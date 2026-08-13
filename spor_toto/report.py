@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import math
 from typing import Dict, List, Optional, Sequence
 
 from .core import (Encoder, OlasilikRaporu, Point, Row, distance_layers,
@@ -64,17 +63,30 @@ def olasilik_satirlari(rap: OlasilikRaporu) -> List[str]:
     ]
 
 
+def monte_carlo_satirlari(mc: dict) -> List[str]:
+    lines = [
+        f"Monte Carlo ({mc['n_samples']} deneme, %95 CI):",
+        f"  Kume ici : %{mc['kume_ici']['pct']:6.3f}  ±{mc['kume_ici']['ci95']}",
+        f"  P(15)    : %{mc['p15']['pct']:6.3f}  ±{mc['p15']['ci95']}",
+        f"  P(14)    : %{mc['p14']['pct']:6.3f}  ±{mc['p14']['ci95']}",
+        f"  P(13)    : %{mc['p13']['pct']:6.3f}  ±{mc['p13']['ci95']}",
+        f"  P(12)    : %{mc['p12']['pct']:6.3f}  ±{mc['p12']['ci95']}",
+    ]
+    return lines
+
+
 def yazdir_ve_kaydet(enc: Encoder, cols: List[Point], baslik: str,
                      output_path: Optional[str] = None,
                      ek_notlar: Sequence[str] = (),
                      probs: Optional[Sequence[Dict[str, float]]] = None,
-                     tam_liste: bool = True) -> Dict[str, object]:
+                     tam_liste: bool = True,
+                     mc_samples: int = 0,
+                     mc_seed: int = 42) -> Dict[str, object]:
     """Sonucu ekrana basar, istenirse dosyaya yazar. Ozet sozluk dondurur."""
     rows = merge_rows(cols)
     toplam_bedel = sum(row_cost(r) for r in rows)
     worst, acik = dogrula_kaplama(cols, enc.alphabet_sizes)
 
-    # Sikistirmanin kayipsiz oldugunu bagimsiz dogrula
     if set(rows_to_points(rows)) != set(cols):
         raise AssertionError(
             "Satir sikistirma kolon kumesini degistirdi - bu bir hatadir.")
@@ -96,11 +108,19 @@ def yazdir_ve_kaydet(enc: Encoder, cols: List[Point], baslik: str,
         print(line)
 
     rap = None
+    mc = None
     if probs:
         rap = olasilik_raporu(enc, cols, probs)
         print(INCE)
         for line in olasilik_satirlari(rap):
             print(line)
+        if mc_samples and mc_samples > 0:
+            from .analysis import monte_carlo_report
+            mc = monte_carlo_report(
+                enc, cols, probs, n_samples=mc_samples, seed=mc_seed)
+            print(INCE)
+            for line in monte_carlo_satirlari(mc):
+                print(line)
     print(INCE)
 
     print(f"\nKUPONA YAZILACAK: {len(rows)} satir "
@@ -127,6 +147,10 @@ def yazdir_ve_kaydet(enc: Encoder, cols: List[Point], baslik: str,
                 f.write("\n")
                 for line in olasilik_satirlari(rap):
                     f.write(line + "\n")
+            if mc:
+                f.write("\n")
+                for line in monte_carlo_satirlari(mc):
+                    f.write(line + "\n")
             f.write(f"\n--- KUPONA YAZILACAK ({len(rows)} satir) ---\n")
             for i, r in enumerate(rows, 1):
                 c = row_cost(r)
@@ -138,4 +162,4 @@ def yazdir_ve_kaydet(enc: Encoder, cols: List[Point], baslik: str,
         print(f"\n-> '{output_path}' dosyasina kaydedildi.")
 
     return {"satir": len(rows), "bedel": len(cols), "en_kotu": worst,
-            "acik": acik, "olasilik": rap}
+            "acik": acik, "olasilik": rap, "monte_carlo": mc}
