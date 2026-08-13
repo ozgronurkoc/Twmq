@@ -3,442 +3,719 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Spor Toto 14-Garanti Formül Üreticisi</title>
+  <title>Spor Toto 14-Garanti</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --green:   #1a7f4b;
-      --green-d: #145f38;
-      --green-l: #e8f5ee;
-      --red:     #c0392b;
-      --gold:    #d4a017;
-      --gray-1:  #f4f6f8;
-      --gray-2:  #e2e8ee;
-      --gray-3:  #aab4be;
-      --gray-4:  #4a5568;
-      --text:    #1a202c;
-      --radius:  8px;
-      --shadow:  0 2px 8px rgba(0,0,0,.10);
+      --bg:          #f5f5f7;
+      --card:        #ffffff;
+      --text:        #1d1d1f;
+      --text-sec:    #86868b;
+      --border:      #d2d2d7;
+      --border-light:#e8e8ed;
+      --blue:        #0071e3;
+      --blue-hover:  #0077ed;
+      --success:     #34c759;
+      --success-bg:  #e8f8ee;
+      --warn-bg:     #fff8e6;
+      --warn-text:   #8a6d00;
+      --error-bg:    #fff0f0;
+      --coral:       #ff3b30;
+      --radius:      14px;
+      --radius-sm:   10px;
+      --shadow:      0 2px 16px rgba(0,0,0,0.06);
     }
 
     body {
-      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-      background: var(--gray-1);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
       color: var(--text);
       min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
     }
 
     header {
-      background: linear-gradient(135deg, var(--green) 0%, var(--green-d) 100%);
-      color: #fff;
-      padding: 20px 24px 18px;
+      background: rgba(255,255,255,0.82);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border-bottom: 1px solid var(--border-light);
+      padding: 14px 28px;
       display: flex;
       align-items: center;
-      gap: 16px;
-      box-shadow: 0 3px 10px rgba(0,0,0,.2);
+      gap: 14px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
-    header .logo { font-size: 2rem; line-height: 1; }
-    header h1 { font-size: 1.25rem; font-weight: 700; }
-    header .sub { font-size: .8rem; opacity: .8; margin-top: 2px; }
-    header .ver { margin-left: auto; font-size: .75rem; opacity: .65; white-space: nowrap; }
+    header .brand { font-size: 1.15rem; font-weight: 600; letter-spacing: -0.02em; }
+    header .sub { font-size: 0.8rem; color: var(--text-sec); margin-top: 1px; }
+    header .ver {
+      margin-left: auto;
+      font-size: 0.75rem;
+      color: var(--text-sec);
+      background: var(--bg);
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
 
-    .container {
-      max-width: 960px;
+    .page {
+      max-width: 1180px;
       margin: 0 auto;
-      padding: 24px 16px;
+      padding: 28px 20px 60px;
       display: grid;
-      gap: 20px;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+    @media (max-width: 920px) {
+      .page { grid-template-columns: 1fr; }
     }
 
     .card {
-      background: #fff;
+      background: var(--card);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
-      padding: 20px 24px;
+      padding: 24px;
+      border: 1px solid rgba(0,0,0,0.04);
     }
-    .card-title {
-      font-size: 1rem;
-      font-weight: 700;
-      color: var(--green-d);
-      margin-bottom: 16px;
-      padding-bottom: 10px;
-      border-bottom: 2px solid var(--green-l);
-    }
+    .card + .card { margin-top: 18px; }
 
-    .picks-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 10px;
-    }
-    .match-row {
+    .card-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      margin-bottom: 18px;
       display: flex;
       align-items: center;
       gap: 8px;
-      background: var(--gray-1);
-      border: 1px solid var(--gray-2);
-      border-radius: 6px;
-      padding: 8px 10px;
-      transition: border-color .15s;
     }
-    .match-row:hover { border-color: var(--green); }
-    .match-num {
-      font-size: .7rem;
-      font-weight: 700;
-      color: var(--gray-3);
-      min-width: 22px;
+
+    .quickfill {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 18px;
     }
-    .cb-group { display: flex; gap: 4px; flex-wrap: wrap; }
-    .cb-label {
+    .qbtn {
+      font-size: 0.78rem;
+      font-weight: 500;
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .qbtn:hover { background: var(--bg); border-color: #b0b0b5; }
+    .qbtn:active { transform: scale(0.97); }
+
+    .picks-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    @media (max-width: 520px) {
+      .picks-grid { grid-template-columns: 1fr; }
+    }
+
+    .match-row {
       display: flex;
       align-items: center;
-      gap: 3px;
-      cursor: pointer;
-      user-select: none;
+      gap: 10px;
+      background: var(--bg);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      transition: background 0.15s;
     }
-    .cb-label input[type=checkbox] { display: none; }
+    .match-row:hover { background: #ebebed; }
+
+    .match-num {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-sec);
+      min-width: 26px;
+    }
+
+    .cb-group { display: flex; gap: 6px; }
+    .cb-label { cursor: pointer; user-select: none; }
+    .cb-label input { display: none; }
+
     .cb-chip {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 30px;
-      height: 30px;
-      border-radius: 6px;
-      font-size: .85rem;
-      font-weight: 700;
-      border: 2px solid var(--gray-2);
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border: 1.5px solid var(--border);
       background: #fff;
-      color: var(--gray-4);
-      transition: all .12s;
+      color: var(--text-sec);
+      transition: all 0.15s ease;
     }
-    .cb-label input[type=checkbox]:checked + .cb-chip {
-      border-color: var(--green);
-      background: var(--green);
-      color: #fff;
+    .cb-label:hover .cb-chip { border-color: #b0b0b5; }
+
+    .sym-1 input:checked + .cb-chip {
+      background: #007aff; border-color: #007aff; color: #fff;
+      box-shadow: 0 2px 8px rgba(0,122,255,0.25);
     }
-    .sym-1 .cb-chip  { border-color: #c5d8f0; }
-    .sym-1 input:checked + .cb-chip { background: #2980b9; border-color: #2980b9; }
-    .sym-0 .cb-chip  { border-color: #fce5b8; }
-    .sym-0 input:checked + .cb-chip { background: var(--gold); border-color: var(--gold); color: #fff; }
-    .sym-2 .cb-chip  { border-color: #f5c6c6; }
-    .sym-2 input:checked + .cb-chip { background: var(--red); border-color: var(--red); }
+    .sym-0 input:checked + .cb-chip {
+      background: #f5a623; border-color: #f5a623; color: #fff;
+      box-shadow: 0 2px 8px rgba(245,166,35,0.25);
+    }
+    .sym-2 input:checked + .cb-chip {
+      background: #ff3b30; border-color: #ff3b30; color: #fff;
+      box-shadow: 0 2px 8px rgba(255,59,48,0.25);
+    }
+
+    .live-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border-light);
+    }
+    .live-item { text-align: center; }
+    .live-item .num {
+      font-size: 1.25rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+    .live-item .lbl {
+      font-size: 0.7rem;
+      color: var(--text-sec);
+      margin-top: 2px;
+    }
 
     .options-row {
       display: flex;
       flex-wrap: wrap;
-      gap: 12px;
+      gap: 14px;
       align-items: flex-end;
-      margin-top: 18px;
+      margin-top: 20px;
     }
-    .opt-group { display: flex; flex-direction: column; gap: 4px; }
-    .opt-group label { font-size: .78rem; font-weight: 600; color: var(--gray-4); }
-    select, input[type=number], input[type=text] {
-      height: 38px;
-      border: 1.5px solid var(--gray-2);
-      border-radius: 6px;
-      padding: 0 10px;
-      font-size: .9rem;
+    .opt-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
+      min-width: 140px;
+    }
+    .opt-group label {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--text-sec);
+    }
+    select, input[type=number] {
+      height: 40px;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 0 12px;
+      font-size: 0.9rem;
       background: #fff;
       color: var(--text);
       outline: none;
-      transition: border-color .15s;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      font-family: inherit;
     }
-    select:focus, input:focus { border-color: var(--green); }
-    select { min-width: 220px; }
-    input[type=number] { width: 100px; }
+    select:focus, input:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(0,113,227,0.15);
+    }
+    select { min-width: 180px; }
 
     .btn-row {
       display: flex;
       gap: 10px;
-      margin-top: 18px;
-      flex-wrap: wrap;
+      margin-top: 20px;
     }
     .btn {
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 6px;
-      padding: 0 22px;
-      height: 42px;
-      border-radius: 6px;
-      font-size: .95rem;
-      font-weight: 600;
+      height: 44px;
+      padding: 0 24px;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 500;
       cursor: pointer;
       border: none;
-      transition: opacity .15s, transform .1s;
+      transition: all 0.15s ease;
+      font-family: inherit;
     }
-    .btn:active { transform: scale(.97); }
-    .btn-primary { background: var(--green); color: #fff; }
-    .btn-primary:hover { opacity: .88; }
-    .btn-secondary { background: var(--gray-2); color: var(--gray-4); }
-    .btn-secondary:hover { opacity: .8; }
-
-    .quickfill { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-    .quickfill span { font-size: .78rem; color: var(--gray-3); line-height: 28px; }
-    .qbtn {
-      font-size: .75rem;
-      padding: 3px 10px;
-      border-radius: 20px;
-      border: 1.5px solid var(--gray-2);
-      background: #fff;
-      cursor: pointer;
-      color: var(--gray-4);
-      transition: all .12s;
+    .btn:active { transform: scale(0.97); }
+    .btn-primary {
+      background: var(--blue);
+      color: #fff;
+      flex: 1;
     }
-    .qbtn:hover { border-color: var(--green); color: var(--green); }
+    .btn-primary:hover { background: var(--blue-hover); }
+    .btn-secondary {
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { background: #ebebed; }
 
-    .alert { padding: 14px 18px; border-radius: var(--radius); font-size: .92rem; }
-    .alert-error { background: #fdecea; color: var(--red); border: 1px solid #f5b7b1; }
-    .alert-warn  { background: #fef9e7; color: #7d6608; border: 1px solid #f9e79f; }
-    .alert-ok    { background: var(--green-l); color: var(--green-d); border: 1px solid #a9dfbf; }
+    .alert {
+      padding: 14px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 0.88rem;
+      line-height: 1.45;
+    }
+    .alert-error { background: var(--error-bg); color: var(--coral); }
+    .alert-warn  { background: var(--warn-bg); color: var(--warn-text); }
+    .alert-ok    { background: var(--success-bg); color: #1a7a3a; }
 
     .summary-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      grid-template-columns: repeat(2, 1fr);
       gap: 12px;
-      margin-bottom: 18px;
+      margin-bottom: 20px;
+    }
+    @media (min-width: 500px) {
+      .summary-grid { grid-template-columns: repeat(4, 1fr); }
     }
     .stat-box {
-      background: var(--gray-1);
-      border: 1px solid var(--gray-2);
-      border-radius: var(--radius);
-      padding: 12px 14px;
+      background: var(--bg);
+      border-radius: var(--radius-sm);
+      padding: 16px 12px;
       text-align: center;
     }
-    .stat-box .val { font-size: 1.7rem; font-weight: 800; color: var(--green-d); }
-    .stat-box .lbl { font-size: .72rem; color: var(--gray-3); margin-top: 2px; }
+    .stat-box .val {
+      font-size: 1.5rem;
+      font-weight: 600;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+    }
+    .stat-box .lbl {
+      font-size: 0.7rem;
+      color: var(--text-sec);
+      margin-top: 4px;
+    }
+    .stat-box.guarantee-ok .val { color: var(--success); }
+    .stat-box.guarantee-no .val { color: var(--coral); }
 
-    .table-wrap { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; font-size: .88rem; }
-    th {
-      background: var(--green);
-      color: #fff;
-      padding: 8px 10px;
-      text-align: center;
-      font-size: .78rem;
-      letter-spacing: .03em;
+    .table-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
     }
-    th:first-child { text-align: left; min-width: 44px; }
-    td { padding: 6px 8px; text-align: center; border-bottom: 1px solid var(--gray-2); }
-    td:first-child { text-align: left; color: var(--gray-3); font-size: .78rem; }
-    tr:nth-child(even) { background: var(--gray-1); }
+    .table-header h3 { font-size: 0.9rem; font-weight: 600; }
+    .copy-btn {
+      font-size: 0.8rem;
+      font-weight: 500;
+      padding: 6px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .copy-btn:hover { background: var(--bg); }
+    .copy-btn.copied {
+      background: var(--success-bg);
+      border-color: var(--success);
+      color: #1a7a3a;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-light);
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    th {
+      background: var(--bg);
+      color: var(--text-sec);
+      padding: 10px 8px;
+      text-align: center;
+      font-size: 0.72rem;
+      font-weight: 600;
+      border-bottom: 1px solid var(--border-light);
+    }
+    th:first-child { text-align: left; padding-left: 14px; }
+    td {
+      padding: 9px 8px;
+      text-align: center;
+      border-bottom: 1px solid var(--border-light);
+    }
+    td:first-child {
+      text-align: left;
+      padding-left: 14px;
+      color: var(--text-sec);
+      font-size: 0.78rem;
+    }
     tr:last-child td { border-bottom: none; }
-    .cell-1, .cell-10 { color: #2980b9; font-weight: 700; }
-    .cell-0 { color: #b7860b; font-weight: 700; }
-    .cell-2 { color: var(--red); font-weight: 700; }
-    .cell-multi { color: var(--green-d); font-weight: 700; }
+    tr:hover td { background: #fafafa; }
+
+    .cell-1 { color: #007aff; font-weight: 600; }
+    .cell-0 { color: #d4890a; font-weight: 600; }
+    .cell-2 { color: #ff3b30; font-weight: 600; }
+    .cell-multi { color: var(--text); font-weight: 600; }
+
     .cost-badge {
       display: inline-block;
-      background: #f0e6c8;
-      color: #7d5a00;
-      border-radius: 4px;
-      font-size: .72rem;
-      padding: 1px 6px;
+      background: #fef6e6;
+      color: #8a5a00;
+      border-radius: 6px;
+      font-size: 0.7rem;
+      font-weight: 500;
+      padding: 2px 7px;
       margin-left: 4px;
     }
 
-    .dist-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
-    .dist-table td { padding: 5px 10px; border-bottom: 1px solid var(--gray-2); }
-    .dist-table tr:last-child td { border: none; }
-    .dist-bar-wrap { position: relative; height: 14px; background: var(--gray-2); border-radius: 3px; min-width: 80px; }
-    .dist-bar { height: 100%; border-radius: 3px; background: var(--green); }
-    .dist-pct { font-size: .8rem; color: var(--gray-4); min-width: 48px; text-align: right; }
-    .stat-lines { font-size: .83rem; color: var(--gray-4); line-height: 1.7; }
+    .dist-list { display: flex; flex-direction: column; gap: 8px; }
+    .dist-row {
+      display: grid;
+      grid-template-columns: 70px 90px 1fr 52px;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.85rem;
+    }
+    .dist-bar-wrap {
+      height: 8px;
+      background: var(--border-light);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .dist-bar {
+      height: 100%;
+      border-radius: 4px;
+      background: var(--blue);
+      transition: width 0.4s ease;
+    }
+    .dist-pct {
+      font-size: 0.8rem;
+      color: var(--text-sec);
+      text-align: right;
+    }
 
-    @media (max-width: 600px) {
-      .picks-grid { grid-template-columns: 1fr 1fr; }
-      header h1 { font-size: 1rem; }
-      .options-row { flex-direction: column; }
-      select { min-width: unset; width: 100%; }
+    .stat-lines {
+      font-size: 0.82rem;
+      color: var(--text-sec);
+      line-height: 1.7;
+      margin-bottom: 16px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 24px;
+      color: var(--text-sec);
+    }
+    .empty-state .icon {
+      font-size: 2.8rem;
+      margin-bottom: 16px;
+      opacity: 0.35;
+    }
+    .empty-state p {
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    .loading-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(245,245,247,0.72);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .loading-overlay.active { display: flex; }
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid var(--border);
+      border-top-color: var(--blue);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .notes {
+      font-size: 0.83rem;
+      color: var(--text-sec);
+      line-height: 1.6;
+      margin-bottom: 18px;
+    }
+
+    .right-col {
+      position: sticky;
+      top: 72px;
     }
   </style>
 </head>
 <body>
 
+<div class="loading-overlay" id="loading">
+  <div class="spinner"></div>
+  <div class="loading-text">Hesaplanıyor…</div>
+</div>
+
 <header>
-  <div class="logo">🎯</div>
   <div>
-    <h1>Spor Toto 14-Garanti Formül Üreticisi</h1>
-    <div class="sub">15 maçlık kuponunuz için minimum kolonlu kaplama kodu</div>
+    <div class="brand">Spor Toto 14-Garanti</div>
+    <div class="sub">Minimum kolonlu kaplama kodu üreticisi</div>
   </div>
   <div class="ver">v{{ version }}</div>
 </header>
 
-<div class="container">
-  <div class="card">
-    <div class="card-title">📋 Maç Seçimleri</div>
+<div class="page">
 
-    <div class="quickfill">
-      <span>Hızlı doldur:</span>
-      <button type="button" class="qbtn" onclick="fillAll(['1','0','2'])">Tüm üçlü</button>
-      <button type="button" class="qbtn" onclick="fillAll(['1','0'])">Tüm 1/0</button>
-      <button type="button" class="qbtn" onclick="fillAll(['0','2'])">Tüm 0/2</button>
-      <button type="button" class="qbtn" onclick="fillAll(['1','2'])">Tüm 1/2</button>
-      <button type="button" class="qbtn" onclick="loadExample()">Örnek kupon</button>
-    </div>
+  <!-- LEFT -->
+  <div class="left-col">
+    <div class="card">
+      <div class="card-title">Maç Seçimleri</div>
 
-    <form method="POST" action="/solve" id="mainForm" style="margin-top:14px">
-      <div class="picks-grid">
-        {% for i in range(1, match_count + 1) %}
-        {% set sel = default_selections[i-1] if default_selections and (i-1) < default_selections|length else [] %}
-        <div class="match-row">
-          <span class="match-num">M{{ i }}</span>
-          <div class="cb-group">
-            {% for sym, label in symbols %}
-            <label class="cb-label sym-{{ sym }}">
-              <input type="checkbox" name="match_{{ i }}" value="{{ sym }}"
-                     {% if sym in sel %}checked{% endif %}>
-              <span class="cb-chip" title="{{ label }}">{{ sym }}</span>
-            </label>
-            {% endfor %}
+      <div class="quickfill">
+        <button type="button" class="qbtn" onclick="fillAll(['1','0','2'])">Tüm üçlü</button>
+        <button type="button" class="qbtn" onclick="fillAll(['1','0'])">Tüm 1/0</button>
+        <button type="button" class="qbtn" onclick="fillAll(['0','2'])">Tüm 0/2</button>
+        <button type="button" class="qbtn" onclick="fillAll(['1','2'])">Tüm 1/2</button>
+        <button type="button" class="qbtn" onclick="loadExample()">Örnek</button>
+      </div>
+
+      <form method="POST" action="/solve" id="mainForm">
+        <div class="picks-grid" id="picksGrid">
+          {% for i in range(1, match_count + 1) %}
+          {% set sel = default_selections[i-1] if default_selections and (i-1) < default_selections|length else [] %}
+          <div class="match-row">
+            <span class="match-num">M{{ i }}</span>
+            <div class="cb-group">
+              {% for sym, label in symbols %}
+              <label class="cb-label sym-{{ sym }}">
+                <input type="checkbox" name="match_{{ i }}" value="{{ sym }}"
+                       {% if sym in sel %}checked{% endif %}
+                       onchange="updateLiveStats()">
+                <span class="cb-chip" title="{{ label }}">{{ sym }}</span>
+              </label>
+              {% endfor %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <div class="live-stats" id="liveStats">
+          <div class="live-item">
+            <div class="num" id="statBanko">—</div>
+            <div class="lbl">Banko</div>
+          </div>
+          <div class="live-item">
+            <div class="num" id="statCifte">—</div>
+            <div class="lbl">Çifte</div>
+          </div>
+          <div class="live-item">
+            <div class="num" id="statUclu">—</div>
+            <div class="lbl">Üçlü</div>
+          </div>
+          <div class="live-item">
+            <div class="num" id="statSpace">—</div>
+            <div class="lbl">Uzay</div>
           </div>
         </div>
-        {% endfor %}
-      </div>
 
-      <div class="options-row">
-        <div class="opt-group">
-          <label for="mode">Mod</label>
-          <select name="mode" id="mode" onchange="toggleBudget(this.value)">
-            {% for val, lbl in modes %}
-            <option value="{{ val }}"
-              {% if form_data and form_data.get('mode') == val %}selected
-              {% elif not form_data and val == 'fix16' %}selected{% endif %}>
-              {{ lbl }}
-            </option>
-            {% endfor %}
-          </select>
+        <div class="options-row">
+          <div class="opt-group">
+            <label for="mode">Mod</label>
+            <select name="mode" id="mode" onchange="toggleBudget(this.value)">
+              {% for val, lbl in modes %}
+              <option value="{{ val }}"
+                {% if form_data and form_data.get('mode') == val %}selected
+                {% elif not form_data and val == 'fix16' %}selected{% endif %}>
+                {{ lbl }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="opt-group" id="budgetGroup" style="display:none">
+            <label for="budget">Kolon Bütçesi</label>
+            <input type="number" name="budget" id="budget" min="1" max="9999"
+                   value="{{ form_data.get('budget', 32) if form_data else 32 }}">
+          </div>
+
+          <div class="opt-group">
+            <label for="variant">Varyant</label>
+            <input type="number" name="variant" id="variant" min="0" max="9999"
+                   value="{{ form_data.get('variant', 0) if form_data else 0 }}">
+          </div>
         </div>
 
-        <div class="opt-group" id="budgetGroup" style="display:none">
-          <label for="budget">Kolon Bütçesi</label>
-          <input type="number" name="budget" id="budget" min="1" max="9999"
-                 value="{{ form_data.get('budget', 32) if form_data else 32 }}"
-                 placeholder="ör. 32">
+        {% if not has_scipy %}
+        <div class="alert alert-warn" style="margin-top:16px">
+          scipy bulunamadı — kesin çözücü (ILP) devre dışı. Sezgisel motor kullanılacak.
         </div>
+        {% endif %}
 
-        <div class="opt-group">
-          <label for="variant">Varyant (0 = standart)</label>
-          <input type="number" name="variant" id="variant" min="0" max="9999"
-                 value="{{ form_data.get('variant', 0) if form_data else 0 }}"
-                 placeholder="0">
+        <div class="btn-row">
+          <button type="submit" class="btn btn-primary" id="submitBtn">Formül Üret</button>
+          <button type="button" class="btn btn-secondary" onclick="resetForm()">Sıfırla</button>
         </div>
-      </div>
-
-      {% if not has_scipy %}
-      <div class="alert alert-warn" style="margin-top:14px">
-        ⚠️ scipy bulunamadı — kesin çözücü (ILP) devre dışı. Sezgisel motor kullanılacak.
-      </div>
-      {% endif %}
-
-      <div class="btn-row">
-        <button type="submit" class="btn btn-primary">⚙️ Formül Üret</button>
-        <button type="button" class="btn btn-secondary" onclick="resetForm()">↺ Sıfırla</button>
-      </div>
-    </form>
+      </form>
+    </div>
   </div>
 
-  {% if error %}
-  <div class="alert alert-error">
-    <strong>❌ Hata:</strong> {{ error }}
-  </div>
-  {% endif %}
+  <!-- RIGHT -->
+  <div class="right-col">
 
-  {% if result %}
-  {% if result.get('uyarilar') %}
-  {% for u in result.uyarilar %}
-  <div class="alert alert-warn">⚠️ {{ u }}</div>
-  {% endfor %}
-  {% endif %}
-
-  <div class="card">
-    <div class="card-title">
-      {{ '✅' if result.guaranteed else '⚠️' }}
-      Sonuç — {{ result.baslik }}
-    </div>
-
-    <div class="summary-grid">
-      <div class="stat-box"><div class="val">{{ result.satir_sayisi }}</div><div class="lbl">Kupon Satırı</div></div>
-      <div class="stat-box"><div class="val">{{ result.kolon_bedeli }}</div><div class="lbl">Kolon Bedeli</div></div>
-      <div class="stat-box"><div class="val">{{ result.alt_sinir }}</div><div class="lbl">Teorik Alt Sınır</div></div>
-      <div class="stat-box">
-        <div class="val" style="color:{{ '#1a7f4b' if result.guaranteed else '#c0392b' }}">
-          {{ '14-GARANTİ ✓' if result.guaranteed else 'GARANTİ YOK' }}
-        </div>
-        <div class="lbl">Garanti Durumu</div>
-      </div>
-    </div>
-
-    {% if result.notlar %}
-    <div style="margin-bottom:16px; font-size:.83rem; color:var(--gray-4); line-height:1.6">
-      {% for n in result.notlar %}<div>ℹ️ {{ n }}</div>{% endfor %}
+    {% if error %}
+    <div class="alert alert-error" style="margin-bottom:18px">
+      <strong>Hata:</strong> {{ error }}
     </div>
     {% endif %}
 
-    <div class="card-title" style="margin-top:8px">🎫 Kupona Yazılacak {{ result.satir_sayisi }} Satır</div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>#</th>
-            {% for i in range(1, result.match_count + 1) %}<th>M{{ i }}</th>{% endfor %}
-            <th>Kolon</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for row in result.rows %}
-          <tr>
-            <td>{{ loop.index }}</td>
-            {% for cell in row.cells %}<td class="cell-{{ cell }}">{{ cell }}</td>{% endfor %}
-            <td>{{ row.cost }}{% if row.cost > 1 %}<span class="cost-badge">×{{ row.cost }}</span>{% endif %}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
+    {% if result %}
 
-  <div class="card">
-    <div class="card-title">📊 Kapsama Dağılımı</div>
-    <div class="stat-lines" style="margin-bottom:14px">
-      {% for line in result.stat_lines %}<div>{{ line }}</div>{% endfor %}
-    </div>
-    <table class="dist-table">
-      <thead>
-        <tr>
-          <th style="text-align:left;background:var(--green);color:#fff;padding:6px 10px;border-radius:4px 0 0 0">Uzaklık</th>
-          <th style="background:var(--green);color:#fff;padding:6px 10px">Açıklama</th>
-          <th style="background:var(--green);color:#fff;padding:6px 10px">Nokta Sayısı</th>
-          <th style="background:var(--green);color:#fff;padding:6px 10px;border-radius:0 4px 0 0">Yüzde / Dağılım</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for item in result.dist %}
-        <tr>
-          <td><strong>d={{ item.d }}</strong></td>
-          <td>{{ item.label }}</td>
-          <td>{{ item.count }}</td>
-          <td><div style="display:flex;align-items:center;gap:8px">
-            <div class="dist-bar-wrap" style="flex:1"><div class="dist-bar" style="width:{{ item.pct }}%"></div></div>
-            <span class="dist-pct">%{{ item.pct }}</span>
-          </div></td>
-        </tr>
-        {% endfor %}
-        {% if result.guaranteed %}
-        <tr><td colspan="4"><div class="alert alert-ok" style="margin:6px 0 2px">
-          ✅ En kötü durum 1 hata — <strong>14-GARANTİ DOĞRULANDI</strong>
-        </div></td></tr>
-        {% else %}
-        <tr><td colspan="4"><div class="alert alert-warn" style="margin:6px 0 2px">
-          ⚠️ En kötü durum {{ result.worst }} hata — 14-garanti bu kupon için geçerli değil.
-        </div></td></tr>
+      {% if result.get('uyarilar') %}
+      {% for u in result.uyarilar %}
+      <div class="alert alert-warn" style="margin-bottom:12px">{{ u }}</div>
+      {% endfor %}
+      {% endif %}
+
+      <div class="card">
+        <div class="card-title">
+          Sonuç
+          <span style="font-weight:400;color:var(--text-sec);font-size:0.85rem">— {{ result.baslik }}</span>
+        </div>
+
+        <div class="summary-grid">
+          <div class="stat-box">
+            <div class="val">{{ result.satir_sayisi }}</div>
+            <div class="lbl">Kupon Satırı</div>
+          </div>
+          <div class="stat-box">
+            <div class="val">{{ result.kolon_bedeli }}</div>
+            <div class="lbl">Kolon Bedeli</div>
+          </div>
+          <div class="stat-box">
+            <div class="val">{{ result.alt_sinir }}</div>
+            <div class="lbl">Alt Sınır</div>
+          </div>
+          <div class="stat-box {{ 'guarantee-ok' if result.guaranteed else 'guarantee-no' }}">
+            <div class="val" style="font-size:1.1rem">
+              {{ '14-Garanti' if result.guaranteed else 'Garanti Yok' }}
+            </div>
+            <div class="lbl">Durum</div>
+          </div>
+        </div>
+
+        {% if result.notlar %}
+        <div class="notes">
+          {% for n in result.notlar %}<div>{{ n }}</div>{% endfor %}
+        </div>
         {% endif %}
-      </tbody>
-    </table>
+
+        <div class="table-header">
+          <h3>Kupona Yazılacak {{ result.satir_sayisi }} Satır</h3>
+          <button type="button" class="copy-btn" id="copyBtn" onclick="copyTable()">Kopyala</button>
+        </div>
+
+        <div class="table-wrap">
+          <table id="resultTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                {% for i in range(1, result.match_count + 1) %}<th>M{{ i }}</th>{% endfor %}
+                <th>Kolon</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in result.rows %}
+              <tr>
+                <td>{{ loop.index }}</td>
+                {% for cell in row.cells %}
+                <td class="cell-{{ cell }}">{{ cell }}</td>
+                {% endfor %}
+                <td>{{ row.cost }}{% if row.cost > 1 %}<span class="cost-badge">×{{ row.cost }}</span>{% endif %}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:18px">
+        <div class="card-title">Kapsama Dağılımı</div>
+
+        <div class="stat-lines">
+          {% for line in result.stat_lines %}<div>{{ line }}</div>{% endfor %}
+        </div>
+
+        <div class="dist-list">
+          {% for item in result.dist %}
+          <div class="dist-row">
+            <div><strong>d={{ item.d }}</strong></div>
+            <div style="color:var(--text-sec)">{{ item.label }}</div>
+            <div class="dist-bar-wrap">
+              <div class="dist-bar" style="width:{{ item.pct }}%"></div>
+            </div>
+            <div class="dist-pct">%{{ item.pct }}</div>
+          </div>
+          {% endfor %}
+        </div>
+
+        {% if result.guaranteed %}
+        <div class="alert alert-ok" style="margin-top:16px">
+          En kötü durum 1 hata — <strong>14-Garanti doğrulandı</strong>
+        </div>
+        {% else %}
+        <div class="alert alert-warn" style="margin-top:16px">
+          En kötü durum {{ result.worst }} hata — 14-garanti bu kupon için geçerli değil.
+        </div>
+        {% endif %}
+      </div>
+
+    {% else %}
+
+      {% if not error %}
+      <div class="card">
+        <div class="empty-state">
+          <div class="icon">◇</div>
+          <p>Maç seçimlerini yapın ve<br><strong>Formül Üret</strong> butonuna basın.</p>
+        </div>
+      </div>
+      {% endif %}
+
+    {% endif %}
+
   </div>
-  {% endif %}
 </div>
 
 <script>
+  function updateLiveStats() {
+    let banko = 0, cifte = 0, uclu = 0, space = 1;
+    for (let i = 1; i <= {{ match_count }}; i++) {
+      const checked = document.querySelectorAll(`input[name="match_${i}"]:checked`);
+      const n = checked.length || 3;
+      if (n === 1) banko++;
+      else if (n === 2) cifte++;
+      else uclu++;
+      space *= n;
+    }
+    document.getElementById('statBanko').textContent = banko;
+    document.getElementById('statCifte').textContent = cifte;
+    document.getElementById('statUclu').textContent = uclu;
+    document.getElementById('statSpace').textContent =
+      space >= 1000 ? (space / 1000).toFixed(1) + 'k' : space;
+  }
+
   function toggleBudget(mode) {
     const show = (mode === 'butce' || mode === 'maxcov');
     document.getElementById('budgetGroup').style.display = show ? '' : 'none';
@@ -451,6 +728,7 @@
         cb.checked = syms.includes(cb.value);
       });
     }
+    updateLiveStats();
   }
 
   const EXAMPLE = [['1'],['1','0'],['1'],['1','2'],['0'],['1','0'],['2'],['1','0'],['1'],['1','2'],['0','2'],['1'],['1','0'],['2'],['1','0']];
@@ -460,6 +738,7 @@
         cb.checked = syms.includes(cb.value);
       });
     });
+    updateLiveStats();
   }
 
   function resetForm() {
@@ -470,10 +749,37 @@
     document.getElementById('budget').value = '32';
   }
 
+  document.getElementById('mainForm').addEventListener('submit', () => {
+    document.getElementById('loading').classList.add('active');
+  });
+
+  function copyTable() {
+    const table = document.getElementById('resultTable');
+    if (!table) return;
+    let text = '';
+    table.querySelectorAll('tbody tr').forEach((tr, i) => {
+      const cells = [...tr.querySelectorAll('td')].slice(1, -1).map(td => td.textContent.trim());
+      text += (i + 1) + ' | ' + cells.join(' ') + '\n';
+    });
+    navigator.clipboard.writeText(text.trim()).then(() => {
+      const btn = document.getElementById('copyBtn');
+      btn.textContent = 'Kopyalandı';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = 'Kopyala';
+        btn.classList.remove('copied');
+      }, 1800);
+    });
+  }
+
+  updateLiveStats();
+
   {% if result or error %}
   window.addEventListener('DOMContentLoaded', () => {
-    const target = document.querySelector('.alert-error, #resultSection');
-    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const target = document.querySelector('.alert-error, .right-col .card');
+    if (target && window.innerWidth < 920) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   });
   {% endif %}
 </script>
