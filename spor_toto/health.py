@@ -2,7 +2,8 @@
 
 Kullanım:
   python -m spor_toto.health
-  python -m spor_toto.health --interval 60   # her 60 sn tekrar
+  python -m spor_toto.health --interval 60
+  python -m spor_toto.health --json
 """
 
 from __future__ import annotations
@@ -11,7 +12,6 @@ import argparse
 import math
 import sys
 import time
-import traceback
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Callable, Dict, List, Optional
@@ -33,6 +33,7 @@ from .core import (
     solve_heuristic,
 )
 from .analysis import match_error_frequency, monte_carlo_report
+from .report import basliklar
 
 ORNEK = "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"
 
@@ -83,6 +84,10 @@ def _run(name: str, fn: Callable[[], str]) -> CheckResult:
         return CheckResult(
             name, False, f"{type(e).__name__}: {e}", (time.perf_counter() - t0) * 1000
         )
+
+
+def _approx(a: float, b: float, rel: float = 1e-9) -> bool:
+    return abs(a - b) <= rel * max(1.0, abs(b))
 
 
 def _check_encoder() -> str:
@@ -153,27 +158,8 @@ def _check_olasilik_exact() -> str:
     rap = olasilik_raporu(enc, cols, probs)
     assert 0 <= rap.p_15 <= 1
     assert 0 <= rap.p_kume_ici <= 1
-    assert rap.p_15 + rap.p_14 == pytest_approx(rap.p_kume_ici)
+    assert _approx(rap.p_15 + rap.p_14, rap.p_kume_ici)
     return f"p_ici={rap.p_kume_ici:.4f} p15={rap.p_15:.4f} p14={rap.p_14:.4f}"
-
-
-def pytest_approx(a: float, b: float = None, rel: float = 1e-9):
-    """Mini approx without importing pytest in production health path."""
-    if b is None:
-        # used as assert x == pytest_approx(y) style via helper
-        return _Approx(a, rel)
-    return abs(a - b) <= rel * max(1.0, abs(b))
-
-
-class _Approx:
-    def __init__(self, expected: float, rel: float = 1e-9):
-        self.expected = expected
-        self.rel = rel
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, (int, float)):
-            return False
-        return abs(float(other) - self.expected) <= self.rel * max(1.0, abs(self.expected))
 
 
 def _check_monte_carlo() -> str:
@@ -185,9 +171,10 @@ def _check_monte_carlo() -> str:
     for key in ("kume_ici", "p15", "p14", "p13", "p12"):
         assert 0.0 <= mc[key]["p"] <= 1.0
         assert mc[key]["ci95"] >= 0.0
-    # uniform: küme içi ~1 (tüm semboller seçili değişkenlerde)
-    # örnek kupon banko+cifte; p_kume_ici bankolara bağlı
     assert mc["kume_ici"]["p"] > 0.01
+    # exact ile kabaca uyum (5000 sample toleransı)
+    rap = olasilik_raporu(enc, cols, probs)
+    assert abs(mc["kume_ici"]["p"] - rap.p_kume_ici) < 0.05
     return (
         f"n=5000 kume_ici={mc['kume_ici']['pct']}% "
         f"p15={mc['p15']['pct']}%±{mc['p15']['ci95']}"
@@ -198,31 +185,48 @@ def _check_error_freq() -> str:
     enc = Encoder(parse_picks(ORNEK))
     cols, _ = solve_fix16(enc)
     ef = match_error_frequency(enc, cols, max_d=2)
-    assert ef["n1"] + ef["n2"] + len(set(cols)) <= enc.space_size()
-    # d=0 points = codewords; remaining at d<=1 for valid cover
+    assert ef["n1"] >= 0 and ef["n2"] >= 0
     worst, acik = dogrula_kaplama(cols, enc.alphabet_sizes)
-    assert acik == 0
+    assert acik == 0 and worst <= 1
+    # geçerli kaplamada d>=2 nokta olmamalı → n2 genelde 0
+    assert ef["n2"] == 0
     return f"n1={ef['n1']} n2={ef['n2']} d1_macs={len(ef['d1'])}"
 
 
-def _check_pipeline_web_shape() -> str:
-    """web_app._build_result ile aynı şekli üret."""
-    from web_app import _build_result, _run_fix16
-
+def _check_pipeline_result_shape() -> str:
+    """web _build_result ile aynı veri sözleşmesi (import web_app yok)."""
     enc = Encoder(parse_picks(ORNEK))
-    r = _run_fix16(enc, variant=0)
+    cols, baslik = solve_fix16(enc)
+    rows = merge_rows(cols)
+    total_cost = sum(row_cost(r) for r in rows)
+    worst, acik = dogrula_kaplama(cols, enc.alphabet_sizes)
+    dist = distance_layers(cols, enc.alphabet_sizes)
     probs = [{s: 1.0 / 3 for s in ("1", "0", "2")} for _ in range(15)]
-    result = _build_result(enc, r["cols"], r["baslik"], r["notlar"], user_probs=probs)
+    rap = olasilik_raporu(enc, cols, probs)
+    mc = monte_carlo_report(enc, cols, probs, n_samples=3_000, seed=1)
+    ef = match_error_frequency(enc, cols)
+
+    result = {
+        "baslik": baslik,
+        "satir_sayisi": len(rows),
+        "kolon_bedeli": total_cost,
+        "guaranteed": worst <= 1,
+        "probs": {"15": dist.get(0, 0), "14": dist.get(1, 0)},
+        "advanced": {
+            "exact": {"p_kume_ici": rap.p_kume_ici, "p_15": rap.p_15},
+            "monte_carlo": mc,
+        },
+        "error_freq": ef,
+        "stat_lines": basliklar(enc),
+        "match_count": enc.total_len,
+    }
     assert result["guaranteed"] is True
     assert result["satir_sayisi"] == 16
-    assert result["probs"]["15"]["count"] >= 1
-    assert result["advanced"] is not None
-    assert "monte_carlo" in result["advanced"]
-    assert result["error_freq"] is not None
-    return (
-        f"satir={result['satir_sayisi']} bedel={result['kolon_bedeli']} "
-        f"adv={result['advanced']['exact']['p_kume_ici']}%"
-    )
+    assert result["match_count"] == 15
+    assert result["advanced"]["monte_carlo"]["n_samples"] == 3_000
+    assert result["error_freq"]["n2"] == 0
+    assert len(result["stat_lines"]) >= 4
+    return f"satir=16 bedel={total_cost} p_ici={rap.p_kume_ici:.4f}"
 
 
 def _check_scipy_flag() -> str:
@@ -240,7 +244,7 @@ def run_health() -> HealthReport:
         ("olasilik_exact", _check_olasilik_exact),
         ("monte_carlo", _check_monte_carlo),
         ("error_freq", _check_error_freq),
-        ("pipeline_web_shape", _check_pipeline_web_shape),
+        ("pipeline_result_shape", _check_pipeline_result_shape),
         ("scipy_flag", _check_scipy_flag),
     ]
     results = [_run(name, fn) for name, fn in checks_spec]
