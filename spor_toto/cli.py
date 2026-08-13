@@ -1,0 +1,288 @@
+"""Komut satiri arayuzu."""
+
+from __future__ import annotations
+
+import argparse
+import sys
+import time
+from typing import List, Optional, Sequence
+
+from . import __version__
+from .core import (Encoder, Fix16Hatasi, HAS_SCIPY, Point, ball,
+                   butce_danismani, dogrula_kaplama, exact_cover,
+                   exact_max_coverage, greedy_full, merge_rows, parse_picks,
+                   parse_probs, solve_by_blocks, solve_fix16, solve_heuristic)
+from .report import CIZGI, INCE, basliklar, yazdir_ve_kaydet
+
+ORNEK = "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"
+
+
+def _log(msg: str) -> None:
+    print(f"   {msg}")
+
+
+def _mod_fix16(enc: Encoder, args) -> None:
+    cols, aciklama = solve_fix16(enc, variant=args.variant)
+    _log(f"Sabit 16 satir: {aciklama} -> {len(cols)} kolon bedeli")
+    notlar = [aciklama]
+    if args.variant:
+        notlar.append(f"Varyant {args.variant} (koset kaydirma + permutasyon)")
+
+    if HAS_SCIPY and not args.no_compare:
+        r = solve_by_blocks(enc, max_block_space=args.block_limit,
+                            time_limit=min(args.time_limit, 10.0),
+                            total_time_limit=args.compare_budget)
+        if r and len(r[0]) < len(cols):
+            notlar.append(
+                f"NOT: --mode auto {len(r[0])} kolona iniyor "
+                f"({len(cols) - len(r[0])} kolon daha ucuz), ama "
+                f"{len(merge_rows(r[0]))} satir olurdu.")
+        elif r:
+            notlar.append("Genel motor daha iyisini bulamadi -> bu mod optimal.")
+
+    yazdir_ve_kaydet(enc, cols, "Sabit 16 satir (Hamming(7,4) + ekstra tam sistem)",
+                     args.output, notlar, probs=args.parsed_probs,
+                     tam_liste=not args.kisa)
+
+
+def _mod_butce(enc: Encoder, args) -> None:
+    if args.budget is None:
+        raise ValueError("--mode butce icin --budget gerekir.")
+    print(f"BUTCE DANISMANI: en fazla {args.budget} kolon\n")
+
+    try:
+        mevcut, _ = solve_fix16(enc)
+        print(f"Mevcut kuponun bedeli: {len(mevcut)} kolon")
+        if len(mevcut) <= args.budget:
+            print("Butcen zaten yetiyor, kismaya gerek yok.\n")
+            _mod_fix16(enc, args)
+            return
+    except Fix16Hatasi:
+        print("Mevcut kupon sabit 16 satir modu icin uygun degil "
+              "(7 cifteden az).")
+
+    planlar = butce_danismani(enc, args.budget, args.parsed_probs, en_fazla=args.plan)
+    if not planlar:
+        print(f"\n{args.budget} kolonluk butceye sigan bir plan bulunamadi.")
+        print("Daha fazla maci bankoya cevirmen ya da butceyi artirman gerekiyor.")
+        return
+
+    print(f"\n{len(planlar)} plan bulundu (en az feda edenden siraliyla):\n")
+    for i, pl in enumerate(planlar, 1):
+        p = f"  kume-ici olasilik %{100 * pl.p_kume_ici:.2f}" if pl.p_kume_ici else ""
+        print(f"Plan {i}: {pl.bedel} kolon / {pl.satir} satir{p}")
+        for d in pl.degisiklikler:
+            print(f"   - {d}")
+        if not pl.degisiklikler:
+            print("   - (degisiklik yok)")
+        print()
+
+    secili = planlar[min(args.plan_uygula, len(planlar)) - 1]
+    print(INCE)
+    print(f"Plan {min(args.plan_uygula, len(planlar))} uygulaniyor "
+          f"(--plan-uygula ile degistirebilirsin).")
+    print(INCE)
+    yeni_enc = Encoder(secili.selections)
+    cols, aciklama = solve_fix16(yeni_enc, variant=args.variant)
+    yazdir_ve_kaydet(yeni_enc, cols,
+                     f"Butce plani ({secili.bedel} kolon) - {aciklama}",
+                     args.output,
+                     [f"Uygulanan degisiklikler: {'; '.join(secili.degisiklikler) or 'yok'}"],
+                     probs=args.parsed_probs, tam_liste=not args.kisa)
+
+
+def _mod_maxcov(enc: Encoder, args) -> None:
+    if args.budget is None:
+        raise ValueError("--mode maxcov icin --budget gerekir.")
+    print(f"MAKSIMUM KAPSAMA MODU: {args.budget} kolon\n")
+    tavan = min(enc.space_size(), args.budget * enc.ball_size())
+    if args.budget < enc.lower_bound():
+        print(f"   Teorik tavan: {args.budget} x {enc.ball_size()} = {tavan} nokta "
+              f"= %{100 * tavan / enc.space_size():.1f}")
+        print("   14-GARANTI IMKANSIZ (sayma argumani). Kapsama maksimize edilecek.\n")
+
+    cols, kapsanan, kanit = exact_max_coverage(
+        enc.alphabet_sizes, args.budget, args.time_limit)
+    if cols is None:
+        print("   Kesin cozucu kullanilamadi, acgozlu cozume dusuluyor.")
+        import random
+        g = greedy_full(list(enc.variable_space()), enc.alphabet_sizes,
+                        random.Random(args.seed))
+        cols = g[:args.budget]
+        kapsanan = len({q for c in cols for q in ball(c, enc.alphabet_sizes)})
+        kanit = False
+
+    notlar = [
+        f"Kapsanan nokta: {kapsanan}/{enc.space_size()} "
+        f"(%{100 * kapsanan / enc.space_size():.2f})",
+        f"Optimallik: {'KANITLANDI' if kanit else 'kanitlanmadi (zaman siniri)'}",
+        "DIKKAT: bu bir GARANTI DEGIL, olasiliktir.",
+    ]
+    yazdir_ve_kaydet(enc, cols, f"Maksimum kapsama - {args.budget} kolon",
+                     args.output, notlar, probs=args.parsed_probs,
+                     tam_liste=not args.kisa)
+
+
+def _mod_genel(enc: Encoder, args) -> None:
+    aday: List[tuple] = []
+
+    if args.mode in ("auto", "block"):
+        print("Blok motoru calisiyor...")
+        r = solve_by_blocks(enc, max_block_space=args.block_limit,
+                            time_limit=min(args.time_limit, 30.0))
+        if r:
+            _log(f"Blok: {r[1]} -> {len(r[0])} kolon")
+            aday.append((r[0], f"Blok ayristirma ({r[1]})", False))
+
+    if args.mode in ("auto", "exact"):
+        if enc.space_size() <= args.exact_limit or args.mode == "exact":
+            print(f"Kesin cozucu calisiyor (ILP, sinir {args.time_limit:.0f} sn)...")
+            cols, kanit = exact_cover(enc.alphabet_sizes, time_limit=args.time_limit)
+            if cols:
+                _log(f"ILP: {len(cols)} kolon "
+                     f"({'OPTIMALLIK KANITLANDI' if kanit else 'zaman siniri'})")
+                aday.append((cols, "Kesin cozucu (ILP)", kanit))
+        elif args.mode == "auto":
+            print(f"Kesin cozucu atlandi "
+                  f"(uzay {enc.space_size()} > {args.exact_limit}).")
+
+    if args.mode in ("auto", "heuristic"):
+        if args.mode == "heuristic" or not any(a[2] for a in aday):
+            print("Heuristik motor calisiyor...")
+            cols = solve_heuristic(enc, args.trials, args.ls_iters, args.seed,
+                                   log=_log)
+            aday.append((cols, "Heuristik (acgozlu + local search)", False))
+
+    if not aday:
+        raise RuntimeError(
+            "Hicbir motor sonuc uretemedi. scipy kurulu mu? (pip install scipy)")
+
+    # Once bedel, sonra kupon satiri. ILP keyfi bir optimal cozum dondurur
+    # ve yapisiz oldugu icin kotu sikisir; blok cozumu ayni bedelde ama
+    # cok daha az satirdir.
+    en_az = min(len(a[0]) for a in aday)
+    esitler = [a for a in aday if len(a[0]) == en_az]
+    kanit = any(a[2] for a in esitler)
+    cols, baslik, _ = min(esitler, key=lambda a: len(merge_rows(a[0])))
+
+    notlar: List[str] = []
+    if len(cols) == enc.lower_bound():
+        notlar.append("Alt sinira esit -> KANITLANMIS OPTIMAL")
+    elif kanit:
+        notlar.append("ILP optimalligi kanitladi -> KANITLANMIS OPTIMAL")
+    _, acik = dogrula_kaplama(cols, enc.alphabet_sizes)
+    if acik:
+        notlar.append(f"HATA: {acik} nokta acik kaldi!")
+    if len(aday) > 1:
+        notlar.append("Denenen motorlar: " +
+                      ", ".join(f"{a[1].split(' (')[0]}={len(a[0])}" for a in aday))
+
+    yazdir_ve_kaydet(enc, cols, baslik, args.output, notlar,
+                     probs=args.parsed_probs, tam_liste=not args.kisa)
+
+
+def build_parser() -> argparse.ArgumentParser:
+    p = argparse.ArgumentParser(
+        prog="spor-toto",
+        description="Spor Toto 14-garanti kaplama formulu ureticisi",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=f"""
+Ornekler:
+  spor-toto --picks "{ORNEK}"
+  spor-toto --picks "{ORNEK}" --variant 3
+  spor-toto --picks "{ORNEK}" --mode auto
+  spor-toto --picks "{ORNEK}" --mode butce --budget 32
+  spor-toto --picks "{ORNEK}" --mode maxcov --budget 16
+
+--picks bicimi: 15 mac virgulle ayrilir, her macin secenekleri bitisik
+yazilir. '1' banko ev sahibi, '10' cifte, '102' kapama (uclu).
+
+--probs bicimi: maclar ';' ile ayrilir, her mac '1:0.5,0:0.3,2:0.2'.
+""")
+    p.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
+    p.add_argument("--picks", type=str, default=ORNEK,
+                   help="Mac tercihleri (varsayilan: ornek kupon)")
+    p.add_argument("--probs", type=str, default=None,
+                   help="Mac basina olasilik tahminleri (istege bagli)")
+    p.add_argument("--mode",
+                   choices=["fix16", "auto", "exact", "block", "heuristic",
+                            "butce", "maxcov"],
+                   default="fix16",
+                   help="fix16 (varsayilan): her zaman 16 satir, en az 7 cifte "
+                        "zorunlu. auto: en ucuz cozum, satir sayisi degisken. "
+                        "butce: hangi maci kismalisin. maxcov: sabit butceyle "
+                        "maksimum kapsama (garanti yok).")
+    p.add_argument("--variant", type=int, default=0,
+                   help="Ayni garantiyi veren farkli bir 16 satir uretir")
+    p.add_argument("--budget", type=int, default=None,
+                   help="butce/maxcov modlari icin kolon butcesi")
+    p.add_argument("--plan", type=int, default=5,
+                   help="butce modunda gosterilecek plan sayisi")
+    p.add_argument("--plan-uygula", type=int, default=1,
+                   help="butce modunda hangi planin kuponu basilsin")
+    p.add_argument("--block-limit", type=int, default=256,
+                   help="Blok motorunda ILP ile cozulecek maksimum blok uzayi")
+    p.add_argument("--exact-limit", type=int, default=512,
+                   help="auto modda ILP denenecek maksimum uzay boyutu")
+    p.add_argument("--time-limit", type=float, default=60.0,
+                   help="ILP zaman siniri (saniye)")
+    p.add_argument("--trials", type=int, default=5)
+    p.add_argument("--ls-iters", type=int, default=30000)
+    p.add_argument("--seed", type=int, default=42)
+    p.add_argument("--kisa", action="store_true",
+                   help="Kolonlarin acik listesini basma")
+    p.add_argument("--compare-budget", type=float, default=10.0,
+                   help="fix16 modunda karsilastirmaya ayrilan saniye")
+    p.add_argument("--no-compare", action="store_true",
+                   help="fix16 modunda auto ile karsilastirma yapma")
+    p.add_argument("--kati", action="store_true",
+                   help="15 mac disindaki girdileri hata say")
+    p.add_argument("--output", type=str, default=None,
+                   help="Sonucun yazilacagi dosya (varsayilan: yazma)")
+    return p
+
+
+def main(argv: Optional[Sequence[str]] = None) -> int:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    t0 = time.time()
+
+    try:
+        selections = parse_picks(args.picks)
+        enc = Encoder(selections, kati=args.kati)
+        args.parsed_probs = parse_probs(args.probs, selections) if args.probs else None
+
+        print(CIZGI)
+        print(f"SPOR TOTO 14-GARANTI FORMUL URETICISI v{__version__}")
+        print(CIZGI)
+        for line in basliklar(enc):
+            print(line)
+        for u in enc.uyarilar:
+            print(f"UYARI          : {u}")
+        if not HAS_SCIPY:
+            print("UYARI          : scipy bulunamadi; kesin cozucu devre disi "
+                  "(pip install scipy)")
+        print(INCE)
+
+        if args.mode == "fix16":
+            _mod_fix16(enc, args)
+        elif args.mode == "butce":
+            _mod_butce(enc, args)
+        elif args.mode == "maxcov":
+            _mod_maxcov(enc, args)
+        else:
+            _mod_genel(enc, args)
+
+    except (ValueError, RuntimeError) as e:
+        print(f"\nHATA: {e}\n", file=sys.stderr)
+        return 1
+    except KeyboardInterrupt:  # pragma: no cover
+        print("\nIptal edildi.", file=sys.stderr)
+        return 130
+
+    print(f"\nSure: {time.time() - t0:.1f} sn")
+    return 0
+
+
+if __name__ == "__main__":  # pragma: no cover
+    sys.exit(main())
