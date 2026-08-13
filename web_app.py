@@ -11,9 +11,11 @@ from spor_toto.core import (
     Encoder, Fix16Hatasi, HAS_SCIPY, butce_danismani, dogrula_kaplama,
     exact_cover, exact_max_coverage, greedy_full, ball,
     merge_rows, parse_picks, parse_probs, row_cost, solve_fix16,
-    solve_by_blocks, solve_heuristic, distance_layers,
+    solve_by_blocks, solve_heuristic, distance_layers, olasilik_raporu,
+    SEMBOLLER,
 )
-from spor_toto.report import basliklar, dagilim_satirlari, olasilik_satirlari
+from spor_toto.report import basliklar
+from spor_toto.analysis import monte_carlo_report, match_error_frequency
 from spor_toto import __version__
 
 app = Flask(__name__)
@@ -33,7 +35,6 @@ DEFAULT_PICKS = "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"
 
 
 def _parse_form_picks(form) -> str:
-    """Convert form checkboxes into a picks string like '10,1,102,...'"""
     parts = []
     for i in range(1, MATCH_COUNT + 1):
         selected = form.getlist(f"match_{i}")
@@ -43,6 +44,40 @@ def _parse_form_picks(form) -> str:
         selected.sort(key=lambda s: order.get(s, 9))
         parts.append("".join(selected))
     return ",".join(parts)
+
+
+def _parse_form_probs(form, selections: List[List[str]]) -> Optional[List[Dict[str, float]]]:
+    """Read optional per-match probabilities from form fields prob_{i}_{sym}.
+    Returns None if user did not provide meaningful probs (all empty).
+    """
+    any_filled = False
+    raw: List[Dict[str, float]] = []
+    for i in range(1, MATCH_COUNT + 1):
+        p: Dict[str, float] = {s: 0.0 for s in SEMBOLLER}
+        for sym in SEMBOLLER:
+            val = form.get(f"prob_{i}_{sym}", "").strip()
+            if val != "":
+                any_filled = True
+                try:
+                    p[sym] = max(0.0, float(val.replace(",", ".")))
+                except ValueError:
+                    p[sym] = 0.0
+        raw.append(p)
+
+    if not any_filled:
+        return None
+
+    # Normalize each match; if all zero on a match, use uniform over selected symbols
+    out: List[Dict[str, float]] = []
+    for i, p in enumerate(raw):
+        total = sum(p.values())
+        if total <= 0:
+            sel = selections[i] if i < len(selections) else list(SEMBOLLER)
+            u = 1.0 / len(sel) if sel else 1.0 / 3
+            out.append({s: (u if s in sel else 0.0) for s in SEMBOLLER})
+        else:
+            out.append({s: v / total for s, v in p.items()})
+    return out
 
 
 def _run_fix16(enc: Encoder, variant: int = 0) -> Dict[str, Any]:
@@ -102,8 +137,13 @@ def _run_maxcov(enc: Encoder, budget: int) -> Dict[str, Any]:
     return {"cols": cols, "baslik": f"Maksimum kapsama – {budget} kolon", "notlar": notlar}
 
 
-def _build_result(enc: Encoder, cols, baslik: str, notlar: List[str]) -> Dict[str, Any]:
-    """Build the result dict for the template."""
+def _build_result(
+    enc: Encoder,
+    cols,
+    baslik: str,
+    notlar: List[str],
+    user_probs: Optional[List[Dict[str, float]]] = None,
+) -> Dict[str, Any]:
     rows = merge_rows(cols)
     total_cost = sum(row_cost(r) for r in rows)
     worst, acik = dogrula_kaplama(cols, enc.alphabet_sizes)
@@ -119,31 +159,45 @@ def _build_result(enc: Encoder, cols, baslik: str, notlar: List[str]) -> Dict[st
     dist_items = []
     for d in sorted(dist):
         dogru = 15 - d
-        label = f"{dogru} doğru"
         pct = 100 * dist[d] / total_space if total_space else 0
         dist_items.append({
-            "d": d,
-            "dogru": dogru,
-            "label": label,
-            "count": dist[d],
-            "pct": f"{pct:.2f}"
+            "d": d, "dogru": dogru, "label": f"{dogru} doğru",
+            "count": dist[d], "pct": f"{pct:.2f}"
         })
 
-    # Explicit 15 / 14 / 13 / 12 for easy display
     def _get(d):
         count = dist.get(d, 0)
         pct = 100 * count / total_space if total_space else 0
         return {"count": count, "pct": f"{pct:.2f}"}
 
-    probs = {
-        "15": _get(0),
-        "14": _get(1),
-        "13": _get(2),
-        "12": _get(3),
+    probs_uniform = {
+        "15": _get(0), "14": _get(1), "13": _get(2), "12": _get(3),
     }
 
+    # Advanced: exact + Monte Carlo when user probs provided
+    advanced = None
+    if user_probs is not None:
+        rap = olasilik_raporu(enc, cols, user_probs)
+        mc = monte_carlo_report(enc, cols, user_probs, n_samples=80_000, seed=42)
+        advanced = {
+            "exact": {
+                "p_kume_ici": round(100 * rap.p_kume_ici, 3),
+                "p_15": round(100 * rap.p_15, 3),
+                "p_14": round(100 * rap.p_14, 3),
+                "p_tek": round(100 * rap.p_tek_kolon_15, 3),
+            },
+            "monte_carlo": mc,
+        }
+
+    # Match-level error frequency (uniform geometry)
+    error_freq = None
+    try:
+        if enc.space_size() <= 20000:  # keep responsive
+            error_freq = match_error_frequency(enc, cols, max_d=2)
+    except Exception:
+        error_freq = None
+
     guaranteed = worst <= 1
-    stat_lines = basliklar(enc)
     return {
         "baslik": baslik,
         "notlar": notlar,
@@ -155,8 +209,10 @@ def _build_result(enc: Encoder, cols, baslik: str, notlar: List[str]) -> Dict[st
         "acik": acik,
         "rows": decoded_rows,
         "dist": dist_items,
-        "probs": probs,
-        "stat_lines": stat_lines,
+        "probs": probs_uniform,
+        "advanced": advanced,
+        "error_freq": error_freq,
+        "stat_lines": basliklar(enc),
         "match_count": enc.total_len,
         "total_space": total_space,
     }
@@ -171,7 +227,6 @@ def index():
             default_selections.append(s)
     except Exception:
         default_selections = [["1", "0", "2"]] * MATCH_COUNT
-
     while len(default_selections) < MATCH_COUNT:
         default_selections.append(["1", "0", "2"])
 
@@ -206,6 +261,7 @@ def solve():
     try:
         selections = parse_picks(picks_str)
         enc = Encoder(selections)
+        user_probs = _parse_form_probs(request.form, selections)
 
         variant = int(variant_raw) if variant_raw.isdigit() else 0
 
@@ -219,7 +275,7 @@ def solve():
             if not budget_raw or not budget_raw.isdigit():
                 raise ValueError("Bütçe modu için bir kolon bütçesi giriniz.")
             budget = int(budget_raw)
-            planlar = butce_danismani(enc, budget, None, en_fazla=5)
+            planlar = butce_danismani(enc, budget, user_probs, en_fazla=5)
             if not planlar:
                 raise ValueError(
                     f"{budget} kolonluk bütçeye sığan plan bulunamadı. "
@@ -231,9 +287,11 @@ def solve():
             cols2, aciklama2 = solve_fix16(yeni_enc, variant=0)
             notlar = [f"Uygulanan değişiklikler: {'; '.join(secili.degisiklikler) or 'yok'}",
                       f"Plan bedeli: {secili.bedel} kolon, {secili.satir} satır"]
-            result = _build_result(yeni_enc, cols2,
-                                   f"Bütçe planı ({secili.bedel} kolon) – {aciklama2}",
-                                   notlar)
+            result = _build_result(
+                yeni_enc, cols2,
+                f"Bütçe planı ({secili.bedel} kolon) – {aciklama2}",
+                notlar, user_probs=None,
+            )
         elif mode == "maxcov":
             if not budget_raw or not budget_raw.isdigit():
                 raise ValueError("Maksimum kapsama modu için bir kolon bütçesi giriniz.")
@@ -243,7 +301,7 @@ def solve():
             r = _run_fix16(enc)
 
         if mode != "butce":
-            result = _build_result(enc, r["cols"], r["baslik"], r["notlar"])
+            result = _build_result(enc, r["cols"], r["baslik"], r["notlar"], user_probs)
 
         if enc.uyarilar:
             result["uyarilar"] = enc.uyarilar
