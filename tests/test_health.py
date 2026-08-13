@@ -1,7 +1,5 @@
 """Sistem health — tek vücut entegrasyon doğrulaması."""
 
-import pytest
-
 from spor_toto.health import run_health, print_report
 
 
@@ -9,8 +7,9 @@ def test_run_health_all_pass():
     report = run_health()
     failed = [c for c in report.checks if not c.ok]
     assert report.ok, f"Health FAIL: {[(c.name, c.detail) for c in failed]}"
-    assert report.passed == report.total
-    assert report.total >= 10
+    passed = sum(1 for c in report.checks if c.ok)
+    assert passed == len(report.checks)
+    assert len(report.checks) >= 10
 
 
 def test_health_report_dict_shape():
