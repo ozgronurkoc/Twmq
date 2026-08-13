@@ -10,7 +10,7 @@ from flask import Flask, render_template, request
 from spor_toto.core import (
     Encoder, Fix16Hatasi, HAS_SCIPY, butce_danismani, dogrula_kaplama,
     exact_cover, exact_max_coverage, greedy_full, ball,
-    merge_rows, parse_picks, parse_probs, row_cost, solve_fix16,
+    merge_rows, parse_picks, row_cost, solve_fix16,
     solve_by_blocks, solve_heuristic, distance_layers, olasilik_raporu,
     SEMBOLLER,
 )
@@ -46,9 +46,21 @@ def _parse_form_picks(form) -> str:
     return ",".join(parts)
 
 
+def _parse_prob_value(raw: str) -> float:
+    """Parse a single probability; values > 1 treated as percentages."""
+    v = float(raw.replace(",", "."))
+    if v < 0:
+        return 0.0
+    if v > 1.0:
+        # 55 -> 0.55, 100 -> 1.0
+        v = v / 100.0
+    return min(v, 1.0)
+
+
 def _parse_form_probs(form, selections: List[List[str]]) -> Optional[List[Dict[str, float]]]:
     """Read optional per-match probabilities from form fields prob_{i}_{sym}.
     Returns None if user did not provide meaningful probs (all empty).
+    Accepts 0–1 or percentage (e.g. 55 for %55).
     """
     any_filled = False
     raw: List[Dict[str, float]] = []
@@ -59,7 +71,7 @@ def _parse_form_probs(form, selections: List[List[str]]) -> Optional[List[Dict[s
             if val != "":
                 any_filled = True
                 try:
-                    p[sym] = max(0.0, float(val.replace(",", ".")))
+                    p[sym] = _parse_prob_value(val)
                 except ValueError:
                     p[sym] = 0.0
         raw.append(p)
@@ -67,7 +79,6 @@ def _parse_form_probs(form, selections: List[List[str]]) -> Optional[List[Dict[s
     if not any_filled:
         return None
 
-    # Normalize each match; if all zero on a match, use uniform over selected symbols
     out: List[Dict[str, float]] = []
     for i, p in enumerate(raw):
         total = sum(p.values())
@@ -174,7 +185,6 @@ def _build_result(
         "15": _get(0), "14": _get(1), "13": _get(2), "12": _get(3),
     }
 
-    # Advanced: exact + Monte Carlo when user probs provided
     advanced = None
     if user_probs is not None:
         rap = olasilik_raporu(enc, cols, user_probs)
@@ -189,10 +199,9 @@ def _build_result(
             "monte_carlo": mc,
         }
 
-    # Match-level error frequency (uniform geometry)
     error_freq = None
     try:
-        if enc.space_size() <= 20000:  # keep responsive
+        if enc.space_size() <= 20000:
             error_freq = match_error_frequency(enc, cols, max_d=2)
     except Exception:
         error_freq = None
@@ -287,6 +296,8 @@ def solve():
             cols2, aciklama2 = solve_fix16(yeni_enc, variant=0)
             notlar = [f"Uygulanan değişiklikler: {'; '.join(secili.degisiklikler) or 'yok'}",
                       f"Plan bedeli: {secili.bedel} kolon, {secili.satir} satır"]
+            # Plan sonrası seçimler daralmış olabilir; advanced probs orijinal
+            # seçim kümesine göredir — güvenli tarafta uniform bırak.
             result = _build_result(
                 yeni_enc, cols2,
                 f"Bütçe planı ({secili.bedel} kolon) – {aciklama2}",
@@ -303,7 +314,7 @@ def solve():
         if mode != "butce":
             result = _build_result(enc, r["cols"], r["baslik"], r["notlar"], user_probs)
 
-        if enc.uyarilar:
+        if result is not None and enc.uyarilar:
             result["uyarilar"] = enc.uyarilar
 
     except (ValueError, RuntimeError, Fix16Hatasi) as e:
