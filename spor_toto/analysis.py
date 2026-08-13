@@ -1,0 +1,171 @@
+"""Monte Carlo olasılık simülasyonu ve maç bazlı hata frekansı."""
+
+from __future__ import annotations
+
+import math
+import random
+from collections import Counter
+from typing import Dict, List, Optional, Sequence, Tuple
+
+from .core import Encoder, Point, SEMBOLLER
+
+
+def monte_carlo_report(
+    enc: Encoder,
+    cols: Sequence[Point],
+    probs: Sequence[Dict[str, float]],
+    n_samples: int = 100_000,
+    seed: int = 42,
+) -> dict:
+    """
+    Kullanıcı olasılıkları altında Monte Carlo simülasyonu.
+
+    Dönen alanlar (her biri p, pct, se, ci95, count içerir):
+      kume_ici, p15, p14, p13, p12
+    """
+    if len(probs) != enc.total_len:
+        raise ValueError(
+            f"{len(probs)} maç için olasılık verildi, {enc.total_len} bekleniyordu."
+        )
+
+    rng = random.Random(seed)
+
+    # Her maç için kümülatif dağılım
+    cum: List[List[Tuple[float, str]]] = []
+    for i in range(enc.total_len):
+        p = probs[i]
+        running = 0.0
+        entries: List[Tuple[float, str]] = []
+        for sym in SEMBOLLER:
+            running += max(0.0, p.get(sym, 0.0))
+            entries.append((running, sym))
+        # Normalize edge case
+        if running <= 0:
+            entries = [(1.0 / 3, s) for s in SEMBOLLER]
+            s = 0.0
+            entries = []
+            for j, sym in enumerate(SEMBOLLER):
+                s += 1.0 / 3
+                entries.append((s, sym))
+        cum.append(entries)
+
+    sel_sets = [set(s) for s in enc.selections]
+
+    n_ici = n_15 = n_14 = n_13 = n_12 = 0
+
+    for _ in range(n_samples):
+        outcome: List[str] = []
+        for i in range(enc.total_len):
+            r = rng.random()
+            chosen = cum[i][-1][1]
+            for threshold, sym in cum[i]:
+                if r <= threshold:
+                    chosen = sym
+                    break
+            outcome.append(chosen)
+
+        if not all(outcome[i] in sel_sets[i] for i in range(enc.total_len)):
+            continue
+        n_ici += 1
+
+        # Değişken uzay noktası
+        try:
+            var = tuple(
+                enc.variable_syms[j].index(outcome[pos])
+                for j, pos in enumerate(enc.variable_pos)
+            )
+        except ValueError:
+            continue
+
+        if not cols:
+            d = 99
+        elif not enc.variable_pos:
+            d = 0
+        else:
+            d = min(sum(a != b for a, b in zip(var, c)) for c in cols)
+
+        dogru = 15 - d
+        if dogru >= 15:
+            n_15 += 1
+        elif dogru == 14:
+            n_14 += 1
+        elif dogru == 13:
+            n_13 += 1
+        elif dogru == 12:
+            n_12 += 1
+
+    def rate(k: int) -> dict:
+        p = k / n_samples if n_samples else 0.0
+        se = math.sqrt(p * (1.0 - p) / n_samples) if n_samples else 0.0
+        return {
+            "p": p,
+            "pct": round(100.0 * p, 3),
+            "se": se,
+            "ci95": round(1.96 * se * 100.0, 3),
+            "count": k,
+        }
+
+    return {
+        "n_samples": n_samples,
+        "kume_ici": rate(n_ici),
+        "p15": rate(n_15),
+        "p14": rate(n_14),
+        "p13": rate(n_13),
+        "p12": rate(n_12),
+    }
+
+
+def match_error_frequency(
+    enc: Encoder,
+    cols: Sequence[Point],
+    max_d: int = 2,
+) -> dict:
+    """
+    Uniform varsayım altında, d=1 ve d=2 katmanlarında
+    hangi maçların hata ürettiğini sayar.
+    """
+    if not cols or not enc.alphabet_sizes:
+        return {"d1": [], "d2": [], "n1": 0, "n2": 0}
+
+    err_d1: Counter = Counter()
+    err_d2: Counter = Counter()
+    n1 = n2 = 0
+
+    for pt in enc.variable_space():
+        best_d = 999
+        best_c: Optional[Point] = None
+        for c in cols:
+            d = sum(a != b for a, b in zip(pt, c))
+            if d < best_d:
+                best_d = d
+                best_c = c
+        if best_c is None:
+            continue
+        if best_d == 1:
+            n1 += 1
+            for i, (a, b) in enumerate(zip(pt, best_c)):
+                if a != b:
+                    err_d1[enc.variable_pos[i] + 1] += 1
+        elif best_d == 2:
+            n2 += 1
+            for i, (a, b) in enumerate(zip(pt, best_c)):
+                if a != b:
+                    err_d2[enc.variable_pos[i] + 1] += 1
+
+    def to_list(counter: Counter, total: int) -> List[dict]:
+        items = []
+        for mac in sorted(counter.keys()):
+            cnt = counter[mac]
+            items.append({
+                "mac": mac,
+                "count": cnt,
+                "pct": round(100.0 * cnt / total, 2) if total else 0.0,
+            })
+        return items
+
+    return {
+        "d1": to_list(err_d1, max(n1, 1)),
+        "d2": to_list(err_d2, max(n2, 1)),
+        "n1": n1,
+        "n2": n2,
+    }
