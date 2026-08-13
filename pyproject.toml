@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "spor-toto-kapsama"
+version = "4.0.0"
+description = "Spor Toto 14-garanti kaplama kodu (covering code) formul ureticisi"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = ["numpy>=1.24", "scipy>=1.11"]
+
+[project.optional-dependencies]
+test = ["pytest>=7"]
+
+[project.scripts]
+spor-toto = "spor_toto.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["spor_toto*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
+markers = ["slow: uzun suren ILP testleri"]
