@@ -57,7 +57,6 @@
     .btn-primary { background: var(--blue); color: #fff; flex: 1; }
     .btn-primary:hover:not(:disabled) { background: var(--blue-hover); }
     .btn-secondary { background: #fff; color: var(--text); border: 1px solid var(--border); }
-    .btn-secondary:hover { background: var(--bg); }
     .alert { padding: 12px 14px; border-radius: var(--radius-sm); font-size: 0.86rem; line-height: 1.45; }
     .alert-error { background: var(--error-bg); color: var(--coral); border: 1px solid #ffd0cd; }
     .alert-warn { background: var(--warn-bg); color: var(--warn-text); border: 1px solid #f5e6b3; }
@@ -118,6 +117,24 @@
     .saved-list { margin-top: 10px; font-size: 0.8rem; }
     .saved-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border-light); }
     .saved-item button { font-size: 0.72rem; padding: 3px 8px; border-radius: 6px; border: 1px solid var(--border); background: #fff; cursor: pointer; }
+    /* Advanced probs */
+    .adv-toggle { margin-top: 14px; font-size: 0.82rem; font-weight: 500; color: var(--blue); background: none; border: none; cursor: pointer; padding: 0; }
+    .adv-panel { display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-light); }
+    .adv-panel.open { display: block; }
+    .adv-hint { font-size: 0.75rem; color: var(--text-sec); margin-bottom: 10px; }
+    .adv-grid { display: flex; flex-direction: column; gap: 6px; max-height: 280px; overflow-y: auto; }
+    .adv-row { display: grid; grid-template-columns: 36px 1fr 1fr 1fr; gap: 6px; align-items: center; }
+    .adv-row span { font-size: 0.75rem; font-weight: 600; color: var(--text-sec); }
+    .adv-row input { height: 30px; font-size: 0.78rem; padding: 0 6px; text-align: center; }
+    .mc-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 10px; }
+    @media (min-width: 480px) { .mc-grid { grid-template-columns: repeat(5, 1fr); } }
+    .mc-box { background: var(--bg); border-radius: var(--radius-sm); padding: 10px 6px; text-align: center; border: 1px solid var(--border-light); }
+    .mc-box .mc-label { font-size: 0.68rem; font-weight: 600; color: var(--text-sec); }
+    .mc-box .mc-val { font-size: 1.05rem; font-weight: 600; margin-top: 2px; }
+    .mc-box .mc-ci { font-size: 0.68rem; color: var(--text-sec); margin-top: 2px; }
+    .err-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    .err-table th { text-align: left; font-size: 0.7rem; color: var(--text-sec); padding: 6px 8px; border-bottom: 1px solid var(--border-light); }
+    .err-table td { padding: 6px 8px; border-bottom: 1px solid var(--border-light); }
   </style>
 </head>
 <body>
@@ -166,6 +183,22 @@
           <div class="live-item"><div class="num" id="statSpace">—</div><div class="lbl">Uzay</div></div>
           <div class="live-item bedel"><div class="num" id="statBedel">—</div><div class="lbl">Tahmini Bedel</div></div>
         </div>
+
+        <button type="button" class="adv-toggle" onclick="toggleAdv()">Gelişmiş olasılık (isteğe bağlı) ▾</button>
+        <div class="adv-panel" id="advPanel">
+          <div class="adv-hint">Her maç için 1 / 0 / 2 olasılıklarını gir (0–1 veya yüzde). Boş bırakırsan uniform kullanılır. Toplam otomatik normalize edilir.</div>
+          <div class="adv-grid">
+            {% for i in range(1, match_count + 1) %}
+            <div class="adv-row">
+              <span>M{{ i }}</span>
+              <input type="text" name="prob_{{ i }}_1" placeholder="1" value="{{ form_data.get('prob_' ~ i ~ '_1', '') if form_data else '' }}">
+              <input type="text" name="prob_{{ i }}_0" placeholder="0" value="{{ form_data.get('prob_' ~ i ~ '_0', '') if form_data else '' }}">
+              <input type="text" name="prob_{{ i }}_2" placeholder="2" value="{{ form_data.get('prob_' ~ i ~ '_2', '') if form_data else '' }}">
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+
         <div class="options-row">
           <div class="opt-group">
             <label for="mode">Mod</label>
@@ -192,7 +225,6 @@
         </div>
       </form>
 
-      <!-- Kayıtlı Kuponlar -->
       <div class="saved-row">
         <input type="text" id="couponName" placeholder="Kupon adı...">
         <button type="button" class="btn btn-secondary" style="height:38px" onclick="saveCoupon()">Kaydet</button>
@@ -218,7 +250,7 @@
         </div>
         {% if result.probs %}
         <div class="prob-header">
-          <div class="card-title" style="margin:0">Olasılık Dağılımı</div>
+          <div class="card-title" style="margin:0">Uniform Dağılım</div>
           <div class="hata-secici">
             <button type="button" class="hata-btn active" data-hata="all" onclick="setHataSeviye('all')">Tümü</button>
             <button type="button" class="hata-btn" data-hata="0" onclick="setHataSeviye(0)">0 hata</button>
@@ -234,6 +266,25 @@
         </div>
         <div class="kumulatif" id="kumulatifText">Tüm dağılım gösteriliyor.</div>
         {% endif %}
+
+        {% if result.advanced %}
+        <div class="card-title" style="margin-top:8px">Gelişmiş Olasılık (Senin Tahminlerin)</div>
+        <div class="mc-grid">
+          <div class="mc-box"><div class="mc-label">Küme içi (exact)</div><div class="mc-val">%{{ result.advanced.exact.p_kume_ici }}</div></div>
+          <div class="mc-box"><div class="mc-label">P(15) exact</div><div class="mc-val">%{{ result.advanced.exact.p_15 }}</div></div>
+          <div class="mc-box"><div class="mc-label">P(14) exact</div><div class="mc-val">%{{ result.advanced.exact.p_14 }}</div></div>
+          <div class="mc-box"><div class="mc-label">Tek kolon 15</div><div class="mc-val">%{{ result.advanced.exact.p_tek }}</div></div>
+        </div>
+        <div class="card-title" style="margin-top:4px;font-size:0.85rem">Monte Carlo ({{ result.advanced.monte_carlo.n_samples }} deneme) ± %95 CI</div>
+        <div class="mc-grid">
+          <div class="mc-box"><div class="mc-label">Küme içi</div><div class="mc-val">%{{ result.advanced.monte_carlo.kume_ici.pct }}</div><div class="mc-ci">±{{ result.advanced.monte_carlo.kume_ici.ci95 }}</div></div>
+          <div class="mc-box"><div class="mc-label">P(15)</div><div class="mc-val">%{{ result.advanced.monte_carlo.p15.pct }}</div><div class="mc-ci">±{{ result.advanced.monte_carlo.p15.ci95 }}</div></div>
+          <div class="mc-box"><div class="mc-label">P(14)</div><div class="mc-val">%{{ result.advanced.monte_carlo.p14.pct }}</div><div class="mc-ci">±{{ result.advanced.monte_carlo.p14.ci95 }}</div></div>
+          <div class="mc-box"><div class="mc-label">P(13)</div><div class="mc-val">%{{ result.advanced.monte_carlo.p13.pct }}</div><div class="mc-ci">±{{ result.advanced.monte_carlo.p13.ci95 }}</div></div>
+          <div class="mc-box"><div class="mc-label">P(12)</div><div class="mc-val">%{{ result.advanced.monte_carlo.p12.pct }}</div><div class="mc-ci">±{{ result.advanced.monte_carlo.p12.ci95 }}</div></div>
+        </div>
+        {% endif %}
+
         {% if result.notlar %}<div class="notes">{% for n in result.notlar %}<div>{{ n }}</div>{% endfor %}</div>{% endif %}
         <div class="table-header">
           <h3>Kupona Yazılacak {{ result.satir_sayisi }} Satır</h3>
@@ -257,6 +308,36 @@
           </table>
         </div>
       </div>
+
+      {% if result.error_freq %}
+      <div class="card" style="margin-top:14px">
+        <div class="card-title">Maç Bazlı Hata Frekansı</div>
+        <div style="font-size:0.78rem;color:var(--text-sec);margin-bottom:10px">1 hata / 2 hata katmanında hangi maçlar daha sık hata üretiyor (uniform).</div>
+        {% if result.error_freq.d1 %}
+        <div style="font-weight:600;font-size:0.82rem;margin-bottom:6px">1 hata (n={{ result.error_freq.n1 }})</div>
+        <table class="err-table">
+          <thead><tr><th>Maç</th><th>Sayı</th><th>Pay</th></tr></thead>
+          <tbody>
+            {% for e in result.error_freq.d1 %}
+            <tr><td>M{{ e.mac }}</td><td>{{ e.count }}</td><td>%{{ e.pct }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% endif %}
+        {% if result.error_freq.d2 %}
+        <div style="font-weight:600;font-size:0.82rem;margin:12px 0 6px">2 hata (n={{ result.error_freq.n2 }})</div>
+        <table class="err-table">
+          <thead><tr><th>Maç</th><th>Sayı</th><th>Pay</th></tr></thead>
+          <tbody>
+            {% for e in result.error_freq.d2 %}
+            <tr><td>M{{ e.mac }}</td><td>{{ e.count }}</td><td>%{{ e.pct }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% endif %}
+      </div>
+      {% endif %}
+
       <div class="card" style="margin-top:14px">
         <div class="card-title">Kapsama Dağılımı (Detay)</div>
         <div class="stat-lines">{% for line in result.stat_lines %}<div>{{ line }}</div>{% endfor %}</div>
@@ -289,6 +370,10 @@
     2: { count: {{ result.probs['13'].count if result and result.probs else 0 }}, pct: {{ result.probs['13'].pct if result and result.probs else 0 }} },
     3: { count: {{ result.probs['12'].count if result and result.probs else 0 }}, pct: {{ result.probs['12'].pct if result and result.probs else 0 }} }
   };
+
+  function toggleAdv() {
+    document.getElementById('advPanel').classList.toggle('open');
+  }
 
   function setHataSeviye(seviye) {
     document.querySelectorAll('.hata-btn').forEach(b => b.classList.toggle('active', b.dataset.hata == seviye));
@@ -383,7 +468,6 @@
     });
   }
 
-  // ===== IMG İNDİRME =====
   function downloadImage() {
     const table = document.getElementById('resultTable');
     if (!table) return;
@@ -400,19 +484,11 @@
     ctx.font = 'bold 14px -apple-system, sans-serif';
     ctx.fillText('Spor Toto 14-Garanti Kupon', pad, pad + 12);
     ctx.font = '12px -apple-system, sans-serif';
-    // header
     const headers = [...table.querySelectorAll('thead th')].map(th => th.textContent.trim());
-    headers.forEach((h, i) => {
-      ctx.fillStyle = '#6e6e73';
-      ctx.fillText(h, pad + i * cellW + 4, pad + 40);
-    });
-    // rows
+    headers.forEach((h, i) => { ctx.fillStyle = '#6e6e73'; ctx.fillText(h, pad + i * cellW + 4, pad + 40); });
     rows.forEach((tr, ri) => {
       const cells = [...tr.querySelectorAll('td')].map(td => td.textContent.trim());
-      cells.forEach((c, ci) => {
-        ctx.fillStyle = '#1d1d1f';
-        ctx.fillText(c, pad + ci * cellW + 4, pad + 40 + (ri + 1) * cellH);
-      });
+      cells.forEach((c, ci) => { ctx.fillStyle = '#1d1d1f'; ctx.fillText(c, pad + ci * cellW + 4, pad + 40 + (ri + 1) * cellH); });
     });
     const link = document.createElement('a');
     link.download = 'spor-toto-kupon.png';
@@ -423,14 +499,8 @@
     setTimeout(() => { btn.textContent = 'Görsel İndir'; btn.classList.remove('done'); }, 1800);
   }
 
-  // ===== KAYITLI KUPONLAR (localStorage) =====
   const STORAGE_KEY = 'spor_toto_saved_coupons';
-
-  function getSaved() {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
-    catch { return {}; }
-  }
-
+  function getSaved() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch { return {}; } }
   function saveCoupon() {
     const name = document.getElementById('couponName').value.trim();
     if (!name) { alert('Kupon adı giriniz.'); return; }
@@ -445,44 +515,25 @@
     document.getElementById('couponName').value = '';
     renderSavedList();
   }
-
   function loadCoupon(name) {
-    const data = getSaved();
-    const c = data[name];
-    if (!c) return;
+    const c = getSaved()[name]; if (!c) return;
     c.selections.forEach((syms, idx) => {
-      document.querySelectorAll(`input[name="match_${idx+1}"]`).forEach(cb => {
-        cb.checked = syms.includes(cb.value);
-      });
+      document.querySelectorAll(`input[name="match_${idx+1}"]`).forEach(cb => { cb.checked = syms.includes(cb.value); });
     });
-    if (c.mode) {
-      document.getElementById('mode').value = c.mode;
-      toggleBudget(c.mode);
-    }
+    if (c.mode) { document.getElementById('mode').value = c.mode; toggleBudget(c.mode); }
     updateLiveStats();
   }
-
   function deleteCoupon(name) {
-    const data = getSaved();
-    delete data[name];
+    const data = getSaved(); delete data[name];
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     renderSavedList();
   }
-
   function renderSavedList() {
     const data = getSaved();
     const el = document.getElementById('savedList');
     const names = Object.keys(data);
     if (!names.length) { el.innerHTML = '<div style="color:#6e6e73;font-size:0.78rem">Kayıtlı kupon yok.</div>'; return; }
-    el.innerHTML = names.map(n => `
-      <div class="saved-item">
-        <span>${n}</span>
-        <span>
-          <button type="button" onclick="loadCoupon('${n}')">Yükle</button>
-          <button type="button" onclick="deleteCoupon('${n}')">Sil</button>
-        </span>
-      </div>
-    `).join('');
+    el.innerHTML = names.map(n => `<div class="saved-item"><span>${n}</span><span><button type="button" onclick="loadCoupon('${n}')">Yükle</button> <button type="button" onclick="deleteCoupon('${n}')">Sil</button></span></div>`).join('');
   }
 
   updateLiveStats();
