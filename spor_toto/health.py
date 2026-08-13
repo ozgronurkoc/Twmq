@@ -36,6 +36,7 @@ from .analysis import match_error_frequency, monte_carlo_report
 from .report import basliklar
 
 ORNEK = "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"
+SEMBOLLER = ("1", "0", "2")
 
 
 @dataclass
@@ -88,6 +89,18 @@ def _run(name: str, fn: Callable[[], str]) -> CheckResult:
 
 def _approx(a: float, b: float, rel: float = 1e-9) -> bool:
     return abs(a - b) <= rel * max(1.0, abs(b))
+
+
+def _probs_on_selections(enc: Encoder) -> List[Dict[str, float]]:
+    """Olasılık kütlesini yalnızca seçilen sembollere koy (küme-içi ~1)."""
+    out: List[Dict[str, float]] = []
+    for sel in enc.selections:
+        p = {s: 0.0 for s in SEMBOLLER}
+        u = 1.0 / len(sel) if sel else 1.0 / 3
+        for s in sel:
+            p[s] = u
+        out.append(p)
+    return out
 
 
 def _check_encoder() -> str:
@@ -154,25 +167,27 @@ def _check_heuristic() -> str:
 def _check_olasilik_exact() -> str:
     enc = Encoder(parse_picks(ORNEK))
     cols, _ = solve_fix16(enc)
-    probs = [{s: 1.0 / 3 for s in ("1", "0", "2")} for _ in range(15)]
+    probs = _probs_on_selections(enc)
     rap = olasilik_raporu(enc, cols, probs)
     assert 0 <= rap.p_15 <= 1
     assert 0 <= rap.p_kume_ici <= 1
     assert _approx(rap.p_15 + rap.p_14, rap.p_kume_ici)
+    # seçim kümesi üzerinde uniform → küme içi ~1
+    assert rap.p_kume_ici > 0.99
     return f"p_ici={rap.p_kume_ici:.4f} p15={rap.p_15:.4f} p14={rap.p_14:.4f}"
 
 
 def _check_monte_carlo() -> str:
     enc = Encoder(parse_picks(ORNEK))
     cols, _ = solve_fix16(enc)
-    probs = [{s: 1.0 / 3 for s in ("1", "0", "2")} for _ in range(15)]
+    probs = _probs_on_selections(enc)
     mc = monte_carlo_report(enc, cols, probs, n_samples=5_000, seed=42)
     assert mc["n_samples"] == 5_000
     for key in ("kume_ici", "p15", "p14", "p13", "p12"):
         assert 0.0 <= mc[key]["p"] <= 1.0
         assert mc[key]["ci95"] >= 0.0
-    assert mc["kume_ici"]["p"] > 0.01
-    # exact ile kabaca uyum (5000 sample toleransı)
+    # seçim destekli probs → küme içi yüksek olmalı
+    assert mc["kume_ici"]["p"] > 0.9
     rap = olasilik_raporu(enc, cols, probs)
     assert abs(mc["kume_ici"]["p"] - rap.p_kume_ici) < 0.05
     return (
@@ -188,20 +203,18 @@ def _check_error_freq() -> str:
     assert ef["n1"] >= 0 and ef["n2"] >= 0
     worst, acik = dogrula_kaplama(cols, enc.alphabet_sizes)
     assert acik == 0 and worst <= 1
-    # geçerli kaplamada d>=2 nokta olmamalı → n2 genelde 0
     assert ef["n2"] == 0
     return f"n1={ef['n1']} n2={ef['n2']} d1_macs={len(ef['d1'])}"
 
 
 def _check_pipeline_result_shape() -> str:
-    """web _build_result ile aynı veri sözleşmesi (import web_app yok)."""
     enc = Encoder(parse_picks(ORNEK))
     cols, baslik = solve_fix16(enc)
     rows = merge_rows(cols)
     total_cost = sum(row_cost(r) for r in rows)
     worst, acik = dogrula_kaplama(cols, enc.alphabet_sizes)
     dist = distance_layers(cols, enc.alphabet_sizes)
-    probs = [{s: 1.0 / 3 for s in ("1", "0", "2")} for _ in range(15)]
+    probs = _probs_on_selections(enc)
     rap = olasilik_raporu(enc, cols, probs)
     mc = monte_carlo_report(enc, cols, probs, n_samples=3_000, seed=1)
     ef = match_error_frequency(enc, cols)
@@ -226,6 +239,7 @@ def _check_pipeline_result_shape() -> str:
     assert result["advanced"]["monte_carlo"]["n_samples"] == 3_000
     assert result["error_freq"]["n2"] == 0
     assert len(result["stat_lines"]) >= 4
+    assert rap.p_kume_ici > 0.99
     return f"satir=16 bedel={total_cost} p_ici={rap.p_kume_ici:.4f}"
 
 
