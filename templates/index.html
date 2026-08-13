@@ -326,6 +326,37 @@
     .stat-box.guarantee-ok .val { color: var(--success); }
     .stat-box.guarantee-no .val { color: var(--coral); }
 
+    /* Probability summary */
+    .prob-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .prob-box {
+      background: var(--bg);
+      border-radius: var(--radius-sm);
+      padding: 12px 8px;
+      text-align: center;
+      border: 1px solid var(--border-light);
+    }
+    .prob-box .prob-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-sec);
+      margin-bottom: 4px;
+    }
+    .prob-box .prob-count {
+      font-size: 1.15rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+    .prob-box .prob-pct {
+      font-size: 0.78rem;
+      color: var(--blue);
+      margin-top: 2px;
+    }
+
     .table-header {
       display: flex;
       align-items: center;
@@ -658,6 +689,33 @@
           </div>
         </div>
 
+        <!-- 15 / 14 / 13 / 12 Olasılık Özeti -->
+        {% if result.probs %}
+        <div class="card-title" style="margin-top:4px; margin-bottom:10px;">Olasılık Dağılımı (Uniform)</div>
+        <div class="prob-grid">
+          <div class="prob-box">
+            <div class="prob-label">15 Doğru</div>
+            <div class="prob-count">{{ result.probs['15'].count }}</div>
+            <div class="prob-pct">%{{ result.probs['15'].pct }}</div>
+          </div>
+          <div class="prob-box">
+            <div class="prob-label">14 Doğru</div>
+            <div class="prob-count">{{ result.probs['14'].count }}</div>
+            <div class="prob-pct">%{{ result.probs['14'].pct }}</div>
+          </div>
+          <div class="prob-box">
+            <div class="prob-label">13 Doğru</div>
+            <div class="prob-count">{{ result.probs['13'].count }}</div>
+            <div class="prob-pct">%{{ result.probs['13'].pct }}</div>
+          </div>
+          <div class="prob-box">
+            <div class="prob-label">12 Doğru</div>
+            <div class="prob-count">{{ result.probs['12'].count }}</div>
+            <div class="prob-pct">%{{ result.probs['12'].pct }}</div>
+          </div>
+        </div>
+        {% endif %}
+
         {% if result.notlar %}
         <div class="notes">
           {% for n in result.notlar %}<div>{{ n }}</div>{% endfor %}
@@ -694,7 +752,7 @@
       </div>
 
       <div class="card" style="margin-top:14px">
-        <div class="card-title">Kapsama Dağılımı</div>
+        <div class="card-title">Kapsama Dağılımı (Detay)</div>
 
         <div class="stat-lines">
           {% for line in result.stat_lines %}<div>{{ line }}</div>{% endfor %}
@@ -747,7 +805,6 @@
       const checked = document.querySelectorAll(`input[name="match_${i}"]:checked`);
       const n = checked.length;
       if (n === 0) {
-        // Hiç seçilmemişse üçlü kabul ediyoruz (backend de öyle davranıyor)
         uclu++;
         space *= 3;
       } else if (n === 1) {
