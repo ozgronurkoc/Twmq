@@ -17,6 +17,7 @@ from spor_toto.core import (
 )
 from spor_toto.report import basliklar
 from spor_toto.analysis import monte_carlo_report, match_error_frequency
+from spor_toto.bayes import bayes_summary, bayes_update_matches, posteriors_only
 from spor_toto.health import run_health
 from spor_toto import __version__
 
@@ -152,6 +153,9 @@ def _build_result(
     baslik: str,
     notlar: List[str],
     user_probs: Optional[List[Dict[str, float]]] = None,
+    use_bayes: bool = False,
+    prior_strength: float = 1.0,
+    evidence_strength: float = 10.0,
 ) -> Dict[str, Any]:
     rows = merge_rows(cols)
     total_cost = sum(row_cost(r) for r in rows)
@@ -184,9 +188,35 @@ def _build_result(
     }
 
     advanced = None
+    bayes_block = None
     if user_probs is not None:
-        rap = olasilik_raporu(enc, cols, user_probs)
-        mc = monte_carlo_report(enc, cols, user_probs, n_samples=80_000, seed=42)
+        work_probs = user_probs
+        if use_bayes:
+            updates = bayes_update_matches(
+                enc.selections, user_probs,
+                prior_strength=prior_strength,
+                evidence_strength=evidence_strength,
+            )
+            work_probs = [u["posterior"] for u in updates]  # type: ignore[misc]
+            bayes_block = {
+                "enabled": True,
+                "prior_strength": prior_strength,
+                "evidence_strength": evidence_strength,
+                "summary": bayes_summary(updates),
+                "matches": [
+                    {
+                        "mac": i + 1,
+                        "prior": {s: round(float(u["prior"][s]), 4) for s in SEMBOLLER},  # type: ignore[index]
+                        "evidence": {s: round(float(u["evidence"][s]), 4) for s in SEMBOLLER},  # type: ignore[index]
+                        "posterior": {s: round(float(u["posterior"][s]), 4) for s in SEMBOLLER},  # type: ignore[index]
+                        "kl": float(u["kl_prior_post"]),  # type: ignore[arg-type]
+                    }
+                    for i, u in enumerate(updates)
+                ],
+            }
+
+        rap = olasilik_raporu(enc, cols, work_probs)
+        mc = monte_carlo_report(enc, cols, work_probs, n_samples=80_000, seed=42)
         advanced = {
             "exact": {
                 "p_kume_ici": round(100 * rap.p_kume_ici, 3),
@@ -195,6 +225,7 @@ def _build_result(
                 "p_tek": round(100 * rap.p_tek_kolon_15, 3),
             },
             "monte_carlo": mc,
+            "source": "bayes_posterior" if use_bayes else "user_probs",
         }
 
     error_freq = None
@@ -222,6 +253,7 @@ def _build_result(
         "dist": dist_items,
         "probs": probs_uniform,
         "advanced": advanced,
+        "bayes": bayes_block,
         "error_freq": error_freq,
         "stat_lines": basliklar(enc),
         "match_count": enc.total_len,
@@ -271,6 +303,15 @@ def solve():
     mode = request.form.get("mode", "fix16")
     budget_raw = request.form.get("budget", "").strip()
     variant_raw = request.form.get("variant", "0").strip()
+    use_bayes = request.form.get("use_bayes") == "1"
+    try:
+        prior_strength = float(request.form.get("prior_strength", "1") or "1")
+    except ValueError:
+        prior_strength = 1.0
+    try:
+        evidence_strength = float(request.form.get("evidence_strength", "10") or "10")
+    except ValueError:
+        evidence_strength = 10.0
 
     form_selections = []
     for i in range(1, MATCH_COUNT + 1):
@@ -319,7 +360,12 @@ def solve():
             r = _run_fix16(enc)
 
         if mode != "butce":
-            result = _build_result(enc, r["cols"], r["baslik"], r["notlar"], user_probs)
+            result = _build_result(
+                enc, r["cols"], r["baslik"], r["notlar"], user_probs,
+                use_bayes=use_bayes and user_probs is not None,
+                prior_strength=prior_strength,
+                evidence_strength=evidence_strength,
+            )
 
         if result is not None and enc.uyarilar:
             result["uyarilar"] = enc.uyarilar
