@@ -26,12 +26,11 @@
     .quickfill { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
     .qbtn { font-size: 0.75rem; font-weight: 500; padding: 5px 11px; border-radius: 16px; border: 1px solid var(--border); background: #fff; color: var(--text); cursor: pointer; transition: all 0.15s ease; }
     .qbtn:hover { background: var(--bg); border-color: #b0b0b5; }
-    .qbtn:active { transform: scale(0.97); }
     .match-table-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid var(--border-light); }
     .match-table { width: 100%; border-collapse: collapse; font-size: 0.87rem; }
     .match-table thead th { font-size: 0.71rem; font-weight: 600; color: var(--text-sec); padding: 8px 6px; text-align: center; border-bottom: 1px solid var(--border-light); background: #f7f7f8; }
     .match-table thead th:first-child { text-align: left; padding-left: 12px; width: 48px; }
-    .match-table tbody tr { border-bottom: 1px solid var(--border-light); transition: background 0.12s; }
+    .match-table tbody tr { border-bottom: 1px solid var(--border-light); }
     .match-table tbody tr:last-child { border-bottom: none; }
     .match-table tbody tr:hover { background: #f9f9fa; }
     .match-table td { padding: 6px 5px; text-align: center; vertical-align: middle; }
@@ -40,27 +39,28 @@
     .cb-label input { display: none; }
     .cb-chip { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 30px; border-radius: 8px; font-size: 0.88rem; font-weight: 600; border: 1.5px solid var(--border); background: #fff; color: var(--text-sec); transition: all 0.15s ease; }
     .cb-label:hover .cb-chip { border-color: #b0b0b5; }
-    .sym-1 input:checked + .cb-chip { background: #007aff; border-color: #007aff; color: #fff; box-shadow: 0 2px 6px rgba(0,122,255,0.2); }
-    .sym-0 input:checked + .cb-chip { background: #f5a623; border-color: #f5a623; color: #fff; box-shadow: 0 2px 6px rgba(245,166,35,0.2); }
-    .sym-2 input:checked + .cb-chip { background: #ff3b30; border-color: #ff3b30; color: #fff; box-shadow: 0 2px 6px rgba(255,59,48,0.2); }
-    .live-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border-light); }
+    .sym-1 input:checked + .cb-chip { background: #007aff; border-color: #007aff; color: #fff; }
+    .sym-0 input:checked + .cb-chip { background: #f5a623; border-color: #f5a623; color: #fff; }
+    .sym-2 input:checked + .cb-chip { background: #ff3b30; border-color: #ff3b30; color: #fff; }
+
+    .live-stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border-light); }
     .live-item { text-align: center; }
-    .live-item .num { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.02em; }
-    .live-item .lbl { font-size: 0.68rem; color: var(--text-sec); margin-top: 2px; }
+    .live-item .num { font-size: 1.15rem; font-weight: 600; letter-spacing: -0.02em; }
+    .live-item .lbl { font-size: 0.65rem; color: var(--text-sec); margin-top: 2px; }
+    .live-item.bedel .num { color: var(--blue); }
+
     .options-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-top: 16px; }
     .opt-group { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 120px; }
     .opt-group label { font-size: 0.72rem; font-weight: 500; color: var(--text-sec); }
-    select, input[type=number] { height: 38px; border: 1.5px solid var(--border); border-radius: 10px; padding: 0 11px; font-size: 0.88rem; background: #fff; color: var(--text); outline: none; transition: border-color 0.15s, box-shadow 0.15s; font-family: inherit; }
+    select, input[type=number] { height: 38px; border: 1.5px solid var(--border); border-radius: 10px; padding: 0 11px; font-size: 0.88rem; background: #fff; color: var(--text); outline: none; font-family: inherit; }
     select:focus, input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(0,113,227,0.14); }
     select { min-width: 160px; }
     .btn-row { display: flex; gap: 10px; margin-top: 16px; }
-    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 42px; padding: 0 20px; border-radius: 11px; font-size: 0.93rem; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s ease; font-family: inherit; }
-    .btn:active { transform: scale(0.97); }
+    .btn { display: inline-flex; align-items: center; justify-content: center; height: 42px; padding: 0 20px; border-radius: 11px; font-size: 0.93rem; font-weight: 500; cursor: pointer; border: none; font-family: inherit; }
     .btn:disabled { opacity: 0.6; cursor: not-allowed; }
     .btn-primary { background: var(--blue); color: #fff; flex: 1; }
     .btn-primary:hover:not(:disabled) { background: var(--blue-hover); }
     .btn-secondary { background: #fff; color: var(--text); border: 1px solid var(--border); }
-    .btn-secondary:hover { background: var(--bg); }
     .alert { padding: 12px 14px; border-radius: var(--radius-sm); font-size: 0.86rem; line-height: 1.45; }
     .alert-error { background: var(--error-bg); color: var(--coral); border: 1px solid #ffd0cd; }
     .alert-warn { background: var(--warn-bg); color: var(--warn-text); border: 1px solid #f5e6b3; }
@@ -72,27 +72,25 @@
     .stat-box .lbl { font-size: 0.67rem; color: var(--text-sec); margin-top: 3px; }
     .stat-box.guarantee-ok .val { color: var(--success); }
     .stat-box.guarantee-no .val { color: var(--coral); }
+    .stat-box.fiyat .val { color: var(--blue); }
 
-    /* Probability + Hata seviyesi */
     .prob-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 4px; margin-bottom: 10px; flex-wrap: wrap; }
     .hata-secici { display: flex; gap: 6px; }
-    .hata-btn { font-size: 0.74rem; font-weight: 500; padding: 5px 12px; border-radius: 16px; border: 1px solid var(--border); background: #fff; color: var(--text); cursor: pointer; transition: all 0.15s; }
-    .hata-btn:hover { background: var(--bg); }
+    .hata-btn { font-size: 0.74rem; font-weight: 500; padding: 5px 12px; border-radius: 16px; border: 1px solid var(--border); background: #fff; color: var(--text); cursor: pointer; }
     .hata-btn.active { background: var(--blue); border-color: var(--blue); color: #fff; }
     .prob-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px; }
     .prob-box { background: var(--bg); border-radius: var(--radius-sm); padding: 12px 8px; text-align: center; border: 1px solid var(--border-light); transition: all 0.15s; }
     .prob-box.dim { opacity: 0.35; }
     .prob-box.highlight { border-color: var(--blue); background: #f0f7ff; }
     .prob-box .prob-label { font-size: 0.72rem; font-weight: 600; color: var(--text-sec); margin-bottom: 4px; }
-    .prob-box .prob-count { font-size: 1.15rem; font-weight: 600; letter-spacing: -0.02em; }
+    .prob-box .prob-count { font-size: 1.15rem; font-weight: 600; }
     .prob-box .prob-pct { font-size: 0.78rem; color: var(--blue); margin-top: 2px; }
     .kumulatif { font-size: 0.82rem; color: var(--text-sec); margin-bottom: 14px; padding: 10px 12px; background: var(--bg); border-radius: 8px; }
     .kumulatif strong { color: var(--text); }
 
     .table-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; gap: 10px; }
     .table-header h3 { font-size: 0.88rem; font-weight: 600; }
-    .copy-btn { font-size: 0.78rem; font-weight: 500; padding: 5px 12px; border-radius: 8px; border: 1px solid var(--border); background: #fff; color: var(--text); cursor: pointer; transition: all 0.15s; white-space: nowrap; }
-    .copy-btn:hover { background: var(--bg); }
+    .copy-btn { font-size: 0.78rem; font-weight: 500; padding: 5px 12px; border-radius: 8px; border: 1px solid var(--border); background: #fff; color: var(--text); cursor: pointer; }
     .copy-btn.copied { background: var(--success-bg); border-color: var(--success); color: #1a7a3a; }
     .table-wrap { overflow-x: auto; border-radius: var(--radius-sm); border: 1px solid var(--border-light); }
     .result-table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
@@ -101,7 +99,6 @@
     .result-table td { padding: 7px 6px; text-align: center; border-bottom: 1px solid var(--border-light); }
     .result-table td:first-child { text-align: left; padding-left: 12px; color: var(--text-sec); font-size: 0.75rem; }
     .result-table tr:last-child td { border-bottom: none; }
-    .result-table tr:hover td { background: #fafafa; }
     .cell-1 { color: #007aff; font-weight: 600; }
     .cell-0 { color: #d4890a; font-weight: 600; }
     .cell-2 { color: #ff3b30; font-weight: 600; }
@@ -109,17 +106,15 @@
     .dist-list { display: flex; flex-direction: column; gap: 7px; }
     .dist-row { display: grid; grid-template-columns: 60px 86px 1fr 48px; align-items: center; gap: 8px; font-size: 0.83rem; }
     .dist-bar-wrap { height: 7px; background: var(--border-light); border-radius: 4px; overflow: hidden; }
-    .dist-bar { height: 100%; border-radius: 4px; background: var(--blue); transition: width 0.35s ease; }
+    .dist-bar { height: 100%; border-radius: 4px; background: var(--blue); }
     .dist-pct { font-size: 0.76rem; color: var(--text-sec); text-align: right; }
     .stat-lines { font-size: 0.8rem; color: var(--text-sec); line-height: 1.6; margin-bottom: 12px; }
     .empty-state { text-align: center; padding: 48px 18px; color: var(--text-sec); }
     .empty-state .icon { font-size: 2.4rem; margin-bottom: 12px; opacity: 0.28; }
-    .empty-state p { font-size: 0.92rem; line-height: 1.5; }
-    .loading-overlay { display: none; position: fixed; inset: 0; background: rgba(250,250,250,0.78); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 200; align-items: center; justify-content: center; flex-direction: column; gap: 12px; }
+    .loading-overlay { display: none; position: fixed; inset: 0; background: rgba(250,250,250,0.78); backdrop-filter: blur(8px); z-index: 200; align-items: center; justify-content: center; flex-direction: column; gap: 12px; }
     .loading-overlay.active { display: flex; }
     .spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--blue); border-radius: 50%; animation: spin 0.7s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .loading-text { font-size: 0.9rem; font-weight: 500; color: var(--text); }
     .notes { font-size: 0.8rem; color: var(--text-sec); line-height: 1.5; margin-bottom: 14px; }
     .right-col { position: sticky; top: 68px; }
     .client-error { display: none; margin-top: 12px; }
@@ -128,10 +123,7 @@
 </head>
 <body>
 
-<div class="loading-overlay" id="loading">
-  <div class="spinner"></div>
-  <div class="loading-text">Hesaplanıyor…</div>
-</div>
+<div class="loading-overlay" id="loading"><div class="spinner"></div><div class="loading-text">Hesaplanıyor…</div></div>
 
 <header>
   <div>
@@ -174,16 +166,19 @@
             </tbody>
           </table>
         </div>
+
         <div class="live-stats" id="liveStats">
           <div class="live-item"><div class="num" id="statBanko">—</div><div class="lbl">Banko</div></div>
           <div class="live-item"><div class="num" id="statCifte">—</div><div class="lbl">Çifte</div></div>
           <div class="live-item"><div class="num" id="statUclu">—</div><div class="lbl">Üçlü</div></div>
           <div class="live-item"><div class="num" id="statSpace">—</div><div class="lbl">Uzay</div></div>
+          <div class="live-item bedel"><div class="num" id="statBedel">—</div><div class="lbl">Tahmini Bedel</div></div>
         </div>
+
         <div class="options-row">
           <div class="opt-group">
             <label for="mode">Mod</label>
-            <select name="mode" id="mode" onchange="toggleBudget(this.value)">
+            <select name="mode" id="mode" onchange="toggleBudget(this.value); updateLiveStats()">
               {% for val, lbl in modes %}
               <option value="{{ val }}" {% if form_data and form_data.get('mode') == val %}selected{% elif not form_data and val == 'fix16' %}selected{% endif %}>{{ lbl }}</option>
               {% endfor %}
@@ -198,8 +193,9 @@
             <input type="number" name="variant" id="variant" min="0" max="9999" value="{{ form_data.get('variant', 0) if form_data else 0 }}">
           </div>
         </div>
+
         {% if not has_scipy %}
-        <div class="alert alert-warn" style="margin-top:12px">scipy bulunamadı — kesin çözücü (ILP) devre dışı. Sezgisel motor kullanılacak.</div>
+        <div class="alert alert-warn" style="margin-top:12px">scipy bulunamadı — kesin çözücü (ILP) devre dışı.</div>
         {% endif %}
         <div class="alert alert-error client-error" id="clientError"></div>
         <div class="btn-row">
@@ -217,9 +213,7 @@
 
     {% if result %}
       {% if result.get('uyarilar') %}
-      {% for u in result.uyarilar %}
-      <div class="alert alert-warn" style="margin-bottom:10px">{{ u }}</div>
-      {% endfor %}
+      {% for u in result.uyarilar %}<div class="alert alert-warn" style="margin-bottom:10px">{{ u }}</div>{% endfor %}
       {% endif %}
 
       <div class="card">
@@ -227,7 +221,7 @@
 
         <div class="summary-grid">
           <div class="stat-box"><div class="val">{{ result.satir_sayisi }}</div><div class="lbl">Kupon Satırı</div></div>
-          <div class="stat-box"><div class="val">{{ result.kolon_bedeli }}</div><div class="lbl">Kolon Bedeli</div></div>
+          <div class="stat-box fiyat"><div class="val">{{ result.kolon_bedeli }}</div><div class="lbl">Toplam Fiyat (Kolon)</div></div>
           <div class="stat-box"><div class="val">{{ result.alt_sinir }}</div><div class="lbl">Alt Sınır</div></div>
           <div class="stat-box {{ 'guarantee-ok' if result.guaranteed else 'guarantee-no' }}">
             <div class="val" style="font-size:1.02rem">{{ '14-Garanti' if result.guaranteed else 'Garanti Yok' }}</div>
@@ -245,38 +239,16 @@
             <button type="button" class="hata-btn" data-hata="2" onclick="setHataSeviye(2)">2 hata</button>
           </div>
         </div>
-
-        <div class="prob-grid" id="probGrid">
-          <div class="prob-box" data-d="0">
-            <div class="prob-label">15 Doğru</div>
-            <div class="prob-count">{{ result.probs['15'].count }}</div>
-            <div class="prob-pct">%{{ result.probs['15'].pct }}</div>
-          </div>
-          <div class="prob-box" data-d="1">
-            <div class="prob-label">14 Doğru</div>
-            <div class="prob-count">{{ result.probs['14'].count }}</div>
-            <div class="prob-pct">%{{ result.probs['14'].pct }}</div>
-          </div>
-          <div class="prob-box" data-d="2">
-            <div class="prob-label">13 Doğru</div>
-            <div class="prob-count">{{ result.probs['13'].count }}</div>
-            <div class="prob-pct">%{{ result.probs['13'].pct }}</div>
-          </div>
-          <div class="prob-box" data-d="3">
-            <div class="prob-label">12 Doğru</div>
-            <div class="prob-count">{{ result.probs['12'].count }}</div>
-            <div class="prob-pct">%{{ result.probs['12'].pct }}</div>
-          </div>
+        <div class="prob-grid">
+          <div class="prob-box" data-d="0"><div class="prob-label">15 Doğru</div><div class="prob-count">{{ result.probs['15'].count }}</div><div class="prob-pct">%{{ result.probs['15'].pct }}</div></div>
+          <div class="prob-box" data-d="1"><div class="prob-label">14 Doğru</div><div class="prob-count">{{ result.probs['14'].count }}</div><div class="prob-pct">%{{ result.probs['14'].pct }}</div></div>
+          <div class="prob-box" data-d="2"><div class="prob-label">13 Doğru</div><div class="prob-count">{{ result.probs['13'].count }}</div><div class="prob-pct">%{{ result.probs['13'].pct }}</div></div>
+          <div class="prob-box" data-d="3"><div class="prob-label">12 Doğru</div><div class="prob-count">{{ result.probs['12'].count }}</div><div class="prob-pct">%{{ result.probs['12'].pct }}</div></div>
         </div>
-
-        <div class="kumulatif" id="kumulatifText">
-          Tüm dağılım gösteriliyor.
-        </div>
+        <div class="kumulatif" id="kumulatifText">Tüm dağılım gösteriliyor.</div>
         {% endif %}
 
-        {% if result.notlar %}
-        <div class="notes">{% for n in result.notlar %}<div>{{ n }}</div>{% endfor %}</div>
-        {% endif %}
+        {% if result.notlar %}<div class="notes">{% for n in result.notlar %}<div>{{ n }}</div>{% endfor %}</div>{% endif %}
 
         <div class="table-header">
           <h3>Kupona Yazılacak {{ result.satir_sayisi }} Satır</h3>
@@ -288,7 +260,7 @@
               <tr>
                 <th>#</th>
                 {% for i in range(1, result.match_count + 1) %}<th>M{{ i }}</th>{% endfor %}
-                <th>Kolon</th>
+                <th>Fiyat</th>
               </tr>
             </thead>
             <tbody>
@@ -296,7 +268,7 @@
               <tr>
                 <td>{{ loop.index }}</td>
                 {% for cell in row.cells %}<td class="cell-{{ cell }}">{{ cell }}</td>{% endfor %}
-                <td>{{ row.cost }}{% if row.cost > 1 %}<span class="cost-badge">×{{ row.cost }}</span>{% endif %}</td>
+                <td><strong>{{ row.cost }}</strong>{% if row.cost > 1 %}<span class="cost-badge">×{{ row.cost }}</span>{% endif %}</td>
               </tr>
               {% endfor %}
             </tbody>
@@ -320,25 +292,19 @@
         {% if result.guaranteed %}
         <div class="alert alert-ok" style="margin-top:12px">En kötü durum 1 hata — <strong>14-Garanti doğrulandı</strong></div>
         {% else %}
-        <div class="alert alert-warn" style="margin-top:12px">En kötü durum {{ result.worst }} hata — 14-garanti bu kupon için geçerli değil.</div>
+        <div class="alert alert-warn" style="margin-top:12px">En kötü durum {{ result.worst }} hata — 14-garanti geçerli değil.</div>
         {% endif %}
       </div>
 
     {% else %}
       {% if not error %}
-      <div class="card">
-        <div class="empty-state">
-          <div class="icon">◇</div>
-          <p>Maç seçimlerini yapın ve<br><strong>Formül Üret</strong> butonuna basın.</p>
-        </div>
-      </div>
+      <div class="card"><div class="empty-state"><div class="icon">◇</div><p>Maç seçimlerini yapın ve<br><strong>Formül Üret</strong> butonuna basın.</p></div></div>
       {% endif %}
     {% endif %}
   </div>
 </div>
 
 <script>
-  // Prob data from server for cumulative calc
   const PROB_DATA = {
     0: { count: {{ result.probs['15'].count if result and result.probs else 0 }}, pct: {{ result.probs['15'].pct if result and result.probs else 0 }} },
     1: { count: {{ result.probs['14'].count if result and result.probs else 0 }}, pct: {{ result.probs['14'].pct if result and result.probs else 0 }} },
@@ -348,44 +314,46 @@
 
   function setHataSeviye(seviye) {
     document.querySelectorAll('.hata-btn').forEach(b => b.classList.toggle('active', b.dataset.hata == seviye));
-    const boxes = document.querySelectorAll('.prob-box');
-    boxes.forEach(b => {
+    document.querySelectorAll('.prob-box').forEach(b => {
       b.classList.remove('dim', 'highlight');
-      const d = parseInt(b.dataset.d);
       if (seviye === 'all') return;
-      if (d === seviye) b.classList.add('highlight');
-      else b.classList.add('dim');
+      const d = parseInt(b.dataset.d);
+      if (d === seviye) b.classList.add('highlight'); else b.classList.add('dim');
     });
-
     const el = document.getElementById('kumulatifText');
     if (!el) return;
-    if (seviye === 'all') {
-      el.innerHTML = 'Tüm dağılım gösteriliyor.';
-      return;
-    }
+    if (seviye === 'all') { el.innerHTML = 'Tüm dağılım gösteriliyor.'; return; }
     let cumCount = 0, cumPct = 0;
-    for (let d = 0; d <= seviye; d++) {
-      cumCount += PROB_DATA[d]?.count || 0;
-      cumPct += parseFloat(PROB_DATA[d]?.pct || 0);
-    }
+    for (let d = 0; d <= seviye; d++) { cumCount += PROB_DATA[d]?.count || 0; cumPct += parseFloat(PROB_DATA[d]?.pct || 0); }
     const labels = {0: '0 hata (15 doğru)', 1: 'en fazla 1 hata (14+ doğru)', 2: 'en fazla 2 hata (13+ doğru)'};
-    el.innerHTML = `<strong>${labels[seviye]}</strong> → <strong>${cumCount}</strong> nokta (<strong>%${cumPct.toFixed(2)}</strong> kapsama)`;
+    el.innerHTML = `<strong>${labels[seviye]}</strong> → <strong>${cumCount}</strong> nokta (<strong>%${cumPct.toFixed(2)}</strong>)`;
   }
 
   function updateLiveStats() {
     let banko = 0, cifte = 0, uclu = 0, space = 1;
+    const sizes = [];
     for (let i = 1; i <= {{ match_count }}; i++) {
-      const checked = document.querySelectorAll(`input[name="match_${i}"]:checked`);
-      const n = checked.length;
-      if (n === 0) { uclu++; space *= 3; }
-      else if (n === 1) { banko++; space *= 1; }
-      else if (n === 2) { cifte++; space *= 2; }
-      else { uclu++; space *= 3; }
+      const n = document.querySelectorAll(`input[name="match_${i}"]:checked`).length || 3;
+      if (n === 1) banko++;
+      else if (n === 2) { cifte++; sizes.push(2); }
+      else { uclu++; sizes.push(3); }
+      space *= n;
     }
     document.getElementById('statBanko').textContent = banko;
     document.getElementById('statCifte').textContent = cifte;
     document.getElementById('statUclu').textContent = uclu;
-    document.getElementById('statSpace').textContent = space >= 1000 ? (space / 1000).toFixed(1) + 'k' : space;
+    document.getElementById('statSpace').textContent = space >= 1000 ? (space/1000).toFixed(1)+'k' : space;
+
+    // Tahmini bedel (Fix-16 mantığı)
+    let bedel = space;
+    const mode = document.getElementById('mode')?.value || 'fix16';
+    if (mode === 'fix16' && cifte >= 7) {
+      // 7 cifte Hamming ile 16 kolona iner, kalanlar çarpan olur
+      // space = prod(sizes), Hamming 7 cifteyi 128 yerine 16 yapar → bedel = space / 8
+      bedel = Math.round(space / 8);
+    }
+    const bedelEl = document.getElementById('statBedel');
+    if (bedelEl) bedelEl.textContent = bedel >= 1000 ? (bedel/1000).toFixed(1)+'k' : bedel;
   }
 
   function toggleBudget(mode) {
@@ -395,7 +363,7 @@
 
   function fillAll(syms) {
     for (let i = 1; i <= {{ match_count }}; i++) {
-      document.querySelectorAll(`input[name="match_${i}"]`).forEach(cb => { cb.checked = syms.includes(cb.value); });
+      document.querySelectorAll(`input[name="match_${i}"]`).forEach(cb => cb.checked = syms.includes(cb.value));
     }
     updateLiveStats(); hideClientError();
   }
@@ -403,7 +371,7 @@
   const EXAMPLE = [['1'],['1','0'],['1'],['1','2'],['0'],['1','0'],['2'],['1','0'],['1'],['1','2'],['0','2'],['1'],['1','0'],['2'],['1','0']];
   function loadExample() {
     EXAMPLE.forEach((syms, idx) => {
-      document.querySelectorAll(`input[name="match_${idx + 1}"]`).forEach(cb => { cb.checked = syms.includes(cb.value); });
+      document.querySelectorAll(`input[name="match_${idx+1}"]`).forEach(cb => cb.checked = syms.includes(cb.value));
     });
     updateLiveStats(); hideClientError();
   }
@@ -417,10 +385,7 @@
     hideClientError();
   }
 
-  function showClientError(msg) {
-    const el = document.getElementById('clientError');
-    el.textContent = msg; el.classList.add('show');
-  }
+  function showClientError(msg) { const el = document.getElementById('clientError'); el.textContent = msg; el.classList.add('show'); }
   function hideClientError() { document.getElementById('clientError').classList.remove('show'); }
 
   document.getElementById('mainForm').addEventListener('submit', function(e) {
@@ -440,13 +405,13 @@
     let text = '';
     table.querySelectorAll('tbody tr').forEach((tr, i) => {
       const cells = [...tr.querySelectorAll('td')].slice(1, -1).map(td => td.textContent.trim());
-      text += (i + 1) + ' | ' + cells.join(' ') + '\n';
+      text += (i+1) + ' | ' + cells.join(' ') + '\n';
     });
     navigator.clipboard.writeText(text.trim()).then(() => {
       const btn = document.getElementById('copyBtn');
       btn.textContent = 'Kopyalandı'; btn.classList.add('copied');
       setTimeout(() => { btn.textContent = 'Kopyala'; btn.classList.remove('copied'); }, 1800);
-    }).catch(() => alert('Kopyalama başarısız.'));
+    });
   }
 
   updateLiveStats();
