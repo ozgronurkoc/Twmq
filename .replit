@@ -1,3 +1,4 @@
+run = "python web_app.py"
 modules = ["python-3.10"]
 
 [nix]
@@ -53,3 +54,7 @@ externalPort = 80
 [postMerge]
 path = "scripts/post-merge.sh"
 timeoutMs = 60000
+
+[deployment]
+deploymentTarget = "autoscale"
+run = ["gunicorn", "--bind=0.0.0.0:5000", "--reuse-port", "web_app:app"]
