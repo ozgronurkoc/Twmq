@@ -38,9 +38,7 @@ def _parse_form_picks(form) -> str:
     for i in range(1, MATCH_COUNT + 1):
         selected = form.getlist(f"match_{i}")
         if not selected:
-            # Default to triple if nothing selected
             selected = ["1", "0", "2"]
-        # Sort in symbol order: 1, 0, 2
         order = {"1": 0, "0": 1, "2": 2}
         selected.sort(key=lambda s: order.get(s, 9))
         parts.append("".join(selected))
@@ -112,7 +110,6 @@ def _build_result(enc: Encoder, cols, baslik: str, notlar: List[str]) -> Dict[st
     dist = distance_layers(cols, enc.alphabet_sizes)
     total_space = enc.space_size()
 
-    # Decode rows for display
     decoded_rows = []
     for r in rows:
         cells = list(enc.decode_row(r))
@@ -121,9 +118,29 @@ def _build_result(enc: Encoder, cols, baslik: str, notlar: List[str]) -> Dict[st
 
     dist_items = []
     for d in sorted(dist):
-        label = f"{15 - d} doğru"
+        dogru = 15 - d
+        label = f"{dogru} doğru"
         pct = 100 * dist[d] / total_space if total_space else 0
-        dist_items.append({"d": d, "label": label, "count": dist[d], "pct": f"{pct:.2f}"})
+        dist_items.append({
+            "d": d,
+            "dogru": dogru,
+            "label": label,
+            "count": dist[d],
+            "pct": f"{pct:.2f}"
+        })
+
+    # Explicit 15 / 14 / 13 / 12 for easy display
+    def _get(d):
+        count = dist.get(d, 0)
+        pct = 100 * count / total_space if total_space else 0
+        return {"count": count, "pct": f"{pct:.2f}"}
+
+    probs = {
+        "15": _get(0),
+        "14": _get(1),
+        "13": _get(2),
+        "12": _get(3),
+    }
 
     guaranteed = worst <= 1
     stat_lines = basliklar(enc)
@@ -138,14 +155,15 @@ def _build_result(enc: Encoder, cols, baslik: str, notlar: List[str]) -> Dict[st
         "acik": acik,
         "rows": decoded_rows,
         "dist": dist_items,
+        "probs": probs,
         "stat_lines": stat_lines,
         "match_count": enc.total_len,
+        "total_space": total_space,
     }
 
 
 @app.route("/", methods=["GET"])
 def index():
-    # Parse default picks to pre-fill form
     default_selections = []
     try:
         sels = parse_picks(DEFAULT_PICKS)
@@ -181,7 +199,6 @@ def solve():
     budget_raw = request.form.get("budget", "").strip()
     variant_raw = request.form.get("variant", "0").strip()
 
-    # Re-parse form data for re-rendering
     form_selections = []
     for i in range(1, MATCH_COUNT + 1):
         form_selections.append(request.form.getlist(f"match_{i}"))
@@ -202,7 +219,6 @@ def solve():
             if not budget_raw or not budget_raw.isdigit():
                 raise ValueError("Bütçe modu için bir kolon bütçesi giriniz.")
             budget = int(budget_raw)
-            # Run budget advisor — pick cheapest plan
             planlar = butce_danismani(enc, budget, None, en_fazla=5)
             if not planlar:
                 raise ValueError(
