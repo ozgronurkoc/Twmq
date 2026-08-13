@@ -21,6 +21,13 @@ def _log(msg: str) -> None:
     print(f"   {msg}")
 
 
+def _mc_kwargs(args) -> dict:
+    return {
+        "mc_samples": getattr(args, "mc_samples", 0) or 0,
+        "mc_seed": getattr(args, "seed", 42),
+    }
+
+
 def _mod_fix16(enc: Encoder, args) -> None:
     cols, aciklama = solve_fix16(enc, variant=args.variant)
     _log(f"Sabit 16 satir: {aciklama} -> {len(cols)} kolon bedeli")
@@ -42,7 +49,7 @@ def _mod_fix16(enc: Encoder, args) -> None:
 
     yazdir_ve_kaydet(enc, cols, "Sabit 16 satir (Hamming(7,4) + ekstra tam sistem)",
                      args.output, notlar, probs=args.parsed_probs,
-                     tam_liste=not args.kisa)
+                     tam_liste=not args.kisa, **_mc_kwargs(args))
 
 
 def _mod_butce(enc: Encoder, args) -> None:
@@ -88,7 +95,8 @@ def _mod_butce(enc: Encoder, args) -> None:
                      f"Butce plani ({secili.bedel} kolon) - {aciklama}",
                      args.output,
                      [f"Uygulanan degisiklikler: {'; '.join(secili.degisiklikler) or 'yok'}"],
-                     probs=args.parsed_probs, tam_liste=not args.kisa)
+                     probs=args.parsed_probs, tam_liste=not args.kisa,
+                     **_mc_kwargs(args))
 
 
 def _mod_maxcov(enc: Encoder, args) -> None:
@@ -120,7 +128,7 @@ def _mod_maxcov(enc: Encoder, args) -> None:
     ]
     yazdir_ve_kaydet(enc, cols, f"Maksimum kapsama - {args.budget} kolon",
                      args.output, notlar, probs=args.parsed_probs,
-                     tam_liste=not args.kisa)
+                     tam_liste=not args.kisa, **_mc_kwargs(args))
 
 
 def _mod_genel(enc: Encoder, args) -> None:
@@ -157,9 +165,6 @@ def _mod_genel(enc: Encoder, args) -> None:
         raise RuntimeError(
             "Hicbir motor sonuc uretemedi. scipy kurulu mu? (pip install scipy)")
 
-    # Once bedel, sonra kupon satiri. ILP keyfi bir optimal cozum dondurur
-    # ve yapisiz oldugu icin kotu sikisir; blok cozumu ayni bedelde ama
-    # cok daha az satirdir.
     en_az = min(len(a[0]) for a in aday)
     esitler = [a for a in aday if len(a[0]) == en_az]
     kanit = any(a[2] for a in esitler)
@@ -178,7 +183,8 @@ def _mod_genel(enc: Encoder, args) -> None:
                       ", ".join(f"{a[1].split(' (')[0]}={len(a[0])}" for a in aday))
 
     yazdir_ve_kaydet(enc, cols, baslik, args.output, notlar,
-                     probs=args.parsed_probs, tam_liste=not args.kisa)
+                     probs=args.parsed_probs, tam_liste=not args.kisa,
+                     **_mc_kwargs(args))
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -193,6 +199,7 @@ Ornekler:
   spor-toto --picks "{ORNEK}" --mode auto
   spor-toto --picks "{ORNEK}" --mode butce --budget 32
   spor-toto --picks "{ORNEK}" --mode maxcov --budget 16
+  spor-toto --picks "{ORNEK}" --probs "1:1,0:1,2:1;..." --mc-samples 20000
 
 --picks bicimi: 15 mac virgulle ayrilir, her macin secenekleri bitisik
 yazilir. '1' banko ev sahibi, '10' cifte, '102' kapama (uclu).
@@ -204,6 +211,8 @@ yazilir. '1' banko ev sahibi, '10' cifte, '102' kapama (uclu).
                    help="Mac tercihleri (varsayilan: ornek kupon)")
     p.add_argument("--probs", type=str, default=None,
                    help="Mac basina olasilik tahminleri (istege bagli)")
+    p.add_argument("--mc-samples", type=int, default=0,
+                   help="--probs ile Monte Carlo deneme sayisi (0=kapali)")
     p.add_argument("--mode",
                    choices=["fix16", "auto", "exact", "block", "heuristic",
                             "butce", "maxcov"],
