@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 from typing import Any, Dict, List, Optional
 
@@ -18,6 +19,8 @@ from spor_toto.report import basliklar
 from spor_toto.analysis import monte_carlo_report, match_error_frequency
 from spor_toto.health import run_health
 from spor_toto import __version__
+
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "spor-toto-web-default")
@@ -199,6 +202,10 @@ def _build_result(
         if enc.space_size() <= 20000:
             error_freq = match_error_frequency(enc, cols, max_d=2)
     except Exception:
+        logger.exception(
+            "match_error_frequency failed (space=%s, cols=%s)",
+            enc.space_size(), len(cols) if cols is not None else 0,
+        )
         error_freq = None
 
     guaranteed = worst <= 1
@@ -224,7 +231,6 @@ def _build_result(
 
 @app.route("/health", methods=["GET"])
 def health():
-    """Sistem sağlık JSON — core + analysis + pipeline tek vücut."""
     report = run_health()
     code = 200 if report.ok else 503
     return jsonify(report.to_dict()), code
