@@ -8,11 +8,13 @@ Bu araç maç sonucu tahmin etmez. Tahminin doğruysa onu kaçırmamanı, hem de
 
 ```bash
 pip install -e .
+# veya
+uv sync --extra test
 ```
 
-Bağımlılıklar: `numpy`, `scipy` (kesin ILP çözücü için). scipy yoksa araç çalışır ama kesin çözücü devre dışı kalır.
+Bağımlılıklar: `numpy`, `scipy` (kesin ILP çözücü için), `flask` (web). scipy yoksa araç çalışır ama kesin çözücü devre dışı kalır.
 
-## Kullanım
+## CLI kullanım
 
 ```bash
 spor-toto --picks "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"
@@ -34,43 +36,67 @@ spor-toto --picks "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"
 | `maxcov` | Sabit bütçeyle maksimum kapsama. **Garanti vermez.** |
 
 ```bash
-spor-toto --picks "..." --variant 3                  # aynı garanti, farklı 16 satır
-spor-toto --picks "..." --mode butce --budget 32     # bütçe danışmanı
-spor-toto --picks "..." --mode maxcov --budget 16    # garanti yok, olasılık
-spor-toto --picks "..." --probs "1:0.5,0:0.3,2:0.2;..."   # olasılık raporu
+spor-toto --picks "..." --variant 3
+spor-toto --picks "..." --mode butce --budget 32
+spor-toto --picks "..." --mode maxcov --budget 16
+spor-toto --picks "..." --probs "1:0.5,0:0.3,2:0.2;..."
+spor-toto --picks "..." --probs "..." --mc-samples 20000   # Monte Carlo
+```
+
+## Web arayüzü
+
+```bash
+python web_app.py
+# http://localhost:5000
+```
+
+Özellikler:
+
+- Maç seçimi tablosu, canlı bedel, Fix-16 / auto / bütçe / maxcov / heuristic
+- Gelişmiş olasılık girişi (maç bazlı 1/0/2)
+- Uniform dağılım + hata seviyesi seçici (0/1/2)
+- Exact olasılık + **Monte Carlo** (%95 CI)
+- Maç bazlı hata frekansı
+- Kopyala / görsel indir / localStorage kupon kaydı
+- **Sistem Health** paneli (UI’den test çalıştırma)
+
+### Health
+
+```bash
+python -m spor_toto.health              # bir kez
+python -m spor_toto.health --interval 60
+curl http://localhost:5000/health       # JSON (200 / 503)
 ```
 
 ## Satır ≠ kolon
 
 Bir maça çifte işaretlersen o satır **2 kolon** üretir ve 2 kolon bedeli ödersin.
-16 satır + 1 çifte = **32 kolon bedeli**.
-
-Çoklu işaret hiçbir zaman bedeli düşürmez. Maçlara `a_i` işaret konursa maliyet `∏a_i`, kapsanan nokta `∏a_i · (1 + Σ(k_i−a_i)/a_i)`. Birim bedel başına verim `1 + Σ(k_i−a_i)/a_i ≤ 1 + Σ(k_i−1)` olup eşitlik ancak tüm `a_i = 1` iken sağlanır.
+16 satır + 1 ekstra çifte faktörü = daha yüksek bedel.
 
 ## Bilinen sınırlar
 
-Küre-kaplama sınırı: `kolon ≥ |uzay| / top_boyutu`. Kesin çözücü literatürdeki değerleri yeniden üretir:
+Küre-kaplama sınırı: `kolon ≥ |uzay| / top_boyutu`.
 
 | Durum | Optimal kolon |
 |---|---|
 | 5 çifte | 7 |
 | 6 çifte | 12 |
-| 7 çifte | **16** (Hamming(7,4), mükemmel kod) |
+| 7 çifte | **16** (Hamming(7,4)) |
 | 8 çifte | **32** |
-| 3 üçlü | 5 |
-| 4 üçlü | **9** (üçlü Hamming, mükemmel kod) |
+| 4 üçlü | **9** |
 
-**8 çifteyi 16 kolona sığdırmak imkânsızdır.** 16 × 9 = 144 < 256. `maxcov` modu 16 kolonla en fazla %56.2 kapsama verir — bu bir garanti değil, olasılıktır.
+**8 çifteyi 16 kolona sığdırmak imkânsızdır.** `maxcov` 16 kolonla en fazla ~%56 kapsama verir — garanti değil.
 
 ## Testler
 
 ```bash
-pytest              # tümü (~70 sn)
+pytest
 pytest -m "not slow"
+pytest tests/test_analysis.py tests/test_health.py -v
 ```
 
-434 test: girdi doğrulama, geometri değişmezleri, bilinen optimal değerler, sıkıştırmanın kayıpsızlığı, rastgele kuponlar üzerinde fuzz testleri, CLI çıkış kodları.
+Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant’lar, CLI, analysis (MC), health.
 
 ## Uyarı
 
-Bu araç kazanma olasılığını artırmaz. Yalnızca belirli bir garantiyi daha az kuponla elde etmeni sağlar. `--probs` ile üretilen olasılık raporu bir beklenen-değer/kâr hesabı değildir; ikramiye havuzu ve kolon bedeli hesaba katılmaz.
+Bu araç kazanma olasılığını artırmaz. Yalnızca belirli bir garantiyi daha az kuponla elde etmeni sağlar. Olasılık / Monte Carlo raporu beklenen-değer/kâr hesabı değildir.
