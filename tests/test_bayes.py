@@ -81,15 +81,22 @@ def test_posteriors_only_feeds_mc_shape():
 
 
 def test_bayes_summary_top_shifts():
+    """Prior ile uyumlu evidence → küçük KL; prior dışı mass → büyük KL."""
     sels = parse_picks("1,10")
     ev = [
-        {"1": 0.99, "0": 0.005, "2": 0.005},
-        {"1": 0.34, "0": 0.33, "2": 0.33},
+        {"1": 0.99, "0": 0.005, "2": 0.005},  # banko prior ile aynı yön → az kayma
+        {"1": 0.34, "0": 0.33, "2": 0.33},    # çifte prior dışı '2' mass → daha çok kayma
     ]
     rows = bayes_update_matches(sels, ev, evidence_strength=20.0)
     summary = bayes_summary(rows)
     assert summary["n"] == 2
-    assert summary["top_shifts"][0]["mac"] == 1  # stronger shift on banko vs strong evidence
+    assert len(summary["top_shifts"]) == 2
+    # sıralama KL azalan
+    kls = [t["kl"] for t in summary["top_shifts"]]
+    assert kls == sorted(kls, reverse=True)
+    # maç 2 (yayvan evidence) maç 1'den (uyumlu evidence) daha yüksek KL
+    assert rows[1]["kl_prior_post"] > rows[0]["kl_prior_post"]
+    assert summary["top_shifts"][0]["mac"] == 2
 
 
 def test_length_mismatch_raises():
