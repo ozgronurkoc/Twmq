@@ -30,23 +30,24 @@ def monte_carlo_report(
 
     rng = random.Random(seed)
 
-    # Her maç için kümülatif dağılım
+    # Her maç için normalize kümülatif dağılım (toplam = 1)
     cum: List[List[Tuple[float, str]]] = []
     for i in range(enc.total_len):
         p = probs[i]
+        weights = [max(0.0, float(p.get(sym, 0.0))) for sym in SEMBOLLER]
+        total = sum(weights)
+        if total <= 0:
+            weights = [1.0 / 3.0] * 3
+        else:
+            weights = [w / total for w in weights]
         running = 0.0
         entries: List[Tuple[float, str]] = []
-        for sym in SEMBOLLER:
-            running += max(0.0, p.get(sym, 0.0))
+        for w, sym in zip(weights, SEMBOLLER):
+            running += w
             entries.append((running, sym))
-        # Normalize edge case
-        if running <= 0:
-            entries = [(1.0 / 3, s) for s in SEMBOLLER]
-            s = 0.0
-            entries = []
-            for j, sym in enumerate(SEMBOLLER):
-                s += 1.0 / 3
-                entries.append((s, sym))
+        # son eşiği tam 1.0 yap (float kayması)
+        if entries:
+            entries[-1] = (1.0, entries[-1][1])
         cum.append(entries)
 
     sel_sets = [set(s) for s in enc.selections]
@@ -68,7 +69,6 @@ def monte_carlo_report(
             continue
         n_ici += 1
 
-        # Değişken uzay noktası
         try:
             var = tuple(
                 enc.variable_syms[j].index(outcome[pos])
