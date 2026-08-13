@@ -33,6 +33,7 @@ from .core import (
     solve_heuristic,
 )
 from .analysis import match_error_frequency, monte_carlo_report
+from .bayes import posteriors_only
 from .report import basliklar
 
 ORNEK = "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"
@@ -92,7 +93,6 @@ def _approx(a: float, b: float, rel: float = 1e-9) -> bool:
 
 
 def _probs_on_selections(enc: Encoder) -> List[Dict[str, float]]:
-    """Olasılık kütlesini yalnızca seçilen sembollere koy (küme-içi ~1)."""
     out: List[Dict[str, float]] = []
     for sel in enc.selections:
         p = {s: 0.0 for s in SEMBOLLER}
@@ -172,7 +172,6 @@ def _check_olasilik_exact() -> str:
     assert 0 <= rap.p_15 <= 1
     assert 0 <= rap.p_kume_ici <= 1
     assert _approx(rap.p_15 + rap.p_14, rap.p_kume_ici)
-    # seçim kümesi üzerinde uniform → küme içi ~1
     assert rap.p_kume_ici > 0.99
     return f"p_ici={rap.p_kume_ici:.4f} p15={rap.p_15:.4f} p14={rap.p_14:.4f}"
 
@@ -186,7 +185,6 @@ def _check_monte_carlo() -> str:
     for key in ("kume_ici", "p15", "p14", "p13", "p12"):
         assert 0.0 <= mc[key]["p"] <= 1.0
         assert mc[key]["ci95"] >= 0.0
-    # seçim destekli probs → küme içi yüksek olmalı
     assert mc["kume_ici"]["p"] > 0.9
     rap = olasilik_raporu(enc, cols, probs)
     assert abs(mc["kume_ici"]["p"] - rap.p_kume_ici) < 0.05
@@ -194,6 +192,19 @@ def _check_monte_carlo() -> str:
         f"n=5000 kume_ici={mc['kume_ici']['pct']}% "
         f"p15={mc['p15']['pct']}%±{mc['p15']['ci95']}"
     )
+
+
+def _check_bayes() -> str:
+    enc = Encoder(parse_picks(ORNEK))
+    cols, _ = solve_fix16(enc)
+    evidence = _probs_on_selections(enc)
+    posts = posteriors_only(
+        enc.selections, evidence, prior_strength=1.0, evidence_strength=10.0)
+    assert len(posts) == 15
+    assert all(abs(sum(p.values()) - 1.0) < 1e-9 for p in posts)
+    rap = olasilik_raporu(enc, cols, posts)
+    assert rap.p_kume_ici > 0.99
+    return f"posteriors=15 p_ici={rap.p_kume_ici:.4f}"
 
 
 def _check_error_freq() -> str:
@@ -257,6 +268,7 @@ def run_health() -> HealthReport:
         ("heuristic", _check_heuristic),
         ("olasilik_exact", _check_olasilik_exact),
         ("monte_carlo", _check_monte_carlo),
+        ("bayes_dirichlet", _check_bayes),
         ("error_freq", _check_error_freq),
         ("pipeline_result_shape", _check_pipeline_result_shape),
         ("scipy_flag", _check_scipy_flag),
