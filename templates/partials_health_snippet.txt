@@ -1,1 +1,0 @@
-Health UI is embedded in index.html in next commit.
