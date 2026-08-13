@@ -19,6 +19,10 @@ author = "agent"
 task = "workflow.run"
 args = "spor-toto"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Start application"
+
 [[workflows.workflow]]
 name = "spor-toto"
 author = "agent"
@@ -29,3 +33,19 @@ args = "spor-toto --picks \"1,10,1,12,0,10,2,10,1,12,02,1,10,2,10\""
 
 [workflows.workflow.metadata]
 outputType = "console"
+
+[[workflows.workflow]]
+name = "Start application"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python web_app.py"
+waitForPort = 5000
+
+[workflows.workflow.metadata]
+outputType = "webview"
+
+[[ports]]
+localPort = 5000
+externalPort = 80

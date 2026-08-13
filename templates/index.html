@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spor Toto 14-Garanti Formül Üreticisi</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green:   #1a7f4b;
+      --green-d: #145f38;
+      --green-l: #e8f5ee;
+      --red:     #c0392b;
+      --gold:    #d4a017;
+      --gray-1:  #f4f6f8;
+      --gray-2:  #e2e8ee;
+      --gray-3:  #aab4be;
+      --gray-4:  #4a5568;
+      --text:    #1a202c;
+      --radius:  8px;
+      --shadow:  0 2px 8px rgba(0,0,0,.10);
+    }
+
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      background: var(--gray-1);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: linear-gradient(135deg, var(--green) 0%, var(--green-d) 100%);
+      color: #fff;
+      padding: 20px 24px 18px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 3px 10px rgba(0,0,0,.2);
+    }
+    header .logo {
+      font-size: 2rem;
+      line-height: 1;
+    }
+    header h1 { font-size: 1.25rem; font-weight: 700; }
+    header .sub { font-size: .8rem; opacity: .8; margin-top: 2px; }
+    header .ver { margin-left: auto; font-size: .75rem; opacity: .65; white-space: nowrap; }
+
+    /* ── Layout ── */
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 24px 16px;
+      display: grid;
+      gap: 20px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px 24px;
+    }
+    .card-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--green-d);
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--green-l);
+    }
+
+    /* ── Picks grid ── */
+    .picks-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px;
+    }
+    .match-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--gray-1);
+      border: 1px solid var(--gray-2);
+      border-radius: 6px;
+      padding: 8px 10px;
+      transition: border-color .15s;
+    }
+    .match-row:hover { border-color: var(--green); }
+    .match-num {
+      font-size: .7rem;
+      font-weight: 700;
+      color: var(--gray-3);
+      min-width: 22px;
+    }
+    .cb-group {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+    .cb-label {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .cb-label input[type=checkbox] { display: none; }
+    .cb-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 6px;
+      font-size: .85rem;
+      font-weight: 700;
+      border: 2px solid var(--gray-2);
+      background: #fff;
+      color: var(--gray-4);
+      transition: all .12s;
+    }
+    .cb-label input[type=checkbox]:checked + .cb-chip {
+      border-color: var(--green);
+      background: var(--green);
+      color: #fff;
+    }
+    .sym-1 .cb-chip  { border-color: #c5d8f0; }
+    .sym-1 input:checked + .cb-chip { background: #2980b9; border-color: #2980b9; }
+    .sym-0 .cb-chip  { border-color: #fce5b8; }
+    .sym-0 input:checked + .cb-chip { background: var(--gold); border-color: var(--gold); color: #fff; }
+    .sym-2 .cb-chip  { border-color: #f5c6c6; }
+    .sym-2 input:checked + .cb-chip { background: var(--red); border-color: var(--red); }
+
+    /* ── Options row ── */
+    .options-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: flex-end;
+      margin-top: 18px;
+    }
+    .opt-group { display: flex; flex-direction: column; gap: 4px; }
+    .opt-group label { font-size: .78rem; font-weight: 600; color: var(--gray-4); }
+    select, input[type=number], input[type=text] {
+      height: 38px;
+      border: 1.5px solid var(--gray-2);
+      border-radius: 6px;
+      padding: 0 10px;
+      font-size: .9rem;
+      background: #fff;
+      color: var(--text);
+      outline: none;
+      transition: border-color .15s;
+    }
+    select:focus, input:focus { border-color: var(--green); }
+    select { min-width: 220px; }
+    input[type=number] { width: 100px; }
+
+    /* ── Buttons ── */
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 18px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 22px;
+      height: 42px;
+      border-radius: 6px;
+      font-size: .95rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: opacity .15s, transform .1s;
+    }
+    .btn:active { transform: scale(.97); }
+    .btn-primary { background: var(--green); color: #fff; }
+    .btn-primary:hover { opacity: .88; }
+    .btn-secondary {
+      background: var(--gray-2);
+      color: var(--gray-4);
+    }
+    .btn-secondary:hover { opacity: .8; }
+
+    /* ── Quick-fill helpers ── */
+    .quickfill {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+    }
+    .quickfill span { font-size: .78rem; color: var(--gray-3); line-height: 28px; }
+    .qbtn {
+      font-size: .75rem;
+      padding: 3px 10px;
+      border-radius: 20px;
+      border: 1.5px solid var(--gray-2);
+      background: #fff;
+      cursor: pointer;
+      color: var(--gray-4);
+      transition: all .12s;
+    }
+    .qbtn:hover { border-color: var(--green); color: var(--green); }
+
+    /* ── Alerts ── */
+    .alert {
+      padding: 14px 18px;
+      border-radius: var(--radius);
+      font-size: .92rem;
+    }
+    .alert-error { background: #fdecea; color: var(--red); border: 1px solid #f5b7b1; }
+    .alert-warn  { background: #fef9e7; color: #7d6608; border: 1px solid #f9e79f; }
+    .alert-ok    { background: var(--green-l); color: var(--green-d); border: 1px solid #a9dfbf; }
+
+    /* ── Result summary ── */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .stat-box {
+      background: var(--gray-1);
+      border: 1px solid var(--gray-2);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      text-align: center;
+    }
+    .stat-box .val { font-size: 1.7rem; font-weight: 800; color: var(--green-d); }
+    .stat-box .lbl { font-size: .72rem; color: var(--gray-3); margin-top: 2px; }
+
+    /* ── Coupon table ── */
+    .table-wrap { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .88rem;
+    }
+    th {
+      background: var(--green);
+      color: #fff;
+      padding: 8px 10px;
+      text-align: center;
+      font-size: .78rem;
+      letter-spacing: .03em;
+    }
+    th:first-child { text-align: left; min-width: 44px; }
+    td {
+      padding: 6px 8px;
+      text-align: center;
+      border-bottom: 1px solid var(--gray-2);
+    }
+    td:first-child { text-align: left; color: var(--gray-3); font-size: .78rem; }
+    tr:nth-child(even) { background: var(--gray-1); }
+    tr:last-child td { border-bottom: none; }
+    .cell-1  { color: #2980b9; font-weight: 700; }
+    .cell-10 { color: #2980b9; font-weight: 700; }
+    .cell-0  { color: #b7860b; font-weight: 700; }
+    .cell-2  { color: var(--red); font-weight: 700; }
+    .cell-multi { color: var(--green-d); font-weight: 700; }
+    .cost-badge {
+      display: inline-block;
+      background: #f0e6c8;
+      color: #7d5a00;
+      border-radius: 4px;
+      font-size: .72rem;
+      padding: 1px 6px;
+      margin-left: 4px;
+    }
+
+    /* ── Coverage dist ── */
+    .dist-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+    .dist-table td { padding: 5px 10px; border-bottom: 1px solid var(--gray-2); }
+    .dist-table tr:last-child td { border: none; }
+    .dist-bar-wrap { position: relative; height: 14px; background: var(--gray-2); border-radius: 3px; min-width: 80px; }
+    .dist-bar { height: 100%; border-radius: 3px; background: var(--green); }
+    .dist-pct { font-size: .8rem; color: var(--gray-4); min-width: 48px; text-align: right; }
+
+    /* ── Stat lines ── */
+    .stat-lines { font-size: .83rem; color: var(--gray-4); line-height: 1.7; }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      .picks-grid { grid-template-columns: 1fr 1fr; }
+      header h1 { font-size: 1rem; }
+      .options-row { flex-direction: column; }
+      select { min-width: unset; width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🎯</div>
+  <div>
+    <h1>Spor Toto 14-Garanti Formül Üreticisi</h1>
+    <div class="sub">15 maçlık kuponunuz için minimum kolonlu kaplama kodu</div>
+  </div>
+  <div class="ver">v{{ version }}</div>
+</header>
+
+<div class="container">
+
+  <!-- ── Input card ── -->
+  <div class="card">
+    <div class="card-title">📋 Maç Seçimleri</div>
+
+    <div class="quickfill">
+      <span>Hızlı doldur:</span>
+      <button type="button" class="qbtn" onclick="fillAll(['1','0','2'])">Tüm üçlü</button>
+      <button type="button" class="qbtn" onclick="fillAll(['1','0'])">Tüm 1/0</button>
+      <button type="button" class="qbtn" onclick="fillAll(['0','2'])">Tüm 0/2</button>
+      <button type="button" class="qbtn" onclick="fillAll(['1','2'])">Tüm 1/2</button>
+      <button type="button" class="qbtn" onclick="loadExample()">Örnek kupon</button>
+    </div>
+
+    <form method="POST" action="/solve" id="mainForm" style="margin-top:14px">
+
+      <div class="picks-grid">
+        {% for i in range(1, match_count + 1) %}
+        {% set sel = default_selections[i-1] if default_selections and (i-1) < default_selections|length else [] %}
+        <div class="match-row">
+          <span class="match-num">M{{ i }}</span>
+          <div class="cb-group">
+            {% for sym, label in symbols %}
+            <label class="cb-label sym-{{ sym }}">
+              <input type="checkbox"
+                     name="match_{{ i }}"
+                     value="{{ sym }}"
+                     {% if sym in sel %}checked{% endif %}>
+              <span class="cb-chip" title="{{ label }}">{{ sym }}</span>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Options -->
+      <div class="options-row">
+        <div class="opt-group">
+          <label for="mode">Mod</label>
+          <select name="mode" id="mode" onchange="toggleBudget(this.value)">
+            {% for val, lbl in modes %}
+            <option value="{{ val }}"
+              {% if form_data and form_data.get('mode') == val %}selected
+              {% elif not form_data and val == 'fix16' %}selected{% endif %}>
+              {{ lbl }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="opt-group" id="budgetGroup" style="display:none">
+          <label for="budget">Kolon Bütçesi</label>
+          <input type="number" name="budget" id="budget" min="1" max="9999"
+                 value="{{ form_data.get('budget', 32) if form_data else 32 }}"
+                 placeholder="ör. 32">
+        </div>
+
+        <div class="opt-group">
+          <label for="variant">Varyant (0 = standart)</label>
+          <input type="number" name="variant" id="variant" min="0" max="9999"
+                 value="{{ form_data.get('variant', 0) if form_data else 0 }}"
+                 placeholder="0">
+        </div>
+      </div>
+
+      {% if not has_scipy %}
+      <div class="alert alert-warn" style="margin-top:14px">
+        ⚠️ scipy bulunamadı — kesin çözücü (ILP) devre dışı. Sezgisel motor kullanılacak.
+      </div>
+      {% endif %}
+
+      <div class="btn-row">
+        <button type="submit" class="btn btn-primary">⚙️ Formül Üret</button>
+        <button type="button" class="btn btn-secondary" onclick="resetForm()">↺ Sıfırla</button>
+      </div>
+
+    </form>
+  </div>
+
+  <!-- ── Error ── -->
+  {% if error %}
+  <div class="alert alert-error">
+    <strong>❌ Hata:</strong> {{ error }}
+  </div>
+  {% endif %}
+
+  <!-- ── Result ── -->
+  {% if result %}
+
+  {% if result.get('uyarilar') %}
+  {% for u in result.uyarilar %}
+  <div class="alert alert-warn">⚠️ {{ u }}</div>
+  {% endfor %}
+  {% endif %}
+
+  <div class="card">
+    <div class="card-title">
+      {{ '✅' if result.guaranteed else '⚠️' }}
+      Sonuç — {{ result.baslik }}
+    </div>
+
+    <!-- Summary stats -->
+    <div class="summary-grid">
+      <div class="stat-box">
+        <div class="val">{{ result.satir_sayisi }}</div>
+        <div class="lbl">Kupon Satırı</div>
+      </div>
+      <div class="stat-box">
+        <div class="val">{{ result.kolon_bedeli }}</div>
+        <div class="lbl">Kolon Bedeli</div>
+      </div>
+      <div class="stat-box">
+        <div class="val">{{ result.alt_sinir }}</div>
+        <div class="lbl">Teorik Alt Sınır</div>
+      </div>
+      <div class="stat-box">
+        <div class="val" style="color:{{ '#1a7f4b' if result.guaranteed else '#c0392b' }}">
+          {{ '14-GARANTİ ✓' if result.guaranteed else 'GARANTİ YOK' }}
+        </div>
+        <div class="lbl">Garanti Durumu</div>
+      </div>
+    </div>
+
+    {% if result.notlar %}
+    <div style="margin-bottom:16px; font-size:.83rem; color:var(--gray-4); line-height:1.6">
+      {% for n in result.notlar %}
+      <div>ℹ️ {{ n }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Coupon rows -->
+    <div class="card-title" style="margin-top:8px">🎫 Kupona Yazılacak {{ result.satir_sayisi }} Satır</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            {% for i in range(1, result.match_count + 1) %}
+            <th>M{{ i }}</th>
+            {% endfor %}
+            <th>Kolon</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in result.rows %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            {% for cell in row.cells %}
+            <td class="cell-{{ cell }}">{{ cell }}</td>
+            {% endfor %}
+            <td>
+              {{ row.cost }}
+              {% if row.cost > 1 %}<span class="cost-badge">×{{ row.cost }}</span>{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Coverage distribution -->
+  <div class="card">
+    <div class="card-title">📊 Kapsama Dağılımı</div>
+    <div class="stat-lines" style="margin-bottom:14px">
+      {% for line in result.stat_lines %}
+      <div>{{ line }}</div>
+      {% endfor %}
+    </div>
+    <table class="dist-table">
+      <thead>
+        <tr>
+          <th style="text-align:left;background:var(--green);color:#fff;padding:6px 10px;border-radius:4px 0 0 0">Uzaklık</th>
+          <th style="background:var(--green);color:#fff;padding:6px 10px">Açıklama</th>
+          <th style="background:var(--green);color:#fff;padding:6px 10px">Nokta Sayısı</th>
+          <th style="background:var(--green);color:#fff;padding:6px 10px;border-radius:0 4px 0 0">Yüzde / Dağılım</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in result.dist %}
+        <tr>
+          <td><strong>d={{ item.d }}</strong></td>
+          <td>{{ item.label }}</td>
+          <td>{{ item.count }}</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="dist-bar-wrap" style="flex:1">
+                <div class="dist-bar" style="width:{{ item.pct }}%"></div>
+              </div>
+              <span class="dist-pct">%{{ item.pct }}</span>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+        {% if result.guaranteed %}
+        <tr>
+          <td colspan="4">
+            <div class="alert alert-ok" style="margin:6px 0 2px">
+              ✅ En kötü durum 1 hata — <strong>14-GARANTİ DOĞRULANDI</strong>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="4">
+            <div class="alert alert-warn" style="margin:6px 0 2px">
+              ⚠️ En kötü durum {{ result.worst }} hata — 14-garanti bu kupon için geçerli değil.
+            </div>
+          </td>
+        </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+
+  {% endif %}
+
+</div><!-- /container -->
+
+<script>
+  // Show/hide budget input based on mode
+  function toggleBudget(mode) {
+    const show = (mode === 'butce' || mode === 'maxcov');
+    document.getElementById('budgetGroup').style.display = show ? '' : 'none';
+  }
+  // Run on load to match current selection
+  toggleBudget(document.getElementById('mode').value);
+
+  // Fill all matches with same symbols
+  function fillAll(syms) {
+    for (let i = 1; i <= {{ match_count }}; i++) {
+      const boxes = document.querySelectorAll(`input[name="match_${i}"]`);
+      boxes.forEach(cb => { cb.checked = syms.includes(cb.value); });
+    }
+  }
+
+  // Load the example coupon: "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"
+  const EXAMPLE = [['1'],['1','0'],['1'],['1','2'],['0'],['1','0'],['2'],['1','0'],['1'],['1','2'],['0','2'],['1'],['1','0'],['2'],['1','0']];
+  function loadExample() {
+    EXAMPLE.forEach((syms, idx) => {
+      const i = idx + 1;
+      const boxes = document.querySelectorAll(`input[name="match_${i}"]`);
+      boxes.forEach(cb => { cb.checked = syms.includes(cb.value); });
+    });
+  }
+
+  // Reset form to all triples
+  function resetForm() {
+    fillAll(['1','0','2']);
+    document.getElementById('mode').value = 'fix16';
+    toggleBudget('fix16');
+    document.getElementById('variant').value = '0';
+    document.getElementById('budget').value = '32';
+  }
+
+  // Scroll to result after submit
+  {% if result or error %}
+  window.addEventListener('DOMContentLoaded', () => {
+    const target = document.querySelector('.alert-error, #resultSection');
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+  {% endif %}
+</script>
+
+</body>
+</html>
