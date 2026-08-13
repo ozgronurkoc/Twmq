@@ -14,18 +14,18 @@
       --shadow: 0 1px 8px rgba(0,0,0,0.04);
     }
     body { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; -webkit-font-smoothing: antialiased; }
-    header { background: rgba(255,255,255,0.92); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); border-bottom: 1px solid var(--border-light); padding: 14px 24px; display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 100; }
-    header .brand { font-size: 1.12rem; font-weight: 600; letter-spacing: -0.02em; }
-    header .sub { font-size: 0.78rem; color: var(--text-sec); margin-top: 1px; }
+    header { background: rgba(255,255,255,0.92); backdrop-filter: saturate(180%) blur(20px); border-bottom: 1px solid var(--border-light); padding: 14px 24px; display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 100; }
+    header .brand { font-size: 1.12rem; font-weight: 600; }
+    header .sub { font-size: 0.78rem; color: var(--text-sec); }
     header .ver { margin-left: auto; font-size: 0.72rem; color: var(--text-sec); background: var(--bg); padding: 4px 10px; border-radius: 20px; }
     .page { max-width: 1100px; margin: 0 auto; padding: 22px 16px 50px; display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 20px; align-items: start; }
     @media (max-width: 900px) { .page { grid-template-columns: 1fr; } }
     .card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; border: 1px solid rgba(0,0,0,0.03); }
     .card + .card { margin-top: 14px; }
-    .card-title { font-size: 0.93rem; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 14px; }
+    .card-title { font-size: 0.93rem; font-weight: 600; margin-bottom: 14px; }
     .quickfill { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
-    .qbtn { font-size: 0.75rem; font-weight: 500; padding: 5px 11px; border-radius: 16px; border: 1px solid var(--border); background: #fff; color: var(--text); cursor: pointer; transition: all 0.15s ease; }
-    .qbtn:hover { background: var(--bg); border-color: #b0b0b5; }
+    .qbtn { font-size: 0.75rem; font-weight: 500; padding: 5px 11px; border-radius: 16px; border: 1px solid var(--border); background: #fff; color: var(--text); cursor: pointer; }
+    .qbtn:hover { background: var(--bg); }
     .match-table-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid var(--border-light); }
     .match-table { width: 100%; border-collapse: collapse; font-size: 0.87rem; }
     .match-table thead th { font-size: 0.71rem; font-weight: 600; color: var(--text-sec); padding: 8px 6px; text-align: center; border-bottom: 1px solid var(--border-light); background: #f7f7f8; }
@@ -33,34 +33,31 @@
     .match-table tbody tr { border-bottom: 1px solid var(--border-light); }
     .match-table tbody tr:last-child { border-bottom: none; }
     .match-table tbody tr:hover { background: #f9f9fa; }
-    .match-table td { padding: 6px 5px; text-align: center; vertical-align: middle; }
+    .match-table td { padding: 6px 5px; text-align: center; }
     .match-table td:first-child { text-align: left; padding-left: 12px; font-size: 0.76rem; font-weight: 600; color: var(--text-sec); }
     .cb-label { cursor: pointer; user-select: none; display: inline-flex; }
     .cb-label input { display: none; }
-    .cb-chip { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 30px; border-radius: 8px; font-size: 0.88rem; font-weight: 600; border: 1.5px solid var(--border); background: #fff; color: var(--text-sec); transition: all 0.15s ease; }
-    .cb-label:hover .cb-chip { border-color: #b0b0b5; }
+    .cb-chip { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 30px; border-radius: 8px; font-size: 0.88rem; font-weight: 600; border: 1.5px solid var(--border); background: #fff; color: var(--text-sec); }
     .sym-1 input:checked + .cb-chip { background: #007aff; border-color: #007aff; color: #fff; }
     .sym-0 input:checked + .cb-chip { background: #f5a623; border-color: #f5a623; color: #fff; }
     .sym-2 input:checked + .cb-chip { background: #ff3b30; border-color: #ff3b30; color: #fff; }
-
     .live-stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border-light); }
     .live-item { text-align: center; }
-    .live-item .num { font-size: 1.15rem; font-weight: 600; letter-spacing: -0.02em; }
+    .live-item .num { font-size: 1.15rem; font-weight: 600; }
     .live-item .lbl { font-size: 0.65rem; color: var(--text-sec); margin-top: 2px; }
     .live-item.bedel .num { color: var(--blue); }
-
     .options-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-top: 16px; }
     .opt-group { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 120px; }
     .opt-group label { font-size: 0.72rem; font-weight: 500; color: var(--text-sec); }
-    select, input[type=number] { height: 38px; border: 1.5px solid var(--border); border-radius: 10px; padding: 0 11px; font-size: 0.88rem; background: #fff; color: var(--text); outline: none; font-family: inherit; }
+    select, input[type=number], input[type=text] { height: 38px; border: 1.5px solid var(--border); border-radius: 10px; padding: 0 11px; font-size: 0.88rem; background: #fff; color: var(--text); outline: none; font-family: inherit; }
     select:focus, input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(0,113,227,0.14); }
-    select { min-width: 160px; }
-    .btn-row { display: flex; gap: 10px; margin-top: 16px; }
-    .btn { display: inline-flex; align-items: center; justify-content: center; height: 42px; padding: 0 20px; border-radius: 11px; font-size: 0.93rem; font-weight: 500; cursor: pointer; border: none; font-family: inherit; }
+    .btn-row { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; height: 42px; padding: 0 18px; border-radius: 11px; font-size: 0.9rem; font-weight: 500; cursor: pointer; border: none; font-family: inherit; }
     .btn:disabled { opacity: 0.6; cursor: not-allowed; }
     .btn-primary { background: var(--blue); color: #fff; flex: 1; }
     .btn-primary:hover:not(:disabled) { background: var(--blue-hover); }
     .btn-secondary { background: #fff; color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: var(--bg); }
     .alert { padding: 12px 14px; border-radius: var(--radius-sm); font-size: 0.86rem; line-height: 1.45; }
     .alert-error { background: var(--error-bg); color: var(--coral); border: 1px solid #ffd0cd; }
     .alert-warn { background: var(--warn-bg); color: var(--warn-text); border: 1px solid #f5e6b3; }
@@ -68,41 +65,38 @@
     .summary-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
     @media (min-width: 480px) { .summary-grid { grid-template-columns: repeat(4, 1fr); } }
     .stat-box { background: var(--bg); border-radius: var(--radius-sm); padding: 13px 10px; text-align: center; }
-    .stat-box .val { font-size: 1.4rem; font-weight: 600; letter-spacing: -0.03em; line-height: 1.1; }
+    .stat-box .val { font-size: 1.4rem; font-weight: 600; }
     .stat-box .lbl { font-size: 0.67rem; color: var(--text-sec); margin-top: 3px; }
     .stat-box.guarantee-ok .val { color: var(--success); }
     .stat-box.guarantee-no .val { color: var(--coral); }
     .stat-box.fiyat .val { color: var(--blue); }
-
-    .prob-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 4px; margin-bottom: 10px; flex-wrap: wrap; }
+    .prob-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
     .hata-secici { display: flex; gap: 6px; }
     .hata-btn { font-size: 0.74rem; font-weight: 500; padding: 5px 12px; border-radius: 16px; border: 1px solid var(--border); background: #fff; color: var(--text); cursor: pointer; }
     .hata-btn.active { background: var(--blue); border-color: var(--blue); color: #fff; }
     .prob-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px; }
-    .prob-box { background: var(--bg); border-radius: var(--radius-sm); padding: 12px 8px; text-align: center; border: 1px solid var(--border-light); transition: all 0.15s; }
+    .prob-box { background: var(--bg); border-radius: var(--radius-sm); padding: 12px 8px; text-align: center; border: 1px solid var(--border-light); }
     .prob-box.dim { opacity: 0.35; }
     .prob-box.highlight { border-color: var(--blue); background: #f0f7ff; }
-    .prob-box .prob-label { font-size: 0.72rem; font-weight: 600; color: var(--text-sec); margin-bottom: 4px; }
+    .prob-box .prob-label { font-size: 0.72rem; font-weight: 600; color: var(--text-sec); }
     .prob-box .prob-count { font-size: 1.15rem; font-weight: 600; }
-    .prob-box .prob-pct { font-size: 0.78rem; color: var(--blue); margin-top: 2px; }
+    .prob-box .prob-pct { font-size: 0.78rem; color: var(--blue); }
     .kumulatif { font-size: 0.82rem; color: var(--text-sec); margin-bottom: 14px; padding: 10px 12px; background: var(--bg); border-radius: 8px; }
-    .kumulatif strong { color: var(--text); }
-
-    .table-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; gap: 10px; }
+    .table-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; gap: 8px; flex-wrap: wrap; }
     .table-header h3 { font-size: 0.88rem; font-weight: 600; }
-    .copy-btn { font-size: 0.78rem; font-weight: 500; padding: 5px 12px; border-radius: 8px; border: 1px solid var(--border); background: #fff; color: var(--text); cursor: pointer; }
-    .copy-btn.copied { background: var(--success-bg); border-color: var(--success); color: #1a7a3a; }
+    .table-actions { display: flex; gap: 6px; }
+    .copy-btn, .img-btn { font-size: 0.78rem; font-weight: 500; padding: 5px 12px; border-radius: 8px; border: 1px solid var(--border); background: #fff; color: var(--text); cursor: pointer; }
+    .copy-btn.copied, .img-btn.done { background: var(--success-bg); border-color: var(--success); color: #1a7a3a; }
     .table-wrap { overflow-x: auto; border-radius: var(--radius-sm); border: 1px solid var(--border-light); }
     .result-table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
     .result-table th { background: #f7f7f8; color: var(--text-sec); padding: 8px 6px; text-align: center; font-size: 0.69rem; font-weight: 600; border-bottom: 1px solid var(--border-light); }
     .result-table th:first-child { text-align: left; padding-left: 12px; }
     .result-table td { padding: 7px 6px; text-align: center; border-bottom: 1px solid var(--border-light); }
     .result-table td:first-child { text-align: left; padding-left: 12px; color: var(--text-sec); font-size: 0.75rem; }
-    .result-table tr:last-child td { border-bottom: none; }
     .cell-1 { color: #007aff; font-weight: 600; }
     .cell-0 { color: #d4890a; font-weight: 600; }
     .cell-2 { color: #ff3b30; font-weight: 600; }
-    .cost-badge { display: inline-block; background: #fef6e6; color: #8a5a00; border-radius: 5px; font-size: 0.66rem; font-weight: 500; padding: 1px 5px; margin-left: 3px; }
+    .cost-badge { display: inline-block; background: #fef6e6; color: #8a5a00; border-radius: 5px; font-size: 0.66rem; padding: 1px 5px; margin-left: 3px; }
     .dist-list { display: flex; flex-direction: column; gap: 7px; }
     .dist-row { display: grid; grid-template-columns: 60px 86px 1fr 48px; align-items: center; gap: 8px; font-size: 0.83rem; }
     .dist-bar-wrap { height: 7px; background: var(--border-light); border-radius: 4px; overflow: hidden; }
@@ -119,20 +113,19 @@
     .right-col { position: sticky; top: 68px; }
     .client-error { display: none; margin-top: 12px; }
     .client-error.show { display: block; }
+    .saved-row { display: flex; gap: 8px; margin-top: 12px; align-items: center; flex-wrap: wrap; }
+    .saved-row input { flex: 1; min-width: 120px; }
+    .saved-list { margin-top: 10px; font-size: 0.8rem; }
+    .saved-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border-light); }
+    .saved-item button { font-size: 0.72rem; padding: 3px 8px; border-radius: 6px; border: 1px solid var(--border); background: #fff; cursor: pointer; }
   </style>
 </head>
 <body>
-
 <div class="loading-overlay" id="loading"><div class="spinner"></div><div class="loading-text">Hesaplanıyor…</div></div>
-
 <header>
-  <div>
-    <div class="brand">Spor Toto 14-Garanti</div>
-    <div class="sub">Minimum kolonlu kaplama kodu üreticisi</div>
-  </div>
+  <div><div class="brand">Spor Toto 14-Garanti</div><div class="sub">Minimum kolonlu kaplama kodu üreticisi</div></div>
   <div class="ver">v{{ version }}</div>
 </header>
-
 <div class="page">
   <div class="left-col">
     <div class="card">
@@ -166,15 +159,13 @@
             </tbody>
           </table>
         </div>
-
-        <div class="live-stats" id="liveStats">
+        <div class="live-stats">
           <div class="live-item"><div class="num" id="statBanko">—</div><div class="lbl">Banko</div></div>
           <div class="live-item"><div class="num" id="statCifte">—</div><div class="lbl">Çifte</div></div>
           <div class="live-item"><div class="num" id="statUclu">—</div><div class="lbl">Üçlü</div></div>
           <div class="live-item"><div class="num" id="statSpace">—</div><div class="lbl">Uzay</div></div>
           <div class="live-item bedel"><div class="num" id="statBedel">—</div><div class="lbl">Tahmini Bedel</div></div>
         </div>
-
         <div class="options-row">
           <div class="opt-group">
             <label for="mode">Mod</label>
@@ -193,32 +184,29 @@
             <input type="number" name="variant" id="variant" min="0" max="9999" value="{{ form_data.get('variant', 0) if form_data else 0 }}">
           </div>
         </div>
-
-        {% if not has_scipy %}
-        <div class="alert alert-warn" style="margin-top:12px">scipy bulunamadı — kesin çözücü (ILP) devre dışı.</div>
-        {% endif %}
+        {% if not has_scipy %}<div class="alert alert-warn" style="margin-top:12px">scipy bulunamadı — ILP devre dışı.</div>{% endif %}
         <div class="alert alert-error client-error" id="clientError"></div>
         <div class="btn-row">
           <button type="submit" class="btn btn-primary" id="submitBtn">Formül Üret</button>
           <button type="button" class="btn btn-secondary" onclick="resetForm()">Sıfırla</button>
         </div>
       </form>
+
+      <!-- Kayıtlı Kuponlar -->
+      <div class="saved-row">
+        <input type="text" id="couponName" placeholder="Kupon adı...">
+        <button type="button" class="btn btn-secondary" style="height:38px" onclick="saveCoupon()">Kaydet</button>
+      </div>
+      <div class="saved-list" id="savedList"></div>
     </div>
   </div>
 
   <div class="right-col">
-    {% if error %}
-    <div class="alert alert-error" style="margin-bottom:14px"><strong>Hata:</strong> {{ error }}</div>
-    {% endif %}
-
+    {% if error %}<div class="alert alert-error" style="margin-bottom:14px"><strong>Hata:</strong> {{ error }}</div>{% endif %}
     {% if result %}
-      {% if result.get('uyarilar') %}
-      {% for u in result.uyarilar %}<div class="alert alert-warn" style="margin-bottom:10px">{{ u }}</div>{% endfor %}
-      {% endif %}
-
+      {% if result.get('uyarilar') %}{% for u in result.uyarilar %}<div class="alert alert-warn" style="margin-bottom:10px">{{ u }}</div>{% endfor %}{% endif %}
       <div class="card">
         <div class="card-title">Sonuç <span style="font-weight:400;color:var(--text-sec);font-size:0.82rem">— {{ result.baslik }}</span></div>
-
         <div class="summary-grid">
           <div class="stat-box"><div class="val">{{ result.satir_sayisi }}</div><div class="lbl">Kupon Satırı</div></div>
           <div class="stat-box fiyat"><div class="val">{{ result.kolon_bedeli }}</div><div class="lbl">Toplam Fiyat (Kolon)</div></div>
@@ -228,7 +216,6 @@
             <div class="lbl">Durum</div>
           </div>
         </div>
-
         {% if result.probs %}
         <div class="prob-header">
           <div class="card-title" style="margin:0">Olasılık Dağılımı</div>
@@ -247,22 +234,17 @@
         </div>
         <div class="kumulatif" id="kumulatifText">Tüm dağılım gösteriliyor.</div>
         {% endif %}
-
         {% if result.notlar %}<div class="notes">{% for n in result.notlar %}<div>{{ n }}</div>{% endfor %}</div>{% endif %}
-
         <div class="table-header">
           <h3>Kupona Yazılacak {{ result.satir_sayisi }} Satır</h3>
-          <button type="button" class="copy-btn" id="copyBtn" onclick="copyTable()">Kopyala</button>
+          <div class="table-actions">
+            <button type="button" class="copy-btn" id="copyBtn" onclick="copyTable()">Kopyala</button>
+            <button type="button" class="img-btn" id="imgBtn" onclick="downloadImage()">Görsel İndir</button>
+          </div>
         </div>
-        <div class="table-wrap">
+        <div class="table-wrap" id="resultCapture">
           <table class="result-table" id="resultTable">
-            <thead>
-              <tr>
-                <th>#</th>
-                {% for i in range(1, result.match_count + 1) %}<th>M{{ i }}</th>{% endfor %}
-                <th>Fiyat</th>
-              </tr>
-            </thead>
+            <thead><tr><th>#</th>{% for i in range(1, result.match_count + 1) %}<th>M{{ i }}</th>{% endfor %}<th>Fiyat</th></tr></thead>
             <tbody>
               {% for row in result.rows %}
               <tr>
@@ -275,7 +257,6 @@
           </table>
         </div>
       </div>
-
       <div class="card" style="margin-top:14px">
         <div class="card-title">Kapsama Dağılımı (Detay)</div>
         <div class="stat-lines">{% for line in result.stat_lines %}<div>{{ line }}</div>{% endfor %}</div>
@@ -295,11 +276,8 @@
         <div class="alert alert-warn" style="margin-top:12px">En kötü durum {{ result.worst }} hata — 14-garanti geçerli değil.</div>
         {% endif %}
       </div>
-
     {% else %}
-      {% if not error %}
-      <div class="card"><div class="empty-state"><div class="icon">◇</div><p>Maç seçimlerini yapın ve<br><strong>Formül Üret</strong> butonuna basın.</p></div></div>
-      {% endif %}
+      {% if not error %}<div class="card"><div class="empty-state"><div class="icon">◇</div><p>Maç seçimlerini yapın ve<br><strong>Formül Üret</strong> butonuna basın.</p></div></div>{% endif %}
     {% endif %}
   </div>
 </div>
@@ -331,27 +309,18 @@
 
   function updateLiveStats() {
     let banko = 0, cifte = 0, uclu = 0, space = 1;
-    const sizes = [];
     for (let i = 1; i <= {{ match_count }}; i++) {
       const n = document.querySelectorAll(`input[name="match_${i}"]:checked`).length || 3;
-      if (n === 1) banko++;
-      else if (n === 2) { cifte++; sizes.push(2); }
-      else { uclu++; sizes.push(3); }
+      if (n === 1) banko++; else if (n === 2) cifte++; else uclu++;
       space *= n;
     }
     document.getElementById('statBanko').textContent = banko;
     document.getElementById('statCifte').textContent = cifte;
     document.getElementById('statUclu').textContent = uclu;
     document.getElementById('statSpace').textContent = space >= 1000 ? (space/1000).toFixed(1)+'k' : space;
-
-    // Tahmini bedel (Fix-16 mantığı)
     let bedel = space;
     const mode = document.getElementById('mode')?.value || 'fix16';
-    if (mode === 'fix16' && cifte >= 7) {
-      // 7 cifte Hamming ile 16 kolona iner, kalanlar çarpan olur
-      // space = prod(sizes), Hamming 7 cifteyi 128 yerine 16 yapar → bedel = space / 8
-      bedel = Math.round(space / 8);
-    }
+    if (mode === 'fix16' && cifte >= 7) bedel = Math.round(space / 8);
     const bedelEl = document.getElementById('statBedel');
     if (bedelEl) bedelEl.textContent = bedel >= 1000 ? (bedel/1000).toFixed(1)+'k' : bedel;
   }
@@ -414,7 +383,110 @@
     });
   }
 
+  // ===== IMG İNDİRME =====
+  function downloadImage() {
+    const table = document.getElementById('resultTable');
+    if (!table) return;
+    const rows = table.querySelectorAll('tbody tr');
+    const cols = table.querySelectorAll('thead th').length;
+    const cellW = 36, cellH = 28, pad = 20;
+    const canvas = document.createElement('canvas');
+    canvas.width = cols * cellW + pad * 2;
+    canvas.height = (rows.length + 1) * cellH + pad * 2 + 30;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#1d1d1f';
+    ctx.font = 'bold 14px -apple-system, sans-serif';
+    ctx.fillText('Spor Toto 14-Garanti Kupon', pad, pad + 12);
+    ctx.font = '12px -apple-system, sans-serif';
+    // header
+    const headers = [...table.querySelectorAll('thead th')].map(th => th.textContent.trim());
+    headers.forEach((h, i) => {
+      ctx.fillStyle = '#6e6e73';
+      ctx.fillText(h, pad + i * cellW + 4, pad + 40);
+    });
+    // rows
+    rows.forEach((tr, ri) => {
+      const cells = [...tr.querySelectorAll('td')].map(td => td.textContent.trim());
+      cells.forEach((c, ci) => {
+        ctx.fillStyle = '#1d1d1f';
+        ctx.fillText(c, pad + ci * cellW + 4, pad + 40 + (ri + 1) * cellH);
+      });
+    });
+    const link = document.createElement('a');
+    link.download = 'spor-toto-kupon.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    const btn = document.getElementById('imgBtn');
+    btn.textContent = 'İndirildi'; btn.classList.add('done');
+    setTimeout(() => { btn.textContent = 'Görsel İndir'; btn.classList.remove('done'); }, 1800);
+  }
+
+  // ===== KAYITLI KUPONLAR (localStorage) =====
+  const STORAGE_KEY = 'spor_toto_saved_coupons';
+
+  function getSaved() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
+    catch { return {}; }
+  }
+
+  function saveCoupon() {
+    const name = document.getElementById('couponName').value.trim();
+    if (!name) { alert('Kupon adı giriniz.'); return; }
+    const selections = [];
+    for (let i = 1; i <= {{ match_count }}; i++) {
+      const checked = [...document.querySelectorAll(`input[name="match_${i}"]:checked`)].map(cb => cb.value);
+      selections.push(checked.length ? checked : ['1','0','2']);
+    }
+    const data = getSaved();
+    data[name] = { selections, mode: document.getElementById('mode').value, ts: Date.now() };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    document.getElementById('couponName').value = '';
+    renderSavedList();
+  }
+
+  function loadCoupon(name) {
+    const data = getSaved();
+    const c = data[name];
+    if (!c) return;
+    c.selections.forEach((syms, idx) => {
+      document.querySelectorAll(`input[name="match_${idx+1}"]`).forEach(cb => {
+        cb.checked = syms.includes(cb.value);
+      });
+    });
+    if (c.mode) {
+      document.getElementById('mode').value = c.mode;
+      toggleBudget(c.mode);
+    }
+    updateLiveStats();
+  }
+
+  function deleteCoupon(name) {
+    const data = getSaved();
+    delete data[name];
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    renderSavedList();
+  }
+
+  function renderSavedList() {
+    const data = getSaved();
+    const el = document.getElementById('savedList');
+    const names = Object.keys(data);
+    if (!names.length) { el.innerHTML = '<div style="color:#6e6e73;font-size:0.78rem">Kayıtlı kupon yok.</div>'; return; }
+    el.innerHTML = names.map(n => `
+      <div class="saved-item">
+        <span>${n}</span>
+        <span>
+          <button type="button" onclick="loadCoupon('${n}')">Yükle</button>
+          <button type="button" onclick="deleteCoupon('${n}')">Sil</button>
+        </span>
+      </div>
+    `).join('');
+  }
+
   updateLiveStats();
+  renderSavedList();
   {% if result or error %}
   window.addEventListener('DOMContentLoaded', () => {
     const target = document.querySelector('.alert-error, .right-col .card');
