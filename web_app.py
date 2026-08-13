@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 from typing import Any, Dict, List, Optional
 
-from flask import Flask, render_template, request
+from flask import Flask, jsonify, render_template, request
 
 from spor_toto.core import (
     Encoder, Fix16Hatasi, HAS_SCIPY, butce_danismani, dogrula_kaplama,
@@ -16,6 +16,7 @@ from spor_toto.core import (
 )
 from spor_toto.report import basliklar
 from spor_toto.analysis import monte_carlo_report, match_error_frequency
+from spor_toto.health import run_health
 from spor_toto import __version__
 
 app = Flask(__name__)
@@ -47,21 +48,15 @@ def _parse_form_picks(form) -> str:
 
 
 def _parse_prob_value(raw: str) -> float:
-    """Parse a single probability; values > 1 treated as percentages."""
     v = float(raw.replace(",", "."))
     if v < 0:
         return 0.0
     if v > 1.0:
-        # 55 -> 0.55, 100 -> 1.0
         v = v / 100.0
     return min(v, 1.0)
 
 
 def _parse_form_probs(form, selections: List[List[str]]) -> Optional[List[Dict[str, float]]]:
-    """Read optional per-match probabilities from form fields prob_{i}_{sym}.
-    Returns None if user did not provide meaningful probs (all empty).
-    Accepts 0–1 or percentage (e.g. 55 for %55).
-    """
     any_filled = False
     raw: List[Dict[str, float]] = []
     for i in range(1, MATCH_COUNT + 1):
@@ -227,6 +222,14 @@ def _build_result(
     }
 
 
+@app.route("/health", methods=["GET"])
+def health():
+    """Sistem sağlık JSON — core + analysis + pipeline tek vücut."""
+    report = run_health()
+    code = 200 if report.ok else 503
+    return jsonify(report.to_dict()), code
+
+
 @app.route("/", methods=["GET"])
 def index():
     default_selections = []
@@ -296,8 +299,6 @@ def solve():
             cols2, aciklama2 = solve_fix16(yeni_enc, variant=0)
             notlar = [f"Uygulanan değişiklikler: {'; '.join(secili.degisiklikler) or 'yok'}",
                       f"Plan bedeli: {secili.bedel} kolon, {secili.satir} satır"]
-            # Plan sonrası seçimler daralmış olabilir; advanced probs orijinal
-            # seçim kümesine göredir — güvenli tarafta uniform bırak.
             result = _build_result(
                 yeni_enc, cols2,
                 f"Bütçe planı ({secili.bedel} kolon) – {aciklama2}",
