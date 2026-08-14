@@ -1,0 +1,34 @@
+--- a/templates/index.html
++++ b/templates/index.html
+@@ -212,7 +212,7 @@
+         </div>
+         <button type="button" class="adv-toggle" onclick="toggleAdv()">Gelişmiş olasılık (isteğe bağlı) ▾</button>
+         <div class="adv-panel" id="advPanel">
+-          <div class="adv-hint">Her maç için 1/0/2 olasılık (0–1 veya %). Boş = uniform. Bayes: prior + evidence → posterior → exact/MC.</div>
++          <div class="adv-hint">Her maç için 1/0/2 olasılık (0–1 veya %). Boş = uniform. Bayes açıkken: prior + evidence → posterior → exact/MC (14-garanti değişmez).</div>
+           <div class="adv-grid">
+             {% for i in range(1, match_count + 1) %}
+             <div class="adv-row">
+@@ -225,9 +225,20 @@
+           </div>
+           <div class="bayes-opts">
+             <label class="bayes-check"><input type="checkbox" name="use_bayes" value="1" id="useBayes" {% if form_data and form_data.get('use_bayes') == '1' %}checked{% endif %}> Bayes güncelle (Dirichlet)</label>
+-            <label>Prior α <input type="number" name="prior_strength" min="0.1" max="50" step="0.5" value="{{ form_data.get('prior_strength', 1) if form_data else 1 }}"></label>
+-            <label>Evidence n <input type="number" name="evidence_strength" min="0" max="200" step="1" value="{{ form_data.get('evidence_strength', 10) if form_data else 10 }}"></label>
++            <label>Prior α <input type="number" name="prior_strength" id="priorStrength" min="0.1" max="50" step="0.5" value="{{ form_data.get('prior_strength', 1) if form_data else 1 }}"></label>
++            <label>Evidence n <input type="number" name="evidence_strength" id="evidenceStrength" min="0" max="200" step="1" value="{{ form_data.get('evidence_strength', 10) if form_data else 10 }}"></label>
++            <label>Preset
++              <select id="bayesPreset" onchange="applyBayesPreset(this.value)" style="height:32px;border-radius:8px;border:1px solid var(--border);background:#fff;padding:0 8px;font-size:0.8rem">
++                <option value="">— manuel —</option>
++                <option value="zayif_prior">zayıf prior</option>
++                <option value="dengeli">dengeli</option>
++                <option value="guclu_prior">güçlü prior</option>
++                <option value="evidence_agir">evidence ağır</option>
++                <option value="sadece_prior">sadece prior</option>
++              </select>
++            </label>
+           </div>
++          <div class="adv-hint" style="margin-top:8px">α: 0.5–1 zayıf · 1–3 dengeli · 5+ güçlü. n: 0=sadece prior · 5–15 orta · 30+ yüksek güven. KL: &lt;0.02 ihmal · 0.1–0.3 orta · &gt;0.7 güçlü kayma.</div>
+         </div>
+         <div class="options-row">
+           <div class="opt-group">
