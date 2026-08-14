@@ -265,7 +265,7 @@
         {% if not has_scipy %}<div class="alert alert-warn" style="margin-top:12px">scipy bulunamadı — ILP devre dışı.</div>{% endif %}
         <div class="alert alert-error client-error" id="clientError"></div>
         <div class="btn-row">
-          <button type="submit" class="btn btn-primary" id="submitBtn">Formül Üret</button>
+          <button type="button" class="btn btn-primary" id="submitBtn" onclick="forceSubmitForm()">Formül Üret</button>
           <button type="button" class="btn btn-secondary" onclick="resetForm()">Sıfırla</button>
         </div>
       </form>
@@ -556,6 +556,15 @@ Tarayıcı bir şeyi engellerse (ör. 7 çifte kuralı) o da buraya yazılır.
     const loading=document.getElementById('loading');
     if(btn){ btn.disabled=false; btn.textContent='Formül Üret'; }
     if(loading) loading.classList.remove('active');
+  }
+  function forceSubmitForm(){
+    const form=document.getElementById('mainForm');
+    if(!form) return;
+    const btn=document.getElementById('submitBtn');
+    const loading=document.getElementById('loading');
+    if(btn){ btn.disabled=true; btn.textContent='Gönderiliyor…'; }
+    if(loading) loading.classList.add('active');
+    HTMLFormElement.prototype.submit.call(form);
   }
   window.addEventListener('pageshow', resetSubmitUI);
   document.getElementById('mainForm').addEventListener('submit', function(e){
