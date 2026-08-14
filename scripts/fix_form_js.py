@@ -1,5 +1,6 @@
 """Tum mainForm submit handler'larini siler, tek temiz AJAX handler ekler."""
 from pathlib import Path
+import re
 
 p = Path("templates/index.html")
 t = p.read_text(encoding="utf-8")
@@ -87,18 +88,15 @@ CLEAN = """
   });
 """
 
-# optional chaining (eski Safari)
-t = t.replace("?", ".") if False else t  # keep line for no-op
-t = t.replace("?", ".") if False else t
-t = t.replace("?", ".") if False else t
-# Correct removal:
-t = t.replace("?", ".") if False else t.replace("?", ".")
-
-# ACTUAL:
-parts = t.split("?")
-# Don't use that. Simple:
-import re as _re
-t = _re.sub(r"\?\.", ".", t)
+# Sadece optional chaining ? .  ->  .   (tek ? ASLA degil)
+t = re.sub(r"\?\.", ".", t)
+# Guvenli property erisimi: obj.x yerine (obj && obj.x)
+t = t.replace("PROB_DATA[d].count || 0", "(PROB_DATA[d] && PROB_DATA[d].count) || 0")
+t = t.replace("PROB_DATA[d].pct || 0", "(PROB_DATA[d] && PROB_DATA[d].pct) || 0")
+t = t.replace(
+    "(document.getElementById('mode')||{}).value||'fix16'",
+    "((document.getElementById('mode')||{}).value)||'fix16'",
+)
 
 if "POST basliyor..." not in t:
     idx = t.rfind("</script>")
@@ -111,3 +109,4 @@ print("OK fix_form_js")
 print("submit handlers:", t.count("addEventListener('submit'"))
 print("fetch:", "fetch(" in t)
 print("function(ev):", "function(ev)" in t)
+print("double-dot yok:", ".." not in t or t.count("..") )
