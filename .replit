@@ -1,5 +1,5 @@
 run = "python web_app.py"
-modules = ["python-3.10"]
+modules = ["python-3.10", "nodejs-24"]
 
 [nix]
 channel = "stable-25_05"

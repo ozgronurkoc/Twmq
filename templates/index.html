@@ -162,6 +162,10 @@
     .surv-table thead, .surv-table tbody { display: table; width: 100%; table-layout: fixed; }
     .surv-table th { text-align: left; color: var(--text-sec); font-size: 0.66rem; padding: 3px 6px; border-bottom: 1px solid var(--border-light); }
     .surv-table td { padding: 3px 6px; border-bottom: 1px solid var(--border-light); }
+    .log-box { width: 100%; min-height: 160px; max-height: 320px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.72rem; line-height: 1.45; padding: 12px; border-radius: var(--radius-sm);
+      border: 1px solid var(--border); background: #fafafa; color: var(--text); resize: vertical; white-space: pre; overflow: auto; }
+    .log-actions { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
   </style>
 </head>
 <body>
@@ -281,6 +285,19 @@
   </div>
   <div class="right-col">
     {% if error %}<div class="alert alert-error" style="margin-bottom:14px"><strong>Hata:</strong> {{ error }}</div>{% endif %}
+
+    <div class="card" style="margin-bottom:14px" id="runLogCard">
+      <div class="card-title">Çalışma Logu</div>
+      <div class="adv-hint" style="margin-bottom:8px">Formül Üret çalışmasa bile burada görünür. Tarayıcı engeli + sunucu adımları. <strong>Logu Kopyala</strong> ile paylaş.</div>
+      <textarea class="log-box" id="runLogText" readonly>{% if run_log_text %}{{ run_log_text }}{% else %}=== SPOR TOTO ÇALIŞMA LOGU ===
+(henüz istek yok)
+Formül Üret'e basınca sunucu logu burada dolacak.
+Tarayıcı bir şeyi engellerse (ör. 7 çifte kuralı) o da buraya yazılır.
+=== LOG SONU ==={% endif %}</textarea>
+      <div class="log-actions">
+        <button type="button" class="copy-btn" id="logCopyBtn" onclick="copyRunLog()">Logu Kopyala</button>
+      </div>
+    </div>
     {% if result %}
       {% if result.get('uyarilar') %}{% for u in result.uyarilar %}<div class="alert alert-warn" style="margin-bottom:10px">{{ u }}</div>{% endfor %}{% endif %}
       <div class="card">
@@ -491,7 +508,7 @@
     if (!el) return;
     if (seviye === 'all') { el.innerHTML = 'Tüm dağılım gösteriliyor.'; return; }
     let cumCount = 0, cumPct = 0;
-    for (let d = 0; d <= seviye; d++) { cumCount += PROB_DATA[d]?.count || 0; cumPct += parseFloat(PROB_DATA[d]?.pct || 0); }
+    for (let d = 0; d <= seviye; d++) { cumCount += PROB_DATA[d].count || 0; cumPct += parseFloat(PROB_DATA[d].pct || 0); }
     const labels = {0:'0 hata (15 doğru)',1:'en fazla 1 hata (14+)',2:'en fazla 2 hata (13+)'};
     el.innerHTML = '<strong>'+labels[seviye]+'</strong> → <strong>'+cumCount+'</strong> nokta (<strong>%'+cumPct.toFixed(2)+'</strong>)';
   }
@@ -506,7 +523,7 @@
     document.getElementById('statCifte').textContent=cifte;
     document.getElementById('statUclu').textContent=uclu;
     document.getElementById('statSpace').textContent=space>=1000?(space/1000).toFixed(1)+'k':space;
-    let bedel=space; const mode=document.getElementById('mode')?.value||'fix16';
+    let bedel=space; const mode=document.getElementById('mode').value||'fix16';
     if(mode==='fix16'&&cifte>=7) bedel=Math.round(space/8);
     const el=document.getElementById('statBedel');
     if(el) el.textContent=bedel>=1000?(bedel/1000).toFixed(1)+'k':bedel;
@@ -517,54 +534,67 @@
   const EXAMPLE=[['1'],['1','0'],['1'],['1','2'],['0'],['1','0'],['2'],['1','0'],['1'],['1','2'],['0','2'],['1'],['1','0'],['2'],['1','0']];
   function loadExample(){ EXAMPLE.forEach((syms,idx)=>{ document.querySelectorAll('input[name="match_'+(idx+1)+'"]').forEach(cb=>cb.checked=syms.includes(cb.value)); }); updateLiveStats(); hideClientError(); }
   function resetForm(){ fillAll(['1','0','2']); document.getElementById('mode').value='fix16'; toggleBudget('fix16'); document.getElementById('variant').value='0'; document.getElementById('budget').value='32'; hideClientError(); }
-  function showClientError(msg){ const el=document.getElementById('clientError'); el.textContent=msg; el.classList.add('show'); }
+  function appendClientLog(msg){
+    const el=document.getElementById('runLogText'); if(!el) return;
+    const ts=new Date().toISOString();
+    const block='=== SPOR TOTO ÇALIŞMA LOGU (TARAYICI) ===\n'+
+      'zaman: '+ts+'\n'+
+      '--- hata ---\n  '+msg+'\n'+
+      '--- not ---\n  Bu log sunucuya gitmeden tarayıcıda üretildi.\n'+
+      '  Form POST edilmedi; Fix-16 çifte kuralı veya bütçe doğrulaması engellemiş olabilir.\n'+
+      '=== LOG SONU ===\n';
+    el.value=block;
+  }
+  function showClientError(msg){
+    const el=document.getElementById('clientError');
+    el.textContent=msg; el.classList.add('show');
+    appendClientLog(msg);
+  }
   function hideClientError(){ document.getElementById('clientError').classList.remove('show'); }
+  function resetSubmitUI(){
+    const btn=document.getElementById('submitBtn');
+    const loading=document.getElementById('loading');
+    if(btn){ btn.disabled=false; btn.textContent='Formül Üret'; }
+    if(loading) loading.classList.remove('active');
+  }
+  window.addEventListener('pageshow', resetSubmitUI);
   document.getElementById('mainForm').addEventListener('submit', function(e){
-    const mode=document.getElementById('mode').value, budget=document.getElementById('budget').value;
+    var mode=document.getElementById('mode').value;
+    var budget=document.getElementById('budget').value;
+    var cifte=0, banko=0, uclu=0, i, n;
+    for(i=1;i<=15;i++){
+      n=document.querySelectorAll('input[name="match_'+i+'"]:checked').length;
+      if(n===0) n=3;
+      if(n===1) banko++; else if(n===2) cifte++; else uclu++;
+    }
+    var logEl=document.getElementById('runLogText');
+    if(logEl){
+      logEl.value='=== TARAYICI ===\\n'+
+        'olay: Formül Üret — form GÖNDERİLİYOR\\n'+
+        'mode: '+mode+' | çifte: '+cifte+'\\n';
+    }
     if((mode==='butce'||mode==='maxcov')&&(!budget||Number(budget)<1)){
-      e.preventDefault(); showClientError('Bütçe modu için pozitif kolon bütçesi giriniz.'); return;
+      e.preventDefault();
+      alert('Bütçe giriniz');
+      return false;
     }
-    if(mode==='fix16'){
-      let cifte=0;
-      for(let i=1;i<={{ match_count }};i++){
-        const n=document.querySelectorAll('input[name="match_'+i+'"]:checked').length||3;
-        if(n===2) cifte++;
-      }
-      if(cifte<7){
-        e.preventDefault();
-        showClientError('Fix-16 en az 7 çifte maç ister (şu an '+cifte+'). Bir maçı daha çifte yapın veya Mod=auto seçin.');
-        return;
-      }
+    if(mode==='fix16' && cifte<7){
+      e.preventDefault();
+      alert("Fix-16 için en az 7 çifte gerekir (şu an "+cifte+"). Örnek'e bas.");
+      return false;
     }
-    hideClientError(); document.getElementById('submitBtn').disabled=true; document.getElementById('loading').classList.add('active');
+    // preventDefault YOK — native POST
+    var btn=document.getElementById('submitBtn');
+    if(btn){ btn.disabled=true; btn.textContent='Gönderiliyor…'; }
+    var loading=document.getElementById('loading');
+    if(loading) loading.classList.add('active');
+    setTimeout(function(){
+      if(btn){ btn.disabled=false; btn.textContent='Formül Üret'; }
+      if(loading) loading.classList.remove('active');
+    }, 20000);
+    return true;
   });
-  function copyTable(){
-    const table=document.getElementById('resultTable'); if(!table) return;
-    let text=''; table.querySelectorAll('tbody tr').forEach((tr,i)=>{ const cells=[...tr.querySelectorAll('td')].slice(1,-1).map(td=>td.textContent.trim()); text+=(i+1)+' | '+cells.join(' ')+'\n'; });
-    navigator.clipboard.writeText(text.trim()).then(()=>{ const btn=document.getElementById('copyBtn'); btn.textContent='Kopyalandı'; btn.classList.add('copied'); setTimeout(()=>{ btn.textContent='Kopyala'; btn.classList.remove('copied'); },1800); });
-  }
-  function downloadImage(){
-    const table=document.getElementById('resultTable'); if(!table) return;
-    const rows=table.querySelectorAll('tbody tr'), cols=table.querySelectorAll('thead th').length;
-    const cellW=36, cellH=28, pad=20;
-    const canvas=document.createElement('canvas');
-    canvas.width=cols*cellW+pad*2; canvas.height=(rows.length+1)*cellH+pad*2+30;
-    const ctx=canvas.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,canvas.width,canvas.height);
-    ctx.fillStyle='#1d1d1f'; ctx.font='bold 14px -apple-system,sans-serif'; ctx.fillText('Spor Toto 14-Garanti Kupon',pad,pad+12);
-    ctx.font='12px -apple-system,sans-serif';
-    [...table.querySelectorAll('thead th')].forEach((th,i)=>{ ctx.fillStyle='#6e6e73'; ctx.fillText(th.textContent.trim(),pad+i*cellW+4,pad+40); });
-    rows.forEach((tr,ri)=>{ [...tr.querySelectorAll('td')].forEach((td,ci)=>{ ctx.fillStyle='#1d1d1f'; ctx.fillText(td.textContent.trim(),pad+ci*cellW+4,pad+40+(ri+1)*cellH); }); });
-    const a=document.createElement('a'); a.download='spor-toto-kupon.png'; a.href=canvas.toDataURL('image/png'); a.click();
-    const btn=document.getElementById('imgBtn'); btn.textContent='İndirildi'; btn.classList.add('done'); setTimeout(()=>{ btn.textContent='Görsel İndir'; btn.classList.remove('done'); },1800);
-  }
-  const STORAGE_KEY='spor_toto_saved_coupons';
-  const BAYES_PRESETS={
-    zayif_prior:{prior:0.5,evidence:15},
-    dengeli:{prior:1,evidence:10},
-    guclu_prior:{prior:5,evidence:8},
-    evidence_agir:{prior:1,evidence:40},
-    sadece_prior:{prior:3,evidence:0}
-  };
+
   function applyBayesPreset(key){
     if(!key||!BAYES_PRESETS[key]) return;
     const p=BAYES_PRESETS[key];
@@ -652,6 +682,17 @@
       }).join('');
     }catch(e){ sum.style.display='block'; sum.className='alert alert-error'; sum.textContent='Health erişilemedi: '+e.message+' — sunucu ayakta mı?'; }
     finally{ btn.disabled=false; btn.textContent='Testleri Çalıştır'; }
+  }
+
+  function copyRunLog(){
+    const el=document.getElementById('runLogText'); if(!el) return;
+    const text=el.value;
+    const done=()=>{ const btn=document.getElementById('logCopyBtn'); if(!btn) return;
+      btn.textContent='Kopyalandı'; btn.classList.add('copied');
+      setTimeout(()=>{ btn.textContent='Logu Kopyala'; btn.classList.remove('copied'); },1600); };
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(done).catch(()=>{ el.select(); document.execCommand('copy'); done(); });
+    } else { el.select(); document.execCommand('copy'); done(); }
   }
   updateLiveStats(); renderSavedList();
   {% if result and result.advanced %}document.getElementById('advPanel').classList.add('open');{% endif %}
