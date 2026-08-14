@@ -333,6 +333,11 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     t0 = time.time()
 
     try:
+        if args.mc_samples is not None and args.mc_samples < 0:
+            raise ValueError(
+                f"--mc-samples negatif olamaz (alindi: {args.mc_samples}). "
+                f"0 = MC kapali, pozitif = deneme sayisi."
+            )
         selections = parse_picks(args.picks)
         enc = Encoder(selections, kati=args.kati)
         args.parsed_probs = parse_probs(args.probs, selections) if args.probs else None
