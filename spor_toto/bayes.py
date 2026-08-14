@@ -13,6 +13,27 @@ eşlenik prior'ıdır; posterior ortalama kapalı formda gelir:
 - n (strength): evidence'a verilen güven (pseudo-gözlem sayısı)
 
 Posterior, mevcut exact + Monte Carlo motorlarına doğrudan verilir.
+
+α / n pratik seçim
+-----------------
+  α (Prior strength)
+    0.5–1   → zayıf prior, evidence hemen baskın olur
+    1–3     → dengeli (varsayılan 1)
+    5–20    → güçlü prior, seçim kümesine güven yüksek
+
+  n (Evidence strength)
+    0       → posterior = prior (evidence yok sayılır)
+    5–15    → orta güven (varsayılan 10)
+    30–100  → yüksek güven, evidence neredeyse doğrudan alınır
+    →∞      → posterior → evidence
+
+KL(p‖q) yorumu (nats)
+---------------------
+  < 0.02   ihmal edilebilir kayma
+  0.02–0.10  hafif
+  0.10–0.30  orta
+  0.30–0.70  belirgin
+  > 0.70   güçlü kayma (prior ile evidence çatışıyor)
 """
 
 from __future__ import annotations
@@ -20,6 +41,15 @@ from __future__ import annotations
 from typing import Dict, List, Optional, Sequence, Tuple
 
 from .core import SEMBOLLER
+
+# UI ve CLI için hazır preset'ler
+STRENGTH_PRESETS: Dict[str, Dict[str, float]] = {
+    "zayif_prior": {"prior_strength": 0.5, "evidence_strength": 15.0},
+    "dengeli": {"prior_strength": 1.0, "evidence_strength": 10.0},
+    "guclu_prior": {"prior_strength": 5.0, "evidence_strength": 8.0},
+    "evidence_agir": {"prior_strength": 1.0, "evidence_strength": 40.0},
+    "sadece_prior": {"prior_strength": 3.0, "evidence_strength": 0.0},
+}
 
 
 def _normalize(weights: Dict[str, float]) -> Dict[str, float]:
@@ -76,6 +106,34 @@ def prior_mean(prior_alpha: Dict[str, float]) -> Dict[str, float]:
     return {s: max(1e-9, float(prior_alpha.get(s, 0.0))) / total for s in SEMBOLLER}
 
 
+def interpret_kl(kl: float) -> str:
+    """KL(p‖q) nats → insan dilinde etiket."""
+    kl = float(kl)
+    if kl < 0.02:
+        return "ihmal edilebilir"
+    if kl < 0.10:
+        return "hafif kayma"
+    if kl < 0.30:
+        return "orta kayma"
+    if kl < 0.70:
+        return "belirgin kayma"
+    return "güçlü kayma"
+
+
+def recommend_strengths(
+    confidence: str = "dengeli",
+) -> Dict[str, float]:
+    """
+    Kullanıcı güven seviyesine göre α / n öner.
+
+    confidence: zayif_prior | dengeli | guclu_prior | evidence_agir | sadece_prior
+    """
+    key = confidence.strip().lower().replace(" ", "_")
+    if key not in STRENGTH_PRESETS:
+        key = "dengeli"
+    return dict(STRENGTH_PRESETS[key])
+
+
 def bayes_update_matches(
     selections: Sequence[Sequence[str]],
     evidence_probs: Sequence[Dict[str, float]],
@@ -86,7 +144,7 @@ def bayes_update_matches(
     Tüm maçlar için prior → posterior.
 
     Dönen her eleman:
-      prior_alpha, prior, evidence, posterior, kl_divergence
+      prior_alpha, prior, evidence, posterior, kl_prior_post, kl_ev_post, kl_label
     """
     if len(evidence_probs) != len(selections):
         raise ValueError(
@@ -99,13 +157,15 @@ def bayes_update_matches(
         prior = prior_mean(alpha)
         ev_n = _normalize(ev)
         post = dirichlet_posterior(alpha, ev_n, strength=evidence_strength)
+        kl_pp = _kl(post, prior)
         out.append({
             "prior_alpha": alpha,
             "prior": prior,
             "evidence": ev_n,
             "posterior": post,
-            "kl_prior_post": _kl(post, prior),
+            "kl_prior_post": kl_pp,
             "kl_ev_post": _kl(post, ev_n),
+            "kl_label": interpret_kl(kl_pp),
         })
     return out
 
@@ -136,9 +196,15 @@ def _kl(p: Dict[str, float], q: Dict[str, float]) -> float:
 def bayes_summary(
     updates: Sequence[Dict[str, object]],
 ) -> Dict[str, object]:
-    """Maç listesi özeti: ortalama KL, en çok kayan maçlar."""
+    """Maç listesi özeti: ortalama KL, etiket, en çok kayan maçlar."""
     if not updates:
-        return {"n": 0, "mean_kl_prior_post": 0.0, "top_shifts": []}
+        return {
+            "n": 0,
+            "mean_kl_prior_post": 0.0,
+            "mean_kl_label": interpret_kl(0.0),
+            "top_shifts": [],
+            "guide": _strength_guide(),
+        }
 
     kls = [float(u["kl_prior_post"]) for u in updates]  # type: ignore[arg-type]
     mean_kl = sum(kls) / len(kls)
@@ -151,14 +217,36 @@ def bayes_summary(
     for mac, u in ranked[:5]:
         post = u["posterior"]  # type: ignore[assignment]
         prior = u["prior"]  # type: ignore[assignment]
+        kl_val = float(u["kl_prior_post"])  # type: ignore[arg-type]
         top.append({
             "mac": mac,
-            "kl": float(u["kl_prior_post"]),  # type: ignore[arg-type]
+            "kl": kl_val,
+            "kl_label": interpret_kl(kl_val),
             "prior": {s: round(float(prior[s]), 4) for s in SEMBOLLER},  # type: ignore[index]
             "posterior": {s: round(float(post[s]), 4) for s in SEMBOLLER},  # type: ignore[index]
         })
     return {
         "n": len(updates),
         "mean_kl_prior_post": round(mean_kl, 6),
+        "mean_kl_label": interpret_kl(mean_kl),
         "top_shifts": top,
+        "guide": _strength_guide(),
+    }
+
+
+def _strength_guide() -> Dict[str, str]:
+    """UI / rapor için kısa α–n kılavuzu."""
+    return {
+        "alpha": (
+            "Prior α: 0.5–1 zayıf (evidence baskın), 1–3 dengeli, "
+            "5–20 güçlü (seçim kümesine güven)."
+        ),
+        "n": (
+            "Evidence n: 0 = sadece prior, 5–15 orta, 30–100 yüksek güven, "
+            "büyük n → posterior ≈ evidence."
+        ),
+        "kl": (
+            "KL: <0.02 ihmal, 0.02–0.10 hafif, 0.10–0.30 orta, "
+            "0.30–0.70 belirgin, >0.70 güçlü kayma."
+        ),
     }
