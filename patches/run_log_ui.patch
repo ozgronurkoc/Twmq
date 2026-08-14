@@ -1,0 +1,49 @@
+--- a/templates/index.html
++++ b/templates/index.html
+@@ -162,6 +162,10 @@
+     .surv-table thead, .surv-table tbody { display: table; width: 100%; table-layout: fixed; }
+     .surv-table th { text-align: left; color: var(--text-sec); font-size: 0.66rem; padding: 3px 6px; border-bottom: 1px solid var(--border-light); }
+     .surv-table td { padding: 3px 6px; border-bottom: 1px solid var(--border-light); }
++    .log-box { width: 100%; min-height: 160px; max-height: 320px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
++      font-size: 0.72rem; line-height: 1.45; padding: 12px; border-radius: var(--radius-sm);
++      border: 1px solid var(--border); background: #fafafa; color: var(--text); resize: vertical; white-space: pre; overflow: auto; }
++    .log-actions { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+   </style>
+ </head>
+ <body>
+@@ -281,6 +285,17 @@
+   </div>
+   <div class="right-col">
+     {% if error %}<div class="alert alert-error" style="margin-bottom:14px"><strong>Hata:</strong> {{ error }}</div>{% endif %}
++
++    {% if run_log_text %}
++    <div class="card" style="margin-bottom:14px" id="runLogCard">
++      <div class="card-title">Çalışma Logu</div>
++      <div class="adv-hint" style="margin-bottom:8px">Her Formül Üret adımı burada. Gelişmiş olasılık yoksa MC çalışmaz (örnek=0). Kopyalayıp paylaşabilirsiniz.</div>
++      <textarea class="log-box" id="runLogText" readonly>{{ run_log_text }}</textarea>
++      <div class="log-actions">
++        <button type="button" class="copy-btn" id="logCopyBtn" onclick="copyRunLog()">Logu Kopyala</button>
++      </div>
++    </div>
++    {% endif %}
+     {% if result %}
+       {% if result.get('uyarilar') %}{% for u in result.uyarilar %}<div class="alert alert-warn" style="margin-bottom:10px">{{ u }}</div>{% endfor %}{% endif %}
+       <div class="card">
+@@ -653,6 +668,17 @@
+     }catch(e){ sum.style.display='block'; sum.className='alert alert-error'; sum.textContent='Health erişilemedi: '+e.message+' — sunucu ayakta mı?'; }
+     finally{ btn.disabled=false; btn.textContent='Testleri Çalıştır'; }
+   }
++
++  function copyRunLog(){
++    const el=document.getElementById('runLogText'); if(!el) return;
++    const text=el.value;
++    const done=()=>{ const btn=document.getElementById('logCopyBtn'); if(!btn) return;
++      btn.textContent='Kopyalandı'; btn.classList.add('copied');
++      setTimeout(()=>{ btn.textContent='Logu Kopyala'; btn.classList.remove('copied'); },1600); };
++    if(navigator.clipboard&&navigator.clipboard.writeText){
++      navigator.clipboard.writeText(text).then(done).catch(()=>{ el.select(); document.execCommand('copy'); done(); });
++    } else { el.select(); document.execCommand('copy'); done(); }
++  }
+   updateLiveStats(); renderSavedList();
+   {% if result and result.advanced %}document.getElementById('advPanel').classList.add('open');{% endif %}
+   {% if result and result.bayes %}document.getElementById('advPanel').classList.add('open');{% endif %}
