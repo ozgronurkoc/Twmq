@@ -8,6 +8,12 @@ import time
 from typing import List, Optional, Sequence
 
 from . import __version__
+from .bayes import (
+    STRENGTH_PRESETS,
+    bayes_summary,
+    bayes_update_matches,
+    recommend_strengths,
+)
 from .core import (Encoder, Fix16Hatasi, HAS_SCIPY, Point, ball,
                    butce_danismani, dogrula_kaplama, exact_cover,
                    exact_max_coverage, greedy_full, merge_rows, parse_picks,
@@ -15,6 +21,7 @@ from .core import (Encoder, Fix16Hatasi, HAS_SCIPY, Point, ball,
 from .report import CIZGI, INCE, basliklar, yazdir_ve_kaydet
 
 ORNEK = "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"
+BAYES_PRESET_CHOICES = tuple(STRENGTH_PRESETS.keys())
 
 
 def _log(msg: str) -> None:
@@ -26,6 +33,56 @@ def _mc_kwargs(args) -> dict:
         "mc_samples": getattr(args, "mc_samples", 0) or 0,
         "mc_seed": getattr(args, "seed", 42),
     }
+
+
+def _apply_bayes(enc: Encoder, args) -> None:
+    """--bayes / --bayes-preset varsa evidence → Dirichlet posterior."""
+    args.bayes_info = None
+    use_bayes = bool(args.bayes or args.bayes_preset)
+    if not use_bayes:
+        return
+    if args.parsed_probs is None:
+        raise ValueError(
+            "--bayes / --bayes-preset icin --probs zorunlu "
+            "(evidence olmadan posterior uretilemez)"
+        )
+
+    if args.bayes_preset:
+        preset = recommend_strengths(args.bayes_preset)
+        prior_s = (
+            float(args.prior_strength)
+            if args.prior_strength is not None
+            else float(preset["prior_strength"])
+        )
+        evid_s = (
+            float(args.evidence_strength)
+            if args.evidence_strength is not None
+            else float(preset["evidence_strength"])
+        )
+        preset_name = args.bayes_preset
+    else:
+        prior_s = float(args.prior_strength) if args.prior_strength is not None else 1.0
+        evid_s = (
+            float(args.evidence_strength) if args.evidence_strength is not None else 10.0
+        )
+        preset_name = "manuel"
+
+    updates = bayes_update_matches(
+        enc.selections,
+        args.parsed_probs,
+        prior_strength=prior_s,
+        evidence_strength=evid_s,
+    )
+    args.parsed_probs = [u["posterior"] for u in updates]  # type: ignore[misc]
+    summary = bayes_summary(updates)
+    args.bayes_info = [
+        f"Bayes           : Dirichlet posterior (preset={preset_name})",
+        f"  Prior α       : {prior_s}  ·  Evidence n : {evid_s}",
+        f"  Ort. KL       : {summary['mean_kl_prior_post']}  "
+        f"({summary.get('mean_kl_label', '')})",
+        "  NOT            : 14-garanti kombinatoryal; Bayes sadece olasilik "
+        "agirliklarini gunceller.",
+    ]
 
 
 def _mod_fix16(enc: Encoder, args) -> None:
@@ -200,11 +257,15 @@ Ornekler:
   spor-toto --picks "{ORNEK}" --mode butce --budget 32
   spor-toto --picks "{ORNEK}" --mode maxcov --budget 16
   spor-toto --picks "{ORNEK}" --probs "1:1,0:1,2:1;..." --mc-samples 20000
+  spor-toto --picks "{ORNEK}" --probs "..." --bayes-preset dengeli --mc-samples 10000
+  spor-toto --picks "{ORNEK}" --probs "..." --bayes --prior-strength 2 --evidence-strength 20
 
 --picks bicimi: 15 mac virgulle ayrilir, her macin secenekleri bitisik
 yazilir. '1' banko ev sahibi, '10' cifte, '102' kapama (uclu).
 
 --probs bicimi: maclar ';' ile ayrilir, her mac '1:0.5,0:0.3,2:0.2'.
+
+--bayes-preset: zayif_prior | dengeli | guclu_prior | evidence_agir | sadece_prior
 """)
     p.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     p.add_argument("--picks", type=str, default=ORNEK,
@@ -213,6 +274,21 @@ yazilir. '1' banko ev sahibi, '10' cifte, '102' kapama (uclu).
                    help="Mac basina olasilik tahminleri (istege bagli)")
     p.add_argument("--mc-samples", type=int, default=0,
                    help="--probs ile Monte Carlo deneme sayisi (0=kapali)")
+    p.add_argument("--bayes", action="store_true",
+                   help="--probs varsa Dirichlet Bayes guncellemesi uygula")
+    p.add_argument(
+        "--bayes-preset",
+        choices=list(BAYES_PRESET_CHOICES),
+        default=None,
+        help=(
+            "Bayes alpha/n kisa yolu: zayif_prior | dengeli | guclu_prior | "
+            "evidence_agir | sadece_prior (ayrica --bayes acar)"
+        ),
+    )
+    p.add_argument("--prior-strength", type=float, default=None,
+                   help="Dirichlet prior alpha (preset/bayes yoksa 1.0)")
+    p.add_argument("--evidence-strength", type=float, default=None,
+                   help="Evidence n / guven (preset/bayes yoksa 10.0)")
     p.add_argument("--mode",
                    choices=["fix16", "auto", "exact", "block", "heuristic",
                             "butce", "maxcov"],
@@ -260,6 +336,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         selections = parse_picks(args.picks)
         enc = Encoder(selections, kati=args.kati)
         args.parsed_probs = parse_probs(args.probs, selections) if args.probs else None
+        _apply_bayes(enc, args)
 
         print(CIZGI)
         print(f"SPOR TOTO 14-GARANTI FORMUL URETICISI v{__version__}")
@@ -271,6 +348,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         if not HAS_SCIPY:
             print("UYARI          : scipy bulunamadi; kesin cozucu devre disi "
                   "(pip install scipy)")
+        if getattr(args, "bayes_info", None):
+            for line in args.bayes_info:
+                print(line)
         print(INCE)
 
         if args.mode == "fix16":

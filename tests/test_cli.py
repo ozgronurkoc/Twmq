@@ -254,6 +254,43 @@ def test_parser_yardim_metni():
     yardim = p.format_help()
     assert "--picks" in yardim
     assert "fix16" in yardim
+    assert "--bayes-preset" in yardim
+    assert "dengeli" in yardim
+
+
+def test_cli_bayes_preset_dengeli(capsys):
+    assert main([
+        "--picks", ORNEK,
+        "--probs", esit_olasilik(ORNEK),
+        "--bayes-preset", "dengeli",
+        "--kisa", "--no-compare",
+    ]) == 0
+    out = capsys.readouterr().out
+    assert "Bayes" in out
+    assert "preset=dengeli" in out
+    assert "Prior" in out
+    assert "14-GARANTI DOGRULANDI" in out
+
+
+def test_cli_bayes_requires_probs(capsys):
+    code = main(["--picks", ORNEK, "--bayes-preset", "dengeli", "--kisa"])
+    assert code == 1
+    err = capsys.readouterr().err
+    assert "probs" in err.lower()
+
+
+def test_cli_bayes_manual_strengths(capsys):
+    assert main([
+        "--picks", ORNEK,
+        "--probs", esit_olasilik(ORNEK),
+        "--bayes",
+        "--prior-strength", "2",
+        "--evidence-strength", "5",
+        "--kisa", "--no-compare",
+    ]) == 0
+    out = capsys.readouterr().out
+    assert "Prior" in out
+    assert "Evidence" in out
 
 
 @pytest.mark.parametrize("mode", ["fix16", "auto", "block", "heuristic"])
