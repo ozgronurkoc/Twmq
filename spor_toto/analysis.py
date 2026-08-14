@@ -1,13 +1,12 @@
-"""Monte Carlo olasılık simülasyonu ve maç bazlı hata frekansı."""
+"""Analiz katmani: Monte Carlo ve mac bazli hata frekansi."""
 
 from __future__ import annotations
 
 import math
 import random
-from collections import Counter
 from typing import Dict, List, Optional, Sequence, Tuple
 
-from .core import Encoder, Point, SEMBOLLER
+from .core import SEMBOLLER, Encoder, Point, ball, hamming
 
 
 def monte_carlo_report(
@@ -18,18 +17,15 @@ def monte_carlo_report(
     seed: int = 42,
 ) -> dict:
     """
-    Kullanıcı olasılıkları altında Monte Carlo simülasyonu.
+    Independent multinomial draws per match → outcome in {1,0,2}^15.
 
-    Dönen alanlar (her biri p, pct, se, ci95, count içerir):
-      kume_ici, p15, p14, p13, p12
+    Reports empirical rates for: selection-set membership, best-column
+    hits at 15/14/13/12, with normal-approx 95% CI half-widths.
 
-    n_samples < 1 → ValueError (sessiz sıfır rapor yok).
-    1 ≤ n_samples < 100 → çalışır ama 'warning' alanı eklenir.
+    n_samples < 1 → ValueError (sessiz sifir rapor yok).
+    1 ≤ n_samples < 100 → calisir ama 'warning' alani eklenir.
+    100 ≤ n_samples < 1000 → yumusak warning.
     """
-    if len(probs) != enc.total_len:
-        raise ValueError(
-            f"{len(probs)} maç için olasılık verildi, {enc.total_len} bekleniyordu."
-        )
     try:
         n_samples = int(n_samples)
     except (TypeError, ValueError) as e:
@@ -44,6 +40,11 @@ def monte_carlo_report(
         warning = (
             f"n_samples={n_samples} cok dusuk; %95 CI guvenilmez. "
             f"En az 1000 (tercihen 10000+) onerilir."
+        )
+    elif n_samples < 1000:
+        warning = (
+            f"n_samples={n_samples} dusuk; CI genis kalabilir. "
+            f"Karar icin en az 1000, rapor icin 10000+ onerilir."
         )
 
     rng = random.Random(seed)
@@ -81,53 +82,56 @@ def monte_carlo_report(
                     break
             outcome.append(chosen)
 
-        if not all(outcome[i] in sel_sets[i] for i in range(enc.total_len)):
+        if any(outcome[i] not in sel_sets[i] for i in range(enc.total_len)):
             continue
         n_ici += 1
 
-        try:
-            var = tuple(
-                enc.variable_syms[j].index(outcome[pos])
-                for j, pos in enumerate(enc.variable_pos)
-            )
-        except ValueError:
-            continue
-
-        if not cols:
-            d = 99
-        elif not enc.variable_pos:
-            d = 0
+        # Best column distance in variable space only (banko fixed match)
+        if not enc.variable_pos:
+            best = 0
         else:
-            d = min(sum(a != b for a, b in zip(var, c)) for c in cols)
+            # Map outcome symbols on variable positions to alphabet indices
+            var_idx: List[int] = []
+            ok = True
+            for j, pos in enumerate(enc.variable_pos):
+                sym = outcome[pos]
+                try:
+                    var_idx.append(enc.variable_syms[j].index(sym))
+                except ValueError:
+                    ok = False
+                    break
+            if not ok:
+                continue
+            pt = tuple(var_idx)
+            best = min(hamming(pt, c) for c in cols) if cols else 99
 
-        dogru = 15 - d
-        if dogru >= 15:
+        if best == 0:
             n_15 += 1
-        elif dogru == 14:
+        elif best == 1:
             n_14 += 1
-        elif dogru == 13:
+        elif best == 2:
             n_13 += 1
-        elif dogru == 12:
+        elif best == 3:
             n_12 += 1
 
-    def rate(k: int) -> dict:
+    def _rate(k: int) -> dict:
         p = k / n_samples if n_samples else 0.0
         se = math.sqrt(p * (1.0 - p) / n_samples) if n_samples else 0.0
         return {
-            "p": p,
-            "pct": round(100.0 * p, 3),
-            "se": se,
-            "ci95": round(1.96 * se * 100.0, 3),
             "count": k,
+            "pct": 100.0 * p,
+            "se": se,
+            "ci95": 1.96 * 100.0 * se,
         }
 
     out = {
         "n_samples": n_samples,
-        "kume_ici": rate(n_ici),
-        "p15": rate(n_15),
-        "p14": rate(n_14),
-        "p13": rate(n_13),
-        "p12": rate(n_12),
+        "seed": seed,
+        "kume_ici": _rate(n_ici),
+        "p15": _rate(n_15),
+        "p14": _rate(n_14),
+        "p13": _rate(n_13),
+        "p12": _rate(n_12),
     }
     if warning:
         out["warning"] = warning
@@ -137,54 +141,56 @@ def monte_carlo_report(
 def match_error_frequency(
     enc: Encoder,
     cols: Sequence[Point],
-    max_d: int = 2,
+    max_distance: int = 2,
 ) -> dict:
     """
-    Uniform varsayım altında, d=1 ve d=2 katmanlarında
-    hangi maçların hata ürettiğini sayar.
+    For each variable match, how often it is among the disagreeing coordinates
+    when the nearest column is at distance d (d=1 or d=2).
     """
-    if not cols or not enc.alphabet_sizes:
-        return {"d1": [], "d2": [], "n1": 0, "n2": 0}
+    sizes = enc.alphabet_sizes
+    if not sizes or not cols:
+        return {"d1": {}, "d2": {}, "n1": 0, "n2": 0}
 
-    err_d1: Counter = Counter()
-    err_d2: Counter = Counter()
+    from itertools import product
+
+    space = list(product(*[range(k) for k in sizes]))
+    d1_counts = [0] * len(sizes)
+    d2_counts = [0] * len(sizes)
     n1 = n2 = 0
 
-    for pt in enc.variable_space():
-        best_d = 999
-        best_c: Optional[Point] = None
+    for pt in space:
+        best_d = 99
+        best_cols = []
         for c in cols:
-            d = sum(a != b for a, b in zip(pt, c))
+            d = hamming(pt, c)
             if d < best_d:
                 best_d = d
-                best_c = c
-        if best_c is None:
-            continue
+                best_cols = [c]
+            elif d == best_d:
+                best_cols.append(c)
         if best_d == 1:
             n1 += 1
-            for i, (a, b) in enumerate(zip(pt, best_c)):
-                if a != b:
-                    err_d1[enc.variable_pos[i] + 1] += 1
+            for c in best_cols:
+                for i, (a, b) in enumerate(zip(pt, c)):
+                    if a != b:
+                        d1_counts[i] += 1
         elif best_d == 2:
             n2 += 1
-            for i, (a, b) in enumerate(zip(pt, best_c)):
-                if a != b:
-                    err_d2[enc.variable_pos[i] + 1] += 1
+            for c in best_cols:
+                for i, (a, b) in enumerate(zip(pt, c)):
+                    if a != b:
+                        d2_counts[i] += 1
 
-    def to_list(counter: Counter, total: int) -> List[dict]:
-        items = []
-        for mac in sorted(counter.keys()):
-            cnt = counter[mac]
-            items.append({
-                "mac": mac,
-                "count": cnt,
-                "pct": round(100.0 * cnt / total, 2) if total else 0.0,
-            })
-        return items
+    def _pack(counts, n):
+        out = {}
+        for i, cnt in enumerate(counts):
+            mac = enc.variable_pos[i] + 1
+            out[mac] = {"count": cnt, "share": (cnt / n) if n else 0.0}
+        return out
 
     return {
-        "d1": to_list(err_d1, max(n1, 1)),
-        "d2": to_list(err_d2, max(n2, 1)),
+        "d1": _pack(d1_counts, n1),
+        "d2": _pack(d2_counts, n2),
         "n1": n1,
         "n2": n2,
     }
