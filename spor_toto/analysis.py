@@ -48,7 +48,6 @@ def monte_carlo_report(
 
     rng = random.Random(seed)
 
-    # Her maç için normalize kümülatif dağılım (toplam = 1)
     cum: List[List[Tuple[float, str]]] = []
     for i in range(enc.total_len):
         p = probs[i]
@@ -63,7 +62,6 @@ def monte_carlo_report(
         for w, sym in zip(weights, SEMBOLLER):
             running += w
             entries.append((running, sym))
-        # son eşiği tam 1.0 yap (float kayması)
         if entries:
             entries[-1] = (1.0, entries[-1][1])
         cum.append(entries)
@@ -142,65 +140,51 @@ def match_error_frequency(
     max_d: int = 2,
 ) -> dict:
     """
-    Seçim kümesi içinde, her mesafe katmanı (d=1, d=2, ...) için
-    hangi maçların hata ürettiğinin frekansı.
-
-    Dönen yapı:
-      n1, n2, d1: [{mac, count, pct}, ...], d2: [...]
+    Uniform varsayım altında, d=1 ve d=2 katmanlarında
+    hangi maçların hata ürettiğini sayar.
     """
-    from .core import distance_layers, dogrula_kaplama
+    if not cols or not enc.alphabet_sizes:
+        return {"d1": [], "d2": [], "n1": 0, "n2": 0}
 
-    # Brute force only for modest spaces
-    space = list(enc.variable_space()) if hasattr(enc, "variable_space") else []
-    if not space:
-        # reconstruct from alphabet
-        from itertools import product
-        space = list(product(*[range(k) for k in enc.alphabet_sizes]))
-
-    if len(space) > 20000:
-        return {"n1": 0, "n2": 0, "d1": [], "d2": [], "skipped": True}
-
-    err1: Counter = Counter()
-    err2: Counter = Counter()
+    err_d1: Counter = Counter()
+    err_d2: Counter = Counter()
     n1 = n2 = 0
 
-    for pt in space:
-        if not cols:
+    for pt in enc.variable_space():
+        best_d = 999
+        best_c: Optional[Point] = None
+        for c in cols:
+            d = sum(a != b for a, b in zip(pt, c))
+            if d < best_d:
+                best_d = d
+                best_c = c
+        if best_c is None:
             continue
-        dists = [sum(a != b for a, b in zip(pt, c)) for c in cols]
-        d = min(dists) if dists else 99
-        if d == 0:
-            continue
-        # which variable positions differ from nearest col
-        nearest = cols[dists.index(d)]
-        bad_pos = [j for j, (a, b) in enumerate(zip(pt, nearest)) if a != b]
-        # map variable index → match number (1-based full index)
-        for j in bad_pos:
-            mac = enc.variable_pos[j] + 1
-            if d == 1:
-                err1[mac] += 1
-            elif d == 2:
-                err2[mac] += 1
-        if d == 1:
+        if best_d == 1:
             n1 += 1
-        elif d == 2:
+            for i, (a, b) in enumerate(zip(pt, best_c)):
+                if a != b:
+                    err_d1[enc.variable_pos[i] + 1] += 1
+        elif best_d == 2:
             n2 += 1
+            for i, (a, b) in enumerate(zip(pt, best_c)):
+                if a != b:
+                    err_d2[enc.variable_pos[i] + 1] += 1
 
-    def pack(counter: Counter, n: int):
-        if n <= 0:
-            return []
-        rows = []
-        for mac, cnt in sorted(counter.items(), key=lambda x: (-x[1], x[0])):
-            rows.append({
+    def to_list(counter: Counter, total: int) -> List[dict]:
+        items = []
+        for mac in sorted(counter.keys()):
+            cnt = counter[mac]
+            items.append({
                 "mac": mac,
                 "count": cnt,
-                "pct": round(100.0 * cnt / n, 2),
+                "pct": round(100.0 * cnt / total, 2) if total else 0.0,
             })
-        return rows
+        return items
 
     return {
+        "d1": to_list(err_d1, max(n1, 1)),
+        "d2": to_list(err_d2, max(n2, 1)),
         "n1": n1,
         "n2": n2,
-        "d1": pack(err1, n1),
-        "d2": pack(err2, n2),
     }
