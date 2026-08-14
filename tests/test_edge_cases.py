@@ -38,12 +38,11 @@ def test_picks_bos():
 
 
 def test_picks_bos_slot_ortada():
-    """Bos slot sessizce atlanmamali. core.py parse_picks guncellemesi ile aktif."""
-    try:
+    """Bos slot sessizce atlanmamali."""
+    with pytest.raises(ValueError, match="bos mac slotu"):
         parse_picks("1,,10")
-        pytest.skip("parse_picks bos-slot sertlestirmesi henuz remote core'da degil")
-    except ValueError as e:
-        assert "bos mac slotu" in str(e)
+    with pytest.raises(ValueError, match="bos mac slotu"):
+        parse_picks("1, ,10")
 
 
 def test_picks_gecersiz_sembol():

@@ -18,6 +18,7 @@ birlestirilirse yaricap 2 olur ve garanti kirilir.
 """
 
 from __future__ import annotations
+import re
 
 import heapq
 import time as _time
@@ -116,16 +117,34 @@ def parse_picks(text: str) -> List[List[str]]:
     """
     '1,10,1,12,0,...' -> [['1'], ['1','0'], ['1'], ['1','2'], ['0'], ...]
     Ayirici olarak virgul, bosluk, noktali virgul veya '/' kabul edilir.
+    Ortadaki bos slotlar (ornegin '1,,10') ValueError firlatir; bas/son
+    fazla ayiricilar yok sayilir. '1, 10' gibi bosluklu yazim gecerlidir.
     """
     if not text or not text.strip():
         raise ValueError("--picks bos olamaz.")
     tmp = text
-    for ch in (";", "/", "|", "\n", "\t", " "):
+    for ch in (";", "/", "|", "\n", "\t"):
         tmp = tmp.replace(ch, ",")
-    parts = [p.strip() for p in tmp.split(",") if p.strip()]
-    if not parts:
+    # Once virgul cevresindeki bosluklari temizle (1, 10 -> 1,10)
+    tmp = re.sub(r"\s*,\s*", ",", tmp)
+    # Kalan bosluklari ayirici say
+    tmp = re.sub(r"\s+", ",", tmp)
+    raw_parts = [p.strip() for p in tmp.split(",")]
+    while raw_parts and not raw_parts[0]:
+        raw_parts.pop(0)
+    while raw_parts and not raw_parts[-1]:
+        raw_parts.pop()
+    if not raw_parts:
         raise ValueError(f"--picks ayristirilamadi: {text!r}")
-    return [sirala_semboller(p) for p in parts]
+    if any(not p for p in raw_parts):
+        raise ValueError(
+            "bos mac slotu: ardisik veya bos ayirici (orn. '1,,10'). "
+            "Her mac icin en az bir sembol girin."
+        )
+    return [sirala_semboller(p) for p in raw_parts]
+
+
+
 
 
 def parse_probs(text: str, selections: Sequence[Sequence[str]]) -> List[Dict[str, float]]:

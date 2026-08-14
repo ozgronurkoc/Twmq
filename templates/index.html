@@ -559,11 +559,11 @@
   }
   const STORAGE_KEY='spor_toto_saved_coupons';
   const BAYES_PRESETS={
-    zayif_prior:{prior:0.5,evidence:10},
+    zayif_prior:{prior:0.5,evidence:15},
     dengeli:{prior:1,evidence:10},
-    guclu_prior:{prior:5,evidence:10},
-    evidence_agir:{prior:1,evidence:30},
-    sadece_prior:{prior:1,evidence:0}
+    guclu_prior:{prior:5,evidence:8},
+    evidence_agir:{prior:1,evidence:40},
+    sadece_prior:{prior:3,evidence:0}
   };
   function applyBayesPreset(key){
     if(!key||!BAYES_PRESETS[key]) return;
