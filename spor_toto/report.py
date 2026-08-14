@@ -97,6 +97,8 @@ def yazdir_ve_kaydet(enc: Encoder, cols: List[Point], baslik: str,
     print(f"Kupon satiri          : {len(rows)}")
     print(f"Kolon bedeli          : {len(cols)}")
     print(f"Kure-kaplama alt sinir: {enc.lower_bound()}")
+    print("NOT                   : Satir != bedel. Cifte/kapama satiri "
+          "birden fazla kolon uretir; odenecek tutar kolon bedelidir.")
     for note in ek_notlar:
         print(f"                        {note}")
     print(INCE)
@@ -117,6 +119,19 @@ def yazdir_ve_kaydet(enc: Encoder, cols: List[Point], baslik: str,
             print(INCE)
             for line in monte_carlo_satirlari(mc):
                 print(line)
+            def _pct(x: float) -> float:
+                return 100.0 * float(x)
+            gaps = [
+                ("kume_ici", _pct(rap.p_kume_ici), float(mc["kume_ici"]["pct"])),
+                ("P15", _pct(rap.p_15), float(mc["p15"]["pct"])),
+                ("P14", _pct(rap.p_14), float(mc["p14"]["pct"])),
+            ]
+            print(INCE)
+            print("Exact vs Monte Carlo sapma (puan, yuzde puan):")
+            for name, ex, mc_p in gaps:
+                d = mc_p - ex
+                print(f"  {name:8s}: exact %{ex:6.2f}  MC %{mc_p:6.2f}  "
+                      f"delta {d:+.2f}")
     print(INCE)
 
     print(f"\nKUPONA YAZILACAK: {len(rows)} satir "
