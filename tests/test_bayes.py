@@ -7,8 +7,10 @@ from spor_toto.bayes import (
     bayes_update_matches,
     default_prior,
     dirichlet_posterior,
+    interpret_kl,
     posteriors_only,
     prior_mean,
+    recommend_strengths,
 )
 from spor_toto.core import SEMBOLLER, parse_picks
 
@@ -102,3 +104,38 @@ def test_bayes_summary_top_shifts():
 def test_length_mismatch_raises():
     with pytest.raises(ValueError):
         bayes_update_matches([["1"]], [{"1": 1}, {"0": 1}])
+
+
+def test_interpret_kl_labels():
+    assert interpret_kl(0.005) == "ihmal edilebilir"
+    assert interpret_kl(0.05) == "hafif kayma"
+    assert interpret_kl(0.2) == "orta kayma"
+    assert interpret_kl(0.5) == "belirgin kayma"
+    assert interpret_kl(1.0) == "güçlü kayma"
+
+
+def test_recommend_strengths_presets():
+    d = recommend_strengths("dengeli")
+    assert d["prior_strength"] == 1.0 and d["evidence_strength"] == 10.0
+    e = recommend_strengths("evidence_agir")
+    assert e["evidence_strength"] >= 30.0
+    # bilinmeyen → dengeli
+    assert recommend_strengths("xyz")["prior_strength"] == 1.0
+
+
+def test_bayes_summary_has_label_and_guide():
+    sels = parse_picks("1,10")
+    ev = [
+        {"1": 0.9, "0": 0.05, "2": 0.05},
+        {"1": 0.3, "0": 0.3, "2": 0.4},
+    ]
+    rows = bayes_update_matches(sels, ev, evidence_strength=15.0)
+    summary = bayes_summary(rows)
+    assert "mean_kl_label" in summary
+    assert summary["mean_kl_label"] in {
+        "ihmal edilebilir", "hafif kayma", "orta kayma",
+        "belirgin kayma", "güçlü kayma",
+    }
+    assert "guide" in summary and "kl" in summary["guide"]
+    assert "kl_label" in rows[0]
+    assert "kl_label" in summary["top_shifts"][0]
