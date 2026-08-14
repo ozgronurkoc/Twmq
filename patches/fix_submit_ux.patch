@@ -1,0 +1,47 @@
+diff --git a/templates/index.html b/templates/index.html
+--- a/templates/index.html
++++ b/templates/index.html
+@@ -519,24 +519,39 @@
+   function resetForm(){ fillAll(['1','0','2']); document.getElementById('mode').value='fix16'; toggleBudget('fix16'); document.getElementById('variant').value='0'; document.getElementById('budget').value='32'; hideClientError(); }
+   function showClientError(msg){ const el=document.getElementById('clientError'); el.textContent=msg; el.classList.add('show'); }
+   function hideClientError(){ document.getElementById('clientError').classList.remove('show'); }
++  function resetSubmitUI(){
++    const btn=document.getElementById('submitBtn');
++    const load=document.getElementById('loading');
++    if(btn){ btn.disabled=false; }
++    if(load){ load.classList.remove('active'); }
++  }
++  window.addEventListener('pageshow', resetSubmitUI);
+   document.getElementById('mainForm').addEventListener('submit', function(e){
+     const mode=document.getElementById('mode').value, budget=document.getElementById('budget').value;
+     if((mode==='butce'||mode==='maxcov')&&(!budget||Number(budget)<1)){
+-      e.preventDefault(); showClientError('Bütçe modu için pozitif kolon bütçesi giriniz.'); return;
++      e.preventDefault();
++      resetSubmitUI();
++      showClientError('Bütçe modu için pozitif kolon bütçesi giriniz.');
++      document.getElementById('clientError').scrollIntoView({behavior:'smooth',block:'center'});
++      return;
+     }
+     if(mode==='fix16'){
+       let cifte=0;
+       for(let i=1;i<={{ match_count }};i++){
+-        const n=document.querySelectorAll('input[name="match_'+i+'"]:checked').length||3;
++        const n=document.querySelectorAll('input[name="match_'+i+'"]:checked').length;
+         if(n===2) cifte++;
+       }
+       if(cifte<7){
+         e.preventDefault();
+-        showClientError('Fix-16 en az 7 çifte maç ister (şu an '+cifte+'). Bir maçı daha çifte yapın veya Mod=auto seçin.');
++        resetSubmitUI();
++        showClientError('Fix-16 en az 7 çifte maç ister (şu an '+cifte+'). «Örnek» yükleyin veya Mod=auto seçin.');
++        document.getElementById('clientError').scrollIntoView({behavior:'smooth',block:'center'});
+         return;
+       }
+     }
+-    hideClientError(); document.getElementById('submitBtn').disabled=true; document.getElementById('loading').classList.add('active');
++    hideClientError();
++    document.getElementById('submitBtn').disabled=true;
++    document.getElementById('loading').classList.add('active');
+   });
+   function copyTable(){
+     const table=document.getElementById('resultTable'); if(!table) return;
