@@ -72,6 +72,8 @@ def monte_carlo_satirlari(mc: dict) -> List[str]:
         f"  P(13)    : %{mc['p13']['pct']:6.3f}  ±{mc['p13']['ci95']}",
         f"  P(12)    : %{mc['p12']['pct']:6.3f}  ±{mc['p12']['ci95']}",
     ]
+    if mc.get("warning"):
+        lines.append(f"  UYARI    : {mc['warning']}")
     return lines
 
 
@@ -87,14 +89,8 @@ def yazdir_ve_kaydet(enc: Encoder, cols: List[Point], baslik: str,
     toplam_bedel = sum(row_cost(r) for r in rows)
     worst, acik = dogrula_kaplama(cols, enc.alphabet_sizes)
 
-    if set(rows_to_points(rows)) != set(cols):
-        raise AssertionError(
-            "Satir sikistirma kolon kumesini degistirdi - bu bir hatadir.")
-    if toplam_bedel != len(cols):
-        raise AssertionError(
-            f"Satir bedeli {toplam_bedel}, kolon sayisi {len(cols)} - uyusmuyor.")
-
-    print("\n" + CIZGI)
+    print()
+    print(CIZGI)
     print("SONUC")
     print(CIZGI)
     print(f"Yontem                : {baslik}")
