@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import logging
 import os
+import time
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from flask import Flask, jsonify, render_template, request
@@ -38,6 +40,7 @@ MODES = [
 ]
 
 DEFAULT_PICKS = "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"
+MC_WEB_SAMPLES = 80_000
 
 
 def _parse_form_picks(form) -> str:
@@ -101,7 +104,7 @@ def _run_fix16(enc: Encoder, variant: int = 0) -> Dict[str, Any]:
 
 def _run_auto(enc: Encoder) -> Dict[str, Any]:
     aday = []
-    r = solve_by_blocks(enc, max_block_space=256, time_limit=min(30.0, 30.0))
+    r = solve_by_blocks(enc, max_block_space=256, time_limit=30.0)
     if r:
         aday.append((r[0], f"Blok ayrıştırma ({r[1]})", False))
     if enc.space_size() <= 512 and HAS_SCIPY:
@@ -139,6 +142,56 @@ def _run_maxcov(enc: Encoder, budget: int) -> Dict[str, Any]:
         "DİKKAT: bu bir GARANTİ DEĞİL, olasılıktır.",
     ]
     return {"cols": cols, "baslik": f"Maksimum kapsama – {budget} kolon", "notlar": notlar}
+
+
+def _new_run_log() -> Dict[str, Any]:
+    return {
+        "started_at": datetime.now(timezone.utc).isoformat(),
+        "steps": [],
+        "warnings": [],
+        "error": None,
+    }
+
+
+def _log_step(log: Dict[str, Any], name: str, detail: str = "", ms: float = 0.0) -> None:
+    log["steps"].append({
+        "name": name,
+        "detail": detail,
+        "ms": round(ms, 2),
+    })
+
+
+def _format_run_log(log: Dict[str, Any]) -> str:
+    lines = [
+        "=== SPOR TOTO ÇALIŞMA LOGU ===",
+        f"başlangıç (UTC): {log.get('started_at', '')}",
+        f"bitiş (UTC)    : {log.get('finished_at', '')}",
+        f"süre toplam    : {log.get('total_ms', 0):.1f} ms",
+        f"mod            : {log.get('mode', '')}",
+        f"picks          : {log.get('picks', '')}",
+        f"variant        : {log.get('variant', 0)}",
+        f"budget         : {log.get('budget', '')}",
+        f"probs dolu     : {log.get('probs_filled', False)}",
+        f"bayes          : {log.get('use_bayes', False)}",
+        f"prior α / n    : {log.get('prior_strength', '')} / {log.get('evidence_strength', '')}",
+        f"MC örnek       : {log.get('mc_samples', 0)}  (0 = çalışmadı)",
+        "--- adımlar ---",
+    ]
+    for s in log.get("steps") or []:
+        lines.append(f"  [{s.get('ms', 0):8.1f} ms] {s.get('name', '')}: {s.get('detail', '')}")
+    if log.get("warnings"):
+        lines.append("--- uyarılar ---")
+        for w in log["warnings"]:
+            lines.append(f"  ! {w}")
+    if log.get("error"):
+        lines.append("--- hata ---")
+        lines.append(f"  {log['error']}")
+    if log.get("result_summary"):
+        lines.append("--- sonuç özeti ---")
+        for k, v in log["result_summary"].items():
+            lines.append(f"  {k}: {v}")
+    lines.append("=== LOG SONU ===")
+    return "\n".join(lines)
 
 
 def _build_result(
@@ -211,7 +264,7 @@ def _build_result(
             }
 
         rap = olasilik_raporu(enc, cols, work_probs)
-        mc = monte_carlo_report(enc, cols, work_probs, n_samples=8_000, seed=42)
+        mc = monte_carlo_report(enc, cols, work_probs, n_samples=MC_WEB_SAMPLES, seed=42)
         advanced = {
             "exact": {
                 "p_kume_ici": round(100 * rap.p_kume_ici, 3),
@@ -292,6 +345,7 @@ def index():
         error=None,
         form_data=None,
         has_scipy=HAS_SCIPY,
+        run_log_text=None,
     )
 
 
@@ -299,6 +353,8 @@ def index():
 def solve():
     error = None
     result = None
+    t0 = time.perf_counter()
+    run_log = _new_run_log()
 
     picks_str = _parse_form_picks(request.form)
     mode = request.form.get("mode", "fix16")
@@ -318,13 +374,41 @@ def solve():
     for i in range(1, MATCH_COUNT + 1):
         form_selections.append(request.form.getlist(f"match_{i}"))
 
+    run_log["mode"] = mode
+    run_log["picks"] = picks_str
+    run_log["variant"] = variant_raw
+    run_log["budget"] = budget_raw
+    run_log["use_bayes"] = use_bayes
+    run_log["prior_strength"] = prior_strength
+    run_log["evidence_strength"] = evidence_strength
+    run_log["mc_samples"] = 0
+    run_log["probs_filled"] = False
+
     try:
+        t1 = time.perf_counter()
         selections = parse_picks(picks_str)
         enc = Encoder(selections)
+        _log_step(
+            run_log, "parse+encoder",
+            f"banko={len(enc.banko_pos)} cifte={sum(1 for k in enc.alphabet_sizes if k==2)} "
+            f"uclu={sum(1 for k in enc.alphabet_sizes if k==3)} uzay={enc.space_size()}",
+            (time.perf_counter() - t1) * 1000,
+        )
+
+        t1 = time.perf_counter()
         user_probs = _parse_form_probs(request.form, selections)
+        run_log["probs_filled"] = user_probs is not None
+        _log_step(
+            run_log, "parse_probs",
+            "dolu" if user_probs is not None else "bos (MC/Bayes atlanacak)",
+            (time.perf_counter() - t1) * 1000,
+        )
 
         variant = int(variant_raw) if variant_raw.isdigit() else 0
+        run_log["variant"] = variant
 
+        t1 = time.perf_counter()
+        r = None
         if mode == "fix16":
             r = _run_fix16(enc, variant=variant)
         elif mode == "auto":
@@ -345,13 +429,23 @@ def solve():
             from spor_toto.core import Encoder as Enc2
             yeni_enc = Enc2(secili.selections)
             cols2, aciklama2 = solve_fix16(yeni_enc, variant=0)
-            notlar = [f"Uygulanan değişiklikler: {'; '.join(secili.degisiklikler) or 'yok'}",
-                      f"Plan bedeli: {secili.bedel} kolon, {secili.satir} satır"]
+            notlar = [
+                f"Uygulanan değişiklikler: {'; '.join(secili.degisiklikler) or 'yok'}",
+                f"Plan bedeli: {secili.bedel} kolon, {secili.satir} satır",
+            ]
+            _log_step(
+                run_log, "motor_butce",
+                f"plan bedel={secili.bedel} satir={secili.satir}",
+                (time.perf_counter() - t1) * 1000,
+            )
+            t1 = time.perf_counter()
             result = _build_result(
                 yeni_enc, cols2,
                 f"Bütçe planı ({secili.bedel} kolon) – {aciklama2}",
                 notlar, user_probs=None,
             )
+            _log_step(run_log, "build_result", "butce (probs yok)",
+                      (time.perf_counter() - t1) * 1000)
         elif mode == "maxcov":
             if not budget_raw or not budget_raw.isdigit():
                 raise ValueError("Maksimum kapsama modu için bir kolon bütçesi giriniz.")
@@ -360,19 +454,51 @@ def solve():
         else:
             r = _run_fix16(enc)
 
-        if mode != "butce":
+        if mode != "butce" and r is not None:
+            _log_step(
+                run_log, f"motor_{mode}",
+                f"kolon={len(r['cols'])} | {r.get('baslik', '')}",
+                (time.perf_counter() - t1) * 1000,
+            )
+            t1 = time.perf_counter()
+            if user_probs is not None:
+                run_log["mc_samples"] = MC_WEB_SAMPLES
             result = _build_result(
                 enc, r["cols"], r["baslik"], r["notlar"], user_probs,
                 use_bayes=use_bayes and user_probs is not None,
                 prior_strength=prior_strength,
                 evidence_strength=evidence_strength,
             )
+            detail = "exact+MC+bayes" if user_probs is not None else "sadece kaplama (MC yok)"
+            _log_step(run_log, "build_result", detail,
+                      (time.perf_counter() - t1) * 1000)
 
         if result is not None and enc.uyarilar:
             result["uyarilar"] = enc.uyarilar
+            run_log["warnings"].extend(list(enc.uyarilar))
+
+        if result is not None:
+            run_log["result_summary"] = {
+                "satir": result.get("satir_sayisi"),
+                "bedel": result.get("kolon_bedeli"),
+                "garanti": result.get("guaranteed"),
+                "worst": result.get("worst"),
+                "advanced": bool(result.get("advanced")),
+                "bayes": bool(result.get("bayes")),
+            }
 
     except (ValueError, RuntimeError, Fix16Hatasi) as e:
         error = str(e)
+        run_log["error"] = error
+        _log_step(run_log, "HATA", error, 0.0)
+        logger.warning("solve failed: %s", error)
+
+    run_log["finished_at"] = datetime.now(timezone.utc).isoformat()
+    run_log["total_ms"] = round((time.perf_counter() - t0) * 1000, 1)
+    run_log_text = _format_run_log(run_log)
+    if result is not None:
+        result["run_log"] = run_log
+        result["run_log_text"] = run_log_text
 
     return render_template(
         "index.html",
@@ -385,6 +511,7 @@ def solve():
         error=error,
         form_data=request.form,
         has_scipy=HAS_SCIPY,
+        run_log_text=run_log_text,
     )
 
 
