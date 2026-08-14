@@ -1,18 +1,41 @@
 # Spor Toto 14-Garanti Formül Üreticisi
 
-Spor Toto kuponu için **kaplama kodu** (covering code) üreten araç. Seçtiğin ihtimal kümeleri içinde doğru sonuç varsa, oynanan kolonlardan en az biri **en fazla 1 maç hatalı** olur — yani 14-garanti.
+Spor Toto kuponu için **kaplama kodu** (covering code) üreten araç.
 
-Bu araç maç sonucu tahmin etmez. Tahminin doğruysa onu kaçırmamanı, hem de mümkün olan **en az kuponla** sağlamanı hedefler. Bir maliyet düşürme aracıdır.
+Seçtiğin ihtimal kümeleri içinde doğru sonuç varsa, oynanan kolonlardan en az biri **en fazla 1 maç hatalı** olur — yani **14-garanti**.
+
+Bu araç maç sonucu **tahmin etmez**. Tahminin doğruysa onu kaçırmamanı, hem de mümkün olan **en az kuponla** sağlamanı hedefler. Bir maliyet düşürme aracıdır; kazanma olasılığını büyütmez.
+
+---
+
+## Ne yapar / ne yapmaz
+
+| Yapar | Yapmaz |
+|-------|--------|
+| Hamming yarıçap-1 kaplama kodu üretir | Maç sonucu tahmin etmez |
+| En kötü durumda 14 doğru **garantiler** (küme içinde) | İkramiye / beklenen değer hesabı yapmaz |
+| Exact + Monte Carlo olasılık raporu verir | Bülten verisi çekmez (henüz) |
+| Bayes (Dirichlet) ile tahminlerini yumuşatır | 14-garantiyi olasılıkla “güçlendirmez” — garanti kombinatoryaldir |
+| Markov ile sıralı risk profili çıkarır | Mobil uygulama değildir |
+
+**Kritik ayrım:** Garanti, *seçim kümesi içinde* geçerlidir. Küme dışı bir sonuç gelirse sistem zaten o senaryoyu kapsamaz — bu bir hata değil, tasarımın sınırıdır.
+
+---
 
 ## Kurulum
 
 ```bash
 pip install -e .
-# veya
+# veya geliştirme + test:
+pip install -e ".[test]"
+# uv kullanıyorsan:
 uv sync --extra test
 ```
 
-Bağımlılıklar: `numpy`, `scipy` (kesin ILP çözücü için), `flask` (web). scipy yoksa araç çalışır ama kesin çözücü devre dışı kalır.
+Bağımlılıklar: `numpy`, `scipy` (kesin ILP için), `flask` (web).
+`scipy` yoksa araç çalışır; yalnızca kesin çözücü (ILP) devre dışı kalır.
+
+---
 
 ## CLI kullanım
 
@@ -20,28 +43,61 @@ Bağımlılıklar: `numpy`, `scipy` (kesin ILP çözücü için), `flask` (web).
 spor-toto --picks "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"
 ```
 
-`--picks` biçimi: 15 maç virgülle ayrılır, her maçın seçenekleri bitişik yazılır.
-`1` = banko ev sahibi, `10` = çifte, `102` = kapama (üçlü).
+### `--picks` biçimi
+
+- 15 maç virgülle ayrılır
+- Her maçın seçenekleri bitişik yazılır
+- `1` = banko ev, `10` = çifte, `102` / `012` = üçlü (kapama)
 
 ### Modlar
 
 | Mod | Ne yapar |
-|---|---|
-| `fix16` (varsayılan) | Her zaman 16 kupon satırı. En az 7 çifte zorunlu. |
+|-----|----------|
+| `fix16` (varsayılan) | Her zaman 16 kupon satırı. En az 7 çifte zorunlu. Hamming(7,4) tabanlı. |
 | `auto` | En ucuz çözümü arar; satır sayısı değişken. |
 | `exact` | ILP ile kanıtlanmış optimal (küçük uzaylar). |
 | `block` | Yalnızca blok ayrıştırma motoru. |
 | `heuristic` | Açgözlü + local search (büyük uzaylar). |
-| `butce` | "Elimde N kolon var, hangi maçı kısmalıyım?" |
+| `butce` | “Elimde N kolon var, hangi maçı kısmalıyım?” |
 | `maxcov` | Sabit bütçeyle maksimum kapsama. **Garanti vermez.** |
 
 ```bash
 spor-toto --picks "..." --variant 3
+spor-toto --picks "..." --mode auto
 spor-toto --picks "..." --mode butce --budget 32
 spor-toto --picks "..." --mode maxcov --budget 16
-spor-toto --picks "..." --probs "1:0.5,0:0.3,2:0.2;..."
-spor-toto --picks "..." --probs "..." --mc-samples 20000   # Monte Carlo
+spor-toto --picks "..." --probs "1:0.5,0:0.3,2:0.2;..." --mc-samples 20000
 ```
+
+### Olasılık, Monte Carlo, Bayes
+
+`--probs`: maçlar `;` ile ayrılır, her maç `1:0.5,0:0.3,2:0.2`.
+
+```bash
+# Exact + Monte Carlo
+spor-toto --picks "..." --probs "..." --mc-samples 20000
+
+# Dirichlet Bayes (preset kısayolu)
+spor-toto --picks "..." --probs "..." --bayes-preset dengeli --mc-samples 10000
+
+# Manuel α / n
+spor-toto --picks "..." --probs "..." --bayes --prior-strength 2 --evidence-strength 20
+```
+
+#### `--bayes-preset` seçenekleri
+
+| Preset | Prior α | Evidence n | Ne zaman |
+|--------|---------|------------|----------|
+| `zayif_prior` | 0.5 | 15 | Evidence’e güven yüksek |
+| `dengeli` | 1.0 | 10 | Varsayılan denge |
+| `guclu_prior` | 5.0 | 8 | Seçim kümesine güçlü güven |
+| `evidence_agir` | 1.0 | 40 | Evidence neredeyse doğrudan alınır |
+| `sadece_prior` | 3.0 | 0 | Evidence yok sayılır (posterior = prior) |
+
+Bayes **14-garantiyi değiştirmez**; yalnızca exact/MC motoruna giden olasılık ağırlıklarını günceller.
+Çıktıda ortalama KL ve etiketi (`ihmal edilebilir` … `güçlü kayma`) görünür.
+
+---
 
 ## Web arayüzü
 
@@ -54,8 +110,10 @@ python web_app.py
 
 - Maç seçimi tablosu, canlı bedel, Fix-16 / auto / bütçe / maxcov / heuristic
 - Gelişmiş olasılık girişi (maç bazlı 1/0/2)
-- Uniform dağılım + hata seviyesi seçici (0/1/2)
+- Uniform dağılım + hata seviyesi seçici (0 / 1 / 2)
 - Exact olasılık + **Monte Carlo** (%95 CI)
+- **Bayes (Dirichlet)** toggle, Prior α, Evidence n, posterior tablosu
+- **Markov zinciri** — küme-içi hayatta kalma + hata bütçesi (0 / 1 / 2+)
 - Maç bazlı hata frekansı
 - Kopyala / görsel indir / localStorage kupon kaydı
 - **Sistem Health** paneli (UI’den test çalıştırma)
@@ -65,38 +123,78 @@ python web_app.py
 ```bash
 python -m spor_toto.health              # bir kez
 python -m spor_toto.health --interval 60
-curl http://localhost:5000/health       # JSON (200 / 503)
+curl http://localhost:5000/health       # JSON (200 = HEALTHY, 503 = UNHEALTHY)
 ```
+
+13 invariant: encoder, fix16 garanti, distance layers, blok/heuristic, exact olasılık, Monte Carlo, Bayes, Markov, error_freq, pipeline şekli, scipy bayrağı.
+
+---
 
 ## Satır ≠ kolon
 
 Bir maça çifte işaretlersen o satır **2 kolon** üretir ve 2 kolon bedeli ödersin.
-16 satır + 1 ekstra çifte faktörü = daha yüksek bedel.
+16 satır + ekstra çifte faktörü = daha yüksek bedel. UI ve CLI toplam **kolon bedelini** gösterir.
 
-## Bilinen sınırlar
+---
 
-Küre-kaplama sınırı: `kolon ≥ |uzay| / top_boyutu`.
+## Bilinen sınırlar (matematik)
 
-| Durum | Optimal kolon |
-|---|---|
+Küre-kaplama alt sınırı: `kolon ≥ |uzay| / top_boyutu`.
+
+| Durum | Optimal kolon (alt sınır civarı) |
+|-------|----------------------------------|
 | 5 çifte | 7 |
 | 6 çifte | 12 |
 | 7 çifte | **16** (Hamming(7,4)) |
 | 8 çifte | **32** |
 | 4 üçlü | **9** |
 
-**8 çifteyi 16 kolona sığdırmak imkânsızdır.** `maxcov` 16 kolonla en fazla ~%56 kapsama verir — garanti değil.
+**8 çifteyi 16 kolona sığdırmak imkânsızdır.**
+`maxcov` 16 kolonla kısmi kapsama verir — **garanti değildir**.
+
+---
+
+## Mimari (kısa)
+
+```
+spor_toto/
+  core.py      Encoder, Fix-16, ILP, heuristic, exact olasılık
+  analysis.py  Monte Carlo, maç bazlı hata frekansı
+  bayes.py     Dirichlet prior → posterior, KL, preset'ler
+  markov.py    Seçim hayatta kalma + hata bütçesi zinciri
+  health.py    13 invariant health check
+  report.py    Konsol / dosya çıktısı
+  cli.py       spor-toto komut satırı
+web_app.py     Flask + Jinja2 UI
+templates/     Apple tarzı arayüz
+tests/         pytest (core, engines, analysis, bayes, markov, health, cli)
+```
+
+Katmanlar bağımsızdır:
+
+1. **Kombinatoryal** — kolon üretimi, Hamming mesafesi, 14-garanti
+2. **Olasılıksal** — exact, MC, Bayes, Markov (garantiyi bozmaz)
+3. **Gözlem** — health, UI, CLI
+
+---
 
 ## Testler
 
 ```bash
 pytest
 pytest -m "not slow"
-pytest tests/test_analysis.py tests/test_health.py -v
+pytest tests/test_bayes.py tests/test_markov.py tests/test_health.py tests/test_cli.py -v
 ```
 
-Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant’lar, CLI, analysis (MC), health.
+Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant’lar, CLI (Bayes preset dahil), analysis, health.
+
+---
 
 ## Uyarı
 
-Bu araç kazanma olasılığını artırmaz. Yalnızca belirli bir garantiyi daha az kuponla elde etmeni sağlar. Olasılık / Monte Carlo raporu beklenen-değer/kâr hesabı değildir.
+Bu araç **kazanma olasılığını artırmaz**.
+Yalnızca belirli bir garantiyi daha az kuponla elde etmeni sağlar.
+
+Olasılık / Monte Carlo / Bayes / Markov çıktıları **beklenen-değer veya kâr hesabı değildir**; ikramiye havuzu ve kolon bedeli hesaba katılmaz.
+
+Sorumlu oynayın.
