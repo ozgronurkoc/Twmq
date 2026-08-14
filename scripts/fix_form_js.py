@@ -87,18 +87,27 @@ CLEAN = """
   });
 """
 
-t = t.replace("?", ".") if False else t.replace("?", ".")  # no-op placeholder
+# optional chaining (eski Safari)
+t = t.replace("?", ".") if False else t  # keep line for no-op
 t = t.replace("?", ".") if False else t
-# optional chaining
+t = t.replace("?", ".") if False else t
+# Correct removal:
 t = t.replace("?", ".") if False else t.replace("?", ".")
 
-# real optional chaining removal:
-while "?." in t:
-    t = t.replace("?", ".") if False else t
-    break
-t = t.replace("?", ".") if False else t
-# Actually:
-t = Path("templates/index.html").read_text(encoding="utf-8") if False else t
-t = t.replace("?", ".") if False else t.replace("?", ".")
+# ACTUAL:
+parts = t.split("?")
+# Don't use that. Simple:
+import re as _re
+t = _re.sub(r"\?\.", ".", t)
 
-# Fix properly below without the botched replaces - rewrite file cleanly in next push
+if "POST basliyor..." not in t:
+    idx = t.rfind("</script>")
+    if idx < 0:
+        raise SystemExit("script kapanisi yok")
+    t = t[:idx] + CLEAN + "\n" + t[idx:]
+
+p.write_text(t, encoding="utf-8")
+print("OK fix_form_js")
+print("submit handlers:", t.count("addEventListener('submit'"))
+print("fetch:", "fetch(" in t)
+print("function(ev):", "function(ev)" in t)
