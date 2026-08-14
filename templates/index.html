@@ -573,17 +573,7 @@ Tarayıcı bir şeyi engellerse (ör. 7 çifte kuralı) o da buraya yazılır.
         'olay: Formül Üret — form GÖNDERİLİYOR\\n'+
         'mode: '+mode+' | çifte: '+cifte+'\\n';
     }
-    if((mode==='butce'||mode==='maxcov')&&(!budget||Number(budget)<1)){
-      e.preventDefault();
-      alert('Bütçe giriniz');
-      return false;
-    }
-    if(mode==='fix16' && cifte<7){
-      e.preventDefault();
-      alert("Fix-16 için en az 7 çifte gerekir (şu an "+cifte+"). Örnek'e bas.");
-      return false;
-    }
-    // preventDefault YOK — native POST
+    // Doğrulama sunucuda yapılır; native POST her durumda devam eder.
     var btn=document.getElementById('submitBtn');
     if(btn){ btn.disabled=true; btn.textContent='Gönderiliyor…'; }
     var loading=document.getElementById('loading');
