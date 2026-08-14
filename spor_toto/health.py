@@ -34,6 +34,7 @@ from .core import (
 )
 from .analysis import match_error_frequency, monte_carlo_report
 from .bayes import posteriors_only
+from .markov import markov_report
 from .report import basliklar
 
 ORNEK = "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"
@@ -207,6 +208,20 @@ def _check_bayes() -> str:
     return f"posteriors=15 p_ici={rap.p_kume_ici:.4f}"
 
 
+def _check_markov() -> str:
+    enc = Encoder(parse_picks(ORNEK))
+    cols, _ = solve_fix16(enc)
+    probs = _probs_on_selections(enc)
+    rep = markov_report(enc, cols, probs)
+    assert rep["summary"]["p_kume_ici"] > 0.99
+    assert rep["summary"]["p_garanti_path"] > 0.99
+    assert rep["error_budget"]["p_final"]["2+"] < 0.01
+    return (
+        f"p_ici={rep['summary']['p_kume_ici']:.4f} "
+        f"p0={rep['summary']['p0']:.4f} p1={rep['summary']['p1']:.4f}"
+    )
+
+
 def _check_error_freq() -> str:
     enc = Encoder(parse_picks(ORNEK))
     cols, _ = solve_fix16(enc)
@@ -269,6 +284,7 @@ def run_health() -> HealthReport:
         ("olasilik_exact", _check_olasilik_exact),
         ("monte_carlo", _check_monte_carlo),
         ("bayes_dirichlet", _check_bayes),
+        ("markov_chain", _check_markov),
         ("error_freq", _check_error_freq),
         ("pipeline_result_shape", _check_pipeline_result_shape),
         ("scipy_flag", _check_scipy_flag),
