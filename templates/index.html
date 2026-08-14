@@ -151,6 +151,17 @@
     .bayes-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; margin-top: 8px; }
     .bayes-table th { text-align: left; color: var(--text-sec); font-size: 0.68rem; padding: 4px 6px; border-bottom: 1px solid var(--border-light); }
     .bayes-table td { padding: 4px 6px; border-bottom: 1px solid var(--border-light); }
+    .markov-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 10px; }
+    @media (min-width: 480px) { .markov-grid { grid-template-columns: repeat(5, 1fr); } }
+    .markov-box { background: var(--bg); border-radius: var(--radius-sm); padding: 10px 6px; text-align: center; border: 1px solid var(--border-light); }
+    .markov-box .mk-label { font-size: 0.68rem; font-weight: 600; color: var(--text-sec); }
+    .markov-box .mk-val { font-size: 1.05rem; font-weight: 600; margin-top: 2px; }
+    .markov-box.good .mk-val { color: var(--success); }
+    .markov-box.warn .mk-val { color: var(--coral); }
+    .surv-table { width: 100%; border-collapse: collapse; font-size: 0.72rem; margin-top: 8px; max-height: 180px; overflow-y: auto; display: block; }
+    .surv-table thead, .surv-table tbody { display: table; width: 100%; table-layout: fixed; }
+    .surv-table th { text-align: left; color: var(--text-sec); font-size: 0.66rem; padding: 3px 6px; border-bottom: 1px solid var(--border-light); }
+    .surv-table td { padding: 3px 6px; border-bottom: 1px solid var(--border-light); }
   </style>
 </head>
 <body>
@@ -327,6 +338,51 @@
             {% endfor %}
           </tbody>
         </table>
+        {% endif %}
+        {% if result.markov %}
+        <div class="card-title" style="margin-top:12px">Markov Zinciri — Sıralı Risk</div>
+        <div style="font-size:0.75rem;color:var(--text-sec);margin-bottom:8px">
+          Küme-içi hayatta kalma + hata bütçesi (0 / 1 / 2+). Kaplama kodunu değiştirmez; yalnızca sıralı olasılıksal risk profili.
+          {% if result.markov.summary.method %} · Yöntem: {{ result.markov.summary.method }}{% endif %}
+        </div>
+        <div class="markov-grid">
+          <div class="markov-box good">
+            <div class="mk-label">Küme içi</div>
+            <div class="mk-val">%{{ '%.2f'|format(100 * result.markov.summary.p_kume_ici) }}</div>
+          </div>
+          <div class="markov-box good">
+            <div class="mk-label">Garanti yolu</div>
+            <div class="mk-val">%{{ '%.2f'|format(100 * result.markov.summary.p_garanti_path) }}</div>
+          </div>
+          <div class="markov-box">
+            <div class="mk-label">P(0 hata)</div>
+            <div class="mk-val">%{{ '%.2f'|format(100 * result.markov.summary.p0) }}</div>
+          </div>
+          <div class="markov-box">
+            <div class="mk-label">P(1 hata)</div>
+            <div class="mk-val">%{{ '%.2f'|format(100 * result.markov.summary.p1) }}</div>
+          </div>
+          <div class="markov-box {% if result.markov.summary.p2plus > 0.01 %}warn{% else %}good{% endif %}">
+            <div class="mk-label">P(2+ hata)</div>
+            <div class="mk-val">%{{ '%.2f'|format(100 * result.markov.summary.p2plus) }}</div>
+          </div>
+        </div>
+        {% if result.markov.survival and result.markov.survival.transitions %}
+        <div style="font-size:0.78rem;font-weight:600;margin:8px 0 4px">Maç bazlı hayatta kalma (IN→IN)</div>
+        <table class="surv-table">
+          <thead><tr><th>Maç</th><th>P(stay)</th><th>P(exit)</th><th>Kümülatif IN</th></tr></thead>
+          <tbody>
+            {% for t in result.markov.survival.transitions %}
+            <tr>
+              <td>M{{ t.mac }}</td>
+              <td>%{{ '%.2f'|format(100 * t.p_stay) }}</td>
+              <td>%{{ '%.2f'|format(100 * t.p_exit) }}</td>
+              <td>%{{ '%.2f'|format(100 * result.markov.survival.p_in_after[t.mac]) }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% endif %}
         {% endif %}
         {% if result.notlar %}<div class="notes">{% for n in result.notlar %}<div>{{ n }}</div>{% endfor %}</div>{% endif %}
         <div class="table-header">
