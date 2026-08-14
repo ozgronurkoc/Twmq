@@ -212,6 +212,7 @@ def _build_result(
                         "evidence": {s: round(float(u["evidence"][s]), 4) for s in SEMBOLLER},  # type: ignore[index]
                         "posterior": {s: round(float(u["posterior"][s]), 4) for s in SEMBOLLER},  # type: ignore[index]
                         "kl": float(u["kl_prior_post"]),  # type: ignore[arg-type]
+                        "kl_label": u.get("kl_label", ""),
                     }
                     for i, u in enumerate(updates)
                 ],
