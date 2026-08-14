@@ -42,13 +42,13 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python web_app.py"
-waitForPort = 5000
+waitForPort = 8080
 
 [workflows.workflow.metadata]
 outputType = "webview"
 
 [[ports]]
-localPort = 5000
+localPort = 8080
 externalPort = 80
 
 [postMerge]
@@ -57,4 +57,4 @@ timeoutMs = 60000
 
 [deployment]
 deploymentTarget = "autoscale"
-run = ["gunicorn", "--bind=0.0.0.0:5000", "--reuse-port", "web_app:app"]
+run = ["gunicorn", "--bind=0.0.0.0:8080", "--reuse-port", "web_app:app"]
