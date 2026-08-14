@@ -1,0 +1,92 @@
+diff --git a/spor_toto/core.py b/spor_toto/core.py
+index 665b59c..52b1bad 100644
+--- a/spor_toto/core.py
++++ b/spor_toto/core.py
+@@ -18,6 +18,7 @@ birlestirilirse yaricap 2 olur ve garanti kirilir.
+ """
+ 
+ from __future__ import annotations
++import re
+ 
+ import heapq
+ import time as _time
+@@ -116,16 +117,34 @@ def parse_picks(text: str) -> List[List[str]]:
+     """
+     '1,10,1,12,0,...' -> [['1'], ['1','0'], ['1'], ['1','2'], ['0'], ...]
+     Ayirici olarak virgul, bosluk, noktali virgul veya '/' kabul edilir.
++    Ortadaki bos slotlar (ornegin '1,,10') ValueError firlatir; bas/son
++    fazla ayiricilar yok sayilir. '1, 10' gibi bosluklu yazim gecerlidir.
+     """
+     if not text or not text.strip():
+         raise ValueError("--picks bos olamaz.")
+     tmp = text
+-    for ch in (";", "/", "|", "\n", "\t", " "):
++    for ch in (";", "/", "|", "\n", "\t"):
+         tmp = tmp.replace(ch, ",")
+-    parts = [p.strip() for p in tmp.split(",") if p.strip()]
+-    if not parts:
++    # Once virgul cevresindeki bosluklari temizle (1, 10 -> 1,10)
++    tmp = re.sub(r"\s*,\s*", ",", tmp)
++    # Kalan bosluklari ayirici say
++    tmp = re.sub(r"\s+", ",", tmp)
++    raw_parts = [p.strip() for p in tmp.split(",")]
++    while raw_parts and not raw_parts[0]:
++        raw_parts.pop(0)
++    while raw_parts and not raw_parts[-1]:
++        raw_parts.pop()
++    if not raw_parts:
+         raise ValueError(f"--picks ayristirilamadi: {text!r}")
+-    return [sirala_semboller(p) for p in parts]
++    if any(not p for p in raw_parts):
++        raise ValueError(
++            "bos mac slotu: ardisik veya bos ayirici (orn. '1,,10'). "
++            "Her mac icin en az bir sembol girin."
++        )
++    return [sirala_semboller(p) for p in raw_parts]
++
++
++
+ 
+ 
+ def parse_probs(text: str, selections: Sequence[Sequence[str]]) -> List[Dict[str, float]]:
+diff --git a/templates/index.html b/templates/index.html
+index 7c2ecf0..2278d51 100644
+--- a/templates/index.html
++++ b/templates/index.html
+@@ -559,11 +559,11 @@
+   }
+   const STORAGE_KEY='spor_toto_saved_coupons';
+   const BAYES_PRESETS={
+-    zayif_prior:{prior:0.5,evidence:10},
++    zayif_prior:{prior:0.5,evidence:15},
+     dengeli:{prior:1,evidence:10},
+-    guclu_prior:{prior:5,evidence:10},
+-    evidence_agir:{prior:1,evidence:30},
+-    sadece_prior:{prior:1,evidence:0}
++    guclu_prior:{prior:5,evidence:8},
++    evidence_agir:{prior:1,evidence:40},
++    sadece_prior:{prior:3,evidence:0}
+   };
+   function applyBayesPreset(key){
+     if(!key||!BAYES_PRESETS[key]) return;
+diff --git a/tests/test_edge_cases.py b/tests/test_edge_cases.py
+index 9d436d1..945017a 100644
+--- a/tests/test_edge_cases.py
++++ b/tests/test_edge_cases.py
+@@ -38,12 +38,11 @@ def test_picks_bos():
+ 
+ 
+ def test_picks_bos_slot_ortada():
+-    """Bos slot sessizce atlanmamali. core.py parse_picks guncellemesi ile aktif."""
+-    try:
++    """Bos slot sessizce atlanmamali."""
++    with pytest.raises(ValueError, match="bos mac slotu"):
+         parse_picks("1,,10")
+-        pytest.skip("parse_picks bos-slot sertlestirmesi henuz remote core'da degil")
+-    except ValueError as e:
+-        assert "bos mac slotu" in str(e)
++    with pytest.raises(ValueError, match="bos mac slotu"):
++        parse_picks("1, ,10")
+ 
+ 
+ def test_picks_gecersiz_sembol():
