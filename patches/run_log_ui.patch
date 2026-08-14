@@ -11,25 +11,51 @@
    </style>
  </head>
  <body>
-@@ -281,6 +285,17 @@
+@@ -281,6 +285,19 @@
    </div>
    <div class="right-col">
      {% if error %}<div class="alert alert-error" style="margin-bottom:14px"><strong>Hata:</strong> {{ error }}</div>{% endif %}
 +
-+    {% if run_log_text %}
 +    <div class="card" style="margin-bottom:14px" id="runLogCard">
 +      <div class="card-title">Çalışma Logu</div>
-+      <div class="adv-hint" style="margin-bottom:8px">Her Formül Üret adımı burada. Gelişmiş olasılık yoksa MC çalışmaz (örnek=0). Kopyalayıp paylaşabilirsiniz.</div>
-+      <textarea class="log-box" id="runLogText" readonly>{{ run_log_text }}</textarea>
++      <div class="adv-hint" style="margin-bottom:8px">Formül Üret çalışmasa bile burada görünür. Tarayıcı engeli + sunucu adımları. <strong>Logu Kopyala</strong> ile paylaş.</div>
++      <textarea class="log-box" id="runLogText" readonly>{% if run_log_text %}{{ run_log_text }}{% else %}=== SPOR TOTO ÇALIŞMA LOGU ===
++(henüz istek yok)
++Formül Üret'e basınca sunucu logu burada dolacak.
++Tarayıcı bir şeyi engellerse (ör. 7 çifte kuralı) o da buraya yazılır.
++=== LOG SONU ==={% endif %}</textarea>
 +      <div class="log-actions">
 +        <button type="button" class="copy-btn" id="logCopyBtn" onclick="copyRunLog()">Logu Kopyala</button>
 +      </div>
 +    </div>
-+    {% endif %}
      {% if result %}
        {% if result.get('uyarilar') %}{% for u in result.uyarilar %}<div class="alert alert-warn" style="margin-bottom:10px">{{ u }}</div>{% endfor %}{% endif %}
        <div class="card">
-@@ -653,6 +668,17 @@
+@@ -517,7 +534,22 @@
+   const EXAMPLE=[['1'],['1','0'],['1'],['1','2'],['0'],['1','0'],['2'],['1','0'],['1'],['1','2'],['0','2'],['1'],['1','0'],['2'],['1','0']];
+   function loadExample(){ EXAMPLE.forEach((syms,idx)=>{ document.querySelectorAll('input[name="match_'+(idx+1)+'"]').forEach(cb=>cb.checked=syms.includes(cb.value)); }); updateLiveStats(); hideClientError(); }
+   function resetForm(){ fillAll(['1','0','2']); document.getElementById('mode').value='fix16'; toggleBudget('fix16'); document.getElementById('variant').value='0'; document.getElementById('budget').value='32'; hideClientError(); }
+-  function showClientError(msg){ const el=document.getElementById('clientError'); el.textContent=msg; el.classList.add('show'); }
++  function appendClientLog(msg){
++    const el=document.getElementById('runLogText'); if(!el) return;
++    const ts=new Date().toISOString();
++    const block='=== SPOR TOTO ÇALIŞMA LOGU (TARAYICI) ===\n'+
++      'zaman: '+ts+'\n'+
++      '--- hata ---\n  '+msg+'\n'+
++      '--- not ---\n  Bu log sunucuya gitmeden tarayıcıda üretildi.\n'+
++      '  Form POST edilmedi; Fix-16 çifte kuralı veya bütçe doğrulaması engellemiş olabilir.\n'+
++      '=== LOG SONU ===\n';
++    el.value=block;
++  }
++  function showClientError(msg){
++    const el=document.getElementById('clientError');
++    el.textContent=msg; el.classList.add('show');
++    appendClientLog(msg);
++  }
+   function hideClientError(){ document.getElementById('clientError').classList.remove('show'); }
+   document.getElementById('mainForm').addEventListener('submit', function(e){
+     const mode=document.getElementById('mode').value, budget=document.getElementById('budget').value;
+@@ -653,6 +685,17 @@
      }catch(e){ sum.style.display='block'; sum.className='alert alert-error'; sum.textContent='Health erişilemedi: '+e.message+' — sunucu ayakta mı?'; }
      finally{ btn.disabled=false; btn.textContent='Testleri Çalıştır'; }
    }
