@@ -22,10 +22,28 @@ def monte_carlo_report(
 
     Dönen alanlar (her biri p, pct, se, ci95, count içerir):
       kume_ici, p15, p14, p13, p12
+
+    n_samples < 1 → ValueError (sessiz sıfır rapor yok).
+    1 ≤ n_samples < 100 → çalışır ama 'warning' alanı eklenir.
     """
     if len(probs) != enc.total_len:
         raise ValueError(
             f"{len(probs)} maç için olasılık verildi, {enc.total_len} bekleniyordu."
+        )
+    try:
+        n_samples = int(n_samples)
+    except (TypeError, ValueError) as e:
+        raise ValueError(f"n_samples sayi olmali, alindi: {n_samples!r}") from e
+    if n_samples < 1:
+        raise ValueError(
+            f"Monte Carlo icin n_samples >= 1 gerekli (alindi: {n_samples}). "
+            f"CLI'de --mc-samples 0 MC'yi kapatir; acmak icin pozitif deger ver."
+        )
+    warning: Optional[str] = None
+    if n_samples < 100:
+        warning = (
+            f"n_samples={n_samples} cok dusuk; %95 CI guvenilmez. "
+            f"En az 1000 (tercihen 10000+) onerilir."
         )
 
     rng = random.Random(seed)
@@ -105,7 +123,7 @@ def monte_carlo_report(
             "count": k,
         }
 
-    return {
+    out = {
         "n_samples": n_samples,
         "kume_ici": rate(n_ici),
         "p15": rate(n_15),
@@ -113,6 +131,9 @@ def monte_carlo_report(
         "p13": rate(n_13),
         "p12": rate(n_12),
     }
+    if warning:
+        out["warning"] = warning
+    return out
 
 
 def match_error_frequency(
@@ -121,51 +142,65 @@ def match_error_frequency(
     max_d: int = 2,
 ) -> dict:
     """
-    Uniform varsayım altında, d=1 ve d=2 katmanlarında
-    hangi maçların hata ürettiğini sayar.
-    """
-    if not cols or not enc.alphabet_sizes:
-        return {"d1": [], "d2": [], "n1": 0, "n2": 0}
+    Seçim kümesi içinde, her mesafe katmanı (d=1, d=2, ...) için
+    hangi maçların hata ürettiğinin frekansı.
 
-    err_d1: Counter = Counter()
-    err_d2: Counter = Counter()
+    Dönen yapı:
+      n1, n2, d1: [{mac, count, pct}, ...], d2: [...]
+    """
+    from .core import distance_layers, dogrula_kaplama
+
+    # Brute force only for modest spaces
+    space = list(enc.variable_space()) if hasattr(enc, "variable_space") else []
+    if not space:
+        # reconstruct from alphabet
+        from itertools import product
+        space = list(product(*[range(k) for k in enc.alphabet_sizes]))
+
+    if len(space) > 20000:
+        return {"n1": 0, "n2": 0, "d1": [], "d2": [], "skipped": True}
+
+    err1: Counter = Counter()
+    err2: Counter = Counter()
     n1 = n2 = 0
 
-    for pt in enc.variable_space():
-        best_d = 999
-        best_c: Optional[Point] = None
-        for c in cols:
-            d = sum(a != b for a, b in zip(pt, c))
-            if d < best_d:
-                best_d = d
-                best_c = c
-        if best_c is None:
+    for pt in space:
+        if not cols:
             continue
-        if best_d == 1:
+        dists = [sum(a != b for a, b in zip(pt, c)) for c in cols]
+        d = min(dists) if dists else 99
+        if d == 0:
+            continue
+        # which variable positions differ from nearest col
+        nearest = cols[dists.index(d)]
+        bad_pos = [j for j, (a, b) in enumerate(zip(pt, nearest)) if a != b]
+        # map variable index → match number (1-based full index)
+        for j in bad_pos:
+            mac = enc.variable_pos[j] + 1
+            if d == 1:
+                err1[mac] += 1
+            elif d == 2:
+                err2[mac] += 1
+        if d == 1:
             n1 += 1
-            for i, (a, b) in enumerate(zip(pt, best_c)):
-                if a != b:
-                    err_d1[enc.variable_pos[i] + 1] += 1
-        elif best_d == 2:
+        elif d == 2:
             n2 += 1
-            for i, (a, b) in enumerate(zip(pt, best_c)):
-                if a != b:
-                    err_d2[enc.variable_pos[i] + 1] += 1
 
-    def to_list(counter: Counter, total: int) -> List[dict]:
-        items = []
-        for mac in sorted(counter.keys()):
-            cnt = counter[mac]
-            items.append({
+    def pack(counter: Counter, n: int):
+        if n <= 0:
+            return []
+        rows = []
+        for mac, cnt in sorted(counter.items(), key=lambda x: (-x[1], x[0])):
+            rows.append({
                 "mac": mac,
                 "count": cnt,
-                "pct": round(100.0 * cnt / total, 2) if total else 0.0,
+                "pct": round(100.0 * cnt / n, 2),
             })
-        return items
+        return rows
 
     return {
-        "d1": to_list(err_d1, max(n1, 1)),
-        "d2": to_list(err_d2, max(n2, 1)),
         "n1": n1,
         "n2": n2,
+        "d1": pack(err1, n1),
+        "d2": pack(err2, n2),
     }
