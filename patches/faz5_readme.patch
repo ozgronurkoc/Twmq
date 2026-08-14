@@ -1,0 +1,37 @@
+diff --git a/README.md b/README.md
+index fc81b18..66077d7 100644
+--- a/README.md
++++ b/README.md
+@@ -48,6 +48,8 @@ spor-toto --picks "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"
+ - 15 maç virgülle ayrılır
+ - Her maçın seçenekleri bitişik yazılır
+ - `1` = banko ev, `10` = çifte, `102` / `012` = üçlü (kapama)
++- Baş/son fazla ayırıcı (`",1,10,"`) yok sayılır; **ortadaki boş slot** (`"1,,10"`) `ValueError` fırlatır
++- `"1, 10"` gibi boşluklu yazım geçerlidir
+ 
+ ### Modlar
+ 
+@@ -95,7 +97,13 @@ spor-toto --picks "..." --probs "..." --bayes --prior-strength 2 --evidence-stre
+ | `sadece_prior` | 3.0 | 0 | Evidence yok sayılır (posterior = prior) |
+ 
+ Bayes **14-garantiyi değiştirmez**; yalnızca exact/MC motoruna giden olasılık ağırlıklarını günceller.
+-Çıktıda ortalama KL ve etiketi (`ihmal edilebilir` … `güçlü kayma`) görünür.
++
++CLI çıktısında:
++- `Kaynak: bayes_posterior`
++- Ortalama KL + etiket (`ihmal edilebilir` … `güçlü kayma`)
++- En büyük KL kaymaları (maç bazlı, web “Yorum” sütunu ile aynı bilgi)
++
++Web’de Bayes paneli: preset dropdown (CLI ile **aynı α/n**), posterior tablosu, maç bazlı KL **Yorum**.
+ 
+ ---
+ 
+@@ -112,7 +120,7 @@ python web_app.py
+ - Gelişmiş olasılık girişi (maç bazlı 1/0/2)
+ - Uniform dağılım + hata seviyesi seçici (0 / 1 / 2)
+ - Exact olasılık + **Monte Carlo** (%95 CI)
+-- **Bayes (Dirichlet)** toggle, Prior α, Evidence n, posterior tablosu
++- **Bayes (Dirichlet)** toggle, Prior α, Evidence n, **preset** (CLI ile aynı), posterior tablosu + KL yorum
+ - **Markov zinciri** — küme-içi hayatta kalma + hata bütçesi (0 / 1 / 2+)
+ - Maç bazlı hata frekansı
+ - Kopyala / görsel indir / localStorage kupon kaydı
