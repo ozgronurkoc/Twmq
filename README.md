@@ -196,6 +196,33 @@ pytest tests/test_bayes.py tests/test_markov.py tests/test_health.py tests/test_
 
 Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant’lar, CLI (Bayes preset dahil), analysis, health.
 
+### Yerel tek komut (health + CLI smoke)
+
+```bash
+bash scripts/check.sh
+```
+
+`scripts/check.sh`: hızlı pytest → 13 invariant health → CLI fix16 + `--bayes-preset dengeli` dumanı.
+Exit code ≠ 0 ise bir adım kırık demektir (CI ile aynı mantık).
+
+---
+
+## CI (GitHub Actions)
+
+Her `main` push ve PR’da:
+
+| Adım | Python | Açıklama |
+|------|--------|----------|
+| `pytest -m "not slow"` | 3.10–3.13 | Hızlı süit |
+| `pytest -m slow` | 3.12 | ILP / yavaş |
+| `python -m spor_toto.health` | 3.12 | 13/13 HEALTHY zorunlu |
+| CLI smoke | 3.12 | fix16 + Bayes preset |
+
+Workflow: `.github/workflows/tests.yml`  
+Actions: repository **Actions** sekmesi.
+
+CD (otomatik deploy) yok: Replit Publish manuel / yarı-otomatik kalır — health kırmızıysa yayınlama.
+
 ---
 
 ## Uyarı
