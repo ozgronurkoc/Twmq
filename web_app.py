@@ -17,7 +17,8 @@ from spor_toto.core import (
 )
 from spor_toto.report import basliklar
 from spor_toto.analysis import monte_carlo_report, match_error_frequency
-from spor_toto.bayes import bayes_summary, bayes_update_matches, posteriors_only
+from spor_toto.bayes import bayes_summary, bayes_update_matches
+from spor_toto.markov import markov_report
 from spor_toto.health import run_health
 from spor_toto import __version__
 
@@ -189,6 +190,7 @@ def _build_result(
 
     advanced = None
     bayes_block = None
+    markov_block = None
     if user_probs is not None:
         work_probs = user_probs
         if use_bayes:
@@ -227,6 +229,11 @@ def _build_result(
             "monte_carlo": mc,
             "source": "bayes_posterior" if use_bayes else "user_probs",
         }
+        try:
+            markov_block = markov_report(enc, cols, work_probs)
+        except Exception:
+            logger.exception("markov_report failed")
+            markov_block = None
 
     error_freq = None
     try:
@@ -254,6 +261,7 @@ def _build_result(
         "probs": probs_uniform,
         "advanced": advanced,
         "bayes": bayes_block,
+        "markov": markov_block,
         "error_freq": error_freq,
         "stat_lines": basliklar(enc),
         "match_count": enc.total_len,
