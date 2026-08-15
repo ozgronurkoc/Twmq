@@ -24,9 +24,29 @@ spor_toto/             ← Fix-16, ILP, Bayes, MC, Markov, health
 |--------|------|----------|
 | GET | `/` | Servis bilgisi JSON |
 | GET | `/api/health` | 13 invariant |
-| GET | `/api/stats` | Tarihsel 1/0/2 |
-| GET | `/api/stats/<week>` | Tek hafta |
+| GET | `/api/stats?last=N` | Tarihsel 1/0/2 + analiz blokları (`last` = son N hafta dilimi) |
+| GET | `/api/stats/<week>` | Tek hafta detayı (komşular, sıra, sapma, sıra-sıra bağlam) |
 | POST | `/api/solve` | Tüm motor özellikleri |
+
+### GET `/api/stats`
+
+`?last=N` verilirse **tüm bloklar** o dilim üzerinden hesaplanır (`last` yoksa/geçersizse tüm sezon).
+
+| Alan | İçerik |
+|------|--------|
+| `meta` | sezon, hafta sayısı, hafta aralığı, tarih aralığı, `sliced` |
+| `totals` / `weekly_avg` / `bands` | toplam, haftalık ortalama, min–maks–ortanca–σ ve ortalama üstü/altı ayrımı |
+| `analytics.positions` | 1.–15. maç sırasına göre 1/0/2 dağılımı |
+| `analytics.transitions` | ardışık maçlarda sembol geçiş matrisi (3×3) |
+| `analytics.distribution` | “bir haftada k adet” histogramı |
+| `analytics.streaks` | hafta içi en uzun aynı-sembol serileri |
+| `analytics.extremes` | her sembol için en yüksek/en düşük hafta |
+| `analytics.recent` | son 6 haftanın ortalaması ve sezona göre farkı |
+| `data_quality` | sayım çelişkileri, tekrar eden diziler, eksik haftalar |
+| `weeks` | hafta satırları (`counts`, `max_streak`, `consistent`, …) |
+
+**Tek doğruluk kaynağı** haftanın 15 karakterlik `results` dizisidir; dosyadaki hazır
+`n1/n0/n2` alanları çeliştiğinde `data_quality.count_conflicts` içinde raporlanır.
 
 ### POST `/api/solve` body
 

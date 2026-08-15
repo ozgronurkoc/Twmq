@@ -15,6 +15,18 @@
   --ok: #34c759;
   --warn: #ff9f0a;
   --bad: #ff3b30;
+
+  /* Veri görselleştirme — doğrulanmış kategorik paletin ilk üç yuvası
+     (validate_palette.js, light, yüzey #ffffff: tüm kontroller geçti).
+     Yuva sırası sabittir: 1 → mavi, 0 → turuncu, 2 → yeşil-mavi. */
+  --viz-1: #2a78d6;
+  --viz-0: #eb6834;
+  --viz-2: #1baf7a;
+  --viz-grid: #e1e0d9;
+  --viz-axis: #c3c2b7;
+  --viz-ink: #52514e;
+  --viz-mute: #898781;
+  --viz-surface: #ffffff;
 }
 
 html, body { height: 100%; }
