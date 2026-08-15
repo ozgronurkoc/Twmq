@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}Sağlık · Spor Toto Lab{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Sistem sağlığı</h1><div class="sub">Health endpoint özeti</div></div></div>
+<div class="card"><div class="card-title">Durum</div>
+<pre style="font-size:0.8rem;white-space:pre-wrap;background:var(--bg);padding:12px;border-radius:10px">{{ report_json }}</pre></div>
+{% endblock %}

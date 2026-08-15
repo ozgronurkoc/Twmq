@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Hafta {{ week.week }} · İstatistik{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>{{ week.week }}. Hafta</h1>
+    <div class="sub">Kapanış {{ week.close_date or '—' }} · {{ week.n1 }} / {{ week.n0 }} / {{ week.n2 }} (1/0/2)</div>
+  </div>
+  <a href="{{ url_for('page_stats') }}" class="badge badge-gray" style="text-decoration:none">← Tüm haftalar</a>
+</div>
+<div class="card">
+  <div class="card-title">Sonuç kodu</div>
+  <p style="font-family:ui-monospace,monospace;font-size:1.1rem;letter-spacing:0.08em">{{ week.results }}</p>
+  <p style="margin-top:10px;color:var(--text-sec);font-size:0.85rem">1={{ week.n1 }} · 0={{ week.n0 }} · 2={{ week.n2 }}</p>
+</div>
+{% endblock %}

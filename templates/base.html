@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>{% block title %}Spor Toto 14-Garanti{% endblock %}</title>
+  <style>
+    :root {
+      --bg: #f5f5f7; --panel: #fff; --sidebar: #1d1d1f; --sidebar-hover: #2c2c2e;
+      --sidebar-active: #3a3a3c; --text: #1d1d1f; --text-sec: #6e6e73; --border: #d2d2d7;
+      --blue: #0071e3; --blue-soft: #e8f1fc; --radius: 14px; --shadow: 0 2px 12px rgba(0,0,0,.06);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; }
+    .sidebar { width: 240px; min-height: 100vh; background: var(--sidebar); color: #f5f5f7; display: flex; flex-direction: column; padding: 20px 12px; flex-shrink: 0; }
+    .sidebar .brand { display: flex; align-items: center; gap: 10px; padding: 8px 12px 20px; font-weight: 600; font-size: 0.95rem; }
+    .sidebar .brand .dot { width: 22px; height: 22px; border-radius: 6px; background: linear-gradient(135deg,#0071e3,#5ac8fa); }
+    .nav { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+    .nav a { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; color: #a1a1a6; text-decoration: none; font-size: 0.88rem; font-weight: 500; }
+    .nav a:hover { background: var(--sidebar-hover); color: #f5f5f7; }
+    .nav a.active { background: var(--sidebar-active); color: #fff; }
+    .nav .section-label { font-size: 0.68rem; font-weight: 600; color: #636366; text-transform: uppercase; letter-spacing: 0.06em; padding: 16px 12px 6px; }
+    .sidebar .foot { padding: 12px; font-size: 0.72rem; color: #636366; border-top: 1px solid #2c2c2e; }
+    .main { flex: 1; min-width: 0; padding: 28px 32px 48px; overflow-x: auto; }
+    .page-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 22px; flex-wrap: wrap; }
+    .page-header h1 { font-size: 1.55rem; font-weight: 650; letter-spacing: -0.03em; }
+    .page-header .sub { color: var(--text-sec); font-size: 0.88rem; margin-top: 4px; }
+    .card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; box-shadow: var(--shadow); margin-bottom: 14px; }
+    .card-title { font-size: 0.92rem; font-weight: 600; margin-bottom: 12px; }
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+    .stat-box { background: var(--bg); border-radius: 12px; padding: 14px 12px; text-align: center; }
+    .stat-box .lbl { font-size: 0.72rem; color: var(--text-sec); font-weight: 500; }
+    .stat-box .val { font-size: 1.35rem; font-weight: 650; margin-top: 4px; }
+    .stat-box .sub { font-size: 0.72rem; color: var(--text-sec); margin-top: 2px; }
+    table.data { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+    table.data th, table.data td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); }
+    table.data th { color: var(--text-sec); font-weight: 600; font-size: 0.75rem; }
+    .badge { display: inline-flex; font-size: 0.68rem; font-weight: 600; padding: 3px 9px; border-radius: 20px; }
+    .badge-blue { background: var(--blue-soft); color: var(--blue); }
+    .badge-gray { background: #f0f0f2; color: #6e6e73; }
+    .pos { color: #1a7a3a; font-weight: 600; }
+    .neg { color: #c41d1d; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand"><span class="dot"></span> Spor Toto Lab</div>
+    <nav class="nav">
+      <div class="section-label">Çalışma</div>
+      <a href="{{ url_for('index') }}" class="{% if active_page=='formula' %}active{% endif %}">Formül Üret</a>
+      <a href="{{ url_for('page_stats') }}" class="{% if active_page=='stats' %}active{% endif %}">İstatistik</a>
+      <div class="section-label">Sistem</div>
+      <a href="{{ url_for('page_health') }}" class="{% if active_page=='health' %}active{% endif %}">Sağlık / Test</a>
+    </nav>
+    <div class="foot">v{{ version }} · 14-garanti</div>
+  </aside>
+  <main class="main">{% block content %}{% endblock %}</main>
+</body>
+</html>
