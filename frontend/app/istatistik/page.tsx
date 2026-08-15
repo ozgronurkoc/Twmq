@@ -27,7 +27,12 @@ import {
   TransitionMatrix,
   TrendChart,
 } from "@/components/istatistik/charts";
-import { DataQualityPanel, DeltaStat, RangeFilter } from "@/components/istatistik/parts";
+import {
+  DataQualityPanel,
+  DeltaStat,
+  RangeFilter,
+  SliceNote,
+} from "@/components/istatistik/parts";
 import { WeeksTable } from "@/components/istatistik/weeks-table";
 import { SYM_BG } from "@/components/istatistik/viz";
 
@@ -120,6 +125,11 @@ export default function IstatistikPage() {
         </div>
         <div className="mt-4">
           <RangeFilter deger={last} onChange={setLast} secenekler={ARALIKLAR} mesgul={mesgul} />
+          <SliceNote
+            weeks={veri.weeks.map((w) => w.week)}
+            matches={meta.matches ?? 0}
+            sliced={Boolean(meta.sliced)}
+          />
         </div>
       </header>
 
