@@ -1,0 +1,20 @@
+{
+  "meta": {
+    "season": "2025/2026",
+    "date_from": "2025-08-18",
+    "date_to": "2026-07-27",
+    "weeks": 41,
+    "matches": 615,
+    "source": "sportototahmin week payloads (match-linked scores); incomplete weeks excluded",
+    "rule": "only weeks with exactly 15 results",
+    "generated_at": "2026-08-15"
+  },
+  "totals": {"1": 270, "0": 149, "2": 196, "pct_1": 43.9024, "pct_0": 24.2276, "pct_2": 31.8699},
+  "weekly_avg": {"1": 6.5854, "0": 3.6341, "2": 4.7805},
+  "bands": {
+    "1": {"avg": 6.5854, "min": 4, "max": 10, "median": 7, "std": 1.6354, "above_n": 21, "below_n": 20, "above_mean": 7.9048, "below_mean": 5.2, "above_gap": 1.3194, "below_gap": 1.3854},
+    "0": {"avg": 3.6341, "min": 0, "max": 8, "median": 4, "std": 1.6946, "above_n": 22, "below_n": 19, "above_mean": 4.9091, "below_mean": 2.1579, "above_gap": 1.2749, "below_gap": 1.4763},
+    "2": {"avg": 4.7805, "min": 1, "max": 9, "median": 5, "std": 1.7347, "above_n": 21, "below_n": 20, "above_mean": 6.0952, "below_mean": 3.4, "above_gap": 1.3148, "below_gap": 1.3805}
+  },
+  "weeks": []
+}
