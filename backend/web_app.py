@@ -6,7 +6,8 @@ import logging
 import os
 import time
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple
+from urllib.parse import urlparse
 
 from flask import Flask, jsonify, request
 
@@ -19,7 +20,9 @@ from spor_toto.core import (
 )
 from spor_toto.report import basliklar
 from spor_toto.analysis import monte_carlo_report, match_error_frequency
-from spor_toto.bayes import bayes_summary, bayes_update_matches
+from spor_toto.bayes import (
+    STRENGTH_PRESETS, bayes_summary, bayes_update_matches, recommend_strengths,
+)
 from spor_toto.markov import markov_report
 from spor_toto.health import run_health
 from spor_toto.history import history_summary, history_weeks, history_week
@@ -32,6 +35,45 @@ app.secret_key = os.environ.get("SESSION_SECRET", "spor-toto-api")
 
 MATCH_COUNT = 15
 MC_WEB_SAMPLES = 80_000
+MC_MIN, MC_MAX = 1_000, 200_000
+
+# Motorun tum modlari. Bu liste /api/meta ile disari verilir; frontend
+# mod listesini sabit kodlamaz, tek kaynak burasidir.
+MODES: List[Dict[str, Any]] = [
+    {"id": "fix16", "label": "Sabit 16 satır", "garanti": True,
+     "needs_budget": False, "needs_scipy": False,
+     "aciklama": "Her zaman 16 kupon satırı. En az 7 çifte zorunlu. "
+                 "Hamming(7,4) tabanlı, kanıtlanmış optimal."},
+    {"id": "auto", "label": "Otomatik", "garanti": True,
+     "needs_budget": False, "needs_scipy": False,
+     "aciklama": "En ucuz çözümü arar; satır sayısı değişkendir."},
+    {"id": "exact", "label": "Kesin çözücü (ILP)", "garanti": True,
+     "needs_budget": False, "needs_scipy": True,
+     "aciklama": "ILP ile kanıtlanmış optimal. Yalnızca küçük uzaylarda."},
+    {"id": "block", "label": "Blok ayrıştırma", "garanti": True,
+     "needs_budget": False, "needs_scipy": False,
+     "aciklama": "r=1 bloğu + tam sistem ayrıştırması; cebirsel bloklar."},
+    {"id": "heuristic", "label": "Sezgisel", "garanti": True,
+     "needs_budget": False, "needs_scipy": False,
+     "aciklama": "Açgözlü + local search. Büyük uzaylar için."},
+    {"id": "butce", "label": "Bütçe danışmanı", "garanti": True,
+     "needs_budget": True, "needs_scipy": False,
+     "aciklama": "Elimde N kolon var, hangi maçı kısmalıyım?"},
+    {"id": "maxcov", "label": "Maksimum kapsama", "garanti": False,
+     "needs_budget": True, "needs_scipy": False,
+     "aciklama": "Sabit bütçeyle maksimum kapsama. GARANTİ VERMEZ."},
+]
+MODE_IDS = {m["id"] for m in MODES}
+
+# CLI ile birebir ayni motor varsayilanlari (bkz. spor_toto/cli.py).
+ENGINE_DEFAULTS: Dict[str, Any] = {
+    "trials": 5,
+    "ls_iters": 30_000,
+    "seed": 42,
+    "time_limit": 60.0,
+    "block_limit": 256,
+    "exact_limit": 512,
+}
 
 
 def _parse_prob_value(raw: Any) -> float:
@@ -84,6 +126,71 @@ def _parse_json_probs(data: dict, selections: List[List[str]]) -> Optional[List[
     return None
 
 
+def _sayi(data: dict, key: str, default: Any, cast: Callable = float,
+          lo: Optional[float] = None, hi: Optional[float] = None) -> Any:
+    """Govdeden sayi okur; bos/bozuk deger varsayilana duser, sinirlara kirpar."""
+    raw = data.get(key)
+    if raw is None or (isinstance(raw, str) and not raw.strip()):
+        raw = default
+    try:
+        val = cast(raw)
+    except (TypeError, ValueError):
+        val = cast(default)
+    if lo is not None:
+        val = max(lo, val)
+    if hi is not None:
+        val = min(hi, val)
+    return val
+
+
+def _engine_params(data: dict) -> Dict[str, Any]:
+    """CLI'de acik olan motor ayarlari; API'de sabit kodlanmislardi."""
+    return {
+        "trials": _sayi(data, "trials", ENGINE_DEFAULTS["trials"], int, 1, 50),
+        "ls_iters": _sayi(data, "ls_iters", ENGINE_DEFAULTS["ls_iters"], int, 100, 500_000),
+        "seed": _sayi(data, "seed", ENGINE_DEFAULTS["seed"], int, 0, 2**31 - 1),
+        "time_limit": _sayi(data, "time_limit", ENGINE_DEFAULTS["time_limit"], float, 1.0, 300.0),
+        "block_limit": _sayi(data, "block_limit", ENGINE_DEFAULTS["block_limit"], int, 2, 6561),
+        "exact_limit": _sayi(data, "exact_limit", ENGINE_DEFAULTS["exact_limit"], int, 2, 4096),
+    }
+
+
+def _resolve_bayes(data: dict) -> Tuple[float, float, Optional[str]]:
+    """
+    Bayes alpha / n cozumleme. `bayes_preset` verilmisse CLI ile BIREBIR ayni
+    degerler kullanilir (tek kaynak: bayes.STRENGTH_PRESETS); yoksa ham
+    prior_strength / evidence_strength okunur.
+    """
+    ham = data.get("bayes_preset")
+    if ham not in (None, ""):
+        key = str(ham).strip().lower().replace(" ", "_")
+        if key not in STRENGTH_PRESETS:
+            raise ValueError(
+                f"Bilinmeyen bayes_preset {ham!r}. "
+                f"Geçerli olanlar: {', '.join(STRENGTH_PRESETS)}")
+        v = recommend_strengths(key)
+        return float(v["prior_strength"]), float(v["evidence_strength"]), key
+    return (
+        _sayi(data, "prior_strength", 1.0, float, 0.0, 1000.0),
+        _sayi(data, "evidence_strength", 10.0, float, 0.0, 10_000.0),
+        None,
+    )
+
+
+def _plan_to_dict(plan, index: int, secili: bool) -> Dict[str, Any]:
+    """ButcePlani -> JSON. Kullanici planlar arasindan UI'dan secebilsin diye."""
+    return {
+        "index": index,
+        "bedel": plan.bedel,
+        "satir": plan.satir,
+        "selections": ["".join(s) for s in plan.selections],
+        "degisiklikler": list(plan.degisiklikler),
+        "p_kume_ici": (round(100 * plan.p_kume_ici, 3)
+                       if plan.p_kume_ici is not None else None),
+        "secili": secili,
+    }
+
+
 def _run_fix16(enc: Encoder, variant: int = 0) -> Dict[str, Any]:
     cols, aciklama = solve_fix16(enc, variant=variant)
     notlar = [aciklama]
@@ -92,17 +199,21 @@ def _run_fix16(enc: Encoder, variant: int = 0) -> Dict[str, Any]:
     return {"cols": cols, "baslik": f"Sabit 16 satır – {aciklama}", "notlar": notlar}
 
 
-def _run_auto(enc: Encoder) -> Dict[str, Any]:
+def _run_auto(enc: Encoder, eng: Dict[str, Any]) -> Dict[str, Any]:
     aday = []
-    r = solve_by_blocks(enc, max_block_space=256, time_limit=30.0)
+    r = solve_by_blocks(enc, max_block_space=eng["block_limit"],
+                        time_limit=min(30.0, eng["time_limit"]))
     if r:
         aday.append((r[0], f"Blok ayrıştırma ({r[1]})", False))
-    if enc.space_size() <= 512 and HAS_SCIPY:
-        cols, kanit = exact_cover(enc.alphabet_sizes, time_limit=30.0)
+    if enc.space_size() <= eng["exact_limit"] and HAS_SCIPY:
+        cols, kanit = exact_cover(enc.alphabet_sizes,
+                                  time_limit=min(30.0, eng["time_limit"]))
         if cols:
             aday.append((cols, "Kesin çözücü (ILP)", kanit))
     if not any(a[2] for a in aday):
-        cols_h = solve_heuristic(enc, trials=5, ls_iters=10000, seed=42)
+        cols_h = solve_heuristic(enc, trials=eng["trials"],
+                                 ls_iters=min(10_000, eng["ls_iters"]),
+                                 seed=eng["seed"])
         aday.append((cols_h, "Heuristik (açgözlü + local search)", False))
     if not aday:
         raise RuntimeError("Hiçbir motor sonuç üretemedi.")
@@ -112,9 +223,43 @@ def _run_auto(enc: Encoder) -> Dict[str, Any]:
     return {"cols": cols, "baslik": baslik, "notlar": []}
 
 
-def _run_heuristic(enc: Encoder) -> Dict[str, Any]:
-    cols = solve_heuristic(enc, trials=5, ls_iters=30000, seed=42)
-    return {"cols": cols, "baslik": "Sezgisel (açgözlü + local search)", "notlar": []}
+def _run_heuristic(enc: Encoder, eng: Dict[str, Any]) -> Dict[str, Any]:
+    cols = solve_heuristic(enc, trials=eng["trials"], ls_iters=eng["ls_iters"],
+                           seed=eng["seed"])
+    return {"cols": cols, "baslik": "Sezgisel (açgözlü + local search)",
+            "notlar": [f"trials={eng['trials']} · ls_iters={eng['ls_iters']} "
+                       f"· seed={eng['seed']}"]}
+
+
+def _run_exact(enc: Encoder, eng: Dict[str, Any]) -> Dict[str, Any]:
+    """Kesin cozucu (ILP). CLI'de vardi, API'de hic acilmamisti."""
+    if not HAS_SCIPY:
+        raise ValueError(
+            "Kesin çözücü (ILP) scipy gerektirir; bu kurulumda scipy yok. "
+            "Bunun yerine 'block' veya 'heuristic' modunu kullanın.")
+    cols, kanit = exact_cover(enc.alphabet_sizes, time_limit=eng["time_limit"])
+    if cols is None:
+        raise ValueError(
+            f"ILP çözüm üretemedi (uzay {enc.space_size()}, zaman sınırı "
+            f"{eng['time_limit']:.0f} sn). Uzayı küçültün ya da 'auto' deneyin.")
+    return {
+        "cols": cols,
+        "baslik": "Kesin çözücü (ILP)",
+        "notlar": [f"Optimallik: {'KANITLANDI' if kanit else 'kanıtlanmadı (zaman sınırı)'}"],
+    }
+
+
+def _run_block(enc: Encoder, eng: Dict[str, Any]) -> Dict[str, Any]:
+    """Blok ayristirma motoru. CLI'de vardi, API'de hic acilmamisti."""
+    r = solve_by_blocks(enc, max_block_space=eng["block_limit"],
+                        time_limit=eng["time_limit"])
+    if not r:
+        raise ValueError(
+            "Blok ayrıştırma sonuç üretemedi. block_limit değerini artırmayı "
+            "ya da 'auto' modunu deneyin.")
+    cols, aciklama = r
+    return {"cols": cols, "baslik": f"Blok ayrıştırma – {aciklama}",
+            "notlar": [aciklama]}
 
 
 def _run_maxcov(enc: Encoder, budget: int) -> Dict[str, Any]:
@@ -306,6 +451,7 @@ def root():
         "version": __version__,
         "frontend": "Next.js only — bu process HTML servis etmez",
         "endpoints": [
+            "GET  /api/meta",
             "GET  /api/health",
             "GET  /api/stats",
             "GET  /api/stats/<week>",
@@ -321,6 +467,38 @@ def api_health():
     report = run_health()
     code = 200 if report.ok else 503
     return jsonify(report.to_dict()), code
+
+
+@app.route("/api/meta", methods=["GET"])
+def api_meta():
+    """
+    Motorun yetenek envanteri. Frontend mod listesini, preset'leri ve
+    sinirlari SABIT KODLAMAZ; hepsini buradan okur, boylece motorla
+    tek kaynaktan senkron kalir.
+    """
+    return jsonify({
+        "version": __version__,
+        "has_scipy": HAS_SCIPY,
+        "match_count": MATCH_COUNT,
+        "symbols": list(SEMBOLLER),
+        "modes": MODES,
+        "bayes_presets": [
+            {"id": k,
+             "prior_strength": v["prior_strength"],
+             "evidence_strength": v["evidence_strength"]}
+            for k, v in STRENGTH_PRESETS.items()
+        ],
+        "engine_defaults": ENGINE_DEFAULTS,
+        "limits": {
+            "mc_samples": {"min": MC_MIN, "max": MC_MAX, "default": MC_WEB_SAMPLES},
+            "plan_count": {"min": 1, "max": 50, "default": 5},
+            "trials": {"min": 1, "max": 50},
+            "ls_iters": {"min": 100, "max": 500_000},
+            "time_limit": {"min": 1.0, "max": 300.0},
+            "block_limit": {"min": 2, "max": 6561},
+            "exact_limit": {"min": 2, "max": 4096},
+        },
+    })
 
 
 @app.route("/api/stats", methods=["GET"])
@@ -363,37 +541,39 @@ def api_solve():
     variant_raw = str(data.get("variant", "0") or "0")
     budget_raw = data.get("budget")
     use_bayes = bool(data.get("use_bayes", False))
-    try:
-        prior_strength = float(data.get("prior_strength", 1) or 1)
-    except (TypeError, ValueError):
-        prior_strength = 1.0
-    try:
-        evidence_strength = float(data.get("evidence_strength", 10) or 10)
-    except (TypeError, ValueError):
-        evidence_strength = 10.0
-    try:
-        mc_samples = int(data.get("mc_samples", MC_WEB_SAMPLES) or MC_WEB_SAMPLES)
-    except (TypeError, ValueError):
-        mc_samples = MC_WEB_SAMPLES
-    mc_samples = max(1000, min(mc_samples, 200_000))
+    kati = bool(data.get("kati", False))
+    mc_samples = _sayi(data, "mc_samples", MC_WEB_SAMPLES, int, MC_MIN, MC_MAX)
+    plan_count = _sayi(data, "plan_count", 5, int, 1, 50)
+    plan_apply = _sayi(data, "plan_apply", 1, int, 1, 50)
+    eng = _engine_params(data)
+    # Bayes preset'i gecersizse burada patlamali (asagidaki try onu 400'e cevirir).
+    bayes_preset: Optional[str] = None
+    prior_strength, evidence_strength = 1.0, 10.0
 
     run_log["mode"] = mode
     run_log["picks"] = picks_str
     run_log["variant"] = variant_raw
     run_log["budget"] = budget_raw
     run_log["use_bayes"] = use_bayes
-    run_log["prior_strength"] = prior_strength
-    run_log["evidence_strength"] = evidence_strength
     run_log["mc_samples"] = 0
     run_log["probs_filled"] = False
 
     try:
+        prior_strength, evidence_strength, bayes_preset = _resolve_bayes(data)
+        run_log["prior_strength"] = prior_strength
+        run_log["evidence_strength"] = evidence_strength
+        run_log["bayes_preset"] = bayes_preset
+
+        if mode not in MODE_IDS:
+            raise ValueError(
+                f"Bilinmeyen mod {mode!r}. Geçerli olanlar: "
+                f"{', '.join(m['id'] for m in MODES)}")
         if not picks_str:
             raise ValueError("picks veya matches zorunlu")
 
         t1 = time.perf_counter()
         selections = parse_picks(picks_str)
-        enc = Encoder(selections)
+        enc = Encoder(selections, kati=kati)
         _log_step(
             run_log, "parse+encoder",
             f"banko={len(enc.banko_pos)} cifte={sum(1 for k in enc.alphabet_sizes if k == 2)} "
@@ -416,34 +596,56 @@ def api_solve():
         t1 = time.perf_counter()
         r = None
 
+        butce_planlari = None
+
         if mode == "fix16":
             r = _run_fix16(enc, variant=variant)
         elif mode == "auto":
-            r = _run_auto(enc)
+            r = _run_auto(enc, eng)
         elif mode == "heuristic":
-            r = _run_heuristic(enc)
+            r = _run_heuristic(enc, eng)
+        elif mode == "exact":
+            r = _run_exact(enc, eng)
+        elif mode == "block":
+            r = _run_block(enc, eng)
         elif mode == "butce":
             if budget_raw is None or str(budget_raw).strip() == "":
                 raise ValueError("Bütçe modu için budget gerekli")
             budget = int(budget_raw)
-            planlar = butce_danismani(enc, budget, user_probs, en_fazla=5)
+            planlar = butce_danismani(enc, budget, user_probs, en_fazla=plan_count)
             if not planlar:
                 raise ValueError(
                     f"{budget} kolonluk bütçeye sığan plan yok. Daha fazla banko veya bütçe artırın."
                 )
-            secili = planlar[0]
+            # CLI'deki --plan-uygula karsiligi (1 tabanli). Once sadece
+            # planlar[0] uygulanabiliyordu; artik kullanici UI'dan secebilir.
+            idx = min(plan_apply, len(planlar)) - 1
+            secili = planlar[idx]
+            butce_planlari = [_plan_to_dict(p, i + 1, i == idx)
+                              for i, p in enumerate(planlar)]
             yeni_enc = Encoder(secili.selections)
-            cols2, aciklama2 = solve_fix16(yeni_enc, variant=0)
+            cols2, aciklama2 = solve_fix16(yeni_enc, variant=variant)
             notlar = [
-                f"Uygulanan: {'; '.join(secili.degisiklikler) or 'yok'}",
+                f"Uygulanan plan {idx + 1}/{len(planlar)}: "
+                f"{'; '.join(secili.degisiklikler) or 'değişiklik yok'}",
                 f"Plan bedeli: {secili.bedel} kolon, {secili.satir} satır",
             ]
-            _log_step(run_log, "motor_butce", f"bedel={secili.bedel}", (time.perf_counter() - t1) * 1000)
+            _log_step(run_log, "motor_butce",
+                      f"plan={idx + 1}/{len(planlar)} bedel={secili.bedel}",
+                      (time.perf_counter() - t1) * 1000)
             t1 = time.perf_counter()
+            if user_probs is not None:
+                run_log["mc_samples"] = mc_samples
+            # Bu mod eskiden user_probs=None ile cagriliyordu; bu yuzden
+            # butce modunda olasilik/Bayes/Markov analizi hic calismiyordu.
             result = _build_result(
                 yeni_enc, cols2,
                 f"Bütçe planı ({secili.bedel} kolon) – {aciklama2}",
-                notlar, user_probs=None,
+                notlar, user_probs=user_probs,
+                use_bayes=use_bayes and user_probs is not None,
+                prior_strength=prior_strength,
+                evidence_strength=evidence_strength,
+                mc_samples=mc_samples,
             )
             _log_step(run_log, "build_result", "butce", (time.perf_counter() - t1) * 1000)
         elif mode == "maxcov":
@@ -451,10 +653,8 @@ def api_solve():
                 raise ValueError("maxcov için budget gerekli")
             budget = int(budget_raw)
             r = _run_maxcov(enc, budget)
-        else:
-            r = _run_fix16(enc, variant=variant)
 
-        if mode != "butce" and r is not None:
+        if r is not None:
             _log_step(
                 run_log, f"motor_{mode}",
                 f"kolon={len(r['cols'])} | {r.get('baslik', '')}",
@@ -472,6 +672,12 @@ def api_solve():
             )
             detail = "exact+MC+bayes" if user_probs is not None else "kaplama"
             _log_step(run_log, "build_result", detail, (time.perf_counter() - t1) * 1000)
+
+        if result is not None:
+            result["mode"] = mode
+            result["bayes_preset"] = bayes_preset
+            if butce_planlari is not None:
+                result["butce_planlari"] = butce_planlari
 
         if result is not None and getattr(enc, "uyarilar", None):
             result["uyarilar"] = list(enc.uyarilar)
@@ -513,15 +719,33 @@ def api_solve():
     return jsonify(body), (200 if body["ok"] else 400)
 
 
+_IZINLI_ALANLAR = ("replit.dev", "repl.co")
+
+
+def _origin_izinli(origin: str) -> bool:
+    """
+    Origin allowlist'i HOSTNAME uzerinden kontrol eder.
+
+    Onceki surum substring bakiyordu ('.replit.dev' in origin); bu yuzden
+    https://x.replit.dev.attacker.com gibi bir origin de geciyordu.
+    """
+    if not origin:
+        return False
+    try:
+        host = (urlparse(origin).hostname or "").lower()
+    except ValueError:
+        return False
+    if not host:
+        return False
+    if host in ("localhost", "127.0.0.1", "::1"):
+        return True
+    return any(host == d or host.endswith("." + d) for d in _IZINLI_ALANLAR)
+
+
 @app.after_request
 def _cors(resp):
     origin = request.headers.get("Origin", "")
-    allowed = (
-        origin.startswith("http://localhost:")
-        or origin.startswith("http://127.0.0.1:")
-        or ".replit.dev" in origin
-        or ".repl.co" in origin
-    )
+    allowed = _origin_izinli(origin)
     if allowed and origin:
         resp.headers["Access-Control-Allow-Origin"] = origin
         resp.headers["Access-Control-Allow-Headers"] = "Content-Type, Accept"
