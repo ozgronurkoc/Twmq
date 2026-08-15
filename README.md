@@ -20,6 +20,8 @@ Bu araç maç sonucu **tahmin etmez**. Tahminin doğruysa onu kaçırmamanı, he
 
 **Kritik ayrım:** Garanti, *seçim kümesi içinde* geçerlidir. Küme dışı bir sonuç gelirse sistem zaten o senaryoyu kapsamaz — bu bir hata değil, tasarımın sınırıdır.
 
+O sınırın ötesinde ne olduğunu **fire analizi** ölçer (CLI `--fire`, arayüzde *Fire* sekmesi): bir veya iki maç işaretlerinin dışına çıkarsa en iyi kolonun kaç tutturduğunu, banko/çifte ayrımıyla birlikte gösterir.
+
 ---
 
 ## Kurulum
@@ -72,6 +74,8 @@ spor-toto --picks "..." --mode auto
 spor-toto --picks "..." --mode butce --budget 32
 spor-toto --picks "..." --mode maxcov --budget 16
 spor-toto --picks "..." --probs "1:0.5,0:0.3,2:0.2;..." --mc-samples 20000
+spor-toto --picks "..." --fire            # seçim DIŞI fire analizi
+spor-toto --picks "..." --fire --fire-max 1
 ```
 
 ### Olasılık, Monte Carlo, Bayes
@@ -129,7 +133,7 @@ bash scripts/run_next_dev.sh    # UI :3000, API :8080
 | `/` | **Formül** — motorun tamamı |
 | `/istatistik` | Sezon dağılımı, bantlar, 41 hafta |
 | `/istatistik/<hafta>` | Tek hafta detayı |
-| `/saglik` | 13 invariant, süreleriyle |
+| `/saglik` | 14 invariant, süreleriyle |
 
 ### Formül sayfası
 
@@ -142,6 +146,7 @@ Girdi tarafı:
 - **Maç bazlı olasılık girişi** (1/0/2) — ham ağırlık da kabul edilir, normalize edilir
 - **Bayes**: 5 hazır preset (CLI ile aynı α/n) veya elle α / n
 - Monte Carlo örnek sayısı (1.000–200.000)
+- **Fire analizi** (seçim dışı): kapalı / 1-fire / 1 ve 2 fire
 - Motor ayarları: `trials`, `ls_iters`, `seed`, `time_limit`, `block_limit`, `exact_limit`
 
 Sonuç sekmeleri — hepsi backend alanlarıyla birebir:
@@ -155,6 +160,7 @@ Sonuç sekmeleri — hepsi backend alanlarıyla birebir:
 | Bayes | Maç bazlı prior → posterior, KL + yorum, en çok kayan maçlar |
 | Markov | Küme-içi hayatta kalma + hata bütçesi (0 / 1 / 2+) |
 | Hata frekansı | d=1 ve d=2 katmanlarında hangi maç hata üretiyor |
+| Fire | **Seçim dışı** senaryolar — garantinin geçerli olmadığı bölge |
 | Log | Motorun adım adım çalışma logu |
 
 Arayüz mod listesini, preset'leri ve sınırları `GET /api/meta` üzerinden okur —
@@ -165,7 +171,7 @@ hiçbiri arayüzde sabit kodlanmaz, motorla tek kaynaktan senkron kalır.
 | Method | Path | Açıklama |
 |--------|------|----------|
 | GET | `/api/meta` | Modlar, preset'ler, varsayılanlar, sınırlar |
-| GET | `/api/health` | 13 invariant (200 = HEALTHY, 503 = UNHEALTHY) |
+| GET | `/api/health` | 14 invariant (200 = HEALTHY, 503 = UNHEALTHY) |
 | GET | `/api/stats` | Tarihsel 1/0/2 |
 | GET | `/api/stats/<week>` | Tek hafta |
 | POST | `/api/solve` | Motorun tamamı |
@@ -179,7 +185,7 @@ python -m spor_toto.health --interval 60
 curl http://localhost:8080/api/health   # JSON (200 = HEALTHY, 503 = UNHEALTHY)
 ```
 
-13 invariant: encoder, fix16 garanti, distance layers, blok/heuristic, exact olasılık, Monte Carlo, Bayes, Markov, error_freq, pipeline şekli, scipy bayrağı.
+14 invariant: encoder, fix16 garanti, distance layers, blok/heuristic, exact olasılık, Monte Carlo, Bayes, Markov, error_freq, **fire senaryoları**, pipeline şekli, scipy bayrağı.
 
 ---
 
@@ -218,7 +224,8 @@ backend/
     analysis.py  Monte Carlo, maç bazlı hata frekansı
     bayes.py     Dirichlet prior → posterior, KL, preset'ler
     markov.py    Seçim hayatta kalma + hata bütçesi zinciri
-    health.py    13 invariant health check
+    fire_scenarios.py  Seçim DIŞI fire analizi (1-fire / 2-fire)
+    health.py    14 invariant health check
     report.py    Konsol / dosya çıktısı
     cli.py       spor-toto komut satırı
   web_app.py     Flask — yalnızca JSON API, HTML servis etmez
@@ -268,7 +275,7 @@ Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant’lar, CLI (Bayes p
 bash backend/scripts/check.sh
 ```
 
-`backend/scripts/check.sh`: hızlı pytest → 13 invariant health → CLI fix16 + `--bayes-preset dengeli` dumanı.
+`backend/scripts/check.sh`: hızlı pytest → 14 invariant health → CLI fix16 + `--bayes-preset dengeli` dumanı.
 Exit code ≠ 0 ise bir adım kırık demektir (CI ile aynı mantık).
 
 ---

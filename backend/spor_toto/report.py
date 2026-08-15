@@ -77,13 +77,48 @@ def monte_carlo_satirlari(mc: dict) -> List[str]:
     return lines
 
 
+def fire_satirlari(fire: dict) -> List[str]:
+    """
+    Secim DISI fire raporu.
+
+    Diger tum bloklar kume ICI mesafeyi anlatir; bu blok 14-garantinin
+    GECERLI OLMADIGI bolgeyi anlatir. Karistirilmamasi icin basligi acik.
+    """
+    lines = ["Secim DISI fire analizi (14-garantinin disi):"]
+    for anahtar, etiket in (("fire1", "1 mac isaret disinda"),
+                            ("fire2", "2 mac isaret disinda")):
+        blok = fire.get(anahtar)
+        if not blok or not blok.get("n"):
+            continue
+        lines.append(f"  {etiket} ({blok['n']} senaryo):")
+        for skor in ("15", "14", "13", "12"):
+            if skor in blok["scores"]:
+                lines.append(
+                    f"    {skor} dogru : {blok['scores'][skor]:9d}  "
+                    f"(%{blok['pct'][skor]:6.2f})")
+        lines.append(f"    >=14      : %{blok['p_ge_14']:6.2f}   "
+                     f">=13: %{blok['p_ge_13']:6.2f}")
+        turler = blok.get("by_type") or {}
+        if turler:
+            parcalar = []
+            for tur, v in turler.items():
+                p14 = v["pct"].get("14", 0.0)
+                p13 = v["pct"].get("13", 0.0)
+                parcalar.append(f"{tur} 14:%{p14:.1f}/13:%{p13:.1f}")
+            lines.append("    tur bazinda: " + "  ".join(parcalar))
+    lines.append("  NOT: bu bolum kume DISI senaryolardir; uniform 1/2 hata")
+    lines.append("       katmanlari kume ICI mesafedir, ikisi farklidir.")
+    return lines
+
+
 def yazdir_ve_kaydet(enc: Encoder, cols: List[Point], baslik: str,
                      output_path: Optional[str] = None,
                      ek_notlar: Sequence[str] = (),
                      probs: Optional[Sequence[Dict[str, float]]] = None,
                      tam_liste: bool = True,
                      mc_samples: int = 0,
-                     mc_seed: int = 42) -> Dict[str, object]:
+                     mc_seed: int = 42,
+                     fire_max: int = 0) -> Dict[str, object]:
     """Sonucu ekrana basar, istenirse dosyaya yazar. Ozet sozluk dondurur."""
     rows = merge_rows(cols)
     toplam_bedel = sum(row_cost(r) for r in rows)
@@ -147,6 +182,13 @@ def yazdir_ve_kaydet(enc: Encoder, cols: List[Point], baslik: str,
                 d = mc_p - ex
                 print(f"  {name:8s}: exact %{ex:6.2f}  MC %{mc_p:6.2f}  "
                       f"delta {d:+.2f}")
+    fire = None
+    if fire_max and fire_max > 0:
+        from .fire_scenarios import fire_scenario_report
+        fire = fire_scenario_report(enc, cols, max_fires=fire_max)
+        print(INCE)
+        for line in fire_satirlari(fire):
+            print(line)
     print(INCE)
 
     print(f"\nKUPONA YAZILACAK: {len(rows)} satir "
@@ -177,6 +219,10 @@ def yazdir_ve_kaydet(enc: Encoder, cols: List[Point], baslik: str,
                 f.write("\n")
                 for line in monte_carlo_satirlari(mc):
                     f.write(line + "\n")
+            if fire:
+                f.write("\n")
+                for line in fire_satirlari(fire):
+                    f.write(line + "\n")
             f.write(f"\n--- KUPONA YAZILACAK ({len(rows)} satir) ---\n")
             for i, r in enumerate(rows, 1):
                 c = row_cost(r)
@@ -188,4 +234,4 @@ def yazdir_ve_kaydet(enc: Encoder, cols: List[Point], baslik: str,
         print(f"\n-> '{output_path}' dosyasina kaydedildi.")
 
     return {"satir": len(rows), "bedel": len(cols), "en_kotu": worst,
-            "acik": acik, "olasilik": rap, "monte_carlo": mc}
+            "acik": acik, "olasilik": rap, "monte_carlo": mc, "fire": fire}

@@ -26,7 +26,7 @@ Eski Jinja2 arayüzü `archive/templates/` altına alınmıştır; runtime'da se
 |--------|------|----------|
 | GET | `/` | Servis bilgisi JSON |
 | GET | `/api/meta` | Modlar, Bayes preset'leri, motor varsayılanları, sınırlar |
-| GET | `/api/health` | 13 invariant |
+| GET | `/api/health` | 14 invariant |
 | GET | `/api/stats` | Tarihsel 1/0/2 |
 | GET | `/api/stats/<week>` | Tek hafta |
 | POST | `/api/solve` | Tüm motor özellikleri |
@@ -51,6 +51,7 @@ sayısal sınırlar arayüzde **sabit kodlanmaz**, buradan okunur.
   "prior_strength": 1,
   "evidence_strength": 10,
   "mc_samples": 80000,
+  "fire_max": 2,
   "trials": 5,
   "ls_iters": 30000,
   "seed": 42,
@@ -62,6 +63,10 @@ sayısal sınırlar arayüzde **sabit kodlanmaz**, buradan okunur.
 
 `probs` gönderilmezse `advanced`, `bayes` ve `markov` blokları `null` döner —
 olasılık katmanının tamamı bu alana bağlıdır.
+
+`fire` bloğu seçim DIŞI senaryoları ölçer ve olasılık girdisi gerektirmez.
+Pahalı olduğu için maliyet sınırı vardır; aşılırsa blok
+`{"skipped": true, "reason": …}` döner (sessizce `null` olmaz).
 
 Cevap: `ok`, `error`, `result` (rows, guaranteed, advanced, bayes, markov, …), `run_log_text`.
 

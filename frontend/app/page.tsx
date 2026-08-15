@@ -35,6 +35,7 @@ import { Tabs, TabPanel, type TabItem } from "@/components/ui/tabs";
 import { MatchGrid } from "@/components/formul/match-grid";
 import { ProbGrid } from "@/components/formul/prob-grid";
 import { DagilimPanel, KuponPanel, OzetPanel } from "@/components/formul/panels-core";
+import { FirePanel } from "@/components/formul/panels-fire";
 import {
   BayesPanel,
   BosPanel,
@@ -73,6 +74,7 @@ export default function FormulPage() {
   const [prior, setPrior] = React.useState(1);
   const [evidence, setEvidence] = React.useState(10);
   const [mcSamples, setMcSamples] = React.useState(80000);
+  const [fireMax, setFireMax] = React.useState(2);
 
   const [eng, setEng] = React.useState({
     trials: 5,
@@ -157,6 +159,7 @@ export default function FormulPage() {
         mode,
         variant,
         kati,
+        fire_max: fireMax,
         ...(butceGerekli ? { budget } : {}),
         ...(mode === "butce"
           ? { plan_count: planCount, plan_apply: planUygula ?? planApply }
@@ -191,7 +194,7 @@ export default function FormulPage() {
       }
     },
     [
-      matches, mode, variant, kati, butceGerekli, budget, planCount, planApply,
+      matches, mode, variant, kati, fireMax, butceGerekli, budget, planCount, planApply,
       probsAcik, probs, mcSamples, useBayes, elleAyar, preset, prior, evidence, eng,
     ],
   );
@@ -204,6 +207,7 @@ export default function FormulPage() {
     { id: "bayes", label: "Bayes", enabled: !!sonuc?.bayes },
     { id: "markov", label: "Markov", enabled: !!sonuc?.markov },
     { id: "hata", label: "Hata frekansı", enabled: !!sonuc?.error_freq },
+    { id: "fire", label: "Fire", enabled: !!sonuc?.fire },
     { id: "log", label: "Log", enabled: !!logMetin },
   ];
 
@@ -318,6 +322,18 @@ export default function FormulPage() {
                   />
                 </div>
               ) : null}
+
+              <Select
+                label="Fire analizi (seçim dışı)"
+                value={String(fireMax)}
+                onChange={(v) => setFireMax(Number(v))}
+                options={[
+                  { value: "2", label: "1 ve 2 maç dışarı çıkarsa" },
+                  { value: "1", label: "Yalnızca 1 maç dışarı çıkarsa" },
+                  { value: "0", label: "Kapalı" },
+                ]}
+                hint="14-garantinin geçerli OLMADIĞI bölgeyi ölçer. Büyük kuponlarda pahalıdır; sınır aşılırsa atlanır."
+              />
 
               <Switch
                 checked={kati}
@@ -606,6 +622,15 @@ export default function FormulPage() {
                 ) : (
                   <BosPanel baslik="Hata frekansı hesaplanmadı">
                     Uzay bu hesap için fazla büyük olabilir.
+                  </BosPanel>
+                )}
+              </TabPanel>
+              <TabPanel id="fire" active={sekme === "fire"}>
+                {sonuc.fire ? (
+                  <FirePanel r={sonuc} />
+                ) : (
+                  <BosPanel baslik="Fire analizi çalıştırılmadı">
+                    Motor kartından <strong>Fire analizi</strong> ayarını açın.
                   </BosPanel>
                 )}
               </TabPanel>

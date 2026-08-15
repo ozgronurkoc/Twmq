@@ -51,7 +51,7 @@ export default function SaglikPage() {
             Sistem sağlığı
           </h1>
           <p className="mt-1 max-w-2xl text-[13.5px] leading-relaxed text-muted-foreground">
-            Motorun 13 değişmezi (invariant). Bunlar testten farklıdır: çalışan
+            Motorun 14 değişmezi (invariant). Bunlar testten farklıdır: çalışan
             sürümün 14-garantiyi, olasılık ve Bayes hattını gerçekten
             koruduğunu her çağrıda yeniden doğrular.
           </p>

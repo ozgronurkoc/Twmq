@@ -56,7 +56,7 @@ const GRUPLAR: NavGroup[] = [
       {
         href: "/saglik",
         label: "Sağlık",
-        hint: "13 invariant",
+        hint: "14 invariant",
         icon: <Activity size={17} />,
       },
     ],

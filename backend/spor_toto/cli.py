@@ -29,9 +29,13 @@ def _log(msg: str) -> None:
 
 
 def _mc_kwargs(args) -> dict:
+    """yazdir_ve_kaydet'e gecen istege bagli analiz ayarlari."""
     return {
         "mc_samples": getattr(args, "mc_samples", 0) or 0,
         "mc_seed": getattr(args, "seed", 42),
+        # Fire analizi varsayilan olarak KAPALI (--mc-samples deseni):
+        # gercekci kuponlarda pahali olabilir, kullanici acikca istemeli.
+        "fire_max": (getattr(args, "fire_max", 2) if getattr(args, "fire", False) else 0),
     }
 
 
@@ -283,6 +287,11 @@ yazilir. '1' banko ev sahibi, '10' cifte, '102' kapama (uclu).
                    help="Mac basina olasilik tahminleri (istege bagli)")
     p.add_argument("--mc-samples", type=int, default=0,
                    help="--probs ile Monte Carlo deneme sayisi (0=kapali)")
+    p.add_argument("--fire", action="store_true",
+                   help="Secim DISI fire analizi (1-fire / 2-fire). "
+                        "14-garantinin gecerli OLMADIGI bolgeyi olcer.")
+    p.add_argument("--fire-max", type=int, default=2, choices=[1, 2],
+                   help="--fire ile kac maca kadar fire incelensin (varsayilan 2)")
     p.add_argument("--bayes", action="store_true",
                    help="--probs varsa Dirichlet Bayes guncellemesi uygula")
     p.add_argument(

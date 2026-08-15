@@ -76,6 +76,8 @@ export interface SolveRequest {
   prior_strength?: number;
   evidence_strength?: number;
   mc_samples?: number;
+  /** 0 = fire analizi kapalı, 1 = yalnızca 1-fire, 2 = ikisi de. */
+  fire_max?: number;
   // Motor ayarlari
   trials?: number;
   ls_iters?: number;
@@ -217,6 +219,56 @@ export interface ErrorFreq {
   n2: number;
 }
 
+// ─── Fire (seçim DIŞI) ────────────────────────────────────────────────────
+
+export type FireTip = "banko" | "double" | "triple";
+
+export interface FireTypeStat {
+  n: number;
+  /** { "14": adet, "13": adet, … } */
+  scores: Record<string, number>;
+  pct: Record<string, number>;
+}
+
+export interface FireMatchStat {
+  mac: number;
+  type: FireTip;
+  n: number;
+  /** Üçlü (kapama) maçlar fire üretemez: küme dışı sembolleri yoktur. */
+  can_fail: boolean;
+  scores: Record<string, number>;
+  pct: Record<string, number>;
+}
+
+export interface FireBlock {
+  n: number;
+  scores: Record<string, number>;
+  pct: Record<string, number>;
+  /** Fire türüne göre: banko / double / triple, fire2'de "banko+double" gibi. */
+  by_type: Record<string, FireTypeStat>;
+  by_match: FireMatchStat[];
+  min_best: number | null;
+  max_best: number | null;
+  p_ge_14: number;
+  p_ge_13: number;
+  p_ge_12: number;
+}
+
+/**
+ * Seçim DIŞI fire raporu — 14-garantinin geçerli OLMADIĞI bölge.
+ * `skipped` true ise hesap bilerek atlanmıştır; `reason` nedenini söyler.
+ */
+export interface FireReport {
+  note?: string;
+  fire1?: FireBlock;
+  fire2?: FireBlock;
+  skipped: boolean;
+  maliyet: number;
+  fire_max: number;
+  esik?: number;
+  reason?: string;
+}
+
 export interface ButcePlan {
   index: number;
   bedel: number;
@@ -250,6 +302,7 @@ export interface SolveResult {
   bayes: BayesBlock | null;
   markov: MarkovBlock | null;
   error_freq: ErrorFreq | null;
+  fire: FireReport | null;
   butce_planlari?: ButcePlan[];
 
   stat_lines: string[];

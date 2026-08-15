@@ -1,12 +1,101 @@
-"""Seçim dışı fire senaryoları (1-fire / 2-fire, banko-çifte)."""
+"""
+Seçim dışı fire senaryoları (1-fire / 2-fire, banko-çifte).
+
+14-garanti KOSULLUDUR: yalnizca gercek sonuc secim kumesinin icindeyse
+gecerlidir. Modulun geri kalani (distance_layers, match_error_frequency,
+markov) hep kume ICI mesafeyi olcer. Bu modul kume DISINI olcer:
+
+    "Tam k mac isaretlerimin disina cikarsa en iyi kolonum kac tutturur?"
+
+Iki hesap uretilir:
+  fire1 : tam 1 mac secim disinda, digerleri secim icinde
+  fire2 : tam 2 mac secim disinda
+
+Sonuclar skor dagilimi, fire TURU (banko/cifte/uclu) ve mac bazinda
+ayristirilir. Tur ayrimi pratikte en degerli ciktidir: bankoda yanilmak
+ciftede yanilmaktan belirgin sekilde pahalidir.
+"""
 from __future__ import annotations
 
+import math
 from collections import Counter
-from itertools import combinations, product
-from typing import Dict, Sequence
+from itertools import combinations
+from typing import Dict, List, Optional, Sequence
+
+import numpy as _np
 
 from .core import Encoder, Point, SEMBOLLER
 
+_SEMBOL_KOD: Dict[str, int] = {s: i for i, s in enumerate(SEMBOLLER)}
+
+
+# ============================================================
+# MALIYET
+# ============================================================
+
+def fire_maliyeti(enc: Encoder, cols: Sequence[Point], max_fires: int = 2) -> int:
+    """
+    Hesabi CALISTIRMADAN maliyet tahmini: ayrik senaryo sayisi x kolon sayisi.
+
+    Cagiran taraf sinirlamayi bununla kurar. Kapali formul oldugu icin
+    bedelsizdir; boylece "once hesapla, uzun surerse iptal et" gibi bir
+    sey gerekmez.
+    """
+    k = [len(s) for s in enc.selections]
+    if not k:
+        return 0
+    space = math.prod(k)
+    failable = [i for i, x in enumerate(k) if x < len(SEMBOLLER)]
+
+    senaryo = 0
+    if max_fires >= 1:
+        senaryo += sum(space // k[i] for i in failable)
+    if max_fires >= 2:
+        senaryo += sum(space // (k[i] * k[j]) for i, j in combinations(failable, 2))
+    return senaryo * max(1, len(cols))
+
+
+# ============================================================
+# GEOMETRI (numpy)
+# ============================================================
+
+def _senaryo_dizisi(
+    izinli: List[List[int]],
+) -> _np.ndarray:
+    """
+    Pozisyon basina izinli sembol kodlarinin kartezyen carpimi -> (S, n) int8.
+
+    meshgrid('ij') + C-order ravel, itertools.product ile AYNI sirayi verir;
+    esit mesafede ilk kolonun secilmesi acisindan sira onemlidir.
+    """
+    eksenler = _np.meshgrid(
+        *[_np.asarray(v, dtype=_np.int8) for v in izinli], indexing="ij"
+    )
+    return _np.stack([e.ravel() for e in eksenler], axis=1)
+
+
+def _min_mesafeler(senaryolar: _np.ndarray, kolonlar: _np.ndarray) -> _np.ndarray:
+    """
+    Her senaryo icin en yakin kolona Hamming mesafesi.
+
+    analysis.match_error_frequency ile ayni parcali desen: (parca, m, n)
+    boolean gecici diziyi birkac MB'ta tutar. Saf Python'da bu dongu
+    gercekci bir kuponda dakikalar aliyordu.
+    """
+    m, n = kolonlar.shape
+    S = len(senaryolar)
+    out = _np.empty(S, dtype=_np.int16)
+    parca = max(1, min(S, 4_000_000 // max(1, m * n)))
+    for bas in range(0, S, parca):
+        blok = senaryolar[bas:bas + parca]
+        d = (blok[:, None, :] != kolonlar[None, :, :]).sum(axis=2)
+        out[bas:bas + parca] = d.min(axis=1)
+    return out
+
+
+# ============================================================
+# RAPOR
+# ============================================================
 
 def fire_scenario_report(
     enc: Encoder,
@@ -21,24 +110,23 @@ def fire_scenario_report(
 
     Not: Uniform '1 hata / 2 hata' küme *içi* mesafedir (d=1, d=2).
     Bu rapor seçim *dışı* fire içindir; ikisi farklıdır.
-    """
-    code_full = [enc.decode_full(c) for c in cols]
-    n = enc.total_len
-    ALL = tuple(SEMBOLLER)
-    sel_sets = [set(s) for s in enc.selections]
-    in_opts = [list(sel_sets[i]) for i in range(n)]
-    out_opts = [[s for s in ALL if s not in sel_sets[i]] for i in range(n)]
-    failable = [i for i in range(n) if out_opts[i]]
 
-    def min_dist(x) -> int:
-        best = n
-        for c in code_full:
-            d = sum(1 for i in range(n) if x[i] != c[i])
-            if d < best:
-                best = d
-                if best == 0:
-                    break
-        return best
+    HIZLANDIRMA (ciktiyi degistirmez)
+    ---------------------------------
+    Fire olan pozisyonda her kolon kume ICI bir sembol tasir, senaryo ise
+    kume DISI bir sembol. Uyusmazlik garantidir; dolayisiyla HANGI kume-disi
+    sembolun geldigi hicbir kolonun mesafesini degistirmez. Bu yuzden o
+    secim enumere edilmez, sayilabilir bir CARPAN olarak islenir:
+    fire kumesi F icin agirlik = prod(len(out_opts[i]) for i in F).
+    Agirliklandirma, eski surumun kume-disi sonuclar uzerindeki uniform
+    dagilimini birebir korur.
+    """
+    n = enc.total_len
+    sel_sets = [set(s) for s in enc.selections]
+    in_opts = [[_SEMBOL_KOD[s] for s in enc.selections[i]] for i in range(n)]
+    out_opts = [[_SEMBOL_KOD[s] for s in SEMBOLLER if s not in sel_sets[i]]
+                for i in range(n)]
+    failable = [i for i in range(n) if out_opts[i]]
 
     def ftype(i: int) -> str:
         k = len(sel_sets[i])
@@ -47,6 +135,15 @@ def fire_scenario_report(
         if k == 2:
             return "double"
         return "triple"
+
+    out: dict = {
+        "note": "Secim disi fire: mac isaret disi. Uniform 1hata/2hata kume ici mesafedir."
+    }
+
+    kolonlar = _np.asarray(
+        [[_SEMBOL_KOD[s] for s in enc.decode_full(c)] for c in cols],
+        dtype=_np.int8,
+    ) if cols else _np.empty((0, n), dtype=_np.int8)
 
     def pack(score_counts: Counter, n_total: int, by_type: dict, by_match: dict) -> dict:
         scores = {}
@@ -113,9 +210,16 @@ def fire_scenario_report(
             "p_ge_12": round(100.0 * sum(v for k, v in score_counts.items() if k >= 12) / n_total, 4) if n_total else 0.0,
         }
 
-    out = {
-        "note": "Secim disi fire: mac isaret disi. Uniform 1hata/2hata kume ici mesafedir."
-    }
+    def skorla(fired: Sequence[int]) -> Optional[_np.ndarray]:
+        """Verilen fire kumesi icin skor (dogru sayisi) dizisi."""
+        if len(kolonlar) == 0:
+            return None
+        izinli = [
+            [out_opts[k][0]] if k in fired else in_opts[k]
+            for k in range(n)
+        ]
+        senaryolar = _senaryo_dizisi(izinli)
+        return (n - _min_mesafeler(senaryolar, kolonlar)).astype(_np.int64)
 
     if max_fires >= 1:
         sc: Counter = Counter()
@@ -125,17 +229,20 @@ def fire_scenario_report(
         by_match: Dict[int, Counter] = {i: Counter() for i in range(n)}
         n_total = 0
         for fail_i in failable:
-            ranges = [
-                out_opts[k] if k == fail_i else in_opts[k] for k in range(n)
-            ]
+            skorlar = skorla((fail_i,))
+            if skorlar is None:
+                continue
+            agirlik = len(out_opts[fail_i])
             ft = ftype(fail_i)
-            for combo in product(*ranges):
-                d = min_dist(combo)
-                correct = n - d
-                sc[correct] += 1
-                by_type[ft][correct] += 1
-                by_match[fail_i][correct] += 1
-                n_total += 1
+            sayim = _np.bincount(skorlar, minlength=n + 1)
+            for skor, adet in enumerate(sayim):
+                if not adet:
+                    continue
+                pay = int(adet) * agirlik
+                sc[skor] += pay
+                by_type[ft][skor] += pay
+                by_match[fail_i][skor] += pay
+                n_total += pay
         out["fire1"] = pack(sc, n_total, by_type, by_match)
 
     if max_fires >= 2:
@@ -148,23 +255,26 @@ def fire_scenario_report(
         by_match = {i: Counter() for i in range(n)}
         n_total = 0
         for i, j in combinations(failable, 2):
-            ranges = []
-            for k in range(n):
-                if k == i or k == j:
-                    ranges.append(out_opts[k])
-                else:
-                    ranges.append(in_opts[k])
+            skorlar = skorla((i, j))
+            if skorlar is None:
+                continue
+            agirlik = len(out_opts[i]) * len(out_opts[j])
             tkey = "+".join(sorted([ftype(i), ftype(j)]))
             if tkey not in by_type:
                 by_type[tkey] = Counter()
-            for combo in product(*ranges):
-                d = min_dist(combo)
-                correct = n - d
-                sc[correct] += 1
-                by_type[tkey][correct] += 1
-                by_match[i][correct] += 1
-                by_match[j][correct] += 1
-                n_total += 1
+            sayim = _np.bincount(skorlar, minlength=n + 1)
+            for skor, adet in enumerate(sayim):
+                if not adet:
+                    continue
+                pay = int(adet) * agirlik
+                sc[skor] += pay
+                by_type[tkey][skor] += pay
+                # Her senaryo iki maca birden yazilir: bu, "bu mac fire
+                # olanlardan biriyken" kosullu dagilimidir. Dolayisiyla
+                # by_match toplamlari n_total'in IKI KATIDIR.
+                by_match[i][skor] += pay
+                by_match[j][skor] += pay
+                n_total += pay
         out["fire2"] = pack(sc, n_total, by_type, by_match)
 
     return out

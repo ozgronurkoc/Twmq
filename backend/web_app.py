@@ -20,6 +20,7 @@ from spor_toto.core import (
 )
 from spor_toto.report import basliklar
 from spor_toto.analysis import monte_carlo_report, match_error_frequency
+from spor_toto.fire_scenarios import fire_maliyeti, fire_scenario_report
 from spor_toto.bayes import (
     STRENGTH_PRESETS, bayes_summary, bayes_update_matches, recommend_strengths,
 )
@@ -36,6 +37,13 @@ app.secret_key = os.environ.get("SESSION_SECRET", "spor-toto-api")
 MATCH_COUNT = 15
 MC_WEB_SAMPLES = 80_000
 MC_MIN, MC_MAX = 1_000, 200_000
+
+# Fire analizi senkron istek yolunda calisiyor. Olculen hiz ~24 M
+# maliyet-birimi/sn (maliyet = ayrik senaryo x kolon): 7,4 M -> 311 ms.
+# 20 M esigi ~0,85 sn'ye denk gelir. Uclu iceren gercekci bir kupon
+# 440 M cikar ve bilerek atlanir.
+FIRE_MAX_MALIYET = 20_000_000
+FIRE_MAX_VARSAYILAN = 2
 
 # Motorun tum modlari. Bu liste /api/meta ile disari verilir; frontend
 # mod listesini sabit kodlamaz, tek kaynak burasidir.
@@ -335,6 +343,7 @@ def _build_result(
     prior_strength: float = 1.0,
     evidence_strength: float = 10.0,
     mc_samples: int = MC_WEB_SAMPLES,
+    fire_max: int = FIRE_MAX_VARSAYILAN,
 ) -> Dict[str, Any]:
     rows = merge_rows(cols)
     total_cost = sum(row_cost(r) for r in rows)
@@ -419,6 +428,36 @@ def _build_result(
         logger.exception("match_error_frequency failed")
         error_freq = None
 
+    # Secim DISI fire analizi. Diger paneller kume ICI mesafeyi olcer;
+    # bu, 14-garantinin gecerli OLMADIGI bolgeyi olcer.
+    fire = None
+    try:
+        if fire_max > 0:
+            maliyet = fire_maliyeti(enc, cols, max_fires=fire_max)
+            if maliyet <= FIRE_MAX_MALIYET:
+                fire = fire_scenario_report(enc, cols, max_fires=fire_max)
+                fire["skipped"] = False
+                fire["maliyet"] = maliyet
+                fire["fire_max"] = fire_max
+            else:
+                # Sessizce None birakma: arayuz NEDEN yok oldugunu
+                # soyleyebilmeli, yoksa "bozuk" gibi gorunur.
+                fire = {
+                    "skipped": True,
+                    "maliyet": maliyet,
+                    "esik": FIRE_MAX_MALIYET,
+                    "fire_max": fire_max,
+                    "reason": (
+                        f"Bu kupon için fire analizi çok pahalı "
+                        f"({maliyet:,} işlem birimi, sınır {FIRE_MAX_MALIYET:,}). "
+                        f"fire_max değerini düşürerek yalnızca 1-fire "
+                        f"hesaplatabilirsiniz."
+                    ),
+                }
+    except Exception:
+        logger.exception("fire_scenario_report failed")
+        fire = None
+
     return {
         "baslik": baslik,
         "notlar": notlar,
@@ -435,6 +474,7 @@ def _build_result(
         "bayes": bayes_block,
         "markov": markov_block,
         "error_freq": error_freq,
+        "fire": fire,
         "stat_lines": basliklar(enc),
         "match_count": enc.total_len,
         "total_space": total_space,
@@ -491,6 +531,8 @@ def api_meta():
         "engine_defaults": ENGINE_DEFAULTS,
         "limits": {
             "mc_samples": {"min": MC_MIN, "max": MC_MAX, "default": MC_WEB_SAMPLES},
+            "fire_max": {"min": 0, "max": 2, "default": FIRE_MAX_VARSAYILAN},
+            "fire_maliyet": {"min": 0, "max": FIRE_MAX_MALIYET},
             "plan_count": {"min": 1, "max": 50, "default": 5},
             "trials": {"min": 1, "max": 50},
             "ls_iters": {"min": 100, "max": 500_000},
@@ -543,6 +585,7 @@ def api_solve():
     use_bayes = bool(data.get("use_bayes", False))
     kati = bool(data.get("kati", False))
     mc_samples = _sayi(data, "mc_samples", MC_WEB_SAMPLES, int, MC_MIN, MC_MAX)
+    fire_max = _sayi(data, "fire_max", FIRE_MAX_VARSAYILAN, int, 0, 2)
     plan_count = _sayi(data, "plan_count", 5, int, 1, 50)
     plan_apply = _sayi(data, "plan_apply", 1, int, 1, 50)
     eng = _engine_params(data)
@@ -646,6 +689,7 @@ def api_solve():
                 prior_strength=prior_strength,
                 evidence_strength=evidence_strength,
                 mc_samples=mc_samples,
+                fire_max=fire_max,
             )
             _log_step(run_log, "build_result", "butce", (time.perf_counter() - t1) * 1000)
         elif mode == "maxcov":
@@ -669,6 +713,7 @@ def api_solve():
                 prior_strength=prior_strength,
                 evidence_strength=evidence_strength,
                 mc_samples=mc_samples,
+                fire_max=fire_max,
             )
             detail = "exact+MC+bayes" if user_probs is not None else "kaplama"
             _log_step(run_log, "build_result", detail, (time.perf_counter() - t1) * 1000)

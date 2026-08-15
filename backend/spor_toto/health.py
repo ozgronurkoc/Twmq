@@ -233,6 +233,29 @@ def _check_error_freq() -> str:
     return f"n1={ef['n1']} n2={ef['n2']} d1_macs={len(ef['d1'])}"
 
 
+def _check_fire_scenarios() -> str:
+    """
+    Secim DISI fire invariantlari.
+
+    Bir mac isaret disindaysa hicbir kolon 15 tutturamaz; iki mac
+    disindaysa 14 de imkansizdir. Bunlar kombinatoryal zorunluluktur,
+    kupona bagli degildir - kirilirsa mesafe hesabi bozulmus demektir.
+    """
+    from .fire_scenarios import fire_maliyeti, fire_scenario_report
+    enc = Encoder(parse_picks(ORNEK))
+    cols, _ = solve_fix16(enc)
+    r = fire_scenario_report(enc, cols, max_fires=2)
+    assert r["fire1"]["scores"]["15"] == 0, "1 fire varken 15 mumkun gorunuyor"
+    assert r["fire2"]["scores"]["15"] == 0
+    assert r["fire2"]["scores"]["14"] == 0, "2 fire varken 14 mumkun gorunuyor"
+    # Bankoda yanilmak ciftede yanilmaktan pahali olmali
+    bt = r["fire1"]["by_type"]
+    assert bt["double"]["pct"]["14"] > bt["banko"]["pct"]["14"]
+    return (f"fire1>=14=%{r['fire1']['p_ge_14']} "
+            f"fire2>=13=%{r['fire2']['p_ge_13']} "
+            f"maliyet={fire_maliyeti(enc, cols)}")
+
+
 def _check_pipeline_result_shape() -> str:
     enc = Encoder(parse_picks(ORNEK))
     cols, baslik = solve_fix16(enc)
@@ -286,6 +309,7 @@ def run_health() -> HealthReport:
         ("bayes_dirichlet", _check_bayes),
         ("markov_chain", _check_markov),
         ("error_freq", _check_error_freq),
+        ("fire_scenarios", _check_fire_scenarios),
         ("pipeline_result_shape", _check_pipeline_result_shape),
         ("scipy_flag", _check_scipy_flag),
     ]
