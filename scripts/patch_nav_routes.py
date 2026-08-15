@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
-"""web_app.py: history import + /stats + /health-ui routes."""
+"""web_app.py: history import + /stats + /health-ui routes. Idempotent."""
 from pathlib import Path
 
 p = Path("web_app.py")
 t = p.read_text(encoding="utf-8")
+changed = False
 
 if "from spor_toto.history import" not in t:
     t = t.replace(
@@ -11,7 +12,10 @@ if "from spor_toto.history import" not in t:
         "from spor_toto.health import run_health\n"
         "from spor_toto.history import history_summary, history_weeks, history_week",
     )
+    changed = True
     print("import ok")
+else:
+    print("import exists")
 
 if "def page_stats" not in t:
     block = '''
@@ -67,9 +71,14 @@ def page_health():
         t = t.replace('@app.route("/health"', block + '\n@app.route("/health"', 1)
     else:
         t += block
+    changed = True
     print("routes ok")
 else:
     print("routes exist")
 
-p.write_text(t, encoding="utf-8")
+if changed:
+    p.write_text(t, encoding="utf-8")
+    print("web_app.py yazildi")
+else:
+    print("degisiklik yok")
 print("DONE")
