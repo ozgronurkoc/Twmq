@@ -61,6 +61,18 @@ def test_stats_mac_sonucu_orani_tasiyor(client):
     assert 0 < o["with_odds"] <= o["matches"]
     assert 0 <= o["favourite_hit_pct"] <= 100
     assert o["favourite_split"]["0"] == 0, "beraberlik favori olamaz"
+    assert o["favourite_hit"] + o["favourite_miss"] == o["with_odds"]
+    # Favori tuttugunda beraberlik cikamaz: beraberlik hicbir zaman favori degil.
+    assert o["outcome_when_hit"]["0"] == 0
+    for sym in SYMBOLS:
+        assert (o["outcome_when_hit"][sym] + o["outcome_when_miss"][sym]
+                == o["outcome_totals"][sym])
+        assert o["cross"][sym][sym] == o["outcome_when_hit"][sym]
+    assert sum(o["outcome_totals"].values()) == o["with_odds"]
+    assert sum(o["outcome_when_hit"].values()) == o["favourite_hit"]
+    assert sum(o["outcome_when_miss"].values()) == o["favourite_miss"]
+    # Surpriz = favorinin karsi tarafi kazandi; beraberlikler bunun disinda.
+    assert o["underdog_wins"] == o["favourite_miss"] - o["outcome_when_miss"]["0"]
     assert o["avg_margin_pct"] > 0
     for kova in o["calibration"]:
         assert kova["lo"] < kova["hi"] and kova["n"] >= 10

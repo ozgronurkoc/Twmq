@@ -20,6 +20,7 @@ import {
   BandStrips,
   CalibrationChart,
   DistributionChart,
+  FavouriteBreakdown,
   PositionHeatmap,
   ShareBar,
   TransitionMatrix,
@@ -266,6 +267,20 @@ export default function IstatistikPage() {
                   etiket="Favori 0 idi"
                   deger={sayi(veri.odds.favourite_split["0"])}
                   alt="beraberlik hiçbir maçta favori olmaz"
+                />
+              </div>
+
+              <div>
+                <SectionTitle hint="Favori tuttuğunda ve tutmadığında hangi sonuç kaç maçta gerçekleşti.">
+                  Favori tuttu mu, tutmayınca ne oldu?
+                </SectionTitle>
+                <FavouriteBreakdown
+                  hit={veri.odds.outcome_when_hit}
+                  miss={veri.odds.outcome_when_miss}
+                  cross={veri.odds.cross}
+                  hitTotal={veri.odds.favourite_hit}
+                  missTotal={veri.odds.favourite_miss}
+                  underdog={veri.odds.underdog_wins}
                 />
               </div>
 

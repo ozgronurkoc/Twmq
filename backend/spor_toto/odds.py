@@ -174,6 +174,27 @@ def season_1x2_summary(weeks: Optional[List[int]] = None) -> Optional[Dict[str, 
     tutan = sum(1 for _, b in oranli if b["hit"])
     fav_dagilim = {s: sum(1 for _, b in oranli if b["favourite"] == s) for s in SEMBOLLER}
 
+    # Favori tuttuğunda / tutmadığında ne gerçekleşti.
+    # "0" tuttu sütunu her zaman 0'dır: beraberlik hiçbir maçta favori olmaz,
+    # bu yüzden HER beraberlik tanımı gereği "tutmadı" tarafına düşer.
+    tuttu_sonuc = {
+        s: sum(1 for r, b in oranli if b["hit"] and r["code"] == s) for s in SEMBOLLER
+    }
+    tutmadi_sonuc = {
+        s: sum(1 for r, b in oranli if not b["hit"] and r["code"] == s) for s in SEMBOLLER
+    }
+    # Favori (satır) × gerçekleşen (sütun) çapraz tablosu.
+    capraz = {
+        f: {s: sum(1 for r, b in oranli if b["favourite"] == f and r["code"] == s)
+            for s in SEMBOLLER}
+        for f in SEMBOLLER
+    }
+    # Gerçek sürpriz: favorinin KARŞI tarafı kazandı (beraberlik değil).
+    underdog = sum(
+        capraz[f][s] for f in SEMBOLLER for s in SEMBOLLER
+        if f != s and s != "0"
+    )
+
     # Kalibrasyon: modelin verdiği olasılık ile gerçekleşme yan yana.
     kovalar: Dict[int, Dict[str, float]] = {}
     for r, b in oranli:
@@ -200,8 +221,16 @@ def season_1x2_summary(weeks: Optional[List[int]] = None) -> Optional[Dict[str, 
         "with_odds": len(oranli),
         "coverage_pct": round(100 * len(oranli) / len(ilgili), 1),
         "favourite_hit": tutan,
+        "favourite_miss": len(oranli) - tutan,
         "favourite_hit_pct": round(100 * tutan / len(oranli), 1),
         "favourite_split": fav_dagilim,
+        "outcome_when_hit": tuttu_sonuc,
+        "outcome_when_miss": tutmadi_sonuc,
+        "cross": capraz,
+        "underdog_wins": underdog,
+        "outcome_totals": {
+            s: tuttu_sonuc[s] + tutmadi_sonuc[s] for s in SEMBOLLER
+        },
         "avg_margin_pct": round(
             100 * sum(b["margin"] for _, b in oranli) / len(oranli), 2
         ),

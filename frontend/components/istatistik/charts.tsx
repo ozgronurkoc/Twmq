@@ -570,6 +570,167 @@ export function CalibrationChart({
   );
 }
 
+/* ── 4c. Favori tuttu / tutmadi kirilimi ────────────────────────────────── */
+
+function PayCubugu({ dagilim, toplam }: { dagilim: Record<Sembol, number>; toplam: number }) {
+  if (!toplam) return null;
+  return (
+    <div className="flex h-2.5 gap-[2px] overflow-hidden rounded-full">
+      {SEMBOLLER.map((s) => (
+        <div
+          key={s}
+          className={SYM_BG[s]}
+          style={{ flexGrow: Math.max(dagilim[s], 0.0001), flexBasis: 0 }}
+          title={`${SEMBOL_ADI[s]}: ${dagilim[s]}`}
+        />
+      ))}
+    </div>
+  );
+}
+
+/**
+ * "Favori tuttugunda / tutmadiginda ne oldu?" — sayilarin kendisi hikaye
+ * oldugu icin form tablo; cubuklar yalnizca bilesimi goz kararina cevirir.
+ */
+export function FavouriteBreakdown({
+  hit,
+  miss,
+  cross,
+  hitTotal,
+  missTotal,
+  underdog,
+}: {
+  hit: Record<Sembol, number>;
+  miss: Record<Sembol, number>;
+  cross: Record<Sembol, Record<Sembol, number>>;
+  hitTotal: number;
+  missTotal: number;
+  underdog: number;
+}) {
+  const toplam = hitTotal + missTotal;
+  const satirlar = [
+    { ad: "Favori tuttu", dagilim: hit, n: hitTotal },
+    { ad: "Favori tutmadı", dagilim: miss, n: missTotal },
+  ];
+
+  return (
+    <div className="space-y-5">
+      <div className="scroll-slim overflow-x-auto">
+        <table className="w-full min-w-[520px] text-[12.5px]">
+          <thead>
+            <tr className="text-left text-[11px] uppercase tracking-[0.06em] text-muted-foreground">
+              <th scope="col" className="pb-2 pr-3 font-medium">Durum</th>
+              {SEMBOLLER.map((s) => (
+                <th key={s} scope="col" className="w-20 pb-2 pr-3 text-right font-medium">
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className={cn("inline-block h-2.5 w-2.5 rounded-sm", SYM_BG[s])} aria-hidden />
+                    {s}
+                  </span>
+                </th>
+              ))}
+              <th scope="col" className="w-16 pb-2 pr-3 text-right font-medium">Toplam</th>
+              <th scope="col" className="w-32 pb-2 font-medium">Bileşim</th>
+            </tr>
+          </thead>
+          <tbody className="tnum">
+            {satirlar.map((r) => (
+              <tr key={r.ad} className="border-t border-line">
+                <td className="py-2.5 pr-3 font-medium">{r.ad}</td>
+                {SEMBOLLER.map((s) => (
+                  <td key={s} className="py-2.5 pr-3 text-right">
+                    {r.dagilim[s] ? (
+                      <>
+                        <span className="font-semibold">{r.dagilim[s]}</span>
+                        <span className="ml-1 text-[11px] text-muted-foreground">
+                          %{((100 * r.dagilim[s]) / r.n).toFixed(0)}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </td>
+                ))}
+                <td className="py-2.5 pr-3 text-right text-muted-foreground">
+                  {r.n}
+                  <span className="ml-1 text-[11px]">%{((100 * r.n) / toplam).toFixed(0)}</span>
+                </td>
+                <td className="py-2.5">
+                  <PayCubugu dagilim={r.dagilim} toplam={r.n} />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="scroll-slim overflow-x-auto">
+        <table className="w-full min-w-[520px] text-[12.5px]">
+          <caption className="mb-2 text-left text-[11px] uppercase tracking-[0.06em] text-muted-foreground">
+            Favori (satır) × gerçekleşen (sütun)
+          </caption>
+          <thead>
+            <tr className="text-left text-[11px] uppercase tracking-[0.06em] text-muted-foreground">
+              <th scope="col" className="pb-2 pr-3 font-medium">Favori</th>
+              {SEMBOLLER.map((s) => (
+                <th key={s} scope="col" className="w-20 pb-2 pr-3 text-right font-medium">{s}</th>
+              ))}
+              <th scope="col" className="w-16 pb-2 pr-3 text-right font-medium">Toplam</th>
+              <th scope="col" className="w-16 pb-2 text-right font-medium">İsabet</th>
+            </tr>
+          </thead>
+          <tbody className="tnum">
+            {SEMBOLLER.map((f) => {
+              const satir = cross[f];
+              const n = SEMBOLLER.reduce((a, s) => a + satir[s], 0);
+              if (!n) return null;
+              return (
+                <tr key={f} className="border-t border-line">
+                  <td className="py-2.5 pr-3">
+                    <span className="inline-flex items-center gap-2">
+                      <span
+                        className={cn(
+                          "grid h-6 w-6 place-items-center rounded-md font-mono text-[12px] font-bold text-white",
+                          SYM_BG[f],
+                        )}
+                      >
+                        {f}
+                      </span>
+                      <span className="text-muted-foreground">{SEMBOL_ADI[f]}</span>
+                    </span>
+                  </td>
+                  {SEMBOLLER.map((s) => (
+                    <td
+                      key={s}
+                      className={cn(
+                        "py-2.5 pr-3 text-right",
+                        s === f ? "font-semibold" : "text-muted-foreground",
+                      )}
+                    >
+                      {satir[s]}
+                    </td>
+                  ))}
+                  <td className="py-2.5 pr-3 text-right text-muted-foreground">{n}</td>
+                  <td className="py-2.5 text-right font-medium">
+                    %{((100 * satir[f]) / n).toFixed(1)}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      <p className="text-[11.5px] leading-relaxed text-muted-foreground">
+        Beraberlik hiçbir maçta favori olmaz; bu yüzden <strong>her beraberlik</strong> tanımı
+        gereği “tutmadı” tarafına düşer ve “tuttu” satırında 0 sütunu boştur. Gerçek sürpriz,
+        favorinin karşı tarafının kazandığı{" "}
+        <span className="tnum font-medium text-foreground">{underdog}</span> maçtır (%
+        {((100 * underdog) / toplam).toFixed(1)}).
+      </p>
+    </div>
+  );
+}
+
 /* ── 5. Mac sirasi isi haritasi ─────────────────────────────────────────── */
 
 export function PositionHeatmap({ positions }: { positions: Analytics["positions"] }) {

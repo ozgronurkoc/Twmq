@@ -475,8 +475,18 @@ export interface OddsSummary {
   with_odds: number;
   coverage_pct: number;
   favourite_hit: number;
+  favourite_miss: number;
   favourite_hit_pct: number;
   favourite_split: Record<Sembol, number>;
+  /** Favori TUTTUĞUNDA gerçekleşen sonuçlar; "0" daima 0'dır. */
+  outcome_when_hit: Record<Sembol, number>;
+  /** Favori TUTMADIĞINDA gerçekleşen sonuçlar. */
+  outcome_when_miss: Record<Sembol, number>;
+  /** Favori (satır) × gerçekleşen (sütun). */
+  cross: Record<Sembol, Record<Sembol, number>>;
+  /** Favorinin karşı tarafının kazandığı maç sayısı (beraberlik hariç). */
+  underdog_wins: number;
+  outcome_totals: Record<Sembol, number>;
   avg_margin_pct: number;
   /** Olasılık kovası başına model vs gerçekleşme. */
   calibration: Array<{
