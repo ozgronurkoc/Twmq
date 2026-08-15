@@ -2,7 +2,58 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  color-scheme: light;
+  --bg: #f5f5f7;
+  --card: #ffffff;
+  --ink: #1d1d1f;
+  --muted: #6e6e73;
+  --line: #d2d2d7;
+  --line-soft: #e8e8ed;
+  --brand: #0071e3;
+  --brand-hover: #0077ed;
+  --ok: #34c759;
+  --warn: #ff9f0a;
+  --bad: #ff3b30;
+}
+
+html, body { height: 100%; }
+
 body {
-  @apply bg-soft text-ink antialiased;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+* { box-sizing: border-box; }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb {
+  background: #c7c7cc;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl border border-[var(--line-soft)] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.04)];
+  }
+  .chip {
+    @apply inline-flex items-center justify-center h-9 min-w-[2.75rem] rounded-xl border text-sm font-semibold transition active:scale-[0.98];
+  }
+  .btn-primary {
+    @apply inline-flex items-center justify-center h-11 px-6 rounded-xl bg-[var(--brand)] text-white text-sm font-semibold
+      shadow-[0_1px_2px_rgba(0,113,227,0.25)] hover:bg-[var(--brand-hover)] disabled:opacity-55 disabled:cursor-not-allowed transition;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center h-10 px-4 rounded-xl border border-[var(--line)] bg-white text-sm font-medium text-[var(--ink)] hover:bg-[var(--bg)] transition;
+  }
+  .stat-tile {
+    @apply rounded-2xl bg-[var(--bg)] px-3 py-4 text-center;
+  }
 }
