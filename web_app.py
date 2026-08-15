@@ -1,4 +1,4 @@
-"""Flask web interface for Spor Toto 14-garanti covering code generator."""
+"""Spor Toto API-only backend (JSON). Frontend = Next.js only."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ import time
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, request
 
 from spor_toto.core import (
     Encoder, Fix16Hatasi, HAS_SCIPY, butce_danismani, dogrula_kaplama,
@@ -28,36 +28,14 @@ from spor_toto import __version__
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SESSION_SECRET", "spor-toto-web-default")
+app.secret_key = os.environ.get("SESSION_SECRET", "spor-toto-api")
 
 MATCH_COUNT = 15
-SYMBOLS = [("1", "Ev (1)"), ("0", "Beraberlik (0)"), ("2", "Deplasman (2)")]
-MODES = [
-    ("fix16", "Fix-16 (16 satır, Hamming garantili)"),
-    ("auto",  "Otomatik (en ucuz çözüm)"),
-    ("butce", "Bütçe danışmanı"),
-    ("maxcov","Maksimum kapsama"),
-    ("heuristic", "Sezgisel"),
-]
-
-DEFAULT_PICKS = "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"
 MC_WEB_SAMPLES = 80_000
 
 
-def _parse_form_picks(form) -> str:
-    parts = []
-    for i in range(1, MATCH_COUNT + 1):
-        selected = form.getlist(f"match_{i}")
-        if not selected:
-            selected = ["1", "0", "2"]
-        order = {"1": 0, "0": 1, "2": 2}
-        selected.sort(key=lambda s: order.get(s, 9))
-        parts.append("".join(selected))
-    return ",".join(parts)
-
-
-def _parse_prob_value(raw: str) -> float:
-    v = float(raw.replace(",", "."))
+def _parse_prob_value(raw: Any) -> float:
+    v = float(str(raw).replace(",", "."))
     if v < 0:
         return 0.0
     if v > 1.0:
@@ -65,34 +43,45 @@ def _parse_prob_value(raw: str) -> float:
     return min(v, 1.0)
 
 
-def _parse_form_probs(form, selections: List[List[str]]) -> Optional[List[Dict[str, float]]]:
-    any_filled = False
-    raw: List[Dict[str, float]] = []
-    for i in range(1, MATCH_COUNT + 1):
-        p: Dict[str, float] = {s: 0.0 for s in SEMBOLLER}
-        for sym in SEMBOLLER:
-            val = form.get(f"prob_{i}_{sym}", "").strip()
-            if val != "":
-                any_filled = True
-                try:
-                    p[sym] = _parse_prob_value(val)
-                except ValueError:
-                    p[sym] = 0.0
-        raw.append(p)
-
-    if not any_filled:
-        return None
-
-    out: List[Dict[str, float]] = []
-    for i, p in enumerate(raw):
-        total = sum(p.values())
-        if total <= 0:
-            sel = selections[i] if i < len(selections) else list(SEMBOLLER)
-            u = 1.0 / len(sel) if sel else 1.0 / 3
-            out.append({s: (u if s in sel else 0.0) for s in SEMBOLLER})
+def _matches_to_picks(matches: list) -> str:
+    parts: List[str] = []
+    for m in matches[:MATCH_COUNT]:
+        if isinstance(m, list):
+            order = {"1": 0, "0": 1, "2": 2}
+            sel = sorted([str(x) for x in m], key=lambda s: order.get(s, 9))
+            parts.append("".join(sel) or "102")
         else:
-            out.append({s: v / total for s, v in p.items()})
-    return out
+            parts.append(str(m) or "102")
+    while len(parts) < MATCH_COUNT:
+        parts.append("102")
+    return ",".join(parts)
+
+
+def _parse_json_probs(data: dict, selections: List[List[str]]) -> Optional[List[Dict[str, float]]]:
+    """probs: [{1:0.5,0:0.3,2:0.2}, ...] veya {\"1\":[...],...} — yoksa None."""
+    raw_probs = data.get("probs")
+    if not raw_probs:
+        return None
+    out: List[Dict[str, float]] = []
+    if isinstance(raw_probs, list):
+        for i in range(MATCH_COUNT):
+            p = {s: 0.0 for s in SEMBOLLER}
+            if i < len(raw_probs) and isinstance(raw_probs[i], dict):
+                for sym in SEMBOLLER:
+                    if sym in raw_probs[i] and raw_probs[i][sym] not in (None, ""):
+                        try:
+                            p[sym] = _parse_prob_value(raw_probs[i][sym])
+                        except (TypeError, ValueError):
+                            p[sym] = 0.0
+            total = sum(p.values())
+            if total <= 0:
+                sel = selections[i] if i < len(selections) else list(SEMBOLLER)
+                u = 1.0 / len(sel) if sel else 1.0 / 3
+                out.append({s: (u if s in sel else 0.0) for s in SEMBOLLER})
+            else:
+                out.append({s: v / total for s, v in p.items()})
+        return out
+    return None
 
 
 def _run_fix16(enc: Encoder, variant: int = 0) -> Dict[str, Any]:
@@ -155,11 +144,7 @@ def _new_run_log() -> Dict[str, Any]:
 
 
 def _log_step(log: Dict[str, Any], name: str, detail: str = "", ms: float = 0.0) -> None:
-    log["steps"].append({
-        "name": name,
-        "detail": detail,
-        "ms": round(ms, 2),
-    })
+    log["steps"].append({"name": name, "detail": detail, "ms": round(ms, 2)})
 
 
 def _format_run_log(log: Dict[str, Any]) -> str:
@@ -204,6 +189,7 @@ def _build_result(
     use_bayes: bool = False,
     prior_strength: float = 1.0,
     evidence_strength: float = 10.0,
+    mc_samples: int = MC_WEB_SAMPLES,
 ) -> Dict[str, Any]:
     rows = merge_rows(cols)
     total_cost = sum(row_cost(r) for r in rows)
@@ -223,7 +209,7 @@ def _build_result(
         pct = 100 * dist[d] / total_space if total_space else 0
         dist_items.append({
             "d": d, "dogru": dogru, "label": f"{dogru} doğru",
-            "count": dist[d], "pct": f"{pct:.2f}"
+            "count": dist[d], "pct": f"{pct:.2f}",
         })
 
     def _get(d):
@@ -231,9 +217,7 @@ def _build_result(
         pct = 100 * count / total_space if total_space else 0
         return {"count": count, "pct": f"{pct:.2f}"}
 
-    probs_uniform = {
-        "15": _get(0), "14": _get(1), "13": _get(2), "12": _get(3),
-    }
+    probs_uniform = {"15": _get(0), "14": _get(1), "13": _get(2), "12": _get(3)}
 
     advanced = None
     bayes_block = None
@@ -265,7 +249,7 @@ def _build_result(
             }
 
         rap = olasilik_raporu(enc, cols, work_probs)
-        mc = monte_carlo_report(enc, cols, work_probs, n_samples=MC_WEB_SAMPLES, seed=42)
+        mc = monte_carlo_report(enc, cols, work_probs, n_samples=mc_samples, seed=42)
         advanced = {
             "exact": {
                 "p_kume_ici": round(100 * rap.p_kume_ici, 3),
@@ -287,20 +271,16 @@ def _build_result(
         if enc.space_size() <= 20000:
             error_freq = match_error_frequency(enc, cols, max_d=2)
     except Exception:
-        logger.exception(
-            "match_error_frequency failed (space=%s, cols=%s)",
-            enc.space_size(), len(cols) if cols is not None else 0,
-        )
+        logger.exception("match_error_frequency failed")
         error_freq = None
 
-    guaranteed = worst <= 1
     return {
         "baslik": baslik,
         "notlar": notlar,
         "satir_sayisi": len(rows),
         "kolon_bedeli": total_cost,
         "alt_sinir": enc.lower_bound(),
-        "guaranteed": guaranteed,
+        "guaranteed": worst <= 1,
         "worst": worst,
         "acik": acik,
         "rows": decoded_rows,
@@ -313,211 +293,29 @@ def _build_result(
         "stat_lines": basliklar(enc),
         "match_count": enc.total_len,
         "total_space": total_space,
+        "has_scipy": HAS_SCIPY,
     }
 
 
-@app.route("/health", methods=["GET"])
-def health():
-    report = run_health()
-    code = 200 if report.ok else 503
-    return jsonify(report.to_dict()), code
-
+# ─── API only ─────────────────────────────────────────────────────────────────
 
 @app.route("/", methods=["GET"])
-def index():
-    default_selections = []
-    try:
-        sels = parse_picks(DEFAULT_PICKS)
-        for s in sels:
-            default_selections.append(s)
-    except Exception:
-        default_selections = [["1", "0", "2"]] * MATCH_COUNT
-    while len(default_selections) < MATCH_COUNT:
-        default_selections.append(["1", "0", "2"])
-
-    return render_template(
-        "index.html",
-        version=__version__,
-        match_count=MATCH_COUNT,
-        symbols=SYMBOLS,
-        modes=MODES,
-        default_selections=default_selections,
-        result=None,
-        error=None,
-        form_data=None,
-        has_scipy=HAS_SCIPY,
-        run_log_text=None,
-    )
+def root():
+    return jsonify({
+        "service": "spor-toto-api",
+        "version": __version__,
+        "frontend": "Next.js only — bu process HTML servis etmez",
+        "endpoints": [
+            "GET  /api/health",
+            "GET  /api/stats",
+            "GET  /api/stats/<week>",
+            "POST /api/solve",
+            "GET  /health",
+        ],
+    })
 
 
-@app.route("/solve", methods=["POST"])
-def solve():
-    error = None
-    result = None
-    t0 = time.perf_counter()
-    run_log = _new_run_log()
-
-    picks_str = _parse_form_picks(request.form)
-    mode = request.form.get("mode", "fix16")
-    budget_raw = request.form.get("budget", "").strip()
-    variant_raw = request.form.get("variant", "0").strip()
-    use_bayes = request.form.get("use_bayes") == "1"
-    try:
-        prior_strength = float(request.form.get("prior_strength", "1") or "1")
-    except ValueError:
-        prior_strength = 1.0
-    try:
-        evidence_strength = float(request.form.get("evidence_strength", "10") or "10")
-    except ValueError:
-        evidence_strength = 10.0
-
-    form_selections = []
-    for i in range(1, MATCH_COUNT + 1):
-        form_selections.append(request.form.getlist(f"match_{i}"))
-
-    run_log["mode"] = mode
-    run_log["picks"] = picks_str
-    run_log["variant"] = variant_raw
-    run_log["budget"] = budget_raw
-    run_log["use_bayes"] = use_bayes
-    run_log["prior_strength"] = prior_strength
-    run_log["evidence_strength"] = evidence_strength
-    run_log["mc_samples"] = 0
-    run_log["probs_filled"] = False
-
-    try:
-        t1 = time.perf_counter()
-        selections = parse_picks(picks_str)
-        enc = Encoder(selections)
-        _log_step(
-            run_log, "parse+encoder",
-            f"banko={len(enc.banko_pos)} cifte={sum(1 for k in enc.alphabet_sizes if k==2)} "
-            f"uclu={sum(1 for k in enc.alphabet_sizes if k==3)} uzay={enc.space_size()}",
-            (time.perf_counter() - t1) * 1000,
-        )
-
-        t1 = time.perf_counter()
-        user_probs = _parse_form_probs(request.form, selections)
-        run_log["probs_filled"] = user_probs is not None
-        _log_step(
-            run_log, "parse_probs",
-            "dolu" if user_probs is not None else "bos (MC/Bayes atlanacak)",
-            (time.perf_counter() - t1) * 1000,
-        )
-
-        variant = int(variant_raw) if variant_raw.isdigit() else 0
-        run_log["variant"] = variant
-
-        t1 = time.perf_counter()
-        r = None
-        if mode == "fix16":
-            r = _run_fix16(enc, variant=variant)
-        elif mode == "auto":
-            r = _run_auto(enc)
-        elif mode == "heuristic":
-            r = _run_heuristic(enc)
-        elif mode == "butce":
-            if not budget_raw or not budget_raw.isdigit():
-                raise ValueError("Bütçe modu için bir kolon bütçesi giriniz.")
-            budget = int(budget_raw)
-            planlar = butce_danismani(enc, budget, user_probs, en_fazla=5)
-            if not planlar:
-                raise ValueError(
-                    f"{budget} kolonluk bütçeye sığan plan bulunamadı. "
-                    "Daha fazla maçı bankoya çevirmeniz ya da bütçeyi artırmanız gerekiyor."
-                )
-            secili = planlar[0]
-            from spor_toto.core import Encoder as Enc2
-            yeni_enc = Enc2(secili.selections)
-            cols2, aciklama2 = solve_fix16(yeni_enc, variant=0)
-            notlar = [
-                f"Uygulanan değişiklikler: {'; '.join(secili.degisiklikler) or 'yok'}",
-                f"Plan bedeli: {secili.bedel} kolon, {secili.satir} satır",
-            ]
-            _log_step(
-                run_log, "motor_butce",
-                f"plan bedel={secili.bedel} satir={secili.satir}",
-                (time.perf_counter() - t1) * 1000,
-            )
-            t1 = time.perf_counter()
-            result = _build_result(
-                yeni_enc, cols2,
-                f"Bütçe planı ({secili.bedel} kolon) – {aciklama2}",
-                notlar, user_probs=None,
-            )
-            _log_step(run_log, "build_result", "butce (probs yok)",
-                      (time.perf_counter() - t1) * 1000)
-        elif mode == "maxcov":
-            if not budget_raw or not budget_raw.isdigit():
-                raise ValueError("Maksimum kapsama modu için bir kolon bütçesi giriniz.")
-            budget = int(budget_raw)
-            r = _run_maxcov(enc, budget)
-        else:
-            r = _run_fix16(enc)
-
-        if mode != "butce" and r is not None:
-            _log_step(
-                run_log, f"motor_{mode}",
-                f"kolon={len(r['cols'])} | {r.get('baslik', '')}",
-                (time.perf_counter() - t1) * 1000,
-            )
-            t1 = time.perf_counter()
-            if user_probs is not None:
-                run_log["mc_samples"] = MC_WEB_SAMPLES
-            result = _build_result(
-                enc, r["cols"], r["baslik"], r["notlar"], user_probs,
-                use_bayes=use_bayes and user_probs is not None,
-                prior_strength=prior_strength,
-                evidence_strength=evidence_strength,
-            )
-            detail = "exact+MC+bayes" if user_probs is not None else "sadece kaplama (MC yok)"
-            _log_step(run_log, "build_result", detail,
-                      (time.perf_counter() - t1) * 1000)
-
-        if result is not None and enc.uyarilar:
-            result["uyarilar"] = enc.uyarilar
-            run_log["warnings"].extend(list(enc.uyarilar))
-
-        if result is not None:
-            run_log["result_summary"] = {
-                "satir": result.get("satir_sayisi"),
-                "bedel": result.get("kolon_bedeli"),
-                "garanti": result.get("guaranteed"),
-                "worst": result.get("worst"),
-                "advanced": bool(result.get("advanced")),
-                "bayes": bool(result.get("bayes")),
-            }
-
-    except (ValueError, RuntimeError, Fix16Hatasi) as e:
-        error = str(e)
-        run_log["error"] = error
-        _log_step(run_log, "HATA", error, 0.0)
-        logger.warning("solve failed: %s", error)
-
-    run_log["finished_at"] = datetime.now(timezone.utc).isoformat()
-    run_log["total_ms"] = round((time.perf_counter() - t0) * 1000, 1)
-    run_log_text = _format_run_log(run_log)
-    if result is not None:
-        result["run_log"] = run_log
-        result["run_log_text"] = run_log_text
-
-    return render_template(
-        "index.html",
-        version=__version__,
-        match_count=MATCH_COUNT,
-        symbols=SYMBOLS,
-        modes=MODES,
-        default_selections=form_selections,
-        result=result,
-        error=error,
-        form_data=request.form,
-        has_scipy=HAS_SCIPY,
-        run_log_text=run_log_text,
-    )
-
-
-# ─── JSON API for Next.js Premium UI ───────────────────────────────────────────
-
+@app.route("/health", methods=["GET"])
 @app.route("/api/health", methods=["GET"])
 def api_health():
     report = run_health()
@@ -550,28 +348,20 @@ def api_stats_week(week: int):
 def api_solve():
     if request.method == "OPTIONS":
         return "", 204
+
     t0 = time.perf_counter()
     run_log = _new_run_log()
     error = None
     result = None
     data = request.get_json(silent=True) or {}
 
-    picks_str = data.get("picks") or ""
-    if not picks_str and "matches" in data:
-        parts = []
-        for m in data["matches"][:MATCH_COUNT]:
-            if isinstance(m, list):
-                order = {"1": 0, "0": 1, "2": 2}
-                sel = sorted([str(x) for x in m], key=lambda s: order.get(s, 9))
-                parts.append("".join(sel) or "102")
-            else:
-                parts.append(str(m) or "102")
-        while len(parts) < MATCH_COUNT:
-            parts.append("102")
-        picks_str = ",".join(parts)
+    picks_str = (data.get("picks") or "").strip()
+    if not picks_str and data.get("matches"):
+        picks_str = _matches_to_picks(data["matches"])
 
-    mode = data.get("mode", "fix16")
+    mode = str(data.get("mode") or "fix16")
     variant_raw = str(data.get("variant", "0") or "0")
+    budget_raw = data.get("budget")
     use_bayes = bool(data.get("use_bayes", False))
     try:
         prior_strength = float(data.get("prior_strength", 1) or 1)
@@ -581,10 +371,16 @@ def api_solve():
         evidence_strength = float(data.get("evidence_strength", 10) or 10)
     except (TypeError, ValueError):
         evidence_strength = 10.0
+    try:
+        mc_samples = int(data.get("mc_samples", MC_WEB_SAMPLES) or MC_WEB_SAMPLES)
+    except (TypeError, ValueError):
+        mc_samples = MC_WEB_SAMPLES
+    mc_samples = max(1000, min(mc_samples, 200_000))
 
     run_log["mode"] = mode
     run_log["picks"] = picks_str
     run_log["variant"] = variant_raw
+    run_log["budget"] = budget_raw
     run_log["use_bayes"] = use_bayes
     run_log["prior_strength"] = prior_strength
     run_log["evidence_strength"] = evidence_strength
@@ -594,10 +390,31 @@ def api_solve():
     try:
         if not picks_str:
             raise ValueError("picks veya matches zorunlu")
+
+        t1 = time.perf_counter()
         selections = parse_picks(picks_str)
         enc = Encoder(selections)
+        _log_step(
+            run_log, "parse+encoder",
+            f"banko={len(enc.banko_pos)} cifte={sum(1 for k in enc.alphabet_sizes if k == 2)} "
+            f"uclu={sum(1 for k in enc.alphabet_sizes if k == 3)} uzay={enc.space_size()}",
+            (time.perf_counter() - t1) * 1000,
+        )
+
+        t1 = time.perf_counter()
+        user_probs = _parse_json_probs(data, selections)
+        run_log["probs_filled"] = user_probs is not None
+        _log_step(
+            run_log, "parse_probs",
+            "dolu" if user_probs is not None else "bos",
+            (time.perf_counter() - t1) * 1000,
+        )
+
         variant = int(variant_raw) if str(variant_raw).isdigit() else 0
         run_log["variant"] = variant
+
+        t1 = time.perf_counter()
+        r = None
 
         if mode == "fix16":
             r = _run_fix16(enc, variant=variant)
@@ -605,27 +422,87 @@ def api_solve():
             r = _run_auto(enc)
         elif mode == "heuristic":
             r = _run_heuristic(enc)
+        elif mode == "butce":
+            if budget_raw is None or str(budget_raw).strip() == "":
+                raise ValueError("Bütçe modu için budget gerekli")
+            budget = int(budget_raw)
+            planlar = butce_danismani(enc, budget, user_probs, en_fazla=5)
+            if not planlar:
+                raise ValueError(
+                    f"{budget} kolonluk bütçeye sığan plan yok. Daha fazla banko veya bütçe artırın."
+                )
+            secili = planlar[0]
+            yeni_enc = Encoder(secili.selections)
+            cols2, aciklama2 = solve_fix16(yeni_enc, variant=0)
+            notlar = [
+                f"Uygulanan: {'; '.join(secili.degisiklikler) or 'yok'}",
+                f"Plan bedeli: {secili.bedel} kolon, {secili.satir} satır",
+            ]
+            _log_step(run_log, "motor_butce", f"bedel={secili.bedel}", (time.perf_counter() - t1) * 1000)
+            t1 = time.perf_counter()
+            result = _build_result(
+                yeni_enc, cols2,
+                f"Bütçe planı ({secili.bedel} kolon) – {aciklama2}",
+                notlar, user_probs=None,
+            )
+            _log_step(run_log, "build_result", "butce", (time.perf_counter() - t1) * 1000)
+        elif mode == "maxcov":
+            if budget_raw is None or str(budget_raw).strip() == "":
+                raise ValueError("maxcov için budget gerekli")
+            budget = int(budget_raw)
+            r = _run_maxcov(enc, budget)
         else:
             r = _run_fix16(enc, variant=variant)
 
-        result = _build_result(
-            enc, r["cols"], r["baslik"], r["notlar"],
-            user_probs=None,
-            use_bayes=False,
-        )
-        run_log["result_summary"] = {
-            "satir": result.get("satir_sayisi"),
-            "bedel": result.get("kolon_bedeli"),
-            "garanti": result.get("guaranteed"),
-            "worst": result.get("worst"),
-        }
+        if mode != "butce" and r is not None:
+            _log_step(
+                run_log, f"motor_{mode}",
+                f"kolon={len(r['cols'])} | {r.get('baslik', '')}",
+                (time.perf_counter() - t1) * 1000,
+            )
+            t1 = time.perf_counter()
+            if user_probs is not None:
+                run_log["mc_samples"] = mc_samples
+            result = _build_result(
+                enc, r["cols"], r["baslik"], r["notlar"], user_probs,
+                use_bayes=use_bayes and user_probs is not None,
+                prior_strength=prior_strength,
+                evidence_strength=evidence_strength,
+                mc_samples=mc_samples,
+            )
+            detail = "exact+MC+bayes" if user_probs is not None else "kaplama"
+            _log_step(run_log, "build_result", detail, (time.perf_counter() - t1) * 1000)
+
+        if result is not None and getattr(enc, "uyarilar", None):
+            result["uyarilar"] = list(enc.uyarilar)
+            run_log["warnings"].extend(list(enc.uyarilar))
+
+        if result is not None:
+            run_log["result_summary"] = {
+                "satir": result.get("satir_sayisi"),
+                "bedel": result.get("kolon_bedeli"),
+                "garanti": result.get("guaranteed"),
+                "worst": result.get("worst"),
+                "advanced": bool(result.get("advanced")),
+                "bayes": bool(result.get("bayes")),
+                "markov": bool(result.get("markov")),
+            }
+
+    except (ValueError, RuntimeError, Fix16Hatasi) as e:
+        error = str(e)
+        run_log["error"] = error
+        _log_step(run_log, "HATA", error, 0.0)
+        logger.warning("api_solve: %s", error)
     except Exception as e:
         error = str(e)
         run_log["error"] = error
-        logger.warning("api_solve failed: %s", error)
+        logger.exception("api_solve unexpected")
 
     run_log["finished_at"] = datetime.now(timezone.utc).isoformat()
     run_log["total_ms"] = round((time.perf_counter() - t0) * 1000, 1)
+    if result is not None:
+        result["run_log_text"] = _format_run_log(run_log)
+
     body = {
         "ok": error is None and result is not None,
         "error": error,
@@ -639,10 +516,17 @@ def api_solve():
 @app.after_request
 def _cors(resp):
     origin = request.headers.get("Origin", "")
-    if origin.startswith("http://localhost:") or origin.startswith("http://127.0.0.1:"):
+    allowed = (
+        origin.startswith("http://localhost:")
+        or origin.startswith("http://127.0.0.1:")
+        or ".replit.dev" in origin
+        or ".repl.co" in origin
+    )
+    if allowed and origin:
         resp.headers["Access-Control-Allow-Origin"] = origin
         resp.headers["Access-Control-Allow-Headers"] = "Content-Type, Accept"
         resp.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+        resp.headers["Vary"] = "Origin"
     return resp
 
 
