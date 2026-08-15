@@ -22,6 +22,7 @@ from spor_toto.analysis import monte_carlo_report, match_error_frequency
 from spor_toto.bayes import bayes_summary, bayes_update_matches
 from spor_toto.markov import markov_report
 from spor_toto.health import run_health
+from spor_toto.history import history_summary, history_weeks, history_week
 from spor_toto import __version__
 
 logger = logging.getLogger(__name__)
@@ -513,6 +514,136 @@ def solve():
         has_scipy=HAS_SCIPY,
         run_log_text=run_log_text,
     )
+
+
+# ─── JSON API for Next.js Premium UI ───────────────────────────────────────────
+
+@app.route("/api/health", methods=["GET"])
+def api_health():
+    report = run_health()
+    code = 200 if report.ok else 503
+    return jsonify(report.to_dict()), code
+
+
+@app.route("/api/stats", methods=["GET"])
+def api_stats():
+    summary = history_summary()
+    return jsonify({
+        "meta": summary.get("meta", {}),
+        "totals": summary.get("totals", {}),
+        "weekly_avg": summary.get("weekly_avg", {}),
+        "bands": summary.get("bands", {}),
+        "weeks": history_weeks(),
+        "error": summary.get("error"),
+    })
+
+
+@app.route("/api/stats/<int:week>", methods=["GET"])
+def api_stats_week(week: int):
+    w = history_week(week)
+    if not w:
+        return jsonify({"error": f"{week}. hafta yok"}), 404
+    return jsonify(w)
+
+
+@app.route("/api/solve", methods=["POST", "OPTIONS"])
+def api_solve():
+    if request.method == "OPTIONS":
+        return "", 204
+    t0 = time.perf_counter()
+    run_log = _new_run_log()
+    error = None
+    result = None
+    data = request.get_json(silent=True) or {}
+
+    picks_str = data.get("picks") or ""
+    if not picks_str and "matches" in data:
+        parts = []
+        for m in data["matches"][:MATCH_COUNT]:
+            if isinstance(m, list):
+                order = {"1": 0, "0": 1, "2": 2}
+                sel = sorted([str(x) for x in m], key=lambda s: order.get(s, 9))
+                parts.append("".join(sel) or "102")
+            else:
+                parts.append(str(m) or "102")
+        while len(parts) < MATCH_COUNT:
+            parts.append("102")
+        picks_str = ",".join(parts)
+
+    mode = data.get("mode", "fix16")
+    variant_raw = str(data.get("variant", "0") or "0")
+    use_bayes = bool(data.get("use_bayes", False))
+    try:
+        prior_strength = float(data.get("prior_strength", 1) or 1)
+    except (TypeError, ValueError):
+        prior_strength = 1.0
+    try:
+        evidence_strength = float(data.get("evidence_strength", 10) or 10)
+    except (TypeError, ValueError):
+        evidence_strength = 10.0
+
+    run_log["mode"] = mode
+    run_log["picks"] = picks_str
+    run_log["variant"] = variant_raw
+    run_log["use_bayes"] = use_bayes
+    run_log["prior_strength"] = prior_strength
+    run_log["evidence_strength"] = evidence_strength
+    run_log["mc_samples"] = 0
+    run_log["probs_filled"] = False
+
+    try:
+        if not picks_str:
+            raise ValueError("picks veya matches zorunlu")
+        selections = parse_picks(picks_str)
+        enc = Encoder(selections)
+        variant = int(variant_raw) if str(variant_raw).isdigit() else 0
+        run_log["variant"] = variant
+
+        if mode == "fix16":
+            r = _run_fix16(enc, variant=variant)
+        elif mode == "auto":
+            r = _run_auto(enc)
+        elif mode == "heuristic":
+            r = _run_heuristic(enc)
+        else:
+            r = _run_fix16(enc, variant=variant)
+
+        result = _build_result(
+            enc, r["cols"], r["baslik"], r["notlar"],
+            user_probs=None,
+            use_bayes=False,
+        )
+        run_log["result_summary"] = {
+            "satir": result.get("satir_sayisi"),
+            "bedel": result.get("kolon_bedeli"),
+            "garanti": result.get("guaranteed"),
+            "worst": result.get("worst"),
+        }
+    except Exception as e:
+        error = str(e)
+        run_log["error"] = error
+        logger.warning("api_solve failed: %s", error)
+
+    run_log["finished_at"] = datetime.now(timezone.utc).isoformat()
+    run_log["total_ms"] = round((time.perf_counter() - t0) * 1000, 1)
+    body = {
+        "ok": error is None and result is not None,
+        "error": error,
+        "result": result,
+        "run_log_text": _format_run_log(run_log),
+        "version": __version__,
+    }
+    return jsonify(body), (200 if body["ok"] else 400)
+
+
+@app.after_request
+def _cors(resp):
+    origin = request.headers.get("Origin", "")
+    if origin.startswith("http://localhost:") or origin.startswith("http://127.0.0.1:"):
+        resp.headers["Access-Control-Allow-Origin"] = origin
+        resp.headers["Access-Control-Allow-Headers"] = "Content-Type, Accept"
+        resp.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+    return resp
 
 
 if __name__ == "__main__":
