@@ -7,6 +7,8 @@ import random
 from collections import Counter
 from typing import Dict, List, Optional, Sequence, Tuple
 
+import numpy as _np
+
 from .core import Encoder, Point, SEMBOLLER
 
 
@@ -148,34 +150,63 @@ def match_error_frequency(
     """
     Uniform varsayım altında, d=1 ve d=2 katmanlarında
     hangi maçların hata ürettiğini sayar.
+
+    Uygulama notu: saf Python'da bu O(uzay x kolon x n) idi ve gerçekçi bir
+    kuponda (uzay=10368, kolon=1296) ölçülen süre 10.9 saniyeydi — üstelik
+    senkron istek yolunda. Hesap numpy'a taşındı: uzay parçalara bölünür,
+    her parça için tüm kolonlara mesafe tek seferde hesaplanır ve en yakın
+    kolon `argmin` ile bulunur.
+
+    Davranış birebir korunur: `argmin` de, eski `if d < best_d` döngüsü de
+    minimumu veren İLK kolonu seçer.
     """
     if not cols or not enc.alphabet_sizes:
         return {"d1": [], "d2": [], "n1": 0, "n2": 0}
 
-    err_d1: Counter = Counter()
-    err_d2: Counter = Counter()
+    sizes = enc.alphabet_sizes
+    n = len(sizes)
+    kolonlar = _np.asarray(cols, dtype=_np.int8)          # (m, n)
+
+    # Uzayı itertools.product ile aynı sırada üret (meshgrid 'ij' + C-order
+    # ravel bu sırayı verir). Sıra, eşit mesafede ilk kolonun seçilmesi
+    # açısından önemlidir.
+    eksenler = _np.meshgrid(*[_np.arange(k, dtype=_np.int8) for k in sizes],
+                            indexing="ij")
+    uzay = _np.stack([e.ravel() for e in eksenler], axis=1)  # (S, n)
+
+    err_d1 = _np.zeros(n, dtype=_np.int64)
+    err_d2 = _np.zeros(n, dtype=_np.int64)
     n1 = n2 = 0
 
-    for pt in enc.variable_space():
-        best_d = 999
-        best_c: Optional[Point] = None
-        for c in cols:
-            d = sum(a != b for a, b in zip(pt, c))
-            if d < best_d:
-                best_d = d
-                best_c = c
-        if best_c is None:
-            continue
-        if best_d == 1:
-            n1 += 1
-            for i, (a, b) in enumerate(zip(pt, best_c)):
-                if a != b:
-                    err_d1[enc.variable_pos[i] + 1] += 1
-        elif best_d == 2:
-            n2 += 1
-            for i, (a, b) in enumerate(zip(pt, best_c)):
-                if a != b:
-                    err_d2[enc.variable_pos[i] + 1] += 1
+    # Parça boyu: (parca x kolon x n) bool geçici dizisini birkaç MB'ta tut.
+    parca = max(1, min(len(uzay), 4_000_000 // max(1, len(kolonlar) * n)))
+
+    for bas in range(0, len(uzay), parca):
+        blok = uzay[bas:bas + parca]                                # (b, n)
+        d = (blok[:, None, :] != kolonlar[None, :, :]).sum(axis=2)  # (b, m)
+        en_yakin = d.argmin(axis=1)
+        en_kucuk = d[_np.arange(len(blok)), en_yakin]
+
+        for hedef_d, sayac in ((1, err_d1), (2, err_d2)):
+            secim = en_kucuk == hedef_d
+            adet = int(secim.sum())
+            if not adet:
+                continue
+            fark = blok[secim] != kolonlar[en_yakin[secim]]          # (k, n)
+            sayac += fark.sum(axis=0)
+            if hedef_d == 1:
+                n1 += adet
+            else:
+                n2 += adet
+
+    def _counter(vec) -> Counter:
+        c: Counter = Counter()
+        for i, adet in enumerate(vec):
+            if adet:
+                c[enc.variable_pos[i] + 1] = int(adet)
+        return c
+
+    err_d1, err_d2 = _counter(err_d1), _counter(err_d2)
 
     def to_list(counter: Counter, total: int) -> List[dict]:
         items = []

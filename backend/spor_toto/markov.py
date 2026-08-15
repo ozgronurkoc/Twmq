@@ -17,9 +17,10 @@ olasiliksal risk profili verir. 14-garantiyi bozmaz.
 
 from __future__ import annotations
 
+import math
 from typing import Dict, List, Optional, Sequence, Tuple
 
-from .core import SEMBOLLER, Encoder, Point
+from .core import SEMBOLLER, Encoder, Point, ball
 
 
 def _norm(p: Dict[str, float]) -> Dict[str, float]:
@@ -153,6 +154,15 @@ def _error_budget_exact(
             else:
                 p_dist[2] += pc
 
+    # Yapisal kaplama durumu. Olasilik dagilimi tek basina bunu soylemez:
+    # yukaridaki dongu pc<=0 olan noktalari atliyor, yani sifir olasilikli
+    # bir acik nokta orada gorunmez. UI her iki dalda ayni alanlari
+    # bekledigi icin burada da hesaplanir.
+    kapsanan: set = set()
+    for c in cols:
+        kapsanan.update(ball(c, enc.alphabet_sizes))
+    toplam_nokta = math.prod(enc.alphabet_sizes) if enc.alphabet_sizes else 1
+
     total_g = p_dist[0] + p_dist[1]
     return {
         "states": ["0", "1", "2+"],
@@ -164,6 +174,8 @@ def _error_budget_exact(
         "p_garanti": round(total_g, 8),
         "p_kume_ici": round(p_kume, 8),
         "p_in_and_garanti": round(total_g, 8),
+        "acik_nokta": toplam_nokta - len(kapsanan),
+        "tam_kaplama": len(kapsanan) >= toplam_nokta,
         "method": "exact_space",
     }
 
@@ -173,37 +185,71 @@ def _error_budget_column_union(
     cols: Sequence[Point],
     probs: Sequence[Dict[str, float]],
 ) -> dict:
-    """Büyük uzay: kolon union alt sınırı (P(15) toplamı) + kabaca d=1."""
+    """
+    Buyuk uzay: d<=1 kutlesi kolonlarin r=1 toplarinin BIRLESIMI uzerinden.
+
+    DIKKAT - burada onceden sessiz bir hata vardi: p_garanti dogrudan
+    p_kume_ici'ye esitleniyordu, yani "sonuc secim kumendeyse en fazla 1
+    hata vardir" varsayiliyordu. Bu yalnizca kaplama TAMSA dogrudur.
+    Kaplama eksikse (maxcov modu, ya da kesilmis acgozlu) acikta kalan
+    noktalar d>=2'dedir ve garanti devreye girmez. Eski surum 8192
+    noktalik uzayda tek kolonla 8178 nokta acikken p_garanti=1.0 ve
+    p("2+")=0.0 raporluyordu - yani garantisi olmayan tek modda %100
+    garanti gosteriyordu.
+
+    Ikinci duzeltme: "2+" artik _error_budget_exact ile ayni anlamda,
+    yani KUME ICI olup d>=2 olan kutle. Eski surum oraya kume DISI
+    kutleyi (1 - p_kume) koyuyordu; iki dal farkli sey sayiyordu.
+    """
+    sizes = enc.alphabet_sizes
+    # Normalize edilmis olasiliklari bir kez hesapla; asagidaki donguler
+    # bunlari nokta basina yeniden hesaplamamali.
+    norm_p = [_norm(p) for p in probs]
+
     banko_p = 1.0
     for pos, sym in zip(enc.banko_pos, enc.banko_syms):
-        banko_p *= _norm(probs[pos]).get(sym, 0.0)
+        banko_p *= norm_p[pos].get(sym, 0.0)
 
-    p15 = 0.0
-    for c in cols:
+    def _nokta_olasiligi(pt: Point) -> float:
         pc = banko_p
         for i, pos in enumerate(enc.variable_pos):
-            sym = enc.variable_syms[i][c[i]]
-            pc *= _norm(probs[pos]).get(sym, 0.0)
-        p15 += pc
+            pc *= norm_p[pos].get(enc.variable_syms[i][pt[i]], 0.0)
+        return pc
 
-    # kume ici
+    p15 = sum(_nokta_olasiligi(c) for c in cols)
+
     p_kume = 1.0
     for i, sel in enumerate(enc.selections):
-        pr = _norm(probs[i])
-        p_kume *= sum(pr[s] for s in sel)
+        p_kume *= sum(norm_p[i][s] for s in sel)
 
-    p14_approx = max(0.0, p_kume - p15)
+    # Toplarin birlesimi: hem kaplama testini hem kapsanan kutleyi verir.
+    # Maliyet O(kolon x top) - p15 dongusuyle ayni buyukluk sinifinda.
+    kapsanan: set = set()
+    for c in cols:
+        kapsanan.update(ball(c, sizes))
+    total = math.prod(sizes) if sizes else 1
+    tam_kaplama = len(kapsanan) >= total
+
+    if tam_kaplama:
+        # Tum uzay kapsanmis: kume ici kutlenin tamami d<=1'de.
+        # Uzayi taramaya gerek yok.
+        p_kapsanan = p_kume
+    else:
+        p_kapsanan = sum(_nokta_olasiligi(pt) for pt in kapsanan)
+
     return {
         "states": ["0", "1", "2+"],
         "p_final": {
             "0": round(p15, 8),
-            "1": round(p14_approx, 8),
-            "2+": round(max(0.0, 1.0 - p_kume), 8),
+            "1": round(max(0.0, p_kapsanan - p15), 8),
+            "2+": round(max(0.0, p_kume - p_kapsanan), 8),
         },
-        "p_garanti": round(p_kume, 8),
+        "p_garanti": round(p_kapsanan, 8),
         "p_kume_ici": round(p_kume, 8),
-        "p_in_and_garanti": round(p_kume, 8),
-        "method": "column_union_approx",
+        "p_in_and_garanti": round(p_kapsanan, 8),
+        "acik_nokta": total - len(kapsanan),
+        "tam_kaplama": tam_kaplama,
+        "method": "column_union" if tam_kaplama else "column_union_partial",
     }
 
 

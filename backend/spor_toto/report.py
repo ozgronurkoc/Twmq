@@ -87,6 +87,21 @@ def yazdir_ve_kaydet(enc: Encoder, cols: List[Point], baslik: str,
     """Sonucu ekrana basar, istenirse dosyaya yazar. Ozet sozluk dondurur."""
     rows = merge_rows(cols)
     toplam_bedel = sum(row_cost(r) for r in rows)
+
+    # Sikistirma KAYIPSIZ olmali. merge_rows satir sayisini dusurur ama
+    # bedeli ve kapsanan nokta kumesini asla degistirmez (bkz. merge_rows
+    # docstring'indeki ispat). Bu kontrol olmadan bozuk bir sikistirma
+    # sessizce gecer ve kullaniciya garantiyi tutmayan bir kupon basilir.
+    # Ayni invariant health.py'de de var; rapor yolu da korunmali.
+    if toplam_bedel != len(cols):
+        raise AssertionError(
+            f"Sikistirma bedeli bozdu: satirlarin toplam bedeli {toplam_bedel}, "
+            f"kolon sayisi {len(cols)}. Kupon basilmadi.")
+    if set(rows_to_points(rows)) != set(cols):
+        raise AssertionError(
+            "Sikistirma kolon kumesini degistirdi: satirlarin acilimi "
+            "orijinal kolonlarla ayni degil. Kupon basilmadi.")
+
     worst, acik = dogrula_kaplama(cols, enc.alphabet_sizes)
 
     print()
