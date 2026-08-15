@@ -25,26 +25,43 @@ Eski Jinja2 arayüzü `archive/templates/` altına alınmıştır; runtime'da se
 | Method | Path | Açıklama |
 |--------|------|----------|
 | GET | `/` | Servis bilgisi JSON |
+| GET | `/api/meta` | Modlar, Bayes preset'leri, motor varsayılanları, sınırlar |
 | GET | `/api/health` | 13 invariant |
 | GET | `/api/stats` | Tarihsel 1/0/2 |
 | GET | `/api/stats/<week>` | Tek hafta |
 | POST | `/api/solve` | Tüm motor özellikleri |
+
+`/api/meta` frontend'in tek gerçek kaynağıdır: mod listesi, preset'ler ve
+sayısal sınırlar arayüzde **sabit kodlanmaz**, buradan okunur.
 
 ### POST `/api/solve` body
 
 ```json
 {
   "matches": [["1"],["1","0"], ...],
-  "mode": "fix16 | auto | heuristic | butce | maxcov",
+  "mode": "fix16 | auto | exact | block | heuristic | butce | maxcov",
   "variant": 0,
   "budget": 32,
+  "plan_count": 5,
+  "plan_apply": 1,
+  "kati": false,
+  "probs": [{"1":0.5,"0":0.3,"2":0.2}, ...],
   "use_bayes": false,
+  "bayes_preset": "dengeli",
   "prior_strength": 1,
   "evidence_strength": 10,
   "mc_samples": 80000,
-  "probs": [{"1":0.5,"0":0.3,"2":0.2}, ...]
+  "trials": 5,
+  "ls_iters": 30000,
+  "seed": 42,
+  "time_limit": 60,
+  "block_limit": 256,
+  "exact_limit": 512
 }
 ```
+
+`probs` gönderilmezse `advanced`, `bayes` ve `markov` blokları `null` döner —
+olasılık katmanının tamamı bu alana bağlıdır.
 
 Cevap: `ok`, `error`, `result` (rows, guaranteed, advanced, bayes, markov, …), `run_log_text`.
 

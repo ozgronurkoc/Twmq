@@ -122,17 +122,53 @@ python backend/web_app.py       # http://localhost:8080
 bash scripts/run_next_dev.sh    # UI :3000, API :8080
 ```
 
-Özellikler:
+### Sayfalar
 
-- Maç seçimi tablosu, canlı bedel, Fix-16 / auto / bütçe / maxcov / heuristic
-- Gelişmiş olasılık girişi (maç bazlı 1/0/2)
-- Uniform dağılım + hata seviyesi seçici (0 / 1 / 2)
-- Exact olasılık + **Monte Carlo** (%95 CI)
-- **Bayes (Dirichlet)** toggle, Prior α, Evidence n, **preset** (CLI ile aynı), posterior tablosu + KL yorum
-- **Markov zinciri** — küme-içi hayatta kalma + hata bütçesi (0 / 1 / 2+)
-- Maç bazlı hata frekansı
-- Kopyala / görsel indir / localStorage kupon kaydı
-- **Sistem Health** paneli (UI’den test çalıştırma)
+| Rota | İçerik |
+|------|--------|
+| `/` | **Formül** — motorun tamamı |
+| `/istatistik` | Sezon dağılımı, bantlar, 41 hafta |
+| `/istatistik/<hafta>` | Tek hafta detayı |
+| `/saglik` | 13 invariant, süreleriyle |
+
+### Formül sayfası
+
+Girdi tarafı:
+
+- 15 × 3 maç ızgarası (klavye: ok tuşları + `1` / `0` / `2`)
+- Canlı sayaç: banko / çifte / üçlü / uzay / tahmini kolon bedeli
+- **7 modun tamamı**: fix16, auto, exact, block, heuristic, butce, maxcov
+- Varyant, bütçe, bütçe planı seçimi, katı doğrulama
+- **Maç bazlı olasılık girişi** (1/0/2) — ham ağırlık da kabul edilir, normalize edilir
+- **Bayes**: 5 hazır preset (CLI ile aynı α/n) veya elle α / n
+- Monte Carlo örnek sayısı (1.000–200.000)
+- Motor ayarları: `trials`, `ls_iters`, `seed`, `time_limit`, `block_limit`, `exact_limit`
+
+Sonuç sekmeleri — hepsi backend alanlarıyla birebir:
+
+| Sekme | Gösterdiği |
+|-------|------------|
+| Özet | Garanti durumu, satır/kolon/alt sınır, bütçe planları, uyarılar |
+| Kupon | Kupon tablosu, satır başına kolon bedeli, kopyala |
+| Dağılım | Kapsama katmanları + uniform varsayım |
+| Olasılık | Exact vs Monte Carlo (%95 CI) |
+| Bayes | Maç bazlı prior → posterior, KL + yorum, en çok kayan maçlar |
+| Markov | Küme-içi hayatta kalma + hata bütçesi (0 / 1 / 2+) |
+| Hata frekansı | d=1 ve d=2 katmanlarında hangi maç hata üretiyor |
+| Log | Motorun adım adım çalışma logu |
+
+Arayüz mod listesini, preset'leri ve sınırları `GET /api/meta` üzerinden okur —
+hiçbiri arayüzde sabit kodlanmaz, motorla tek kaynaktan senkron kalır.
+
+### API uçları
+
+| Method | Path | Açıklama |
+|--------|------|----------|
+| GET | `/api/meta` | Modlar, preset'ler, varsayılanlar, sınırlar |
+| GET | `/api/health` | 13 invariant (200 = HEALTHY, 503 = UNHEALTHY) |
+| GET | `/api/stats` | Tarihsel 1/0/2 |
+| GET | `/api/stats/<week>` | Tek hafta |
+| POST | `/api/solve` | Motorun tamamı |
 
 ### Health
 
@@ -191,9 +227,14 @@ backend/
   scripts/       check.sh (yerel CI eşdeğeri)
   pyproject.toml
 
-frontend/        Next.js App Router (Formül / İstatistik / Sağlık)
-  app/           sayfalar
-  lib/api.ts     API istemcisi
+frontend/        Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
+  app/           sayfalar (/, /istatistik, /saglik)
+  components/
+    shell/       kalıcı kenar çubuğu + sayfa geçişleri
+    formul/      maç ızgarası, olasılık girişi, sonuç panelleri
+    ui/          temel bileşenler (elle yazıldı, Radix yok)
+  lib/types.ts   API sözleşmesinin tamamı tipli
+  lib/api.ts     tipli, iptal edilebilir API istemcisi
 
 scripts/         run_next_dev.sh (API + UI birlikte ayağa kaldırır)
 docs/            Mimari ve veri notları

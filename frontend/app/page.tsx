@@ -1,440 +1,630 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { solve } from "@/lib/api";
+import * as React from "react";
+import { Loader2, Play } from "lucide-react";
 
-const DEFAULT: string[][] = [
+import { getMeta, solve } from "@/lib/api";
+import {
+  MAC_SAYISI,
+  type MetaResponse,
+  type ModeId,
+  type ProbRow,
+  type Sembol,
+  type SolveRequest,
+  type SolveResult,
+} from "@/lib/types";
+import { cn, normalize, sayi, sure, uniformProb } from "@/lib/utils";
+import {
+  Badge,
+  Button,
+  Callout,
+  Card,
+  CardBody,
+  CardHeader,
+  SectionTitle,
+  Stat,
+} from "@/components/ui/primitives";
+import {
+  Collapsible,
+  NumberField,
+  Select,
+  SliderField,
+  Switch,
+} from "@/components/ui/controls";
+import { Tabs, TabPanel, type TabItem } from "@/components/ui/tabs";
+import { MatchGrid } from "@/components/formul/match-grid";
+import { ProbGrid } from "@/components/formul/prob-grid";
+import { DagilimPanel, KuponPanel, OzetPanel } from "@/components/formul/panels-core";
+import {
+  BayesPanel,
+  BosPanel,
+  HataFrekansPanel,
+  LogPanel,
+  MarkovPanel,
+  OlasilikPanel,
+} from "@/components/formul/panels-analiz";
+
+/** README'deki örnek kupon: "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10" */
+const VARSAYILAN: Sembol[][] = [
   ["1"], ["1", "0"], ["1"], ["1", "2"], ["0"],
   ["1", "0"], ["2"], ["1", "0"], ["1"], ["1", "2"],
   ["0", "2"], ["1"], ["1", "0"], ["2"], ["1", "0"],
 ];
 
-type Row = { cells: string[]; cost: number };
+const HAMMING_BLOK = 7;
 
-const MODES = [
-  { id: "fix16", label: "Fix-16" },
-  { id: "auto", label: "Otomatik" },
-  { id: "heuristic", label: "Sezgisel" },
-  { id: "butce", label: "Bütçe" },
-  { id: "maxcov", label: "Max kapsama" },
-] as const;
+export default function FormulPage() {
+  const [meta, setMeta] = React.useState<MetaResponse | null>(null);
+  const [matches, setMatches] = React.useState<Sembol[][]>(VARSAYILAN);
+  const [mode, setMode] = React.useState<ModeId>("fix16");
+  const [variant, setVariant] = React.useState(0);
+  const [budget, setBudget] = React.useState(32);
+  const [planCount, setPlanCount] = React.useState(5);
+  const [planApply, setPlanApply] = React.useState(1);
+  const [kati, setKati] = React.useState(false);
 
-export default function FormulaPage() {
-  const [matches, setMatches] = useState(DEFAULT);
-  const [mode, setMode] = useState("fix16");
-  const [budget, setBudget] = useState(32);
-  const [variant, setVariant] = useState(0);
-  const [useBayes, setUseBayes] = useState(false);
-  const [prior, setPrior] = useState(1);
-  const [evidence, setEvidence] = useState(10);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<Record<string, unknown> | null>(null);
-  const [log, setLog] = useState("");
-  const [copied, setCopied] = useState(false);
-  const [logCopied, setLogCopied] = useState(false);
+  const [probsAcik, setProbsAcik] = React.useState(false);
+  const [probs, setProbs] = React.useState<ProbRow[]>(() =>
+    VARSAYILAN.map((s) => uniformProb(s)),
+  );
+  const [useBayes, setUseBayes] = React.useState(false);
+  const [preset, setPreset] = React.useState<string>("dengeli");
+  const [elleAyar, setElleAyar] = React.useState(false);
+  const [prior, setPrior] = React.useState(1);
+  const [evidence, setEvidence] = React.useState(10);
+  const [mcSamples, setMcSamples] = React.useState(80000);
 
-  const needsBudget = mode === "butce" || mode === "maxcov";
+  const [eng, setEng] = React.useState({
+    trials: 5,
+    ls_iters: 30000,
+    seed: 42,
+    time_limit: 60,
+    block_limit: 256,
+    exact_limit: 512,
+  });
 
-  const live = useMemo(() => {
-    let banko = 0, cifte = 0, uclu = 0, space = 1;
-    for (const row of matches) {
-      const n = row.length || 3;
+  const [sonuc, setSonuc] = React.useState<SolveResult | null>(null);
+  const [logMetin, setLogMetin] = React.useState("");
+  const [hata, setHata] = React.useState<string | null>(null);
+  const [calisiyor, setCalisiyor] = React.useState(false);
+  const [gecen, setGecen] = React.useState(0);
+  const [sekme, setSekme] = React.useState("ozet");
+  const iptalRef = React.useRef<AbortController | null>(null);
+
+  // /api/meta: modlar, preset'ler, sinirlar — hicbiri sabit kodlanmaz.
+  React.useEffect(() => {
+    const ac = new AbortController();
+    getMeta(ac.signal)
+      .then((m) => {
+        setMeta(m);
+        setEng((e) => ({ ...e, ...m.engine_defaults }));
+        setMcSamples(m.limits?.mc_samples?.default ?? 80000);
+      })
+      .catch(() => {
+        /* meta alinamazsa arayuz calisir, sadece aciklamalar eksik olur */
+      });
+    return () => ac.abort();
+  }, []);
+
+  // Gecen sure sayaci — uzun suren istekler icin bekleme anlatisi.
+  React.useEffect(() => {
+    if (!calisiyor) return;
+    const t0 = performance.now();
+    setGecen(0);
+    const id = window.setInterval(() => setGecen(performance.now() - t0), 100);
+    return () => window.clearInterval(id);
+  }, [calisiyor]);
+
+  // Secimler degisince olasilik satirlarini hizada tut.
+  React.useEffect(() => {
+    setProbs((p) => matches.map((sel, i) => p[i] ?? uniformProb(sel)));
+  }, [matches]);
+
+  const canli = React.useMemo(() => {
+    let banko = 0;
+    let cifte = 0;
+    let uclu = 0;
+    let uzay = 1;
+    for (const satir of matches) {
+      const n = satir.length || 1;
       if (n === 1) banko++;
       else if (n === 2) cifte++;
       else uclu++;
-      space *= n;
+      uzay *= n;
     }
-    let bedel = space;
-    if (mode === "fix16" && cifte >= 7) bedel = Math.round(space / 8);
-    return { banko, cifte, uclu, space, bedel };
+    // fix16'da bedel = uzay / 2^7 * 16 = uzay / 8
+    const tahminiBedel =
+      mode === "fix16" && cifte >= HAMMING_BLOK ? Math.round(uzay / 8) : uzay;
+    return { banko, cifte, uclu, uzay, tahminiBedel };
   }, [matches, mode]);
 
-  function toggle(i: number, sym: string) {
-    setMatches((prev) => {
-      const next = prev.map((row) => [...row]);
-      const row = next[i];
-      if (row.includes(sym)) {
-        if (row.length === 1) return prev;
-        next[i] = row.filter((s) => s !== sym);
-      } else {
-        const order: Record<string, number> = { "1": 0, "0": 1, "2": 2 };
-        next[i] = [...row, sym].sort((a, b) => order[a] - order[b]);
-      }
-      return next;
-    });
-  }
+  const modInfo = meta?.modes.find((m) => m.id === mode);
+  const butceGerekli =
+    modInfo?.needs_budget ?? (mode === "butce" || mode === "maxcov");
+  const scipyEksik = Boolean(modInfo?.needs_scipy && meta?.has_scipy === false);
+  const fix16Yetersiz = mode === "fix16" && canli.cifte < HAMMING_BLOK;
 
-  function fillAll(syms: string[]) {
-    setMatches(Array.from({ length: 15 }, () => [...syms]));
-  }
+  const calistir = React.useCallback(
+    async (planUygula?: number) => {
+      iptalRef.current?.abort();
+      const ac = new AbortController();
+      iptalRef.current = ac;
+      setCalisiyor(true);
+      setHata(null);
 
-  async function onSolve() {
-    setLoading(true);
-    setError(null);
-    setResult(null);
-    try {
-      const body: Parameters<typeof solve>[0] = {
+      const govde: SolveRequest = {
         matches,
         mode,
         variant,
-        use_bayes: useBayes,
-        prior_strength: prior,
-        evidence_strength: evidence,
+        kati,
+        ...(butceGerekli ? { budget } : {}),
+        ...(mode === "butce"
+          ? { plan_count: planCount, plan_apply: planUygula ?? planApply }
+          : {}),
+        ...(probsAcik
+          ? {
+              probs: probs.map((p) => normalize(p)),
+              mc_samples: mcSamples,
+              use_bayes: useBayes,
+              ...(useBayes && !elleAyar ? { bayes_preset: preset } : {}),
+              ...(useBayes && elleAyar
+                ? { prior_strength: prior, evidence_strength: evidence }
+                : {}),
+            }
+          : {}),
+        ...eng,
       };
-      if (needsBudget) body.budget = budget;
-      const data = await solve(body);
-      if (!data.ok) {
-        setError(data.error || "Hata");
-        setResult(null);
-      } else {
-        setResult(data.result || null);
+
+      try {
+        const cevap = await solve(govde, ac.signal);
+        setLogMetin(cevap.run_log_text || "");
+        if (!cevap.ok || !cevap.result) {
+          setHata(cevap.error || "Bilinmeyen hata");
+        } else {
+          setSonuc(cevap.result);
+        }
+      } catch (e) {
+        if (e instanceof DOMException && e.name === "AbortError") return;
+        setHata(e instanceof Error ? e.message : String(e));
+      } finally {
+        if (!ac.signal.aborted) setCalisiyor(false);
       }
-      setLog(data.run_log_text || "");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-      setLog("");
-    } finally {
-      setLoading(false);
-    }
-  }
+    },
+    [
+      matches, mode, variant, kati, butceGerekli, budget, planCount, planApply,
+      probsAcik, probs, mcSamples, useBayes, elleAyar, preset, prior, evidence, eng,
+    ],
+  );
 
-  function copyTable() {
-    if (!result?.rows) return;
-    const rows = result.rows as Row[];
-    const header = `#\t${Array.from({ length: 15 }, (_, i) => `M${i + 1}`).join("\t")}\tFiyat`;
-    const lines = rows.map((r, i) => `${i + 1}\t${r.cells.join("\t")}\t${r.cost}`);
-    navigator.clipboard.writeText([header, ...lines].join("\n")).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1600);
-    });
-  }
-
-  function copyLog() {
-    if (!log) return;
-    navigator.clipboard.writeText(log).then(() => {
-      setLogCopied(true);
-      setTimeout(() => setLogCopied(false), 1600);
-    });
-  }
-
-  const rows = (result?.rows as Row[] | undefined) || [];
-  const guaranteed = Boolean(result?.guaranteed);
-  const advanced = result?.advanced as Record<string, any> | undefined;
-  const bayes = result?.bayes as Record<string, any> | undefined;
-  const markov = result?.markov as Record<string, any> | undefined;
-  const dist = (result?.dist as any[]) || [];
+  const sekmeler: TabItem[] = [
+    { id: "ozet", label: "Özet" },
+    { id: "kupon", label: "Kupon", badge: sonuc ? sonuc.satir_sayisi : undefined },
+    { id: "dagilim", label: "Dağılım" },
+    { id: "olasilik", label: "Olasılık", enabled: !!sonuc?.advanced },
+    { id: "bayes", label: "Bayes", enabled: !!sonuc?.bayes },
+    { id: "markov", label: "Markov", enabled: !!sonuc?.markov },
+    { id: "hata", label: "Hata frekansı", enabled: !!sonuc?.error_freq },
+    { id: "log", label: "Log", enabled: !!logMetin },
+  ];
 
   return (
-    <div className="max-w-5xl space-y-6">
-      <header className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Formül Üret</h1>
-          <p className="text-sm text-muted mt-1">Next.js UI · Python API · tüm motorlar</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <label className="text-xs text-muted">Mod</label>
-          <select
-            value={mode}
-            onChange={(e) => setMode(e.target.value)}
-            className="h-9 rounded-xl border border-line bg-white px-3 text-sm"
-          >
-            {MODES.map((m) => (
-              <option key={m.id} value={m.id}>{m.label}</option>
-            ))}
-          </select>
-          {needsBudget && (
-            <>
-              <label className="text-xs text-muted">Bütçe</label>
-              <input
-                type="number"
-                min={1}
-                max={9999}
-                value={budget}
-                onChange={(e) => setBudget(Number(e.target.value) || 1)}
-                className="h-9 w-20 rounded-xl border border-line px-2 text-sm"
-              />
-            </>
-          )}
-          {mode === "fix16" && (
-            <>
-              <label className="text-xs text-muted">Varyant</label>
-              <input
-                type="number"
-                min={0}
-                value={variant}
-                onChange={(e) => setVariant(Number(e.target.value) || 0)}
-                className="h-9 w-16 rounded-xl border border-line px-2 text-sm"
-              />
-            </>
-          )}
-        </div>
+    <div className="space-y-6">
+      <header>
+        <h1 className="font-display text-[32px] italic leading-tight">Formül üret</h1>
+        <p className="mt-1 max-w-3xl text-[13.5px] leading-relaxed text-muted-foreground">
+          Seçtiğin ihtimal kümeleri içinde doğru sonuç varsa, oynanan kolonlardan
+          en az biri en fazla 1 maç hatalı olur — yani <strong>14-garanti</strong>.
+          Bu araç maç sonucu <strong>tahmin etmez</strong>; tahminin doğruysa onu
+          en az kuponla garantiye alır.
+        </p>
       </header>
 
-      <section className="rounded-2xl border border-line bg-white p-5 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-          <h2 className="text-sm font-semibold">Maç seçimleri</h2>
-          <div className="flex flex-wrap gap-1.5">
-            <button type="button" onClick={() => fillAll(["1", "0", "2"])} className="text-xs px-2.5 py-1 rounded-full border border-line hover:bg-soft">Tüm üçlü</button>
-            <button type="button" onClick={() => fillAll(["1", "0"])} className="text-xs px-2.5 py-1 rounded-full border border-line hover:bg-soft">Tüm 1/0</button>
-            <button type="button" onClick={() => fillAll(["0", "2"])} className="text-xs px-2.5 py-1 rounded-full border border-line hover:bg-soft">Tüm 0/2</button>
-            <button type="button" onClick={() => setMatches(DEFAULT.map((r) => [...r]))} className="text-xs px-2.5 py-1 rounded-full border border-line hover:bg-soft">Örnek</button>
-          </div>
-        </div>
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
+        {/* ── Girdi ──────────────────────────────────────────── */}
+        <div className="space-y-4">
+          <Card>
+            <CardHeader
+              title="Maç seçimleri"
+              hint="Her maç için en az bir sembol. Semboller kupon düzeninde."
+            />
+            <CardBody>
+              <MatchGrid matches={matches} onChange={setMatches} disabled={calisiyor} />
+            </CardBody>
+          </Card>
 
-        <div className="space-y-1.5">
-          {matches.map((row, i) => (
-            <div key={i} className="flex items-center gap-3">
-              <span className="w-10 text-xs text-muted font-medium">M{i + 1}</span>
-              {(["1", "0", "2"] as const).map((sym) => {
-                const on = row.includes(sym);
-                const color =
-                  sym === "1" ? "bg-blue-500 border-blue-500"
-                  : sym === "0" ? "bg-amber-500 border-amber-500"
-                  : "bg-red-500 border-red-500";
-                return (
-                  <button
-                    key={sym}
-                    type="button"
-                    onClick={() => toggle(i, sym)}
-                    className={`h-9 w-11 rounded-lg border text-sm font-semibold transition active:scale-95 ${
-                      on ? color + " text-white" : "border-line bg-white text-muted"
-                    }`}
-                  >
-                    {sym}
-                  </button>
-                );
-              })}
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-5 grid grid-cols-5 gap-2 border-t border-line pt-4">
-          {[
-            { label: "Banko", value: live.banko },
-            { label: "Çifte", value: live.cifte },
-            { label: "Üçlü", value: live.uclu },
-            { label: "Uzay", value: live.space >= 1000 ? `${(live.space / 1000).toFixed(1)}k` : live.space },
-            { label: "Tahmini bedel", value: live.bedel >= 1000 ? `${(live.bedel / 1000).toFixed(1)}k` : live.bedel, accent: true },
-          ].map((s) => (
-            <div key={s.label} className="text-center">
-              <div className={`text-lg font-semibold ${s.accent ? "text-brand" : ""}`}>{s.value}</div>
-              <div className="text-[11px] text-muted">{s.label}</div>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-4 flex flex-wrap items-center gap-3 text-sm border-t border-line pt-4">
-          <label className="inline-flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" checked={useBayes} onChange={(e) => setUseBayes(e.target.checked)} className="rounded" />
-            <span>Bayes (Dirichlet)</span>
-          </label>
-          {useBayes && (
-            <>
-              <label className="text-xs text-muted">α
-                <input type="number" step={0.5} min={0.1} value={prior} onChange={(e) => setPrior(Number(e.target.value) || 1)}
-                  className="ml-1 h-8 w-16 rounded-lg border border-line px-2 text-sm" />
-              </label>
-              <label className="text-xs text-muted">n
-                <input type="number" min={0} value={evidence} onChange={(e) => setEvidence(Number(e.target.value) || 0)}
-                  className="ml-1 h-8 w-16 rounded-lg border border-line px-2 text-sm" />
-              </label>
-              <span className="text-[11px] text-muted">Not: Bayes için probs gerekir; şimdilik sadece bayes bayrağı gönderilir (uniform seçim kümesi).</span>
-            </>
-          )}
-        </div>
-
-        <button
-          type="button"
-          onClick={onSolve}
-          disabled={loading}
-          className="mt-5 h-11 w-full sm:w-auto rounded-xl bg-brand px-8 text-sm font-medium text-white hover:bg-blue-600 disabled:opacity-60 transition"
-        >
-          {loading ? "Hesaplanıyor…" : "Formül Üret"}
-        </button>
-
-        {error && (
-          <p className="mt-3 text-sm text-red-600 bg-red-50 rounded-xl px-3 py-2 border border-red-100">{error}</p>
-        )}
-      </section>
-
-      {result && (
-        <section className="rounded-2xl border border-line bg-white p-5 shadow-sm space-y-5">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-sm font-semibold">{(result.baslik as string) || "Sonuç"}</h2>
-            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-              guaranteed
-                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                : "bg-red-50 text-red-600 border border-red-200"
-            }`}>
-              {guaranteed ? "14-Garanti ✓" : "Garanti yok"}
-            </span>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <Stat etiket="Banko" deger={canli.banko} />
+            <Stat
+              etiket="Çifte"
+              deger={canli.cifte}
+              ton={fix16Yetersiz ? "danger" : "neutral"}
+            />
+            <Stat etiket="Üçlü" deger={canli.uclu} />
+            <Stat etiket="Uzay" deger={sayi(canli.uzay)} />
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
-            <div className="rounded-xl bg-soft p-3">
-              <div className="text-xl font-semibold">{String(result.satir_sayisi ?? "—")}</div>
-              <div className="text-[11px] text-muted mt-0.5">Kupon satırı</div>
-            </div>
-            <div className="rounded-xl bg-soft p-3">
-              <div className="text-xl font-semibold text-brand">{String(result.kolon_bedeli ?? "—")}</div>
-              <div className="text-[11px] text-muted mt-0.5">Toplam bedel</div>
-            </div>
-            <div className="rounded-xl bg-soft p-3">
-              <div className="text-xl font-semibold">{String(result.alt_sinir ?? "—")}</div>
-              <div className="text-[11px] text-muted mt-0.5">Alt sınır</div>
-            </div>
-            <div className="rounded-xl bg-soft p-3">
-              <div className={`text-xl font-semibold ${guaranteed ? "text-emerald-600" : "text-red-500"}`}>
-                {String(result.worst ?? "—")}
-              </div>
-              <div className="text-[11px] text-muted mt-0.5">En kötü mesafe</div>
-            </div>
-          </div>
+          {fix16Yetersiz ? (
+            <Callout
+              ton="danger"
+              baslik={`Sabit 16 satır en az ${HAMMING_BLOK} çifte ister`}
+            >
+              Şu an {canli.cifte} çifte var. Bir maçı daha çifte yap ya da{" "}
+              <strong>Otomatik</strong> moda geç — o mod eldeki en iyi bloğu kendi
+              seçer (satır sayısı 16 olmayabilir).
+            </Callout>
+          ) : null}
 
-          {Array.isArray(result.notlar) && (result.notlar as string[]).length > 0 && (
-            <ul className="text-xs text-muted space-y-1">
-              {(result.notlar as string[]).map((n, i) => <li key={i}>• {n}</li>)}
-            </ul>
-          )}
+          <Card>
+            <CardHeader title="Motor" hint={modInfo?.aciklama} />
+            <CardBody className="space-y-4">
+              <Select
+                label="Mod"
+                value={mode}
+                onChange={(v) => setMode(v as ModeId)}
+                options={
+                  meta?.modes.map((m) => ({ value: m.id, label: m.label })) ?? [
+                    { value: "fix16" as ModeId, label: "Sabit 16 satır" },
+                  ]
+                }
+              />
 
-          {rows.length > 0 && (
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-semibold">Kupona yazılacak {rows.length} satır</h3>
-                <button type="button" onClick={copyTable}
-                  className={`text-xs px-3 py-1.5 rounded-lg border transition ${
-                    copied ? "bg-emerald-50 border-emerald-300 text-emerald-700" : "border-line hover:bg-soft"
-                  }`}>{copied ? "Kopyalandı" : "Tabloyu kopyala"}</button>
-              </div>
-              <div className="overflow-x-auto rounded-xl border border-line">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="bg-soft text-left text-[11px] text-muted">
-                      <th className="py-2 px-2 font-semibold">#</th>
-                      {Array.from({ length: 15 }, (_, i) => (
-                        <th key={i} className="py-2 px-1 text-center font-semibold">M{i + 1}</th>
-                      ))}
-                      <th className="py-2 px-2 text-center font-semibold">Fiyat</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map((r, idx) => (
-                      <tr key={idx} className="border-t border-line hover:bg-soft/60">
-                        <td className="py-1.5 px-2 text-muted text-xs">{idx + 1}</td>
-                        {r.cells.map((c, ci) => (
-                          <td key={ci} className={`py-1.5 px-1 text-center font-semibold ${
-                            c === "1" ? "text-blue-600" : c === "0" ? "text-amber-600" : "text-red-500"
-                          }`}>{c}</td>
-                        ))}
-                        <td className="py-1.5 px-2 text-center">
-                          <span className="font-semibold">{r.cost}</span>
-                          {r.cost > 1 && <span className="ml-1 text-[10px] bg-amber-50 text-amber-700 px-1 rounded">×{r.cost}</span>}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
+              {modInfo && !modInfo.garanti ? (
+                <Callout ton="danger" baslik="Bu mod 14-garanti VERMEZ">
+                  Sabit bütçeyle mümkün olan en geniş kapsamayı arar. Kapsanmayan
+                  noktalar için hiçbir güvence yoktur.
+                </Callout>
+              ) : null}
 
-          {dist.length > 0 && (
-            <div>
-              <h3 className="text-sm font-semibold mb-2">Kapsama dağılımı</h3>
-              <div className="space-y-1.5">
-                {dist.map((d) => (
-                  <div key={d.d} className="grid grid-cols-[60px_80px_1fr_48px] items-center gap-2 text-xs">
-                    <span className="font-semibold">d={d.d}</span>
-                    <span className="text-muted">{d.label}</span>
-                    <div className="h-1.5 bg-soft rounded overflow-hidden">
-                      <div className="h-full bg-brand rounded" style={{ width: `${Math.min(100, Number(d.pct) || 0)}%` }} />
-                    </div>
-                    <span className="text-right text-muted">%{d.pct}</span>
+              {scipyEksik ? (
+                <Callout ton="warning" baslik="scipy kurulu değil">
+                  Bu mod ILP gerektirir ve şu an kullanılamaz.
+                </Callout>
+              ) : null}
+
+              <div className="grid grid-cols-2 gap-3">
+                <NumberField
+                  label="Varyant"
+                  value={variant}
+                  onChange={setVariant}
+                  min={0}
+                  hint="Aynı garantiyi veren farklı 16 satır"
+                />
+                {butceGerekli ? (
+                  <NumberField
+                    label="Bütçe"
+                    value={budget}
+                    onChange={setBudget}
+                    min={1}
+                    suffix="kolon"
+                  />
+                ) : null}
+              </div>
+
+              {mode === "butce" ? (
+                <div className="grid grid-cols-2 gap-3">
+                  <NumberField
+                    label="Plan sayısı"
+                    value={planCount}
+                    onChange={setPlanCount}
+                    min={1}
+                    max={50}
+                  />
+                  <NumberField
+                    label="Uygulanacak plan"
+                    value={planApply}
+                    onChange={setPlanApply}
+                    min={1}
+                    max={planCount}
+                  />
+                </div>
+              ) : null}
+
+              <Switch
+                checked={kati}
+                onChange={setKati}
+                label="Katı giriş doğrulaması"
+                hint={`${MAC_SAYISI} maç dışındaki girdileri uyarı değil hata say`}
+              />
+            </CardBody>
+          </Card>
+
+          <Card>
+            <CardHeader
+              title="Olasılık"
+              hint="Kendi 1/0/2 tahminlerini gir — exact olasılık, Monte Carlo, Bayes ve Markov panelleri ancak bununla dolar."
+            />
+            <CardBody className="space-y-4">
+              <Switch
+                checked={probsAcik}
+                onChange={setProbsAcik}
+                label="Olasılık girişini kullan"
+                hint="Kapalıyken yalnızca kombinatoryal sonuç hesaplanır"
+              />
+
+              {probsAcik ? (
+                <>
+                  <ProbGrid
+                    probs={probs}
+                    selections={matches}
+                    onChange={setProbs}
+                    disabled={calisiyor}
+                  />
+
+                  <SliderField
+                    label="Monte Carlo örnek sayısı"
+                    value={mcSamples}
+                    onChange={setMcSamples}
+                    min={meta?.limits?.mc_samples?.min ?? 1000}
+                    max={meta?.limits?.mc_samples?.max ?? 200000}
+                    step={1000}
+                    format={(v) => sayi(v)}
+                    hint="Daha fazla örnek = daha dar güven aralığı, daha uzun süre"
+                  />
+
+                  <div className="space-y-3 rounded-xl border border-line p-4">
+                    <Switch
+                      checked={useBayes}
+                      onChange={setUseBayes}
+                      label="Bayes (Dirichlet) güncellemesi"
+                      hint="Seçim kümene dayalı prior ile tahminlerini yumuşatır"
+                    />
+                    {useBayes ? (
+                      <>
+                        <Switch
+                          checked={elleAyar}
+                          onChange={setElleAyar}
+                          label="α / n değerlerini elle gir"
+                          hint="Kapalıyken hazır preset kullanılır (CLI ile aynı değerler)"
+                        />
+                        {elleAyar ? (
+                          <div className="grid grid-cols-2 gap-3">
+                            <NumberField
+                              label="Prior α"
+                              value={prior}
+                              onChange={setPrior}
+                              min={0}
+                              step={0.5}
+                            />
+                            <NumberField
+                              label="Evidence n"
+                              value={evidence}
+                              onChange={setEvidence}
+                              min={0}
+                              step={1}
+                            />
+                          </div>
+                        ) : (
+                          <Select
+                            label="Preset"
+                            value={preset}
+                            onChange={setPreset}
+                            options={
+                              meta?.bayes_presets.map((p) => ({
+                                value: p.id,
+                                label: `${p.id} — α ${p.prior_strength} / n ${p.evidence_strength}`,
+                              })) ?? [{ value: "dengeli", label: "dengeli" }]
+                            }
+                          />
+                        )}
+                      </>
+                    ) : null}
                   </div>
-                ))}
-              </div>
+                </>
+              ) : null}
+            </CardBody>
+          </Card>
+
+          <Collapsible
+            baslik="Motor ayarları"
+            hint="Sezgisel arama ve ILP parametreleri — CLI ile aynı"
+          >
+            <div className="grid grid-cols-2 gap-3">
+              <NumberField
+                label="trials"
+                value={eng.trials}
+                min={1}
+                max={50}
+                onChange={(v) => setEng((e) => ({ ...e, trials: v }))}
+              />
+              <NumberField
+                label="ls_iters"
+                value={eng.ls_iters}
+                min={100}
+                max={500000}
+                step={1000}
+                onChange={(v) => setEng((e) => ({ ...e, ls_iters: v }))}
+              />
+              <NumberField
+                label="seed"
+                value={eng.seed}
+                min={0}
+                onChange={(v) => setEng((e) => ({ ...e, seed: v }))}
+              />
+              <NumberField
+                label="time_limit"
+                value={eng.time_limit}
+                min={1}
+                max={300}
+                suffix="sn"
+                onChange={(v) => setEng((e) => ({ ...e, time_limit: v }))}
+              />
+              <NumberField
+                label="block_limit"
+                value={eng.block_limit}
+                min={2}
+                max={6561}
+                onChange={(v) => setEng((e) => ({ ...e, block_limit: v }))}
+              />
+              <NumberField
+                label="exact_limit"
+                value={eng.exact_limit}
+                min={2}
+                max={4096}
+                onChange={(v) => setEng((e) => ({ ...e, exact_limit: v }))}
+              />
             </div>
-          )}
+          </Collapsible>
 
-          {advanced && (
-            <div>
-              <h3 className="text-sm font-semibold mb-2">Gelişmiş olasılık ({String(advanced.source || "")})</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-center text-sm">
-                {advanced.exact && Object.entries(advanced.exact).map(([k, v]) => (
-                  <div key={k} className="rounded-xl bg-soft p-3">
-                    <div className="font-semibold">{String(v)}</div>
-                    <div className="text-[11px] text-muted">{k}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {bayes && (
-            <div>
-              <h3 className="text-sm font-semibold mb-2">Bayes posterior</h3>
-              <p className="text-xs text-muted mb-2">α={bayes.prior_strength} · n={bayes.evidence_strength}</p>
-              <div className="overflow-x-auto rounded-xl border border-line text-xs">
-                <table className="w-full">
-                  <thead><tr className="bg-soft text-muted text-left">
-                    <th className="p-2">Maç</th><th className="p-2">Posterior 1/0/2</th><th className="p-2">KL</th><th className="p-2">Yorum</th>
-                  </tr></thead>
-                  <tbody>
-                    {(bayes.matches || []).map((m: any) => (
-                      <tr key={m.mac} className="border-t border-line">
-                        <td className="p-2">M{m.mac}</td>
-                        <td className="p-2">{m.posterior?.["1"]}/{m.posterior?.["0"]}/{m.posterior?.["2"]}</td>
-                        <td className="p-2">{Number(m.kl).toFixed(4)}</td>
-                        <td className="p-2">{m.kl_label || "—"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {markov?.summary && (
-            <div>
-              <h3 className="text-sm font-semibold mb-2">Markov özeti</h3>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-center text-sm">
-                {["p_kume_ici", "p_garanti_path", "p0", "p1", "p2plus"].map((k) => (
-                  <div key={k} className="rounded-xl bg-soft p-3">
-                    <div className="font-semibold">
-                      {markov.summary[k] != null ? `%${(100 * Number(markov.summary[k])).toFixed(2)}` : "—"}
-                    </div>
-                    <div className="text-[11px] text-muted">{k}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <p className={`text-sm rounded-xl px-3 py-2 border ${
-            guaranteed
-              ? "text-emerald-700 bg-emerald-50 border-emerald-100"
-              : "text-amber-800 bg-amber-50 border-amber-100"
-          }`}>
-            {guaranteed
-              ? "En kötü mesafe ≤ 1 — 14-Garanti doğrulandı."
-              : `En kötü mesafe ${String(result.worst)} — 14-garanti yok.`}
-          </p>
-        </section>
-      )}
-
-      {log && (
-        <section className="rounded-2xl border border-line bg-white p-5 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-sm font-semibold">Çalışma logu</h2>
-            <button type="button" onClick={copyLog}
-              className={`text-xs px-3 py-1.5 rounded-lg border transition ${
-                logCopied ? "bg-emerald-50 border-emerald-300 text-emerald-700" : "border-line hover:bg-soft"
-              }`}>{logCopied ? "Kopyalandı" : "Logu kopyala"}</button>
+          {/*
+            Yapiskan buton icerigin uzerinde durur; arkasina cam zemin
+            konmazsa altindaki "tahmini bedel" satiri izgaranin uzerine
+            binip okunmaz oluyor.
+          */}
+          <div className="sticky bottom-3 z-20 -mx-1 rounded-2xl border border-line bg-background/80 p-3 shadow-card backdrop-blur-xl">
+            <Button
+              boyut="lg"
+              className="w-full"
+              onClick={() => void calistir()}
+              disabled={calisiyor || fix16Yetersiz || scipyEksik}
+            >
+              {calisiyor ? (
+                <>
+                  <Loader2 size={17} className="animate-spin" />
+                  Hesaplanıyor… {sure(gecen)}
+                </>
+              ) : (
+                <>
+                  <Play size={16} />
+                  Formülü üret
+                </>
+              )}
+            </Button>
+            <p className="mt-2 text-center text-[11px] text-muted-foreground">
+              Tahmini bedel: <strong>{sayi(canli.tahminiBedel)} kolon</strong>
+              {mode === "fix16" && canli.cifte >= HAMMING_BLOK ? " · 16 satır" : ""}
+              {" · ödeyeceğin tutar kolon sayısıdır"}
+            </p>
           </div>
-          <pre className="text-xs bg-soft rounded-xl p-3 overflow-auto max-h-56 whitespace-pre-wrap font-mono leading-relaxed">{log}</pre>
-        </section>
-      )}
+        </div>
+
+        {/* ── Sonuç ──────────────────────────────────────────── */}
+        <div className="space-y-4">
+          {hata ? (
+            <Callout ton="danger" baslik="Motor hata verdi">
+              {hata}
+            </Callout>
+          ) : null}
+
+          {calisiyor ? (
+            <Card>
+              <CardBody className="flex items-center gap-3">
+                <Loader2 size={18} className="animate-spin text-primary" />
+                <div className="min-w-0">
+                  <div className="text-[13.5px] font-medium">
+                    {modInfo?.label ?? mode} çalışıyor — {sure(gecen)}
+                  </div>
+                  <div className="text-[11.5px] text-muted-foreground">
+                    {gecen > 6000
+                      ? "Büyük uzaylarda bu normal. Adım süreleri Log sekmesinde."
+                      : "Kaplama üretiliyor…"}
+                  </div>
+                </div>
+              </CardBody>
+            </Card>
+          ) : null}
+
+          {!sonuc && !calisiyor && !hata ? (
+            <Card>
+              <CardBody className="py-16 text-center">
+                <SectionTitle>Henüz formül üretilmedi</SectionTitle>
+                <p className="mx-auto max-w-md text-[12.5px] leading-relaxed text-muted-foreground">
+                  Soldan maçlarını işaretle ve <strong>Formülü üret</strong>&apos;e
+                  bas. Olasılık girişini açarsan Bayes, Monte Carlo ve Markov
+                  panelleri de dolar.
+                </p>
+              </CardBody>
+            </Card>
+          ) : null}
+
+          {sonuc ? (
+            <div
+              className={cn(
+                "space-y-4 transition-opacity duration-300",
+                // Yeni sonuc gelene kadar eskisi ekranda kalir, sadece soluklasir
+                calisiyor && "pointer-events-none opacity-40",
+              )}
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge ton="primary">{sonuc.baslik}</Badge>
+                {sonuc.mode ? <Badge>{sonuc.mode}</Badge> : null}
+                {!sonuc.has_scipy ? <Badge ton="warning">scipy yok</Badge> : null}
+              </div>
+
+              <Tabs items={sekmeler} value={sekme} onChange={setSekme} />
+
+              <TabPanel id="ozet" active={sekme === "ozet"}>
+                <OzetPanel
+                  r={sonuc}
+                  onPlanSec={
+                    sonuc.butce_planlari
+                      ? (p) => {
+                          setPlanApply(p.index);
+                          void calistir(p.index);
+                        }
+                      : undefined
+                  }
+                />
+              </TabPanel>
+              <TabPanel id="kupon" active={sekme === "kupon"}>
+                <KuponPanel r={sonuc} />
+              </TabPanel>
+              <TabPanel id="dagilim" active={sekme === "dagilim"}>
+                <DagilimPanel r={sonuc} />
+              </TabPanel>
+              <TabPanel id="olasilik" active={sekme === "olasilik"}>
+                {sonuc.advanced ? (
+                  <OlasilikPanel r={sonuc} />
+                ) : (
+                  <BosPanel baslik="Olasılık verisi yok">
+                    Soldaki <strong>Olasılık girişini kullan</strong> anahtarını aç ve
+                    maç bazlı tahminlerini gir.
+                  </BosPanel>
+                )}
+              </TabPanel>
+              <TabPanel id="bayes" active={sekme === "bayes"}>
+                {sonuc.bayes ? (
+                  <BayesPanel r={sonuc} />
+                ) : (
+                  <BosPanel baslik="Bayes çalıştırılmadı">
+                    Olasılık girişini açıp <strong>Bayes güncellemesi</strong>&apos;ni
+                    etkinleştir.
+                  </BosPanel>
+                )}
+              </TabPanel>
+              <TabPanel id="markov" active={sekme === "markov"}>
+                {sonuc.markov ? (
+                  <MarkovPanel r={sonuc} />
+                ) : (
+                  <BosPanel baslik="Markov zinciri yok">
+                    Bu zincir olasılık girdisi gerektirir.
+                  </BosPanel>
+                )}
+              </TabPanel>
+              <TabPanel id="hata" active={sekme === "hata"}>
+                {sonuc.error_freq ? (
+                  <HataFrekansPanel r={sonuc} />
+                ) : (
+                  <BosPanel baslik="Hata frekansı hesaplanmadı">
+                    Uzay bu hesap için fazla büyük olabilir.
+                  </BosPanel>
+                )}
+              </TabPanel>
+              <TabPanel id="log" active={sekme === "log"}>
+                <LogPanel metin={logMetin} />
+              </TabPanel>
+            </div>
+          ) : null}
+
+          {!sonuc && logMetin ? <LogPanel metin={logMetin} /> : null}
+        </div>
+      </div>
+
+      <Callout ton="neutral" baslik="Sorumlu oynayın">
+        Bu araç kazanma olasılığını <strong>artırmaz</strong>. Yalnızca belirli bir
+        garantiyi daha az kuponla elde etmeni sağlar. Olasılık, Monte Carlo, Bayes
+        ve Markov çıktıları beklenen-değer veya kâr hesabı değildir; ikramiye
+        havuzu ve kolon bedeli hesaba katılmaz.
+      </Callout>
     </div>
   );
 }
