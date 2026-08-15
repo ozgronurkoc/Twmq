@@ -468,6 +468,108 @@ export function BandStrips({ bands }: { bands: Record<Sembol, Band> }) {
   );
 }
 
+/* ── 4b. Kalibrasyon — oranin dedigi vs olan ────────────────────────────── */
+
+/**
+ * Her olasilik kovasi icin iki nokta: oranin verdigi olasilik ve gercekte
+ * ne siklikta oldugu. Aradaki cizgi sapmayi dogrudan gosterir.
+ *
+ * Bu iki seri KIMLIK degil, ayni buyuklugun iki okumasidir — bu yuzden
+ * sembol renkleri kullanilmaz; tek hue, iki ton.
+ */
+export function CalibrationChart({
+  rows,
+}: {
+  rows: Array<{ lo: number; hi: number; n: number; model_pct: number; actual_pct: number }>;
+}) {
+  const { fare, olaylar } = useFare();
+  const W = 840;
+  const satirY = 34;
+  const solB = 74;
+  const sagB = 46;
+  const H = satirY * rows.length + 34;
+  const x = (v: number) => solB + (v / 100) * (W - solB - sagB);
+  const vurgu = fare
+    ? Math.min(rows.length - 1, Math.max(0, Math.floor((fare.py / (H * (fare.w / W))) * rows.length)))
+    : null;
+
+  if (!rows.length) return <p className="text-[13px] text-muted-foreground">Yeterli veri yok.</p>;
+
+  return (
+    <div className="relative" {...olaylar}>
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        className="h-auto w-full"
+        role="img"
+        aria-label="Oranın verdiği olasılık ile gerçekleşme oranının kova kova karşılaştırması"
+      >
+        {[0, 25, 50, 75, 100].map((v) => (
+          <g key={v}>
+            <line x1={x(v)} x2={x(v)} y1={6} y2={satirY * rows.length + 2} className="stroke-line" strokeWidth={1} />
+            <text x={x(v)} y={H - 8} textAnchor="middle" fontSize={11} className="tnum fill-muted-foreground">
+              %{v}
+            </text>
+          </g>
+        ))}
+        {rows.map((r, i) => {
+          const cy = 20 + i * satirY;
+          const a = x(r.model_pct);
+          const b = x(r.actual_pct);
+          return (
+            <g key={r.lo}>
+              {vurgu === i ? (
+                <rect x={solB - 4} y={cy - 14} width={W - solB - sagB + 8} height={28} rx={6} className="fill-muted" />
+              ) : null}
+              <text x={4} y={cy + 4} fontSize={11} className="tnum fill-muted-foreground">
+                %{r.lo}–{r.hi}
+              </text>
+              <line
+                x1={Math.min(a, b)}
+                x2={Math.max(a, b)}
+                y1={cy}
+                y2={cy}
+                className="stroke-primary"
+                strokeOpacity={0.35}
+                strokeWidth={3}
+                strokeLinecap="round"
+              />
+              {/* beklenen: ici bos halka · gerceklesen: dolu nokta */}
+              <circle cx={a} cy={cy} r={5} className="fill-card stroke-primary" strokeWidth={2} />
+              <circle cx={b} cy={cy} r={5} className="fill-primary stroke-card" strokeWidth={2} />
+              <text x={W - sagB + 8} y={cy + 4} fontSize={11} className="tnum fill-muted-foreground">
+                {r.n}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+      <div className="mt-2 flex flex-wrap items-center gap-4 text-[11.5px] text-muted-foreground">
+        <span className="flex items-center gap-1.5">
+          <span className="inline-block h-2.5 w-2.5 rounded-full border-2 border-primary bg-card" aria-hidden />
+          oranın dediği
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="inline-block h-2.5 w-2.5 rounded-full bg-primary" aria-hidden />
+          gerçekleşen
+        </span>
+        <span className="ml-auto">sağdaki sayı: kovadaki gözlem adedi</span>
+      </div>
+      {fare && vurgu !== null && rows[vurgu] ? (
+        <Tooltip x={fare.px} y={fare.py} w={fare.w}>
+          <div className="mb-1 font-semibold">
+            %{rows[vurgu].lo}–{rows[vurgu].hi} kovası
+          </div>
+          <div className="min-w-[150px] space-y-0.5">
+            <TooltipSatir etiket="oranın dediği" deger={`%${rows[vurgu].model_pct.toFixed(1)}`} />
+            <TooltipSatir etiket="gerçekleşen" deger={`%${rows[vurgu].actual_pct.toFixed(1)}`} />
+            <TooltipSatir etiket="gözlem" deger={String(rows[vurgu].n)} />
+          </div>
+        </Tooltip>
+      ) : null}
+    </div>
+  );
+}
+
 /* ── 5. Mac sirasi isi haritasi ─────────────────────────────────────────── */
 
 export function PositionHeatmap({ positions }: { positions: Analytics["positions"] }) {

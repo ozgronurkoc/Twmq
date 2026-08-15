@@ -529,9 +529,12 @@ dosyaları (T1, E0, SP1…) listenin tamamını verir.
 | `data/odds/odds.sqlite3` | hayır (üretilir) | `mac` / `oran` / `istatistik` tabloları, uzun biçim |
 | `data/odds/_kaynak/*.csv` | hayır (indirilir) | Ham football-data.co.uk dosyaları (12 MB) |
 
-**Arayüze bağlı değildir.** Hiçbir API ucu, sayfa ya da motor akışı bu veriyi
-okumaz; `/api/stats` gövdesi değişmedi. Okumak için `spor_toto.odds`
-(`load_odds`, `market_odds`, `implied_probs`) ya da doğrudan SQLite.
+**Arayüze yalnızca maç sonucu (1X2) çıkar.** `/api/stats` sezon özetini
+(kapsama, favori isabeti, marj, kalibrasyon), `/api/stats/<week>` ise maç maç
+kapanış oranını döndürür. 2.5 alt/üst, Asya handikap ve maç istatistikleri
+API'ye **hiç girmez** — onlar yalnızca bu arşivde, analiz için durur. Okumak
+için `spor_toto.odds` (`load_odds`, `market_odds`, `implied_probs`,
+`season_1x2_summary`) ya da doğrudan SQLite.
 
 Bu setin geçmiş veriyle birleşebilmesinin **ön koşulu** v2 ile gelen `matches`
 alanıydı: eşleştirme takım adı + tarih + skor üzerinden yapılır.

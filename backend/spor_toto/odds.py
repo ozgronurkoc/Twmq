@@ -106,6 +106,111 @@ def implied_probs(oranlar: Dict[str, float]) -> Dict[str, float]:
     return {k: v / toplam for k, v in ters.items()}
 
 
+# ─── maç sonucu (1X2) — arayüze giden tek pazar ───────────────────────────────
+
+SEMBOLLER = ("1", "0", "2")
+#: Tercih sırası: piyasa ortalaması, sonra tek tek bahisçiler.
+KAYNAK_SIRASI = ("Avg", "B365", "PS", "BFE", "Max")
+
+
+def match_1x2(row: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """Bir maçın maç sonucu oranı: önce kapanış, yoksa açılış.
+
+    Hangi kaynaktan ve hangi dönemden geldiği çıktıda yazar — sayının
+    nereden geldiği belirsiz kalmamalı.
+    """
+    if not row.get("matched"):
+        return None
+    for kapanis in (True, False):
+        for kaynak in KAYNAK_SIRASI:
+            oranlar = market_odds(row, "1X2", kaynak, closing=kapanis)
+            if len(oranlar) != 3 or any(v <= 1.0 for v in oranlar.values()):
+                continue
+            olasilik = implied_probs(oranlar)
+            favori = min(oranlar, key=lambda s: oranlar[s])
+            return {
+                "odds": {s: round(oranlar[s], 2) for s in SEMBOLLER},
+                "probs": {s: round(olasilik[s], 4) for s in SEMBOLLER},
+                "favourite": favori,
+                "hit": favori == row["code"],
+                "margin": round(sum(1 / v for v in oranlar.values()) - 1, 4),
+                "book": kaynak,
+                "closing": kapanis,
+            }
+    return None
+
+
+def week_1x2(week: int) -> Dict[int, Dict[str, Any]]:
+    """Bir haftanın maç numarasına göre 1X2 blokları (oranı olmayanlar yok)."""
+    out: Dict[int, Dict[str, Any]] = {}
+    for r in load_odds():
+        if r["week"] != week:
+            continue
+        blok = match_1x2(r)
+        if blok:
+            out[r["no"]] = blok
+    return out
+
+
+def season_1x2_summary(weeks: Optional[List[int]] = None) -> Optional[Dict[str, Any]]:
+    """Dilim için oran özeti: kapsama, favori isabeti, marj ve kalibrasyon.
+
+    ``weeks`` verilirse yalnızca o haftalar sayılır — arayüzdeki aralık
+    filtresi böylece oran kartını da kapsar.
+    """
+    rows = load_odds()
+    if not rows:
+        return None
+    izin = set(weeks) if weeks is not None else None
+    ilgili = [r for r in rows if izin is None or r["week"] in izin]
+    if not ilgili:
+        return None
+
+    bloklar = [(r, match_1x2(r)) for r in ilgili]
+    oranli = [(r, b) for r, b in bloklar if b]
+    if not oranli:
+        return None
+
+    tutan = sum(1 for _, b in oranli if b["hit"])
+    fav_dagilim = {s: sum(1 for _, b in oranli if b["favourite"] == s) for s in SEMBOLLER}
+
+    # Kalibrasyon: modelin verdiği olasılık ile gerçekleşme yan yana.
+    kovalar: Dict[int, Dict[str, float]] = {}
+    for r, b in oranli:
+        for s in SEMBOLLER:
+            p = b["probs"][s]
+            k = min(int(p * 10), 9)
+            hucre = kovalar.setdefault(k, {"n": 0, "model": 0.0, "gercek": 0})
+            hucre["n"] += 1
+            hucre["model"] += p
+            hucre["gercek"] += 1 if s == r["code"] else 0
+    kalibrasyon = [
+        {
+            "lo": k * 10,
+            "hi": k * 10 + 10,
+            "n": int(v["n"]),
+            "model_pct": round(100 * v["model"] / v["n"], 1),
+            "actual_pct": round(100 * v["gercek"] / v["n"], 1),
+        }
+        for k, v in sorted(kovalar.items()) if v["n"] >= 10
+    ]
+
+    return {
+        "matches": len(ilgili),
+        "with_odds": len(oranli),
+        "coverage_pct": round(100 * len(oranli) / len(ilgili), 1),
+        "favourite_hit": tutan,
+        "favourite_hit_pct": round(100 * tutan / len(oranli), 1),
+        "favourite_split": fav_dagilim,
+        "avg_margin_pct": round(
+            100 * sum(b["margin"] for _, b in oranli) / len(oranli), 2
+        ),
+        "calibration": kalibrasyon,
+        "books": sorted({b["book"] for _, b in oranli}),
+        "note": "piyasa kapanış oranları (football-data.co.uk) — iddaa oranı değildir",
+    }
+
+
 def coverage() -> Dict[str, Any]:
     rows = load_odds()
     eslesen = [r for r in rows if r["matched"]]

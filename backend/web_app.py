@@ -29,6 +29,7 @@ from spor_toto.health import run_health
 from spor_toto.history import (
     history_analytics, history_summary, history_week_detail, history_weeks,
 )
+from spor_toto.odds import season_1x2_summary, week_1x2
 from spor_toto import __version__
 
 logger = logging.getLogger(__name__)
@@ -565,6 +566,7 @@ def api_stats():
     """
     last = _parse_last(request.args.get("last"))
     summary = history_summary(last)
+    weeks = history_weeks(last)
     return jsonify({
         "meta": summary.get("meta", {}),
         "totals": summary.get("totals", {}),
@@ -572,7 +574,10 @@ def api_stats():
         "bands": summary.get("bands", {}),
         "data_quality": summary.get("data_quality", {}),
         "analytics": history_analytics(last),
-        "weeks": history_weeks(last),
+        # Yalnizca MAC SONUCU (1X2). Arsivdeki diger pazarlar (alt/ust, Asya
+        # handikap) analiz icindir, API'den cikmaz. Arsiv yoksa None doner.
+        "odds": season_1x2_summary([w["week"] for w in weeks]),
+        "weeks": weeks,
         "last": last,
         "error": summary.get("error"),
     })
@@ -583,6 +588,9 @@ def api_stats_week(week: int):
     w = history_week_detail(week)
     if not w:
         return jsonify({"error": f"{week}. hafta yok"}), 404
+    oranlar = week_1x2(week)
+    w["odds"] = {str(no): blok for no, blok in oranlar.items()}
+    w["odds_hit"] = sum(1 for b in oranlar.values() if b["hit"])
     return jsonify(w)
 
 

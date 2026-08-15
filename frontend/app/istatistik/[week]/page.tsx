@@ -41,6 +41,8 @@ export default function HaftaPage({ params }: { params: { week: string } }) {
     return () => ac.abort();
   }, [week]);
 
+  const oranliMac = veri ? Object.keys(veri.odds || {}).length : 0;
+
   // Sezonda en nadir gorulen tercihler — bu haftanin surprizleri.
   const surprizler = React.useMemo(() => {
     if (!veri) return [];
@@ -146,11 +148,14 @@ export default function HaftaPage({ params }: { params: { week: string } }) {
                       <th scope="col" className="w-12 pb-2 font-medium">
                         Sonuç
                       </th>
-                      <th scope="col" className="w-40 pb-2 font-medium">
+                      <th scope="col" className="w-36 pb-2 font-medium">
                         Sezon payı (1 / 0 / 2)
                       </th>
                       <th scope="col" className="w-14 pb-2 text-right font-medium">
-                        Oran
+                        Sıra payı
+                      </th>
+                      <th scope="col" className="w-32 pb-2 pl-3 font-medium">
+                        Kapanış oranı
                       </th>
                     </tr>
                   </thead>
@@ -159,6 +164,7 @@ export default function HaftaPage({ params }: { params: { week: string } }) {
                       const p = veri.position_stats[c.pos - 1];
                       const kendi = p?.pct[c.symbol] ?? 0;
                       const mac = veri.matches?.[c.pos - 1];
+                      const oran = veri.odds?.[String(c.pos)];
                       return (
                         <tr key={c.pos} className="border-t border-line align-middle">
                           <td className="tnum py-2 text-muted-foreground">{c.pos}</td>
@@ -212,11 +218,42 @@ export default function HaftaPage({ params }: { params: { week: string } }) {
                             </div>
                           </td>
                           <td className="tnum py-2 text-right">%{kendi.toFixed(0)}</td>
+                          <td className="py-2 pl-3">
+                            {oran ? (
+                              <span className="tnum flex items-center gap-1.5 font-mono text-[12px]">
+                                {SEMBOLLER.map((s) => (
+                                  <span
+                                    key={s}
+                                    title={`${SEMBOL_ADI[s]} · %${(oran.probs[s] * 100).toFixed(0)}${
+                                      s === oran.favourite ? " · favori" : ""
+                                    }`}
+                                    className={cn(
+                                      "rounded px-1 py-0.5",
+                                      s === oran.favourite
+                                        ? "bg-primary/12 font-semibold text-foreground"
+                                        : "text-muted-foreground",
+                                    )}
+                                  >
+                                    {oran.odds[s].toFixed(2)}
+                                  </span>
+                                ))}
+                              </span>
+                            ) : (
+                              <span className="text-[11.5px] text-muted-foreground">—</span>
+                            )}
+                          </td>
                         </tr>
                       );
                     })}
                   </tbody>
                 </table>
+                {oranliMac > 0 ? (
+                  <p className="mt-3 text-[11.5px] leading-relaxed text-muted-foreground">
+                    Kapanış favorisi (vurgulu oran) bu haftanın {oranliMac} maçından{" "}
+                    <span className="tnum font-medium text-foreground">{veri.odds_hit}</span>{" "}
+                    tanesinde tuttu. Piyasa kapanış oranı — iddaa oranı değildir.
+                  </p>
+                ) : null}
                 <code className="tnum mt-4 block break-all rounded-lg bg-muted px-3 py-2 font-mono text-[12.5px]">
                   {veri.results}
                 </code>

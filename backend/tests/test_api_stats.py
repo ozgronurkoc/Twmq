@@ -52,6 +52,43 @@ def test_hafta_detayi(client):
         assert mac["home"] and mac["away"]
 
 
+def test_stats_mac_sonucu_orani_tasiyor(client):
+    """Arayuze YALNIZCA 1X2 gider; alt/ust ve Asya handikap arsivde kalir."""
+    body = client.get("/api/stats").get_json()
+    o = body["odds"]
+    if o is None:  # oran arsivi yoksa uc sessizce None doner
+        return
+    assert 0 < o["with_odds"] <= o["matches"]
+    assert 0 <= o["favourite_hit_pct"] <= 100
+    assert o["favourite_split"]["0"] == 0, "beraberlik favori olamaz"
+    assert o["avg_margin_pct"] > 0
+    for kova in o["calibration"]:
+        assert kova["lo"] < kova["hi"] and kova["n"] >= 10
+
+
+def test_stats_odds_dilime_uyar(client):
+    tam = client.get("/api/stats").get_json()["odds"]
+    dilim = client.get("/api/stats?last=6").get_json()["odds"]
+    if tam is None or dilim is None:
+        return
+    assert dilim["matches"] < tam["matches"]
+
+
+def test_hafta_detayinda_1x2_var_diger_pazarlar_yok(client):
+    hafta = history_weeks()[-1]["week"]
+    body = client.get(f"/api/stats/{hafta}").get_json()
+    assert "odds" in body and "odds_hit" in body
+    for no, blok in body["odds"].items():
+        assert set(blok["odds"]) == set(SYMBOLS)
+        assert set(blok["probs"]) == set(SYMBOLS)
+        assert abs(sum(blok["probs"].values()) - 1.0) < 1e-3
+        assert blok["favourite"] in SYMBOLS
+        assert blok["margin"] > 0
+        # Alt/ust ve handikap arayuze sizmamali.
+        assert not any(k in blok for k in ("over", "under", "ah", "2.5"))
+    assert body["odds_hit"] <= len(body["odds"])
+
+
 def test_olmayan_hafta_404(client):
     r = client.get("/api/stats/99999")
     assert r.status_code == 404

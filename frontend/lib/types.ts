@@ -454,6 +454,42 @@ export interface DataQuality {
   ok: boolean;
 }
 
+/**
+ * Tek maçın maç sonucu (1X2) oranı. Arşivdeki diğer pazarlar (alt/üst, Asya
+ * handikap) arayüze gelmez; onlar analiz katmanı içindir.
+ */
+export interface MacOran {
+  odds: Record<Sembol, number>;
+  /** Marj arındırılmış, toplamı 1 olan olasılıklar. */
+  probs: Record<Sembol, number>;
+  favourite: Sembol;
+  hit: boolean;
+  /** Bahisçi payı (overround), 0.0758 = %7,58. */
+  margin: number;
+  book: string;
+  closing: boolean;
+}
+
+export interface OddsSummary {
+  matches: number;
+  with_odds: number;
+  coverage_pct: number;
+  favourite_hit: number;
+  favourite_hit_pct: number;
+  favourite_split: Record<Sembol, number>;
+  avg_margin_pct: number;
+  /** Olasılık kovası başına model vs gerçekleşme. */
+  calibration: Array<{
+    lo: number;
+    hi: number;
+    n: number;
+    model_pct: number;
+    actual_pct: number;
+  }>;
+  books: string[];
+  note: string;
+}
+
 export interface StatsResponse {
   meta: Partial<StatsMeta>;
   totals: Partial<Record<Sembol | "pct_1" | "pct_0" | "pct_2", number>>;
@@ -461,6 +497,8 @@ export interface StatsResponse {
   bands: Partial<Record<Sembol, Band>>;
   data_quality: DataQuality;
   analytics: Analytics;
+  /** Maç sonucu oranı özeti; arşiv yoksa null. */
+  odds: OddsSummary | null;
   weeks: WeekRow[];
   /** Uygulanan dilim (`?last=N`); tum sezon icin null. */
   last: number | null;
@@ -477,6 +515,10 @@ export interface WeekDetail extends WeekRow {
   delta_vs_avg: Record<Sembol, number>;
   rank: Record<Sembol, { rank: number; of: number }>;
   position_stats: PositionStat[];
+  /** Maç numarasına göre 1X2 oranı; oranı bulunamayan maç listede yoktur. */
+  odds: Record<string, MacOran>;
+  /** Bu haftada kapanış favorisinin tuttuğu maç sayısı. */
+  odds_hit: number;
 }
 
 // ─── /api/health ──────────────────────────────────────────────────────────
