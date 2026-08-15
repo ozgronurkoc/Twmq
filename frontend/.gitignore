@@ -1,0 +1,10 @@
+# bagimliliklar
+node_modules/
+
+# Next.js build ciktisi — repoya girmemeli
+.next/
+out/
+
+# Next.js'in otomatik urettigi tip dosyasi
+next-env.d.ts
+*.tsbuildinfo

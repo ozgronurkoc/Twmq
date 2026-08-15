@@ -2,58 +2,198 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+  Tasarim sistemi — referans: nonplo.com (Tailwind + shadcn token duzeni).
+  Renkler HSL bilesenleri olarak tutulur ki Tailwind <alpha-value> ile
+  opaklik uygulayabilsin: hsl(var(--primary) / .15)
+
+  Uc temali kurulum: :root acik tema, prefers-color-scheme koyu tema
+  (sistem tercihi), [data-theme] ise kullanicinin acik secimi. Bir renk
+  ASLA yalnizca media/attribute blogunda tanimlanmaz.
+*/
+
 :root {
-  color-scheme: light;
-  --bg: #f5f5f7;
-  --card: #ffffff;
-  --ink: #1d1d1f;
-  --muted: #6e6e73;
-  --line: #d2d2d7;
-  --line-soft: #e8e8ed;
-  --brand: #0071e3;
-  --brand-hover: #0077ed;
-  --ok: #34c759;
-  --warn: #ff9f0a;
-  --bad: #ff3b30;
+  --background: 0 0% 100%;
+  --foreground: 258 30% 10%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 258 30% 10%;
+  --elevated: 260 40% 99%;
+
+  --muted: 260 20% 96%;
+  --muted-foreground: 258 12% 44%;
+
+  --border: 260 16% 90%;
+  --border-strong: 260 16% 82%;
+  --input: 260 16% 90%;
+
+  /* nonplo'nun birincil moru */
+  --primary: 262 83% 58%;
+  --primary-foreground: 0 0% 100%;
+  --primary-glow: 262 83% 70%;
+  --accent: 262 83% 96%;
+  --accent-foreground: 262 83% 26%;
+
+  /* Durum renkleri — garanti/uyari/bozuk uc hali */
+  --success: 152 58% 38%;
+  --success-foreground: 0 0% 100%;
+  --success-soft: 152 60% 95%;
+  --warning: 32 92% 45%;
+  --warning-foreground: 0 0% 100%;
+  --warning-soft: 38 95% 94%;
+  --danger: 0 72% 48%;
+  --danger-foreground: 0 0% 100%;
+  --danger-soft: 0 85% 96%;
+
+  /* Kupon sembolleri: 1 / 0 / 2 */
+  --sym-1: 262 83% 58%;
+  --sym-0: 199 89% 44%;
+  --sym-2: 330 76% 52%;
+
+  /* Kenar cubugu — siyah degil, mora calan derin notr */
+  --sidebar: 258 32% 11%;
+  --sidebar-foreground: 260 18% 88%;
+  --sidebar-muted: 258 12% 58%;
+  --sidebar-border: 258 20% 20%;
+  --sidebar-active: 262 60% 22%;
+
+  --radius: 0.5rem;
+
+  --gradient-hero: linear-gradient(135deg, hsl(262 83% 58%) 0%, hsl(229 84% 64%) 100%);
+  --gradient-glow: radial-gradient(600px at 50% 0%, hsl(262 83% 58% / 0.15) 0%, transparent 50%);
+
+  --shadow-card: 0 4px 20px -2px hsl(262 83% 58% / 0.1);
+  --shadow-glow: 0 0 40px hsl(262 83% 70% / 0.4);
+  --shadow-primary: 0 10px 30px -10px hsl(262 83% 58% / 0.3);
+
+  /* Apple'in kendi egrileri — nonplo da bunlari kullaniyor */
+  --ease-ios: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-pop: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-html, body { height: 100%; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --background: 258 28% 7%;
+    --foreground: 260 20% 96%;
+
+    --card: 258 26% 10%;
+    --card-foreground: 260 20% 96%;
+    --elevated: 258 24% 13%;
+
+    --muted: 258 20% 15%;
+    --muted-foreground: 258 12% 64%;
+
+    --border: 258 18% 19%;
+    --border-strong: 258 18% 28%;
+    --input: 258 18% 19%;
+
+    --accent: 262 45% 20%;
+    --accent-foreground: 262 90% 88%;
+
+    --success: 152 52% 48%;
+    --success-soft: 152 40% 14%;
+    --warning: 38 92% 56%;
+    --warning-soft: 38 50% 15%;
+    --danger: 0 72% 60%;
+    --danger-soft: 0 45% 16%;
+
+    --sym-0: 199 85% 56%;
+    --sym-2: 330 76% 62%;
+
+    --sidebar: 258 30% 9%;
+    --sidebar-border: 258 20% 17%;
+    --sidebar-active: 262 55% 24%;
+
+    --gradient-glow: radial-gradient(600px at 50% 0%, hsl(262 83% 58% / 0.22) 0%, transparent 50%);
+    --shadow-card: 0 4px 24px -4px hsl(258 60% 2% / 0.6);
+  }
+}
+
+:root[data-theme="dark"] {
+  --background: 258 28% 7%;
+  --foreground: 260 20% 96%;
+
+  --card: 258 26% 10%;
+  --card-foreground: 260 20% 96%;
+  --elevated: 258 24% 13%;
+
+  --muted: 258 20% 15%;
+  --muted-foreground: 258 12% 64%;
+
+  --border: 258 18% 19%;
+  --border-strong: 258 18% 28%;
+  --input: 258 18% 19%;
+
+  --accent: 262 45% 20%;
+  --accent-foreground: 262 90% 88%;
+
+  --success: 152 52% 48%;
+  --success-soft: 152 40% 14%;
+  --warning: 38 92% 56%;
+  --warning-soft: 38 50% 15%;
+  --danger: 0 72% 60%;
+  --danger-soft: 0 45% 16%;
+
+  --sym-0: 199 85% 56%;
+  --sym-2: 330 76% 62%;
+
+  --sidebar: 258 30% 9%;
+  --sidebar-border: 258 20% 17%;
+  --sidebar-active: 262 55% 24%;
+
+  --gradient-glow: radial-gradient(600px at 50% 0%, hsl(262 83% 58% / 0.22) 0%, transparent 50%);
+  --shadow-card: 0 4px 24px -4px hsl(258 60% 2% / 0.6);
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
 
 body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--ink);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-feature-settings: "cv02", "cv03", "cv04";
   -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-* { box-sizing: border-box; }
-
-::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-thumb {
-  background: #c7c7cc;
-  border-radius: 8px;
-  border: 2px solid transparent;
-  background-clip: content-box;
+/*
+  Bu bir kupon araci: sayilar elle kagida geciriliyor. Butun sayisal
+  hucreler sabit genislikte olmali ki sutunlar hizalansin ve goz kaymasin.
+*/
+.tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
 }
 
-@layer components {
-  .card {
-    @apply rounded-2xl border border-[var(--line-soft)] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.04)];
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
-  .chip {
-    @apply inline-flex items-center justify-center h-9 min-w-[2.75rem] rounded-xl border text-sm font-semibold transition active:scale-[0.98];
-  }
-  .btn-primary {
-    @apply inline-flex items-center justify-center h-11 px-6 rounded-xl bg-[var(--brand)] text-white text-sm font-semibold
-      shadow-[0_1px_2px_rgba(0,113,227,0.25)] hover:bg-[var(--brand-hover)] disabled:opacity-55 disabled:cursor-not-allowed transition;
-  }
-  .btn-ghost {
-    @apply inline-flex items-center justify-center h-10 px-4 rounded-xl border border-[var(--line)] bg-white text-sm font-medium text-[var(--ink)] hover:bg-[var(--bg)] transition;
-  }
-  .stat-tile {
-    @apply rounded-2xl bg-[var(--bg)] px-3 py-4 text-center;
-  }
+}
+
+/* Ince kaydirma cubugu — genis kupon tablolari icin */
+.scroll-slim::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+.scroll-slim::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scroll-slim::-webkit-scrollbar-thumb {
+  background: hsl(var(--border-strong));
+  border-radius: 999px;
+}
+.scroll-slim {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--border-strong)) transparent;
 }

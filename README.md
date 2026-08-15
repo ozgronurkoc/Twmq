@@ -20,11 +20,16 @@ Bu araç maç sonucu **tahmin etmez**. Tahminin doğruysa onu kaçırmamanı, he
 
 **Kritik ayrım:** Garanti, *seçim kümesi içinde* geçerlidir. Küme dışı bir sonuç gelirse sistem zaten o senaryoyu kapsamaz — bu bir hata değil, tasarımın sınırıdır.
 
+O sınırın ötesinde ne olduğunu **fire analizi** ölçer (CLI `--fire`, arayüzde *Fire* sekmesi): bir veya iki maç işaretlerinin dışına çıkarsa en iyi kolonun kaç tutturduğunu, banko/çifte ayrımıyla birlikte gösterir.
+
 ---
 
 ## Kurulum
 
+Python tarafının tamamı `backend/` altındadır:
+
 ```bash
+cd backend
 pip install -e .
 # veya geliştirme + test:
 pip install -e ".[test]"
@@ -69,6 +74,8 @@ spor-toto --picks "..." --mode auto
 spor-toto --picks "..." --mode butce --budget 32
 spor-toto --picks "..." --mode maxcov --budget 16
 spor-toto --picks "..." --probs "1:0.5,0:0.3,2:0.2;..." --mc-samples 20000
+spor-toto --picks "..." --fire            # seçim DIŞI fire analizi
+spor-toto --picks "..." --fire --fire-max 1
 ```
 
 ### Olasılık, Monte Carlo, Bayes
@@ -109,32 +116,76 @@ Web’de Bayes paneli: preset dropdown (CLI ile **aynı α/n**), posterior tablo
 
 ## Web arayüzü
 
+Backend yalnızca JSON API'dir; arayüz Next.js tarafındadır (`frontend/`).
+
 ```bash
-python web_app.py
-# http://localhost:5000
+# API tek başına
+python backend/web_app.py       # http://localhost:8080
+
+# API + Next.js arayüz birlikte
+bash scripts/run_next_dev.sh    # UI :3000, API :8080
 ```
 
-Özellikler:
+### Sayfalar
 
-- Maç seçimi tablosu, canlı bedel, Fix-16 / auto / bütçe / maxcov / heuristic
-- Gelişmiş olasılık girişi (maç bazlı 1/0/2)
-- Uniform dağılım + hata seviyesi seçici (0 / 1 / 2)
-- Exact olasılık + **Monte Carlo** (%95 CI)
-- **Bayes (Dirichlet)** toggle, Prior α, Evidence n, **preset** (CLI ile aynı), posterior tablosu + KL yorum
-- **Markov zinciri** — küme-içi hayatta kalma + hata bütçesi (0 / 1 / 2+)
-- Maç bazlı hata frekansı
-- Kopyala / görsel indir / localStorage kupon kaydı
-- **Sistem Health** paneli (UI’den test çalıştırma)
+| Rota | İçerik |
+|------|--------|
+| `/` | **Formül** — motorun tamamı |
+| `/istatistik` | Sezon dağılımı, bantlar, 41 hafta |
+| `/istatistik/<hafta>` | Tek hafta detayı |
+| `/saglik` | 14 invariant, süreleriyle |
+
+### Formül sayfası
+
+Girdi tarafı:
+
+- 15 × 3 maç ızgarası (klavye: ok tuşları + `1` / `0` / `2`)
+- Canlı sayaç: banko / çifte / üçlü / uzay / tahmini kolon bedeli
+- **7 modun tamamı**: fix16, auto, exact, block, heuristic, butce, maxcov
+- Varyant, bütçe, bütçe planı seçimi, katı doğrulama
+- **Maç bazlı olasılık girişi** (1/0/2) — ham ağırlık da kabul edilir, normalize edilir
+- **Bayes**: 5 hazır preset (CLI ile aynı α/n) veya elle α / n
+- Monte Carlo örnek sayısı (1.000–200.000)
+- **Fire analizi** (seçim dışı): kapalı / 1-fire / 1 ve 2 fire
+- Motor ayarları: `trials`, `ls_iters`, `seed`, `time_limit`, `block_limit`, `exact_limit`
+
+Sonuç sekmeleri — hepsi backend alanlarıyla birebir:
+
+| Sekme | Gösterdiği |
+|-------|------------|
+| Özet | Garanti durumu, satır/kolon/alt sınır, bütçe planları, uyarılar |
+| Kupon | Kupon tablosu, satır başına kolon bedeli, kopyala |
+| Dağılım | Kapsama katmanları + uniform varsayım |
+| Olasılık | Exact vs Monte Carlo (%95 CI) |
+| Bayes | Maç bazlı prior → posterior, KL + yorum, en çok kayan maçlar |
+| Markov | Küme-içi hayatta kalma + hata bütçesi (0 / 1 / 2+) |
+| Hata frekansı | d=1 ve d=2 katmanlarında hangi maç hata üretiyor |
+| Fire | **Seçim dışı** senaryolar — garantinin geçerli olmadığı bölge |
+| Log | Motorun adım adım çalışma logu |
+
+Arayüz mod listesini, preset'leri ve sınırları `GET /api/meta` üzerinden okur —
+hiçbiri arayüzde sabit kodlanmaz, motorla tek kaynaktan senkron kalır.
+
+### API uçları
+
+| Method | Path | Açıklama |
+|--------|------|----------|
+| GET | `/api/meta` | Modlar, preset'ler, varsayılanlar, sınırlar |
+| GET | `/api/health` | 14 invariant (200 = HEALTHY, 503 = UNHEALTHY) |
+| GET | `/api/stats` | Tarihsel 1/0/2 |
+| GET | `/api/stats/<week>` | Tek hafta |
+| POST | `/api/solve` | Motorun tamamı |
 
 ### Health
 
 ```bash
+cd backend
 python -m spor_toto.health              # bir kez
 python -m spor_toto.health --interval 60
-curl http://localhost:5000/health       # JSON (200 = HEALTHY, 503 = UNHEALTHY)
+curl http://localhost:8080/api/health   # JSON (200 = HEALTHY, 503 = UNHEALTHY)
 ```
 
-13 invariant: encoder, fix16 garanti, distance layers, blok/heuristic, exact olasılık, Monte Carlo, Bayes, Markov, error_freq, pipeline şekli, scipy bayrağı.
+14 invariant: encoder, fix16 garanti, distance layers, blok/heuristic, exact olasılık, Monte Carlo, Bayes, Markov, error_freq, **fire senaryoları**, pipeline şekli, scipy bayrağı.
 
 ---
 
@@ -164,19 +215,40 @@ Küre-kaplama alt sınırı: `kolon ≥ |uzay| / top_boyutu`.
 
 ## Mimari (kısa)
 
+Repo iki tarafa ayrılmıştır: `backend/` (Python) ve `frontend/` (Next.js).
+
 ```
-spor_toto/
-  core.py      Encoder, Fix-16, ILP, heuristic, exact olasılık
-  analysis.py  Monte Carlo, maç bazlı hata frekansı
-  bayes.py     Dirichlet prior → posterior, KL, preset'ler
-  markov.py    Seçim hayatta kalma + hata bütçesi zinciri
-  health.py    13 invariant health check
-  report.py    Konsol / dosya çıktısı
-  cli.py       spor-toto komut satırı
-web_app.py     Flask + Jinja2 UI
-templates/     Apple tarzı arayüz
-tests/         pytest (core, engines, analysis, bayes, markov, health, cli)
+backend/
+  spor_toto/
+    core.py      Encoder, Fix-16, ILP, heuristic, exact olasılık
+    analysis.py  Monte Carlo, maç bazlı hata frekansı
+    bayes.py     Dirichlet prior → posterior, KL, preset'ler
+    markov.py    Seçim hayatta kalma + hata bütçesi zinciri
+    fire_scenarios.py  Seçim DIŞI fire analizi (1-fire / 2-fire)
+    health.py    14 invariant health check
+    report.py    Konsol / dosya çıktısı
+    cli.py       spor-toto komut satırı
+  web_app.py     Flask — yalnızca JSON API, HTML servis etmez
+  tests/         pytest (core, engines, analysis, bayes, markov, health, cli)
+  data/          Tarihsel 1/0/2 verisi
+  scripts/       check.sh (yerel CI eşdeğeri)
+  pyproject.toml
+
+frontend/        Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
+  app/           sayfalar (/, /istatistik, /saglik)
+  components/
+    shell/       kalıcı kenar çubuğu + sayfa geçişleri
+    formul/      maç ızgarası, olasılık girişi, sonuç panelleri
+    ui/          temel bileşenler (elle yazıldı, Radix yok)
+  lib/types.ts   API sözleşmesinin tamamı tipli
+  lib/api.ts     tipli, iptal edilebilir API istemcisi
+
+scripts/         run_next_dev.sh (API + UI birlikte ayağa kaldırır)
+docs/            Mimari ve veri notları
+archive/         Kullanımdan kalkmış Jinja2 arayüzü ve tek-seferlik yamalar
 ```
+
+Detay için `docs/ARCHITECTURE_NEXT.md` ve `archive/README.md`.
 
 Katmanlar bağımsızdır:
 
@@ -189,6 +261,7 @@ Katmanlar bağımsızdır:
 ## Testler
 
 ```bash
+cd backend
 pytest
 pytest -m "not slow"
 pytest tests/test_bayes.py tests/test_markov.py tests/test_health.py tests/test_cli.py -v
@@ -199,10 +272,10 @@ Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant’lar, CLI (Bayes p
 ### Yerel tek komut (health + CLI smoke)
 
 ```bash
-bash scripts/check.sh
+bash backend/scripts/check.sh
 ```
 
-`scripts/check.sh`: hızlı pytest → 13 invariant health → CLI fix16 + `--bayes-preset dengeli` dumanı.
+`backend/scripts/check.sh`: hızlı pytest → 14 invariant health → CLI fix16 + `--bayes-preset dengeli` dumanı.
 Exit code ≠ 0 ise bir adım kırık demektir (CI ile aynı mantık).
 
 ---

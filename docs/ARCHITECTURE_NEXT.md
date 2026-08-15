@@ -7,49 +7,98 @@
 Tarayıcı
    │
    ▼
-Next.js :3000          ← tek UI (Formül / İstatistik / Sağlık)
+frontend/              ← Next.js :3000, tek UI (Formül / İstatistik / Sağlık)
    │  /api/* rewrite
    ▼
-Flask  :8080           ← sadece JSON (spor_toto motoru)
+backend/web_app.py     ← Flask :8080, sadece JSON
    │
    ▼
-spor_toto/             ← Fix-16, ILP, Bayes, MC, Markov, health
+backend/spor_toto/     ← Fix-16, ILP, Bayes, MC, Markov, health
 ```
 
-`templates/` klasörü tarihsel kalıntı; runtime’da servis **edilmez**.
+Repo iki taraflıdır: Python'un tamamı `backend/`, arayüzün tamamı `frontend/`.
+Eski Jinja2 arayüzü `archive/templates/` altına alınmıştır; runtime'da servis
+**edilmez** ve hiçbir şey tarafından import edilmez.
 
 ## API
 
 | Method | Path | Açıklama |
 |--------|------|----------|
 | GET | `/` | Servis bilgisi JSON |
-| GET | `/api/health` | 13 invariant |
-| GET | `/api/stats` | Tarihsel 1/0/2 |
-| GET | `/api/stats/<week>` | Tek hafta |
+| GET | `/api/meta` | Modlar, Bayes preset'leri, motor varsayılanları, sınırlar |
+| GET | `/api/health` | 14 invariant |
+| GET | `/api/stats?last=N` | Tarihsel 1/0/2 + analiz blokları (`last` = son N hafta dilimi) |
+| GET | `/api/stats/<week>` | Tek hafta detayı (komşular, sıra, sapma, sıra-sıra bağlam) |
 | POST | `/api/solve` | Tüm motor özellikleri |
+
+`/api/meta` frontend'in tek gerçek kaynağıdır: mod listesi, preset'ler ve
+sayısal sınırlar arayüzde **sabit kodlanmaz**, buradan okunur.
+
+### GET `/api/stats`
+
+`?last=N` verilirse özet, bantlar **ve** analiz bloklarının tamamı o dilim
+üzerinden hesaplanır (`last` yoksa/geçersizse tüm sezon). Arayüzdeki tek filtre
+satırı buraya bağlıdır; böylece iki görsel asla farklı veriyi anlatmaz.
+
+| Alan | İçerik |
+|------|--------|
+| `meta` | sezon, hafta sayısı, hafta/tarih aralığı, `sliced` |
+| `totals` / `weekly_avg` / `bands` | toplam, haftalık ortalama, min–maks–ortanca–σ, ortalama üstü/altı |
+| `analytics.positions` | 1.–15. maç sırasına göre 1/0/2 dağılımı |
+| `analytics.transitions` | ardışık maçlarda sembol geçiş matrisi (3×3) |
+| `analytics.distribution` | "bir haftada k adet" histogramı |
+| `analytics.streaks` | hafta içi en uzun aynı-sembol serileri |
+| `analytics.extremes` | her sembol için en yüksek/en düşük hafta |
+| `analytics.recent` | son 6 haftanın ortalaması ve sezona göre farkı |
+| `data_quality` | sayım çelişkileri, tekrar eden diziler, eksik haftalar |
+| `weeks` | hafta satırları (`counts`, `max_streak`, `consistent`, …) |
+
+Tek doğruluk kaynağı haftanın 15 karakterlik `results` dizisidir; dosyadaki
+hazır `n1/n0/n2` alanları çeliştiğinde fark yutulmaz,
+`data_quality.count_conflicts` içinde raporlanır ve arayüzde gösterilir.
 
 ### POST `/api/solve` body
 
 ```json
 {
   "matches": [["1"],["1","0"], ...],
-  "mode": "fix16 | auto | heuristic | butce | maxcov",
+  "mode": "fix16 | auto | exact | block | heuristic | butce | maxcov",
   "variant": 0,
   "budget": 32,
+  "plan_count": 5,
+  "plan_apply": 1,
+  "kati": false,
+  "probs": [{"1":0.5,"0":0.3,"2":0.2}, ...],
   "use_bayes": false,
+  "bayes_preset": "dengeli",
   "prior_strength": 1,
   "evidence_strength": 10,
   "mc_samples": 80000,
-  "probs": [{"1":0.5,"0":0.3,"2":0.2}, ...]
+  "fire_max": 2,
+  "trials": 5,
+  "ls_iters": 30000,
+  "seed": 42,
+  "time_limit": 60,
+  "block_limit": 256,
+  "exact_limit": 512
 }
 ```
+
+`probs` gönderilmezse `advanced`, `bayes` ve `markov` blokları `null` döner —
+olasılık katmanının tamamı bu alana bağlıdır.
+
+`fire` bloğu seçim DIŞI senaryoları ölçer ve olasılık girdisi gerektirmez.
+Pahalı olduğu için maliyet sınırı vardır; aşılırsa blok
+`{"skipped": true, "reason": …}` döner (sessizce `null` olmaz).
 
 Cevap: `ok`, `error`, `result` (rows, guaranteed, advanced, bayes, markov, …), `run_log_text`.
 
 ## Çalıştırma
 
 ```bash
-bash scripts/run_next_dev.sh
+bash scripts/run_next_dev.sh    # repo kökünden
 # Preview = :3000 (Next)
 # API     = :8080 (sadece JSON)
 ```
+
+Yalnızca API: `python backend/web_app.py`
