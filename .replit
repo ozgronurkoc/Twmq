@@ -1,4 +1,4 @@
-run = "python web_app.py"
+run = "bash scripts/run_next_dev.sh"
 modules = ["python-3.10", "nodejs-24"]
 
 [nix]
@@ -18,11 +18,19 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "spor-toto"
+args = "Start Lab"
+
+[[workflows.workflow]]
+name = "Start Lab"
+author = "agent"
 
 [[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Start application"
+task = "shell.exec"
+args = "bash scripts/run_next_dev.sh"
+waitForPort = 3000
+
+[workflows.workflow.metadata]
+outputType = "webview"
 
 [[workflows.workflow]]
 name = "spor-toto"
@@ -36,7 +44,7 @@ args = "spor-toto --picks \"1,10,1,12,0,10,2,10,1,12,02,1,10,2,10\""
 outputType = "console"
 
 [[workflows.workflow]]
-name = "Start application"
+name = "API only"
 author = "agent"
 
 [[workflows.workflow.tasks]]
@@ -48,8 +56,12 @@ waitForPort = 8080
 outputType = "webview"
 
 [[ports]]
-localPort = 8080
+localPort = 3000
 externalPort = 80
+
+[[ports]]
+localPort = 8080
+externalPort = 8080
 
 [postMerge]
 path = "scripts/post-merge.sh"

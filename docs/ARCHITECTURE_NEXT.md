@@ -3,10 +3,10 @@
 **Karar:** React / Next.js UI + JSON API + `spor_toto` motoru.
 
 ```
-frontend/          Next.js (App Router) + Tailwind
-       │  fetch JSON
+frontend/          Next.js (App Router) + Tailwind  → :3000  (preview)
+       │  /api/* rewrite (aynı origin)
        ▼
-web_app.py         Flask — HTML (eski) + /api/* (yeni)
+web_app.py         Flask  → :8080
        │
        ▼
 spor_toto/         Fix-16, MC, Bayes, history, …
@@ -19,61 +19,39 @@ spor_toto/         Fix-16, MC, Bayes, history, …
 | GET | `/api/health` | Sağlık JSON |
 | GET | `/api/stats` | 1/0/2 özet + haftalar |
 | GET | `/api/stats/<week>` | Tek hafta |
-| POST | `/api/solve` | Formül üret (JSON body: `matches` veya `picks`) |
+| POST | `/api/solve` | Formül üret (`matches` veya `picks`) |
 
-Eski HTML (`/`, `/solve`) geçiş süresince durur.
-Yeni UI sadece `/api/*` kullanır.
+`next.config.mjs` içinde `/api/*` → `http://127.0.0.1:8080/api/*` rewrite var.
+Tarayıcı sadece `:3000` görür; Flask tarayıcıya açılmaz.
 
-CORS: `localhost` / `127.0.0.1` origin’lerine açık.
+## Replit
 
-## Kurulum (bir kez)
-
-```bash
-python3 scripts/install_premium_ui.py
-python3 scripts/install_premium_pages.py   # doğrulama
-cd frontend && npm install
-```
-
-## Çalıştırma (Replit / yerel)
-
-### Tek komut (önerilen)
+**Run** butonu:
+1. Flask’ı arka planda `:8080` açar
+2. Next.js’i `:3000` açar
+3. **Preview = port 3000** (Next.js UI)
 
 ```bash
+# Elle de aynı script:
 bash scripts/run_next_dev.sh
 ```
 
-Bu script:
-1. `.env.local` yoksa oluşturur
-2. `npm install` (gerekirse)
-3. Flask API’yi `:8080` arka planda başlatır
-4. Next.js’i `:3000` ön planda çalıştırır
+`npm install` sadece ilk sefer (veya `package.json` değişince) çalışır.
 
-### Manuel (iki terminal)
+## Yerel (iki terminal)
 
 ```bash
-# Terminal A — API
+# A
 python web_app.py
-# http://127.0.0.1:8080/api/health
 
-# Terminal B — UI
-cd frontend
-cp .env.example .env.local   # bir kez
-npm install                  # bir kez
-npm run dev
-# http://localhost:3000
+# B
+cd frontend && npm run dev
 ```
 
-## Next.js sayfaları
+## Sayfalar
 
-| Rota | Dosya | İçerik |
-|------|-------|--------|
-| `/` | `app/page.tsx` | Formül üret (maç seçimi, canlı bedel, satır tablosu, log) |
-| `/stats` | `app/stats/page.tsx` | Tarihsel 1/0/2 |
-| `/health` | `app/health/page.tsx` | Sistem sağlık JSON |
-
-## Notlar
-
-- Flask varsayılan port: **8080** (`PORT` env ile değiştirilebilir)
-- Next.js varsayılan port: **3000**
-- Replit’te her iki portu da açık tutun / publish ayarlarını kontrol edin
-- API cevap vermiyorsa `.env.local` içindeki `NEXT_PUBLIC_API_URL` değerini kontrol edin
+| Rota | Dosya |
+|------|-------|
+| `/` | Formül üret (seçim, canlı bedel, satır tablosu, log) |
+| `/stats` | Tarihsel 1/0/2 |
+| `/health` | Sistem sağlık |
