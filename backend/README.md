@@ -86,7 +86,8 @@ Pazarlar: 1X2 (11 bahisçi × açılış/kapanış), 2.5 alt/üst, Asya handikap
 Bunlardan **yalnızca 1X2** arayüze çıkar (`/api/stats`, `/api/stats/<week>`);
 gerisi burada analiz için durur.
 Kaynak **piyasa oranlarıdır, iddaa değildir** — gerekçe:
-`../docs/VERI_TOPLAMA_VE_ISLEME.md` §12.
+`../docs/VERI_TOPLAMA_VE_ISLEME.md` §12. Katmanın tamamı ve yol haritası:
+`../docs/ISTATISTIK_YOL_HARITASI.md`.
 
 ```python
 from spor_toto.odds import load_odds, market_odds, implied_probs

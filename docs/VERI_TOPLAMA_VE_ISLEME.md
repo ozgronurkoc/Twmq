@@ -539,4 +539,6 @@ için `spor_toto.odds` (`load_odds`, `market_odds`, `implied_probs`,
 Bu setin geçmiş veriyle birleşebilmesinin **ön koşulu** v2 ile gelen `matches`
 alanıydı: eşleştirme takım adı + tarih + skor üzerinden yapılır.
 
-Bu MD, projedeki tarihsel istatistik katmanının tek kaynak dokümantasyonudur.
+Bu MD, projedeki tarihsel istatistik **verisinin** tek kaynak dokümantasyonudur.
+Sayfanın kendisi, alınan kararlar ve yol haritası için:
+[`ISTATISTIK_YOL_HARITASI.md`](ISTATISTIK_YOL_HARITASI.md).
