@@ -12,18 +12,27 @@ import {
   Card,
   CardBody,
   CardHeader,
+  SectionTitle,
   Skeleton,
 } from "@/components/ui/primitives";
 import { SEMBOL_ADI, SymbolLegend } from "@/components/ui/symbol";
 import {
   BandStrips,
+  CalibrationChart,
   DistributionChart,
+  FavouriteBands,
+  FavouriteBreakdown,
   PositionHeatmap,
   ShareBar,
   TransitionMatrix,
   TrendChart,
 } from "@/components/istatistik/charts";
-import { DataQualityPanel, DeltaStat, RangeFilter } from "@/components/istatistik/parts";
+import {
+  DataQualityPanel,
+  DeltaStat,
+  RangeFilter,
+  SliceNote,
+} from "@/components/istatistik/parts";
 import { WeeksTable } from "@/components/istatistik/weeks-table";
 import { SYM_BG } from "@/components/istatistik/viz";
 
@@ -116,6 +125,11 @@ export default function IstatistikPage() {
         </div>
         <div className="mt-4">
           <RangeFilter deger={last} onChange={setLast} secenekler={ARALIKLAR} mesgul={mesgul} />
+          <SliceNote
+            weeks={veri.weeks.map((w) => w.week)}
+            matches={meta.matches ?? 0}
+            sliced={Boolean(meta.sliced)}
+          />
         </div>
       </header>
 
@@ -230,6 +244,83 @@ export default function IstatistikPage() {
             </CardBody>
           </Card>
         </div>
+
+        {/* Maç sonucu oranlari */}
+        {veri.odds ? (
+          <Card>
+            <CardHeader
+              title="Oranlar ne diyordu?"
+              hint={`Maç sonucu (1/0/2) kapanış oranları — ${veri.odds.note}. Diğer pazarlar arayüze gelmez, arşivde durur.`}
+              action={
+                <Badge>
+                  {veri.odds.with_odds}/{veri.odds.matches} maç · %{ondalik(veri.odds.coverage_pct, 1)}
+                </Badge>
+              }
+            />
+            <CardBody className="space-y-5">
+              <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                <DeltaStat
+                  etiket="Favori tuttu"
+                  deger={`%${ondalik(veri.odds.favourite_hit_pct, 1)}`}
+                  alt={`${veri.odds.favourite_hit} / ${veri.odds.with_odds} maç`}
+                />
+                <DeltaStat
+                  etiket="Favori 1 idi"
+                  deger={sayi(veri.odds.favourite_split["1"])}
+                  alt="maçta ev sahibi favoriydi"
+                />
+                <DeltaStat
+                  etiket="Favori 2 idi"
+                  deger={sayi(veri.odds.favourite_split["2"])}
+                  alt="maçta deplasman favoriydi"
+                />
+                <DeltaStat
+                  etiket="Favori 0 idi"
+                  deger={sayi(veri.odds.favourite_split["0"])}
+                  alt="beraberlik hiçbir maçta favori olmaz"
+                />
+              </div>
+
+              <div>
+                <SectionTitle hint="Favori tuttuğunda ve tutmadığında hangi sonuç kaç maçta gerçekleşti.">
+                  Favori tuttu mu, tutmayınca ne oldu?
+                </SectionTitle>
+                <FavouriteBreakdown
+                  hit={veri.odds.outcome_when_hit}
+                  miss={veri.odds.outcome_when_miss}
+                  cross={veri.odds.cross}
+                  hitTotal={veri.odds.favourite_hit}
+                  missTotal={veri.odds.favourite_miss}
+                  underdog={veri.odds.underdog_wins}
+                />
+              </div>
+
+              <div>
+                <SectionTitle hint="Favorinin oranı düştükçe isabet artar. Banko yapmadan önce bakılacak tablo budur; “tutmadı”nın ne kadarının beraberlikten geldiği ayrı gösterilir.">
+                  Banko güvenilirliği — favori oranına göre
+                </SectionTitle>
+                <FavouriteBands bands={veri.odds.favourite_bands} />
+                <p className="mt-3 text-[11.5px] leading-relaxed text-muted-foreground">
+                  Az maç içeren bantlarda yüzdeler oynaktır; “Maç” sütununa bakmadan karar
+                  vermeyin. Aralık filtresi bu tabloyu da kapsar.
+                </p>
+              </div>
+
+              <div>
+                <SectionTitle hint="Oranın verdiği olasılık, gerçekte o sıklıkta oldu mu? İki nokta ne kadar üst üsteyse oran o kadar kalibre.">
+                  Kalibrasyon
+                </SectionTitle>
+                <CalibrationChart rows={veri.odds.calibration} />
+              </div>
+
+              <p className="text-[11.5px] leading-relaxed text-muted-foreground">
+                Ortalama bahisçi payı (marj) %{ondalik(veri.odds.avg_margin_pct, 2)}; yukarıdaki
+                olasılıklar bu pay arındırılarak hesaplandı. Kaynak: {veri.odds.books.join(", ")}
+                {" "}kapanış. Milli maç haftalarında oran yok, kapsama bu yüzden %100 değildir.
+              </p>
+            </CardBody>
+          </Card>
+        ) : null}
 
         {/* Mac sirasi */}
         <Card>

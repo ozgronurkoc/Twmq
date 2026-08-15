@@ -468,6 +468,372 @@ export function BandStrips({ bands }: { bands: Record<Sembol, Band> }) {
   );
 }
 
+/* ── 4b. Kalibrasyon — oranin dedigi vs olan ────────────────────────────── */
+
+/**
+ * Her olasilik kovasi icin iki nokta: oranin verdigi olasilik ve gercekte
+ * ne siklikta oldugu. Aradaki cizgi sapmayi dogrudan gosterir.
+ *
+ * Bu iki seri KIMLIK degil, ayni buyuklugun iki okumasidir — bu yuzden
+ * sembol renkleri kullanilmaz; tek hue, iki ton.
+ */
+export function CalibrationChart({
+  rows,
+}: {
+  rows: Array<{ lo: number; hi: number; n: number; model_pct: number; actual_pct: number }>;
+}) {
+  const { fare, olaylar } = useFare();
+  const W = 840;
+  const satirY = 34;
+  const solB = 74;
+  const sagB = 46;
+  const H = satirY * rows.length + 34;
+  const x = (v: number) => solB + (v / 100) * (W - solB - sagB);
+  const vurgu = fare
+    ? Math.min(rows.length - 1, Math.max(0, Math.floor((fare.py / (H * (fare.w / W))) * rows.length)))
+    : null;
+
+  if (!rows.length) return <p className="text-[13px] text-muted-foreground">Yeterli veri yok.</p>;
+
+  return (
+    <div className="relative" {...olaylar}>
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        className="h-auto w-full"
+        role="img"
+        aria-label="Oranın verdiği olasılık ile gerçekleşme oranının kova kova karşılaştırması"
+      >
+        {[0, 25, 50, 75, 100].map((v) => (
+          <g key={v}>
+            <line x1={x(v)} x2={x(v)} y1={6} y2={satirY * rows.length + 2} className="stroke-line" strokeWidth={1} />
+            <text x={x(v)} y={H - 8} textAnchor="middle" fontSize={11} className="tnum fill-muted-foreground">
+              %{v}
+            </text>
+          </g>
+        ))}
+        {rows.map((r, i) => {
+          const cy = 20 + i * satirY;
+          const a = x(r.model_pct);
+          const b = x(r.actual_pct);
+          return (
+            <g key={r.lo}>
+              {vurgu === i ? (
+                <rect x={solB - 4} y={cy - 14} width={W - solB - sagB + 8} height={28} rx={6} className="fill-muted" />
+              ) : null}
+              <text x={4} y={cy + 4} fontSize={11} className="tnum fill-muted-foreground">
+                %{r.lo}–{r.hi}
+              </text>
+              <line
+                x1={Math.min(a, b)}
+                x2={Math.max(a, b)}
+                y1={cy}
+                y2={cy}
+                className="stroke-primary"
+                strokeOpacity={0.35}
+                strokeWidth={3}
+                strokeLinecap="round"
+              />
+              {/* beklenen: ici bos halka · gerceklesen: dolu nokta */}
+              <circle cx={a} cy={cy} r={5} className="fill-card stroke-primary" strokeWidth={2} />
+              <circle cx={b} cy={cy} r={5} className="fill-primary stroke-card" strokeWidth={2} />
+              <text x={W - sagB + 8} y={cy + 4} fontSize={11} className="tnum fill-muted-foreground">
+                {r.n}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+      <div className="mt-2 flex flex-wrap items-center gap-4 text-[11.5px] text-muted-foreground">
+        <span className="flex items-center gap-1.5">
+          <span className="inline-block h-2.5 w-2.5 rounded-full border-2 border-primary bg-card" aria-hidden />
+          oranın dediği
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="inline-block h-2.5 w-2.5 rounded-full bg-primary" aria-hidden />
+          gerçekleşen
+        </span>
+        <span className="ml-auto">sağdaki sayı: kovadaki gözlem adedi</span>
+      </div>
+      {fare && vurgu !== null && rows[vurgu] ? (
+        <Tooltip x={fare.px} y={fare.py} w={fare.w}>
+          <div className="mb-1 font-semibold">
+            %{rows[vurgu].lo}–{rows[vurgu].hi} kovası
+          </div>
+          <div className="min-w-[150px] space-y-0.5">
+            <TooltipSatir etiket="oranın dediği" deger={`%${rows[vurgu].model_pct.toFixed(1)}`} />
+            <TooltipSatir etiket="gerçekleşen" deger={`%${rows[vurgu].actual_pct.toFixed(1)}`} />
+            <TooltipSatir etiket="gözlem" deger={String(rows[vurgu].n)} />
+          </div>
+        </Tooltip>
+      ) : null}
+    </div>
+  );
+}
+
+/* ── 4c. Favori tuttu / tutmadi kirilimi ────────────────────────────────── */
+
+function PayCubugu({ dagilim, toplam }: { dagilim: Record<Sembol, number>; toplam: number }) {
+  if (!toplam) return null;
+  return (
+    <div className="flex h-2.5 gap-[2px] overflow-hidden rounded-full">
+      {SEMBOLLER.map((s) => (
+        <div
+          key={s}
+          className={SYM_BG[s]}
+          style={{ flexGrow: Math.max(dagilim[s], 0.0001), flexBasis: 0 }}
+          title={`${SEMBOL_ADI[s]}: ${dagilim[s]}`}
+        />
+      ))}
+    </div>
+  );
+}
+
+/**
+ * "Favori tuttugunda / tutmadiginda ne oldu?" — sayilarin kendisi hikaye
+ * oldugu icin form tablo; cubuklar yalnizca bilesimi goz kararina cevirir.
+ */
+export function FavouriteBreakdown({
+  hit,
+  miss,
+  cross,
+  hitTotal,
+  missTotal,
+  underdog,
+}: {
+  hit: Record<Sembol, number>;
+  miss: Record<Sembol, number>;
+  cross: Record<Sembol, Record<Sembol, number>>;
+  hitTotal: number;
+  missTotal: number;
+  underdog: number;
+}) {
+  const toplam = hitTotal + missTotal;
+  const satirlar = [
+    { ad: "Favori tuttu", dagilim: hit, n: hitTotal },
+    { ad: "Favori tutmadı", dagilim: miss, n: missTotal },
+  ];
+
+  return (
+    <div className="space-y-5">
+      <div className="scroll-slim overflow-x-auto">
+        <table className="w-full min-w-[520px] text-[12.5px]">
+          <thead>
+            <tr className="text-left text-[11px] uppercase tracking-[0.06em] text-muted-foreground">
+              <th scope="col" className="pb-2 pr-3 font-medium">Durum</th>
+              {SEMBOLLER.map((s) => (
+                <th key={s} scope="col" className="w-20 pb-2 pr-3 text-right font-medium">
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className={cn("inline-block h-2.5 w-2.5 rounded-sm", SYM_BG[s])} aria-hidden />
+                    {s}
+                  </span>
+                </th>
+              ))}
+              <th scope="col" className="w-16 pb-2 pr-3 text-right font-medium">Toplam</th>
+              <th scope="col" className="w-32 pb-2 font-medium">Bileşim</th>
+            </tr>
+          </thead>
+          <tbody className="tnum">
+            {satirlar.map((r) => (
+              <tr key={r.ad} className="border-t border-line">
+                <td className="py-2.5 pr-3 font-medium">{r.ad}</td>
+                {SEMBOLLER.map((s) => (
+                  <td key={s} className="py-2.5 pr-3 text-right">
+                    {r.dagilim[s] ? (
+                      <>
+                        <span className="font-semibold">{r.dagilim[s]}</span>
+                        <span className="ml-1 text-[11px] text-muted-foreground">
+                          %{((100 * r.dagilim[s]) / r.n).toFixed(0)}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </td>
+                ))}
+                <td className="py-2.5 pr-3 text-right text-muted-foreground">
+                  {r.n}
+                  <span className="ml-1 text-[11px]">%{((100 * r.n) / toplam).toFixed(0)}</span>
+                </td>
+                <td className="py-2.5">
+                  <PayCubugu dagilim={r.dagilim} toplam={r.n} />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="scroll-slim overflow-x-auto">
+        <table className="w-full min-w-[520px] text-[12.5px]">
+          <caption className="mb-2 text-left text-[11px] uppercase tracking-[0.06em] text-muted-foreground">
+            Favori (satır) × gerçekleşen (sütun)
+          </caption>
+          <thead>
+            <tr className="text-left text-[11px] uppercase tracking-[0.06em] text-muted-foreground">
+              <th scope="col" className="pb-2 pr-3 font-medium">Favori</th>
+              {SEMBOLLER.map((s) => (
+                <th key={s} scope="col" className="w-20 pb-2 pr-3 text-right font-medium">{s}</th>
+              ))}
+              <th scope="col" className="w-16 pb-2 pr-3 text-right font-medium">Toplam</th>
+              <th scope="col" className="w-16 pb-2 text-right font-medium">İsabet</th>
+            </tr>
+          </thead>
+          <tbody className="tnum">
+            {SEMBOLLER.map((f) => {
+              const satir = cross[f];
+              const n = SEMBOLLER.reduce((a, s) => a + satir[s], 0);
+              if (!n) return null;
+              return (
+                <tr key={f} className="border-t border-line">
+                  <td className="py-2.5 pr-3">
+                    <span className="inline-flex items-center gap-2">
+                      <span
+                        className={cn(
+                          "grid h-6 w-6 place-items-center rounded-md font-mono text-[12px] font-bold text-white",
+                          SYM_BG[f],
+                        )}
+                      >
+                        {f}
+                      </span>
+                      <span className="text-muted-foreground">{SEMBOL_ADI[f]}</span>
+                    </span>
+                  </td>
+                  {SEMBOLLER.map((s) => (
+                    <td
+                      key={s}
+                      className={cn(
+                        "py-2.5 pr-3 text-right",
+                        s === f ? "font-semibold" : "text-muted-foreground",
+                      )}
+                    >
+                      {satir[s]}
+                    </td>
+                  ))}
+                  <td className="py-2.5 pr-3 text-right text-muted-foreground">{n}</td>
+                  <td className="py-2.5 text-right font-medium">
+                    %{((100 * satir[f]) / n).toFixed(1)}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      <p className="text-[11.5px] leading-relaxed text-muted-foreground">
+        Beraberlik hiçbir maçta favori olmaz; bu yüzden <strong>her beraberlik</strong> tanımı
+        gereği “tutmadı” tarafına düşer ve “tuttu” satırında 0 sütunu boştur. Gerçek sürpriz,
+        favorinin karşı tarafının kazandığı{" "}
+        <span className="tnum font-medium text-foreground">{underdog}</span> maçtır (%
+        {((100 * underdog) / toplam).toFixed(1)}).
+      </p>
+    </div>
+  );
+}
+
+/* ── 4d. Banko guvenilirligi: favori oranina gore tuttu / tutmadi ───────── */
+
+/**
+ * Favorinin orani dustukce isabet artar — banko karari bu tablonun isidir.
+ * "Tutmadi" iki parcaya ayrilir: beraberlik ve karsi tarafin kazanmasi.
+ * Cubuk ucu ayni satirda gosterir; genislikler yuzdedir.
+ */
+export function FavouriteBands({
+  bands,
+}: {
+  bands: Array<{
+    label: string;
+    n: number;
+    hit: number;
+    miss: number;
+    draw: number;
+    upset: number;
+    hit_pct: number;
+    miss_pct: number;
+    draw_pct: number;
+    upset_pct: number;
+  }>;
+}) {
+  if (!bands.length) return <p className="text-[13px] text-muted-foreground">Yeterli veri yok.</p>;
+
+  return (
+    <div className="space-y-3">
+      <div className="scroll-slim overflow-x-auto">
+        <table className="w-full min-w-[640px] text-[12.5px]">
+          <thead>
+            <tr className="text-left text-[11px] uppercase tracking-[0.06em] text-muted-foreground">
+              <th scope="col" className="pb-2 pr-3 font-medium">Favori oranı</th>
+              <th scope="col" className="w-14 pb-2 pr-3 text-right font-medium">Maç</th>
+              <th scope="col" className="w-24 pb-2 pr-3 text-right font-medium">Tuttu</th>
+              <th scope="col" className="w-24 pb-2 pr-3 text-right font-medium">Tutmadı</th>
+              <th scope="col" className="w-28 pb-2 pr-3 text-right font-medium">↳ beraberlik</th>
+              <th scope="col" className="w-28 pb-2 pr-3 text-right font-medium">↳ karşı taraf</th>
+              <th scope="col" className="w-36 pb-2 font-medium">Dağılım</th>
+            </tr>
+          </thead>
+          <tbody className="tnum">
+            {bands.map((b) => (
+              <tr key={b.label} className="border-t border-line">
+                <td className="py-2.5 pr-3 font-medium">{b.label}</td>
+                <td className="py-2.5 pr-3 text-right text-muted-foreground">{b.n}</td>
+                <td className="py-2.5 pr-3 text-right">
+                  <span className="font-semibold">{b.hit}</span>
+                  <span className="ml-1 text-[11px] text-muted-foreground">%{b.hit_pct.toFixed(0)}</span>
+                </td>
+                <td className="py-2.5 pr-3 text-right">
+                  <span className="font-semibold">{b.miss}</span>
+                  <span className="ml-1 text-[11px] text-muted-foreground">%{b.miss_pct.toFixed(0)}</span>
+                </td>
+                <td className="py-2.5 pr-3 text-right text-muted-foreground">
+                  {b.draw}
+                  <span className="ml-1 text-[11px]">%{b.draw_pct.toFixed(0)}</span>
+                </td>
+                <td className="py-2.5 pr-3 text-right text-muted-foreground">
+                  {b.upset}
+                  <span className="ml-1 text-[11px]">%{b.upset_pct.toFixed(0)}</span>
+                </td>
+                <td className="py-2.5">
+                  <div className="flex h-2.5 gap-[2px] overflow-hidden rounded-full" aria-hidden>
+                    <div
+                      className="bg-success"
+                      style={{ flexGrow: Math.max(b.hit_pct, 0.0001), flexBasis: 0 }}
+                      title={`tuttu %${b.hit_pct.toFixed(0)}`}
+                    />
+                    <div
+                      className="bg-warning"
+                      style={{ flexGrow: Math.max(b.draw_pct, 0.0001), flexBasis: 0 }}
+                      title={`beraberlik %${b.draw_pct.toFixed(0)}`}
+                    />
+                    <div
+                      className="bg-danger"
+                      style={{ flexGrow: Math.max(b.upset_pct, 0.0001), flexBasis: 0 }}
+                      title={`karşı taraf %${b.upset_pct.toFixed(0)}`}
+                    />
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11.5px] text-muted-foreground">
+        <span className="flex items-center gap-1.5">
+          <span className="inline-block h-2.5 w-2.5 rounded-sm bg-success" aria-hidden /> tuttu
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="inline-block h-2.5 w-2.5 rounded-sm bg-warning" aria-hidden /> tutmadı ·
+          beraberlik
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="inline-block h-2.5 w-2.5 rounded-sm bg-danger" aria-hidden /> tutmadı ·
+          karşı taraf kazandı
+        </span>
+      </div>
+    </div>
+  );
+}
+
 /* ── 5. Mac sirasi isi haritasi ─────────────────────────────────────────── */
 
 export function PositionHeatmap({ positions }: { positions: Analytics["positions"] }) {

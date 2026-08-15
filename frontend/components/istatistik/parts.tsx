@@ -54,6 +54,62 @@ export function RangeFilter({
   );
 }
 
+/** [32,33,35,36,…] → ["34", "43–49"] biçiminde eksik aralıklar. */
+function eksikAraliklar(numaralar: number[]): string[] {
+  if (numaralar.length < 2) return [];
+  const set = new Set(numaralar);
+  const eksik: number[] = [];
+  for (let n = numaralar[0]; n <= numaralar[numaralar.length - 1]; n++) {
+    if (!set.has(n)) eksik.push(n);
+  }
+  const parcalar: string[] = [];
+  let i = 0;
+  while (i < eksik.length) {
+    let j = i;
+    while (j + 1 < eksik.length && eksik[j + 1] === eksik[j] + 1) j++;
+    parcalar.push(i === j ? String(eksik[i]) : `${eksik[i]}–${eksik[j]}`);
+    i = j + 1;
+  }
+  return parcalar;
+}
+
+/**
+ * Filtrenin altindaki tek satirlik acıklama: hangi haftalar hesaba giriyor.
+ * Filtre veriyi kirpmaz, kesit secer — bu satir secimi somutlastirir.
+ */
+export function SliceNote({
+  weeks,
+  matches,
+  sliced,
+}: {
+  weeks: number[];
+  matches: number;
+  sliced: boolean;
+}) {
+  if (!weeks.length) return null;
+  const ilk = weeks[0];
+  const son = weeks[weeks.length - 1];
+  const bosluk = eksikAraliklar(weeks);
+
+  return (
+    <p className="mt-2 text-[11.5px] leading-relaxed text-muted-foreground">
+      <span className="tnum">
+        Seçili kesit: <span className="font-medium text-foreground">{ilk}–{son}. haftalar</span>
+        {" · "}
+        {weeks.length} hafta · {matches} maç
+      </span>
+      {sliced ? " — veri setindeki son " + weeks.length + " hafta." : " — tüm sezon."}
+      {bosluk.length > 0 ? (
+        <>
+          {" "}
+          Aradaki <span className="tnum">{bosluk.join(", ")}</span>. haftalar veri setinde yok:
+          15 maçı tam kapanmadığı için hiç girmediler.
+        </>
+      ) : null}
+    </p>
+  );
+}
+
 /** Sayi kutusu — Stat'in sembol rozetli ve farkli surumu. */
 export function DeltaStat({
   etiket,
@@ -112,11 +168,14 @@ export function DataQualityPanel({ dq }: { dq: DataQuality }) {
 
   if (dq.ok) {
     return (
-      <p className="flex items-center gap-2 text-[13px] text-muted-foreground">
+      <p className="flex items-start gap-2 text-[13px] text-muted-foreground">
         <span aria-hidden className="text-success">
           ✓
         </span>
-        {dq.weeks_total} haftanın tamamı tutarlı: sayımlar sonuç dizisiyle birebir örtüşüyor.
+        <span>
+          {dq.weeks_total} haftanın tamamı tutarlı: her hafta 15 maçlık listesini taşıyor, sonuç
+          dizisi bu listeden türüyor ve sayımlar ikisiyle de birebir örtüşüyor.
+        </span>
       </p>
     );
   }
@@ -162,6 +221,18 @@ export function DataQualityPanel({ dq }: { dq: DataQuality }) {
               </li>
             ))}
           </ul>
+        </div>
+      ) : null}
+
+      {dq.match_conflicts?.length ? (
+        <div className="text-muted-foreground">
+          Maç listesi sonuç dizisiyle örtüşmeyen hafta: {dq.match_conflicts.join(", ")}
+        </div>
+      ) : null}
+
+      {dq.weeks_without_matches?.length ? (
+        <div className="text-muted-foreground">
+          Maç listesi taşımayan hafta: {dq.weeks_without_matches.join(", ")}
         </div>
       ) : null}
 

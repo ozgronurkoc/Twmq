@@ -51,7 +51,15 @@ satırı buraya bağlıdır; böylece iki görsel asla farklı veriyi anlatmaz.
 | `analytics.extremes` | her sembol için en yüksek/en düşük hafta |
 | `analytics.recent` | son 6 haftanın ortalaması ve sezona göre farkı |
 | `data_quality` | sayım çelişkileri, tekrar eden diziler, eksik haftalar |
+| `odds` | maç sonucu (1X2) özeti: kapsama, favori isabeti, marj, kalibrasyon — arşiv yoksa `null` |
 | `weeks` | hafta satırları (`counts`, `max_streak`, `consistent`, …) |
+
+`/api/stats/<week>` ayrıca `odds` (maç numarasına göre 1X2 bloğu) ve `odds_hit`
+(o hafta favorinin tuttuğu maç sayısı) döner.
+
+**Arayüze yalnızca maç sonucu oranı çıkar.** Arşivdeki diğer pazarlar (2.5
+alt/üst, Asya handikap) ve maç istatistikleri API'ye hiç girmez; onlar
+`backend/data/odds/` altında analiz için durur (`backend/README.md`).
 
 Tek doğruluk kaynağı haftanın 15 karakterlik `results` dizisidir; dosyadaki
 hazır `n1/n0/n2` alanları çeliştiğinde fark yutulmaz,

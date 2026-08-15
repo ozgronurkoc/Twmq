@@ -357,6 +357,18 @@ export interface Streak {
   length: number;
 }
 
+/** Kupondaki tek maç. `code` skorun kendisinden türer. */
+export interface Mac {
+  no: number;
+  home: string;
+  away: string;
+  /** "2025-12-19 17:00" — kaynaktaki başlama saati (UTC). */
+  kickoff: string;
+  hg: number | null;
+  ag: number | null;
+  code: Sembol | "";
+}
+
 export interface WeekRow {
   week: number;
   close_date: string;
@@ -375,6 +387,10 @@ export interface WeekRow {
   /** Dosyadaki hazir n1/n0/n2 ile dizi ortusuyor mu. */
   consistent: boolean;
   reported_counts: Record<Sembol, number> | null;
+  /** Haftanin mac listesi — takim adlari, saat, skor. */
+  matches: Mac[];
+  /** Mac listesinin kodlari `results` dizisiyle sirasiyla ortusuyor mu. */
+  matches_match_results: boolean;
 }
 
 /** Kuponun 1..15 sirasindaki bir mac icin sezon dagilimi. */
@@ -423,15 +439,82 @@ export interface Analytics {
 export interface DataQuality {
   source: string;
   weeks_total: number;
+  weeks_with_matches: number;
   count_conflicts: Array<{
     week: number;
     close_date: string;
     reported: Record<Sembol, number> | null;
     derived: Record<Sembol, number>;
   }>;
+  /** Mac listesi ile `results` dizisi ortusmeyen haftalar. */
+  match_conflicts: number[];
+  weeks_without_matches: number[];
   incomplete_weeks: number[];
   duplicate_results: Array<{ results: string; weeks: number[] }>;
   ok: boolean;
+}
+
+/**
+ * Tek maçın maç sonucu (1X2) oranı. Arşivdeki diğer pazarlar (alt/üst, Asya
+ * handikap) arayüze gelmez; onlar analiz katmanı içindir.
+ */
+export interface MacOran {
+  odds: Record<Sembol, number>;
+  /** Marj arındırılmış, toplamı 1 olan olasılıklar. */
+  probs: Record<Sembol, number>;
+  favourite: Sembol;
+  hit: boolean;
+  /** Bahisçi payı (overround), 0.0758 = %7,58. */
+  margin: number;
+  book: string;
+  closing: boolean;
+}
+
+export interface OddsSummary {
+  matches: number;
+  with_odds: number;
+  coverage_pct: number;
+  favourite_hit: number;
+  favourite_miss: number;
+  favourite_hit_pct: number;
+  favourite_split: Record<Sembol, number>;
+  /** Favori TUTTUĞUNDA gerçekleşen sonuçlar; "0" daima 0'dır. */
+  outcome_when_hit: Record<Sembol, number>;
+  /** Favori TUTMADIĞINDA gerçekleşen sonuçlar. */
+  outcome_when_miss: Record<Sembol, number>;
+  /** Favori (satır) × gerçekleşen (sütun). */
+  cross: Record<Sembol, Record<Sembol, number>>;
+  /** Favorinin karşı tarafının kazandığı maç sayısı (beraberlik hariç). */
+  underdog_wins: number;
+  /** Favori oranı bandına göre isabet — banko kararının dayanağı. */
+  favourite_bands: Array<{
+    lo: number;
+    hi: number | null;
+    label: string;
+    n: number;
+    hit: number;
+    miss: number;
+    /** `miss`in beraberlikten gelen kısmı. */
+    draw: number;
+    /** `miss`in karşı tarafın kazanmasından gelen kısmı. */
+    upset: number;
+    hit_pct: number;
+    miss_pct: number;
+    draw_pct: number;
+    upset_pct: number;
+  }>;
+  outcome_totals: Record<Sembol, number>;
+  avg_margin_pct: number;
+  /** Olasılık kovası başına model vs gerçekleşme. */
+  calibration: Array<{
+    lo: number;
+    hi: number;
+    n: number;
+    model_pct: number;
+    actual_pct: number;
+  }>;
+  books: string[];
+  note: string;
 }
 
 export interface StatsResponse {
@@ -441,6 +524,8 @@ export interface StatsResponse {
   bands: Partial<Record<Sembol, Band>>;
   data_quality: DataQuality;
   analytics: Analytics;
+  /** Maç sonucu oranı özeti; arşiv yoksa null. */
+  odds: OddsSummary | null;
   weeks: WeekRow[];
   /** Uygulanan dilim (`?last=N`); tum sezon icin null. */
   last: number | null;
@@ -457,6 +542,10 @@ export interface WeekDetail extends WeekRow {
   delta_vs_avg: Record<Sembol, number>;
   rank: Record<Sembol, { rank: number; of: number }>;
   position_stats: PositionStat[];
+  /** Maç numarasına göre 1X2 oranı; oranı bulunamayan maç listede yoktur. */
+  odds: Record<string, MacOran>;
+  /** Bu haftada kapanış favorisinin tuttuğu maç sayısı. */
+  odds_hit: number;
 }
 
 // ─── /api/health ──────────────────────────────────────────────────────────

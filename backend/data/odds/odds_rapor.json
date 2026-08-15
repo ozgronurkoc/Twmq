@@ -1,0 +1,531 @@
+{
+  "generated_at": "2026-08-15",
+  "source": "football-data.co.uk (mmz4281/2526 + new/) — piyasa oranlari, IDDAA DEGIL",
+  "matches_total": 615,
+  "matches_matched": 567,
+  "coverage_pct": 92.2,
+  "weeks_total": 41,
+  "weeks_full": 36,
+  "odds_columns": [
+    "AHCh",
+    "AHh",
+    "Avg<2.5",
+    "Avg>2.5",
+    "AvgA",
+    "AvgAHA",
+    "AvgAHH",
+    "AvgC<2.5",
+    "AvgC>2.5",
+    "AvgCA",
+    "AvgCAHA",
+    "AvgCAHH",
+    "AvgCD",
+    "AvgCH",
+    "AvgD",
+    "AvgH",
+    "B365<2.5",
+    "B365>2.5",
+    "B365A",
+    "B365AHA",
+    "B365AHH",
+    "B365C<2.5",
+    "B365C>2.5",
+    "B365CA",
+    "B365CAHA",
+    "B365CAHH",
+    "B365CD",
+    "B365CH",
+    "B365D",
+    "B365H",
+    "BFDA",
+    "BFDCA",
+    "BFDCD",
+    "BFDCH",
+    "BFDD",
+    "BFDH",
+    "BFE<2.5",
+    "BFE>2.5",
+    "BFEA",
+    "BFEAHA",
+    "BFEAHH",
+    "BFEC<2.5",
+    "BFEC>2.5",
+    "BFECA",
+    "BFECAHA",
+    "BFECAHH",
+    "BFECD",
+    "BFECH",
+    "BFED",
+    "BFEH",
+    "BMGMA",
+    "BMGMCA",
+    "BMGMCD",
+    "BMGMCH",
+    "BMGMD",
+    "BMGMH",
+    "BVA",
+    "BVCA",
+    "BVCD",
+    "BVCH",
+    "BVD",
+    "BVH",
+    "BWA",
+    "BWCA",
+    "BWCD",
+    "BWCH",
+    "BWD",
+    "BWH",
+    "CLA",
+    "CLCA",
+    "CLCD",
+    "CLCH",
+    "CLD",
+    "CLH",
+    "LBA",
+    "LBCA",
+    "LBCD",
+    "LBCH",
+    "LBD",
+    "LBH",
+    "Max<2.5",
+    "Max>2.5",
+    "MaxA",
+    "MaxAHA",
+    "MaxAHH",
+    "MaxC<2.5",
+    "MaxC>2.5",
+    "MaxCA",
+    "MaxCAHA",
+    "MaxCAHH",
+    "MaxCD",
+    "MaxCH",
+    "MaxD",
+    "MaxH",
+    "P<2.5",
+    "P>2.5",
+    "PAHA",
+    "PAHH",
+    "PC<2.5",
+    "PC>2.5",
+    "PCAHA",
+    "PCAHH",
+    "PSA",
+    "PSCA",
+    "PSCD",
+    "PSCH",
+    "PSD",
+    "PSH"
+  ],
+  "stat_columns": [
+    "AC",
+    "AF",
+    "AR",
+    "AS",
+    "AST",
+    "AY",
+    "HC",
+    "HF",
+    "HR",
+    "HS",
+    "HST",
+    "HTAG",
+    "HTHG",
+    "HY"
+  ],
+  "market_coverage": {
+    "1X2/acilis": 15796,
+    "2.5U/acilis": 2332,
+    "2.5A/acilis": 2332,
+    "AH/acilis": 5564,
+    "1X2/kapanis": 16179,
+    "2.5U/kapanis": 2369,
+    "2.5A/kapanis": 2369,
+    "AH/kapanis": 4742
+  },
+  "unmatched": [
+    {
+      "week": 5,
+      "no": 1,
+      "home": "Türkiye",
+      "away": "İspanya",
+      "date": "2025-09-07",
+      "best_similarity": 0.0
+    },
+    {
+      "week": 5,
+      "no": 2,
+      "home": "Ukrayna",
+      "away": "Fransa",
+      "date": "2025-09-05",
+      "best_similarity": 0.0
+    },
+    {
+      "week": 5,
+      "no": 3,
+      "home": "İzlanda",
+      "away": "Azerbaycan",
+      "date": "2025-09-05",
+      "best_similarity": 0.312
+    },
+    {
+      "week": 5,
+      "no": 4,
+      "home": "Letonya",
+      "away": "Sırbistan",
+      "date": "2025-09-06",
+      "best_similarity": 0.372
+    },
+    {
+      "week": 5,
+      "no": 5,
+      "home": "Ermenistan",
+      "away": "Portekiz",
+      "date": "2025-09-06",
+      "best_similarity": 0.0
+    },
+    {
+      "week": 5,
+      "no": 6,
+      "home": "İngiltere",
+      "away": "Andorra",
+      "date": "2025-09-06",
+      "best_similarity": 0.25
+    },
+    {
+      "week": 5,
+      "no": 7,
+      "home": "San Marino",
+      "away": "Bosna Hersek",
+      "date": "2025-09-06",
+      "best_similarity": 0.0
+    },
+    {
+      "week": 5,
+      "no": 8,
+      "home": "İrlanda Cumhuriyeti",
+      "away": "Macaristan",
+      "date": "2025-09-06",
+      "best_similarity": 0.32
+    },
+    {
+      "week": 5,
+      "no": 9,
+      "home": "Gürcistan",
+      "away": "Bulgaristan",
+      "date": "2025-09-07",
+      "best_similarity": 0.301
+    },
+    {
+      "week": 5,
+      "no": 10,
+      "home": "Kuzey Makedonya Cumhuriyeti",
+      "away": "Lihtenştayn",
+      "date": "2025-09-07",
+      "best_similarity": 0.265
+    },
+    {
+      "week": 5,
+      "no": 11,
+      "home": "Litvanya",
+      "away": "Hollanda",
+      "date": "2025-09-07",
+      "best_similarity": 0.376
+    },
+    {
+      "week": 5,
+      "no": 12,
+      "home": "Almanya",
+      "away": "Kuzey İrlanda",
+      "date": "2025-09-07",
+      "best_similarity": 0.293
+    },
+    {
+      "week": 5,
+      "no": 13,
+      "home": "Belçika",
+      "away": "Kazakistan",
+      "date": "2025-09-07",
+      "best_similarity": 0.0
+    },
+    {
+      "week": 5,
+      "no": 14,
+      "home": "Lüksemburg",
+      "away": "Slovakya",
+      "date": "2025-09-07",
+      "best_similarity": 0.353
+    },
+    {
+      "week": 5,
+      "no": 15,
+      "home": "Polonya",
+      "away": "Finlandiya",
+      "date": "2025-09-07",
+      "best_similarity": 0.299
+    },
+    {
+      "week": 10,
+      "no": 1,
+      "home": "Bulgaristan",
+      "away": "Türkiye",
+      "date": "2025-10-11",
+      "best_similarity": 0.0
+    },
+    {
+      "week": 10,
+      "no": 2,
+      "home": "Portekiz",
+      "away": "İrlanda Cumhuriyeti",
+      "date": "2025-10-11",
+      "best_similarity": 0.346
+    },
+    {
+      "week": 10,
+      "no": 3,
+      "home": "Sırbistan",
+      "away": "Arnavutluk",
+      "date": "2025-10-11",
+      "best_similarity": 0.325
+    },
+    {
+      "week": 10,
+      "no": 4,
+      "home": "İspanya",
+      "away": "Gürcistan",
+      "date": "2025-10-11",
+      "best_similarity": 0.379
+    },
+    {
+      "week": 10,
+      "no": 5,
+      "home": "Hollanda",
+      "away": "Finlandiya",
+      "date": "2025-10-12",
+      "best_similarity": 0.256
+    },
+    {
+      "week": 10,
+      "no": 6,
+      "home": "İskoçya",
+      "away": "Belarus",
+      "date": "2025-10-12",
+      "best_similarity": 0.318
+    },
+    {
+      "week": 10,
+      "no": 7,
+      "home": "Danimarka",
+      "away": "Yunanistan",
+      "date": "2025-10-12",
+      "best_similarity": 0.0
+    },
+    {
+      "week": 10,
+      "no": 8,
+      "home": "Litvanya",
+      "away": "Polonya",
+      "date": "2025-10-12",
+      "best_similarity": 0.287
+    },
+    {
+      "week": 10,
+      "no": 9,
+      "home": "Romanya",
+      "away": "Avusturya",
+      "date": "2025-10-12",
+      "best_similarity": 0.423
+    },
+    {
+      "week": 10,
+      "no": 10,
+      "home": "Galler",
+      "away": "Belçika",
+      "date": "2025-10-13",
+      "best_similarity": 0.0
+    },
+    {
+      "week": 10,
+      "no": 11,
+      "home": "Kuzey Makedonya Cumhuriyeti",
+      "away": "Kazakistan",
+      "date": "2025-10-13",
+      "best_similarity": 0.265
+    },
+    {
+      "week": 10,
+      "no": 12,
+      "home": "Kuzey İrlanda",
+      "away": "Almanya",
+      "date": "2025-10-13",
+      "best_similarity": 0.325
+    },
+    {
+      "week": 10,
+      "no": 13,
+      "home": "Slovenya",
+      "away": "İsviçre",
+      "date": "2025-10-13",
+      "best_similarity": 0.292
+    },
+    {
+      "week": 10,
+      "no": 14,
+      "home": "Ukrayna",
+      "away": "Azerbaycan",
+      "date": "2025-10-13",
+      "best_similarity": 0.229
+    },
+    {
+      "week": 10,
+      "no": 15,
+      "home": "İsveç",
+      "away": "Kosova",
+      "date": "2025-10-13",
+      "best_similarity": 0.25
+    },
+    {
+      "week": 15,
+      "no": 1,
+      "home": "Türkiye",
+      "away": "Bulgaristan",
+      "date": "2025-11-15",
+      "best_similarity": 0.333
+    },
+    {
+      "week": 15,
+      "no": 2,
+      "home": "Polonya",
+      "away": "Hollanda",
+      "date": "2025-11-14",
+      "best_similarity": 0.399
+    },
+    {
+      "week": 15,
+      "no": 3,
+      "home": "Gürcistan",
+      "away": "İspanya",
+      "date": "2025-11-15",
+      "best_similarity": 0.253
+    },
+    {
+      "week": 15,
+      "no": 4,
+      "home": "Lihtenştayn",
+      "away": "Galler",
+      "date": "2025-11-15",
+      "best_similarity": 0.278
+    },
+    {
+      "week": 15,
+      "no": 5,
+      "home": "Danimarka",
+      "away": "Belarus",
+      "date": "2025-11-15",
+      "best_similarity": 0.294
+    },
+    {
+      "week": 15,
+      "no": 6,
+      "home": "Slovenya",
+      "away": "Kosova",
+      "date": "2025-11-15",
+      "best_similarity": 0.258
+    },
+    {
+      "week": 15,
+      "no": 7,
+      "home": "Yunanistan",
+      "away": "İskoçya",
+      "date": "2025-11-15",
+      "best_similarity": 0.229
+    },
+    {
+      "week": 15,
+      "no": 8,
+      "home": "İsviçre",
+      "away": "İsveç",
+      "date": "2025-11-15",
+      "best_similarity": 0.0
+    },
+    {
+      "week": 15,
+      "no": 9,
+      "home": "Macaristan",
+      "away": "İrlanda Cumhuriyeti",
+      "date": "2025-11-16",
+      "best_similarity": 0.0
+    },
+    {
+      "week": 15,
+      "no": 10,
+      "home": "Arnavutluk",
+      "away": "İngiltere",
+      "date": "2025-11-16",
+      "best_similarity": 0.387
+    },
+    {
+      "week": 15,
+      "no": 11,
+      "home": "Azerbaycan",
+      "away": "Fransa",
+      "date": "2025-11-16",
+      "best_similarity": 0.319
+    },
+    {
+      "week": 15,
+      "no": 12,
+      "home": "Sırbistan",
+      "away": "Letonya",
+      "date": "2025-11-16",
+      "best_similarity": 0.417
+    },
+    {
+      "week": 15,
+      "no": 13,
+      "home": "İtalya",
+      "away": "Norveç",
+      "date": "2025-11-16",
+      "best_similarity": 0.0
+    },
+    {
+      "week": 15,
+      "no": 14,
+      "home": "Almanya",
+      "away": "Slovakya",
+      "date": "2025-11-17",
+      "best_similarity": 0.0
+    },
+    {
+      "week": 15,
+      "no": 15,
+      "home": "Kuzey İrlanda",
+      "away": "Lüksemburg",
+      "date": "2025-11-17",
+      "best_similarity": 0.325
+    },
+    {
+      "week": 33,
+      "no": 8,
+      "home": "Arsenal",
+      "away": "Manchester City",
+      "date": "2026-03-22",
+      "best_similarity": 0.467
+    },
+    {
+      "week": 50,
+      "no": 9,
+      "home": "Incheon United",
+      "away": "Jeonbuk FC",
+      "date": "2026-07-18",
+      "best_similarity": 0.279
+    },
+    {
+      "week": 50,
+      "no": 10,
+      "home": "Jeju United",
+      "away": "Pohang Steelers",
+      "date": "2026-07-18",
+      "best_similarity": 0.254
+    }
+  ]
+}
