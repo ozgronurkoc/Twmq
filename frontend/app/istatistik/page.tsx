@@ -2,10 +2,9 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
 
 import { getStats } from "@/lib/api";
-import { SEMBOLLER, type Band, type Sembol, type StatsResponse } from "@/lib/types";
+import { SEMBOLLER, type Sembol, type StatsResponse } from "@/lib/types";
 import { cn, ondalik, sayi } from "@/lib/utils";
 import {
   Badge,
@@ -15,28 +14,48 @@ import {
   CardHeader,
   Skeleton,
 } from "@/components/ui/primitives";
-import { ResultStrip, SEMBOL_ADI, SymbolLegend } from "@/components/ui/symbol";
+import { SEMBOL_ADI, SymbolLegend } from "@/components/ui/symbol";
+import {
+  BandStrips,
+  DistributionChart,
+  PositionHeatmap,
+  ShareBar,
+  TransitionMatrix,
+  TrendChart,
+} from "@/components/istatistik/charts";
+import { DataQualityPanel, DeltaStat, RangeFilter } from "@/components/istatistik/parts";
+import { WeeksTable } from "@/components/istatistik/weeks-table";
+import { SYM_BG } from "@/components/istatistik/viz";
 
-const SEMBOL_ZEMIN: Record<Sembol, string> = {
-  "1": "bg-sym-1",
-  "0": "bg-sym-0",
-  "2": "bg-sym-2",
-};
+const ARALIKLAR: Array<{ deger: number | null; etiket: string }> = [
+  { deger: null, etiket: "Tüm sezon" },
+  { deger: 24, etiket: "Son 24" },
+  { deger: 12, etiket: "Son 12" },
+  { deger: 6, etiket: "Son 6" },
+];
 
 export default function IstatistikPage() {
+  const [last, setLast] = React.useState<number | null>(null);
   const [veri, setVeri] = React.useState<StatsResponse | null>(null);
+  const [mesgul, setMesgul] = React.useState(true);
   const [hata, setHata] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     const ac = new AbortController();
-    getStats(ac.signal)
-      .then(setVeri)
+    setMesgul(true);
+    getStats(last, ac.signal)
+      .then((d) => {
+        setVeri(d);
+        setHata(null);
+        setMesgul(false);
+      })
       .catch((e) => {
         if (e instanceof DOMException && e.name === "AbortError") return;
         setHata(e instanceof Error ? e.message : String(e));
+        setMesgul(false);
       });
     return () => ac.abort();
-  }, []);
+  }, [last]);
 
   if (hata) {
     return (
@@ -56,30 +75,47 @@ export default function IstatistikPage() {
     );
   }
 
-  const meta = veri.meta || {};
-  const totals = veri.totals || {};
-  const toplamMac = SEMBOLLER.reduce((a, s) => a + (totals[s] ?? 0), 0);
+  const { meta, analytics, data_quality: dq } = veri;
+  const totals = veri.totals as Record<string, number>;
+  const bands = veri.bands as Record<Sembol, NonNullable<StatsResponse["bands"]["1"]>>;
+  const weeklyAvg = veri.weekly_avg;
+  const pct: Record<Sembol, number> = {
+    "1": totals.pct_1 ?? 0,
+    "0": totals.pct_0 ?? 0,
+    "2": totals.pct_2 ?? 0,
+  };
+  const adet: Record<Sembol, number> = {
+    "1": totals["1"] ?? 0,
+    "0": totals["0"] ?? 0,
+    "2": totals["2"] ?? 0,
+  };
+  const lider = SEMBOLLER.reduce((a, b) => (adet[a] >= adet[b] ? a : b));
+  const son = analytics.recent;
 
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="font-display text-[30px] italic leading-tight">
-          Tarihsel 1 / 0 / 2
-        </h1>
+        <h1 className="font-display text-[30px] italic leading-tight">Tarihsel 1 / 0 / 2</h1>
         <p className="mt-1 max-w-3xl text-[13.5px] leading-relaxed text-muted-foreground">
-          Geçmiş sezon sonuçlarının dağılımı. Bu veri bir tahmin değildir ve
-          formül üretimine girmez — yalnızca kendi olasılık tahminlerini
-          kalibre etmen için referanstır.
+          Geçmiş sezon sonuçlarının dağılımı. Bu veri bir tahmin değildir ve formül üretimine
+          girmez — yalnızca kendi olasılık tahminlerini kalibre etmen için referanstır.
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-2">
           {meta.season ? <Badge ton="primary">{meta.season}</Badge> : null}
-          <Badge>{sayi(meta.weeks)} hafta</Badge>
+          <Badge>
+            {sayi(meta.weeks)} hafta
+            {meta.week_from ? ` (${meta.week_from}–${meta.week_to})` : ""}
+          </Badge>
           <Badge>{sayi(meta.matches)} maç</Badge>
           {meta.date_from ? (
             <Badge>
               {meta.date_from} → {meta.date_to}
             </Badge>
           ) : null}
+          {meta.sliced ? <Badge ton="warning">dilim</Badge> : null}
+        </div>
+        <div className="mt-4">
+          <RangeFilter deger={last} onChange={setLast} secenekler={ARALIKLAR} mesgul={mesgul} />
         </div>
       </header>
 
@@ -89,161 +125,210 @@ export default function IstatistikPage() {
         </Callout>
       ) : null}
 
-      {/* Toplam dagilim */}
-      <Card>
-        <CardHeader
-          title="Sezon dağılımı"
-          hint={meta.rule}
-          action={<SymbolLegend />}
-        />
-        <CardBody className="space-y-4">
-          <div className="flex h-3 w-full overflow-hidden rounded-full bg-muted">
-            {SEMBOLLER.map((s) => {
-              const pay = toplamMac ? ((totals[s] ?? 0) / toplamMac) * 100 : 0;
-              return (
-                <span
-                  key={s}
-                  className={cn(SEMBOL_ZEMIN[s], "transition-all duration-500 ease-ios")}
-                  style={{ width: `${pay}%` }}
-                  title={`${s} · ${pay.toFixed(1)}%`}
-                />
-              );
-            })}
-          </div>
-          <div className="grid gap-3 sm:grid-cols-3">
-            {SEMBOLLER.map((s) => {
-              const adet = totals[s] ?? 0;
-              const pct = totals[`pct_${s}` as "pct_1"] ?? 0;
-              const ort = veri.weekly_avg?.[s];
-              return (
-                <div
-                  key={s}
-                  className="rounded-xl border border-line bg-elevated px-4 py-3"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
-                      {SEMBOL_ADI[s]}
-                    </span>
-                    <span
-                      className={cn(
-                        "tnum grid h-6 w-6 place-items-center rounded-md font-mono text-[12px] font-bold text-white",
-                        SEMBOL_ZEMIN[s],
-                      )}
-                    >
-                      {s}
-                    </span>
-                  </div>
-                  <div className="tnum mt-1 text-[24px] font-semibold leading-tight">
-                    %{Number(pct).toFixed(1)}
-                  </div>
-                  <div className="tnum mt-0.5 text-[11.5px] text-muted-foreground">
-                    {sayi(adet)} maç
-                    {ort !== undefined
-                      ? ` · haftada ort. ${Number(ort).toFixed(2)}`
-                      : ""}
-                  </div>
+      <div className={cn("space-y-6 transition-opacity duration-200", mesgul && "opacity-60")}>
+        {/* Sezon payi */}
+        <Card>
+          <CardHeader title="Sezon dağılımı" hint={meta.rule} action={<SymbolLegend />} />
+          <CardBody>
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,240px)_minmax(0,1fr)] lg:items-center">
+              <div>
+                <div className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                  En sık sonuç
                 </div>
-              );
-            })}
-          </div>
-        </CardBody>
-      </Card>
+                <div className="mt-1 flex items-baseline gap-3">
+                  <span
+                    className={cn(
+                      "tnum grid h-12 w-12 place-items-center rounded-xl font-mono text-[24px] font-bold text-white",
+                      SYM_BG[lider],
+                    )}
+                  >
+                    {lider}
+                  </span>
+                  <span className="tnum text-[40px] font-semibold leading-none">
+                    %{ondalik(pct[lider], 1)}
+                  </span>
+                </div>
+                <p className="mt-2 text-[12.5px] leading-relaxed text-muted-foreground">
+                  {SEMBOL_ADI[lider]} · haftada ortalama {ondalik(weeklyAvg[lider] ?? 0, 1)} maç
+                </p>
+              </div>
+              <ShareBar pct={pct} totals={adet} matches={meta.matches ?? 0} />
+            </div>
+          </CardBody>
+        </Card>
 
-      {/* Bantlar */}
-      <Card>
-        <CardHeader
-          title="Haftalık bantlar"
-          hint="Her sembolün hafta başına adet dağılımı. Ortalamanın üstü/altı, o taraftaki haftaların sayısı ve ortalamadan uzaklığıdır."
-        />
-        <CardBody className="scroll-slim overflow-x-auto">
-          <table className="w-full min-w-[720px] text-[12.5px]">
-            <thead>
-              <tr className="text-left text-[11px] uppercase tracking-[0.06em] text-muted-foreground">
-                <th className="pb-2 pr-3 font-medium">Sembol</th>
-                <th className="pb-2 pr-3 font-medium">Ortalama</th>
-                <th className="pb-2 pr-3 font-medium">Medyan</th>
-                <th className="pb-2 pr-3 font-medium">En az</th>
-                <th className="pb-2 pr-3 font-medium">En çok</th>
-                <th className="pb-2 pr-3 font-medium">Std sapma</th>
-                <th className="pb-2 pr-3 font-medium">Üst bant</th>
-                <th className="pb-2 font-medium">Alt bant</th>
-              </tr>
-            </thead>
-            <tbody className="tnum">
-              {SEMBOLLER.map((s) => {
-                const b = veri.bands?.[s] as Band | undefined;
-                if (!b) return null;
-                return (
-                  <tr key={s} className="border-t border-line">
-                    <td className="py-2.5 pr-3">
-                      <span className="flex items-center gap-2">
-                        <span
-                          className={cn(
-                            "grid h-5 w-5 place-items-center rounded font-mono text-[11px] font-bold text-white",
-                            SEMBOL_ZEMIN[s],
-                          )}
-                        >
-                          {s}
-                        </span>
-                        <span className="text-muted-foreground">{SEMBOL_ADI[s]}</span>
-                      </span>
-                    </td>
-                    <td className="py-2.5 pr-3 font-semibold">{ondalik(b.avg, 2)}</td>
-                    <td className="py-2.5 pr-3">{sayi(b.median)}</td>
-                    <td className="py-2.5 pr-3">{sayi(b.min)}</td>
-                    <td className="py-2.5 pr-3">{sayi(b.max)}</td>
-                    <td className="py-2.5 pr-3">{ondalik(b.std, 3)}</td>
-                    <td className="py-2.5 pr-3 text-muted-foreground">
-                      {ondalik(b.above_mean, 2)}{" "}
-                      <span className="text-[11px]">({b.above_n} hafta)</span>
-                    </td>
-                    <td className="py-2.5 text-muted-foreground">
-                      {ondalik(b.below_mean, 2)}{" "}
-                      <span className="text-[11px]">({b.below_n} hafta)</span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </CardBody>
-      </Card>
-
-      {/* Haftalar */}
-      <Card>
-        <CardHeader
-          title={`Haftalar (${veri.weeks?.length ?? 0})`}
-          hint={meta.source}
-        />
-        <CardBody className="space-y-1.5">
-          {(veri.weeks || []).map((w) => (
-            <Link
-              key={w.week}
-              href={`/istatistik/${w.week}`}
-              className={cn(
-                "flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-line bg-elevated px-3 py-2.5",
-                "transition-colors duration-200 ease-smooth hover:border-primary/40 hover:bg-accent",
-              )}
-            >
-              <span className="tnum w-12 shrink-0 text-[13px] font-semibold">
-                {w.week}.
-              </span>
-              <span className="tnum w-24 shrink-0 text-[11.5px] text-muted-foreground">
-                {w.close_date}
-              </span>
-              <span className="tnum flex w-28 shrink-0 gap-2 text-[12px]">
-                <span className="text-sym-1">{w.n1}</span>
-                <span className="text-sym-0">{w.n0}</span>
-                <span className="text-sym-2">{w.n2}</span>
-              </span>
-              <span className="min-w-0 flex-1">
-                <ResultStrip results={w.results} />
-              </span>
-              <ChevronRight size={15} className="shrink-0 text-muted-foreground" />
-            </Link>
+        {/* Sayilar */}
+        <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {SEMBOLLER.map((s) => (
+            <DeltaStat
+              key={s}
+              rozet={s}
+              rozetSinif={SYM_BG[s]}
+              etiket={SEMBOL_ADI[s]}
+              deger={sayi(adet[s])}
+              alt={`%${ondalik(pct[s], 1)} · haftada ort. ${ondalik(weeklyAvg[s] ?? 0, 1)}`}
+              delta={son.delta[s]}
+              deltaNot={`son ${son.window} haftada (ort. ${ondalik(son.avg[s], 1)})`}
+            />
           ))}
-        </CardBody>
-      </Card>
+          <DeltaStat
+            etiket="Hafta içi en uzun seri"
+            deger={ondalik(analytics.streaks.avg_week_max, 1)}
+            alt="ortalama; aynı sembolün arka arkaya tekrarı"
+          />
+        </section>
+
+        {/* Haftalik seyir */}
+        <Card>
+          <CardHeader
+            title="Haftalık seyir"
+            hint="Dikey eksen o haftaki maç sayısı, yatay eksen hafta numarası. Eksik veri nedeniyle dışarıda kalan haftalar eksende yer almaz."
+            action={<SymbolLegend />}
+          />
+          <CardBody>
+            <TrendChart weeks={veri.weeks} />
+          </CardBody>
+        </Card>
+
+        <div className="grid gap-6 xl:grid-cols-2">
+          {/* Bantlar */}
+          <Card>
+            <CardHeader
+              title="Haftalık bantlar"
+              hint="Yatay eksen bir haftadaki adet (0–15). Açık şerit en az–en çok aralığı, koyu şerit ±1 standart sapma, ince çizgi ortanca, nokta ortalama."
+            />
+            <CardBody>
+              <BandStrips bands={bands} />
+              <ul className="tnum mt-3 space-y-1 text-[11.5px] text-muted-foreground">
+                {SEMBOLLER.map((s) => {
+                  const b = bands[s];
+                  if (!b) return null;
+                  return (
+                    <li key={s}>
+                      <span className="font-medium text-foreground">{s}</span> · ortalama üstü{" "}
+                      {b.above_n} hafta (ort. {ondalik(b.above_mean, 1)}), altı {b.below_n} hafta
+                      (ort. {ondalik(b.below_mean, 1)}) · σ = {ondalik(b.std, 2)}
+                    </li>
+                  );
+                })}
+              </ul>
+            </CardBody>
+          </Card>
+
+          {/* Dagilim */}
+          <Card>
+            <CardHeader
+              title="Haftalık adet dağılımı"
+              hint="Yatay eksen bir haftada çıkan adet, dikey eksen o adedin görüldüğü hafta sayısı."
+              action={<SymbolLegend />}
+            />
+            <CardBody>
+              <DistributionChart
+                distribution={analytics.distribution}
+                weekCount={meta.weeks ?? 0}
+              />
+            </CardBody>
+          </Card>
+        </div>
+
+        {/* Mac sirasi */}
+        <Card>
+          <CardHeader
+            title="Maç sırasına göre dağılım"
+            hint="Kuponun 1.–15. sırasındaki maçlarda sembollerin çıkma yüzdesi. Koyu hücre = daha sık."
+          />
+          <CardBody>
+            <PositionHeatmap positions={analytics.positions} />
+          </CardBody>
+        </Card>
+
+        <div className="grid gap-6 xl:grid-cols-2">
+          {/* Gecis matrisi */}
+          <Card>
+            <CardHeader
+              title="Geçiş matrisi"
+              hint={`Bir maçın sonucundan sonra bir sonraki maçta ne çıktı (${analytics.transitions.n} ardışık çift). Aynı sembolün tekrarı: %${analytics.transitions.repeat_pct.toFixed(0)}.`}
+            />
+            <CardBody>
+              <TransitionMatrix transitions={analytics.transitions} />
+            </CardBody>
+          </Card>
+
+          {/* Uclar ve seriler */}
+          <Card>
+            <CardHeader
+              title="Uçlar ve seriler"
+              hint="Sezonun sınır haftaları ve en uzun aynı-sembol serileri."
+            />
+            <CardBody className="grid gap-5 sm:grid-cols-2">
+              <div>
+                <div className="mb-2 text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                  En yüksek / en düşük hafta
+                </div>
+                <ul className="tnum space-y-1.5 text-[12.5px]">
+                  {SEMBOLLER.map((s) => {
+                    const e = analytics.extremes[s];
+                    return (
+                      <li key={s} className="flex items-center gap-2">
+                        <span className="w-3 font-medium">{s}</span>
+                        <span className="text-muted-foreground">
+                          en çok {e.max?.value} →{" "}
+                          <Link className="text-primary hover:underline" href={`/istatistik/${e.max?.week}`}>
+                            {e.max?.week}. hf
+                          </Link>{" "}
+                          · en az {e.min?.value} →{" "}
+                          <Link className="text-primary hover:underline" href={`/istatistik/${e.min?.week}`}>
+                            {e.min?.week}. hf
+                          </Link>
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+              <div>
+                <div className="mb-2 text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                  En uzun seriler
+                </div>
+                <ul className="tnum space-y-1.5 text-[12.5px] text-muted-foreground">
+                  {analytics.streaks.top.slice(0, 5).map((r, i) => (
+                    <li key={`${r.week}-${r.start}-${i}`}>
+                      <span className="font-medium text-foreground">
+                        {r.length}× {r.symbol}
+                      </span>{" "}
+                      ·{" "}
+                      <Link className="text-primary hover:underline" href={`/istatistik/${r.week}`}>
+                        {r.week}. hf
+                      </Link>{" "}
+                      · {r.start}. maçtan itibaren
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </CardBody>
+          </Card>
+        </div>
+
+        {/* Haftalar */}
+        <Card>
+          <CardHeader
+            title={`Haftalar (${veri.weeks.length})`}
+            hint="Başlıklara tıklayarak sıralayın; hafta numarasından detay sayfasına gidin."
+            action={<SymbolLegend />}
+          />
+          <CardBody>
+            <WeeksTable weeks={veri.weeks} avg={weeklyAvg} />
+          </CardBody>
+        </Card>
+
+        {/* Veri kalitesi */}
+        <Card>
+          <CardHeader title="Veri kalitesi" hint={meta.source} />
+          <CardBody>
+            <DataQualityPanel dq={dq} />
+          </CardBody>
+        </Card>
+      </div>
     </div>
   );
 }

@@ -26,7 +26,9 @@ from spor_toto.bayes import (
 )
 from spor_toto.markov import markov_report
 from spor_toto.health import run_health
-from spor_toto.history import history_summary, history_weeks, history_week
+from spor_toto.history import (
+    history_analytics, history_summary, history_week_detail, history_weeks,
+)
 from spor_toto import __version__
 
 logger = logging.getLogger(__name__)
@@ -543,22 +545,42 @@ def api_meta():
     })
 
 
+def _parse_last(raw: Any) -> Optional[int]:
+    """?last=N — son N hafta dilimi. Gecersiz/bos deger = tum sezon."""
+    if raw is None or str(raw).strip() == "" or str(raw).strip().lower() == "all":
+        return None
+    try:
+        n = int(raw)
+    except (TypeError, ValueError):
+        return None
+    return n if n > 0 else None
+
+
 @app.route("/api/stats", methods=["GET"])
 def api_stats():
-    summary = history_summary()
+    """
+    Tarihsel 1/0/2. `?last=N` verilirse ozet, bantlar VE analiz bloklarinin
+    tamami ayni dilim uzerinden hesaplanir — arayuzdeki tek filtre satiri
+    boylece butun gorselleri ayni veriye baglar.
+    """
+    last = _parse_last(request.args.get("last"))
+    summary = history_summary(last)
     return jsonify({
         "meta": summary.get("meta", {}),
         "totals": summary.get("totals", {}),
         "weekly_avg": summary.get("weekly_avg", {}),
         "bands": summary.get("bands", {}),
-        "weeks": history_weeks(),
+        "data_quality": summary.get("data_quality", {}),
+        "analytics": history_analytics(last),
+        "weeks": history_weeks(last),
+        "last": last,
         "error": summary.get("error"),
     })
 
 
 @app.route("/api/stats/<int:week>", methods=["GET"])
 def api_stats_week(week: int):
-    w = history_week(week)
+    w = history_week_detail(week)
     if not w:
         return jsonify({"error": f"{week}. hafta yok"}), 404
     return jsonify(w)

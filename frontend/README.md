@@ -37,6 +37,7 @@ app/
 components/
   shell/              kenar çubuğu, sayfa geçişi, tema
   formul/             maç ızgarası, olasılık girişi, sonuç panelleri
+  istatistik/         grafikler (inline SVG), hafta tablosu, filtre, veri kalitesi
   ui/                 kart, buton, sekme, anahtar… (elle yazıldı)
 lib/
   types.ts            /api/solve dahil tüm API sözleşmesi
@@ -56,6 +57,19 @@ Renkler `app/globals.css` içinde HSL bileşenleri olarak; Tailwind bunlara
    üretir ve kuponu elle doldururken hata yaptırır.
 2. **Satır ≠ kolon.** Kolon bedeli hiçbir yerde satır sayısından ayrı
    gösterilmez; ödenecek tutar kolon sayısıdır.
+
+## Grafikler
+
+`components/istatistik/` içindeki görseller bağımlılıksız inline SVG'dir ve
+renklerini `--sym-1/0/2` ile `--primary` token'larından alır — bu yüzden koyu
+tema bedava gelir, dosyalarda sabit hex yoktur (`viz.ts`). Üç kural:
+
+1. **Renk kimliği takip eder, sıralamayı değil.** Filtre hafta sayısını
+   değiştirdiğinde hiçbir seri renk değiştirmez.
+2. **Her görselin tablo karşılığı vardır.** Hiçbir değer yalnızca renge ya da
+   fare ipucuna bırakılmaz; hafta tablosu tam veriyi taşır.
+3. **Tek filtre satırı.** Kartların içine filtre konmaz; aralık seçimi
+   `?last=N` ile API'ye gider ve bütün bloklar aynı dilimden hesaplanır.
 
 ## Kontroller
 

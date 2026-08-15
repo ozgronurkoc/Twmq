@@ -331,6 +331,10 @@ export interface StatsMeta {
   source: string;
   rule: string;
   generated_at: string;
+  /** Dilimin ilk/son hafta numarasi ve `?last=N` ile kirpilip kirpilmadigi. */
+  week_from: number | null;
+  week_to: number | null;
+  sliced: boolean;
 }
 
 export interface Band {
@@ -347,6 +351,12 @@ export interface Band {
   below_gap: number;
 }
 
+export interface Streak {
+  symbol: string;
+  start: number;
+  length: number;
+}
+
 export interface WeekRow {
   week: number;
   close_date: string;
@@ -356,6 +366,72 @@ export interface WeekRow {
   n2: number;
   /** 15 karakterlik sonuc dizisi, ornek "120021012210020". */
   results: string;
+  /** Diziden turetilen sayimlar — n1/n0/n2 ile ayni, sembolle anahtarli. */
+  counts: Record<Sembol, number>;
+  top: Sembol;
+  /** Hafta icindeki en uzun ayni-sembol serisi. */
+  max_streak: Streak;
+  complete: boolean;
+  /** Dosyadaki hazir n1/n0/n2 ile dizi ortusuyor mu. */
+  consistent: boolean;
+  reported_counts: Record<Sembol, number> | null;
+}
+
+/** Kuponun 1..15 sirasindaki bir mac icin sezon dagilimi. */
+export interface PositionStat {
+  pos: number;
+  counts: Record<Sembol, number>;
+  pct: Record<Sembol, number>;
+  n: number;
+  top: Sembol | "";
+}
+
+export interface Analytics {
+  positions: PositionStat[];
+  transitions: {
+    counts: Record<Sembol, Record<Sembol, number>>;
+    pct: Record<Sembol, Record<Sembol, number>>;
+    row_totals: Record<Sembol, number>;
+    n: number;
+    repeat_pct: number;
+  };
+  distribution: Record<Sembol, Array<{ count: number; weeks: number; pct: number }>>;
+  streaks: {
+    by_symbol: Record<Sembol, { length: number; week: number | null; start: number }>;
+    top: Array<{ week: number; symbol: Sembol; start: number; length: number }>;
+    avg_week_max: number;
+  };
+  extremes: Record<
+    Sembol,
+    {
+      max: { week: number; value: number; results: string } | null;
+      min: { week: number; value: number; results: string } | null;
+    }
+  >;
+  recent: {
+    window: number;
+    weeks: number[];
+    avg: Record<Sembol, number>;
+    delta: Record<Sembol, number>;
+  };
+}
+
+/**
+ * Veri seti kendini denetler: dosyadaki hazir sayim ile 15 karakterlik dizi
+ * catistiginda fark GIZLENMEZ, buradan raporlanir.
+ */
+export interface DataQuality {
+  source: string;
+  weeks_total: number;
+  count_conflicts: Array<{
+    week: number;
+    close_date: string;
+    reported: Record<Sembol, number> | null;
+    derived: Record<Sembol, number>;
+  }>;
+  incomplete_weeks: number[];
+  duplicate_results: Array<{ results: string; weeks: number[] }>;
+  ok: boolean;
 }
 
 export interface StatsResponse {
@@ -363,8 +439,24 @@ export interface StatsResponse {
   totals: Partial<Record<Sembol | "pct_1" | "pct_0" | "pct_2", number>>;
   weekly_avg: Partial<Record<Sembol, number>>;
   bands: Partial<Record<Sembol, Band>>;
+  data_quality: DataQuality;
+  analytics: Analytics;
   weeks: WeekRow[];
+  /** Uygulanan dilim (`?last=N`); tum sezon icin null. */
+  last: number | null;
   error?: string | null;
+}
+
+/** /api/stats/<week> — WeekRow'un ustune komsular ve sezon bagi. */
+export interface WeekDetail extends WeekRow {
+  prev_week: number | null;
+  next_week: number | null;
+  cells: Array<{ pos: number; symbol: Sembol }>;
+  runs: Streak[];
+  season_avg: Record<Sembol, number>;
+  delta_vs_avg: Record<Sembol, number>;
+  rank: Record<Sembol, { rank: number; of: number }>;
+  position_stats: PositionStat[];
 }
 
 // ─── /api/health ──────────────────────────────────────────────────────────

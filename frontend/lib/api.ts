@@ -4,7 +4,7 @@ import type {
   SolveRequest,
   SolveResponse,
   StatsResponse,
-  WeekRow,
+  WeekDetail,
 } from "./types";
 
 /**
@@ -80,12 +80,17 @@ export async function getHealth(signal?: AbortSignal): Promise<HealthReport> {
   return govde as HealthReport;
 }
 
-export function getStats(signal?: AbortSignal) {
-  return istek<StatsResponse>("/api/stats", { signal });
+/**
+ * `last` verilirse ozet, bantlar ve analiz bloklarinin TAMAMI son N hafta
+ * uzerinden hesaplanir — filtre tek noktadan butun gorselleri kapsar.
+ */
+export function getStats(last?: number | null, signal?: AbortSignal) {
+  const q = last && last > 0 ? `?last=${last}` : "";
+  return istek<StatsResponse>(`/api/stats${q}`, { signal });
 }
 
 export function getStatsWeek(week: number, signal?: AbortSignal) {
-  return istek<WeekRow>(`/api/stats/${week}`, { signal });
+  return istek<WeekDetail>(`/api/stats/${week}`, { signal });
 }
 
 /**
