@@ -7,8 +7,19 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
     cache: "no-store",
   });
   if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text || `HTTP ${res.status}`);
+    let msg = `HTTP ${res.status}`;
+    try {
+      const j = await res.json();
+      if (j?.error) msg = j.error;
+      else if (typeof j === "string") msg = j;
+    } catch {
+      try {
+        msg = (await res.text()) || msg;
+      } catch {
+        /* ignore */
+      }
+    }
+    throw new Error(msg);
   }
   return res.json() as Promise<T>;
 }
@@ -21,14 +32,29 @@ export function getHealth() {
   return api<Record<string, unknown>>("/api/health");
 }
 
-export function solve(body: {
+export type SolveBody = {
   picks?: string;
   matches?: string[][];
-  mode?: string;
+  mode?: "fix16" | "auto" | "heuristic" | "butce" | "maxcov" | string;
   variant?: number;
+  budget?: number;
   use_bayes?: boolean;
-}) {
-  return api<any>("/api/solve", {
+  prior_strength?: number;
+  evidence_strength?: number;
+  mc_samples?: number;
+  probs?: Array<Record<string, number>>;
+};
+
+export type SolveResponse = {
+  ok: boolean;
+  error?: string | null;
+  result?: Record<string, unknown> | null;
+  run_log_text?: string;
+  version?: string;
+};
+
+export function solve(body: SolveBody) {
+  return api<SolveResponse>("/api/solve", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
