@@ -199,7 +199,13 @@ def kaynak_satirlari(cache: Path) -> Dict[Any, List[Dict[str, Any]]]:
     for etiket, yol in dosyalar:
         with open(yol, encoding="latin-1", newline="") as fh:
             for satir in csv.DictReader(fh):
-                satir = {(k or "").strip().lstrip("﻿"): v for k, v in satir.items()}
+                # Dosyalar latin-1; UTF-8 BOM bu kodlamada "ï»¿" olarak
+                # okunur ve ilk sutunun adina yapisir ("ï»¿Div"). Temizlenmezse
+                # `Div` anahtari hic bulunamaz ve lig etiketi bos kalir.
+                satir = {
+                    (k or "").strip().lstrip("﻿").lstrip("ï»¿"): v
+                    for k, v in satir.items()
+                }
                 dt = tarih_coz((satir.get("Date") or "").strip())
                 if not dt:
                     continue
