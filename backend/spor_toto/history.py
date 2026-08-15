@@ -1,8 +1,10 @@
 """Spor Toto tarihsel 1/0/2 istatistikleri.
 
-Tek doğruluk kaynağı haftaların ``results`` dizisidir (15 karakter). Dosyadaki
-``n1/n0/n2`` alanları bilgi amaçlı taşınır; dizi ile çeliştiklerinde fark
-``data_quality`` bloğunda raporlanır — sessizce yutulmaz.
+Veri seti ``scripts/build_history.py`` ile kaynağından üretilir ve her hafta
+kendi maç listesini (takım adları, tarih, skor) taşır. Tek doğruluk kaynağı
+haftanın ``matches`` dizisidir; ``results`` ondan üretilir, ``n1/n0/n2`` de
+ondan sayılır. Üçü arasındaki her tutarsızlık ``data_quality`` bloğunda
+raporlanır — sessizce yutulmaz.
 """
 from __future__ import annotations
 
@@ -73,6 +75,28 @@ def _pct(part: float, total: float, digits: int = 4) -> float:
 
 # ─── hafta normalizasyonu ─────────────────────────────────────────────────────
 
+def _clean_matches(raw: Any) -> List[Dict[str, Any]]:
+    """Maç satırlarını normalize eder; kodu skordan yeniden türetir."""
+    out: List[Dict[str, Any]] = []
+    for i, m in enumerate(raw or []):
+        if not isinstance(m, dict):
+            continue
+        hg, ag = m.get("hg"), m.get("ag")
+        code = ""
+        if isinstance(hg, int) and isinstance(ag, int):
+            code = "1" if hg > ag else "0" if hg == ag else "2"
+        out.append({
+            "no": int(m.get("no") or i + 1),
+            "home": str(m.get("home") or ""),
+            "away": str(m.get("away") or ""),
+            "kickoff": str(m.get("kickoff") or ""),
+            "hg": hg if isinstance(hg, int) else None,
+            "ag": ag if isinstance(ag, int) else None,
+            "code": code,
+        })
+    return out
+
+
 def normalized_weeks(last: Optional[int] = None) -> List[Dict[str, Any]]:
     """Hafta numarasına göre sıralı, türetilmiş alanlarla zenginleştirilmiş liste.
 
@@ -87,6 +111,7 @@ def normalized_weeks(last: Optional[int] = None) -> List[Dict[str, Any]]:
             "0": int(w.get("n0") or 0),
             "2": int(w.get("n2") or 0),
         }
+        matches = _clean_matches(w.get("matches"))
         mx = _max_run(results)
         rows.append({
             "week": int(w.get("week") or 0),
@@ -102,6 +127,11 @@ def normalized_weeks(last: Optional[int] = None) -> List[Dict[str, Any]]:
             "complete": len(results) == MATCH_COUNT,
             "consistent": derived == reported,
             "reported_counts": None if derived == reported else reported,
+            "matches": matches,
+            # Maç listesi ile dizi birbirini tutuyor mu (sıra dahil).
+            "matches_match_results": bool(matches) and "".join(
+                m["code"] for m in matches
+            ) == results,
         })
     rows.sort(key=lambda r: r["week"])
     if last is not None and last > 0:
@@ -148,6 +178,11 @@ def _data_quality(weeks: Iterable[Dict[str, Any]]) -> Dict[str, Any]:
         for w in weeks if not w["consistent"]
     ]
     incomplete = [w["week"] for w in weeks if not w["complete"]]
+    # Maç listesi taşımayan ya da listesi diziyle örtüşmeyen haftalar.
+    without_matches = [w["week"] for w in weeks if not w["matches"]]
+    match_conflicts = [
+        w["week"] for w in weeks if w["matches"] and not w["matches_match_results"]
+    ]
     by_results: Dict[str, List[int]] = defaultdict(list)
     for w in weeks:
         if w["results"]:
@@ -158,12 +193,16 @@ def _data_quality(weeks: Iterable[Dict[str, Any]]) -> Dict[str, Any]:
     ]
     duplicates.sort(key=lambda d: d["weeks"][0])
     return {
-        "source": "results",
+        "source": "matches",
         "weeks_total": len(weeks),
+        "weeks_with_matches": sum(1 for w in weeks if w["matches"]),
         "count_conflicts": conflicts,
+        "match_conflicts": match_conflicts,
+        "weeks_without_matches": without_matches,
         "incomplete_weeks": incomplete,
         "duplicate_results": duplicates,
-        "ok": not conflicts and not incomplete and not duplicates,
+        "ok": not conflicts and not incomplete and not duplicates
+        and not match_conflicts and not without_matches,
     }
 
 

@@ -357,6 +357,18 @@ export interface Streak {
   length: number;
 }
 
+/** Kupondaki tek maç. `code` skorun kendisinden türer. */
+export interface Mac {
+  no: number;
+  home: string;
+  away: string;
+  /** "2025-12-19 17:00" — kaynaktaki başlama saati (UTC). */
+  kickoff: string;
+  hg: number | null;
+  ag: number | null;
+  code: Sembol | "";
+}
+
 export interface WeekRow {
   week: number;
   close_date: string;
@@ -375,6 +387,10 @@ export interface WeekRow {
   /** Dosyadaki hazir n1/n0/n2 ile dizi ortusuyor mu. */
   consistent: boolean;
   reported_counts: Record<Sembol, number> | null;
+  /** Haftanin mac listesi — takim adlari, saat, skor. */
+  matches: Mac[];
+  /** Mac listesinin kodlari `results` dizisiyle sirasiyla ortusuyor mu. */
+  matches_match_results: boolean;
 }
 
 /** Kuponun 1..15 sirasindaki bir mac icin sezon dagilimi. */
@@ -423,12 +439,16 @@ export interface Analytics {
 export interface DataQuality {
   source: string;
   weeks_total: number;
+  weeks_with_matches: number;
   count_conflicts: Array<{
     week: number;
     close_date: string;
     reported: Record<Sembol, number> | null;
     derived: Record<Sembol, number>;
   }>;
+  /** Mac listesi ile `results` dizisi ortusmeyen haftalar. */
+  match_conflicts: number[];
+  weeks_without_matches: number[];
   incomplete_weeks: number[];
   duplicate_results: Array<{ results: string; weeks: number[] }>;
   ok: boolean;

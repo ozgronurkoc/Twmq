@@ -68,17 +68,50 @@ def test_last_hafta_sayisindan_buyukse_tum_sezon():
     assert len(history_weeks(10_000)) == len(history_weeks())
 
 
-def test_data_quality_catisan_haftalari_raporlar():
+def test_veri_seti_temiz():
+    """Yayindaki veri seti kendi denetiminden gecmeli.
+
+    Bu test bir regresyon bekcisidir: veri yeniden uretilirken sira ya da
+    sayim bozulursa (build_history.py kaynagi yanlis okursa) burada patlar.
+    """
     dq = history_summary()["data_quality"]
-    assert dq["source"] == "results"
-    assert dq["weeks_total"] == len(WEEKS)
+    assert dq["source"] == "matches"
+    assert dq["weeks_total"] == dq["weeks_with_matches"] == len(WEEKS)
+    assert dq["count_conflicts"] == []
+    assert dq["match_conflicts"] == []
+    assert dq["weeks_without_matches"] == []
     assert dq["incomplete_weeks"] == []
+    assert dq["duplicate_results"] == []
+    assert dq["ok"] is True
+
+
+def test_data_quality_catismalari_raporlar():
+    dq = history_summary()["data_quality"]
     for c in dq["count_conflicts"]:
         assert c["reported"] != c["derived"]
         assert sum(c["derived"].values()) == MATCH_COUNT
     for d in dq["duplicate_results"]:
         assert len(d["weeks"]) > 1
-    assert dq["ok"] == (not dq["count_conflicts"] and not dq["duplicate_results"])
+
+
+def test_mac_listesi_diziyi_uretir():
+    for w in WEEKS:
+        assert len(w["matches"]) == MATCH_COUNT
+        assert [m["no"] for m in w["matches"]] == list(range(1, MATCH_COUNT + 1))
+        # Kod skorun kendisinden turer; dizi de maclarin sirasindan.
+        for m in w["matches"]:
+            beklenen = "1" if m["hg"] > m["ag"] else "0" if m["hg"] == m["ag"] else "2"
+            assert m["code"] == beklenen
+            assert m["home"] and m["away"]
+            assert m["kickoff"][:4].isdigit()
+        assert "".join(m["code"] for m in w["matches"]) == w["results"]
+        assert w["matches_match_results"] is True
+
+
+def test_ayni_hafta_icinde_takim_tekrar_etmez():
+    for w in WEEKS:
+        takimlar = [t for m in w["matches"] for t in (m["home"], m["away"])]
+        assert len(set(takimlar)) == len(takimlar), f"{w['week']}. haftada tekrar eden takim"
 
 
 def test_position_stats_her_maca_tum_haftalari_dagitir():

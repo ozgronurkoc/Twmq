@@ -1,53 +1,6054 @@
 {
- "meta": {"season": "2025/2026", "date_from": "2025-08-18", "date_to": "2026-07-27", "weeks": 41, "matches": 615, "source": "sportototahmin week payloads (match-linked scores); incomplete weeks excluded", "rule": "only weeks with exactly 15 results", "generated_at": "2026-08-15"},
- "totals": {"1": 270, "0": 149, "2": 196, "pct_1": 43.9024, "pct_0": 24.2276, "pct_2": 31.8699},
- "weekly_avg": {"1": 6.5854, "0": 3.6341, "2": 4.7805},
- "bands": {
-  "1": {"avg": 6.5854, "min": 4, "max": 10, "median": 7, "std": 1.6376, "above_n": 21, "below_n": 20, "above_mean": 7.9048, "below_mean": 5.2, "above_gap": 1.3194, "below_gap": 1.3854},
-  "0": {"avg": 3.6341, "min": 0, "max": 8, "median": 4, "std": 1.693, "above_n": 22, "below_n": 19, "above_mean": 4.9091, "below_mean": 2.1579, "above_gap": 1.2749, "below_gap": 1.4763},
-  "2": {"avg": 4.7805, "min": 1, "max": 9, "median": 5, "std": 1.7322, "above_n": 21, "below_n": 20, "above_mean": 6.0952, "below_mean": 3.4, "above_gap": 1.3148, "below_gap": 1.3805}
- },
- "weeks": [
-  {"week": 2, "close_date": "2025-08-18", "season": "2025/2026", "n1": 4, "n0": 6, "n2": 5, "results": "120021012210020"},
-  {"week": 3, "close_date": "2025-08-25", "season": "2025/2026", "n1": 8, "n0": 1, "n2": 6, "results": "211211221111220"},
-  {"week": 4, "close_date": "2025-08-31", "season": "2025/2026", "n1": 6, "n0": 4, "n2": 5, "results": "020210210121112"},
-  {"week": 5, "close_date": "2025-09-07", "season": "2025/2026", "n1": 7, "n0": 1, "n2": 7, "results": "221221201121121"},
-  {"week": 6, "close_date": "2025-09-15", "season": "2025/2026", "n1": 9, "n0": 1, "n2": 5, "results": "222120111111211"},
-  {"week": 7, "close_date": "2025-09-22", "season": "2025/2026", "n1": 6, "n0": 8, "n2": 1, "results": "110000011010102"},
-  {"week": 8, "close_date": "2025-09-29", "season": "2025/2026", "n1": 5, "n0": 4, "n2": 6, "results": "200212101222101"},
-  {"week": 9, "close_date": "2025-10-05", "season": "2025/2026", "n1": 6, "n0": 5, "n2": 4, "results": "210100210021112"},
-  {"week": 10, "close_date": "2025-10-13", "season": "2025/2026", "n1": 7, "n0": 2, "n2": 6, "results": "212111121202012"},
-  {"week": 11, "close_date": "2025-10-20", "season": "2025/2026", "n1": 6, "n0": 0, "n2": 9, "results": "212212221121122"},
-  {"week": 12, "close_date": "2025-10-27", "season": "2025/2026", "n1": 7, "n0": 3, "n2": 5, "results": "121012112012210"},
-  {"week": 13, "close_date": "2025-11-03", "season": "2025/2026", "n1": 9, "n0": 2, "n2": 4, "results": "111211201112210"},
-  {"week": 14, "close_date": "2025-11-09", "season": "2025/2026", "n1": 7, "n0": 4, "n2": 4, "results": "101121012120112"},
-  {"week": 15, "close_date": "2025-11-17", "season": "2025/2026", "n1": 6, "n0": 2, "n2": 7, "results": "120212112210221"},
-  {"week": 16, "close_date": "2025-11-24", "season": "2025/2026", "n1": 4, "n0": 5, "n2": 6, "results": "201021202012120"},
-  {"week": 17, "close_date": "2025-12-01", "season": "2025/2026", "n1": 5, "n0": 3, "n2": 7, "results": "221021120122012"},
-  {"week": 18, "close_date": "2025-12-08", "season": "2025/2026", "n1": 6, "n0": 6, "n2": 3, "results": "101021011012100"},
-  {"week": 19, "close_date": "2025-12-15", "season": "2025/2026", "n1": 7, "n0": 5, "n2": 3, "results": "110120101121012"},
-  {"week": 20, "close_date": "2025-12-22", "season": "2025/2026", "n1": 10, "n0": 1, "n2": 4, "results": "111121111220012"},
-  {"week": 21, "close_date": "2025-12-28", "season": "2025/2026", "n1": 6, "n0": 3, "n2": 6, "results": "121012211022120"},
-  {"week": 22, "close_date": "2026-01-04", "season": "2025/2026", "n1": 4, "n0": 6, "n2": 5, "results": "201020121012020"},
-  {"week": 24, "close_date": "2026-01-19", "season": "2025/2026", "n1": 7, "n0": 4, "n2": 4, "results": "111020121012110"},
-  {"week": 25, "close_date": "2026-01-26", "season": "2025/2026", "n1": 4, "n0": 6, "n2": 5, "results": "201020121012020"},
-  {"week": 26, "close_date": "2026-02-02", "season": "2025/2026", "n1": 7, "n0": 4, "n2": 4, "results": "111020121012110"},
-  {"week": 27, "close_date": "2026-02-09", "season": "2025/2026", "n1": 5, "n0": 3, "n2": 7, "results": "122020211112220"},
-  {"week": 28, "close_date": "2026-02-16", "season": "2025/2026", "n1": 9, "n0": 3, "n2": 3, "results": "110121021111210"},
-  {"week": 29, "close_date": "2026-02-23", "season": "2025/2026", "n1": 8, "n0": 3, "n2": 4, "results": "112112100012121"},
-  {"week": 30, "close_date": "2026-03-01", "season": "2025/2026", "n1": 6, "n0": 5, "n2": 4, "results": "112210002102110"},
-  {"week": 31, "close_date": "2026-03-09", "season": "2025/2026", "n1": 4, "n0": 5, "n2": 6, "results": "120101202002221"},
-  {"week": 32, "close_date": "2026-03-15", "season": "2025/2026", "n1": 7, "n0": 4, "n2": 4, "results": "212110121021010"},
-  {"week": 33, "close_date": "2026-03-22", "season": "2025/2026", "n1": 4, "n0": 2, "n2": 9, "results": "102212222211202"},
-  {"week": 35, "close_date": "2026-04-06", "season": "2025/2026", "n1": 8, "n0": 4, "n2": 3, "results": "210110110021121"},
-  {"week": 36, "close_date": "2026-04-13", "season": "2025/2026", "n1": 6, "n0": 4, "n2": 5, "results": "110210021212120"},
-  {"week": 37, "close_date": "2026-04-20", "season": "2025/2026", "n1": 5, "n0": 4, "n2": 6, "results": "202021101122120"},
-  {"week": 38, "close_date": "2026-04-27", "season": "2025/2026", "n1": 10, "n0": 3, "n2": 2, "results": "111111201101120"},
-  {"week": 39, "close_date": "2026-05-03", "season": "2025/2026", "n1": 8, "n0": 6, "n2": 1, "results": "011200110011110"},
-  {"week": 40, "close_date": "2026-05-10", "season": "2025/2026", "n1": 8, "n0": 2, "n2": 5, "results": "112111122120012"},
-  {"week": 41, "close_date": "2026-05-19", "season": "2025/2026", "n1": 8, "n0": 3, "n2": 4, "results": "110211012021112"},
-  {"week": 42, "close_date": "2026-05-24", "season": "2025/2026", "n1": 6, "n0": 5, "n2": 4, "results": "112021100112200"},
-  {"week": 50, "close_date": "2026-07-20", "season": "2025/2026", "n1": 8, "n0": 3, "n2": 4, "results": "112120121100121"},
-  {"week": 51, "close_date": "2026-07-27", "season": "2025/2026", "n1": 7, "n0": 4, "n2": 4, "results": "000111122212011"}
- ]
+  "meta": {
+    "season": "2025/2026",
+    "date_from": "2025-08-18",
+    "date_to": "2026-07-27",
+    "weeks": 41,
+    "matches": 615,
+    "source": "sportototahmin week payloads (week.matches order, match-linked scores); incomplete weeks excluded",
+    "rule": "only weeks with exactly 15 results; match order from the week's own matches array",
+    "generated_at": "2026-08-15"
+  },
+  "totals": {
+    "1": 270,
+    "0": 149,
+    "2": 196,
+    "pct_1": 43.9024,
+    "pct_0": 24.2276,
+    "pct_2": 31.8699
+  },
+  "weekly_avg": {
+    "1": 6.5854,
+    "0": 3.6341,
+    "2": 4.7805
+  },
+  "bands": {
+    "1": {
+      "avg": 6.5854,
+      "min": 4,
+      "max": 10,
+      "median": 7,
+      "std": 1.6376,
+      "above_n": 21,
+      "below_n": 20,
+      "above_mean": 7.9048,
+      "below_mean": 5.2,
+      "above_gap": 1.3194,
+      "below_gap": 1.3854
+    },
+    "0": {
+      "avg": 3.6341,
+      "min": 0,
+      "max": 8,
+      "median": 4,
+      "std": 1.693,
+      "above_n": 22,
+      "below_n": 19,
+      "above_mean": 4.9091,
+      "below_mean": 2.1579,
+      "above_gap": 1.2749,
+      "below_gap": 1.4763
+    },
+    "2": {
+      "avg": 4.7805,
+      "min": 1,
+      "max": 9,
+      "median": 5,
+      "std": 1.7322,
+      "above_n": 21,
+      "below_n": 20,
+      "above_mean": 6.0952,
+      "below_mean": 3.4,
+      "above_gap": 1.3148,
+      "below_gap": 1.3805
+    }
+  },
+  "weeks": [
+    {
+      "week": 2,
+      "close_date": "2025-08-18",
+      "season": "2025/2026",
+      "n1": 4,
+      "n0": 6,
+      "n2": 5,
+      "results": "120021012210020",
+      "matches": [
+        {
+          "no": 1,
+          "home": "Galatasaray",
+          "away": "Mısırlı.com.tr Fatih Karagümrük",
+          "kickoff": "2025-08-15 18:30",
+          "hg": 3,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 2,
+          "home": "Kocaelispor",
+          "away": "Samsunspor",
+          "kickoff": "2025-08-16 16:00",
+          "hg": 0,
+          "ag": 1,
+          "code": "2"
+        },
+        {
+          "no": 3,
+          "home": "Corendon Alanyaspor",
+          "away": "Çaykur Rizespor",
+          "kickoff": "2025-08-16 18:30",
+          "hg": 0,
+          "ag": 0,
+          "code": "0"
+        },
+        {
+          "no": 4,
+          "home": "Göztepe",
+          "away": "Fenerbahçe",
+          "kickoff": "2025-08-16 18:30",
+          "hg": 0,
+          "ag": 0,
+          "code": "0"
+        },
+        {
+          "no": 5,
+          "home": "Natura Dünyası Gençlerbirliği",
+          "away": "Hesap.com Antalyaspor",
+          "kickoff": "2025-08-17 16:00",
+          "hg": 0,
+          "ag": 1,
+          "code": "2"
+        },
+        {
+          "no": 6,
+          "home": "Tümosan Konyaspor",
+          "away": "Gaziantep FK",
+          "kickoff": "2025-08-17 16:00",
+          "hg": 3,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 7,
+          "home": "Rams Başakşehir",
+          "away": "Zecorner Kayserispor",
+          "kickoff": "2025-08-17 18:30",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 8,
+          "home": "Beşiktaş",
+          "away": "ikas Eyüpspor",
+          "kickoff": "2025-08-17 18:30",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 9,
+          "home": "Kasımpaşa",
+          "away": "Trabzonspor",
+          "kickoff": "2025-08-18 18:30",
+          "hg": 0,
+          "ag": 1,
+          "code": "2"
+        },
+        {
+          "no": 10,
+          "home": "Nantes",
+          "away": "Paris St Germain",
+          "kickoff": "2025-08-17 18:45",
+          "hg": 0,
+          "ag": 1,
+          "code": "2"
+        },
+        {
+          "no": 11,
+          "home": "Groningen",
+          "away": "Heerenveen",
+          "kickoff": "2025-08-16 19:00",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 12,
+          "home": "Go Ahead Eagles",
+          "away": "Ajax",
+          "kickoff": "2025-08-17 10:15",
+          "hg": 2,
+          "ag": 2,
+          "code": "0"
+        },
+        {
+          "no": 13,
+          "home": "Chelsea",
+          "away": "Crystal Palace",
+          "kickoff": "2025-08-17 13:00",
+          "hg": 0,
+          "ag": 0,
+          "code": "0"
+        },
+        {
+          "no": 14,
+          "home": "Manchester United",
+          "away": "Arsenal",
+          "kickoff": "2025-08-17 15:30",
+          "hg": 0,
+          "ag": 1,
+          "code": "2"
+        },
+        {
+          "no": 15,
+          "home": "Valencia",
+          "away": "Real Sociedad",
+          "kickoff": "2025-08-16 19:30",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        }
+      ]
+    },
+    {
+      "week": 3,
+      "close_date": "2025-08-25",
+      "season": "2025/2026",
+      "n1": 8,
+      "n0": 1,
+      "n2": 6,
+      "results": "211211221111220",
+      "matches": [
+        {
+          "no": 1,
+          "home": "Mısırlı.com.tr Fatih Karagümrük",
+          "away": "Göztepe",
+          "kickoff": "2025-08-22 18:30",
+          "hg": 0,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 2,
+          "home": "Fenerbahçe",
+          "away": "Kocaelispor",
+          "kickoff": "2025-08-23 18:30",
+          "hg": 3,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 3,
+          "home": "Gaziantep FK",
+          "away": "Natura Dünyası Gençlerbirliği",
+          "kickoff": "2025-08-23 18:30",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 4,
+          "home": "Zecorner Kayserispor",
+          "away": "Galatasaray",
+          "kickoff": "2025-08-24 18:30",
+          "hg": 0,
+          "ag": 4,
+          "code": "2"
+        },
+        {
+          "no": 5,
+          "home": "Trabzonspor",
+          "away": "Hesap.com Antalyaspor",
+          "kickoff": "2025-08-24 16:00",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 6,
+          "home": "ikas Eyüpspor",
+          "away": "Corendon Alanyaspor",
+          "kickoff": "2025-08-25 16:00",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 7,
+          "home": "Levante",
+          "away": "Barcelona",
+          "kickoff": "2025-08-23 19:30",
+          "hg": 2,
+          "ag": 3,
+          "code": "2"
+        },
+        {
+          "no": 8,
+          "home": "Real Oviedo",
+          "away": "Real Madrid",
+          "kickoff": "2025-08-24 19:30",
+          "hg": 0,
+          "ag": 3,
+          "code": "2"
+        },
+        {
+          "no": 9,
+          "home": "Juventus",
+          "away": "Parma",
+          "kickoff": "2025-08-24 18:45",
+          "hg": 2,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 10,
+          "home": "Bayern Münih",
+          "away": "RB Leipzig",
+          "kickoff": "2025-08-22 18:30",
+          "hg": 6,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 11,
+          "home": "Paris St Germain",
+          "away": "Angers",
+          "kickoff": "2025-08-22 18:45",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 12,
+          "home": "Lille",
+          "away": "Monaco",
+          "kickoff": "2025-08-24 18:45",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 13,
+          "home": "West Ham United",
+          "away": "Chelsea",
+          "kickoff": "2025-08-22 19:00",
+          "hg": 1,
+          "ag": 5,
+          "code": "2"
+        },
+        {
+          "no": 14,
+          "home": "Manchester City",
+          "away": "Tottenham Hotspur",
+          "kickoff": "2025-08-23 11:30",
+          "hg": 0,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 15,
+          "home": "Fulham",
+          "away": "Manchester United",
+          "kickoff": "2025-08-24 15:30",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        }
+      ]
+    },
+    {
+      "week": 4,
+      "close_date": "2025-08-31",
+      "season": "2025/2026",
+      "n1": 6,
+      "n0": 4,
+      "n2": 5,
+      "results": "020210210121112",
+      "matches": [
+        {
+          "no": 1,
+          "home": "Göztepe",
+          "away": "Tümosan Konyaspor",
+          "kickoff": "2025-08-29 18:30",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 2,
+          "home": "Kasımpaşa",
+          "away": "Gaziantep FK",
+          "kickoff": "2025-08-30 16:00",
+          "hg": 2,
+          "ag": 3,
+          "code": "2"
+        },
+        {
+          "no": 3,
+          "home": "Kocaelispor",
+          "away": "Zecorner Kayserispor",
+          "kickoff": "2025-08-30 16:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 4,
+          "home": "Hesap.com Antalyaspor",
+          "away": "Mısırlı.com.tr Fatih Karagümrük",
+          "kickoff": "2025-08-30 18:30",
+          "hg": 1,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 5,
+          "home": "Galatasaray",
+          "away": "Çaykur Rizespor",
+          "kickoff": "2025-08-30 18:30",
+          "hg": 3,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 6,
+          "home": "Rams Başakşehir",
+          "away": "ikas Eyüpspor",
+          "kickoff": "2025-08-31 16:00",
+          "hg": 0,
+          "ag": 0,
+          "code": "0"
+        },
+        {
+          "no": 7,
+          "home": "Natura Dünyası Gençlerbirliği",
+          "away": "Fenerbahçe",
+          "kickoff": "2025-08-31 16:00",
+          "hg": 1,
+          "ag": 3,
+          "code": "2"
+        },
+        {
+          "no": 8,
+          "home": "Corendon Alanyaspor",
+          "away": "Beşiktaş",
+          "kickoff": "2025-08-31 18:30",
+          "hg": 2,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 9,
+          "home": "Trabzonspor",
+          "away": "Samsunspor",
+          "kickoff": "2025-08-31 18:30",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 10,
+          "home": "Borussia Dortmund",
+          "away": "Union Berlin",
+          "kickoff": "2025-08-31 15:30",
+          "hg": 3,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 11,
+          "home": "Toulouse",
+          "away": "Paris St Germain",
+          "kickoff": "2025-08-30 19:05",
+          "hg": 3,
+          "ag": 6,
+          "code": "2"
+        },
+        {
+          "no": 12,
+          "home": "Chelsea",
+          "away": "Fulham",
+          "kickoff": "2025-08-30 11:30",
+          "hg": 2,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 13,
+          "home": "Liverpool",
+          "away": "Arsenal",
+          "kickoff": "2025-08-31 15:30",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 14,
+          "home": "Real Madrid",
+          "away": "Mallorca",
+          "kickoff": "2025-08-30 19:30",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 15,
+          "home": "Real Betis",
+          "away": "Athletic Bilbao",
+          "kickoff": "2025-08-31 17:00",
+          "hg": 1,
+          "ag": 2,
+          "code": "2"
+        }
+      ]
+    },
+    {
+      "week": 5,
+      "close_date": "2025-09-07",
+      "season": "2025/2026",
+      "n1": 7,
+      "n0": 1,
+      "n2": 7,
+      "results": "221221201121121",
+      "matches": [
+        {
+          "no": 1,
+          "home": "Türkiye",
+          "away": "İspanya",
+          "kickoff": "2025-09-07 18:45",
+          "hg": 0,
+          "ag": 6,
+          "code": "2"
+        },
+        {
+          "no": 2,
+          "home": "Ukrayna",
+          "away": "Fransa",
+          "kickoff": "2025-09-05 18:45",
+          "hg": 0,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 3,
+          "home": "İzlanda",
+          "away": "Azerbaycan",
+          "kickoff": "2025-09-05 18:45",
+          "hg": 5,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 4,
+          "home": "Letonya",
+          "away": "Sırbistan",
+          "kickoff": "2025-09-06 13:00",
+          "hg": 0,
+          "ag": 1,
+          "code": "2"
+        },
+        {
+          "no": 5,
+          "home": "Ermenistan",
+          "away": "Portekiz",
+          "kickoff": "2025-09-06 16:00",
+          "hg": 0,
+          "ag": 5,
+          "code": "2"
+        },
+        {
+          "no": 6,
+          "home": "İngiltere",
+          "away": "Andorra",
+          "kickoff": "2025-09-06 16:00",
+          "hg": 2,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 7,
+          "home": "San Marino",
+          "away": "Bosna Hersek",
+          "kickoff": "2025-09-06 18:45",
+          "hg": 0,
+          "ag": 6,
+          "code": "2"
+        },
+        {
+          "no": 8,
+          "home": "İrlanda Cumhuriyeti",
+          "away": "Macaristan",
+          "kickoff": "2025-09-06 18:45",
+          "hg": 2,
+          "ag": 2,
+          "code": "0"
+        },
+        {
+          "no": 9,
+          "home": "Gürcistan",
+          "away": "Bulgaristan",
+          "kickoff": "2025-09-07 13:00",
+          "hg": 3,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 10,
+          "home": "Kuzey Makedonya Cumhuriyeti",
+          "away": "Lihtenştayn",
+          "kickoff": "2025-09-07 16:00",
+          "hg": 5,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 11,
+          "home": "Litvanya",
+          "away": "Hollanda",
+          "kickoff": "2025-09-07 16:00",
+          "hg": 2,
+          "ag": 3,
+          "code": "2"
+        },
+        {
+          "no": 12,
+          "home": "Almanya",
+          "away": "Kuzey İrlanda",
+          "kickoff": "2025-09-07 18:45",
+          "hg": 3,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 13,
+          "home": "Belçika",
+          "away": "Kazakistan",
+          "kickoff": "2025-09-07 18:45",
+          "hg": 6,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 14,
+          "home": "Lüksemburg",
+          "away": "Slovakya",
+          "kickoff": "2025-09-07 18:45",
+          "hg": 0,
+          "ag": 1,
+          "code": "2"
+        },
+        {
+          "no": 15,
+          "home": "Polonya",
+          "away": "Finlandiya",
+          "kickoff": "2025-09-07 18:45",
+          "hg": 3,
+          "ag": 1,
+          "code": "1"
+        }
+      ]
+    },
+    {
+      "week": 6,
+      "close_date": "2025-09-15",
+      "season": "2025/2026",
+      "n1": 9,
+      "n0": 1,
+      "n2": 5,
+      "results": "222120111111211",
+      "matches": [
+        {
+          "no": 1,
+          "home": "Samsunspor",
+          "away": "Hesap.com Antalyaspor",
+          "kickoff": "2025-09-13 14:00",
+          "hg": 1,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 2,
+          "home": "Mısırlı.com.tr Fatih Karagümrük",
+          "away": "Kasımpaşa",
+          "kickoff": "2025-09-13 14:00",
+          "hg": 0,
+          "ag": 1,
+          "code": "2"
+        },
+        {
+          "no": 3,
+          "home": "Tümosan Konyaspor",
+          "away": "Corendon Alanyaspor",
+          "kickoff": "2025-09-13 17:00",
+          "hg": 1,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 4,
+          "home": "Beşiktaş",
+          "away": "Rams Başakşehir",
+          "kickoff": "2025-09-13 17:00",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 5,
+          "home": "ikas Eyüpspor",
+          "away": "Galatasaray",
+          "kickoff": "2025-09-13 14:00",
+          "hg": 0,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 6,
+          "home": "Zecorner Kayserispor",
+          "away": "Göztepe",
+          "kickoff": "2025-09-14 14:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 7,
+          "home": "Gaziantep FK",
+          "away": "Kocaelispor",
+          "kickoff": "2025-09-14 16:00",
+          "hg": 2,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 8,
+          "home": "Fenerbahçe",
+          "away": "Trabzonspor",
+          "kickoff": "2025-09-14 16:00",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 9,
+          "home": "Çaykur Rizespor",
+          "away": "Natura Dünyası Gençlerbirliği",
+          "kickoff": "2025-09-15 17:00",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 10,
+          "home": "Bayern Münih",
+          "away": "Hamburger SV",
+          "kickoff": "2025-09-13 16:30",
+          "hg": 5,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 11,
+          "home": "Paris St Germain",
+          "away": "Lens",
+          "kickoff": "2025-09-14 15:15",
+          "hg": 2,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 12,
+          "home": "Manchester City",
+          "away": "Manchester United",
+          "kickoff": "2025-09-14 15:30",
+          "hg": 3,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 13,
+          "home": "Real Sociedad",
+          "away": "Real Madrid",
+          "kickoff": "2025-09-13 14:15",
+          "hg": 1,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 14,
+          "home": "Atletico Madrid",
+          "away": "Villarreal",
+          "kickoff": "2025-09-13 19:00",
+          "hg": 2,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 15,
+          "home": "Juventus",
+          "away": "Inter",
+          "kickoff": "2025-09-13 16:00",
+          "hg": 4,
+          "ag": 3,
+          "code": "1"
+        }
+      ]
+    },
+    {
+      "week": 7,
+      "close_date": "2025-09-22",
+      "season": "2025/2026",
+      "n1": 6,
+      "n0": 8,
+      "n2": 1,
+      "results": "110000011010102",
+      "matches": [
+        {
+          "no": 1,
+          "home": "Göztepe",
+          "away": "Beşiktaş",
+          "kickoff": "2025-09-19 17:00",
+          "hg": 3,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 2,
+          "home": "Natura Dünyası Gençlerbirliği",
+          "away": "ikas Eyüpspor",
+          "kickoff": "2025-09-20 14:00",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 3,
+          "home": "Hesap.com Antalyaspor",
+          "away": "Zecorner Kayserispor",
+          "kickoff": "2025-09-20 17:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 4,
+          "home": "Trabzonspor",
+          "away": "Gaziantep FK",
+          "kickoff": "2025-09-20 17:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 5,
+          "home": "Rams Başakşehir",
+          "away": "Corendon Alanyaspor",
+          "kickoff": "2025-09-21 14:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 6,
+          "home": "Kocaelispor",
+          "away": "Çaykur Rizespor",
+          "kickoff": "2025-09-21 14:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 7,
+          "home": "Kasımpaşa",
+          "away": "Fenerbahçe",
+          "kickoff": "2025-09-21 17:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 8,
+          "home": "Samsunspor",
+          "away": "Mısırlı.com.tr Fatih Karagümrük",
+          "kickoff": "2025-09-21 17:00",
+          "hg": 3,
+          "ag": 2,
+          "code": "1"
+        },
+        {
+          "no": 9,
+          "home": "Galatasaray",
+          "away": "Tümosan Konyaspor",
+          "kickoff": "2025-09-22 17:00",
+          "hg": 3,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 10,
+          "home": "Bayer Leverkusen",
+          "away": "M'gladbach",
+          "kickoff": "2025-09-21 15:30",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 11,
+          "home": "Marsilya",
+          "away": "Paris St Germain",
+          "kickoff": "2025-09-22 18:00",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 12,
+          "home": "PSV Eindhoven",
+          "away": "Ajax",
+          "kickoff": "2025-09-21 12:30",
+          "hg": 2,
+          "ag": 2,
+          "code": "0"
+        },
+        {
+          "no": 13,
+          "home": "Manchester United",
+          "away": "Chelsea",
+          "kickoff": "2025-09-20 16:30",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 14,
+          "home": "Arsenal",
+          "away": "Manchester City",
+          "kickoff": "2025-09-21 15:30",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 15,
+          "home": "Lazio",
+          "away": "Roma",
+          "kickoff": "2025-09-21 10:30",
+          "hg": 0,
+          "ag": 1,
+          "code": "2"
+        }
+      ]
+    },
+    {
+      "week": 8,
+      "close_date": "2025-09-29",
+      "season": "2025/2026",
+      "n1": 5,
+      "n0": 4,
+      "n2": 6,
+      "results": "200212101222101",
+      "matches": [
+        {
+          "no": 1,
+          "home": "Corendon Alanyaspor",
+          "away": "Galatasaray",
+          "kickoff": "2025-09-26 17:00",
+          "hg": 0,
+          "ag": 1,
+          "code": "2"
+        },
+        {
+          "no": 2,
+          "home": "ikas Eyüpspor",
+          "away": "Göztepe",
+          "kickoff": "2025-09-27 14:00",
+          "hg": 0,
+          "ag": 0,
+          "code": "0"
+        },
+        {
+          "no": 3,
+          "home": "Gaziantep FK",
+          "away": "Samsunspor",
+          "kickoff": "2025-09-27 14:00",
+          "hg": 2,
+          "ag": 2,
+          "code": "0"
+        },
+        {
+          "no": 4,
+          "home": "Mısırlı.com.tr Fatih Karagümrük",
+          "away": "Trabzonspor",
+          "kickoff": "2025-09-27 17:00",
+          "hg": 3,
+          "ag": 4,
+          "code": "2"
+        },
+        {
+          "no": 5,
+          "home": "Tümosan Konyaspor",
+          "away": "Rams Başakşehir",
+          "kickoff": "2025-09-28 14:00",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 6,
+          "home": "Çaykur Rizespor",
+          "away": "Kasımpaşa",
+          "kickoff": "2025-09-28 14:00",
+          "hg": 1,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 7,
+          "home": "Fenerbahçe",
+          "away": "Hesap.com Antalyaspor",
+          "kickoff": "2025-09-28 17:00",
+          "hg": 2,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 8,
+          "home": "Zecorner Kayserispor",
+          "away": "Natura Dünyası Gençlerbirliği",
+          "kickoff": "2025-09-28 17:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 9,
+          "home": "Beşiktaş",
+          "away": "Kocaelispor",
+          "kickoff": "2025-09-29 17:00",
+          "hg": 3,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 10,
+          "home": "Mainz 05",
+          "away": "Borussia Dortmund",
+          "kickoff": "2025-09-27 13:30",
+          "hg": 0,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 11,
+          "home": "Standard Liege",
+          "away": "Club Brugge",
+          "kickoff": "2025-09-27 16:15",
+          "hg": 1,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 12,
+          "home": "Newcastle United",
+          "away": "Arsenal",
+          "kickoff": "2025-09-28 15:30",
+          "hg": 1,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 13,
+          "home": "Atletico Madrid",
+          "away": "Real Madrid",
+          "kickoff": "2025-09-27 14:15",
+          "hg": 5,
+          "ag": 2,
+          "code": "1"
+        },
+        {
+          "no": 14,
+          "home": "Juventus",
+          "away": "Atalanta",
+          "kickoff": "2025-09-27 16:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 15,
+          "home": "Milan",
+          "away": "Napoli",
+          "kickoff": "2025-09-28 18:45",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        }
+      ]
+    },
+    {
+      "week": 9,
+      "close_date": "2025-10-05",
+      "season": "2025/2026",
+      "n1": 6,
+      "n0": 5,
+      "n2": 4,
+      "results": "210100210021112",
+      "matches": [
+        {
+          "no": 1,
+          "home": "Hesap.com Antalyaspor",
+          "away": "Çaykur Rizespor",
+          "kickoff": "2025-10-03 17:00",
+          "hg": 2,
+          "ag": 5,
+          "code": "2"
+        },
+        {
+          "no": 2,
+          "home": "Trabzonspor",
+          "away": "Zecorner Kayserispor",
+          "kickoff": "2025-10-03 17:00",
+          "hg": 4,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 3,
+          "home": "Natura Dünyası Gençlerbirliği",
+          "away": "Corendon Alanyaspor",
+          "kickoff": "2025-10-04 11:30",
+          "hg": 2,
+          "ag": 2,
+          "code": "0"
+        },
+        {
+          "no": 4,
+          "home": "Kocaelispor",
+          "away": "ikas Eyüpspor",
+          "kickoff": "2025-10-04 14:00",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 5,
+          "home": "Galatasaray",
+          "away": "Beşiktaş",
+          "kickoff": "2025-10-04 17:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 6,
+          "home": "Kasımpaşa",
+          "away": "Tümosan Konyaspor",
+          "kickoff": "2025-10-05 11:30",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 7,
+          "home": "Mısırlı.com.tr Fatih Karagümrük",
+          "away": "Gaziantep FK",
+          "kickoff": "2025-10-05 14:00",
+          "hg": 0,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 8,
+          "home": "Göztepe",
+          "away": "Rams Başakşehir",
+          "kickoff": "2025-10-05 17:00",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 9,
+          "home": "Samsunspor",
+          "away": "Fenerbahçe",
+          "kickoff": "2025-10-05 17:00",
+          "hg": 0,
+          "ag": 0,
+          "code": "0"
+        },
+        {
+          "no": 10,
+          "home": "Borussia Dortmund",
+          "away": "RB Leipzig",
+          "kickoff": "2025-10-04 13:30",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 11,
+          "home": "Eintracht Frankfurt",
+          "away": "Bayern Münih",
+          "kickoff": "2025-10-04 16:30",
+          "hg": 0,
+          "ag": 3,
+          "code": "2"
+        },
+        {
+          "no": 12,
+          "home": "Chelsea",
+          "away": "Liverpool",
+          "kickoff": "2025-10-04 16:30",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 13,
+          "home": "Real Madrid",
+          "away": "Villarreal",
+          "kickoff": "2025-10-04 19:00",
+          "hg": 3,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 14,
+          "home": "Sevilla",
+          "away": "Barcelona",
+          "kickoff": "2025-10-05 14:15",
+          "hg": 4,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 15,
+          "home": "Fiorentina",
+          "away": "Roma",
+          "kickoff": "2025-10-05 13:00",
+          "hg": 1,
+          "ag": 2,
+          "code": "2"
+        }
+      ]
+    },
+    {
+      "week": 10,
+      "close_date": "2025-10-13",
+      "season": "2025/2026",
+      "n1": 7,
+      "n0": 2,
+      "n2": 6,
+      "results": "212111121202012",
+      "matches": [
+        {
+          "no": 1,
+          "home": "Bulgaristan",
+          "away": "Türkiye",
+          "kickoff": "2025-10-11 18:45",
+          "hg": 1,
+          "ag": 6,
+          "code": "2"
+        },
+        {
+          "no": 2,
+          "home": "Portekiz",
+          "away": "İrlanda Cumhuriyeti",
+          "kickoff": "2025-10-11 18:45",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 3,
+          "home": "Sırbistan",
+          "away": "Arnavutluk",
+          "kickoff": "2025-10-11 18:45",
+          "hg": 0,
+          "ag": 1,
+          "code": "2"
+        },
+        {
+          "no": 4,
+          "home": "İspanya",
+          "away": "Gürcistan",
+          "kickoff": "2025-10-11 18:45",
+          "hg": 2,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 5,
+          "home": "Hollanda",
+          "away": "Finlandiya",
+          "kickoff": "2025-10-12 16:00",
+          "hg": 4,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 6,
+          "home": "İskoçya",
+          "away": "Belarus",
+          "kickoff": "2025-10-12 16:00",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 7,
+          "home": "Danimarka",
+          "away": "Yunanistan",
+          "kickoff": "2025-10-12 18:45",
+          "hg": 3,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 8,
+          "home": "Litvanya",
+          "away": "Polonya",
+          "kickoff": "2025-10-12 18:45",
+          "hg": 0,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 9,
+          "home": "Romanya",
+          "away": "Avusturya",
+          "kickoff": "2025-10-12 18:45",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 10,
+          "home": "Galler",
+          "away": "Belçika",
+          "kickoff": "2025-10-13 18:45",
+          "hg": 2,
+          "ag": 4,
+          "code": "2"
+        },
+        {
+          "no": 11,
+          "home": "Kuzey Makedonya Cumhuriyeti",
+          "away": "Kazakistan",
+          "kickoff": "2025-10-13 18:45",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 12,
+          "home": "Kuzey İrlanda",
+          "away": "Almanya",
+          "kickoff": "2025-10-13 18:45",
+          "hg": 0,
+          "ag": 1,
+          "code": "2"
+        },
+        {
+          "no": 13,
+          "home": "Slovenya",
+          "away": "İsviçre",
+          "kickoff": "2025-10-13 18:45",
+          "hg": 0,
+          "ag": 0,
+          "code": "0"
+        },
+        {
+          "no": 14,
+          "home": "Ukrayna",
+          "away": "Azerbaycan",
+          "kickoff": "2025-10-13 18:45",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 15,
+          "home": "İsveç",
+          "away": "Kosova",
+          "kickoff": "2025-10-13 18:45",
+          "hg": 0,
+          "ag": 1,
+          "code": "2"
+        }
+      ]
+    },
+    {
+      "week": 11,
+      "close_date": "2025-10-20",
+      "season": "2025/2026",
+      "n1": 6,
+      "n0": 0,
+      "n2": 9,
+      "results": "222221111122221",
+      "matches": [
+        {
+          "no": 1,
+          "home": "Tümosan Konyaspor",
+          "away": "Kocaelispor",
+          "kickoff": "2025-10-18 11:30",
+          "hg": 2,
+          "ag": 3,
+          "code": "2"
+        },
+        {
+          "no": 2,
+          "home": "Beşiktaş",
+          "away": "Natura Dünyası Gençlerbirliği",
+          "kickoff": "2025-10-18 14:00",
+          "hg": 1,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 3,
+          "home": "Çaykur Rizespor",
+          "away": "Trabzonspor",
+          "kickoff": "2025-10-18 14:00",
+          "hg": 1,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 4,
+          "home": "Rams Başakşehir",
+          "away": "Galatasaray",
+          "kickoff": "2025-10-18 17:00",
+          "hg": 1,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 5,
+          "home": "Zecorner Kayserispor",
+          "away": "Samsunspor",
+          "kickoff": "2025-10-19 11:30",
+          "hg": 1,
+          "ag": 3,
+          "code": "2"
+        },
+        {
+          "no": 6,
+          "home": "Corendon Alanyaspor",
+          "away": "Göztepe",
+          "kickoff": "2025-10-19 14:00",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 7,
+          "home": "Gaziantep FK",
+          "away": "Hesap.com Antalyaspor",
+          "kickoff": "2025-10-19 14:00",
+          "hg": 3,
+          "ag": 2,
+          "code": "1"
+        },
+        {
+          "no": 8,
+          "home": "Fenerbahçe",
+          "away": "Mısırlı.com.tr Fatih Karagümrük",
+          "kickoff": "2025-10-19 17:00",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 9,
+          "home": "ikas Eyüpspor",
+          "away": "Kasımpaşa",
+          "kickoff": "2025-10-20 17:00",
+          "hg": 2,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 10,
+          "home": "Bayern Münih",
+          "away": "Borussia Dortmund",
+          "kickoff": "2025-10-18 16:30",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 11,
+          "home": "Nottingham Forest",
+          "away": "Chelsea",
+          "kickoff": "2025-10-18 11:30",
+          "hg": 0,
+          "ag": 3,
+          "code": "2"
+        },
+        {
+          "no": 12,
+          "home": "Tottenham Hotspur",
+          "away": "Aston Villa",
+          "kickoff": "2025-10-19 13:00",
+          "hg": 1,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 13,
+          "home": "Liverpool",
+          "away": "Manchester United",
+          "kickoff": "2025-10-19 15:30",
+          "hg": 1,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 14,
+          "home": "Roma",
+          "away": "Inter",
+          "kickoff": "2025-10-18 18:45",
+          "hg": 0,
+          "ag": 1,
+          "code": "2"
+        },
+        {
+          "no": 15,
+          "home": "Milan",
+          "away": "Fiorentina",
+          "kickoff": "2025-10-19 18:45",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        }
+      ]
+    },
+    {
+      "week": 12,
+      "close_date": "2025-10-27",
+      "season": "2025/2026",
+      "n1": 7,
+      "n0": 3,
+      "n2": 5,
+      "results": "011212020212111",
+      "matches": [
+        {
+          "no": 1,
+          "home": "Mısırlı.com.tr Fatih Karagümrük",
+          "away": "Zecorner Kayserispor",
+          "kickoff": "2025-10-24 17:00",
+          "hg": 2,
+          "ag": 2,
+          "code": "0"
+        },
+        {
+          "no": 2,
+          "home": "Kocaelispor",
+          "away": "Corendon Alanyaspor",
+          "kickoff": "2025-10-25 14:00",
+          "hg": 2,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 3,
+          "home": "Trabzonspor",
+          "away": "ikas Eyüpspor",
+          "kickoff": "2025-10-25 17:00",
+          "hg": 2,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 4,
+          "home": "Hesap.com Antalyaspor",
+          "away": "Rams Başakşehir",
+          "kickoff": "2025-10-26 11:30",
+          "hg": 0,
+          "ag": 4,
+          "code": "2"
+        },
+        {
+          "no": 5,
+          "home": "Galatasaray",
+          "away": "Göztepe",
+          "kickoff": "2025-10-26 14:00",
+          "hg": 3,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 6,
+          "home": "Natura Dünyası Gençlerbirliği",
+          "away": "Tümosan Konyaspor",
+          "kickoff": "2025-10-26 14:00",
+          "hg": 1,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 7,
+          "home": "Kasımpaşa",
+          "away": "Beşiktaş",
+          "kickoff": "2025-10-26 17:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 8,
+          "home": "Gaziantep FK",
+          "away": "Fenerbahçe",
+          "kickoff": "2025-10-27 17:00",
+          "hg": 0,
+          "ag": 4,
+          "code": "2"
+        },
+        {
+          "no": 9,
+          "home": "Samsunspor",
+          "away": "Çaykur Rizespor",
+          "kickoff": "2025-10-27 17:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 10,
+          "home": "Feyenoord",
+          "away": "PSV Eindhoven",
+          "kickoff": "2025-10-26 13:30",
+          "hg": 2,
+          "ag": 3,
+          "code": "2"
+        },
+        {
+          "no": 11,
+          "home": "Aston Villa",
+          "away": "Manchester City",
+          "kickoff": "2025-10-26 14:00",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 12,
+          "home": "Everton",
+          "away": "Tottenham Hotspur",
+          "kickoff": "2025-10-26 16:30",
+          "hg": 0,
+          "ag": 3,
+          "code": "2"
+        },
+        {
+          "no": 13,
+          "home": "Real Madrid",
+          "away": "Barcelona",
+          "kickoff": "2025-10-26 15:15",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 14,
+          "home": "Napoli",
+          "away": "Inter",
+          "kickoff": "2025-10-25 16:00",
+          "hg": 3,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 15,
+          "home": "Lazio",
+          "away": "Juventus",
+          "kickoff": "2025-10-26 19:45",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        }
+      ]
+    },
+    {
+      "week": 13,
+      "close_date": "2025-11-03",
+      "season": "2025/2026",
+      "n1": 9,
+      "n0": 2,
+      "n2": 4,
+      "results": "110212021112111",
+      "matches": [
+        {
+          "no": 1,
+          "home": "Rams Başakşehir",
+          "away": "Kocaelispor",
+          "kickoff": "2025-10-31 17:00",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 2,
+          "home": "Göztepe",
+          "away": "Natura Dünyası Gençlerbirliği",
+          "kickoff": "2025-11-01 14:00",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 3,
+          "home": "Galatasaray",
+          "away": "Trabzonspor",
+          "kickoff": "2025-11-01 17:00",
+          "hg": 0,
+          "ag": 0,
+          "code": "0"
+        },
+        {
+          "no": 4,
+          "home": "Tümosan Konyaspor",
+          "away": "Samsunspor",
+          "kickoff": "2025-11-02 11:30",
+          "hg": 1,
+          "ag": 3,
+          "code": "2"
+        },
+        {
+          "no": 5,
+          "home": "Zecorner Kayserispor",
+          "away": "Kasımpaşa",
+          "kickoff": "2025-11-02 14:00",
+          "hg": 3,
+          "ag": 2,
+          "code": "1"
+        },
+        {
+          "no": 6,
+          "home": "Beşiktaş",
+          "away": "Fenerbahçe",
+          "kickoff": "2025-11-02 17:00",
+          "hg": 2,
+          "ag": 3,
+          "code": "2"
+        },
+        {
+          "no": 7,
+          "home": "Corendon Alanyaspor",
+          "away": "Gaziantep FK",
+          "kickoff": "2025-11-03 17:00",
+          "hg": 0,
+          "ag": 0,
+          "code": "0"
+        },
+        {
+          "no": 8,
+          "home": "ikas Eyüpspor",
+          "away": "Hesap.com Antalyaspor",
+          "kickoff": "2025-11-03 17:00",
+          "hg": 0,
+          "ag": 1,
+          "code": "2"
+        },
+        {
+          "no": 9,
+          "home": "Çaykur Rizespor",
+          "away": "Mısırlı.com.tr Fatih Karagümrük",
+          "kickoff": "2025-11-03 17:00",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 10,
+          "home": "RB Leipzig",
+          "away": "Vfb Stuttgart",
+          "kickoff": "2025-11-01 14:30",
+          "hg": 3,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 11,
+          "home": "Bayern Münih",
+          "away": "Bayer Leverkusen",
+          "kickoff": "2025-11-01 17:30",
+          "hg": 3,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 12,
+          "home": "Tottenham Hotspur",
+          "away": "Chelsea",
+          "kickoff": "2025-11-01 17:30",
+          "hg": 0,
+          "ag": 1,
+          "code": "2"
+        },
+        {
+          "no": 13,
+          "home": "Manchester City",
+          "away": "AFC Bournemouth",
+          "kickoff": "2025-11-02 16:30",
+          "hg": 3,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 14,
+          "home": "Atletico Madrid",
+          "away": "Sevilla",
+          "kickoff": "2025-11-01 15:15",
+          "hg": 3,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 15,
+          "home": "Milan",
+          "away": "Roma",
+          "kickoff": "2025-11-02 19:45",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        }
+      ]
+    },
+    {
+      "week": 14,
+      "close_date": "2025-11-09",
+      "season": "2025/2026",
+      "n1": 7,
+      "n0": 4,
+      "n2": 4,
+      "results": "100221111120120",
+      "matches": [
+        {
+          "no": 1,
+          "home": "Natura Dünyası Gençlerbirliği",
+          "away": "Rams Başakşehir",
+          "kickoff": "2025-11-07 17:00",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 2,
+          "home": "Gaziantep FK",
+          "away": "Çaykur Rizespor",
+          "kickoff": "2025-11-08 11:30",
+          "hg": 2,
+          "ag": 2,
+          "code": "0"
+        },
+        {
+          "no": 3,
+          "home": "Trabzonspor",
+          "away": "Corendon Alanyaspor",
+          "kickoff": "2025-11-08 14:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 4,
+          "home": "Hesap.com Antalyaspor",
+          "away": "Beşiktaş",
+          "kickoff": "2025-11-08 17:00",
+          "hg": 1,
+          "ag": 3,
+          "code": "2"
+        },
+        {
+          "no": 5,
+          "home": "Kasımpaşa",
+          "away": "Göztepe",
+          "kickoff": "2025-11-08 17:00",
+          "hg": 0,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 6,
+          "home": "Mısırlı.com.tr Fatih Karagümrük",
+          "away": "Tümosan Konyaspor",
+          "kickoff": "2025-11-09 11:30",
+          "hg": 2,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 7,
+          "home": "Kocaelispor",
+          "away": "Galatasaray",
+          "kickoff": "2025-11-09 14:00",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 8,
+          "home": "Fenerbahçe",
+          "away": "Zecorner Kayserispor",
+          "kickoff": "2025-11-09 17:00",
+          "hg": 4,
+          "ag": 2,
+          "code": "1"
+        },
+        {
+          "no": 9,
+          "home": "Samsunspor",
+          "away": "ikas Eyüpspor",
+          "kickoff": "2025-11-09 17:00",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 10,
+          "home": "Anderlecht",
+          "away": "Club Brugge",
+          "kickoff": "2025-11-09 12:30",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 11,
+          "home": "Monaco",
+          "away": "Lens",
+          "kickoff": "2025-11-08 20:05",
+          "hg": 1,
+          "ag": 4,
+          "code": "2"
+        },
+        {
+          "no": 12,
+          "home": "Tottenham Hotspur",
+          "away": "Manchester United",
+          "kickoff": "2025-11-08 12:30",
+          "hg": 2,
+          "ag": 2,
+          "code": "0"
+        },
+        {
+          "no": 13,
+          "home": "Manchester City",
+          "away": "Liverpool",
+          "kickoff": "2025-11-09 16:30",
+          "hg": 3,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 14,
+          "home": "Espanyol",
+          "away": "Villarreal",
+          "kickoff": "2025-11-08 20:00",
+          "hg": 0,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 15,
+          "home": "Juventus",
+          "away": "Torino",
+          "kickoff": "2025-11-08 17:00",
+          "hg": 0,
+          "ag": 0,
+          "code": "0"
+        }
+      ]
+    },
+    {
+      "week": 15,
+      "close_date": "2025-11-17",
+      "season": "2025/2026",
+      "n1": 6,
+      "n0": 2,
+      "n2": 7,
+      "results": "102202112221211",
+      "matches": [
+        {
+          "no": 1,
+          "home": "Türkiye",
+          "away": "Bulgaristan",
+          "kickoff": "2025-11-15 17:00",
+          "hg": 2,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 2,
+          "home": "Polonya",
+          "away": "Hollanda",
+          "kickoff": "2025-11-14 19:45",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 3,
+          "home": "Gürcistan",
+          "away": "İspanya",
+          "kickoff": "2025-11-15 17:00",
+          "hg": 0,
+          "ag": 4,
+          "code": "2"
+        },
+        {
+          "no": 4,
+          "home": "Lihtenştayn",
+          "away": "Galler",
+          "kickoff": "2025-11-15 17:00",
+          "hg": 0,
+          "ag": 1,
+          "code": "2"
+        },
+        {
+          "no": 5,
+          "home": "Danimarka",
+          "away": "Belarus",
+          "kickoff": "2025-11-15 19:45",
+          "hg": 2,
+          "ag": 2,
+          "code": "0"
+        },
+        {
+          "no": 6,
+          "home": "Slovenya",
+          "away": "Kosova",
+          "kickoff": "2025-11-15 19:45",
+          "hg": 0,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 7,
+          "home": "Yunanistan",
+          "away": "İskoçya",
+          "kickoff": "2025-11-15 19:45",
+          "hg": 3,
+          "ag": 2,
+          "code": "1"
+        },
+        {
+          "no": 8,
+          "home": "İsviçre",
+          "away": "İsveç",
+          "kickoff": "2025-11-15 19:45",
+          "hg": 4,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 9,
+          "home": "Macaristan",
+          "away": "İrlanda Cumhuriyeti",
+          "kickoff": "2025-11-16 14:00",
+          "hg": 2,
+          "ag": 3,
+          "code": "2"
+        },
+        {
+          "no": 10,
+          "home": "Arnavutluk",
+          "away": "İngiltere",
+          "kickoff": "2025-11-16 17:00",
+          "hg": 0,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 11,
+          "home": "Azerbaycan",
+          "away": "Fransa",
+          "kickoff": "2025-11-16 17:00",
+          "hg": 1,
+          "ag": 3,
+          "code": "2"
+        },
+        {
+          "no": 12,
+          "home": "Sırbistan",
+          "away": "Letonya",
+          "kickoff": "2025-11-16 17:00",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 13,
+          "home": "İtalya",
+          "away": "Norveç",
+          "kickoff": "2025-11-16 19:45",
+          "hg": 1,
+          "ag": 4,
+          "code": "2"
+        },
+        {
+          "no": 14,
+          "home": "Almanya",
+          "away": "Slovakya",
+          "kickoff": "2025-11-17 19:45",
+          "hg": 6,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 15,
+          "home": "Kuzey İrlanda",
+          "away": "Lüksemburg",
+          "kickoff": "2025-11-17 19:45",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        }
+      ]
+    },
+    {
+      "week": 16,
+      "close_date": "2025-11-24",
+      "season": "2025/2026",
+      "n1": 4,
+      "n0": 5,
+      "n2": 6,
+      "results": "201020220021112",
+      "matches": [
+        {
+          "no": 1,
+          "home": "Zecorner Kayserispor",
+          "away": "Gaziantep FK",
+          "kickoff": "2025-11-22 11:30",
+          "hg": 0,
+          "ag": 3,
+          "code": "2"
+        },
+        {
+          "no": 2,
+          "home": "ikas Eyüpspor",
+          "away": "Mısırlı.com.tr Fatih Karagümrük",
+          "kickoff": "2025-11-22 14:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 3,
+          "home": "Galatasaray",
+          "away": "Natura Dünyası Gençlerbirliği",
+          "kickoff": "2025-11-22 17:00",
+          "hg": 3,
+          "ag": 2,
+          "code": "1"
+        },
+        {
+          "no": 4,
+          "home": "Göztepe",
+          "away": "Kocaelispor",
+          "kickoff": "2025-11-23 11:30",
+          "hg": 0,
+          "ag": 0,
+          "code": "0"
+        },
+        {
+          "no": 5,
+          "home": "Corendon Alanyaspor",
+          "away": "Kasımpaşa",
+          "kickoff": "2025-11-23 14:00",
+          "hg": 1,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 6,
+          "home": "Beşiktaş",
+          "away": "Samsunspor",
+          "kickoff": "2025-11-23 14:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 7,
+          "home": "Çaykur Rizespor",
+          "away": "Fenerbahçe",
+          "kickoff": "2025-11-23 17:00",
+          "hg": 2,
+          "ag": 5,
+          "code": "2"
+        },
+        {
+          "no": 8,
+          "home": "Rams Başakşehir",
+          "away": "Trabzonspor",
+          "kickoff": "2025-11-24 17:00",
+          "hg": 3,
+          "ag": 4,
+          "code": "2"
+        },
+        {
+          "no": 9,
+          "home": "Tümosan Konyaspor",
+          "away": "Hesap.com Antalyaspor",
+          "kickoff": "2025-11-24 17:00",
+          "hg": 0,
+          "ag": 0,
+          "code": "0"
+        },
+        {
+          "no": 10,
+          "home": "Borussia Dortmund",
+          "away": "Vfb Stuttgart",
+          "kickoff": "2025-11-22 14:30",
+          "hg": 3,
+          "ag": 3,
+          "code": "0"
+        },
+        {
+          "no": 11,
+          "home": "FC Köln",
+          "away": "Eintracht Frankfurt",
+          "kickoff": "2025-11-22 17:30",
+          "hg": 3,
+          "ag": 4,
+          "code": "2"
+        },
+        {
+          "no": 12,
+          "home": "Arsenal",
+          "away": "Tottenham Hotspur",
+          "kickoff": "2025-11-23 16:30",
+          "hg": 4,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 13,
+          "home": "Barcelona",
+          "away": "Athletic Bilbao",
+          "kickoff": "2025-11-22 15:15",
+          "hg": 4,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 14,
+          "home": "Napoli",
+          "away": "Atalanta",
+          "kickoff": "2025-11-22 19:45",
+          "hg": 3,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 15,
+          "home": "Inter",
+          "away": "Milan",
+          "kickoff": "2025-11-23 19:45",
+          "hg": 0,
+          "ag": 1,
+          "code": "2"
+        }
+      ]
+    },
+    {
+      "week": 17,
+      "close_date": "2025-12-01",
+      "season": "2025/2026",
+      "n1": 5,
+      "n0": 3,
+      "n2": 7,
+      "results": "122212200210112",
+      "matches": [
+        {
+          "no": 1,
+          "home": "Kocaelispor",
+          "away": "Natura Dünyası Gençlerbirliği",
+          "kickoff": "2025-11-28 17:00",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 2,
+          "home": "Çaykur Rizespor",
+          "away": "Zecorner Kayserispor",
+          "kickoff": "2025-11-29 11:30",
+          "hg": 0,
+          "ag": 1,
+          "code": "2"
+        },
+        {
+          "no": 3,
+          "home": "Gaziantep FK",
+          "away": "ikas Eyüpspor",
+          "kickoff": "2025-11-29 14:00",
+          "hg": 1,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 4,
+          "home": "Kasımpaşa",
+          "away": "Rams Başakşehir",
+          "kickoff": "2025-11-29 17:00",
+          "hg": 1,
+          "ag": 3,
+          "code": "2"
+        },
+        {
+          "no": 5,
+          "home": "Trabzonspor",
+          "away": "Tümosan Konyaspor",
+          "kickoff": "2025-11-29 17:00",
+          "hg": 3,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 6,
+          "home": "Hesap.com Antalyaspor",
+          "away": "Göztepe",
+          "kickoff": "2025-11-30 14:00",
+          "hg": 1,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 7,
+          "home": "Mısırlı.com.tr Fatih Karagümrük",
+          "away": "Beşiktaş",
+          "kickoff": "2025-11-30 17:00",
+          "hg": 0,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 8,
+          "home": "Fenerbahçe",
+          "away": "Galatasaray",
+          "kickoff": "2025-12-01 17:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 9,
+          "home": "Samsunspor",
+          "away": "Corendon Alanyaspor",
+          "kickoff": "2025-12-01 17:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 10,
+          "home": "Bayer Leverkusen",
+          "away": "Borussia Dortmund",
+          "kickoff": "2025-11-29 17:30",
+          "hg": 1,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 11,
+          "home": "Monaco",
+          "away": "Paris St Germain",
+          "kickoff": "2025-11-29 16:00",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 12,
+          "home": "Chelsea",
+          "away": "Arsenal",
+          "kickoff": "2025-11-30 16:30",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 13,
+          "home": "Barcelona",
+          "away": "Deportivo Alaves",
+          "kickoff": "2025-11-29 15:15",
+          "hg": 3,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 14,
+          "home": "Milan",
+          "away": "Lazio",
+          "kickoff": "2025-11-29 19:45",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 15,
+          "home": "Roma",
+          "away": "Napoli",
+          "kickoff": "2025-11-30 19:45",
+          "hg": 0,
+          "ag": 1,
+          "code": "2"
+        }
+      ]
+    },
+    {
+      "week": 18,
+      "close_date": "2025-12-08",
+      "season": "2025/2026",
+      "n1": 6,
+      "n0": 6,
+      "n2": 3,
+      "results": "100010200211121",
+      "matches": [
+        {
+          "no": 1,
+          "home": "Galatasaray",
+          "away": "Samsunspor",
+          "kickoff": "2025-12-05 17:00",
+          "hg": 3,
+          "ag": 2,
+          "code": "1"
+        },
+        {
+          "no": 2,
+          "home": "ikas Eyüpspor",
+          "away": "Zecorner Kayserispor",
+          "kickoff": "2025-12-06 11:30",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 3,
+          "home": "Tümosan Konyaspor",
+          "away": "Çaykur Rizespor",
+          "kickoff": "2025-12-06 14:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 4,
+          "home": "Rams Başakşehir",
+          "away": "Fenerbahçe",
+          "kickoff": "2025-12-06 17:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 5,
+          "home": "Natura Dünyası Gençlerbirliği",
+          "away": "Mısırlı.com.tr Fatih Karagümrük",
+          "kickoff": "2025-12-07 11:30",
+          "hg": 3,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 6,
+          "home": "Kocaelispor",
+          "away": "Kasımpaşa",
+          "kickoff": "2025-12-07 14:00",
+          "hg": 0,
+          "ag": 0,
+          "code": "0"
+        },
+        {
+          "no": 7,
+          "home": "Göztepe",
+          "away": "Trabzonspor",
+          "kickoff": "2025-12-07 17:00",
+          "hg": 1,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 8,
+          "home": "Corendon Alanyaspor",
+          "away": "Hesap.com Antalyaspor",
+          "kickoff": "2025-12-08 17:00",
+          "hg": 0,
+          "ag": 0,
+          "code": "0"
+        },
+        {
+          "no": 9,
+          "home": "Beşiktaş",
+          "away": "Gaziantep FK",
+          "kickoff": "2025-12-08 17:00",
+          "hg": 2,
+          "ag": 2,
+          "code": "0"
+        },
+        {
+          "no": 10,
+          "home": "Vfb Stuttgart",
+          "away": "Bayern Münih",
+          "kickoff": "2025-12-06 14:30",
+          "hg": 0,
+          "ag": 5,
+          "code": "2"
+        },
+        {
+          "no": 11,
+          "home": "Lille",
+          "away": "Marsilya",
+          "kickoff": "2025-12-05 20:00",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 12,
+          "home": "Aston Villa",
+          "away": "Arsenal",
+          "kickoff": "2025-12-06 12:30",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 13,
+          "home": "Everton",
+          "away": "Nottingham Forest",
+          "kickoff": "2025-12-06 15:00",
+          "hg": 3,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 14,
+          "home": "Real Betis",
+          "away": "Barcelona",
+          "kickoff": "2025-12-06 17:30",
+          "hg": 3,
+          "ag": 5,
+          "code": "2"
+        },
+        {
+          "no": 15,
+          "home": "Napoli",
+          "away": "Juventus",
+          "kickoff": "2025-12-07 19:45",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        }
+      ]
+    },
+    {
+      "week": 19,
+      "close_date": "2025-12-15",
+      "season": "2025/2026",
+      "n1": 7,
+      "n0": 5,
+      "n2": 3,
+      "results": "010220201011111",
+      "matches": [
+        {
+          "no": 1,
+          "home": "Kasımpaşa",
+          "away": "Natura Dünyası Gençlerbirliği",
+          "kickoff": "2025-12-12 17:00",
+          "hg": 0,
+          "ag": 0,
+          "code": "0"
+        },
+        {
+          "no": 2,
+          "home": "Çaykur Rizespor",
+          "away": "ikas Eyüpspor",
+          "kickoff": "2025-12-13 11:30",
+          "hg": 3,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 3,
+          "home": "Zecorner Kayserispor",
+          "away": "Corendon Alanyaspor",
+          "kickoff": "2025-12-13 14:00",
+          "hg": 0,
+          "ag": 0,
+          "code": "0"
+        },
+        {
+          "no": 4,
+          "home": "Hesap.com Antalyaspor",
+          "away": "Galatasaray",
+          "kickoff": "2025-12-13 17:00",
+          "hg": 1,
+          "ag": 4,
+          "code": "2"
+        },
+        {
+          "no": 5,
+          "home": "Gaziantep FK",
+          "away": "Göztepe",
+          "kickoff": "2025-12-14 11:30",
+          "hg": 0,
+          "ag": 1,
+          "code": "2"
+        },
+        {
+          "no": 6,
+          "home": "Mısırlı.com.tr Fatih Karagümrük",
+          "away": "Kocaelispor",
+          "kickoff": "2025-12-14 14:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 7,
+          "home": "Samsunspor",
+          "away": "Rams Başakşehir",
+          "kickoff": "2025-12-14 17:00",
+          "hg": 0,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 8,
+          "home": "Trabzonspor",
+          "away": "Beşiktaş",
+          "kickoff": "2025-12-14 17:00",
+          "hg": 3,
+          "ag": 3,
+          "code": "0"
+        },
+        {
+          "no": 9,
+          "home": "Fenerbahçe",
+          "away": "Tümosan Konyaspor",
+          "kickoff": "2025-12-15 17:00",
+          "hg": 4,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 10,
+          "home": "Freiburg",
+          "away": "Borussia Dortmund",
+          "kickoff": "2025-12-14 14:30",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 11,
+          "home": "Marsilya",
+          "away": "Monaco",
+          "kickoff": "2025-12-14 19:56",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 12,
+          "home": "Ajax",
+          "away": "Feyenoord",
+          "kickoff": "2025-12-14 13:30",
+          "hg": 2,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 13,
+          "home": "Liverpool",
+          "away": "Brighton & Hove Albion",
+          "kickoff": "2025-12-13 15:00",
+          "hg": 2,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 14,
+          "home": "Atletico Madrid",
+          "away": "Valencia",
+          "kickoff": "2025-12-13 13:00",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 15,
+          "home": "Udinese",
+          "away": "Napoli",
+          "kickoff": "2025-12-14 14:00",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        }
+      ]
+    },
+    {
+      "week": 20,
+      "close_date": "2025-12-22",
+      "season": "2025/2026",
+      "n1": 10,
+      "n0": 1,
+      "n2": 4,
+      "results": "102111111221211",
+      "matches": [
+        {
+          "no": 1,
+          "home": "Kocaelispor",
+          "away": "Hesap.com Antalyaspor",
+          "kickoff": "2025-12-19 17:00",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 2,
+          "home": "Tümosan Konyaspor",
+          "away": "Zecorner Kayserispor",
+          "kickoff": "2025-12-20 11:30",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 3,
+          "home": "ikas Eyüpspor",
+          "away": "Fenerbahçe",
+          "kickoff": "2025-12-20 14:00",
+          "hg": 0,
+          "ag": 3,
+          "code": "2"
+        },
+        {
+          "no": 4,
+          "home": "Beşiktaş",
+          "away": "Çaykur Rizespor",
+          "kickoff": "2025-12-20 17:00",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 5,
+          "home": "Corendon Alanyaspor",
+          "away": "Mısırlı.com.tr Fatih Karagümrük",
+          "kickoff": "2025-12-21 11:30",
+          "hg": 2,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 6,
+          "home": "Rams Başakşehir",
+          "away": "Gaziantep FK",
+          "kickoff": "2025-12-22 14:00",
+          "hg": 5,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 7,
+          "home": "Galatasaray",
+          "away": "Kasımpaşa",
+          "kickoff": "2025-12-21 17:00",
+          "hg": 3,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 8,
+          "home": "Göztepe",
+          "away": "Samsunspor",
+          "kickoff": "2025-12-21 17:00",
+          "hg": 2,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 9,
+          "home": "Natura Dünyası Gençlerbirliği",
+          "away": "Trabzonspor",
+          "kickoff": "2025-12-22 17:00",
+          "hg": 4,
+          "ag": 3,
+          "code": "1"
+        },
+        {
+          "no": 10,
+          "home": "RB Leipzig",
+          "away": "Bayer Leverkusen",
+          "kickoff": "2025-12-20 17:30",
+          "hg": 1,
+          "ag": 3,
+          "code": "2"
+        },
+        {
+          "no": 11,
+          "home": "Tottenham Hotspur",
+          "away": "Liverpool",
+          "kickoff": "2025-12-20 17:30",
+          "hg": 1,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 12,
+          "home": "Aston Villa",
+          "away": "Manchester United",
+          "kickoff": "2025-12-21 16:30",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 13,
+          "home": "Villarreal",
+          "away": "Barcelona",
+          "kickoff": "2025-12-21 15:15",
+          "hg": 0,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 14,
+          "home": "Real Betis",
+          "away": "Getafe",
+          "kickoff": "2025-12-21 20:00",
+          "hg": 4,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 15,
+          "home": "Juventus",
+          "away": "Roma",
+          "kickoff": "2025-12-20 19:45",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        }
+      ]
+    },
+    {
+      "week": 21,
+      "close_date": "2025-12-28",
+      "season": "2025/2026",
+      "n1": 6,
+      "n0": 3,
+      "n2": 6,
+      "results": "221111112202020",
+      "matches": [
+        {
+          "no": 1,
+          "home": "Standard Liege",
+          "away": "Sint Truiden",
+          "kickoff": "2025-12-26 17:30",
+          "hg": 1,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 2,
+          "home": "Anderlecht",
+          "away": "Sporting Charleroi",
+          "kickoff": "2025-12-26 19:45",
+          "hg": 1,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 3,
+          "home": "Antwerp",
+          "away": "Zulte Waregem",
+          "kickoff": "2025-12-27 12:30",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 4,
+          "home": "KAA Gent",
+          "away": "Westerlo",
+          "kickoff": "2025-12-27 19:45",
+          "hg": 2,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 5,
+          "home": "Manchester United",
+          "away": "Newcastle United",
+          "kickoff": "2025-12-26 20:00",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 6,
+          "home": "Arsenal",
+          "away": "Brighton & Hove Albion",
+          "kickoff": "2025-12-27 15:00",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 7,
+          "home": "Brentford",
+          "away": "AFC Bournemouth",
+          "kickoff": "2025-12-27 15:00",
+          "hg": 4,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 8,
+          "home": "Liverpool",
+          "away": "Wolverhampton",
+          "kickoff": "2025-12-27 15:00",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 9,
+          "home": "Chelsea",
+          "away": "Aston Villa",
+          "kickoff": "2025-12-27 17:30",
+          "hg": 1,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 10,
+          "home": "Crystal Palace",
+          "away": "Tottenham Hotspur",
+          "kickoff": "2025-12-28 16:30",
+          "hg": 0,
+          "ag": 1,
+          "code": "2"
+        },
+        {
+          "no": 11,
+          "home": "Udinese",
+          "away": "Lazio",
+          "kickoff": "2025-12-27 17:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 12,
+          "home": "Cremonese",
+          "away": "Napoli",
+          "kickoff": "2025-12-28 14:00",
+          "hg": 0,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 13,
+          "home": "Bologna",
+          "away": "Sassuolo",
+          "kickoff": "2025-12-28 17:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 14,
+          "home": "Atalanta",
+          "away": "Inter",
+          "kickoff": "2025-12-28 19:45",
+          "hg": 0,
+          "ag": 1,
+          "code": "2"
+        },
+        {
+          "no": 15,
+          "home": "Braga",
+          "away": "Benfica",
+          "kickoff": "2025-12-28 18:00",
+          "hg": 2,
+          "ag": 2,
+          "code": "0"
+        }
+      ]
+    },
+    {
+      "week": 22,
+      "close_date": "2026-01-04",
+      "season": "2025/2026",
+      "n1": 4,
+      "n0": 6,
+      "n2": 5,
+      "results": "220201000211120",
+      "matches": [
+        {
+          "no": 1,
+          "home": "Monaco",
+          "away": "Olympique Lyon",
+          "kickoff": "2026-01-03 16:00",
+          "hg": 1,
+          "ag": 3,
+          "code": "2"
+        },
+        {
+          "no": 2,
+          "home": "Lille",
+          "away": "Rennes",
+          "kickoff": "2026-01-03 20:05",
+          "hg": 0,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 3,
+          "home": "Leeds United",
+          "away": "Manchester United",
+          "kickoff": "2026-01-04 12:30",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 4,
+          "home": "Everton",
+          "away": "Brentford",
+          "kickoff": "2026-01-04 15:00",
+          "hg": 2,
+          "ag": 4,
+          "code": "2"
+        },
+        {
+          "no": 5,
+          "home": "Fulham",
+          "away": "Liverpool",
+          "kickoff": "2026-01-04 15:15",
+          "hg": 2,
+          "ag": 2,
+          "code": "0"
+        },
+        {
+          "no": 6,
+          "home": "Newcastle United",
+          "away": "Crystal Palace",
+          "kickoff": "2026-01-04 15:00",
+          "hg": 2,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 7,
+          "home": "Tottenham Hotspur",
+          "away": "Sunderland",
+          "kickoff": "2026-01-04 15:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 8,
+          "home": "Manchester City",
+          "away": "Chelsea",
+          "kickoff": "2026-01-04 17:30",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 9,
+          "home": "Rayo Vallecano",
+          "away": "Getafe",
+          "kickoff": "2026-01-02 20:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 10,
+          "home": "Espanyol",
+          "away": "Barcelona",
+          "kickoff": "2026-01-03 20:00",
+          "hg": 0,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 11,
+          "home": "Real Madrid",
+          "away": "Real Betis",
+          "kickoff": "2026-01-04 15:15",
+          "hg": 5,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 12,
+          "home": "Como",
+          "away": "Udinese",
+          "kickoff": "2026-01-03 11:30",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 13,
+          "home": "Atalanta",
+          "away": "Roma",
+          "kickoff": "2026-01-03 19:45",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 14,
+          "home": "Lazio",
+          "away": "Napoli",
+          "kickoff": "2026-01-04 11:30",
+          "hg": 0,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 15,
+          "home": "Gil Vicente",
+          "away": "Sporting Lizbon",
+          "kickoff": "2026-01-02 18:45",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        }
+      ]
+    },
+    {
+      "week": 24,
+      "close_date": "2026-01-19",
+      "season": "2025/2026",
+      "n1": 7,
+      "n0": 4,
+      "n2": 4,
+      "results": "100022011121121",
+      "matches": [
+        {
+          "no": 1,
+          "home": "Rams Başakşehir",
+          "away": "Mısırlı.com.tr Fatih Karagümrük",
+          "kickoff": "2026-01-17 14:00",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 2,
+          "home": "Galatasaray",
+          "away": "Gaziantep FK",
+          "kickoff": "2026-01-17 17:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 3,
+          "home": "Kasımpaşa",
+          "away": "Hesap.com Antalyaspor",
+          "kickoff": "2026-01-18 11:30",
+          "hg": 0,
+          "ag": 0,
+          "code": "0"
+        },
+        {
+          "no": 4,
+          "home": "Natura Dünyası Gençlerbirliği",
+          "away": "Samsunspor",
+          "kickoff": "2026-01-18 14:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 5,
+          "home": "Kocaelispor",
+          "away": "Trabzonspor",
+          "kickoff": "2026-01-18 14:00",
+          "hg": 1,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 6,
+          "home": "Corendon Alanyaspor",
+          "away": "Fenerbahçe",
+          "kickoff": "2026-01-18 17:00",
+          "hg": 2,
+          "ag": 3,
+          "code": "2"
+        },
+        {
+          "no": 7,
+          "home": "Tümosan Konyaspor",
+          "away": "ikas Eyüpspor",
+          "kickoff": "2026-01-19 14:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 8,
+          "home": "Beşiktaş",
+          "away": "Zecorner Kayserispor",
+          "kickoff": "2026-01-19 17:00",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 9,
+          "home": "Göztepe",
+          "away": "Çaykur Rizespor",
+          "kickoff": "2026-01-19 17:00",
+          "hg": 3,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 10,
+          "home": "TSG Hoffenheim",
+          "away": "Bayer Leverkusen",
+          "kickoff": "2026-01-17 14:30",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 11,
+          "home": "RB Leipzig",
+          "away": "Bayern Münih",
+          "kickoff": "2026-01-17 17:30",
+          "hg": 1,
+          "ag": 5,
+          "code": "2"
+        },
+        {
+          "no": 12,
+          "home": "Paris St Germain",
+          "away": "Lille",
+          "kickoff": "2026-01-16 20:00",
+          "hg": 3,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 13,
+          "home": "Manchester United",
+          "away": "Manchester City",
+          "kickoff": "2026-01-17 12:30",
+          "hg": 2,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 14,
+          "home": "Aston Villa",
+          "away": "Everton",
+          "kickoff": "2026-01-18 16:30",
+          "hg": 0,
+          "ag": 1,
+          "code": "2"
+        },
+        {
+          "no": 15,
+          "home": "Real Sociedad",
+          "away": "Barcelona",
+          "kickoff": "2026-01-18 20:00",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        }
+      ]
+    },
+    {
+      "week": 25,
+      "close_date": "2026-01-26",
+      "season": "2025/2026",
+      "n1": 4,
+      "n0": 6,
+      "n2": 5,
+      "results": "120201000212210",
+      "matches": [
+        {
+          "no": 1,
+          "home": "Trabzonspor",
+          "away": "Kasımpaşa",
+          "kickoff": "2026-01-23 17:00",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 2,
+          "home": "Zecorner Kayserispor",
+          "away": "Rams Başakşehir",
+          "kickoff": "2026-01-24 11:30",
+          "hg": 0,
+          "ag": 3,
+          "code": "2"
+        },
+        {
+          "no": 3,
+          "home": "Samsunspor",
+          "away": "Kocaelispor",
+          "kickoff": "2026-01-24 14:00",
+          "hg": 0,
+          "ag": 0,
+          "code": "0"
+        },
+        {
+          "no": 4,
+          "home": "Mısırlı.com.tr Fatih Karagümrük",
+          "away": "Galatasaray",
+          "kickoff": "2026-01-24 17:00",
+          "hg": 1,
+          "ag": 3,
+          "code": "2"
+        },
+        {
+          "no": 5,
+          "home": "Gaziantep FK",
+          "away": "Tümosan Konyaspor",
+          "kickoff": "2026-01-25 11:30",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 6,
+          "home": "Hesap.com Antalyaspor",
+          "away": "Natura Dünyası Gençlerbirliği",
+          "kickoff": "2026-01-25 14:00",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 7,
+          "home": "Çaykur Rizespor",
+          "away": "Corendon Alanyaspor",
+          "kickoff": "2026-01-25 14:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 8,
+          "home": "Fenerbahçe",
+          "away": "Göztepe",
+          "kickoff": "2026-01-25 17:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 9,
+          "home": "ikas Eyüpspor",
+          "away": "Beşiktaş",
+          "kickoff": "2026-01-26 17:00",
+          "hg": 2,
+          "ag": 2,
+          "code": "0"
+        },
+        {
+          "no": 10,
+          "home": "Union Berlin",
+          "away": "Borussia Dortmund",
+          "kickoff": "2026-01-24 17:30",
+          "hg": 0,
+          "ag": 3,
+          "code": "2"
+        },
+        {
+          "no": 11,
+          "home": "Marsilya",
+          "away": "Lens",
+          "kickoff": "2026-01-24 20:05",
+          "hg": 3,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 12,
+          "home": "Arsenal",
+          "away": "Manchester United",
+          "kickoff": "2026-01-25 16:30",
+          "hg": 2,
+          "ag": 3,
+          "code": "2"
+        },
+        {
+          "no": 13,
+          "home": "Villarreal",
+          "away": "Real Madrid",
+          "kickoff": "2026-01-24 20:00",
+          "hg": 0,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 14,
+          "home": "Juventus",
+          "away": "Napoli",
+          "kickoff": "2026-01-25 17:00",
+          "hg": 3,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 15,
+          "home": "Roma",
+          "away": "Milan",
+          "kickoff": "2026-01-25 19:45",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        }
+      ]
+    },
+    {
+      "week": 26,
+      "close_date": "2026-02-02",
+      "season": "2025/2026",
+      "n1": 7,
+      "n0": 4,
+      "n2": 4,
+      "results": "022011112211010",
+      "matches": [
+        {
+          "no": 1,
+          "home": "Hesap.com Antalyaspor",
+          "away": "Trabzonspor",
+          "kickoff": "2026-01-30 17:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 2,
+          "home": "Kasımpaşa",
+          "away": "Samsunspor",
+          "kickoff": "2026-01-30 17:00",
+          "hg": 0,
+          "ag": 1,
+          "code": "2"
+        },
+        {
+          "no": 3,
+          "home": "Corendon Alanyaspor",
+          "away": "ikas Eyüpspor",
+          "kickoff": "2026-01-31 11:30",
+          "hg": 1,
+          "ag": 3,
+          "code": "2"
+        },
+        {
+          "no": 4,
+          "home": "Rams Başakşehir",
+          "away": "Çaykur Rizespor",
+          "kickoff": "2026-01-31 14:00",
+          "hg": 2,
+          "ag": 2,
+          "code": "0"
+        },
+        {
+          "no": 5,
+          "home": "Beşiktaş",
+          "away": "Tümosan Konyaspor",
+          "kickoff": "2026-01-31 17:00",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 6,
+          "home": "Göztepe",
+          "away": "Mısırlı.com.tr Fatih Karagümrük",
+          "kickoff": "2026-01-31 17:00",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 7,
+          "home": "Natura Dünyası Gençlerbirliği",
+          "away": "Gaziantep FK",
+          "kickoff": "2026-02-01 14:00",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 8,
+          "home": "Galatasaray",
+          "away": "Zecorner Kayserispor",
+          "kickoff": "2026-02-01 17:00",
+          "hg": 4,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 9,
+          "home": "Kocaelispor",
+          "away": "Fenerbahçe",
+          "kickoff": "2026-02-02 17:00",
+          "hg": 0,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 10,
+          "home": "Eintracht Frankfurt",
+          "away": "Bayer Leverkusen",
+          "kickoff": "2026-01-31 14:30",
+          "hg": 1,
+          "ag": 3,
+          "code": "2"
+        },
+        {
+          "no": 11,
+          "home": "Olympique Lyon",
+          "away": "Lille",
+          "kickoff": "2026-02-01 14:00",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 12,
+          "home": "Liverpool",
+          "away": "Newcastle United",
+          "kickoff": "2026-01-31 20:00",
+          "hg": 4,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 13,
+          "home": "Tottenham Hotspur",
+          "away": "Manchester City",
+          "kickoff": "2026-02-01 16:30",
+          "hg": 2,
+          "ag": 2,
+          "code": "0"
+        },
+        {
+          "no": 14,
+          "home": "Napoli",
+          "away": "Fiorentina",
+          "kickoff": "2026-01-31 17:00",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 15,
+          "home": "Como",
+          "away": "Atalanta",
+          "kickoff": "2026-02-01 14:00",
+          "hg": 0,
+          "ag": 0,
+          "code": "0"
+        }
+      ]
+    },
+    {
+      "week": 27,
+      "close_date": "2026-02-09",
+      "season": "2025/2026",
+      "n1": 5,
+      "n0": 3,
+      "n2": 7,
+      "results": "122020211112220",
+      "matches": [
+        {
+          "no": 1,
+          "home": "Mısırlı.com.tr Fatih Karagümrük",
+          "away": "Hesap.com Antalyaspor",
+          "kickoff": "2026-02-07 11:30",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 2,
+          "home": "Samsunspor",
+          "away": "Trabzonspor",
+          "kickoff": "2026-02-07 17:00",
+          "hg": 0,
+          "ag": 3,
+          "code": "2"
+        },
+        {
+          "no": 3,
+          "home": "ikas Eyüpspor",
+          "away": "Rams Başakşehir",
+          "kickoff": "2026-02-08 11:30",
+          "hg": 1,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 4,
+          "home": "Tümosan Konyaspor",
+          "away": "Göztepe",
+          "kickoff": "2026-02-08 14:00",
+          "hg": 0,
+          "ag": 0,
+          "code": "0"
+        },
+        {
+          "no": 5,
+          "home": "Çaykur Rizespor",
+          "away": "Galatasaray",
+          "kickoff": "2026-02-08 14:00",
+          "hg": 0,
+          "ag": 3,
+          "code": "2"
+        },
+        {
+          "no": 6,
+          "home": "Beşiktaş",
+          "away": "Corendon Alanyaspor",
+          "kickoff": "2026-02-08 17:00",
+          "hg": 2,
+          "ag": 2,
+          "code": "0"
+        },
+        {
+          "no": 7,
+          "home": "Zecorner Kayserispor",
+          "away": "Kocaelispor",
+          "kickoff": "2026-02-09 14:00",
+          "hg": 1,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 8,
+          "home": "Fenerbahçe",
+          "away": "Natura Dünyası Gençlerbirliği",
+          "kickoff": "2026-02-09 17:00",
+          "hg": 3,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 9,
+          "home": "Gaziantep FK",
+          "away": "Kasımpaşa",
+          "kickoff": "2026-02-09 17:00",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 10,
+          "home": "Bayern Münih",
+          "away": "TSG Hoffenheim",
+          "kickoff": "2026-02-08 16:30",
+          "hg": 5,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 11,
+          "home": "Paris St Germain",
+          "away": "Marsilya",
+          "kickoff": "2026-02-08 19:45",
+          "hg": 5,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 12,
+          "home": "Liverpool",
+          "away": "Manchester City",
+          "kickoff": "2026-02-08 16:30",
+          "hg": 1,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 13,
+          "home": "Atletico Madrid",
+          "away": "Real Betis",
+          "kickoff": "2026-02-08 17:30",
+          "hg": 0,
+          "ag": 1,
+          "code": "2"
+        },
+        {
+          "no": 14,
+          "home": "Valencia",
+          "away": "Real Madrid",
+          "kickoff": "2026-02-08 20:00",
+          "hg": 0,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 15,
+          "home": "Juventus",
+          "away": "Lazio",
+          "kickoff": "2026-02-08 19:45",
+          "hg": 2,
+          "ag": 2,
+          "code": "0"
+        }
+      ]
+    },
+    {
+      "week": 28,
+      "close_date": "2026-02-16",
+      "season": "2025/2026",
+      "n1": 9,
+      "n0": 3,
+      "n2": 3,
+      "results": "110121021111210",
+      "matches": [
+        {
+          "no": 1,
+          "home": "Hesap.com Antalyaspor",
+          "away": "Samsunspor",
+          "kickoff": "2026-02-13 17:00",
+          "hg": 3,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 2,
+          "home": "Galatasaray",
+          "away": "ikas Eyüpspor",
+          "kickoff": "2026-02-13 17:00",
+          "hg": 5,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 3,
+          "home": "Natura Dünyası Gençlerbirliği",
+          "away": "Çaykur Rizespor",
+          "kickoff": "2026-02-14 11:30",
+          "hg": 2,
+          "ag": 2,
+          "code": "0"
+        },
+        {
+          "no": 4,
+          "home": "Corendon Alanyaspor",
+          "away": "Tümosan Konyaspor",
+          "kickoff": "2026-02-14 14:00",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 5,
+          "home": "Trabzonspor",
+          "away": "Fenerbahçe",
+          "kickoff": "2026-02-14 17:00",
+          "hg": 2,
+          "ag": 3,
+          "code": "2"
+        },
+        {
+          "no": 6,
+          "home": "Kocaelispor",
+          "away": "Gaziantep FK",
+          "kickoff": "2026-02-15 11:30",
+          "hg": 3,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 7,
+          "home": "Göztepe",
+          "away": "Zecorner Kayserispor",
+          "kickoff": "2026-02-15 14:00",
+          "hg": 0,
+          "ag": 0,
+          "code": "0"
+        },
+        {
+          "no": 8,
+          "home": "Rams Başakşehir",
+          "away": "Beşiktaş",
+          "kickoff": "2026-02-15 17:00",
+          "hg": 2,
+          "ag": 3,
+          "code": "2"
+        },
+        {
+          "no": 9,
+          "home": "Kasımpaşa",
+          "away": "Mısırlı.com.tr Fatih Karagümrük",
+          "kickoff": "2026-02-16 17:00",
+          "hg": 3,
+          "ag": 2,
+          "code": "1"
+        },
+        {
+          "no": 10,
+          "home": "Borussia Dortmund",
+          "away": "Mainz 05",
+          "kickoff": "2026-02-13 19:30",
+          "hg": 4,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 11,
+          "home": "Rennes",
+          "away": "Paris St Germain",
+          "kickoff": "2026-02-13 18:00",
+          "hg": 3,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 12,
+          "home": "Real Madrid",
+          "away": "Real Sociedad",
+          "kickoff": "2026-02-14 20:00",
+          "hg": 4,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 13,
+          "home": "Lazio",
+          "away": "Atalanta",
+          "kickoff": "2026-02-14 17:00",
+          "hg": 0,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 14,
+          "home": "Inter",
+          "away": "Juventus",
+          "kickoff": "2026-02-14 19:45",
+          "hg": 3,
+          "ag": 2,
+          "code": "1"
+        },
+        {
+          "no": 15,
+          "home": "Napoli",
+          "away": "Roma",
+          "kickoff": "2026-02-15 19:45",
+          "hg": 2,
+          "ag": 2,
+          "code": "0"
+        }
+      ]
+    },
+    {
+      "week": 29,
+      "close_date": "2026-02-23",
+      "season": "2025/2026",
+      "n1": 8,
+      "n0": 3,
+      "n2": 4,
+      "results": "112112100012121",
+      "matches": [
+        {
+          "no": 1,
+          "home": "Çaykur Rizespor",
+          "away": "Kocaelispor",
+          "kickoff": "2026-02-20 17:00",
+          "hg": 2,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 2,
+          "home": "ikas Eyüpspor",
+          "away": "Natura Dünyası Gençlerbirliği",
+          "kickoff": "2026-02-21 10:30",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 3,
+          "home": "Corendon Alanyaspor",
+          "away": "Rams Başakşehir",
+          "kickoff": "2026-02-21 13:00",
+          "hg": 1,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 4,
+          "home": "Tümosan Konyaspor",
+          "away": "Galatasaray",
+          "kickoff": "2026-02-21 17:00",
+          "hg": 2,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 5,
+          "home": "Zecorner Kayserispor",
+          "away": "Hesap.com Antalyaspor",
+          "kickoff": "2026-02-22 10:30",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 6,
+          "home": "Gaziantep FK",
+          "away": "Trabzonspor",
+          "kickoff": "2026-02-22 13:00",
+          "hg": 1,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 7,
+          "home": "Beşiktaş",
+          "away": "Göztepe",
+          "kickoff": "2026-02-22 17:00",
+          "hg": 4,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 8,
+          "home": "Mısırlı.com.tr Fatih Karagümrük",
+          "away": "Samsunspor",
+          "kickoff": "2026-02-22 17:00",
+          "hg": 0,
+          "ag": 0,
+          "code": "0"
+        },
+        {
+          "no": 9,
+          "home": "Fenerbahçe",
+          "away": "Kasımpaşa",
+          "kickoff": "2026-02-23 17:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 10,
+          "home": "RB Leipzig",
+          "away": "Borussia Dortmund",
+          "kickoff": "2026-02-21 17:30",
+          "hg": 2,
+          "ag": 2,
+          "code": "0"
+        },
+        {
+          "no": 11,
+          "home": "Manchester City",
+          "away": "Newcastle United",
+          "kickoff": "2026-02-21 20:00",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 12,
+          "home": "Tottenham Hotspur",
+          "away": "Arsenal",
+          "kickoff": "2026-02-22 16:30",
+          "hg": 1,
+          "ag": 4,
+          "code": "2"
+        },
+        {
+          "no": 13,
+          "home": "Atletico Madrid",
+          "away": "Espanyol",
+          "kickoff": "2026-02-21 20:00",
+          "hg": 4,
+          "ag": 2,
+          "code": "1"
+        },
+        {
+          "no": 14,
+          "home": "Juventus",
+          "away": "Como",
+          "kickoff": "2026-02-21 14:00",
+          "hg": 0,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 15,
+          "home": "Atalanta",
+          "away": "Napoli",
+          "kickoff": "2026-02-22 14:00",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        }
+      ]
+    },
+    {
+      "week": 30,
+      "close_date": "2026-03-01",
+      "season": "2025/2026",
+      "n1": 6,
+      "n0": 5,
+      "n2": 4,
+      "results": "112210002102110",
+      "matches": [
+        {
+          "no": 1,
+          "home": "Rams Başakşehir",
+          "away": "Tümosan Konyaspor",
+          "kickoff": "2026-02-27 17:00",
+          "hg": 2,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 2,
+          "home": "Trabzonspor",
+          "away": "Mısırlı.com.tr Fatih Karagümrük",
+          "kickoff": "2026-02-27 17:00",
+          "hg": 3,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 3,
+          "home": "Kasımpaşa",
+          "away": "Çaykur Rizespor",
+          "kickoff": "2026-02-28 10:30",
+          "hg": 0,
+          "ag": 3,
+          "code": "2"
+        },
+        {
+          "no": 4,
+          "home": "Kocaelispor",
+          "away": "Beşiktaş",
+          "kickoff": "2026-02-28 13:00",
+          "hg": 0,
+          "ag": 1,
+          "code": "2"
+        },
+        {
+          "no": 5,
+          "home": "Galatasaray",
+          "away": "Corendon Alanyaspor",
+          "kickoff": "2026-02-28 17:00",
+          "hg": 3,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 6,
+          "home": "Natura Dünyası Gençlerbirliği",
+          "away": "Zecorner Kayserispor",
+          "kickoff": "2026-03-01 13:00",
+          "hg": 0,
+          "ag": 0,
+          "code": "0"
+        },
+        {
+          "no": 7,
+          "home": "Hesap.com Antalyaspor",
+          "away": "Fenerbahçe",
+          "kickoff": "2026-03-01 17:00",
+          "hg": 2,
+          "ag": 2,
+          "code": "0"
+        },
+        {
+          "no": 8,
+          "home": "Samsunspor",
+          "away": "Gaziantep FK",
+          "kickoff": "2026-03-01 17:00",
+          "hg": 0,
+          "ag": 0,
+          "code": "0"
+        },
+        {
+          "no": 9,
+          "home": "Borussia Dortmund",
+          "away": "Bayern Münih",
+          "kickoff": "2026-02-28 17:30",
+          "hg": 2,
+          "ag": 3,
+          "code": "2"
+        },
+        {
+          "no": 10,
+          "home": "Eintracht Frankfurt",
+          "away": "Freiburg",
+          "kickoff": "2026-03-01 16:30",
+          "hg": 2,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 11,
+          "home": "AFC Bournemouth",
+          "away": "Sunderland",
+          "kickoff": "2026-02-28 12:30",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 12,
+          "home": "Newcastle United",
+          "away": "Everton",
+          "kickoff": "2026-02-28 15:00",
+          "hg": 2,
+          "ag": 3,
+          "code": "2"
+        },
+        {
+          "no": 13,
+          "home": "Arsenal",
+          "away": "Chelsea",
+          "kickoff": "2026-03-01 16:30",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 14,
+          "home": "Barcelona",
+          "away": "Villarreal",
+          "kickoff": "2026-02-28 15:15",
+          "hg": 4,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 15,
+          "home": "Göztepe",
+          "away": "ikas Eyüpspor",
+          "kickoff": "2026-02-28 17:00",
+          "hg": 0,
+          "ag": 0,
+          "code": "0"
+        }
+      ]
+    },
+    {
+      "week": 31,
+      "close_date": "2026-03-09",
+      "season": "2025/2026",
+      "n1": 4,
+      "n0": 5,
+      "n2": 6,
+      "results": "120101202002221",
+      "matches": [
+        {
+          "no": 1,
+          "home": "Rams Başakşehir",
+          "away": "Göztepe",
+          "kickoff": "2026-03-07 13:00",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 2,
+          "home": "Beşiktaş",
+          "away": "Galatasaray",
+          "kickoff": "2026-03-07 17:00",
+          "hg": 0,
+          "ag": 1,
+          "code": "2"
+        },
+        {
+          "no": 3,
+          "home": "Gaziantep FK",
+          "away": "Mısırlı.com.tr Fatih Karagümrük",
+          "kickoff": "2026-03-08 10:30",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 4,
+          "home": "Çaykur Rizespor",
+          "away": "Hesap.com Antalyaspor",
+          "kickoff": "2026-03-08 10:30",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 5,
+          "home": "Tümosan Konyaspor",
+          "away": "Kasımpaşa",
+          "kickoff": "2026-03-08 13:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 6,
+          "home": "Fenerbahçe",
+          "away": "Samsunspor",
+          "kickoff": "2026-03-08 17:00",
+          "hg": 3,
+          "ag": 2,
+          "code": "1"
+        },
+        {
+          "no": 7,
+          "home": "ikas Eyüpspor",
+          "away": "Kocaelispor",
+          "kickoff": "2026-03-09 13:00",
+          "hg": 0,
+          "ag": 1,
+          "code": "2"
+        },
+        {
+          "no": 8,
+          "home": "Corendon Alanyaspor",
+          "away": "Natura Dünyası Gençlerbirliği",
+          "kickoff": "2026-03-09 17:00",
+          "hg": 0,
+          "ag": 0,
+          "code": "0"
+        },
+        {
+          "no": 9,
+          "home": "Zecorner Kayserispor",
+          "away": "Trabzonspor",
+          "kickoff": "2026-03-09 17:00",
+          "hg": 1,
+          "ag": 3,
+          "code": "2"
+        },
+        {
+          "no": 10,
+          "home": "Freiburg",
+          "away": "Bayer Leverkusen",
+          "kickoff": "2026-03-07 14:30",
+          "hg": 3,
+          "ag": 3,
+          "code": "0"
+        },
+        {
+          "no": 11,
+          "home": "Club Brugge",
+          "away": "Anderlecht",
+          "kickoff": "2026-03-08 12:30",
+          "hg": 2,
+          "ag": 2,
+          "code": "0"
+        },
+        {
+          "no": 12,
+          "home": "Paris St Germain",
+          "away": "Monaco",
+          "kickoff": "2026-03-06 19:45",
+          "hg": 1,
+          "ag": 3,
+          "code": "2"
+        },
+        {
+          "no": 13,
+          "home": "Celta Vigo",
+          "away": "Real Madrid",
+          "kickoff": "2026-03-06 20:00",
+          "hg": 1,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 14,
+          "home": "Athletic Bilbao",
+          "away": "Barcelona",
+          "kickoff": "2026-03-07 20:00",
+          "hg": 0,
+          "ag": 1,
+          "code": "2"
+        },
+        {
+          "no": 15,
+          "home": "Milan",
+          "away": "Inter",
+          "kickoff": "2026-03-08 19:45",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        }
+      ]
+    },
+    {
+      "week": 32,
+      "close_date": "2026-03-15",
+      "season": "2025/2026",
+      "n1": 7,
+      "n0": 4,
+      "n2": 4,
+      "results": "212110121021010",
+      "matches": [
+        {
+          "no": 1,
+          "home": "Hesap.com Antalyaspor",
+          "away": "Gaziantep FK",
+          "kickoff": "2026-03-13 17:00",
+          "hg": 1,
+          "ag": 4,
+          "code": "2"
+        },
+        {
+          "no": 2,
+          "home": "Mısırlı.com.tr Fatih Karagümrük",
+          "away": "Fenerbahçe",
+          "kickoff": "2026-03-13 17:00",
+          "hg": 2,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 3,
+          "home": "Kocaelispor",
+          "away": "Tümosan Konyaspor",
+          "kickoff": "2026-03-14 10:30",
+          "hg": 1,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 4,
+          "home": "Trabzonspor",
+          "away": "Çaykur Rizespor",
+          "kickoff": "2026-03-14 17:00",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 5,
+          "home": "Galatasaray",
+          "away": "Rams Başakşehir",
+          "kickoff": "2026-03-14 17:00",
+          "hg": 3,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 6,
+          "home": "Göztepe",
+          "away": "Corendon Alanyaspor",
+          "kickoff": "2026-03-14 17:00",
+          "hg": 2,
+          "ag": 2,
+          "code": "0"
+        },
+        {
+          "no": 7,
+          "home": "Kasımpaşa",
+          "away": "ikas Eyüpspor",
+          "kickoff": "2026-03-15 13:00",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 8,
+          "home": "Natura Dünyası Gençlerbirliği",
+          "away": "Beşiktaş",
+          "kickoff": "2026-03-15 17:00",
+          "hg": 0,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 9,
+          "home": "Samsunspor",
+          "away": "Zecorner Kayserispor",
+          "kickoff": "2026-03-15 17:00",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 10,
+          "home": "Bayer Leverkusen",
+          "away": "Bayern Münih",
+          "kickoff": "2026-03-14 14:30",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 11,
+          "home": "Chelsea",
+          "away": "Newcastle United",
+          "kickoff": "2026-03-14 17:30",
+          "hg": 0,
+          "ag": 1,
+          "code": "2"
+        },
+        {
+          "no": 12,
+          "home": "Manchester United",
+          "away": "Aston Villa",
+          "kickoff": "2026-03-15 14:00",
+          "hg": 3,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 13,
+          "home": "Liverpool",
+          "away": "Tottenham Hotspur",
+          "kickoff": "2026-03-15 16:30",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 14,
+          "home": "Barcelona",
+          "away": "Sevilla",
+          "kickoff": "2026-03-15 15:15",
+          "hg": 5,
+          "ag": 2,
+          "code": "1"
+        },
+        {
+          "no": 15,
+          "home": "Inter",
+          "away": "Atalanta",
+          "kickoff": "2026-03-14 14:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        }
+      ]
+    },
+    {
+      "week": 33,
+      "close_date": "2026-03-22",
+      "season": "2025/2026",
+      "n1": 4,
+      "n0": 2,
+      "n2": 9,
+      "results": "102212222211202",
+      "matches": [
+        {
+          "no": 1,
+          "home": "RB Leipzig",
+          "away": "TSG Hoffenheim",
+          "kickoff": "2026-03-20 19:30",
+          "hg": 5,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 2,
+          "home": "FC Köln",
+          "away": "M'gladbach",
+          "kickoff": "2026-03-21 14:30",
+          "hg": 3,
+          "ag": 3,
+          "code": "0"
+        },
+        {
+          "no": 3,
+          "home": "Olympique Lyon",
+          "away": "Monaco",
+          "kickoff": "2026-03-22 14:00",
+          "hg": 1,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 4,
+          "home": "Marsilya",
+          "away": "Lille",
+          "kickoff": "2026-03-22 16:15",
+          "hg": 1,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 5,
+          "home": "Everton",
+          "away": "Chelsea",
+          "kickoff": "2026-03-21 17:30",
+          "hg": 3,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 6,
+          "home": "Newcastle United",
+          "away": "Sunderland",
+          "kickoff": "2026-03-22 12:00",
+          "hg": 1,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 7,
+          "home": "Tottenham Hotspur",
+          "away": "Nottingham Forest",
+          "kickoff": "2026-03-22 14:15",
+          "hg": 0,
+          "ag": 3,
+          "code": "2"
+        },
+        {
+          "no": 8,
+          "home": "Arsenal",
+          "away": "Manchester City",
+          "kickoff": "2026-03-22 16:30",
+          "hg": 0,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 9,
+          "home": "Espanyol",
+          "away": "Getafe",
+          "kickoff": "2026-03-21 15:15",
+          "hg": 1,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 10,
+          "home": "Sevilla",
+          "away": "Valencia",
+          "kickoff": "2026-03-21 20:00",
+          "hg": 0,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 11,
+          "home": "Athletic Bilbao",
+          "away": "Real Betis",
+          "kickoff": "2026-03-22 17:30",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 12,
+          "home": "Real Madrid",
+          "away": "Atletico Madrid",
+          "kickoff": "2026-03-22 20:00",
+          "hg": 3,
+          "ag": 2,
+          "code": "1"
+        },
+        {
+          "no": 13,
+          "home": "Genoa",
+          "away": "Udinese",
+          "kickoff": "2026-03-20 19:45",
+          "hg": 0,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 14,
+          "home": "Juventus",
+          "away": "Sassuolo",
+          "kickoff": "2026-03-21 19:45",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 15,
+          "home": "Bologna",
+          "away": "Lazio",
+          "kickoff": "2026-03-22 14:00",
+          "hg": 0,
+          "ag": 2,
+          "code": "2"
+        }
+      ]
+    },
+    {
+      "week": 35,
+      "close_date": "2026-04-06",
+      "season": "2025/2026",
+      "n1": 8,
+      "n0": 4,
+      "n2": 3,
+      "results": "210110110021121",
+      "matches": [
+        {
+          "no": 1,
+          "home": "Natura Dünyası Gençlerbirliği",
+          "away": "Göztepe",
+          "kickoff": "2026-04-04 11:30",
+          "hg": 0,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 2,
+          "home": "Kasımpaşa",
+          "away": "Zecorner Kayserispor",
+          "kickoff": "2026-04-04 11:30",
+          "hg": 2,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 3,
+          "home": "Gaziantep FK",
+          "away": "Corendon Alanyaspor",
+          "kickoff": "2026-04-04 14:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 4,
+          "home": "Trabzonspor",
+          "away": "Galatasaray",
+          "kickoff": "2026-04-04 17:00",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 5,
+          "home": "Mısırlı.com.tr Fatih Karagümrük",
+          "away": "Çaykur Rizespor",
+          "kickoff": "2026-04-05 11:30",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 6,
+          "home": "Samsunspor",
+          "away": "Tümosan Konyaspor",
+          "kickoff": "2026-04-05 11:30",
+          "hg": 2,
+          "ag": 2,
+          "code": "0"
+        },
+        {
+          "no": 7,
+          "home": "Hesap.com Antalyaspor",
+          "away": "ikas Eyüpspor",
+          "kickoff": "2026-04-05 14:00",
+          "hg": 3,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 8,
+          "home": "Fenerbahçe",
+          "away": "Beşiktaş",
+          "kickoff": "2026-04-05 17:00",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 9,
+          "home": "Kocaelispor",
+          "away": "Rams Başakşehir",
+          "kickoff": "2026-04-06 17:00",
+          "hg": 0,
+          "ag": 0,
+          "code": "0"
+        },
+        {
+          "no": 10,
+          "home": "Hamburger SV",
+          "away": "Augsburg",
+          "kickoff": "2026-04-04 13:30",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 11,
+          "home": "Vfb Stuttgart",
+          "away": "Borussia Dortmund",
+          "kickoff": "2026-04-04 16:30",
+          "hg": 0,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 12,
+          "home": "Lille",
+          "away": "Lens",
+          "kickoff": "2026-04-04 19:05",
+          "hg": 3,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 13,
+          "home": "Monaco",
+          "away": "Marsilya",
+          "kickoff": "2026-04-05 18:45",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 14,
+          "home": "Atletico Madrid",
+          "away": "Barcelona",
+          "kickoff": "2026-04-04 19:00",
+          "hg": 1,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 15,
+          "home": "Inter",
+          "away": "Roma",
+          "kickoff": "2026-04-05 18:45",
+          "hg": 5,
+          "ag": 2,
+          "code": "1"
+        }
+      ]
+    },
+    {
+      "week": 36,
+      "close_date": "2026-04-13",
+      "season": "2025/2026",
+      "n1": 6,
+      "n0": 4,
+      "n2": 5,
+      "results": "110210021212120",
+      "matches": [
+        {
+          "no": 1,
+          "home": "Beşiktaş",
+          "away": "Hesap.com Antalyaspor",
+          "kickoff": "2026-04-10 17:00",
+          "hg": 4,
+          "ag": 2,
+          "code": "1"
+        },
+        {
+          "no": 2,
+          "home": "Rams Başakşehir",
+          "away": "Natura Dünyası Gençlerbirliği",
+          "kickoff": "2026-04-11 11:30",
+          "hg": 3,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 3,
+          "home": "Corendon Alanyaspor",
+          "away": "Trabzonspor",
+          "kickoff": "2026-04-11 14:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 4,
+          "home": "Zecorner Kayserispor",
+          "away": "Fenerbahçe",
+          "kickoff": "2026-04-11 17:00",
+          "hg": 0,
+          "ag": 4,
+          "code": "2"
+        },
+        {
+          "no": 5,
+          "home": "Tümosan Konyaspor",
+          "away": "Mısırlı.com.tr Fatih Karagümrük",
+          "kickoff": "2026-04-12 11:30",
+          "hg": 3,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 6,
+          "home": "Göztepe",
+          "away": "Kasımpaşa",
+          "kickoff": "2026-04-12 14:00",
+          "hg": 3,
+          "ag": 3,
+          "code": "0"
+        },
+        {
+          "no": 7,
+          "home": "Galatasaray",
+          "away": "Kocaelispor",
+          "kickoff": "2026-04-12 17:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 8,
+          "home": "ikas Eyüpspor",
+          "away": "Samsunspor",
+          "kickoff": "2026-04-13 17:00",
+          "hg": 1,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 9,
+          "home": "Çaykur Rizespor",
+          "away": "Gaziantep FK",
+          "kickoff": "2026-04-13 17:00",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 10,
+          "home": "Borussia Dortmund",
+          "away": "Bayer Leverkusen",
+          "kickoff": "2026-04-11 13:30",
+          "hg": 0,
+          "ag": 1,
+          "code": "2"
+        },
+        {
+          "no": 11,
+          "home": "Liverpool",
+          "away": "Fulham",
+          "kickoff": "2026-04-11 16:30",
+          "hg": 2,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 12,
+          "home": "Chelsea",
+          "away": "Manchester City",
+          "kickoff": "2026-04-12 15:30",
+          "hg": 0,
+          "ag": 3,
+          "code": "2"
+        },
+        {
+          "no": 13,
+          "home": "Sevilla",
+          "away": "Atletico Madrid",
+          "kickoff": "2026-04-11 19:00",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 14,
+          "home": "Atalanta",
+          "away": "Juventus",
+          "kickoff": "2026-04-11 18:45",
+          "hg": 0,
+          "ag": 1,
+          "code": "2"
+        },
+        {
+          "no": 15,
+          "home": "Parma",
+          "away": "Napoli",
+          "kickoff": "2026-04-12 13:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        }
+      ]
+    },
+    {
+      "week": 37,
+      "close_date": "2026-04-20",
+      "season": "2025/2026",
+      "n1": 5,
+      "n0": 4,
+      "n2": 6,
+      "results": "202021101122120",
+      "matches": [
+        {
+          "no": 1,
+          "home": "Hesap.com Antalyaspor",
+          "away": "Tümosan Konyaspor",
+          "kickoff": "2026-04-17 17:00",
+          "hg": 0,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 2,
+          "home": "Fenerbahçe",
+          "away": "Çaykur Rizespor",
+          "kickoff": "2026-04-17 17:00",
+          "hg": 2,
+          "ag": 2,
+          "code": "0"
+        },
+        {
+          "no": 3,
+          "home": "Mısırlı.com.tr Fatih Karagümrük",
+          "away": "ikas Eyüpspor",
+          "kickoff": "2026-04-18 11:30",
+          "hg": 1,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 4,
+          "home": "Kocaelispor",
+          "away": "Göztepe",
+          "kickoff": "2026-04-18 14:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 5,
+          "home": "Natura Dünyası Gençlerbirliği",
+          "away": "Galatasaray",
+          "kickoff": "2026-04-18 17:00",
+          "hg": 1,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 6,
+          "home": "Kasımpaşa",
+          "away": "Corendon Alanyaspor",
+          "kickoff": "2026-04-19 11:30",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 7,
+          "home": "Samsunspor",
+          "away": "Beşiktaş",
+          "kickoff": "2026-04-19 14:00",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 8,
+          "home": "Trabzonspor",
+          "away": "Rams Başakşehir",
+          "kickoff": "2026-04-19 17:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 9,
+          "home": "Gaziantep FK",
+          "away": "Zecorner Kayserispor",
+          "kickoff": "2026-04-20 17:00",
+          "hg": 3,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 10,
+          "home": "TSG Hoffenheim",
+          "away": "Borussia Dortmund",
+          "kickoff": "2026-04-18 13:30",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 11,
+          "home": "Chelsea",
+          "away": "Manchester United",
+          "kickoff": "2026-04-18 19:00",
+          "hg": 0,
+          "ag": 1,
+          "code": "2"
+        },
+        {
+          "no": 12,
+          "home": "Everton",
+          "away": "Liverpool",
+          "kickoff": "2026-04-19 13:00",
+          "hg": 1,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 13,
+          "home": "Manchester City",
+          "away": "Arsenal",
+          "kickoff": "2026-04-19 15:30",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 14,
+          "home": "Napoli",
+          "away": "Lazio",
+          "kickoff": "2026-04-18 16:00",
+          "hg": 0,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 15,
+          "home": "Roma",
+          "away": "Atalanta",
+          "kickoff": "2026-04-18 18:45",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        }
+      ]
+    },
+    {
+      "week": 38,
+      "close_date": "2026-04-27",
+      "season": "2025/2026",
+      "n1": 10,
+      "n0": 3,
+      "n2": 2,
+      "results": "111111201101120",
+      "matches": [
+        {
+          "no": 1,
+          "home": "Rams Başakşehir",
+          "away": "Kasımpaşa",
+          "kickoff": "2026-04-24 17:00",
+          "hg": 4,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 2,
+          "home": "ikas Eyüpspor",
+          "away": "Gaziantep FK",
+          "kickoff": "2026-04-25 11:30",
+          "hg": 3,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 3,
+          "home": "Zecorner Kayserispor",
+          "away": "Çaykur Rizespor",
+          "kickoff": "2026-04-25 14:00",
+          "hg": 2,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 4,
+          "home": "Göztepe",
+          "away": "Hesap.com Antalyaspor",
+          "kickoff": "2026-04-25 17:00",
+          "hg": 2,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 5,
+          "home": "Natura Dünyası Gençlerbirliği",
+          "away": "Kocaelispor",
+          "kickoff": "2026-04-26 11:30",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 6,
+          "home": "Galatasaray",
+          "away": "Fenerbahçe",
+          "kickoff": "2026-04-26 17:00",
+          "hg": 3,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 7,
+          "home": "Corendon Alanyaspor",
+          "away": "Samsunspor",
+          "kickoff": "2026-04-27 14:00",
+          "hg": 2,
+          "ag": 3,
+          "code": "2"
+        },
+        {
+          "no": 8,
+          "home": "Beşiktaş",
+          "away": "Mısırlı.com.tr Fatih Karagümrük",
+          "kickoff": "2026-04-27 17:00",
+          "hg": 0,
+          "ag": 0,
+          "code": "0"
+        },
+        {
+          "no": 9,
+          "home": "Tümosan Konyaspor",
+          "away": "Trabzonspor",
+          "kickoff": "2026-04-27 17:00",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 10,
+          "home": "Arsenal",
+          "away": "Newcastle United",
+          "kickoff": "2026-04-25 16:30",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 11,
+          "home": "Real Betis",
+          "away": "Real Madrid",
+          "kickoff": "2026-04-24 19:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 12,
+          "home": "Atletico Madrid",
+          "away": "Athletic Bilbao",
+          "kickoff": "2026-04-25 19:00",
+          "hg": 3,
+          "ag": 2,
+          "code": "1"
+        },
+        {
+          "no": 13,
+          "home": "Villarreal",
+          "away": "Celta Vigo",
+          "kickoff": "2026-04-26 19:00",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 14,
+          "home": "Bologna",
+          "away": "Roma",
+          "kickoff": "2026-04-25 16:00",
+          "hg": 0,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 15,
+          "home": "Milan",
+          "away": "Juventus",
+          "kickoff": "2026-04-26 18:45",
+          "hg": 0,
+          "ag": 0,
+          "code": "0"
+        }
+      ]
+    },
+    {
+      "week": 39,
+      "close_date": "2026-05-03",
+      "season": "2025/2026",
+      "n1": 8,
+      "n0": 6,
+      "n2": 1,
+      "results": "011200110011110",
+      "matches": [
+        {
+          "no": 1,
+          "home": "Hesap.com Antalyaspor",
+          "away": "Corendon Alanyaspor",
+          "kickoff": "2026-05-03 17:00",
+          "hg": 0,
+          "ag": 0,
+          "code": "0"
+        },
+        {
+          "no": 2,
+          "home": "Mısırlı.com.tr Fatih Karagümrük",
+          "away": "Natura Dünyası Gençlerbirliği",
+          "kickoff": "2026-05-03 17:00",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 3,
+          "home": "Fenerbahçe",
+          "away": "Rams Başakşehir",
+          "kickoff": "2026-05-02 17:00",
+          "hg": 3,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 4,
+          "home": "Gaziantep FK",
+          "away": "Beşiktaş",
+          "kickoff": "2026-05-01 17:00",
+          "hg": 0,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 5,
+          "home": "Kasımpaşa",
+          "away": "Kocaelispor",
+          "kickoff": "2026-05-03 17:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 6,
+          "home": "Zecorner Kayserispor",
+          "away": "ikas Eyüpspor",
+          "kickoff": "2026-05-03 17:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 7,
+          "home": "Çaykur Rizespor",
+          "away": "Tümosan Konyaspor",
+          "kickoff": "2026-05-01 14:00",
+          "hg": 3,
+          "ag": 2,
+          "code": "1"
+        },
+        {
+          "no": 8,
+          "home": "Samsunspor",
+          "away": "Galatasaray",
+          "kickoff": "2026-05-02 17:00",
+          "hg": 4,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 9,
+          "home": "Trabzonspor",
+          "away": "Göztepe",
+          "kickoff": "2026-05-02 17:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 10,
+          "home": "TSG Hoffenheim",
+          "away": "Vfb Stuttgart",
+          "kickoff": "2026-05-02 13:30",
+          "hg": 3,
+          "ag": 3,
+          "code": "0"
+        },
+        {
+          "no": 11,
+          "home": "Bayer Leverkusen",
+          "away": "RB Leipzig",
+          "kickoff": "2026-05-02 16:30",
+          "hg": 4,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 12,
+          "home": "Olympique Lyon",
+          "away": "Rennes",
+          "kickoff": "2026-05-03 18:45",
+          "hg": 4,
+          "ag": 2,
+          "code": "1"
+        },
+        {
+          "no": 13,
+          "home": "Manchester United",
+          "away": "Liverpool",
+          "kickoff": "2026-05-03 14:30",
+          "hg": 3,
+          "ag": 2,
+          "code": "1"
+        },
+        {
+          "no": 14,
+          "home": "Udinese",
+          "away": "Torino",
+          "kickoff": "2026-05-02 13:00",
+          "hg": 2,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 15,
+          "home": "Como",
+          "away": "Napoli",
+          "kickoff": "2026-05-02 16:00",
+          "hg": 0,
+          "ag": 0,
+          "code": "0"
+        }
+      ]
+    },
+    {
+      "week": 40,
+      "close_date": "2026-05-10",
+      "season": "2025/2026",
+      "n1": 8,
+      "n0": 2,
+      "n2": 5,
+      "results": "112111122120012",
+      "matches": [
+        {
+          "no": 1,
+          "home": "Corendon Alanyaspor",
+          "away": "Zecorner Kayserispor",
+          "kickoff": "2026-05-09 17:00",
+          "hg": 3,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 2,
+          "home": "Rams Başakşehir",
+          "away": "Samsunspor",
+          "kickoff": "2026-05-09 17:00",
+          "hg": 3,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 3,
+          "home": "Beşiktaş",
+          "away": "Trabzonspor",
+          "kickoff": "2026-05-09 17:00",
+          "hg": 1,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 4,
+          "home": "ikas Eyüpspor",
+          "away": "Çaykur Rizespor",
+          "kickoff": "2026-05-09 17:00",
+          "hg": 4,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 5,
+          "home": "Galatasaray",
+          "away": "Hesap.com Antalyaspor",
+          "kickoff": "2026-05-09 17:00",
+          "hg": 4,
+          "ag": 2,
+          "code": "1"
+        },
+        {
+          "no": 6,
+          "home": "Natura Dünyası Gençlerbirliği",
+          "away": "Kasımpaşa",
+          "kickoff": "2026-05-09 17:00",
+          "hg": 3,
+          "ag": 2,
+          "code": "1"
+        },
+        {
+          "no": 7,
+          "home": "Göztepe",
+          "away": "Gaziantep FK",
+          "kickoff": "2026-05-09 17:00",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 8,
+          "home": "Kocaelispor",
+          "away": "Mısırlı.com.tr Fatih Karagümrük",
+          "kickoff": "2026-05-09 17:00",
+          "hg": 0,
+          "ag": 1,
+          "code": "2"
+        },
+        {
+          "no": 9,
+          "home": "Tümosan Konyaspor",
+          "away": "Fenerbahçe",
+          "kickoff": "2026-05-09 17:00",
+          "hg": 0,
+          "ag": 3,
+          "code": "2"
+        },
+        {
+          "no": 10,
+          "home": "Vfb Stuttgart",
+          "away": "Bayer Leverkusen",
+          "kickoff": "2026-05-09 13:30",
+          "hg": 3,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 11,
+          "home": "Monaco",
+          "away": "Lille",
+          "kickoff": "2026-05-10 19:00",
+          "hg": 0,
+          "ag": 1,
+          "code": "2"
+        },
+        {
+          "no": 12,
+          "home": "Liverpool",
+          "away": "Chelsea",
+          "kickoff": "2026-05-09 11:30",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 13,
+          "home": "Real Sociedad",
+          "away": "Real Betis",
+          "kickoff": "2026-05-09 19:00",
+          "hg": 2,
+          "ag": 2,
+          "code": "0"
+        },
+        {
+          "no": 14,
+          "home": "Barcelona",
+          "away": "Real Madrid",
+          "kickoff": "2026-05-10 19:00",
+          "hg": 2,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 15,
+          "home": "Lazio",
+          "away": "Inter",
+          "kickoff": "2026-05-09 16:00",
+          "hg": 0,
+          "ag": 3,
+          "code": "2"
+        }
+      ]
+    },
+    {
+      "week": 41,
+      "close_date": "2026-05-19",
+      "season": "2025/2026",
+      "n1": 8,
+      "n0": 3,
+      "n2": 4,
+      "results": "110211012021112",
+      "matches": [
+        {
+          "no": 1,
+          "home": "Hesap.com Antalyaspor",
+          "away": "Kocaelispor",
+          "kickoff": "2026-05-17 17:00",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 2,
+          "home": "Mısırlı.com.tr Fatih Karagümrük",
+          "away": "Corendon Alanyaspor",
+          "kickoff": "2026-05-16 14:00",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 3,
+          "home": "Fenerbahçe",
+          "away": "ikas Eyüpspor",
+          "kickoff": "2026-05-17 17:00",
+          "hg": 3,
+          "ag": 3,
+          "code": "0"
+        },
+        {
+          "no": 4,
+          "home": "Gaziantep FK",
+          "away": "Rams Başakşehir",
+          "kickoff": "2026-05-16 17:00",
+          "hg": 1,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 5,
+          "home": "Kasımpaşa",
+          "away": "Galatasaray",
+          "kickoff": "2026-05-17 17:00",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 6,
+          "home": "Zecorner Kayserispor",
+          "away": "Tümosan Konyaspor",
+          "kickoff": "2026-05-17 14:00",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 7,
+          "home": "Çaykur Rizespor",
+          "away": "Beşiktaş",
+          "kickoff": "2026-05-15 17:00",
+          "hg": 2,
+          "ag": 2,
+          "code": "0"
+        },
+        {
+          "no": 8,
+          "home": "Samsunspor",
+          "away": "Göztepe",
+          "kickoff": "2026-05-16 17:00",
+          "hg": 3,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 9,
+          "home": "Trabzonspor",
+          "away": "Natura Dünyası Gençlerbirliği",
+          "kickoff": "2026-05-17 17:00",
+          "hg": 0,
+          "ag": 3,
+          "code": "2"
+        },
+        {
+          "no": 10,
+          "home": "Eintracht Frankfurt",
+          "away": "Vfb Stuttgart",
+          "kickoff": "2026-05-16 13:30",
+          "hg": 2,
+          "ag": 2,
+          "code": "0"
+        },
+        {
+          "no": 11,
+          "home": "Olympique Lyon",
+          "away": "Lens",
+          "kickoff": "2026-05-17 19:00",
+          "hg": 0,
+          "ag": 4,
+          "code": "2"
+        },
+        {
+          "no": 12,
+          "home": "Aston Villa",
+          "away": "Liverpool",
+          "kickoff": "2026-05-15 19:00",
+          "hg": 4,
+          "ag": 2,
+          "code": "1"
+        },
+        {
+          "no": 13,
+          "home": "Chelsea",
+          "away": "Tottenham Hotspur",
+          "kickoff": "2026-05-19 19:15",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 14,
+          "home": "Barcelona",
+          "away": "Real Betis",
+          "kickoff": "2026-05-17 19:15",
+          "hg": 3,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 15,
+          "home": "Sevilla",
+          "away": "Real Madrid",
+          "kickoff": "2026-05-17 17:00",
+          "hg": 0,
+          "ag": 1,
+          "code": "2"
+        }
+      ]
+    },
+    {
+      "week": 42,
+      "close_date": "2026-05-24",
+      "season": "2025/2026",
+      "n1": 6,
+      "n0": 5,
+      "n2": 4,
+      "results": "112021100112200",
+      "matches": [
+        {
+          "no": 1,
+          "home": "Club Brugge",
+          "away": "KAA Gent",
+          "kickoff": "2026-05-24 16:30",
+          "hg": 5,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 2,
+          "home": "Union St.Gilloise",
+          "away": "Anderlecht",
+          "kickoff": "2026-05-24 16:30",
+          "hg": 5,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 3,
+          "home": "Crystal Palace",
+          "away": "Arsenal",
+          "kickoff": "2026-05-24 15:00",
+          "hg": 1,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 4,
+          "home": "Liverpool",
+          "away": "Brentford",
+          "kickoff": "2026-05-24 15:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 5,
+          "home": "Manchester City",
+          "away": "Aston Villa",
+          "kickoff": "2026-05-24 15:00",
+          "hg": 1,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 6,
+          "home": "Tottenham Hotspur",
+          "away": "Everton",
+          "kickoff": "2026-05-24 15:00",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 7,
+          "home": "Celta Vigo",
+          "away": "Sevilla",
+          "kickoff": "2026-05-23 19:00",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 8,
+          "home": "Espanyol",
+          "away": "Real Sociedad",
+          "kickoff": "2026-05-23 19:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 9,
+          "home": "Girona",
+          "away": "Elche",
+          "kickoff": "2026-05-23 19:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 10,
+          "home": "Real Betis",
+          "away": "Levante",
+          "kickoff": "2026-05-23 19:00",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 11,
+          "home": "Real Madrid",
+          "away": "Athletic Bilbao",
+          "kickoff": "2026-05-23 19:00",
+          "hg": 4,
+          "ag": 2,
+          "code": "1"
+        },
+        {
+          "no": 12,
+          "home": "Milan",
+          "away": "Cagliari",
+          "kickoff": "2026-05-24 18:45",
+          "hg": 1,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 13,
+          "home": "Cremonese",
+          "away": "Como",
+          "kickoff": "2026-05-24 18:45",
+          "hg": 1,
+          "ag": 4,
+          "code": "2"
+        },
+        {
+          "no": 14,
+          "home": "Fiorentina",
+          "away": "Atalanta",
+          "kickoff": "2026-05-22 18:45",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 15,
+          "home": "Torino",
+          "away": "Juventus",
+          "kickoff": "2026-05-24 19:50",
+          "hg": 2,
+          "ag": 2,
+          "code": "0"
+        }
+      ]
+    },
+    {
+      "week": 50,
+      "close_date": "2026-07-20",
+      "season": "2025/2026",
+      "n1": 8,
+      "n0": 3,
+      "n2": 4,
+      "results": "112120121100121",
+      "matches": [
+        {
+          "no": 1,
+          "home": "AIK Stockholm",
+          "away": "Gais",
+          "kickoff": "2026-07-18 16:00",
+          "hg": 2,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 2,
+          "home": "Göteborg",
+          "away": "Brommapojkarna",
+          "kickoff": "2026-07-17 20:00",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 3,
+          "home": "Halmstads BK",
+          "away": "Hacken",
+          "kickoff": "2026-07-19 17:30",
+          "hg": 0,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 4,
+          "home": "Hammarby",
+          "away": "Degerfors",
+          "kickoff": "2026-07-19 17:30",
+          "hg": 4,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 5,
+          "home": "Elfsborg",
+          "away": "Sirius",
+          "kickoff": "2026-07-19 17:30",
+          "hg": 1,
+          "ag": 3,
+          "code": "2"
+        },
+        {
+          "no": 6,
+          "home": "Kalmar",
+          "away": "Malmö",
+          "kickoff": "2026-07-20 20:00",
+          "hg": 2,
+          "ag": 2,
+          "code": "0"
+        },
+        {
+          "no": 7,
+          "home": "Helsinki",
+          "away": "VPS Vaasa",
+          "kickoff": "2026-07-18 15:00",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 8,
+          "home": "Oulu",
+          "away": "Gnistan",
+          "kickoff": "2026-07-18 17:00",
+          "hg": 0,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 9,
+          "home": "Incheon United",
+          "away": "Jeonbuk FC",
+          "kickoff": "2026-07-18 13:30",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 10,
+          "home": "Jeju United",
+          "away": "Pohang Steelers",
+          "kickoff": "2026-07-18 13:30",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 11,
+          "home": "Chongqing Tongliang Long",
+          "away": "Zhejiang Professional",
+          "kickoff": "2026-07-18 14:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 12,
+          "home": "Qingdao West Coast",
+          "away": "Chengdu Rongcheng FC",
+          "kickoff": "2026-07-17 14:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 13,
+          "home": "Dalian Yingbo",
+          "away": "Shandong Taishan",
+          "kickoff": "2026-07-18 14:35",
+          "hg": 3,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 14,
+          "home": "Shanghai Shenhua",
+          "away": "Tianjin Jinmen Tiger",
+          "kickoff": "2026-07-18 14:35",
+          "hg": 0,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 15,
+          "home": "Wuhan Three Towns FC",
+          "away": "Shenzhen Peng City",
+          "kickoff": "2026-07-18 15:00",
+          "hg": 2,
+          "ag": 0,
+          "code": "1"
+        }
+      ]
+    },
+    {
+      "week": 51,
+      "close_date": "2026-07-27",
+      "season": "2025/2026",
+      "n1": 7,
+      "n0": 4,
+      "n2": 4,
+      "results": "000111122212011",
+      "matches": [
+        {
+          "no": 1,
+          "home": "AGF Aarhus",
+          "away": "Brondby",
+          "kickoff": "2026-07-25 19:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 2,
+          "home": "Horsens",
+          "away": "FC Nordsjaelland",
+          "kickoff": "2026-07-26 19:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 3,
+          "home": "Randers",
+          "away": "Silkeborg",
+          "kickoff": "2026-07-27 20:00",
+          "hg": 1,
+          "ag": 1,
+          "code": "0"
+        },
+        {
+          "no": 4,
+          "home": "Ilves",
+          "away": "Lahti",
+          "kickoff": "2026-07-26 15:00",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 5,
+          "home": "Helsinki",
+          "away": "TPS Turku",
+          "kickoff": "2026-07-26 17:00",
+          "hg": 1,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 6,
+          "home": "Vasteras SK",
+          "away": "Örgryte IS",
+          "kickoff": "2026-07-24 20:00",
+          "hg": 2,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 7,
+          "home": "Sirius",
+          "away": "Göteborg",
+          "kickoff": "2026-07-26 15:00",
+          "hg": 4,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 8,
+          "home": "Malmö",
+          "away": "Elfsborg",
+          "kickoff": "2026-07-26 17:30",
+          "hg": 1,
+          "ag": 2,
+          "code": "2"
+        },
+        {
+          "no": 9,
+          "home": "KFUM",
+          "away": "Molde",
+          "kickoff": "2026-07-26 18:00",
+          "hg": 2,
+          "ag": 4,
+          "code": "2"
+        },
+        {
+          "no": 10,
+          "home": "Sandefjord",
+          "away": "Bodo Glimt",
+          "kickoff": "2026-07-26 18:00",
+          "hg": 0,
+          "ag": 3,
+          "code": "2"
+        },
+        {
+          "no": 11,
+          "home": "Rosenborg",
+          "away": "Fredrikstad",
+          "kickoff": "2026-07-27 20:00",
+          "hg": 4,
+          "ag": 0,
+          "code": "1"
+        },
+        {
+          "no": 12,
+          "home": "Pogon Szczecin",
+          "away": "Legia Varşova",
+          "kickoff": "2026-07-24 21:30",
+          "hg": 0,
+          "ag": 1,
+          "code": "2"
+        },
+        {
+          "no": 13,
+          "home": "Lech Poznan",
+          "away": "Cracovia",
+          "kickoff": "2026-07-25 21:15",
+          "hg": 0,
+          "ag": 0,
+          "code": "0"
+        },
+        {
+          "no": 14,
+          "home": "Wisla Krakow",
+          "away": "GKS Katowice",
+          "kickoff": "2026-07-26 21:15",
+          "hg": 2,
+          "ag": 1,
+          "code": "1"
+        },
+        {
+          "no": 15,
+          "home": "KGHM Zaglebie Lubin",
+          "away": "Piast Gliwice",
+          "kickoff": "2026-07-27 20:00",
+          "hg": 2,
+          "ag": 0,
+          "code": "1"
+        }
+      ]
+    }
+  ]
 }

@@ -112,11 +112,14 @@ export function DataQualityPanel({ dq }: { dq: DataQuality }) {
 
   if (dq.ok) {
     return (
-      <p className="flex items-center gap-2 text-[13px] text-muted-foreground">
+      <p className="flex items-start gap-2 text-[13px] text-muted-foreground">
         <span aria-hidden className="text-success">
           ✓
         </span>
-        {dq.weeks_total} haftanın tamamı tutarlı: sayımlar sonuç dizisiyle birebir örtüşüyor.
+        <span>
+          {dq.weeks_total} haftanın tamamı tutarlı: her hafta 15 maçlık listesini taşıyor, sonuç
+          dizisi bu listeden türüyor ve sayımlar ikisiyle de birebir örtüşüyor.
+        </span>
       </p>
     );
   }
@@ -162,6 +165,18 @@ export function DataQualityPanel({ dq }: { dq: DataQuality }) {
               </li>
             ))}
           </ul>
+        </div>
+      ) : null}
+
+      {dq.match_conflicts?.length ? (
+        <div className="text-muted-foreground">
+          Maç listesi sonuç dizisiyle örtüşmeyen hafta: {dq.match_conflicts.join(", ")}
+        </div>
+      ) : null}
+
+      {dq.weeks_without_matches?.length ? (
+        <div className="text-muted-foreground">
+          Maç listesi taşımayan hafta: {dq.weeks_without_matches.join(", ")}
         </div>
       ) : null}
 

@@ -45,7 +45,11 @@ def test_hafta_detayi(client):
     assert body["week"] == hafta
     assert len(body["cells"]) == MATCH_COUNT
     assert body["prev_week"] == history_weeks()[0]["week"]
-    assert set(body) >= {"runs", "season_avg", "delta_vs_avg", "rank", "position_stats"}
+    assert set(body) >= {"runs", "season_avg", "delta_vs_avg", "rank", "position_stats", "matches"}
+    assert len(body["matches"]) == MATCH_COUNT
+    for hucre, mac in zip(body["cells"], body["matches"]):
+        assert hucre["symbol"] == mac["code"]
+        assert mac["home"] and mac["away"]
 
 
 def test_olmayan_hafta_404(client):

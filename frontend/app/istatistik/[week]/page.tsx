@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 
 import { getStatsWeek } from "@/lib/api";
-import { SEMBOLLER, type Sembol, type WeekDetail } from "@/lib/types";
+import { SEMBOLLER, type WeekDetail } from "@/lib/types";
 import { cn, ondalik } from "@/lib/utils";
 import {
   Badge,
@@ -18,12 +18,6 @@ import {
 import { SEMBOL_ADI, SymbolLegend } from "@/components/ui/symbol";
 import { DeltaStat } from "@/components/istatistik/parts";
 import { SYM_BG } from "@/components/istatistik/viz";
-
-const ZEMIN: Record<Sembol, string> = {
-  "1": "bg-sym-1/12 text-sym-1 border-sym-1/25",
-  "0": "bg-sym-0/12 text-sym-0 border-sym-0/25",
-  "2": "bg-sym-2/12 text-sym-2 border-sym-2/25",
-};
 
 export default function HaftaPage({ params }: { params: { week: string } }) {
   const week = Number(params.week);
@@ -129,70 +123,69 @@ export default function HaftaPage({ params }: { params: { week: string } }) {
             ))}
           </div>
 
-          <Card>
-            <CardHeader
-              title="Maç maç sonuçlar"
-              hint="Semboller kupon düzeninde (1, 0, 2) gösterilir. Yüzde, o sıradaki maçta bu sembolün sezon boyunca çıkma oranıdır."
-              action={<SymbolLegend />}
-            />
-            <CardBody>
-              <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
-                {veri.cells.map((c) => (
-                  <div
-                    key={c.pos}
-                    className={cn(
-                      "flex items-center gap-2.5 rounded-xl border px-3 py-2.5",
-                      ZEMIN[c.symbol],
-                    )}
-                  >
-                    <span className="tnum text-[11px] font-medium text-muted-foreground">
-                      {String(c.pos).padStart(2, "0")}
-                    </span>
-                    <span className="tnum font-mono text-[17px] font-bold">{c.symbol}</span>
-                    <span className="tnum ml-auto text-[11px] opacity-80">
-                      %{(veri.position_stats[c.pos - 1]?.pct[c.symbol] ?? 0).toFixed(0)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-              <code className="tnum mt-4 block break-all rounded-lg bg-muted px-3 py-2 font-mono text-[12.5px]">
-                {veri.results}
-              </code>
-            </CardBody>
-          </Card>
-
           <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,320px)]">
             <Card>
               <CardHeader
-                title="Sıra sıra bağlam"
-                hint="Her maç sırasında sezon boyunca oluşan pay; bu haftanın sonucu tam renkte, diğerleri soluk."
+                title="Maç maç sonuçlar"
+                hint="Sezon payı çubuğunda bu haftanın sonucu tam renkte, diğer iki ihtimal soluktur; oran, o sıradaki maçta bu sembolün sezon boyunca çıkma yüzdesidir."
+                action={<SymbolLegend />}
               />
               <CardBody className="scroll-slim overflow-x-auto">
-                <table className="w-full min-w-[420px] text-[12.5px]">
+                <table className="w-full min-w-[640px] text-[12.5px]">
                   <thead>
                     <tr className="text-left text-[11px] uppercase tracking-[0.06em] text-muted-foreground">
-                      <th scope="col" className="w-10 pb-2 font-medium">
-                        Sıra
+                      <th scope="col" className="w-8 pb-2 font-medium">
+                        #
+                      </th>
+                      <th scope="col" className="pb-2 pr-3 font-medium">
+                        Maç
+                      </th>
+                      <th scope="col" className="w-14 pb-2 font-medium">
+                        Skor
                       </th>
                       <th scope="col" className="w-12 pb-2 font-medium">
                         Sonuç
                       </th>
-                      <th scope="col" className="pb-2 font-medium">
+                      <th scope="col" className="w-40 pb-2 font-medium">
                         Sezon payı (1 / 0 / 2)
                       </th>
-                      <th scope="col" className="w-16 pb-2 text-right font-medium">
+                      <th scope="col" className="w-14 pb-2 text-right font-medium">
                         Oran
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="tnum">
+                  <tbody>
                     {veri.cells.map((c) => {
                       const p = veri.position_stats[c.pos - 1];
                       const kendi = p?.pct[c.symbol] ?? 0;
+                      const mac = veri.matches?.[c.pos - 1];
                       return (
-                        <tr key={c.pos} className="border-t border-line">
-                          <td className="py-1.5 text-muted-foreground">{c.pos}</td>
-                          <td className="py-1.5">
+                        <tr key={c.pos} className="border-t border-line align-middle">
+                          <td className="tnum py-2 text-muted-foreground">{c.pos}</td>
+                          <td className="py-2 pr-3">
+                            {mac ? (
+                              <>
+                                <span className={c.symbol === "1" ? "font-medium" : ""}>
+                                  {mac.home}
+                                </span>
+                                <span className="text-muted-foreground"> – </span>
+                                <span className={c.symbol === "2" ? "font-medium" : ""}>
+                                  {mac.away}
+                                </span>
+                                {mac.kickoff ? (
+                                  <span className="tnum block text-[11px] text-muted-foreground">
+                                    {mac.kickoff}
+                                  </span>
+                                ) : null}
+                              </>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </td>
+                          <td className="tnum py-2 font-mono">
+                            {mac && mac.hg !== null ? `${mac.hg}-${mac.ag}` : "—"}
+                          </td>
+                          <td className="py-2">
                             <span
                               className={cn(
                                 "grid h-6 w-6 place-items-center rounded-md font-mono text-[12px] font-bold text-white",
@@ -202,7 +195,7 @@ export default function HaftaPage({ params }: { params: { week: string } }) {
                               {c.symbol}
                             </span>
                           </td>
-                          <td className="py-1.5">
+                          <td className="py-2 pr-3">
                             <div className="flex h-4 gap-[2px] overflow-hidden rounded-md">
                               {SEMBOLLER.map((s) => (
                                 <div
@@ -218,12 +211,15 @@ export default function HaftaPage({ params }: { params: { week: string } }) {
                               ))}
                             </div>
                           </td>
-                          <td className="py-1.5 text-right">%{kendi.toFixed(0)}</td>
+                          <td className="tnum py-2 text-right">%{kendi.toFixed(0)}</td>
                         </tr>
                       );
                     })}
                   </tbody>
                 </table>
+                <code className="tnum mt-4 block break-all rounded-lg bg-muted px-3 py-2 font-mono text-[12.5px]">
+                  {veri.results}
+                </code>
               </CardBody>
             </Card>
 
@@ -231,22 +227,32 @@ export default function HaftaPage({ params }: { params: { week: string } }) {
               <Card>
                 <CardHeader title="Sürprizler" hint="Sezonda en nadir görülen tercihler." />
                 <CardBody>
-                  <ul className="tnum space-y-2 text-[12.5px]">
-                    {surprizler.map((s) => (
-                      <li key={s.pos} className="flex items-center gap-2">
-                        <span
-                          className={cn(
-                            "grid h-6 w-6 shrink-0 place-items-center rounded-md font-mono text-[12px] font-bold text-white",
-                            SYM_BG[s.symbol],
-                          )}
-                        >
-                          {s.symbol}
-                        </span>
-                        <span className="text-muted-foreground">
-                          {s.pos}. maç · sezonda %{s.pct.toFixed(0)}
-                        </span>
-                      </li>
-                    ))}
+                  <ul className="space-y-2.5 text-[12.5px]">
+                    {surprizler.map((s) => {
+                      const mac = veri.matches?.[s.pos - 1];
+                      return (
+                        <li key={s.pos} className="flex items-start gap-2">
+                          <span
+                            className={cn(
+                              "grid h-6 w-6 shrink-0 place-items-center rounded-md font-mono text-[12px] font-bold text-white",
+                              SYM_BG[s.symbol],
+                            )}
+                          >
+                            {s.symbol}
+                          </span>
+                          <span className="min-w-0">
+                            {mac ? (
+                              <span className="block truncate">
+                                {mac.home} – {mac.away}
+                              </span>
+                            ) : null}
+                            <span className="tnum block text-[11.5px] text-muted-foreground">
+                              {s.pos}. maç · sezonda %{s.pct.toFixed(0)}
+                            </span>
+                          </span>
+                        </li>
+                      );
+                    })}
                   </ul>
                 </CardBody>
               </Card>
