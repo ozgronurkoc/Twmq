@@ -468,24 +468,72 @@ daha bağımsız olarak kontrol eder.
 
 ---
 
-## 12. Oran (iddaa) verisi — yapılabilirlik notu
+## 12. Oran arşivi
 
-2026-08-16 araştırması. Ayrıntılı ölçüm sohbet kaydında; özet:
+**Üretici:** `backend/scripts/build_odds.py` · **Çıktı:** `backend/data/odds/`
+· **Durum:** üretildi (2026-08-16)
+
+### 12.1 Kaynak seçimi
 
 | Hedef | Durum |
 |-------|-------|
-| Geçmiş maçlar + **iddaa'nın kendi oranı** | Yok. Resmi API (`sportsbookv2.iddaa.com`) yalnızca açık bülteni verir (ölçümde 8 günlük pencere); Nesine de aynı. Arşiv ucu bulunamadı. |
-| Geçmiş maçlar + **piyasa kapanış oranı** | Var. football-data.co.uk ücretsiz CSV'leri ile 615 maçın **567'si (%92,2)** eşleşti; 41 haftanın 36'sı tam 15/15. |
-| Bundan sonraki haftalar + iddaa oranı | Mümkün — haftalık bülten snapshot'ı alınırsa kendi arşivimiz oluşur. |
+| Geçmiş maçlar + **iddaa'nın kendi oranı** | **Yok.** Resmi API (`sportsbookv2.iddaa.com`) yalnızca açık bülteni verir (ölçümde 8 günlük pencere); Nesine de aynı. Geriye dönük arşiv ucu bulunamadı. Maçkolik'in maç sayfasında bu veri var ama sitesi otomatik erişime kapalı (§2.2). |
+| Geçmiş maçlar + **piyasa oranı** | **Var, kullanıldı.** football-data.co.uk ücretsiz arşivi. |
+| Bundan sonraki haftalar + iddaa oranı | Mümkün — haftalık bülten snapshot'ı alınırsa kendi arşivimiz oluşur. Henüz kurulmadı. |
 
-Eşleşmeyen 48 maç yapısal: 5., 10. ve 15. haftalar tamamen **milli maç**
-(kaynak milli maç yayınlamıyor), kalanı K-League ve tek bir eşleştirme kaçağı.
+> **Bu oranlar iddaa oranı değildir.** Bahisçi marjı farklı olduğu için
+> seviyeleri iddaa ile birebir tutmaz (ölçülen ortalama marj %7,26; iddaa
+> tipik olarak daha yüksek). Favori sıralaması ve marj arındırılmış olasılık
+> yapısı ise büyük ölçüde örtüşür — analizde kullanılacak olan budur.
 
-Eşleşmenin sağlaması: kapanış oranındaki favori %54,9 tutmuş, favori hiçbir
-maçta beraberlik çıkmamış (374 kez "1", 193 kez "2"); marj arındırılmış
-olasılıklar gerçekleşmeyle kova kova örtüşüyor. Ortalama marj %7,26.
+### 12.2 Eşleştirme
 
-Bu setin bu belgedeki veriyle birleştirilebilmesinin **ön koşulu**, v2 ile
-gelen `matches` alanıdır: eşleştirme tarih + skor + takım adı üzerinden yapılır.
+Anahtar: **tarih (±1 gün) + birebir skor + bulanık takım adı**. Skor şartı
+yanlış eşleşmeye karşı en güçlü korumadır; takım adı benzerliği ayrıca 0,55
+eşiğini geçmek zorundadır. Takım adları sponsor ekinden arındırılır
+(`Hesap.com Antalyaspor` → `antalyaspor`), bilinen kısaltmalar için küçük bir
+eş tablosu vardır (`Buyuksehyr` → `basaksehir`).
+
+| | |
+|---|---|
+| Eşleşen | **567 / 615 maç (%92,2)** |
+| Tam kapsanan hafta | **36 / 41** |
+| Eşleşmeyen | 48 maç — 5., 10. ve 15. haftalar tamamen **milli maç** (kaynak milli maç yayınlamıyor), kalan 3'ü K-League ve tek bir kaçak |
+
+**Sağlama.** Kapanış oranındaki favori %54,8 tutmuş; favori hiçbir maçta
+beraberlik çıkmamış. Marj arındırılmış olasılıklar gerçekleşmeyle kova kova
+örtüşüyor (ör. %25 kovası → gerçek %24,4). Rastgele bir eşleştirme bu tabloyu
+üretemez. `tests/test_odds.py` bu oranı alt/üst sınırla bekçiye bağlar.
+
+### 12.3 Toplanan pazarlar
+
+| Pazar | Dönem | Kaynak sayısı |
+|-------|-------|---------------|
+| 1X2 | açılış + kapanış | 11 bahisçi/agregat |
+| 2.5 alt / üst | açılış + kapanış | 5 |
+| Asya handikap (çizgi + iki taraf) | açılış + kapanış | 5–6 |
+
+Toplam **108 oran sütunu**, 51.683 oran değeri. Ayrıca aynı satırdan bedavaya
+gelen **14 maç istatistiği** (şut, isabetli şut, korner, faul, kart, ilk yarı
+skoru) `stat_` ön ekiyle saklanır.
+
+Ek ülke dosyaları (POL, DNK, SWE…) yalnızca kapanış 1X2 taşır; ana lig
+dosyaları (T1, E0, SP1…) listenin tamamını verir.
+
+### 12.4 Nerede duruyor
+
+| Dosya | Sürümlenir mi | İçerik |
+|-------|----------------|--------|
+| `data/odds/odds_2025_26.csv` | evet | Maç başına bir satır, tüm sütunlar (332 KB) |
+| `data/odds/odds_rapor.json` | evet | Kapsama, sütun sözlüğü, eşleşmeyen maç listesi |
+| `data/odds/odds.sqlite3` | hayır (üretilir) | `mac` / `oran` / `istatistik` tabloları, uzun biçim |
+| `data/odds/_kaynak/*.csv` | hayır (indirilir) | Ham football-data.co.uk dosyaları (12 MB) |
+
+**Arayüze bağlı değildir.** Hiçbir API ucu, sayfa ya da motor akışı bu veriyi
+okumaz; `/api/stats` gövdesi değişmedi. Okumak için `spor_toto.odds`
+(`load_odds`, `market_odds`, `implied_probs`) ya da doğrudan SQLite.
+
+Bu setin geçmiş veriyle birleşebilmesinin **ön koşulu** v2 ile gelen `matches`
+alanıydı: eşleştirme takım adı + tarih + skor üzerinden yapılır.
 
 Bu MD, projedeki tarihsel istatistik katmanının tek kaynak dokümantasyonudur.

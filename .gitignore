@@ -17,3 +17,8 @@ htmlcov/
 # Aracin urettigi kupon ciktilari
 formul.txt
 *.kupon.txt
+
+# Oran arsivi: ham kaynak dosyalar ve SQLite kopyasi uretilir,
+# surumlenmez. Yeniden olusturmak icin: python scripts/build_odds.py
+backend/data/odds/_kaynak/
+backend/data/odds/odds.sqlite3
