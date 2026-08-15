@@ -73,6 +73,17 @@ def test_stats_mac_sonucu_orani_tasiyor(client):
     assert sum(o["outcome_when_miss"].values()) == o["favourite_miss"]
     # Surpriz = favorinin karsi tarafi kazandi; beraberlikler bunun disinda.
     assert o["underdog_wins"] == o["favourite_miss"] - o["outcome_when_miss"]["0"]
+    # Banko bantlari: tuttu+tutmadi = n, beraberlik+karsi = tutmadi
+    assert o["favourite_bands"], "favori bantlari bos"
+    assert sum(b["n"] for b in o["favourite_bands"]) == o["with_odds"]
+    for b in o["favourite_bands"]:
+        assert b["hit"] + b["miss"] == b["n"]
+        assert b["draw"] + b["upset"] == b["miss"]
+        assert b["lo"] > 1.0 or b["lo"] == 1.0
+        assert b["hi"] is None or b["hi"] > b["lo"]
+    assert sum(b["draw"] for b in o["favourite_bands"]) == o["outcome_when_miss"]["0"]
+    assert sum(b["upset"] for b in o["favourite_bands"]) == o["underdog_wins"]
+    assert sum(b["hit"] for b in o["favourite_bands"]) == o["favourite_hit"]
     assert o["avg_margin_pct"] > 0
     for kova in o["calibration"]:
         assert kova["lo"] < kova["hi"] and kova["n"] >= 10

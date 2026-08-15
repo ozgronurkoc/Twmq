@@ -152,6 +152,44 @@ def week_1x2(week: int) -> Dict[int, Dict[str, Any]]:
     return out
 
 
+#: Banko kararı için favori oranı bantları (alt dahil, üst hariç).
+FAVORI_BANTLARI = ((1.0, 1.20), (1.20, 1.35), (1.35, 1.50),
+                   (1.50, 1.75), (1.75, 2.00), (2.00, 99.0))
+
+
+def _favori_bantlari(oranli: List[Any]) -> List[Dict[str, Any]]:
+    """Favorinin oranına göre: kaç maçta tuttu, kaçında tutmadı.
+
+    ``tutmadı`` iki parçaya ayrılır — beraberlik ve karşı tarafın kazanması —
+    çünkü banko kararında bunlar farklı riskler: beraberlik her maçta masada,
+    karşı tarafın kazanması ise favorinin gerçekten yanılmasıdır.
+    """
+    out: List[Dict[str, Any]] = []
+    for lo, hi in FAVORI_BANTLARI:
+        grup = [(r, b) for r, b in oranli if lo <= min(b["odds"].values()) < hi]
+        n = len(grup)
+        if not n:
+            continue
+        tuttu = sum(1 for r, b in grup if b["hit"])
+        beraberlik = sum(1 for r, _ in grup if r["code"] == "0")
+        tutmadi = n - tuttu
+        out.append({
+            "lo": lo,
+            "hi": hi if hi < 99 else None,
+            "label": f"{lo:.2f}–{hi:.2f}" if hi < 99 else f"{lo:.2f} ve üstü",
+            "n": n,
+            "hit": tuttu,
+            "miss": tutmadi,
+            "draw": beraberlik,
+            "upset": tutmadi - beraberlik,
+            "hit_pct": round(100 * tuttu / n, 1),
+            "miss_pct": round(100 * tutmadi / n, 1),
+            "draw_pct": round(100 * beraberlik / n, 1),
+            "upset_pct": round(100 * (tutmadi - beraberlik) / n, 1),
+        })
+    return out
+
+
 def season_1x2_summary(weeks: Optional[List[int]] = None) -> Optional[Dict[str, Any]]:
     """Dilim için oran özeti: kapsama, favori isabeti, marj ve kalibrasyon.
 
@@ -195,6 +233,8 @@ def season_1x2_summary(weeks: Optional[List[int]] = None) -> Optional[Dict[str, 
         if f != s and s != "0"
     )
 
+    bantlar = _favori_bantlari(oranli)
+
     # Kalibrasyon: modelin verdiği olasılık ile gerçekleşme yan yana.
     kovalar: Dict[int, Dict[str, float]] = {}
     for r, b in oranli:
@@ -228,6 +268,7 @@ def season_1x2_summary(weeks: Optional[List[int]] = None) -> Optional[Dict[str, 
         "outcome_when_miss": tutmadi_sonuc,
         "cross": capraz,
         "underdog_wins": underdog,
+        "favourite_bands": bantlar,
         "outcome_totals": {
             s: tuttu_sonuc[s] + tutmadi_sonuc[s] for s in SEMBOLLER
         },

@@ -486,6 +486,23 @@ export interface OddsSummary {
   cross: Record<Sembol, Record<Sembol, number>>;
   /** Favorinin karşı tarafının kazandığı maç sayısı (beraberlik hariç). */
   underdog_wins: number;
+  /** Favori oranı bandına göre isabet — banko kararının dayanağı. */
+  favourite_bands: Array<{
+    lo: number;
+    hi: number | null;
+    label: string;
+    n: number;
+    hit: number;
+    miss: number;
+    /** `miss`in beraberlikten gelen kısmı. */
+    draw: number;
+    /** `miss`in karşı tarafın kazanmasından gelen kısmı. */
+    upset: number;
+    hit_pct: number;
+    miss_pct: number;
+    draw_pct: number;
+    upset_pct: number;
+  }>;
   outcome_totals: Record<Sembol, number>;
   avg_margin_pct: number;
   /** Olasılık kovası başına model vs gerçekleşme. */

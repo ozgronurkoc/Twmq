@@ -731,6 +731,109 @@ export function FavouriteBreakdown({
   );
 }
 
+/* ── 4d. Banko guvenilirligi: favori oranina gore tuttu / tutmadi ───────── */
+
+/**
+ * Favorinin orani dustukce isabet artar — banko karari bu tablonun isidir.
+ * "Tutmadi" iki parcaya ayrilir: beraberlik ve karsi tarafin kazanmasi.
+ * Cubuk ucu ayni satirda gosterir; genislikler yuzdedir.
+ */
+export function FavouriteBands({
+  bands,
+}: {
+  bands: Array<{
+    label: string;
+    n: number;
+    hit: number;
+    miss: number;
+    draw: number;
+    upset: number;
+    hit_pct: number;
+    miss_pct: number;
+    draw_pct: number;
+    upset_pct: number;
+  }>;
+}) {
+  if (!bands.length) return <p className="text-[13px] text-muted-foreground">Yeterli veri yok.</p>;
+
+  return (
+    <div className="space-y-3">
+      <div className="scroll-slim overflow-x-auto">
+        <table className="w-full min-w-[640px] text-[12.5px]">
+          <thead>
+            <tr className="text-left text-[11px] uppercase tracking-[0.06em] text-muted-foreground">
+              <th scope="col" className="pb-2 pr-3 font-medium">Favori oranı</th>
+              <th scope="col" className="w-14 pb-2 pr-3 text-right font-medium">Maç</th>
+              <th scope="col" className="w-24 pb-2 pr-3 text-right font-medium">Tuttu</th>
+              <th scope="col" className="w-24 pb-2 pr-3 text-right font-medium">Tutmadı</th>
+              <th scope="col" className="w-28 pb-2 pr-3 text-right font-medium">↳ beraberlik</th>
+              <th scope="col" className="w-28 pb-2 pr-3 text-right font-medium">↳ karşı taraf</th>
+              <th scope="col" className="w-36 pb-2 font-medium">Dağılım</th>
+            </tr>
+          </thead>
+          <tbody className="tnum">
+            {bands.map((b) => (
+              <tr key={b.label} className="border-t border-line">
+                <td className="py-2.5 pr-3 font-medium">{b.label}</td>
+                <td className="py-2.5 pr-3 text-right text-muted-foreground">{b.n}</td>
+                <td className="py-2.5 pr-3 text-right">
+                  <span className="font-semibold">{b.hit}</span>
+                  <span className="ml-1 text-[11px] text-muted-foreground">%{b.hit_pct.toFixed(0)}</span>
+                </td>
+                <td className="py-2.5 pr-3 text-right">
+                  <span className="font-semibold">{b.miss}</span>
+                  <span className="ml-1 text-[11px] text-muted-foreground">%{b.miss_pct.toFixed(0)}</span>
+                </td>
+                <td className="py-2.5 pr-3 text-right text-muted-foreground">
+                  {b.draw}
+                  <span className="ml-1 text-[11px]">%{b.draw_pct.toFixed(0)}</span>
+                </td>
+                <td className="py-2.5 pr-3 text-right text-muted-foreground">
+                  {b.upset}
+                  <span className="ml-1 text-[11px]">%{b.upset_pct.toFixed(0)}</span>
+                </td>
+                <td className="py-2.5">
+                  <div className="flex h-2.5 gap-[2px] overflow-hidden rounded-full" aria-hidden>
+                    <div
+                      className="bg-success"
+                      style={{ flexGrow: Math.max(b.hit_pct, 0.0001), flexBasis: 0 }}
+                      title={`tuttu %${b.hit_pct.toFixed(0)}`}
+                    />
+                    <div
+                      className="bg-warning"
+                      style={{ flexGrow: Math.max(b.draw_pct, 0.0001), flexBasis: 0 }}
+                      title={`beraberlik %${b.draw_pct.toFixed(0)}`}
+                    />
+                    <div
+                      className="bg-danger"
+                      style={{ flexGrow: Math.max(b.upset_pct, 0.0001), flexBasis: 0 }}
+                      title={`karşı taraf %${b.upset_pct.toFixed(0)}`}
+                    />
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11.5px] text-muted-foreground">
+        <span className="flex items-center gap-1.5">
+          <span className="inline-block h-2.5 w-2.5 rounded-sm bg-success" aria-hidden /> tuttu
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="inline-block h-2.5 w-2.5 rounded-sm bg-warning" aria-hidden /> tutmadı ·
+          beraberlik
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="inline-block h-2.5 w-2.5 rounded-sm bg-danger" aria-hidden /> tutmadı ·
+          karşı taraf kazandı
+        </span>
+      </div>
+    </div>
+  );
+}
+
 /* ── 5. Mac sirasi isi haritasi ─────────────────────────────────────────── */
 
 export function PositionHeatmap({ positions }: { positions: Analytics["positions"] }) {

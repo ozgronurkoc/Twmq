@@ -20,6 +20,7 @@ import {
   BandStrips,
   CalibrationChart,
   DistributionChart,
+  FavouriteBands,
   FavouriteBreakdown,
   PositionHeatmap,
   ShareBar,
@@ -282,6 +283,17 @@ export default function IstatistikPage() {
                   missTotal={veri.odds.favourite_miss}
                   underdog={veri.odds.underdog_wins}
                 />
+              </div>
+
+              <div>
+                <SectionTitle hint="Favorinin oranı düştükçe isabet artar. Banko yapmadan önce bakılacak tablo budur; “tutmadı”nın ne kadarının beraberlikten geldiği ayrı gösterilir.">
+                  Banko güvenilirliği — favori oranına göre
+                </SectionTitle>
+                <FavouriteBands bands={veri.odds.favourite_bands} />
+                <p className="mt-3 text-[11.5px] leading-relaxed text-muted-foreground">
+                  Az maç içeren bantlarda yüzdeler oynaktır; “Maç” sütununa bakmadan karar
+                  vermeyin. Aralık filtresi bu tabloyu da kapsar.
+                </p>
               </div>
 
               <div>
