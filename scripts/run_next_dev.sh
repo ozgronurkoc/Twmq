@@ -22,9 +22,11 @@ if [[ ! -d frontend/node_modules ]]; then
   (cd frontend && npm install)
 fi
 
-# Flask API arka planda
+# Flask API arka planda.
+# `python backend/web_app.py` yeterli: Python script'in bulundugu dizini
+# (backend/) sys.path'e ekler, yani `import spor_toto` calisir.
 echo "→ Flask API  http://0.0.0.0:8080"
-PORT=8080 python web_app.py &
+PORT=8080 python backend/web_app.py &
 API_PID=$!
 trap 'kill $API_PID 2>/dev/null || true' EXIT
 

@@ -7,16 +7,18 @@
 Tarayıcı
    │
    ▼
-Next.js :3000          ← tek UI (Formül / İstatistik / Sağlık)
+frontend/              ← Next.js :3000, tek UI (Formül / İstatistik / Sağlık)
    │  /api/* rewrite
    ▼
-Flask  :8080           ← sadece JSON (spor_toto motoru)
+backend/web_app.py     ← Flask :8080, sadece JSON
    │
    ▼
-spor_toto/             ← Fix-16, ILP, Bayes, MC, Markov, health
+backend/spor_toto/     ← Fix-16, ILP, Bayes, MC, Markov, health
 ```
 
-`templates/` klasörü tarihsel kalıntı; runtime’da servis **edilmez**.
+Repo iki taraflıdır: Python'un tamamı `backend/`, arayüzün tamamı `frontend/`.
+Eski Jinja2 arayüzü `archive/templates/` altına alınmıştır; runtime'da servis
+**edilmez** ve hiçbir şey tarafından import edilmez.
 
 ## API
 
@@ -49,7 +51,9 @@ Cevap: `ok`, `error`, `result` (rows, guaranteed, advanced, bayes, markov, …),
 ## Çalıştırma
 
 ```bash
-bash scripts/run_next_dev.sh
+bash scripts/run_next_dev.sh    # repo kökünden
 # Preview = :3000 (Next)
 # API     = :8080 (sadece JSON)
 ```
+
+Yalnızca API: `python backend/web_app.py`

@@ -24,7 +24,10 @@ Bu araç maç sonucu **tahmin etmez**. Tahminin doğruysa onu kaçırmamanı, he
 
 ## Kurulum
 
+Python tarafının tamamı `backend/` altındadır:
+
 ```bash
+cd backend
 pip install -e .
 # veya geliştirme + test:
 pip install -e ".[test]"
@@ -109,9 +112,14 @@ Web’de Bayes paneli: preset dropdown (CLI ile **aynı α/n**), posterior tablo
 
 ## Web arayüzü
 
+Backend yalnızca JSON API'dir; arayüz Next.js tarafındadır (`frontend/`).
+
 ```bash
-python web_app.py
-# http://localhost:5000
+# API tek başına
+python backend/web_app.py       # http://localhost:8080
+
+# API + Next.js arayüz birlikte
+bash scripts/run_next_dev.sh    # UI :3000, API :8080
 ```
 
 Özellikler:
@@ -129,9 +137,10 @@ python web_app.py
 ### Health
 
 ```bash
+cd backend
 python -m spor_toto.health              # bir kez
 python -m spor_toto.health --interval 60
-curl http://localhost:5000/health       # JSON (200 = HEALTHY, 503 = UNHEALTHY)
+curl http://localhost:8080/api/health   # JSON (200 = HEALTHY, 503 = UNHEALTHY)
 ```
 
 13 invariant: encoder, fix16 garanti, distance layers, blok/heuristic, exact olasılık, Monte Carlo, Bayes, Markov, error_freq, pipeline şekli, scipy bayrağı.
@@ -164,19 +173,34 @@ Küre-kaplama alt sınırı: `kolon ≥ |uzay| / top_boyutu`.
 
 ## Mimari (kısa)
 
+Repo iki tarafa ayrılmıştır: `backend/` (Python) ve `frontend/` (Next.js).
+
 ```
-spor_toto/
-  core.py      Encoder, Fix-16, ILP, heuristic, exact olasılık
-  analysis.py  Monte Carlo, maç bazlı hata frekansı
-  bayes.py     Dirichlet prior → posterior, KL, preset'ler
-  markov.py    Seçim hayatta kalma + hata bütçesi zinciri
-  health.py    13 invariant health check
-  report.py    Konsol / dosya çıktısı
-  cli.py       spor-toto komut satırı
-web_app.py     Flask + Jinja2 UI
-templates/     Apple tarzı arayüz
-tests/         pytest (core, engines, analysis, bayes, markov, health, cli)
+backend/
+  spor_toto/
+    core.py      Encoder, Fix-16, ILP, heuristic, exact olasılık
+    analysis.py  Monte Carlo, maç bazlı hata frekansı
+    bayes.py     Dirichlet prior → posterior, KL, preset'ler
+    markov.py    Seçim hayatta kalma + hata bütçesi zinciri
+    health.py    13 invariant health check
+    report.py    Konsol / dosya çıktısı
+    cli.py       spor-toto komut satırı
+  web_app.py     Flask — yalnızca JSON API, HTML servis etmez
+  tests/         pytest (core, engines, analysis, bayes, markov, health, cli)
+  data/          Tarihsel 1/0/2 verisi
+  scripts/       check.sh (yerel CI eşdeğeri)
+  pyproject.toml
+
+frontend/        Next.js App Router (Formül / İstatistik / Sağlık)
+  app/           sayfalar
+  lib/api.ts     API istemcisi
+
+scripts/         run_next_dev.sh (API + UI birlikte ayağa kaldırır)
+docs/            Mimari ve veri notları
+archive/         Kullanımdan kalkmış Jinja2 arayüzü ve tek-seferlik yamalar
 ```
+
+Detay için `docs/ARCHITECTURE_NEXT.md` ve `archive/README.md`.
 
 Katmanlar bağımsızdır:
 
@@ -189,6 +213,7 @@ Katmanlar bağımsızdır:
 ## Testler
 
 ```bash
+cd backend
 pytest
 pytest -m "not slow"
 pytest tests/test_bayes.py tests/test_markov.py tests/test_health.py tests/test_cli.py -v
@@ -199,10 +224,10 @@ Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant’lar, CLI (Bayes p
 ### Yerel tek komut (health + CLI smoke)
 
 ```bash
-bash scripts/check.sh
+bash backend/scripts/check.sh
 ```
 
-`scripts/check.sh`: hızlı pytest → 13 invariant health → CLI fix16 + `--bayes-preset dengeli` dumanı.
+`backend/scripts/check.sh`: hızlı pytest → 13 invariant health → CLI fix16 + `--bayes-preset dengeli` dumanı.
 Exit code ≠ 0 ise bir adım kırık demektir (CI ile aynı mantık).
 
 ---

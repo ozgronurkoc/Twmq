@@ -8,6 +8,10 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    # Python projesinin tamami backend/ altinda; tum run adimlari oradan calisir.
+    defaults:
+      run:
+        working-directory: backend
     strategy:
       fail-fast: false
       matrix:
@@ -18,6 +22,8 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
+          # `uses:` adimlari working-directory'yi almaz; yol repo kokune goredir.
+          cache-dependency-path: backend/pyproject.toml
       - run: pip install -e ".[test]"
 
       - name: Hizli testler

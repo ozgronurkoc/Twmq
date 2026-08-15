@@ -49,7 +49,7 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python web_app.py"
+args = "python backend/web_app.py"
 waitForPort = 8080
 
 [workflows.workflow.metadata]
@@ -63,10 +63,6 @@ externalPort = 80
 localPort = 8080
 externalPort = 8080
 
-[postMerge]
-path = "scripts/post-merge.sh"
-timeoutMs = 60000
-
 [deployment]
 deploymentTarget = "autoscale"
-run = ["gunicorn", "--bind=0.0.0.0:8080", "--reuse-port", "web_app:app"]
+run = ["sh", "-c", "cd backend && gunicorn --bind=0.0.0.0:8080 --reuse-port web_app:app"]
