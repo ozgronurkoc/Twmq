@@ -99,6 +99,10 @@ spor-toto --picks "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"
 bash scripts/run_next_dev.sh    # UI :3000, API :8080
 ```
 
+Adım 1'i atlamak isterseniz `bash scripts/setup.sh` pip ve npm bağımlılıklarını
+birlikte, kuruluları atlayarak kurar; `run_next_dev.sh` zaten kendisi çağırır.
+Replit kurulumu (Run düğmesi, iş akışları, dağıtım): `replit.md`.
+
 Bağımlılıklar: `numpy`, `scipy` (kesin ILP için), `flask`, `gunicorn`.
 `scipy` yoksa araç çalışır; yalnızca kesin çözücü (ILP) devre dışı kalır.
 Python ≥ 3.10. Arayüz: Next.js 14 App Router + TypeScript + Tailwind.
@@ -633,7 +637,8 @@ frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası 
   lib/api.ts           tipli, AbortController ile iptal edilebilir istemci
   lib/transfer.ts      hafta → formül devri (idempotent; bkz. §7.2 kural 6)
 
-scripts/               run_next_dev.sh (API + UI birlikte)
+scripts/               setup.sh (bağımlılıklar) · run_next_dev.sh (API + UI birlikte)
+                       build.sh + run_prod.sh (Replit dağıtımı)
 docs/                  Mimari, veri ve yol haritası belgeleri
 archive/               Kullanımdan kalkmış Jinja2 arayüzü ve tek-seferlik yamalar
 ```

@@ -6,6 +6,9 @@ cd "$ROOT"
 
 echo "=== Spor Toto Lab — Next.js :3000 + Flask :8080 ==="
 
+# Bagimliliklar (idempotent: kurulular atlanir)
+bash scripts/setup.sh
+
 # .env.local — boş API_URL = aynı origin (next.config rewrites → Flask)
 if [[ ! -f frontend/.env.local ]]; then
   echo "NEXT_PUBLIC_API_URL=" > frontend/.env.local
@@ -16,23 +19,18 @@ elif grep -q '127.0.0.1:8080' frontend/.env.local 2>/dev/null; then
   echo "✓ .env.local proxy moduna alındı"
 fi
 
-# npm deps (sadece yoksa)
-if [[ ! -d frontend/node_modules ]]; then
-  echo "→ npm install (ilk kurulum)..."
-  (cd frontend && npm install)
-fi
-
 # Flask API arka planda.
 # `python backend/web_app.py` yeterli: Python script'in bulundugu dizini
 # (backend/) sys.path'e ekler, yani `import spor_toto` calisir.
 echo "→ Flask API  http://0.0.0.0:8080"
-PORT=8080 python backend/web_app.py &
+PORT=8080 "${PYTHON:-python3}" backend/web_app.py &
 API_PID=$!
 trap 'kill $API_PID 2>/dev/null || true' EXIT
 
 # API ayağa kalksın
 for i in 1 2 3 4 5 6 7 8 9 10; do
-  if curl -sf http://127.0.0.1:8080/api/health >/dev/null 2>&1; then
+  # /api/meta hazir olma sinyali: /api/health degismez dusunce 503 dondurur
+  if curl -sf http://127.0.0.1:8080/api/meta >/dev/null 2>&1; then
     echo "✓ API hazır"
     break
   fi

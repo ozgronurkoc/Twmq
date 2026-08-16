@@ -20,6 +20,7 @@ author = "agent"
 task = "workflow.run"
 args = "Start Lab"
 
+# UI + API birlikte — Run dugmesi burayi acar (preview :3000)
 [[workflows.workflow]]
 name = "Start Lab"
 author = "agent"
@@ -32,28 +33,66 @@ waitForPort = 3000
 [workflows.workflow.metadata]
 outputType = "webview"
 
-[[workflows.workflow]]
-name = "spor-toto"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "spor-toto --picks \"1,10,1,12,0,10,2,10,1,12,02,1,10,2,10\""
-
-[workflows.workflow.metadata]
-outputType = "console"
-
+# Yalnizca Flask API (UI olmadan; /api/* uclari)
 [[workflows.workflow]]
 name = "API only"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python backend/web_app.py"
+args = "bash scripts/setup.sh && python backend/web_app.py"
 waitForPort = 8080
 
 [workflows.workflow.metadata]
 outputType = "webview"
+
+# Bagimliliklari kur (git pull sonrasi tek tikla)
+[[workflows.workflow]]
+name = "Kurulum"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "bash scripts/setup.sh"
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+# Hizli test suiti (ILP testleri haric)
+[[workflows.workflow]]
+name = "Testler"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd backend && python -m pytest -m \"not slow\" -q"
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+# Degismez (invariant) kontrolleri — /saglik sayfasinin konsol karsiligi
+[[workflows.workflow]]
+name = "Saglik"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd backend && python -m spor_toto.health"
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+# CLI ornegi (arayuzsuz formul uretimi)
+[[workflows.workflow]]
+name = "spor-toto"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd backend && python -m spor_toto.cli --picks \"1,10,1,12,0,10,2,10,1,12,02,1,10,2,10\""
+
+[workflows.workflow.metadata]
+outputType = "console"
 
 [[ports]]
 localPort = 3000
@@ -65,4 +104,5 @@ externalPort = 8080
 
 [deployment]
 deploymentTarget = "autoscale"
-run = ["sh", "-c", "cd backend && gunicorn --bind=0.0.0.0:8080 --reuse-port web_app:app"]
+build = ["bash", "scripts/build.sh"]
+run = ["bash", "scripts/run_prod.sh"]
