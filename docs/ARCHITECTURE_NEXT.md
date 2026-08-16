@@ -104,6 +104,42 @@ Pahalı olduğu için maliyet sınırı vardır; aşılırsa blok
 
 Cevap: `ok`, `error`, `result` (rows, guaranteed, advanced, bayes, markov, …), `run_log_text`.
 
+## Arayüz durumu
+
+Sunucuda oturum yoktur; `/api/solve` durumsuzdur ve her istek kurulumun
+tamamını taşır. Formül sayfasının kurulumu bu yüzden **istemcide** saklanır
+(`frontend/lib/kurulum.ts`):
+
+| Taşıyıcı | Ne zaman yazılır | Kapsam | Kayıp |
+|---|---|---|---|
+| `localStorage` | her değişiklikte, kendiliğinden | o tarayıcı | yok |
+| URL (`?s=…`) | yalnızca "Bağlantıyı kopyala" | paylaşılabilir | olasılıklar binde bir + normalize |
+| `sessionStorage` (`?hafta=`) | hafta detayından devir | o sekme | yok |
+
+Maç adları yalnızca ilk satırdadır: URL'e girmez (15 takım adı adresi üç
+katına çıkarır) ve çözüme hiç katılmaz — motor yalnızca işaretleri görür.
+
+Öncelik: **URL > `localStorage`**, ardından devir paketi yalnızca
+olasılıkların üzerine yazar. Sonuç hiçbirine girmez — türetilmiş veridir.
+
+Kodlama sabit genişliklidir; taşan bir alan sonraki bütün maçları kaydırır
+ve hiçbir yerde patlamaz. `frontend/scripts/check.mjs` bu sınırı CI'da
+bekçiye bağlar (`tests.yml` → `frontend` işi).
+
+## İstemcide hesaplanan iki büyüklük
+
+Bu ikisi sunucudan **istenmez**; girdi değiştikçe anında görünmeleri
+gerektiği için istemcide durur (`frontend/lib/kume-ici.ts`):
+
+| Büyüklük | Formül | Sunucudaki karşılığı |
+|---|---|---|
+| Küme-içi koşulu | `∏ᵢ Σ_{s∈secᵢ} pᵢ(s)` | `advanced.exact.p_kume_ici` |
+| Küre-kaplama alt sınırı | `⌈uzay / (1 + Σ(kᵢ−1))⌉` | `result.alt_sinir` |
+
+İkisi de sunucunun döndürdüğü değerle birebir tutmak zorundadır; CI bunu
+ölçülmüş vakalarla denetler. **Birimlere dikkat:** `advanced.exact.*` yüzde
+döner (sunucuda `100 *` uygulanmıştır), `markov.*` ise 0–1 olasılık.
+
 ## Çalıştırma
 
 ```bash

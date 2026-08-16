@@ -4,6 +4,22 @@ import * as React from "react";
 import { Loader2, Play } from "lucide-react";
 
 import { getMeta, solve } from "@/lib/api";
+import { kaplamaAltSiniri } from "@/lib/kume-ici";
+import { senaryoEkle, senaryoYap, type Senaryo } from "@/lib/senaryo";
+import {
+  adresiTemizle,
+  kurulumuCoz,
+  kurulumuKodla,
+  maclariKodla,
+  temizEtiketler,
+  varsayilanKurulum,
+  VARSAYILAN_ENG,
+  VARSAYILAN_MACLAR,
+  yereldenOku,
+  yereleYaz,
+  yereliTemizle,
+  type Kurulum,
+} from "@/lib/kurulum";
 import {
   devirIsaretliMi,
   haftaDevriOku,
@@ -38,6 +54,10 @@ import {
   Switch,
 } from "@/components/ui/controls";
 import { Tabs, TabPanel, type TabItem } from "@/components/ui/tabs";
+import { KumeIciKart } from "@/components/formul/kume-ici-kart";
+import { KurulumBar } from "@/components/formul/kurulum-bar";
+import { SenaryoKart } from "@/components/formul/senaryo-kart";
+import { AdGirisi } from "@/components/formul/ad-girisi";
 import { MatchGrid } from "@/components/formul/match-grid";
 import { ProbGrid } from "@/components/formul/prob-grid";
 import { DagilimPanel, KuponPanel, OzetPanel } from "@/components/formul/panels-core";
@@ -45,24 +65,34 @@ import { FirePanel } from "@/components/formul/panels-fire";
 import {
   BayesPanel,
   BosPanel,
+  HataButcesiPanel,
   HataFrekansPanel,
   LogPanel,
-  MarkovPanel,
   OlasilikPanel,
 } from "@/components/formul/panels-analiz";
 
-/** README'deki örnek kupon: "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10" */
-const VARSAYILAN: Sembol[][] = [
-  ["1"], ["1", "0"], ["1"], ["1", "2"], ["0"],
-  ["1", "0"], ["2"], ["1", "0"], ["1"], ["1", "2"],
-  ["0", "2"], ["1"], ["1", "0"], ["2"], ["1", "0"],
-];
-
 const HAMMING_BLOK = 7;
+
+/**
+ * Birlestirilen sekmelerin icindeki dikis. Sekme sayisi 9'dan 5'e inince
+ * bir sekmede birden fazla konu bulunuyor; okurun nerede konu degistigini
+ * gormesi gerekir, yoksa birlestirme sadece uzun bir liste olur.
+ */
+function BolumBasligi({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-3 pt-1">
+      <span className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+        {children}
+      </span>
+      <span className="h-px flex-1 bg-line" />
+    </div>
+  );
+}
 
 export default function FormulPage() {
   const [meta, setMeta] = React.useState<MetaResponse | null>(null);
-  const [matches, setMatches] = React.useState<Sembol[][]>(VARSAYILAN);
+  const [matches, setMatches] = React.useState<Sembol[][]>(VARSAYILAN_MACLAR);
+  const [labels, setLabels] = React.useState<string[]>(() => Array(MAC_SAYISI).fill(""));
   const [mode, setMode] = React.useState<ModeId>("fix16");
   const [variant, setVariant] = React.useState(0);
   const [budget, setBudget] = React.useState(32);
@@ -72,7 +102,7 @@ export default function FormulPage() {
 
   const [probsAcik, setProbsAcik] = React.useState(false);
   const [probs, setProbs] = React.useState<ProbRow[]>(() =>
-    VARSAYILAN.map((s) => uniformProb(s)),
+    VARSAYILAN_MACLAR.map((s) => uniformProb(s)),
   );
   const [useBayes, setUseBayes] = React.useState(false);
   const [preset, setPreset] = React.useState<string>("dengeli");
@@ -82,23 +112,120 @@ export default function FormulPage() {
   const [mcSamples, setMcSamples] = React.useState(80000);
   const [fireMax, setFireMax] = React.useState(2);
 
-  const [eng, setEng] = React.useState({
-    trials: 5,
-    ls_iters: 30000,
-    seed: 42,
-    time_limit: 60,
-    block_limit: 256,
-    exact_limit: 512,
-  });
+  const [eng, setEng] = React.useState({ ...VARSAYILAN_ENG });
 
   const [sonuc, setSonuc] = React.useState<SolveResult | null>(null);
+  /**
+   * Ekrandaki sonucu ureten kurulumun parmak izi. Kurulum kodlamasi zaten
+   * bunun icin bicilmis kaftan: modun ETKILEMEDIGI alanlari disarida
+   * birakir, yani fix16'dayken butceyi degistirmek sonucu bayatlatmaz.
+   */
+  const [uretilenParmak, setUretilenParmak] = React.useState<string | null>(null);
+  const [senaryolar, setSenaryolar] = React.useState<Senaryo[]>([]);
   const [logMetin, setLogMetin] = React.useState("");
   const [hata, setHata] = React.useState<string | null>(null);
   const [calisiyor, setCalisiyor] = React.useState(false);
   const [gecen, setGecen] = React.useState(0);
-  const [sekme, setSekme] = React.useState("ozet");
+  const [sekme, setSekme] = React.useState("sonuc");
   const [devir, setDevir] = React.useState<HaftaDevri | null>(null);
+  const [baglantiNotu, setBaglantiNotu] = React.useState<{
+    atlanan: string[];
+    olasilikVar: boolean;
+  } | null>(null);
   const iptalRef = React.useRef<AbortController | null>(null);
+  const sonucRef = React.useRef<HTMLDivElement | null>(null);
+
+  /**
+   * Dar ekranda sonuca kaydir.
+   *
+   * Telefonda sonuc blogu ~2200 px asagida basliyor: "Formulu uret"e
+   * basildiginda ekranda HICBIR SEY degismiyor, calisma gostergesi bile
+   * gorunmuyordu. Kaydirma bitiste degil BASLANGICTA yapilir — kullanici
+   * bekleme anlatisini (donen ikon + gecen sure) gormeli.
+   *
+   * Genis ekranda sonuc girdinin yaninda duruyor; orada kaydirmak
+   * kullaniciyi yerinden etmek olurdu. Esik, izgaranin tek kolona dustugu
+   * Tailwind `xl` kirilma noktasi.
+   */
+  const kaydirSonuca = React.useCallback((yalnizcaUzaktaysa = false) => {
+    if (typeof window === "undefined" || window.innerWidth >= 1280) return;
+    const el = sonucRef.current;
+    if (!el) return;
+    // Kullanici sonucu zaten ekrana getirmisse yerinden etme.
+    if (yalnizcaUzaktaysa && el.getBoundingClientRect().top < window.innerHeight / 3) {
+      return;
+    }
+    const azHareket = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    el.scrollIntoView({ behavior: azHareket ? "auto" : "smooth", block: "start" });
+  }, []);
+
+  // Kurulum geri yuklendi mi. Iki yerde belirleyici: (a) /api/meta gec
+  // gelip geri yuklenen degerleri EZMESIN, (b) geri yukleme bitmeden yerel
+  // depoya varsayilanlar yazilmasin.
+  const geriYuklendiRef = React.useRef(false);
+  // Yerel depoya yazma kapisi. Bilerek ref DEGIL state: ref olsaydi kayit
+  // etkisi, geri yukleme henuz islenmemis ayni commit'te varsayilanlari
+  // yazmaya baslar ve o yazimi yalnizca geciktirmenin iptali durdururdu.
+  // State olunca kapi ancak geri yuklenmis degerlerle birlikte acilir.
+  const [kayitAcik, setKayitAcik] = React.useState(false);
+
+  const kurulum: Kurulum = React.useMemo(
+    () => ({
+      matches, labels, probsAcik, probs, mode, variant, budget, planCount, planApply,
+      kati, fireMax, useBayes, preset, elleAyar, prior, evidence, mcSamples, eng,
+    }),
+    [
+      matches, labels, probsAcik, probs, mode, variant, budget, planCount, planApply,
+      kati, fireMax, useBayes, preset, elleAyar, prior, evidence, mcSamples, eng,
+    ],
+  );
+
+  const uygula = React.useCallback((k: Kurulum) => {
+    setMatches(k.matches.map((r) => [...r]));
+    setLabels([...k.labels]);
+    setProbs(k.probs.map((r) => ({ ...r })));
+    setProbsAcik(k.probsAcik);
+    setMode(k.mode);
+    setVariant(k.variant);
+    setBudget(k.budget);
+    setPlanCount(k.planCount);
+    setPlanApply(k.planApply);
+    setKati(k.kati);
+    setFireMax(k.fireMax);
+    setUseBayes(k.useBayes);
+    setPreset(k.preset);
+    setElleAyar(k.elleAyar);
+    setPrior(k.prior);
+    setEvidence(k.evidence);
+    setMcSamples(k.mcSamples);
+    setEng({ ...k.eng });
+  }, []);
+
+  // Kurulumun geri yuklenmesi. Oncelik: URL > yerel depo. URL'de kurulum
+  // varsa yerel kayit OKUNMAZ — paylasilan baglantiyi acan kisi kendi eski
+  // kurulumunun kalintisini degil, gonderilen kurulumu gormeli.
+  //
+  // Devir paketi (asagida) bundan SONRA calisir ve yalnizca olasiliklarin
+  // uzerine yazar; hafta detayindan gelen bir kullanicinin isaretleri
+  // korunur.
+  React.useEffect(() => {
+    const cozum = kurulumuCoz(window.location.search);
+    if (cozum) {
+      uygula(cozum.kurulum);
+      setBaglantiNotu({
+        atlanan: cozum.atlanan,
+        olasilikVar: cozum.kurulum.probsAcik,
+      });
+      geriYuklendiRef.current = true;
+    } else {
+      const yerel = yereldenOku();
+      if (yerel) {
+        uygula(yerel);
+        geriYuklendiRef.current = true;
+      }
+    }
+    setKayitAcik(true);
+  }, [uygula]);
 
   // Hafta detayindaki "formule gonder" dugmesinden gelen paket. Isaret
   // URL'de (`?hafta=51`), paket sessionStorage'da ve ikisi de TUKETILMEZ:
@@ -111,7 +238,19 @@ export default function FormulPage() {
     setDevir(paket);
     setProbs(paket.probs.map((r) => ({ ...r })));
     setProbsAcik(true);
+    // Ad tasimak bir TAHMIN tasimak degildir: hangi macin hangisi oldugunu
+    // soyler, hangi sembolun tutacagini degil. Bu yuzden devrin "isaretler
+    // tasinmadi" sozunu bozmaz.
+    if (paket.labels?.some(Boolean)) setLabels(temizEtiketler(paket.labels));
   }, []);
+
+  // Kurulumu yerel depoya yaz. Olasilik kutularinda her tusa basista
+  // yazmamak icin geciktirilir.
+  React.useEffect(() => {
+    if (!kayitAcik) return;
+    const id = window.setTimeout(() => yereleYaz(kurulum), 400);
+    return () => window.clearTimeout(id);
+  }, [kurulum, kayitAcik]);
 
   // /api/meta: modlar, preset'ler, sinirlar — hicbiri sabit kodlanmaz.
   React.useEffect(() => {
@@ -119,6 +258,10 @@ export default function FormulPage() {
     getMeta(ac.signal)
       .then((m) => {
         setMeta(m);
+        // Sunucunun varsayilanlari YALNIZCA geri yuklenen bir kurulum
+        // yokken uygulanir. Aksi halde gec gelen meta, kullanicinin
+        // kaydettigi motor ayarlarini ve MC ornek sayisini sessizce ezerdi.
+        if (geriYuklendiRef.current) return;
         setEng((e) => ({ ...e, ...m.engine_defaults }));
         setMcSamples(m.limits?.mc_samples?.default ?? 80000);
       })
@@ -127,6 +270,41 @@ export default function FormulPage() {
       });
     return () => ac.abort();
   }, []);
+
+  const sifirla = React.useCallback(() => {
+    yereliTemizle();
+    haftaDevriTemizle();
+    // Adres de temizlenir: aksi halde yenileme, az once silinen kurulumu
+    // baglantidan geri getirirdi.
+    adresiTemizle();
+    setDevir(null);
+    setBaglantiNotu(null);
+    setSonuc(null);
+    setUretilenParmak(null);
+    setSenaryolar([]);
+    setLogMetin("");
+    setHata(null);
+    uygula(varsayilanKurulum());
+  }, [uygula]);
+
+  // Kaydirma, olay isleyicisinden DEGIL commit sonrasindan tetiklenir.
+  // Isleyiciden cagrildiginda yumusak kaydirma daha ucarken `setCalisiyor`
+  // kaynakli yeniden render araya giriyor ve animasyon iptal oluyordu
+  // (olculdu: scrollY 0'da kaliyordu, oysa ayni cagri tek basina 2019'a
+  // goturuyor).
+  React.useEffect(() => {
+    if (calisiyor) kaydirSonuca();
+  }, [calisiyor, kaydirSonuca]);
+
+  // Ikinci kaydirma: baslangictakini tarayici KIRPMIS olabilir. Sonuc
+  // gelmeden once sayfa kisa (olculdu: 2818 px, yani en fazla 1974'e
+  // kaydirilabiliyor) ama sonuc kolonu 2441'de basliyor — hedef tavana
+  // takiliyor ve sonuc ekranin alt yarisinda kaliyordu. Sonuc gelip sayfa
+  // uzayinca bir kez daha denenir; kullanici o arada sonucu zaten ekrana
+  // getirdiyse dokunulmaz.
+  React.useEffect(() => {
+    if (sonuc) kaydirSonuca(true);
+  }, [sonuc, kaydirSonuca]);
 
   // Gecen sure sayaci — uzun suren istekler icin bekleme anlatisi.
   React.useEffect(() => {
@@ -146,23 +324,39 @@ export default function FormulPage() {
     let banko = 0;
     let cifte = 0;
     let uclu = 0;
-    let uzay = 1;
     for (const satir of matches) {
       const n = satir.length || 1;
       if (n === 1) banko++;
       else if (n === 2) cifte++;
       else uclu++;
-      uzay *= n;
     }
-    // fix16'da bedel = uzay / 2^7 * 16 = uzay / 8
-    const tahminiBedel =
-      mode === "fix16" && cifte >= HAMMING_BLOK ? Math.round(uzay / 8) : uzay;
-    return { banko, cifte, uclu, uzay, tahminiBedel };
-  }, [matches, mode]);
+    return { banko, cifte, uclu, ...kaplamaAltSiniri(matches) };
+  }, [matches]);
 
   const modInfo = meta?.modes.find((m) => m.id === mode);
   const butceGerekli =
     modInfo?.needs_budget ?? (mode === "butce" || mode === "maxcov");
+
+  /**
+   * Uretmeden once soylenebilecek bedel. Uc AYRI durum var ve tek bir
+   * sayiya indirilemezler:
+   *
+   *   fix16   kesin — blok 2^7 noktayi 16 satira indirir, yani uzay/8.
+   *   butce   tavan — odeyecegin en fazla kendi girdigin butcedir.
+   *   digeri  aralik — motor kac kolon uretecegini arama sonunda bilir.
+   *
+   * Onceki surum ucunu de tek formulle veriyordu ve fix16 disinda UZAYI
+   * yaziyordu: `auto` modunda ayni kupon icin "256 kolon" diyordu, motor
+   * 32 uretiyordu (olculdu). Sekiz kat abarti, hem de odenecek tutari
+   * soyleyen en gorunur yerde.
+   */
+  const bedel = React.useMemo(() => {
+    if (mode === "fix16" && canli.cifte >= HAMMING_BLOK) {
+      return { tip: "kesin" as const, deger: Math.round(canli.uzay / 8) };
+    }
+    if (butceGerekli) return { tip: "tavan" as const, deger: budget };
+    return { tip: "aralik" as const, alt: canli.altSinir, ust: canli.uzay };
+  }, [mode, butceGerekli, budget, canli]);
   const scipyEksik = Boolean(modInfo?.needs_scipy && meta?.has_scipy === false);
   const fix16Yetersiz = mode === "fix16" && canli.cifte < HAMMING_BLOK;
 
@@ -173,6 +367,13 @@ export default function FormulPage() {
       iptalRef.current = ac;
       setCalisiyor(true);
       setHata(null);
+
+      // Parmak izi istek KURULURKEN alinir, cevap donunce degil: arada
+      // kullanici girdiyi degistirmisse sonuc zaten o degisiklige ait
+      // olmayacak ve bayat isaretlenmesi gerekir.
+      const govdeKurulum =
+        planUygula === undefined ? kurulum : { ...kurulum, planApply: planUygula };
+      const parmak = kurulumuKodla(govdeKurulum);
 
       const govde: SolveRequest = {
         matches,
@@ -205,6 +406,13 @@ export default function FormulPage() {
           setHata(cevap.error || "Bilinmeyen hata");
         } else {
           setSonuc(cevap.result);
+          setUretilenParmak(parmak);
+          setSenaryolar((liste) =>
+            senaryoEkle(
+              liste,
+              senaryoYap(cevap.result!, govdeKurulum, parmak, maclariKodla(matches)),
+            ),
+          );
         }
       } catch (e) {
         if (e instanceof DOMException && e.name === "AbortError") return;
@@ -216,18 +424,32 @@ export default function FormulPage() {
     [
       matches, mode, variant, kati, fireMax, butceGerekli, budget, planCount, planApply,
       probsAcik, probs, mcSamples, useBayes, elleAyar, preset, prior, evidence, eng,
+      kurulum,
     ],
   );
 
+  // Ekrandaki sonuc hala girdiyi mi anlatiyor. Sonuc SILINMEZ — eski sonuc
+  // hala okunabilir bir bilgidir, yalnizca artik neyi anlattigi soylenir.
+  const bayat =
+    sonuc !== null && uretilenParmak !== null && uretilenParmak !== kurulumuKodla(kurulum);
+
+  /*
+    Sekmeler SORUYA gore bolunur, motor blogua gore degil.
+    Onceki dizilim backend modullerinin birebir yansimasiydi (Ozet,
+    Kupon, Dagilim, Olasilik, Bayes, Markov, Hata frekansi, Fire, Log) ve
+    kullanicinin dort sorusundan ikisi ucer-dorder sekmeye dagiliyordu:
+    "ne kadar riskli" Olasilik+Markov+Dagilim'a, "hangi maci degistireyim"
+    Hata frekansi+Fire+Markov'a.
+  */
   const sekmeler: TabItem[] = [
-    { id: "ozet", label: "Özet" },
-    { id: "kupon", label: "Kupon", badge: sonuc ? sonuc.satir_sayisi : undefined },
-    { id: "dagilim", label: "Dağılım" },
-    { id: "olasilik", label: "Olasılık", enabled: !!sonuc?.advanced },
-    { id: "bayes", label: "Bayes", enabled: !!sonuc?.bayes },
-    { id: "markov", label: "Markov", enabled: !!sonuc?.markov },
-    { id: "hata", label: "Hata frekansı", enabled: !!sonuc?.error_freq },
-    { id: "fire", label: "Fire", enabled: !!sonuc?.fire },
+    { id: "sonuc", label: "Ne aldım" },
+    { id: "kupon", label: "Ne yazacağım", badge: sonuc ? sonuc.satir_sayisi : undefined },
+    { id: "risk", label: "Ne kadar riskli", enabled: !!sonuc?.advanced },
+    {
+      id: "zayif",
+      label: "Zayıf halkalar",
+      enabled: !!(sonuc?.error_freq || sonuc?.fire),
+    },
     { id: "log", label: "Log", enabled: !!logMetin },
   ];
 
@@ -244,15 +466,72 @@ export default function FormulPage() {
       </header>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
-        {/* ── Girdi ──────────────────────────────────────────── */}
-        <div className="space-y-4">
+        {/*
+          ── Girdi ────────────────────────────────────────────
+          `min-w-0` sart: izgara ogesinin varsayilan `min-width:auto`'su
+          icerigin min-content genisligine kilitlenir. Olasilik izgarasi
+          `min-w-[420px]` tasiyor ve kendi `overflow-x-auto` sarmalayicisi
+          bunu icerde tutamiyor — telefonda (390 px) TUM sol kolonu 462 px'e
+          itip sayfayi yatay kaydiriyordu, olasilik girisi acikken.
+        */}
+        <div className="min-w-0 space-y-4">
+          <KurulumBar kurulum={kurulum} onSifirla={sifirla} disabled={calisiyor} />
+
+          {baglantiNotu ? (
+            <Callout ton="primary" baslik="Kurulum bağlantıdan yüklendi">
+              <p>
+                Maç işaretleri ve motor ayarları adresteki bağlantıdan geldi.
+                {baglantiNotu.atlanan.length ? (
+                  <>
+                    {" "}
+                    Bağlantıdaki <strong>{baglantiNotu.atlanan.join(", ")}</strong>{" "}
+                    okunamadı ve varsayılana düşürüldü — uydurulmadı, aşağıdan
+                    kontrol et.
+                  </>
+                ) : null}
+                {baglantiNotu.olasilikVar ? (
+                  <>
+                    {" "}
+                    Olasılıklar bağlantıda <strong>binde bir</strong> çözünürlükle
+                    ve <strong>1&apos;e normalize edilmiş</strong> taşınır; gönderen
+                    ham ağırlık girdiyse (5/3/2) burada oranı korunmuş halini
+                    (0.5/0.3/0.2) görürsün.
+                  </>
+                ) : null}
+              </p>
+              <button
+                type="button"
+                onClick={() => setBaglantiNotu(null)}
+                className="mt-2 text-[12px] underline underline-offset-2 hover:no-underline"
+              >
+                Bu notu kapat
+              </button>
+            </Callout>
+          ) : null}
+
           <Card>
             <CardHeader
               title="Maç seçimleri"
               hint="Her maç için en az bir sembol. Semboller kupon düzeninde."
             />
             <CardBody>
-              <MatchGrid matches={matches} onChange={setMatches} disabled={calisiyor} />
+              {/*
+                Ad girisi izgaranin USTUNDE. Altta oldugunda masaustunde tam
+                katlama cizgisine denk gelip yapiskan cubugun altinda
+                kaliyordu (olculdu: dugme 1011-1074, cubuk 996-1088) — yani
+                ilk acilista tiklanamiyordu. Kartin ustu yapiskan cubugun
+                hic ulasmadigi yer; ayrica "once adlandir, sonra isaretle"
+                sirasi da dogal.
+              */}
+              <div className="mb-4">
+                <AdGirisi labels={labels} onChange={setLabels} disabled={calisiyor} />
+              </div>
+              <MatchGrid
+                matches={matches}
+                labels={labels}
+                onChange={setMatches}
+                disabled={calisiyor}
+              />
             </CardBody>
           </Card>
 
@@ -266,6 +545,16 @@ export default function FormulPage() {
             <Stat etiket="Üçlü" deger={canli.uclu} />
             <Stat etiket="Uzay" deger={sayi(canli.uzay)} />
           </div>
+
+          <KumeIciKart
+            matches={matches}
+            probs={probs}
+            acik={probsAcik}
+            onAc={() => setProbsAcik(true)}
+            onEsitle={() =>
+              setProbs(matches.map(() => ({ "1": 1 / 3, "0": 1 / 3, "2": 1 / 3 })))
+            }
+          />
 
           {fix16Yetersiz ? (
             <Callout
@@ -291,6 +580,37 @@ export default function FormulPage() {
                   ]
                 }
               />
+
+              {/*
+                Bedelin nasil okunacagi MODUN SECILDIGI yerde anlatilir.
+                Yapiskan cubukta duruyordu ve orayi 100 px'e sisirip
+                altindaki kontrolleri kapatiyordu; ayrica aciklamanin
+                dogal yeri zaten burasi.
+              */}
+              <p className="text-[11.5px] leading-relaxed text-muted-foreground">
+                {bedel.tip === "kesin" ? (
+                  <>
+                    Bu modda bedel <strong>kesindir</strong>: blok 2⁷ noktayı 16
+                    satıra indirir, yani değişken uzayın sekizde biri —{" "}
+                    <strong>{sayi(bedel.deger)} kolon</strong>.
+                  </>
+                ) : null}
+                {bedel.tip === "tavan" ? (
+                  <>
+                    Bu mod bütçeyi <strong>aşmaz</strong>: ödeyeceğin en fazla{" "}
+                    <strong>{sayi(bedel.deger)} kolon</strong>.
+                  </>
+                ) : null}
+                {bedel.tip === "aralik" ? (
+                  <>
+                    Bu modda kesin bedeli motor arama sonunda bilir.{" "}
+                    <strong>{sayi(bedel.alt)} kolonun</strong> altı
+                    küre-kaplama sınırı yüzünden imkânsız,{" "}
+                    <strong>{sayi(bedel.ust)} kolon</strong> ise tam sistem —
+                    sonuç bu ikisinin arasında çıkar.
+                  </>
+                ) : null}
+              </p>
 
               {modInfo && !modInfo.garanti ? (
                 <Callout ton="danger" baslik="Bu mod 14-garanti VERMEZ">
@@ -541,7 +861,7 @@ export default function FormulPage() {
             konmazsa altindaki "tahmini bedel" satiri izgaranin uzerine
             binip okunmaz oluyor.
           */}
-          <div className="sticky bottom-3 z-20 -mx-1 rounded-2xl border border-line bg-background/80 p-3 shadow-card backdrop-blur-xl">
+          <div className="sticky bottom-3 z-20 -mx-1 rounded-2xl border border-line bg-background/80 px-3 pb-2.5 pt-3 shadow-card backdrop-blur-xl">
             <Button
               boyut="lg"
               className="w-full"
@@ -560,16 +880,40 @@ export default function FormulPage() {
                 </>
               )}
             </Button>
-            <p className="mt-2 text-center text-[11px] text-muted-foreground">
-              Tahmini bedel: <strong>{sayi(canli.tahminiBedel)} kolon</strong>
-              {mode === "fix16" && canli.cifte >= HAMMING_BLOK ? " · 16 satır" : ""}
-              {" · ödeyeceğin tutar kolon sayısıdır"}
+            {/*
+              Cubuk TEK SATIR kalir. F0'da eklenen uzun bedel aciklamasi
+              cubugu 100 px'e cikarmisti ve yapiskan cubuk, ilk acilista
+              "Mac adlari" kontrolunun tam ustune oturuyordu (olculdu:
+              elementFromPoint cubugu donuyordu). Aciklamanin tam hali
+              Motor kartinda, modun secildigi yerde duruyor — zaten oraya
+              ait.
+            */}
+            <p className="mt-1.5 text-center text-[11px] leading-tight text-muted-foreground">
+              {bedel.tip === "kesin" ? (
+                <>
+                  <strong>{sayi(bedel.deger)} kolon</strong> · 16 satır
+                </>
+              ) : null}
+              {bedel.tip === "tavan" ? (
+                <>
+                  en çok <strong>{sayi(bedel.deger)} kolon</strong>
+                </>
+              ) : null}
+              {bedel.tip === "aralik" ? (
+                <>
+                  <strong>
+                    {sayi(bedel.alt)}–{sayi(bedel.ust)} kolon
+                  </strong>{" "}
+                  arası
+                </>
+              ) : null}
+              {" · ödenecek tutar"}
             </p>
           </div>
         </div>
 
         {/* ── Sonuç ──────────────────────────────────────────── */}
-        <div className="space-y-4">
+        <div ref={sonucRef} className="min-w-0 scroll-mt-4 space-y-4">
           {hata ? (
             <Callout ton="danger" baslik="Motor hata verdi">
               {hata}
@@ -621,74 +965,119 @@ export default function FormulPage() {
                 {!sonuc.has_scipy ? <Badge ton="warning">scipy yok</Badge> : null}
               </div>
 
+              {bayat ? (
+                <Callout ton="warning" baslik="Bu sonuç girdinin eski hâline ait">
+                  <p>
+                    Sonuç üretildikten sonra soldaki kurulumu değiştirdin.
+                    Aşağıdaki kupon, bedel ve olasılıklar <strong>eski</strong>
+                    {" "}girdiyi anlatıyor — yeni hâlini görmek için yeniden üret.
+                  </p>
+                  <Button
+                    tip="outline"
+                    boyut="sm"
+                    className="mt-2.5"
+                    onClick={() => void calistir()}
+                    disabled={calisiyor || fix16Yetersiz || scipyEksik}
+                  >
+                    <Play size={13} />
+                    Yeniden üret
+                  </Button>
+                </Callout>
+              ) : null}
+
               <Tabs items={sekmeler} value={sekme} onChange={setSekme} />
 
-              <TabPanel id="ozet" active={sekme === "ozet"}>
-                <OzetPanel
-                  r={sonuc}
-                  onPlanSec={
-                    sonuc.butce_planlari
-                      ? (p) => {
-                          setPlanApply(p.index);
-                          void calistir(p.index);
-                        }
-                      : undefined
-                  }
-                />
+              {/* Ne aldım — bedel, garanti ve kapsamanın geometrisi */}
+              <TabPanel id="sonuc" active={sekme === "sonuc"}>
+                <div className="space-y-4">
+                  <OzetPanel
+                    r={sonuc}
+                    onPlanSec={
+                      sonuc.butce_planlari
+                        ? (p) => {
+                            setPlanApply(p.index);
+                            void calistir(p.index);
+                          }
+                        : undefined
+                    }
+                  />
+                  {/*
+                    Karsilastirma ancak iki calisma varken bir sey anlatir;
+                    tek satirlik bir tablo yer kaplamaktan baska is yapmaz.
+                  */}
+                  {senaryolar.length >= 2 ? (
+                    <>
+                      <BolumBasligi>Başka modda ne alırdım</BolumBasligi>
+                      <SenaryoKart
+                        liste={senaryolar}
+                        guncelSecim={maclariKodla(matches)}
+                        guncelId={uretilenParmak}
+                        disabled={calisiyor}
+                        onDon={(sn) => {
+                          uygula(sn.kurulum);
+                          setSekme("sonuc");
+                        }}
+                      />
+                    </>
+                  ) : null}
+
+                  <BolumBasligi>Kapsamanın geometrisi</BolumBasligi>
+                  <DagilimPanel r={sonuc} />
+                </div>
               </TabPanel>
+
               <TabPanel id="kupon" active={sekme === "kupon"}>
-                <KuponPanel r={sonuc} />
+                <KuponPanel r={sonuc} labels={labels} />
               </TabPanel>
-              <TabPanel id="dagilim" active={sekme === "dagilim"}>
-                <DagilimPanel r={sonuc} />
-              </TabPanel>
-              <TabPanel id="olasilik" active={sekme === "olasilik"}>
+
+              {/* Ne kadar riskli — hepsi SENİN tahminlerine bağlı olanlar */}
+              <TabPanel id="risk" active={sekme === "risk"}>
                 {sonuc.advanced ? (
-                  <OlasilikPanel r={sonuc} />
+                  <div className="space-y-4">
+                    <OlasilikPanel r={sonuc} />
+                    {sonuc.markov ? (
+                      <>
+                        <BolumBasligi>Hata bütçesi</BolumBasligi>
+                        <HataButcesiPanel r={sonuc} />
+                      </>
+                    ) : null}
+                    {sonuc.bayes ? (
+                      <>
+                        <BolumBasligi>Bayes güncellemesi</BolumBasligi>
+                        <BayesPanel r={sonuc} />
+                      </>
+                    ) : null}
+                  </div>
                 ) : (
                   <BosPanel baslik="Olasılık verisi yok">
                     Soldaki <strong>Olasılık girişini kullan</strong> anahtarını aç ve
-                    maç bazlı tahminlerini gir.
+                    maç bazlı tahminlerini gir. Bu sekmedeki her şey senin
+                    tahminlerine bağlıdır; kombinatoryal 14-garanti onlardan
+                    bağımsızdır ve <strong>Ne aldım</strong> sekmesinde durur.
                   </BosPanel>
                 )}
               </TabPanel>
-              <TabPanel id="bayes" active={sekme === "bayes"}>
-                {sonuc.bayes ? (
-                  <BayesPanel r={sonuc} />
+
+              {/* Zayıf halkalar — hangi maçı değiştirmeliyim */}
+              <TabPanel id="zayif" active={sekme === "zayif"}>
+                {sonuc.error_freq || sonuc.fire ? (
+                  <div className="space-y-4">
+                    {sonuc.error_freq ? <HataFrekansPanel r={sonuc} /> : null}
+                    {sonuc.fire ? (
+                      <>
+                        <BolumBasligi>Seçim dışına çıkarsa (fire)</BolumBasligi>
+                        <FirePanel r={sonuc} />
+                      </>
+                    ) : null}
+                  </div>
                 ) : (
-                  <BosPanel baslik="Bayes çalıştırılmadı">
-                    Olasılık girişini açıp <strong>Bayes güncellemesi</strong>&apos;ni
-                    etkinleştir.
+                  <BosPanel baslik="Zayıf halka analizi çalışmadı">
+                    Hata frekansı için uzay fazla büyük olabilir; fire analizi
+                    ise Motor kartından açılır.
                   </BosPanel>
                 )}
               </TabPanel>
-              <TabPanel id="markov" active={sekme === "markov"}>
-                {sonuc.markov ? (
-                  <MarkovPanel r={sonuc} />
-                ) : (
-                  <BosPanel baslik="Markov zinciri yok">
-                    Bu zincir olasılık girdisi gerektirir.
-                  </BosPanel>
-                )}
-              </TabPanel>
-              <TabPanel id="hata" active={sekme === "hata"}>
-                {sonuc.error_freq ? (
-                  <HataFrekansPanel r={sonuc} />
-                ) : (
-                  <BosPanel baslik="Hata frekansı hesaplanmadı">
-                    Uzay bu hesap için fazla büyük olabilir.
-                  </BosPanel>
-                )}
-              </TabPanel>
-              <TabPanel id="fire" active={sekme === "fire"}>
-                {sonuc.fire ? (
-                  <FirePanel r={sonuc} />
-                ) : (
-                  <BosPanel baslik="Fire analizi çalıştırılmadı">
-                    Motor kartından <strong>Fire analizi</strong> ayarını açın.
-                  </BosPanel>
-                )}
-              </TabPanel>
+
               <TabPanel id="log" active={sekme === "log"}>
                 <LogPanel metin={logMetin} />
               </TabPanel>

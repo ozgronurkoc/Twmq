@@ -106,7 +106,14 @@ export interface DistItem {
 
 export interface UniformProb { count: number; pct: string }
 
+/**
+ * DIKKAT — BIRIM: bu blogun tum alanlari YUZDE'dir (sunucu `100 *`
+ * uygulayip yollar), oysa `MarkovBlock` icindeki ayni buyuklukler 0-1
+ * OLASILIK'tir. Ayni cevapta ayni sey iki birimde donuyor; 100 kat
+ * yanilmak icin tek gereken bunu bilmemek.
+ */
 export interface ExactProb {
+  /** Yüzde. `markov.error_budget.p_kume_ici` ile aynı büyüklük ama × 100. */
   p_kume_ici: number;
   p_15: number;
   p_14: number;
@@ -184,6 +191,7 @@ export interface Survival {
   transitions: SurvivalTransition[];
 }
 
+/** BIRIM: bu blokta olasiliklar 0-1'dir — `ExactProb` yuzde donerken. */
 export interface ErrorBudget {
   states: string[];
   p_final: { "0": number; "1": number; "2+": number };

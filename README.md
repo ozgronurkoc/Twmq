@@ -422,24 +422,32 @@ Bugün `match_conflicts` tam olarak bunu yakalar. Vaka analizi:
 | `/saglik` | Değişmezler — kategori kategori, süre ve açıklamalarıyla |
 
 **Formül sayfası — girdi:** 15 × 3 maç ızgarası (klavye: ok tuşları + `1` / `0` /
-`2`) · canlı sayaç (banko / çifte / üçlü / uzay / tahmini kolon bedeli) · **7 modun
-tamamı** · varyant, bütçe, bütçe planı, katı doğrulama · maç bazlı olasılık girişi
-· Bayes preset veya elle α/n · Monte Carlo örnek sayısı (1.000–200.000) · fire
-analizi (kapalı / 1-fire / 1 ve 2 fire) · motor ayarları.
+`2`) · **maç adları** (toplu giriş; hafta detayından devirde kendiliğinden gelir)
+· canlı sayaç (banko / çifte / üçlü / uzay) · **üretmeden önce görülen koşul**
+(seçim kümesinin doğru sonucu içerme olasılığı + maç başına kütle + verime göre
+ekleme önerileri) · **7 modun tamamı** · varyant, bütçe, bütçe planı, katı
+doğrulama · maç bazlı olasılık girişi · Bayes preset veya elle α/n · Monte Carlo
+örnek sayısı (1.000–200.000) · fire analizi (kapalı / 1-fire / 1 ve 2 fire) ·
+motor ayarları.
 
-**Formül sayfası — sonuç sekmeleri** (hepsi backend alanlarıyla birebir):
+Kurulum **kalıcıdır**: maç işaretleri, adlar, olasılıklar ve motor ayarları
+tarayıcıya yazılır, yenileme kaybettirmez. *Bağlantıyı kopyala* aynı kurulumu
+~110 karakterlik bir adrese kodlar (ayrıntı ve kayıplar: `frontend/README.md`).
 
-| Sekme | Gösterdiği |
-|-------|------------|
-| Özet | Garanti durumu, satır/kolon/alt sınır, bütçe planları, uyarılar |
-| Kupon | Kupon tablosu, satır başına kolon bedeli, kopyala |
-| Dağılım | Kapsama katmanları + uniform varsayım |
-| Olasılık | Exact vs Monte Carlo (%95 CI) |
-| Bayes | Maç bazlı prior → posterior, KL + yorum, en çok kayan maçlar |
-| Markov | Küme-içi hayatta kalma + hata bütçesi (0 / 1 / 2+) |
-| Hata frekansı | d=1 ve d=2 katmanlarında hangi maç hata üretiyor |
-| Fire | **Seçim dışı** senaryolar — garantinin geçerli olmadığı bölge |
-| Log | Motorun adım adım çalışma logu |
+**Formül sayfası — sonuç sekmeleri.** Sekmeler motor bloğuna göre değil
+**soruya göre** bölünür:
+
+| Sekme | Cevapladığı soru | İçindekiler |
+|-------|------------------|-------------|
+| Ne aldım | Kaça mal oldu, ne garanti ediyor? | garanti durumu, satır/kolon/alt sınır, bütçe planları, uyarılar, **çalıştırılan modların karşılaştırması**, kapsama dağılımı + uniform taban |
+| Ne yazacağım | Kupona ne yazacağım? | kupon tablosu, satır başına kolon bedeli, kopyala (başlıkta maç adları) |
+| Ne kadar riskli | Tahminlerime göre ne olur? | exact vs Monte Carlo (%95 CI), hata bütçesi (0 / 1 / 2+), küme-içi çözülme, Bayes (prior → posterior, KL) |
+| Zayıf halkalar | Hangi maçı değiştirmeliyim? | hata frekansı (d=1, d=2), **fire** — seçim dışı senaryolar |
+| Log | — | motorun adım adım çalışma logu |
+
+Bu sayfanın çalışma raporu ve yol haritası ayrı belgelerdedir:
+[`FORMUL_GELISTIRME_RAPORU.md`](docs/FORMUL_GELISTIRME_RAPORU.md) ·
+[`FORMUL_YOL_HARITASI.md`](docs/FORMUL_YOL_HARITASI.md).
 
 **İstatistik sayfası:** sezon dağılımı · 5 sayı kutusu · haftalık seyir çizgisi ·
 haftalık bantlar (min–maks, ±1σ, ortanca, ortalama) · adet dağılımı · **oran kartı**
@@ -636,6 +644,10 @@ frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası 
   lib/types.ts         API sözleşmesinin tamamı tipli
   lib/api.ts           tipli, AbortController ile iptal edilebilir istemci
   lib/transfer.ts      hafta → formül devri (idempotent; bkz. §7.2 kural 6)
+  lib/kurulum.ts       formül kurulumunun kalıcılığı + paylaşılabilir bağlantı
+  lib/kume-ici.ts      üretmeden önce görülen koşul + küre-kaplama alt sınırı
+  lib/senaryo.ts       çalıştırılan modların karşılaştırma listesi
+  scripts/             check.mjs (saf mantık denetimi, bağımlılıksız)
 
 scripts/               setup.sh (bağımlılıklar) · run_next_dev.sh (API + UI birlikte)
                        build.sh + run_prod.sh (Replit dağıtımı)
@@ -676,6 +688,30 @@ katmanı arayüzü bilmez.
    yazar (`lib/transfer.ts`).
 7. **Geçmişe uydurulan sayı yalnız gösterilmez.** Eşik taraması hold-out ve uyarı
    metniyle birlikte durur; ikisi ayrılamaz.
+8. **Geri yüklenen kurulumda bozuk alan sessizce yutulmaz.** Formül kurulumu yerel
+   depoya kendiliğinden yazılır, bağlantıya ise yalnızca istenince (`lib/kurulum.ts`).
+   Okunamayan her alan varsayılana düşer *ve* arayüzde adıyla söylenir. Okunamayan
+   olasılık girişi **kapalı** açılır: açık bırakıp seçimlerden tekdüze değer üretmek,
+   kullanıcının girmediği bir tahmini Bayes'e ve Monte Carlo'ya beslemek olurdu.
+9. **Anlamı olmayan sayı basılmaz, sebebi yazılır.** Küme-içi koşulu varsayılan
+   olasılık satırlarıyla tanım gereği %100 çıkar; kart o sayıyı göstermek yerine
+   neden çıktığını söyler (`lib/kume-ici.ts`). Aynı kural bedelde de geçerlidir:
+   motorun arama sonunda bileceği kolon sayısı tek sayı gibi sunulmaz, aralık
+   verilir.
+10. **Ekrandaki sonuç girdiyi anlatmıyorsa bunu söyler.** Girdi değişince sonuç
+    silinmez — eski sonuç hâlâ okunabilir bilgidir — ama "eski hâline ait" diye
+    işaretlenir.
+11. **Kıyas ancak aynı şey üzerindeyse yapılır.** Çalıştırılan modlar yan yana
+    listelenir, ama farklı maç seçimiyle koşulmuş satırlar soluklaştırılıp
+    işaretlenir — aradaki bedel farkı moddan değil seçimden geliyor olabilir.
+    Garanti vermeyen bir çalışma "en ucuz" sayılmaz: `maxcov` daha ucuz
+    görünür ama farklı bir şey satın alır (`lib/senaryo.ts`).
+12. **Sekmeler soruya göre bölünür, motor bloğuna göre değil.** Formül sonucu
+    dört soruya ayrılır (ne aldım / ne yazacağım / ne kadar riskli / zayıf
+    halkalar); backend modüllerinin birebir yansıması olan dokuz sekme, tek bir
+    sorunun cevabını üçe dörde dağıtıyordu. Aynı büyüklük iki yerde
+    gösterilmez: Markov'un maç bazlı `p_stay` tablosu, girdi tarafındaki
+    küme-içi kütleleriyle birebir aynı olduğu için kaldırıldı.
 
 ---
 
@@ -764,19 +800,37 @@ ayrıştırmanın doğruluğu ise arşivin tamamının dayandığı şey.
 **Arayüz kontrolleri:**
 
 ```bash
-cd frontend && npx tsc --noEmit && npm run build
+cd frontend
+npm run check                # tip denetimi + saf mantık denetimi (37 vaka)
+npm run build                # üretim derlemesi
 ```
+
+`frontend/scripts/check.mjs` tarayıcı gerektirmeyen her şeyi denetler: kurulum
+kodlaması (kalıcılık + paylaşılabilir bağlantı), küme-içi hesabı ve senaryo
+karşılaştırması. **Bağımlılık eklemez** — `tsc` zaten devDependency olduğu için
+modülleri geçici bir dizine çevirir, dosya düz `node` ile koşar.
+
+Bu denetimin sebebi ölçülmüş bir olaydır: kurulum kodlaması sabit genişliklidir
+ve taşan tek bir alan, ondan sonraki *bütün* maçları kaydırıp hiçbir yerde
+patlamadan **sessizce başka bir kupon** üretir. İlk sürüm tam bunu yaptı (binde
+birlik olasılık `1000` olabilir, yani dört basamak; `padStart(3)` alanı
+taşırıyordu). Aynı sınıfta olan iki hesap daha aynı dosyada bekçiye bağlıdır:
+küme-içi koşulunun backend'in `exact` değeriyle, küre-kaplama alt sınırının
+sunucunun `alt_sinir`'iyle birebir tutması.
 
 **CI (GitHub Actions)** — her `main` push ve PR'da:
 
-| Adım | Python | Açıklama |
-|------|--------|----------|
-| `pytest -m "not slow"` | 3.10–3.13 | Hızlı süit |
-| `pytest -m slow` | 3.12 | ILP / yavaş |
-| `python -m spor_toto.health` | 3.12 | HEALTHY zorunlu (tüm kritik kontroller) |
-| CLI smoke | 3.12 | fix16 + Bayes preset parity |
+| İş | Adım | Sürüm | Açıklama |
+|----|------|-------|----------|
+| `frontend` | `npm run check` | Node 22 | Tip denetimi + saf mantık denetimi |
+| `frontend` | `npm run build` | Node 22 | Üretim derlemesi |
+| `test` | `pytest -m "not slow"` | Python 3.10–3.13 | Hızlı süit |
+| `test` | `pytest -m slow` | 3.12 | ILP / yavaş |
+| `test` | `python -m spor_toto.health` | 3.12 | HEALTHY zorunlu (tüm kritik kontroller) |
+| `test` | CLI smoke | 3.12 | fix16 + Bayes preset parity |
 
-Workflow: `.github/workflows/tests.yml`.
+Workflow: `.github/workflows/tests.yml`. Arayüzün uzun süre **hiçbir** otomatik
+kapısı yoktu; yukarıdaki kodlama hatası bu yüzden sessizce geçebilirdi.
 
 **İkinci workflow — veri toplama.** `.github/workflows/snapshot-iddaa.yml` haftada
 bir (pazartesi 06:00 UTC) iddaa bültenini arşivler ve yeni veri varsa depoya işler.
@@ -805,7 +859,23 @@ Sıradakiler, "en çok belirsizliği kaldıran" ölçütüne göre:
 | **S3 — İddaa arşivi olgunlaşınca** | Snapshot'ları kupon maçlarıyla eşleştir; iddaa ile piyasa oranını yan yana koy; geri testi vekil değil gerçek fiyatla tekrarla | **Birikmeyi bekliyor** — ~10 snapshot sonra anlamlı |
 | **S4 — Küçük işler** | Geri testte eşik çiftini URL'e yazmak, tarama tablosunu CSV'ye çıkarmak, hafta detayında Brier | Veri tarafı yok |
 
-### 10.1 Sağlık katmanı
+### 10.1 Formül sayfası
+
+Sayfanın kendisi uzun süre yol haritası dışındaydı; ölçülünce en somut borcun
+orada olduğu çıktı. **F0–F6 uygulandı** — ne yapıldığı, neden öyle yapıldığı ve
+ölçülen sayılar: [`docs/FORMUL_GELISTIRME_RAPORU.md`](docs/FORMUL_GELISTIRME_RAPORU.md).
+
+Sıradakiler ve gerekçeleri:
+[`docs/FORMUL_YOL_HARITASI.md`](docs/FORMUL_YOL_HARITASI.md).
+
+| # | Ne | Neden |
+|---|-----|---|
+| **K1 — Kupon doldurma görünümü** | 16–32 satırı fiziksel kupona geçirirken okunacak, yazdırılabilir görünüm | Sayfanın asıl işi burada bitiyor ama son adım desteklenmiyor |
+| **K2 — Fire'ı karara bağlamak** | "Bu maç dışarı çıkarsa ne kaybederim" sayısını maç ızgarasına taşımak | Fire ölçülüyor ama karardan uzakta duruyor |
+| **K3 — Bütçe danışmanını girdi tarafına almak** | Plan listesi sonuçta; oysa kısılacak maç kararı girdide veriliyor | Karar ile bilginin yeri ayrı |
+| **K4 — Varyant gezgini** | Aynı garantiyi veren farklı 16 satırı kıyaslamak | `variant` bugün kör bir sayı |
+
+### 10.2 Sağlık katmanı
 
 Sıra, "en çok belirsizliği kaldıran" ölçütüne göredir. Ayrıntı:
 [`docs/SAGLIK_VIZYONU.md`](docs/SAGLIK_VIZYONU.md) §10.
@@ -819,7 +889,7 @@ Sıra, "en çok belirsizliği kaldıran" ölçütüne göredir. Ayrıntı:
 | 5 | **Alarm bağlantısı** | "Birinin bakıyor olması" varsayımı |
 | 6 | **Örnek kimliği** | Çok örnekli dağıtımda "hangi örnek?" |
 
-### 10.2 Bilinçli olarak yapılmayacaklar
+### 10.3 Bilinçli olarak yapılmayacaklar
 
 | Fikir | Neden hayır |
 |---|---|
@@ -911,6 +981,8 @@ anlatır; çok örnekli bir dağıtımda "hangi örnek?" sorusu bugün cevapsız
 | [`docs/ISTATISTIK_YOL_HARITASI.md`](docs/ISTATISTIK_YOL_HARITASI.md) | İstatistik katmanının durumu, ölçülmüş bulgular, yol haritası |
 | [`docs/SAGLIK_VIZYONU.md`](docs/SAGLIK_VIZYONU.md) | Sağlık katmanının vizyonu: kontrol sözleşmesi, kategori modeli, DEGRADED kararı, bilinçli sınırlar |
 | [`docs/SAGLIK_GELISTIRME_RAPORU.md`](docs/SAGLIK_GELISTIRME_RAPORU.md) | Sağlık katmanının çalışma raporu ve ölçümleri |
+| [`docs/FORMUL_GELISTIRME_RAPORU.md`](docs/FORMUL_GELISTIRME_RAPORU.md) | Formül sayfasının çalışma raporu: teşhis, F0–F6, bulunan hatalar, ölçümler |
+| [`docs/FORMUL_YOL_HARITASI.md`](docs/FORMUL_YOL_HARITASI.md) | Formül sayfasının yol haritası ve yapılmayacaklar listesi |
 | [`backend/README.md`](backend/README.md) | Motor + API kurulumu, oran arşivi kullanımı |
 | [`frontend/README.md`](frontend/README.md) | Arayüz yapısı, tasarım sistemi, grafik kuralları |
 | [`archive/README.md`](archive/README.md) | Ölü kodun envanteri ve neden silinmediği |

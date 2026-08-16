@@ -24,14 +24,18 @@ const SECILI: Record<Sembol, string> = {
  */
 export function MatchGrid({
   matches,
+  labels,
   onChange,
   disabled,
 }: {
   matches: Sembol[][];
+  /** 15 takım adı; boş olanlar yalnızca numarayla gösterilir. */
+  labels: string[];
   onChange: (next: Sembol[][]) => void;
   disabled?: boolean;
 }) {
   const refs = React.useRef<(HTMLButtonElement | null)[][]>([]);
+  const adVar = labels.some(Boolean);
 
   function degistir(mac: number, sym: Sembol) {
     const next = matches.map((r) => [...r]);
@@ -88,14 +92,34 @@ export function MatchGrid({
         ))}
       </div>
 
-      <div className="flex flex-col gap-1.5">
+      <div className={cn("flex flex-col", adVar ? "gap-2.5" : "gap-1.5")}>
         {matches.map((satir, i) => {
           const tekli = satir.length === 1;
+          const ad = labels[i] || "";
           return (
-            <div
-              key={i}
-              className="grid grid-cols-[2rem_repeat(3,minmax(0,1fr))] items-center gap-1.5"
-            >
+            <div key={i}>
+              {/*
+                Ad, dugme satirinin USTUNDE tam genislikte durur. Sola
+                sutun olarak konsaydi 420 px'lik girdi kolonunda ya adi ya
+                dugmeleri okunmaz hale getirirdi.
+              */}
+              {/*
+                Numara BURADA tekrarlanmaz: hemen altindaki dugme satirinda
+                zaten var ve orada ayrica banko/cifte renk kodunu tasiyor.
+                Ad, o numara sutunuyla ayni hizada baslar.
+              */}
+              {adVar ? (
+                <div
+                  className="mb-0.5 truncate pl-0.5 text-[11.5px] leading-tight"
+                  title={ad || undefined}
+                >
+                  <span className={ad ? "text-foreground" : "italic text-muted-foreground"}>
+                    {ad || "adsız"}
+                  </span>
+                </div>
+              ) : null}
+
+              <div className="grid grid-cols-[2rem_repeat(3,minmax(0,1fr))] items-center gap-1.5">
               <span
                 className={cn(
                   "tnum text-right text-[11.5px] font-medium tabular-nums",
@@ -136,6 +160,7 @@ export function MatchGrid({
                   </button>
                 );
               })}
+            </div>
             </div>
           );
         })}
