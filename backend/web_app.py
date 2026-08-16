@@ -25,7 +25,7 @@ from spor_toto.bayes import (
     STRENGTH_PRESETS, bayes_summary, bayes_update_matches, recommend_strengths,
 )
 from spor_toto.markov import markov_report
-from spor_toto.health import run_health
+from spor_toto.health import check_envanteri, run_health
 from spor_toto.history import (
     history_analytics, history_summary, history_week_detail, history_weeks,
 )
@@ -496,6 +496,7 @@ def root():
         "endpoints": [
             "GET  /api/meta",
             "GET  /api/health",
+            "GET  /api/health/checks",
             "GET  /api/stats",
             "GET  /api/stats/<week>",
             "POST /api/solve",
@@ -507,9 +508,30 @@ def root():
 @app.route("/health", methods=["GET"])
 @app.route("/api/health", methods=["GET"])
 def api_health():
-    report = run_health()
+    """
+    Degismezleri calistirip raporlar.
+
+    `?only=` ile tek bir kontrol veya kategori calistirilabilir; arayuz
+    dusen bir grubu butun takimi 600 ms bekletmeden yeniden deneyebilsin
+    diye. `degraded` (kritik olmayan kontrol dustu) 503 URETMEZ — servis
+    calisiyordur, yalnizca bir yetenek eksiktir.
+    """
+    only = (request.args.get("only") or "").strip() or None
+    try:
+        report = run_health(only)
+    except ValueError as e:
+        return jsonify({"ok": False, "error": str(e)}), 400
     code = 200 if report.ok else 503
     return jsonify(report.to_dict()), code
+
+
+@app.route("/api/health/checks", methods=["GET"])
+def api_health_checks():
+    """Kontrol envanteri — calistirmadan, filtre menusunu beslemek icin."""
+    return jsonify({
+        "version": __version__,
+        "checks": check_envanteri(),
+    })
 
 
 @app.route("/api/meta", methods=["GET"])

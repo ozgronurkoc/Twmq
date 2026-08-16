@@ -1,4 +1,5 @@
 import type {
+  HealthChecksResponse,
   HealthReport,
   MetaResponse,
   SolveRequest,
@@ -59,11 +60,18 @@ export function getMeta(signal?: AbortSignal) {
  * kendisidir — govde yine tam HealthReport'tur. Bu yuzden genel `istek`
  * yolundan gecmez; 503 basarisiz sayilsaydi kullanici invariantlarin
  * hangisinin kirildigini goremezdi.
+ *
+ * `only` verilirse yalnizca o kontrol/kategori calisir (virgulle coklu).
+ * Bilinmeyen bir ad 400 doner ve bu gercek bir hatadir — firlatilir.
  */
-export async function getHealth(signal?: AbortSignal): Promise<HealthReport> {
+export async function getHealth(
+  only?: string | null,
+  signal?: AbortSignal,
+): Promise<HealthReport> {
+  const q = only ? `?only=${encodeURIComponent(only)}` : "";
   let res: Response;
   try {
-    res = await fetch(`${API_URL}/api/health`, {
+    res = await fetch(`${API_URL}/api/health${q}`, {
       headers: { Accept: "application/json" },
       cache: "no-store",
       signal,
@@ -72,12 +80,21 @@ export async function getHealth(signal?: AbortSignal): Promise<HealthReport> {
     if (e instanceof DOMException && e.name === "AbortError") throw e;
     throw new ApiError("API'ye ulaşılamadı. Backend çalışıyor mu?", 0);
   }
-  if (res.status !== 200 && res.status !== 503) {
-    throw new ApiError(`HTTP ${res.status}`, res.status);
-  }
   const govde = await res.json().catch(() => null);
+  if (res.status !== 200 && res.status !== 503) {
+    const mesaj =
+      (govde && typeof govde === "object" && "error" in govde
+        ? String((govde as { error: unknown }).error ?? "")
+        : "") || `HTTP ${res.status}`;
+    throw new ApiError(mesaj, res.status);
+  }
   if (!govde) throw new ApiError("Sağlık raporu okunamadı", res.status);
   return govde as HealthReport;
+}
+
+/** Kontrol envanteri — kontrolleri CALISTIRMADAN listeler. */
+export function getHealthChecks(signal?: AbortSignal) {
+  return istek<HealthChecksResponse>("/api/health/checks", { signal });
 }
 
 /**

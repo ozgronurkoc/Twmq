@@ -133,7 +133,7 @@ bash scripts/run_next_dev.sh    # UI :3000, API :8080
 | `/` | **Formül** — motorun tamamı |
 | `/istatistik` | Sezon dağılımı, bantlar, 41 hafta |
 | `/istatistik/<hafta>` | Tek hafta detayı |
-| `/saglik` | 14 invariant, süreleriyle |
+| `/saglik` | Değişmezler — kategori kategori, süre ve açıklamalarıyla |
 
 ### Formül sayfası
 
@@ -171,7 +171,8 @@ hiçbiri arayüzde sabit kodlanmaz, motorla tek kaynaktan senkron kalır.
 | Method | Path | Açıklama |
 |--------|------|----------|
 | GET | `/api/meta` | Modlar, preset'ler, varsayılanlar, sınırlar |
-| GET | `/api/health` | 14 invariant (200 = HEALTHY, 503 = UNHEALTHY) |
+| GET | `/api/health` | Değişmezler (200 = HEALTHY, 503 = UNHEALTHY); `?only=` ile kısmi |
+| GET | `/api/health/checks` | Kontrol envanteri (çalıştırmadan) |
 | GET | `/api/stats` | Tarihsel 1/0/2 |
 | GET | `/api/stats/<week>` | Tek hafta |
 | POST | `/api/solve` | Motorun tamamı |
@@ -180,12 +181,27 @@ hiçbiri arayüzde sabit kodlanmaz, motorla tek kaynaktan senkron kalır.
 
 ```bash
 cd backend
-python -m spor_toto.health              # bir kez
+python -m spor_toto.health                  # bir kez
 python -m spor_toto.health --interval 60
-curl http://localhost:8080/api/health   # JSON (200 = HEALTHY, 503 = UNHEALTHY)
+python -m spor_toto.health --list           # kontrol envanteri
+python -m spor_toto.health --only olasilik  # tek kategori (veya tek kontrol)
+curl http://localhost:8080/api/health       # JSON (200 = HEALTHY, 503 = UNHEALTHY)
+curl "http://localhost:8080/api/health?only=cekirdek"
 ```
 
-14 invariant: encoder, fix16 garanti, distance layers, blok/heuristic, exact olasılık, Monte Carlo, Bayes, Markov, error_freq, **fire senaryoları**, pipeline şekli, scipy bayrağı.
+Kontroller altı kategoriye ayrılır — güncel liste için `--list`:
+
+| Kategori | Kapsam |
+|----------|--------|
+| `cekirdek` | encoder, fix16 garanti, yetersiz çifte reddi, distance layers |
+| `motor` | blok motoru, heuristic |
+| `olasilik` | exact, Monte Carlo, Bayes, Markov |
+| `analiz` | error_freq, **fire senaryoları**, veri seti, oran arşivi |
+| `ucuca` | pipeline sonuç şekli |
+| `ortam` | scipy bayrağı (bilgi amaçlı) |
+
+Kritik olmayan bir kontrol düşerse rapor **DEGRADED** olur: `ok` true kalır, uç 503
+DÖNMEZ — servis ayaktadır, yalnızca bir yeteneği eksiktir.
 
 ---
 
@@ -225,11 +241,11 @@ backend/
     bayes.py     Dirichlet prior → posterior, KL, preset'ler
     markov.py    Seçim hayatta kalma + hata bütçesi zinciri
     fire_scenarios.py  Seçim DIŞI fire analizi (1-fire / 2-fire)
-    health.py    14 invariant health check
+    health.py    Kategorili değişmez (invariant) kontrolleri
     report.py    Konsol / dosya çıktısı
     cli.py       spor-toto komut satırı
   web_app.py     Flask — yalnızca JSON API, HTML servis etmez
-  tests/         pytest (core, engines, analysis, bayes, markov, health, cli)
+  tests/         pytest (core, engines, analysis, bayes, markov, health, api, cli)
   data/          Tarihsel 1/0/2 verisi
   scripts/       check.sh (yerel CI eşdeğeri)
   pyproject.toml
@@ -275,7 +291,7 @@ Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant’lar, CLI (Bayes p
 bash backend/scripts/check.sh
 ```
 
-`backend/scripts/check.sh`: hızlı pytest → 14 invariant health → CLI fix16 + `--bayes-preset dengeli` dumanı.
+`backend/scripts/check.sh`: hızlı pytest → health → CLI fix16 + `--bayes-preset dengeli` dumanı.
 Exit code ≠ 0 ise bir adım kırık demektir (CI ile aynı mantık).
 
 ---
@@ -288,7 +304,7 @@ Her `main` push ve PR’da:
 |------|--------|----------|
 | `pytest -m "not slow"` | 3.10–3.13 | Hızlı süit |
 | `pytest -m slow` | 3.12 | ILP / yavaş |
-| `python -m spor_toto.health` | 3.12 | 13/13 HEALTHY zorunlu |
+| `python -m spor_toto.health` | 3.12 | HEALTHY zorunlu (tüm kritik kontroller) |
 | CLI smoke | 3.12 | fix16 + Bayes preset |
 
 Workflow: `.github/workflows/tests.yml`  
