@@ -42,8 +42,30 @@ components/
 lib/
   types.ts            /api/solve dahil tüm API sözleşmesi
   api.ts              tipli, AbortController ile iptal edilebilir istemci
+  transfer.ts         hafta → formül devri (sessionStorage, idempotent)
+  kupon-deposu.ts     adlandırılmış kupon kaydı (localStorage, doğrulamalı)
   utils.ts            cn(), normalize, biçimlendirme
 ```
+
+## Kupon kaydı
+
+Formül sayfasındaki **Kayıtlı kuponlar** bölümü işaretleri, modu ve varyantı
+adlandırıp `localStorage`'a yazar; formül üretilmişse satır tablosunu da
+saklar. Üç karar:
+
+- **Sunucuda değil, tarayıcıda.** Bu repoda kullanıcı hesabı yok; kuponu
+  sunucuya yazmak olmayan bir hesap sistemini ima ederdi. Kayıt başka cihazda
+  görünmez ve bu kasıtlıdır.
+- **Okurken doğrulanır.** Depoya eski sürüm de devtools'tan kullanıcı da
+  yazabilir. Doğrulanmamış bir `Sembol[][]` ızgarada boş maç çizer, motorda
+  `ValueError` üretir. Bozuk kayıt sessizce atılır; sürüm uyuşmazsa depo
+  tamamen düşer.
+- **Olasılık kaydedilmez.** Kaydın işi "hangi maçlara ne oynadım"ı
+  hatırlamak. Olasılık tahmindir, kupona yazılmaz ve haftadan haftaya değişir.
+
+Kota dolarsa önce satır tablosu düşürülüp tekrar denenir — işaretlerle formül
+yeniden üretilebildiği için kaydın tamamını kaybetmektense tabloyu kaybetmek
+yeğlenir; arayüz bunu kullanıcıya söyler.
 
 ## Tasarım sistemi
 
