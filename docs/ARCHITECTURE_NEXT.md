@@ -116,6 +116,9 @@ tamamını taşır. Formül sayfasının kurulumu bu yüzden **istemcide** sakla
 | URL (`?s=…`) | yalnızca "Bağlantıyı kopyala" | paylaşılabilir | olasılıklar binde bir + normalize |
 | `sessionStorage` (`?hafta=`) | hafta detayından devir | o sekme | yok |
 
+Maç adları yalnızca ilk satırdadır: URL'e girmez (15 takım adı adresi üç
+katına çıkarır) ve çözüme hiç katılmaz — motor yalnızca işaretleri görür.
+
 Öncelik: **URL > `localStorage`**, ardından devir paketi yalnızca
 olasılıkların üzerine yazar. Sonuç hiçbirine girmez — türetilmiş veridir.
 

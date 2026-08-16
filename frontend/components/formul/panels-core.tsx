@@ -191,20 +191,34 @@ export function OzetPanel({
   );
 }
 
-export function KuponPanel({ r }: { r: SolveResult }) {
+export function KuponPanel({
+  r,
+  labels = [],
+}: {
+  r: SolveResult;
+  /** 15 maç adı; boş olanlar M1…M15 olarak yazılır. */
+  labels?: string[];
+}) {
   const [kopyalandi, setKopyalandi] = React.useState(false);
 
+  /*
+    Kopyalanan metnin baslik satiri adlari tasir. Tabloyu bir hesap
+    tablosuna yapistirip kuponu elle doldururken "M7" hangi macti sorusunun
+    cevabi orada olmali; sutun numarasi tek basina isi ekrana geri
+    donmeye birakiyordu. Sekme ayraci oldugu icin ad icindeki bosluklar
+    sorun degil.
+  */
   const metin = React.useMemo(() => {
     const basliklar = [
       "#",
-      ...Array.from({ length: r.match_count }, (_, i) => `M${i + 1}`),
+      ...Array.from({ length: r.match_count }, (_, i) => labels[i] || `M${i + 1}`),
       "Kolon",
     ].join("\t");
     const satirlar = r.rows.map((row, i) =>
       [i + 1, ...row.cells, row.cost].join("\t"),
     );
     return [basliklar, ...satirlar].join("\n");
-  }, [r]);
+  }, [r, labels]);
 
   async function kopyala() {
     try {
@@ -240,7 +254,12 @@ export function KuponPanel({ r }: { r: SolveResult }) {
                 {Array.from({ length: r.match_count }, (_, i) => (
                   <th
                     key={i}
-                    className="px-0.5 pb-2 text-center text-[10px] font-semibold text-muted-foreground"
+                    // Tablo 15 sutun genis; ad sigmaz ama kaybolmasin da.
+                    title={labels[i] || undefined}
+                    className={cn(
+                      "px-0.5 pb-2 text-center text-[10px] font-semibold text-muted-foreground",
+                      labels[i] && "cursor-help underline decoration-dotted underline-offset-2",
+                    )}
                   >
                     {i + 1}
                   </th>

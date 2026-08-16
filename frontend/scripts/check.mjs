@@ -161,6 +161,41 @@ try {
   });
 
   // ── Bozuk girdi ──────────────────────────────────────────────────────
+  // ── Mac adlari ───────────────────────────────────────────────────────
+
+  dene("adlar 15'e sabitlenir, kirpilir, tek satira indirilir", () => {
+    const e = K.temizEtiketler([
+      "  Galatasaray –  Fenerbahçe  ",
+      "Beşiktaş\nTrabzonspor",
+      "x".repeat(200),
+      42,
+      null,
+    ]);
+    assert.equal(e.length, 15);
+    assert.equal(e[0], "Galatasaray – Fenerbahçe");
+    assert.equal(e[1], "Beşiktaş Trabzonspor", "satir sonu izgarayi bozardi");
+    assert.equal(e[2].length, K.ETIKET_SINIR);
+    assert.equal(e[3], "", "string olmayan deger yutulmali");
+    assert.equal(e[14], "");
+  });
+
+  dene("adlar BAGLANTIDA tasinmaz (URL uc katina cikardi)", () => {
+    const k = K.varsayilanKurulum();
+    k.labels = k.labels.map((_, i) => `Takım A${i} – Takım B${i}`);
+    const kodlu = K.kurulumuKodla(k);
+    assert.ok(!kodlu.includes("Tak"), "ad baglantiya sizdi");
+    const geri = K.kurulumuCoz(kodlu).kurulum;
+    assert.deepEqual(geri.labels, Array(15).fill(""));
+  });
+
+  dene("ad degistirmek sonucun parmak izini DEGISTIRMEZ", () => {
+    // Ad cozume girmez; maca ad vermek ekrandaki sonucu bayatlatmamali.
+    const a = K.varsayilanKurulum();
+    const b = K.varsayilanKurulum();
+    b.labels = b.labels.map((_, i) => `Mac ${i}`);
+    assert.equal(K.kurulumuKodla(a), K.kurulumuKodla(b));
+  });
+
   dene("kurulumsuz adres null doner (`?hafta=51` kurulum sanilmaz)", () => {
     assert.equal(K.kurulumuCoz("?hafta=51"), null);
     assert.equal(K.kurulumuCoz(""), null);

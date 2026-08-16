@@ -73,6 +73,28 @@ Aynı sayıyı ikinci kez, üstelik yalnızca motor çalıştıktan sonra göste
 bilgi eklemiyordu. Kümülatif eğri kaldı, ama yatay ekseninin kupon sırası
 olduğu — bir zaman değil — artık açıkça yazıyor.
 
+## Maç kimliği
+
+Izgara uzun süre yalnızca 1–15 numaralarını gösterdi; 16 satırlık bir kuponu
+elle doldururken "7. maç hangisiydi" sorusunun cevabı ekranda yoktu. Artık
+maçların adı olabilir:
+
+- **Toplu giriş** (satır başına bir ad). Adlar neredeyse her zaman bir
+  yerden kopyalanır; 15 ayrı kutu aynı işi 15 hamleye bölerdi ve dar girdi
+  kolonuna 15 kutu daha eklerdi.
+- **Devirde kendiliğinden gelir.** Hafta detayındaki "formüle gönder"
+  paketinde takım adları zaten vardı, yalnızca notta listeleniyordu.
+  Ad taşımak *tahmin* taşımak değildir — hangi maçın hangisi olduğunu
+  söyler, hangi sembolün tutacağını değil — bu yüzden devrin "işaretler
+  taşınmadı" sözünü bozmaz.
+- **Kupon kopyasının başlık satırına girer**, böylece tabloyu bir hesap
+  tablosuna yapıştırınca "M7" hangi maçtı sorusu ekranda kalmaz.
+
+Adlar `localStorage`'da durur, **bağlantıya girmez** (15 takım adı URL'i üç
+katına çıkarır — `transfer.ts`'teki kararla aynı) ve çözüme hiç girmediği
+için sonucun parmak izine de dahil değildir: bir maça ad vermek ekrandaki
+sonucu bayatlatmaz.
+
 ## Üretmeden önce görülen koşul
 
 14-garanti **koşulludur**: ancak gerçek sonuç seçim kümesinin içindeyse
@@ -115,6 +137,18 @@ yazıyordu: `auto` modunda aynı kupon için "256 kolon" diyordu, motor 32
 üretiyordu — sekiz kat abartı, üstelik ödenecek tutarı söyleyen en görünür
 yerde.
 
+Yapışkan çubukta yalnızca **sayı** durur, tek satır. Açıklamanın tamamı
+Motor kartında, modun seçildiği yerdedir. Sebep ölçüldü: uzun açıklama
+çubuğu 100 px'e çıkarmış ve çubuk, ilk açılışta altındaki kontrolün tam
+üstüne oturmuştu (düğme 1011–1074, çubuk 996–1088 → `elementFromPoint`
+çubuğu döndürüyordu, yani tıklanamıyordu).
+
+Viewport'a sabitlenmiş bir eylem çubuğu arkasındaki içeriği kaçınılmaz
+olarak örter. Garanti edilen şey daha zayıf ama ölçülebilir bir özelliktir:
+**hiçbir kontrol erişilemez değildir** — her kontrol görünür alanın
+ortasına kaydırıldığında gerçekten en üstteki ögedir. Bu, iki viewport'ta
+104 kontrol üzerinde test edilir.
+
 ## Kurulumun kalıcılığı
 
 Formül sayfasının kurulumu — 15 maçın işaretleri, olasılık satırları ve
@@ -126,7 +160,7 @@ elle ürettiği tek şeydir.
 |---|---|---|
 | Ne zaman | her değişiklikte, kendiliğinden | yalnızca **Bağlantıyı kopyala**'ya basınca |
 | Nerede | `localStorage`, yalnızca o tarayıcı | URL (~110 karakter) |
-| Kayıp | yok (JSON) | olasılıklar binde bir + normalize |
+| Kayıp | yok (JSON) | olasılıklar binde bir + normalize; maç adları hiç girmez |
 
 Öncelik **URL > yerel depo**: paylaşılan bir bağlantıyı açan kişi kendi eski
 kurulumunun kalıntısını değil, gönderilen kurulumu görür. Devir paketi

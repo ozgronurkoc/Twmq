@@ -9,6 +9,7 @@ import {
   adresiTemizle,
   kurulumuCoz,
   kurulumuKodla,
+  temizEtiketler,
   varsayilanKurulum,
   VARSAYILAN_ENG,
   VARSAYILAN_MACLAR,
@@ -53,6 +54,7 @@ import {
 import { Tabs, TabPanel, type TabItem } from "@/components/ui/tabs";
 import { KumeIciKart } from "@/components/formul/kume-ici-kart";
 import { KurulumBar } from "@/components/formul/kurulum-bar";
+import { AdGirisi } from "@/components/formul/ad-girisi";
 import { MatchGrid } from "@/components/formul/match-grid";
 import { ProbGrid } from "@/components/formul/prob-grid";
 import { DagilimPanel, KuponPanel, OzetPanel } from "@/components/formul/panels-core";
@@ -87,6 +89,7 @@ function BolumBasligi({ children }: { children: React.ReactNode }) {
 export default function FormulPage() {
   const [meta, setMeta] = React.useState<MetaResponse | null>(null);
   const [matches, setMatches] = React.useState<Sembol[][]>(VARSAYILAN_MACLAR);
+  const [labels, setLabels] = React.useState<string[]>(() => Array(MAC_SAYISI).fill(""));
   const [mode, setMode] = React.useState<ModeId>("fix16");
   const [variant, setVariant] = React.useState(0);
   const [budget, setBudget] = React.useState(32);
@@ -139,17 +142,18 @@ export default function FormulPage() {
 
   const kurulum: Kurulum = React.useMemo(
     () => ({
-      matches, probsAcik, probs, mode, variant, budget, planCount, planApply,
+      matches, labels, probsAcik, probs, mode, variant, budget, planCount, planApply,
       kati, fireMax, useBayes, preset, elleAyar, prior, evidence, mcSamples, eng,
     }),
     [
-      matches, probsAcik, probs, mode, variant, budget, planCount, planApply,
+      matches, labels, probsAcik, probs, mode, variant, budget, planCount, planApply,
       kati, fireMax, useBayes, preset, elleAyar, prior, evidence, mcSamples, eng,
     ],
   );
 
   const uygula = React.useCallback((k: Kurulum) => {
     setMatches(k.matches.map((r) => [...r]));
+    setLabels([...k.labels]);
     setProbs(k.probs.map((r) => ({ ...r })));
     setProbsAcik(k.probsAcik);
     setMode(k.mode);
@@ -205,6 +209,10 @@ export default function FormulPage() {
     setDevir(paket);
     setProbs(paket.probs.map((r) => ({ ...r })));
     setProbsAcik(true);
+    // Ad tasimak bir TAHMIN tasimak degildir: hangi macin hangisi oldugunu
+    // soyler, hangi sembolun tutacagini degil. Bu yuzden devrin "isaretler
+    // tasinmadi" sozunu bozmaz.
+    if (paket.labels?.some(Boolean)) setLabels(temizEtiketler(paket.labels));
   }, []);
 
   // Kurulumu yerel depoya yaz. Olasilik kutularinda her tusa basista
@@ -452,7 +460,23 @@ export default function FormulPage() {
               hint="Her maç için en az bir sembol. Semboller kupon düzeninde."
             />
             <CardBody>
-              <MatchGrid matches={matches} onChange={setMatches} disabled={calisiyor} />
+              {/*
+                Ad girisi izgaranin USTUNDE. Altta oldugunda masaustunde tam
+                katlama cizgisine denk gelip yapiskan cubugun altinda
+                kaliyordu (olculdu: dugme 1011-1074, cubuk 996-1088) — yani
+                ilk acilista tiklanamiyordu. Kartin ustu yapiskan cubugun
+                hic ulasmadigi yer; ayrica "once adlandir, sonra isaretle"
+                sirasi da dogal.
+              */}
+              <div className="mb-4">
+                <AdGirisi labels={labels} onChange={setLabels} disabled={calisiyor} />
+              </div>
+              <MatchGrid
+                matches={matches}
+                labels={labels}
+                onChange={setMatches}
+                disabled={calisiyor}
+              />
             </CardBody>
           </Card>
 
@@ -501,6 +525,37 @@ export default function FormulPage() {
                   ]
                 }
               />
+
+              {/*
+                Bedelin nasil okunacagi MODUN SECILDIGI yerde anlatilir.
+                Yapiskan cubukta duruyordu ve orayi 100 px'e sisirip
+                altindaki kontrolleri kapatiyordu; ayrica aciklamanin
+                dogal yeri zaten burasi.
+              */}
+              <p className="text-[11.5px] leading-relaxed text-muted-foreground">
+                {bedel.tip === "kesin" ? (
+                  <>
+                    Bu modda bedel <strong>kesindir</strong>: blok 2⁷ noktayı 16
+                    satıra indirir, yani değişken uzayın sekizde biri —{" "}
+                    <strong>{sayi(bedel.deger)} kolon</strong>.
+                  </>
+                ) : null}
+                {bedel.tip === "tavan" ? (
+                  <>
+                    Bu mod bütçeyi <strong>aşmaz</strong>: ödeyeceğin en fazla{" "}
+                    <strong>{sayi(bedel.deger)} kolon</strong>.
+                  </>
+                ) : null}
+                {bedel.tip === "aralik" ? (
+                  <>
+                    Bu modda kesin bedeli motor arama sonunda bilir.{" "}
+                    <strong>{sayi(bedel.alt)} kolonun</strong> altı
+                    küre-kaplama sınırı yüzünden imkânsız,{" "}
+                    <strong>{sayi(bedel.ust)} kolon</strong> ise tam sistem —
+                    sonuç bu ikisinin arasında çıkar.
+                  </>
+                ) : null}
+              </p>
 
               {modInfo && !modInfo.garanti ? (
                 <Callout ton="danger" baslik="Bu mod 14-garanti VERMEZ">
@@ -751,7 +806,7 @@ export default function FormulPage() {
             konmazsa altindaki "tahmini bedel" satiri izgaranin uzerine
             binip okunmaz oluyor.
           */}
-          <div className="sticky bottom-3 z-20 -mx-1 rounded-2xl border border-line bg-background/80 p-3 shadow-card backdrop-blur-xl">
+          <div className="sticky bottom-3 z-20 -mx-1 rounded-2xl border border-line bg-background/80 px-3 pb-2.5 pt-3 shadow-card backdrop-blur-xl">
             <Button
               boyut="lg"
               className="w-full"
@@ -770,26 +825,34 @@ export default function FormulPage() {
                 </>
               )}
             </Button>
-            <p className="mt-2 text-center text-[11px] leading-relaxed text-muted-foreground">
+            {/*
+              Cubuk TEK SATIR kalir. F0'da eklenen uzun bedel aciklamasi
+              cubugu 100 px'e cikarmisti ve yapiskan cubuk, ilk acilista
+              "Mac adlari" kontrolunun tam ustune oturuyordu (olculdu:
+              elementFromPoint cubugu donuyordu). Aciklamanin tam hali
+              Motor kartinda, modun secildigi yerde duruyor — zaten oraya
+              ait.
+            */}
+            <p className="mt-1.5 text-center text-[11px] leading-tight text-muted-foreground">
               {bedel.tip === "kesin" ? (
                 <>
-                  Bedel: <strong>{sayi(bedel.deger)} kolon</strong> · 16 satır
+                  <strong>{sayi(bedel.deger)} kolon</strong> · 16 satır
                 </>
               ) : null}
               {bedel.tip === "tavan" ? (
                 <>
-                  Bedel: <strong>en çok {sayi(bedel.deger)} kolon</strong> —
-                  girdiğin bütçe
+                  en çok <strong>{sayi(bedel.deger)} kolon</strong>
                 </>
               ) : null}
               {bedel.tip === "aralik" ? (
                 <>
-                  Bedel: <strong>{sayi(bedel.alt)}–{sayi(bedel.ust)} kolon</strong>{" "}
-                  · alt sınır küre-kaplama, üst sınır tam sistem; kesin sayıyı
-                  motor belirler
+                  <strong>
+                    {sayi(bedel.alt)}–{sayi(bedel.ust)} kolon
+                  </strong>{" "}
+                  arası
                 </>
               ) : null}
-              {" · ödeyeceğin tutar kolon sayısıdır"}
+              {" · ödenecek tutar"}
             </p>
           </div>
         </div>
@@ -889,7 +952,7 @@ export default function FormulPage() {
               </TabPanel>
 
               <TabPanel id="kupon" active={sekme === "kupon"}>
-                <KuponPanel r={sonuc} />
+                <KuponPanel r={sonuc} labels={labels} />
               </TabPanel>
 
               {/* Ne kadar riskli — hepsi SENİN tahminlerine bağlı olanlar */}

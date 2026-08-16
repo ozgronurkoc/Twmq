@@ -33,6 +33,16 @@ import { normalize } from "./utils";
  */
 export interface Kurulum {
   matches: Sembol[][];
+  /**
+   * "Galatasaray – Fenerbahçe" biçiminde 15 etiket; boş olabilir.
+   *
+   * YEREL depoda durur, BAGLANTIYA girmez. Sebep `transfer.ts`'te verilen
+   * kararla ayni: 15 takim adi URL'i uc katina cikarir. Ayrica etiket
+   * cozume hic girmez — motor yalnizca isaretleri gorur — bu yuzden
+   * sonucun parmak izine de dahil DEGILDIR: maca ad vermek ekrandaki
+   * sonucu bayatlatmaz.
+   */
+  labels: string[];
   probsAcik: boolean;
   probs: ProbRow[];
   mode: ModeId;
@@ -78,6 +88,7 @@ const YEREL_ANAHTAR = "twmq.formul.kurulum.v1";
 export function varsayilanKurulum(): Kurulum {
   return {
     matches: VARSAYILAN_MACLAR.map((r) => [...r]),
+    labels: Array(MAC_SAYISI).fill(""),
     probsAcik: false,
     probs: VARSAYILAN_MACLAR.map((sel) => esitPay(sel)),
     mode: "fix16",
@@ -340,6 +351,9 @@ export function kurulumuCoz(arama: string): UrlCozum | null {
     atlanan,
     kurulum: {
       matches: mac.matches,
+      // Etiketler baglantida tasinmaz; cagiran taraf gerekiyorsa yerel
+      // kayittan tamamlar.
+      labels: Array(MAC_SAYISI).fill(""),
       probsAcik,
       probs: probsAcik ? pr.probs : mac.matches.map((s) => esitPay(s)),
       mode,
@@ -431,12 +445,39 @@ export function yereldenOku(): Kurulum | null {
     const olasilik = tamOlasilik(aday.probs);
     return {
       ...tur.kurulum,
+      // Etiketler de kodlama turunun DISINDA: baglanti onlari tasimaz,
+      // tur icine alinsalardi yerel kayittan da silinirlerdi.
+      labels: temizEtiketler(aday.labels),
       probsAcik: Boolean(aday.probsAcik) && olasilik !== null,
       probs: olasilik ?? tur.kurulum.probs,
     };
   } catch {
     return null;
   }
+}
+
+/** Etiket satirinin en fazla uzunlugu. Uzun bir yapistirma yerel depoyu
+ *  sisirmesin; 80 karakter en uzun takim adi ciftini rahat aliyor. */
+export const ETIKET_SINIR = 80;
+
+/**
+ * Herhangi bir girdiyi 15 elemanli, tek satirlik, kirpilmis etiket
+ * dizisine cevirir. Kaynak ne olursa olsun (depo, devir paketi, kullanici
+ * yapistirmasi) tek kapidan gecer.
+ */
+export function temizEtiketler(ham: unknown): string[] {
+  const cikti: string[] = [];
+  const dizi = Array.isArray(ham) ? ham : [];
+  for (let i = 0; i < MAC_SAYISI; i++) {
+    const deger = dizi[i];
+    if (typeof deger !== "string") {
+      cikti.push("");
+      continue;
+    }
+    // Satir sonu izgara duzenini bozar; bosluklar sadelestirilir.
+    cikti.push(deger.replace(/\s+/g, " ").trim().slice(0, ETIKET_SINIR));
+  }
+  return cikti;
 }
 
 /** Depodaki ham olasilik dizisini kayipsiz dogrular; bozuksa null doner. */
