@@ -262,7 +262,18 @@ export function BayesPanel({ r }: { r: SolveResult }) {
 
 // ─── Markov ───────────────────────────────────────────────────────────────
 
-export function MarkovPanel({ r }: { r: SolveResult }) {
+/**
+ * Hata butcesi + kume-ici cozulme egrisi.
+ *
+ * Onceki surumde burada bir de MAC BAZLI gecis tablosu vardi (p_stay /
+ * p_exit). Kaldirildi, cunku ayni sayilardi: sunucuda
+ * `p_stay = Σ_{s∈sec} p(s)`, yani girdi kartindaki kutle cubugunun tam
+ * kendisi — ve `p_survive` de onlarin carpimi, yani kume-ici kosulu.
+ * Ayni sayiyi ikinci kez, üstelik yalnizca motor calistiktan SONRA
+ * gostermek bilgi eklemiyordu; girdi kartindaki hali hem canli hem de
+ * yaninda ne yapilacagini soyluyor.
+ */
+export function HataButcesiPanel({ r }: { r: SolveResult }) {
   const m = r.markov;
   if (!m) return null;
   const eb = m.error_budget;
@@ -318,7 +329,7 @@ export function MarkovPanel({ r }: { r: SolveResult }) {
 
       <Card>
         <CardHeader
-          title="Küme-içi hayatta kalma"
+          title="Küme-içi çözülme"
           hint="Maç maç ilerlerken sonucun hâlâ seçim kümende olma olasılığı. Bir kez çıkıldığında geri dönüş yoktur (emici durum)."
         />
         <CardBody className="space-y-3">
@@ -358,35 +369,15 @@ export function MarkovPanel({ r }: { r: SolveResult }) {
             </span>
           </div>
 
-          <div className="scroll-slim mt-2 overflow-x-auto">
-            <table className="w-full min-w-[420px] text-[12px]">
-              <thead>
-                <tr className="text-left text-[10.5px] uppercase tracking-[0.06em] text-muted-foreground">
-                  <th className="pb-2 pr-3 font-medium">Maç</th>
-                  <th className="pb-2 pr-3 text-right font-medium">Kümede kalma</th>
-                  <th className="pb-2 text-right font-medium">Kümeden çıkma</th>
-                </tr>
-              </thead>
-              <tbody className="tnum">
-                {m.survival.transitions.map((t) => (
-                  <tr key={t.mac} className="border-t border-line">
-                    <td className="py-1.5 pr-3">{t.mac}</td>
-                    <td className="py-1.5 pr-3 text-right font-mono">
-                      %{(t.p_stay * 100).toFixed(2)}
-                    </td>
-                    <td
-                      className={cn(
-                        "py-1.5 text-right font-mono",
-                        t.p_exit > 0.3 ? "text-danger" : "text-muted-foreground",
-                      )}
-                    >
-                      %{(t.p_exit * 100).toFixed(2)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <p className="text-[11px] leading-relaxed text-muted-foreground">
+            Eğrinin <strong>yatay ekseni kupon sırasıdır</strong>, bir zaman
+            değil: maçlar bağımsız olduğu için son değer sıralamadan
+            etkilenmez, yalnızca inişin şekli değişir. Maç bazlı kalma
+            olasılıkları soldaki{" "}
+            <strong>&ldquo;seçim kümen doğru sonucu içeriyor mu&rdquo;</strong>{" "}
+            kartındaki kütle çubuklarının ta kendisidir — orada canlı, üstelik
+            hangi maçı değiştireceğini de söylüyor.
+          </p>
         </CardBody>
       </Card>
     </div>

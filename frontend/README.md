@@ -48,6 +48,31 @@ lib/
   transfer.ts         hafta → formül devri (idempotent)
 ```
 
+## Sonuç sekmeleri soruya göre bölünür
+
+Sekmeler bir zamanlar backend modüllerinin birebir yansımasıydı — Özet,
+Kupon, Dağılım, Olasılık, Bayes, Markov, Hata frekansı, Fire, Log. Dokuz
+sekme, ama kullanıcının dört sorusundan ikisi üçe-dörde dağılmış
+durumdaydı. Şimdi sekme = soru:
+
+| Sekme | Cevapladığı soru | İçindekiler |
+|---|---|---|
+| **Ne aldım** | Kaça mal oldu, ne garanti ediyor? | garanti durumu, bedel, motor notları, bütçe planları, kapsama dağılımı, uniform taban |
+| **Ne yazacağım** | Kupona ne yazacağım? | kupon tablosu |
+| **Ne kadar riskli** | Tahminlerime göre ne olur? | exact vs Monte Carlo, hata bütçesi, küme-içi çözülme, Bayes |
+| **Zayıf halkalar** | Hangi maçı değiştirmeliyim? | hata frekansı, fire (seçim dışı) |
+| Log | — | çalışma logu |
+
+Birleştirilen sekmelerin içinde bölüm başlıkları vardır; yoksa birleştirme
+sadece uzun bir liste olurdu.
+
+**Markov'un "hayatta kalma" tablosu kaldırıldı.** Sunucuda
+`p_stay = Σ_{s∈seç} p(s)` ve `p_survive` onların çarpımı — yani girdi
+tarafındaki küme-içi kartının kütle çubuklarıyla *birebir aynı sayılar*.
+Aynı sayıyı ikinci kez, üstelik yalnızca motor çalıştıktan sonra göstermek
+bilgi eklemiyordu. Kümülatif eğri kaldı, ama yatay ekseninin kupon sırası
+olduğu — bir zaman değil — artık açıkça yazıyor.
+
 ## Üretmeden önce görülen koşul
 
 14-garanti **koşulludur**: ancak gerçek sonuç seçim kümesinin içindeyse

@@ -692,6 +692,12 @@ katmanı arayüzü bilmez.
 10. **Ekrandaki sonuç girdiyi anlatmıyorsa bunu söyler.** Girdi değişince sonuç
     silinmez — eski sonuç hâlâ okunabilir bilgidir — ama "eski hâline ait" diye
     işaretlenir.
+11. **Sekmeler soruya göre bölünür, motor bloğuna göre değil.** Formül sonucu
+    dört soruya ayrılır (ne aldım / ne yazacağım / ne kadar riskli / zayıf
+    halkalar); backend modüllerinin birebir yansıması olan dokuz sekme, tek bir
+    sorunun cevabını üçe dörde dağıtıyordu. Aynı büyüklük iki yerde
+    gösterilmez: Markov'un maç bazlı `p_stay` tablosu, girdi tarafındaki
+    küme-içi kütleleriyle birebir aynı olduğu için kaldırıldı.
 
 ---
 

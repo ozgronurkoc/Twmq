@@ -60,13 +60,29 @@ import { FirePanel } from "@/components/formul/panels-fire";
 import {
   BayesPanel,
   BosPanel,
+  HataButcesiPanel,
   HataFrekansPanel,
   LogPanel,
-  MarkovPanel,
   OlasilikPanel,
 } from "@/components/formul/panels-analiz";
 
 const HAMMING_BLOK = 7;
+
+/**
+ * Birlestirilen sekmelerin icindeki dikis. Sekme sayisi 9'dan 5'e inince
+ * bir sekmede birden fazla konu bulunuyor; okurun nerede konu degistigini
+ * gormesi gerekir, yoksa birlestirme sadece uzun bir liste olur.
+ */
+function BolumBasligi({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-3 pt-1">
+      <span className="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+        {children}
+      </span>
+      <span className="h-px flex-1 bg-line" />
+    </div>
+  );
+}
 
 export default function FormulPage() {
   const [meta, setMeta] = React.useState<MetaResponse | null>(null);
@@ -103,7 +119,7 @@ export default function FormulPage() {
   const [hata, setHata] = React.useState<string | null>(null);
   const [calisiyor, setCalisiyor] = React.useState(false);
   const [gecen, setGecen] = React.useState(0);
-  const [sekme, setSekme] = React.useState("ozet");
+  const [sekme, setSekme] = React.useState("sonuc");
   const [devir, setDevir] = React.useState<HaftaDevri | null>(null);
   const [baglantiNotu, setBaglantiNotu] = React.useState<{
     atlanan: string[];
@@ -354,15 +370,23 @@ export default function FormulPage() {
   const bayat =
     sonuc !== null && uretilenParmak !== null && uretilenParmak !== kurulumuKodla(kurulum);
 
+  /*
+    Sekmeler SORUYA gore bolunur, motor blogua gore degil.
+    Onceki dizilim backend modullerinin birebir yansimasiydi (Ozet,
+    Kupon, Dagilim, Olasilik, Bayes, Markov, Hata frekansi, Fire, Log) ve
+    kullanicinin dort sorusundan ikisi ucer-dorder sekmeye dagiliyordu:
+    "ne kadar riskli" Olasilik+Markov+Dagilim'a, "hangi maci degistireyim"
+    Hata frekansi+Fire+Markov'a.
+  */
   const sekmeler: TabItem[] = [
-    { id: "ozet", label: "Özet" },
-    { id: "kupon", label: "Kupon", badge: sonuc ? sonuc.satir_sayisi : undefined },
-    { id: "dagilim", label: "Dağılım" },
-    { id: "olasilik", label: "Olasılık", enabled: !!sonuc?.advanced },
-    { id: "bayes", label: "Bayes", enabled: !!sonuc?.bayes },
-    { id: "markov", label: "Markov", enabled: !!sonuc?.markov },
-    { id: "hata", label: "Hata frekansı", enabled: !!sonuc?.error_freq },
-    { id: "fire", label: "Fire", enabled: !!sonuc?.fire },
+    { id: "sonuc", label: "Ne aldım" },
+    { id: "kupon", label: "Ne yazacağım", badge: sonuc ? sonuc.satir_sayisi : undefined },
+    { id: "risk", label: "Ne kadar riskli", enabled: !!sonuc?.advanced },
+    {
+      id: "zayif",
+      label: "Zayıf halkalar",
+      enabled: !!(sonuc?.error_freq || sonuc?.fire),
+    },
     { id: "log", label: "Log", enabled: !!logMetin },
   ];
 
@@ -845,72 +869,77 @@ export default function FormulPage() {
 
               <Tabs items={sekmeler} value={sekme} onChange={setSekme} />
 
-              <TabPanel id="ozet" active={sekme === "ozet"}>
-                <OzetPanel
-                  r={sonuc}
-                  onPlanSec={
-                    sonuc.butce_planlari
-                      ? (p) => {
-                          setPlanApply(p.index);
-                          void calistir(p.index);
-                        }
-                      : undefined
-                  }
-                />
+              {/* Ne aldım — bedel, garanti ve kapsamanın geometrisi */}
+              <TabPanel id="sonuc" active={sekme === "sonuc"}>
+                <div className="space-y-4">
+                  <OzetPanel
+                    r={sonuc}
+                    onPlanSec={
+                      sonuc.butce_planlari
+                        ? (p) => {
+                            setPlanApply(p.index);
+                            void calistir(p.index);
+                          }
+                        : undefined
+                    }
+                  />
+                  <BolumBasligi>Kapsamanın geometrisi</BolumBasligi>
+                  <DagilimPanel r={sonuc} />
+                </div>
               </TabPanel>
+
               <TabPanel id="kupon" active={sekme === "kupon"}>
                 <KuponPanel r={sonuc} />
               </TabPanel>
-              <TabPanel id="dagilim" active={sekme === "dagilim"}>
-                <DagilimPanel r={sonuc} />
-              </TabPanel>
-              <TabPanel id="olasilik" active={sekme === "olasilik"}>
+
+              {/* Ne kadar riskli — hepsi SENİN tahminlerine bağlı olanlar */}
+              <TabPanel id="risk" active={sekme === "risk"}>
                 {sonuc.advanced ? (
-                  <OlasilikPanel r={sonuc} />
+                  <div className="space-y-4">
+                    <OlasilikPanel r={sonuc} />
+                    {sonuc.markov ? (
+                      <>
+                        <BolumBasligi>Hata bütçesi</BolumBasligi>
+                        <HataButcesiPanel r={sonuc} />
+                      </>
+                    ) : null}
+                    {sonuc.bayes ? (
+                      <>
+                        <BolumBasligi>Bayes güncellemesi</BolumBasligi>
+                        <BayesPanel r={sonuc} />
+                      </>
+                    ) : null}
+                  </div>
                 ) : (
                   <BosPanel baslik="Olasılık verisi yok">
                     Soldaki <strong>Olasılık girişini kullan</strong> anahtarını aç ve
-                    maç bazlı tahminlerini gir.
+                    maç bazlı tahminlerini gir. Bu sekmedeki her şey senin
+                    tahminlerine bağlıdır; kombinatoryal 14-garanti onlardan
+                    bağımsızdır ve <strong>Ne aldım</strong> sekmesinde durur.
                   </BosPanel>
                 )}
               </TabPanel>
-              <TabPanel id="bayes" active={sekme === "bayes"}>
-                {sonuc.bayes ? (
-                  <BayesPanel r={sonuc} />
+
+              {/* Zayıf halkalar — hangi maçı değiştirmeliyim */}
+              <TabPanel id="zayif" active={sekme === "zayif"}>
+                {sonuc.error_freq || sonuc.fire ? (
+                  <div className="space-y-4">
+                    {sonuc.error_freq ? <HataFrekansPanel r={sonuc} /> : null}
+                    {sonuc.fire ? (
+                      <>
+                        <BolumBasligi>Seçim dışına çıkarsa (fire)</BolumBasligi>
+                        <FirePanel r={sonuc} />
+                      </>
+                    ) : null}
+                  </div>
                 ) : (
-                  <BosPanel baslik="Bayes çalıştırılmadı">
-                    Olasılık girişini açıp <strong>Bayes güncellemesi</strong>&apos;ni
-                    etkinleştir.
+                  <BosPanel baslik="Zayıf halka analizi çalışmadı">
+                    Hata frekansı için uzay fazla büyük olabilir; fire analizi
+                    ise Motor kartından açılır.
                   </BosPanel>
                 )}
               </TabPanel>
-              <TabPanel id="markov" active={sekme === "markov"}>
-                {sonuc.markov ? (
-                  <MarkovPanel r={sonuc} />
-                ) : (
-                  <BosPanel baslik="Markov zinciri yok">
-                    Bu zincir olasılık girdisi gerektirir.
-                  </BosPanel>
-                )}
-              </TabPanel>
-              <TabPanel id="hata" active={sekme === "hata"}>
-                {sonuc.error_freq ? (
-                  <HataFrekansPanel r={sonuc} />
-                ) : (
-                  <BosPanel baslik="Hata frekansı hesaplanmadı">
-                    Uzay bu hesap için fazla büyük olabilir.
-                  </BosPanel>
-                )}
-              </TabPanel>
-              <TabPanel id="fire" active={sekme === "fire"}>
-                {sonuc.fire ? (
-                  <FirePanel r={sonuc} />
-                ) : (
-                  <BosPanel baslik="Fire analizi çalıştırılmadı">
-                    Motor kartından <strong>Fire analizi</strong> ayarını açın.
-                  </BosPanel>
-                )}
-              </TabPanel>
+
               <TabPanel id="log" active={sekme === "log"}>
                 <LogPanel metin={logMetin} />
               </TabPanel>
