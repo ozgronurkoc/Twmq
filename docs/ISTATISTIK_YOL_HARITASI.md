@@ -184,7 +184,7 @@ dizi ve sayımlar birbirini tutmadan dosya yazılmaz.
 
 **Doğrulama.** 26 hafta aynı kaldı, 9'unda sıra, 6'sında sıra + sayım düzeldi, mükerrer diziler
 kalmadı. `close_date` alanlarının 41/41'i önceki sürümle aynı çıktı — hafta eşlemesi baştan
-doğruymuş, bozuk olan hafta *içindeki* sıraymış. 51. hafta, `VERI_TOPLAMA_VE_ISLEME.md` §6.2'de
+doğruymuş, bozuk olan hafta *içindeki* sıraymış. 51. hafta, `VERI_TOPLAMA_VE_ISLEME.md` §7.2'de
 Misli ile bağımsız doğrulanmış satırla birebir tutuyor (`000111122212011`).
 
 **Yan kazanç.** Veri seti artık her hafta için maç listesini taşıyor: takım adı, başlama saati,
@@ -417,7 +417,7 @@ sayısı ~80'e çıkar.
 
 ### S3 — İddaa arşivi olgunlaşınca
 
-Snapshot boru hattı hazır ama zamanlaması kapalı (§3.9). Cron açıldıktan ~10 hafta sonra:
+Snapshot boru hattı ve haftalık tetik çalışıyor (§3.9). ~10 snapshot biriktikten sonra:
 
 - Snapshot'ları kupon maçlarıyla eşleştir (`build_odds.py`'daki isim normalizasyonu yeniden
   kullanılır)

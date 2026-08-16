@@ -353,7 +353,7 @@ birebir tuttu (`000111122212011`).
 
 **Ders:** doğru görünen bir toplam, altındaki verinin doğru olduğunu göstermez.
 Bugün `match_conflicts` tam olarak bunu yakalar. Vaka analizi:
-[`docs/VERI_TOPLAMA_VE_ISLEME.md`](docs/VERI_TOPLAMA_VE_ISLEME.md) §6.4.
+[`docs/VERI_TOPLAMA_VE_ISLEME.md`](docs/VERI_TOPLAMA_VE_ISLEME.md) §7.4.
 
 ---
 
