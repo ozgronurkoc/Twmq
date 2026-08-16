@@ -44,6 +44,11 @@ bash scripts/setup.sh    # yeni bağımlılık geldiyse kurar, kuruluysa atlar
 komutu her dizinden çalışır. `scripts/run_next_dev.sh` bunu kendisi çağırır,
 yani Run düğmesi tek başına da yeterlidir.
 
+Kurulumu klasörün varlığına bakarak atlamaz: `package.json`/`package-lock.json`
+son kurulumdan yeniyse ya da `npm ls` eksik bir paket görüyorsa yeniden kurar.
+Yeni bir bağımlılık geldiğinde eski `node_modules` ile derlemenin
+"Module not found" vermesi bu yüzden olmaz.
+
 ### Önemli: `NEXT_PUBLIC_API_URL` boş kalmalı
 
 `frontend/.env.local` içindeki değer **boş** olur. İstekler aynı origin'e gider,
