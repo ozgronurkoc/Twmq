@@ -637,7 +637,8 @@ frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası 
   lib/api.ts           tipli, AbortController ile iptal edilebilir istemci
   lib/transfer.ts      hafta → formül devri (idempotent; bkz. §7.2 kural 6)
   lib/kurulum.ts       formül kurulumunun kalıcılığı + paylaşılabilir bağlantı
-  scripts/             kurulum-check.mjs (gidiş-dönüş denetimi, bağımlılıksız)
+  lib/kume-ici.ts      üretmeden önce görülen koşul + küre-kaplama alt sınırı
+  scripts/             check.mjs (saf mantık denetimi, bağımlılıksız)
 
 scripts/               setup.sh (bağımlılıklar) · run_next_dev.sh (API + UI birlikte)
                        build.sh + run_prod.sh (Replit dağıtımı)
@@ -683,6 +684,14 @@ katmanı arayüzü bilmez.
    Okunamayan her alan varsayılana düşer *ve* arayüzde adıyla söylenir. Okunamayan
    olasılık girişi **kapalı** açılır: açık bırakıp seçimlerden tekdüze değer üretmek,
    kullanıcının girmediği bir tahmini Bayes'e ve Monte Carlo'ya beslemek olurdu.
+9. **Anlamı olmayan sayı basılmaz, sebebi yazılır.** Küme-içi koşulu varsayılan
+   olasılık satırlarıyla tanım gereği %100 çıkar; kart o sayıyı göstermek yerine
+   neden çıktığını söyler (`lib/kume-ici.ts`). Aynı kural bedelde de geçerlidir:
+   motorun arama sonunda bileceği kolon sayısı tek sayı gibi sunulmaz, aralık
+   verilir.
+10. **Ekrandaki sonuç girdiyi anlatmıyorsa bunu söyler.** Girdi değişince sonuç
+    silinmez — eski sonuç hâlâ okunabilir bilgidir — ama "eski hâline ait" diye
+    işaretlenir.
 
 ---
 

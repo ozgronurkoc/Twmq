@@ -4,9 +4,11 @@ import * as React from "react";
 import { Loader2, Play } from "lucide-react";
 
 import { getMeta, solve } from "@/lib/api";
+import { kaplamaAltSiniri } from "@/lib/kume-ici";
 import {
   adresiTemizle,
   kurulumuCoz,
+  kurulumuKodla,
   varsayilanKurulum,
   VARSAYILAN_ENG,
   VARSAYILAN_MACLAR,
@@ -49,6 +51,7 @@ import {
   Switch,
 } from "@/components/ui/controls";
 import { Tabs, TabPanel, type TabItem } from "@/components/ui/tabs";
+import { KumeIciKart } from "@/components/formul/kume-ici-kart";
 import { KurulumBar } from "@/components/formul/kurulum-bar";
 import { MatchGrid } from "@/components/formul/match-grid";
 import { ProbGrid } from "@/components/formul/prob-grid";
@@ -90,6 +93,12 @@ export default function FormulPage() {
   const [eng, setEng] = React.useState({ ...VARSAYILAN_ENG });
 
   const [sonuc, setSonuc] = React.useState<SolveResult | null>(null);
+  /**
+   * Ekrandaki sonucu ureten kurulumun parmak izi. Kurulum kodlamasi zaten
+   * bunun icin bicilmis kaftan: modun ETKILEMEDIGI alanlari disarida
+   * birakir, yani fix16'dayken butceyi degistirmek sonucu bayatlatmaz.
+   */
+  const [uretilenParmak, setUretilenParmak] = React.useState<string | null>(null);
   const [logMetin, setLogMetin] = React.useState("");
   const [hata, setHata] = React.useState<string | null>(null);
   const [calisiyor, setCalisiyor] = React.useState(false);
@@ -218,6 +227,7 @@ export default function FormulPage() {
     setDevir(null);
     setBaglantiNotu(null);
     setSonuc(null);
+    setUretilenParmak(null);
     setLogMetin("");
     setHata(null);
     uygula(varsayilanKurulum());
@@ -241,23 +251,39 @@ export default function FormulPage() {
     let banko = 0;
     let cifte = 0;
     let uclu = 0;
-    let uzay = 1;
     for (const satir of matches) {
       const n = satir.length || 1;
       if (n === 1) banko++;
       else if (n === 2) cifte++;
       else uclu++;
-      uzay *= n;
     }
-    // fix16'da bedel = uzay / 2^7 * 16 = uzay / 8
-    const tahminiBedel =
-      mode === "fix16" && cifte >= HAMMING_BLOK ? Math.round(uzay / 8) : uzay;
-    return { banko, cifte, uclu, uzay, tahminiBedel };
-  }, [matches, mode]);
+    return { banko, cifte, uclu, ...kaplamaAltSiniri(matches) };
+  }, [matches]);
 
   const modInfo = meta?.modes.find((m) => m.id === mode);
   const butceGerekli =
     modInfo?.needs_budget ?? (mode === "butce" || mode === "maxcov");
+
+  /**
+   * Uretmeden once soylenebilecek bedel. Uc AYRI durum var ve tek bir
+   * sayiya indirilemezler:
+   *
+   *   fix16   kesin — blok 2^7 noktayi 16 satira indirir, yani uzay/8.
+   *   butce   tavan — odeyecegin en fazla kendi girdigin butcedir.
+   *   digeri  aralik — motor kac kolon uretecegini arama sonunda bilir.
+   *
+   * Onceki surum ucunu de tek formulle veriyordu ve fix16 disinda UZAYI
+   * yaziyordu: `auto` modunda ayni kupon icin "256 kolon" diyordu, motor
+   * 32 uretiyordu (olculdu). Sekiz kat abarti, hem de odenecek tutari
+   * soyleyen en gorunur yerde.
+   */
+  const bedel = React.useMemo(() => {
+    if (mode === "fix16" && canli.cifte >= HAMMING_BLOK) {
+      return { tip: "kesin" as const, deger: Math.round(canli.uzay / 8) };
+    }
+    if (butceGerekli) return { tip: "tavan" as const, deger: budget };
+    return { tip: "aralik" as const, alt: canli.altSinir, ust: canli.uzay };
+  }, [mode, butceGerekli, budget, canli]);
   const scipyEksik = Boolean(modInfo?.needs_scipy && meta?.has_scipy === false);
   const fix16Yetersiz = mode === "fix16" && canli.cifte < HAMMING_BLOK;
 
@@ -268,6 +294,13 @@ export default function FormulPage() {
       iptalRef.current = ac;
       setCalisiyor(true);
       setHata(null);
+
+      // Parmak izi istek KURULURKEN alinir, cevap donunce degil: arada
+      // kullanici girdiyi degistirmisse sonuc zaten o degisiklige ait
+      // olmayacak ve bayat isaretlenmesi gerekir.
+      const parmak = kurulumuKodla(
+        planUygula === undefined ? kurulum : { ...kurulum, planApply: planUygula },
+      );
 
       const govde: SolveRequest = {
         matches,
@@ -300,6 +333,7 @@ export default function FormulPage() {
           setHata(cevap.error || "Bilinmeyen hata");
         } else {
           setSonuc(cevap.result);
+          setUretilenParmak(parmak);
         }
       } catch (e) {
         if (e instanceof DOMException && e.name === "AbortError") return;
@@ -311,8 +345,14 @@ export default function FormulPage() {
     [
       matches, mode, variant, kati, fireMax, butceGerekli, budget, planCount, planApply,
       probsAcik, probs, mcSamples, useBayes, elleAyar, preset, prior, evidence, eng,
+      kurulum,
     ],
   );
+
+  // Ekrandaki sonuc hala girdiyi mi anlatiyor. Sonuc SILINMEZ — eski sonuc
+  // hala okunabilir bir bilgidir, yalnizca artik neyi anlattigi soylenir.
+  const bayat =
+    sonuc !== null && uretilenParmak !== null && uretilenParmak !== kurulumuKodla(kurulum);
 
   const sekmeler: TabItem[] = [
     { id: "ozet", label: "Özet" },
@@ -339,8 +379,15 @@ export default function FormulPage() {
       </header>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
-        {/* ── Girdi ──────────────────────────────────────────── */}
-        <div className="space-y-4">
+        {/*
+          ── Girdi ────────────────────────────────────────────
+          `min-w-0` sart: izgara ogesinin varsayilan `min-width:auto`'su
+          icerigin min-content genisligine kilitlenir. Olasilik izgarasi
+          `min-w-[420px]` tasiyor ve kendi `overflow-x-auto` sarmalayicisi
+          bunu icerde tutamiyor — telefonda (390 px) TUM sol kolonu 462 px'e
+          itip sayfayi yatay kaydiriyordu, olasilik girisi acikken.
+        */}
+        <div className="min-w-0 space-y-4">
           <KurulumBar kurulum={kurulum} onSifirla={sifirla} disabled={calisiyor} />
 
           {baglantiNotu ? (
@@ -395,6 +442,16 @@ export default function FormulPage() {
             <Stat etiket="Üçlü" deger={canli.uclu} />
             <Stat etiket="Uzay" deger={sayi(canli.uzay)} />
           </div>
+
+          <KumeIciKart
+            matches={matches}
+            probs={probs}
+            acik={probsAcik}
+            onAc={() => setProbsAcik(true)}
+            onEsitle={() =>
+              setProbs(matches.map(() => ({ "1": 1 / 3, "0": 1 / 3, "2": 1 / 3 })))
+            }
+          />
 
           {fix16Yetersiz ? (
             <Callout
@@ -689,16 +746,32 @@ export default function FormulPage() {
                 </>
               )}
             </Button>
-            <p className="mt-2 text-center text-[11px] text-muted-foreground">
-              Tahmini bedel: <strong>{sayi(canli.tahminiBedel)} kolon</strong>
-              {mode === "fix16" && canli.cifte >= HAMMING_BLOK ? " · 16 satır" : ""}
+            <p className="mt-2 text-center text-[11px] leading-relaxed text-muted-foreground">
+              {bedel.tip === "kesin" ? (
+                <>
+                  Bedel: <strong>{sayi(bedel.deger)} kolon</strong> · 16 satır
+                </>
+              ) : null}
+              {bedel.tip === "tavan" ? (
+                <>
+                  Bedel: <strong>en çok {sayi(bedel.deger)} kolon</strong> —
+                  girdiğin bütçe
+                </>
+              ) : null}
+              {bedel.tip === "aralik" ? (
+                <>
+                  Bedel: <strong>{sayi(bedel.alt)}–{sayi(bedel.ust)} kolon</strong>{" "}
+                  · alt sınır küre-kaplama, üst sınır tam sistem; kesin sayıyı
+                  motor belirler
+                </>
+              ) : null}
               {" · ödeyeceğin tutar kolon sayısıdır"}
             </p>
           </div>
         </div>
 
         {/* ── Sonuç ──────────────────────────────────────────── */}
-        <div className="space-y-4">
+        <div className="min-w-0 space-y-4">
           {hata ? (
             <Callout ton="danger" baslik="Motor hata verdi">
               {hata}
@@ -749,6 +822,26 @@ export default function FormulPage() {
                 {sonuc.mode ? <Badge>{sonuc.mode}</Badge> : null}
                 {!sonuc.has_scipy ? <Badge ton="warning">scipy yok</Badge> : null}
               </div>
+
+              {bayat ? (
+                <Callout ton="warning" baslik="Bu sonuç girdinin eski hâline ait">
+                  <p>
+                    Sonuç üretildikten sonra soldaki kurulumu değiştirdin.
+                    Aşağıdaki kupon, bedel ve olasılıklar <strong>eski</strong>
+                    {" "}girdiyi anlatıyor — yeni hâlini görmek için yeniden üret.
+                  </p>
+                  <Button
+                    tip="outline"
+                    boyut="sm"
+                    className="mt-2.5"
+                    onClick={() => void calistir()}
+                    disabled={calisiyor || fix16Yetersiz || scipyEksik}
+                  >
+                    <Play size={13} />
+                    Yeniden üret
+                  </Button>
+                </Callout>
+              ) : null}
 
               <Tabs items={sekmeler} value={sekme} onChange={setSekme} />
 

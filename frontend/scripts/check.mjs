@@ -1,16 +1,22 @@
 /**
- * Kurulum kodlamasinin gidis-donus denetimi.
+ * Arayuzun saf mantiginin denetimi — tarayici gerektirmeyen her sey.
  *
- * NEDEN VAR: kodlama sabit genislikli ve tek bir alan tasinca ONDAN SONRAKI
- * TUM maclar kayar — yani hata bir maci degil, kuponun yarisini bozar ve
- * hicbir yerde patlamaz, sessizce baska bir kupon uretir. Ilk surumde tam
- * bunu yapti: binde birlik olasilik 0..1000 araligindadir, banko bir macta
- * 1000 dort basamak eder ve `padStart(3)` alani 4 karaktere tasirdi.
+ * Iki bolum var:
+ *   1. Kurulum kodlamasi (kalicilik + paylasilabilir baglanti)
+ *   2. Kume-ici hesabi (uretmeden once gorulen kosul)
  *
- * Bagimlilik eklemez: tsc (zaten devDependency) modulu gecici bir dizine
- * cevirir, dosya duz node ile kosar.
+ * NEDEN VAR: kurulum kodlamasi sabit genislikli ve tek bir alan tasinca
+ * ONDAN SONRAKI TUM maclar kayar — yani hata bir maci degil, kuponun
+ * yarisini bozar ve hicbir yerde patlamaz, sessizce baska bir kupon
+ * uretir. Ilk surumde tam bunu yapti: binde birlik olasilik 0..1000
+ * araligindadir, banko bir macta 1000 dort basamak eder ve `padStart(3)`
+ * alani 4 karaktere tasirdi. Kume-ici hesabi da ayni sinifta: 15 sayinin
+ * carpimi, yanlis oldugunda makul gorunmeye devam eder.
  *
- * Calistirma: node scripts/kurulum-check.mjs
+ * Bagimlilik eklemez: tsc (zaten devDependency) modulleri gecici bir
+ * dizine cevirir, dosya duz node ile kosar.
+ *
+ * Calistirma: npm run check   (ya da node scripts/check.mjs)
  */
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
@@ -30,14 +36,16 @@ try {
   execFileSync(
     "npx",
     [
-      "tsc", "lib/kurulum.ts", "lib/utils.ts", "lib/types.ts",
+      "tsc", "lib/kurulum.ts", "lib/kume-ici.ts", "lib/utils.ts", "lib/types.ts",
       "--outDir", cikti,
       "--module", "commonjs", "--target", "es2022", "--skipLibCheck",
     ],
     { cwd: kok, stdio: "inherit" },
   );
 
-  const K = createRequire(import.meta.url)(join(cikti, "kurulum.js"));
+  const iste = createRequire(import.meta.url);
+  const K = iste(join(cikti, "kurulum.js"));
+  const Z = iste(join(cikti, "kume-ici.js"));
 
   let gecen = 0;
   const dene = (ad, fn) => {
@@ -196,7 +204,139 @@ try {
     assert.ok(geri.planApply <= geri.planCount);
   });
 
-  console.log(`\nOK — ${gecen} kurulum denetimi gecti`);
+  // ── Kume-ici hesabi ──────────────────────────────────────────────────
+
+  // README'nin ornek kuponu + check.sh'in ornek olasiliklari. Ikisi de
+  // depoda zaten var, yani bu vaka uydurulmus degil.
+  const ORNEK_SEC = "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"
+    .split(",")
+    .map((s) => s.split(""));
+  const ORNEK_P = [
+    [0.5, 0.3, 0.2], [0.4, 0.4, 0.2], [0.6, 0.2, 0.2], [0.5, 0.25, 0.25],
+    [0.3, 0.4, 0.3], [0.45, 0.35, 0.2], [0.5, 0.3, 0.2], [0.4, 0.3, 0.3],
+    [0.55, 0.25, 0.2], [0.5, 0.3, 0.2], [0.4, 0.3, 0.3], [0.5, 0.3, 0.2],
+    [0.45, 0.35, 0.2], [0.5, 0.25, 0.25], [0.4, 0.4, 0.2],
+  ].map(([a, b, c]) => ({ "1": a, "0": b, "2": c }));
+
+  dene("kume-ici, backend'in exact hesabiyla ayni sayiyi verir", () => {
+    const h = Z.kumeIciHesapla(ORNEK_SEC, ORNEK_P);
+    // backend olasilik_raporu -> p_kume_ici = 0.00014902 (olculdu)
+    assert.ok(
+      Math.abs(h.p - 0.00014902) < 1e-8,
+      `beklenen 0.00014902, gelen ${h.p}`,
+    );
+  });
+
+  dene("en zayif uc mac dogru secilir", () => {
+    const h = Z.kumeIciHesapla(ORNEK_SEC, ORNEK_P);
+    // 7. mac banko "2" (0.20), 14. mac banko "2" (0.25), 5. mac banko "0" (0.40)
+    assert.deepEqual(h.zayiflar.map((i) => i + 1).sort((a, b) => a - b), [5, 7, 14]);
+  });
+
+  dene("varsayilan satirlar 'bilgi yok' sayilir, %100 diye basilmaz", () => {
+    // uniformProb: tum kutle isaretli sembollerde -> p tanim geregi 1.
+    const p = ORNEK_SEC.map((sec) => {
+      const pay = 1 / sec.length;
+      return {
+        "1": sec.includes("1") ? pay : 0,
+        "0": sec.includes("0") ? pay : 0,
+        "2": sec.includes("2") ? pay : 0,
+      };
+    });
+    const h = Z.kumeIciHesapla(ORNEK_SEC, p);
+    assert.ok(Math.abs(h.p - 1) < 1e-9, "p 1 cikmali");
+    assert.equal(h.bilgiYok, true, "bilgisiz durum yakalanmadi");
+  });
+
+  dene("gercek tahmin girilince 'bilgi yok' kalkar", () => {
+    const h = Z.kumeIciHesapla(ORNEK_SEC, ORNEK_P);
+    assert.equal(h.bilgiYok, false);
+  });
+
+  dene("kutleler esitken 'en zayif uc' YOKTUR (keyfi suclama olurdu)", () => {
+    const esit = ORNEK_SEC.map(() => ({ "1": 1 / 3, "0": 1 / 3, "2": 1 / 3 }));
+    // Hepsi banko: her kutle 1/3, yani tamamen esit.
+    const h = Z.kumeIciHesapla(Array(15).fill(["1"]), esit);
+    assert.deepEqual(h.zayiflar, []);
+  });
+
+  dene("hepsi kapama ise %100 gercektir, 'bilgi yok' degildir", () => {
+    const sec = Array(15).fill(["1", "0", "2"]);
+    const h = Z.kumeIciHesapla(sec, ORNEK_P);
+    assert.ok(Math.abs(h.p - 1) < 1e-9);
+    assert.equal(h.bilgiYok, false, "kapama maclar bilgisiz sanildi");
+  });
+
+  dene("bir mac imkansizsa p sifir olur ve mac adiyla raporlanir", () => {
+    const sec = ORNEK_SEC.map((r) => [...r]);
+    const p = ORNEK_P.map((r) => ({ ...r }));
+    // 3. mac yalnizca "1" isaretli; "1"in olasiligini sifirla.
+    p[2] = { "1": 0, "0": 0.5, "2": 0.5 };
+    const h = Z.kumeIciHesapla(sec, p);
+    assert.equal(h.p, 0);
+    assert.deepEqual(h.imkansizlar, [2]);
+  });
+
+  dene("sifir olasilikli sembol ONERILMEZ (bedeli artirir, kazanci yok)", () => {
+    const sec = [["1"]];
+    const p = [{ "1": 1, "0": 0, "2": 0 }];
+    const h = Z.kumeIciHesapla(sec, p);
+    assert.deepEqual(h.oneriler, [], "sifir olasilikli sembol onerildi");
+  });
+
+  dene("oneri carpanlari dogru: kume ×(kutle+p)/kutle, bedel ×(k+1)/k", () => {
+    // Tek mac, banko "2" (p=0.2). "1" eklenirse kutle 0.2 -> 0.7.
+    const h = Z.kumeIciHesapla([["2"]], [{ "1": 0.5, "0": 0.3, "2": 0.2 }]);
+    const o = h.oneriler.find((x) => x.sembol === "1");
+    assert.ok(o, "'1' onerisi yok");
+    assert.ok(Math.abs(o.kumeCarpani - 3.5) < 1e-9, `kume carpani ${o.kumeCarpani}`);
+    assert.ok(Math.abs(o.bedelCarpani - 2) < 1e-9, `bedel carpani ${o.bedelCarpani}`);
+    assert.ok(Math.abs(o.verim - 1.75) < 1e-9, `verim ${o.verim}`);
+  });
+
+  dene("oneriler verime gore sirali", () => {
+    const h = Z.kumeIciHesapla(ORNEK_SEC, ORNEK_P);
+    for (let i = 1; i < h.oneriler.length; i++) {
+      assert.ok(h.oneriler[i - 1].verim >= h.oneriler[i].verim, "siralama bozuk");
+    }
+  });
+
+  dene("kaplama alt siniri backend'in alt_sinir'iyla ayni", () => {
+    // Ornek kupon: 8 cifte -> uzay 256, top 9, alt sinir 29 (backend olculdu)
+    const a = Z.kaplamaAltSiniri(ORNEK_SEC);
+    assert.equal(a.uzay, 256);
+    assert.equal(a.topBoyutu, 9);
+    assert.equal(a.altSinir, 29);
+  });
+
+  dene("uclu maclar top boyutuna 2 katar", () => {
+    const a = Z.kaplamaAltSiniri([["1", "0", "2"], ["1", "0"], ["1"]]);
+    assert.equal(a.uzay, 6);
+    assert.equal(a.topBoyutu, 1 + 2 + 1 + 0);
+    assert.equal(a.altSinir, Math.ceil(6 / 4));
+  });
+
+  dene("kucuk olasilik okunur yazilir (sabit basamak farki yutardi)", () => {
+    assert.equal(Z.olasilikYaz(0.25), "%25.0");
+    assert.equal(Z.olasilikYaz(0.052), "%5.20");
+    assert.equal(Z.olasilikYaz(0), "%0");
+    // Asil vaka: bu iki kupon farkli, yazim da farkli olmali.
+    assert.equal(Z.olasilikYaz(0.000149), "%0.0149");
+    assert.equal(Z.olasilikYaz(0.000151), "%0.0151");
+    assert.notEqual(Z.olasilikYaz(0.000149), Z.olasilikYaz(0.000151));
+    // Sondaki sifirlar dusurulur.
+    assert.equal(Z.olasilikYaz(0.00002), "%0.002");
+  });
+
+  dene("bir-de-kac orani", () => {
+    assert.equal(Z.birdeKac(0.001), "1/1.000");
+    assert.equal(Z.birdeKac(0), null);
+    assert.equal(Z.birdeKac(1), null);
+    const h = Z.kumeIciHesapla(ORNEK_SEC, ORNEK_P);
+    assert.equal(Z.birdeKac(h.p), `1/${Math.round(1 / h.p).toLocaleString("tr-TR")}`);
+  });
+
+  console.log(`\nOK — ${gecen} arayuz denetimi gecti`);
 } finally {
   rmSync(cikti, { recursive: true, force: true });
 }

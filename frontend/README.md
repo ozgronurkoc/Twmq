@@ -44,8 +44,51 @@ lib/
   api.ts              tipli, AbortController ile iptal edilebilir istemci
   utils.ts            cn(), normalize, biçimlendirme
   kurulum.ts          formül kurulumunun kalıcılığı + paylaşılabilir bağlantı
+  kume-ici.ts         üretmeden önce görülen koşul + küre-kaplama alt sınırı
   transfer.ts         hafta → formül devri (idempotent)
 ```
+
+## Üretmeden önce görülen koşul
+
+14-garanti **koşulludur**: ancak gerçek sonuç seçim kümesinin içindeyse
+devreye girer. Sayfanın en görünür ögesi büyük yeşil "14-garanti VAR"
+kalkanı, ama koşulun kendisi ölçülmeden bırakılıyordu — görmek için
+olasılık girip motoru çalıştırmak ve Olasılık sekmesini açmak gerekiyordu.
+
+`lib/kume-ici.ts` bunu istemcide hesaplar (`∏ᵢ Σ_{s∈secᵢ} pᵢ(s)`, 15 çarpma)
+ve işaretler değiştikçe canlı gösterir. Yanında maç başına kütle çubukları
+ve **verime göre** sıralı ekleme önerileri durur: küme-içi kazancın bedel
+artışına oranı, ikisi birlikte.
+
+Üç kural:
+
+1. **Varsayılan satırlar "bilgi yok" sayılır.** Açılışta tüm kütle işaretli
+   sembollerde olduğu için koşul tanım gereği %100 çıkar; sayı basmak
+   "seçimin kesin tutar" demek olurdu. Kart sayı yerine sebebi yazar.
+2. **Kütleler eşitken "en zayıf üç" yoktur.** Sıralamanın ilk üçünü
+   işaretlemek onları keyfî olarak suçlamaktır.
+3. **Olasılığı sıfır olan sembol önerilmez.** Bedeli iki katına çıkarır,
+   küme-içi kazancı sıfırdır.
+
+Ölçülmüş vaka (README'nin örnek kuponu, `check.sh`'ın örnek olasılıkları):
+koşul **%0,0149** — yaklaşık 1/6.700. Kaybın çoğu üç bankoda: 7. maç (0,20),
+14. maç (0,25), 5. maç (0,40). Bilgisiz taban çizgisi (hepsi 1/3) ise
+`uzay / 3¹⁵` = %0,00178.
+
+## Üretmeden önce söylenen bedel
+
+Üç ayrı durum vardır ve tek sayıya indirilemezler:
+
+| Mod | Ne söylenir | Neden |
+|---|---|---|
+| `fix16` | kesin — `uzay / 8` | blok 2⁷ noktayı 16 satıra indirir |
+| `bütçe` / `maxcov` | tavan — girilen bütçe | motor bütçeyi aşmaz |
+| diğerleri | aralık — küre-kaplama alt sınırı … tam sistem | kesin sayıyı arama sonunda motor bilir |
+
+Önceki sürüm üçünü de tek formülle veriyor ve `fix16` dışında **uzayı**
+yazıyordu: `auto` modunda aynı kupon için "256 kolon" diyordu, motor 32
+üretiyordu — sekiz kat abartı, üstelik ödenecek tutarı söyleyen en görünür
+yerde.
 
 ## Kurulumun kalıcılığı
 
@@ -78,8 +121,14 @@ yazar — hafta detayından gelen kullanıcının işaretleri korunur.
 Kodlama sabit genişliklidir: bir alan taşarsa ondan sonraki *bütün* maçlar
 kayar ve hiçbir yerde patlamaz — sessizce başka bir kupon üretir. İlk sürüm
 tam bunu yaptı (binde birlik olasılık `1000` olabilir, yani dört basamak;
-`padStart(3)` alanı taşırıyordu). `scripts/kurulum-check.mjs` bu sınırı ve
-diğer gidiş-dönüş vakalarını bağımlılık eklemeden denetler.
+`padStart(3)` alanı taşırıyordu). `scripts/check.mjs` bu sınırı ve diğer
+gidiş-dönüş vakalarını bağımlılık eklemeden denetler.
+
+Ekrandaki sonucun hâlâ girdiyi anlatıp anlatmadığı da bu kodlamayla
+ölçülür: sonuç üretilirken kurulumun parmak izi alınır, girdi değiştiğinde
+sonuç **silinmez** ama "eski hâline ait" diye işaretlenir. Kodlama modun
+etkilemediği alanları dışarıda bıraktığı için `fix16`'dayken bütçeyi
+değiştirmek sonucu bayatlatmaz.
 
 ## Tasarım sistemi
 
