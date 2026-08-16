@@ -148,7 +148,9 @@ function bayrak(ham: string | null, yedek: boolean): boolean {
 // ValueError uretir, o yuzden cozerken 7'ye (kapama) degil, o maci
 // varsayilanda BIRAKMAYA karar verilir — bkz. `maclariCoz`.
 
-function maclariKodla(matches: Sembol[][]): string {
+/** Yalnizca isaretlerin parmak izi. Senaryo karsilastirmasi bunu kullanir:
+ *  iki calisma ancak AYNI secim uzerinde kosulduysa bedelleri kiyaslanabilir. */
+export function maclariKodla(matches: Sembol[][]): string {
   return matches
     .map((satir) => {
       let maske = 0;

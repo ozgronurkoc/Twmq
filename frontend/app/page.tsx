@@ -5,10 +5,12 @@ import { Loader2, Play } from "lucide-react";
 
 import { getMeta, solve } from "@/lib/api";
 import { kaplamaAltSiniri } from "@/lib/kume-ici";
+import { senaryoEkle, senaryoYap, type Senaryo } from "@/lib/senaryo";
 import {
   adresiTemizle,
   kurulumuCoz,
   kurulumuKodla,
+  maclariKodla,
   temizEtiketler,
   varsayilanKurulum,
   VARSAYILAN_ENG,
@@ -54,6 +56,7 @@ import {
 import { Tabs, TabPanel, type TabItem } from "@/components/ui/tabs";
 import { KumeIciKart } from "@/components/formul/kume-ici-kart";
 import { KurulumBar } from "@/components/formul/kurulum-bar";
+import { SenaryoKart } from "@/components/formul/senaryo-kart";
 import { AdGirisi } from "@/components/formul/ad-girisi";
 import { MatchGrid } from "@/components/formul/match-grid";
 import { ProbGrid } from "@/components/formul/prob-grid";
@@ -118,6 +121,7 @@ export default function FormulPage() {
    * birakir, yani fix16'dayken butceyi degistirmek sonucu bayatlatmaz.
    */
   const [uretilenParmak, setUretilenParmak] = React.useState<string | null>(null);
+  const [senaryolar, setSenaryolar] = React.useState<Senaryo[]>([]);
   const [logMetin, setLogMetin] = React.useState("");
   const [hata, setHata] = React.useState<string | null>(null);
   const [calisiyor, setCalisiyor] = React.useState(false);
@@ -129,6 +133,31 @@ export default function FormulPage() {
     olasilikVar: boolean;
   } | null>(null);
   const iptalRef = React.useRef<AbortController | null>(null);
+  const sonucRef = React.useRef<HTMLDivElement | null>(null);
+
+  /**
+   * Dar ekranda sonuca kaydir.
+   *
+   * Telefonda sonuc blogu ~2200 px asagida basliyor: "Formulu uret"e
+   * basildiginda ekranda HICBIR SEY degismiyor, calisma gostergesi bile
+   * gorunmuyordu. Kaydirma bitiste degil BASLANGICTA yapilir — kullanici
+   * bekleme anlatisini (donen ikon + gecen sure) gormeli.
+   *
+   * Genis ekranda sonuc girdinin yaninda duruyor; orada kaydirmak
+   * kullaniciyi yerinden etmek olurdu. Esik, izgaranin tek kolona dustugu
+   * Tailwind `xl` kirilma noktasi.
+   */
+  const kaydirSonuca = React.useCallback((yalnizcaUzaktaysa = false) => {
+    if (typeof window === "undefined" || window.innerWidth >= 1280) return;
+    const el = sonucRef.current;
+    if (!el) return;
+    // Kullanici sonucu zaten ekrana getirmisse yerinden etme.
+    if (yalnizcaUzaktaysa && el.getBoundingClientRect().top < window.innerHeight / 3) {
+      return;
+    }
+    const azHareket = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    el.scrollIntoView({ behavior: azHareket ? "auto" : "smooth", block: "start" });
+  }, []);
 
   // Kurulum geri yuklendi mi. Iki yerde belirleyici: (a) /api/meta gec
   // gelip geri yuklenen degerleri EZMESIN, (b) geri yukleme bitmeden yerel
@@ -252,10 +281,30 @@ export default function FormulPage() {
     setBaglantiNotu(null);
     setSonuc(null);
     setUretilenParmak(null);
+    setSenaryolar([]);
     setLogMetin("");
     setHata(null);
     uygula(varsayilanKurulum());
   }, [uygula]);
+
+  // Kaydirma, olay isleyicisinden DEGIL commit sonrasindan tetiklenir.
+  // Isleyiciden cagrildiginda yumusak kaydirma daha ucarken `setCalisiyor`
+  // kaynakli yeniden render araya giriyor ve animasyon iptal oluyordu
+  // (olculdu: scrollY 0'da kaliyordu, oysa ayni cagri tek basina 2019'a
+  // goturuyor).
+  React.useEffect(() => {
+    if (calisiyor) kaydirSonuca();
+  }, [calisiyor, kaydirSonuca]);
+
+  // Ikinci kaydirma: baslangictakini tarayici KIRPMIS olabilir. Sonuc
+  // gelmeden once sayfa kisa (olculdu: 2818 px, yani en fazla 1974'e
+  // kaydirilabiliyor) ama sonuc kolonu 2441'de basliyor — hedef tavana
+  // takiliyor ve sonuc ekranin alt yarisinda kaliyordu. Sonuc gelip sayfa
+  // uzayinca bir kez daha denenir; kullanici o arada sonucu zaten ekrana
+  // getirdiyse dokunulmaz.
+  React.useEffect(() => {
+    if (sonuc) kaydirSonuca(true);
+  }, [sonuc, kaydirSonuca]);
 
   // Gecen sure sayaci — uzun suren istekler icin bekleme anlatisi.
   React.useEffect(() => {
@@ -322,9 +371,9 @@ export default function FormulPage() {
       // Parmak izi istek KURULURKEN alinir, cevap donunce degil: arada
       // kullanici girdiyi degistirmisse sonuc zaten o degisiklige ait
       // olmayacak ve bayat isaretlenmesi gerekir.
-      const parmak = kurulumuKodla(
-        planUygula === undefined ? kurulum : { ...kurulum, planApply: planUygula },
-      );
+      const govdeKurulum =
+        planUygula === undefined ? kurulum : { ...kurulum, planApply: planUygula };
+      const parmak = kurulumuKodla(govdeKurulum);
 
       const govde: SolveRequest = {
         matches,
@@ -358,6 +407,12 @@ export default function FormulPage() {
         } else {
           setSonuc(cevap.result);
           setUretilenParmak(parmak);
+          setSenaryolar((liste) =>
+            senaryoEkle(
+              liste,
+              senaryoYap(cevap.result!, govdeKurulum, parmak, maclariKodla(matches)),
+            ),
+          );
         }
       } catch (e) {
         if (e instanceof DOMException && e.name === "AbortError") return;
@@ -858,7 +913,7 @@ export default function FormulPage() {
         </div>
 
         {/* ── Sonuç ──────────────────────────────────────────── */}
-        <div className="min-w-0 space-y-4">
+        <div ref={sonucRef} className="min-w-0 scroll-mt-4 space-y-4">
           {hata ? (
             <Callout ton="danger" baslik="Motor hata verdi">
               {hata}
@@ -946,6 +1001,26 @@ export default function FormulPage() {
                         : undefined
                     }
                   />
+                  {/*
+                    Karsilastirma ancak iki calisma varken bir sey anlatir;
+                    tek satirlik bir tablo yer kaplamaktan baska is yapmaz.
+                  */}
+                  {senaryolar.length >= 2 ? (
+                    <>
+                      <BolumBasligi>Başka modda ne alırdım</BolumBasligi>
+                      <SenaryoKart
+                        liste={senaryolar}
+                        guncelSecim={maclariKodla(matches)}
+                        guncelId={uretilenParmak}
+                        disabled={calisiyor}
+                        onDon={(sn) => {
+                          uygula(sn.kurulum);
+                          setSekme("sonuc");
+                        }}
+                      />
+                    </>
+                  ) : null}
+
                   <BolumBasligi>Kapsamanın geometrisi</BolumBasligi>
                   <DagilimPanel r={sonuc} />
                 </div>

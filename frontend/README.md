@@ -73,6 +73,47 @@ Aynı sayıyı ikinci kez, üstelik yalnızca motor çalıştıktan sonra göste
 bilgi eklemiyordu. Kümülatif eğri kaldı, ama yatay ekseninin kupon sırası
 olduğu — bir zaman değil — artık açıkça yazıyor.
 
+## Senaryo karşılaştırma
+
+Mod seçimi bu sayfadaki en pahalı karardır ama gözle yapılamıyordu: bir
+modu çalıştırıp diğerine geçince öncekinin sayıları ekrandan siliniyordu.
+Artık çalıştırılan modlar bir tabloda yan yana durur (`lib/senaryo.ts`).
+
+Üç kural karara doğruluk kazandırır:
+
+1. **Yalnızca aynı seçimle koşulanlar kıyaslanır.** Arada bir maç çifte
+   yapıldıysa "32 yerine 64 kolon" farkı moddan değil seçimden gelir;
+   liste bunu gizlemez, o satırları soluklaştırıp uyarır.
+2. **Garanti vermeyen bir çalışma "en ucuz" sayılmaz.** `maxcov` 12
+   kolonla en ucuz görünür ama 14-garanti vermez — farklı bir şey satın
+   alır. "En ucuz" cümlesi yalnızca garantili satırlardan seçilir.
+3. **Aynı kurulum tekrar koşulursa satır yerinde yenilenir.** Varyant
+   denerken liste aynı satırın kopyalarıyla dolup asıl karşılaştırmayı
+   ekrandan itmemeli.
+
+Liste **kaydedilmez**: senaryolar türetilmiş veridir, tıpkı `sonuc` gibi.
+Kalıcı olan tek şey kurulumdur — kullanıcının elle ürettiği tek şey odur.
+
+## Üretimden sonra kaydırma
+
+Telefonda sonuç bloğu ~2400 px aşağıda başlıyor: "Formülü üret"e
+basıldığında ekranda hiçbir şey değişmiyor, çalışma göstergesi bile
+görünmüyordu. Artık dar ekranda (`xl` kırılma noktasının altında) sonuç
+alanına kaydırılır; geniş ekranda sonuç zaten girdinin yanındadır ve
+kaydırmak kullanıcıyı yerinden etmek olurdu.
+
+İki ince nokta ölçümle çıktı:
+
+- **Kaydırma olay işleyicisinden değil, commit sonrasından tetiklenir.**
+  İşleyiciden çağrıldığında yumuşak kaydırma daha uçarken `setCalisiyor`
+  kaynaklı yeniden render araya giriyor ve animasyon iptal oluyordu
+  (`scrollY` 0'da kalıyordu, oysa aynı çağrı tek başına 2019'a götürüyor).
+- **İki kez denenir.** İlk kaydırmada sayfa henüz kısadır (2818 px → en
+  fazla 1974'e kaydırılabilir) ama sonuç kolonu 2441'de başlar; tarayıcı
+  hedefi tavana kırpar ve sonuç ekranın alt yarısında kalırdı. Sonuç gelip
+  sayfa uzayınca bir kez daha denenir — kullanıcı o arada sonucu zaten
+  ekrana getirdiyse dokunulmaz.
+
 ## Maç kimliği
 
 Izgara uzun süre yalnızca 1–15 numaralarını gösterdi; 16 satırlık bir kuponu

@@ -638,6 +638,7 @@ frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası 
   lib/transfer.ts      hafta → formül devri (idempotent; bkz. §7.2 kural 6)
   lib/kurulum.ts       formül kurulumunun kalıcılığı + paylaşılabilir bağlantı
   lib/kume-ici.ts      üretmeden önce görülen koşul + küre-kaplama alt sınırı
+  lib/senaryo.ts       çalıştırılan modların karşılaştırma listesi
   scripts/             check.mjs (saf mantık denetimi, bağımlılıksız)
 
 scripts/               setup.sh (bağımlılıklar) · run_next_dev.sh (API + UI birlikte)
@@ -692,7 +693,12 @@ katmanı arayüzü bilmez.
 10. **Ekrandaki sonuç girdiyi anlatmıyorsa bunu söyler.** Girdi değişince sonuç
     silinmez — eski sonuç hâlâ okunabilir bilgidir — ama "eski hâline ait" diye
     işaretlenir.
-11. **Sekmeler soruya göre bölünür, motor bloğuna göre değil.** Formül sonucu
+11. **Kıyas ancak aynı şey üzerindeyse yapılır.** Çalıştırılan modlar yan yana
+    listelenir, ama farklı maç seçimiyle koşulmuş satırlar soluklaştırılıp
+    işaretlenir — aradaki bedel farkı moddan değil seçimden geliyor olabilir.
+    Garanti vermeyen bir çalışma "en ucuz" sayılmaz: `maxcov` daha ucuz
+    görünür ama farklı bir şey satın alır (`lib/senaryo.ts`).
+12. **Sekmeler soruya göre bölünür, motor bloğuna göre değil.** Formül sonucu
     dört soruya ayrılır (ne aldım / ne yazacağım / ne kadar riskli / zayıf
     halkalar); backend modüllerinin birebir yansıması olan dokuz sekme, tek bir
     sorunun cevabını üçe dörde dağıtıyordu. Aynı büyüklük iki yerde

@@ -36,7 +36,8 @@ try {
   execFileSync(
     "npx",
     [
-      "tsc", "lib/kurulum.ts", "lib/kume-ici.ts", "lib/utils.ts", "lib/types.ts",
+      "tsc", "lib/kurulum.ts", "lib/kume-ici.ts", "lib/senaryo.ts",
+      "lib/utils.ts", "lib/types.ts",
       "--outDir", cikti,
       "--module", "commonjs", "--target", "es2022", "--skipLibCheck",
     ],
@@ -46,6 +47,7 @@ try {
   const iste = createRequire(import.meta.url);
   const K = iste(join(cikti, "kurulum.js"));
   const Z = iste(join(cikti, "kume-ici.js"));
+  const S = iste(join(cikti, "senaryo.js"));
 
   let gecen = 0;
   const dene = (ad, fn) => {
@@ -369,6 +371,78 @@ try {
     assert.equal(Z.birdeKac(1), null);
     const h = Z.kumeIciHesapla(ORNEK_SEC, ORNEK_P);
     assert.equal(Z.birdeKac(h.p), `1/${Math.round(1 / h.p).toLocaleString("tr-TR")}`);
+  });
+
+  // ── Senaryo karsilastirmasi ──────────────────────────────────────────
+
+  const sn = (id, secim, ek = {}) => ({
+    id, secimParmak: secim, mode: "fix16", baslik: "", satir: 16, bedel: 32,
+    garanti: true, acik: 0, altSinir: 29, pKumeIci: null,
+    kurulum: K.varsayilanKurulum(), ...ek,
+  });
+
+  dene("ayni kurulum tekrar kosulursa satir YERINDE yenilenir", () => {
+    let l = [];
+    l = S.senaryoEkle(l, sn("a", "s1", { bedel: 32 }));
+    l = S.senaryoEkle(l, sn("b", "s1", { bedel: 64 }));
+    l = S.senaryoEkle(l, sn("a", "s1", { bedel: 33 }));
+    assert.equal(l.length, 2, "kopya satir eklendi");
+    // Yeri korunmali: "a" hala ikinci sirada.
+    assert.equal(l[1].id, "a");
+    assert.equal(l[1].bedel, 33, "satir yenilenmedi");
+  });
+
+  dene("liste sinirlanir, en yenisi basta durur", () => {
+    let l = [];
+    for (let i = 0; i < 10; i++) l = S.senaryoEkle(l, sn(`id${i}`, "s1"), 6);
+    assert.equal(l.length, 6);
+    assert.equal(l[0].id, "id9");
+  });
+
+  dene("en ucuz garantili YALNIZCA ayni secimden secilir", () => {
+    const l = [
+      sn("a", "s1", { bedel: 32, mode: "fix16" }),
+      sn("b", "s2", { bedel: 8, mode: "fix16" }),   // baska secim: sayilmaz
+      sn("c", "s1", { bedel: 29, mode: "auto" }),
+    ];
+    const e = S.enUcuzGarantili(l, "s1");
+    assert.equal(e.id, "c", "baska secimden bir satir secildi");
+    assert.equal(e.bedel, 29);
+  });
+
+  dene("garanti vermeyen daha ucuz satir 'en ucuz' sayilmaz", () => {
+    const l = [
+      sn("a", "s1", { bedel: 32, garanti: true }),
+      sn("b", "s1", { bedel: 12, garanti: false, acik: 40, mode: "maxcov" }),
+    ];
+    const e = S.enUcuzGarantili(l, "s1");
+    assert.equal(e.id, "a", "garantisiz satir one cikti");
+  });
+
+  dene("kiyaslanacak sey yoksa null doner", () => {
+    assert.equal(S.enUcuzGarantili([], "s1"), null);
+    assert.equal(S.enUcuzGarantili([sn("a", "s2")], "s1"), null);
+  });
+
+  dene("senaryoYap: p_kume_ici YUZDEden 0-1'e cevrilir", () => {
+    const r = {
+      mode: "fix16", baslik: "x", satir_sayisi: 16, kolon_bedeli: 32,
+      acik: 0, worst: 1, alt_sinir: 29,
+      advanced: { exact: { p_kume_ici: 0.015, p_15: 0, p_14: 0, p_tek: 0 } },
+    };
+    const y = S.senaryoYap(r, K.varsayilanKurulum(), "id", "s1");
+    assert.ok(Math.abs(y.pKumeIci - 0.00015) < 1e-9, `gelen ${y.pKumeIci}`);
+    assert.equal(y.garanti, true);
+  });
+
+  dene("acik nokta varsa garanti YOK sayilir", () => {
+    const r = {
+      mode: "maxcov", baslik: "x", satir_sayisi: 8, kolon_bedeli: 12,
+      acik: 40, worst: 2, alt_sinir: 29, advanced: null,
+    };
+    const y = S.senaryoYap(r, K.varsayilanKurulum(), "id", "s1");
+    assert.equal(y.garanti, false);
+    assert.equal(y.pKumeIci, null);
   });
 
   console.log(`\nOK — ${gecen} arayuz denetimi gecti`);
