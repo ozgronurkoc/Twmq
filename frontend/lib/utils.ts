@@ -58,6 +58,14 @@ export function normalize(row: ProbRow): ProbRow {
   };
 }
 
+/**
+ * Secimleri CLI'nin `--picks` bicimine cevirir: `1,10,1,12,0,...`
+ * Semboller satir icinde bitisik, maclar virgulle ayrilir.
+ */
+export function secimMetni(matches: Sembol[][]): string {
+  return matches.map((satir) => satir.join("")).join(",");
+}
+
 export function panoyaKopyala(text: string): Promise<void> {
   if (typeof navigator !== "undefined" && navigator.clipboard) {
     return navigator.clipboard.writeText(text);

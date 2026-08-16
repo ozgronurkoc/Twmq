@@ -40,6 +40,7 @@ import {
 import { Tabs, TabPanel, type TabItem } from "@/components/ui/tabs";
 import { MatchGrid } from "@/components/formul/match-grid";
 import { ProbGrid } from "@/components/formul/prob-grid";
+import { KuponDeposu } from "@/components/formul/kupon-deposu";
 import { DagilimPanel, KuponPanel, OzetPanel } from "@/components/formul/panels-core";
 import { FirePanel } from "@/components/formul/panels-fire";
 import {
@@ -363,6 +364,24 @@ export default function FormulPage() {
               />
             </CardBody>
           </Card>
+
+          <Collapsible
+            baslik="Kayıtlı kuponlar"
+            hint="İşaretlerini adlandırıp bu tarayıcıya kaydet, sonra tek tıkla geri yükle"
+          >
+            <KuponDeposu
+              matches={matches}
+              mode={mode}
+              variant={variant}
+              sonuc={sonuc}
+              disabled={calisiyor}
+              onYukle={(k) => {
+                setMatches(k.matches);
+                setMode(k.mode);
+                setVariant(k.variant);
+              }}
+            />
+          </Collapsible>
 
           <Card>
             <CardHeader

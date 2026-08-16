@@ -425,7 +425,9 @@ Bugün `match_conflicts` tam olarak bunu yakalar. Vaka analizi:
 `2`) · canlı sayaç (banko / çifte / üçlü / uzay / tahmini kolon bedeli) · **7 modun
 tamamı** · varyant, bütçe, bütçe planı, katı doğrulama · maç bazlı olasılık girişi
 · Bayes preset veya elle α/n · Monte Carlo örnek sayısı (1.000–200.000) · fire
-analizi (kapalı / 1-fire / 1 ve 2 fire) · motor ayarları.
+analizi (kapalı / 1-fire / 1 ve 2 fire) · motor ayarları · **kayıtlı kuponlar**
+(işaret + mod + varyant, formül üretilmişse satır tablosuyla birlikte; tarayıcı
+yerelinde durur, bkz. §7.2 kural 8).
 
 **Formül sayfası — sonuç sekmeleri** (hepsi backend alanlarıyla birebir):
 
@@ -583,8 +585,9 @@ Katmanın vizyonu, kontrol sözleşmesi ve yol haritası:
 ## 7. Mimari
 
 **Python = sadece backend (JSON API). HTML yok. Frontend = sadece Next.js
-(TS/TSX).** Bu kesin bir karardır; eski Jinja2 arayüzü `archive/` altında ölü kod
-olarak durur ve hiçbir şey tarafından import edilmez.
+(TS/TSX).** Bu kesin bir karardır; eski Jinja2 arayüzü ve ona ait tek-seferlik
+yamalar depodan tamamen kaldırılmıştır (geçmişte `archive/` altında duruyordu,
+`git log --follow` ile hâlâ okunabilir).
 
 ```
 Tarayıcı
@@ -636,11 +639,11 @@ frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası 
   lib/types.ts         API sözleşmesinin tamamı tipli
   lib/api.ts           tipli, AbortController ile iptal edilebilir istemci
   lib/transfer.ts      hafta → formül devri (idempotent; bkz. §7.2 kural 6)
+  lib/kupon-deposu.ts  adlandırılmış kupon kaydı (localStorage; bkz. §7.2 kural 8)
 
 scripts/               setup.sh (bağımlılıklar) · run_next_dev.sh (API + UI birlikte)
                        build.sh + run_prod.sh (Replit dağıtımı)
 docs/                  Mimari, veri ve yol haritası belgeleri
-archive/               Kullanımdan kalkmış Jinja2 arayüzü ve tek-seferlik yamalar
 ```
 
 ### 7.1 Katman bağımsızlığı
@@ -676,6 +679,13 @@ katmanı arayüzü bilmez.
    yazar (`lib/transfer.ts`).
 7. **Geçmişe uydurulan sayı yalnız gösterilmez.** Eşik taraması hold-out ve uyarı
    metniyle birlikte durur; ikisi ayrılamaz.
+8. **Kupon kaydı tarayıcıda kalır ve okunurken doğrulanır.** Kayıt
+   `localStorage`'dadır; hesap sistemi olmadığı için sunucuya yazılmaz. Depoya
+   eski sürüm de kullanıcı da yazabildiğinden her kayıt okunurken doğrulanır,
+   bozuk olan sessizce atılır — tamir edilmeye çalışılmaz
+   (`lib/kupon-deposu.ts`). Kaydedilen şey işaretler, mod ve varyanttır;
+   **olasılık girdisi kaydedilmez** — o tahmindir, geri yüklemek kullanıcının
+   güncel tahminini sessizce ezerdi.
 
 ---
 
@@ -913,7 +923,6 @@ anlatır; çok örnekli bir dağıtımda "hangi örnek?" sorusu bugün cevapsız
 | [`docs/SAGLIK_GELISTIRME_RAPORU.md`](docs/SAGLIK_GELISTIRME_RAPORU.md) | Sağlık katmanının çalışma raporu ve ölçümleri |
 | [`backend/README.md`](backend/README.md) | Motor + API kurulumu, oran arşivi kullanımı |
 | [`frontend/README.md`](frontend/README.md) | Arayüz yapısı, tasarım sistemi, grafik kuralları |
-| [`archive/README.md`](archive/README.md) | Ölü kodun envanteri ve neden silinmediği |
 
 ---
 

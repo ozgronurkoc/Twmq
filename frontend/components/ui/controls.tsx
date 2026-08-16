@@ -135,6 +135,64 @@ export function NumberField({
   );
 }
 
+// ─── Metin alani ──────────────────────────────────────────────────────────
+
+export function TextField({
+  label,
+  value,
+  onChange,
+  placeholder,
+  maxLength,
+  hint,
+  disabled,
+  onEnter,
+}: {
+  label: React.ReactNode;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  maxLength?: number;
+  hint?: React.ReactNode;
+  disabled?: boolean;
+  /** Enter'a basildiginda cagrilir — kisa formlarda dugmeye gitmeyi zorunlu kilmaz. */
+  onEnter?: () => void;
+}) {
+  const id = React.useId();
+  return (
+    <div className={cn(disabled && "opacity-50")}>
+      <label
+        htmlFor={id}
+        className="block text-[12px] font-medium text-muted-foreground"
+      >
+        {label}
+      </label>
+      <input
+        id={id}
+        type="text"
+        value={value}
+        placeholder={placeholder}
+        maxLength={maxLength}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && onEnter) {
+            e.preventDefault();
+            onEnter();
+          }
+        }}
+        className={cn(
+          "mt-1.5 h-10 w-full rounded-xl border border-line bg-background px-3 text-[13.5px]",
+          "transition-shadow duration-200 ease-smooth",
+          "focus:outline-none focus:ring-2 focus:ring-primary/50",
+        )}
+      />
+      {hint ? (
+        <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">{hint}</p>
+      ) : null}
+    </div>
+  );
+}
+
 // ─── Kaydiraci ────────────────────────────────────────────────────────────
 
 export function SliderField({
