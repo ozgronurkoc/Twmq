@@ -31,6 +31,9 @@ Eski Jinja2 arayüzü `archive/templates/` altına alınmıştır; runtime'da se
 | GET | `/api/stats/<week>` | Tek hafta detayı (komşular, sıra, sapma, sıra-sıra bağlam) |
 | POST | `/api/solve` | Tüm motor özellikleri |
 
+İstatistik katmanının durumu, alınan kararlar ve yol haritası:
+[`ISTATISTIK_YOL_HARITASI.md`](ISTATISTIK_YOL_HARITASI.md).
+
 `/api/meta` frontend'in tek gerçek kaynağıdır: mod listesi, preset'ler ve
 sayısal sınırlar arayüzde **sabit kodlanmaz**, buradan okunur.
 

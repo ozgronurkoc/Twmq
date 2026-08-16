@@ -1,397 +1,246 @@
-# Spor Toto Tarihsel 1 / 0 / 2 Veri Toplama ve İşleme Raporu
+# Veri Katmanı — Toplama, İşleme ve Doğrulama
 
-**Dosya:** `backend/data/st_history_2025_26.json`  
-**Üretici:** `backend/scripts/build_history.py`  
-**Modül:** `backend/spor_toto/history.py`  
-**Üretim tarihi:** 2026-08-15 (v1) · 2026-08-16 (v2 — yeniden üretim)  
-**Sezon:** 2025 / 2026  
+**Kapsam:** projedeki iki veri setinin tamamı — tarihsel 1/0/2 sonuçları ve oran arşivi
+**Sürüm:** v2 (sıra hatası kapatıldı, veri maç düzeyine indi, oran arşivi eklendi)
+**İlgili belgeler:** [`ISTATISTIK_YOL_HARITASI.md`](ISTATISTIK_YOL_HARITASI.md) (katmanın
+durumu ve yol haritası) · [`ARCHITECTURE_NEXT.md`](ARCHITECTURE_NEXT.md) (API sözleşmesi)
 
-> **v2 notu.** İlk üretimde sonuç dizisinin **sırası** 41 haftanın 15'inde,
-> **sayımı** ise 6'sında hatalıydı. Sebep §6.10'da; düzeltme artık tek komutla
-> tekrarlanabilir (`python scripts/build_history.py`). Sezon toplamları
-> değişmedi (270 / 149 / 196) çünkü dosyadaki `n1/n0/n2` alanları baştan
-> doğruydu — bozuk olan `results` dizisiydi. Veri seti artık her hafta için
-> **maç listesini** (takım adları, başlama saati, skor) da taşır.
-
-Bu belge, tarihsel 1 / 0 / 2 istatistik setinin **nasıl elde edildiğini**, **nasıl işlendiğini** ve işlerken **nelere dikkat edildiğini** eksiksiz kaydeder. Amaç: aynı yöntemle tekrar üretilebilirlik ve şeffaflık.
+| | Tarihsel sonuçlar | Oran arşivi |
+|---|---|---|
+| **Dosya** | `backend/data/st_history_2025_26.json` | `backend/data/odds/odds_2025_26.csv` |
+| **Üreten** | `backend/scripts/build_history.py` | `backend/scripts/build_odds.py` |
+| **Okuyan** | `backend/spor_toto/history.py` | `backend/spor_toto/odds.py` |
+| **Bekçi** | `backend/tests/test_history.py` | `backend/tests/test_odds.py` |
 
 ---
 
-## 1. Amaç
+## 1. Veri doktrini
 
-Sistemde kullanılmak üzere şu sorulara **kesin (15/15 dolu haftalarla)** cevap üretilmesi:
+Bu yedi ilke, aşağıdaki her kararın gerekçesidir. Yeni bir veri kaynağı eklerken de bunlar
+geçerlidir.
 
-1. Hangi tarih aralığı kapsanıyor?
-2. Toplam kaç hafta ve kaç maç var?
-3. Kaç maç **1** (ev), kaç **0** (beraberlik), kaç **2** (deplasman) bitti?
-4. Yüzdesel dağılım nedir?
-5. Haftalık ortalama (15 maç üzerinden) nedir?
-6. Ortalama **üstünde** / **altında** kapatan hafta sayıları nedir?
-7. Üstünde / altında kapatan haftaların kendi ortalaması ve ortalamadan sapması nedir?
+**1. Tek doğruluk kaynağı vardır ve zinciri bellidir.**
+Maç listesi → sonuç dizisi → sayımlar. Dizi listeden üretilir, sayımlar diziden sayılır. Üç
+temsil de dosyada durur ama biri diğerinden türer; hiçbiri bağımsız yazılmaz.
 
-**Kural (kullanıcı kararı):** %100 kesin olmayan veri **elenir**. Sadece tam 15 sonucu olan haftalar analize girer.
+**2. Kesin olmayan veri elenir, tahmin edilmez.**
+15 maçı tam kapanmamış hafta analize hiç girmez. Bir eksik sonuç bile o haftanın 1/0/2
+vektörünü bozar. Eksiği doldurmak, ortalamayla tamamlamak, "yaklaşık" saymak yok.
 
----
+**3. Sıra kaynağın kendi sırasıdır.**
+Kupon sırası tahmin edilmez, tarihe göre sıralanmaz, isimden çıkarılmaz. Kaynağın haftaya ait
+kendi listesinden okunur. Bu ilke v1'de ihlal edildiği için 41 haftanın 15'i bozuldu (§6.4).
 
-## 2. Kaynak seçimi ve sınırlar
+**4. Çelişki gizlenmez, raporlanır.**
+Dosyadaki hazır sayım ile diziden türeyen sayım çelişirse fark yutulmaz; `data_quality`
+bloğunda listelenir ve **arayüzde gösterilir**. "Sessizce doğru olanı seç" yaklaşımı, hatanın
+bir sonraki sefere kadar saklanması demektir.
 
-### 2.1 Hedef mimari (plan)
+**5. Doğrulanmadan yazılmaz.**
+Üretim scriptleri çıkmadan önce iç tutarlılığı `assert` ile kontrol eder; tutmuyorsa dosya
+yazılmaz. Yazıldıktan sonra testler aynı şeyi bağımsız olarak tekrar denetler.
 
-```
-Resmi / arşiv bülten (15 maç listesi)
-        ↓
-Her maçın skoru (mümkünse Maçkolik)
-        ↓
-1 / 0 / 2 dizisi
-        ↓
-Sadece 15/15 haftalar → özet istatistik
-```
+**6. Türetilmiş veri sürümlenir, ham veri sürümlenmez.**
+İnsan tarafından okunabilen ve üzerinde konuşulan çıktılar git'e girer. İndirilen ham dosyalar
+ve üretilen ikili kopyalar `.gitignore`'dadır — tek komutla yeniden üretilirler.
 
-### 2.2 Maçkolik
-
-- Tarihsel ve açık kaynak scraper’larda bilinen endpoint:  
-  `http://goapi.mackolik.com/livedata?date=dd/mm/yyyy`
-- Bu çalışma ortamında endpoint **DNS çözülemedi** (`Name or service not known`).
-- Sonuç: Maçkolik üzerinden canlı skor çekimi **yapılamadı**.
-
-**2026-08-16 tekrar kontrolü.** `www.mackolik.com` ayakta (302), ancak
-`goapi.mackolik.com` hâlâ ölü. Sitenin `robots.txt` dosyası `/api/` yolunu
-**herkese** kapatıyor; ayrıca `GPTBot`, `CCBot`, `Google-Extended` ve
-`anthropic-ai` için sitenin tamamı yasak. Yani Maçkolik bu proje için
-otomatik bir veri kaynağı değildir — teknik engelin yanında açık bir politika
-sınırı da var. Oran kaynakları için bkz. §12.
-
-### 2.3 Kullanılan birincil kaynak
-
-| Özellik | Değer |
-|--------|--------|
-| Site | [sportototahmin.com](https://sportototahmin.com) |
-| Endpoint kalıbı | `/spor-toto/{N}-hafta-tahminleri/_payload.json` |
-| Format | Nuxt / Vue serialized JSON payload (index dizisi + referanslar) |
-| Sezon alanı | Payload içinde `2025/2026` |
-| Neden seçildi | Haftalık **15 maç listesi** ile **skor** aynı kayıtta, **maç nesnesine bağlı** |
-
-**Önemli:** Skorlar “ilk 15 isim + ilk 15 skor” gibi sıraya dayalı kırılgan eşleme ile değil; her maç nesnesinin kendi `match → score → homeRegular / awayRegular` zinciri çözülerek alındı.
-
-### 2.4 Çapraz doğrulama
-
-- **Misli** Spor Toto sonuç sayfası (ör. 51. hafta civarı) tarama sonuçlarında şu satır görünüyordu:  
-  `X X X 1 1 1 1 2 2 2 1 2 X 1 1` → kod: `000111122212011`
-- Aynı hafta payload çıkarımı: **`000111122212011`** — birebir uyum.
-- Bu, maç–skor bağının en az bir kapalı haftada resmi sonuç satırı ile örtüştüğünü gösterir.
-
-### 2.5 Resmi `sportoto.gov.tr`
-
-- Toplu, makine-dostu arşiv API’si bu çalışmada kullanılabilir bulunmadı.
-- Bu yüzden birincil paket kaynak sportototahmin hafta payload’ları oldu; kesin sayım için **eksik skorlu haftalar tamamen dışarıda bırakıldı**.
+**7. Kaynak dürüstlüğü.**
+Verinin ne OLMADIĞI, ne olduğu kadar önemlidir. Oranlar piyasa oranıdır, iddaa oranı değildir
+ve bu her yerde yazar. Bir kaynak otomatik erişime kapalıysa oradan veri çekilmez.
 
 ---
 
-## 3. Ham veri yapısı (Nuxt payload)
+## 2. Elimizde ne var
 
-Payload, tipik Nuxt dehidrasyon dizisidir:
+### 2.1 Tarihsel sonuçlar
 
-- Büyük bir `list` / dizi.
-- Nesneler ya düz değerdir ya da `["Reactive", index]` benzeri referanslarla başka indekslere işaret eder.
-- Çözümleyici (resolver) referansı takip ederek son skaler değere iner.
+| Alan | Değer |
+|---|---|
+| Sezon | 2025/2026 |
+| Tarih aralığı | 2025-08-18 → 2026-07-27 |
+| Hafta | **41** (2.–51. haftalar arası, tamamı 15/15) |
+| Maç | **615** |
+| 1 / 0 / 2 | 270 (%43,90) · 149 (%24,23) · 196 (%31,87) |
+| Haftalık ortalama | 6,59 / 3,63 / 4,78 |
+| Maç düzeyi | Her maç için takım adları, başlama saati, skor, kod |
 
-### 3.1 Maç bağlantı şeması (kritik)
+Bant özeti (haftalık adet serisinin dağılımı):
 
-Gözlenen ve kullanılan yapı:
+| Sonuç | Ort. | Ortanca | En az–en çok | σ | Üstünde | Üst ort. | Altında | Alt ort. |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 | 6,59 | 7 | 4–10 | 1,64 | 21 hf | 7,90 | 20 hf | 5,20 |
+| 0 | 3,63 | 4 | 0–8 | 1,69 | 22 hf | 4,91 | 19 hf | 2,16 |
+| 2 | 4,78 | 5 | 1–9 | 1,73 | 21 hf | 6,10 | 20 hf | 3,40 |
+
+### 2.2 Oran arşivi
+
+| Alan | Değer |
+|---|---|
+| Eşleşen maç | **567 / 615 (%92,2)** |
+| Tam kapsanan hafta | **36 / 41** |
+| Oran sütunu | **108** · toplam 51.683 değer |
+| Maç istatistiği | 14 sütun (şut, korner, faul, kart, ilk yarı skoru) |
+| Pazarlar | 1X2 · 2.5 alt/üst · Asya handikap — her biri açılış + kapanış |
+| Kaynak | football-data.co.uk (piyasa oranları) |
+
+---
+
+## 3. Kaynak seçimi
+
+### 3.1 Değerlendirilen kaynaklar
+
+| Kaynak | Ne için | Karar | Gerekçe |
+|---|---|---|---|
+| **sportototahmin.com** hafta payload'ları | 15 maçlık liste + skor | **Kullanılıyor** | Maç listesi ve skor aynı kayıtta ve maç nesnesine bağlı; sıra haftanın kendi dizisinde |
+| **football-data.co.uk** arşivi | Oran | **Kullanılıyor** | Ücretsiz, geçmişi tam, açılış + kapanış, çok pazarlı; kişisel kullanıma açık |
+| `sportoto.gov.tr` | Resmi sonuç arşivi | Kullanılamadı | Toplu, makine dostu arşiv ucu bulunamadı |
+| **Maçkolik** | Skor + iddaa oranı | **Kullanılmıyor** | Eski açık uç (`goapi.mackolik.com`) ölü; `robots.txt` `/api/` yolunu herkese, `anthropic-ai`/`GPTBot`/`CCBot`'u tamamen kapatıyor. Teknik engelin yanında açık bir politika sınırı var (§3.3) |
+| **iddaa resmi API** (`sportsbookv2.iddaa.com`) | İddaa oranı | İleriye dönük (F5) | Çalışıyor — 411 etkinlik, 410'unda 1X2 — ama **yalnızca açık bülten**; ölçümde 8 günlük pencere. Geriye dönük arşiv ucu yok |
+| **Nesine** bülten API'si | İddaa oranı | Aynı | Canlı bülten; geçmiş yok |
+| **Misli** sonuç sayfası | Çapraz doğrulama | Nokta atışı kullanıldı | 51. haftanın sonuç satırı bağımsız doğrulama için kullanıldı (§6.2) |
+
+### 3.2 Neden geçmiş iddaa oranı yok
+
+Kısa cevap: **hiçbir açık kaynak yayınlamıyor.** İddaa ve bayileri (Nesine, Misli, Bilyoner)
+yalnızca açık bülteni servis eder; kapanan maçın oranı API'den düşer. O veri Maçkolik gibi
+sitelerin maç sayfalarında durur, ama orası otomatik erişime kapalıdır.
+
+Sonuç: **geçmiş için piyasa oranı** kullanıyoruz. Seviye tutmaz (iddaa marjı daha yüksek),
+**favori sıralaması ve marj arındırılmış olasılık yapısı** tutar — analizde kullanılan da budur.
+İleriye dönük çözüm F5: haftalık bülten snapshot'ı alınırsa bir sezonda kendi iddaa arşivimiz
+olur.
+
+### 3.3 Yasal ve etik sınır
+
+- `robots.txt` bir kaynağın otomatik erişim politikasıdır; ihlal edilmez.
+- football-data.co.uk verisi kişisel kullanım için serbesttir; ham dosyalar repoya konmaz,
+  yalnızca türetilmiş eşleştirme sürümlenir.
+- Kaynak siteler resmi devlet arşivi değildir. Bu yüzden eksik haftalar elenir ve en az bir
+  hafta bağımsız kaynakla çapraz doğrulanır. Bu belge "tam sezon resmi dump" iddiası taşımaz;
+  **41 tam haftalık filtrelenmiş set** iddiası taşır.
+
+---
+
+## 4. Tarihsel sonuç boru hattı
+
+### 4.1 Kaynak biçimi
+
+`https://sportototahmin.com/spor-toto/{N}-hafta-tahminleri/_payload.json` — Nuxt dehidrasyon
+dizisi. Nesneler ya düz değerdir ya da `["Reactive", index]` benzeri referanslarla başka
+indekslere işaret eder; çözümleyici referansı takip ederek skalere iner (derinlik sınırı 12).
+
+Maç kaydının zinciri:
 
 ```
-{
-  "homeTeamName": <ref>,
-  "awayTeamName": <ref>,
-  "match": <ref>
-}
+{ homeTeamName: <ref>, awayTeamName: <ref>, match: <ref> }
+        └─ match  → { date: <ref>, score: <ref> }
+                        └─ score → { homeRegular: <ref>, awayRegular: <ref> }
 ```
 
-`match` çözülünce:
+Skorlar **maç nesnesinin kendi zinciri** üzerinden alınır. "İlk 15 isim + ilk 15 skor listesini
+sırayla yapıştır" yaklaşımı denenmiş ve reddedilmiştir: skorlar farklı bloklarda tekrarlandığı
+için yanlış maç–skor eşleşmesi üretir.
 
-```
-{
-  "date": <ISO datetime ref>,
-  "homeTeam": ...,
-  "awayTeam": ...,
-  "score": <ref>
-}
-```
-
-`score` çözülünce:
-
-```
-{
-  "homeRegular": <gol sayısı ref>,
-  "awayRegular": <gol sayısı ref>
-}
-```
-
-Aynı payload içinde tam hafta için genelde:
-
-- 15 adet `homeTeamName` + `match` nesnesi
-- 15 adet skor taşıyan eş yapı
-- 15 adet `homeRegular` / `awayRegular` skoru
-
-bulunur.
-
-### 3.1.b Maç sırası — v2'nin kritik düzeltmesi
+### 4.2 Hangi blok — doktrin 3'ün uygulanışı
 
 Payload içinde maça benzeyen **birden fazla blok** vardır:
 
-| Alan | İçerik |
-|------|--------|
-| `{weekNumber, matches: [...]}` | **haftanın kendi 15 maçı, kupon sırasıyla** |
-| `nearbyWeekSummaries[].featuredMatches` | komşu haftaların 3'er öne çıkan maçı |
+| Blok | İçerik | Kullanılır mı |
+|---|---|---|
+| `{weekNumber, matches: [...]}` | Haftanın kendi 15 maçı, kupon sırasıyla | **Evet, yalnızca bu** |
+| `nearbyWeekSummaries[].featuredMatches` | Komşu haftaların 3'er öne çıkan maçı | Hayır |
 
-v1, diziyi baştan sona tarayıp `homeTeamName` + `match` taşıyan her nesneyi
-topluyordu. Bu, öne çıkan maç blokları araya girdiğinde **sırayı bozuyor**,
-bazı haftalarda da yanlış maçı sayıma sokuyordu.
+**Kural:** hafta nesnesini `weekNumber` ile bul, yalnızca onun `matches` dizisini sırasıyla
+çöz, başka hiçbir bloğa bakma. Diziyi baştan sona tarayıp maça benzeyen her nesneyi toplamak,
+öne çıkan maç blokları araya girdiğinde sırayı bozar (§6.4).
 
-v2 kuralı: **hafta nesnesini `weekNumber` ile bul, yalnızca onun `matches`
-dizisini sırasıyla çöz.** Başka hiçbir bloğa bakma.
+Bunun bir yan sonucu: **tekilleştirmeye gerek yoktur.** Tek ve doğru listeden okunduğu için
+mükerrer kayıt oluşmaz.
 
-### 3.2 Hafta meta
+### 4.3 Hafta meta alanları
 
-İki ayrı yerde, **iki farklı adla** durur:
+Aynı bilgi payload'da **iki farklı adla** durur:
 
-| Nesne | Kapanış | Sezon |
-|-------|---------|-------|
+| Nesne | Kapanış tarihi | Sezon |
+|---|---|---|
 | Haftanın kendi kaydı (`matches` taşıyan) | `roundCloseDate` | `year` |
-| `nearbyWeekSummaries` içindeki komşu hafta özeti | `closeDate` | `season` |
+| `nearbyWeekSummaries` içindeki komşu özet | `closeDate` | `season` |
 
-v2 önce haftanın kendi kaydına, bulamazsa komşu özetine bakar. (v1 yalnızca
-`closeDate` arıyordu; bu yüzden yeniden üretimin ilk denemesinde tüm tarihler
-boş çıktı — hata testte değil, üretim çıktısında yakalandı.)
+Script önce haftanın kendi kaydına, bulamazsa komşu özetine bakar. (Yeniden üretimin ilk
+denemesinde yalnızca `closeDate` aranıyordu ve tüm tarihler boş çıktı — hata testte değil,
+üretim çıktısına bakılırken yakalandı.)
 
-`close_date`, raporun tarih aralığı için kullanılır.
+### 4.4 Maç satırı üretimi
 
----
+Haftanın `matches` dizisi üzerinde, sırayı bozmadan:
 
-## 4. İşleme boru hattı (adım adım)
+1. Ev ve deplasman adını çöz
+2. `match.score.homeRegular` / `awayRegular` çöz
+3. Gol değerleri `int` ve `0…20` aralığında mı kontrol et — anlamsız parse reddedilir
+4. `match.date` → başlama saati (`YYYY-MM-DD HH:MM`, UTC)
+5. Sonuç kodu: `home > away → 1` · `home == away → 0` · `home < away → 2`
 
-### Adım A — Hafta döngüsü
+**Yalnızca normal süre.** `homeRegular` / `awayRegular` kullanılır; uzatma ve penaltı alanları
+dahil edilmez — Spor Toto maç sonucu normal süre üzerinden okunur.
 
-- `N = 1 … 53` (ve 54 → 404) için payload indirildi.
-- HTTP hata / 404 → hafta atlandı, hata listesine yazıldı.
+### 4.5 Kesinlik eşiği
 
-### Adım B — Referans çözümleme
+| Geçerli maç sayısı | Karar |
+|---|---|
+| **= 15** | Analize dahil |
+| **≠ 15** | Elenir |
 
-```text
-resolve(data, idx):
-  - idx skaler ise → değeri döndür
-  - ["Reactive"|"Ref"|..., target] ise → resolve(data, target)
-  - derinlik sınırı (ör. 12) aşılırsa → dur
-```
+Bu sette elenen 12 hafta:
 
-Bu, Nuxt proxy sarmalayıcılarını soyarak `homeRegular` / takım adı / tarih alanlarını düz değere indirir.
+| Hafta | Durum |
+|---:|---|
+| 1 | 12 geçerli maç |
+| 23 | 14 |
+| 34 | 14 |
+| 43–49 | 0 (yaz arası) |
+| 52 | 3 (henüz kapanmamış) |
+| 53 | 0 (aktif) |
 
-### Adım C — Maç satırı üretimi
-
-Haftanın **kendi `matches` dizisi** üzerinde, **sırayı bozmadan** (§3.1.b):
-
-1. Ev ve deplasman adını çöz.
-2. `match.score.homeRegular` / `awayRegular` çöz.
-3. Gol değerleri `int` ve makul aralıkta mı kontrol et (`0 … 20`).
-4. `match.date` → başlama saati.
-5. Sonuç kodu:
-
-| Koşul | Kod |
-|--------|-----|
-| `home > away` | **1** |
-| `home == away` | **0** |
-| `home < away` | **2** |
-
-Tekilleştirmeye gerek yoktur: tek ve doğru listeden okunduğu için mükerrer
-kayıt oluşmaz. (v1'de tekilleştirme, birleştirilmiş bloklardaki kopyaları
-temizlemek zorundaydı; bu da sıranın kaynağını belirsizleştiriyordu.)
-
-### Adım D — 15/15 filtresi (kesinlik eşiği)
-
-| `len(uniq_matches)` | Karar |
-|---------------------|--------|
-| **== 15** | Analize **dahil** |
-| **≠ 15** | Analize **hariç** (eleme) |
-
-Elenen örnekler (bu sette):
-
-| Hafta | Durum (örnek) |
-|------:|----------------|
-| 1 | 12 skor (eksik) |
-| 23 | 14 skor |
-| 34 | 14 skor |
-| 43–49 | 0 skor (yaz arşivi / boş) |
-| 52 | 3 skor (henüz kapanmamış / eksik) |
-| 53 | 0 skor (aktif / boş) |
-
-### Adım E — Haftalık özet
-
-Her kabul edilen hafta için:
-
-- `matches`: 15 maçlık liste — `no`, `home`, `away`, `kickoff`, `hg`, `ag`, `code`
-- `results`: 15 karakterlik string, **maç listesinden üretilir**, örn. `000111122212011`
-- `n1`, `n0`, `n2` (15’in parçalanması; `n1+n0+n2 = 15`)
-- `close_date`: `YYYY-MM-DD`
-- `season`: `2025/2026`
-
-Script çıkmadan önce her hafta için şunu doğrular (assert):
-`results == "".join(m.code)` ve `(n1,n0,n2) == results.count(...)`. Yani
-listenin, dizinin ve sayımların üçü de birbirini tutmadan dosya yazılmaz.
-
-### Adım F — Sezon özeti
+### 4.6 Özet ve bant hesabı
 
 ```text
 N          = kabul edilen hafta sayısı
 T          = N × 15
-sum1,0,2   = tüm maçlarda 1 / 0 / 2 adedi
-pct_*      = 100 * sum_* / T
-avg_*      = sum_* / N          # haftalık ortalama
+sum_r      = tüm maçlarda r ∈ {1,0,2} adedi
+pct_r      = 100 × sum_r / T
+avg_r      = sum_r / N                      # haftalık ortalama
+
+above      = { n_r | n_r >  avg_r }         # ortalama üstü kapatan haftalar
+below      = { n_r | n_r <= avg_r }
+above_gap  = mean(above) − avg_r
+below_gap  = avg_r − mean(below)
 ```
 
-### Adım G — Ortalama üstü / altı bantları
+Ayrıca min, ortanca, maks ve **popülasyon** standart sapması kaydedilir.
 
-Her sonuç tipi `r ∈ {1,0,2}` için, haftalık `n_r` serisi:
+> Not: bantlar `history.py` tarafından **çalışma anında haftalardan yeniden hesaplanır**;
+> dosyadaki değerler bilgi amaçlıdır. Sebep: `?last=N` dilimi alındığında bantların da o dilime
+> göre hesaplanması gerekir.
 
-```text
-above = { n | n > avg_r }
-below = { n | n < avg_r }
+### 4.7 Çıkış şeması
 
-above_n     = |above|
-below_n     = |below|
-above_mean  = mean(above)
-below_mean  = mean(below)
-above_gap   = above_mean - avg_r
-below_gap   = avg_r - below_mean
-```
-
-Ayrıca min / medyan / max / popülasyon std kaydedildi.
-
----
-
-## 5. Üretilen veri seti özeti
-
-| Alan | Değer |
-|------|--------|
-| Sezon | 2025 / 2026 |
-| Tarih aralığı | **2025-08-18 → 2026-07-27** |
-| Analiz haftası | **41** |
-| Toplam maç | **615** |
-| 1 | **270** (**%43,90**) |
-| 0 | **149** (**%24,23**) |
-| 2 | **196** (**%31,87**) |
-| Haftalık ort. 1 / 0 / 2 | **6,59 / 3,63 / 4,78** |
-
-### Bant özeti
-
-| Sonuç | Ort. | Üstünde (hf) | Üst ort. | Sapma+ | Altında (hf) | Alt ort. | Sapma− |
-|--------|-----:|-------------:|---------:|-------:|-------------:|---------:|-------:|
-| 1 | 6,59 | 21 | 7,90 | +1,32 | 20 | 5,20 | −1,39 |
-| 0 | 3,63 | 22 | 4,91 | +1,27 | 19 | 2,16 | −1,48 |
-| 2 | 4,78 | 21 | 6,10 | +1,31 | 20 | 3,40 | −1,38 |
-
----
-
-## 6. Dikkat edilen noktalar (kalite kontrol)
-
-### 6.1 Sıra ile skor eşlemesi yapılmadı
-
-İlk denemelerde “15 isim + 15 skor listesini sırayla yapıştır” yaklaşımı denendi. Bu, payload içinde skorların farklı bloklarda tekrarlanması durumunda **yanlış maç–skor** üretebilir.  
-**Nihai yöntem:** her maç kaydının kendi `match.score` referansı.
-
-### 6.2 Sadece regular time golleri
-
-`homeRegular` / `awayRegular` kullanıldı. Uzatma / penaltı alanları (varsa) bu Spor Toto 1-0-2 tanımına dahil edilmedi; Spor Toto maç sonucu normal süre üzerinden okunur.
-
-### 6.3 Gol aralığı filtresi
-
-Anlamsız parse (negatif, aşırı büyük) değerler satır olarak reddedildi (`0…20`).
-
-### 6.4 Mükerrer kayıt temizliği
-
-Aynı `(home, away, skor, date)` birden fazla serileşirse tek satır tutuldu; aksi halde 15’ten fazla satır “sahte tamam” görünebilirdi.
-
-### 6.5 Eksik hafta politikası
-
-Kısmi hafta (14/15, 12/15, 0/15) **ortalama hesaplarına karıştırılmadı**.  
-Gerekçe: bir eksik sonuç bile o haftanın 1/0/2 vektörünü bozar; kullanıcı “kesin veri yoksa ele” şartı koydu.
-
-### 6.6 Maçkolik yokluğu açıkça belgelendi
-
-Skor kaynağı Maçkolik olamadı. Bunun yerine **bülten kaydına gömülü, maça bağlı skorlar** kullanıldı.  
-51. hafta Misli satırı ile çapraz kontrol edildi.
-
-### 6.7 Üçüncü parti kaynak riski
-
-sportototahmin resmi devlet arşivi değildir. Bu yüzden:
-
-- Eksik haftalar atıldı.
-- En az bir hafta bağımsız sonuç satırı ile doğrulandı.
-- Rapor “kesin resmi 53 haftalık tam sezon dump’ı” iddiası taşımaz; **41 tam haftalık filtrelenmiş set** iddiası taşır.
-
-### 6.8 Tarih alanı
-
-`close_date` katalog `closeDate` alanından ISO → `YYYY-MM-DD`.  
-Aralık raporu: min / max `close_date` (dahil haftalar üzerinden).
-
-### 6.9 Sonuç kodu string’i
-
-`results` alanı, maç sırasına göre 15 karakter (1/0/2).  
-Hem insan okuması hem de ileride formül / simülasyon geri testi için tutuldu.
-
-### 6.10 v1'de bulunan hata ve düzeltmesi (2026-08-16)
-
-**Belirti.** Veri seti kendi içinde çelişiyordu: 6 haftada dosyadaki
-`n1/n0/n2` alanları ile `results` dizisinin sayımı tutmuyordu; ayrıca iki
-farklı hafta çifti (22–25 ve 24–26) **birebir aynı** sonuç dizisini taşıyordu.
-
-**Teşhis.** Kaynak payload'lar yeniden çekilip 9 hafta tek tek karşılaştırıldı.
-Çelişkili 6 haftanın **hepsinde** dosyadaki `n1/n0/n2` kaynakla birebir
-uyuştu; hatalı olan `results` dizisiydi. Sıra kontrolü daha geniş bir hasar
-gösterdi: 41 haftanın **26'sında** dizi doğru, **15'inde** sıra yanlıştı
-(bunların 6'sında sayım da). Sebep §3.1.b: düz tarama, `featuredMatches`
-bloklarını haftanın kendi listesine karıştırıyordu.
-
-**Etki.** Sezon toplamları ve bantlar etkilenmedi (onlar `n1/n0/n2`
-üzerindendi). Ama **sıraya bağlı** her analiz — maç sırası dağılımı, geçiş
-matrisi, seriler — 15 haftada kirliydi.
-
-**Düzeltme.** `scripts/build_history.py` ile veri seti kaynağından yeniden
-üretildi: 26 hafta aynı kaldı, 9 haftada sıra, 6 haftada sıra + sayım
-düzeldi, mükerrer diziler ortadan kalktı. `close_date` alanlarının 41/41'i
-v1 ile birebir aynı çıktı — yani hafta eşlemesi baştan doğruydu, bozuk olan
-hafta *içindeki* sıraydı.
-
-**Bekçi.** `tests/test_history.py::test_veri_seti_temiz` artık veri setinin
-kendi denetiminden geçmesini şart koşuyor; sıra ya da sayım bir daha bozulursa
-test kırmızıya döner.
-
----
-
-## 7. Çıktı şeması (`data/st_history_2025_26.json`)
-
-```json
+```jsonc
 {
   "meta": {
     "season": "2025/2026",
-    "date_from": "YYYY-MM-DD",
-    "date_to": "YYYY-MM-DD",
-    "weeks": 41,
-    "matches": 615,
-    "source": "...",
-    "rule": "only weeks with exactly 15 results",
+    "date_from": "2025-08-18", "date_to": "2026-07-27",
+    "weeks": 41, "matches": 615,
+    "source": "sportototahmin week payloads (week.matches order, match-linked scores); …",
+    "rule": "only weeks with exactly 15 results; match order from the week's own matches array",
     "generated_at": "2026-08-15"
   },
-  "totals": {
-    "1": 270, "0": 149, "2": 196,
-    "pct_1": 43.9024, "pct_0": 24.2276, "pct_2": 31.8699
-  },
+  "totals":     { "1": 270, "0": 149, "2": 196,
+                  "pct_1": 43.9024, "pct_0": 24.2276, "pct_2": 31.8699 },
   "weekly_avg": { "1": 6.5854, "0": 3.6341, "2": 4.7805 },
   "bands": {
     "1": { "avg", "min", "max", "median", "std",
-           "above_n", "below_n", "above_mean", "below_mean",
-           "above_gap", "below_gap" },
-    "0": { "...": "..." },
-    "2": { "...": "..." }
+           "above_n", "below_n", "above_mean", "below_mean", "above_gap", "below_gap" },
+    "0": { … }, "2": { … }
   },
   "weeks": [
     {
@@ -399,144 +248,288 @@ test kırmızıya döner.
       "close_date": "2026-07-27",
       "season": "2025/2026",
       "n1": 7, "n0": 4, "n2": 4,
-      "results": "000111122212011",
+      "results": "000111122212011",        // matches'ten üretilir
       "matches": [
-        {
-          "no": 1,
-          "home": "AGF Aarhus",
-          "away": "Brondby",
-          "kickoff": "2026-07-25 16:00",
-          "hg": 1, "ag": 1,
-          "code": "0"
-        }
+        { "no": 1, "home": "AGF Aarhus", "away": "Brondby",
+          "kickoff": "2026-07-25 16:00", "hg": 1, "ag": 1, "code": "0" }
+        // … 15 adet
       ]
     }
   ]
 }
 ```
 
-Uygulama tarafında yükleme: `spor_toto.history.load_history()` /
-`history_summary(last)` / `history_weeks(last)` / `history_analytics(last)` /
-`history_week_detail(n)`.
+---
+
+## 5. Oran boru hattı
+
+### 5.1 Kaynak dosyalar
+
+İki tür, toplam 38 dosya:
+
+| Tür | Örnek | Sütun | İçerik |
+|---|---|---:|---|
+| Ana ligler | `mmz4281/2526/T1.csv` | 131 | 1X2 (11 bahisçi, açılış + kapanış), 2.5 alt/üst, Asya handikap, maç istatistikleri |
+| Ek ülkeler | `new/POL.csv` | 25 | Yalnızca kapanış 1X2, 4 kaynaktan |
+
+Ana ligler: İngiltere (E0–E3, EC), İskoçya (SC0–SC3), Almanya (D1, D2), İtalya (I1, I2),
+İspanya (SP1, SP2), Fransa (F1, F2), Hollanda (N1), Belçika (B1), Portekiz (P1), Türkiye (T1),
+Yunanistan (G1). Ek ülkeler: ARG, AUT, BRA, CHN, DNK, FIN, IRL, JPN, MEX, NOR, POL, ROU, RUS,
+SWE, SWZ, USA.
+
+### 5.2 Eşleştirme
+
+**Anahtar: tarih (±1 gün) + BİREBİR skor + bulanık takım adı (eşik 0,55).**
+
+Skor şartı yanlış eşleşmeye karşı en güçlü korumadır: aynı gün aynı skorla biten, adı da
+benzeyen başka bir maç bulma ihtimali pratikte yoktur. Ad benzerliği ayrıca eşiği geçmek
+zorundadır.
+
+İsim normalizasyonu:
+1. Türkçe karakterler sadeleştirilir, aksan atılır
+2. **Sponsor ekleri** çıkarılır: `Hesap.com Antalyaspor` → `antalyaspor`,
+   `Natura Dünyası Gençlerbirliği` → `gençlerbirliği`
+3. Hukuki/genel ekler atılır (`a.ş.`, `fk`, `fc`, `sk`, `kulübü`, `1907`…)
+4. Bilinen kısaltmalar için eş tablosu: `Buyuksehyr` → `basaksehir`, `Ath Bilbao` →
+   `athletic bilbao`, `M'gladbach` → `borussia monchengladbach` …
+
+> **Dikkat:** sponsor listesine takımın kendi adı asla girmez. Bir defasında
+> `genclerbirligi` yanlışlıkla sponsor listesine düştü ve kapsama %92,2'den %87'ye indi;
+> kod içinde bu uyarı yorum olarak duruyor.
+
+### 5.3 Kapsama
+
+| | Değer |
+|---|---|
+| Eşleşen | 567 / 615 (%92,2) |
+| Tam kapsanan hafta | 36 / 41 |
+| Eşleşmeyen | 48 maç |
+
+Eşleşmeyenlerin dağılımı **yapısaldır**, gürültü değil:
+
+| Neden | Maç |
+|---|---:|
+| Milli maç haftaları (5, 10, 15) — kaynak milli maç yayınlamıyor | 45 |
+| K-League (50. hafta) — kaynakta yok | 2 |
+| Tek eşleştirme kaçağı (33. hafta) | 1 |
+
+### 5.4 Toplanan pazarlar
+
+| Pazar | Dönem | Değer adedi |
+|---|---|---:|
+| 1X2 | kapanış | 16.179 |
+| 1X2 | açılış | 15.796 |
+| Asya handikap | açılış | 5.564 |
+| Asya handikap | kapanış | 4.742 |
+| 2.5 üst | kapanış / açılış | 2.369 / 2.332 |
+| 2.5 alt | kapanış / açılış | 2.369 / 2.332 |
+
+Ayrıca aynı satırdan bedavaya gelen 14 maç istatistiği: `HS/AS` (şut), `HST/AST` (isabetli),
+`HC/AC` (korner), `HF/AF` (faul), `HY/AY` (sarı), `HR/AR` (kırmızı), `HTHG/HTAG` (ilk yarı).
+
+### 5.5 Depolama katmanları
+
+| Dosya | Sürümlenir | İçerik |
+|---|---|---|
+| `data/odds/odds_2025_26.csv` | **evet** | Maç başına bir satır, 108 oran + 14 istatistik sütunu (332 KB) |
+| `data/odds/odds_rapor.json` | **evet** | Kapsama, sütun sözlüğü, eşleşmeyen maç listesi |
+| `data/odds/odds.sqlite3` | hayır | Sorgulanabilir kopya, **uzun biçim** |
+| `data/odds/_kaynak/*.csv` | hayır | İndirilen ham dosyalar (12 MB) |
+
+SQLite şeması — analiz için uzun biçim, sütun adı ayrıştırılmış:
+
+```sql
+mac(week, no, kickoff, home, away, hg, ag, code,
+    kaynak_dosya, kaynak_lig, kaynak_ev, kaynak_dep, guven)
+oran(week, no, sutun, kaynak, pazar, secim, donem, deger)   -- pazar: 1X2|2.5U|2.5A|AH
+istatistik(week, no, ad, deger)
+```
+
+`AvgCH` gibi bir sütun adı `(kaynak=Avg, pazar=1X2, secim=1, donem=kapanis)` diye çözülür;
+böylece "piyasa ortalamasının kapanış 1X2'si" tek `WHERE` ile alınır.
+
+### 5.6 Eşleştirmenin sağlaması
+
+Eşleştirme doğruysa oranların gerçeklikle uyumlu davranması gerekir — ölçüldü:
+
+- Kapanış favorisi **%54,9** tuttu; favori **hiçbir maçta beraberlik çıkmadı** (374 kez "1",
+  193 kez "2") — futbolun bilinen tablosuyla uyumlu
+- Marj arındırılmış olasılıklar gerçekleşmeyle kova kova örtüşüyor (ör. %20–30 kovası: model
+  %25,6 → gerçek %24,4)
+- Ortalama marj %7,26
+
+Rastgele ya da kaymış bir eşleştirme bu tabloyu üretemez. `test_odds.py` favori isabetini
+alt/üst sınırla bekçiye bağlar.
 
 ---
 
-## 8. UI entegrasyonu
+## 6. Kalite güvencesi
 
-| Rota | Sayfa |
-|------|--------|
-| `/istatistik` | Sezon payı, haftalık seyir, bantlar, dağılım, maç sırası ısı haritası, geçiş matrisi, hafta tablosu, veri kalitesi |
-| `/istatistik/<week>` | Maç maç sonuçlar (takım adı + skor), sezon ortalamasına sapma ve sıra, sürprizler, seriler |
+### 6.1 Üretim anında
 
-Formül motoru (`/`, `/api/solve`) bu seti zorunlu kullanmaz; istatistik sayfası bağımsız okur. İleride prior / Dirichlet / Bayes için `weekly_avg` ve `bands` doğal aday girdilerdir.
+`build_history.py` dosyayı yazmadan önce her hafta için:
+
+```python
+assert len(results) == 15 == len(matches)
+assert (n1, n0, n2) == tuple(results.count(s) for s in "102")
+assert results == "".join(m["code"] for m in matches)
+```
+
+Yani liste, dizi ve sayımların üçü birbirini tutmadan çıktı üretilmez.
+
+### 6.2 Bağımsız çapraz doğrulama
+
+51. hafta için Misli sonuç satırı: `X X X 1 1 1 1 2 2 2 1 2 X 1 1` → `000111122212011`.
+Üretim çıktısı **birebir aynı**. Bu, yalnızca kodların değil **sıranın** da en az bir haftada
+bağımsız kaynakla doğrulandığı anlamına gelir.
+
+### 6.3 Okuma anında — `data_quality` bloğu
+
+`history.py` her okumada veri setini denetler ve sonucu API'ye koyar:
+
+| Alan | Ne yakalar |
+|---|---|
+| `count_conflicts` | Dosyadaki `n1/n0/n2` ile diziden türeyen sayım çelişiyor |
+| `match_conflicts` | Maç listesinin kodları diziyle örtüşmüyor (sıra dahil) |
+| `weeks_without_matches` | Hafta maç listesi taşımıyor |
+| `incomplete_weeks` | 15 maçtan az |
+| `duplicate_results` | İki hafta birebir aynı diziyi taşıyor |
+| `ok` | Hepsi temizse `true` |
+
+Bu blok **arayüzde gösterilir**. Temizse yeşil bir satır, değilse hangi haftada ne olduğu.
+
+### 6.4 Vaka: v1 sıra hatası
+
+**Belirti.** Veri seti kendi içinde çelişiyordu: 6 haftada `n1/n0/n2` ile dizinin sayımı
+tutmuyordu; ayrıca iki hafta çifti (22–25 ve 24–26) **birebir aynı** sonuç dizisini taşıyordu.
+
+**Teşhis.** Kaynak payload'lar yeniden çekilip 9 hafta tek tek karşılaştırıldı. Çelişkili 6
+haftanın **hepsinde** dosyadaki `n1/n0/n2` kaynakla birebir uyuştu — hatalı olan `results`
+dizisiydi. Sıra kontrolü daha geniş hasar gösterdi: 41 haftanın **26'sında** dizi doğru,
+**15'inde sıra yanlıştı** (bunların 6'sında sayım da).
+
+**Sebep.** §4.2: düz tarama, `featuredMatches` bloklarını haftanın kendi listesine karıştırıyordu.
+
+**Etki.** Sezon toplamları ve bantlar etkilenmedi (onlar `n1/n0/n2` üzerindendi). Ama **sıraya
+bağlı** her analiz — maç sırası dağılımı, geçiş matrisi, seriler — 15 haftada kirliydi.
+
+**Düzeltme.** Veri seti kaynağından yeniden üretildi: 26 hafta aynı kaldı, 9'unda sıra, 6'sında
+sıra + sayım düzeldi, mükerrer diziler ortadan kalktı. `close_date` alanlarının 41/41'i v1 ile
+aynı çıktı — hafta eşlemesi baştan doğruymuş, bozuk olan hafta *içindeki* sıraymış.
+
+**Ders.** Sayım doğru olduğu için hata gözden kaçmıştı; sıra hiçbir toplamı değiştirmiyordu.
+Bugün `match_conflicts` denetimi tam olarak bunu yakalar.
+
+### 6.5 Vaka: BOM hatası
+
+football-data ana lig dosyaları latin-1 okunuyor; UTF-8 BOM bu kodlamada `ï»¿` olarak gelip ilk
+sütunun adına yapışıyor (`ï»¿Div`). Temizlik yalnızca `﻿` arıyordu, bu yüzden `Div`
+anahtarı hiç bulunamıyor ve **539 maçın lig etiketi boş kalıyordu**. Düzeltildikten sonra 15
+lig doğru etiketlendi — Süper Lig'de beraberlik %29,8, Premier Lig'de %19,7 gibi kırılımlar
+ancak bu alanla mümkün.
+
+**Ders.** Boş kalan bir alan hata vermez, sadece sessizce kaybolur. Üretim çıktısındaki özet
+tablolar (script'in bastığı lig dağılımı) bunu yakalayan şeydi.
+
+### 6.6 Test bekçileri
+
+| Test | Neyi garanti eder |
+|---|---|
+| `test_history.py::test_veri_seti_temiz` | Yayındaki veri seti `data_quality` denetiminden geçiyor |
+| `test_history.py::test_mac_listesi_diziyi_uretir` | Kod skordan, dizi maç sırasından türüyor |
+| `test_history.py::test_ayni_hafta_icinde_takim_tekrar_etmez` | Aynı hafta aynı takım iki kez yok |
+| `test_history.py` (analiz blokları) | Sütun toplamları sezon toplamına eşit; dilimleme tutarlı |
+| `test_odds.py::test_arsiv_gecmis_veriyle_birebir_hizali` | Oran satırları kupon maçlarıyla sıra sıra aynı |
+| `test_odds.py::test_favori_isabeti_gerceklikle_uyumlu` | Favori isabeti %45–70 bandında (eşleştirme kaymışsa çıkar) |
+| `test_api_stats.py` | Uçların sözleşmesi; **diğer pazarların arayüze sızmadığı** |
+
+Toplam 38 test bu iki veri setini korur (backend paketi 545 test).
+
+### 6.7 Bilinen kabuller
+
+| Kabul | Gerekçe |
+|---|---|
+| Yalnızca normal süre golü | Spor Toto sonucu normal süre üzerinden okunur |
+| Gol aralığı 0–20 | Anlamsız parse değerlerini reddetmek için |
+| Kupon sırası = kaynağın sırası | Resmi bülten numaralandırmasıyla ayrıca karşılaştırılmadı; 51. hafta bağımsız doğrulandı (§6.2) |
+| Oran = kapanış, yoksa açılış | Kapanış daha bilgilidir; kaynak sırası Avg → B365 → PS → BFE → Max |
+| Lig bilgisi oran arşivinden gelir | Payload maç kaydı lig adı taşımıyor |
 
 ---
 
-## 9. Bilinen sınırlamalar
+## 7. Sınırlar
 
-1. **Tam sezon değil:** 41 / ~53 hafta; eksik skorlu haftalar yok.
-2. **Maçkolik doğrulaması yok:** API ölü ve robots.txt otomatik erişimi kapatıyor (§2.2).
-3. **Kupon sırası kaynağın sırasıdır.** Haftanın kendi `matches` dizisi esas alınır; resmi bülten numaralandırmasıyla ayrıca karşılaştırılmamıştır. 51. hafta bağımsız sonuç satırıyla birebir tutuyor (§2.4) — bu, hem kodların hem sıranın en az bir haftada doğrulandığı anlamına gelir.
-4. **Lig bilgisi yok:** payload maç kaydında lig adı taşımıyor; oran eşleştirmesi tarih + skor + takım adı üzerinden yapılır (§12).
-5. **Yaz dönemi (43–49)** çoğu boş payload; lig takvimi / bülten yapısı farklı olabilir.
-6. Üçüncü parti arşiv güncellenirse veya silinirse **yeniden çekim** gerekir; script bunun için vardır.
+1. **Tam sezon değil:** 41 / ~53 hafta. Eksik skorlu haftalar bilinçli olarak yok.
+2. **Tek sezon:** 2025/2026. İstatistiksel güç sınırlı — 41 hafta küçük örneklem.
+3. **Milli maç haftalarında oran yok** (5, 10, 15). Oran blokları o haftalarda boş; kapsama
+   hiçbir zaman %100 olmayacak.
+4. **Geçmiş iddaa oranı yok** (§3.2). Piyasa oranı vekildir.
+5. **Üçüncü parti kaynak riski:** iki kaynak da dış. Silinir ya da biçim değiştirirse yeniden
+   çekim gerekir; iki üretim scripti tam olarak bunun için var.
+6. **Resmi bülten numarası doğrulanmadı:** kupon sırası kaynağın sırasıdır.
 
 ---
 
-## 10. Yeniden üretim
+## 8. Yeniden üretim
 
 ```bash
 cd backend
-python scripts/build_history.py            # çek, doğrula, yaz
-python scripts/build_history.py --dry-run  # yazmadan sonucu gör
-pytest tests/test_history.py               # veri seti denetimi
+
+python scripts/build_history.py              # tarihsel seti üret
+python scripts/build_history.py --dry-run    # yazmadan farkı gör
+python scripts/build_history.py --cache /tmp/p   # payload'ları sakla/oradan oku
+
+python scripts/build_odds.py                 # oranları çek ve eşleştir
+python scripts/build_odds.py --dry-run       # yalnızca kapsama raporu
+python scripts/build_odds.py --no-sqlite     # yalnızca CSV + rapor
+
+pytest -q tests/test_history.py tests/test_odds.py   # bağımsız denetim
 ```
 
-Script her hafta için listenin, dizinin ve sayımların birbirini tuttuğunu
-doğrulamadan dosya yazmaz. Yazdıktan sonra `test_veri_seti_temiz` bunu bir kez
-daha bağımsız olarak kontrol eder.
+Her iki script de doğrulamadan dosya yazmaz; testler yazıldıktan sonra aynı şeyi tekrar
+denetler. Ham dosyalar ve SQLite git dışıdır, bu komutlarla yeniden oluşur.
+
+**Okuma tarafı:**
+
+```python
+from spor_toto.history import history_summary, history_weeks, history_analytics, history_week_detail
+from spor_toto.odds import load_odds, market_odds, implied_probs, season_1x2_summary
+
+history_summary(last=12)                      # son 12 hafta dilimi
+implied_probs(market_odds(load_odds()[0], "1X2", "Avg"))
+```
 
 ---
 
-## 11. Kısa sonuç
+## 9. Yol haritasının veri tarafı
 
-- Veri **uydurulmadı**; haftalık payload’lardan **maç bağlı skor** ile üretildi.
-- **Kesinlik filtresi** uygulandı: 15’ten az sonuçlu hafta yok.
-- Dağılım tipik futbol oranlarına yakın: ~%44 ev, ~%24 beraberlik, ~%32 deplasman.
-- Ortalama üstü/altı yaklaşık yarı yarıya; tipik sapma **±1,3–1,5 maç / hafta**.
-- v2 ile sıra hatası kapatıldı ve veri seti maç düzeyine indi.
+[`ISTATISTIK_YOL_HARITASI.md`](ISTATISTIK_YOL_HARITASI.md) fazlarının veri ihtiyacı:
 
----
-
-## 12. Oran arşivi
-
-**Üretici:** `backend/scripts/build_odds.py` · **Çıktı:** `backend/data/odds/`
-· **Durum:** üretildi (2026-08-16)
-
-### 12.1 Kaynak seçimi
-
-| Hedef | Durum |
-|-------|-------|
-| Geçmiş maçlar + **iddaa'nın kendi oranı** | **Yok.** Resmi API (`sportsbookv2.iddaa.com`) yalnızca açık bülteni verir (ölçümde 8 günlük pencere); Nesine de aynı. Geriye dönük arşiv ucu bulunamadı. Maçkolik'in maç sayfasında bu veri var ama sitesi otomatik erişime kapalı (§2.2). |
-| Geçmiş maçlar + **piyasa oranı** | **Var, kullanıldı.** football-data.co.uk ücretsiz arşivi. |
-| Bundan sonraki haftalar + iddaa oranı | Mümkün — haftalık bülten snapshot'ı alınırsa kendi arşivimiz oluşur. Henüz kurulmadı. |
-
-> **Bu oranlar iddaa oranı değildir.** Bahisçi marjı farklı olduğu için
-> seviyeleri iddaa ile birebir tutmaz (ölçülen ortalama marj %7,26; iddaa
-> tipik olarak daha yüksek). Favori sıralaması ve marj arındırılmış olasılık
-> yapısı ise büyük ölçüde örtüşür — analizde kullanılacak olan budur.
-
-### 12.2 Eşleştirme
-
-Anahtar: **tarih (±1 gün) + birebir skor + bulanık takım adı**. Skor şartı
-yanlış eşleşmeye karşı en güçlü korumadır; takım adı benzerliği ayrıca 0,55
-eşiğini geçmek zorundadır. Takım adları sponsor ekinden arındırılır
-(`Hesap.com Antalyaspor` → `antalyaspor`), bilinen kısaltmalar için küçük bir
-eş tablosu vardır (`Buyuksehyr` → `basaksehir`).
-
-| | |
+| Faz | Veri durumu |
 |---|---|
-| Eşleşen | **567 / 615 maç (%92,2)** |
-| Tam kapsanan hafta | **36 / 41** |
-| Eşleşmeyen | 48 maç — 5., 10. ve 15. haftalar tamamen **milli maç** (kaynak milli maç yayınlamıyor), kalan 3'ü K-League ve tek bir kaçak |
+| **F1 — Geri test** | **Hazır.** 567 maçta olasılık + gerçek sonuç var; ek veri gerekmez |
+| **F2 — Oranlardan `probs`** | **Hazır.** `match_1x2` marj arındırılmış olasılığı zaten döndürüyor |
+| **F3 — Karar destek kartları** | **Hazır.** Lig etiketi §6.5 ile düzeldi; çift kapsama ve beraberlik profili mevcut alanlardan hesaplanır |
+| **F4 — Kullanım cilası** | Veri tarafı yok |
+| **F5 — İddaa bülten arşivi** | **Yeni boru hattı gerekir.** `snapshot_iddaa.py` haftalık çalışıp bülteni tarih damgalı saklar; şema oran arşiviyle aynı uzun biçim olmalı ki iki kaynak yan yana sorgulanabilsin |
 
-**Sağlama.** Kapanış oranındaki favori %54,8 tutmuş; favori hiçbir maçta
-beraberlik çıkmamış. Marj arındırılmış olasılıklar gerçekleşmeyle kova kova
-örtüşüyor (ör. %25 kovası → gerçek %24,4). Rastgele bir eşleştirme bu tabloyu
-üretemez. `tests/test_odds.py` bu oranı alt/üst sınırla bekçiye bağlar.
+**Örneklem büyütme (öneri, planda yok):** 2024/2025 sezonu aynı iki boru hattıyla çekilebilirse
+hafta sayısı ~80'e çıkar. Geri testin aşırı uyum riskini azaltmanın en doğrudan yolu budur;
+kaynak sitenin geçmiş sezon payload'larını taşıyıp taşımadığı kontrol edilmeli.
 
-### 12.3 Toplanan pazarlar
+---
 
-| Pazar | Dönem | Kaynak sayısı |
-|-------|-------|---------------|
-| 1X2 | açılış + kapanış | 11 bahisçi/agregat |
-| 2.5 alt / üst | açılış + kapanış | 5 |
-| Asya handikap (çizgi + iki taraf) | açılış + kapanış | 5–6 |
+## 10. Sürüm geçmişi
 
-Toplam **108 oran sütunu**, 51.683 oran değeri. Ayrıca aynı satırdan bedavaya
-gelen **14 maç istatistiği** (şut, isabetli şut, korner, faul, kart, ilk yarı
-skoru) `stat_` ön ekiyle saklanır.
+| Sürüm | Ne değişti |
+|---|---|
+| **v1** (2026-08-15) | İlk üretim. 41 hafta, 615 maç. Sonuç dizisi 15 haftada yanlış sırada, 6'sında yanlış sayımda (§6.4) — o zaman fark edilmedi |
+| **v2** (2026-08-16) | Sıra hatası kapatıldı; veri **maç düzeyine** indi (takım, saat, skor); üretim tek komutla tekrarlanabilir oldu; `data_quality` denetimi ve test bekçileri eklendi; **oran arşivi** kuruldu (§5) |
 
-Ek ülke dosyaları (POL, DNK, SWE…) yalnızca kapanış 1X2 taşır; ana lig
-dosyaları (T1, E0, SP1…) listenin tamamını verir.
+Sezon toplamları v1 ve v2'de aynıdır (270/149/196) — çünkü v1'de bozuk olan yalnızca diziydi,
+sayımlar doğruydu.
 
-### 12.4 Nerede duruyor
+---
 
-| Dosya | Sürümlenir mi | İçerik |
-|-------|----------------|--------|
-| `data/odds/odds_2025_26.csv` | evet | Maç başına bir satır, tüm sütunlar (332 KB) |
-| `data/odds/odds_rapor.json` | evet | Kapsama, sütun sözlüğü, eşleşmeyen maç listesi |
-| `data/odds/odds.sqlite3` | hayır (üretilir) | `mac` / `oran` / `istatistik` tabloları, uzun biçim |
-| `data/odds/_kaynak/*.csv` | hayır (indirilir) | Ham football-data.co.uk dosyaları (12 MB) |
-
-**Arayüze yalnızca maç sonucu (1X2) çıkar.** `/api/stats` sezon özetini
-(kapsama, favori isabeti, marj, kalibrasyon), `/api/stats/<week>` ise maç maç
-kapanış oranını döndürür. 2.5 alt/üst, Asya handikap ve maç istatistikleri
-API'ye **hiç girmez** — onlar yalnızca bu arşivde, analiz için durur. Okumak
-için `spor_toto.odds` (`load_odds`, `market_odds`, `implied_probs`,
-`season_1x2_summary`) ya da doğrudan SQLite.
-
-Bu setin geçmiş veriyle birleşebilmesinin **ön koşulu** v2 ile gelen `matches`
-alanıydı: eşleştirme takım adı + tarih + skor üzerinden yapılır.
-
-Bu MD, projedeki tarihsel istatistik katmanının tek kaynak dokümantasyonudur.
+Bu belge veri katmanının tek kaynak dokümantasyonudur. Sayfanın kendisi, alınan ürün kararları
+ve yol haritası için: [`ISTATISTIK_YOL_HARITASI.md`](ISTATISTIK_YOL_HARITASI.md).
