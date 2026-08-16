@@ -306,9 +306,11 @@ cümlesinin artık sayısı var.
 ayağın yer tutucusu. `match_1x2` zaten aynı kuralı uyguluyordu; snapshot da eliyor ve kaç maçın
 neden elendiğini raporluyor.
 
-Haftalık tetik hazır ama **zamanlaması kapalı**: iş depoya commit atıyor ve bir botun varsayılan
-dala kendiliğinden yazması açık bir karar. `.github/workflows/snapshot-iddaa.yml` içindeki
-`schedule` satırlarından yorumu kaldırmak yeterli.
+**Haftalık tetik açık** (`.github/workflows/snapshot-iddaa.yml`): her pazartesi 06:00 UTC
+(TR 09:00), hafta kuponu açıktayken. İş yalnızca `backend/data/iddaa/` altına yazar, değişiklik
+yoksa commit atmaz ve aynı anda tek çalışma yapar. **Zamanlanmış işler yalnızca varsayılan
+daldan çalışır** — arşiv, bu dal `main`'e geçtiği anda birikmeye başlar. Durdurmak: Actions →
+bu iş → "Disable workflow".
 
 ## 4. Sayfada bugün ne var
 

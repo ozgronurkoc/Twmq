@@ -442,10 +442,26 @@ Açılış–kapanış farkı ancak böyle çıkar; aynı gün ikinci kez çalı
 
 ### 5A.4 Zamanlama
 
-`.github/workflows/snapshot-iddaa.yml` hazır, **schedule bloğu kapalı**. İş depoya commit
-attığı için bir botun varsayılan dala kendiliğinden yazması açık bir karardır; açmak `schedule`
-satırlarındaki yorumu kaldırmaktır. Beklemenin bedeli, geçen her haftanın bir daha ele
-geçmemesidir.
+`.github/workflows/snapshot-iddaa.yml` **açık**: her pazartesi 06:00 UTC (TR 09:00), hafta
+kuponu açıktayken. Snapshot alınır, biçimi `test_snapshot_iddaa.py` ile denetlenir ve yeni veri
+varsa depoya işlenir.
+
+Botun yazma alanı dar tutuldu:
+
+| Önlem | Ne engelliyor |
+|---|---|
+| `git add backend/data/iddaa` | Arşiv dışında hiçbir dosyaya dokunmaz |
+| `git diff --cached --quiet` kontrolü | Değişiklik yoksa boş commit atmaz |
+| `concurrency: iddaa-snapshot` | İki çalışma aynı dosyaya yazıp push yarışına girmez |
+| `pull --rebase` + açık hedefe push | Dal bu arada ilerlediyse çakışmaz |
+| Testin push'tan **önce** koşması | Bozuk biçimli bir snapshot depoya girmez |
+
+**Zamanlanmış işler yalnızca varsayılan daldan çalışır.** Bu iş bir özellik dalında durduğu
+sürece tetiklenmez; arşiv, dosya `main`'e geçtiği anda birikmeye başlar. Elle denemek için
+Actions → bu iş → "Run workflow" (bu, `workflow_dispatch` ile her daldan çalışır).
+
+Durdurmak: Actions → bu iş → "Disable workflow". Durdurmanın bedeli, o haftanın bülteninin bir
+daha ele geçmemesidir.
 
 ---
 

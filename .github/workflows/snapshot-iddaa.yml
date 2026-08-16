@@ -7,21 +7,33 @@ name: iddaa bulten snapshot
 # anki halini alip depoya isler; bir sezon sonunda kendi iddaa arsivimiz
 # olur. Deger tek snapshot'ta degil, birikimde.
 #
-# ZAMANLAMA KAPALI GELIYOR
-# ========================
-# Asagidaki `schedule` blogu BILEREK yorumda: bu is depoya COMMIT ATAR ve
-# bir botun varsayilan dala kendiliginden yazmasi acik bir karardir.
-# Baslatmak icin `schedule` satirlarindaki yorumu kaldirmak yeterli —
-# haftalik arsiv o andan itibaren birikmeye baslar. Beklemenin bedeli
-# gecmis oranin bir daha ele gecmemesidir.
+# ZAMANLAMA ACIK
+# ==============
+# Bu is haftada bir CALISIR ve yeni snapshot varsa depoya COMMIT ATAR.
+# Yazdigi tek yer `backend/data/iddaa/` — baska hicbir dosyaya dokunmaz ve
+# degisiklik yoksa commit de atmaz.
 #
-# Once elle denemek icin: Actions sekmesi -> bu is -> "Run workflow".
+# Durdurmak icin: Actions sekmesi -> bu is -> "..." -> "Disable workflow"
+# (ya da asagidaki `schedule` blogunu yorumla). Durdurmanin bedeli, o
+# haftanin bulteninin bir daha ele gecmemesidir — gecmis oran hicbir
+# kaynakta yayinlanmiyor.
+#
+# Elle calistirmak icin: Actions sekmesi -> bu is -> "Run workflow".
 
 on:
   workflow_dispatch:
-  # schedule:
-  #   # Her pazartesi 06:00 UTC (TR 09:00) — hafta kuponu aciktayken.
-  #   - cron: "0 6 * * 1"
+  schedule:
+    # Her pazartesi 06:00 UTC (TR 09:00) — hafta kuponu aciktayken.
+    # GitHub zamanlanmis isleri yogunlukta oteleyebilir; gun icinde kayma
+    # onemli degil, bulten gun boyu ayakta.
+    - cron: "0 6 * * 1"
+
+# Iki calisma ust uste binerse ikisi de ayni dosyaya yazip push yarisina
+# girer. Ayni anda tek calisma yeter; bekleyen is iptal EDILMEZ, cunku
+# atlanan bir hafta geri gelmiyor.
+concurrency:
+  group: iddaa-snapshot
+  cancel-in-progress: false
 
 jobs:
   snapshot:
@@ -51,10 +63,18 @@ jobs:
           cd "$GITHUB_WORKSPACE"
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Yalnizca arsiv dizini. Baska bir dosya degistiyse (olmamali)
+          # bu is onu islemez — botun yazma alani tek bir yer.
           git add backend/data/iddaa
           if git diff --cached --quiet; then
             echo "yeni snapshot yok — islenecek degisiklik bulunamadi"
             exit 0
           fi
           git commit -m "veri: iddaa bulten snapshot $(date -u +%Y-%m-%d)"
-          git push
+
+          # Dal bu arada ilerlemis olabilir. Veri dosyasi commit'i cakismaz;
+          # rebase ile ustune bindirip acik hedefe push ediyoruz (schedule
+          # calismasinda checkout ayrik HEAD olabilir).
+          git pull --rebase --autostash origin "$GITHUB_REF_NAME"
+          git push origin "HEAD:$GITHUB_REF_NAME"
