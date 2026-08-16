@@ -1,62 +1,125 @@
-# Spor Toto 14-Garanti Formül Üreticisi
+# Spor Toto Lab — 14-Garanti Formül Üreticisi
 
-Spor Toto kuponu için **kaplama kodu** (covering code) üreten araç.
+Spor Toto kuponu için **kaplama kodu** (covering code) üreten, ürettiği garantinin
+sınırını da ölçen açık bir laboratuvar.
 
-Seçtiğin ihtimal kümeleri içinde doğru sonuç varsa, oynanan kolonlardan en az biri **en fazla 1 maç hatalı** olur — yani **14-garanti**.
-
-Bu araç maç sonucu **tahmin etmez**. Tahminin doğruysa onu kaçırmamanı, hem de mümkün olan **en az kuponla** sağlamanı hedefler. Bir maliyet düşürme aracıdır; kazanma olasılığını büyütmez.
+Seçtiğin ihtimal kümeleri içinde doğru sonuç varsa, oynanan kolonlardan en az biri
+**en fazla 1 maç hatalı** olur — yani **14-garanti**. Bu garanti bir tahmin değil,
+kombinatoryal bir teoremdir: doğruysa her zaman doğrudur, yanlışsa hiçbir zaman
+doğru olmaz.
 
 ---
 
-## Ne yapar / ne yapmaz
+## 1. Vizyon
+
+Bahis araçlarının çoğu aynı şeyi yapar: bir sayı üretir, o sayının nereden geldiğini
+anlatmaz ve kullanıcıya kazanma hissi satar. Bu proje bunun tam tersini denemektedir.
+
+**Kurucu iddia: bu araç maç sonucu tahmin etmez.** Tahminin doğruysa onu
+kaçırmamanı, hem de mümkün olan **en az kuponla** sağlar. Bir maliyet düşürme
+aracıdır; kazanma olasılığını büyütmez.
+
+Bu iddianın etrafında beş taahhüt var. Projedeki hemen her karar bunlardan birine
+dayanır.
+
+### 1.1 Garanti kombinatoryaldir, olasılıksal değildir
+
+14-garanti Hamming geometrisinden gelir. Olasılık, Bayes, Markov — hiçbiri onu
+güçlendirmez veya zayıflatmaz. Bu katmanlar yalnızca "seçimlerim ne kadar
+sağlam?" sorusuna cevap verir; garantinin kendisine dokunmazlar. Kodda da böyle
+ayrılmıştır: `core.py` olasılık katmanını hiç bilmez.
+
+### 1.2 Belirsizlik saklanmaz, ölçülür ve gösterilir
+
+Garanti yalnızca **seçim kümesi içinde** geçerlidir. Küme dışına çıkan bir sonuç
+gelirse sistem o senaryoyu kapsamaz. Bu bir hata değil, tasarımın sınırıdır — ve
+bir aracın en kolay gizleyebileceği şey tam olarak budur.
+
+Bu yüzden sınırın ötesi ayrı bir katman olarak ölçülür: **fire analizi** (CLI
+`--fire`, arayüzde *Fire* sekmesi) bir veya iki maç işaretlerin dışına çıkarsa en
+iyi kolonun kaç tutturduğunu, banko/çifte ayrımıyla birlikte gösterir. "Ya
+yanılırsam?" sorusunun cevabı üründe görünür bir yerde durur.
+
+### 1.3 Veri kendini denetler, çelişki raporlanır
+
+Tarihsel veri ve oran arşivi bu projede birer süs değil, denetlenen varlıklardır.
+Maç listesi, sonuç dizisi ve sayımlar birbirini tutmadan dosya yazılmaz; okuma
+anında aynı denetim tekrarlanır ve sonucu `data_quality` bloğu olarak **arayüzde
+görünür**. "Sessizce doğru olanı seç" yaklaşımı, hatanın bir sonraki sefere kadar
+saklanması demektir (bkz. §5.6 vaka: v1 sıra hatası).
+
+### 1.4 Kaynak dürüstlüğü
+
+Verinin ne **olmadığı**, ne olduğu kadar önemlidir. Arşivdeki oranlar piyasa
+oranıdır, **iddaa oranı değildir** — ve bu, kodda, belgede ve arayüzde her yerde
+yazar. Otomatik erişime kapalı bir kaynaktan veri çekilmez.
+
+### 1.5 Vaat bir kez değil, her çağrıda kanıtlanır
+
+Yukarıdaki dört taahhüdün hepsi kodda doğru yazılmış olabilir ve yine de
+**yayındaki sürümde** geçerli olmayabilir: bağımlılık kurulamaz, veri dosyası
+dağıtıma girmez, yanlış commit yayınlanır. Testler bunu yakalamaz — testler CI
+makinesinde, o günkü kilitli bağımlılıklarla, o commit üzerinde koşar.
+
+Bu yüzden sağlık katmanı ayrı bir katmandır ve `/saglik` sayfası ürünün eşit
+haklı bir parçasıdır: **ürünün vaadinin şu anda, bu makinede, bu sürümde hâlâ
+geçerli olduğunu kanıtlar.** 16 değişmez, 6 kategori, her çağrıda yeniden
+ölçülür — ve neyi kanıtlamadığını da açıkça yazar (§6.3).
+
+### 1.6 Ne yapar / ne yapmaz
 
 | Yapar | Yapmaz |
 |-------|--------|
 | Hamming yarıçap-1 kaplama kodu üretir | Maç sonucu tahmin etmez |
 | En kötü durumda 14 doğru **garantiler** (küme içinde) | İkramiye / beklenen değer hesabı yapmaz |
-| Exact + Monte Carlo olasılık raporu verir | Bülten verisi çekmez (henüz) |
-| Bayes (Dirichlet) ile tahminlerini yumuşatır | 14-garantiyi olasılıkla “güçlendirmez” — garanti kombinatoryaldir |
-| Markov ile sıralı risk profili çıkarır | Mobil uygulama değildir |
-
-**Kritik ayrım:** Garanti, *seçim kümesi içinde* geçerlidir. Küme dışı bir sonuç gelirse sistem zaten o senaryoyu kapsamaz — bu bir hata değil, tasarımın sınırıdır.
-
-O sınırın ötesinde ne olduğunu **fire analizi** ölçer (CLI `--fire`, arayüzde *Fire* sekmesi): bir veya iki maç işaretlerinin dışına çıkarsa en iyi kolonun kaç tutturduğunu, banko/çifte ayrımıyla birlikte gösterir.
+| Küme dışı senaryoları **fire** olarak ölçer | Kazanma olasılığını artırmaz |
+| Exact + Monte Carlo olasılık raporu verir | 14-garantiyi olasılıkla "güçlendirmez" |
+| Bayes (Dirichlet) ile tahminlerini yumuşatır | Kâr vaadi vermez |
+| Vaadin canlıda geçerliliğini 16 değişmezle ölçer | Tahmin isabetini ölçmez (ölçemez) |
+| Markov ile sıralı risk profili çıkarır | Canlı bülten çekmez |
+| 41 haftalık sezon verisini ve piyasa oranlarını analiz eder | İddaa geçmiş oranı sunmaz (yok — §5.3) |
+| Her sayının kaynağını ve sınırını yazar | Mobil uygulama değildir |
 
 ---
 
-## Kurulum
+## 2. Hızlı başlangıç
 
-Python tarafının tamamı `backend/` altındadır:
+Python tarafının tamamı `backend/`, arayüzün tamamı `frontend/` altındadır.
 
 ```bash
+# 1) Motor + API
 cd backend
-pip install -e .
-# veya geliştirme + test:
-pip install -e ".[test]"
-# uv kullanıyorsan:
-uv sync --extra test
+pip install -e ".[test]"        # veya: uv sync --extra test
+
+# 2) CLI
+spor-toto --picks "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"
+
+# 3) API + arayüz birlikte (repo kökünden)
+bash scripts/run_next_dev.sh    # UI :3000, API :8080
 ```
 
-Bağımlılıklar: `numpy`, `scipy` (kesin ILP için), `flask` (web).
+Bağımlılıklar: `numpy`, `scipy` (kesin ILP için), `flask`, `gunicorn`.
 `scipy` yoksa araç çalışır; yalnızca kesin çözücü (ILP) devre dışı kalır.
+Python ≥ 3.10. Arayüz: Next.js 14 App Router + TypeScript + Tailwind.
 
 ---
 
-## CLI kullanım
+## 3. Katman 1 — Kombinatoryal çekirdek
 
-```bash
-spor-toto --picks "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"
-```
+Ürünün değişmeyen çekirdeği. Girdi 15 maçlık işaret kümesi, çıktı kupon
+satırlarıdır; arada olasılık yoktur.
 
-### `--picks` biçimi
+### 3.1 `--picks` biçimi
 
 - 15 maç virgülle ayrılır
 - Her maçın seçenekleri bitişik yazılır
-- `1` = banko ev, `10` = çifte, `102` / `012` = üçlü (kapama)
-- Baş/son fazla ayırıcı (`",1,10,"`) yok sayılır; **ortadaki boş slot** (`"1,,10"`) `ValueError` fırlatır
+- `1` = banko ev, `0` = beraberlik, `2` = deplasman
+- `10` / `02` / `12` = çifte, `102` / `012` = üçlü (kapama)
+- Baş/son fazla ayırıcı (`",1,10,"`) yok sayılır; **ortadaki boş slot** (`"1,,10"`)
+  `ValueError` fırlatır
 - `"1, 10"` gibi boşluklu yazım geçerlidir
 
-### Modlar
+### 3.2 Modlar
 
 | Mod | Ne yapar |
 |-----|----------|
@@ -65,7 +128,7 @@ spor-toto --picks "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"
 | `exact` | ILP ile kanıtlanmış optimal (küçük uzaylar). |
 | `block` | Yalnızca blok ayrıştırma motoru. |
 | `heuristic` | Açgözlü + local search (büyük uzaylar). |
-| `butce` | “Elimde N kolon var, hangi maçı kısmalıyım?” |
+| `butce` | "Elimde N kolon var, hangi maçı kısmalıyım?" |
 | `maxcov` | Sabit bütçeyle maksimum kapsama. **Garanti vermez.** |
 
 ```bash
@@ -73,14 +136,45 @@ spor-toto --picks "..." --variant 3
 spor-toto --picks "..." --mode auto
 spor-toto --picks "..." --mode butce --budget 32
 spor-toto --picks "..." --mode maxcov --budget 16
-spor-toto --picks "..." --probs "1:0.5,0:0.3,2:0.2;..." --mc-samples 20000
-spor-toto --picks "..." --fire            # seçim DIŞI fire analizi
-spor-toto --picks "..." --fire --fire-max 1
+spor-toto --picks "..." --kati            # katı doğrulama
+spor-toto --picks "..." --kisa            # kısa çıktı
+spor-toto --picks "..." --output rapor.txt
 ```
 
-### Olasılık, Monte Carlo, Bayes
+Motor ayarları: `--trials`, `--ls-iters`, `--seed`, `--time-limit`,
+`--block-limit`, `--exact-limit`, `--plan`, `--plan-uygula`.
 
-`--probs`: maçlar `;` ile ayrılır, her maç `1:0.5,0:0.3,2:0.2`.
+### 3.3 Satır ≠ kolon
+
+Bir maça çifte işaretlersen o satır **2 kolon** üretir ve 2 kolon bedeli ödersin.
+16 satır + ekstra çifte faktörü = daha yüksek bedel. UI ve CLI toplam **kolon
+bedelini** gösterir; bu bir tasarım kuralıdır, kolon bedeli hiçbir yerde satır
+sayısından ayrı gösterilmez.
+
+### 3.4 Bilinen matematiksel sınırlar
+
+Küre-kaplama alt sınırı: `kolon ≥ |uzay| / top_boyutu`.
+
+| Durum | Optimal kolon (alt sınır civarı) |
+|-------|----------------------------------|
+| 5 çifte | 7 |
+| 6 çifte | 12 |
+| 7 çifte | **16** (Hamming(7,4)) |
+| 8 çifte | **32** |
+| 4 üçlü | **9** |
+
+**8 çifteyi 16 kolona sığdırmak imkânsızdır.** `maxcov` 16 kolonla kısmi kapsama
+verir — **garanti değildir** ve arayüz bunu her seferinde yazar.
+
+---
+
+## 4. Katman 2 — Olasılıksal analiz
+
+Bu katmanın tamamı isteğe bağlıdır ve **garantiyi değiştirmez**. `probs`
+verilmezse `advanced`, `bayes` ve `markov` blokları `null` döner.
+
+`--probs`: maçlar `;` ile ayrılır, her maç `1:0.5,0:0.3,2:0.2`. Ham ağırlık da
+kabul edilir, normalize edilir.
 
 ```bash
 # Exact + Monte Carlo
@@ -91,65 +185,196 @@ spor-toto --picks "..." --probs "..." --bayes-preset dengeli --mc-samples 10000
 
 # Manuel α / n
 spor-toto --picks "..." --probs "..." --bayes --prior-strength 2 --evidence-strength 20
+
+# Seçim DIŞI fire analizi
+spor-toto --picks "..." --fire
+spor-toto --picks "..." --fire --fire-max 1
 ```
 
-#### `--bayes-preset` seçenekleri
+### 4.1 Bayes presetleri
 
 | Preset | Prior α | Evidence n | Ne zaman |
 |--------|---------|------------|----------|
-| `zayif_prior` | 0.5 | 15 | Evidence’e güven yüksek |
+| `zayif_prior` | 0.5 | 15 | Evidence'e güven yüksek |
 | `dengeli` | 1.0 | 10 | Varsayılan denge |
 | `guclu_prior` | 5.0 | 8 | Seçim kümesine güçlü güven |
 | `evidence_agir` | 1.0 | 40 | Evidence neredeyse doğrudan alınır |
 | `sadece_prior` | 3.0 | 0 | Evidence yok sayılır (posterior = prior) |
 
-Bayes **14-garantiyi değiştirmez**; yalnızca exact/MC motoruna giden olasılık ağırlıklarını günceller.
+Web'deki preset dropdown CLI ile **aynı α/n** değerlerini kullanır; arayüz bunları
+`GET /api/meta` üzerinden okur, sabit kodlamaz. CLI çıktısında `Kaynak:
+bayes_posterior`, ortalama KL + etiket (`ihmal edilebilir` … `güçlü kayma`) ve
+maç bazlı en büyük KL kaymaları görünür — web'deki "Yorum" sütunuyla aynı bilgi.
 
-CLI çıktısında:
-- `Kaynak: bayes_posterior`
-- Ortalama KL + etiket (`ihmal edilebilir` … `güçlü kayma`)
-- En büyük KL kaymaları (maç bazlı, web “Yorum” sütunu ile aynı bilgi)
+### 4.2 Ne ölçülür
 
-Web’de Bayes paneli: preset dropdown (CLI ile **aynı α/n**), posterior tablosu, maç bazlı KL **Yorum**.
+| Blok | Soru |
+|------|------|
+| Exact olasılık | Seçim kümesi içinde kalma olasılığı tam olarak nedir |
+| Monte Carlo | Aynı sayı örneklemeyle ne çıkıyor (%95 güven aralığıyla) |
+| Bayes | Girdiğim olasılıklar seçim kümemle ne kadar çelişiyor (KL) |
+| Markov | Maç maç ilerlerken hata bütçesi (0 / 1 / 2+) nasıl tükeniyor |
+| Hata frekansı | d=1 ve d=2 katmanlarında hangi maç hata üretiyor |
+| **Fire** | **Küme dışına çıkarsam en iyi kolonum kaç tutturur** |
+
+Fire bloğu olasılık girdisi gerektirmez, çünkü olasılıkla ilgili değildir — sınırın
+ötesindeki kombinatoryal manzarayı çizer. Pahalı olduğu için maliyet sınırı vardır;
+aşılırsa blok sessizce `null` olmaz, `{"skipped": true, "reason": …}` döner.
 
 ---
 
-## Web arayüzü
+## 5. Katman 3 — Veri ve istatistik
 
-Backend yalnızca JSON API'dir; arayüz Next.js tarafındadır (`frontend/`).
+Motor tek başına tarihsiz çalışır; istatistik katmanı ona bağlam verir. İki veri
+seti vardır ve ikisi de tek komutla kaynağından yeniden üretilebilir.
 
-```bash
-# API tek başına
-python backend/web_app.py       # http://localhost:8080
+| | Tarihsel sonuçlar | Oran arşivi |
+|---|---|---|
+| **Dosya** | `backend/data/st_history_2025_26.json` | `backend/data/odds/odds_2025_26.csv` |
+| **Üreten** | `backend/scripts/build_history.py` | `backend/scripts/build_odds.py` |
+| **Okuyan** | `backend/spor_toto/history.py` | `backend/spor_toto/odds.py` |
+| **Bekçi** | `backend/tests/test_history.py` | `backend/tests/test_odds.py` |
 
-# API + Next.js arayüz birlikte
-bash scripts/run_next_dev.sh    # UI :3000, API :8080
+### 5.1 Veri akışı
+
+```
+sportototahmin hafta payload'ları
+        │  scripts/build_history.py   (haftanın kendi matches dizisi, sırayla)
+        ▼
+data/st_history_2025_26.json          41 hafta · 615 maç · maç listesiyle
+        │  spor_toto/history.py       (6 analiz bloğu, dilimleme, veri kalitesi)
+        ▼
+GET /api/stats[?last=N] ─────────────► /istatistik
+GET /api/stats/<week>   ─────────────► /istatistik/<hafta>
+        ▲
+        │  spor_toto/odds.py          (1X2 özeti, banko bantları, kalibrasyon)
+data/odds/odds_2025_26.csv            567 maç · 108 oran sütunu
+        ▲
+        │  scripts/build_odds.py      (tarih ±1 gün + birebir skor + bulanık ad)
+football-data.co.uk arşivi (38 dosya)
 ```
 
-### Sayfalar
+### 5.2 Veri doktrini
+
+Bu yedi ilke, veri tarafındaki her kararın gerekçesidir. Tam metin:
+[`docs/VERI_TOPLAMA_VE_ISLEME.md`](docs/VERI_TOPLAMA_VE_ISLEME.md) §1.
+
+1. **Tek doğruluk kaynağı vardır ve zinciri bellidir.** Maç listesi → sonuç dizisi
+   → sayımlar. Hiçbiri bağımsız yazılmaz.
+2. **Kesin olmayan veri elenir, tahmin edilmez.** 15 maçı tam kapanmamış hafta
+   analize hiç girmez.
+3. **Sıra kaynağın kendi sırasıdır.** Tarihe göre sıralanmaz, isimden çıkarılmaz.
+4. **Çelişki gizlenmez, raporlanır.** `data_quality` bloğu arayüzde görünür.
+5. **Doğrulanmadan yazılmaz.** Üretim scriptleri `assert` geçmeden dosya yazmaz.
+6. **Türetilmiş veri sürümlenir, ham veri sürümlenmez.** Ham indirmeler
+   `.gitignore`'da; tek komutla geri gelirler.
+7. **Kaynak dürüstlüğü.** Verinin ne olmadığı her yerde yazar.
+
+### 5.3 Elimizde ne var
+
+**Tarihsel sonuçlar** — 2025/2026 sezonu, 2025-08-18 → 2026-07-27, **41 hafta ·
+615 maç** (yalnızca 15/15 kapanmış haftalar). Dağılım: 1 → 270 (%43,90) · 0 → 149
+(%24,23) · 2 → 196 (%31,87). Her maç için takım adları, başlama saati, skor ve kod
+saklanır.
+
+**Oran arşivi** — football-data.co.uk piyasa oranları, **567 / 615 maç (%92,2)**,
+41 haftanın 36'sı tam. **108 oran sütunu, 51.683 değer** (1X2 · 2.5 alt/üst · Asya
+handikap, her biri açılış + kapanış) ve 14 maç istatistiği. Eşleşmeyen 48 maçın
+45'i milli maç haftalarıdır (5, 10, 15) — kaynak milli maç yayınlamaz; bu yüzden
+kapsama hiçbir zaman %100 olmayacak.
+
+Eşleştirme anahtarı: **tarih (±1 gün) + birebir skor + bulanık takım adı**. Skor
+şartı yanlış eşleşmeye karşı en güçlü korumadır.
+
+**Bunlar iddaa oranı değildir.** İddaa geçmiş bültenini yayınlamıyor (resmi API
+yalnızca açık bülteni veriyor), Maçkolik ise `robots.txt` ile otomatik erişime
+kapalı. Piyasa oranının **seviyesi** iddaa ile tutmaz (marj farkı), **favori
+sıralaması ve marj arındırılmış olasılık yapısı** tutar — analizde kullanılan da
+budur.
+
+### 5.4 Ölçülmüş bulgular
+
+Bunlar tahmin değil, bu veri seti üzerinde hesaplanmış sayılardır.
+
+**Banko güvenilirliği** (kapanış favorisinin oranına göre):
+
+| Favori oranı | Maç | Tuttu | Tutmadı | ↳ beraberlik | ↳ karşı taraf |
+|---|---:|---:|---:|---:|---:|
+| 1.00–1.20 | 11 | %90,9 | %9,1 | %9,1 | %0,0 |
+| 1.20–1.35 | 39 | %76,9 | %23,1 | %17,9 | %5,1 |
+| 1.35–1.50 | 64 | %64,1 | %35,9 | %23,4 | %12,5 |
+| 1.50–1.75 | 106 | %60,4 | %39,6 | %20,8 | %18,9 |
+| 1.75–2.00 | 104 | %50,0 | %50,0 | %35,6 | %14,4 |
+| 2.00+ | 243 | %46,9 | %53,1 | %25,5 | %27,6 |
+
+Okuma: 1.35 pratik bir sınır. 1.75–2.00 bandı tuzaktır — isabet %50'ye düşerken
+tutmama sebebinin çoğu beraberliktir; orada banko yapmak aslında beraberliğe karşı
+bahis yapmaktır.
+
+**Favori kırılımı** — 567 maçın 311'inde favori tuttu (1 → 205, 2 → 106; **0 asla
+favori olmadı**). Gerçek sürpriz (karşı taraf kazandı): 112 maç (%19,8). Piyasa iki
+yönde de aynı doğrulukta: favori "1" iken isabet %54,8, "2" iken %54,9.
+
+**Kalibrasyon** — 8 kova; ör. %20–30 kovasında model %25,6 → gerçek %24,4.
+Ortalama marj %7,26. Rastgele ya da kaymış bir eşleştirme bu tabloyu üretemez;
+`test_odds.py` favori isabetini alt/üst sınırla bekçiye bağlar.
+
+**Çift kapsama** — ilk-iki olasılık toplamı 0,70–0,80 iken gerçek sonuç küme içinde
+kalma oranı %77,4; 0,80–0,90 iken %86,6; 0,90+ iken %96,9. (Henüz sayfada yok →
+yol haritası F3.)
+
+### 5.5 Veri kalitesi denetimi
+
+`history.py` her okumada seti denetler ve sonucu API'ye koyar:
+
+| Alan | Ne yakalar |
+|---|---|
+| `count_conflicts` | Dosyadaki `n1/n0/n2` ile diziden türeyen sayım çelişiyor |
+| `match_conflicts` | Maç listesinin kodları diziyle örtüşmüyor (sıra dahil) |
+| `weeks_without_matches` | Hafta maç listesi taşımıyor |
+| `incomplete_weeks` | 15 maçtan az |
+| `duplicate_results` | İki hafta birebir aynı diziyi taşıyor |
+| `ok` | Hepsi temizse `true` |
+
+Bu blok **arayüzde gösterilir**. Temizse yeşil bir satır, değilse hangi haftada ne
+olduğu.
+
+### 5.6 Neden bu denetim var — v1 sıra hatası
+
+İlk üretimde payload düz taranıyor, haftanın kendi `matches` dizisiyle komşu
+haftaların `featuredMatches` blokları karışıyordu. Sonuç: 41 haftanın **15'inde
+sonuç dizisi yanlış sıradaydı**, 6'sında sayım da tutmuyordu; iki hafta çifti
+birebir aynı diziyi taşıyordu.
+
+Sezon toplamları etkilenmemişti — bu yüzden hata aylarca görünmedi. Ama **sıraya
+bağlı her analiz** (maç sırası dağılımı, geçiş matrisi, seriler) 15 haftada
+kirliydi. Düzeltme sonrası 51. hafta bağımsız bir kaynakla çapraz doğrulandı ve
+birebir tuttu (`000111122212011`).
+
+**Ders:** doğru görünen bir toplam, altındaki verinin doğru olduğunu göstermez.
+Bugün `match_conflicts` tam olarak bunu yakalar. Vaka analizi:
+[`docs/VERI_TOPLAMA_VE_ISLEME.md`](docs/VERI_TOPLAMA_VE_ISLEME.md) §6.4.
+
+---
+
+## 6. Katman 4 — Gözlem: arayüz, API, sağlık
+
+### 6.1 Sayfalar
 
 | Rota | İçerik |
 |------|--------|
 | `/` | **Formül** — motorun tamamı |
-| `/istatistik` | Sezon dağılımı, bantlar, 41 hafta |
+| `/istatistik` | Sezon dağılımı, bantlar, oran kartı, 41 hafta |
 | `/istatistik/<hafta>` | Tek hafta detayı |
 | `/saglik` | Değişmezler — kategori kategori, süre ve açıklamalarıyla |
 
-### Formül sayfası
+**Formül sayfası — girdi:** 15 × 3 maç ızgarası (klavye: ok tuşları + `1` / `0` /
+`2`) · canlı sayaç (banko / çifte / üçlü / uzay / tahmini kolon bedeli) · **7 modun
+tamamı** · varyant, bütçe, bütçe planı, katı doğrulama · maç bazlı olasılık girişi
+· Bayes preset veya elle α/n · Monte Carlo örnek sayısı (1.000–200.000) · fire
+analizi (kapalı / 1-fire / 1 ve 2 fire) · motor ayarları.
 
-Girdi tarafı:
-
-- 15 × 3 maç ızgarası (klavye: ok tuşları + `1` / `0` / `2`)
-- Canlı sayaç: banko / çifte / üçlü / uzay / tahmini kolon bedeli
-- **7 modun tamamı**: fix16, auto, exact, block, heuristic, butce, maxcov
-- Varyant, bütçe, bütçe planı seçimi, katı doğrulama
-- **Maç bazlı olasılık girişi** (1/0/2) — ham ağırlık da kabul edilir, normalize edilir
-- **Bayes**: 5 hazır preset (CLI ile aynı α/n) veya elle α / n
-- Monte Carlo örnek sayısı (1.000–200.000)
-- **Fire analizi** (seçim dışı): kapalı / 1-fire / 1 ve 2 fire
-- Motor ayarları: `trials`, `ls_iters`, `seed`, `time_limit`, `block_limit`, `exact_limit`
-
-Sonuç sekmeleri — hepsi backend alanlarıyla birebir:
+**Formül sayfası — sonuç sekmeleri** (hepsi backend alanlarıyla birebir):
 
 | Sekme | Gösterdiği |
 |-------|------------|
@@ -163,21 +388,72 @@ Sonuç sekmeleri — hepsi backend alanlarıyla birebir:
 | Fire | **Seçim dışı** senaryolar — garantinin geçerli olmadığı bölge |
 | Log | Motorun adım adım çalışma logu |
 
-Arayüz mod listesini, preset'leri ve sınırları `GET /api/meta` üzerinden okur —
-hiçbiri arayüzde sabit kodlanmaz, motorla tek kaynaktan senkron kalır.
+**İstatistik sayfası:** sezon dağılımı · 5 sayı kutusu · haftalık seyir çizgisi ·
+haftalık bantlar (min–maks, ±1σ, ortanca, ortalama) · adet dağılımı · **oran kartı**
+(favori isabeti + kırılım + çapraz tablo + banko bantları + kalibrasyon) · maç
+sırasına göre ısı haritası · geçiş matrisi · uçlar ve seriler · hafta tablosu · veri
+kalitesi paneli.
 
-### API uçları
+**Sağlık sayfası** okuma sırasına göre kurulmuştur — her blok, bir öncekinin cevabı
+yetmediğinde okunur:
+
+| Sıra | Blok | Cevapladığı soru |
+|---|---|---|
+| 1 | Durum kartı | "İyi mi kötü mü?" |
+| 2 | Düşenler özeti | "Ne bozuldu?" |
+| 3 | Kategori kartları (+ *"yalnızca bunu çalıştır"*) | "Hangi katman, tam olarak ne?" |
+| 4 | Çalışma geçmişi (oturum içi) | "Sürekli mi, arada bir mi?" |
+| 5 | Çalışan ortam | "Hangi sürümlerde?" |
+
+Süre çubuğu her satırda görünür, çünkü performans gerilemesi de bir gerilemedir:
+bir kontrolün 8 ms'den 400 ms'ye çıkması hiçbir değişmezi kırmaz ama bir şeyin
+değiştiğini kesin olarak söyler. Sayfa kategorileri, açıklamaları ve kritiklik
+bayrağını rapordan okur — hiçbirini sabit kodlamaz.
+
+### 6.2 API uçları
 
 | Method | Path | Açıklama |
 |--------|------|----------|
+| GET | `/` | Servis bilgisi JSON |
 | GET | `/api/meta` | Modlar, preset'ler, varsayılanlar, sınırlar |
-| GET | `/api/health` | Değişmezler (200 = HEALTHY, 503 = UNHEALTHY); `?only=` ile kısmi |
-| GET | `/api/health/checks` | Kontrol envanteri (çalıştırmadan) |
-| GET | `/api/stats` | Tarihsel 1/0/2 |
-| GET | `/api/stats/<week>` | Tek hafta |
+| GET | `/api/health` | Değişmezler (200 = HEALTHY/DEGRADED, 503 = UNHEALTHY); `?only=` ile kısmi |
+| GET | `/api/health/checks` | Kontrol envanteri — çalıştırmadan |
+| GET | `/api/stats?last=N` | Tarihsel 1/0/2 + analiz blokları + oran özeti |
+| GET | `/api/stats/<week>` | Tek hafta detayı (komşular, sıra, sapma, maç listesi) |
 | POST | `/api/solve` | Motorun tamamı |
 
-### Health
+Üç sözleşme kuralı:
+
+1. **`/api/meta` frontend'in tek gerçek kaynağıdır.** Mod listesi, preset'ler ve
+   sayısal sınırlar arayüzde sabit kodlanmaz — motorla tek kaynaktan senkron kalır.
+2. **`?last=N` bütün blokları birlikte diler.** Özet, bantlar ve analiz bloklarının
+   tamamı aynı dilim üzerinden hesaplanır; iki görsel asla farklı veriyi anlatmaz.
+3. **Arayüze yalnızca maç sonucu (1X2) çıkar.** 2.5 alt/üst, Asya handikap ve maç
+   istatistikleri arşivde analiz için kalır; `test_api_stats.py` bunu denetler.
+
+Gövde şeması ve alan alan sözleşme:
+[`docs/ARCHITECTURE_NEXT.md`](docs/ARCHITECTURE_NEXT.md).
+
+### 6.3 Sağlık — vaadin hâlâ geçerli olduğunun kanıtı
+
+Sağlık katmanı "sistem ayakta mı?" sorusunu sormaz; onu 200 dönen herhangi bir uç
+zaten cevaplar. Sorduğu soru şudur: **ayakta olan şey hâlâ vaat ettiğimiz şey mi?**
+
+Test ile sağlık kontrolü aynı iddiayı farklı zaman ve zeminde sınar. `pytest`
+"bu commit doğru mu?" der; `/api/health` "yayınlanmış olan, kurulu gerçek
+sürümlerle, şu anda hâlâ doğru mu?" der. Aradaki boşluk teorik değildir: scipy'nin
+dağıtımda kurulamaması, numpy'ın majör sürüm atlaması, veri dosyasının dağıtıma
+girmemesi ya da yanlış commit'in yayınlanması — hiçbirini test yakalamaz.
+
+Kontrol mantığının **ikinci bir kopyası yoktur**: tek `CHECKS` tanımı üç ayrı
+soruya cevap verir.
+
+```
+CHECKS (tek tanım)
+   ├── pytest            → "bu commit doğru mu?"
+   ├── CI adımı          → "yayınlanmaya uygun mu?"
+   └── GET /api/health   → "yayınlanmış olan hâlâ doğru mu?"
+```
 
 ```bash
 cd backend
@@ -185,140 +461,341 @@ python -m spor_toto.health                  # bir kez
 python -m spor_toto.health --interval 60
 python -m spor_toto.health --list           # kontrol envanteri
 python -m spor_toto.health --only olasilik  # tek kategori (veya tek kontrol)
-curl http://localhost:8080/api/health       # JSON (200 = HEALTHY, 503 = UNHEALTHY)
+curl http://localhost:8080/api/health       # JSON
 curl "http://localhost:8080/api/health?only=cekirdek"
+curl http://localhost:8080/api/health/checks   # envanter, çalıştırmadan
 ```
 
-Kontroller altı kategoriye ayrılır — güncel liste için `--list`:
+**16 kontrol, 6 kategori.** Kategoriler motorun katmanlarını izler ve yukarıdan
+aşağıya doğru ciddiyet azalır — düşen kontrolün adı değil, **hangi katmanın
+bozulduğu** okunur. Güncel liste için `--list`:
 
-| Kategori | Kapsam |
-|----------|--------|
-| `cekirdek` | encoder, fix16 garanti, yetersiz çifte reddi, distance layers |
-| `motor` | blok motoru, heuristic |
-| `olasilik` | exact, Monte Carlo, Bayes, Markov |
-| `analiz` | error_freq, **fire senaryoları**, veri seti, oran arşivi |
-| `ucuca` | pipeline sonuç şekli |
-| `ortam` | scipy bayrağı (bilgi amaçlı) |
+| Kategori | Kapsam | Düşerse |
+|----------|--------|---------|
+| `cekirdek` | encoder, fix16 garanti, yetersiz çifte reddi, distance layers | **Ana vaat geçersiz.** Yayın durdurulur |
+| `motor` | blok motoru, heuristic | Bir mod güvenilmez; fix16 ayakta olabilir |
+| `olasilik` | exact, Monte Carlo, Bayes, Markov | Sayılar yanlış; garanti geçerli olabilir |
+| `analiz` | error_freq, **fire senaryoları**, veri seti, oran arşivi | Yorum katmanı bozuk; motor sağlam |
+| `ucuca` | pipeline sonuç şekli | Arayüz yanlış okuyor olabilir |
+| `ortam` | scipy bayrağı (bilgi amaçlı) | Bir yetenek eksik olabilir |
 
-Kritik olmayan bir kontrol düşerse rapor **DEGRADED** olur: `ok` true kalır, uç 503
-DÖNMEZ — servis ayaktadır, yalnızca bir yeteneği eksiktir.
+**Her düşüş 503 değildir.** HTTP durum kodu "beni trafikten çıkar" demektir, "bir
+eksiğim var" demek değildir:
+
+| Durum | Koşul | `ok` | HTTP | Anlamı |
+|---|---|---|---|---|
+| **HEALTHY** | Her şey geçti | `true` | 200 | Vaat geçerli |
+| **DEGRADED** | Yalnızca `critical=False` düştü | `true` | **200** | Vaat geçerli, bir yetenek eksik |
+| **UNHEALTHY** | En az bir kritik düştü | `false` | 503 | Vaat sorgulanır |
+
+Bugün tek bir kontrol kritik değildir (`scipy_flag`): scipy yoksa ILP devre dışı
+kalır, motorun geri kalanı doğru çalışmaya devam eder. `critical=False` bir
+istisnadır ve gerekçe ister; ölçüt tektir — *bu kontrol düşerken kullanıcının
+aldığı sonuç hâlâ doğru mu?*
+
+**Kısmi çalıştırma dürüsttür.** `?only=` tek kontrolü veya kategoriyi koşturur;
+rapor `summary.kismi` ile kendini işaretler ve sayfa bunu bant olarak gösterir —
+kısmi bir yeşil, tam bir yeşil gibi görünemez. Otomatik yenileme her zaman tam
+raporu koşar. Bilinmeyen kontrol adı sessizce boş küme değil, **400** döner.
+
+**Neyi kanıtlamaz:** kontroller sabit bir örnek kupon üzerinde koşar
+(`1,10,1,12,0,10,2,10,1,12,02,1,10,2,10` — 8 çift, 256 nokta). HEALTHY, *senin az
+önce ürettiğin kuponun* doğrulandığı anlamına gelmez; motorun o kupon sınıfında
+doğru davrandığı anlamına gelir. Kendi sonucun her `/api/solve` çağrısında
+`guaranteed` / `worst` / `acik` alanlarıyla ayrıca doğrulanır.
+
+Sağlık kırmızıysa yayınlama yapılmaz. Bu, otomatik CD'nin yerini alan kuraldır.
+
+Katmanın vizyonu, kontrol sözleşmesi ve yol haritası:
+[`docs/SAGLIK_VIZYONU.md`](docs/SAGLIK_VIZYONU.md).
 
 ---
 
-## Satır ≠ kolon
+## 7. Mimari
 
-Bir maça çifte işaretlersen o satır **2 kolon** üretir ve 2 kolon bedeli ödersin.
-16 satır + ekstra çifte faktörü = daha yüksek bedel. UI ve CLI toplam **kolon bedelini** gösterir.
+**Python = sadece backend (JSON API). HTML yok. Frontend = sadece Next.js
+(TS/TSX).** Bu kesin bir karardır; eski Jinja2 arayüzü `archive/` altında ölü kod
+olarak durur ve hiçbir şey tarafından import edilmez.
 
----
-
-## Bilinen sınırlar (matematik)
-
-Küre-kaplama alt sınırı: `kolon ≥ |uzay| / top_boyutu`.
-
-| Durum | Optimal kolon (alt sınır civarı) |
-|-------|----------------------------------|
-| 5 çifte | 7 |
-| 6 çifte | 12 |
-| 7 çifte | **16** (Hamming(7,4)) |
-| 8 çifte | **32** |
-| 4 üçlü | **9** |
-
-**8 çifteyi 16 kolona sığdırmak imkânsızdır.**
-`maxcov` 16 kolonla kısmi kapsama verir — **garanti değildir**.
-
----
-
-## Mimari (kısa)
-
-Repo iki tarafa ayrılmıştır: `backend/` (Python) ve `frontend/` (Next.js).
+```
+Tarayıcı
+   │
+   ▼
+frontend/              ← Next.js :3000, tek UI (Formül / İstatistik / Sağlık)
+   │  /api/* rewrite
+   ▼
+backend/web_app.py     ← Flask :8080, sadece JSON
+   │
+   ▼
+backend/spor_toto/     ← Fix-16, ILP, Bayes, MC, Markov, history, odds, health
+```
 
 ```
 backend/
   spor_toto/
-    core.py      Encoder, Fix-16, ILP, heuristic, exact olasılık
-    analysis.py  Monte Carlo, maç bazlı hata frekansı
-    bayes.py     Dirichlet prior → posterior, KL, preset'ler
-    markov.py    Seçim hayatta kalma + hata bütçesi zinciri
+    core.py            Encoder, Fix-16, ILP, heuristic, exact olasılık
+    analysis.py        Monte Carlo, maç bazlı hata frekansı
+    bayes.py           Dirichlet prior → posterior, KL, preset'ler
+    markov.py          Seçim hayatta kalma + hata bütçesi zinciri
     fire_scenarios.py  Seçim DIŞI fire analizi (1-fire / 2-fire)
-    health.py    Kategorili değişmez (invariant) kontrolleri
-    report.py    Konsol / dosya çıktısı
-    cli.py       spor-toto komut satırı
-  web_app.py     Flask — yalnızca JSON API, HTML servis etmez
-  tests/         pytest (core, engines, analysis, bayes, markov, health, api, cli)
-  data/          Tarihsel 1/0/2 verisi
-  scripts/       check.sh (yerel CI eşdeğeri)
+    history.py         Tarihsel 1/0/2, 6 analiz bloğu, veri kalitesi
+    odds.py            Oran arşivi okuyucu, 1X2 özeti, kalibrasyon
+    health.py          Kategorili değişmez (invariant) kontrolleri — tek CHECKS tanımı
+    report.py          Konsol / dosya çıktısı
+    cli.py             spor-toto komut satırı
+  web_app.py           Flask — yalnızca JSON API, HTML servis etmez
+  scripts/
+    build_history.py   Tarihsel veri setini kaynağından üretir
+    build_odds.py      Kupon maçlarına piyasa oranlarını eşleştirir
+    check.sh           Yerel CI eşdeğeri
+  data/                st_history_2025_26.json · odds/
+  tests/               pytest (15 dosya, 224 test fonksiyonu → 564 test)
   pyproject.toml
 
-frontend/        Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
-  app/           sayfalar (/, /istatistik, /saglik)
+frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
+  app/                 sayfalar (/, /istatistik, /istatistik/[week], /saglik)
   components/
-    shell/       kalıcı kenar çubuğu + sayfa geçişleri
-    formul/      maç ızgarası, olasılık girişi, sonuç panelleri
-    ui/          temel bileşenler (elle yazıldı, Radix yok)
-  lib/types.ts   API sözleşmesinin tamamı tipli
-  lib/api.ts     tipli, iptal edilebilir API istemcisi
+    shell/             kalıcı kenar çubuğu + sayfa geçişleri + tema
+    formul/            maç ızgarası, olasılık girişi, sonuç panelleri
+    istatistik/        grafikler (bağımlılıksız inline SVG), hafta tablosu, filtre
+    saglik/            durum kartı, kategori kartları, çalışma geçmişi
+    ui/                temel bileşenler (elle yazıldı, Radix yok)
+  lib/types.ts         API sözleşmesinin tamamı tipli
+  lib/api.ts           tipli, AbortController ile iptal edilebilir istemci
 
-scripts/         run_next_dev.sh (API + UI birlikte ayağa kaldırır)
-docs/            Mimari ve veri notları
-archive/         Kullanımdan kalkmış Jinja2 arayüzü ve tek-seferlik yamalar
+scripts/               run_next_dev.sh (API + UI birlikte)
+docs/                  Mimari, veri ve yol haritası belgeleri
+archive/               Kullanımdan kalkmış Jinja2 arayüzü ve tek-seferlik yamalar
 ```
 
-Detay için `docs/ARCHITECTURE_NEXT.md`, `docs/SAGLIK_VIZYONU.md` (sağlık katmanının vizyonu ve tasarım kararları) ve `archive/README.md`.
-
-Katmanlar bağımsızdır:
+### 7.1 Katman bağımsızlığı
 
 1. **Kombinatoryal** — kolon üretimi, Hamming mesafesi, 14-garanti
 2. **Olasılıksal** — exact, MC, Bayes, Markov (garantiyi bozmaz)
-3. **Gözlem** — health, UI, CLI
+3. **Veri** — tarihsel sonuçlar, oran arşivi, veri kalitesi
+4. **Gözlem** — health, UI, CLI
+
+Sağlık katmanı bu şemada bir istisnadır: **hepsini birden ölçer**, ama hiçbirine
+bağımlı değildir — kontrol tanımları tek yerdedir (`CHECKS`) ve motorun kendi
+fonksiyonlarını çağırır, ikinci bir doğruluk kopyası tutmaz.
+
+Alt katman üsttekini bilmez. `core.py` olasılığı, olasılık katmanı veriyi, veri
+katmanı arayüzü bilmez.
+
+### 7.2 Arayüze gömülü ürün kuralları
+
+1. **Semboller daima kupon düzeninde (1, 0, 2).** Alfabetik sıralama `01` üretir ve
+   kuponu elle doldururken hata yaptırır.
+2. **Satır ≠ kolon.** Kolon bedeli hiçbir yerde satır sayısından ayrı gösterilmez.
+3. **Renk kimliği takip eder, sıralamayı değil.** Seriler `--sym-1/0/2`
+   token'larından gelir; dosyalarda sabit hex yoktur, koyu tema bu yüzden bedava
+   çalışır.
+4. **Her görselin tablo karşılığı vardır.** Hiçbir değer yalnızca renge ya da fare
+   ipucuna bırakılmaz.
+5. **Tek filtre satırı.** Kart içine filtre konmaz; aralık seçimi `?last=N` ile
+   API'ye gider.
 
 ---
 
-## Testler
+## 8. Veri üretimi ve yeniden üretim
 
 ```bash
 cd backend
-pytest
-pytest -m "not slow"
-pytest tests/test_bayes.py tests/test_markov.py tests/test_health.py tests/test_cli.py -v
+
+python scripts/build_history.py              # tarihsel seti üret
+python scripts/build_history.py --dry-run    # yazmadan farkı gör
+python scripts/build_history.py --cache /tmp/p   # payload'ları sakla/oradan oku
+
+python scripts/build_odds.py                 # oranları çek ve eşleştir
+python scripts/build_odds.py --dry-run       # yalnızca kapsama raporu
+python scripts/build_odds.py --no-sqlite     # yalnızca CSV + rapor
 ```
 
-Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant’lar, CLI (Bayes preset dahil), analysis, health.
+Her iki script de doğrulamadan dosya yazmaz. Ham indirmeler ve SQLite kopyası git
+dışıdır, bu komutlarla yeniden oluşur.
 
-### Yerel tek komut (health + CLI smoke)
+**Okuma tarafı:**
 
-```bash
-bash backend/scripts/check.sh
+```python
+from spor_toto.history import history_summary, history_week_detail
+from spor_toto.odds import load_odds, market_odds, implied_probs
+
+history_summary(last=12)                      # son 12 hafta dilimi
+implied_probs(market_odds(load_odds()[0], "1X2", "Avg"))   # {"1": .., "0": .., "2": ..}
 ```
 
-`backend/scripts/check.sh`: hızlı pytest → health → CLI fix16 + `--bayes-preset dengeli` dumanı.
-Exit code ≠ 0 ise bir adım kırık demektir (CI ile aynı mantık).
+**Oran arşivini sorgulamak** (SQLite, uzun biçim):
+
+```sql
+SELECT m.week, m.no, m.home, m.away, o.secim, o.deger
+FROM oran o JOIN mac m USING (week, no)
+WHERE o.pazar = '1X2' AND o.donem = 'kapanis' AND o.kaynak = 'Avg';
+```
 
 ---
 
-## CI (GitHub Actions)
+## 9. Testler ve CI
 
-Her `main` push ve PR’da:
+```bash
+cd backend
+pytest                       # tamamı (ILP dahil)
+pytest -m "not slow"         # hızlı süit
+pytest -q tests/test_history.py tests/test_odds.py    # veri bekçileri
+bash scripts/check.sh        # yerel CI eşdeğeri
+```
+
+`backend/scripts/check.sh`: hızlı pytest → health → CLI fix16 +
+`--bayes-preset dengeli` dumanı. Exit code ≠ 0 ise bir adım kırık demektir.
+
+Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant'lar, CLI (Bayes preset
+dahil), analysis, bayes, markov, fire, health, health API, history, odds, API
+sözleşmesi. 15 test dosyası, 224 test fonksiyonu, parametrizasyonla **564 test**;
+38'i istatistik/oran, 23'ü sağlık katmanına ait.
+
+**Arayüz kontrolleri:**
+
+```bash
+cd frontend && npx tsc --noEmit && npm run build
+```
+
+**CI (GitHub Actions)** — her `main` push ve PR'da:
 
 | Adım | Python | Açıklama |
 |------|--------|----------|
 | `pytest -m "not slow"` | 3.10–3.13 | Hızlı süit |
 | `pytest -m slow` | 3.12 | ILP / yavaş |
 | `python -m spor_toto.health` | 3.12 | HEALTHY zorunlu (tüm kritik kontroller) |
-| CLI smoke | 3.12 | fix16 + Bayes preset |
+| CLI smoke | 3.12 | fix16 + Bayes preset parity |
 
-Workflow: `.github/workflows/tests.yml`  
-Actions: repository **Actions** sekmesi.
-
-CD (otomatik deploy) yok: Replit Publish manuel / yarı-otomatik kalır — health kırmızıysa yayınlama.
+Workflow: `.github/workflows/tests.yml`.
+CD (otomatik deploy) yoktur: yayın manuel kalır — **health kırmızıysa
+yayınlanmaz.**
 
 ---
 
-## Uyarı
+## 10. Yol haritası
 
-Bu araç **kazanma olasılığını artırmaz**.
-Yalnızca belirli bir garantiyi daha az kuponla elde etmeni sağlar.
+Önerilen sıra: **F1 → F3 → F2 → F4 → F5.** Gerekçe: F1 diğer her şeyin değerini
+ölçer. Ayrıntı, kabul kriterleri ve büyüklük tahminleri:
+[`docs/ISTATISTIK_YOL_HARITASI.md`](docs/ISTATISTIK_YOL_HARITASI.md) §6.
 
-Olasılık / Monte Carlo / Bayes / Markov çıktıları **beklenen-değer veya kâr hesabı değildir**; ikramiye havuzu ve kolon bedeli hesaba katılmaz.
+| Faz | Ne | Veri durumu |
+|-----|-----|---|
+| **F1 — Geri test** | "Bu strateji geçen sezon ne yapardı?" 41 haftanın her biri için oranlardan seçim üret, motoru çalıştır, kaç haftada 14 tutardı ve kaça mal olurdu ölç | **Hazır** — 567 maçta olasılık + gerçek sonuç var |
+| **F2 — Oranlardan `probs`** | Hafta detayından formül sayfasına "bu haftayı gönder"; 15 maçın olasılığı hazır gelsin | **Hazır** — `match_1x2` marj arındırılmış olasılığı döndürüyor |
+| **F3 — Karar destek kartları** | Çift/üçlü kapsama tablosu, beraberlik profili, lig kırılımı | **Hazır** — mevcut alanlardan hesaplanır |
+| **F4 — Kullanım cilası** | Filtre durumu URL'de, CSV dışa aktarma, haftalık Brier skoru | Veri tarafı yok |
+| **F5 — İddaa bülten arşivi** | Haftalık snapshot; bir sezonda kendi arşivimiz olur | **Yeni boru hattı gerekir** |
 
-Sorumlu oynayın.
+### 10.1 Sağlık katmanı
+
+Sıra, "en çok belirsizliği kaldıran" ölçütüne göredir. Ayrıntı:
+[`docs/SAGLIK_VIZYONU.md`](docs/SAGLIK_VIZYONU.md) §10.
+
+| # | Adım | Çözdüğü sorun |
+|---|---|---|
+| 1 | **Süre eşikleri** — kontrol başına beklenen bant; aşınca `degraded` | Performans gerilemesi bugün yalnızca gözle görülüyor |
+| 2 | **Zaman serisi** — son N koşunun sunucuda saklanması | Geçmiş oturumla sınırlı, sekme kapanınca kayboluyor |
+| 3 | **Kullanıcı kuponuyla koşma** | Sabit örnek kupon sınırı |
+| 4 | **Örnek çeşitliliği** — sabit tohumlu birkaç kupon sınıfı | Tek kupon sınıfı; determinizm korunarak |
+| 5 | **Alarm bağlantısı** | "Birinin bakıyor olması" varsayımı |
+| 6 | **Örnek kimliği** | Çok örnekli dağıtımda "hangi örnek?" |
+
+### 10.2 Bilinçli olarak yapılmayacaklar
+
+| Fikir | Neden hayır |
+|---|---|
+| Takım bazlı istatistik | 216 takım, Süper Lig takımları bile 32 maç. Çıkacak sayı güvenilir *görünür* ama gürültüdür |
+| "Beraberlik tahmincisi" | Sinyal var (%14 → %33) ama zayıf ve tam monoton değil. Gösterge olarak sunmak dürüst, tahminci diye sunmak değil |
+| Diğer pazarların arayüze çıkması | Ürün kararı: 1X2 dışındakiler analiz içindir, arşivde kalır |
+| Maçkolik'ten veri çekme | `robots.txt` otomatik erişimi kapatıyor; politika sınırı ihlal edilmez |
+| Kontrolleri arayüzden düzenlemek | Değişmezler koddadır, yapılandırmada değil |
+| Sağlık geçmişini metrik panosuna çevirmek | Bu bir APM işidir; sayfa motorun sağlığını ölçer, sürecin değil |
+| Tahmin isabetini ölçen bir kontrol | Araç tahmin etmez; sağlık sayfası da etmez |
+
+---
+
+## 11. Riskler ve sınırlar
+
+**Matematik.** 8 çifte 16 kolona sığmaz. `maxcov` garanti vermez. Garanti yalnızca
+seçim kümesi içinde geçerlidir.
+
+**Küçük örneklem.** 41 hafta, tek sezon. F1'de eşik taraması yapılırsa aşırı uyum
+kaçınılmazdır: 41 hafta üzerinde en iyi görünen eşik gelecek sezon aynısını yapmaz.
+Sonuçlar güven aralığıyla verilmeli ve "bu geçmişin en iyisidir, geleceğin garantisi
+değildir" notu görünür kalmalıdır.
+
+**Piyasa oranı ≠ iddaa oranı.** Seviye tutmaz, yapı tutar. Bu not sayfada her yerde
+görünür durumdadır ve kaldırılmamalıdır.
+
+**Milli maç haftaları.** 5., 10. ve 15. haftalarda oran yok; oran blokları o
+haftalarda boş gelir ve kapsama hiçbir zaman %100 olmaz.
+
+**Üçüncü parti kaynak.** Hem hafta payload'ları hem oran arşivi dış kaynaklıdır.
+Silinir ya da biçim değiştirirse yeniden çekim gerekir; iki üretim scripti tam
+olarak bunun için var.
+
+**Resmi bülten numarası doğrulanmadı.** Kupon sırası kaynağın sırasıdır; 51. hafta
+bağımsız kaynakla çapraz doğrulanmıştır.
+
+**Sağlık sabit örnek kupon üzerinde koşar.** HEALTHY, senin kuponunun değil,
+motorun o kupon sınıfındaki davranışının doğrulandığı anlamına gelir. Rastgele
+kupon determinizmi bozardı; geniş girdi taraması `pytest`'teki fuzz testlerinin
+işidir.
+
+**Sağlıkta alarm yoktur ve tek süreci anlatır.** Kırmızıya döndüğünde kimseye
+haber gitmez — birinin bakıyor olması gerekir. Rapor, çağrıyı karşılayan süreci
+anlatır; çok örnekli bir dağıtımda "hangi örnek?" sorusu bugün cevapsızdır.
+İlk koşu (~615 ms) sonrakilerden (~340 ms) yavaştır; bu ısınmadır, gerileme değil.
+
+---
+
+## 12. Sözlük
+
+| Terim | Anlamı |
+|---|---|
+| **Banko** | Bir maça tek sembol işaretlemek |
+| **Çifte / üçlü** | Bir maça iki / üç sembol işaretlemek; kolon bedelini çarpar |
+| **Küme içi** | Gerçek sonucun, işaretlenen sembollerin içinde kalması |
+| **14-garanti** | Tahmin küme içindeyse en fazla 1 hatayla en az 14 doğruyu garanti eden kaplama |
+| **Fire** | Seçim kümesinin dışına çıkılan senaryo; garantinin geçerli olmadığı bölge |
+| **Değişmez (invariant)** | Kodun her koşusunda doğru kalması gereken matematiksel zorunluluk; sağlık katmanının ölçtüğü şey |
+| **DEGRADED** | Yalnızca kritik olmayan bir kontrol düşmüş: vaat geçerli, bir yetenek eksik (200 döner) |
+| **Kolon bedeli** | Ödenecek tutar. Satır sayısıyla karıştırılmamalı |
+| **Kaplama kodu** | Uzaydaki her noktanın en fazla r uzaklıkta bir kod sözcüğüne sahip olduğu küme |
+| **Marj (overround)** | Bahisçi payı; ham olasılık toplamının 1'i aşan kısmı |
+| **Kalibrasyon** | Modelin verdiği olasılığın gerçekleşme sıklığıyla örtüşmesi |
+| **Favori** | Oranı en düşük sembol |
+| **Underdog galibiyeti** | Favorinin karşı tarafının kazanması (beraberlik değil) |
+| **Kapanış oranı** | Maç başlarken geçerli son oran; açılıştan daha bilgilidir |
+| **Dilim** | `?last=N` ile seçilen son N hafta |
+
+---
+
+## 13. Belgeler
+
+| Belge | İçerik |
+|---|---|
+| [`docs/ARCHITECTURE_NEXT.md`](docs/ARCHITECTURE_NEXT.md) | Mimari kararı ve API sözleşmesinin tamamı |
+| [`docs/VERI_TOPLAMA_VE_ISLEME.md`](docs/VERI_TOPLAMA_VE_ISLEME.md) | Veri katmanının tek kaynak dokümantasyonu: doktrin, boru hatları, kalite güvencesi, vakalar |
+| [`docs/ISTATISTIK_YOL_HARITASI.md`](docs/ISTATISTIK_YOL_HARITASI.md) | İstatistik katmanının durumu, ölçülmüş bulgular, yol haritası |
+| [`docs/SAGLIK_VIZYONU.md`](docs/SAGLIK_VIZYONU.md) | Sağlık katmanının vizyonu: kontrol sözleşmesi, kategori modeli, DEGRADED kararı, bilinçli sınırlar |
+| [`docs/SAGLIK_GELISTIRME_RAPORU.md`](docs/SAGLIK_GELISTIRME_RAPORU.md) | Sağlık katmanının çalışma raporu ve ölçümleri |
+| [`backend/README.md`](backend/README.md) | Motor + API kurulumu, oran arşivi kullanımı |
+| [`frontend/README.md`](frontend/README.md) | Arayüz yapısı, tasarım sistemi, grafik kuralları |
+| [`archive/README.md`](archive/README.md) | Ölü kodun envanteri ve neden silinmediği |
+
+---
+
+## 14. Uyarı
+
+Bu araç **kazanma olasılığını artırmaz.** Yalnızca belirli bir garantiyi daha az
+kuponla elde etmeni sağlar.
+
+Olasılık / Monte Carlo / Bayes / Markov çıktıları **beklenen-değer veya kâr hesabı
+değildir**; ikramiye havuzu ve kolon bedeli hesaba katılmaz.
+
+İstatistik katmanındaki bulgular tek sezonluk, 41 haftalık bir örneklem üzerinde
+ölçülmüştür. Geçmişin tarifi geleceğin garantisi değildir.
+
+**Sorumlu oynayın.**
