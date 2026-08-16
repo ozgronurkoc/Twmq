@@ -25,7 +25,7 @@ import {
   SweepTable,
   WeekCoupon,
 } from "@/components/istatistik/backtest";
-import { RangeFilter, SliceNote } from "@/components/istatistik/parts";
+import { RangeFilter } from "@/components/istatistik/parts";
 
 const ARALIKLAR: Array<{ deger: number | null; etiket: string }> = [
   { deger: null, etiket: "Tüm sezon" },
@@ -115,11 +115,28 @@ export default function GeriTestPage() {
         </div>
         <div className="mt-4">
           <RangeFilter deger={last} onChange={setLast} secenekler={ARALIKLAR} mesgul={mesgul} />
-          <SliceNote
-            weeks={veri.weeks.map((h) => h.week)}
-            matches={veri.meta.weeks_used * veri.meta.match_count}
-            sliced={last !== null}
-          />
+          {/* İstatistik sayfasının SliceNote'u burada YANLIŞ olurdu: oradaki
+              boşluklar "15 maçı tam kapanmamış hafta", buradakiler ise
+              "oranı eksik hafta". Aynı görünen iki eksiklik değil. */}
+          <p className="tnum mt-2 text-[11.5px] leading-relaxed text-muted-foreground">
+            Seçili kesit:{" "}
+            <span className="font-medium text-foreground">
+              {veri.weeks.length ? `${veri.weeks[0].week}–${veri.weeks[veri.weeks.length - 1].week}. haftalar` : "—"}
+            </span>{" "}
+            · {veri.meta.weeks_used} hafta · {veri.meta.weeks_used * veri.meta.match_count} maç
+            {last === null ? " — tüm sezon." : ` — veri setindeki son ${last} hafta.`}
+            {veri.meta.weeks_dropped.length ? (
+              <>
+                {" "}
+                Hesaba girmeyen{" "}
+                <span className="font-medium text-foreground">
+                  {veri.meta.weeks_dropped.map((d) => d.week).join(", ")}. hafta
+                </span>
+                : 15 maçın hepsinde oran yok (milli maç haftalarında kaynak oran yayınlamıyor),
+                eksik oran tamamlanmadığı için hafta tamamen elenir.
+              </>
+            ) : null}
+          </p>
         </div>
       </header>
 

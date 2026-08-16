@@ -2,13 +2,16 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, ChevronLeft, ChevronRight, Wand2 } from "lucide-react";
 
 import { getStatsWeek } from "@/lib/api";
-import { SEMBOLLER, type WeekDetail } from "@/lib/types";
+import { DEVIR_PARAM, haftaDevret } from "@/lib/transfer";
+import { SEMBOLLER, type ProbRow, type WeekDetail } from "@/lib/types";
 import { cn, ondalik } from "@/lib/utils";
 import {
   Badge,
+  Button,
   Callout,
   Card,
   CardBody,
@@ -19,10 +22,15 @@ import { SEMBOL_ADI, SymbolLegend } from "@/components/ui/symbol";
 import { DeltaStat } from "@/components/istatistik/parts";
 import { SYM_BG } from "@/components/istatistik/viz";
 
+/** Oranı olmayan maç 1/3'e düşer — uydurulmaz, eşit dağıtılır ve söylenir. */
+const ESIT: ProbRow = { "1": 1 / 3, "0": 1 / 3, "2": 1 / 3 };
+
 export default function HaftaPage({ params }: { params: { week: string } }) {
   const week = Number(params.week);
+  const router = useRouter();
   const [veri, setVeri] = React.useState<WeekDetail | null>(null);
   const [hata, setHata] = React.useState<string | null>(null);
+  const [devirHatasi, setDevirHatasi] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     if (!Number.isFinite(week)) {
@@ -42,6 +50,39 @@ export default function HaftaPage({ params }: { params: { week: string } }) {
   }, [week]);
 
   const oranliMac = veri ? Object.keys(veri.odds || {}).length : 0;
+
+  /**
+   * Bu haftanin 15 macini formul sayfasina tasir. Tasinan sey YALNIZCA
+   * olasiliktir; isaretleri (banko/cifte/uclu) kullanici kendisi secer —
+   * arac mac sonucu tahmin etmez, tahmini garantiye alir.
+   */
+  function formuleGonder() {
+    if (!veri) return;
+    const probs: ProbRow[] = [];
+    const labels: string[] = [];
+    const missing: number[] = [];
+    for (let i = 1; i <= veri.cells.length; i++) {
+      const oran = veri.odds?.[String(i)];
+      const mac = veri.matches?.[i - 1];
+      probs.push(oran ? { ...oran.probs } : { ...ESIT });
+      labels.push(mac ? `${mac.home} – ${mac.away}` : "");
+      if (!oran) missing.push(i);
+    }
+    const ok = haftaDevret({
+      week: veri.week,
+      probs,
+      labels,
+      missing,
+      note: `${veri.week}. haftanın kapanış oranlarından (marj arındırılmış)`,
+    });
+    if (!ok) {
+      setDevirHatasi(
+        "Tarayıcı oturum deposu kullanılamıyor (özel sekme olabilir); hafta formüle taşınamadı.",
+      );
+      return;
+    }
+    router.push(`/?${DEVIR_PARAM}=${veri.week}`);
+  }
 
   // Sezonda en nadir gorulen tercihler — bu haftanin surprizleri.
   const surprizler = React.useMemo(() => {
@@ -81,6 +122,18 @@ export default function HaftaPage({ params }: { params: { week: string } }) {
               </p>
             </div>
             <nav className="flex items-center gap-2">
+              {oranliMac > 0 ? (
+                <Button
+                  tip="outline"
+                  boyut="sm"
+                  className="h-9"
+                  onClick={formuleGonder}
+                  title="15 maçın kapanış oranından türeyen olasılıkları formül sayfasına taşır"
+                >
+                  <Wand2 size={14} />
+                  Bu haftayı formüle gönder
+                </Button>
+              ) : null}
               {veri.prev_week !== null ? (
                 <Link
                   href={`/istatistik/${veri.prev_week}`}
@@ -101,6 +154,12 @@ export default function HaftaPage({ params }: { params: { week: string } }) {
               ) : null}
             </nav>
           </header>
+
+          {devirHatasi ? (
+            <Callout ton="warning" baslik="Formüle gönderilemedi">
+              {devirHatasi}
+            </Callout>
+          ) : null}
 
           {!veri.consistent && veri.reported_counts ? (
             <Callout ton="warning" baslik="Veri uyarısı">
