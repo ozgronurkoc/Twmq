@@ -12,9 +12,11 @@ import type { ProbRow } from "./types";
  * donuyor). "Oku ve sil" yaklasiminda ilk baglanma paketi tuketiyor, ayakta
  * kalan ikinci baglanma bos buluyordu ve devir sessizce kayboluyordu.
  *
- * Isareti URL'den dusurmek de ise yaramadi: hem `router.replace` hem —
- * Next router'i History API'yi yamaladigi icin — `history.replaceState`
- * yeniden baglanmayi TETIKLIYOR ve az once yazilan state gidiyordu.
+ * Isareti uyguladiktan sonra URL'den dusurmek de ise yaramadi — ne
+ * `router.replace` ile ne `history.replaceState` ile. Sebep dusurmenin
+ * kendisi degil, yeniden baglanmanin zaten oluyor olmasi: ilk baglanma
+ * isareti dusurunce ikinci baglanma paketi UYGULAYAMAZ hale geliyor ve
+ * state yine bos kaliyordu.
  *
  * Cozum: isaret URL'de durur (`?hafta=51`) ve paket depoda kalir. Kac kez
  * yeniden baglanirsa baglansin ayni paket okunur, AYNI degerler yazilir

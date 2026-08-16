@@ -130,13 +130,36 @@ def test_karar_destek_bloklari(client):
         assert 0 <= l["draw_pct"] <= 100
 
 
+def test_haftalik_brier(client):
+    """Piyasa hangi hafta yanıldı — favori isabetinden daha dürüst ölçü."""
+    o = client.get("/api/stats").get_json()["odds"]
+    if o is None:
+        return
+    haftalar = o["weekly_brier"]
+    assert haftalar
+    assert haftalar == sorted(haftalar, key=lambda w: w["week"])
+    assert sum(w["n"] for w in haftalar) == o["with_odds"]
+    for w in haftalar:
+        # Brier [0, 2] araligindadir; 0 kusursuz, 2 tam ters.
+        assert 0.0 <= w["brier"] <= 2.0
+        assert w["favourite_hit"] <= w["n"]
+        assert w["partial"] == (w["n"] < 15)
+    # Esit olasilik referansi: piyasa bunun altinda kalmali, yoksa bilgi
+    # tasimiyor demektir.
+    assert o["brier_uniform"] == pytest.approx(2 / 3, abs=1e-3)
+    assert 0.0 < o["brier_avg"] < o["brier_uniform"]
+    # Sezon ortalamasi hafta ortalamalarinin mac agirlikli ortalamasidir.
+    agirlikli = sum(w["brier"] * w["n"] for w in haftalar) / o["with_odds"]
+    assert o["brier_avg"] == pytest.approx(agirlikli, abs=1e-3)
+
+
 def test_karar_destek_dilime_uyar(client):
     """?last=N üç bloğu da kapsar — iki görsel farklı veriyi anlatmaz."""
     tam = client.get("/api/stats").get_json()["odds"]
     dilim = client.get("/api/stats?last=6").get_json()["odds"]
     if tam is None or dilim is None:
         return
-    for anahtar in ("set_coverage", "draw_profile", "leagues"):
+    for anahtar in ("set_coverage", "draw_profile", "leagues", "weekly_brier"):
         assert sum(b["n"] for b in dilim[anahtar]) == dilim["with_odds"]
         assert sum(b["n"] for b in dilim[anahtar]) < sum(b["n"] for b in tam[anahtar])
 

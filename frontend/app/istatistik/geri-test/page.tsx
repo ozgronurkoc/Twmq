@@ -25,7 +25,11 @@ import {
   SweepTable,
   WeekCoupon,
 } from "@/components/istatistik/backtest";
-import { RangeFilter } from "@/components/istatistik/parts";
+import {
+  RangeFilter,
+  aralikUrldenOku,
+  aralikUrleYaz,
+} from "@/components/istatistik/parts";
 
 const ARALIKLAR: Array<{ deger: number | null; etiket: string }> = [
   { deger: null, etiket: "Tüm sezon" },
@@ -39,8 +43,20 @@ export default function GeriTestPage() {
   const [veri, setVeri] = React.useState<BacktestResponse | null>(null);
   const [mesgul, setMesgul] = React.useState(true);
   const [hata, setHata] = React.useState<string | null>(null);
+  const [urlOkundu, setUrlOkundu] = React.useState(false);
 
   React.useEffect(() => {
+    setLast(aralikUrldenOku());
+    setUrlOkundu(true);
+  }, []);
+
+  function aralikSec(v: number | null) {
+    setLast(v);
+    aralikUrleYaz(v);
+  }
+
+  React.useEffect(() => {
+    if (!urlOkundu) return;
     const ac = new AbortController();
     setMesgul(true);
     getBacktest({ last, banko: esik?.banko, uclu: esik?.uclu }, ac.signal)
@@ -55,7 +71,7 @@ export default function GeriTestPage() {
         setMesgul(false);
       });
     return () => ac.abort();
-  }, [last, esik]);
+  }, [last, esik, urlOkundu]);
 
   if (hata) {
     return (
@@ -114,7 +130,7 @@ export default function GeriTestPage() {
           ) : null}
         </div>
         <div className="mt-4">
-          <RangeFilter deger={last} onChange={setLast} secenekler={ARALIKLAR} mesgul={mesgul} />
+          <RangeFilter deger={last} onChange={aralikSec} secenekler={ARALIKLAR} mesgul={mesgul} />
           {/* İstatistik sayfasının SliceNote'u burada YANLIŞ olurdu: oradaki
               boşluklar "15 maçı tam kapanmamış hafta", buradakiler ise
               "oranı eksik hafta". Aynı görünen iki eksiklik değil. */}

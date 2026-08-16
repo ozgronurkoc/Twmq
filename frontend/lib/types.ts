@@ -546,6 +546,23 @@ export interface OddsSummary {
     favourite_hit_pct: number;
     low_sample: boolean;
   }>;
+  /**
+   * Hafta hafta "piyasa ne kadar yanıldı". Brier = Σ(p − gerçekleşme)²;
+   * 0 kusursuz, 2 tam ters. Favori isabetinden daha dürüsttür: 1,05 oranlı
+   * favorinin tutmasıyla 2,40 oranlınınki aynı sayılmaz.
+   */
+  weekly_brier: Array<{
+    week: number;
+    n: number;
+    brier: number;
+    favourite_hit: number;
+    favourite_hit_pct: number;
+    /** 15 maçın hepsinde oran yoksa hafta karşılaştırmaya girmemeli. */
+    partial: boolean;
+  }>;
+  brier_avg: number;
+  /** Üç sembole eşit olasılık verilseydi çıkacak skor — referans çizgi. */
+  brier_uniform: number;
   /** Bu maç sayısının altındaki satırlar `low_sample` işaretlenir. */
   low_sample_at: number;
   outcome_totals: Record<Sembol, number>;

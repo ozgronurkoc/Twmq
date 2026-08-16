@@ -333,6 +333,50 @@ def _lig_kirilimi(oranli: List[Any], hafta_sayisi: int) -> List[Dict[str, Any]]:
     return out
 
 
+def _brier(blok: Dict[str, Any], code: str) -> float:
+    """Tek maçın Brier skoru: Σ(p_s − 1{s=gerçek})².
+
+    0 = kusursuz tahmin, 2 = tam ters. Üç sembol eşit verilmişse (0,33 her
+    biri) skor 0,667 çıkar; piyasa bunun altında kaldığı sürece bilgi
+    taşıyor demektir.
+    """
+    return sum((blok["probs"][s] - (1.0 if s == code else 0.0)) ** 2
+               for s in SEMBOLLER)
+
+
+#: Üç sembole eşit olasılık verildiğinde çıkan Brier skoru — referans çizgi.
+BRIER_ESIT = round(2 * (1 / 3.0) ** 2 + (1 - 1 / 3.0) ** 2, 4)
+
+
+def _haftalik_brier(oranli: List[Any]) -> List[Dict[str, Any]]:
+    """Hafta hafta "piyasa ne kadar yanıldı".
+
+    Favori isabeti tek başına yanıltıcıdır: 1,05 oranlı favorinin tutması
+    ile 2,40 oranlının tutması aynı şey değil. Brier skoru olasılığın
+    tamamını cezalandırır, bu yüzden sürpriz haftayı isabet sayısından
+    daha dürüst gösterir.
+    """
+    gruplar: Dict[int, List[Any]] = {}
+    for r, b in oranli:
+        gruplar.setdefault(r["week"], []).append((r, b))
+
+    out: List[Dict[str, Any]] = []
+    for hafta, grup in sorted(gruplar.items()):
+        n = len(grup)
+        toplam = sum(_brier(b, r["code"]) for r, b in grup)
+        tutan = sum(1 for _, b in grup if b["hit"])
+        out.append({
+            "week": hafta,
+            "n": n,
+            "brier": round(toplam / n, 4),
+            "favourite_hit": tutan,
+            "favourite_hit_pct": round(100 * tutan / n, 1),
+            # Kupon eksik oranlıysa hafta karşılaştırmaya girmemeli.
+            "partial": n < 15,
+        })
+    return out
+
+
 def season_1x2_summary(weeks: Optional[List[int]] = None) -> Optional[Dict[str, Any]]:
     """Dilim için oran özeti: kapsama, favori isabeti, marj ve kalibrasyon.
 
@@ -416,6 +460,11 @@ def season_1x2_summary(weeks: Optional[List[int]] = None) -> Optional[Dict[str, 
         "set_coverage": _kume_kapsama(oranli),
         "draw_profile": _beraberlik_profili(oranli),
         "leagues": _lig_kirilimi(oranli, len({r["week"] for r, _ in oranli})),
+        "weekly_brier": _haftalik_brier(oranli),
+        "brier_avg": round(
+            sum(_brier(b, r["code"]) for r, b in oranli) / len(oranli), 4
+        ),
+        "brier_uniform": BRIER_ESIT,
         "low_sample_at": AZ_ORNEK,
         "outcome_totals": {
             s: tuttu_sonuc[s] + tutmadi_sonuc[s] for s in SEMBOLLER

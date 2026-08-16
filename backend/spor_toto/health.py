@@ -442,9 +442,12 @@ def _check_oran_arsivi() -> str:
 
     # Karar destek bloklari: her biri ayni mac kumesini bolusturur, bir mac
     # ne kaybolur ne iki kez sayilir.
-    for anahtar in ("set_coverage", "draw_profile", "leagues"):
+    for anahtar in ("set_coverage", "draw_profile", "leagues", "weekly_brier"):
         assert sum(b["n"] for b in o[anahtar]) == o["with_odds"], \
             f"{anahtar} maclari bolusturmuyor"
+    # Piyasa esit olasilik vermekten iyi olmali; olmuyorsa oran ya da
+    # eslestirme bozulmustur.
+    assert 0.0 < o["brier_avg"] < o["brier_uniform"], "piyasa esit dagilimdan kotu"
     assert sum(b["draw"] for b in o["draw_profile"]) == o["outcome_totals"]["0"]
     assert sum(l["draw"] for l in o["leagues"]) == o["outcome_totals"]["0"]
     assert sum(l["favourite_hit"] for l in o["leagues"]) == o["favourite_hit"]

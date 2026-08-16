@@ -8,6 +8,42 @@ import { Button } from "@/components/ui/primitives";
 import { ResultStrip } from "@/components/ui/symbol";
 import { isaretli } from "./viz";
 
+const ARALIK_PARAM = "last";
+
+/**
+ * Filtreyi URL'den okur (`?last=12`). Sunucuda ve ilk render'da null
+ * doner; deger bir EFEKTTE uygulanir, cunku statik olarak on-render edilen
+ * sayfada render sirasinda `window`'a bakmak hidrasyon uyusmazligi yapar.
+ */
+export function aralikUrldenOku(): number | null {
+  if (typeof window === "undefined") return null;
+  const ham = new URL(window.location.href).searchParams.get(ARALIK_PARAM);
+  if (!ham || ham === "all") return null;
+  const n = Number(ham);
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : null;
+}
+
+/**
+ * Filtreyi adres cubuguna yazar — `/istatistik?last=12` paylasilabilir
+ * olsun diye.
+ *
+ * `router.replace` DEGIL, dogrudan `history.replaceState`: router uzerinden
+ * gidildiginde ayni rotaya yapilan replace sayfa bilesenini yeniden
+ * bagliyor, `veri` sifirlaniyor ve her filtre tikinda iskelet parliyordu.
+ * Arama parametresini ayni yolda degistirmek router'in bilmesi gereken bir
+ * sey degil. Olculdu: replaceState ile tablo tikta ayakta kaliyor ve
+ * yalnizca beklenen tek `/api/stats` istegi atiliyor.
+ */
+export function aralikUrleYaz(deger: number | null): void {
+  if (typeof window === "undefined") return;
+  const url = new URL(window.location.href);
+  if (deger && deger > 0) url.searchParams.set(ARALIK_PARAM, String(deger));
+  else url.searchParams.delete(ARALIK_PARAM);
+  const yeni = url.pathname + (url.search || "") + url.hash;
+  if (yeni === window.location.pathname + window.location.search + window.location.hash) return;
+  window.history.replaceState(window.history.state, "", yeni);
+}
+
 /**
  * Tum gorselleri kapsayan TEK filtre satiri. Kart icine filtre koymuyoruz:
  * secim degisince butun bloklar ayni dilim uzerinden yeniden hesaplanir,

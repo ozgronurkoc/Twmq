@@ -40,6 +40,8 @@ import {
   DeltaStat,
   RangeFilter,
   SliceNote,
+  aralikUrldenOku,
+  aralikUrleYaz,
 } from "@/components/istatistik/parts";
 import { BacktestStats } from "@/components/istatistik/backtest";
 import { WeeksTable } from "@/components/istatistik/weeks-table";
@@ -58,19 +60,35 @@ export default function IstatistikPage() {
   const [mesgul, setMesgul] = React.useState(true);
   const [hata, setHata] = React.useState<string | null>(null);
   const [gerite, setGerite] = React.useState<BacktestResponse | null>(null);
+  // Adresteki `?last=` okunana kadar istek atmiyoruz; aksi halde
+  // paylasilan bir baglanti once tum sezonu cekip sonra dilime donerdi.
+  const [urlOkundu, setUrlOkundu] = React.useState(false);
+
+  React.useEffect(() => {
+    setLast(aralikUrldenOku());
+    setUrlOkundu(true);
+  }, []);
+
+  /** Filtre secimi hem state'e hem adres cubuguna yazilir. */
+  function aralikSec(v: number | null) {
+    setLast(v);
+    aralikUrleYaz(v);
+  }
 
   // Geri test ayri bir istek: tarama kapali (tek strateji ~1 sn) ve
   // basarisiz olursa sayfanin geri kalani etkilenmez — kart gorunmez.
   React.useEffect(() => {
+    if (!urlOkundu) return;
     const ac = new AbortController();
     setGerite(null);
     getBacktest({ last, sweep: false }, ac.signal)
       .then(setGerite)
       .catch(() => undefined);
     return () => ac.abort();
-  }, [last]);
+  }, [last, urlOkundu]);
 
   React.useEffect(() => {
+    if (!urlOkundu) return;
     const ac = new AbortController();
     setMesgul(true);
     getStats(last, ac.signal)
@@ -85,7 +103,7 @@ export default function IstatistikPage() {
         setMesgul(false);
       });
     return () => ac.abort();
-  }, [last]);
+  }, [last, urlOkundu]);
 
   if (hata) {
     return (
@@ -145,7 +163,7 @@ export default function IstatistikPage() {
           {meta.sliced ? <Badge ton="warning">dilim</Badge> : null}
         </div>
         <div className="mt-4">
-          <RangeFilter deger={last} onChange={setLast} secenekler={ARALIKLAR} mesgul={mesgul} />
+          <RangeFilter deger={last} onChange={aralikSec} secenekler={ARALIKLAR} mesgul={mesgul} />
           <SliceNote
             weeks={veri.weeks.map((w) => w.week)}
             matches={meta.matches ?? 0}
@@ -482,7 +500,12 @@ export default function IstatistikPage() {
             action={<SymbolLegend />}
           />
           <CardBody>
-            <WeeksTable weeks={veri.weeks} avg={weeklyAvg} />
+            <WeeksTable
+              weeks={veri.weeks}
+              avg={weeklyAvg}
+              brier={veri.odds?.weekly_brier}
+              brierAvg={veri.odds?.brier_avg}
+            />
           </CardBody>
         </Card>
 
