@@ -1,0 +1,60 @@
+name: iddaa bulten snapshot
+
+# NE ISE YARAR
+# ============
+# Gecmis iddaa orani hicbir kaynakta yayinlanmiyor (bkz.
+# docs/VERI_TOPLAMA_VE_ISLEME.md §3.2). Bu is haftada bir acik bultenin o
+# anki halini alip depoya isler; bir sezon sonunda kendi iddaa arsivimiz
+# olur. Deger tek snapshot'ta degil, birikimde.
+#
+# ZAMANLAMA KAPALI GELIYOR
+# ========================
+# Asagidaki `schedule` blogu BILEREK yorumda: bu is depoya COMMIT ATAR ve
+# bir botun varsayilan dala kendiliginden yazmasi acik bir karardir.
+# Baslatmak icin `schedule` satirlarindaki yorumu kaldirmak yeterli —
+# haftalik arsiv o andan itibaren birikmeye baslar. Beklemenin bedeli
+# gecmis oranin bir daha ele gecmemesidir.
+#
+# Once elle denemek icin: Actions sekmesi -> bu is -> "Run workflow".
+
+on:
+  workflow_dispatch:
+  # schedule:
+  #   # Her pazartesi 06:00 UTC (TR 09:00) — hafta kuponu aciktayken.
+  #   - cron: "0 6 * * 1"
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # Script yalnizca standart kutuphane kullanir; bagimlilik kurulmaz.
+      - name: Bulteni al
+        run: python scripts/snapshot_iddaa.py
+
+      - name: Bicimi denetle
+        run: |
+          pip install -q pytest
+          pytest -q tests/test_snapshot_iddaa.py
+
+      - name: Degisiklik varsa isle
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backend/data/iddaa
+          if git diff --cached --quiet; then
+            echo "yeni snapshot yok — islenecek degisiklik bulunamadi"
+            exit 0
+          fi
+          git commit -m "veri: iddaa bulten snapshot $(date -u +%Y-%m-%d)"
+          git push

@@ -22,3 +22,9 @@ formul.txt
 # surumlenmez. Yeniden olusturmak icin: python scripts/build_odds.py
 backend/data/odds/_kaynak/
 backend/data/odds/odds.sqlite3
+
+# Iddaa bulten arsivi: tarih damgali CSV'ler SURUMLENIR (arsivin kendisi
+# odur), ham payload ve SQLite kopyasi uretilir. Yeniden olusturmak icin:
+# python scripts/snapshot_iddaa.py
+backend/data/iddaa/_kaynak/
+backend/data/iddaa/iddaa.sqlite3
