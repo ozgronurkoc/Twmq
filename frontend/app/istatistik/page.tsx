@@ -25,9 +25,12 @@ import {
   BandStrips,
   CalibrationChart,
   DistributionChart,
+  DrawProfile,
   FavouriteBands,
   FavouriteBreakdown,
+  LeagueSplit,
   PositionHeatmap,
+  SetCoverage,
   ShareBar,
   TransitionMatrix,
   TrendChart,
@@ -322,6 +325,27 @@ export default function IstatistikPage() {
                   Az maç içeren bantlarda yüzdeler oynaktır; “Maç” sütununa bakmadan karar
                   vermeyin. Aralık filtresi bu tabloyu da kapsar.
                 </p>
+              </div>
+
+              <div>
+                <SectionTitle hint="Bir maça ikinci işareti koymak neyi satın alıyor? “Oran diyor” sütunu ilk iki olasılığın toplamıdır — yani piyasanın kendi kapsama tahmini; yanındaki sütun gerçekleşeni gösterir.">
+                  Çifte kapsaması — ikinci işaret neyi kurtarıyor
+                </SectionTitle>
+                <SetCoverage rows={veri.odds.set_coverage} esik={veri.odds.low_sample_at} />
+              </div>
+
+              <div>
+                <SectionTitle hint="Favori ile ikinci sembol birbirine yakınsa beraberlik ihtimali artar. Eğilim var ama zayıf: bu bir gösterge, tahminci değil.">
+                  Beraberlik profili
+                </SectionTitle>
+                <DrawProfile rows={veri.odds.draw_profile} esik={veri.odds.low_sample_at} />
+              </div>
+
+              <div>
+                <SectionTitle hint="Kuponun yarısı Süper Lig’den geliyor ve ligler beraberlik oranında birbirinden ayrışıyor — bu fark “0” bütçesinin nereye harcanacağını değiştirir. Lig etiketi oran arşivinden gelir.">
+                  Lig kırılımı
+                </SectionTitle>
+                <LeagueSplit rows={veri.odds.leagues} esik={veri.odds.low_sample_at} />
               </div>
 
               <div>

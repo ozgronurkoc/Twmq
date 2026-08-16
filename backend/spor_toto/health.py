@@ -439,9 +439,22 @@ def _check_oran_arsivi() -> str:
         ), f"capraz tablo {s} icin tutmuyor"
     assert sum(b["n"] for b in o["favourite_bands"]) == o["with_odds"]
     assert o["avg_margin_pct"] > 0, "marj pozitif olmali"
+
+    # Karar destek bloklari: her biri ayni mac kumesini bolusturur, bir mac
+    # ne kaybolur ne iki kez sayilir.
+    for anahtar in ("set_coverage", "draw_profile", "leagues"):
+        assert sum(b["n"] for b in o[anahtar]) == o["with_odds"], \
+            f"{anahtar} maclari bolusturmuyor"
+    assert sum(b["draw"] for b in o["draw_profile"]) == o["outcome_totals"]["0"]
+    assert sum(l["draw"] for l in o["leagues"]) == o["outcome_totals"]["0"]
+    assert sum(l["favourite_hit"] for l in o["leagues"]) == o["favourite_hit"]
+    # Banko, ciftenin alt kumesidir: tek isaret ikisinden fazla tutamaz.
+    for b in o["set_coverage"]:
+        assert b["in_one"] <= b["in_two"] <= b["n"]
+
     return (
         f"eslesme=%{o['coverage_pct']} favori_isabet=%{o['favourite_hit_pct']} "
-        f"marj=%{o['avg_margin_pct']}"
+        f"marj=%{o['avg_margin_pct']} lig={len(o['leagues'])}"
     )
 
 

@@ -503,6 +503,51 @@ export interface OddsSummary {
     draw_pct: number;
     upset_pct: number;
   }>;
+  /**
+   * Çift (ilk iki sembol) işaretlemek sonucu ne sıklıkla kapsıyor.
+   * `model_pct` piyasanın söylediği, `in_two_pct` gerçekleşen kapsamadır.
+   */
+  set_coverage: Array<{
+    lo: number;
+    hi: number | null;
+    label: string;
+    n: number;
+    model_pct: number;
+    in_two: number;
+    in_two_pct: number;
+    /** Aynı bantta banko yapılsaydı: tek sembolün tutma sayısı. */
+    in_one: number;
+    in_one_pct: number;
+    low_sample: boolean;
+  }>;
+  /** Favori ile ikincinin olasılık farkına göre beraberlik oranı. */
+  draw_profile: Array<{
+    lo: number;
+    hi: number | null;
+    label: string;
+    n: number;
+    draw: number;
+    draw_pct: number;
+    model_draw_pct: number;
+    favourite_hit_pct: number;
+    low_sample: boolean;
+  }>;
+  /** Lig lig beraberlik ve favori isabeti. Etiket oran arşivinden gelir. */
+  leagues: Array<{
+    league: string;
+    label: string;
+    n: number;
+    share_pct: number;
+    /** Kupon başına ortalama kaç maç bu ligden geliyor. */
+    per_week: number;
+    draw: number;
+    draw_pct: number;
+    favourite_hit: number;
+    favourite_hit_pct: number;
+    low_sample: boolean;
+  }>;
+  /** Bu maç sayısının altındaki satırlar `low_sample` işaretlenir. */
+  low_sample_at: number;
   outcome_totals: Record<Sembol, number>;
   avg_margin_pct: number;
   /** Olasılık kovası başına model vs gerçekleşme. */
