@@ -1,16 +1,20 @@
 # Veri Katmanı — Toplama, İşleme ve Doğrulama
 
-**Kapsam:** projedeki iki veri setinin tamamı — tarihsel 1/0/2 sonuçları ve oran arşivi
-**Sürüm:** v2 (sıra hatası kapatıldı, veri maç düzeyine indi, oran arşivi eklendi)
+**Kapsam:** projedeki üç veri setinin tamamı — tarihsel 1/0/2 sonuçları, piyasa oranı arşivi
+ve iddaa bülten arşivi
+**Sürüm:** v3 (iddaa bülten snapshot boru hattı eklendi)
 **İlgili belgeler:** [`ISTATISTIK_YOL_HARITASI.md`](ISTATISTIK_YOL_HARITASI.md) (katmanın
 durumu ve yol haritası) · [`ARCHITECTURE_NEXT.md`](ARCHITECTURE_NEXT.md) (API sözleşmesi)
 
-| | Tarihsel sonuçlar | Oran arşivi |
-|---|---|---|
-| **Dosya** | `backend/data/st_history_2025_26.json` | `backend/data/odds/odds_2025_26.csv` |
-| **Üreten** | `backend/scripts/build_history.py` | `backend/scripts/build_odds.py` |
-| **Okuyan** | `backend/spor_toto/history.py` | `backend/spor_toto/odds.py` |
-| **Bekçi** | `backend/tests/test_history.py` | `backend/tests/test_odds.py` |
+| | Tarihsel sonuçlar | Piyasa oranı arşivi | İddaa bülten arşivi |
+|---|---|---|---|
+| **Dosya** | `data/st_history_2025_26.json` | `data/odds/odds_2025_26.csv` | `data/iddaa/iddaa_<tarih>.csv` |
+| **Üreten** | `scripts/build_history.py` | `scripts/build_odds.py` | `scripts/snapshot_iddaa.py` |
+| **Okuyan** | `spor_toto/history.py` | `spor_toto/odds.py` | (henüz analize girmiyor) |
+| **Bekçi** | `tests/test_history.py` | `tests/test_odds.py` | `tests/test_snapshot_iddaa.py` |
+| **Yönü** | geriye dönük, tamam | geriye dönük, tamam | **ileriye dönük, birikiyor** |
+
+(Yollar `backend/` altındadır.)
 
 ---
 
@@ -29,7 +33,7 @@ vektörünü bozar. Eksiği doldurmak, ortalamayla tamamlamak, "yaklaşık" saym
 
 **3. Sıra kaynağın kendi sırasıdır.**
 Kupon sırası tahmin edilmez, tarihe göre sıralanmaz, isimden çıkarılmaz. Kaynağın haftaya ait
-kendi listesinden okunur. Bu ilke v1'de ihlal edildiği için 41 haftanın 15'i bozuldu (§6.4).
+kendi listesinden okunur. Bu ilke v1'de ihlal edildiği için 41 haftanın 15'i bozuldu (§7.4).
 
 **4. Çelişki gizlenmez, raporlanır.**
 Dosyadaki hazır sayım ile diziden türeyen sayım çelişirse fark yutulmaz; `data_quality`
@@ -83,7 +87,23 @@ Bant özeti (haftalık adet serisinin dağılımı):
 | Pazarlar | 1X2 · 2.5 alt/üst · Asya handikap — her biri açılış + kapanış |
 | Kaynak | football-data.co.uk (piyasa oranları) |
 
----
+### 2.3 İddaa bülten arşivi (ileriye dönük)
+
+| Alan | Değer |
+|---|---|
+| Kaynak | `sportsbookv2.iddaa.com/sportsbook/events` — **açık bülten**, geçmiş yok |
+| Toplanan | Yalnızca futbol (`sid=1`) ve yalnızca maç sonucu (1X2) |
+| Ölçülen | 226 futbol etkinliği, 225'inde 1X2 pazarı; 222'si kaydedildi |
+| Fiyat listesi | İki tane, ikisi de saklanır: `odd` (kupon), `wodd` (web) |
+| **Ortalama marj** | **%17,2** — piyasa oranlarında %7,26 idi |
+| Biriktirme | Haftalık snapshot; tarih damgalı CSV sürümlenir |
+
+Bu arşiv **bugün analize girmiyor** çünkü tek snapshot bir şey söylemez. Değeri birikimdedir:
+haftada bir çalışırsa bir sezon sonunda geçmiş iddaa oranı sorunu (§3.2) kendi verimizle
+kapanır.
+
+Marj farkı, belgenin baştan beri söylediği "seviye tutmaz, yapı tutar" cümlesinin ölçülmüş
+karşılığıdır: iddaa payı piyasanın iki katından fazla.
 
 ## 3. Kaynak seçimi
 
@@ -95,9 +115,9 @@ Bant özeti (haftalık adet serisinin dağılımı):
 | **football-data.co.uk** arşivi | Oran | **Kullanılıyor** | Ücretsiz, geçmişi tam, açılış + kapanış, çok pazarlı; kişisel kullanıma açık |
 | `sportoto.gov.tr` | Resmi sonuç arşivi | Kullanılamadı | Toplu, makine dostu arşiv ucu bulunamadı |
 | **Maçkolik** | Skor + iddaa oranı | **Kullanılmıyor** | Eski açık uç (`goapi.mackolik.com`) ölü; `robots.txt` `/api/` yolunu herkese, `anthropic-ai`/`GPTBot`/`CCBot`'u tamamen kapatıyor. Teknik engelin yanında açık bir politika sınırı var (§3.3) |
-| **iddaa resmi API** (`sportsbookv2.iddaa.com`) | İddaa oranı | İleriye dönük (F5) | Çalışıyor — 411 etkinlik, 410'unda 1X2 — ama **yalnızca açık bülten**; ölçümde 8 günlük pencere. Geriye dönük arşiv ucu yok |
+| **iddaa resmi API** (`sportsbookv2.iddaa.com`) | İddaa oranı | **Kullanılıyor (ileriye dönük)** | Çalışıyor ama **yalnızca açık bülten**; geriye dönük arşiv ucu yok. Haftalık snapshot ile kendi arşivimizi kuruyoruz (§6) |
 | **Nesine** bülten API'si | İddaa oranı | Aynı | Canlı bülten; geçmiş yok |
-| **Misli** sonuç sayfası | Çapraz doğrulama | Nokta atışı kullanıldı | 51. haftanın sonuç satırı bağımsız doğrulama için kullanıldı (§6.2) |
+| **Misli** sonuç sayfası | Çapraz doğrulama | Nokta atışı kullanıldı | 51. haftanın sonuç satırı bağımsız doğrulama için kullanıldı (§7.2) |
 
 ### 3.2 Neden geçmiş iddaa oranı yok
 
@@ -107,8 +127,9 @@ sitelerin maç sayfalarında durur, ama orası otomatik erişime kapalıdır.
 
 Sonuç: **geçmiş için piyasa oranı** kullanıyoruz. Seviye tutmaz (iddaa marjı daha yüksek),
 **favori sıralaması ve marj arındırılmış olasılık yapısı** tutar — analizde kullanılan da budur.
-İleriye dönük çözüm F5: haftalık bülten snapshot'ı alınırsa bir sezonda kendi iddaa arşivimiz
-olur.
+İleriye dönük çözüm uygulandı (§6): haftalık bülten snapshot'ı alındıkça bir sezonda kendi
+iddaa arşivimiz olur. Ölçülen marj farkı (%17,2 → %7,26) vekilin neden yalnızca *yapı* için
+kullanılabileceğini somutlaştırıyor.
 
 ### 3.3 Yasal ve etik sınır
 
@@ -152,7 +173,7 @@ Payload içinde maça benzeyen **birden fazla blok** vardır:
 
 **Kural:** hafta nesnesini `weekNumber` ile bul, yalnızca onun `matches` dizisini sırasıyla
 çöz, başka hiçbir bloğa bakma. Diziyi baştan sona tarayıp maça benzeyen her nesneyi toplamak,
-öne çıkan maç blokları araya girdiğinde sırayı bozar (§6.4).
+öne çıkan maç blokları araya girdiğinde sırayı bozar (§7.4).
 
 Bunun bir yan sonucu: **tekilleştirmeye gerek yoktur.** Tek ve doğru listeden okunduğu için
 mükerrer kayıt oluşmaz.
@@ -363,9 +384,88 @@ alt/üst sınırla bekçiye bağlar.
 
 ---
 
-## 6. Kalite güvencesi
+## 6. İddaa bülten boru hattı
 
-### 6.1 Üretim anında
+### 6.1 Kaynak biçimi
+
+Tek uç, tek çağrı: `sportsbookv2.iddaa.com/sportsbook/events?st=1&type=0&version=0`. Cevap
+`{isSuccess, data: {version, events}}` sarmalında gelir. Her etkinlik `m` altında onlarca pazar
+taşır; **maç sonucu pazarı ölçülerek bulundu**: `t=1, st=1` ve seçenek adları birebir
+`"1"/"0"/"2"`.
+
+Lig adı ayrı uçtan gelir (`/sportsbook/competitions`) ve etkinliğin `ci` alanıyla eşleşir. Lig
+adı alınamazsa snapshot yine değerlidir — kod satırda durur, ad boş kalır ve script bunu uyarı
+olarak basar.
+
+Başlama zamanı `d` alanında unix saniyedir; **UTC olarak saklanır**, çünkü oran arşivindeki
+`kickoff` da UTC — iki kaynak aynı eksende olmalı.
+
+### 6.2 Neyin elendiği
+
+| Durum | Karar | Gerekçe |
+|---|---|---|
+| `sid ≠ 1` | Elenir | Futbol dışı; kupona girmez |
+| 1X2 pazarı yok | Elenir | Ölçümde 226'nın 1'i |
+| 1X2'nin bir ayağı eksik | Elenir | İki ayaklı bir "1X2" yanıltır |
+| **Bir ayak ≤ 1.00** | **Elenir** | 1.00 fiyat değil, askıya alınmış ayağın yer tutucusu |
+
+Son satır ölçülmüş bir vakadır: 225 maçın 3'ünde üçlü `17.95 / 8.48 / 1.00` gibi çıkıyor. Bunu
+fiyatmış gibi saklamak sonraki her analizi zehirlerdi. `spor_toto.odds.match_1x2` zaten aynı
+kuralı uyguluyordu (doktrin 2: kesin olmayan veri elenir); snapshot da uyguluyor ve kaç maçın
+elendiğini `iddaa_rapor.json` içinde `dropped` olarak raporluyor.
+
+### 6.3 Depolama katmanları
+
+| Dosya | Sürümlenir | İçerik |
+|---|---|---|
+| `data/iddaa/iddaa_<tarih>.csv` | **evet** | Snapshot başına bir dosya, maç başına bir satır |
+| `data/iddaa/iddaa_rapor.json` | **evet** | Son çalışmanın özeti + biriken snapshot listesi |
+| `data/iddaa/iddaa.sqlite3` | hayır | Uzun biçim kopya, üretilir |
+| `data/iddaa/_kaynak/*.json` | hayır | İndirilen ham payload |
+
+Doktrin 6'nın uygulanışı: burada **sürümlenen şey arşivin kendisidir**, çünkü kaynak onu bir
+daha vermeyecek. Oran arşivinde ham dosyalar istendiği an yeniden indirilebilirdi; kapanmış bir
+iddaa bülteni indirilemez.
+
+SQLite şeması bilerek `odds.sqlite3` ile aynı uzun biçimdedir:
+
+```sql
+mac (alinma, event_id, kickoff, home, away, lig, lig_kodu, canli)
+oran(alinma, event_id, pazar, secim, donem, deger)   -- pazar: 1X2 · donem: kupon|web
+```
+
+Anahtarın `alinma`'yı içermesi kasıtlıdır: aynı maç farklı snapshot'larda **ayrı satırdır**.
+Açılış–kapanış farkı ancak böyle çıkar; aynı gün ikinci kez çalıştırmak ise satırı çoğaltmaz,
+üstüne yazar.
+
+### 6.4 Zamanlama
+
+`.github/workflows/snapshot-iddaa.yml` **açık**: her pazartesi 06:00 UTC (TR 09:00), hafta
+kuponu açıktayken. Snapshot alınır, biçimi `test_snapshot_iddaa.py` ile denetlenir ve yeni veri
+varsa depoya işlenir.
+
+Botun yazma alanı dar tutuldu:
+
+| Önlem | Ne engelliyor |
+|---|---|
+| `git add backend/data/iddaa` | Arşiv dışında hiçbir dosyaya dokunmaz |
+| `git diff --cached --quiet` kontrolü | Değişiklik yoksa boş commit atmaz |
+| `concurrency: iddaa-snapshot` | İki çalışma aynı dosyaya yazıp push yarışına girmez |
+| `pull --rebase` + açık hedefe push | Dal bu arada ilerlediyse çakışmaz |
+| Testin push'tan **önce** koşması | Bozuk biçimli bir snapshot depoya girmez |
+
+**Zamanlanmış işler yalnızca varsayılan daldan çalışır.** Bu iş bir özellik dalında durduğu
+sürece tetiklenmez; arşiv, dosya `main`'e geçtiği anda birikmeye başlar. Elle denemek için
+Actions → bu iş → "Run workflow" (bu, `workflow_dispatch` ile her daldan çalışır).
+
+Durdurmak: Actions → bu iş → "Disable workflow". Durdurmanın bedeli, o haftanın bülteninin bir
+daha ele geçmemesidir.
+
+---
+
+## 7. Kalite güvencesi
+
+### 7.1 Üretim anında
 
 `build_history.py` dosyayı yazmadan önce her hafta için:
 
@@ -377,13 +477,13 @@ assert results == "".join(m["code"] for m in matches)
 
 Yani liste, dizi ve sayımların üçü birbirini tutmadan çıktı üretilmez.
 
-### 6.2 Bağımsız çapraz doğrulama
+### 7.2 Bağımsız çapraz doğrulama
 
 51. hafta için Misli sonuç satırı: `X X X 1 1 1 1 2 2 2 1 2 X 1 1` → `000111122212011`.
 Üretim çıktısı **birebir aynı**. Bu, yalnızca kodların değil **sıranın** da en az bir haftada
 bağımsız kaynakla doğrulandığı anlamına gelir.
 
-### 6.3 Okuma anında — `data_quality` bloğu
+### 7.3 Okuma anında — `data_quality` bloğu
 
 `history.py` her okumada veri setini denetler ve sonucu API'ye koyar:
 
@@ -398,7 +498,7 @@ bağımsız kaynakla doğrulandığı anlamına gelir.
 
 Bu blok **arayüzde gösterilir**. Temizse yeşil bir satır, değilse hangi haftada ne olduğu.
 
-### 6.4 Vaka: v1 sıra hatası
+### 7.4 Vaka: v1 sıra hatası
 
 **Belirti.** Veri seti kendi içinde çelişiyordu: 6 haftada `n1/n0/n2` ile dizinin sayımı
 tutmuyordu; ayrıca iki hafta çifti (22–25 ve 24–26) **birebir aynı** sonuç dizisini taşıyordu.
@@ -420,7 +520,7 @@ aynı çıktı — hafta eşlemesi baştan doğruymuş, bozuk olan hafta *içind
 **Ders.** Sayım doğru olduğu için hata gözden kaçmıştı; sıra hiçbir toplamı değiştirmiyordu.
 Bugün `match_conflicts` denetimi tam olarak bunu yakalar.
 
-### 6.5 Vaka: BOM hatası
+### 7.5 Vaka: BOM hatası
 
 football-data ana lig dosyaları latin-1 okunuyor; UTF-8 BOM bu kodlamada `ï»¿` olarak gelip ilk
 sütunun adına yapışıyor (`ï»¿Div`). Temizlik yalnızca `﻿` arıyordu, bu yüzden `Div`
@@ -431,7 +531,7 @@ ancak bu alanla mümkün.
 **Ders.** Boş kalan bir alan hata vermez, sadece sessizce kaybolur. Üretim çıktısındaki özet
 tablolar (script'in bastığı lig dağılımı) bunu yakalayan şeydi.
 
-### 6.6 Test bekçileri
+### 7.6 Test bekçileri
 
 | Test | Neyi garanti eder |
 |---|---|
@@ -441,36 +541,47 @@ tablolar (script'in bastığı lig dağılımı) bunu yakalayan şeydi.
 | `test_history.py` (analiz blokları) | Sütun toplamları sezon toplamına eşit; dilimleme tutarlı |
 | `test_odds.py::test_arsiv_gecmis_veriyle_birebir_hizali` | Oran satırları kupon maçlarıyla sıra sıra aynı |
 | `test_odds.py::test_favori_isabeti_gerceklikle_uyumlu` | Favori isabeti %45–70 bandında (eşleştirme kaymışsa çıkar) |
-| `test_api_stats.py` | Uçların sözleşmesi; **diğer pazarların arayüze sızmadığı** |
+| `test_api_stats.py` | Uçların sözleşmesi; **diğer pazarların arayüze sızmadığı**; karar destek blokları ve Brier'in maçları bölüştürdüğü |
+| `test_backtest.py::test_kume_ici_hafta_15_tutturur` | Skorlama doğru: küme içi hafta 14-garanti gereği en az 14 tutturur |
+| `test_backtest.py::test_holdout_taramadan_iyi_olamaz` | Aşırı uyum ölçüsü tutarlı: hold-out taramanın en iyisini geçemez |
+| `test_api_backtest.py::test_diger_pazarlar_geri_teste_de_sizmaz` | 1X2 kuralı geri testte de geçerli |
+| `test_snapshot_iddaa.py::test_askidaki_ayak_maci_eler` | 1.00 fiyat sayılmaz |
+| `test_snapshot_iddaa.py::test_farkli_snapshot_birikir` | Arşiv gerçekten birikiyor, üstüne yazmıyor |
 
-Toplam 38 test bu iki veri setini korur (backend paketi 545 test).
+Toplam 82 test bu üç veri setini korur (backend paketi 608 test). `python -m spor_toto.health`
+17 değişmez çalıştırır; `oran_arsivi` ve `geri_test` bu katmanı korur.
 
-### 6.7 Bilinen kabuller
+### 7.7 Bilinen kabuller
 
 | Kabul | Gerekçe |
 |---|---|
 | Yalnızca normal süre golü | Spor Toto sonucu normal süre üzerinden okunur |
 | Gol aralığı 0–20 | Anlamsız parse değerlerini reddetmek için |
-| Kupon sırası = kaynağın sırası | Resmi bülten numaralandırmasıyla ayrıca karşılaştırılmadı; 51. hafta bağımsız doğrulandı (§6.2) |
+| Kupon sırası = kaynağın sırası | Resmi bülten numaralandırmasıyla ayrıca karşılaştırılmadı; 51. hafta bağımsız doğrulandı (§7.2) |
 | Oran = kapanış, yoksa açılış | Kapanış daha bilgilidir; kaynak sırası Avg → B365 → PS → BFE → Max |
 | Lig bilgisi oran arşivinden gelir | Payload maç kaydı lig adı taşımıyor |
+| İddaa bülteninde 1.00 fiyat değildir | Askıya alınmış ayağın yer tutucusu; ölçüldü (§6.2) |
+| Bülten saatleri UTC saklanır | Oran arşiviyle aynı eksende olsun diye |
 
 ---
 
-## 7. Sınırlar
+## 8. Sınırlar
 
 1. **Tam sezon değil:** 41 / ~53 hafta. Eksik skorlu haftalar bilinçli olarak yok.
 2. **Tek sezon:** 2025/2026. İstatistiksel güç sınırlı — 41 hafta küçük örneklem.
 3. **Milli maç haftalarında oran yok** (5, 10, 15). Oran blokları o haftalarda boş; kapsama
    hiçbir zaman %100 olmayacak.
-4. **Geçmiş iddaa oranı yok** (§3.2). Piyasa oranı vekildir.
-5. **Üçüncü parti kaynak riski:** iki kaynak da dış. Silinir ya da biçim değiştirirse yeniden
-   çekim gerekir; iki üretim scripti tam olarak bunun için var.
+4. **Geçmiş iddaa oranı yok** (§3.2). Piyasa oranı vekildir; ölçülen marj farkı (%17,2 → %7,26)
+   bu vekilin neden yalnızca *yapı* için kullanılabileceğini gösterir. İleriye dönük arşiv
+   §6 ile başladı; haftalık tetik açık ama arşiv henüz tek snapshot.
+5. **Üçüncü parti kaynak riski:** üç kaynak da dış. İlk ikisi silinir ya da biçim değiştirirse
+   yeniden çekim gerekir; üretim scriptleri tam olarak bunun için var. Üçüncüsünde (iddaa) bu
+   kurtarma yolu **yok**: kaçırılan hafta kaçmıştır.
 6. **Resmi bülten numarası doğrulanmadı:** kupon sırası kaynağın sırasıdır.
 
 ---
 
-## 8. Yeniden üretim
+## 9. Yeniden üretim
 
 ```bash
 cd backend
@@ -483,11 +594,19 @@ python scripts/build_odds.py                 # oranları çek ve eşleştir
 python scripts/build_odds.py --dry-run       # yalnızca kapsama raporu
 python scripts/build_odds.py --no-sqlite     # yalnızca CSV + rapor
 
-pytest -q tests/test_history.py tests/test_odds.py   # bağımsız denetim
+python scripts/snapshot_iddaa.py             # bültenin anlık görüntüsünü al
+python scripts/snapshot_iddaa.py --dry-run   # yazmadan özet
+python scripts/snapshot_iddaa.py --kaynak d.json   # kaydedilmiş ham dosyadan
+
+pytest -q tests/test_history.py tests/test_odds.py tests/test_snapshot_iddaa.py
 ```
 
-Her iki script de doğrulamadan dosya yazmaz; testler yazıldıktan sonra aynı şeyi tekrar
-denetler. Ham dosyalar ve SQLite git dışıdır, bu komutlarla yeniden oluşur.
+Üç script de doğrulamadan dosya yazmaz; testler yazıldıktan sonra aynı şeyi tekrar denetler.
+Ham dosyalar ve SQLite git dışıdır, bu komutlarla yeniden oluşur.
+
+**Tek fark — ve önemli:** iddaa snapshot'ı *yeniden üretilemez*. Diğer iki set kaynağından her
+an tekrar çekilebilir; kapanmış bir iddaa bülteni çekilemez. Bu yüzden orada sürümlenen şey
+türetilmiş çıktı değil, **arşivin kendisidir** (§6.3). Bu dizini silmek geri alınamaz.
 
 **Okuma tarafı:**
 
@@ -497,34 +616,39 @@ from spor_toto.odds import load_odds, market_odds, implied_probs, season_1x2_sum
 
 history_summary(last=12)                      # son 12 hafta dilimi
 implied_probs(market_odds(load_odds()[0], "1X2", "Avg"))
+
+from spor_toto.backtest import backtest
+backtest(sweep=False)["season"]                # 41 haftalık geri test, ~1,2 sn
 ```
 
 ---
 
-## 9. Yol haritasının veri tarafı
+## 10. Yol haritasının veri tarafı
 
-[`ISTATISTIK_YOL_HARITASI.md`](ISTATISTIK_YOL_HARITASI.md) fazlarının veri ihtiyacı:
+[`ISTATISTIK_YOL_HARITASI.md`](ISTATISTIK_YOL_HARITASI.md) fazlarının **tamamı uygulandı**;
+veri tarafında yeni boru hattı gerektiren tek faz F5 idi ve §6'da anlatıldı.
 
-| Faz | Veri durumu |
+Bundan sonrası için (yol haritası belgesinin §6'sı):
+
+| İş | Veri durumu |
 |---|---|
-| **F1 — Geri test** | **Hazır.** 567 maçta olasılık + gerçek sonuç var; ek veri gerekmez |
-| **F2 — Oranlardan `probs`** | **Hazır.** `match_1x2` marj arındırılmış olasılığı zaten döndürüyor |
-| **F3 — Karar destek kartları** | **Hazır.** Lig etiketi §6.5 ile düzeldi; çift kapsama ve beraberlik profili mevcut alanlardan hesaplanır |
-| **F4 — Kullanım cilası** | Veri tarafı yok |
-| **F5 — İddaa bülten arşivi** | **Yeni boru hattı gerekir.** `snapshot_iddaa.py` haftalık çalışıp bülteni tarih damgalı saklar; şema oran arşiviyle aynı uzun biçim olmalı ki iki kaynak yan yana sorgulanabilsin |
+| **S1 — Örneklem büyütme** | **Yeni üretim gerekir.** İki script de sezon parametreli hale gelmeli; football-data `mmz4281/2425/` mevcut, kaynak sitenin geçmiş sezon payload'ları kontrol edilmeli |
+| **S2 — Geri testi zenginleştir** | **Hazır.** Ek veri gerekmez |
+| **S3 — İddaa arşivi olgunlaşınca** | **Birikmeyi bekliyor.** Boru hattı ve haftalık tetik çalışıyor (§6.4); ~10 snapshot sonra eşleştirme anlamlı olur |
+| **S4 — Küçük işler** | Veri tarafı yok |
 
-**Örneklem büyütme (öneri, planda yok):** 2024/2025 sezonu aynı iki boru hattıyla çekilebilirse
-hafta sayısı ~80'e çıkar. Geri testin aşırı uyum riskini azaltmanın en doğrudan yolu budur;
-kaynak sitenin geçmiş sezon payload'larını taşıyıp taşımadığı kontrol edilmeli.
+**Örneklem büyütme neden en önemlisi:** geri test hold-out'u 0 hafta çıkardı. Bu sayı 41 hafta
+üzerinde ölçüldüğü için hem gerçek bir bulgu hem de dar bir ölçüm. Sezon sayısını ikiye
+çıkarmak, "eşiği bir sezonda seç, diğerinde ölç" diyebilmeyi sağlar — leave-one-out'un
+yapamadığı gerçek out-of-sample budur.
 
----
-
-## 10. Sürüm geçmişi
+## 11. Sürüm geçmişi
 
 | Sürüm | Ne değişti |
 |---|---|
-| **v1** (2026-08-15) | İlk üretim. 41 hafta, 615 maç. Sonuç dizisi 15 haftada yanlış sırada, 6'sında yanlış sayımda (§6.4) — o zaman fark edilmedi |
+| **v1** (2026-08-15) | İlk üretim. 41 hafta, 615 maç. Sonuç dizisi 15 haftada yanlış sırada, 6'sında yanlış sayımda (§7.4) — o zaman fark edilmedi |
 | **v2** (2026-08-16) | Sıra hatası kapatıldı; veri **maç düzeyine** indi (takım, saat, skor); üretim tek komutla tekrarlanabilir oldu; `data_quality` denetimi ve test bekçileri eklendi; **oran arşivi** kuruldu (§5) |
+| **v3** (2026-08-16) | **İddaa bülten arşivi** kuruldu (§6) ve haftalık tetiği açıldı — ileriye dönük, birikmeye başlıyor. Oran arşivinden türetilen üç karar destek bloğu (çift kapsama, beraberlik profili, lig kırılımı) ve haftalık Brier eklendi; geri test boru hattı bu veriyi tüketmeye başladı. İddaa boru hattı §5'in eki değil **üçüncü veri seti** olduğu için `5A` yerine kendi bölüm numarasını aldı; sonraki bölümler bir kaydı |
 
 Sezon toplamları v1 ve v2'de aynıdır (270/149/196) — çünkü v1'de bozuk olan yalnızca diziydi,
 sayımlar doğruydu.

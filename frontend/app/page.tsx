@@ -5,6 +5,12 @@ import { Loader2, Play } from "lucide-react";
 
 import { getMeta, solve } from "@/lib/api";
 import {
+  devirIsaretliMi,
+  haftaDevriOku,
+  haftaDevriTemizle,
+  type HaftaDevri,
+} from "@/lib/transfer";
+import {
   MAC_SAYISI,
   type MetaResponse,
   type ModeId,
@@ -91,7 +97,21 @@ export default function FormulPage() {
   const [calisiyor, setCalisiyor] = React.useState(false);
   const [gecen, setGecen] = React.useState(0);
   const [sekme, setSekme] = React.useState("ozet");
+  const [devir, setDevir] = React.useState<HaftaDevri | null>(null);
   const iptalRef = React.useRef<AbortController | null>(null);
+
+  // Hafta detayindaki "formule gonder" dugmesinden gelen paket. Isaret
+  // URL'de (`?hafta=51`), paket sessionStorage'da ve ikisi de TUKETILMEZ:
+  // App Router gecisinde sayfa iki kez baglaniyor, ikisi de ayni paketi
+  // okuyup ayni degerleri yaziyor. Bkz. lib/transfer.ts.
+  React.useEffect(() => {
+    if (!devirIsaretliMi()) return;
+    const paket = haftaDevriOku();
+    if (!paket) return;
+    setDevir(paket);
+    setProbs(paket.probs.map((r) => ({ ...r })));
+    setProbsAcik(true);
+  }, []);
 
   // /api/meta: modlar, preset'ler, sinirlar — hicbiri sabit kodlanmaz.
   React.useEffect(() => {
@@ -356,6 +376,41 @@ export default function FormulPage() {
                 label="Olasılık girişini kullan"
                 hint="Kapalıyken yalnızca kombinatoryal sonuç hesaplanır"
               />
+
+              {devir ? (
+                <Callout ton="primary" baslik={`${devir.week}. hafta yüklendi`}>
+                  <p>
+                    15 maçın olasılığı {devir.note} dolduruldu.{" "}
+                    {devir.missing.length
+                      ? `Oranı bulunamayan ${devir.missing.join(", ")}. maç eşit (1/3) bırakıldı — ` +
+                        "uydurulmadı."
+                      : "Tüm maçların oranı vardı."}{" "}
+                    <strong>İşaretler taşınmadı:</strong> hangi maça banko, hangisine çifte
+                    koyacağın senin kararın — bu araç maç sonucu tahmin etmez.
+                  </p>
+                  {devir.labels.some(Boolean) ? (
+                    <ol className="tnum mt-2 grid gap-x-4 gap-y-0.5 text-[11.5px] sm:grid-cols-2">
+                      {devir.labels.map((ad, i) => (
+                        <li key={i} className="truncate">
+                          <span className="opacity-60">{i + 1}.</span> {ad || "—"}
+                        </li>
+                      ))}
+                    </ol>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      // Paketi de sil: aksi halde sayfa yeniden baglandiginda
+                      // kapatilan not geri gelirdi.
+                      haftaDevriTemizle();
+                      setDevir(null);
+                    }}
+                    className="mt-2 text-[12px] underline underline-offset-2 hover:no-underline"
+                  >
+                    Bu notu kapat
+                  </button>
+                </Callout>
+              ) : null}
 
               {probsAcik ? (
                 <>

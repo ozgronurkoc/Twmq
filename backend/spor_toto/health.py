@@ -439,9 +439,62 @@ def _check_oran_arsivi() -> str:
         ), f"capraz tablo {s} icin tutmuyor"
     assert sum(b["n"] for b in o["favourite_bands"]) == o["with_odds"]
     assert o["avg_margin_pct"] > 0, "marj pozitif olmali"
+
+    # Karar destek bloklari: her biri ayni mac kumesini bolusturur, bir mac
+    # ne kaybolur ne iki kez sayilir.
+    for anahtar in ("set_coverage", "draw_profile", "leagues", "weekly_brier"):
+        assert sum(b["n"] for b in o[anahtar]) == o["with_odds"], \
+            f"{anahtar} maclari bolusturmuyor"
+    # Piyasa esit olasilik vermekten iyi olmali; olmuyorsa oran ya da
+    # eslestirme bozulmustur.
+    assert 0.0 < o["brier_avg"] < o["brier_uniform"], "piyasa esit dagilimdan kotu"
+    assert sum(b["draw"] for b in o["draw_profile"]) == o["outcome_totals"]["0"]
+    assert sum(l["draw"] for l in o["leagues"]) == o["outcome_totals"]["0"]
+    assert sum(l["favourite_hit"] for l in o["leagues"]) == o["favourite_hit"]
+    # Banko, ciftenin alt kumesidir: tek isaret ikisinden fazla tutamaz.
+    for b in o["set_coverage"]:
+        assert b["in_one"] <= b["in_two"] <= b["n"]
+
     return (
         f"eslesme=%{o['coverage_pct']} favori_isabet=%{o['favourite_hit_pct']} "
-        f"marj=%{o['avg_margin_pct']}"
+        f"marj=%{o['avg_margin_pct']} lig={len(o['leagues'])}"
+    )
+
+
+def _check_geri_test() -> str:
+    """
+    Geri test hatti. Iki degismez var ve ikisi de raporun durustlugunu
+    korur: (1) her hafta 14-GARANTILI bir kaplamayla cozulur — acik nokta
+    birakan bir cozum bedel tablosuna giremez; (2) kume ici kalan bir hafta
+    tanimi geregi en az 14 tutturur, yani `in_set <= hit14`.
+
+    Tarama KAPALI calisir: burada olculen sey stratejinin isabeti degil,
+    boru hattinin kendi tutarliligi.
+    """
+    from .backtest import backtest
+    from .history import MATCH_COUNT
+
+    r = backtest(sweep=False)
+    s = r["season"]
+    if not s.get("weeks"):
+        return "çalıştırılabilir hafta yok — oran arşivi eksik olabilir"
+
+    for h in r["weeks"]:
+        if h["skipped"]:
+            continue
+        assert h["guaranteed"], f"{h['week']}. hafta kaplaması açık nokta bıraktı"
+        assert h["banko"] + h["double"] + h["triple"] == MATCH_COUNT
+        assert h["in_set"] == (h["misses"] == 0)
+        assert h["misses"] == len(h["miss_at"])
+        assert 0 <= h["best"] <= MATCH_COUNT
+        assert h["columns"] >= h["rows"], "kolon bedeli satır sayısının altına düşemez"
+    assert s["in_set"] <= s["hit14"], "küme içi hafta en az 14 tutturmalı"
+    assert s["hit15"] <= s["hit14"] <= s["hit13"] <= s["weeks"]
+    lo, hi = s["hit14_ci"]
+    assert lo <= s["hit14_pct"] <= hi, "güven aralığı ölçümü içermeli"
+    return (
+        f"hafta={s['weeks']} 14+={s['hit14']} kume_ici={s['in_set']} "
+        f"kolon/hafta={s['columns_avg']}"
     )
 
 
@@ -552,6 +605,12 @@ CHECKS: Tuple[CheckSpec, ...] = (
         "Piyasa oranı arşivi: kapsama, favori isabet muhasebesi ve çapraz "
         "tablonun toplamları tutuyor mu.",
         _check_oran_arsivi,
+    ),
+    CheckSpec(
+        "geri_test", "analiz",
+        "Geri test boru hattı: her hafta 14-garantili bir kaplamayla çözülüyor "
+        "mu ve küme içi kalan hafta gerçekten en az 14 tutturuyor mu.",
+        _check_geri_test,
     ),
     CheckSpec(
         "pipeline_result_shape", "ucuca",

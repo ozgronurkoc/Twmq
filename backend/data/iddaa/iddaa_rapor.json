@@ -1,0 +1,14 @@
+{
+  "taken_at": "2026-08-16 15:10",
+  "source": "sportsbookv2.iddaa.com/sportsbook/events — ACIK bulten, gecmis yok",
+  "bulletin_version": 1786893011091,
+  "football_events": 226,
+  "with_1x2": 222,
+  "dropped": 4,
+  "with_league_label": 222,
+  "avg_margin_pct": 17.2,
+  "snapshots": [
+    "iddaa_2026-08-16.csv"
+  ],
+  "note": "Tek snapshot analize yetmez; deger haftalik birikimle olusur. Gecmis iddaa orani hicbir kaynakta yayinlanmadigi icin bu arsiv ancak ileriye donuk buyur."
+}

@@ -503,6 +503,68 @@ export interface OddsSummary {
     draw_pct: number;
     upset_pct: number;
   }>;
+  /**
+   * Çift (ilk iki sembol) işaretlemek sonucu ne sıklıkla kapsıyor.
+   * `model_pct` piyasanın söylediği, `in_two_pct` gerçekleşen kapsamadır.
+   */
+  set_coverage: Array<{
+    lo: number;
+    hi: number | null;
+    label: string;
+    n: number;
+    model_pct: number;
+    in_two: number;
+    in_two_pct: number;
+    /** Aynı bantta banko yapılsaydı: tek sembolün tutma sayısı. */
+    in_one: number;
+    in_one_pct: number;
+    low_sample: boolean;
+  }>;
+  /** Favori ile ikincinin olasılık farkına göre beraberlik oranı. */
+  draw_profile: Array<{
+    lo: number;
+    hi: number | null;
+    label: string;
+    n: number;
+    draw: number;
+    draw_pct: number;
+    model_draw_pct: number;
+    favourite_hit_pct: number;
+    low_sample: boolean;
+  }>;
+  /** Lig lig beraberlik ve favori isabeti. Etiket oran arşivinden gelir. */
+  leagues: Array<{
+    league: string;
+    label: string;
+    n: number;
+    share_pct: number;
+    /** Kupon başına ortalama kaç maç bu ligden geliyor. */
+    per_week: number;
+    draw: number;
+    draw_pct: number;
+    favourite_hit: number;
+    favourite_hit_pct: number;
+    low_sample: boolean;
+  }>;
+  /**
+   * Hafta hafta "piyasa ne kadar yanıldı". Brier = Σ(p − gerçekleşme)²;
+   * 0 kusursuz, 2 tam ters. Favori isabetinden daha dürüsttür: 1,05 oranlı
+   * favorinin tutmasıyla 2,40 oranlınınki aynı sayılmaz.
+   */
+  weekly_brier: Array<{
+    week: number;
+    n: number;
+    brier: number;
+    favourite_hit: number;
+    favourite_hit_pct: number;
+    /** 15 maçın hepsinde oran yoksa hafta karşılaştırmaya girmemeli. */
+    partial: boolean;
+  }>;
+  brier_avg: number;
+  /** Üç sembole eşit olasılık verilseydi çıkacak skor — referans çizgi. */
+  brier_uniform: number;
+  /** Bu maç sayısının altındaki satırlar `low_sample` işaretlenir. */
+  low_sample_at: number;
   outcome_totals: Record<Sembol, number>;
   avg_margin_pct: number;
   /** Olasılık kovası başına model vs gerçekleşme. */
@@ -546,6 +608,99 @@ export interface WeekDetail extends WeekRow {
   odds: Record<string, MacOran>;
   /** Bu haftada kapanış favorisinin tuttuğu maç sayısı. */
   odds_hit: number;
+}
+
+// ─── /api/backtest ────────────────────────────────────────────────────────
+
+/** Bir eşik çiftinin sezon özeti. `sweep` satırları da bu biçimdedir. */
+export interface BacktestSeason {
+  weeks: number;
+  /** Seçim uzayı sınırı aşıldığı için çözülemeyen hafta sayısı. */
+  skipped: number;
+  /** Gerçek sonucun 15 maçta da işaretlerin içinde kaldığı hafta sayısı. */
+  in_set: number;
+  in_set_pct: number;
+  hit15: number;
+  hit14: number;
+  hit13: number;
+  hit14_pct: number;
+  /** Wilson %95 güven aralığı — 41 hafta küçük örneklem. */
+  hit14_ci: [number, number];
+  columns_total: number;
+  columns_avg: number;
+  columns_max: number;
+  /** 14+ tutan hafta başına kolon bedeli; hiç tutmadıysa null. */
+  columns_per_hit14: number | null;
+  rows_avg: number;
+  banko_avg: number;
+  double_avg: number;
+  triple_avg: number;
+  misses_total: number;
+  all_guaranteed: boolean;
+}
+
+export interface SweepRow extends BacktestSeason {
+  banko: number;
+  uclu: number;
+}
+
+export interface BacktestWeek {
+  week: number;
+  close_date: string;
+  skipped: boolean;
+  /** Hafta çözülemediyse nedeni; aksi halde tanımsız. */
+  reason?: string;
+  /** 15 maçın işaretleri: "1", "10", "102". */
+  picks: string[];
+  banko: number;
+  double: number;
+  triple: number;
+  /** Ödenecek tutarın ölçüsü. Satır sayısıyla karıştırılmamalı. */
+  columns: number;
+  rows: number;
+  engine: string;
+  guaranteed: boolean;
+  /** 15 maçın tamamı işaretlerin içinde mi kaldı. */
+  in_set: boolean;
+  misses: number;
+  /** Küme dışı kalan maçların 1 tabanlı numaraları. */
+  miss_at: number[];
+  /** Kolonların içinde en çok tutturanın doğru sayısı. */
+  best: number;
+  results: string;
+}
+
+/**
+ * Eşik o haftayı GÖRMEDEN seçildiğinde ne oldu (leave-one-out). Tarama
+ * satırlarıyla arasındaki fark, aşırı uyumun büyüklüğüdür.
+ */
+export interface BacktestHoldout {
+  weeks: number;
+  hit14?: number;
+  hit14_pct?: number;
+  hit14_ci?: [number, number];
+  columns_total?: number;
+  columns_avg?: number;
+  chosen?: Array<{ threshold: string; weeks: number }>;
+}
+
+export interface BacktestResponse {
+  meta: {
+    weeks_available: number;
+    weeks_used: number;
+    weeks_dropped: Array<{ week: number; missing: number }>;
+    match_count: number;
+    space_limit: number;
+    note: string;
+  };
+  strategy: { banko: number; uclu: number; explain: string };
+  season: BacktestSeason;
+  weeks: BacktestWeek[];
+  sweep: SweepRow[];
+  sweep_best: SweepRow | null;
+  holdout: BacktestHoldout;
+  grid: { banko: number[]; uclu: number[] };
+  warning: string;
 }
 
 // ─── /api/health ──────────────────────────────────────────────────────────

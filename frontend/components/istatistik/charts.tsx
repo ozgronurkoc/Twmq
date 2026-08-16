@@ -2,7 +2,14 @@
 
 import * as React from "react";
 
-import { SEMBOLLER, type Analytics, type Band, type Sembol, type WeekRow } from "@/lib/types";
+import {
+  SEMBOLLER,
+  type Analytics,
+  type Band,
+  type OddsSummary,
+  type Sembol,
+  type WeekRow,
+} from "@/lib/types";
 import { cn, ondalik } from "@/lib/utils";
 import { SEMBOL_ADI } from "@/components/ui/symbol";
 import { SYM_BG, SYM_FILL, SYM_STROKE, barPath, seqFill, seqInk } from "./viz";
@@ -964,6 +971,268 @@ export function TransitionMatrix({ transitions }: { transitions: Analytics["tran
           ))}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+/* ── 7. Karar destegi: cift kapsama ─────────────────────────────────────── */
+
+/** Az ornekli satirlari isaretler — yuzdeye bakmadan once maca bakilsin. */
+function AzOrnek({ n, esik }: { n: number; esik: number }) {
+  return (
+    <span
+      className="ml-1.5 text-[10px] uppercase tracking-wide text-warning"
+      title={`${n} maç — ${esik} maçın altında yüzdeler oynaktır`}
+    >
+      az örnek
+    </span>
+  );
+}
+
+/**
+ * "Bu maca cifte koysam yeter mi?" — bantlarin uc sayisi yan yana durur:
+ * piyasanin SOYLEDIGI kapsama, GERCEKLESEN kapsama ve ayni bantta banko
+ * yapilsaydi ne olacagi. Karar bu ucunun arasindadir.
+ */
+export function SetCoverage({
+  rows,
+  esik,
+}: {
+  rows: OddsSummary["set_coverage"];
+  esik: number;
+}) {
+  if (!rows.length) return <p className="text-[13px] text-muted-foreground">Yeterli veri yok.</p>;
+
+  return (
+    <div className="space-y-3">
+      <div className="scroll-slim overflow-x-auto">
+        <table className="w-full min-w-[620px] text-[12.5px]">
+          <thead>
+            <tr className="text-left text-[11px] uppercase tracking-[0.06em] text-muted-foreground">
+              <th scope="col" className="pb-2 pr-3 font-medium">İlk iki olasılık toplamı</th>
+              <th scope="col" className="w-14 pb-2 pr-3 text-right font-medium">Maç</th>
+              <th scope="col" className="w-24 pb-2 pr-3 text-right font-medium">Oran diyor</th>
+              <th scope="col" className="w-28 pb-2 pr-3 text-right font-medium">Çifte tuttu</th>
+              <th scope="col" className="w-28 pb-2 pr-3 text-right font-medium">Banko tutardı</th>
+              <th scope="col" className="w-32 pb-2 font-medium">Çifte / banko</th>
+            </tr>
+          </thead>
+          <tbody className="tnum">
+            {rows.map((r) => (
+              <tr key={r.label} className="border-t border-line">
+                <td className="py-2.5 pr-3 font-medium">
+                  {r.label}
+                  {r.low_sample ? <AzOrnek n={r.n} esik={esik} /> : null}
+                </td>
+                <td className="py-2.5 pr-3 text-right text-muted-foreground">{r.n}</td>
+                <td className="py-2.5 pr-3 text-right text-muted-foreground">
+                  %{r.model_pct.toFixed(1)}
+                </td>
+                <td className="py-2.5 pr-3 text-right">
+                  <span className="font-semibold">%{r.in_two_pct.toFixed(1)}</span>
+                  <span className="ml-1 text-[11px] text-muted-foreground">{r.in_two}</span>
+                </td>
+                <td className="py-2.5 pr-3 text-right text-muted-foreground">
+                  %{r.in_one_pct.toFixed(1)}
+                  <span className="ml-1 text-[11px]">{r.in_one}</span>
+                </td>
+                <td className="py-2.5">
+                  <div className="flex h-2.5 gap-[2px] overflow-hidden rounded-full" aria-hidden>
+                    <div
+                      className="bg-success"
+                      style={{ flexGrow: Math.max(r.in_one_pct, 0.0001), flexBasis: 0 }}
+                      title={`banko tutardı %${r.in_one_pct.toFixed(0)}`}
+                    />
+                    <div
+                      className="bg-primary/50"
+                      style={{
+                        flexGrow: Math.max(r.in_two_pct - r.in_one_pct, 0.0001),
+                        flexBasis: 0,
+                      }}
+                      title={`ikinci işaretin kurtardığı %${(r.in_two_pct - r.in_one_pct).toFixed(0)}`}
+                    />
+                    <div
+                      className="bg-danger"
+                      style={{ flexGrow: Math.max(100 - r.in_two_pct, 0.0001), flexBasis: 0 }}
+                      title={`çifte de tutmadı %${(100 - r.in_two_pct).toFixed(0)}`}
+                    />
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11.5px] text-muted-foreground">
+        <span className="flex items-center gap-1.5">
+          <span className="inline-block h-2.5 w-2.5 rounded-sm bg-success" aria-hidden /> banko
+          zaten tutardı
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="inline-block h-2.5 w-2.5 rounded-sm bg-primary/50" aria-hidden /> ikinci
+          işaretin kurtardığı
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="inline-block h-2.5 w-2.5 rounded-sm bg-danger" aria-hidden /> çifte de
+          tutmadı
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/* ── 8. Karar destegi: beraberlik profili ───────────────────────────────── */
+
+/**
+ * Favori ile ikincinin arasi acildikca beraberlik dusuyor. Sinyal var ama
+ * ZAYIF ve tam monoton degil; bu yuzden tablo bir GOSTERGE olarak sunulur,
+ * tahminci olarak degil. Piyasanin kendi beraberlik olasiligi yaninda
+ * durur — asil soru o olasiligin tutup tutmadigi.
+ */
+export function DrawProfile({
+  rows,
+  esik,
+}: {
+  rows: OddsSummary["draw_profile"];
+  esik: number;
+}) {
+  if (!rows.length) return <p className="text-[13px] text-muted-foreground">Yeterli veri yok.</p>;
+  const enBuyuk = Math.max(...rows.map((r) => Math.max(r.draw_pct, r.model_draw_pct)), 1);
+
+  return (
+    <div className="space-y-3">
+      <div className="scroll-slim overflow-x-auto">
+        <table className="w-full min-w-[600px] text-[12.5px]">
+          <thead>
+            <tr className="text-left text-[11px] uppercase tracking-[0.06em] text-muted-foreground">
+              <th scope="col" className="pb-2 pr-3 font-medium">Favori − ikinci farkı</th>
+              <th scope="col" className="w-14 pb-2 pr-3 text-right font-medium">Maç</th>
+              <th scope="col" className="w-28 pb-2 pr-3 text-right font-medium">Beraberlik</th>
+              <th scope="col" className="w-24 pb-2 pr-3 text-right font-medium">Oran diyor</th>
+              <th scope="col" className="w-28 pb-2 pr-3 text-right font-medium">Favori tuttu</th>
+              <th scope="col" className="w-32 pb-2 font-medium">Beraberlik payı</th>
+            </tr>
+          </thead>
+          <tbody className="tnum">
+            {rows.map((r) => (
+              <tr key={r.label} className="border-t border-line">
+                <td className="py-2.5 pr-3 font-medium">
+                  {r.label}
+                  {r.low_sample ? <AzOrnek n={r.n} esik={esik} /> : null}
+                </td>
+                <td className="py-2.5 pr-3 text-right text-muted-foreground">{r.n}</td>
+                <td className="py-2.5 pr-3 text-right">
+                  <span className="font-semibold">%{r.draw_pct.toFixed(1)}</span>
+                  <span className="ml-1 text-[11px] text-muted-foreground">{r.draw}</span>
+                </td>
+                <td className="py-2.5 pr-3 text-right text-muted-foreground">
+                  %{r.model_draw_pct.toFixed(1)}
+                </td>
+                <td className="py-2.5 pr-3 text-right text-muted-foreground">
+                  %{r.favourite_hit_pct.toFixed(1)}
+                </td>
+                <td className="py-2.5">
+                  <div className="relative h-5" title={`gerçekleşen %${r.draw_pct.toFixed(1)}`}>
+                    <div
+                      className={cn("absolute inset-y-0 left-0 rounded-md", SYM_BG["0"])}
+                      style={{ width: `${(100 * r.draw_pct) / enBuyuk}%` }}
+                    />
+                    <div
+                      aria-hidden
+                      title={`oranın dediği %${r.model_draw_pct.toFixed(1)}`}
+                      className="absolute inset-y-0 w-[2px] bg-foreground"
+                      style={{ left: `${(100 * r.model_draw_pct) / enBuyuk}%` }}
+                    />
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="text-[11.5px] leading-relaxed text-muted-foreground">
+        Çubuk gerçekleşen beraberlik oranı, dikey çizgi oranın söylediği. Eğilim var — fark
+        açıldıkça beraberlik düşüyor — ama <strong>tam monoton değil</strong> ve bantlar birbirine
+        yakın. Bu bir gösterge tablosudur; “beraberlik tahmincisi” olarak okunmamalıdır.
+      </p>
+    </div>
+  );
+}
+
+/* ── 9. Karar destegi: lig kirilimi ─────────────────────────────────────── */
+
+/**
+ * Kuponun yarisi Super Lig'den geliyor ve orada beraberlik %30, Premier
+ * Lig'de %20. Bu fark "0" butcesinin nereye harcanacagini degistirir.
+ */
+export function LeagueSplit({
+  rows,
+  esik,
+}: {
+  rows: OddsSummary["leagues"];
+  esik: number;
+}) {
+  const [hepsi, setHepsi] = React.useState(false);
+  if (!rows.length) return <p className="text-[13px] text-muted-foreground">Yeterli veri yok.</p>;
+  const guclu = rows.filter((r) => !r.low_sample);
+  const gosterilen = hepsi ? rows : guclu.length ? guclu : rows.slice(0, 6);
+  const gizli = rows.length - gosterilen.length;
+
+  return (
+    <div className="space-y-3">
+      <div className="scroll-slim overflow-x-auto">
+        <table className="w-full min-w-[620px] text-[12.5px]">
+          <thead>
+            <tr className="text-left text-[11px] uppercase tracking-[0.06em] text-muted-foreground">
+              <th scope="col" className="pb-2 pr-3 font-medium">Lig</th>
+              <th scope="col" className="w-14 pb-2 pr-3 text-right font-medium">Maç</th>
+              <th scope="col" className="w-28 pb-2 pr-3 text-right font-medium">Kupon başına</th>
+              <th scope="col" className="w-28 pb-2 pr-3 text-right font-medium">Beraberlik</th>
+              <th scope="col" className="w-28 pb-2 pr-3 text-right font-medium">Favori tuttu</th>
+              <th scope="col" className="w-28 pb-2 font-medium">Kupon payı</th>
+            </tr>
+          </thead>
+          <tbody className="tnum">
+            {gosterilen.map((r) => (
+              <tr key={r.league} className="border-t border-line">
+                <td className="py-2.5 pr-3 font-medium">
+                  {r.label}
+                  {r.low_sample ? <AzOrnek n={r.n} esik={esik} /> : null}
+                </td>
+                <td className="py-2.5 pr-3 text-right text-muted-foreground">{r.n}</td>
+                <td className="py-2.5 pr-3 text-right text-muted-foreground">
+                  {r.per_week.toFixed(1)} maç
+                </td>
+                <td className="py-2.5 pr-3 text-right">
+                  <span className="font-semibold">%{r.draw_pct.toFixed(1)}</span>
+                  <span className="ml-1 text-[11px] text-muted-foreground">{r.draw}</span>
+                </td>
+                <td className="py-2.5 pr-3 text-right text-muted-foreground">
+                  %{r.favourite_hit_pct.toFixed(1)}
+                </td>
+                <td className="py-2.5">
+                  <div className="h-2.5 overflow-hidden rounded-full bg-muted">
+                    <div
+                      className="h-full rounded-full bg-primary"
+                      style={{ width: `${r.share_pct}%` }}
+                      title={`kuponun %${r.share_pct.toFixed(1)}'i`}
+                    />
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {gizli > 0 || hepsi ? (
+        <button
+          type="button"
+          onClick={() => setHepsi((v) => !v)}
+          className="text-[12px] text-primary transition-colors hover:underline"
+        >
+          {hepsi ? "Az örnekli ligleri gizle" : `${gizli} az örnekli ligi de göster`}
+        </button>
+      ) : null}
     </div>
   );
 }

@@ -6,6 +6,7 @@ import logging
 import os
 import time
 from datetime import datetime, timezone
+from functools import lru_cache
 from typing import Any, Callable, Dict, List, Optional, Tuple
 from urllib.parse import urlparse
 
@@ -30,6 +31,9 @@ from spor_toto.history import (
     history_analytics, history_summary, history_week_detail, history_weeks,
 )
 from spor_toto.odds import season_1x2_summary, week_1x2
+from spor_toto.backtest import (
+    BANKO_IZGARA, UCLU_IZGARA, VARSAYILAN_BANKO, VARSAYILAN_UCLU, backtest,
+)
 from spor_toto import __version__
 
 logger = logging.getLogger(__name__)
@@ -499,6 +503,7 @@ def root():
             "GET  /api/health/checks",
             "GET  /api/stats",
             "GET  /api/stats/<week>",
+            "GET  /api/backtest",
             "POST /api/solve",
             "GET  /health",
         ],
@@ -554,6 +559,14 @@ def api_meta():
             for k, v in STRENGTH_PRESETS.items()
         ],
         "engine_defaults": ENGINE_DEFAULTS,
+        # Geri test esikleri de sabit kodlanmaz; izgara motorla tek kaynaktan
+        # senkron kalsin diye buradan okunur.
+        "backtest": {
+            "banko_default": VARSAYILAN_BANKO,
+            "uclu_default": VARSAYILAN_UCLU,
+            "banko_grid": list(BANKO_IZGARA),
+            "uclu_grid": list(UCLU_IZGARA),
+        },
         "limits": {
             "mc_samples": {"min": MC_MIN, "max": MC_MAX, "default": MC_WEB_SAMPLES},
             "fire_max": {"min": 0, "max": 2, "default": FIRE_MAX_VARSAYILAN},
@@ -614,6 +627,44 @@ def api_stats_week(week: int):
     w["odds"] = {str(no): blok for no, blok in oranlar.items()}
     w["odds_hit"] = sum(1 for b in oranlar.values() if b["hit"])
     return jsonify(w)
+
+
+def _parse_esik(raw: Any, varsayilan: float) -> float:
+    """Eşik [0, 1] araligina kirpilir; gecersiz deger varsayilana duser."""
+    try:
+        v = float(raw)
+    except (TypeError, ValueError):
+        return varsayilan
+    return min(1.0, max(0.0, v))
+
+
+@lru_cache(maxsize=32)
+def _backtest_cached(last: Optional[int], banko: float, uclu: float,
+                     sweep: bool) -> Dict[str, Any]:
+    """Geri test sonucu istek basina yeniden hesaplanmaz.
+
+    Veri seti surumlenmis bir dosyadir; ayni parametreler ayni cevabi verir.
+    Tek strateji ~1,2 sn, 28 esikli tarama ilk cagrida ~15 sn surer (kaplama
+    imzalari onbelleklenene kadar) ve sonrasinda milisaniyeye iner.
+    """
+    return backtest(last=last, banko_esik=banko, uclu_esik=uclu, sweep=sweep)
+
+
+@app.route("/api/backtest", methods=["GET"])
+def api_backtest():
+    """
+    "Bu strateji gecen sezon ne yapardi?"
+
+    `?banko=` ve `?uclu=` esikleri, `?last=N` dilimi, `?sweep=0` ile tarama
+    kapali. Cevap UC blok tasir ve ucu birlikte okunmalidir: secili
+    stratejinin sezonu, esik taramasi ve **hold-out** — sonuncusu esigin o
+    haftayi gormeden secildigi halde olculen sonuctur.
+    """
+    last = _parse_last(request.args.get("last"))
+    banko = _parse_esik(request.args.get("banko"), VARSAYILAN_BANKO)
+    uclu = _parse_esik(request.args.get("uclu"), VARSAYILAN_UCLU)
+    sweep = str(request.args.get("sweep", "1")).strip().lower() not in {"0", "false", "no"}
+    return jsonify(_backtest_cached(last, banko, uclu, sweep))
 
 
 @app.route("/api/solve", methods=["POST", "OPTIONS"])

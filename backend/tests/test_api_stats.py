@@ -89,6 +89,81 @@ def test_stats_mac_sonucu_orani_tasiyor(client):
         assert kova["lo"] < kova["hi"] and kova["n"] >= 10
 
 
+def test_karar_destek_bloklari(client):
+    """Çift kapsama, beraberlik profili ve lig kırılımı — F3 blokları."""
+    o = client.get("/api/stats").get_json()["odds"]
+    if o is None:
+        return
+    assert o["low_sample_at"] > 0
+
+    # Cift kapsama: banko her zaman ciftenin altinda kalir (alt kume).
+    kapsama = o["set_coverage"]
+    assert kapsama
+    assert sum(b["n"] for b in kapsama) == o["with_odds"]
+    for b in kapsama:
+        assert b["in_one"] <= b["in_two"] <= b["n"]
+        assert b["in_two_pct"] >= b["in_one_pct"]
+        assert 0 <= b["model_pct"] <= 100
+        assert b["low_sample"] == (b["n"] < o["low_sample_at"])
+    # Ilk iki olasilik toplami buyudukce kapsama artar (bant sirasi monoton).
+    buyuk = [b for b in kapsama if not b["low_sample"]]
+    assert buyuk == sorted(buyuk, key=lambda b: b["in_two_pct"])
+
+    # Beraberlik profili: banttaki maclarin toplami tum maclari verir.
+    profil = o["draw_profile"]
+    assert profil
+    assert sum(b["n"] for b in profil) == o["with_odds"]
+    assert sum(b["draw"] for b in profil) == o["outcome_totals"]["0"]
+    for b in profil:
+        assert b["draw"] <= b["n"]
+        assert 0 <= b["model_draw_pct"] <= 100
+
+    # Lig kirilimi: paylar toplami maclarin tamami.
+    ligler = o["leagues"]
+    assert ligler
+    assert sum(l["n"] for l in ligler) == o["with_odds"]
+    assert sum(l["draw"] for l in ligler) == o["outcome_totals"]["0"]
+    assert sum(l["favourite_hit"] for l in ligler) == o["favourite_hit"]
+    assert ligler == sorted(ligler, key=lambda l: (-l["n"], l["league"]))
+    for l in ligler:
+        assert l["label"], "lig etiketi bos olamaz"
+        assert 0 <= l["draw_pct"] <= 100
+
+
+def test_haftalik_brier(client):
+    """Piyasa hangi hafta yanıldı — favori isabetinden daha dürüst ölçü."""
+    o = client.get("/api/stats").get_json()["odds"]
+    if o is None:
+        return
+    haftalar = o["weekly_brier"]
+    assert haftalar
+    assert haftalar == sorted(haftalar, key=lambda w: w["week"])
+    assert sum(w["n"] for w in haftalar) == o["with_odds"]
+    for w in haftalar:
+        # Brier [0, 2] araligindadir; 0 kusursuz, 2 tam ters.
+        assert 0.0 <= w["brier"] <= 2.0
+        assert w["favourite_hit"] <= w["n"]
+        assert w["partial"] == (w["n"] < 15)
+    # Esit olasilik referansi: piyasa bunun altinda kalmali, yoksa bilgi
+    # tasimiyor demektir.
+    assert o["brier_uniform"] == pytest.approx(2 / 3, abs=1e-3)
+    assert 0.0 < o["brier_avg"] < o["brier_uniform"]
+    # Sezon ortalamasi hafta ortalamalarinin mac agirlikli ortalamasidir.
+    agirlikli = sum(w["brier"] * w["n"] for w in haftalar) / o["with_odds"]
+    assert o["brier_avg"] == pytest.approx(agirlikli, abs=1e-3)
+
+
+def test_karar_destek_dilime_uyar(client):
+    """?last=N üç bloğu da kapsar — iki görsel farklı veriyi anlatmaz."""
+    tam = client.get("/api/stats").get_json()["odds"]
+    dilim = client.get("/api/stats?last=6").get_json()["odds"]
+    if tam is None or dilim is None:
+        return
+    for anahtar in ("set_coverage", "draw_profile", "leagues", "weekly_brier"):
+        assert sum(b["n"] for b in dilim[anahtar]) == dilim["with_odds"]
+        assert sum(b["n"] for b in dilim[anahtar]) < sum(b["n"] for b in tam[anahtar])
+
+
 def test_stats_odds_dilime_uyar(client):
     tam = client.get("/api/stats").get_json()["odds"]
     dilim = client.get("/api/stats?last=6").get_json()["odds"]

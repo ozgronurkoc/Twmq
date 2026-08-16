@@ -190,6 +190,193 @@ def _favori_bantlari(oranli: List[Any]) -> List[Dict[str, Any]]:
     return out
 
 
+#: Bir satır bu sayının altında maça dayanıyorsa yüzdesi oynaktır ve
+#: arayüzde işaretlenir. 30, "yüzde okumaya başlanabilir" sınırı.
+AZ_ORNEK = 30
+
+#: İlk iki sembolün olasılık toplamı bantları — çift mi banko mu kararı.
+#: Alt sınır teorik olarak 2/3'tür (üç sembol de eşitse), o yüzden ilk bant
+#: açık uçlu başlar.
+CIFT_BANTLARI = ((0.0, 0.70), (0.70, 0.80), (0.80, 0.90), (0.90, 1.01))
+
+#: Favori ile ikincinin olasılık farkı bantları — beraberlik profili.
+FARK_BANTLARI = ((0.0, 0.05), (0.05, 0.15), (0.15, 0.30),
+                 (0.30, 0.50), (0.50, 1.01))
+
+
+def _sirali_olasilik(blok: Dict[str, Any]) -> List[Tuple[str, float]]:
+    """Sembolleri olasılığa göre büyükten küçüğe; eşitlikte kupon düzeni."""
+    return sorted(blok["probs"].items(),
+                  key=lambda kv: (-kv[1], SEMBOLLER.index(kv[0])))
+
+
+def _kume_kapsama(oranli: List[Any]) -> List[Dict[str, Any]]:
+    """Çift (ilk iki sembol) işaretlemek sonucu ne sıklıkla kapsıyor.
+
+    Her bant için üç sayı yan yana durur: piyasanın **söylediği** kapsama
+    (ilk iki olasılığın toplamı), **gerçekleşen** kapsama ve aynı bantta
+    banko yapılsaydı ne olacağı. Çift mi banko mu kararı bu üçlünün işidir.
+    """
+    out: List[Dict[str, Any]] = []
+    for lo, hi in CIFT_BANTLARI:
+        grup = []
+        for r, b in oranli:
+            s = _sirali_olasilik(b)
+            ikili = s[0][1] + s[1][1]
+            if lo <= ikili < hi:
+                grup.append((r, s, ikili))
+        n = len(grup)
+        if not n:
+            continue
+        ikide = sum(1 for r, s, _ in grup if r["code"] in (s[0][0], s[1][0]))
+        birde = sum(1 for r, s, _ in grup if r["code"] == s[0][0])
+        out.append({
+            "lo": round(lo, 2),
+            "hi": round(hi, 2) if hi <= 1.0 else None,
+            "label": f"%{100 * lo:.0f}–%{100 * hi:.0f}" if hi <= 1.0 else f"%{100 * lo:.0f}+",
+            "n": n,
+            "model_pct": round(100 * sum(x[2] for x in grup) / n, 1),
+            "in_two": ikide,
+            "in_two_pct": round(100 * ikide / n, 1),
+            "in_one": birde,
+            "in_one_pct": round(100 * birde / n, 1),
+            "low_sample": n < AZ_ORNEK,
+        })
+    return out
+
+
+def _beraberlik_profili(oranli: List[Any]) -> List[Dict[str, Any]]:
+    """Favori ile ikincinin arası açıldıkça beraberlik ne yapıyor.
+
+    Sinyal var ama zayıf: bu bir **gösterge**dir, tahminci değildir. Model
+    sütunu bilerek yanında durur — piyasa zaten beraberliğe bir olasılık
+    veriyor ve tabloda asıl soru, o olasılığın tutup tutmadığı.
+    """
+    out: List[Dict[str, Any]] = []
+    for lo, hi in FARK_BANTLARI:
+        grup = []
+        for r, b in oranli:
+            s = _sirali_olasilik(b)
+            fark = s[0][1] - s[1][1]
+            if lo <= fark < hi:
+                grup.append((r, b))
+        n = len(grup)
+        if not n:
+            continue
+        beraberlik = sum(1 for r, _ in grup if r["code"] == "0")
+        tutan = sum(1 for _, b in grup if b["hit"])
+        out.append({
+            "lo": round(lo, 2),
+            "hi": round(hi, 2) if hi <= 1.0 else None,
+            "label": f"{lo:.2f}–{hi:.2f}" if hi <= 1.0 else f"{lo:.2f} ve üstü",
+            "n": n,
+            "draw": beraberlik,
+            "draw_pct": round(100 * beraberlik / n, 1),
+            "model_draw_pct": round(
+                100 * sum(b["probs"]["0"] for _, b in grup) / n, 1),
+            "favourite_hit_pct": round(100 * tutan / n, 1),
+            "low_sample": n < AZ_ORNEK,
+        })
+    return out
+
+
+#: football-data ana lig dosyaları ligi kodla verir (`T1`, `E0`…); ek ülke
+#: dosyaları zaten "Sweden/Allsvenskan" gibi okunur bir ad taşır. Tabloda
+#: kod görünmesin diye çeviri burada durur; eşleşmeyen değer olduğu gibi
+#: geçer — uydurma ad üretilmez.
+LIG_ADLARI: Dict[str, str] = {
+    "E0": "İngiltere · Premier Lig", "E1": "İngiltere · Championship",
+    "E2": "İngiltere · League One", "E3": "İngiltere · League Two",
+    "EC": "İngiltere · National League",
+    "SC0": "İskoçya · Premiership", "SC1": "İskoçya · Championship",
+    "SC2": "İskoçya · League One", "SC3": "İskoçya · League Two",
+    "D1": "Almanya · Bundesliga", "D2": "Almanya · 2. Bundesliga",
+    "I1": "İtalya · Serie A", "I2": "İtalya · Serie B",
+    "SP1": "İspanya · La Liga", "SP2": "İspanya · La Liga 2",
+    "F1": "Fransa · Ligue 1", "F2": "Fransa · Ligue 2",
+    "N1": "Hollanda · Eredivisie", "B1": "Belçika · Pro Lig",
+    "P1": "Portekiz · Primeira Liga", "T1": "Türkiye · Süper Lig",
+    "G1": "Yunanistan · Süper Lig",
+}
+
+
+def _lig_kirilimi(oranli: List[Any], hafta_sayisi: int) -> List[Dict[str, Any]]:
+    """Lig lig beraberlik oranı ve favori isabeti.
+
+    Lig etiketi oran arşivinden gelir (kupon payload'ı lig adı taşımaz).
+    BOM hatası kapanana kadar bu alan 539 maçta boştu; etiketsiz satırlar
+    gizlenmez, "bilinmiyor" olarak sayılır.
+    """
+    gruplar: Dict[str, List[Any]] = {}
+    for r, b in oranli:
+        ad = (r["source"].get("league") or "").strip() or "bilinmiyor"
+        gruplar.setdefault(ad, []).append((r, b))
+
+    out: List[Dict[str, Any]] = []
+    for ad, grup in gruplar.items():
+        n = len(grup)
+        beraberlik = sum(1 for r, _ in grup if r["code"] == "0")
+        tutan = sum(1 for _, b in grup if b["hit"])
+        out.append({
+            "league": ad,
+            "label": LIG_ADLARI.get(ad, ad),
+            "n": n,
+            "share_pct": round(100 * n / len(oranli), 1),
+            "per_week": round(n / hafta_sayisi, 1) if hafta_sayisi else 0.0,
+            "draw": beraberlik,
+            "draw_pct": round(100 * beraberlik / n, 1),
+            "favourite_hit": tutan,
+            "favourite_hit_pct": round(100 * tutan / n, 1),
+            "low_sample": n < AZ_ORNEK,
+        })
+    out.sort(key=lambda d: (-d["n"], d["league"]))
+    return out
+
+
+def _brier(blok: Dict[str, Any], code: str) -> float:
+    """Tek maçın Brier skoru: Σ(p_s − 1{s=gerçek})².
+
+    0 = kusursuz tahmin, 2 = tam ters. Üç sembol eşit verilmişse (0,33 her
+    biri) skor 0,667 çıkar; piyasa bunun altında kaldığı sürece bilgi
+    taşıyor demektir.
+    """
+    return sum((blok["probs"][s] - (1.0 if s == code else 0.0)) ** 2
+               for s in SEMBOLLER)
+
+
+#: Üç sembole eşit olasılık verildiğinde çıkan Brier skoru — referans çizgi.
+BRIER_ESIT = round(2 * (1 / 3.0) ** 2 + (1 - 1 / 3.0) ** 2, 4)
+
+
+def _haftalik_brier(oranli: List[Any]) -> List[Dict[str, Any]]:
+    """Hafta hafta "piyasa ne kadar yanıldı".
+
+    Favori isabeti tek başına yanıltıcıdır: 1,05 oranlı favorinin tutması
+    ile 2,40 oranlının tutması aynı şey değil. Brier skoru olasılığın
+    tamamını cezalandırır, bu yüzden sürpriz haftayı isabet sayısından
+    daha dürüst gösterir.
+    """
+    gruplar: Dict[int, List[Any]] = {}
+    for r, b in oranli:
+        gruplar.setdefault(r["week"], []).append((r, b))
+
+    out: List[Dict[str, Any]] = []
+    for hafta, grup in sorted(gruplar.items()):
+        n = len(grup)
+        toplam = sum(_brier(b, r["code"]) for r, b in grup)
+        tutan = sum(1 for _, b in grup if b["hit"])
+        out.append({
+            "week": hafta,
+            "n": n,
+            "brier": round(toplam / n, 4),
+            "favourite_hit": tutan,
+            "favourite_hit_pct": round(100 * tutan / n, 1),
+            # Kupon eksik oranlıysa hafta karşılaştırmaya girmemeli.
+            "partial": n < 15,
+        })
+    return out
+
+
 def season_1x2_summary(weeks: Optional[List[int]] = None) -> Optional[Dict[str, Any]]:
     """Dilim için oran özeti: kapsama, favori isabeti, marj ve kalibrasyon.
 
@@ -269,6 +456,16 @@ def season_1x2_summary(weeks: Optional[List[int]] = None) -> Optional[Dict[str, 
         "cross": capraz,
         "underdog_wins": underdog,
         "favourite_bands": bantlar,
+        # Karar destek blokları — üçü de aynı dilim üzerinden hesaplanır.
+        "set_coverage": _kume_kapsama(oranli),
+        "draw_profile": _beraberlik_profili(oranli),
+        "leagues": _lig_kirilimi(oranli, len({r["week"] for r, _ in oranli})),
+        "weekly_brier": _haftalik_brier(oranli),
+        "brier_avg": round(
+            sum(_brier(b, r["code"]) for r, b in oranli) / len(oranli), 4
+        ),
+        "brier_uniform": BRIER_ESIT,
+        "low_sample_at": AZ_ORNEK,
         "outcome_totals": {
             s: tuttu_sonuc[s] + tutmadi_sonuc[s] for s in SEMBOLLER
         },
