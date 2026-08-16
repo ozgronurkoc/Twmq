@@ -3,8 +3,13 @@
 import * as React from "react";
 import Link from "next/link";
 
-import { getStats } from "@/lib/api";
-import { SEMBOLLER, type Sembol, type StatsResponse } from "@/lib/types";
+import { getBacktest, getStats } from "@/lib/api";
+import {
+  SEMBOLLER,
+  type BacktestResponse,
+  type Sembol,
+  type StatsResponse,
+} from "@/lib/types";
 import { cn, ondalik, sayi } from "@/lib/utils";
 import {
   Badge,
@@ -33,6 +38,7 @@ import {
   RangeFilter,
   SliceNote,
 } from "@/components/istatistik/parts";
+import { BacktestStats } from "@/components/istatistik/backtest";
 import { WeeksTable } from "@/components/istatistik/weeks-table";
 import { SYM_BG } from "@/components/istatistik/viz";
 
@@ -48,6 +54,18 @@ export default function IstatistikPage() {
   const [veri, setVeri] = React.useState<StatsResponse | null>(null);
   const [mesgul, setMesgul] = React.useState(true);
   const [hata, setHata] = React.useState<string | null>(null);
+  const [gerite, setGerite] = React.useState<BacktestResponse | null>(null);
+
+  // Geri test ayri bir istek: tarama kapali (tek strateji ~1 sn) ve
+  // basarisiz olursa sayfanin geri kalani etkilenmez — kart gorunmez.
+  React.useEffect(() => {
+    const ac = new AbortController();
+    setGerite(null);
+    getBacktest({ last, sweep: false }, ac.signal)
+      .then(setGerite)
+      .catch(() => undefined);
+    return () => ac.abort();
+  }, [last]);
 
   React.useEffect(() => {
     const ac = new AbortController();
@@ -317,6 +335,38 @@ export default function IstatistikPage() {
                 Ortalama bahisçi payı (marj) %{ondalik(veri.odds.avg_margin_pct, 2)}; yukarıdaki
                 olasılıklar bu pay arındırılarak hesaplandı. Kaynak: {veri.odds.books.join(", ")}
                 {" "}kapanış. Milli maç haftalarında oran yok, kapsama bu yüzden %100 değildir.
+              </p>
+            </CardBody>
+          </Card>
+        ) : null}
+
+        {/* Geri test ozeti */}
+        {gerite && gerite.season.weeks ? (
+          <Card>
+            <CardHeader
+              title="Bu strateji geçen sezon ne yapardı?"
+              hint={`${gerite.strategy.explain}. Kupon her hafta 14-garantili motorla çözülür; “tuttu” demek, üretilen kolonlardan birinin en az 14 doğru yakalaması demektir.`}
+              action={
+                <Link
+                  href="/istatistik/geri-test"
+                  className="inline-flex h-8 items-center rounded-xl border border-line-strong px-3 text-[12.5px] transition-colors hover:bg-muted"
+                >
+                  Eşik taraması →
+                </Link>
+              }
+            />
+            <CardBody className="space-y-4">
+              <BacktestStats season={gerite.season} />
+              <p className="text-[11.5px] leading-relaxed text-muted-foreground">
+                {gerite.meta.weeks_used} hafta çalıştırıldı
+                {gerite.meta.weeks_dropped.length
+                  ? `, ${gerite.meta.weeks_dropped.length} hafta oranı eksik olduğu için elendi`
+                  : ""}
+                . Bu, geçmişin kaydıdır; geleceğin garantisi değildir —{" "}
+                <Link className="text-primary hover:underline" href="/istatistik/geri-test">
+                  eşik taraması ve hold-out sağlaması
+                </Link>{" "}
+                aşırı uyumun büyüklüğünü gösterir.
               </p>
             </CardBody>
           </Card>

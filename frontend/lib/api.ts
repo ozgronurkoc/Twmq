@@ -1,4 +1,5 @@
 import type {
+  BacktestResponse,
   HealthChecksResponse,
   HealthReport,
   MetaResponse,
@@ -108,6 +109,24 @@ export function getStats(last?: number | null, signal?: AbortSignal) {
 
 export function getStatsWeek(week: number, signal?: AbortSignal) {
   return istek<WeekDetail>(`/api/stats/${week}`, { signal });
+}
+
+/**
+ * Geri test. `sweep` kapaliyken tek strateji hesaplanir (~1 sn); acikken
+ * 28 esikli tarama + hold-out gelir ve sunucu bunu ilk cagrida uretip
+ * onbellege alir, sonraki cagrilar milisaniyedir.
+ */
+export function getBacktest(
+  opt: { last?: number | null; banko?: number; uclu?: number; sweep?: boolean } = {},
+  signal?: AbortSignal,
+) {
+  const q = new URLSearchParams();
+  if (opt.last && opt.last > 0) q.set("last", String(opt.last));
+  if (opt.banko !== undefined) q.set("banko", String(opt.banko));
+  if (opt.uclu !== undefined) q.set("uclu", String(opt.uclu));
+  if (opt.sweep === false) q.set("sweep", "0");
+  const qs = q.toString();
+  return istek<BacktestResponse>(`/api/backtest${qs ? `?${qs}` : ""}`, { signal });
 }
 
 /**

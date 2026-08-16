@@ -7,6 +7,7 @@ import {
   Activity,
   BarChart3,
   Grid3x3,
+  History,
   PanelLeftClose,
   PanelLeftOpen,
   Zap,
@@ -48,6 +49,12 @@ const GRUPLAR: NavGroup[] = [
         hint: "Tarihsel 1 / 0 / 2",
         icon: <BarChart3 size={17} />,
       },
+      {
+        href: "/istatistik/geri-test",
+        label: "Geri test",
+        hint: "Strateji geçen sezon ne yapardı",
+        icon: <History size={17} />,
+      },
     ],
   },
   {
@@ -63,9 +70,22 @@ const GRUPLAR: NavGroup[] = [
   },
 ];
 
-function aktifMi(pathname: string, href: string) {
+function eslesirMi(pathname: string, href: string) {
   if (href === "/") return pathname === "/";
   return pathname === href || pathname.startsWith(href + "/");
+}
+
+/**
+ * Eslesen href'lerin EN UZUNU aktiftir. `/istatistik` ile
+ * `/istatistik/geri-test` ikisi de eslestigi icin bu gerekli: aksi halde
+ * geri test sayfasinda iki baglanti birden vurgulanirdi.
+ */
+function aktifHref(pathname: string): string | null {
+  const eslesenler = GRUPLAR.flatMap((g) => g.items)
+    .map((i) => i.href)
+    .filter((h) => eslesirMi(pathname, h));
+  if (!eslesenler.length) return null;
+  return eslesenler.reduce((a, b) => (b.length > a.length ? b : a));
 }
 
 export function SidebarIcerik({
@@ -78,6 +98,7 @@ export function SidebarIcerik({
   onGezinme?: () => void;
 }) {
   const pathname = usePathname() || "/";
+  const aktif_href = aktifHref(pathname);
 
   return (
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
@@ -137,7 +158,7 @@ export function SidebarIcerik({
             )}
             <div className="flex flex-col gap-0.5">
               {grup.items.map((item) => {
-                const aktif = aktifMi(pathname, item.href);
+                const aktif = item.href === aktif_href;
                 return (
                   <Link
                     key={item.href}

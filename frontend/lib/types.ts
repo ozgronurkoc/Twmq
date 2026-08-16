@@ -548,6 +548,99 @@ export interface WeekDetail extends WeekRow {
   odds_hit: number;
 }
 
+// ─── /api/backtest ────────────────────────────────────────────────────────
+
+/** Bir eşik çiftinin sezon özeti. `sweep` satırları da bu biçimdedir. */
+export interface BacktestSeason {
+  weeks: number;
+  /** Seçim uzayı sınırı aşıldığı için çözülemeyen hafta sayısı. */
+  skipped: number;
+  /** Gerçek sonucun 15 maçta da işaretlerin içinde kaldığı hafta sayısı. */
+  in_set: number;
+  in_set_pct: number;
+  hit15: number;
+  hit14: number;
+  hit13: number;
+  hit14_pct: number;
+  /** Wilson %95 güven aralığı — 41 hafta küçük örneklem. */
+  hit14_ci: [number, number];
+  columns_total: number;
+  columns_avg: number;
+  columns_max: number;
+  /** 14+ tutan hafta başına kolon bedeli; hiç tutmadıysa null. */
+  columns_per_hit14: number | null;
+  rows_avg: number;
+  banko_avg: number;
+  double_avg: number;
+  triple_avg: number;
+  misses_total: number;
+  all_guaranteed: boolean;
+}
+
+export interface SweepRow extends BacktestSeason {
+  banko: number;
+  uclu: number;
+}
+
+export interface BacktestWeek {
+  week: number;
+  close_date: string;
+  skipped: boolean;
+  /** Hafta çözülemediyse nedeni; aksi halde tanımsız. */
+  reason?: string;
+  /** 15 maçın işaretleri: "1", "10", "102". */
+  picks: string[];
+  banko: number;
+  double: number;
+  triple: number;
+  /** Ödenecek tutarın ölçüsü. Satır sayısıyla karıştırılmamalı. */
+  columns: number;
+  rows: number;
+  engine: string;
+  guaranteed: boolean;
+  /** 15 maçın tamamı işaretlerin içinde mi kaldı. */
+  in_set: boolean;
+  misses: number;
+  /** Küme dışı kalan maçların 1 tabanlı numaraları. */
+  miss_at: number[];
+  /** Kolonların içinde en çok tutturanın doğru sayısı. */
+  best: number;
+  results: string;
+}
+
+/**
+ * Eşik o haftayı GÖRMEDEN seçildiğinde ne oldu (leave-one-out). Tarama
+ * satırlarıyla arasındaki fark, aşırı uyumun büyüklüğüdür.
+ */
+export interface BacktestHoldout {
+  weeks: number;
+  hit14?: number;
+  hit14_pct?: number;
+  hit14_ci?: [number, number];
+  columns_total?: number;
+  columns_avg?: number;
+  chosen?: Array<{ threshold: string; weeks: number }>;
+}
+
+export interface BacktestResponse {
+  meta: {
+    weeks_available: number;
+    weeks_used: number;
+    weeks_dropped: Array<{ week: number; missing: number }>;
+    match_count: number;
+    space_limit: number;
+    note: string;
+  };
+  strategy: { banko: number; uclu: number; explain: string };
+  season: BacktestSeason;
+  weeks: BacktestWeek[];
+  sweep: SweepRow[];
+  sweep_best: SweepRow | null;
+  holdout: BacktestHoldout;
+  grid: { banko: number[]; uclu: number[] };
+  warning: string;
+}
+
 // ─── /api/health ──────────────────────────────────────────────────────────
 
 /** Motorun katmanları; kaynak: backend/spor_toto/health.py KATEGORILER. */

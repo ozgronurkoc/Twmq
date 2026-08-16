@@ -445,6 +445,43 @@ def _check_oran_arsivi() -> str:
     )
 
 
+def _check_geri_test() -> str:
+    """
+    Geri test hatti. Iki degismez var ve ikisi de raporun durustlugunu
+    korur: (1) her hafta 14-GARANTILI bir kaplamayla cozulur — acik nokta
+    birakan bir cozum bedel tablosuna giremez; (2) kume ici kalan bir hafta
+    tanimi geregi en az 14 tutturur, yani `in_set <= hit14`.
+
+    Tarama KAPALI calisir: burada olculen sey stratejinin isabeti degil,
+    boru hattinin kendi tutarliligi.
+    """
+    from .backtest import backtest
+    from .history import MATCH_COUNT
+
+    r = backtest(sweep=False)
+    s = r["season"]
+    if not s.get("weeks"):
+        return "çalıştırılabilir hafta yok — oran arşivi eksik olabilir"
+
+    for h in r["weeks"]:
+        if h["skipped"]:
+            continue
+        assert h["guaranteed"], f"{h['week']}. hafta kaplaması açık nokta bıraktı"
+        assert h["banko"] + h["double"] + h["triple"] == MATCH_COUNT
+        assert h["in_set"] == (h["misses"] == 0)
+        assert h["misses"] == len(h["miss_at"])
+        assert 0 <= h["best"] <= MATCH_COUNT
+        assert h["columns"] >= h["rows"], "kolon bedeli satır sayısının altına düşemez"
+    assert s["in_set"] <= s["hit14"], "küme içi hafta en az 14 tutturmalı"
+    assert s["hit15"] <= s["hit14"] <= s["hit13"] <= s["weeks"]
+    lo, hi = s["hit14_ci"]
+    assert lo <= s["hit14_pct"] <= hi, "güven aralığı ölçümü içermeli"
+    return (
+        f"hafta={s['weeks']} 14+={s['hit14']} kume_ici={s['in_set']} "
+        f"kolon/hafta={s['columns_avg']}"
+    )
+
+
 def _check_scipy_flag() -> str:
     return f"HAS_SCIPY={HAS_SCIPY}"
 
@@ -552,6 +589,12 @@ CHECKS: Tuple[CheckSpec, ...] = (
         "Piyasa oranı arşivi: kapsama, favori isabet muhasebesi ve çapraz "
         "tablonun toplamları tutuyor mu.",
         _check_oran_arsivi,
+    ),
+    CheckSpec(
+        "geri_test", "analiz",
+        "Geri test boru hattı: her hafta 14-garantili bir kaplamayla çözülüyor "
+        "mu ve küme içi kalan hafta gerçekten en az 14 tutturuyor mu.",
+        _check_geri_test,
     ),
     CheckSpec(
         "pipeline_result_shape", "ucuca",
