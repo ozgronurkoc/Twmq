@@ -550,20 +550,80 @@ export interface WeekDetail extends WeekRow {
 
 // ─── /api/health ──────────────────────────────────────────────────────────
 
+/** Motorun katmanları; kaynak: backend/spor_toto/health.py KATEGORILER. */
+export type HealthKategoriId =
+  | "cekirdek" | "motor" | "olasilik" | "analiz" | "ucuca" | "ortam";
+
 export interface HealthCheck {
   name: string;
   ok: boolean;
   detail: string;
   duration_ms: number;
+  category: HealthKategoriId;
+  category_label: string;
+  /** Kontrolün NEYİ koruduğu — arayüz kriptik `name` yerine bunu gösterir. */
+  aciklama: string;
+  /** false ise düşmesi raporu UNHEALTHY yapmaz, yalnızca "degraded" işaretler. */
+  critical: boolean;
+}
+
+export interface HealthKategori {
+  id: HealthKategoriId;
+  label: string;
+  aciklama: string;
+  passed: number;
+  failed: number;
+  total: number;
+  duration_ms: number;
+  /** Kritik olmayan bir kontrol düşse bile kategori `ok` kalır. */
+  ok: boolean;
+}
+
+export interface HealthEnv {
+  python: string;
+  platform: string;
+  numpy: string | null;
+  scipy: string | null;
+  flask: string | null;
+}
+
+export interface HealthSummary {
+  ornek_kupon?: string;
+  has_scipy?: boolean;
+  env?: HealthEnv;
+  slowest?: { name: string; duration_ms: number } | null;
+  /** `?only=` ile çalıştırıldıysa filtre metni. */
+  only?: string | null;
+  /** true ise rapor kontrollerin TAMAMINI kapsamıyor. */
+  kismi?: boolean;
+  kayitli_kontrol?: number;
 }
 
 export interface HealthReport {
   version: string;
   timestamp: string;
   ok: boolean;
+  /** Kritikler geçti ama bilgi amaçlı bir kontrol düştü. */
+  degraded: boolean;
   passed: number;
   failed: number;
   total: number;
+  duration_ms: number;
+  categories: HealthKategori[];
   checks: HealthCheck[];
-  summary: { ornek_kupon?: string; has_scipy?: boolean };
+  summary: HealthSummary;
+}
+
+/** /api/health/checks — çalıştırmadan alınan envanter. */
+export interface HealthCheckInfo {
+  name: string;
+  category: HealthKategoriId;
+  category_label: string;
+  aciklama: string;
+  critical: boolean;
+}
+
+export interface HealthChecksResponse {
+  version: string;
+  checks: HealthCheckInfo[];
 }

@@ -6,7 +6,7 @@ cd "$(dirname "$0")/.."
 echo "==> pytest (not slow)"
 python -m pytest -m "not slow" -q
 
-echo "==> system health (13 invariant)"
+echo "==> system health (değişmezler)"
 python -m spor_toto.health
 
 ORNEK="1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"

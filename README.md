@@ -19,7 +19,7 @@ anlatmaz ve kullanıcıya kazanma hissi satar. Bu proje bunun tam tersini deneme
 kaçırmamanı, hem de mümkün olan **en az kuponla** sağlar. Bir maliyet düşürme
 aracıdır; kazanma olasılığını büyütmez.
 
-Bu iddianın etrafında dört taahhüt var. Projedeki hemen her karar bunlardan birine
+Bu iddianın etrafında beş taahhüt var. Projedeki hemen her karar bunlardan birine
 dayanır.
 
 ### 1.1 Garanti kombinatoryaldir, olasılıksal değildir
@@ -46,7 +46,7 @@ Tarihsel veri ve oran arşivi bu projede birer süs değil, denetlenen varlıkla
 Maç listesi, sonuç dizisi ve sayımlar birbirini tutmadan dosya yazılmaz; okuma
 anında aynı denetim tekrarlanır ve sonucu `data_quality` bloğu olarak **arayüzde
 görünür**. "Sessizce doğru olanı seç" yaklaşımı, hatanın bir sonraki sefere kadar
-saklanması demektir (bkz. §6.4 vaka: v1 sıra hatası).
+saklanması demektir (bkz. §5.6 vaka: v1 sıra hatası).
 
 ### 1.4 Kaynak dürüstlüğü
 
@@ -54,7 +54,19 @@ Verinin ne **olmadığı**, ne olduğu kadar önemlidir. Arşivdeki oranlar piya
 oranıdır, **iddaa oranı değildir** — ve bu, kodda, belgede ve arayüzde her yerde
 yazar. Otomatik erişime kapalı bir kaynaktan veri çekilmez.
 
-### 1.5 Ne yapar / ne yapmaz
+### 1.5 Vaat bir kez değil, her çağrıda kanıtlanır
+
+Yukarıdaki dört taahhüdün hepsi kodda doğru yazılmış olabilir ve yine de
+**yayındaki sürümde** geçerli olmayabilir: bağımlılık kurulamaz, veri dosyası
+dağıtıma girmez, yanlış commit yayınlanır. Testler bunu yakalamaz — testler CI
+makinesinde, o günkü kilitli bağımlılıklarla, o commit üzerinde koşar.
+
+Bu yüzden sağlık katmanı ayrı bir katmandır ve `/saglik` sayfası ürünün eşit
+haklı bir parçasıdır: **ürünün vaadinin şu anda, bu makinede, bu sürümde hâlâ
+geçerli olduğunu kanıtlar.** 16 değişmez, 6 kategori, her çağrıda yeniden
+ölçülür — ve neyi kanıtlamadığını da açıkça yazar (§6.3).
+
+### 1.6 Ne yapar / ne yapmaz
 
 | Yapar | Yapmaz |
 |-------|--------|
@@ -63,8 +75,9 @@ yazar. Otomatik erişime kapalı bir kaynaktan veri çekilmez.
 | Küme dışı senaryoları **fire** olarak ölçer | Kazanma olasılığını artırmaz |
 | Exact + Monte Carlo olasılık raporu verir | 14-garantiyi olasılıkla "güçlendirmez" |
 | Bayes (Dirichlet) ile tahminlerini yumuşatır | Kâr vaadi vermez |
+| Vaadin canlıda geçerliliğini 16 değişmezle ölçer | Tahmin isabetini ölçmez (ölçemez) |
 | Markov ile sıralı risk profili çıkarır | Canlı bülten çekmez |
-| 41 haftalık sezon verisini ve piyasa oranlarını analiz eder | İddaa geçmiş oranı sunmaz (yok — §6.2) |
+| 41 haftalık sezon verisini ve piyasa oranlarını analiz eder | İddaa geçmiş oranı sunmaz (yok — §5.3) |
 | Her sayının kaynağını ve sınırını yazar | Mobil uygulama değildir |
 
 ---
@@ -353,7 +366,7 @@ Bugün `match_conflicts` tam olarak bunu yakalar. Vaka analizi:
 | `/` | **Formül** — motorun tamamı |
 | `/istatistik` | Sezon dağılımı, bantlar, oran kartı, 41 hafta |
 | `/istatistik/<hafta>` | Tek hafta detayı |
-| `/saglik` | 14 invariant, süreleriyle |
+| `/saglik` | Değişmezler — kategori kategori, süre ve açıklamalarıyla |
 
 **Formül sayfası — girdi:** 15 × 3 maç ızgarası (klavye: ok tuşları + `1` / `0` /
 `2`) · canlı sayaç (banko / çifte / üçlü / uzay / tahmini kolon bedeli) · **7 modun
@@ -381,13 +394,30 @@ haftalık bantlar (min–maks, ±1σ, ortanca, ortalama) · adet dağılımı ·
 sırasına göre ısı haritası · geçiş matrisi · uçlar ve seriler · hafta tablosu · veri
 kalitesi paneli.
 
+**Sağlık sayfası** okuma sırasına göre kurulmuştur — her blok, bir öncekinin cevabı
+yetmediğinde okunur:
+
+| Sıra | Blok | Cevapladığı soru |
+|---|---|---|
+| 1 | Durum kartı | "İyi mi kötü mü?" |
+| 2 | Düşenler özeti | "Ne bozuldu?" |
+| 3 | Kategori kartları (+ *"yalnızca bunu çalıştır"*) | "Hangi katman, tam olarak ne?" |
+| 4 | Çalışma geçmişi (oturum içi) | "Sürekli mi, arada bir mi?" |
+| 5 | Çalışan ortam | "Hangi sürümlerde?" |
+
+Süre çubuğu her satırda görünür, çünkü performans gerilemesi de bir gerilemedir:
+bir kontrolün 8 ms'den 400 ms'ye çıkması hiçbir değişmezi kırmaz ama bir şeyin
+değiştiğini kesin olarak söyler. Sayfa kategorileri, açıklamaları ve kritiklik
+bayrağını rapordan okur — hiçbirini sabit kodlamaz.
+
 ### 6.2 API uçları
 
 | Method | Path | Açıklama |
 |--------|------|----------|
 | GET | `/` | Servis bilgisi JSON |
 | GET | `/api/meta` | Modlar, preset'ler, varsayılanlar, sınırlar |
-| GET | `/api/health` | 14 invariant (200 = HEALTHY, 503 = UNHEALTHY) |
+| GET | `/api/health` | Değişmezler (200 = HEALTHY/DEGRADED, 503 = UNHEALTHY); `?only=` ile kısmi |
+| GET | `/api/health/checks` | Kontrol envanteri — çalıştırmadan |
 | GET | `/api/stats?last=N` | Tarihsel 1/0/2 + analiz blokları + oran özeti |
 | GET | `/api/stats/<week>` | Tek hafta detayı (komşular, sıra, sapma, maç listesi) |
 | POST | `/api/solve` | Motorun tamamı |
@@ -404,20 +434,80 @@ kalitesi paneli.
 Gövde şeması ve alan alan sözleşme:
 [`docs/ARCHITECTURE_NEXT.md`](docs/ARCHITECTURE_NEXT.md).
 
-### 6.3 Sağlık — 14 invariant
+### 6.3 Sağlık — vaadin hâlâ geçerli olduğunun kanıtı
+
+Sağlık katmanı "sistem ayakta mı?" sorusunu sormaz; onu 200 dönen herhangi bir uç
+zaten cevaplar. Sorduğu soru şudur: **ayakta olan şey hâlâ vaat ettiğimiz şey mi?**
+
+Test ile sağlık kontrolü aynı iddiayı farklı zaman ve zeminde sınar. `pytest`
+"bu commit doğru mu?" der; `/api/health` "yayınlanmış olan, kurulu gerçek
+sürümlerle, şu anda hâlâ doğru mu?" der. Aradaki boşluk teorik değildir: scipy'nin
+dağıtımda kurulamaması, numpy'ın majör sürüm atlaması, veri dosyasının dağıtıma
+girmemesi ya da yanlış commit'in yayınlanması — hiçbirini test yakalamaz.
+
+Kontrol mantığının **ikinci bir kopyası yoktur**: tek `CHECKS` tanımı üç ayrı
+soruya cevap verir.
+
+```
+CHECKS (tek tanım)
+   ├── pytest            → "bu commit doğru mu?"
+   ├── CI adımı          → "yayınlanmaya uygun mu?"
+   └── GET /api/health   → "yayınlanmış olan hâlâ doğru mu?"
+```
 
 ```bash
 cd backend
-python -m spor_toto.health              # bir kez
+python -m spor_toto.health                  # bir kez
 python -m spor_toto.health --interval 60
-curl http://localhost:8080/api/health   # JSON (200 = HEALTHY, 503 = UNHEALTHY)
+python -m spor_toto.health --list           # kontrol envanteri
+python -m spor_toto.health --only olasilik  # tek kategori (veya tek kontrol)
+curl http://localhost:8080/api/health       # JSON
+curl "http://localhost:8080/api/health?only=cekirdek"
+curl http://localhost:8080/api/health/checks   # envanter, çalıştırmadan
 ```
 
-Denetlenenler: encoder · fix16 garanti · fix16 yetersiz çifte · distance layers ·
-blok motor · heuristic · exact olasılık · Monte Carlo · Bayes · Markov · error_freq
-· **fire senaryoları** · pipeline şekli · scipy bayrağı.
+**16 kontrol, 6 kategori.** Kategoriler motorun katmanlarını izler ve yukarıdan
+aşağıya doğru ciddiyet azalır — düşen kontrolün adı değil, **hangi katmanın
+bozulduğu** okunur. Güncel liste için `--list`:
+
+| Kategori | Kapsam | Düşerse |
+|----------|--------|---------|
+| `cekirdek` | encoder, fix16 garanti, yetersiz çifte reddi, distance layers | **Ana vaat geçersiz.** Yayın durdurulur |
+| `motor` | blok motoru, heuristic | Bir mod güvenilmez; fix16 ayakta olabilir |
+| `olasilik` | exact, Monte Carlo, Bayes, Markov | Sayılar yanlış; garanti geçerli olabilir |
+| `analiz` | error_freq, **fire senaryoları**, veri seti, oran arşivi | Yorum katmanı bozuk; motor sağlam |
+| `ucuca` | pipeline sonuç şekli | Arayüz yanlış okuyor olabilir |
+| `ortam` | scipy bayrağı (bilgi amaçlı) | Bir yetenek eksik olabilir |
+
+**Her düşüş 503 değildir.** HTTP durum kodu "beni trafikten çıkar" demektir, "bir
+eksiğim var" demek değildir:
+
+| Durum | Koşul | `ok` | HTTP | Anlamı |
+|---|---|---|---|---|
+| **HEALTHY** | Her şey geçti | `true` | 200 | Vaat geçerli |
+| **DEGRADED** | Yalnızca `critical=False` düştü | `true` | **200** | Vaat geçerli, bir yetenek eksik |
+| **UNHEALTHY** | En az bir kritik düştü | `false` | 503 | Vaat sorgulanır |
+
+Bugün tek bir kontrol kritik değildir (`scipy_flag`): scipy yoksa ILP devre dışı
+kalır, motorun geri kalanı doğru çalışmaya devam eder. `critical=False` bir
+istisnadır ve gerekçe ister; ölçüt tektir — *bu kontrol düşerken kullanıcının
+aldığı sonuç hâlâ doğru mu?*
+
+**Kısmi çalıştırma dürüsttür.** `?only=` tek kontrolü veya kategoriyi koşturur;
+rapor `summary.kismi` ile kendini işaretler ve sayfa bunu bant olarak gösterir —
+kısmi bir yeşil, tam bir yeşil gibi görünemez. Otomatik yenileme her zaman tam
+raporu koşar. Bilinmeyen kontrol adı sessizce boş küme değil, **400** döner.
+
+**Neyi kanıtlamaz:** kontroller sabit bir örnek kupon üzerinde koşar
+(`1,10,1,12,0,10,2,10,1,12,02,1,10,2,10` — 8 çift, 256 nokta). HEALTHY, *senin az
+önce ürettiğin kuponun* doğrulandığı anlamına gelmez; motorun o kupon sınıfında
+doğru davrandığı anlamına gelir. Kendi sonucun her `/api/solve` çağrısında
+`guaranteed` / `worst` / `acik` alanlarıyla ayrıca doğrulanır.
 
 Sağlık kırmızıysa yayınlama yapılmaz. Bu, otomatik CD'nin yerini alan kuraldır.
+
+Katmanın vizyonu, kontrol sözleşmesi ve yol haritası:
+[`docs/SAGLIK_VIZYONU.md`](docs/SAGLIK_VIZYONU.md).
 
 ---
 
@@ -450,7 +540,7 @@ backend/
     fire_scenarios.py  Seçim DIŞI fire analizi (1-fire / 2-fire)
     history.py         Tarihsel 1/0/2, 6 analiz bloğu, veri kalitesi
     odds.py            Oran arşivi okuyucu, 1X2 özeti, kalibrasyon
-    health.py          14 invariant health check
+    health.py          Kategorili değişmez (invariant) kontrolleri — tek CHECKS tanımı
     report.py          Konsol / dosya çıktısı
     cli.py             spor-toto komut satırı
   web_app.py           Flask — yalnızca JSON API, HTML servis etmez
@@ -459,7 +549,7 @@ backend/
     build_odds.py      Kupon maçlarına piyasa oranlarını eşleştirir
     check.sh           Yerel CI eşdeğeri
   data/                st_history_2025_26.json · odds/
-  tests/               pytest (14 dosya, 205 test fonksiyonu → 545 test)
+  tests/               pytest (15 dosya, 224 test fonksiyonu → 564 test)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -468,6 +558,7 @@ frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası 
     shell/             kalıcı kenar çubuğu + sayfa geçişleri + tema
     formul/            maç ızgarası, olasılık girişi, sonuç panelleri
     istatistik/        grafikler (bağımlılıksız inline SVG), hafta tablosu, filtre
+    saglik/            durum kartı, kategori kartları, çalışma geçmişi
     ui/                temel bileşenler (elle yazıldı, Radix yok)
   lib/types.ts         API sözleşmesinin tamamı tipli
   lib/api.ts           tipli, AbortController ile iptal edilebilir istemci
@@ -483,6 +574,10 @@ archive/               Kullanımdan kalkmış Jinja2 arayüzü ve tek-seferlik y
 2. **Olasılıksal** — exact, MC, Bayes, Markov (garantiyi bozmaz)
 3. **Veri** — tarihsel sonuçlar, oran arşivi, veri kalitesi
 4. **Gözlem** — health, UI, CLI
+
+Sağlık katmanı bu şemada bir istisnadır: **hepsini birden ölçer**, ama hiçbirine
+bağımlı değildir — kontrol tanımları tek yerdedir (`CHECKS`) ve motorun kendi
+fonksiyonlarını çağırır, ikinci bir doğruluk kopyası tutmaz.
 
 Alt katman üsttekini bilmez. `core.py` olasılığı, olasılık katmanı veriyi, veri
 katmanı arayüzü bilmez.
@@ -549,13 +644,13 @@ pytest -q tests/test_history.py tests/test_odds.py    # veri bekçileri
 bash scripts/check.sh        # yerel CI eşdeğeri
 ```
 
-`backend/scripts/check.sh`: hızlı pytest → 14 invariant health → CLI fix16 +
+`backend/scripts/check.sh`: hızlı pytest → health → CLI fix16 +
 `--bayes-preset dengeli` dumanı. Exit code ≠ 0 ise bir adım kırık demektir.
 
 Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant'lar, CLI (Bayes preset
-dahil), analysis, bayes, markov, fire, health, history, odds, API sözleşmesi.
-14 test dosyası, 205 test fonksiyonu, parametrizasyonla **545 test**; 38'i
-istatistik/oran katmanına ait.
+dahil), analysis, bayes, markov, fire, health, health API, history, odds, API
+sözleşmesi. 15 test dosyası, 224 test fonksiyonu, parametrizasyonla **564 test**;
+38'i istatistik/oran, 23'ü sağlık katmanına ait.
 
 **Arayüz kontrolleri:**
 
@@ -569,7 +664,7 @@ cd frontend && npx tsc --noEmit && npm run build
 |------|--------|----------|
 | `pytest -m "not slow"` | 3.10–3.13 | Hızlı süit |
 | `pytest -m slow` | 3.12 | ILP / yavaş |
-| `python -m spor_toto.health` | 3.12 | Tüm invariantlar HEALTHY zorunlu |
+| `python -m spor_toto.health` | 3.12 | HEALTHY zorunlu (tüm kritik kontroller) |
 | CLI smoke | 3.12 | fix16 + Bayes preset parity |
 
 Workflow: `.github/workflows/tests.yml`.
@@ -592,7 +687,21 @@ yayınlanmaz.**
 | **F4 — Kullanım cilası** | Filtre durumu URL'de, CSV dışa aktarma, haftalık Brier skoru | Veri tarafı yok |
 | **F5 — İddaa bülten arşivi** | Haftalık snapshot; bir sezonda kendi arşivimiz olur | **Yeni boru hattı gerekir** |
 
-### 10.1 Bilinçli olarak yapılmayacaklar
+### 10.1 Sağlık katmanı
+
+Sıra, "en çok belirsizliği kaldıran" ölçütüne göredir. Ayrıntı:
+[`docs/SAGLIK_VIZYONU.md`](docs/SAGLIK_VIZYONU.md) §10.
+
+| # | Adım | Çözdüğü sorun |
+|---|---|---|
+| 1 | **Süre eşikleri** — kontrol başına beklenen bant; aşınca `degraded` | Performans gerilemesi bugün yalnızca gözle görülüyor |
+| 2 | **Zaman serisi** — son N koşunun sunucuda saklanması | Geçmiş oturumla sınırlı, sekme kapanınca kayboluyor |
+| 3 | **Kullanıcı kuponuyla koşma** | Sabit örnek kupon sınırı |
+| 4 | **Örnek çeşitliliği** — sabit tohumlu birkaç kupon sınıfı | Tek kupon sınıfı; determinizm korunarak |
+| 5 | **Alarm bağlantısı** | "Birinin bakıyor olması" varsayımı |
+| 6 | **Örnek kimliği** | Çok örnekli dağıtımda "hangi örnek?" |
+
+### 10.2 Bilinçli olarak yapılmayacaklar
 
 | Fikir | Neden hayır |
 |---|---|
@@ -600,6 +709,9 @@ yayınlanmaz.**
 | "Beraberlik tahmincisi" | Sinyal var (%14 → %33) ama zayıf ve tam monoton değil. Gösterge olarak sunmak dürüst, tahminci diye sunmak değil |
 | Diğer pazarların arayüze çıkması | Ürün kararı: 1X2 dışındakiler analiz içindir, arşivde kalır |
 | Maçkolik'ten veri çekme | `robots.txt` otomatik erişimi kapatıyor; politika sınırı ihlal edilmez |
+| Kontrolleri arayüzden düzenlemek | Değişmezler koddadır, yapılandırmada değil |
+| Sağlık geçmişini metrik panosuna çevirmek | Bu bir APM işidir; sayfa motorun sağlığını ölçer, sürecin değil |
+| Tahmin isabetini ölçen bir kontrol | Araç tahmin etmez; sağlık sayfası da etmez |
 
 ---
 
@@ -626,6 +738,16 @@ olarak bunun için var.
 **Resmi bülten numarası doğrulanmadı.** Kupon sırası kaynağın sırasıdır; 51. hafta
 bağımsız kaynakla çapraz doğrulanmıştır.
 
+**Sağlık sabit örnek kupon üzerinde koşar.** HEALTHY, senin kuponunun değil,
+motorun o kupon sınıfındaki davranışının doğrulandığı anlamına gelir. Rastgele
+kupon determinizmi bozardı; geniş girdi taraması `pytest`'teki fuzz testlerinin
+işidir.
+
+**Sağlıkta alarm yoktur ve tek süreci anlatır.** Kırmızıya döndüğünde kimseye
+haber gitmez — birinin bakıyor olması gerekir. Rapor, çağrıyı karşılayan süreci
+anlatır; çok örnekli bir dağıtımda "hangi örnek?" sorusu bugün cevapsızdır.
+İlk koşu (~615 ms) sonrakilerden (~340 ms) yavaştır; bu ısınmadır, gerileme değil.
+
 ---
 
 ## 12. Sözlük
@@ -637,6 +759,8 @@ bağımsız kaynakla çapraz doğrulanmıştır.
 | **Küme içi** | Gerçek sonucun, işaretlenen sembollerin içinde kalması |
 | **14-garanti** | Tahmin küme içindeyse en fazla 1 hatayla en az 14 doğruyu garanti eden kaplama |
 | **Fire** | Seçim kümesinin dışına çıkılan senaryo; garantinin geçerli olmadığı bölge |
+| **Değişmez (invariant)** | Kodun her koşusunda doğru kalması gereken matematiksel zorunluluk; sağlık katmanının ölçtüğü şey |
+| **DEGRADED** | Yalnızca kritik olmayan bir kontrol düşmüş: vaat geçerli, bir yetenek eksik (200 döner) |
 | **Kolon bedeli** | Ödenecek tutar. Satır sayısıyla karıştırılmamalı |
 | **Kaplama kodu** | Uzaydaki her noktanın en fazla r uzaklıkta bir kod sözcüğüne sahip olduğu küme |
 | **Marj (overround)** | Bahisçi payı; ham olasılık toplamının 1'i aşan kısmı |
@@ -655,6 +779,8 @@ bağımsız kaynakla çapraz doğrulanmıştır.
 | [`docs/ARCHITECTURE_NEXT.md`](docs/ARCHITECTURE_NEXT.md) | Mimari kararı ve API sözleşmesinin tamamı |
 | [`docs/VERI_TOPLAMA_VE_ISLEME.md`](docs/VERI_TOPLAMA_VE_ISLEME.md) | Veri katmanının tek kaynak dokümantasyonu: doktrin, boru hatları, kalite güvencesi, vakalar |
 | [`docs/ISTATISTIK_YOL_HARITASI.md`](docs/ISTATISTIK_YOL_HARITASI.md) | İstatistik katmanının durumu, ölçülmüş bulgular, yol haritası |
+| [`docs/SAGLIK_VIZYONU.md`](docs/SAGLIK_VIZYONU.md) | Sağlık katmanının vizyonu: kontrol sözleşmesi, kategori modeli, DEGRADED kararı, bilinçli sınırlar |
+| [`docs/SAGLIK_GELISTIRME_RAPORU.md`](docs/SAGLIK_GELISTIRME_RAPORU.md) | Sağlık katmanının çalışma raporu ve ölçümleri |
 | [`backend/README.md`](backend/README.md) | Motor + API kurulumu, oran arşivi kullanımı |
 | [`frontend/README.md`](frontend/README.md) | Arayüz yapısı, tasarım sistemi, grafik kuralları |
 | [`archive/README.md`](archive/README.md) | Ölü kodun envanteri ve neden silinmediği |

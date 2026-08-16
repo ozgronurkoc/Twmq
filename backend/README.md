@@ -21,8 +21,10 @@ python web_app.py                 # http://localhost:8080
 # CLI
 python -m spor_toto.cli --picks "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"
 
-# Health (13 invariant)
+# Health (değişmezler)
 python -m spor_toto.health
+python -m spor_toto.health --list           # kontrol envanteri
+python -m spor_toto.health --only olasilik  # tek kategori
 ```
 
 ## Testler
@@ -42,7 +44,7 @@ spor_toto/
   analysis.py  Monte Carlo, maç bazlı hata frekansı
   bayes.py     Dirichlet prior → posterior, KL, preset'ler
   markov.py    Seçim hayatta kalma + hata bütçesi zinciri
-  health.py    13 invariant health check
+  health.py    Kategorili değişmez (invariant) kontrolleri
   history.py   Tarihsel 1/0/2 + analiz blokları
   odds.py      Oran arşivi okuyucu — YALNIZCA analiz için, API'ye bağlı değil
   report.py    Konsol / dosya çıktısı

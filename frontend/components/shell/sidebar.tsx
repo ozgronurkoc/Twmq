@@ -56,7 +56,7 @@ const GRUPLAR: NavGroup[] = [
       {
         href: "/saglik",
         label: "Sağlık",
-        hint: "14 invariant",
+        hint: "Motor değişmezleri",
         icon: <Activity size={17} />,
       },
     ],

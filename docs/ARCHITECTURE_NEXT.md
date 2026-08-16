@@ -26,7 +26,7 @@ Eski Jinja2 arayüzü `archive/templates/` altına alınmıştır; runtime'da se
 |--------|------|----------|
 | GET | `/` | Servis bilgisi JSON |
 | GET | `/api/meta` | Modlar, Bayes preset'leri, motor varsayılanları, sınırlar |
-| GET | `/api/health` | 14 invariant |
+| GET | `/api/health` | Değişmezler; `?only=` ile kısmi (bkz. `SAGLIK_VIZYONU.md`) |
 | GET | `/api/stats?last=N` | Tarihsel 1/0/2 + analiz blokları (`last` = son N hafta dilimi) |
 | GET | `/api/stats/<week>` | Tek hafta detayı (komşular, sıra, sapma, sıra-sıra bağlam) |
 | POST | `/api/solve` | Tüm motor özellikleri |
