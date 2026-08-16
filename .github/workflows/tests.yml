@@ -33,7 +33,7 @@ jobs:
         if: matrix.python-version == '3.12'
         run: pytest -m slow
 
-      # 13 invariant — 14-garanti + Bayes/MC/Markov pipeline
+      # Degismezler — 14-garanti + Bayes/MC/Markov + veri katmani
       - name: System health
         if: matrix.python-version == '3.12'
         run: python -m spor_toto.health

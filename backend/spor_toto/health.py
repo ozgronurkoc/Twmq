@@ -4,17 +4,21 @@ Kullanım:
   python -m spor_toto.health
   python -m spor_toto.health --interval 60
   python -m spor_toto.health --json
+  python -m spor_toto.health --only olasilik        # tek kategori
+  python -m spor_toto.health --only fix16_garanti   # tek kontrol
+  python -m spor_toto.health --list                 # kontrol envanteri
 """
 
 from __future__ import annotations
 
 import argparse
 import math
+import platform
 import sys
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from . import __version__
 from .core import (
@@ -40,6 +44,34 @@ from .report import basliklar
 ORNEK = "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"
 SEMBOLLER = ("1", "0", "2")
 
+# Kategoriler, motorun katmanlarını izler: bir kontrol düştüğünde hatanın
+# hangi katmanda olduğu isimden değil buradan okunur.
+KATEGORILER: Tuple[Tuple[str, str, str], ...] = (
+    ("cekirdek", "Çekirdek", "Kodlama, 14-garanti ve mesafe muhasebesi."),
+    ("motor", "Çözücüler", "Alternatif motorların ürettiği kaplamalar."),
+    ("olasilik", "Olasılık", "Exact, Monte Carlo, Bayes ve Markov hattı."),
+    ("analiz", "Analiz", "Hata dağılımı ve seçim dışı fire katmanı."),
+    ("ucuca", "Uçtan uca", "API'nin döndürdüğü sonucun bütünlüğü."),
+    ("ortam", "Ortam", "Çalışan sürümün bağımlılık envanteri."),
+)
+KATEGORI_ETIKET: Dict[str, str] = {k: e for k, e, _ in KATEGORILER}
+
+
+@dataclass(frozen=True)
+class CheckSpec:
+    """Tek bir değişmezin tanımı.
+
+    `aciklama` kontrolün NEYİ koruduğunu söyler; arayüz kriptik `name`
+    yerine bunu gösterir. `critical=False` olan kontroller bilgi amaçlıdır:
+    düşmeleri raporu UNHEALTHY yapmaz, yalnızca "degraded" işaretler.
+    """
+
+    name: str
+    category: str
+    aciklama: str
+    fn: Callable[[], str]
+    critical: bool = True
+
 
 @dataclass
 class CheckResult:
@@ -47,6 +79,21 @@ class CheckResult:
     ok: bool
     detail: str = ""
     duration_ms: float = 0.0
+    category: str = "cekirdek"
+    aciklama: str = ""
+    critical: bool = True
+
+    def to_dict(self) -> dict:
+        return {
+            "name": self.name,
+            "ok": self.ok,
+            "detail": self.detail,
+            "duration_ms": round(self.duration_ms, 1),
+            "category": self.category,
+            "category_label": KATEGORI_ETIKET.get(self.category, self.category),
+            "aciklama": self.aciklama,
+            "critical": self.critical,
+        }
 
 
 @dataclass
@@ -56,36 +103,70 @@ class HealthReport:
     ok: bool
     checks: List[CheckResult] = field(default_factory=list)
     summary: Dict[str, Any] = field(default_factory=dict)
+    degraded: bool = False
+
+    def kategoriler(self) -> List[dict]:
+        """Kontrolleri kategoriye göre, tanım sırasını koruyarak toplar."""
+        out: List[dict] = []
+        for key, etiket, aciklama in KATEGORILER:
+            uyan = [c for c in self.checks if c.category == key]
+            if not uyan:
+                continue
+            out.append({
+                "id": key,
+                "label": etiket,
+                "aciklama": aciklama,
+                "passed": sum(1 for c in uyan if c.ok),
+                "failed": sum(1 for c in uyan if not c.ok),
+                "total": len(uyan),
+                "duration_ms": round(sum(c.duration_ms for c in uyan), 1),
+                "ok": all(c.ok or not c.critical for c in uyan),
+            })
+        return out
 
     def to_dict(self) -> dict:
+        en_yavas = max(self.checks, key=lambda c: c.duration_ms, default=None)
         return {
             "version": self.version,
             "timestamp": self.timestamp,
             "ok": self.ok,
+            "degraded": self.degraded,
             "passed": sum(1 for c in self.checks if c.ok),
             "failed": sum(1 for c in self.checks if not c.ok),
             "total": len(self.checks),
-            "checks": [
-                {
-                    "name": c.name,
-                    "ok": c.ok,
-                    "detail": c.detail,
-                    "duration_ms": round(c.duration_ms, 1),
-                }
-                for c in self.checks
-            ],
-            "summary": self.summary,
+            "duration_ms": round(sum(c.duration_ms for c in self.checks), 1),
+            "categories": self.kategoriler(),
+            "checks": [c.to_dict() for c in self.checks],
+            "summary": {
+                **self.summary,
+                "slowest": (
+                    {"name": en_yavas.name, "duration_ms": round(en_yavas.duration_ms, 1)}
+                    if en_yavas
+                    else None
+                ),
+            },
         }
 
 
-def _run(name: str, fn: Callable[[], str]) -> CheckResult:
+def _run(spec: CheckSpec) -> CheckResult:
     t0 = time.perf_counter()
+    ortak = {
+        "category": spec.category,
+        "aciklama": spec.aciklama,
+        "critical": spec.critical,
+    }
     try:
-        detail = fn() or "ok"
-        return CheckResult(name, True, detail, (time.perf_counter() - t0) * 1000)
+        detail = spec.fn() or "ok"
+        return CheckResult(
+            spec.name, True, detail, (time.perf_counter() - t0) * 1000, **ortak
+        )
     except Exception as e:
         return CheckResult(
-            name, False, f"{type(e).__name__}: {e}", (time.perf_counter() - t0) * 1000
+            spec.name,
+            False,
+            f"{type(e).__name__}: {e}",
+            (time.perf_counter() - t0) * 1000,
+            **ortak,
         )
 
 
@@ -292,50 +373,303 @@ def _check_pipeline_result_shape() -> str:
     return f"satir=16 bedel={total_cost} p_ici={rap.p_kume_ici:.4f}"
 
 
+def _check_veri_seti() -> str:
+    """
+    /istatistik sayfasinin dayandigi tarihsel veri seti.
+
+    Dosya YOKSA bu bir hata degildir: motor veri setinden bagimsiz calisir,
+    yalnizca istatistik sayfasi bos kalir. Dosya VARSA kendi ic tutarliligini
+    saglamak zorundadir — hafta sayimi, 15'lik dizi ve mac listesi ortusmeli.
+    """
+    from .history import (
+        MATCH_COUNT,
+        history_analytics,
+        history_summary,
+        history_weeks,
+    )
+
+    s = history_summary()
+    meta = s.get("meta") or {}
+    if not meta.get("weeks"):
+        return "veri seti yok — istatistik sayfası boş çalışır"
+
+    dq = s["data_quality"]
+    assert not dq["count_conflicts"], f"sayim catismasi: {dq['count_conflicts']}"
+    assert not dq["match_conflicts"], f"mac/dizi catismasi: {dq['match_conflicts']}"
+    assert not dq["incomplete_weeks"], f"eksik hafta: {dq['incomplete_weeks']}"
+    assert dq["ok"] is True
+
+    weeks = history_weeks()
+    assert len(weeks) == meta["weeks"]
+    for w in weeks:
+        assert len(w["results"]) == MATCH_COUNT, f"hafta {w['week']} dizisi eksik"
+        assert w["n1"] + w["n0"] + w["n2"] == MATCH_COUNT
+
+    a = history_analytics()
+    assert len(a["positions"]) == MATCH_COUNT
+    for p in a["positions"]:
+        assert sum(p["counts"].values()) == p["n"] == meta["weeks"]
+    # Gecis matrisi hafta ici ardisik ciftleri sayar: hafta basina 14 gecis.
+    assert a["transitions"]["n"] == meta["weeks"] * (MATCH_COUNT - 1)
+    return f"hafta={meta['weeks']} mac={meta['matches']} catisma=0"
+
+
+def _check_oran_arsivi() -> str:
+    """
+    Piyasa orani arsivi. Yoksa istatistik sayfasi oran bloklarini gizler;
+    varsa marj arindirilmis olasiliklar 1'e toplanmak zorundadir.
+    """
+    from .odds import coverage, season_1x2_summary
+
+    cov = coverage()
+    if not cov["matches"]:
+        return "oran arşivi yok — oran blokları gizlenir"
+
+    assert 0 <= cov["pct"] <= 100
+    o = season_1x2_summary()
+    if o is None:
+        return f"eşleşme=%{cov['pct']} — 1X2 özeti üretilemedi"
+
+    assert o["favourite_hit"] + o["favourite_miss"] == o["with_odds"]
+    assert sum(o["favourite_split"].values()) == o["with_odds"]
+    for s in SEMBOLLER:
+        assert (
+            o["outcome_when_hit"][s] + o["outcome_when_miss"][s]
+            == o["outcome_totals"][s]
+        ), f"capraz tablo {s} icin tutmuyor"
+    assert sum(b["n"] for b in o["favourite_bands"]) == o["with_odds"]
+    assert o["avg_margin_pct"] > 0, "marj pozitif olmali"
+    return (
+        f"eslesme=%{o['coverage_pct']} favori_isabet=%{o['favourite_hit_pct']} "
+        f"marj=%{o['avg_margin_pct']}"
+    )
+
+
 def _check_scipy_flag() -> str:
     return f"HAS_SCIPY={HAS_SCIPY}"
 
 
-def run_health() -> HealthReport:
-    checks_spec = [
-        ("encoder", _check_encoder),
-        ("fix16_garanti", _check_fix16_garanti),
-        ("fix16_yetersiz_cifte", _check_fix16_yetersiz_cifte),
-        ("distance_layers", _check_distance_layers),
-        ("blok_motor", _check_blok_motor),
-        ("heuristic", _check_heuristic),
-        ("olasilik_exact", _check_olasilik_exact),
-        ("monte_carlo", _check_monte_carlo),
-        ("bayes_dirichlet", _check_bayes),
-        ("markov_chain", _check_markov),
-        ("error_freq", _check_error_freq),
-        ("fire_scenarios", _check_fire_scenarios),
-        ("pipeline_result_shape", _check_pipeline_result_shape),
-        ("scipy_flag", _check_scipy_flag),
-    ]
-    results = [_run(name, fn) for name, fn in checks_spec]
-    ok = all(c.ok for c in results)
+def _env_info() -> Dict[str, Any]:
+    """Calisan surumun bagimlilik envanteri — 'bende calisiyordu' icin."""
+    from importlib.metadata import version as _paket_surum
+
+    def _surum(paket: str) -> Optional[str]:
+        # Surum bilgisi raporun kritik parcasi degil: bulunamazsa None gecer.
+        try:
+            return _paket_surum(paket)
+        except Exception:
+            return None
+
+    return {
+        "python": platform.python_version(),
+        "platform": platform.platform(terse=True),
+        "numpy": _surum("numpy"),
+        "scipy": _surum("scipy"),
+        "flask": _surum("flask"),
+    }
+
+
+CHECKS: Tuple[CheckSpec, ...] = (
+    CheckSpec(
+        "encoder", "cekirdek",
+        "Kupon metnini arama uzayına çevirir: çift/üçlü sayısı, uzay büyüklüğü "
+        "ve teorik alt sınır. Kırılırsa bütün hesap yanlış uzayda yapılır.",
+        _check_encoder,
+    ),
+    CheckSpec(
+        "fix16_garanti", "cekirdek",
+        "16 satırlık sabit kaplama gerçekten 14-garanti veriyor mu: en kötü "
+        "durumda hata ≤ 1 ve açıkta nokta yok. Ürünün ana vaadi budur.",
+        _check_fix16_garanti,
+    ),
+    CheckSpec(
+        "fix16_yetersiz_cifte", "cekirdek",
+        "Yetersiz çift sayısıyla fix16 istendiğinde sessizce garantisiz sonuç "
+        "dönmez, Fix16Hatası yükselir.",
+        _check_fix16_yetersiz_cifte,
+    ),
+    CheckSpec(
+        "distance_layers", "cekirdek",
+        "Mesafe muhasebesi: 0 ve 1 hatalı noktaların toplamı arama uzayının "
+        "tamamını vermeli. Tutmazsa kapsama raporu güvenilmezdir.",
+        _check_distance_layers,
+    ),
+    CheckSpec(
+        "blok_motor", "motor",
+        "Blok motoru da tam kaplama üretir ve fix16'dan pahalı olmaz.",
+        _check_blok_motor,
+    ),
+    CheckSpec(
+        "heuristic", "motor",
+        "Sezgisel motor, fix16'nın reddettiği kuponda bile geçerli kaplama "
+        "bulur — garanti motora değil, kaplamanın kendisine bağlıdır.",
+        _check_heuristic,
+    ),
+    CheckSpec(
+        "olasilik_exact", "olasilik",
+        "Kesin olasılık: p15 + p14 = küme içi olasılığı. Ayrışırsa olasılık "
+        "raporu kendi içinde çelişiyor demektir.",
+        _check_olasilik_exact,
+    ),
+    CheckSpec(
+        "monte_carlo", "olasilik",
+        "Simülasyon kesin hesapla aynı yeri gösteriyor mu (fark < 0,05) ve "
+        "güven aralıkları makul mu.",
+        _check_monte_carlo,
+    ),
+    CheckSpec(
+        "bayes_dirichlet", "olasilik",
+        "Dirichlet posterior'ları 15 maç için 1'e toplanır ve garantiyi "
+        "bozmaz — Bayes tahmini yumuşatır, kaplamayı değiştirmez.",
+        _check_bayes,
+    ),
+    CheckSpec(
+        "markov_chain", "olasilik",
+        "Sıralı hata bütçesi: garanti yolunda kalma olasılığı ve 2+ hataya "
+        "düşme olasılığı kombinatoryal sınırlarla tutarlı mı.",
+        _check_markov,
+    ),
+    CheckSpec(
+        "error_freq", "analiz",
+        "Hangi maçlarda 1 hata oluşabildiği. Tam kaplamada 2 hatalı nokta "
+        "sayısı sıfır olmak zorundadır.",
+        _check_error_freq,
+    ),
+    CheckSpec(
+        "fire_scenarios", "analiz",
+        "Seçim DIŞI bölge: 1 fire varken 15, 2 fire varken 14 imkânsızdır; "
+        "bankoda yanılmak çiftede yanılmaktan pahalıya patlar.",
+        _check_fire_scenarios,
+    ),
+    CheckSpec(
+        "veri_seti", "analiz",
+        "İstatistik sayfasının dayandığı veri setinin iç tutarlılığı: hafta "
+        "sayımı, 15'lik sonuç dizisi ve maç listesi birbirini doğruluyor mu.",
+        _check_veri_seti,
+    ),
+    CheckSpec(
+        "oran_arsivi", "analiz",
+        "Piyasa oranı arşivi: kapsama, favori isabet muhasebesi ve çapraz "
+        "tablonun toplamları tutuyor mu.",
+        _check_oran_arsivi,
+    ),
+    CheckSpec(
+        "pipeline_result_shape", "ucuca",
+        "API'nin döndürdüğü sonuç sözleşmesi: satır sayısı, bedel, garanti "
+        "bayrağı ve analiz blokları eksiksiz mi.",
+        _check_pipeline_result_shape,
+    ),
+    CheckSpec(
+        "scipy_flag", "ortam",
+        "scipy var mı — yoksa kesin çözücü (ILP) devre dışıdır. Bilgi "
+        "amaçlıdır, raporu UNHEALTHY yapmaz.",
+        _check_scipy_flag,
+        critical=False,
+    ),
+)
+
+CHECK_ADLARI: Tuple[str, ...] = tuple(c.name for c in CHECKS)
+
+
+def secili_checkler(only: Optional[str] = None) -> List[CheckSpec]:
+    """`only` ile kontrol/kategori suzer. Bos veya None ise hepsini dondurur.
+
+    Virgulle birden fazla ad verilebilir ("olasilik,error_freq"). Taninmayan
+    bir ad sessizce bos kume uretmez — ValueError yukselir.
+    """
+    if not only or not only.strip():
+        return list(CHECKS)
+
+    istenen = [p.strip().lower() for p in only.split(",") if p.strip()]
+    secili: List[CheckSpec] = []
+    for parca in istenen:
+        uyan = [
+            c for c in CHECKS
+            if c.name == parca or c.category == parca
+        ]
+        if not uyan:
+            gecerli = ", ".join(sorted({*CHECK_ADLARI, *KATEGORI_ETIKET}))
+            raise ValueError(f"Bilinmeyen kontrol/kategori: {parca}. Geçerli: {gecerli}")
+        for c in uyan:
+            if c not in secili:
+                secili.append(c)
+    # Tanim sirasini koru — rapor her zaman ayni duzende okunur.
+    return [c for c in CHECKS if c in secili]
+
+
+def run_health(only: Optional[str] = None) -> HealthReport:
+    secili = secili_checkler(only)
+    results = [_run(spec) for spec in secili]
+    kritik_dusen = [c for c in results if not c.ok and c.critical]
+    bilgi_dusen = [c for c in results if not c.ok and not c.critical]
     return HealthReport(
         version=__version__,
         timestamp=datetime.now(timezone.utc).isoformat(),
-        ok=ok,
+        ok=not kritik_dusen,
+        degraded=bool(bilgi_dusen) and not kritik_dusen,
         checks=results,
         summary={
             "ornek_kupon": ORNEK,
             "has_scipy": HAS_SCIPY,
+            "env": _env_info(),
+            "only": only or None,
+            "kismi": len(secili) < len(CHECKS),
+            "kayitli_kontrol": len(CHECKS),
         },
     )
 
 
+def check_envanteri() -> List[dict]:
+    """Kontrolleri CALISTIRMADAN listeler — arayuzun filtre menusu icin."""
+    return [
+        {
+            "name": c.name,
+            "category": c.category,
+            "category_label": KATEGORI_ETIKET.get(c.category, c.category),
+            "aciklama": c.aciklama,
+            "critical": c.critical,
+        }
+        for c in CHECKS
+    ]
+
+
 def print_report(report: HealthReport) -> None:
     status = "HEALTHY" if report.ok else "UNHEALTHY"
+    if report.ok and report.degraded:
+        status = "DEGRADED"
     print(f"\n=== SYSTEM HEALTH [{status}] v{report.version} ===")
     print(f"time: {report.timestamp}")
     passed = sum(1 for c in report.checks if c.ok)
-    print(f"checks: {passed}/{len(report.checks)} passed\n")
-    for c in report.checks:
-        mark = "OK " if c.ok else "FAIL"
-        print(f"  [{mark}] {c.name:24s} {c.duration_ms:7.1f} ms  {c.detail}")
+    toplam_ms = sum(c.duration_ms for c in report.checks)
+    kismi = " (kısmi çalıştırma)" if report.summary.get("kismi") else ""
+    print(f"checks: {passed}/{len(report.checks)} passed  "
+          f"{toplam_ms:.0f} ms{kismi}")
+
+    for kat in report.kategoriler():
+        print(f"\n  {kat['label']}  [{kat['passed']}/{kat['total']}]")
+        for c in report.checks:
+            if c.category != kat["id"]:
+                continue
+            mark = "OK " if c.ok else ("FAIL" if c.critical else "warn")
+            print(f"    [{mark}] {c.name:22s} {c.duration_ms:7.1f} ms  {c.detail}")
+
+    dusen = [c for c in report.checks if not c.ok]
+    if dusen:
+        print("\n  DÜŞEN KONTROLLER")
+        for c in dusen:
+            print(f"    · {c.name}: {c.aciklama}")
+    print()
+
+
+def print_envanter() -> None:
+    for kat_id, etiket, aciklama in KATEGORILER:
+        uyan = [c for c in CHECKS if c.category == kat_id]
+        if not uyan:
+            continue
+        print(f"\n{etiket} ({kat_id}) — {aciklama}")
+        for c in uyan:
+            isaret = "" if c.critical else "  [bilgi]"
+            print(f"  {c.name}{isaret}\n    {c.aciklama}")
     print()
 
 
@@ -344,10 +678,22 @@ def main(argv: Optional[List[str]] = None) -> int:
     p.add_argument("--interval", type=float, default=0,
                    help="Saniye cinsinden tekrar aralığı (0 = bir kez)")
     p.add_argument("--json", action="store_true", help="JSON çıktı")
+    p.add_argument("--only", default=None,
+                   help="Yalnızca bu kontrol/kategori (virgülle çoklu)")
+    p.add_argument("--list", action="store_true", dest="listele",
+                   help="Kontrol envanterini yaz ve çık")
     args = p.parse_args(argv)
 
+    if args.listele:
+        print_envanter()
+        return 0
+
     while True:
-        report = run_health()
+        try:
+            report = run_health(args.only)
+        except ValueError as e:
+            print(f"hata: {e}", file=sys.stderr)
+            return 2
         if args.json:
             import json
             print(json.dumps(report.to_dict(), ensure_ascii=False, indent=2))

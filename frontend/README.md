@@ -31,7 +31,7 @@ app/
   layout.tsx          kök — tema sağlayıcı + kabuk
   page.tsx            Formül (motorun tamamı)
   istatistik/         sezon dağılımı + hafta detayı
-  saglik/             13 invariant
+  saglik/             sistem sağlığı (kategorili değişmezler)
   icon.tsx            favicon (next/og ile TSX'ten üretilir)
   globals.css         tasarım token'ları
 components/
