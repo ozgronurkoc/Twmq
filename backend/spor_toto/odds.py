@@ -9,7 +9,7 @@ kolayca okuyabilmesi için durur.
     p = market_odds(rows[0], "1X2", "Avg")   # {"1": 7.03, "0": 4.67, "2": 1.39}
 
 Kaynak: football-data.co.uk piyasa oranları — **iddaa oranları değildir**
-(gerekçe: docs/VERI_TOPLAMA_VE_ISLEME.md §12).
+(gerekçe: docs/VERI_TOPLAMA_VE_ISLEME.md §3.2).
 """
 from __future__ import annotations
 
