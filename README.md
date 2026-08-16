@@ -264,7 +264,7 @@ docs/            Mimari ve veri notları
 archive/         Kullanımdan kalkmış Jinja2 arayüzü ve tek-seferlik yamalar
 ```
 
-Detay için `docs/ARCHITECTURE_NEXT.md` ve `archive/README.md`.
+Detay için `docs/ARCHITECTURE_NEXT.md`, `docs/SAGLIK_VIZYONU.md` (sağlık katmanının vizyonu ve tasarım kararları) ve `archive/README.md`.
 
 Katmanlar bağımsızdır:
 
