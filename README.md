@@ -63,7 +63,7 @@ makinesinde, o günkü kilitli bağımlılıklarla, o commit üzerinde koşar.
 
 Bu yüzden sağlık katmanı ayrı bir katmandır ve `/saglik` sayfası ürünün eşit
 haklı bir parçasıdır: **ürünün vaadinin şu anda, bu makinede, bu sürümde hâlâ
-geçerli olduğunu kanıtlar.** 16 değişmez, 6 kategori, her çağrıda yeniden
+geçerli olduğunu kanıtlar.** 17 değişmez, 6 kategori, her çağrıda yeniden
 ölçülür — ve neyi kanıtlamadığını da açıkça yazar (§6.3).
 
 ### 1.6 Ne yapar / ne yapmaz
@@ -75,9 +75,10 @@ geçerli olduğunu kanıtlar.** 16 değişmez, 6 kategori, her çağrıda yenide
 | Küme dışı senaryoları **fire** olarak ölçer | Kazanma olasılığını artırmaz |
 | Exact + Monte Carlo olasılık raporu verir | 14-garantiyi olasılıkla "güçlendirmez" |
 | Bayes (Dirichlet) ile tahminlerini yumuşatır | Kâr vaadi vermez |
-| Vaadin canlıda geçerliliğini 16 değişmezle ölçer | Tahmin isabetini ölçmez (ölçemez) |
+| Vaadin canlıda geçerliliğini 17 değişmezle ölçer | Tahmin isabetini ölçmez (ölçemez) |
 | Markov ile sıralı risk profili çıkarır | Canlı bülten çekmez |
 | 41 haftalık sezon verisini ve piyasa oranlarını analiz eder | İddaa geçmiş oranı sunmaz (yok — §5.3) |
+| Bir stratejiyi geçmiş sezonda çalıştırıp bedelini ölçer (**geri test**) | Geri testi bir kâr vaadine çevirmez; aşırı uyumu ölçüp gösterir |
 | Her sayının kaynağını ve sınırını yazar | Mobil uygulama değildir |
 
 ---
@@ -225,15 +226,19 @@ aşılırsa blok sessizce `null` olmaz, `{"skipped": true, "reason": …}` döne
 
 ## 5. Katman 3 — Veri ve istatistik
 
-Motor tek başına tarihsiz çalışır; istatistik katmanı ona bağlam verir. İki veri
-seti vardır ve ikisi de tek komutla kaynağından yeniden üretilebilir.
+Motor tek başına tarihsiz çalışır; istatistik katmanı ona bağlam verir. **Üç** veri
+seti vardır; ilk ikisi tek komutla kaynağından yeniden üretilebilir, üçüncüsü
+üretilemez — ileriye dönük birikir.
 
-| | Tarihsel sonuçlar | Oran arşivi |
-|---|---|---|
-| **Dosya** | `backend/data/st_history_2025_26.json` | `backend/data/odds/odds_2025_26.csv` |
-| **Üreten** | `backend/scripts/build_history.py` | `backend/scripts/build_odds.py` |
-| **Okuyan** | `backend/spor_toto/history.py` | `backend/spor_toto/odds.py` |
-| **Bekçi** | `backend/tests/test_history.py` | `backend/tests/test_odds.py` |
+| | Tarihsel sonuçlar | Piyasa oranı arşivi | İddaa bülten arşivi |
+|---|---|---|---|
+| **Dosya** | `data/st_history_2025_26.json` | `data/odds/odds_2025_26.csv` | `data/iddaa/iddaa_<tarih>.csv` |
+| **Üreten** | `scripts/build_history.py` | `scripts/build_odds.py` | `scripts/snapshot_iddaa.py` |
+| **Okuyan** | `spor_toto/history.py` | `spor_toto/odds.py` | (henüz analize girmiyor) |
+| **Bekçi** | `tests/test_history.py` | `tests/test_odds.py` | `tests/test_snapshot_iddaa.py` |
+| **Yönü** | geriye dönük, tamam | geriye dönük, tamam | **ileriye dönük, birikiyor** |
+
+(Yollar `backend/` altındadır.)
 
 ### 5.1 Veri akışı
 
@@ -245,13 +250,21 @@ data/st_history_2025_26.json          41 hafta · 615 maç · maç listesiyle
         │  spor_toto/history.py       (6 analiz bloğu, dilimleme, veri kalitesi)
         ▼
 GET /api/stats[?last=N] ─────────────► /istatistik
-GET /api/stats/<week>   ─────────────► /istatistik/<hafta>
-        ▲
-        │  spor_toto/odds.py          (1X2 özeti, banko bantları, kalibrasyon)
+GET /api/stats/<week>   ─────────────► /istatistik/<hafta> ──┐ 15 maçın olasılığı
+        ▲                                                     ▼
+        │  spor_toto/odds.py          (1X2 özeti, banko bantları,    /  formül sayfası
+        │                              kalibrasyon, çift kapsama,
+        │                              beraberlik, lig, Brier)
 data/odds/odds_2025_26.csv            567 maç · 108 oran sütunu
-        ▲
+        ▲       │  spor_toto/backtest.py   (eşikli seçim → kaplama → skor)
+        │       ▼
+        │  GET /api/backtest ─────────────► /istatistik/geri-test
+        │
         │  scripts/build_odds.py      (tarih ±1 gün + birebir skor + bulanık ad)
 football-data.co.uk arşivi (38 dosya)
+
+iddaa açık bülteni ──► scripts/snapshot_iddaa.py ──► data/iddaa/iddaa_<tarih>.csv
+                       (haftalık; analize henüz girmiyor, birikiyor)
 ```
 
 ### 5.2 Veri doktrini
@@ -292,6 +305,20 @@ kapalı. Piyasa oranının **seviyesi** iddaa ile tutmaz (marj farkı), **favori
 sıralaması ve marj arındırılmış olasılık yapısı** tutar — analizde kullanılan da
 budur.
 
+Bu fark artık ölçülmüş bir sayı: iddaa açık bülteninde ortalama marj **%17,2**,
+piyasa oranlarında **%7,26** — iddaa payı iki katından fazla.
+
+**İddaa bülten arşivi** — yukarıdaki boşluğu ileriye dönük kapatmak için haftalık
+snapshot alınır: yalnızca futbol, yalnızca maç sonucu (1X2), kupon ve web fiyatı
+ayrı ayrı. Ölçümde 226 futbol etkinliğinin 225'inde 1X2 pazarı var; 222'si
+kaydedildi (1'inde pazar yok, 3'ünde bir ayak `1.00` — bu bir fiyat değil, askıya
+alınmış ayağın yer tutucusu, elenir).
+
+Bu arşiv **bugün analize girmiyor**: tek snapshot bir şey söylemez, değeri
+birikimdedir. Diğer iki setten kritik bir farkı var — **yeniden üretilemez.**
+Kapanmış bir bülten bir daha çekilemez, o yüzden orada sürümlenen şey türetilmiş
+çıktı değil arşivin kendisidir.
+
 ### 5.4 Ölçülmüş bulgular
 
 Bunlar tahmin değil, bu veri seti üzerinde hesaplanmış sayılardır.
@@ -320,8 +347,29 @@ Ortalama marj %7,26. Rastgele ya da kaymış bir eşleştirme bu tabloyu üretem
 `test_odds.py` favori isabetini alt/üst sınırla bekçiye bağlar.
 
 **Çift kapsama** — ilk-iki olasılık toplamı 0,70–0,80 iken gerçek sonuç küme içinde
-kalma oranı %77,4; 0,80–0,90 iken %86,6; 0,90+ iken %96,9. (Henüz sayfada yok →
-yol haritası F3.)
+kalma oranı %77,4; 0,80–0,90 iken %86,6; 0,90+ iken %96,9. Aynı bantlarda **banko**
+yapılsaydı: %48,7 / %65,1 / %84,4. Yani en üst bantta ikinci işaret kolonu ikiye
+katlayıp isabete yalnızca 12,5 puan ekliyor — çifte kararı bu tablonun işidir.
+
+**Beraberlik profili** — favori ile ikincinin olasılık farkı 0–0,05 iken beraberlik
+%32,7; 0,50+ iken %14,3. Eğilim var ama **tam monoton değil**; bu yüzden gösterge
+olarak sunulur, tahminci olarak değil (§10.2).
+
+**Lig kırılımı** — kuponun yarısı Süper Lig'den geliyor (kupon başına 7,5 maç) ve
+orada beraberlik %29,8; Premier Lig'de %19,7. Bu fark "0" bütçesinin nereye
+harcanacağını değiştirir.
+
+**Piyasa hangi hafta yanıldı** — haftalık Brier skoru: sezon ortalaması **0,579**.
+Üç sembole eşit olasılık vermenin karşılığı 0,667, yani piyasa bilgi taşıyor ama
+az. Favori isabeti tek başına yanıltıcıdır: 1,05 oranlı favorinin tutmasıyla 2,40
+oranlınınki aynı sayılmaz; Brier olasılığın tamamını cezalandırır.
+
+**Geri test** — varsayılan eşiklerle 36 haftanın **3'ünde** 14+ tutuyor (%8,3; %95
+aralık %2,9–%21,8), hafta başına ortalama **2.686 kolon**. 15 maçın tamamının
+işaretler içinde kaldığı hafta **yok**. 28 eşikli taramanın en iyisi 4 hafta;
+aynı yöntem eşiği o haftayı görmeden seçtiğinde (**hold-out**) **0 hafta**.
+Aradaki fark aşırı uyumun büyüklüğüdür — ve bu tablonun neden bir kâr vaadi
+olmadığının kanıtıdır.
 
 ### 5.5 Veri kalitesi denetimi
 
@@ -364,8 +412,9 @@ Bugün `match_conflicts` tam olarak bunu yakalar. Vaka analizi:
 | Rota | İçerik |
 |------|--------|
 | `/` | **Formül** — motorun tamamı |
-| `/istatistik` | Sezon dağılımı, bantlar, oran kartı, 41 hafta |
-| `/istatistik/<hafta>` | Tek hafta detayı |
+| `/istatistik` | Sezon dağılımı, bantlar, oran kartı, karar destek tabloları, 41 hafta |
+| `/istatistik/<hafta>` | Tek hafta detayı + "bu haftayı formüle gönder" |
+| `/istatistik/geri-test` | **Geri test** — strateji, eşik taraması, hold-out |
 | `/saglik` | Değişmezler — kategori kategori, süre ve açıklamalarıyla |
 
 **Formül sayfası — girdi:** 15 × 3 maç ızgarası (klavye: ok tuşları + `1` / `0` /
@@ -390,9 +439,17 @@ analizi (kapalı / 1-fire / 1 ve 2 fire) · motor ayarları.
 
 **İstatistik sayfası:** sezon dağılımı · 5 sayı kutusu · haftalık seyir çizgisi ·
 haftalık bantlar (min–maks, ±1σ, ortanca, ortalama) · adet dağılımı · **oran kartı**
-(favori isabeti + kırılım + çapraz tablo + banko bantları + kalibrasyon) · maç
-sırasına göre ısı haritası · geçiş matrisi · uçlar ve seriler · hafta tablosu · veri
-kalitesi paneli.
+(favori isabeti + kırılım + çapraz tablo + banko bantları + **çift kapsaması** +
+**beraberlik profili** + **lig kırılımı** + kalibrasyon) · **geri test özeti** · maç
+sırasına göre ısı haritası · geçiş matrisi · uçlar ve seriler · hafta tablosu
+(**Brier sütunu + CSV dışa aktarma**) · veri kalitesi paneli. Aralık filtresi
+`?last=N` olarak adres çubuğunda durur — sayfa paylaşılabilir.
+
+**Geri test sayfası:** aşırı uyum uyarısı · strateji seçici (banko/üçlü eşiği) +
+sezon özeti + örnek kupon · **hold-out sağlaması** · 28 satırlık eşik taraması
+(satıra tıklayınca uygulanır) · hafta hafta sonuç · yöntem notu. Sayfa "en iyi
+eşiği bul ve oyna" diye kurulmamıştır: taramanın en iyisi ile hold-out yan yana
+durur, çünkü karara esas olan ikincisidir.
 
 **Sağlık sayfası** okuma sırasına göre kurulmuştur — her blok, bir öncekinin cevabı
 yetmediğinde okunur:
@@ -420,7 +477,12 @@ bayrağını rapordan okur — hiçbirini sabit kodlamaz.
 | GET | `/api/health/checks` | Kontrol envanteri — çalıştırmadan |
 | GET | `/api/stats?last=N` | Tarihsel 1/0/2 + analiz blokları + oran özeti |
 | GET | `/api/stats/<week>` | Tek hafta detayı (komşular, sıra, sapma, maç listesi) |
+| GET | `/api/backtest` | Geri test: sezon, hafta hafta, eşik taraması, hold-out |
 | POST | `/api/solve` | Motorun tamamı |
+
+`/api/backtest` parametreleri: `?banko=` / `?uclu=` (strateji eşikleri), `?last=N`
+(dilim), `?sweep=0` (taramayı kapat). Sonuç sunucuda önbelleklenir — tek strateji
+~1,2 sn, 28 eşikli tarama ilk çağrıda ~15 sn, sonrasında milisaniye.
 
 Üç sözleşme kuralı:
 
@@ -429,7 +491,10 @@ bayrağını rapordan okur — hiçbirini sabit kodlamaz.
 2. **`?last=N` bütün blokları birlikte diler.** Özet, bantlar ve analiz bloklarının
    tamamı aynı dilim üzerinden hesaplanır; iki görsel asla farklı veriyi anlatmaz.
 3. **Arayüze yalnızca maç sonucu (1X2) çıkar.** 2.5 alt/üst, Asya handikap ve maç
-   istatistikleri arşivde analiz için kalır; `test_api_stats.py` bunu denetler.
+   istatistikleri arşivde analiz için kalır; `test_api_stats.py` bunu denetler —
+   `test_api_backtest.py` aynı kuralı geri test için de bekçiye bağlar.
+4. **Geçmişe uydurulan sayı tek başına dönmez.** `/api/backtest` eşik taramasını
+   her zaman hold-out ve uyarı metniyle birlikte verir.
 
 Gövde şeması ve alan alan sözleşme:
 [`docs/ARCHITECTURE_NEXT.md`](docs/ARCHITECTURE_NEXT.md).
@@ -466,7 +531,7 @@ curl "http://localhost:8080/api/health?only=cekirdek"
 curl http://localhost:8080/api/health/checks   # envanter, çalıştırmadan
 ```
 
-**16 kontrol, 6 kategori.** Kategoriler motorun katmanlarını izler ve yukarıdan
+**17 kontrol, 6 kategori.** Kategoriler motorun katmanlarını izler ve yukarıdan
 aşağıya doğru ciddiyet azalır — düşen kontrolün adı değil, **hangi katmanın
 bozulduğu** okunur. Güncel liste için `--list`:
 
@@ -475,7 +540,7 @@ bozulduğu** okunur. Güncel liste için `--list`:
 | `cekirdek` | encoder, fix16 garanti, yetersiz çifte reddi, distance layers | **Ana vaat geçersiz.** Yayın durdurulur |
 | `motor` | blok motoru, heuristic | Bir mod güvenilmez; fix16 ayakta olabilir |
 | `olasilik` | exact, Monte Carlo, Bayes, Markov | Sayılar yanlış; garanti geçerli olabilir |
-| `analiz` | error_freq, **fire senaryoları**, veri seti, oran arşivi | Yorum katmanı bozuk; motor sağlam |
+| `analiz` | error_freq, **fire senaryoları**, veri seti, oran arşivi, **geri test** | Yorum katmanı bozuk; motor sağlam |
 | `ucuca` | pipeline sonuç şekli | Arayüz yanlış okuyor olabilir |
 | `ortam` | scipy bayrağı (bilgi amaçlı) | Bir yetenek eksik olabilir |
 
@@ -539,7 +604,8 @@ backend/
     markov.py          Seçim hayatta kalma + hata bütçesi zinciri
     fire_scenarios.py  Seçim DIŞI fire analizi (1-fire / 2-fire)
     history.py         Tarihsel 1/0/2, 6 analiz bloğu, veri kalitesi
-    odds.py            Oran arşivi okuyucu, 1X2 özeti, kalibrasyon
+    odds.py            Oran arşivi okuyucu, 1X2 özeti, kalibrasyon, karar destek blokları
+    backtest.py        Eşikli strateji → kaplama → skor; eşik taraması + hold-out
     health.py          Kategorili değişmez (invariant) kontrolleri — tek CHECKS tanımı
     report.py          Konsol / dosya çıktısı
     cli.py             spor-toto komut satırı
@@ -547,21 +613,25 @@ backend/
   scripts/
     build_history.py   Tarihsel veri setini kaynağından üretir
     build_odds.py      Kupon maçlarına piyasa oranlarını eşleştirir
+    snapshot_iddaa.py  İddaa açık bültenini tarih damgalı arşivler (haftalık)
     check.sh           Yerel CI eşdeğeri
-  data/                st_history_2025_26.json · odds/
-  tests/               pytest (15 dosya, 224 test fonksiyonu → 564 test)
+  data/                st_history_2025_26.json · odds/ · iddaa/
+  tests/               pytest (17 dosya, 264 test fonksiyonu → 608 test)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
-  app/                 sayfalar (/, /istatistik, /istatistik/[week], /saglik)
+  app/                 sayfalar (/, /istatistik, /istatistik/[week],
+                       /istatistik/geri-test, /saglik)
   components/
     shell/             kalıcı kenar çubuğu + sayfa geçişleri + tema
     formul/            maç ızgarası, olasılık girişi, sonuç panelleri
-    istatistik/        grafikler (bağımlılıksız inline SVG), hafta tablosu, filtre
+    istatistik/        grafikler (bağımlılıksız inline SVG), hafta tablosu, filtre,
+                       geri test bileşenleri
     saglik/            durum kartı, kategori kartları, çalışma geçmişi
     ui/                temel bileşenler (elle yazıldı, Radix yok)
   lib/types.ts         API sözleşmesinin tamamı tipli
   lib/api.ts           tipli, AbortController ile iptal edilebilir istemci
+  lib/transfer.ts      hafta → formül devri (idempotent; bkz. §7.2 kural 6)
 
 scripts/               run_next_dev.sh (API + UI birlikte)
 docs/                  Mimari, veri ve yol haritası belgeleri
@@ -593,7 +663,14 @@ katmanı arayüzü bilmez.
 4. **Her görselin tablo karşılığı vardır.** Hiçbir değer yalnızca renge ya da fare
    ipucuna bırakılmaz.
 5. **Tek filtre satırı.** Kart içine filtre konmaz; aralık seçimi `?last=N` ile
-   API'ye gider.
+   API'ye gider ve adres çubuğuna yazılır. *Strateji* parametresi (geri testteki
+   eşikler) bundan ayrıdır: veri aralığı değil, ölçülen şeyin tanımıdır.
+6. **Sayfalar arası devir idempotenttir.** App Router istemci geçişinde hedef sayfa
+   iki kez bağlanabilir; "oku ve sil" biçimindeki bir devir sessizce kaybolur.
+   Devredilen paket tüketilmez, işaret URL'de durur ve her bağlanma aynı değerleri
+   yazar (`lib/transfer.ts`).
+7. **Geçmişe uydurulan sayı yalnız gösterilmez.** Eşik taraması hold-out ve uyarı
+   metniyle birlikte durur; ikisi ayrılamaz.
 
 ---
 
@@ -609,19 +686,30 @@ python scripts/build_history.py --cache /tmp/p   # payload'ları sakla/oradan ok
 python scripts/build_odds.py                 # oranları çek ve eşleştir
 python scripts/build_odds.py --dry-run       # yalnızca kapsama raporu
 python scripts/build_odds.py --no-sqlite     # yalnızca CSV + rapor
+
+python scripts/snapshot_iddaa.py             # iddaa bülteninin anlık görüntüsü
+python scripts/snapshot_iddaa.py --dry-run   # yazmadan özet
 ```
 
-Her iki script de doğrulamadan dosya yazmaz. Ham indirmeler ve SQLite kopyası git
+Üç script de doğrulamadan dosya yazmaz. Ham indirmeler ve SQLite kopyaları git
 dışıdır, bu komutlarla yeniden oluşur.
+
+**Tek istisna — ve önemli:** iddaa snapshot'ı yeniden üretilemez. Diğer ikisi
+kaynağından her an tekrar çekilebilir; kapanmış bir bülten çekilemez. `data/iddaa/`
+altındaki tarih damgalı CSV'ler bu yüzden **arşivin kendisidir**; silmek geri
+alınamaz. Haftalık tetik: `.github/workflows/snapshot-iddaa.yml` (zamanlanmış işler
+yalnızca varsayılan daldan çalışır).
 
 **Okuma tarafı:**
 
 ```python
 from spor_toto.history import history_summary, history_week_detail
 from spor_toto.odds import load_odds, market_odds, implied_probs
+from spor_toto.backtest import backtest
 
 history_summary(last=12)                      # son 12 hafta dilimi
 implied_probs(market_odds(load_odds()[0], "1X2", "Avg"))   # {"1": .., "0": .., "2": ..}
+backtest(sweep=False)["season"]               # 41 haftalık geri test, ~1,2 sn
 ```
 
 **Oran arşivini sorgulamak** (SQLite, uzun biçim):
@@ -632,6 +720,16 @@ FROM oran o JOIN mac m USING (week, no)
 WHERE o.pazar = '1X2' AND o.donem = 'kapanis' AND o.kaynak = 'Avg';
 ```
 
+İddaa arşivi de **aynı uzun biçimdedir**, böylece iki kaynak yan yana sorgulanır
+(`data/iddaa/iddaa.sqlite3`); tek fark anahtarın `alinma` zaman damgasını
+içermesidir — aynı maç farklı snapshot'larda ayrı satırdır:
+
+```sql
+SELECT m.alinma, m.home, m.away, o.secim, o.deger
+FROM oran o JOIN mac m USING (alinma, event_id)
+WHERE o.pazar = '1X2' AND o.donem = 'kupon';
+```
+
 ---
 
 ## 9. Testler ve CI
@@ -640,7 +738,8 @@ WHERE o.pazar = '1X2' AND o.donem = 'kapanis' AND o.kaynak = 'Avg';
 cd backend
 pytest                       # tamamı (ILP dahil)
 pytest -m "not slow"         # hızlı süit
-pytest -q tests/test_history.py tests/test_odds.py    # veri bekçileri
+pytest -q tests/test_history.py tests/test_odds.py tests/test_snapshot_iddaa.py
+pytest -q tests/test_backtest.py                     # strateji, skorlama, hold-out
 bash scripts/check.sh        # yerel CI eşdeğeri
 ```
 
@@ -648,9 +747,14 @@ bash scripts/check.sh        # yerel CI eşdeğeri
 `--bayes-preset dengeli` dumanı. Exit code ≠ 0 ise bir adım kırık demektir.
 
 Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant'lar, CLI (Bayes preset
-dahil), analysis, bayes, markov, fire, health, health API, history, odds, API
-sözleşmesi. 15 test dosyası, 224 test fonksiyonu, parametrizasyonla **564 test**;
-38'i istatistik/oran, 23'ü sağlık katmanına ait.
+dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri test,
+iddaa snapshot'ı, API sözleşmesi. 17 test dosyası, 264 test fonksiyonu,
+parametrizasyonla **608 test**; 82'si veri/istatistik/geri test, 23'ü sağlık
+katmanına ait.
+
+İki test bilerek **ağa çıkmaz**: `test_snapshot_iddaa.py` gerçek bültenden alınmış
+küçük bir örnek payload üzerinde koşar — ağ çağrısını sınamak bu paketin işi değil,
+ayrıştırmanın doğruluğu ise arşivin tamamının dayandığı şey.
 
 **Arayüz kontrolleri:**
 
@@ -668,6 +772,13 @@ cd frontend && npx tsc --noEmit && npm run build
 | CLI smoke | 3.12 | fix16 + Bayes preset parity |
 
 Workflow: `.github/workflows/tests.yml`.
+
+**İkinci workflow — veri toplama.** `.github/workflows/snapshot-iddaa.yml` haftada
+bir (pazartesi 06:00 UTC) iddaa bültenini arşivler ve yeni veri varsa depoya işler.
+Botun yazma alanı dardır: yalnızca `backend/data/iddaa/`, değişiklik yoksa commit
+yok, testler push'tan önce koşar, eşzamanlı çalışma engellenir. Durdurmak: Actions →
+"Disable workflow".
+
 CD (otomatik deploy) yoktur: yayın manuel kalır — **health kırmızıysa
 yayınlanmaz.**
 
@@ -675,17 +786,19 @@ yayınlanmaz.**
 
 ## 10. Yol haritası
 
-Önerilen sıra: **F1 → F3 → F2 → F4 → F5.** Gerekçe: F1 diğer her şeyin değerini
-ölçer. Ayrıntı, kabul kriterleri ve büyüklük tahminleri:
-[`docs/ISTATISTIK_YOL_HARITASI.md`](docs/ISTATISTIK_YOL_HARITASI.md) §6.
+İstatistik katmanının **F1–F5 fazlarının tamamı uygulandı** (geri test, karar destek
+kartları, formüle devir, kullanım cilası, iddaa arşivi). Ne yapıldığı, neden öyle
+yapıldığı ve ölçülen sayılar:
+[`docs/ISTATISTIK_YOL_HARITASI.md`](docs/ISTATISTIK_YOL_HARITASI.md) §3.5–3.9.
 
-| Faz | Ne | Veri durumu |
-|-----|-----|---|
-| **F1 — Geri test** | "Bu strateji geçen sezon ne yapardı?" 41 haftanın her biri için oranlardan seçim üret, motoru çalıştır, kaç haftada 14 tutardı ve kaça mal olurdu ölç | **Hazır** — 567 maçta olasılık + gerçek sonuç var |
-| **F2 — Oranlardan `probs`** | Hafta detayından formül sayfasına "bu haftayı gönder"; 15 maçın olasılığı hazır gelsin | **Hazır** — `match_1x2` marj arındırılmış olasılığı döndürüyor |
-| **F3 — Karar destek kartları** | Çift/üçlü kapsama tablosu, beraberlik profili, lig kırılımı | **Hazır** — mevcut alanlardan hesaplanır |
-| **F4 — Kullanım cilası** | Filtre durumu URL'de, CSV dışa aktarma, haftalık Brier skoru | Veri tarafı yok |
-| **F5 — İddaa bülten arşivi** | Haftalık snapshot; bir sezonda kendi arşivimiz olur | **Yeni boru hattı gerekir** |
+Sıradakiler, "en çok belirsizliği kaldıran" ölçütüne göre:
+
+| # | Ne | Neden / veri durumu |
+|---|-----|---|
+| **S1 — Örneklem büyütme** | 2024/2025 sezonunu aynı iki boru hattıyla çekip hafta sayısını ~80'e çıkarmak | **Her şeyin önündeki darboğaz.** Geri testin hold-out'u 0 çıktı; bu 41 hafta üzerinde ölçüldüğü için hem gerçek bir bulgu hem dar bir ölçüm. İki sezon, "eşiği birinde seç ötekinde ölç" demeyi sağlar — gerçek out-of-sample budur. **Yeni üretim gerekir** (scriptler sezon parametreli olmalı) |
+| **S2 — Geri testi zenginleştirmek** | Sabit kolon bütçesi kipi, ikinci strateji ailesi ("en belirsiz k maçı çifte yap"), bütçe danışmanıyla bağ | **Hazır** — ek veri gerekmez |
+| **S3 — İddaa arşivi olgunlaşınca** | Snapshot'ları kupon maçlarıyla eşleştir; iddaa ile piyasa oranını yan yana koy; geri testi vekil değil gerçek fiyatla tekrarla | **Birikmeyi bekliyor** — ~10 snapshot sonra anlamlı |
+| **S4 — Küçük işler** | Geri testte eşik çiftini URL'e yazmak, tarama tablosunu CSV'ye çıkarmak, hafta detayında Brier | Veri tarafı yok |
 
 ### 10.1 Sağlık katmanı
 
@@ -706,7 +819,7 @@ Sıra, "en çok belirsizliği kaldıran" ölçütüne göredir. Ayrıntı:
 | Fikir | Neden hayır |
 |---|---|
 | Takım bazlı istatistik | 216 takım, Süper Lig takımları bile 32 maç. Çıkacak sayı güvenilir *görünür* ama gürültüdür |
-| "Beraberlik tahmincisi" | Sinyal var (%14 → %33) ama zayıf ve tam monoton değil. Gösterge olarak sunmak dürüst, tahminci diye sunmak değil |
+| "Beraberlik tahmincisi" | Sinyal var (%14 → %33) ama zayıf ve tam monoton değil. Gösterge olarak sunuldu (§5.4); tahminci diye sunmak hâlâ hayır |
 | Diğer pazarların arayüze çıkması | Ürün kararı: 1X2 dışındakiler analiz içindir, arşivde kalır |
 | Maçkolik'ten veri çekme | `robots.txt` otomatik erişimi kapatıyor; politika sınırı ihlal edilmez |
 | Kontrolleri arayüzden düzenlemek | Değişmezler koddadır, yapılandırmada değil |
@@ -720,10 +833,16 @@ Sıra, "en çok belirsizliği kaldıran" ölçütüne göredir. Ayrıntı:
 **Matematik.** 8 çifte 16 kolona sığmaz. `maxcov` garanti vermez. Garanti yalnızca
 seçim kümesi içinde geçerlidir.
 
-**Küçük örneklem.** 41 hafta, tek sezon. F1'de eşik taraması yapılırsa aşırı uyum
-kaçınılmazdır: 41 hafta üzerinde en iyi görünen eşik gelecek sezon aynısını yapmaz.
-Sonuçlar güven aralığıyla verilmeli ve "bu geçmişin en iyisidir, geleceğin garantisi
-değildir" notu görünür kalmalıdır.
+**Küçük örneklem.** 41 hafta, tek sezon. Geri testte aşırı uyum ölçüldü ve
+büyüklüğü belli: 28 eşikli taramanın en iyisi 4 hafta, aynı yöntemin hold-out'u
+0 hafta. Sonuçlar güven aralığıyla verilir ve "bu geçmişin en iyisidir, geleceğin
+garantisi değildir" uyarısı sayfada görünür durumdadır — **kaldırılmamalıdır.** Bu
+riski gerçekten küçültecek tek şey daha çok hafta (§10, S1), daha iyi bir eşik
+değil.
+
+**Geri test bir davranışı değil, bir kuralın bedelini ölçer.** Strateji oranlardan
+mekanik üretilir: sakatlık, motivasyon, kadro gibi hiçbir dış bilgi yoktur. Ayrıca
+gerçek bir oyuncunun hafta başına 2.686 kolonluk kupon oynamayacağı açıktır.
 
 **Piyasa oranı ≠ iddaa oranı.** Seviye tutmaz, yapı tutar. Bu not sayfada her yerde
 görünür durumdadır ve kaldırılmamalıdır.
@@ -731,9 +850,10 @@ görünür durumdadır ve kaldırılmamalıdır.
 **Milli maç haftaları.** 5., 10. ve 15. haftalarda oran yok; oran blokları o
 haftalarda boş gelir ve kapsama hiçbir zaman %100 olmaz.
 
-**Üçüncü parti kaynak.** Hem hafta payload'ları hem oran arşivi dış kaynaklıdır.
-Silinir ya da biçim değiştirirse yeniden çekim gerekir; iki üretim scripti tam
-olarak bunun için var.
+**Üçüncü parti kaynak.** Üç kaynak da dıştır. İlk ikisi silinir ya da biçim
+değiştirirse yeniden çekim gerekir; üretim scriptleri tam olarak bunun için var.
+Üçüncüsünde (iddaa bülteni) bu kurtarma yolu **yoktur**: kaçırılan hafta
+kaçmıştır.
 
 **Resmi bülten numarası doğrulanmadı.** Kupon sırası kaynağın sırasıdır; 51. hafta
 bağımsız kaynakla çapraz doğrulanmıştır.
@@ -769,6 +889,11 @@ anlatır; çok örnekli bir dağıtımda "hangi örnek?" sorusu bugün cevapsız
 | **Underdog galibiyeti** | Favorinin karşı tarafının kazanması (beraberlik değil) |
 | **Kapanış oranı** | Maç başlarken geçerli son oran; açılıştan daha bilgilidir |
 | **Dilim** | `?last=N` ile seçilen son N hafta |
+| **Geri test** | Bir stratejiyi geçmiş haftalarda çalıştırıp sonucunu ve bedelini ölçmek |
+| **Aşırı uyum** | Geçmişe o kadar iyi uyan bir seçim ki geleceğe taşınmaz |
+| **Hold-out** | Eşiği o haftayı görmeden seçip yine o haftada ölçmek; aşırı uyumun ölçüsü |
+| **Brier skoru** | Σ(olasılık − gerçekleşme)². 0 kusursuz, 0,667 üç sembole eşit olasılık vermeye denk |
+| **Wilson aralığı** | Küçük örneklemde oran için güven aralığı; kenarlarda 0–1 dışına taşmaz |
 
 ---
 
@@ -797,5 +922,10 @@ değildir**; ikramiye havuzu ve kolon bedeli hesaba katılmaz.
 
 İstatistik katmanındaki bulgular tek sezonluk, 41 haftalık bir örneklem üzerinde
 ölçülmüştür. Geçmişin tarifi geleceğin garantisi değildir.
+
+**Geri test bir strateji önerisi değildir.** Bir kuralın geçmişteki bedelini ve
+isabetini kaydeder; ölçülen sonuç, varsayılan eşiklerle 36 haftanın 3'ünde 14+ ve
+hold-out'ta 0'dır. Eşik taramasındaki "en iyi" satır, tanımı gereği bu sezona uyan
+satırdır.
 
 **Sorumlu oynayın.**
