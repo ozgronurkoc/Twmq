@@ -43,7 +43,43 @@ lib/
   types.ts            /api/solve dahil tüm API sözleşmesi
   api.ts              tipli, AbortController ile iptal edilebilir istemci
   utils.ts            cn(), normalize, biçimlendirme
+  kurulum.ts          formül kurulumunun kalıcılığı + paylaşılabilir bağlantı
+  transfer.ts         hafta → formül devri (idempotent)
 ```
+
+## Kurulumun kalıcılığı
+
+Formül sayfasının kurulumu — 15 maçın işaretleri, olasılık satırları ve
+motorun bütün ayarları — iki ayrı taşıyıcıya yazılır (`lib/kurulum.ts`).
+Sonuç ikisine de girmez; sonuç türetilmiş veridir, kurulum ise kullanıcının
+elle ürettiği tek şeydir.
+
+| | Yerel depo | Bağlantı |
+|---|---|---|
+| Ne zaman | her değişiklikte, kendiliğinden | yalnızca **Bağlantıyı kopyala**'ya basınca |
+| Nerede | `localStorage`, yalnızca o tarayıcı | URL (~110 karakter) |
+| Kayıp | yok (JSON) | olasılıklar binde bir + normalize |
+
+Öncelik **URL > yerel depo**: paylaşılan bir bağlantıyı açan kişi kendi eski
+kurulumunun kalıntısını değil, gönderilen kurulumu görür. Devir paketi
+(`?hafta=51`) bunlardan sonra çalışır ve yalnızca olasılıkların üzerine
+yazar — hafta detayından gelen kullanıcının işaretleri korunur.
+
+Üç kural kodda ve testte bağlıdır:
+
+1. **Bozuk alan sessizce yutulmaz.** Okunamayan her alan varsayılana düşer
+   *ve* arayüzde adıyla söylenir.
+2. **Okunamayan olasılık girişi KAPALI açılır.** Açık bırakıp seçimlerden
+   tekdüze değer üretmek, kullanıcının girmediği bir tahmini Bayes'e ve
+   Monte Carlo'ya beslemek olurdu.
+3. **Adres çubuğu kendiliğinden güncellenmez.** Her tuşa basışta URL yazmak
+   geçmişi kirletir ve devir işaretiyle çakışırdı.
+
+Kodlama sabit genişliklidir: bir alan taşarsa ondan sonraki *bütün* maçlar
+kayar ve hiçbir yerde patlamaz — sessizce başka bir kupon üretir. İlk sürüm
+tam bunu yaptı (binde birlik olasılık `1000` olabilir, yani dört basamak;
+`padStart(3)` alanı taşırıyordu). `scripts/kurulum-check.mjs` bu sınırı ve
+diğer gidiş-dönüş vakalarını bağımlılık eklemeden denetler.
 
 ## Tasarım sistemi
 
@@ -74,6 +110,8 @@ tema bedava gelir, dosyalarda sabit hex yoktur (`viz.ts`). Üç kural:
 ## Kontroller
 
 ```bash
-npx tsc --noEmit     # tip kontrolü
+npm run check        # tip kontrolü + kurulum gidiş-dönüş denetimi
 npm run build        # üretim derlemesi
 ```
+
+İkisi de CI'da koşar (`.github/workflows/tests.yml`, `frontend` işi).

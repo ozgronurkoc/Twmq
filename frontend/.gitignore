@@ -8,3 +8,7 @@ out/
 # Next.js'in otomatik urettigi tip dosyasi
 next-env.d.ts
 *.tsbuildinfo
+
+# scripts/kurulum-check.mjs gecici cikti dizini (normalde kendi siler,
+# bu satir yalnizca cokme durumu icin)
+.kurulum-check-*/

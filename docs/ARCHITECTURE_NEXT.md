@@ -104,6 +104,25 @@ Pahalı olduğu için maliyet sınırı vardır; aşılırsa blok
 
 Cevap: `ok`, `error`, `result` (rows, guaranteed, advanced, bayes, markov, …), `run_log_text`.
 
+## Arayüz durumu
+
+Sunucuda oturum yoktur; `/api/solve` durumsuzdur ve her istek kurulumun
+tamamını taşır. Formül sayfasının kurulumu bu yüzden **istemcide** saklanır
+(`frontend/lib/kurulum.ts`):
+
+| Taşıyıcı | Ne zaman yazılır | Kapsam | Kayıp |
+|---|---|---|---|
+| `localStorage` | her değişiklikte, kendiliğinden | o tarayıcı | yok |
+| URL (`?s=…`) | yalnızca "Bağlantıyı kopyala" | paylaşılabilir | olasılıklar binde bir + normalize |
+| `sessionStorage` (`?hafta=`) | hafta detayından devir | o sekme | yok |
+
+Öncelik: **URL > `localStorage`**, ardından devir paketi yalnızca
+olasılıkların üzerine yazar. Sonuç hiçbirine girmez — türetilmiş veridir.
+
+Kodlama sabit genişliklidir; taşan bir alan sonraki bütün maçları kaydırır
+ve hiçbir yerde patlamaz. `frontend/scripts/kurulum-check.mjs` bu sınırı
+CI'da bekçiye bağlar (`tests.yml` → `frontend` işi).
+
 ## Çalıştırma
 
 ```bash

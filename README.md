@@ -636,6 +636,8 @@ frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası 
   lib/types.ts         API sözleşmesinin tamamı tipli
   lib/api.ts           tipli, AbortController ile iptal edilebilir istemci
   lib/transfer.ts      hafta → formül devri (idempotent; bkz. §7.2 kural 6)
+  lib/kurulum.ts       formül kurulumunun kalıcılığı + paylaşılabilir bağlantı
+  scripts/             kurulum-check.mjs (gidiş-dönüş denetimi, bağımlılıksız)
 
 scripts/               setup.sh (bağımlılıklar) · run_next_dev.sh (API + UI birlikte)
                        build.sh + run_prod.sh (Replit dağıtımı)
@@ -676,6 +678,11 @@ katmanı arayüzü bilmez.
    yazar (`lib/transfer.ts`).
 7. **Geçmişe uydurulan sayı yalnız gösterilmez.** Eşik taraması hold-out ve uyarı
    metniyle birlikte durur; ikisi ayrılamaz.
+8. **Geri yüklenen kurulumda bozuk alan sessizce yutulmaz.** Formül kurulumu yerel
+   depoya kendiliğinden yazılır, bağlantıya ise yalnızca istenince (`lib/kurulum.ts`).
+   Okunamayan her alan varsayılana düşer *ve* arayüzde adıyla söylenir. Okunamayan
+   olasılık girişi **kapalı** açılır: açık bırakıp seçimlerden tekdüze değer üretmek,
+   kullanıcının girmediği bir tahmini Bayes'e ve Monte Carlo'ya beslemek olurdu.
 
 ---
 

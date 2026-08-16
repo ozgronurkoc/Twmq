@@ -5,6 +5,17 @@ import { Loader2, Play } from "lucide-react";
 
 import { getMeta, solve } from "@/lib/api";
 import {
+  adresiTemizle,
+  kurulumuCoz,
+  varsayilanKurulum,
+  VARSAYILAN_ENG,
+  VARSAYILAN_MACLAR,
+  yereldenOku,
+  yereleYaz,
+  yereliTemizle,
+  type Kurulum,
+} from "@/lib/kurulum";
+import {
   devirIsaretliMi,
   haftaDevriOku,
   haftaDevriTemizle,
@@ -38,6 +49,7 @@ import {
   Switch,
 } from "@/components/ui/controls";
 import { Tabs, TabPanel, type TabItem } from "@/components/ui/tabs";
+import { KurulumBar } from "@/components/formul/kurulum-bar";
 import { MatchGrid } from "@/components/formul/match-grid";
 import { ProbGrid } from "@/components/formul/prob-grid";
 import { DagilimPanel, KuponPanel, OzetPanel } from "@/components/formul/panels-core";
@@ -51,18 +63,11 @@ import {
   OlasilikPanel,
 } from "@/components/formul/panels-analiz";
 
-/** README'deki örnek kupon: "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10" */
-const VARSAYILAN: Sembol[][] = [
-  ["1"], ["1", "0"], ["1"], ["1", "2"], ["0"],
-  ["1", "0"], ["2"], ["1", "0"], ["1"], ["1", "2"],
-  ["0", "2"], ["1"], ["1", "0"], ["2"], ["1", "0"],
-];
-
 const HAMMING_BLOK = 7;
 
 export default function FormulPage() {
   const [meta, setMeta] = React.useState<MetaResponse | null>(null);
-  const [matches, setMatches] = React.useState<Sembol[][]>(VARSAYILAN);
+  const [matches, setMatches] = React.useState<Sembol[][]>(VARSAYILAN_MACLAR);
   const [mode, setMode] = React.useState<ModeId>("fix16");
   const [variant, setVariant] = React.useState(0);
   const [budget, setBudget] = React.useState(32);
@@ -72,7 +77,7 @@ export default function FormulPage() {
 
   const [probsAcik, setProbsAcik] = React.useState(false);
   const [probs, setProbs] = React.useState<ProbRow[]>(() =>
-    VARSAYILAN.map((s) => uniformProb(s)),
+    VARSAYILAN_MACLAR.map((s) => uniformProb(s)),
   );
   const [useBayes, setUseBayes] = React.useState(false);
   const [preset, setPreset] = React.useState<string>("dengeli");
@@ -82,14 +87,7 @@ export default function FormulPage() {
   const [mcSamples, setMcSamples] = React.useState(80000);
   const [fireMax, setFireMax] = React.useState(2);
 
-  const [eng, setEng] = React.useState({
-    trials: 5,
-    ls_iters: 30000,
-    seed: 42,
-    time_limit: 60,
-    block_limit: 256,
-    exact_limit: 512,
-  });
+  const [eng, setEng] = React.useState({ ...VARSAYILAN_ENG });
 
   const [sonuc, setSonuc] = React.useState<SolveResult | null>(null);
   const [logMetin, setLogMetin] = React.useState("");
@@ -98,7 +96,78 @@ export default function FormulPage() {
   const [gecen, setGecen] = React.useState(0);
   const [sekme, setSekme] = React.useState("ozet");
   const [devir, setDevir] = React.useState<HaftaDevri | null>(null);
+  const [baglantiNotu, setBaglantiNotu] = React.useState<{
+    atlanan: string[];
+    olasilikVar: boolean;
+  } | null>(null);
   const iptalRef = React.useRef<AbortController | null>(null);
+
+  // Kurulum geri yuklendi mi. Iki yerde belirleyici: (a) /api/meta gec
+  // gelip geri yuklenen degerleri EZMESIN, (b) geri yukleme bitmeden yerel
+  // depoya varsayilanlar yazilmasin.
+  const geriYuklendiRef = React.useRef(false);
+  // Yerel depoya yazma kapisi. Bilerek ref DEGIL state: ref olsaydi kayit
+  // etkisi, geri yukleme henuz islenmemis ayni commit'te varsayilanlari
+  // yazmaya baslar ve o yazimi yalnizca geciktirmenin iptali durdururdu.
+  // State olunca kapi ancak geri yuklenmis degerlerle birlikte acilir.
+  const [kayitAcik, setKayitAcik] = React.useState(false);
+
+  const kurulum: Kurulum = React.useMemo(
+    () => ({
+      matches, probsAcik, probs, mode, variant, budget, planCount, planApply,
+      kati, fireMax, useBayes, preset, elleAyar, prior, evidence, mcSamples, eng,
+    }),
+    [
+      matches, probsAcik, probs, mode, variant, budget, planCount, planApply,
+      kati, fireMax, useBayes, preset, elleAyar, prior, evidence, mcSamples, eng,
+    ],
+  );
+
+  const uygula = React.useCallback((k: Kurulum) => {
+    setMatches(k.matches.map((r) => [...r]));
+    setProbs(k.probs.map((r) => ({ ...r })));
+    setProbsAcik(k.probsAcik);
+    setMode(k.mode);
+    setVariant(k.variant);
+    setBudget(k.budget);
+    setPlanCount(k.planCount);
+    setPlanApply(k.planApply);
+    setKati(k.kati);
+    setFireMax(k.fireMax);
+    setUseBayes(k.useBayes);
+    setPreset(k.preset);
+    setElleAyar(k.elleAyar);
+    setPrior(k.prior);
+    setEvidence(k.evidence);
+    setMcSamples(k.mcSamples);
+    setEng({ ...k.eng });
+  }, []);
+
+  // Kurulumun geri yuklenmesi. Oncelik: URL > yerel depo. URL'de kurulum
+  // varsa yerel kayit OKUNMAZ — paylasilan baglantiyi acan kisi kendi eski
+  // kurulumunun kalintisini degil, gonderilen kurulumu gormeli.
+  //
+  // Devir paketi (asagida) bundan SONRA calisir ve yalnizca olasiliklarin
+  // uzerine yazar; hafta detayindan gelen bir kullanicinin isaretleri
+  // korunur.
+  React.useEffect(() => {
+    const cozum = kurulumuCoz(window.location.search);
+    if (cozum) {
+      uygula(cozum.kurulum);
+      setBaglantiNotu({
+        atlanan: cozum.atlanan,
+        olasilikVar: cozum.kurulum.probsAcik,
+      });
+      geriYuklendiRef.current = true;
+    } else {
+      const yerel = yereldenOku();
+      if (yerel) {
+        uygula(yerel);
+        geriYuklendiRef.current = true;
+      }
+    }
+    setKayitAcik(true);
+  }, [uygula]);
 
   // Hafta detayindaki "formule gonder" dugmesinden gelen paket. Isaret
   // URL'de (`?hafta=51`), paket sessionStorage'da ve ikisi de TUKETILMEZ:
@@ -113,12 +182,24 @@ export default function FormulPage() {
     setProbsAcik(true);
   }, []);
 
+  // Kurulumu yerel depoya yaz. Olasilik kutularinda her tusa basista
+  // yazmamak icin geciktirilir.
+  React.useEffect(() => {
+    if (!kayitAcik) return;
+    const id = window.setTimeout(() => yereleYaz(kurulum), 400);
+    return () => window.clearTimeout(id);
+  }, [kurulum, kayitAcik]);
+
   // /api/meta: modlar, preset'ler, sinirlar — hicbiri sabit kodlanmaz.
   React.useEffect(() => {
     const ac = new AbortController();
     getMeta(ac.signal)
       .then((m) => {
         setMeta(m);
+        // Sunucunun varsayilanlari YALNIZCA geri yuklenen bir kurulum
+        // yokken uygulanir. Aksi halde gec gelen meta, kullanicinin
+        // kaydettigi motor ayarlarini ve MC ornek sayisini sessizce ezerdi.
+        if (geriYuklendiRef.current) return;
         setEng((e) => ({ ...e, ...m.engine_defaults }));
         setMcSamples(m.limits?.mc_samples?.default ?? 80000);
       })
@@ -127,6 +208,20 @@ export default function FormulPage() {
       });
     return () => ac.abort();
   }, []);
+
+  const sifirla = React.useCallback(() => {
+    yereliTemizle();
+    haftaDevriTemizle();
+    // Adres de temizlenir: aksi halde yenileme, az once silinen kurulumu
+    // baglantidan geri getirirdi.
+    adresiTemizle();
+    setDevir(null);
+    setBaglantiNotu(null);
+    setSonuc(null);
+    setLogMetin("");
+    setHata(null);
+    uygula(varsayilanKurulum());
+  }, [uygula]);
 
   // Gecen sure sayaci — uzun suren istekler icin bekleme anlatisi.
   React.useEffect(() => {
@@ -246,6 +341,40 @@ export default function FormulPage() {
       <div className="grid gap-6 xl:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
         {/* ── Girdi ──────────────────────────────────────────── */}
         <div className="space-y-4">
+          <KurulumBar kurulum={kurulum} onSifirla={sifirla} disabled={calisiyor} />
+
+          {baglantiNotu ? (
+            <Callout ton="primary" baslik="Kurulum bağlantıdan yüklendi">
+              <p>
+                Maç işaretleri ve motor ayarları adresteki bağlantıdan geldi.
+                {baglantiNotu.atlanan.length ? (
+                  <>
+                    {" "}
+                    Bağlantıdaki <strong>{baglantiNotu.atlanan.join(", ")}</strong>{" "}
+                    okunamadı ve varsayılana düşürüldü — uydurulmadı, aşağıdan
+                    kontrol et.
+                  </>
+                ) : null}
+                {baglantiNotu.olasilikVar ? (
+                  <>
+                    {" "}
+                    Olasılıklar bağlantıda <strong>binde bir</strong> çözünürlükle
+                    ve <strong>1&apos;e normalize edilmiş</strong> taşınır; gönderen
+                    ham ağırlık girdiyse (5/3/2) burada oranı korunmuş halini
+                    (0.5/0.3/0.2) görürsün.
+                  </>
+                ) : null}
+              </p>
+              <button
+                type="button"
+                onClick={() => setBaglantiNotu(null)}
+                className="mt-2 text-[12px] underline underline-offset-2 hover:no-underline"
+              >
+                Bu notu kapat
+              </button>
+            </Callout>
+          ) : null}
+
           <Card>
             <CardHeader
               title="Maç seçimleri"

@@ -6,6 +6,29 @@ on:
   pull_request:
 
 jobs:
+  # Arayuzun kendi kapisi. Once hicbir sey yoktu; kurulum kodlamasi
+  # (paylasilabilir baglanti) sabit genislikli ve bir alan tastiginda
+  # SESSIZCE baska bir kupon uretiyor — o yuzden tip denetimiyle birlikte
+  # gidis-donus denetimi de burada kosar.
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          # `uses:` adimlari working-directory'yi almaz; yol repo kokune gore.
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - name: Tip denetimi + kurulum gidis-donus
+        run: npm run check
+      - name: Uretim derlemesi
+        run: npm run build
+
   test:
     runs-on: ubuntu-latest
     # Python projesinin tamami backend/ altinda; tum run adimlari oradan calisir.
