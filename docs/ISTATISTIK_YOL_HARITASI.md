@@ -390,14 +390,167 @@ arındırılmış yapı tutar.
 
 ## 6. Yol haritası
 
-**F1–F5'in tamamı uygulandı** (bkz. §3.5–3.9). Bu bölüm bundan sonrasını tutar.
+**F1–F5'in tamamı uygulandı** (bkz. §3.5–3.9). Bundan sonrası iki koldan gider:
 
-### Sıradaki iş: örneklem büyütme (S1)
+| Kol | Neyi iyileştirir |
+|---|---|
+| **G1–G5** | **Sayfanın kendisi** — bilgi mimarisi, sentez, kullanım |
+| **S1–S4** | **Verinin ve analizin derinliği** — örneklem, strateji, kaynak |
 
-Her şeyin önündeki tek gerçek darboğaz bu. 41 hafta üzerinde ölçülen her şey — kalibrasyon,
-banko bantları, geri testin eşikleri — dar bir güven aralığıyla geliyor ve hold-out'un 0
-çıkması da bundan bağımsız değil. 2024/2025 sezonu aynı iki boru hattıyla çekilebilirse hafta
-sayısı ~80'e çıkar.
+**Sıra: G1 → G2 → G3 → G4 → S1 → S2 → G5 → S3 → S4.**
+
+Gerekçe: G kolu var olan gerçeği daha iyi *teslim eder*, S kolu gerçeğin *kendisini*
+derinleştirir. G önce geliyor çünkü kusurları ölçüldü, hiçbir şey tarafından bloklanmıyor ve
+S1'in yanında ucuz. S1 en derin darboğaz olmaya devam ediyor — ama sayfa bugünkü haliyle
+mevcut bulguları bile taşımakta zorlanıyor, önce onu düzeltmek daha çok belirsizlik kaldırıyor.
+
+---
+
+### G kolu — sayfanın kendisi
+
+#### Ölçülen durum
+
+`/istatistik`, 1400 px genişlikte, tüm sezon seçiliyken:
+
+| Ölçüm | Değer |
+|---|---:|
+| Sayfa boyu | **7.210 px** |
+| ↳ "Oranlar ne diyordu?" kartı (6 alt bölüm) | 2.482 px · **%34** |
+| ↳ Hafta tablosu (41 satır) | 2.098 px · **%29** |
+| ↳ Kalan 9 kart | toplam **%37** |
+| İlk ekranda görünen başlık | **3 / 11** |
+| Telefonda (390 px) sayfa boyu | 11.250 px |
+| ↳ Yatay kaydırma gerektiren tablo | **9'un 8'i** |
+| Filtre satırı | `position: static` — kaydırınca kaybolur |
+| Sayfa yükünde istek | 2 (`/api/stats` + `/api/backtest`) |
+
+**Kök sorun: sayfa veri kaynağına göre kurulmuş, soruya göre değil.** Kartlar
+"`history.py`'dan gelenler" ve "`odds.py`'dan gelenler" diye ayrılmış; kullanıcının soruları
+ise başka eksende duruyor ve her birinin cevabı sayfaya dağılmış:
+
+| Kullanıcının sorusu | Cevabın bugün bulunduğu yer |
+|---|---|
+| "Bu hafta kaç `0` beklemeliyim?" | Bantlar + adet dağılımı + son 6 hafta kutusu — 3 ayrı kart |
+| "Hangi maça banko koyabilirim?" | Banko bantları + çift kapsaması — 2.482 px'in içine gömülü |
+| "Kaç kolona çıkmalıyım?" | Çift kapsaması + geri test — iki ayrı kart, arası ~800 px |
+| "Bu sayılara ne kadar güvenebilirim?" | Kalibrasyon + Brier + veri kalitesi + "az örnek" işaretleri — 4 ayrı yer |
+
+Sayfa bütün parçalara sahip; eksik olan **sentez**. İkinci eksik: sayfa tarif ediyor ama karar
+desteklemiyor — "1.35 pratik bir sınır", "1.75–2.00 tuzak bandı" gibi ölçülmüş okumalar bu
+belgede yazılı, sayfada okurun kendi çıkarması gerekiyor.
+
+#### G1 — Sayfayı soruya göre böl
+
+**Soru:** 7.210 px'lik tek akışta kullanıcı aradığı cevaba nasıl ulaşacak?
+
+- `/istatistik` → **Sezon**: dağılım, seyir, bantlar, adet, ısı haritası, geçiş, uçlar, hafta
+  tablosu, veri kalitesi
+- `/istatistik/oranlar` → **Piyasa**: favori kırılımı, banko bantları, çift kapsaması,
+  beraberlik profili, lig kırılımı, kalibrasyon, Brier
+- `/istatistik/geri-test` → mevcut (§3.5)
+
+Üç sayfada ortak sekme şeridi; `?last=N` href'lerde taşınır.
+
+> **Değişmez kural 3 bozulmuyor, genişliyor.** "Tek filtre satırı" → **"tek dilim"**: aynı anda
+> görünen her blok aynı `?last` üzerinden hesaplanır ve sekme geçişinde dilim korunur. F4'te
+> filtreyi URL'e taşımak (§3.8) bölmeyi ücretsiz hale getirdi.
+
+Hafta tablosu varsayılan olarak son 12 satır + "41 haftanın tamamı" düğmesi. Kural 2 ("her
+görselin tablo karşılığı vardır") bozulmaz: veri kaybolmuyor, bir tık uzağa gidiyor; CSV zaten
+tamamını veriyor.
+
+- **Yeniden kullan:** `RangeFilter`, `aralikUrldenOku` / `aralikUrleYaz`, mevcut kart bileşenleri
+- **Yeni:** `app/istatistik/oranlar/page.tsx`, ortak sekme şeridi bileşeni
+- **Kabul kriteri:** her sayfa < 3.500 px (masaüstü, tüm sezon) · sekme geçişinde dilim korunur
+  · `/istatistik` artık `/api/backtest` istemez · hiçbir görsel kaybolmaz
+- **Büyüklük:** orta
+
+#### G2 — Sentez katmanı
+
+**Soru:** sayfa tarif ediyor; okurun çıkarması gereken sonucu neden kendisi söylemiyor?
+
+Her sayfanın tepesinde, **veriden türetilen** (elle yazılmayan) kesit okumaları. Prototipin tüm
+sezon üzerinde ürettikleri:
+
+> - Favori oranı 1.20–1.35 bandında isabet %77 (39 maç)
+> - 1.75–2.00 bandında isabet %50; tutmamanın %71'i beraberlik (104 maç)
+> - İlk-iki toplamı %90+ olan maçlarda banko tek başına %84 tutuyor; ikinci işaret 12,5 puan
+>   ekliyor (32 maç)
+> - Piyasa Brier 0,579 (eşit dağılım 0,667) — 567 maç
+
+**Vaka: naif cümle üretici gürültüyü iddiaya çevirir.** Prototip "isabeti %65'in üstünde olan
+en yüksek bandı seç" kuralıyla çalıştırıldığında, son 12 hafta diliminde şu cümleyi üretti:
+*"Favori oranı 1.75–2.00 altındayken isabet %67 (39 maç)."* Bu cümle 2.00'a kadar banko
+yapılabileceğini ima ediyor — sezon boyu gerçeğin tam tersi. Sebep, o dilimde bantların
+tersine dönmesi:
+
+| Favori oranı | Tüm sezon | Son 12 hafta |
+|---|---:|---:|
+| 1.00–1.20 | %90,9 (11) | %100,0 (2) |
+| 1.20–1.35 | %76,9 (39) | %55,6 (9) |
+| 1.35–1.50 | %64,1 (64) | %50,0 (16) |
+| 1.50–1.75 | %60,4 (106) | %58,1 (31) |
+| 1.75–2.00 | %50,0 (104) | **%66,7 (39)** |
+| 2.00+ | %46,9 (243) | %42,5 (80) |
+
+**Ders:** tablodaki bir sayı kendi örneklemini yanında taşır ve okur onu iskonto eder; cümle
+ise *iddia eder*. Bu yüzden sentez katmanının eşiği tablonunkinden katı olmak zorundadır.
+
+**Dört zorunlu kural:**
+
+1. **Buyurgan olamaz.** "Banko yap" yok; "bu kesitte şu ölçüldü (N maç)" var. Kurucu iddia
+   yerinde kalır: araç maç sonucu tahmin etmez.
+2. **Her cümle bir ölçüme bağlıdır** ve örneklemini yanında taşır.
+3. **Eşik cümlesi ancak bantlar monoton ise çıkar** — seçilen bandın altındaki her bant da
+   barajı geçmeli. Yukarıdaki son-12 diliminde bu kural cümlelerin *hepsini* susturur; doğru
+   davranış budur.
+4. **Örneklem yetmiyorsa cümle hiç çıkmaz.** Zayıflatılmış bir cümle değil, sessizlik.
+
+**Nerede üretilecek:** backend. Gerekçe: test edilebilir, `?last` ile zaten hesaplanmış
+bloklardan türer, sağlık denetimine bağlanabilir. Arayüz yalnızca basar — ikinci bir doğruluk
+kopyası oluşmaz.
+
+- **Yeniden kullan:** `season_1x2_summary` blokları, `history_analytics`, `_wilson`
+- **Yeni:** `backend/spor_toto/insights.py`, `/api/stats` içinde `insights` bloğu, 1 arayüz
+  bileşeni
+- **Kabul kriteri:** `?last=N` değişince cümleler değişir (sabit metin yok) · **monotonluk
+  kuralı testle bekçiye bağlı: son-12 dilimi eşik cümlesi üretmemeli** · hiçbir cümle buyurgan
+  değil · her cümle örneklemini taşır
+- **Büyüklük:** orta-büyük (~200 satır backend + testler + 1 bileşen)
+
+#### G3 — Dilim dürüstlüğü
+
+`?last=6` seçilince 90 maç kalıyor; lig kırılımının ve banko bantlarının çoğu satırı
+anlamsızlaşıyor. Satır satır "az örnek" deniyor ama sayfa üst düzeyde susuyor.
+
+Blok başına minimum örneklem eşiği; eşik altındaki blok kart başlığında rozet alır ve kesit
+notu toplu uyarı verir: "bu kesitte lig kırılımı ve banko bantları anlamlı değil".
+
+- **Kabul kriteri:** eşik `AZ_ORNEK` ile tek kaynaktan gelir · uyarı `?last` değişince güncellenir
+- **Büyüklük:** küçük
+
+#### G4 — Gezinme cilası
+
+Yapışkan filtre + sekme şeridi (7.210 px'lik sayfada filtreyi değiştirmek için başa dönmek
+gerekiyor) · bölüm bağlantıları · kart başına iskelet.
+**Büyüklük:** küçük
+
+#### G5 — Mobil
+
+9 tablodan 8'i telefonda yatay kayıyor. Hedef "kusursuz" değil **"okunabilir"**: kritik tablolar
+dar ekranda kart görünümüne düşer. Kullanım ağırlıkla masaüstü olduğu için sona bırakıldı.
+**Büyüklük:** orta
+
+---
+
+### S kolu — verinin ve analizin derinliği
+
+#### S1 — Örneklem büyütme
+
+Sayıların önündeki en derin darboğaz. 41 hafta üzerinde ölçülen her şey — kalibrasyon, banko
+bantları, geri testin eşikleri — dar bir güven aralığıyla geliyor ve hold-out'un 0 çıkması da
+bundan bağımsız değil. 2024/2025 sezonu aynı iki boru hattıyla çekilebilirse hafta sayısı
+~80'e çıkar. G2'nin monotonluk kuralının kaç dilimde cümle üretebildiği de doğrudan buna bağlı.
 
 - **Önce kontrol:** kaynak sitenin geçmiş sezon payload'ları duruyor mu; football-data
   `mmz4281/2425/` zaten var
@@ -407,7 +560,7 @@ sayısı ~80'e çıkar.
   geri test sezon ayrımı yapabiliyor (birinde eşik seç, ötekinde ölç — gerçek out-of-sample)
 - **Büyüklük:** orta
 
-### S2 — Geri testi zenginleştir
+#### S2 — Geri testi zenginleştir
 
 - Sabit kolon bütçesi kipi: "haftada en fazla N kolon" kısıtıyla eşik seçimi
 - İkinci strateji ailesi: eşik yerine "en belirsiz k maçı çifte yap" (kolon bedelini
@@ -415,7 +568,7 @@ sayısı ~80'e çıkar.
 - `butce_danismani` ile bağ: geri testin ürettiği kupon bütçeye sığmıyorsa hangi maç kısılır
 - **Büyüklük:** orta
 
-### S3 — İddaa arşivi olgunlaşınca
+#### S3 — İddaa arşivi olgunlaşınca
 
 Snapshot boru hattı ve haftalık tetik çalışıyor (§3.9). ~10 snapshot biriktikten sonra:
 
@@ -426,11 +579,20 @@ Snapshot boru hattı ve haftalık tetik çalışıyor (§3.9). ~10 snapshot biri
 - Geri testi iddaa oranıyla tekrarla — vekil değil, gerçek fiyatla
 - **Büyüklük:** küçük (veri geldikten sonra); değeri zamanla birikir
 
-### S4 — Küçük işler
+#### S4 — Küçük işler
 
 Geri test sayfasında eşik çiftini URL'e yazmak (`?banko=0.68&uclu=0.38` paylaşılabilir olur) ·
 tarama tablosunu CSV'ye çıkarmak · hafta detayında Brier'i göstermek.
-**Büyüklük:** küçük.
+**Büyüklük:** küçük
+
+---
+
+### Masada duran, sırada olmayan
+
+**"Bu hafta" kartı.** Sayfa tamamen geçmişe bakıyor; oysa kullanıcının asıl işi bu haftanın
+kuponu. Veri setinde 52./53. hafta açık duruyor ve F5 arşivi (§3.9) tam da bunu besleyebilir —
+"bu haftanın maçlarına kesitteki bulguları uygula" kartı sayfayı referanstan araca çevirir.
+S3'e bağımlı olduğu için bugün planlanamaz; arşiv birikince yeniden değerlendirilmeli.
 
 ## 7. Yapılmayacaklar
 
