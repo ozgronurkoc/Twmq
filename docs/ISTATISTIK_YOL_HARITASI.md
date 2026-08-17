@@ -104,8 +104,8 @@ spor_toto/evaluate.py  ◄── spor_toto/predict.py     (sözleşme + 3 refera
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
 paketi toplam **700 test**; **82'si** istatistik katmanına, **104'ü** tahmin katmanına ait.
-`python -m spor_toto.health` **22 değişmez** çalıştırır — ikisi (`oran_arsivi`, `geri_test`)
-istatistik katmanını korur; tahmin katmanının henüz değişmezi **yok** (T4).
+`python -m spor_toto.health` **23 değişmez** çalıştırır — ikisi (`oran_arsivi`, `geri_test`)
+istatistik katmanını, biri (`tahmin_referanslari`) tahmin katmanının ölçüm koşumunu korur.
 
 ### 2.3 API sözleşmesi
 
@@ -414,6 +414,35 @@ kapasitesinden değil **örneklem küçüklüğünden** geliyormuş.
 0,0005–0,0015 Brier; tabanı 0,57–0,59 olan bir sayıda. İddaa marjı %17,2 iken bu büyüklük
 pratik eşiğe yakın bile değil. **Yön doğru, miktar yetersiz** — T5'in gerekçesi budur.
 
+### 3.13 Referans skorları sağlık değişmezine bağlandı (T4)
+
+**Soru.** Tahmin katmanının bütün ölçümleri bir koşuma dayanıyor. O koşum sessizce
+kayarsa — veri bozulur, oran arşivi eksilir, ölçüt kodu değişir — bunu bugün hiçbir şey
+fark etmiyordu.
+
+`tahmin_referanslari` 23. değişmez olarak eklendi (`analiz` kategorisi). Denetlediği şey
+**modelin kalitesi değil, ölçümün tekrarlanabilirliğidir** — isabet istatistik katmanının
+işidir (geri test, hold-out), sağlık katmanı vaadin canlıda geçerliliğini ölçer.
+
+Üç şey sabitlendi:
+
+1. **Matematiksel özdeşlikler** — `duzgun` Brier'i tam olarak 0,667, log kaybı tam olarak
+   ln(3). Kayarsa bozulan şey ölçüt kodudur.
+2. **Sıralama** — `piyasa < sezon_sabiti < duzgun`. Bozulursa bozulan model değil **oran
+   arşividir.**
+3. **Çizgi kendisini geçemez** — hiçbir referans `piyasa`'yı geçmemeli.
+
+**Piyasanın kendi değeri bilerek dar bir eşiğe bağlanmadı.** Kupon seti ikinci sezonla
+büyürse değer meşru olarak kayar ve sağlık bundan kırmızı olmamalıdır. Yerine geniş bir
+akıl sağlaması var (eşit dağıtımdan iyi, kusursuzdan uzak) ve tam değer mesajda raporlanır:
+
+```
+[OK ] tahmin_referanslari  75 ms  hafta=36 mac=540 | piyasa=0.5747 sezon=0.6505 duzgun=0.6667
+```
+
+Kontrolün gerçekten bir şey koruduğu ayrıca sınandı: sıralama ya da `duzgun` değeri
+bozulduğunda kontrol kırılıyor. Kırılmasaydı dekoratif olurdu.
+
 ---
 
 ## 4. Sayfada bugün ne var
@@ -515,15 +544,15 @@ uygulandı** (§3.10–3.12). Bundan sonrası üç koldan gider:
 |---|---|---|
 | **G1–G5** | **Sayfanın kendisi** — bilgi mimarisi, sentez, kullanım | hiçbiri başlamadı |
 | **S1–S4** | **Verinin ve analizin derinliği** — örneklem, strateji, kaynak | S1 kısmen (§6.1) |
-| **T1–T6** | **Tahmin katmanı** — ölçüm, model, girdi | T1–T3 bitti |
+| **T1–T6** | **Tahmin katmanı** — ölçüm, model, girdi | T1–T4 bitti |
 
-**Sıra: T4 → G1 → G2 → T5 → G3 → G4 → T6 → S2 → G5 → S3.**
+**Sıra: G1 → G2 → T5 → G3 → G4 → T6 → S2 → G5 → S3.**
 
 Gerekçe değişti. Önceki sıralamada G kolu başta geliyordu çünkü "var olan gerçeği daha iyi
 teslim etmek" en ucuz kazançtı. Amaç tahmine dönünce **teslim edilecek gerçeğin kendisi
 değişti**: bugün sayfada gösterilmeyen bir tahmin katmanı var ve ölçülmüş sonucu net. T4
-(sağlık değişmezi) öne alındı çünkü küçük ve tahmin katmanının bütün ölçümlerini bekçiye
-bağlıyor; G1–G2 hemen arkasından geliyor çünkü sayfa hâlâ mevcut bulguları taşımakta
+(sağlık değişmezi) öne alınıp **bitirildi** — küçüktü ve tahmin katmanının ölçümlerini
+bekçiye bağladı. Sıra artık G1–G2'de, çünkü sayfa hâlâ mevcut bulguları taşımakta
 zorlanıyor.
 
 ### 6.1 S1'in durumu — yarısı yapıldı, yarısı kapalı
@@ -701,18 +730,7 @@ Amaç tahmine döndükten sonra kurulan kol. **Sayfaya hiçbir şey çıkmadı**
 | **T1** | Tahminci sözleşmesi + değerlendirme koşumu (§3.10) | `piyasa` çizgisi 0,5747 |
 | **T2** | Piyasanın yeniden kalibrasyonu, 4 basamaklı kademe (§3.11) | Kupon üzerinde eğitilince **hiçbiri geçmedi** |
 | **T3** | Eğitim korpusu + çapraz ölçüm (§3.12) | Korpusta eğitilince yön döndü, **anlamlılık kurulamadı** |
-
-#### T4 — Referans skorlarını sağlık değişmezine bağla
-
-**Küçük, ve sıranın başında.** `duzgun` her zaman Brier 0,6667 vermeli, `piyasa` kupon
-kesitinde 0,5747 ± dar bir bant. Bu sayılar kayarsa bozulan şey model değil **veri ya da
-boru hattıdır** — ve bunu bugün hiçbir şey fark etmez.
-
-- **Yeniden kullan:** `evaluate.karsilastir`, `health.py` kontrol sözleşmesi
-- **Yeni:** 1 değişmez (`tahmin_referanslari`)
-- **Kabul kriteri:** referans skoru bandın dışına çıkarsa sağlık kırmızıya döner · kontrol
-  modelin *kalitesini* değil, ölçümün *tekrarlanabilirliğini* denetler
-- **Büyüklük:** küçük
+| **T4** | Referans skorları sağlık değişmezine (§3.13) | `tahmin_referanslari` — 23. değişmez |
 
 #### T5 — Piyasa dışı girdi: takım formu
 

@@ -108,6 +108,9 @@ Sayfanın güvenilirliği, neyi kanıtlamadığını açıkça söylemesine bağ
   9 çift, üçlü içeren) ve her sınıfın bedeli beklenen sayıya eşit.
 - `/api/stats` ve `/api/backtest` gövdeleri kendi içinde tutarlı; `?last=`
   dilimi gövdenin tamamını daraltıyor.
+- Tahmin katmanının ölçüm koşumu **tekrarlanabilir**: `duzgun` tam olarak 0,667,
+  sıralama piyasa < sezon_sabiti < duzgun. Ölçülen şey modelin *kalitesi* değil,
+  ölçümün *kendini tekrar edebilmesi* — sıralama bozulursa bozulan oran arşividir.
 - Her kontrol kendi **süre bütçesinin** içinde koşuyor.
 
 ### 3.2 Kanıtlanmayan — ve asla kanıtlanmayacak olan
@@ -263,7 +266,7 @@ her kategori kartındaki *"Yalnızca bunu çalıştır"* düğmesi budur.
 İki tasarım kararı bunu güvenli kılar:
 
 1. **Kısmi rapor kendini açıkça işaretler.** `summary.kismi` true döner ve
-   sayfa bunu bir bant olarak gösterir: *"kayıtlı 22 kontrolün 5 tanesi
+   sayfa bunu bir bant olarak gösterir: *"kayıtlı 23 kontrolün 5 tanesi
    çalıştı"*. Kısmi bir yeşil, tam bir yeşil gibi görünemez.
 2. **Otomatik yenileme her zaman tam raporu koşar.** Kısmi bir koşuyu arka
    planda tekrarlamak, sayfayı giderek daha az şey doğrulayan bir yeşil
@@ -408,7 +411,7 @@ olmamalıdır.
 
 | Ölçü | Değer |
 |---|---|
-| Kayıtlı kontrol | 22 |
+| Kayıtlı kontrol | 23 |
 | Kategori | 6 |
 | Kritik olmayan kontrol | 1 (`scipy_flag`) |
 | Tam rapor süresi (ısınmış) | ~520 ms |

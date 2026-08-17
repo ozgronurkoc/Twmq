@@ -631,7 +631,8 @@ tablolar (script'in bastığı lig dağılımı) bunu yakalayan şeydi.
 | `test_snapshot_iddaa.py::test_farkli_snapshot_birikir` | Arşiv gerçekten birikiyor, üstüne yazmıyor |
 
 Toplam 82 test bu üç veri setini korur (backend paketi 664 test). `python -m spor_toto.health`
-22 değişmez çalıştırır; `oran_arsivi` ve `geri_test` bu katmanı korur.
+23 değişmez çalıştırır; `oran_arsivi` ve `geri_test` bu katmanı, `tahmin_referanslari`
+tahmin katmanının ölçüm koşumunu korur.
 
 ### 7.7 Bilinen kabuller
 

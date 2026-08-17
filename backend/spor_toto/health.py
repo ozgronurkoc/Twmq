@@ -886,6 +886,69 @@ def _check_geri_test() -> str:
     )
 
 
+def _check_tahmin_referanslari() -> str:
+    """
+    Tahmin katmaninin olcum kosumu hala ayni sayiyi veriyor mu.
+
+    Denetlenen sey MODELIN KALITESI DEGIL, olcumun TEKRARLANABILIRLIGIdir.
+    Bir tahmincinin iyi olup olmadigi istatistik katmaninin isidir (geri
+    test, hold-out); burada sorulan soru daha temel: "referanslar hala
+    bildigimiz degerleri veriyor mu, yoksa altlarindaki veri mi kaydi?"
+
+    Uc sey sabittir ve veri ne kadar buyurse buyusun degismez:
+
+      1. `duzgun` Brier'i tam olarak 0,667, log kaybi tam olarak ln(3).
+         Bunlar matematiksel ozdesliktir; kayarsa bozulan olcut kodudur.
+      2. Siralama piyasa < sezon_sabiti < duzgun. Piyasa bilgi tasiyor,
+         sezon dagilimi ondan az, esit dagitim hic. Bu siralama bozulursa
+         bozulan model degil ORAN ARSIVIdir.
+      3. Hicbir referans piyasayi gecmez — cizgi kendisi referans oldugu
+         icin gecmesi mantiken imkansiz.
+
+    Piyasanin kendi degeri BILEREK dar bir esige baglanmadi: kupon seti
+    ikinci sezonla buyursa deger mesru olarak kayar ve saglik bundan
+    kirmizi olmamalidir. Bunun yerine genis bir akil saglami var (esit
+    dagitimdan iyi, kusursuzdan uzak) ve tam deger mesajda raporlanir.
+    """
+    import math
+
+    from .evaluate import karsilastir, olculebilir_haftalar
+    from .odds import BRIER_ESIT
+
+    kesit = olculebilir_haftalar()
+    if not kesit:
+        return "olculebilir hafta yok — oran arsivi eksik olabilir"
+
+    r = karsilastir(haftalar=kesit)
+    skor = {s["ad"]: s for s in r["tahminciler"]}
+    for ad in ("duzgun", "sezon_sabiti", "piyasa"):
+        assert ad in skor, f"referans tahminci kayip: {ad}"
+
+    # 1) matematiksel ozdeslikler
+    assert abs(skor["duzgun"]["brier"] - BRIER_ESIT) < 1e-3, (
+        f"duzgun Brier {skor['duzgun']['brier']} — 0,667 olmaliydi")
+    assert abs(skor["duzgun"]["log_kaybi"] - math.log(3)) < 1e-3, (
+        f"duzgun log kaybi {skor['duzgun']['log_kaybi']} — ln(3) olmaliydi")
+
+    # 2) siralama — bozulursa oran arsivi bozulmustur
+    assert skor["piyasa"]["brier"] < skor["sezon_sabiti"]["brier"] < skor["duzgun"]["brier"], (
+        "referans siralamasi bozuk: piyasa < sezon_sabiti < duzgun beklenir")
+
+    # 3) genis akil saglami — dar esik BILEREK yok (bkz. docstring)
+    p = skor["piyasa"]["brier"]
+    assert 0.30 < p < BRIER_ESIT, f"piyasa Brier'i akil disi: {p}"
+
+    # 4) cizgi kendisini gecemez
+    for s in r["tahminciler"]:
+        if s["ad"] != r["referans"]:
+            assert s["gecti"] is False, f"{s['ad']} referansi gecti — beklenmez"
+
+    return (
+        f"hafta={r['n_hafta']} mac={r['n_mac']} | piyasa={p:.4f} "
+        f"sezon={skor['sezon_sabiti']['brier']:.4f} duzgun={skor['duzgun']['brier']:.4f}"
+    )
+
+
 def _check_scipy_flag() -> str:
     return f"HAS_SCIPY={HAS_SCIPY}"
 
@@ -1058,6 +1121,15 @@ CHECKS: Tuple[CheckSpec, ...] = (
         "mu ve küme içi kalan hafta gerçekten en az 14 tutturuyor mu.",
         _check_geri_test,
         butce_ms=200,
+    ),
+    CheckSpec(
+        "tahmin_referanslari", "analiz",
+        "Tahmin katmanının ölçüm koşumu hâlâ aynı sayıyı veriyor mu: `duzgun` "
+        "tam olarak 0,667, sıralama piyasa < sezon_sabiti < duzgun. Denetlenen "
+        "şey modelin kalitesi değil ölçümün tekrarlanabilirliği — sıralama "
+        "bozulursa bozulan model değil oran arşividir.",
+        _check_tahmin_referanslari,
+        butce_ms=350,
     ),
     CheckSpec(
         "meta_sozlesmesi", "ucuca",
