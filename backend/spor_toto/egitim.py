@@ -37,6 +37,10 @@ VARSAYILAN_KORPUS = KOK / "data" / "egitim" / "egitim_korpus.csv"
 #: (`recalibrate.OLASILIK_TABANI` ile aynı gerekçe).
 OLASILIK_TABANI = 1e-6
 
+#: A2'nin taşıdığı kapanış kaynakları — `build_egitim.A2_KAYNAKLARI` ile aynı.
+#: `b_B365`/`b_PS` tekil bahisçi, `b_Max`/`b_Avg` bütün bahisçilerin özeti.
+BAHISCILER: Sequence[str] = ("b_B365", "b_PS", "b_Max", "b_Avg")
+
 #: Bir sözde-haftanın karşılaştırmaya girmesi için gereken en az maç. Altında
 #: hafta düzeyinde ortalama kendi gürültüsünü ölçer.
 EN_AZ_MAC = 5
@@ -76,6 +80,7 @@ def korpus_yukle(yol: Optional[str] = None) -> List[Dict[str, Any]]:
                 return uclu if all(v > 1.0 for v in uclu.values()) else None
 
             acilis, kapanis = _cizgi("acilis"), _cizgi("kapanis")
+            dortlu = {ad: _cizgi(ad) for ad in BAHISCILER}
             out.append({
                 "sezon": r["sezon"],
                 "lig": r["lig"],
@@ -90,6 +95,9 @@ def korpus_yukle(yol: Optional[str] = None) -> List[Dict[str, Any]]:
                 # None olur ve mac A1 kesitine giremez (bkz. `_cizgi`).
                 "acilis": acilis if (acilis and kapanis) else None,
                 "kapanis": kapanis if (acilis and kapanis) else None,
+                # Dortlu de ya tamdir ya yoktur: eksik bir kaynak kumesinden
+                # hesaplanan ayrisma maclar arasinda karsilastirilamaz.
+                "bahisciler": dortlu if all(dortlu.values()) else None,
                 "ev_isabet": _tam("ev_isabet"),
                 "dep_isabet": _tam("dep_isabet"),
                 "ev_sut": _tam("ev_sut"),
@@ -196,11 +204,54 @@ def cizgi_hareketi(acilis: Optional[Dict[str, float]],
             for s in ("1", "0", "2")}
 
 
+def bahisci_ayrismasi(bahisciler: Optional[Dict[str, Optional[Dict[str, float]]]]
+                      ) -> Dict[str, float]:
+    """Bahisçiler ne kadar ayrışıyor — **iki ayrı ölçü, ikisi de gerekli.**
+
+    `ayrisma` — `B365` ile `Pinnacle`ın marj arındırılmış olasılıkları
+    arasındaki toplam değişim uzaklığı, ½·Σ|Δp|. 0 = tam hemfikir, 1 = tam zıt.
+    **A2'nin birincil özelliği budur** çünkü kaynak kümesi sabittir: iki
+    bahisçi de dört sezonda da ~%100 mevcut ve ölçünün büyüklüğü kaç bahisçi
+    olduğuna bağlı değil. Ölçülen sezon ortalamaları 0,0142 / 0,0122 / 0,0125
+    / 0,0124 — sabit.
+
+    `en_iyi_prim` — `ln(Max/Avg)`ın semboller ortalaması: en iyi fiyat,
+    ortalamanın ne kadar üstünde. **Daha geniş** bir ölçüdür (bütün bahisçi
+    evrenini görür) ama **bahisçi sayısına duyarlıdır**: football-data yeni
+    kaynak ekledikçe `Max` mekanik olarak kayar. Ölçülen sezon ortalamaları
+    0,0712 / 0,0641 / 0,0629 / 0,0577 — %20'lik bir sürüklenme.
+
+    **Bu yüzden ikisi ayrı tutuluyor ve model yalnızca `ayrisma`yı görüyor.**
+    Sezon dışarıda bırakmalı ölçümde sezona göre kayan bir özellik, sinyal
+    değil sezon kimliği öğretir; model "hangi sezondayım" bilgisini
+    anlaşmazlık sanır. `en_iyi_prim` betimleyici kalır ve sürüklenmesi
+    raporlanır.
+
+    Dörtlü yoksa iki sıfır döner — "bilinmiyor" ile "hemfikir" aynı davranışa
+    düşer, çünkü ikisinde de söylenecek bir şey yoktur (`form`, `hareket` ile
+    aynı gerekçe).
+    """
+    bos = {"ayrisma": 0.0, "en_iyi_prim": 0.0}
+    if not bahisciler or not all(bahisciler.get(ad) for ad in BAHISCILER):
+        return bos
+
+    p_b365 = implied_probs(bahisciler["b_B365"])
+    p_ps = implied_probs(bahisciler["b_PS"])
+    ayrisma = 0.5 * sum(abs(p_b365[s] - p_ps[s]) for s in ("1", "0", "2"))
+
+    en_iyi, ortalama = bahisciler["b_Max"], bahisciler["b_Avg"]
+    prim = sum(math.log(max(en_iyi[s], OLASILIK_TABANI)
+                        / max(ortalama[s], OLASILIK_TABANI))
+               for s in ("1", "0", "2")) / 3.0
+    return {"ayrisma": ayrisma, "en_iyi_prim": prim}
+
+
 def korpus_haftalari(sezonlar_: Optional[Sequence[str]] = None,
                      ligler: Optional[Sequence[str]] = None,
                      en_az_mac: int = EN_AZ_MAC,
                      yol: Optional[str] = None,
-                     cizgi_gerekli: bool = False) -> List[Dict[str, Any]]:
+                     cizgi_gerekli: bool = False,
+                     bahisci_gerekli: bool = False) -> List[Dict[str, Any]]:
     """Korpusu `evaluate` koşumunun beklediği hafta girdilerine çevir.
 
     Dönen her kayıt `backtest.hafta_girdileri()` ile aynı sözleşmeyi taşır
@@ -217,6 +268,9 @@ def korpus_haftalari(sezonlar_: Optional[Sequence[str]] = None,
     A1 ölçümünün kesiti budur ve **eleme şart**: açılış tahmincisi ile kapanış
     tahmincisi aynı maçlarda ölçülmezse aradaki fark hareketi değil,
     örneklem farkını ölçer.
+
+    `bahisci_gerekli=True` aynı şeyi A2 için yapar: bahisçi dörtlüsü tam
+    olmayan maçlar elenir.
     """
     tumu = korpus_yukle(yol)
     # Form tum korpus uzerinde, kronolojik hesaplanir; suzme SONRA gelir.
@@ -228,6 +282,8 @@ def korpus_haftalari(sezonlar_: Optional[Sequence[str]] = None,
     satirlar = tumu
     if cizgi_gerekli:
         satirlar = [r for r in satirlar if r.get("acilis") and r.get("kapanis")]
+    if bahisci_gerekli:
+        satirlar = [r for r in satirlar if r.get("bahisciler")]
     if sezonlar_ is not None:
         izin = set(sezonlar_)
         satirlar = [r for r in satirlar if r["sezon"] in izin]
@@ -264,6 +320,11 @@ def korpus_haftalari(sezonlar_: Optional[Sequence[str]] = None,
                 "kapanis_probs": (implied_probs(r["kapanis"])
                                   if r.get("kapanis") else None),
                 **{f"hareket_{s}": v for s, v in hareket.items()},
+                "bahisci_var": bool(r.get("bahisciler")),
+                "bahisci_probs": ({ad: implied_probs(uclu)
+                                   for ad, uclu in r["bahisciler"].items()}
+                                  if r.get("bahisciler") else None),
+                **bahisci_ayrismasi(r.get("bahisciler")),
             })
         out.append({
             "week": yil * 100 + hafta,
@@ -291,4 +352,5 @@ def ozet(yol: Optional[str] = None) -> Dict[str, Any]:
                          for k in ("1", "0", "2")},
         "cizgi_cifti": sum(1 for r in satirlar
                            if r.get("acilis") and r.get("kapanis")),
+        "bahisci_dortlusu": sum(1 for r in satirlar if r.get("bahisciler")),
     }
