@@ -23,6 +23,7 @@ Leave-one-week-out'un veremediği gerçek out-of-sample budur.
 from __future__ import annotations
 
 import csv
+import math
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
@@ -31,6 +32,10 @@ from .odds import implied_probs
 
 KOK = Path(__file__).resolve().parent.parent
 VARSAYILAN_KORPUS = KOK / "data" / "egitim" / "egitim_korpus.csv"
+
+#: Logaritma alınırken sıfıra düşmeyi engelleyen taban
+#: (`recalibrate.OLASILIK_TABANI` ile aynı gerekçe).
+OLASILIK_TABANI = 1e-6
 
 #: Bir sözde-haftanın karşılaştırmaya girmesi için gereken en az maç. Altında
 #: hafta düzeyinde ortalama kendi gürültüsünü ölçer.
@@ -56,6 +61,21 @@ def korpus_yukle(yol: Optional[str] = None) -> List[Dict[str, Any]]:
                 ham = (r.get(ad) or "").strip()
                 return int(ham) if ham.isdigit() else None
 
+            def _cizgi(onek: str) -> Optional[Dict[str, float]]:
+                """Acilis/kapanis ucluSU — **ya tamdir ya yoktur.**
+
+                Yarim bir cift sessiz bir yalan olurdu: hareket sifir gorunur,
+                mac A1 kesitine girer ve olcumu seyreltirdi. Uretici zaten
+                yarim cift yazmiyor (`build_egitim.dogrula`); burada okurken de
+                gevsetilmez.
+                """
+                try:
+                    uclu = {s: float(r[f"{onek}_{s}"]) for s in ("1", "0", "2")}
+                except (KeyError, TypeError, ValueError):
+                    return None
+                return uclu if all(v > 1.0 for v in uclu.values()) else None
+
+            acilis, kapanis = _cizgi("acilis"), _cizgi("kapanis")
             out.append({
                 "sezon": r["sezon"],
                 "lig": r["lig"],
@@ -66,6 +86,10 @@ def korpus_yukle(yol: Optional[str] = None) -> List[Dict[str, Any]]:
                 "dep": r["dep"],
                 "kod": r["kod"],
                 "oranlar": oranlar,
+                # Cift ancak ikisi de tamsa tasinir; biri eksikse ikisi de
+                # None olur ve mac A1 kesitine giremez (bkz. `_cizgi`).
+                "acilis": acilis if (acilis and kapanis) else None,
+                "kapanis": kapanis if (acilis and kapanis) else None,
                 "ev_isabet": _tam("ev_isabet"),
                 "dep_isabet": _tam("dep_isabet"),
                 "ev_sut": _tam("ev_sut"),
@@ -146,21 +170,53 @@ def sezonlar() -> List[str]:
     return sorted({r["sezon"] for r in korpus_yukle()})
 
 
+def cizgi_hareketi(acilis: Optional[Dict[str, float]],
+                   kapanis: Optional[Dict[str, float]]
+                   ) -> Dict[str, float]:
+    """Açılış→kapanış hareketi, sembol başına: `ln p_kapanış − ln p_açılış`.
+
+    Marj arındırılmış **olasılık** üzerinden ölçülür, ham oran üzerinden
+    değil. Ham oran hareketi iki şeyi karıştırır: piyasanın fikir değiştirmesi
+    ve bahisçinin marjını değiştirmesi. Marj arındırıldıktan sonra üç olasılık
+    da 1'e toplandığı için geriye yalnızca **fikrin yeniden dağılımı** kalır.
+
+    Logaritma alınır çünkü ölçek simetrik olsun isteriz: 0,10 → 0,20 ile
+    0,40 → 0,80 aynı büyüklükte bir fikir değişikliğidir; farkları alsaydık
+    ikincisi dört kat büyük görünürdü.
+
+    Çift yoksa üç sıfır döner — "hareket bilinmiyor" ile "hareket yok" aynı
+    davranışa düşer, çünkü ikisinde de söylenecek bir şey yoktur (`form` ile
+    aynı gerekçe).
+    """
+    if not acilis or not kapanis:
+        return {s: 0.0 for s in ("1", "0", "2")}
+    a, k = implied_probs(acilis), implied_probs(kapanis)
+    return {s: math.log(max(k.get(s, 0.0), OLASILIK_TABANI)
+                        / max(a.get(s, 0.0), OLASILIK_TABANI))
+            for s in ("1", "0", "2")}
+
+
 def korpus_haftalari(sezonlar_: Optional[Sequence[str]] = None,
                      ligler: Optional[Sequence[str]] = None,
                      en_az_mac: int = EN_AZ_MAC,
-                     yol: Optional[str] = None) -> List[Dict[str, Any]]:
+                     yol: Optional[str] = None,
+                     cizgi_gerekli: bool = False) -> List[Dict[str, Any]]:
     """Korpusu `evaluate` koşumunun beklediği hafta girdilerine çevir.
 
     Dönen her kayıt `backtest.hafta_girdileri()` ile aynı sözleşmeyi taşır
     (`results`, `probs`, `usable`, …) artı iki alan:
 
         sezon        sezon dışarıda bırakmalı ölçüm için grup anahtarı
-        ozellikler   maç başına lig / favori / favori oranı
+        ozellikler   maç başına lig / favori / form / çizgi hareketi
 
     `ozellikler` modelin özellik üretmesi içindir; korpus **olguyu** taşır,
     özelliği model türetir (`recalibrate._mac_ozellikleri`). Bu ayrım
     sayesinde aynı tahminci hem kupon haftalarında hem korpusta çalışır.
+
+    `cizgi_gerekli=True` verilirse açılış+kapanış çifti olmayan maçlar elenir.
+    A1 ölçümünün kesiti budur ve **eleme şart**: açılış tahmincisi ile kapanış
+    tahmincisi aynı maçlarda ölçülmezse aradaki fark hareketi değil,
+    örneklem farkını ölçer.
     """
     tumu = korpus_yukle(yol)
     # Form tum korpus uzerinde, kronolojik hesaplanir; suzme SONRA gelir.
@@ -170,6 +226,8 @@ def korpus_haftalari(sezonlar_: Optional[Sequence[str]] = None,
         r["_form"] = f
 
     satirlar = tumu
+    if cizgi_gerekli:
+        satirlar = [r for r in satirlar if r.get("acilis") and r.get("kapanis")]
     if sezonlar_ is not None:
         izin = set(sezonlar_)
         satirlar = [r for r in satirlar if r["sezon"] in izin]
@@ -194,11 +252,18 @@ def korpus_haftalari(sezonlar_: Optional[Sequence[str]] = None,
             favori = min(r["oranlar"], key=lambda s: r["oranlar"][s])
             form = r.get("_form") or {"form_var": False, "form_puan_farki": 0.0,
                                       "form_isabet_farki": 0.0}
+            hareket = cizgi_hareketi(r.get("acilis"), r.get("kapanis"))
             ozellikler.append({
                 "lig": r["lig"],
                 "favori": favori,
                 "favori_oran": r["oranlar"][favori],
                 **form,
+                "cizgi_var": bool(r.get("acilis") and r.get("kapanis")),
+                "acilis_probs": (implied_probs(r["acilis"])
+                                 if r.get("acilis") else None),
+                "kapanis_probs": (implied_probs(r["kapanis"])
+                                  if r.get("kapanis") else None),
+                **{f"hareket_{s}": v for s, v in hareket.items()},
             })
         out.append({
             "week": yil * 100 + hafta,
@@ -224,4 +289,6 @@ def ozet(yol: Optional[str] = None) -> Dict[str, Any]:
         "hafta": len(haftalar),
         "kod_dagilimi": {k: sum(1 for r in satirlar if r["kod"] == k)
                          for k in ("1", "0", "2")},
+        "cizgi_cifti": sum(1 for r in satirlar
+                           if r.get("acilis") and r.get("kapanis")),
     }
