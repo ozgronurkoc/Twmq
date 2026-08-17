@@ -961,6 +961,11 @@ korpusu. Ölçülen sayılar ve gerekçeler:
 ve §5.1. **Bu katmandan sayfaya hiçbir şey çıkmadı** — ölçülmemiş tahminci
 arayüze çıkmaz.
 
+> **Projenin tamamını kapsayan ve sonlanan plan:** [`docs/YOL_PLANI.md`](docs/YOL_PLANI.md).
+> Hedefi üç çarpımsal eksene ayırır (tahmin · havuz · kaplama), her eksene bir **durma
+> kuralı** koyar ve projenin ne zaman biteceğini tanımlar. Aşağıdaki tablo o planın
+> katman düzeyindeki izdüşümüdür.
+
 Sıradakiler, "en çok belirsizliği kaldıran" ölçütüne göre:
 
 | # | Ne | Neden / veri durumu |
@@ -1098,7 +1103,8 @@ olması gerekir. Tanımlıysa yalnızca **durum değişiminde** bildirim gider.
 |---|---|
 | [`docs/ARCHITECTURE_NEXT.md`](docs/ARCHITECTURE_NEXT.md) | Mimari kararı ve API sözleşmesinin tamamı |
 | [`docs/VERI_TOPLAMA_VE_ISLEME.md`](docs/VERI_TOPLAMA_VE_ISLEME.md) | Veri katmanının tek kaynak dokümantasyonu: doktrin, boru hatları, kalite güvencesi, vakalar |
-| [`docs/ISTATISTIK_YOL_HARITASI.md`](docs/ISTATISTIK_YOL_HARITASI.md) | İstatistik katmanının durumu, ölçülmüş bulgular, yol haritası |
+| [`docs/YOL_PLANI.md`](docs/YOL_PLANI.md) | **Baştan sona yol planı — proje ne zaman biter.** Hedefin üç eksene ayrışması, her eksenin durma kuralı, bitiş tanımı |
+| [`docs/ISTATISTIK_YOL_HARITASI.md`](docs/ISTATISTIK_YOL_HARITASI.md) | İstatistik katmanının durumu, ölçülmüş bulgular, katman yol haritası |
 | [`docs/SAGLIK_VIZYONU.md`](docs/SAGLIK_VIZYONU.md) | Sağlık katmanının vizyonu: kontrol sözleşmesi, kategori modeli, DEGRADED kararı, bilinçli sınırlar |
 | [`docs/SAGLIK_GELISTIRME_RAPORU.md`](docs/SAGLIK_GELISTIRME_RAPORU.md) | Sağlık katmanının çalışma raporu ve ölçümleri |
 | [`docs/FORMUL_GELISTIRME_RAPORU.md`](docs/FORMUL_GELISTIRME_RAPORU.md) | Formül sayfasının çalışma raporu: teşhis, F0–F6, bulunan hatalar, ölçümler |

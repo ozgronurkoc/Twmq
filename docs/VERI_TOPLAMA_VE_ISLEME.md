@@ -664,12 +664,20 @@ tahmin katmanının ölçüm koşumunu korur.
 
 Amaç tahmine döndüğü için iki sınır daha kritik hale geldi ve ayrıca yazılmalıdır:
 
-7. **Piyasanın dışında hiçbir sinyal yok.** Üç veri setinin taşıdığı her şey — 1/0/2, takım
-   adı, skor, saat, oran — ya sonucun kendisi ya da **piyasanın sonuç hakkındaki fiyatıdır.**
-   Sakatlık, kadro, motivasyon, seyahat, hava, sıralama baskısı: hiçbiri yok. Bu veriden
-   üretilecek bir tahminci, tanımı gereği piyasanın zaten fiyatladığı bilgiyi yeniden
-   türetir. Piyasayı yenmesi için piyasada **olmayan** bir girdi gerekir; bugün elde öyle
-   bir girdi yoktur. Ölçülen sayı bu sınırla tutarlıdır: hold-out isabeti 0 hafta.
+7. **Piyasa dışı doğrudan sinyal yok — ama türetilebilir olanlar var.** Üç veri setinin
+   *doğrudan* taşıdığı her şey ya sonucun kendisi ya da piyasanın sonuç hakkındaki
+   fiyatıdır: sakatlık, kadro, motivasyon kaydı yok.
+
+   > **Düzeltme (2026-08-17).** Bu madde önce "veride piyasa dışı **hiçbir** sinyal yok"
+   > diyordu; bu fazla genişti. Tarih ve takım alanlarından **türetilebilecek** birkaç
+   > özellik var ve hiçbiri denenmedi: dinlenme günü, fikstür sıkışıklığı, seyahat, derbi,
+   > sezon sonu bahis. T5 yalnızca **takım formunu** denedi ve piyasanın onu fiyatladığını
+   > gösterdi; bu, diğerleri hakkında hiçbir şey söylemez.
+   > Planı: [`YOL_PLANI.md`](YOL_PLANI.md) §3 A3.
+
+   Yine de sınır gerçektir: bu özellikler de piyasanın gördüğü bilgiden türer, yalnızca
+   farklı biçimde. Ölçülen sayılar bu sınırla tutarlı — hold-out isabeti 0 hafta, formun
+   artık değeri ~0.
 8. **İkramiye ve havuz verisi yok.** Hiçbir veri seti haftalık kazanan adedini veya ikramiye
    tutarını taşımıyor — hafta kaydı yalnızca `week, close_date, season, n1/n0/n2, results,
    matches` içerir. Spor Toto müşterek bahis olduğu için **kazanma oranı** ile **beklenen

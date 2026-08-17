@@ -10,7 +10,8 @@
 > sayının arayüze çıkmamasıyla dengelenir. Hold-out **0 hafta**, piyasa Brier
 > **0,579**, iddaa marjı **%17,2** — bu üç sayı tahmin katmanının başlangıç
 > çizgisidir ve ilerleme bunlara karşı ölçülür.
-**İlgili belgeler:** [`VERI_TOPLAMA_VE_ISLEME.md`](VERI_TOPLAMA_VE_ISLEME.md) (veri üretiminin
+**İlgili belgeler:** [`YOL_PLANI.md`](YOL_PLANI.md) (**projenin tamamını kapsayan sonlanan
+plan** — bu belge onun katman düzeyindeki izdüşümüdür) · [`VERI_TOPLAMA_VE_ISLEME.md`](VERI_TOPLAMA_VE_ISLEME.md) (veri üretiminin
 tek kaynak dokümantasyonu) · [`ARCHITECTURE_NEXT.md`](ARCHITECTURE_NEXT.md) (API sözleşmesi)
 
 ---
