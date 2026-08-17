@@ -7,7 +7,11 @@ tahmincinin ne olduğunu (tek imza) ve neyi geçmesi gerektiğini (üç referans
 Sözleşme tektir:
 
     tahminci.egit(egitim_haftalari)   # gerekiyorsa; varsayılan no-op
-    tahminci.tahmin(hafta)  → 15 maçın {"1","0","2"} olasılığı
+    tahminci.tahmin(hafta)  → haftanın her maçı için {"1","0","2"} olasılığı
+
+Maç sayısı haftadan okunur (`mac_sayisi`), sabit değildir: kuponda 15, eğitim
+korpusunun sözde-haftalarında değişken. Aynı tahminci böylece iki kaynakta da
+çalışır.
 
 `egit`/`tahmin` ayrımı süs değil, **sızıntıya karşı tek savunmadır.** Sezon
 dağılımı gibi veriden türeyen bir tahminci, ölçüldüğü haftayı görerek eğitilirse
@@ -28,14 +32,28 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Sequence
 
-from .history import MATCH_COUNT, SYMBOLS
+from .history import SYMBOLS
 
-#: Bir haftanın girdisi — `backtest.hafta_girdileri()` üretir.
-#: Alanlar: week, close_date, results, probs[15], missing, usable
+#: Bir haftanın girdisi — `backtest.hafta_girdileri()` ya da
+#: `egitim.korpus_haftalari()` üretir.
+#: Alanlar: week, close_date, results, probs[], missing, usable
 Girdi = Dict[str, Any]
 
 #: Bir maçın tahmini: sembol → olasılık. Toplamı 1 olmalıdır.
 Olasilik = Dict[str, float]
+
+
+def mac_sayisi(hafta: Girdi) -> int:
+    """Haftanın maç sayısı — kuponda 15, eğitim korpusunda değişken.
+
+    Tahminciler bunu `MATCH_COUNT` yerine kullanır; aksi halde korpusun
+    sözde-haftalarında (bkz. `egitim.korpus_haftalari`) yanlış uzunlukta
+    çıktı verir ve koşum haklı olarak hata fırlatır.
+    """
+    sonuc = hafta.get("results") or ""
+    if sonuc:
+        return len(sonuc)
+    return len(hafta.get("probs") or [])
 
 
 class Tahminci:
@@ -72,7 +90,7 @@ class DuzgunTahminci(Tahminci):
 
     def tahmin(self, hafta: Girdi) -> List[Olasilik]:
         esit = {s: 1.0 / len(SYMBOLS) for s in SYMBOLS}
-        return [dict(esit) for _ in range(MATCH_COUNT)]
+        return [dict(esit) for _ in range(mac_sayisi(hafta))]
 
 
 class SezonSabitiTahminci(Tahminci):
@@ -105,7 +123,7 @@ class SezonSabitiTahminci(Tahminci):
         self._dagilim = {s: sayim[s] / toplam for s in SYMBOLS}
 
     def tahmin(self, hafta: Girdi) -> List[Olasilik]:
-        return [dict(self._dagilim) for _ in range(MATCH_COUNT)]
+        return [dict(self._dagilim) for _ in range(mac_sayisi(hafta))]
 
 
 class PiyasaTahminci(Tahminci):

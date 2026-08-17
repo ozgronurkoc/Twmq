@@ -99,12 +99,29 @@ def _bant_adi(oran: Optional[float]) -> str:
 
 
 def _mac_ozellikleri(hafta: Girdi) -> List[Dict[str, Any]]:
-    """Bir haftanın 15 maçı için özellik satırları."""
+    """Bir haftanın maçları için özellik satırları — iki kaynak da desteklenir.
+
+    Eğitim korpusu (`egitim.korpus_haftalari`) lig ve favori oranını haftanın
+    içinde **taşır**; kupon haftaları taşımaz, oran arşivinden `(hafta, no)`
+    ile aranır. Korpus olguyu taşır, bandı model türetir — bu ayrım sayesinde
+    aynı tahminci iki kaynakta da değişmeden çalışır.
+    """
+    tasinan = hafta.get("ozellikler")
+    probs_listesi = hafta.get("probs") or []
+
+    if tasinan is not None:
+        return [{
+            "probs": probs_listesi[i] if i < len(probs_listesi) else None,
+            "lig": o.get("lig", "bilinmiyor"),
+            "favori": o.get("favori"),
+            "bant": _bant_adi(o.get("favori_oran")),
+        } for i, o in enumerate(tasinan)]
+
     tablo = _ozellik_tablosu()
     out: List[Dict[str, Any]] = []
     for no in range(1, MATCH_COUNT + 1):
         ek = tablo.get((hafta["week"], no), {})
-        probs = hafta["probs"][no - 1] if no - 1 < len(hafta["probs"]) else None
+        probs = probs_listesi[no - 1] if no - 1 < len(probs_listesi) else None
         out.append({
             "probs": probs,
             "lig": ek.get("lig", "bilinmiyor"),

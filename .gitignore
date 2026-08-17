@@ -28,3 +28,8 @@ backend/data/odds/odds.sqlite3
 # python scripts/snapshot_iddaa.py
 backend/data/iddaa/_kaynak/
 backend/data/iddaa/iddaa.sqlite3
+
+# Egitim korpusu: turetilmis CSV + rapor SURUMLENIR, ham lig dosyalari
+# uretilir. Bu korpus TAHMIN katmanina aittir; istatistik sayfasinin verisi
+# degildir. Yeniden olusturmak icin: python scripts/build_egitim.py
+backend/data/egitim/_kaynak/
