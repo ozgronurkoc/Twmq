@@ -99,14 +99,21 @@ spor_toto/evaluate.py  ◄── spor_toto/predict.py     (sözleşme + 3 refera
 | Tahmin | `backend/spor_toto/predict.py` | — | Tahminci sözleşmesi, 3 referans |
 | Tahmin | `backend/spor_toto/evaluate.py` | — | Dışarıda bırakmalı + çapraz ölçüm, bootstrap |
 | Tahmin | `backend/spor_toto/recalibrate.py` | — | Yeniden kalibrasyon kademesi (Newton) |
+| Tahmin | `backend/spor_toto/cizgi.py` | — | Kapanış çizgisi verimliliği (A1): açılış tahmincisi, hareket ölçümü |
 | Tahmin | `backend/spor_toto/egitim.py` | — | Eğitim korpusu okuyucusu (**istatistiğe girmez**) |
-| Üretim | `backend/scripts/build_egitim.py` | — | Korpus üretimi (football-data, 4 sezon) |
-| Test | `backend/tests/test_predict.py` · `test_evaluate.py` · `test_recalibrate.py` · `test_egitim.py` | — | Tahmin katmanı ve **ayrım bekçisi** (104) |
+| Üretim | `backend/scripts/build_egitim.py` | — | Korpus üretimi (football-data, 4 sezon, **iki çizgi**) |
+| Test | `backend/tests/test_predict.py` · `test_evaluate.py` · `test_recalibrate.py` · `test_egitim.py` · `test_cizgi.py` | — | Tahmin katmanı ve **ayrım bekçisi** (131) |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **700 test**; **82'si** istatistik katmanına, **104'ü** tahmin katmanına ait.
+paketi toplam **813 test**; **82'si** istatistik katmanına, **131'i** tahmin katmanına ait.
 `python -m spor_toto.health` **23 değişmez** çalıştırır — ikisi (`oran_arsivi`, `geri_test`)
 istatistik katmanını, biri (`tahmin_referanslari`) tahmin katmanının ölçüm koşumunu korur.
+
+**Korpusun bütünlüğü sağlık katmanında değil test paketinde korunur** ve bu bir üründür
+kararıdır: korpus yalnızca tahmin katmanına aittir, `/api/health` ondan hiçbir sayı okumaz
+(`test_egitim.py::test_ayrim_*` bunu bekçiye bağlar). Korpus çalışma anında da kaymaz —
+git'e işlenmiş bir dosyadır — dolayısıyla bozulma ancak bir kod değişikliğiyle gelir ve
+orayı bekleyecek yer test paketidir.
 
 ### 2.3 API sözleşmesi
 
@@ -444,6 +451,85 @@ akıl sağlaması var (eşit dağıtımdan iyi, kusursuzdan uzak) ve tam değer 
 Kontrolün gerçekten bir şey koruduğu ayrıca sınandı: sıralama ya da `duzgun` değeri
 bozulduğunda kontrol kırılıyor. Kırılmasaydı dekoratif olurdu.
 
+### 3.14 Kapanış çizgisi verimliliği (A1)
+
+Yol haritasının "tek deneyde en çok bilgi veren ölçüm" dediği iş. Piyasa maç öncesinde
+**iki kez** konuşur — bir açılış, bir kapanış çizgisi. Aradaki fark iki ayrı soruyu birden
+cevaplar.
+
+**Önce veri.** Korpus bugüne kadar maç başına *tek* bir oran üçlüsü taşıyordu: tercih
+sırasındaki ilk tam kaynak, pratikte hep kapanış. Kapanış varsa açılış kayboluyordu — yani
+A1'in ölçmek istediği şeyin ta kendisi. Üretici artık iki ucu ayrı sütunlara yazıyor, tek
+kuralla: **çift yalnızca aynı bahisçi ailesinden kurulur** (`Avg`↔`AvgC`, `B365`↔`B365C`,
+`PS`↔`PSC`). Açılışı `Avg`'den kapanışı `B365C`'den alsaydık aradaki fark piyasanın fikir
+değiştirmesini değil, iki farklı fiyatlayıcıyı ölçerdi.
+
+Kesit: **31.099 / 31.103 maç** (%99,99). Çifti olmayan maç elenmedi — `oran_*` tam olduğu
+için tahminci ölçümüne giriyor, yalnızca A1 kesitine giremiyor. Korpus boyutu sabit kaldığı
+için önceki ölçümler karşılaştırılabilir.
+
+#### Soru 1 — piyasa bilgiyi soğuruyor mu? **Evet.**
+
+Aynı kesitte, aynı maçlarda, sezon dışarıda bırakmalı ölçüm:
+
+| Tahminci | Brier | log kaybı | Fark | %95 aralık |
+|---|---:|---:|---:|---|
+| **kapanış** (`piyasa`) | **0,5940** | 0,9945 | — | referans |
+| açılış (`acilis`) | 0,5964 | 0,9981 | +0,0025 | [+0,0019, +0,0030] |
+
+Aralık **tamamen sıfırın üstünde.** Açılış ile kapanış arasında geçen sürede gelen bilgi
+(kadro, sakatlık, hava, para) fiyata işleniyor. Bu, piyasanın *çalıştığının* dolaylı değil
+**doğrudan** ölçümüdür.
+
+#### Soru 2 — kapanışın kendisi verimli mi? **Evet; hareket bir şey eklemiyor.**
+
+Kademeye altıncı basamak eklendi: `hareket` = kapanış + açılış→kapanış hareketi, **tek
+paylaşılan katsayı.** Tek katsayı kasıtlı, çünkü işareti doğrudan soruyu cevaplıyor.
+
+| Tahminci | Brier | Fark | %95 aralık | Geçti |
+|---|---:|---:|---|---|
+| `kalibre_form` | 0,5937 | −0,0003 | [−0,0007, +0,0001] | hayır |
+| `kalibre_hareket` | 0,5937 | −0,0003 | [−0,0007, +0,0001] | hayır |
+
+İki satır aynı. **Katsayı okuması Brier farkının veremediğini veriyor:** logit
+`z_s = β·ln p_kapanış + γ·(ln p_kapanış − ln p_açılış)` biçiminde kurulduğu için **γ/β,
+kapanışın ötesine ne kadar uzatılacağıdır.** Ölçülen: β = 1,094, γ = 0,0111, yani
+**%1,01.** Model harekete baktı ve kapanışın ötesine uzatmak için kayda değer bir sebep
+bulamadı. Bu ayrım önemli: fark sıfıra yakın çıkınca "model harekete bakmadı mı, yoksa baktı
+da söyleyecek bir şey mi bulamadı?" sorusu açık kalırdı.
+
+#### Ham sinyal gerçek — ve bu kritik
+
+"Hareket bilgi taşımıyor" bir **yokluk iddiasıdır** ve hareketin *hiç* bilgi taşımamasından
+da gelebilirdi. Gelmiyor:
+
+| Hareket büyüklüğü | Lehine tuttu | Aleyhine tuttu | n |
+|---|---:|---:|---:|
+| <0,05 | %33,4 | %33,5 | 4.577 |
+| <0,15 | %36,2 | %33,2 | 12.861 |
+| <0,30 | %41,1 | %32,0 | 9.221 |
+| ≥0,30 | **%47,2** | %30,2 | 4.440 |
+
+Çizgi ne kadar çok oynarsa yönü o kadar çok tutuyor — güçlü ve monoton bir sinyal. **Ama
+tamamı zaten kapanış fiyatında.** Kapanış çizgisinin verimliliğinin ders kitabı tanımı
+budur. T5'te aynı disiplin uygulanmıştı: bir yokluk iddiasını yorumlamadan önce ham sinyali
+doğrula.
+
+Hareket **marj arındırılmış olasılık** üzerinden ölçülür, ham oran üzerinden değil. Ham
+oranın hareketi iki şeyi karıştırır: piyasanın fikir değiştirmesi ve bahisçinin marjını
+değiştirmesi. Bütün ayakları aynı oranda kısan bir bahisçi fikrini değiştirmemiştir.
+
+#### Neyi bekçiye bağladık
+
+İki test, bulgunun ölçümden geldiğini kanıtlıyor — koddan değil:
+
+- `test_hareket_sutunu_gercekten_calisiyor` — hareket katsayısı elle değiştirildiğinde
+  tahmin **değişmeli**. Değişmiyorsa sütun ölüdür ve "yardım etmiyor" bulgusu bağlanmamış
+  bir koddan gelir.
+- `test_korpusta_cizgi_gercekten_oynuyor` — üretici bir gün iki ucu da aynı sütundan
+  doldurursa açılış = kapanış olur, hareket her maçta sıfır çıkar ve **A1 raporu sapasağlam
+  görünür.** Aynı çizgi iki kez yazılmış bir korpusta bunu başka hiçbir şey yakalamaz.
+
 ---
 
 ## 4. Sayfada bugün ne var
@@ -531,10 +617,18 @@ arındırılmış yapı tutar.
 | Kademe, kupon üzerinde eğitilmiş | 540 maç | Dört basamak da piyasadan **kötü** (+0,0009…+0,0133) |
 | Kademe, korpus içi sezon dışarıda | 31.103 maç | `sicaklik` −0,0004 ve `bias` −0,0005 **geçti** |
 | Kademe, korpusta eğit → kuponda ölç | 540 maç | Dört basamak da **iyi** (−0,0010…−0,0015), hiçbiri geçmedi |
+| Takım formu (T5) | 31.103 maç | `kalibre_form` −0,0003 [−0,0007, +0,0001] — **geçmedi**; ham sinyal güçlü, piyasa fiyatlamış |
+| **Kapanış vs açılış (A1)** | 31.099 maç | Kapanış **0,5940**, açılış 0,5964 · +0,0025 [+0,0019, +0,0030] — **piyasa bilgiyi soğuruyor** |
+| **Çizgi hareketi (A1)** | 31.099 maç | `kalibre_hareket` = `kalibre_form`, uzatma **%1,01** — **kapanış verimli** |
 
 **Okuma.** Aşırı uyum modelin kapasitesinden değil örneklem küçüklüğünden geliyordu; büyük
 korpus onu kaldırdı. Ama kalan etki 0,0005–0,0015 Brier — 31 binde anlamlı, 540'ta değil ve
 %17,2'lik iddaa marjının yanında hiç. **Yön doğru, miktar yetersiz.**
+
+**A1'in eklediği okuma daha serttir.** Piyasanın *kendi hareketi* — ham haliyle güçlü ve
+monoton bir sinyal — kapanışın ötesinde hiçbir şey söylemiyor. Bu, "iyi model bulamadık"
+demekten farklı bir cümledir: piyasanın kendi bilgisi bile kendini yenemiyorsa, aynı veriyle
+aramaya devam etmenin karşılığı yoktur.
 
 ## 6. Yol planı — proje ne zaman biter
 
@@ -570,20 +664,35 @@ optimum yenilemez, oraya harcanacak her saat cevabı önceden bilinen bir soruya
 
 Hepsi **mevcut korpusla** yapılır; yeni kaynak gerekmez.
 
-#### A1 — Kapanış çizgisi verimliliği · *en belirleyici tek deney*
+#### A1 — Kapanış çizgisi verimliliği · **bitti** (§3.14)
 
-Korpus hem açılış (`Avg*`) hem kapanış (`AvgC*`) oranını taşıyor. Ölçülecek: açılış→kapanış
-hareketi bilgi taşıyor mu, ve kapanışı yenen herhangi bir tahminci var mı.
+Sorulan iki şey de ölçüldü, 31.099 maçta, sezon dışarıda bırakmalı:
 
-Neden belirleyici: kapanış açılışı sistematik yeniyorsa piyasa bilgiyi *soğuruyor* demektir;
-kapanışı da hiçbir şey yenemiyorsa artık aramak boşunadır. Tek deneyde en çok bilgi veren
-ölçüm budur. **Büyüklük:** küçük.
+> **Kapanış açılışı geçiyor** — +0,0025 Brier, aralık [+0,0019, +0,0030], tamamen sıfırın
+> üstünde. Piyasa maç öncesinde gelen bilgiyi fiyata **soğuruyor.**
+>
+> **Hareket kapanışın ötesinde bilgi taşımıyor** — model hareketi kapanışın ötesine yalnızca
+> **%1,01** uzatmak istiyor. Ham sinyal güçlü (en büyük harekette çizginin lehine oynadığı
+> sembol %47,2'ye karşı %30,2 tutuyor) ve **tamamı zaten kapanış fiyatında.**
 
-#### A2 — Bahisçi anlaşmazlığı
+Bu sonuç A4'ün (b) şıkkına giden **en güçlü tek kanıttır** ve "iyi bir model bulamadık"
+demekten farklıdır: piyasanın kendi hareketi bile kendini yenemiyorsa, sorun modelde değil
+veridedir.
+
+#### A2 — Bahisçi anlaşmazlığı · **sırada**
 
 Korpusta 12+ bahisçinin oranı var. A1 "piyasa kolektif olarak doğru mu" diye sorar; A2
 "kolektifin içindeki dağılım bilgi mi" diye. İkisi bağımsız olarak yanlış çıkabilir.
 **Büyüklük:** küçük.
+
+**A1'den sonra neden hâlâ meşru bir soru.** A1 `Avg` — bütün bahisçilerin *ortalaması* —
+üzerinden ölçtü ve ortalamanın son sözünün verimli olduğunu gösterdi. Ortalamanın etrafındaki
+**dağılım** ayrı bir büyüklüktür: bahisçilerin ayrıştığı maçlar, hemfikir oldukları maçlardan
+farklı davranabilir ve bu, ortalamanın kendisinde görünmez. Altyapı hazır — korpusun taşıdığı
+kaynak sayısı artırılır, `cizgi.py`'nin kesit kurma deseni aynen kullanılır.
+
+**Dürüst beklenti: bu da fiyatlanmıştır.** A1'den sonra bunu yazmamak yanlış olurdu. Yine de
+ucuz ve denenmeden "kolektifin içi bilgi taşımıyor" demek ölçüm değil kanaat olur.
 
 #### A3 — Piyasa dışı ama türetilebilir özellikler
 
@@ -617,6 +726,21 @@ A1–A3 bittiğinde belgeye şu iki cümleden **biri** yazılır:
 
 **(b) çıkarsa Faz A bir daha açılmaz.** Aynı veriyle yeni model denemek, aynı soruyu daha
 yüksek sesle sormaktır.
+
+**Bugünkü durum: (b)'ye doğru, ama kural gereği henüz yazılmıyor.**
+
+| Denenen | Kesit | Sonuç |
+|---|---|---|
+| Yeniden kalibrasyon kademesi (T2–T3) | 31.103 | Yön doğru, miktar yetersiz |
+| Takım formu (T5) | 31.103 | Geçmedi; piyasa fiyatlamış |
+| Açılış çizgisi (A1) | 31.099 | Kapanışın **altında** — soğuruma var |
+| Çizgi hareketi (A1) | 31.099 | Geçmedi; uzatma %1,01 |
+
+A1 bu tablodaki en ağır kanıttır çünkü diğerlerinden farklı bir şey gösterir: yalnızca
+*bizim* denediğimiz özellikler değil, **piyasanın kendi hareketi** de kapanışı yenemiyor.
+Yine de durma kuralı A2 ve A3 bitmeden işletilmez — plan, cevabı erken yazmamak üzerine
+kurulu. A1'in yaptığı şey, geriye kalan iki denemenin **beklentisini** düşürmek ve
+büyüklüklerini haklı çıkarmaktır (ikisi de "küçük"–"orta").
 
 ### 6.3 Faz B — havuz eksenini aç ve ölç
 
@@ -672,7 +796,7 @@ değildir: bu alandaki araçların neredeyse tamamı birinciyi *iddia eder*, hi�
 ### 6.6 Sıra ve eski etiketlerin karşılığı
 
 ```
-A1 ─┐
+A1 ─┐  ✔ bitti (§3.14)
 A2 ─┼─► A4  (tahmin ekseni kapanır ya da açılır)
 A3 ─┘
         B1 ─► B2 ─► B3 ─► B4  (havuz ekseni; B1 paralel başlayabilir)
@@ -688,6 +812,7 @@ Eski etiketler kayıp değil, yerleşti:
 | Eski | Yeni | Durum |
 |---|---|---|
 | T1–T5 | Faz A'nın yapılmış kısmı (§3.10–3.13) | bitti |
+| — | **A1** (§3.14) | **bitti** |
 | G1 | C3 | bekliyor |
 | G2 | C1 | koşullu |
 | G3–G5 | C4 | bekliyor |
@@ -945,12 +1070,19 @@ python scripts/build_odds.py               # oranları çek ve eşleştir
 python scripts/build_odds.py --dry-run     # yalnızca kapsama raporu
 python scripts/snapshot_iddaa.py           # iddaa açık bültenini arşivle
 python scripts/snapshot_iddaa.py --dry-run # yazmadan özet
+python scripts/build_egitim.py             # eğitim korpusu (iki çizgi birden)
+python scripts/build_egitim.py --dry-run   # yazmadan özet
+
+# Tahmin katmanının ölçümleri (korpus gerekir; ~30 sn)
+python -m spor_toto.recalibrate            # yeniden kalibrasyon kademesi
+python -m spor_toto.cizgi                  # A1: kapanış çizgisi verimliliği
 
 # Denetim
-pytest -q                                  # 664 test (82'si bu katman)
+pytest -q                                  # 813 test (82'si bu katman, 131'i tahmin)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out
-python -m spor_toto.health                 # 17 invariant
+pytest -q tests/test_cizgi.py              # A1 ölçümü ve korpus bütünlüğü
+python -m spor_toto.health                 # 23 değişmez
 python -m spor_toto.health --help          # tek kontrol: ?only=geri_test
 
 # Arayüz
