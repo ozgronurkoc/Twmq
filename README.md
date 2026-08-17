@@ -549,8 +549,9 @@ curl http://localhost:8080/api/health/checks      # envanter, çalıştırmadan
 **`/health` ile `/api/health` ayrı uçlardır.** İlki liveness'tır ve hiçbir
 değişmez koşmaz (~2 ms); ikincisi readiness'tır, tam raporu koşar (ısınmış
 ~500 ms, ilk koşu ~2,2 sn) ve kritik bir değişmez düşerse 503 döner. Aynı
-handler'a bağlı olsalardı platform probe'u her vuruşta tam raporu ödetirdi ve
-probe zaman aşımına düşünce **sağlıklı** bir konteyner öldürülürdü.
+handler'a bağlı olsalardı `/health`e vuran her şey tam raporu ödetirdi ve
+`/health`i canlılık sinyali sanan bir probe, zaman aşımına düşünce **sağlıklı**
+bir konteyneri öldürebilirdi.
 
 **21 kontrol, 6 kategori.** Kategoriler motorun katmanlarını izler ve yukarıdan
 aşağıya doğru ciddiyet azalır — düşen kontrolün adı değil, **hangi katmanın

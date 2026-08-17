@@ -202,10 +202,17 @@ kritik olarak işaretlenir.
 ## 6.1 Liveness ile readiness ayrı uçlardır
 
 `/health` ile `/api/health` bir dönem **aynı handler'a** bağlıydı: ikisi de
-bütün değişmezleri koşuyordu. Dağıtım hedefi autoscale olduğu için platform
-probe'u her vuruşta tam raporun bedelini ödüyordu ve probe zaman aşımına
-düşerse platform **sağlıklı** bir konteyneri öldürüyordu — yani sağlık
-kontrolünün kendisi kesinti üretebiliyordu.
+bütün değişmezleri koşuyordu: `/health`e vuran her şey tam raporun bedelini
+ödüyordu — açılış bekleme döngüleri, konteyner içinden yapılan her yoklama ve
+`/health`i canlılık sinyali sanan herhangi bir izleme.
+
+**Bugünkü topolojide dışarıya açılan tek port Next.js'tir** (`next.config.mjs`
+yalnızca `/api/*`'ı Flask'a proxy'ler), yani platform probe'u Flask'ın
+`/health`ine bugün *ulaşmıyor*. Risk bu yüzden yok değil, **gizli**: dağıtım
+hedefi autoscale ve gün gelip Flask portu bir probe'a bağlandığında,
+sağlıklı bir konteyner yalnızca sağlık raporu yavaş diye öldürülebilirdi.
+Bir sağlık kontrolünün kesinti üretebilecek olması, kesinti üretmesini
+beklemeden düzeltilir.
 
 | Uç | Rol | İçerik | Süre |
 |---|---|---|---|

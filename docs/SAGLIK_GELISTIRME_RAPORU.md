@@ -83,10 +83,16 @@ Bayrak ile davranış ayrışırsa kullanıcı **garanti sandığı** bir kupon 
 
 ## 3. `/health` ile `/api/health` ayrıldı
 
-İkisi aynı handler'a bağlıydı; dağıtım hedefi autoscale olduğu için
-platform probe'u her vuruşta tam raporun bedelini ödüyordu. Probe zaman
-aşımına düşerse platform **sağlıklı** bir konteyneri öldürür — sağlık
-kontrolünün kendisi kesinti üretebiliyordu.
+İkisi aynı handler'a bağlıydı: `/health`e vuran her şey tam raporun bedelini
+ödüyordu (açılış bekleme döngüleri, konteyner içi yoklamalar, `/health`i
+canlılık sinyali sanan her izleme).
+
+**Ölçüldü:** bugünkü dağıtımda dışarıya açılan tek port Next.js'tir ve
+`next.config.mjs` yalnızca `/api/*`'ı proxy'ler — yani platform probe'u
+Flask'ın `/health`ine şu an ulaşmıyor. Yol haritasındaki 7.1 maddesi bu
+noktada bir varsayım içeriyordu. Risk yine de gerçek ama **gizli**: dağıtım
+hedefi autoscale, ve Flask portu bir probe'a bağlandığı gün sağlıklı bir
+konteyner yalnızca rapor yavaş diye öldürülebilirdi.
 
 | Uç | Rol | İçerik | Ölçülen süre |
 |---|---|---|---|
@@ -236,7 +242,24 @@ gerekiyor. Sekme başlığı (§5) bunun en yakın vekili, ama yerine geçmez.
 Rapor, çağrıyı karşılayan süreci anlatıyor. Çok örnekli bir dağıtımda "hangi
 örnek?" sorusu cevapsız. Rapora süreç/örnek etiketi eklenmeli.
 
-#### 7.9 `auto` modunun süresi `[S]`
+#### 7.9 Liveness dışarıdan erişilemiyor `[S]`
+
+`next.config.mjs` yalnızca `/api/*`'ı Flask'a proxy'ler; `/health` konteyner
+dışından çağrılamıyor. Bugün buna ihtiyaç yok (platform Next.js'i yokluyor),
+ama liveness'ın var olup ulaşılamaz olması yarım bir çözümdür. İki seçenek:
+`/health` için de bir rewrite eklemek, ya da Next tarafına kendi liveness
+route'unu koymak. Karar, probe'un hangi süreci sorguladığına bağlı — ikisi
+farklı sorulardır ve ikisinin de cevabı gerekebilir.
+
+#### 7.10 Önbellek süreç başınadır `[bilgi]`
+
+Prod'da gunicorn 2 worker ile koşuyor; TTL önbelleği her worker'da ayrıdır.
+Zararsızdır (en kötü ihtimalle rapor iki kez koşar) ama §9'daki "tek süreç,
+tek makine" sınırının bir başka yüzüdür ve zaman serisi (7.2) yazılırken
+hesaba katılmalıdır — bellekte tutulan bir halka tampon, worker'lar arasında
+bölünür.
+
+#### 7.11 `auto` modunun süresi `[S]`
 
 Ölçüm sırasında görüldü: `auto`, 256 noktalık örnek kuponda ILP'yi devreye
 sokuyor ve **~11 saniye** sürüyor (`exact_limit` varsayılanı 512). Sağlık
@@ -263,8 +286,8 @@ düşürülmeli ya da ILP'ye ayrı bir zaman sınırı verilmeli.
 1. **7.1 + 7.2** — süre eşikleri ve sunucu tarafı zaman serisi. İkisi de
    "ne zamandan beri" sorusunu açar; önbellek kararı netleştiği için artık
    sırası geldi.
-2. **7.9** — ölçülmüş, somut ve kullanıcıya doğrudan çarpan tek performans
-   sorunu; birkaç saatlik iş.
+2. **7.11** — ölçülmüş, somut ve kullanıcıya doğrudan çarpan tek performans
+   sorunu (`auto` modu ~11 sn); birkaç saatlik iş.
 3. **7.3** — mod mantığının kalan kopyasını da tek yola bağlar.
 
 ---
