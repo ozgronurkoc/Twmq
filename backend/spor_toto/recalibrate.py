@@ -17,6 +17,8 @@ Tek model yerine **kademe** kuruldu, çünkü asıl soru "bu model iyi mi" deği
     bias       + sınıf sabiti                        3 parametre
     lig        + lige göre beraberlik sapması        3 + lig sayısı
     bant       + favori bandına göre sapma           + bant sayısı
+    form       + takım formu (2 parametre)
+    hareket    + açılış→kapanış çizgi hareketi       + 1 parametre
 
 Hepsi softmax ile olasılığa döner. Kapasite bilerek küçük tutuldu: 540 maçlık
 bir eğitim setinde serbest parametre sayısı arttıkça ölçüm değil ezber olur.
@@ -62,7 +64,8 @@ EN_AZ_ORNEK = AZ_ORNEK
 
 #: Kademe — basitten karmaşığa. Sıra kasıtlı: her basamak bir öncekine
 #: yalnızca bir özellik ekler, böylece fark o özelliğe atfedilebilir.
-KADEMELER: Tuple[str, ...] = ("sicaklik", "bias", "lig", "bant", "form")
+KADEMELER: Tuple[str, ...] = ("sicaklik", "bias", "lig", "bant", "form",
+                              "hareket")
 
 
 # ─── özellik kaynağı ──────────────────────────────────────────────────────────
@@ -117,6 +120,7 @@ def _mac_ozellikleri(hafta: Girdi) -> List[Dict[str, Any]]:
             "bant": _bant_adi(o.get("favori_oran")),
             "form_puan_farki": float(o.get("form_puan_farki") or 0.0),
             "form_isabet_farki": float(o.get("form_isabet_farki") or 0.0),
+            "hareket": {s: float(o.get(f"hareket_{s}") or 0.0) for s in SYMBOLS},
         } for i, o in enumerate(tasinan)]
 
     tablo = _ozellik_tablosu()
@@ -129,9 +133,11 @@ def _mac_ozellikleri(hafta: Girdi) -> List[Dict[str, Any]]:
             "lig": ek.get("lig", "bilinmiyor"),
             "favori": ek.get("favori"),
             "bant": _bant_adi(ek.get("favori_oran")),
-            # Kupon haftalari form tasimaz; notr 0 = "form bilgisi yok".
+            # Kupon haftalari form da cizgi hareketi de tasimaz; notr 0 =
+            # "bilgi yok". Sutun o macta hicbir sey yapmaz.
             "form_puan_farki": 0.0,
             "form_isabet_farki": 0.0,
+            "hareket": {s: 0.0 for s in SYMBOLS},
         })
     return out
 
@@ -185,6 +191,21 @@ def _tasarim_satiri(ozellik: Dict[str, Any], kademe: str,
         v = float(ozellik.get(alan) or 0.0)
         sutunlar.append([v if s == "1" else (-v if s == "2" else 0.0)
                          for s in SYMBOLS])
+    if kademe == "form":
+        return np.array(sutunlar, dtype=float).T
+
+    # 6) cizgi hareketi — **tek paylasilan katsayi**, ve bu kasitli.
+    #    Sutun her sembolun logitine o sembolun hareketini ekler; geriye tek
+    #    bir β kalir ve ISARETI dogrudan soruyu cevaplar:
+    #
+    #        β > 0  momentum   — kapanis hareketi EKSIK fiyatlamis
+    #        β ≈ 0  verimli    — hareketin soyledigi zaten kapanista
+    #        β < 0  asiri tepki — kapanis hareketi FAZLA fiyatlamis
+    #
+    #    Sembol basina ayri katsayi verilseydi ucu de karisir ve isaret
+    #    okunamazdi; kapasiteyi buyutmek burada cevabi bulaniklastirirdi.
+    hareket = ozellik.get("hareket") or {}
+    sutunlar.append([float(hareket.get(s) or 0.0) for s in SYMBOLS])
     return np.array(sutunlar, dtype=float).T
 
 
@@ -281,8 +302,9 @@ class KalibreTahminci(Tahminci):
             return sorted([k for k, v in sayim.items()
                            if v >= EN_AZ_ORNEK and k != "bilinmiyor"]) + ["diger"]
 
-        self._ligler = yeterli("lig") if self.kademe in ("lig", "bant", "form") else []
-        self._bantlar = yeterli("bant") if self.kademe in ("bant", "form") else []
+        ust = ("lig", "bant", "form", "hareket")
+        self._ligler = yeterli("lig") if self.kademe in ust else []
+        self._bantlar = yeterli("bant") if self.kademe in ust[1:] else []
 
     def egit(self, haftalar: Sequence[Girdi]) -> None:
         ozellikler: List[Dict[str, Any]] = []
