@@ -226,7 +226,7 @@ gerektirir, yani 9.1 olmadan yapılamaz.
 |---|---|
 | Kontrolleri arayüzden düzenlemek | Değişmezler koddadır, yapılandırmada değil |
 | Sağlığı metrik panosuna dönüştürmek | Bu bir APM işidir; sayfa vaadin kanıtıdır |
-| Tahmin isabetini ölçen kontrol | Araç tahmin etmez; bu sayfa da etmez |
+| Tahmin isabetini ölçen kontrol | İsabet istatistik katmanının işidir (geri test, hold-out); bu sayfa vaadin canlıda geçerliliğini ölçer, modelin kalitesini değil |
 | Kontrol mantığının ikinci kopyası | Biri güncellenip diğeri unutulduğu gün ikisi de değersizleşir |
 | Liveness'ın değişmez koşması | Probe'u tam rapora bağlamak, sağlıklı konteyneri öldürtür |
 | Her kırmızı koşuda alarm | Okunmayan alarm, alarmsızlıktan kötüdür |

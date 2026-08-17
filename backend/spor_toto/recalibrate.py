@@ -1,0 +1,350 @@
+"""Piyasanın yeniden kalibrasyonu — ilk gerçek tahminci adayı.
+
+Mevcut veriyle dürüst tek aday sınıfı budur. Veride piyasa dışı hiçbir sinyal
+yok (bkz. `docs/VERI_TOPLAMA_VE_ISLEME.md` §8.7): sakatlık, kadro, motivasyon
+taşınmıyor. Dolayısıyla yapılabilecek tek şey **piyasanın kendi olasılığını
+düzeltmeye çalışmaktır** — piyasanın sistematik olarak yanıldığı bir yer varsa.
+
+Şüphelenilecek iki yer zaten ölçülmüştü:
+
+    lig farkı    Süper Lig beraberlik %29,8 · Premier Lig %19,7
+    favori bandı 1,75–2,00 aralığında isabet %50'ye düşüyor
+
+Tek model yerine **kademe** kuruldu, çünkü asıl soru "bu model iyi mi" değil,
+*"kaçıncı basamakta yardım bitip aşırı uyum başlıyor"*:
+
+    sicaklik   z_s = β·log p_s                       1 parametre
+    bias       + sınıf sabiti                        3 parametre
+    lig        + lige göre beraberlik sapması        3 + lig sayısı
+    bant       + favori bandına göre sapma           + bant sayısı
+
+Hepsi softmax ile olasılığa döner. Kapasite bilerek küçük tutuldu: 540 maçlık
+bir eğitim setinde serbest parametre sayısı arttıkça ölçüm değil ezber olur.
+
+**Düzenlileştirme katsayısı (L2) baştan sabitlendi ve ayarlanmadı.** Onu ölçüm
+sonucuna bakarak seçmek, sınavın cevabını görerek çalışmak olurdu — projenin
+hold-out'la ayırmaya çalıştığı şeyin tam olarak kendisi.
+
+Sonucu okumak için: `python -m spor_toto.recalibrate` ya da `rapor()`.
+"""
+from __future__ import annotations
+
+from functools import lru_cache
+from typing import Any, Dict, List, Optional, Sequence, Tuple
+
+import numpy as np
+
+from .history import MATCH_COUNT, SYMBOLS
+from .odds import AZ_ORNEK, FAVORI_BANTLARI, load_odds, match_1x2
+from .predict import Girdi, Olasilik, Tahminci
+
+#: Olasılık logaritması alınırken sıfıra düşmeyi engelleyen taban.
+OLASILIK_TABANI = 1e-6
+
+#: L2 düzenlileştirme katsayısı. **Ayarlanmadı ve ayarlanmayacak** — ölçüm
+#: sonucuna bakarak seçilirse hold-out'un anlamı kalmaz. Küçük bir değer,
+#: az örnekli lig/bant katsayılarının uçmasını engellemek için.
+L2 = 1e-3
+
+#: Newton yinelemesinin sınırları. Rastgelelik yok: başlangıç sıfır, durma
+#: ölçütü sabit — aynı eğitim seti her zaman aynı katsayıyı verir.
+#:
+#: Newton seçildi çünkü **gradyan inişi yakınsamıyordu**: 15 parametreli
+#: `bant` modeli 20 000 adımda hâlâ sürükleniyordu ve eksik uydurulmuş bir
+#: model, aşırı uyumla aynı görüntüyü verir (dışarıda skor kötü). İkisini
+#: ayırmadan "kapasite zarar veriyor" demek yanlış olurdu.
+EN_COK_YINELEME = 100
+DURMA_ESIGI = 1e-10
+
+#: Kendi katsayısını hak etmek için bir ligin/bandın eğitim setinde taşıması
+#: gereken en az maç. Altındakiler "diger" havuzunda toplanır.
+EN_AZ_ORNEK = AZ_ORNEK
+
+#: Kademe — basitten karmaşığa. Sıra kasıtlı: her basamak bir öncekine
+#: yalnızca bir özellik ekler, böylece fark o özelliğe atfedilebilir.
+KADEMELER: Tuple[str, ...] = ("sicaklik", "bias", "lig", "bant")
+
+
+# ─── özellik kaynağı ──────────────────────────────────────────────────────────
+
+@lru_cache(maxsize=1)
+def _ozellik_tablosu() -> Dict[Tuple[int, int], Dict[str, Any]]:
+    """(hafta, maç no) → lig etiketi ve favori oranı.
+
+    `hafta_girdileri` yalnızca olasılık taşır; lig ve oran arşivde kalır.
+    Buradan okunur, mevcut modüllerin sözleşmesi değiştirilmeden.
+    """
+    out: Dict[Tuple[int, int], Dict[str, Any]] = {}
+    for r in load_odds():
+        blok = match_1x2(r)
+        if not blok:
+            continue
+        favori = blok["favourite"]
+        out[(r["week"], r["no"])] = {
+            "lig": (r["source"].get("league") or "").strip() or "bilinmiyor",
+            "favori": favori,
+            "favori_oran": blok["odds"][favori],
+        }
+    return out
+
+
+def _bant_adi(oran: Optional[float]) -> str:
+    """Favori oranının hangi banda düştüğü — `odds.FAVORI_BANTLARI` ile aynı."""
+    if oran is None:
+        return "bilinmiyor"
+    for alt, ust in FAVORI_BANTLARI:
+        if alt <= oran < ust:
+            return f"{alt:.2f}-{ust:.2f}"
+    return "bilinmiyor"
+
+
+def _mac_ozellikleri(hafta: Girdi) -> List[Dict[str, Any]]:
+    """Bir haftanın maçları için özellik satırları — iki kaynak da desteklenir.
+
+    Eğitim korpusu (`egitim.korpus_haftalari`) lig ve favori oranını haftanın
+    içinde **taşır**; kupon haftaları taşımaz, oran arşivinden `(hafta, no)`
+    ile aranır. Korpus olguyu taşır, bandı model türetir — bu ayrım sayesinde
+    aynı tahminci iki kaynakta da değişmeden çalışır.
+    """
+    tasinan = hafta.get("ozellikler")
+    probs_listesi = hafta.get("probs") or []
+
+    if tasinan is not None:
+        return [{
+            "probs": probs_listesi[i] if i < len(probs_listesi) else None,
+            "lig": o.get("lig", "bilinmiyor"),
+            "favori": o.get("favori"),
+            "bant": _bant_adi(o.get("favori_oran")),
+        } for i, o in enumerate(tasinan)]
+
+    tablo = _ozellik_tablosu()
+    out: List[Dict[str, Any]] = []
+    for no in range(1, MATCH_COUNT + 1):
+        ek = tablo.get((hafta["week"], no), {})
+        probs = probs_listesi[no - 1] if no - 1 < len(probs_listesi) else None
+        out.append({
+            "probs": probs,
+            "lig": ek.get("lig", "bilinmiyor"),
+            "favori": ek.get("favori"),
+            "bant": _bant_adi(ek.get("favori_oran")),
+        })
+    return out
+
+
+# ─── tasarım matrisi ──────────────────────────────────────────────────────────
+
+def _tasarim_satiri(ozellik: Dict[str, Any], kademe: str,
+                    ligler: Sequence[str], bantlar: Sequence[str]) -> np.ndarray:
+    """Tek maçın (3 sembol × k özellik) tasarım bloğu.
+
+    Sütunlar kademeye göre büyür; her sembol satırı o sembolün logitine
+    hangi özelliklerin girdiğini söyler.
+    """
+    probs = ozellik["probs"] or {s: 1.0 / len(SYMBOLS) for s in SYMBOLS}
+    sutunlar: List[List[float]] = []
+
+    # 1) sıcaklık: log piyasa olasılığı
+    sutunlar.append([np.log(max(probs.get(s, 0.0), OLASILIK_TABANI))
+                     for s in SYMBOLS])
+    if kademe == "sicaklik":
+        return np.array(sutunlar, dtype=float).T
+
+    # 2) sınıf sabiti — "1" referans alınır (tanımlanabilirlik için)
+    for hedef in SYMBOLS[1:]:
+        sutunlar.append([1.0 if s == hedef else 0.0 for s in SYMBOLS])
+    if kademe == "bias":
+        return np.array(sutunlar, dtype=float).T
+
+    # 3) lige göre beraberlik sapması
+    lig = ozellik["lig"] if ozellik["lig"] in ligler else "diger"
+    for ad in ligler:
+        sutunlar.append([1.0 if (s == "0" and lig == ad) else 0.0
+                         for s in SYMBOLS])
+    if kademe == "lig":
+        return np.array(sutunlar, dtype=float).T
+
+    # 4) favori bandına göre favori sembolün sapması
+    bant = ozellik["bant"] if ozellik["bant"] in bantlar else "diger"
+    favori = ozellik["favori"]
+    for ad in bantlar:
+        sutunlar.append([1.0 if (favori is not None and s == favori and bant == ad)
+                         else 0.0 for s in SYMBOLS])
+    return np.array(sutunlar, dtype=float).T
+
+
+def _tasarim(ozellikler: Sequence[Dict[str, Any]], kademe: str,
+             ligler: Sequence[str], bantlar: Sequence[str]) -> np.ndarray:
+    """(n, 3, k) tasarım tensörü."""
+    if not ozellikler:
+        return np.zeros((0, len(SYMBOLS), 1))
+    return np.stack([_tasarim_satiri(o, kademe, ligler, bantlar)
+                     for o in ozellikler])
+
+
+# ─── uydurma ──────────────────────────────────────────────────────────────────
+
+def _softmax(z: np.ndarray) -> np.ndarray:
+    z = z - z.max(axis=-1, keepdims=True)
+    e = np.exp(z)
+    return e / e.sum(axis=-1, keepdims=True)
+
+
+def _uydur(X: np.ndarray, y: np.ndarray) -> np.ndarray:
+    """Çok sınıflı lojistik katsayıları — Newton yinelemesi.
+
+    Amaç fonksiyonu L2 cezalı çok sınıflı çapraz entropidir; Hessian'ı
+    kapalı biçimde yazılabilir:
+
+        g = Σ_i X_iᵀ (q_i − y_i) / n + λθ
+        H = Σ_i X_iᵀ (diag(q_i) − q_i q_iᵀ) X_i / n + λI
+
+    H yarı-tanımlı pozitif, λI ile tam tanımlı olur; `solve` güvenlidir.
+    Parametre sayısı en çok ~20 olduğu için k×k çözüm bedava sayılır ve
+    yineleme karesel yakınsar — gradyan inişinin binlerce adımda
+    ulaşamadığı yere onlarca adımda varır.
+
+    scipy kullanılmadı: isteğe bağlı bir bağımlılık (`HAS_SCIPY`) ve kurulu
+    olmadığı ortamda tahmincinin sessizce kaybolmasındansa kendi
+    optimizasyonumuzu yazmak yeğdir.
+    """
+    n, _, k = X.shape
+    theta = np.zeros(k)
+    if n == 0:
+        return theta
+
+    goz = np.eye(k)
+    for _ in range(EN_COK_YINELEME):
+        q = _softmax(X @ theta)
+        grad = np.einsum("isk,is->k", X, q - y) / n + L2 * theta
+        # H_i = X_iᵀ (diag(q_i) − q_i q_iᵀ) X_i
+        agirlikli = (np.einsum("is,isk->isk", q, X)
+                     - np.einsum("is,it,itk->isk", q, q, X))
+        hess = np.einsum("isk,isj->kj", X, agirlikli) / n + L2 * goz
+        try:
+            adim = np.linalg.solve(hess, grad)
+        except np.linalg.LinAlgError:  # pragma: no cover - L2 bunu engeller
+            adim = np.linalg.lstsq(hess, grad, rcond=None)[0]
+        theta = theta - adim
+        if float(np.abs(adim).max()) < DURMA_ESIGI:
+            break
+    return theta
+
+
+# ─── tahminci ─────────────────────────────────────────────────────────────────
+
+class KalibreTahminci(Tahminci):
+    """Piyasa olasılığını lojistik olarak yeniden kalibre eden aday.
+
+    `kademe` hangi özelliklerin girdiğini belirler (bkz. `KADEMELER`).
+    Eğitilmeden çağrılırsa piyasayı olduğu gibi geçirir — uydurma bir
+    düzeltme üretmez.
+    """
+
+    def __init__(self, kademe: str = "bias") -> None:
+        if kademe not in KADEMELER:
+            raise ValueError(f"bilinmeyen kademe: {kademe}")
+        self.kademe = kademe
+        self.ad = f"kalibre_{kademe}"
+        self.aciklama = f"Piyasanın lojistik yeniden kalibrasyonu ({kademe})"
+        self._theta: Optional[np.ndarray] = None
+        self._ligler: List[str] = []
+        self._bantlar: List[str] = []
+
+    # -- eğitim --------------------------------------------------------------
+
+    def _gruplari_belirle(self, ozellikler: Sequence[Dict[str, Any]]) -> None:
+        """Kendi katsayısını hak eden lig ve bantlar — **eğitim setinden**.
+
+        Grup kümesi de veriden gelen bir seçimdir; ölçülen haftayı görerek
+        belirlenirse sızıntı olur. Bu yüzden her katta yeniden hesaplanır.
+        """
+        def yeterli(alan: str) -> List[str]:
+            sayim: Dict[str, int] = {}
+            for o in ozellikler:
+                sayim[o[alan]] = sayim.get(o[alan], 0) + 1
+            return sorted([k for k, v in sayim.items()
+                           if v >= EN_AZ_ORNEK and k != "bilinmiyor"]) + ["diger"]
+
+        self._ligler = yeterli("lig") if self.kademe in ("lig", "bant") else []
+        self._bantlar = yeterli("bant") if self.kademe == "bant" else []
+
+    def egit(self, haftalar: Sequence[Girdi]) -> None:
+        ozellikler: List[Dict[str, Any]] = []
+        kodlar: List[str] = []
+        for hafta in haftalar:
+            satirlar = _mac_ozellikleri(hafta)
+            for k, kod in enumerate(hafta["results"]):
+                if k < len(satirlar) and satirlar[k]["probs"]:
+                    ozellikler.append(satirlar[k])
+                    kodlar.append(kod)
+        if not ozellikler:
+            self._theta = None
+            return
+
+        self._gruplari_belirle(ozellikler)
+        X = _tasarim(ozellikler, self.kademe, self._ligler, self._bantlar)
+        y = np.zeros((len(kodlar), len(SYMBOLS)))
+        for i, kod in enumerate(kodlar):
+            if kod in SYMBOLS:
+                y[i, SYMBOLS.index(kod)] = 1.0
+        self._theta = _uydur(X, y)
+
+    # -- tahmin --------------------------------------------------------------
+
+    def tahmin(self, hafta: Girdi) -> List[Olasilik]:
+        satirlar = _mac_ozellikleri(hafta)
+        esit = {s: 1.0 / len(SYMBOLS) for s in SYMBOLS}
+        out: List[Olasilik] = []
+        for satir in satirlar:
+            piyasa = satir["probs"]
+            if self._theta is None or piyasa is None:
+                out.append(dict(piyasa) if piyasa else dict(esit))
+                continue
+            X = _tasarim_satiri(satir, self.kademe, self._ligler, self._bantlar)
+            q = _softmax(X @ self._theta)
+            out.append({s: float(q[i]) for i, s in enumerate(SYMBOLS)})
+        return out
+
+    @property
+    def katsayilar(self) -> Optional[List[float]]:
+        """Uydurulmuş katsayılar — tanılama ve test için."""
+        return None if self._theta is None else [float(v) for v in self._theta]
+
+
+def kademe_fabrikalari() -> List[Any]:
+    """Kademenin her basamağı için bir fabrika."""
+    return [(lambda k=k: KalibreTahminci(k)) for k in KADEMELER]
+
+
+# ─── rapor ────────────────────────────────────────────────────────────────────
+
+def rapor(last: Optional[int] = None) -> Dict[str, Any]:
+    """Kademeyi piyasaya karşı koştur ve sonucu döndür.
+
+    Bu fonksiyon bir öneri üretmez; yalnızca `evaluate.karsilastir`'ın
+    verdiği tabloyu taşır. Hangi basamağın "geçtiği" kararı orada, güven
+    aralığı kuralıyla verilir.
+    """
+    from .evaluate import karsilastir
+    from .predict import PiyasaTahminci
+
+    fabrikalar = [PiyasaTahminci] + kademe_fabrikalari()
+    return karsilastir(fabrikalar, last=last)
+
+
+def _yazdir(sonuc: Dict[str, Any]) -> None:  # pragma: no cover - elle kullanim
+    print(f"kesit: {sonuc['n_hafta']} hafta · {sonuc['n_mac']} maç "
+          f"· referans: {sonuc['referans']}")
+    print(f"{'tahminci':<20} {'brier':>8} {'log':>8} {'fark':>9} "
+          f"{'%95 aralık':>18}  geçti")
+    for s in sonuc["tahminciler"]:
+        f = s["fark"]
+        aralik = f"[{f['alt']:+.4f}, {f['ust']:+.4f}]" if f else ""
+        fark = f"{f['fark']:+.4f}" if f else ""
+        gecti = "" if s["gecti"] is None else ("EVET" if s["gecti"] else "hayir")
+        print(f"{s['ad']:<20} {s['brier']:>8.4f} {s['log_kaybi']:>8.4f} "
+              f"{fark:>9} {aralik:>18}  {gecti}")
+
+
+if __name__ == "__main__":  # pragma: no cover - elle kullanim
+    _yazdir(rapor())

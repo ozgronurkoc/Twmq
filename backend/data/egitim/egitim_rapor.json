@@ -1,0 +1,56 @@
+{
+  "generated_at": "2026-08-17",
+  "source": "football-data.co.uk (mmz4281) — piyasa oranlari, IDDAA DEGIL",
+  "purpose": "tahmin katmaninin egitimi ve olcumu; istatistik sayfasinin verisi DEGILDIR",
+  "seasons": [
+    "2122",
+    "2223",
+    "2324",
+    "2425"
+  ],
+  "season_note": "varsayilan sezonlar 2025/2026'yi disarida birakir: kupon degerlendirme seti o sezondan gelir, korpusa katmak egitim/sinav ayrimini bozar",
+  "matches": 31103,
+  "by_season": {
+    "2122": 7822,
+    "2223": 7801,
+    "2324": 7799,
+    "2425": 7681
+  },
+  "leagues": [
+    "B1",
+    "D1",
+    "D2",
+    "E0",
+    "E1",
+    "E2",
+    "E3",
+    "EC",
+    "F1",
+    "F2",
+    "G1",
+    "I1",
+    "I2",
+    "N1",
+    "P1",
+    "SC0",
+    "SC1",
+    "SC2",
+    "SC3",
+    "SP1",
+    "SP2",
+    "T1"
+  ],
+  "result_distribution": {
+    "1": 13488,
+    "0": 8115,
+    "2": 9500
+  },
+  "closing_odds_pct": 100.0,
+  "dropped": {
+    "toplam": 31132,
+    "tarih_yok": 0,
+    "sonuc_yok": 0,
+    "oran_yok": 29
+  },
+  "unavailable_files": []
+}

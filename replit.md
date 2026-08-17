@@ -1,8 +1,13 @@
 # Spor Toto Lab
 
-Spor Toto kuponu için 14-garanti **kaplama kodu (covering code)** üreten motor,
-üstüne bu motoru sonuna kadar açan bir web arayüzü ve tarihsel veriden beslenen
-bir istatistik katmanı.
+Tarihsel veriyi ve piyasa oranlarını analiz edip **maç sonucu tahmini** üreten,
+bu tahmini 14-garanti **kaplama kodu (covering code)** ile en az kupona indiren
+motor; üstüne bu motoru sonuna kadar açan bir web arayüzü.
+
+> **Amaç: kazanma oranını artırmak.** Hedefe bugünkü mesafe ölçülmüştür ve
+> `README.md` §1.1'de yazar (hold-out isabeti 0 hafta, piyasa Brier 0,579, iddaa
+> marjı %17,2). Ölçülmemiş hiçbir iyileşme iddia edilmez, ölçülmemiş hiçbir
+> tahminci arayüze çıkmaz.
 
 > Bu dosya Replit çalışma alanının hafızasıdır. Depo iki parçalıdır ve
 > **Python HTML servis etmez**; arayüzün tamamı Next.js'tir. Mimari kararın

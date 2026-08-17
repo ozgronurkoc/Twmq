@@ -219,7 +219,7 @@ adları). Küçük iş, K2'nin yanında yapılabilir.
 
 | Fikir | Neden hayır |
 |---|---|
-| Sayfanın işaret **önermesi** ("şu maçı banko yap") | Araç maç sonucu tahmin etmez. Küme-içi kartı çarpanı ve bedeli gösterir; işareti kullanıcı koyar |
+| Sayfanın **ölçülmemiş** işaret önermesi ("şu maçı banko yap") | Amaç tahmin olduğu için öneri artık hedeftedir, ama isabeti hold-out ile ölçülmemiş bir öneri sayfaya çıkmaz. Bugün küme-içi kartı çarpanı ve bedeli gösterir; işareti kullanıcı koyar |
 | "Önerilen mod" rozeti | Mod seçimi bütçe ve risk iştahına bağlıdır; kıyas tablosu sayıları verir, kararı vermez |
 | Beklenen değer / kâr hesabı | İkramiye havuzu ve kaç kişinin tuttuğu bilinmiyor; hesaplanabilirmiş gibi göstermek yanıltıcı olur |
 | Maç adlarının bağlantıya girmesi | 15 takım adı URL'i üç katına çıkarır; `transfer.ts`'te aynı karar verildi |

@@ -1,10 +1,18 @@
 # Veri Katmanı — Toplama, İşleme ve Doğrulama
 
-**Kapsam:** projedeki üç veri setinin tamamı — tarihsel 1/0/2 sonuçları, piyasa oranı arşivi
-ve iddaa bülten arşivi
-**Sürüm:** v3 (iddaa bülten snapshot boru hattı eklendi)
+**Kapsam:** projedeki dört veri setinin tamamı — tarihsel 1/0/2 sonuçları, piyasa oranı
+arşivi, iddaa bülten arşivi ve (ayrı katman) eğitim korpusu
+**Sürüm:** v5 (eğitim korpusu eklendi — tahmin katmanına ait, istatistikten ayrı)
 **İlgili belgeler:** [`ISTATISTIK_YOL_HARITASI.md`](ISTATISTIK_YOL_HARITASI.md) (katmanın
 durumu ve yol haritası) · [`ARCHITECTURE_NEXT.md`](ARCHITECTURE_NEXT.md) (API sözleşmesi)
+
+> **Amaç değişikliği (2026-08-17).** Projenin amacı artık **veriyi analiz ederek kazanma
+> oranını artıracak sonuçlar üretmek ve maç sonucu tahmini yapmaktır**
+> ([`../README.md`](../README.md) §1). Bu belgenin **doktrini değişmedi** — yedi ilkenin
+> tamamı aynen geçerlidir ve tahmin hedefiyle birlikte daha da bağlayıcı hale gelmiştir:
+> bir tahmin modeli, altındaki verinin bütün kusurlarını devralır ve onları güvenilir
+> görünen bir sayıya çevirir. Değişen tek şey **önceliklerdir** (§10) ve amaçla birlikte
+> ortaya çıkan **yeni bir veri ihtiyacıdır** (§10.1).
 
 | | Tarihsel sonuçlar | Piyasa oranı arşivi | İddaa bülten arşivi |
 |---|---|---|---|
@@ -15,6 +23,21 @@ durumu ve yol haritası) · [`ARCHITECTURE_NEXT.md`](ARCHITECTURE_NEXT.md) (API 
 | **Yönü** | geriye dönük, tamam | geriye dönük, tamam | **ileriye dönük, birikiyor** |
 
 (Yollar `backend/` altındadır.)
+
+Bu üçü **istatistik ve kaplama katmanlarının** verisidir. Dördüncü bir veri
+seti daha var ve bilerek **ayrı** tutulur:
+
+| | Eğitim korpusu |
+|---|---|
+| **Dosya** | `data/egitim/egitim_korpus.csv` |
+| **Üreten** | `scripts/build_egitim.py` |
+| **Okuyan** | `spor_toto/egitim.py` → **yalnızca tahmin katmanı** |
+| **Bekçi** | `tests/test_egitim.py` (ayrım testleri dahil) |
+| **Yönü** | geriye dönük, 4 geçmiş sezon |
+
+**Korpus `/istatistik` sayfasına girmez.** O sayfa Spor Toto kuponunun
+sezonunu anlatır (41 hafta, 615 maç) ve öyle kalır. Ayrım ürün kararıdır ve
+`test_ayrim_*` testleriyle korunur (§6A.4).
 
 ---
 
@@ -27,9 +50,15 @@ geçerlidir.
 Maç listesi → sonuç dizisi → sayımlar. Dizi listeden üretilir, sayımlar diziden sayılır. Üç
 temsil de dosyada durur ama biri diğerinden türer; hiçbiri bağımsız yazılmaz.
 
-**2. Kesin olmayan veri elenir, tahmin edilmez.**
+**2. Kesin olmayan veri elenir, doldurulmaz.**
 15 maçı tam kapanmamış hafta analize hiç girmez. Bir eksik sonuç bile o haftanın 1/0/2
 vektörünü bozar. Eksiği doldurmak, ortalamayla tamamlamak, "yaklaşık" saymak yok.
+
+> Bu ilke **maç sonucu tahminiyle çelişmez, onun önkoşuludur.** Yasak olan şey eksik
+> *girdiyi* uydurmaktır; amaç ise gelecek sonucu *tahmin etmektir*. İkisi aynı şey değil:
+> imputasyonla doldurulmuş bir eğitim seti, modelin öğrendiği ilişkinin ne kadarının
+> gerçek olduğunu ölçülemez hale getirir. Amaç tahmine döndüğü için bu ilke gevşemez,
+> **sıkılaşır.**
 
 **3. Sıra kaynağın kendi sırasıdır.**
 Kupon sırası tahmin edilmez, tarihe göre sıralanmaz, isimden çıkarılmaz. Kaynağın haftaya ait
@@ -463,6 +492,59 @@ daha ele geçmemesidir.
 
 ---
 
+## 6A. Eğitim korpusu boru hattı
+
+### 6A.1 Neden dördüncü bir veri seti
+
+Kupon değerlendirme seti 540 maç ve tek sezon. "Piyasayı geçen bir şey var mı"
+sorusuna bu örneklemle verilen cevap zayıf kalıyordu: Adım 2'de yeniden
+kalibrasyon kademesinin **hiçbir basamağı** geçemedi, ama kapasite arttıkça
+eğitim-içi iyileşip dışarıda kötüleşmesi bunun bir *örneklem* sorunu
+olabileceğini gösteriyordu.
+
+Aynı kaynak — football-data.co.uk — kupon dışındaki maçların da **hem sonucunu
+hem 1X2 oranını** taşıyor. Bir tahminciyi ölçmek için gereken üçlü budur;
+kuponun hangi 15 maçtan oluştuğu bu iş için ilgisizdir. Kupon bileşimi yalnızca
+**kaplama katmanı** ve kupon düzeyindeki geri test için gerekli kalır.
+
+### 6A.2 Kaynak ve kapsam
+
+`https://www.football-data.co.uk/mmz4281/{sezon}/{lig}.csv` — 22 lig × 4 geçmiş
+sezon. `robots.txt` tüm erişime açıktır (`Disallow:` boş).
+
+Ölçülen: **31.103 maç · 4 sezon · 22 lig · %100 kapanış oranı.** Oranı tam
+olmadığı için elenen 29 maç. Sonuç dağılımı 1: %43,4 · 0: %26,1 · 2: %30,5 —
+Spor Toto sezonunun dağılımıyla (%43,9 / %24,2 / %31,9) tutarlı; bağımsız bir
+sağlama sayılır.
+
+### 6A.3 Varsayılan sezonlar 2025/2026'yı dışarıda bırakır
+
+Bu bir tercih değil, **sızıntı önlemidir.** Kupon değerlendirme seti 2025/26
+sezonundan gelir; korpusa o sezon katılırsa eğitim ve sınav aynı maçları
+paylaşır. Varsayılan `2122 2223 2324 2425`; başka bir sezon istenirse
+`--sezonlar` ile açıkça verilir ve rapor bunu yazar.
+`test_varsayilan_korpus_guncel_sezonu_icermez` bekçidir.
+
+### 6A.4 Ayrım nasıl korunuyor
+
+Ayrım yorumla değil testle korunur:
+
+| Test | Neyi korur |
+|---|---|
+| `test_ayrim_istatistik_katmani_korpusu_import_etmez` | `history`, `odds`, `payloads`, `backtest`, `core`, `health` korpusa atıf yapmaz |
+| `test_ayrim_stats_govdesi_korpustan_etkilenmez` | `/api/stats` gövdesinde korpus izi yok |
+| `test_ayrim_korpus_kupon_bilesimi_tasimaz` | Korpus kupon alanı (`week`, `no`) taşımaz |
+
+### 6A.5 Doktrin bu boru hattına da uygulanır
+
+Oranı tam olmayan maç **elenir, tamamlanmaz** (ilke 2). Üretim scripti
+doğrulamadan dosya yazmaz (ilke 5): geçersiz kod, 1.00'dan küçük oran, boş
+takım adı ya da mükerrer maç bulursa çıkar ve yazmaz. Türetilmiş CSV + rapor
+sürümlenir, ham lig dosyaları `_kaynak/` altında git dışıdır (ilke 6). Kaynağın
+ne olmadığı raporda yazar: **piyasa oranıdır, iddaa oranı değildir** (ilke 7).
+
+---
+
 ## 7. Kalite güvencesi
 
 ### 7.1 Üretim anında
@@ -579,6 +661,20 @@ Toplam 82 test bu üç veri setini korur (backend paketi 664 test). `python -m s
    kurtarma yolu **yok**: kaçırılan hafta kaçmıştır.
 6. **Resmi bülten numarası doğrulanmadı:** kupon sırası kaynağın sırasıdır.
 
+Amaç tahmine döndüğü için iki sınır daha kritik hale geldi ve ayrıca yazılmalıdır:
+
+7. **Piyasanın dışında hiçbir sinyal yok.** Üç veri setinin taşıdığı her şey — 1/0/2, takım
+   adı, skor, saat, oran — ya sonucun kendisi ya da **piyasanın sonuç hakkındaki fiyatıdır.**
+   Sakatlık, kadro, motivasyon, seyahat, hava, sıralama baskısı: hiçbiri yok. Bu veriden
+   üretilecek bir tahminci, tanımı gereği piyasanın zaten fiyatladığı bilgiyi yeniden
+   türetir. Piyasayı yenmesi için piyasada **olmayan** bir girdi gerekir; bugün elde öyle
+   bir girdi yoktur. Ölçülen sayı bu sınırla tutarlıdır: hold-out isabeti 0 hafta.
+8. **İkramiye ve havuz verisi yok.** Hiçbir veri seti haftalık kazanan adedini veya ikramiye
+   tutarını taşımıyor — hafta kaydı yalnızca `week, close_date, season, n1/n0/n2, results,
+   matches` içerir. Spor Toto müşterek bahis olduğu için **kazanma oranı** ile **beklenen
+   getiri** farklı şeylerdir ve ikincisi bugün hiç ölçülemez. Bu, yeni amacın önündeki en
+   somut veri boşluğudur (§10.1).
+
 ---
 
 ## 9. Yeniden üretim
@@ -628,19 +724,66 @@ backtest(sweep=False)["season"]                # 41 haftalık geri test, ~1,2 sn
 [`ISTATISTIK_YOL_HARITASI.md`](ISTATISTIK_YOL_HARITASI.md) fazlarının **tamamı uygulandı**;
 veri tarafında yeni boru hattı gerektiren tek faz F5 idi ve §6'da anlatıldı.
 
-Bundan sonrası için (yol haritası belgesinin §6'sı):
+Amaç tahmine döndüğü için sıralama değişti. Öncelik artık "sayfayı zenginleştiren veri"
+değil, **tahminin ölçülebilir hale gelmesini sağlayan veridir.**
 
-| İş | Veri durumu |
-|---|---|
-| **S1 — Örneklem büyütme** | **Yeni üretim gerekir.** İki script de sezon parametreli hale gelmeli; football-data `mmz4281/2425/` mevcut, kaynak sitenin geçmiş sezon payload'ları kontrol edilmeli |
-| **S2 — Geri testi zenginleştir** | **Hazır.** Ek veri gerekmez |
-| **S3 — İddaa arşivi olgunlaşınca** | **Birikmeyi bekliyor.** Boru hattı ve haftalık tetik çalışıyor (§6.4); ~10 snapshot sonra eşleştirme anlamlı olur |
-| **S4 — Küçük işler** | Veri tarafı yok |
+| Öncelik | İş | Veri durumu |
+|---|---|---|
+| **✔** | **Eğitim korpusu** (§6A) | **Yapıldı.** 31.103 maç · 4 sezon · 22 lig |
+| **1** | **T5 — Takım formu özellikleri** | **Aynı kaynaktan türetilebilir.** football-data maç istatistiği taşıyor (şut, korner, kart); korpusa o sütunlar eklenip yuvarlanan pencereyle form üretilir. Yeni kaynak gerekmez |
+| **2** | **İkramiye / havuz verisi** (§10.1) | **Hiç yok.** Beşinci veri seti gerekir; kaynak araştırılmadı |
+| **3** | **S1'in kupon ayağı** | **Kapalı** (§10.2). Sonuç kaynağı sezon parametresi taşımıyor + `robots.txt` kısıtı |
+| **4** | **S3 — İddaa arşivi olgunlaşınca** | **Birikmeyi bekliyor.** Boru hattı ve haftalık tetik çalışıyor (§6.4); ~10 snapshot sonra eşleştirme anlamlı olur |
+| **5** | **S2 — Geri testi zenginleştir** | **Hazır.** Ek veri gerekmez |
+| — | **S4 — Küçük işler** | Veri tarafı yok |
 
-**Örneklem büyütme neden en önemlisi:** geri test hold-out'u 0 hafta çıkardı. Bu sayı 41 hafta
-üzerinde ölçüldüğü için hem gerçek bir bulgu hem de dar bir ölçüm. Sezon sayısını ikiye
-çıkarmak, "eşiği bir sezonda seç, diğerinde ölç" diyebilmeyi sağlar — leave-one-out'un
-yapamadığı gerçek out-of-sample budur.
+**Örneklem sorununun yarısı çözüldü.** Tahminci ölçümü için gereken büyük örneklem korpusla
+geldi ve sonucu net: aşırı uyum modelin kapasitesinden değil **örneklem küçüklüğünden**
+geliyormuş. Ama kalan etki 0,0005–0,0015 Brier — 31 binde anlamlı, 540 kupon maçında değil.
+Daha çok **aynı türden** veri bu sayıyı büyütmez; büyütecek olan şey **piyasada olmayan bir
+girdidir** (öncelik 1).
+
+### 10.2 S1'in kupon ayağı neden kapalı
+
+İki bağımsız engel ölçüldü:
+
+1. **Sonuç kaynağı sezon parametresi taşımıyor.** `/spor-toto/{week}-hafta-tahminleri/`
+   mevcut sezonu döndürür; 2. hafta sorgusu `"2025/2026"` verdi. Geçmiş sezonun
+   adreslenebildiğine dair işaret bulunamadı.
+2. **`robots.txt` kısıtı.** `User-agent: ClaudeBot → Disallow: /` ve
+   `Content-Signal: ai-train=no, use=reference`. Genel `User-agent: *` bloğu `/spor-toto/`
+   yolunu kapatmıyor — kısıt otomatik aracıya özel. Doktrin 7 gereği bu sınıra uyulur.
+
+`build_odds.py` da `st_history_2025_26.json`'a bağlı olduğundan kupon tarafı **bir bütün
+olarak** bekliyor. Veri geldiğinde altyapı hazır: `evaluate.capraz_olc` "bir sette eğit,
+ötekinde ölç" yapıyor ve `sezon_anahtari` kupon setinde de çalışır.
+
+### 10.1 Yeni veri ihtiyacı — ikramiye ve havuz
+
+Yeni amaç iki farklı hedefi birbirine karıştırmaya açıktır ve veri tarafı bu ayrımı
+zorunlu kılar:
+
+| Hedef | Neyi artırır | Bugün ölçülebilir mi |
+|---|---|---|
+| Daha iyi tahmin | 14 tutturma **olasılığını** | Evet — geri test + hold-out |
+| Daha az paylaşılan kolon | Tutturunca alınan **payı** | **Hayır — veri yok** |
+
+İkincisi Spor Toto'nun müşterek bahis olmasından gelir: ikramiye havuzdan kazananlara
+bölünür, dolayısıyla aynı olasılığa sahip iki sonuçtan **daha az oynananı** işaretlemek
+tutturma olasılığını değiştirmeden beklenen getiriyi artırır. Bu, piyasayı tahminde yenmeyi
+gerektirmeyen tek kaldıraçtır — ama ölçmek için elde hiçbir şey yok.
+
+**Gereken veri:** hafta başına kazanan adedi (13 ve 14 doğru için ayrı) ve ödenen tutar.
+Kaynak, Spor Toto'nun haftalık sonuç/ikramiye ilanlarıdır; erişilebilirliği ve biçimi
+**henüz araştırılmadı.**
+
+Doktrin bu boru hattına olduğu gibi uygulanır — özellikle ilke 2 ve 7: ikramiye verisi
+bulunamayan hafta boş bırakılır, tahmin edilmez; bulunan veri hangi kaynaktan geldiğini
+yanında taşır. Veri gelene kadar **popülerlik yalnızca vekille** yaklaşılabilir (favori
+oranı → tahmini oynanma payı) ve bu vekilin vekil olduğu her yerde yazılmalıdır.
+
+Bu yol da pozitif getiri garanti etmez; ölçülebilir hale getirdiği şey, bugün hakkında
+hiçbir şey bilmediğimiz bir boyuttur.
 
 ## 11. Sürüm geçmişi
 
@@ -648,6 +791,8 @@ yapamadığı gerçek out-of-sample budur.
 |---|---|
 | **v1** (2026-08-15) | İlk üretim. 41 hafta, 615 maç. Sonuç dizisi 15 haftada yanlış sırada, 6'sında yanlış sayımda (§7.4) — o zaman fark edilmedi |
 | **v2** (2026-08-16) | Sıra hatası kapatıldı; veri **maç düzeyine** indi (takım, saat, skor); üretim tek komutla tekrarlanabilir oldu; `data_quality` denetimi ve test bekçileri eklendi; **oran arşivi** kuruldu (§5) |
+| **v5** (2026-08-17) | **Eğitim korpusu** kuruldu (§6A): football-data'dan 22 lig × 4 geçmiş sezon, 31.103 maç. Kupon değerlendirme setinin 58 katı. `/istatistik` sayfasına **girmez** — ayrım `test_ayrim_*` ile bekçiye bağlandı. Varsayılan sezonlar 2025/26'yı dışarıda bırakır (sızıntı önlemi) |
+| **v4** (2026-08-17) | **Veri değişmedi, amaç değişti.** Proje maç sonucu tahminine ve kazanma oranını artırmaya yöneldi. Doktrinin yedi ilkesi aynen korundu; ilke 2'ye "eleme ≠ tahmin" ayrımı yazıldı. §8'e iki sınır eklendi: veride piyasa dışı sinyal yok, ikramiye/havuz verisi yok. §10 öncelikleri yeniden sıralandı ve §10.1 ile **dördüncü veri seti ihtiyacı** (ikramiye/havuz) tanımlandı |
 | **v3** (2026-08-16) | **İddaa bülten arşivi** kuruldu (§6) ve haftalık tetiği açıldı — ileriye dönük, birikmeye başlıyor. Oran arşivinden türetilen üç karar destek bloğu (çift kapsama, beraberlik profili, lig kırılımı) ve haftalık Brier eklendi; geri test boru hattı bu veriyi tüketmeye başladı. İddaa boru hattı §5'in eki değil **üçüncü veri seti** olduğu için `5A` yerine kendi bölüm numarasını aldı; sonraki bölümler bir kaydı |
 
 Sezon toplamları v1 ve v2'de aynıdır (270/149/196) — çünkü v1'de bozuk olan yalnızca diziydi,

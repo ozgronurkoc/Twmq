@@ -1,12 +1,16 @@
 # Spor Toto Lab — 14-Garanti Formül Üreticisi
 
-Spor Toto kuponu için **kaplama kodu** (covering code) üreten, ürettiği garantinin
-sınırını da ölçen açık bir laboratuvar.
+Spor Toto kuponu için tarihsel veriyi ve piyasa oranlarını analiz edip **maç sonucu
+tahmini** üreten, bu tahmini **kaplama kodu** (covering code) ile en az kupona
+indiren ve her iki katmanın da isabetini/sınırını ölçen açık bir laboratuvar.
 
-Seçtiğin ihtimal kümeleri içinde doğru sonuç varsa, oynanan kolonlardan en az biri
-**en fazla 1 maç hatalı** olur — yani **14-garanti**. Bu garanti bir tahmin değil,
-kombinatoryal bir teoremdir: doğruysa her zaman doğrudur, yanlışsa hiçbir zaman
-doğru olmaz.
+**Amaç kazanma oranını artırmaktır.** Hedefe bugünkü mesafe ölçülmüştür ve
+belgede açıkça yazar (§1.1) — ölçülmemiş hiçbir iyileşme iddia edilmez.
+
+Kaplama katmanının vaadi ayrıdır ve tahminden bağımsızdır: seçtiğin ihtimal
+kümeleri içinde doğru sonuç varsa, oynanan kolonlardan en az biri **en fazla 1 maç
+hatalı** olur — yani **14-garanti**. Bu garanti bir tahmin değil, kombinatoryal bir
+teoremdir: doğruysa her zaman doğrudur, yanlışsa hiçbir zaman doğru olmaz.
 
 ---
 
@@ -15,19 +19,42 @@ doğru olmaz.
 Bahis araçlarının çoğu aynı şeyi yapar: bir sayı üretir, o sayının nereden geldiğini
 anlatmaz ve kullanıcıya kazanma hissi satar. Bu proje bunun tam tersini denemektedir.
 
-**Kurucu iddia: bu araç maç sonucu tahmin etmez.** Tahminin doğruysa onu
-kaçırmamanı, hem de mümkün olan **en az kuponla** sağlar. Bir maliyet düşürme
-aracıdır; kazanma olasılığını büyütmez.
+**Amaç: elimizdeki veriyi analiz ederek kazanma oranını artıracak sonuçlar
+üretmek.** Proje maç sonucu tahmini yapar ve bu tahmini en az kupona indirir. İki
+katman birlikte çalışır: **tahmin katmanı** hangi sonuçların işaretleneceğine
+katkı verir, **kaplama katmanı** o seçimi mümkün olan en ucuz şekilde oynatır.
 
-Bu iddianın etrafında beş taahhüt var. Projedeki hemen her karar bunlardan birine
-dayanır.
+Bu bir vaat değil, bir hedeftir — ve hedefe bugünkü mesafe ölçülmüştür (§1.1).
+Aşağıdaki beş taahhüt amacın kendisinden bağımsızdır: onlar *neyi hedeflediğimizi*
+değil, *neyi saklamadığımızı* tanımlar. Amaç değişti, bu taahhütler değişmedi.
 
-### 1.1 Garanti kombinatoryaldir, olasılıksal değildir
+### 1.1 Tahmin hedeftir, garanti teoremdir — ikisi karıştırılmaz
 
-14-garanti Hamming geometrisinden gelir. Olasılık, Bayes, Markov — hiçbiri onu
-güçlendirmez veya zayıflatmaz. Bu katmanlar yalnızca "seçimlerim ne kadar
-sağlam?" sorusuna cevap verir; garantinin kendisine dokunmazlar. Kodda da böyle
-ayrılmıştır: `core.py` olasılık katmanını hiç bilmez.
+Amaç tahmin olsa da 14-garanti tahminle değişmez. Garanti Hamming geometrisinden
+gelir: seçim kümesi içinde doğru sonuç varsa en fazla 1 hata kalır. Bu
+kombinatoryal bir teoremdir; olasılık, Bayes, Markov hiçbiri onu güçlendirmez
+veya zayıflatmaz. Kodda ayrım korunur: `core.py` olasılık katmanını hiç bilmez.
+
+Değişen şey, **kümeyi kim seçiyor** sorusunun cevabıdır. Önceden işaretleri
+yalnızca kullanıcı koyardı, araç maliyeti düşürmekle yetinirdi. Artık tahmin
+katmanı bu seçime katkı verir ve **isabeti ölçülür** (§1.6).
+
+**Hedefe bugünkü mesafe ölçülmüştür ve küçüktür.** Piyasa oranlarından mekanik
+olarak üretilen strateji 36 haftanın 3'ünde 14+ tutturdu; eşik o haftayı görmeden
+seçildiğinde (hold-out) **0**. Piyasanın kendi Brier skoru 0,579 — eşit olasılık
+dağıtmanın karşılığı 0,667, yani piyasa bilgi taşıyor ama az. İddaa marjı %17,2.
+Bu üç sayı tahmin katmanının **başlangıç çizgisidir, varış noktası değil**:
+ilerleme bunlara karşı ölçülür ve ölçülmeden ilerleme sayılmaz.
+
+**İlk üç adım ölçüldü ve sonuç şudur.** Tahminci sözleşmesi, değerlendirme
+koşumu, yeniden kalibrasyon kademesi ve 31.103 maçlık eğitim korpusu kuruldu
+(T1–T3). Kupon üzerinde eğitilen modeller piyasadan **kötü** çıkıyordu; büyük
+korpusta eğitilince hepsi **iyi** tarafa geçti — aşırı uyum modelin
+kapasitesinden değil örneklem küçüklüğünden geliyormuş. Ama kalan etki
+**0,0005–0,0015 Brier**: 31 binde istatistiksel olarak anlamlı, 540 kupon
+maçında değil ve %17,2'lik iddaa marjının yanında pratik eşiğe yakın bile
+değil. **Yön doğru, miktar yetersiz** — ayrıntı §10 ve
+[`docs/ISTATISTIK_YOL_HARITASI.md`](docs/ISTATISTIK_YOL_HARITASI.md) §5.1.
 
 ### 1.2 Belirsizlik saklanmaz, ölçülür ve gösterilir
 
@@ -70,16 +97,17 @@ geçerli olduğunu kanıtlar.** 22 değişmez, 6 kategori, her çağrıda yenide
 
 | Yapar | Yapmaz |
 |-------|--------|
-| Hamming yarıçap-1 kaplama kodu üretir | Maç sonucu tahmin etmez |
-| En kötü durumda 14 doğru **garantiler** (küme içinde) | İkramiye / beklenen değer hesabı yapmaz |
-| Küme dışı senaryoları **fire** olarak ölçer | Kazanma olasılığını artırmaz |
-| Exact + Monte Carlo olasılık raporu verir | 14-garantiyi olasılıkla "güçlendirmez" |
-| Bayes (Dirichlet) ile tahminlerini yumuşatır | Kâr vaadi vermez |
-| Vaadin canlıda geçerliliğini 22 değişmezle ölçer | Tahmin isabetini ölçmez (ölçemez) |
-| Markov ile sıralı risk profili çıkarır | Canlı bülten çekmez |
-| 41 haftalık sezon verisini ve piyasa oranlarını analiz eder | İddaa geçmiş oranı sunmaz (yok — §5.3) |
-| Bir stratejiyi geçmiş sezonda çalıştırıp bedelini ölçer (**geri test**) | Geri testi bir kâr vaadine çevirmez; aşırı uyumu ölçüp gösterir |
-| Her sayının kaynağını ve sınırını yazar | Mobil uygulama değildir |
+| 41 haftalık sezon verisini ve piyasa oranlarını analiz edip **maç sonucu tahmini** üretir | Kazanmayı **garanti etmez** |
+| Tahmin isabetini ölçer ve hold-out ile aşırı uyumdan ayırır | Ölçülmemiş bir isabet iddiası sunmaz |
+| Hamming yarıçap-1 kaplama kodu üretir | 14-garantiyi olasılıkla "güçlendirmez" |
+| En kötü durumda 14 doğru **garantiler** (küme içinde) | İkramiye / beklenen değer hesabı yapmaz (havuz verisi yok — §11) |
+| Küme dışı senaryoları **fire** olarak ölçer | Kâr vaadi vermez |
+| Exact + Monte Carlo olasılık raporu verir | Canlı bülten çekmez |
+| Bayes (Dirichlet) ile tahminlerini yumuşatır | İddaa geçmiş oranı sunmaz (yok — §5.3) |
+| Markov ile sıralı risk profili çıkarır | Geri testi bir kâr vaadine çevirmez; aşırı uyumu ölçüp gösterir |
+| Bir stratejiyi geçmiş sezonda çalıştırıp bedelini ve isabetini ölçer (**geri test**) | Mobil uygulama değildir |
+| Vaadin canlıda geçerliliğini 22 değişmezle ölçer | |
+| Her sayının kaynağını ve sınırını yazar | |
 
 ---
 
@@ -361,8 +389,9 @@ yapılsaydı: %48,7 / %65,1 / %84,4. Yani en üst bantta ikinci işaret kolonu i
 katlayıp isabete yalnızca 12,5 puan ekliyor — çifte kararı bu tablonun işidir.
 
 **Beraberlik profili** — favori ile ikincinin olasılık farkı 0–0,05 iken beraberlik
-%32,7; 0,50+ iken %14,3. Eğilim var ama **tam monoton değil**; bu yüzden gösterge
-olarak sunulur, tahminci olarak değil (§10.2).
+%32,7; 0,50+ iken %14,3. Eğilim var ama **tam monoton değil**. Tahmin katmanının
+girdilerinden biridir; tek başına bir tahminci olarak kullanılamayacak kadar
+zayıftır ve isabeti ölçülmeden karara bağlanmaz (§10.2).
 
 **Lig kırılımı** — kuponun yarısı Süper Lig'den geliyor (kupon başına 7,5 maç) ve
 orada beraberlik %29,8; Premier Lig'de %19,7. Bu fark "0" bütçesinin nereye
@@ -685,6 +714,10 @@ backend/
     history.py         Tarihsel 1/0/2, 6 analiz bloğu, veri kalitesi
     odds.py            Oran arşivi okuyucu, 1X2 özeti, kalibrasyon, karar destek blokları
     backtest.py        Eşikli strateji → kaplama → skor; eşik taraması + hold-out
+    predict.py         TAHMİN: tahminci sözleşmesi + 3 referans (duzgun/sezon/piyasa)
+    evaluate.py        TAHMİN: dışarıda bırakmalı + çapraz ölçüm, eşleştirilmiş bootstrap
+    recalibrate.py     TAHMİN: piyasanın yeniden kalibrasyonu (kademe, Newton)
+    egitim.py          TAHMİN: eğitim korpusu okuyucu — /istatistik'e GİRMEZ
     health.py          Kategorili değişmez (invariant) kontrolleri — tek CHECKS tanımı
     meta.py            Yetenek envanteri (modlar, preset'ler, sınırlar) = /api/meta
     engines.py         Mod çalıştırıcıları — /api/solve ve health AYNI yolu kullanır
@@ -695,9 +728,10 @@ backend/
     build_history.py   Tarihsel veri setini kaynağından üretir
     build_odds.py      Kupon maçlarına piyasa oranlarını eşleştirir
     snapshot_iddaa.py  İddaa açık bültenini tarih damgalı arşivler (haftalık)
+    build_egitim.py    Eğitim korpusu (football-data, 22 lig × 4 geçmiş sezon)
     check.sh           Yerel CI eşdeğeri
-  data/                st_history_2025_26.json · odds/ · iddaa/
-  tests/               pytest (19 dosya, 320 test fonksiyonu → 664 test)
+  data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/
+  tests/               pytest (23 dosya → 700 test)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -858,9 +892,10 @@ bash scripts/check.sh        # yerel CI eşdeğeri
 
 Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant'lar, CLI (Bayes preset
 dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri test,
-iddaa snapshot'ı, API sözleşmesi. 19 test dosyası, 320 test fonksiyonu,
-parametrizasyonla **664 test**; 82'si veri/istatistik/geri test, 79'u sağlık
-katmanına ait.
+iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
+yeniden kalibrasyon ve eğitim korpusu. 23 test dosyası, parametrizasyonla
+**700 test**; 82'si veri/istatistik/geri test, 79'u sağlık, **104'ü tahmin
+katmanı** (ayrım bekçileri dahil).
 
 İki test bilerek **ağa çıkmaz**: `test_snapshot_iddaa.py` gerçek bültenden alınmış
 küçük bir örnek payload üzerinde koşar — ağ çağrısını sınamak bu paketin işi değil,
@@ -919,11 +954,21 @@ kartları, formüle devir, kullanım cilası, iddaa arşivi). Ne yapıldığı, 
 yapıldığı ve ölçülen sayılar:
 [`docs/ISTATISTIK_YOL_HARITASI.md`](docs/ISTATISTIK_YOL_HARITASI.md) §3.5–3.9.
 
+Amaç tahmine döndükten sonra **tahmin katmanının T1–T3'ü uygulandı**: tahminci
+sözleşmesi + değerlendirme koşumu, piyasanın yeniden kalibrasyonu ve eğitim
+korpusu. Ölçülen sayılar ve gerekçeler:
+[`docs/ISTATISTIK_YOL_HARITASI.md`](docs/ISTATISTIK_YOL_HARITASI.md) §3.10–3.12
+ve §5.1. **Bu katmandan sayfaya hiçbir şey çıkmadı** — ölçülmemiş tahminci
+arayüze çıkmaz.
+
 Sıradakiler, "en çok belirsizliği kaldıran" ölçütüne göre:
 
 | # | Ne | Neden / veri durumu |
 |---|-----|---|
-| **S1 — Örneklem büyütme** | 2024/2025 sezonunu aynı iki boru hattıyla çekip hafta sayısını ~80'e çıkarmak | **Her şeyin önündeki darboğaz.** Geri testin hold-out'u 0 çıktı; bu 41 hafta üzerinde ölçüldüğü için hem gerçek bir bulgu hem dar bir ölçüm. İki sezon, "eşiği birinde seç ötekinde ölç" demeyi sağlar — gerçek out-of-sample budur. **Yeni üretim gerekir** (scriptler sezon parametreli olmalı) |
+| **T4 — Referans skorları sağlık değişmezine** | `duzgun` her zaman 0,6667, `piyasa` kupon kesitinde 0,5747 vermeli | **Küçük ve sıranın başında.** Bu sayılar kayarsa bozulan model değil veri/boru hattıdır ve bugün hiçbir şey fark etmez |
+| **T5 — Piyasa dışı girdi: takım formu** | football-data'nın maç istatistiklerinden yuvarlanan pencereyle form özelliği | **Ölçüm bunu söylüyor.** Piyasayı yeniden kalibre etmek yön olarak doğru ama miktar yetersiz; sinyal ancak piyasada olmayan bir girdiden gelir. Ek kaynak gerekmez |
+| **S1 — Örneklem büyütme** | Kupon setini ikinci sezona çıkarmak | **Yarısı yapıldı, yarısı kapalı.** Tahmin ölçümü için gereken örneklem korpusla geldi (31.103 maç). Kupon ayağı bloke: sonuç kaynağı sezon parametresi taşımıyor + `robots.txt` kısıtı ([`docs/VERI_TOPLAMA_VE_ISLEME.md`](docs/VERI_TOPLAMA_VE_ISLEME.md) §10.2) |
+| **İkramiye / havuz verisi** | Hafta başına kazanan adedi ve ödenen tutar | **Hiç yok.** Müşterek bahiste "kazanma oranı" ile "beklenen getiri" farklı şeylerdir; ikincisi bugün hiç ölçülemiyor. Kaynak araştırılmadı |
 | **S2 — Geri testi zenginleştirmek** | Sabit kolon bütçesi kipi, ikinci strateji ailesi ("en belirsiz k maçı çifte yap"), bütçe danışmanıyla bağ | **Hazır** — ek veri gerekmez |
 | **S3 — İddaa arşivi olgunlaşınca** | Snapshot'ları kupon maçlarıyla eşleştir; iddaa ile piyasa oranını yan yana koy; geri testi vekil değil gerçek fiyatla tekrarla | **Birikmeyi bekliyor** — ~10 snapshot sonra anlamlı |
 | **S4 — Küçük işler** | Geri testte eşik çiftini URL'e yazmak, tarama tablosunu CSV'ye çıkarmak, hafta detayında Brier | Veri tarafı yok |
@@ -963,12 +1008,12 @@ Sıra, "en çok belirsizliği kaldıran" ölçütüne göredir. Ayrıntı:
 | Fikir | Neden hayır |
 |---|---|
 | Takım bazlı istatistik | 216 takım, Süper Lig takımları bile 32 maç. Çıkacak sayı güvenilir *görünür* ama gürültüdür |
-| "Beraberlik tahmincisi" | Sinyal var (%14 → %33) ama zayıf ve tam monoton değil. Gösterge olarak sunuldu (§5.4); tahminci diye sunmak hâlâ hayır |
+| Ölçülmemiş bir tahmincinin arayüze çıkması | Amaç tahmin olsa da isabeti hold-out ile ölçülmemiş hiçbir tahminci sayfaya çıkmaz |
 | Diğer pazarların arayüze çıkması | Ürün kararı: 1X2 dışındakiler analiz içindir, arşivde kalır |
 | Maçkolik'ten veri çekme | `robots.txt` otomatik erişimi kapatıyor; politika sınırı ihlal edilmez |
 | Kontrolleri arayüzden düzenlemek | Değişmezler koddadır, yapılandırmada değil |
 | Sağlık geçmişini metrik panosuna çevirmek | Bu bir APM işidir; sayfa motorun sağlığını ölçer, sürecin değil |
-| Tahmin isabetini ölçen bir kontrol | Araç tahmin etmez; sağlık sayfası da etmez |
+| Tahmin isabetini **sağlık sayfasında** ölçmek | İsabet istatistik katmanının işidir (geri test, hold-out); sağlık katmanı vaadin canlıda geçerliliğini ölçer, modelin kalitesini değil |
 
 ---
 
@@ -1066,8 +1111,10 @@ olması gerekir. Tanımlıysa yalnızca **durum değişiminde** bildirim gider.
 
 ## 14. Uyarı
 
-Bu araç **kazanma olasılığını artırmaz.** Yalnızca belirli bir garantiyi daha az
-kuponla elde etmeni sağlar.
+Bu aracın amacı kazanma oranını artırmaktır; ancak kazanmayı **garanti etmez** ve
+hedefe bugünkü mesafe açıkça ölçülmüştür (§1.1): piyasa oranlarından üretilen
+stratejinin **hold-out isabeti 0 haftadır.** Ölçülen bu sayı iyileşmeden, aracın
+kazanma oranını artırdığı iddia edilemez.
 
 Olasılık / Monte Carlo / Bayes / Markov çıktıları **beklenen-değer veya kâr hesabı
 değildir**; ikramiye havuzu ve kolon bedeli hesaba katılmaz.
