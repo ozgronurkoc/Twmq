@@ -112,6 +112,28 @@ FORM_PENCERE = 5
 #: Puan karşılıkları (galibiyet/beraberlik/mağlubiyet).
 _PUAN = {"G": 3.0, "B": 1.0, "M": 0.0}
 
+#: İç/dış saha formu için ayrı pencere. Birleşik formdan **küçük** tutuldu:
+#: bir takımın son 5 iç saha maçı takvimde çok daha geriye gider (yaklaşık iki
+#: katı), yani aynı sayı daha eski bilgi demektir. 3, tazelikle örneklem
+#: arasındaki makul orta nokta — ve ölçüm sonucuna bakılmadan seçildi.
+IC_DIS_PENCERE = 3
+
+#: Fikstür sıkışıklığı penceresi (gün). 14 gün, iki maç haftası demektir.
+SIKISIKLIK_PENCERE_GUN = 14
+
+#: Dinlenme günü tavanı. Bunun ötesi "uzun ara"dır ve ayrım taşımaz; ara
+#: vermiş bir takımla sezon başındaki bir takım aynı kategoriye düşer.
+#: Tavansız bırakılsaydı sezon başı maçları (önceki maç 3 ay önce) modele
+#: devasa değerler sokardı.
+DINLENME_TAVANI = 14.0
+
+#: Sezonun son yüzde kaçı "sezon sonu" sayılır.
+SEZON_SONU_ORANI = 0.20
+
+#: Bir takımın lig sıralamasının anlamlı olması için gereken en az maç.
+#: Altında sıralama kendi gürültüsüdür (2 maçta lider olmak bir şey demez).
+EN_AZ_LIG_MACI = 5
+
 
 def _form_tablosu(satirlar: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """Her maç için, **o maçtan önceki** maçlardan hesaplanmış takım formu.
@@ -169,6 +191,139 @@ def _form_tablosu(satirlar: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
             "puan": _PUAN[ev_sonuc], "isabet_farki": float(ev_isabet - dep_isabet)})
         gecmis.setdefault(r["dep"], []).append({
             "puan": _PUAN[dep_sonuc], "isabet_farki": float(dep_isabet - ev_isabet)})
+
+    return [o for o in out if o is not None]
+
+
+def _takvim_tablosu(satirlar: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """A3 özellikleri: dinlenme, sıkışıklık, iç/dış form, sezon sonu payı.
+
+    Hepsi **yalnızca o maçtan önceki** maçlardan hesaplanır; `_form_tablosu`
+    ile aynı sıra disiplini geçerlidir (önce oku, sonra geçmişe ekle). Bu
+    modüldeki bütün zamansal özelliklerin tek savunması budur.
+
+    **Korpusun göremediği bir kör nokta var ve ölçümü etkiler.** Korpus 22 lig
+    taşıyor; kupa ve Avrupa maçları içinde yok. Dolayısıyla dinlenme günü
+    olduğundan **uzun**, fikstür sıkışıklığı olduğundan **düşük** ölçülür — ve
+    hata rastgele değil, Avrupa oynayan (yani güçlü) takımlarda yoğunlaşır.
+
+    Bu, A3'ün cevabını okurken taşınması gereken sınırdır: "yorgunluk yardım
+    etmiyor" sonucu, yorgunluğun **eksik ölçülmüş** olmasından da gelebilir.
+    Sonuç bu yüzden "yorgunluk fiyatlanmış" değil, *"korpustan türetilebilen
+    yorgunluk vekili fiyatlanmış"* diye yazılır.
+
+    Sezon sonu payı kaba bir vekildir: ligin son %20'sinde, sıralamanın uçlarına
+    yakın takımların oynayacak bir şeyi olduğu varsayılır (şampiyonluk/küme
+    düşme), orta sıranın olmadığı. Şampiyonluğunu garantilemiş bir takımı
+    ayırt edemez — bunun için puan farkı ve kalan maç hesabı gerekir ve o,
+    vekilin taşıyabileceğinden fazla ayrıntıdır.
+    """
+    from datetime import date
+
+    def _gun(ham: str) -> date:
+        y, a, g = (int(p) for p in ham.split("-"))
+        return date(y, a, g)
+
+    sirali = sorted(range(len(satirlar)),
+                    key=lambda i: (satirlar[i]["tarih"], satirlar[i]["lig"],
+                                   satirlar[i]["ev"]))
+
+    # Lig-sezon basina toplam mac sayisi: fikstur BASTAN bellidir (sonuc
+    # degil takvim bilgisi), bu yuzden "sezonun neresindeyiz" sorusunda
+    # kullanilmasi sizinti degildir.
+    lig_toplam: Dict[Any, int] = {}
+    for r in satirlar:
+        anahtar = (r["sezon"], r["lig"])
+        lig_toplam[anahtar] = lig_toplam.get(anahtar, 0) + 1
+
+    son_mac: Dict[str, date] = {}
+    mac_gunleri: Dict[str, List[date]] = {}
+    ic_form: Dict[str, List[float]] = {}
+    dis_form: Dict[str, List[float]] = {}
+    puan: Dict[Any, Dict[str, List[float]]] = {}
+    oynanan: Dict[Any, int] = {}
+
+    out: List[Optional[Dict[str, Any]]] = [None] * len(satirlar)
+
+    def dinlenme(takim: str, bugun: date) -> Optional[float]:
+        onceki = son_mac.get(takim)
+        return None if onceki is None else min((bugun - onceki).days,
+                                               DINLENME_TAVANI)
+
+    def sikisiklik(takim: str, bugun: date) -> int:
+        gunler = mac_gunleri.get(takim, [])
+        return sum(1 for g in gunler
+                   if 0 < (bugun - g).days <= SIKISIKLIK_PENCERE_GUN)
+
+    def yuvarlanan(kayit: List[float], pencere: int) -> Optional[float]:
+        if len(kayit) < pencere:
+            return None
+        son = kayit[-pencere:]
+        return sum(son) / len(son)
+
+    def sira_payi(anahtar: Any, takim: str) -> Optional[float]:
+        """Takımın ligindeki sıra yüzdeliğinden türeyen "oynayacak şey" payı.
+
+        Uçlar (şampiyonluk / küme düşme) 1'e, orta sıra 0'a yakın. Sıralama
+        maç başına puanla kurulur — takımlar farklı sayıda maç oynamış olabilir.
+        """
+        tablo = puan.get(anahtar, {})
+        kendi = tablo.get(takim)
+        if not kendi or len(kendi) < EN_AZ_LIG_MACI:
+            return None
+        yeterli = {t: sum(p) / len(p) for t, p in tablo.items()
+                   if len(p) >= EN_AZ_LIG_MACI}
+        if len(yeterli) < 4:
+            return None
+        benim = sum(kendi) / len(kendi)
+        altinda = sum(1 for v in yeterli.values() if v < benim)
+        yuzdelik = altinda / (len(yeterli) - 1)
+        return 2.0 * abs(yuzdelik - 0.5)
+
+    for i in sirali:
+        r = satirlar[i]
+        bugun = _gun(r["tarih"])
+        anahtar = (r["sezon"], r["lig"])
+        ev, dep = r["ev"], r["dep"]
+
+        ev_dinlenme, dep_dinlenme = dinlenme(ev, bugun), dinlenme(dep, bugun)
+        ev_ic, dep_dis = (yuvarlanan(ic_form.get(ev, []), IC_DIS_PENCERE),
+                          yuvarlanan(dis_form.get(dep, []), IC_DIS_PENCERE))
+
+        ilerleme = oynanan.get(anahtar, 0) / max(lig_toplam.get(anahtar, 1), 1)
+        sezon_sonu = ilerleme >= 1.0 - SEZON_SONU_ORANI
+        ev_pay, dep_pay = sira_payi(anahtar, ev), sira_payi(anahtar, dep)
+
+        out[i] = {
+            "dinlenme_var": ev_dinlenme is not None and dep_dinlenme is not None,
+            "dinlenme_farki": (float(ev_dinlenme - dep_dinlenme)
+                               if ev_dinlenme is not None
+                               and dep_dinlenme is not None else 0.0),
+            # Deplasmanin sikisikligi EV lehinedir; isaret bu yonde secildi ki
+            # butun A3 ozellikleri "pozitif = ev lehine" okunsun.
+            "sikisiklik_farki": float(sikisiklik(dep, bugun)
+                                      - sikisiklik(ev, bugun)),
+            "ic_dis_form_var": ev_ic is not None and dep_dis is not None,
+            "ic_dis_form_farki": (float(ev_ic - dep_dis)
+                                  if ev_ic is not None and dep_dis is not None
+                                  else 0.0),
+            "sezon_sonu": sezon_sonu,
+            "sezon_sonu_pay_farki": (float(ev_pay - dep_pay)
+                                     if sezon_sonu and ev_pay is not None
+                                     and dep_pay is not None else 0.0),
+        }
+
+        # --- ozellikler OKUNDUKTAN SONRA bu mac gecmise eklenir ---
+        son_mac[ev] = son_mac[dep] = bugun
+        mac_gunleri.setdefault(ev, []).append(bugun)
+        mac_gunleri.setdefault(dep, []).append(bugun)
+        ev_sonuc = {"1": "G", "0": "B", "2": "M"}[r["kod"]]
+        dep_sonuc = {"1": "M", "0": "B", "2": "G"}[r["kod"]]
+        ic_form.setdefault(ev, []).append(_PUAN[ev_sonuc])
+        dis_form.setdefault(dep, []).append(_PUAN[dep_sonuc])
+        puan.setdefault(anahtar, {}).setdefault(ev, []).append(_PUAN[ev_sonuc])
+        puan.setdefault(anahtar, {}).setdefault(dep, []).append(_PUAN[dep_sonuc])
+        oynanan[anahtar] = oynanan.get(anahtar, 0) + 1
 
     return [o for o in out if o is not None]
 
@@ -276,8 +431,10 @@ def korpus_haftalari(sezonlar_: Optional[Sequence[str]] = None,
     # Form tum korpus uzerinde, kronolojik hesaplanir; suzme SONRA gelir.
     # Once suzseydik, secilen sezonun ilk maclari gecmissiz kalirdi.
     formlar = _form_tablosu(tumu)
-    for r, f in zip(tumu, formlar):
+    takvimler = _takvim_tablosu(tumu)
+    for r, f, t in zip(tumu, formlar, takvimler):
         r["_form"] = f
+        r["_takvim"] = t
 
     satirlar = tumu
     if cizgi_gerekli:
@@ -309,11 +466,13 @@ def korpus_haftalari(sezonlar_: Optional[Sequence[str]] = None,
             form = r.get("_form") or {"form_var": False, "form_puan_farki": 0.0,
                                       "form_isabet_farki": 0.0}
             hareket = cizgi_hareketi(r.get("acilis"), r.get("kapanis"))
+            takvim = r.get("_takvim") or {}
             ozellikler.append({
                 "lig": r["lig"],
                 "favori": favori,
                 "favori_oran": r["oranlar"][favori],
                 **form,
+                **takvim,
                 "cizgi_var": bool(r.get("acilis") and r.get("kapanis")),
                 "acilis_probs": (implied_probs(r["acilis"])
                                  if r.get("acilis") else None),
