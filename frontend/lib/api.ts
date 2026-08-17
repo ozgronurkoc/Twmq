@@ -1,7 +1,9 @@
 import type {
   BacktestResponse,
   HealthChecksResponse,
+  HealthHistoryResponse,
   HealthReport,
+  KuponDenetimSonuc,
   MetaResponse,
   SolveRequest,
   SolveResponse,
@@ -64,12 +66,19 @@ export function getMeta(signal?: AbortSignal) {
  *
  * `only` verilirse yalnizca o kontrol/kategori calisir (virgulle coklu).
  * Bilinmeyen bir ad 400 doner ve bu gercek bir hatadir — firlatilir.
+ *
+ * `fresh` sunucudaki kisa TTL onbellegini atlar: kullanici "yeniden
+ * calistir" dedigi anda ONBELLEK degil OLCUM bekler.
  */
 export async function getHealth(
   only?: string | null,
   signal?: AbortSignal,
+  fresh = false,
 ): Promise<HealthReport> {
-  const q = only ? `?only=${encodeURIComponent(only)}` : "";
+  const p = new URLSearchParams();
+  if (only) p.set("only", only);
+  if (fresh) p.set("fresh", "1");
+  const q = p.toString() ? `?${p.toString()}` : "";
   let res: Response;
   try {
     res = await fetch(`${API_URL}/api/health${q}`, {
@@ -96,6 +105,35 @@ export async function getHealth(
 /** Kontrol envanteri — kontrolleri CALISTIRMADAN listeler. */
 export function getHealthChecks(signal?: AbortSignal) {
   return istek<HealthChecksResponse>("/api/health/checks", { signal });
+}
+
+/**
+ * Sunucudaki son kosular. Sayfadaki gecmis seridi OTURUM icidir ve sekme
+ * kapaninca gider; bu uc "ne zamandan beri kirmizi?" sorusunu cevaplar.
+ */
+export function getHealthHistory(limit = 50, signal?: AbortSignal) {
+  return istek<HealthHistoryResponse>(`/api/health/history?limit=${limit}`, {
+    signal,
+  });
+}
+
+/**
+ * KULLANICININ kendi kuponunu ayni degismezlerden gecirir.
+ *
+ * Kayitli rapor sabit ornek kuponlarla kosar: HEALTHY, kullanicinin az once
+ * urettigi kuponun dogrulandigi anlamina GELMEZ. Bu cagri o bosluga bakar
+ * ve sonucu kayitli raporla ayni tabloda gosterilmemelidir.
+ */
+export function denetleKupon(
+  body: { picks: string; mode?: string; variant?: number; budget?: number },
+  signal?: AbortSignal,
+) {
+  return istek<KuponDenetimSonuc>("/api/health/kupon", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    signal,
+  });
 }
 
 /**

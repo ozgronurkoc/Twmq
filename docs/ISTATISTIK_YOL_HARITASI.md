@@ -76,8 +76,8 @@ iddaa açık bülteni  ──► scripts/snapshot_iddaa.py ──► data/iddaa/
 | Test | `backend/tests/test_snapshot_iddaa.py` | 204 | Bülten ayrıştırma ve yazma (13) |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **608 test**; bunların **82'si** bu katmana ait. `python -m spor_toto.health`
-**17 değişmez** çalıştırır — ikisi (`oran_arsivi`, `geri_test`) bu katmanı korur.
+paketi toplam **664 test**; bunların **82'si** bu katmana ait. `python -m spor_toto.health`
+**22 değişmez** çalıştırır — ikisi (`oran_arsivi`, `geri_test`) bu katmanı korur.
 
 ### 2.3 API sözleşmesi
 
@@ -640,7 +640,7 @@ python scripts/snapshot_iddaa.py           # iddaa açık bültenini arşivle
 python scripts/snapshot_iddaa.py --dry-run # yazmadan özet
 
 # Denetim
-pytest -q                                  # 608 test (82'si bu katman)
+pytest -q                                  # 664 test (82'si bu katman)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out
 python -m spor_toto.health                 # 17 invariant

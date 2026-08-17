@@ -63,7 +63,7 @@ makinesinde, o günkü kilitli bağımlılıklarla, o commit üzerinde koşar.
 
 Bu yüzden sağlık katmanı ayrı bir katmandır ve `/saglik` sayfası ürünün eşit
 haklı bir parçasıdır: **ürünün vaadinin şu anda, bu makinede, bu sürümde hâlâ
-geçerli olduğunu kanıtlar.** 17 değişmez, 6 kategori, her çağrıda yeniden
+geçerli olduğunu kanıtlar.** 22 değişmez, 6 kategori, her çağrıda yeniden
 ölçülür — ve neyi kanıtlamadığını da açıkça yazar (§6.3).
 
 ### 1.6 Ne yapar / ne yapmaz
@@ -75,7 +75,7 @@ geçerli olduğunu kanıtlar.** 17 değişmez, 6 kategori, her çağrıda yenide
 | Küme dışı senaryoları **fire** olarak ölçer | Kazanma olasılığını artırmaz |
 | Exact + Monte Carlo olasılık raporu verir | 14-garantiyi olasılıkla "güçlendirmez" |
 | Bayes (Dirichlet) ile tahminlerini yumuşatır | Kâr vaadi vermez |
-| Vaadin canlıda geçerliliğini 17 değişmezle ölçer | Tahmin isabetini ölçmez (ölçemez) |
+| Vaadin canlıda geçerliliğini 22 değişmezle ölçer | Tahmin isabetini ölçmez (ölçemez) |
 | Markov ile sıralı risk profili çıkarır | Canlı bülten çekmez |
 | 41 haftalık sezon verisini ve piyasa oranlarını analiz eder | İddaa geçmiş oranı sunmaz (yok — §5.3) |
 | Bir stratejiyi geçmiş sezonda çalıştırıp bedelini ölçer (**geri test**) | Geri testi bir kâr vaadine çevirmez; aşırı uyumu ölçüp gösterir |
@@ -129,8 +129,8 @@ satırlarıdır; arada olasılık yoktur.
 | Mod | Ne yapar |
 |-----|----------|
 | `fix16` (varsayılan) | Her zaman 16 kupon satırı. En az 7 çifte zorunlu. Hamming(7,4) tabanlı. |
-| `auto` | En ucuz çözümü arar; satır sayısı değişken. |
-| `exact` | ILP ile kanıtlanmış optimal (küçük uzaylar). |
+| `auto` | En ucuz çözümü arar; satır sayısı değişken. Web'de ILP'ye kısa bir bütçe verilir (`auto_ilp_limit`, 3 sn) — kanıt isteyen `exact` kullanır. |
+| `exact` | ILP ile kanıtlanmış optimal (küçük uzaylar). Uzay sınırını yok sayar, tam `--time-limit` bütçesini kullanır. |
 | `block` | Yalnızca blok ayrıştırma motoru. |
 | `heuristic` | Açgözlü + local search (büyük uzaylar). |
 | `butce` | "Elimde N kolon var, hangi maçı kısmalıyım?" |
@@ -148,6 +148,11 @@ spor-toto --picks "..." --output rapor.txt
 
 Motor ayarları: `--trials`, `--ls-iters`, `--seed`, `--time-limit`,
 `--block-limit`, `--exact-limit`, `--plan`, `--plan-uygula`.
+
+Mod dağıtımı tek yerdedir (`spor_toto/engines.py`): CLI, `/api/solve` ve sağlık
+raporu aynı çalıştırıcıları kullanır. CLI'de `auto` tam zaman bütçesiyle koşar —
+komutu bilerek çalıştırdın ve karşısında oturuyorsun; web'de aynı bekleme istek
+yolunu tıkardı.
 
 ### 3.3 Satır ≠ kolon
 
@@ -485,8 +490,11 @@ bayrağını rapordan okur — hiçbirini sabit kodlamaz.
 |--------|------|----------|
 | GET | `/` | Servis bilgisi JSON |
 | GET | `/api/meta` | Modlar, preset'ler, varsayılanlar, sınırlar |
-| GET | `/api/health` | Değişmezler (200 = HEALTHY/DEGRADED, 503 = UNHEALTHY); `?only=` ile kısmi |
+| GET | `/health` | **Liveness** — süreç ayakta mı; hiçbir değişmez koşmaz (~2 ms) |
+| GET | `/api/health` | **Readiness** — değişmezler (200 = HEALTHY/DEGRADED, 503 = UNHEALTHY); `?only=` kısmi, `?fresh=1` önbelleği atlar |
 | GET | `/api/health/checks` | Kontrol envanteri — çalıştırmadan |
+| GET | `/api/health/history` | Sunucudaki son koşular — "ne zamandan beri kırmızı?" |
+| POST | `/api/health/kupon` | **Kullanıcının kendi kuponunu** aynı değişmezlerden geçirir |
 | GET | `/api/stats?last=N` | Tarihsel 1/0/2 + analiz blokları + oran özeti |
 | GET | `/api/stats/<week>` | Tek hafta detayı (komşular, sıra, sapma, maç listesi) |
 | GET | `/api/backtest` | Geri test: sezon, hafta hafta, eşik taraması, hold-out |
@@ -523,7 +531,10 @@ dağıtımda kurulamaması, numpy'ın majör sürüm atlaması, veri dosyasını
 girmemesi ya da yanlış commit'in yayınlanması — hiçbirini test yakalamaz.
 
 Kontrol mantığının **ikinci bir kopyası yoktur**: tek `CHECKS` tanımı üç ayrı
-soruya cevap verir.
+soruya cevap verir. Sağlık, ölçtüğü şeyi de kendi kopyasıyla değil ürünün
+kendi yollarıyla koşturur — modlar `spor_toto/engines.py` (aynı kodu
+`/api/solve` ve CLI kullanır), ilan edilen envanter `spor_toto/meta.py`,
+istatistik/geri test gövdeleri `spor_toto/payloads.py`.
 
 ```
 CHECKS (tek tanım)
@@ -538,22 +549,35 @@ python -m spor_toto.health                  # bir kez
 python -m spor_toto.health --interval 60
 python -m spor_toto.health --list           # kontrol envanteri
 python -m spor_toto.health --only olasilik  # tek kategori (veya tek kontrol)
-curl http://localhost:8080/api/health       # JSON
+curl http://localhost:8080/health           # liveness: süreç ayakta mı
+curl http://localhost:8080/api/health       # readiness: tam rapor (JSON)
 curl "http://localhost:8080/api/health?only=cekirdek"
-curl http://localhost:8080/api/health/checks   # envanter, çalıştırmadan
+curl "http://localhost:8080/api/health?fresh=1"   # 5 sn'lik önbelleği atla
+curl http://localhost:8080/api/health/checks      # envanter, çalıştırmadan
+curl http://localhost:8080/api/health/history     # son koşular
+curl -X POST http://localhost:8080/api/health/kupon \
+     -H 'Content-Type: application/json' \
+     -d '{"picks":"1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"}'   # kendi kuponun
 ```
 
-**17 kontrol, 6 kategori.** Kategoriler motorun katmanlarını izler ve yukarıdan
+**`/health` ile `/api/health` ayrı uçlardır.** İlki liveness'tır ve hiçbir
+değişmez koşmaz (~2 ms); ikincisi readiness'tır, tam raporu koşar (ısınmış
+~520 ms, ilk koşu ~2,1 sn) ve kritik bir değişmez düşerse 503 döner. Aynı
+handler'a bağlı olsalardı `/health`e vuran her şey tam raporu ödetirdi ve
+`/health`i canlılık sinyali sanan bir probe, zaman aşımına düşünce **sağlıklı**
+bir konteyneri öldürebilirdi.
+
+**22 kontrol, 6 kategori.** Kategoriler motorun katmanlarını izler ve yukarıdan
 aşağıya doğru ciddiyet azalır — düşen kontrolün adı değil, **hangi katmanın
 bozulduğu** okunur. Güncel liste için `--list`:
 
 | Kategori | Kapsam | Düşerse |
 |----------|--------|---------|
-| `cekirdek` | encoder, fix16 garanti, yetersiz çifte reddi, distance layers | **Ana vaat geçersiz.** Yayın durdurulur |
-| `motor` | blok motoru, heuristic | Bir mod güvenilmez; fix16 ayakta olabilir |
-| `olasilik` | exact, Monte Carlo, Bayes, Markov | Sayılar yanlış; garanti geçerli olabilir |
+| `cekirdek` | encoder, fix16 garanti, yetersiz çifte reddi, distance layers, **varyantlar** | **Ana vaat geçersiz.** Yayın durdurulur |
+| `motor` | blok motoru, heuristic, **mod envanteri (7 modun hepsi)** | Bir mod güvenilmez; fix16 ayakta olabilir |
+| `olasilik` | exact, Monte Carlo, Bayes, **Bayes preset'leri**, Markov | Sayılar yanlış; garanti geçerli olabilir |
 | `analiz` | error_freq, **fire senaryoları**, veri seti, oran arşivi, **geri test** | Yorum katmanı bozuk; motor sağlam |
-| `ucuca` | pipeline sonuç şekli | Arayüz yanlış okuyor olabilir |
+| `ucuca` | **meta sözleşmesi**, **stats/backtest gövdeleri**, pipeline sonuç şekli | Arayüz yanlış okuyor olabilir |
 | `ortam` | scipy bayrağı (bilgi amaçlı) | Bir yetenek eksik olabilir |
 
 **Her düşüş 503 değildir.** HTTP durum kodu "beni trafikten çıkar" demektir, "bir
@@ -562,7 +586,7 @@ eksiğim var" demek değildir:
 | Durum | Koşul | `ok` | HTTP | Anlamı |
 |---|---|---|---|---|
 | **HEALTHY** | Her şey geçti | `true` | 200 | Vaat geçerli |
-| **DEGRADED** | Yalnızca `critical=False` düştü | `true` | **200** | Vaat geçerli, bir yetenek eksik |
+| **DEGRADED** | Yalnızca `critical=False` düştü **ya da** bir kontrol süre bütçesini aştı | `true` | **200** | Vaat geçerli; bir yetenek eksik ya da bir şey yavaşladı |
 | **UNHEALTHY** | En az bir kritik düştü | `false` | 503 | Vaat sorgulanır |
 
 Bugün tek bir kontrol kritik değildir (`scipy_flag`): scipy yoksa ILP devre dışı
@@ -575,11 +599,54 @@ rapor `summary.kismi` ile kendini işaretler ve sayfa bunu bant olarak gösterir
 kısmi bir yeşil, tam bir yeşil gibi görünemez. Otomatik yenileme her zaman tam
 raporu koşar. Bilinmeyen kontrol adı sessizce boş küme değil, **400** döner.
 
-**Neyi kanıtlamaz:** kontroller sabit bir örnek kupon üzerinde koşar
-(`1,10,1,12,0,10,2,10,1,12,02,1,10,2,10` — 8 çift, 256 nokta). HEALTHY, *senin az
-önce ürettiğin kuponun* doğrulandığı anlamına gelmez; motorun o kupon sınıfında
-doğru davrandığı anlamına gelir. Kendi sonucun her `/api/solve` çağrısında
-`guaranteed` / `worst` / `acik` alanlarıyla ayrıca doğrulanır.
+**Yavaşlamak da bir gerilemedir — ama düşüş değildir.** Her kontrolün beklenen
+bir süre bandı (`butce_ms`) vardır. Bandı aşan kontrol **düşmez**: değişmez hâlâ
+geçerlidir, yalnızca beklenenden pahalıya koşmuştur. Rapor `degraded` işaretlenir,
+süre çubuğu ambere döner ve detaya `süre 50 ms > bütçe 10 ms` yazılır. Sürecin
+**ilk koşusunda bütçe uygulanmaz**: o rapor numpy/scipy import'unu ve veri
+setinin ilk okunmasını da üstlenir (~2,1 sn ↔ ~520 ms), ısınmayı gerileme saymak
+her soğuk başlangıçta yanlış alarm üretirdi.
+
+**"Ne zamandan beri kırmızı?"** `GET /api/health/history` süreç ayakta olduğu
+sürece son koşuların özetini tutar (varsayılan 200 kayıt): durum, o durumda
+geçen koşu sayısı, değişim zamanı, son sağlıklı koşu. Kısmi koşular ve
+önbellekten dönen cevaplar seriye girmez — "5/5 geçti" ile "22/22 geçti" aynı
+seride yan yana dururken seri, olduğundan çok şey doğrulanmış gibi görünür.
+
+**Alarm opsiyoneldir ve yalnızca DEĞİŞİMİ bildirir.** `HEALTH_ALARM_URL`
+tanımlıysa durum değiştiğinde (HEALTHY↔DEGRADED↔UNHEALTHY) arka planda bir POST
+gider; tanımlı değilse değişim yalnızca log'a yazılır. Her kırmızı koşuda
+bildirim göndermek bildirimleri okunmaz hâle getirirdi — okunmayan alarm,
+alarmsızlıktan kötüdür: korunduğunu sanırsın.
+
+**Hangi süreç cevap verdi?** Rapor ve liveness gövdesi `ornek` bloğu taşır
+(pid, host, `INSTANCE_ID`/`REPL_ID` etiketi, başlangıç, uptime). Çok örnekli bir
+dağıtımda iki ardışık çağrı farklı süreçlere düşebilir; fark, kim olduğu
+yazılmadan rastgele görünür. Zaman serisi ve önbellek de süreç başınadır.
+
+**Neyi kanıtlamaz:** kontroller **sabit dört kupon sınıfı** üzerinde koşar
+(8 çift/256 nokta, 7 çift + 8 banko/128, 9 çift/512, üçlü içeren/768). HEALTHY,
+*senin az önce ürettiğin kuponun* doğrulandığı anlamına gelmez; motorun o kupon
+sınıflarında doğru davrandığı anlamına gelir. Kendi kuponun için iki yol var:
+her `/api/solve` cevabındaki `guaranteed` / `worst` / `acik` alanları ve
+`POST /api/health/kupon` — ikincisi kuponu aynı kombinatoryal zorunluluklardan
+geçirir (kaplama garantisi, mesafe muhasebesi, satır/kolon muhasebesi, alt
+sınır, olasılık tutarlılığı). Sonucu kayıtlı raporun tablosuna karışmaz ve
+düşmesi 503 üretmez: bir kuponun değişmezi servisin sağlık durumu değildir.
+
+Sağlık katmanının ortam değişkenleri — hepsi isteğe bağlıdır ve varsayılanlar
+tek başına çalışır:
+
+| Değişken | Varsayılan | Ne yapar |
+|---|---|---|
+| `HEALTH_TTL_S` | `5` | `/api/health` önbellek ömrü (sn); `?fresh=1` atlar |
+| `HEALTH_HISTORY_LIMIT` | `200` | Sunucudaki koşu geçmişi tamponu |
+| `HEALTH_ALARM_URL` | — | Tanımlıysa durum **değişiminde** buraya POST atılır |
+| `HEALTH_ALARM_TIMEOUT_S` | `5` | Alarm isteğinin zaman aşımı |
+| `INSTANCE_ID` | — | Rapordaki örnek etiketi (çok örnekli dağıtım) |
+
+Neden böyle: [`docs/SAGLIK_VIZYONU.md`](docs/SAGLIK_VIZYONU.md) — sayfanın
+varlık sebebi, kontrol yazma sözleşmesi ve bilinçli sınırlar oradadır.
 
 Sağlık kırmızıysa yayınlama yapılmaz. Bu, otomatik CD'nin yerini alan kuraldır.
 
@@ -619,6 +686,8 @@ backend/
     odds.py            Oran arşivi okuyucu, 1X2 özeti, kalibrasyon, karar destek blokları
     backtest.py        Eşikli strateji → kaplama → skor; eşik taraması + hold-out
     health.py          Kategorili değişmez (invariant) kontrolleri — tek CHECKS tanımı
+    meta.py            Yetenek envanteri (modlar, preset'ler, sınırlar) = /api/meta
+    engines.py         Mod çalıştırıcıları — /api/solve ve health AYNI yolu kullanır
     report.py          Konsol / dosya çıktısı
     cli.py             spor-toto komut satırı
   web_app.py           Flask — yalnızca JSON API, HTML servis etmez
@@ -628,7 +697,7 @@ backend/
     snapshot_iddaa.py  İddaa açık bültenini tarih damgalı arşivler (haftalık)
     check.sh           Yerel CI eşdeğeri
   data/                st_history_2025_26.json · odds/ · iddaa/
-  tests/               pytest (17 dosya, 264 test fonksiyonu → 608 test)
+  tests/               pytest (19 dosya, 320 test fonksiyonu → 664 test)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -789,8 +858,8 @@ bash scripts/check.sh        # yerel CI eşdeğeri
 
 Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant'lar, CLI (Bayes preset
 dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri test,
-iddaa snapshot'ı, API sözleşmesi. 17 test dosyası, 264 test fonksiyonu,
-parametrizasyonla **608 test**; 82'si veri/istatistik/geri test, 23'ü sağlık
+iddaa snapshot'ı, API sözleşmesi. 19 test dosyası, 320 test fonksiyonu,
+parametrizasyonla **664 test**; 82'si veri/istatistik/geri test, 79'u sağlık
 katmanına ait.
 
 İki test bilerek **ağa çıkmaz**: `test_snapshot_iddaa.py` gerçek bültenden alınmış
@@ -933,15 +1002,21 @@ kaçmıştır.
 **Resmi bülten numarası doğrulanmadı.** Kupon sırası kaynağın sırasıdır; 51. hafta
 bağımsız kaynakla çapraz doğrulanmıştır.
 
-**Sağlık sabit örnek kupon üzerinde koşar.** HEALTHY, senin kuponunun değil,
-motorun o kupon sınıfındaki davranışının doğrulandığı anlamına gelir. Rastgele
-kupon determinizmi bozardı; geniş girdi taraması `pytest`'teki fuzz testlerinin
-işidir.
+**Sağlık sabit kupon sınıfları üzerinde koşar.** HEALTHY, senin kuponunun
+değil, motorun o dört sınıftaki davranışının doğrulandığı anlamına gelir.
+Rastgele kupon determinizmi bozardı; geniş girdi taraması `pytest`'teki fuzz
+testlerinin işidir. Kendi kuponun için ayrı bir uç var:
+`POST /api/health/kupon`.
 
-**Sağlıkta alarm yoktur ve tek süreci anlatır.** Kırmızıya döndüğünde kimseye
-haber gitmez — birinin bakıyor olması gerekir. Rapor, çağrıyı karşılayan süreci
-anlatır; çok örnekli bir dağıtımda "hangi örnek?" sorusu bugün cevapsızdır.
-İlk koşu (~615 ms) sonrakilerden (~340 ms) yavaştır; bu ısınmadır, gerileme değil.
+**Sağlık tek süreci anlatır.** Rapor, çağrıyı karşılayan süreci anlatır ve
+bunu artık açıkça yazar (`ornek`: pid, host, etiket). Zaman serisi ve önbellek
+de süreç başınadır: gunicorn iki worker ile koşarken her worker kendi tamponunu
+tutar. İlk koşu (~2,1 sn) sonrakilerden (~520 ms) yavaştır; bu ısınmadır,
+gerileme değil ve süre bütçeleri o koşuda uygulanmaz.
+
+**Alarm varsayılan olarak kapalıdır.** `HEALTH_ALARM_URL` tanımlanmadıkça
+kırmızıya dönüş yalnızca log'a ve sekme başlığına yansır; birinin bakıyor
+olması gerekir. Tanımlıysa yalnızca **durum değişiminde** bildirim gider.
 
 ---
 

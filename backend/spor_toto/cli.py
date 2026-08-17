@@ -14,10 +14,11 @@ from .bayes import (
     bayes_update_matches,
     recommend_strengths,
 )
-from .core import (Encoder, Fix16Hatasi, HAS_SCIPY, Point, ball,
-                   butce_danismani, dogrula_kaplama, exact_cover,
+from .core import (Encoder, Fix16Hatasi, HAS_SCIPY, ball,
+                   butce_danismani, dogrula_kaplama,
                    exact_max_coverage, greedy_full, merge_rows, parse_picks,
-                   parse_probs, solve_by_blocks, solve_fix16, solve_heuristic)
+                   parse_probs, solve_by_blocks, solve_fix16)
+from .engines import adaylar, en_iyi_aday, engine_params
 from .report import CIZGI, INCE, basliklar, yazdir_ve_kaydet
 
 ORNEK = "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"
@@ -202,55 +203,51 @@ def _mod_maxcov(enc: Encoder, args) -> None:
 
 
 def _mod_genel(enc: Encoder, args) -> None:
-    aday: List[tuple] = []
+    """auto / block / exact / heuristic — hepsi `engines.adaylar()` uzerinden.
 
-    if args.mode in ("auto", "block"):
-        print("Blok motoru calisiyor...")
-        r = solve_by_blocks(enc, max_block_space=args.block_limit,
-                            time_limit=min(args.time_limit, 30.0))
-        if r:
-            _log(f"Blok: {r[1]} -> {len(r[0])} kolon")
-            aday.append((r[0], f"Blok ayristirma ({r[1]})", False))
+    Motor dagitiminin CLI kopyasi buradaydi; API ve saglik katmani ayni isi
+    `engines.py` icinde yapiyordu. Kopya kaldirildi: CLI artik yalnizca
+    SUNUM katmanidir (hangi motorun kostugunu yazar, sonucu bicimler),
+    hangi motorun kosacagina karar veren tek yer `engines.adaylar()`.
+    """
+    motorlar = {
+        "auto": ("block", "exact", "heuristic"),
+        "block": ("block",),
+        "exact": ("exact",),
+        "heuristic": ("heuristic",),
+    }[args.mode]
 
-    if args.mode in ("auto", "exact"):
-        if enc.space_size() <= args.exact_limit or args.mode == "exact":
-            print(f"Kesin cozucu calisiyor (ILP, sinir {args.time_limit:.0f} sn)...")
-            cols, kanit = exact_cover(enc.alphabet_sizes, time_limit=args.time_limit)
-            if cols:
-                _log(f"ILP: {len(cols)} kolon "
-                     f"({'OPTIMALLIK KANITLANDI' if kanit else 'zaman siniri'})")
-                aday.append((cols, "Kesin cozucu (ILP)", kanit))
-        elif args.mode == "auto":
-            print(f"Kesin cozucu atlandi "
-                  f"(uzay {enc.space_size()} > {args.exact_limit}).")
-
-    if args.mode in ("auto", "heuristic"):
-        if args.mode == "heuristic" or not any(a[2] for a in aday):
-            print("Heuristik motor calisiyor...")
-            cols = solve_heuristic(enc, args.trials, args.ls_iters, args.seed,
-                                   log=_log)
-            aday.append((cols, "Heuristik (acgozlu + local search)", False))
-
-    if not aday:
+    eng = engine_params(
+        trials=args.trials, ls_iters=args.ls_iters, seed=args.seed,
+        time_limit=args.time_limit, block_limit=args.block_limit,
+        exact_limit=args.exact_limit,
+        # CLI'de `auto` kanit icin beklemeye razidir: kullanici komutu
+        # bilerek calistirmis ve karsisinda oturuyordur. Web'de ayni bekleme
+        # istek yolunu tikar, orada `auto_ilp_limit` varsayilani (3 sn) gecerli.
+        auto_ilp_limit=args.time_limit,
+    )
+    print(f"Motorlar calisiyor: {', '.join(motorlar)}...")
+    liste = adaylar(enc, eng, motorlar=motorlar, log=_log,
+                    ilp_zorunlu=(args.mode == "exact"))
+    if not liste:
         raise RuntimeError(
             "Hicbir motor sonuc uretemedi. scipy kurulu mu? (pip install scipy)")
 
-    en_az = min(len(a[0]) for a in aday)
-    esitler = [a for a in aday if len(a[0]) == en_az]
-    kanit = any(a[2] for a in esitler)
-    cols, baslik, _ = min(esitler, key=lambda a: len(merge_rows(a[0])))
+    en_iyi = en_iyi_aday(liste)
+    cols, baslik = en_iyi.cols, en_iyi.baslik
 
     notlar: List[str] = []
     if len(cols) == enc.lower_bound():
         notlar.append("Alt sinira esit -> KANITLANMIS OPTIMAL")
-    elif kanit:
+    elif en_iyi.kanit:
         notlar.append("ILP optimalligi kanitladi -> KANITLANMIS OPTIMAL")
     _, acik = dogrula_kaplama(cols, enc.alphabet_sizes)
     if acik:
         notlar.append(f"HATA: {acik} nokta acik kaldi!")
-    if len(aday) > 1:
+    if len(liste) > 1:
         notlar.append("Denenen motorlar: " +
-                      ", ".join(f"{a[1].split(' (')[0]}={len(a[0])}" for a in aday))
+                      ", ".join(f"{a.baslik.split(' (')[0]}={len(a.cols)}"
+                                for a in liste))
 
     yazdir_ve_kaydet(enc, cols, baslik, args.output, notlar,
                      probs=args.parsed_probs, tam_liste=not args.kisa,

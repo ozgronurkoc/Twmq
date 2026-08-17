@@ -29,8 +29,10 @@ trap 'kill $API_PID 2>/dev/null || true' EXIT
 
 # API ayağa kalksın
 for i in 1 2 3 4 5 6 7 8 9 10; do
-  # /api/meta hazir olma sinyali: /api/health degismez dusunce 503 dondurur
-  if curl -sf http://127.0.0.1:8080/api/meta >/dev/null 2>&1; then
+  # Ayaga kalkma sinyali /health (liveness): hicbir degismez kosmaz, bu
+  # yuzden bir kontrol dustugunde de "surec ayakta" cevabini verir.
+  # /api/health readiness'tir ve degismez dusunce bilerek 503 doner.
+  if curl -sf http://127.0.0.1:8080/health >/dev/null 2>&1; then
     echo "✓ API hazır"
     break
   fi

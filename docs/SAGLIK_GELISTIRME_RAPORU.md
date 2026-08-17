@@ -1,402 +1,226 @@
 # Sağlık Katmanı — Çalışma Raporu ve Yol Haritası
 
-**Tarih:** 2026-08-16  
-**Dal:** `claude/health-page-development-4ahakf`  
-**Commit'ler:** `980a865` (motor + arayüz), `ff8d99b` (vizyon belgesi)  
-**Kapsam:** `/saglik` sayfası, `spor_toto/health.py`, `/api/health*` uçları  
+**Tarih:** 2026-08-17 (önceki turlar: 2026-08-16, aynı gün ilk tur)
+**Dal:** `claude/dosyalari-gelistirme-vy2py4`
+**Kapsam:** `/saglik` sayfası, `spor_toto/health.py`, `health_history.py`,
+`meta.py`, `engines.py`, `payloads.py`, `/health` + `/api/health*` uçları
 
-> Bu belge iki şeyi bir arada tutar: **bugün ne yapıldığı** (§1–§6) ve
-> **bundan sonra ne yapılacağı** (§7–§9). Kararların *gerekçesi*
+> Bu belge iki şeyi bir arada tutar: **bugün ne yapıldığı** (§1–§8) ve
+> **bundan sonra ne yapılacağı** (§9–§11). Kararların *gerekçesi*
 > `SAGLIK_VIZYONU.md`'dedir; burası yapılan işin ve bekleyen işin dökümüdür.
+> İkisi ayrışırsa vizyon belgesi asıldır: burada yazan her madde onun
+> koyduğu sınırların içinde kalmalıdır.
 
 ---
 
 ## 0. Özet
 
-| | Öncesi | Sonrası |
+Bu turda önceki yol haritasının **tamamı** kapatıldı: önce önerilen sıradaki
+üç iş (liveness/readiness ayrımı, meta + mod kapsamı, teşhis düzeltmeleri),
+ardından bilerek ertelenmiş olan geri kalan maddeler (süre eşikleri, zaman
+serisi, kullanıcı kuponu, örnek çeşitliliği, alarm, örnek kimliği, CLI'nin
+tek yola bağlanması, `auto` modunun süresi).
+
+| | Tur başı | Bugün |
 |---|---|---|
-| Kontrol sayısı | 14 | **16** |
-| Kategori | yok (düz liste) | **6** |
-| Kontrol açıklaması | yok | **hepsinde, testle zorunlu** |
-| Veri katmanı kapsamı | yok | **2 kontrol** (istatistik + oran) |
-| Kısmi çalıştırma | yok | **`?only=` / `--only`** |
-| Bilgi amaçlı düşüş | 503 | **200 + DEGRADED** |
-| Ortam bilgisi | yok | **python/numpy/scipy/flask + platform** |
-| Sağlık katmanı testi | 4 | **23** |
-| Uçlar | `/api/health` | `+ /api/health/checks` |
+| Kontrol sayısı | 17 | **22** |
+| İlan edilip sınanmayan mod | 4 | **0** |
+| `/api/meta` sözleşmesi | doğrulanmıyordu | **`meta_sozlesmesi`** |
+| `/api/stats` + `/api/backtest` gövdesi | doğrulanmıyordu | **`stats_sozlesmesi`** |
+| Kupon sınıfı kapsamı | 1 | **4** (8 çift, 7 çift+banko, 9 çift, üçlü) |
+| Bayes preset'leri | 1/5 koşuyordu | **5/5** |
+| `variant` | hiç koşmuyordu | **1..3** |
+| `/health` | tam raporu koşuyordu (o günkü haliyle ~370 ms, soğukta ~2,1 sn) | **liveness, ~2 ms** |
+| Readiness önbelleği | yok | **5 sn TTL + `?fresh=1`** |
+| Süre eşiği | yok | **her kontrolde `butce_ms`** |
+| Sunucu tarafı geçmiş | yok | **halka tampon + `/api/health/history`** |
+| Kullanıcının kendi kuponu | doğrulanamıyordu | **`POST /api/health/kupon`** |
+| Alarm | yok | **durum değişiminde, opt-in** |
+| Örnek kimliği | yok | **pid/host/etiket, raporda ve liveness'ta** |
+| Mod mantığının kopyası | 3 (web, health, CLI) | **1 (`engines.py`)** |
+| `auto` modu süresi (256 nokta) | ~11,3 sn | **~3,5 sn** |
+| Düşen kontrolün detayı | `AssertionError:` | **`… @ health.py:246`** |
+| Sağlık katmanının testi | 23 | **79** |
+| Tüm süit | 608 | **664** |
 
-İki commit, 16 dosya, +1.640 / −155 satır. Tüm süit (564 test) yeşil,
-`tsc --noEmit` ve `next build` temiz.
-
----
-
-## 1. Çıkış noktası: sayfadaki asıl sorun
-
-Sayfa çalışıyordu ama **okunamıyordu.** Bir satır şuydu:
-
-```
-[✓] fix16_yetersiz_cifte    0.0 ms    6 cifte reddedildi
-```
-
-Bunun ne anlama geldiğini bilmek için Python kaynağını açmak gerekiyordu.
-Sayfa 14 kontrolü listeliyor, hiçbirinin **neyi koruduğunu** söylemiyordu.
-Üç somut eksik vardı:
-
-1. **Anlam yok.** Kriptik `name` ve ham `detail` dışında bilgi yoktu.
-2. **Yapı yok.** Düz liste, düşen kontrolün adını söylüyor; hatanın hangi
-   katmanda olduğunu söylemiyordu.
-3. **Kapsam boşluğu.** `/istatistik` sayfasının dayandığı veri katmanı
-   (tarihsel sonuçlar + oran arşivi) hiç doğrulanmıyordu.
-
-Ayrıca yanlış bir sinyal üretiyordu: `scipy` kurulu değilse rapor
-**UNHEALTHY** diyordu — oysa motor sorunsuz çalışıyor, yalnızca ILP çözücü
-devre dışı kalıyordu.
+Isınmış tam rapor 370 ms → **~520 ms**: yeni kapsamın bedeli, bilerek ödendi.
 
 ---
 
-## 2. Backend — `spor_toto/health.py`
+## 1. Tek kaynak: `meta.py`, `engines.py`, `payloads.py`
 
-### 2.1 Kontroller artık veri, kod değil
+Kapsam boşluklarının sebebi teşhis değil **yapıydı**: ilan edilen envanter
+(`MODES`, sınırlar) ve gövde kurucular `web_app.py` içindeydi; web_app zaten
+`health`i import ettiği için sağlık onlara erişemiyordu.
 
-Önceden kontroller `(ad, fonksiyon)` ikilisiydi. Şimdi her biri bir `CheckSpec`:
+- **`meta.py`** — `MODES`, `ENGINE_DEFAULTS`, `LIMITS`, `meta_payload()`.
+  `/api/meta` yalnızca bunu `jsonify` eder; `_engine_params()` de bantları
+  `LIMITS`'ten okur, arayüzün gördüğü bant ile uygulanan bant ayrışamaz.
+- **`engines.py`** — mod çalıştırıcıları + `adaylar()` / `en_iyi_aday()`.
+  `/api/solve`, sağlık ve **CLI** aynı kodu kullanır. Üç kopya vardı.
+- **`payloads.py`** — `stats_payload()` / `backtest_payload()`. Veri katmanı
+  doğrulanıyordu ama arayüzün okuduğu gövde sınanmıyordu.
 
-```python
-@dataclass(frozen=True)
-class CheckSpec:
-    name: str          # fix16_garanti
-    category: str      # cekirdek
-    aciklama: str      # "16 satırlık sabit kaplama gerçekten 14-garanti…"
-    fn: Callable[[], str]
-    critical: bool = True
-```
+---
 
-`aciklama` **zorunludur ve testle denetlenir** (`test_health_report_dict_shape`).
-"Ne yapıyor" değil, **"kırılırsa ne kaybederiz"** sorusuna cevap verir.
+## 2. Kontroller: 17 → 22
 
-### 2.2 Kategori modeli
-
-Kategoriler motorun katmanlarını izler ve **ciddiyet sırasına** dizilidir:
-
-| # | Kategori | Kontroller |
+| Kontrol | Kategori | Bağladığı değişmez |
 |---|---|---|
-| 1 | `cekirdek` — Çekirdek | `encoder`, `fix16_garanti`, `fix16_yetersiz_cifte`, `distance_layers` |
-| 2 | `motor` — Çözücüler | `blok_motor`, `heuristic` |
-| 3 | `olasilik` — Olasılık | `olasilik_exact`, `monte_carlo`, `bayes_dirichlet`, `markov_chain` |
-| 4 | `analiz` — Analiz | `error_freq`, `fire_scenarios`, **`veri_seti`**, **`oran_arsivi`** |
-| 5 | `ucuca` — Uçtan uca | `pipeline_result_shape` |
-| 6 | `ortam` — Ortam | `scipy_flag` *(bilgi amaçlı)* |
+| `meta_sozlesmesi` | `ucuca` | Her sınırda `min ≤ varsayılan ≤ max`; preset/mod listeleri motorla aynı; `has_scipy` gerçekle aynı |
+| `stats_sozlesmesi` | `ucuca` | `/api/stats` + `/api/backtest` gövdeleri tutarlı; `?last=` gövdenin tamamını daraltıyor |
+| `mod_envanteri` | `motor` | 7 modun hepsi koşuyor; `garanti: True` açık bırakmıyor, `maxcov` gerçekten kaplamıyor |
+| `bayes_presetleri` | `olasilik` | 5 preset'in posterior'ları 1'e toplanıyor, hiçbiri kaplamayı bozmuyor |
+| `fix16_varyantlari` | `cekirdek` | `variant` 1..3 de 16 satır / 14-garanti veriyor |
 
-`cekirdek` düşmüşse aşağıdaki her şey şüphelidir; `analiz` düşmüşse çekirdek
-hakkında hiçbir şey söylenmiş olmaz.
+Ayrıca `encoder`, `fix16_garanti` ve `distance_layers` artık **dört kupon
+sınıfında** koşuyor ve her sınıfın beklenen bedeli tabloda yazılı
+(`KUPON_SINIFLARI`): kontrol "kaplama geçerli" demekle kalmıyor, "bu sınıfta
+bedel tam olarak bu" diyor.
 
-### 2.3 İki yeni kontrol — veri katmanı
-
-**`veri_seti`** — `/istatistik`'in dayandığı tarihsel veri setini doğrular:
-hafta sayımı, her haftanın 15'lik sonuç dizisi, `n1+n0+n2 = 15`, pozisyon
-istatistiklerinin toplamı, geçiş matrisinin hafta başına 14 geçiş üretmesi ve
-veri kalitesi çatışmalarının sıfır olması.
-
-**`oran_arsivi`** — piyasa oranı arşivini doğrular: kapsama oranı, favori
-isabet muhasebesinin (`hit + miss = with_odds`) tutması, çapraz tablo
-toplamlarının satır/sütun bazında örtüşmesi, bant toplamları ve marjın
-pozitif olması.
-
-> **Kritik tasarım kararı:** Dosya **yoksa** bu bir hata değildir — motor veri
-> setinden bağımsız çalışır, yalnızca istatistik sayfası boş kalır. Kontrol bu
-> iki durumu ayırır: dosya yoksa geçer ve nedenini yazar; dosya varsa iç
-> tutarlılığı sağlamak **zorundadır**.
-
-### 2.4 DEGRADED — her düşüş 503 değildir
-
-`critical=False` olan kontroller düştüğünde rapor UNHEALTHY olmaz:
-
-| Durum | Koşul | `ok` | `degraded` | HTTP |
-|---|---|---|---|---|
-| **HEALTHY** | Her şey geçti | `true` | `false` | 200 |
-| **DEGRADED** | Yalnızca bilgi amaçlı kontrol düştü | `true` | `true` | **200** |
-| **UNHEALTHY** | En az bir kritik düştü | `false` | `false` | 503 |
-
-İlke: *HTTP durum kodu "beni trafikten çıkar" demektir, "bir eksiğim var"
-demek değildir.* DEGRADED bir süreç doğru cevap vermeye devam eder; onu yük
-dengeleyiciden düşürmek olmayan bir kesinti üretir.
-
-### 2.5 Kısmi çalıştırma
-
-`secili_checkler(only)` bir kontrol adını veya kategori adını (virgülle
-çoklu) süzer. Tanım sırası korunur, tekrarlı adlar iki kez koşmaz, bilinmeyen
-ad **ValueError** yükseltir — sessizce boş küme koşturmak "hiçbir şey
-düşmedi" diyen bir rapor üretirdi.
-
-### 2.6 Rapora eklenenler
-
-`duration_ms` (toplam), `categories[]` (kategori özetleri), `degraded`,
-`summary.slowest`, `summary.env` (python, platform, numpy, scipy, flask),
-`summary.only`, `summary.kismi`, `summary.kayitli_kontrol`.
-
-### 2.7 CLI
-
-```bash
-python -m spor_toto.health                  # kategorili çıktı + düşenlerin özeti
-python -m spor_toto.health --list           # kontrol envanteri (çalıştırmadan)
-python -m spor_toto.health --only olasilik  # tek kategori veya tek kontrol
-python -m spor_toto.health --json
-```
-
-Çıktı artık kategori başlıklarıyla gruplu; sonda **düşen kontrollerin ne
-koruduğu** ayrıca özetleniyor. Bilinmeyen `--only` değeri çıkış kodu 2 verir.
+**`stats_sozlesmesi` yazılırken gerçek bir uyumsuzluk yakaladı:** gövdede
+`params` diye bir alan yok (`meta` + `strategy` var). Kontrolün ilk hâli
+yanlış alanı arıyordu ve düştü — tam da olması gerektiği gibi.
 
 ---
 
-## 3. API — `web_app.py`
+## 3. `/health` ile `/api/health` ayrıldı
 
-| Uç | Değişiklik |
-|---|---|
-| `GET /api/health` | `?only=` desteği; bilinmeyen ad → **400**; DEGRADED → **200** |
-| `GET /api/health/checks` | **Yeni.** Kontrol envanterini çalıştırmadan döner |
-| `GET /` | Uç listesine `/api/health/checks` eklendi |
-
----
-
-## 4. Arayüz — `/saglik`
-
-### 4.1 Yeni dosya: `components/saglik/parts.tsx` (343 satır)
-
-`durumu()`, `DurumIkonu`, `goreliZaman()`, `KontrolSatiri`, `KategoriKarti`,
-`GecmisSeridi`, `OrtamKarti`. Repodaki `components/istatistik/parts.tsx`
-düzeniyle aynı.
-
-### 4.2 Sayfadaki değişiklikler
-
-- **Kategori kartları.** Her kartta geçen/toplam, süre ve *"Yalnızca bunu
-  çalıştır"* düğmesi.
-- **Satır başına açıklama.** Kontrolün ne koruduğu birincil, ham `detail`
-  ikincil (mono, sönük).
-- **Süre çubuğu.** Rapordaki en uzun kontrole göre ölçekli — hangi kontrolün
-  raporu yavaşlattığı gözle görülür. Performans gerilemesi de bir gerilemedir.
-- **Üç durumlu ikonografi.** Geçti (yeşil) / kritik düştü (kırmızı) / bilgi
-  amaçlı düştü (amber). Üçüncüsü kırmızı **değildir**.
-- **Düşenler özeti** sayfanın başında, açıklamalarıyla.
-- **"Yalnızca düşenler" filtresi.** Yalnızca görünürlüğü değiştirir;
-  kontrollerin hepsi her zaman koşar.
-- **Otomatik yenileme** (Kapalı / 15 sn / 1 dk / 5 dk). Her zaman **tam**
-  raporu koşar — kısmi bir koşuyu arka planda tekrarlamak sayfayı giderek daha
-  az şey doğrulayan bir yeşil göstergeye dönüştürürdü.
-- **Oturum içi çalışma geçmişi.** Son 8 koşu; arada bir düşen bir kontrol tek
-  çalıştırmada görünmez.
-- **Kısmi koşu bandı**, tek tıkla tam rapora dönüş.
-- **Çalışan ortam kartı** ve **JSON kopyala**.
-- **Hydration güvenliği.** Göreli zaman ("14 sn önce") yalnızca mount sonrası
-  hesaplanır; sunucuda hesaplanırsa uyuşmazlık olur.
-
-### 4.3 Tip katmanı — `lib/types.ts`
-
-`HealthKategoriId`, `HealthKategori`, `HealthEnv`, `HealthSummary`,
-`HealthCheckInfo`, `HealthChecksResponse` eklendi; `HealthCheck` ve
-`HealthReport` genişletildi. `lib/api.ts`'te `getHealth(only?, signal?)` ve
-`getHealthChecks()`.
-
-Sayfa kategorileri, açıklamaları ve kritiklik bayrağını **rapordan okur**,
-hiçbirini sabit kodlamaz — mevcut bir kategoriye eklenen yeni kontrol
-arayüzde kendiliğinden belirir.
-
----
-
-## 5. Testler
-
-**23 test** (öncesi 4). Tüm süit: **564 test, ~65 sn.**
-
-**`tests/test_health.py`** (16) — konu başına:
-
-| Konu | Testler |
-|---|---|
-| Temel rapor | `run_health_all_pass`, `health_report_dict_shape`, `health_includes_core_and_analysis`, `print_report_no_crash` |
-| Kategori bütünlüğü | `her_check_bilinen_kategoride`, `check_adlari_tekil`, `kategori_ozeti_toplami_tutar` |
-| Envanter | `envanter_calistirmadan_listeler` |
-| `only` süzgeci | `only_tek_kontrol`, `only_kategori`, `only_coklu_ve_sira_korunur`, `only_tekrarli_ad_iki_kez_calismaz`, `only_bilinmeyen_ad_hata_verir`, `only_bos_hepsini_calistirir` |
-| Ortam / ölçüm | `env_bilgisi_raporda`, `slowest_en_uzun_kontrolu_gosterir` |
-
-**`tests/test_api_health.py`** (7, yeni dosya) — gövde sözleşmesi, kategori
-kapsaması, `?only=` kategori, bilinmeyen ad → 400, boş `only`, envanter ucu,
-`/health` ile `/api/health` eşdeğerliği.
-
-### 5.1 Doğrulama yöntemi
-
-Testlere ek olarak uygulama gerçekten ayağa kaldırıldı ve Playwright ile
-sürüldü:
-
-- Sağlıklı durum, açık ve koyu tema.
-- **Bilerek kırılmış durum** (bir kritik + bir bilgi kontrolü düşürülerek):
-  kritik kırmızı, bilgi amaçlı amber, uç 503 dönerken sayfa raporu göstermeye
-  devam ediyor. Kırma sonrası kod geri alındı.
-- Etkileşimler: "yalnızca düşenler" filtresi, kategori bazlı kısmi
-  çalıştırma, tam rapora dönüş, geçmiş şeridi, otomatik yenileme düğmeleri.
-- JS konsol hatası yok.
-
----
-
-## 6. Belgeler
-
-- **`docs/SAGLIK_VIZYONU.md` (yeni, 334 satır)** — sayfanın neden var olduğu,
-  test/health ayrımı, ne kanıtlanıp ne kanıtlanmadığı, kontrol yazma
-  sözleşmesi, DEGRADED gerekçesi, bilinçli sınırlar, yol haritası.
-- Sabit kontrol sayıları temizlendi. `README.md`, `backend/README.md`,
-  `frontend/README.md`, `docs/ARCHITECTURE_NEXT.md`, `scripts/check.sh` ve CI
-  workflow'unda **"13 invariant" / "14 invariant"** diye üç farklı ve üçü de
-  yanlış sayı duruyordu; sürekli geride kalıyorlardı.
-
----
-
-## 7. Yol haritası — öncelik sırasıyla
-
-Sıra "en çok riski/belirsizliği kaldıran" ölçütüne göredir. Efor kabaca:
-**S** = birkaç saat, **M** = yarım–bir gün, **L** = birkaç gün.
-
-### Öncelik 1 — Dağıtım riski
-
-#### 7.1 `/health` ile `/api/health` ayrılmalı `[M]`
-
-`@app.route("/health")` ve `@app.route("/api/health")` **aynı handler'a**
-bağlı; ikisi de 16 kontrolün tamamını koşuyor (~340 ms, soğuk başlangıçta
-~615 ms).
-
-`.replit`'te `deploymentTarget = "autoscale"`. Platform probe'u `/health`'e
-her vurduğunda bu bedel ödeniyor; sıfıra inmiş bir konteyner uyandığında ısınma
-bedeli de eklenir. Probe zaman aşımına düşerse platform **sağlıklı** bir
-konteyneri öldürür — yani sağlık kontrolü kesintiye *sebep olabilir*.
-
-**Çözüm:** liveness / readiness ayrımı.
-
-| Uç | Rol | İçerik | Süre |
+| Uç | Rol | İçerik | Ölçülen süre |
 |---|---|---|---|
-| `/health` | liveness | Süreç ayakta + sürüm | ~0 ms |
-| `/api/health` | readiness / teşhis | Tam rapor | ~340 ms |
+| `/health` | liveness | Süreç + sürüm + uptime + örnek kimliği | **~2 ms** |
+| `/api/health` | readiness | Tam rapor | ~520 ms (ilk koşu ~2,1 sn) |
 
-Üstüne kısa bir önbellek (örn. 5 sn TTL, `?fresh=1` ile atlanır) hem probe'u
-hem de sekmesini açık bırakan kullanıcıyı korur.
+Liveness "bu süreci öldür mü?", readiness "bu sürece trafik ver mi?"
+sorusudur. Düşen bir değişmez ikinciyi kırmızıya çevirir; süreci öldürmek
+onu düzeltmez — aynı kod her konteynerde aynı şekilde düşer.
 
-> **Uyarı:** `/health` gövdesi değişir. Bugün ona bakan bir şey varsa kırılır;
-> `test_kisa_yol_health_ayni_govdeyi_verir` testi de güncellenmelidir.
+**Ölçüldü:** dışarıya açılan tek port Next.js'tir, dolayısıyla platform
+probe'u Flask'ın `/health`ine erişemiyordu. `next.config.mjs` artık `/health`i
+de proxy'liyor: liveness'ın var olup dışarıdan ulaşılamaz olması yarım
+çözümdü — bir probe'un sorabileceği tek adres yine tam raporu koşan uçtu.
 
-### Öncelik 2 — Kapsam boşlukları
-
-#### 7.2 `/api/meta` sözleşmesi kontrol edilmiyor `[S]`
-
-Formül sayfasının **tamamı** modları, Bayes preset'lerini, motor
-varsayılanlarını ve sınırları `/api/meta`'dan okur, hiçbirini sabit kodlamaz.
-Meta bozulursa ana sayfa çöker ama sağlık raporu yemyeşil kalır.
-
-Ucuz bir tutarlılık kontrolü çok şey yakalar: her limitte `min ≤ default ≤ max`,
-`STRENGTH_PRESETS` ile meta'daki preset listesinin örtüşmesi, `needs_scipy`
-bayrağının `HAS_SCIPY` ile tutarlılığı, `symbols` ve `match_count`'un motorla
-aynı olması.
-
-#### 7.3 İlan edilen 7 moddan 4'ü hiç sınanmıyor `[M]`
-
-Sağlık `fix16`, `block` ve `heuristic` koşturuyor. **`auto`, `exact`,
-`butce`, `maxcov` kapsam dışı.** Meta'da ilan edilen ama bozuk bir mod,
-doğrudan kullanıcıya çarpan bir hatadır.
-
-Asıl kazanç şu değişmezi bağlamaktır: **her modun ürettiği sonuç, meta'daki
-`garanti` bayrağıyla uyuşmalı** — özellikle `maxcov`'un `garanti: False`
-olması ve gerçekten garanti *vermemesi*.
-
-Süre bütçesi gözetilmeli: ILP'yi ya küçük bir kupona indir ya da
-`pytest -m slow` tarafında bırak.
-
-#### 7.4 Bayes preset'leri sınanmıyor `[S]`
-
-`bayes_dirichlet` elle verilen güçlerle koşuyor, meta'nın ilan ettiği
-preset'lerle değil. CLI duman testi yalnızca `dengeli`yi kullanıyor;
-diğerleri hiçbir yerde koşmuyor.
-
-#### 7.5 `variant` parametresi sınanmıyor `[S]`
-
-Alternatif 16 satırlık kümeler (`--variant`) hiçbir kontrolde koşmuyor. Her
-varyantın da 14-garanti vermesi gerekir.
-
-### Öncelik 3 — Mevcut koddaki gerçek sorunlar
-
-#### 7.6 Otomatik yenilemede iptal yok `[S]`
-
-`setInterval(() => void yukle(null))` çağrısı `AbortSignal` almıyor. Kısmi bir
-koşu ile arka plandaki tam koşu çakışırsa cevaplar **geliş** sırasına göre
-yazılıyor, **gönderim** sırasına göre değil; ekranda yanlış rapor kalabilir.
-Her yeni çağrı öncekini iptal etmeli.
-
-#### 7.7 Geçmiş şeridi yalnızca başarılı koşuları kaydediyor `[S]`
-
-`setGecmis` `try` bloğunun içinde; backend'e ulaşılamadığında geçmişe hiçbir
-şey düşmüyor. Oysa zaman çizelgesinde en çok görmek isteyeceğin olay tam da
-odur. Hata durumları da bir kayıt olarak ("ulaşılamadı", kırmızı) eklenmeli.
-
-#### 7.8 Sekme gizliyken yenileme sürüyor `[S]`
-
-Arka plandaki sekme 5 dakikalık aralıkla saatlerce koşuyor, geçmiş şeridi
-anlamsız kayıtlarla doluyor. `document.visibilityState` ile duraklat, sekme
-geri geldiğinde bir kez koştur.
-
-#### 7.9 Hata satırı kayboluyor `[S]` — en ucuz kazanç
-
-`_run` istisnayı `f"{type(e).__name__}: {e}"` diye yassıltıyor. Bir assert
-düştüğünde hangi satırda kırıldığı görünmüyor. Traceback'in **son karesini**
-(`health.py:226`) detaya eklemek birkaç satır; canlıda hata ayıklarken farkı
-büyük.
-
-### Öncelik 4 — Teşhis gücü
-
-#### 7.10 Süre eşikleri `[M]`
-
-Her `CheckSpec`'e beklenen süre bandı. Aşınca kontrol **düşmesin** ama
-`degraded` işaretlensin ve süre çubuğu ambere dönsün. Bugün performans
-gerilemesi yalnızca gözle yakalanıyor.
-
-> Isınma farkı (ilk koşu ~615 ms, sonrakiler ~340 ms) hesaba katılmalı; yoksa
-> her soğuk başlangıç yanlış alarm üretir.
-
-#### 7.11 Sunucu tarafı zaman serisi `[M]`
-
-Son N raporun özeti (`ok`, `passed`, süre, düşen adlar) bellekte halka
-tamponda tutulsun, `GET /api/health/history` ile verilsin. Bugün
-cevaplanamayan soruyu açar: **"ne zamandan beri kırmızı?"** Oturum içi geçmiş
-sekme kapanınca gidiyor.
-
-#### 7.12 Kullanıcı kuponuyla koşma `[L]`
-
-Bugün rapor **sabit** örnek kupon üzerinde koşuyor; HEALTHY, kullanıcının
-kendi kuponunun doğrulandığı anlamına gelmiyor. `/api/solve` sonucunu aynı
-değişmezlerden geçiren bir mod bu boşluğu kapatır.
-
-#### 7.13 Örnek çeşitliliği `[M]`
-
-Tek kupon sınıfı (8 çift, 256 nokta) kapsanıyor. Sabit tohumlu birkaç sınıf
-daha (çok bankolu, çok çiftli, üçlü içeren) determinizmi bozmadan kapsamı
-genişletir.
-
-### Öncelik 5 — Arayüz cilası
-
-| # | Öneri | Efor |
-|---|---|---|
-| 7.14 | **Durum URL'e yansısın** (`/saglik?only=olasilik`) — düşen kategorinin bağlantısı paylaşılabilir olur, yenilemede kaybolmaz | S |
-| 7.15 | **Sekme başlığı durumu göstersin** (`⚠ Sağlık`) — bu sayfa arka planda açık tutulmak için var; alarm altyapısı gerektirmeyen en yakın "haber verme" | S |
-| 7.16 | **`aria-live`** durum kartında — otomatik yenilemede HEALTHY→UNHEALTHY geçişi ekran okuyucuya sessiz (`components/istatistik/parts.tsx:45`'te örneği var) | S |
-| 7.17 | **Düşen kontrole atlama** — özetteki addan ilgili karta anchor | S |
-| 7.18 | **"Kategori" istatistiği zayıf** — hiç değişmiyor; yerine "en yavaş kontrol" | S |
-
-### Öncelik 6 — Operasyon
-
-#### 7.19 Alarm bağlantısı `[M]`
-
-Sağlık kırmızıya döndüğünde kimseye haber gitmiyor; birinin bakıyor olması
-gerekiyor. Bugünkü kullanım için bilinçli bir sadeleştirme, ama kalıcı değil.
-
-#### 7.20 Örnek kimliği `[S]`
-
-Rapor, çağrıyı karşılayan süreci anlatıyor. Çok örnekli bir dağıtımda "hangi
-örnek?" sorusu cevapsız. Rapora süreç/örnek etiketi eklenmeli.
+Readiness üstünde 5 sn TTL önbellek (`HEALTH_TTL_S`), `?fresh=1` atlar.
+Önbellekten dönen gövde bunu saklamaz — `summary.onbellek` yaşını yazar.
 
 ---
 
-## 8. Bilinçli olarak yapılmayacaklar
+## 4. Süre eşikleri
+
+Her `CheckSpec` bir `butce_ms` taşır (ölçülen ısınmış sürenin ~3 katı).
+Aşım kontrolü **düşürmez**: değişmez hâlâ geçerli, yalnızca beklenenden
+pahalı. `ok` kalır, rapor `degraded` işaretlenir, süre çubuğu ambere döner
+ve detaya `süre 50 ms > bütçe 10 ms` yazılır.
+
+**Isınma ayrımı zorunluydu:** sürecin ilk raporu numpy/scipy import'unu ve
+veri setinin ilk okunmasını da üstlenir (~2,1 sn ↔ ~520 ms). İlk koşuda
+bütçe uygulanmaz ve rapor bunu `summary.isinma` ile söyler; sayfa da
+"bu, sürecin ilk koşusu" bandını gösterir.
+
+---
+
+## 5. Zaman serisi ve alarm
+
+`spor_toto/health_history.py` — süreç ömürlü halka tampon (200 kayıt,
+`HEALTH_HISTORY_LIMIT`) ve `GET /api/health/history`.
+
+Cevapladığı soru: **"ne zamandan beri kırmızı?"** Özet bloğu durumu, o
+durumda geçen koşu sayısını, değişim zamanını ve son sağlıklı koşuyu verir.
+
+İki şey seriye **girmez**: kısmi koşular (`?only=`) ve önbellekten dönen
+cevaplar. Birincisi "5/5 geçti" ile "22/22 geçti"yi yan yana koyardı,
+ikincisi aynı ölçümü iki kez sayardı.
+
+**Alarm** yalnızca durum DEĞİŞİMİNDE tetiklenir (HEALTHY↔DEGRADED↔UNHEALTHY),
+arka planda POST atar ve her hatasını yutar. Varsayılan kapalıdır
+(`HEALTH_ALARM_URL`); kapalıyken değişim yine log'a yazılır. Her kırmızı
+koşuda bildirim göndermek bildirimleri okunmaz yapardı — okunmayan alarm,
+alarmsızlıktan kötüdür: korunduğunu sanırsın.
+
+---
+
+## 6. Kullanıcının kendi kuponu
+
+`health.kupon_denetle()` + `POST /api/health/kupon` + sayfadaki *"Kendi
+kuponunu doğrula"* bloğu. Sayfanın en kolay yanlış anlaşılan sınırını
+kapatır: HEALTHY, kullanıcının kendi kuponunun doğrulandığı anlamına
+gelmiyordu.
+
+Verilen kupon aynı kombinatoryal zorunluluklardan geçer: kaplama garantisi
+(modun ilan ettiği söze göre), mesafe muhasebesi, satır/kolon muhasebesi,
+alt sınır ve olasılık tutarlılığı.
+
+İki kasıtlı karar: sonuç kayıtlı raporun tablosuna **karışmaz** (ayrı blok,
+ayrı uyarı metni) ve düşmesi **503 üretmez** — bir kuponun değişmezi
+servisin sağlık durumu değildir; 503 izlemeyi yanlış yere baktırırdı.
+
+---
+
+## 7. Arayüz ve motor tarafındaki diğer düzeltmeler
+
+- **Otomatik yenilemede iptal**, **hata koşusunun geçmişe düşmesi**, **sekme
+  gizliyken duraklatma** (önceki turdan).
+- **Durum adreste** (`?only=`), **sekme başlığında** (`⚠`/`✗`), durum kartı
+  `aria-live`, düşenler özetinden karta atlama, "en yavaş kontrol"
+  istatistiği, önbellek rozeti.
+- **Sunucu geçmişi kartı** ve **kupon denetimi bloğu** (bu tur).
+- **Örnek kimliği** durum kartında: `örnek vm#31100`.
+- **`auto` modu** artık ILP'ye ayrı bütçe veriyor (`auto_ilp_limit`, 3 sn):
+  256 noktalık kuponda **11,3 sn → 3,5 sn**, aynı 32 kolon. Kaybedilen tek
+  şey "optimallik kanıtlandı" bayrağı; kanıt isteyen `--mode exact` kullanır.
+  CLI'de `auto` tam bütçeyle koşmaya devam eder — kullanıcı komutu bilerek
+  çalıştırmış ve karşısında oturuyordur.
+- **Düşen kontrol kırılma yerini yazıyor**: `AssertionError: … @ health.py:246`.
+
+---
+
+## 8. Testler ve doğrulama
+
+**79 test** (tur başı 23). Tüm süit: **664 test**.
+
+| Dosya | Konu |
+|---|---|
+| `tests/test_health.py` | Rapor şekli, kategori bütünlüğü, `only`, kırılma yeri, **süre bütçeleri**, **kupon sınıfları**, **örnek kimliği**, **kupon denetimi** |
+| `tests/test_api_health.py` | Gövde sözleşmesi, liveness/readiness, önbellek, **zaman serisi**, **kupon ucu** |
+| `tests/test_meta.py` | Envanter tutarlılığı, mod çalıştırıcıları, her modun `/api/solve` ile koşabilmesi |
+| `tests/test_health_history.py` | Halka tampon, "ne zamandan beri", **alarmın yalnızca değişimde tetiklenmesi** |
+
+Playwright ile sürüldü: sağlıklı durum (açık/koyu tema), **bilerek kırılmış
+durum** (kritik kırmızı + bilgi amaçlı amber, `/api/health` 503 iken
+`/health` 200), **bütçe aşımı** (DEGRADED + amber çubuk + bant), ağ kesikken
+"ulaşılamadı" kaydı, sunucu geçmişi kartı, kupon denetimi (geçerli ve
+geçersiz kupon), kısmi koşu ve paylaşılan `?only=` bağlantısı. Kırma sonrası
+kod geri alındı. `tsc --noEmit`, `npm run check` ve `next build` temiz.
+
+---
+
+## 9. Yol haritası
+
+Kapsam boşluğu kalmadı; açık maddeler **ölçek** ve **kalıcılık** ile ilgili.
+
+| # | Adım | Çözdüğü sorun | Efor |
+|---|---|---|---|
+| 9.1 | **Kalıcı zaman serisi** — halka tampon yerine diske/DB'ye | Süreç yeniden başlayınca geçmiş sıfırlanıyor; "geçen hafta ne oldu?" cevapsız | M |
+| 9.2 | **Örnekler arası birleştirme** | Her worker kendi tamponunu ve önbelleğini tutuyor | L |
+| 9.3 | **Süre bantlarının kendini ayarlaması** | Bant elle yazılıyor; makine yavaşlarsa toplu yanlış alarm | M |
+| 9.4 | **Kupon denetiminde mod matrisi** | Bugün kullanıcının kuponu tek modda denetleniyor | S |
+| 9.5 | **Alarm gövdesinin biçimlenmesi** (Slack/webhook şablonu) | Bugün ham JSON gidiyor | S |
+
+### 9.1 Önerilen sıradaki iki iş
+
+1. **9.1 + 9.2 birlikte** — kalıcı zaman serisi ve örnekler arası birleştirme.
+   Ayrı ayrı yapılırsa ikinci iş birincinin şemasını yeniden yazdırır: "hangi
+   örnek, ne zaman, ne ölçtü" aynı kaydın üç alanıdır.
+2. **9.4** — kupon denetimini mod matrisine açmak. Birkaç saatlik iş ve
+   kullanıcının doğrudan gördüğü yüzeyi genişletir; `kupon_denetle()` zaten
+   mod parametresi alıyor, eksik olan yalnızca arayüz ve matris koşusu.
+
+**9.3 sırası sonra:** süre bantlarının kendini ayarlaması kalıcı ölçüm
+gerektirir, yani 9.1 olmadan yapılamaz.
+
+---
+
+## 10. Bilinçli olarak yapılmayacaklar
 
 | Yapılmayacak | Neden |
 |---|---|
@@ -404,43 +228,33 @@ Rapor, çağrıyı karşılayan süreci anlatıyor. Çok örnekli bir dağıtım
 | Sağlığı metrik panosuna dönüştürmek | Bu bir APM işidir; sayfa vaadin kanıtıdır |
 | Tahmin isabetini ölçen kontrol | Araç tahmin etmez; bu sayfa da etmez |
 | Kontrol mantığının ikinci kopyası | Biri güncellenip diğeri unutulduğu gün ikisi de değersizleşir |
+| Liveness'ın değişmez koşması | Probe'u tam rapora bağlamak, sağlıklı konteyneri öldürtür |
+| Her kırmızı koşuda alarm | Okunmayan alarm, alarmsızlıktan kötüdür |
 
 ---
 
-## 9. Önerilen sıradaki üç iş
-
-1. **7.1** — tek gerçek dağıtım riski; geri kalanların hepsinden önce gelir.
-2. **7.2 + 7.3** — sağlığın kapsamını ürünün asıl kırılgan yüzeyine (meta
-   sözleşmesi ve ilan edilen modlar) genişletir. Kapsam kazancı en yüksek,
-   maliyeti orta.
-3. **7.9 + 7.6 + 7.7** — üçü birlikte yarım günlük iş, teşhis kalitesini
-   belirgin yükseltir.
-
-**7.10** ve **7.11** güçlü ama sırası sonra: ikisi de kalıcı durum getiriyor,
-yani önce 7.1'deki önbellek/probe kararının netleşmesi gerekiyor.
-
----
-
-## 10. Bugünkü referans değerler
-
-Bu tablo bir sözleşme değil, karşılaştırma tabanıdır.
+## 11. Bugünkü referans değerler
 
 | Ölçü | Değer |
 |---|---|
-| Kayıtlı kontrol | 16 |
+| Kayıtlı kontrol | 22 |
 | Kategori | 6 |
 | Kritik olmayan kontrol | 1 (`scipy_flag`) |
-| Tam rapor süresi (ısınmış) | ~340 ms |
-| Tam rapor süresi (ilk koşu) | ~615 ms |
-| En yavaş kontrol | `monte_carlo` (~122 ms, 5.000 örnek) |
-| Sağlık katmanının testi | 23 |
-| Tüm süit | 564 test, ~65 sn |
-| Örnek kupon | `1,10,1,12,0,10,2,10,1,12,02,1,10,2,10` |
-| Örnek kuponun uzayı | 8 çift → 256 nokta, alt sınır 29 kolon |
+| Tam rapor süresi (ısınmış) | ~520 ms |
+| Tam rapor süresi (ilk koşu) | ~2,1 sn |
+| Liveness (`/health`) | ~2 ms |
+| Readiness önbelleği | 5 sn TTL, `?fresh=1` atlar |
+| Zaman serisi tamponu | 200 koşu, süreç ömürlü |
+| Alarm | kapalı (`HEALTH_ALARM_URL` ile açılır) |
+| En yavaş kontrol | `mod_envanteri` (~129 ms, 7 mod) |
+| `auto` modu (256 nokta) | ~3,5 sn (önce ~11,3 sn) |
+| Sağlık katmanının testi | 79 |
+| Tüm süit | 664 test, ~84 sn |
+| Kupon sınıfları | 8 çift/256 · 7 çift+8 banko/128 · 9 çift/512 · üçlü içeren/768 |
 
 ---
 
-## 11. İlgili belgeler
+## 12. İlgili belgeler
 
 | Belge | İçerik |
 |---|---|

@@ -3,8 +3,12 @@
 import * as React from "react";
 import { Check, Copy, ListFilter, RefreshCw } from "lucide-react";
 
-import { getHealth } from "@/lib/api";
-import type { HealthReport } from "@/lib/types";
+import { denetleKupon, getHealth, getHealthHistory } from "@/lib/api";
+import type {
+  HealthHistoryResponse,
+  HealthReport,
+  KuponDenetimSonuc,
+} from "@/lib/types";
 import { cn, panoyaKopyala, sure } from "@/lib/utils";
 import {
   Badge,
@@ -22,9 +26,12 @@ import {
   type GecmisKaydi,
   GecmisSeridi,
   KategoriKarti,
+  KuponDenetimi,
   OrtamKarti,
+  SunucuGecmisi,
   durumu,
   goreliZaman,
+  kategoriAnkraji,
 } from "@/components/saglik/parts";
 
 /** Otomatik yenileme aralıkları (saniye; 0 = kapalı). */
@@ -37,6 +44,32 @@ const ARALIK_ETIKET: Record<number, string> = {
 };
 
 const GECMIS_SINIRI = 8;
+
+/** Sekme başlığı: sayfa arka planda açık tutulmak için var (§7.15). */
+const BASLIK = "Sistem sağlığı";
+const BASLIK_ISARETI: Record<string, string> = {
+  saglikli: "",
+  kisitli: "⚠ ",
+  bozuk: "✗ ",
+};
+
+/** `?only=` adresten okunur; düşen bir kategorinin bağlantısı paylaşılabilir
+ * olsun ve yenilemede kaybolmasın diye (§7.14). */
+function adrestekiOnly(): string | null {
+  if (typeof window === "undefined") return null;
+  const v = new URLSearchParams(window.location.search).get("only");
+  return v && v.trim() ? v.trim() : null;
+}
+
+function adresiGuncelle(only: string | null) {
+  if (typeof window === "undefined") return;
+  const { pathname, search } = window.location;
+  const p = new URLSearchParams(search);
+  if (only) p.set("only", only);
+  else p.delete("only");
+  const yeni = p.toString() ? `${pathname}?${p.toString()}` : pathname;
+  if (yeni !== pathname + search) window.history.replaceState(null, "", yeni);
+}
 
 export default function SaglikPage() {
   const [rapor, setRapor] = React.useState<HealthReport | null>(null);
@@ -56,53 +89,165 @@ export default function SaglikPage() {
     return () => clearInterval(t);
   }, []);
 
+  // Sunucu tarafi gecmis: oturum icinden farkli olarak sekme kapansa da
+  // kalir ve "ne zamandan beri kirmizi?" sorusunu cevaplar.
+  const [sunucuGecmisi, setSunucuGecmisi] =
+    React.useState<HealthHistoryResponse | null>(null);
+
+  // Kullanicinin kendi kuponu — kayitli rapordan AYRI katman.
+  const [kuponPicks, setKuponPicks] = React.useState("");
+  const [kuponSonuc, setKuponSonuc] = React.useState<KuponDenetimSonuc | null>(null);
+  const [kuponHata, setKuponHata] = React.useState<string | null>(null);
+  const [kuponCalisiyor, setKuponCalisiyor] = React.useState(false);
+
   const sayacRef = React.useRef(0);
+  // Ucan istek. Her yeni cagri oncekini iptal eder: kismi bir kosu ile arka
+  // plandaki tam kosu carpisirsa cevaplar GELIS sirasina gore yazilirdi ve
+  // ekranda gonderim sirasi degil, sansin sirasi kalirdi.
+  const istekRef = React.useRef<AbortController | null>(null);
+
+  const gecmiseYaz = React.useCallback((kayit: Omit<GecmisKaydi, "id">) => {
+    setGecmis((onceki) =>
+      [{ id: ++sayacRef.current, ...kayit }, ...onceki].slice(0, GECMIS_SINIRI),
+    );
+  }, []);
 
   const yukle = React.useCallback(
-    async (only?: string | null, signal?: AbortSignal) => {
+    async (only?: string | null, opt: { fresh?: boolean } = {}) => {
+      istekRef.current?.abort();
+      const ac = new AbortController();
+      istekRef.current = ac;
+
       setYukleniyor(true);
       setHata(null);
       try {
-        const r = await getHealth(only, signal);
+        const r = await getHealth(only, ac.signal, opt.fresh);
         setRapor(r);
-        setGecmis((onceki) =>
-          [
-            {
-              id: ++sayacRef.current,
-              zaman: r.timestamp,
-              ok: r.ok,
-              degraded: r.degraded,
-              passed: r.passed,
-              total: r.total,
-              duration_ms: r.duration_ms,
-              kismi: Boolean(r.summary.kismi),
-            },
-            ...onceki,
-          ].slice(0, GECMIS_SINIRI),
-        );
+        adresiGuncelle(r.summary.kismi ? (r.summary.only ?? null) : null);
+        // Sunucu gecmisi rapordan SONRA cekilir: az onceki kosu da icinde
+        // olsun. Basarisizligi raporu gostermeyi engellemez — gecmis bir
+        // konfor, rapor ise sayfanin kendisidir.
+        if (!r.summary.kismi) {
+          getHealthHistory(50, ac.signal)
+            .then(setSunucuGecmisi)
+            .catch(() => undefined);
+        }
+        gecmiseYaz({
+          zaman: r.timestamp,
+          ok: r.ok,
+          degraded: r.degraded,
+          passed: r.passed,
+          total: r.total,
+          duration_ms: r.duration_ms,
+          kismi: Boolean(r.summary.kismi),
+          onbellekten: Boolean(r.summary.onbellek?.cached),
+        });
       } catch (e) {
         if (e instanceof DOMException && e.name === "AbortError") return;
-        setHata(e instanceof Error ? e.message : String(e));
+        const mesaj = e instanceof Error ? e.message : String(e);
+        setHata(mesaj);
+        // Ulasilamayan bir kosu da bir kayittir — hatta zaman cizelgesinde
+        // en cok gormek isteyecegin olay tam odur. Sessizce dusurmek,
+        // gecmisi "yalnizca iyi gunlerin" kaydina cevirirdi.
+        gecmiseYaz({
+          zaman: new Date().toISOString(),
+          ok: false,
+          degraded: false,
+          passed: 0,
+          total: 0,
+          duration_ms: 0,
+          kismi: false,
+          onbellekten: false,
+          hata: mesaj,
+        });
       } finally {
-        setYukleniyor(false);
+        if (istekRef.current === ac) {
+          istekRef.current = null;
+          setYukleniyor(false);
+        }
       }
     },
-    [],
+    [gecmiseYaz],
   );
 
+  // Ilk kosu adresteki `?only=` ile baslar: paylasilan bir baglanti dogrudan
+  // o kapsami acar.
   React.useEffect(() => {
-    const ac = new AbortController();
-    void yukle(null, ac.signal);
-    return () => ac.abort();
+    void yukle(adrestekiOnly());
+    return () => istekRef.current?.abort();
   }, [yukle]);
 
   // Otomatik yenileme her zaman TAM raporu calistirir: kismi bir kosuyu
   // arka planda tekrarlamak yaniltici olurdu.
+  //
+  // Sekme gizliyken duraklar (§7.8): arka plandaki bir sekme saatlerce
+  // kosup gecmis seridini anlamsiz kayitlarla doldururdu. Sekme geri
+  // geldiginde bir kez kosar, boylece ekrandaki rapor bayat kalmaz.
   React.useEffect(() => {
     if (!aralik) return;
-    const t = setInterval(() => void yukle(null), aralik * 1000);
-    return () => clearInterval(t);
+
+    let t: ReturnType<typeof setInterval> | null = null;
+    const durdur = () => {
+      if (t) clearInterval(t);
+      t = null;
+    };
+    const basla = () => {
+      durdur();
+      t = setInterval(() => void yukle(null), aralik * 1000);
+    };
+
+    const gorunurlukDegisti = () => {
+      if (document.visibilityState === "visible") {
+        void yukle(null);
+        basla();
+      } else {
+        durdur();
+      }
+    };
+
+    if (document.visibilityState === "visible") basla();
+    document.addEventListener("visibilitychange", gorunurlukDegisti);
+    return () => {
+      durdur();
+      document.removeEventListener("visibilitychange", gorunurlukDegisti);
+    };
   }, [aralik, yukle]);
+
+  const durum = rapor ? durumu(rapor) : null;
+
+  // Sekme basligi durumu tasir: alarm altyapisi gerektirmeyen en yakin
+  // "haber verme". Sayfa arka planda acik tutulmak icin var.
+  React.useEffect(() => {
+    document.title = hata
+      ? `✗ ${BASLIK}`
+      : `${durum ? BASLIK_ISARETI[durum] : ""}${BASLIK}`;
+    return () => {
+      document.title = BASLIK;
+    };
+  }, [durum, hata]);
+
+  const kuponuDenetle = React.useCallback(async () => {
+    const picks = kuponPicks.trim();
+    if (!picks) return;
+    setKuponCalisiyor(true);
+    setKuponHata(null);
+    try {
+      setKuponSonuc(await denetleKupon({ picks }));
+    } catch (e) {
+      setKuponSonuc(null);
+      setKuponHata(e instanceof Error ? e.message : String(e));
+    } finally {
+      setKuponCalisiyor(false);
+    }
+  }, [kuponPicks]);
+
+  // Kutu bos baslamasin: rapordaki ornek kupon, denemek icin hazir bir
+  // baslangictir ve "hangi bicimde yazacagim?" sorusunu da cevaplar.
+  React.useEffect(() => {
+    if (!kuponPicks && rapor?.summary.ornek_kupon) {
+      setKuponPicks(rapor.summary.ornek_kupon);
+    }
+  }, [rapor, kuponPicks]);
 
   const kopyala = React.useCallback(async () => {
     if (!rapor) return;
@@ -115,7 +260,6 @@ export default function SaglikPage() {
     }
   }, [rapor]);
 
-  const durum = rapor ? durumu(rapor) : null;
   const ton = durum ? DURUM_TONU[durum] : "neutral";
   const dusenler = React.useMemo(
     () => (rapor ? rapor.checks.filter((c) => !c.ok) : []),
@@ -123,6 +267,10 @@ export default function SaglikPage() {
   );
   const enUzunMs = React.useMemo(
     () => (rapor ? Math.max(...rapor.checks.map((c) => c.duration_ms), 0) : 0),
+    [rapor],
+  );
+  const yavaslar = React.useMemo(
+    () => (rapor ? rapor.checks.filter((c) => c.ok && c.yavas).map((c) => c.name) : []),
     [rapor],
   );
 
@@ -136,6 +284,8 @@ export default function SaglikPage() {
         : [],
     [rapor, yalnizDusenler],
   );
+
+  const onbellek = rapor?.summary.onbellek;
 
   return (
     <div className="space-y-6">
@@ -180,7 +330,7 @@ export default function SaglikPage() {
           <Button
             tip="outline"
             boyut="sm"
-            onClick={() => void yukle(null)}
+            onClick={() => void yukle(null, { fresh: true })}
             disabled={yukleniyor}
           >
             <RefreshCw size={14} className={cn(yukleniyor && "animate-spin")} />
@@ -213,7 +363,15 @@ export default function SaglikPage() {
               durum === "bozuk" && "border-danger/40",
             )}
           >
-            <CardBody className="flex flex-wrap items-center gap-5">
+            {/*
+              Otomatik yenilemede HEALTHY -> UNHEALTHY gecisi ekran okuyucuya
+              sessizdi; durum karti artik canli bolge.
+            */}
+            <CardBody
+              aria-live="polite"
+              aria-atomic="true"
+              className="flex flex-wrap items-center gap-5"
+            >
               <span
                 className={cn(
                   "grid h-14 w-14 shrink-0 place-items-center rounded-2xl",
@@ -238,9 +396,28 @@ export default function SaglikPage() {
                   <Badge ton={rapor.summary.has_scipy ? "primary" : "warning"}>
                     scipy {rapor.summary.has_scipy ? "var" : "yok"}
                   </Badge>
+                  {onbellek?.cached ? (
+                    <Badge
+                      ton="neutral"
+                      title={`Sunucudaki ${onbellek.ttl_s} sn'lik önbellekten geldi; ölçüm ${Math.round(
+                        onbellek.yas_ms,
+                      )} ms önce yapıldı. “Yeniden çalıştır” önbelleği atlar.`}
+                    >
+                      önbellekten
+                    </Badge>
+                  ) : null}
                 </div>
                 <p className="tnum mt-1 text-[12px] text-muted-foreground">
                   {goreliZaman(rapor.timestamp, simdi)}
+                  {rapor.summary.ornek ? (
+                    <>
+                      {" · örnek "}
+                      <span className="font-mono">
+                        {rapor.summary.ornek.etiket ??
+                          `${rapor.summary.ornek.host ?? "?"}#${rapor.summary.ornek.pid}`}
+                      </span>
+                    </>
+                  ) : null}
                   {rapor.summary.slowest ? (
                     <>
                       {" · en yavaş: "}
@@ -266,7 +443,7 @@ export default function SaglikPage() {
               {rapor.total} tanesi çalıştı.{" "}
               <button
                 type="button"
-                onClick={() => void yukle(null)}
+                onClick={() => void yukle(null, { fresh: true })}
                 className="font-semibold underline underline-offset-2"
               >
                 Tam raporu çalıştır
@@ -282,7 +459,14 @@ export default function SaglikPage() {
               <ul className="space-y-1">
                 {dusenler.map((c) => (
                   <li key={c.name}>
-                    <span className="font-mono font-semibold">{c.name}</span>
+                    {/* Uzun rapordaki ilgili karta atlar: özetten teşhise
+                        giden yol tek tık olmalı. */}
+                    <a
+                      href={`#${kategoriAnkraji(c.category)}`}
+                      className="font-mono font-semibold underline decoration-dotted underline-offset-2"
+                    >
+                      {c.name}
+                    </a>
                     {!c.critical ? " (bilgi) " : " "}— {c.aciklama}
                   </li>
                 ))}
@@ -290,10 +474,32 @@ export default function SaglikPage() {
             </Callout>
           ) : null}
 
-          {durum === "kisitli" ? (
+          {yavaslar.length ? (
+            <Callout
+              ton="warning"
+              baslik={`${yavaslar.length} kontrol süre bütçesini aştı`}
+            >
+              Bu kontroller <strong>düşmedi</strong>; değişmezler hâlâ geçerli,
+              yalnızca beklenenden pahalıya koştular:{" "}
+              <span className="font-mono">{yavaslar.join(", ")}</span>. Performans
+              gerilemesi de bir gerilemedir — ama servisi durdurmaz.
+              {rapor.summary.isinma ? null : null}
+            </Callout>
+          ) : null}
+
+          {durum === "kisitli" && !yavaslar.length ? (
             <Callout ton="warning" baslik="Yetenek eksik, servis ayakta">
               Kritik değişmezlerin tamamı geçti; düşenler bilgi amaçlı
               kontroller. Motor çalışır, yalnızca bir yeteneği devre dışıdır.
+            </Callout>
+          ) : null}
+
+          {rapor.summary.isinma ? (
+            <Callout ton="primary" baslik="Bu, sürecin ilk koşusu">
+              İlk rapor numpy/scipy ilk import'unu ve veri setinin ilk
+              okunmasını da üstlenir; süreleri sonraki koşularla
+              karşılaştırmayın. Süre bütçeleri bu koşuda <strong>uygulanmaz</strong>,
+              yoksa her soğuk başlangıç yanlış alarm üretirdi.
             </Callout>
           ) : null}
 
@@ -311,7 +517,21 @@ export default function SaglikPage() {
               deger={rapor.failed}
               ton={rapor.failed ? "danger" : "neutral"}
             />
-            <Stat etiket="Kategori" deger={rapor.categories.length} />
+            {/* "Kategori" sayısı hiç değişmiyordu; yerine raporu asıl
+                yavaşlatan kontrol — performans gerilemesi de bir gerilemedir. */}
+            <Stat
+              etiket="En yavaş kontrol"
+              deger={
+                <span className="break-all font-mono text-[15px]">
+                  {rapor.summary.slowest?.name ?? "—"}
+                </span>
+              }
+              alt={
+                rapor.summary.slowest
+                  ? sure(rapor.summary.slowest.duration_ms)
+                  : undefined
+              }
+            />
             <Stat etiket="Toplam süre" deger={sure(rapor.duration_ms)} />
           </div>
 
@@ -347,12 +567,21 @@ export default function SaglikPage() {
                 checks={gorunenChecks.filter((c) => c.category === kat.id)}
                 enUzunMs={enUzunMs}
                 calisiyor={yukleniyor}
-                onCalistir={(id) => void yukle(id)}
+                onCalistir={(id) => void yukle(id, { fresh: true })}
               />
             ))}
           </div>
 
           <GecmisSeridi gecmis={gecmis} simdi={simdi} />
+          <SunucuGecmisi gecmis={sunucuGecmisi} simdi={simdi} />
+          <KuponDenetimi
+            sonuc={kuponSonuc}
+            hata={kuponHata}
+            calisiyor={kuponCalisiyor}
+            picks={kuponPicks}
+            onPicks={setKuponPicks}
+            onCalistir={() => void kuponuDenetle()}
+          />
           <OrtamKarti rapor={rapor} />
         </>
       ) : null}

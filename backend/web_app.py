@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import os
+import threading
 import time
 from datetime import datetime, timezone
 from functools import lru_cache
@@ -13,11 +14,18 @@ from urllib.parse import urlparse
 from flask import Flask, jsonify, request
 
 from spor_toto.core import (
-    Encoder, Fix16Hatasi, HAS_SCIPY, butce_danismani, dogrula_kaplama,
-    exact_cover, exact_max_coverage, greedy_full, ball,
-    merge_rows, parse_picks, row_cost, solve_fix16,
-    solve_by_blocks, solve_heuristic, distance_layers, olasilik_raporu,
+    Encoder, Fix16Hatasi, HAS_SCIPY, dogrula_kaplama,
+    merge_rows, parse_picks, row_cost, distance_layers, olasilik_raporu,
     SEMBOLLER,
+)
+from spor_toto.engines import (
+    run_auto, run_block, run_butce, run_exact, run_fix16, run_heuristic,
+    run_maxcov,
+)
+from spor_toto.meta import (
+    ENGINE_DEFAULTS, FIRE_MAX_MALIYET, FIRE_MAX_VARSAYILAN, LIMITS,
+    MATCH_COUNT, MC_MAX, MC_MIN, MC_WEB_SAMPLES, MODE_IDS, MODES,
+    meta_payload,
 )
 from spor_toto.report import basliklar
 from spor_toto.analysis import monte_carlo_report, match_error_frequency
@@ -26,14 +34,14 @@ from spor_toto.bayes import (
     STRENGTH_PRESETS, bayes_summary, bayes_update_matches, recommend_strengths,
 )
 from spor_toto.markov import markov_report
-from spor_toto.health import check_envanteri, run_health
-from spor_toto.history import (
-    history_analytics, history_summary, history_week_detail, history_weeks,
+from spor_toto import health_history as saglik_gecmisi
+from spor_toto.health import (
+    check_envanteri, kupon_denetle, ornek_kimligi, run_health,
 )
-from spor_toto.odds import season_1x2_summary, week_1x2
-from spor_toto.backtest import (
-    BANKO_IZGARA, UCLU_IZGARA, VARSAYILAN_BANKO, VARSAYILAN_UCLU, backtest,
-)
+from spor_toto.history import history_week_detail
+from spor_toto.odds import week_1x2
+from spor_toto.backtest import VARSAYILAN_BANKO, VARSAYILAN_UCLU
+from spor_toto.payloads import backtest_payload, stats_payload
 from spor_toto import __version__
 
 logger = logging.getLogger(__name__)
@@ -41,54 +49,8 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "spor-toto-api")
 
-MATCH_COUNT = 15
-MC_WEB_SAMPLES = 80_000
-MC_MIN, MC_MAX = 1_000, 200_000
-
-# Fire analizi senkron istek yolunda calisiyor. Olculen hiz ~24 M
-# maliyet-birimi/sn (maliyet = ayrik senaryo x kolon): 7,4 M -> 311 ms.
-# 20 M esigi ~0,85 sn'ye denk gelir. Uclu iceren gercekci bir kupon
-# 440 M cikar ve bilerek atlanir.
-FIRE_MAX_MALIYET = 20_000_000
-FIRE_MAX_VARSAYILAN = 2
-
-# Motorun tum modlari. Bu liste /api/meta ile disari verilir; frontend
-# mod listesini sabit kodlamaz, tek kaynak burasidir.
-MODES: List[Dict[str, Any]] = [
-    {"id": "fix16", "label": "Sabit 16 satır", "garanti": True,
-     "needs_budget": False, "needs_scipy": False,
-     "aciklama": "Her zaman 16 kupon satırı. En az 7 çifte zorunlu. "
-                 "Hamming(7,4) tabanlı, kanıtlanmış optimal."},
-    {"id": "auto", "label": "Otomatik", "garanti": True,
-     "needs_budget": False, "needs_scipy": False,
-     "aciklama": "En ucuz çözümü arar; satır sayısı değişkendir."},
-    {"id": "exact", "label": "Kesin çözücü (ILP)", "garanti": True,
-     "needs_budget": False, "needs_scipy": True,
-     "aciklama": "ILP ile kanıtlanmış optimal. Yalnızca küçük uzaylarda."},
-    {"id": "block", "label": "Blok ayrıştırma", "garanti": True,
-     "needs_budget": False, "needs_scipy": False,
-     "aciklama": "r=1 bloğu + tam sistem ayrıştırması; cebirsel bloklar."},
-    {"id": "heuristic", "label": "Sezgisel", "garanti": True,
-     "needs_budget": False, "needs_scipy": False,
-     "aciklama": "Açgözlü + local search. Büyük uzaylar için."},
-    {"id": "butce", "label": "Bütçe danışmanı", "garanti": True,
-     "needs_budget": True, "needs_scipy": False,
-     "aciklama": "Elimde N kolon var, hangi maçı kısmalıyım?"},
-    {"id": "maxcov", "label": "Maksimum kapsama", "garanti": False,
-     "needs_budget": True, "needs_scipy": False,
-     "aciklama": "Sabit bütçeyle maksimum kapsama. GARANTİ VERMEZ."},
-]
-MODE_IDS = {m["id"] for m in MODES}
-
-# CLI ile birebir ayni motor varsayilanlari (bkz. spor_toto/cli.py).
-ENGINE_DEFAULTS: Dict[str, Any] = {
-    "trials": 5,
-    "ls_iters": 30_000,
-    "seed": 42,
-    "time_limit": 60.0,
-    "block_limit": 256,
-    "exact_limit": 512,
-}
+# Sabitler ve mod envanteri artik spor_toto.meta icinde: saglik katmani da
+# ayni kaynaktan okuyor (bkz. health._check_meta_sozlesmesi).
 
 
 def _parse_prob_value(raw: Any) -> float:
@@ -159,14 +121,23 @@ def _sayi(data: dict, key: str, default: Any, cast: Callable = float,
 
 
 def _engine_params(data: dict) -> Dict[str, Any]:
-    """CLI'de acik olan motor ayarlari; API'de sabit kodlanmislardi."""
+    """CLI'de acik olan motor ayarlari; API'de sabit kodlanmislardi.
+
+    Sinirlar `meta.LIMITS`'ten okunur: arayuzun gordugu bant ile burada
+    uygulanan bant ayrisirsa kullanici sessizce kirpilan bir deger gonderir.
+    """
+    def _bant(ad: str, tip):
+        lim = LIMITS[ad]
+        return _sayi(data, ad, ENGINE_DEFAULTS[ad], tip, lim["min"], lim["max"])
+
     return {
-        "trials": _sayi(data, "trials", ENGINE_DEFAULTS["trials"], int, 1, 50),
-        "ls_iters": _sayi(data, "ls_iters", ENGINE_DEFAULTS["ls_iters"], int, 100, 500_000),
+        "trials": _bant("trials", int),
+        "ls_iters": _bant("ls_iters", int),
         "seed": _sayi(data, "seed", ENGINE_DEFAULTS["seed"], int, 0, 2**31 - 1),
-        "time_limit": _sayi(data, "time_limit", ENGINE_DEFAULTS["time_limit"], float, 1.0, 300.0),
-        "block_limit": _sayi(data, "block_limit", ENGINE_DEFAULTS["block_limit"], int, 2, 6561),
-        "exact_limit": _sayi(data, "exact_limit", ENGINE_DEFAULTS["exact_limit"], int, 2, 4096),
+        "time_limit": _bant("time_limit", float),
+        "block_limit": _bant("block_limit", int),
+        "exact_limit": _bant("exact_limit", int),
+        "auto_ilp_limit": _bant("auto_ilp_limit", float),
     }
 
 
@@ -204,94 +175,6 @@ def _plan_to_dict(plan, index: int, secili: bool) -> Dict[str, Any]:
                        if plan.p_kume_ici is not None else None),
         "secili": secili,
     }
-
-
-def _run_fix16(enc: Encoder, variant: int = 0) -> Dict[str, Any]:
-    cols, aciklama = solve_fix16(enc, variant=variant)
-    notlar = [aciklama]
-    if variant:
-        notlar.append(f"Varyant {variant}")
-    return {"cols": cols, "baslik": f"Sabit 16 satır – {aciklama}", "notlar": notlar}
-
-
-def _run_auto(enc: Encoder, eng: Dict[str, Any]) -> Dict[str, Any]:
-    aday = []
-    r = solve_by_blocks(enc, max_block_space=eng["block_limit"],
-                        time_limit=min(30.0, eng["time_limit"]))
-    if r:
-        aday.append((r[0], f"Blok ayrıştırma ({r[1]})", False))
-    if enc.space_size() <= eng["exact_limit"] and HAS_SCIPY:
-        cols, kanit = exact_cover(enc.alphabet_sizes,
-                                  time_limit=min(30.0, eng["time_limit"]))
-        if cols:
-            aday.append((cols, "Kesin çözücü (ILP)", kanit))
-    if not any(a[2] for a in aday):
-        cols_h = solve_heuristic(enc, trials=eng["trials"],
-                                 ls_iters=min(10_000, eng["ls_iters"]),
-                                 seed=eng["seed"])
-        aday.append((cols_h, "Heuristik (açgözlü + local search)", False))
-    if not aday:
-        raise RuntimeError("Hiçbir motor sonuç üretemedi.")
-    en_az = min(len(a[0]) for a in aday)
-    esitler = [a for a in aday if len(a[0]) == en_az]
-    cols, baslik, _ = min(esitler, key=lambda a: len(merge_rows(a[0])))
-    return {"cols": cols, "baslik": baslik, "notlar": []}
-
-
-def _run_heuristic(enc: Encoder, eng: Dict[str, Any]) -> Dict[str, Any]:
-    cols = solve_heuristic(enc, trials=eng["trials"], ls_iters=eng["ls_iters"],
-                           seed=eng["seed"])
-    return {"cols": cols, "baslik": "Sezgisel (açgözlü + local search)",
-            "notlar": [f"trials={eng['trials']} · ls_iters={eng['ls_iters']} "
-                       f"· seed={eng['seed']}"]}
-
-
-def _run_exact(enc: Encoder, eng: Dict[str, Any]) -> Dict[str, Any]:
-    """Kesin cozucu (ILP). CLI'de vardi, API'de hic acilmamisti."""
-    if not HAS_SCIPY:
-        raise ValueError(
-            "Kesin çözücü (ILP) scipy gerektirir; bu kurulumda scipy yok. "
-            "Bunun yerine 'block' veya 'heuristic' modunu kullanın.")
-    cols, kanit = exact_cover(enc.alphabet_sizes, time_limit=eng["time_limit"])
-    if cols is None:
-        raise ValueError(
-            f"ILP çözüm üretemedi (uzay {enc.space_size()}, zaman sınırı "
-            f"{eng['time_limit']:.0f} sn). Uzayı küçültün ya da 'auto' deneyin.")
-    return {
-        "cols": cols,
-        "baslik": "Kesin çözücü (ILP)",
-        "notlar": [f"Optimallik: {'KANITLANDI' if kanit else 'kanıtlanmadı (zaman sınırı)'}"],
-    }
-
-
-def _run_block(enc: Encoder, eng: Dict[str, Any]) -> Dict[str, Any]:
-    """Blok ayristirma motoru. CLI'de vardi, API'de hic acilmamisti."""
-    r = solve_by_blocks(enc, max_block_space=eng["block_limit"],
-                        time_limit=eng["time_limit"])
-    if not r:
-        raise ValueError(
-            "Blok ayrıştırma sonuç üretemedi. block_limit değerini artırmayı "
-            "ya da 'auto' modunu deneyin.")
-    cols, aciklama = r
-    return {"cols": cols, "baslik": f"Blok ayrıştırma – {aciklama}",
-            "notlar": [aciklama]}
-
-
-def _run_maxcov(enc: Encoder, budget: int) -> Dict[str, Any]:
-    cols, kapsanan, kanit = exact_max_coverage(enc.alphabet_sizes, budget)
-    if cols is None:
-        import random
-        g = greedy_full(list(enc.variable_space()), enc.alphabet_sizes, random.Random(42))
-        cols = g[:budget]
-        kapsanan = len({q for c in cols for q in ball(c, enc.alphabet_sizes)})
-        kanit = False
-    notlar = [
-        f"Kapsanan nokta: {kapsanan}/{enc.space_size()} "
-        f"(%{100 * kapsanan / enc.space_size():.2f})",
-        f"Optimallik: {'KANITLANDI' if kanit else 'kanıtlanmadı (zaman sınırı)'}",
-        "DİKKAT: bu bir GARANTİ DEĞİL, olasılıktır.",
-    ]
-    return {"cols": cols, "baslik": f"Maksimum kapsama – {budget} kolon", "notlar": notlar}
 
 
 def _new_run_log() -> Dict[str, Any]:
@@ -489,6 +372,53 @@ def _build_result(
     }
 
 
+# Kisa omurlu rapor onbellegi. Amaci iki tuketiciyi de korumak: sayfayi acik
+# birakan kullanici (oto yenileme) ve arka arkaya vuran izleme. TTL bilerek
+# kisadir — daha uzunu, sayfanin "az once olctum" iddiasini yalanlar.
+HEALTH_TTL_S = float(os.environ.get("HEALTH_TTL_S", "5"))
+_BASLANGIC = time.monotonic()
+_health_onbellek: Dict[str, Tuple[float, Dict[str, Any]]] = {}
+_health_kilit = threading.Lock()
+
+
+def _health_govde(only: Optional[str], fresh: bool) -> Dict[str, Any]:
+    """Raporu üretir; TTL içinde tekrar istenirse önbellekten döner.
+
+    Önbellekten dönen gövde bunu SAKLAMAZ: `summary.onbellek` alanı yaşını
+    yazar. Bir sağlık raporunun ne zaman ölçüldüğünü gizlemesi, raporun
+    kendisini değersizleştirir.
+    """
+    anahtar = only or ""
+    simdi = time.monotonic()
+
+    if not fresh and HEALTH_TTL_S > 0:
+        with _health_kilit:
+            kayit = _health_onbellek.get(anahtar)
+        if kayit and (simdi - kayit[0]) <= HEALTH_TTL_S:
+            govde = dict(kayit[1])
+            govde["summary"] = {
+                **govde.get("summary", {}),
+                "onbellek": {
+                    "cached": True,
+                    "yas_ms": round((simdi - kayit[0]) * 1000, 1),
+                    "ttl_s": HEALTH_TTL_S,
+                },
+            }
+            return govde
+
+    govde = run_health(only).to_dict()
+    govde["summary"] = {
+        **govde.get("summary", {}),
+        "onbellek": {"cached": False, "yas_ms": 0.0, "ttl_s": HEALTH_TTL_S},
+    }
+    # Zaman serisine YALNIZCA gercek olcumler girer; onbellekten donen bir
+    # cevap ayni kosuyu ikinci kez saymazdi.
+    saglik_gecmisi.kaydet(govde)
+    with _health_kilit:
+        _health_onbellek[anahtar] = (simdi, govde)
+    return govde
+
+
 # ─── API only ─────────────────────────────────────────────────────────────────
 
 @app.route("/", methods=["GET"])
@@ -499,35 +429,120 @@ def root():
         "frontend": "Next.js only — bu process HTML servis etmez",
         "endpoints": [
             "GET  /api/meta",
-            "GET  /api/health",
+            "GET  /api/health         (readiness: tam değişmez raporu)",
             "GET  /api/health/checks",
+            "GET  /api/health/history  (son koşuların özeti)",
+            "POST /api/health/kupon    (kullanıcının kendi kuponu)",
             "GET  /api/stats",
             "GET  /api/stats/<week>",
             "GET  /api/backtest",
             "POST /api/solve",
-            "GET  /health",
+            "GET  /health             (liveness: süreç ayakta mı)",
         ],
     })
 
 
 @app.route("/health", methods=["GET"])
+def health_liveness():
+    """
+    LIVENESS — "bu süreç ayakta mı?" Başka hiçbir şey.
+
+    Eskiden bu yol `/api/health` ile AYNI handler'a bağliydi ve 21
+    değişmezin tamamını koşuyordu (~500 ms, soğuk başlangıçta ~2,3 sn).
+    Dağıtım hedefi autoscale: platform probe'u her vurdugunda bu bedel
+    ödeniyordu ve probe zaman aşımına düşerse platform SAGLIKLI bir
+    konteyneri öldürür — yani sağlık kontrolünün kendisi kesinti üretebilir.
+
+    Bu uç hiçbir değişmez koşmaz; sürecin istek karşılayabildiğini söyler.
+    Değişmezler "trafiğe hazır mıyım" sorusudur ve `/api/health`'in işidir.
+    """
+    return jsonify({
+        "status": "ok",
+        "service": "spor-toto-api",
+        "version": __version__,
+        "uptime_s": round(time.monotonic() - _BASLANGIC, 1),
+        "readiness": "/api/health",
+        # Cok ornekli bir dagitimda "bu cevabi hangi surec verdi?" sorusu
+        # liveness icin de gecerlidir: probe'un gordugu surec ile raporu
+        # ureten surec ayni olmayabilir.
+        "ornek": ornek_kimligi(),
+    })
+
+
 @app.route("/api/health", methods=["GET"])
 def api_health():
     """
-    Degismezleri calistirip raporlar.
+    READINESS — degismezleri calistirip raporlar.
 
     `?only=` ile tek bir kontrol veya kategori calistirilabilir; arayuz
-    dusen bir grubu butun takimi 600 ms bekletmeden yeniden deneyebilsin
-    diye. `degraded` (kritik olmayan kontrol dustu) 503 URETMEZ — servis
-    calisiyordur, yalnizca bir yetenek eksiktir.
+    dusen bir grubu butun takimi 500 ms bekletmeden yeniden deneyebilsin
+    diye. `?fresh=1` onbellegi atlar. `degraded` (kritik olmayan kontrol
+    dustu) 503 URETMEZ — servis calisiyordur, yalnizca bir yetenek eksiktir.
     """
     only = (request.args.get("only") or "").strip() or None
+    fresh = (request.args.get("fresh") or "").strip().lower() in ("1", "true", "evet")
     try:
-        report = run_health(only)
+        govde = _health_govde(only, fresh)
     except ValueError as e:
         return jsonify({"ok": False, "error": str(e)}), 400
-    code = 200 if report.ok else 503
-    return jsonify(report.to_dict()), code
+    return jsonify(govde), (200 if govde["ok"] else 503)
+
+
+@app.route("/api/health/kupon", methods=["POST", "OPTIONS"])
+def api_health_kupon():
+    """
+    KULLANICININ kendi kuponunu ayni degismezlerden gecirir.
+
+    Kayitli rapor sabit ornek kuponlarla kosar; HEALTHY, kullanicinin az
+    once urettigi kuponun dogrulandigi anlamina GELMEZ (SAGLIK_VIZYONU §3.2).
+    Bu uc o bosluga bakar: verilen kupon icin kaplama garantisi, mesafe
+    muhasebesi, satir/kolon muhasebesi, alt sinir ve olasilik tutarliligi.
+
+    Sonucu 200 ile doner — bir kuponun degismezi dusmesi SERVISIN saglik
+    durumu degildir; 503 dondurmek izlemeyi yanlis yere bakmaya iterdi.
+    """
+    if request.method == "OPTIONS":
+        return "", 204
+    data = request.get_json(silent=True) or {}
+    picks = (data.get("picks") or "").strip()
+    if not picks and data.get("matches"):
+        picks = _matches_to_picks(data["matches"])
+    if not picks:
+        return jsonify({"ok": False, "error": "picks veya matches zorunlu"}), 400
+
+    budget_raw = data.get("budget")
+    try:
+        govde = kupon_denetle(
+            picks,
+            mode=str(data.get("mode") or "fix16"),
+            variant=int(data.get("variant") or 0),
+            budget=(int(budget_raw) if str(budget_raw or "").strip() else None),
+        )
+    except (ValueError, RuntimeError, Fix16Hatasi) as e:
+        return jsonify({"ok": False, "error": str(e)}), 400
+    return jsonify(govde)
+
+
+@app.route("/api/health/history", methods=["GET"])
+def api_health_history():
+    """
+    Sunucudaki son kosularin ozeti — "ne zamandan beri kirmizi?"
+
+    Sayfadaki gecmis seridi oturum icidir: sekme kapaninca gider ve yalnizca
+    o sekmenin gordugu kosulari bilir. Bu uc surece bagli halka tampondan
+    okur; surec yeniden basladiginda sifirlanir ve bunu `ornek.baslangic`
+    ile acikca soyler.
+
+    Kismi kosular (`?only=`) tampona GIRMEZ: "5/5 gecti" ile "21/21 gecti"
+    ayni zaman serisinde yan yana durursa seri yalan soyler.
+    """
+    limit = _sayi(request.args.to_dict(), "limit", 50, int, 1, 200)
+    return jsonify({
+        "version": __version__,
+        "ozet": saglik_gecmisi.ozet(),
+        "kayitlar": saglik_gecmisi.gecmis(limit),
+        "ornek": ornek_kimligi(),
+    })
 
 
 @app.route("/api/health/checks", methods=["GET"])
@@ -545,40 +560,11 @@ def api_meta():
     Motorun yetenek envanteri. Frontend mod listesini, preset'leri ve
     sinirlari SABIT KODLAMAZ; hepsini buradan okur, boylece motorla
     tek kaynaktan senkron kalir.
+
+    Govde `spor_toto.meta.meta_payload()` icinde uretilir: ayni envanteri
+    saglik katmani da okuyup tutarliligini denetleyebilsin diye.
     """
-    return jsonify({
-        "version": __version__,
-        "has_scipy": HAS_SCIPY,
-        "match_count": MATCH_COUNT,
-        "symbols": list(SEMBOLLER),
-        "modes": MODES,
-        "bayes_presets": [
-            {"id": k,
-             "prior_strength": v["prior_strength"],
-             "evidence_strength": v["evidence_strength"]}
-            for k, v in STRENGTH_PRESETS.items()
-        ],
-        "engine_defaults": ENGINE_DEFAULTS,
-        # Geri test esikleri de sabit kodlanmaz; izgara motorla tek kaynaktan
-        # senkron kalsin diye buradan okunur.
-        "backtest": {
-            "banko_default": VARSAYILAN_BANKO,
-            "uclu_default": VARSAYILAN_UCLU,
-            "banko_grid": list(BANKO_IZGARA),
-            "uclu_grid": list(UCLU_IZGARA),
-        },
-        "limits": {
-            "mc_samples": {"min": MC_MIN, "max": MC_MAX, "default": MC_WEB_SAMPLES},
-            "fire_max": {"min": 0, "max": 2, "default": FIRE_MAX_VARSAYILAN},
-            "fire_maliyet": {"min": 0, "max": FIRE_MAX_MALIYET},
-            "plan_count": {"min": 1, "max": 50, "default": 5},
-            "trials": {"min": 1, "max": 50},
-            "ls_iters": {"min": 100, "max": 500_000},
-            "time_limit": {"min": 1.0, "max": 300.0},
-            "block_limit": {"min": 2, "max": 6561},
-            "exact_limit": {"min": 2, "max": 4096},
-        },
-    })
+    return jsonify(meta_payload(__version__))
 
 
 def _parse_last(raw: Any) -> Optional[int]:
@@ -600,22 +586,7 @@ def api_stats():
     boylece butun gorselleri ayni veriye baglar.
     """
     last = _parse_last(request.args.get("last"))
-    summary = history_summary(last)
-    weeks = history_weeks(last)
-    return jsonify({
-        "meta": summary.get("meta", {}),
-        "totals": summary.get("totals", {}),
-        "weekly_avg": summary.get("weekly_avg", {}),
-        "bands": summary.get("bands", {}),
-        "data_quality": summary.get("data_quality", {}),
-        "analytics": history_analytics(last),
-        # Yalnizca MAC SONUCU (1X2). Arsivdeki diger pazarlar (alt/ust, Asya
-        # handikap) analiz icindir, API'den cikmaz. Arsiv yoksa None doner.
-        "odds": season_1x2_summary([w["week"] for w in weeks]),
-        "weeks": weeks,
-        "last": last,
-        "error": summary.get("error"),
-    })
+    return jsonify(stats_payload(last))
 
 
 @app.route("/api/stats/<int:week>", methods=["GET"])
@@ -647,7 +618,7 @@ def _backtest_cached(last: Optional[int], banko: float, uclu: float,
     Tek strateji ~1,2 sn, 28 esikli tarama ilk cagrida ~15 sn surer (kaplama
     imzalari onbelleklenene kadar) ve sonrasinda milisaniyeye iner.
     """
-    return backtest(last=last, banko_esik=banko, uclu_esik=uclu, sweep=sweep)
+    return backtest_payload(last=last, banko=banko, uclu=uclu, sweep=sweep)
 
 
 @app.route("/api/backtest", methods=["GET"])
@@ -745,39 +716,29 @@ def api_solve():
         butce_planlari = None
 
         if mode == "fix16":
-            r = _run_fix16(enc, variant=variant)
+            r = run_fix16(enc, variant=variant)
         elif mode == "auto":
-            r = _run_auto(enc, eng)
+            r = run_auto(enc, eng)
         elif mode == "heuristic":
-            r = _run_heuristic(enc, eng)
+            r = run_heuristic(enc, eng)
         elif mode == "exact":
-            r = _run_exact(enc, eng)
+            r = run_exact(enc, eng)
         elif mode == "block":
-            r = _run_block(enc, eng)
+            r = run_block(enc, eng)
         elif mode == "butce":
             if budget_raw is None or str(budget_raw).strip() == "":
                 raise ValueError("Bütçe modu için budget gerekli")
             budget = int(budget_raw)
-            planlar = butce_danismani(enc, budget, user_probs, en_fazla=plan_count)
-            if not planlar:
-                raise ValueError(
-                    f"{budget} kolonluk bütçeye sığan plan yok. Daha fazla banko veya bütçe artırın."
-                )
             # CLI'deki --plan-uygula karsiligi (1 tabanli). Once sadece
             # planlar[0] uygulanabiliyordu; artik kullanici UI'dan secebilir.
-            idx = min(plan_apply, len(planlar)) - 1
-            secili = planlar[idx]
+            b = run_butce(enc, budget, user_probs,
+                          plan_count=plan_count, plan_apply=plan_apply,
+                          variant=variant)
+            idx, planlar = b["secili_index"], b["planlar"]
             butce_planlari = [_plan_to_dict(p, i + 1, i == idx)
                               for i, p in enumerate(planlar)]
-            yeni_enc = Encoder(secili.selections)
-            cols2, aciklama2 = solve_fix16(yeni_enc, variant=variant)
-            notlar = [
-                f"Uygulanan plan {idx + 1}/{len(planlar)}: "
-                f"{'; '.join(secili.degisiklikler) or 'değişiklik yok'}",
-                f"Plan bedeli: {secili.bedel} kolon, {secili.satir} satır",
-            ]
             _log_step(run_log, "motor_butce",
-                      f"plan={idx + 1}/{len(planlar)} bedel={secili.bedel}",
+                      f"plan={idx + 1}/{len(planlar)} bedel={planlar[idx].bedel}",
                       (time.perf_counter() - t1) * 1000)
             t1 = time.perf_counter()
             if user_probs is not None:
@@ -785,9 +746,8 @@ def api_solve():
             # Bu mod eskiden user_probs=None ile cagriliyordu; bu yuzden
             # butce modunda olasilik/Bayes/Markov analizi hic calismiyordu.
             result = _build_result(
-                yeni_enc, cols2,
-                f"Bütçe planı ({secili.bedel} kolon) – {aciklama2}",
-                notlar, user_probs=user_probs,
+                b["enc"], b["cols"], b["baslik"], b["notlar"],
+                user_probs=user_probs,
                 use_bayes=use_bayes and user_probs is not None,
                 prior_strength=prior_strength,
                 evidence_strength=evidence_strength,
@@ -799,7 +759,7 @@ def api_solve():
             if budget_raw is None or str(budget_raw).strip() == "":
                 raise ValueError("maxcov için budget gerekli")
             budget = int(budget_raw)
-            r = _run_maxcov(enc, budget)
+            r = run_maxcov(enc, budget)
 
         if r is not None:
             _log_step(
