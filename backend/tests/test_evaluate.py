@@ -204,6 +204,22 @@ def test_esit_aday_gecmez():
     assert kopya["fark"]["alt"] <= 0 <= kopya["fark"]["ust"]
 
 
+@pytest.mark.parametrize("sira", [
+    [KahinTahminci, PiyasaTahminci],
+    [PiyasaTahminci, KahinTahminci],
+])
+def test_sonuc_fabrika_sirasindan_bagimsiz(sira):
+    """Gerileme testi: referans listenin başındayken de karşılaştırılabilmeli.
+
+    İlk sürüm kayıtları tek geçişte siliyordu; referans başta olduğunda kendi
+    kayıtlarını sonraki adaylar okumadan siliyor ve `KeyError` veriyordu.
+    Sıra bir sözleşme değil, o yüzden ikisi de sınanır.
+    """
+    r = karsilastir(sira, haftalar=_kesit())
+    kahin = next(s for s in r["tahminciler"] if s["ad"] == "kahin")
+    assert kahin["gecti"] is True
+
+
 def test_referans_kendisiyle_karsilastirilmaz():
     r = karsilastir([PiyasaTahminci], haftalar=_kesit())
     piyasa = next(s for s in r["tahminciler"] if s["ad"] == "piyasa")

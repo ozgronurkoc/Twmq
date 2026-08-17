@@ -226,6 +226,9 @@ def karsilastir(fabrikalar: Optional[Sequence[Fabrika]] = None,
     sonuclar = [degerlendir(f, haftalar) for f in fabrikalar]
     referans = next((s for s in sonuclar if s["ad"] == REFERANS_AD), None)
 
+    # İki geçiş: karşılaştırmaların tamamı bitmeden hiçbir kayıt silinmez.
+    # Tek geçişte referans listenin başındaysa kendi kayıtlarını, sonraki
+    # adaylar onu okumadan önce siliyordu — sıraya bağlı sessiz bir hata.
     for s in sonuclar:
         if referans is None or s["ad"] == REFERANS_AD:
             s["fark"] = None
@@ -234,9 +237,8 @@ def karsilastir(fabrikalar: Optional[Sequence[Fabrika]] = None,
             fark = bootstrap_farki(s["_kayitlar"], referans["_kayitlar"])
             s["fark"] = fark
             s["gecti"] = bool(fark["ust"] is not None and fark["ust"] < 0)
+    for s in sonuclar:
         s.pop("_kayitlar", None)
-    if referans is not None:
-        referans.pop("_kayitlar", None)
 
     n_hafta = len(haftalar)
     return {
