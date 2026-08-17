@@ -5,9 +5,11 @@
 **Kapsam:** `/saglik` sayfası, `spor_toto/health.py`, `health_history.py`,
 `meta.py`, `engines.py`, `payloads.py`, `/health` + `/api/health*` uçları
 
-> Bu belge iki şeyi bir arada tutar: **bugün ne yapıldığı** (§1–§7) ve
-> **bundan sonra ne yapılacağı** (§8–§10). Kararların *gerekçesi*
+> Bu belge iki şeyi bir arada tutar: **bugün ne yapıldığı** (§1–§8) ve
+> **bundan sonra ne yapılacağı** (§9–§11). Kararların *gerekçesi*
 > `SAGLIK_VIZYONU.md`'dedir; burası yapılan işin ve bekleyen işin dökümüdür.
+> İkisi ayrışırsa vizyon belgesi asıldır: burada yazan her madde onun
+> koyduğu sınırların içinde kalmalıdır.
 
 ---
 
@@ -28,7 +30,7 @@ tek yola bağlanması, `auto` modunun süresi).
 | Kupon sınıfı kapsamı | 1 | **4** (8 çift, 7 çift+banko, 9 çift, üçlü) |
 | Bayes preset'leri | 1/5 koşuyordu | **5/5** |
 | `variant` | hiç koşmuyordu | **1..3** |
-| `/health` | tam raporu koşuyordu (~500 ms) | **liveness, ~2 ms** |
+| `/health` | tam raporu koşuyordu (o günkü haliyle ~370 ms, soğukta ~2,1 sn) | **liveness, ~2 ms** |
 | Readiness önbelleği | yok | **5 sn TTL + `?fresh=1`** |
 | Süre eşiği | yok | **her kontrolde `butce_ms`** |
 | Sunucu tarafı geçmiş | yok | **halka tampon + `/api/health/history`** |
@@ -41,7 +43,7 @@ tek yola bağlanması, `auto` modunun süresi).
 | Sağlık katmanının testi | 23 | **79** |
 | Tüm süit | 608 | **664** |
 
-Beş commit. Isınmış tam rapor 370 ms → **520 ms** (yeni kapsamın bedeli).
+Isınmış tam rapor 370 ms → **~520 ms**: yeni kapsamın bedeli, bilerek ödendi.
 
 ---
 
@@ -95,7 +97,8 @@ onu düzeltmez — aynı kod her konteynerde aynı şekilde düşer.
 
 **Ölçüldü:** dışarıya açılan tek port Next.js'tir, dolayısıyla platform
 probe'u Flask'ın `/health`ine erişemiyordu. `next.config.mjs` artık `/health`i
-de proxy'liyor (§7.9): liveness'ın var olup ulaşılamaz olması yarım çözümdü.
+de proxy'liyor: liveness'ın var olup dışarıdan ulaşılamaz olması yarım
+çözümdü — bir probe'un sorabileceği tek adres yine tam raporu koşan uçtu.
 
 Readiness üstünde 5 sn TTL önbellek (`HEALTH_TTL_S`), `?fresh=1` atlar.
 Önbellekten dönen gövde bunu saklamaz — `summary.onbellek` yaşını yazar.
@@ -202,6 +205,18 @@ Kapsam boşluğu kalmadı; açık maddeler **ölçek** ve **kalıcılık** ile i
 | 9.3 | **Süre bantlarının kendini ayarlaması** | Bant elle yazılıyor; makine yavaşlarsa toplu yanlış alarm | M |
 | 9.4 | **Kupon denetiminde mod matrisi** | Bugün kullanıcının kuponu tek modda denetleniyor | S |
 | 9.5 | **Alarm gövdesinin biçimlenmesi** (Slack/webhook şablonu) | Bugün ham JSON gidiyor | S |
+
+### 9.1 Önerilen sıradaki iki iş
+
+1. **9.1 + 9.2 birlikte** — kalıcı zaman serisi ve örnekler arası birleştirme.
+   Ayrı ayrı yapılırsa ikinci iş birincinin şemasını yeniden yazdırır: "hangi
+   örnek, ne zaman, ne ölçtü" aynı kaydın üç alanıdır.
+2. **9.4** — kupon denetimini mod matrisine açmak. Birkaç saatlik iş ve
+   kullanıcının doğrudan gördüğü yüzeyi genişletir; `kupon_denetle()` zaten
+   mod parametresi alıyor, eksik olan yalnızca arayüz ve matris koşusu.
+
+**9.3 sırası sonra:** süre bantlarının kendini ayarlaması kalıcı ölçüm
+gerektirir, yani 9.1 olmadan yapılamaz.
 
 ---
 
