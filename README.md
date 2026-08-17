@@ -46,6 +46,16 @@ dağıtmanın karşılığı 0,667, yani piyasa bilgi taşıyor ama az. İddaa m
 Bu üç sayı tahmin katmanının **başlangıç çizgisidir, varış noktası değil**:
 ilerleme bunlara karşı ölçülür ve ölçülmeden ilerleme sayılmaz.
 
+**İlk üç adım ölçüldü ve sonuç şudur.** Tahminci sözleşmesi, değerlendirme
+koşumu, yeniden kalibrasyon kademesi ve 31.103 maçlık eğitim korpusu kuruldu
+(T1–T3). Kupon üzerinde eğitilen modeller piyasadan **kötü** çıkıyordu; büyük
+korpusta eğitilince hepsi **iyi** tarafa geçti — aşırı uyum modelin
+kapasitesinden değil örneklem küçüklüğünden geliyormuş. Ama kalan etki
+**0,0005–0,0015 Brier**: 31 binde istatistiksel olarak anlamlı, 540 kupon
+maçında değil ve %17,2'lik iddaa marjının yanında pratik eşiğe yakın bile
+değil. **Yön doğru, miktar yetersiz** — ayrıntı §10 ve
+[`docs/ISTATISTIK_YOL_HARITASI.md`](docs/ISTATISTIK_YOL_HARITASI.md) §5.1.
+
 ### 1.2 Belirsizlik saklanmaz, ölçülür ve gösterilir
 
 Garanti yalnızca **seçim kümesi içinde** geçerlidir. Küme dışına çıkan bir sonuç
@@ -704,6 +714,10 @@ backend/
     history.py         Tarihsel 1/0/2, 6 analiz bloğu, veri kalitesi
     odds.py            Oran arşivi okuyucu, 1X2 özeti, kalibrasyon, karar destek blokları
     backtest.py        Eşikli strateji → kaplama → skor; eşik taraması + hold-out
+    predict.py         TAHMİN: tahminci sözleşmesi + 3 referans (duzgun/sezon/piyasa)
+    evaluate.py        TAHMİN: dışarıda bırakmalı + çapraz ölçüm, eşleştirilmiş bootstrap
+    recalibrate.py     TAHMİN: piyasanın yeniden kalibrasyonu (kademe, Newton)
+    egitim.py          TAHMİN: eğitim korpusu okuyucu — /istatistik'e GİRMEZ
     health.py          Kategorili değişmez (invariant) kontrolleri — tek CHECKS tanımı
     meta.py            Yetenek envanteri (modlar, preset'ler, sınırlar) = /api/meta
     engines.py         Mod çalıştırıcıları — /api/solve ve health AYNI yolu kullanır
@@ -714,9 +728,10 @@ backend/
     build_history.py   Tarihsel veri setini kaynağından üretir
     build_odds.py      Kupon maçlarına piyasa oranlarını eşleştirir
     snapshot_iddaa.py  İddaa açık bültenini tarih damgalı arşivler (haftalık)
+    build_egitim.py    Eğitim korpusu (football-data, 22 lig × 4 geçmiş sezon)
     check.sh           Yerel CI eşdeğeri
-  data/                st_history_2025_26.json · odds/ · iddaa/
-  tests/               pytest (19 dosya, 320 test fonksiyonu → 664 test)
+  data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/
+  tests/               pytest (23 dosya → 700 test)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -877,9 +892,10 @@ bash scripts/check.sh        # yerel CI eşdeğeri
 
 Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant'lar, CLI (Bayes preset
 dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri test,
-iddaa snapshot'ı, API sözleşmesi. 19 test dosyası, 320 test fonksiyonu,
-parametrizasyonla **664 test**; 82'si veri/istatistik/geri test, 79'u sağlık
-katmanına ait.
+iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
+yeniden kalibrasyon ve eğitim korpusu. 23 test dosyası, parametrizasyonla
+**700 test**; 82'si veri/istatistik/geri test, 79'u sağlık, **104'ü tahmin
+katmanı** (ayrım bekçileri dahil).
 
 İki test bilerek **ağa çıkmaz**: `test_snapshot_iddaa.py` gerçek bültenden alınmış
 küçük bir örnek payload üzerinde koşar — ağ çağrısını sınamak bu paketin işi değil,
@@ -938,11 +954,21 @@ kartları, formüle devir, kullanım cilası, iddaa arşivi). Ne yapıldığı, 
 yapıldığı ve ölçülen sayılar:
 [`docs/ISTATISTIK_YOL_HARITASI.md`](docs/ISTATISTIK_YOL_HARITASI.md) §3.5–3.9.
 
+Amaç tahmine döndükten sonra **tahmin katmanının T1–T3'ü uygulandı**: tahminci
+sözleşmesi + değerlendirme koşumu, piyasanın yeniden kalibrasyonu ve eğitim
+korpusu. Ölçülen sayılar ve gerekçeler:
+[`docs/ISTATISTIK_YOL_HARITASI.md`](docs/ISTATISTIK_YOL_HARITASI.md) §3.10–3.12
+ve §5.1. **Bu katmandan sayfaya hiçbir şey çıkmadı** — ölçülmemiş tahminci
+arayüze çıkmaz.
+
 Sıradakiler, "en çok belirsizliği kaldıran" ölçütüne göre:
 
 | # | Ne | Neden / veri durumu |
 |---|-----|---|
-| **S1 — Örneklem büyütme** | 2024/2025 sezonunu aynı iki boru hattıyla çekip hafta sayısını ~80'e çıkarmak | **Her şeyin önündeki darboğaz.** Geri testin hold-out'u 0 çıktı; bu 41 hafta üzerinde ölçüldüğü için hem gerçek bir bulgu hem dar bir ölçüm. İki sezon, "eşiği birinde seç ötekinde ölç" demeyi sağlar — gerçek out-of-sample budur. **Yeni üretim gerekir** (scriptler sezon parametreli olmalı) |
+| **T4 — Referans skorları sağlık değişmezine** | `duzgun` her zaman 0,6667, `piyasa` kupon kesitinde 0,5747 vermeli | **Küçük ve sıranın başında.** Bu sayılar kayarsa bozulan model değil veri/boru hattıdır ve bugün hiçbir şey fark etmez |
+| **T5 — Piyasa dışı girdi: takım formu** | football-data'nın maç istatistiklerinden yuvarlanan pencereyle form özelliği | **Ölçüm bunu söylüyor.** Piyasayı yeniden kalibre etmek yön olarak doğru ama miktar yetersiz; sinyal ancak piyasada olmayan bir girdiden gelir. Ek kaynak gerekmez |
+| **S1 — Örneklem büyütme** | Kupon setini ikinci sezona çıkarmak | **Yarısı yapıldı, yarısı kapalı.** Tahmin ölçümü için gereken örneklem korpusla geldi (31.103 maç). Kupon ayağı bloke: sonuç kaynağı sezon parametresi taşımıyor + `robots.txt` kısıtı ([`docs/VERI_TOPLAMA_VE_ISLEME.md`](docs/VERI_TOPLAMA_VE_ISLEME.md) §10.2) |
+| **İkramiye / havuz verisi** | Hafta başına kazanan adedi ve ödenen tutar | **Hiç yok.** Müşterek bahiste "kazanma oranı" ile "beklenen getiri" farklı şeylerdir; ikincisi bugün hiç ölçülemiyor. Kaynak araştırılmadı |
 | **S2 — Geri testi zenginleştirmek** | Sabit kolon bütçesi kipi, ikinci strateji ailesi ("en belirsiz k maçı çifte yap"), bütçe danışmanıyla bağ | **Hazır** — ek veri gerekmez |
 | **S3 — İddaa arşivi olgunlaşınca** | Snapshot'ları kupon maçlarıyla eşleştir; iddaa ile piyasa oranını yan yana koy; geri testi vekil değil gerçek fiyatla tekrarla | **Birikmeyi bekliyor** — ~10 snapshot sonra anlamlı |
 | **S4 — Küçük işler** | Geri testte eşik çiftini URL'e yazmak, tarama tablosunu CSV'ye çıkarmak, hafta detayında Brier | Veri tarafı yok |

@@ -729,16 +729,34 @@ değil, **tahminin ölçülebilir hale gelmesini sağlayan veridir.**
 
 | Öncelik | İş | Veri durumu |
 |---|---|---|
-| **1** | **İkramiye / havuz verisi** (§10.1 — yeni) | **Hiç yok.** Dördüncü veri seti gerekir |
-| **2** | **S1 — Örneklem büyütme** | **Yeni üretim gerekir.** İki script de sezon parametreli hale gelmeli; football-data `mmz4281/2425/` mevcut, kaynak sitenin geçmiş sezon payload'ları kontrol edilmeli |
-| **3** | **S3 — İddaa arşivi olgunlaşınca** | **Birikmeyi bekliyor.** Boru hattı ve haftalık tetik çalışıyor (§6.4); ~10 snapshot sonra eşleştirme anlamlı olur |
-| **4** | **S2 — Geri testi zenginleştir** | **Hazır.** Ek veri gerekmez |
+| **✔** | **Eğitim korpusu** (§6A) | **Yapıldı.** 31.103 maç · 4 sezon · 22 lig |
+| **1** | **T5 — Takım formu özellikleri** | **Aynı kaynaktan türetilebilir.** football-data maç istatistiği taşıyor (şut, korner, kart); korpusa o sütunlar eklenip yuvarlanan pencereyle form üretilir. Yeni kaynak gerekmez |
+| **2** | **İkramiye / havuz verisi** (§10.1) | **Hiç yok.** Beşinci veri seti gerekir; kaynak araştırılmadı |
+| **3** | **S1'in kupon ayağı** | **Kapalı** (§10.2). Sonuç kaynağı sezon parametresi taşımıyor + `robots.txt` kısıtı |
+| **4** | **S3 — İddaa arşivi olgunlaşınca** | **Birikmeyi bekliyor.** Boru hattı ve haftalık tetik çalışıyor (§6.4); ~10 snapshot sonra eşleştirme anlamlı olur |
+| **5** | **S2 — Geri testi zenginleştir** | **Hazır.** Ek veri gerekmez |
 | — | **S4 — Küçük işler** | Veri tarafı yok |
 
-**Örneklem büyütme neden hâlâ kritik:** geri test hold-out'u 0 hafta çıkardı. Bu sayı 41 hafta
-üzerinde ölçüldüğü için hem gerçek bir bulgu hem de dar bir ölçüm. Sezon sayısını ikiye
-çıkarmak, "eşiği bir sezonda seç, diğerinde ölç" diyebilmeyi sağlar — leave-one-out'un
-yapamadığı gerçek out-of-sample budur. Tahmin iddiası ancak böyle bir ölçümle savunulabilir.
+**Örneklem sorununun yarısı çözüldü.** Tahminci ölçümü için gereken büyük örneklem korpusla
+geldi ve sonucu net: aşırı uyum modelin kapasitesinden değil **örneklem küçüklüğünden**
+geliyormuş. Ama kalan etki 0,0005–0,0015 Brier — 31 binde anlamlı, 540 kupon maçında değil.
+Daha çok **aynı türden** veri bu sayıyı büyütmez; büyütecek olan şey **piyasada olmayan bir
+girdidir** (öncelik 1).
+
+### 10.2 S1'in kupon ayağı neden kapalı
+
+İki bağımsız engel ölçüldü:
+
+1. **Sonuç kaynağı sezon parametresi taşımıyor.** `/spor-toto/{week}-hafta-tahminleri/`
+   mevcut sezonu döndürür; 2. hafta sorgusu `"2025/2026"` verdi. Geçmiş sezonun
+   adreslenebildiğine dair işaret bulunamadı.
+2. **`robots.txt` kısıtı.** `User-agent: ClaudeBot → Disallow: /` ve
+   `Content-Signal: ai-train=no, use=reference`. Genel `User-agent: *` bloğu `/spor-toto/`
+   yolunu kapatmıyor — kısıt otomatik aracıya özel. Doktrin 7 gereği bu sınıra uyulur.
+
+`build_odds.py` da `st_history_2025_26.json`'a bağlı olduğundan kupon tarafı **bir bütün
+olarak** bekliyor. Veri geldiğinde altyapı hazır: `evaluate.capraz_olc` "bir sette eğit,
+ötekinde ölç" yapıyor ve `sezon_anahtari` kupon setinde de çalışır.
 
 ### 10.1 Yeni veri ihtiyacı — ikramiye ve havuz
 

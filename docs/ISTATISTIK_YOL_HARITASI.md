@@ -54,6 +54,19 @@ football-data.co.uk arşivi (38 dosya)
 
 iddaa açık bülteni  ──► scripts/snapshot_iddaa.py ──► data/iddaa/iddaa_<tarih>.csv
                         (haftalık, ileriye dönük arşiv — henüz analize girmiyor)
+
+──────────── TAHMİN KATMANI (ayrı; /istatistik'e girmez) ────────────
+
+football-data (22 lig × 4 sezon)
+        │  scripts/build_egitim.py
+        ▼
+data/egitim/egitim_korpus.csv         31.103 maç
+        │  spor_toto/egitim.py        (ISO haftası → sözde-hafta + sezon)
+        ▼
+spor_toto/evaluate.py  ◄── spor_toto/predict.py     (sözleşme + 3 referans)
+   (ölçüm koşumu)      ◄── spor_toto/recalibrate.py (kademe)
+        │
+        └─► rapor: hiçbir uç yok — sayfaya çıkan bir şey yok (T6)
 ```
 
 ### 2.2 Dosya haritası
@@ -82,10 +95,17 @@ iddaa açık bülteni  ──► scripts/snapshot_iddaa.py ──► data/iddaa/
 | Test | `backend/tests/test_backtest.py` | 193 | Strateji, skorlama, Wilson, tarama, hold-out (17) |
 | Test | `backend/tests/test_api_backtest.py` | 98 | `/api/backtest` sözleşmesi (11) |
 | Test | `backend/tests/test_snapshot_iddaa.py` | 204 | Bülten ayrıştırma ve yazma (13) |
+| Tahmin | `backend/spor_toto/predict.py` | — | Tahminci sözleşmesi, 3 referans |
+| Tahmin | `backend/spor_toto/evaluate.py` | — | Dışarıda bırakmalı + çapraz ölçüm, bootstrap |
+| Tahmin | `backend/spor_toto/recalibrate.py` | — | Yeniden kalibrasyon kademesi (Newton) |
+| Tahmin | `backend/spor_toto/egitim.py` | — | Eğitim korpusu okuyucusu (**istatistiğe girmez**) |
+| Üretim | `backend/scripts/build_egitim.py` | — | Korpus üretimi (football-data, 4 sezon) |
+| Test | `backend/tests/test_predict.py` · `test_evaluate.py` · `test_recalibrate.py` · `test_egitim.py` | — | Tahmin katmanı ve **ayrım bekçisi** (104) |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **664 test**; bunların **82'si** bu katmana ait. `python -m spor_toto.health`
-**22 değişmez** çalıştırır — ikisi (`oran_arsivi`, `geri_test`) bu katmanı korur.
+paketi toplam **700 test**; **82'si** istatistik katmanına, **104'ü** tahmin katmanına ait.
+`python -m spor_toto.health` **22 değişmez** çalıştırır — ikisi (`oran_arsivi`, `geri_test`)
+istatistik katmanını korur; tahmin katmanının henüz değişmezi **yok** (T4).
 
 ### 2.3 API sözleşmesi
 
@@ -161,6 +181,9 @@ Bunlar katmanın tasarım sözleşmesidir; yeni kart eklerken bozulmamalı:
 | `9d9cfac` | **F2** — hafta detayından formül sayfasına olasılık devri |
 | `c6a8d0f` | **F4** — URL'de filtre, CSV dışa aktarma, haftalık Brier |
 | `f1eb65c` | **F5** — iddaa bülten snapshot boru hattı |
+| `68e5ff9` | **T1** — tahminci sözleşmesi + değerlendirme koşumu |
+| `2362539` | **T2** — piyasanın yeniden kalibrasyonu (kademe) |
+| `d7a5623` | **T3** — eğitim korpusu + çapraz ölçüm |
 
 ### 3.1 Analiz katmanı ve sayfanın yeniden yazımı (`81cc5cf`)
 
@@ -323,6 +346,76 @@ yoksa commit atmaz ve aynı anda tek çalışma yapar. **Zamanlanmış işler ya
 daldan çalışır** — arşiv, bu dal `main`'e geçtiği anda birikmeye başlar. Durdurmak: Actions →
 bu iş → "Disable workflow".
 
+### 3.10 Tahminci sözleşmesi ve değerlendirme koşumu (T1)
+
+**Soru.** Amaç tahmine döndü — ilk ne yazılmalı? Cevap: model değil, **modeli ölçen koşum.**
+Gerekçe projenin kendi geçmişi: eşik taraması 4 hafta gösterirken hold-out 0 çıkmıştı.
+
+`predict.py` sözleşmeyi kurdu — `egit(eğitim_haftaları)` / `tahmin(hafta)`. Ayrım sızıntıya
+karşı tek savunma: veriden öğrenen tahminci ölçüldüğü haftayı görerek eğitilemez.
+`evaluate.py` koşumu kurdu: hafta dışarıda bırakmalı ölçüm, Brier + log kaybı, **hafta
+üzerinden eşleştirilmiş bootstrap** (aynı haftanın maçları bağımsız değil).
+
+Karşılaştırma kuralı koddadır: `gecti`, ancak güven aralığının **tamamı** sıfırın altındaysa
+`True`. "Ortalaması daha iyi çıktı" yeterli değil.
+
+**Ölçülen çizgi** (36 hafta, 540 maç): `piyasa` 0,5747 · `sezon_sabiti` 0,6505 · `duzgun`
+0,6667. Belgedeki 0,579 ile fark bilinçli — o sayı 2 kısmi haftayı da içeren 38 haftanın
+ortalaması; koşum yalnızca 15 maçı tam oranlı haftaları alır, çünkü bütün tahminciler aynı
+haftalarda ölçülmezse karşılaştırma anlamsızdır.
+
+### 3.11 Piyasanın yeniden kalibrasyonu (T2)
+
+Mevcut veriyle dürüst tek aday sınıfı. Tek model yerine **kademe** kuruldu — asıl soru "bu
+model iyi mi" değil, *"kaçıncı basamakta yardım bitip aşırı uyum başlıyor"*.
+
+| model | parametre | eğitim-içi | dışarıda | fark |
+|---|---:|---:|---:|---:|
+| piyasa | — | 0,5747 | 0,5747 | 0 |
+| kalibre_sicaklik | 1 | 0,5736 | 0,5745 | +0,0009 |
+| kalibre_bias | 3 | 0,5727 | 0,5757 | +0,0030 |
+| kalibre_lig | 9 | 0,5698 | 0,5777 | +0,0079 |
+| kalibre_bant | 15 | 0,5654 | 0,5787 | +0,0133 |
+
+Eğitim-içi monoton iyileşiyor, dışarıda monoton kötüleşiyor, fark kapasiteyle büyüyor.
+**Hiçbir basamak geçmedi.** Ölçülmüş lig farkı (%29,8 / %19,7) ve 1,75–2,00 bandı zaten
+fiyatlanmış görünüyordu.
+
+**Yol boyunca bulunan iki hata.** (1) `karsilastir` sıraya bağlı `KeyError` veriyordu —
+referans listenin başındayken kendi kayıtlarını erken siliyordu. (2) Uydurucu
+**yakınsamıyordu**: gradyan inişi 15 parametreli modelde 20.000 adımda hâlâ sürükleniyordu.
+Eksik uydurulmuş bir model aşırı uyumla **aynı görüntüyü** verir, yani bulgu yanlış
+yorumlanacaktı. Newton yinelemesine geçildi (10 adımda makine hassasiyeti, koşum 27 sn →
+1,7 sn) ve bütçe yeterliliği gerileme testine bağlandı. Sonuç iki düzeltmeden sonra da aynı
+çıktı.
+
+### 3.12 Eğitim korpusu ve çapraz ölçüm (T3)
+
+540 maçlık kesitte "piyasayı geçen var mı" sorusuna verilen cevap zayıf kalıyordu. Aynı
+kaynak (football-data) kupon dışı maçların hem sonucunu hem oranını taşıyor; bir tahminciyi
+ölçmek için gereken üçlü budur ve **kupon bileşimi bu iş için ilgisizdir.**
+
+Korpus: **31.103 maç · 4 geçmiş sezon · 22 lig.** Ayrıntı ve ayrım kuralları
+[`VERI_TOPLAMA_VE_ISLEME.md`](VERI_TOPLAMA_VE_ISLEME.md) §6A'da.
+
+İki yeni ölçüm kipi: **sezon dışarıda bırakmalı** (aynı sezonun başka haftaları da bilgi
+sızdırır) ve **çapraz** (`capraz_olc` — bir sette eğit, ortak maçı olmayan başka bir sette ölç).
+
+| Ölçüm | Sonuç |
+|---|---|
+| Korpus içi, sezon dışarıda bırakmalı (31.103 maç) | `kalibre_sicaklik` −0,0004 ve `kalibre_bias` −0,0005 **geçti**; lig/bant geçmedi |
+| Korpusta eğit → 2025/26 kuponunda ölç (540 maç) | Dört basamak da piyasadan **iyi** (−0,0010…−0,0015) ama **hiçbiri geçmedi** |
+
+**Bulgu.** T2'de kupon üzerinde eğitilen aynı modeller piyasadan *kötü* çıkıyordu; büyük
+korpusta eğitilince hepsi *iyi* tarafa geçti. Yani T2'deki aşırı uyum modelin
+kapasitesinden değil **örneklem küçüklüğünden** geliyormuş.
+
+**Ama miktar yetersiz.** 31 binde anlamlılık kuruluyor, 540 maçta kurulamıyor. Etki
+0,0005–0,0015 Brier; tabanı 0,57–0,59 olan bir sayıda. İddaa marjı %17,2 iken bu büyüklük
+pratik eşiğe yakın bile değil. **Yön doğru, miktar yetersiz** — T5'in gerekçesi budur.
+
+---
+
 ## 4. Sayfada bugün ne var
 
 **`/istatistik`** — sezon dağılımı (en sık sonuç + pay çubuğu) · 5 sayı kutusu (sembol
@@ -399,21 +492,61 @@ vermenin karşılığı 0,667. Piyasa bilgi taşıyor ama az. En sürprizli haft
 oranlarında **%7,26**. İki kaynağın seviyesi bu yüzden tutmaz; favori sıralaması ve marj
 arındırılmış yapı tutar.
 
+### 5.1 Tahmin katmanının bulguları (sayfada **yok**)
+
+| Ölçüm | Kesit | Sonuç |
+|---|---|---|
+| Piyasa çizgisi | 540 kupon maçı | Brier **0,5747** · log 0,9660 |
+| Piyasa çizgisi | 31.103 korpus maçı | Brier **0,5940** — kupon maçları ortalama maçtan daha tahmin edilebilir |
+| Kademe, kupon üzerinde eğitilmiş | 540 maç | Dört basamak da piyasadan **kötü** (+0,0009…+0,0133) |
+| Kademe, korpus içi sezon dışarıda | 31.103 maç | `sicaklik` −0,0004 ve `bias` −0,0005 **geçti** |
+| Kademe, korpusta eğit → kuponda ölç | 540 maç | Dört basamak da **iyi** (−0,0010…−0,0015), hiçbiri geçmedi |
+
+**Okuma.** Aşırı uyum modelin kapasitesinden değil örneklem küçüklüğünden geliyordu; büyük
+korpus onu kaldırdı. Ama kalan etki 0,0005–0,0015 Brier — 31 binde anlamlı, 540'ta değil ve
+%17,2'lik iddaa marjının yanında hiç. **Yön doğru, miktar yetersiz.**
+
 ## 6. Yol haritası
 
-**F1–F5'in tamamı uygulandı** (bkz. §3.5–3.9). Bundan sonrası iki koldan gider:
+**F1–F5'in tamamı uygulandı** (bkz. §3.5–3.9). Amaç tahmine döndükten sonra **T1–T3
+uygulandı** (§3.10–3.12). Bundan sonrası üç koldan gider:
 
-| Kol | Neyi iyileştirir |
+| Kol | Neyi iyileştirir | Durum |
+|---|---|---|
+| **G1–G5** | **Sayfanın kendisi** — bilgi mimarisi, sentez, kullanım | hiçbiri başlamadı |
+| **S1–S4** | **Verinin ve analizin derinliği** — örneklem, strateji, kaynak | S1 kısmen (§6.1) |
+| **T1–T6** | **Tahmin katmanı** — ölçüm, model, girdi | T1–T3 bitti |
+
+**Sıra: T4 → G1 → G2 → T5 → G3 → G4 → T6 → S2 → G5 → S3.**
+
+Gerekçe değişti. Önceki sıralamada G kolu başta geliyordu çünkü "var olan gerçeği daha iyi
+teslim etmek" en ucuz kazançtı. Amaç tahmine dönünce **teslim edilecek gerçeğin kendisi
+değişti**: bugün sayfada gösterilmeyen bir tahmin katmanı var ve ölçülmüş sonucu net. T4
+(sağlık değişmezi) öne alındı çünkü küçük ve tahmin katmanının bütün ölçümlerini bekçiye
+bağlıyor; G1–G2 hemen arkasından geliyor çünkü sayfa hâlâ mevcut bulguları taşımakta
+zorlanıyor.
+
+### 6.1 S1'in durumu — yarısı yapıldı, yarısı kapalı
+
+S1 "örneklem büyütme" idi ve **ikiye ayrıldı**:
+
+| Ayak | Durum |
 |---|---|
-| **G1–G5** | **Sayfanın kendisi** — bilgi mimarisi, sentez, kullanım |
-| **S1–S4** | **Verinin ve analizin derinliği** — örneklem, strateji, kaynak |
+| **Tahmin ölçümü için örneklem** | **Yapıldı.** Eğitim korpusu: 31.103 maç, 4 sezon, 22 lig (§3.12) |
+| **Kupon seti için ikinci sezon** | **Kapalı** — aşağıdaki iki engel |
 
-**Sıra: G1 → G2 → G3 → G4 → S1 → S2 → G5 → S3 → S4.**
+Kupon ayağının engelleri ölçüldü:
 
-Gerekçe: G kolu var olan gerçeği daha iyi *teslim eder*, S kolu gerçeğin *kendisini*
-derinleştirir. G önce geliyor çünkü kusurları ölçüldü, hiçbir şey tarafından bloklanmıyor ve
-S1'in yanında ucuz. S1 en derin darboğaz olmaya devam ediyor — ama sayfa bugünkü haliyle
-mevcut bulguları bile taşımakta zorlanıyor, önce onu düzeltmek daha çok belirsizlik kaldırıyor.
+1. **Sonuç kaynağı sezon parametresi taşımıyor.** `/spor-toto/{week}-hafta-tahminleri/`
+   mevcut sezonu döndürüyor (2. hafta sorgusu `"2025/2026"` verdi). Geçmiş sezonun
+   adreslenebildiğine dair işaret yok.
+2. **`robots.txt` otomatik erişimi kısıtlıyor.** `User-agent: ClaudeBot → Disallow: /`,
+   ayrıca `Content-Signal: ai-train=no`. Genel `User-agent: *` bloğu `/spor-toto/` yolunu
+   kapatmıyor; yani kısıt aracıya özel, kaynağa değil.
+
+`build_odds.py` de `st_history_2025_26.json`'a bağlı olduğu için kupon tarafı **bir bütün
+olarak** bekliyor. Veri geldiğinde altyapı hazır: `evaluate.capraz_olc` zaten "bir sette
+eğit, ötekinde ölç" yapıyor.
 
 ---
 
@@ -553,6 +686,61 @@ gerekiyor) · bölüm bağlantıları · kart başına iskelet.
 9 tablodan 8'i telefonda yatay kayıyor. Hedef "kusursuz" değil **"okunabilir"**: kritik tablolar
 dar ekranda kart görünümüne düşer. Kullanım ağırlıkla masaüstü olduğu için sona bırakıldı.
 **Büyüklük:** orta
+
+---
+
+### T kolu — tahmin katmanı
+
+Amaç tahmine döndükten sonra kurulan kol. **Sayfaya hiçbir şey çıkmadı** ve bu bilinçli:
+ölçülmemiş tahminci arayüze çıkmaz (§7).
+
+#### Yapılanlar
+
+| # | İş | Sonuç |
+|---|---|---|
+| **T1** | Tahminci sözleşmesi + değerlendirme koşumu (§3.10) | `piyasa` çizgisi 0,5747 |
+| **T2** | Piyasanın yeniden kalibrasyonu, 4 basamaklı kademe (§3.11) | Kupon üzerinde eğitilince **hiçbiri geçmedi** |
+| **T3** | Eğitim korpusu + çapraz ölçüm (§3.12) | Korpusta eğitilince yön döndü, **anlamlılık kurulamadı** |
+
+#### T4 — Referans skorlarını sağlık değişmezine bağla
+
+**Küçük, ve sıranın başında.** `duzgun` her zaman Brier 0,6667 vermeli, `piyasa` kupon
+kesitinde 0,5747 ± dar bir bant. Bu sayılar kayarsa bozulan şey model değil **veri ya da
+boru hattıdır** — ve bunu bugün hiçbir şey fark etmez.
+
+- **Yeniden kullan:** `evaluate.karsilastir`, `health.py` kontrol sözleşmesi
+- **Yeni:** 1 değişmez (`tahmin_referanslari`)
+- **Kabul kriteri:** referans skoru bandın dışına çıkarsa sağlık kırmızıya döner · kontrol
+  modelin *kalitesini* değil, ölçümün *tekrarlanabilirliğini* denetler
+- **Büyüklük:** küçük
+
+#### T5 — Piyasa dışı girdi: takım formu
+
+Ölçülen sonuç net: piyasanın kendi olasılığını yeniden kalibre etmek yön olarak doğru ama
+miktar yetersiz (§5). Sinyal ancak **piyasada olmayan** bir girdiden gelebilir.
+
+En ucuz aday zaten korpusun kaynağında duruyor: football-data CSV'leri maç istatistiği
+taşıyor (şut, isabetli şut, korner, faul, kart). Bunlar maç *sonrası* veridir, doğrudan
+tahminci girdisi olamaz — ama **yuvarlanan pencereyle takım formu** üretilebilir: son N
+maçın şut farkı, isabetli şut oranı, gol beklentisi vekili.
+
+Dürüst beklenti: piyasa formu da fiyatlıyor. Sorulan soru "form bilgi taşıyor mu" değil,
+**"piyasanın fiyatladığından fazlasını taşıyor mu"** — ve cevabı T1'in koşumu verecek.
+
+- **Yeniden kullan:** `egitim.korpus_haftalari`, `recalibrate` kademe altyapısı, `capraz_olc`
+- **Yeni:** korpusa istatistik sütunları, form özelliği üreteci, kademeye bir basamak
+- **Kabul kriteri:** form basamağı `piyasa`'yı korpus içi sezon dışarıda bırakmalı ölçümde
+  geçmeli · geçmezse sonuç **olduğu gibi raporlanır**, basamak sayfaya çıkmaz
+- **Büyüklük:** orta
+
+#### T6 — Tahmin katmanının arayüzü
+
+Ölçülmüş bir tahminci çıkarsa nasıl gösterilecek. Bugün gösterilecek bir şey yok, o yüzden
+sırada geride. Kurallar şimdiden belli:
+
+- İsabet, örneklem ve güven aralığı cümlenin yanında durur (§6 G2 kural 1)
+- Korpus sayıları `/istatistik`'e girmez — gerekirse **ayrı sayfa**
+- **Büyüklük:** orta
 
 ---
 
