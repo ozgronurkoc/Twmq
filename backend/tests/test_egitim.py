@@ -215,3 +215,99 @@ def test_capraz_referanssiz_liste_cokmez(haftalar):
     r = capraz_olc([DuzgunTahminci], haftalar[:5], olculebilir_haftalar()[:5])
     assert r["tahminciler"][0]["gecti"] is False
     assert r["tahminciler"][0]["fark"] is None
+
+
+# ─── takım formu (T5) ─────────────────────────────────────────────────────────
+
+def _mac(tarih: str, ev: str, dep: str, kod: str, ev_is: int = 5,
+         dep_is: int = 5) -> dict:
+    return {"sezon": "9999", "lig": "XX", "tarih": tarih, "iso_yil": 2099,
+            "iso_hafta": 1, "ev": ev, "dep": dep, "kod": kod,
+            "oranlar": {"1": 2.0, "0": 3.0, "2": 4.0},
+            "ev_isabet": ev_is, "dep_isabet": dep_is,
+            "ev_sut": ev_is, "dep_sut": dep_is}
+
+
+def test_form_gelecegi_gormez():
+    """**Sızıntı bekçisi** — modülün varlık sebebi.
+
+    A takımı 5 maç kazanıyor, 6. maçı kaybediyor. 6. maçtaki formu o 5
+    galibiyeti yansıtmalı (pozitif); kendi yenilgisini görmemeli. Sızıntı
+    olsaydı 6. maçın formu düşerdi.
+
+    Bu sızıntı sessizdir: model geleceği görür, skor mucizevi çıkar, gerçek
+    maçta hiçbir işe yaramaz.
+    """
+    from spor_toto.egitim import _form_tablosu
+
+    maclar = [_mac(f"2099-01-0{i}", "A", f"R{i}", "1") for i in range(1, 6)]
+    maclar.append(_mac("2099-01-06", "A", "Z", "2"))          # A kaybediyor
+    maclar += [_mac(f"2099-01-0{i}", "Z", f"Q{i}", "0") for i in range(1, 6)]
+
+    form = _form_tablosu(maclar)
+    alti = form[5]
+    assert alti["form_var"] is True
+    # A: 5 galibiyet = 3,0 puan/mac · Z: 5 beraberlik = 1,0 → fark +2,0
+    assert alti["form_puan_farki"] == pytest.approx(2.0), (
+        "6. macin formu kendi sonucunu gormus olabilir")
+
+
+def test_form_yeterli_gecmis_yoksa_isaretlenir():
+    """Doktrin 2: eksik geçmiş uydurulmaz, `form_var=False` ile bildirilir."""
+    from spor_toto.egitim import _form_tablosu
+
+    form = _form_tablosu([_mac("2099-01-01", "A", "B", "1")])
+    assert form[0]["form_var"] is False
+    assert form[0]["form_puan_farki"] == 0.0
+
+
+def test_form_istatistiksiz_mac_gecmise_katilmaz():
+    """Şut verisi olmayan maç formu kirletmemeli (doktrin 2)."""
+    from spor_toto.egitim import _form_tablosu
+
+    maclar = [_mac(f"2099-01-0{i}", "A", f"R{i}", "1") for i in range(1, 6)]
+    for m in maclar:
+        m["ev_isabet"] = None                      # istatistik yok
+    maclar.append(_mac("2099-01-06", "A", "Z", "1"))
+    form = _form_tablosu(maclar)
+    assert form[5]["form_var"] is False, "istatistiksiz maclar gecmise katilmis"
+
+
+def test_form_deterministik():
+    from spor_toto.egitim import _form_tablosu
+    maclar = [_mac(f"2099-01-{i:02d}", "A", f"R{i}", "1") for i in range(1, 9)]
+    assert _form_tablosu(maclar) == _form_tablosu(list(maclar))
+
+
+def test_form_gercek_veride_ham_sinyal_tasiyor(haftalar):
+    """Özellik bozuk değil mi — ham sinyal yoksa ölçüm anlamsız olurdu.
+
+    Bu bir *bulgu* testi değil, bir *sağlama*: form ile sonuç arasında ham
+    bir ilişki olmalı. Olmasaydı "form yardım etmiyor" sonucu, özelliğin
+    bozuk olmasından da kaynaklanabilirdi.
+    """
+    ciftler = [(o, hf["results"][i]) for hf in haftalar
+               for i, o in enumerate(hf["ozellikler"]) if o["form_var"]]
+    assert len(ciftler) > 10_000
+
+    iyi = [k for o, k in ciftler if o["form_puan_farki"] > 1.0]
+    kotu = [k for o, k in ciftler if o["form_puan_farki"] < -1.0]
+    ev_orani = lambda g: sum(1 for k in g if k == "1") / len(g)
+    assert ev_orani(iyi) > ev_orani(kotu) + 0.15, "form ham sinyal tasimiyor"
+
+
+def test_kupon_haftasinda_form_notr():
+    """Kupon haftaları form taşımaz; nötr 0 döner, uydurma değer değil."""
+    from spor_toto.recalibrate import _mac_ozellikleri
+    kupon = olculebilir_haftalar()[0]
+    for o in _mac_ozellikleri(kupon):
+        assert o["form_puan_farki"] == 0.0
+        assert o["form_isabet_farki"] == 0.0
+
+
+def test_form_kademesi_bant_ustune_iki_sutun_ekler():
+    from spor_toto.recalibrate import KalibreTahminci
+    h = korpus_haftalari(sezonlar_=["2425"])
+    bant = KalibreTahminci("bant"); bant.egit(h)
+    form = KalibreTahminci("form"); form.egit(h)
+    assert len(form.katsayilar) == len(bant.katsayilar) + 2

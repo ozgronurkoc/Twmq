@@ -52,6 +52,10 @@ def korpus_yukle(yol: Optional[str] = None) -> List[Dict[str, Any]]:
                 continue
             if any(v <= 1.0 for v in oranlar.values()):
                 continue
+            def _tam(ad: str) -> Optional[int]:
+                ham = (r.get(ad) or "").strip()
+                return int(ham) if ham.isdigit() else None
+
             out.append({
                 "sezon": r["sezon"],
                 "lig": r["lig"],
@@ -62,8 +66,79 @@ def korpus_yukle(yol: Optional[str] = None) -> List[Dict[str, Any]]:
                 "dep": r["dep"],
                 "kod": r["kod"],
                 "oranlar": oranlar,
+                "ev_isabet": _tam("ev_isabet"),
+                "dep_isabet": _tam("dep_isabet"),
+                "ev_sut": _tam("ev_sut"),
+                "dep_sut": _tam("dep_sut"),
             })
     return out
+
+
+#: Yuvarlanan form penceresi — bir takımın son kaç maçına bakılır.
+FORM_PENCERE = 5
+
+#: Puan karşılıkları (galibiyet/beraberlik/mağlubiyet).
+_PUAN = {"G": 3.0, "B": 1.0, "M": 0.0}
+
+
+def _form_tablosu(satirlar: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Her maç için, **o maçtan önceki** maçlardan hesaplanmış takım formu.
+
+    Zamansal sızıntıya karşı tek savunma buradaki sıradır: maçlar kronolojik
+    gezilir, form **önce okunur, sonra** o maç geçmişe eklenir. Bir maçın
+    kendi sonucu asla kendi formuna girmez.
+
+    Sızıntının bu türü sessizdir ve ölçümü tamamen bozar — model geleceği
+    görür, skor mucizevi çıkar, gerçek maçta hiçbir işe yaramaz. Bu yüzden
+    `test_egitim.py::test_form_gelecegi_gormez` bekçidir.
+
+    Eksik istatistik **uydurulmaz** (doktrin 2): şut verisi olmayan maç
+    geçmişe katılmaz ve yeterli geçmişi olmayan maç `form_var=False` ile
+    işaretlenir. Model o maçta formu değil, işareti görür.
+    """
+    sirali = sorted(range(len(satirlar)),
+                    key=lambda i: (satirlar[i]["tarih"], satirlar[i]["lig"],
+                                   satirlar[i]["ev"]))
+    gecmis: Dict[str, List[Dict[str, float]]] = {}
+    out: List[Optional[Dict[str, Any]]] = [None] * len(satirlar)
+
+    def ozet(takim: str) -> Optional[Dict[str, float]]:
+        kayit = gecmis.get(takim, [])
+        if len(kayit) < FORM_PENCERE:
+            return None
+        son = kayit[-FORM_PENCERE:]
+        n = float(len(son))
+        return {
+            "puan": sum(k["puan"] for k in son) / n,
+            "isabet_farki": sum(k["isabet_farki"] for k in son) / n,
+        }
+
+    for i in sirali:
+        r = satirlar[i]
+        ev_ozet, dep_ozet = ozet(r["ev"]), ozet(r["dep"])
+        if ev_ozet and dep_ozet:
+            out[i] = {
+                "form_var": True,
+                "form_puan_farki": ev_ozet["puan"] - dep_ozet["puan"],
+                "form_isabet_farki": (ev_ozet["isabet_farki"]
+                                      - dep_ozet["isabet_farki"]),
+            }
+        else:
+            out[i] = {"form_var": False, "form_puan_farki": 0.0,
+                      "form_isabet_farki": 0.0}
+
+        # --- form OKUNDUKTAN SONRA bu mac gecmise eklenir ---
+        ev_isabet, dep_isabet = r.get("ev_isabet"), r.get("dep_isabet")
+        if ev_isabet is None or dep_isabet is None:
+            continue  # istatistigi olmayan mac gecmise katilmaz
+        ev_sonuc = {"1": "G", "0": "B", "2": "M"}[r["kod"]]
+        dep_sonuc = {"1": "M", "0": "B", "2": "G"}[r["kod"]]
+        gecmis.setdefault(r["ev"], []).append({
+            "puan": _PUAN[ev_sonuc], "isabet_farki": float(ev_isabet - dep_isabet)})
+        gecmis.setdefault(r["dep"], []).append({
+            "puan": _PUAN[dep_sonuc], "isabet_farki": float(dep_isabet - ev_isabet)})
+
+    return [o for o in out if o is not None]
 
 
 def sezonlar() -> List[str]:
@@ -87,7 +162,14 @@ def korpus_haftalari(sezonlar_: Optional[Sequence[str]] = None,
     özelliği model türetir (`recalibrate._mac_ozellikleri`). Bu ayrım
     sayesinde aynı tahminci hem kupon haftalarında hem korpusta çalışır.
     """
-    satirlar = korpus_yukle(yol)
+    tumu = korpus_yukle(yol)
+    # Form tum korpus uzerinde, kronolojik hesaplanir; suzme SONRA gelir.
+    # Once suzseydik, secilen sezonun ilk maclari gecmissiz kalirdi.
+    formlar = _form_tablosu(tumu)
+    for r, f in zip(tumu, formlar):
+        r["_form"] = f
+
+    satirlar = tumu
     if sezonlar_ is not None:
         izin = set(sezonlar_)
         satirlar = [r for r in satirlar if r["sezon"] in izin]
@@ -110,10 +192,13 @@ def korpus_haftalari(sezonlar_: Optional[Sequence[str]] = None,
             olasilik = implied_probs(r["oranlar"])
             probs.append(olasilik)
             favori = min(r["oranlar"], key=lambda s: r["oranlar"][s])
+            form = r.get("_form") or {"form_var": False, "form_puan_farki": 0.0,
+                                      "form_isabet_farki": 0.0}
             ozellikler.append({
                 "lig": r["lig"],
                 "favori": favori,
                 "favori_oran": r["oranlar"][favori],
+                **form,
             })
         out.append({
             "week": yil * 100 + hafta,

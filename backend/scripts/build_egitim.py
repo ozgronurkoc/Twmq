@@ -68,6 +68,16 @@ KAYNAK_SIRASI: Tuple[Tuple[str, bool], ...] = (
 #: FTR -> kupon sembolu
 SONUC_KODU = {"H": "1", "D": "0", "A": "2"}
 
+#: Tasinan mac istatistikleri. Bunlar mac SONRASI veridir; dogrudan tahminci
+#: girdisi OLAMAZLAR. Tek amaclari yuvarlanan takim formu uretmek: bir macin
+#: oncesindeki maclardan hesaplanan sut/isabetli sut farki. Eksik olabilirler
+#: ve eksikse UYDURULMAZ — form ureteci o maci gecmise katmaz (doktrin 2).
+ISTATISTIK_SUTUNLARI: Tuple[Tuple[str, str], ...] = (
+    ("HS", "ev_sut"), ("AS", "dep_sut"),
+    ("HST", "ev_isabet"), ("AST", "dep_isabet"),
+    ("HC", "ev_korner"), ("AC", "dep_korner"),
+)
+
 
 def indir(url: str, hedef: Path, timeout: float = 60.0) -> Optional[Path]:
     """Kaynak dosyayi indir; varsa yeniden indirme (onbellek git disi)."""
@@ -142,6 +152,10 @@ def satirlari_coz(sezon: str, lig: str, yol: Path) -> Tuple[List[Dict[str, Any]]
                 continue
 
             yil, iso_hafta, _ = tarih.isocalendar()
+            istatistik = {}
+            for kaynak_ad, hedef_ad in ISTATISTIK_SUTUNLARI:
+                ham_deger = (satir.get(kaynak_ad) or "").strip()
+                istatistik[hedef_ad] = ham_deger if ham_deger.isdigit() else ""
             out.append({
                 "sezon": sezon,
                 "lig": (satir.get("Div") or lig).strip() or lig,
@@ -156,6 +170,7 @@ def satirlari_coz(sezon: str, lig: str, yol: Path) -> Tuple[List[Dict[str, Any]]
                 "oran_1": oran["1"], "oran_0": oran["0"], "oran_2": oran["2"],
                 "oran_kaynak": oran["kaynak"],
                 "kapanis": "1" if oran["kapanis"] else "0",
+                **istatistik,
             })
     return out, sayac
 
@@ -225,12 +240,15 @@ def main() -> int:
                      for s in args.sezonlar}
     kod_dagilim = {k: sum(1 for r in satirlar if r["kod"] == k) for k in ("1", "0", "2")}
     kapanis_orani = sum(1 for r in satirlar if r["kapanis"] == "1") / len(satirlar)
+    istatistikli = sum(1 for r in satirlar if r.get("ev_isabet"))
+
 
     print(f"\nkorpus: {len(satirlar)} mac · {len(sezon_dagilim)} sezon "
           f"· {len({r['lig'] for r in satirlar})} lig")
     print(f"  sezon dagilimi : {sezon_dagilim}")
     print(f"  sonuc dagilimi : {kod_dagilim}")
     print(f"  kapanis orani  : %{100 * kapanis_orani:.1f}")
+    print(f"  istatistikli   : {istatistikli} (%{100 * istatistikli / len(satirlar):.1f})")
     if sayaclar["oran_yok"]:
         print(f"  orani olmadigi icin elenen: {sayaclar['oran_yok']}")
     if alinamayan:
@@ -243,7 +261,7 @@ def main() -> int:
     args.out_dir.mkdir(parents=True, exist_ok=True)
     basliklar = ["sezon", "lig", "tarih", "iso_yil", "iso_hafta", "ev", "dep",
                  "hg", "ag", "kod", "oran_1", "oran_0", "oran_2",
-                 "oran_kaynak", "kapanis"]
+                 "oran_kaynak", "kapanis"] + [h for _, h in ISTATISTIK_SUTUNLARI]
     csv_yol = args.out_dir / "egitim_korpus.csv"
     with open(csv_yol, "w", encoding="utf-8", newline="") as fh:
         yazici = csv.DictWriter(fh, fieldnames=basliklar, extrasaction="ignore")
@@ -265,6 +283,10 @@ def main() -> int:
         "leagues": sorted({r["lig"] for r in satirlar}),
         "result_distribution": kod_dagilim,
         "closing_odds_pct": round(100 * kapanis_orani, 2),
+        "with_match_stats": istatistikli,
+        "match_stats_pct": round(100 * istatistikli / len(satirlar), 2),
+        "match_stats_note": ("mac SONRASI veridir; dogrudan tahminci girdisi degil, "
+                             "yalnizca yuvarlanan takim formu icin"),
         "dropped": sayaclar,
         "unavailable_files": alinamayan,
     }

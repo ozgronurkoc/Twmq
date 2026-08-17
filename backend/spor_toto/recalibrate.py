@@ -62,7 +62,7 @@ EN_AZ_ORNEK = AZ_ORNEK
 
 #: Kademe — basitten karmaşığa. Sıra kasıtlı: her basamak bir öncekine
 #: yalnızca bir özellik ekler, böylece fark o özelliğe atfedilebilir.
-KADEMELER: Tuple[str, ...] = ("sicaklik", "bias", "lig", "bant")
+KADEMELER: Tuple[str, ...] = ("sicaklik", "bias", "lig", "bant", "form")
 
 
 # ─── özellik kaynağı ──────────────────────────────────────────────────────────
@@ -115,6 +115,8 @@ def _mac_ozellikleri(hafta: Girdi) -> List[Dict[str, Any]]:
             "lig": o.get("lig", "bilinmiyor"),
             "favori": o.get("favori"),
             "bant": _bant_adi(o.get("favori_oran")),
+            "form_puan_farki": float(o.get("form_puan_farki") or 0.0),
+            "form_isabet_farki": float(o.get("form_isabet_farki") or 0.0),
         } for i, o in enumerate(tasinan)]
 
     tablo = _ozellik_tablosu()
@@ -127,6 +129,9 @@ def _mac_ozellikleri(hafta: Girdi) -> List[Dict[str, Any]]:
             "lig": ek.get("lig", "bilinmiyor"),
             "favori": ek.get("favori"),
             "bant": _bant_adi(ek.get("favori_oran")),
+            # Kupon haftalari form tasimaz; notr 0 = "form bilgisi yok".
+            "form_puan_farki": 0.0,
+            "form_isabet_farki": 0.0,
         })
     return out
 
@@ -169,6 +174,17 @@ def _tasarim_satiri(ozellik: Dict[str, Any], kademe: str,
     for ad in bantlar:
         sutunlar.append([1.0 if (favori is not None and s == favori and bant == ad)
                          else 0.0 for s in SYMBOLS])
+    if kademe == "bant":
+        return np.array(sutunlar, dtype=float).T
+
+    # 5) takim formu — simetrik kaydirma: ev lehine fark "1"i yukari,
+    #    "2"yi asagi iter, beraberlige dokunmaz. Form bilinmiyorsa deger
+    #    0'dir ve sutun hicbir sey yapmaz; "notr" ile "bilinmiyor" ayni
+    #    davranisa duser, cunku ikisinde de soylenecek bir sey yoktur.
+    for alan in ("form_puan_farki", "form_isabet_farki"):
+        v = float(ozellik.get(alan) or 0.0)
+        sutunlar.append([v if s == "1" else (-v if s == "2" else 0.0)
+                         for s in SYMBOLS])
     return np.array(sutunlar, dtype=float).T
 
 
@@ -265,8 +281,8 @@ class KalibreTahminci(Tahminci):
             return sorted([k for k, v in sayim.items()
                            if v >= EN_AZ_ORNEK and k != "bilinmiyor"]) + ["diger"]
 
-        self._ligler = yeterli("lig") if self.kademe in ("lig", "bant") else []
-        self._bantlar = yeterli("bant") if self.kademe == "bant" else []
+        self._ligler = yeterli("lig") if self.kademe in ("lig", "bant", "form") else []
+        self._bantlar = yeterli("bant") if self.kademe in ("bant", "form") else []
 
     def egit(self, haftalar: Sequence[Girdi]) -> None:
         ozellikler: List[Dict[str, Any]] = []

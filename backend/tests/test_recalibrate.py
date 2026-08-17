@@ -216,5 +216,31 @@ def test_gercek_veride_egitim_ici_kapasiteyle_iyilesiyor():
                 n += 1
         return top / n
 
-    skorlar = [icsel(k) for k in KADEMELER]
-    assert skorlar == sorted(skorlar, reverse=True), "egitim-ici monoton degil"
+    skorlar = {k: icsel(k) for k in KADEMELER}
+    sirali = [skorlar[k] for k in KADEMELER]
+    # Azalan ama STRICT degil: `form` kupon kesitinde `bant` ile berabere
+    # kalir, cunku kupon haftalari form tasimaz (asagidaki testin konusu).
+    # Tolerans, esit ciftin kayan nokta gurultusu icin: ayni modelin iki
+    # sifir sutunu fazlasi Newton cozumunde ~1e-13 fark uretiyor.
+    assert all(a >= b - 1e-9 for a, b in zip(sirali, sirali[1:])), "egitim-ici artmis"
+    assert skorlar["bant"] < skorlar["lig"] < skorlar["bias"] < skorlar["sicaklik"]
+
+
+def test_form_kupon_kesitinde_bant_ile_ozdes():
+    """Kupon haftaları form taşımaz — `form` orada `bant`'tan ayrışamaz.
+
+    Bu bir eksiklik değil, ölçümün sınırı: form yalnızca eğitim korpusunda
+    var. Kuponda form sütunları sabit 0 olduğu için model birebir aynı
+    kalır. Sayı ayrışırsa nötr-form sözleşmesi bozulmuş demektir.
+    """
+    haftalar = olculebilir_haftalar()
+
+    def katsayi(kademe: str):
+        t = KalibreTahminci(kademe)
+        t.egit(haftalar)
+        return t.katsayilar
+
+    bant, form = katsayi("bant"), katsayi("form")
+    assert form[:len(bant)] == pytest.approx(bant, abs=1e-6)
+    assert form[len(bant):] == pytest.approx([0.0, 0.0], abs=1e-6), (
+        "kuponda form katsayisi sifirdan farkli — notr sozlesmesi bozuk")

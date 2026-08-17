@@ -46,6 +46,9 @@
     "2": 9500
   },
   "closing_odds_pct": 100.0,
+  "with_match_stats": 28928,
+  "match_stats_pct": 93.01,
+  "match_stats_note": "mac SONRASI veridir; dogrudan tahminci girdisi degil, yalnizca yuvarlanan takim formu icin",
   "dropped": {
     "toplam": 31132,
     "tarih_yok": 0,
