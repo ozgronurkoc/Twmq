@@ -5,6 +5,8 @@ import pytest
 from spor_toto.health import (
     CHECKS,
     KATEGORILER,
+    CheckSpec,
+    _run,
     check_envanteri,
     print_report,
     run_health,
@@ -51,6 +53,23 @@ def test_health_includes_core_and_analysis():
         "pipeline_result_shape",
         "veri_seti",
         "oran_arsivi",
+    ):
+        assert required in names
+
+
+def test_ilan_edilen_yuzey_kapsanir():
+    """Meta sözleşmesi, ilan edilen modlar, preset'ler ve varyantlar.
+
+    Bunların hepsi kullanıcıya doğrudan çarpan yüzeylerdir ve sağlık
+    kapsamına sonradan alınmıştır; listeden düşerlerse kapsam boşluğu
+    sessizce geri gelir.
+    """
+    names = {c.name for c in run_health().checks}
+    for required in (
+        "meta_sozlesmesi",
+        "mod_envanteri",
+        "bayes_presetleri",
+        "fix16_varyantlari",
     ):
         assert required in names
 
@@ -137,6 +156,28 @@ def test_env_bilgisi_raporda():
     assert env["python"]
     assert env["platform"]
     assert "numpy" in env and "scipy" in env
+
+
+def test_dusen_kontrol_kirilma_yerini_yazar():
+    """Yassıltılmış "AssertionError:" hangi satırda kırıldığını söylemez.
+
+    Assert'ler çoğunlukla mesajsızdır; son kare olmadan canlıda düşen bir
+    kontrolü ayıklamak kaynak okumaya dönüşür.
+    """
+    def kirik() -> str:
+        assert False
+
+    r = _run(CheckSpec("kirik_deneme", "cekirdek", "test", kirik))
+    assert r.ok is False
+    assert r.detail.startswith("AssertionError")
+    assert "@ test_health.py:" in r.detail, r.detail
+
+
+def test_gecen_kontrol_kirilma_yeri_yazmaz():
+    r = _run(CheckSpec("gecen_deneme", "cekirdek", "test", lambda: "olctum=3"))
+    assert r.ok is True
+    assert r.detail == "olctum=3"
+    assert "@" not in r.detail
 
 
 def test_slowest_en_uzun_kontrolu_gosterir():

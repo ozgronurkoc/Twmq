@@ -13,9 +13,11 @@ from __future__ import annotations
 
 import argparse
 import math
+import os
 import platform
 import sys
 import time
+import traceback
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Callable, Dict, List, Optional, Tuple
@@ -42,6 +44,17 @@ from .markov import markov_report
 from .report import basliklar
 
 ORNEK = "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"
+
+# Mod envanteri KUCUK bir kupon uzerinde kosar: 7 cifte -> 128 nokta, alt
+# sinir 16 kolon. Sebep sure butcesi (§4.3): ayni denetim ORNEK uzerinde
+# ILP'yi 11 saniyeye cikariyor, kanit degeri ise degismiyor — "ilan edilen
+# her mod calisiyor ve garanti bayragini tutuyor mu" sorusu uzayin
+# buyuklugunden bagimsizdir.
+MOD_ORNEK = "1,1,1,1,1,1,1,10,10,10,10,10,10,10,1"
+MOD_BUTCE = 24   # fix16 bedeli 16 kolon; plan bu butceye sigmak zorunda
+MOD_MAXCOV_BUTCE = 8   # alt sinirin (16) ALTINDA: tam kaplama matematiksel
+                       # olarak imkansiz, yani "garanti yok" ilani sinanabilir
+
 SEMBOLLER = ("1", "0", "2")
 
 # Kategoriler, motorun katmanlarını izler: bir kontrol düştüğünde hatanın
@@ -164,10 +177,24 @@ def _run(spec: CheckSpec) -> CheckResult:
         return CheckResult(
             spec.name,
             False,
-            f"{type(e).__name__}: {e}",
+            f"{type(e).__name__}: {e}{_kirilma_yeri(e)}",
             (time.perf_counter() - t0) * 1000,
             **ortak,
         )
+
+
+def _kirilma_yeri(e: BaseException) -> str:
+    """Istisnanin KIRILDIGI son kare — "health.py:226" gibi.
+
+    Yassiltilmis bir `AssertionError:` mesaji canlida hangi degismezin
+    dustugunu soylemez; assert'ler cogunlukla mesajsizdir. Son kare birkac
+    karakter yer kaplar ve hata ayiklamayi kaynak okumaktan kurtarir.
+    """
+    tb = traceback.extract_tb(e.__traceback__)
+    if not tb:
+        return ""
+    son = tb[-1]
+    return f" @ {os.path.basename(son.filename)}:{son.lineno}"
 
 
 def _approx(a: float, b: float, rel: float = 1e-9) -> bool:
@@ -225,6 +252,31 @@ def _check_distance_layers() -> str:
     return f"layers={dict(dist)}"
 
 
+def _check_fix16_varyantlari() -> str:
+    """
+    `--variant` ile uretilen alternatif 16'liklar.
+
+    Varyantlar kod tabanini karistirarak baska bir kaplama uretir; ama
+    16-satir/14-garanti sozlesmesi HEPSI icin gecerli olmak zorundadir.
+    Kirilirsa "varyant sec" dugmesi sessizce garantisiz kupon dagitir.
+    """
+    enc = Encoder(parse_picks(ORNEK))
+    kanonik, _ = solve_fix16(enc, variant=0)
+    farkli = 0
+    for v in (1, 2, 3):
+        cols, _ = solve_fix16(enc, variant=v)
+        rows = merge_rows(cols)
+        worst, acik = dogrula_kaplama(cols, enc.alphabet_sizes)
+        assert len(rows) == 16, f"varyant {v}: {len(rows)} satır"
+        assert worst <= 1 and acik == 0, f"varyant {v}: worst={worst} acik={acik}"
+        assert sum(row_cost(r) for r in rows) == len(cols)
+        if set(cols) != set(kanonik):
+            farkli += 1
+    # Varyantlar ayni kaplamayi tekrarlarsa secenek olmaktan cikar.
+    assert farkli >= 1, "hicbir varyant kanonik kaplamadan farkli degil"
+    return f"varyant=1..3 satir=16 worst<=1 farkli={farkli}/3"
+
+
 def _check_blok_motor() -> str:
     enc = Encoder(parse_picks(ORNEK))
     r = solve_by_blocks(enc)
@@ -244,6 +296,146 @@ def _check_heuristic() -> str:
     worst, acik = dogrula_kaplama(cols, enc.alphabet_sizes)
     assert worst <= 1 and acik == 0
     return f"heuristic_bedel={len(cols)}"
+
+
+def _check_mod_envanteri() -> str:
+    """
+    Meta'da ILAN EDILEN her mod gercekten kosuyor mu ve `garanti` bayragi
+    dogru mu?
+
+    Saglik daha once yalnizca fix16/blok/sezgisel kosturuyordu; `auto`,
+    `exact`, `butce` ve `maxcov` hic sinanmiyordu. Bozuk bir mod, meta'da
+    ilan edildigi icin arayuzde secilebilir kalir ve dogrudan kullaniciya
+    carpar.
+
+    Baglanan degismez sudur: **garanti: True ilan eden bir mod acik nokta
+    birakamaz; garanti: False ilan eden maxcov ise alt sinirin altindaki bir
+    butceyle gercekten kaplayamaz.** Ikincisi kombinatoryal zorunluluktur:
+    8 kolonun toplam topu 8*(1+ekseriyet) < 128'dir.
+    """
+    from .engines import (
+        engine_params, run_auto, run_block, run_butce, run_exact, run_fix16,
+        run_heuristic, run_maxcov,
+    )
+    from .meta import MODES
+
+    enc = Encoder(parse_picks(MOD_ORNEK))
+    # ILP'yi ve local search'u sure butcesine cek: burada olculen sey
+    # kalite degil, modun ayakta olup olmadigi.
+    eng = engine_params(trials=1, ls_iters=2_000, time_limit=10.0,
+                        exact_limit=256, block_limit=256)
+
+    kosucular: Dict[str, Callable[[], Dict[str, Any]]] = {
+        "fix16": lambda: run_fix16(enc),
+        "auto": lambda: run_auto(enc, eng),
+        "exact": lambda: run_exact(enc, eng),
+        "block": lambda: run_block(enc, eng),
+        "heuristic": lambda: run_heuristic(enc, eng),
+        "butce": lambda: run_butce(enc, MOD_BUTCE),
+        "maxcov": lambda: run_maxcov(enc, MOD_MAXCOV_BUTCE),
+    }
+    eksik = [m["id"] for m in MODES if m["id"] not in kosucular]
+    assert not eksik, f"meta'da ilan edilen ama koşulmayan mod: {eksik}"
+
+    kosan: List[str] = []
+    atlanan: List[str] = []
+    for mod in MODES:
+        mid = mod["id"]
+        if mod["needs_scipy"] and not HAS_SCIPY:
+            # Bilgi amacli scipy_flag zaten bunu ayrica raporluyor.
+            atlanan.append(mid)
+            continue
+        r = kosucular[mid]()
+        e = r.get("enc", enc)
+        cols = r["cols"]
+        assert cols, f"{mid}: bos kaplama"
+        assert r.get("baslik"), f"{mid}: baslik yok"
+        worst, acik = dogrula_kaplama(cols, e.alphabet_sizes)
+        if mod["garanti"]:
+            assert worst <= 1 and acik == 0, (
+                f"{mid} meta'da garanti ilan ediyor ama worst={worst} acik={acik}"
+            )
+            assert len(merge_rows(cols)) >= 1
+        else:
+            assert acik > 0, (
+                f"{mid} garanti VERMEDIGINI ilan ediyor ama tam kapladi — "
+                f"ya bayrak ya kaplama yanlis"
+            )
+            assert len(cols) <= MOD_MAXCOV_BUTCE, f"{mid} bütçeyi aştı"
+            assert r["kapsanan"] + acik == e.space_size(), "kapsama muhasebesi tutmuyor"
+        if mod["needs_budget"]:
+            # Butce modunun urettigi kupon, verilen butceyi asamaz.
+            assert len(cols) <= (MOD_BUTCE if mid == "butce" else MOD_MAXCOV_BUTCE), \
+                f"{mid} bütçeyi aştı: {len(cols)}"
+        kosan.append(mid)
+
+    atlama = f" atlanan={','.join(atlanan)}" if atlanan else ""
+    return f"mod={len(kosan)}/{len(MODES)} uzay={enc.space_size()}{atlama}"
+
+
+def _check_meta_sozlesmesi() -> str:
+    """
+    `/api/meta` sozlesmesi. Formul sayfasinin TAMAMI modlari, preset'leri,
+    motor varsayilanlarini ve sinirlari buradan okur ve hicbirini sabit
+    kodlamaz. Meta bozulursa ana sayfa coker; motor ise sapasaglam kalir,
+    yani baska hicbir kontrol bunu yakalamaz.
+
+    Denetlenen sey degerlerin "guzelligi" degil, ic tutarlilik: her sinirda
+    min <= varsayilan <= max, preset listesinin motordaki tabloyla ortusmesi,
+    scipy bayraginin gercekle ayni olmasi.
+    """
+    from . import __version__ as surum
+    from .bayes import STRENGTH_PRESETS
+    from .history import MATCH_COUNT as VERI_MAC_SAYISI
+    from .meta import MODE_IDS, meta_payload
+
+    m = meta_payload(surum)
+    assert m["version"] == surum
+    assert m["has_scipy"] is HAS_SCIPY, "meta scipy'yi motordan farklı biliyor"
+
+    enc = Encoder(parse_picks(ORNEK))
+    assert m["match_count"] == enc.total_len == VERI_MAC_SAYISI, (
+        f"maç sayısı ayrışmış: meta={m['match_count']} motor={enc.total_len} "
+        f"veri={VERI_MAC_SAYISI}"
+    )
+    assert tuple(m["symbols"]) == SEMBOLLER
+
+    ids = [x["id"] for x in m["modes"]]
+    assert len(ids) == len(set(ids)), "mod kimlikleri tekil değil"
+    assert set(ids) == MODE_IDS
+    for mod in m["modes"]:
+        for alan in ("label", "aciklama"):
+            assert mod.get(alan), f"{mod['id']}: {alan} boş"
+        for bayrak in ("garanti", "needs_budget", "needs_scipy"):
+            assert isinstance(mod.get(bayrak), bool), f"{mod['id']}: {bayrak}"
+    assert {x["id"] for x in m["modes"] if x["needs_scipy"]} == {"exact"}
+    assert {x["id"] for x in m["modes"] if x["needs_budget"]} == {"butce", "maxcov"}
+    assert {x["id"] for x in m["modes"] if not x["garanti"]} == {"maxcov"}
+
+    for ad, lim in m["limits"].items():
+        assert lim["min"] <= lim["max"], f"{ad}: min > max"
+        if "default" in lim:
+            assert lim["min"] <= lim["default"] <= lim["max"], \
+                f"{ad}: varsayılan bandın dışında"
+    for ad, deger in m["engine_defaults"].items():
+        lim = m["limits"].get(ad)
+        if lim is not None:
+            assert lim["min"] <= deger <= lim["max"], \
+                f"engine_defaults[{ad}]={deger} sınırların dışında"
+
+    presetler = {p["id"]: p for p in m["bayes_presets"]}
+    assert set(presetler) == set(STRENGTH_PRESETS), "preset listesi motorla ayrışmış"
+    for ad, p in presetler.items():
+        kaynak = STRENGTH_PRESETS[ad]
+        assert _approx(p["prior_strength"], kaynak["prior_strength"])
+        assert _approx(p["evidence_strength"], kaynak["evidence_strength"])
+
+    bt = m["backtest"]
+    assert bt["banko_default"] in bt["banko_grid"], "banko varsayılanı ızgarada yok"
+    assert bt["uclu_default"] in bt["uclu_grid"], "üçlü varsayılanı ızgarada yok"
+
+    return (f"mod={len(ids)} preset={len(presetler)} limit={len(m['limits'])} "
+            f"mac={m['match_count']}")
 
 
 def _check_olasilik_exact() -> str:
@@ -287,6 +479,50 @@ def _check_bayes() -> str:
     rap = olasilik_raporu(enc, cols, posts)
     assert rap.p_kume_ici > 0.99
     return f"posteriors=15 p_ici={rap.p_kume_ici:.4f}"
+
+
+def _check_bayes_presetleri() -> str:
+    """
+    Meta'da ILAN EDILEN Bayes preset'lerinin hepsi.
+
+    `bayes_dirichlet` elle verilen guclerle kosuyor, preset'lerle degil;
+    CLI duman testi de yalnizca `dengeli`yi kullaniyordu. Bozuk bir preset
+    (ornegin `sadece_prior`, evidence_strength=0) hicbir yerde kosmadan
+    kullaniciya gidiyordu.
+
+    Iki degismez: (1) her preset'in posterior'lari 1'e toplanir,
+    (2) posterior hangi preset ile uretilirse uretilsin KAPLAMAYI
+    degistirmez — Bayes tahmini yumusatir, garantiyi degil.
+    """
+    from .bayes import STRENGTH_PRESETS, recommend_strengths
+
+    enc = Encoder(parse_picks(ORNEK))
+    cols, _ = solve_fix16(enc)
+    evidence = _probs_on_selections(enc)
+    worst, acik = dogrula_kaplama(cols, enc.alphabet_sizes)
+    assert worst <= 1 and acik == 0
+
+    olculen: List[str] = []
+    for ad in STRENGTH_PRESETS:
+        v = recommend_strengths(ad)
+        assert v == dict(STRENGTH_PRESETS[ad]), f"{ad}: preset çözümlemesi ayrıştı"
+        posts = posteriors_only(
+            enc.selections, evidence,
+            prior_strength=v["prior_strength"],
+            evidence_strength=v["evidence_strength"],
+        )
+        assert len(posts) == enc.total_len, f"{ad}: {len(posts)} posterior"
+        for p in posts:
+            assert abs(sum(p.values()) - 1.0) < 1e-9, f"{ad}: posterior 1'e toplanmıyor"
+            assert all(x >= 0.0 for x in p.values()), f"{ad}: negatif olasılık"
+        rap = olasilik_raporu(enc, cols, posts)
+        assert rap.p_kume_ici > 0.99, f"{ad}: kaplama olasılığı düştü"
+        assert _approx(rap.p_15 + rap.p_14, rap.p_kume_ici), f"{ad}: p15+p14 ayrıştı"
+        olculen.append(f"{ad}={rap.p_kume_ici:.3f}")
+
+    # Bilinmeyen bir preset sessizce patlamak yerine dengeliye duser.
+    assert recommend_strengths("boyle_bir_preset_yok") == dict(STRENGTH_PRESETS["dengeli"])
+    return f"preset={len(olculen)} " + " ".join(olculen)
 
 
 def _check_markov() -> str:
@@ -548,6 +784,13 @@ CHECKS: Tuple[CheckSpec, ...] = (
         _check_distance_layers,
     ),
     CheckSpec(
+        "fix16_varyantlari", "cekirdek",
+        "Alternatif 16'lık kümeler (`variant`) de 16 satır ve 14-garanti "
+        "veriyor mu. Kırılırsa varyant seçen kullanıcı sessizce garantisiz "
+        "kupon alır.",
+        _check_fix16_varyantlari,
+    ),
+    CheckSpec(
         "blok_motor", "motor",
         "Blok motoru da tam kaplama üretir ve fix16'dan pahalı olmaz.",
         _check_blok_motor,
@@ -557,6 +800,13 @@ CHECKS: Tuple[CheckSpec, ...] = (
         "Sezgisel motor, fix16'nın reddettiği kuponda bile geçerli kaplama "
         "bulur — garanti motora değil, kaplamanın kendisine bağlıdır.",
         _check_heuristic,
+    ),
+    CheckSpec(
+        "mod_envanteri", "motor",
+        "Meta'da ilan edilen 7 modun hepsi koşuyor ve `garanti` bayrağı "
+        "gerçeği söylüyor mu. Bozuk bir mod arayüzde seçilebilir kalır ve "
+        "doğrudan kullanıcıya çarpar.",
+        _check_mod_envanteri,
     ),
     CheckSpec(
         "olasilik_exact", "olasilik",
@@ -575,6 +825,12 @@ CHECKS: Tuple[CheckSpec, ...] = (
         "Dirichlet posterior'ları 15 maç için 1'e toplanır ve garantiyi "
         "bozmaz — Bayes tahmini yumuşatır, kaplamayı değiştirmez.",
         _check_bayes,
+    ),
+    CheckSpec(
+        "bayes_presetleri", "olasilik",
+        "Meta'nın ilan ettiği Bayes preset'lerinin hepsi çalışıyor, "
+        "posterior'ları 1'e toplanıyor ve hiçbiri kaplamayı bozmuyor.",
+        _check_bayes_presetleri,
     ),
     CheckSpec(
         "markov_chain", "olasilik",
@@ -611,6 +867,13 @@ CHECKS: Tuple[CheckSpec, ...] = (
         "Geri test boru hattı: her hafta 14-garantili bir kaplamayla çözülüyor "
         "mu ve küme içi kalan hafta gerçekten en az 14 tutturuyor mu.",
         _check_geri_test,
+    ),
+    CheckSpec(
+        "meta_sozlesmesi", "ucuca",
+        "`/api/meta` kendi içinde tutarlı mı: her sınırda min ≤ varsayılan ≤ "
+        "max, preset ve mod listeleri motorla aynı. Meta bozulursa formül "
+        "sayfası çöker ama motor sapasağlam kalır.",
+        _check_meta_sozlesmesi,
     ),
     CheckSpec(
         "pipeline_result_shape", "ucuca",
