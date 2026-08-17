@@ -63,7 +63,7 @@ makinesinde, o günkü kilitli bağımlılıklarla, o commit üzerinde koşar.
 
 Bu yüzden sağlık katmanı ayrı bir katmandır ve `/saglik` sayfası ürünün eşit
 haklı bir parçasıdır: **ürünün vaadinin şu anda, bu makinede, bu sürümde hâlâ
-geçerli olduğunu kanıtlar.** 21 değişmez, 6 kategori, her çağrıda yeniden
+geçerli olduğunu kanıtlar.** 22 değişmez, 6 kategori, her çağrıda yeniden
 ölçülür — ve neyi kanıtlamadığını da açıkça yazar (§6.3).
 
 ### 1.6 Ne yapar / ne yapmaz
@@ -75,7 +75,7 @@ geçerli olduğunu kanıtlar.** 21 değişmez, 6 kategori, her çağrıda yenide
 | Küme dışı senaryoları **fire** olarak ölçer | Kazanma olasılığını artırmaz |
 | Exact + Monte Carlo olasılık raporu verir | 14-garantiyi olasılıkla "güçlendirmez" |
 | Bayes (Dirichlet) ile tahminlerini yumuşatır | Kâr vaadi vermez |
-| Vaadin canlıda geçerliliğini 21 değişmezle ölçer | Tahmin isabetini ölçmez (ölçemez) |
+| Vaadin canlıda geçerliliğini 22 değişmezle ölçer | Tahmin isabetini ölçmez (ölçemez) |
 | Markov ile sıralı risk profili çıkarır | Canlı bülten çekmez |
 | 41 haftalık sezon verisini ve piyasa oranlarını analiz eder | İddaa geçmiş oranı sunmaz (yok — §5.3) |
 | Bir stratejiyi geçmiş sezonda çalıştırıp bedelini ölçer (**geri test**) | Geri testi bir kâr vaadine çevirmez; aşırı uyumu ölçüp gösterir |
@@ -488,6 +488,8 @@ bayrağını rapordan okur — hiçbirini sabit kodlamaz.
 | GET | `/health` | **Liveness** — süreç ayakta mı; hiçbir değişmez koşmaz (~2 ms) |
 | GET | `/api/health` | **Readiness** — değişmezler (200 = HEALTHY/DEGRADED, 503 = UNHEALTHY); `?only=` kısmi, `?fresh=1` önbelleği atlar |
 | GET | `/api/health/checks` | Kontrol envanteri — çalıştırmadan |
+| GET | `/api/health/history` | Sunucudaki son koşular — "ne zamandan beri kırmızı?" |
+| POST | `/api/health/kupon` | **Kullanıcının kendi kuponunu** aynı değişmezlerden geçirir |
 | GET | `/api/stats?last=N` | Tarihsel 1/0/2 + analiz blokları + oran özeti |
 | GET | `/api/stats/<week>` | Tek hafta detayı (komşular, sıra, sapma, maç listesi) |
 | GET | `/api/backtest` | Geri test: sezon, hafta hafta, eşik taraması, hold-out |
@@ -544,6 +546,10 @@ curl http://localhost:8080/api/health       # readiness: tam rapor (JSON)
 curl "http://localhost:8080/api/health?only=cekirdek"
 curl "http://localhost:8080/api/health?fresh=1"   # 5 sn'lik önbelleği atla
 curl http://localhost:8080/api/health/checks      # envanter, çalıştırmadan
+curl http://localhost:8080/api/health/history     # son koşular
+curl -X POST http://localhost:8080/api/health/kupon \
+     -H 'Content-Type: application/json' \
+     -d '{"picks":"1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"}'   # kendi kuponun
 ```
 
 **`/health` ile `/api/health` ayrı uçlardır.** İlki liveness'tır ve hiçbir
@@ -553,7 +559,7 @@ handler'a bağlı olsalardı `/health`e vuran her şey tam raporu ödetirdi ve
 `/health`i canlılık sinyali sanan bir probe, zaman aşımına düşünce **sağlıklı**
 bir konteyneri öldürebilirdi.
 
-**21 kontrol, 6 kategori.** Kategoriler motorun katmanlarını izler ve yukarıdan
+**22 kontrol, 6 kategori.** Kategoriler motorun katmanlarını izler ve yukarıdan
 aşağıya doğru ciddiyet azalır — düşen kontrolün adı değil, **hangi katmanın
 bozulduğu** okunur. Güncel liste için `--list`:
 
@@ -563,7 +569,7 @@ bozulduğu** okunur. Güncel liste için `--list`:
 | `motor` | blok motoru, heuristic, **mod envanteri (7 modun hepsi)** | Bir mod güvenilmez; fix16 ayakta olabilir |
 | `olasilik` | exact, Monte Carlo, Bayes, **Bayes preset'leri**, Markov | Sayılar yanlış; garanti geçerli olabilir |
 | `analiz` | error_freq, **fire senaryoları**, veri seti, oran arşivi, **geri test** | Yorum katmanı bozuk; motor sağlam |
-| `ucuca` | **meta sözleşmesi**, pipeline sonuç şekli | Arayüz yanlış okuyor olabilir |
+| `ucuca` | **meta sözleşmesi**, **stats/backtest gövdeleri**, pipeline sonuç şekli | Arayüz yanlış okuyor olabilir |
 | `ortam` | scipy bayrağı (bilgi amaçlı) | Bir yetenek eksik olabilir |
 
 **Her düşüş 503 değildir.** HTTP durum kodu "beni trafikten çıkar" demektir, "bir
@@ -640,7 +646,7 @@ backend/
     snapshot_iddaa.py  İddaa açık bültenini tarih damgalı arşivler (haftalık)
     check.sh           Yerel CI eşdeğeri
   data/                st_history_2025_26.json · odds/ · iddaa/
-  tests/               pytest (18 dosya, 285 test fonksiyonu → 629 test)
+  tests/               pytest (19 dosya, 320 test fonksiyonu → 664 test)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -801,8 +807,8 @@ bash scripts/check.sh        # yerel CI eşdeğeri
 
 Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant'lar, CLI (Bayes preset
 dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri test,
-iddaa snapshot'ı, API sözleşmesi. 18 test dosyası, 285 test fonksiyonu,
-parametrizasyonla **629 test**; 82'si veri/istatistik/geri test, 44'ü sağlık
+iddaa snapshot'ı, API sözleşmesi. 19 test dosyası, 320 test fonksiyonu,
+parametrizasyonla **664 test**; 82'si veri/istatistik/geri test, 79'u sağlık
 katmanına ait.
 
 İki test bilerek **ağa çıkmaz**: `test_snapshot_iddaa.py` gerçek bültenden alınmış

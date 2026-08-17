@@ -728,6 +728,10 @@ export interface HealthCheck {
   aciklama: string;
   /** false ise düşmesi raporu UNHEALTHY yapmaz, yalnızca "degraded" işaretler. */
   critical: boolean;
+  /** Beklenen üst süre (ms). Aşılması kontrolü DÜŞÜRMEZ. */
+  butce_ms: number | null;
+  /** Süre bütçesi aşıldı mı; ısınma koşusunda her zaman false. */
+  yavas: boolean;
 }
 
 export interface HealthKategori {
@@ -760,8 +764,31 @@ export interface HealthOnbellek {
   ttl_s: number;
 }
 
+/** Raporu hangi süreç üretti — çok örnekli dağıtımda "hangi örnek?" */
+export interface HealthOrnek {
+  pid: number;
+  host: string | null;
+  etiket: string | null;
+  baslangic: string;
+  uptime_s: number;
+}
+
+/** Çekirdek kontrollerin koştuğu kupon sınıfı. */
+export interface HealthKuponSinifi {
+  etiket: string;
+  picks: string;
+  uzay: number;
+  alt_sinir: number;
+}
+
 export interface HealthSummary {
   ornek_kupon?: string;
+  kupon_siniflari?: HealthKuponSinifi[];
+  ornek?: HealthOrnek;
+  /** Sürecin İLK raporu: süre bütçeleri uygulanmaz (ısınma). */
+  isinma?: boolean;
+  /** Süre bütçesini aşan kontroller — düşmediler, yavaşladılar. */
+  butce_asan?: string[];
   has_scipy?: boolean;
   env?: HealthEnv;
   slowest?: { name: string; duration_ms: number } | null;
@@ -788,6 +815,69 @@ export interface HealthReport {
   summary: HealthSummary;
 }
 
+/** GET /api/health/history — sunucudaki son koşular. */
+export interface HealthGecmisKaydi {
+  timestamp: string;
+  durum: "HEALTHY" | "DEGRADED" | "UNHEALTHY";
+  ok: boolean;
+  degraded: boolean;
+  passed: number;
+  total: number;
+  duration_ms: number;
+  dusenler: string[];
+  yavaslar: string[];
+  version: string;
+}
+
+export interface HealthGecmisOzet {
+  kayit: number;
+  durum: "HEALTHY" | "DEGRADED" | "UNHEALTHY" | null;
+  /** Aynı durumda kaç koşu geçti — "ne zamandan beri" sorusunun sayısı. */
+  bu_durumda_kosu: number;
+  degisim_zamani: string | null;
+  son_saglikli: string | null;
+  sinir?: number;
+  /** Durum değişiminde dışarı bildirim gidiyor mu (varsayılan kapalı). */
+  alarm?: boolean;
+}
+
+export interface HealthHistoryResponse {
+  version: string;
+  ozet: HealthGecmisOzet;
+  kayitlar: HealthGecmisKaydi[];
+  ornek: HealthOrnek;
+}
+
+/** POST /api/health/kupon — KULLANICININ kendi kuponunun denetimi. */
+export interface KuponDenetimKontrol {
+  name: string;
+  ok: boolean;
+  aciklama: string;
+  detail: string;
+}
+
+export interface KuponDenetimSonuc {
+  ok: boolean;
+  mode: ModeId;
+  picks: string;
+  baslik: string;
+  notlar: string[];
+  satir: number;
+  bedel: number;
+  alt_sinir: number;
+  uzay: number;
+  guaranteed: boolean;
+  worst: number;
+  acik: number;
+  checks: KuponDenetimKontrol[];
+  duration_ms: number;
+  timestamp: string;
+  version: string;
+  ornek: HealthOrnek;
+  /** Kayıtlı rapordan AYRI olduğunu söyleyen uyarı metni. */
+  uyari: string;
+}
+
 /** /api/health/checks — çalıştırmadan alınan envanter. */
 export interface HealthCheckInfo {
   name: string;
@@ -795,6 +885,7 @@ export interface HealthCheckInfo {
   category_label: string;
   aciklama: string;
   critical: boolean;
+  butce_ms: number | null;
 }
 
 export interface HealthChecksResponse {

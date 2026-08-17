@@ -3,8 +3,12 @@
 import * as React from "react";
 import { Check, Copy, ListFilter, RefreshCw } from "lucide-react";
 
-import { getHealth } from "@/lib/api";
-import type { HealthReport } from "@/lib/types";
+import { denetleKupon, getHealth, getHealthHistory } from "@/lib/api";
+import type {
+  HealthHistoryResponse,
+  HealthReport,
+  KuponDenetimSonuc,
+} from "@/lib/types";
 import { cn, panoyaKopyala, sure } from "@/lib/utils";
 import {
   Badge,
@@ -22,7 +26,9 @@ import {
   type GecmisKaydi,
   GecmisSeridi,
   KategoriKarti,
+  KuponDenetimi,
   OrtamKarti,
+  SunucuGecmisi,
   durumu,
   goreliZaman,
   kategoriAnkraji,
@@ -83,6 +89,17 @@ export default function SaglikPage() {
     return () => clearInterval(t);
   }, []);
 
+  // Sunucu tarafi gecmis: oturum icinden farkli olarak sekme kapansa da
+  // kalir ve "ne zamandan beri kirmizi?" sorusunu cevaplar.
+  const [sunucuGecmisi, setSunucuGecmisi] =
+    React.useState<HealthHistoryResponse | null>(null);
+
+  // Kullanicinin kendi kuponu — kayitli rapordan AYRI katman.
+  const [kuponPicks, setKuponPicks] = React.useState("");
+  const [kuponSonuc, setKuponSonuc] = React.useState<KuponDenetimSonuc | null>(null);
+  const [kuponHata, setKuponHata] = React.useState<string | null>(null);
+  const [kuponCalisiyor, setKuponCalisiyor] = React.useState(false);
+
   const sayacRef = React.useRef(0);
   // Ucan istek. Her yeni cagri oncekini iptal eder: kismi bir kosu ile arka
   // plandaki tam kosu carpisirsa cevaplar GELIS sirasina gore yazilirdi ve
@@ -107,6 +124,14 @@ export default function SaglikPage() {
         const r = await getHealth(only, ac.signal, opt.fresh);
         setRapor(r);
         adresiGuncelle(r.summary.kismi ? (r.summary.only ?? null) : null);
+        // Sunucu gecmisi rapordan SONRA cekilir: az onceki kosu da icinde
+        // olsun. Basarisizligi raporu gostermeyi engellemez — gecmis bir
+        // konfor, rapor ise sayfanin kendisidir.
+        if (!r.summary.kismi) {
+          getHealthHistory(50, ac.signal)
+            .then(setSunucuGecmisi)
+            .catch(() => undefined);
+        }
         gecmiseYaz({
           zaman: r.timestamp,
           ok: r.ok,
@@ -201,6 +226,29 @@ export default function SaglikPage() {
     };
   }, [durum, hata]);
 
+  const kuponuDenetle = React.useCallback(async () => {
+    const picks = kuponPicks.trim();
+    if (!picks) return;
+    setKuponCalisiyor(true);
+    setKuponHata(null);
+    try {
+      setKuponSonuc(await denetleKupon({ picks }));
+    } catch (e) {
+      setKuponSonuc(null);
+      setKuponHata(e instanceof Error ? e.message : String(e));
+    } finally {
+      setKuponCalisiyor(false);
+    }
+  }, [kuponPicks]);
+
+  // Kutu bos baslamasin: rapordaki ornek kupon, denemek icin hazir bir
+  // baslangictir ve "hangi bicimde yazacagim?" sorusunu da cevaplar.
+  React.useEffect(() => {
+    if (!kuponPicks && rapor?.summary.ornek_kupon) {
+      setKuponPicks(rapor.summary.ornek_kupon);
+    }
+  }, [rapor, kuponPicks]);
+
   const kopyala = React.useCallback(async () => {
     if (!rapor) return;
     try {
@@ -219,6 +267,10 @@ export default function SaglikPage() {
   );
   const enUzunMs = React.useMemo(
     () => (rapor ? Math.max(...rapor.checks.map((c) => c.duration_ms), 0) : 0),
+    [rapor],
+  );
+  const yavaslar = React.useMemo(
+    () => (rapor ? rapor.checks.filter((c) => c.ok && c.yavas).map((c) => c.name) : []),
     [rapor],
   );
 
@@ -357,6 +409,15 @@ export default function SaglikPage() {
                 </div>
                 <p className="tnum mt-1 text-[12px] text-muted-foreground">
                   {goreliZaman(rapor.timestamp, simdi)}
+                  {rapor.summary.ornek ? (
+                    <>
+                      {" · örnek "}
+                      <span className="font-mono">
+                        {rapor.summary.ornek.etiket ??
+                          `${rapor.summary.ornek.host ?? "?"}#${rapor.summary.ornek.pid}`}
+                      </span>
+                    </>
+                  ) : null}
                   {rapor.summary.slowest ? (
                     <>
                       {" · en yavaş: "}
@@ -413,10 +474,32 @@ export default function SaglikPage() {
             </Callout>
           ) : null}
 
-          {durum === "kisitli" ? (
+          {yavaslar.length ? (
+            <Callout
+              ton="warning"
+              baslik={`${yavaslar.length} kontrol süre bütçesini aştı`}
+            >
+              Bu kontroller <strong>düşmedi</strong>; değişmezler hâlâ geçerli,
+              yalnızca beklenenden pahalıya koştular:{" "}
+              <span className="font-mono">{yavaslar.join(", ")}</span>. Performans
+              gerilemesi de bir gerilemedir — ama servisi durdurmaz.
+              {rapor.summary.isinma ? null : null}
+            </Callout>
+          ) : null}
+
+          {durum === "kisitli" && !yavaslar.length ? (
             <Callout ton="warning" baslik="Yetenek eksik, servis ayakta">
               Kritik değişmezlerin tamamı geçti; düşenler bilgi amaçlı
               kontroller. Motor çalışır, yalnızca bir yeteneği devre dışıdır.
+            </Callout>
+          ) : null}
+
+          {rapor.summary.isinma ? (
+            <Callout ton="primary" baslik="Bu, sürecin ilk koşusu">
+              İlk rapor numpy/scipy ilk import'unu ve veri setinin ilk
+              okunmasını da üstlenir; süreleri sonraki koşularla
+              karşılaştırmayın. Süre bütçeleri bu koşuda <strong>uygulanmaz</strong>,
+              yoksa her soğuk başlangıç yanlış alarm üretirdi.
             </Callout>
           ) : null}
 
@@ -490,6 +573,15 @@ export default function SaglikPage() {
           </div>
 
           <GecmisSeridi gecmis={gecmis} simdi={simdi} />
+          <SunucuGecmisi gecmis={sunucuGecmisi} simdi={simdi} />
+          <KuponDenetimi
+            sonuc={kuponSonuc}
+            hata={kuponHata}
+            calisiyor={kuponCalisiyor}
+            picks={kuponPicks}
+            onPicks={setKuponPicks}
+            onCalistir={() => void kuponuDenetle()}
+          />
           <OrtamKarti rapor={rapor} />
         </>
       ) : null}

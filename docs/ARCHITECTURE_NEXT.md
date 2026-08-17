@@ -28,6 +28,8 @@ Eski Jinja2 arayüzü `archive/templates/` altına alınmıştır; runtime'da se
 | GET | `/api/meta` | Modlar, Bayes preset'leri, motor varsayılanları, sınırlar |
 | GET | `/health` | Liveness — süreç ayakta mı; hiçbir değişmez koşmaz |
 | GET | `/api/health` | Readiness — değişmezler; `?only=` kısmi, `?fresh=1` önbelleği atlar (bkz. `SAGLIK_VIZYONU.md`) |
+| GET | `/api/health/history` | Sunucudaki son koşuların özeti (süreç ömürlü) |
+| POST | `/api/health/kupon` | Kullanıcının kendi kuponunu aynı değişmezlerden geçirir |
 | GET | `/api/stats?last=N` | Tarihsel 1/0/2 + analiz blokları (`last` = son N hafta dilimi) |
 | GET | `/api/stats/<week>` | Tek hafta detayı (komşular, sıra, sapma, sıra-sıra bağlam) |
 | POST | `/api/solve` | Tüm motor özellikleri |

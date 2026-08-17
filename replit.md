@@ -68,6 +68,8 @@ GET  /api/meta               yetenek envanteri (modlar, preset'ler, ızgaralar)
 GET  /health                 liveness — süreç ayakta mı (değişmez koşmaz)
 GET  /api/health             readiness — değişmezler (?only=, ?fresh=1)
 GET  /api/health/checks      kontrol envanteri (çalıştırmadan)
+GET  /api/health/history     son koşular ("ne zamandan beri kırmızı?")
+POST /api/health/kupon       kullanıcının kendi kuponunu doğrular
 GET  /api/stats              sezon istatistikleri (?last=N)
 GET  /api/stats/<week>       hafta detayı
 GET  /api/backtest           geri test
@@ -115,7 +117,7 @@ yazmazlar). Ayrıntı: `docs/VERI_TOPLAMA_VE_ISLEME.md`.
 ```bash
 cd backend
 python -m pytest -m "not slow" -q   # hızlı süit
-python -m pytest                    # tamamı (629 test, ILP dahil)
+python -m pytest                    # tamamı (664 test, ILP dahil)
 bash scripts/check.sh               # CI ile aynı çekirdek adımlar
 ```
 

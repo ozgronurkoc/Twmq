@@ -27,6 +27,16 @@ python -m spor_toto.health --list           # kontrol envanteri
 python -m spor_toto.health --only olasilik  # tek kategori
 ```
 
+Ortam değişkenleri (hepsi isteğe bağlı):
+
+| Değişken | Varsayılan | Ne yapar |
+|---|---|---|
+| `HEALTH_TTL_S` | `5` | `/api/health` önbellek ömrü (sn); `?fresh=1` atlar |
+| `HEALTH_HISTORY_LIMIT` | `200` | Sunucudaki koşu geçmişi tamponu |
+| `HEALTH_ALARM_URL` | — | Tanımlıysa durum DEĞİŞİMİNDE buraya POST atılır |
+| `HEALTH_ALARM_TIMEOUT_S` | `5` | Alarm isteğinin zaman aşımı |
+| `INSTANCE_ID` | — | Rapordaki örnek etiketi (çok örnekli dağıtım) |
+
 ## Testler
 
 ```bash
@@ -45,8 +55,10 @@ spor_toto/
   bayes.py     Dirichlet prior → posterior, KL, preset'ler
   markov.py    Seçim hayatta kalma + hata bütçesi zinciri
   health.py    Kategorili değişmez (invariant) kontrolleri
-  engines.py   Mod çalıştırıcıları — /api/solve ve health AYNI yolu kullanır
+  engines.py   Mod çalıştırıcıları — /api/solve, health ve CLI AYNI yolu kullanır
   meta.py      Yetenek envanteri (modlar, preset'ler, sınırlar) = /api/meta
+  payloads.py  /api/stats ve /api/backtest gövdeleri (health bunları denetler)
+  health_history.py  Sunucu tarafı koşu geçmişi + durum değişimi bildirimi
   history.py   Tarihsel 1/0/2 + analiz blokları
   odds.py      Oran arşivi okuyucu — YALNIZCA analiz için, API'ye bağlı değil
   report.py    Konsol / dosya çıktısı

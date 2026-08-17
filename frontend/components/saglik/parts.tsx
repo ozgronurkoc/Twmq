@@ -6,13 +6,27 @@ import {
   CheckCircle2,
   Info,
   MinusCircle,
+  ShieldCheck,
+  Timer,
   WifiOff,
   XCircle,
 } from "lucide-react";
 
-import type { HealthCheck, HealthKategori, HealthReport } from "@/lib/types";
+import type {
+  HealthCheck,
+  HealthHistoryResponse,
+  HealthKategori,
+  HealthReport,
+  KuponDenetimSonuc,
+} from "@/lib/types";
 import { cn, sure } from "@/lib/utils";
-import { Badge, Card, CardBody, CardHeader } from "@/components/ui/primitives";
+import {
+  Badge,
+  Button,
+  Card,
+  CardBody,
+  CardHeader,
+} from "@/components/ui/primitives";
 
 // ─── Durum ────────────────────────────────────────────────────────────────
 
@@ -33,6 +47,12 @@ export const DURUM_TONU: Record<Durum, "success" | "warning" | "danger"> = {
   saglikli: "success",
   kisitli: "warning",
   bozuk: "danger",
+};
+
+export const DURUM_RENK: Record<Durum, string> = {
+  saglikli: "text-success",
+  kisitli: "text-warning",
+  bozuk: "text-danger",
 };
 
 export function DurumIkonu({ durum, size = 26 }: { durum: Durum; size?: number }) {
@@ -81,6 +101,9 @@ export function KontrolSatiri({
 }) {
   const oran = enUzunMs > 0 ? Math.min(1, check.duration_ms / enUzunMs) : 0;
   const kirik = !check.ok && check.critical;
+  // Yavaslamak DUSUS degildir: degismez hala gecerli, yalnizca beklenenden
+  // pahali. Bu yuzden satir kirmiziya degil, cubuk ambere doner.
+  const yavas = check.ok && check.yavas;
 
   return (
     <div
@@ -107,6 +130,12 @@ export function KontrolSatiri({
                 bilgi
               </Badge>
             ) : null}
+            {yavas ? (
+              <Badge ton="warning" className="gap-1" title="Süre bütçesi aşıldı">
+                <Timer size={11} />
+                yavaş
+              </Badge>
+            ) : null}
           </div>
 
           <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">
@@ -127,17 +156,29 @@ export function KontrolSatiri({
           ) : null}
         </div>
 
-        <span className="tnum shrink-0 pt-0.5 text-[11.5px] text-muted-foreground">
+        <span
+          className={cn(
+            "tnum shrink-0 pt-0.5 text-[11.5px]",
+            yavas ? "font-semibold text-warning" : "text-muted-foreground",
+          )}
+          title={
+            check.butce_ms != null
+              ? `beklenen üst sınır: ${check.butce_ms} ms`
+              : undefined
+          }
+        >
           {check.duration_ms.toFixed(1)} ms
         </span>
       </div>
 
-      {/* Sure cubugu: hangi kontrolun raporu yavaslattigini gozle secmek icin. */}
+      {/* Sure cubugu: hangi kontrolun raporu yavaslattigini gozle secmek icin.
+          Butcesini asan kontrol ambere doner — performans gerilemesi de bir
+          gerilemedir, ama degismezi kirmaz. */}
       <div className="mt-2 h-[3px] overflow-hidden rounded-full bg-line">
         <div
           className={cn(
             "h-full rounded-full transition-[width] duration-500 ease-smooth",
-            kirik ? "bg-danger" : "bg-primary/50",
+            kirik ? "bg-danger" : yavas ? "bg-warning" : "bg-primary/50",
           )}
           style={{ width: `${Math.max(1, oran * 100)}%` }}
         />
@@ -334,6 +375,212 @@ export function GecmisSeridi({
             );
           })}
         </div>
+      </CardBody>
+    </Card>
+  );
+}
+
+// ─── Sunucu tarafi gecmis ─────────────────────────────────────────────────
+
+/**
+ * Sunucudaki son kosular. Oturum ici seritten farki: sekme kapaninca
+ * kaybolmaz ve BASKA sekmelerin/izlemenin kosularini da gorur. Cevapladigi
+ * soru tektir ve baska hicbir yerde cevaplanmiyordu: **ne zamandan beri?**
+ */
+export function SunucuGecmisi({
+  gecmis,
+  simdi,
+}: {
+  gecmis: HealthHistoryResponse | null;
+  simdi: number | null;
+}) {
+  if (!gecmis || !gecmis.kayitlar.length) return null;
+  const { ozet, kayitlar } = gecmis;
+  const durum: Durum =
+    ozet.durum === "UNHEALTHY" ? "bozuk" : ozet.durum === "DEGRADED" ? "kisitli" : "saglikli";
+
+  return (
+    <Card>
+      <CardHeader
+        title="Sunucudaki koşu geçmişi"
+        hint="Süreç ayakta olduğu sürece tutulur; sekme kapansa da kaybolmaz. Kısmi koşular buraya girmez."
+        action={
+          <Badge ton={ozet.alarm ? "primary" : "neutral"}>
+            {ozet.alarm ? "alarm açık" : "alarm kapalı"}
+          </Badge>
+        }
+      />
+      <CardBody className="space-y-3">
+        <p className="text-[12.5px] leading-relaxed">
+          <strong className={cn(DURUM_RENK[durum])}>{ozet.durum}</strong>{" "}
+          {ozet.degisim_zamani ? (
+            <>
+              — {goreliZaman(ozet.degisim_zamani, simdi)} bu duruma geçti,
+              o zamandan beri {ozet.bu_durumda_kosu} koşu.
+            </>
+          ) : null}
+          {ozet.durum !== "HEALTHY" && ozet.son_saglikli ? (
+            <>
+              {" "}Son sağlıklı koşu: {goreliZaman(ozet.son_saglikli, simdi)}.
+            </>
+          ) : null}
+        </p>
+
+        <ol className="space-y-1">
+          {kayitlar.slice(0, 12).map((k) => {
+            const d: Durum =
+              k.durum === "UNHEALTHY" ? "bozuk" : k.durum === "DEGRADED" ? "kisitli" : "saglikli";
+            return (
+              <li
+                key={`${k.timestamp}-${k.passed}`}
+                className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 border-b border-line pb-1 last:border-0"
+              >
+                <span className={cn("text-[11.5px] font-semibold", DURUM_RENK[d])}>
+                  {k.durum}
+                </span>
+                <span className="tnum text-[11.5px] text-muted-foreground">
+                  {k.passed}/{k.total} · {sure(k.duration_ms)}
+                </span>
+                <span className="tnum text-[11px] text-muted-foreground">
+                  {goreliZaman(k.timestamp, simdi)}
+                </span>
+                {k.dusenler.length ? (
+                  <span className="font-mono text-[11px] text-danger">
+                    {k.dusenler.join(", ")}
+                  </span>
+                ) : null}
+                {k.yavaslar.length ? (
+                  <span className="font-mono text-[11px] text-warning">
+                    yavaş: {k.yavaslar.join(", ")}
+                  </span>
+                ) : null}
+              </li>
+            );
+          })}
+        </ol>
+
+        <p className="text-[11px] text-muted-foreground">
+          {ozet.kayit} kayıt{ozet.sinir ? ` (tampon sınırı ${ozet.sinir})` : ""} ·
+          süreç {goreliZaman(gecmis.ornek.baslangic, simdi)} başladı
+          {gecmis.ornek.etiket ? ` · örnek ${gecmis.ornek.etiket}` : ""}
+        </p>
+      </CardBody>
+    </Card>
+  );
+}
+
+// ─── Kullanicinin kendi kuponu ────────────────────────────────────────────
+
+/**
+ * Sayfanin en kolay yanlis anlasilan sinirini kapatan blok: kayitli rapor
+ * SABIT ornek kuponlarla kosar, yani HEALTHY "senin kuponun dogrulandi"
+ * demek degildir. Bu blok kullanicinin kendi kuponunu ayni degismezlerden
+ * gecirir ve sonucunu kayitli rapordan AYRI gosterir.
+ */
+export function KuponDenetimi({
+  sonuc,
+  hata,
+  calisiyor,
+  picks,
+  onPicks,
+  onCalistir,
+}: {
+  sonuc: KuponDenetimSonuc | null;
+  hata: string | null;
+  calisiyor: boolean;
+  picks: string;
+  onPicks: (v: string) => void;
+  onCalistir: () => void;
+}) {
+  return (
+    <Card>
+      <CardHeader
+        title="Kendi kuponunu doğrula"
+        hint="Yukarıdaki rapor sabit örnek kuponlarla koşar; HEALTHY, senin kuponunun doğrulandığı anlamına gelmez. Bu blok o boşluğu kapatır."
+      />
+      <CardBody className="space-y-3">
+        <div className="flex flex-wrap items-end gap-2">
+          <label className="min-w-[260px] flex-1">
+            <span className="text-[11.5px] text-muted-foreground">
+              Kupon (virgülle 15 maç, çoklu işaret bitişik: <code>10</code>)
+            </span>
+            <input
+              value={picks}
+              onChange={(e) => onPicks(e.target.value)}
+              spellCheck={false}
+              className={cn(
+                "tnum mt-1 w-full rounded-xl border border-line bg-elevated px-3 py-2",
+                "font-mono text-[12.5px] outline-none",
+                "focus-visible:ring-2 focus-visible:ring-primary/60",
+              )}
+            />
+          </label>
+          <Button
+            tip="outline"
+            boyut="sm"
+            disabled={calisiyor || !picks.trim()}
+            onClick={onCalistir}
+          >
+            <ShieldCheck size={14} />
+            Kuponu denetle
+          </Button>
+        </div>
+
+        {hata ? (
+          <p className="rounded-xl border border-danger/40 bg-danger-soft px-3 py-2 text-[12.5px] text-danger">
+            {hata}
+          </p>
+        ) : null}
+
+        {sonuc ? (
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge ton={sonuc.ok ? "success" : "danger"}>
+                {sonuc.ok ? "değişmezler geçti" : "değişmez düştü"}
+              </Badge>
+              <Badge ton={sonuc.guaranteed ? "primary" : "warning"}>
+                {sonuc.guaranteed ? "14-garanti" : "garanti yok"}
+              </Badge>
+              <Badge>{sonuc.satir} satır</Badge>
+              <Badge>{sonuc.bedel} kolon</Badge>
+              <Badge>alt sınır {sonuc.alt_sinir}</Badge>
+              <span className="tnum text-[11.5px] text-muted-foreground">
+                {sure(sonuc.duration_ms)}
+              </span>
+            </div>
+
+            <ul className="space-y-1.5">
+              {sonuc.checks.map((c) => (
+                <li
+                  key={c.name}
+                  className={cn(
+                    "rounded-xl border px-3 py-2",
+                    c.ok ? "border-line bg-elevated" : "border-danger/40 bg-danger-soft",
+                  )}
+                >
+                  <div className="flex items-center gap-2">
+                    {c.ok ? (
+                      <CheckCircle2 size={14} className="text-success" />
+                    ) : (
+                      <AlertTriangle size={14} className="text-danger" />
+                    )}
+                    <span className="font-mono text-[12px] font-medium">{c.name}</span>
+                  </div>
+                  <p className="mt-0.5 text-[12px] leading-relaxed text-muted-foreground">
+                    {c.aciklama}
+                  </p>
+                  <div className="tnum mt-1 break-words rounded-lg bg-muted px-2 py-1 font-mono text-[11.5px] text-muted-foreground">
+                    {c.detail}
+                  </div>
+                </li>
+              ))}
+            </ul>
+
+            <p className="text-[11px] leading-relaxed text-muted-foreground">
+              {sonuc.uyari}
+            </p>
+          </div>
+        ) : null}
       </CardBody>
     </Card>
   );
