@@ -750,6 +750,16 @@ export interface HealthEnv {
   flask: string | null;
 }
 
+/**
+ * Kısa TTL önbelleğinin durumu. Önbellekten dönen bir rapor bunu SAKLAMAZ:
+ * ne zaman ölçüldüğünü gizleyen bir sağlık raporu değersizdir.
+ */
+export interface HealthOnbellek {
+  cached: boolean;
+  yas_ms: number;
+  ttl_s: number;
+}
+
 export interface HealthSummary {
   ornek_kupon?: string;
   has_scipy?: boolean;
@@ -760,6 +770,7 @@ export interface HealthSummary {
   /** true ise rapor kontrollerin TAMAMINI kapsamıyor. */
   kismi?: boolean;
   kayitli_kontrol?: number;
+  onbellek?: HealthOnbellek;
 }
 
 export interface HealthReport {

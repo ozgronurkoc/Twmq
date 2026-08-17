@@ -64,12 +64,19 @@ export function getMeta(signal?: AbortSignal) {
  *
  * `only` verilirse yalnizca o kontrol/kategori calisir (virgulle coklu).
  * Bilinmeyen bir ad 400 doner ve bu gercek bir hatadir — firlatilir.
+ *
+ * `fresh` sunucudaki kisa TTL onbellegini atlar: kullanici "yeniden
+ * calistir" dedigi anda ONBELLEK degil OLCUM bekler.
  */
 export async function getHealth(
   only?: string | null,
   signal?: AbortSignal,
+  fresh = false,
 ): Promise<HealthReport> {
-  const q = only ? `?only=${encodeURIComponent(only)}` : "";
+  const p = new URLSearchParams();
+  if (only) p.set("only", only);
+  if (fresh) p.set("fresh", "1");
+  const q = p.toString() ? `?${p.toString()}` : "";
   let res: Response;
   try {
     res = await fetch(`${API_URL}/api/health${q}`, {

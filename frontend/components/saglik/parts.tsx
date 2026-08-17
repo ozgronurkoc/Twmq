@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   Info,
   MinusCircle,
+  WifiOff,
   XCircle,
 } from "lucide-react";
 
@@ -147,6 +148,11 @@ export function KontrolSatiri({
 
 // ─── Kategori karti ───────────────────────────────────────────────────────
 
+/** Düşenler özetinden ilgili karta atlamak için (§7.17). */
+export function kategoriAnkraji(kategoriId: string): string {
+  return `saglik-kat-${kategoriId}`;
+}
+
 export function KategoriKarti({
   kategori,
   checks,
@@ -164,7 +170,10 @@ export function KategoriKarti({
   const dusen = kategori.total - kategori.passed;
 
   return (
-    <Card className={cn(!kategori.ok && "border-danger/40")}>
+    <Card
+      id={kategoriAnkraji(kategori.id)}
+      className={cn("scroll-mt-24", !kategori.ok && "border-danger/40")}
+    >
       <CardHeader
         title={
           <span className="flex flex-wrap items-center gap-2">
@@ -214,12 +223,20 @@ export interface GecmisKaydi {
   total: number;
   duration_ms: number;
   kismi: boolean;
+  /** Rapor sunucudaki kısa TTL önbelleğinden geldiyse: yeni ölçüm değildir. */
+  onbellekten?: boolean;
+  /** Dolu ise koşu hiç tamamlanamadı (backend'e ulaşılamadı). */
+  hata?: string;
 }
 
 /**
  * Oturum ici calisma gecmisi. Kalici degildir; amaci ARADA BIR dusen
  * kontrolu (ornegin Monte Carlo orneklemesi) tek calistirmaya bakarak
  * kacirmamaktir.
+ *
+ * Ulasilamayan kosular da buraya duser: zaman cizelgesinde en cok gormek
+ * isteyecegin olay tam odur, ve yalnizca basarili kosulari kaydeden bir
+ * gecmis "iyi gunlerin" kaydina donusur.
  */
 export function GecmisSeridi({
   gecmis,
@@ -241,12 +258,17 @@ export function GecmisSeridi({
         <div className="flex flex-wrap gap-2">
           {gecmis.map((g) => {
             const durum: Durum = !g.ok ? "bozuk" : g.degraded ? "kisitli" : "saglikli";
+            const ulasilamadi = Boolean(g.hata);
             return (
               <div
                 key={g.id}
-                title={`${g.passed}/${g.total} · ${sure(g.duration_ms)}${
-                  g.kismi ? " · kısmi" : ""
-                }`}
+                title={
+                  ulasilamadi
+                    ? `ulaşılamadı — ${g.hata}`
+                    : `${g.passed}/${g.total} · ${sure(g.duration_ms)}${
+                        g.kismi ? " · kısmi" : ""
+                      }${g.onbellekten ? " · önbellekten" : ""}`
+                }
                 className={cn(
                   "min-w-[92px] flex-1 rounded-xl border px-2.5 py-2",
                   durum === "bozuk"
@@ -254,6 +276,7 @@ export function GecmisSeridi({
                     : durum === "kisitli"
                       ? "border-warning/40 bg-warning-soft"
                       : "border-line bg-elevated",
+                  ulasilamadi && "border-dashed",
                 )}
               >
                 <div className="flex items-center justify-between gap-1">
@@ -267,7 +290,14 @@ export function GecmisSeridi({
                           : "text-success",
                     )}
                   >
-                    {g.passed}/{g.total}
+                    {ulasilamadi ? (
+                      <span className="inline-flex items-center gap-1">
+                        <WifiOff size={11} />
+                        yok
+                      </span>
+                    ) : (
+                      `${g.passed}/${g.total}`
+                    )}
                   </span>
                   {g.kismi ? (
                     <span
@@ -278,12 +308,23 @@ export function GecmisSeridi({
                   ) : null}
                 </div>
                 <div className="tnum mt-0.5 text-[10.5px] text-muted-foreground">
-                  {sure(g.duration_ms)}
+                  {ulasilamadi
+                    ? "ulaşılamadı"
+                    : g.onbellekten
+                      ? `${sure(g.duration_ms)} · önbellek`
+                      : sure(g.duration_ms)}
                 </div>
                 <div className="mt-1 h-[3px] overflow-hidden rounded-full bg-line">
                   <div
-                    className="h-full rounded-full bg-primary/40"
-                    style={{ width: `${(g.duration_ms / enUzun) * 100}%` }}
+                    className={cn(
+                      "h-full rounded-full",
+                      ulasilamadi ? "bg-danger/50" : "bg-primary/40",
+                    )}
+                    style={{
+                      width: ulasilamadi
+                        ? "100%"
+                        : `${(g.duration_ms / enUzun) * 100}%`,
+                    }}
                   />
                 </div>
                 <div className="mt-1 text-[10px] text-muted-foreground">
