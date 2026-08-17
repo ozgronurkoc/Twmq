@@ -1,6 +1,7 @@
 # İstatistik Katmanı — Durum ve Yol Haritası
 
-**Kapsam:** `/istatistik` sayfası ve onu besleyen veri + oran altyapısı
+**Kapsam:** `/istatistik` sayfası, onu besleyen veri + oran altyapısı, tahmin katmanı ve
+**projenin tamamını kapsayan yol planı** (§6). Dosya adı tarihsel; kapsam §6 ile genişledi.
 **Güncellendi:** 2026-08-17 (proje amacı güncellendi — aşağıya bakınız)
 
 > **Amaç değişikliği (2026-08-17).** Projenin amacı artık **veriyi analiz ederek
@@ -10,8 +11,7 @@
 > sayının arayüze çıkmamasıyla dengelenir. Hold-out **0 hafta**, piyasa Brier
 > **0,579**, iddaa marjı **%17,2** — bu üç sayı tahmin katmanının başlangıç
 > çizgisidir ve ilerleme bunlara karşı ölçülür.
-**İlgili belgeler:** [`YOL_PLANI.md`](YOL_PLANI.md) (**projenin tamamını kapsayan sonlanan
-plan** — bu belge onun katman düzeyindeki izdüşümüdür) · [`VERI_TOPLAMA_VE_ISLEME.md`](VERI_TOPLAMA_VE_ISLEME.md) (veri üretiminin
+**İlgili belgeler:** [`VERI_TOPLAMA_VE_ISLEME.md`](VERI_TOPLAMA_VE_ISLEME.md) (veri üretiminin
 tek kaynak dokümantasyonu) · [`ARCHITECTURE_NEXT.md`](ARCHITECTURE_NEXT.md) (API sözleşmesi)
 
 ---
@@ -536,51 +536,182 @@ arındırılmış yapı tutar.
 korpus onu kaldırdı. Ama kalan etki 0,0005–0,0015 Brier — 31 binde anlamlı, 540'ta değil ve
 %17,2'lik iddaa marjının yanında hiç. **Yön doğru, miktar yetersiz.**
 
-## 6. Yol haritası
+## 6. Yol planı — proje ne zaman biter
 
-**F1–F5'in tamamı uygulandı** (bkz. §3.5–3.9). Amaç tahmine döndükten sonra **T1–T3
-uygulandı** (§3.10–3.12). Bundan sonrası üç koldan gider:
+Bu bölüm **sonlanan** bir plandır: bitirildiğinde yapacak iş kalmaz.
 
-| Kol | Neyi iyileştirir | Durum |
+Böyle bir şey ancak plan **özellikler** yerine **sorular** etrafında kurulursa mümkündür.
+Özellik listesi sonsuzdur — her karta bir kart daha eklenebilir. Soru listesi sonludur:
+hedefe ulaşılıp ulaşılamayacağını belirleyen soruların sayısı bellidir.
+
+Bu yüzden buradaki her fazın bir **durma kuralı** vardır ve bir kısmı şudur: *"cevap hayır
+çıktı, bu eksen kapandı."* Yalnızca başarıyla bitebilen bir plan, plan değil temennidir.
+
+### 6.1 Hedefin ayrışması — planın neden sonlu olduğu
+
+Amaç "kazanma oranını artırmak" tek bir şey değil, **çarpımsal üç etkendir**:
+
+```
+Beklenen getiri  =  P(tutturma)  ×  Pay(tutturunca)  −  Bedel
+                    ─────────────    ───────────────     ──────
+                    tahmin ekseni    havuz ekseni        kaplama ekseni
+```
+
+| Eksen | Ne belirler | Durum |
 |---|---|---|
-| **G1–G5** | **Sayfanın kendisi** — bilgi mimarisi, sentez, kullanım | hiçbiri başlamadı |
-| **S1–S4** | **Verinin ve analizin derinliği** — örneklem, strateji, kaynak | S1 kısmen (§6.1) |
-| **T1–T6** | **Tahmin katmanı** — ölçüm, model, girdi | T1–T4 bitti |
+| **Tahmin** | 14+ tutturma olasılığı | İki bağımsız denemede ~sıfır artık (§5.1) |
+| **Havuz** | Tutturunca ikramiyenin kaçta kaçını aldığın | **Hiç ölçülmedi.** Veri bile yok |
+| **Kaplama** | Aynı garanti için ödenen kolon | **Çözüldü** — Hamming, kanıtlanmış optimal |
 
-**Sıra: G1 → G2 → T5 → G3 → G4 → T6 → S2 → G5 → S3.**
+Plan sonludur çünkü **etken sayısı üçtür.** Kaplama ekseninde iş yok ve olmayacak: bir
+optimum yenilemez, oraya harcanacak her saat cevabı önceden bilinen bir soruya gider.
 
-Gerekçe değişti. Önceki sıralamada G kolu başta geliyordu çünkü "var olan gerçeği daha iyi
-teslim etmek" en ucuz kazançtı. Amaç tahmine dönünce **teslim edilecek gerçeğin kendisi
-değişti**: bugün sayfada gösterilmeyen bir tahmin katmanı var ve ölçülmüş sonucu net. T4
-(sağlık değişmezi) öne alınıp **bitirildi** — küçüktü ve tahmin katmanının ölçümlerini
-bekçiye bağladı. Sıra artık G1–G2'de, çünkü sayfa hâlâ mevcut bulguları taşımakta
-zorlanıyor.
+### 6.2 Faz A — tahmin eksenini kapat ya da aç
 
-### 6.1 S1'in durumu — yarısı yapıldı, yarısı kapalı
+Hepsi **mevcut korpusla** yapılır; yeni kaynak gerekmez.
 
-S1 "örneklem büyütme" idi ve **ikiye ayrıldı**:
+#### A1 — Kapanış çizgisi verimliliği · *en belirleyici tek deney*
 
-| Ayak | Durum |
-|---|---|
-| **Tahmin ölçümü için örneklem** | **Yapıldı.** Eğitim korpusu: 31.103 maç, 4 sezon, 22 lig (§3.12) |
-| **Kupon seti için ikinci sezon** | **Kapalı** — aşağıdaki iki engel |
+Korpus hem açılış (`Avg*`) hem kapanış (`AvgC*`) oranını taşıyor. Ölçülecek: açılış→kapanış
+hareketi bilgi taşıyor mu, ve kapanışı yenen herhangi bir tahminci var mı.
 
-Kupon ayağının engelleri ölçüldü:
+Neden belirleyici: kapanış açılışı sistematik yeniyorsa piyasa bilgiyi *soğuruyor* demektir;
+kapanışı da hiçbir şey yenemiyorsa artık aramak boşunadır. Tek deneyde en çok bilgi veren
+ölçüm budur. **Büyüklük:** küçük.
+
+#### A2 — Bahisçi anlaşmazlığı
+
+Korpusta 12+ bahisçinin oranı var. A1 "piyasa kolektif olarak doğru mu" diye sorar; A2
+"kolektifin içindeki dağılım bilgi mi" diye. İkisi bağımsız olarak yanlış çıkabilir.
+**Büyüklük:** küçük.
+
+#### A3 — Piyasa dışı ama türetilebilir özellikler
+
+**Burada bir hata düzeltiliyor.** `VERI_TOPLAMA_VE_ISLEME.md` §8.7'ye "veride piyasa dışı
+hiçbir sinyal yok" yazılmıştı; bu fazla genişti. Ek kaynak gerektirmeyen birkaç özellik var
+ve hiçbiri denenmedi:
+
+| Özellik | Nasıl türetilir | Neden aday |
+|---|---|---|
+| **Dinlenme günü** | Önceki maçtan geçen gün | Yorgunluk fiyatlanır ama tam mı? |
+| **Fikstür sıkışıklığı** | Son 14 günde oynanan maç | Kupa/Avrupa yükü lige tam yansımayabilir |
+| **Seyahat** | Deplasman takımının lig/ülke değişimi | Kaba vekil, sıfır maliyet |
+| **Derbi** | Aynı şehir / rekabet eşleşmesi | Beraberlik oranı sapar mı? |
+| **Sezon sonu bahis** | Tarih + lig konumu | Motivasyon; sezonun son %20'si |
+| **Ev/deplasman ayrı form** | T5'te ayrıştırılmadı | Form tek birleşik özellik olarak denendi |
+
+T5 yalnızca **birleşik takım formunu** denedi ve piyasanın onu fiyatladığını gösterdi; bu,
+diğerleri hakkında hiçbir şey söylemez. Dürüst beklenti: bunlar da fiyatlanmış. Ama ucuzlar
+ve denenmeden "piyasa dışı girdi yok" demek yanlış olur. **Büyüklük:** orta.
+
+#### A4 — Tahmin ekseninin durma kuralı
+
+A1–A3 bittiğinde belgeye şu iki cümleden **biri** yazılır:
+
+> **(a)** *"31.103 maçta, sezon dışarıda bırakmalı ölçümde, şu özellik piyasayı şu kadar
+> geçiyor: [sayı, güven aralığı]. Faz C'ye giriyor."*
+
+> **(b)** *"Denenen N özelliğin hiçbiri piyasayı geçemedi. Tahmin ekseni kapalıdır. Bu bir
+> kanaat değil ölçümdür; tekrar açılması için yeni bir **veri kaynağı** gerekir — yeni bir
+> model değil."*
+
+**(b) çıkarsa Faz A bir daha açılmaz.** Aynı veriyle yeni model denemek, aynı soruyu daha
+yüksek sesle sormaktır.
+
+### 6.3 Faz B — havuz eksenini aç ve ölç
+
+Projenin hiç dokunmadığı eksen ve muhtemelen **tek gerçek kaldıraç** — çünkü piyasayı
+tahminde yenmeyi gerektirmez.
+
+Spor Toto müşterek bahistir: ikramiye havuzdan kazananlara bölünür. Sonuç: *aynı olasılığa
+sahip iki sonuçtan **daha az oynananı** işaretlemek, tutturma olasılığını değiştirmeden
+beklenen getiriyi artırır.* Ve kalabalık öngörülebilir davranır — favoriye yığılır. Projenin
+kendi verisi bunu söylüyor: favori 567 maçın 311'inde tuttu (%54,9), yani kalabalığın gittiği
+yer maçların **yarısında yanlış**.
+
+| # | İş | Not |
+|---|---|---|
+| **B1** | İkramiye / kazanan verisi | **Faz B'nin ön koşulu.** Hafta başına 13 ve 14 doğru için kazanan adedi + tutar. Kaynak araştırılmadı; **önce fizibilite**, sonra boru hattı. Yoksa Faz B düşer ve bu da bir cevaptır |
+| **B2** | Popülerlik modeli | B1 gelene kadar vekil: favori olasılığı → tahmini oynanma payı. B1 gelirse vekil **gerçek veriyle kalibre edilir** |
+| **B3** | Beklenen getiriye göre kupon kurma | **Kaplamanın ve havuzun buluştuğu yer; projenin en özgün işi.** "Hangi maça kaç işaret" sorusu ilk kez ölçülmüş bir amaç fonksiyonuyla cevaplanır. Tahmin değil, **kalabalık davranışı** modellenir |
+| **B4** | Durma kuralı | *(a)* pozitif beklenen getiri ölçüldü → Faz C · *(b)* veri yok, ya da %17,2 marj + havuz seyrelmesi avantajı yutuyor → eksen kapanır |
+
+### 6.4 Faz C — karar katmanı ve ürün
+
+**Yalnızca A4(a) ya da B4(a) çıkarsa açılır** — C3 hariç, o bağımsızdır. Gösterilecek
+ölçülmüş bir şey yoksa C1/C2 hiç yapılmaz; ölçülmemiş bir üstünlüğü arayüze koymak projenin
+karşı çıktığı şeyin ta kendisidir.
+
+| # | İş | Koşul |
+|---|---|---|
+| **C1** | Sentez katmanı (`insights.py`) | §6.6 G2'nin dört kuralı geçerli |
+| **C2** | Tahmin/öneri arayüzü | Öneri ancak ölçülmüş isabetiyle birlikte çıkar |
+| **C3** | Sayfayı soruya göre bölme | = eski **G1**. Bağımsız, her an yapılabilir |
+| **C4** | Dilim dürüstlüğü, gezinme, mobil | = eski **G3–G5** |
+
+### 6.5 Faz D — sonlanma
+
+Proje şu **dört sorunun tamamı** ölçülmüş cevaba bağlandığında biter:
+
+| # | Soru | Bugün | Nasıl kapanır |
+|---|---|---|---|
+| 1 | Kapanış çizgisini yenebiliyor muyuz? | bilinmiyor | A1–A4 |
+| 2 | Kalabalığı yenebiliyor muyuz? | bilinmiyor | B1–B4 |
+| 3 | Pozitif beklenen getirili kupon kurulabiliyor mu? | bilinmiyor | B3 |
+| 4 | Garanti hâlâ optimal mi? | **evet, kanıtlı** | kapandı |
+
+Faz D'nin tek çıktısı README'ye yazılacak **"Bu proje ne buldu"** bölümüdür: her soru için
+ölçülen sayı, örneklem, güven aralığı ve "evet"/"hayır"; her "hayır"ın yanında onu tekrar
+açacak koşul. Bu bölüm yazıldığında **yapacak iş kalmaz.**
+
+**İki bitiş de meşrudur:** ölçülmüş bir üstünlük bulunup ürüne çevrilir — ya da her eksende
+üstünlük olmadığı **kanıtlanır** ve proje bunu belgeleyerek biter. İkincisi başarısızlık
+değildir: bu alandaki araçların neredeyse tamamı birinciyi *iddia eder*, hiçbiri ikinciyi
+ölçmez.
+
+### 6.6 Sıra ve eski etiketlerin karşılığı
+
+```
+A1 ─┐
+A2 ─┼─► A4  (tahmin ekseni kapanır ya da açılır)
+A3 ─┘
+        B1 ─► B2 ─► B3 ─► B4  (havuz ekseni; B1 paralel başlayabilir)
+C3 (bağımsız, her an)
+                          └─► C1, C2 (yalnızca A4(a) ya da B4(a))  ─► C4 ─► D
+```
+
+**A önce, çünkü ucuz ve belirleyici.** **B1 paralel** — o bir araştırma, kod değil.
+**C3 hiçbir şeyi beklemez** (ölçülmüş kusur: 7.210 px, ilk ekranda 3/11 başlık).
+
+Eski etiketler kayıp değil, yerleşti:
+
+| Eski | Yeni | Durum |
+|---|---|---|
+| T1–T5 | Faz A'nın yapılmış kısmı (§3.10–3.13) | bitti |
+| G1 | C3 | bekliyor |
+| G2 | C1 | koşullu |
+| G3–G5 | C4 | bekliyor |
+| S1 (korpus ayağı) | Faz A girdisi (§3.12) | bitti |
+| S1 (kupon ayağı) | §6.7 — kapalı | bloke |
+| S2 | §6.8 | hazır, ek veri gerekmez |
+| S3 | Faz A/B girdisi | birikmeyi bekliyor |
+| İkramiye verisi | **B1** | araştırılmadı |
+
+### 6.7 S1'in kupon ayağı neden kapalı
+
+İki bağımsız engel ölçüldü:
 
 1. **Sonuç kaynağı sezon parametresi taşımıyor.** `/spor-toto/{week}-hafta-tahminleri/`
-   mevcut sezonu döndürüyor (2. hafta sorgusu `"2025/2026"` verdi). Geçmiş sezonun
-   adreslenebildiğine dair işaret yok.
-2. **`robots.txt` otomatik erişimi kısıtlıyor.** `User-agent: ClaudeBot → Disallow: /`,
-   ayrıca `Content-Signal: ai-train=no`. Genel `User-agent: *` bloğu `/spor-toto/` yolunu
-   kapatmıyor; yani kısıt aracıya özel, kaynağa değil.
+   mevcut sezonu döndürür; 2. hafta sorgusu `"2025/2026"` verdi.
+2. **`robots.txt` kısıtı.** `User-agent: ClaudeBot → Disallow: /` ve
+   `Content-Signal: ai-train=no`. Genel `User-agent: *` bloğu `/spor-toto/` yolunu
+   kapatmıyor — kısıt otomatik aracıya özel.
 
-`build_odds.py` de `st_history_2025_26.json`'a bağlı olduğu için kupon tarafı **bir bütün
-olarak** bekliyor. Veri geldiğinde altyapı hazır: `evaluate.capraz_olc` zaten "bir sette
-eğit, ötekinde ölç" yapıyor.
+`build_odds.py` da `st_history_2025_26.json`'a bağlı olduğundan kupon tarafı **bir bütün
+olarak** bekliyor. Veri geldiğinde altyapı hazır: `evaluate.capraz_olc` ve `sezon_anahtari`
+kupon setinde de çalışır.
 
----
-
-### G kolu — sayfanın kendisi
+### 6.8 Faz C ayrıntısı — sayfanın kendisi (eski G kolu)
 
 #### Ölçülen durum
 
@@ -719,51 +850,7 @@ dar ekranda kart görünümüne düşer. Kullanım ağırlıkla masaüstü oldu�
 
 ---
 
-### T kolu — tahmin katmanı
-
-Amaç tahmine döndükten sonra kurulan kol. **Sayfaya hiçbir şey çıkmadı** ve bu bilinçli:
-ölçülmemiş tahminci arayüze çıkmaz (§7).
-
-#### Yapılanlar
-
-| # | İş | Sonuç |
-|---|---|---|
-| **T1** | Tahminci sözleşmesi + değerlendirme koşumu (§3.10) | `piyasa` çizgisi 0,5747 |
-| **T2** | Piyasanın yeniden kalibrasyonu, 4 basamaklı kademe (§3.11) | Kupon üzerinde eğitilince **hiçbiri geçmedi** |
-| **T3** | Eğitim korpusu + çapraz ölçüm (§3.12) | Korpusta eğitilince yön döndü, **anlamlılık kurulamadı** |
-| **T4** | Referans skorları sağlık değişmezine (§3.13) | `tahmin_referanslari` — 23. değişmez |
-
-#### T5 — Piyasa dışı girdi: takım formu
-
-Ölçülen sonuç net: piyasanın kendi olasılığını yeniden kalibre etmek yön olarak doğru ama
-miktar yetersiz (§5). Sinyal ancak **piyasada olmayan** bir girdiden gelebilir.
-
-En ucuz aday zaten korpusun kaynağında duruyor: football-data CSV'leri maç istatistiği
-taşıyor (şut, isabetli şut, korner, faul, kart). Bunlar maç *sonrası* veridir, doğrudan
-tahminci girdisi olamaz — ama **yuvarlanan pencereyle takım formu** üretilebilir: son N
-maçın şut farkı, isabetli şut oranı, gol beklentisi vekili.
-
-Dürüst beklenti: piyasa formu da fiyatlıyor. Sorulan soru "form bilgi taşıyor mu" değil,
-**"piyasanın fiyatladığından fazlasını taşıyor mu"** — ve cevabı T1'in koşumu verecek.
-
-- **Yeniden kullan:** `egitim.korpus_haftalari`, `recalibrate` kademe altyapısı, `capraz_olc`
-- **Yeni:** korpusa istatistik sütunları, form özelliği üreteci, kademeye bir basamak
-- **Kabul kriteri:** form basamağı `piyasa`'yı korpus içi sezon dışarıda bırakmalı ölçümde
-  geçmeli · geçmezse sonuç **olduğu gibi raporlanır**, basamak sayfaya çıkmaz
-- **Büyüklük:** orta
-
-#### T6 — Tahmin katmanının arayüzü
-
-Ölçülmüş bir tahminci çıkarsa nasıl gösterilecek. Bugün gösterilecek bir şey yok, o yüzden
-sırada geride. Kurallar şimdiden belli:
-
-- İsabet, örneklem ve güven aralığı cümlenin yanında durur (§6 G2 kural 1)
-- Korpus sayıları `/istatistik`'e girmez — gerekirse **ayrı sayfa**
-- **Büyüklük:** orta
-
----
-
-### S kolu — verinin ve analizin derinliği
+### 6.9 Veri tarafı ayrıntısı (eski S kolu)
 
 #### S1 — Örneklem büyütme
 
@@ -807,7 +894,7 @@ tarama tablosunu CSV'ye çıkarmak · hafta detayında Brier'i göstermek.
 
 ---
 
-### Masada duran, sırada olmayan
+#### Masada duran, sırada olmayan
 
 **"Bu hafta" kartı.** Sayfa tamamen geçmişe bakıyor; oysa kullanıcının asıl işi bu haftanın
 kuponu. Veri setinde 52./53. hafta açık duruyor ve F5 arşivi (§3.9) tam da bunu besleyebilir —

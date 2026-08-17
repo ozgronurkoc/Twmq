@@ -673,7 +673,7 @@ Amaç tahmine döndüğü için iki sınır daha kritik hale geldi ve ayrıca ya
    > özellik var ve hiçbiri denenmedi: dinlenme günü, fikstür sıkışıklığı, seyahat, derbi,
    > sezon sonu bahis. T5 yalnızca **takım formunu** denedi ve piyasanın onu fiyatladığını
    > gösterdi; bu, diğerleri hakkında hiçbir şey söylemez.
-   > Planı: [`YOL_PLANI.md`](YOL_PLANI.md) §3 A3.
+   > Planı: [`ISTATISTIK_YOL_HARITASI.md`](ISTATISTIK_YOL_HARITASI.md) §6.2 A3.
 
    Yine de sınır gerçektir: bu özellikler de piyasanın gördüğü bilgiden türer, yalnızca
    farklı biçimde. Ölçülen sayılar bu sınırla tutarlı — hold-out isabeti 0 hafta, formun
