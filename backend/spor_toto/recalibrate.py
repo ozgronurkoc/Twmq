@@ -19,6 +19,7 @@ Tek model yerine **kademe** kuruldu, çünkü asıl soru "bu model iyi mi" deği
     bant       + favori bandına göre sapma           + bant sayısı
     form       + takım formu (2 parametre)
     hareket    + açılış→kapanış çizgi hareketi       + 1 parametre
+    dagilim    + bahisçi anlaşmazlığı (sıcaklık)     + 1 parametre
 
 Hepsi softmax ile olasılığa döner. Kapasite bilerek küçük tutuldu: 540 maçlık
 bir eğitim setinde serbest parametre sayısı arttıkça ölçüm değil ezber olur.
@@ -65,7 +66,7 @@ EN_AZ_ORNEK = AZ_ORNEK
 #: Kademe — basitten karmaşığa. Sıra kasıtlı: her basamak bir öncekine
 #: yalnızca bir özellik ekler, böylece fark o özelliğe atfedilebilir.
 KADEMELER: Tuple[str, ...] = ("sicaklik", "bias", "lig", "bant", "form",
-                              "hareket")
+                              "hareket", "dagilim")
 
 
 # ─── özellik kaynağı ──────────────────────────────────────────────────────────
@@ -121,6 +122,7 @@ def _mac_ozellikleri(hafta: Girdi) -> List[Dict[str, Any]]:
             "form_puan_farki": float(o.get("form_puan_farki") or 0.0),
             "form_isabet_farki": float(o.get("form_isabet_farki") or 0.0),
             "hareket": {s: float(o.get(f"hareket_{s}") or 0.0) for s in SYMBOLS},
+            "ayrisma": float(o.get("ayrisma") or 0.0),
         } for i, o in enumerate(tasinan)]
 
     tablo = _ozellik_tablosu()
@@ -138,6 +140,7 @@ def _mac_ozellikleri(hafta: Girdi) -> List[Dict[str, Any]]:
             "form_puan_farki": 0.0,
             "form_isabet_farki": 0.0,
             "hareket": {s: 0.0 for s in SYMBOLS},
+            "ayrisma": 0.0,
         })
     return out
 
@@ -206,6 +209,29 @@ def _tasarim_satiri(ozellik: Dict[str, Any], kademe: str,
     #    okunamazdi; kapasiteyi buyutmek burada cevabi bulaniklastirirdi.
     hareket = ozellik.get("hareket") or {}
     sutunlar.append([float(hareket.get(s) or 0.0) for s in SYMBOLS])
+    if kademe == "hareket":
+        return np.array(sutunlar, dtype=float).T
+
+    # 7) bahisci anlasmazligi — bir SICAKLIK degiskeni, yon degiskeni degil.
+    #    Anlasmazligin yonu yoktur; buyuklugu vardir. Hipotez: bahisciler
+    #    ayrisinca kolektifin son sozu daha az guvenilirdir, yani model
+    #    duzgun dagilima dogru cekilmelidir. Bu, logitte sicakligin
+    #    MODULASYONUdur:
+    #
+    #        z_s = (β + δ·ayrisma)·ln p_s
+    #
+    #    Sutun `ayrisma · ln p_s`; geriye tek bir δ kalir ve isareti dogrudan
+    #    soruyu cevaplar:
+    #
+    #        δ < 0  ayrisinca guven azalt — anlasmazlik BILGI tasiyor
+    #        δ ≈ 0  anlasmazlik bir sey soylemiyor
+    #        δ > 0  ayrisinca guven artir (beklenmez; cikarsa aciklama gerekir)
+    #
+    #    Yon sutunu (hangi bahisci hakli) BILEREK yok: o ayri bir soru ve
+    #    `bahisci.py` onu tekil tahminci olarak, kafa kafaya olcuyor.
+    ayrisma = float(ozellik.get("ayrisma") or 0.0)
+    probs_log = [np.log(max(probs.get(s, 0.0), OLASILIK_TABANI)) for s in SYMBOLS]
+    sutunlar.append([ayrisma * v for v in probs_log])
     return np.array(sutunlar, dtype=float).T
 
 
@@ -302,7 +328,7 @@ class KalibreTahminci(Tahminci):
             return sorted([k for k, v in sayim.items()
                            if v >= EN_AZ_ORNEK and k != "bilinmiyor"]) + ["diger"]
 
-        ust = ("lig", "bant", "form", "hareket")
+        ust = ("lig", "bant", "form", "hareket", "dagilim")
         self._ligler = yeterli("lig") if self.kademe in ust else []
         self._bantlar = yeterli("bant") if self.kademe in ust[1:] else []
 
