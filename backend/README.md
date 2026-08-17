@@ -45,11 +45,14 @@ spor_toto/
   bayes.py     Dirichlet prior → posterior, KL, preset'ler
   markov.py    Seçim hayatta kalma + hata bütçesi zinciri
   health.py    Kategorili değişmez (invariant) kontrolleri
+  engines.py   Mod çalıştırıcıları — /api/solve ve health AYNI yolu kullanır
+  meta.py      Yetenek envanteri (modlar, preset'ler, sınırlar) = /api/meta
   history.py   Tarihsel 1/0/2 + analiz blokları
   odds.py      Oran arşivi okuyucu — YALNIZCA analiz için, API'ye bağlı değil
   report.py    Konsol / dosya çıktısı
   cli.py       spor-toto komut satırı
-web_app.py     Flask — /api/solve, /api/stats, /api/health
+web_app.py     Flask — /api/solve, /api/stats, /health (liveness),
+               /api/health (readiness)
 scripts/
   build_history.py  Tarihsel veri setini kaynağından üretir
   build_odds.py     Kupon maçlarına piyasa oranlarını eşleştirir

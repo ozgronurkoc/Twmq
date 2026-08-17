@@ -65,7 +65,8 @@ yani Run düğmesi tek başına da yeterlidir.
 
 ```
 GET  /api/meta               yetenek envanteri (modlar, preset'ler, ızgaralar)
-GET  /api/health             değişmezler (?only= ile tek kategori)
+GET  /health                 liveness — süreç ayakta mı (değişmez koşmaz)
+GET  /api/health             readiness — değişmezler (?only=, ?fresh=1)
 GET  /api/health/checks      kontrol envanteri (çalıştırmadan)
 GET  /api/stats              sezon istatistikleri (?last=N)
 GET  /api/stats/<week>       hafta detayı
@@ -77,10 +78,12 @@ Sözleşmenin tamamı: `docs/ARCHITECTURE_NEXT.md` ve `frontend/lib/types.ts`.
 
 ## Motor (`backend/spor_toto/`)
 
-`core.py` (Encoder, Fix-16, ILP, heuristic) · `analysis.py` (Monte Carlo, hata
-frekansı) · `bayes.py` (Dirichlet prior → posterior) · `markov.py` (hata bütçesi)
-· `health.py` (değişmezler) · `history.py` (tarihsel 1/0/2) · `odds.py` (oran
-arşivi, yalnızca analiz) · `cli.py`.
+`core.py` (Encoder, Fix-16, ILP, heuristic) · `engines.py` (mod çalıştırıcıları
+— API ve sağlık aynı yolu kullanır) · `meta.py` (yetenek envanteri, `/api/meta`
+tek kaynağı) · `analysis.py` (Monte Carlo, hata frekansı) · `bayes.py` (Dirichlet
+prior → posterior) · `markov.py` (hata bütçesi) · `health.py` (değişmezler) ·
+`history.py` (tarihsel 1/0/2) · `odds.py` (oran arşivi, yalnızca analiz) ·
+`cli.py`.
 
 ### CLI
 
@@ -112,7 +115,7 @@ yazmazlar). Ayrıntı: `docs/VERI_TOPLAMA_VE_ISLEME.md`.
 ```bash
 cd backend
 python -m pytest -m "not slow" -q   # hızlı süit
-python -m pytest                    # tamamı (608 test, ILP dahil)
+python -m pytest                    # tamamı (629 test, ILP dahil)
 bash scripts/check.sh               # CI ile aynı çekirdek adımlar
 ```
 

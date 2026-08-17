@@ -63,7 +63,7 @@ makinesinde, o günkü kilitli bağımlılıklarla, o commit üzerinde koşar.
 
 Bu yüzden sağlık katmanı ayrı bir katmandır ve `/saglik` sayfası ürünün eşit
 haklı bir parçasıdır: **ürünün vaadinin şu anda, bu makinede, bu sürümde hâlâ
-geçerli olduğunu kanıtlar.** 17 değişmez, 6 kategori, her çağrıda yeniden
+geçerli olduğunu kanıtlar.** 21 değişmez, 6 kategori, her çağrıda yeniden
 ölçülür — ve neyi kanıtlamadığını da açıkça yazar (§6.3).
 
 ### 1.6 Ne yapar / ne yapmaz
@@ -75,7 +75,7 @@ geçerli olduğunu kanıtlar.** 17 değişmez, 6 kategori, her çağrıda yenide
 | Küme dışı senaryoları **fire** olarak ölçer | Kazanma olasılığını artırmaz |
 | Exact + Monte Carlo olasılık raporu verir | 14-garantiyi olasılıkla "güçlendirmez" |
 | Bayes (Dirichlet) ile tahminlerini yumuşatır | Kâr vaadi vermez |
-| Vaadin canlıda geçerliliğini 17 değişmezle ölçer | Tahmin isabetini ölçmez (ölçemez) |
+| Vaadin canlıda geçerliliğini 21 değişmezle ölçer | Tahmin isabetini ölçmez (ölçemez) |
 | Markov ile sıralı risk profili çıkarır | Canlı bülten çekmez |
 | 41 haftalık sezon verisini ve piyasa oranlarını analiz eder | İddaa geçmiş oranı sunmaz (yok — §5.3) |
 | Bir stratejiyi geçmiş sezonda çalıştırıp bedelini ölçer (**geri test**) | Geri testi bir kâr vaadine çevirmez; aşırı uyumu ölçüp gösterir |
@@ -485,7 +485,8 @@ bayrağını rapordan okur — hiçbirini sabit kodlamaz.
 |--------|------|----------|
 | GET | `/` | Servis bilgisi JSON |
 | GET | `/api/meta` | Modlar, preset'ler, varsayılanlar, sınırlar |
-| GET | `/api/health` | Değişmezler (200 = HEALTHY/DEGRADED, 503 = UNHEALTHY); `?only=` ile kısmi |
+| GET | `/health` | **Liveness** — süreç ayakta mı; hiçbir değişmez koşmaz (~2 ms) |
+| GET | `/api/health` | **Readiness** — değişmezler (200 = HEALTHY/DEGRADED, 503 = UNHEALTHY); `?only=` kısmi, `?fresh=1` önbelleği atlar |
 | GET | `/api/health/checks` | Kontrol envanteri — çalıştırmadan |
 | GET | `/api/stats?last=N` | Tarihsel 1/0/2 + analiz blokları + oran özeti |
 | GET | `/api/stats/<week>` | Tek hafta detayı (komşular, sıra, sapma, maç listesi) |
@@ -538,22 +539,30 @@ python -m spor_toto.health                  # bir kez
 python -m spor_toto.health --interval 60
 python -m spor_toto.health --list           # kontrol envanteri
 python -m spor_toto.health --only olasilik  # tek kategori (veya tek kontrol)
-curl http://localhost:8080/api/health       # JSON
+curl http://localhost:8080/health           # liveness: süreç ayakta mı
+curl http://localhost:8080/api/health       # readiness: tam rapor (JSON)
 curl "http://localhost:8080/api/health?only=cekirdek"
-curl http://localhost:8080/api/health/checks   # envanter, çalıştırmadan
+curl "http://localhost:8080/api/health?fresh=1"   # 5 sn'lik önbelleği atla
+curl http://localhost:8080/api/health/checks      # envanter, çalıştırmadan
 ```
 
-**17 kontrol, 6 kategori.** Kategoriler motorun katmanlarını izler ve yukarıdan
+**`/health` ile `/api/health` ayrı uçlardır.** İlki liveness'tır ve hiçbir
+değişmez koşmaz (~2 ms); ikincisi readiness'tır, tam raporu koşar (ısınmış
+~500 ms, ilk koşu ~2,2 sn) ve kritik bir değişmez düşerse 503 döner. Aynı
+handler'a bağlı olsalardı platform probe'u her vuruşta tam raporu ödetirdi ve
+probe zaman aşımına düşünce **sağlıklı** bir konteyner öldürülürdü.
+
+**21 kontrol, 6 kategori.** Kategoriler motorun katmanlarını izler ve yukarıdan
 aşağıya doğru ciddiyet azalır — düşen kontrolün adı değil, **hangi katmanın
 bozulduğu** okunur. Güncel liste için `--list`:
 
 | Kategori | Kapsam | Düşerse |
 |----------|--------|---------|
-| `cekirdek` | encoder, fix16 garanti, yetersiz çifte reddi, distance layers | **Ana vaat geçersiz.** Yayın durdurulur |
-| `motor` | blok motoru, heuristic | Bir mod güvenilmez; fix16 ayakta olabilir |
-| `olasilik` | exact, Monte Carlo, Bayes, Markov | Sayılar yanlış; garanti geçerli olabilir |
+| `cekirdek` | encoder, fix16 garanti, yetersiz çifte reddi, distance layers, **varyantlar** | **Ana vaat geçersiz.** Yayın durdurulur |
+| `motor` | blok motoru, heuristic, **mod envanteri (7 modun hepsi)** | Bir mod güvenilmez; fix16 ayakta olabilir |
+| `olasilik` | exact, Monte Carlo, Bayes, **Bayes preset'leri**, Markov | Sayılar yanlış; garanti geçerli olabilir |
 | `analiz` | error_freq, **fire senaryoları**, veri seti, oran arşivi, **geri test** | Yorum katmanı bozuk; motor sağlam |
-| `ucuca` | pipeline sonuç şekli | Arayüz yanlış okuyor olabilir |
+| `ucuca` | **meta sözleşmesi**, pipeline sonuç şekli | Arayüz yanlış okuyor olabilir |
 | `ortam` | scipy bayrağı (bilgi amaçlı) | Bir yetenek eksik olabilir |
 
 **Her düşüş 503 değildir.** HTTP durum kodu "beni trafikten çıkar" demektir, "bir
@@ -619,6 +628,8 @@ backend/
     odds.py            Oran arşivi okuyucu, 1X2 özeti, kalibrasyon, karar destek blokları
     backtest.py        Eşikli strateji → kaplama → skor; eşik taraması + hold-out
     health.py          Kategorili değişmez (invariant) kontrolleri — tek CHECKS tanımı
+    meta.py            Yetenek envanteri (modlar, preset'ler, sınırlar) = /api/meta
+    engines.py         Mod çalıştırıcıları — /api/solve ve health AYNI yolu kullanır
     report.py          Konsol / dosya çıktısı
     cli.py             spor-toto komut satırı
   web_app.py           Flask — yalnızca JSON API, HTML servis etmez
@@ -628,7 +639,7 @@ backend/
     snapshot_iddaa.py  İddaa açık bültenini tarih damgalı arşivler (haftalık)
     check.sh           Yerel CI eşdeğeri
   data/                st_history_2025_26.json · odds/ · iddaa/
-  tests/               pytest (17 dosya, 264 test fonksiyonu → 608 test)
+  tests/               pytest (18 dosya, 285 test fonksiyonu → 629 test)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -789,8 +800,8 @@ bash scripts/check.sh        # yerel CI eşdeğeri
 
 Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant'lar, CLI (Bayes preset
 dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri test,
-iddaa snapshot'ı, API sözleşmesi. 17 test dosyası, 264 test fonksiyonu,
-parametrizasyonla **608 test**; 82'si veri/istatistik/geri test, 23'ü sağlık
+iddaa snapshot'ı, API sözleşmesi. 18 test dosyası, 285 test fonksiyonu,
+parametrizasyonla **629 test**; 82'si veri/istatistik/geri test, 44'ü sağlık
 katmanına ait.
 
 İki test bilerek **ağa çıkmaz**: `test_snapshot_iddaa.py` gerçek bültenden alınmış
