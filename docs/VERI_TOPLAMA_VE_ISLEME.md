@@ -2,9 +2,17 @@
 
 **Kapsam:** projedeki üç veri setinin tamamı — tarihsel 1/0/2 sonuçları, piyasa oranı arşivi
 ve iddaa bülten arşivi
-**Sürüm:** v3 (iddaa bülten snapshot boru hattı eklendi)
+**Sürüm:** v4 (proje amacı güncellendi; veri tarafının öncelikleri yeniden sıralandı)
 **İlgili belgeler:** [`ISTATISTIK_YOL_HARITASI.md`](ISTATISTIK_YOL_HARITASI.md) (katmanın
 durumu ve yol haritası) · [`ARCHITECTURE_NEXT.md`](ARCHITECTURE_NEXT.md) (API sözleşmesi)
+
+> **Amaç değişikliği (2026-08-17).** Projenin amacı artık **veriyi analiz ederek kazanma
+> oranını artıracak sonuçlar üretmek ve maç sonucu tahmini yapmaktır**
+> ([`../README.md`](../README.md) §1). Bu belgenin **doktrini değişmedi** — yedi ilkenin
+> tamamı aynen geçerlidir ve tahmin hedefiyle birlikte daha da bağlayıcı hale gelmiştir:
+> bir tahmin modeli, altındaki verinin bütün kusurlarını devralır ve onları güvenilir
+> görünen bir sayıya çevirir. Değişen tek şey **önceliklerdir** (§10) ve amaçla birlikte
+> ortaya çıkan **yeni bir veri ihtiyacıdır** (§10.1).
 
 | | Tarihsel sonuçlar | Piyasa oranı arşivi | İddaa bülten arşivi |
 |---|---|---|---|
@@ -27,9 +35,15 @@ geçerlidir.
 Maç listesi → sonuç dizisi → sayımlar. Dizi listeden üretilir, sayımlar diziden sayılır. Üç
 temsil de dosyada durur ama biri diğerinden türer; hiçbiri bağımsız yazılmaz.
 
-**2. Kesin olmayan veri elenir, tahmin edilmez.**
+**2. Kesin olmayan veri elenir, doldurulmaz.**
 15 maçı tam kapanmamış hafta analize hiç girmez. Bir eksik sonuç bile o haftanın 1/0/2
 vektörünü bozar. Eksiği doldurmak, ortalamayla tamamlamak, "yaklaşık" saymak yok.
+
+> Bu ilke **maç sonucu tahminiyle çelişmez, onun önkoşuludur.** Yasak olan şey eksik
+> *girdiyi* uydurmaktır; amaç ise gelecek sonucu *tahmin etmektir*. İkisi aynı şey değil:
+> imputasyonla doldurulmuş bir eğitim seti, modelin öğrendiği ilişkinin ne kadarının
+> gerçek olduğunu ölçülemez hale getirir. Amaç tahmine döndüğü için bu ilke gevşemez,
+> **sıkılaşır.**
 
 **3. Sıra kaynağın kendi sırasıdır.**
 Kupon sırası tahmin edilmez, tarihe göre sıralanmaz, isimden çıkarılmaz. Kaynağın haftaya ait
@@ -579,6 +593,20 @@ Toplam 82 test bu üç veri setini korur (backend paketi 664 test). `python -m s
    kurtarma yolu **yok**: kaçırılan hafta kaçmıştır.
 6. **Resmi bülten numarası doğrulanmadı:** kupon sırası kaynağın sırasıdır.
 
+Amaç tahmine döndüğü için iki sınır daha kritik hale geldi ve ayrıca yazılmalıdır:
+
+7. **Piyasanın dışında hiçbir sinyal yok.** Üç veri setinin taşıdığı her şey — 1/0/2, takım
+   adı, skor, saat, oran — ya sonucun kendisi ya da **piyasanın sonuç hakkındaki fiyatıdır.**
+   Sakatlık, kadro, motivasyon, seyahat, hava, sıralama baskısı: hiçbiri yok. Bu veriden
+   üretilecek bir tahminci, tanımı gereği piyasanın zaten fiyatladığı bilgiyi yeniden
+   türetir. Piyasayı yenmesi için piyasada **olmayan** bir girdi gerekir; bugün elde öyle
+   bir girdi yoktur. Ölçülen sayı bu sınırla tutarlıdır: hold-out isabeti 0 hafta.
+8. **İkramiye ve havuz verisi yok.** Hiçbir veri seti haftalık kazanan adedini veya ikramiye
+   tutarını taşımıyor — hafta kaydı yalnızca `week, close_date, season, n1/n0/n2, results,
+   matches` içerir. Spor Toto müşterek bahis olduğu için **kazanma oranı** ile **beklenen
+   getiri** farklı şeylerdir ve ikincisi bugün hiç ölçülemez. Bu, yeni amacın önündeki en
+   somut veri boşluğudur (§10.1).
+
 ---
 
 ## 9. Yeniden üretim
@@ -628,19 +656,48 @@ backtest(sweep=False)["season"]                # 41 haftalık geri test, ~1,2 sn
 [`ISTATISTIK_YOL_HARITASI.md`](ISTATISTIK_YOL_HARITASI.md) fazlarının **tamamı uygulandı**;
 veri tarafında yeni boru hattı gerektiren tek faz F5 idi ve §6'da anlatıldı.
 
-Bundan sonrası için (yol haritası belgesinin §6'sı):
+Amaç tahmine döndüğü için sıralama değişti. Öncelik artık "sayfayı zenginleştiren veri"
+değil, **tahminin ölçülebilir hale gelmesini sağlayan veridir.**
 
-| İş | Veri durumu |
-|---|---|
-| **S1 — Örneklem büyütme** | **Yeni üretim gerekir.** İki script de sezon parametreli hale gelmeli; football-data `mmz4281/2425/` mevcut, kaynak sitenin geçmiş sezon payload'ları kontrol edilmeli |
-| **S2 — Geri testi zenginleştir** | **Hazır.** Ek veri gerekmez |
-| **S3 — İddaa arşivi olgunlaşınca** | **Birikmeyi bekliyor.** Boru hattı ve haftalık tetik çalışıyor (§6.4); ~10 snapshot sonra eşleştirme anlamlı olur |
-| **S4 — Küçük işler** | Veri tarafı yok |
+| Öncelik | İş | Veri durumu |
+|---|---|---|
+| **1** | **İkramiye / havuz verisi** (§10.1 — yeni) | **Hiç yok.** Dördüncü veri seti gerekir |
+| **2** | **S1 — Örneklem büyütme** | **Yeni üretim gerekir.** İki script de sezon parametreli hale gelmeli; football-data `mmz4281/2425/` mevcut, kaynak sitenin geçmiş sezon payload'ları kontrol edilmeli |
+| **3** | **S3 — İddaa arşivi olgunlaşınca** | **Birikmeyi bekliyor.** Boru hattı ve haftalık tetik çalışıyor (§6.4); ~10 snapshot sonra eşleştirme anlamlı olur |
+| **4** | **S2 — Geri testi zenginleştir** | **Hazır.** Ek veri gerekmez |
+| — | **S4 — Küçük işler** | Veri tarafı yok |
 
-**Örneklem büyütme neden en önemlisi:** geri test hold-out'u 0 hafta çıkardı. Bu sayı 41 hafta
+**Örneklem büyütme neden hâlâ kritik:** geri test hold-out'u 0 hafta çıkardı. Bu sayı 41 hafta
 üzerinde ölçüldüğü için hem gerçek bir bulgu hem de dar bir ölçüm. Sezon sayısını ikiye
 çıkarmak, "eşiği bir sezonda seç, diğerinde ölç" diyebilmeyi sağlar — leave-one-out'un
-yapamadığı gerçek out-of-sample budur.
+yapamadığı gerçek out-of-sample budur. Tahmin iddiası ancak böyle bir ölçümle savunulabilir.
+
+### 10.1 Yeni veri ihtiyacı — ikramiye ve havuz
+
+Yeni amaç iki farklı hedefi birbirine karıştırmaya açıktır ve veri tarafı bu ayrımı
+zorunlu kılar:
+
+| Hedef | Neyi artırır | Bugün ölçülebilir mi |
+|---|---|---|
+| Daha iyi tahmin | 14 tutturma **olasılığını** | Evet — geri test + hold-out |
+| Daha az paylaşılan kolon | Tutturunca alınan **payı** | **Hayır — veri yok** |
+
+İkincisi Spor Toto'nun müşterek bahis olmasından gelir: ikramiye havuzdan kazananlara
+bölünür, dolayısıyla aynı olasılığa sahip iki sonuçtan **daha az oynananı** işaretlemek
+tutturma olasılığını değiştirmeden beklenen getiriyi artırır. Bu, piyasayı tahminde yenmeyi
+gerektirmeyen tek kaldıraçtır — ama ölçmek için elde hiçbir şey yok.
+
+**Gereken veri:** hafta başına kazanan adedi (13 ve 14 doğru için ayrı) ve ödenen tutar.
+Kaynak, Spor Toto'nun haftalık sonuç/ikramiye ilanlarıdır; erişilebilirliği ve biçimi
+**henüz araştırılmadı.**
+
+Doktrin bu boru hattına olduğu gibi uygulanır — özellikle ilke 2 ve 7: ikramiye verisi
+bulunamayan hafta boş bırakılır, tahmin edilmez; bulunan veri hangi kaynaktan geldiğini
+yanında taşır. Veri gelene kadar **popülerlik yalnızca vekille** yaklaşılabilir (favori
+oranı → tahmini oynanma payı) ve bu vekilin vekil olduğu her yerde yazılmalıdır.
+
+Bu yol da pozitif getiri garanti etmez; ölçülebilir hale getirdiği şey, bugün hakkında
+hiçbir şey bilmediğimiz bir boyuttur.
 
 ## 11. Sürüm geçmişi
 
@@ -648,6 +705,7 @@ yapamadığı gerçek out-of-sample budur.
 |---|---|
 | **v1** (2026-08-15) | İlk üretim. 41 hafta, 615 maç. Sonuç dizisi 15 haftada yanlış sırada, 6'sında yanlış sayımda (§7.4) — o zaman fark edilmedi |
 | **v2** (2026-08-16) | Sıra hatası kapatıldı; veri **maç düzeyine** indi (takım, saat, skor); üretim tek komutla tekrarlanabilir oldu; `data_quality` denetimi ve test bekçileri eklendi; **oran arşivi** kuruldu (§5) |
+| **v4** (2026-08-17) | **Veri değişmedi, amaç değişti.** Proje maç sonucu tahminine ve kazanma oranını artırmaya yöneldi. Doktrinin yedi ilkesi aynen korundu; ilke 2'ye "eleme ≠ tahmin" ayrımı yazıldı. §8'e iki sınır eklendi: veride piyasa dışı sinyal yok, ikramiye/havuz verisi yok. §10 öncelikleri yeniden sıralandı ve §10.1 ile **dördüncü veri seti ihtiyacı** (ikramiye/havuz) tanımlandı |
 | **v3** (2026-08-16) | **İddaa bülten arşivi** kuruldu (§6) ve haftalık tetiği açıldı — ileriye dönük, birikmeye başlıyor. Oran arşivinden türetilen üç karar destek bloğu (çift kapsama, beraberlik profili, lig kırılımı) ve haftalık Brier eklendi; geri test boru hattı bu veriyi tüketmeye başladı. İddaa boru hattı §5'in eki değil **üçüncü veri seti** olduğu için `5A` yerine kendi bölüm numarasını aldı; sonraki bölümler bir kaydı |
 
 Sezon toplamları v1 ve v2'de aynıdır (270/149/196) — çünkü v1'de bozuk olan yalnızca diziydi,
