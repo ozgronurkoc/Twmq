@@ -100,12 +100,13 @@ spor_toto/evaluate.py  ◄── spor_toto/predict.py     (sözleşme + 3 refera
 | Tahmin | `backend/spor_toto/evaluate.py` | — | Dışarıda bırakmalı + çapraz ölçüm, bootstrap |
 | Tahmin | `backend/spor_toto/recalibrate.py` | — | Yeniden kalibrasyon kademesi (Newton) |
 | Tahmin | `backend/spor_toto/cizgi.py` | — | Kapanış çizgisi verimliliği (A1): açılış tahmincisi, hareket ölçümü |
+| Tahmin | `backend/spor_toto/bahisci.py` | — | Bahisçi anlaşmazlığı (A2): tekil bahisçiler, ayrışma ölçümü |
 | Tahmin | `backend/spor_toto/egitim.py` | — | Eğitim korpusu okuyucusu (**istatistiğe girmez**) |
-| Üretim | `backend/scripts/build_egitim.py` | — | Korpus üretimi (football-data, 4 sezon, **iki çizgi**) |
-| Test | `backend/tests/test_predict.py` · `test_evaluate.py` · `test_recalibrate.py` · `test_egitim.py` · `test_cizgi.py` | — | Tahmin katmanı ve **ayrım bekçisi** (131) |
+| Üretim | `backend/scripts/build_egitim.py` | — | Korpus üretimi (football-data, 4 sezon, **iki çizgi + bahisçi kırılımı**) |
+| Test | `backend/tests/test_predict.py` · `test_evaluate.py` · `test_recalibrate.py` · `test_egitim.py` · `test_cizgi.py` · `test_bahisci.py` | — | Tahmin katmanı ve **ayrım bekçisi** (161) |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **813 test**; **82'si** istatistik katmanına, **131'i** tahmin katmanına ait.
+paketi toplam **843 test**; **82'si** istatistik katmanına, **161'i** tahmin katmanına ait.
 `python -m spor_toto.health` **23 değişmez** çalıştırır — ikisi (`oran_arsivi`, `geri_test`)
 istatistik katmanını, biri (`tahmin_referanslari`) tahmin katmanının ölçüm koşumunu korur.
 
@@ -530,6 +531,87 @@ değiştirmesi. Bütün ayakları aynı oranda kısan bir bahisçi fikrini deği
   doldurursa açılış = kapanış olur, hareket her maçta sıfır çıkar ve **A1 raporu sapasağlam
   görünür.** Aynı çizgi iki kez yazılmış bir korpusta bunu başka hiçbir şey yakalamaz.
 
+### 3.15 Bahisçi anlaşmazlığı (A2)
+
+A1 baştan sona `Avg` — bütün bahisçilerin **ortalaması** — üzerinden ölçtü. Ortalamanın
+etrafındaki **dağılım** ayrı bir büyüklüktür ve ortalamanın kendi değerinde görünmez. A2
+kolektifin içine bakıyor: daha iyi bir üye var mı, ve üyeler arasındaki dağılım bilgi mi?
+
+#### Kaynak seçimi ölçümü belirledi
+
+football-data yedi tekil bahisçi veriyor ama **kapsamaları sezona göre değişiyor** (31.132
+maçta ölçüldü):
+
+| Kaynak | 2122 | 2223 | 2324 | 2425 |
+|---|---:|---:|---:|---:|
+| `B365C`, `PSC` | %100 | %100 | %100 | %100 |
+| `BWC` | %99 | %100 | %97 | **%63** |
+| `WHC` | %99 | %91 | %94 | **%76** |
+| `BFC`, `1XBC`, `BFEC` | %0 | %0 | %0 | %100 |
+
+Hepsini isteyen bir filtre 2425'in %40'ını atardı. **Sezon dışarıda bırakmalı ölçümde bu
+sessiz bir yanlılıktır** — model bir sezonu diğerlerinden farklı bir maç evreninde öğrenir.
+Bu yüzden yalnızca dört sezonda da ~%100 olan dört kaynak taşındı: `B365C`, `PSC`, `MaxC`,
+`AvgC`. Kesit **31.100 maç** ve sezonlara göre dengeli.
+
+İkinci karar aynı gerekçeden: iki anlaşmazlık ölçüsü var ve biri bilerek ikincil.
+
+| Ölçü | Tanım | 2122 | 2223 | 2324 | 2425 |
+|---|---|---:|---:|---:|---:|
+| `ayrisma` | ½·Σ\|p_B365 − p_PS\| | 0,0142 | 0,0122 | 0,0125 | 0,0124 |
+| `en_iyi_prim` | ort ln(Max/Avg) | 0,0712 | 0,0641 | 0,0629 | 0,0577 |
+
+`en_iyi_prim` daha geniştir (bütün bahisçi evrenini görür) ama **bahisçi sayısına
+duyarlıdır**: football-data kaynak ekledikçe `Max` mekanik olarak kayar — %20'lik bir
+sürüklenme. Modele yalnızca `ayrisma` verilir; sürüklenen bir özellik modele anlaşmazlık
+değil **sezon kimliği** öğretir.
+
+#### Soru 1 — kolektifin içinde daha iyi bir üye var mı? **Evet: Pinnacle**
+
+| Tahminci | Brier | log kaybı | Fark | %95 aralık | Geçti |
+|---|---:|---:|---:|---|---|
+| `ps` (Pinnacle) | **0,5936** | 0,9938 | −0,0004 | [−0,0006, −0,0002] | **EVET** |
+| **kolektif** (`piyasa` = `Avg`) | 0,5940 | 0,9945 | — | referans | — |
+| `b365` | 0,5943 | 0,9951 | +0,0003 | [+0,0001, +0,0005] | hayır |
+
+**Projede referansı geçen ilk tahminci.** Ama bunu doğru okumak şart — ayrıntısı §6.2 A4'te:
+bu bir *model* başarısı değil, bir **kaynak seçimi** bulgusudur ve asıl söylediği şey
+referans çizgimizin 0,0004 kadar yumuşak olduğudur. Bulgu `PS`'e özgü: `B365` kolektiften
+*kötü*, yani "tekil kaynak kolektifi geçer" diye bir genelleme çıkmıyor.
+
+#### Soru 2 — anlaşmazlık bilgi mi? **Hayır — ve sebebi T5/A1'dekinden farklı**
+
+Ham tablo önce aksini söylüyor gibi:
+
+| Ayrışma | n | Kolektif Brier | Ort. p_favori |
+|---|---:|---:|---:|
+| <0,01 | 13.532 | 0,6048 | 0,4841 |
+| <0,02 | 12.492 | 0,5941 | 0,4989 |
+| <0,04 | 4.774 | 0,5662 | 0,5273 |
+| ≥0,04 | 302 | **0,5402** | 0,5336 |
+
+Anlaşmazlık arttıkça kolektif *daha* isabetli. Ama sağdaki sütun karışmayı ele veriyor:
+**favori gücü de aynı yönde artıyor** ve güçlü favorili maçların Brier'i zaten mekanik
+olarak düşüktür (0,85'lik bir favori tuttuğunda ~0,05; üç yönlü bir maçta ~0,66).
+Bahisçiler, favorinin belirgin olduğu maçlarda daha çok ayrışıyor.
+
+Favori gücü sabitlenince ilişki **tamamen kayboluyor**:
+
+| p_favori | <0,01 | <0,02 | <0,04 |
+|---|---:|---:|---:|
+| <0,40 | 0,6611 | 0,6639 | 0,6622 |
+| <0,50 | 0,6429 | 0,6447 | 0,6415 |
+| <0,65 | 0,5673 | 0,5674 | 0,5682 |
+| ≥0,65 | 0,3758 | 0,3788 | 0,3645 |
+
+Katsayı da bunu tekrarlıyor: δ = 0,0158, yani ortalama anlaşmazlıkta kolektife duyulan
+güveni **%0,02** değiştiriyor. Model zaten `ln p_s` taşıdığı için favori gücüne
+koşullanmış durumda; anlaşmazlık üstüne hiçbir şey eklemiyor.
+
+**Bu farklı bir null.** T5'te form, A1'de çizgi hareketi **gerçek** ham sinyaldi ve piyasa
+onları fiyatlamıştı. Burada ham sinyalin **kendisi bir yanılsama**. İkisini ayırmadan
+"anlaşmazlık yardım etmiyor" demek, doğru sonucu yanlış sebeple kaydetmek olurdu.
+
 ---
 
 ## 4. Sayfada bugün ne var
@@ -620,6 +702,8 @@ arındırılmış yapı tutar.
 | Takım formu (T5) | 31.103 maç | `kalibre_form` −0,0003 [−0,0007, +0,0001] — **geçmedi**; ham sinyal güçlü, piyasa fiyatlamış |
 | **Kapanış vs açılış (A1)** | 31.099 maç | Kapanış **0,5940**, açılış 0,5964 · +0,0025 [+0,0019, +0,0030] — **piyasa bilgiyi soğuruyor** |
 | **Çizgi hareketi (A1)** | 31.099 maç | `kalibre_hareket` = `kalibre_form`, uzatma **%1,01** — **kapanış verimli** |
+| **Pinnacle vs kolektif (A2)** | 31.100 maç | `ps` **0,5936** · −0,0004 [−0,0006, −0,0002] — **geçti**; `b365` geçmedi |
+| **Bahisçi anlaşmazlığı (A2)** | 31.100 maç | Ham ilişki favori gücüyle karışık; sabitlenince **kayboluyor**. Güven kısma %0,02 |
 
 **Okuma.** Aşırı uyum modelin kapasitesinden değil örneklem küçüklüğünden geliyordu; büyük
 korpus onu kaldırdı. Ama kalan etki 0,0005–0,0015 Brier — 31 binde anlamlı, 540'ta değil ve
@@ -629,6 +713,12 @@ korpus onu kaldırdı. Ama kalan etki 0,0005–0,0015 Brier — 31 binde anlaml�
 monoton bir sinyal — kapanışın ötesinde hiçbir şey söylemiyor. Bu, "iyi model bulamadık"
 demekten farklı bir cümledir: piyasanın kendi bilgisi bile kendini yenemiyorsa, aynı veriyle
 aramaya devam etmenin karşılığı yoktur.
+
+**A2 tabloya iki farklı şey ekledi.** Biri ilk "geçti": Pinnacle kolektifi geçiyor — ama
+bu bir model değil, referansın yumuşaklığı (§6.2 A4). Diğeri **yeni bir null türü**:
+anlaşmazlıkta ham sinyal *hiç yok*, yalnızca favori gücüyle karışmış bir görüntü var.
+Üç ölçümün üçü de aynı yere bakıyor: piyasa fiyatı, elimizdeki veriden çıkarılabilecek
+her şeyi zaten içeriyor.
 
 ## 6. Yol planı — proje ne zaman biter
 
@@ -679,22 +769,39 @@ Bu sonuç A4'ün (b) şıkkına giden **en güçlü tek kanıttır** ve "iyi bir
 demekten farklıdır: piyasanın kendi hareketi bile kendini yenemiyorsa, sorun modelde değil
 veridedir.
 
-#### A2 — Bahisçi anlaşmazlığı · **sırada**
+#### A2 — Bahisçi anlaşmazlığı · **bitti** (§3.15)
 
-Korpusta 12+ bahisçinin oranı var. A1 "piyasa kolektif olarak doğru mu" diye sorar; A2
-"kolektifin içindeki dağılım bilgi mi" diye. İkisi bağımsız olarak yanlış çıkabilir.
-**Büyüklük:** küçük.
+İki soru sorulmuştu, ikisi de ölçüldü — ve **cevapları farklı çıktı:**
 
-**A1'den sonra neden hâlâ meşru bir soru.** A1 `Avg` — bütün bahisçilerin *ortalaması* —
-üzerinden ölçtü ve ortalamanın son sözünün verimli olduğunu gösterdi. Ortalamanın etrafındaki
-**dağılım** ayrı bir büyüklüktür: bahisçilerin ayrıştığı maçlar, hemfikir oldukları maçlardan
-farklı davranabilir ve bu, ortalamanın kendisinde görünmez. Altyapı hazır — korpusun taşıdığı
-kaynak sayısı artırılır, `cizgi.py`'nin kesit kurma deseni aynen kullanılır.
+> **Kolektifin içinde daha iyi bir üye var** — `ps` (Pinnacle) kolektif ortalamayı geçiyor:
+> −0,0004 Brier, aralık [−0,0006, −0,0002]. Projede referansı geçen ilk tahminci. Bulgu
+> `PS`'e özgü; `B365` kolektiften kötü.
+>
+> **Anlaşmazlığın kendisi bilgi taşımıyor** — ham ilişki favori gücüyle karışıktı; favori
+> sabitlenince tamamen kayboluyor. Model ortalama anlaşmazlıkta güvenini **%0,02**
+> değiştiriyor.
 
-**Dürüst beklenti: bu da fiyatlanmıştır.** A1'den sonra bunu yazmamak yanlış olurdu. Yine de
-ucuz ve denenmeden "kolektifin içi bilgi taşımıyor" demek ölçüm değil kanaat olur.
+İkinci bulgu **yeni bir null türü**: T5 ve A1'de ham sinyal gerçekti ve piyasa onu
+fiyatlamıştı; burada ham sinyalin kendisi bir görüntüydü.
 
-#### A3 — Piyasa dışı ama türetilebilir özellikler
+Birinci bulgu ise durma kuralının muhasebesini değiştiriyor — aşağıda.
+
+#### A2'nin açtığı karar: referans çizgisi `Avg` mi kalmalı?
+
+`REFERANS_AD` bugün `piyasa`, yani `Avg` kapanışı. A2 bunun **ölçülebilir biçimde yumuşak**
+olduğunu gösterdi: Pinnacle 0,0004 daha iyi. Üç seçenek var ve seçim ürün kararıdır:
+
+| Seçenek | Sonuç |
+|---|---|
+| **`Avg` kalsın** | Bütün geçmiş ölçümler karşılaştırılabilir kalır; referansın yumuşaklığı belgede yazılı durur |
+| **`PS`'e geçilsin** | Çıta 0,0004 yükselir, gelecek ölçümler daha dürüst olur — ama T1–A2'nin tamamı yeniden koşulmadıkça geçmişle karşılaştırılamaz |
+| **İkisi de raporlansın** | Bedeli yok ama her tabloda iki referans sütunu taşımak gerekir |
+
+**Bugünkü tercih: `Avg` kalıyor.** Gerekçe: 0,0004'lük fark, ölçülen hiçbir sonucun işaretini
+değiştirmiyor (geçen tek şey `ps`'in kendisi), ve karşılaştırılabilirliği kaybetmenin bedeli
+kazancından büyük. Karar bilinçlidir ve burada yazılıdır — sessizce bırakılmış değil.
+
+#### A3 — Piyasa dışı ama türetilebilir özellikler · **sırada, Faz A'nın son işi**
 
 **Burada bir hata düzeltiliyor.** `VERI_TOPLAMA_VE_ISLEME.md` §8.7'ye "veride piyasa dışı
 hiçbir sinyal yok" yazılmıştı; bu fazla genişti. Ek kaynak gerektirmeyen birkaç özellik var
@@ -712,6 +819,13 @@ ve hiçbiri denenmedi:
 T5 yalnızca **birleşik takım formunu** denedi ve piyasanın onu fiyatladığını gösterdi; bu,
 diğerleri hakkında hiçbir şey söylemez. Dürüst beklenti: bunlar da fiyatlanmış. Ama ucuzlar
 ve denenmeden "piyasa dışı girdi yok" demek yanlış olur. **Büyüklük:** orta.
+
+**A2'den sonra bir uyarı taşınmalı.** A2'nin ikinci bulgusu, ham bir tablonun karışmış bir
+değişkenle nasıl gerçek sinyal taklidi yapabildiğini gösterdi. A3'ün özelliklerinin
+neredeyse hepsi aynı riski taşıyor: dinlenme günü ve fikstür sıkışıklığı **lig ve takım
+gücüyle** karışıktır (Avrupa oynayan takımlar hem yorgun hem güçlüdür), sezon sonu
+motivasyonu **lig konumuyla**. Her biri için ham tablonun yanına en az bir kontrol dilimi
+konmalı; konmazsa bulunan "sinyal" özelliğin değil karışmanın olur.
 
 #### A4 — Tahmin ekseninin durma kuralı
 
@@ -735,12 +849,26 @@ yüksek sesle sormaktır.
 | Takım formu (T5) | 31.103 | Geçmedi; piyasa fiyatlamış |
 | Açılış çizgisi (A1) | 31.099 | Kapanışın **altında** — soğuruma var |
 | Çizgi hareketi (A1) | 31.099 | Geçmedi; uzatma %1,01 |
+| Pinnacle (A2) | 31.100 | **Geçti** — ama aşağıya bakınız |
+| Bahisçi anlaşmazlığı (A2) | 31.100 | Geçmedi; ham sinyalin kendisi yok |
 
-A1 bu tablodaki en ağır kanıttır çünkü diğerlerinden farklı bir şey gösterir: yalnızca
-*bizim* denediğimiz özellikler değil, **piyasanın kendi hareketi** de kapanışı yenemiyor.
-Yine de durma kuralı A2 ve A3 bitmeden işletilmez — plan, cevabı erken yazmamak üzerine
-kurulu. A1'in yaptığı şey, geriye kalan iki denemenin **beklentisini** düşürmek ve
-büyüklüklerini haklı çıkarmaktır (ikisi de "küçük"–"orta").
+**`ps`'in geçmesi A4(a)'yı tetiklemiyor, ve sebebi kaydedilmelidir.**
+
+A4(a)'nın şablonu şunu ister: *"şu **özellik** piyasayı şu kadar geçiyor → Faz C'ye
+giriyor."* `ps` bir özellik değil, hatta bir model bile değil — **aynı piyasanın başka bir
+okuması**. Söylediği şey "şunu tahmin edebiliyoruz" değil, "referans çizgimiz 0,0004 kadar
+yumuşakmış". Üç somut sebep:
+
+1. **Yeni bilgi üretmiyor.** Kolektifin bir üyesi, kolektiften iyi. Elimizde piyasa dışı
+   hiçbir girdi yokken bu, veri kaynağı seçimidir; tahmin yeteneği değil.
+2. **Faz C'ye çevrilemez.** Spor Toto müşterek bahistir; Pinnacle'ın fiyatından bahis
+   oynanmıyor. Arayüze konabilecek bir öneri çıkmıyor.
+3. **Büyüklük yine yetersiz.** 0,0004 Brier, tabanı 0,594 olan bir sayıda, %17,2'lik iddaa
+   marjının yanında hiç. T2–T5'in tamamıyla aynı mertebe.
+
+Doğru sonuç şudur: A4(a) değil, **referans çizgisi kararı** (yukarıda). Faz A'nın durma
+kuralı A3 bitmeden işletilmez; A1 ve A2 birlikte, kalan tek denemenin **beklentisini**
+düşürdü — üç bağımsız yönden bakıldı ve üçünde de fiyatın dışında bir şey bulunamadı.
 
 ### 6.3 Faz B — havuz eksenini aç ve ölç
 
@@ -797,8 +925,8 @@ değildir: bu alandaki araçların neredeyse tamamı birinciyi *iddia eder*, hi�
 
 ```
 A1 ─┐  ✔ bitti (§3.14)
-A2 ─┼─► A4  (tahmin ekseni kapanır ya da açılır)
-A3 ─┘
+A2 ─┼─► A4  (tahmin ekseni kapanır ya da açılır)   ✔ bitti (§3.15)
+A3 ─┘  ◄── sırada, Faz A'nın son işi
         B1 ─► B2 ─► B3 ─► B4  (havuz ekseni; B1 paralel başlayabilir)
 C3 (bağımsız, her an)
                           └─► C1, C2 (yalnızca A4(a) ya da B4(a))  ─► C4 ─► D
@@ -813,6 +941,7 @@ Eski etiketler kayıp değil, yerleşti:
 |---|---|---|
 | T1–T5 | Faz A'nın yapılmış kısmı (§3.10–3.13) | bitti |
 | — | **A1** (§3.14) | **bitti** |
+| — | **A2** (§3.15) | **bitti** |
 | G1 | C3 | bekliyor |
 | G2 | C1 | koşullu |
 | G3–G5 | C4 | bekliyor |
@@ -1076,12 +1205,14 @@ python scripts/build_egitim.py --dry-run   # yazmadan özet
 # Tahmin katmanının ölçümleri (korpus gerekir; ~30 sn)
 python -m spor_toto.recalibrate            # yeniden kalibrasyon kademesi
 python -m spor_toto.cizgi                  # A1: kapanış çizgisi verimliliği
+python -m spor_toto.bahisci                # A2: bahisçi anlaşmazlığı
 
 # Denetim
-pytest -q                                  # 813 test (82'si bu katman, 131'i tahmin)
+pytest -q                                  # 843 test (82'si bu katman, 161'i tahmin)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out
 pytest -q tests/test_cizgi.py              # A1 ölçümü ve korpus bütünlüğü
+pytest -q tests/test_bahisci.py            # A2 ölçümü ve kaynak seçimi
 python -m spor_toto.health                 # 23 değişmez
 python -m spor_toto.health --help          # tek kontrol: ?only=geri_test
 

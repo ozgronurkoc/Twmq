@@ -2,7 +2,7 @@
 
 **Kapsam:** projedeki dört veri setinin tamamı — tarihsel 1/0/2 sonuçları, piyasa oranı
 arşivi, iddaa bülten arşivi ve (ayrı katman) eğitim korpusu
-**Sürüm:** v6 (korpus açılış ve kapanış çizgisini ayrı ayrı taşıyor — A1'in ön koşulu)
+**Sürüm:** v7 (korpus bahisçi kırılımını da taşıyor — A2'nin ön koşulu)
 **İlgili belgeler:** [`ISTATISTIK_YOL_HARITASI.md`](ISTATISTIK_YOL_HARITASI.md) (katmanın
 durumu ve yol haritası) · [`ARCHITECTURE_NEXT.md`](ARCHITECTURE_NEXT.md) (API sözleşmesi)
 
@@ -520,7 +520,7 @@ sağlama sayılır.
 Maçların **%93,0'ı** maç istatistiği (şut, isabetli şut, korner) taşır; bunlar
 maç *sonrası* veridir ve doğrudan tahminci girdisi olamazlar — tek amaçları
 yuvarlanan takım formu üretmektir. **%99,99'u** açılış+kapanış çizgi çifti
-taşır (§6A.6).
+taşır (§6A.6) ve **%99,99'u** bahisçi dörtlüsü (§6A.7).
 
 ### 6A.3 Varsayılan sezonlar 2025/2026'yı dışarıda bırakır
 
@@ -577,6 +577,45 @@ böylece kesit önceki ölçümlerle karşılaştırılabilir.
 değiştirmesi ve bahisçinin marjını değiştirmesi. Bütün ayakları aynı oranda
 kısan bir bahisçi fikrini değiştirmemiştir; marj arındırıldıktan sonra geriye
 yalnızca fikrin yeniden dağılımı kalır.
+
+### 6A.7 Bahisçi kırılımı — kaynak seçimi ölçümü belirler
+
+A2 (bahisçi anlaşmazlığı) kolektifin **içine** bakar, dolayısıyla kırılım
+gerekir. Ama hangi kaynakların taşınacağı burada masum bir tercih değildir.
+
+football-data yedi tekil bahisçi veriyor; **kapsamaları sezona göre değişiyor**
+(31.132 maçta ölçüldü):
+
+| Kaynak | 2122 | 2223 | 2324 | 2425 |
+|---|---:|---:|---:|---:|
+| `B365C`, `PSC` | %100 | %100 | %100 | %100 |
+| `BWC` | %99 | %100 | %97 | **%63** |
+| `WHC` | %99 | %91 | %94 | **%76** |
+| `BFC`, `1XBC`, `BFEC` | %0 | %0 | %0 | %100 |
+
+Hepsini isteyen bir filtre 2425'in %40'ını atardı. Sezon dışarıda bırakmalı
+ölçümde bu **sessiz bir yanlılıktır**: model bir sezonu diğerlerinden farklı
+bir maç evreninde öğrenir. Bu yüzden yalnızca dört sezonda da ~%100 olan dört
+kaynak taşınır — `B365C`, `PSC`, `MaxC`, `AvgC` — ve kesit 31.100 maç kalır.
+
+Aynı gerekçenin ikinci yüzü türetilen özelliklerdedir. İki anlaşmazlık ölçüsü
+var ve biri bilerek **ikincil**:
+
+| Ölçü | Kaynak | 2122 | 2223 | 2324 | 2425 |
+|---|---|---:|---:|---:|---:|
+| `ayrisma` | sabit `B365`↔`PS` çifti | 0,0142 | 0,0122 | 0,0125 | 0,0124 |
+| `en_iyi_prim` | `Max`/`Avg` açığı | 0,0712 | 0,0641 | 0,0629 | 0,0577 |
+
+`en_iyi_prim` daha geniştir — bütün bahisçi evrenini görür — ama `Max`, kaynak
+sayısı değiştikçe **mekanik olarak kayar**: %20'lik bir sürüklenme ölçüldü.
+Modele yalnızca `ayrisma` verilir. Sürüklenen bir özellik modele anlaşmazlık
+değil **sezon kimliği** öğretir ve sızıntı sessizdir: skor iyileşir, sebep
+yanlıştır. `en_iyi_prim` betimleyici kalır ve sürüklenmesi raporlanır.
+
+Dörtlü **ya tamdır ya yoktur** (çizgi çiftiyle aynı gerekçe): kısmi bir kaynak
+kümesi anlaşmazlığı değil, o gün hangi kaynağın mevcut olduğunu ölçerdi.
+Doğrulamaya ayrıca **`Max ≥ Avg`** eklendi — en iyi fiyat ortalamanın altına
+inemez; inerse kaynak sütunları karışmıştır (ilke 5).
 
 ---
 
@@ -722,6 +761,15 @@ Amaç tahmine döndüğü için iki sınır daha kritik hale geldi ve ayrıca ya
    > (en büyük harekette çizginin lehine oynadığı sembol %47,2'ye karşı %30,2 tutuyor)
    > artık değerin sıfır olması, **piyasanın kendi bilgisinin bile kapanışta tükendiği**
    > anlamına gelir. Ölçüm: [`ISTATISTIK_YOL_HARITASI.md`](ISTATISTIK_YOL_HARITASI.md) §3.14.
+
+   > **A2 bir uyarı ekledi (2026-08-17).** Korpus artık bahisçi kırılımı da taşıyor (§6A.7)
+   > ve anlaşmazlık ölçüldü. Ham tablo güçlü bir sinyal gösteriyordu — bahisçiler ayrıştıkça
+   > kolektifin Brier'i düşüyordu — ama ilişki **favori gücüyle karışıktı** ve favori
+   > sabitlenince tamamen kayboldu. Bu, veri sınırlarını okurken taşınması gereken bir ders:
+   > *ham bir tablo, karışmış bir değişkenle gerçek sinyal taklidi yapabilir.* §6.2 A3'ün
+   > listesindeki özelliklerin çoğu (dinlenme günü, fikstür sıkışıklığı, sezon sonu
+   > motivasyonu) aynı riski taşıyor ve her biri en az bir kontrol dilimiyle ölçülmelidir.
+   > Ölçüm: [`ISTATISTIK_YOL_HARITASI.md`](ISTATISTIK_YOL_HARITASI.md) §3.15.
 8. **İkramiye ve havuz verisi yok.** Hiçbir veri seti haftalık kazanan adedini veya ikramiye
    tutarını taşımıyor — hafta kaydı yalnızca `week, close_date, season, n1/n0/n2, results,
    matches` içerir. Spor Toto müşterek bahis olduğu için **kazanma oranı** ile **beklenen
@@ -785,7 +833,8 @@ değil, **tahminin ölçülebilir hale gelmesini sağlayan veridir.**
 | **✔** | **Eğitim korpusu** (§6A) | **Yapıldı.** 31.103 maç · 4 sezon · 22 lig |
 | **✔** | **T5 — Takım formu özellikleri** | **Yapıldı.** Maç istatistiği sütunları korpusa eklendi; form yuvarlanan pencereyle türetiliyor. Ham sinyal güçlü, artık değer ~0 |
 | **✔** | **A1 — Açılış/kapanış çizgi çifti** (§6A.6) | **Yapıldı.** Aynı kaynaktan, yeni indirme gerekmedi. 31.099 maçta çift var |
-| **1** | **A2 — Bahisçi anlaşmazlığı** | **Aynı kaynaktan türetilebilir.** football-data 12+ bahisçinin oranını taşıyor; korpusa ek kaynak sütunları eklenir. Yeni indirme gerekmez |
+| **✔** | **A2 — Bahisçi kırılımı** (§6A.7) | **Yapıldı.** Dört kaynak taşınıyor; kapsaması sezona göre değişenler bilerek dışarıda |
+| **1** | **A3 — Türetilebilir özellikler** | **Aynı kaynaktan türetilebilir.** Tarih ve takım alanlarından dinlenme günü, fikstür sıkışıklığı, derbi, sezon sonu. Yeni indirme gerekmez — ama her biri karışma kontrolü ister (§8 madde 7) |
 | **2** | **İkramiye / havuz verisi** (§10.1) | **Hiç yok.** Beşinci veri seti gerekir; kaynak araştırılmadı |
 | **3** | **S1'in kupon ayağı** | **Kapalı** (§10.2). Sonuç kaynağı sezon parametresi taşımıyor + `robots.txt` kısıtı |
 | **4** | **S3 — İddaa arşivi olgunlaşınca** | **Birikmeyi bekliyor.** Boru hattı ve haftalık tetik çalışıyor (§6.4); ~10 snapshot sonra eşleştirme anlamlı olur |
@@ -848,6 +897,7 @@ hiçbir şey bilmediğimiz bir boyuttur.
 | **v2** (2026-08-16) | Sıra hatası kapatıldı; veri **maç düzeyine** indi (takım, saat, skor); üretim tek komutla tekrarlanabilir oldu; `data_quality` denetimi ve test bekçileri eklendi; **oran arşivi** kuruldu (§5) |
 | **v5** (2026-08-17) | **Eğitim korpusu** kuruldu (§6A): football-data'dan 22 lig × 4 geçmiş sezon, 31.103 maç. Kupon değerlendirme setinin 58 katı. `/istatistik` sayfasına **girmez** — ayrım `test_ayrim_*` ile bekçiye bağlandı. Varsayılan sezonlar 2025/26'yı dışarıda bırakır (sızıntı önlemi) |
 | **v6** (2026-08-17) | **Korpus artık iki çizgi taşıyor** (§6A.6): açılış ve kapanış oranı ayrı sütunlarda, yalnızca aynı bahisçi ailesinden eşleşmiş çift olarak. Maç sayısı değişmedi (31.103; 31.099'unda çift var), böylece önceki ölçümler karşılaştırılabilir kaldı. Bu değişiklik A1'i (kapanış çizgisi verimliliği) mümkün kıldı; sonucu §8 madde 7'ye işlendi |
+| **v7** (2026-08-17) | **Korpus bahisçi kırılımı taşıyor** (§6A.7): `B365C`, `PSC`, `MaxC`, `AvgC`. Kaynak seçimi ölçümün parçası — kapsaması sezona göre değişen bahisçiler (`BW`, `WH`, `BF`, `1XB`) bilerek dışarıda, çünkü kesiti sezona göre dengesizleştirip sezon dışarıda bırakmalı ölçümü yanlılarlardı. Aynı gerekçeyle model yalnızca sabit kaynak çiftinden gelen `ayrisma`yı görür; sürüklenen `en_iyi_prim` betimleyici kalır. Doğrulamaya `Max ≥ Avg` eklendi |
 | **v4** (2026-08-17) | **Veri değişmedi, amaç değişti.** Proje maç sonucu tahminine ve kazanma oranını artırmaya yöneldi. Doktrinin yedi ilkesi aynen korundu; ilke 2'ye "eleme ≠ tahmin" ayrımı yazıldı. §8'e iki sınır eklendi: veride piyasa dışı sinyal yok, ikramiye/havuz verisi yok. §10 öncelikleri yeniden sıralandı ve §10.1 ile **dördüncü veri seti ihtiyacı** (ikramiye/havuz) tanımlandı |
 | **v3** (2026-08-16) | **İddaa bülten arşivi** kuruldu (§6) ve haftalık tetiği açıldı — ileriye dönük, birikmeye başlıyor. Oran arşivinden türetilen üç karar destek bloğu (çift kapsama, beraberlik profili, lig kırılımı) ve haftalık Brier eklendi; geri test boru hattı bu veriyi tüketmeye başladı. İddaa boru hattı §5'in eki değil **üçüncü veri seti** olduğu için `5A` yerine kendi bölüm numarasını aldı; sonraki bölümler bir kaydı |
 
