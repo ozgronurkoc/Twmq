@@ -7,16 +7,20 @@ pytest.importorskip("flask")
 import web_app  # noqa: E402
 from web_app import app  # noqa: E402
 from spor_toto import __version__  # noqa: E402
-from spor_toto.health import CHECKS  # noqa: E402
+from spor_toto import health_history as hh  # noqa: E402
+from spor_toto.health import CHECKS, ORNEK  # noqa: E402
 
 
 @pytest.fixture()
 def client():
     app.config.update(TESTING=True)
-    # Onbellek testler arasinda sizmasin: her test kendi olcumunu yapar.
+    # Onbellek ve zaman serisi testler arasinda sizmasin: her test kendi
+    # olcumunu yapar.
     web_app._health_onbellek.clear()
+    hh.temizle()
     with app.test_client() as c:
         yield c
+    hh.temizle()
 
 
 def test_health_govdesi(client):
@@ -132,3 +136,89 @@ def test_kismi_kosu_ayri_onbelleklenir(client):
     assert tam["summary"]["kismi"] is False
     assert tam["total"] == len(CHECKS)
     assert client.get("/api/health?only=cekirdek").get_json()["total"] == kismi["total"]
+
+
+# ─── zaman serisi (§7.2) ─────────────────────────────────────────────────────
+
+def test_history_ucu_kosulari_biriktirir(client):
+    client.get("/api/health?fresh=1")
+    client.get("/api/health?fresh=1")
+    body = client.get("/api/health/history").get_json()
+    assert len(body["kayitlar"]) == 2
+    assert body["ozet"]["durum"] == "HEALTHY"
+    assert body["ozet"]["bu_durumda_kosu"] == 2
+    assert body["ozet"]["degisim_zamani"]
+    assert body["ornek"]["pid"]
+    # En yeni kayıt başta.
+    assert body["kayitlar"][0]["timestamp"] >= body["kayitlar"][1]["timestamp"]
+
+
+def test_onbellekten_donen_cevap_seriye_ikinci_kez_girmez(client):
+    """Aynı ölçüm iki kez sayılırsa zaman serisi olmadığı kadar koşu gösterir."""
+    client.get("/api/health?fresh=1")
+    client.get("/api/health")          # önbellekten
+    body = client.get("/api/health/history").get_json()
+    assert len(body["kayitlar"]) == 1
+
+
+def test_kismi_kosu_seriye_girmez(client):
+    client.get("/api/health?only=cekirdek&fresh=1")
+    body = client.get("/api/health/history").get_json()
+    assert body["kayitlar"] == []
+    assert body["ozet"]["kayit"] == 0
+
+
+def test_history_limit_kirpar(client):
+    for _ in range(3):
+        client.get("/api/health?fresh=1")
+    assert len(client.get("/api/health/history?limit=2").get_json()["kayitlar"]) == 2
+
+
+# ─── kullanıcı kuponu (§7.4) ─────────────────────────────────────────────────
+
+def test_kupon_ucu_kullanici_kuponunu_dogrular(client):
+    r = client.post("/api/health/kupon", json={"picks": ORNEK})
+    assert r.status_code == 200
+    body = r.get_json()
+    assert body["ok"] is True
+    assert body["satir"] == 16 and body["bedel"] == 32
+    assert body["uyari"], "kayıtlı rapordan ayrı olduğu yazmalı"
+    assert len(body["checks"]) >= 5
+
+
+def test_kupon_ucu_matches_kabul_eder(client):
+    matches = [["1"], ["1", "0"], ["1"], ["1", "2"], ["0"], ["1", "0"], ["2"],
+               ["1", "0"], ["1"], ["1", "2"], ["0", "2"], ["1"], ["1", "0"],
+               ["2"], ["1", "0"]]
+    body = client.post("/api/health/kupon", json={"matches": matches}).get_json()
+    assert body["ok"] is True
+
+
+def test_kupon_ucu_bos_govdede_400(client):
+    r = client.post("/api/health/kupon", json={})
+    assert r.status_code == 400
+    assert r.get_json()["ok"] is False
+
+
+def test_kupon_ucu_bilinmeyen_mod_400(client):
+    r = client.post("/api/health/kupon", json={"picks": ORNEK, "mode": "yok"})
+    assert r.status_code == 400
+    assert "Bilinmeyen mod" in r.get_json()["error"]
+
+
+def test_kupon_dusen_degismez_503_uretmez(client):
+    """Bir KUPONUN değişmezi düşmesi servisin sağlık durumu değildir; 503
+    dönmek izlemeyi yanlış yere baktırırdı."""
+    r = client.post("/api/health/kupon", json={"picks": ORNEK, "mode": "maxcov",
+                                               "budget": 8})
+    assert r.status_code == 200
+    body = r.get_json()
+    assert body["guaranteed"] is False
+    assert body["ok"] is True   # maxcov zaten garanti vermediğini ilan eder
+
+
+def test_kupon_kosusu_zaman_serisine_girmez(client):
+    """Kupon denetimi kayıtlı rapor değildir; seriye girerse "21/21" ile
+    "5/5" aynı grafikte yan yana durur."""
+    client.post("/api/health/kupon", json={"picks": ORNEK})
+    assert client.get("/api/health/history").get_json()["kayitlar"] == []

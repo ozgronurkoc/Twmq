@@ -1,13 +1,21 @@
 """Sistem health — tek vücut entegrasyon doğrulaması."""
 
+import os
+import time
+
 import pytest
 
+from spor_toto.core import Encoder, parse_picks, solve_fix16
 from spor_toto.health import (
     CHECKS,
     KATEGORILER,
+    KUPON_SINIFLARI,
+    ORNEK,
     CheckSpec,
     _run,
     check_envanteri,
+    kupon_denetle,
+    ornek_kimligi,
     print_report,
     run_health,
     secili_checkler,
@@ -178,6 +186,155 @@ def test_gecen_kontrol_kirilma_yeri_yazmaz():
     assert r.ok is True
     assert r.detail == "olctum=3"
     assert "@" not in r.detail
+
+
+# ─── süre bütçeleri (§7.1) ───────────────────────────────────────────────────
+
+def test_her_kontrolun_butcesi_var():
+    """Bütçesiz bir kontrol, süre gerilemesini görünmez kılar."""
+    butcesiz = [c.name for c in CHECKS if c.butce_ms is None]
+    assert not butcesiz, f"süre bütçesi olmayan kontrol: {butcesiz}"
+
+
+def test_butce_asimi_dusurmez_yalnizca_isaretler():
+    """Yavaşlamak bir gerilemedir ama DÜŞÜŞ değildir: değişmez hâlâ geçerli,
+    yalnızca beklenenden pahalı."""
+    def yavas() -> str:
+        time.sleep(0.05)
+        return "olctum=1"
+
+    r = _run(CheckSpec("yavas_deneme", "cekirdek", "test", yavas, butce_ms=5))
+    assert r.ok is True
+    assert r.yavas is True
+    assert "bütçe" in r.detail
+
+
+def test_isinma_kosusunda_butce_uygulanmaz():
+    """İlk koşu numpy/scipy import'unu ve veri setinin ilk okunmasını da
+    üstlenir; ısınmayı gerileme saymak her soğuk başlangıçta yanlış alarm
+    üretirdi."""
+    def yavas() -> str:
+        time.sleep(0.05)
+        return "olctum=1"
+
+    r = _run(CheckSpec("yavas_deneme", "cekirdek", "test", yavas, butce_ms=5),
+             isinma=True)
+    assert r.yavas is False
+
+
+def test_butce_altindaki_kontrol_isaretlenmez():
+    r = _run(CheckSpec("hizli", "cekirdek", "test", lambda: "ok", butce_ms=500))
+    assert r.yavas is False
+    assert "bütçe" not in r.detail
+
+
+def test_rapor_butce_asanlari_ozetler():
+    d = run_health().to_dict()
+    assert "butce_asan" in d["summary"]
+    assert isinstance(d["summary"]["butce_asan"], list)
+    for c in d["checks"]:
+        assert "butce_ms" in c and "yavas" in c
+
+
+# ─── kupon sınıfları (§7.5) ──────────────────────────────────────────────────
+
+def test_kupon_siniflari_tablosu_dogru():
+    """Tablodaki beklenen sayılar motorla ölçülenle aynı olmalı; tablo
+    yanlışsa kontrol yanlış şeyi doğrular."""
+    for s in KUPON_SINIFLARI:
+        enc = Encoder(parse_picks(s.picks))
+        assert enc.total_len == 15, s.etiket
+        assert enc.space_size() == s.uzay, s.etiket
+        assert enc.lower_bound() == s.alt_sinir, s.etiket
+        cols, _ = solve_fix16(enc)
+        assert len(cols) == s.fix16_bedel, s.etiket
+
+
+def test_siniflar_gercekten_farkli_bicimleri_kapsar():
+    uzaylar = {s.uzay for s in KUPON_SINIFLARI}
+    assert len(uzaylar) == len(KUPON_SINIFLARI), "iki sınıf aynı uzayı kapsıyor"
+    # En az bir sınıf ÜÇLÜ içermeli: alfabe boyu 3 farklı kod yolu kullanır.
+    uclu_var = any(3 in Encoder(parse_picks(s.picks)).alphabet_sizes
+                   for s in KUPON_SINIFLARI)
+    assert uclu_var, "hiçbir sınıf üçlü içermiyor"
+
+
+def test_rapor_kupon_siniflarini_bildirir():
+    siniflar = run_health("encoder").summary["kupon_siniflari"]
+    assert len(siniflar) == len(KUPON_SINIFLARI)
+    assert all(s["etiket"] and s["picks"] for s in siniflar)
+
+
+# ─── örnek kimliği (§7.8) ────────────────────────────────────────────────────
+
+def test_ornek_kimligi_raporda():
+    """Çok örnekli bir dağıtımda "hangi örnek?" sorusu cevapsızdı: iki
+    ardışık çağrı farklı süreçlere düşüp farklı cevap verebilir."""
+    o = run_health("encoder").summary["ornek"]
+    assert o["pid"] == os.getpid()
+    assert o["host"]
+    assert o["baslangic"]
+    assert o["uptime_s"] >= 0
+
+
+def test_ornek_etiketi_ortamdan_okunur(monkeypatch):
+    monkeypatch.setenv("INSTANCE_ID", "kirmizi-3")
+    assert ornek_kimligi()["etiket"] == "kirmizi-3"
+
+
+# ─── kullanıcı kuponu (§7.4) ─────────────────────────────────────────────────
+
+def test_kupon_denetle_gecerli_kupon():
+    r = kupon_denetle(ORNEK)
+    assert r["ok"] is True
+    assert r["satir"] == 16
+    assert r["bedel"] == 32
+    assert r["guaranteed"] is True
+    assert {c["name"] for c in r["checks"]} >= {
+        "kaplama_garantisi", "mesafe_muhasebesi", "satir_kolon_muhasebesi",
+        "alt_sinir", "olasilik_tutarliligi",
+    }
+    for c in r["checks"]:
+        assert c["aciklama"] and c["detail"]
+
+
+def test_kupon_denetle_kayitli_rapordan_ayridir():
+    """Tek bir kuponun doğrulanması, motorun genel sağlığı değildir; ikisi
+    aynı tabloda görünürse HEALTHY yanlış okunur."""
+    r = kupon_denetle(ORNEK)
+    assert "uyari" in r and r["uyari"]
+    assert {c["name"] for c in r["checks"]}.isdisjoint(
+        {c.name for c in CHECKS}), "kupon kontrolleri kayıtlı adlarla karışıyor"
+
+
+def test_kupon_denetle_garanti_vermeyen_mod():
+    """maxcov garanti VERMEDİĞİNİ ilan eder; bütçe alt sınırın altındayken
+    kaplamanın açık bırakması doğru davranıştır, düşüş değil."""
+    r = kupon_denetle(ORNEK, mode="maxcov", budget=8)
+    assert r["ok"] is True
+    assert r["guaranteed"] is False
+    assert r["acik"] > 0
+
+
+def test_kupon_denetle_butce_modu_kuponu_daraltir():
+    r = kupon_denetle(ORNEK, mode="butce", budget=24)
+    assert r["ok"] is True
+    assert r["bedel"] <= 24
+
+
+def test_kupon_denetle_bilinmeyen_mod():
+    with pytest.raises(ValueError, match="Bilinmeyen mod"):
+        kupon_denetle(ORNEK, mode="boyle_bir_mod_yok")
+
+
+def test_kupon_denetle_butce_zorunlulugu():
+    with pytest.raises(ValueError, match="budget"):
+        kupon_denetle(ORNEK, mode="maxcov")
+
+
+def test_kupon_denetle_yetersiz_cifte():
+    with pytest.raises(Exception):
+        kupon_denetle("1,1,1,1,1,1,1,1,1,1,1,1,1,1,1")
 
 
 def test_slowest_en_uzun_kontrolu_gosterir():

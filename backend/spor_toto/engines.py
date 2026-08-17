@@ -16,10 +16,11 @@ dondurur, cunku arayuz planlar arasindan secim yaptirir.
 from __future__ import annotations
 
 import random
-from typing import Any, Dict, List, Optional
+from dataclasses import dataclass
+from typing import Any, Callable, Dict, List, Optional, Sequence
 
 from .core import (
-    Encoder, HAS_SCIPY, ball, butce_danismani, exact_cover,
+    Encoder, HAS_SCIPY, Point, ball, butce_danismani, exact_cover,
     exact_max_coverage, greedy_full, merge_rows, solve_by_blocks,
     solve_fix16, solve_heuristic,
 )
@@ -33,6 +34,91 @@ def engine_params(**kwargs: Any) -> Dict[str, Any]:
     return p
 
 
+@dataclass
+class Aday:
+    """Bir motorun urettigi aday kaplama.
+
+    `kanit`, ILP'nin optimalligi KANITLADIGINI soyler; zaman sinirina
+    takilmis bir ILP cozumu de gecerlidir ama kanitli degildir.
+    """
+
+    cols: List[Point]
+    baslik: str
+    kanit: bool = False
+
+
+def adaylar(
+    enc: Encoder,
+    eng: Dict[str, Any],
+    motorlar: Sequence[str] = ("block", "exact", "heuristic"),
+    log: Optional[Callable[[str], None]] = None,
+    ilp_zorunlu: bool = False,
+    heuristic_ls_cap: Optional[int] = None,
+) -> List[Aday]:
+    """Istenen motorlari kosturup aday kaplamalari toplar.
+
+    `/api/solve`'un `auto` modu, CLI'nin `--mode auto/block/exact/heuristic`
+    dagitimi ve saglik kontrolu **bu tek fonksiyonu** kullanir. Uc ayri
+    kopya vardi; biri guncellenip digeri unutuldugu gun ucu de degersizdi.
+
+    `ilp_zorunlu` (CLI'de `--mode exact`) uzay `exact_limit`ten buyuk olsa
+    da ILP'yi kosturur. Aksi halde ILP yalnizca sinirin altindaki uzaylarda
+    ve `auto_ilp_limit` saniyelik kisa bir butceyle calisir.
+    """
+    def _yaz(mesaj: str) -> None:
+        if log:
+            log(mesaj)
+
+    out: List[Aday] = []
+
+    if "block" in motorlar:
+        r = solve_by_blocks(enc, max_block_space=eng["block_limit"],
+                            time_limit=min(30.0, eng["time_limit"]))
+        if r:
+            _yaz(f"Blok: {r[1]} -> {len(r[0])} kolon")
+            out.append(Aday(r[0], f"Blok ayrıştırma ({r[1]})"))
+
+    if "exact" in motorlar and HAS_SCIPY:
+        uygun = ilp_zorunlu or enc.space_size() <= eng["exact_limit"]
+        if uygun:
+            # Kanit istenmedigi surece ILP kisa butceyle kosar: aksi halde
+            # 256 noktalik gercekci bir kupon `auto` modunu 11 saniyeye
+            # cikariyordu (bkz. meta.ENGINE_DEFAULTS).
+            sinir = (eng["time_limit"] if ilp_zorunlu
+                     else min(eng["auto_ilp_limit"], eng["time_limit"]))
+            cols, kanit = exact_cover(enc.alphabet_sizes, time_limit=sinir)
+            if cols:
+                _yaz(f"ILP: {len(cols)} kolon "
+                     f"({'optimallik kanıtlandı' if kanit else 'zaman sınırı'})")
+                out.append(Aday(cols, "Kesin çözücü (ILP)", kanit))
+        else:
+            _yaz(f"ILP atlandı (uzay {enc.space_size()} > {eng['exact_limit']}).")
+
+    if "heuristic" in motorlar:
+        # `auto`da sezgisel yalnizca KANITLI bir aday yoksa kosar: kanitli
+        # optimalin yanina daha kotu bir aday koymak bedelsiz degil, sure.
+        tek_motor = tuple(motorlar) == ("heuristic",)
+        if tek_motor or not any(a.kanit for a in out):
+            iters = (eng["ls_iters"] if heuristic_ls_cap is None
+                     else min(heuristic_ls_cap, eng["ls_iters"]))
+            cols = solve_heuristic(enc, trials=eng["trials"], ls_iters=iters,
+                                   seed=eng["seed"], log=log)
+            _yaz(f"Heuristik: {len(cols)} kolon")
+            out.append(Aday(cols, "Heuristik (açgözlü + local search)"))
+
+    return out
+
+
+def en_iyi_aday(adaylar_: Sequence[Aday]) -> Aday:
+    """En az kolon; esitlikte en az SATIR. Kupon satirla doldurulur, kolonla
+    odenir — ikisi ayni sey degildir."""
+    if not adaylar_:
+        raise RuntimeError("Hiçbir motor sonuç üretemedi.")
+    en_az = min(len(a.cols) for a in adaylar_)
+    esitler = [a for a in adaylar_ if len(a.cols) == en_az]
+    return min(esitler, key=lambda a: len(merge_rows(a.cols)))
+
+
 def run_fix16(enc: Encoder, variant: int = 0) -> Dict[str, Any]:
     cols, aciklama = solve_fix16(enc, variant=variant)
     notlar = [aciklama]
@@ -42,27 +128,24 @@ def run_fix16(enc: Encoder, variant: int = 0) -> Dict[str, Any]:
 
 
 def run_auto(enc: Encoder, eng: Dict[str, Any]) -> Dict[str, Any]:
-    aday = []
-    r = solve_by_blocks(enc, max_block_space=eng["block_limit"],
-                        time_limit=min(30.0, eng["time_limit"]))
-    if r:
-        aday.append((r[0], f"Blok ayrıştırma ({r[1]})", False))
-    if enc.space_size() <= eng["exact_limit"] and HAS_SCIPY:
-        cols, kanit = exact_cover(enc.alphabet_sizes,
-                                  time_limit=min(30.0, eng["time_limit"]))
-        if cols:
-            aday.append((cols, "Kesin çözücü (ILP)", kanit))
-    if not any(a[2] for a in aday):
-        cols_h = solve_heuristic(enc, trials=eng["trials"],
-                                 ls_iters=min(10_000, eng["ls_iters"]),
-                                 seed=eng["seed"])
-        aday.append((cols_h, "Heuristik (açgözlü + local search)", False))
-    if not aday:
-        raise RuntimeError("Hiçbir motor sonuç üretemedi.")
-    en_az = min(len(a[0]) for a in aday)
-    esitler = [a for a in aday if len(a[0]) == en_az]
-    cols, baslik, _ = min(esitler, key=lambda a: len(merge_rows(a[0])))
-    return {"cols": cols, "baslik": baslik, "notlar": []}
+    """Blok + (uygunsa) ILP + sezgiselden en ucuzu.
+
+    ILP burada KISA butceyle kosar (`auto_ilp_limit`, varsayılan 3 sn):
+    ölçüldü, 256 noktalık gerçekçi bir kuponda tam çözüm ~11 saniye sürüyor
+    ve 3 saniyelik sınırla bulunan kaplama aynı bedelde çıkıyor — kaybedilen
+    tek şey "optimallik kanıtlandı" bayrağı.
+    """
+    liste = adaylar(enc, eng, heuristic_ls_cap=10_000)
+    en_iyi = en_iyi_aday(liste)
+    notlar: List[str] = []
+    if en_iyi.kanit:
+        notlar.append("ILP optimalliği kanıtladı.")
+    elif len(en_iyi.cols) == enc.lower_bound():
+        notlar.append("Alt sınıra eşit → kanıtlanmış optimal.")
+    if len(liste) > 1:
+        notlar.append("Denenen motorlar: " + ", ".join(
+            f"{a.baslik.split(' (')[0]}={len(a.cols)}" for a in liste))
+    return {"cols": en_iyi.cols, "baslik": en_iyi.baslik, "notlar": notlar}
 
 
 def run_heuristic(enc: Encoder, eng: Dict[str, Any]) -> Dict[str, Any]:
@@ -74,7 +157,8 @@ def run_heuristic(enc: Encoder, eng: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def run_exact(enc: Encoder, eng: Dict[str, Any]) -> Dict[str, Any]:
-    """Kesin cozucu (ILP). CLI'de vardi, API'de hic acilmamisti."""
+    """Kesin cozucu (ILP). Kanit isteyen mod budur: uzay sinirini yok sayar
+    ve tam `time_limit` butcesini kullanir."""
     if not HAS_SCIPY:
         raise ValueError(
             "Kesin çözücü (ILP) scipy gerektirir; bu kurulumda scipy yok. "

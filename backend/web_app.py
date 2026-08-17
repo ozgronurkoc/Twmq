@@ -34,12 +34,14 @@ from spor_toto.bayes import (
     STRENGTH_PRESETS, bayes_summary, bayes_update_matches, recommend_strengths,
 )
 from spor_toto.markov import markov_report
-from spor_toto.health import check_envanteri, run_health
-from spor_toto.history import (
-    history_analytics, history_summary, history_week_detail, history_weeks,
+from spor_toto import health_history as saglik_gecmisi
+from spor_toto.health import (
+    check_envanteri, kupon_denetle, ornek_kimligi, run_health,
 )
-from spor_toto.odds import season_1x2_summary, week_1x2
-from spor_toto.backtest import VARSAYILAN_BANKO, VARSAYILAN_UCLU, backtest
+from spor_toto.history import history_week_detail
+from spor_toto.odds import week_1x2
+from spor_toto.backtest import VARSAYILAN_BANKO, VARSAYILAN_UCLU
+from spor_toto.payloads import backtest_payload, stats_payload
 from spor_toto import __version__
 
 logger = logging.getLogger(__name__)
@@ -135,6 +137,7 @@ def _engine_params(data: dict) -> Dict[str, Any]:
         "time_limit": _bant("time_limit", float),
         "block_limit": _bant("block_limit", int),
         "exact_limit": _bant("exact_limit", int),
+        "auto_ilp_limit": _bant("auto_ilp_limit", float),
     }
 
 
@@ -408,6 +411,9 @@ def _health_govde(only: Optional[str], fresh: bool) -> Dict[str, Any]:
         **govde.get("summary", {}),
         "onbellek": {"cached": False, "yas_ms": 0.0, "ttl_s": HEALTH_TTL_S},
     }
+    # Zaman serisine YALNIZCA gercek olcumler girer; onbellekten donen bir
+    # cevap ayni kosuyu ikinci kez saymazdi.
+    saglik_gecmisi.kaydet(govde)
     with _health_kilit:
         _health_onbellek[anahtar] = (simdi, govde)
     return govde
@@ -425,6 +431,8 @@ def root():
             "GET  /api/meta",
             "GET  /api/health         (readiness: tam değişmez raporu)",
             "GET  /api/health/checks",
+            "GET  /api/health/history  (son koşuların özeti)",
+            "POST /api/health/kupon    (kullanıcının kendi kuponu)",
             "GET  /api/stats",
             "GET  /api/stats/<week>",
             "GET  /api/backtest",
@@ -454,6 +462,10 @@ def health_liveness():
         "version": __version__,
         "uptime_s": round(time.monotonic() - _BASLANGIC, 1),
         "readiness": "/api/health",
+        # Cok ornekli bir dagitimda "bu cevabi hangi surec verdi?" sorusu
+        # liveness icin de gecerlidir: probe'un gordugu surec ile raporu
+        # ureten surec ayni olmayabilir.
+        "ornek": ornek_kimligi(),
     })
 
 
@@ -474,6 +486,63 @@ def api_health():
     except ValueError as e:
         return jsonify({"ok": False, "error": str(e)}), 400
     return jsonify(govde), (200 if govde["ok"] else 503)
+
+
+@app.route("/api/health/kupon", methods=["POST", "OPTIONS"])
+def api_health_kupon():
+    """
+    KULLANICININ kendi kuponunu ayni degismezlerden gecirir.
+
+    Kayitli rapor sabit ornek kuponlarla kosar; HEALTHY, kullanicinin az
+    once urettigi kuponun dogrulandigi anlamina GELMEZ (SAGLIK_VIZYONU §3.2).
+    Bu uc o bosluga bakar: verilen kupon icin kaplama garantisi, mesafe
+    muhasebesi, satir/kolon muhasebesi, alt sinir ve olasilik tutarliligi.
+
+    Sonucu 200 ile doner — bir kuponun degismezi dusmesi SERVISIN saglik
+    durumu degildir; 503 dondurmek izlemeyi yanlis yere bakmaya iterdi.
+    """
+    if request.method == "OPTIONS":
+        return "", 204
+    data = request.get_json(silent=True) or {}
+    picks = (data.get("picks") or "").strip()
+    if not picks and data.get("matches"):
+        picks = _matches_to_picks(data["matches"])
+    if not picks:
+        return jsonify({"ok": False, "error": "picks veya matches zorunlu"}), 400
+
+    budget_raw = data.get("budget")
+    try:
+        govde = kupon_denetle(
+            picks,
+            mode=str(data.get("mode") or "fix16"),
+            variant=int(data.get("variant") or 0),
+            budget=(int(budget_raw) if str(budget_raw or "").strip() else None),
+        )
+    except (ValueError, RuntimeError, Fix16Hatasi) as e:
+        return jsonify({"ok": False, "error": str(e)}), 400
+    return jsonify(govde)
+
+
+@app.route("/api/health/history", methods=["GET"])
+def api_health_history():
+    """
+    Sunucudaki son kosularin ozeti — "ne zamandan beri kirmizi?"
+
+    Sayfadaki gecmis seridi oturum icidir: sekme kapaninca gider ve yalnizca
+    o sekmenin gordugu kosulari bilir. Bu uc surece bagli halka tampondan
+    okur; surec yeniden basladiginda sifirlanir ve bunu `ornek.baslangic`
+    ile acikca soyler.
+
+    Kismi kosular (`?only=`) tampona GIRMEZ: "5/5 gecti" ile "21/21 gecti"
+    ayni zaman serisinde yan yana durursa seri yalan soyler.
+    """
+    limit = _sayi(request.args.to_dict(), "limit", 50, int, 1, 200)
+    return jsonify({
+        "version": __version__,
+        "ozet": saglik_gecmisi.ozet(),
+        "kayitlar": saglik_gecmisi.gecmis(limit),
+        "ornek": ornek_kimligi(),
+    })
 
 
 @app.route("/api/health/checks", methods=["GET"])
@@ -517,22 +586,7 @@ def api_stats():
     boylece butun gorselleri ayni veriye baglar.
     """
     last = _parse_last(request.args.get("last"))
-    summary = history_summary(last)
-    weeks = history_weeks(last)
-    return jsonify({
-        "meta": summary.get("meta", {}),
-        "totals": summary.get("totals", {}),
-        "weekly_avg": summary.get("weekly_avg", {}),
-        "bands": summary.get("bands", {}),
-        "data_quality": summary.get("data_quality", {}),
-        "analytics": history_analytics(last),
-        # Yalnizca MAC SONUCU (1X2). Arsivdeki diger pazarlar (alt/ust, Asya
-        # handikap) analiz icindir, API'den cikmaz. Arsiv yoksa None doner.
-        "odds": season_1x2_summary([w["week"] for w in weeks]),
-        "weeks": weeks,
-        "last": last,
-        "error": summary.get("error"),
-    })
+    return jsonify(stats_payload(last))
 
 
 @app.route("/api/stats/<int:week>", methods=["GET"])
@@ -564,7 +618,7 @@ def _backtest_cached(last: Optional[int], banko: float, uclu: float,
     Tek strateji ~1,2 sn, 28 esikli tarama ilk cagrida ~15 sn surer (kaplama
     imzalari onbelleklenene kadar) ve sonrasinda milisaniyeye iner.
     """
-    return backtest(last=last, banko_esik=banko, uclu_esik=uclu, sweep=sweep)
+    return backtest_payload(last=last, banko=banko, uclu=uclu, sweep=sweep)
 
 
 @app.route("/api/backtest", methods=["GET"])

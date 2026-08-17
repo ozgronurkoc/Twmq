@@ -57,6 +57,43 @@ MOD_MAXCOV_BUTCE = 8   # alt sinirin (16) ALTINDA: tam kaplama matematiksel
 
 SEMBOLLER = ("1", "0", "2")
 
+
+@dataclass(frozen=True)
+class KuponSinifi:
+    """Cekirdek kontrollerin kostugu bir kupon sinifi.
+
+    Beklenen sayilar tabloda YAZILIDIR: kontrol yalnizca "kaplama gecerli"
+    demez, "bu sinif icin bedel tam olarak bu" der. Sessiz bir gerileme
+    (ornegin fix16'nin bir sinifta 32 yerine 48 kolon uretmeye baslamasi)
+    ancak boyle gorunur.
+    """
+
+    etiket: str
+    picks: str
+    uzay: int
+    alt_sinir: int
+    fix16_bedel: int
+
+
+# Tek kupon sinifi kapsami dardi: 8 ciftlik kupon, motorun gordugu bicimlerin
+# yalnizca biri. Siniflar SABIT ve deterministiktir — rastgele kupon uretmek
+# kapsami genisletirdi ama arada bir dusen bir kontrol, hic olmayandan
+# kotudur (§4, madde 1).
+KUPON_SINIFLARI: Tuple[KuponSinifi, ...] = (
+    KuponSinifi("8 çift", ORNEK, 256, 29, 32),
+    KuponSinifi("7 çift + 8 banko", "1,1,1,1,1,1,1,10,10,10,10,10,10,10,1",
+                128, 16, 16),
+    KuponSinifi("9 çift", "1,10,10,12,0,10,2,10,1,12,02,1,10,2,10", 512, 52, 64),
+    KuponSinifi("üçlü içeren", "1,10,102,12,0,10,2,10,1,12,02,1,10,2,10",
+                768, 70, 96),
+)
+
+# Surecin ayaga kalktigi an. Iki yerde kullanilir: ornek kimligi (§7.8) ve
+# ISINMA ayrimi (§7.1) — ilk kosu her zaman yavastir ve sure esikleri onu
+# gerileme sanmamalidir.
+_SUREC_BASLANGIC = time.monotonic()
+_SUREC_BASLANGIC_ISO = datetime.now(timezone.utc).isoformat()
+
 # Kategoriler, motorun katmanlarını izler: bir kontrol düştüğünde hatanın
 # hangi katmanda olduğu isimden değil buradan okunur.
 KATEGORILER: Tuple[Tuple[str, str, str], ...] = (
@@ -84,6 +121,13 @@ class CheckSpec:
     aciklama: str
     fn: Callable[[], str]
     critical: bool = True
+    # Beklenen ust sure (ms). Asilmasi kontrolu DUSURMEZ — yalnizca raporu
+    # `degraded` isaretler ve sayfada sure cubugunu ambere cevirir. Bir
+    # kontrolun 8 ms'den 400 ms'ye cikmasi hicbir degismezi kirmaz ama bir
+    # seyin degistigini kesin olarak soyler; bugune dek bunu yalnizca goz
+    # yakaliyordu. Bant, olculen isinmis surenin ~3 katidir: dar bir bant
+    # gurultu uretir, gurultu de raporu gormezden gelmeyi ogretir (§4.1).
+    butce_ms: Optional[float] = None
 
 
 @dataclass
@@ -95,6 +139,9 @@ class CheckResult:
     category: str = "cekirdek"
     aciklama: str = ""
     critical: bool = True
+    butce_ms: Optional[float] = None
+    # Sure butcesi asildi mi. `isinma` kosusunda HER ZAMAN False'tur.
+    yavas: bool = False
 
     def to_dict(self) -> dict:
         return {
@@ -106,6 +153,8 @@ class CheckResult:
             "category_label": KATEGORI_ETIKET.get(self.category, self.category),
             "aciklama": self.aciklama,
             "critical": self.critical,
+            "butce_ms": self.butce_ms,
+            "yavas": self.yavas,
         }
 
 
@@ -139,6 +188,7 @@ class HealthReport:
 
     def to_dict(self) -> dict:
         en_yavas = max(self.checks, key=lambda c: c.duration_ms, default=None)
+        butce_asan = [c.name for c in self.checks if c.yavas]
         return {
             "version": self.version,
             "timestamp": self.timestamp,
@@ -157,30 +207,41 @@ class HealthReport:
                     if en_yavas
                     else None
                 ),
+                "butce_asan": butce_asan,
             },
         }
 
 
-def _run(spec: CheckSpec) -> CheckResult:
+def _run(spec: CheckSpec, isinma: bool = False) -> CheckResult:
+    """Tek kontrolu kosturur ve suresini butcesiyle karsilastirir.
+
+    `isinma` True ise sure butcesi UYGULANMAZ: surecin ilk raporu numpy/scipy
+    ilk import'unu, veri setinin ve oran arsivinin ilk okunmasini da ustlenir
+    (olculdu: ~2,1 sn'ye karsi ~500 ms). Isinmayi gerileme saymak, her soguk
+    baslangicta yanlis alarm uretirdi.
+    """
     t0 = time.perf_counter()
     ortak = {
         "category": spec.category,
         "aciklama": spec.aciklama,
         "critical": spec.critical,
+        "butce_ms": spec.butce_ms,
     }
     try:
         detail = spec.fn() or "ok"
-        return CheckResult(
-            spec.name, True, detail, (time.perf_counter() - t0) * 1000, **ortak
-        )
+        ok, sonuc_detay = True, detail
     except Exception as e:
-        return CheckResult(
-            spec.name,
-            False,
-            f"{type(e).__name__}: {e}{_kirilma_yeri(e)}",
-            (time.perf_counter() - t0) * 1000,
-            **ortak,
-        )
+        ok, sonuc_detay = False, f"{type(e).__name__}: {e}{_kirilma_yeri(e)}"
+
+    sure = (time.perf_counter() - t0) * 1000
+    yavas = bool(
+        spec.butce_ms is not None and not isinma and sure > spec.butce_ms
+    )
+    if yavas and ok:
+        # Sapma detaya da yazilir: rapora bakan kisi sayilari gormeden
+        # "yavas" etiketine inanmak zorunda kalmasin.
+        sonuc_detay = f"{sonuc_detay} | süre {sure:.0f} ms > bütçe {spec.butce_ms:.0f} ms"
+    return CheckResult(spec.name, ok, sonuc_detay, sure, yavas=yavas, **ortak)
 
 
 def _kirilma_yeri(e: BaseException) -> str:
@@ -213,24 +274,45 @@ def _probs_on_selections(enc: Encoder) -> List[Dict[str, float]]:
 
 
 def _check_encoder() -> str:
-    enc = Encoder(parse_picks(ORNEK))
-    assert enc.total_len == 15
-    assert enc.n == 8
-    assert enc.space_size() == 256
-    assert enc.lower_bound() == math.ceil(256 / 9)
-    return f"n={enc.n} space={enc.space_size()} lb={enc.lower_bound()}"
+    """Kodlama katmani — DORT kupon sinifinda.
+
+    Arama uzayi ve teorik alt sinir, sonraki her hesabin zeminidir; yanlis
+    uzayda dogru hesap yapilamaz. Tek sinif yerine dort sinif kosar: bankosu
+    cok olan, ciftesi cok olan ve UCLU iceren kuponlar farkli kod yollari
+    kullanir (alfabe boyu 3'e cikar).
+    """
+    olcum: List[str] = []
+    for s in KUPON_SINIFLARI:
+        enc = Encoder(parse_picks(s.picks))
+        assert enc.total_len == 15, f"{s.etiket}: {enc.total_len} maç"
+        assert enc.space_size() == s.uzay, (
+            f"{s.etiket}: uzay {enc.space_size()} ≠ {s.uzay}")
+        assert enc.lower_bound() == s.alt_sinir == math.ceil(s.uzay / enc.ball_size())
+        olcum.append(f"{s.etiket}={s.uzay}/{s.alt_sinir}")
+    return f"sınıf={len(KUPON_SINIFLARI)} " + " ".join(olcum)
 
 
 def _check_fix16_garanti() -> str:
-    enc = Encoder(parse_picks(ORNEK))
-    cols, _ = solve_fix16(enc)
-    rows = merge_rows(cols)
-    worst, acik = dogrula_kaplama(cols, enc.alphabet_sizes)
-    assert len(rows) == 16
-    assert worst <= 1 and acik == 0
-    assert set(rows_to_points(rows)) == set(cols)
-    assert sum(row_cost(r) for r in rows) == len(cols)
-    return f"rows=16 bedel={len(cols)} worst={worst}"
+    """Urunun ana vaadi — DORT kupon sinifinda.
+
+    Beklenen bedel her sinif icin tabloda yazilidir (`KUPON_SINIFLARI`):
+    kontrol "kaplama gecerli" demekle yetinmez, "bu sinifta bedel tam olarak
+    bu" der. Sessiz bir gerileme ancak boyle gorunur.
+    """
+    olcum: List[str] = []
+    for s in KUPON_SINIFLARI:
+        enc = Encoder(parse_picks(s.picks))
+        cols, _ = solve_fix16(enc)
+        rows = merge_rows(cols)
+        worst, acik = dogrula_kaplama(cols, enc.alphabet_sizes)
+        assert len(rows) == 16, f"{s.etiket}: {len(rows)} satır"
+        assert worst <= 1 and acik == 0, f"{s.etiket}: worst={worst} acik={acik}"
+        assert set(rows_to_points(rows)) == set(cols), f"{s.etiket}: satır↔kolon"
+        assert sum(row_cost(r) for r in rows) == len(cols), f"{s.etiket}: bedel"
+        assert len(cols) == s.fix16_bedel, (
+            f"{s.etiket}: bedel {len(cols)} ≠ {s.fix16_bedel}")
+        olcum.append(f"{s.etiket}={len(cols)}")
+    return f"sınıf={len(KUPON_SINIFLARI)} rows=16 worst≤1 bedel: " + " ".join(olcum)
 
 
 def _check_fix16_yetersiz_cifte() -> str:
@@ -243,13 +325,22 @@ def _check_fix16_yetersiz_cifte() -> str:
 
 
 def _check_distance_layers() -> str:
-    enc = Encoder(parse_picks(ORNEK))
-    cols, _ = solve_fix16(enc)
-    dist = distance_layers(cols, enc.alphabet_sizes)
-    assert sum(dist.values()) == enc.space_size()
-    assert dist.get(0, 0) == len(set(cols))
-    assert max(dist) <= 1
-    return f"layers={dict(dist)}"
+    """Mesafe muhasebesi — DORT kupon sinifinda.
+
+    0 ve 1 hatali noktalarin toplami arama uzayinin TAMAMINI vermeli:
+    tutmazsa kapsama raporundaki her yuzde yanlistir.
+    """
+    olcum: List[str] = []
+    for s in KUPON_SINIFLARI:
+        enc = Encoder(parse_picks(s.picks))
+        cols, _ = solve_fix16(enc)
+        dist = distance_layers(cols, enc.alphabet_sizes)
+        assert sum(dist.values()) == enc.space_size() == s.uzay, (
+            f"{s.etiket}: katman toplamı {sum(dist.values())} ≠ {s.uzay}")
+        assert dist.get(0, 0) == len(set(cols)), f"{s.etiket}: d=0 katmanı"
+        assert max(dist) <= 1, f"{s.etiket}: d={max(dist)} noktası açıkta"
+        olcum.append(f"{s.etiket}={dist.get(0, 0)}+{dist.get(1, 0)}")
+    return f"sınıf={len(KUPON_SINIFLARI)} d0+d1=uzay: " + " ".join(olcum)
 
 
 def _check_fix16_varyantlari() -> str:
@@ -573,6 +664,67 @@ def _check_fire_scenarios() -> str:
             f"maliyet={fire_maliyeti(enc, cols)}")
 
 
+def _check_stats_sozlesmesi() -> str:
+    """
+    `/api/stats` ve `/api/backtest` govdelerinin SEKLI.
+
+    Veri katmani `veri_seti`, `oran_arsivi` ve `geri_test` ile
+    dogrulaniyordu; ama arayuzun gercekten okudugu govde hicbir yerde
+    sinanmiyordu. Bir alan adi degistiginde motor sapasaglam kalir, testler
+    gecer, `/istatistik` sessizce bos doner.
+
+    Denetlenen sey degerler degil, govdenin kendi icinde tutarliligi:
+    hafta sayisi meta ile, analiz bloklari mac sayisi ile, sezon ozeti hafta
+    hafta dokumle ortusmeli.
+    """
+    from .history import MATCH_COUNT
+    from .payloads import backtest_payload, stats_payload
+
+    s = stats_payload()
+    for alan in ("meta", "totals", "weekly_avg", "bands", "data_quality",
+                 "analytics", "odds", "weeks", "last", "error"):
+        assert alan in s, f"/api/stats gövdesinde {alan} yok"
+
+    haftalar = s["weeks"]
+    if not haftalar:
+        return "veri seti yok — istatistik gövdesi boş çalışır"
+
+    assert s["meta"]["weeks"] == len(haftalar), "meta.weeks hafta listesiyle ayrışmış"
+    assert s["meta"]["matches"] == len(haftalar) * MATCH_COUNT
+    for w in haftalar:
+        assert {"week", "results", "n1", "n0", "n2"} <= set(w), "hafta kaydı eksik"
+    a = s["analytics"]
+    assert len(a["positions"]) == MATCH_COUNT, "pozisyon bloğu 15 maç değil"
+    assert a["transitions"]["n"] == len(haftalar) * (MATCH_COUNT - 1)
+    assert s["data_quality"]["ok"] is True
+
+    # Dilim: `?last=N` govdenin TAMAMINI daraltmali, yalnizca bir blogunu degil.
+    n = min(5, len(haftalar))
+    d = stats_payload(n)
+    assert len(d["weeks"]) == n, "last dilimi hafta listesini daraltmadı"
+    assert d["meta"]["weeks"] == n, "last dilimi meta'yı daraltmadı"
+    assert d["analytics"]["transitions"]["n"] == n * (MATCH_COUNT - 1), \
+        "last dilimi analiz bloğunu daraltmadı"
+    assert d["last"] == n
+
+    # Geri test: tarama KAPALI (sure butcesi); acik hali `pytest -m slow` isi.
+    b = backtest_payload(sweep=False)
+    # Arayuzun okudugu alanlarin TAMAMI (frontend/lib/types.ts:BacktestResponse).
+    for alan in ("meta", "strategy", "season", "weeks", "sweep", "sweep_best",
+                 "holdout", "grid", "warning"):
+        assert alan in b, f"/api/backtest gövdesinde {alan} yok"
+    assert b["grid"]["banko"] and b["grid"]["uclu"], "eşik ızgarası boş"
+    assert b["strategy"]["banko"] in b["grid"]["banko"], "seçili eşik ızgarada yok"
+    sezon, hafta_dokumu = b["season"], b["weeks"]
+    kosan = [h for h in hafta_dokumu if not h["skipped"]]
+    assert sezon["weeks"] == len(kosan), "sezon özeti hafta dökümüyle ayrışmış"
+    assert sezon["hit14"] == sum(1 for h in kosan if h["best"] >= MATCH_COUNT - 1)
+    assert sezon["hit15"] == sum(1 for h in kosan if h["best"] == MATCH_COUNT)
+
+    return (f"stats: hafta={s['meta']['weeks']} dilim={n} | "
+            f"backtest: hafta={sezon['weeks']} 14+={sezon['hit14']}")
+
+
 def _check_pipeline_result_shape() -> str:
     enc = Encoder(parse_picks(ORNEK))
     cols, baslik = solve_fix16(enc)
@@ -738,6 +890,27 @@ def _check_scipy_flag() -> str:
     return f"HAS_SCIPY={HAS_SCIPY}"
 
 
+def ornek_kimligi() -> Dict[str, Any]:
+    """Raporu HANGI surecin urettigi.
+
+    Rapor, cagriyi karsilayan sureci anlatir. Cok ornekli bir dagitimda
+    (autoscale, gunicorn'un birden fazla worker'i) "hangi ornek?" sorusu
+    cevapsizdi: iki ardisik cagri farkli sureclere dusup farkli cevap
+    verebilir ve fark okuyana rastgele gorunur.
+
+    `INSTANCE_ID` (ya da Replit'in verdigi `REPL_ID`) tanimliysa etiket
+    olarak gecer; yoksa pid + host yeterince ayirt eder.
+    """
+    return {
+        "pid": os.getpid(),
+        "host": platform.node() or None,
+        "etiket": (os.environ.get("INSTANCE_ID")
+                   or os.environ.get("REPL_ID") or None),
+        "baslangic": _SUREC_BASLANGIC_ISO,
+        "uptime_s": round(time.monotonic() - _SUREC_BASLANGIC, 1),
+    }
+
+
 def _env_info() -> Dict[str, Any]:
     """Calisan surumun bagimlilik envanteri — 'bende calisiyordu' icin."""
     from importlib.metadata import version as _paket_surum
@@ -764,24 +937,28 @@ CHECKS: Tuple[CheckSpec, ...] = (
         "Kupon metnini arama uzayına çevirir: çift/üçlü sayısı, uzay büyüklüğü "
         "ve teorik alt sınır. Kırılırsa bütün hesap yanlış uzayda yapılır.",
         _check_encoder,
+        butce_ms=25,
     ),
     CheckSpec(
         "fix16_garanti", "cekirdek",
         "16 satırlık sabit kaplama gerçekten 14-garanti veriyor mu: en kötü "
         "durumda hata ≤ 1 ve açıkta nokta yok. Ürünün ana vaadi budur.",
         _check_fix16_garanti,
+        butce_ms=40,
     ),
     CheckSpec(
         "fix16_yetersiz_cifte", "cekirdek",
         "Yetersiz çift sayısıyla fix16 istendiğinde sessizce garantisiz sonuç "
         "dönmez, Fix16Hatası yükselir.",
         _check_fix16_yetersiz_cifte,
+        butce_ms=25,
     ),
     CheckSpec(
         "distance_layers", "cekirdek",
         "Mesafe muhasebesi: 0 ve 1 hatalı noktaların toplamı arama uzayının "
         "tamamını vermeli. Tutmazsa kapsama raporu güvenilmezdir.",
         _check_distance_layers,
+        butce_ms=30,
     ),
     CheckSpec(
         "fix16_varyantlari", "cekirdek",
@@ -789,17 +966,20 @@ CHECKS: Tuple[CheckSpec, ...] = (
         "veriyor mu. Kırılırsa varyant seçen kullanıcı sessizce garantisiz "
         "kupon alır.",
         _check_fix16_varyantlari,
+        butce_ms=30,
     ),
     CheckSpec(
         "blok_motor", "motor",
         "Blok motoru da tam kaplama üretir ve fix16'dan pahalı olmaz.",
         _check_blok_motor,
+        butce_ms=40,
     ),
     CheckSpec(
         "heuristic", "motor",
         "Sezgisel motor, fix16'nın reddettiği kuponda bile geçerli kaplama "
         "bulur — garanti motora değil, kaplamanın kendisine bağlıdır.",
         _check_heuristic,
+        butce_ms=300,
     ),
     CheckSpec(
         "mod_envanteri", "motor",
@@ -807,66 +987,77 @@ CHECKS: Tuple[CheckSpec, ...] = (
         "gerçeği söylüyor mu. Bozuk bir mod arayüzde seçilebilir kalır ve "
         "doğrudan kullanıcıya çarpar.",
         _check_mod_envanteri,
+        butce_ms=400,
     ),
     CheckSpec(
         "olasilik_exact", "olasilik",
         "Kesin olasılık: p15 + p14 = küme içi olasılığı. Ayrışırsa olasılık "
         "raporu kendi içinde çelişiyor demektir.",
         _check_olasilik_exact,
+        butce_ms=25,
     ),
     CheckSpec(
         "monte_carlo", "olasilik",
         "Simülasyon kesin hesapla aynı yeri gösteriyor mu (fark < 0,05) ve "
         "güven aralıkları makul mu.",
         _check_monte_carlo,
+        butce_ms=400,
     ),
     CheckSpec(
         "bayes_dirichlet", "olasilik",
         "Dirichlet posterior'ları 15 maç için 1'e toplanır ve garantiyi "
         "bozmaz — Bayes tahmini yumuşatır, kaplamayı değiştirmez.",
         _check_bayes,
+        butce_ms=25,
     ),
     CheckSpec(
         "bayes_presetleri", "olasilik",
         "Meta'nın ilan ettiği Bayes preset'lerinin hepsi çalışıyor, "
         "posterior'ları 1'e toplanıyor ve hiçbiri kaplamayı bozmuyor.",
         _check_bayes_presetleri,
+        butce_ms=30,
     ),
     CheckSpec(
         "markov_chain", "olasilik",
         "Sıralı hata bütçesi: garanti yolunda kalma olasılığı ve 2+ hataya "
         "düşme olasılığı kombinatoryal sınırlarla tutarlı mı.",
         _check_markov,
+        butce_ms=40,
     ),
     CheckSpec(
         "error_freq", "analiz",
         "Hangi maçlarda 1 hata oluşabildiği. Tam kaplamada 2 hatalı nokta "
         "sayısı sıfır olmak zorundadır.",
         _check_error_freq,
+        butce_ms=25,
     ),
     CheckSpec(
         "fire_scenarios", "analiz",
         "Seçim DIŞI bölge: 1 fire varken 15, 2 fire varken 14 imkânsızdır; "
         "bankoda yanılmak çiftede yanılmaktan pahalıya patlar.",
         _check_fire_scenarios,
+        butce_ms=120,
     ),
     CheckSpec(
         "veri_seti", "analiz",
         "İstatistik sayfasının dayandığı veri setinin iç tutarlılığı: hafta "
         "sayımı, 15'lik sonuç dizisi ve maç listesi birbirini doğruluyor mu.",
         _check_veri_seti,
+        butce_ms=60,
     ),
     CheckSpec(
         "oran_arsivi", "analiz",
         "Piyasa oranı arşivi: kapsama, favori isabet muhasebesi ve çapraz "
         "tablonun toplamları tutuyor mu.",
         _check_oran_arsivi,
+        butce_ms=250,
     ),
     CheckSpec(
         "geri_test", "analiz",
         "Geri test boru hattı: her hafta 14-garantili bir kaplamayla çözülüyor "
         "mu ve küme içi kalan hafta gerçekten en az 14 tutturuyor mu.",
         _check_geri_test,
+        butce_ms=200,
     ),
     CheckSpec(
         "meta_sozlesmesi", "ucuca",
@@ -874,18 +1065,29 @@ CHECKS: Tuple[CheckSpec, ...] = (
         "max, preset ve mod listeleri motorla aynı. Meta bozulursa formül "
         "sayfası çöker ama motor sapasağlam kalır.",
         _check_meta_sozlesmesi,
+        butce_ms=25,
+    ),
+    CheckSpec(
+        "stats_sozlesmesi", "ucuca",
+        "`/api/stats` ve `/api/backtest` gövdeleri kendi içinde tutarlı mı ve "
+        "`?last=` dilimi gövdenin tamamını daraltıyor mu. Bir alan adı "
+        "değiştiğinde motor sağlam kalır, /istatistik sessizce boşalır.",
+        _check_stats_sozlesmesi,
+        butce_ms=120,
     ),
     CheckSpec(
         "pipeline_result_shape", "ucuca",
         "API'nin döndürdüğü sonuç sözleşmesi: satır sayısı, bedel, garanti "
         "bayrağı ve analiz blokları eksiksiz mi.",
         _check_pipeline_result_shape,
+        butce_ms=250,
     ),
     CheckSpec(
         "scipy_flag", "ortam",
         "scipy var mı — yoksa kesin çözücü (ILP) devre dışıdır. Bilgi "
         "amaçlıdır, raporu UNHEALTHY yapmaz.",
         _check_scipy_flag,
+        butce_ms=25,
         critical=False,
     ),
 )
@@ -919,26 +1121,172 @@ def secili_checkler(only: Optional[str] = None) -> List[CheckSpec]:
     return [c for c in CHECKS if c in secili]
 
 
+# Bu surecte en az bir rapor kosuldu mu. Ilki ISINMA sayilir: numpy/scipy
+# import'u, veri seti ve oran arsivinin ilk okunmasi onun sirtindadir.
+_isindi = False
+
+
 def run_health(only: Optional[str] = None) -> HealthReport:
+    global _isindi
+    isinma = not _isindi
+    _isindi = True
+
     secili = secili_checkler(only)
-    results = [_run(spec) for spec in secili]
+    results = [_run(spec, isinma=isinma) for spec in secili]
     kritik_dusen = [c for c in results if not c.ok and c.critical]
     bilgi_dusen = [c for c in results if not c.ok and not c.critical]
+    yavaslar = [c for c in results if c.yavas]
     return HealthReport(
         version=__version__,
         timestamp=datetime.now(timezone.utc).isoformat(),
         ok=not kritik_dusen,
-        degraded=bool(bilgi_dusen) and not kritik_dusen,
+        # Sure butcesini asmak da bir gerilemedir ama DUSUS degildir:
+        # degismez hala gecerli, yalnizca beklenenden pahali. Bu yuzden
+        # `ok` kalir, `degraded` isaretlenir (§6'daki ayrimla ayni mantik).
+        degraded=bool(bilgi_dusen or yavaslar) and not kritik_dusen,
         checks=results,
         summary={
             "ornek_kupon": ORNEK,
+            "kupon_siniflari": [
+                {"etiket": s.etiket, "picks": s.picks, "uzay": s.uzay,
+                 "alt_sinir": s.alt_sinir}
+                for s in KUPON_SINIFLARI
+            ],
             "has_scipy": HAS_SCIPY,
             "env": _env_info(),
+            "ornek": ornek_kimligi(),
+            "isinma": isinma,
             "only": only or None,
             "kismi": len(secili) < len(CHECKS),
             "kayitli_kontrol": len(CHECKS),
         },
     )
+
+
+def kupon_denetle(
+    picks: str,
+    mode: str = "fix16",
+    variant: int = 0,
+    budget: Optional[int] = None,
+) -> Dict[str, Any]:
+    """KULLANICININ kendi kuponunu ayni degismezlerden gecirir.
+
+    Saglik raporunun en kolay yanlis anlasilan sinirini kapatir (§3.2): sabit
+    ornek kuponla kosan bir HEALTHY, kullanicinin az once urettigi kuponun
+    dogrulandigi anlamina GELMEZ. Bu fonksiyon o kuponu alir ve ayni
+    kombinatoryal zorunluluklari onun uzerinde sinar.
+
+    Donen sozluk, rapor govdesiyle ayni sekildedir (`ok`, `checks[]`), ama
+    KAYITLI kontrol listesinden ayridir: burada olculen sey motorun genel
+    sagligi degil, TEK bir kuponun sonucudur. Ikisi ayni tabloda gorunmemeli.
+    """
+    from .engines import (
+        engine_params, run_auto, run_block, run_butce, run_exact, run_fix16,
+        run_heuristic, run_maxcov,
+    )
+    from .meta import MODES
+
+    mod = next((m for m in MODES if m["id"] == mode), None)
+    if mod is None:
+        raise ValueError(
+            f"Bilinmeyen mod {mode!r}. Geçerli olanlar: "
+            f"{', '.join(m['id'] for m in MODES)}")
+    if mod["needs_budget"] and not budget:
+        raise ValueError(f"{mode} modu için budget gerekli")
+    if mod["needs_scipy"] and not HAS_SCIPY:
+        raise ValueError(f"{mode} modu scipy gerektirir; bu kurulumda scipy yok")
+
+    t0 = time.perf_counter()
+    enc = Encoder(parse_picks(picks))
+    eng = engine_params()
+    kosucular = {
+        "fix16": lambda: run_fix16(enc, variant=variant),
+        "auto": lambda: run_auto(enc, eng),
+        "exact": lambda: run_exact(enc, eng),
+        "block": lambda: run_block(enc, eng),
+        "heuristic": lambda: run_heuristic(enc, eng),
+        "butce": lambda: run_butce(enc, int(budget or 0), variant=variant),
+        "maxcov": lambda: run_maxcov(enc, int(budget or 0)),
+    }
+    r = kosucular[mode]()
+    # Butce modu kuponu DARALTIR; sonraki her hesap daraltilmis kupon
+    # uzerinde yapilmali, yoksa olculen sey kullanicinin aldigi sey olmaz.
+    kupon_enc = r.get("enc", enc)
+    cols = r["cols"]
+
+    rows = merge_rows(cols)
+    worst, acik = dogrula_kaplama(cols, kupon_enc.alphabet_sizes)
+    dist = distance_layers(cols, kupon_enc.alphabet_sizes)
+    probs = _probs_on_selections(kupon_enc)
+    rap = olasilik_raporu(kupon_enc, cols, probs)
+    garanti_bekleniyor = bool(mod["garanti"])
+
+    def _kontrol(ad: str, gecti: bool, aciklama: str, detail: str) -> Dict[str, Any]:
+        return {"name": ad, "ok": bool(gecti), "aciklama": aciklama,
+                "detail": detail}
+
+    checks = [
+        _kontrol(
+            "kaplama_garantisi",
+            (worst <= 1 and acik == 0) if garanti_bekleniyor else acik > 0,
+            "Bu kuponun kaplaması, modun ilan ettiği garanti sözünü tutuyor mu.",
+            f"mod={mode} garanti={garanti_bekleniyor} worst={worst} açık={acik}",
+        ),
+        _kontrol(
+            "mesafe_muhasebesi",
+            sum(dist.values()) == kupon_enc.space_size(),
+            "0/1/2… hatalı nokta sayılarının toplamı arama uzayının tamamını "
+            "vermeli; tutmazsa bu kuponun yüzdeleri yanlıştır.",
+            f"katman={dict(sorted(dist.items()))} uzay={kupon_enc.space_size()}",
+        ),
+        _kontrol(
+            "satir_kolon_muhasebesi",
+            (set(rows_to_points(rows)) == set(cols)
+             and sum(row_cost(r_) for r_ in rows) == len(cols)),
+            "Kupona yazılacak satırlar ile ödenecek kolon bedeli birbirini "
+            "tutmalı: satır çözülüp tekrar kolona döndüğünde aynı küme çıkmalı.",
+            f"satır={len(rows)} bedel={len(cols)}",
+        ),
+        _kontrol(
+            "alt_sinir",
+            len(cols) >= kupon_enc.lower_bound() or not garanti_bekleniyor,
+            "Bedel, sayma argümanının verdiği teorik alt sınırın altına "
+            "düşemez; düşüyorsa hesap yanlıştır.",
+            f"bedel={len(cols)} alt_sınır={kupon_enc.lower_bound()}",
+        ),
+        _kontrol(
+            "olasilik_tutarliligi",
+            _approx(rap.p_15 + rap.p_14, rap.p_kume_ici),
+            "p15 + p14 = küme içi olasılığı. Ayrışırsa bu kuponun olasılık "
+            "raporu kendi içinde çelişiyor demektir.",
+            f"p_içi={rap.p_kume_ici:.4f} p15={rap.p_15:.4f} p14={rap.p_14:.4f}",
+        ),
+    ]
+
+    dusen = [c for c in checks if not c["ok"]]
+    return {
+        "ok": not dusen,
+        "mode": mode,
+        "picks": picks,
+        "baslik": r.get("baslik", ""),
+        "notlar": list(r.get("notlar", [])),
+        "satir": len(rows),
+        "bedel": len(cols),
+        "alt_sinir": kupon_enc.lower_bound(),
+        "uzay": kupon_enc.space_size(),
+        "guaranteed": worst <= 1 and acik == 0,
+        "worst": worst,
+        "acik": acik,
+        "checks": checks,
+        "duration_ms": round((time.perf_counter() - t0) * 1000, 1),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "version": __version__,
+        "ornek": ornek_kimligi(),
+        "uyari": (
+            "Bu blok TEK bir kuponu doğrular; kayıtlı değişmez raporunun "
+            "yerine geçmez. İkisi farklı katmandır."
+        ),
+    }
 
 
 def check_envanteri() -> List[dict]:
@@ -950,6 +1298,7 @@ def check_envanteri() -> List[dict]:
             "category_label": KATEGORI_ETIKET.get(c.category, c.category),
             "aciklama": c.aciklama,
             "critical": c.critical,
+            "butce_ms": c.butce_ms,
         }
         for c in CHECKS
     ]
@@ -973,6 +1322,8 @@ def print_report(report: HealthReport) -> None:
             if c.category != kat["id"]:
                 continue
             mark = "OK " if c.ok else ("FAIL" if c.critical else "warn")
+            if c.ok and c.yavas:
+                mark = "slow"
             print(f"    [{mark}] {c.name:22s} {c.duration_ms:7.1f} ms  {c.detail}")
 
     dusen = [c for c in report.checks if not c.ok]

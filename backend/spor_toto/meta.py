@@ -59,6 +59,13 @@ MODES: List[Dict[str, Any]] = [
 MODE_IDS: Set[str] = {m["id"] for m in MODES}
 
 # CLI ile birebir ayni motor varsayilanlari (bkz. spor_toto/cli.py).
+#
+# `auto_ilp_limit` ayri durur ve ayri bir sorunu cozer: `auto` modu
+# `exact_limit` (512) altindaki her uzayda ILP'yi devreye sokuyordu ve 256
+# noktalik gercekci bir kuponda **~11 saniye** suruyordu. Olculdu: ayni
+# kupon 3 saniyelik sinirla da 32 kolon veriyor, yalnizca "optimallik
+# kanitlandi" bayragini kaybediyor. `auto`nun sozu "en ucuzu ara"dir,
+# "optimalligi kanitla" degil — kanit isteyen `--mode exact` kullanir.
 ENGINE_DEFAULTS: Dict[str, Any] = {
     "trials": 5,
     "ls_iters": 30_000,
@@ -66,6 +73,7 @@ ENGINE_DEFAULTS: Dict[str, Any] = {
     "time_limit": 60.0,
     "block_limit": 256,
     "exact_limit": 512,
+    "auto_ilp_limit": 3.0,
 }
 
 # Her sinir icin min <= default <= max tutmak ZORUNDADIR; arayuz kaydiraclari
@@ -81,6 +89,8 @@ LIMITS: Dict[str, Dict[str, Any]] = {
     "time_limit": {"min": 1.0, "max": 300.0, "default": ENGINE_DEFAULTS["time_limit"]},
     "block_limit": {"min": 2, "max": 6561, "default": ENGINE_DEFAULTS["block_limit"]},
     "exact_limit": {"min": 2, "max": 4096, "default": ENGINE_DEFAULTS["exact_limit"]},
+    "auto_ilp_limit": {"min": 0.5, "max": 300.0,
+                       "default": ENGINE_DEFAULTS["auto_ilp_limit"]},
 }
 
 
