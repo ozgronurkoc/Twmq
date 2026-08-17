@@ -335,7 +335,7 @@ CI'a `frontend` işi eklendi: `npm run check` + `npm run build`.
 
 | Fikir | Neden hayır |
 |---|---|
-| Küme-içi kartının işaret **önermesi** | Araç tahmin etmez. Kart çarpanı ve bedeli gösterir; hangi maça hangi sembolün ekleneceği kullanıcının kararıdır |
+| Küme-içi kartının **ölçülmemiş** işaret önermesi | Amaç tahmin olsa da isabeti ölçülmemiş öneri gösterilmez. Kart bugün çarpanı ve bedeli gösterir; hangi maça hangi sembolün ekleneceği kullanıcının kararıdır |
 | Maç adlarının bağlantıya girmesi | 15 takım adı URL'i üç katına çıkarır; `transfer.ts`'te aynı karar verilmişti |
 | Senaryo listesinin kaydedilmesi | Türetilmiş veri kaydedilmez; kalıcı olan tek şey kurulumdur |
 | Adres çubuğunun kendiliğinden güncellenmesi | Geçmişi kirletir ve devir işaretiyle (`?hafta=`) çakışırdı |

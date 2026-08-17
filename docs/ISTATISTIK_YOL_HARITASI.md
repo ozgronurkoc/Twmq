@@ -1,7 +1,15 @@
 # İstatistik Katmanı — Durum ve Yol Haritası
 
 **Kapsam:** `/istatistik` sayfası ve onu besleyen veri + oran altyapısı
-**Güncellendi:** 2026-08-16 (F1–F5 uygulandı)
+**Güncellendi:** 2026-08-17 (proje amacı güncellendi — aşağıya bakınız)
+
+> **Amaç değişikliği (2026-08-17).** Projenin amacı artık **veriyi analiz ederek
+> kazanma oranını artıracak sonuçlar üretmek ve maç sonucu tahmini yapmaktır**
+> (bkz. [`../README.md`](../README.md) §1). Bu belgedeki ölçüm disiplini aynen
+> geçerlidir ve daha da kritik hale gelmiştir: tahmin iddiası, ölçülmemiş hiçbir
+> sayının arayüze çıkmamasıyla dengelenir. Hold-out **0 hafta**, piyasa Brier
+> **0,579**, iddaa marjı **%17,2** — bu üç sayı tahmin katmanının başlangıç
+> çizgisidir ve ilerleme bunlara karşı ölçülür.
 **İlgili belgeler:** [`VERI_TOPLAMA_VE_ISLEME.md`](VERI_TOPLAMA_VE_ISLEME.md) (veri üretiminin
 tek kaynak dokümantasyonu) · [`ARCHITECTURE_NEXT.md`](ARCHITECTURE_NEXT.md) (API sözleşmesi)
 
@@ -261,7 +269,8 @@ bantta banko yapılsaydı ne olacağı. İlk-iki toplamı %70–80 iken çifte %
 kolonu ikiye katlayan karar bu tablonun işi.
 
 **Beraberlik profili.** Fark 0–0,05 iken %32,7, 0,50+ iken %14,3. Eğilim var ama tam monoton
-değil; **gösterge** olarak sunuluyor, tahminci olarak değil (bkz. §7).
+değil. Tahmin katmanının **girdilerinden biri**; tek başına tahminci olarak
+kullanılamayacak kadar zayıf ve isabeti ölçülmeden karara bağlanmaz (bkz. §7).
 
 **Lig kırılımı.** Kuponun yarısı Süper Lig'den (kupon başına 7,5 maç), orada beraberlik %29,8;
 Premier Lig'de %19,7. Lig kodları okunur ada çevrildi; eşleşmeyen değer olduğu gibi geçiyor.
@@ -269,8 +278,10 @@ Premier Lig'de %19,7. Lig kodları okunur ada çevrildi; eşleşmeyen değer old
 ### 3.7 Formüle devir (`9d9cfac`)
 
 Hafta detayındaki düğme 15 maçın marj arındırılmış olasılığını formül sayfasına taşıyor.
-**İşaretler taşınmıyor** — hangi maça kaç işaret konacağı kullanıcının kararı; araç maç sonucu
-tahmin etmez. Oranı bulunamayan maç 1/3'e düşüyor ve hangileri olduğu notta yazıyor.
+**İşaretler taşınmıyor** — bugün hangi maça kaç işaret konacağı kullanıcının kararı. Amaç
+değişikliğiyle birlikte bu bir tasarım ilkesi değil, **bir sonraki adımın konusu** oldu:
+işaret önerisi ancak isabeti hold-out ile ölçülmüş bir tahminci çıktığında devreye girer
+(§6, G2/S2). Oranı bulunamayan maç 1/3'e düşüyor ve hangileri olduğu notta yazıyor.
 
 Devir mekaniği tarayıcıda ölçülerek oturdu. App Router istemci geçişinde hedef sayfa **iki kez
 bağlanıyor** (ölçüldü: `getItem` sırasıyla "dolu", "null"); "oku ve sil" yaklaşımında ilk
@@ -498,8 +509,10 @@ ise *iddia eder*. Bu yüzden sentez katmanının eşiği tablonunkinden katı ol
 
 **Dört zorunlu kural:**
 
-1. **Buyurgan olamaz.** "Banko yap" yok; "bu kesitte şu ölçüldü (N maç)" var. Kurucu iddia
-   yerinde kalır: araç maç sonucu tahmin etmez.
+1. **Öneri ancak ölçülmüş isabetiyle birlikte çıkar.** Amaç tahmin olduğu için "şu maça
+   banko koy" biçiminde bir cümle artık meşrudur — ama yalnızca o önerinin geçmişte ne
+   yaptığı (isabet, hold-out, örneklem) cümlenin yanında duruyorsa. Çıplak buyruk hâlâ
+   yasak: ölçüsüz öneri, projenin kaçındığı "kazanma hissi satma" davranışının ta kendisidir.
 2. **Her cümle bir ölçüme bağlıdır** ve örneklemini yanında taşır.
 3. **Eşik cümlesi ancak bantlar monoton ise çıkar** — seçilen bandın altındaki her bant da
    barajı geçmeli. Yukarıdaki son-12 diliminde bu kural cümlelerin *hepsini* susturur; doğru
@@ -599,7 +612,7 @@ S3'e bağımlı olduğu için bugün planlanamaz; arşiv birikince yeniden değe
 | Fikir | Neden hayır |
 |---|---|
 | Takım bazlı istatistik | 216 takım, Süper Lig takımları bile 32 maç. Çıkacak sayı güvenilir görünür ama gürültüdür |
-| "Beraberlik tahmincisi" | Sinyal var (%14 → %33) ama zayıf ve tam monoton değil. Gösterge olarak sunuldu (§3.6); tahminci diye sunmak hâlâ hayır |
+| Ölçülmemiş tahmincinin arayüze çıkması | Amaç tahmin olsa da isabeti hold-out ile ölçülmemiş hiçbir tahminci sayfaya çıkmaz. Beraberlik profili buna örnektir: sinyal var (%14 → %33) ama zayıf ve tam monoton değil (§3.6) — girdi olarak kullanılır, tek başına tahminci olarak sunulmaz |
 | Diğer pazarların arayüze çıkması | Ürün kararı: 1X2 dışındakiler analiz içindir, arşivde kalır |
 | Maçkolik'ten veri çekme | `robots.txt` `/api/` yolunu herkese, `anthropic-ai`'yi tamamen kapatıyor; ayrıca eski açık uç ölü |
 

@@ -114,8 +114,8 @@ Sayfanın güvenilirliği, neyi kanıtlamadığını açıkça söylemesine bağ
 
 | Kanıtlanmaz | Neden |
 |---|---|
-| Maç sonucu tahmininin isabeti | Araç tahmin etmez; bu sayfa da etmez |
-| Kazanma olasılığının artışı | Garanti maliyeti düşürür, şansı büyütmez |
+| Maç sonucu tahmininin isabeti | İsabet **istatistik katmanının** işidir (geri test, hold-out). Sağlık katmanı vaadin canlıda geçerliliğini ölçer, modelin kalitesini değil — ikisi ayrı sorulardır |
+| Kazanma oranının arttığı | Projenin amacı budur ama sağlık sayfası bunu kanıtlayamaz: kanıt geçmiş sezon ölçümünden gelir, değişmez kontrolünden değil |
 | **Kullanıcının kendi kuponunun** doğruluğu | Kayıtlı kontroller **sabit kupon sınıfları** üzerinde koşar; kendi kuponun için ayrı bir uç var (aşağıda) |
 | İkramiye / beklenen değer | Motorun kapsamı dışında |
 

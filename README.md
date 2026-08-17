@@ -1,12 +1,16 @@
 # Spor Toto Lab — 14-Garanti Formül Üreticisi
 
-Spor Toto kuponu için **kaplama kodu** (covering code) üreten, ürettiği garantinin
-sınırını da ölçen açık bir laboratuvar.
+Spor Toto kuponu için tarihsel veriyi ve piyasa oranlarını analiz edip **maç sonucu
+tahmini** üreten, bu tahmini **kaplama kodu** (covering code) ile en az kupona
+indiren ve her iki katmanın da isabetini/sınırını ölçen açık bir laboratuvar.
 
-Seçtiğin ihtimal kümeleri içinde doğru sonuç varsa, oynanan kolonlardan en az biri
-**en fazla 1 maç hatalı** olur — yani **14-garanti**. Bu garanti bir tahmin değil,
-kombinatoryal bir teoremdir: doğruysa her zaman doğrudur, yanlışsa hiçbir zaman
-doğru olmaz.
+**Amaç kazanma oranını artırmaktır.** Hedefe bugünkü mesafe ölçülmüştür ve
+belgede açıkça yazar (§1.1) — ölçülmemiş hiçbir iyileşme iddia edilmez.
+
+Kaplama katmanının vaadi ayrıdır ve tahminden bağımsızdır: seçtiğin ihtimal
+kümeleri içinde doğru sonuç varsa, oynanan kolonlardan en az biri **en fazla 1 maç
+hatalı** olur — yani **14-garanti**. Bu garanti bir tahmin değil, kombinatoryal bir
+teoremdir: doğruysa her zaman doğrudur, yanlışsa hiçbir zaman doğru olmaz.
 
 ---
 
@@ -15,19 +19,32 @@ doğru olmaz.
 Bahis araçlarının çoğu aynı şeyi yapar: bir sayı üretir, o sayının nereden geldiğini
 anlatmaz ve kullanıcıya kazanma hissi satar. Bu proje bunun tam tersini denemektedir.
 
-**Kurucu iddia: bu araç maç sonucu tahmin etmez.** Tahminin doğruysa onu
-kaçırmamanı, hem de mümkün olan **en az kuponla** sağlar. Bir maliyet düşürme
-aracıdır; kazanma olasılığını büyütmez.
+**Amaç: elimizdeki veriyi analiz ederek kazanma oranını artıracak sonuçlar
+üretmek.** Proje maç sonucu tahmini yapar ve bu tahmini en az kupona indirir. İki
+katman birlikte çalışır: **tahmin katmanı** hangi sonuçların işaretleneceğine
+katkı verir, **kaplama katmanı** o seçimi mümkün olan en ucuz şekilde oynatır.
 
-Bu iddianın etrafında beş taahhüt var. Projedeki hemen her karar bunlardan birine
-dayanır.
+Bu bir vaat değil, bir hedeftir — ve hedefe bugünkü mesafe ölçülmüştür (§1.1).
+Aşağıdaki beş taahhüt amacın kendisinden bağımsızdır: onlar *neyi hedeflediğimizi*
+değil, *neyi saklamadığımızı* tanımlar. Amaç değişti, bu taahhütler değişmedi.
 
-### 1.1 Garanti kombinatoryaldir, olasılıksal değildir
+### 1.1 Tahmin hedeftir, garanti teoremdir — ikisi karıştırılmaz
 
-14-garanti Hamming geometrisinden gelir. Olasılık, Bayes, Markov — hiçbiri onu
-güçlendirmez veya zayıflatmaz. Bu katmanlar yalnızca "seçimlerim ne kadar
-sağlam?" sorusuna cevap verir; garantinin kendisine dokunmazlar. Kodda da böyle
-ayrılmıştır: `core.py` olasılık katmanını hiç bilmez.
+Amaç tahmin olsa da 14-garanti tahminle değişmez. Garanti Hamming geometrisinden
+gelir: seçim kümesi içinde doğru sonuç varsa en fazla 1 hata kalır. Bu
+kombinatoryal bir teoremdir; olasılık, Bayes, Markov hiçbiri onu güçlendirmez
+veya zayıflatmaz. Kodda ayrım korunur: `core.py` olasılık katmanını hiç bilmez.
+
+Değişen şey, **kümeyi kim seçiyor** sorusunun cevabıdır. Önceden işaretleri
+yalnızca kullanıcı koyardı, araç maliyeti düşürmekle yetinirdi. Artık tahmin
+katmanı bu seçime katkı verir ve **isabeti ölçülür** (§1.6).
+
+**Hedefe bugünkü mesafe ölçülmüştür ve küçüktür.** Piyasa oranlarından mekanik
+olarak üretilen strateji 36 haftanın 3'ünde 14+ tutturdu; eşik o haftayı görmeden
+seçildiğinde (hold-out) **0**. Piyasanın kendi Brier skoru 0,579 — eşit olasılık
+dağıtmanın karşılığı 0,667, yani piyasa bilgi taşıyor ama az. İddaa marjı %17,2.
+Bu üç sayı tahmin katmanının **başlangıç çizgisidir, varış noktası değil**:
+ilerleme bunlara karşı ölçülür ve ölçülmeden ilerleme sayılmaz.
 
 ### 1.2 Belirsizlik saklanmaz, ölçülür ve gösterilir
 
@@ -70,16 +87,17 @@ geçerli olduğunu kanıtlar.** 22 değişmez, 6 kategori, her çağrıda yenide
 
 | Yapar | Yapmaz |
 |-------|--------|
-| Hamming yarıçap-1 kaplama kodu üretir | Maç sonucu tahmin etmez |
-| En kötü durumda 14 doğru **garantiler** (küme içinde) | İkramiye / beklenen değer hesabı yapmaz |
-| Küme dışı senaryoları **fire** olarak ölçer | Kazanma olasılığını artırmaz |
-| Exact + Monte Carlo olasılık raporu verir | 14-garantiyi olasılıkla "güçlendirmez" |
-| Bayes (Dirichlet) ile tahminlerini yumuşatır | Kâr vaadi vermez |
-| Vaadin canlıda geçerliliğini 22 değişmezle ölçer | Tahmin isabetini ölçmez (ölçemez) |
-| Markov ile sıralı risk profili çıkarır | Canlı bülten çekmez |
-| 41 haftalık sezon verisini ve piyasa oranlarını analiz eder | İddaa geçmiş oranı sunmaz (yok — §5.3) |
-| Bir stratejiyi geçmiş sezonda çalıştırıp bedelini ölçer (**geri test**) | Geri testi bir kâr vaadine çevirmez; aşırı uyumu ölçüp gösterir |
-| Her sayının kaynağını ve sınırını yazar | Mobil uygulama değildir |
+| 41 haftalık sezon verisini ve piyasa oranlarını analiz edip **maç sonucu tahmini** üretir | Kazanmayı **garanti etmez** |
+| Tahmin isabetini ölçer ve hold-out ile aşırı uyumdan ayırır | Ölçülmemiş bir isabet iddiası sunmaz |
+| Hamming yarıçap-1 kaplama kodu üretir | 14-garantiyi olasılıkla "güçlendirmez" |
+| En kötü durumda 14 doğru **garantiler** (küme içinde) | İkramiye / beklenen değer hesabı yapmaz (havuz verisi yok — §11) |
+| Küme dışı senaryoları **fire** olarak ölçer | Kâr vaadi vermez |
+| Exact + Monte Carlo olasılık raporu verir | Canlı bülten çekmez |
+| Bayes (Dirichlet) ile tahminlerini yumuşatır | İddaa geçmiş oranı sunmaz (yok — §5.3) |
+| Markov ile sıralı risk profili çıkarır | Geri testi bir kâr vaadine çevirmez; aşırı uyumu ölçüp gösterir |
+| Bir stratejiyi geçmiş sezonda çalıştırıp bedelini ve isabetini ölçer (**geri test**) | Mobil uygulama değildir |
+| Vaadin canlıda geçerliliğini 22 değişmezle ölçer | |
+| Her sayının kaynağını ve sınırını yazar | |
 
 ---
 
@@ -361,8 +379,9 @@ yapılsaydı: %48,7 / %65,1 / %84,4. Yani en üst bantta ikinci işaret kolonu i
 katlayıp isabete yalnızca 12,5 puan ekliyor — çifte kararı bu tablonun işidir.
 
 **Beraberlik profili** — favori ile ikincinin olasılık farkı 0–0,05 iken beraberlik
-%32,7; 0,50+ iken %14,3. Eğilim var ama **tam monoton değil**; bu yüzden gösterge
-olarak sunulur, tahminci olarak değil (§10.2).
+%32,7; 0,50+ iken %14,3. Eğilim var ama **tam monoton değil**. Tahmin katmanının
+girdilerinden biridir; tek başına bir tahminci olarak kullanılamayacak kadar
+zayıftır ve isabeti ölçülmeden karara bağlanmaz (§10.2).
 
 **Lig kırılımı** — kuponun yarısı Süper Lig'den geliyor (kupon başına 7,5 maç) ve
 orada beraberlik %29,8; Premier Lig'de %19,7. Bu fark "0" bütçesinin nereye
@@ -963,12 +982,12 @@ Sıra, "en çok belirsizliği kaldıran" ölçütüne göredir. Ayrıntı:
 | Fikir | Neden hayır |
 |---|---|
 | Takım bazlı istatistik | 216 takım, Süper Lig takımları bile 32 maç. Çıkacak sayı güvenilir *görünür* ama gürültüdür |
-| "Beraberlik tahmincisi" | Sinyal var (%14 → %33) ama zayıf ve tam monoton değil. Gösterge olarak sunuldu (§5.4); tahminci diye sunmak hâlâ hayır |
+| Ölçülmemiş bir tahmincinin arayüze çıkması | Amaç tahmin olsa da isabeti hold-out ile ölçülmemiş hiçbir tahminci sayfaya çıkmaz |
 | Diğer pazarların arayüze çıkması | Ürün kararı: 1X2 dışındakiler analiz içindir, arşivde kalır |
 | Maçkolik'ten veri çekme | `robots.txt` otomatik erişimi kapatıyor; politika sınırı ihlal edilmez |
 | Kontrolleri arayüzden düzenlemek | Değişmezler koddadır, yapılandırmada değil |
 | Sağlık geçmişini metrik panosuna çevirmek | Bu bir APM işidir; sayfa motorun sağlığını ölçer, sürecin değil |
-| Tahmin isabetini ölçen bir kontrol | Araç tahmin etmez; sağlık sayfası da etmez |
+| Tahmin isabetini **sağlık sayfasında** ölçmek | İsabet istatistik katmanının işidir (geri test, hold-out); sağlık katmanı vaadin canlıda geçerliliğini ölçer, modelin kalitesini değil |
 
 ---
 
@@ -1066,8 +1085,10 @@ olması gerekir. Tanımlıysa yalnızca **durum değişiminde** bildirim gider.
 
 ## 14. Uyarı
 
-Bu araç **kazanma olasılığını artırmaz.** Yalnızca belirli bir garantiyi daha az
-kuponla elde etmeni sağlar.
+Bu aracın amacı kazanma oranını artırmaktır; ancak kazanmayı **garanti etmez** ve
+hedefe bugünkü mesafe açıkça ölçülmüştür (§1.1): piyasa oranlarından üretilen
+stratejinin **hold-out isabeti 0 haftadır.** Ölçülen bu sayı iyileşmeden, aracın
+kazanma oranını artırdığı iddia edilemez.
 
 Olasılık / Monte Carlo / Bayes / Markov çıktıları **beklenen-değer veya kâr hesabı
 değildir**; ikramiye havuzu ve kolon bedeli hesaba katılmaz.
