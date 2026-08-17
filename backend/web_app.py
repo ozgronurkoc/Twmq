@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import os
+import threading
 import time
 from datetime import datetime, timezone
 from functools import lru_cache
@@ -368,6 +369,50 @@ def _build_result(
     }
 
 
+# Kisa omurlu rapor onbellegi. Amaci iki tuketiciyi de korumak: sayfayi acik
+# birakan kullanici (oto yenileme) ve arka arkaya vuran izleme. TTL bilerek
+# kisadir — daha uzunu, sayfanin "az once olctum" iddiasini yalanlar.
+HEALTH_TTL_S = float(os.environ.get("HEALTH_TTL_S", "5"))
+_BASLANGIC = time.monotonic()
+_health_onbellek: Dict[str, Tuple[float, Dict[str, Any]]] = {}
+_health_kilit = threading.Lock()
+
+
+def _health_govde(only: Optional[str], fresh: bool) -> Dict[str, Any]:
+    """Raporu üretir; TTL içinde tekrar istenirse önbellekten döner.
+
+    Önbellekten dönen gövde bunu SAKLAMAZ: `summary.onbellek` alanı yaşını
+    yazar. Bir sağlık raporunun ne zaman ölçüldüğünü gizlemesi, raporun
+    kendisini değersizleştirir.
+    """
+    anahtar = only or ""
+    simdi = time.monotonic()
+
+    if not fresh and HEALTH_TTL_S > 0:
+        with _health_kilit:
+            kayit = _health_onbellek.get(anahtar)
+        if kayit and (simdi - kayit[0]) <= HEALTH_TTL_S:
+            govde = dict(kayit[1])
+            govde["summary"] = {
+                **govde.get("summary", {}),
+                "onbellek": {
+                    "cached": True,
+                    "yas_ms": round((simdi - kayit[0]) * 1000, 1),
+                    "ttl_s": HEALTH_TTL_S,
+                },
+            }
+            return govde
+
+    govde = run_health(only).to_dict()
+    govde["summary"] = {
+        **govde.get("summary", {}),
+        "onbellek": {"cached": False, "yas_ms": 0.0, "ttl_s": HEALTH_TTL_S},
+    }
+    with _health_kilit:
+        _health_onbellek[anahtar] = (simdi, govde)
+    return govde
+
+
 # ─── API only ─────────────────────────────────────────────────────────────────
 
 @app.route("/", methods=["GET"])
@@ -378,35 +423,57 @@ def root():
         "frontend": "Next.js only — bu process HTML servis etmez",
         "endpoints": [
             "GET  /api/meta",
-            "GET  /api/health",
+            "GET  /api/health         (readiness: tam değişmez raporu)",
             "GET  /api/health/checks",
             "GET  /api/stats",
             "GET  /api/stats/<week>",
             "GET  /api/backtest",
             "POST /api/solve",
-            "GET  /health",
+            "GET  /health             (liveness: süreç ayakta mı)",
         ],
     })
 
 
 @app.route("/health", methods=["GET"])
+def health_liveness():
+    """
+    LIVENESS — "bu süreç ayakta mı?" Başka hiçbir şey.
+
+    Eskiden bu yol `/api/health` ile AYNI handler'a bağliydi ve 21
+    değişmezin tamamını koşuyordu (~500 ms, soğuk başlangıçta ~2,3 sn).
+    Dağıtım hedefi autoscale: platform probe'u her vurdugunda bu bedel
+    ödeniyordu ve probe zaman aşımına düşerse platform SAGLIKLI bir
+    konteyneri öldürür — yani sağlık kontrolünün kendisi kesinti üretebilir.
+
+    Bu uç hiçbir değişmez koşmaz; sürecin istek karşılayabildiğini söyler.
+    Değişmezler "trafiğe hazır mıyım" sorusudur ve `/api/health`'in işidir.
+    """
+    return jsonify({
+        "status": "ok",
+        "service": "spor-toto-api",
+        "version": __version__,
+        "uptime_s": round(time.monotonic() - _BASLANGIC, 1),
+        "readiness": "/api/health",
+    })
+
+
 @app.route("/api/health", methods=["GET"])
 def api_health():
     """
-    Degismezleri calistirip raporlar.
+    READINESS — degismezleri calistirip raporlar.
 
     `?only=` ile tek bir kontrol veya kategori calistirilabilir; arayuz
-    dusen bir grubu butun takimi 600 ms bekletmeden yeniden deneyebilsin
-    diye. `degraded` (kritik olmayan kontrol dustu) 503 URETMEZ — servis
-    calisiyordur, yalnizca bir yetenek eksiktir.
+    dusen bir grubu butun takimi 500 ms bekletmeden yeniden deneyebilsin
+    diye. `?fresh=1` onbellegi atlar. `degraded` (kritik olmayan kontrol
+    dustu) 503 URETMEZ — servis calisiyordur, yalnizca bir yetenek eksiktir.
     """
     only = (request.args.get("only") or "").strip() or None
+    fresh = (request.args.get("fresh") or "").strip().lower() in ("1", "true", "evet")
     try:
-        report = run_health(only)
+        govde = _health_govde(only, fresh)
     except ValueError as e:
         return jsonify({"ok": False, "error": str(e)}), 400
-    code = 200 if report.ok else 503
-    return jsonify(report.to_dict()), code
+    return jsonify(govde), (200 if govde["ok"] else 503)
 
 
 @app.route("/api/health/checks", methods=["GET"])
