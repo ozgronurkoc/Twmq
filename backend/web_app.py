@@ -609,6 +609,22 @@ def _parse_esik(raw: Any, varsayilan: float) -> float:
     return min(1.0, max(0.0, v))
 
 
+def _tahmin_cached(limit: Optional[int]) -> Dict[str, Any]:
+    """Tahmin govdesi — **onbelleklenmez ve bu kasitli.**
+
+    Digerlerinden farki yonu: `stats` ve `backtest` surumlenmis bir dosyayi
+    okur, ayni parametre ayni cevabi verir. Burasi YAKLASAN maclari okur ve
+    cevap zamanla degisir — mac baslar, bulten yenilenir, fikstur penceresi
+    kayar. Onbelleklenmis bir tahmin, baslamis bir maca mac oncesi olasiligi
+    gostermeye devam ederdi.
+
+    Bedeli kucuk: govde iki dosya okur ve `olculmus_isabet` zaten kendi
+    icinde `lru_cache`li (arsiv surumlenmis, degismez).
+    """
+    from spor_toto.tahmin import rapor
+    return rapor(limit=limit)
+
+
 @lru_cache(maxsize=32)
 def _backtest_cached(last: Optional[int], banko: float, uclu: float,
                      sweep: bool) -> Dict[str, Any]:
@@ -636,6 +652,29 @@ def api_backtest():
     uclu = _parse_esik(request.args.get("uclu"), VARSAYILAN_UCLU)
     sweep = str(request.args.get("sweep", "1")).strip().lower() not in {"0", "false", "no"}
     return jsonify(_backtest_cached(last, banko, uclu, sweep))
+
+
+@app.route("/api/tahmin", methods=["GET"])
+def api_tahmin():
+    """
+    "Yaklasan maclar nasil biter?"
+
+    Govde IKI blogu ayrilmaz bicimde tasir: `tahminler` ve `olculmus_isabet`.
+    Bu ayrilmazlik projenin tek kirmizi cizgisidir — olculmus isabeti
+    olmayan bir olasilik disari cikmaz. Ayrica `uyarilar` bloğu, gövdenin
+    kendi sinirlarini tasir ve KISALTILMAZ: en onemlisi bu tahmincinin tek
+    kolonla 14+ tutturamayacagi (aritmetik, model kusuru degil).
+
+    `?limit=N` yalnizca listeyi kirpar; isabet ve uyarilar hep tam gelir.
+    """
+    ham = request.args.get("limit")
+    limit = None
+    if ham is not None:
+        try:
+            limit = max(1, min(int(str(ham).strip()), 500))
+        except (TypeError, ValueError):
+            limit = None
+    return jsonify(_tahmin_cached(limit))
 
 
 @app.route("/api/solve", methods=["POST", "OPTIONS"])

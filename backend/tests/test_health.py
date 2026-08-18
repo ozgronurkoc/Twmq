@@ -341,3 +341,69 @@ def test_slowest_en_uzun_kontrolu_gosterir():
     d = run_health().to_dict()
     slowest = d["summary"]["slowest"]
     assert slowest["duration_ms"] == max(c["duration_ms"] for c in d["checks"])
+
+
+# ─── tahmin referansları (T4) ────────────────────────────────────────────────
+
+def test_tahmin_referanslari_kayitli():
+    """Kontrol envantere girdi ve doğru kategoride."""
+    spec = next((c for c in CHECKS if c.name == "tahmin_referanslari"), None)
+    assert spec is not None, "tahmin_referanslari kayitli degil"
+    assert spec.category == "analiz"
+    assert spec.critical is True
+
+
+def test_tahmin_referanslari_gecer():
+    """Gerçek veri üzerinde koşar ve geçer; mesaj ölçülen kesiti taşır."""
+    sonuc = _run(next(c for c in CHECKS if c.name == "tahmin_referanslari"))
+    assert sonuc.ok is True, sonuc.detail
+    assert "piyasa=" in sonuc.detail
+    assert "mac=540" in sonuc.detail
+
+
+def test_tahmin_referanslari_siralama_bozulursa_kirilir(monkeypatch):
+    """Bekçilik testi — kontrol gerçekten bir şey koruyor mu.
+
+    Sıralama (piyasa < sezon_sabiti < duzgun) bozulduğunda kontrol
+    kırılmalı. Bozulmuyorsa kontrol dekoratif demektir.
+    """
+    from spor_toto import evaluate, health
+
+    gercek = evaluate.karsilastir
+
+    def bozuk(*a, **kw):
+        r = gercek(*a, **kw)
+        for s in r["tahminciler"]:
+            if s["ad"] == "piyasa":
+                s["brier"] = 0.99          # zeminin de altina it
+        return r
+
+    monkeypatch.setattr(evaluate, "karsilastir", bozuk)
+    with pytest.raises(AssertionError, match="siralamasi bozuk"):
+        health._check_tahmin_referanslari()
+
+
+def test_tahmin_referanslari_duzgun_kayarsa_kirilir(monkeypatch):
+    """`duzgun` 0,667 vermiyorsa ölçüt kodunun kendisi bozulmuştur."""
+    from spor_toto import evaluate, health
+
+    gercek = evaluate.karsilastir
+
+    def bozuk(*a, **kw):
+        r = gercek(*a, **kw)
+        for s in r["tahminciler"]:
+            if s["ad"] == "duzgun":
+                s["brier"] = 0.60
+        return r
+
+    monkeypatch.setattr(evaluate, "karsilastir", bozuk)
+    with pytest.raises(AssertionError, match="duzgun Brier"):
+        health._check_tahmin_referanslari()
+
+
+def test_tahmin_referanslari_kesit_yoksa_cokmez(monkeypatch):
+    """Oran arşivi eksikse kırmızı değil, açıklayıcı mesaj."""
+    from spor_toto import evaluate, health
+
+    monkeypatch.setattr(evaluate, "olculebilir_haftalar", lambda *a, **kw: [])
+    assert "olculebilir hafta yok" in health._check_tahmin_referanslari()

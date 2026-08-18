@@ -10,6 +10,7 @@ import {
   History,
   PanelLeftClose,
   PanelLeftOpen,
+  Target,
   Zap,
 } from "lucide-react";
 
@@ -43,6 +44,12 @@ const GRUPLAR: NavGroup[] = [
   {
     baslik: "Veri",
     items: [
+      {
+        href: "/tahmin",
+        label: "Tahmin",
+        hint: "Yaklaşan maçlara olasılık",
+        icon: <Target size={17} />,
+      },
       {
         href: "/istatistik",
         label: "İstatistik",
@@ -208,7 +215,7 @@ export function SidebarIcerik({
             <p className="mt-3 text-[10.5px] leading-relaxed text-sidebar-muted">
               Next.js arayüz · Python motoru
               <br />
-              Bu araç maç sonucu tahmin etmez.
+              Kaplama motoru tahmin etmez, garanti verir.
             </p>
           </>
         ) : (

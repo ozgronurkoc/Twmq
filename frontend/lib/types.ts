@@ -892,3 +892,83 @@ export interface HealthChecksResponse {
   version: string;
   checks: HealthCheckInfo[];
 }
+
+/* ── Tahmin (C2) ─────────────────────────────────────────────────────────── */
+
+/** Tek maçın tahmini. `olasilik` marj arındırılmıştır ve 1'e toplanır. */
+export interface TahminBlogu {
+  olasilik: Record<string, number>;
+  en_olasi: string | null;
+  guven: number | null;
+}
+
+export interface TahminSatiri extends TahminBlogu {
+  kaynak: string;
+  lig: string;
+  tarih: string;
+  saat: string;
+  ev: string;
+  dep: string;
+  oran_kaynak: string;
+  /** Ölçülen isabetin ait olduğu lig evreninde mi. */
+  olculen_lig: boolean;
+  oranlar: Record<string, number>;
+  /**
+   * Korpusta eğitilmiş yeniden kalibrasyonun aynı maça verdiği olasılık.
+   * Manşetin YERİNE geçmez, yanında durur — ölçüldü ve geçmedi.
+   */
+  alternatif: (TahminBlogu & { ad: string }) | null;
+}
+
+/**
+ * Tahmincinin ÖLÇÜLMÜŞ isabeti. Arşivden koşulur, elle yazılmaz.
+ * `olculdu=false` ise oran arşivi eksiktir ve sayı gösterilmez.
+ */
+/** Tek bir tahmincinin kupon setindeki ölçülmüş skoru. */
+export interface TahminciSkoru {
+  ad: string;
+  aciklama?: string;
+  n_mac: number;
+  mac_basina_isabet: number;
+  brier: number;
+  log_kaybi: number;
+  hafta_ortalamasi: number;
+  en_iyi_hafta: number;
+  hafta_14_arti: number;
+  hafta_13_arti: number;
+  /** Yalnızca alternatifte: manşete göre fark ve güven aralığı. */
+  fark?: { fark: number; alt: number; ust: number; tekrar: number };
+  /** Yalnızca alternatifte: aralık tamamen sıfırın altında mı. */
+  gecti?: boolean;
+}
+
+export interface OlculmusIsabet {
+  olculdu: boolean;
+  not?: string;
+  kesit?: string;
+  n_hafta?: number;
+  referans?: string;
+  manset?: TahminciSkoru;
+  alternatif?: TahminciSkoru | null;
+}
+
+export interface TahminUyarisi {
+  ad: string;
+  metin: string;
+}
+
+/**
+ * Tahmin gövdesi. `tahminler` ile `olculmus_isabet` AYRILAMAZ — biri
+ * gösteriliyorsa diğeri de gösterilir. Projenin tek kırmızı çizgisi budur.
+ */
+export interface TahminResponse {
+  n_mac: number;
+  kaynaklar: string[];
+  /** Alternatif kaç maçta FARKLI sembol seçiyor. 0 = tek kolon için ikisi aynı. */
+  alternatif_farkli_secim?: number;
+  olculen_kaynak: boolean;
+  tahminler: TahminSatiri[];
+  olculmus_isabet: OlculmusIsabet;
+  uyarilar: TahminUyarisi[];
+  bos_sebep: string | null;
+}

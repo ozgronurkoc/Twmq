@@ -1,0 +1,16 @@
+{
+  "generated_at": "2026-08-18T01:11:12",
+  "source": "football-data.co.uk/fixtures.csv — piyasa oranlari, IDDAA DEGIL",
+  "odds_period": "ACILIS orani; kapanis henuz yok. A1 olcumu: acilis Brier 0,5964 · kapanis 0,5940 — fark +0,0025",
+  "as_of": "2026-08-18",
+  "matches": 0,
+  "in_measured_leagues": 0,
+  "leagues": [],
+  "rolling_window_note": "fikstur yuvarlanan penceredir; bos olmasi normaldir, hata degildir",
+  "dropped": {
+    "toplam": 127,
+    "gecmis": 127,
+    "tarih_yok": 0,
+    "oran_yok": 0
+  }
+}
