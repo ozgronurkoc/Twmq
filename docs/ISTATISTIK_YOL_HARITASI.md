@@ -890,25 +890,21 @@ bunu doğruladı — deplasman "dinlenmiş" göründüğünde ev takımı piyasa
 Avrupa liglerinde dört kat güçlü. Bulgu değil (n=445, dışarıda bırakmalı katkısı sıfır), ama
 A4(b)'nin yeniden açılma koşulunu somutlaştırıyor: eksik olan **fikstür verisi**.
 
-#### A4 — Tahmin ekseninin durma kuralı · **işletildi: (b)**
+#### A4 — Arayışın durma kuralı · **işletildi**, ve neyi kapatmadığı
 
-A1–A3 bittiğinde belgeye şu iki cümleden **biri** yazılır:
+> **Bu bölüm bir kez yanlış yazıldı ve düzeltildi (2026-08-18).** İlk sürüm ölçümü
+> *"tahmin ekseni kapalıdır"* diye özetliyordu. Ölçüm bunu söylemedi. Söylediği şey
+> **"denenen dokuz özellikten hiçbiri piyasayı geçmedi"** idi — ve bu ikisi aynı cümle
+> değil. Aradaki farkı yutmak, projenin kendi amacını (README §1: *maç sonucu tahmini
+> yapmak*) bir ölçüm sonucuyla iptal etmek olurdu. **Tahmin ekseni açıktır ve kapatılmaz.**
 
-> **(a)** *"31.103 maçta, sezon dışarıda bırakmalı ölçümde, şu özellik piyasayı şu kadar
-> geçiyor: [sayı, güven aralığı]. Faz C'ye giriyor."*
+**Durma kuralı bir SORUYA aittir, eksene değil.** Kapanan soru şudur:
 
-> **(b)** *"Denenen N özelliğin hiçbiri piyasayı geçemedi. Tahmin ekseni kapalıdır. Bu bir
-> kanaat değil ölçümdür; tekrar açılması için yeni bir **veri kaynağı** gerekir — yeni bir
-> model değil."*
-
-A1, A2 ve A3 bitti. **Yazılan cümle (b):**
-
-> **Dokuz özellik denendi; hiçbiri piyasayı geçemedi.** Ölçümlerin tamamı 31.100 maçlık
-> korpusta, sezon dışarıda bırakmalı, hafta üzerinden eşleştirilmiş bootstrap ile yapıldı;
-> "geçti" ölçütü güven aralığının tamamen sıfırın altında kalmasıdır.
+> *"Elimizdeki veriden türetilen bir özellik, piyasa fiyatını out-of-sample geçebilir mi?"*
 >
-> **Tahmin ekseni kapalıdır.** Bu bir kanaat değil ölçümdür. Tekrar açılması için yeni bir
-> **veri kaynağı** gerekir — yeni bir model değil.
+> **Cevap: hayır.** Dokuz özellik denendi, 31.100 maçlık korpusta, sezon dışarıda bırakmalı,
+> hafta üzerinden eşleştirilmiş bootstrap ile; "geçti" ölçütü güven aralığının tamamen
+> sıfırın altında kalmasıdır. Bu bir kanaat değil ölçümdür.
 
 | # | Denenen | Kesit | Sonuç |
 |---|---|---|---|
@@ -919,51 +915,74 @@ A1, A2 ve A3 bitti. **Yazılan cümle (b):**
 | 8 | Dinlenme + fikstür sıkışıklığı (A3) | 31.103 | Geçmedi |
 | 9 | İç/dış form + sezon sonu payı (A3) | 31.103 | Geçmedi |
 
-Ayrıca **iki bağımsız doğrulama** aynı yöne işaret ediyor:
+İki bağımsız doğrulama aynı yöne işaret ediyor: **açılış çizgisi kapanışın altında**
+(+0,0025, aralık tamamen sıfırın üstünde) — piyasa bilgiyi soğuruyor; ve **piyasanın kendi
+hareketi bile kapanışı yenemiyor.**
 
-- **Açılış çizgisi kapanışın altında** (+0,0025, aralık tamamen sıfırın üstünde). Piyasa maç
-  öncesinde gelen bilgiyi fiyata soğuruyor — piyasanın *çalıştığının* doğrudan ölçümü.
-- **Piyasanın kendi hareketi bile kapanışı yenemiyor.** Bu, "iyi bir model bulamadık"
-  demekten farklı bir cümledir.
+#### Kapanan ile açık kalan
 
-**`ps`'in geçmesi (a)'yı tetiklemiyor** ve sebebi kaydedilmelidir. A4(a)'nın şablonu şunu
-ister: *"şu **özellik** piyasayı şu kadar geçiyor → Faz C'ye giriyor."* `ps` bir özellik
-değil, hatta bir model bile değil — **aynı piyasanın başka bir okuması**. Üç somut sebep:
-
-1. **Yeni bilgi üretmiyor.** Kolektifin bir üyesi, kolektiften iyi. Bu veri kaynağı
-   seçimidir; tahmin yeteneği değil.
-2. **Faz C'ye çevrilemez.** Spor Toto müşterek bahistir; Pinnacle'ın fiyatından bahis
-   oynanmıyor. Arayüze konabilecek bir öneri çıkmıyor.
-3. **Büyüklük yine yetersiz.** 0,0004 Brier, tabanı 0,594 olan bir sayıda, %17,2'lik iddaa
-   marjının yanında hiç.
-
-Söylediği şey "tahmin edebiliyoruz" değil, **"referans çizgimiz 0,0004 kadar yumuşakmış"** —
-ve bu bir referans kararıdır (yukarıda), durma kuralı değil.
-
-#### Yeniden açılma koşulları — ölçülmüş, belirsiz değil
-
-**(b) çıktığı için Faz A bir daha açılmaz.** Aynı veriyle yeni model denemek, aynı soruyu
-daha yüksek sesle sormaktır. Ama (b) "hiçbir zaman" demiyor; **yeni veri kaynağı** diyor. A1–A3
-o kaynakların ne olduğunu belirsiz bırakmadı, üçünü de somutlaştırdı:
-
-| Yeniden açacak kaynak | Neden — ve hangi ölçüm işaret etti |
+| | Durum |
 |---|---|
-| **Fikstür verisi** (kupa + Avrupa maçları) | A3'ün kör nokta taraması: deplasman "dinlenmiş" göründüğünde ev takımı piyasayı +0,0655 aşıyor ve etki Avrupa liglerinde dört kat güçlü. Türetebildiğimiz yorgunluk vekili fiyatlanmış; **gerçek yorgunluk ölçülmedi** |
-| **Kadro / sakatlık verisi** | Hiçbir veri setinde yok (§8 madde 7). Piyasanın gördüğü, bizim görmediğimiz en büyük girdi |
-| **Şehir / rekabet tablosu** | A3'te seyahat ve derbi bu yüzden elendi — hesaplanamadıkları için, denenip elendikleri için değil |
+| **Piyasayı geçen özellik arayışı** | **Kapandı.** Aynı veriyle yeni model denemek, aynı soruyu daha yüksek sesle sormaktır |
+| **Tahmin üretmek** | **Açık ve kalıcı.** Projenin amacı bu; bir ölçüm sonucu onu iptal etmez |
 
-Bu üçü olmadan tahmin ekseninde yapılacak iş **yoktur**. Üçünden biri gelirse açılacak soru
-bellidir ve altyapı hazır: `cizgi.py`/`bahisci.py`/`disari.py` deseni aynen kullanılır.
+Aradaki fark pratikte şudur: elimizde **kalibre, ölçülmüş bir tahminci var** ve o piyasanın
+kendisidir. Bunu "yenemedik" diye rafa kaldırmak, çalışan bir aracı sırf daha iyisini
+bulamadık diye atmak olur. Ölçülen isabetiyle birlikte sunulduğu sürece bu tahmin
+**dürüsttür** — projenin karşı çıktığı şey ölçülmemiş bir üstünlük iddiasıydı, tahminin
+kendisi değil.
+
+Tahmincinin ölçülmüş hâli (kupon seti, 36 hafta · 540 maç):
+
+| Ölçü | Değer |
+|---|---|
+| Maç başına en olası seçim | **%55,6** |
+| Haftada ortalama doğru | **8,3 / 15** · en iyi hafta 12/15 |
+| Brier · log kaybı | 0,5747 · 0,9660 |
+| Tek kolonla 14+ | **0 / 36 hafta** |
+
+Son satır modelin kusuru değil **aritmetiktir** ve piyasanın kendi olasılıklarından çıkar:
+tek kolonla P(14+) ≈ 8,6·10⁻⁴, yani ~1/1.161 hafta. 36 haftada beklenen 14+ sayısı **0,031**;
+gözlenen **0**. Tahminci tam olması gerektiği kadar iyi çalışıyor — kalibre.
+
+**14+'a kaplama motoru taşır, tahminci değil.** Tek kolon yerine garanti veren bir sistem
+oynanır (haftada ort. 1,6 banko · 12,2 çift · 1,1 üçlü → 2.686 kolon). Sezon içi 3/36 hafta
+14 tuttu; **hold-out'ta 0/36** — aşırı uyum, ve bu da kayıtlı.
+
+#### Piyasayı geçmeyi yeniden mümkün kılacak kaynaklar
+
+Arayış kapandı ama "hiçbir zaman" demiyor: **yeni veri kaynağı** diyor. A1–A3 o kaynakları
+belirsiz bırakmadı, üçünü de somutlaştırdı:
+
+| Kaynak | Hangi ölçüm işaret etti |
+|---|---|
+| **Fikstür verisi** (kupa + Avrupa) | A3'ün kör nokta taraması: deplasman "dinlenmiş" göründüğünde ev takımı piyasayı +0,0655 aşıyor, etki Avrupa liglerinde dört kat güçlü. Türetebildiğimiz yorgunluk vekili fiyatlanmış; **gerçek yorgunluk ölçülmedi** |
+| **Kadro / sakatlık** | Hiçbir veri setinde yok. Piyasanın gördüğü, bizim görmediğimiz en büyük girdi |
+| **Şehir / rekabet tablosu** | A3'te seyahat ve derbi bu yüzden elendi — hesaplanamadıkları için |
+
+Biri geldiğinde açılacak soru bellidir ve altyapı hazır: `cizgi.py`/`bahisci.py`/`disari.py`
+deseni aynen kullanılır. Gelmediği sürece **aynı veriyle yeni model denenmez.**
+
+#### `ps` geçti — arayışı yeniden açar mı? Hayır
+
+`ps` (Pinnacle) kolektifi geçti: −0,0004 [−0,0006, −0,0002]. Ama bir özellik değil, model
+bile değil — **aynı piyasanın başka bir okuması**. Yeni bilgi üretmiyor; müşterek bahiste
+Pinnacle fiyatından oynanmadığı için ürüne çevrilemez; büyüklüğü yine 0,0004. Söylediği şey
+**"referans çizgimiz 0,0004 kadar yumuşakmış"** — bir referans kararı (yukarıda), arayışın
+sonucu değil.
 
 #### Faz A'nın asıl çıktısı
 
 Dokuz özellik, dört bağımsız açı, 31 bin maç — ve tek bir "geçti" yok. **Bu bir başarısızlık
-değil, projenin cevaplamak için kurulduğu sorunun cevabıdır.** Bu alandaki araçların
-neredeyse tamamı üstünlük *iddia eder*; hiçbiri üstünlüğün yokluğunu **ölçmez**.
+değil, projenin cevaplamak için kurulduğu sorunun cevabı.** Bu alandaki araçların neredeyse
+tamamı üstünlük *iddia eder*; hiçbiri üstünlüğün yokluğunu **ölçmez**.
 
-Pratik sonuç: **kazanma oranı tahmin tarafından artırılamaz.** Geriye çarpımsal hedefin
-diğer iki ekseni kalıyor — havuz (Faz B) ve kaplama (çözülmüş). Faz B'nin bugün öne çıkması
-bir tercih değil, **ölçümün sonucudur.**
+Pratik sonuç iki yönlü ve ikisi de eyleme dönük:
+
+1. **Tahmin ürünleşir.** Elimizdeki kalibre tahminci, ölçülmüş isabetiyle birlikte arayüze
+   çıkar (Faz C — artık koşulsuz, aşağıya bakınız).
+2. **Kazanç havuz ekseninden aranır.** Piyasayı tahminde yenmek gerekmiyor; kalabalığın
+   gitmediği yeri işaretlemek yetiyor (Faz B).
 
 ### 6.3 Faz B — havuz eksenini aç ve ölç
 
@@ -985,16 +1004,36 @@ yer maçların **yarısında yanlış**.
 
 ### 6.4 Faz C — karar katmanı ve ürün
 
-**Yalnızca A4(a) ya da B4(a) çıkarsa açılır** — C3 hariç, o bağımsızdır. Gösterilecek
-ölçülmüş bir şey yoksa C1/C2 hiç yapılmaz; ölçülmemiş bir üstünlüğü arayüze koymak projenin
-karşı çıktığı şeyin ta kendisidir.
+> **Koşul kaldırıldı (2026-08-18).** Bu bölüm önce *"yalnızca A4(a) ya da B4(a) çıkarsa
+> açılır"* diyordu. O koşul yanlış yere kondu: derdi **ölçülmemiş bir üstünlüğü** arayüze
+> koymamaktı, tahminin kendisini engellemek değil. Elimizde kalibre ve **ölçülmüş** bir
+> tahminci var; onu ölçülen isabetiyle birlikte göstermek doktrinin yasakladığı şey değil,
+> tam olarak istediği şeydir. **C2 koşulsuzdur.**
+
+Tek kural yerinde duruyor ve sertleşti: **hiçbir sayı ölçülmüş isabeti olmadan arayüze
+çıkmaz.** Bir tahmin gösterilecekse yanında "bu tahminci 540 maçta %55,6 tutturdu, tek
+kolonla 14+ hiç gelmedi" yazacak. Süslenmiş bir olasılık, süslenmemiş bir yalandır.
 
 | # | İş | Koşul |
 |---|---|---|
 | **C1** | Sentez katmanı (`insights.py`) | §6.6 G2'nin dört kuralı geçerli |
-| **C2** | Tahmin/öneri arayüzü | Öneri ancak ölçülmüş isabetiyle birlikte çıkar |
+| **C2** | **Tahmin arayüzü** | **Koşulsuz.** Öneri ancak ölçülmüş isabetiyle birlikte çıkar |
 | **C3** | Sayfayı soruya göre bölme | = eski **G1**. Bağımsız, her an yapılabilir |
 | **C4** | Dilim dürüstlüğü, gezinme, mobil | = eski **G3–G5** |
+
+#### C2'nin üç parçası — sırayla
+
+Bugün tahmin katmanı **ürüne hiç bağlı değil**: `web_app.py` onu import etmiyor, 11 API
+ucunun hiçbiri tahmin döndürmüyor, `/tahmin` diye bir sayfa yok. Ölçüm aracı olarak yaşıyor,
+ürün olarak değil. Eksik olan üç şey:
+
+| | İş | Neden gerekli |
+|---|---|---|
+| **C2a** | **Canlı oran bağlantısı** | Oran arşivi geçmiş sezonun; gelecek haftanın maçına oran yok. İddaa bülteni snapshot'ı (`snapshot_iddaa.py`) zaten haftalık toplanıyor ama tahminciye bağlı değil |
+| **C2b** | **`/api/tahmin/<hafta>`** | Maç maç 1/0/2 olasılığı + ölçülmüş isabet, tek gövdede |
+| **C2c** | **`/tahmin` sayfası** | Olasılıklar, önerilen kupon yapısı ve yanında dürüst isabet sayıları |
+
+Üçü de Faz B'yi beklemez.
 
 ### 6.5 Faz D — sonlanma
 
@@ -1002,7 +1041,7 @@ Proje şu **dört sorunun tamamı** ölçülmüş cevaba bağlandığında biter
 
 | # | Soru | Bugün | Nasıl kapanır |
 |---|---|---|---|
-| 1 | Kapanış çizgisini yenebiliyor muyuz? | **hayır, ölçüldü** | A1–A4 **kapandı** (§6.2 A4) |
+| 1 | Kapanış çizgisini **yenebiliyor** muyuz? | **hayır, ölçüldü** | A1–A4 (§6.2 A4) — arayış kapandı, tahmin ekseni açık kaldı |
 | 2 | Kalabalığı yenebiliyor muyuz? | bilinmiyor | B1–B4 |
 | 3 | Pozitif beklenen getirili kupon kurulabiliyor mu? | bilinmiyor | B3 |
 | 4 | Garanti hâlâ optimal mi? | **evet, kanıtlı** | kapandı |
@@ -1020,11 +1059,11 @@ değildir: bu alandaki araçların neredeyse tamamı birinciyi *iddia eder*, hi�
 
 ```
 A1 ─┐  ✔ bitti (§3.14)
-A2 ─┼─► A4  ✔ İŞLETİLDİ → (b): tahmin ekseni KAPALI
+A2 ─┼─► A4  ✔ arayış kapandı · TAHMİN EKSENİ AÇIK, kapatılmaz
 A3 ─┘  ✔ bitti (§3.16)
         B1 ─► B2 ─► B3 ─► B4  (havuz ekseni; B1 paralel başlayabilir)
 C3 (bağımsız, her an)
-                          └─► C1, C2 (yalnızca A4(a) ya da B4(a))  ─► C4 ─► D
+                          └─► C1 (koşullu) · C2 (KOŞULSUZ, sırada)  ─► C4 ─► D
 ```
 
 **Faz A bitti ve (b) ile kapandı** (§6.2 A4). **B1 artık tek açık kol** — o bir araştırma, kod değil.
@@ -1038,7 +1077,8 @@ Eski etiketler kayıp değil, yerleşti:
 | — | **A1** (§3.14) | **bitti** |
 | — | **A2** (§3.15) | **bitti** |
 | — | **A3** (§3.16) | **bitti** |
-| — | **A4** (§6.2) | **işletildi — (b)** |
+| — | **A4** (§6.2) | **arayış kapandı; eksen açık** |
+| G2 | **C2** — tahmin arayüzü | **koşulsuz, sırada** |
 | G1 | C3 | bekliyor |
 | G2 | C1 | koşullu |
 | G3–G5 | C4 | bekliyor |
