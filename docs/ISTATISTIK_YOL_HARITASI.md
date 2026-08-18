@@ -108,10 +108,10 @@ spor_toto/evaluate.py  ◄── spor_toto/predict.py     (sözleşme + 3 refera
 | UI | `frontend/components/tahmin/parts.tsx` | — | Olasılık çubuğu, isabet kartı, sınırlar |
 | Tahmin | `backend/spor_toto/egitim.py` | — | Eğitim korpusu okuyucusu (**istatistiğe girmez**) |
 | Üretim | `backend/scripts/build_egitim.py` | — | Korpus üretimi (football-data, 4 sezon, **iki çizgi + bahisçi kırılımı**) |
-| Test | `backend/tests/test_predict.py` · `test_evaluate.py` · `test_recalibrate.py` · `test_egitim.py` · `test_cizgi.py` · `test_bahisci.py` · `test_disari.py` · `test_tahmin.py` | — | Tahmin katmanı, **ürün** ve ayrım bekçisi (224) |
+| Test | `backend/tests/test_predict.py` · `test_evaluate.py` · `test_recalibrate.py` · `test_egitim.py` · `test_cizgi.py` · `test_bahisci.py` · `test_disari.py` · `test_tahmin.py` | — | Tahmin katmanı, **ürün** ve ayrım bekçisi (229) |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **906 test**; **82'si** istatistik katmanına, **224'ü** tahmin katmanına ait.
+paketi toplam **911 test**; **82'si** istatistik katmanına, **229'u** tahmin katmanına ait.
 `python -m spor_toto.health` **23 değişmez** çalıştırır — ikisi (`oran_arsivi`, `geri_test`)
 istatistik katmanını, biri (`tahmin_referanslari`) tahmin katmanının ölçüm koşumunu korur.
 
@@ -741,6 +741,50 @@ zamana "maç öncesi" demek, iddiayı doğrulanamaz kılar.
 yaklaşan maçları okur ve cevap zamanla değişir. Önbelleklenmiş bir tahmin, başlamış bir
 maça maç öncesi olasılığı göstermeye devam ederdi.
 
+#### İki tahminci yan yana — 31 binlik korpusun ürüne dönüşü
+
+Ürün ilk sürümünde yalnızca eğitimsiz `piyasa`yı taşıyordu ve **31.103 maçlık
+korpusun ürüne katkısı sıfırdı.** Korpusun işi "eğitmek yardım ediyor mu" sorusunu
+cevaplamaktı; cevap *"yön doğru, miktar kurulamadı"* çıkmıştı.
+
+Çapraz sınav (korpusta eğit → 540 maçlık kuponda ölç, **ortak maç yok**) şunu veriyor:
+eğitilmiş basamakların **on biri de** piyasadan iyi (0,5732–0,5737'ye karşı 0,5747) ama
+**hiçbiri geçmiyor** — her birinin güven aralığı sıfırı içeriyor.
+
+Bu bir çifte dürüstlük sorunu yarattı:
+
+| | Sonuç |
+|---|---|
+| Geçmemiş modeli **manşet yapmak** | Ölçülmemiş bir üstünlüğü arayüze koymak olurdu |
+| Ölçülmüş modeli **hiç göstermemek** | Ölçülen bir şeyi saklamak olurdu |
+
+Çözüm ikisini **yan yana** koymak:
+
+| Tahminci | Brier | Fark | %95 aralık | Geçti |
+|---|---:|---:|---|---|
+| `piyasa` (manşet, eğitimsiz) | 0,5747 | — | referans | — |
+| `kalibre_bias` | **0,5732** | −0,0015 | [−0,0035, +0,0004] | **hayır** |
+
+**`bias` basamağı seçildi ve seçim kasıtlı.** Üç parametresi var (sıcaklık + iki sınıf
+sabiti) ve yalnızca `probs` okur — lig, form, çizgi hareketi gibi yaklaşan maçta
+**elimizde olmayan** hiçbir alana ihtiyaç duymaz. Üst basamaklar o alanları nötr sıfır
+görüp aynı sayıyı üretirdi; fazladan parametre, fazladan iddia demek olurdu.
+
+**Ve bir şey ölçüldü:** alternatif, 117 maçın **hiçbirinde** farklı sembol seçmiyor.
+Yalnızca güveni keskinleştiriyor (%70,8 → %74,0). Yani *tek kolon oynayan biri için iki
+tahminci aynıdır*; fark ancak olasılığa dayalı bir kupon kurarken anlam taşır.
+`alternatif_farkli_secim` alanı bunu her koşumda sayar — kullanıcının tahmin etmesi değil
+**görmesi** gereken bir şey.
+
+**Sessiz ve zehirli bir hatanın bekçisi.** `recalibrate._mac_ozellikleri`, `ozellikler`
+alanı yoksa oran arşivine `(hafta, maç no)` ile bakar — kupon setine özgü bir yol.
+Yaklaşan maçta o arama **tamamen başka bir maçın** özelliğini döndürürdü. `_sozde_hafta`
+alanı açıkça doldurur ve `test_alternatif_sozde_haftada_kupon_arsivine_bakmaz` bekçidir.
+
+`test_alternatif_gecmedi_diye_etiketli` bilerek kırılgan: alternatif bir gün **geçerse**
+test kırılır ve manşet kararı bilinçli olarak gözden geçirilir — sessiz bir güncelleme
+olmaz.
+
 #### Sayfanın sıralaması bir karardır (C2c)
 
 **Ölçülmüş isabet, tahmin tablosunun üstündedir.** Kullanıcı önce bu tahmincinin 540 maçta
@@ -777,7 +821,8 @@ Filtre `?last=N` olarak adres çubuğunda durur; sayfa paylaşılabilir.
 sezon payı, kapanış oranı) · **"bu haftayı formüle gönder"** · sürprizler · ardışık bloklar ·
 komşu hafta gezinmesi.
 
-**`/tahmin`** — yaklaşan maçlara 1/0/2 olasılığı, **ölçülmüş isabet kartı tablonun
+**`/tahmin`** — yaklaşan maçlara 1/0/2 olasılığı **iki tahminciyle** (manşet `piyasa` +
+ölçülmüş alternatif `kalibre_bias`, farkı ve aralığıyla), **ölçülmüş isabet kartı tablonun
 üstünde** (maç başına %55,6 · haftada 8,33/15 · Brier 0,5747 · 14+ tutan hafta 0/36) ·
 günlere bölünmüş maç tablosu + olasılık çubuğu · katlanmayan sınırlar bloğu.
 
@@ -1431,7 +1476,7 @@ python -m spor_toto.disari                 # A3: piyasa dışı özellikler
 python -m spor_toto.tahmin                 # ÜRÜN: yaklaşan maçlara olasılık
 
 # Denetim
-pytest -q                                  # 906 test (82'si bu katman, 224'ü tahmin)
+pytest -q                                  # 911 test (82'si bu katman, 229'u tahmin)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out
 pytest -q tests/test_cizgi.py              # A1 ölçümü ve korpus bütünlüğü
