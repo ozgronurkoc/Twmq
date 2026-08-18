@@ -1,0 +1,690 @@
+<title>Süper Toto 1. Hafta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@1,6..96,400;1,6..96,600;0,6..96,600&display=swap">
+<style>
+:root {
+  --bg: hsl(0 0% 100%); --ink: hsl(258 30% 10%); --card: hsl(0 0% 100%);
+  --elev: hsl(260 40% 99%); --muted: hsl(260 20% 96%); --dim: hsl(258 12% 44%);
+  --line: hsl(260 16% 90%); --line2: hsl(260 16% 82%);
+  --primary: hsl(262 83% 58%); --accent: hsl(262 83% 96%);
+  --s1: hsl(262 83% 58%); --s0: hsl(199 89% 44%); --s2: hsl(330 76% 52%);
+  --warn: hsl(32 92% 45%); --warn-soft: hsl(38 95% 94%);
+  --ok: hsl(152 58% 38%); --ok-soft: hsl(152 60% 95%);
+  --shadow: 0 4px 20px -2px hsl(262 83% 58% / .10);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: hsl(258 28% 7%); --ink: hsl(260 20% 96%); --card: hsl(258 26% 10%);
+    --elev: hsl(258 24% 13%); --muted: hsl(258 20% 15%); --dim: hsl(258 12% 64%);
+    --line: hsl(258 18% 19%); --line2: hsl(258 18% 28%);
+    --primary: hsl(262 83% 70%); --accent: hsl(262 40% 18%);
+    --s1: hsl(262 83% 68%); --s0: hsl(199 89% 54%); --s2: hsl(330 76% 62%);
+    --warn: hsl(38 95% 62%); --warn-soft: hsl(32 60% 16%);
+    --ok: hsl(152 50% 55%); --ok-soft: hsl(152 40% 14%);
+    --shadow: 0 4px 24px -4px hsl(0 0% 0% / .5);
+  }
+}
+:root[data-theme="dark"] {
+  --bg: hsl(258 28% 7%); --ink: hsl(260 20% 96%); --card: hsl(258 26% 10%);
+  --elev: hsl(258 24% 13%); --muted: hsl(258 20% 15%); --dim: hsl(258 12% 64%);
+  --line: hsl(258 18% 19%); --line2: hsl(258 18% 28%);
+  --primary: hsl(262 83% 70%); --accent: hsl(262 40% 18%);
+  --s1: hsl(262 83% 68%); --s0: hsl(199 89% 54%); --s2: hsl(330 76% 62%);
+  --warn: hsl(38 95% 62%); --warn-soft: hsl(32 60% 16%);
+  --ok: hsl(152 50% 55%); --ok-soft: hsl(152 40% 14%);
+  --shadow: 0 4px 24px -4px hsl(0 0% 0% / .5);
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font: 15px/1.6 "Helvetica Neue", Helvetica, "Segoe UI", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 1120px; margin: 0 auto; padding: 40px 20px 80px; }
+h1, h2, h3 { font-family: "Bodoni Moda", Didot, "Bodoni MT", Georgia, serif; font-style: italic; font-weight: 600; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(32px, 6vw, 46px); line-height: 1.05; letter-spacing: -.01em; }
+h2 { font-size: 24px; line-height: 1.2; }
+h3 { font-size: 17px; }
+p { margin: 0; }
+.eyebrow { font: 600 10.5px/1 ui-sans-serif, sans-serif; letter-spacing: .16em; text-transform: uppercase; color: var(--dim); }
+section { margin-top: 56px; }
+section > header { display: flex; flex-direction: column; gap: 6px; padding-bottom: 14px; border-bottom: 1px solid var(--line2); margin-bottom: 22px; }
+section > header p { color: var(--dim); font-size: 13.5px; max-width: 68ch; }
+.mono, .num, table { font-variant-numeric: tabular-nums; }
+
+/* başlık */
+.hero { display: flex; flex-direction: column; gap: 14px; }
+.hero .prog { color: var(--dim); font-size: 14px; }
+.rozetler { display: flex; flex-wrap: wrap; gap: 8px; }
+.rozet { font-size: 11.5px; font-weight: 500; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line2); color: var(--dim); background: var(--muted); }
+.rozet.mor { background: var(--accent); border-color: var(--primary); color: var(--primary); }
+.rozet.uyari { background: var(--warn-soft); border-color: var(--warn); color: var(--warn); }
+
+/* stat */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 26px; }
+.stat { background: var(--elev); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; }
+.stat .k { font: 600 10.5px/1 sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--dim); }
+.stat .v { font-size: 27px; font-weight: 600; line-height: 1.15; margin-top: 7px; font-variant-numeric: tabular-nums; }
+.stat .a { font-size: 12px; color: var(--dim); margin-top: 3px; }
+
+/* tablo */
+.scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; background: var(--card); box-shadow: var(--shadow); }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { padding: 9px 10px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: middle; white-space: nowrap; }
+thead th { font: 600 10.5px/1.3 sans-serif; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); background: var(--muted); position: sticky; top: 0; }
+tbody tr:last-child td { border-bottom: 0; }
+td.num, th.num { text-align: right; }
+td.no { color: var(--dim); width: 28px; }
+td.mac { white-space: normal; min-width: 190px; font-weight: 500; }
+td.mac .lig { display: inline-block; margin-left: 7px; font-size: 10px; letter-spacing: .08em; color: var(--dim); border: 1px solid var(--line2); border-radius: 4px; padding: 1px 5px; vertical-align: 1px; }
+.sub { display: block; font-size: 11px; color: var(--dim); }
+.delta { display: block; font-size: 10.5px; font-weight: 600; }
+td.up .delta { color: var(--warn); }
+td.down .delta { color: var(--s0); }
+td.up { background: var(--warn-soft); }
+td.band { font-size: 12px; color: var(--dim); }
+tr.yok td { color: var(--dim); font-style: italic; }
+
+/* sembol çipi */
+.chip { display: inline-grid; place-items: center; width: 21px; height: 21px; border-radius: 6px; font: 700 12px/1 ui-monospace, "SF Mono", Menlo, monospace; color: #fff; margin-right: 3px; }
+.chip.s1 { background: var(--s1); } .chip.s0 { background: var(--s0); } .chip.s2 { background: var(--s2); }
+.chip.off { background: transparent; color: var(--line2); border: 1px dashed var(--line2); }
+
+/* kalabalık */
+.ayr { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.ayr li { display: grid; grid-template-columns: minmax(150px, 1.4fr) auto minmax(70px, 1fr) auto; align-items: center; gap: 12px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); font-size: 13px; }
+.ay-mac { font-weight: 500; }
+.ay-bar { height: 7px; border-radius: 999px; background: var(--muted); overflow: hidden; }
+.ay-bar i { display: block; height: 100%; border-radius: 999px; }
+.ayr li.up .ay-bar i { background: var(--warn); }
+.ayr li.down .ay-bar i { background: var(--s0); }
+.ay-num { font-size: 11.5px; color: var(--dim); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ay-num b { color: var(--ink); }
+
+/* kupon */
+.grid-kupon th, .grid-kupon td { padding: 5px 6px; text-align: center; }
+.grid-kupon th[scope="row"] { color: var(--dim); font-weight: 500; font-size: 11px; background: var(--muted); position: sticky; left: 0; }
+.grid-kupon .chip { margin: 0 1px; }
+.varyantlar { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; margin-top: 18px; }
+.var { border: 1px solid var(--line); border-radius: 14px; padding: 16px; background: var(--card); }
+.var.vurgu { border-color: var(--primary); box-shadow: var(--shadow); }
+.var header { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.var .kolon { font: 600 12px ui-monospace, Menlo, monospace; color: var(--primary); }
+.var-picks { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 12px; }
+.vp { font-size: 9.5px; color: var(--dim); border: 1px solid var(--line); border-radius: 6px; padding: 2px 4px; text-align: center; line-height: 1.25; }
+.vp em { display: block; font-style: normal; font: 700 12px ui-monospace, Menlo, monospace; color: var(--ink); }
+.var dl { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0 0 10px; }
+.var dt { font: 600 9.5px/1 sans-serif; letter-spacing: .09em; text-transform: uppercase; color: var(--dim); }
+.var dd { margin: 3px 0 0; font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.var dd.kotu { color: var(--warn); } .var dd.iyi { color: var(--ok); }
+.var .deg { font-size: 11.5px; color: var(--dim); border-top: 1px solid var(--line); padding-top: 9px; }
+
+/* gerekçe */
+.kural { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; margin-bottom: 30px; }
+.kural > div { border: 1px solid var(--line); border-radius: 14px; padding: 15px 16px; background: var(--card); border-top: 3px solid var(--line2); }
+.kural .kb { border-top-color: var(--s1); }
+.kural .kc { border-top-color: var(--s0); }
+.kural .ku { border-top-color: var(--s2); }
+.kural h4 { margin: 0 0 4px; font: 600 13px sans-serif; }
+.kural .adet { font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.kural .adet span { font-size: 12px; font-weight: 400; color: var(--dim); }
+.kural p { font-size: 12.5px; color: var(--dim); margin-top: 7px; }
+.kural code { font-size: 11.5px; background: var(--muted); padding: 1px 5px; border-radius: 4px; }
+
+.gerekceler { display: grid; gap: 12px; }
+.ger { border: 1px solid var(--line); border-left: 3px solid var(--line2); border-radius: 0 14px 14px 0; padding: 15px 18px; background: var(--card); }
+.ger.banko { border-left-color: var(--s1); }
+.ger.cifte { border-left-color: var(--s0); }
+.ger.uclu { border-left-color: var(--s2); }
+.ger > header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 9px; padding: 0; border: 0; }
+.ger-no { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 7px; background: var(--muted); color: var(--dim); font: 600 12px ui-monospace, Menlo, monospace; }
+.ger h3 { font-size: 16px; flex: 1 1 auto; min-width: 150px; }
+.ger-karar { font: 600 9.5px/1 sans-serif; letter-spacing: .12em; padding: 4px 8px; border-radius: 6px; background: var(--muted); color: var(--dim); }
+.ger.banko .ger-karar { background: var(--accent); color: var(--primary); }
+.ger ul { margin: 0; padding-left: 17px; display: flex; flex-direction: column; gap: 6px; }
+.ger li { font-size: 13px; line-height: 1.55; color: var(--dim); }
+.ger li b { color: var(--ink); }
+.ger li b.risk { color: var(--warn); }
+.ger li b.ok { color: var(--ok); }
+.ger li b.kal { color: var(--s2); }
+td.risk-n { color: var(--warn); font-weight: 600; }
+.anatomi { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; }
+.anatomi div { border: 1px solid var(--line); border-radius: 14px; padding: 15px 16px; background: var(--elev); font-size: 13px; color: var(--dim); }
+.anatomi h4 { margin: 0 0 6px; font: 600 13px sans-serif; color: var(--ink); }
+.anatomi b { color: var(--ink); }
+
+/* not */
+.not { border-left: 3px solid var(--warn); background: var(--warn-soft); padding: 14px 18px; border-radius: 0 12px 12px 0; font-size: 13.5px; }
+.not h3 { font-size: 15px; margin-bottom: 5px; }
+.notlar { display: flex; flex-direction: column; gap: 12px; }
+.notlar li { font-size: 13.5px; color: var(--dim); }
+.notlar b { color: var(--ink); }
+footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--line); color: var(--dim); font-size: 12px; }
+@media (max-width: 640px) {
+  .ayr li { grid-template-columns: 1fr auto; }
+  .ay-bar { grid-column: 1 / -1; }
+  .ay-num { grid-column: 1 / -1; text-align: left; }
+}
+</style>
+
+<div class="wrap">
+  <header class="hero">
+    <span class="eyebrow">Süper Toto 2026/2027 · işlenen sezon</span>
+    <h1>1. Hafta</h1>
+    <p class="prog">14.08.2026 - 17.08.2026 · 15 maç · iddaa taraf oranları ve tek platform oynanma yüzdeleriyle</p>
+    <div class="rozetler">
+      <span class="rozet mor">2026/2027</span>
+      <span class="rozet">iddaa oranı</span>
+      <span class="rozet">oynanma yüzdesi</span>
+      <span class="rozet uyari">sonuçlar YOK — bu rapor sonuçlar görülmeden yazıldı</span>
+    </div>
+  </header>
+
+  <div class="stats">
+    <div class="stat"><div class="k">Bahisçi marjı</div><div class="v">%18.9</div><div class="a">geçen sezon arşivi %7.26 — 2.6× daha yüksek</div></div>
+    <div class="stat"><div class="k">Beklenen 1 / 0 / 2</div><div class="v">6.2 · 3.9 · 4.9</div><div class="a">geçen sezon ort. 6.6 · 3.6 · 4.8</div></div>
+    <div class="stat"><div class="k">Favori tutar</div><div class="v">7.4–8.7</div><div class="a">piyasa – geçen sezon bantları · sezon ort. 8.2</div></div>
+    <div class="stat"><div class="k">Küme-içi</div><div class="v">%2.31</div><div class="a">≈ 1/43 — 14-garantinin geçerlilik koşulu</div></div>
+    <div class="stat"><div class="k">Kalabalık oranı</div><div class="v">0.45</div><div class="a">1'in altı: seçim kümem olasılığına göre fazla oynanmış</div></div>
+  </div>
+
+  <section>
+    <header>
+      <span class="eyebrow">Ölçüm · geçen sezonun kendi tabloları</span>
+      <h2>Maç maç</h2>
+      <p>Her satırda üç sayı üst üste: kalın olan <b>oynanma yüzdesi</b>, altındaki <b>marj arındırılmış piyasa olasılığı</b>, en altta ikisinin farkı. Sarı hücre, halkın piyasadan en az 6 puan fazla oynadığı seçenektir. Sağdaki bant, favorinin oranının geçen sezon 567 maçta ölçülen isabetidir.</p>
+    </header>
+    <div class="scroll">
+      <table>
+        <thead><tr>
+          <th>#</th><th>Maç</th><th class="num">Oran<br>1/0/2</th>
+          <th class="num">1<br><span class="sub">halk/piyasa</span></th>
+          <th class="num">0<br><span class="sub">halk/piyasa</span></th>
+          <th class="num">2<br><span class="sub">halk/piyasa</span></th>
+          <th>Favori bandı<br><span class="sub">geçen sezon isabeti</span></th>
+          <th>İşaretim</th>
+        </tr></thead>
+        <tbody>
+      <tr>
+        <td class="no">1</td>
+        <td class="mac">Galatasaray A.Ş. – Çorum FK<span class="lig">T1</span></td>
+        <td class="num mono">1.22<span class="sub">4.91</span><span class="sub">7.37</span></td>
+        <td class="num up"><b>78</b><span class="sub">71</span><span class="delta">+7</span></td><td class="num "><b>16</b><span class="sub">18</span><span class="delta">-2</span></td><td class="num "><b>6</b><span class="sub">12</span><span class="delta">-6</span></td>
+        <td class="band">1.20–1.35<span class="sub">%76.9 · n=39</span></td>
+        <td class="pick"><span class="chip s1">1</span><span class="chip s0 off">0</span><span class="chip s2 off">2</span></td>
+      </tr>
+      <tr>
+        <td class="no">2</td>
+        <td class="mac">Kasımpaşa A.Ş. – Trabzonspor A.Ş.<span class="lig">T1</span></td>
+        <td class="num mono">3.38<span class="sub">3.11</span><span class="sub">1.74</span></td>
+        <td class="num down"><b>12</b><span class="sub">25</span><span class="delta">-13</span></td><td class="num "><b>26</b><span class="sub">27</span><span class="delta">-1</span></td><td class="num up"><b>62</b><span class="sub">48</span><span class="delta">+14</span></td>
+        <td class="band">1.50–1.75<span class="sub">%60.4 · n=106</span></td>
+        <td class="pick"><span class="chip s1 off">1</span><span class="chip s0">0</span><span class="chip s2">2</span></td>
+      </tr>
+      <tr>
+        <td class="no">3</td>
+        <td class="mac">Konyaspor – Çaykur Rizespor A.Ş.<span class="lig">T1</span></td>
+        <td class="num mono">2.10<span class="sub">2.98</span><span class="sub">2.63</span></td>
+        <td class="num "><b>44</b><span class="sub">40</span><span class="delta">+4</span></td><td class="num up"><b>35</b><span class="sub">28</span><span class="delta">+7</span></td><td class="num down"><b>21</b><span class="sub">32</span><span class="delta">-11</span></td>
+        <td class="band">2.00 ve üstü<span class="sub">%46.9 · n=243</span></td>
+        <td class="pick"><span class="chip s1">1</span><span class="chip s0 off">0</span><span class="chip s2">2</span></td>
+      </tr>
+      <tr>
+        <td class="no">4</td>
+        <td class="mac">Gaziantep F.K. A.Ş. – Alanyaspor<span class="lig">T1</span></td>
+        <td class="num mono">2.18<span class="sub">2.88</span><span class="sub">2.60</span></td>
+        <td class="num "><b>38</b><span class="sub">39</span><span class="delta">-1</span></td><td class="num "><b>35</b><span class="sub">29</span><span class="delta">+6</span></td><td class="num "><b>27</b><span class="sub">32</span><span class="delta">-5</span></td>
+        <td class="band">2.00 ve üstü<span class="sub">%46.9 · n=243</span></td>
+        <td class="pick"><span class="chip s1">1</span><span class="chip s0 off">0</span><span class="chip s2">2</span></td>
+      </tr>
+      <tr>
+        <td class="no">5</td>
+        <td class="mac">Gençlerbirliği – Fenerbahçe A.Ş.<span class="lig">T1</span></td>
+        <td class="num mono">4.65<span class="sub">3.53</span><span class="sub">1.44</span></td>
+        <td class="num down"><b>3</b><span class="sub">18</span><span class="delta">-15</span></td><td class="num down"><b>10</b><span class="sub">24</span><span class="delta">-14</span></td><td class="num up"><b>87</b><span class="sub">58</span><span class="delta">+29</span></td>
+        <td class="band">1.35–1.50<span class="sub">%64.1 · n=64</span></td>
+        <td class="pick"><span class="chip s1 off">1</span><span class="chip s0">0</span><span class="chip s2">2</span></td>
+      </tr>
+      <tr>
+        <td class="no">6</td>
+        <td class="mac">Başakşehir FK – Kocaelispor<span class="lig">T1</span></td>
+        <td class="num mono">1.46<span class="sub">3.31</span><span class="sub">4.91</span></td>
+        <td class="num "><b>60</b><span class="sub">58</span><span class="delta">+2</span></td><td class="num "><b>28</b><span class="sub">25</span><span class="delta">+3</span></td><td class="num "><b>12</b><span class="sub">17</span><span class="delta">-5</span></td>
+        <td class="band">1.35–1.50<span class="sub">%64.1 · n=64</span></td>
+        <td class="pick"><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2 off">2</span></td>
+      </tr>
+      <tr>
+        <td class="no">7</td>
+        <td class="mac">Amed Sportif – Erzurumspor FK<span class="lig">T2</span></td>
+        <td class="num mono">1.91<span class="sub">2.99</span><span class="sub">2.99</span></td>
+        <td class="num "><b>45</b><span class="sub">44</span><span class="delta">+1</span></td><td class="num "><b>34</b><span class="sub">28</span><span class="delta">+6</span></td><td class="num down"><b>21</b><span class="sub">28</span><span class="delta">-7</span></td>
+        <td class="band">1.75–2.00<span class="sub">%50.0 · n=104</span></td>
+        <td class="pick"><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2 off">2</span></td>
+      </tr>
+      <tr>
+        <td class="no">8</td>
+        <td class="mac">Beşiktaş A.Ş. – Eyüpspor<span class="lig">T1</span></td>
+        <td class="num mono">1.15<span class="sub">5.09</span><span class="sub">7.82</span></td>
+        <td class="num up"><b>89</b><span class="sub">73</span><span class="delta">+16</span></td><td class="num down"><b>9</b><span class="sub">16</span><span class="delta">-7</span></td><td class="num down"><b>2</b><span class="sub">11</span><span class="delta">-9</span></td>
+        <td class="band">1.00–1.20<span class="sub">%90.9 · n=11</span></td>
+        <td class="pick"><span class="chip s1">1</span><span class="chip s0 off">0</span><span class="chip s2 off">2</span></td>
+      </tr>
+      <tr>
+        <td class="no">9</td>
+        <td class="mac">Samsunspor A.Ş. – Göztepe A.Ş.<span class="lig">T1</span></td>
+        <td class="num mono">2.00<span class="sub">3.02</span><span class="sub">2.90</span></td>
+        <td class="num "><b>37</b><span class="sub">43</span><span class="delta">-6</span></td><td class="num up"><b>35</b><span class="sub">28</span><span class="delta">+7</span></td><td class="num "><b>28</b><span class="sub">29</span><span class="delta">-1</span></td>
+        <td class="band">2.00 ve üstü<span class="sub">%46.9 · n=243</span></td>
+        <td class="pick"><span class="chip s1">1</span><span class="chip s0 off">0</span><span class="chip s2">2</span></td>
+      </tr>
+      <tr>
+        <td class="no">10</td>
+        <td class="mac">Arsenal – Manchester City<span class="lig">E0</span></td>
+        <td class="num mono">2.39<span class="sub">2.98</span><span class="sub">2.28</span></td>
+        <td class="num "><b>34</b><span class="sub">35</span><span class="delta">-1</span></td><td class="num "><b>29</b><span class="sub">28</span><span class="delta">+1</span></td><td class="num "><b>37</b><span class="sub">37</span><span class="delta">+0</span></td>
+        <td class="band">2.00 ve üstü<span class="sub">%46.9 · n=243</span></td>
+        <td class="pick"><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2">2</span></td>
+      </tr>
+      <tr>
+        <td class="no">11</td>
+        <td class="mac">RC Lens – PSG<span class="lig">F1</span></td>
+        <td class="num mono">4.16<span class="sub">3.57</span><span class="sub">1.49</span></td>
+        <td class="num "><b>17</b><span class="sub">20</span><span class="delta">-3</span></td><td class="num "><b>23</b><span class="sub">24</span><span class="delta">-1</span></td><td class="num "><b>60</b><span class="sub">56</span><span class="delta">+4</span></td>
+        <td class="band">1.35–1.50<span class="sub">%64.1 · n=64</span></td>
+        <td class="pick"><span class="chip s1 off">1</span><span class="chip s0">0</span><span class="chip s2">2</span></td>
+      </tr>
+      <tr>
+        <td class="no">12</td>
+        <td class="mac">Sevilla – Rayo Vallecano<span class="lig">SP1</span></td>
+        <td class="num mono">2.21<span class="sub">2.58</span><span class="sub">2.84</span></td>
+        <td class="num up"><b>56</b><span class="sub">38</span><span class="delta">+18</span></td><td class="num "><b>31</b><span class="sub">33</span><span class="delta">-2</span></td><td class="num down"><b>13</b><span class="sub">30</span><span class="delta">-17</span></td>
+        <td class="band">2.00 ve üstü<span class="sub">%46.9 · n=243</span></td>
+        <td class="pick"><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2">2</span></td>
+      </tr>
+      <tr>
+        <td class="no">13</td>
+        <td class="mac">Racing Santander – Villarreal<span class="lig">SP1</span></td>
+        <td class="num mono">3.25<span class="sub">3.36</span><span class="sub">1.70</span></td>
+        <td class="num down"><b>18</b><span class="sub">26</span><span class="delta">-8</span></td><td class="num "><b>27</b><span class="sub">25</span><span class="delta">+2</span></td><td class="num "><b>55</b><span class="sub">49</span><span class="delta">+6</span></td>
+        <td class="band">1.50–1.75<span class="sub">%60.4 · n=106</span></td>
+        <td class="pick"><span class="chip s1">1</span><span class="chip s0 off">0</span><span class="chip s2">2</span></td>
+      </tr>
+      <tr>
+        <td class="no">14</td>
+        <td class="mac">Espanyol – Levante<span class="lig">SP1</span></td>
+        <td class="num mono">1.87<span class="sub">2.86</span><span class="sub">3.27</span></td>
+        <td class="num "><b>48</b><span class="sub">45</span><span class="delta">+3</span></td><td class="num "><b>34</b><span class="sub">29</span><span class="delta">+5</span></td><td class="num down"><b>18</b><span class="sub">26</span><span class="delta">-8</span></td>
+        <td class="band">1.75–2.00<span class="sub">%50.0 · n=104</span></td>
+        <td class="pick"><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2 off">2</span></td>
+      </tr>
+      <tr>
+        <td class="no">15</td>
+        <td class="mac">Celta Vigo – Osasuna<span class="lig">SP1</span></td>
+        <td class="num mono">1.80<span class="sub">2.98</span><span class="sub">3.35</span></td>
+        <td class="num up"><b>77</b><span class="sub">47</span><span class="delta">+30</span></td><td class="num down"><b>14</b><span class="sub">28</span><span class="delta">-14</span></td><td class="num down"><b>9</b><span class="sub">25</span><span class="delta">-16</span></td>
+        <td class="band">1.75–2.00<span class="sub">%50.0 · n=104</span></td>
+        <td class="pick"><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2 off">2</span></td>
+      </tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <header>
+      <span class="eyebrow">Karşılaştırma · 41 hafta, 615 maç</span>
+      <h2>Bu hafta ↔ geçen sezon</h2>
+      <p>Soldaki sütun bu haftanın oranlarından, sağdaki 2025/2026 sezonunun gerçekleşmiş kaydından gelir. Hiçbiri tahmin değildir: ikisi de ölçülmüş sayılardır ve aralarındaki fark, bu haftanın sıradışı olup olmadığını söyler.</p>
+    </header>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Ölçü</th><th class="num">Bu hafta</th><th class="num">Geçen sezon</th><th>Not</th></tr></thead>
+        <tbody>
+          <tr><td>Beklenen "1"</td><td class="num mono">6.19</td><td class="num mono">6.59</td><td class="band">haftalık ortalama</td></tr>
+          <tr><td>Beklenen "0"</td><td class="num mono">3.90</td><td class="num mono">3.63</td><td class="band">beraberlik bütçesi</td></tr>
+          <tr><td>Beklenen "2"</td><td class="num mono">4.90</td><td class="num mono">4.78</td><td class="band">deplasman</td></tr>
+          <tr><td>Favori dağılımı (1/0/2)</td><td class="num mono">10 / 0 / 5</td><td class="num mono">%66 / 0 / %34</td><td class="band">beraberlik hiçbir maçta favori olmaz</td></tr>
+          <tr><td>Favori kaç maçta tutar</td><td class="num mono">7.44 – 8.65</td><td class="num mono">8.23</td><td class="band">piyasa – geçen sezon bantları</td></tr>
+          <tr><td>İlk iki sembol kapsar</td><td class="num mono">11.51 – 11.98</td><td class="num mono">—</td><td class="band">çift işaretin karşılığı</td></tr>
+          <tr><td>Beraberlik (profil tablosu)</td><td class="num mono">3.77</td><td class="num mono">3.63</td><td class="band">favori–ikinci farkına göre</td></tr>
+          <tr><td>Bahisçi marjı</td><td class="num mono">%18.86</td><td class="num mono">%7.26</td><td class="band">iddaa ↔ football-data kapanış</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="margin-top:28px;margin-bottom:12px">Lig kırılımı</h3>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Lig</th><th class="num">Bu hafta</th><th class="num">Geçen sezon /hafta</th><th class="num">Beraberlik</th><th class="num">Favori isabeti</th></tr></thead>
+        <tbody><tr><td>T1</td><td class="num">8</td><td class="num">7.5</td><td class="num">%29.8</td><td class="num">%53.0</td></tr><tr><td>SP1</td><td class="num">4</td><td class="num">1.3</td><td class="num">%12.0</td><td class="num">%76.0</td></tr><tr class="yok"><td>T2</td><td class="num">1</td><td colspan="3">geçen sezon arşivinde yok — karşılaştırılamaz</td></tr><tr><td>E0</td><td class="num">1</td><td class="num">1.9</td><td class="num">%19.7</td><td class="num">%47.9</td></tr><tr><td>F1</td><td class="num">1</td><td class="num">0.7</td><td class="num">%0.0</td><td class="num">%52.0</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <header>
+      <span class="eyebrow">Yeni boyut · geçen sezonda karşılığı yok</span>
+      <h2>Kalabalık nerede toplanmış</h2>
+      <p>Spor Toto müşterek bahistir: ikramiye kazananlara bölünür. Yani aynı olasılıktaki iki sonuçtan <b>az oynananı</b> işaretlemek, tutturma olasılığını değiştirmeden alınacak payı büyütür. Bu, piyasayı tahminde yenmeyi gerektirmeyen tek kaldıraçtır — ve geçen sezon verisinde ölçülemiyordu. Aşağıdakiler halkın piyasadan en çok ayrıştığı altı seçenek.</p>
+    </header>
+    <ul class="ayr">
+      <li class="up">
+        <span class="ay-mac">15. Celta Vigo – Osasuna</span>
+        <span class="chip s1">1</span>
+        <span class="ay-bar"><i style="width:91%"></i></span>
+        <span class="ay-num">halk %77 · piyasa %47
+          <b>+30 puan</b></span>
+      </li>
+      <li class="up">
+        <span class="ay-mac">5. Gençlerbirliği – Fenerbahçe A.Ş.</span>
+        <span class="chip s2">2</span>
+        <span class="ay-bar"><i style="width:86%"></i></span>
+        <span class="ay-num">halk %87 · piyasa %58
+          <b>+29 puan</b></span>
+      </li>
+      <li class="up">
+        <span class="ay-mac">12. Sevilla – Rayo Vallecano</span>
+        <span class="chip s1">1</span>
+        <span class="ay-bar"><i style="width:54%"></i></span>
+        <span class="ay-num">halk %56 · piyasa %38
+          <b>+18 puan</b></span>
+      </li>
+      <li class="down">
+        <span class="ay-mac">12. Sevilla – Rayo Vallecano</span>
+        <span class="chip s2">2</span>
+        <span class="ay-bar"><i style="width:50%"></i></span>
+        <span class="ay-num">halk %13 · piyasa %30
+          <b>-17 puan</b></span>
+      </li>
+      <li class="up">
+        <span class="ay-mac">8. Beşiktaş A.Ş. – Eyüpspor</span>
+        <span class="chip s1">1</span>
+        <span class="ay-bar"><i style="width:48%"></i></span>
+        <span class="ay-num">halk %89 · piyasa %73
+          <b>+16 puan</b></span>
+      </li>
+      <li class="down">
+        <span class="ay-mac">15. Celta Vigo – Osasuna</span>
+        <span class="chip s2">2</span>
+        <span class="ay-bar"><i style="width:48%"></i></span>
+        <span class="ay-num">halk %9 · piyasa %25
+          <b>-16 puan</b></span>
+      </li></ul>
+    <p style="margin-top:16px;font-size:13px;color:var(--dim)">
+      Toplamda halk favorilere piyasanın verdiğinden ortalama <b style="color:var(--ink)">+8.6 puan</b> fazla oynamış;
+      4 maçta %70'in üzerinde mutabakat var. Sembol başına toplam pay:
+      "1" halk 6.56 ↔ piyasa 6.19 ·
+      "0" halk 3.86 ↔ piyasa 3.90 ·
+      "2" halk 4.58 ↔ piyasa 4.90.
+      Beraberlik <b style="color:var(--ink)">aggregate olarak az oynanmamış</b> — sapma tek tek favorilerde toplanıyor.
+    </p>
+  </section>
+
+  <section>
+    <header>
+      <span class="eyebrow">Çıktı · sonuçlar görülmeden donduruldu</span>
+      <h2>Kupon</h2>
+      <p>İşaret seçimi <b>yalnızca</b> 2025/2026 geri testinin varsayılan eşiğinden gelir: favori olasılığı ≥%68 ise banko, &lt;%38 ise üçlü, arası çifte. Bu haftanın oynanma yüzdeleri işaret seçimine <b>girmemiştir</b> — yukarıdaki kalabalık ölçüsü yalnızca sonucu okumak için hesaplandı. 16 satır, 14 doğru garantili; garanti koşulludur: ancak gerçek sonuç seçim kümesinin içindeyse geçerlidir.</p>
+    </header>
+    <div class="scroll">
+      <table class="grid-kupon">
+        <thead><tr><th></th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th><th>11</th><th>12</th><th>13</th><th>14</th><th>15</th></tr></thead>
+        <tbody><tr><th scope="row">1</th><td><span class="chip s1">1</span></td><td><span class="chip s0">0</span></td><td><span class="chip s1">1</span></td><td><span class="chip s1">1</span></td><td><span class="chip s0">0</span></td><td><span class="chip s1">1</span></td><td><span class="chip s1">1</span></td><td><span class="chip s1">1</span></td><td><span class="chip s1">1</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2">2</span></td><td><span class="chip s0">0</span><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span></td></tr><tr><th scope="row">2</th><td><span class="chip s1">1</span></td><td><span class="chip s0">0</span></td><td><span class="chip s1">1</span></td><td><span class="chip s1">1</span></td><td><span class="chip s2">2</span></td><td><span class="chip s1">1</span></td><td><span class="chip s0">0</span></td><td><span class="chip s1">1</span></td><td><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2">2</span></td><td><span class="chip s0">0</span><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span></td></tr><tr><th scope="row">3</th><td><span class="chip s1">1</span></td><td><span class="chip s0">0</span></td><td><span class="chip s1">1</span></td><td><span class="chip s2">2</span></td><td><span class="chip s0">0</span></td><td><span class="chip s0">0</span></td><td><span class="chip s0">0</span></td><td><span class="chip s1">1</span></td><td><span class="chip s1">1</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2">2</span></td><td><span class="chip s0">0</span><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span></td></tr><tr><th scope="row">4</th><td><span class="chip s1">1</span></td><td><span class="chip s0">0</span></td><td><span class="chip s1">1</span></td><td><span class="chip s2">2</span></td><td><span class="chip s2">2</span></td><td><span class="chip s0">0</span></td><td><span class="chip s1">1</span></td><td><span class="chip s1">1</span></td><td><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2">2</span></td><td><span class="chip s0">0</span><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span></td></tr><tr><th scope="row">5</th><td><span class="chip s1">1</span></td><td><span class="chip s0">0</span></td><td><span class="chip s2">2</span></td><td><span class="chip s1">1</span></td><td><span class="chip s0">0</span></td><td><span class="chip s0">0</span></td><td><span class="chip s0">0</span></td><td><span class="chip s1">1</span></td><td><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2">2</span></td><td><span class="chip s0">0</span><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span></td></tr><tr><th scope="row">6</th><td><span class="chip s1">1</span></td><td><span class="chip s0">0</span></td><td><span class="chip s2">2</span></td><td><span class="chip s1">1</span></td><td><span class="chip s2">2</span></td><td><span class="chip s0">0</span></td><td><span class="chip s1">1</span></td><td><span class="chip s1">1</span></td><td><span class="chip s1">1</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2">2</span></td><td><span class="chip s0">0</span><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span></td></tr><tr><th scope="row">7</th><td><span class="chip s1">1</span></td><td><span class="chip s0">0</span></td><td><span class="chip s2">2</span></td><td><span class="chip s2">2</span></td><td><span class="chip s0">0</span></td><td><span class="chip s1">1</span></td><td><span class="chip s1">1</span></td><td><span class="chip s1">1</span></td><td><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2">2</span></td><td><span class="chip s0">0</span><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span></td></tr><tr><th scope="row">8</th><td><span class="chip s1">1</span></td><td><span class="chip s0">0</span></td><td><span class="chip s2">2</span></td><td><span class="chip s2">2</span></td><td><span class="chip s2">2</span></td><td><span class="chip s1">1</span></td><td><span class="chip s0">0</span></td><td><span class="chip s1">1</span></td><td><span class="chip s1">1</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2">2</span></td><td><span class="chip s0">0</span><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span></td></tr><tr><th scope="row">9</th><td><span class="chip s1">1</span></td><td><span class="chip s2">2</span></td><td><span class="chip s1">1</span></td><td><span class="chip s1">1</span></td><td><span class="chip s0">0</span></td><td><span class="chip s0">0</span></td><td><span class="chip s1">1</span></td><td><span class="chip s1">1</span></td><td><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2">2</span></td><td><span class="chip s0">0</span><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span></td></tr><tr><th scope="row">10</th><td><span class="chip s1">1</span></td><td><span class="chip s2">2</span></td><td><span class="chip s1">1</span></td><td><span class="chip s1">1</span></td><td><span class="chip s2">2</span></td><td><span class="chip s0">0</span></td><td><span class="chip s0">0</span></td><td><span class="chip s1">1</span></td><td><span class="chip s1">1</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2">2</span></td><td><span class="chip s0">0</span><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span></td></tr><tr><th scope="row">11</th><td><span class="chip s1">1</span></td><td><span class="chip s2">2</span></td><td><span class="chip s1">1</span></td><td><span class="chip s2">2</span></td><td><span class="chip s0">0</span></td><td><span class="chip s1">1</span></td><td><span class="chip s0">0</span></td><td><span class="chip s1">1</span></td><td><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2">2</span></td><td><span class="chip s0">0</span><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span></td></tr><tr><th scope="row">12</th><td><span class="chip s1">1</span></td><td><span class="chip s2">2</span></td><td><span class="chip s1">1</span></td><td><span class="chip s2">2</span></td><td><span class="chip s2">2</span></td><td><span class="chip s1">1</span></td><td><span class="chip s1">1</span></td><td><span class="chip s1">1</span></td><td><span class="chip s1">1</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2">2</span></td><td><span class="chip s0">0</span><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span></td></tr><tr><th scope="row">13</th><td><span class="chip s1">1</span></td><td><span class="chip s2">2</span></td><td><span class="chip s2">2</span></td><td><span class="chip s1">1</span></td><td><span class="chip s0">0</span></td><td><span class="chip s1">1</span></td><td><span class="chip s0">0</span></td><td><span class="chip s1">1</span></td><td><span class="chip s1">1</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2">2</span></td><td><span class="chip s0">0</span><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span></td></tr><tr><th scope="row">14</th><td><span class="chip s1">1</span></td><td><span class="chip s2">2</span></td><td><span class="chip s2">2</span></td><td><span class="chip s1">1</span></td><td><span class="chip s2">2</span></td><td><span class="chip s1">1</span></td><td><span class="chip s1">1</span></td><td><span class="chip s1">1</span></td><td><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2">2</span></td><td><span class="chip s0">0</span><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span></td></tr><tr><th scope="row">15</th><td><span class="chip s1">1</span></td><td><span class="chip s2">2</span></td><td><span class="chip s2">2</span></td><td><span class="chip s2">2</span></td><td><span class="chip s0">0</span></td><td><span class="chip s0">0</span></td><td><span class="chip s1">1</span></td><td><span class="chip s1">1</span></td><td><span class="chip s1">1</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2">2</span></td><td><span class="chip s0">0</span><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span></td></tr><tr><th scope="row">16</th><td><span class="chip s1">1</span></td><td><span class="chip s2">2</span></td><td><span class="chip s2">2</span></td><td><span class="chip s2">2</span></td><td><span class="chip s2">2</span></td><td><span class="chip s0">0</span></td><td><span class="chip s0">0</span></td><td><span class="chip s1">1</span></td><td><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2">2</span></td><td><span class="chip s0">0</span><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s2">2</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span></td><td><span class="chip s1">1</span><span class="chip s0">0</span></td></tr></tbody>
+      </table>
+    </div>
+    <div class="varyantlar">
+      
+    <article class="var vurgu">
+      <header><h3>Ana — kural birebir</h3><span class="kolon">2.304 kolon</span></header>
+      <div class="var-picks"><span class="vp">1<em>1</em></span><span class="vp">2<em>02</em></span><span class="vp">3<em>12</em></span><span class="vp">4<em>12</em></span><span class="vp">5<em>02</em></span><span class="vp">6<em>10</em></span><span class="vp">7<em>10</em></span><span class="vp">8<em>1</em></span><span class="vp">9<em>12</em></span><span class="vp">10<em>102</em></span><span class="vp">11<em>02</em></span><span class="vp">12<em>102</em></span><span class="vp">13<em>12</em></span><span class="vp">14<em>10</em></span><span class="vp">15<em>10</em></span></div>
+      <dl>
+        <div><dt>Küme-içi</dt><dd>%2.309</dd></div>
+        <div><dt>Kalabalık-içi</dt><dd>%5.115</dd></div>
+        <div><dt>Oran</dt><dd class="kotu">0.45</dd></div>
+        <div><dt>Satır</dt><dd>16</dd></div>
+      </dl>
+      <p class="deg">kural birebir — kısılan yok</p>
+    </article>
+      
+    <article class="var">
+      <header><h3>Bütçeli</h3><span class="kolon">512 kolon</span></header>
+      <div class="var-picks"><span class="vp">1<em>1</em></span><span class="vp">2<em>02</em></span><span class="vp">3<em>12</em></span><span class="vp">4<em>12</em></span><span class="vp">5<em>02</em></span><span class="vp">6<em>10</em></span><span class="vp">7<em>10</em></span><span class="vp">8<em>1</em></span><span class="vp">9<em>12</em></span><span class="vp">10<em>12</em></span><span class="vp">11<em>02</em></span><span class="vp">12<em>1</em></span><span class="vp">13<em>12</em></span><span class="vp">14<em>10</em></span><span class="vp">15<em>10</em></span></div>
+      <dl>
+        <div><dt>Küme-içi</dt><dd>%0.630</dd></div>
+        <div><dt>Kalabalık-içi</dt><dd>%2.034</dd></div>
+        <div><dt>Oran</dt><dd class="kotu">0.31</dd></div>
+        <div><dt>Satır</dt><dd>16</dd></div>
+      </dl>
+      <p class="deg">10. mac: 102 -&gt; 12; 12. mac: 102 -&gt; 1</p>
+    </article>
+      
+    <article class="var">
+      <header><h3>Kısıtlı</h3><span class="kolon">256 kolon</span></header>
+      <div class="var-picks"><span class="vp">1<em>1</em></span><span class="vp">2<em>02</em></span><span class="vp">3<em>12</em></span><span class="vp">4<em>12</em></span><span class="vp">5<em>02</em></span><span class="vp">6<em>10</em></span><span class="vp">7<em>10</em></span><span class="vp">8<em>1</em></span><span class="vp">9<em>12</em></span><span class="vp">10<em>2</em></span><span class="vp">11<em>02</em></span><span class="vp">12<em>1</em></span><span class="vp">13<em>12</em></span><span class="vp">14<em>10</em></span><span class="vp">15<em>10</em></span></div>
+      <dl>
+        <div><dt>Küme-içi</dt><dd>%0.322</dd></div>
+        <div><dt>Kalabalık-içi</dt><dd>%1.060</dd></div>
+        <div><dt>Oran</dt><dd class="kotu">0.30</dd></div>
+        <div><dt>Satır</dt><dd>16</dd></div>
+      </dl>
+      <p class="deg">10. mac: 102 -&gt; 2; 12. mac: 102 -&gt; 1</p>
+    </article>
+    </div>
+    <p style="margin-top:14px;font-size:12.5px;color:var(--dim)">Yukarıdaki 16 satırlık ızgara <b style="color:var(--ink)">ana</b> sürümündür. Bütçeli ve kısıtlı sürümlerin satırları da aynı motorla üretildi ve repoda <code>hafta_01_kupon.json</code> içinde duruyor.</p>
+  </section>
+
+  <section>
+    <header>
+      <span class="eyebrow">Gerekçe · her işaretin sebebi</span>
+      <h2>Neden bu işaretler?</h2>
+      <p>Kupondaki hiçbir işaret sezgiyle konmadı. Tek bir kural var ve her maça aynı uygulanıyor: <b>maçın favori olasılığı</b> hangi aralığa düşüyorsa işaret sayısı odur. Eşikler bu haftadan değil, geçen sezonun 36 haftalık geri testinden gelir.</p>
+    </header>
+
+    <div class="kural">
+      <div class="kb">
+        <h4>Banko — tek işaret</h4>
+        <div class="adet">2 <span>maç</span></div>
+        <p>Favori olasılığı <code>≥ %68</code>. Bu sayı ölçümden geldi: geçen sezon favori oranı 1.35'in altına inince isabet %64'ün üstüne çıkıyordu, marj arındırılmış karşılığı ~0,68. <b>Yanlışsa kupon tamamen ölür.</b></p>
+      </div>
+      <div class="kc">
+        <h4>Çifte — iki işaret</h4>
+        <div class="adet">11 <span>maç</span></div>
+        <p>Arada kalan her maç. En olası iki sembol işaretlenir; üçüncüsü feda edilir. Geçen sezon ilk iki sembol, maçların <b>%77–87</b>'sini gerçekten kapsadı (bant başına değişir).</p>
+      </div>
+      <div class="ku">
+        <h4>Üçlü — üç işaret</h4>
+        <div class="adet">2 <span>maç</span></div>
+        <p>Favori olasılığı <code>&lt; %38</code>. Piyasanın kendisinin karar veremediği maç. Kapatmak kolonu 3'e katlar ama o maçtan <b>asla</b> hata gelmez.</p>
+      </div>
+    </div>
+
+    <div class="gerekceler">
+      <article class="ger banko">
+        <header>
+          <span class="ger-no">1</span>
+          <h3>Galatasaray A.Ş. – Çorum FK</h3>
+          <span class="ger-karar">BANKO</span>
+          <span class="ger-pick"><span class="chip s1">1</span><span class="chip s0 off">0</span><span class="chip s2 off">2</span></span>
+        </header>
+        <ul><li>Favori olasılığı <b>%70.7</b>, banko eşiğinin (%68) üstünde — kural tek işaret diyor.</li><li>Geçen sezon <b>1.20–1.35</b> oran bandındaki 39 maçın %76.9'i favoriye gitti; bandın kaçırdıklarının %17.9'i beraberlikti.</li><li><b class="risk">Bedeli:</b> %29.3 ihtimalle bu maç kuponu tamamen dışarı atar. Banko yanlışsa 14-garanti geçersizdir — kuponun en kırılgan yeri burasıdır.</li></ul>
+      </article>
+      <article class="ger cifte">
+        <header>
+          <span class="ger-no">2</span>
+          <h3>Kasımpaşa A.Ş. – Trabzonspor A.Ş.</h3>
+          <span class="ger-karar">ÇİFTE</span>
+          <span class="ger-pick"><span class="chip s1 off">1</span><span class="chip s0">0</span><span class="chip s2">2</span></span>
+        </header>
+        <ul><li>Favori olasılığı <b>%48.2</b> — banko için (%68) düşük, üçlü için (%38) yüksek. Aradaki her maç çifte olur.</li><li>İkinci işaret <b>0</b> (beraberlik, %27.0), çünkü dışarıda bıraktığımız <b>1</b> ondan 2.2 puan düşük (%24.8). <b class="risk">Bu fark kıl payı</b> — sıralama neredeyse rastgele; sonuç buradan gelirse suç olasılıkta değil, farkın küçüklüğünde.</li><li>Geçen sezon ilk iki sembolün toplamı <b>%70–%80</b> bandında olan 372 maçın <b>%77.4</b>'i gerçekten o iki sembolden birine gitti. Bu haftaki toplam %75.</li><li><b class="risk">Bedeli:</b> %24.8 ihtimalle bu maç kuponu dışarı atar.</li><li><b class="kal">Kalabalık:</b> halk <b>2</b>'e piyasadan 14 puan fazla oynamış (%62 ↔ %48). Bu sembol işaretimin <b>içinde</b> — bu sonuç gelirse ikramiyeyi kalabalık bir grupla bölüşürüz.</li></ul>
+      </article>
+      <article class="ger cifte">
+        <header>
+          <span class="ger-no">3</span>
+          <h3>Konyaspor – Çaykur Rizespor A.Ş.</h3>
+          <span class="ger-karar">ÇİFTE</span>
+          <span class="ger-pick"><span class="chip s1">1</span><span class="chip s0 off">0</span><span class="chip s2">2</span></span>
+        </header>
+        <ul><li>Favori olasılığı <b>%39.9</b> — banko için (%68) düşük, üçlü için (%38) yüksek. Aradaki her maç çifte olur.</li><li>İkinci işaret <b>2</b> (deplasman, %31.9), çünkü dışarıda bıraktığımız <b>0</b> ondan 3.7 puan düşük (%28.2).</li><li>Geçen sezon ilk iki sembolün toplamı <b>%70–%80</b> bandında olan 372 maçın <b>%77.4</b>'i gerçekten o iki sembolden birine gitti. Bu haftaki toplam %72.</li><li><b class="risk">Bedeli:</b> %28.2 ihtimalle bu maç kuponu dışarı atar.</li><li><b class="kal">Kalabalık:</b> halk <b>2</b>'e piyasadan 11 puan az oynamış (%21 ↔ %32). Bu sembol işaretimin <b>içinde</b> ve halk buraya piyasadan az oynamış — kuponun bu maçtaki en değerli tarafı bu.</li></ul>
+      </article>
+      <article class="ger cifte">
+        <header>
+          <span class="ger-no">4</span>
+          <h3>Gaziantep F.K. A.Ş. – Alanyaspor</h3>
+          <span class="ger-karar">ÇİFTE</span>
+          <span class="ger-pick"><span class="chip s1">1</span><span class="chip s0 off">0</span><span class="chip s2">2</span></span>
+        </header>
+        <ul><li>Favori olasılığı <b>%38.5</b> — banko için (%68) düşük, üçlü için (%38) yüksek. Aradaki her maç çifte olur.</li><li>İkinci işaret <b>2</b> (deplasman, %32.3), çünkü dışarıda bıraktığımız <b>0</b> ondan 3.1 puan düşük (%29.2).</li><li>Geçen sezon ilk iki sembolün toplamı <b>%70–%80</b> bandında olan 372 maçın <b>%77.4</b>'i gerçekten o iki sembolden birine gitti. Bu haftaki toplam %71.</li><li><b class="risk">Bedeli:</b> %29.2 ihtimalle bu maç kuponu dışarı atar.</li></ul>
+      </article>
+      <article class="ger cifte">
+        <header>
+          <span class="ger-no">5</span>
+          <h3>Gençlerbirliği – Fenerbahçe A.Ş.</h3>
+          <span class="ger-karar">ÇİFTE</span>
+          <span class="ger-pick"><span class="chip s1 off">1</span><span class="chip s0">0</span><span class="chip s2">2</span></span>
+        </header>
+        <ul><li>Favori olasılığı <b>%58.2</b> — banko için (%68) düşük, üçlü için (%38) yüksek. Aradaki her maç çifte olur.</li><li>İkinci işaret <b>0</b> (beraberlik, %23.7), çünkü dışarıda bıraktığımız <b>1</b> ondan 5.7 puan düşük (%18.0).</li><li>Geçen sezon ilk iki sembolün toplamı <b>%80–%90</b> bandında olan 149 maçın <b>%86.6</b>'i gerçekten o iki sembolden birine gitti. Bu haftaki toplam %82.</li><li><b class="risk">Bedeli:</b> %18.0 ihtimalle bu maç kuponu dışarı atar.</li><li><b class="kal">Kalabalık:</b> halk <b>2</b>'e piyasadan 29 puan fazla oynamış (%87 ↔ %58). Bu sembol işaretimin <b>içinde</b> — bu sonuç gelirse ikramiyeyi kalabalık bir grupla bölüşürüz.</li></ul>
+      </article>
+      <article class="ger cifte">
+        <header>
+          <span class="ger-no">6</span>
+          <h3>Başakşehir FK – Kocaelispor</h3>
+          <span class="ger-karar">ÇİFTE</span>
+          <span class="ger-pick"><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2 off">2</span></span>
+        </header>
+        <ul><li>Favori olasılığı <b>%57.5</b> — banko için (%68) düşük, üçlü için (%38) yüksek. Aradaki her maç çifte olur.</li><li>İkinci işaret <b>0</b> (beraberlik, %25.4), çünkü dışarıda bıraktığımız <b>2</b> ondan 8.3 puan düşük (%17.1).</li><li>Geçen sezon ilk iki sembolün toplamı <b>%80–%90</b> bandında olan 149 maçın <b>%86.6</b>'i gerçekten o iki sembolden birine gitti. Bu haftaki toplam %83.</li><li><b class="risk">Bedeli:</b> %17.1 ihtimalle bu maç kuponu dışarı atar.</li></ul>
+      </article>
+      <article class="ger cifte">
+        <header>
+          <span class="ger-no">7</span>
+          <h3>Amed Sportif – Erzurumspor FK</h3>
+          <span class="ger-karar">ÇİFTE</span>
+          <span class="ger-pick"><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2 off">2</span></span>
+        </header>
+        <ul><li>Favori olasılığı <b>%43.9</b> — banko için (%68) düşük, üçlü için (%38) yüksek. Aradaki her maç çifte olur.</li><li>İkinci işaret <b>0</b> (beraberlik) ile dışarıda kalan <b>2</b> <b class="risk">tam olarak eşit</b>: ikisi de %28.0. Oranlar birebir aynı (2.99 / 2.99), yani piyasa bu iki sonucu ayırt etmiyor. Seçim olasılıkla değil, <b>kupon düzeniyle</b> (1–0–2 sırası) çözüldü — burada gerçek bir tercih yok, yazı tura var.</li><li>Geçen sezon ilk iki sembolün toplamı <b>%70–%80</b> bandında olan 372 maçın <b>%77.4</b>'i gerçekten o iki sembolden birine gitti. Bu haftaki toplam %72.</li><li><b class="risk">Bedeli:</b> %28.0 ihtimalle bu maç kuponu dışarı atar.</li></ul>
+      </article>
+      <article class="ger banko">
+        <header>
+          <span class="ger-no">8</span>
+          <h3>Beşiktaş A.Ş. – Eyüpspor</h3>
+          <span class="ger-karar">BANKO</span>
+          <span class="ger-pick"><span class="chip s1">1</span><span class="chip s0 off">0</span><span class="chip s2 off">2</span></span>
+        </header>
+        <ul><li>Favori olasılığı <b>%72.8</b>, banko eşiğinin (%68) üstünde — kural tek işaret diyor.</li><li>Geçen sezon <b>1.00–1.20</b> oran bandındaki 11 maçın %90.9'i favoriye gitti; bandın kaçırdıklarının %9.1'i beraberlikti.</li><li><b class="risk">Bedeli:</b> %27.2 ihtimalle bu maç kuponu tamamen dışarı atar. Banko yanlışsa 14-garanti geçersizdir — kuponun en kırılgan yeri burasıdır.</li><li><b class="kal">Kalabalık:</b> halk <b>1</b>'e piyasadan 16 puan fazla oynamış (%89 ↔ %73). Bu sembol işaretimin <b>içinde</b> — bu sonuç gelirse ikramiyeyi kalabalık bir grupla bölüşürüz.</li></ul>
+      </article>
+      <article class="ger cifte">
+        <header>
+          <span class="ger-no">9</span>
+          <h3>Samsunspor A.Ş. – Göztepe A.Ş.</h3>
+          <span class="ger-karar">ÇİFTE</span>
+          <span class="ger-pick"><span class="chip s1">1</span><span class="chip s0 off">0</span><span class="chip s2">2</span></span>
+        </header>
+        <ul><li>Favori olasılığı <b>%42.5</b> — banko için (%68) düşük, üçlü için (%38) yüksek. Aradaki her maç çifte olur.</li><li>İkinci işaret <b>2</b> (deplasman, %29.3), çünkü dışarıda bıraktığımız <b>0</b> ondan 1.2 puan düşük (%28.2). <b class="risk">Bu fark kıl payı</b> — sıralama neredeyse rastgele; sonuç buradan gelirse suç olasılıkta değil, farkın küçüklüğünde.</li><li>Geçen sezon ilk iki sembolün toplamı <b>%70–%80</b> bandında olan 372 maçın <b>%77.4</b>'i gerçekten o iki sembolden birine gitti. Bu haftaki toplam %72.</li><li><b class="risk">Bedeli:</b> %28.2 ihtimalle bu maç kuponu dışarı atar.</li></ul>
+      </article>
+      <article class="ger uclu">
+        <header>
+          <span class="ger-no">10</span>
+          <h3>Arsenal – Manchester City</h3>
+          <span class="ger-karar">ÜÇLÜ</span>
+          <span class="ger-pick"><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2">2</span></span>
+        </header>
+        <ul><li>Favori olasılığı <b>%36.8</b>, üçlü eşiğinin (%38) altında — yani piyasanın kendisi de karar veremiyor. Üç sembol de işaretlenir.</li><li>Olasılıklar birbirine yakın: 2=%37 · 1=%35 · 0=%28. Böyle bir maçta çifte yapmak kapsamayı %72'e düşürür ve üçüncü sembolün %28'lik kütlesini tamamen dışarıda bırakırdı — piyasanın ayırt edemediği bir maçta bu, bilgi olmadan risk almaktır.</li><li><b class="ok">Kazancı:</b> bu maç kuponu <b>asla</b> dışarı atmaz. Bedeli, kolon sayısını 3 katına çıkarması.</li></ul>
+      </article>
+      <article class="ger cifte">
+        <header>
+          <span class="ger-no">11</span>
+          <h3>RC Lens – PSG</h3>
+          <span class="ger-karar">ÇİFTE</span>
+          <span class="ger-pick"><span class="chip s1 off">1</span><span class="chip s0">0</span><span class="chip s2">2</span></span>
+        </header>
+        <ul><li>Favori olasılığı <b>%56.3</b> — banko için (%68) düşük, üçlü için (%38) yüksek. Aradaki her maç çifte olur.</li><li>İkinci işaret <b>0</b> (beraberlik, %23.5), çünkü dışarıda bıraktığımız <b>1</b> ondan 3.3 puan düşük (%20.2).</li><li>Geçen sezon ilk iki sembolün toplamı <b>%70–%80</b> bandında olan 372 maçın <b>%77.4</b>'i gerçekten o iki sembolden birine gitti. Bu haftaki toplam %80.</li><li><b class="risk">Bedeli:</b> %20.2 ihtimalle bu maç kuponu dışarı atar.</li></ul>
+      </article>
+      <article class="ger uclu">
+        <header>
+          <span class="ger-no">12</span>
+          <h3>Sevilla – Rayo Vallecano</h3>
+          <span class="ger-karar">ÜÇLÜ</span>
+          <span class="ger-pick"><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2">2</span></span>
+        </header>
+        <ul><li>Favori olasılığı <b>%38.0</b>, üçlü eşiğinin (%38) altında — yani piyasanın kendisi de karar veremiyor. Üç sembol de işaretlenir.</li><li>Olasılıklar birbirine yakın: 1=%38 · 0=%33 · 2=%30. Böyle bir maçta çifte yapmak kapsamayı %70'e düşürür ve üçüncü sembolün %30'lik kütlesini tamamen dışarıda bırakırdı — piyasanın ayırt edemediği bir maçta bu, bilgi olmadan risk almaktır.</li><li><b class="ok">Kazancı:</b> bu maç kuponu <b>asla</b> dışarı atmaz. Bedeli, kolon sayısını 3 katına çıkarması.</li><li><b class="kal">Kalabalık:</b> halk <b>1</b>'e piyasadan 18 puan fazla oynamış (%56 ↔ %38). Bu sembol işaretimin <b>içinde</b> — bu sonuç gelirse ikramiyeyi kalabalık bir grupla bölüşürüz.</li></ul>
+      </article>
+      <article class="ger cifte">
+        <header>
+          <span class="ger-no">13</span>
+          <h3>Racing Santander – Villarreal</h3>
+          <span class="ger-karar">ÇİFTE</span>
+          <span class="ger-pick"><span class="chip s1">1</span><span class="chip s0 off">0</span><span class="chip s2">2</span></span>
+        </header>
+        <ul><li>Favori olasılığı <b>%49.3</b> — banko için (%68) düşük, üçlü için (%38) yüksek. Aradaki her maç çifte olur.</li><li>İkinci işaret <b>1</b> (ev sahibi, %25.8), çünkü dışarıda bıraktığımız <b>0</b> ondan 0.8 puan düşük (%24.9). <b class="risk">Bu fark kıl payı</b> — sıralama neredeyse rastgele; sonuç buradan gelirse suç olasılıkta değil, farkın küçüklüğünde.</li><li>Geçen sezon ilk iki sembolün toplamı <b>%70–%80</b> bandında olan 372 maçın <b>%77.4</b>'i gerçekten o iki sembolden birine gitti. Bu haftaki toplam %75.</li><li><b class="risk">Bedeli:</b> %24.9 ihtimalle bu maç kuponu dışarı atar.</li></ul>
+      </article>
+      <article class="ger cifte">
+        <header>
+          <span class="ger-no">14</span>
+          <h3>Espanyol – Levante</h3>
+          <span class="ger-karar">ÇİFTE</span>
+          <span class="ger-pick"><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2 off">2</span></span>
+        </header>
+        <ul><li>Favori olasılığı <b>%44.9</b> — banko için (%68) düşük, üçlü için (%38) yüksek. Aradaki her maç çifte olur.</li><li>İkinci işaret <b>0</b> (beraberlik, %29.4), çünkü dışarıda bıraktığımız <b>2</b> ondan 3.7 puan düşük (%25.7).</li><li>Geçen sezon ilk iki sembolün toplamı <b>%70–%80</b> bandında olan 372 maçın <b>%77.4</b>'i gerçekten o iki sembolden birine gitti. Bu haftaki toplam %74.</li><li><b class="risk">Bedeli:</b> %25.7 ihtimalle bu maç kuponu dışarı atar.</li></ul>
+      </article>
+      <article class="ger cifte">
+        <header>
+          <span class="ger-no">15</span>
+          <h3>Celta Vigo – Osasuna</h3>
+          <span class="ger-karar">ÇİFTE</span>
+          <span class="ger-pick"><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2 off">2</span></span>
+        </header>
+        <ul><li>Favori olasılığı <b>%46.7</b> — banko için (%68) düşük, üçlü için (%38) yüksek. Aradaki her maç çifte olur.</li><li>İkinci işaret <b>0</b> (beraberlik, %28.2), çünkü dışarıda bıraktığımız <b>2</b> ondan 3.1 puan düşük (%25.1).</li><li>Geçen sezon ilk iki sembolün toplamı <b>%70–%80</b> bandında olan 372 maçın <b>%77.4</b>'i gerçekten o iki sembolden birine gitti. Bu haftaki toplam %75.</li><li><b class="risk">Bedeli:</b> %25.1 ihtimalle bu maç kuponu dışarı atar.</li><li><b class="kal">Kalabalık:</b> halk <b>1</b>'e piyasadan 30 puan fazla oynamış (%77 ↔ %47). Bu sembol işaretimin <b>içinde</b> — bu sonuç gelirse ikramiyeyi kalabalık bir grupla bölüşürüz.</li></ul>
+      </article></div>
+
+    <h3 style="margin:36px 0 6px">Risk nerede toplanıyor</h3>
+    <p style="font-size:13.5px;color:var(--dim);max-width:68ch;margin-bottom:14px">Kuponun ayakta kalması, <b style="color:var(--ink)">15 maçın hepsinde</b> sonucun işaretlerimin içinde olmasına bağlı. Aşağıdaki tablo en kırılgan maçtan başlar — bir maçın "dışarıda" sütunu, tek başına kuponu bitirme olasılığıdır. Çarpımları küme-içi olasılığını verir: <b style="color:var(--ink)">%2.31</b>.</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>#</th><th>Maç</th><th>İşaret</th><th class="num">İçinde</th><th class="num">Dışarıda</th></tr></thead>
+        <tbody><tr><td class="no">1</td><td class="mac">Galatasaray A.Ş. – Çorum FK</td><td><span class="chip s1">1</span><span class="chip s0 off">0</span><span class="chip s2 off">2</span></td><td class="num mono">%70.7</td><td class="num mono risk-n">%29.3</td></tr><tr><td class="no">4</td><td class="mac">Gaziantep F.K. A.Ş. – Alanyaspor</td><td><span class="chip s1">1</span><span class="chip s0 off">0</span><span class="chip s2">2</span></td><td class="num mono">%70.8</td><td class="num mono risk-n">%29.2</td></tr><tr><td class="no">9</td><td class="mac">Samsunspor A.Ş. – Göztepe A.Ş.</td><td><span class="chip s1">1</span><span class="chip s0 off">0</span><span class="chip s2">2</span></td><td class="num mono">%71.8</td><td class="num mono risk-n">%28.2</td></tr><tr><td class="no">3</td><td class="mac">Konyaspor – Çaykur Rizespor A.Ş.</td><td><span class="chip s1">1</span><span class="chip s0 off">0</span><span class="chip s2">2</span></td><td class="num mono">%71.8</td><td class="num mono risk-n">%28.2</td></tr><tr><td class="no">7</td><td class="mac">Amed Sportif – Erzurumspor FK</td><td><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2 off">2</span></td><td class="num mono">%72.0</td><td class="num mono risk-n">%28.0</td></tr><tr><td class="no">8</td><td class="mac">Beşiktaş A.Ş. – Eyüpspor</td><td><span class="chip s1">1</span><span class="chip s0 off">0</span><span class="chip s2 off">2</span></td><td class="num mono">%72.8</td><td class="num mono risk-n">%27.2</td></tr><tr><td class="no">14</td><td class="mac">Espanyol – Levante</td><td><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2 off">2</span></td><td class="num mono">%74.3</td><td class="num mono risk-n">%25.7</td></tr><tr><td class="no">15</td><td class="mac">Celta Vigo – Osasuna</td><td><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2 off">2</span></td><td class="num mono">%74.9</td><td class="num mono risk-n">%25.1</td></tr><tr><td class="no">13</td><td class="mac">Racing Santander – Villarreal</td><td><span class="chip s1">1</span><span class="chip s0 off">0</span><span class="chip s2">2</span></td><td class="num mono">%75.1</td><td class="num mono risk-n">%24.9</td></tr><tr><td class="no">2</td><td class="mac">Kasımpaşa A.Ş. – Trabzonspor A.Ş.</td><td><span class="chip s1 off">1</span><span class="chip s0">0</span><span class="chip s2">2</span></td><td class="num mono">%75.2</td><td class="num mono risk-n">%24.8</td></tr><tr><td class="no">11</td><td class="mac">RC Lens – PSG</td><td><span class="chip s1 off">1</span><span class="chip s0">0</span><span class="chip s2">2</span></td><td class="num mono">%79.8</td><td class="num mono risk-n">%20.2</td></tr><tr><td class="no">5</td><td class="mac">Gençlerbirliği – Fenerbahçe A.Ş.</td><td><span class="chip s1 off">1</span><span class="chip s0">0</span><span class="chip s2">2</span></td><td class="num mono">%82.0</td><td class="num mono risk-n">%18.0</td></tr><tr><td class="no">6</td><td class="mac">Başakşehir FK – Kocaelispor</td><td><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2 off">2</span></td><td class="num mono">%82.9</td><td class="num mono risk-n">%17.1</td></tr><tr><td class="no">10</td><td class="mac">Arsenal – Manchester City</td><td><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2">2</span></td><td class="num mono">%100.0</td><td class="num mono risk-n">%0.0</td></tr><tr><td class="no">12</td><td class="mac">Sevilla – Rayo Vallecano</td><td><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2">2</span></td><td class="num mono">%100.0</td><td class="num mono risk-n">%0.0</td></tr></tbody>
+      </table>
+    </div>
+
+    <h3 style="margin:36px 0 14px">16 satır nereden çıkıyor</h3>
+    <div class="anatomi">
+      <div>
+        <h4>Hata bütçesi — 7 maç</h4>
+        <p>Maç <b>2, 3, 4, 5, 6, 7, 9</b>. Bu yedi çiftin 128 ihtimali, Hamming(7,4) koduyla <b>16 satıra</b> sığdırılır. Kod, bu yedi maçta <b>en fazla 1 hatayı</b> affeder — 14-garanti tam olarak buradan gelir. Kanıtlanmış optimaldir: 16'dan az satırla olmaz.</p>
+      </div>
+      <div>
+        <h4>Tam oynanan — 6 maç</h4>
+        <p>Maç <b>10, 11, 12, 13, 14, 15</b>. Bunların bütün ihtimalleri her satırda oynanır, yani buradan <b>hata gelmez</b>. Bedeli çarpan olarak öderiz — maç sırasına göre 3×2×3×2×2×2 = 144.</p>
+      </div>
+      <div>
+        <h4>Toplam bedel</h4>
+        <p><b>16 satır × 144 = 2.304 kolon.</b> Seçim uzayının tamamı 18.432 kolondu; Hamming bloğu bunu <b>8 kat</b> ucuzlatıyor ve 14-garantiyi koruyor. Bankolar bedele girmez — ama karşılığında hata payı da tanımazlar.</p>
+      </div>
+    </div>
+
+    <h3 style="margin:36px 0 6px">Kalabalık verisini neden kullanmadım</h3>
+    <p style="font-size:13.5px;color:var(--dim);max-width:68ch">Oynanma yüzdeleri elimde ve yukarıda ölçtüm — ama <b style="color:var(--ink)">işaret seçimine sokmadım</b>. Sebep, bu kuponun ne olduğuyla ilgili: bu, geçen sezon verisinden çıkan kuralın kör bir sınavı. Kalabalığa göre işaret oynatsaydım, sonuç geldiğinde "kural mı tuttu, sezgim mi tuttu" ayırt edilemezdi.<br><br>Kalabalık verisinin asıl işi zaten farklı: <b style="color:var(--ink)">tutturma olasılığını değil, tutturunca alınacak payı</b> değiştirir. Onu ölçmek için ikramiye/havuz verisi gerekiyor ve o veri ilk kez bu hafta gelecek. Payı hesaplayabildiğimiz an, seçim kuralına ikinci bir terim eklemek meşru olur — daha önce değil.</p>
+  </section>
+
+  <section>
+    <header>
+      <span class="eyebrow">Sınırlar</span>
+      <h2>Bu kupon neyi vaat etmiyor</h2>
+    </header>
+    <div class="notlar">
+      <div class="not">
+        <h3>Geçen sezonun hold-out sonucu: 36 haftada 0 isabet</h3>
+        <p>Aynı strateji 2025/2026'da eşik taramasıyla 36 haftanın 3'ünde 14 tutturdu (%8,3). Ama eşik o haftayı <b>görmeden</b> seçildiğinde isabet <b>0/36</b> (%0, güven aralığı %0–9,6). Karara esas alınacak sayı budur. Bu araç maç sonucu tahmin etmez; tahmini garantiye alır.</p>
+      </div>
+      <ul class="notlar" style="list-style:disc;padding-left:20px;gap:8px">
+        <li><b>Marj farkı ölçek bozar.</b> Eşikler football-data kapanış oranlarıyla (%7.26 marj) kalibre edildi; bu haftanın iddaa oranlarında marj %18.9. Marj orantılı atıldığı için favori olasılıkları muhtemelen bir miktar <b>küçük</b> çıkıyor — yani gerçek banko sayısı 2'den fazla olabilirdi.</li>
+        <li><b>Kupon kalabalıkla aynı yöne bakıyor.</b> Seçim kümesinin kalabalık oranı 0.45 (1'in altı). Tutarsa ikramiye çok bölünür. En kalabalık işaretlerim: 8. maç [1] halkın %89'u, 15. maç [10] %91'i, 5. maç [02] %97'si.</li>
+        <li><b>Üç veri boşluğu duruyor.</b> 7. maç (Amed–Erzurumspor, TFF 1. Lig) geçen sezon arşivinde karşılığı olmayan bir lig. 13. maçın lig etiketi varsayım. Ve ikramiye/havuz verisi henüz yok — geldiğinde kalabalık ölçüsü vekil olmaktan çıkıp gerçek paya dönüşecek.</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>
+    Veri elle girildi (2026-08-18), kaynağı dosyasında yazılı. Analiz projenin kendi modülleriyle üretildi
+    (<code>odds</code>, <code>backtest</code>, <code>core</code>) — geçen sezon arşivi yalnızca <b>okundu</b>, değiştirilmedi.
+    Kupon sonuçlar görülmeden donduruldu ve commit'lendi.
+  </footer>
+</div>
