@@ -40,10 +40,33 @@ ref = m.gecen_sezon_ref()
 prof = m.hafta_profili(d, ref)
 kam = m.kamuoyu(d)
 ana = m.kupon_kur(d, 0.68, 0.38)
+
+# Sonuç girilmişse değerlendirme katmanı da yüklenir. Girilmemişse sayfa
+# eskisi gibi "sonuç yok" halinde üretilir — tek şablon, iki durum.
+_dspec = importlib.util.spec_from_file_location(
+    "st_deg", str(KOK / "scripts" / "super_toto_degerlendir.py"))
+_deg = importlib.util.module_from_spec(_dspec)
+_argv = sys.argv; sys.argv = ["x"]
+try:
+    _dspec.loader.exec_module(_deg)
+finally:
+    sys.argv = _argv
+BITTI = bool(d["meta"].get("results"))
+if BITTI:
+    gercek = d["meta"]["results"]
+    degerlendirme = _deg.kupon_degerlendir(d, ana["picks"])
+    kal_karne = _deg.kalabalik_karnesi(d)
+    ikramiye = _deg.ikramiye_ozeti(d)
+    sayim_g = {x: gercek.count(x) for x in S}
 mer = {p["budget"]: p for p in m.butce_merdiveni(d, [list(x) for x in ana["picks"]], [256, 512])}
 o, hist = ref["odds"], ref["hist"]
 wa = hist["weekly_avg"]
 e = html.escape
+
+def para(n):
+    """Türkçe para biçimi: 2.153.527,18"""
+    return f"{n:,.2f}".replace(",", "@").replace(".", ",").replace("@", ".")
+
 
 def tr(n):
     """Binlik ayracı Türkçe: 2.304."""
@@ -263,6 +286,214 @@ risk_html = "".join(
 
 sayilar = {"banko": len(ana["banko"]), "cift": len(ana["cift"]), "uclu": len(ana["uclu"])}
 
+
+# ─── sonuç blokları
+if BITTI:
+    # maç maç karne
+    karne = []
+    for r in degerlendirme["per_match"]:
+        at = " · ".join(f'{x} %{100*r["p_atilan"][x]:.0f}' for x in r["atilan"]) or "—"
+        karne.append(f"""
+      <tr class="{'tuttu' if r['tuttu'] else 'kacti'}">
+        <td class="no">{r['no']}</td>
+        <td class="mac">{e(r['mac'])}</td>
+        <td>{marks(r['pick'])}</td>
+        <td class="sonuc-h">{chip(r['gercek'])}</td>
+        <td class="band">{at}</td>
+        <td class="im">{'✓' if r['tuttu'] else '✗'}</td>
+      </tr>""")
+    karne_html = "".join(karne)
+
+    # kaçak dağılımı çubukları
+    dist = degerlendirme["dist"]
+    enb = max(dist)
+    dag = []
+    for i, v in enumerate(dist[:9]):
+        bu = i == degerlendirme["miss_count"]
+        bek = abs(i - round(degerlendirme["expected_misses"])) < 0.5
+        dag.append(f"""
+        <li class="{'bu' if bu else ('bek' if bek else '')}">
+          <span class="d-k">{i}</span>
+          <span class="d-bar"><i style="width:{100*v/enb:.1f}%"></i></span>
+          <span class="d-p">%{100*v:.1f}</span>
+          <span class="d-not">{'← gerçekleşen' if bu else ('← en olası' if bek else '')}</span>
+        </li>""")
+    dag_html = "".join(dag)
+
+    ikr_satir = []
+    for t in ikramiye["tiers"]:
+        if t["prize"] is None:
+            kisi = "—"
+            tutar = "çıkmadı"
+            not_ = f'{para(t.get("rollover", 0))} TL devretti'
+        else:
+            kisi = tr(t["winners"])
+            tutar = f'{para(t["prize"])} TL'
+            not_ = f'toplam {para(t["toplam"])} TL'
+        ikr_satir.append(
+            f'<tr><td><b>{t["correct"]} bilen</b></td>'
+            f'<td class="num mono">{kisi}</td>'
+            f'<td class="num mono">{tutar}</td>'
+            f'<td class="band">{not_}</td></tr>')
+    ikr_html = "".join(ikr_satir)
+else:
+    karne_html = dag_html = ikr_html = ""
+
+
+if BITTI:
+    dg = degerlendirme
+    kayip = [r for r in dg["per_match"] if not r["tuttu"]]
+    ber_kacak = [r for r in kayip if r["gercek"] == "0"]
+    serit = "".join(
+        f'<span class="sh">{chip(x)}<small>{i+1}</small></span>'
+        for i, x in enumerate(gercek))
+    sonuc_bolumu = f"""
+  <section>
+    <header>
+      <span class="eyebrow">Sonuç · kupon donduruldu, hafta oynandı</span>
+      <h2>Kupon {dg['best']}/15 ile bitti</h2>
+      <p>İkramiye eşiği 12'ydi; kupon oraya ulaşamadı. On beş maçın <b>{dg['miss_count']}'sında</b> gerçek sonuç
+      işaretlerimin dışında kaldı ve bunların <b>{len(ber_kacak)}'ü beraberlikti</b> — üçü de "çifte" yaparken
+      üçüncü sembol olarak attığım beraberlikler. Haftanın sembol dağılımı {sayim_g['1']} / {sayim_g['0']} / {sayim_g['2']}:
+      tek bir deplasman galibiyeti var, geçen sezonun 36 haftasında bu yalnızca 2 kez görüldü.</p>
+    </header>
+    <div class="sonuc-serit">{serit}</div>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>#</th><th>Maç</th><th>İşaretim</th><th>Sonuç</th><th>Attığım sembol(ler)</th><th></th></tr></thead>
+        <tbody>{karne_html}</tbody>
+      </table>
+    </div>
+
+    <h3 style="margin:34px 0 6px">Şanssızlık mıydı, hata mıydı?</h3>
+    <p style="font-size:13.5px;color:var(--dim);max-width:68ch;margin-bottom:16px">
+      Kuponun kendi olasılıklarına göre <b style="color:var(--ink)">beklenen kaçak sayısı {dg['expected_misses']:.2f}</b>,
+      en olası senaryo 3 kaçaktı. {dg['miss_count']} kaçak geldi — bu, %{100*dg['p_at_least_actual']:.0f}
+      olasılıklı bir kuyruk. Yani hafta kötüydü, ama asıl mesele bu değil:
+      <b style="color:var(--ink)">3 kaçak da 14'e yetmezdi.</b> Kupon daha atılmadan beklentisi
+      {15-dg['expected_misses']:.1f} doğruydu; 14 hedefi için gereken "sıfır kaçak" ihtimali %{100*dg['p_in_set']:.2f} idi.</p>
+    <ul class="dag">{dag_html}</ul>
+
+    <h3 style="margin:34px 0 14px">İkramiye nasıl dağıldı</h3>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Kademe</th><th class="num">Kişi</th><th class="num">Kişi başı</th><th>Not</th></tr></thead>
+        <tbody>{ikr_html}</tbody>
+      </table>
+    </div>
+    <p style="margin-top:14px;font-size:13px;color:var(--dim);max-width:70ch">
+      Halkın en çok oynadığı kupon <span class="mono">{kal_karne['halk_kuponu']}</span> —
+      <b style="color:var(--ink)">{kal_karne['halk_dogru']}/15</b> tutturdu. Piyasanın favori kuponu
+      <b style="color:var(--ink)">bunun birebir aynısı</b> ve o da {kal_karne['piyasa_dogru']}/15 yaptı.
+      Rastgele bir halk kuponunun beklenen doğrusu {kal_karne['beklenen_halk_dogru']:.2f}'ydi.
+      14 bilenin yalnızca 8 kişi çıkması ve kişi başı {para(2153527.18)} TL ödemesi bundandır:
+      <b style="color:var(--ink)">ikramiyeyi büyüten şey, bizi bitiren şeyin ta kendisi.</b></p>
+  </section>"""
+else:
+    sonuc_bolumu = ""
+
+
+if BITTI:
+    dersler_bolumu = f"""
+  <section>
+    <header>
+      <span class="eyebrow">Dersler · her biri ölçüme bağlı</span>
+      <h2>Bir dahakine ne değişecek</h2>
+      <p>Aşağıdaki her ders, bu haftanın hikâyesinden değil, geçen sezonun 567 maçında ya da 36 haftasında
+      yeniden koşulmuş bir ölçümden çıkıyor. Tek maça bakıp kural değiştirmek, bu projenin baştan beri
+      uyardığı hatanın ta kendisi olurdu.</p>
+    </header>
+
+    <div class="ders">
+      <span class="olcum">Ölçüm · 36 hafta yeniden koşuldu</span>
+      <h3>1. Hedefi yanlış koydum. 14 değil, 12–13.</h3>
+      <p>Aynı kuralın geçen sezonki en iyi kolon dağılımı şöyleydi:
+      <b>14 → 3 hafta, 13 → 6, 12 → 12, 11 → 9, 10 → 3, 9 → 3.</b>
+      Yani kupon haftaların {'%'}58'inde ödeme eşiği olan 12'ye ulaşıyor, {'%'}8'inde 14'e.
+      Bu hafta kuponun kendi matematiği de aynı şeyi söylüyordu: beklenen en iyi kolon
+      <b>11,7</b>. Ben ise kuponu 14 hedefiyle kurdum ve "14-garanti" etiketiyle sundum.</p>
+      <p>Etiket teknik olarak doğruydu — ama <b>koşullu</b> bir garantiyi hedef sanmak yanlıştı.
+      Bu haftanın ödeme tablosu farkı gösteriyor: 12 bilen {para(7532.44)} TL, 13 bilen
+      {para(82039.13)} TL, 14 bilen {para(2153527.18)} TL.</p>
+      <p class="karar"><b>Karar:</b> kuponu bundan sonra "sıfır kaçak" olasılığına göre değil,
+      <b>12–13'e ulaşma olasılığına</b> göre kuracağım. Bu, işaret sayısını değil hedef fonksiyonunu
+      değiştirir ve raporun en üstünde artık bu sayı duracak.</p>
+    </div>
+
+    <div class="ders">
+      <span class="olcum">Ölçüm · 567 maç, kimliğe göre kalibrasyon</span>
+      <h3>2. Beraberliği atmak, kenar takımı atmaktan 1,6 kat pahalı</h3>
+      <p>"Çifte" kuralı en olası iki sembolü işaretler, üçüncüyü atar. Ama atılan sembolün
+      <b>kim olduğu</b> çok şey değiştiriyor. Geçen sezonun 567 maçında ölçtüm:</p>
+      <p>Atılan sembol <b>beraberlik</b> ise {'%'}<b>25,8</b> ihtimalle geliyor (piyasa {'%'}26,9 demişti — yani
+      piyasa beraberliği neredeyse tam fiyatlıyor). Atılan sembol <b>ev sahibi</b> ise {'%'}16,0
+      (piyasa {'%'}20,0 demişti), <b>deplasman</b> ise {'%'}15,6 (piyasa {'%'}18,7). Kenar takımlar
+      fiyatlarının 3–4 puan altında geliyor; beraberlik gelmiyor.</p>
+      <p>Bu hafta 4 maçta beraberliği attım — 3'ü beraberlikle bitti. Üstelik bunların ikisini
+      (<b>9. ve 13. maç</b>) raporda "kıl payı" diye <b>kendim işaretlemiştim</b> ve yine de attım.
+      İşaretleyip bir şey yapmamak, karar değil not almaktır.</p>
+      <p class="karar"><b>Karar:</b> "çifte" artık tek tip sayılmayacak. Beraberlik atan çifte ile
+      kenar atan çifte ayrı raporlanacak, ve kuponun beklenen kaçağı bu ayrımla hesaplanacak.</p>
+    </div>
+
+    <div class="ders">
+      <span class="olcum">Ölçüm · 7 alternatif kural, 36 hafta</span>
+      <h3>3. Ama beraberliği korumak çözüm değil — denedim</h3>
+      <p>2. dersin akla getirdiği çözüm şu: beraberlik canlıysa üçlü yap. Bunu geçen sezonun tamamında
+      koşturdum. Kolon başına maliyet (bir 14 için kaç kolon):</p>
+      <p><b>Kullandığım kural (0.68/0.38): 32.235 kolon/14.</b> Beraberlik koruması p₀≥0,28: 50.933.
+      Üçlü eşiği 0,42: 61.208. Beraberlik koruması p₀≥0,25: 80.520. Banko yok: 84.480.</p>
+      <p>Koruma isabeti artırıyor (3 → 4 hafta) ama bedeli 2,5 katına çıkarıyor. Yani 2. dersin cevabı
+      "daha çok üçlü" değil.</p>
+      <p class="karar"><b>Karar:</b> kural değişmiyor. Doğru yön, işaret genişletmek değil —
+      1. derste yazdığı gibi <b>hedefi düşürmek</b>, ya da aynı parayı daha az haftaya yığmak.</p>
+    </div>
+
+    <div class="ders">
+      <span class="olcum">Ölçüm · karşı-olgusal koşu</span>
+      <h3>4. Bankonun suçu yoktu</h3>
+      <p>Galatasaray 1.22 oranla berabere kaldı ve kuponu tek başına bitirdi. En kolay ders
+      "banko yapma" olurdu — ama yanlış olurdu. "Beraberlik olasılığı {'%'}20'nin üstündeyse banko yapma"
+      kuralını geçen sezonda koşturdum: <b>aynı 3 isabet, neredeyse aynı maliyet</b> (2.743 kolon).
+      Bu haftada da hiçbir şey değişmiyordu — yine 6 kaçak, yine 9 doğru.</p>
+      <p class="karar"><b>Karar:</b> banko kuralı duruyor. Tek maçın acısıyla kural değiştirmek,
+      bu projenin geçen sezon hold-out'unda ({'%'}0 isabet) zaten ölçtüğü aşırı uyum hatasıdır.</p>
+    </div>
+
+    <div class="ders">
+      <span class="olcum">Ölçüm · bu haftanın oynanma verisi</span>
+      <h3>5. Kalabalık verisi yön için değil, büyüklük için işe yarıyor</h3>
+      <p>Halkın en çok oynadığı işaretlerden kurulu kupon: <span class="mono">{kal_karne['halk_kuponu']}</span>.
+      Piyasanın favori kuponu: <span class="mono">{kal_karne['piyasa_kuponu']}</span>.
+      <b>On beş hanenin on beşi de aynı.</b> İkisi de 6/15 tutturdu.</p>
+      <p>Yani "kalabalığın tersine oyna" diye ayrı bir sinyal yok — kalabalık, yönü piyasadan alıyor.
+      Verinin taşıdığı bilgi <b>yönde değil, şiddette</b>: Celta'ya {'%'}77 (piyasa {'%'}47),
+      Beşiktaş'a {'%'}89 (piyasa {'%'}73). Bu farklar hangi işareti seçeceğimi değil,
+      tutturursam kaç kişiyle bölüşeceğimi anlatıyor.</p>
+      <p class="karar"><b>Karar:</b> oynanma yüzdesini işaret seçimine sokmaya çalışmayacağım.
+      Yeri, kuponun beklenen <b>payı</b> hesabı — ve o hesap ancak ikramiye verisi birikince kurulur.</p>
+    </div>
+
+    <div class="ders">
+      <span class="olcum">Ölçüm · 36 hafta + ilk ikramiye gözlemi</span>
+      <h3>6. İkramiye ile isabet ters çalışıyor — asıl ders bu</h3>
+      <p>14 bileni yalnızca 8 kişi buldu ve kişi başı {para(2153527.18)} TL aldı. Ödülün bu kadar büyük
+      olmasının sebebi haftanın zorluğu — yani <b>bizi bitiren şeyin ta kendisi</b>.</p>
+      <p>Bunun tesadüf olmadığını geçen sezonda ölçtüm: kuralın en iyi kolonu <b>13+</b> yaptığı haftalarda
+      ortalama <b>9,00</b> favori tutmuştu; <b>11 ve altı</b> yaptığı haftalarda <b>7,47</b>.
+      Yani strateji, favorilerin tuttuğu "kolay" haftalarda başarılı oluyor — tam da kalabalığın da
+      tutturduğu ve ikramiyenin bölündüğü haftalarda.</p>
+      <p>Bu hafta 6/15 favori tuttu; geçen sezonun 36 haftasında bundan kötü yalnızca 4 hafta vardı.
+      Tek deplasman galibiyeti ise 36 haftada 2 kez görülmüş bir uçtu.</p>
+      <p class="karar"><b>Karar:</b> isabet olasılığını büyütmek, kazancı büyütmeyebilir. Bunu kanıtlamak
+      ya da çürütmek için haftalık ikramiye verisi gerekiyor — <b>bu hafta 1. gözlem</b>. Her hafta
+      kazanan sayısı + tutar kaydedilecek; 8–10 hafta sonra "isabet mi, pay mı" sorusu ilk kez
+      ölçülebilir hale gelir.</p>
+    </div>
+  </section>"""
+else:
+    dersler_bolumu = ""
+
 ana_v = dict(ana); ana_v["cost"] = ana["columns"]
 HTML = f"""<title>Süper Toto 1. Hafta</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -277,6 +508,7 @@ HTML = f"""<title>Süper Toto 1. Hafta</title>
   --s1: hsl(262 83% 58%); --s0: hsl(199 89% 44%); --s2: hsl(330 76% 52%);
   --warn: hsl(32 92% 45%); --warn-soft: hsl(38 95% 94%);
   --ok: hsl(152 58% 38%); --ok-soft: hsl(152 60% 95%);
+  --danger: hsl(0 72% 48%); --danger-soft: hsl(0 85% 96%);
   --shadow: 0 4px 20px -2px hsl(262 83% 58% / .10);
 }}
 @media (prefers-color-scheme: dark) {{
@@ -288,6 +520,7 @@ HTML = f"""<title>Süper Toto 1. Hafta</title>
     --s1: hsl(262 83% 68%); --s0: hsl(199 89% 54%); --s2: hsl(330 76% 62%);
     --warn: hsl(38 95% 62%); --warn-soft: hsl(32 60% 16%);
     --ok: hsl(152 50% 55%); --ok-soft: hsl(152 40% 14%);
+    --danger: hsl(0 75% 65%); --danger-soft: hsl(0 45% 15%);
     --shadow: 0 4px 24px -4px hsl(0 0% 0% / .5);
   }}
 }}
@@ -299,6 +532,7 @@ HTML = f"""<title>Süper Toto 1. Hafta</title>
   --s1: hsl(262 83% 68%); --s0: hsl(199 89% 54%); --s2: hsl(330 76% 62%);
   --warn: hsl(38 95% 62%); --warn-soft: hsl(32 60% 16%);
   --ok: hsl(152 50% 55%); --ok-soft: hsl(152 40% 14%);
+  --danger: hsl(0 75% 65%); --danger-soft: hsl(0 45% 15%);
   --shadow: 0 4px 24px -4px hsl(0 0% 0% / .5);
 }}
 * {{ box-sizing: border-box; }}
@@ -386,6 +620,35 @@ tr.yok td {{ color: var(--dim); font-style: italic; }}
 .var dd.kotu {{ color: var(--warn); }} .var dd.iyi {{ color: var(--ok); }}
 .var .deg {{ font-size: 11.5px; color: var(--dim); border-top: 1px solid var(--line); padding-top: 9px; }}
 
+/* sonuç */
+.sonuc-serit {{ display: flex; flex-wrap: wrap; gap: 5px; margin: 4px 0 18px; }}
+.sonuc-serit .sh {{ display: grid; place-items: center; gap: 2px; }}
+.sonuc-serit .sh small {{ font-size: 9.5px; color: var(--dim); }}
+tr.tuttu td.im {{ color: var(--ok); font-weight: 700; }}
+tr.kacti td.im {{ color: var(--danger); font-weight: 700; }}
+tr.kacti {{ background: var(--danger-soft); }}
+td.sonuc-h {{ width: 44px; }}
+.dag {{ list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }}
+.dag li {{ display: grid; grid-template-columns: 22px minmax(80px, 1fr) 52px minmax(90px, auto); align-items: center; gap: 10px; font-size: 12.5px; color: var(--dim); }}
+.dag .d-k {{ font: 600 12px ui-monospace, Menlo, monospace; color: var(--ink); text-align: right; }}
+.dag .d-bar {{ height: 12px; border-radius: 4px; background: var(--muted); overflow: hidden; }}
+.dag .d-bar i {{ display: block; height: 100%; background: var(--line2); }}
+.dag li.bek .d-bar i {{ background: var(--primary); }}
+.dag li.bu .d-bar i {{ background: var(--danger); }}
+.dag .d-p {{ font-variant-numeric: tabular-nums; text-align: right; }}
+.dag .d-not {{ font-size: 11px; font-weight: 600; }}
+.dag li.bu .d-not {{ color: var(--danger); }}
+.dag li.bek .d-not {{ color: var(--primary); }}
+.ders {{ border: 1px solid var(--line); border-radius: 14px; background: var(--card); padding: 18px 20px; }}
+.ders + .ders {{ margin-top: 12px; }}
+.ders h3 {{ font-size: 17px; margin-bottom: 8px; }}
+.ders .olcum {{ display: inline-block; font: 600 10.5px/1 sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--primary); background: var(--accent); border-radius: 6px; padding: 4px 8px; margin-bottom: 9px; }}
+.ders p {{ font-size: 13.5px; line-height: 1.65; color: var(--dim); }}
+.ders p + p {{ margin-top: 9px; }}
+.ders b {{ color: var(--ink); }}
+.ders .karar {{ margin-top: 11px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 13px; }}
+.ders .karar b {{ color: var(--primary); }}
+
 /* gerekçe */
 .kural {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; margin-bottom: 30px; }}
 .kural > div {{ border: 1px solid var(--line); border-radius: 14px; padding: 15px 16px; background: var(--card); border-top: 3px solid var(--line2); }}
@@ -443,7 +706,8 @@ footer {{ margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--line)
       <span class="rozet mor">2026/2027</span>
       <span class="rozet">iddaa oranı</span>
       <span class="rozet">oynanma yüzdesi</span>
-      <span class="rozet uyari">sonuçlar YOK — bu rapor sonuçlar görülmeden yazıldı</span>
+      {'<span class="rozet uyari">SONUÇ: en iyi kolon ' + str(degerlendirme["best"]) + '/15 — ikramiye yok</span>' if BITTI else '<span class="rozet uyari">sonuçlar YOK — bu rapor sonuçlar görülmeden yazıldı</span>'}
+      {'<span class="rozet">kupon sonuçlar görülmeden donduruldu</span>' if BITTI else ''}
     </div>
   </header>
 
@@ -454,6 +718,8 @@ footer {{ margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--line)
     <div class="stat"><div class="k">Küme-içi</div><div class="v">%{100*ana['in_set_p']:.2f}</div><div class="a">≈ 1/{ana['in_set_1_in']:.0f} — 14-garantinin geçerlilik koşulu</div></div>
     <div class="stat"><div class="k">Kalabalık oranı</div><div class="v">{ana['crowd_ratio']:.2f}</div><div class="a">1'in altı: seçim kümem olasılığına göre fazla oynanmış</div></div>
   </div>
+
+  {sonuc_bolumu}
 
   <section>
     <header>
@@ -597,13 +863,15 @@ footer {{ margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--line)
     </div>
 
     <h3 style="margin:36px 0 6px">Kalabalık verisini neden kullanmadım</h3>
-    <p style="font-size:13.5px;color:var(--dim);max-width:68ch">Oynanma yüzdeleri elimde ve yukarıda ölçtüm — ama <b style="color:var(--ink)">işaret seçimine sokmadım</b>. Sebep, bu kuponun ne olduğuyla ilgili: bu, geçen sezon verisinden çıkan kuralın kör bir sınavı. Kalabalığa göre işaret oynatsaydım, sonuç geldiğinde "kural mı tuttu, sezgim mi tuttu" ayırt edilemezdi.<br><br>Kalabalık verisinin asıl işi zaten farklı: <b style="color:var(--ink)">tutturma olasılığını değil, tutturunca alınacak payı</b> değiştirir. Onu ölçmek için ikramiye/havuz verisi gerekiyor ve o veri ilk kez bu hafta gelecek. Payı hesaplayabildiğimiz an, seçim kuralına ikinci bir terim eklemek meşru olur — daha önce değil.</p>
+    <p style="font-size:13.5px;color:var(--dim);max-width:68ch">Oynanma yüzdeleri elimde ve yukarıda ölçtüm — ama <b style="color:var(--ink)">işaret seçimine sokmadım</b>. Sebep, bu kuponun ne olduğuyla ilgili: bu, geçen sezon verisinden çıkan kuralın kör bir sınavı. Kalabalığa göre işaret oynatsaydım, sonuç geldiğinde "kural mı tuttu, sezgim mi tuttu" ayırt edilemezdi.<br><br>Kalabalık verisinin asıl işi zaten farklı: <b style="color:var(--ink)">tutturma olasılığını değil, tutturunca alınacak payı</b> değiştirir. Onu ölçmek için ikramiye/havuz verisi gerekiyor. {'O veri artık elimizde — ve aşağıdaki 5. ve 6. ders tam olarak ne söylediğini yazıyor: kalabalık yönü piyasadan alıyor, dolayısıyla kural için bir sinyal taşımıyor; taşıdığı şey payın büyüklüğü.' if BITTI else 'O veri ilk kez bu hafta gelecek. Payı hesaplayabildiğimiz an, seçim kuralına ikinci bir terim eklemek meşru olur — daha önce değil.'}</p>
   </section>
+
+  {dersler_bolumu}
 
   <section>
     <header>
       <span class="eyebrow">Sınırlar</span>
-      <h2>Bu kupon neyi vaat etmiyor</h2>
+      <h2>{'Baştan yazılmış olan sınırlar' if BITTI else 'Bu kupon neyi vaat etmiyor'}</h2>
     </header>
     <div class="notlar">
       <div class="not">
@@ -613,7 +881,7 @@ footer {{ margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--line)
       <ul class="notlar" style="list-style:disc;padding-left:20px;gap:8px">
         <li><b>Marj farkı ölçek bozar.</b> Eşikler football-data kapanış oranlarıyla (%{o['avg_margin_pct']:.2f} marj) kalibre edildi; bu haftanın iddaa oranlarında marj %{prof['avg_margin_pct']:.1f}. Marj orantılı atıldığı için favori olasılıkları muhtemelen bir miktar <b>küçük</b> çıkıyor — yani gerçek banko sayısı 2'den fazla olabilirdi.</li>
         <li><b>Kupon kalabalıkla aynı yöne bakıyor.</b> Seçim kümesinin kalabalık oranı {ana['crowd_ratio']:.2f} (1'in altı). Tutarsa ikramiye çok bölünür. En kalabalık işaretlerim: 8. maç [1] halkın %89'u, 15. maç [10] %91'i, 5. maç [02] %97'si.</li>
-        <li><b>Üç veri boşluğu duruyor.</b> 7. maç (Amed–Erzurumspor, TFF 1. Lig) geçen sezon arşivinde karşılığı olmayan bir lig. 13. maçın lig etiketi varsayım. Ve ikramiye/havuz verisi henüz yok — geldiğinde kalabalık ölçüsü vekil olmaktan çıkıp gerçek paya dönüşecek.</li>
+        <li><b>Veri boşlukları.</b> 7. maç (Amed–Erzurumspor, TFF 1. Lig) geçen sezon arşivinde karşılığı olmayan bir lig; 13. maçın lig etiketi hâlâ varsayım. {'İkramiye boşluğu ise kapandı: bu hafta ilk gözlem kaydedildi (8 / 210 / 2.859 kişi). Bir gözlem dağılım değildir — “isabet mi, pay mı” sorusu 8–10 hafta sonra ölçülebilir.' if BITTI else 'Ve ikramiye/havuz verisi henüz yok — geldiğinde kalabalık ölçüsü vekil olmaktan çıkıp gerçek paya dönüşecek.'}</li>
       </ul>
     </div>
   </section>
