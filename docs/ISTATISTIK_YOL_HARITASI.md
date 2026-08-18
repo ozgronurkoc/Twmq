@@ -102,12 +102,16 @@ spor_toto/evaluate.py  ◄── spor_toto/predict.py     (sözleşme + 3 refera
 | Tahmin | `backend/spor_toto/cizgi.py` | — | Kapanış çizgisi verimliliği (A1): açılış tahmincisi, hareket ölçümü |
 | Tahmin | `backend/spor_toto/bahisci.py` | — | Bahisçi anlaşmazlığı (A2): tekil bahisçiler, ayrışma ölçümü |
 | Tahmin | `backend/spor_toto/disari.py` | — | Piyasa dışı türetilebilir özellikler (A3): artık taraması, kör nokta |
+| **Ürün** | `backend/spor_toto/tahmin.py` | — | **Tahmin ürünü (C2)**: yaklaşan maça olasılık + ölçülmüş isabet |
+| Üretim | `backend/scripts/build_fixtures.py` | — | Yaklaşan maçlar ve oranları (football-data `fixtures.csv`) |
+| UI | `frontend/app/tahmin/page.tsx` | — | Tahmin sayfası |
+| UI | `frontend/components/tahmin/parts.tsx` | — | Olasılık çubuğu, isabet kartı, sınırlar |
 | Tahmin | `backend/spor_toto/egitim.py` | — | Eğitim korpusu okuyucusu (**istatistiğe girmez**) |
 | Üretim | `backend/scripts/build_egitim.py` | — | Korpus üretimi (football-data, 4 sezon, **iki çizgi + bahisçi kırılımı**) |
-| Test | `backend/tests/test_predict.py` · `test_evaluate.py` · `test_recalibrate.py` · `test_egitim.py` · `test_cizgi.py` · `test_bahisci.py` · `test_disari.py` | — | Tahmin katmanı ve **ayrım bekçisi** (206) |
+| Test | `backend/tests/test_predict.py` · `test_evaluate.py` · `test_recalibrate.py` · `test_egitim.py` · `test_cizgi.py` · `test_bahisci.py` · `test_disari.py` · `test_tahmin.py` | — | Tahmin katmanı, **ürün** ve ayrım bekçisi (224) |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **888 test**; **82'si** istatistik katmanına, **206'sı** tahmin katmanına ait.
+paketi toplam **906 test**; **82'si** istatistik katmanına, **224'ü** tahmin katmanına ait.
 `python -m spor_toto.health` **23 değişmez** çalıştırır — ikisi (`oran_arsivi`, `geri_test`)
 istatistik katmanını, biri (`tahmin_referanslari`) tahmin katmanının ölçüm koşumunu korur.
 
@@ -681,6 +685,81 @@ liglerinde **dört kat** güçlü — korpusta görünmeyen bir maç oynanmış 
 ölçümde katkısı sıfır. Değeri, A4(b)'nin yeniden açılma koşulunu **somutlaştırması**: eksik
 olan model değil, **fikstür verisi**.
 
+### 3.17 Tahmin ürünü — olasılık, ölçülmüş isabetiyle birlikte (C2)
+
+Tahmin katmanı bu işten önce **ürüne hiç bağlı değildi**: `web_app.py` onu import
+etmiyordu, 11 API ucunun hiçbiri tahmin döndürmüyordu, `/tahmin` diye bir sayfa yoktu.
+Ölçüm aracı olarak yaşıyordu, ürün olarak değil — oysa projenin amacı (README §1) *maç
+sonucu tahmini yapmak*.
+
+#### Kaynak seçimi ölçümü belirledi (C2a)
+
+Oynanmamış maçın hiçbir arşivde oranı yok. Kaynak football-data'nın `fixtures.csv`
+dosyası ve seçim kasıtlı: **ölçümü yaptığımız kaynağın ta kendisi.** Kupon setinde
+ölçülen isabet aynı fiyatlayıcıya ait olduğu için ürüne meşru biçimde taşınabilir.
+
+İddaa bülteni yedektir ve **kalibrasyonu ölçülmemiştir** (marj %17,2'ye karşı %7,26).
+İkisi birleştirilmez, **sıralanır**: fikstürde maç varsa o gösterilir. Karıştırmak,
+gövdedeki tek bir isabet sayısının iki farklı fiyatlayıcıya aitmiş gibi okunmasına yol
+açardı.
+
+Fikstür **yuvarlanan bir penceredir**; hafta oynandığında boşalır. "Yaklaşan maç yok"
+normal bir durumdur, hata değildir — ve gövde bunu sessizce boş dönerek değil,
+`bos_sebep` alanıyla söyleyerek bildirir.
+
+#### Kırmızı çizgi: olasılık isabetinden ayrılamaz (C2b)
+
+`/api/tahmin` gövdesi iki bloğu **ayrılamaz** biçimde taşır: `tahminler` ve
+`olculmus_isabet`. `?limit=` yalnızca listeyi kırpar; isabet ve uyarılar hep tam gelir.
+Bekçisi `test_api_tahmin_isabeti_hep_tasir`.
+
+İsabet **elle yazılmadı, arşivden koşuyor** — elle yazılmış bir sayı, veri kaydığında
+sessizce yalan söylemeye başlar:
+
+| Ölçü | Değer |
+|---|---|
+| Maç başına isabet | **%55,6** (540 maç · 36 hafta) |
+| Haftada ortalama doğru | **8,33 / 15** · en iyi hafta 12 |
+| Brier · log kaybı | 0,5747 · 0,9660 |
+| 14+ tutan hafta | **0 / 36** |
+
+`uyarilar` bloğu gövdenin sınırlarını taşır ve **kısaltılmaz**. İkisi her zaman var:
+
+- **`tek_kolon_14_tutmaz`** — ürünün söyleyebileceği en büyük yalanı engelleyen uyarı.
+  Metin "zor" demiyor, **ölçülmüş sayıyı** söylüyor: P(14+) ≈ 1/1.161 hafta, 36 haftada
+  beklenen 0,031, gözlenen 0. 14+'a kaplama motoru taşır, tahminci değil.
+- **`model_yok`** — olasılıklar piyasa fiyatıdır; dokuz özellik denendi, hiçbiri geçemedi.
+
+İkisi koşullu: açılış oranı olduğu (A1'in ölçtüğü bedel +0,0025 Brier) ve iddaa kaynaklı
+maçların kalibrasyonunun ölçülmediği.
+
+**Başlamış maça maç öncesi olasılığı verilmez:** canlı işaretli maçlar, başlama saati
+geçmiş maçlar ve saati çözülemeyen maçlar elenir. Sonuncusu doktrin 2 — belirsiz bir
+zamana "maç öncesi" demek, iddiayı doğrulanamaz kılar.
+
+`/api/tahmin` **önbelleklenmez** ve bu kasıtlı: diğer uçlar sürümlenmiş dosya okur, burası
+yaklaşan maçları okur ve cevap zamanla değişir. Önbelleklenmiş bir tahmin, başlamış bir
+maça maç öncesi olasılığı göstermeye devam ederdi.
+
+#### Sayfanın sıralaması bir karardır (C2c)
+
+**Ölçülmüş isabet, tahmin tablosunun üstündedir.** Kullanıcı önce bu tahmincinin 540 maçta
+ne yaptığını görür, sonra bu haftanın sayılarını. Ters sırada olsaydı isabet bir dipnot
+olurdu; sayfanın amacı ise onu dipnot olmaktan çıkarmak. Aynı sebeple sınırlar katlanmaz —
+bir uyarıyı açılır kutuya koymak, onu göstermemektir.
+
+Çalıştırılarak iki kusur ölçülüp düzeltildi: 117 maç tek blok hâlinde **5.841 px**
+sürüyordu (C3'ün kaydettiği kusurun aynısı) — tablo günlere bölündü; ve kaynağın tamamı
+ölçüm dışıyken satır başına yıldız hiçbir şeyi ayırt etmiyordu — kaldırıldı, uyarı bir kez
+tepede söyleniyor.
+
+#### Çelişen metinler düzeltildi
+
+Kabuk altbilgisi ve formül sayfası *"bu araç maç sonucu tahmin etmez"* diyordu. `/tahmin`
+sayfasından sonra bu yanlış — ama alttaki ayrım **gerçek ve korunmalı**: kaplama motoru
+tahmin etmez, garanti verir. Metinler kapsamlarına göre ayrıldı; "bu araç" yerine "kaplama
+motoru" yazıldı ve formül sayfası `/tahmin`e bağlandı.
+
 ---
 
 ## 4. Sayfada bugün ne var
@@ -697,6 +776,10 @@ Filtre `?last=N` olarak adres çubuğunda durur; sayfa paylaşılabilir.
 **`/istatistik/<hafta>`** — sapma ve sıra kutuları · maç maç tablo (takım, saat, skor, sonuç,
 sezon payı, kapanış oranı) · **"bu haftayı formüle gönder"** · sürprizler · ardışık bloklar ·
 komşu hafta gezinmesi.
+
+**`/tahmin`** — yaklaşan maçlara 1/0/2 olasılığı, **ölçülmüş isabet kartı tablonun
+üstünde** (maç başına %55,6 · haftada 8,33/15 · Brier 0,5747 · 14+ tutan hafta 0/36) ·
+günlere bölünmüş maç tablosu + olasılık çubuğu · katlanmayan sınırlar bloğu.
 
 **`/istatistik/geri-test`** — aşırı uyum uyarısı · strateji seçici (banko/üçlü eşiği) + sezon
 özeti + örnek kupon · hold-out sağlaması · 28 satırlık eşik taraması (satıra tıklayınca uygulanır)
@@ -1017,7 +1100,7 @@ kolonla 14+ hiç gelmedi" yazacak. Süslenmiş bir olasılık, süslenmemiş bir
 | # | İş | Koşul |
 |---|---|---|
 | **C1** | Sentez katmanı (`insights.py`) | §6.6 G2'nin dört kuralı geçerli |
-| **C2** | **Tahmin arayüzü** | **Koşulsuz.** Öneri ancak ölçülmüş isabetiyle birlikte çıkar |
+| **C2** | **Tahmin arayüzü** | ✅ **BİTTİ** (§3.17) — `/tahmin`, `/api/tahmin` |
 | **C3** | Sayfayı soruya göre bölme | = eski **G1**. Bağımsız, her an yapılabilir |
 | **C4** | Dilim dürüstlüğü, gezinme, mobil | = eski **G3–G5** |
 
@@ -1029,11 +1112,11 @@ ucunun hiçbiri tahmin döndürmüyor, `/tahmin` diye bir sayfa yok. Ölçüm ar
 
 | | İş | Neden gerekli |
 |---|---|---|
-| **C2a** | **Canlı oran bağlantısı** | Oran arşivi geçmiş sezonun; gelecek haftanın maçına oran yok. İddaa bülteni snapshot'ı (`snapshot_iddaa.py`) zaten haftalık toplanıyor ama tahminciye bağlı değil |
-| **C2b** | **`/api/tahmin/<hafta>`** | Maç maç 1/0/2 olasılığı + ölçülmüş isabet, tek gövdede |
-| **C2c** | **`/tahmin` sayfası** | Olasılıklar, önerilen kupon yapısı ve yanında dürüst isabet sayıları |
+| **C2a** | ✅ Canlı oran (`build_fixtures.py`) | football-data `fixtures.csv` — **ölçümün yapıldığı kaynağın kendisi**; iddaa bülteni yedek |
+| **C2b** | ✅ `/api/tahmin` | Olasılık + ölçülmüş isabet + sınırlar, tek gövdede ve **ayrılamaz** |
+| **C2c** | ✅ `/tahmin` sayfası | İsabet tablonun **üstünde**; sınırlar katlanmaz |
 
-Üçü de Faz B'yi beklemez.
+Üçü de bitti ve hiçbiri Faz B'yi beklemedi.
 
 ### 6.5 Faz D — sonlanma
 
@@ -1078,7 +1161,7 @@ Eski etiketler kayıp değil, yerleşti:
 | — | **A2** (§3.15) | **bitti** |
 | — | **A3** (§3.16) | **bitti** |
 | — | **A4** (§6.2) | **arayış kapandı; eksen açık** |
-| G2 | **C2** — tahmin arayüzü | **koşulsuz, sırada** |
+| G2 | **C2** — tahmin arayüzü | **bitti** (§3.17) |
 | G1 | C3 | bekliyor |
 | G2 | C1 | koşullu |
 | G3–G5 | C4 | bekliyor |
@@ -1338,15 +1421,17 @@ python scripts/snapshot_iddaa.py           # iddaa açık bültenini arşivle
 python scripts/snapshot_iddaa.py --dry-run # yazmadan özet
 python scripts/build_egitim.py             # eğitim korpusu (iki çizgi birden)
 python scripts/build_egitim.py --dry-run   # yazmadan özet
+python scripts/build_fixtures.py            # yaklaşan maçlar + oranları
 
 # Tahmin katmanının ölçümleri (korpus gerekir; ~30 sn)
 python -m spor_toto.recalibrate            # yeniden kalibrasyon kademesi
 python -m spor_toto.cizgi                  # A1: kapanış çizgisi verimliliği
 python -m spor_toto.bahisci                # A2: bahisçi anlaşmazlığı
 python -m spor_toto.disari                 # A3: piyasa dışı özellikler
+python -m spor_toto.tahmin                 # ÜRÜN: yaklaşan maçlara olasılık
 
 # Denetim
-pytest -q                                  # 888 test (82'si bu katman, 206'sı tahmin)
+pytest -q                                  # 906 test (82'si bu katman, 224'ü tahmin)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out
 pytest -q tests/test_cizgi.py              # A1 ölçümü ve korpus bütünlüğü

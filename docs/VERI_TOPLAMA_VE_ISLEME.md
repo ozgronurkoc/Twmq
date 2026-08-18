@@ -2,7 +2,7 @@
 
 **Kapsam:** projedeki dört veri setinin tamamı — tarihsel 1/0/2 sonuçları, piyasa oranı
 arşivi, iddaa bülten arşivi ve (ayrı katman) eğitim korpusu
-**Sürüm:** v8 (A3 türetilmiş özellikleri; tahmin ekseni ölçümle kapandı)
+**Sürüm:** v9 (beşinci veri seti: yaklaşan maçlar — tahmin ürününün girdisi)
 **İlgili belgeler:** [`ISTATISTIK_YOL_HARITASI.md`](ISTATISTIK_YOL_HARITASI.md) (katmanın
 durumu ve yol haritası) · [`ARCHITECTURE_NEXT.md`](ARCHITECTURE_NEXT.md) (API sözleşmesi)
 
@@ -34,6 +34,29 @@ seti daha var ve bilerek **ayrı** tutulur:
 | **Okuyan** | `spor_toto/egitim.py` → **yalnızca tahmin katmanı** |
 | **Bekçi** | `tests/test_egitim.py` (ayrım testleri dahil) |
 | **Yönü** | geriye dönük, 4 geçmiş sezon |
+
+Ve **beşinci** bir veri seti, tahmin ürününün girdisi:
+
+| | Yaklaşan maçlar |
+|---|---|
+| **Dosya** | `data/fixtures/fixtures.csv` |
+| **Üreten** | `scripts/build_fixtures.py` |
+| **Okuyan** | `spor_toto/tahmin.py` → `/api/tahmin`, `/tahmin` |
+| **Bekçi** | `tests/test_tahmin.py` |
+| **Yönü** | **ileriye dönük, yuvarlanan pencere** |
+
+Diğer dördünden yönüyle ayrılır: hepsi geriye dönüktür, sonucu belli maçları
+taşır. Bu ise **henüz oynanmamış** maçı taşır ve hafta oynandıkça boşalır.
+"Yaklaşan maç yok" bu yüzden **normal bir durumdur, hata değildir.**
+
+Kaynağı football-data'nın `fixtures.csv` dosyasıdır ve seçim kasıtlı:
+**ölçümün yapıldığı kaynağın ta kendisi.** Kupon setinde ölçülen isabet aynı
+fiyatlayıcıya ait olduğu için ürüne meşru biçimde taşınabilir. İddaa bülteni
+yedektir ve kalibrasyonu **ölçülmemiştir** (marj %17,2'ye karşı %7,26); o
+maçlar gövdede ayrı işaretlenir.
+
+Oranlar **açılış** oranıdır ve bedeli ölçülmüştür (A1): açılış Brier 0,5964,
+kapanış 0,5940 — fark +0,0025. Ürün gövdesi bu sayıyı taşır.
 
 **Korpus `/istatistik` sayfasına girmez.** O sayfa Spor Toto kuponunun
 sezonunu anlatır (41 hafta, 615 maç) ve öyle kalır. Ayrım ürün kararıdır ve
@@ -914,6 +937,7 @@ hiçbir şey bilmediğimiz bir boyuttur.
 | **v6** (2026-08-17) | **Korpus artık iki çizgi taşıyor** (§6A.6): açılış ve kapanış oranı ayrı sütunlarda, yalnızca aynı bahisçi ailesinden eşleşmiş çift olarak. Maç sayısı değişmedi (31.103; 31.099'unda çift var), böylece önceki ölçümler karşılaştırılabilir kaldı. Bu değişiklik A1'i (kapanış çizgisi verimliliği) mümkün kıldı; sonucu §8 madde 7'ye işlendi |
 | **v7** (2026-08-17) | **Korpus bahisçi kırılımı taşıyor** (§6A.7): `B365C`, `PSC`, `MaxC`, `AvgC`. Kaynak seçimi ölçümün parçası — kapsaması sezona göre değişen bahisçiler (`BW`, `WH`, `BF`, `1XB`) bilerek dışarıda, çünkü kesiti sezona göre dengesizleştirip sezon dışarıda bırakmalı ölçümü yanlılarlardı. Aynı gerekçeyle model yalnızca sabit kaynak çiftinden gelen `ayrisma`yı görür; sürüklenen `en_iyi_prim` betimleyici kalır. Doğrulamaya `Max ≥ Avg` eklendi |
 | **v8** (2026-08-17) | **A3 özellikleri korpustan türetiliyor** (kod tarafında; yeni sütun yok): dinlenme günü, fikstür sıkışıklığı, iç/dış saha ayrı formu, sezon sonu payı. Hepsi maçtan **önceki** maçlardan hesaplanır ve her biri ayrı sızıntı bekçisine bağlıdır. §8 madde 7 kapandı: dört özellik de piyasayı geçemedi, ikisi (seyahat, derbi) türetilemedi. Yeni ve daha keskin bir sınır yazıldı — korpus **kupa ve Avrupa maçlarını görmüyor**, dolayısıyla ölçülen yorgunluk değil vekilidir |
+| **v9** (2026-08-18) | **Beşinci veri seti: yaklaşan maçlar** (`build_fixtures.py`). Tahmin ürününün girdisi; diğer dördünden yönüyle ayrılır — ileriye dönük ve yuvarlanan bir penceredir, hafta oynandıkça boşalır. Kaynak football-data `fixtures.csv`, yani **ölçümün yapıldığı fiyatlayıcının kendisi**; iddaa bülteni yedek ve kalibrasyonu ölçülmemiş olarak işaretli. Oranlar açılış oranıdır ve bedeli A1'de ölçülmüştür (+0,0025 Brier) |
 | **v4** (2026-08-17) | **Veri değişmedi, amaç değişti.** Proje maç sonucu tahminine ve kazanma oranını artırmaya yöneldi. Doktrinin yedi ilkesi aynen korundu; ilke 2'ye "eleme ≠ tahmin" ayrımı yazıldı. §8'e iki sınır eklendi: veride piyasa dışı sinyal yok, ikramiye/havuz verisi yok. §10 öncelikleri yeniden sıralandı ve §10.1 ile **dördüncü veri seti ihtiyacı** (ikramiye/havuz) tanımlandı |
 | **v3** (2026-08-16) | **İddaa bülten arşivi** kuruldu (§6) ve haftalık tetiği açıldı — ileriye dönük, birikmeye başlıyor. Oran arşivinden türetilen üç karar destek bloğu (çift kapsama, beraberlik profili, lig kırılımı) ve haftalık Brier eklendi; geri test boru hattı bu veriyi tüketmeye başladı. İddaa boru hattı §5'in eki değil **üçüncü veri seti** olduğu için `5A` yerine kendi bölüm numarasını aldı; sonraki bölümler bir kaydı |
 
