@@ -89,9 +89,15 @@ def test_olasilik_isabetsiz_cikamaz(tmp_path):
     assert "olculmus_isabet" in g
     i = g["olculmus_isabet"]
     assert i["olculdu"] is True
-    for alan in ("kesit", "n_mac", "mac_basina_isabet", "brier",
-                 "hafta_ortalamasi", "hafta_14_arti"):
-        assert alan in i, f"olculmus isabet blogunda {alan} yok"
+    for alan in ("n_mac", "mac_basina_isabet", "brier", "hafta_ortalamasi",
+                 "hafta_14_arti"):
+        assert alan in i["manset"], f"manset blogunda {alan} yok"
+    # Gövde bir ALTERNATIF olasilik tasiyorsa, onun da isabeti gelmeli.
+    if any(s.get("alternatif") for s in g["tahminler"]):
+        a = i["alternatif"]
+        assert a is not None, "alternatif olasilik var ama isabeti yok"
+        for alan in ("brier", "mac_basina_isabet", "fark", "gecti"):
+            assert alan in a, f"alternatif isabetinde {alan} yok"
 
 
 def test_uyarilar_kisaltilmaz(tmp_path):
@@ -128,11 +134,12 @@ def test_olculmus_isabet_arsivden_kosuyor():
     i = olculmus_isabet()
     if not i.get("olculdu"):
         pytest.skip("oran arsivi yok")
-    assert i["n_mac"] == 540 and i["n_hafta"] == 36
-    assert 0.50 < i["mac_basina_isabet"] < 0.62
-    assert 0.55 < i["brier"] < 0.62
+    m = i["manset"]
+    assert m["n_mac"] == 540 and i["n_hafta"] == 36
+    assert 0.50 < m["mac_basina_isabet"] < 0.62
+    assert 0.55 < m["brier"] < 0.62
     # A4'un yazdigi sayi: tek kolonla 14+ hic gelmedi
-    assert i["hafta_14_arti"] == 0
+    assert m["hafta_14_arti"] == 0
 
 
 # ─── kaynak dürüstlüğü ────────────────────────────────────────────────────────
@@ -280,3 +287,93 @@ def test_api_tahmin_isabeti_hep_tasir(client):
 def test_api_tahmin_bozuk_limit_cokmez(client):
     for ham in ("abc", "-5", "0", "1e9", ""):
         assert client.get(f"/api/tahmin?limit={ham}").status_code == 200
+
+
+# ─── alternatif tahminci ──────────────────────────────────────────────────────
+
+def test_alternatif_gecmedi_diye_etiketli():
+    """**Alternatifin varlik sarti.**
+
+    `kalibre_bias` ortalamada piyasadan iyi ama guven araligi sifiri
+    iceriyor. Urun onu manset yapamaz; ama olculdugu icin de saklayamaz.
+    Dogru davranis: yaninda dursun, `gecti=False` etiketiyle.
+
+    Bu test kirilirsa — yani alternatif GECERSE — o zaman manset kararinin
+    yeniden dusunulmesi gerekir ve bu bilincli bir istir, sessiz bir
+    guncelleme degil.
+    """
+    i = olculmus_isabet()
+    if not i.get("olculdu") or not i.get("alternatif"):
+        pytest.skip("korpus ya da arsiv yok")
+    a = i["alternatif"]
+    assert a["gecti"] is False, (
+        f"alternatif GECTI ({a['fark']}) — manset karari gozden gecirilmeli")
+    # Ortalamada daha iyi olmali; degilse alternatifi tasimanin anlami yok.
+    assert a["brier"] < i["manset"]["brier"]
+    assert a["fark"]["alt"] < 0 < a["fark"]["ust"], "aralik sifiri icermeli"
+
+
+def test_alternatif_manseti_degistirmez(tmp_path):
+    """Manşet her zaman eğitimsiz `piyasa`dır.
+
+    Alternatif ayrı bir alanda durur; manşet olasılığın yerine geçmez.
+    Geçseydi sayfadaki ölçülmüş isabet kartı başka bir tahmincinin
+    sayılarını gösteriyor olurdu.
+    """
+    yol = tmp_path / "f.csv"
+    _fixtures_yaz(yol, [_fixture_satiri()])
+    g = rapor(fixtures_yolu=str(yol))
+    t = g["tahminler"][0]
+    from spor_toto.odds import implied_probs
+    ham = implied_probs({"1": 2.0, "0": 3.5, "2": 4.0})
+    for s in ("1", "0", "2"):
+        assert t["olasilik"][s] == pytest.approx(ham[s], abs=1e-4)
+
+
+def test_alternatif_sozde_haftada_kupon_arsivine_bakmaz(tmp_path):
+    """**Sessiz ve zehirli bir hatanin bekcisi.**
+
+    `recalibrate._mac_ozellikleri`, `ozellikler` alani yoksa oran arsivine
+    `(hafta, mac no)` ile bakar — kupon setine ozgu bir yol. Yaklasan macta
+    o arama TAMAMEN BASKA bir macin ozelligini dondururdu.
+
+    `_sozde_hafta` bu yuzden alani acikca doldurur. Burada dogrulanan sey:
+    uretilen sozde haftanin her maci icin ozellik var ve hicbiri arsivden
+    gelmiyor (form/hareket/ayrisma notr sifir).
+    """
+    from spor_toto.recalibrate import _mac_ozellikleri
+    from spor_toto.tahmin import _sozde_hafta
+
+    maclar = [{"lig": "E0", "oranlar": {"1": 2.0, "0": 3.5, "2": 4.0}},
+              {"lig": "D1", "oranlar": {"1": 1.5, "0": 4.0, "2": 6.0}}]
+    hafta = _sozde_hafta(maclar)
+    assert hafta["ozellikler"] is not None
+    satirlar = _mac_ozellikleri(hafta)
+    assert len(satirlar) == len(maclar)
+    for s in satirlar:
+        assert s["form_puan_farki"] == 0.0
+        assert s["ayrisma"] == 0.0
+        assert all(v == 0.0 for v in s["hareket"].values())
+
+
+def test_alternatif_farkli_secim_sayilir(tmp_path):
+    """Alternatifin sıralamayı değiştirip değiştirmediği **ölçülür**.
+
+    Sıfır çıkıyorsa tek kolon oynayan biri için iki tahminci aynıdır ve
+    kullanıcının bunu tahmin etmesi değil görmesi gerekir.
+    """
+    yol = tmp_path / "f.csv"
+    _fixtures_yaz(yol, [_fixture_satiri(ev=f"T{i}") for i in range(4)])
+    g = rapor(fixtures_yolu=str(yol))
+    assert "alternatif_farkli_secim" in g
+    assert 0 <= g["alternatif_farkli_secim"] <= g["n_mac"]
+
+
+def test_alternatif_uyarisi_var(tmp_path):
+    yol = tmp_path / "f.csv"
+    _fixtures_yaz(yol, [_fixture_satiri()])
+    g = rapor(fixtures_yolu=str(yol))
+    if not any(s.get("alternatif") for s in g["tahminler"]):
+        pytest.skip("korpus yok — alternatif uretilmedi")
+    adlar = {u["ad"] for u in g["uyarilar"]}
+    assert "alternatif_gecmedi" in adlar

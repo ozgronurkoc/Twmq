@@ -98,7 +98,10 @@ export function TahminTablosu({ satirlar, yildizGoster = true }: {
             <th className="py-2 pr-3 font-medium" style={{ width: "34%" }}>
               Olasılık
             </th>
-            <th className="py-2 pr-1 text-right font-medium">Seçim</th>
+            <th className="py-2 pr-3 text-right font-medium">Seçim</th>
+            <th className="py-2 pr-1 text-right font-medium" title="Korpusta eğitilmiş yeniden kalibrasyon — geçmedi">
+              Alt.
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -143,7 +146,7 @@ export function TahminTablosu({ satirlar, yildizGoster = true }: {
               <td className="py-2 pr-3">
                 <OlasilikCubugu olasilik={t.olasilik} enOlasi={t.en_olasi} />
               </td>
-              <td className="py-2 pr-1 text-right whitespace-nowrap">
+              <td className="py-2 pr-3 text-right whitespace-nowrap">
                 {t.en_olasi ? (
                   <>
                     <span className={cn("font-semibold", SYM_TEXT[t.en_olasi as Sembol])}>
@@ -153,6 +156,25 @@ export function TahminTablosu({ satirlar, yildizGoster = true }: {
                       {yuzde(t.guven)}
                     </span>
                   </>
+                ) : (
+                  "—"
+                )}
+              </td>
+              {/*
+                Alternatif AYNI sembolu seciyorsa yalnizca guveni yazilir;
+                FARKLI seciyorsa sembol de yazilir ve vurgulanir — asil bilgi
+                orada. Sifir farkli secim, alternatifin siralamayi hic
+                degistirmedigi anlamina gelir ve bu gorulmeli.
+              */}
+              <td className="py-2 pr-1 text-right whitespace-nowrap tabular-nums text-muted-foreground">
+                {t.alternatif?.en_olasi ? (
+                  t.alternatif.en_olasi === t.en_olasi ? (
+                    yuzde(t.alternatif.guven)
+                  ) : (
+                    <span className="font-semibold text-warning">
+                      {t.alternatif.en_olasi} {yuzde(t.alternatif.guven)}
+                    </span>
+                  )
                 ) : (
                   "—"
                 )}
@@ -175,7 +197,7 @@ export function TahminTablosu({ satirlar, yildizGoster = true }: {
  * süslenmemiş bir yalandır.
  */
 export function IsabetKarti({ isabet }: { isabet: OlculmusIsabet }) {
-  if (!isabet.olculdu) {
+  if (!isabet.olculdu || !isabet.manset) {
     return (
       <Callout ton="warning" baslik="İsabet ölçülemedi">
         {isabet.not ?? "Oran arşivi eksik."} Ölçülmüş isabet olmadan bu
@@ -183,37 +205,105 @@ export function IsabetKarti({ isabet }: { isabet: OlculmusIsabet }) {
       </Callout>
     );
   }
+  const m = isabet.manset;
+  const a = isabet.alternatif;
   return (
     <Card>
       <CardBody className="space-y-3">
         <div className="text-[13px] font-semibold">
-          Bu tahminci geçen sezon ne yaptı?
+          Bu tahminciler geçen sezon ne yaptı?
         </div>
+
         <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
           <Stat
             etiket="Maç başına isabet"
-            deger={yuzde(isabet.mac_basina_isabet)}
-            alt={`${isabet.n_mac} maç · ${isabet.n_hafta} hafta`}
+            deger={yuzde(m.mac_basina_isabet)}
+            alt={`${m.n_mac} maç · ${isabet.n_hafta} hafta`}
           />
           <Stat
             etiket="Haftada doğru"
-            deger={`${isabet.hafta_ortalamasi ?? "—"} / 15`}
-            alt={`en iyi hafta ${isabet.en_iyi_hafta ?? "—"}`}
+            deger={`${m.hafta_ortalamasi} / 15`}
+            alt={`en iyi hafta ${m.en_iyi_hafta}`}
           />
           <Stat
             etiket="Brier"
-            deger={isabet.brier ?? "—"}
-            alt={`log kaybı ${isabet.log_kaybi ?? "—"}`}
+            deger={m.brier}
+            alt={`log kaybı ${m.log_kaybi}`}
           />
           <Stat
             etiket="14+ tutan hafta"
-            deger={`${isabet.hafta_14_arti ?? "—"} / ${isabet.n_hafta ?? "—"}`}
-            ton={isabet.hafta_14_arti ? "neutral" : "danger"}
-            alt={`13+ : ${isabet.hafta_13_arti ?? "—"}`}
+            deger={`${m.hafta_14_arti} / ${isabet.n_hafta}`}
+            ton={m.hafta_14_arti ? "neutral" : "danger"}
+            alt={`13+ : ${m.hafta_13_arti}`}
           />
         </div>
+
+        {/*
+          Iki tahminci yan yana. Alternatif ORTALAMADA daha iyi ama gecmedi;
+          bunu gizlemek de manset yapmak da yanlis olurdu. Fark ve araligi
+          birlikte durur — aralik sifiri iceriyorsa "gecmedi" yazar.
+        */}
+        {a ? (
+          <div className="overflow-x-auto rounded-xl border border-line">
+            <table className="w-full min-w-[520px] border-collapse text-[12.5px]">
+              <thead>
+                <tr className="border-b border-line bg-muted/40 text-left text-[11px] uppercase tracking-[0.06em] text-muted-foreground">
+                  <th className="px-3 py-2 font-medium">Tahminci</th>
+                  <th className="px-3 py-2 text-right font-medium">Brier</th>
+                  <th className="px-3 py-2 text-right font-medium">Fark</th>
+                  <th className="px-3 py-2 text-right font-medium">%95 aralık</th>
+                  <th className="px-3 py-2 text-right font-medium">Geçti</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[m, a].map((s) => (
+                  <tr key={s.ad} className="border-b border-line/60 last:border-0">
+                    <td className="px-3 py-2">
+                      <span className="font-medium">{s.ad}</span>
+                      {s.ad === isabet.referans ? (
+                        <span className="ml-1.5 text-[10.5px] text-muted-foreground">
+                          manşet
+                        </span>
+                      ) : null}
+                      {s.aciklama ? (
+                        <div className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
+                          {s.aciklama}
+                        </div>
+                      ) : null}
+                    </td>
+                    <td className="px-3 py-2 text-right tabular-nums">{s.brier}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">
+                      {s.fark ? s.fark.fark.toFixed(4) : "—"}
+                    </td>
+                    <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">
+                      {s.fark
+                        ? `[${s.fark.alt.toFixed(4)}, ${s.fark.ust.toFixed(4)}]`
+                        : "—"}
+                    </td>
+                    <td className="px-3 py-2 text-right">
+                      {s.gecti === undefined ? (
+                        "—"
+                      ) : s.gecti ? (
+                        <span className="font-semibold text-success">EVET</span>
+                      ) : (
+                        <span className="text-muted-foreground">hayır</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : null}
+
         <div className="text-[11.5px] leading-relaxed text-muted-foreground">
           Kesit: {isabet.kesit}
+          {a ? (
+            <>
+              {" · "}Alternatif <strong>31.103 maçlık korpusta</strong> eğitildi
+              ve burada ölçüldü; iki set arasında ortak maç yok.
+            </>
+          ) : null}
         </div>
       </CardBody>
     </Card>

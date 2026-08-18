@@ -108,6 +108,32 @@ export default function TahminSayfasi() {
               Yaklaşan maçlar
             </SectionTitle>
 
+            {/*
+              Alternatifin siralamayi degistirip degistirmedigi OLCULUR ve
+              yazilir. Sifirsa tek kolon oynayan biri icin iki tahminci
+              aynidir; kullanicinin bunu tahmin etmesi degil gormesi gerekir.
+            */}
+            {veri.n_mac && veri.alternatif_farkli_secim !== undefined ? (
+              <p className="text-[12px] leading-relaxed text-muted-foreground">
+                <strong>Alt.</strong> sütunu, korpusta eğitilmiş alternatif
+                tahmincinin aynı maça verdiği güven.{" "}
+                {veri.alternatif_farkli_secim === 0 ? (
+                  <>
+                    Bu maçların <strong>hiçbirinde</strong> farklı bir sembol
+                    seçmiyor — yalnızca güveni değiştiriyor. Tek kolon oynayan
+                    biri için iki tahminci aynıdır; fark ancak olasılığa
+                    dayalı bir kupon kurarken anlam taşır.
+                  </>
+                ) : (
+                  <>
+                    {veri.alternatif_farkli_secim} / {veri.n_mac} maçta{" "}
+                    <span className="text-warning">farklı sembol</span>{" "}
+                    seçiyor.
+                  </>
+                )}
+              </p>
+            ) : null}
+
             {veri.n_mac ? (
               <Card>
                 <CardBody>
