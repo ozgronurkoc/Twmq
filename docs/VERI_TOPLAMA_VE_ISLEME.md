@@ -2,7 +2,7 @@
 
 **Kapsam:** projedeki dört veri setinin tamamı — tarihsel 1/0/2 sonuçları, piyasa oranı
 arşivi, iddaa bülten arşivi ve (ayrı katman) eğitim korpusu
-**Sürüm:** v7 (korpus bahisçi kırılımını da taşıyor — A2'nin ön koşulu)
+**Sürüm:** v8 (A3 türetilmiş özellikleri; tahmin ekseni ölçümle kapandı)
 **İlgili belgeler:** [`ISTATISTIK_YOL_HARITASI.md`](ISTATISTIK_YOL_HARITASI.md) (katmanın
 durumu ve yol haritası) · [`ARCHITECTURE_NEXT.md`](ARCHITECTURE_NEXT.md) (API sözleşmesi)
 
@@ -770,6 +770,20 @@ Amaç tahmine döndüğü için iki sınır daha kritik hale geldi ve ayrıca ya
    > listesindeki özelliklerin çoğu (dinlenme günü, fikstür sıkışıklığı, sezon sonu
    > motivasyonu) aynı riski taşıyor ve her biri en az bir kontrol dilimiyle ölçülmelidir.
    > Ölçüm: [`ISTATISTIK_YOL_HARITASI.md`](ISTATISTIK_YOL_HARITASI.md) §3.15.
+
+   > **A3 bu maddeyi kapattı (2026-08-17).** Listedeki altı özellikten **ikisi türetilemedi**
+   > — seyahat (şehir/koordinat yok; bir maçın iki takımı hep aynı ligde) ve derbi (rekabet
+   > tablosu yok). Kalan dördü — dinlenme günü, fikstür sıkışıklığı, iç/dış saha ayrı formu,
+   > sezon sonu payı — türetildi ve **dördü de piyasayı geçemedi.**
+   >
+   > **Ama bu maddeye yeni ve daha keskin bir sınır eklendi:** korpus 22 lig taşıyor, **kupa
+   > ve Avrupa maçları içinde yok.** Dolayısıyla ölçülen şey yorgunluk değil, *korpustan
+   > türetilebilen yorgunluk vekilidir*. Kör nokta ölçüldü: deplasman "dinlenmiş" göründüğünde
+   > ev takımı piyasanın beklediğini +0,0655 aşıyor ve etki Avrupa'ya takım veren liglerde
+   > **dört kat** güçlü — görünmeyen bir maç oynanmış olmasıyla tutarlı. Bir bulgu değil
+   > (n=445, dışarıda bırakmalı katkısı sıfır) ama **fikstür verisi** artık somut bir veri
+   > ihtiyacı olarak yazılı (§10.1 ile aynı statüde).
+   > Ölçüm: [`ISTATISTIK_YOL_HARITASI.md`](ISTATISTIK_YOL_HARITASI.md) §3.16 ve §6.2 A4.
 8. **İkramiye ve havuz verisi yok.** Hiçbir veri seti haftalık kazanan adedini veya ikramiye
    tutarını taşımıyor — hafta kaydı yalnızca `week, close_date, season, n1/n0/n2, results,
    matches` içerir. Spor Toto müşterek bahis olduğu için **kazanma oranı** ile **beklenen
@@ -834,7 +848,8 @@ değil, **tahminin ölçülebilir hale gelmesini sağlayan veridir.**
 | **✔** | **T5 — Takım formu özellikleri** | **Yapıldı.** Maç istatistiği sütunları korpusa eklendi; form yuvarlanan pencereyle türetiliyor. Ham sinyal güçlü, artık değer ~0 |
 | **✔** | **A1 — Açılış/kapanış çizgi çifti** (§6A.6) | **Yapıldı.** Aynı kaynaktan, yeni indirme gerekmedi. 31.099 maçta çift var |
 | **✔** | **A2 — Bahisçi kırılımı** (§6A.7) | **Yapıldı.** Dört kaynak taşınıyor; kapsaması sezona göre değişenler bilerek dışarıda |
-| **1** | **A3 — Türetilebilir özellikler** | **Aynı kaynaktan türetilebilir.** Tarih ve takım alanlarından dinlenme günü, fikstür sıkışıklığı, derbi, sezon sonu. Yeni indirme gerekmez — ama her biri karışma kontrolü ister (§8 madde 7) |
+| **✔** | **A3 — Türetilebilir özellikler** | **Yapıldı.** Dördü türetildi ve geçmedi; seyahat ile derbi türetilemedi. Faz A **(b) ile kapandı** |
+| **1** | **Fikstür verisi** (kupa + Avrupa) | **Hiç yok.** A3'ün kör noktası: korpus 22 ligi görüyor, kupa/Avrupa maçlarını görmüyor. Tahmin eksenini yeniden açabilecek üç kaynaktan biri |
 | **2** | **İkramiye / havuz verisi** (§10.1) | **Hiç yok.** Beşinci veri seti gerekir; kaynak araştırılmadı |
 | **3** | **S1'in kupon ayağı** | **Kapalı** (§10.2). Sonuç kaynağı sezon parametresi taşımıyor + `robots.txt` kısıtı |
 | **4** | **S3 — İddaa arşivi olgunlaşınca** | **Birikmeyi bekliyor.** Boru hattı ve haftalık tetik çalışıyor (§6.4); ~10 snapshot sonra eşleştirme anlamlı olur |
@@ -898,6 +913,7 @@ hiçbir şey bilmediğimiz bir boyuttur.
 | **v5** (2026-08-17) | **Eğitim korpusu** kuruldu (§6A): football-data'dan 22 lig × 4 geçmiş sezon, 31.103 maç. Kupon değerlendirme setinin 58 katı. `/istatistik` sayfasına **girmez** — ayrım `test_ayrim_*` ile bekçiye bağlandı. Varsayılan sezonlar 2025/26'yı dışarıda bırakır (sızıntı önlemi) |
 | **v6** (2026-08-17) | **Korpus artık iki çizgi taşıyor** (§6A.6): açılış ve kapanış oranı ayrı sütunlarda, yalnızca aynı bahisçi ailesinden eşleşmiş çift olarak. Maç sayısı değişmedi (31.103; 31.099'unda çift var), böylece önceki ölçümler karşılaştırılabilir kaldı. Bu değişiklik A1'i (kapanış çizgisi verimliliği) mümkün kıldı; sonucu §8 madde 7'ye işlendi |
 | **v7** (2026-08-17) | **Korpus bahisçi kırılımı taşıyor** (§6A.7): `B365C`, `PSC`, `MaxC`, `AvgC`. Kaynak seçimi ölçümün parçası — kapsaması sezona göre değişen bahisçiler (`BW`, `WH`, `BF`, `1XB`) bilerek dışarıda, çünkü kesiti sezona göre dengesizleştirip sezon dışarıda bırakmalı ölçümü yanlılarlardı. Aynı gerekçeyle model yalnızca sabit kaynak çiftinden gelen `ayrisma`yı görür; sürüklenen `en_iyi_prim` betimleyici kalır. Doğrulamaya `Max ≥ Avg` eklendi |
+| **v8** (2026-08-17) | **A3 özellikleri korpustan türetiliyor** (kod tarafında; yeni sütun yok): dinlenme günü, fikstür sıkışıklığı, iç/dış saha ayrı formu, sezon sonu payı. Hepsi maçtan **önceki** maçlardan hesaplanır ve her biri ayrı sızıntı bekçisine bağlıdır. §8 madde 7 kapandı: dört özellik de piyasayı geçemedi, ikisi (seyahat, derbi) türetilemedi. Yeni ve daha keskin bir sınır yazıldı — korpus **kupa ve Avrupa maçlarını görmüyor**, dolayısıyla ölçülen yorgunluk değil vekilidir |
 | **v4** (2026-08-17) | **Veri değişmedi, amaç değişti.** Proje maç sonucu tahminine ve kazanma oranını artırmaya yöneldi. Doktrinin yedi ilkesi aynen korundu; ilke 2'ye "eleme ≠ tahmin" ayrımı yazıldı. §8'e iki sınır eklendi: veride piyasa dışı sinyal yok, ikramiye/havuz verisi yok. §10 öncelikleri yeniden sıralandı ve §10.1 ile **dördüncü veri seti ihtiyacı** (ikramiye/havuz) tanımlandı |
 | **v3** (2026-08-16) | **İddaa bülten arşivi** kuruldu (§6) ve haftalık tetiği açıldı — ileriye dönük, birikmeye başlıyor. Oran arşivinden türetilen üç karar destek bloğu (çift kapsama, beraberlik profili, lig kırılımı) ve haftalık Brier eklendi; geri test boru hattı bu veriyi tüketmeye başladı. İddaa boru hattı §5'in eki değil **üçüncü veri seti** olduğu için `5A` yerine kendi bölüm numarasını aldı; sonraki bölümler bir kaydı |
 

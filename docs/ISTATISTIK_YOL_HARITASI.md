@@ -101,12 +101,13 @@ spor_toto/evaluate.py  ◄── spor_toto/predict.py     (sözleşme + 3 refera
 | Tahmin | `backend/spor_toto/recalibrate.py` | — | Yeniden kalibrasyon kademesi (Newton) |
 | Tahmin | `backend/spor_toto/cizgi.py` | — | Kapanış çizgisi verimliliği (A1): açılış tahmincisi, hareket ölçümü |
 | Tahmin | `backend/spor_toto/bahisci.py` | — | Bahisçi anlaşmazlığı (A2): tekil bahisçiler, ayrışma ölçümü |
+| Tahmin | `backend/spor_toto/disari.py` | — | Piyasa dışı türetilebilir özellikler (A3): artık taraması, kör nokta |
 | Tahmin | `backend/spor_toto/egitim.py` | — | Eğitim korpusu okuyucusu (**istatistiğe girmez**) |
 | Üretim | `backend/scripts/build_egitim.py` | — | Korpus üretimi (football-data, 4 sezon, **iki çizgi + bahisçi kırılımı**) |
-| Test | `backend/tests/test_predict.py` · `test_evaluate.py` · `test_recalibrate.py` · `test_egitim.py` · `test_cizgi.py` · `test_bahisci.py` | — | Tahmin katmanı ve **ayrım bekçisi** (161) |
+| Test | `backend/tests/test_predict.py` · `test_evaluate.py` · `test_recalibrate.py` · `test_egitim.py` · `test_cizgi.py` · `test_bahisci.py` · `test_disari.py` | — | Tahmin katmanı ve **ayrım bekçisi** (206) |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **843 test**; **82'si** istatistik katmanına, **161'i** tahmin katmanına ait.
+paketi toplam **888 test**; **82'si** istatistik katmanına, **206'sı** tahmin katmanına ait.
 `python -m spor_toto.health` **23 değişmez** çalıştırır — ikisi (`oran_arsivi`, `geri_test`)
 istatistik katmanını, biri (`tahmin_referanslari`) tahmin katmanının ölçüm koşumunu korur.
 
@@ -612,6 +613,74 @@ koşullanmış durumda; anlaşmazlık üstüne hiçbir şey eklemiyor.
 onları fiyatlamıştı. Burada ham sinyalin **kendisi bir yanılsama**. İkisini ayırmadan
 "anlaşmazlık yardım etmiyor" demek, doğru sonucu yanlış sebeple kaydetmek olurdu.
 
+### 3.16 Piyasa dışı ama türetilebilir özellikler (A3)
+
+Faz A'nın son işi. §6.2 A3 altı özellik listelemişti; **ilk iş listeyi denetlemek oldu** ve
+ikisi elendi — korpusta türetilecek bir şey yok:
+
+| Elenen | Neden |
+|---|---|
+| **Seyahat** | Şehir/koordinat yok. Ayrıca bir maçın iki takımı **her zaman aynı ligde** (`Div` tek değer); "deplasman takımının lig/ülke değişimi" maç düzeyinde bir büyüklük değil |
+| **Derbi** | Şehir eşlemesi ya da rekabet tablosu yok. Elle derbi listesi yazmak *türetme* değil **küratörlük** olurdu |
+
+İkisi de yeni bir **veri kaynağı** ister, yani A4(b)'nin yeniden açılma şartına aittir.
+Denemiş gibi yapıp sessizce atlamaktansa gerekçesiyle kayda geçti — *"denenmedi"* ile
+*"denenemez"* farklı şeylerdir ve A4 bu ayrımı yazmak zorunda.
+
+Kalan dördü türetildi ve kademeye birer basamak olarak eklendi (`egitim._takvim_tablosu`):
+
+| Tahminci | Brier | Fark | %95 aralık | Geçti |
+|---|---:|---:|---|---|
+| `kalibre_dagilim` (taban) | 0,5937 | −0,0003 | [−0,0007, +0,0001] | hayır |
+| `kalibre_dinlenme` | 0,5936 | −0,0003 | [−0,0007, +0,0001] | hayır |
+| `kalibre_sikisiklik` | 0,5937 | −0,0003 | [−0,0007, +0,0001] | hayır |
+| `kalibre_ic_dis` | 0,5937 | −0,0003 | [−0,0007, +0,0001] | hayır |
+| `kalibre_sezon_sonu` | 0,5937 | −0,0003 | [−0,0007, +0,0001] | hayır |
+
+**Dört özellik üstüste eklendiğinde taban çizgisi hiç kımıldamadı.**
+
+#### Betimleyici tablo ham farkı değil **artığı** raporluyor
+
+A2'nin dersi buraya taşındı. Artık = gerçekleşen ev oranı − **piyasanın beklediği** ev oranı.
+Ham fark özelliğin bilgi taşıyıp taşımadığını söyler; artık, o bilginin **fiyata girmemiş**
+kısmını. A3'ün sorusu ikincisidir.
+
+En öğretici örnek iç/dış saha formu:
+
+| Özellik | Ham fark (ev galibiyeti oranı) | En büyük artık |
+|---|---:|---:|
+| `ic_dis_form_farki` | **+0,247** | +0,090 |
+| `sezon_sonu_pay_farki` | +0,106 | +0,060 |
+| `dinlenme_farki` | −0,028 | −0,044 |
+| `sikisiklik_farki` | −0,021 | −0,018 |
+
+İç/dış form ham haliyle devasa bir sinyal taşıyor — ev takımının iç saha formu iyiyken ev
+galibiyeti oranı 25 puan yüksek. Piyasa onu neredeyse tamamen fiyatlamış. **Güçlü sinyal,
+sıfır katkı.**
+
+`sikisiklik` taramasının eşiği 1,0'dan 0,5'e indirildi: 1,0'da kuyruklarda 300 maç kalıyor,
+favori dilimlerine bölününce hücreler 30–130'a düşüyor ve tarama **sessizce cevapsız**
+kalıyordu. Cevapsızlığın "artık yok" diye okunması A3'ün en kolay yapılacak hatası olurdu;
+`dilimlenemedi` bayrağı artık bunu açıkça taşıyor.
+
+#### Korpusun kör noktası — iddia değil ölçüm
+
+Korpus 22 lig taşıyor; **kupa ve Avrupa maçları içinde yok.** Dinlenme olduğundan uzun,
+sıkışıklık olduğundan düşük ölçülür — ve hata rastgele değil, Avrupa oynayan takımlarda
+yoğunlaşır. Bunu yazıp geçmek kolay olurdu; sınandı:
+
+| Lig katmanı | Ev dinlenmiş | Dengeli | **Dep dinlenmiş** |
+|---|---:|---:|---:|
+| Avrupa'ya takım veren | +0,0026 | −0,0032 | **+0,0655** (n=445) |
+| Diğer | +0,0072 | +0,0046 | +0,0162 (n=1.136) |
+
+Deplasman "dinlenmiş" göründüğünde ev takımı piyasanın beklediğini aşıyor ve etki Avrupa
+liglerinde **dört kat** güçlü — korpusta görünmeyen bir maç oynanmış olmasıyla tutarlı.
+
+**Ama bu bir bulgu değil.** n=445, çok hücreli bir taramadan okunuyor ve dışarıda bırakmalı
+ölçümde katkısı sıfır. Değeri, A4(b)'nin yeniden açılma koşulunu **somutlaştırması**: eksik
+olan model değil, **fikstür verisi**.
+
 ---
 
 ## 4. Sayfada bugün ne var
@@ -704,6 +773,8 @@ arındırılmış yapı tutar.
 | **Çizgi hareketi (A1)** | 31.099 maç | `kalibre_hareket` = `kalibre_form`, uzatma **%1,01** — **kapanış verimli** |
 | **Pinnacle vs kolektif (A2)** | 31.100 maç | `ps` **0,5936** · −0,0004 [−0,0006, −0,0002] — **geçti**; `b365` geçmedi |
 | **Bahisçi anlaşmazlığı (A2)** | 31.100 maç | Ham ilişki favori gücüyle karışık; sabitlenince **kayboluyor**. Güven kısma %0,02 |
+| **Dinlenme + sıkışıklık (A3)** | 31.103 maç | Geçmedi. Korpus kupa/Avrupa maçlarını görmüyor — ölçülen, yorgunluğun **vekili** |
+| **İç/dış form + sezon sonu (A3)** | 31.103 maç | Geçmedi. İç/dış form ham farkı **+0,247**, artığı onda biri — güçlü sinyal, sıfır katkı |
 
 **Okuma.** Aşırı uyum modelin kapasitesinden değil örneklem küçüklüğünden geliyordu; büyük
 korpus onu kaldırdı. Ama kalan etki 0,0005–0,0015 Brier — 31 binde anlamlı, 540'ta değil ve
@@ -801,33 +872,25 @@ olduğunu gösterdi: Pinnacle 0,0004 daha iyi. Üç seçenek var ve seçim ürü
 değiştirmiyor (geçen tek şey `ps`'in kendisi), ve karşılaştırılabilirliği kaybetmenin bedeli
 kazancından büyük. Karar bilinçlidir ve burada yazılıdır — sessizce bırakılmış değil.
 
-#### A3 — Piyasa dışı ama türetilebilir özellikler · **sırada, Faz A'nın son işi**
+#### A3 — Piyasa dışı ama türetilebilir özellikler · **bitti** (§3.16)
 
-**Burada bir hata düzeltiliyor.** `VERI_TOPLAMA_VE_ISLEME.md` §8.7'ye "veride piyasa dışı
-hiçbir sinyal yok" yazılmıştı; bu fazla genişti. Ek kaynak gerektirmeyen birkaç özellik var
-ve hiçbiri denenmedi:
+Altı özellik listelenmişti. **İkisi türetilemedi** ve gerekçesi kayda geçti (seyahat: şehir
+yok ve bir maçın iki takımı hep aynı ligde; derbi: rekabet tablosu yok — elle liste yazmak
+küratörlük olurdu). Kalan dördü türetildi ve dördü de **geçmedi:**
 
-| Özellik | Nasıl türetilir | Neden aday |
-|---|---|---|
-| **Dinlenme günü** | Önceki maçtan geçen gün | Yorgunluk fiyatlanır ama tam mı? |
-| **Fikstür sıkışıklığı** | Son 14 günde oynanan maç | Kupa/Avrupa yükü lige tam yansımayabilir |
-| **Seyahat** | Deplasman takımının lig/ülke değişimi | Kaba vekil, sıfır maliyet |
-| **Derbi** | Aynı şehir / rekabet eşleşmesi | Beraberlik oranı sapar mı? |
-| **Sezon sonu bahis** | Tarih + lig konumu | Motivasyon; sezonun son %20'si |
-| **Ev/deplasman ayrı form** | T5'te ayrıştırılmadı | Form tek birleşik özellik olarak denendi |
+> Dinlenme günü, fikstür sıkışıklığı, iç/dış saha ayrı formu ve sezon sonu payı kademeye
+> üstüste eklendiğinde taban çizgisi **hiç kımıldamadı** — dördü de −0,0003 [−0,0007, +0,0001].
 
-T5 yalnızca **birleşik takım formunu** denedi ve piyasanın onu fiyatladığını gösterdi; bu,
-diğerleri hakkında hiçbir şey söylemez. Dürüst beklenti: bunlar da fiyatlanmış. Ama ucuzlar
-ve denenmeden "piyasa dışı girdi yok" demek yanlış olur. **Büyüklük:** orta.
+En öğretici olanı iç/dış form: ham farkı devasa (+0,247 ev galibiyeti oranı), artığı ham
+farkın onda birinden küçük. **Güçlü sinyal, sıfır katkı.**
 
-**A2'den sonra bir uyarı taşınmalı.** A2'nin ikinci bulgusu, ham bir tablonun karışmış bir
-değişkenle nasıl gerçek sinyal taklidi yapabildiğini gösterdi. A3'ün özelliklerinin
-neredeyse hepsi aynı riski taşıyor: dinlenme günü ve fikstür sıkışıklığı **lig ve takım
-gücüyle** karışıktır (Avrupa oynayan takımlar hem yorgun hem güçlüdür), sezon sonu
-motivasyonu **lig konumuyla**. Her biri için ham tablonun yanına en az bir kontrol dilimi
-konmalı; konmazsa bulunan "sinyal" özelliğin değil karışmanın olur.
+**Bir sınır ölçüldü ve A4'e taşındı.** Korpus kupa ve Avrupa maçlarını görmüyor; dolayısıyla
+ölçülen şey yorgunluk değil, *korpustan türetilebilen yorgunluk vekili*. Kör nokta taraması
+bunu doğruladı — deplasman "dinlenmiş" göründüğünde ev takımı piyasayı +0,0655 aşıyor ve etki
+Avrupa liglerinde dört kat güçlü. Bulgu değil (n=445, dışarıda bırakmalı katkısı sıfır), ama
+A4(b)'nin yeniden açılma koşulunu somutlaştırıyor: eksik olan **fikstür verisi**.
 
-#### A4 — Tahmin ekseninin durma kuralı
+#### A4 — Tahmin ekseninin durma kuralı · **işletildi: (b)**
 
 A1–A3 bittiğinde belgeye şu iki cümleden **biri** yazılır:
 
@@ -838,37 +901,69 @@ A1–A3 bittiğinde belgeye şu iki cümleden **biri** yazılır:
 > kanaat değil ölçümdür; tekrar açılması için yeni bir **veri kaynağı** gerekir — yeni bir
 > model değil."*
 
-**(b) çıkarsa Faz A bir daha açılmaz.** Aynı veriyle yeni model denemek, aynı soruyu daha
-yüksek sesle sormaktır.
+A1, A2 ve A3 bitti. **Yazılan cümle (b):**
 
-**Bugünkü durum: (b)'ye doğru, ama kural gereği henüz yazılmıyor.**
+> **Dokuz özellik denendi; hiçbiri piyasayı geçemedi.** Ölçümlerin tamamı 31.100 maçlık
+> korpusta, sezon dışarıda bırakmalı, hafta üzerinden eşleştirilmiş bootstrap ile yapıldı;
+> "geçti" ölçütü güven aralığının tamamen sıfırın altında kalmasıdır.
+>
+> **Tahmin ekseni kapalıdır.** Bu bir kanaat değil ölçümdür. Tekrar açılması için yeni bir
+> **veri kaynağı** gerekir — yeni bir model değil.
 
-| Denenen | Kesit | Sonuç |
-|---|---|---|
-| Yeniden kalibrasyon kademesi (T2–T3) | 31.103 | Yön doğru, miktar yetersiz |
-| Takım formu (T5) | 31.103 | Geçmedi; piyasa fiyatlamış |
-| Açılış çizgisi (A1) | 31.099 | Kapanışın **altında** — soğuruma var |
-| Çizgi hareketi (A1) | 31.099 | Geçmedi; uzatma %1,01 |
-| Pinnacle (A2) | 31.100 | **Geçti** — ama aşağıya bakınız |
-| Bahisçi anlaşmazlığı (A2) | 31.100 | Geçmedi; ham sinyalin kendisi yok |
+| # | Denenen | Kesit | Sonuç |
+|---|---|---|---|
+| 1–4 | Yeniden kalibrasyon kademesi (T2–T3) | 31.103 | Yön doğru, miktar yetersiz |
+| 5 | Takım formu (T5) | 31.103 | Geçmedi; piyasa fiyatlamış |
+| 6 | Çizgi hareketi (A1) | 31.099 | Geçmedi; uzatma %1,01 |
+| 7 | Bahisçi anlaşmazlığı (A2) | 31.100 | Geçmedi; ham sinyalin kendisi yok |
+| 8 | Dinlenme + fikstür sıkışıklığı (A3) | 31.103 | Geçmedi |
+| 9 | İç/dış form + sezon sonu payı (A3) | 31.103 | Geçmedi |
 
-**`ps`'in geçmesi A4(a)'yı tetiklemiyor, ve sebebi kaydedilmelidir.**
+Ayrıca **iki bağımsız doğrulama** aynı yöne işaret ediyor:
 
-A4(a)'nın şablonu şunu ister: *"şu **özellik** piyasayı şu kadar geçiyor → Faz C'ye
-giriyor."* `ps` bir özellik değil, hatta bir model bile değil — **aynı piyasanın başka bir
-okuması**. Söylediği şey "şunu tahmin edebiliyoruz" değil, "referans çizgimiz 0,0004 kadar
-yumuşakmış". Üç somut sebep:
+- **Açılış çizgisi kapanışın altında** (+0,0025, aralık tamamen sıfırın üstünde). Piyasa maç
+  öncesinde gelen bilgiyi fiyata soğuruyor — piyasanın *çalıştığının* doğrudan ölçümü.
+- **Piyasanın kendi hareketi bile kapanışı yenemiyor.** Bu, "iyi bir model bulamadık"
+  demekten farklı bir cümledir.
 
-1. **Yeni bilgi üretmiyor.** Kolektifin bir üyesi, kolektiften iyi. Elimizde piyasa dışı
-   hiçbir girdi yokken bu, veri kaynağı seçimidir; tahmin yeteneği değil.
+**`ps`'in geçmesi (a)'yı tetiklemiyor** ve sebebi kaydedilmelidir. A4(a)'nın şablonu şunu
+ister: *"şu **özellik** piyasayı şu kadar geçiyor → Faz C'ye giriyor."* `ps` bir özellik
+değil, hatta bir model bile değil — **aynı piyasanın başka bir okuması**. Üç somut sebep:
+
+1. **Yeni bilgi üretmiyor.** Kolektifin bir üyesi, kolektiften iyi. Bu veri kaynağı
+   seçimidir; tahmin yeteneği değil.
 2. **Faz C'ye çevrilemez.** Spor Toto müşterek bahistir; Pinnacle'ın fiyatından bahis
    oynanmıyor. Arayüze konabilecek bir öneri çıkmıyor.
 3. **Büyüklük yine yetersiz.** 0,0004 Brier, tabanı 0,594 olan bir sayıda, %17,2'lik iddaa
-   marjının yanında hiç. T2–T5'in tamamıyla aynı mertebe.
+   marjının yanında hiç.
 
-Doğru sonuç şudur: A4(a) değil, **referans çizgisi kararı** (yukarıda). Faz A'nın durma
-kuralı A3 bitmeden işletilmez; A1 ve A2 birlikte, kalan tek denemenin **beklentisini**
-düşürdü — üç bağımsız yönden bakıldı ve üçünde de fiyatın dışında bir şey bulunamadı.
+Söylediği şey "tahmin edebiliyoruz" değil, **"referans çizgimiz 0,0004 kadar yumuşakmış"** —
+ve bu bir referans kararıdır (yukarıda), durma kuralı değil.
+
+#### Yeniden açılma koşulları — ölçülmüş, belirsiz değil
+
+**(b) çıktığı için Faz A bir daha açılmaz.** Aynı veriyle yeni model denemek, aynı soruyu
+daha yüksek sesle sormaktır. Ama (b) "hiçbir zaman" demiyor; **yeni veri kaynağı** diyor. A1–A3
+o kaynakların ne olduğunu belirsiz bırakmadı, üçünü de somutlaştırdı:
+
+| Yeniden açacak kaynak | Neden — ve hangi ölçüm işaret etti |
+|---|---|
+| **Fikstür verisi** (kupa + Avrupa maçları) | A3'ün kör nokta taraması: deplasman "dinlenmiş" göründüğünde ev takımı piyasayı +0,0655 aşıyor ve etki Avrupa liglerinde dört kat güçlü. Türetebildiğimiz yorgunluk vekili fiyatlanmış; **gerçek yorgunluk ölçülmedi** |
+| **Kadro / sakatlık verisi** | Hiçbir veri setinde yok (§8 madde 7). Piyasanın gördüğü, bizim görmediğimiz en büyük girdi |
+| **Şehir / rekabet tablosu** | A3'te seyahat ve derbi bu yüzden elendi — hesaplanamadıkları için, denenip elendikleri için değil |
+
+Bu üçü olmadan tahmin ekseninde yapılacak iş **yoktur**. Üçünden biri gelirse açılacak soru
+bellidir ve altyapı hazır: `cizgi.py`/`bahisci.py`/`disari.py` deseni aynen kullanılır.
+
+#### Faz A'nın asıl çıktısı
+
+Dokuz özellik, dört bağımsız açı, 31 bin maç — ve tek bir "geçti" yok. **Bu bir başarısızlık
+değil, projenin cevaplamak için kurulduğu sorunun cevabıdır.** Bu alandaki araçların
+neredeyse tamamı üstünlük *iddia eder*; hiçbiri üstünlüğün yokluğunu **ölçmez**.
+
+Pratik sonuç: **kazanma oranı tahmin tarafından artırılamaz.** Geriye çarpımsal hedefin
+diğer iki ekseni kalıyor — havuz (Faz B) ve kaplama (çözülmüş). Faz B'nin bugün öne çıkması
+bir tercih değil, **ölçümün sonucudur.**
 
 ### 6.3 Faz B — havuz eksenini aç ve ölç
 
@@ -907,7 +1002,7 @@ Proje şu **dört sorunun tamamı** ölçülmüş cevaba bağlandığında biter
 
 | # | Soru | Bugün | Nasıl kapanır |
 |---|---|---|---|
-| 1 | Kapanış çizgisini yenebiliyor muyuz? | bilinmiyor | A1–A4 |
+| 1 | Kapanış çizgisini yenebiliyor muyuz? | **hayır, ölçüldü** | A1–A4 **kapandı** (§6.2 A4) |
 | 2 | Kalabalığı yenebiliyor muyuz? | bilinmiyor | B1–B4 |
 | 3 | Pozitif beklenen getirili kupon kurulabiliyor mu? | bilinmiyor | B3 |
 | 4 | Garanti hâlâ optimal mi? | **evet, kanıtlı** | kapandı |
@@ -925,14 +1020,14 @@ değildir: bu alandaki araçların neredeyse tamamı birinciyi *iddia eder*, hi�
 
 ```
 A1 ─┐  ✔ bitti (§3.14)
-A2 ─┼─► A4  (tahmin ekseni kapanır ya da açılır)   ✔ bitti (§3.15)
-A3 ─┘  ◄── sırada, Faz A'nın son işi
+A2 ─┼─► A4  ✔ İŞLETİLDİ → (b): tahmin ekseni KAPALI
+A3 ─┘  ✔ bitti (§3.16)
         B1 ─► B2 ─► B3 ─► B4  (havuz ekseni; B1 paralel başlayabilir)
 C3 (bağımsız, her an)
                           └─► C1, C2 (yalnızca A4(a) ya da B4(a))  ─► C4 ─► D
 ```
 
-**A önce, çünkü ucuz ve belirleyici.** **B1 paralel** — o bir araştırma, kod değil.
+**Faz A bitti ve (b) ile kapandı** (§6.2 A4). **B1 artık tek açık kol** — o bir araştırma, kod değil.
 **C3 hiçbir şeyi beklemez** (ölçülmüş kusur: 7.210 px, ilk ekranda 3/11 başlık).
 
 Eski etiketler kayıp değil, yerleşti:
@@ -942,6 +1037,8 @@ Eski etiketler kayıp değil, yerleşti:
 | T1–T5 | Faz A'nın yapılmış kısmı (§3.10–3.13) | bitti |
 | — | **A1** (§3.14) | **bitti** |
 | — | **A2** (§3.15) | **bitti** |
+| — | **A3** (§3.16) | **bitti** |
+| — | **A4** (§6.2) | **işletildi — (b)** |
 | G1 | C3 | bekliyor |
 | G2 | C1 | koşullu |
 | G3–G5 | C4 | bekliyor |
@@ -1206,13 +1303,15 @@ python scripts/build_egitim.py --dry-run   # yazmadan özet
 python -m spor_toto.recalibrate            # yeniden kalibrasyon kademesi
 python -m spor_toto.cizgi                  # A1: kapanış çizgisi verimliliği
 python -m spor_toto.bahisci                # A2: bahisçi anlaşmazlığı
+python -m spor_toto.disari                 # A3: piyasa dışı özellikler
 
 # Denetim
-pytest -q                                  # 843 test (82'si bu katman, 161'i tahmin)
+pytest -q                                  # 888 test (82'si bu katman, 206'sı tahmin)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out
 pytest -q tests/test_cizgi.py              # A1 ölçümü ve korpus bütünlüğü
 pytest -q tests/test_bahisci.py            # A2 ölçümü ve kaynak seçimi
+pytest -q tests/test_disari.py             # A3 ölçümü ve sızıntı bekçileri
 python -m spor_toto.health                 # 23 değişmez
 python -m spor_toto.health --help          # tek kontrol: ?only=geri_test
 
