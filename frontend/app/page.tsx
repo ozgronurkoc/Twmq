@@ -460,8 +460,12 @@ export default function FormulPage() {
         <p className="mt-1 max-w-3xl text-[13.5px] leading-relaxed text-muted-foreground">
           Seçtiğin ihtimal kümeleri içinde doğru sonuç varsa, oynanan kolonlardan
           en az biri en fazla 1 maç hatalı olur — yani <strong>14-garanti</strong>.
-          Bu araç maç sonucu <strong>tahmin etmez</strong>; tahminin doğruysa onu
-          en az kuponla garantiye alır.
+          <strong>Kaplama motoru tahmin etmez</strong>; tahminin doğruysa onu en az
+          kuponla garantiye alır. Olasılık istiyorsan{" "}
+          <a href="/tahmin" className="underline underline-offset-2">
+            Tahmin
+          </a>{" "}
+          sayfası, ölçülmüş isabetiyle birlikte verir.
         </p>
       </header>
 
@@ -706,7 +710,7 @@ export default function FormulPage() {
                         "uydurulmadı."
                       : "Tüm maçların oranı vardı."}{" "}
                     <strong>İşaretler taşınmadı:</strong> hangi maça banko, hangisine çifte
-                    koyacağın senin kararın — bu araç maç sonucu tahmin etmez.
+                    koyacağın senin kararın — kaplama motoru bu seçimi yapmaz.
                   </p>
                   {devir.labels.some(Boolean) ? (
                     <ol className="tnum mt-2 grid gap-x-4 gap-y-0.5 text-[11.5px] sm:grid-cols-2">

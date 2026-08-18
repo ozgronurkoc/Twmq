@@ -892,3 +892,60 @@ export interface HealthChecksResponse {
   version: string;
   checks: HealthCheckInfo[];
 }
+
+/* ── Tahmin (C2) ─────────────────────────────────────────────────────────── */
+
+/** Tek maçın tahmini. `olasilik` marj arındırılmıştır ve 1'e toplanır. */
+export interface TahminSatiri {
+  kaynak: string;
+  lig: string;
+  tarih: string;
+  saat: string;
+  ev: string;
+  dep: string;
+  oran_kaynak: string;
+  /** Ölçülen isabetin ait olduğu lig evreninde mi. */
+  olculen_lig: boolean;
+  oranlar: Record<string, number>;
+  olasilik: Record<string, number>;
+  en_olasi: string | null;
+  guven: number | null;
+}
+
+/**
+ * Tahmincinin ÖLÇÜLMÜŞ isabeti. Arşivden koşulur, elle yazılmaz.
+ * `olculdu=false` ise oran arşivi eksiktir ve sayı gösterilmez.
+ */
+export interface OlculmusIsabet {
+  olculdu: boolean;
+  not?: string;
+  kesit?: string;
+  n_hafta?: number;
+  n_mac?: number;
+  mac_basina_isabet?: number;
+  brier?: number;
+  log_kaybi?: number;
+  hafta_ortalamasi?: number;
+  en_iyi_hafta?: number;
+  hafta_14_arti?: number;
+  hafta_13_arti?: number;
+}
+
+export interface TahminUyarisi {
+  ad: string;
+  metin: string;
+}
+
+/**
+ * Tahmin gövdesi. `tahminler` ile `olculmus_isabet` AYRILAMAZ — biri
+ * gösteriliyorsa diğeri de gösterilir. Projenin tek kırmızı çizgisi budur.
+ */
+export interface TahminResponse {
+  n_mac: number;
+  kaynaklar: string[];
+  olculen_kaynak: boolean;
+  tahminler: TahminSatiri[];
+  olculmus_isabet: OlculmusIsabet;
+  uyarilar: TahminUyarisi[];
+  bos_sebep: string | null;
+}
