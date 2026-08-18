@@ -113,6 +113,43 @@ def kupon_degerlendir(d: Dict[str, Any], picks: Sequence[str]) -> Dict[str, Any]
     }
 
 
+def kupon_kiyas(d, a_picks, b_picks) -> Dict[str, Any]:
+    """İki kuponu maç maç karşılaştırır ve birleşimlerini ölçer.
+
+    Birleşim kolonu bilerek var: "iki kupon birlikte oynansaydı" sorusu,
+    haftanın ulaşılabilir olup olmadığını gösteren en dürüst testtir.
+    """
+    import math
+    gercek = d["meta"]["results"]
+    birlesim = ["".join(sorted(set(x) | set(y), key=SEM.index))
+                for x, y in zip(a_picks, b_picks)]
+    bk = [i + 1 for i, (p_, g) in enumerate(zip(birlesim, gercek)) if g not in p_]
+    return {
+        "union_picks": birlesim,
+        "union_space": math.prod(len(x) for x in birlesim),
+        "union_misses": bk,
+        "union_best": 15 - len(bk),
+        "rows": [
+            {"no": i + 1, "mac": f"{mm['home']} – {mm['away']}",
+             "a": x, "b": y, "gercek": g,
+             "a_tuttu": g in x, "b_tuttu": g in y}
+            for i, (mm, x, y, g) in enumerate(zip(d["matches"], a_picks, b_picks, gercek))
+        ],
+    }
+
+
+def banko_karnesi(d, picks) -> Dict[str, Any]:
+    """Bankolar ne yaptı — tek işaretli maçlar kuponun kırılma noktasıdır."""
+    gercek = d["meta"]["results"]
+    sat = [{"no": i + 1, "mac": f"{d['matches'][i]['home']} – {d['matches'][i]['away']}",
+            "sembol": p, "gercek": gercek[i], "tuttu": p == gercek[i],
+            "p": d["matches"][i]["probs"][p]}
+           for i, p in enumerate(picks) if len(p) == 1]
+    return {"rows": sat, "n": len(sat),
+            "dogru": sum(1 for r in sat if r["tuttu"]),
+            "beklenen": sum(r["p"] for r in sat)}
+
+
 def kalabalik_karnesi(d: Dict[str, Any]) -> Dict[str, Any]:
     """Kalabalığın kuponu ne yaptı — ikramiyenin neden büyük olduğunun cevabı."""
     gercek = d["meta"]["results"]

@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import html
+import json
 import importlib.util
 import sys
 from pathlib import Path
@@ -52,12 +53,26 @@ try:
 finally:
     sys.argv = _argv
 BITTI = bool(d["meta"].get("results"))
+KUPON_JSON = json.loads((KOK / "data" / "super_toto" / _a.sezon /
+                         f"hafta_{_a.hafta:02d}_kupon.json").read_text(encoding="utf-8"))
+KULLANICI = KUPON_JSON.get("user")
+
 if BITTI:
     gercek = d["meta"]["results"]
     degerlendirme = _deg.kupon_degerlendir(d, ana["picks"])
     kal_karne = _deg.kalabalik_karnesi(d)
     ikramiye = _deg.ikramiye_ozeti(d)
     sayim_g = {x: gercek.count(x) for x in S}
+    if KULLANICI:
+        import math as _math
+        kul_p = KULLANICI["picks"]
+        kul_deg = _deg.kupon_degerlendir(d, kul_p)
+        kul_banko = _deg.banko_karnesi(d, kul_p)
+        ben_banko = _deg.banko_karnesi(d, ana["picks"])
+        kiyas = _deg.kupon_kiyas(d, kul_p, ana["picks"])
+        kul_kal = _math.prod(
+            sum(mm["play"][x] for x in pk) for mm, pk in zip(d["matches"], kul_p))
+        kul_uzay = _math.prod(len(x) for x in kul_p)
 mer = {p["budget"]: p for p in m.butce_merdiveni(d, [list(x) for x in ana["picks"]], [256, 512])}
 o, hist = ref["odds"], ref["hist"]
 wa = hist["weekly_avg"]
@@ -494,6 +509,107 @@ if BITTI:
 else:
     dersler_bolumu = ""
 
+
+if BITTI and KULLANICI:
+    kiyas_satir = []
+    for r in kiyas["rows"]:
+        ikisi = (not r["a_tuttu"]) and (not r["b_tuttu"])
+        kiyas_satir.append(f"""
+      <tr class="{'ikisi-de' if ikisi else ''}">
+        <td class="no">{r['no']}</td>
+        <td class="mac">{e(r['mac'])}</td>
+        <td class="iki-a">{marks(r['a'])} {'✓' if r['a_tuttu'] else '✗'}</td>
+        <td class="iki-b">{marks(r['b'])} {'✓' if r['b_tuttu'] else '✗'}</td>
+        <td>{chip(r['gercek'])}</td>
+      </tr>""")
+    kiyas_html = "".join(kiyas_satir)
+
+    kul_banko_satir = "".join(
+        f'<tr class="{"tuttu" if r["tuttu"] else "kacti"}"><td class="no">{r["no"]}</td>'
+        f'<td class="mac">{e(r["mac"])}</td><td>{chip(r["sembol"])}</td>'
+        f'<td>{chip(r["gercek"])}</td><td class="num mono">%{100*r["p"]:.0f}</td>'
+        f'<td class="im">{"✓" if r["tuttu"] else "✗"}</td></tr>'
+        for r in kul_banko["rows"])
+
+    dis_banko = [r for r in kul_banko["rows"] if r["sembol"] == "2"]
+    dis_tutan = sum(1 for r in dis_banko if r["tuttu"])
+
+    iki_kupon_bolumu = f"""
+  <section>
+    <header>
+      <span class="eyebrow">Karşılaştırma · iki farklı yol, aynı sonuç</span>
+      <h2>Senin kuponun da 9/15</h2>
+      <p>İki kupon birbirinden çok farklı kuruldu — seninki 7 banko ile dar ve ucuz, benimki 11 çifte ile
+      geniş ve pahalı. İkisi de aynı yerde bitti. Bu tesadüf değil: haftayı bitiren maçlar
+      <b>ikimizin de kaçırdığı</b> maçlardı.</p>
+    </header>
+
+    <div class="ik">
+      <div class="sen">
+        <h4>Senin kuponun</h4>
+        <div class="skor">9<span>/15</span></div>
+        <dl>
+          <div><dt>Yapı</dt><dd style="font-size:13px">{kul_banko['n']} banko · {sum(1 for x in kul_p if len(x)==2)} çifte · {sum(1 for x in kul_p if len(x)==3)} üçlü</dd></div>
+          <div><dt>Kolon</dt><dd>{tr(kul_uzay)}</dd></div>
+          <div><dt>Küme-içi</dt><dd>%{100*kul_deg['p_in_set']:.3f}</dd></div>
+          <div><dt>Beklenen kaçak</dt><dd>{kul_deg['expected_misses']:.2f}</dd></div>
+        </dl>
+      </div>
+      <div class="kur">
+        <h4>Kural kuponu (benim)</h4>
+        <div class="skor">9<span>/15</span></div>
+        <dl>
+          <div><dt>Yapı</dt><dd style="font-size:13px">{ben_banko['n']} banko · {len(ana['cift'])} çifte · {len(ana['uclu'])} üçlü</dd></div>
+          <div><dt>Kolon</dt><dd>{tr(ana['columns'])}</dd></div>
+          <div><dt>Küme-içi</dt><dd>%{100*degerlendirme['p_in_set']:.3f}</dd></div>
+          <div><dt>Beklenen kaçak</dt><dd>{degerlendirme['expected_misses']:.2f}</dd></div>
+        </dl>
+      </div>
+    </div>
+
+    <p style="font-size:13.5px;color:var(--dim);max-width:70ch;margin-bottom:18px">
+      Benim kuponumun tutma ihtimali seninkinin <b style="color:var(--ink)">11 katıydı</b>
+      (%{100*degerlendirme['p_in_set']:.2f}'e karşı %{100*kul_deg['p_in_set']:.2f}) ve
+      <b style="color:var(--ink)">6 kat</b> daha fazla kolona mal oluyordu. Bu hafta o fark hiçbir şey satın almadı:
+      fazladan ödenen her kolon, zaten kaybedilmiş bir kuponu genişletti.</p>
+
+    <div class="scroll">
+      <table>
+        <thead><tr><th>#</th><th>Maç</th><th>Senin</th><th>Kural</th><th>Sonuç</th></tr></thead>
+        <tbody>{kiyas_html}</tbody>
+      </table>
+    </div>
+    <p style="margin-top:12px;font-size:12.5px;color:var(--dim)">
+      Kırmızı satırlar <b style="color:var(--ink)">ikimizin de kaçırdığı</b> maçlar.</p>
+
+    <h3 style="margin:34px 0 6px">Haftayı bitiren dört maç</h3>
+    <p style="font-size:13.5px;color:var(--dim);max-width:70ch;margin-bottom:14px">
+      1, 5, 11 ve 13. maçlar iki kuponu da dışarı attı. Piyasa bu dört sonuca sırasıyla
+      %17,6 · %18,0 · %20,2 · %24,9 vermişti; dördünün aynı hafta gerçekleşme olasılığı
+      <b style="color:var(--ink)">1/627</b>. İki kupon <b style="color:var(--ink)">birleştirilse</b> bile
+      ({tr(kiyas['union_space'])} kolon) sonuç {kiyas['union_best']}/15 olurdu — yine ödeme eşiğinin altında.
+      Bu hafta seçimle ulaşılabilir değildi.</p>
+
+    <h3 style="margin:30px 0 14px">Senin bankoların</h3>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>#</th><th>Maç</th><th>Banko</th><th>Sonuç</th><th class="num">Piyasa</th><th></th></tr></thead>
+        <tbody>{kul_banko_satir}</tbody>
+      </table>
+    </div>
+    <p style="margin-top:14px;font-size:13.5px;color:var(--dim);max-width:70ch">
+      <b style="color:var(--ink)">{kul_banko['dogru']}/{kul_banko['n']} tuttu; beklenen {kul_banko['beklenen']:.2f}</b>'ydi.
+      Asıl kırılma noktası şu: bankolarının {len(dis_banko)}'ü <b style="color:var(--ink)">deplasman</b> işaretiydi
+      (Trabzonspor, Fenerbahçe, PSG, Villarreal) ve <b style="color:var(--ink)">{dis_tutan}'i tuttu</b>.
+      Haftada toplam <b style="color:var(--ink)">tek bir</b> deplasman galibiyeti vardı — o da
+      Konyaspor–Rizespor'daki Rizespor'du: haftanın tek deplasman galibiyeti, senin deplasman
+      işaretlemediğin maçlardan birinde geldi.
+      Dört bankonun dördü de %48–58 aralığındaydı; kural kuponunun banko eşiği %68'dir ve
+      bu maçların hiçbirini banko yapmazdı.</p>
+  </section>"""
+else:
+    iki_kupon_bolumu = ""
+
 ana_v = dict(ana); ana_v["cost"] = ana["columns"]
 HTML = f"""<title>Süper Toto 1. Hafta</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -648,6 +764,21 @@ td.sonuc-h {{ width: 44px; }}
 .ders b {{ color: var(--ink); }}
 .ders .karar {{ margin-top: 11px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 13px; }}
 .ders .karar b {{ color: var(--primary); }}
+
+/* iki kupon */
+.ik {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 14px; margin-bottom: 22px; }}
+.ik > div {{ border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; background: var(--card); border-top: 3px solid var(--line2); }}
+.ik .sen {{ border-top-color: var(--s2); }}
+.ik .kur {{ border-top-color: var(--s1); }}
+.ik h4 {{ margin: 0 0 3px; font: 600 14px sans-serif; }}
+.ik .skor {{ font-size: 32px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.1; }}
+.ik .skor span {{ font-size: 14px; color: var(--dim); font-weight: 400; }}
+.ik dl {{ display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin: 13px 0 0; }}
+.ik dt {{ font: 600 9.5px/1 sans-serif; letter-spacing: .09em; text-transform: uppercase; color: var(--dim); }}
+.ik dd {{ margin: 3px 0 0; font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }}
+td.iki-a, td.iki-b {{ width: 96px; }}
+tr.ikisi-de td {{ background: var(--danger-soft); }}
+.rozet-k {{ display: inline-block; font: 600 9.5px/1 sans-serif; letter-spacing: .08em; padding: 3px 6px; border-radius: 5px; background: var(--muted); color: var(--dim); }}
 
 /* gerekçe */
 .kural {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; margin-bottom: 30px; }}
@@ -865,6 +996,8 @@ footer {{ margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--line)
     <h3 style="margin:36px 0 6px">Kalabalık verisini neden kullanmadım</h3>
     <p style="font-size:13.5px;color:var(--dim);max-width:68ch">Oynanma yüzdeleri elimde ve yukarıda ölçtüm — ama <b style="color:var(--ink)">işaret seçimine sokmadım</b>. Sebep, bu kuponun ne olduğuyla ilgili: bu, geçen sezon verisinden çıkan kuralın kör bir sınavı. Kalabalığa göre işaret oynatsaydım, sonuç geldiğinde "kural mı tuttu, sezgim mi tuttu" ayırt edilemezdi.<br><br>Kalabalık verisinin asıl işi zaten farklı: <b style="color:var(--ink)">tutturma olasılığını değil, tutturunca alınacak payı</b> değiştirir. Onu ölçmek için ikramiye/havuz verisi gerekiyor. {'O veri artık elimizde — ve aşağıdaki 5. ve 6. ders tam olarak ne söylediğini yazıyor: kalabalık yönü piyasadan alıyor, dolayısıyla kural için bir sinyal taşımıyor; taşıdığı şey payın büyüklüğü.' if BITTI else 'O veri ilk kez bu hafta gelecek. Payı hesaplayabildiğimiz an, seçim kuralına ikinci bir terim eklemek meşru olur — daha önce değil.'}</p>
   </section>
+
+  {iki_kupon_bolumu}
 
   {dersler_bolumu}
 

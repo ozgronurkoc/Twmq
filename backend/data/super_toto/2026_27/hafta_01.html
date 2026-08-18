@@ -152,6 +152,21 @@ td.sonuc-h { width: 44px; }
 .ders .karar { margin-top: 11px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 13px; }
 .ders .karar b { color: var(--primary); }
 
+/* iki kupon */
+.ik { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 14px; margin-bottom: 22px; }
+.ik > div { border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; background: var(--card); border-top: 3px solid var(--line2); }
+.ik .sen { border-top-color: var(--s2); }
+.ik .kur { border-top-color: var(--s1); }
+.ik h4 { margin: 0 0 3px; font: 600 14px sans-serif; }
+.ik .skor { font-size: 32px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.ik .skor span { font-size: 14px; color: var(--dim); font-weight: 400; }
+.ik dl { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin: 13px 0 0; }
+.ik dt { font: 600 9.5px/1 sans-serif; letter-spacing: .09em; text-transform: uppercase; color: var(--dim); }
+.ik dd { margin: 3px 0 0; font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
+td.iki-a, td.iki-b { width: 96px; }
+tr.ikisi-de td { background: var(--danger-soft); }
+.rozet-k { display: inline-block; font: 600 9.5px/1 sans-serif; letter-spacing: .08em; padding: 3px 6px; border-radius: 5px; background: var(--muted); color: var(--dim); }
+
 /* gerekçe */
 .kural { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; margin-bottom: 30px; }
 .kural > div { border: 1px solid var(--line); border-radius: 14px; padding: 15px 16px; background: var(--card); border-top: 3px solid var(--line2); }
@@ -912,6 +927,185 @@ footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--line);
 
     <h3 style="margin:36px 0 6px">Kalabalık verisini neden kullanmadım</h3>
     <p style="font-size:13.5px;color:var(--dim);max-width:68ch">Oynanma yüzdeleri elimde ve yukarıda ölçtüm — ama <b style="color:var(--ink)">işaret seçimine sokmadım</b>. Sebep, bu kuponun ne olduğuyla ilgili: bu, geçen sezon verisinden çıkan kuralın kör bir sınavı. Kalabalığa göre işaret oynatsaydım, sonuç geldiğinde "kural mı tuttu, sezgim mi tuttu" ayırt edilemezdi.<br><br>Kalabalık verisinin asıl işi zaten farklı: <b style="color:var(--ink)">tutturma olasılığını değil, tutturunca alınacak payı</b> değiştirir. Onu ölçmek için ikramiye/havuz verisi gerekiyor. O veri artık elimizde — ve aşağıdaki 5. ve 6. ders tam olarak ne söylediğini yazıyor: kalabalık yönü piyasadan alıyor, dolayısıyla kural için bir sinyal taşımıyor; taşıdığı şey payın büyüklüğü.</p>
+  </section>
+
+  
+  <section>
+    <header>
+      <span class="eyebrow">Karşılaştırma · iki farklı yol, aynı sonuç</span>
+      <h2>Senin kuponun da 9/15</h2>
+      <p>İki kupon birbirinden çok farklı kuruldu — seninki 7 banko ile dar ve ucuz, benimki 11 çifte ile
+      geniş ve pahalı. İkisi de aynı yerde bitti. Bu tesadüf değil: haftayı bitiren maçlar
+      <b>ikimizin de kaçırdığı</b> maçlardı.</p>
+    </header>
+
+    <div class="ik">
+      <div class="sen">
+        <h4>Senin kuponun</h4>
+        <div class="skor">9<span>/15</span></div>
+        <dl>
+          <div><dt>Yapı</dt><dd style="font-size:13px">7 banko · 7 çifte · 1 üçlü</dd></div>
+          <div><dt>Kolon</dt><dd>384</dd></div>
+          <div><dt>Küme-içi</dt><dd>%0.203</dd></div>
+          <div><dt>Beklenen kaçak</dt><dd>4.92</dd></div>
+        </dl>
+      </div>
+      <div class="kur">
+        <h4>Kural kuponu (benim)</h4>
+        <div class="skor">9<span>/15</span></div>
+        <dl>
+          <div><dt>Yapı</dt><dd style="font-size:13px">2 banko · 11 çifte · 2 üçlü</dd></div>
+          <div><dt>Kolon</dt><dd>2.304</dd></div>
+          <div><dt>Küme-içi</dt><dd>%2.309</dd></div>
+          <div><dt>Beklenen kaçak</dt><dd>3.26</dd></div>
+        </dl>
+      </div>
+    </div>
+
+    <p style="font-size:13.5px;color:var(--dim);max-width:70ch;margin-bottom:18px">
+      Benim kuponumun tutma ihtimali seninkinin <b style="color:var(--ink)">11 katıydı</b>
+      (%2.31'e karşı %0.20) ve
+      <b style="color:var(--ink)">6 kat</b> daha fazla kolona mal oluyordu. Bu hafta o fark hiçbir şey satın almadı:
+      fazladan ödenen her kolon, zaten kaybedilmiş bir kuponu genişletti.</p>
+
+    <div class="scroll">
+      <table>
+        <thead><tr><th>#</th><th>Maç</th><th>Senin</th><th>Kural</th><th>Sonuç</th></tr></thead>
+        <tbody>
+      <tr class="ikisi-de">
+        <td class="no">1</td>
+        <td class="mac">Galatasaray A.Ş. – Çorum FK</td>
+        <td class="iki-a"><span class="chip s1">1</span><span class="chip s0 off">0</span><span class="chip s2 off">2</span> ✗</td>
+        <td class="iki-b"><span class="chip s1">1</span><span class="chip s0 off">0</span><span class="chip s2 off">2</span> ✗</td>
+        <td><span class="chip s0">0</span></td>
+      </tr>
+      <tr class="">
+        <td class="no">2</td>
+        <td class="mac">Kasımpaşa A.Ş. – Trabzonspor A.Ş.</td>
+        <td class="iki-a"><span class="chip s1 off">1</span><span class="chip s0 off">0</span><span class="chip s2">2</span> ✗</td>
+        <td class="iki-b"><span class="chip s1 off">1</span><span class="chip s0">0</span><span class="chip s2">2</span> ✓</td>
+        <td><span class="chip s0">0</span></td>
+      </tr>
+      <tr class="">
+        <td class="no">3</td>
+        <td class="mac">Konyaspor – Çaykur Rizespor A.Ş.</td>
+        <td class="iki-a"><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2 off">2</span> ✗</td>
+        <td class="iki-b"><span class="chip s1">1</span><span class="chip s0 off">0</span><span class="chip s2">2</span> ✓</td>
+        <td><span class="chip s2">2</span></td>
+      </tr>
+      <tr class="">
+        <td class="no">4</td>
+        <td class="mac">Gaziantep F.K. A.Ş. – Alanyaspor</td>
+        <td class="iki-a"><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2 off">2</span> ✓</td>
+        <td class="iki-b"><span class="chip s1">1</span><span class="chip s0 off">0</span><span class="chip s2">2</span> ✗</td>
+        <td><span class="chip s0">0</span></td>
+      </tr>
+      <tr class="ikisi-de">
+        <td class="no">5</td>
+        <td class="mac">Gençlerbirliği – Fenerbahçe A.Ş.</td>
+        <td class="iki-a"><span class="chip s1 off">1</span><span class="chip s0 off">0</span><span class="chip s2">2</span> ✗</td>
+        <td class="iki-b"><span class="chip s1 off">1</span><span class="chip s0">0</span><span class="chip s2">2</span> ✗</td>
+        <td><span class="chip s1">1</span></td>
+      </tr>
+      <tr class="">
+        <td class="no">6</td>
+        <td class="mac">Başakşehir FK – Kocaelispor</td>
+        <td class="iki-a"><span class="chip s1">1</span><span class="chip s0 off">0</span><span class="chip s2 off">2</span> ✓</td>
+        <td class="iki-b"><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2 off">2</span> ✓</td>
+        <td><span class="chip s1">1</span></td>
+      </tr>
+      <tr class="">
+        <td class="no">7</td>
+        <td class="mac">Amed Sportif – Erzurumspor FK</td>
+        <td class="iki-a"><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2 off">2</span> ✓</td>
+        <td class="iki-b"><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2 off">2</span> ✓</td>
+        <td><span class="chip s1">1</span></td>
+      </tr>
+      <tr class="">
+        <td class="no">8</td>
+        <td class="mac">Beşiktaş A.Ş. – Eyüpspor</td>
+        <td class="iki-a"><span class="chip s1">1</span><span class="chip s0 off">0</span><span class="chip s2 off">2</span> ✓</td>
+        <td class="iki-b"><span class="chip s1">1</span><span class="chip s0 off">0</span><span class="chip s2 off">2</span> ✓</td>
+        <td><span class="chip s1">1</span></td>
+      </tr>
+      <tr class="">
+        <td class="no">9</td>
+        <td class="mac">Samsunspor A.Ş. – Göztepe A.Ş.</td>
+        <td class="iki-a"><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2 off">2</span> ✓</td>
+        <td class="iki-b"><span class="chip s1">1</span><span class="chip s0 off">0</span><span class="chip s2">2</span> ✗</td>
+        <td><span class="chip s0">0</span></td>
+      </tr>
+      <tr class="">
+        <td class="no">10</td>
+        <td class="mac">Arsenal – Manchester City</td>
+        <td class="iki-a"><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2">2</span> ✓</td>
+        <td class="iki-b"><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2">2</span> ✓</td>
+        <td><span class="chip s1">1</span></td>
+      </tr>
+      <tr class="ikisi-de">
+        <td class="no">11</td>
+        <td class="mac">RC Lens – PSG</td>
+        <td class="iki-a"><span class="chip s1 off">1</span><span class="chip s0 off">0</span><span class="chip s2">2</span> ✗</td>
+        <td class="iki-b"><span class="chip s1 off">1</span><span class="chip s0">0</span><span class="chip s2">2</span> ✗</td>
+        <td><span class="chip s1">1</span></td>
+      </tr>
+      <tr class="">
+        <td class="no">12</td>
+        <td class="mac">Sevilla – Rayo Vallecano</td>
+        <td class="iki-a"><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2 off">2</span> ✓</td>
+        <td class="iki-b"><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2">2</span> ✓</td>
+        <td><span class="chip s1">1</span></td>
+      </tr>
+      <tr class="ikisi-de">
+        <td class="no">13</td>
+        <td class="mac">Racing Santander – Villarreal</td>
+        <td class="iki-a"><span class="chip s1 off">1</span><span class="chip s0 off">0</span><span class="chip s2">2</span> ✗</td>
+        <td class="iki-b"><span class="chip s1">1</span><span class="chip s0 off">0</span><span class="chip s2">2</span> ✗</td>
+        <td><span class="chip s0">0</span></td>
+      </tr>
+      <tr class="">
+        <td class="no">14</td>
+        <td class="mac">Espanyol – Levante</td>
+        <td class="iki-a"><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2 off">2</span> ✓</td>
+        <td class="iki-b"><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2 off">2</span> ✓</td>
+        <td><span class="chip s1">1</span></td>
+      </tr>
+      <tr class="">
+        <td class="no">15</td>
+        <td class="mac">Celta Vigo – Osasuna</td>
+        <td class="iki-a"><span class="chip s1">1</span><span class="chip s0 off">0</span><span class="chip s2">2</span> ✓</td>
+        <td class="iki-b"><span class="chip s1">1</span><span class="chip s0">0</span><span class="chip s2 off">2</span> ✓</td>
+        <td><span class="chip s1">1</span></td>
+      </tr></tbody>
+      </table>
+    </div>
+    <p style="margin-top:12px;font-size:12.5px;color:var(--dim)">
+      Kırmızı satırlar <b style="color:var(--ink)">ikimizin de kaçırdığı</b> maçlar.</p>
+
+    <h3 style="margin:34px 0 6px">Haftayı bitiren dört maç</h3>
+    <p style="font-size:13.5px;color:var(--dim);max-width:70ch;margin-bottom:14px">
+      1, 5, 11 ve 13. maçlar iki kuponu da dışarı attı. Piyasa bu dört sonuca sırasıyla
+      %17,6 · %18,0 · %20,2 · %24,9 vermişti; dördünün aynı hafta gerçekleşme olasılığı
+      <b style="color:var(--ink)">1/627</b>. İki kupon <b style="color:var(--ink)">birleştirilse</b> bile
+      (93.312 kolon) sonuç 11/15 olurdu — yine ödeme eşiğinin altında.
+      Bu hafta seçimle ulaşılabilir değildi.</p>
+
+    <h3 style="margin:30px 0 14px">Senin bankoların</h3>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>#</th><th>Maç</th><th>Banko</th><th>Sonuç</th><th class="num">Piyasa</th><th></th></tr></thead>
+        <tbody><tr class="kacti"><td class="no">1</td><td class="mac">Galatasaray A.Ş. – Çorum FK</td><td><span class="chip s1">1</span></td><td><span class="chip s0">0</span></td><td class="num mono">%71</td><td class="im">✗</td></tr><tr class="kacti"><td class="no">2</td><td class="mac">Kasımpaşa A.Ş. – Trabzonspor A.Ş.</td><td><span class="chip s2">2</span></td><td><span class="chip s0">0</span></td><td class="num mono">%48</td><td class="im">✗</td></tr><tr class="kacti"><td class="no">5</td><td class="mac">Gençlerbirliği – Fenerbahçe A.Ş.</td><td><span class="chip s2">2</span></td><td><span class="chip s1">1</span></td><td class="num mono">%58</td><td class="im">✗</td></tr><tr class="tuttu"><td class="no">6</td><td class="mac">Başakşehir FK – Kocaelispor</td><td><span class="chip s1">1</span></td><td><span class="chip s1">1</span></td><td class="num mono">%58</td><td class="im">✓</td></tr><tr class="tuttu"><td class="no">8</td><td class="mac">Beşiktaş A.Ş. – Eyüpspor</td><td><span class="chip s1">1</span></td><td><span class="chip s1">1</span></td><td class="num mono">%73</td><td class="im">✓</td></tr><tr class="kacti"><td class="no">11</td><td class="mac">RC Lens – PSG</td><td><span class="chip s2">2</span></td><td><span class="chip s1">1</span></td><td class="num mono">%56</td><td class="im">✗</td></tr><tr class="kacti"><td class="no">13</td><td class="mac">Racing Santander – Villarreal</td><td><span class="chip s2">2</span></td><td><span class="chip s0">0</span></td><td class="num mono">%49</td><td class="im">✗</td></tr></tbody>
+      </table>
+    </div>
+    <p style="margin-top:14px;font-size:13.5px;color:var(--dim);max-width:70ch">
+      <b style="color:var(--ink)">2/7 tuttu; beklenen 4.13</b>'ydi.
+      Asıl kırılma noktası şu: bankolarının 4'ü <b style="color:var(--ink)">deplasman</b> işaretiydi
+      (Trabzonspor, Fenerbahçe, PSG, Villarreal) ve <b style="color:var(--ink)">0'i tuttu</b>.
+      Haftada toplam <b style="color:var(--ink)">tek bir</b> deplasman galibiyeti vardı — o da
+      Konyaspor–Rizespor'daki Rizespor'du: haftanın tek deplasman galibiyeti, senin deplasman
+      işaretlemediğin maçlardan birinde geldi.
+      Dört bankonun dördü de %48–58 aralığındaydı; kural kuponunun banko eşiği %68'dir ve
+      bu maçların hiçbirini banko yapmazdı.</p>
   </section>
 
   

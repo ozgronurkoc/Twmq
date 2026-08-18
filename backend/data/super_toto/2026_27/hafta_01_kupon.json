@@ -169,5 +169,29 @@
     "1   2   2   2   2   0   0   1   2   2   02  1   12  10  10 "
    ]
   }
- ]
+ ],
+ "user": {
+  "label": "kullanıcının kendi kuponu",
+  "source": "kullanıcı ekran görüntüsü (2026-08-18) — oynanmış kupon",
+  "picks": [
+   "1",
+   "2",
+   "10",
+   "10",
+   "2",
+   "1",
+   "10",
+   "1",
+   "10",
+   "102",
+   "2",
+   "10",
+   "2",
+   "10",
+   "12"
+  ],
+  "columns": 384,
+  "system": "tam sistem (indirgeme yok) — 2^7 × 3 = 384 kolon",
+  "note": "kupon bedeli analize GİRMEZ; karşılaştırma işaret seçimi üzerinedir"
+ }
 }
