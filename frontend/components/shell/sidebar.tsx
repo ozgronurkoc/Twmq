@@ -10,9 +10,11 @@ import {
   History,
   PanelLeftClose,
   PanelLeftOpen,
+  Trophy,
   Zap,
 } from "lucide-react";
 
+import { SUPER_TOTO_SEZON } from "@/lib/super-toto";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "./theme";
 
@@ -43,6 +45,12 @@ const GRUPLAR: NavGroup[] = [
   {
     baslik: "Veri",
     items: [
+      {
+        href: "/super-toto",
+        label: "Süper Toto",
+        hint: `${SUPER_TOTO_SEZON} · işlenen sezon`,
+        icon: <Trophy size={17} />,
+      },
       {
         href: "/istatistik",
         label: "İstatistik",
