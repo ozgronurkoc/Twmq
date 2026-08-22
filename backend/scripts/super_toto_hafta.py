@@ -47,6 +47,76 @@ VERI_KOK = KOK / "data" / "super_toto"
 
 # ─── veri ─────────────────────────────────────────────────────────────────────
 
+#: Bir satırın marjı bültenin ortancasından bu kadar puan saparsa KUŞKULU
+#: damgası basılır. 2. haftada 4. maçın marjı %45,8'di (bültenin geri kalanı
+#: %17,5–17,9) ve bunu **insan** yakaladı, kod değil. Elle girilen veride tek
+#: gerçek savunma budur.
+#:
+#: 5 puan, ölçüm sonucuna bakılmadan seçildi: bültenler kendi içinde 1 puanın
+#: altında oynuyor, gerçek giriş hataları ise on puanlarla sapıyor — arada
+#: geniş bir boşluk var ve eşik oraya kondu.
+MARJ_SAPMA_ESIGI = 5.0
+
+#: Marjın kendi başına saçma sayıldığı sınırlar. Altı: oranlar arbitraj
+#: verirdi (bülten böyle bir şey yayımlamaz, demek ki giriş hatası). Üstü:
+#: hiçbir bülten bu marjla oynamaz.
+MARJ_ALT, MARJ_UST = 0.0, 0.60
+
+
+def dogrula(d: Dict[str, Any]) -> List[str]:
+    """Elle girilen hafta dosyasını denetler ve uyarı listesi döner.
+
+    **Uyarı üretir, veri düzeltmez.** Şüpheli bir satırı sessizce onarmak
+    veri doktrinine aykırı olurdu (belirsiz veri atılır ya da işaretlenir,
+    uydurulmaz); burada yapılan işaretlemedir.
+
+    `build_egitim.dogrula` ile aynı biçim: `assert` yerine liste döner çünkü
+    bu dosya kullanıcının elinden çıkıyor ve koşumu durdurmak yerine
+    şüpheyi görünür kılmak istiyoruz.
+    """
+    uyarilar: List[str] = []
+    maclar = d.get("matches") or []
+
+    marjlar = [(m["no"], sum(1.0 / v for v in m["odds"].values()) - 1.0)
+               for m in maclar if m.get("odds")]
+    if len(marjlar) >= 3:
+        sirali = sorted(x[1] for x in marjlar)
+        ortanca = sirali[len(sirali) // 2]
+        for no, marj in marjlar:
+            sapma = 100 * abs(marj - ortanca)
+            if sapma > MARJ_SAPMA_ESIGI:
+                uyarilar.append(
+                    f"{no}. maç: marj %{100*marj:.1f}, bültenin ortancası "
+                    f"%{100*ortanca:.1f} — {sapma:.1f} puan sapma, KUŞKULU")
+
+    for no, marj in marjlar:
+        if not (MARJ_ALT < marj < MARJ_UST):
+            uyarilar.append(
+                f"{no}. maç: marj %{100*marj:.1f} — hiçbir bültende olmayacak "
+                f"bir değer, giriş hatası olmalı")
+
+    for m in maclar:
+        if m.get("odds") and any(v <= 1.0 for v in m["odds"].values()):
+            uyarilar.append(f"{m['no']}. maç: 1.00'den küçük oran var")
+        pay = m.get("play_pct") or {}
+        if set(pay) != set(SEMBOLLER):
+            uyarilar.append(f"{m['no']}. maç: oynanma yüzdesi eksik")
+        elif not 90 <= sum(pay.values()) <= 110:
+            uyarilar.append(
+                f"{m['no']}. maç: oynanma yüzdeleri toplamı "
+                f"%{sum(pay.values()):.0f} — 100'den uzak")
+
+    ligler = [m.get("league") for m in maclar]
+    if any(not x for x in ligler):
+        uyarilar.append("lig etiketi olmayan maç var")
+
+    sonuc = (d.get("meta") or {}).get("results")
+    if sonuc is not None:
+        if len(sonuc) != 15 or any(c not in SEMBOLLER for c in sonuc):
+            uyarilar.append(f"sonuç dizisi bozuk: {sonuc!r}")
+    return uyarilar
+
+
 def hafta_yukle(sezon: str, hafta: int) -> Dict[str, Any]:
     yol = VERI_KOK / sezon / f"hafta_{hafta:02d}.json"
     if not yol.exists():
@@ -55,6 +125,10 @@ def hafta_yukle(sezon: str, hafta: int) -> Dict[str, Any]:
     maclar = d["matches"]
     if len(maclar) != 15:
         raise SystemExit(f"15 maç bekleniyor, {len(maclar)} var")
+    # Elle yazilan uyarilar KORUNUR; uretilenler onlarin ustune eklenir.
+    # Kod insani duzeltmez, insan da kodu susturmaz — ikisi yan yana durur.
+    d.setdefault("meta", {}).setdefault("data_warnings", [])
+    d["meta"]["uretilen_uyarilar"] = dogrula(d)
     for m in maclar:
         # Oranı ilan edilmemiş maç: olasılık 1/3–1/3–1/3. Bu bir TAHMİN
         # DEĞİL, bilgi yokluğunun ilanıdır — arayüzün ESIT kuralıyla aynı
@@ -318,6 +392,15 @@ def yaz(d: Dict[str, Any], prof: Dict[str, Any], kam: Dict[str, Any],
     print(f"Oran kaynağı : {meta['odds_source']}")
     print(f"Oynanma      : {meta['play_source']}")
     print(f"Sonuç/ikramiye: {'YOK — bu analiz sonuçları görmeden yapıldı' if not meta.get('results') else 'var'}")
+
+    elle = meta.get("data_warnings") or []
+    uretilen = meta.get("uretilen_uyarilar") or []
+    if elle or uretilen:
+        print(f"\n─── VERİ UYARILARI ──────────────────────────────────────────────────────")
+        for u in elle:
+            print(f"  [elle]    {u}")
+        for u in uretilen:
+            print(f"  [kod]     {u}")
 
     print(f"\n─── 1. MARJ ─────────────────────────────────────────────────────────────")
     print(f"Bu hafta (iddaa)        : %{prof['avg_margin_pct']:.2f}")

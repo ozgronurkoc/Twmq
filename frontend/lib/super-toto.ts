@@ -1,19 +1,20 @@
 /**
- * Guncel sezonun ISKELETI. Burada henuz VERI YOKTUR ve olmasi da
- * beklenmez: bu dosya yalnizca "hangi sezondayiz, kac hafta var, bir
- * haftanin dolu sayilmasi ne demek" sorularini tek yerden cevaplar.
+ * Guncel sezonun iskeleti ve GERCEK verisi.
  *
- * Hafta verisi (kapanis tarihi, maclar, 15 karakterlik sonuc dizisi)
- * sonradan `HAFTALAR` icine yazilacak; arayuzun geri kalani o gun
- * degismeyecek cunku sekmeler de, dolu/bos ayrimi da bu listeden turer.
+ * Hafta verisi artik elle tutulmuyor: `super-toto-veri.json`,
+ * `backend/scripts/super_toto_frontend.py` tarafindan
+ * `backend/data/super_toto` altindan uretilir. Backend kaynaktir, bu dosya
+ * onu okur. Besleme eskirse CI kirilir (`--kontrol`) — sessizce eskimis bir
+ * arayuz, bos bir arayuzden daha kotudur cunku yanlis oldugu belli olmaz.
  *
  * Gecmis sezon (2025/2026) buraya GIRMEZ: o veri backend'in
  * `st_history_2025_26.json` dosyasinda yasar ve /istatistik altindan
  * okunur. Ikisi bilerek ayri tutulur — biri arsiv, biri isleyen sezon.
  */
+import veri from "./super-toto-veri.json";
 
 /** Uzerinde calisilan sezon. */
-export const SUPER_TOTO_SEZON = "2026/2027";
+export const SUPER_TOTO_SEZON = veri.season;
 
 /**
  * Sezonun planlanan hafta sayisi. Gecen sezon 41 tam hafta uretti;
@@ -24,30 +25,98 @@ export const HAFTA_SAYISI = 41;
 /** Bir kuponun mac sayisi — motorun sabiti (backend `meta.MATCH_COUNT`). */
 export const MAC_SAYISI = 15;
 
+/** Beslemeyi ureten marj arindirma yontemi — sayfada yazar. */
+export const ARINDIRMA = veri.arindirma;
+
+export interface SuperTotoMac {
+  no: number;
+  date: string | null;
+  kickoff: string | null;
+  league: string;
+  home: string;
+  away: string;
+  /** Orani ilan edilmemis mac icin null — bu bir tahmin yoklugudur. */
+  odds: Record<string, number> | null;
+  odds_missing: boolean;
+  probs: Record<string, number>;
+  fav: string | null;
+  margin: number;
+  play: Record<string, number>;
+  /** Sonuc girilmemisse null. */
+  result: string | null;
+}
+
+export interface SuperTotoKupon {
+  picks: string[];
+  banko: number[];
+  cift: number[];
+  uclu: number[];
+  columns: number | null;
+  rows: number | null;
+  in_set_p: number;
+  banko_esik: number;
+  uclu_esik: number;
+}
+
 export interface SuperTotoHafta {
   /** 1'den baslayan hafta numarasi. */
   week: number;
+  program: string | null;
   /** Kupon kapanis tarihi (YYYY-MM-DD). Veri girilene kadar null. */
   close_date: string | null;
-  /** 15 karakterlik sonuc dizisi ("1"/"0"/"2"). Veri girilene kadar null. */
+  /** 15 karakterlik sonuc dizisi ("1"/"0"/"2"). Sonuc gelene kadar null. */
   results: string | null;
+  odds_source: string | null;
+  odds_kind: string | null;
+  play_source: string | null;
+  /** Insanin dustugu notlar. */
+  warnings_manual: string[];
+  /** Kalite kapisinin urettigi uyarilar. Ikisi AYRI tutulur. */
+  warnings_generated: string[];
+  matches: SuperTotoMac[];
+  coupon: SuperTotoKupon | null;
 }
 
+/** Verisi girilmis haftalar — beslemeden gelir. */
+export const GIRILEN_HAFTALAR = veri.weeks as unknown as SuperTotoHafta[];
+
+const GIRILEN = new Map(GIRILEN_HAFTALAR.map((h) => [h.week, h]));
+
 /**
- * Sezonun tum haftalari. Su an hepsi bos: veri girisi bu listeyi
- * doldurarak yapilacak.
+ * Sezonun tum haftalari. Verisi girilmis olanlar beslemeden, digerleri
+ * bos iskelet olarak gelir — serit her zaman 41 sekme gosterir.
  */
 export const HAFTALAR: SuperTotoHafta[] = Array.from(
   { length: HAFTA_SAYISI },
-  (_, i): SuperTotoHafta => ({ week: i + 1, close_date: null, results: null }),
+  (_, i): SuperTotoHafta =>
+    GIRILEN.get(i + 1) ?? {
+      week: i + 1,
+      program: null,
+      close_date: null,
+      results: null,
+      odds_source: null,
+      odds_kind: null,
+      play_source: null,
+      warnings_manual: [],
+      warnings_generated: [],
+      matches: [],
+      coupon: null,
+    },
 );
 
 /**
- * Bir hafta ancak 15 sonucun TAMAMI varsa doludur. Eksik hafta yarim
- * gosterilmez: yarim veri, yanlis veriden daha tehlikelidir cunku
- * ortalamalara sessizce karisir.
+ * Bir haftanin verisi VAR mi — 15 macin kadrosu girilmis mi.
+ *
+ * Dikkat: bu "sonuclari geldi mi" DEGILDIR. Kupon dondurulmus ama maclar
+ * daha oynanmamis bir hafta da doludur ve panelinde gosterilecek seyi
+ * vardir (oranlar, olasiliklar, isaretler). Sonuc ayri sorulur.
  */
 export function haftaDoluMu(h: SuperTotoHafta): boolean {
+  return h.matches.length === MAC_SAYISI;
+}
+
+/** Sonuclari gelmis hafta — yarim veri ortalamalara karismasin diye ayri. */
+export function haftaSonuclandiMi(h: SuperTotoHafta): boolean {
   return typeof h.results === "string" && h.results.length === MAC_SAYISI;
 }
 
@@ -58,4 +127,9 @@ export function haftaBul(week: number): SuperTotoHafta | null {
 /** Veri girilmis hafta sayisi — basliktaki rozetin kaynagi. */
 export function doluHaftaSayisi(): number {
   return HAFTALAR.filter(haftaDoluMu).length;
+}
+
+/** Sonuclanmis hafta sayisi. */
+export function sonuclananHaftaSayisi(): number {
+  return HAFTALAR.filter(haftaSonuclandiMi).length;
 }

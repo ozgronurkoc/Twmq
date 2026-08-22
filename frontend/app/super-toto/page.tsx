@@ -3,17 +3,20 @@
 import * as React from "react";
 
 import {
+  ARINDIRMA,
   HAFTALAR,
   HAFTA_SAYISI,
   MAC_SAYISI,
   SUPER_TOTO_SEZON,
   doluHaftaSayisi,
   haftaDoluMu,
+  sonuclananHaftaSayisi,
 } from "@/lib/super-toto";
 import { Badge, Card, CardBody, CardHeader } from "@/components/ui/primitives";
 import { TabPanel } from "@/components/ui/tabs";
 import {
   BosHafta,
+  DoluHafta,
   HaftaSekmeleri,
   haftaUrldenOku,
   haftaUrleYaz,
@@ -35,6 +38,7 @@ export default function SuperTotoPage() {
   }
 
   const dolu = doluHaftaSayisi();
+  const sonuclanan = sonuclananHaftaSayisi();
 
   return (
     <div className="space-y-6">
@@ -42,15 +46,20 @@ export default function SuperTotoPage() {
         <h1 className="font-display text-[30px] italic leading-tight">Süper Toto</h1>
         <p className="mt-1 max-w-3xl text-[13.5px] leading-relaxed text-muted-foreground">
           İşlenen sezon burada yaşar: her hafta kendi sekmesinde durur, hafta
-          seçilince o haftanın verisine gidilir. Şu an sekmeler kurulu ama
-          içleri boş — veri girişi bundan sonra yapılacak.
+          seçilince o haftanın verisine gidilir. Veri backend&apos;den gelir
+          (<code>backend/data/super_toto</code>); bu sayfa hiçbir sayıyı
+          kendi hesaplamaz.
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <Badge ton="primary">{SUPER_TOTO_SEZON}</Badge>
           <Badge>{HAFTA_SAYISI} hafta</Badge>
+          <Badge>arındırma: {ARINDIRMA}</Badge>
           <Badge>haftada {MAC_SAYISI} maç</Badge>
           <Badge ton={dolu ? "success" : "warning"}>
             {dolu} / {HAFTA_SAYISI} hafta girildi
+          </Badge>
+          <Badge ton={sonuclanan ? "success" : "neutral"}>
+            {sonuclanan} hafta sonuçlandı
           </Badge>
         </div>
       </header>
@@ -74,7 +83,7 @@ export default function SuperTotoPage() {
               }
             />
             <CardBody>
-              {haftaDoluMu(h) ? null : <BosHafta hafta={h} />}
+              {haftaDoluMu(h) ? <DoluHafta hafta={h} /> : <BosHafta hafta={h} />}
             </CardBody>
           </Card>
         </TabPanel>

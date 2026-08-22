@@ -401,6 +401,23 @@ orantısal yöntem oranın ölçeğinden bağımsız olan tek yöntemdir — Shi
 bahisçinin yalnızca marjını büyütmesi "hareket" ya da "anlaşmazlık" gibi
 okunurdu (ayrıntı: `docs/ISTATISTIK_YOL_HARITASI.md` §3.18).
 
+**İşlenen sezonun karnesi** — `python scripts/super_toto_sezon.py`. Girilmiş
+bütün haftaları üst üste koyar: birikimli Brier, favori isabetinin gözlenen ↔
+beklenen sapması, en iyi kolon dağılımı, canlı sezon kalibrasyon eğrisi. Her
+koşumda **örneklem yeterliliği** satırını basar: aranan üstünlük 0,0005 Brier,
+bu örneklemde %95 aralığın yarı genişliği onun yüzlerce katı, ayırt edebilmek
+için ~2,5 milyon maç gerekir. Defter kural değiştirmek için değil, kuralın ne
+yaptığını görmek içindir — 5-10 hafta sonra doğacak "eşiği oynatalım" baskısına
+karşı tek savunma budur.
+
+**Havuz ekseni (Faz B)** — `python scripts/faz_b.py`. Sorusu kuruldu: *aynı
+tutturma olasılığında az oynanan sembolü işaretlemek kişi başı ikramiyeyi
+büyütüyor mu?* Bu soru **piyasayı geçmeyi gerektirmiyor**, o yüzden A1–A3'ün
+kapattığı arayış bu ekseni kapatmıyor. Bugünkü cevap **ölçülemez**: elde 1
+haftalık ikramiye kaydı var, güç analizi ≈71 ikramiyeli hafta (≈3,5 sezon)
+istiyor. Durma kuralı şimdiden yazılı (`docs/ISTATISTIK_YOL_HARITASI.md`
+§6.3b).
+
 **"Bu oranda geçmişte ne olmuş?"** — `python -m spor_toto.benzer --oran 1.82,3.04,2.44`
 ya da `GET /api/benzer?oran=1.82,3.04,2.44`. Verilen orana benzeyen geçmiş maçları
 31 binlik korpusta bulur ve nasıl bittiklerini sayar. Eşleme **olasılık uzayında**

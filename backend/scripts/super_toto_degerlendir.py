@@ -50,16 +50,43 @@ def _hafta_modulu():
     return mod
 
 
+#: Tam sayım için üst sınır. 16 satırlık kaplama kurulamadığında seçim
+#: uzayının tamamı gezilir; 200 bin kolon 15 maçta saniyenin altındadır.
+TAM_SAYIM_SINIRI = 200_000
+
+
 def en_iyi_kolon(secimler: Sequence[Sequence[str]], gercek: str) -> int:
-    """Kaplamanın EN İYİ kolonunun kaç doğru tutturduğu.
+    """Oynanan kuponun EN İYİ kolonunun kaç doğru tutturduğu.
 
     Kolonları tek tek gezer; 15 maç ve en fazla ~30 bin kolonda bu
     milisaniyelerdir ve motorun kendi skorlayıcısına bağımlılık
     yaratmaz — sonuç kümenin dışındayken de doğru cevap verir.
+
+    **Yedek yol neden var.** `solve_fix16` en az 7 çifte maç ister; altında
+    `Fix16Hatasi` atar. Kural az çifte üretebilir (çok banko çıkan hafta) ve
+    bu, marj arındırma `shin`e çevrildikten sonra **daha olası** hâle geldi —
+    Shin favoriye daha çok pay verir, daha çok banko çıkar. Böyle bir haftada
+    sonuç değerlendirmesinin çökmesi, ölçümün en çok gerektiği anda
+    kaybolması olurdu. Kaplama kurulamıyorsa seçim uzayının tamamı gezilir;
+    o uzay zaten küçüktür (az çifte = az kolon).
     """
-    from spor_toto.core import Encoder, solve_fix16
-    enc = Encoder([list(x) for x in secimler])
-    cols, _ = solve_fix16(enc)
+    from itertools import product
+
+    from spor_toto.core import Encoder, Fix16Hatasi, solve_fix16
+    listeler = [list(x) for x in secimler]
+    try:
+        enc = Encoder(listeler)
+        cols, _ = solve_fix16(enc)
+    except Fix16Hatasi:
+        uzay = 1
+        for s in listeler:
+            uzay *= len(s)
+        if uzay > TAM_SAYIM_SINIRI:  # pragma: no cover - kuralin uretemedigi hal
+            raise
+        # Tam sayim: her kolon secim kumesinin bir noktasidir.
+        return max(sum(1 for a, b in zip(kolon, gercek) if a == b)
+                   for kolon in product(*listeler))
+
     en_iyi = 0
     for c in cols:
         skor = 0

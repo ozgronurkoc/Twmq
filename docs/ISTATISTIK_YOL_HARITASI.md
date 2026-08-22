@@ -1131,7 +1131,7 @@ Beklenen getiri  =  P(tutturma)  ×  Pay(tutturunca)  −  Bedel
 | Eksen | Ne belirler | Durum |
 |---|---|---|
 | **Tahmin** | 14+ tutturma olasılığı | İki bağımsız denemede ~sıfır artık (§5.1) |
-| **Havuz** | Tutturunca ikramiyenin kaçta kaçını aldığın | **Hiç ölçülmedi.** Veri bile yok |
+| **Havuz** | Tutturunca ikramiyenin kaçta kaçını aldığın | **Ölçülemedi.** Soru ve durma kuralı kuruldu (§6.3b); veri 1 hafta |
 | **Kaplama** | Aynı garanti için ödenen kolon | **Çözüldü** — Hamming, kanıtlanmış optimal |
 
 Plan sonludur çünkü **etken sayısı üçtür.** Kaplama ekseninde iş yok ve olmayacak: bir
@@ -1317,6 +1317,68 @@ yer maçların **yarısında yanlış**.
 | **B2** | Popülerlik modeli | B1 gelene kadar vekil: favori olasılığı → tahmini oynanma payı. B1 gelirse vekil **gerçek veriyle kalibre edilir** |
 | **B3** | Beklenen getiriye göre kupon kurma | **Kaplamanın ve havuzun buluştuğu yer; projenin en özgün işi.** "Hangi maça kaç işaret" sorusu ilk kez ölçülmüş bir amaç fonksiyonuyla cevaplanır. Tahmin değil, **kalabalık davranışı** modellenir |
 | **B4** | Durma kuralı | *(a)* pozitif beklenen getiri ölçüldü → Faz C · *(b)* veri yok, ya da %17,2 marj + havuz seyrelmesi avantajı yutuyor → eksen kapanır |
+
+### 6.3b Faz B'nin ölçülebilir hâli — soru, ölçü ve durma kuralı
+
+Faz B "muhtemelen tek gerçek kaldıraç" diye yazılmıştı ama **sorusu ölçülebilir
+biçimde kurulmamıştı**. Altyapı bu arada hazır oldu: `super_toto_hafta.kamuoyu`
+oynanma yüzdesini taşıyor, `kupon_kur` `crowd_in_set_p` ve `crowd_ratio`
+hesaplıyor, `super_toto_sezon.py` haftaları biriktiriyor. Eksik olan soruydu.
+
+#### Soru
+
+> Aynı tutturma olasılığında, **az oynanan** sembolü işaretlemek kişi başı
+> ikramiyeyi ölçülebilir biçimde büyütüyor mu?
+
+Tahmin ekseninden farkı ve önemi şu: bu soru **piyasayı geçmeyi gerektirmiyor.**
+Piyasa fiyatı doğru olsa bile, aynı olasılıktaki iki sonuçtan az oynananı seçmek
+tutturma olasılığını değiştirmeden payı büyütür. A1–A3'ün kapattığı arayış bu
+ekseni kapatmaz.
+
+#### Ölçü
+
+`crowd_ratio = p_küme_içi / p_kalabalık_içi`. 1'in üstü, seçim kümesinin
+olasılığına göre **az** oynandığı anlamına gelir. Ölçülecek bağıntı:
+
+    tutturulan haftalarda   kişi başı ikramiye  ↔  o haftanın crowd_ratio'su
+
+#### Durma kuralı — şimdiden yazıldı
+
+Faz B, aşağıdaki üç şıktan biri gerçekleştiğinde kapanır:
+
+1. **B1 verisi bulunamazsa** (kazanan sayısı ve kişi başı ikramiye, hafta
+   bazında, geçmişe dönük): eksen *"ölçülemez"* diye kapanır. Bugün elde
+   yalnızca **1 haftalık** ikramiye kaydı var (2026/27 1. hafta: 14 bilen 8
+   kişi, kişi başı 2.153.527,18 TL). Bir gözlemle bağıntı ölçülmez.
+2. **Veri bulunur ve bağıntı ölçülür**: bootstrap %95 aralığı sıfırı
+   kesmiyorsa eksen **açık**, kesiyorsa **kapalı**. Ölçüt projenin geri
+   kalanıyla aynıdır.
+3. **Yeterli hafta birikmezse**: kaç hafta gerektiği **şimdiden** yazılır ve
+   o sayıya ulaşılana kadar eksen "açık ama ölçülmemiş" kalır.
+
+#### Kaç hafta gerekir — ölçüldü, tahmin edilmedi
+
+`scripts/faz_b.py --guc` sorunun istatistiksel gücünü hesaplar. Kişi başı
+ikramiye haftalar arası **çok** oynak (kazanan sayısına bölünür ve kazanan
+sayısı 0 ile binler arasında gezer), bu yüzden orta büyüklükte bir etkiyi
+(log ölçekte 0,5) %80 güçle ayırt etmek **≈71 ikramiyeli hafta ≈ 3,5 sezon**
+ister. Elde **1** hafta var.
+
+Sayı bir tahmin değil, koşum çıktısıdır — ve varsayılan standart sapma (1,5)
+muhafazakâr bir tahmindir; gerçek veri biriktikçe **ölçülen** sd yerine
+konmalıdır.
+
+Bu, ekseni şimdiden kapatmaz ama **beklentiyi bugünden düzeltir**: Faz B'nin
+cevabı bu sezon gelmeyecek. Gelecek olan şey, verinin **biriktirilmeye
+başlanmasıdır** — ve toplanmamış veri hiçbir zaman ölçülemez.
+
+#### Bilinen sınır — kaldırılmamalı
+
+Oynanma yüzdeleri **tek bir platformun kendi kullanıcılarıdır**, Spor Toto
+havuzunun tamamı değildir. Bütün `crowd_*` ölçüleri bu vekile dayanır ve
+vekilin havuzu ne kadar temsil ettiği **ölçülmemiştir**. B1 verisi gelirse ilk
+iş bu vekili doğrulamak olmalı: gerçekleşen kazanan sayısı, kalabalık
+modelinin öngördüğüyle uyuşuyor mu?
 
 ### 6.4 Faz C — karar katmanı ve ürün
 
