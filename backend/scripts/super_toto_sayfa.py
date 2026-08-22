@@ -617,7 +617,7 @@ else:
     iki_kupon_bolumu = ""
 
 ana_v = dict(ana); ana_v["cost"] = ana["columns"]
-HTML = f"""<title>Süper Toto 1. Hafta</title>
+HTML = f"""<title>Süper Toto {_a.hafta}. Hafta</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@1,6..96,400;1,6..96,600;0,6..96,600&display=swap">
