@@ -90,7 +90,7 @@ makinesinde, o günkü kilitli bağımlılıklarla, o commit üzerinde koşar.
 
 Bu yüzden sağlık katmanı ayrı bir katmandır ve `/saglik` sayfası ürünün eşit
 haklı bir parçasıdır: **ürünün vaadinin şu anda, bu makinede, bu sürümde hâlâ
-geçerli olduğunu kanıtlar.** 22 değişmez, 6 kategori, her çağrıda yeniden
+geçerli olduğunu kanıtlar.** 23 değişmez, 6 kategori, her çağrıda yeniden
 ölçülür — ve neyi kanıtlamadığını da açıkça yazar (§6.3).
 
 ### 1.6 Ne yapar / ne yapmaz
@@ -106,7 +106,7 @@ geçerli olduğunu kanıtlar.** 22 değişmez, 6 kategori, her çağrıda yenide
 | Bayes (Dirichlet) ile tahminlerini yumuşatır | İddaa geçmiş oranı sunmaz (yok — §5.3) |
 | Markov ile sıralı risk profili çıkarır | Geri testi bir kâr vaadine çevirmez; aşırı uyumu ölçüp gösterir |
 | Bir stratejiyi geçmiş sezonda çalıştırıp bedelini ve isabetini ölçer (**geri test**) | Mobil uygulama değildir |
-| Vaadin canlıda geçerliliğini 22 değişmezle ölçer | |
+| Vaadin canlıda geçerliliğini 23 değişmezle ölçer | |
 | Her sayının kaynağını ve sınırını yazar | |
 
 ---
@@ -596,7 +596,7 @@ handler'a bağlı olsalardı `/health`e vuran her şey tam raporu ödetirdi ve
 `/health`i canlılık sinyali sanan bir probe, zaman aşımına düşünce **sağlıklı**
 bir konteyneri öldürebilirdi.
 
-**22 kontrol, 6 kategori.** Kategoriler motorun katmanlarını izler ve yukarıdan
+**23 kontrol, 6 kategori.** Kategoriler motorun katmanlarını izler ve yukarıdan
 aşağıya doğru ciddiyet azalır — düşen kontrolün adı değil, **hangi katmanın
 bozulduğu** okunur. Güncel liste için `--list`:
 
@@ -961,6 +961,11 @@ korpusu. Ölçülen sayılar ve gerekçeler:
 ve §5.1. **Bu katmandan sayfaya hiçbir şey çıkmadı** — ölçülmemiş tahminci
 arayüze çıkmaz.
 
+> **Projenin tamamını kapsayan ve sonlanan plan:**
+> [`docs/ISTATISTIK_YOL_HARITASI.md`](docs/ISTATISTIK_YOL_HARITASI.md) §6. Hedefi üç
+> çarpımsal eksene ayırır (tahmin · havuz · kaplama), her eksene bir **durma kuralı** koyar
+> ve projenin ne zaman biteceğini tanımlar. Aşağıdaki tablo onun özetidir.
+
 Sıradakiler, "en çok belirsizliği kaldıran" ölçütüne göre:
 
 | # | Ne | Neden / veri durumu |
@@ -1098,7 +1103,7 @@ olması gerekir. Tanımlıysa yalnızca **durum değişiminde** bildirim gider.
 |---|---|
 | [`docs/ARCHITECTURE_NEXT.md`](docs/ARCHITECTURE_NEXT.md) | Mimari kararı ve API sözleşmesinin tamamı |
 | [`docs/VERI_TOPLAMA_VE_ISLEME.md`](docs/VERI_TOPLAMA_VE_ISLEME.md) | Veri katmanının tek kaynak dokümantasyonu: doktrin, boru hatları, kalite güvencesi, vakalar |
-| [`docs/ISTATISTIK_YOL_HARITASI.md`](docs/ISTATISTIK_YOL_HARITASI.md) | İstatistik katmanının durumu, ölçülmüş bulgular, yol haritası |
+| [`docs/ISTATISTIK_YOL_HARITASI.md`](docs/ISTATISTIK_YOL_HARITASI.md) | Ölçülmüş bulgular ve **baştan sona yol planı** (§6): hedefin üç eksene ayrışması, her eksenin durma kuralı, projenin bitiş tanımı |
 | [`docs/SAGLIK_VIZYONU.md`](docs/SAGLIK_VIZYONU.md) | Sağlık katmanının vizyonu: kontrol sözleşmesi, kategori modeli, DEGRADED kararı, bilinçli sınırlar |
 | [`docs/SAGLIK_GELISTIRME_RAPORU.md`](docs/SAGLIK_GELISTIRME_RAPORU.md) | Sağlık katmanının çalışma raporu ve ölçümleri |
 | [`docs/FORMUL_GELISTIRME_RAPORU.md`](docs/FORMUL_GELISTIRME_RAPORU.md) | Formül sayfasının çalışma raporu: teşhis, F0–F6, bulunan hatalar, ölçümler |

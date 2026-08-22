@@ -17,6 +17,13 @@ Tek model yerine **kademe** kuruldu, çünkü asıl soru "bu model iyi mi" deği
     bias       + sınıf sabiti                        3 parametre
     lig        + lige göre beraberlik sapması        3 + lig sayısı
     bant       + favori bandına göre sapma           + bant sayısı
+    form       + takım formu (2 parametre)
+    hareket    + açılış→kapanış çizgi hareketi       + 1 parametre
+    dagilim    + bahisçi anlaşmazlığı (sıcaklık)     + 1 parametre
+    dinlenme   + dinlenme günü farkı                 + 1 parametre
+    sikisiklik + fikstür sıkışıklığı farkı           + 1 parametre
+    ic_dis     + iç saha / dış saha ayrı form        + 1 parametre
+    sezon_sonu + sezon sonu "oynayacak şey" payı     + 1 parametre
 
 Hepsi softmax ile olasılığa döner. Kapasite bilerek küçük tutuldu: 540 maçlık
 bir eğitim setinde serbest parametre sayısı arttıkça ölçüm değil ezber olur.
@@ -62,7 +69,20 @@ EN_AZ_ORNEK = AZ_ORNEK
 
 #: Kademe — basitten karmaşığa. Sıra kasıtlı: her basamak bir öncekine
 #: yalnızca bir özellik ekler, böylece fark o özelliğe atfedilebilir.
-KADEMELER: Tuple[str, ...] = ("sicaklik", "bias", "lig", "bant")
+KADEMELER: Tuple[str, ...] = ("sicaklik", "bias", "lig", "bant", "form",
+                              "hareket", "dagilim",
+                              "dinlenme", "sikisiklik", "ic_dis", "sezon_sonu")
+
+#: A3 basamaklarının okuduğu alanlar — hepsi **yön** özelliğidir ve hepsi
+#: "pozitif = ev lehine" diye kurulmuştur (bkz. `egitim._takvim_tablosu`).
+#: Sıra `KADEMELER`in son dördüyle birebir aynı olmalıdır; her basamak
+#: listeye yalnızca bir sütun ekler.
+A3_ALANLARI: Tuple[Tuple[str, str], ...] = (
+    ("dinlenme", "dinlenme_farki"),
+    ("sikisiklik", "sikisiklik_farki"),
+    ("ic_dis", "ic_dis_form_farki"),
+    ("sezon_sonu", "sezon_sonu_pay_farki"),
+)
 
 
 # ─── özellik kaynağı ──────────────────────────────────────────────────────────
@@ -115,6 +135,11 @@ def _mac_ozellikleri(hafta: Girdi) -> List[Dict[str, Any]]:
             "lig": o.get("lig", "bilinmiyor"),
             "favori": o.get("favori"),
             "bant": _bant_adi(o.get("favori_oran")),
+            "form_puan_farki": float(o.get("form_puan_farki") or 0.0),
+            "form_isabet_farki": float(o.get("form_isabet_farki") or 0.0),
+            "hareket": {s: float(o.get(f"hareket_{s}") or 0.0) for s in SYMBOLS},
+            "ayrisma": float(o.get("ayrisma") or 0.0),
+            **{alan: float(o.get(alan) or 0.0) for _, alan in A3_ALANLARI},
         } for i, o in enumerate(tasinan)]
 
     tablo = _ozellik_tablosu()
@@ -127,6 +152,13 @@ def _mac_ozellikleri(hafta: Girdi) -> List[Dict[str, Any]]:
             "lig": ek.get("lig", "bilinmiyor"),
             "favori": ek.get("favori"),
             "bant": _bant_adi(ek.get("favori_oran")),
+            # Kupon haftalari form da cizgi hareketi de tasimaz; notr 0 =
+            # "bilgi yok". Sutun o macta hicbir sey yapmaz.
+            "form_puan_farki": 0.0,
+            "form_isabet_farki": 0.0,
+            "hareket": {s: 0.0 for s in SYMBOLS},
+            "ayrisma": 0.0,
+            **{alan: 0.0 for _, alan in A3_ALANLARI},
         })
     return out
 
@@ -169,6 +201,68 @@ def _tasarim_satiri(ozellik: Dict[str, Any], kademe: str,
     for ad in bantlar:
         sutunlar.append([1.0 if (favori is not None and s == favori and bant == ad)
                          else 0.0 for s in SYMBOLS])
+    if kademe == "bant":
+        return np.array(sutunlar, dtype=float).T
+
+    # 5) takim formu — simetrik kaydirma: ev lehine fark "1"i yukari,
+    #    "2"yi asagi iter, beraberlige dokunmaz. Form bilinmiyorsa deger
+    #    0'dir ve sutun hicbir sey yapmaz; "notr" ile "bilinmiyor" ayni
+    #    davranisa duser, cunku ikisinde de soylenecek bir sey yoktur.
+    for alan in ("form_puan_farki", "form_isabet_farki"):
+        v = float(ozellik.get(alan) or 0.0)
+        sutunlar.append([v if s == "1" else (-v if s == "2" else 0.0)
+                         for s in SYMBOLS])
+    if kademe == "form":
+        return np.array(sutunlar, dtype=float).T
+
+    # 6) cizgi hareketi — **tek paylasilan katsayi**, ve bu kasitli.
+    #    Sutun her sembolun logitine o sembolun hareketini ekler; geriye tek
+    #    bir β kalir ve ISARETI dogrudan soruyu cevaplar:
+    #
+    #        β > 0  momentum   — kapanis hareketi EKSIK fiyatlamis
+    #        β ≈ 0  verimli    — hareketin soyledigi zaten kapanista
+    #        β < 0  asiri tepki — kapanis hareketi FAZLA fiyatlamis
+    #
+    #    Sembol basina ayri katsayi verilseydi ucu de karisir ve isaret
+    #    okunamazdi; kapasiteyi buyutmek burada cevabi bulaniklastirirdi.
+    hareket = ozellik.get("hareket") or {}
+    sutunlar.append([float(hareket.get(s) or 0.0) for s in SYMBOLS])
+    if kademe == "hareket":
+        return np.array(sutunlar, dtype=float).T
+
+    # 7) bahisci anlasmazligi — bir SICAKLIK degiskeni, yon degiskeni degil.
+    #    Anlasmazligin yonu yoktur; buyuklugu vardir. Hipotez: bahisciler
+    #    ayrisinca kolektifin son sozu daha az guvenilirdir, yani model
+    #    duzgun dagilima dogru cekilmelidir. Bu, logitte sicakligin
+    #    MODULASYONUdur:
+    #
+    #        z_s = (β + δ·ayrisma)·ln p_s
+    #
+    #    Sutun `ayrisma · ln p_s`; geriye tek bir δ kalir ve isareti dogrudan
+    #    soruyu cevaplar:
+    #
+    #        δ < 0  ayrisinca guven azalt — anlasmazlik BILGI tasiyor
+    #        δ ≈ 0  anlasmazlik bir sey soylemiyor
+    #        δ > 0  ayrisinca guven artir (beklenmez; cikarsa aciklama gerekir)
+    #
+    #    Yon sutunu (hangi bahisci hakli) BILEREK yok: o ayri bir soru ve
+    #    `bahisci.py` onu tekil tahminci olarak, kafa kafaya olcuyor.
+    ayrisma = float(ozellik.get("ayrisma") or 0.0)
+    probs_log = [np.log(max(probs.get(s, 0.0), OLASILIK_TABANI)) for s in SYMBOLS]
+    sutunlar.append([ayrisma * v for v in probs_log])
+    if kademe == "dagilim":
+        return np.array(sutunlar, dtype=float).T
+
+    # 8-11) A3 — piyasa disi ama turetilebilir ozellikler. Dordu de `form` ile
+    #       ayni bicimde girer: simetrik kaydirma, ev lehine fark "1"i yukari
+    #       "2"yi asagi iter, beraberlige dokunmaz. Her basamak SIRAYLA bir
+    #       sutun ekler, boylece fark o ozellige atfedilebilir.
+    for ad, alan in A3_ALANLARI:
+        v = float(ozellik.get(alan) or 0.0)
+        sutunlar.append([v if s == "1" else (-v if s == "2" else 0.0)
+                         for s in SYMBOLS])
+        if kademe == ad:
+            break
     return np.array(sutunlar, dtype=float).T
 
 
@@ -265,8 +359,10 @@ class KalibreTahminci(Tahminci):
             return sorted([k for k, v in sayim.items()
                            if v >= EN_AZ_ORNEK and k != "bilinmiyor"]) + ["diger"]
 
-        self._ligler = yeterli("lig") if self.kademe in ("lig", "bant") else []
-        self._bantlar = yeterli("bant") if self.kademe == "bant" else []
+        ust = ("lig", "bant", "form", "hareket", "dagilim",
+               "dinlenme", "sikisiklik", "ic_dis", "sezon_sonu")
+        self._ligler = yeterli("lig") if self.kademe in ust else []
+        self._bantlar = yeterli("bant") if self.kademe in ust[1:] else []
 
     def egit(self, haftalar: Sequence[Girdi]) -> None:
         ozellikler: List[Dict[str, Any]] = []

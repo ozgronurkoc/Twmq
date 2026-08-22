@@ -23,7 +23,7 @@ tek yola bağlanması, `auto` modunun süresi).
 
 | | Tur başı | Bugün |
 |---|---|---|
-| Kontrol sayısı | 17 | **22** |
+| Kontrol sayısı | 17 | **23** |
 | İlan edilip sınanmayan mod | 4 | **0** |
 | `/api/meta` sözleşmesi | doğrulanmıyordu | **`meta_sozlesmesi`** |
 | `/api/stats` + `/api/backtest` gövdesi | doğrulanmıyordu | **`stats_sozlesmesi`** |
@@ -40,8 +40,8 @@ tek yola bağlanması, `auto` modunun süresi).
 | Mod mantığının kopyası | 3 (web, health, CLI) | **1 (`engines.py`)** |
 | `auto` modu süresi (256 nokta) | ~11,3 sn | **~3,5 sn** |
 | Düşen kontrolün detayı | `AssertionError:` | **`… @ health.py:246`** |
-| Sağlık katmanının testi | 23 | **79** |
-| Tüm süit | 608 | **664** |
+| Sağlık katmanının testi | 23 | **84** |
+| Tüm süit | 608 | **705** |
 
 Isınmış tam rapor 370 ms → **~520 ms**: yeni kapsamın bedeli, bilerek ödendi.
 
@@ -63,7 +63,7 @@ Kapsam boşluklarının sebebi teşhis değil **yapıydı**: ilan edilen envante
 
 ---
 
-## 2. Kontroller: 17 → 22
+## 2. Kontroller: 17 → 23
 
 | Kontrol | Kategori | Bağladığı değişmez |
 |---|---|---|
@@ -72,6 +72,7 @@ Kapsam boşluklarının sebebi teşhis değil **yapıydı**: ilan edilen envante
 | `mod_envanteri` | `motor` | 7 modun hepsi koşuyor; `garanti: True` açık bırakmıyor, `maxcov` gerçekten kaplamıyor |
 | `bayes_presetleri` | `olasilik` | 5 preset'in posterior'ları 1'e toplanıyor, hiçbiri kaplamayı bozmuyor |
 | `fix16_varyantlari` | `cekirdek` | `variant` 1..3 de 16 satır / 14-garanti veriyor |
+| `tahmin_referanslari` | `analiz` | Tahmin ölçümü tekrarlanabilir: `duzgun` = 0,667, sıralama piyasa < sezon_sabiti < duzgun (T4) |
 
 Ayrıca `encoder`, `fix16_garanti` ve `distance_layers` artık **dört kupon
 sınıfında** koşuyor ve her sınıfın beklenen bedeli tabloda yazılı
@@ -237,7 +238,7 @@ gerektirir, yani 9.1 olmadan yapılamaz.
 
 | Ölçü | Değer |
 |---|---|
-| Kayıtlı kontrol | 22 |
+| Kayıtlı kontrol | 23 |
 | Kategori | 6 |
 | Kritik olmayan kontrol | 1 (`scipy_flag`) |
 | Tam rapor süresi (ısınmış) | ~520 ms |

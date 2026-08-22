@@ -10,6 +10,7 @@ import {
   History,
   PanelLeftClose,
   PanelLeftOpen,
+  Target,
   Trophy,
   Zap,
 } from "lucide-react";
@@ -50,6 +51,12 @@ const GRUPLAR: NavGroup[] = [
         label: "Süper Toto",
         hint: `${SUPER_TOTO_SEZON} · işlenen sezon`,
         icon: <Trophy size={17} />,
+      },
+      {
+        href: "/tahmin",
+        label: "Tahmin",
+        hint: "Yaklaşan maçlara olasılık",
+        icon: <Target size={17} />,
       },
       {
         href: "/istatistik",
@@ -216,7 +223,7 @@ export function SidebarIcerik({
             <p className="mt-3 text-[10.5px] leading-relaxed text-sidebar-muted">
               Next.js arayüz · Python motoru
               <br />
-              Bu araç maç sonucu tahmin etmez.
+              Kaplama motoru tahmin etmez, garanti verir.
             </p>
           </>
         ) : (

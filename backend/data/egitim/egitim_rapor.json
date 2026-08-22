@@ -46,11 +46,28 @@
     "2": 9500
   },
   "closing_odds_pct": 100.0,
+  "with_line_pair": 31099,
+  "line_pair_pct": 99.99,
+  "line_pair_note": "acilis+kapanis ayni bahisci ailesinden esitlenmis cift; A1 (kapanis cizgisi verimliligi) kesiti budur. Cifti olmayan mac ELENMEZ — `oran_*` tamdir ve tahminci olcumune girer",
+  "with_bookmaker_quartet": 31100,
+  "bookmaker_quartet_pct": 99.99,
+  "bookmaker_sources": [
+    "B365C",
+    "PSC",
+    "MaxC",
+    "AvgC"
+  ],
+  "bookmaker_note": "A2 (bahisci anlasmazligi) kesiti. Yalnizca dort sezonda da ~%100 olan kaynaklar tasinir; BW/WH/BF/1XB eklenirse kesit sezona gore dengesizlesir ve sezon disarida birakmali olcum yanlilanir",
+  "with_match_stats": 28928,
+  "match_stats_pct": 93.01,
+  "match_stats_note": "mac SONRASI veridir; dogrudan tahminci girdisi degil, yalnizca yuvarlanan takim formu icin",
   "dropped": {
     "toplam": 31132,
     "tarih_yok": 0,
     "sonuc_yok": 0,
-    "oran_yok": 29
+    "oran_yok": 29,
+    "cizgi_cifti_yok": 4,
+    "bahisci_dortlusu_yok": 3
   },
   "unavailable_files": []
 }

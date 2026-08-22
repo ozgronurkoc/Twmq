@@ -8,6 +8,7 @@ import type {
   SolveRequest,
   SolveResponse,
   StatsResponse,
+  TahminResponse,
   WeekDetail,
 } from "./types";
 
@@ -179,4 +180,23 @@ export function solve(body: SolveRequest, signal?: AbortSignal) {
     body: JSON.stringify(body),
     signal,
   });
+}
+
+/**
+ * Yaklasan maclarin tahmini.
+ *
+ * Sunucu ONBELLEKLEMEZ (bkz. `web_app._tahmin_cached` docstring'i): cevap
+ * zamanla degisir, mac baslar ve bulten yenilenir. Bu yuzden burada da
+ * agresif bir istemci onbellegi yok.
+ *
+ * `limit` yalnizca listeyi kirpar; olculmus isabet ve uyarilar hep tam gelir.
+ */
+export function getTahmin(
+  opt: { limit?: number } = {},
+  signal?: AbortSignal,
+) {
+  const q = new URLSearchParams();
+  if (opt.limit && opt.limit > 0) q.set("limit", String(opt.limit));
+  const qs = q.toString();
+  return istek<TahminResponse>(`/api/tahmin${qs ? `?${qs}` : ""}`, { signal });
 }
