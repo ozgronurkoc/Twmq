@@ -1,38 +1,296 @@
 {
-  "meta": {
-    "season": "2026/2027",
-    "week": 2,
-    "program": "21.08.2026 - 25.08.2026",
-    "match_count": 15,
-    "odds_source": "iddaa AÇILIŞ oranları — kullanıcı ekran görüntüsü (2026-08-18 14:16)",
-    "odds_kind": "iddaa-acilis",
-    "odds_note": "AÇILIŞ oranıdır; kapanış değildir. 9. maçın oranı bülten açıldığında henüz ilan edilmemişti ve BOŞ bırakıldı — uydurulmadı.",
-    "play_source": "tek platform kullanıcı tercih yüzdesi (% Tercih) — kullanıcı ekran görüntüsü (2026-08-18)",
-    "play_note": "yüzdeler tek bir platformun kendi kullanıcılarıdır; Spor Toto havuzunun tamamı DEĞİLDİR",
-    "entered_at": "2026-08-18",
-    "results": null,
-    "payout": null,
-    "data_warnings": [
-      "4. maç (Fenerbahçe–Konyaspor): oranların ima ettiği marj %45,8. Bültenin geri kalanı %17,5–17,9 bandında. Bu satır KUŞKULU — kaynaktan doğrulanmalı.",
-      "3. maç (Çorum–Kasımpaşa): marj %13,3, bültenin geri kalanının altında. Kullanılabilir ama işaretlendi.",
-      "9. maç (Kocaelispor–Amed Sportif): oran YOK. Olasılık 1/3–1/3–1/3 kabul edildi (arayüzün ESIT kuralı); bu bir tahmin değil, bilgi yokluğunun ilanıdır."
-    ]
-  },
-  "matches": [
-    {"no": 1,  "date": "2026-08-21", "kickoff": "21:30", "league": "T1", "home": "Erzurumspor FK",      "away": "Galatasaray A.Ş.",     "odds": {"1": 7.29, "0": 4.05, "2": 1.26}, "play_pct": {"1": 6,  "0": 21, "2": 73}},
-    {"no": 2,  "date": "2026-08-22", "kickoff": "19:00", "league": "T1", "home": "Çaykur Rizespor A.Ş.", "away": "Samsunspor A.Ş.",     "odds": {"1": 2.00, "0": 3.03, "2": 2.88}, "play_pct": {"1": 44, "0": 37, "2": 19}},
-    {"no": 3,  "date": "2026-08-22", "kickoff": "19:00", "league": "T1", "home": "Çorum FK",            "away": "Kasımpaşa A.Ş.",      "odds": {"1": 2.17, "0": 3.31, "2": 2.70}, "play_pct": {"1": 57, "0": 23, "2": 20}, "odds_flag": "marj %13,3 — bültenin altında"},
-    {"no": 4,  "date": "2026-08-22", "kickoff": "21:30", "league": "T1", "home": "Fenerbahçe A.Ş.",     "away": "Konyaspor",           "odds": {"1": 1.18, "0": 5.64, "2": 2.31}, "play_pct": {"1": 71, "0": 16, "2": 13}, "odds_flag": "KUŞKULU — marj %45,8; deplasman oranı bültenle tutarsız"},
-    {"no": 5,  "date": "2026-08-23", "kickoff": "19:00", "league": "T1", "home": "Eyüpspor",            "away": "Gaziantep F.K. A.Ş.", "odds": {"1": 2.56, "0": 2.96, "2": 2.22}, "play_pct": {"1": 53, "0": 27, "2": 20}},
-    {"no": 6,  "date": "2026-08-23", "kickoff": "19:00", "league": "T1", "home": "Trabzonspor A.Ş.",    "away": "Başakşehir FK",       "odds": {"1": 1.88, "0": 3.28, "2": 2.94}, "play_pct": {"1": 60, "0": 24, "2": 16}},
-    {"no": 7,  "date": "2026-08-23", "kickoff": "21:30", "league": "T1", "home": "Alanyaspor",          "away": "Beşiktaş A.Ş.",       "odds": {"1": 3.46, "0": 3.36, "2": 1.70}, "play_pct": {"1": 17, "0": 27, "2": 56}},
-    {"no": 8,  "date": "2026-08-23", "kickoff": "21:30", "league": "T1", "home": "Göztepe A.Ş.",        "away": "Gençlerbirliği",      "odds": {"1": 1.48, "0": 3.54, "2": 4.59}, "play_pct": {"1": 76, "0": 16, "2": 8}},
-    {"no": 9,  "date": "2026-08-24", "kickoff": "21:30", "league": "T1", "home": "Kocaelispor",         "away": "Amed Sportif",        "odds": null,                              "play_pct": {"1": 44, "0": 30, "2": 26}, "odds_flag": "oran henüz ilan edilmedi — boş"},
-    {"no": 10, "date": "2026-08-22", "kickoff": "21:30", "league": "D1", "home": "B. Dortmund",         "away": "Bayern Münih",        "odds": {"1": 4.17, "0": 4.06, "2": 1.45}, "play_pct": {"1": 22, "0": 22, "2": 56}},
-    {"no": 11, "date": "2026-08-21", "kickoff": "21:45", "league": "F1", "home": "Marsilya",            "away": "Strasbourg",          "odds": {"1": 1.56, "0": 3.64, "2": 3.82}, "play_pct": {"1": 63, "0": 22, "2": 15}},
-    {"no": 12, "date": "2026-08-23", "kickoff": "18:30", "league": "E0", "home": "Newcastle United",    "away": "Liverpool",           "odds": {"1": 3.19, "0": 3.55, "2": 1.72}, "play_pct": {"1": 19, "0": 27, "2": 54}},
-    {"no": 13, "date": "2026-08-21", "kickoff": "22:00", "league": "SP1", "home": "Real Betis",         "away": "Real Sociedad",       "odds": {"1": 1.86, "0": 3.02, "2": 3.24}, "play_pct": {"1": 49, "0": 32, "2": 19}},
-    {"no": 14, "date": "2026-08-23", "kickoff": "18:00", "league": "SP1", "home": "Atletico Madrid",    "away": "Villarreal",          "odds": {"1": 1.69, "0": 3.29, "2": 3.57}, "play_pct": {"1": 77, "0": 15, "2": 8}},
-    {"no": 15, "date": "2026-08-23", "kickoff": "21:45", "league": "I1", "home": "Torino",              "away": "AC Milan",            "odds": {"1": 4.02, "0": 3.32, "2": 1.59}, "play_pct": {"1": 11, "0": 20, "2": 69}}
+ "meta": {
+  "season": "2026/2027",
+  "week": 2,
+  "program": "21.08.2026 - 25.08.2026",
+  "match_count": 15,
+  "odds_source": "iddaa AÇILIŞ oranları — kullanıcı ekran görüntüsü (2026-08-18 14:16)",
+  "odds_kind": "iddaa-acilis",
+  "odds_note": "AÇILIŞ oranıdır; kapanış değildir. 9. maçın oranı ilk girişte ilan edilmemişti ve boş bırakılmıştı; sonradan ilan edilince (1.97-3.05-2.92) eklendi — marjı %17.8, bültenin bandıyla tutarlı.",
+  "play_source": "tek platform kullanıcı tercih yüzdesi (% Tercih) — kullanıcı ekran görüntüsü (2026-08-18)",
+  "play_note": "yüzdeler tek bir platformun kendi kullanıcılarıdır; Spor Toto havuzunun tamamı DEĞİLDİR",
+  "entered_at": "2026-08-18",
+  "results": null,
+  "payout": null,
+  "data_warnings": [
+   "4. maç (Fenerbahçe–Konyaspor): oranların ima ettiği marj %45,8. Bültenin geri kalanı %17,5–17,9 bandında. Bu satır KUŞKULU — kaynaktan doğrulanmalı.",
+   "3. maç (Çorum–Kasımpaşa): marj %13,3, bültenin geri kalanının altında. Kullanılabilir ama işaretlendi.",
+   "9. maç (Kocaelispor–Amed Sportif): oran SONRADAN geldi ve eklendi (1.97-3.05-2.92, marj %17.8). Kupon bu yüzden v2 olarak yeniden kuruldu; v1 kayıtta duruyor."
   ]
+ },
+ "matches": [
+  {
+   "no": 1,
+   "date": "2026-08-21",
+   "kickoff": "21:30",
+   "league": "T1",
+   "home": "Erzurumspor FK",
+   "away": "Galatasaray A.Ş.",
+   "odds": {
+    "1": 7.29,
+    "0": 4.05,
+    "2": 1.26
+   },
+   "play_pct": {
+    "1": 6,
+    "0": 21,
+    "2": 73
+   }
+  },
+  {
+   "no": 2,
+   "date": "2026-08-22",
+   "kickoff": "19:00",
+   "league": "T1",
+   "home": "Çaykur Rizespor A.Ş.",
+   "away": "Samsunspor A.Ş.",
+   "odds": {
+    "1": 2.0,
+    "0": 3.03,
+    "2": 2.88
+   },
+   "play_pct": {
+    "1": 44,
+    "0": 37,
+    "2": 19
+   }
+  },
+  {
+   "no": 3,
+   "date": "2026-08-22",
+   "kickoff": "19:00",
+   "league": "T1",
+   "home": "Çorum FK",
+   "away": "Kasımpaşa A.Ş.",
+   "odds": {
+    "1": 2.17,
+    "0": 3.31,
+    "2": 2.7
+   },
+   "play_pct": {
+    "1": 57,
+    "0": 23,
+    "2": 20
+   },
+   "odds_flag": "marj %13,3 — bültenin altında"
+  },
+  {
+   "no": 4,
+   "date": "2026-08-22",
+   "kickoff": "21:30",
+   "league": "T1",
+   "home": "Fenerbahçe A.Ş.",
+   "away": "Konyaspor",
+   "odds": {
+    "1": 1.18,
+    "0": 5.64,
+    "2": 2.31
+   },
+   "play_pct": {
+    "1": 71,
+    "0": 16,
+    "2": 13
+   },
+   "odds_flag": "KUŞKULU — marj %45,8; deplasman oranı bültenle tutarsız"
+  },
+  {
+   "no": 5,
+   "date": "2026-08-23",
+   "kickoff": "19:00",
+   "league": "T1",
+   "home": "Eyüpspor",
+   "away": "Gaziantep F.K. A.Ş.",
+   "odds": {
+    "1": 2.56,
+    "0": 2.96,
+    "2": 2.22
+   },
+   "play_pct": {
+    "1": 53,
+    "0": 27,
+    "2": 20
+   }
+  },
+  {
+   "no": 6,
+   "date": "2026-08-23",
+   "kickoff": "19:00",
+   "league": "T1",
+   "home": "Trabzonspor A.Ş.",
+   "away": "Başakşehir FK",
+   "odds": {
+    "1": 1.88,
+    "0": 3.28,
+    "2": 2.94
+   },
+   "play_pct": {
+    "1": 60,
+    "0": 24,
+    "2": 16
+   }
+  },
+  {
+   "no": 7,
+   "date": "2026-08-23",
+   "kickoff": "21:30",
+   "league": "T1",
+   "home": "Alanyaspor",
+   "away": "Beşiktaş A.Ş.",
+   "odds": {
+    "1": 3.46,
+    "0": 3.36,
+    "2": 1.7
+   },
+   "play_pct": {
+    "1": 17,
+    "0": 27,
+    "2": 56
+   }
+  },
+  {
+   "no": 8,
+   "date": "2026-08-23",
+   "kickoff": "21:30",
+   "league": "T1",
+   "home": "Göztepe A.Ş.",
+   "away": "Gençlerbirliği",
+   "odds": {
+    "1": 1.48,
+    "0": 3.54,
+    "2": 4.59
+   },
+   "play_pct": {
+    "1": 76,
+    "0": 16,
+    "2": 8
+   }
+  },
+  {
+   "no": 9,
+   "date": "2026-08-24",
+   "kickoff": "21:30",
+   "league": "T1",
+   "home": "Kocaelispor",
+   "away": "Amed Sportif",
+   "odds": {
+    "1": 1.97,
+    "0": 3.05,
+    "2": 2.92
+   },
+   "play_pct": {
+    "1": 44,
+    "0": 30,
+    "2": 26
+   },
+   "odds_flag": "oran sonradan ilan edildi (kullanıcı bildirimi, 2026-08-22); ilk girişte boştu"
+  },
+  {
+   "no": 10,
+   "date": "2026-08-22",
+   "kickoff": "21:30",
+   "league": "D1",
+   "home": "B. Dortmund",
+   "away": "Bayern Münih",
+   "odds": {
+    "1": 4.17,
+    "0": 4.06,
+    "2": 1.45
+   },
+   "play_pct": {
+    "1": 22,
+    "0": 22,
+    "2": 56
+   }
+  },
+  {
+   "no": 11,
+   "date": "2026-08-21",
+   "kickoff": "21:45",
+   "league": "F1",
+   "home": "Marsilya",
+   "away": "Strasbourg",
+   "odds": {
+    "1": 1.56,
+    "0": 3.64,
+    "2": 3.82
+   },
+   "play_pct": {
+    "1": 63,
+    "0": 22,
+    "2": 15
+   }
+  },
+  {
+   "no": 12,
+   "date": "2026-08-23",
+   "kickoff": "18:30",
+   "league": "E0",
+   "home": "Newcastle United",
+   "away": "Liverpool",
+   "odds": {
+    "1": 3.19,
+    "0": 3.55,
+    "2": 1.72
+   },
+   "play_pct": {
+    "1": 19,
+    "0": 27,
+    "2": 54
+   }
+  },
+  {
+   "no": 13,
+   "date": "2026-08-21",
+   "kickoff": "22:00",
+   "league": "SP1",
+   "home": "Real Betis",
+   "away": "Real Sociedad",
+   "odds": {
+    "1": 1.86,
+    "0": 3.02,
+    "2": 3.24
+   },
+   "play_pct": {
+    "1": 49,
+    "0": 32,
+    "2": 19
+   }
+  },
+  {
+   "no": 14,
+   "date": "2026-08-23",
+   "kickoff": "18:00",
+   "league": "SP1",
+   "home": "Atletico Madrid",
+   "away": "Villarreal",
+   "odds": {
+    "1": 1.69,
+    "0": 3.29,
+    "2": 3.57
+   },
+   "play_pct": {
+    "1": 77,
+    "0": 15,
+    "2": 8
+   }
+  },
+  {
+   "no": 15,
+   "date": "2026-08-23",
+   "kickoff": "21:45",
+   "league": "I1",
+   "home": "Torino",
+   "away": "AC Milan",
+   "odds": {
+    "1": 4.02,
+    "0": 3.32,
+    "2": 1.59
+   },
+   "play_pct": {
+    "1": 11,
+    "0": 20,
+    "2": 69
+   }
+  }
+ ]
 }

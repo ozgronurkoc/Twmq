@@ -129,6 +129,16 @@ def uret(sezon: str = "2026_27") -> Dict[str, Any]:
                            if meta.get("results") else None),
             } for m in d["matches"]],
             "coupon": _donmus_blok(donmus),
+            # Revizyon kaydi: girdi degistigi icin (orn. sonradan ilan edilen
+            # oran) kupon yeniden kuruldusa, ONCEKI surum de gorunur kalir.
+            # Gorunmeyen bir revizyon, revizyon olmayan bir kayittan daha
+            # kotudur — degistigi belli olmaz.
+            "coupon_superseded": (
+                {"reason": donmus["superseded"].get("reason"),
+                 "revised_at": donmus["superseded"].get("revised_at"),
+                 "arindirma": donmus["superseded"].get("arindirma"),
+                 "picks": donmus["superseded"]["variants"][0]["picks"]}
+                if donmus and donmus.get("superseded") else None),
             "coupon_today": {
                 "picks": bugun["picks"],
                 "banko": bugun["banko"], "cift": bugun["cift"],

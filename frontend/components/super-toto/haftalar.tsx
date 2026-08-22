@@ -154,6 +154,7 @@ export function DoluHafta({ hafta }: { hafta: SuperTotoHafta }) {
   const k = hafta.coupon;
   const bugun = hafta.coupon_today;
   const kayan = hafta.coupon_drift;
+  const eski = hafta.coupon_superseded;
   const uyarilar = [
     ...hafta.warnings_manual.map((m) => ({ kaynak: "elle" as const, m })),
     ...hafta.warnings_generated.map((m) => ({ kaynak: "kod" as const, m })),
@@ -207,6 +208,22 @@ export function DoluHafta({ hafta }: { hafta: SuperTotoHafta }) {
               isaretler uretiyor. Dondurulmus kayit yeniden hesaplanmaz;
               bugunku kuralin ne yapacagi AYRI bir satirda durur.
             */}
+            {eski ? (
+              <div className="rounded-lg border border-line bg-muted/40 px-3 py-2">
+                <div className="text-[12px] font-medium">
+                  Bu kupon yenilendi
+                  {eski.revised_at ? ` · ${eski.revised_at}` : ""}
+                </div>
+                <div className="mt-1 font-mono text-[12.5px] text-muted-foreground">
+                  {eski.picks.join(" ")}
+                </div>
+                {eski.reason ? (
+                  <div className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
+                    {eski.reason}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
             {bugun && bugun.arindirma !== k.arindirma ? (
               <div className="rounded-lg border border-line bg-muted/40 px-3 py-2">
                 <div className="text-[12px] font-medium">

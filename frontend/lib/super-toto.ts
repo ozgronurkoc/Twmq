@@ -70,6 +70,14 @@ export interface SuperTotoKupon {
   results_known: boolean | null;
 }
 
+/** Yerine yenisi kurulmus onceki surum. Revizyon gorunur kalmali. */
+export interface SuperTotoEskiKupon {
+  reason: string | null;
+  revised_at: string | null;
+  arindirma: string | null;
+  picks: string[];
+}
+
 /** Bugunku kuralin AYNI hafta icin uretecegi kupon — kiyas icin, kayit degil. */
 export interface SuperTotoBugunkuKupon {
   picks: string[];
@@ -102,6 +110,8 @@ export interface SuperTotoHafta {
   matches: SuperTotoMac[];
   /** Dondurulmus kayit. */
   coupon: SuperTotoKupon | null;
+  /** Girdi degistigi icin yenilenmisse, onceki surum. */
+  coupon_superseded: SuperTotoEskiKupon | null;
   /** Bugunku kuralin uretecegi kupon — kiyas. */
   coupon_today: SuperTotoBugunkuKupon | null;
   /** Ikisinin ayristigi mac numaralari. Bos ise olcek degisimi isaret degistirmemis. */
@@ -132,6 +142,7 @@ export const HAFTALAR: SuperTotoHafta[] = Array.from(
       warnings_generated: [],
       matches: [],
       coupon: null,
+      coupon_superseded: null,
       coupon_today: null,
       coupon_drift: null,
     },

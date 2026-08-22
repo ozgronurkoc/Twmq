@@ -61,15 +61,26 @@ def test_hafta_okunur_ve_olasiliklar_bire_toplanir(hafta, no):
         assert set(m["probs"]) == {"1", "0", "2"}
 
 
-def test_orani_olmayan_mac_esit_dagitilir(hafta):
-    """9. maçın oranı ilan edilmemişti. Bu bir TAHMİN değil, bilgi yokluğu.
+def test_orani_olmayan_mac_esit_dagitilir(hafta, tmp_path, monkeypatch):
+    """Oranı ilan edilmemiş maç bir TAHMİN değil, bilgi yokluğu taşır.
 
-    Boru hattı onu 1/3–1/3–1/3 taşır; kural da eşiğin altında kaldığı için
-    otomatik üçlü yapar. Buradaki değişmez, o maça uydurma bir olasılık
-    atanmamasıdır.
+    Boru hattı onu 1/3–1/3–1/3 yapar; kural da eşiğin altında kaldığı için
+    otomatik üçlü açar. Değişmez, o maça uydurma bir olasılık atanmamasıdır.
+
+    Test **sentetik veriyle** koşar, canlı hafta dosyasıyla değil: 2. haftanın
+    9. maçının oranı 2026-08-22'de ilan edildi ve o dosyaya bağlı bir test
+    mekanizmayı değil, o günkü veriyi ölçüyordu. Mekanizma kalıcıdır, veri
+    değildir.
     """
-    d = hafta.hafta_yukle("2026_27", 2)
-    m = next(x for x in d["matches"] if x["no"] == 9)
+    d = json.loads((VERI / "hafta_02.json").read_text(encoding="utf-8"))
+    d["matches"][8]["odds"] = None
+    kok = tmp_path / "2026_27"
+    kok.mkdir()
+    (kok / "hafta_08.json").write_text(json.dumps(d), encoding="utf-8")
+    monkeypatch.setattr(hafta, "VERI_KOK", tmp_path)
+
+    y = hafta.hafta_yukle("2026_27", 8)
+    m = next(x for x in y["matches"] if x["no"] == 9)
     assert m["odds_yok"] is True
     assert m["odds"] is None
     assert m["fav"] is None
@@ -77,15 +88,19 @@ def test_orani_olmayan_mac_esit_dagitilir(hafta):
     for s in ("1", "0", "2"):
         assert m["probs"][s] == pytest.approx(1 / 3)
 
+    # Marj ortalamasi oransiz maci saymaz — 0'lik marj ortalamayi sahte
+    # bicimde asagi cekerdi.
+    prof = hafta.hafta_profili(y, hafta.gecen_sezon_ref())
+    oranli = [x for x in y["matches"] if not x["odds_yok"]]
+    assert prof["avg_margin_pct"] == pytest.approx(
+        100 * sum(x["margin"] for x in oranli) / len(oranli))
 
-def test_marj_ortalamasi_oransiz_maci_saymaz(hafta):
-    """Oransız maçın marjı 0'dır; ortalamaya girseydi sahte biçimde düşerdi."""
+
+def test_marj_ortalamasi_iddaa_bandinda(hafta):
+    """İddaa marjı çift haneli olmalı — arşivin (~%7) iki katından fazla."""
     d = hafta.hafta_yukle("2026_27", 2)
     prof = hafta.hafta_profili(d, hafta.gecen_sezon_ref())
-    oranli = [m for m in d["matches"] if not m["odds_yok"]]
-    beklenen = 100 * sum(m["margin"] for m in oranli) / len(oranli)
-    assert prof["avg_margin_pct"] == pytest.approx(beklenen)
-    assert prof["avg_margin_pct"] > 10, "iddaa marji cift haneli olmali"
+    assert prof["avg_margin_pct"] > 10
 
 
 def test_eksik_mac_sayisi_reddedilir(hafta, tmp_path, monkeypatch):
@@ -121,11 +136,42 @@ def test_kupon_kume_ici_olasiligi_tutarli(hafta, no):
     assert len(k["banko"]) + len(k["cift"]) + len(k["uclu"]) == 15
 
 
-def test_oransiz_mac_otomatik_uclu_olur(hafta):
+def test_oransiz_mac_otomatik_uclu_olur(hafta, tmp_path, monkeypatch):
+    """1/3 üçlü eşiğinin (0,38) altındadır; kural maçı kendiliğinden açar."""
     from spor_toto.backtest import VARSAYILAN_BANKO, VARSAYILAN_UCLU
-    d = hafta.hafta_yukle("2026_27", 2)
-    k = hafta.kupon_kur(d, VARSAYILAN_BANKO, VARSAYILAN_UCLU)
+    d = json.loads((VERI / "hafta_02.json").read_text(encoding="utf-8"))
+    d["matches"][8]["odds"] = None
+    kok = tmp_path / "2026_27"
+    kok.mkdir()
+    (kok / "hafta_08.json").write_text(json.dumps(d), encoding="utf-8")
+    monkeypatch.setattr(hafta, "VERI_KOK", tmp_path)
+
+    y = hafta.hafta_yukle("2026_27", 8)
+    k = hafta.kupon_kur(y, VARSAYILAN_BANKO, VARSAYILAN_UCLU)
     assert 9 in k["uclu"], "orani olmayan mac uclu yapilmali"
+
+
+def test_9_mac_orani_geldiginde_ucluden_ciftye_doner(hafta):
+    """Girdi değişti, kural değişmedi — kayıt bunu ayırt edebilmeli.
+
+    2. haftanın 9. maçının oranı sonradan ilan edildi (1.97-3.05-2.92) ve
+    maç 1/3 varsayımından gerçek fiyata geçti. Kupon v2 kuruldu, v1
+    `superseded` altında gerekçesiyle saklandı.
+    """
+    d = hafta.hafta_yukle("2026_27", 2)
+    m = next(x for x in d["matches"] if x["no"] == 9)
+    assert m["odds_yok"] is False
+    assert m["fav"] is not None
+
+    kupon = json.loads(
+        (VERI / "hafta_02_kupon.json").read_text(encoding="utf-8"))
+    assert "superseded" in kupon, "v1 kayitta durmali"
+    v1 = kupon["superseded"]["variants"][0]["picks"]
+    v2 = kupon["variants"][0]["picks"]
+    assert v1[8] == "102" and v2[8] == "12", (v1[8], v2[8])
+    # Revizyon SONUC gorulmeden yapildi — kaydin en onemli alani.
+    assert kupon["meta"]["results_known"] is False
+    assert kupon["superseded"]["reason"]
 
 
 # ─── kaçak dağılımı (Poisson-binom) ───────────────────────────────────────────
@@ -508,3 +554,21 @@ def test_degerlendirme_donmus_kuponu_kullanir(deg, hafta):
     s = deg.kupon_degerlendir(d, donmus["variants"][0]["picks"])
     assert s["picks"] == donmus["variants"][0]["picks"]
     assert s["best"] == 9, "1. haftanin kayitli sonucu: en iyi kolon 9/15"
+
+
+def test_besleme_revizyonu_gorunur_tutar(besleme):
+    """Görünmeyen bir revizyon, revizyon olmayan bir kayıttan daha kötüdür.
+
+    2. haftanın kuponu 9. maçın oranı ilan edilince yenilendi; önceki sürüm
+    gerekçesiyle birlikte beslemede durmalı.
+    """
+    g = besleme.uret("2026_27")
+    w2 = next(w for w in g["weeks"] if w["week"] == 2)
+    esk = w2["coupon_superseded"]
+    assert esk is not None
+    assert esk["picks"][8] == "102", "onceki surumde 9. mac ucluydu"
+    assert w2["coupon"]["picks"][8] == "12", "yeni surumde cifte"
+    assert esk["reason"] and esk["revised_at"]
+    assert esk["arindirma"] == "orantili"
+    w1 = next(w for w in g["weeks"] if w["week"] == 1)
+    assert w1["coupon_superseded"] is None, "1. hafta yenilenmedi"
