@@ -14,6 +14,7 @@ Kaynak: football-data.co.uk piyasa oranları — **iddaa oranları değildir**
 from __future__ import annotations
 
 import csv
+import math
 import re
 from functools import lru_cache
 from pathlib import Path
@@ -97,13 +98,108 @@ def market_odds(row: Dict[str, Any], market: str = "1X2", book: str = "Avg",
     return {}
 
 
-def implied_probs(oranlar: Dict[str, float]) -> Dict[str, float]:
-    """Marjı (overround) atarak oranları 1'e normalize edilmiş olasılığa çevirir."""
+#: Marj arındırma yöntemleri. Varsayılan `orantili` **bilerek** korunur:
+#: arşivde yayımlanmış bütün sayılar onunla üretildi, sessizce değiştirmek
+#: geçmiş ölçümleri kıyaslanamaz kılardı. Yöntem seçimi çağıranın işidir.
+ARINDIRMA_YONTEMLERI = ("orantili", "guc", "shin")
+ARINDIRMA_VARSAYILAN = "orantili"
+
+#: Kök bulucu tarama sınırları ve adım sayısı. 60 ikiye bölme, çift
+#: duyarlıkta ulaşılabilir hassasiyetin ötesindedir; sabit tutuldu ki
+#: sonuç makineden makineye oynamasın.
+_ARINDIRMA_ADIM = 60
+
+
+def implied_probs(oranlar: Dict[str, float],
+                  yontem: str = ARINDIRMA_VARSAYILAN) -> Dict[str, float]:
+    """Marjı (overround) atarak oranları 1'e normalize edilmiş olasılığa çevirir.
+
+    Üç yöntem var ve **hangisinin seçildiği sonucu değiştirir**:
+
+    ``orantili``
+        ``p = (1/o) / Σ(1/o)``. Marjı her sonuca eşit oranda dağıtır.
+        Basit ve tersine çevrilebilir, ama bahisçi marjı sürprizlere daha
+        çok yüklediği için favoriyi **sistematik olarak eksik fiyatlar**
+        (favourite–longshot yanlılığı). Korpusta ölçüldü: piyasanın %70–80
+        dediği maçlar gerçekte %78,9 geliyor (n=1.702).
+    ``guc``
+        ``p ∝ (1/o)^k``, ``k`` toplamı 1 yapacak şekilde çözülür. ``k>1``
+        çıkar ve küçük olasılıkları büyüklerden daha çok kısar.
+    ``shin``
+        Shin (1993): bahisçinin marjını, bilgili bahisçi payı ``z`` ile
+        açıklar. Aynı yönde ama daha yumuşak düzeltir.
+
+    Marj sıfıra giderken üç yöntem de aynı sonuca yakınsar; ayrıştıkları yer
+    yüksek marjdır — iddaa bülteni (~%18) tam olarak orası.
+    """
     ters = {k: 1.0 / v for k, v in oranlar.items() if v and v > 0}
     toplam = sum(ters.values())
     if toplam <= 0:
         return {}
-    return {k: v / toplam for k, v in ters.items()}
+    if yontem == "orantili":
+        return {k: v / toplam for k, v in ters.items()}
+    if yontem == "guc":
+        ham = _arindir_guc(ters, toplam)
+    elif yontem == "shin":
+        ham = _arindir_shin(ters, toplam)
+    else:
+        raise ValueError(
+            f"bilinmeyen arındırma yöntemi: {yontem!r} "
+            f"(seçenekler: {', '.join(ARINDIRMA_YONTEMLERI)})")
+    # Kök bulucunun bıraktığı son kırıntı da atılır: çağıran taraf
+    # olasılıkların tam olarak 1'e toplandığına güvenebilmeli.
+    kalan = sum(ham.values())
+    return {k: v / kalan for k, v in ham.items()} if kalan > 0 else {}
+
+
+def _arindir_guc(ters: Dict[str, float], toplam: float) -> Dict[str, float]:
+    """``p ∝ (1/o)^k``; ``k`` ikiye bölmeyle çözülür.
+
+    ``Σ(1/o)^k`` ``k``'ye göre kesin azalandır (her taban 1'den küçük), yani
+    kök tektir ve ikiye bölme güvenlidir — Newton'un ıraksama riski yok.
+    """
+    if toplam <= 1.0:
+        return dict(ters)
+    q = list(ters.values())
+    alt, ust = 1.0, 8.0
+    for _ in range(_ARINDIRMA_ADIM):
+        k = (alt + ust) / 2
+        if sum(x ** k for x in q) > 1.0:
+            alt = k
+        else:
+            ust = k
+    k = (alt + ust) / 2
+    return {s: v ** k for s, v in ters.items()}
+
+
+def _arindir_shin(ters: Dict[str, float], toplam: float) -> Dict[str, float]:
+    """Shin (1993) marj arındırması.
+
+    ``p_i = (√(z² + 4(1−z)·q_i²/Σq) − z) / (2(1−z))``; ``z`` toplamı 1 yapan
+    bilgili-bahisçi payıdır. ``z=0`` orantısal yöntemin kendisidir, yani
+    marjsız oranda ikisi çakışır.
+    """
+    if toplam <= 1.0:
+        return dict(ters)
+    q = list(ters.values())
+
+    def _dagilim(z: float) -> List[float]:
+        return [(math.sqrt(z * z + 4 * (1 - z) * x * x / toplam) - z)
+                / (2 * (1 - z)) for x in q]
+
+    alt, ust = 0.0, 0.99
+    for _ in range(_ARINDIRMA_ADIM):
+        z = (alt + ust) / 2
+        if sum(_dagilim(z)) > 1.0:
+            alt = z
+        else:
+            ust = z
+    return dict(zip(ters.keys(), _dagilim((alt + ust) / 2)))
+
+
+def margin(oranlar: Dict[str, float]) -> float:
+    """Bültenin marjı (overround): ``Σ(1/o) − 1``. Arındırmadan bağımsızdır."""
+    return sum(1.0 / v for v in oranlar.values() if v and v > 0) - 1.0
 
 
 # ─── maç sonucu (1X2) — arayüze giden tek pazar ───────────────────────────────

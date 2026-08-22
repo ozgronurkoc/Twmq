@@ -806,6 +806,100 @@ motoru" yazıldı ve formül sayfası `/tahmin`e bağlandı.
 
 ---
 
+### 3.18 Marj arındırma ve ampirik sorgu (A5)
+
+Faz A dört cepheden (T5, A1, A2, A3 — dokuz özellik) piyasayı geçmeye çalıştı ve hiçbiri
+geçemedi. Bu iş, **hiç sorulmamış bir soruyu** sordu: piyasa oranını olasılığa çeviren
+adımın kendisi doğru mu?
+
+İş, istenen bir üründen çıktı: *"bu oranda geçmişte ne olmuş?"* — `spor_toto/benzer.py`.
+Araç yazılınca ilk gösterdiği şey aradığı cevap değil, **kendi girdisinin yanlılığı** oldu.
+
+#### Eşleme neden olasılık uzayında yapılır
+
+Ölçüldü. 1.82/3.04/2.44 (marj %28,8) korpusta aranınca:
+
+| Eşleme | Bulunan |
+|---|---:|
+| Birebir aynı oran | **0** |
+| Oran ±%2 | **0** |
+| Oran ±%10 | **0** |
+| Olasılık ±2 puan | **710** |
+
+Aynı gerçek olasılık, farklı marjda tamamen farklı oran verir. Oran uzayında arama sessizce
+"sonuç yok" der. `tests/test_benzer.py::test_oran_uzayinda_arama_bos_doner` bunu çiviler.
+
+#### Bulgu: orantısal arındırma favoriyi eksik fiyatlıyor
+
+Her sembol kendi olasılık bandında, gözlenen ↔ piyasanın dediği (31.103 maç, Wilson %95):
+
+| Band | n | Piyasa | Gerçek | Fark | GA dışında |
+|---|---:|---:|---:|---:|:--:|
+| %5–10 | 1.697 | %7,9 | %5,7 | **−2,2** | ✗ |
+| %10–15 | 3.557 | %12,8 | %10,6 | **−2,2** | ✗ |
+| %15–20 | 6.530 | %17,7 | %16,6 | −1,2 | ✗ |
+| %20–25 | 11.924 | %22,8 | %21,7 | −1,1 | ✗ |
+| %25–40 | 45.074 | — | — | ~0 | içeride |
+| %40–45 | 6.828 | %42,4 | %43,6 | +1,2 | ✗ |
+| %50–55 | 3.757 | %52,4 | %54,3 | +1,9 | ✗ |
+| %55–60 | 2.820 | %57,3 | %60,1 | +2,8 | ✗ |
+| %60–70 | 3.346 | %64,5 | %67,2 | +2,7 | ✗ |
+| **%70–80** | 1.702 | %74,5 | **%78,9** | **+4,4** | ✗ |
+| %80+ | 627 | %83,8 | %86,8 | +3,0 | ✗ |
+
+Sapma **tek yönlü ve düzenli**: sürprizler abartılıyor, favoriler küçümseniyor — klasik
+favourite–longshot yanlılığı. 15 banttan **10'u** anlamlı sapıyor.
+
+Bu bir model kusuru değil, bir **çevrim** kusuru. `implied_probs` marjı her sonuca eşit
+oranda dağıtıyordu (`p = (1/o) / Σ(1/o)`); oysa bahisçi marjı sürprizlere daha ağır yükler.
+
+#### Düzeltme: Shin ve güç yöntemi
+
+`odds.implied_probs` artık üç yöntem taşıyor. Marj sıfırken üçü **çakışır**; ayrıştıkları
+yer yüksek marjdır — iddaa bülteni (~%18) tam olarak orası.
+
+| Yöntem | Brier (31.103) | Log | Anlamlı sapan bant |
+|---|---:|---:|---:|
+| `orantili` (varsayılan) | 0,5940 | 0,9945 | **10 / 15** |
+| `guc` | **0,5936** | **0,9937** | — |
+| `shin` | **0,5936** | 0,9938 | **4 / 15** |
+
+Brier farkı **0,00042**. Kıyas: A2'de "projenin piyasayı geçen ilk tahmincisi" diye kaydedilen
+Pinnacle bulgusu 0,0004 idi. Aynı büyüklükteki kazanç, **yeni veri kaynağı ve model eğitimi
+gerektirmeden**, tek fonksiyonda duruyordu.
+
+En büyük bant hatası (%70–80) +4,4 → +3,0 puana iniyor; kalan sapma ampirik/izotonik bir
+kademeyle kapatılabilir ve o iş **henüz yapılmadı**.
+
+#### Varsayılan neden değiştirilmedi
+
+`ARINDIRMA_VARSAYILAN` **`orantili` kaldı.** Arşivde yayımlanmış bütün sayılar (A1–A3
+tabloları, geri test, `/api/stats`) onunla üretildi; sessizce değiştirmek geçmiş ölçümleri
+kıyaslanamaz kılardı. Değişim kendi başına bir iştir ve şunları ister: eşiklerin
+(`VARSAYILAN_BANKO=0,68`) yeni ölçekte hold-out ile yeniden türetilmesi, `health`in Brier
+sınırlarının gözden geçirilmesi, belgelerdeki tabloların yeniden koşulması.
+
+#### Sınır — bu bir "piyasayı geçtik" bulgusu DEĞİLDİR
+
+Ölçülen şey piyasanın hatası değil, **piyasa fiyatını okuma biçimimizin** hatasıydı.
+Bahisçi zaten marjı sürprizlere yüklüyor; biz onu düz dağıttığımız için favoriyi eksik
+okuyorduk. A4'ün "arayış kapandı" hükmü **yerinde duruyor**: bu satır yeni bir tahmin
+kaynağı bulmuyor, mevcut kaynağı daha az bozarak okuyor.
+
+Pratik karşılığı yine de küçük değil. 2026/27 2. haftasında (iddaa, %17,8 marj, eşik
+0,68/0,38) aynı kuralın ürettiği kupon — hafta verisi PR #14 dalında
+(`data/super_toto/2026_27/hafta_02.json`), bu daldan koşulunca birebir üretilir:
+
+| Arındırma | Banko | Çifte | Üçlü | Seçim uzayı | Küme-içi |
+|---|---:|---:|---:|---:|---:|
+| `orantili` | 0 | 14 | 1 | 49.152 | %2,778 |
+| `shin` | 1 | 13 | 1 | **24.576** | **%2,862** |
+
+Kupon yarı fiyata düşerken tutma olasılığı **artıyor** — iki eksende birden. Sebep, 1. maçın
+(Galatasaray 1.26) favori olasılığının %67,4 → %71,8 çıkması ve banko eşiğini artık
+aşması. 2. haftanın kupon dosyasına düşülen *"eşiği 0,6 puanla kaçırdı"* notu, bu
+yanlılığın ta kendisiydi.
+
 ## 4. Sayfada bugün ne var
 
 **`/istatistik`** — sezon dağılımı (en sık sonuç + pay çubuğu) · 5 sayı kutusu (sembol
@@ -903,6 +997,8 @@ arındırılmış yapı tutar.
 | **Bahisçi anlaşmazlığı (A2)** | 31.100 maç | Ham ilişki favori gücüyle karışık; sabitlenince **kayboluyor**. Güven kısma %0,02 |
 | **Dinlenme + sıkışıklık (A3)** | 31.103 maç | Geçmedi. Korpus kupa/Avrupa maçlarını görmüyor — ölçülen, yorgunluğun **vekili** |
 | **İç/dış form + sezon sonu (A3)** | 31.103 maç | Geçmedi. İç/dış form ham farkı **+0,247**, artığı onda biri — güçlü sinyal, sıfır katkı |
+| **Marj arındırma (A5)** | 31.103 maç | `orantili` 15 bandın **10'unda** anlamlı sapıyor; `shin`/`guc` Brier **0,5936** (−0,00042) ve sapan bant **4'e** iniyor |
+| **Favori–sürpriz yanlılığı (A5)** | 31.103 maç | Piyasanın %70–80 dediği maçlar gerçekte **%78,9** (n=1.702) — sapma tek yönlü ve düzenli |
 
 **Okuma.** Aşırı uyum modelin kapasitesinden değil örneklem küçüklüğünden geliyordu; büyük
 korpus onu kaldırdı. Ama kalan etki 0,0005–0,0015 Brier — 31 binde anlamlı, 540'ta değil ve

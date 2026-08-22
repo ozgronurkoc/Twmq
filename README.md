@@ -383,6 +383,23 @@ yönde de aynı doğrulukta: favori "1" iken isabet %54,8, "2" iken %54,9.
 Ortalama marj %7,26. Rastgele ya da kaymış bir eşleştirme bu tabloyu üretemez;
 `test_odds.py` favori isabetini alt/üst sınırla bekçiye bağlar.
 
+**Marj arındırma yanlılığı (A5)** — yukarıdaki kalibrasyon 567 kupon maçında ölçülür;
+31.103 maçlık korpusta aynı tablo çıkarılınca sapma **düzenli ve tek yönlü** çıkıyor:
+piyasanın %70–80 dediği maçlar gerçekte **%78,9** oluyor (n=1.702, +4,4 puan, %95
+güven aralığının dışında) ve 15 banttan 10'u anlamlı sapıyor. Sebep piyasanın hatası
+değil, **oranı olasılığa çevirme biçimimiz**: marj her sonuca eşit dağıtılıyordu, oysa
+bahisçi onu sürprizlere ağır yükler. `odds.implied_probs` artık `shin` ve `guc`
+yöntemlerini de taşıyor — Brier 0,5940 → **0,5936**, anlamlı sapan bant 10 → **4**.
+Varsayılan `orantili` **bilerek** korundu: arşivdeki bütün yayımlanmış sayılar onunla
+üretildi (ayrıntı: `docs/ISTATISTIK_YOL_HARITASI.md` §3.18).
+
+**"Bu oranda geçmişte ne olmuş?"** — `python -m spor_toto.benzer --oran 1.82,3.04,2.44`
+ya da `GET /api/benzer?oran=1.82,3.04,2.44`. Verilen orana benzeyen geçmiş maçları
+31 binlik korpusta bulur ve nasıl bittiklerini sayar. Eşleme **olasılık uzayında**
+yapılır, oran uzayında değil: örnek oran (marj %28,8) korpusta ±%10'luk oran
+komşuluğunda **hiç** maç bulmuyor, olasılık uzayında ±2 puanda **710** maç buluyor.
+Her yüzde yanında n ve Wilson %95 aralığı gelir; 30 maçın altındaki dilim sayı vermez.
+
 **Çift kapsama** — ilk-iki olasılık toplamı 0,70–0,80 iken gerçek sonuç küme içinde
 kalma oranı %77,4; 0,80–0,90 iken %86,6; 0,90+ iken %96,9. Aynı bantlarda **banko**
 yapılsaydı: %48,7 / %65,1 / %84,4. Yani en üst bantta ikinci işaret kolonu ikiye
