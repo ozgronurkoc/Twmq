@@ -11,6 +11,7 @@ import {
 } from "@/lib/super-toto";
 import { Tabs, type TabItem } from "@/components/ui/tabs";
 import { Badge, Card, CardBody, CardHeader } from "@/components/ui/primitives";
+import { BenzerKart } from "@/components/benzer/kart";
 
 const HAFTA_PARAM = "hafta";
 
@@ -112,6 +113,7 @@ function MacSatiri({
           {mac.home} – {mac.away}
         </div>
         <div className="text-[11px] text-muted-foreground">{mac.league}</div>
+        <BenzerKart oranlar={mac.odds} />
       </td>
       <td className="py-1.5 pr-3 tabular-nums">
         {mac.odds_missing ? (
@@ -150,6 +152,8 @@ function MacSatiri({
  */
 export function DoluHafta({ hafta }: { hafta: SuperTotoHafta }) {
   const k = hafta.coupon;
+  const bugun = hafta.coupon_today;
+  const kayan = hafta.coupon_drift;
   const uyarilar = [
     ...hafta.warnings_manual.map((m) => ({ kaynak: "elle" as const, m })),
     ...hafta.warnings_generated.map((m) => ({ kaynak: "kod" as const, m })),
@@ -176,18 +180,50 @@ export function DoluHafta({ hafta }: { hafta: SuperTotoHafta }) {
       {k ? (
         <Card>
           <CardHeader
-            title="Kuralın işaretleri"
-            hint={`eşik ${k.banko_esik} / ${k.uclu_esik}`}
+            title="Dondurulmuş kupon"
+            hint={
+              k.frozen_at
+                ? `${k.frozen_at} · sonuçlar görülmeden`
+                : "sonuçlar görülmeden"
+            }
+            action={
+              k.arindirma ? <Badge>arındırma: {k.arindirma}</Badge> : null
+            }
           />
           <CardBody className="space-y-1.5 text-[12.5px]">
             <div className="font-mono text-[13px]">{k.picks.join(" ")}</div>
             <div className="text-muted-foreground">
-              {k.banko.length} banko · {k.cift.length} çift · {k.uclu.length} üçlü
+              eşik {k.banko_esik} / {k.uclu_esik}
               {k.columns ? ` · ${k.columns.toLocaleString("tr-TR")} kolon` : ""}
-              {k.rows ? ` · ${k.rows} satır` : ""} · küme-içi{" "}
-              {(100 * k.in_set_p).toFixed(2)}%
+              {k.rows ? ` · ${k.rows} satır` : ""}
+              {k.in_set_p !== null
+                ? ` · küme-içi ${(100 * k.in_set_p).toFixed(2)}%`
+                : ""}
               {dogru !== null ? ` · ${dogru}/15 küme içinde` : ""}
             </div>
+            {/*
+              Olcek degistiyse bunu SOYLEMEK zorundayiz. Kural ayni ama
+              marj arindirma varsayilani degisti ve ayni esik baska
+              isaretler uretiyor. Dondurulmus kayit yeniden hesaplanmaz;
+              bugunku kuralin ne yapacagi AYRI bir satirda durur.
+            */}
+            {bugun && bugun.arindirma !== k.arindirma ? (
+              <div className="rounded-lg border border-line bg-muted/40 px-3 py-2">
+                <div className="text-[12px] font-medium">
+                  Bugünkü kural ({bugun.arindirma}) ne işaretlerdi
+                </div>
+                <div className="mt-1 font-mono text-[12.5px]">
+                  {bugun.picks.join(" ")}
+                </div>
+                <div className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
+                  {kayan && kayan.length
+                    ? `Eşik aynı, ölçek farklı: ${kayan.join(", ")}. maçta işaret değişiyor. `
+                    : "Ölçek değişimi bu haftada hiçbir işareti değiştirmiyor. "}
+                  Yukarıdaki kayıt <strong>yeniden hesaplanmaz</strong> —
+                  sonuçlar görülmeden donduruldu.
+                </div>
+              </div>
+            ) : null}
           </CardBody>
         </Card>
       ) : null}

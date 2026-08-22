@@ -8,9 +8,15 @@
 > kazanma oranını artıracak sonuçlar üretmek ve maç sonucu tahmini yapmaktır**
 > (bkz. [`../README.md`](../README.md) §1). Bu belgedeki ölçüm disiplini aynen
 > geçerlidir ve daha da kritik hale gelmiştir: tahmin iddiası, ölçülmemiş hiçbir
-> sayının arayüze çıkmamasıyla dengelenir. Hold-out **0 hafta**, piyasa Brier
-> **0,579**, iddaa marjı **%17,2** — bu üç sayı tahmin katmanının başlangıç
+> sayının arayüze çıkmamasıyla dengelenir. Hold-out **1 hafta**, piyasa Brier
+> **0,574**, iddaa marjı **%17,2** — bu üç sayı tahmin katmanının başlangıç
 > çizgisidir ve ilerleme bunlara karşı ölçülür.
+>
+> **Ölçek uyarısı.** 2026-08'de marj arındırma varsayılanı `orantili`dan `shin`e
+> çevrildi (§3.18). O tarihten önceki bölümlerdeki sayılar orantısal ölçekte
+> ölçülmüştür ve bugünküyle **doğrudan kıyaslanamaz**. §3.10–§3.16 (T1–T5,
+> A1–A3) böyle bölümlerdir ve **bilerek olduğu gibi bırakıldı** — bir ölçüm
+> kaydı sonradan yeniden yazılmaz. Bugünkü sayılar §3.18 ve §5'tedir.
 **İlgili belgeler:** [`VERI_TOPLAMA_VE_ISLEME.md`](VERI_TOPLAMA_VE_ISLEME.md) (veri üretiminin
 tek kaynak dokümantasyonu) · [`ARCHITECTURE_NEXT.md`](ARCHITECTURE_NEXT.md) (API sözleşmesi)
 
@@ -281,8 +287,9 @@ eşiği ise banko, < üçlü eşiği ise üçlü, arası çifte) → `solve_fix1
 → gerçekleşen sonucun skoru. Yeni olan yalnızca eşik katmanı ve skorlama; geri kalanı var olan
 modüller.
 
-**Ölçülen.** Varsayılan eşiklerle 36 haftanın **3'ünde** 14+ tutuyor, hafta başına ortalama
-**2.686 kolon**. Küme içi kalan hafta **yok** — 15 maçın tamamını işaretlerin içinde tutmak
+**Ölçülen** (orantısal ölçek — ölçüldüğü günkü hâli). Varsayılan eşiklerle 36 haftanın
+**3'ünde** 14+ tutuyor, hafta başına ortalama **2.686 kolon**. Shin ölçeğinde aynı tablo
+1.987 kolon/hafta ve hold-out'ta 1 hafta (§3.18). Küme içi kalan hafta **yok** — 15 maçın tamamını işaretlerin içinde tutmak
 piyasa oranlarıyla pratikte olmuyor. Bu bir bulgu, kusur değil.
 
 **Aşırı uyuma karşı üç önlem.** Wilson %95 güven aralığı (41 hafta küçük örneklem; normal
@@ -1007,7 +1014,7 @@ komşu hafta gezinmesi.
 
 **`/tahmin`** — yaklaşan maçlara 1/0/2 olasılığı **iki tahminciyle** (manşet `piyasa` +
 ölçülmüş alternatif `kalibre_bias`, farkı ve aralığıyla), **ölçülmüş isabet kartı tablonun
-üstünde** (maç başına %55,6 · haftada 8,33/15 · Brier 0,5747 · 14+ tutan hafta 0/36) ·
+üstünde** (maç başına %55,6 · haftada 8,33/15 · Brier 0,5740 · 14+ tutan hafta 0/36) ·
 günlere bölünmüş maç tablosu + olasılık çubuğu · katlanmayan sınırlar bloğu.
 
 **`/istatistik/geri-test`** — aşırı uyum uyarısı · strateji seçici (banko/üçlü eşiği) + sezon
@@ -1059,11 +1066,13 @@ Premier Lig (71 maç) %19,7 / %47,9. Kupon başına ortalama 7 maç Süper Lig'd
 ---
 
 **Geri test** (sayfada var): varsayılan eşiklerle 36 haftanın 3'ünde 14+ (%8,3; %95 aralık
-%2,9–%21,8), hafta başına ort. 2.686 kolon, bir 14 için 32.235 kolon. Küme içi hafta 0.
-Taramanın en iyisi 4 hafta (%68/%42 eşiği, 6.995 kolon/hafta), **hold-out 0 hafta** — aradaki
-fark aşırı uyumun ölçüsü.
+%2,9–%21,8), hafta başına ort. **1.987 kolon**, bir 14 için 23.840 kolon. Küme içi hafta 0.
+**Hold-out 1 hafta** (%2,8; %95 aralık %0,5–14,2), 2.228 kolon/hafta. Hold-out'un seçtiği eşik
+36 haftanın 34'ünde varsayılanın kendisi (0,68/0,38); orantısal ölçekte 31 hafta boyunca
+0,68/0,42'ye kayıyordu (§3.18). Hold-out'taki 0→1 farkı **tek bir olaydır**, aralıklar
+fazlasıyla örtüşür — okunacak sayı maliyettir.
 
-**Piyasanın yanılması** (sayfada var): sezon ortalaması Brier **0,579**; eşit olasılık
+**Piyasanın yanılması** (sayfada var): sezon ortalaması Brier **0,574**; eşit olasılık
 vermenin karşılığı 0,667. Piyasa bilgi taşıyor ama az. En sürprizli haftalar 33 (0,753, kısmi),
 7 (0,734), 37 (0,700); en tahmin edilebilir 3. hafta (0,348).
 
@@ -1073,9 +1082,13 @@ arındırılmış yapı tutar.
 
 ### 5.1 Tahmin katmanının bulguları (sayfada **yok**)
 
+**Ölçek.** A5 satırlarına kadar olan bütün ölçümler `orantili` arındırmayla yapıldı ve o
+hâlleriyle bırakıldı — bir ölçüm kaydı sonradan yeniden yazılmaz. Bugünkü varsayılan `shin`
+ve karşılıkları: kupon seti 0,5747 → **0,5740**, korpus 0,5940 → **0,5936**.
+
 | Ölçüm | Kesit | Sonuç |
 |---|---|---|
-| Piyasa çizgisi | 540 kupon maçı | Brier **0,5747** · log 0,9660 |
+| Piyasa çizgisi | 540 kupon maçı | Brier **0,5747** · log 0,9660 *(orantısal)* |
 | Piyasa çizgisi | 31.103 korpus maçı | Brier **0,5940** — kupon maçları ortalama maçtan daha tahmin edilebilir |
 | Kademe, kupon üzerinde eğitilmiş | 540 maç | Dört basamak da piyasadan **kötü** (+0,0009…+0,0133) |
 | Kademe, korpus içi sezon dışarıda | 31.103 maç | `sicaklik` −0,0004 ve `bias` −0,0005 **geçti** |

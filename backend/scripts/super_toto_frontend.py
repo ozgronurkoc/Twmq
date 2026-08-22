@@ -54,6 +54,32 @@ def _yuvarla(p: Dict[str, float]) -> Dict[str, float]:
     return {s: round(p[s], 4) for s in SEM}
 
 
+def _donmus_blok(donmus: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    """Dondurulmuş kupon dosyasından arayüzün okuyacağı kayıt.
+
+    Ana varyant (`variants[0]`) alınır; kupon dosyası birden çok bütçe
+    sürümü taşıyabilir ama sayfada gösterilecek olan kuralın kendisidir.
+    """
+    if not donmus:
+        return None
+    v = donmus["variants"][0]
+    st = donmus["meta"].get("strategy") or {}
+    return {
+        "picks": v["picks"],
+        "label": v.get("label"),
+        "columns": v.get("columns"), "rows": v.get("rows"),
+        "in_set_p": v.get("in_set_p"),
+        "banko_esik": st.get("banko_esik"),
+        "uclu_esik": st.get("uclu_esik"),
+        # Hangi olcekte donduruldugu — bu alan olmadan isaretler
+        # yorumlanamaz (bkz. strategy.arindirma_notu).
+        "arindirma": st.get("arindirma"),
+        "marj_ort_pct": st.get("marj_ort_pct"),
+        "frozen_at": donmus["meta"].get("frozen_at"),
+        "results_known": donmus["meta"].get("results_known"),
+    }
+
+
 def uret(sezon: str = "2026_27") -> Dict[str, Any]:
     from spor_toto.backtest import VARSAYILAN_BANKO, VARSAYILAN_UCLU
     from spor_toto.odds import ARINDIRMA_VARSAYILAN
@@ -65,7 +91,20 @@ def uret(sezon: str = "2026_27") -> Dict[str, Any]:
     for no in sezon_mod.haftalari_bul(sezon):
         d = hafta_mod.hafta_yukle(sezon, no)
         meta = d["meta"]
-        kupon = hafta_mod.kupon_kur(d, VARSAYILAN_BANKO, VARSAYILAN_UCLU)
+        # DONDURULMUS kupon KAYITTIR ve yeniden hesaplanmaz. Bu satirin
+        # onemi buyuk: 2026-08'de marj arindirma varsayilani degisti ve ayni
+        # esik baska isaretler uretiyor (1. haftada 12. mac uclu → cift,
+        # 2. haftada 1. mac cift → banko). Yeniden hesaplanan bir kuponu
+        # sayfada gostermek, sonuclar gorulmeden donduruldugunu soyleyen
+        # kaydin ustune sonradan yazmak olurdu — projenin en degerli
+        # aliskanligi tam olarak budur.
+        kupon_yolu = (KOK / "data" / "super_toto" / sezon
+                      / f"hafta_{no:02d}_kupon.json")
+        donmus = (json.loads(kupon_yolu.read_text(encoding="utf-8"))
+                  if kupon_yolu.exists() else None)
+        # Bugunku kural ne uretirdi — AYRI alan, ayri etiket. Karsilastirma
+        # bilgi tasir; kaydin yerine gecemez.
+        bugun = hafta_mod.kupon_kur(d, VARSAYILAN_BANKO, VARSAYILAN_UCLU)
         haftalar.append({
             "week": no,
             "program": meta.get("program"),
@@ -89,15 +128,23 @@ def uret(sezon: str = "2026_27") -> Dict[str, Any]:
                 "result": (meta["results"][m["no"] - 1]
                            if meta.get("results") else None),
             } for m in d["matches"]],
-            "coupon": {
-                "picks": kupon["picks"],
-                "banko": kupon["banko"], "cift": kupon["cift"],
-                "uclu": kupon["uclu"],
-                "columns": kupon["columns"], "rows": kupon["rows"],
-                "in_set_p": round(kupon["in_set_p"], 6),
-                "banko_esik": kupon["banko_esik"],
-                "uclu_esik": kupon["uclu_esik"],
+            "coupon": _donmus_blok(donmus),
+            "coupon_today": {
+                "picks": bugun["picks"],
+                "banko": bugun["banko"], "cift": bugun["cift"],
+                "uclu": bugun["uclu"],
+                "columns": bugun["columns"], "rows": bugun["rows"],
+                "in_set_p": round(bugun["in_set_p"], 6),
+                "banko_esik": bugun["banko_esik"],
+                "uclu_esik": bugun["uclu_esik"],
+                "arindirma": ARINDIRMA_VARSAYILAN,
             },
+            # Kural ayni, olcek farkli: hangi maclarda isaret degisti.
+            "coupon_drift": (
+                [i + 1 for i, (a, b) in enumerate(
+                    zip(donmus["variants"][0]["picks"], bugun["picks"]))
+                 if a != b]
+                if donmus else None),
         })
 
     return {

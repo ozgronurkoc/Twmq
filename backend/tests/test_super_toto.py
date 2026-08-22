@@ -456,3 +456,55 @@ def test_fazb_sinir_notu_kaldirilmamis(fazb):
     o = fazb.rapor("2026_27")
     assert "TEK PLATFORM" in o["sinir"].upper()
     assert "OLCULMEMISTIR" in o["sinir"].upper()
+
+
+# ─── dondurulmuş kupon yeniden hesaplanmaz ────────────────────────────────────
+
+def test_donmus_kupon_yeniden_hesaplanmaz(besleme, hafta):
+    """Projenin en değerli alışkanlığı: kayıt, sonradan üzerine yazılmaz.
+
+    Marj arındırma varsayılanı 2026-08'de değişti ve **aynı eşik başka
+    işaretler üretiyor**. Beslemenin `coupon` alanı dondurulmuş dosyadan
+    gelmeli; yeniden hesaplanan sürüm ayrı alanda (`coupon_today`) durmalı.
+    """
+    g = besleme.uret("2026_27")
+    for w in g["weeks"]:
+        yol = (KOK / "data" / "super_toto" / "2026_27"
+               / f"hafta_{w['week']:02d}_kupon.json")
+        donmus = json.loads(yol.read_text(encoding="utf-8"))
+        assert w["coupon"]["picks"] == donmus["variants"][0]["picks"], (
+            f"{w['week']}. hafta: besleme dondurulmus kaydi tasimiyor")
+
+
+def test_donmus_kupon_hangi_olcekte_donduruldugunu_yazar(besleme):
+    """Ölçek yazmıyorsa işaretler yorumlanamaz."""
+    for w in besleme.uret("2026_27")["weeks"]:
+        assert w["coupon"]["arindirma"] == "orantili"
+        assert w["coupon"]["marj_ort_pct"] > 10
+        assert w["coupon"]["frozen_at"]
+
+
+def test_olcek_kaymasi_gorunur_kilinir(besleme):
+    """Ölçek değişimi işaret değiştirdiyse bu SÖYLENMELİ, gizlenmemeli."""
+    from spor_toto.odds import ARINDIRMA_VARSAYILAN
+    g = besleme.uret("2026_27")
+    for w in g["weeks"]:
+        assert w["coupon_today"]["arindirma"] == ARINDIRMA_VARSAYILAN
+        kayan = w["coupon_drift"]
+        assert kayan is not None
+        beklenen = [i + 1 for i, (a, b) in enumerate(
+            zip(w["coupon"]["picks"], w["coupon_today"]["picks"])) if a != b]
+        assert kayan == beklenen
+    # Iki haftada da olcek en az bir isareti degistirdi; test bunu civiler
+    # ki "fark yok" diye sessizce gecilmesin.
+    assert any(w["coupon_drift"] for w in g["weeks"])
+
+
+def test_degerlendirme_donmus_kuponu_kullanir(deg, hafta):
+    """Sonuç değerlendirmesi de kaydı okumalı, yeniden hesaplamamalı."""
+    d = hafta.hafta_yukle("2026_27", 1)
+    donmus = json.loads(
+        (VERI / "hafta_01_kupon.json").read_text(encoding="utf-8"))
+    s = deg.kupon_degerlendir(d, donmus["variants"][0]["picks"])
+    assert s["picks"] == donmus["variants"][0]["picks"]
+    assert s["best"] == 9, "1. haftanin kayitli sonucu: en iyi kolon 9/15"

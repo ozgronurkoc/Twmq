@@ -64,7 +64,7 @@ MANSET_AD = "piyasa"
 #: fazladan parametre, fazladan iddia demek olurdu.
 #:
 #: **Geçmedi ve öyle etiketlenir.** 31.103 maçta eğitilip 540 maçlık kupon
-#: setinde ölçüldüğünde piyasadan iyi çıkıyor (0,5732'ye karşı 0,5747) ama
+#: setinde ölçüldüğünde piyasadan iyi çıkıyor (0,5732'ye karşı 0,5740) ama
 #: güven aralığı sıfırı içeriyor. Ürüne manşet olarak değil, **ölçülmüş
 #: alternatif** olarak girer — farkı ve aralığıyla birlikte.
 ALTERNATIF_AD = "kalibre_bias"
@@ -386,7 +386,7 @@ def _uyarilar(maclar: Sequence[Dict[str, Any]]) -> List[Dict[str, str]]:
          "metin": ("Yanindaki `kalibre_bias`, 31.103 maclik korpusta "
                    "egitilmis 3 parametreli bir yeniden kalibrasyondur ve "
                    "540 maclik kupon setinde ORTALAMADA daha iyi cikiyor "
-                   "(0,5732'ye karsi 0,5747). Ama guven araligi sifiri "
+                   "(0,5732'ye karsi 0,5740). Ama guven araligi sifiri "
                    "iceriyor: 540 macta anlamlilik KURULAMIYOR. Bu yuzden "
                    "manset degil, olculmus alternatif olarak duruyor.")},
     ]

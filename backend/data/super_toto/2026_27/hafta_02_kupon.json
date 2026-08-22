@@ -8,7 +8,10 @@
   "strategy": {
    "banko_esik": 0.68,
    "uclu_esik": 0.38,
-   "kaynak": "backtest.VARSAYILAN_BANKO / VARSAYILAN_UCLU — 2025/26 sezonu"
+   "kaynak": "backtest.VARSAYILAN_BANKO / VARSAYILAN_UCLU — 2025/26 sezonu",
+   "arindirma": "orantili",
+   "arindirma_notu": "Bu kupon dondurulurken projenin marj arindirma varsayilani `orantili`ydi. Varsayilan 2026-08'de `shin`e cevrildi (A5, docs §3.18); AYNI esik baska bir olcekte baska isaretler uretir. Buradaki isaretler dondurulduklari gunku olcegin kaydidir ve yeniden hesaplanmaz.",
+   "marj_ort_pct": 19.39
   },
   "hedef_notu": "1. haftanın 1. dersi gereği asıl ölçü P(en iyi kolon ≥ 12); 14 bir yan üründür.",
   "veri_uyarilari": [

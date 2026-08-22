@@ -20,7 +20,10 @@
      0.0,
      9.6
     ]
-   }
+   },
+   "arindirma": "orantili",
+   "arindirma_notu": "Bu kupon dondurulurken projenin marj arindirma varsayilani `orantili`ydi. Varsayilan 2026-08'de `shin`e cevrildi (A5, docs §3.18); AYNI esik baska bir olcekte baska isaretler uretir. Buradaki isaretler dondurulduklari gunku olcegin kaydidir ve yeniden hesaplanmaz.",
+   "marj_ort_pct": 18.86
   },
   "warning": "14-garanti KOŞULLUDUR: ancak gerçek sonuç seçim kümesinin içindeyse geçerlidir. Küme-içi olasılık aşağıda yazılıdır."
  },

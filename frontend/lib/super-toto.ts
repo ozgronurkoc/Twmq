@@ -46,7 +46,32 @@ export interface SuperTotoMac {
   result: string | null;
 }
 
+/**
+ * DONDURULMUS kupon — sonuclar gorulmeden kaydedilmis isaretler.
+ *
+ * Bu bir KAYITTIR, yeniden hesaplanmaz. Kural degismese bile OLCEK
+ * degisebilir (marj arindirma varsayilani 2026-08'de `orantili`dan
+ * `shin`e cevrildi) ve ayni esik baska isaretler uretir. Yeniden
+ * hesaplanan bir kuponu gostermek, "sonuclar gorulmeden dondu" diyen
+ * kaydin ustune sonradan yazmak olurdu.
+ */
 export interface SuperTotoKupon {
+  picks: string[];
+  label: string | null;
+  columns: number | null;
+  rows: number | null;
+  in_set_p: number | null;
+  banko_esik: number | null;
+  uclu_esik: number | null;
+  /** Hangi olcekte donduruldugu — bu alan olmadan isaretler yorumlanamaz. */
+  arindirma: string | null;
+  marj_ort_pct: number | null;
+  frozen_at: string | null;
+  results_known: boolean | null;
+}
+
+/** Bugunku kuralin AYNI hafta icin uretecegi kupon — kiyas icin, kayit degil. */
+export interface SuperTotoBugunkuKupon {
   picks: string[];
   banko: number[];
   cift: number[];
@@ -56,6 +81,7 @@ export interface SuperTotoKupon {
   in_set_p: number;
   banko_esik: number;
   uclu_esik: number;
+  arindirma: string;
 }
 
 export interface SuperTotoHafta {
@@ -74,7 +100,12 @@ export interface SuperTotoHafta {
   /** Kalite kapisinin urettigi uyarilar. Ikisi AYRI tutulur. */
   warnings_generated: string[];
   matches: SuperTotoMac[];
+  /** Dondurulmus kayit. */
   coupon: SuperTotoKupon | null;
+  /** Bugunku kuralin uretecegi kupon — kiyas. */
+  coupon_today: SuperTotoBugunkuKupon | null;
+  /** Ikisinin ayristigi mac numaralari. Bos ise olcek degisimi isaret degistirmemis. */
+  coupon_drift: number[] | null;
 }
 
 /** Verisi girilmis haftalar — beslemeden gelir. */
@@ -101,6 +132,8 @@ export const HAFTALAR: SuperTotoHafta[] = Array.from(
       warnings_generated: [],
       matches: [],
       coupon: null,
+      coupon_today: null,
+      coupon_drift: null,
     },
 );
 

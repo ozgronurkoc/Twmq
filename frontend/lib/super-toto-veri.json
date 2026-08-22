@@ -7,6 +7,39 @@
   {
    "close_date": "2026-08-14",
    "coupon": {
+    "arindirma": "orantili",
+    "banko_esik": 0.68,
+    "columns": 2304,
+    "frozen_at": "2026-08-18",
+    "in_set_p": 0.023089,
+    "label": "ana — kural birebir uygulandı",
+    "marj_ort_pct": 18.86,
+    "picks": [
+     "1",
+     "02",
+     "12",
+     "12",
+     "02",
+     "10",
+     "10",
+     "1",
+     "12",
+     "102",
+     "02",
+     "102",
+     "12",
+     "10",
+     "10"
+    ],
+    "results_known": false,
+    "rows": 16,
+    "uclu_esik": 0.38
+   },
+   "coupon_drift": [
+    12
+   ],
+   "coupon_today": {
+    "arindirma": "shin",
     "banko": [
      1,
      8
@@ -470,6 +503,39 @@
   {
    "close_date": "2026-08-21",
    "coupon": {
+    "arindirma": "orantili",
+    "banko_esik": 0.68,
+    "columns": 6144,
+    "frozen_at": "2026-08-18",
+    "in_set_p": 0.027776,
+    "label": "ana — kural birebir",
+    "marj_ort_pct": 19.39,
+    "picks": [
+     "02",
+     "12",
+     "12",
+     "12",
+     "12",
+     "12",
+     "02",
+     "10",
+     "102",
+     "02",
+     "10",
+     "12",
+     "10",
+     "10",
+     "02"
+    ],
+    "results_known": false,
+    "rows": 16,
+    "uclu_esik": 0.38
+   },
+   "coupon_drift": [
+    1
+   ],
+   "coupon_today": {
+    "arindirma": "shin",
     "banko": [
      1
     ],
