@@ -28,7 +28,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
 
-from .odds import implied_probs
+from .odds import ARINDIRMA_VARSAYILAN, implied_probs
 
 KOK = Path(__file__).resolve().parent.parent
 VARSAYILAN_KORPUS = KOK / "data" / "egitim" / "egitim_korpus.csv"
@@ -406,7 +406,8 @@ def korpus_haftalari(sezonlar_: Optional[Sequence[str]] = None,
                      en_az_mac: int = EN_AZ_MAC,
                      yol: Optional[str] = None,
                      cizgi_gerekli: bool = False,
-                     bahisci_gerekli: bool = False) -> List[Dict[str, Any]]:
+                     bahisci_gerekli: bool = False,
+                     yontem: str = ARINDIRMA_VARSAYILAN) -> List[Dict[str, Any]]:
     """Korpusu `evaluate` koşumunun beklediği hafta girdilerine çevir.
 
     Dönen her kayıt `backtest.hafta_girdileri()` ile aynı sözleşmeyi taşır
@@ -426,6 +427,11 @@ def korpus_haftalari(sezonlar_: Optional[Sequence[str]] = None,
 
     `bahisci_gerekli=True` aynı şeyi A2 için yapar: bahisçi dörtlüsü tam
     olmayan maçlar elenir.
+
+    `yontem` marj arındırmasını seçer (A5, `odds.implied_probs`). Varsayılan
+    `orantili`dır ve **değiştirilmemelidir**: A1–A3'ün yayımlanmış bütün
+    sayıları onunla ölçüldü. Parametre, "aynı ölçüm başka arındırmayla ne
+    verir" sorusunu sormak için var — cevabı görmek isteyen açıkça ister.
     """
     tumu = korpus_yukle(yol)
     # Form tum korpus uzerinde, kronolojik hesaplanir; suzme SONRA gelir.
@@ -460,7 +466,7 @@ def korpus_haftalari(sezonlar_: Optional[Sequence[str]] = None,
         probs: List[Dict[str, float]] = []
         ozellikler: List[Dict[str, Any]] = []
         for r in grup:
-            olasilik = implied_probs(r["oranlar"])
+            olasilik = implied_probs(r["oranlar"], yontem)
             probs.append(olasilik)
             favori = min(r["oranlar"], key=lambda s: r["oranlar"][s])
             form = r.get("_form") or {"form_var": False, "form_puan_farki": 0.0,
@@ -474,13 +480,13 @@ def korpus_haftalari(sezonlar_: Optional[Sequence[str]] = None,
                 **form,
                 **takvim,
                 "cizgi_var": bool(r.get("acilis") and r.get("kapanis")),
-                "acilis_probs": (implied_probs(r["acilis"])
+                "acilis_probs": (implied_probs(r["acilis"], yontem)
                                  if r.get("acilis") else None),
-                "kapanis_probs": (implied_probs(r["kapanis"])
+                "kapanis_probs": (implied_probs(r["kapanis"], yontem)
                                   if r.get("kapanis") else None),
                 **{f"hareket_{s}": v for s, v in hareket.items()},
                 "bahisci_var": bool(r.get("bahisciler")),
-                "bahisci_probs": ({ad: implied_probs(uclu)
+                "bahisci_probs": ({ad: implied_probs(uclu, yontem)
                                    for ad, uclu in r["bahisciler"].items()}
                                   if r.get("bahisciler") else None),
                 **bahisci_ayrismasi(r.get("bahisciler")),

@@ -209,11 +209,16 @@ SEMBOLLER = ("1", "0", "2")
 KAYNAK_SIRASI = ("Avg", "B365", "PS", "BFE", "Max")
 
 
-def match_1x2(row: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+def match_1x2(row: Dict[str, Any],
+              yontem: str = ARINDIRMA_VARSAYILAN) -> Optional[Dict[str, Any]]:
     """Bir maçın maç sonucu oranı: önce kapanış, yoksa açılış.
 
-    Hangi kaynaktan ve hangi dönemden geldiği çıktıda yazar — sayının
-    nereden geldiği belirsiz kalmamalı.
+    Hangi kaynaktan, hangi dönemden ve **hangi arındırmayla** geldiği çıktıda
+    yazar — sayının nereden geldiği belirsiz kalmamalı.
+
+    `yontem` varsayılanı `orantili`dır ve arşivin yayımlanmış bütün sayıları
+    onunla üretildi; başka bir değer ancak açıkça istendiğinde kullanılır
+    (A5, bkz. `implied_probs`).
     """
     if not row.get("matched"):
         return None
@@ -222,7 +227,7 @@ def match_1x2(row: Dict[str, Any]) -> Optional[Dict[str, Any]]:
             oranlar = market_odds(row, "1X2", kaynak, closing=kapanis)
             if len(oranlar) != 3 or any(v <= 1.0 for v in oranlar.values()):
                 continue
-            olasilik = implied_probs(oranlar)
+            olasilik = implied_probs(oranlar, yontem)
             favori = min(oranlar, key=lambda s: oranlar[s])
             return {
                 "odds": {s: round(oranlar[s], 2) for s in SEMBOLLER},
@@ -232,6 +237,7 @@ def match_1x2(row: Dict[str, Any]) -> Optional[Dict[str, Any]]:
                 "margin": round(sum(1 / v for v in oranlar.values()) - 1, 4),
                 "book": kaynak,
                 "closing": kapanis,
+                "arindirma": yontem,
             }
     return None
 

@@ -879,6 +879,45 @@ kıyaslanamaz kılardı. Değişim kendi başına bir iştir ve şunları ister:
 (`VARSAYILAN_BANKO=0,68`) yeni ölçekte hold-out ile yeniden türetilmesi, `health`in Brier
 sınırlarının gözden geçirilmesi, belgelerdeki tabloların yeniden koşulması.
 
+#### Kalan sapma izotonikle kapatılabiliyor mu? — evet, ama yeni bir şey değil
+
+Shin sonrası dört bant hâlâ anlamlı sapıyordu. Soru şuydu: bu artık, **parametresiz
+monoton** bir düzelticiyle kapanır mı? `recalibrate.IzotonikTahminci` bunun için yazıldı —
+üç sembol havuzlanır, eşit sayıda noktalı kovalara bölünür, ağırlıklı PAV ile monoton
+eğri uydurulur, sonra 1'e normalize edilir. Ölçüm **sezon dışarıda bırakmalı**
+(`spor_toto/kalibrasyon.py`; izotonik esnek bir düzelticidir, aynı sezonda uydurulup aynı
+sezonda ölçülürse kesin yanıltır — o yüzden başka bir ölçüm yolu sunulmadı).
+
+| Girdi olasılığı | Tahminci | Brier | Fark | %95 aralık | Geçti |
+|---|---|---:|---:|---|---|
+| `orantili` | `piyasa` | 0,5940 | — | — | — |
+| `orantili` | **`izotonik`** | **0,5936** | **−0,00036** | [−0,00067, −0,00003] | **EVET** |
+| `shin` | `piyasa` | 0,5936 | — | — | — |
+| `shin` | `izotonik` | 0,5936 | +0,00001 | [−0,00020, +0,00022] | hayır |
+
+**Okuma — ve bu satır önemli.** İzotonik, orantısal arındırmanın üstünde piyasayı geçiyor;
+ama Shin'in üstünde **hiçbir şey eklemiyor**. Yani ikisi aynı olguyu ölçüyor, ikisi
+toplanmıyor. Kazanç 0,0004'tür ve iki kez sayılamaz.
+
+Pratik sonuç: **düzeltme izotonikle değil arındırmayla yapılmalı.** Shin tek parametreli,
+kapalı formda ve fiyatın kendi yapısından türeyen bir düzeltme; izotonik ~90 kovalı,
+veriden uydurulan bir eğri. Aynı kazanç için basit olan tercih edilir. İzotonik kademe
+kodda **ölçüm aracı olarak** kalır — "arındırma değiştiğinde artık kaldı mı" sorusunun
+cevabını veren şey odur.
+
+#### Yan bulgu: geçme kuralı yuvarlanmış sayıdan karar veriyordu
+
+İzotonik ilk koşumda `geçmedi` yazdı. Ham üst sınır **−0,000031** idi — yani aralığın
+tamamı sıfırın altındaydı ve kural gereği **geçmeliydi**. Sebep `evaluate.bootstrap_farki`:
+üst sınır önce 4 basamağa yuvarlanıyor, sonra karşılaştırılıyordu. `round(-0,000031; 4)`
+Python'da `-0.0` verir ve `-0.0 < 0` **`False`**'tur.
+
+Hata sessizdi ve tam da **kararın zorlaştığı yerde** — aralık daraldıkça — ortaya
+çıkıyordu. Yayımlanmış hiçbir bulgu bundan etkilenmiyor (A1–A3 aralıkları sıfırı açıkça
+kesiyor, A2'nin Pinnacle üst sınırı −0,0002). Düzeltildi: `fark` bloğu artık `ham_fark`,
+`ham_alt`, `ham_ust` alanlarını da taşır ve `gecti` **yalnızca** ham değeri okur; yuvarlama
+gösterime kaldı. `tests/test_evaluate.py::test_cok_dar_aralik_gecmis_sayilir` bekçisi.
+
 #### Sınır — bu bir "piyasayı geçtik" bulgusu DEĞİLDİR
 
 Ölçülen şey piyasanın hatası değil, **piyasa fiyatını okuma biçimimizin** hatasıydı.
@@ -999,6 +1038,7 @@ arındırılmış yapı tutar.
 | **İç/dış form + sezon sonu (A3)** | 31.103 maç | Geçmedi. İç/dış form ham farkı **+0,247**, artığı onda biri — güçlü sinyal, sıfır katkı |
 | **Marj arındırma (A5)** | 31.103 maç | `orantili` 15 bandın **10'unda** anlamlı sapıyor; `shin`/`guc` Brier **0,5936** (−0,00042) ve sapan bant **4'e** iniyor |
 | **Favori–sürpriz yanlılığı (A5)** | 31.103 maç | Piyasanın %70–80 dediği maçlar gerçekte **%78,9** (n=1.702) — sapma tek yönlü ve düzenli |
+| **İzotonik kalibrasyon (A5)** | 31.103 maç | `orantili` üzerinde **geçti** (−0,00036 [−0,00067, −0,00003]); `shin` üzerinde **hiçbir şey eklemiyor** — aynı olgu, iki kez sayılamaz |
 
 **Okuma.** Aşırı uyum modelin kapasitesinden değil örneklem küçüklüğünden geliyordu; büyük
 korpus onu kaldırdı. Ama kalan etki 0,0005–0,0015 Brier — 31 binde anlamlı, 540'ta değil ve

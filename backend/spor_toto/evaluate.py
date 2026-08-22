@@ -201,7 +201,9 @@ def capraz_olc(fabrikalar: Sequence[Fabrika],
         else:
             fark = bootstrap_farki(s["_kayitlar"], referans["_kayitlar"])
             s["fark"] = fark
-            s["gecti"] = bool(fark["ust"] is not None and fark["ust"] < 0)
+            # Karar YUVARLANMAMIS ust sinirdan (bkz. `bootstrap_farki`).
+            s["gecti"] = bool(fark.get("ham_ust") is not None
+                              and fark["ham_ust"] < 0)
     for s in sonuclar:
         s.pop("_kayitlar", None)
 
@@ -286,10 +288,21 @@ def bootstrap_farki(aday: Sequence[Dict[str, Any]],
     alt = farklar[min(int(dis * tekrar), tekrar - 1)]
     ust = farklar[min(int((1.0 - dis) * tekrar), tekrar - 1)]
     tum = list(range(n))
+    nokta = _ortalama(aday, tum, alan) - _ortalama(referans, tum, alan)
     return {
-        "fark": round(_ortalama(aday, tum, alan) - _ortalama(referans, tum, alan), 4),
+        # Gösterim için yuvarlanmış — belgelerde ve arayüzde okunacak sayılar.
+        "fark": round(nokta, 4),
         "alt": round(alt, 4),
         "ust": round(ust, 4),
+        # **Karar bu alandan verilir.** Yuvarlanmış üst sınırla karar vermek
+        # sessiz bir hataydı: `round(-0.000031, 4)` `-0.0` verir ve
+        # `-0.0 < 0` Python'da `False`'tur — yani güven aralığının tamamı
+        # sıfırın altındayken aday "geçmedi" diye yazılırdı. Aralık ne kadar
+        # dar olursa hata o kadar olasıydı, yani tam da kararın zorlaştığı
+        # yerde. Ham değerler bu yüzden taşınır ve `gecti` bunları okur.
+        "ham_fark": nokta,
+        "ham_alt": alt,
+        "ham_ust": ust,
         "tekrar": tekrar,
     }
 
@@ -328,7 +341,9 @@ def karsilastir(fabrikalar: Optional[Sequence[Fabrika]] = None,
         else:
             fark = bootstrap_farki(s["_kayitlar"], referans["_kayitlar"])
             s["fark"] = fark
-            s["gecti"] = bool(fark["ust"] is not None and fark["ust"] < 0)
+            # Karar YUVARLANMAMIS ust sinirdan (bkz. `bootstrap_farki`).
+            s["gecti"] = bool(fark.get("ham_ust") is not None
+                              and fark["ham_ust"] < 0)
     for s in sonuclar:
         s.pop("_kayitlar", None)
 
