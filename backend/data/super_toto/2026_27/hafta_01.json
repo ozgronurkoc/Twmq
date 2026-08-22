@@ -182,7 +182,7 @@
    "no": 7,
    "date": "2026-08-16",
    "kickoff": "21:30",
-   "league": "T2",
+   "league": "T1",
    "home": "Amed Sportif",
    "away": "Erzurumspor FK",
    "odds": {
@@ -199,7 +199,8 @@
     "hg": 3,
     "ag": 0
    },
-   "result": "1"
+   "result": "1",
+   "note": "lig etiketi DÜZELTİLDİ (T2 → T1): 1. ve 2. haftanın ilk 9 maçı aynı 18 takımdan kuruluyor, yani hepsi Süper Lig. Amed ve Erzurumspor 2026/27'de Süper Lig'dedir."
   },
   {
    "no": 8,

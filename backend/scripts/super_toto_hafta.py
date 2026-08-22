@@ -56,9 +56,20 @@ def hafta_yukle(sezon: str, hafta: int) -> Dict[str, Any]:
     if len(maclar) != 15:
         raise SystemExit(f"15 maç bekleniyor, {len(maclar)} var")
     for m in maclar:
-        m["probs"] = implied_probs(m["odds"])
-        m["margin"] = sum(1.0 / v for v in m["odds"].values()) - 1.0
-        m["fav"] = min(m["odds"], key=lambda s: m["odds"][s])
+        # Oranı ilan edilmemiş maç: olasılık 1/3–1/3–1/3. Bu bir TAHMİN
+        # DEĞİL, bilgi yokluğunun ilanıdır — arayüzün ESIT kuralıyla aynı
+        # (bkz. app/istatistik/[week]/page.tsx). Böyle bir maç kuralın
+        # üçlü eşiğinin (0,38) altında kalır ve otomatik olarak kapatılır.
+        m["odds_yok"] = not m.get("odds")
+        if m["odds_yok"]:
+            m["odds"] = None
+            m["probs"] = {s: 1.0 / 3 for s in SEMBOLLER}
+            m["margin"] = 0.0
+            m["fav"] = None
+        else:
+            m["probs"] = implied_probs(m["odds"])
+            m["margin"] = sum(1.0 / v for v in m["odds"].values()) - 1.0
+            m["fav"] = min(m["odds"], key=lambda s: m["odds"][s])
         m["sirali"] = sorted(m["probs"].items(),
                              key=lambda kv: (-kv[1], SEMBOLLER.index(kv[0])))
         # Oynanma yüzdesi platformun kendi kullanıcı payıdır; 100'e
@@ -106,8 +117,8 @@ def hafta_profili(d: Dict[str, Any], ref: Dict[str, Any]) -> Dict[str, Any]:
     cift_gecmis = 0.0
     ber_gecmis = 0.0
     for m in maclar:
-        fav_oran = m["odds"][m["fav"]]
-        fb = _bant_bul(FAVORI_BANTLARI, fav_oran)
+        fav_oran = m["odds"][m["fav"]] if not m["odds_yok"] else None
+        fb = _bant_bul(FAVORI_BANTLARI, fav_oran) if fav_oran else None
         fb_ref = ref["fav_band"].get(fb) if fb else None
         ikili = m["sirali"][0][1] + m["sirali"][1][1]
         cb = _bant_bul(CIFT_BANTLARI, ikili)
@@ -116,7 +127,7 @@ def hafta_profili(d: Dict[str, Any], ref: Dict[str, Any]) -> Dict[str, Any]:
         kb = _bant_bul(FARK_BANTLARI, fark)
         kb_ref = ref["fark_band"].get(kb) if kb else None
 
-        fav_bekleyen += m["probs"][m["fav"]]
+        fav_bekleyen += m["probs"][m["fav"]] if m["fav"] else 0.0
         if fb_ref:
             fav_gecmis += fb_ref["hit_pct"] / 100
         cift_bekleyen += ikili
@@ -129,6 +140,7 @@ def hafta_profili(d: Dict[str, Any], ref: Dict[str, Any]) -> Dict[str, Any]:
             "no": m["no"], "mac": f"{m['home']} – {m['away']}",
             "lig": m["league"], "odds": m["odds"], "probs": m["probs"],
             "fav": m["fav"], "fav_oran": fav_oran, "margin": m["margin"],
+            "odds_yok": m["odds_yok"],
             "fav_band": fb_ref["label"] if fb_ref else None,
             "fav_band_hit": fb_ref["hit_pct"] if fb_ref else None,
             "fav_band_draw": fb_ref["draw_pct"] if fb_ref else None,
@@ -156,7 +168,11 @@ def hafta_profili(d: Dict[str, Any], ref: Dict[str, Any]) -> Dict[str, Any]:
         "double_expected_market": cift_bekleyen,
         "double_expected_history": cift_gecmis,
         "draw_expected_history": ber_gecmis,
-        "avg_margin_pct": 100 * sum(m["margin"] for m in maclar) / len(maclar),
+        # Marj ortalaması YALNIZCA oranı olan maçlardan; oransız maçın
+        # marjı 0'dır ve ortalamayı sahte biçimde aşağı çekerdi.
+        "avg_margin_pct": (
+            100 * sum(m["margin"] for m in maclar if not m["odds_yok"])
+            / max(1, sum(1 for m in maclar if not m["odds_yok"]))),
         "leagues": ligler,
     }
 
@@ -181,7 +197,8 @@ def kamuoyu(d: Dict[str, Any]) -> Dict[str, Any]:
             }
         fav = m["fav"]
         satir["fav"] = fav
-        satir["fav_diff"] = m["play"][fav] - m["probs"][fav]
+        # Oranı olmayan maçın favorisi yoktur; sapma hesabına girmez.
+        satir["fav_diff"] = (m["play"][fav] - m["probs"][fav]) if fav else 0.0
         satir["max_play"] = max(SEMBOLLER, key=lambda s: m["play"][s])
         satir["consensus"] = max(m["play"].values())
         out.append(satir)
@@ -190,7 +207,8 @@ def kamuoyu(d: Dict[str, Any]) -> Dict[str, Any]:
     return {
         "rows": out,
         "totals": {"play": toplam_play, "market": toplam_prob},
-        "avg_fav_diff": sum(r["fav_diff"] for r in out) / len(out),
+        "avg_fav_diff": (sum(r["fav_diff"] for r in out if r["fav"])
+                         / max(1, sum(1 for r in out if r["fav"]))),
         "consensus_70": sum(1 for r in out if r["consensus"] >= 0.70),
         "public_vs_market_disagree": [
             r["no"] for r in out if r["max_play"] != r["fav"]
@@ -310,11 +328,13 @@ def yaz(d: Dict[str, Any], prof: Dict[str, Any], kam: Dict[str, Any],
     print(f"{'#':>2} {'Maç':<34} {'Lig':<4} {'oran 1/0/2':<20} {'olasılık':<20} "
           f"{'fav':<4} {'bant':<12} {'geç.sezon isabet'}")
     for r in prof["rows"]:
-        oranstr = "/".join(f"{r['odds'][s]:.2f}" for s in SEMBOLLER)
+        oranstr = ("oran YOK" if r["odds_yok"]
+                   else "/".join(f"{r['odds'][s]:.2f}" for s in SEMBOLLER))
         pstr = "/".join(f"{100*r['probs'][s]:.0f}" for s in SEMBOLLER)
+        bant_not = ("—" if r["fav_band_hit"] is None
+                    else f"%{r['fav_band_hit']} (n={r['fav_band_n']})")
         print(f"{r['no']:>2} {r['mac'][:34]:<34} {r['lig']:<4} {oranstr:<20} {pstr:<20} "
-              f"{r['fav']:<4} {str(r['fav_band']):<12} "
-              f"%{r['fav_band_hit']} (n={r['fav_band_n']})")
+              f"{str(r['fav'] or '—'):<4} {str(r['fav_band'] or '—'):<12} {bant_not}")
 
     print(f"\n─── 3. BU HAFTA ↔ GEÇEN SEZON ───────────────────────────────────────────")
     wa = h["weekly_avg"]

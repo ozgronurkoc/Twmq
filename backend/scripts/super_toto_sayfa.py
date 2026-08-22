@@ -97,6 +97,12 @@ def marks(pick):
 # ─── maç tablosu
 mac_satir = []
 for r, kr in zip(prof["rows"], kam["rows"]):
+    if r["odds_yok"]:
+        oran_hucre = '<td class="num mono yok">oran<span class="sub">yok</span></td>'
+    else:
+        oran_hucre = (f'<td class="num mono">{r["odds"]["1"]:.2f}'
+                      f'<span class="sub">{r["odds"]["0"]:.2f}</span>'
+                      f'<span class="sub">{r["odds"]["2"]:.2f}</span></td>')
     hucre = []
     for s in S:
         c = kr["cells"][s]
@@ -110,9 +116,9 @@ for r, kr in zip(prof["rows"], kam["rows"]):
       <tr>
         <td class="no">{r['no']}</td>
         <td class="mac">{e(r['mac'])}<span class="lig">{r['lig']}</span></td>
-        <td class="num mono">{r['odds']['1']:.2f}<span class="sub">{r['odds']['0']:.2f}</span><span class="sub">{r['odds']['2']:.2f}</span></td>
+        {oran_hucre}
         {''.join(hucre)}
-        <td class="band">{e(str(r['fav_band']))}<span class="sub">%{r['fav_band_hit']} · n={r['fav_band_n']}</span></td>
+        <td class="band">{e(str(r['fav_band'] or '—'))}<span class="sub">{'—' if r['fav_band_hit'] is None else f"%{r['fav_band_hit']} · n={r['fav_band_n']}"}</span></td>
         <td class="pick">{marks(ana['picks'][r['no']-1])}</td>
       </tr>""")
 
@@ -765,6 +771,8 @@ td.sonuc-h {{ width: 44px; }}
 .ders .karar {{ margin-top: 11px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 13px; }}
 .ders .karar b {{ color: var(--primary); }}
 
+td.yok {{ color: var(--warn); font-style: italic; }}
+
 /* iki kupon */
 .ik {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 14px; margin-bottom: 22px; }}
 .ik > div {{ border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; background: var(--card); border-top: 3px solid var(--line2); }}
@@ -831,11 +839,11 @@ footer {{ margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--line)
 <div class="wrap">
   <header class="hero">
     <span class="eyebrow">Süper Toto 2026/2027 · işlenen sezon</span>
-    <h1>1. Hafta</h1>
+    <h1>{_a.hafta}. Hafta</h1>
     <p class="prog">{e(d['meta']['program'])} · 15 maç · iddaa taraf oranları ve tek platform oynanma yüzdeleriyle</p>
     <div class="rozetler">
       <span class="rozet mor">2026/2027</span>
-      <span class="rozet">iddaa oranı</span>
+      <span class="rozet">{"iddaa açılış oranı" if d["meta"].get("odds_kind","").endswith("acilis") else "iddaa oranı"}</span>
       <span class="rozet">oynanma yüzdesi</span>
       {'<span class="rozet uyari">SONUÇ: en iyi kolon ' + str(degerlendirme["best"]) + '/15 — ikramiye yok</span>' if BITTI else '<span class="rozet uyari">sonuçlar YOK — bu rapor sonuçlar görülmeden yazıldı</span>'}
       {'<span class="rozet">kupon sonuçlar görülmeden donduruldu</span>' if BITTI else ''}
@@ -1014,7 +1022,7 @@ footer {{ margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--line)
       <ul class="notlar" style="list-style:disc;padding-left:20px;gap:8px">
         <li><b>Marj farkı ölçek bozar.</b> Eşikler football-data kapanış oranlarıyla (%{o['avg_margin_pct']:.2f} marj) kalibre edildi; bu haftanın iddaa oranlarında marj %{prof['avg_margin_pct']:.1f}. Marj orantılı atıldığı için favori olasılıkları muhtemelen bir miktar <b>küçük</b> çıkıyor — yani gerçek banko sayısı 2'den fazla olabilirdi.</li>
         <li><b>Kupon kalabalıkla aynı yöne bakıyor.</b> Seçim kümesinin kalabalık oranı {ana['crowd_ratio']:.2f} (1'in altı). Tutarsa ikramiye çok bölünür. En kalabalık işaretlerim: 8. maç [1] halkın %89'u, 15. maç [10] %91'i, 5. maç [02] %97'si.</li>
-        <li><b>Veri boşlukları.</b> 7. maç (Amed–Erzurumspor, TFF 1. Lig) geçen sezon arşivinde karşılığı olmayan bir lig; 13. maçın lig etiketi hâlâ varsayım. {'İkramiye boşluğu ise kapandı: bu hafta ilk gözlem kaydedildi (8 / 210 / 2.859 kişi). Bir gözlem dağılım değildir — “isabet mi, pay mı” sorusu 8–10 hafta sonra ölçülebilir.' if BITTI else 'Ve ikramiye/havuz verisi henüz yok — geldiğinde kalabalık ölçüsü vekil olmaktan çıkıp gerçek paya dönüşecek.'}</li>
+        <li><b>Veri boşlukları.</b> 13. maçın lig etiketi hâlâ varsayım. (7. maçın etiketi düzeltildi: 2. haftanın bülteni, ilk dokuz maçın 1. haftayla <b>aynı 18 takımdan</b> kurulduğunu gösterdi — yani hepsi Süper Lig, TFF 1. Lig değil.) {'İkramiye boşluğu ise kapandı: bu hafta ilk gözlem kaydedildi (8 / 210 / 2.859 kişi). Bir gözlem dağılım değildir — “isabet mi, pay mı” sorusu 8–10 hafta sonra ölçülebilir.' if BITTI else 'Ve ikramiye/havuz verisi henüz yok — geldiğinde kalabalık ölçüsü vekil olmaktan çıkıp gerçek paya dönüşecek.'}</li>
       </ul>
     </div>
   </section>
