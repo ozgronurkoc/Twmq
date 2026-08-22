@@ -113,16 +113,27 @@ def test_egri_veri_disinda_duzlesir(egitilmis):
 
 # ─── eğri tablosu ─────────────────────────────────────────────────────────────
 
-def test_egri_belgedeki_sayilari_uretir():
-    """`docs §3.18` tablosu buradan üretilir; elle yazılmış sayı yok."""
-    e = kalibrasyon_egrisi()
+@pytest.mark.parametrize("yontem,sapan,n70,gercek70", [
+    ("orantili", 10, 1702, 78.9),
+    ("shin", 4, 1865, 77.3),
+])
+def test_egri_belgedeki_sayilari_uretir(yontem, sapan, n70, gercek70):
+    """`docs §3.18` tablosu buradan üretilir; elle yazılmış sayı yok.
+
+    İki ölçek de sabitlenir: `orantili` çevrimden önceki yayımlanmış sayı,
+    `shin` bugünün varsayılanı. İkisi de belgede kendi etiketiyle duruyor.
+    """
+    e = kalibrasyon_egrisi(yontem)
+    assert e["arindirma"] == yontem
     assert e["n_mac"] == len(KORPUS)
     assert e["n_nokta"] == 3 * len(KORPUS)
-    assert e["sapan_bant"] == 10
+    assert e["sapan_bant"] == sapan
     assert e["toplam_bant"] == 15
     yuksek = next(r for r in e["bantlar"] if (r["lo"], r["hi"]) == (0.70, 0.80))
-    assert yuksek["n"] == 1702
-    assert round(100 * yuksek["gercek"], 1) == 78.9
+    assert yuksek["n"] == n70
+    assert round(100 * yuksek["gercek"], 1) == gercek70
+    # Iki olcekte de en yuksek bant hala sapiyor — Shin yanliligi kucultuyor,
+    # sifirlamiyor.
     assert yuksek["piyasa_ga_icinde"] is False
 
 

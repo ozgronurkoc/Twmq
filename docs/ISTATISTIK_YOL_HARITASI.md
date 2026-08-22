@@ -871,13 +871,64 @@ gerektirmeden**, tek fonksiyonda duruyordu.
 En büyük bant hatası (%70–80) +4,4 → +3,0 puana iniyor; kalan sapma ampirik/izotonik bir
 kademeyle kapatılabilir ve o iş **henüz yapılmadı**.
 
-#### Varsayılan neden değiştirilmedi
+#### Varsayılan `shin`e çevrildi — ve eşiklerin değişmesi gerekmedi
 
-`ARINDIRMA_VARSAYILAN` **`orantili` kaldı.** Arşivde yayımlanmış bütün sayılar (A1–A3
-tabloları, geri test, `/api/stats`) onunla üretildi; sessizce değiştirmek geçmiş ölçümleri
-kıyaslanamaz kılardı. Değişim kendi başına bir iştir ve şunları ister: eşiklerin
-(`VARSAYILAN_BANKO=0,68`) yeni ölçekte hold-out ile yeniden türetilmesi, `health`in Brier
-sınırlarının gözden geçirilmesi, belgelerdeki tabloların yeniden koşulması.
+`ARINDIRMA_VARSAYILAN` 2026-08'de **`shin`** oldu. Karar dört ölçüme dayanıyor:
+
+| Ölçüm | orantısal | shin |
+|---|---:|---:|
+| Brier (31.103 maç) | 0,5940 | **0,5936** — fark −0,00035 [−0,00049, −0,00021], **geçti** |
+| Anlamlı sapan bant | 10 / 15 | **4 / 15** |
+| Geri test kolon/hafta (hold-out) | 6.897 | **2.228** |
+| Hold-out'un seçtiği eşik | 36 haftanın 31'inde 0,68/**0,42** | 34'ünde 0,68/**0,38** |
+
+Son satır en öğreticisi. Orantısal ölçekte hold-out eşiği projenin varsayılanından
+(0,68/0,38) **uzağa** kaydırıyordu; Shin ölçeğinde 36 haftanın 34'ünde tam varsayılanı
+seçiyor. **Eşik baştan doğruymuş; eğri olan onu besleyen olasılıktı.** Bu yüzden
+`VARSAYILAN_BANKO`/`VARSAYILAN_UCLU` değiştirilmedi — değiştirilmesi için bir sebep
+çıkmadı.
+
+Hold-out'ta 14+ sayısının 0'dan 1'e çıkması **okunmaması gereken** satırdır: tek olay,
+ve aralıklar fazlasıyla örtüşüyor (%0,5–14,2 ↔ %0–9,6). Sağlam olan sayı maliyettir.
+
+Çevrimin bedeli ödendi: `/api/stats` oran tabloları, geri test sayıları, README §5.4 ve
+bu belgedeki tablolar yeniden koşuldu; `health` yeşil kaldı (kupon seti Brier 0,5747 →
+**0,5740**). Çevrimden önce yayımlanmış sayılar orantısal ölçekte ölçülmüştür ve
+belgede o etiketle durur.
+
+#### İki ölçü bilerek `orantili`da bırakıldı — ve bunu projenin kendi testi yakaladı
+
+Çevrim yapıldığında `test_hareket_saf_marj_degisimini_gormez` kırıldı. Testin çivilediği
+değişmez şuydu: bahisçi bütün ayakları aynı çarpanla kısarsa **fikri değişmemiş**, yalnızca
+marjı büyümüştür; arındırılmış olasılık kımıldamamalıdır.
+
+Orantısal yöntem oranın ölçeğinden bağımsızdır, yani bu değişmezi sağlar. **Shin ve güç
+yöntemleri sağlamaz** — ve bu onların kusuru değil, tanımı: ikisi de marjın büyüklüğünü
+*bilgi* sayar. Bir **seviye** ölçerken (tek fiyat → olasılık) bu istenen davranıştır. Bir
+**fark** ölçerken felakettir: A1 fikir değişimi yerine bahisçinin fiyatlama politikasını
+ölçmeye başlardı.
+
+Aynı gerekçe A2 için de geçerli: B365 ile Pinnacle'ın marjları farklıdır, ölçek duyarlı
+bir arındırmada o marj farkı "anlaşmazlık" diye okunurdu. Nitekim çevrim, A2'nin ham
+tablosunun yönünü de ters çevirmişti.
+
+Kural bu yüzden ikiye ayrıldı (`egitim.FARK_ARINDIRMASI`):
+
+* **Seviye** ölçüleri (kupon kararı, tahmin, kalibrasyon) → varsayılanı izler (`shin`).
+* **Fark** ölçüleri (`cizgi_hareketi`, `bahisci_ayrismasi`) → `orantili`ya sabit.
+
+A1 ve A2'nin yayımlanmış sayıları bu sayede olduğu gibi geçerli kaldı.
+
+#### A2'nin bekçisi de mutlak eşikten göreliye çevrildi
+
+`test_favori_sabitlenince_iliski_kayboluyor` sabit bir eşik kullanıyordu (0,02 Brier).
+O sayı yazıldığı gün en geniş dilimin yayılımı 0,0143'tü — payı dardı. Çevrimden sonra
+Brier düzeyleri kayınca aynı dilim 0,0200'e çıktı ve eşiği geçti; **bulgu değişmeden**
+test kırıldı, yani eşiğin keyfî olduğu ortaya çıktı.
+
+A2'nin iddiası zaten görelidir: *"koşullayınca ham ilişki kayboluyor."* Ölçüt de o hâle
+getirildi — koşullanmış yayılım, ham yayılımın yarısından küçük olmalı. Ölçülen: orantısalda
+en fazla %22, Shin'de en fazla %30. İddia iki ölçekte de ayakta.
 
 #### Kalan sapma izotonikle kapatılabiliyor mu? — evet, ama yeni bir şey değil
 
@@ -1039,6 +1090,7 @@ arındırılmış yapı tutar.
 | **Marj arındırma (A5)** | 31.103 maç | `orantili` 15 bandın **10'unda** anlamlı sapıyor; `shin`/`guc` Brier **0,5936** (−0,00042) ve sapan bant **4'e** iniyor |
 | **Favori–sürpriz yanlılığı (A5)** | 31.103 maç | Piyasanın %70–80 dediği maçlar gerçekte **%78,9** (n=1.702) — sapma tek yönlü ve düzenli |
 | **İzotonik kalibrasyon (A5)** | 31.103 maç | `orantili` üzerinde **geçti** (−0,00036 [−0,00067, −0,00003]); `shin` üzerinde **hiçbir şey eklemiyor** — aynı olgu, iki kez sayılamaz |
+| **Arındırma çevrimi (A5)** | 31.103 maç · 36 hafta | Varsayılan `shin` oldu. Kupon seti Brier 0,5747→**0,5740**; geri test hold-out kolon/hafta 6.897→**2.228**, seçilen eşik 31 hafta 0,68/0,42 → **34 hafta 0,68/0,38** (varsayılanın kendisi) |
 
 **Okuma.** Aşırı uyum modelin kapasitesinden değil örneklem küçüklüğünden geliyordu; büyük
 korpus onu kaldırdı. Ama kalan etki 0,0005–0,0015 Brier — 31 binde anlamlı, 540'ta değil ve

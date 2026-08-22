@@ -164,11 +164,29 @@ def test_gecersiz_oran_reddedilir():
 # ─── regresyon: ölçülen sayılar ───────────────────────────────────────────────
 
 def test_olculen_sayilar_korunur():
-    """Belgelere yazılan sayılar korpus değişmedikçe sabit kalmalı."""
-    r = benzer_maclar(ORNEK, tolerans=0.02)
+    """Belgelere yazılan sayılar korpus değişmedikçe sabit kalmalı.
+
+    Yöntem **açıkça** verilir: bu sayılar `orantili` ölçekte ölçüldü ve
+    belgede o etiketle duruyor. Varsayılan değiştiğinde (2026-08'de `shin`
+    oldu) sabitlenmiş sayı sessizce başka bir şeyi ölçmeye başlamamalı.
+    """
+    r = benzer_maclar(ORNEK, tolerans=0.02, yontem="orantili")
     assert r["toplam"]["n"] == 710
     sayilar = {s: r["toplam"]["semboller"][s]["adet"] for s in SEMBOLLER}
     assert sayilar == {"1": 293, "0": 184, "2": 233}
+
+
+def test_varsayilan_yontem_kendi_sayilarini_uretir():
+    """Bugünün varsayılanı (`shin`) — aynı oran, farklı ölçek, farklı komşuluk.
+
+    Aynı yarıçap Shin ölçeğinde daha az maç buluyor: yüksek marjlı hedef
+    oran (%28,8) Shin'de favoriye daha çok pay verdiği için korpusun düşük
+    marjlı maçlarından uzaklaşıyor.
+    """
+    r = benzer_maclar(ORNEK, tolerans=0.02)
+    assert r["arindirma"] == "shin"
+    assert r["toplam"]["n"] == 241
+    assert sum(r["toplam"]["semboller"][s]["adet"] for s in SEMBOLLER) == 241
 
 
 # ─── /api/benzer ──────────────────────────────────────────────────────────────
@@ -183,7 +201,9 @@ def istemci():
 
 def test_api_govdesi_n_ve_ga_tasir(istemci):
     """Uçtan çıkan hiçbir yüzde n ve güven aralığı olmadan gitmemeli."""
-    g = istemci.get("/api/benzer?oran=1.82,3.04,2.44&tolerans=0.02").get_json()
+    g = istemci.get(
+        "/api/benzer?oran=1.82,3.04,2.44&tolerans=0.02&arindirma=orantili"
+    ).get_json()
     assert g["toplam"]["n"] == 710
     for s in SEMBOLLER:
         h = g["toplam"]["semboller"][s]

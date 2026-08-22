@@ -33,6 +33,19 @@ from .odds import ARINDIRMA_VARSAYILAN, implied_probs
 KOK = Path(__file__).resolve().parent.parent
 VARSAYILAN_KORPUS = KOK / "data" / "egitim" / "egitim_korpus.csv"
 
+#: **Fark ölçülerinin** arındırması — projenin varsayılanından bağımsızdır.
+#:
+#: `cizgi_hareketi` (açılış↔kapanış) ve `bahisci_ayrismasi` (B365↔Pinnacle)
+#: iki fiyatın FARKINI ölçer. Orantısal arındırma oranın ölçeğinden
+#: bağımsızdır — bütün ayaklar aynı çarpanla kısılırsa olasılık kımıldamaz —
+#: ve fikir değişimini marj değişiminden ayıran özellik tam olarak budur.
+#: Shin ve güç yöntemleri marjın kendisini bilgi sayar; bir fark ölçüsünde
+#: bu, marj oynamasını sinyal diye okumak olurdu.
+#:
+#: SEVIYE ölçüleri (tek bir fiyat → olasılık) varsayılanı izler; yalnızca
+#: fark ölçüleri buraya sabitlenir.
+FARK_ARINDIRMASI = "orantili"
+
 #: Logaritma alınırken sıfıra düşmeyi engelleyen taban
 #: (`recalibrate.OLASILIK_TABANI` ile aynı gerekçe).
 OLASILIK_TABANI = 1e-6
@@ -350,10 +363,20 @@ def cizgi_hareketi(acilis: Optional[Dict[str, float]],
     Çift yoksa üç sıfır döner — "hareket bilinmiyor" ile "hareket yok" aynı
     davranışa düşer, çünkü ikisinde de söylenecek bir şey yoktur (`form` ile
     aynı gerekçe).
+
+    **Arındırma burada `orantili`ya sabitlenmiştir ve projenin varsayılanını
+    izlemez.** Sebep, bir FARK ölçüyor olmamız: orantısal yöntem oranın
+    ölçeğinden bağımsızdır (bütün ayaklar aynı çarpanla kısılırsa olasılık
+    kımıldamaz), Shin ve güç yöntemleri değildir — onlar marjın kendisini
+    bilgi sayar. Varsayılanı izleseydi, bahisçinin yalnızca marjını büyütmesi
+    "hareket" olarak okunur ve A1 fikir değişimi yerine bahisçinin fiyatlama
+    politikasını ölçerdi. `test_hareket_saf_marj_degisimini_gormez` bekçisi
+    bunu 2026-08'deki varsayılan çevriminde yakaladı.
     """
     if not acilis or not kapanis:
         return {s: 0.0 for s in ("1", "0", "2")}
-    a, k = implied_probs(acilis), implied_probs(kapanis)
+    a = implied_probs(acilis, FARK_ARINDIRMASI)
+    k = implied_probs(kapanis, FARK_ARINDIRMASI)
     return {s: math.log(max(k.get(s, 0.0), OLASILIK_TABANI)
                         / max(a.get(s, 0.0), OLASILIK_TABANI))
             for s in ("1", "0", "2")}
@@ -390,8 +413,11 @@ def bahisci_ayrismasi(bahisciler: Optional[Dict[str, Optional[Dict[str, float]]]
     if not bahisciler or not all(bahisciler.get(ad) for ad in BAHISCILER):
         return bos
 
-    p_b365 = implied_probs(bahisciler["b_B365"])
-    p_ps = implied_probs(bahisciler["b_PS"])
+    # Ayrisma da bir FARK olcusudur ve `cizgi_hareketi` ile ayni gerekceyle
+    # `orantili`ya sabitlenmistir: B365 ile Pinnacle'in marjlari farklidir ve
+    # olcek duyarli bir arindirmada o marj farki "anlasmazlik" gibi gorunurdu.
+    p_b365 = implied_probs(bahisciler["b_B365"], FARK_ARINDIRMASI)
+    p_ps = implied_probs(bahisciler["b_PS"], FARK_ARINDIRMASI)
     ayrisma = 0.5 * sum(abs(p_b365[s] - p_ps[s]) for s in ("1", "0", "2"))
 
     en_iyi, ortalama = bahisciler["b_Max"], bahisciler["b_Avg"]

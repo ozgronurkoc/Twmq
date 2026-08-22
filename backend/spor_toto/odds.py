@@ -98,11 +98,21 @@ def market_odds(row: Dict[str, Any], market: str = "1X2", book: str = "Avg",
     return {}
 
 
-#: Marj arındırma yöntemleri. Varsayılan `orantili` **bilerek** korunur:
-#: arşivde yayımlanmış bütün sayılar onunla üretildi, sessizce değiştirmek
-#: geçmiş ölçümleri kıyaslanamaz kılardı. Yöntem seçimi çağıranın işidir.
+#: Marj arındırma yöntemleri ve projenin varsayılanı.
+#:
+#: Varsayılan **2026-08'de `orantili`dan `shin`e çevrildi** (A5, bkz.
+#: `docs/ISTATISTIK_YOL_HARITASI.md` §3.18). Gerekçe ölçüm: orantısal
+#: yöntem marjı her sonuca eşit dağıtır, oysa bahisçi onu sürprizlere ağır
+#: yükler; sonuç favorinin sistematik olarak eksik fiyatlanmasıydı.
+#:
+#:     Brier            0,5940 → 0,5936 · −0,00035 [−0,00049, −0,00021]
+#:     sapan bant       10/15 → 4/15
+#:     geri test kolon  6.897/hafta → 2.228/hafta (hold-out)
+#:
+#: Çevrimden ÖNCE yayımlanmış sayılar orantısal ölçekte ölçülmüştür ve
+#: yenileriyle doğrudan kıyaslanamaz; ikisi de belgede o etiketle durur.
 ARINDIRMA_YONTEMLERI = ("orantili", "guc", "shin")
-ARINDIRMA_VARSAYILAN = "orantili"
+ARINDIRMA_VARSAYILAN = "shin"
 
 #: Kök bulucu tarama sınırları ve adım sayısı. 60 ikiye bölme, çift
 #: duyarlıkta ulaşılabilir hassasiyetin ötesindedir; sabit tutuldu ki
@@ -117,7 +127,8 @@ def implied_probs(oranlar: Dict[str, float],
     Üç yöntem var ve **hangisinin seçildiği sonucu değiştirir**:
 
     ``orantili``
-        ``p = (1/o) / Σ(1/o)``. Marjı her sonuca eşit oranda dağıtır.
+        Eski varsayılan. ``p = (1/o) / Σ(1/o)``; marjı her sonuca eşit
+        oranda dağıtır.
         Basit ve tersine çevrilebilir, ama bahisçi marjı sürprizlere daha
         çok yüklediği için favoriyi **sistematik olarak eksik fiyatlar**
         (favourite–longshot yanlılığı). Korpusta ölçüldü: piyasanın %70–80
@@ -126,8 +137,9 @@ def implied_probs(oranlar: Dict[str, float],
         ``p ∝ (1/o)^k``, ``k`` toplamı 1 yapacak şekilde çözülür. ``k>1``
         çıkar ve küçük olasılıkları büyüklerden daha çok kısar.
     ``shin``
-        Shin (1993): bahisçinin marjını, bilgili bahisçi payı ``z`` ile
-        açıklar. Aynı yönde ama daha yumuşak düzeltir.
+        **Varsayılan.** Shin (1993): bahisçinin marjını, bilgili bahisçi
+        payı ``z`` ile açıklar. Güç yöntemiyle aynı yönde ama daha yumuşak
+        düzeltir; ikisi ölçümde ayırt edilemedi, kapalı formu olan seçildi.
 
     Marj sıfıra giderken üç yöntem de aynı sonuca yakınsar; ayrıştıkları yer
     yüksek marjdır — iddaa bülteni (~%18) tam olarak orası.
