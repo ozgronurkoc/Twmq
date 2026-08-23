@@ -14,6 +14,7 @@ import {
 
 import type {
   HealthCheck,
+  HealthCheckInfo,
   HealthHistoryResponse,
   HealthKategori,
   HealthReport,
@@ -23,9 +24,11 @@ import { cn, sure } from "@/lib/utils";
 import {
   Badge,
   Button,
+  Callout,
   Card,
   CardBody,
   CardHeader,
+  Skeleton,
 } from "@/components/ui/primitives";
 
 // ─── Durum ────────────────────────────────────────────────────────────────
@@ -624,6 +627,113 @@ export function OrtamKarti({ rapor }: { rapor: HealthReport }) {
               {rapor.summary.ornek_kupon}
             </code>
           </div>
+        ) : null}
+      </CardBody>
+    </Card>
+  );
+}
+
+/**
+ * Kayıtlı kontrol envanteri — kontrolleri **çalıştırmadan** listeler.
+ *
+ * `/api/health/checks` ucu, onu üreten `health.check_envanteri()` ve
+ * `lib/api.getHealthChecks()` istemcisi hepsi hazırdı ama **hiçbir sayfa
+ * çağırmıyordu**: zincirin üç halkası da yerindeyken hiçbir yere
+ * bağlanmamış yarım bir özellikti.
+ *
+ * Rapordan farkı ve varlık sebebi: rapor "az önce ne oldu"yu söyler, bu
+ * kart "bu sistem **neyi** denetliyor"u. İkisi ayrı sorudur ve ikincisinin
+ * cevabı ölçüm koşmadan, servis düşükken bile okunabilmelidir — üstelik
+ * kısmi bir koşumda (`?only=`) raporda görünmeyen kontroller de burada
+ * durur.
+ */
+export function KontrolEnvanteri({
+  envanter,
+  hata,
+  yukleniyor,
+}: {
+  envanter: HealthCheckInfo[] | null;
+  hata: string | null;
+  yukleniyor: boolean;
+}) {
+  const [acik, setAcik] = React.useState(false);
+
+  const kategoriler = React.useMemo(() => {
+    if (!envanter) return [];
+    const harita = new Map<string, { etiket: string; checks: HealthCheckInfo[] }>();
+    for (const c of envanter) {
+      const k = harita.get(c.category);
+      if (k) k.checks.push(c);
+      else harita.set(c.category, { etiket: c.category_label, checks: [c] });
+    }
+    return Array.from(harita, ([id, v]) => ({ id, ...v }));
+  }, [envanter]);
+
+  const toplamButce = React.useMemo(
+    () => (envanter ?? []).reduce((a, c) => a + (c.butce_ms ?? 0), 0),
+    [envanter],
+  );
+
+  return (
+    <Card>
+      <CardHeader
+        title="Kayıtlı kontroller"
+        hint="Bu sistemin neyi denetlediği — kontroller ÇALIŞTIRILMADAN. Rapor “az önce ne oldu”yu, bu liste “neye bakılıyor”u söyler."
+        action={
+          <button
+            type="button"
+            onClick={() => setAcik((a) => !a)}
+            className="rounded-lg border border-line-strong px-2.5 py-1 text-[12px] transition-colors hover:bg-muted"
+            aria-expanded={acik}
+          >
+            {acik ? "Gizle" : "Göster"}
+          </button>
+        }
+      />
+      <CardBody className="space-y-3">
+        {hata ? (
+          <Callout ton="warning" baslik="Envanter alınamadı">
+            {hata} — rapor bundan etkilenmez.
+          </Callout>
+        ) : yukleniyor && !envanter ? (
+          <Skeleton className="h-16 w-full" />
+        ) : envanter ? (
+          <>
+            <p className="text-[12.5px] leading-relaxed text-muted-foreground">
+              <strong className="tnum text-foreground">{envanter.length}</strong> kayıtlı
+              kontrol, {kategoriler.length} kategori. Toplam süre bütçesi{" "}
+              <span className="tnum">{sure(toplamButce)}</span>; bir kontrol bütçesini
+              aşarsa rapor onu <em>düşmedi ama yavaşladı</em> diye işaretler.
+            </p>
+
+            {acik
+              ? kategoriler.map((kat) => (
+                  <div key={kat.id}>
+                    <div className="mb-1.5 text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                      {kat.etiket} · {kat.checks.length}
+                    </div>
+                    <ul className="space-y-1.5">
+                      {kat.checks.map((c) => (
+                        <li
+                          key={c.name}
+                          className="rounded-lg border border-line bg-elevated px-3 py-2"
+                        >
+                          <div className="flex items-baseline justify-between gap-3">
+                            <code className="font-mono text-[12px]">{c.name}</code>
+                            <span className="tnum shrink-0 text-[11px] text-muted-foreground">
+                              {c.butce_ms === null ? "bütçesiz" : `≤ ${sure(c.butce_ms)}`}
+                            </span>
+                          </div>
+                          <p className="mt-0.5 text-[11.5px] leading-relaxed text-muted-foreground">
+                            {c.aciklama}
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))
+              : null}
+          </>
         ) : null}
       </CardBody>
     </Card>

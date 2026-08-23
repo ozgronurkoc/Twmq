@@ -326,17 +326,21 @@ def _build_result(
         }
         try:
             markov_block = markov_report(enc, cols, work_probs)
-        except Exception:
+        except Exception as e:
+            # Once sessizce None doniyordu: arayuz blogu gizliyor ve
+            # kullanici "olasilik verdim ama Markov paneli yok" durumunun
+            # sebebini goremiyordu. `fire` blogunun maliyet dalinda zaten
+            # skipped/reason vardi; ayni sozlesme buraya da genisletildi.
             logger.exception("markov_report failed")
-            markov_block = None
+            markov_block = {"skipped": True, "reason": f"Markov hesabı düştü: {e}"}
 
     error_freq = None
     try:
         if enc.space_size() <= 20000:
             error_freq = match_error_frequency(enc, cols, max_d=2)
-    except Exception:
+    except Exception as e:
         logger.exception("match_error_frequency failed")
-        error_freq = None
+        error_freq = {"skipped": True, "reason": f"Hata dağılımı hesaplanamadı: {e}"}
 
     # Secim DISI fire analizi. Diger paneller kume ICI mesafeyi olcer;
     # bu, 14-garantinin gecerli OLMADIGI bolgeyi olcer.
@@ -456,6 +460,8 @@ def root():
             "GET  /api/stats",
             "GET  /api/stats/<week>",
             "GET  /api/backtest",
+            "GET  /api/tahmin         (yaklasan maclar + olculmus isabet)",
+            "GET  /api/benzer         (bu oranda gecmiste ne oldu)",
             "POST /api/solve",
             "GET  /health             (liveness: süreç ayakta mı)",
         ],
@@ -467,8 +473,9 @@ def health_liveness():
     """
     LIVENESS — "bu süreç ayakta mı?" Başka hiçbir şey.
 
-    Eskiden bu yol `/api/health` ile AYNI handler'a bağliydi ve 21
-    değişmezin tamamını koşuyordu (~500 ms, soğuk başlangıçta ~2,3 sn).
+    Eskiden bu yol `/api/health` ile AYNI handler'a bağliydi ve
+    değişmezlerin tamamını koşuyordu (~500 ms, soğuk başlangıçta ~2,3 sn).
+    Sayi burada YAZILMAZ: docstring "21" diyordu, gercek 23'tu.
     Dağıtım hedefi autoscale: platform probe'u her vurdugunda bu bedel
     ödeniyordu ve probe zaman aşımına düşerse platform SAGLIKLI bir
     konteyneri öldürür — yani sağlık kontrolünün kendisi kesinti üretebilir.
@@ -937,8 +944,10 @@ def api_solve():
 
     run_log["finished_at"] = datetime.now(timezone.utc).isoformat()
     run_log["total_ms"] = round((time.perf_counter() - t0) * 1000, 1)
-    if result is not None:
-        result["run_log_text"] = _format_run_log(run_log)
+    # `run_log_text` YALNIZCA ust seviyede gonderilir. Once ayni dizgi
+    # `result` icinde de duruyordu (ayni `_format_run_log(run_log)`) ve
+    # arayuz zaten ustekini okuyor (app/page.tsx). Iki kopya govdeyi
+    # bosuna buyutuyordu.
 
     body = {
         "ok": error is None and result is not None,

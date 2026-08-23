@@ -2,11 +2,17 @@
 
 import * as React from "react";
 
-import { getBenzer } from "@/lib/api";
+import { ARINDIRMA_YONTEMLERI, getBenzer, type ArindirmaYontemi } from "@/lib/api";
 import { useIstek } from "@/lib/istek";
 import { SEMBOLLER as SEM } from "@/lib/types";
-import type { BenzerKarne, BenzerResponse, BenzerSembol } from "@/lib/types";
+import type {
+  BenzerDilim,
+  BenzerKarne,
+  BenzerResponse,
+  BenzerSembol,
+} from "@/lib/types";
 import { Badge } from "@/components/ui/primitives";
+import { sayi, yuzde } from "@/lib/utils";
 
 
 /**
@@ -29,11 +35,17 @@ export function BenzerKart({
 }) {
   const [acik, setAcik] = React.useState(false);
 
+  // Arindirma yontemi kullanicinin secimidir. Backend bunu bastan beri
+  // kabul ediyordu (`?arindirma=`) ama arayuz hic gondermiyordu — yani
+  // motorun bir yetenegi kapali duruyordu. Yontem SORGUYU degistirir,
+  // dolayisiyla anahtarin parcasidir.
+  const [arindirma, setArindirma] = React.useState<ArindirmaYontemi>("shin");
+
   // Sorguyu belirleyen TEK sey bu anahtardir. `oranlar` her render'da yeni
   // kimlik alabilen bir nesnedir; onu bagimlilik yapmak sonsuz donguye
   // giden yoldu (asagidaki tarihce).
   const anahtar = oranlar
-    ? `${SEM.map((s) => oranlar[s]).join(",")}|${lig ?? ""}`
+    ? `${SEM.map((s) => oranlar[s]).join(",")}|${lig ?? ""}|${arindirma}`
     : "";
 
   /*
@@ -60,7 +72,12 @@ export function BenzerKart({
   }, [acik]);
 
   const { veri, hata, yukleniyor } = useIstek(
-    (signal) => getBenzer(oranlar as Record<string, number>, lig ? { lig } : undefined, signal),
+    (signal) =>
+      getBenzer(
+        oranlar as Record<string, number>,
+        { arindirma, ...(lig ? { lig } : {}) },
+        signal,
+      ),
     [anahtar],
     {
       hazir: hicAcildi && !!anahtar && !!oranlar,
@@ -90,7 +107,11 @@ export function BenzerKart({
           ) : hata ? (
             <span className="text-danger">{hata}</span>
           ) : veri ? (
-            <BenzerGovde veri={veri} />
+            <BenzerGovde
+              veri={veri}
+              arindirma={arindirma}
+              onArindirma={setArindirma}
+            />
           ) : null}
         </div>
       ) : null}
@@ -152,7 +173,15 @@ function Satir({
   );
 }
 
-function BenzerGovde({ veri }: { veri: BenzerResponse }) {
+function BenzerGovde({
+  veri,
+  arindirma,
+  onArindirma,
+}: {
+  veri: BenzerResponse;
+  arindirma: ArindirmaYontemi;
+  onArindirma: (y: ArindirmaYontemi) => void;
+}) {
   const t = veri.toplam;
   if (!t.yeterli) {
     return (
@@ -166,8 +195,35 @@ function BenzerGovde({ veri }: { veri: BenzerResponse }) {
       <div className="flex flex-wrap items-center gap-1.5">
         <Badge>{t.n} benzer maç</Badge>
         <Badge>±{(100 * veri.tolerans).toFixed(1)} puan</Badge>
-        <Badge>{veri.arindirma}</Badge>
+        {/* Bu ucu daha once yalnizca `toplam`, `tolerans`, `arindirma` ve
+            `uyarilar` okunuyordu; gerisi hesaplanip ATILIYORDU. `evren`
+            karsilastirmanin hangi havuzdan yapildigini, `marj` ise
+            arindirmanin ne kadarini attigini soyler — ikisi de sayiyi
+            okurken bilinmesi gereken sey. */}
+        <Badge>{sayi(veri.evren)} maçlık korpus</Badge>
+        <Badge>marj %{(100 * veri.marj).toFixed(1)}</Badge>
+        {veri.tolerans_genisledi ? (
+          <Badge ton="warning">yarıçap genişletildi</Badge>
+        ) : null}
+        {veri.tolerans_tavana_dayandi ? (
+          <Badge ton="warning">yarıçap tavanda</Badge>
+        ) : null}
       </div>
+
+      <label className="flex items-center gap-2 text-[11px] text-muted-foreground">
+        marj arındırma
+        <select
+          value={arindirma}
+          onChange={(e) => onArindirma(e.target.value as ArindirmaYontemi)}
+          className="rounded-md border border-line-strong bg-elevated px-1.5 py-0.5 text-[11px]"
+        >
+          {ARINDIRMA_YONTEMLERI.map((y) => (
+            <option key={y} value={y}>
+              {y}
+            </option>
+          ))}
+        </select>
+      </label>
 
       <table className="w-full">
         <thead className="text-[10.5px] uppercase tracking-wide text-muted-foreground">
@@ -187,12 +243,76 @@ function BenzerGovde({ veri }: { veri: BenzerResponse }) {
         </tbody>
       </table>
 
+      <LigDilimleri dilimler={veri.dilimler.lig} />
+
       {veri.uyarilar.length ? (
         <ul className="space-y-0.5 text-[11px] leading-relaxed text-muted-foreground">
           {veri.uyarilar.map((u, i) => (
             <li key={i}>• {u}</li>
           ))}
         </ul>
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * Lig kirilimi — sunucu bunu hesaplayip gonderiyordu ve arayuz TAMAMEN
+ * atiyordu.
+ *
+ * Neden degerli: "bu fiyata gecmiste ne oldu" sorusunun cevabi lige gore
+ * degisebilir ve toplam yuzde o farki gizler. Neden dikkatli gosteriliyor:
+ * dilim kucuklukce carpici yuzde cikma olasiligi artar, o yuzden yalnizca
+ * `yeterli` olanlar listelenir ve n her zaman yaninda durur — bu aracin
+ * tek gercek tehlikesi ince bir dilimdeki carpici oranin bulgu sanilmasidir.
+ */
+function LigDilimleri({ dilimler }: { dilimler: BenzerDilim[] }) {
+  const [acik, setAcik] = React.useState(false);
+  const yeterli = dilimler.filter((d) => d.karne.yeterli);
+  if (!yeterli.length) return null;
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setAcik((a) => !a)}
+        aria-expanded={acik}
+        className="text-[11px] text-primary hover:underline"
+      >
+        {acik ? "Lig kırılımını gizle" : `Lig kırılımı (${yeterli.length} lig)`}
+      </button>
+      {acik ? (
+        <table className="mt-1 w-full">
+          <thead className="text-[10.5px] uppercase tracking-wide text-muted-foreground">
+            <tr>
+              <th className="pr-2 text-left">lig</th>
+              <th className="pr-2 text-right">n</th>
+              {SEM.map((s) => (
+                <th key={s} className="pr-2 text-right">
+                  {s}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {yeterli.map((d) => (
+              <tr key={d.deger}>
+                <td className="pr-2 font-mono">{d.deger}</td>
+                <td className="tnum pr-2 text-right text-muted-foreground">
+                  {d.karne.n}
+                </td>
+                {SEM.map((s) => {
+                  const r = d.karne.semboller[s] as BenzerSembol | undefined;
+                  return (
+                    <td key={s} className="tnum pr-2 text-right">
+                      {r ? yuzde(r.oran ?? 0, 0) : "—"}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
       ) : null}
     </div>
   );

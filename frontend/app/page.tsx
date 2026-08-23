@@ -14,8 +14,11 @@ import {
   maclariKodla,
   temizEtiketler,
   varsayilanKurulum,
+  MC_MAX,
+  MC_MIN,
   VARSAYILAN_ENG,
   VARSAYILAN_MACLAR,
+  VARSAYILAN_MC,
   yereldenOku,
   yereleYaz,
   yereliTemizle,
@@ -110,7 +113,7 @@ export default function FormulPage() {
   const [elleAyar, setElleAyar] = React.useState(false);
   const [prior, setPrior] = React.useState(1);
   const [evidence, setEvidence] = React.useState(10);
-  const [mcSamples, setMcSamples] = React.useState(80000);
+  const [mcSamples, setMcSamples] = React.useState(VARSAYILAN_MC);
   const [fireMax, setFireMax] = React.useState(2);
 
   const [eng, setEng] = React.useState({ ...VARSAYILAN_ENG });
@@ -264,7 +267,7 @@ export default function FormulPage() {
         // kaydettigi motor ayarlarini ve MC ornek sayisini sessizce ezerdi.
         if (geriYuklendiRef.current) return;
         setEng((e) => ({ ...e, ...m.engine_defaults }));
-        setMcSamples(m.limits?.mc_samples?.default ?? 80000);
+        setMcSamples(m.limits?.mc_samples?.default ?? VARSAYILAN_MC);
       })
       .catch(() => {
         /* meta alinamazsa arayuz calisir, sadece aciklamalar eksik olur */
@@ -750,8 +753,8 @@ export default function FormulPage() {
                     label="Monte Carlo örnek sayısı"
                     value={mcSamples}
                     onChange={setMcSamples}
-                    min={meta?.limits?.mc_samples?.min ?? 1000}
-                    max={meta?.limits?.mc_samples?.max ?? 200000}
+                    min={meta?.limits?.mc_samples?.min ?? MC_MIN}
+                    max={meta?.limits?.mc_samples?.max ?? MC_MAX}
                     step={1000}
                     format={(v) => sayi(v)}
                     hint="Daha fazla örnek = daha dar güven aralığı, daha uzun süre"

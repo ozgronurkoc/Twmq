@@ -198,6 +198,32 @@ export interface ErrorBudget {
   method: string;
 }
 
+/**
+ * Bir analiz blogu hesaplanamadiginda gonderilen govde.
+ *
+ * Once bu durumda sunucu sessizce `null` gonderiyordu ve arayuz blogu
+ * gizliyordu: kullanici "olasilik verdim ama panel yok" durumunun sebebini
+ * goremiyordu. `fire` blogunun maliyet dalinda bu sozlesme zaten vardi;
+ * `markov` ve `error_freq` da ayni kurala baglandi.
+ */
+export interface AtlandiBlok {
+  skipped: true;
+  reason: string;
+}
+
+/**
+ * Bir blogun atlanmis olup olmadigini daraltir.
+ *
+ * Genel bir `T | AtlandiBlok` birlesimini daraltabilmesi icin girdi
+ * `unknown` degil `object`tir; `skipped` alani yalnizca atlanmis govdede
+ * bulunur, dolayisiyla ayrim guvenlidir.
+ */
+export function atlandiMi<T extends object>(
+  b: T | AtlandiBlok | null | undefined,
+): b is AtlandiBlok {
+  return !!b && (b as AtlandiBlok).skipped === true;
+}
+
 export interface MarkovBlock {
   survival: Survival;
   error_budget: ErrorBudget;
@@ -307,8 +333,8 @@ export interface SolveResult {
 
   advanced: Advanced | null;
   bayes: BayesBlock | null;
-  markov: MarkovBlock | null;
-  error_freq: ErrorFreq | null;
+  markov: MarkovBlock | AtlandiBlok | null;
+  error_freq: ErrorFreq | AtlandiBlok | null;
   fire: FireReport | null;
   butce_planlari?: ButcePlan[];
 
@@ -316,7 +342,6 @@ export interface SolveResult {
   match_count: number;
   total_space: number;
   has_scipy: boolean;
-  run_log_text?: string;
 }
 
 export interface SolveResponse {

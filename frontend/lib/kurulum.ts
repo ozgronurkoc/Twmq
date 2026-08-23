@@ -10,6 +10,18 @@ import {
 import { normalize, uniformProb as esitPay } from "./utils";
 
 /**
+ * Monte Carlo ornek sayisinin sinirlari — sunucunun `/api/meta`'da ilan
+ * ettigi degerlerle AYNI olmak zorunda (`meta.MC_MIN` / `MC_MAX`).
+ *
+ * Bu modul saf: React yok, istek yok (check.mjs onu dogrudan kosar), yani
+ * calisma aninda `/api/meta`yi okuyamaz. Bu yuzden deger burada duruyor ve
+ * Faz 5'in urettigi sozlesme dosyasi ikisinin ayrismadigini denetleyecek.
+ */
+export const MC_MIN = 1000;
+export const MC_MAX = 200_000;
+export const VARSAYILAN_MC = 80_000;
+
+/**
  * Formul sayfasinin KURULUMU: 15 macin isaretleri, olasilik satirlari ve
  * motorun tum ayarlari. Sonuc buraya girmez — sonuc turetilmis veridir,
  * kurulum ise kullanicinin elle urettigi tek sey.
@@ -104,7 +116,7 @@ export function varsayilanKurulum(): Kurulum {
     elleAyar: false,
     prior: 1,
     evidence: 10,
-    mcSamples: 80000,
+    mcSamples: VARSAYILAN_MC,
     eng: { ...VARSAYILAN_ENG },
   };
 }
@@ -362,7 +374,12 @@ export function kurulumuCoz(arama: string): UrlCozum | null {
       elleAyar: bayrak(p.get("be"), v.elleAyar),
       prior: ondalikDeger(p.get("pr"), 0, 1000, v.prior),
       evidence: ondalikDeger(p.get("ev"), 0, 1000, v.evidence),
-      mcSamples: tamsayi(p.get("mc"), 1000, 1_000_000, v.mcSamples),
+      // Ust sinir SUNUCUNUN ilan ettigi sinirdir (`/api/meta` limits.
+      // mc_samples.max = 200_000). Burada 1_000_000 yaziyordu ve iki taraf
+      // ayrisiyordu: `?mc=500000` tasiyan bir paylasim baglantisi cozuluyor
+      // ama ne kaydiricida gosterilebiliyor ne de sunucuda kabul ediliyordu.
+      // Faz 5'te uretilen sozlesme dosyasina baglanacak.
+      mcSamples: tamsayi(p.get("mc"), MC_MIN, MC_MAX, v.mcSamples),
       eng,
     },
   };

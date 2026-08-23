@@ -3,7 +3,13 @@
 import * as React from "react";
 import { Check, Copy, ListFilter, RefreshCw } from "lucide-react";
 
-import { denetleKupon, getHealth, getHealthHistory } from "@/lib/api";
+import {
+  denetleKupon,
+  getHealth,
+  getHealthChecks,
+  getHealthHistory,
+} from "@/lib/api";
+import { useIstek } from "@/lib/istek";
 import { hataMetni, iptalMi } from "@/lib/istek";
 import type {
   HealthHistoryResponse,
@@ -28,6 +34,7 @@ import {
   type GecmisKaydi,
   GecmisSeridi,
   KategoriKarti,
+  KontrolEnvanteri,
   KuponDenetimi,
   OrtamKarti,
   SunucuGecmisi,
@@ -100,6 +107,17 @@ export default function SaglikPage() {
       [{ id: ++sayacRef.current, ...kayit }, ...onceki].slice(0, GECMIS_SINIRI),
     );
   }, []);
+
+  // Kayitli kontrol envanteri. Rapordan BAGIMSIZ cekilir ve bu kasitli:
+  // "bu sistem neyi denetliyor" sorusunun cevabi olcum kosmadan, servis
+  // dususke bile okunabilmeli.
+  const {
+    veri: envanter,
+    hata: envanterHatasi,
+    yukleniyor: envanterYukleniyor,
+  } = useIstek((signal) => getHealthChecks(signal), [], {
+    varsayilanHata: "Kontrol envanteri alınamadı",
+  });
 
   /**
    * Bu yukleyici bilerek `lib/istek.useIstek` KULLANMAZ. O kanca bildirimsel
@@ -592,6 +610,11 @@ export default function SaglikPage() {
             picks={kuponPicks}
             onPicks={setKuponPicks}
             onCalistir={() => void kuponuDenetle()}
+          />
+          <KontrolEnvanteri
+            envanter={envanter?.checks ?? null}
+            hata={envanterHatasi}
+            yukleniyor={envanterYukleniyor}
           />
           <OrtamKarti rapor={rapor} />
         </>
