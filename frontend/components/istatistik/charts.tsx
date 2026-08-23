@@ -13,6 +13,7 @@ import {
 import { cn, ondalik } from "@/lib/utils";
 import { SEMBOL_ADI } from "@/components/ui/symbol";
 import { SYM_BG, SYM_FILL, SYM_STROKE, barPath, seqFill, seqInk } from "./viz";
+import { TABLO_BASLIK_SATIRI, TABLO_SARMAL } from "@/components/ui/tablo";
 
 /* ── ortak ──────────────────────────────────────────────────────────────── */
 
@@ -622,10 +623,10 @@ export function FavouriteBreakdown({
 
   return (
     <div className="space-y-5">
-      <div className="scroll-slim overflow-x-auto">
+      <div className={TABLO_SARMAL}>
         <table className="w-full min-w-[520px] text-[12.5px]">
           <thead>
-            <tr className="text-left text-[11px] uppercase tracking-[0.06em] text-muted-foreground">
+            <tr className={TABLO_BASLIK_SATIRI}>
               <th scope="col" className="pb-2 pr-3 font-medium">Durum</th>
               {SEMBOLLER.map((s) => (
                 <th key={s} scope="col" className="w-20 pb-2 pr-3 text-right font-medium">
@@ -670,13 +671,13 @@ export function FavouriteBreakdown({
         </table>
       </div>
 
-      <div className="scroll-slim overflow-x-auto">
+      <div className={TABLO_SARMAL}>
         <table className="w-full min-w-[520px] text-[12.5px]">
           <caption className="mb-2 text-left text-[11px] uppercase tracking-[0.06em] text-muted-foreground">
             Favori (satır) × gerçekleşen (sütun)
           </caption>
           <thead>
-            <tr className="text-left text-[11px] uppercase tracking-[0.06em] text-muted-foreground">
+            <tr className={TABLO_BASLIK_SATIRI}>
               <th scope="col" className="pb-2 pr-3 font-medium">Favori</th>
               {SEMBOLLER.map((s) => (
                 <th key={s} scope="col" className="w-20 pb-2 pr-3 text-right font-medium">{s}</th>
@@ -765,10 +766,10 @@ export function FavouriteBands({
 
   return (
     <div className="space-y-3">
-      <div className="scroll-slim overflow-x-auto">
+      <div className={TABLO_SARMAL}>
         <table className="w-full min-w-[640px] text-[12.5px]">
           <thead>
-            <tr className="text-left text-[11px] uppercase tracking-[0.06em] text-muted-foreground">
+            <tr className={TABLO_BASLIK_SATIRI}>
               <th scope="col" className="pb-2 pr-3 font-medium">Favori oranı</th>
               <th scope="col" className="w-14 pb-2 pr-3 text-right font-medium">Maç</th>
               <th scope="col" className="w-24 pb-2 pr-3 text-right font-medium">Tuttu</th>
@@ -930,7 +931,7 @@ export function PositionHeatmap({ positions }: { positions: Analytics["positions
 export function TransitionMatrix({ transitions }: { transitions: Analytics["transitions"] }) {
   const enBuyuk = Math.max(1, ...SEMBOLLER.flatMap((a) => SEMBOLLER.map((b) => transitions.pct[a][b])));
   return (
-    <div className="scroll-slim overflow-x-auto">
+    <div className={TABLO_SARMAL}>
       <table className="border-separate text-center" style={{ borderSpacing: 2 }}>
         <thead>
           <tr>
@@ -1005,10 +1006,10 @@ export function SetCoverage({
 
   return (
     <div className="space-y-3">
-      <div className="scroll-slim overflow-x-auto">
+      <div className={TABLO_SARMAL}>
         <table className="w-full min-w-[620px] text-[12.5px]">
           <thead>
-            <tr className="text-left text-[11px] uppercase tracking-[0.06em] text-muted-foreground">
+            <tr className={TABLO_BASLIK_SATIRI}>
               <th scope="col" className="pb-2 pr-3 font-medium">İlk iki olasılık toplamı</th>
               <th scope="col" className="w-14 pb-2 pr-3 text-right font-medium">Maç</th>
               <th scope="col" className="w-24 pb-2 pr-3 text-right font-medium">Oran diyor</th>
@@ -1101,10 +1102,10 @@ export function DrawProfile({
 
   return (
     <div className="space-y-3">
-      <div className="scroll-slim overflow-x-auto">
+      <div className={TABLO_SARMAL}>
         <table className="w-full min-w-[600px] text-[12.5px]">
           <thead>
-            <tr className="text-left text-[11px] uppercase tracking-[0.06em] text-muted-foreground">
+            <tr className={TABLO_BASLIK_SATIRI}>
               <th scope="col" className="pb-2 pr-3 font-medium">Favori − ikinci farkı</th>
               <th scope="col" className="w-14 pb-2 pr-3 text-right font-medium">Maç</th>
               <th scope="col" className="w-28 pb-2 pr-3 text-right font-medium">Beraberlik</th>
@@ -1180,10 +1181,10 @@ export function LeagueSplit({
 
   return (
     <div className="space-y-3">
-      <div className="scroll-slim overflow-x-auto">
+      <div className={TABLO_SARMAL}>
         <table className="w-full min-w-[620px] text-[12.5px]">
           <thead>
-            <tr className="text-left text-[11px] uppercase tracking-[0.06em] text-muted-foreground">
+            <tr className={TABLO_BASLIK_SATIRI}>
               <th scope="col" className="pb-2 pr-3 font-medium">Lig</th>
               <th scope="col" className="w-14 pb-2 pr-3 text-right font-medium">Maç</th>
               <th scope="col" className="w-28 pb-2 pr-3 text-right font-medium">Kupon başına</th>

@@ -10,9 +10,14 @@ import {
   type SuperTotoMac,
 } from "@/lib/super-toto";
 import { SEMBOLLER as SEM } from "@/lib/types";
+import { yuzde as _yuzde } from "@/lib/utils";
+
+/** Bu tabloda basamak yok — `yuzde(v, 0)`. */
+const yuzde = (v: number) => _yuzde(v, 0);
 import { Tabs, type TabItem } from "@/components/ui/tabs";
 import { Badge, Card, CardBody, CardHeader } from "@/components/ui/primitives";
 import { BenzerKart } from "@/components/benzer/kart";
+import { adreseYaz, adrestenOku } from "@/lib/adres";
 
 const HAFTA_PARAM = "hafta";
 
@@ -23,8 +28,7 @@ const HAFTA_PARAM = "hafta";
  * (ayni gerekce icin bkz. `istatistik/parts.tsx`).
  */
 export function haftaUrldenOku(): number | null {
-  if (typeof window === "undefined") return null;
-  const ham = new URL(window.location.href).searchParams.get(HAFTA_PARAM);
+  const ham = adrestenOku(HAFTA_PARAM);
   if (!ham) return null;
   const n = Number(ham);
   if (!Number.isFinite(n)) return null;
@@ -38,12 +42,7 @@ export function haftaUrldenOku(): number | null {
  * her sekme tikinda panel bastan kurulurdu.
  */
 export function haftaUrleYaz(week: number): void {
-  if (typeof window === "undefined") return;
-  const url = new URL(window.location.href);
-  url.searchParams.set(HAFTA_PARAM, String(week));
-  const yeni = url.pathname + (url.search || "") + url.hash;
-  if (yeni === window.location.pathname + window.location.search + window.location.hash) return;
-  window.history.replaceState(window.history.state, "", yeni);
+  adreseYaz(HAFTA_PARAM, String(week));
 }
 
 /**
@@ -89,10 +88,6 @@ export function HaftaSekmeleri({
   );
 }
 
-
-function yuzde(v: number): string {
-  return `%${(100 * v).toFixed(0)}`;
-}
 
 /** Bir macin satiri: oran, olasilik, oynanma, isaret ve (varsa) sonuc. */
 function MacSatiri({
@@ -200,7 +195,7 @@ export function DoluHafta({ hafta }: { hafta: SuperTotoHafta }) {
               {k.columns ? ` · ${k.columns.toLocaleString("tr-TR")} kolon` : ""}
               {k.rows ? ` · ${k.rows} satır` : ""}
               {k.in_set_p !== null
-                ? ` · küme-içi ${(100 * k.in_set_p).toFixed(2)}%`
+                ? ` · küme-içi ${_yuzde(k.in_set_p, 2)}`
                 : ""}
               {dogru !== null ? ` · ${dogru}/15 küme içinde` : ""}
             </div>

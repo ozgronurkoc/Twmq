@@ -8,6 +8,7 @@ import { SEMBOLLER, type OddsSummary, type Sembol, type WeekRow } from "@/lib/ty
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/primitives";
 import { ResultStrip } from "@/components/ui/symbol";
+import { TABLO_BASLIK_SATIRI, TABLO_SARMAL } from "@/components/ui/tablo";
 
 type SiraAnahtari = "week" | Sembol | "streak" | "brier";
 
@@ -170,10 +171,10 @@ export function WeeksTable({
         </div>
       </div>
 
-      <div className="scroll-slim overflow-x-auto">
+      <div className={TABLO_SARMAL}>
         <table className="w-full min-w-[720px] text-[12.5px]">
           <thead>
-            <tr className="text-left text-[11px] uppercase tracking-[0.06em] text-muted-foreground">
+            <tr className={TABLO_BASLIK_SATIRI}>
               {basliklar.map((h) => (
                 <th key={h.key} scope="col" className="pb-2 pr-3 font-medium">
                   <button

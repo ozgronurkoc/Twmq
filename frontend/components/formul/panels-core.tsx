@@ -16,6 +16,7 @@ import {
   Stat,
 } from "@/components/ui/primitives";
 import { CouponCell, SymbolLegend } from "@/components/ui/symbol";
+import { TABLO_SARMAL } from "@/components/ui/tablo";
 
 /** Garanti uc ayri durumdur ve asla belirsiz birakilmaz. */
 function garantiDurumu(r: SolveResult) {
@@ -247,7 +248,7 @@ export function KuponPanel({
       />
       <CardBody>
         <SymbolLegend className="mb-3" />
-        <div className="scroll-slim overflow-x-auto">
+        <div className={TABLO_SARMAL}>
           <table className="w-full border-separate border-spacing-0">
             <thead>
               <tr>

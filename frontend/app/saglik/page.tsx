@@ -11,6 +11,7 @@ import type {
   KuponDenetimSonuc,
 } from "@/lib/types";
 import { cn, panoyaKopyala, sure } from "@/lib/utils";
+import { adreseYaz, adrestenOku } from "@/lib/adres";
 import {
   Badge,
   Button,
@@ -56,21 +57,8 @@ const BASLIK_ISARETI: Record<string, string> = {
 
 /** `?only=` adresten okunur; düşen bir kategorinin bağlantısı paylaşılabilir
  * olsun ve yenilemede kaybolmasın diye (§7.14). */
-function adrestekiOnly(): string | null {
-  if (typeof window === "undefined") return null;
-  const v = new URLSearchParams(window.location.search).get("only");
-  return v && v.trim() ? v.trim() : null;
-}
-
-function adresiGuncelle(only: string | null) {
-  if (typeof window === "undefined") return;
-  const { pathname, search } = window.location;
-  const p = new URLSearchParams(search);
-  if (only) p.set("only", only);
-  else p.delete("only");
-  const yeni = p.toString() ? `${pathname}?${p.toString()}` : pathname;
-  if (yeni !== pathname + search) window.history.replaceState(null, "", yeni);
-}
+const adrestekiOnly = () => adrestenOku("only");
+const adresiGuncelle = (only: string | null) => adreseYaz("only", only);
 
 export default function SaglikPage() {
   const [rapor, setRapor] = React.useState<HealthReport | null>(null);

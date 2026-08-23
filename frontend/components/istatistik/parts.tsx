@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/primitives";
 import { ResultStrip } from "@/components/ui/symbol";
 import { isaretli } from "./viz";
+import { adreseYaz, adrestenOku } from "@/lib/adres";
 
 const ARALIK_PARAM = "last";
 
@@ -16,8 +17,7 @@ const ARALIK_PARAM = "last";
  * sayfada render sirasinda `window`'a bakmak hidrasyon uyusmazligi yapar.
  */
 export function aralikUrldenOku(): number | null {
-  if (typeof window === "undefined") return null;
-  const ham = new URL(window.location.href).searchParams.get(ARALIK_PARAM);
+  const ham = adrestenOku(ARALIK_PARAM);
   if (!ham || ham === "all") return null;
   const n = Number(ham);
   return Number.isFinite(n) && n > 0 ? Math.floor(n) : null;
@@ -35,13 +35,7 @@ export function aralikUrldenOku(): number | null {
  * yalnizca beklenen tek `/api/stats` istegi atiliyor.
  */
 export function aralikUrleYaz(deger: number | null): void {
-  if (typeof window === "undefined") return;
-  const url = new URL(window.location.href);
-  if (deger && deger > 0) url.searchParams.set(ARALIK_PARAM, String(deger));
-  else url.searchParams.delete(ARALIK_PARAM);
-  const yeni = url.pathname + (url.search || "") + url.hash;
-  if (yeni === window.location.pathname + window.location.search + window.location.hash) return;
-  window.history.replaceState(window.history.state, "", yeni);
+  adreseYaz(ARALIK_PARAM, deger && deger > 0 ? String(deger) : null);
 }
 
 /**

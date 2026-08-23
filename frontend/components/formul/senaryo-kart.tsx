@@ -7,6 +7,7 @@ import { enUcuzGarantili, type Senaryo } from "@/lib/senaryo";
 import { olasilikYaz } from "@/lib/kume-ici";
 import { cn, sayi } from "@/lib/utils";
 import { Badge, Button, Card, CardBody, CardHeader } from "@/components/ui/primitives";
+import { TABLO_SARMAL } from "@/components/ui/tablo";
 
 /**
  * Calistirilan modlarin yan yana karsilastirmasi.
@@ -40,7 +41,7 @@ export function SenaryoKart({
         hint="Aynı seçim üzerinde hangi mod neyi kaç kolona veriyor. Bu liste bir mod önermez; oturum boyunca tutulur, kaydedilmez."
       />
       <CardBody className="space-y-3">
-        <div className="scroll-slim overflow-x-auto">
+        <div className={TABLO_SARMAL}>
           <table className="w-full min-w-[520px] text-[12.5px]">
             <thead>
               <tr className="text-left text-[10.5px] uppercase tracking-[0.06em] text-muted-foreground">

@@ -176,17 +176,27 @@ export function Callout({
 
 // ─── Stat ─────────────────────────────────────────────────────────────────
 
+/**
+ * Etiket + buyuk sayi + aciklama kutusu.
+ *
+ * `boyut` iki cagri yerini de karsilar: `istatistik/backtest` bu kutunun
+ * kendi kopyasini (`Kutu`) tasiyordu ve tek farki daha buyuk punto ile
+ * `alt` satirindaki tabular rakamlardi — manşet sayilari icin bilincli bir
+ * secim. Kopya yerine varyant.
+ */
 export function Stat({
   etiket,
   deger,
   alt,
   ton = "neutral",
+  boyut = "md",
   className,
 }: {
   etiket: React.ReactNode;
   deger: React.ReactNode;
   alt?: React.ReactNode;
   ton?: Ton;
+  boyut?: "md" | "lg";
   className?: string;
 }) {
   const renk: Record<Ton, string> = {
@@ -206,11 +216,22 @@ export function Stat({
       <div className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
         {etiket}
       </div>
-      <div className={cn("tnum mt-1 text-[22px] font-semibold leading-tight", renk[ton])}>
+      <div
+        className={cn(
+          "tnum mt-1 font-semibold leading-tight",
+          boyut === "lg" ? "text-[24px]" : "text-[22px]",
+          renk[ton],
+        )}
+      >
         {deger}
       </div>
       {alt ? (
-        <div className="mt-0.5 text-[11.5px] leading-relaxed text-muted-foreground">
+        <div
+          className={cn(
+            "mt-0.5 text-[11.5px] leading-relaxed text-muted-foreground",
+            boyut === "lg" && "tnum",
+          )}
+        >
           {alt}
         </div>
       ) : null}

@@ -7,6 +7,25 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/**
+ * Olasiligi yuzde olarak yazar. **Girdi 0-1'dir.**
+ *
+ * Birim bu docstring'de yaziyor cunku depoda ayni adin iki birimi vardi:
+ * burada olu duran eski `yuzde` ZATEN-YUZDE bir sayi aliyordu, iki bileşen
+ * icindeki yerel kopyalar ise 0-1. Karistirmak 100 kat hata demektir.
+ *
+ * Sunucunun zaten `100 *` uyguladigi alanlar (`advanced.exact.*`,
+ * `ButcePlan.p_kume_ici`) bu fonksiyondan GECMEZ; onlar cagri yerinde
+ * `.toFixed()` ile basilir ve tipleri birimi soyler.
+ */
+export function yuzde(
+  v: number | null | undefined,
+  basamak = 1,
+): string {
+  if (v === null || v === undefined || !Number.isFinite(v)) return "—";
+  return `%${(100 * v).toFixed(basamak)}`;
+}
+
 export function sayi(n: number | null | undefined): string {
   if (n === null || n === undefined || !Number.isFinite(n)) return "—";
   return n.toLocaleString("tr-TR");

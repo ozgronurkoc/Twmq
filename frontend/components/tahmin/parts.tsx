@@ -4,7 +4,7 @@ import * as React from "react";
 
 import { SEMBOLLER } from "@/lib/types";
 import type { OlculmusIsabet, Sembol, TahminSatiri, TahminUyarisi } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn, yuzde } from "@/lib/utils";
 import { BenzerKart } from "@/components/benzer/kart";
 import { Callout, Card, CardBody, Stat } from "@/components/ui/primitives";
 import { SYM_BG, SYM_TEXT } from "@/components/istatistik/viz";
@@ -19,9 +19,6 @@ function gunEtiketi(iso: string): string {
   const ay = d.toLocaleDateString("tr-TR", { day: "numeric", month: "long" });
   return `${ay}, ${GUNLER[d.getDay()]}`;
 }
-
-export const yuzde = (v: number | null | undefined, basamak = 1) =>
-  v === null || v === undefined ? "—" : `%${(100 * v).toFixed(basamak)}`;
 
 /**
  * Tek maçın olasılık çubuğu.
