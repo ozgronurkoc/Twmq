@@ -86,6 +86,15 @@ jobs:
         if: matrix.python-version == '3.12'
         run: python scripts/super_toto_frontend.py --kontrol
 
+      # API sozlesmesi: arayuzun okudugu govdenin SEKLI. Bir alan adi
+      # degistiginde motor sapasaglam kalir, butun testler gecer ve sayfa
+      # sessizce bos doner — tip denetimi de goremez, cunku istemci cevabi
+      # dogrulamadan `as T` ile kaliba sokar. `frontend` isi ayrica bu
+      # dosyayi lib/types.ts ile karsilastirir.
+      - name: API sozlesmesi guncel mi
+        if: matrix.python-version == '3.12'
+        run: python scripts/api_sozlesme.py --kontrol
+
       # CLI duman: fix16 + Bayes preset parity
       - name: CLI smoke
         if: matrix.python-version == '3.12'

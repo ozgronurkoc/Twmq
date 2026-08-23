@@ -54,6 +54,19 @@ export interface MetaResponse {
   bayes_presets: BayesPresetInfo[];
   engine_defaults: EngineDefaults;
   limits: Record<string, Limit>;
+  /**
+   * Geri test esiklerinin varsayilanlari ve izgarasi.
+   *
+   * Sunucu bunu bastan beri gonderiyordu ama bu tipte YAZMIYORDU — yani
+   * arayuz esik izgarasini `/api/meta`dan okuyabilecekken okumuyordu.
+   * Sozlesme denetimi ilk kosusunda bunu yakaladi.
+   */
+  backtest: {
+    banko_default: number;
+    banko_grid: number[];
+    uclu_default: number;
+    uclu_grid: number[];
+  };
 }
 
 // ─── POST /api/solve — istek ──────────────────────────────────────────────
@@ -955,6 +968,11 @@ export interface BenzerResponse {
   tolerans_genisledi: boolean;
   tolerans_tavana_dayandi: boolean;
   evren: number;
+  /**
+   * Uygulanan suzgecler. Sunucu bunu bastan beri donduruyordu ama tip
+   * bilmiyordu; sozlesme denetimi yakaladi. `null` = suzgec yok.
+   */
+  filtre: { lig: string | null; sezon: string | null };
   toplam: BenzerKarne;
   dilimler: { lig: BenzerDilim[]; sezon: BenzerDilim[] };
   uyarilar: string[];

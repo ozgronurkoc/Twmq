@@ -1,0 +1,1688 @@
+{
+ "_aciklama": "URETILMIS DOSYA — elle duzenlemeyin. Kaynak: backend/scripts/api_sozlesme.py. Yenilemek icin: python scripts/api_sozlesme.py",
+ "olculmus": {
+  "alt_sinir": 29,
+  "en_zayif_uc_mac": [
+   5,
+   7,
+   14
+  ],
+  "fix16_kolon": 32,
+  "ornek_kupon": "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10",
+  "p_kume_ici": 0.0001490227,
+  "top_boyutu": 9,
+  "uzay": 256
+ },
+ "sinirlar": {
+  "auto_ilp_limit": {
+   "default": 3.0,
+   "max": 300.0,
+   "min": 0.5
+  },
+  "block_limit": {
+   "default": 256,
+   "max": 6561,
+   "min": 2
+  },
+  "exact_limit": {
+   "default": 512,
+   "max": 4096,
+   "min": 2
+  },
+  "fire_maliyet": {
+   "max": 20000000,
+   "min": 0
+  },
+  "fire_max": {
+   "default": 2,
+   "max": 2,
+   "min": 0
+  },
+  "ls_iters": {
+   "default": 30000,
+   "max": 500000,
+   "min": 100
+  },
+  "mc_samples": {
+   "default": 80000,
+   "max": 200000,
+   "min": 1000
+  },
+  "plan_apply": {
+   "default": 1,
+   "max": 50,
+   "min": 1
+  },
+  "plan_count": {
+   "default": 5,
+   "max": 50,
+   "min": 1
+  },
+  "time_limit": {
+   "default": 60.0,
+   "max": 300.0,
+   "min": 1.0
+  },
+  "trials": {
+   "default": 5,
+   "max": 50,
+   "min": 1
+  }
+ },
+ "surum": "4.0.0",
+ "uclar": {
+  "GET /": {
+   "endpoints": [
+    "str"
+   ],
+   "frontend": "str",
+   "service": "str",
+   "version": "str"
+  },
+  "GET /api/backtest": {
+   "grid": {
+    "banko": [
+     "float"
+    ],
+    "uclu": [
+     "float"
+    ]
+   },
+   "holdout": {
+    "weeks": "int"
+   },
+   "meta": {
+    "arindirma": "str",
+    "match_count": "int",
+    "note": "str",
+    "space_limit": "int",
+    "weeks_available": "int",
+    "weeks_dropped": [
+     {
+      "missing": "int",
+      "week": "int"
+     }
+    ],
+    "weeks_used": "int"
+   },
+   "season": {
+    "all_guaranteed": "bool",
+    "banko_avg": "float",
+    "columns_avg": "float",
+    "columns_max": "int",
+    "columns_per_hit14": "float",
+    "columns_total": "int",
+    "double_avg": "float",
+    "hit13": "int",
+    "hit14": "int",
+    "hit14_ci": [
+     "float"
+    ],
+    "hit14_pct": "float",
+    "hit15": "int",
+    "in_set": "int",
+    "in_set_pct": "float",
+    "misses_total": "int",
+    "rows_avg": "float",
+    "skipped": "int",
+    "triple_avg": "float",
+    "weeks": "int"
+   },
+   "strategy": {
+    "banko": "float",
+    "explain": "str",
+    "uclu": "float"
+   },
+   "sweep": [
+    "<bos>"
+   ],
+   "sweep_best": "null",
+   "warning": "str",
+   "weeks": [
+    {
+     "banko": "int",
+     "best": "int",
+     "close_date": "str",
+     "columns": "int",
+     "double": "int",
+     "engine": "str",
+     "guaranteed": "bool",
+     "in_set": "bool",
+     "miss_at": [
+      "int"
+     ],
+     "misses": "int",
+     "picks": [
+      "str"
+     ],
+     "results": "str",
+     "rows": "int",
+     "skipped": "bool",
+     "triple": "int",
+     "week": "int"
+    }
+   ]
+  },
+  "GET /api/benzer": {
+   "arindirma": "str",
+   "dilimler": {
+    "lig": [
+     {
+      "deger": "str",
+      "karne": {
+       "n": "int",
+       "semboller": {
+        "0": {
+         "adet": "int",
+         "fark": "float",
+         "ga_alt": "float",
+         "ga_ust": "float",
+         "oran": "float",
+         "piyasa": "float",
+         "piyasa_ga_icinde": "bool"
+        },
+        "1": {
+         "adet": "int",
+         "fark": "float",
+         "ga_alt": "float",
+         "ga_ust": "float",
+         "oran": "float",
+         "piyasa": "float",
+         "piyasa_ga_icinde": "bool"
+        },
+        "2": {
+         "adet": "int",
+         "fark": "float",
+         "ga_alt": "float",
+         "ga_ust": "float",
+         "oran": "float",
+         "piyasa": "float",
+         "piyasa_ga_icinde": "bool"
+        }
+       },
+       "yeterli": "bool"
+      }
+     }
+    ],
+    "sezon": [
+     {
+      "deger": "str",
+      "karne": {
+       "n": "int",
+       "semboller": {
+        "0": {
+         "adet": "int",
+         "fark": "float",
+         "ga_alt": "float",
+         "ga_ust": "float",
+         "oran": "float",
+         "piyasa": "float",
+         "piyasa_ga_icinde": "bool"
+        },
+        "1": {
+         "adet": "int",
+         "fark": "float",
+         "ga_alt": "float",
+         "ga_ust": "float",
+         "oran": "float",
+         "piyasa": "float",
+         "piyasa_ga_icinde": "bool"
+        },
+        "2": {
+         "adet": "int",
+         "fark": "float",
+         "ga_alt": "float",
+         "ga_ust": "float",
+         "oran": "float",
+         "piyasa": "float",
+         "piyasa_ga_icinde": "bool"
+        }
+       },
+       "yeterli": "bool"
+      }
+     }
+    ]
+   },
+   "evren": "int",
+   "filtre": {
+    "lig": "null",
+    "sezon": "null"
+   },
+   "hedef_olasilik": {
+    "0": "float",
+    "1": "float",
+    "2": "float"
+   },
+   "marj": "float",
+   "oranlar": {
+    "0": "float",
+    "1": "float",
+    "2": "float"
+   },
+   "tolerans": "float",
+   "tolerans_genisledi": "bool",
+   "tolerans_tavana_dayandi": "bool",
+   "tolerans_uyarlandi": "bool",
+   "toplam": {
+    "n": "int",
+    "semboller": {
+     "0": {
+      "adet": "int",
+      "fark": "float",
+      "ga_alt": "float",
+      "ga_ust": "float",
+      "oran": "float",
+      "piyasa": "float",
+      "piyasa_ga_icinde": "bool"
+     },
+     "1": {
+      "adet": "int",
+      "fark": "float",
+      "ga_alt": "float",
+      "ga_ust": "float",
+      "oran": "float",
+      "piyasa": "float",
+      "piyasa_ga_icinde": "bool"
+     },
+     "2": {
+      "adet": "int",
+      "fark": "float",
+      "ga_alt": "float",
+      "ga_ust": "float",
+      "oran": "float",
+      "piyasa": "float",
+      "piyasa_ga_icinde": "bool"
+     }
+    },
+    "yeterli": "bool"
+   },
+   "uyarilar": [
+    "str"
+   ]
+  },
+  "GET /api/health": {
+   "categories": [
+    {
+     "aciklama": "str",
+     "duration_ms": "float",
+     "failed": "int",
+     "id": "str",
+     "label": "str",
+     "ok": "bool",
+     "passed": "int",
+     "total": "int"
+    }
+   ],
+   "checks": [
+    {
+     "aciklama": "str",
+     "butce_ms": "int",
+     "category": "str",
+     "category_label": "str",
+     "critical": "bool",
+     "detail": "str",
+     "duration_ms": "float",
+     "name": "str",
+     "ok": "bool",
+     "yavas": "bool"
+    }
+   ],
+   "degraded": "bool",
+   "duration_ms": "float",
+   "failed": "int",
+   "ok": "bool",
+   "passed": "int",
+   "summary": {
+    "butce_asan": [
+     "<bos>"
+    ],
+    "env": {
+     "flask": "str",
+     "numpy": "str",
+     "platform": "str",
+     "python": "str",
+     "scipy": "str"
+    },
+    "has_scipy": "bool",
+    "isinma": "bool",
+    "kayitli_kontrol": "int",
+    "kismi": "bool",
+    "kupon_siniflari": [
+     {
+      "alt_sinir": "int",
+      "etiket": "str",
+      "picks": "str",
+      "uzay": "int"
+     }
+    ],
+    "onbellek": {
+     "cached": "bool",
+     "ttl_s": "float",
+     "yas_ms": "float"
+    },
+    "only": "null",
+    "ornek": {
+     "baslangic": "str",
+     "etiket": "null",
+     "host": "str",
+     "pid": "int",
+     "uptime_s": "float"
+    },
+    "ornek_kupon": "str",
+    "slowest": {
+     "duration_ms": "float",
+     "name": "str"
+    }
+   },
+   "timestamp": "str",
+   "total": "int",
+   "version": "str"
+  },
+  "GET /api/health/checks": {
+   "checks": [
+    {
+     "aciklama": "str",
+     "butce_ms": "int",
+     "category": "str",
+     "category_label": "str",
+     "critical": "bool",
+     "name": "str"
+    }
+   ],
+   "version": "str"
+  },
+  "GET /api/health/history": {
+   "kayitlar": [
+    {
+     "degraded": "bool",
+     "duration_ms": "float",
+     "durum": "str",
+     "dusenler": [
+      "<bos>"
+     ],
+     "ok": "bool",
+     "passed": "int",
+     "timestamp": "str",
+     "total": "int",
+     "version": "str",
+     "yavaslar": [
+      "<bos>"
+     ]
+    }
+   ],
+   "ornek": {
+    "baslangic": "str",
+    "etiket": "null",
+    "host": "str",
+    "pid": "int",
+    "uptime_s": "float"
+   },
+   "ozet": {
+    "alarm": "bool",
+    "bu_durumda_kosu": "int",
+    "degisim_zamani": "str",
+    "durum": "str",
+    "kayit": "int",
+    "sinir": "int",
+    "son_saglikli": "str"
+   },
+   "version": "str"
+  },
+  "GET /api/meta": {
+   "backtest": {
+    "banko_default": "float",
+    "banko_grid": [
+     "float"
+    ],
+    "uclu_default": "float",
+    "uclu_grid": [
+     "float"
+    ]
+   },
+   "bayes_presets": [
+    {
+     "evidence_strength": "float",
+     "id": "str",
+     "prior_strength": "float"
+    }
+   ],
+   "engine_defaults": {
+    "auto_ilp_limit": "float",
+    "block_limit": "int",
+    "exact_limit": "int",
+    "ls_iters": "int",
+    "seed": "int",
+    "time_limit": "float",
+    "trials": "int"
+   },
+   "has_scipy": "bool",
+   "limits": {
+    "auto_ilp_limit": {
+     "default": "float",
+     "max": "float",
+     "min": "float"
+    },
+    "block_limit": {
+     "default": "int",
+     "max": "int",
+     "min": "int"
+    },
+    "exact_limit": {
+     "default": "int",
+     "max": "int",
+     "min": "int"
+    },
+    "fire_maliyet": {
+     "max": "int",
+     "min": "int"
+    },
+    "fire_max": {
+     "default": "int",
+     "max": "int",
+     "min": "int"
+    },
+    "ls_iters": {
+     "default": "int",
+     "max": "int",
+     "min": "int"
+    },
+    "mc_samples": {
+     "default": "int",
+     "max": "int",
+     "min": "int"
+    },
+    "plan_apply": {
+     "default": "int",
+     "max": "int",
+     "min": "int"
+    },
+    "plan_count": {
+     "default": "int",
+     "max": "int",
+     "min": "int"
+    },
+    "time_limit": {
+     "default": "float",
+     "max": "float",
+     "min": "float"
+    },
+    "trials": {
+     "default": "int",
+     "max": "int",
+     "min": "int"
+    }
+   },
+   "match_count": "int",
+   "modes": [
+    {
+     "aciklama": "str",
+     "garanti": "bool",
+     "id": "str",
+     "label": "str",
+     "needs_budget": "bool",
+     "needs_scipy": "bool"
+    }
+   ],
+   "symbols": [
+    "str"
+   ],
+   "version": "str"
+  },
+  "GET /api/stats": {
+   "analytics": {
+    "distribution": {
+     "0": [
+      {
+       "count": "int",
+       "pct": "float",
+       "weeks": "int"
+      }
+     ],
+     "1": [
+      {
+       "count": "int",
+       "pct": "float",
+       "weeks": "int"
+      }
+     ],
+     "2": [
+      {
+       "count": "int",
+       "pct": "float",
+       "weeks": "int"
+      }
+     ]
+    },
+    "extremes": {
+     "0": {
+      "max": {
+       "results": "str",
+       "value": "int",
+       "week": "int"
+      },
+      "min": {
+       "results": "str",
+       "value": "int",
+       "week": "int"
+      }
+     },
+     "1": {
+      "max": {
+       "results": "str",
+       "value": "int",
+       "week": "int"
+      },
+      "min": {
+       "results": "str",
+       "value": "int",
+       "week": "int"
+      }
+     },
+     "2": {
+      "max": {
+       "results": "str",
+       "value": "int",
+       "week": "int"
+      },
+      "min": {
+       "results": "str",
+       "value": "int",
+       "week": "int"
+      }
+     }
+    },
+    "positions": [
+     {
+      "counts": {
+       "0": "int",
+       "1": "int",
+       "2": "int"
+      },
+      "n": "int",
+      "pct": {
+       "0": "float",
+       "1": "float",
+       "2": "float"
+      },
+      "pos": "int",
+      "top": "str"
+     }
+    ],
+    "recent": {
+     "avg": {
+      "0": "float",
+      "1": "float",
+      "2": "float"
+     },
+     "delta": {
+      "0": "float",
+      "1": "float",
+      "2": "float"
+     },
+     "weeks": [
+      "int"
+     ],
+     "window": "int"
+    },
+    "streaks": {
+     "avg_week_max": "float",
+     "by_symbol": {
+      "0": {
+       "length": "int",
+       "start": "int",
+       "week": "int"
+      },
+      "1": {
+       "length": "int",
+       "start": "int",
+       "week": "int"
+      },
+      "2": {
+       "length": "int",
+       "start": "int",
+       "week": "int"
+      }
+     },
+     "top": [
+      {
+       "length": "int",
+       "start": "int",
+       "symbol": "str",
+       "week": "int"
+      }
+     ]
+    },
+    "transitions": {
+     "counts": {
+      "0": {
+       "0": "int",
+       "1": "int",
+       "2": "int"
+      },
+      "1": {
+       "0": "int",
+       "1": "int",
+       "2": "int"
+      },
+      "2": {
+       "0": "int",
+       "1": "int",
+       "2": "int"
+      }
+     },
+     "n": "int",
+     "pct": {
+      "0": {
+       "0": "float",
+       "1": "float",
+       "2": "float"
+      },
+      "1": {
+       "0": "float",
+       "1": "float",
+       "2": "float"
+      },
+      "2": {
+       "0": "float",
+       "1": "float",
+       "2": "float"
+      }
+     },
+     "repeat_pct": "float",
+     "row_totals": {
+      "0": "int",
+      "1": "int",
+      "2": "int"
+     }
+    }
+   },
+   "bands": {
+    "0": {
+     "above_gap": "float",
+     "above_mean": "float",
+     "above_n": "int",
+     "avg": "float",
+     "below_gap": "float",
+     "below_mean": "float",
+     "below_n": "int",
+     "max": "int",
+     "median": "int",
+     "min": "int",
+     "std": "float"
+    },
+    "1": {
+     "above_gap": "float",
+     "above_mean": "float",
+     "above_n": "int",
+     "avg": "float",
+     "below_gap": "float",
+     "below_mean": "float",
+     "below_n": "int",
+     "max": "int",
+     "median": "int",
+     "min": "int",
+     "std": "float"
+    },
+    "2": {
+     "above_gap": "float",
+     "above_mean": "float",
+     "above_n": "int",
+     "avg": "float",
+     "below_gap": "float",
+     "below_mean": "float",
+     "below_n": "int",
+     "max": "int",
+     "median": "int",
+     "min": "int",
+     "std": "float"
+    }
+   },
+   "data_quality": {
+    "count_conflicts": [
+     "<bos>"
+    ],
+    "duplicate_results": [
+     "<bos>"
+    ],
+    "incomplete_weeks": [
+     "<bos>"
+    ],
+    "match_conflicts": [
+     "<bos>"
+    ],
+    "ok": "bool",
+    "source": "str",
+    "weeks_total": "int",
+    "weeks_with_matches": "int",
+    "weeks_without_matches": [
+     "<bos>"
+    ]
+   },
+   "error": "null",
+   "last": "null",
+   "meta": {
+    "date_from": "str",
+    "date_to": "str",
+    "generated_at": "str",
+    "matches": "int",
+    "rule": "str",
+    "season": "str",
+    "sliced": "bool",
+    "source": "str",
+    "week_from": "int",
+    "week_to": "int",
+    "weeks": "int"
+   },
+   "odds": {
+    "avg_margin_pct": "float",
+    "books": [
+     "str"
+    ],
+    "brier_avg": "float",
+    "brier_uniform": "float",
+    "calibration": [
+     {
+      "actual_pct": "float",
+      "hi": "int",
+      "lo": "int",
+      "model_pct": "float",
+      "n": "int"
+     }
+    ],
+    "coverage_pct": "float",
+    "cross": {
+     "0": {
+      "0": "int",
+      "1": "int",
+      "2": "int"
+     },
+     "1": {
+      "0": "int",
+      "1": "int",
+      "2": "int"
+     },
+     "2": {
+      "0": "int",
+      "1": "int",
+      "2": "int"
+     }
+    },
+    "draw_profile": [
+     {
+      "draw": "int",
+      "draw_pct": "float",
+      "favourite_hit_pct": "float",
+      "hi": "float",
+      "label": "str",
+      "lo": "float",
+      "low_sample": "bool",
+      "model_draw_pct": "float",
+      "n": "int"
+     }
+    ],
+    "favourite_bands": [
+     {
+      "draw": "int",
+      "draw_pct": "float",
+      "hi": "float",
+      "hit": "int",
+      "hit_pct": "float",
+      "label": "str",
+      "lo": "float",
+      "miss": "int",
+      "miss_pct": "float",
+      "n": "int",
+      "upset": "int",
+      "upset_pct": "float"
+     }
+    ],
+    "favourite_hit": "int",
+    "favourite_hit_pct": "float",
+    "favourite_miss": "int",
+    "favourite_split": {
+     "0": "int",
+     "1": "int",
+     "2": "int"
+    },
+    "leagues": [
+     {
+      "draw": "int",
+      "draw_pct": "float",
+      "favourite_hit": "int",
+      "favourite_hit_pct": "float",
+      "label": "str",
+      "league": "str",
+      "low_sample": "bool",
+      "n": "int",
+      "per_week": "float",
+      "share_pct": "float"
+     }
+    ],
+    "low_sample_at": "int",
+    "matches": "int",
+    "note": "str",
+    "outcome_totals": {
+     "0": "int",
+     "1": "int",
+     "2": "int"
+    },
+    "outcome_when_hit": {
+     "0": "int",
+     "1": "int",
+     "2": "int"
+    },
+    "outcome_when_miss": {
+     "0": "int",
+     "1": "int",
+     "2": "int"
+    },
+    "set_coverage": [
+     {
+      "hi": "float",
+      "in_one": "int",
+      "in_one_pct": "float",
+      "in_two": "int",
+      "in_two_pct": "float",
+      "label": "str",
+      "lo": "float",
+      "low_sample": "bool",
+      "model_pct": "float",
+      "n": "int"
+     }
+    ],
+    "underdog_wins": "int",
+    "weekly_brier": [
+     {
+      "brier": "float",
+      "favourite_hit": "int",
+      "favourite_hit_pct": "float",
+      "n": "int",
+      "partial": "bool",
+      "week": "int"
+     }
+    ],
+    "with_odds": "int"
+   },
+   "totals": {
+    "0": "int",
+    "1": "int",
+    "2": "int",
+    "pct_0": "float",
+    "pct_1": "float",
+    "pct_2": "float"
+   },
+   "weekly_avg": {
+    "0": "float",
+    "1": "float",
+    "2": "float"
+   },
+   "weeks": [
+    {
+     "close_date": "str",
+     "complete": "bool",
+     "consistent": "bool",
+     "counts": {
+      "0": "int",
+      "1": "int",
+      "2": "int"
+     },
+     "matches": [
+      {
+       "ag": "int",
+       "away": "str",
+       "code": "str",
+       "hg": "int",
+       "home": "str",
+       "kickoff": "str",
+       "no": "int"
+      }
+     ],
+     "matches_match_results": "bool",
+     "max_streak": {
+      "length": "int",
+      "start": "int",
+      "symbol": "str"
+     },
+     "n0": "int",
+     "n1": "int",
+     "n2": "int",
+     "reported_counts": "null",
+     "results": "str",
+     "season": "str",
+     "top": "str",
+     "week": "int"
+    }
+   ]
+  },
+  "GET /api/stats/<week>": {
+   "cells": [
+    {
+     "pos": "int",
+     "symbol": "str"
+    }
+   ],
+   "close_date": "str",
+   "complete": "bool",
+   "consistent": "bool",
+   "counts": {
+    "0": "int",
+    "1": "int",
+    "2": "int"
+   },
+   "delta_vs_avg": {
+    "0": "float",
+    "1": "float",
+    "2": "float"
+   },
+   "matches": [
+    {
+     "ag": "int",
+     "away": "str",
+     "code": "str",
+     "hg": "int",
+     "home": "str",
+     "kickoff": "str",
+     "no": "int"
+    }
+   ],
+   "matches_match_results": "bool",
+   "max_streak": {
+    "length": "int",
+    "start": "int",
+    "symbol": "str"
+   },
+   "n0": "int",
+   "n1": "int",
+   "n2": "int",
+   "next_week": "int",
+   "odds": {
+    "1": {
+     "arindirma": "str",
+     "book": "str",
+     "closing": "bool",
+     "favourite": "str",
+     "hit": "bool",
+     "margin": "float",
+     "odds": {
+      "0": "float",
+      "1": "float",
+      "2": "float"
+     },
+     "probs": {
+      "0": "float",
+      "1": "float",
+      "2": "float"
+     }
+    },
+    "10": {
+     "arindirma": "str",
+     "book": "str",
+     "closing": "bool",
+     "favourite": "str",
+     "hit": "bool",
+     "margin": "float",
+     "odds": {
+      "0": "float",
+      "1": "float",
+      "2": "float"
+     },
+     "probs": {
+      "0": "float",
+      "1": "float",
+      "2": "float"
+     }
+    },
+    "11": {
+     "arindirma": "str",
+     "book": "str",
+     "closing": "bool",
+     "favourite": "str",
+     "hit": "bool",
+     "margin": "float",
+     "odds": {
+      "0": "float",
+      "1": "float",
+      "2": "float"
+     },
+     "probs": {
+      "0": "float",
+      "1": "float",
+      "2": "float"
+     }
+    },
+    "12": {
+     "arindirma": "str",
+     "book": "str",
+     "closing": "bool",
+     "favourite": "str",
+     "hit": "bool",
+     "margin": "float",
+     "odds": {
+      "0": "float",
+      "1": "float",
+      "2": "float"
+     },
+     "probs": {
+      "0": "float",
+      "1": "float",
+      "2": "float"
+     }
+    },
+    "13": {
+     "arindirma": "str",
+     "book": "str",
+     "closing": "bool",
+     "favourite": "str",
+     "hit": "bool",
+     "margin": "float",
+     "odds": {
+      "0": "float",
+      "1": "float",
+      "2": "float"
+     },
+     "probs": {
+      "0": "float",
+      "1": "float",
+      "2": "float"
+     }
+    },
+    "14": {
+     "arindirma": "str",
+     "book": "str",
+     "closing": "bool",
+     "favourite": "str",
+     "hit": "bool",
+     "margin": "float",
+     "odds": {
+      "0": "float",
+      "1": "float",
+      "2": "float"
+     },
+     "probs": {
+      "0": "float",
+      "1": "float",
+      "2": "float"
+     }
+    },
+    "15": {
+     "arindirma": "str",
+     "book": "str",
+     "closing": "bool",
+     "favourite": "str",
+     "hit": "bool",
+     "margin": "float",
+     "odds": {
+      "0": "float",
+      "1": "float",
+      "2": "float"
+     },
+     "probs": {
+      "0": "float",
+      "1": "float",
+      "2": "float"
+     }
+    },
+    "2": {
+     "arindirma": "str",
+     "book": "str",
+     "closing": "bool",
+     "favourite": "str",
+     "hit": "bool",
+     "margin": "float",
+     "odds": {
+      "0": "float",
+      "1": "float",
+      "2": "float"
+     },
+     "probs": {
+      "0": "float",
+      "1": "float",
+      "2": "float"
+     }
+    },
+    "3": {
+     "arindirma": "str",
+     "book": "str",
+     "closing": "bool",
+     "favourite": "str",
+     "hit": "bool",
+     "margin": "float",
+     "odds": {
+      "0": "float",
+      "1": "float",
+      "2": "float"
+     },
+     "probs": {
+      "0": "float",
+      "1": "float",
+      "2": "float"
+     }
+    },
+    "4": {
+     "arindirma": "str",
+     "book": "str",
+     "closing": "bool",
+     "favourite": "str",
+     "hit": "bool",
+     "margin": "float",
+     "odds": {
+      "0": "float",
+      "1": "float",
+      "2": "float"
+     },
+     "probs": {
+      "0": "float",
+      "1": "float",
+      "2": "float"
+     }
+    },
+    "5": {
+     "arindirma": "str",
+     "book": "str",
+     "closing": "bool",
+     "favourite": "str",
+     "hit": "bool",
+     "margin": "float",
+     "odds": {
+      "0": "float",
+      "1": "float",
+      "2": "float"
+     },
+     "probs": {
+      "0": "float",
+      "1": "float",
+      "2": "float"
+     }
+    },
+    "6": {
+     "arindirma": "str",
+     "book": "str",
+     "closing": "bool",
+     "favourite": "str",
+     "hit": "bool",
+     "margin": "float",
+     "odds": {
+      "0": "float",
+      "1": "float",
+      "2": "float"
+     },
+     "probs": {
+      "0": "float",
+      "1": "float",
+      "2": "float"
+     }
+    },
+    "7": {
+     "arindirma": "str",
+     "book": "str",
+     "closing": "bool",
+     "favourite": "str",
+     "hit": "bool",
+     "margin": "float",
+     "odds": {
+      "0": "float",
+      "1": "float",
+      "2": "float"
+     },
+     "probs": {
+      "0": "float",
+      "1": "float",
+      "2": "float"
+     }
+    },
+    "8": {
+     "arindirma": "str",
+     "book": "str",
+     "closing": "bool",
+     "favourite": "str",
+     "hit": "bool",
+     "margin": "float",
+     "odds": {
+      "0": "float",
+      "1": "float",
+      "2": "float"
+     },
+     "probs": {
+      "0": "float",
+      "1": "float",
+      "2": "float"
+     }
+    },
+    "9": {
+     "arindirma": "str",
+     "book": "str",
+     "closing": "bool",
+     "favourite": "str",
+     "hit": "bool",
+     "margin": "float",
+     "odds": {
+      "0": "float",
+      "1": "float",
+      "2": "float"
+     },
+     "probs": {
+      "0": "float",
+      "1": "float",
+      "2": "float"
+     }
+    }
+   },
+   "odds_hit": "int",
+   "position_stats": [
+    {
+     "counts": {
+      "0": "int",
+      "1": "int",
+      "2": "int"
+     },
+     "n": "int",
+     "pct": {
+      "0": "float",
+      "1": "float",
+      "2": "float"
+     },
+     "pos": "int",
+     "top": "str"
+    }
+   ],
+   "prev_week": "null",
+   "rank": {
+    "0": {
+     "of": "int",
+     "rank": "int"
+    },
+    "1": {
+     "of": "int",
+     "rank": "int"
+    },
+    "2": {
+     "of": "int",
+     "rank": "int"
+    }
+   },
+   "reported_counts": "null",
+   "results": "str",
+   "runs": [
+    {
+     "length": "int",
+     "start": "int",
+     "symbol": "str"
+    }
+   ],
+   "season": "str",
+   "season_avg": {
+    "0": "float",
+    "1": "float",
+    "2": "float"
+   },
+   "top": "str",
+   "week": "int"
+  },
+  "GET /api/tahmin": {
+   "alternatif_farkli_secim": "int",
+   "bos_sebep": "null",
+   "kaynaklar": [
+    "str"
+   ],
+   "n_mac": "int",
+   "olculen_kaynak": "bool",
+   "olculmus_isabet": {
+    "alternatif": {
+     "aciklama": "str",
+     "ad": "str",
+     "brier": "float",
+     "en_iyi_hafta": "int",
+     "fark": {
+      "alt": "float",
+      "fark": "float",
+      "ham_alt": "float",
+      "ham_fark": "float",
+      "ham_ust": "float",
+      "tekrar": "int",
+      "ust": "float"
+     },
+     "gecti": "bool",
+     "hafta_13_arti": "int",
+     "hafta_14_arti": "int",
+     "hafta_ortalamasi": "float",
+     "log_kaybi": "float",
+     "mac_basina_isabet": "float",
+     "n_mac": "int"
+    },
+    "kesit": "str",
+    "manset": {
+     "aciklama": "str",
+     "ad": "str",
+     "brier": "float",
+     "en_iyi_hafta": "int",
+     "hafta_13_arti": "int",
+     "hafta_14_arti": "int",
+     "hafta_ortalamasi": "float",
+     "log_kaybi": "float",
+     "mac_basina_isabet": "float",
+     "n_mac": "int"
+    },
+    "n_hafta": "int",
+    "olculdu": "bool",
+    "referans": "str"
+   },
+   "tahminler": [
+    {
+     "alternatif": {
+      "ad": "str",
+      "en_olasi": "str",
+      "guven": "float",
+      "olasilik": {
+       "0": "float",
+       "1": "float",
+       "2": "float"
+      }
+     },
+     "dep": "str",
+     "en_olasi": "str",
+     "ev": "str",
+     "guven": "float",
+     "kaynak": "str",
+     "lig": "str",
+     "olasilik": {
+      "0": "float",
+      "1": "float",
+      "2": "float"
+     },
+     "olculen_lig": "bool",
+     "oran_kaynak": "str",
+     "oranlar": {
+      "0": "float",
+      "1": "float",
+      "2": "float"
+     },
+     "saat": "str",
+     "tarih": "str"
+    }
+   ],
+   "uyarilar": [
+    {
+     "ad": "str",
+     "metin": "str"
+    }
+   ]
+  },
+  "GET /health": {
+   "ornek": {
+    "baslangic": "str",
+    "etiket": "null",
+    "host": "str",
+    "pid": "int",
+    "uptime_s": "float"
+   },
+   "readiness": "str",
+   "service": "str",
+   "status": "str",
+   "uptime_s": "float",
+   "version": "str"
+  },
+  "POST /api/health/kupon": {
+   "acik": "int",
+   "alt_sinir": "int",
+   "baslik": "str",
+   "bedel": "int",
+   "checks": [
+    {
+     "aciklama": "str",
+     "detail": "str",
+     "name": "str",
+     "ok": "bool"
+    }
+   ],
+   "duration_ms": "float",
+   "guaranteed": "bool",
+   "mode": "str",
+   "notlar": [
+    "str"
+   ],
+   "ok": "bool",
+   "ornek": {
+    "baslangic": "str",
+    "etiket": "null",
+    "host": "str",
+    "pid": "int",
+    "uptime_s": "float"
+   },
+   "picks": "str",
+   "satir": "int",
+   "timestamp": "str",
+   "uyari": "str",
+   "uzay": "int",
+   "version": "str",
+   "worst": "int"
+  },
+  "POST /api/solve": {
+   "error": "null",
+   "ok": "bool",
+   "result": {
+    "acik": "int",
+    "advanced": {
+     "exact": {
+      "p_14": "float",
+      "p_15": "float",
+      "p_kume_ici": "float",
+      "p_tek": "float"
+     },
+     "monte_carlo": {
+      "kume_ici": {
+       "ci95": "float",
+       "count": "int",
+       "p": "float",
+       "pct": "float",
+       "se": "float"
+      },
+      "n_samples": "int",
+      "p12": {
+       "ci95": "float",
+       "count": "int",
+       "p": "float",
+       "pct": "float",
+       "se": "float"
+      },
+      "p13": {
+       "ci95": "float",
+       "count": "int",
+       "p": "float",
+       "pct": "float",
+       "se": "float"
+      },
+      "p14": {
+       "ci95": "float",
+       "count": "int",
+       "p": "float",
+       "pct": "float",
+       "se": "float"
+      },
+      "p15": {
+       "ci95": "float",
+       "count": "int",
+       "p": "float",
+       "pct": "float",
+       "se": "float"
+      }
+     },
+     "source": "str"
+    },
+    "alt_sinir": "int",
+    "baslik": "str",
+    "bayes": "null",
+    "bayes_preset": "null",
+    "dist": [
+     {
+      "count": "int",
+      "d": "int",
+      "dogru": "int",
+      "label": "str",
+      "pct": "str"
+     }
+    ],
+    "error_freq": {
+     "d1": [
+      {
+       "count": "int",
+       "mac": "int",
+       "pct": "float"
+      }
+     ],
+     "d2": [
+      "<bos>"
+     ],
+     "n1": "int",
+     "n2": "int"
+    },
+    "fire": {
+     "fire1": {
+      "by_match": [
+       {
+        "can_fail": "bool",
+        "mac": "int",
+        "n": "int",
+        "pct": {
+         "13": "float",
+         "14": "float"
+        },
+        "scores": {
+         "13": "int",
+         "14": "int"
+        },
+        "type": "str"
+       }
+      ],
+      "by_type": {
+       "banko": {
+        "n": "int",
+        "pct": {
+         "13": "float",
+         "14": "float"
+        },
+        "scores": {
+         "13": "int",
+         "14": "int"
+        }
+       },
+       "double": {
+        "n": "int",
+        "pct": {
+         "13": "float",
+         "14": "float"
+        },
+        "scores": {
+         "13": "int",
+         "14": "int"
+        }
+       }
+      },
+      "max_best": "int",
+      "min_best": "int",
+      "n": "int",
+      "p_ge_12": "float",
+      "p_ge_13": "float",
+      "p_ge_14": "float",
+      "pct": {
+       "10": "float",
+       "11": "float",
+       "12": "float",
+       "13": "float",
+       "14": "float",
+       "15": "float"
+      },
+      "scores": {
+       "10": "int",
+       "11": "int",
+       "12": "int",
+       "13": "int",
+       "14": "int",
+       "15": "int"
+      }
+     },
+     "fire_max": "int",
+     "maliyet": "int",
+     "note": "str",
+     "skipped": "bool"
+    },
+    "guaranteed": "bool",
+    "has_scipy": "bool",
+    "kolon_bedeli": "int",
+    "markov": {
+     "error_budget": {
+      "acik_nokta": "int",
+      "method": "str",
+      "p_final": {
+       "0": "float",
+       "1": "float",
+       "2+": "float"
+      },
+      "p_garanti": "float",
+      "p_in_and_garanti": "float",
+      "p_kume_ici": "float",
+      "states": [
+       "str"
+      ],
+      "tam_kaplama": "bool"
+     },
+     "summary": {
+      "method": "str",
+      "p0": "float",
+      "p1": "float",
+      "p2plus": "float",
+      "p_garanti_path": "float",
+      "p_kume_ici": "float"
+     },
+     "survival": {
+      "p_in_after": [
+       "float"
+      ],
+      "p_survive": "float",
+      "states": [
+       "str"
+      ]
+     }
+    },
+    "match_count": "int",
+    "mode": "str",
+    "notlar": [
+     "str"
+    ],
+    "probs": {
+     "12": {
+      "count": "int",
+      "pct": "str"
+     },
+     "13": {
+      "count": "int",
+      "pct": "str"
+     },
+     "14": {
+      "count": "int",
+      "pct": "str"
+     },
+     "15": {
+      "count": "int",
+      "pct": "str"
+     }
+    },
+    "rows": [
+     {
+      "cells": [
+       "str"
+      ],
+      "cost": "int"
+     }
+    ],
+    "satir_sayisi": "int",
+    "stat_lines": [
+     "str"
+    ],
+    "total_space": "int",
+    "worst": "int"
+   },
+   "run_log_text": "str",
+   "version": "str"
+  }
+ }
+}

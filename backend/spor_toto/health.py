@@ -951,6 +951,62 @@ def _check_tahmin_referanslari() -> str:
     )
 
 
+def _check_api_sozlesmesi() -> str:
+    """Uretilmis sozlesme ile CANLI cevaplar hala ortusuyor mu.
+
+    `stats_sozlesmesi` yalnizca iki ucu goruyordu; bu kontrol on ucunun
+    tamamini kapsar. Onemli olan sey su: dosya CI'da `--kontrol` ile
+    denetleniyor ama o denetim yalnizca "dosya bayat mi" der. Burasi
+    "sozlesmenin ilan ettigi sekil CALISAN sistemde hala uretilebiliyor mu"
+    sorusunu cevaplar — ikisi ayri sorudur ve ikincisi calisma anindadir.
+
+    Sozlesme dosyasi yoksa kontrol DUSMEZ: depoyu ilk kez kuran biri icin
+    bu bir eksiklik degil, henuz uretilmemis bir ciktidir.
+    """
+    import json
+    from pathlib import Path
+
+    yol = (Path(__file__).resolve().parent.parent.parent
+           / "frontend" / "lib" / "api-sozlesme.json")
+    if not yol.exists():
+        return "sozlesme dosyasi yok — `python scripts/api_sozlesme.py` uretir"
+
+    sozlesme = json.loads(yol.read_text(encoding="utf-8"))
+    uclar = sozlesme.get("uclar", {})
+    assert uclar, "sozlesmede uc yok"
+
+    # Route'lari GERCEKTEN kostur: sekil iddiasi calisan sistemden gelmeli.
+    from web_app import app
+
+    app.config.update(TESTING=True)
+    istemci = app.test_client()
+
+    # Ucuz ve veriye bagli olmayan bir kesit; tamami `api_sozlesme.py`nin
+    # isi ve saglik kontrolunun sure butcesine sigmaz.
+    kesit = {
+        "GET /api/meta": "/api/meta",
+        "GET /api/health/checks": "/api/health/checks",
+    }
+    for ad, yol_ in kesit.items():
+        assert ad in uclar, f"sozlesmede {ad} yok"
+        cevap = istemci.get(yol_)
+        assert cevap.status_code == 200, f"{ad}: {cevap.status_code}"
+        beklenen = set(uclar[ad])
+        gelen = set(cevap.get_json())
+        assert beklenen == gelen, (
+            f"{ad} sozlesmeden ayrismis — eksik: {sorted(beklenen - gelen)}, "
+            f"fazla: {sorted(gelen - beklenen)}")
+
+    # Sinirlar: arayuz bunlari SABIT tutuyor (lib/kurulum.ts saf modul).
+    from .meta import MC_MAX, MC_MIN
+
+    mc = sozlesme["sinirlar"]["mc_samples"]
+    assert mc["min"] == MC_MIN and mc["max"] == MC_MAX, \
+        "sozlesmedeki mc_samples sinirlari meta ile ayrismis"
+
+    return f"{len(uclar)} uc kayitli, {len(kesit)} tanesi canli dogrulandi"
+
+
 def _check_scipy_flag() -> str:
     return f"HAS_SCIPY={HAS_SCIPY}"
 
@@ -1155,6 +1211,14 @@ CHECKS: Tuple[CheckSpec, ...] = (
         "bayrağı ve analiz blokları eksiksiz mi.",
         _check_pipeline_result_shape,
         butce_ms=250,
+    ),
+    CheckSpec(
+        "api_sozlesmesi", "ucuca",
+        "Uretilmis API sozlesmesi (frontend/lib/api-sozlesme.json) calisan "
+        "sistemle hala ortusuyor mu. Bir alan adi degistiginde motor "
+        "sapasaglam kalir, testler gecer ve SAYFA sessizce bos doner.",
+        _check_api_sozlesmesi,
+        butce_ms=200,
     ),
     CheckSpec(
         "scipy_flag", "ortam",
