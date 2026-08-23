@@ -188,13 +188,34 @@ def run_block(enc: Encoder, eng: Dict[str, Any]) -> Dict[str, Any]:
             "notlar": [aciklama]}
 
 
-def run_maxcov(enc: Encoder, budget: int) -> Dict[str, Any]:
+class ButceSigmazHatasi(ValueError):
+    """Butce gecerli ama ona sigan bir plan yok.
+
+    `butce_danismani` gecersiz girdi icin de ValueError firlatir
+    ("Butce pozitif olmali"). Ikisi ayni tiple gelince cagiran ayirt
+    edemiyordu: CLI `--budget 0`i "plan bulunamadi" diye yutup 0 ile
+    cikiyordu, oysa bu bir KULLANIM hatasidir ve 1 ile cikmali.
+    """
+
+
+def run_maxcov(enc: Encoder, budget: int,
+               time_limit: Optional[float] = None,
+               seed: int = 42) -> Dict[str, Any]:
     """Sabit butceyle en genis kapsama. GARANTI VERMEZ — meta'da da oyle ilan
-    edilir; saglik katmani bu iki ifadenin ayrismadigini denetler."""
-    cols, kapsanan, kanit = exact_max_coverage(enc.alphabet_sizes, budget)
+    edilir; saglik katmani bu iki ifadenin ayrismadigini denetler.
+
+    `time_limit` ve `seed` disaridan verilebilir cunku CLI kendi
+    `--time-limit`/`--seed` bayraklarini tasiyor. Once CLI bu govdenin
+    kendi kopyasini calistiriyordu ve iki kopyanin varsayilanlari
+    AYRISMISTI: burada 120 sn / seed 42, CLI'da 60 sn / kullanicinin
+    seed'i. Ayni istekten iki farkli kaplama cikabilirdi.
+    """
+    cols, kapsanan, kanit = exact_max_coverage(
+        enc.alphabet_sizes, budget,
+        *( (time_limit,) if time_limit is not None else () ))
     if cols is None:
         g = greedy_full(list(enc.variable_space()), enc.alphabet_sizes,
-                        random.Random(42))
+                        random.Random(seed))
         cols = g[:budget]
         kapsanan = len({q for c in cols for q in ball(c, enc.alphabet_sizes)})
         kanit = False
@@ -224,7 +245,7 @@ def run_butce(
     """
     planlar = butce_danismani(enc, budget, user_probs, en_fazla=plan_count)
     if not planlar:
-        raise ValueError(
+        raise ButceSigmazHatasi(
             f"{budget} kolonluk bütçeye sığan plan yok. "
             f"Daha fazla banko veya bütçe artırın."
         )
