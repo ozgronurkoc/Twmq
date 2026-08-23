@@ -119,7 +119,9 @@ function MacSatiri({
         {mac.odds_missing ? (
           <span className="text-muted-foreground">oran yok</span>
         ) : (
-          SEM.map((s) => mac.odds?.[s].toFixed(2)).join(" / ")
+          // `?.` yalnizca `odds`'un null olmasini koruyordu; ANAHTAR
+          // eksikse `.toFixed` cokuyordu (index imzasi `number` der).
+          SEM.map((s) => mac.odds?.[s]?.toFixed(2) ?? "—").join(" / ")
         )}
       </td>
       <td className="py-1.5 pr-3 tabular-nums">

@@ -459,11 +459,16 @@ def korpus_haftalari(sezonlar_: Optional[Sequence[str]] = None,
     sayıları onunla ölçüldü. Parametre, "aynı ölçüm başka arındırmayla ne
     verir" sorusunu sormak için var — cevabı görmek isteyen açıkça ister.
     """
-    tumu = korpus_yukle(yol)
+    ham = korpus_yukle(yol)
     # Form tum korpus uzerinde, kronolojik hesaplanir; suzme SONRA gelir.
     # Once suzseydik, secilen sezonun ilk maclari gecmissiz kalirdi.
-    formlar = _form_tablosu(tumu)
-    takvimler = _takvim_tablosu(tumu)
+    formlar = _form_tablosu(ham)
+    takvimler = _takvim_tablosu(ham)
+    # KOPYA uzerinde calisilir. `korpus_yukle` lru_cache'lidir ve
+    # `benzer._olasilik_tablosu` ayni satir nesnelerini disariya dagitip
+    # docstring'inde "degistirmeyin" der; `_form`/`_takvim` alanlarini
+    # yerinde yazmak onbellegi ve o sozu birlikte bozuyordu.
+    tumu = [dict(r) for r in ham]
     for r, f, t in zip(tumu, formlar, takvimler):
         r["_form"] = f
         r["_takvim"] = t

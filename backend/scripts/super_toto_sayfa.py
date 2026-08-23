@@ -28,12 +28,21 @@ _ap = argparse.ArgumentParser()
 _ap.add_argument("--sezon", default="2026_27")
 _ap.add_argument("--hafta", type=int, default=1)
 _ap.add_argument("--cikti", default=None)
-_a = _ap.parse_args()
-sys.argv = ["x"]  # alt modülün kendi argparse'ı tetiklenmesin
+# Bayraklar YALNIZCA dogrudan calistirilirken okunur. Once kosulsuz
+# `parse_args()` vardi: bu dosyayi import eden herkes (test toplayicisi
+# dahil) kendi argv'siyle bu ayristiriciya carpiyordu.
+_a = _ap.parse_args(None if __name__ == "__main__" else [])
 
-_spec = importlib.util.spec_from_file_location(
-    "st", str(KOK / "scripts" / "super_toto_hafta.py"))
-m = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(m)
+# Alt modullerin kendi argparse'i tetiklenmesin. Onceki surum sys.argv'yi
+# GERI KOYMADAN eziyordu, yani import eden surecin argv'si kayboluyordu.
+_argv0 = sys.argv
+sys.argv = ["x"]
+try:
+    _spec = importlib.util.spec_from_file_location(
+        "st", str(KOK / "scripts" / "super_toto_hafta.py"))
+    m = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(m)
+finally:
+    sys.argv = _argv0
 
 S = ("1", "0", "2")
 d = m.hafta_yukle(_a.sezon, _a.hafta)
@@ -47,11 +56,11 @@ ana = m.kupon_kur(d, 0.68, 0.38)
 _dspec = importlib.util.spec_from_file_location(
     "st_deg", str(KOK / "scripts" / "super_toto_degerlendir.py"))
 _deg = importlib.util.module_from_spec(_dspec)
-_argv = sys.argv; sys.argv = ["x"]
+_argv1 = sys.argv; sys.argv = ["x"]
 try:
     _dspec.loader.exec_module(_deg)
 finally:
-    sys.argv = _argv
+    sys.argv = _argv1
 BITTI = bool(d["meta"].get("results"))
 KUPON_JSON = json.loads((KOK / "data" / "super_toto" / _a.sezon /
                          f"hafta_{_a.hafta:02d}_kupon.json").read_text(encoding="utf-8"))
@@ -1034,8 +1043,12 @@ footer {{ margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--line)
   </footer>
 </div>
 """
-cikti = Path(_a.cikti) if _a.cikti else (
-    KOK / "data" / "super_toto" / _a.sezon / f"hafta_{_a.hafta:02d}.html")
-cikti.parent.mkdir(parents=True, exist_ok=True)
-cikti.write_text(HTML, encoding="utf-8")
-print(f"yazıldı: {cikti} ({len(HTML):,} bayt)")
+# Dosya yazma YALNIZCA dogrudan calistirilirken. Once modul duzeyindeydi:
+# bu dosyayi import etmek diske HTML yaziyordu. Dizindeki her script'in
+# guard'i vardi, bunun yoktu.
+if __name__ == "__main__":
+    cikti = Path(_a.cikti) if _a.cikti else (
+        KOK / "data" / "super_toto" / _a.sezon / f"hafta_{_a.hafta:02d}.html")
+    cikti.parent.mkdir(parents=True, exist_ok=True)
+    cikti.write_text(HTML, encoding="utf-8")
+    print(f"yazıldı: {cikti} ({len(HTML):,} bayt)")

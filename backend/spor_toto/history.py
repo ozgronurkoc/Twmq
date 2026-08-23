@@ -401,10 +401,12 @@ def history_week_detail(week: int) -> Optional[Dict[str, Any]]:
     ranks: Dict[str, Any] = {}
     for s in SYMBOLS:
         ordered = sorted(weeks, key=lambda x: (-x["counts"][s], x["week"]))
-        ranks[s] = {
-            "rank": next(i for i, x in enumerate(ordered) if x["week"] == week) + 1,
-            "of": n,
-        }
+        # Konum haritasi: varsayilansiz `next()` sira icinde tarardi ve
+        # eslesme bulunmazsa StopIteration -> HTTP 500 verirdi. `week`in
+        # listede oldugu yukarida (`idx`) cozuldu ve `ordered` ayni
+        # listenin permutasyonu, yani arama tanim geregi basarili.
+        konum = {x["week"]: i for i, x in enumerate(ordered)}
+        ranks[s] = {"rank": konum[week] + 1, "of": n}
 
     w.update({
         "prev_week": weeks[idx - 1]["week"] if idx > 0 else None,

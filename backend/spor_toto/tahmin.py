@@ -365,7 +365,10 @@ def olculmus_isabet() -> Dict[str, Any]:
                      "(3 parametre); kupon setinde ölçüldü, ortak maç yok"),
         **skor,
         "fark": fark,
-        "gecti": bool(fark["ust"] is not None and fark["ust"] < 0),
+        # Karar HAM ustten verilir: `round(-0.000031, 4)` `-0.0` verir ve
+        # `-0.0 < 0` False'tur — aralik tamamen sifirin altindayken aday
+        # "gecmedi" diye yazilirdi (bkz. evaluate.bootstrap_farki yorumu).
+        "gecti": bool(fark["ham_ust"] is not None and fark["ham_ust"] < 0),
     }
     return out
 

@@ -54,6 +54,26 @@ app.secret_key = os.environ.get("SESSION_SECRET", "spor-toto-api")
 
 
 def _parse_prob_value(raw: Any) -> float:
+    """Tek bir olasilik hucresini okur — **bagislayici** yol.
+
+    `core.parse_probs` (CLI) ile bilerek ayrisir; ikisi ayni girdiye farkli
+    cevap verir ve bu bir hata degil, iki ayri sozlesmedir:
+
+    | Durum            | CLI (`core.parse_probs`) | API (burasi)        |
+    |------------------|--------------------------|---------------------|
+    | negatif deger    | `ValueError`             | 0'a kirpilir        |
+    | 1'den buyuk      | oldugu gibi, normalize   | yuzde sayilir (/100)|
+    | satirin tamami 0 | `ValueError`             | secim uzerinde esit |
+
+    Gerekce: CLI'yi bir insan degil bir betik cagirir ve orada sessiz
+    duzeltme veriyi bozar. API'yi ise **form** cagirir; kullanici bir
+    hucreye "50" yazdiginda yuzde kasteder ve daha doldurmadigi bir satir
+    butun istegi 400'e dusurmemelidir.
+
+    Arayuz de ayni bagislayici kurali uygular (`frontend/lib/utils.ts`
+    `normalize`: negatifi kirpar, toplam 0 ise esit dagitir), yani web
+    yigininin iki ucu birbiriyle tutarlidir.
+    """
     v = float(str(raw).replace(",", "."))
     if v < 0:
         return 0.0
@@ -249,7 +269,7 @@ def _build_result(
 
     dist_items = []
     for d in sorted(dist):
-        dogru = 15 - d
+        dogru = enc.total_len - d
         pct = 100 * dist[d] / total_space if total_space else 0
         dist_items.append({
             "d": d, "dogru": dogru, "label": f"{dogru} doğru",

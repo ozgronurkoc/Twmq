@@ -3,7 +3,7 @@
 import * as React from "react";
 
 import { ApiError, getBenzer } from "@/lib/api";
-import type { BenzerKarne, BenzerResponse } from "@/lib/types";
+import type { BenzerKarne, BenzerResponse, BenzerSembol } from "@/lib/types";
 import { Badge } from "@/components/ui/primitives";
 
 const SEM = ["1", "0", "2"] as const;
@@ -119,7 +119,21 @@ function Satir({
   sembol: string;
   karne: BenzerKarne;
 }) {
-  const r = karne.semboller[sembol];
+  // `semboller` bir Record<string, …>: eksik anahtar `undefined` doner ama
+  // tip `BenzerSembol` diyordu (tsconfig'de noUncheckedIndexedAccess kapali).
+  // Backend bir sembolu hic dondurmediginde `r.adet` render sirasinda
+  // cokuyordu — bos hucre degil, BEYAZ SAYFA.
+  const r = karne.semboller[sembol] as BenzerSembol | undefined;
+  if (!r) {
+    return (
+      <tr>
+        <td className="pr-2 font-mono">{sembol}</td>
+        <td colSpan={5} className="py-1 text-muted-foreground">
+          bu dilimde örnek yok
+        </td>
+      </tr>
+    );
+  }
   const oran = r.oran ?? 0;
   return (
     <tr>

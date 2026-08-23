@@ -283,6 +283,12 @@ export interface ButcePlan {
   satir: number;
   selections: string[];
   degisiklikler: string[];
+  /**
+   * YUZDE (0-100), 3 basamaga yuvarlanmis — `web_app._plan_to_dict` zaten
+   * `100 *` uygular. Bu alanin birimi hicbir yerde yazmiyordu ve depoda
+   * ayni adin iki birimi var: `ExactProb.p_kume_ici` yuzde,
+   * `ErrorBudget.p_kume_ici` 0-1. Karistirmak 100 kat hata demektir.
+   */
   p_kume_ici: number | null;
   secili: boolean;
 }

@@ -262,7 +262,13 @@ export function WeeksTable({
             })}
             {satirlar.length === 0 ? (
               <tr>
-                <td colSpan={9} className="py-6 text-center text-muted-foreground">
+                {/* Sutun sayisi basliklardan okunur: `basliklar` Brier
+                    varken 6, yokken 5; ustune iki sabit sutun biner.
+                    Sabit 9 hicbir durumda dogru degildi. */}
+                <td
+                  colSpan={basliklar.length + 2}
+                  className="py-6 text-center text-muted-foreground"
+                >
                   Eşleşen hafta yok.
                 </td>
               </tr>

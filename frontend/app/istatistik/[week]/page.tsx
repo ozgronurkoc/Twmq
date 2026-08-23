@@ -33,7 +33,9 @@ export default function HaftaPage({ params }: { params: { week: string } }) {
   const [devirHatasi, setDevirHatasi] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    if (!Number.isFinite(week)) {
+    // isFinite `/istatistik/1.5`'i kabul ediyordu ve istek genel
+    // "Hafta bulunamadi" 404'une dusuyordu; hafta bir TAM sayidir.
+    if (!Number.isInteger(week)) {
       setHata("Geçersiz hafta numarası");
       return;
     }

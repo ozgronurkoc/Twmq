@@ -108,14 +108,18 @@ def monte_carlo_report(
         else:
             d = min(sum(a != b for a, b in zip(var, c)) for c in cols)
 
-        dogru = 15 - d
-        if dogru >= 15:
+        # Kovalar HATA SAYISINDAN okunur. Once `15 - d` yazilmisti ve
+        # `Encoder(kati=False)` 15'ten farkli uzunluga izin verdigi icin
+        # kupon 14 macliksa butun etiketler bir kayardi. `d` tanim geregi
+        # uzunluktan bagimsizdir: d=0 tamami dogru, d=1 bir hata...
+        # Cikti anahtarlari (p15..p12) sozlesmedir, degismez.
+        if d == 0:
             n_15 += 1
-        elif dogru == 14:
+        elif d == 1:
             n_14 += 1
-        elif dogru == 13:
+        elif d == 2:
             n_13 += 1
-        elif dogru == 12:
+        elif d == 3:
             n_12 += 1
 
     def rate(k: int) -> dict:

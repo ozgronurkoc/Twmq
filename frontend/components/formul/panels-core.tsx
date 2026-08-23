@@ -160,7 +160,10 @@ export function OzetPanel({
                 </span>
                 {p.p_kume_ici !== null ? (
                   <span className="tnum shrink-0 text-[11.5px] text-muted-foreground">
-                    küme içi %{p.p_kume_ici}
+                    {/* Zaten yuzde (bkz. types.ts:ButcePlan). Ham
+                        basiliyordu: sunucudan 3 basamak geldigi icin
+                        "%2.309" gibi, arayuzun geri kalaniyla uyumsuz. */}
+                    küme içi %{p.p_kume_ici.toFixed(2)}
                   </span>
                 ) : null}
                 {p.secili ? <Badge ton="primary">uygulandı</Badge> : null}

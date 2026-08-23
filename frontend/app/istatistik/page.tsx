@@ -451,18 +451,29 @@ export default function IstatistikPage() {
                 <ul className="tnum space-y-1.5 text-[12.5px]">
                   {SEMBOLLER.map((s) => {
                     const e = analytics.extremes[s];
+                    // `max`/`min` null olabilir (bkz. types.ts:Analytics).
+                    // Once yalnizca degere `?.` konmustu: uc null oldugunda
+                    // metin "undefined. hf" yaziyor ve baglanti
+                    // /istatistik/undefined adresine gidiyordu.
+                    const uc = (u: typeof e.max, etiket: string) =>
+                      u ? (
+                        <>
+                          {etiket} {u.value} →{" "}
+                          <Link
+                            className="text-primary hover:underline"
+                            href={`/istatistik/${u.week}`}
+                          >
+                            {u.week}. hf
+                          </Link>
+                        </>
+                      ) : (
+                        <>{etiket} —</>
+                      );
                     return (
                       <li key={s} className="flex items-center gap-2">
                         <span className="w-3 font-medium">{s}</span>
                         <span className="text-muted-foreground">
-                          en çok {e.max?.value} →{" "}
-                          <Link className="text-primary hover:underline" href={`/istatistik/${e.max?.week}`}>
-                            {e.max?.week}. hf
-                          </Link>{" "}
-                          · en az {e.min?.value} →{" "}
-                          <Link className="text-primary hover:underline" href={`/istatistik/${e.min?.week}`}>
-                            {e.min?.week}. hf
-                          </Link>
+                          {uc(e.max, "en çok")} · {uc(e.min, "en az")}
                         </span>
                       </li>
                     );

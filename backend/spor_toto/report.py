@@ -37,7 +37,7 @@ def dagilim_satirlari(enc: Encoder, cols: Sequence[Point]) -> List[str]:
     total = enc.space_size()
     out = ["Kapsama dagilimi (degisken maclar uzerinden):"]
     for d in sorted(dist):
-        etiket = f"{15 - d} dogru"
+        etiket = f"{enc.total_len - d} dogru"
         out.append(f"  d={d} ({etiket:9s}) : {dist[d]:8d}  "
                    f"(%{100 * dist[d] / total:6.2f})")
     worst = max(dist) if dist else 99

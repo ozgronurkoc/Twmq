@@ -217,13 +217,27 @@ export default function SaglikPage() {
 
   // Sekme basligi durumu tasir: alarm altyapisi gerektirmeyen en yakin
   // "haber verme". Sayfa arka planda acik tutulmak icin var.
+  // Ayrilirken UYGULAMA basligi geri konur. Once temizlik `BASLIK`
+  // ("Sistem sagligi") yaziyordu: bu sayfadan cikan kullanici
+  // /istatistik'te de /tahmin'de de sekmede "Sistem sagligi" goruyordu.
+  //
+  // Yakalama AYRI ve ONCE gelen bir etki: React etkileri bildirim
+  // sirasinda kosar, yani burasi asagidaki set'ten once calisir ve
+  // bozulmamis basligi alir. Tek etkide `const onceki = document.title`
+  // yeterli olmazdi — etki [durum, hata] ile yeniden kostugunda `onceki`
+  // bu sayfanin kendi basligina donerdi.
+  const uygulamaBasligi = React.useRef<string | null>(null);
+  React.useEffect(() => {
+    if (uygulamaBasligi.current === null) uygulamaBasligi.current = document.title;
+    return () => {
+      if (uygulamaBasligi.current !== null) document.title = uygulamaBasligi.current;
+    };
+  }, []);
+
   React.useEffect(() => {
     document.title = hata
       ? `✗ ${BASLIK}`
       : `${durum ? BASLIK_ISARETI[durum] : ""}${BASLIK}`;
-    return () => {
-      document.title = BASLIK;
-    };
   }, [durum, hata]);
 
   const kuponuDenetle = React.useCallback(async () => {

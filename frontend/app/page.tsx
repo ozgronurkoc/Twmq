@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { Loader2, Play } from "lucide-react";
 
 import { getMeta, solve } from "@/lib/api";
@@ -462,9 +463,9 @@ export default function FormulPage() {
           en az biri en fazla 1 maç hatalı olur — yani <strong>14-garanti</strong>.
           <strong>Kaplama motoru tahmin etmez</strong>; tahminin doğruysa onu en az
           kuponla garantiye alır. Olasılık istiyorsan{" "}
-          <a href="/tahmin" className="underline underline-offset-2">
+          <Link href="/tahmin" className="underline underline-offset-2">
             Tahmin
-          </a>{" "}
+          </Link>{" "}
           sayfası, ölçülmüş isabetiyle birlikte verir.
         </p>
       </header>
