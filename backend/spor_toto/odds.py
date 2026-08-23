@@ -14,6 +14,7 @@ Kaynak: football-data.co.uk piyasa oranları — **iddaa oranları değildir**
 from __future__ import annotations
 
 import csv
+import math
 import re
 from functools import lru_cache
 from pathlib import Path
@@ -97,13 +98,120 @@ def market_odds(row: Dict[str, Any], market: str = "1X2", book: str = "Avg",
     return {}
 
 
-def implied_probs(oranlar: Dict[str, float]) -> Dict[str, float]:
-    """Marjı (overround) atarak oranları 1'e normalize edilmiş olasılığa çevirir."""
+#: Marj arındırma yöntemleri ve projenin varsayılanı.
+#:
+#: Varsayılan **2026-08'de `orantili`dan `shin`e çevrildi** (A5, bkz.
+#: `docs/ISTATISTIK_YOL_HARITASI.md` §3.18). Gerekçe ölçüm: orantısal
+#: yöntem marjı her sonuca eşit dağıtır, oysa bahisçi onu sürprizlere ağır
+#: yükler; sonuç favorinin sistematik olarak eksik fiyatlanmasıydı.
+#:
+#:     Brier            0,5940 → 0,5936 · −0,00035 [−0,00049, −0,00021]
+#:     sapan bant       10/15 → 4/15
+#:     geri test kolon  6.897/hafta → 2.228/hafta (hold-out)
+#:
+#: Çevrimden ÖNCE yayımlanmış sayılar orantısal ölçekte ölçülmüştür ve
+#: yenileriyle doğrudan kıyaslanamaz; ikisi de belgede o etiketle durur.
+ARINDIRMA_YONTEMLERI = ("orantili", "guc", "shin")
+ARINDIRMA_VARSAYILAN = "shin"
+
+#: Kök bulucu tarama sınırları ve adım sayısı. 60 ikiye bölme, çift
+#: duyarlıkta ulaşılabilir hassasiyetin ötesindedir; sabit tutuldu ki
+#: sonuç makineden makineye oynamasın.
+_ARINDIRMA_ADIM = 60
+
+
+def implied_probs(oranlar: Dict[str, float],
+                  yontem: str = ARINDIRMA_VARSAYILAN) -> Dict[str, float]:
+    """Marjı (overround) atarak oranları 1'e normalize edilmiş olasılığa çevirir.
+
+    Üç yöntem var ve **hangisinin seçildiği sonucu değiştirir**:
+
+    ``orantili``
+        Eski varsayılan. ``p = (1/o) / Σ(1/o)``; marjı her sonuca eşit
+        oranda dağıtır.
+        Basit ve tersine çevrilebilir, ama bahisçi marjı sürprizlere daha
+        çok yüklediği için favoriyi **sistematik olarak eksik fiyatlar**
+        (favourite–longshot yanlılığı). Korpusta ölçüldü: piyasanın %70–80
+        dediği maçlar gerçekte %78,9 geliyor (n=1.702).
+    ``guc``
+        ``p ∝ (1/o)^k``, ``k`` toplamı 1 yapacak şekilde çözülür. ``k>1``
+        çıkar ve küçük olasılıkları büyüklerden daha çok kısar.
+    ``shin``
+        **Varsayılan.** Shin (1993): bahisçinin marjını, bilgili bahisçi
+        payı ``z`` ile açıklar. Güç yöntemiyle aynı yönde ama daha yumuşak
+        düzeltir; ikisi ölçümde ayırt edilemedi, kapalı formu olan seçildi.
+
+    Marj sıfıra giderken üç yöntem de aynı sonuca yakınsar; ayrıştıkları yer
+    yüksek marjdır — iddaa bülteni (~%18) tam olarak orası.
+    """
     ters = {k: 1.0 / v for k, v in oranlar.items() if v and v > 0}
     toplam = sum(ters.values())
     if toplam <= 0:
         return {}
-    return {k: v / toplam for k, v in ters.items()}
+    if yontem == "orantili":
+        return {k: v / toplam for k, v in ters.items()}
+    if yontem == "guc":
+        ham = _arindir_guc(ters, toplam)
+    elif yontem == "shin":
+        ham = _arindir_shin(ters, toplam)
+    else:
+        raise ValueError(
+            f"bilinmeyen arındırma yöntemi: {yontem!r} "
+            f"(seçenekler: {', '.join(ARINDIRMA_YONTEMLERI)})")
+    # Kök bulucunun bıraktığı son kırıntı da atılır: çağıran taraf
+    # olasılıkların tam olarak 1'e toplandığına güvenebilmeli.
+    kalan = sum(ham.values())
+    return {k: v / kalan for k, v in ham.items()} if kalan > 0 else {}
+
+
+def _arindir_guc(ters: Dict[str, float], toplam: float) -> Dict[str, float]:
+    """``p ∝ (1/o)^k``; ``k`` ikiye bölmeyle çözülür.
+
+    ``Σ(1/o)^k`` ``k``'ye göre kesin azalandır (her taban 1'den küçük), yani
+    kök tektir ve ikiye bölme güvenlidir — Newton'un ıraksama riski yok.
+    """
+    if toplam <= 1.0:
+        return dict(ters)
+    q = list(ters.values())
+    alt, ust = 1.0, 8.0
+    for _ in range(_ARINDIRMA_ADIM):
+        k = (alt + ust) / 2
+        if sum(x ** k for x in q) > 1.0:
+            alt = k
+        else:
+            ust = k
+    k = (alt + ust) / 2
+    return {s: v ** k for s, v in ters.items()}
+
+
+def _arindir_shin(ters: Dict[str, float], toplam: float) -> Dict[str, float]:
+    """Shin (1993) marj arındırması.
+
+    ``p_i = (√(z² + 4(1−z)·q_i²/Σq) − z) / (2(1−z))``; ``z`` toplamı 1 yapan
+    bilgili-bahisçi payıdır. ``z=0`` orantısal yöntemin kendisidir, yani
+    marjsız oranda ikisi çakışır.
+    """
+    if toplam <= 1.0:
+        return dict(ters)
+    q = list(ters.values())
+
+    def _dagilim(z: float) -> List[float]:
+        return [(math.sqrt(z * z + 4 * (1 - z) * x * x / toplam) - z)
+                / (2 * (1 - z)) for x in q]
+
+    alt, ust = 0.0, 0.99
+    for _ in range(_ARINDIRMA_ADIM):
+        z = (alt + ust) / 2
+        if sum(_dagilim(z)) > 1.0:
+            alt = z
+        else:
+            ust = z
+    return dict(zip(ters.keys(), _dagilim((alt + ust) / 2)))
+
+
+def margin(oranlar: Dict[str, float]) -> float:
+    """Bültenin marjı (overround): ``Σ(1/o) − 1``. Arındırmadan bağımsızdır."""
+    return sum(1.0 / v for v in oranlar.values() if v and v > 0) - 1.0
 
 
 # ─── maç sonucu (1X2) — arayüze giden tek pazar ───────────────────────────────
@@ -113,11 +221,16 @@ SEMBOLLER = ("1", "0", "2")
 KAYNAK_SIRASI = ("Avg", "B365", "PS", "BFE", "Max")
 
 
-def match_1x2(row: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+def match_1x2(row: Dict[str, Any],
+              yontem: str = ARINDIRMA_VARSAYILAN) -> Optional[Dict[str, Any]]:
     """Bir maçın maç sonucu oranı: önce kapanış, yoksa açılış.
 
-    Hangi kaynaktan ve hangi dönemden geldiği çıktıda yazar — sayının
-    nereden geldiği belirsiz kalmamalı.
+    Hangi kaynaktan, hangi dönemden ve **hangi arındırmayla** geldiği çıktıda
+    yazar — sayının nereden geldiği belirsiz kalmamalı.
+
+    `yontem` varsayılanı `orantili`dır ve arşivin yayımlanmış bütün sayıları
+    onunla üretildi; başka bir değer ancak açıkça istendiğinde kullanılır
+    (A5, bkz. `implied_probs`).
     """
     if not row.get("matched"):
         return None
@@ -126,7 +239,7 @@ def match_1x2(row: Dict[str, Any]) -> Optional[Dict[str, Any]]:
             oranlar = market_odds(row, "1X2", kaynak, closing=kapanis)
             if len(oranlar) != 3 or any(v <= 1.0 for v in oranlar.values()):
                 continue
-            olasilik = implied_probs(oranlar)
+            olasilik = implied_probs(oranlar, yontem)
             favori = min(oranlar, key=lambda s: oranlar[s])
             return {
                 "odds": {s: round(oranlar[s], 2) for s in SEMBOLLER},
@@ -136,6 +249,7 @@ def match_1x2(row: Dict[str, Any]) -> Optional[Dict[str, Any]]:
                 "margin": round(sum(1 / v for v in oranlar.values()) - 1, 4),
                 "book": kaynak,
                 "closing": kapanis,
+                "arindirma": yontem,
             }
     return None
 

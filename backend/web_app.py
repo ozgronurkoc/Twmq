@@ -677,6 +677,70 @@ def api_tahmin():
     return jsonify(_tahmin_cached(limit))
 
 
+@lru_cache(maxsize=128)
+def _benzer_cached(oran: Tuple[float, float, float], tolerans: Optional[float],
+                   en_az: int, lig: Optional[str], sezon: Optional[str],
+                   yontem: str) -> Dict[str, Any]:
+    """Benzer mac sorgusu onbelleklenir — korpus surumlenmis bir dosyadir.
+
+    `tahmin`in aksine burada zaman gecmesi cevabi degistirmez: 31 bin maclik
+    gecmis korpus donmustur, ayni oran ayni cevabi verir.
+    """
+    from spor_toto.benzer import benzer_maclar
+    return benzer_maclar({"1": oran[0], "0": oran[1], "2": oran[2]},
+                         tolerans=tolerans, en_az=en_az, lig=lig,
+                         sezon=sezon, yontem=yontem)
+
+
+@app.route("/api/benzer", methods=["GET"])
+def api_benzer():
+    """
+    "Bu oranda gecmiste ne oldu?"
+
+    `?oran=1.82,3.04,2.44` zorunlu; istege bagli `?tolerans=`, `?en_az=`,
+    `?lig=`, `?sezon=`, `?arindirma=`.
+
+    Govde bir TAHMIN degildir: 31 bin maclik korpusta ayni fiyata sahip
+    maclarin nasil bittigini sayar. Her yuzde yaninda `n` ve Wilson %95
+    guven araligi gelir ve **kirpilmaz** — cunku bu aracin tek gercek
+    tehlikesi ince bir dilimdeki carpici oranin bulgu sanilmasidir.
+    Eslesme oran uzayinda degil OLASILIK uzayinda yapilir (gerekce:
+    `spor_toto/benzer.py` bas yorumu).
+    """
+    # Gec import: `benzer` egitim korpusunu okur ve o korpus yalnizca tahmin
+    # katmanina aittir (bkz. test_ayrim_istatistik_katmani_korpusu_import_etmez).
+    # Modul duzeyinde import edilseydi surec acilisinda 31 bin satir okunurdu.
+    from spor_toto.benzer import HEDEF_ORNEKLEM
+    from spor_toto.odds import ARINDIRMA_VARSAYILAN, ARINDIRMA_YONTEMLERI
+
+    ham = (request.args.get("oran") or "").strip()
+    try:
+        parcalar = tuple(float(x) for x in ham.split(","))
+    except ValueError:
+        return jsonify({"error": "oran uc sayi olmali: 1.82,3.04,2.44"}), 400
+    if len(parcalar) != 3:
+        return jsonify({"error": "oran uc sayi olmali: 1.82,3.04,2.44"}), 400
+
+    tolerans = None
+    if request.args.get("tolerans") is not None:
+        tolerans = _parse_esik(request.args.get("tolerans"), 0.02)
+    try:
+        en_az = max(1, min(int(request.args.get("en_az", HEDEF_ORNEKLEM)), 20000))
+    except (TypeError, ValueError):
+        en_az = HEDEF_ORNEKLEM
+    yontem = (request.args.get("arindirma") or ARINDIRMA_VARSAYILAN).strip()
+    if yontem not in ARINDIRMA_YONTEMLERI:
+        return jsonify({"error": f"arindirma: {', '.join(ARINDIRMA_YONTEMLERI)}"}), 400
+
+    try:
+        govde = _benzer_cached(parcalar, tolerans, en_az,
+                               request.args.get("lig") or None,
+                               request.args.get("sezon") or None, yontem)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    return jsonify(govde)
+
+
 @app.route("/api/solve", methods=["POST", "OPTIONS"])
 def api_solve():
     if request.method == "OPTIONS":

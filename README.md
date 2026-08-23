@@ -41,7 +41,7 @@ katmanı bu seçime katkı verir ve **isabeti ölçülür** (§1.6).
 
 **Hedefe bugünkü mesafe ölçülmüştür ve küçüktür.** Piyasa oranlarından mekanik
 olarak üretilen strateji 36 haftanın 3'ünde 14+ tutturdu; eşik o haftayı görmeden
-seçildiğinde (hold-out) **0**. Piyasanın kendi Brier skoru 0,579 — eşit olasılık
+seçildiğinde (hold-out) **1**. Piyasanın kendi Brier skoru 0,574 — eşit olasılık
 dağıtmanın karşılığı 0,667, yani piyasa bilgi taşıyor ama az. İddaa marjı %17,2.
 Bu üç sayı tahmin katmanının **başlangıç çizgisidir, varış noktası değil**:
 ilerleme bunlara karşı ölçülür ve ölçülmeden ilerleme sayılmaz.
@@ -379,17 +379,59 @@ bahis yapmaktır.
 favori olmadı**). Gerçek sürpriz (karşı taraf kazandı): 112 maç (%19,8). Piyasa iki
 yönde de aynı doğrulukta: favori "1" iken isabet %54,8, "2" iken %54,9.
 
-**Kalibrasyon** — 8 kova; ör. %20–30 kovasında model %25,6 → gerçek %24,4.
+**Kalibrasyon** — 8 kova; ör. %20–30 kovasında model %25,5 → gerçek %24,7.
 Ortalama marj %7,26. Rastgele ya da kaymış bir eşleştirme bu tabloyu üretemez;
 `test_odds.py` favori isabetini alt/üst sınırla bekçiye bağlar.
 
+**Marj arındırma yanlılığı (A5)** — yukarıdaki kalibrasyon 567 kupon maçında ölçülür;
+31.103 maçlık korpusta aynı tablo çıkarılınca sapma **düzenli ve tek yönlü** çıkıyor:
+piyasanın %70–80 dediği maçlar gerçekte **%78,9** oluyor (n=1.702, +4,4 puan, %95
+güven aralığının dışında) ve 15 banttan 10'u anlamlı sapıyor. Sebep piyasanın hatası
+değil, **oranı olasılığa çevirme biçimimiz**: marj her sonuca eşit dağıtılıyordu, oysa
+bahisçi onu sürprizlere ağır yükler. `odds.implied_probs` artık `shin` ve `guc`
+yöntemlerini de taşıyor — Brier 0,5940 → **0,5936**, fark −0,00035 [−0,00049,
+−0,00021], yani projenin geçme kuralını (aralığın tamamı sıfırın altında)
+sağlıyor; anlamlı sapan bant 10 → **4**.
+
+**Varsayılan 2026-08'de `shin`e çevrildi.** Bu sayfadaki oran tabloları o gün
+yeniden koşuldu; çevrimden önceki sayılar orantısal ölçekte ölçülmüştü ve
+yenileriyle doğrudan kıyaslanamaz. İki istisna bilerek `orantili`da bırakıldı:
+açılış↔kapanış hareketi ve bahisçi anlaşmazlığı. İkisi de bir **fark** ölçer ve
+orantısal yöntem oranın ölçeğinden bağımsız olan tek yöntemdir — Shin'de,
+bahisçinin yalnızca marjını büyütmesi "hareket" ya da "anlaşmazlık" gibi
+okunurdu (ayrıntı: `docs/ISTATISTIK_YOL_HARITASI.md` §3.18).
+
+**İşlenen sezonun karnesi** — `python scripts/super_toto_sezon.py`. Girilmiş
+bütün haftaları üst üste koyar: birikimli Brier, favori isabetinin gözlenen ↔
+beklenen sapması, en iyi kolon dağılımı, canlı sezon kalibrasyon eğrisi. Her
+koşumda **örneklem yeterliliği** satırını basar: aranan üstünlük 0,0005 Brier,
+bu örneklemde %95 aralığın yarı genişliği onun yüzlerce katı, ayırt edebilmek
+için ~2,5 milyon maç gerekir. Defter kural değiştirmek için değil, kuralın ne
+yaptığını görmek içindir — 5-10 hafta sonra doğacak "eşiği oynatalım" baskısına
+karşı tek savunma budur.
+
+**Havuz ekseni (Faz B)** — `python scripts/faz_b.py`. Sorusu kuruldu: *aynı
+tutturma olasılığında az oynanan sembolü işaretlemek kişi başı ikramiyeyi
+büyütüyor mu?* Bu soru **piyasayı geçmeyi gerektirmiyor**, o yüzden A1–A3'ün
+kapattığı arayış bu ekseni kapatmıyor. Bugünkü cevap **ölçülemez**: elde 1
+haftalık ikramiye kaydı var, güç analizi ≈71 ikramiyeli hafta (≈3,5 sezon)
+istiyor. Durma kuralı şimdiden yazılı (`docs/ISTATISTIK_YOL_HARITASI.md`
+§6.3b).
+
+**"Bu oranda geçmişte ne olmuş?"** — `python -m spor_toto.benzer --oran 1.82,3.04,2.44`
+ya da `GET /api/benzer?oran=1.82,3.04,2.44`. Verilen orana benzeyen geçmiş maçları
+31 binlik korpusta bulur ve nasıl bittiklerini sayar. Eşleme **olasılık uzayında**
+yapılır, oran uzayında değil: örnek oran (marj %28,8) korpusta ±%10'luk oran
+komşuluğunda **hiç** maç bulmuyor, olasılık uzayında ±2 puanda **710** maç buluyor.
+Her yüzde yanında n ve Wilson %95 aralığı gelir; 30 maçın altındaki dilim sayı vermez.
+
 **Çift kapsama** — ilk-iki olasılık toplamı 0,70–0,80 iken gerçek sonuç küme içinde
-kalma oranı %77,4; 0,80–0,90 iken %86,6; 0,90+ iken %96,9. Aynı bantlarda **banko**
-yapılsaydı: %48,7 / %65,1 / %84,4. Yani en üst bantta ikinci işaret kolonu ikiye
-katlayıp isabete yalnızca 12,5 puan ekliyor — çifte kararı bu tablonun işidir.
+kalma oranı %77,2; 0,80–0,90 iken %85,3; 0,90+ iken %95,1. Aynı bantlarda **banko**
+yapılsaydı: %47,8 / %65,4 / %80,5. Yani en üst bantta ikinci işaret kolonu ikiye
+katlayıp isabete yalnızca 14,6 puan ekliyor — çifte kararı bu tablonun işidir.
 
 **Beraberlik profili** — favori ile ikincinin olasılık farkı 0–0,05 iken beraberlik
-%32,7; 0,50+ iken %14,3. Eğilim var ama **tam monoton değil**. Tahmin katmanının
+%34,0; 0,50+ iken %15,5. Eğilim var ama **tam monoton değil**. Tahmin katmanının
 girdilerinden biridir; tek başına bir tahminci olarak kullanılamayacak kadar
 zayıftır ve isabeti ölçülmeden karara bağlanmaz (§10.2).
 
@@ -397,17 +439,24 @@ zayıftır ve isabeti ölçülmeden karara bağlanmaz (§10.2).
 orada beraberlik %29,8; Premier Lig'de %19,7. Bu fark "0" bütçesinin nereye
 harcanacağını değiştirir.
 
-**Piyasa hangi hafta yanıldı** — haftalık Brier skoru: sezon ortalaması **0,579**.
+**Piyasa hangi hafta yanıldı** — haftalık Brier skoru: sezon ortalaması **0,574**.
 Üç sembole eşit olasılık vermenin karşılığı 0,667, yani piyasa bilgi taşıyor ama
 az. Favori isabeti tek başına yanıltıcıdır: 1,05 oranlı favorinin tutmasıyla 2,40
 oranlınınki aynı sayılmaz; Brier olasılığın tamamını cezalandırır.
 
 **Geri test** — varsayılan eşiklerle 36 haftanın **3'ünde** 14+ tutuyor (%8,3; %95
-aralık %2,9–%21,8), hafta başına ortalama **2.686 kolon**. 15 maçın tamamının
-işaretler içinde kaldığı hafta **yok**. 28 eşikli taramanın en iyisi 4 hafta;
-aynı yöntem eşiği o haftayı görmeden seçtiğinde (**hold-out**) **0 hafta**.
-Aradaki fark aşırı uyumun büyüklüğüdür — ve bu tablonun neden bir kâr vaadi
-olmadığının kanıtıdır.
+aralık %2,9–%21,8), hafta başına ortalama **1.987 kolon**. 15 maçın tamamının
+işaretler içinde kaldığı hafta **yok**. Aynı yöntem eşiği o haftayı görmeden
+seçtiğinde (**hold-out**) **1 hafta** ve hafta başına 2.228 kolon.
+
+Bu satırlar 2026-08'de marj arındırma varsayılanı `shin`e çevrilince yeniden
+koşuldu (§5.4, A5). Orantısal ölçekte aynı tablo 2.686 kolon/hafta ve hold-out'ta
+**0** haftaydı; hold-out ayrıca eşiği 36 haftanın 31'inde 0,68/**0,42**'ye
+kaydırıyordu. Shin ölçeğinde eşik 34 haftada 0,68/**0,38**'de — yani projenin
+varsayılanında — kalıyor. **Eşik baştan doğruydu; onu besleyen olasılık
+eğriydi.** Hold-out'taki 0→1 farkı tek bir olaydır ve güven aralıkları
+fazlasıyla örtüşür (%0,5–14,2 ↔ %0–9,6); okunacak sağlam sayı isabet değil
+**maliyettir**: 3,1 kat düşüş.
 
 ### 5.5 Veri kalitesi denetimi
 
@@ -1035,7 +1084,7 @@ değil.
 
 **Geri test bir davranışı değil, bir kuralın bedelini ölçer.** Strateji oranlardan
 mekanik üretilir: sakatlık, motivasyon, kadro gibi hiçbir dış bilgi yoktur. Ayrıca
-gerçek bir oyuncunun hafta başına 2.686 kolonluk kupon oynamayacağı açıktır.
+gerçek bir oyuncunun hafta başına 1.987 kolonluk kupon oynamayacağı açıktır.
 
 **Piyasa oranı ≠ iddaa oranı.** Seviye tutmaz, yapı tutar. Bu not sayfada her yerde
 görünür durumdadır ve kaldırılmamalıdır.

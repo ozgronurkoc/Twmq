@@ -7,7 +7,7 @@ maça olasılık vermek zorunda ve oynanmamış maçın hiçbir arşivde oranı 
 
 Kaynak football-data.co.uk'in `fixtures.csv` dosyasıdır ve seçim kasıtlıdır:
 **ölçümü yaptığımız kaynağın ta kendisi.** Kupon setinde ölçülen isabet
-(Brier 0,5747 · maç başına %55,6) aynı fiyatlayıcıya ait olduğu için ürüne
+(Brier 0,5740 · maç başına %55,6) aynı fiyatlayıcıya ait olduğu için ürüne
 meşru biçimde taşınabilir. İddaa bülteninden üretilen olasılık da bir
 tahmindir ama **kalibrasyonu ölçülmemiştir** (marj %17,2'ye karşı %7,26) ve
 o yüzden burada ikinci sıradadır.

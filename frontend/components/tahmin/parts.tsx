@@ -4,6 +4,7 @@ import * as React from "react";
 
 import type { OlculmusIsabet, Sembol, TahminSatiri, TahminUyarisi } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { BenzerKart } from "@/components/benzer/kart";
 import { Callout, Card, CardBody, Stat } from "@/components/ui/primitives";
 import { SYM_BG, SYM_TEXT } from "@/components/istatistik/viz";
 
@@ -142,6 +143,7 @@ export function TahminTablosu({ satirlar, yildizGoster = true }: {
                 <span className="font-medium">{t.ev}</span>
                 <span className="mx-1.5 text-muted-foreground">–</span>
                 <span>{t.dep}</span>
+                <BenzerKart oranlar={t.oranlar ?? null} />
               </td>
               <td className="py-2 pr-3">
                 <OlasilikCubugu olasilik={t.olasilik} enOlasi={t.en_olasi} />

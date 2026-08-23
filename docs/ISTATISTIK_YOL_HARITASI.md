@@ -8,9 +8,15 @@
 > kazanma oranını artıracak sonuçlar üretmek ve maç sonucu tahmini yapmaktır**
 > (bkz. [`../README.md`](../README.md) §1). Bu belgedeki ölçüm disiplini aynen
 > geçerlidir ve daha da kritik hale gelmiştir: tahmin iddiası, ölçülmemiş hiçbir
-> sayının arayüze çıkmamasıyla dengelenir. Hold-out **0 hafta**, piyasa Brier
-> **0,579**, iddaa marjı **%17,2** — bu üç sayı tahmin katmanının başlangıç
+> sayının arayüze çıkmamasıyla dengelenir. Hold-out **1 hafta**, piyasa Brier
+> **0,574**, iddaa marjı **%17,2** — bu üç sayı tahmin katmanının başlangıç
 > çizgisidir ve ilerleme bunlara karşı ölçülür.
+>
+> **Ölçek uyarısı.** 2026-08'de marj arındırma varsayılanı `orantili`dan `shin`e
+> çevrildi (§3.18). O tarihten önceki bölümlerdeki sayılar orantısal ölçekte
+> ölçülmüştür ve bugünküyle **doğrudan kıyaslanamaz**. §3.10–§3.16 (T1–T5,
+> A1–A3) böyle bölümlerdir ve **bilerek olduğu gibi bırakıldı** — bir ölçüm
+> kaydı sonradan yeniden yazılmaz. Bugünkü sayılar §3.18 ve §5'tedir.
 **İlgili belgeler:** [`VERI_TOPLAMA_VE_ISLEME.md`](VERI_TOPLAMA_VE_ISLEME.md) (veri üretiminin
 tek kaynak dokümantasyonu) · [`ARCHITECTURE_NEXT.md`](ARCHITECTURE_NEXT.md) (API sözleşmesi)
 
@@ -110,9 +116,8 @@ spor_toto/evaluate.py  ◄── spor_toto/predict.py     (sözleşme + 3 refera
 | Üretim | `backend/scripts/build_egitim.py` | — | Korpus üretimi (football-data, 4 sezon, **iki çizgi + bahisçi kırılımı**) |
 | Test | `backend/tests/test_predict.py` · `test_evaluate.py` · `test_recalibrate.py` · `test_egitim.py` · `test_cizgi.py` · `test_bahisci.py` · `test_disari.py` · `test_tahmin.py` | — | Tahmin katmanı, **ürün** ve ayrım bekçisi (229) |
 
-**İşleyen sezon (2026/27) — PR #14 ile geliyor, henüz `main`'de değil**
-(dal: `claude/super-toto-season-tabs-an1kqx`). Bu satırlar yukarıdaki haritanın
-parçasıdır ama ayrı tutulmuştur: PR birleşene kadar `main`'de karşılıkları yoktur.
+**İşleyen sezon (2026/27)** — bu satırlar yukarıdaki haritanın parçasıdır,
+ayrı tabloda tutulmuştur.
 
 | Katman | Dosya | Rol |
 |---|---|---|
@@ -294,8 +299,9 @@ eşiği ise banko, < üçlü eşiği ise üçlü, arası çifte) → `solve_fix1
 → gerçekleşen sonucun skoru. Yeni olan yalnızca eşik katmanı ve skorlama; geri kalanı var olan
 modüller.
 
-**Ölçülen.** Varsayılan eşiklerle 36 haftanın **3'ünde** 14+ tutuyor, hafta başına ortalama
-**2.686 kolon**. Küme içi kalan hafta **yok** — 15 maçın tamamını işaretlerin içinde tutmak
+**Ölçülen** (orantısal ölçek — ölçüldüğü günkü hâli). Varsayılan eşiklerle 36 haftanın
+**3'ünde** 14+ tutuyor, hafta başına ortalama **2.686 kolon**. Shin ölçeğinde aynı tablo
+1.987 kolon/hafta ve hold-out'ta 1 hafta (§3.18). Küme içi kalan hafta **yok** — 15 maçın tamamını işaretlerin içinde tutmak
 piyasa oranlarıyla pratikte olmuyor. Bu bir bulgu, kusur değil.
 
 **Aşırı uyuma karşı üç önlem.** Wilson %95 güven aralığı (41 hafta küçük örneklem; normal
@@ -819,6 +825,190 @@ motoru" yazıldı ve formül sayfası `/tahmin`e bağlandı.
 
 ---
 
+### 3.18 Marj arındırma ve ampirik sorgu (A5)
+
+Faz A dört cepheden (T5, A1, A2, A3 — dokuz özellik) piyasayı geçmeye çalıştı ve hiçbiri
+geçemedi. Bu iş, **hiç sorulmamış bir soruyu** sordu: piyasa oranını olasılığa çeviren
+adımın kendisi doğru mu?
+
+İş, istenen bir üründen çıktı: *"bu oranda geçmişte ne olmuş?"* — `spor_toto/benzer.py`.
+Araç yazılınca ilk gösterdiği şey aradığı cevap değil, **kendi girdisinin yanlılığı** oldu.
+
+#### Eşleme neden olasılık uzayında yapılır
+
+Ölçüldü. 1.82/3.04/2.44 (marj %28,8) korpusta aranınca:
+
+| Eşleme | Bulunan |
+|---|---:|
+| Birebir aynı oran | **0** |
+| Oran ±%2 | **0** |
+| Oran ±%10 | **0** |
+| Olasılık ±2 puan | **710** |
+
+Aynı gerçek olasılık, farklı marjda tamamen farklı oran verir. Oran uzayında arama sessizce
+"sonuç yok" der. `tests/test_benzer.py::test_oran_uzayinda_arama_bos_doner` bunu çiviler.
+
+#### Bulgu: orantısal arındırma favoriyi eksik fiyatlıyor
+
+Her sembol kendi olasılık bandında, gözlenen ↔ piyasanın dediği (31.103 maç, Wilson %95):
+
+| Band | n | Piyasa | Gerçek | Fark | GA dışında |
+|---|---:|---:|---:|---:|:--:|
+| %5–10 | 1.697 | %7,9 | %5,7 | **−2,2** | ✗ |
+| %10–15 | 3.557 | %12,8 | %10,6 | **−2,2** | ✗ |
+| %15–20 | 6.530 | %17,7 | %16,6 | −1,2 | ✗ |
+| %20–25 | 11.924 | %22,8 | %21,7 | −1,1 | ✗ |
+| %25–40 | 45.074 | — | — | ~0 | içeride |
+| %40–45 | 6.828 | %42,4 | %43,6 | +1,2 | ✗ |
+| %50–55 | 3.757 | %52,4 | %54,3 | +1,9 | ✗ |
+| %55–60 | 2.820 | %57,3 | %60,1 | +2,8 | ✗ |
+| %60–70 | 3.346 | %64,5 | %67,2 | +2,7 | ✗ |
+| **%70–80** | 1.702 | %74,5 | **%78,9** | **+4,4** | ✗ |
+| %80+ | 627 | %83,8 | %86,8 | +3,0 | ✗ |
+
+Sapma **tek yönlü ve düzenli**: sürprizler abartılıyor, favoriler küçümseniyor — klasik
+favourite–longshot yanlılığı. 15 banttan **10'u** anlamlı sapıyor.
+
+Bu bir model kusuru değil, bir **çevrim** kusuru. `implied_probs` marjı her sonuca eşit
+oranda dağıtıyordu (`p = (1/o) / Σ(1/o)`); oysa bahisçi marjı sürprizlere daha ağır yükler.
+
+#### Düzeltme: Shin ve güç yöntemi
+
+`odds.implied_probs` artık üç yöntem taşıyor. Marj sıfırken üçü **çakışır**; ayrıştıkları
+yer yüksek marjdır — iddaa bülteni (~%18) tam olarak orası.
+
+| Yöntem | Brier (31.103) | Log | Anlamlı sapan bant |
+|---|---:|---:|---:|
+| `orantili` (varsayılan) | 0,5940 | 0,9945 | **10 / 15** |
+| `guc` | **0,5936** | **0,9937** | — |
+| `shin` | **0,5936** | 0,9938 | **4 / 15** |
+
+Brier farkı **0,00042**. Kıyas: A2'de "projenin piyasayı geçen ilk tahmincisi" diye kaydedilen
+Pinnacle bulgusu 0,0004 idi. Aynı büyüklükteki kazanç, **yeni veri kaynağı ve model eğitimi
+gerektirmeden**, tek fonksiyonda duruyordu.
+
+En büyük bant hatası (%70–80) +4,4 → +3,0 puana iniyor; kalan sapma ampirik/izotonik bir
+kademeyle kapatılabilir ve o iş **henüz yapılmadı**.
+
+#### Varsayılan `shin`e çevrildi — ve eşiklerin değişmesi gerekmedi
+
+`ARINDIRMA_VARSAYILAN` 2026-08'de **`shin`** oldu. Karar dört ölçüme dayanıyor:
+
+| Ölçüm | orantısal | shin |
+|---|---:|---:|
+| Brier (31.103 maç) | 0,5940 | **0,5936** — fark −0,00035 [−0,00049, −0,00021], **geçti** |
+| Anlamlı sapan bant | 10 / 15 | **4 / 15** |
+| Geri test kolon/hafta (hold-out) | 6.897 | **2.228** |
+| Hold-out'un seçtiği eşik | 36 haftanın 31'inde 0,68/**0,42** | 34'ünde 0,68/**0,38** |
+
+Son satır en öğreticisi. Orantısal ölçekte hold-out eşiği projenin varsayılanından
+(0,68/0,38) **uzağa** kaydırıyordu; Shin ölçeğinde 36 haftanın 34'ünde tam varsayılanı
+seçiyor. **Eşik baştan doğruymuş; eğri olan onu besleyen olasılıktı.** Bu yüzden
+`VARSAYILAN_BANKO`/`VARSAYILAN_UCLU` değiştirilmedi — değiştirilmesi için bir sebep
+çıkmadı.
+
+Hold-out'ta 14+ sayısının 0'dan 1'e çıkması **okunmaması gereken** satırdır: tek olay,
+ve aralıklar fazlasıyla örtüşüyor (%0,5–14,2 ↔ %0–9,6). Sağlam olan sayı maliyettir.
+
+Çevrimin bedeli ödendi: `/api/stats` oran tabloları, geri test sayıları, README §5.4 ve
+bu belgedeki tablolar yeniden koşuldu; `health` yeşil kaldı (kupon seti Brier 0,5747 →
+**0,5740**). Çevrimden önce yayımlanmış sayılar orantısal ölçekte ölçülmüştür ve
+belgede o etiketle durur.
+
+#### İki ölçü bilerek `orantili`da bırakıldı — ve bunu projenin kendi testi yakaladı
+
+Çevrim yapıldığında `test_hareket_saf_marj_degisimini_gormez` kırıldı. Testin çivilediği
+değişmez şuydu: bahisçi bütün ayakları aynı çarpanla kısarsa **fikri değişmemiş**, yalnızca
+marjı büyümüştür; arındırılmış olasılık kımıldamamalıdır.
+
+Orantısal yöntem oranın ölçeğinden bağımsızdır, yani bu değişmezi sağlar. **Shin ve güç
+yöntemleri sağlamaz** — ve bu onların kusuru değil, tanımı: ikisi de marjın büyüklüğünü
+*bilgi* sayar. Bir **seviye** ölçerken (tek fiyat → olasılık) bu istenen davranıştır. Bir
+**fark** ölçerken felakettir: A1 fikir değişimi yerine bahisçinin fiyatlama politikasını
+ölçmeye başlardı.
+
+Aynı gerekçe A2 için de geçerli: B365 ile Pinnacle'ın marjları farklıdır, ölçek duyarlı
+bir arındırmada o marj farkı "anlaşmazlık" diye okunurdu. Nitekim çevrim, A2'nin ham
+tablosunun yönünü de ters çevirmişti.
+
+Kural bu yüzden ikiye ayrıldı (`egitim.FARK_ARINDIRMASI`):
+
+* **Seviye** ölçüleri (kupon kararı, tahmin, kalibrasyon) → varsayılanı izler (`shin`).
+* **Fark** ölçüleri (`cizgi_hareketi`, `bahisci_ayrismasi`) → `orantili`ya sabit.
+
+A1 ve A2'nin yayımlanmış sayıları bu sayede olduğu gibi geçerli kaldı.
+
+#### A2'nin bekçisi de mutlak eşikten göreliye çevrildi
+
+`test_favori_sabitlenince_iliski_kayboluyor` sabit bir eşik kullanıyordu (0,02 Brier).
+O sayı yazıldığı gün en geniş dilimin yayılımı 0,0143'tü — payı dardı. Çevrimden sonra
+Brier düzeyleri kayınca aynı dilim 0,0200'e çıktı ve eşiği geçti; **bulgu değişmeden**
+test kırıldı, yani eşiğin keyfî olduğu ortaya çıktı.
+
+A2'nin iddiası zaten görelidir: *"koşullayınca ham ilişki kayboluyor."* Ölçüt de o hâle
+getirildi — koşullanmış yayılım, ham yayılımın yarısından küçük olmalı. Ölçülen: orantısalda
+en fazla %22, Shin'de en fazla %30. İddia iki ölçekte de ayakta.
+
+#### Kalan sapma izotonikle kapatılabiliyor mu? — evet, ama yeni bir şey değil
+
+Shin sonrası dört bant hâlâ anlamlı sapıyordu. Soru şuydu: bu artık, **parametresiz
+monoton** bir düzelticiyle kapanır mı? `recalibrate.IzotonikTahminci` bunun için yazıldı —
+üç sembol havuzlanır, eşit sayıda noktalı kovalara bölünür, ağırlıklı PAV ile monoton
+eğri uydurulur, sonra 1'e normalize edilir. Ölçüm **sezon dışarıda bırakmalı**
+(`spor_toto/kalibrasyon.py`; izotonik esnek bir düzelticidir, aynı sezonda uydurulup aynı
+sezonda ölçülürse kesin yanıltır — o yüzden başka bir ölçüm yolu sunulmadı).
+
+| Girdi olasılığı | Tahminci | Brier | Fark | %95 aralık | Geçti |
+|---|---|---:|---:|---|---|
+| `orantili` | `piyasa` | 0,5940 | — | — | — |
+| `orantili` | **`izotonik`** | **0,5936** | **−0,00036** | [−0,00067, −0,00003] | **EVET** |
+| `shin` | `piyasa` | 0,5936 | — | — | — |
+| `shin` | `izotonik` | 0,5936 | +0,00001 | [−0,00020, +0,00022] | hayır |
+
+**Okuma — ve bu satır önemli.** İzotonik, orantısal arındırmanın üstünde piyasayı geçiyor;
+ama Shin'in üstünde **hiçbir şey eklemiyor**. Yani ikisi aynı olguyu ölçüyor, ikisi
+toplanmıyor. Kazanç 0,0004'tür ve iki kez sayılamaz.
+
+Pratik sonuç: **düzeltme izotonikle değil arındırmayla yapılmalı.** Shin tek parametreli,
+kapalı formda ve fiyatın kendi yapısından türeyen bir düzeltme; izotonik ~90 kovalı,
+veriden uydurulan bir eğri. Aynı kazanç için basit olan tercih edilir. İzotonik kademe
+kodda **ölçüm aracı olarak** kalır — "arındırma değiştiğinde artık kaldı mı" sorusunun
+cevabını veren şey odur.
+
+#### Yan bulgu: geçme kuralı yuvarlanmış sayıdan karar veriyordu
+
+İzotonik ilk koşumda `geçmedi` yazdı. Ham üst sınır **−0,000031** idi — yani aralığın
+tamamı sıfırın altındaydı ve kural gereği **geçmeliydi**. Sebep `evaluate.bootstrap_farki`:
+üst sınır önce 4 basamağa yuvarlanıyor, sonra karşılaştırılıyordu. `round(-0,000031; 4)`
+Python'da `-0.0` verir ve `-0.0 < 0` **`False`**'tur.
+
+Hata sessizdi ve tam da **kararın zorlaştığı yerde** — aralık daraldıkça — ortaya
+çıkıyordu. Yayımlanmış hiçbir bulgu bundan etkilenmiyor (A1–A3 aralıkları sıfırı açıkça
+kesiyor, A2'nin Pinnacle üst sınırı −0,0002). Düzeltildi: `fark` bloğu artık `ham_fark`,
+`ham_alt`, `ham_ust` alanlarını da taşır ve `gecti` **yalnızca** ham değeri okur; yuvarlama
+gösterime kaldı. `tests/test_evaluate.py::test_cok_dar_aralik_gecmis_sayilir` bekçisi.
+
+#### Sınır — bu bir "piyasayı geçtik" bulgusu DEĞİLDİR
+
+Ölçülen şey piyasanın hatası değil, **piyasa fiyatını okuma biçimimizin** hatasıydı.
+Bahisçi zaten marjı sürprizlere yüklüyor; biz onu düz dağıttığımız için favoriyi eksik
+okuyorduk. A4'ün "arayış kapandı" hükmü **yerinde duruyor**: bu satır yeni bir tahmin
+kaynağı bulmuyor, mevcut kaynağı daha az bozarak okuyor.
+
+Pratik karşılığı yine de küçük değil. 2026/27 2. haftasında (iddaa, %17,8 marj, eşik
+0,68/0,38) aynı kuralın ürettiği kupon — hafta verisi PR #14 dalında
+(`data/super_toto/2026_27/hafta_02.json`), bu daldan koşulunca birebir üretilir:
+
+| Arındırma | Banko | Çifte | Üçlü | Seçim uzayı | Küme-içi |
+|---|---:|---:|---:|---:|---:|
+| `orantili` | 0 | 14 | 1 | 49.152 | %2,778 |
+| `shin` | 1 | 13 | 1 | **24.576** | **%2,862** |
+
+Kupon yarı fiyata düşerken tutma olasılığı **artıyor** — iki eksende birden. Sebep, 1. maçın
+(Galatasaray 1.26) favori olasılığının %67,4 → %71,8 çıkması ve banko eşiğini artık
+aşması. 2. haftanın kupon dosyasına düşülen *"eşiği 0,6 puanla kaçırdı"* notu, bu
+yanlılığın ta kendisiydi.
+
 ## 4. Sayfada bugün ne var
 
 **`/istatistik`** — sezon dağılımı (en sık sonuç + pay çubuğu) · 5 sayı kutusu (sembol
@@ -836,7 +1026,7 @@ komşu hafta gezinmesi.
 
 **`/tahmin`** — yaklaşan maçlara 1/0/2 olasılığı **iki tahminciyle** (manşet `piyasa` +
 ölçülmüş alternatif `kalibre_bias`, farkı ve aralığıyla), **ölçülmüş isabet kartı tablonun
-üstünde** (maç başına %55,6 · haftada 8,33/15 · Brier 0,5747 · 14+ tutan hafta 0/36) ·
+üstünde** (maç başına %55,6 · haftada 8,33/15 · Brier 0,5740 · 14+ tutan hafta 0/36) ·
 günlere bölünmüş maç tablosu + olasılık çubuğu · katlanmayan sınırlar bloğu.
 
 **`/istatistik/geri-test`** — aşırı uyum uyarısı · strateji seçici (banko/üçlü eşiği) + sezon
@@ -888,11 +1078,13 @@ Premier Lig (71 maç) %19,7 / %47,9. Kupon başına ortalama 7 maç Süper Lig'd
 ---
 
 **Geri test** (sayfada var): varsayılan eşiklerle 36 haftanın 3'ünde 14+ (%8,3; %95 aralık
-%2,9–%21,8), hafta başına ort. 2.686 kolon, bir 14 için 32.235 kolon. Küme içi hafta 0.
-Taramanın en iyisi 4 hafta (%68/%42 eşiği, 6.995 kolon/hafta), **hold-out 0 hafta** — aradaki
-fark aşırı uyumun ölçüsü.
+%2,9–%21,8), hafta başına ort. **1.987 kolon**, bir 14 için 23.840 kolon. Küme içi hafta 0.
+**Hold-out 1 hafta** (%2,8; %95 aralık %0,5–14,2), 2.228 kolon/hafta. Hold-out'un seçtiği eşik
+36 haftanın 34'ünde varsayılanın kendisi (0,68/0,38); orantısal ölçekte 31 hafta boyunca
+0,68/0,42'ye kayıyordu (§3.18). Hold-out'taki 0→1 farkı **tek bir olaydır**, aralıklar
+fazlasıyla örtüşür — okunacak sayı maliyettir.
 
-**Piyasanın yanılması** (sayfada var): sezon ortalaması Brier **0,579**; eşit olasılık
+**Piyasanın yanılması** (sayfada var): sezon ortalaması Brier **0,574**; eşit olasılık
 vermenin karşılığı 0,667. Piyasa bilgi taşıyor ama az. En sürprizli haftalar 33 (0,753, kısmi),
 7 (0,734), 37 (0,700); en tahmin edilebilir 3. hafta (0,348).
 
@@ -902,9 +1094,13 @@ arındırılmış yapı tutar.
 
 ### 5.1 Tahmin katmanının bulguları (sayfada **yok**)
 
+**Ölçek.** A5 satırlarına kadar olan bütün ölçümler `orantili` arındırmayla yapıldı ve o
+hâlleriyle bırakıldı — bir ölçüm kaydı sonradan yeniden yazılmaz. Bugünkü varsayılan `shin`
+ve karşılıkları: kupon seti 0,5747 → **0,5740**, korpus 0,5940 → **0,5936**.
+
 | Ölçüm | Kesit | Sonuç |
 |---|---|---|
-| Piyasa çizgisi | 540 kupon maçı | Brier **0,5747** · log 0,9660 |
+| Piyasa çizgisi | 540 kupon maçı | Brier **0,5747** · log 0,9660 *(orantısal)* |
 | Piyasa çizgisi | 31.103 korpus maçı | Brier **0,5940** — kupon maçları ortalama maçtan daha tahmin edilebilir |
 | Kademe, kupon üzerinde eğitilmiş | 540 maç | Dört basamak da piyasadan **kötü** (+0,0009…+0,0133) |
 | Kademe, korpus içi sezon dışarıda | 31.103 maç | `sicaklik` −0,0004 ve `bias` −0,0005 **geçti** |
@@ -916,6 +1112,10 @@ arındırılmış yapı tutar.
 | **Bahisçi anlaşmazlığı (A2)** | 31.100 maç | Ham ilişki favori gücüyle karışık; sabitlenince **kayboluyor**. Güven kısma %0,02 |
 | **Dinlenme + sıkışıklık (A3)** | 31.103 maç | Geçmedi. Korpus kupa/Avrupa maçlarını görmüyor — ölçülen, yorgunluğun **vekili** |
 | **İç/dış form + sezon sonu (A3)** | 31.103 maç | Geçmedi. İç/dış form ham farkı **+0,247**, artığı onda biri — güçlü sinyal, sıfır katkı |
+| **Marj arındırma (A5)** | 31.103 maç | `orantili` 15 bandın **10'unda** anlamlı sapıyor; `shin`/`guc` Brier **0,5936** (−0,00042) ve sapan bant **4'e** iniyor |
+| **Favori–sürpriz yanlılığı (A5)** | 31.103 maç | Piyasanın %70–80 dediği maçlar gerçekte **%78,9** (n=1.702) — sapma tek yönlü ve düzenli |
+| **İzotonik kalibrasyon (A5)** | 31.103 maç | `orantili` üzerinde **geçti** (−0,00036 [−0,00067, −0,00003]); `shin` üzerinde **hiçbir şey eklemiyor** — aynı olgu, iki kez sayılamaz |
+| **Arındırma çevrimi (A5)** | 31.103 maç · 36 hafta | Varsayılan `shin` oldu. Kupon seti Brier 0,5747→**0,5740**; geri test hold-out kolon/hafta 6.897→**2.228**, seçilen eşik 31 hafta 0,68/0,42 → **34 hafta 0,68/0,38** (varsayılanın kendisi) |
 
 **Okuma.** Aşırı uyum modelin kapasitesinden değil örneklem küçüklüğünden geliyordu; büyük
 korpus onu kaldırdı. Ama kalan etki 0,0005–0,0015 Brier — 31 binde anlamlı, 540'ta değil ve
@@ -934,13 +1134,10 @@ her şeyi zaten içeriyor.
 
 ### 5.2 Havuz ekseninin ilk bulguları — ölçüldü, belgeye girmedi
 
-> ### ⚠ PR #14 ile geliyor — henüz `main`'de değil
-> Dal: `claude/super-toto-season-tabs-an1kqx`.
-
 PR #14, 2026/27'nin ilk iki haftasında **altı ölçülmüş bulgu** üretti ve
 bunların tamamı bugün yalnızca **commit mesajlarında** duruyor. Bu belgenin
-kuralı ölçülen her şeyin §3'e gerekçesiyle yazılmasıdır; o yazım **PR #14'ün
-kendi işidir** ve burada yapılmaz (iki dal aynı bölümü yazarsa çakışır).
+kuralı ölçülen her şeyin §3'e gerekçesiyle yazılmasıdır; PR #14 `main`'e
+girdi ama o yazımı yapmadı — **borç duruyor**.
 
 Kaybolmasınlar diye başlıkları ve commit'leri:
 
@@ -989,7 +1186,7 @@ Beklenen getiri  =  P(tutturma)  ×  Pay(tutturunca)  −  Bedel
 | Eksen | Ne belirler | Durum |
 |---|---|---|
 | **Tahmin** | 14+ tutturma olasılığı | İki bağımsız denemede ~sıfır artık (§5.1) |
-| **Havuz** | Tutturunca ikramiyenin kaçta kaçını aldığın | **Veri geldi, ölçülmedi** (§6.3). İlk iki hafta elle girildi; n = 2 |
+| **Havuz** | Tutturunca ikramiyenin kaçta kaçını aldığın | **Veri geldi, ölçülmedi** (§6.3, §6.3b). Oynanma 2 hafta, ikramiye kaydı 1 hafta |
 | **Kaplama** | Aynı garanti için ödenen kolon | **Çözüldü** — Hamming, kanıtlanmış optimal |
 
 Plan sonludur çünkü **etken sayısı üçtür.** Kaplama ekseninde iş yok ve olmayacak: bir
@@ -1202,40 +1399,33 @@ Pratik sonuç iki yönlü ve ikisi de eyleme dönük:
 
 Muhtemelen **tek gerçek kaldıraç** — çünkü piyasayı tahminde yenmeyi gerektirmez.
 
-> ### ⚠ PR #14 ile geliyor — bu satırlar yazılırken henüz `main`'de değil
->
-> Dal: `claude/super-toto-season-tabs-an1kqx`. Aşağıdaki durum tespiti o dala
-> dayanır; PR birleşene kadar `main`'de karşılığı yoktur. **Bu blok, PR #14'e
-> dayanan cümlelerin tamamını taşır** — birleşince yalnızca bu uyarı kaldırılır,
-> belgenin geri kalanı gözden geçirilmez.
->
-> **B1'in ön koşulu artık sağlanmış durumda.** Bu bölüm uzun süre *"veri yok,
-> kaynak araştırılmadı"* diyordu; 2026/27 sezonunun ilk iki haftası için üç veri
-> birden elle girildi (`backend/data/super_toto/2026_27/hafta_NN.json`):
->
-> | Veri | 1. haftada ölçülen |
-> |---|---|
-> | **İkramiye tablosu** | 15 bilen **0 kişi** (30.149.380,57 TL devretti) · 14 bilen 8 kişi × 2.153.527,18 TL · 13 bilen 210 kişi × 82.039,13 TL · 12 bilen 2.859 kişi × 7.532,44 TL |
-> | **Oynanma yüzdesi** | Maç başına 1/0/2 tercih payı — **tek platformun kendi kullanıcıları**, Spor Toto havuzunun tamamı değil |
-> | **Gerçek iddaa oranı** | Piyasa vekili değil, oynanan fiyatın kendisi |
->
-> **Ve ilk iki ölçüm çoktan yapılmış** (`super_toto_hafta.py`, `super_toto_degerlendir.py`):
->
-> - **Havuz kenarı ölçülebiliyor.** `crowd_ratio` = kuponun küme-içi olasılığının,
->   rastgele bir halk kuponununkine oranı. 1. haftada 0,451 (%2,31 ↔ %5,12) — yani
->   kupon, kalabalığın seyrek olduğu yere düşüyor. B3'ün amaç fonksiyonunun çekirdeği budur.
-> - **Ama iki bulgu tezi zayıflatıyor.** (1) Halkın modal kuponu ile piyasanın favori
->   kuponu **birebir aynı** çıktı: oynanma verisi **yön için sinyal taşımıyor, yalnızca
->   pay için**. (2) Daha ağırı: strateji, en iyi kolonu 13+ olan haftalarda ortalama
->   **9,00** favori, 11 ve altı haftalarda **7,47** favori görüyor — **isabet kalabalıkla
->   birlikte geliyor**, yani tam da ikramiyenin küçüldüğü haftalarda.
->
-> İkinci bulgu Faz B için elimizdeki en önemli tek sayıdır ve B4'ün *(b)* şıkkını
-> somutlaştırır: havuz avantajı, onu kazandığın haftaların aynı zamanda payın
-> küçüldüğü haftalar olmasıyla kısmen kendini yiyor. **Ölçülmesi gereken şey artık
-> "avantaj var mı" değil, "net mi".**
->
-> **n = 2 hafta.** Hiçbiri "geçti" statüsünde değil; hepsi betimleyicidir.
+**B1'in ön koşulu artık sağlanmış durumda.** Bu bölüm uzun süre *"veri yok,
+kaynak araştırılmadı"* diyordu; 2026/27 sezonunun ilk iki haftası için üç veri
+birden elle girildi (`backend/data/super_toto/2026_27/hafta_NN.json`):
+
+| Veri | 1. haftada ölçülen |
+|---|---|
+| **İkramiye tablosu** | 15 bilen **0 kişi** (30.149.380,57 TL devretti) · 14 bilen 8 kişi × 2.153.527,18 TL · 13 bilen 210 kişi × 82.039,13 TL · 12 bilen 2.859 kişi × 7.532,44 TL |
+| **Oynanma yüzdesi** | Maç başına 1/0/2 tercih payı — **tek platformun kendi kullanıcıları**, Spor Toto havuzunun tamamı değil |
+| **Gerçek iddaa oranı** | Piyasa vekili değil, oynanan fiyatın kendisi |
+
+**Ve ilk iki ölçüm çoktan yapılmış** (`super_toto_hafta.py`, `super_toto_degerlendir.py`):
+
+- **Havuz kenarı ölçülebiliyor.** `crowd_ratio` = kuponun küme-içi olasılığının,
+  rastgele bir halk kuponununkine oranı. 1. haftada 0,451 (%2,31 ↔ %5,12) — yani
+  kupon, kalabalığın seyrek olduğu yere düşüyor. B3'ün amaç fonksiyonunun çekirdeği budur.
+- **Ama iki bulgu tezi zayıflatıyor.** (1) Halkın modal kuponu ile piyasanın favori
+  kuponu **birebir aynı** çıktı: oynanma verisi **yön için sinyal taşımıyor, yalnızca
+  pay için**. (2) Daha ağırı: strateji, en iyi kolonu 13+ olan haftalarda ortalama
+  **9,00** favori, 11 ve altı haftalarda **7,47** favori görüyor — **isabet kalabalıkla
+  birlikte geliyor**, yani tam da ikramiyenin küçüldüğü haftalarda.
+
+İkinci bulgu Faz B için elimizdeki en önemli tek sayıdır ve B4'ün *(b)* şıkkını
+somutlaştırır: havuz avantajı, onu kazandığın haftaların aynı zamanda payın
+küçüldüğü haftalar olmasıyla kısmen kendini yiyor. **Ölçülmesi gereken şey artık
+"avantaj var mı" değil, "net mi".**
+
+**n = 2 hafta.** Hiçbiri "geçti" statüsünde değil; hepsi betimleyicidir.
 
 Spor Toto müşterek bahistir: ikramiye havuzdan kazananlara bölünür. Sonuç: *aynı olasılığa
 sahip iki sonuçtan **daha az oynananı** işaretlemek, tutturma olasılığını değiştirmeden
@@ -1249,6 +1439,68 @@ yer maçların **yarısında yanlış**.
 | **B2** | Popülerlik modeli | **Vekile gerek kalmadı** — gerçek oynanma payı var. Ama kendisi de vekil: tek platformun kullanıcıları, havuzun tamamı değil. **Sıradaki ölçüm bu yanlılıktır**: ikramiye tablosunun kat başına kazanan adetleri, oynanma payı + gerçek sonuçtan önceden söylenebilmeli; söylenemiyorsa platform havuzu temsil etmiyor |
 | **B3** | Beklenen getiriye göre kupon kurma | **Kaplamanın ve havuzun buluştuğu yer; projenin en özgün işi.** "Hangi maça kaç işaret" sorusu ilk kez ölçülmüş bir amaç fonksiyonuyla cevaplanır. Tahmin değil, **kalabalık davranışı** modellenir |
 | **B4** | Durma kuralı | *(a)* pozitif beklenen getiri ölçüldü → Faz C · *(b)* veri yok, ya da %17,2 marj + havuz seyrelmesi avantajı yutuyor → eksen kapanır |
+
+### 6.3b Faz B'nin ölçülebilir hâli — soru, ölçü ve durma kuralı
+
+Faz B "muhtemelen tek gerçek kaldıraç" diye yazılmıştı ama **sorusu ölçülebilir
+biçimde kurulmamıştı**. Altyapı bu arada hazır oldu: `super_toto_hafta.kamuoyu`
+oynanma yüzdesini taşıyor, `kupon_kur` `crowd_in_set_p` ve `crowd_ratio`
+hesaplıyor, `super_toto_sezon.py` haftaları biriktiriyor. Eksik olan soruydu.
+
+#### Soru
+
+> Aynı tutturma olasılığında, **az oynanan** sembolü işaretlemek kişi başı
+> ikramiyeyi ölçülebilir biçimde büyütüyor mu?
+
+Tahmin ekseninden farkı ve önemi şu: bu soru **piyasayı geçmeyi gerektirmiyor.**
+Piyasa fiyatı doğru olsa bile, aynı olasılıktaki iki sonuçtan az oynananı seçmek
+tutturma olasılığını değiştirmeden payı büyütür. A1–A3'ün kapattığı arayış bu
+ekseni kapatmaz.
+
+#### Ölçü
+
+`crowd_ratio = p_küme_içi / p_kalabalık_içi`. 1'in üstü, seçim kümesinin
+olasılığına göre **az** oynandığı anlamına gelir. Ölçülecek bağıntı:
+
+    tutturulan haftalarda   kişi başı ikramiye  ↔  o haftanın crowd_ratio'su
+
+#### Durma kuralı — şimdiden yazıldı
+
+Faz B, aşağıdaki üç şıktan biri gerçekleştiğinde kapanır:
+
+1. **B1 verisi bulunamazsa** (kazanan sayısı ve kişi başı ikramiye, hafta
+   bazında, geçmişe dönük): eksen *"ölçülemez"* diye kapanır. Bugün elde
+   yalnızca **1 haftalık** ikramiye kaydı var (2026/27 1. hafta: 14 bilen 8
+   kişi, kişi başı 2.153.527,18 TL). Bir gözlemle bağıntı ölçülmez.
+2. **Veri bulunur ve bağıntı ölçülür**: bootstrap %95 aralığı sıfırı
+   kesmiyorsa eksen **açık**, kesiyorsa **kapalı**. Ölçüt projenin geri
+   kalanıyla aynıdır.
+3. **Yeterli hafta birikmezse**: kaç hafta gerektiği **şimdiden** yazılır ve
+   o sayıya ulaşılana kadar eksen "açık ama ölçülmemiş" kalır.
+
+#### Kaç hafta gerekir — ölçüldü, tahmin edilmedi
+
+`scripts/faz_b.py --guc` sorunun istatistiksel gücünü hesaplar. Kişi başı
+ikramiye haftalar arası **çok** oynak (kazanan sayısına bölünür ve kazanan
+sayısı 0 ile binler arasında gezer), bu yüzden orta büyüklükte bir etkiyi
+(log ölçekte 0,5) %80 güçle ayırt etmek **≈71 ikramiyeli hafta ≈ 3,5 sezon**
+ister. Elde **1** hafta var.
+
+Sayı bir tahmin değil, koşum çıktısıdır — ve varsayılan standart sapma (1,5)
+muhafazakâr bir tahmindir; gerçek veri biriktikçe **ölçülen** sd yerine
+konmalıdır.
+
+Bu, ekseni şimdiden kapatmaz ama **beklentiyi bugünden düzeltir**: Faz B'nin
+cevabı bu sezon gelmeyecek. Gelecek olan şey, verinin **biriktirilmeye
+başlanmasıdır** — ve toplanmamış veri hiçbir zaman ölçülemez.
+
+#### Bilinen sınır — kaldırılmamalı
+
+Oynanma yüzdeleri **tek bir platformun kendi kullanıcılarıdır**, Spor Toto
+havuzunun tamamı değildir. Bütün `crowd_*` ölçüleri bu vekile dayanır ve
+vekilin havuzu ne kadar temsil ettiği **ölçülmemiştir**. B1 verisi gelirse ilk
+iş bu vekili doğrulamak olmalı: gerçekleşen kazanan sayısı, kalabalık
+modelinin öngördüğüyle uyuşuyor mu?
 
 ### 6.4 Faz C — karar katmanı ve ürün
 

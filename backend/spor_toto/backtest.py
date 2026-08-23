@@ -33,7 +33,7 @@ from .core import (
     solve_heuristic,
 )
 from .history import MATCH_COUNT, SYMBOLS, normalized_weeks
-from .odds import match_1x2, load_odds
+from .odds import ARINDIRMA_VARSAYILAN, match_1x2, load_odds
 
 try:  # pragma: no cover - ortama bagli
     import numpy as _np
@@ -158,11 +158,16 @@ def _en_iyi_skor(kap: Dict[str, Any], nokta: Sequence[int]) -> int:
 
 # ─── hafta girdisi ────────────────────────────────────────────────────────────
 
-def hafta_girdileri(last: Optional[int] = None) -> List[Dict[str, Any]]:
+def hafta_girdileri(last: Optional[int] = None,
+                    yontem: str = ARINDIRMA_VARSAYILAN) -> List[Dict[str, Any]]:
     """Geri teste girecek haftalar: sonuç + 15 maçın olasılığı.
 
     Oranı eksik olan hafta **elenir, tamamlanmaz** (veri doktrini 2). Kaç
     haftanın neden elendiği çağırana ayrıca döner.
+
+    `yontem` marj arındırmasını seçer (A5). Varsayılan değişirse **eşikler de
+    değişmek zorundadır**: `VARSAYILAN_BANKO=0,68` orantısal arındırmanın
+    ölçeğinde türetildi ve başka bir ölçekte aynı sayı başka bir kupon üretir.
     """
     oran_satiri = {(r["week"], r["no"]): r for r in load_odds()}
     out: List[Dict[str, Any]] = []
@@ -170,7 +175,7 @@ def hafta_girdileri(last: Optional[int] = None) -> List[Dict[str, Any]]:
         probs: List[Optional[Dict[str, float]]] = []
         for no in range(1, MATCH_COUNT + 1):
             satir = oran_satiri.get((w["week"], no))
-            blok = match_1x2(satir) if satir else None
+            blok = match_1x2(satir, yontem) if satir else None
             probs.append(blok["probs"] if blok else None)
         eksik = sum(1 for p in probs if p is None)
         out.append({
@@ -419,9 +424,15 @@ UYARI = (
 def backtest(last: Optional[int] = None,
              banko_esik: float = VARSAYILAN_BANKO,
              uclu_esik: float = VARSAYILAN_UCLU,
-             sweep: bool = True) -> Dict[str, Any]:
-    """Bir stratejinin sezon boyu geri testi + eşik taraması + hold-out."""
-    girdiler = hafta_girdileri(last)
+             sweep: bool = True,
+             yontem: str = ARINDIRMA_VARSAYILAN) -> Dict[str, Any]:
+    """Bir stratejinin sezon boyu geri testi + eşik taraması + hold-out.
+
+    `yontem` marj arındırmasını seçer (A5); `meta.arindirma` ile çıktıda yazar
+    çünkü eşikler ölçeğe bağlıdır ve hangi ölçekte ölçüldüğü sonradan
+    anlaşılamazsa tablo yorumlanamaz.
+    """
+    girdiler = hafta_girdileri(last, yontem)
     elenen = [
         {"week": g["week"], "missing": g["missing"]}
         for g in girdiler if not g["usable"]
@@ -439,6 +450,7 @@ def backtest(last: Optional[int] = None,
             "match_count": MATCH_COUNT,
             "space_limit": UZAY_SINIRI,
             "note": "piyasa kapanış oranları — iddaa oranı değildir",
+            "arindirma": yontem,
         },
         "strategy": {
             "banko": banko_esik,

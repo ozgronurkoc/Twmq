@@ -644,11 +644,6 @@ inemez; inerse kaynak sütunları karışmıştır (ilke 5).
 
 ## 6B. Süper Toto haftası — elle girilen veri
 
-> ### ⚠ PR #14 ile geliyor — bu bölüm yazılırken henüz `main`'de değil
-> Dal: `claude/super-toto-season-tabs-an1kqx`. Bu belgedeki **PR #14'e dayanan
-> cümlelerin tamamı** bu bölümde ve §10.1'dedir; PR birleşince yalnızca bu iki
-> uyarı kaldırılır.
-
 ### 6B.1 Neden ayrı bir köken sınıfı
 
 Bu belgenin ilk beş boru hattı ortak bir varsayım üzerine kurulu: **veri
@@ -967,10 +962,6 @@ olarak** bekliyor. Veri geldiğinde altyapı hazır: `evaluate.capraz_olc` "bir 
 ötekinde ölç" yapıyor ve `sezon_anahtari` kupon setinde de çalışır.
 
 ### 10.1 İkramiye ve havuz — ihtiyaç kapandı, ölçüm açık
-
-> ### ⚠ PR #14 ile geliyor — bu bölüm yazılırken henüz `main`'de değil
-> Dal: `claude/super-toto-season-tabs-an1kqx`. Bu belgedeki PR #14'e dayanan
-> cümleler yalnızca burada ve §6B'dedir.
 
 Yeni amaç iki farklı hedefi birbirine karıştırmaya açıktır ve veri tarafı bu ayrımı
 zorunlu kılar:
