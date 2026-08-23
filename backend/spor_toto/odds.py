@@ -18,7 +18,7 @@ import math
 import re
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 ODDS_FILE = Path(__file__).resolve().parent.parent / "data" / "odds" / "odds_2025_26.csv"
 
@@ -119,6 +119,12 @@ ARINDIRMA_VARSAYILAN = "shin"
 #: sonuç makineden makineye oynamasın.
 _ARINDIRMA_ADIM = 60
 
+#: Arındırma önbelleğinin boyu. Korpusta 126.274 eşsiz oran üçlüsü var
+#: (217.701 çağrının %42'si tekrar); tavan onun üstünde tutuldu ki tek bir
+#: korpus geçişi kendi kendini tahliye etmesin. Sınırsız DEĞİL: `implied_probs`
+#: dışarıdan gelen oranla da çağrılır ve önbellek bir bellek sızıntısı olmamalı.
+_ONBELLEK_BOYU = 1 << 18
+
 
 def implied_probs(oranlar: Dict[str, float],
                   yontem: str = ARINDIRMA_VARSAYILAN) -> Dict[str, float]:
@@ -143,13 +149,39 @@ def implied_probs(oranlar: Dict[str, float],
 
     Marj sıfıra giderken üç yöntem de aynı sonuca yakınsar; ayrıştıkları yer
     yüksek marjdır — iddaa bülteni (~%18) tam olarak orası.
+
+    Hesabın kendisi `_arindirilmis` içinde ve **önbelleklidir**; burada
+    çağırana her seferinde taze bir sözlük verilir, çünkü önbellekteki kayıt
+    paylaşılır ve bir çağıranın onu değiştirmesi ötekini bozardı.
     """
+    return dict(_arindirilmis(tuple(oranlar.items()), yontem))
+
+
+@lru_cache(maxsize=_ONBELLEK_BOYU)
+def _arindirilmis(cift: Tuple[Tuple[str, float], ...],
+                  yontem: str) -> Tuple[Tuple[str, float], ...]:
+    """`implied_probs`in saf çekirdeği — yalnızca önbelleklenebilsin diye ayrı.
+
+    Arındırma **saf**tır: aynı oran üçlüsü hep aynı olasılığı verir. Shin kök
+    bulucusu çağrı başına 61 kez üç elemanlı bir vektör kuruyor (~61 µs,
+    orantısal yöntemin 54 katı) ve korpusta aynı üçlü ortalama iki kez geçiyor
+    — ikinci kez hesaplamanın hiçbir karşılığı yok.
+
+    Anahtar `oranlar.items()` sırasını **korur**. Sıralasaydık dönen sözlüğün
+    anahtar sırası değişir ve JSON gövdelerinin alan sırası sessizce oynardı;
+    korpus üçlüleri zaten hep ("1", "0", "2") sırasında kurulduğu için sıra
+    korunurken isabetten de bir şey kaybedilmiyor.
+
+    Sözlük yerine ikili demeti döner: önbellekte duran nesne **değişmez**
+    olmalı, yoksa çağıranlardan biri ötekinin sonucunu yazabilirdi.
+    """
+    oranlar = dict(cift)
     ters = {k: 1.0 / v for k, v in oranlar.items() if v and v > 0}
     toplam = sum(ters.values())
     if toplam <= 0:
-        return {}
+        return ()
     if yontem == "orantili":
-        return {k: v / toplam for k, v in ters.items()}
+        return tuple((k, v / toplam) for k, v in ters.items())
     if yontem == "guc":
         ham = _arindir_guc(ters, toplam)
     elif yontem == "shin":
@@ -161,7 +193,9 @@ def implied_probs(oranlar: Dict[str, float],
     # Kök bulucunun bıraktığı son kırıntı da atılır: çağıran taraf
     # olasılıkların tam olarak 1'e toplandığına güvenebilmeli.
     kalan = sum(ham.values())
-    return {k: v / kalan for k, v in ham.items()} if kalan > 0 else {}
+    if kalan <= 0:
+        return ()
+    return tuple((k, v / kalan) for k, v in ham.items())
 
 
 def _arindir_guc(ters: Dict[str, float], toplam: float) -> Dict[str, float]:

@@ -75,6 +75,9 @@ def test_tohum_bloklar_bilinen_optimal():
     assert len(b[(3,) * 4]) == 9       # K3(4,1)
     assert len(b[(3,) * 5]) == 27      # K3(5,1)
     assert len(b[(2, 2, 2)]) == 2      # K(3,1)
+    # Cebirsel degil, ILP ispatli (bkz. core._ILP_3322_22). Sayinin kendisi
+    # `test_donmus_ilp_blogu_hala_optimal` icinde ILP'ye yeniden sorulur.
+    assert len(b[(3, 3, 2, 2, 2, 2)]) == 20
 
 
 # ------------------------------------------------------------
@@ -106,6 +109,32 @@ def test_exact_cover_8_cifte_32():
     assert kanit is True
     assert len(cols) == 32
     assert kaplama_gecerli(cols, (2,) * 8)
+
+
+@gerek_scipy
+@pytest.mark.slow
+def test_donmus_ilp_blogu_hala_optimal():
+    """**Donmus ILP cikitisinin bekcisi.**
+
+    `core._ILP_3322_22` kaynakta duran 20 kolonluk bir kaplamadir; cebirsel
+    degil, ILP'nin bulup optimalligini ispatladigi bir sonuctur. Oraya
+    konmasinin tek sebebi bedeliydi (~17,6 sn, her kosuda yeniden).
+
+    Donmus bir sayinin sessizce eskimesi buradaki asil risk: ILP kodlamasi
+    bir gun iyilesir ve 20'nin altina inerse, tablo onu gormeden eski
+    cevabi vermeye devam ederdi. Bu test ILP'yi yeniden kosarak tam olarak
+    onu denetler — bu yuzden yavas isaretli, hizli kapiya girmez.
+    """
+    from spor_toto.core import _ILP_3322_22
+
+    sizes = (3, 3, 2, 2, 2, 2)
+    assert kaplama_gecerli(_ILP_3322_22, sizes), "donmus blok gecerli kaplama degil"
+
+    cols, kanit = exact_cover(sizes, time_limit=180)
+    assert kanit is True, "ILP optimalligi ispatlayamadi — donmus sayi dogrulanamiyor"
+    assert len(cols) == len(_ILP_3322_22) == 20, (
+        f"ILP artik {len(cols)} kolon buluyor, kaynakta {len(_ILP_3322_22)} var "
+        f"— core._ILP_3322_22 guncellenmeli")
 
 
 @gerek_scipy

@@ -59,6 +59,13 @@ def kesit(sezonlar_: Optional[Sequence[str]] = None,
        aynı çıkıyor, ama ölçüm bir tercihin yan etkisine yaslanmamalı.
     """
     haftalar = korpus_haftalari(sezonlar_=sezonlar_, yol=yol, cizgi_gerekli=True)
+    # Hafta kaydının ÜSTÜNE YAZILMAZ, kopyası alınır. `korpus_haftalari`
+    # önbellekli: aynı kayıt başka çağıranlara da gidiyor ve buradaki
+    # `probs` (kapanış) onların gördüğü `probs`u (oran_* sütunu) sessizce
+    # değiştirirdi. Sessiz olurdu çünkü ikisi bugün aynı çıkıyor — ta ki
+    # bir gün çıkmayana kadar. Bekçi:
+    # `test_egitim.py::test_korpus_haftalari_paylasilan_kaydi_korur`.
+    out: List[Girdi] = []
     for hafta in haftalar:
         probs: List[Olasilik] = []
         for ozellik in hafta["ozellikler"]:
@@ -66,8 +73,8 @@ def kesit(sezonlar_: Optional[Sequence[str]] = None,
             if not kapanis:  # pragma: no cover - cizgi_gerekli bunu engeller
                 raise ValueError("kesitte kapanis orani olmayan mac var")
             probs.append(dict(kapanis))
-        hafta["probs"] = probs
-    return haftalar
+        out.append({**hafta, "probs": probs})
+    return out
 
 
 class AcilisTahminci(Tahminci):
