@@ -141,18 +141,79 @@ def test_kismi_kosu_ayri_onbelleklenir(client):
 # ─── zaman serisi (§7.2) ─────────────────────────────────────────────────────
 
 def test_history_ucu_kosulari_biriktirir(client):
+    """Uç, geçmiş ile özeti TUTARLI biçimde birlikte veriyor mu.
+
+    Sayma mantığının kendisi burada değil, `test_health_history.py::
+    test_ozet_ne_zamandan_beri_bu_durumda`'da — orada kayıtlar elle
+    beslendiği için deterministiktir. Buradaki iş, uçtan çıkan özetin
+    yine uçtan çıkan kayıtlarla uyuşması.
+
+    `bu_durumda_kosu == 2` diye sabitlenmişti ve bu, **iki koşumun aynı
+    durumda kalacağını** varsayıyordu. Varsayım yüklü makinede tutmuyor:
+    ölçüm süreye bakan denetimler içerdiği için ilk koşum DEGRADED, ikincisi
+    HEALTHY olabiliyor ve sayı haklı olarak 1'e düşüyor. Testler paralel
+    koşmaya başlayınca (`-n auto`) bu CI'da düzenli olarak patladı.
+    Beklenen değer artık kayıtlardan **türetiliyor**; böylece test iki
+    senaryoda da ayakta kalıyor ve sayacın yanlış sayması hâlâ yakalanıyor.
+    """
     client.get("/api/health?fresh=1")
     client.get("/api/health?fresh=1")
     body = client.get("/api/health/history").get_json()
-    assert len(body["kayitlar"]) == 2
+    kayitlar = body["kayitlar"]          # en yeni başta
+    ozet = body["ozet"]
+    assert len(kayitlar) == 2
     # Yavas bir makinede durum DEGRADED olur ve bu bir basarisizlik degil
     # (gerekce: tests/test_health.py::test_health_report_dict_shape).
-    assert body["ozet"]["durum"] in ("HEALTHY", "DEGRADED")
-    assert body["ozet"]["bu_durumda_kosu"] == 2
-    assert body["ozet"]["degisim_zamani"]
+    assert ozet["durum"] in ("HEALTHY", "DEGRADED")
+    assert ozet["durum"] == kayitlar[0]["durum"]
+
+    # Son durumla aynı kalan ardışık koşum sayısı — kayıtlardan sayılır.
+    beklenen = 0
+    for k in kayitlar:
+        if k["durum"] != kayitlar[0]["durum"]:
+            break
+        beklenen += 1
+    assert 1 <= beklenen <= 2
+    assert ozet["bu_durumda_kosu"] == beklenen
+
+    # `degisim_zamani` o durumun BAŞLADIĞI koşumun zamanı: seride en yeniden
+    # geriye giderken durumun bozulmadığı SON kayıt. Eskiden yalnızca "boş
+    # değil" diye bakılıyordu; bu satır onu gerçek kayda bağlıyor.
+    assert ozet["degisim_zamani"] == kayitlar[beklenen - 1]["timestamp"]
     assert body["ornek"]["pid"]
     # En yeni kayıt başta.
-    assert body["kayitlar"][0]["timestamp"] >= body["kayitlar"][1]["timestamp"]
+    assert kayitlar[0]["timestamp"] >= kayitlar[1]["timestamp"]
+
+
+def test_history_durum_degisirse_sayac_sifirdan_baslar(client, monkeypatch):
+    """CI'da patlayan senaryonun **deterministik** hâli.
+
+    İki koşum farklı durumda biterse `bu_durumda_kosu` 1 olmalı ve
+    `degisim_zamani` en yeni kaydı göstermeli. Yukarıdaki test bunu
+    tesadüfen yakalayabilir; bu test her zaman yakalar.
+    """
+    import spor_toto.health_history as gecmis_modulu
+
+    gercek = gecmis_modulu.kaydet
+    durumlar = iter([True, False])       # once saglikli, sonra degil
+
+    def sahte_kaydet(rapor):
+        rapor = dict(rapor)
+        saglikli = next(durumlar, True)
+        rapor["ok"] = saglikli
+        rapor["degraded"] = False
+        return gercek(rapor)
+
+    monkeypatch.setattr(web_app.saglik_gecmisi, "kaydet", sahte_kaydet)
+    client.get("/api/health?fresh=1")
+    client.get("/api/health?fresh=1")
+
+    body = client.get("/api/health/history").get_json()
+    kayitlar = body["kayitlar"]
+    assert [k["durum"] for k in kayitlar] == ["UNHEALTHY", "HEALTHY"]
+    assert body["ozet"]["durum"] == "UNHEALTHY"
+    assert body["ozet"]["bu_durumda_kosu"] == 1
+    assert body["ozet"]["degisim_zamani"] == kayitlar[0]["timestamp"]
 
 
 def test_onbellekten_donen_cevap_seriye_ikinci_kez_girmez(client):
