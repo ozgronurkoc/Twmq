@@ -129,7 +129,7 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/app/super-toto/page.tsx` · `components/super-toto/haftalar.tsx` · `lib/super-toto.ts` | Sezonun hafta şeridi; `?hafta=N` adreste durur |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **1.092 test**; **82'si** istatistik katmanına (`history` `odds` `backtest`
+paketi toplam **1.116 test**; **82'si** istatistik katmanına (`history` `odds` `backtest`
 `api_stats` `api_backtest` `snapshot_iddaa`), **294'ü** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer`). Dosya adlarıyla sayılıdır ki tablo elle bakım gerektirmesin —
@@ -1274,6 +1274,82 @@ olacak — marjı %18 olan bir piyasada aynı sapmanın büyük çıkması makul
 
 > Ö3, planın "geçmezse yazılır ve bırakılır" maddesinin uygulanmasıdır.
 
+### 3.22 İddaa ekseni (Ö4) — durma kuralı yazıldı, ölçüm bekliyor
+
+**Ölçtüğümüz piyasa, oynadığımız piyasa değil.** Projenin bütün
+kalibrasyonu football-data üzerinde; kupon iddaa'da oynanıyor:
+
+| Piyasa | Marj | Nerede kullanılıyor |
+|---|---:|---|
+| football-data (`AvgC*`) | **%7,26** | A1–A6, kalibrasyon, geri test, eşikler |
+| iddaa — bayi (`odd`) | **%16,93** | kuponun gerçekten oynandığı yer |
+| iddaa — web (`wodd`) | **%21,32** | aynı bülten, ayrı fiyat |
+
+Oran **2,6 kat** ve bu önemsiz bir ayrıntı değil: marj, arındırma
+yönteminin ne kadar önemli olduğunu doğrudan belirleyen sayı. A5'in
+bulgusu (`orantili` → `shin`) düşük marjlı bir piyasada ölçüldü; yüksek
+marjlı bir piyasada aynı sorunun cevabı **aynı olmak zorunda değil**.
+
+#### Bugün elde ne var
+
+| Kaynak | Oran | Sonuç | Ölçüme girer mi |
+|---|---|---|---|
+| Bülten arşivi (`data/iddaa/*.csv`) | ✅ 469 maç | ❌ | hayır — kalibrasyon sonuç ister |
+| Kupon haftaları (`data/super_toto/2026_27/`) | ✅ iddaa | ✅ | **evet — 1 hafta, 15 maç** |
+
+Yani ölçümün yakıtı haftada **15 maç** ve bugün **bir hafta** var.
+
+#### Durma kuralı — sayı önceden yazıldı
+
+Standart iki taraflı güç hesabı (%80 güç, %5 anlamlılık). **sd
+uydurulmadı, ölçüldü:** aynı maçlarda iki arındırma yöntemi arasındaki
+hafta başına Brier farkının gerçek standart sapması, 38 haftada
+**0,00358**.
+
+| Aranan etki (Brier) | Gerekli hafta | Sezon |
+|---:|---:|---:|
+| 0,0050 | 5 | 0,1 |
+| 0,0030 | 12 | 0,3 |
+| **0,0015** | **45** | **1,1** |
+| 0,0010 | 101 | 2,5 |
+| 0,0005 | 403 | 9,8 |
+
+**Aranan etki 0,0015 seçildi ve gerekçesi ölçümden bağımsız:** A5'te
+arındırma seçimi football-data'da hafta başına 0,00059 Brier değiştirdi;
+Shin düzeltmesinin büyüklüğü marjla ölçeklenir, marj 2,6 kat, dolayısıyla
+beklenen etki ~0,0015. Bu sayı **önceden** yazılıyor ki sonuç görüldükten
+sonra "aslında daha küçüğü de sayılır" denemesin.
+
+> **Kural: 45 kupon haftası (iddaa oranı + sonuç) birikmeden kalibrasyon
+> koşulmaz.** Erken koşulup "fark yok" denmesi, gücün yetmediği bir ölçümü
+> bulgu sanmaktır. `tests/test_iddaa_hazirlik.py::test_elde_olan_veri_yetmiyor`
+> bilerek konmuş bir **tetiktir**: kırıldığı gün veri gelmiş demektir.
+
+#### Bugün ölçülebilen tek parça: bayi ↔ web
+
+Alt sorulardan biri sonuç gerektirmiyor — iki fiyatın **ayrışıp
+ayrışmadığı** yalnızca bülten arşivinden okunur (469 maç):
+
+- Marj ayrı: bayi %16,93 ↔ web %21,32 (**web daha büyük pay alıyor**).
+- Ama arındırmadan sonra en büyük sembol farkı ortalama **0,53 puan**,
+  ortanca 0,47 puan; 1 puandan çok ayrışan yalnızca **52/469 (%11,1)**.
+
+**Marj ayrı, görüş aynı.** İki fiyat aynı bültenin iki vitrini; fark
+büyük ölçüde komisyon, bilgi değil. "`odd`–`wodd` farkı sonucu öngörüyor
+mu" sorusunun ölçülecek tarafı maçların ancak %11'inde var — bu da o alt
+soruyu, ötekiler beklerken **düşük öncelikli** yapıyor.
+
+#### Neden bu eksen yine de tek gerçek uzun vadeli yatırım
+
+Geçmiş iddaa oranı **hiçbir kaynakta yayınlanmıyor**. Arşiv yalnızca
+ileriye doğru büyür ve kaçan hafta geri gelmez. `snapshot-iddaa.yml`
+haftalık koşuyor; bu iş, sonucu bir sezon sonra alınacak olsa bile
+**bugün doğru iş**.
+
+    python scripts/iddaa_hazirlik.py            # elde ne var, ne eksik
+    python scripts/iddaa_hazirlik.py --guc      # kac hafta gerekir
+    python scripts/iddaa_hazirlik.py --bayi-web # odd vs wodd
+
 ## 4. Sayfada bugün ne var
 
 **`/istatistik`** — sezon dağılımı (en sık sonuç + pay çubuğu) · 5 sayı kutusu (sembol
@@ -1394,6 +1470,7 @@ ve karşılıkları: kupon seti 0,5747 → **0,5740**, korpus 0,5940 → **0,593
 | **Karar katmanı (B0)** | 36 hafta | Seçim `P(k≤2)`'ye göre kurulunca **+6,02 puan** hedef ve **%26 daha az kolon**; eşik kuralı 35/36 haftada optimalin altında. Tahmin tarafında aynı kazanç için ~0,10 Brier gerekirdi |
 | **Handikap + alt/üst (A6)** | 31.101 maç · 183 hafta | Türetilmiş 1X2 **geçmedi**: −0,000063 [−0,000287, +0,000155]; 50/50 karışım da −0,000107 [−0,000223, +0,0000038]. Üç pazar aynı görüşün üç yüzü |
 | **Beraberlik düzeltmesi (Ö3)** | 31.103 maç · 183 hafta | Şekil gerçek (`b` dört katlamada da negatif), büyüklük yok: `bant − sabit` −0,000057 [−0,000137, +0,000021], **0/10 tohum**. Kuponda 30/540 işaret değişiyor, `P(k≤2)` her plan kendi cetveli altında ~0,05 puan kazanıyor — bilgisizliğin imzası |
+| **İddaa ekseni (Ö4)** | 469 bülten maçı · 1 kupon haftası | **Ölçülmedi, kural yazıldı.** Marj football-data %7,26 ↔ iddaa %16,93 (bayi) / %21,32 (web). Kalibrasyon için **45 kupon haftası** gerekiyor (ölçülen sd 0,00358, aranan etki 0,0015). Bugün ölçülebilen tek parça: bayi–web arındırmadan sonra ort. **0,53 puan** ayrışıyor — marj ayrı, görüş aynı |
 
 **Okuma.** Aşırı uyum modelin kapasitesinden değil örneklem küçüklüğünden geliyordu; büyük
 korpus onu kaldırdı. Ama kalan etki 0,0005–0,0015 Brier — 31 binde anlamlı, 540'ta değil ve
@@ -2131,7 +2208,7 @@ python -m spor_toto.disari                 # A3: piyasa dışı özellikler
 python -m spor_toto.tahmin                 # ÜRÜN: yaklaşan maçlara olasılık
 
 # Denetim
-pytest -q                                  # 1.092 test (82'si bu katman, 294'ü tahmin)
+pytest -q                                  # 1.116 test (82'si bu katman, 294'ü tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out
