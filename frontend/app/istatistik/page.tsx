@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 
 import { getBacktest, getStats } from "@/lib/api";
+import { useIstek } from "@/lib/istek";
 import {
   SEMBOLLER,
   type BacktestResponse,
@@ -56,10 +57,6 @@ const ARALIKLAR: Array<{ deger: number | null; etiket: string }> = [
 
 export default function IstatistikPage() {
   const [last, setLast] = React.useState<number | null>(null);
-  const [veri, setVeri] = React.useState<StatsResponse | null>(null);
-  const [mesgul, setMesgul] = React.useState(true);
-  const [hata, setHata] = React.useState<string | null>(null);
-  const [gerite, setGerite] = React.useState<BacktestResponse | null>(null);
   // Adresteki `?last=` okunana kadar istek atmiyoruz; aksi halde
   // paylasilan bir baglanti once tum sezonu cekip sonra dilime donerdi.
   const [urlOkundu, setUrlOkundu] = React.useState(false);
@@ -77,33 +74,20 @@ export default function IstatistikPage() {
 
   // Geri test ayri bir istek: tarama kapali (tek strateji ~1 sn) ve
   // basarisiz olursa sayfanin geri kalani etkilenmez — kart gorunmez.
-  React.useEffect(() => {
-    if (!urlOkundu) return;
-    const ac = new AbortController();
-    setGerite(null);
-    getBacktest({ last, sweep: false }, ac.signal)
-      .then(setGerite)
-      .catch(() => undefined);
-    return () => ac.abort();
-  }, [last, urlOkundu]);
+  const { veri: gerite, hata: geriteHatasi } = useIstek(
+    (signal) => getBacktest({ last, sweep: false }, signal),
+    [last],
+    { hazir: urlOkundu, eskiyiKoru: false },
+  );
 
-  React.useEffect(() => {
-    if (!urlOkundu) return;
-    const ac = new AbortController();
-    setMesgul(true);
-    getStats(last, ac.signal)
-      .then((d) => {
-        setVeri(d);
-        setHata(null);
-        setMesgul(false);
-      })
-      .catch((e) => {
-        if (e instanceof DOMException && e.name === "AbortError") return;
-        setHata(e instanceof Error ? e.message : String(e));
-        setMesgul(false);
-      });
-    return () => ac.abort();
-  }, [last, urlOkundu]);
+  const {
+    veri,
+    hata,
+    yukleniyor: mesgul,
+  } = useIstek((signal) => getStats(last, signal), [last], {
+    hazir: urlOkundu,
+    varsayilanHata: "İstatistik alınamadı",
+  });
 
   if (hata) {
     return (
@@ -412,6 +396,13 @@ export default function IstatistikPage() {
               </p>
             </CardBody>
           </Card>
+        ) : geriteHatasi ? (
+          /* Once bu hata `.catch(() => undefined)` ile yutuluyordu: kart
+             sessizce kayboluyor ve kullanici neden gitmis oldugunu
+             bilemiyordu. Sayfanin geri kalani hala etkilenmiyor. */
+          <Callout ton="warning" baslik="Geri test kartı gösterilemedi">
+            {geriteHatasi} — sayfanın geri kalanı bundan etkilenmez.
+          </Callout>
         ) : null}
 
         {/* Mac sirasi */}

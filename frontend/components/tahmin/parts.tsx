@@ -2,13 +2,13 @@
 
 import * as React from "react";
 
+import { SEMBOLLER } from "@/lib/types";
 import type { OlculmusIsabet, Sembol, TahminSatiri, TahminUyarisi } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { BenzerKart } from "@/components/benzer/kart";
 import { Callout, Card, CardBody, Stat } from "@/components/ui/primitives";
 import { SYM_BG, SYM_TEXT } from "@/components/istatistik/viz";
 
-const SEMBOLLER: Sembol[] = ["1", "0", "2"];
 
 const GUNLER = ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"];
 

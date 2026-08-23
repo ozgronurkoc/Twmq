@@ -2,11 +2,12 @@
 
 import * as React from "react";
 
-import { ApiError, getBenzer } from "@/lib/api";
+import { getBenzer } from "@/lib/api";
+import { useIstek } from "@/lib/istek";
+import { SEMBOLLER as SEM } from "@/lib/types";
 import type { BenzerKarne, BenzerResponse, BenzerSembol } from "@/lib/types";
 import { Badge } from "@/components/ui/primitives";
 
-const SEM = ["1", "0", "2"] as const;
 
 /**
  * "Gecmiste bu oranda ne oldu?" karti.
@@ -27,16 +28,10 @@ export function BenzerKart({
   lig?: string;
 }) {
   const [acik, setAcik] = React.useState(false);
-  // Veri, HANGI sorguya ait oldugu bilgisiyle birlikte tutulur; boylece
-  // oran degisirse eski cevap gosterilmez ve ayni oran icin ikinci kez
-  // istek atilmaz.
-  const [sonuc, setSonuc] = React.useState<{
-    anahtar: string;
-    veri: BenzerResponse;
-  } | null>(null);
-  const [hata, setHata] = React.useState<string | null>(null);
-  const [yukleniyor, setYukleniyor] = React.useState(false);
 
+  // Sorguyu belirleyen TEK sey bu anahtardir. `oranlar` her render'da yeni
+  // kimlik alabilen bir nesnedir; onu bagimlilik yapmak sonsuz donguye
+  // giden yoldu (asagidaki tarihce).
   const anahtar = oranlar
     ? `${SEM.map((s) => oranlar[s]).join(",")}|${lig ?? ""}`
     : "";
@@ -50,38 +45,29 @@ export function BenzerKart({
     yazisinda takili kaliyor ve sunucuya saniyede onlarca istek gidiyordu.
     Tip denetimi de derleme de bunu goremez — yalnizca uygulamayi
     calistirinca gorunur.
-  */
-  React.useEffect(() => {
-    if (!acik || !anahtar || !oranlar) return;
-    if (sonuc?.anahtar === anahtar) return;
-    let iptal = false;
-    const ac = new AbortController();
-    setYukleniyor(true);
-    getBenzer(oranlar, lig ? { lig } : undefined, ac.signal)
-      .then((d) => {
-        if (iptal) return;
-        setSonuc({ anahtar, veri: d });
-        setHata(null);
-      })
-      .catch((e) => {
-        if (iptal) return;
-        if (e instanceof DOMException && e.name === "AbortError") return;
-        setHata(e instanceof ApiError ? e.message : "Sorgu başarısız");
-      })
-      .finally(() => {
-        if (!iptal) setYukleniyor(false);
-      });
-    return () => {
-      iptal = true;
-      ac.abort();
-    };
-    // `sonuc` ve `oranlar` bilerek listede DEGIL: ikisi de her render'da
-    // yeni kimlik alabilir ve dongunun kaynagi tam olarak budur. Sorguyu
-    // belirleyen tek sey `anahtar`dir.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [acik, anahtar]);
 
-  const veri = sonuc?.anahtar === anahtar ? sonuc.veri : null;
+    `useIstek` bu dersi tasiyor: `getir` bir ref'te durur ve istegi ne
+    zaman yenileyecegine YALNIZCA verilen bagimliliklar karar verir.
+  */
+  // MANDAL: kart bir kez acildiktan sonra kapali iken de "hazir" kalir.
+  // Dogrudan `acik` verilseydi her kapat-ac istegi yeniden atardi; eski
+  // surumdeki `if (sonuc?.anahtar === anahtar) return;` korumasi tam olarak
+  // bunu engelliyordu ve tarayici testinde kapat-ac-kapat-ac uc istek
+  // uretti. Sorgu yalnizca ANAHTAR degisince tekrarlanmali.
+  const [hicAcildi, setHicAcildi] = React.useState(false);
+  React.useEffect(() => {
+    if (acik) setHicAcildi(true);
+  }, [acik]);
+
+  const { veri, hata, yukleniyor } = useIstek(
+    (signal) => getBenzer(oranlar as Record<string, number>, lig ? { lig } : undefined, signal),
+    [anahtar],
+    {
+      hazir: hicAcildi && !!anahtar && !!oranlar,
+      varsayilanHata: "Sorgu başarısız",
+      eskiyiKoru: false,
+    },
+  );
 
   // Orani olmayan mac icin sorulacak bir sey yok: 1/3-1/3-1/3 bir fiyat
   // degil, bilgi yoklugudur.

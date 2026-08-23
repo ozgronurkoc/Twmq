@@ -2,16 +2,8 @@
 
 import * as React from "react";
 
-import {
-  ARINDIRMA,
-  HAFTALAR,
-  HAFTA_SAYISI,
-  MAC_SAYISI,
-  SUPER_TOTO_SEZON,
-  doluHaftaSayisi,
-  haftaDoluMu,
-  sonuclananHaftaSayisi,
-} from "@/lib/super-toto";
+import { ARINDIRMA, HAFTALAR, HAFTA_SAYISI, SUPER_TOTO_SEZON, doluHaftaSayisi, haftaDoluMu, sonuclananHaftaSayisi } from "@/lib/super-toto";
+import { MAC_SAYISI } from "@/lib/types";
 import { Badge, Card, CardBody, CardHeader } from "@/components/ui/primitives";
 import { TabPanel } from "@/components/ui/tabs";
 import {

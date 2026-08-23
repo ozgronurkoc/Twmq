@@ -4,6 +4,7 @@ import * as React from "react";
 import { Check, Copy, ListFilter, RefreshCw } from "lucide-react";
 
 import { denetleKupon, getHealth, getHealthHistory } from "@/lib/api";
+import { hataMetni, iptalMi } from "@/lib/istek";
 import type {
   HealthHistoryResponse,
   HealthReport,
@@ -112,6 +113,14 @@ export default function SaglikPage() {
     );
   }, []);
 
+  /**
+   * Bu yukleyici bilerek `lib/istek.useIstek` KULLANMAZ. O kanca bildirimsel
+   * bir veri cekme icindir: bagimlilik degisir, istek kosar. Burasi ise
+   * parametreli bir EYLEM — `only`/`fresh` ile cagrilir, basariyi da
+   * basarisizligi da gecmis seridine yazar, adres cubugunu gunceller ve
+   * ardina ikinci bir istek zincirler. Kancaya zorlamak ikisini de
+   * bozardi; paylasilan sey ortak olan tek sey oldu: iptal kurali.
+   */
   const yukle = React.useCallback(
     async (only?: string | null, opt: { fresh?: boolean } = {}) => {
       istekRef.current?.abort();
@@ -143,8 +152,9 @@ export default function SaglikPage() {
           onbellekten: Boolean(r.summary.onbellek?.cached),
         });
       } catch (e) {
-        if (e instanceof DOMException && e.name === "AbortError") return;
-        const mesaj = e instanceof Error ? e.message : String(e);
+        // Iptal deyimi `lib/istek`ten: depoda uc ayri surumu vardi.
+        if (iptalMi(e, ac.signal)) return;
+        const mesaj = hataMetni(e, "Sağlık raporu alınamadı");
         setHata(mesaj);
         // Ulasilamayan bir kosu da bir kayittir — hatta zaman cizelgesinde
         // en cok gormek isteyecegin olay tam odur. Sessizce dusurmek,

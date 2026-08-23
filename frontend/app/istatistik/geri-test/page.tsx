@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
 import { getBacktest } from "@/lib/api";
-import type { BacktestResponse } from "@/lib/types";
+import { useIstek } from "@/lib/istek";
 import { cn, ondalik, sayi } from "@/lib/utils";
 import {
   Badge,
@@ -40,9 +40,6 @@ const ARALIKLAR: Array<{ deger: number | null; etiket: string }> = [
 export default function GeriTestPage() {
   const [last, setLast] = React.useState<number | null>(null);
   const [esik, setEsik] = React.useState<{ banko: number; uclu: number } | null>(null);
-  const [veri, setVeri] = React.useState<BacktestResponse | null>(null);
-  const [mesgul, setMesgul] = React.useState(true);
-  const [hata, setHata] = React.useState<string | null>(null);
   const [urlOkundu, setUrlOkundu] = React.useState(false);
 
   React.useEffect(() => {
@@ -55,23 +52,15 @@ export default function GeriTestPage() {
     aralikUrleYaz(v);
   }
 
-  React.useEffect(() => {
-    if (!urlOkundu) return;
-    const ac = new AbortController();
-    setMesgul(true);
-    getBacktest({ last, banko: esik?.banko, uclu: esik?.uclu }, ac.signal)
-      .then((d) => {
-        setVeri(d);
-        setHata(null);
-        setMesgul(false);
-      })
-      .catch((e) => {
-        if (e instanceof DOMException && e.name === "AbortError") return;
-        setHata(e instanceof Error ? e.message : String(e));
-        setMesgul(false);
-      });
-    return () => ac.abort();
-  }, [last, esik, urlOkundu]);
+  const {
+    veri,
+    hata,
+    yukleniyor: mesgul,
+  } = useIstek(
+    (signal) => getBacktest({ last, banko: esik?.banko, uclu: esik?.uclu }, signal),
+    [last, esik?.banko, esik?.uclu],
+    { hazir: urlOkundu, varsayilanHata: "Geri test alınamadı" },
+  );
 
   if (hata) {
     return (

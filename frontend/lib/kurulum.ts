@@ -6,7 +6,8 @@ import {
   type ProbRow,
   type Sembol,
 } from "./types";
-import { normalize } from "./utils";
+// `esitPay` burada `uniformProb` ile BIREBIR ayni bir govdeydi.
+import { normalize, uniformProb as esitPay } from "./utils";
 
 /**
  * Formul sayfasinin KURULUMU: 15 macin isaretleri, olasilik satirlari ve
@@ -105,15 +106,6 @@ export function varsayilanKurulum(): Kurulum {
     evidence: 10,
     mcSamples: 80000,
     eng: { ...VARSAYILAN_ENG },
-  };
-}
-
-function esitPay(sel: Sembol[]): ProbRow {
-  const pay = sel.length ? 1 / sel.length : 1 / 3;
-  return {
-    "1": sel.includes("1") ? pay : 0,
-    "0": sel.includes("0") ? pay : 0,
-    "2": sel.includes("2") ? pay : 0,
   };
 }
 

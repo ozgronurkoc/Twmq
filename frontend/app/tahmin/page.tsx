@@ -4,7 +4,7 @@ import * as React from "react";
 import { RefreshCw } from "lucide-react";
 
 import { getTahmin } from "@/lib/api";
-import type { TahminResponse } from "@/lib/types";
+import { useIstek } from "@/lib/istek";
 import {
   Button,
   Callout,
@@ -32,30 +32,11 @@ import {
  * — bu tahminci tek kolonla 14+ tutturamaz — sayfada tam metniyle durur.
  */
 export default function TahminSayfasi() {
-  const [veri, setVeri] = React.useState<TahminResponse | null>(null);
-  const [hata, setHata] = React.useState<string | null>(null);
-  const [yukleniyor, setYukleniyor] = React.useState(true);
-
-  const yukle = React.useCallback((signal?: AbortSignal) => {
-    setYukleniyor(true);
-    setHata(null);
-    getTahmin({}, signal)
-      .then((g) => {
-        setVeri(g);
-        setYukleniyor(false);
-      })
-      .catch((e: unknown) => {
-        if (signal?.aborted) return;
-        setHata(e instanceof Error ? e.message : "Tahmin alınamadı");
-        setYukleniyor(false);
-      });
-  }, []);
-
-  React.useEffect(() => {
-    const c = new AbortController();
-    yukle(c.signal);
-    return () => c.abort();
-  }, [yukle]);
+  const { veri, hata, yukleniyor, yenile } = useIstek(
+    (signal) => getTahmin({}, signal),
+    [],
+    { varsayilanHata: "Tahmin alınamadı" },
+  );
 
   return (
     <div className="mx-auto w-full max-w-[1180px] space-y-6 px-4 py-6 sm:px-6">
@@ -70,7 +51,7 @@ export default function TahminSayfasi() {
         </div>
         <Button
           tip="ghost"
-          onClick={() => yukle()}
+          onClick={yenile}
           disabled={yukleniyor}
           aria-label="Yenile"
         >

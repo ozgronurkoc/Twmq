@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, ChevronLeft, ChevronRight, Wand2 } from "lucide-react";
 
 import { getStatsWeek } from "@/lib/api";
+import { useIstek } from "@/lib/istek";
 import { DEVIR_PARAM, haftaDevret } from "@/lib/transfer";
 import { SEMBOLLER, type ProbRow, type WeekDetail } from "@/lib/types";
 import { cn, ondalik } from "@/lib/utils";
@@ -28,28 +29,19 @@ const ESIT: ProbRow = { "1": 1 / 3, "0": 1 / 3, "2": 1 / 3 };
 export default function HaftaPage({ params }: { params: { week: string } }) {
   const week = Number(params.week);
   const router = useRouter();
-  const [veri, setVeri] = React.useState<WeekDetail | null>(null);
-  const [hata, setHata] = React.useState<string | null>(null);
   const [devirHatasi, setDevirHatasi] = React.useState<string | null>(null);
 
-  React.useEffect(() => {
-    // isFinite `/istatistik/1.5`'i kabul ediyordu ve istek genel
-    // "Hafta bulunamadi" 404'une dusuyordu; hafta bir TAM sayidir.
-    if (!Number.isInteger(week)) {
-      setHata("Geçersiz hafta numarası");
-      return;
-    }
-    const ac = new AbortController();
-    setVeri(null);
-    setHata(null);
-    getStatsWeek(week, ac.signal)
-      .then(setVeri)
-      .catch((e) => {
-        if (e instanceof DOMException && e.name === "AbortError") return;
-        setHata(e instanceof Error ? e.message : String(e));
-      });
-    return () => ac.abort();
-  }, [week]);
+  // isFinite `/istatistik/1.5`'i kabul ediyordu ve istek genel
+  // "Hafta bulunamadi" 404'une dusuyordu; hafta bir TAM sayidir.
+  const gecerliHafta = Number.isInteger(week);
+  // `eskiyiKoru: false` — hafta degistiginde onceki haftanin verisi bir
+  // an icin yeni haftaninmis gibi gorunmemeli.
+  const { veri, hata: istekHatasi } = useIstek(
+    (signal) => getStatsWeek(week, signal),
+    [week],
+    { hazir: gecerliHafta, eskiyiKoru: false },
+  );
+  const hata = gecerliHafta ? istekHatasi : "Geçersiz hafta numarası";
 
   const oranliMac = veri ? Object.keys(veri.odds || {}).length : 0;
 

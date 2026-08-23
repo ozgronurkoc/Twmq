@@ -12,6 +12,7 @@
  * okunur. Ikisi bilerek ayri tutulur — biri arsiv, biri isleyen sezon.
  */
 import veri from "./super-toto-veri.json";
+import { MAC_SAYISI } from "./types";
 
 /** Uzerinde calisilan sezon. */
 export const SUPER_TOTO_SEZON = veri.season;
@@ -23,7 +24,6 @@ export const SUPER_TOTO_SEZON = veri.season;
 export const HAFTA_SAYISI = 41;
 
 /** Bir kuponun mac sayisi — motorun sabiti (backend `meta.MATCH_COUNT`). */
-export const MAC_SAYISI = 15;
 
 /** Beslemeyi ureten marj arindirma yontemi — sayfada yazar. */
 export const ARINDIRMA = veri.arindirma;

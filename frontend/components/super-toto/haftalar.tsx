@@ -9,6 +9,7 @@ import {
   type SuperTotoHafta,
   type SuperTotoMac,
 } from "@/lib/super-toto";
+import { SEMBOLLER as SEM } from "@/lib/types";
 import { Tabs, type TabItem } from "@/components/ui/tabs";
 import { Badge, Card, CardBody, CardHeader } from "@/components/ui/primitives";
 import { BenzerKart } from "@/components/benzer/kart";
@@ -88,7 +89,6 @@ export function HaftaSekmeleri({
   );
 }
 
-const SEM = ["1", "0", "2"] as const;
 
 function yuzde(v: number): string {
   return `%${(100 * v).toFixed(0)}`;
