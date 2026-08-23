@@ -67,6 +67,9 @@ def kesit(sezonlar_: Optional[Sequence[str]] = None,
     """
     haftalar = korpus_haftalari(sezonlar_=sezonlar_, yol=yol,
                                 bahisci_gerekli=True)
+    # Hafta kaydının ÜSTÜNE YAZILMAZ, kopyası alınır — gerekçe `cizgi.kesit`
+    # ile aynı: `korpus_haftalari` önbellekli, kayıt paylaşılıyor.
+    out: List[Girdi] = []
     for hafta in haftalar:
         probs: List[Olasilik] = []
         for ozellik in hafta["ozellikler"]:
@@ -74,8 +77,8 @@ def kesit(sezonlar_: Optional[Sequence[str]] = None,
             if not kolektif:  # pragma: no cover - bahisci_gerekli bunu engeller
                 raise ValueError("kesitte bahisci dortlusu olmayan mac var")
             probs.append(dict(kolektif))
-        hafta["probs"] = probs
-    return haftalar
+        out.append({**hafta, "probs": probs})
+    return out
 
 
 class BahisciTahminci(Tahminci):

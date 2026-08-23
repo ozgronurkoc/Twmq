@@ -427,6 +427,29 @@ def bahisci_ayrismasi(bahisciler: Optional[Dict[str, Optional[Dict[str, float]]]
     return {"ayrisma": ayrisma, "en_iyi_prim": prim}
 
 
+def _zamansal_ozellikli(tumu: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Korpus satırlarına form ve takvim tablolarını **bir kez** iliştir.
+
+    Form tüm korpus üzerinde, kronolojik hesaplanır; süzme SONRA gelir. Önce
+    süzseydik, seçilen sezonun ilk maçları geçmişsiz kalırdı — bu yüzden her
+    süzgeç kombinasyonu aynı iki tabloyu istiyor ve onları her seferinde
+    yeniden kurmanın hiçbir karşılığı yok (birlikte ~1,3 sn).
+
+    `korpus_yukle` önbellekli, yani satırlar çağrılar arasında aynı nesnedir
+    ve iliştirme kalıcı olur. Önbellek tahliye ederse taze bir liste gelir,
+    `_form` alanı bulunmaz ve tablolar yeniden kurulur — koşul tam olarak
+    bunun için var, bir hız kısayolu değil.
+    """
+    if tumu and "_form" in tumu[0] and "_takvim" in tumu[0]:
+        return tumu
+    formlar = _form_tablosu(tumu)
+    takvimler = _takvim_tablosu(tumu)
+    for r, f, t in zip(tumu, formlar, takvimler):
+        r["_form"] = f
+        r["_takvim"] = t
+    return tumu
+
+
 def korpus_haftalari(sezonlar_: Optional[Sequence[str]] = None,
                      ligler: Optional[Sequence[str]] = None,
                      en_az_mac: int = EN_AZ_MAC,
@@ -458,16 +481,39 @@ def korpus_haftalari(sezonlar_: Optional[Sequence[str]] = None,
     `orantili`dır ve **değiştirilmemelidir**: A1–A3'ün yayımlanmış bütün
     sayıları onunla ölçüldü. Parametre, "aynı ölçüm başka arındırmayla ne
     verir" sorusunu sormak için var — cevabı görmek isteyen açıkça ister.
-    """
-    tumu = korpus_yukle(yol)
-    # Form tum korpus uzerinde, kronolojik hesaplanir; suzme SONRA gelir.
-    # Once suzseydik, secilen sezonun ilk maclari gecmissiz kalirdi.
-    formlar = _form_tablosu(tumu)
-    takvimler = _takvim_tablosu(tumu)
-    for r, f, t in zip(tumu, formlar, takvimler):
-        r["_form"] = f
-        r["_takvim"] = t
+        Sonuç **önbelleklidir** (`_korpus_haftalari`). Bu çağrı 31.103 satırlık
+    korpusu baştan geziyor, 217.701 kez marj arındırıyor ve tek başına ~16 sn
+    sürüyor; test suitinde 27 kez, hep aynı argümanlarla koşuyordu. Korpus
+    sürümlenmiş bir dosyadır — iki çağrı arasında değişmez.
 
+    Dönen liste **paylaşılır: değiştirilmemelidir.** Bir haftanın alanını
+    değiştirmesi gereken çağıran (`cizgi.kesit`, `bahisci.kesit`) kopyasını
+    alır; `test_egitim.py::test_korpus_haftalari_paylasilan_kaydi_korur`
+    bekçidir.
+    """
+    return _korpus_haftalari(
+        tuple(sezonlar_) if sezonlar_ is not None else None,
+        tuple(ligler) if ligler is not None else None,
+        en_az_mac, yol, cizgi_gerekli, bahisci_gerekli, yontem)
+
+
+#: Önbellek tavanı. Suite'te bir avuç farklı argüman kombinasyonu var; tavan
+#: bol tutuldu ama sınırsız değil — `yol` parametresi testlerde geçici
+#: dizinlerle çağrılıyor ve sınırsız bir önbellek onları biriktirirdi.
+_HAFTA_ONBELLEK_BOYU = 64
+
+
+@lru_cache(maxsize=_HAFTA_ONBELLEK_BOYU)
+def _korpus_haftalari(sezonlar_: Optional[tuple],
+                      ligler: Optional[tuple],
+                      en_az_mac: int,
+                      yol: Optional[str],
+                      cizgi_gerekli: bool,
+                      bahisci_gerekli: bool,
+                      yontem: str) -> List[Dict[str, Any]]:
+    """`korpus_haftalari`nin önbelleklenebilir çekirdeği (dizi argümanlar demet).
+    """
+    tumu = _zamansal_ozellikli(korpus_yukle(yol))
     satirlar = tumu
     if cizgi_gerekli:
         satirlar = [r for r in satirlar if r.get("acilis") and r.get("kapanis")]

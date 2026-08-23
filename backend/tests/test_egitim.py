@@ -132,6 +132,40 @@ def test_en_az_mac_esigi_uygulanir():
     assert all(len(h["results"]) >= 50 for h in dar)
 
 
+def test_korpus_haftalari_paylasilan_kaydi_korur():
+    """**Önbelleğin bekçisi.** `korpus_haftalari` aynı listeyi geri verir.
+
+    Çağrı 31.103 satırı gezip 217.701 kez marj arındırdığı için önbelleklendi
+    (tek geçiş ~12 sn, suite'te onlarca çağrı). Bunun bedeli şu: dönen kayıt
+    artık **paylaşılıyor**. Bir çağıran bir haftanın alanını değiştirirse
+    öteki çağıranların gördüğü veri sessizce bozulur — ve sessiz olur, çünkü
+    bugün `probs` ile `kapanis_probs` aynı çıkıyor.
+
+    Kayda yazması gereken (`cizgi.kesit`, `bahisci.kesit`) kopyasını alır.
+    Bu test o kuralı korur.
+    """
+    from spor_toto import bahisci, cizgi
+
+    a = korpus_haftalari(sezonlar_=["2425"])
+    b = korpus_haftalari(sezonlar_=["2425"])
+    if not a:
+        pytest.skip("egitim korpusu yok")
+    assert a is b, "onbellek calismiyor — cagri basina yeniden hesaplaniyor"
+
+    for kesit_fn, bayrak in ((cizgi.kesit, "cizgi_gerekli"),
+                             (bahisci.kesit, "bahisci_gerekli")):
+        paylasilan = korpus_haftalari(sezonlar_=["2425"], **{bayrak: True})
+        if not paylasilan:
+            continue
+        once = [[dict(p) for p in h["probs"]] for h in paylasilan]
+        kendi = kesit_fn(sezonlar_=["2425"])
+        sonra = [[dict(p) for p in h["probs"]]
+                 for h in korpus_haftalari(sezonlar_=["2425"], **{bayrak: True})]
+        assert once == sonra, (
+            f"{kesit_fn.__module__}.kesit paylasilan kaydin uzerine yazdi")
+        assert kendi is not paylasilan
+
+
 def test_korpus_yoksa_bos_doner(tmp_path):
     yok = tmp_path / "olmayan.csv"
     assert korpus_yukle(str(yok)) == []
