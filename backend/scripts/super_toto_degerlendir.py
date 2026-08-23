@@ -34,7 +34,11 @@ from typing import Any, Dict, List, Sequence
 KOK = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(KOK))
 
-SEM = ("1", "0", "2")
+from spor_toto.core import SEMBOLLER  # noqa: E402
+
+#: Sembol duzeni TEK kaynaktan (`spor_toto.core`). Bu dosyada ayri bir
+#: demet olarak yaziliyordu; depoda ayni deger on bir kez tanimliydi.
+SEM = SEMBOLLER
 
 
 def _hafta_modulu():

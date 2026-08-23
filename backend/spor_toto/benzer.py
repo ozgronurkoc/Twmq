@@ -48,6 +48,7 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 from .egitim import korpus_yukle
 from .odds import (ARINDIRMA_VARSAYILAN, AZ_ORNEK, SEMBOLLER, implied_probs,
                    margin)
+from .ortak import wilson
 
 #: Aramanın başladığı yarıçap (olasılık puanı). Dar başlanır ki yakın maç
 #: varken uzak maç sayılmasın.
@@ -64,15 +65,10 @@ HEDEF_ORNEKLEM = 200
 COK_DILIM = 8
 
 
-def _wilson(basari: int, n: int) -> Tuple[float, float]:
-    """Oran için Wilson %95 güven aralığı.
-
-    `backtest._wilson` ile aynı formül ve aynı gerekçe: normal yaklaşım
-    küçük örneklemde kenarlara yapışır (0/30'da alt sınır eksiye iner).
-    Buraya kopyalanmadı, oradan çağrılıyor.
-    """
-    from .backtest import _wilson as _w
-    return _w(basari, n)
+#: Once `backtest._wilson`i fonksiyon govdesinden import eden bir kabuktu;
+#: `kalibrasyon` ve `scripts/super_toto_sezon` da bu kabugu import ediyordu,
+#: yani private bir sembol iki sicramayla dolasiyordu. Tek kaynak: `ortak`.
+_wilson = wilson
 
 
 def _mesafe(a: Dict[str, float], b: Dict[str, float]) -> float:

@@ -44,7 +44,11 @@ try:
 finally:
     sys.argv = _argv0
 
-S = ("1", "0", "2")
+from spor_toto.core import SEMBOLLER  # noqa: E402
+
+#: Sembol duzeni TEK kaynaktan (`spor_toto.core`). Bu dosyada ayri bir
+#: demet olarak yaziliyordu; depoda ayni deger on bir kez tanimliydi.
+S = SEMBOLLER
 d = m.hafta_yukle(_a.sezon, _a.hafta)
 ref = m.gecen_sezon_ref()
 prof = m.hafta_profili(d, ref)

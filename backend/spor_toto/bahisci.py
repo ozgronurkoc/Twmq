@@ -38,6 +38,7 @@ from typing import Any, Dict, List, Optional, Sequence
 from .egitim import korpus_haftalari
 from .history import SYMBOLS
 from .predict import Girdi, Olasilik, PiyasaTahminci, Tahminci
+from .ortak import FAVORI_DILIMLERI, bant_adi, favori_dilimi
 
 #: Kafa kafaya ölçülen tekil bahisçiler. `b_Max`/`b_Avg` burada **yok**:
 #: `b_Avg` referansın kendisi, `b_Max` ise bir bahisçi değil her ayakta en iyi
@@ -113,23 +114,13 @@ def tekil_fabrikalar() -> List[Any]:
 # ─── betimleyici ölçüm ────────────────────────────────────────────────────────
 
 def _bant_adi(ayrisma: float) -> str:
-    for esik in AYRISMA_BANTLARI:
-        if ayrisma < esik:
-            return f"<{esik:.2f}"
-    return f">={AYRISMA_BANTLARI[-1]:.2f}"
+    """Ayrismanin bandi — genel bantlama `ortak.bant_adi`de."""
+    return bant_adi(ayrisma, AYRISMA_BANTLARI)
 
 
-#: Favori olasılığı dilimleri — anlaşmazlığın karışmasını açmak için.
-#: Eşikler ölçüm sonucuna bakılmadan, kaba biçimde seçildi.
-FAVORI_DILIMLERI: Sequence[float] = (0.40, 0.50, 0.65)
-
-
-def _favori_dilimi(probs: Olasilik) -> str:
-    en_yuksek = max(probs.values()) if probs else 0.0
-    for esik in FAVORI_DILIMLERI:
-        if en_yuksek < esik:
-            return f"<{esik:.2f}"
-    return f">={FAVORI_DILIMLERI[-1]:.2f}"
+#: `disari` ile birebir ayniydi (orada bir yorum bunu itiraf ediyordu);
+#: tek kaynak artik `ortak`.
+_favori_dilimi = favori_dilimi
 
 
 def ayrisma_ozeti(haftalar: Optional[Sequence[Girdi]] = None) -> Dict[str, Any]:

@@ -34,6 +34,7 @@ from .core import (
 )
 from .history import MATCH_COUNT, SYMBOLS, normalized_weeks
 from .odds import ARINDIRMA_VARSAYILAN, match_1x2, load_odds
+from .ortak import wilson
 
 try:  # pragma: no cover - ortama bagli
     import numpy as _np
@@ -251,20 +252,9 @@ def _hafta_calistir(girdi: Dict[str, Any], banko_esik: float,
 
 # ─── sezon ────────────────────────────────────────────────────────────────────
 
-def _wilson(basari: int, n: int) -> Tuple[float, float]:
-    """Oran için Wilson %95 güven aralığı.
-
-    Normal yaklaşım 41 haftada kenarlara yapışır (ör. 40/41'de üst sınır 1'i
-    aşar); Wilson küçük örneklemde bu yüzden tercih edilir.
-    """
-    if n <= 0:
-        return 0.0, 0.0
-    z = 1.959964
-    p = basari / n
-    payda = 1 + z * z / n
-    merkez = (p + z * z / (2 * n)) / payda
-    yari = z * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / payda
-    return max(0.0, merkez - yari), min(1.0, merkez + yari)
+#: Wilson araligi artik `ortak`ta. Bu ad korunuyor cunku `benzer`,
+#: `kalibrasyon` ve `scripts/super_toto_sezon` onu buradan cagiriyordu.
+_wilson = wilson
 
 
 def _ozet(hafta_sonuclari: Sequence[Dict[str, Any]]) -> Dict[str, Any]:

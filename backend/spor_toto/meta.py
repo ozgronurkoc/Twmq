@@ -15,9 +15,10 @@ from __future__ import annotations
 from typing import Any, Dict, List, Set
 
 from .bayes import STRENGTH_PRESETS
-from .core import SEMBOLLER, HAS_SCIPY
+from .core import MAC_SAYISI, SEMBOLLER, HAS_SCIPY
 
-MATCH_COUNT = 15
+#: Kupon uzunlugu TEK kaynaktan (`core`) — ad korunuyor, deger degil.
+MATCH_COUNT = MAC_SAYISI
 
 MC_WEB_SAMPLES = 80_000
 MC_MIN, MC_MAX = 1_000, 200_000

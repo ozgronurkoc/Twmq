@@ -33,6 +33,7 @@ from typing import Any, Callable, Dict, List, Optional, Sequence
 from .backtest import hafta_girdileri
 from .history import SYMBOLS
 from .predict import REFERANS_AD, Girdi, Olasilik, Tahminci, referans_fabrikalar
+from .ortak import brier as _ortak_brier
 
 #: Log kaybında sıfır olasılığa sonsuz ceza vermemek için kırpma tabanı.
 #: Tahminci "imkânsız" dediği bir sonuç gerçekleşirse ceza büyük olmalı ama
@@ -57,15 +58,9 @@ Fabrika = Callable[[], Tahminci]
 
 # ─── tek maç ölçütleri ────────────────────────────────────────────────────────
 
-def brier(probs: Olasilik, code: str) -> float:
-    """Tek maçın Brier skoru: Σ(p_s − 1{s=gerçek})².
-
-    0 = kusursuz, 2 = tam ters. Üç sembole eşit olasılık verilirse 0,667.
-    Olasılığın tamamını cezalandırır: 0,90 verip tutturmakla 0,40 verip
-    tutturmak aynı sayılmaz.
-    """
-    return sum((probs.get(s, 0.0) - (1.0 if s == code else 0.0)) ** 2
-               for s in SYMBOLS)
+#: Brier artik `ortak`ta; `odds._brier` de ayni govdeyi tasiyordu.
+#: Ad burada korunuyor cunku disari/cizgi/bahisci/predict onu buradan alir.
+brier = _ortak_brier
 
 
 def log_kaybi(probs: Olasilik, code: str) -> float:

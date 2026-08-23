@@ -41,6 +41,7 @@ from __future__ import annotations
 from typing import Dict, List, Optional, Sequence
 
 from .core import SEMBOLLER
+from .ortak import normalize_olasilik
 
 # UI ve CLI için hazır preset'ler
 STRENGTH_PRESETS: Dict[str, Dict[str, float]] = {
@@ -52,11 +53,8 @@ STRENGTH_PRESETS: Dict[str, Dict[str, float]] = {
 }
 
 
-def _normalize(weights: Dict[str, float]) -> Dict[str, float]:
-    total = sum(max(0.0, float(weights.get(s, 0.0))) for s in SEMBOLLER)
-    if total <= 0:
-        return {s: 1.0 / 3.0 for s in SEMBOLLER}
-    return {s: max(0.0, float(weights.get(s, 0.0))) / total for s in SEMBOLLER}
+#: `markov` ile birebir ayni govdeydi; tek kaynak artik `ortak`.
+_normalize = normalize_olasilik
 
 
 def default_prior(

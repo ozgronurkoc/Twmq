@@ -42,6 +42,7 @@ from typing import Any, Dict, List, Optional, Sequence
 from .egitim import korpus_haftalari
 from .predict import Girdi, PiyasaTahminci
 from .recalibrate import A3_ALANLARI
+from .ortak import FAVORI_DILIMLERI, favori_dilimi
 
 #: Listeden elenen özellikler ve gerekçeleri. Kodda durur çünkü "denenmedi"
 #: ile "denenemez" farklı şeylerdir ve A4 bu ayrımı yazmak zorunda.
@@ -68,9 +69,6 @@ TARAMA_ESIKLERI: Dict[str, float] = {
     "sezon_sonu_pay_farki": 0.3,
 }
 
-#: Favori olasılığı dilimleri — karışmayı açmak için (`bahisci.py` ile aynı).
-FAVORI_DILIMLERI: Sequence[float] = (0.40, 0.50, 0.65)
-
 #: Bir hücrenin raporlanması için gereken en az maç.
 AZ_HUCRE = 150
 
@@ -87,12 +85,8 @@ def kesit(sezonlar_: Optional[Sequence[str]] = None,
     return korpus_haftalari(sezonlar_=sezonlar_, yol=yol)
 
 
-def _favori_dilimi(probs: Dict[str, float]) -> str:
-    en_yuksek = max(probs.values()) if probs else 0.0
-    for esik in FAVORI_DILIMLERI:
-        if en_yuksek < esik:
-            return f"<{esik:.2f}"
-    return f">={FAVORI_DILIMLERI[-1]:.2f}"
+#: `bahisci` ile birebir ayniydi; tek kaynak artik `ortak`.
+_favori_dilimi = favori_dilimi
 
 
 def artik_taramasi(haftalar: Optional[Sequence[Girdi]] = None) -> Dict[str, Any]:

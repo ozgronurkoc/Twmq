@@ -39,6 +39,7 @@ from typing import Any, Dict, List, Optional, Sequence
 from .egitim import korpus_haftalari
 from .history import SYMBOLS
 from .predict import Girdi, Olasilik, PiyasaTahminci, Tahminci
+from .ortak import bant_adi
 
 #: Hareket büyüklüğü bantları — |ln p_kapanış − ln p_açılış| toplamı üzerinden.
 #: Eşikler kaba ve **ölçüm sonucuna bakılmadan** seçildi: sonuca göre seçilseydi
@@ -99,11 +100,8 @@ class AcilisTahminci(Tahminci):
 # ─── betimleyici ölçüm ────────────────────────────────────────────────────────
 
 def _bant_adi(buyukluk: float) -> str:
-    """Hareket büyüklüğünün bandı."""
-    for esik in HAREKET_BANTLARI:
-        if buyukluk < esik:
-            return f"<{esik:.2f}"
-    return f">={HAREKET_BANTLARI[-1]:.2f}"
+    """Hareket büyüklüğünün bandı — genel bantlama `ortak.bant_adi`de."""
+    return bant_adi(buyukluk, HAREKET_BANTLARI)
 
 
 def hareket_ozeti(haftalar: Optional[Sequence[Girdi]] = None) -> Dict[str, Any]:

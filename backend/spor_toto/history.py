@@ -15,10 +15,15 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
+from .core import MAC_SAYISI, SEMBOLLER
+
 DATA_FILE = Path(__file__).resolve().parent.parent / "data" / "st_history_2025_26.json"
 
-SYMBOLS: Tuple[str, str, str] = ("1", "0", "2")
-MATCH_COUNT = 15
+#: Sembol duzeni ve kupon uzunlugu TEK kaynaktan (`core`). Bu iki ad
+#: korunuyor cunku paketin yarisi onlari buradan import ediyor; degerin
+#: kendisi artik burada tanimli DEGIL.
+SYMBOLS: Tuple[str, str, str] = SEMBOLLER
+MATCH_COUNT = MAC_SAYISI
 RECENT_WINDOW = 6
 
 

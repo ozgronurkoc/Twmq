@@ -21,13 +21,11 @@ import math
 from typing import Dict, Sequence
 
 from .core import SEMBOLLER, Encoder, Point, ball
+from .ortak import normalize_olasilik
 
 
-def _norm(p: Dict[str, float]) -> Dict[str, float]:
-    total = sum(max(0.0, float(p.get(s, 0.0))) for s in SEMBOLLER)
-    if total <= 0:
-        return {s: 1.0 / 3.0 for s in SEMBOLLER}
-    return {s: max(0.0, float(p.get(s, 0.0))) / total for s in SEMBOLLER}
+#: `bayes` ile birebir ayni govdeydi; tek kaynak artik `ortak`.
+_norm = normalize_olasilik
 
 
 def selection_survival_chain(

@@ -27,7 +27,7 @@ from spor_toto.evaluate import (
     olculebilir_haftalar,
 )
 from spor_toto.history import MATCH_COUNT, SYMBOLS
-from spor_toto.odds import BRIER_ESIT
+from spor_toto.ortak import BRIER_ESIT
 from spor_toto.predict import (
     DuzgunTahminci,
     PiyasaTahminci,

@@ -28,7 +28,11 @@ from spor_toto.backtest import _en_iyi_skor, _kaplama, secim_uret  # noqa: E402
 from spor_toto.history import normalized_weeks  # noqa: E402
 from spor_toto.odds import implied_probs, load_odds, market_odds  # noqa: E402
 
-SEM = ("1", "0", "2")
+from spor_toto.core import SEMBOLLER  # noqa: E402
+
+#: Sembol duzeni TEK kaynaktan (`spor_toto.core`). Bu dosyada ayri bir
+#: demet olarak yaziliyordu; depoda ayni deger on bir kez tanimliydi.
+SEM = SEMBOLLER
 #: Kapanış - açılış farkının (puan) bantları. Orta bant "hareket yok".
 HAREKET_BANTLARI = ((-99, -4), (-4, -2), (-2, -0.5), (-0.5, 0.5),
                     (0.5, 2), (2, 4), (4, 99))

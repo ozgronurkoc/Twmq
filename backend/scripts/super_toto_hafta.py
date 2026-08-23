@@ -41,7 +41,11 @@ from spor_toto.odds import (  # noqa: E402
     season_1x2_summary,
 )
 
-SEMBOLLER = ("1", "0", "2")
+from spor_toto.core import SEMBOLLER as _SEMBOLLER  # noqa: E402
+
+#: Sembol duzeni TEK kaynaktan (`spor_toto.core`). Bu dosyada ayri bir
+#: demet olarak yaziliyordu; depoda ayni deger on bir kez tanimliydi.
+SEMBOLLER = _SEMBOLLER
 VERI_KOK = KOK / "data" / "super_toto"
 
 

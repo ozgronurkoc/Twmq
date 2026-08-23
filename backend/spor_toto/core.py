@@ -37,7 +37,8 @@ from typing import Dict, FrozenSet, Iterable, List, Optional, Sequence, Tuple
 #: modulun kendisiyle karsilastirir; bir daha sessizce eskiyemez.
 __all__ = [
     # Sabitler ve tipler
-    "SEMBOLLER", "MAC_SAYISI", "HAMMING_BLOK_BOYU", "HAMMING_KOLON",
+    "SEMBOLLER", "MAC_SAYISI", "ORNEK_KUPON",
+    "HAMMING_BLOK_BOYU", "HAMMING_KOLON",
     "Point", "Sizes", "Row", "HAS_SCIPY",
     # Girdi ayristirma ve kodlama
     "Encoder", "parse_picks", "parse_probs", "dogrula_secimler",
@@ -62,6 +63,12 @@ SEMBOLLER: Tuple[str, str, str] = ("1", "0", "2")
 _SEMBOL_INDEX: Dict[str, int] = {s: i for i, s in enumerate(SEMBOLLER)}
 
 MAC_SAYISI = 15
+
+#: Belgelerdeki, CLI yardimindaki ve saglik kontrollerindeki ornek kupon.
+#: `cli` ve `health` bu dizgiyi ayri ayri tasiyordu; biri degistiginde
+#: otekinin haberi olmazdi ve "README'deki ornek" ile "olculen ornek"
+#: sessizce ayrisirdi.
+ORNEK_KUPON = "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"
 HAMMING_BLOK_BOYU = 7
 HAMMING_KOLON = 16
 

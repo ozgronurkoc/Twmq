@@ -18,10 +18,12 @@ from .core import (Encoder, Fix16Hatasi, HAS_SCIPY, ball,
                    butce_danismani, dogrula_kaplama,
                    exact_max_coverage, greedy_full, merge_rows, parse_picks,
                    parse_probs, solve_by_blocks, solve_fix16)
+from .core import ORNEK_KUPON
 from .engines import adaylar, en_iyi_aday, engine_params
 from .report import CIZGI, INCE, basliklar, yazdir_ve_kaydet
 
-ORNEK = "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"
+#: Tek kaynak `core.ORNEK_KUPON`; ad burada korunuyor.
+ORNEK = ORNEK_KUPON
 BAYES_PRESET_CHOICES = tuple(STRENGTH_PRESETS.keys())
 
 

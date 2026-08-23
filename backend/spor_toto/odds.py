@@ -19,6 +19,8 @@ import re
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+from .core import SEMBOLLER as _SEMBOLLER
+from .ortak import BRIER_ESIT, brier
 
 ODDS_FILE = Path(__file__).resolve().parent.parent / "data" / "odds" / "odds_2025_26.csv"
 
@@ -216,7 +218,8 @@ def margin(oranlar: Dict[str, float]) -> float:
 
 # ─── maç sonucu (1X2) — arayüze giden tek pazar ───────────────────────────────
 
-SEMBOLLER = ("1", "0", "2")
+#: Sembol duzeni TEK kaynaktan (`core`) — ad korunuyor, deger degil.
+SEMBOLLER = _SEMBOLLER
 #: Tercih sırası: piyasa ortalaması, sonra tek tek bahisçiler.
 KAYNAK_SIRASI = ("Avg", "B365", "PS", "BFE", "Max")
 
@@ -448,18 +451,12 @@ def _lig_kirilimi(oranli: List[Any], hafta_sayisi: int) -> List[Dict[str, Any]]:
 
 
 def _brier(blok: Dict[str, Any], code: str) -> float:
-    """Tek maçın Brier skoru: Σ(p_s − 1{s=gerçek})².
+    """Bir oran blogunun Brier skoru — hesap `ortak.brier`de.
 
-    0 = kusursuz tahmin, 2 = tam ters. Üç sembol eşit verilmişse (0,33 her
-    biri) skor 0,667 çıkar; piyasa bunun altında kaldığı sürece bilgi
-    taşıyor demektir.
+    `evaluate.brier` ile ayni formuldu; tek fark olasiligi `blok["probs"]`
+    icinden okumasi. Formul artik tek yerde.
     """
-    return sum((blok["probs"][s] - (1.0 if s == code else 0.0)) ** 2
-               for s in SEMBOLLER)
-
-
-#: Üç sembole eşit olasılık verildiğinde çıkan Brier skoru — referans çizgi.
-BRIER_ESIT = round(2 * (1 / 3.0) ** 2 + (1 - 1 / 3.0) ** 2, 4)
+    return brier(blok["probs"], code)
 
 
 def _haftalik_brier(oranli: List[Any]) -> List[Dict[str, Any]]:

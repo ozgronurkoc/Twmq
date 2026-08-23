@@ -38,12 +38,14 @@ from .core import (
     solve_by_blocks,
     solve_heuristic,
 )
+from .core import ORNEK_KUPON, SEMBOLLER as _SEMBOLLER
 from .analysis import match_error_frequency, monte_carlo_report
 from .bayes import posteriors_only
 from .markov import markov_report
 from .report import basliklar
 
-ORNEK = "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"
+#: Tek kaynak `core.ORNEK_KUPON`; ad burada korunuyor.
+ORNEK = ORNEK_KUPON
 
 # Mod envanteri KUCUK bir kupon uzerinde kosar: 7 cifte -> 128 nokta, alt
 # sinir 16 kolon. Sebep sure butcesi (§4.3): ayni denetim ORNEK uzerinde
@@ -55,7 +57,8 @@ MOD_BUTCE = 24   # fix16 bedeli 16 kolon; plan bu butceye sigmak zorunda
 MOD_MAXCOV_BUTCE = 8   # alt sinirin (16) ALTINDA: tam kaplama matematiksel
                        # olarak imkansiz, yani "garanti yok" ilani sinanabilir
 
-SEMBOLLER = ("1", "0", "2")
+#: Sembol duzeni TEK kaynaktan (`core`) — ad korunuyor, deger degil.
+SEMBOLLER = _SEMBOLLER
 
 
 @dataclass(frozen=True)
@@ -81,8 +84,7 @@ class KuponSinifi:
 # kotudur (§4, madde 1).
 KUPON_SINIFLARI: Tuple[KuponSinifi, ...] = (
     KuponSinifi("8 çift", ORNEK, 256, 29, 32),
-    KuponSinifi("7 çift + 8 banko", "1,1,1,1,1,1,1,10,10,10,10,10,10,10,1",
-                128, 16, 16),
+    KuponSinifi("7 çift + 8 banko", MOD_ORNEK, 128, 16, 16),
     KuponSinifi("9 çift", "1,10,10,12,0,10,2,10,1,12,02,1,10,2,10", 512, 52, 64),
     KuponSinifi("üçlü içeren", "1,10,102,12,0,10,2,10,1,12,02,1,10,2,10",
                 768, 70, 96),
@@ -913,7 +915,7 @@ def _check_tahmin_referanslari() -> str:
     import math
 
     from .evaluate import karsilastir, olculebilir_haftalar
-    from .odds import BRIER_ESIT
+    from .ortak import BRIER_ESIT
 
     kesit = olculebilir_haftalar()
     if not kesit:
