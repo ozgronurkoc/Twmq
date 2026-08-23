@@ -27,8 +27,9 @@ import importlib.util
 import json
 import math
 import sys
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any
 
 KOK = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(KOK))
@@ -47,32 +48,31 @@ VARSAYILAN_SD = 1.5
 
 
 def _modul(ad: str):
-    spec = importlib.util.spec_from_file_location(
-        f"st_{ad}", str(KOK / "scripts" / f"super_toto_{ad}.py"))
-    mod = importlib.util.module_from_spec(spec)
-    eski = sys.argv
-    sys.argv = ["x"]
-    try:
-        spec.loader.exec_module(mod)
-    finally:
-        sys.argv = eski
-    return mod
+    """Kardes betigi getirir — artik sıradan bir import.
+
+    Once `spec_from_file_location` ile dosya yolundan yukleniyordu ve
+    yuklerken `sys.argv`yi geciciyle degistiriyordu. Ikisi de gereksizdi:
+    bu dizin bir paket (`scripts/__init__.py`) ve hedef betiklerin hepsinde
+    `if __name__ == "__main__"` guard'i var, yani import etmek argparse'i
+    tetiklemiyor.
+    """
+    return importlib.import_module(f"scripts.super_toto_{ad}")
 
 
-def elde_ne_var(sezon: str = "2026_27") -> Dict[str, Any]:
+def elde_ne_var(sezon: str = "2026_27") -> dict[str, Any]:
     """İkramiye kaydı olan haftalar ve o haftaların kalabalık ölçüleri."""
     from spor_toto.backtest import VARSAYILAN_BANKO, VARSAYILAN_UCLU
 
     hafta_mod = _modul("hafta")
     sezon_mod = _modul("sezon")
 
-    satirlar: List[Dict[str, Any]] = []
+    satirlar: list[dict[str, Any]] = []
     for no in sezon_mod.haftalari_bul(sezon):
         d = hafta_mod.hafta_yukle(sezon, no)
         meta = d["meta"]
         k = hafta_mod.kupon_kur(d, VARSAYILAN_BANKO, VARSAYILAN_UCLU)
         pay = meta.get("payout")
-        kayit: Dict[str, Any] = {
+        kayit: dict[str, Any] = {
             "hafta": no,
             "crowd_ratio": k["crowd_ratio"],
             "in_set_p": k["in_set_p"],
@@ -104,7 +104,7 @@ def elde_ne_var(sezon: str = "2026_27") -> Dict[str, Any]:
 
 
 def guc_analizi(n_hafta: int, sd: float = VARSAYILAN_SD,
-                etki: float = ARANAN_ETKI) -> Dict[str, Any]:
+                etki: float = ARANAN_ETKI) -> dict[str, Any]:
     """Bu soruyu cevaplamak için kaç hafta gerekir.
 
     Basit iki taraflı güç hesabı (%80 güç, %5 anlamlılık): bir eğim
@@ -130,7 +130,7 @@ def guc_analizi(n_hafta: int, sd: float = VARSAYILAN_SD,
     }
 
 
-def rapor(sezon: str = "2026_27") -> Dict[str, Any]:
+def rapor(sezon: str = "2026_27") -> dict[str, Any]:
     d = elde_ne_var(sezon)
     n = d["ikramiyeli_hafta"]
     g = guc_analizi(n)
@@ -154,7 +154,7 @@ def rapor(sezon: str = "2026_27") -> Dict[str, Any]:
     }
 
 
-def yaz(o: Dict[str, Any]) -> None:
+def yaz(o: dict[str, Any]) -> None:
     print("=" * 78)
     print("FAZ B — HAVUZ EKSENİ")
     print("=" * 78)
@@ -168,23 +168,23 @@ def yaz(o: Dict[str, Any]) -> None:
         kb = (f"{r['kisi_basi']:,.2f}" if r.get("kisi_basi") else "—")
         print(f"{r['hafta']:>6}{cr:>13}{100*r['in_set_p']:>10.2f}%"
               f"{100*r['crowd_in_set_p']:>10.2f}%"
-              f"{str(r.get('kademe', '—')):>8}"
-              f"{str(r.get('kazanan', '—')):>9}{kb:>16}")
+              f"{r.get('kademe', '—')!s:>8}"
+              f"{r.get('kazanan', '—')!s:>9}{kb:>16}")
 
     g = o["guc"]
-    print(f"\n─── GÜÇ ANALİZİ ─────────────────────────────────────────────────────────")
+    print("\n─── GÜÇ ANALİZİ ─────────────────────────────────────────────────────────")
     print(f"  Aranan etki {g['aranan_etki']} · varsayılan sd {g['varsayilan_sd']}")
     print(f"  Gerekli hafta ≈ {g['gerekli_hafta']} "
           f"(≈ {g['gerekli_sezon']:.1f} sezon) · elde {g['eldeki_hafta']}")
-    print(f"\n  Bu, ekseni kapatmaz ama beklentiyi bugünden düzeltir: Faz B'nin")
-    print(f"  cevabı bu sezon gelmeyecek. Gelecek olan şey, verinin")
-    print(f"  BİRİKTİRİLMEYE BAŞLANMASIDIR — toplanmamış veri hiç ölçülemez.")
+    print("\n  Bu, ekseni kapatmaz ama beklentiyi bugünden düzeltir: Faz B'nin")
+    print("  cevabı bu sezon gelmeyecek. Gelecek olan şey, verinin")
+    print("  BİRİKTİRİLMEYE BAŞLANMASIDIR — toplanmamış veri hiç ölçülemez.")
 
-    print(f"\n─── BİLİNEN SINIR ───────────────────────────────────────────────────────")
+    print("\n─── BİLİNEN SINIR ───────────────────────────────────────────────────────")
     print(f"  {o['sinir']}")
 
 
-def main(argv: Optional[Sequence[str]] = None) -> None:
+def main(argv: Sequence[str] | None = None) -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--sezon", default="2026_27")
     ap.add_argument("--guc", action="store_true",

@@ -28,26 +28,23 @@ import argparse
 import importlib.util
 import json
 import sys
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Dict, List, Sequence
+from typing import Any
 
 KOK = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(KOK))
 
-SEM = ("1", "0", "2")
+from spor_toto.core import SEMBOLLER
+
+#: Sembol duzeni TEK kaynaktan (`spor_toto.core`). Bu dosyada ayri bir
+#: demet olarak yaziliyordu; depoda ayni deger on bir kez tanimliydi.
+SEM = SEMBOLLER
 
 
 def _hafta_modulu():
-    spec = importlib.util.spec_from_file_location(
-        "st_hafta", str(KOK / "scripts" / "super_toto_hafta.py"))
-    mod = importlib.util.module_from_spec(spec)
-    eski = sys.argv
-    sys.argv = ["x"]
-    try:
-        spec.loader.exec_module(mod)
-    finally:
-        sys.argv = eski
-    return mod
+    """Hafta betigi — artik siradan bir import (bkz. scripts/__init__.py)."""
+    return importlib.import_module("scripts.super_toto_hafta")
 
 
 #: Tam sayım için üst sınır. 16 satırlık kaplama kurulamadığında seçim
@@ -102,7 +99,7 @@ def en_iyi_kolon(secimler: Sequence[Sequence[str]], gercek: str) -> int:
     return en_iyi
 
 
-def kacak_dagilimi(p_kacak: Sequence[float]) -> List[float]:
+def kacak_dagilimi(p_kacak: Sequence[float]) -> list[float]:
     """Poisson-binom: bağımsız maçlarda toplam kaçak sayısının dağılımı."""
     dist = [1.0]
     for p in p_kacak:
@@ -114,7 +111,7 @@ def kacak_dagilimi(p_kacak: Sequence[float]) -> List[float]:
     return dist
 
 
-def kupon_degerlendir(d: Dict[str, Any], picks: Sequence[str]) -> Dict[str, Any]:
+def kupon_degerlendir(d: dict[str, Any], picks: Sequence[str]) -> dict[str, Any]:
     gercek = d["meta"]["results"]
     maclar = d["matches"]
     kacaklar = [i + 1 for i, (p, g) in enumerate(zip(picks, gercek)) if g not in p]
@@ -140,7 +137,7 @@ def kupon_degerlendir(d: Dict[str, Any], picks: Sequence[str]) -> Dict[str, Any]
     }
 
 
-def kupon_kiyas(d, a_picks, b_picks) -> Dict[str, Any]:
+def kupon_kiyas(d, a_picks, b_picks) -> dict[str, Any]:
     """İki kuponu maç maç karşılaştırır ve birleşimlerini ölçer.
 
     Birleşim kolonu bilerek var: "iki kupon birlikte oynansaydı" sorusu,
@@ -165,7 +162,7 @@ def kupon_kiyas(d, a_picks, b_picks) -> Dict[str, Any]:
     }
 
 
-def banko_karnesi(d, picks) -> Dict[str, Any]:
+def banko_karnesi(d, picks) -> dict[str, Any]:
     """Bankolar ne yaptı — tek işaretli maçlar kuponun kırılma noktasıdır."""
     gercek = d["meta"]["results"]
     sat = [{"no": i + 1, "mac": f"{d['matches'][i]['home']} – {d['matches'][i]['away']}",
@@ -177,7 +174,7 @@ def banko_karnesi(d, picks) -> Dict[str, Any]:
             "beklenen": sum(r["p"] for r in sat)}
 
 
-def kalabalik_karnesi(d: Dict[str, Any]) -> Dict[str, Any]:
+def kalabalik_karnesi(d: dict[str, Any]) -> dict[str, Any]:
     """Kalabalığın kuponu ne yaptı — ikramiyenin neden büyük olduğunun cevabı."""
     gercek = d["meta"]["results"]
     maclar = d["matches"]
@@ -195,7 +192,7 @@ def kalabalik_karnesi(d: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def ikramiye_ozeti(d: Dict[str, Any]) -> Dict[str, Any]:
+def ikramiye_ozeti(d: dict[str, Any]) -> dict[str, Any]:
     pay = d["meta"].get("payout")
     if not pay:
         return {}
@@ -208,8 +205,8 @@ def ikramiye_ozeti(d: Dict[str, Any]) -> Dict[str, Any]:
     return {"tiers": katlar, "currency": pay.get("currency", "TRY")}
 
 
-def yaz(d: Dict[str, Any], kupon: Dict[str, Any], sonuclar: List[Dict[str, Any]],
-        kal: Dict[str, Any], ikr: Dict[str, Any]) -> None:
+def yaz(d: dict[str, Any], kupon: dict[str, Any], sonuclar: list[dict[str, Any]],
+        kal: dict[str, Any], ikr: dict[str, Any]) -> None:
     meta = d["meta"]
     gercek = meta["results"]
     sayim = {s: gercek.count(s) for s in SEM}
@@ -226,21 +223,21 @@ def yaz(d: Dict[str, Any], kupon: Dict[str, Any], sonuclar: List[Dict[str, Any]]
               f"P(kaçak ≥ {s['miss_count']}) = %{100*s['p_at_least_actual']:.1f}")
 
     ana = sonuclar[0]
-    print(f"\n─── MAÇ MAÇ (ana kupon) ───────────────────────────────────────────────")
+    print("\n─── MAÇ MAÇ (ana kupon) ───────────────────────────────────────────────")
     for r in ana["per_match"]:
         im = "✓" if r["tuttu"] else "✗"
         at = ", ".join(f"{x}=%{100*r['p_atilan'][x]:.0f}" for x in r["atilan"]) or "—"
         print(f"  {im} {r['no']:>2} {r['mac'][:34]:<34} işaret [{r['pick']:<3}] "
               f"gerçek {r['gercek']} · attığım: {at}")
 
-    print(f"\n─── KALABALIK KARNESİ ─────────────────────────────────────────────────")
+    print("\n─── KALABALIK KARNESİ ─────────────────────────────────────────────────")
     print(f"  Halkın en çok oynadığı kupon : {kal['halk_kuponu']} → {kal['halk_dogru']}/15 doğru")
     print(f"  Piyasanın favori kuponu      : {kal['piyasa_kuponu']} → {kal['piyasa_dogru']}/15 doğru")
     print(f"  Rastgele bir halk kuponunun beklenen doğrusu : {kal['beklenen_halk_dogru']:.2f}")
     print(f"  Piyasa olasılıklarının beklediği doğru       : {kal['beklenen_piyasa_dogru']:.2f}")
 
     if ikr:
-        print(f"\n─── İKRAMİYE ──────────────────────────────────────────────────────────")
+        print("\n─── İKRAMİYE ──────────────────────────────────────────────────────────")
         for t in ikr["tiers"]:
             if t["prize"] is None:
                 print(f"  {t['correct']} bilen: çıkmadı · {t.get('rollover', 0):,.2f} TL devretti")

@@ -13,14 +13,14 @@ denetler.
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 from .backtest import VARSAYILAN_BANKO, VARSAYILAN_UCLU, backtest
 from .history import history_analytics, history_summary, history_weeks
 from .odds import season_1x2_summary
 
 
-def stats_payload(last: Optional[int] = None) -> Dict[str, Any]:
+def stats_payload(last: int | None = None) -> dict[str, Any]:
     """Tarihsel 1/0/2 + analiz bloklari + oran ozeti.
 
     `last` verilirse ozet, bantlar VE analiz bloklarinin tamami ayni dilim
@@ -45,11 +45,11 @@ def stats_payload(last: Optional[int] = None) -> Dict[str, Any]:
 
 
 def backtest_payload(
-    last: Optional[int] = None,
+    last: int | None = None,
     banko: float = VARSAYILAN_BANKO,
     uclu: float = VARSAYILAN_UCLU,
     sweep: bool = True,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Geri test govdesi: sezon + hafta hafta + (istege bagli) esik taramasi.
 
     Tarama acikken hold-out bloku da gelir; esigin o haftayi GORMEDEN

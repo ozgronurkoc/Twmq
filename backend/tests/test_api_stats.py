@@ -4,8 +4,8 @@ import pytest
 
 pytest.importorskip("flask")
 
-from web_app import app  # noqa: E402
-from spor_toto.history import MATCH_COUNT, SYMBOLS, history_weeks  # noqa: E402
+from spor_toto.history import MATCH_COUNT, SYMBOLS, history_weeks
+from web_app import app
 
 
 @pytest.fixture()
@@ -121,13 +121,13 @@ def test_karar_destek_bloklari(client):
     # Lig kirilimi: paylar toplami maclarin tamami.
     ligler = o["leagues"]
     assert ligler
-    assert sum(l["n"] for l in ligler) == o["with_odds"]
-    assert sum(l["draw"] for l in ligler) == o["outcome_totals"]["0"]
-    assert sum(l["favourite_hit"] for l in ligler) == o["favourite_hit"]
-    assert ligler == sorted(ligler, key=lambda l: (-l["n"], l["league"]))
-    for l in ligler:
-        assert l["label"], "lig etiketi bos olamaz"
-        assert 0 <= l["draw_pct"] <= 100
+    assert sum(lig["n"] for lig in ligler) == o["with_odds"]
+    assert sum(lig["draw"] for lig in ligler) == o["outcome_totals"]["0"]
+    assert sum(lig["favourite_hit"] for lig in ligler) == o["favourite_hit"]
+    assert ligler == sorted(ligler, key=lambda lig: (-lig["n"], lig["league"]))
+    for lig in ligler:
+        assert lig["label"], "lig etiketi bos olamaz"
+        assert 0 <= lig["draw_pct"] <= 100
 
 
 def test_haftalik_brier(client):
@@ -176,7 +176,7 @@ def test_hafta_detayinda_1x2_var_diger_pazarlar_yok(client):
     hafta = history_weeks()[-1]["week"]
     body = client.get(f"/api/stats/{hafta}").get_json()
     assert "odds" in body and "odds_hit" in body
-    for no, blok in body["odds"].items():
+    for _no, blok in body["odds"].items():
         assert set(blok["odds"]) == set(SYMBOLS)
         assert set(blok["probs"]) == set(SYMBOLS)
         assert abs(sum(blok["probs"].values()) - 1.0) < 1e-3

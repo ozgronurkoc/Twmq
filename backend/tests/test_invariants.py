@@ -12,13 +12,29 @@ from itertools import product
 
 import pytest
 
-from spor_toto.core import (Encoder, Fix16Hatasi, ball, distance_layers,
-                            dogrula_kaplama, hamming, merge_rows,
-                            olasilik_raporu, parse_picks, parse_probs,
-                            row_cost, rows_to_points, solve_by_blocks,
-                            solve_fix16)
-from spor_toto.report import (dagilim_satirlari, kolon_metni, olasilik_satirlari,
-                              satir_metni, yazdir_ve_kaydet)
+from spor_toto.core import (
+    Encoder,
+    Fix16Hatasi,
+    ball,
+    distance_layers,
+    dogrula_kaplama,
+    hamming,
+    merge_rows,
+    olasilik_raporu,
+    parse_picks,
+    parse_probs,
+    row_cost,
+    rows_to_points,
+    solve_by_blocks,
+    solve_fix16,
+)
+from spor_toto.report import (
+    dagilim_satirlari,
+    kolon_metni,
+    olasilik_satirlari,
+    satir_metni,
+    yazdir_ve_kaydet,
+)
 
 SEMBOL_KUMELERI = [
     ["1"], ["0"], ["2"],
@@ -162,7 +178,7 @@ def test_kaplama_ve_mesafe_tutarli(tohum):
     sizes = tuple(rng.choice([2, 3]) for _ in range(rng.randint(1, 5)))
     space = list(product(*[range(k) for k in sizes]))
     cols = rng.sample(space, rng.randint(1, len(space)))
-    worst, acik = dogrula_kaplama(cols, sizes)
+    _worst, acik = dogrula_kaplama(cols, sizes)
     dist = distance_layers(cols, sizes)
     if acik == 0:
         assert max(dist) <= 1

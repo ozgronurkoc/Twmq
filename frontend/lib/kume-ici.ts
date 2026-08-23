@@ -86,11 +86,15 @@ export function kumeIciHesapla(matches: Sembol[][], probs: ProbRow[]): KumeIci {
 
   const p = imkansizlar.length ? 0 : kutleler.reduce((a, b) => a * b, 1);
 
+  // `kutleler` `matches` ile ayni uzunlukta uretilir; yine de hizasi
+  // bozulursa o satiri "bilgi tasiyor" saymak yanlis olurdu — bilgi
+  // yoklugu iddiasi ancak butun kutleler OKUNABILDIGINDE kurulabilir.
   const kisitli = matches
     .map((sec, i) => ({ sec, kutle: kutleler[i] }))
     .filter((x) => (x.sec?.length ?? 0) < SEMBOLLER.length);
   const bilgiYok =
-    kisitli.length > 0 && kisitli.every((x) => x.kutle >= 1 - 1e-9);
+    kisitli.length > 0 &&
+    kisitli.every((x) => x.kutle !== undefined && x.kutle >= 1 - 1e-9);
 
   // Tum kutleler esitse "en zayif uc" diye bir sey YOKTUR; siralamanin
   // ilk ucunu isaretlemek onlari keyfi olarak sucluyor. Varsayilan

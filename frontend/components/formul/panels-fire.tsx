@@ -5,6 +5,7 @@ import { Flame, ShieldOff } from "lucide-react";
 
 import type { FireBlock, FireReport, SolveResult } from "@/lib/types";
 import { cn, sayi } from "@/lib/utils";
+import { TABLO_SARMAL } from "@/components/ui/tablo";
 import {
   Badge,
   Callout,
@@ -132,7 +133,7 @@ function MacTablosu({ blok, ikiKat }: { blok: FireBlock; ikiKat: boolean }) {
           toplamları genel senaryo sayısının iki katıdır.
         </Callout>
       ) : null}
-      <div className="scroll-slim overflow-x-auto">
+      <div className={TABLO_SARMAL}>
         <table className="w-full min-w-[460px] text-[12.5px]">
           <thead>
             <tr className="text-left text-[10.5px] uppercase tracking-[0.06em] text-muted-foreground">

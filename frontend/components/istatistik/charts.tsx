@@ -13,6 +13,7 @@ import {
 import { cn, ondalik } from "@/lib/utils";
 import { SEMBOL_ADI } from "@/components/ui/symbol";
 import { SYM_BG, SYM_FILL, SYM_STROKE, barPath, seqFill, seqInk } from "./viz";
+import { TABLO_BASLIK_SATIRI, TABLO_SARMAL } from "@/components/ui/tablo";
 
 /* ── ortak ──────────────────────────────────────────────────────────────── */
 
@@ -129,7 +130,15 @@ export function TrendChart({ weeks }: { weeks: WeekRow[] }) {
   const yMax = Math.max(4, ...weeks.flatMap((w) => SEMBOLLER.map((s) => w.counts[s])));
   const yTepe = Math.ceil(yMax / 2) * 2;
   const px = (i: number) => solB + (n <= 1 ? 0 : (i * (W - solB - sagB)) / (n - 1));
-  const py = (v: number) => H - altB - (v / yTepe) * (H - ustB - altB);
+  // `py` bir useMemo icinde kullaniliyor. Her render'da yeni bir kapanis
+  // olarak uretilirse bagimlilik listesine konamaz; useCallback ile kimligi
+  // `yTepe`ye baglanir. Kod zaten dogruydu (gercek bagimlilik yTepe, gerisi
+  // sabit) ama lint bunu goremiyordu ve boyle bir bosluk bir gun gercekten
+  // bayat bir deger yakalar.
+  const py = React.useCallback(
+    (v: number) => H - altB - (v / yTepe) * (H - ustB - altB),
+    [yTepe],
+  );
 
   const yEksen = React.useMemo(() => {
     const adim = yTepe > 8 ? 3 : 2;
@@ -156,13 +165,29 @@ export function TrendChart({ weeks }: { weeks: WeekRow[] }) {
   // cizgisinden kopar ve gurultu olur — o durumda efsane + ipucu tasir.
   const ucEtiket = React.useMemo(() => {
     if (!n) return [] as Array<{ sym: Sembol; y: number }>;
-    const items = SEMBOLLER.map((s) => ({ sym: s, y: py(weeks[n - 1].counts[s]) })).sort(
+    const son = weeks[n - 1];
+    if (!son) return [] as Array<{ sym: Sembol; y: number }>;
+    const items = SEMBOLLER.map((s) => ({ sym: s, y: py(son.counts[s]) })).sort(
       (a, b) => a.y - b.y,
     );
-    return items.every((it, i) => i === 0 || it.y - items[i - 1].y >= 14) ? items : [];
-  }, [weeks, n, yTepe]);
+    return items.every((it, i) => {
+      const onceki = items[i - 1];
+      return i === 0 || !onceki || it.y - onceki.y >= 14;
+    })
+      ? items
+      : [];
+  }, [weeks, n, py]);
 
-  if (!n) return <p className="text-[13px] text-muted-foreground">Hafta yok.</p>;
+  // Indeksler bir kez cozulur. `n` sifir degilse ucu da vardir, ama
+  // `noUncheckedIndexedAccess` bunu goremez; JSX icinde tek tek daraltmak
+  // okunaksiz olurdu. `!` koymak ise olmayan bir garantiyi ilan etmek olur.
+  const ilkHafta = weeks[0];
+  const sonHafta = weeks[n - 1];
+  const vurguHafta = vurgu === null ? null : (weeks[vurgu] ?? null);
+
+  if (!n || !ilkHafta || !sonHafta) {
+    return <p className="text-[13px] text-muted-foreground">Hafta yok.</p>;
+  }
 
   return (
     <div className="relative" {...olaylar}>
@@ -170,7 +195,7 @@ export function TrendChart({ weeks }: { weeks: WeekRow[] }) {
         viewBox={`0 0 ${W} ${H}`}
         className="h-auto w-full"
         role="img"
-        aria-label={`${weeks[0].week}–${weeks[n - 1].week}. haftalar arasi haftalik 1/0/2 sayilari`}
+        aria-label={`${ilkHafta.week}–${sonHafta.week}. haftalar arasi haftalik 1/0/2 sayilari`}
       >
         {yEksen.map((v) => (
           <g key={v}>
@@ -195,7 +220,7 @@ export function TrendChart({ weeks }: { weeks: WeekRow[] }) {
             fontSize={11}
             className="tnum fill-muted-foreground"
           >
-            {weeks[i].week}
+            {weeks[i]?.week}
           </text>
         ))}
 
@@ -226,7 +251,7 @@ export function TrendChart({ weeks }: { weeks: WeekRow[] }) {
           <circle
             key={s}
             cx={px(n - 1)}
-            cy={py(weeks[n - 1].counts[s])}
+            cy={py(sonHafta.counts[s] ?? 0)}
             r={4}
             className={cn(SYM_FILL[s], "stroke-card")}
             strokeWidth={2}
@@ -238,12 +263,12 @@ export function TrendChart({ weeks }: { weeks: WeekRow[] }) {
           </text>
         ))}
 
-        {vurgu !== null
+        {vurgu !== null && vurguHafta
           ? SEMBOLLER.map((s) => (
               <circle
                 key={s}
                 cx={px(vurgu)}
-                cy={py(weeks[vurgu].counts[s])}
+                cy={py(vurguHafta.counts[s] ?? 0)}
                 r={4.5}
                 className={cn(SYM_FILL[s], "stroke-card")}
                 strokeWidth={2}
@@ -252,15 +277,15 @@ export function TrendChart({ weeks }: { weeks: WeekRow[] }) {
           : null}
       </svg>
 
-      {fare && vurgu !== null ? (
+      {fare && vurgu !== null && vurguHafta ? (
         <Tooltip x={(px(vurgu) / W) * fare.w} y={fare.py} w={fare.w}>
-          <div className="mb-1 font-semibold">{weeks[vurgu].week}. hafta</div>
+          <div className="mb-1 font-semibold">{vurguHafta.week}. hafta</div>
           <div className="min-w-[128px] space-y-0.5">
             {SEMBOLLER.map((s) => (
-              <TooltipSatir key={s} sym={s} etiket={s} deger={String(weeks[vurgu].counts[s])} />
+              <TooltipSatir key={s} sym={s} etiket={s} deger={String(vurguHafta.counts[s] ?? 0)} />
             ))}
           </div>
-          <div className="mt-1 opacity-60">{weeks[vurgu].close_date}</div>
+          <div className="mt-1 opacity-60">{vurguHafta.close_date}</div>
         </Tooltip>
       ) : null}
     </div>
@@ -330,7 +355,11 @@ export function DistributionChart({
               />
             ) : null}
             {SEMBOLLER.map((s, j) => {
-              const v = distribution[s][i].weeks;
+              // Kova sayisi sembole gore ayrisirsa (govde bozuksa) o cubuk
+              // hic cizilmez; `undefined.weeks` ile cokmez.
+              const kova = distribution[s][i];
+              if (!kova) return null;
+              const v = kova.weeks;
               const x = grupX(i) + (bant - (kalinlik * 3 + 4)) / 2 + j * (kalinlik + 2);
               const h = (v / yTepe) * (H - ustB - altB);
               return <path key={s} d={barPath(x, py(v), kalinlik, h)} className={SYM_FILL[s]} />;
@@ -352,14 +381,18 @@ export function DistributionChart({
         <Tooltip x={((grupX(vurgu) + bant / 2) / W) * fare.w} y={fare.py} w={fare.w}>
           <div className="mb-1 font-semibold">Haftada {kovalar[vurgu]} adet</div>
           <div className="min-w-[150px] space-y-0.5">
-            {SEMBOLLER.map((s) => (
-              <TooltipSatir
-                key={s}
-                sym={s}
-                etiket={s}
-                deger={`${distribution[s][vurgu].weeks} hafta · %${distribution[s][vurgu].pct.toFixed(0)}`}
-              />
-            ))}
+            {SEMBOLLER.map((s) => {
+              const kova = distribution[s][vurgu];
+              if (!kova) return null;
+              return (
+                <TooltipSatir
+                  key={s}
+                  sym={s}
+                  etiket={s}
+                  deger={`${kova.weeks} hafta · %${kova.pct.toFixed(0)}`}
+                />
+              );
+            })}
           </div>
           <div className="mt-1 opacity-60">{weekCount} hafta içinden</div>
         </Tooltip>
@@ -622,10 +655,10 @@ export function FavouriteBreakdown({
 
   return (
     <div className="space-y-5">
-      <div className="scroll-slim overflow-x-auto">
+      <div className={TABLO_SARMAL}>
         <table className="w-full min-w-[520px] text-[12.5px]">
           <thead>
-            <tr className="text-left text-[11px] uppercase tracking-[0.06em] text-muted-foreground">
+            <tr className={TABLO_BASLIK_SATIRI}>
               <th scope="col" className="pb-2 pr-3 font-medium">Durum</th>
               {SEMBOLLER.map((s) => (
                 <th key={s} scope="col" className="w-20 pb-2 pr-3 text-right font-medium">
@@ -670,13 +703,13 @@ export function FavouriteBreakdown({
         </table>
       </div>
 
-      <div className="scroll-slim overflow-x-auto">
+      <div className={TABLO_SARMAL}>
         <table className="w-full min-w-[520px] text-[12.5px]">
           <caption className="mb-2 text-left text-[11px] uppercase tracking-[0.06em] text-muted-foreground">
             Favori (satır) × gerçekleşen (sütun)
           </caption>
           <thead>
-            <tr className="text-left text-[11px] uppercase tracking-[0.06em] text-muted-foreground">
+            <tr className={TABLO_BASLIK_SATIRI}>
               <th scope="col" className="pb-2 pr-3 font-medium">Favori</th>
               {SEMBOLLER.map((s) => (
                 <th key={s} scope="col" className="w-20 pb-2 pr-3 text-right font-medium">{s}</th>
@@ -765,10 +798,10 @@ export function FavouriteBands({
 
   return (
     <div className="space-y-3">
-      <div className="scroll-slim overflow-x-auto">
+      <div className={TABLO_SARMAL}>
         <table className="w-full min-w-[640px] text-[12.5px]">
           <thead>
-            <tr className="text-left text-[11px] uppercase tracking-[0.06em] text-muted-foreground">
+            <tr className={TABLO_BASLIK_SATIRI}>
               <th scope="col" className="pb-2 pr-3 font-medium">Favori oranı</th>
               <th scope="col" className="w-14 pb-2 pr-3 text-right font-medium">Maç</th>
               <th scope="col" className="w-24 pb-2 pr-3 text-right font-medium">Tuttu</th>
@@ -912,13 +945,21 @@ export function PositionHeatmap({ positions }: { positions: Analytics["positions
       {hucre ? (
         <Tooltip x={hucre.x} y={hucre.y} w={hucre.w}>
           <div className="mb-1 font-semibold">{hucre.pos}. maç</div>
-          <TooltipSatir
-            sym={hucre.sym}
-            etiket={SEMBOL_ADI[hucre.sym]}
-            deger={`%${positions[hucre.pos - 1].pct[hucre.sym].toFixed(0)} · ${
-              positions[hucre.pos - 1].counts[hucre.sym]
-            }/${positions[hucre.pos - 1].n}`}
-          />
+          {(() => {
+            // Ipucu ekranda dururken veri yenilenirse satir kaybolabilir;
+            // uc ayri indeks erisimi yerine bir kez cozulur.
+            const satir = positions[hucre.pos - 1];
+            if (!satir) return null;
+            return (
+              <TooltipSatir
+                sym={hucre.sym}
+                etiket={SEMBOL_ADI[hucre.sym]}
+                deger={`%${(satir.pct[hucre.sym] ?? 0).toFixed(0)} · ${
+                  satir.counts[hucre.sym] ?? 0
+                }/${satir.n}`}
+              />
+            );
+          })()}
         </Tooltip>
       ) : null}
     </div>
@@ -930,7 +971,7 @@ export function PositionHeatmap({ positions }: { positions: Analytics["positions
 export function TransitionMatrix({ transitions }: { transitions: Analytics["transitions"] }) {
   const enBuyuk = Math.max(1, ...SEMBOLLER.flatMap((a) => SEMBOLLER.map((b) => transitions.pct[a][b])));
   return (
-    <div className="scroll-slim overflow-x-auto">
+    <div className={TABLO_SARMAL}>
       <table className="border-separate text-center" style={{ borderSpacing: 2 }}>
         <thead>
           <tr>
@@ -1005,10 +1046,10 @@ export function SetCoverage({
 
   return (
     <div className="space-y-3">
-      <div className="scroll-slim overflow-x-auto">
+      <div className={TABLO_SARMAL}>
         <table className="w-full min-w-[620px] text-[12.5px]">
           <thead>
-            <tr className="text-left text-[11px] uppercase tracking-[0.06em] text-muted-foreground">
+            <tr className={TABLO_BASLIK_SATIRI}>
               <th scope="col" className="pb-2 pr-3 font-medium">İlk iki olasılık toplamı</th>
               <th scope="col" className="w-14 pb-2 pr-3 text-right font-medium">Maç</th>
               <th scope="col" className="w-24 pb-2 pr-3 text-right font-medium">Oran diyor</th>
@@ -1101,10 +1142,10 @@ export function DrawProfile({
 
   return (
     <div className="space-y-3">
-      <div className="scroll-slim overflow-x-auto">
+      <div className={TABLO_SARMAL}>
         <table className="w-full min-w-[600px] text-[12.5px]">
           <thead>
-            <tr className="text-left text-[11px] uppercase tracking-[0.06em] text-muted-foreground">
+            <tr className={TABLO_BASLIK_SATIRI}>
               <th scope="col" className="pb-2 pr-3 font-medium">Favori − ikinci farkı</th>
               <th scope="col" className="w-14 pb-2 pr-3 text-right font-medium">Maç</th>
               <th scope="col" className="w-28 pb-2 pr-3 text-right font-medium">Beraberlik</th>
@@ -1180,10 +1221,10 @@ export function LeagueSplit({
 
   return (
     <div className="space-y-3">
-      <div className="scroll-slim overflow-x-auto">
+      <div className={TABLO_SARMAL}>
         <table className="w-full min-w-[620px] text-[12.5px]">
           <thead>
-            <tr className="text-left text-[11px] uppercase tracking-[0.06em] text-muted-foreground">
+            <tr className={TABLO_BASLIK_SATIRI}>
               <th scope="col" className="pb-2 pr-3 font-medium">Lig</th>
               <th scope="col" className="w-14 pb-2 pr-3 text-right font-medium">Maç</th>
               <th scope="col" className="w-28 pb-2 pr-3 text-right font-medium">Kupon başına</th>

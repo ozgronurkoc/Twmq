@@ -18,21 +18,18 @@ olasiliksal risk profili verir. 14-garantiyi bozmaz.
 from __future__ import annotations
 
 import math
-from typing import Dict, List, Optional, Sequence, Tuple
+from collections.abc import Sequence
 
-from .core import SEMBOLLER, Encoder, Point, ball
+from .core import Encoder, Point, ball
+from .ortak import normalize_olasilik
 
-
-def _norm(p: Dict[str, float]) -> Dict[str, float]:
-    total = sum(max(0.0, float(p.get(s, 0.0))) for s in SEMBOLLER)
-    if total <= 0:
-        return {s: 1.0 / 3.0 for s in SEMBOLLER}
-    return {s: max(0.0, float(p.get(s, 0.0))) / total for s in SEMBOLLER}
+#: `bayes` ile birebir ayni govdeydi; tek kaynak artik `ortak`.
+_norm = normalize_olasilik
 
 
 def selection_survival_chain(
     enc: Encoder,
-    probs: Sequence[Dict[str, float]],
+    probs: Sequence[dict[str, float]],
 ) -> dict:
     """
     Durumlar: IN (tüm maçlar şimdiye kadar seçimde), OUT (emici).
@@ -40,7 +37,12 @@ def selection_survival_chain(
     Dönüş:
       p_in_after[k]: k maç sonra hâlâ IN olasılığı (k=0..15)
       p_survive: tüm 15 maç IN = p_kume_ici
-      transitions: maç bazlı P(IN→IN)
+
+    Gövde eskiden bir de `transitions` (maç bazlı p_stay/p_exit) taşırdı.
+    Kaldırıldı: onu gösteren panel bilerek silinmişti (gerekçe
+    `panels-analiz.HataButcesiPanel` doc'unda — aynı sayılar girdi
+    kartındaki kütle çubuğunda zaten canlı duruyor), yani her `/api/solve`
+    cevabında hiç kimsenin okumadığı 15 kayıt gidiyordu.
     """
     if len(probs) != enc.total_len:
         raise ValueError(
@@ -48,30 +50,22 @@ def selection_survival_chain(
 
     p_in = 1.0
     p_in_after = [1.0]
-    transitions = []
     for i, sel in enumerate(enc.selections):
         pr = _norm(probs[i])
-        p_stay = sum(pr[s] for s in sel)
-        transitions.append({
-            "mac": i + 1,
-            "p_stay": round(p_stay, 6),
-            "p_exit": round(1.0 - p_stay, 6),
-        })
-        p_in *= p_stay
+        p_in *= sum(pr[s] for s in sel)
         p_in_after.append(round(p_in, 8))
 
     return {
         "states": ["IN", "OUT"],
         "p_in_after": p_in_after,
         "p_survive": round(p_in, 8),
-        "transitions": transitions,
     }
 
 
 def error_budget_chain(
     enc: Encoder,
     cols: Sequence[Point],
-    probs: Sequence[Dict[str, float]],
+    probs: Sequence[dict[str, float]],
 ) -> dict:
     """
     Hata bütçesi Markov zinciri (0 → 1 → 2+).
@@ -112,14 +106,13 @@ def error_budget_chain(
 def _error_budget_exact(
     enc: Encoder,
     cols: Sequence[Point],
-    probs: Sequence[Dict[str, float]],
+    probs: Sequence[dict[str, float]],
 ) -> dict:
     """Değişken uzayı tarayarak min-mesafe dağılımı (küme-içi koşullu değil, tam)."""
     from itertools import product
 
     # Banko faktörü
     banko_p = 1.0
-    banko_fail = False
     for pos, sym in zip(enc.banko_pos, enc.banko_syms):
         pr = _norm(probs[pos])
         banko_p *= pr.get(sym, 0.0)
@@ -137,7 +130,6 @@ def _error_budget_exact(
         for var in product(*[range(k) for k in enc.alphabet_sizes]):
             # nokta olasılığı
             pc = banko_p
-            outcome_ok = True
             for i, pos in enumerate(enc.variable_pos):
                 sym = enc.variable_syms[i][var[i]]
                 pr = _norm(probs[pos])
@@ -183,7 +175,7 @@ def _error_budget_exact(
 def _error_budget_column_union(
     enc: Encoder,
     cols: Sequence[Point],
-    probs: Sequence[Dict[str, float]],
+    probs: Sequence[dict[str, float]],
 ) -> dict:
     """
     Buyuk uzay: d<=1 kutlesi kolonlarin r=1 toplarinin BIRLESIMI uzerinden.
@@ -256,7 +248,7 @@ def _error_budget_column_union(
 def markov_report(
     enc: Encoder,
     cols: Sequence[Point],
-    probs: Sequence[Dict[str, float]],
+    probs: Sequence[dict[str, float]],
 ) -> dict:
     """Birleşik rapor: survival + hata bütçesi."""
     survival = selection_survival_chain(enc, probs)

@@ -12,6 +12,7 @@ import type {
   TahminResponse,
   WeekDetail,
 } from "./types";
+import { SEMBOLLER } from "./types";
 
 /**
  * Bos birakilmasi KASITLIDIR: ayni origin kullanilir ve istek
@@ -210,14 +211,32 @@ export function getTahmin(
  * yaninda n ve Wilson %95 araligi gelir ve `piyasa_ga_icinde` alani asil
  * soruyu cevaplar — *piyasa sozunu tutmus mu*.
  */
+export const ARINDIRMA_YONTEMLERI = ["shin", "guc", "orantili"] as const;
+export type ArindirmaYontemi = (typeof ARINDIRMA_YONTEMLERI)[number];
+
 export function getBenzer(
   oranlar: Record<string, number>,
-  secenek?: { lig?: string; tolerans?: number },
+  secenek?: {
+    lig?: string;
+    tolerans?: number;
+    /** Marj arindirma yontemi. Sunucu varsayilani `shin`. */
+    arindirma?: ArindirmaYontemi;
+    /** Hedeflenen en az ornek — tolerans buna ulasana kadar genisler. */
+    en_az?: number;
+    sezon?: string;
+  },
   signal?: AbortSignal,
 ) {
-  const oran = ["1", "0", "2"].map((s) => oranlar[s]).join(",");
-  const q = new URLSearchParams({ oran });
+  // Sembol sirasi KUPON duzenidir (1, 0, 2), alfabetik degil.
+  const eksik = SEMBOLLER.filter((s) => !Number.isFinite(oranlar[s]));
+  if (eksik.length) {
+    throw new ApiError(`oran eksik: ${eksik.join(", ")}`, 0);
+  }
+  const q = new URLSearchParams({ oran: SEMBOLLER.map((s) => oranlar[s]).join(",") });
   if (secenek?.lig) q.set("lig", secenek.lig);
+  if (secenek?.sezon) q.set("sezon", secenek.sezon);
   if (secenek?.tolerans !== undefined) q.set("tolerans", String(secenek.tolerans));
+  if (secenek?.arindirma) q.set("arindirma", secenek.arindirma);
+  if (secenek?.en_az !== undefined) q.set("en_az", String(secenek.en_az));
   return istek<BenzerResponse>(`/api/benzer?${q}`, { signal });
 }

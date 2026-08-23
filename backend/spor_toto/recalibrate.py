@@ -36,8 +36,10 @@ Sonucu okumak için: `python -m spor_toto.recalibrate` ya da `rapor()`.
 """
 from __future__ import annotations
 
+import itertools
+from collections.abc import Sequence
 from functools import lru_cache
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -76,7 +78,7 @@ EN_AZ_ORNEK = AZ_ORNEK
 
 #: Kademe — basitten karmaşığa. Sıra kasıtlı: her basamak bir öncekine
 #: yalnızca bir özellik ekler, böylece fark o özelliğe atfedilebilir.
-KADEMELER: Tuple[str, ...] = ("sicaklik", "bias", "lig", "bant", "form",
+KADEMELER: tuple[str, ...] = ("sicaklik", "bias", "lig", "bant", "form",
                               "hareket", "dagilim",
                               "dinlenme", "sikisiklik", "ic_dis", "sezon_sonu")
 
@@ -84,7 +86,7 @@ KADEMELER: Tuple[str, ...] = ("sicaklik", "bias", "lig", "bant", "form",
 #: "pozitif = ev lehine" diye kurulmuştur (bkz. `egitim._takvim_tablosu`).
 #: Sıra `KADEMELER`in son dördüyle birebir aynı olmalıdır; her basamak
 #: listeye yalnızca bir sütun ekler.
-A3_ALANLARI: Tuple[Tuple[str, str], ...] = (
+A3_ALANLARI: tuple[tuple[str, str], ...] = (
     ("dinlenme", "dinlenme_farki"),
     ("sikisiklik", "sikisiklik_farki"),
     ("ic_dis", "ic_dis_form_farki"),
@@ -95,13 +97,13 @@ A3_ALANLARI: Tuple[Tuple[str, str], ...] = (
 # ─── özellik kaynağı ──────────────────────────────────────────────────────────
 
 @lru_cache(maxsize=1)
-def _ozellik_tablosu() -> Dict[Tuple[int, int], Dict[str, Any]]:
+def _ozellik_tablosu() -> dict[tuple[int, int], dict[str, Any]]:
     """(hafta, maç no) → lig etiketi ve favori oranı.
 
     `hafta_girdileri` yalnızca olasılık taşır; lig ve oran arşivde kalır.
     Buradan okunur, mevcut modüllerin sözleşmesi değiştirilmeden.
     """
-    out: Dict[Tuple[int, int], Dict[str, Any]] = {}
+    out: dict[tuple[int, int], dict[str, Any]] = {}
     for r in load_odds():
         blok = match_1x2(r)
         if not blok:
@@ -115,7 +117,7 @@ def _ozellik_tablosu() -> Dict[Tuple[int, int], Dict[str, Any]]:
     return out
 
 
-def _bant_adi(oran: Optional[float]) -> str:
+def _bant_adi(oran: float | None) -> str:
     """Favori oranının hangi banda düştüğü — `odds.FAVORI_BANTLARI` ile aynı."""
     if oran is None:
         return "bilinmiyor"
@@ -125,7 +127,7 @@ def _bant_adi(oran: Optional[float]) -> str:
     return "bilinmiyor"
 
 
-def _mac_ozellikleri(hafta: Girdi) -> List[Dict[str, Any]]:
+def _mac_ozellikleri(hafta: Girdi) -> list[dict[str, Any]]:
     """Bir haftanın maçları için özellik satırları — iki kaynak da desteklenir.
 
     Eğitim korpusu (`egitim.korpus_haftalari`) lig ve favori oranını haftanın
@@ -150,7 +152,7 @@ def _mac_ozellikleri(hafta: Girdi) -> List[Dict[str, Any]]:
         } for i, o in enumerate(tasinan)]
 
     tablo = _ozellik_tablosu()
-    out: List[Dict[str, Any]] = []
+    out: list[dict[str, Any]] = []
     for no in range(1, MATCH_COUNT + 1):
         ek = tablo.get((hafta["week"], no), {})
         probs = probs_listesi[no - 1] if no - 1 < len(probs_listesi) else None
@@ -163,7 +165,7 @@ def _mac_ozellikleri(hafta: Girdi) -> List[Dict[str, Any]]:
             # "bilgi yok". Sutun o macta hicbir sey yapmaz.
             "form_puan_farki": 0.0,
             "form_isabet_farki": 0.0,
-            "hareket": {s: 0.0 for s in SYMBOLS},
+            "hareket": dict.fromkeys(SYMBOLS, 0.0),
             "ayrisma": 0.0,
             **{alan: 0.0 for _, alan in A3_ALANLARI},
         })
@@ -172,7 +174,7 @@ def _mac_ozellikleri(hafta: Girdi) -> List[Dict[str, Any]]:
 
 # ─── tasarım matrisi ──────────────────────────────────────────────────────────
 
-def _tasarim_satiri(ozellik: Dict[str, Any], kademe: str,
+def _tasarim_satiri(ozellik: dict[str, Any], kademe: str,
                     ligler: Sequence[str], bantlar: Sequence[str]) -> np.ndarray:
     """Tek maçın (3 sembol × k özellik) tasarım bloğu.
 
@@ -180,7 +182,7 @@ def _tasarim_satiri(ozellik: Dict[str, Any], kademe: str,
     hangi özelliklerin girdiğini söyler.
     """
     probs = ozellik["probs"] or {s: 1.0 / len(SYMBOLS) for s in SYMBOLS}
-    sutunlar: List[List[float]] = []
+    sutunlar: list[list[float]] = []
 
     # 1) sıcaklık: log piyasa olasılığı
     sutunlar.append([np.log(max(probs.get(s, 0.0), OLASILIK_TABANI))
@@ -273,7 +275,7 @@ def _tasarim_satiri(ozellik: Dict[str, Any], kademe: str,
     return np.array(sutunlar, dtype=float).T
 
 
-def _tasarim(ozellikler: Sequence[Dict[str, Any]], kademe: str,
+def _tasarim(ozellikler: Sequence[dict[str, Any]], kademe: str,
              ligler: Sequence[str], bantlar: Sequence[str]) -> np.ndarray:
     """(n, 3, k) tasarım tensörü."""
     if not ozellikler:
@@ -355,24 +357,23 @@ class KalibreTahminci(Tahminci):
         self.kademe = kademe
         self.ad = f"kalibre_{kademe}"
         self.aciklama = f"Piyasanın lojistik yeniden kalibrasyonu ({kademe})"
-        self._theta: Optional[np.ndarray] = None
-        self._ligler: List[str] = []
-        self._bantlar: List[str] = []
+        self._theta: np.ndarray | None = None
+        self._ligler: list[str] = []
+        self._bantlar: list[str] = []
 
     # -- eğitim --------------------------------------------------------------
 
-    def _gruplari_belirle(self, ozellikler: Sequence[Dict[str, Any]]) -> None:
+    def _gruplari_belirle(self, ozellikler: Sequence[dict[str, Any]]) -> None:
         """Kendi katsayısını hak eden lig ve bantlar — **eğitim setinden**.
 
         Grup kümesi de veriden gelen bir seçimdir; ölçülen haftayı görerek
         belirlenirse sızıntı olur. Bu yüzden her katta yeniden hesaplanır.
         """
-        def yeterli(alan: str) -> List[str]:
-            sayim: Dict[str, int] = {}
+        def yeterli(alan: str) -> list[str]:
+            sayim: dict[str, int] = {}
             for o in ozellikler:
                 sayim[o[alan]] = sayim.get(o[alan], 0) + 1
-            return sorted([k for k, v in sayim.items()
-                           if v >= EN_AZ_ORNEK and k != "bilinmiyor"]) + ["diger"]
+            return [*sorted([k for k, v in sayim.items() if v >= EN_AZ_ORNEK and k != "bilinmiyor"]), "diger"]
 
         ust = ("lig", "bant", "form", "hareket", "dagilim",
                "dinlenme", "sikisiklik", "ic_dis", "sezon_sonu")
@@ -380,8 +381,8 @@ class KalibreTahminci(Tahminci):
         self._bantlar = yeterli("bant") if self.kademe in ust[1:] else []
 
     def egit(self, haftalar: Sequence[Girdi]) -> None:
-        ozellikler: List[Dict[str, Any]] = []
-        kodlar: List[str] = []
+        ozellikler: list[dict[str, Any]] = []
+        kodlar: list[str] = []
         for hafta in haftalar:
             satirlar = _mac_ozellikleri(hafta)
             for k, kod in enumerate(hafta["results"]):
@@ -402,10 +403,10 @@ class KalibreTahminci(Tahminci):
 
     # -- tahmin --------------------------------------------------------------
 
-    def tahmin(self, hafta: Girdi) -> List[Olasilik]:
+    def tahmin(self, hafta: Girdi) -> list[Olasilik]:
         satirlar = _mac_ozellikleri(hafta)
         esit = {s: 1.0 / len(SYMBOLS) for s in SYMBOLS}
-        out: List[Olasilik] = []
+        out: list[Olasilik] = []
         for satir in satirlar:
             piyasa = satir["probs"]
             if self._theta is None or piyasa is None:
@@ -417,7 +418,7 @@ class KalibreTahminci(Tahminci):
         return out
 
     @property
-    def katsayilar(self) -> Optional[List[float]]:
+    def katsayilar(self) -> list[float] | None:
         """Uydurulmuş katsayılar — tanılama ve test için."""
         return None if self._theta is None else [float(v) for v in self._theta]
 
@@ -433,7 +434,7 @@ EN_AZ_KOVA = 1000
 
 
 def _pav(x: Sequence[float], y: Sequence[float],
-         w: Sequence[float]) -> List[float]:
+         w: Sequence[float]) -> list[float]:
     """Ağırlıklı PAV (pool-adjacent-violators) — monoton artan en iyi uyum.
 
     Komşu iki blok sırayı bozuyorsa birleştirilir ve ağırlıklı ortalamaları
@@ -444,7 +445,7 @@ def _pav(x: Sequence[float], y: Sequence[float],
     # Her blok: [toplam agirlikli y, toplam agirlik, kac kovayi yuttu].
     # Kova adedi agirliktan geri hesaplanmaz, acikca tasinir — agirliklar
     # kesirli oldugunda geri hesap kayardi.
-    bloklar: List[List[float]] = []
+    bloklar: list[list[float]] = []
     for yi, wi in zip(y, w):
         bloklar.append([yi * wi, wi, 1])
         while len(bloklar) > 1:
@@ -454,7 +455,7 @@ def _pav(x: Sequence[float], y: Sequence[float],
             bloklar[-2] = [onceki[0] + son[0], onceki[1] + son[1],
                            onceki[2] + son[2]]
             bloklar.pop()
-    out: List[float] = []
+    out: list[float] = []
     for toplam, agirlik, adet in bloklar:
         out.extend([toplam / agirlik] * int(adet))
     return out
@@ -484,11 +485,11 @@ class IzotonikTahminci(Tahminci):
 
     def __init__(self, en_az_kova: int = EN_AZ_KOVA) -> None:
         self.en_az_kova = en_az_kova
-        self._x: List[float] = []
-        self._y: List[float] = []
+        self._x: list[float] = []
+        self._y: list[float] = []
 
     def egit(self, haftalar: Sequence[Girdi]) -> None:
-        noktalar: List[Tuple[float, float]] = []
+        noktalar: list[tuple[float, float]] = []
         for hafta in haftalar:
             kodlar = hafta.get("results") or ""
             for k, blok in enumerate(hafta["probs"]):
@@ -509,10 +510,10 @@ class IzotonikTahminci(Tahminci):
         kova_sayisi = max(1, len(noktalar) // self.en_az_kova)
         sinirlar = [round(i * len(noktalar) / kova_sayisi)
                     for i in range(kova_sayisi + 1)]
-        x: List[float] = []
-        y: List[float] = []
-        w: List[float] = []
-        for bas, son in zip(sinirlar, sinirlar[1:]):
+        x: list[float] = []
+        y: list[float] = []
+        w: list[float] = []
+        for bas, son in itertools.pairwise(sinirlar):
             kova = noktalar[bas:son]
             if not kova:
                 continue
@@ -545,9 +546,9 @@ class IzotonikTahminci(Tahminci):
                 return y0 + (y1 - y0) * (p - x0) / (x1 - x0)
         return self._y[-1]
 
-    def tahmin(self, hafta: Girdi) -> List[Olasilik]:
+    def tahmin(self, hafta: Girdi) -> list[Olasilik]:
         esit = {s: 1.0 / len(SYMBOLS) for s in SYMBOLS}
-        out: List[Olasilik] = []
+        out: list[Olasilik] = []
         for blok in hafta["probs"]:
             if not blok or not self._x:
                 out.append(dict(blok) if blok else dict(esit))
@@ -560,19 +561,19 @@ class IzotonikTahminci(Tahminci):
         return out
 
     @property
-    def egri(self) -> List[Tuple[float, float]]:
+    def egri(self) -> list[tuple[float, float]]:
         """Uydurulmuş eğri — tanılama ve test için (piyasa p, düzeltilmiş p)."""
         return list(zip(self._x, self._y))
 
 
-def kademe_fabrikalari() -> List[Any]:
+def kademe_fabrikalari() -> list[Any]:
     """Kademenin her basamağı için bir fabrika."""
     return [(lambda k=k: KalibreTahminci(k)) for k in KADEMELER]
 
 
 # ─── rapor ────────────────────────────────────────────────────────────────────
 
-def rapor(last: Optional[int] = None) -> Dict[str, Any]:
+def rapor(last: int | None = None) -> dict[str, Any]:
     """Kademeyi piyasaya karşı koştur ve sonucu döndür.
 
     Bu fonksiyon bir öneri üretmez; yalnızca `evaluate.karsilastir`'ın
@@ -582,11 +583,11 @@ def rapor(last: Optional[int] = None) -> Dict[str, Any]:
     from .evaluate import karsilastir
     from .predict import PiyasaTahminci
 
-    fabrikalar = [PiyasaTahminci] + kademe_fabrikalari()
+    fabrikalar = [PiyasaTahminci, *kademe_fabrikalari()]
     return karsilastir(fabrikalar, last=last)
 
 
-def _yazdir(sonuc: Dict[str, Any]) -> None:  # pragma: no cover - elle kullanim
+def _yazdir(sonuc: dict[str, Any]) -> None:  # pragma: no cover - elle kullanim
     print(f"kesit: {sonuc['n_hafta']} hafta · {sonuc['n_mac']} maç "
           f"· referans: {sonuc['referans']}")
     print(f"{'tahminci':<20} {'brier':>8} {'log':>8} {'fark':>9} "

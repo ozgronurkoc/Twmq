@@ -1,8 +1,13 @@
-"""Oran arşivi okuyucu — analiz katmanı için, arayüz için değil.
+"""Oran arşivi okuyucu.
 
-Bu modül hiçbir API ucuna, sayfaya ya da motor akışına bağlı DEĞİLDİR.
-``scripts/build_odds.py`` ile üretilen arşivi ileride yapılacak analizin
-kolayca okuyabilmesi için durur.
+``scripts/build_odds.py`` ile üretilen arşivi okur.
+
+**Arayüze yalnızca MAÇ SONUCU (1X2) çıkar.** Bu modül bir zamanlar hiçbir
+API ucuna bağlı değildi ve baş yorumu hâlâ öyle diyordu; artık öyle değil:
+``web_app`` ``week_1x2``i, ``payloads.stats_payload`` ``season_1x2_summary``i
+ve ``backtest`` ``match_1x2``yi çağırıyor. Arşivdeki **diğer pazarlar**
+(2,5 alt/üst, Asya handikap) ve maç istatistikleri API'ye hiç girmez;
+onlar analiz için durur.
 
     from spor_toto.odds import load_odds, market_odds
     rows = load_odds()                       # maç başına tek satır
@@ -18,7 +23,10 @@ import math
 import re
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
+
+from .core import SEMBOLLER as _SEMBOLLER
+from .ortak import BRIER_ESIT, brier
 
 ODDS_FILE = Path(__file__).resolve().parent.parent / "data" / "odds" / "odds_2025_26.csv"
 
@@ -30,18 +38,18 @@ KIMLIK_ALANLARI = {
 _SAYI = re.compile(r"^-?\d+(\.\d+)?$")
 
 
-def _sayi(ham: str) -> Optional[float]:
+def _sayi(ham: str) -> float | None:
     ham = (ham or "").strip()
     return float(ham) if _SAYI.match(ham) else None
 
 
 @lru_cache(maxsize=1)
-def load_odds(path: Optional[str] = None) -> List[Dict[str, Any]]:
+def load_odds(path: str | None = None) -> list[dict[str, Any]]:
     """Arşivi satır satır okur. Dosya yoksa boş liste döner (hata değil)."""
     yol = Path(path) if path else ODDS_FILE
     if not yol.exists():
         return []
-    out: List[Dict[str, Any]] = []
+    out: list[dict[str, Any]] = []
     with open(yol, encoding="utf-8", newline="") as fh:
         for r in csv.DictReader(fh):
             oranlar = {
@@ -69,15 +77,15 @@ def load_odds(path: Optional[str] = None) -> List[Dict[str, Any]]:
     return out
 
 
-def odds_for(week: int, no: int) -> Optional[Dict[str, Any]]:
+def odds_for(week: int, no: int) -> dict[str, Any] | None:
     for r in load_odds():
         if r["week"] == week and r["no"] == no:
             return r
     return None
 
 
-def market_odds(row: Dict[str, Any], market: str = "1X2", book: str = "Avg",
-                closing: bool = True) -> Dict[str, float]:
+def market_odds(row: dict[str, Any], market: str = "1X2", book: str = "Avg",
+                closing: bool = True) -> dict[str, float]:
     """Bir maçın tek pazarını sembol anahtarlı sözlüğe indirger.
 
     market: "1X2" | "2.5" | "AH"  ·  book: "Avg", "Max", "B365", "PS", …
@@ -126,8 +134,8 @@ _ARINDIRMA_ADIM = 60
 _ONBELLEK_BOYU = 1 << 18
 
 
-def implied_probs(oranlar: Dict[str, float],
-                  yontem: str = ARINDIRMA_VARSAYILAN) -> Dict[str, float]:
+def implied_probs(oranlar: dict[str, float],
+                  yontem: str = ARINDIRMA_VARSAYILAN) -> dict[str, float]:
     """Marjı (overround) atarak oranları 1'e normalize edilmiş olasılığa çevirir.
 
     Üç yöntem var ve **hangisinin seçildiği sonucu değiştirir**:
@@ -157,9 +165,18 @@ def implied_probs(oranlar: Dict[str, float],
     return dict(_arindirilmis(tuple(oranlar.items()), yontem))
 
 
+#: **Ölçülmüş sıcak nokta.** `shin` kök bulucusu 60 ikiye bölme adımı koşar
+#: ve her adım üç karekök alır; korpus üzerinde profillendiğinde
+#: `korpus_haftalari`nin süresinin **%92'si** buradaydı (217.685 çağrı,
+#: 39,7 sn) ve korpusta aynı oran üçlüsü %42 oranında tekrar ediyordu.
+#:
+#: Önbellek sonucu **bit birebir** korur — aynı girdi, aynı kayan nokta
+#: işlemleri. Adım sayısını düşürmek ya da `_dagilim`in içindeki sabitleri
+#: dışarı almak da hızlandırırdı ama ikisi de son basamağı oynatabilirdi;
+#: yayımlanmış ölçümlerin arkasındaki sayılar değişmemeli.
 @lru_cache(maxsize=_ONBELLEK_BOYU)
-def _arindirilmis(cift: Tuple[Tuple[str, float], ...],
-                  yontem: str) -> Tuple[Tuple[str, float], ...]:
+def _arindirilmis(cift: tuple[tuple[str, float], ...],
+                  yontem: str) -> tuple[tuple[str, float], ...]:
     """`implied_probs`in saf çekirdeği — yalnızca önbelleklenebilsin diye ayrı.
 
     Arındırma **saf**tır: aynı oran üçlüsü hep aynı olasılığı verir. Shin kök
@@ -198,7 +215,7 @@ def _arindirilmis(cift: Tuple[Tuple[str, float], ...],
     return tuple((k, v / kalan) for k, v in ham.items())
 
 
-def _arindir_guc(ters: Dict[str, float], toplam: float) -> Dict[str, float]:
+def _arindir_guc(ters: dict[str, float], toplam: float) -> dict[str, float]:
     """``p ∝ (1/o)^k``; ``k`` ikiye bölmeyle çözülür.
 
     ``Σ(1/o)^k`` ``k``'ye göre kesin azalandır (her taban 1'den küçük), yani
@@ -218,7 +235,7 @@ def _arindir_guc(ters: Dict[str, float], toplam: float) -> Dict[str, float]:
     return {s: v ** k for s, v in ters.items()}
 
 
-def _arindir_shin(ters: Dict[str, float], toplam: float) -> Dict[str, float]:
+def _arindir_shin(ters: dict[str, float], toplam: float) -> dict[str, float]:
     """Shin (1993) marj arındırması.
 
     ``p_i = (√(z² + 4(1−z)·q_i²/Σq) − z) / (2(1−z))``; ``z`` toplamı 1 yapan
@@ -229,7 +246,7 @@ def _arindir_shin(ters: Dict[str, float], toplam: float) -> Dict[str, float]:
         return dict(ters)
     q = list(ters.values())
 
-    def _dagilim(z: float) -> List[float]:
+    def _dagilim(z: float) -> list[float]:
         return [(math.sqrt(z * z + 4 * (1 - z) * x * x / toplam) - z)
                 / (2 * (1 - z)) for x in q]
 
@@ -243,28 +260,32 @@ def _arindir_shin(ters: Dict[str, float], toplam: float) -> Dict[str, float]:
     return dict(zip(ters.keys(), _dagilim((alt + ust) / 2)))
 
 
-def margin(oranlar: Dict[str, float]) -> float:
+def margin(oranlar: dict[str, float]) -> float:
     """Bültenin marjı (overround): ``Σ(1/o) − 1``. Arındırmadan bağımsızdır."""
     return sum(1.0 / v for v in oranlar.values() if v and v > 0) - 1.0
 
 
 # ─── maç sonucu (1X2) — arayüze giden tek pazar ───────────────────────────────
 
-SEMBOLLER = ("1", "0", "2")
+#: Sembol duzeni TEK kaynaktan (`core`) — ad korunuyor, deger degil.
+SEMBOLLER = _SEMBOLLER
 #: Tercih sırası: piyasa ortalaması, sonra tek tek bahisçiler.
 KAYNAK_SIRASI = ("Avg", "B365", "PS", "BFE", "Max")
 
 
-def match_1x2(row: Dict[str, Any],
-              yontem: str = ARINDIRMA_VARSAYILAN) -> Optional[Dict[str, Any]]:
+def match_1x2(row: dict[str, Any],
+              yontem: str = ARINDIRMA_VARSAYILAN) -> dict[str, Any] | None:
     """Bir maçın maç sonucu oranı: önce kapanış, yoksa açılış.
 
     Hangi kaynaktan, hangi dönemden ve **hangi arındırmayla** geldiği çıktıda
     yazar — sayının nereden geldiği belirsiz kalmamalı.
 
-    `yontem` varsayılanı `orantili`dır ve arşivin yayımlanmış bütün sayıları
-    onunla üretildi; başka bir değer ancak açıkça istendiğinde kullanılır
-    (A5, bkz. `implied_probs`).
+    `yontem` varsayılanı `ARINDIRMA_VARSAYILAN`dır (bugün **`shin`**).
+    Burada bir zamanlar "varsayılanı `orantili`dır" yazıyordu; A5 ölçümünden
+    sonra varsayılan değişti ama bu satır kaldı. Arşivin **çevrimden önce**
+    yayımlanmış sayıları orantısal ölçekte ölçülmüştür ve yenileriyle
+    doğrudan kıyaslanamaz (bkz. `implied_probs` ve `ARINDIRMA_VARSAYILAN`
+    üstündeki not).
     """
     if not row.get("matched"):
         return None
@@ -288,9 +309,9 @@ def match_1x2(row: Dict[str, Any],
     return None
 
 
-def week_1x2(week: int) -> Dict[int, Dict[str, Any]]:
+def week_1x2(week: int) -> dict[int, dict[str, Any]]:
     """Bir haftanın maç numarasına göre 1X2 blokları (oranı olmayanlar yok)."""
-    out: Dict[int, Dict[str, Any]] = {}
+    out: dict[int, dict[str, Any]] = {}
     for r in load_odds():
         if r["week"] != week:
             continue
@@ -305,14 +326,14 @@ FAVORI_BANTLARI = ((1.0, 1.20), (1.20, 1.35), (1.35, 1.50),
                    (1.50, 1.75), (1.75, 2.00), (2.00, 99.0))
 
 
-def _favori_bantlari(oranli: List[Any]) -> List[Dict[str, Any]]:
+def _favori_bantlari(oranli: list[Any]) -> list[dict[str, Any]]:
     """Favorinin oranına göre: kaç maçta tuttu, kaçında tutmadı.
 
     ``tutmadı`` iki parçaya ayrılır — beraberlik ve karşı tarafın kazanması —
     çünkü banko kararında bunlar farklı riskler: beraberlik her maçta masada,
     karşı tarafın kazanması ise favorinin gerçekten yanılmasıdır.
     """
-    out: List[Dict[str, Any]] = []
+    out: list[dict[str, Any]] = []
     for lo, hi in FAVORI_BANTLARI:
         grup = [(r, b) for r, b in oranli if lo <= min(b["odds"].values()) < hi]
         n = len(grup)
@@ -352,20 +373,20 @@ FARK_BANTLARI = ((0.0, 0.05), (0.05, 0.15), (0.15, 0.30),
                  (0.30, 0.50), (0.50, 1.01))
 
 
-def _sirali_olasilik(blok: Dict[str, Any]) -> List[Tuple[str, float]]:
+def _sirali_olasilik(blok: dict[str, Any]) -> list[tuple[str, float]]:
     """Sembolleri olasılığa göre büyükten küçüğe; eşitlikte kupon düzeni."""
     return sorted(blok["probs"].items(),
                   key=lambda kv: (-kv[1], SEMBOLLER.index(kv[0])))
 
 
-def _kume_kapsama(oranli: List[Any]) -> List[Dict[str, Any]]:
+def _kume_kapsama(oranli: list[Any]) -> list[dict[str, Any]]:
     """Çift (ilk iki sembol) işaretlemek sonucu ne sıklıkla kapsıyor.
 
     Her bant için üç sayı yan yana durur: piyasanın **söylediği** kapsama
     (ilk iki olasılığın toplamı), **gerçekleşen** kapsama ve aynı bantta
     banko yapılsaydı ne olacağı. Çift mi banko mu kararı bu üçlünün işidir.
     """
-    out: List[Dict[str, Any]] = []
+    out: list[dict[str, Any]] = []
     for lo, hi in CIFT_BANTLARI:
         grup = []
         for r, b in oranli:
@@ -393,14 +414,14 @@ def _kume_kapsama(oranli: List[Any]) -> List[Dict[str, Any]]:
     return out
 
 
-def _beraberlik_profili(oranli: List[Any]) -> List[Dict[str, Any]]:
+def _beraberlik_profili(oranli: list[Any]) -> list[dict[str, Any]]:
     """Favori ile ikincinin arası açıldıkça beraberlik ne yapıyor.
 
     Sinyal var ama zayıf: bu bir **gösterge**dir, tahminci değildir. Model
     sütunu bilerek yanında durur — piyasa zaten beraberliğe bir olasılık
     veriyor ve tabloda asıl soru, o olasılığın tutup tutmadığı.
     """
-    out: List[Dict[str, Any]] = []
+    out: list[dict[str, Any]] = []
     for lo, hi in FARK_BANTLARI:
         grup = []
         for r, b in oranli:
@@ -432,7 +453,7 @@ def _beraberlik_profili(oranli: List[Any]) -> List[Dict[str, Any]]:
 #: dosyaları zaten "Sweden/Allsvenskan" gibi okunur bir ad taşır. Tabloda
 #: kod görünmesin diye çeviri burada durur; eşleşmeyen değer olduğu gibi
 #: geçer — uydurma ad üretilmez.
-LIG_ADLARI: Dict[str, str] = {
+LIG_ADLARI: dict[str, str] = {
     "E0": "İngiltere · Premier Lig", "E1": "İngiltere · Championship",
     "E2": "İngiltere · League One", "E3": "İngiltere · League Two",
     "EC": "İngiltere · National League",
@@ -448,19 +469,19 @@ LIG_ADLARI: Dict[str, str] = {
 }
 
 
-def _lig_kirilimi(oranli: List[Any], hafta_sayisi: int) -> List[Dict[str, Any]]:
+def _lig_kirilimi(oranli: list[Any], hafta_sayisi: int) -> list[dict[str, Any]]:
     """Lig lig beraberlik oranı ve favori isabeti.
 
     Lig etiketi oran arşivinden gelir (kupon payload'ı lig adı taşımaz).
     BOM hatası kapanana kadar bu alan 539 maçta boştu; etiketsiz satırlar
     gizlenmez, "bilinmiyor" olarak sayılır.
     """
-    gruplar: Dict[str, List[Any]] = {}
+    gruplar: dict[str, list[Any]] = {}
     for r, b in oranli:
         ad = (r["source"].get("league") or "").strip() or "bilinmiyor"
         gruplar.setdefault(ad, []).append((r, b))
 
-    out: List[Dict[str, Any]] = []
+    out: list[dict[str, Any]] = []
     for ad, grup in gruplar.items():
         n = len(grup)
         beraberlik = sum(1 for r, _ in grup if r["code"] == "0")
@@ -481,22 +502,16 @@ def _lig_kirilimi(oranli: List[Any], hafta_sayisi: int) -> List[Dict[str, Any]]:
     return out
 
 
-def _brier(blok: Dict[str, Any], code: str) -> float:
-    """Tek maçın Brier skoru: Σ(p_s − 1{s=gerçek})².
+def _brier(blok: dict[str, Any], code: str) -> float:
+    """Bir oran blogunun Brier skoru — hesap `ortak.brier`de.
 
-    0 = kusursuz tahmin, 2 = tam ters. Üç sembol eşit verilmişse (0,33 her
-    biri) skor 0,667 çıkar; piyasa bunun altında kaldığı sürece bilgi
-    taşıyor demektir.
+    `evaluate.brier` ile ayni formuldu; tek fark olasiligi `blok["probs"]`
+    icinden okumasi. Formul artik tek yerde.
     """
-    return sum((blok["probs"][s] - (1.0 if s == code else 0.0)) ** 2
-               for s in SEMBOLLER)
+    return brier(blok["probs"], code)
 
 
-#: Üç sembole eşit olasılık verildiğinde çıkan Brier skoru — referans çizgi.
-BRIER_ESIT = round(2 * (1 / 3.0) ** 2 + (1 - 1 / 3.0) ** 2, 4)
-
-
-def _haftalik_brier(oranli: List[Any]) -> List[Dict[str, Any]]:
+def _haftalik_brier(oranli: list[Any]) -> list[dict[str, Any]]:
     """Hafta hafta "piyasa ne kadar yanıldı".
 
     Favori isabeti tek başına yanıltıcıdır: 1,05 oranlı favorinin tutması
@@ -504,11 +519,11 @@ def _haftalik_brier(oranli: List[Any]) -> List[Dict[str, Any]]:
     tamamını cezalandırır, bu yüzden sürpriz haftayı isabet sayısından
     daha dürüst gösterir.
     """
-    gruplar: Dict[int, List[Any]] = {}
+    gruplar: dict[int, list[Any]] = {}
     for r, b in oranli:
         gruplar.setdefault(r["week"], []).append((r, b))
 
-    out: List[Dict[str, Any]] = []
+    out: list[dict[str, Any]] = []
     for hafta, grup in sorted(gruplar.items()):
         n = len(grup)
         toplam = sum(_brier(b, r["code"]) for r, b in grup)
@@ -525,7 +540,7 @@ def _haftalik_brier(oranli: List[Any]) -> List[Dict[str, Any]]:
     return out
 
 
-def season_1x2_summary(weeks: Optional[List[int]] = None) -> Optional[Dict[str, Any]]:
+def season_1x2_summary(weeks: list[int] | None = None) -> dict[str, Any] | None:
     """Dilim için oran özeti: kapsama, favori isabeti, marj ve kalibrasyon.
 
     ``weeks`` verilirse yalnızca o haftalar sayılır — arayüzdeki aralık
@@ -571,7 +586,7 @@ def season_1x2_summary(weeks: Optional[List[int]] = None) -> Optional[Dict[str, 
     bantlar = _favori_bantlari(oranli)
 
     # Kalibrasyon: modelin verdiği olasılık ile gerçekleşme yan yana.
-    kovalar: Dict[int, Dict[str, float]] = {}
+    kovalar: dict[int, dict[str, float]] = {}
     for r, b in oranli:
         for s in SEMBOLLER:
             p = b["probs"][s]
@@ -626,7 +641,7 @@ def season_1x2_summary(weeks: Optional[List[int]] = None) -> Optional[Dict[str, 
     }
 
 
-def coverage() -> Dict[str, Any]:
+def coverage() -> dict[str, Any]:
     rows = load_odds()
     eslesen = [r for r in rows if r["matched"]]
     return {

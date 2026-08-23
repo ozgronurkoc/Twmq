@@ -3,8 +3,14 @@
 import * as React from "react";
 import { AlertTriangle } from "lucide-react";
 
-import { SEMBOLLER, type SolveResult } from "@/lib/types";
+import {
+  SEMBOLLER,
+  atlandiMi,
+  type AtlandiBlok,
+  type SolveResult,
+} from "@/lib/types";
 import { cn, ondalik, sayi } from "@/lib/utils";
+import { TABLO_BASLIK_SATIRI, TABLO_SARMAL } from "@/components/ui/tablo";
 import {
   Badge,
   Callout,
@@ -44,10 +50,10 @@ export function OlasilikPanel({ r }: { r: SolveResult }) {
           title="Exact vs Monte Carlo"
           hint={`Monte Carlo ${sayi(mc.n_samples)} denemeyle simüle edildi; ± değerleri %95 güven aralığıdır. İki sütunun yakın olması hesabın tutarlı olduğunu gösterir.`}
         />
-        <CardBody className="scroll-slim overflow-x-auto">
+        <CardBody className={TABLO_SARMAL}>
           <table className="w-full min-w-[520px] text-[12.5px]">
             <thead>
-              <tr className="text-left text-[11px] uppercase tracking-[0.06em] text-muted-foreground">
+              <tr className={TABLO_BASLIK_SATIRI}>
                 <th className="pb-2 pr-3 font-medium">Olay</th>
                 <th className="pb-2 pr-3 text-right font-medium">Exact</th>
                 <th className="pb-2 pr-3 text-right font-medium">Monte Carlo</th>
@@ -192,7 +198,7 @@ export function BayesPanel({ r }: { r: SolveResult }) {
 
       <Card>
         <CardHeader title="Maç bazlı prior → posterior" />
-        <CardBody className="scroll-slim overflow-x-auto">
+        <CardBody className={TABLO_SARMAL}>
           <table className="w-full min-w-[760px] text-[12px]">
             <thead>
               <tr className="text-left text-[10.5px] uppercase tracking-[0.06em] text-muted-foreground">
@@ -276,6 +282,8 @@ export function BayesPanel({ r }: { r: SolveResult }) {
 export function HataButcesiPanel({ r }: { r: SolveResult }) {
   const m = r.markov;
   if (!m) return null;
+  // Hesap dustuyse sebebi GORUNUR olur; sessizce kaybolmaz.
+  if (atlandiMi(m)) return <BlokAtlandi baslik="Hata bütçesi" blok={m} />;
   const eb = m.error_budget;
   const kapsamaEksik = eb.tam_kaplama === false;
 
@@ -389,6 +397,7 @@ export function HataButcesiPanel({ r }: { r: SolveResult }) {
 export function HataFrekansPanel({ r }: { r: SolveResult }) {
   const ef = r.error_freq;
   if (!ef) return null;
+  if (atlandiMi(ef)) return <BlokAtlandi baslik="Hata dağılımı" blok={ef} />;
 
   const bolum = (
     baslik: string,
@@ -492,5 +501,20 @@ export function BosPanel({
         </div>
       </CardBody>
     </Card>
+  );
+}
+
+/**
+ * Bir analiz blogu hesaplanamadiginda gosterilen kart.
+ *
+ * Bu bilesenin varlik sebebi: sunucu once bu durumda sessizce `null`
+ * gonderiyordu ve panel hic cizilmiyordu — kullanici icin "bozuk" ile
+ * "bilerek atlandi" ayni goruntuydu.
+ */
+function BlokAtlandi({ baslik, blok }: { baslik: string; blok: AtlandiBlok }) {
+  return (
+    <Callout ton="warning" baslik={`${baslik} hesaplanamadı`}>
+      {blok.reason}
+    </Callout>
   );
 }

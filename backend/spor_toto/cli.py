@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 import sys
 import time
-from typing import List, Optional, Sequence
+from collections.abc import Sequence
 
 from . import __version__
 from .bayes import (
@@ -14,14 +14,23 @@ from .bayes import (
     bayes_update_matches,
     recommend_strengths,
 )
-from .core import (Encoder, Fix16Hatasi, HAS_SCIPY, ball,
-                   butce_danismani, dogrula_kaplama,
-                   exact_max_coverage, greedy_full, merge_rows, parse_picks,
-                   parse_probs, solve_by_blocks, solve_fix16)
-from .engines import adaylar, en_iyi_aday, engine_params
+from .core import (
+    HAS_SCIPY,
+    ORNEK_KUPON,
+    Encoder,
+    Fix16Hatasi,
+    dogrula_kaplama,
+    merge_rows,
+    parse_picks,
+    parse_probs,
+    solve_by_blocks,
+    solve_fix16,
+)
+from .engines import ButceSigmazHatasi, adaylar, en_iyi_aday, engine_params, run_butce, run_maxcov
 from .report import CIZGI, INCE, basliklar, yazdir_ve_kaydet
 
-ORNEK = "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"
+#: Tek kaynak `core.ORNEK_KUPON`; ad burada korunuyor.
+ORNEK = ORNEK_KUPON
 BAYES_PRESET_CHOICES = tuple(STRENGTH_PRESETS.keys())
 
 
@@ -82,7 +91,7 @@ def _apply_bayes(enc: Encoder, args) -> None:
     summary = bayes_summary(updates)
     args.bayes_info = [
         f"Bayes           : Dirichlet posterior (preset={preset_name})",
-        f"  Kaynak        : bayes_posterior",
+        "  Kaynak        : bayes_posterior",
         f"  Prior α       : {prior_s}  ·  Evidence n : {evid_s}",
         f"  Ort. KL       : {summary['mean_kl_prior_post']}  "
         f"({summary.get('mean_kl_label', '')})",
@@ -139,30 +148,34 @@ def _mod_butce(enc: Encoder, args) -> None:
         print("Mevcut kupon sabit 16 satir modu icin uygun degil "
               "(7 cifteden az).")
 
-    planlar = butce_danismani(enc, args.budget, args.parsed_probs, en_fazla=args.plan)
-    if not planlar:
+    # Plan uretimi, secim, yeniden kodlama ve cozum `engines.run_butce`ta.
+    # Buradaki kopya ayni diziyi yuruyordu; CLI yalnizca SUNUM katmanidir.
+    try:
+        r = run_butce(enc, args.budget, args.parsed_probs,
+                      plan_count=args.plan, plan_apply=args.plan_uygula,
+                      variant=args.variant)
+    except ButceSigmazHatasi:
         print(f"\n{args.budget} kolonluk butceye sigan bir plan bulunamadi.")
         print("Daha fazla maci bankoya cevirmen ya da butceyi artirman gerekiyor.")
         return
 
+    planlar, idx = r["planlar"], r["secili_index"]
     print(f"\n{len(planlar)} plan bulundu (en az feda edenden siraliyla):\n")
     for i, pl in enumerate(planlar, 1):
-        p = f"  kume-ici olasilik %{100 * pl.p_kume_ici:.2f}" if pl.p_kume_ici else ""
-        print(f"Plan {i}: {pl.bedel} kolon / {pl.satir} satir{p}")
+        ek = f"  kume-ici olasilik %{100 * pl.p_kume_ici:.2f}" if pl.p_kume_ici else ""
+        print(f"Plan {i}: {pl.bedel} kolon / {pl.satir} satir{ek}")
         for d in pl.degisiklikler:
             print(f"   - {d}")
         if not pl.degisiklikler:
             print("   - (degisiklik yok)")
         print()
 
-    secili = planlar[min(args.plan_uygula, len(planlar)) - 1]
+    secili = planlar[idx]
     print(INCE)
-    print(f"Plan {min(args.plan_uygula, len(planlar))} uygulaniyor "
-          f"(--plan-uygula ile degistirebilirsin).")
+    print(f"Plan {idx + 1} uygulaniyor (--plan-uygula ile degistirebilirsin).")
     print(INCE)
-    yeni_enc = Encoder(secili.selections)
-    cols, aciklama = solve_fix16(yeni_enc, variant=args.variant)
-    yazdir_ve_kaydet(yeni_enc, cols,
+    _, aciklama = solve_fix16(r["enc"], variant=args.variant)
+    yazdir_ve_kaydet(r["enc"], r["cols"],
                      f"Butce plani ({secili.bedel} kolon) - {aciklama}",
                      args.output,
                      [f"Uygulanan degisiklikler: {'; '.join(secili.degisiklikler) or 'yok'}"],
@@ -180,16 +193,14 @@ def _mod_maxcov(enc: Encoder, args) -> None:
               f"= %{100 * tavan / enc.space_size():.1f}")
         print("   14-GARANTI IMKANSIZ (sayma argumani). Kapsama maksimize edilecek.\n")
 
-    cols, kapsanan, kanit = exact_max_coverage(
-        enc.alphabet_sizes, args.budget, args.time_limit)
-    if cols is None:
-        print("   Kesin cozucu kullanilamadi, acgozlu cozume dusuluyor.")
-        import random
-        g = greedy_full(list(enc.variable_space()), enc.alphabet_sizes,
-                        random.Random(args.seed))
-        cols = g[:args.budget]
-        kapsanan = len({q for c in cols for q in ball(c, enc.alphabet_sizes)})
-        kanit = False
+    # Algoritma `engines.run_maxcov`ta (kesin cozucu -> acgozlu duse ->
+    # kapsama yeniden sayimi). Buradaki kopya ayni isi yapiyordu ama farkli
+    # varsayilanlarla. CLI yalnizca SUNUM katmanidir: notlar ASCII kalir
+    # cunku terminal ciktisinin tamami boyle (bkz. report.py).
+    r = run_maxcov(enc, args.budget, time_limit=args.time_limit, seed=args.seed)
+    cols, kapsanan, kanit = r["cols"], r["kapsanan"], r["kanit"]
+    if not kanit:
+        print("   Kesin cozucu kanit uretmedi (zaman siniri ya da scipy yok).")
 
     notlar = [
         f"Kapsanan nokta: {kapsanan}/{enc.space_size()} "
@@ -236,7 +247,7 @@ def _mod_genel(enc: Encoder, args) -> None:
     en_iyi = en_iyi_aday(liste)
     cols, baslik = en_iyi.cols, en_iyi.baslik
 
-    notlar: List[str] = []
+    notlar: list[str] = []
     if len(cols) == enc.lower_bound():
         notlar.append("Alt sinira esit -> KANITLANMIS OPTIMAL")
     elif en_iyi.kanit:
@@ -342,7 +353,7 @@ yazilir. '1' banko ev sahibi, '10' cifte, '102' kapama (uclu).
     return p
 
 
-def main(argv: Optional[Sequence[str]] = None) -> int:
+def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
     t0 = time.time()

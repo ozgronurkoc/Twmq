@@ -27,7 +27,7 @@ ORNEK = "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"
 
 
 def _uniform_probs(n: int = 15):
-    return [{s: 1.0 / 3.0 for s in SEMBOLLER} for _ in range(n)]
+    return [dict.fromkeys(SEMBOLLER, 1.0 / 3.0) for _ in range(n)]
 
 
 def test_picks_bos():
@@ -171,3 +171,86 @@ def test_mc_kucuk_n_warning():
     mc = monte_carlo_report(enc, cols, _uniform_probs(15), n_samples=5, seed=1)
     assert mc["n_samples"] == 5
     assert "warning" in mc
+
+
+# ── Olasilik ayristirmada CLI/API ayrimi ────────────────────────────────
+#
+# Iki ayristirici ayni girdiye BILEREK farkli cevap verir (gerekce:
+# `web_app._parse_prob_value` docstring'i). Ayrim belgelenmisti ama hicbir
+# test onu tutmuyordu; yani biri digerine dogru kayarsa kimse fark etmezdi.
+# Asagidaki uc cift o ayrimin kendisini kilitler.
+
+def _api_probs(satirlar, sel):
+    flask = pytest.importorskip("flask")  # noqa: F841
+    from web_app import _parse_json_probs
+    return _parse_json_probs({"probs": satirlar}, sel)
+
+
+def test_ayrim_negatif_olasilik():
+    """CLI reddeder, API sifira kirpar."""
+    sel = [["1", "0", "2"]] * 15
+    with pytest.raises(ValueError, match=r"[Nn]egatif"):
+        parse_probs(";".join(["1:-0.5,0:0.3,2:0.2"] * 15), sel)
+
+    out = _api_probs([{"1": -0.5, "0": 0.3, "2": 0.2}] * 15, sel)
+    assert out[0]["1"] == 0.0
+    assert out[0]["0"] == pytest.approx(0.6)
+
+
+def test_ayrim_satirin_tamami_sifir():
+    """CLI reddeder, API secim kumesine esit dagitir."""
+    sel = [["1", "0"]] * 15
+    with pytest.raises(ValueError, match="sifir"):
+        parse_probs(";".join(["1:0,0:0,2:0"] * 15), sel)
+
+    out = _api_probs([{"1": 0, "0": 0, "2": 0}] * 15, sel)
+    assert out[0] == {"1": 0.5, "0": 0.5, "2": 0.0}, \
+        "isaretlenmemis sembole kutle verilmemeli"
+
+
+def test_ayrim_yuzde_sezgisi():
+    """API `>1` degeri yuzde sayar; CLI saymaz. Ikisi de 1'e normalize eder."""
+    sel = [["1", "0", "2"]] * 15
+    cli = parse_probs(";".join(["1:50,0:30,2:20"] * 15), sel)
+    api = _api_probs([{"1": 50, "0": 30, "2": 20}] * 15, sel)
+    # Olcek degismezligi: tek basina bu satir ikisini ayirmaz.
+    assert cli[0]["1"] == pytest.approx(0.5)
+    assert api[0]["1"] == pytest.approx(0.5)
+
+    # Ayrim KARISIK olcekte gorunur: API once hepsini yuzde sanip boler.
+    karisik = _api_probs([{"1": 50, "0": 0.3, "2": 0.2}] * 15, sel)
+    assert karisik[0]["1"] == pytest.approx(0.5)
+    cli_karisik = parse_probs(";".join(["1:50,0:0.3,2:0.2"] * 15), sel)
+    assert cli_karisik[0]["1"] == pytest.approx(50 / 50.5)
+    assert karisik[0]["1"] != pytest.approx(cli_karisik[0]["1"])
+
+
+# ── "N dogru" etiketleri kupon uzunlugundan okunur ──────────────────────
+
+def test_etiketler_15_sabitine_bagli_degil():
+    """`Encoder(kati=False)` 15'ten kisa kupona izin verir.
+
+    Etiketler once `15 - d` ile uretiliyordu; 14 macli bir kuponda butun
+    "N dogru" etiketleri bir kayiyordu — cokme degil, YANLIS SAYI, yani
+    fark edilmesi en zor tur. Monte Carlo kovalari, API'nin `dist` blogu ve
+    konsol raporu ayni sabiti tasiyordu.
+    """
+    from spor_toto.core import distance_layers, solve_fix16
+    from spor_toto.report import dagilim_satirlari
+
+    sel = [["1", "0"]] * 7 + [["1"]] * 7          # 14 mac, 7 cifte
+    enc = Encoder(sel, kati=False)
+    assert enc.total_len == 14
+    cols, _ = solve_fix16(enc)
+
+    satirlar = dagilim_satirlari(enc, cols)
+    assert any("14 dogru" in s for s in satirlar), \
+        f"tam isabet 14 dogru olmali, gelen: {satirlar}"
+    assert not any("15 dogru" in s for s in satirlar), \
+        "14 macli kuponda 15 dogru etiketi olamaz"
+
+    # d=0 tam isabettir; kova sayisi uzunluktan bagimsiz olmali.
+    dist = distance_layers(cols, enc.alphabet_sizes)
+    mc = monte_carlo_report(enc, cols, _uniform_probs(14), n_samples=2000, seed=1)
+    assert mc["p15"]["count"] == 0 or dist.get(0, 0) > 0
+    assert set(mc) >= {"p15", "p14", "p13", "p12", "kume_ici"}

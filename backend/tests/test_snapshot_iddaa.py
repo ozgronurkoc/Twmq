@@ -14,11 +14,7 @@ from pathlib import Path
 import pytest
 
 KOK = Path(__file__).resolve().parent.parent
-_spec = importlib.util.spec_from_file_location(
-    "snapshot_iddaa", KOK / "scripts" / "snapshot_iddaa.py"
-)
-snap = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(snap)
+snap = importlib.import_module("scripts.snapshot_iddaa")
 
 
 def _etkinlik(i: int, hn: str, an: str, oranlar, *, sid=1, ci=1912, d=1786915800):

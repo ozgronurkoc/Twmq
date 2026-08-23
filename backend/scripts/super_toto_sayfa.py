@@ -16,8 +16,8 @@ from __future__ import annotations
 
 import argparse
 import html
-import json
 import importlib.util
+import json
 import sys
 from pathlib import Path
 
@@ -28,14 +28,18 @@ _ap = argparse.ArgumentParser()
 _ap.add_argument("--sezon", default="2026_27")
 _ap.add_argument("--hafta", type=int, default=1)
 _ap.add_argument("--cikti", default=None)
-_a = _ap.parse_args()
-sys.argv = ["x"]  # alt modülün kendi argparse'ı tetiklenmesin
+# Bayraklar YALNIZCA dogrudan calistirilirken okunur. Once kosulsuz
+# `parse_args()` vardi: bu dosyayi import eden herkes (test toplayicisi
+# dahil) kendi argv'siyle bu ayristiriciya carpiyordu.
+_a = _ap.parse_args(None if __name__ == "__main__" else [])
 
-_spec = importlib.util.spec_from_file_location(
-    "st", str(KOK / "scripts" / "super_toto_hafta.py"))
-m = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(m)
+m = importlib.import_module("scripts.super_toto_hafta")
 
-S = ("1", "0", "2")
+from spor_toto.core import SEMBOLLER
+
+#: Sembol duzeni TEK kaynaktan (`spor_toto.core`). Bu dosyada ayri bir
+#: demet olarak yaziliyordu; depoda ayni deger on bir kez tanimliydi.
+S = SEMBOLLER
 d = m.hafta_yukle(_a.sezon, _a.hafta)
 ref = m.gecen_sezon_ref()
 prof = m.hafta_profili(d, ref)
@@ -44,14 +48,7 @@ ana = m.kupon_kur(d, 0.68, 0.38)
 
 # Sonuç girilmişse değerlendirme katmanı da yüklenir. Girilmemişse sayfa
 # eskisi gibi "sonuç yok" halinde üretilir — tek şablon, iki durum.
-_dspec = importlib.util.spec_from_file_location(
-    "st_deg", str(KOK / "scripts" / "super_toto_degerlendir.py"))
-_deg = importlib.util.module_from_spec(_dspec)
-_argv = sys.argv; sys.argv = ["x"]
-try:
-    _dspec.loader.exec_module(_deg)
-finally:
-    sys.argv = _argv
+_deg = importlib.import_module("scripts.super_toto_degerlendir")
 BITTI = bool(d["meta"].get("results"))
 KUPON_JSON = json.loads((KOK / "data" / "super_toto" / _a.sezon /
                          f"hafta_{_a.hafta:02d}_kupon.json").read_text(encoding="utf-8"))
@@ -180,6 +177,7 @@ def varyant(v, etiket, vurgu=False):
 # ─── neden bu işaret? (maç maç gerekçe)
 SEM_AD = {"1": "ev sahibi", "0": "beraberlik", "2": "deplasman"}
 from spor_toto.core import Encoder as _Encoder
+
 enc_ana = _Encoder(
     [list(x) for x in ana["picks"]])
 blok_maclar = [enc_ana.variable_pos[j] + 1 for j in enc_ana.double_pos()[:7]]
@@ -224,8 +222,8 @@ def gerekce(r, kr, pick):
             f'%{100*sirali[2][1]:.0f}\'lik kütlesini tamamen dışarıda bırakırdı — '
             f'piyasanın ayırt edemediği bir maçta bu, bilgi olmadan risk almaktır.')
         parcalar.append(
-            f'<b class="ok">Kazancı:</b> bu maç kuponu <b>asla</b> dışarı atmaz. '
-            f'Bedeli, kolon sayısını 3 katına çıkarması.')
+            '<b class="ok">Kazancı:</b> bu maç kuponu <b>asla</b> dışarı atmaz. '
+            'Bedeli, kolon sayısını 3 katına çıkarması.')
     else:
         karar, sinif = "ÇİFTE", "cifte"
         ikinci = sirali[1]
@@ -259,7 +257,7 @@ def gerekce(r, kr, pick):
             f'<b class="risk">Bedeli:</b> %{100*disarida:.1f} ihtimalle bu maç kuponu dışarı atar.')
 
     # kalabalık notu
-    en_buyuk = max(((abs(kr["cells"][x]["diff"]), x) for x in S))
+    en_buyuk = max((abs(kr["cells"][x]["diff"]), x) for x in S)
     if en_buyuk[0] >= 0.08:
         x = en_buyuk[1]
         c = kr["cells"][x]
@@ -616,7 +614,8 @@ if BITTI and KULLANICI:
 else:
     iki_kupon_bolumu = ""
 
-ana_v = dict(ana); ana_v["cost"] = ana["columns"]
+ana_v = dict(ana)
+ana_v["cost"] = ana["columns"]
 HTML = f"""<title>Süper Toto {_a.hafta}. Hafta</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1034,8 +1033,12 @@ footer {{ margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--line)
   </footer>
 </div>
 """
-cikti = Path(_a.cikti) if _a.cikti else (
-    KOK / "data" / "super_toto" / _a.sezon / f"hafta_{_a.hafta:02d}.html")
-cikti.parent.mkdir(parents=True, exist_ok=True)
-cikti.write_text(HTML, encoding="utf-8")
-print(f"yazıldı: {cikti} ({len(HTML):,} bayt)")
+# Dosya yazma YALNIZCA dogrudan calistirilirken. Once modul duzeyindeydi:
+# bu dosyayi import etmek diske HTML yaziyordu. Dizindeki her script'in
+# guard'i vardi, bunun yoktu.
+if __name__ == "__main__":
+    cikti = Path(_a.cikti) if _a.cikti else (
+        KOK / "data" / "super_toto" / _a.sezon / f"hafta_{_a.hafta:02d}.html")
+    cikti.parent.mkdir(parents=True, exist_ok=True)
+    cikti.write_text(HTML, encoding="utf-8")
+    print(f"yazıldı: {cikti} ({len(HTML):,} bayt)")

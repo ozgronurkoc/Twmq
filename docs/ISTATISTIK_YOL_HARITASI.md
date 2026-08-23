@@ -9,7 +9,7 @@
 > (bkz. [`../README.md`](../README.md) §1). Bu belgedeki ölçüm disiplini aynen
 > geçerlidir ve daha da kritik hale gelmiştir: tahmin iddiası, ölçülmemiş hiçbir
 > sayının arayüze çıkmamasıyla dengelenir. Hold-out **1 hafta**, piyasa Brier
-> **0,574**, iddaa marjı **%17,2** — bu üç sayı tahmin katmanının başlangıç
+> **0,579**, iddaa marjı **%17,2** — bu üç sayı tahmin katmanının başlangıç
 > çizgisidir ve ilerleme bunlara karşı ölçülür.
 >
 > **Ölçek uyarısı.** 2026-08'de marj arındırma varsayılanı `orantili`dan `shin`e
@@ -129,8 +129,12 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/app/super-toto/page.tsx` · `components/super-toto/haftalar.tsx` · `lib/super-toto.ts` | Sezonun hafta şeridi; `?hafta=N` adreste durur |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **911 test**; **82'si** istatistik katmanına, **229'u** tahmin katmanına ait.
-`python -m spor_toto.health` **23 değişmez** çalıştırır — ikisi (`oran_arsivi`, `geri_test`)
+paketi toplam **1.031 test**; **82'si** istatistik katmanına (`history` `odds` `backtest`
+`api_stats` `api_backtest` `snapshot_iddaa`), **294'ü** tahmin katmanına ait (`predict`
+`evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
+`benzer`). Dosya adlarıyla sayılıdır ki tablo elle bakım gerektirmesin —
+`tests/test_belgeler.py` onları gerçek koleksiyona karşı denetler.
+`python -m spor_toto.health` **24 değişmez** çalıştırır — ikisi (`oran_arsivi`, `geri_test`)
 istatistik katmanını, biri (`tahmin_referanslari`) tahmin katmanının ölçüm koşumunu korur.
 
 **Korpusun bütünlüğü sağlık katmanında değil test paketinde korunur** ve bu bir üründür
@@ -707,7 +711,7 @@ olan model değil, **fikstür verisi**.
 ### 3.17 Tahmin ürünü — olasılık, ölçülmüş isabetiyle birlikte (C2)
 
 Tahmin katmanı bu işten önce **ürüne hiç bağlı değildi**: `web_app.py` onu import
-etmiyordu, 11 API ucunun hiçbiri tahmin döndürmüyordu, `/tahmin` diye bir sayfa yoktu.
+etmiyordu, API uçlarının hiçbiri tahmin döndürmüyordu, `/tahmin` diye bir sayfa yoktu.
 Ölçüm aracı olarak yaşıyordu, ürün olarak değil — oysa projenin amacı (README §1) *maç
 sonucu tahmini yapmak*.
 
@@ -1084,9 +1088,9 @@ Premier Lig (71 maç) %19,7 / %47,9. Kupon başına ortalama 7 maç Süper Lig'd
 0,68/0,42'ye kayıyordu (§3.18). Hold-out'taki 0→1 farkı **tek bir olaydır**, aralıklar
 fazlasıyla örtüşür — okunacak sayı maliyettir.
 
-**Piyasanın yanılması** (sayfada var): sezon ortalaması Brier **0,574**; eşit olasılık
-vermenin karşılığı 0,667. Piyasa bilgi taşıyor ama az. En sürprizli haftalar 33 (0,753, kısmi),
-7 (0,734), 37 (0,700); en tahmin edilebilir 3. hafta (0,348).
+**Piyasanın yanılması** (sayfada var): sezon ortalaması Brier **0,579** (oranı olan 567 maç,
+38 hafta); eşit olasılık vermenin karşılığı 0,667. Piyasa bilgi taşıyor ama az. En sürprizli
+haftalar 33 (0,759, kısmi), 7 (0,741), 37 (0,706); en tahmin edilebilir 3. hafta (0,339).
 
 **Marj karşılaştırması** (F5 ölçümü): iddaa açık bülteninde ortalama marj **%17,2**, piyasa
 oranlarında **%7,26**. İki kaynağın seviyesi bu yüzden tutmaz; favori sıralaması ve marj
@@ -1097,6 +1101,16 @@ arındırılmış yapı tutar.
 **Ölçek.** A5 satırlarına kadar olan bütün ölçümler `orantili` arındırmayla yapıldı ve o
 hâlleriyle bırakıldı — bir ölçüm kaydı sonradan yeniden yazılmaz. Bugünkü varsayılan `shin`
 ve karşılıkları: kupon seti 0,5747 → **0,5740**, korpus 0,5940 → **0,5936**.
+
+> **Kesit büyüdü (2026-08-23).** Yukarıdaki tablonun "540 kupon maçı" sütunu
+> **36 hafta**lık bir kesittir. Kupon seti o ölçümden bu yana **41 hafta /
+> 615 maça** çıktı ve aynı `piyasa` çizgisi bu kesitte **0,5856** veriyor.
+> Aradaki fark bir gerileme değil, **örneklem farkıdır**: yeni haftalar
+> ortalamadan daha sürprizli geldi. Tablodaki sayılar kendi kesitlerinde
+> doğrudur ve öyle kalır; **bugünkü** referans çizgisi arandığında
+> `evaluate.degerlendir` çıktısına bakılır, bu tabloya değil. Tabloların
+> hepsi aynı 540 maçlık kesitte ölçüldüğü için birbirleriyle
+> karşılaştırılabilirlikleri de bozulmuş değildir.
 
 | Ölçüm | Kesit | Sonuç |
 |---|---|---|
@@ -1523,9 +1537,14 @@ kolonla 14+ hiç gelmedi" yazacak. Süslenmiş bir olasılık, süslenmemiş bir
 
 #### C2'nin üç parçası — sırayla
 
-Bugün tahmin katmanı **ürüne hiç bağlı değil**: `web_app.py` onu import etmiyor, 11 API
-ucunun hiçbiri tahmin döndürmüyor, `/tahmin` diye bir sayfa yok. Ölçüm aracı olarak yaşıyor,
-ürün olarak değil. Eksik olan üç şey:
+> **Bu bölüm C2 yapılMADAN önceki durumu anlatır ve tarihçe olarak duruyor.**
+> C2 bitti (aynı belgede §6.2'deki tabloda "✅ BİTTİ" işaretli): `web_app.py`
+> tahmin katmanını import ediyor, `/api/tahmin` yayında ve `/tahmin` sayfası
+> var. Aşağıdaki "yok" cümleleri o günün fotoğrafıdır.
+
+Bugün *(C2 öncesi)* tahmin katmanı **ürüne hiç bağlı değildi**: `web_app.py` onu
+import etmiyordu, API uçlarının hiçbiri tahmin döndürmüyordu, `/tahmin` diye bir
+sayfa yoktu. Ölçüm aracı olarak yaşıyordu, ürün olarak değil. Eksik olan üç şey:
 
 | | İş | Neden gerekli |
 |---|---|---|
@@ -1848,13 +1867,14 @@ python -m spor_toto.disari                 # A3: piyasa dışı özellikler
 python -m spor_toto.tahmin                 # ÜRÜN: yaklaşan maçlara olasılık
 
 # Denetim
-pytest -q                                  # 911 test (82'si bu katman, 229'u tahmin)
+pytest -q                                  # 1.031 test (82'si bu katman, 294'ü tahmin)
+pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out
 pytest -q tests/test_cizgi.py              # A1 ölçümü ve korpus bütünlüğü
 pytest -q tests/test_bahisci.py            # A2 ölçümü ve kaynak seçimi
 pytest -q tests/test_disari.py             # A3 ölçümü ve sızıntı bekçileri
-python -m spor_toto.health                 # 23 değişmez
+python -m spor_toto.health                 # 24 değişmez
 python -m spor_toto.health --help          # tek kontrol: ?only=geri_test
 
 # Arayüz

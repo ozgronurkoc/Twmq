@@ -11,8 +11,14 @@ from spor_toto import __version__
 from spor_toto.bayes import STRENGTH_PRESETS
 from spor_toto.core import HAS_SCIPY, Encoder, dogrula_kaplama, parse_picks
 from spor_toto.engines import (
-    engine_params, run_auto, run_block, run_butce, run_exact, run_fix16,
-    run_heuristic, run_maxcov,
+    engine_params,
+    run_auto,
+    run_block,
+    run_butce,
+    run_exact,
+    run_fix16,
+    run_heuristic,
+    run_maxcov,
 )
 from spor_toto.history import MATCH_COUNT
 from spor_toto.meta import ENGINE_DEFAULTS, LIMITS, MODE_IDS, MODES, meta_payload
@@ -121,7 +127,7 @@ def test_maxcov_garanti_vermez(enc):
     sandığı bir kupon oynar.
     """
     r = run_maxcov(enc, 8)
-    worst, acik = dogrula_kaplama(r["cols"], enc.alphabet_sizes)
+    _worst, acik = dogrula_kaplama(r["cols"], enc.alphabet_sizes)
     assert acik > 0
     assert len(r["cols"]) <= 8
     assert r["kapsanan"] + acik == enc.space_size()

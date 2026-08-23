@@ -35,10 +35,11 @@ Ve bir dördüncüsü, ürünün en kolay söyleyeceği yalanı engelleyen:
 from __future__ import annotations
 
 import csv
+from collections.abc import Sequence
 from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any
 
 from .history import SYMBOLS
 from .odds import implied_probs
@@ -76,7 +77,7 @@ def _simdi() -> datetime:
     return datetime.now()
 
 
-def _gelecekte(kickoff: Optional[str], simdi: datetime) -> bool:
+def _gelecekte(kickoff: str | None, simdi: datetime) -> bool:
     """Başlama saati geçmiş mi. Saat çözülemezse maç **elenir** (doktrin 2).
 
     Belirsiz bir zamana maç öncesi olasılığı vermek, olasılığın maç öncesi
@@ -91,7 +92,7 @@ def _gelecekte(kickoff: Optional[str], simdi: datetime) -> bool:
     return False
 
 
-def _sayi(ham: Any) -> Optional[float]:
+def _sayi(ham: Any) -> float | None:
     try:
         v = float(str(ham).strip())
     except (TypeError, ValueError):
@@ -99,7 +100,7 @@ def _sayi(ham: Any) -> Optional[float]:
     return v if v > 1.0 else None
 
 
-def fixtures_maclari(yol: Optional[str] = None) -> List[Dict[str, Any]]:
+def fixtures_maclari(yol: str | None = None) -> list[dict[str, Any]]:
     """`build_fixtures.py`nin yazdığı yaklaşan maçlar (ölçülen kaynak).
 
     Dosya yoksa ya da boşsa **boş liste** döner ve bu bir hata değildir:
@@ -108,7 +109,7 @@ def fixtures_maclari(yol: Optional[str] = None) -> List[Dict[str, Any]]:
     p = Path(yol) if yol else VARSAYILAN_FIXTURES
     if not p.exists():
         return []
-    out: List[Dict[str, Any]] = []
+    out: list[dict[str, Any]] = []
     with open(p, encoding="utf-8", newline="") as fh:
         for r in csv.DictReader(fh):
             oranlar = {s: _sayi(r.get(f"oran_{s}")) for s in SYMBOLS}
@@ -128,14 +129,14 @@ def fixtures_maclari(yol: Optional[str] = None) -> List[Dict[str, Any]]:
     return out
 
 
-def _son_iddaa_dosyasi() -> Optional[Path]:
+def _son_iddaa_dosyasi() -> Path | None:
     if not IDDAA_DIZINI.exists():
         return None
     adaylar = sorted(IDDAA_DIZINI.glob("iddaa_*.csv"))
     return adaylar[-1] if adaylar else None
 
 
-def iddaa_maclari(yol: Optional[str] = None) -> List[Dict[str, Any]]:
+def iddaa_maclari(yol: str | None = None) -> list[dict[str, Any]]:
     """En son iddaa bülten snapshot'ından yaklaşan maçlar.
 
     **Kalibrasyonu ölçülmemiş bir kaynaktır** ve gövdede öyle işaretlenir.
@@ -152,7 +153,7 @@ def iddaa_maclari(yol: Optional[str] = None) -> List[Dict[str, Any]]:
     if p is None or not Path(p).exists():
         return []
     simdi = _simdi()
-    out: List[Dict[str, Any]] = []
+    out: list[dict[str, Any]] = []
     with open(p, encoding="utf-8", newline="") as fh:
         for r in csv.DictReader(fh):
             if (r.get("canli") or "").strip() == "1":
@@ -196,7 +197,7 @@ def _egitilmis_alternatif():
     return t
 
 
-def _sozde_hafta(maclar: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
+def _sozde_hafta(maclar: Sequence[dict[str, Any]]) -> dict[str, Any]:
     """Yaklaşan maçları kademe tahmincisinin beklediği hafta girdisine çevir.
 
     **`ozellikler` AÇIKÇA doldurulur ve bu şart.** `recalibrate` bu alan
@@ -211,8 +212,8 @@ def _sozde_hafta(maclar: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
     """
     from .recalibrate import A3_ALANLARI
 
-    ozellikler: List[Dict[str, Any]] = []
-    probs: List[Dict[str, float]] = []
+    ozellikler: list[dict[str, Any]] = []
+    probs: list[dict[str, float]] = []
     for m in maclar:
         olasilik = implied_probs(m["oranlar"])
         probs.append(olasilik)
@@ -232,8 +233,8 @@ def _sozde_hafta(maclar: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
             "ozellikler": ozellikler, "missing": 0, "usable": True}
 
 
-def yaklasan_maclar(fixtures_yolu: Optional[str] = None,
-                    iddaa_yolu: Optional[str] = None) -> List[Dict[str, Any]]:
+def yaklasan_maclar(fixtures_yolu: str | None = None,
+                    iddaa_yolu: str | None = None) -> list[dict[str, Any]]:
     """Tahmin edilebilecek maçlar — **ölçülen kaynak önce.**
 
     İkisi birleştirilmez, **sıralanır**: fikstürde maç varsa ürün onu
@@ -246,7 +247,7 @@ def yaklasan_maclar(fixtures_yolu: Optional[str] = None,
     return iddaa_maclari(iddaa_yolu)
 
 
-def _blok(olasilik: Dict[str, float]) -> Dict[str, Any]:
+def _blok(olasilik: dict[str, float]) -> dict[str, Any]:
     """Olasılık sözlüğünü gövde bloğuna çevir: olasılık + en olası + güven."""
     en_olasi = max(olasilik, key=lambda s: olasilik[s]) if olasilik else None
     return {
@@ -256,8 +257,8 @@ def _blok(olasilik: Dict[str, float]) -> Dict[str, Any]:
     }
 
 
-def tahmin_et(mac: Dict[str, Any],
-              alternatif: Optional[Dict[str, float]] = None) -> Dict[str, Any]:
+def tahmin_et(mac: dict[str, Any],
+              alternatif: dict[str, float] | None = None) -> dict[str, Any]:
     """Tek maçın tahmini: marj arındırılmış 1/0/2 olasılığı.
 
     **Manşet sayı eğitimsizdir** ve bu bir eksiklik değil ölçüm sonucu:
@@ -278,13 +279,13 @@ def tahmin_et(mac: Dict[str, Any],
     }
 
 
-def _tahminci_skoru(tahminci, haftalar) -> Dict[str, Any]:
+def _tahminci_skoru(tahminci, haftalar) -> dict[str, Any]:
     """Bir tahmincinin kupon setindeki isabeti — maç ve hafta düzeyinde."""
     from .evaluate import brier, log_kaybi
 
     n_mac = dogru = 0
     b_top = l_top = 0.0
-    hafta_dogru: List[int] = []
+    hafta_dogru: list[int] = []
     for hafta in haftalar:
         tahminler = tahminci.tahmin(hafta)
         d = 0
@@ -310,7 +311,7 @@ def _tahminci_skoru(tahminci, haftalar) -> Dict[str, Any]:
 
 
 @lru_cache(maxsize=1)
-def olculmus_isabet() -> Dict[str, Any]:
+def olculmus_isabet() -> dict[str, Any]:
     """İki tahmincinin de **ölçülmüş** isabeti — gövdeden ayrılamaz blok.
 
     Kupon setinde (2025/26, 36 tam hafta, 540 maç) hesaplanır. Hiçbiri elle
@@ -336,7 +337,7 @@ def olculmus_isabet() -> Dict[str, Any]:
                 "not": "oran arsivi eksik — isabet olculemedi"}
 
     manset = _tahminci_skoru(PiyasaTahminci(), haftalar)
-    out: Dict[str, Any] = {
+    out: dict[str, Any] = {
         "olculdu": True,
         "kesit": "2025/26 Spor Toto kuponu — football-data kapanış oranı",
         "n_hafta": len(haftalar),
@@ -365,12 +366,15 @@ def olculmus_isabet() -> Dict[str, Any]:
                      "(3 parametre); kupon setinde ölçüldü, ortak maç yok"),
         **skor,
         "fark": fark,
-        "gecti": bool(fark["ust"] is not None and fark["ust"] < 0),
+        # Karar HAM ustten verilir: `round(-0.000031, 4)` `-0.0` verir ve
+        # `-0.0 < 0` False'tur — aralik tamamen sifirin altindayken aday
+        # "gecmedi" diye yazilirdi (bkz. evaluate.bootstrap_farki yorumu).
+        "gecti": bool(fark["ham_ust"] is not None and fark["ham_ust"] < 0),
     }
     return out
 
 
-def _uyarilar(maclar: Sequence[Dict[str, Any]]) -> List[Dict[str, str]]:
+def _uyarilar(maclar: Sequence[dict[str, Any]]) -> list[dict[str, str]]:
     """Gövdenin taşımak zorunda olduğu sınırlar. **Kısaltılmaz.**"""
     out = [
         {"ad": "tek_kolon_14_tutmaz",
@@ -413,9 +417,9 @@ def _uyarilar(maclar: Sequence[Dict[str, Any]]) -> List[Dict[str, str]]:
     return out
 
 
-def rapor(fixtures_yolu: Optional[str] = None,
-          iddaa_yolu: Optional[str] = None,
-          limit: Optional[int] = None) -> Dict[str, Any]:
+def rapor(fixtures_yolu: str | None = None,
+          iddaa_yolu: str | None = None,
+          limit: int | None = None) -> dict[str, Any]:
     """Tahmin gövdesi — olasılıklar ve ölçülmüş isabet, **birlikte.**
 
     İkisi ayrılamaz. Bir arayüz olasılıkları alıp isabeti atarsa, projenin
@@ -425,7 +429,7 @@ def rapor(fixtures_yolu: Optional[str] = None,
 
     # Alternatif TEK SEFERDE, toplu hesaplanir: kademe tahmincisi hafta
     # duzeyinde calisir ve mac basina cagirmak hem yavas hem gereksiz olurdu.
-    alt_olasiliklar: List[Optional[Dict[str, float]]] = [None] * len(maclar)
+    alt_olasiliklar: list[dict[str, float] | None] = [None] * len(maclar)
     alternatif = _egitilmis_alternatif()
     if alternatif is not None and maclar:
         cikti = alternatif.tahmin(_sozde_hafta(maclar))
@@ -463,7 +467,7 @@ def rapor(fixtures_yolu: Optional[str] = None,
     }
 
 
-def _yazdir(g: Dict[str, Any]) -> None:  # pragma: no cover - elle kullanim
+def _yazdir(g: dict[str, Any]) -> None:  # pragma: no cover - elle kullanim
     i = g["olculmus_isabet"]
     print(f"YAKLASAN {g['n_mac']} MAC · kaynak: {', '.join(g['kaynaklar']) or '—'}")
     if g["n_mac"] and g.get("alternatif_farkli_secim") is not None:

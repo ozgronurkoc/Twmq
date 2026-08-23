@@ -42,12 +42,13 @@ from __future__ import annotations
 
 import argparse
 import json
+from collections.abc import Sequence
 from functools import lru_cache
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any
 
 from .egitim import korpus_yukle
-from .odds import (ARINDIRMA_VARSAYILAN, AZ_ORNEK, SEMBOLLER, implied_probs,
-                   margin)
+from .odds import ARINDIRMA_VARSAYILAN, AZ_ORNEK, SEMBOLLER, implied_probs, margin
+from .ortak import wilson
 
 #: Aramanın başladığı yarıçap (olasılık puanı). Dar başlanır ki yakın maç
 #: varken uzak maç sayılmasın.
@@ -64,18 +65,13 @@ HEDEF_ORNEKLEM = 200
 COK_DILIM = 8
 
 
-def _wilson(basari: int, n: int) -> Tuple[float, float]:
-    """Oran için Wilson %95 güven aralığı.
-
-    `backtest._wilson` ile aynı formül ve aynı gerekçe: normal yaklaşım
-    küçük örneklemde kenarlara yapışır (0/30'da alt sınır eksiye iner).
-    Buraya kopyalanmadı, oradan çağrılıyor.
-    """
-    from .backtest import _wilson as _w
-    return _w(basari, n)
+#: Once `backtest._wilson`i fonksiyon govdesinden import eden bir kabuktu;
+#: `kalibrasyon` ve `scripts/super_toto_sezon` da bu kabugu import ediyordu,
+#: yani private bir sembol iki sicramayla dolasiyordu. Tek kaynak: `ortak`.
+_wilson = wilson
 
 
-def _mesafe(a: Dict[str, float], b: Dict[str, float]) -> float:
+def _mesafe(a: dict[str, float], b: dict[str, float]) -> float:
     """İki olasılık vektörü arasındaki en büyük tek sembol farkı (L∞).
 
     Öklid değil L∞: "hiçbir sembolde X puandan fazla ayrılmasın" kuralı,
@@ -87,8 +83,8 @@ def _mesafe(a: Dict[str, float], b: Dict[str, float]) -> float:
 
 
 @lru_cache(maxsize=8)
-def _olasilik_tablosu(yontem: str, korpus: Optional[str]
-                      ) -> Tuple[Tuple[Dict[str, float], Dict[str, Any]], ...]:
+def _olasilik_tablosu(yontem: str, korpus: str | None
+                      ) -> tuple[tuple[dict[str, float], dict[str, Any]], ...]:
     """Korpusun tamamının arındırılmış olasılıkları — yöntem başına bir kez.
 
     Bunsuz her sorgu 31 bin satırı yeniden arındırıyordu (~2 sn). Bir hafta
@@ -104,8 +100,8 @@ def _olasilik_tablosu(yontem: str, korpus: Optional[str]
                  if len(p) == 3)
 
 
-def _sayim(maclar: Sequence[Dict[str, Any]],
-           piyasa: Dict[str, float]) -> Dict[str, Any]:
+def _sayim(maclar: Sequence[dict[str, Any]],
+           piyasa: dict[str, float]) -> dict[str, Any]:
     """Bir maç kümesinin 1/0/2 karnesi — her satırda n, GA ve piyasa payı."""
     n = len(maclar)
     satirlar = {}
@@ -130,13 +126,13 @@ def _sayim(maclar: Sequence[Dict[str, Any]],
     return {"n": n, "yeterli": n >= AZ_ORNEK, "semboller": satirlar}
 
 
-def benzer_maclar(oranlar: Dict[str, float],
-                  tolerans: Optional[float] = None,
+def benzer_maclar(oranlar: dict[str, float],
+                  tolerans: float | None = None,
                   en_az: int = HEDEF_ORNEKLEM,
-                  lig: Optional[str] = None,
-                  sezon: Optional[str] = None,
+                  lig: str | None = None,
+                  sezon: str | None = None,
                   yontem: str = ARINDIRMA_VARSAYILAN,
-                  korpus: Optional[str] = None) -> Dict[str, Any]:
+                  korpus: str | None = None) -> dict[str, Any]:
     """Verilen orana benzeyen geçmiş maçları bulur ve karnelerini çıkarır.
 
     `tolerans=None` iken yarıçap **uyarlanır**: `BASLANGIC_TOLERANS`'tan
@@ -168,7 +164,7 @@ def benzer_maclar(oranlar: Dict[str, float],
             genisledi = True
 
     bulunan = [r for d, r in olculu if d <= kullanilan]
-    rapor: Dict[str, Any] = {
+    rapor: dict[str, Any] = {
         "oranlar": dict(oranlar),
         "marj": margin(oranlar),
         "arindirma": yontem,
@@ -217,10 +213,10 @@ def benzer_maclar(oranlar: Dict[str, float],
     return rapor
 
 
-def _dilimle(maclar: Sequence[Dict[str, Any]], hedef: Dict[str, float],
-             alan: str) -> List[Dict[str, Any]]:
+def _dilimle(maclar: Sequence[dict[str, Any]], hedef: dict[str, float],
+             alan: str) -> list[dict[str, Any]]:
     """Bulunan maçları bir alana göre böler; her dilim kendi n'i ve GA'sıyla."""
-    gruplar: Dict[str, List[Dict[str, Any]]] = {}
+    gruplar: dict[str, list[dict[str, Any]]] = {}
     for m in maclar:
         gruplar.setdefault(m[alan], []).append(m)
     out = [{"deger": k, "karne": _sayim(v, hedef)}
@@ -231,7 +227,7 @@ def _dilimle(maclar: Sequence[Dict[str, Any]], hedef: Dict[str, float],
 
 # ─── yazdırma ─────────────────────────────────────────────────────────────────
 
-def _karne_satirlari(karne: Dict[str, Any], girinti: str = "") -> None:
+def _karne_satirlari(karne: dict[str, Any], girinti: str = "") -> None:
     n = karne["n"]
     if not karne["yeterli"]:
         print(f"{girinti}n={n} — örneklem yetersiz, yüzde yazılmadı.")
@@ -244,7 +240,7 @@ def _karne_satirlari(karne: Dict[str, Any], girinti: str = "") -> None:
               f"piyasa %{100*r['piyasa']:>5.1f}  fark {100*r['fark']:>+5.1f}{isaret}")
 
 
-def yaz(rapor: Dict[str, Any]) -> None:
+def yaz(rapor: dict[str, Any]) -> None:
     o = rapor["oranlar"]
     print("=" * 78)
     print("GEÇMİŞTE BU ORANDA NE OLDU?")
@@ -282,7 +278,7 @@ def yaz(rapor: Dict[str, Any]) -> None:
             print(f"  • {u}")
 
 
-def main(argv: Optional[Sequence[str]] = None) -> None:
+def main(argv: Sequence[str] | None = None) -> None:
     ap = argparse.ArgumentParser(
         description="Bir orana benzeyen geçmiş maçların nasıl sonuçlandığı.")
     ap.add_argument("--oran", required=True,
@@ -302,7 +298,9 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
     try:
         parcalar = [float(x) for x in a.oran.split(",")]
     except ValueError:
-        raise SystemExit("--oran üç sayı olmalı: 1.82,3.04,2.44")
+        # `from None`: bu bir KULLANIM hatasi, ic float() izlemesi
+        # kullaniciya bir sey soylemez.
+        raise SystemExit("--oran üç sayı olmalı: 1.82,3.04,2.44") from None
     if len(parcalar) != 3:
         raise SystemExit("--oran üç sayı olmalı: 1.82,3.04,2.44")
 

@@ -71,8 +71,11 @@ const config: Config = {
       fontFamily: {
         // Bodoni Moda — nonplo'nun display serif'i (next/font ile yuklenir)
         display: ["var(--font-display)", "Didot", "Bodoni MT", "Georgia", "serif"],
+        // Not: burada `var(--font-sans)` duruyordu ama o degisken hicbir
+        // yerde tanimli degil — next/font yalnizca display serif'ini
+        // yukluyor (app/layout.tsx). Yani stack sessizce Helvetica'ya
+        // dusuyordu; govde yazisi bilerek sistem yiginini kullanir.
         sans: [
-          "var(--font-sans)",
           "Helvetica Neue",
           "Helvetica",
           "Segoe UI",
@@ -100,10 +103,13 @@ const config: Config = {
         glow: "var(--shadow-glow)",
         primary: "var(--shadow-primary)",
       },
+      // Egriler globals.css'te `--ease-*` olarak zaten tanimli. Burada
+      // ikinci kez duz metin olarak yaziliyordu: iki tanim, biri olu.
+      // Artik tek kaynak globals.css.
       transitionTimingFunction: {
-        ios: "cubic-bezier(0.32, 0.72, 0, 1)",
-        pop: "cubic-bezier(0.16, 1, 0.3, 1)",
-        smooth: "cubic-bezier(0.4, 0, 0.2, 1)",
+        ios: "var(--ease-ios)",
+        pop: "var(--ease-pop)",
+        smooth: "var(--ease-smooth)",
       },
       keyframes: {
         "fade-up": {

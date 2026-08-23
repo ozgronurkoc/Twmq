@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, Copy, ShieldAlert, ShieldCheck, ShieldX } from "lucide-react";
+import { Check, Copy, ShieldCheck, ShieldX } from "lucide-react";
 
 import type { ButcePlan, SolveResult } from "@/lib/types";
 import { cn, panoyaKopyala, sayi } from "@/lib/utils";
@@ -16,6 +16,7 @@ import {
   Stat,
 } from "@/components/ui/primitives";
 import { CouponCell, SymbolLegend } from "@/components/ui/symbol";
+import { TABLO_SARMAL } from "@/components/ui/tablo";
 
 /** Garanti uc ayri durumdur ve asla belirsiz birakilmaz. */
 function garantiDurumu(r: SolveResult) {
@@ -160,7 +161,10 @@ export function OzetPanel({
                 </span>
                 {p.p_kume_ici !== null ? (
                   <span className="tnum shrink-0 text-[11.5px] text-muted-foreground">
-                    küme içi %{p.p_kume_ici}
+                    {/* Zaten yuzde (bkz. types.ts:ButcePlan). Ham
+                        basiliyordu: sunucudan 3 basamak geldigi icin
+                        "%2.309" gibi, arayuzun geri kalaniyla uyumsuz. */}
+                    küme içi %{p.p_kume_ici.toFixed(2)}
                   </span>
                 ) : null}
                 {p.secili ? <Badge ton="primary">uygulandı</Badge> : null}
@@ -244,7 +248,7 @@ export function KuponPanel({
       />
       <CardBody>
         <SymbolLegend className="mb-3" />
-        <div className="scroll-slim overflow-x-auto">
+        <div className={TABLO_SARMAL}>
           <table className="w-full border-separate border-spacing-0">
             <thead>
               <tr>
@@ -392,21 +396,5 @@ export function DagilimPanel({ r }: { r: SolveResult }) {
         </CardBody>
       </Card>
     </div>
-  );
-}
-
-export function EksikVeri({ baslik, aciklama }: { baslik: string; aciklama: string }) {
-  return (
-    <Card>
-      <CardBody className="flex items-start gap-3 py-8">
-        <ShieldAlert size={18} className="mt-0.5 shrink-0 text-muted-foreground" />
-        <div>
-          <SectionTitle>{baslik}</SectionTitle>
-          <p className="text-[12.5px] leading-relaxed text-muted-foreground">
-            {aciklama}
-          </p>
-        </div>
-      </CardBody>
-    </Card>
   );
 }

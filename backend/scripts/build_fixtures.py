@@ -38,7 +38,7 @@ import urllib.error
 import urllib.request
 from datetime import date, datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 KOK = Path(__file__).resolve().parent.parent
 VARSAYILAN_CIKTI = KOK / "data" / "fixtures"
@@ -48,12 +48,12 @@ FIXTURES_URL = "https://www.football-data.co.uk/fixtures.csv"
 
 #: Oran kaynagi tercihi. `Avg` once gelir cunku olcum onun uzerinde yapildi
 #: (`egitim.py` korpusu `Avg`/`AvgC` ailesini tercih eder).
-KAYNAK_SIRASI: Tuple[str, ...] = ("Avg", "B365", "PS", "Max")
+KAYNAK_SIRASI: tuple[str, ...] = ("Avg", "B365", "PS", "Max")
 
 #: Korpusun tasidigi ligler — olculen isabet bu evrene ait. Disindaki bir lig
 #: icin tahmin uretilebilir ama olculmus isabet ONA AIT DEGILDIR, o yuzden
 #: ayri isaretlenir.
-OLCULEN_LIGLER: Tuple[str, ...] = (
+OLCULEN_LIGLER: tuple[str, ...] = (
     "E0", "E1", "E2", "E3", "EC",
     "SC0", "SC1", "SC2", "SC3",
     "D1", "D2", "I1", "I2", "SP1", "SP2",
@@ -64,7 +64,7 @@ BASLIKLAR = ["lig", "tarih", "saat", "ev", "dep",
              "oran_1", "oran_0", "oran_2", "oran_kaynak", "olculen_lig"]
 
 
-def indir(url: str, timeout: float = 60.0) -> Optional[bytes]:
+def indir(url: str, timeout: float = 60.0) -> bytes | None:
     istek = urllib.request.Request(url, headers={"User-Agent": UA})
     try:
         with urllib.request.urlopen(istek, timeout=timeout) as r:
@@ -74,7 +74,7 @@ def indir(url: str, timeout: float = 60.0) -> Optional[bytes]:
         return None
 
 
-def _sayi(ham: Any) -> Optional[float]:
+def _sayi(ham: Any) -> float | None:
     try:
         v = float(str(ham).strip())
     except (TypeError, ValueError):
@@ -82,7 +82,7 @@ def _sayi(ham: Any) -> Optional[float]:
     return v if v > 1.0 else None
 
 
-def oran_sec(satir: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+def oran_sec(satir: dict[str, Any]) -> dict[str, Any] | None:
     """Tercih sirasindaki ilk tam uclu. Hicbiri tam degilse mac ELENIR."""
     for onek in KAYNAK_SIRASI:
         degerler = [_sayi(satir.get(f"{onek}{s}")) for s in ("H", "D", "A")]
@@ -92,7 +92,7 @@ def oran_sec(satir: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     return None
 
 
-def tarih_coz(ham: str) -> Optional[date]:
+def tarih_coz(ham: str) -> date | None:
     for bicim in ("%d/%m/%Y", "%d/%m/%y"):
         try:
             return datetime.strptime(ham.strip(), bicim).date()
@@ -101,10 +101,10 @@ def tarih_coz(ham: str) -> Optional[date]:
     return None
 
 
-def satirlari_coz(ham: bytes, bugun: date) -> Tuple[List[Dict[str, Any]], Dict[str, int]]:
+def satirlari_coz(ham: bytes, bugun: date) -> tuple[list[dict[str, Any]], dict[str, int]]:
     """Yalnizca BUGUN VE SONRASI maclar. Gecmis satirlar sessizce atilmaz, sayilir."""
     sayac = {"toplam": 0, "gecmis": 0, "tarih_yok": 0, "oran_yok": 0}
-    out: List[Dict[str, Any]] = []
+    out: list[dict[str, Any]] = []
     metin = ham.decode("utf-8-sig", errors="replace").splitlines()
     for r in csv.DictReader(metin):
         satir = {(k or "").lstrip("﻿"): v for k, v in r.items()}
@@ -138,14 +138,14 @@ def satirlari_coz(ham: bytes, bugun: date) -> Tuple[List[Dict[str, Any]], Dict[s
     return out, sayac
 
 
-def dogrula(satirlar: List[Dict[str, Any]]) -> List[str]:
+def dogrula(satirlar: list[dict[str, Any]]) -> list[str]:
     """Yazmadan once ic tutarlilik (doktrin 5).
 
     **Bos liste bir HATA DEGILDIR.** Fikstur yuvarlanan bir penceredir; hafta
     oynandiginda yaklasan mac kalmaz ve bu normaldir. Bos dosya yazmak,
     "yaklasan mac yok" olgusunu dogru bicimde kaydetmektir.
     """
-    hatalar: List[str] = []
+    hatalar: list[str] = []
     for i, r in enumerate(satirlar):
         for s in ("1", "0", "2"):
             if not r[f"oran_{s}"] > 1.0:

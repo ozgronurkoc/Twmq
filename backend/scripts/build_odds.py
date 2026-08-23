@@ -42,7 +42,7 @@ import urllib.request
 from datetime import datetime, timedelta
 from difflib import SequenceMatcher
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 KOK = Path(__file__).resolve().parent.parent
 GECMIS = KOK / "data" / "st_history_2025_26.json"
@@ -131,7 +131,7 @@ def benzerlik(a: str, b: str) -> float:
 
 # ─── sutun adi cozumleme ──────────────────────────────────────────────────────
 
-def sutun_ayristir(sutun: str) -> Tuple[str, str, str, str]:
+def sutun_ayristir(sutun: str) -> tuple[str, str, str, str]:
     """'AvgCH' -> (kaynak='Avg', pazar='1X2', secim='1', donem='kapanis')."""
     s = sutun.strip()
     kaynak = ""
@@ -158,7 +158,7 @@ def sutun_ayristir(sutun: str) -> Tuple[str, str, str, str]:
 
 # ─── kaynak dosyalar ──────────────────────────────────────────────────────────
 
-def indir(url: str, hedef: Path, timeout: float = 60.0) -> Optional[Path]:
+def indir(url: str, hedef: Path, timeout: float = 60.0) -> Path | None:
     if hedef.exists() and hedef.stat().st_size > 0:
         return hedef
     istek = urllib.request.Request(url, headers={"User-Agent": UA})
@@ -173,7 +173,7 @@ def indir(url: str, hedef: Path, timeout: float = 60.0) -> Optional[Path]:
     return hedef
 
 
-def tarih_coz(ham: str) -> Optional[datetime]:
+def tarih_coz(ham: str) -> datetime | None:
     for bicim in ("%d/%m/%Y", "%d/%m/%y"):
         try:
             return datetime.strptime(ham, bicim)
@@ -182,10 +182,10 @@ def tarih_coz(ham: str) -> Optional[datetime]:
     return None
 
 
-def kaynak_satirlari(cache: Path) -> Dict[Any, List[Dict[str, Any]]]:
+def kaynak_satirlari(cache: Path) -> dict[Any, list[dict[str, Any]]]:
     """Gune gore indekslenmis kaynak satirlari."""
-    indeks: Dict[Any, List[Dict[str, Any]]] = {}
-    dosyalar: List[Tuple[str, Path]] = []
+    indeks: dict[Any, list[dict[str, Any]]] = {}
+    dosyalar: list[tuple[str, Path]] = []
 
     for lig in ANA_LIGLER:
         p = indir(ANA_URL.format(sezon=SEZON, lig=lig), cache / f"{lig}.csv")
@@ -231,7 +231,7 @@ def kaynak_satirlari(cache: Path) -> Dict[Any, List[Dict[str, Any]]]:
 
 # ─── eslestirme ───────────────────────────────────────────────────────────────
 
-def en_iyi_aday(mac: Dict[str, Any], indeks, esik: float = 0.55):
+def en_iyi_aday(mac: dict[str, Any], indeks, esik: float = 0.55):
     gun = (mac.get("kickoff") or "")[:10]
     try:
         d = datetime.strptime(gun, "%Y-%m-%d").date()
@@ -250,7 +250,7 @@ def en_iyi_aday(mac: Dict[str, Any], indeks, esik: float = 0.55):
 
 # ─── cikti ────────────────────────────────────────────────────────────────────
 
-def sayi(ham: Any) -> Optional[float]:
+def sayi(ham: Any) -> float | None:
     if ham in (None, "", "-"):
         return None
     try:
@@ -259,7 +259,7 @@ def sayi(ham: Any) -> Optional[float]:
         return None
 
 
-def sqlite_yaz(yol: Path, satirlar: List[Dict[str, Any]]) -> None:
+def sqlite_yaz(yol: Path, satirlar: list[dict[str, Any]]) -> None:
     if yol.exists():
         yol.unlink()
     db = sqlite3.connect(yol)
@@ -324,14 +324,14 @@ def main() -> int:
     indeks = kaynak_satirlari(cache)
     print(f"  {sum(len(v) for v in indeks.values())} kaynak satiri, {len(indeks)} gun\n")
 
-    satirlar: List[Dict[str, Any]] = []
+    satirlar: list[dict[str, Any]] = []
     oran_sutunlari: set = set()
     stat_sutunlari: set = set()
 
     for w in haftalar:
         for mac in w.get("matches", []):
             aday, guven = en_iyi_aday(mac, indeks, args.esik)
-            kayit: Dict[str, Any] = {
+            kayit: dict[str, Any] = {
                 "week": w["week"], "no": mac["no"], "kickoff": mac["kickoff"],
                 "home": mac["home"], "away": mac["away"],
                 "hg": mac["hg"], "ag": mac["ag"], "code": mac["code"],
@@ -368,7 +368,7 @@ def main() -> int:
     print(f"oran sutunu: {len(oran_sutunlari)} · istatistik sutunu: {len(stat_sutunlari)}")
 
     # Pazar bazinda kac maca oran dustu
-    pazar_sayaci: Dict[str, int] = {}
+    pazar_sayaci: dict[str, int] = {}
     for r in eslesen:
         for sutun in r["oranlar"]:
             _, pazar, _, donem = sutun_ayristir(sutun)

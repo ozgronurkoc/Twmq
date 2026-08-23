@@ -38,10 +38,7 @@ from spor_toto.history import SYMBOLS
 from spor_toto.predict import PiyasaTahminci
 
 KOK = Path(__file__).resolve().parent.parent
-_spec = importlib.util.spec_from_file_location(
-    "build_egitim_a2", KOK / "scripts" / "build_egitim.py")
-uretici = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(uretici)
+uretici = importlib.import_module("scripts.build_egitim")
 
 
 @pytest.fixture(scope="module")
@@ -233,7 +230,7 @@ def test_bahisci_kupon_haftasinda_duzgune_duser():
     from spor_toto.evaluate import olculebilir_haftalar
     kupon = olculebilir_haftalar()[0]
     for blok in BahisciTahminci("b_PS").tahmin(kupon):
-        assert blok == pytest.approx({s: 1 / 3 for s in SYMBOLS})
+        assert blok == pytest.approx(dict.fromkeys(SYMBOLS, 1 / 3))
 
 
 def test_max_tekil_tahminci_degil():
@@ -252,8 +249,10 @@ def test_max_tekil_tahminci_degil():
 def test_dagilim_kademesi_hareket_ustune_tek_sutun_ekler():
     from spor_toto.recalibrate import KalibreTahminci
     h = korpus_haftalari(sezonlar_=["2425"], bahisci_gerekli=True)
-    hareket = KalibreTahminci("hareket"); hareket.egit(h)
-    dagilim = KalibreTahminci("dagilim"); dagilim.egit(h)
+    hareket = KalibreTahminci("hareket")
+    hareket.egit(h)
+    dagilim = KalibreTahminci("dagilim")
+    dagilim.egit(h)
     assert len(dagilim.katsayilar) == len(hareket.katsayilar) + 1
 
 
@@ -270,7 +269,8 @@ def test_dagilim_sutunu_gercekten_calisiyor():
     hafta = next(x for x in h
                  if any(o["ayrisma"] > 0.02 for o in x["ozellikler"]))
 
-    t = KalibreTahminci("dagilim"); t.egit(h)
+    t = KalibreTahminci("dagilim")
+    t.egit(h)
     once = t.tahmin(hafta)
     t._theta[-1] += 20.0
     sonra = t.tahmin(hafta)

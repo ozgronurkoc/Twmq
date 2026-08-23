@@ -24,9 +24,10 @@ from __future__ import annotations
 
 import csv
 import math
+from collections.abc import Sequence
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any
 
 from .odds import ARINDIRMA_VARSAYILAN, implied_probs
 
@@ -59,13 +60,33 @@ BAHISCILER: Sequence[str] = ("b_B365", "b_PS", "b_Max", "b_Avg")
 EN_AZ_MAC = 5
 
 
+def _tam_sayi(r: dict[str, str], ad: str) -> int | None:
+    """Bos ya da sayisal olmayan hucre -> None."""
+    ham = (r.get(ad) or "").strip()
+    return int(ham) if ham.isdigit() else None
+
+
+def _cizgi_uclusu(r: dict[str, str], onek: str) -> dict[str, float] | None:
+    """Acilis/kapanis ucluSU — **ya tamdir ya yoktur.**
+
+    Yarim bir cift sessiz bir yalan olurdu: hareket sifir gorunur, mac A1
+    kesitine girer ve olcumu seyreltirdi. Uretici zaten yarim cift yazmiyor
+    (`build_egitim.dogrula`); burada okurken de gevsetilmez.
+    """
+    try:
+        uclu = {s: float(r[f"{onek}_{s}"]) for s in ("1", "0", "2")}
+    except (KeyError, TypeError, ValueError):
+        return None
+    return uclu if all(v > 1.0 for v in uclu.values()) else None
+
+
 @lru_cache(maxsize=2)
-def korpus_yukle(yol: Optional[str] = None) -> List[Dict[str, Any]]:
+def korpus_yukle(yol: str | None = None) -> list[dict[str, Any]]:
     """Korpus satırlarını oku. Dosya yoksa boş liste (çağıran karar verir)."""
     p = Path(yol) if yol else VARSAYILAN_KORPUS
     if not p.exists():
         return []
-    out: List[Dict[str, Any]] = []
+    out: list[dict[str, Any]] = []
     with open(p, encoding="utf-8", newline="") as fh:
         for r in csv.DictReader(fh):
             try:
@@ -74,26 +95,13 @@ def korpus_yukle(yol: Optional[str] = None) -> List[Dict[str, Any]]:
                 continue
             if any(v <= 1.0 for v in oranlar.values()):
                 continue
-            def _tam(ad: str) -> Optional[int]:
-                ham = (r.get(ad) or "").strip()
-                return int(ham) if ham.isdigit() else None
-
-            def _cizgi(onek: str) -> Optional[Dict[str, float]]:
-                """Acilis/kapanis ucluSU — **ya tamdir ya yoktur.**
-
-                Yarim bir cift sessiz bir yalan olurdu: hareket sifir gorunur,
-                mac A1 kesitine girer ve olcumu seyreltirdi. Uretici zaten
-                yarim cift yazmiyor (`build_egitim.dogrula`); burada okurken de
-                gevsetilmez.
-                """
-                try:
-                    uclu = {s: float(r[f"{onek}_{s}"]) for s in ("1", "0", "2")}
-                except (KeyError, TypeError, ValueError):
-                    return None
-                return uclu if all(v > 1.0 for v in uclu.values()) else None
-
-            acilis, kapanis = _cizgi("acilis"), _cizgi("kapanis")
-            dortlu = {ad: _cizgi(ad) for ad in BAHISCILER}
+            # Bu iki yardimci DONGUNUN ICINDE tanimliydi: 31 bin satirin
+            # her biri icin iki fonksiyon nesnesi uretiliyordu. Ayrica
+            # dongu degiskenini kapatiyorlardi (ruff B023) — burada zararsiz,
+            # cunku ayni yinelemede cagriliyorlar, ama desen kirilgan.
+            acilis = _cizgi_uclusu(r, "acilis")
+            kapanis = _cizgi_uclusu(r, "kapanis")
+            dortlu = {ad: _cizgi_uclusu(r, ad) for ad in BAHISCILER}
             out.append({
                 "sezon": r["sezon"],
                 "lig": r["lig"],
@@ -111,10 +119,10 @@ def korpus_yukle(yol: Optional[str] = None) -> List[Dict[str, Any]]:
                 # Dortlu de ya tamdir ya yoktur: eksik bir kaynak kumesinden
                 # hesaplanan ayrisma maclar arasinda karsilastirilamaz.
                 "bahisciler": dortlu if all(dortlu.values()) else None,
-                "ev_isabet": _tam("ev_isabet"),
-                "dep_isabet": _tam("dep_isabet"),
-                "ev_sut": _tam("ev_sut"),
-                "dep_sut": _tam("dep_sut"),
+                "ev_isabet": _tam_sayi(r, "ev_isabet"),
+                "dep_isabet": _tam_sayi(r, "dep_isabet"),
+                "ev_sut": _tam_sayi(r, "ev_sut"),
+                "dep_sut": _tam_sayi(r, "dep_sut"),
             })
     return out
 
@@ -148,7 +156,7 @@ SEZON_SONU_ORANI = 0.20
 EN_AZ_LIG_MACI = 5
 
 
-def _form_tablosu(satirlar: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def _form_tablosu(satirlar: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
     """Her maç için, **o maçtan önceki** maçlardan hesaplanmış takım formu.
 
     Zamansal sızıntıya karşı tek savunma buradaki sıradır: maçlar kronolojik
@@ -166,10 +174,10 @@ def _form_tablosu(satirlar: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
     sirali = sorted(range(len(satirlar)),
                     key=lambda i: (satirlar[i]["tarih"], satirlar[i]["lig"],
                                    satirlar[i]["ev"]))
-    gecmis: Dict[str, List[Dict[str, float]]] = {}
-    out: List[Optional[Dict[str, Any]]] = [None] * len(satirlar)
+    gecmis: dict[str, list[dict[str, float]]] = {}
+    out: list[dict[str, Any] | None] = [None] * len(satirlar)
 
-    def ozet(takim: str) -> Optional[Dict[str, float]]:
+    def ozet(takim: str) -> dict[str, float] | None:
         kayit = gecmis.get(takim, [])
         if len(kayit) < FORM_PENCERE:
             return None
@@ -208,7 +216,7 @@ def _form_tablosu(satirlar: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
     return [o for o in out if o is not None]
 
 
-def _takvim_tablosu(satirlar: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def _takvim_tablosu(satirlar: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
     """A3 özellikleri: dinlenme, sıkışıklık, iç/dış form, sezon sonu payı.
 
     Hepsi **yalnızca o maçtan önceki** maçlardan hesaplanır; `_form_tablosu`
@@ -244,21 +252,21 @@ def _takvim_tablosu(satirlar: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
     # Lig-sezon basina toplam mac sayisi: fikstur BASTAN bellidir (sonuc
     # degil takvim bilgisi), bu yuzden "sezonun neresindeyiz" sorusunda
     # kullanilmasi sizinti degildir.
-    lig_toplam: Dict[Any, int] = {}
+    lig_toplam: dict[Any, int] = {}
     for r in satirlar:
         anahtar = (r["sezon"], r["lig"])
         lig_toplam[anahtar] = lig_toplam.get(anahtar, 0) + 1
 
-    son_mac: Dict[str, date] = {}
-    mac_gunleri: Dict[str, List[date]] = {}
-    ic_form: Dict[str, List[float]] = {}
-    dis_form: Dict[str, List[float]] = {}
-    puan: Dict[Any, Dict[str, List[float]]] = {}
-    oynanan: Dict[Any, int] = {}
+    son_mac: dict[str, date] = {}
+    mac_gunleri: dict[str, list[date]] = {}
+    ic_form: dict[str, list[float]] = {}
+    dis_form: dict[str, list[float]] = {}
+    puan: dict[Any, dict[str, list[float]]] = {}
+    oynanan: dict[Any, int] = {}
 
-    out: List[Optional[Dict[str, Any]]] = [None] * len(satirlar)
+    out: list[dict[str, Any] | None] = [None] * len(satirlar)
 
-    def dinlenme(takim: str, bugun: date) -> Optional[float]:
+    def dinlenme(takim: str, bugun: date) -> float | None:
         onceki = son_mac.get(takim)
         return None if onceki is None else min((bugun - onceki).days,
                                                DINLENME_TAVANI)
@@ -268,13 +276,13 @@ def _takvim_tablosu(satirlar: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
         return sum(1 for g in gunler
                    if 0 < (bugun - g).days <= SIKISIKLIK_PENCERE_GUN)
 
-    def yuvarlanan(kayit: List[float], pencere: int) -> Optional[float]:
+    def yuvarlanan(kayit: list[float], pencere: int) -> float | None:
         if len(kayit) < pencere:
             return None
         son = kayit[-pencere:]
         return sum(son) / len(son)
 
-    def sira_payi(anahtar: Any, takim: str) -> Optional[float]:
+    def sira_payi(anahtar: Any, takim: str) -> float | None:
         """Takımın ligindeki sıra yüzdeliğinden türeyen "oynayacak şey" payı.
 
         Uçlar (şampiyonluk / küme düşme) 1'e, orta sıra 0'a yakın. Sıralama
@@ -341,14 +349,14 @@ def _takvim_tablosu(satirlar: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
     return [o for o in out if o is not None]
 
 
-def sezonlar() -> List[str]:
+def sezonlar() -> list[str]:
     """Korpustaki sezonlar, kronolojik."""
     return sorted({r["sezon"] for r in korpus_yukle()})
 
 
-def cizgi_hareketi(acilis: Optional[Dict[str, float]],
-                   kapanis: Optional[Dict[str, float]]
-                   ) -> Dict[str, float]:
+def cizgi_hareketi(acilis: dict[str, float] | None,
+                   kapanis: dict[str, float] | None
+                   ) -> dict[str, float]:
     """Açılış→kapanış hareketi, sembol başına: `ln p_kapanış − ln p_açılış`.
 
     Marj arındırılmış **olasılık** üzerinden ölçülür, ham oran üzerinden
@@ -374,7 +382,7 @@ def cizgi_hareketi(acilis: Optional[Dict[str, float]],
     bunu 2026-08'deki varsayılan çevriminde yakaladı.
     """
     if not acilis or not kapanis:
-        return {s: 0.0 for s in ("1", "0", "2")}
+        return dict.fromkeys(("1", "0", "2"), 0.0)
     a = implied_probs(acilis, FARK_ARINDIRMASI)
     k = implied_probs(kapanis, FARK_ARINDIRMASI)
     return {s: math.log(max(k.get(s, 0.0), OLASILIK_TABANI)
@@ -382,8 +390,8 @@ def cizgi_hareketi(acilis: Optional[Dict[str, float]],
             for s in ("1", "0", "2")}
 
 
-def bahisci_ayrismasi(bahisciler: Optional[Dict[str, Optional[Dict[str, float]]]]
-                      ) -> Dict[str, float]:
+def bahisci_ayrismasi(bahisciler: dict[str, dict[str, float] | None] | None
+                      ) -> dict[str, float]:
     """Bahisçiler ne kadar ayrışıyor — **iki ayrı ölçü, ikisi de gerekli.**
 
     `ayrisma` — `B365` ile `Pinnacle`ın marj arındırılmış olasılıkları
@@ -427,36 +435,46 @@ def bahisci_ayrismasi(bahisciler: Optional[Dict[str, Optional[Dict[str, float]]]
     return {"ayrisma": ayrisma, "en_iyi_prim": prim}
 
 
-def _zamansal_ozellikli(tumu: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """Korpus satırlarına form ve takvim tablolarını **bir kez** iliştir.
+@lru_cache(maxsize=2)
+def _zenginlestirilmis_korpus(yol: str | None = None) -> tuple[dict[str, Any], ...]:
+    """Korpus satirlari + `_form` / `_takvim` alanlari — **bir kez** hesaplanir.
 
-    Form tüm korpus üzerinde, kronolojik hesaplanır; süzme SONRA gelir. Önce
-    süzseydik, seçilen sezonun ilk maçları geçmişsiz kalırdı — bu yüzden her
-    süzgeç kombinasyonu aynı iki tabloyu istiyor ve onları her seferinde
-    yeniden kurmanın hiçbir karşılığı yok (birlikte ~1,3 sn).
+    Iki sebeple ayri ve onbellekli:
 
-    `korpus_yukle` önbellekli, yani satırlar çağrılar arasında aynı nesnedir
-    ve iliştirme kalıcı olur. Önbellek tahliye ederse taze bir liste gelir,
-    `_form` alanı bulunmaz ve tablolar yeniden kurulur — koşul tam olarak
-    bunun için var, bir hız kısayolu değil.
+    1. **Dogruluk.** `korpus_yukle` lru_cache'lidir ve
+       `benzer._olasilik_tablosu` ayni satir nesnelerini disariya dagitip
+       docstring'inde "degistirmeyin" der. `_form`/`_takvim` alanlarini o
+       satirlara YERINDE yazmak onbellegi ve o sozu birlikte bozuyordu; bu
+       yuzden kopya uzerinde calisilir.
+    2. **Hiz.** Kopya ve iki tablo hesabi (birlikte ~1,3 sn) `korpus_haftalari`nin govdesinde
+       duruyordu, yani HER cagrida 31 bin sozluk kopyalaniyor ve form/takvim
+       tablolari bastan kuruluyordu. Suzgecler (sezon, lig, cizgi, bahisci)
+       sonucu degistirir ama bu zenginlestirmeyi degistirmez — dolayisiyla
+       onbelleklenebilir.
+
+    Demet doner: lru_cache'li bir fonksiyonun ciktisi cagiranlarca yanlislikla
+    degistirilmemeli (satirlarin kendisi yine sozluktur; kural, cagiranin
+    onlari degistirmemesidir — ayni sozlesme `korpus_yukle`da da gecerli).
     """
-    if tumu and "_form" in tumu[0] and "_takvim" in tumu[0]:
-        return tumu
-    formlar = _form_tablosu(tumu)
-    takvimler = _takvim_tablosu(tumu)
+    ham = korpus_yukle(yol)
+    # Form tum korpus uzerinde, kronolojik hesaplanir; suzme SONRA gelir.
+    # Once suzseydik, secilen sezonun ilk maclari gecmissiz kalirdi.
+    formlar = _form_tablosu(ham)
+    takvimler = _takvim_tablosu(ham)
+    tumu = [dict(r) for r in ham]
     for r, f, t in zip(tumu, formlar, takvimler):
         r["_form"] = f
         r["_takvim"] = t
-    return tumu
+    return tuple(tumu)
 
 
-def korpus_haftalari(sezonlar_: Optional[Sequence[str]] = None,
-                     ligler: Optional[Sequence[str]] = None,
+def korpus_haftalari(sezonlar_: Sequence[str] | None = None,
+                     ligler: Sequence[str] | None = None,
                      en_az_mac: int = EN_AZ_MAC,
-                     yol: Optional[str] = None,
+                     yol: str | None = None,
                      cizgi_gerekli: bool = False,
                      bahisci_gerekli: bool = False,
-                     yontem: str = ARINDIRMA_VARSAYILAN) -> List[Dict[str, Any]]:
+                     yontem: str = ARINDIRMA_VARSAYILAN) -> list[dict[str, Any]]:
     """Korpusu `evaluate` koşumunun beklediği hafta girdilerine çevir.
 
     Dönen her kayıt `backtest.hafta_girdileri()` ile aynı sözleşmeyi taşır
@@ -481,7 +499,8 @@ def korpus_haftalari(sezonlar_: Optional[Sequence[str]] = None,
     `orantili`dır ve **değiştirilmemelidir**: A1–A3'ün yayımlanmış bütün
     sayıları onunla ölçüldü. Parametre, "aynı ölçüm başka arındırmayla ne
     verir" sorusunu sormak için var — cevabı görmek isteyen açıkça ister.
-        Sonuç **önbelleklidir** (`_korpus_haftalari`). Bu çağrı 31.103 satırlık
+
+    Sonuç **önbelleklidir** (`_korpus_haftalari`). Bu çağrı 31.103 satırlık
     korpusu baştan geziyor, 217.701 kez marj arındırıyor ve tek başına ~16 sn
     sürüyor; test suitinde 27 kez, hep aynı argümanlarla koşuyordu. Korpus
     sürümlenmiş bir dosyadır — iki çağrı arasında değişmez.
@@ -504,17 +523,16 @@ _HAFTA_ONBELLEK_BOYU = 64
 
 
 @lru_cache(maxsize=_HAFTA_ONBELLEK_BOYU)
-def _korpus_haftalari(sezonlar_: Optional[tuple],
-                      ligler: Optional[tuple],
+def _korpus_haftalari(sezonlar_: tuple | None,
+                      ligler: tuple | None,
                       en_az_mac: int,
-                      yol: Optional[str],
+                      yol: str | None,
                       cizgi_gerekli: bool,
                       bahisci_gerekli: bool,
-                      yontem: str) -> List[Dict[str, Any]]:
+                      yontem: str) -> list[dict[str, Any]]:
     """`korpus_haftalari`nin önbelleklenebilir çekirdeği (dizi argümanlar demet).
     """
-    tumu = _zamansal_ozellikli(korpus_yukle(yol))
-    satirlar = tumu
+    satirlar: list[dict[str, Any]] = list(_zenginlestirilmis_korpus(yol))
     if cizgi_gerekli:
         satirlar = [r for r in satirlar if r.get("acilis") and r.get("kapanis")]
     if bahisci_gerekli:
@@ -526,17 +544,17 @@ def _korpus_haftalari(sezonlar_: Optional[tuple],
         izin_lig = set(ligler)
         satirlar = [r for r in satirlar if r["lig"] in izin_lig]
 
-    gruplar: Dict[Any, List[Dict[str, Any]]] = {}
+    gruplar: dict[Any, list[dict[str, Any]]] = {}
     for r in satirlar:
         gruplar.setdefault((r["sezon"], r["iso_yil"], r["iso_hafta"]), []).append(r)
 
-    out: List[Dict[str, Any]] = []
+    out: list[dict[str, Any]] = []
     for (sezon, yil, hafta), grup in sorted(gruplar.items()):
         if len(grup) < en_az_mac:
             continue
         grup.sort(key=lambda r: (r["tarih"], r["lig"], r["ev"]))
-        probs: List[Dict[str, float]] = []
-        ozellikler: List[Dict[str, Any]] = []
+        probs: list[dict[str, float]] = []
+        ozellikler: list[dict[str, Any]] = []
         for r in grup:
             olasilik = implied_probs(r["oranlar"], yontem)
             probs.append(olasilik)
@@ -576,7 +594,7 @@ def _korpus_haftalari(sezonlar_: Optional[tuple],
     return out
 
 
-def ozet(yol: Optional[str] = None) -> Dict[str, Any]:
+def ozet(yol: str | None = None) -> dict[str, Any]:
     """Korpusun tanılama özeti — rapor ve test için."""
     satirlar = korpus_yukle(yol)
     haftalar = korpus_haftalari(yol=yol)

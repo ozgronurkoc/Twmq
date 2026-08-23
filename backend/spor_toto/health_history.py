@@ -32,7 +32,7 @@ import urllib.error
 import urllib.request
 from collections import deque
 from datetime import datetime, timezone
-from typing import Any, Deque, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -43,17 +43,17 @@ GECMIS_SINIRI = int(os.environ.get("HEALTH_HISTORY_LIMIT", "200"))
 ALARM_URL = os.environ.get("HEALTH_ALARM_URL", "").strip()
 ALARM_TIMEOUT_S = float(os.environ.get("HEALTH_ALARM_TIMEOUT_S", "5"))
 
-_kayitlar: Deque[Dict[str, Any]] = deque(maxlen=max(1, GECMIS_SINIRI))
+_kayitlar: deque[dict[str, Any]] = deque(maxlen=max(1, GECMIS_SINIRI))
 _kilit = threading.Lock()
 
 
-def _durum(rapor: Dict[str, Any]) -> str:
+def _durum(rapor: dict[str, Any]) -> str:
     if not rapor.get("ok"):
         return "UNHEALTHY"
     return "DEGRADED" if rapor.get("degraded") else "HEALTHY"
 
 
-def kaydet(rapor: Dict[str, Any]) -> Dict[str, Any]:
+def kaydet(rapor: dict[str, Any]) -> dict[str, Any]:
     """Rapor ozetini tampona yazar; durum DEGISTIYSE bildirimi tetikler.
 
     Kismi kosular (`?only=`) tampona GIRMEZ: zaman serisi ancak ayni sey
@@ -87,14 +87,14 @@ def kaydet(rapor: Dict[str, Any]) -> Dict[str, Any]:
             "onceki": onceki, "durum": kayit["durum"]}
 
 
-def gecmis(limit: int = 50) -> List[Dict[str, Any]]:
+def gecmis(limit: int = 50) -> list[dict[str, Any]]:
     """En yeniden en eskiye. Tampon kopyalanir; cagiran taraf mutasyon yapamaz."""
     with _kilit:
         kayitlar = list(_kayitlar)
     return list(reversed(kayitlar))[:max(1, limit)]
 
 
-def ozet() -> Dict[str, Any]:
+def ozet() -> dict[str, Any]:
     """"Ne zamandan beri bu durumdayiz?" — tek cevaplanmasi gereken soru."""
     with _kilit:
         kayitlar = list(_kayitlar)
@@ -131,7 +131,7 @@ def temizle() -> None:
         _kayitlar.clear()
 
 
-def _bildir(onceki: Optional[str], kayit: Dict[str, Any]) -> None:
+def _bildir(onceki: str | None, kayit: dict[str, Any]) -> None:
     """Durum degisimini disari haber verir (varsayilan: kapali).
 
     Gonderim ARKA PLANDA yapilir ve her hatasi yutulur: bildirim

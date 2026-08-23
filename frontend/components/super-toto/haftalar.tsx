@@ -9,9 +9,20 @@ import {
   type SuperTotoHafta,
   type SuperTotoMac,
 } from "@/lib/super-toto";
+import { SEMBOLLER as SEM } from "@/lib/types";
+import { yuzde as _yuzde } from "@/lib/utils";
+
+/** Bu tabloda basamak yok — `yuzde(v, 0)`.
+ *
+ *  Girdi `number | undefined`: `Record<string, number>` erisimi eksik
+ *  anahtarda `undefined` doner (`noUncheckedIndexedAccess`) ve `_yuzde`
+ *  bu durumu zaten "—" ile karsiliyor. Takma adi daraltmak, cagri yerinde
+ *  `!` koymayi gerektirirdi — yani olmayan bir garantiyi ilan etmeyi. */
+const yuzde = (v: number | undefined) => _yuzde(v, 0);
 import { Tabs, type TabItem } from "@/components/ui/tabs";
 import { Badge, Card, CardBody, CardHeader } from "@/components/ui/primitives";
 import { BenzerKart } from "@/components/benzer/kart";
+import { adreseYaz, adrestenOku } from "@/lib/adres";
 
 const HAFTA_PARAM = "hafta";
 
@@ -22,8 +33,7 @@ const HAFTA_PARAM = "hafta";
  * (ayni gerekce icin bkz. `istatistik/parts.tsx`).
  */
 export function haftaUrldenOku(): number | null {
-  if (typeof window === "undefined") return null;
-  const ham = new URL(window.location.href).searchParams.get(HAFTA_PARAM);
+  const ham = adrestenOku(HAFTA_PARAM);
   if (!ham) return null;
   const n = Number(ham);
   if (!Number.isFinite(n)) return null;
@@ -37,12 +47,7 @@ export function haftaUrldenOku(): number | null {
  * her sekme tikinda panel bastan kurulurdu.
  */
 export function haftaUrleYaz(week: number): void {
-  if (typeof window === "undefined") return;
-  const url = new URL(window.location.href);
-  url.searchParams.set(HAFTA_PARAM, String(week));
-  const yeni = url.pathname + (url.search || "") + url.hash;
-  if (yeni === window.location.pathname + window.location.search + window.location.hash) return;
-  window.history.replaceState(window.history.state, "", yeni);
+  adreseYaz(HAFTA_PARAM, String(week));
 }
 
 /**
@@ -88,11 +93,6 @@ export function HaftaSekmeleri({
   );
 }
 
-const SEM = ["1", "0", "2"] as const;
-
-function yuzde(v: number): string {
-  return `%${(100 * v).toFixed(0)}`;
-}
 
 /** Bir macin satiri: oran, olasilik, oynanma, isaret ve (varsa) sonuc. */
 function MacSatiri({
@@ -119,7 +119,9 @@ function MacSatiri({
         {mac.odds_missing ? (
           <span className="text-muted-foreground">oran yok</span>
         ) : (
-          SEM.map((s) => mac.odds?.[s].toFixed(2)).join(" / ")
+          // `?.` yalnizca `odds`'un null olmasini koruyordu; ANAHTAR
+          // eksikse `.toFixed` cokuyordu (index imzasi `number` der).
+          SEM.map((s) => mac.odds?.[s]?.toFixed(2) ?? "—").join(" / ")
         )}
       </td>
       <td className="py-1.5 pr-3 tabular-nums">
@@ -161,9 +163,13 @@ export function DoluHafta({ hafta }: { hafta: SuperTotoHafta }) {
   ];
   const dogru =
     hafta.results && k
-      ? hafta.matches.filter(
-          (mac) => mac.result && k.picks[mac.no - 1].includes(mac.result),
-        ).length
+      ? hafta.matches.filter((mac) => {
+          // `picks` hafta verisinden gelir; mac numarasi ile hizasi
+          // bozulursa satir EKSIK olur. Once `.includes` dogrudan
+          // cagriliyordu ve o durumda sayfa cokerdi.
+          const isaret = k.picks[mac.no - 1];
+          return !!mac.result && !!isaret && isaret.includes(mac.result);
+        }).length
       : null;
 
   return (
@@ -198,7 +204,7 @@ export function DoluHafta({ hafta }: { hafta: SuperTotoHafta }) {
               {k.columns ? ` · ${k.columns.toLocaleString("tr-TR")} kolon` : ""}
               {k.rows ? ` · ${k.rows} satır` : ""}
               {k.in_set_p !== null
-                ? ` · küme-içi ${(100 * k.in_set_p).toFixed(2)}%`
+                ? ` · küme-içi ${_yuzde(k.in_set_p, 2)}`
                 : ""}
               {dogru !== null ? ` · ${dogru}/15 küme içinde` : ""}
             </div>
@@ -263,7 +269,7 @@ export function DoluHafta({ hafta }: { hafta: SuperTotoHafta }) {
               <MacSatiri
                 key={mac.no}
                 mac={mac}
-                isaret={k ? k.picks[mac.no - 1] : null}
+                isaret={k?.picks[mac.no - 1] ?? null}
               />
             ))}
           </tbody>

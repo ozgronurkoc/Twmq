@@ -30,17 +30,18 @@ kodda uygular, yorumu okura bırakmaz.
 """
 from __future__ import annotations
 
-from typing import Any, Dict, List, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 from .history import SYMBOLS
 
 #: Bir haftanın girdisi — `backtest.hafta_girdileri()` ya da
 #: `egitim.korpus_haftalari()` üretir.
 #: Alanlar: week, close_date, results, probs[], missing, usable
-Girdi = Dict[str, Any]
+Girdi = dict[str, Any]
 
 #: Bir maçın tahmini: sembol → olasılık. Toplamı 1 olmalıdır.
-Olasilik = Dict[str, float]
+Olasilik = dict[str, float]
 
 
 def mac_sayisi(hafta: Girdi) -> int:
@@ -71,7 +72,7 @@ class Tahminci:
     def egit(self, haftalar: Sequence[Girdi]) -> None:
         """Eğitim haftalarını gör. Öğrenmeyen tahminciler için no-op."""
 
-    def tahmin(self, hafta: Girdi) -> List[Olasilik]:
+    def tahmin(self, hafta: Girdi) -> list[Olasilik]:
         raise NotImplementedError
 
     def __repr__(self) -> str:  # pragma: no cover - tanılama kolayligi
@@ -88,7 +89,7 @@ class DuzgunTahminci(Tahminci):
     ad = "duzgun"
     aciklama = "Her sembole 1/3; bilgi taşımayan zemin"
 
-    def tahmin(self, hafta: Girdi) -> List[Olasilik]:
+    def tahmin(self, hafta: Girdi) -> list[Olasilik]:
         esit = {s: 1.0 / len(SYMBOLS) for s in SYMBOLS}
         return [dict(esit) for _ in range(mac_sayisi(hafta))]
 
@@ -112,7 +113,7 @@ class SezonSabitiTahminci(Tahminci):
         self._dagilim: Olasilik = {s: 1.0 / len(SYMBOLS) for s in SYMBOLS}
 
     def egit(self, haftalar: Sequence[Girdi]) -> None:
-        sayim = {s: 0 for s in SYMBOLS}
+        sayim = dict.fromkeys(SYMBOLS, 0)
         for hafta in haftalar:
             for kod in hafta["results"]:
                 if kod in sayim:
@@ -122,7 +123,7 @@ class SezonSabitiTahminci(Tahminci):
             return
         self._dagilim = {s: sayim[s] / toplam for s in SYMBOLS}
 
-    def tahmin(self, hafta: Girdi) -> List[Olasilik]:
+    def tahmin(self, hafta: Girdi) -> list[Olasilik]:
         return [dict(self._dagilim) for _ in range(mac_sayisi(hafta))]
 
 
@@ -145,9 +146,9 @@ class PiyasaTahminci(Tahminci):
     ad = "piyasa"
     aciklama = "Marj arındırılmış kapanış oranı (football-data)"
 
-    def tahmin(self, hafta: Girdi) -> List[Olasilik]:
+    def tahmin(self, hafta: Girdi) -> list[Olasilik]:
         esit = {s: 1.0 / len(SYMBOLS) for s in SYMBOLS}
-        out: List[Olasilik] = []
+        out: list[Olasilik] = []
         for blok in hafta["probs"]:
             out.append(dict(blok) if blok else dict(esit))
         return out
@@ -155,7 +156,7 @@ class PiyasaTahminci(Tahminci):
 
 #: Referans tahminciler — her koşumda bunlara karşı ölçülür.
 #: Sıra kasıtlı: zeminden çizgiye doğru.
-def referans_fabrikalar() -> List[type]:
+def referans_fabrikalar() -> list[type]:
     """Üç referansın **sınıfları** — her biri kendi fabrikasıdır.
 
     Örnek değil sınıf döner, çünkü `sezon_sabiti` eğitimle **durum tutar**:
@@ -165,7 +166,7 @@ def referans_fabrikalar() -> List[type]:
     return [DuzgunTahminci, SezonSabitiTahminci, PiyasaTahminci]
 
 
-def referans_tahminciler() -> List[Tahminci]:
+def referans_tahminciler() -> list[Tahminci]:
     """Üç referansın yeni birer örneği (tanılama ve elle kullanım için)."""
     return [f() for f in referans_fabrikalar()]
 

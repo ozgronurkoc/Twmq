@@ -10,9 +10,10 @@ import type {
   SweepRow,
 } from "@/lib/types";
 import { cn, ondalik, sayi } from "@/lib/utils";
-import { Button, Callout } from "@/components/ui/primitives";
+import { Button, Callout, Stat } from "@/components/ui/primitives";
 import { CouponCell } from "@/components/ui/symbol";
 import { seqFill, seqInk } from "./viz";
+import { TABLO_BASLIK_SATIRI, TABLO_SARMAL } from "@/components/ui/tablo";
 
 /* ── strateji secici ────────────────────────────────────────────────────── */
 
@@ -82,39 +83,6 @@ export function StrategyPicker({
 
 /* ── sezon ozeti ────────────────────────────────────────────────────────── */
 
-function Kutu({
-  etiket,
-  deger,
-  alt,
-  ton = "neutral",
-}: {
-  etiket: string;
-  deger: React.ReactNode;
-  alt?: React.ReactNode;
-  ton?: "neutral" | "warning";
-}) {
-  return (
-    <div className="rounded-xl border border-line bg-elevated px-4 py-3">
-      <div className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
-        {etiket}
-      </div>
-      <div
-        className={cn(
-          "tnum mt-1 text-[24px] font-semibold leading-tight",
-          ton === "warning" && "text-warning",
-        )}
-      >
-        {deger}
-      </div>
-      {alt ? (
-        <div className="tnum mt-0.5 text-[11.5px] leading-relaxed text-muted-foreground">
-          {alt}
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
 export function BacktestStats({ season }: { season: BacktestSeason }) {
   if (!season.weeks) {
     return <p className="text-[13px] text-muted-foreground">Çalıştırılabilir hafta yok.</p>;
@@ -122,23 +90,27 @@ export function BacktestStats({ season }: { season: BacktestSeason }) {
   const [lo, hi] = season.hit14_ci;
   return (
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-      <Kutu
+      <Stat
+        boyut="lg"
         etiket="14+ tutan hafta"
         deger={`${season.hit14} / ${season.weeks}`}
         alt={`%${ondalik(season.hit14_pct, 1)} · %95 aralık %${ondalik(lo, 1)}–%${ondalik(hi, 1)}`}
         ton={season.hit14 === 0 ? "warning" : "neutral"}
       />
-      <Kutu
+      <Stat
+        boyut="lg"
         etiket="Küme içi hafta"
         deger={`${season.in_set} / ${season.weeks}`}
         alt="15 maçın tamamı işaretlerin içinde kaldı"
       />
-      <Kutu
+      <Stat
+        boyut="lg"
         etiket="Toplam kolon bedeli"
         deger={sayi(season.columns_total)}
         alt={`haftada ort. ${sayi(Math.round(season.columns_avg))} · en pahalı hafta ${sayi(season.columns_max)}`}
       />
-      <Kutu
+      <Stat
+        boyut="lg"
         etiket="14 başına maliyet"
         deger={season.columns_per_hit14 === null ? "—" : sayi(Math.round(season.columns_per_hit14))}
         alt={
@@ -177,10 +149,10 @@ export function SweepTable({
 
   return (
     <div className="space-y-3">
-      <div className="scroll-slim overflow-x-auto">
+      <div className={TABLO_SARMAL}>
         <table className="w-full min-w-[760px] text-[12.5px]">
           <thead>
-            <tr className="text-left text-[11px] uppercase tracking-[0.06em] text-muted-foreground">
+            <tr className={TABLO_BASLIK_SATIRI}>
               <th scope="col" className="pb-2 pr-3 font-medium">Banko</th>
               <th scope="col" className="pb-2 pr-3 font-medium">Üçlü</th>
               <th scope="col" className="w-16 pb-2 pr-3 text-right font-medium">Hafta</th>
@@ -288,18 +260,21 @@ export function HoldoutPanel({
   return (
     <div className="space-y-4">
       <div className="grid gap-3 sm:grid-cols-3">
-        <Kutu
+        <Stat
+        boyut="lg"
           etiket="Taramanın en iyisi"
           deger={best ? `${best.hit14} / ${best.weeks}` : "—"}
           alt={best ? `eşik %${(best.banko * 100).toFixed(0)} / ${best.uclu === 0 ? "üçlü yok" : `%${(best.uclu * 100).toFixed(0)}`}` : undefined}
         />
-        <Kutu
+        <Stat
+        boyut="lg"
           etiket="Hold-out (haftayı görmeden)"
           deger={`${holdout.hit14} / ${holdout.weeks}`}
           alt={`%${ondalik(holdout.hit14_pct ?? 0, 1)} · %95 aralık %${ondalik(lo, 1)}–%${ondalik(hi, 1)}`}
           ton={holdout.hit14 === 0 ? "warning" : "neutral"}
         />
-        <Kutu
+        <Stat
+        boyut="lg"
           etiket="Aşırı uyum farkı"
           deger={fark > 0 ? `−${fark} hafta` : "±0"}
           alt="taramanın kazandığı, hold-out'un kaybettiği"
@@ -333,10 +308,10 @@ export function BacktestWeeks({ weeks }: { weeks: BacktestWeek[] }) {
 
   return (
     <div className="space-y-3">
-      <div className="scroll-slim overflow-x-auto">
+      <div className={TABLO_SARMAL}>
         <table className="w-full min-w-[720px] text-[12.5px]">
           <thead>
-            <tr className="text-left text-[11px] uppercase tracking-[0.06em] text-muted-foreground">
+            <tr className={TABLO_BASLIK_SATIRI}>
               <th scope="col" className="w-16 pb-2 pr-3 font-medium">Hafta</th>
               <th scope="col" className="w-24 pb-2 pr-3 font-medium">Kupon</th>
               <th scope="col" className="w-24 pb-2 pr-3 text-right font-medium">Kolon</th>

@@ -6,7 +6,20 @@ import {
   type ProbRow,
   type Sembol,
 } from "./types";
-import { normalize } from "./utils";
+// `esitPay` burada `uniformProb` ile BIREBIR ayni bir govdeydi.
+import { normalize, uniformProb as esitPay } from "./utils";
+
+/**
+ * Monte Carlo ornek sayisinin sinirlari — sunucunun `/api/meta`'da ilan
+ * ettigi degerlerle AYNI olmak zorunda (`meta.MC_MIN` / `MC_MAX`).
+ *
+ * Bu modul saf: React yok, istek yok (check.mjs onu dogrudan kosar), yani
+ * calisma aninda `/api/meta`yi okuyamaz. Bu yuzden deger burada duruyor ve
+ * Faz 5'in urettigi sozlesme dosyasi ikisinin ayrismadigini denetleyecek.
+ */
+export const MC_MIN = 1000;
+export const MC_MAX = 200_000;
+export const VARSAYILAN_MC = 80_000;
 
 /**
  * Formul sayfasinin KURULUMU: 15 macin isaretleri, olasilik satirlari ve
@@ -103,17 +116,8 @@ export function varsayilanKurulum(): Kurulum {
     elleAyar: false,
     prior: 1,
     evidence: 10,
-    mcSamples: 80000,
+    mcSamples: VARSAYILAN_MC,
     eng: { ...VARSAYILAN_ENG },
-  };
-}
-
-function esitPay(sel: Sembol[]): ProbRow {
-  const pay = sel.length ? 1 / sel.length : 1 / 3;
-  return {
-    "1": sel.includes("1") ? pay : 0,
-    "0": sel.includes("0") ? pay : 0,
-    "2": sel.includes("2") ? pay : 0,
   };
 }
 
@@ -123,22 +127,29 @@ function esitPay(sel: Sembol[]): ProbRow {
 // o alani sessizce varsayilana dusurup HANGISININ dustugunu soylemesi
 // gerekir — asagidaki `atlanan` listesi bunun icin.
 
-function tamsayi(ham: string | null, alt: number, ust: number, yedek: number): number {
-  if (ham === null) return yedek;
+// Uc ayristirici da ayni sozlesmeyi tasir: **deger yoksa ya da bozuksa
+// yedek**. `undefined` de tam olarak "yok" demektir — `URLSearchParams.get`
+// `null`, dizi erisimi ise `undefined` dondurur (`noUncheckedIndexedAccess`).
+// Imzayi daraltip cagri yerinde `!` koymak, "burasi asla bos degil" diye bir
+// sey iddia ederdi; oysa iddia edilmesi gereken sey bos OLABILECEGI.
+type HamDeger = string | null | undefined;
+
+function tamsayi(ham: HamDeger, alt: number, ust: number, yedek: number): number {
+  if (ham === null || ham === undefined) return yedek;
   const n = Number(ham);
   if (!Number.isFinite(n)) return yedek;
   return Math.min(ust, Math.max(alt, Math.round(n)));
 }
 
-function ondalikDeger(ham: string | null, alt: number, ust: number, yedek: number): number {
-  if (ham === null) return yedek;
+function ondalikDeger(ham: HamDeger, alt: number, ust: number, yedek: number): number {
+  if (ham === null || ham === undefined) return yedek;
   const n = Number(ham);
   if (!Number.isFinite(n)) return yedek;
   return Math.min(ust, Math.max(alt, n));
 }
 
-function bayrak(ham: string | null, yedek: boolean): boolean {
-  if (ham === null) return yedek;
+function bayrak(ham: HamDeger, yedek: boolean): boolean {
+  if (ham === null || ham === undefined) return yedek;
   return ham === "1" || ham === "true";
 }
 
@@ -370,7 +381,12 @@ export function kurulumuCoz(arama: string): UrlCozum | null {
       elleAyar: bayrak(p.get("be"), v.elleAyar),
       prior: ondalikDeger(p.get("pr"), 0, 1000, v.prior),
       evidence: ondalikDeger(p.get("ev"), 0, 1000, v.evidence),
-      mcSamples: tamsayi(p.get("mc"), 1000, 1_000_000, v.mcSamples),
+      // Ust sinir SUNUCUNUN ilan ettigi sinirdir (`/api/meta` limits.
+      // mc_samples.max = 200_000). Burada 1_000_000 yaziyordu ve iki taraf
+      // ayrisiyordu: `?mc=500000` tasiyan bir paylasim baglantisi cozuluyor
+      // ama ne kaydiricida gosterilebiliyor ne de sunucuda kabul ediliyordu.
+      // Faz 5'te uretilen sozlesme dosyasina baglanacak.
+      mcSamples: tamsayi(p.get("mc"), MC_MIN, MC_MAX, v.mcSamples),
       eng,
     },
   };

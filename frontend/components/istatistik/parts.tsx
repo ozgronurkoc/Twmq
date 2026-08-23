@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/primitives";
 import { ResultStrip } from "@/components/ui/symbol";
 import { isaretli } from "./viz";
+import { adreseYaz, adrestenOku } from "@/lib/adres";
 
 const ARALIK_PARAM = "last";
 
@@ -16,8 +17,7 @@ const ARALIK_PARAM = "last";
  * sayfada render sirasinda `window`'a bakmak hidrasyon uyusmazligi yapar.
  */
 export function aralikUrldenOku(): number | null {
-  if (typeof window === "undefined") return null;
-  const ham = new URL(window.location.href).searchParams.get(ARALIK_PARAM);
+  const ham = adrestenOku(ARALIK_PARAM);
   if (!ham || ham === "all") return null;
   const n = Number(ham);
   return Number.isFinite(n) && n > 0 ? Math.floor(n) : null;
@@ -35,13 +35,7 @@ export function aralikUrldenOku(): number | null {
  * yalnizca beklenen tek `/api/stats` istegi atiliyor.
  */
 export function aralikUrleYaz(deger: number | null): void {
-  if (typeof window === "undefined") return;
-  const url = new URL(window.location.href);
-  if (deger && deger > 0) url.searchParams.set(ARALIK_PARAM, String(deger));
-  else url.searchParams.delete(ARALIK_PARAM);
-  const yeni = url.pathname + (url.search || "") + url.hash;
-  if (yeni === window.location.pathname + window.location.search + window.location.hash) return;
-  window.history.replaceState(window.history.state, "", yeni);
+  adreseYaz(ARALIK_PARAM, deger && deger > 0 ? String(deger) : null);
 }
 
 /**
@@ -92,18 +86,33 @@ export function RangeFilter({
 
 /** [32,33,35,36,…] → ["34", "43–49"] biçiminde eksik aralıklar. */
 function eksikAraliklar(numaralar: number[]): string[] {
-  if (numaralar.length < 2) return [];
+  // Sinirlar YEREL degiskene alinir. `length < 2` kontrolu indekslerin
+  // varligini kanitlar ama tip sistemi bunu goremez; `!` koymak yerine
+  // degeri bir kez okuyup daraltmak hem dogru hem okunur.
+  const ilk = numaralar[0];
+  const son = numaralar[numaralar.length - 1];
+  if (numaralar.length < 2 || ilk === undefined || son === undefined) return [];
+
   const set = new Set(numaralar);
   const eksik: number[] = [];
-  for (let n = numaralar[0]; n <= numaralar[numaralar.length - 1]; n++) {
+  for (let n = ilk; n <= son; n++) {
     if (!set.has(n)) eksik.push(n);
   }
   const parcalar: string[] = [];
   let i = 0;
   while (i < eksik.length) {
     let j = i;
-    while (j + 1 < eksik.length && eksik[j + 1] === eksik[j] + 1) j++;
-    parcalar.push(i === j ? String(eksik[i]) : `${eksik[i]}–${eksik[j]}`);
+    // Ardisik blogu buyut: `eksik[j + 1] === eksik[j] + 1` oldugu surece.
+    for (;;) {
+      const suanki = eksik[j];
+      const sonraki = eksik[j + 1];
+      if (suanki === undefined || sonraki === undefined || sonraki !== suanki + 1) break;
+      j++;
+    }
+    const bas = eksik[i];
+    const bit = eksik[j];
+    if (bas === undefined || bit === undefined) break;
+    parcalar.push(i === j ? String(bas) : `${bas}–${bit}`);
     i = j + 1;
   }
   return parcalar;

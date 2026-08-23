@@ -11,6 +11,8 @@ kurguda modelin beraberliğe doğru kayması gerekir. Bunu yapmıyorsa geri kala
 her ölçüm anlamsızdır.
 """
 
+import itertools
+
 import numpy as np
 import pytest
 
@@ -222,7 +224,7 @@ def test_gercek_veride_egitim_ici_kapasiteyle_iyilesiyor():
     # kalir, cunku kupon haftalari form tasimaz (asagidaki testin konusu).
     # Tolerans, esit ciftin kayan nokta gurultusu icin: ayni modelin iki
     # sifir sutunu fazlasi Newton cozumunde ~1e-13 fark uretiyor.
-    assert all(a >= b - 1e-9 for a, b in zip(sirali, sirali[1:])), "egitim-ici artmis"
+    assert all(a >= b - 1e-9 for a, b in itertools.pairwise(sirali)), "egitim-ici artmis"
     assert skorlar["bant"] < skorlar["lig"] < skorlar["bias"] < skorlar["sicaklik"]
 
 

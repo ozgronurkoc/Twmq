@@ -24,24 +24,36 @@ import json
 import math
 import sys
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 KOK = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(KOK))
 
-from spor_toto.backtest import (  # noqa: E402
-    VARSAYILAN_BANKO, VARSAYILAN_UCLU, _kaplama, secim_uret,
+from spor_toto.backtest import (
+    VARSAYILAN_BANKO,
+    VARSAYILAN_UCLU,
+    _kaplama,
+    secim_uret,
 )
-from spor_toto.core import (  # noqa: E402
-    Encoder, butce_danismani, merge_rows, solve_fix16,
+from spor_toto.core import SEMBOLLER as _SEMBOLLER
+from spor_toto.core import (
+    Encoder,
+    butce_danismani,
+    merge_rows,
+    solve_fix16,
 )
-from spor_toto.history import history_analytics, history_summary  # noqa: E402
-from spor_toto.odds import (  # noqa: E402
-    CIFT_BANTLARI, FARK_BANTLARI, FAVORI_BANTLARI, implied_probs,
+from spor_toto.history import history_analytics, history_summary
+from spor_toto.odds import (
+    CIFT_BANTLARI,
+    FARK_BANTLARI,
+    FAVORI_BANTLARI,
+    implied_probs,
     season_1x2_summary,
 )
 
-SEMBOLLER = ("1", "0", "2")
+#: Sembol duzeni TEK kaynaktan (`spor_toto.core`). Bu dosyada ayri bir
+#: demet olarak yaziliyordu; depoda ayni deger on bir kez tanimliydi.
+SEMBOLLER = _SEMBOLLER
 VERI_KOK = KOK / "data" / "super_toto"
 
 
@@ -63,7 +75,7 @@ MARJ_SAPMA_ESIGI = 5.0
 MARJ_ALT, MARJ_UST = 0.0, 0.60
 
 
-def dogrula(d: Dict[str, Any]) -> List[str]:
+def dogrula(d: dict[str, Any]) -> list[str]:
     """Elle girilen hafta dosyasını denetler ve uyarı listesi döner.
 
     **Uyarı üretir, veri düzeltmez.** Şüpheli bir satırı sessizce onarmak
@@ -74,7 +86,7 @@ def dogrula(d: Dict[str, Any]) -> List[str]:
     bu dosya kullanıcının elinden çıkıyor ve koşumu durdurmak yerine
     şüpheyi görünür kılmak istiyoruz.
     """
-    uyarilar: List[str] = []
+    uyarilar: list[str] = []
     maclar = d.get("matches") or []
 
     marjlar = [(m["no"], sum(1.0 / v for v in m["odds"].values()) - 1.0)
@@ -117,7 +129,7 @@ def dogrula(d: Dict[str, Any]) -> List[str]:
     return uyarilar
 
 
-def hafta_yukle(sezon: str, hafta: int) -> Dict[str, Any]:
+def hafta_yukle(sezon: str, hafta: int) -> dict[str, Any]:
     yol = VERI_KOK / sezon / f"hafta_{hafta:02d}.json"
     if not yol.exists():
         raise SystemExit(f"Hafta dosyası yok: {yol}")
@@ -137,7 +149,7 @@ def hafta_yukle(sezon: str, hafta: int) -> Dict[str, Any]:
         m["odds_yok"] = not m.get("odds")
         if m["odds_yok"]:
             m["odds"] = None
-            m["probs"] = {s: 1.0 / 3 for s in SEMBOLLER}
+            m["probs"] = dict.fromkeys(SEMBOLLER, 1.0 / 3)
             m["margin"] = 0.0
             m["fav"] = None
         else:
@@ -162,7 +174,7 @@ def _bant_bul(bantlar, deger):
     return None
 
 
-def gecen_sezon_ref() -> Dict[str, Any]:
+def gecen_sezon_ref() -> dict[str, Any]:
     ozet = season_1x2_summary() or {}
     return {
         "odds": ozet,
@@ -178,7 +190,7 @@ def gecen_sezon_ref() -> Dict[str, Any]:
     }
 
 
-def hafta_profili(d: Dict[str, Any], ref: Dict[str, Any]) -> Dict[str, Any]:
+def hafta_profili(d: dict[str, Any], ref: dict[str, Any]) -> dict[str, Any]:
     """Bu haftayı geçen sezonun bantlarına oturtur."""
     maclar = d["matches"]
     bekle = {s: sum(m["probs"][s] for m in maclar) for s in SEMBOLLER}
@@ -229,7 +241,7 @@ def hafta_profili(d: Dict[str, Any], ref: Dict[str, Any]) -> Dict[str, Any]:
             "play": m["play"], "play_pct": m["play_pct"],
         })
 
-    ligler: Dict[str, int] = {}
+    ligler: dict[str, int] = {}
     for m in maclar:
         ligler[m["league"]] = ligler.get(m["league"], 0) + 1
 
@@ -253,7 +265,7 @@ def hafta_profili(d: Dict[str, Any], ref: Dict[str, Any]) -> Dict[str, Any]:
 
 # ─── kamuoyu (oynanma) — geçen sezonda karşılığı OLMAYAN boyut ────────────────
 
-def kamuoyu(d: Dict[str, Any]) -> Dict[str, Any]:
+def kamuoyu(d: dict[str, Any]) -> dict[str, Any]:
     """Oynanma payı ile piyasa olasılığının farkı.
 
     Müşterek bahiste aynı olasılıktaki iki sonuçtan AZ oynananı işaretlemek,
@@ -292,7 +304,7 @@ def kamuoyu(d: Dict[str, Any]) -> Dict[str, Any]:
 
 # ─── kupon ────────────────────────────────────────────────────────────────────
 
-def kupon_kur(d: Dict[str, Any], banko: float, uclu: float) -> Dict[str, Any]:
+def kupon_kur(d: dict[str, Any], banko: float, uclu: float) -> dict[str, Any]:
     maclar = d["matches"]
     secimler = [secim_uret(m["probs"], banko, uclu) for m in maclar]
     boyutlar = tuple(len(s) for s in secimler if len(s) > 1)
@@ -352,8 +364,8 @@ def kupon_kur(d: Dict[str, Any], banko: float, uclu: float) -> Dict[str, Any]:
     }
 
 
-def butce_merdiveni(d: Dict[str, Any], secimler: List[List[str]],
-                    butceler: List[int]) -> List[Dict[str, Any]]:
+def butce_merdiveni(d: dict[str, Any], secimler: list[list[str]],
+                    butceler: list[int]) -> list[dict[str, Any]]:
     """Bütçe düşerse hangi maç kısılır — motorun kendi bütçe danışmanı.
 
     Kısma sırasını olasılık belirler (en düşük olasılıklı sembol önce
@@ -382,9 +394,9 @@ def butce_merdiveni(d: Dict[str, Any], secimler: List[List[str]],
     return out
 
 
-def yaz(d: Dict[str, Any], prof: Dict[str, Any], kam: Dict[str, Any],
-        ref: Dict[str, Any], kuponlar: List[Dict[str, Any]],
-        merdiven: List[Dict[str, Any]]) -> None:
+def yaz(d: dict[str, Any], prof: dict[str, Any], kam: dict[str, Any],
+        ref: dict[str, Any], kuponlar: list[dict[str, Any]],
+        merdiven: list[dict[str, Any]]) -> None:
     meta = d["meta"]
     o = ref["odds"]
     h = ref["hist"]
@@ -396,18 +408,18 @@ def yaz(d: Dict[str, Any], prof: Dict[str, Any], kam: Dict[str, Any],
     elle = meta.get("data_warnings") or []
     uretilen = meta.get("uretilen_uyarilar") or []
     if elle or uretilen:
-        print(f"\n─── VERİ UYARILARI ──────────────────────────────────────────────────────")
+        print("\n─── VERİ UYARILARI ──────────────────────────────────────────────────────")
         for u in elle:
             print(f"  [elle]    {u}")
         for u in uretilen:
             print(f"  [kod]     {u}")
 
-    print(f"\n─── 1. MARJ ─────────────────────────────────────────────────────────────")
+    print("\n─── 1. MARJ ─────────────────────────────────────────────────────────────")
     print(f"Bu hafta (iddaa)        : %{prof['avg_margin_pct']:.2f}")
     print(f"Geçen sezon (football-data): %{o['avg_margin_pct']:.2f}")
     print(f"Kat                     : {prof['avg_margin_pct'] / o['avg_margin_pct']:.2f}×")
 
-    print(f"\n─── 2. MAÇ MAÇ ──────────────────────────────────────────────────────────")
+    print("\n─── 2. MAÇ MAÇ ──────────────────────────────────────────────────────────")
     print(f"{'#':>2} {'Maç':<34} {'Lig':<4} {'oran 1/0/2':<20} {'olasılık':<20} "
           f"{'fav':<4} {'bant':<12} {'geç.sezon isabet'}")
     for r in prof["rows"]:
@@ -417,9 +429,9 @@ def yaz(d: Dict[str, Any], prof: Dict[str, Any], kam: Dict[str, Any],
         bant_not = ("—" if r["fav_band_hit"] is None
                     else f"%{r['fav_band_hit']} (n={r['fav_band_n']})")
         print(f"{r['no']:>2} {r['mac'][:34]:<34} {r['lig']:<4} {oranstr:<20} {pstr:<20} "
-              f"{str(r['fav'] or '—'):<4} {str(r['fav_band'] or '—'):<12} {bant_not}")
+              f"{r['fav'] or '—'!s:<4} {r['fav_band'] or '—'!s:<12} {bant_not}")
 
-    print(f"\n─── 3. BU HAFTA ↔ GEÇEN SEZON ───────────────────────────────────────────")
+    print("\n─── 3. BU HAFTA ↔ GEÇEN SEZON ───────────────────────────────────────────")
     wa = h["weekly_avg"]
     print(f"{'':<26}{'bu hafta (piyasa)':>20}{'geçen sezon ort.':>20}")
     for s in SEMBOLLER:
@@ -433,7 +445,7 @@ def yaz(d: Dict[str, Any], prof: Dict[str, Any], kam: Dict[str, Any],
     print(f"çift kapsar (geç.sezon)   {prof['double_expected_history']:>20.2f}")
     print(f"beraberlik (geç.sezon prof.){prof['draw_expected_history']:>18.2f}{wa['0']:>20.2f}")
 
-    print(f"\nLig kırılımı (bu hafta → geçen sezon haftalık ortalaması):")
+    print("\nLig kırılımı (bu hafta → geçen sezon haftalık ortalaması):")
     for lig, n in sorted(prof["leagues"].items(), key=lambda kv: -kv[1]):
         gec = ref["lig"].get(lig)
         if gec:
@@ -442,7 +454,7 @@ def yaz(d: Dict[str, Any], prof: Dict[str, Any], kam: Dict[str, Any],
         else:
             print(f"  {lig:<4} {n:>2} maç   ← geçen sezon arşivinde YOK (karşılaştırılamaz)")
 
-    print(f"\n─── 4. KAMUOYU (oynanma) — geçen sezonda karşılığı YOK ──────────────────")
+    print("\n─── 4. KAMUOYU (oynanma) — geçen sezonda karşılığı YOK ──────────────────")
     print(f"{'#':>2} {'Maç':<32} {'oynanma 1/0/2':<16} {'piyasa 1/0/2':<16} {'fark (puan)':<18} kalabalık")
     for r in kam["rows"]:
         oy = "/".join(f"{100*r['cells'][s]['play']:.0f}" for s in SEMBOLLER)
@@ -481,7 +493,7 @@ def yaz(d: Dict[str, Any], prof: Dict[str, Any], kam: Dict[str, Any],
                   f"bedel ×{u['bedel_carpani']:.2f}  verim {u['verim']:.2f}")
 
 
-def kupon_satirlari(secimler: List[List[str]]) -> List[str]:
+def kupon_satirlari(secimler: list[list[str]]) -> list[str]:
     """Seçimleri OYNANACAK satırlara çevirir — 16 satır, 14-garantili.
 
     Motorun kendi `solve_fix16` + `merge_rows` yolu; burada yeniden
@@ -508,8 +520,8 @@ def kupon_satirlari(secimler: List[List[str]]) -> List[str]:
     return [" ".join(f"{c:<3}" for c in r) for r in out]
 
 
-def yaz_merdiven(merdiven: List[Dict[str, Any]]) -> None:
-    print(f"\n─── 6. BÜTÇE MERDİVENİ (motorun bütçe danışmanı) ────────────────────────")
+def yaz_merdiven(merdiven: list[dict[str, Any]]) -> None:
+    print("\n─── 6. BÜTÇE MERDİVENİ (motorun bütçe danışmanı) ────────────────────────")
     print("Kolon bedeli bilinmiyor; tablo KOLON cinsindendir. Kısma sırasını")
     print("olasılık belirler — en düşük olasılıklı sembol önce düşer.")
     print(f"{'bütçe':>8} {'kolon':>7} {'satır':>6} {'küme-içi':>10} {'kalabalık':>10} {'oran':>6}  kısılan")

@@ -7,15 +7,23 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-/** Kupon duzeninde (1, 0, 2) sirala. Alfabetik siralama okuma hatasi yaptirir. */
-export function siralaSemboller(syms: Iterable<string>): Sembol[] {
-  const set = new Set(Array.from(syms));
-  return SEMBOLLER.filter((s) => set.has(s));
-}
-
-export function yuzde(n: number, basamak = 2): string {
-  if (!Number.isFinite(n)) return "—";
-  return `%${n.toFixed(basamak)}`;
+/**
+ * Olasiligi yuzde olarak yazar. **Girdi 0-1'dir.**
+ *
+ * Birim bu docstring'de yaziyor cunku depoda ayni adin iki birimi vardi:
+ * burada olu duran eski `yuzde` ZATEN-YUZDE bir sayi aliyordu, iki bileşen
+ * icindeki yerel kopyalar ise 0-1. Karistirmak 100 kat hata demektir.
+ *
+ * Sunucunun zaten `100 *` uyguladigi alanlar (`advanced.exact.*`,
+ * `ButcePlan.p_kume_ici`) bu fonksiyondan GECMEZ; onlar cagri yerinde
+ * `.toFixed()` ile basilir ve tipleri birimi soyler.
+ */
+export function yuzde(
+  v: number | null | undefined,
+  basamak = 1,
+): string {
+  if (v === null || v === undefined || !Number.isFinite(v)) return "—";
+  return `%${(100 * v).toFixed(basamak)}`;
 }
 
 export function sayi(n: number | null | undefined): string {
@@ -31,11 +39,6 @@ export function ondalik(n: number | null | undefined, basamak = 4): string {
 export function sure(ms: number): string {
   if (ms < 1000) return `${Math.round(ms)} ms`;
   return `${(ms / 1000).toFixed(1)} sn`;
-}
-
-/** Bir maca isaretlenen sembol sayisindan kolon carpani. */
-export function satirBedeli(row: string[]): number {
-  return row.reduce((acc, cell) => acc * Math.max(1, cell.length), 1);
 }
 
 export function uniformProb(sel: Sembol[]): ProbRow {

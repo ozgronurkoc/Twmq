@@ -377,3 +377,39 @@ def test_alternatif_uyarisi_var(tmp_path):
         pytest.skip("korpus yok — alternatif uretilmedi")
     adlar = {u["ad"] for u in g["uyarilar"]}
     assert "alternatif_gecmedi" in adlar
+
+
+def test_gecti_karari_yuvarlanmamis_sinirdan_verilir(monkeypatch):
+    """`gecti` YUVARLANMIS ust sinirdan karar vermemeli.
+
+    `evaluate.bootstrap_farki` bu alani bilerek iki kez dondurur ve kendi
+    yorumunda gerekcesini yazar: `round(-0.000031, 4)` `-0.0` verir ve
+    `-0.0 < 0` Python'da `False`'tur. Yani guven araliginin TAMAMI sifirin
+    altindayken aday "gecmedi" diye yazilirdi — hem de aralik daraldikca,
+    yani tam kararin zorlastigi yerde.
+
+    `evaluate.py` iki karar noktasinda da `ham_ust` okuyor; burasi urune
+    `/api/tahmin` ile cikan ucuncu karar noktasidir ve ayni kurala uymali.
+    """
+    import spor_toto.evaluate as ev
+
+    # Aralik tamamen sifirin altinda ama yuvarlaninca -0.0'a duser.
+    dar = {"fark": -0.0, "alt": -0.0001, "ust": -0.0,
+           "ham_fark": -0.000031, "ham_alt": -0.000052, "ham_ust": -0.000031,
+           "tekrar": 2000}
+    monkeypatch.setattr(ev, "bootstrap_farki", lambda a, m: dar)
+
+    olculmus_isabet.cache_clear()
+    try:
+        i = olculmus_isabet()
+    finally:
+        olculmus_isabet.cache_clear()
+
+    if not i.get("olculdu") or not i.get("alternatif"):
+        pytest.skip("oran arsivi ya da egitilmis alternatif yok")
+
+    assert i["alternatif"]["fark"]["ham_ust"] < 0
+    assert i["alternatif"]["gecti"] is True, (
+        "aralik tamamen sifirin altinda ama karar yuvarlanmis sinirdan "
+        "verildigi icin 'gecmedi' dondu"
+    )

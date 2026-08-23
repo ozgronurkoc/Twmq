@@ -39,8 +39,12 @@ export function Tabs({
     else if (e.key === "Home") hedef = 0;
     else if (e.key === "End") hedef = acik.length - 1;
     if (hedef === null) return;
+    // `hedef` modulo ile hesaplandi, yani `acik` bosken 0 ya da NaN olur.
+    // Sekme yokken ok tusuna basmak sayfayi cokertmemeli.
+    const sekme = acik[hedef];
+    if (!sekme) return;
     e.preventDefault();
-    const id = acik[hedef].id;
+    const id = sekme.id;
     onChange(id);
     refs.current[id]?.focus();
   }

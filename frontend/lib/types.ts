@@ -54,6 +54,19 @@ export interface MetaResponse {
   bayes_presets: BayesPresetInfo[];
   engine_defaults: EngineDefaults;
   limits: Record<string, Limit>;
+  /**
+   * Geri test esiklerinin varsayilanlari ve izgarasi.
+   *
+   * Sunucu bunu bastan beri gonderiyordu ama bu tipte YAZMIYORDU — yani
+   * arayuz esik izgarasini `/api/meta`dan okuyabilecekken okumuyordu.
+   * Sozlesme denetimi ilk kosusunda bunu yakaladi.
+   */
+  backtest: {
+    banko_default: number;
+    banko_grid: number[];
+    uclu_default: number;
+    uclu_grid: number[];
+  };
 }
 
 // ─── POST /api/solve — istek ──────────────────────────────────────────────
@@ -177,18 +190,11 @@ export interface BayesBlock {
   matches: BayesMatch[];
 }
 
-export interface SurvivalTransition {
-  mac: number;
-  p_stay: number;
-  p_exit: number;
-}
-
 export interface Survival {
   states: string[];
   /** k mac sonra hala secim kumesinde olma olasiligi (k = 0..15). */
   p_in_after: number[];
   p_survive: number;
-  transitions: SurvivalTransition[];
 }
 
 /** BIRIM: bu blokta olasiliklar 0-1'dir — `ExactProb` yuzde donerken. */
@@ -203,6 +209,32 @@ export interface ErrorBudget {
   acik_nokta?: number;
   tam_kaplama?: boolean;
   method: string;
+}
+
+/**
+ * Bir analiz blogu hesaplanamadiginda gonderilen govde.
+ *
+ * Once bu durumda sunucu sessizce `null` gonderiyordu ve arayuz blogu
+ * gizliyordu: kullanici "olasilik verdim ama panel yok" durumunun sebebini
+ * goremiyordu. `fire` blogunun maliyet dalinda bu sozlesme zaten vardi;
+ * `markov` ve `error_freq` da ayni kurala baglandi.
+ */
+export interface AtlandiBlok {
+  skipped: true;
+  reason: string;
+}
+
+/**
+ * Bir blogun atlanmis olup olmadigini daraltir.
+ *
+ * Genel bir `T | AtlandiBlok` birlesimini daraltabilmesi icin girdi
+ * `unknown` degil `object`tir; `skipped` alani yalnizca atlanmis govdede
+ * bulunur, dolayisiyla ayrim guvenlidir.
+ */
+export function atlandiMi<T extends object>(
+  b: T | AtlandiBlok | null | undefined,
+): b is AtlandiBlok {
+  return !!b && (b as AtlandiBlok).skipped === true;
 }
 
 export interface MarkovBlock {
@@ -283,6 +315,12 @@ export interface ButcePlan {
   satir: number;
   selections: string[];
   degisiklikler: string[];
+  /**
+   * YUZDE (0-100), 3 basamaga yuvarlanmis — `web_app._plan_to_dict` zaten
+   * `100 *` uygular. Bu alanin birimi hicbir yerde yazmiyordu ve depoda
+   * ayni adin iki birimi var: `ExactProb.p_kume_ici` yuzde,
+   * `ErrorBudget.p_kume_ici` 0-1. Karistirmak 100 kat hata demektir.
+   */
   p_kume_ici: number | null;
   secili: boolean;
 }
@@ -308,8 +346,8 @@ export interface SolveResult {
 
   advanced: Advanced | null;
   bayes: BayesBlock | null;
-  markov: MarkovBlock | null;
-  error_freq: ErrorFreq | null;
+  markov: MarkovBlock | AtlandiBlok | null;
+  error_freq: ErrorFreq | AtlandiBlok | null;
   fire: FireReport | null;
   butce_planlari?: ButcePlan[];
 
@@ -317,7 +355,6 @@ export interface SolveResult {
   match_count: number;
   total_space: number;
   has_scipy: boolean;
-  run_log_text?: string;
 }
 
 export interface SolveResponse {
@@ -931,6 +968,11 @@ export interface BenzerResponse {
   tolerans_genisledi: boolean;
   tolerans_tavana_dayandi: boolean;
   evren: number;
+  /**
+   * Uygulanan suzgecler. Sunucu bunu bastan beri donduruyordu ama tip
+   * bilmiyordu; sozlesme denetimi yakaladi. `null` = suzgec yok.
+   */
+  filtre: { lig: string | null; sezon: string | null };
   toplam: BenzerKarne;
   dilimler: { lig: BenzerDilim[]; sezon: BenzerDilim[] };
   uyarilar: string[];

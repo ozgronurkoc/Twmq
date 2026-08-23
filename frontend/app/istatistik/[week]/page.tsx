@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, ChevronLeft, ChevronRight, Wand2 } from "lucide-react";
 
 import { getStatsWeek } from "@/lib/api";
+import { useIstek } from "@/lib/istek";
 import { DEVIR_PARAM, haftaDevret } from "@/lib/transfer";
 import { SEMBOLLER, type ProbRow, type WeekDetail } from "@/lib/types";
 import { cn, ondalik } from "@/lib/utils";
@@ -21,6 +22,7 @@ import {
 import { SEMBOL_ADI, SymbolLegend } from "@/components/ui/symbol";
 import { DeltaStat } from "@/components/istatistik/parts";
 import { SYM_BG } from "@/components/istatistik/viz";
+import { TABLO_BASLIK_SATIRI, TABLO_SARMAL } from "@/components/ui/tablo";
 
 /** Oranı olmayan maç 1/3'e düşer — uydurulmaz, eşit dağıtılır ve söylenir. */
 const ESIT: ProbRow = { "1": 1 / 3, "0": 1 / 3, "2": 1 / 3 };
@@ -28,26 +30,19 @@ const ESIT: ProbRow = { "1": 1 / 3, "0": 1 / 3, "2": 1 / 3 };
 export default function HaftaPage({ params }: { params: { week: string } }) {
   const week = Number(params.week);
   const router = useRouter();
-  const [veri, setVeri] = React.useState<WeekDetail | null>(null);
-  const [hata, setHata] = React.useState<string | null>(null);
   const [devirHatasi, setDevirHatasi] = React.useState<string | null>(null);
 
-  React.useEffect(() => {
-    if (!Number.isFinite(week)) {
-      setHata("Geçersiz hafta numarası");
-      return;
-    }
-    const ac = new AbortController();
-    setVeri(null);
-    setHata(null);
-    getStatsWeek(week, ac.signal)
-      .then(setVeri)
-      .catch((e) => {
-        if (e instanceof DOMException && e.name === "AbortError") return;
-        setHata(e instanceof Error ? e.message : String(e));
-      });
-    return () => ac.abort();
-  }, [week]);
+  // isFinite `/istatistik/1.5`'i kabul ediyordu ve istek genel
+  // "Hafta bulunamadi" 404'une dusuyordu; hafta bir TAM sayidir.
+  const gecerliHafta = Number.isInteger(week);
+  // `eskiyiKoru: false` — hafta degistiginde onceki haftanin verisi bir
+  // an icin yeni haftaninmis gibi gorunmemeli.
+  const { veri, hata: istekHatasi } = useIstek(
+    (signal) => getStatsWeek(week, signal),
+    [week],
+    { hazir: gecerliHafta, eskiyiKoru: false },
+  );
+  const hata = gecerliHafta ? istekHatasi : "Geçersiz hafta numarası";
 
   const oranliMac = veri ? Object.keys(veri.odds || {}).length : 0;
 
@@ -192,10 +187,10 @@ export default function HaftaPage({ params }: { params: { week: string } }) {
                 hint="Sezon payı çubuğunda bu haftanın sonucu tam renkte, diğer iki ihtimal soluktur; oran, o sıradaki maçta bu sembolün sezon boyunca çıkma yüzdesidir."
                 action={<SymbolLegend />}
               />
-              <CardBody className="scroll-slim overflow-x-auto">
+              <CardBody className={TABLO_SARMAL}>
                 <table className="w-full min-w-[640px] text-[12.5px]">
                   <thead>
-                    <tr className="text-left text-[11px] uppercase tracking-[0.06em] text-muted-foreground">
+                    <tr className={TABLO_BASLIK_SATIRI}>
                       <th scope="col" className="w-8 pb-2 font-medium">
                         #
                       </th>

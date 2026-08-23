@@ -1,5 +1,8 @@
 run = "bash scripts/run_next_dev.sh"
-modules = ["python-3.10", "nodejs-24"]
+# Node surumu CI ve `frontend/package.json` engines ile hizali olmali;
+# once burada 24, CI'da 22 yaziyordu ve ikisi hicbir yerde
+# karsilastirilmiyordu.
+modules = ["python-3.10", "nodejs-22"]
 
 [nix]
 channel = "stable-25_05"

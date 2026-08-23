@@ -34,12 +34,8 @@ from spor_toto.egitim import cizgi_hareketi, korpus_haftalari, korpus_yukle
 from spor_toto.history import SYMBOLS
 from spor_toto.predict import PiyasaTahminci
 
-
 KOK = Path(__file__).resolve().parent.parent
-_spec = importlib.util.spec_from_file_location(
-    "build_egitim", KOK / "scripts" / "build_egitim.py")
-uretici = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(uretici)
+uretici = importlib.import_module("scripts.build_egitim")
 
 
 @pytest.fixture(scope="module")
@@ -245,7 +241,7 @@ def test_acilis_kupon_haftasinda_duzgune_duser():
     from spor_toto.evaluate import olculebilir_haftalar
     kupon = olculebilir_haftalar()[0]
     for blok in AcilisTahminci().tahmin(kupon):
-        assert blok == pytest.approx({s: 1 / 3 for s in SYMBOLS})
+        assert blok == pytest.approx(dict.fromkeys(SYMBOLS, 1 / 3))
 
 
 # ─── hareket sütunu gerçekten bağlı mı ────────────────────────────────────────
@@ -253,8 +249,10 @@ def test_acilis_kupon_haftasinda_duzgune_duser():
 def test_hareket_kademesi_form_ustune_tek_sutun_ekler():
     from spor_toto.recalibrate import KalibreTahminci
     h = korpus_haftalari(sezonlar_=["2425"], cizgi_gerekli=True)
-    form = KalibreTahminci("form"); form.egit(h)
-    hareket = KalibreTahminci("hareket"); hareket.egit(h)
+    form = KalibreTahminci("form")
+    form.egit(h)
+    hareket = KalibreTahminci("hareket")
+    hareket.egit(h)
     assert len(hareket.katsayilar) == len(form.katsayilar) + 1
 
 
@@ -272,7 +270,8 @@ def test_hareket_sutunu_gercekten_calisiyor():
     hafta = next(x for x in h
                  if any(abs(o["hareket_1"]) > 0.1 for o in x["ozellikler"]))
 
-    t = KalibreTahminci("hareket"); t.egit(h)
+    t = KalibreTahminci("hareket")
+    t.egit(h)
     once = t.tahmin(hafta)
     t._theta[-1] += 5.0          # hareket katsayisi
     sonra = t.tahmin(hafta)
@@ -290,7 +289,7 @@ def test_kupon_haftasinda_hareket_notr():
     from spor_toto.evaluate import olculebilir_haftalar
     from spor_toto.recalibrate import _mac_ozellikleri
     for o in _mac_ozellikleri(olculebilir_haftalar()[0]):
-        assert o["hareket"] == {s: 0.0 for s in SYMBOLS}
+        assert o["hareket"] == dict.fromkeys(SYMBOLS, 0.0)
 
 
 # ─── bulgular ─────────────────────────────────────────────────────────────────

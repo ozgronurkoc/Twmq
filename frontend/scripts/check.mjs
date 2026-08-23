@@ -20,7 +20,7 @@
  */
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { createRequire } from "node:module";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -29,6 +29,15 @@ const kok = join(dirname(fileURLToPath(import.meta.url)), "..");
 // Cikti /tmp'e DEGIL frontend/ altina yazilir: `lib/utils.ts` clsx ve
 // tailwind-merge'e bagli, repo disindaki bir dizin node_modules'i goremez.
 const cikti = mkdtempSync(join(kok, ".kurulum-check-"));
+
+/**
+ * Backend'in urettigi sozlesme (`backend/scripts/api_sozlesme.py`).
+ * `olculmus` blogu, bu dosyada eskiden DUZ YAZILI duran "(olculdu)"
+ * sayilarinin yerine gecer.
+ */
+const SOZLESME = JSON.parse(
+  readFileSync(join(kok, "lib", "api-sozlesme.json"), "utf8"),
+);
 
 try {
   // CommonJS'e cevrilir: tsc `./types` importlarini uzantisiz birakir ve
@@ -245,7 +254,9 @@ try {
 
   // README'nin ornek kuponu + check.sh'in ornek olasiliklari. Ikisi de
   // depoda zaten var, yani bu vaka uydurulmus degil.
-  const ORNEK_SEC = "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"
+  // Kupon da sozlesmeden: backend `core.ORNEK_KUPON`u degistirirse
+  // buradaki olculmus sayilar baska bir kupona ait olurdu.
+  const ORNEK_SEC = SOZLESME.olculmus.ornek_kupon
     .split(",")
     .map((s) => s.split(""));
   const ORNEK_P = [
@@ -257,17 +268,22 @@ try {
 
   dene("kume-ici, backend'in exact hesabiyla ayni sayiyi verir", () => {
     const h = Z.kumeIciHesapla(ORNEK_SEC, ORNEK_P);
-    // backend olasilik_raporu -> p_kume_ici = 0.00014902 (olculdu)
+    // Beklenen deger SOZLESMEDEN gelir. Once burada duz yaziliydi
+    // ("0.00014902 (olculdu)") ve backend matematigi degistiginde sessizce
+    // yanlislanirdi: test yesil kalir ama artik yanlis bir seyi dogrulardi.
     assert.ok(
-      Math.abs(h.p - 0.00014902) < 1e-8,
-      `beklenen 0.00014902, gelen ${h.p}`,
+      Math.abs(h.p - SOZLESME.olculmus.p_kume_ici) < 1e-8,
+      `beklenen ${SOZLESME.olculmus.p_kume_ici}, gelen ${h.p}`,
     );
   });
 
   dene("en zayif uc mac dogru secilir", () => {
     const h = Z.kumeIciHesapla(ORNEK_SEC, ORNEK_P);
     // 7. mac banko "2" (0.20), 14. mac banko "2" (0.25), 5. mac banko "0" (0.40)
-    assert.deepEqual(h.zayiflar.map((i) => i + 1).sort((a, b) => a - b), [5, 7, 14]);
+    assert.deepEqual(
+      h.zayiflar.map((i) => i + 1).sort((a, b) => a - b),
+      SOZLESME.olculmus.en_zayif_uc_mac,
+    );
   });
 
   dene("varsayilan satirlar 'bilgi yok' sayilir, %100 diye basilmaz", () => {
@@ -341,9 +357,9 @@ try {
   dene("kaplama alt siniri backend'in alt_sinir'iyla ayni", () => {
     // Ornek kupon: 8 cifte -> uzay 256, top 9, alt sinir 29 (backend olculdu)
     const a = Z.kaplamaAltSiniri(ORNEK_SEC);
-    assert.equal(a.uzay, 256);
-    assert.equal(a.topBoyutu, 9);
-    assert.equal(a.altSinir, 29);
+    assert.equal(a.uzay, SOZLESME.olculmus.uzay);
+    assert.equal(a.topBoyutu, SOZLESME.olculmus.top_boyutu);
+    assert.equal(a.altSinir, SOZLESME.olculmus.alt_sinir);
   });
 
   dene("uclu maclar top boyutuna 2 katar", () => {
@@ -443,6 +459,115 @@ try {
     const y = S.senaryoYap(r, K.varsayilanKurulum(), "id", "s1");
     assert.equal(y.garanti, false);
     assert.equal(y.pKumeIci, null);
+  });
+
+  // ── Sozlesme: types.ts ile backend govdesi ─────────────────────────
+  //
+  // NEDEN VAR: `lib/types.ts` 1000 satir ve ELLE bakiliyordu. Bir alan adi
+  // backend'de degistiginde motor sapasaglam kalir, butun testler gecer ve
+  // sayfa sessizce bos doner — tam da tip sisteminin yakalayamadigi hata
+  // sinifi, cunku `istek<T>()` cevabi dogrulamadan `as T` ile kaliba
+  // sokuyor. Asagidaki denetim o boslugu kapatir.
+  //
+  // TypeScript zaten devDependency; derleyici API'siyle arayuzler
+  // OKUNUR (calisma aninda tip yok, o yuzden kaynak ayristirilir).
+
+  const ts = iste("typescript");
+  const tipKaynagi = readFileSync(join(kok, "lib", "types.ts"), "utf8");
+  const tipAgaci = ts.createSourceFile(
+    "types.ts", tipKaynagi, ts.ScriptTarget.ES2022, true,
+  );
+
+  /** Bir arayuzun KENDI alanlari ve genislettigi arayuzler. */
+  const hamArayuzler = new Map();
+  tipAgaci.forEachChild((d) => {
+    if (!ts.isInterfaceDeclaration(d)) return;
+    const alanlar = new Map();
+    for (const uye of d.members) {
+      if (!ts.isPropertySignature(uye) || !uye.name) continue;
+      const ad = uye.name.getText(tipAgaci).replace(/^["']|["']$/g, "");
+      alanlar.set(ad, { istegeBagli: !!uye.questionToken });
+    }
+    const atalar = (d.heritageClauses ?? [])
+      .filter((h) => h.token === ts.SyntaxKind.ExtendsKeyword)
+      .flatMap((h) => h.types.map((t) => t.expression.getText(tipAgaci)));
+    hamArayuzler.set(d.name.text, { alanlar, atalar });
+  });
+
+  /**
+   * Miras COZULUR. `WeekDetail extends WeekRow` gibi durumlarda yalnizca
+   * `members`a bakmak alanlarin yarisini kaciriyordu ve denetim yanlis
+   * alarm veriyordu — ilk kosuda tam bunu yapti.
+   */
+  const arayuzler = new Map();
+  const coz = (ad, gorulen = new Set()) => {
+    if (arayuzler.has(ad)) return arayuzler.get(ad);
+    const ham = hamArayuzler.get(ad);
+    if (!ham || gorulen.has(ad)) return new Map();
+    gorulen.add(ad);
+    const birlesik = new Map();
+    for (const ata of ham.atalar) {
+      for (const [k, v] of coz(ata, gorulen)) birlesik.set(k, v);
+    }
+    for (const [k, v] of ham.alanlar) birlesik.set(k, v);
+    arayuzler.set(ad, birlesik);
+    return birlesik;
+  };
+  for (const ad of hamArayuzler.keys()) coz(ad);
+
+  /**
+   * Uc -> onu okuyan tip. Elle tutulan TEK esleme bu; gerisi uretilir.
+   * Buradaki bir ucun tipi yoksa denetim sessizce atlamaz, PATLAR.
+   */
+  const ESLEME = {
+    "GET /api/meta": "MetaResponse",
+    "GET /api/health": "HealthReport",
+    "GET /api/health/checks": "HealthChecksResponse",
+    "GET /api/health/history": "HealthHistoryResponse",
+    "POST /api/health/kupon": "KuponDenetimSonuc",
+    "GET /api/stats": "StatsResponse",
+    "GET /api/stats/<week>": "WeekDetail",
+    "GET /api/backtest": "BacktestResponse",
+    "GET /api/tahmin": "TahminResponse",
+    "GET /api/benzer": "BenzerResponse",
+    "POST /api/solve": "SolveResponse",
+  };
+
+  for (const [uc, tipAdi] of Object.entries(ESLEME)) {
+    dene(`sozlesme: ${uc} -> ${tipAdi}`, () => {
+      const govde = SOZLESME.uclar[uc];
+      assert.ok(govde, `sozlesmede ${uc} yok`);
+      const alanlar = arayuzler.get(tipAdi);
+      assert.ok(alanlar, `types.ts icinde ${tipAdi} arayuzu yok`);
+
+      const sunucu = Object.keys(govde).sort();
+      const eksik = sunucu.filter((k) => !alanlar.has(k));
+      assert.deepEqual(
+        eksik, [],
+        `${tipAdi} sunucunun gonderdigi alanlari TANIMIYOR: ${eksik.join(", ")}`,
+      );
+
+      // Tipte olup sunucunun gondermedigi alanlar: yalnizca `?` ile
+      // isaretlenmisse kabul. Isaretsiz bir alan "her zaman gelir" demektir
+      // ve gelmiyorsa tip YALAN soyluyor.
+      const fazla = [...alanlar.entries()]
+        .filter(([k, v]) => !v.istegeBagli && !(k in govde))
+        .map(([k]) => k);
+      assert.deepEqual(
+        fazla, [],
+        `${tipAdi} zorunlu diyor ama sunucu gondermiyor: ${fazla.join(", ")}`,
+      );
+    });
+  }
+
+  dene("sozlesme: mc_samples sinirlari sunucuyla ayni", () => {
+    // `lib/kurulum.ts` bu sinirlari SABIT tutmak zorunda (saf modul,
+    // istek atamaz). Iki taraf ayrismisti: burada 1.000.000, sunucuda
+    // 200.000 yaziyordu.
+    const s = SOZLESME.sinirlar.mc_samples;
+    assert.equal(K.MC_MIN, s.min, "MC_MIN sunucudan farkli");
+    assert.equal(K.MC_MAX, s.max, "MC_MAX sunucudan farkli");
+    assert.equal(K.VARSAYILAN_MC, s.default, "VARSAYILAN_MC sunucudan farkli");
   });
 
   console.log(`\nOK — ${gecen} arayuz denetimi gecti`);

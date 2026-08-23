@@ -3,13 +3,21 @@
 import * as React from "react";
 import { Check, Copy, ListFilter, RefreshCw } from "lucide-react";
 
-import { denetleKupon, getHealth, getHealthHistory } from "@/lib/api";
+import {
+  denetleKupon,
+  getHealth,
+  getHealthChecks,
+  getHealthHistory,
+} from "@/lib/api";
+import { useIstek } from "@/lib/istek";
+import { hataMetni, iptalMi } from "@/lib/istek";
 import type {
   HealthHistoryResponse,
   HealthReport,
   KuponDenetimSonuc,
 } from "@/lib/types";
 import { cn, panoyaKopyala, sure } from "@/lib/utils";
+import { adreseYaz, adrestenOku } from "@/lib/adres";
 import {
   Badge,
   Button,
@@ -26,6 +34,7 @@ import {
   type GecmisKaydi,
   GecmisSeridi,
   KategoriKarti,
+  KontrolEnvanteri,
   KuponDenetimi,
   OrtamKarti,
   SunucuGecmisi,
@@ -55,21 +64,8 @@ const BASLIK_ISARETI: Record<string, string> = {
 
 /** `?only=` adresten okunur; düşen bir kategorinin bağlantısı paylaşılabilir
  * olsun ve yenilemede kaybolmasın diye (§7.14). */
-function adrestekiOnly(): string | null {
-  if (typeof window === "undefined") return null;
-  const v = new URLSearchParams(window.location.search).get("only");
-  return v && v.trim() ? v.trim() : null;
-}
-
-function adresiGuncelle(only: string | null) {
-  if (typeof window === "undefined") return;
-  const { pathname, search } = window.location;
-  const p = new URLSearchParams(search);
-  if (only) p.set("only", only);
-  else p.delete("only");
-  const yeni = p.toString() ? `${pathname}?${p.toString()}` : pathname;
-  if (yeni !== pathname + search) window.history.replaceState(null, "", yeni);
-}
+const adrestekiOnly = () => adrestenOku("only");
+const adresiGuncelle = (only: string | null) => adreseYaz("only", only);
 
 export default function SaglikPage() {
   const [rapor, setRapor] = React.useState<HealthReport | null>(null);
@@ -112,6 +108,25 @@ export default function SaglikPage() {
     );
   }, []);
 
+  // Kayitli kontrol envanteri. Rapordan BAGIMSIZ cekilir ve bu kasitli:
+  // "bu sistem neyi denetliyor" sorusunun cevabi olcum kosmadan, servis
+  // dususke bile okunabilmeli.
+  const {
+    veri: envanter,
+    hata: envanterHatasi,
+    yukleniyor: envanterYukleniyor,
+  } = useIstek((signal) => getHealthChecks(signal), [], {
+    varsayilanHata: "Kontrol envanteri alınamadı",
+  });
+
+  /**
+   * Bu yukleyici bilerek `lib/istek.useIstek` KULLANMAZ. O kanca bildirimsel
+   * bir veri cekme icindir: bagimlilik degisir, istek kosar. Burasi ise
+   * parametreli bir EYLEM — `only`/`fresh` ile cagrilir, basariyi da
+   * basarisizligi da gecmis seridine yazar, adres cubugunu gunceller ve
+   * ardina ikinci bir istek zincirler. Kancaya zorlamak ikisini de
+   * bozardi; paylasilan sey ortak olan tek sey oldu: iptal kurali.
+   */
   const yukle = React.useCallback(
     async (only?: string | null, opt: { fresh?: boolean } = {}) => {
       istekRef.current?.abort();
@@ -143,8 +158,9 @@ export default function SaglikPage() {
           onbellekten: Boolean(r.summary.onbellek?.cached),
         });
       } catch (e) {
-        if (e instanceof DOMException && e.name === "AbortError") return;
-        const mesaj = e instanceof Error ? e.message : String(e);
+        // Iptal deyimi `lib/istek`ten: depoda uc ayri surumu vardi.
+        if (iptalMi(e, ac.signal)) return;
+        const mesaj = hataMetni(e, "Sağlık raporu alınamadı");
         setHata(mesaj);
         // Ulasilamayan bir kosu da bir kayittir — hatta zaman cizelgesinde
         // en cok gormek isteyecegin olay tam odur. Sessizce dusurmek,
@@ -217,13 +233,27 @@ export default function SaglikPage() {
 
   // Sekme basligi durumu tasir: alarm altyapisi gerektirmeyen en yakin
   // "haber verme". Sayfa arka planda acik tutulmak icin var.
+  // Ayrilirken UYGULAMA basligi geri konur. Once temizlik `BASLIK`
+  // ("Sistem sagligi") yaziyordu: bu sayfadan cikan kullanici
+  // /istatistik'te de /tahmin'de de sekmede "Sistem sagligi" goruyordu.
+  //
+  // Yakalama AYRI ve ONCE gelen bir etki: React etkileri bildirim
+  // sirasinda kosar, yani burasi asagidaki set'ten once calisir ve
+  // bozulmamis basligi alir. Tek etkide `const onceki = document.title`
+  // yeterli olmazdi — etki [durum, hata] ile yeniden kostugunda `onceki`
+  // bu sayfanin kendi basligina donerdi.
+  const uygulamaBasligi = React.useRef<string | null>(null);
+  React.useEffect(() => {
+    if (uygulamaBasligi.current === null) uygulamaBasligi.current = document.title;
+    return () => {
+      if (uygulamaBasligi.current !== null) document.title = uygulamaBasligi.current;
+    };
+  }, []);
+
   React.useEffect(() => {
     document.title = hata
       ? `✗ ${BASLIK}`
       : `${durum ? BASLIK_ISARETI[durum] : ""}${BASLIK}`;
-    return () => {
-      document.title = BASLIK;
-    };
   }, [durum, hata]);
 
   const kuponuDenetle = React.useCallback(async () => {
@@ -483,7 +513,6 @@ export default function SaglikPage() {
               yalnızca beklenenden pahalıya koştular:{" "}
               <span className="font-mono">{yavaslar.join(", ")}</span>. Performans
               gerilemesi de bir gerilemedir — ama servisi durdurmaz.
-              {rapor.summary.isinma ? null : null}
             </Callout>
           ) : null}
 
@@ -496,7 +525,7 @@ export default function SaglikPage() {
 
           {rapor.summary.isinma ? (
             <Callout ton="primary" baslik="Bu, sürecin ilk koşusu">
-              İlk rapor numpy/scipy ilk import'unu ve veri setinin ilk
+              İlk rapor numpy/scipy ilk import&apos;unu ve veri setinin ilk
               okunmasını da üstlenir; süreleri sonraki koşularla
               karşılaştırmayın. Süre bütçeleri bu koşuda <strong>uygulanmaz</strong>,
               yoksa her soğuk başlangıç yanlış alarm üretirdi.
@@ -581,6 +610,11 @@ export default function SaglikPage() {
             picks={kuponPicks}
             onPicks={setKuponPicks}
             onCalistir={() => void kuponuDenetle()}
+          />
+          <KontrolEnvanteri
+            envanter={envanter?.checks ?? null}
+            hata={envanterHatasi}
+            yukleniyor={envanterYukleniyor}
           />
           <OrtamKarti rapor={rapor} />
         </>

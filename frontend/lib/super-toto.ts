@@ -12,6 +12,7 @@
  * okunur. Ikisi bilerek ayri tutulur — biri arsiv, biri isleyen sezon.
  */
 import veri from "./super-toto-veri.json";
+import { MAC_SAYISI } from "./types";
 
 /** Uzerinde calisilan sezon. */
 export const SUPER_TOTO_SEZON = veri.season;
@@ -23,7 +24,6 @@ export const SUPER_TOTO_SEZON = veri.season;
 export const HAFTA_SAYISI = 41;
 
 /** Bir kuponun mac sayisi — motorun sabiti (backend `meta.MATCH_COUNT`). */
-export const MAC_SAYISI = 15;
 
 /** Beslemeyi ureten marj arindirma yontemi — sayfada yazar. */
 export const ARINDIRMA = veri.arindirma;
@@ -162,10 +162,6 @@ export function haftaDoluMu(h: SuperTotoHafta): boolean {
 /** Sonuclari gelmis hafta — yarim veri ortalamalara karismasin diye ayri. */
 export function haftaSonuclandiMi(h: SuperTotoHafta): boolean {
   return typeof h.results === "string" && h.results.length === MAC_SAYISI;
-}
-
-export function haftaBul(week: number): SuperTotoHafta | null {
-  return HAFTALAR.find((h) => h.week === week) ?? null;
 }
 
 /** Veri girilmis hafta sayisi — basliktaki rozetin kaynagi. */

@@ -37,16 +37,17 @@ Sonucu okumak için: `python -m spor_toto.disari`.
 """
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 from .egitim import korpus_haftalari
-from .history import SYMBOLS
+from .ortak import FAVORI_DILIMLERI, favori_dilimi
 from .predict import Girdi, PiyasaTahminci
 from .recalibrate import A3_ALANLARI
 
 #: Listeden elenen özellikler ve gerekçeleri. Kodda durur çünkü "denenmedi"
 #: ile "denenemez" farklı şeylerdir ve A4 bu ayrımı yazmak zorunda.
-TURETILEMEYEN: Dict[str, str] = {
+TURETILEMEYEN: dict[str, str] = {
     "seyahat": ("sehir/koordinat yok; ayrica bir macin iki takimi her zaman "
                 "ayni ligde — mac duzeyinde bir buyukluk degil"),
     "derbi": ("sehir eslemesi ya da rekabet tablosu yok; elle liste yazmak "
@@ -62,22 +63,19 @@ TURETILEMEYEN: Dict[str, str] = {
 #: getiriyordu. Eşik gevşetildi çünkü **hücre boş kalırsa tarama sessizce
 #: cevapsız kalır** — ve cevapsızlığın "artık yok" diye okunması A3'ün en
 #: kolay yapılacak hatası olurdu.
-TARAMA_ESIKLERI: Dict[str, float] = {
+TARAMA_ESIKLERI: dict[str, float] = {
     "dinlenme_farki": 2.0,
     "sikisiklik_farki": 0.5,
     "ic_dis_form_farki": 1.0,
     "sezon_sonu_pay_farki": 0.3,
 }
 
-#: Favori olasılığı dilimleri — karışmayı açmak için (`bahisci.py` ile aynı).
-FAVORI_DILIMLERI: Sequence[float] = (0.40, 0.50, 0.65)
-
 #: Bir hücrenin raporlanması için gereken en az maç.
 AZ_HUCRE = 150
 
 
-def kesit(sezonlar_: Optional[Sequence[str]] = None,
-          yol: Optional[str] = None) -> List[Girdi]:
+def kesit(sezonlar_: Sequence[str] | None = None,
+          yol: str | None = None) -> list[Girdi]:
     """A3 kesiti — korpusun tamamı.
 
     A1 ve A2'den farklı olarak burada **eleme yok**: dört özellik de her maç
@@ -88,15 +86,11 @@ def kesit(sezonlar_: Optional[Sequence[str]] = None,
     return korpus_haftalari(sezonlar_=sezonlar_, yol=yol)
 
 
-def _favori_dilimi(probs: Dict[str, float]) -> str:
-    en_yuksek = max(probs.values()) if probs else 0.0
-    for esik in FAVORI_DILIMLERI:
-        if en_yuksek < esik:
-            return f"<{esik:.2f}"
-    return f">={FAVORI_DILIMLERI[-1]:.2f}"
+#: `bahisci` ile birebir ayniydi; tek kaynak artik `ortak`.
+_favori_dilimi = favori_dilimi
 
 
-def artik_taramasi(haftalar: Optional[Sequence[Girdi]] = None) -> Dict[str, Any]:
+def artik_taramasi(haftalar: Sequence[Girdi] | None = None) -> dict[str, Any]:
     """Her özellik için: piyasanın **fiyatlamadığı** bir şey kalıyor mu?
 
     Ham fark yerine **artık** raporlanır ve fark budur:
@@ -123,19 +117,19 @@ def artik_taramasi(haftalar: Optional[Sequence[Girdi]] = None) -> Dict[str, Any]
     veri = [(hf["ozellikler"][i], hf["probs"][i], kod)
             for hf in haftalar for i, kod in enumerate(hf["results"])]
 
-    out: Dict[str, Any] = {}
+    out: dict[str, Any] = {}
     for _, alan in A3_ALANLARI:
         esik = TARAMA_ESIKLERI[alan]
         dusuk = [g for g in veri if g[0].get(alan, 0.0) < -esik]
         yuksek = [g for g in veri if g[0].get(alan, 0.0) > esik]
 
-        def _ev(grup: Sequence[Any]) -> Optional[float]:
+        def _ev(grup: Sequence[Any]) -> float | None:
             return sum(1 for _, _, k in grup if k == "1") / len(grup) if grup else None
 
-        def _piyasa(grup: Sequence[Any]) -> Optional[float]:
+        def _piyasa(grup: Sequence[Any]) -> float | None:
             return sum(p["1"] for _, p, _ in grup) / len(grup) if grup else None
 
-        dilimler: Dict[str, Dict[str, Any]] = {}
+        dilimler: dict[str, dict[str, Any]] = {}
         for dilim in [f"<{e:.2f}" for e in FAVORI_DILIMLERI] + \
                      [f">={FAVORI_DILIMLERI[-1]:.2f}"]:
             d = [g for g in dusuk if _favori_dilimi(g[1]) == dilim]
@@ -175,8 +169,8 @@ AVRUPA_LIGLERI: Sequence[str] = ("E0", "SP1", "D1", "I1", "F1", "N1", "P1",
                                  "T1", "B1", "G1", "SC0")
 
 
-def kor_nokta_taramasi(haftalar: Optional[Sequence[Girdi]] = None
-                       ) -> Dict[str, Any]:
+def kor_nokta_taramasi(haftalar: Sequence[Girdi] | None = None
+                       ) -> dict[str, Any]:
     """Dinlenme özelliğinin kör noktası ölçülebiliyor mu — **iddia değil test.**
 
     Modül başlığı korpusun kupa ve Avrupa maçlarını görmediğini söylüyor.
@@ -201,7 +195,7 @@ def kor_nokta_taramasi(haftalar: Optional[Sequence[Girdi]] = None
     veri = [(hf["ozellikler"][i], hf["probs"][i], kod)
             for hf in haftalar for i, kod in enumerate(hf["results"])]
 
-    def _artik(grup: Sequence[Any]) -> Optional[Dict[str, Any]]:
+    def _artik(grup: Sequence[Any]) -> dict[str, Any] | None:
         if len(grup) < AZ_HUCRE:
             return None
         gercek = sum(1 for _, _, k in grup if k == "1") / len(grup)
@@ -213,7 +207,7 @@ def kor_nokta_taramasi(haftalar: Optional[Sequence[Girdi]] = None
         ("dengeli", lambda o: abs(o["dinlenme_farki"]) <= 1),
         ("dep_cok_dinlenmis", lambda o: o["dinlenme_farki"] < -2),
     )
-    out: Dict[str, Any] = {}
+    out: dict[str, Any] = {}
     for katman, icinde in (("avrupa_ligi", True), ("diger_lig", False)):
         secim = [g for g in veri if (g[0]["lig"] in avrupa) is icinde]
         out[katman] = {ad: _artik([g for g in secim if kosul(g[0])])
@@ -226,7 +220,7 @@ def kor_nokta_taramasi(haftalar: Optional[Sequence[Girdi]] = None
     return out
 
 
-def kapsama(haftalar: Optional[Sequence[Girdi]] = None) -> Dict[str, Any]:
+def kapsama(haftalar: Sequence[Girdi] | None = None) -> dict[str, Any]:
     """Özelliklerin kaç maçta gerçekten tanımlı olduğu.
 
     Yeterli geçmişi olmayan maçta özellik nötr 0'a düşer (doktrin 2: uydurma
@@ -251,8 +245,8 @@ def kapsama(haftalar: Optional[Sequence[Girdi]] = None) -> Dict[str, Any]:
     }
 
 
-def rapor(sezonlar_: Optional[Sequence[str]] = None,
-          yol: Optional[str] = None) -> Dict[str, Any]:
+def rapor(sezonlar_: Sequence[str] | None = None,
+          yol: str | None = None) -> dict[str, Any]:
     """A3'ün dört özelliğini kademe üzerinde, sırayla ölç.
 
     Kademe **kümülatiftir**: her basamak bir öncekine yalnızca bir sütun
@@ -286,7 +280,7 @@ def rapor(sezonlar_: Optional[Sequence[str]] = None,
     return sonuc
 
 
-def _yazdir(sonuc: Dict[str, Any]) -> None:  # pragma: no cover - elle kullanim
+def _yazdir(sonuc: dict[str, Any]) -> None:  # pragma: no cover - elle kullanim
     k = sonuc["kapsama"]
     print(f"A3 kesiti: {sonuc['n_hafta']} hafta · {sonuc['n_mac']} maç "
           f"· referans: {sonuc['referans']}")

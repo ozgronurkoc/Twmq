@@ -7,7 +7,11 @@ import pytest
 
 from spor_toto.history import normalized_weeks
 from spor_toto.odds import (
-    coverage, implied_probs, load_odds, market_odds, odds_for,
+    coverage,
+    implied_probs,
+    load_odds,
+    market_odds,
+    odds_for,
 )
 
 ROWS = load_odds()

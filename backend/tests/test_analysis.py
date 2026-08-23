@@ -7,7 +7,7 @@ import math
 import pytest
 
 from spor_toto.analysis import match_error_frequency, monte_carlo_report
-from spor_toto.core import Encoder, SEMBOLLER, parse_picks, solve_fix16
+from spor_toto.core import SEMBOLLER, Encoder, parse_picks, solve_fix16
 
 ORNEK = "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"
 
@@ -19,7 +19,7 @@ def _enc_cols():
 
 
 def _uniform_probs(n: int = 15):
-    return [{s: 1.0 / 3.0 for s in SEMBOLLER} for _ in range(n)]
+    return [dict.fromkeys(SEMBOLLER, 1.0 / 3.0) for _ in range(n)]
 
 
 def test_monte_carlo_shape_and_bounds():
@@ -53,7 +53,7 @@ def test_monte_carlo_exact_ile_yaklasik():
     # Secim kumesi uzerinde uniform: her mac icin seceneklere esit agirlik
     probs = []
     for sec in enc.selections:
-        p = {s: 0.0 for s in SEMBOLLER}
+        p = dict.fromkeys(SEMBOLLER, 0.0)
         for s in sec:
             p[s] = 1.0 / len(sec)
         probs.append(p)

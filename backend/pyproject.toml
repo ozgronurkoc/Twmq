@@ -17,6 +17,9 @@ dependencies = [
 
 [project.optional-dependencies]
 test = ["pytest>=7", "pytest-xdist>=3"]
+#: Kalite kapisi. Uretim bagimliligi DEGIL — `pip install -e ".[kalite]"`
+#: ile ayrica kurulur, boylece calisan servis onlari tasimaz.
+kalite = ["ruff>=0.16", "mypy>=1.11"]
 
 [project.scripts]
 spor-toto = "spor_toto.cli:main"
@@ -39,3 +42,82 @@ testpaths = ["tests"]
 # `-n0` ile kapatilir (cikti sirasi da o zaman duzelir).
 addopts = "-q --strict-markers -n auto"
 markers = ["slow: uzun suren ILP testleri"]
+
+
+# ─── Ruff ─────────────────────────────────────────────────────────────────
+#
+# Depoda hicbir linter/formatter yoktu; ironik olarak `.gitignore` zaten
+# `.ruff_cache/` ve `.mypy_cache/`i yok sayiyordu — niyet vardi, araclar hic
+# gelmedi.
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+extend-exclude = ["data"]
+
+[tool.ruff.lint]
+select = [
+    "E", "W",   # pycodestyle
+    "F",        # pyflakes — kullanilmayan import/degisken
+    "I",        # isort — import sirasi
+    "UP",       # pyupgrade
+    "B",        # bugbear — sessiz hata sinifi
+    "C4",       # comprehension
+    "RUF",      # ruff'in kendi kurallari
+]
+ignore = [
+    # Turkce docstring ve yorumlar uzun; satir uzunlugu formatter'in isi.
+    "E501",
+    # `zip()` icin strict= py3.10'da yok (asgari surumumuz 3.10).
+    "B905",
+    # RUF001/002/003 — "belirsiz unicode karakter". Bu kural Kiril/Yunan
+    # benzerlerini yakalamak icin var ama TURKCE harfleri de isaretliyor:
+    # `ı`, `ş`, `ğ`, `ç` ve tipografik tirnak/tire. Depodaki butun
+    # docstring ve yorumlar Turkce oldugu icin tek basina 7.017 bulgu
+    # uretiyordu — yani gercek bulgularin uzerini orten saf gurultu.
+    "RUF001", "RUF002", "RUF003",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# `core.__all__` alfabetik DEGIL, KONUYA gore gruplu ve her grubun basinda
+# bir yorum var (sabitler / ayristirma / mesafe / cozucu / rapor / hata).
+# Alfabetik siralamak o gruplamayi ve aciklamalari birbirine karistirirdi;
+# listenin dogrulugunu zaten `test_all_modulun_gercek_yuzeyini_sayar` tutuyor.
+"spor_toto/core.py" = ["RUF022"]
+# Testlerde ve betiklerde `sys.path` ayarindan SONRA import etmek zorunlu:
+# betikler paket kurulmadan da kosabilmeli.
+"scripts/*.py" = ["E402"]
+"tests/*.py" = ["E402"]
+
+# ─── mypy ─────────────────────────────────────────────────────────────────
+#
+# KADEMELI: cekirdek sozlesme modulleri siki, kalani taban cizgisiyle
+# baslar. Hepsini birden sikilastirmak ~9k satirda yuzlerce hata uretir ve
+# hicbiri okunmadan susturulurdu.
+[tool.mypy]
+python_version = "3.10"
+files = ["spor_toto", "web_app.py"]
+ignore_missing_imports = true
+warn_unused_configs = true
+warn_redundant_casts = true
+no_implicit_optional = true
+
+# Arayuzun okudugu govdeyi ureten moduller — sozlesme burada kirilir.
+[[tool.mypy.overrides]]
+module = ["spor_toto.meta", "spor_toto.payloads", "spor_toto.ortak"]
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+warn_return_any = true
+
+# Arastirma ve olcum katmani: kademeli olarak daraltilacak.
+[[tool.mypy.overrides]]
+module = [
+    "spor_toto.bahisci", "spor_toto.cizgi", "spor_toto.disari",
+    "spor_toto.egitim", "spor_toto.evaluate", "spor_toto.kalibrasyon",
+    "spor_toto.recalibrate", "spor_toto.markov", "spor_toto.analysis",
+    "spor_toto.fire_scenarios", "spor_toto.backtest", "spor_toto.benzer",
+    "spor_toto.odds", "spor_toto.history", "spor_toto.predict",
+    "spor_toto.tahmin", "spor_toto.health", "spor_toto.health_history",
+    "spor_toto.core", "spor_toto.engines", "spor_toto.report",
+    "spor_toto.cli", "spor_toto.bayes",
+]
+ignore_errors = true

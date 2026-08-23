@@ -675,7 +675,7 @@ uygulanır: her blok kendi kaynağını ve tarihini kendi içinde taşır.
 | **Her veri bloğu `*_source` alanı taşır** ve alan ekran görüntüsünün tarihini içerir | Yeniden üretilemeyen veride kaynak, tek doğrulama izidir |
 | **Yeniden üretilemez** — `scripts/` altında bu dosyayı yazan bir üretici yoktur, yalnızca okuyanlar vardır | Bunu gizlemek, dosyayı öteki dördüyle aynı statüde gösterirdi |
 | **`data_quality` denetiminden geçmez** | O denetim `st_history` veri setine özgüdür (§7.3) |
-| **23 değişmezin hiçbiri ona bakmaz** | Sağlık katmanı vaadin canlıda geçerliliğini ölçer; bu dosya ürün vaadine girmiyor |
+| **24 değişmezin hiçbiri ona bakmaz** | Sağlık katmanı vaadin canlıda geçerliliğini ölçer; bu dosya ürün vaadine girmiyor |
 | **Kuşkulu satır işaretlenir, düzeltilmez** | 2. haftada 4. maçın ima ettiği marj %45,8 iken bültenin geri kalanı %17,5–17,9'du; satır **KUŞKULU** olarak işaretlendi. Doğru marjla banko, verilen oranla çifte olurdu — sessizce "doğru olanı seçmek" §1.3'ün yasakladığı şeydir |
 | **Eksik oran uydurulmaz** | Oranı ilan edilmemiş maç 1/3–1/3–1/3 taşır. Bu bir tahmin değil, **bilgi yokluğunun ilanı**; kural onu otomatik olarak üçlü yapar |
 
@@ -787,8 +787,8 @@ tablolar (script'in bastığı lig dağılımı) bunu yakalayan şeydi.
 | `test_snapshot_iddaa.py::test_askidaki_ayak_maci_eler` | 1.00 fiyat sayılmaz |
 | `test_snapshot_iddaa.py::test_farkli_snapshot_birikir` | Arşiv gerçekten birikiyor, üstüne yazmıyor |
 
-Toplam 82 test bu üç veri setini korur (backend paketi 664 test). `python -m spor_toto.health`
-23 değişmez çalıştırır; `oran_arsivi` ve `geri_test` bu katmanı, `tahmin_referanslari`
+Toplam 82 test bu üç veri setini korur (backend paketi 1.031 test). `python -m spor_toto.health`
+24 değişmez çalıştırır; `oran_arsivi` ve `geri_test` bu katmanı, `tahmin_referanslari`
 tahmin katmanının ölçüm koşumunu korur.
 
 ### 7.7 Bilinen kabuller
@@ -833,8 +833,13 @@ Amaç tahmine döndüğü için iki sınır daha kritik hale geldi ve ayrıca ya
    > Planı: [`ISTATISTIK_YOL_HARITASI.md`](ISTATISTIK_YOL_HARITASI.md) §6.2 A3.
 
    Yine de sınır gerçektir: bu özellikler de piyasanın gördüğü bilgiden türer, yalnızca
-   farklı biçimde. Ölçülen sayılar bu sınırla tutarlı — hold-out isabeti 0 hafta, formun
-   artık değeri ~0.
+   farklı biçimde. Ölçülen sayılar bu sınırla tutarlı — hold-out isabeti **36 haftada 1**
+   (%2,8; aralık %0,5–14,2), formun artık değeri ~0.
+
+   > **Sayı güncellendi (2026-08-23).** Burada "hold-out isabeti 0 hafta" yazıyordu; o
+   > sayı `orantili` arındırma ölçeğinde ölçülmüştü ve varsayılan `shin`e çevrilince 1
+   > oldu (A5). **Argüman değişmedi:** 36 haftada 1 isabet, "piyasa dışı sinyal aramanın
+   > sınırı" tezini aynen destekler — tek bir olay ve güven aralığı sıfırı içeriyor.
 
    > **A1 bu sınıra en sert kanıtı ekledi (2026-08-17).** Korpus artık her maçın **açılış
    > ve kapanış** çizgisini ayrı ayrı taşıyor (§6A.6) ve ikisi 31.099 maçta karşılaştırıldı:

@@ -34,10 +34,12 @@ Sonucu okumak için: `python -m spor_toto.cizgi`.
 """
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 from .egitim import korpus_haftalari
 from .history import SYMBOLS
+from .ortak import bant_adi
 from .predict import Girdi, Olasilik, PiyasaTahminci, Tahminci
 
 #: Hareket büyüklüğü bantları — |ln p_kapanış − ln p_açılış| toplamı üzerinden.
@@ -46,8 +48,8 @@ from .predict import Girdi, Olasilik, PiyasaTahminci, Tahminci
 HAREKET_BANTLARI: Sequence[float] = (0.05, 0.15, 0.30)
 
 
-def kesit(sezonlar_: Optional[Sequence[str]] = None,
-          yol: Optional[str] = None) -> List[Girdi]:
+def kesit(sezonlar_: Sequence[str] | None = None,
+          yol: str | None = None) -> list[Girdi]:
     """A1 kesiti: açılış+kapanış çifti tam olan maçlar, kapanış `probs` olarak.
 
     İki şey burada garanti altına alınır:
@@ -65,9 +67,9 @@ def kesit(sezonlar_: Optional[Sequence[str]] = None,
     # değiştirirdi. Sessiz olurdu çünkü ikisi bugün aynı çıkıyor — ta ki
     # bir gün çıkmayana kadar. Bekçi:
     # `test_egitim.py::test_korpus_haftalari_paylasilan_kaydi_korur`.
-    out: List[Girdi] = []
+    out: list[Girdi] = []
     for hafta in haftalar:
-        probs: List[Olasilik] = []
+        probs: list[Olasilik] = []
         for ozellik in hafta["ozellikler"]:
             kapanis = ozellik.get("kapanis_probs")
             if not kapanis:  # pragma: no cover - cizgi_gerekli bunu engeller
@@ -92,9 +94,9 @@ class AcilisTahminci(Tahminci):
     ad = "acilis"
     aciklama = "Marj arındırılmış açılış oranı (football-data)"
 
-    def tahmin(self, hafta: Girdi) -> List[Olasilik]:
+    def tahmin(self, hafta: Girdi) -> list[Olasilik]:
         esit = {s: 1.0 / len(SYMBOLS) for s in SYMBOLS}
-        out: List[Olasilik] = []
+        out: list[Olasilik] = []
         for ozellik in hafta.get("ozellikler") or []:
             acilis = ozellik.get("acilis_probs")
             out.append(dict(acilis) if acilis else dict(esit))
@@ -106,14 +108,11 @@ class AcilisTahminci(Tahminci):
 # ─── betimleyici ölçüm ────────────────────────────────────────────────────────
 
 def _bant_adi(buyukluk: float) -> str:
-    """Hareket büyüklüğünün bandı."""
-    for esik in HAREKET_BANTLARI:
-        if buyukluk < esik:
-            return f"<{esik:.2f}"
-    return f">={HAREKET_BANTLARI[-1]:.2f}"
+    """Hareket büyüklüğünün bandı — genel bantlama `ortak.bant_adi`de."""
+    return bant_adi(buyukluk, HAREKET_BANTLARI)
 
 
-def hareket_ozeti(haftalar: Optional[Sequence[Girdi]] = None) -> Dict[str, Any]:
+def hareket_ozeti(haftalar: Sequence[Girdi] | None = None) -> dict[str, Any]:
     """Çizgi ne kadar oynuyor ve oynadığı yön tutuyor mu — betimleyici.
 
     Bu bir tahminci değil, **olgu**: hareketin yönü ile sonucun ilişkisi.
@@ -129,7 +128,7 @@ def hareket_ozeti(haftalar: Optional[Sequence[Girdi]] = None) -> Dict[str, Any]:
     if haftalar is None:
         haftalar = kesit()
 
-    bantlar: Dict[str, Dict[str, float]] = {}
+    bantlar: dict[str, dict[str, float]] = {}
     n_toplam = 0
     lehine_tuttu = 0
     aleyhine_tuttu = 0
@@ -156,7 +155,7 @@ def hareket_ozeti(haftalar: Optional[Sequence[Girdi]] = None) -> Dict[str, Any]:
             bant["lehine"] += 1.0 if kod == lehine else 0.0
             bant["aleyhine"] += 1.0 if kod == aleyhine else 0.0
 
-    def _oran(pay: float, payda: float) -> Optional[float]:
+    def _oran(pay: float, payda: float) -> float | None:
         return round(pay / payda, 4) if payda else None
 
     return {
@@ -177,7 +176,7 @@ def hareket_ozeti(haftalar: Optional[Sequence[Girdi]] = None) -> Dict[str, Any]:
     }
 
 
-def hareket_katsayisi(haftalar: Optional[Sequence[Girdi]] = None) -> Dict[str, Any]:
+def hareket_katsayisi(haftalar: Sequence[Girdi] | None = None) -> dict[str, Any]:
     """Modelin hareketi ne kadar uzatmak istediği — A1'in en okunaklı sayısı.
 
     `kalibre_hareket` iki katsayı taşır ve ikisi birlikte tek bir cümle söyler.
@@ -218,8 +217,8 @@ def hareket_katsayisi(haftalar: Optional[Sequence[Girdi]] = None) -> Dict[str, A
 
 # ─── karar koşumu ─────────────────────────────────────────────────────────────
 
-def rapor(sezonlar_: Optional[Sequence[str]] = None,
-          yol: Optional[str] = None) -> Dict[str, Any]:
+def rapor(sezonlar_: Sequence[str] | None = None,
+          yol: str | None = None) -> dict[str, Any]:
     """A1'in iki sorusunu tek koşumda ölç.
 
     Koşan tahminciler ve her birinin cevapladığı soru:
@@ -259,7 +258,7 @@ def rapor(sezonlar_: Optional[Sequence[str]] = None,
     return sonuc
 
 
-def _yazdir(sonuc: Dict[str, Any]) -> None:  # pragma: no cover - elle kullanim
+def _yazdir(sonuc: dict[str, Any]) -> None:  # pragma: no cover - elle kullanim
     print(f"A1 kesiti: {sonuc['n_hafta']} hafta · {sonuc['n_mac']} maç "
           f"· referans: {sonuc['referans']}")
     print(f"{'tahminci':<20} {'brier':>8} {'log':>8} {'fark':>9} "

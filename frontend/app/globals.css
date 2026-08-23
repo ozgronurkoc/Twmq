@@ -25,7 +25,6 @@
 
   --border: 260 16% 90%;
   --border-strong: 260 16% 82%;
-  --input: 260 16% 90%;
 
   /* nonplo'nun birincil moru */
   --primary: 262 83% 58%;
@@ -86,7 +85,6 @@
 
     --border: 258 18% 19%;
     --border-strong: 258 18% 28%;
-    --input: 258 18% 19%;
 
     --accent: 262 45% 20%;
     --accent-foreground: 262 90% 88%;
@@ -123,7 +121,6 @@
 
   --border: 258 18% 19%;
   --border-strong: 258 18% 28%;
-  --input: 258 18% 19%;
 
   --accent: 262 45% 20%;
   --accent-foreground: 262 90% 88%;

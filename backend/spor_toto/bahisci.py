@@ -33,10 +33,12 @@ Sonucu okumak için: `python -m spor_toto.bahisci`.
 """
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 from .egitim import korpus_haftalari
 from .history import SYMBOLS
+from .ortak import bant_adi, favori_dilimi
 from .predict import Girdi, Olasilik, PiyasaTahminci, Tahminci
 
 #: Kafa kafaya ölçülen tekil bahisçiler. `b_Max`/`b_Avg` burada **yok**:
@@ -55,8 +57,8 @@ AYRISMA_BANTLARI: Sequence[float] = (0.01, 0.02, 0.04)
 AZ_HUCRE = 100
 
 
-def kesit(sezonlar_: Optional[Sequence[str]] = None,
-          yol: Optional[str] = None) -> List[Girdi]:
+def kesit(sezonlar_: Sequence[str] | None = None,
+          yol: str | None = None) -> list[Girdi]:
     """A2 kesiti: bahisçi dörtlüsü tam olan maçlar, `Avg` `probs` olarak.
 
     `cizgi.kesit` ile aynı iki garanti: **aynı maçlar** (dörtlüsü olmayan maç
@@ -69,9 +71,9 @@ def kesit(sezonlar_: Optional[Sequence[str]] = None,
                                 bahisci_gerekli=True)
     # Hafta kaydının ÜSTÜNE YAZILMAZ, kopyası alınır — gerekçe `cizgi.kesit`
     # ile aynı: `korpus_haftalari` önbellekli, kayıt paylaşılıyor.
-    out: List[Girdi] = []
+    out: list[Girdi] = []
     for hafta in haftalar:
-        probs: List[Olasilik] = []
+        probs: list[Olasilik] = []
         for ozellik in hafta["ozellikler"]:
             kolektif = (ozellik.get("bahisci_probs") or {}).get("b_Avg")
             if not kolektif:  # pragma: no cover - bahisci_gerekli bunu engeller
@@ -97,9 +99,9 @@ class BahisciTahminci(Tahminci):
         self.ad = kod.replace("b_", "").lower()
         self.aciklama = f"Marj arındırılmış kapanış oranı ({kod})"
 
-    def tahmin(self, hafta: Girdi) -> List[Olasilik]:
+    def tahmin(self, hafta: Girdi) -> list[Olasilik]:
         esit = {s: 1.0 / len(SYMBOLS) for s in SYMBOLS}
-        out: List[Olasilik] = []
+        out: list[Olasilik] = []
         for ozellik in hafta.get("ozellikler") or []:
             blok = (ozellik.get("bahisci_probs") or {}).get(self.kod)
             out.append(dict(blok) if blok else dict(esit))
@@ -108,7 +110,7 @@ class BahisciTahminci(Tahminci):
         return out
 
 
-def tekil_fabrikalar() -> List[Any]:
+def tekil_fabrikalar() -> list[Any]:
     """Her tekil bahisçi için bir fabrika."""
     return [(lambda k=k: BahisciTahminci(k)) for k in TEKIL_BAHISCILER]
 
@@ -116,26 +118,16 @@ def tekil_fabrikalar() -> List[Any]:
 # ─── betimleyici ölçüm ────────────────────────────────────────────────────────
 
 def _bant_adi(ayrisma: float) -> str:
-    for esik in AYRISMA_BANTLARI:
-        if ayrisma < esik:
-            return f"<{esik:.2f}"
-    return f">={AYRISMA_BANTLARI[-1]:.2f}"
+    """Ayrismanin bandi — genel bantlama `ortak.bant_adi`de."""
+    return bant_adi(ayrisma, AYRISMA_BANTLARI)
 
 
-#: Favori olasılığı dilimleri — anlaşmazlığın karışmasını açmak için.
-#: Eşikler ölçüm sonucuna bakılmadan, kaba biçimde seçildi.
-FAVORI_DILIMLERI: Sequence[float] = (0.40, 0.50, 0.65)
+#: `disari` ile birebir ayniydi (orada bir yorum bunu itiraf ediyordu);
+#: tek kaynak artik `ortak`.
+_favori_dilimi = favori_dilimi
 
 
-def _favori_dilimi(probs: Olasilik) -> str:
-    en_yuksek = max(probs.values()) if probs else 0.0
-    for esik in FAVORI_DILIMLERI:
-        if en_yuksek < esik:
-            return f"<{esik:.2f}"
-    return f">={FAVORI_DILIMLERI[-1]:.2f}"
-
-
-def ayrisma_ozeti(haftalar: Optional[Sequence[Girdi]] = None) -> Dict[str, Any]:
+def ayrisma_ozeti(haftalar: Sequence[Girdi] | None = None) -> dict[str, Any]:
     """Anlaşmazlık arttıkça kolektif gerçekten kötüleşiyor mu — betimleyici.
 
     **Sağlama, bulgu değil.** T5 ve A1'de aynı disiplin uygulanmıştı: bir
@@ -164,10 +156,10 @@ def ayrisma_ozeti(haftalar: Optional[Sequence[Girdi]] = None) -> Dict[str, Any]:
     if haftalar is None:
         haftalar = kesit()
 
-    bantlar: Dict[str, Dict[str, float]] = {}
-    capraz: Dict[str, Dict[str, Dict[str, float]]] = {}
-    sezon_prim: Dict[str, List[float]] = {}
-    sezon_ayrisma: Dict[str, List[float]] = {}
+    bantlar: dict[str, dict[str, float]] = {}
+    capraz: dict[str, dict[str, dict[str, float]]] = {}
+    sezon_prim: dict[str, list[float]] = {}
+    sezon_ayrisma: dict[str, list[float]] = {}
 
     for hafta in haftalar:
         sezon = hafta.get("sezon") or "?"
@@ -192,7 +184,7 @@ def ayrisma_ozeti(haftalar: Optional[Sequence[Girdi]] = None) -> Dict[str, Any]:
             hucre["n"] += 1
             hucre["brier"] += b
 
-    def _ort(degerler: Sequence[float]) -> Optional[float]:
+    def _ort(degerler: Sequence[float]) -> float | None:
         return round(sum(degerler) / len(degerler), 4) if degerler else None
 
     return {
@@ -222,7 +214,7 @@ def ayrisma_ozeti(haftalar: Optional[Sequence[Girdi]] = None) -> Dict[str, Any]:
     }
 
 
-def dagilim_katsayisi(haftalar: Optional[Sequence[Girdi]] = None) -> Dict[str, Any]:
+def dagilim_katsayisi(haftalar: Sequence[Girdi] | None = None) -> dict[str, Any]:
     """Model anlaşmazlığa göre güvenini ne kadar kısıyor — A2'nin okunaklı sayısı.
 
     `kalibre_dagilim`ın logiti `z_s = (β + δ·ayrisma)·ln p_s` biçimindedir.
@@ -261,8 +253,8 @@ def dagilim_katsayisi(haftalar: Optional[Sequence[Girdi]] = None) -> Dict[str, A
 
 # ─── karar koşumu ─────────────────────────────────────────────────────────────
 
-def rapor(sezonlar_: Optional[Sequence[str]] = None,
-          yol: Optional[str] = None) -> Dict[str, Any]:
+def rapor(sezonlar_: Sequence[str] | None = None,
+          yol: str | None = None) -> dict[str, Any]:
     """A2'nin iki sorusunu tek koşumda ölç.
 
     Koşan tahminciler ve her birinin cevapladığı soru:
@@ -283,10 +275,7 @@ def rapor(sezonlar_: Optional[Sequence[str]] = None,
     from .recalibrate import KalibreTahminci
 
     haftalar = kesit(sezonlar_=sezonlar_, yol=yol)
-    fabrikalar = [PiyasaTahminci] + tekil_fabrikalar() + [
-        lambda: KalibreTahminci("hareket"),
-        lambda: KalibreTahminci("dagilim"),
-    ]
+    fabrikalar = [PiyasaTahminci, *tekil_fabrikalar(), lambda: KalibreTahminci("hareket"), lambda: KalibreTahminci("dagilim")]
     sonuc = karsilastir(fabrikalar, haftalar=haftalar, grup=sezon_anahtari)
     sonuc["ayrisma"] = ayrisma_ozeti(haftalar)
     sonuc["katsayi"] = dagilim_katsayisi(haftalar)
@@ -300,7 +289,7 @@ def rapor(sezonlar_: Optional[Sequence[str]] = None,
     return sonuc
 
 
-def _yazdir(sonuc: Dict[str, Any]) -> None:  # pragma: no cover - elle kullanim
+def _yazdir(sonuc: dict[str, Any]) -> None:  # pragma: no cover - elle kullanim
     print(f"A2 kesiti: {sonuc['n_hafta']} hafta · {sonuc['n_mac']} maç "
           f"· referans: {sonuc['referans']} (kolektif kapanış)")
     print(f"{'tahminci':<20} {'brier':>8} {'log':>8} {'fark':>9} "

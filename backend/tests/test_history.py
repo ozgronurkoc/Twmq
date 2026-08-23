@@ -3,11 +3,22 @@
 import pytest
 
 from spor_toto.history import (
-    MATCH_COUNT, SYMBOLS,
-    count_distribution, extreme_weeks, history_analytics, history_summary,
-    history_week, history_week_detail, history_weeks, normalized_weeks,
-    position_stats, recent_form, streak_stats, transition_stats,
-    _max_run, _runs,
+    MATCH_COUNT,
+    SYMBOLS,
+    _max_run,
+    _runs,
+    count_distribution,
+    extreme_weeks,
+    history_analytics,
+    history_summary,
+    history_week,
+    history_week_detail,
+    history_weeks,
+    normalized_weeks,
+    position_stats,
+    recent_form,
+    streak_stats,
+    transition_stats,
 )
 
 WEEKS = normalized_weeks()
