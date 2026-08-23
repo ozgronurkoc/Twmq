@@ -40,7 +40,6 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional, Sequence
 
 from .egitim import korpus_haftalari
-from .history import SYMBOLS
 from .predict import Girdi, PiyasaTahminci
 from .recalibrate import A3_ALANLARI
 

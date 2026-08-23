@@ -392,7 +392,6 @@ def test_gecti_karari_yuvarlanmamis_sinirdan_verilir(monkeypatch):
     `/api/tahmin` ile cikan ucuncu karar noktasidir ve ayni kurala uymali.
     """
     import spor_toto.evaluate as ev
-    import spor_toto.tahmin as th
 
     # Aralik tamamen sifirin altinda ama yuvarlaninca -0.0'a duser.
     dar = {"fark": -0.0, "alt": -0.0001, "ust": -0.0,

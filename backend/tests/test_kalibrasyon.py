@@ -11,7 +11,7 @@ import pytest
 from spor_toto.egitim import korpus_haftalari, korpus_yukle
 from spor_toto.history import SYMBOLS
 from spor_toto.kalibrasyon import BANTLAR, EN_AZ_BANT, kalibrasyon_egrisi
-from spor_toto.recalibrate import EN_AZ_KOVA, IzotonikTahminci, _pav
+from spor_toto.recalibrate import IzotonikTahminci, _pav
 
 KORPUS = korpus_yukle()
 pytestmark = pytest.mark.skipif(

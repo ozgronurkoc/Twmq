@@ -1,6 +1,5 @@
 """Olasilik raporu, butce danismani, CLI ve raporlama testleri."""
 
-import math
 
 import pytest
 

@@ -28,16 +28,31 @@ from collections import Counter
 from itertools import product
 from typing import Dict, FrozenSet, Iterable, List, Optional, Sequence, Tuple
 
+#: Modulun ilan edilen yuzeyi. Depoda `import *` yok, yani bu liste bir
+#: sozlesme degil BELGE: "core'dan disari ne cikar" sorusunun cevabi.
+#: Onceki hali yanlisti — `Fix16Hatasi` (cli ve web_app import ediyor),
+#: `rows_to_points` (report ve health import ediyor), `MAC_SAYISI`,
+#: `hamming74_variant`, `block_optimal` ve `ternary_hamming4` eksikti.
+#: `test_core.test_all_modulun_gercek_yuzeyini_sayar` artik bu listeyi
+#: modulun kendisiyle karsilastirir; bir daha sessizce eskiyemez.
 __all__ = [
-    "SEMBOLLER", "Point", "Sizes", "Row",
+    # Sabitler ve tipler
+    "SEMBOLLER", "MAC_SAYISI", "HAMMING_BLOK_BOYU", "HAMMING_KOLON",
+    "Point", "Sizes", "Row", "HAS_SCIPY",
+    # Girdi ayristirma ve kodlama
     "Encoder", "parse_picks", "parse_probs", "dogrula_secimler",
+    "sirala_semboller", "rows_to_points",
+    # Mesafe muhasebesi
     "hamming", "ball", "distance_layers", "dogrula_kaplama",
-    "hamming74_codewords", "solve_fix16", "solve_by_blocks",
-    "solve_heuristic", "greedy_full", "ls_fixed_size",
-    "exact_cover", "exact_max_coverage",
-    "merge_rows", "row_cost", "sirala_semboller",
+    # Cozucu ler
+    "hamming74_codewords", "hamming74_variant", "ternary_hamming4",
+    "solve_fix16", "solve_by_blocks", "block_optimal", "solve_heuristic",
+    "greedy_full", "ls_fixed_size", "exact_cover", "exact_max_coverage",
+    # Rapor ve planlama
+    "merge_rows", "row_cost",
     "olasilik_raporu", "butce_danismani", "ButcePlani", "OlasilikRaporu",
-    "HAS_SCIPY",
+    # Hatalar
+    "Fix16Hatasi",
 ]
 
 # Spor Toto kupon duzeni. Sembollerin ekrana yazilma sirasi budur;

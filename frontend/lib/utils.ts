@@ -7,17 +7,6 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-/** Kupon duzeninde (1, 0, 2) sirala. Alfabetik siralama okuma hatasi yaptirir. */
-export function siralaSemboller(syms: Iterable<string>): Sembol[] {
-  const set = new Set(Array.from(syms));
-  return SEMBOLLER.filter((s) => set.has(s));
-}
-
-export function yuzde(n: number, basamak = 2): string {
-  if (!Number.isFinite(n)) return "—";
-  return `%${n.toFixed(basamak)}`;
-}
-
 export function sayi(n: number | null | undefined): string {
   if (n === null || n === undefined || !Number.isFinite(n)) return "—";
   return n.toLocaleString("tr-TR");
@@ -31,11 +20,6 @@ export function ondalik(n: number | null | undefined, basamak = 4): string {
 export function sure(ms: number): string {
   if (ms < 1000) return `${Math.round(ms)} ms`;
   return `${(ms / 1000).toFixed(1)} sn`;
-}
-
-/** Bir maca isaretlenen sembol sayisindan kolon carpani. */
-export function satirBedeli(row: string[]): number {
-  return row.reduce((acc, cell) => acc * Math.max(1, cell.length), 1);
 }
 
 export function uniformProb(sel: Sembol[]): ProbRow {

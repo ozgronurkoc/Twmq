@@ -38,7 +38,7 @@ KL(p‖q) yorumu (nats)
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Dict, List, Optional, Sequence
 
 from .core import SEMBOLLER
 

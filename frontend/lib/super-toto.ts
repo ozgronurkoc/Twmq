@@ -164,10 +164,6 @@ export function haftaSonuclandiMi(h: SuperTotoHafta): boolean {
   return typeof h.results === "string" && h.results.length === MAC_SAYISI;
 }
 
-export function haftaBul(week: number): SuperTotoHafta | null {
-  return HAFTALAR.find((h) => h.week === week) ?? null;
-}
-
 /** Veri girilmis hafta sayisi — basliktaki rozetin kaynagi. */
 export function doluHaftaSayisi(): number {
   return HAFTALAR.filter(haftaDoluMu).length;

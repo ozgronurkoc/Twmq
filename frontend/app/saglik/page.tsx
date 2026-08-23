@@ -497,7 +497,6 @@ export default function SaglikPage() {
               yalnızca beklenenden pahalıya koştular:{" "}
               <span className="font-mono">{yavaslar.join(", ")}</span>. Performans
               gerilemesi de bir gerilemedir — ama servisi durdurmaz.
-              {rapor.summary.isinma ? null : null}
             </Callout>
           ) : null}
 

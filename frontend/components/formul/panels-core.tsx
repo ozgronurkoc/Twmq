@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, Copy, ShieldAlert, ShieldCheck, ShieldX } from "lucide-react";
+import { Check, Copy, ShieldCheck, ShieldX } from "lucide-react";
 
 import type { ButcePlan, SolveResult } from "@/lib/types";
 import { cn, panoyaKopyala, sayi } from "@/lib/utils";
@@ -395,21 +395,5 @@ export function DagilimPanel({ r }: { r: SolveResult }) {
         </CardBody>
       </Card>
     </div>
-  );
-}
-
-export function EksikVeri({ baslik, aciklama }: { baslik: string; aciklama: string }) {
-  return (
-    <Card>
-      <CardBody className="flex items-start gap-3 py-8">
-        <ShieldAlert size={18} className="mt-0.5 shrink-0 text-muted-foreground" />
-        <div>
-          <SectionTitle>{baslik}</SectionTitle>
-          <p className="text-[12.5px] leading-relaxed text-muted-foreground">
-            {aciklama}
-          </p>
-        </div>
-      </CardBody>
-    </Card>
   );
 }

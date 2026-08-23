@@ -6,7 +6,7 @@ from itertools import product
 
 import pytest
 
-from spor_toto.core import (SEMBOLLER, Encoder, ball, distance_layers,
+from spor_toto.core import (Encoder, ball, distance_layers,
                             dogrula_kaplama, dogrula_secimler, hamming,
                             parse_picks, parse_probs, sirala_semboller)
 
@@ -199,3 +199,59 @@ def test_dogrula_kaplama_acik_tespit_eder():
     worst, acik = dogrula_kaplama([(0, 0, 0), (1, 1, 1)], sizes)
     assert acik == 0
     assert worst == 1
+
+
+def test_all_modulun_gercek_yuzeyini_sayar():
+    """`core.__all__` modulun kendisiyle ortusmeli.
+
+    Depoda `import *` yok, yani bu liste calisma zamaninda hicbir sey
+    yapmiyordu ve tam bu yuzden sessizce eskimisti: `Fix16Hatasi`,
+    `rows_to_points`, `MAC_SAYISI`, `hamming74_variant`, `block_optimal` ve
+    `ternary_hamming4` disarida kalmisti — ilk ikisini `cli`, `web_app`,
+    `report` ve `health` zaten import ediyordu. Yani "core'dan ne cikar"
+    sorusunun yazili cevabi ile gercek cevap ayrismisti.
+
+    Bu test ikisini bagliyor: listeye eklemeden yeni public isim
+    tanimlanamaz, listeden cikarmadan public isim silinemez.
+    """
+    import ast
+    import pathlib
+
+    import spor_toto.core as core
+
+    kaynak = pathlib.Path(core.__file__).read_text(encoding="utf-8")
+    tanimli: set[str] = set()
+
+    def topla(govde):
+        """Modul duzeyindeki tanimlar — try/if bloklarinin ICI dahil.
+
+        `HAS_SCIPY` bir `try/except ImportError` icinde atanir; yalnizca
+        `tree.body`ye bakmak onu kacirirdi.
+        """
+        for dugum in govde:
+            if isinstance(dugum, (ast.FunctionDef, ast.ClassDef)):
+                tanimli.add(dugum.name)
+            elif isinstance(dugum, ast.Assign):
+                tanimli.update(t.id for t in dugum.targets if isinstance(t, ast.Name))
+            elif isinstance(dugum, ast.AnnAssign) and isinstance(dugum.target, ast.Name):
+                tanimli.add(dugum.target.id)
+            elif isinstance(dugum, ast.Try):
+                topla(dugum.body)
+                for h in dugum.handlers:
+                    topla(h.body)
+                topla(dugum.orelse)
+                topla(dugum.finalbody)
+            elif isinstance(dugum, ast.If):
+                topla(dugum.body)
+                topla(dugum.orelse)
+
+    topla(ast.parse(kaynak).body)
+    # Private isimler disarida.
+    tanimli = {a for a in tanimli if not a.startswith("_")}
+
+    ilan = set(core.__all__)
+    assert ilan - tanimli == set(), \
+        f"__all__ modulde tanimli olmayan isim sayiyor: {sorted(ilan - tanimli)}"
+    assert tanimli - ilan == set(), \
+        f"public tanim __all__'da yok: {sorted(tanimli - ilan)}"
+    assert len(core.__all__) == len(ilan), "__all__ icinde tekrar var"

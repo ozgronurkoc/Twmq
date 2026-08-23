@@ -177,18 +177,11 @@ export interface BayesBlock {
   matches: BayesMatch[];
 }
 
-export interface SurvivalTransition {
-  mac: number;
-  p_stay: number;
-  p_exit: number;
-}
-
 export interface Survival {
   states: string[];
   /** k mac sonra hala secim kumesinde olma olasiligi (k = 0..15). */
   p_in_after: number[];
   p_survive: number;
-  transitions: SurvivalTransition[];
 }
 
 /** BIRIM: bu blokta olasiliklar 0-1'dir — `ExactProb` yuzde donerken. */

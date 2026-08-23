@@ -18,7 +18,7 @@ olasiliksal risk profili verir. 14-garantiyi bozmaz.
 from __future__ import annotations
 
 import math
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Dict, Sequence
 
 from .core import SEMBOLLER, Encoder, Point, ball
 
@@ -40,7 +40,12 @@ def selection_survival_chain(
     Dönüş:
       p_in_after[k]: k maç sonra hâlâ IN olasılığı (k=0..15)
       p_survive: tüm 15 maç IN = p_kume_ici
-      transitions: maç bazlı P(IN→IN)
+
+    Gövde eskiden bir de `transitions` (maç bazlı p_stay/p_exit) taşırdı.
+    Kaldırıldı: onu gösteren panel bilerek silinmişti (gerekçe
+    `panels-analiz.HataButcesiPanel` doc'unda — aynı sayılar girdi
+    kartındaki kütle çubuğunda zaten canlı duruyor), yani her `/api/solve`
+    cevabında hiç kimsenin okumadığı 15 kayıt gidiyordu.
     """
     if len(probs) != enc.total_len:
         raise ValueError(
@@ -48,23 +53,15 @@ def selection_survival_chain(
 
     p_in = 1.0
     p_in_after = [1.0]
-    transitions = []
     for i, sel in enumerate(enc.selections):
         pr = _norm(probs[i])
-        p_stay = sum(pr[s] for s in sel)
-        transitions.append({
-            "mac": i + 1,
-            "p_stay": round(p_stay, 6),
-            "p_exit": round(1.0 - p_stay, 6),
-        })
-        p_in *= p_stay
+        p_in *= sum(pr[s] for s in sel)
         p_in_after.append(round(p_in, 8))
 
     return {
         "states": ["IN", "OUT"],
         "p_in_after": p_in_after,
         "p_survive": round(p_in, 8),
-        "transitions": transitions,
     }
 
 
