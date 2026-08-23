@@ -687,8 +687,8 @@ Katmanın vizyonu, kontrol sözleşmesi ve yol haritası:
 ## 7. Mimari
 
 **Python = sadece backend (JSON API). HTML yok. Frontend = sadece Next.js
-(TS/TSX).** Bu kesin bir karardır; eski Jinja2 arayüzü `archive/` altında ölü kod
-olarak durur ve hiçbir şey tarafından import edilmez.
+(TS/TSX).** Bu kesin bir karardır; eski Jinja2 arayüzü depodan tamamen
+silinmiştir — yalnızca git geçmişinde durur.
 
 ```
 Tarayıcı
@@ -755,7 +755,6 @@ frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası 
 scripts/               setup.sh (bağımlılıklar) · run_next_dev.sh (API + UI birlikte)
                        build.sh + run_prod.sh (Replit dağıtımı)
 docs/                  Mimari, veri ve yol haritası belgeleri
-archive/               Kullanımdan kalkmış Jinja2 arayüzü ve tek-seferlik yamalar
 ```
 
 ### 7.1 Katman bağımsızlığı
@@ -1110,7 +1109,6 @@ olması gerekir. Tanımlıysa yalnızca **durum değişiminde** bildirim gider.
 | [`docs/FORMUL_YOL_HARITASI.md`](docs/FORMUL_YOL_HARITASI.md) | Formül sayfasının yol haritası ve yapılmayacaklar listesi |
 | [`backend/README.md`](backend/README.md) | Motor + API kurulumu, oran arşivi kullanımı |
 | [`frontend/README.md`](frontend/README.md) | Arayüz yapısı, tasarım sistemi, grafik kuralları |
-| [`archive/README.md`](archive/README.md) | Ölü kodun envanteri ve neden silinmediği |
 
 ---
 

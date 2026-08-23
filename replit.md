@@ -20,7 +20,6 @@ backend/     Python — motor + JSON API (Flask). Hiç HTML yok.
 frontend/    Next.js 14 App Router + TypeScript + Tailwind. Tek arayüz.
 scripts/     setup.sh (bağımlılıklar), run_next_dev.sh (Run), build.sh, run_prod.sh
 docs/        mimari, veri, istatistik yol haritası, sağlık vizyonu
-archive/     ölü kod (eski Jinja arayüzü) — hiçbir şey import etmez
 ```
 
 ## Çalıştırma
@@ -145,6 +144,5 @@ erişim UI'nin `/api/*` proxy'si üzerindendir.
 3. **Frontend'de HTML yok.** Jinja şablonu, `.html` dosyası ve
    `dangerouslySetInnerHTML` kullanılmaz (tek istisna `app/layout.tsx`'in
    döndürdüğü kök JSX).
-4. **`archive/` ölü koddur.** Oradan bir şey import edilmez, düzeltilmez.
 
 ## User preferences
