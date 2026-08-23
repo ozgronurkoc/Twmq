@@ -33,16 +33,7 @@ _ap.add_argument("--cikti", default=None)
 # dahil) kendi argv'siyle bu ayristiriciya carpiyordu.
 _a = _ap.parse_args(None if __name__ == "__main__" else [])
 
-# Alt modullerin kendi argparse'i tetiklenmesin. Onceki surum sys.argv'yi
-# GERI KOYMADAN eziyordu, yani import eden surecin argv'si kayboluyordu.
-_argv0 = sys.argv
-sys.argv = ["x"]
-try:
-    _spec = importlib.util.spec_from_file_location(
-        "st", str(KOK / "scripts" / "super_toto_hafta.py"))
-    m = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(m)
-finally:
-    sys.argv = _argv0
+m = importlib.import_module("scripts.super_toto_hafta")
 
 from spor_toto.core import SEMBOLLER  # noqa: E402
 
@@ -57,14 +48,7 @@ ana = m.kupon_kur(d, 0.68, 0.38)
 
 # Sonuç girilmişse değerlendirme katmanı da yüklenir. Girilmemişse sayfa
 # eskisi gibi "sonuç yok" halinde üretilir — tek şablon, iki durum.
-_dspec = importlib.util.spec_from_file_location(
-    "st_deg", str(KOK / "scripts" / "super_toto_degerlendir.py"))
-_deg = importlib.util.module_from_spec(_dspec)
-_argv1 = sys.argv; sys.argv = ["x"]
-try:
-    _dspec.loader.exec_module(_deg)
-finally:
-    sys.argv = _argv1
+_deg = importlib.import_module("scripts.super_toto_degerlendir")
 BITTI = bool(d["meta"].get("results"))
 KUPON_JSON = json.loads((KOK / "data" / "super_toto" / _a.sezon /
                          f"hafta_{_a.hafta:02d}_kupon.json").read_text(encoding="utf-8"))

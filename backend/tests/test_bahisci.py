@@ -38,10 +38,7 @@ from spor_toto.history import SYMBOLS
 from spor_toto.predict import PiyasaTahminci
 
 KOK = Path(__file__).resolve().parent.parent
-_spec = importlib.util.spec_from_file_location(
-    "build_egitim_a2", KOK / "scripts" / "build_egitim.py")
-uretici = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(uretici)
+uretici = importlib.import_module("scripts.build_egitim")
 
 
 @pytest.fixture(scope="module")

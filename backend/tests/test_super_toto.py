@@ -6,14 +6,13 @@ bulguları değil **boru hattını** korur — bir hafta dosyası okunduğunda
 olasılıklar doğru mu kuruluyor, kaçak dağılımı gerçekten bir dağılım mı,
 en iyi kolon sayımı doğru mu.
 
-Scriptler paket değil; `super_toto_degerlendir._hafta_modulu`'nün kendi
-kullandığı `spec_from_file_location` yolu burada da kullanılır — test,
-üretimin yüklediğinden başka bir şeyi yüklememelidir.
+`scripts/` artık bir pakettir, dolayısıyla üretim de test de sıradan
+`importlib.import_module` kullanır — test, üretimin yüklediğinden başka
+bir şeyi yüklememelidir.
 """
 
 import importlib.util
 import json
-import sys
 from pathlib import Path
 
 import pytest
@@ -27,16 +26,8 @@ pytestmark = pytest.mark.skipif(
 
 
 def _modul(ad: str):
-    spec = importlib.util.spec_from_file_location(
-        f"st_{ad}", str(KOK / "scripts" / f"super_toto_{ad}.py"))
-    mod = importlib.util.module_from_spec(spec)
-    eski = sys.argv
-    sys.argv = ["x"]
-    try:
-        spec.loader.exec_module(mod)
-    finally:
-        sys.argv = eski
-    return mod
+    """Uretimin yukledigi neyse test de onu yuklemeli — artik siradan import."""
+    return importlib.import_module(f"scripts.super_toto_{ad}")
 
 
 @pytest.fixture(scope="module")
@@ -447,16 +438,7 @@ def test_besleme_arindirmayi_yazar(besleme):
 
 @pytest.fixture(scope="module")
 def fazb():
-    spec = importlib.util.spec_from_file_location(
-        "st_fazb", str(KOK / "scripts" / "faz_b.py"))
-    mod = importlib.util.module_from_spec(spec)
-    eski = sys.argv
-    sys.argv = ["x"]
-    try:
-        spec.loader.exec_module(mod)
-    finally:
-        sys.argv = eski
-    return mod
+    return importlib.import_module("scripts.faz_b")
 
 
 def test_fazb_bugun_olculemez_der(fazb):

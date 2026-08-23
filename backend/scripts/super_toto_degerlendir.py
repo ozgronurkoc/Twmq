@@ -42,16 +42,8 @@ SEM = SEMBOLLER
 
 
 def _hafta_modulu():
-    spec = importlib.util.spec_from_file_location(
-        "st_hafta", str(KOK / "scripts" / "super_toto_hafta.py"))
-    mod = importlib.util.module_from_spec(spec)
-    eski = sys.argv
-    sys.argv = ["x"]
-    try:
-        spec.loader.exec_module(mod)
-    finally:
-        sys.argv = eski
-    return mod
+    """Hafta betigi — artik siradan bir import (bkz. scripts/__init__.py)."""
+    return importlib.import_module("scripts.super_toto_hafta")
 
 
 #: Tam sayım için üst sınır. 16 satırlık kaplama kurulamadığında seçim

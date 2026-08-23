@@ -42,16 +42,15 @@ CIKTI = KOK.parent / "frontend" / "lib" / "super-toto-veri.json"
 
 
 def _modul(ad: str):
-    spec = importlib.util.spec_from_file_location(
-        f"st_{ad}", str(KOK / "scripts" / f"super_toto_{ad}.py"))
-    mod = importlib.util.module_from_spec(spec)
-    eski = sys.argv
-    sys.argv = ["x"]
-    try:
-        spec.loader.exec_module(mod)
-    finally:
-        sys.argv = eski
-    return mod
+    """Kardes betigi getirir — artik sıradan bir import.
+
+    Once `spec_from_file_location` ile dosya yolundan yukleniyordu ve
+    yuklerken `sys.argv`yi geciciyle degistiriyordu. Ikisi de gereksizdi:
+    bu dizin bir paket (`scripts/__init__.py`) ve hedef betiklerin hepsinde
+    `if __name__ == "__main__"` guard'i var, yani import etmek argparse'i
+    tetiklemiyor.
+    """
+    return importlib.import_module(f"scripts.super_toto_{ad}")
 
 
 def _yuvarla(p: Dict[str, float]) -> Dict[str, float]:
