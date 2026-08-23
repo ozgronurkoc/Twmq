@@ -127,22 +127,29 @@ export function varsayilanKurulum(): Kurulum {
 // o alani sessizce varsayilana dusurup HANGISININ dustugunu soylemesi
 // gerekir — asagidaki `atlanan` listesi bunun icin.
 
-function tamsayi(ham: string | null, alt: number, ust: number, yedek: number): number {
-  if (ham === null) return yedek;
+// Uc ayristirici da ayni sozlesmeyi tasir: **deger yoksa ya da bozuksa
+// yedek**. `undefined` de tam olarak "yok" demektir — `URLSearchParams.get`
+// `null`, dizi erisimi ise `undefined` dondurur (`noUncheckedIndexedAccess`).
+// Imzayi daraltip cagri yerinde `!` koymak, "burasi asla bos degil" diye bir
+// sey iddia ederdi; oysa iddia edilmesi gereken sey bos OLABILECEGI.
+type HamDeger = string | null | undefined;
+
+function tamsayi(ham: HamDeger, alt: number, ust: number, yedek: number): number {
+  if (ham === null || ham === undefined) return yedek;
   const n = Number(ham);
   if (!Number.isFinite(n)) return yedek;
   return Math.min(ust, Math.max(alt, Math.round(n)));
 }
 
-function ondalikDeger(ham: string | null, alt: number, ust: number, yedek: number): number {
-  if (ham === null) return yedek;
+function ondalikDeger(ham: HamDeger, alt: number, ust: number, yedek: number): number {
+  if (ham === null || ham === undefined) return yedek;
   const n = Number(ham);
   if (!Number.isFinite(n)) return yedek;
   return Math.min(ust, Math.max(alt, n));
 }
 
-function bayrak(ham: string | null, yedek: boolean): boolean {
-  if (ham === null) return yedek;
+function bayrak(ham: HamDeger, yedek: boolean): boolean {
+  if (ham === null || ham === undefined) return yedek;
   return ham === "1" || ham === "true";
 }
 

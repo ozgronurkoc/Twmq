@@ -37,7 +37,11 @@ export function ProbGrid({
 }) {
   function yaz(mac: number, sym: Sembol, deger: number) {
     const next = probs.map((r) => ({ ...r }));
-    next[mac][sym] = Number.isFinite(deger) ? Math.max(0, deger) : 0;
+    // `mac` izgaradan gelir ve gecerlidir, ama satir yoksa sessizce
+    // hicbir sey yazmamak, `undefined`e alan atayip cokmekten iyidir.
+    const satir = next[mac];
+    if (!satir) return;
+    satir[sym] = Number.isFinite(deger) ? Math.max(0, deger) : 0;
     onChange(next);
   }
 

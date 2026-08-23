@@ -1,4 +1,23 @@
 {
+  "//noUncheckedIndexedAccess": [
+    "Dizi ve Record erisimi `T` degil `T | undefined` doner.",
+    "",
+    "NEDEN ACIK: `strict: true` bunu KAPSAMAZ ve kapali oldugu surece tip",
+    "sistemi olmayan bir garanti ilan ediyordu. Bu, teorik bir risk degil:",
+    "iki gercek cokme tam bu sinifti ve ikisi de ancak uygulamayi",
+    "calistirinca goruluyordu —",
+    "  1. `benzer/kart`: `karne.semboller[sembol]` eksik anahtarda",
+    "     `undefined` donuyordu ve `.adet` erisimi BEYAZ SAYFA yapiyordu;",
+    "  2. `super-toto/haftalar`: `mac.odds?.[s].toFixed(2)` — `?.` yalnizca",
+    "     `odds`u koruyordu, ANAHTARI degil.",
+    "Ikisi de duzeltildi; bayrak ayni sinifin tekrar girmesini engeller.",
+    "",
+    "Acildiginda 35 hata verdi (9 dosya). Hicbiri kor `!` ile gecistirilmedi:",
+    "her biri ya erken guard, ya yerel daraltma, ya da sozlesmenin dogru",
+    "genisletilmesiyle kapatildi (`lib/kurulum` ayristiricilari zaten",
+    "\"deger yoksa yedek\" diyordu — `undefined` de tam olarak \"yok\" demek)."
+  ],
+
   "compilerOptions": {
     "target": "ES2017",
     "lib": [
@@ -26,7 +45,8 @@
       "@/*": [
         "./*"
       ]
-    }
+    },
+    "noUncheckedIndexedAccess": true
   },
   "include": [
     "next-env.d.ts",

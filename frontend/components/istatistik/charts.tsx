@@ -178,7 +178,16 @@ export function TrendChart({ weeks }: { weeks: WeekRow[] }) {
       : [];
   }, [weeks, n, py]);
 
-  if (!n) return <p className="text-[13px] text-muted-foreground">Hafta yok.</p>;
+  // Indeksler bir kez cozulur. `n` sifir degilse ucu da vardir, ama
+  // `noUncheckedIndexedAccess` bunu goremez; JSX icinde tek tek daraltmak
+  // okunaksiz olurdu. `!` koymak ise olmayan bir garantiyi ilan etmek olur.
+  const ilkHafta = weeks[0];
+  const sonHafta = weeks[n - 1];
+  const vurguHafta = vurgu === null ? null : (weeks[vurgu] ?? null);
+
+  if (!n || !ilkHafta || !sonHafta) {
+    return <p className="text-[13px] text-muted-foreground">Hafta yok.</p>;
+  }
 
   return (
     <div className="relative" {...olaylar}>
@@ -186,7 +195,7 @@ export function TrendChart({ weeks }: { weeks: WeekRow[] }) {
         viewBox={`0 0 ${W} ${H}`}
         className="h-auto w-full"
         role="img"
-        aria-label={`${weeks[0].week}–${weeks[n - 1].week}. haftalar arasi haftalik 1/0/2 sayilari`}
+        aria-label={`${ilkHafta.week}–${sonHafta.week}. haftalar arasi haftalik 1/0/2 sayilari`}
       >
         {yEksen.map((v) => (
           <g key={v}>
@@ -211,7 +220,7 @@ export function TrendChart({ weeks }: { weeks: WeekRow[] }) {
             fontSize={11}
             className="tnum fill-muted-foreground"
           >
-            {weeks[i].week}
+            {weeks[i]?.week}
           </text>
         ))}
 
@@ -242,7 +251,7 @@ export function TrendChart({ weeks }: { weeks: WeekRow[] }) {
           <circle
             key={s}
             cx={px(n - 1)}
-            cy={py(weeks[n - 1].counts[s])}
+            cy={py(sonHafta.counts[s] ?? 0)}
             r={4}
             className={cn(SYM_FILL[s], "stroke-card")}
             strokeWidth={2}
@@ -254,12 +263,12 @@ export function TrendChart({ weeks }: { weeks: WeekRow[] }) {
           </text>
         ))}
 
-        {vurgu !== null
+        {vurgu !== null && vurguHafta
           ? SEMBOLLER.map((s) => (
               <circle
                 key={s}
                 cx={px(vurgu)}
-                cy={py(weeks[vurgu].counts[s])}
+                cy={py(vurguHafta.counts[s] ?? 0)}
                 r={4.5}
                 className={cn(SYM_FILL[s], "stroke-card")}
                 strokeWidth={2}
@@ -268,15 +277,15 @@ export function TrendChart({ weeks }: { weeks: WeekRow[] }) {
           : null}
       </svg>
 
-      {fare && vurgu !== null ? (
+      {fare && vurgu !== null && vurguHafta ? (
         <Tooltip x={(px(vurgu) / W) * fare.w} y={fare.py} w={fare.w}>
-          <div className="mb-1 font-semibold">{weeks[vurgu].week}. hafta</div>
+          <div className="mb-1 font-semibold">{vurguHafta.week}. hafta</div>
           <div className="min-w-[128px] space-y-0.5">
             {SEMBOLLER.map((s) => (
-              <TooltipSatir key={s} sym={s} etiket={s} deger={String(weeks[vurgu].counts[s])} />
+              <TooltipSatir key={s} sym={s} etiket={s} deger={String(vurguHafta.counts[s] ?? 0)} />
             ))}
           </div>
-          <div className="mt-1 opacity-60">{weeks[vurgu].close_date}</div>
+          <div className="mt-1 opacity-60">{vurguHafta.close_date}</div>
         </Tooltip>
       ) : null}
     </div>
@@ -346,7 +355,11 @@ export function DistributionChart({
               />
             ) : null}
             {SEMBOLLER.map((s, j) => {
-              const v = distribution[s][i].weeks;
+              // Kova sayisi sembole gore ayrisirsa (govde bozuksa) o cubuk
+              // hic cizilmez; `undefined.weeks` ile cokmez.
+              const kova = distribution[s][i];
+              if (!kova) return null;
+              const v = kova.weeks;
               const x = grupX(i) + (bant - (kalinlik * 3 + 4)) / 2 + j * (kalinlik + 2);
               const h = (v / yTepe) * (H - ustB - altB);
               return <path key={s} d={barPath(x, py(v), kalinlik, h)} className={SYM_FILL[s]} />;
@@ -368,14 +381,18 @@ export function DistributionChart({
         <Tooltip x={((grupX(vurgu) + bant / 2) / W) * fare.w} y={fare.py} w={fare.w}>
           <div className="mb-1 font-semibold">Haftada {kovalar[vurgu]} adet</div>
           <div className="min-w-[150px] space-y-0.5">
-            {SEMBOLLER.map((s) => (
-              <TooltipSatir
-                key={s}
-                sym={s}
-                etiket={s}
-                deger={`${distribution[s][vurgu].weeks} hafta · %${distribution[s][vurgu].pct.toFixed(0)}`}
-              />
-            ))}
+            {SEMBOLLER.map((s) => {
+              const kova = distribution[s][vurgu];
+              if (!kova) return null;
+              return (
+                <TooltipSatir
+                  key={s}
+                  sym={s}
+                  etiket={s}
+                  deger={`${kova.weeks} hafta · %${kova.pct.toFixed(0)}`}
+                />
+              );
+            })}
           </div>
           <div className="mt-1 opacity-60">{weekCount} hafta içinden</div>
         </Tooltip>
@@ -928,13 +945,21 @@ export function PositionHeatmap({ positions }: { positions: Analytics["positions
       {hucre ? (
         <Tooltip x={hucre.x} y={hucre.y} w={hucre.w}>
           <div className="mb-1 font-semibold">{hucre.pos}. maç</div>
-          <TooltipSatir
-            sym={hucre.sym}
-            etiket={SEMBOL_ADI[hucre.sym]}
-            deger={`%${positions[hucre.pos - 1].pct[hucre.sym].toFixed(0)} · ${
-              positions[hucre.pos - 1].counts[hucre.sym]
-            }/${positions[hucre.pos - 1].n}`}
-          />
+          {(() => {
+            // Ipucu ekranda dururken veri yenilenirse satir kaybolabilir;
+            // uc ayri indeks erisimi yerine bir kez cozulur.
+            const satir = positions[hucre.pos - 1];
+            if (!satir) return null;
+            return (
+              <TooltipSatir
+                sym={hucre.sym}
+                etiket={SEMBOL_ADI[hucre.sym]}
+                deger={`%${(satir.pct[hucre.sym] ?? 0).toFixed(0)} · ${
+                  satir.counts[hucre.sym] ?? 0
+                }/${satir.n}`}
+              />
+            );
+          })()}
         </Tooltip>
       ) : null}
     </div>

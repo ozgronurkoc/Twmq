@@ -9,7 +9,6 @@ import type {
   BenzerDilim,
   BenzerKarne,
   BenzerResponse,
-  BenzerSembol,
 } from "@/lib/types";
 import { Badge } from "@/components/ui/primitives";
 import { sayi, yuzde } from "@/lib/utils";
@@ -126,11 +125,13 @@ function Satir({
   sembol: string;
   karne: BenzerKarne;
 }) {
-  // `semboller` bir Record<string, …>: eksik anahtar `undefined` doner ama
-  // tip `BenzerSembol` diyordu (tsconfig'de noUncheckedIndexedAccess kapali).
-  // Backend bir sembolu hic dondurmediginde `r.adet` render sirasinda
-  // cokuyordu — bos hucre degil, BEYAZ SAYFA.
-  const r = karne.semboller[sembol] as BenzerSembol | undefined;
+  // Eksik anahtar `undefined` doner. Bu bir zamanlar ELLE yazilmis bir
+  // cast'ti (`as BenzerSembol | undefined`) cunku `noUncheckedIndexedAccess`
+  // kapaliydi ve tip `BenzerSembol` diye YALAN soyluyordu; backend bir
+  // sembolu hic dondurmediginde `r.adet` render sirasinda cokuyordu —
+  // bos hucre degil, BEYAZ SAYFA. Bayrak acik oldugu icin cast gereksiz:
+  // daralmayi artik derleyici yapiyor.
+  const r = karne.semboller[sembol];
   if (!r) {
     return (
       <tr>
@@ -302,7 +303,7 @@ function LigDilimleri({ dilimler }: { dilimler: BenzerDilim[] }) {
                   {d.karne.n}
                 </td>
                 {SEM.map((s) => {
-                  const r = d.karne.semboller[s] as BenzerSembol | undefined;
+                  const r = d.karne.semboller[s];
                   return (
                     <td key={s} className="tnum pr-2 text-right">
                       {r ? yuzde(r.oran ?? 0, 0) : "—"}

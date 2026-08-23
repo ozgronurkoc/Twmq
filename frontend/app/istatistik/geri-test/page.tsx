@@ -62,6 +62,14 @@ export default function GeriTestPage() {
     { hazir: urlOkundu, varsayilanHata: "Geri test alınamadı" },
   );
 
+  // Kesit araligi JSX'te `veri.weeks[0]` ve `veri.weeks[son]` diye
+  // okunuyordu; `noUncheckedIndexedAccess` ile ikisi de `undefined`
+  // olabilir ve `.week` erisimi cokerdi. Bir kez, guard'la hesaplanir.
+  const ilkHafta = veri?.weeks[0];
+  const sonHafta = veri?.weeks[(veri?.weeks.length ?? 0) - 1];
+  const kesitAraligi =
+    ilkHafta && sonHafta ? `${ilkHafta.week}–${sonHafta.week}. haftalar` : null;
+
   if (hata) {
     return (
       <div className="space-y-4">
@@ -126,7 +134,7 @@ export default function GeriTestPage() {
           <p className="tnum mt-2 text-[11.5px] leading-relaxed text-muted-foreground">
             Seçili kesit:{" "}
             <span className="font-medium text-foreground">
-              {veri.weeks.length ? `${veri.weeks[0].week}–${veri.weeks[veri.weeks.length - 1].week}. haftalar` : "—"}
+              {kesitAraligi ?? "—"}
             </span>{" "}
             · {veri.meta.weeks_used} hafta · {veri.meta.weeks_used * veri.meta.match_count} maç
             {last === null ? " — tüm sezon." : ` — veri setindeki son ${last} hafta.`}

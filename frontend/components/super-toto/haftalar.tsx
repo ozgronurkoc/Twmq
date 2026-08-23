@@ -12,8 +12,13 @@ import {
 import { SEMBOLLER as SEM } from "@/lib/types";
 import { yuzde as _yuzde } from "@/lib/utils";
 
-/** Bu tabloda basamak yok — `yuzde(v, 0)`. */
-const yuzde = (v: number) => _yuzde(v, 0);
+/** Bu tabloda basamak yok — `yuzde(v, 0)`.
+ *
+ *  Girdi `number | undefined`: `Record<string, number>` erisimi eksik
+ *  anahtarda `undefined` doner (`noUncheckedIndexedAccess`) ve `_yuzde`
+ *  bu durumu zaten "—" ile karsiliyor. Takma adi daraltmak, cagri yerinde
+ *  `!` koymayi gerektirirdi — yani olmayan bir garantiyi ilan etmeyi. */
+const yuzde = (v: number | undefined) => _yuzde(v, 0);
 import { Tabs, type TabItem } from "@/components/ui/tabs";
 import { Badge, Card, CardBody, CardHeader } from "@/components/ui/primitives";
 import { BenzerKart } from "@/components/benzer/kart";
@@ -158,9 +163,13 @@ export function DoluHafta({ hafta }: { hafta: SuperTotoHafta }) {
   ];
   const dogru =
     hafta.results && k
-      ? hafta.matches.filter(
-          (mac) => mac.result && k.picks[mac.no - 1].includes(mac.result),
-        ).length
+      ? hafta.matches.filter((mac) => {
+          // `picks` hafta verisinden gelir; mac numarasi ile hizasi
+          // bozulursa satir EKSIK olur. Once `.includes` dogrudan
+          // cagriliyordu ve o durumda sayfa cokerdi.
+          const isaret = k.picks[mac.no - 1];
+          return !!mac.result && !!isaret && isaret.includes(mac.result);
+        }).length
       : null;
 
   return (
@@ -260,7 +269,7 @@ export function DoluHafta({ hafta }: { hafta: SuperTotoHafta }) {
               <MacSatiri
                 key={mac.no}
                 mac={mac}
-                isaret={k ? k.picks[mac.no - 1] : null}
+                isaret={k?.picks[mac.no - 1] ?? null}
               />
             ))}
           </tbody>
