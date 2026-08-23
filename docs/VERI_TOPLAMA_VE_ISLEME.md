@@ -642,6 +642,66 @@ inemez; inerse kaynak sütunları karışmıştır (ilke 5).
 
 ---
 
+## 6B. Süper Toto haftası — elle girilen veri
+
+### 6B.1 Neden ayrı bir köken sınıfı
+
+Bu belgenin ilk beş boru hattı ortak bir varsayım üzerine kurulu: **veri
+script'le üretilir, üretim anında doğrulanır ve yeniden üretilebilir**
+(`build_history.py`, `build_odds.py`, `snapshot_iddaa.py`, `build_egitim.py` —
+hiçbiri doğrulamadan dosya yazmaz, §7.1).
+
+`backend/data/super_toto/<sezon>/hafta_NN.json` bu varsayımı bozar:
+
+```
+odds_source    : "iddaa taraf oranları — kullanıcı ekran görüntüsü (2026-08-18)"
+play_source    : "tek platform kullanıcı oynanma yüzdesi — kullanıcı ekran görüntüsü"
+results_source : "Spor Toto resmî sonuç ekranı — kullanıcı ekran görüntüsü"
+payout.source  : "Spor Toto resmî ikramiye ekranı — kullanıcı ekran görüntüsü"
+```
+
+**Bu bir kusur değil, bir zorunluluktur.** §10.1'in tarif ettiği havuz verisi
+otomatik erişilebilir bir kaynakta yok; ikramiye ve oynanma payı yalnızca ilan
+ekranlarında yayımlanıyor. Elle girmek, veriyi hiç almamakla arasındaki tek
+seçenekti.
+
+Doktrinin 4. ilkesi (kaynak dürüstlüğü) bu yüzden burada **daha da sıkı**
+uygulanır: her blok kendi kaynağını ve tarihini kendi içinde taşır.
+
+### 6B.2 Sınıfın kuralları
+
+| Kural | Gerekçe |
+|---|---|
+| **Her veri bloğu `*_source` alanı taşır** ve alan ekran görüntüsünün tarihini içerir | Yeniden üretilemeyen veride kaynak, tek doğrulama izidir |
+| **Yeniden üretilemez** — `scripts/` altında bu dosyayı yazan bir üretici yoktur, yalnızca okuyanlar vardır | Bunu gizlemek, dosyayı öteki dördüyle aynı statüde gösterirdi |
+| **`data_quality` denetiminden geçmez** | O denetim `st_history` veri setine özgüdür (§7.3) |
+| **23 değişmezin hiçbiri ona bakmaz** | Sağlık katmanı vaadin canlıda geçerliliğini ölçer; bu dosya ürün vaadine girmiyor |
+| **Kuşkulu satır işaretlenir, düzeltilmez** | 2. haftada 4. maçın ima ettiği marj %45,8 iken bültenin geri kalanı %17,5–17,9'du; satır **KUŞKULU** olarak işaretlendi. Doğru marjla banko, verilen oranla çifte olurdu — sessizce "doğru olanı seçmek" §1.3'ün yasakladığı şeydir |
+| **Eksik oran uydurulmaz** | Oranı ilan edilmemiş maç 1/3–1/3–1/3 taşır. Bu bir tahmin değil, **bilgi yokluğunun ilanı**; kural onu otomatik olarak üçlü yapar |
+
+### 6B.3 Ne taşıyor
+
+| Blok | İçerik |
+|---|---|
+| `matches[]` | 15 maç: tarih, saat, lig, takımlar, **iddaa oranı**, **oynanma yüzdesi**, skor, sonuç |
+| `meta.payout` | Kat başına (12/13/14/15) kazanan adedi, kişi başı tutar, devreden tutar |
+| `meta.results` | 15 karakterlik 1/0/2 dizisi |
+| `hafta_NN_kupon.json` | **Sonuç görülmeden dondurulmuş** kupon: işaretler, kolon sayısı, küme-içi olasılık, `crowd_ratio`; revize edilirse eski sürüm `superseded` altında gerekçesiyle saklanır |
+
+**Oynanma yüzdesinin kendisi de vekildir** ve dosya bunu yazıyor: *"yüzdeler tek
+bir platformun kendi kullanıcılarıdır; Spor Toto havuzunun tamamı DEĞİLDİR."*
+Yanlılığı ölçülmedi — nasıl ölçüleceği §10.1'de.
+
+### 6B.4 Geçmiş sezon arşivine karışmaz
+
+`super_toto_hafta.py` geçen sezonun tablolarını **okur, yazmaz**; `/api/stats`
+yolunun beslediği arşive dokunmaz. Ayrım §6A'daki korpus ayrımıyla aynı
+gerekçeye dayanır: biri kapanmış kayıt, öteki işleyen sezon.
+
+Bir uyarı dosyanın kendi içinde duruyor ve taşınmalı: **oranlar iddaa oranıdır,
+geçen sezon arşivi football-data piyasa kapanışıdır.** Marj farkı (%17,2 ↔
+%7,26) yüzünden marj arındırılmış olasılıklar birebir aynı ölçekte değildir.
+
 ## 7. Kalite güvencesi
 
 ### 7.1 Üretim anında
@@ -807,11 +867,12 @@ Amaç tahmine döndüğü için iki sınır daha kritik hale geldi ve ayrıca ya
    > (n=445, dışarıda bırakmalı katkısı sıfır) ama **fikstür verisi** artık somut bir veri
    > ihtiyacı olarak yazılı (§10.1 ile aynı statüde).
    > Ölçüm: [`ISTATISTIK_YOL_HARITASI.md`](ISTATISTIK_YOL_HARITASI.md) §3.16 ve §6.2 A4.
-8. **İkramiye ve havuz verisi yok.** Hiçbir veri seti haftalık kazanan adedini veya ikramiye
-   tutarını taşımıyor — hafta kaydı yalnızca `week, close_date, season, n1/n0/n2, results,
-   matches` içerir. Spor Toto müşterek bahis olduğu için **kazanma oranı** ile **beklenen
-   getiri** farklı şeylerdir ve ikincisi bugün hiç ölçülemez. Bu, yeni amacın önündeki en
-   somut veri boşluğudur (§10.1).
+8. **İkramiye ve havuz verisi: sınır daraldı, kalkmadı.** Dört üretim veri setinin hiçbiri
+   haftalık kazanan adedini veya ikramiye tutarını taşımıyor — hafta kaydı yalnızca
+   `week, close_date, season, n1/n0/n2, results, matches` içerir. **Beşinci bir set bu boşluğu
+   doldurmaya başladı** ve kökeni ötekilerden farklı: elle giriliyor (§6B, PR #14). Spor Toto
+   müşterek bahis olduğu için **kazanma oranı** ile **beklenen getiri** farklı şeylerdir;
+   ikincisi **hâlâ ölçülmedi** ama artık ölçülemez değil (§10.1).
 
 ---
 
@@ -873,7 +934,7 @@ değil, **tahminin ölçülebilir hale gelmesini sağlayan veridir.**
 | **✔** | **A2 — Bahisçi kırılımı** (§6A.7) | **Yapıldı.** Dört kaynak taşınıyor; kapsaması sezona göre değişenler bilerek dışarıda |
 | **✔** | **A3 — Türetilebilir özellikler** | **Yapıldı.** Dördü türetildi ve geçmedi; seyahat ile derbi türetilemedi. Faz A **(b) ile kapandı** |
 | **1** | **Fikstür verisi** (kupa + Avrupa) | **Hiç yok.** A3'ün kör noktası: korpus 22 ligi görüyor, kupa/Avrupa maçlarını görmüyor. Tahmin eksenini yeniden açabilecek üç kaynaktan biri |
-| **2** | **İkramiye / havuz verisi** (§10.1) | **Hiç yok.** Beşinci veri seti gerekir; kaynak araştırılmadı |
+| **2** | **İkramiye / havuz verisi** (§10.1) | **Beşinci veri seti kuruldu** (§6B, PR #14). Kaynak bulundu, ilk iki hafta girildi; kalan iş **biriktirme ve yanlılık ölçümü** — n = 2 |
 | **3** | **S1'in kupon ayağı** | **Kapalı** (§10.2). Sonuç kaynağı sezon parametresi taşımıyor + `robots.txt` kısıtı |
 | **4** | **S3 — İddaa arşivi olgunlaşınca** | **Birikmeyi bekliyor.** Boru hattı ve haftalık tetik çalışıyor (§6.4); ~10 snapshot sonra eşleştirme anlamlı olur |
 | **5** | **S2 — Geri testi zenginleştir** | **Hazır.** Ek veri gerekmez |
@@ -900,7 +961,7 @@ girdidir** (öncelik 1).
 olarak** bekliyor. Veri geldiğinde altyapı hazır: `evaluate.capraz_olc` "bir sette eğit,
 ötekinde ölç" yapıyor ve `sezon_anahtari` kupon setinde de çalışır.
 
-### 10.1 Yeni veri ihtiyacı — ikramiye ve havuz
+### 10.1 İkramiye ve havuz — ihtiyaç kapandı, ölçüm açık
 
 Yeni amaç iki farklı hedefi birbirine karıştırmaya açıktır ve veri tarafı bu ayrımı
 zorunlu kılar:
@@ -908,24 +969,57 @@ zorunlu kılar:
 | Hedef | Neyi artırır | Bugün ölçülebilir mi |
 |---|---|---|
 | Daha iyi tahmin | 14 tutturma **olasılığını** | Evet — geri test + hold-out |
-| Daha az paylaşılan kolon | Tutturunca alınan **payı** | **Hayır — veri yok** |
+| Daha az paylaşılan kolon | Tutturunca alınan **payı** | **Veri var, ölçüm yok** — n = 2 hafta |
 
 İkincisi Spor Toto'nun müşterek bahis olmasından gelir: ikramiye havuzdan kazananlara
 bölünür, dolayısıyla aynı olasılığa sahip iki sonuçtan **daha az oynananı** işaretlemek
 tutturma olasılığını değiştirmeden beklenen getiriyi artırır. Bu, piyasayı tahminde yenmeyi
-gerektirmeyen tek kaldıraçtır — ama ölçmek için elde hiçbir şey yok.
+gerektirmeyen tek kaldıraçtır.
 
-**Gereken veri:** hafta başına kazanan adedi (13 ve 14 doğru için ayrı) ve ödenen tutar.
-Kaynak, Spor Toto'nun haftalık sonuç/ikramiye ilanlarıdır; erişilebilirliği ve biçimi
-**henüz araştırılmadı.**
+**Bu bölüm uzun süre "elde hiçbir şey yok" diyordu; artık doğru değil.** İhtiyaç
+duyulan iki veri de §6B'nin boru hattıyla geliyor: kat başına kazanan adedi + ödenen
+tutar (`meta.payout`) ve maç başına oynanma payı (`play_pct`). Kaynak Spor Toto'nun
+resmî ilan ekranlarıdır; **erişim biçimi elle giriştir** ve bunun kuralları §6B.2'de.
 
 Doktrin bu boru hattına olduğu gibi uygulanır — özellikle ilke 2 ve 7: ikramiye verisi
 bulunamayan hafta boş bırakılır, tahmin edilmez; bulunan veri hangi kaynaktan geldiğini
-yanında taşır. Veri gelene kadar **popülerlik yalnızca vekille** yaklaşılabilir (favori
-oranı → tahmini oynanma payı) ve bu vekilin vekil olduğu her yerde yazılmalıdır.
+yanında taşır.
 
-Bu yol da pozitif getiri garanti etmez; ölçülebilir hale getirdiği şey, bugün hakkında
-hiçbir şey bilmediğimiz bir boyuttur.
+#### Vekil sorunu yer değiştirdi, kalkmadı
+
+Eskiden popülerlik vekili **favori oranından türetilecekti** (oran → tahmini oynanma
+payı). Artık gerçek oynanma payı var — ama **o da bir vekil**, çünkü tek platformun
+kendi kullanıcılarını sayıyor, Spor Toto havuzunun tamamını değil. Dosya bunu kendi
+içinde yazıyor (`play_note`).
+
+**Yanlılığı ölçmenin yolu ikramiye tablosunun içinde.** Her hafta üç kat için kazanan
+adedi veriliyor (12, 13, 14 bilen). Oynanma payı + gerçekleşen sonuç, bu adetleri
+**önceden söyleyebilmelidir**:
+
+| Söylüyorsa | Söylemiyorsa |
+|---|---|
+| Platform havuzu temsil ediyor; pay hesabı doğrudan kurulabilir | Platform yanlı; oynanma payı havuza çevrilmeden kullanılamaz ve yanlılığın **yönü** bu farktan okunur |
+
+Bu, B2'nin (popülerlik modeli) asıl işidir ve **hafta biriktikçe** koşulur: her hafta
+üç veri noktası verir, ama haftalar birbirinden bağımsız değildir (aynı platform, aynı
+kullanıcı kitlesi). n = 2 iken hiçbir sayı sonuç değildir.
+
+#### Ölçülen ilk şey tezi zayıflatıyor
+
+1. haftanın değerlendirmesi (`super_toto_degerlendir.py`) iki bulgu verdi ve ikisi de
+   havuz tezinin lehine değil:
+
+- **Oynanma verisi yön taşımıyor.** Halkın en çok oynadığı kupon ile piyasanın favori
+  kuponu **birebir aynı** çıktı. Kalabalık piyasadan sapmıyor; yalnızca payı belirliyor.
+- **İsabet kalabalıkla birlikte geliyor.** Aynı strateji, en iyi kolonu 13+ olan
+  haftalarda ortalama **9,00** favori, 11 ve altı haftalarda **7,47** favori görüyor.
+  Yani tutturulan haftalar, kalabalığın da tutturduğu ve ikramiyenin küçüldüğü haftalar.
+
+İkincisi ölçülmesi gereken soruyu değiştiriyor: artık *"havuz avantajı var mı"* değil,
+**"net mi"**. Ayrıntı: [`ISTATISTIK_YOL_HARITASI.md`](ISTATISTIK_YOL_HARITASI.md) §6.3.
+
+Bu yol pozitif getiri garanti etmez; ölçülebilir hale getirdiği şey, bu belgenin önceki
+sürümünde hakkında hiçbir şey bilinmeyen bir boyuttur.
 
 ## 11. Sürüm geçmişi
 

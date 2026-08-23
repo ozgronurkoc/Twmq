@@ -116,6 +116,18 @@ spor_toto/evaluate.py  ◄── spor_toto/predict.py     (sözleşme + 3 refera
 | Üretim | `backend/scripts/build_egitim.py` | — | Korpus üretimi (football-data, 4 sezon, **iki çizgi + bahisçi kırılımı**) |
 | Test | `backend/tests/test_predict.py` · `test_evaluate.py` · `test_recalibrate.py` · `test_egitim.py` · `test_cizgi.py` · `test_bahisci.py` · `test_disari.py` · `test_tahmin.py` | — | Tahmin katmanı, **ürün** ve ayrım bekçisi (229) |
 
+**İşleyen sezon (2026/27)** — bu satırlar yukarıdaki haritanın parçasıdır,
+ayrı tabloda tutulmuştur.
+
+| Katman | Dosya | Rol |
+|---|---|---|
+| Okuma | `backend/scripts/super_toto_hafta.py` | Haftayı **geçen sezonun kendi ölçümlerine** oturtur (favori bantları, çift kapsama, beraberlik profili, lig kırılımı). Arşive **yazmaz**. `kamuoyu()` havuz kenarını ölçer |
+| Analiz | `backend/scripts/super_toto_degerlendir.py` | Sonuç sonrası: kaçakların Poisson-binom dağılımı, banko karnesi, **kalabalık karnesi**, ikramiye özeti |
+| Üretim | `backend/scripts/super_toto_sayfa.py` | Hafta raporu sayfası; sayfadaki hiçbir sayı elle yazılmaz, boru hattından okunur |
+| Analiz | `backend/scripts/acilis_kapanis.py` | Açılış ↔ kapanış fiyatı, **kupon zamanlamasıyla** (§5.2) |
+| Veri | `backend/data/super_toto/<sezon>/hafta_NN{,_kupon}.json` | Elle girilen hafta verisi ve dondurulmuş kupon — köken sınıfı ayrı ([`VERI_TOPLAMA_VE_ISLEME.md`](VERI_TOPLAMA_VE_ISLEME.md) §6B) |
+| UI | `frontend/app/super-toto/page.tsx` · `components/super-toto/haftalar.tsx` · `lib/super-toto.ts` | Sezonun hafta şeridi; `?hafta=N` adreste durur |
+
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
 paketi toplam **911 test**; **82'si** istatistik katmanına, **229'u** tahmin katmanına ait.
 `python -m spor_toto.health` **23 değişmez** çalıştırır — ikisi (`oran_arsivi`, `geri_test`)
@@ -1120,6 +1132,36 @@ anlaşmazlıkta ham sinyal *hiç yok*, yalnızca favori gücüyle karışmış b
 Üç ölçümün üçü de aynı yere bakıyor: piyasa fiyatı, elimizdeki veriden çıkarılabilecek
 her şeyi zaten içeriyor.
 
+### 5.2 Havuz ekseninin ilk bulguları — ölçüldü, belgeye girmedi
+
+PR #14, 2026/27'nin ilk iki haftasında **altı ölçülmüş bulgu** üretti ve
+bunların tamamı bugün yalnızca **commit mesajlarında** duruyor. Bu belgenin
+kuralı ölçülen her şeyin §3'e gerekçesiyle yazılmasıdır; PR #14 `main`'e
+girdi ama o yazımı yapmadı — **borç duruyor**.
+
+Kaybolmasınlar diye başlıkları ve commit'leri:
+
+| # | Bulgu | Commit |
+|---|---|---|
+| 1 | **Hedef yanlıştı.** Aynı kuralın 36 haftalık en-iyi-kolon dağılımı 14→3, 13→6, 12→12, 11→9, 10→3, 9→3. 14 hiçbir zaman ulaşılabilir hedef değildi; doğru ölçü **P(en iyi kolon ≥ 12)** — ikramiye 12'den başlıyor | `bb4a274` |
+| 2 | **Atılan sembolün bedeli simetrik değil.** Çiftede atılan beraberlikse %25,8 geliyor, ev sahibiyse %16,0, deplasmansa %15,6 (567 maç). Beraberlik atmak 1,6 kat pahalı | `bb4a274` |
+| 3 | **Korumak daha pahalı.** Beraberliği korumanın maliyeti kolon/14 başına 32.235 → 80.520. Yedi alternatif kural koşuldu; kullanılan kural en verimlisi çıktı | `bb4a274` |
+| 4 | **Kural değiştirilmedi.** Bir haftalık veriyle eşik oynatmak, geçen sezonun hold-out'unun (%0) zaten ölçtüğü hatadır | `bb4a274` |
+| 5 | **Oynanma verisi yön taşımıyor.** Halkın modal kuponu ile piyasanın favori kuponu birebir aynı — sinyal yalnızca **pay** için | `bb4a274` |
+| 6 | **İsabet kalabalıkla birlikte geliyor.** 13+ haftalarda ort. 9,00 favori, 11 ve altı haftalarda 7,47 — ikramiyenin küçüldüğü haftalarda tutturuluyor | `bb4a274` |
+| + | **Açılış ↔ kapanış, kupon zamanlamasıyla.** Kupon ilk maçtan önce kapanır, oranlar her maçın saatine kadar oynar: son maçlarda **kapanış fiyatı kupon verilirken yoktur**. Bedeli isabet değil **kolon: %22 artış** (2.686 → 3.290). Hareket 4 puanı aştığında kapanış gerçeği neredeyse birebir tutturuyor, açılış sapıyor | `14650a7` |
+
+Sonuncusu **A1'i daraltıyor, çürütmüyor.** A1 hareketin *kapanışın ötesinde*
+bilgi taşımadığını ölçmüştü (uzatma %1,01); bu ölçüm kapanışın açılışa göre
+üstünlüğünün **nerede yoğunlaştığını** gösteriyor — hareketsiz bantta (n=407)
+ikisi aynı, hareketli bantta (n=171) kapanış açık ara doğru. İkisi tutarlı:
+piyasa hareketi kapanış fiyatına soğuruyor.
+
+Pratik sonucu ise yeni ve ürünü ilgilendiriyor: **ölçümlerimizin dayandığı
+kapanış fiyatı, kupon verilirken haftanın son maçları için elimizde yok.**
+
+---
+
 ## 6. Yol planı — proje ne zaman biter
 
 Bu bölüm **sonlanan** bir plandır: bitirildiğinde yapacak iş kalmaz.
@@ -1144,7 +1186,7 @@ Beklenen getiri  =  P(tutturma)  ×  Pay(tutturunca)  −  Bedel
 | Eksen | Ne belirler | Durum |
 |---|---|---|
 | **Tahmin** | 14+ tutturma olasılığı | İki bağımsız denemede ~sıfır artık (§5.1) |
-| **Havuz** | Tutturunca ikramiyenin kaçta kaçını aldığın | **Ölçülemedi.** Soru ve durma kuralı kuruldu (§6.3b); veri 1 hafta |
+| **Havuz** | Tutturunca ikramiyenin kaçta kaçını aldığın | **Veri geldi, ölçülmedi** (§6.3, §6.3b). Oynanma 2 hafta, ikramiye kaydı 1 hafta |
 | **Kaplama** | Aynı garanti için ödenen kolon | **Çözüldü** — Hamming, kanıtlanmış optimal |
 
 Plan sonludur çünkü **etken sayısı üçtür.** Kaplama ekseninde iş yok ve olmayacak: bir
@@ -1288,9 +1330,49 @@ belirsiz bırakmadı, üçünü de somutlaştırdı:
 | **Fikstür verisi** (kupa + Avrupa) | A3'ün kör nokta taraması: deplasman "dinlenmiş" göründüğünde ev takımı piyasayı +0,0655 aşıyor, etki Avrupa liglerinde dört kat güçlü. Türetebildiğimiz yorgunluk vekili fiyatlanmış; **gerçek yorgunluk ölçülmedi** |
 | **Kadro / sakatlık** | Hiçbir veri setinde yok. Piyasanın gördüğü, bizim görmediğimiz en büyük girdi |
 | **Şehir / rekabet tablosu** | A3'te seyahat ve derbi bu yüzden elendi — hesaplanamadıkları için |
+| ~~**xG (Understat)**~~ | **Kaynak değil — ölçülmüş negatif.** Listede yoktu, yani örtük olarak açık duruyordu. Dış bir çalışma 14 xG özelliğiyle denedi ve piyasayı geçemedi; üstelik Understat **Süper Lig'i kapsamıyor**. Ayrıntı: [`DIS_INCELEME.md`](DIS_INCELEME.md) §4 |
 
 Biri geldiğinde açılacak soru bellidir ve altyapı hazır: `cizgi.py`/`bahisci.py`/`disari.py`
 deseni aynen kullanılır. Gelmediği sürece **aynı veriyle yeni model denenmez.**
+
+#### Model sınıfı — dokuz denemenin ortak kör noktası ve dışarıdan gelen kontrol
+
+Yukarıdaki dokuz denemenin **hepsi tek bir model ailesiyle** yapıldı:
+`recalibrate.py`'ın kademesi, `ln p` üzerinde doğrusal, Newton ile uydurulan bir
+softmax. Etkileşim yakalayan ya da doğrusal olmayan eşik kuran bir sınıf hiç
+denenmedi. Bu, A4'ün bugüne kadar cevaplamadığı bir itiraz bırakıyor:
+
+> *"Piyasayı geçen özellik yok demediniz — sizin doğrusal kademeniz o özelliği
+> kullanamadı demiş oldunuz."*
+
+Dış bir çalışma (`zakariae-boui/football-prediction-ml`) tam o sınıfı deniyor —
+Random Forest, XGBoost ve SVM ile, 52–62 özellik üzerinde, 6.080 Premier Lig ve
+La Liga maçında — ve **aynı tavana çarpıyor**: en iyi model %54,2, bahisçi
+favorisi %54,7, bütün stratejilerde ROI negatif (−%2,9 … −%8,4).
+
+**Bu bir teyittir, ölçüm değil.** Farklı ligler, farklı dönem, farklı ölçüt
+(isabet + ROI; bizim güven aralığı ölçütümüz değil) ve bizden bağımsız bir ekip.
+İtirazı ortadan kaldırmaz — o sınıfın **bizim kesitimizde** ne yapacağı hâlâ
+ölçülmedi — ama itirazın beklenen getirisini düşürür. Künye ve sınırlar:
+[`DIS_INCELEME.md`](DIS_INCELEME.md) §3.
+
+#### Denenmedi, gerekçesiyle
+
+A3 *"denenmedi"* ile *"denenemez"*i ayırmayı kural hâline getirmişti (seyahat,
+derbi). Aynı disiplin iki özelliğe daha uygulanır — bunlar **denenebilir ama
+denenmedi**, ve bu bilinçli bir tahsis kararıdır:
+
+| Özellik | Türetilebilir mi | Neden şimdi denenmiyor |
+|---|---|---|
+| **Elo** (rakip gücüne göre düzeltilmiş takım gücü) | **Evet**, korpustan; yeni kaynak gerekmez | Durma kuralı (aynı veri) · A1'in null'ı — piyasanın kendi çizgi hareketi bile kapanışı yenemedi · **fırsat maliyeti**: havuz ekseni veri taşıyor ve hiç ölçülmedi |
+| **H2H** (son 5 karşılaşma) | **Evet**, aynı şekilde | Aynı üç gerekçe |
+
+Elo'nun ayrıca kaydedilmesi gereken bir yanı var: `kalibre_form` **ham** formdu,
+rakip gücüne göre düzeltilmemişti — Elo tam o eksiği kapatan standart sinyaldir.
+Yani "form denendi" demek "Elo denendi" demek değildir.
+
+**Yeniden açılma koşulu:** havuz ekseni ölçülüp kapanırsa (§6.3 B4/b), ya da
+yukarıdaki üç kaynaktan biri gelirse. Ayrıntı: [`DIS_INCELEME.md`](DIS_INCELEME.md) §8.
 
 #### `ps` geçti — arayışı yeniden açar mı? Hayır
 
@@ -1315,8 +1397,35 @@ Pratik sonuç iki yönlü ve ikisi de eyleme dönük:
 
 ### 6.3 Faz B — havuz eksenini aç ve ölç
 
-Projenin hiç dokunmadığı eksen ve muhtemelen **tek gerçek kaldıraç** — çünkü piyasayı
-tahminde yenmeyi gerektirmez.
+Muhtemelen **tek gerçek kaldıraç** — çünkü piyasayı tahminde yenmeyi gerektirmez.
+
+**B1'in ön koşulu artık sağlanmış durumda.** Bu bölüm uzun süre *"veri yok,
+kaynak araştırılmadı"* diyordu; 2026/27 sezonunun ilk iki haftası için üç veri
+birden elle girildi (`backend/data/super_toto/2026_27/hafta_NN.json`):
+
+| Veri | 1. haftada ölçülen |
+|---|---|
+| **İkramiye tablosu** | 15 bilen **0 kişi** (30.149.380,57 TL devretti) · 14 bilen 8 kişi × 2.153.527,18 TL · 13 bilen 210 kişi × 82.039,13 TL · 12 bilen 2.859 kişi × 7.532,44 TL |
+| **Oynanma yüzdesi** | Maç başına 1/0/2 tercih payı — **tek platformun kendi kullanıcıları**, Spor Toto havuzunun tamamı değil |
+| **Gerçek iddaa oranı** | Piyasa vekili değil, oynanan fiyatın kendisi |
+
+**Ve ilk iki ölçüm çoktan yapılmış** (`super_toto_hafta.py`, `super_toto_degerlendir.py`):
+
+- **Havuz kenarı ölçülebiliyor.** `crowd_ratio` = kuponun küme-içi olasılığının,
+  rastgele bir halk kuponununkine oranı. 1. haftada 0,451 (%2,31 ↔ %5,12) — yani
+  kupon, kalabalığın seyrek olduğu yere düşüyor. B3'ün amaç fonksiyonunun çekirdeği budur.
+- **Ama iki bulgu tezi zayıflatıyor.** (1) Halkın modal kuponu ile piyasanın favori
+  kuponu **birebir aynı** çıktı: oynanma verisi **yön için sinyal taşımıyor, yalnızca
+  pay için**. (2) Daha ağırı: strateji, en iyi kolonu 13+ olan haftalarda ortalama
+  **9,00** favori, 11 ve altı haftalarda **7,47** favori görüyor — **isabet kalabalıkla
+  birlikte geliyor**, yani tam da ikramiyenin küçüldüğü haftalarda.
+
+İkinci bulgu Faz B için elimizdeki en önemli tek sayıdır ve B4'ün *(b)* şıkkını
+somutlaştırır: havuz avantajı, onu kazandığın haftaların aynı zamanda payın
+küçüldüğü haftalar olmasıyla kısmen kendini yiyor. **Ölçülmesi gereken şey artık
+"avantaj var mı" değil, "net mi".**
+
+**n = 2 hafta.** Hiçbiri "geçti" statüsünde değil; hepsi betimleyicidir.
 
 Spor Toto müşterek bahistir: ikramiye havuzdan kazananlara bölünür. Sonuç: *aynı olasılığa
 sahip iki sonuçtan **daha az oynananı** işaretlemek, tutturma olasılığını değiştirmeden
@@ -1326,8 +1435,8 @@ yer maçların **yarısında yanlış**.
 
 | # | İş | Not |
 |---|---|---|
-| **B1** | İkramiye / kazanan verisi | **Faz B'nin ön koşulu.** Hafta başına 13 ve 14 doğru için kazanan adedi + tutar. Kaynak araştırılmadı; **önce fizibilite**, sonra boru hattı. Yoksa Faz B düşer ve bu da bir cevaptır |
-| **B2** | Popülerlik modeli | B1 gelene kadar vekil: favori olasılığı → tahmini oynanma payı. B1 gelirse vekil **gerçek veriyle kalibre edilir** |
+| **B1** | İkramiye / kazanan verisi | **Ön koşul sağlandı** (PR #14, yukarıdaki blok). Fizibilite sorusu kapandı: kaynak Spor Toto'nun resmî ikramiye ekranı, veri **elle** giriliyor. Kalan iş biriktirme — n = 2 |
+| **B2** | Popülerlik modeli | **Vekile gerek kalmadı** — gerçek oynanma payı var. Ama kendisi de vekil: tek platformun kullanıcıları, havuzun tamamı değil. **Sıradaki ölçüm bu yanlılıktır**: ikramiye tablosunun kat başına kazanan adetleri, oynanma payı + gerçek sonuçtan önceden söylenebilmeli; söylenemiyorsa platform havuzu temsil etmiyor |
 | **B3** | Beklenen getiriye göre kupon kurma | **Kaplamanın ve havuzun buluştuğu yer; projenin en özgün işi.** "Hangi maça kaç işaret" sorusu ilk kez ölçülmüş bir amaç fonksiyonuyla cevaplanır. Tahmin değil, **kalabalık davranışı** modellenir |
 | **B4** | Durma kuralı | *(a)* pozitif beklenen getiri ölçüldü → Faz C · *(b)* veri yok, ya da %17,2 marj + havuz seyrelmesi avantajı yutuyor → eksen kapanır |
 
@@ -1433,7 +1542,7 @@ Proje şu **dört sorunun tamamı** ölçülmüş cevaba bağlandığında biter
 | # | Soru | Bugün | Nasıl kapanır |
 |---|---|---|---|
 | 1 | Kapanış çizgisini **yenebiliyor** muyuz? | **hayır, ölçüldü** | A1–A4 (§6.2 A4) — arayış kapandı, tahmin ekseni açık kaldı |
-| 2 | Kalabalığı yenebiliyor muyuz? | bilinmiyor | B1–B4 |
+| 2 | Kalabalığı yenebiliyor muyuz? | **bilinmiyor — ama artık "veri yok" diye değil, "veri geldi, ölçülmedi" diye** (§6.3) | B2–B4 |
 | 3 | Pozitif beklenen getirili kupon kurulabiliyor mu? | bilinmiyor | B3 |
 | 4 | Garanti hâlâ optimal mi? | **evet, kanıtlı** | kapandı |
 
@@ -1457,7 +1566,7 @@ C3 (bağımsız, her an)
                           └─► C1 (koşullu) · C2 (KOŞULSUZ, sırada)  ─► C4 ─► D
 ```
 
-**Faz A bitti ve (b) ile kapandı** (§6.2 A4). **B1 artık tek açık kol** — o bir araştırma, kod değil.
+**Faz A bitti ve (b) ile kapandı** (§6.2 A4). **B1'in araştırma kısmı da kapandı** — veri geldi (§6.3, PR #14); açık kol artık **B2'nin yanlılık ölçümü**.
 **C3 hiçbir şeyi beklemez** (ölçülmüş kusur: 7.210 px, ilk ekranda 3/11 başlık).
 
 Eski etiketler kayıp değil, yerleşti:
@@ -1477,7 +1586,7 @@ Eski etiketler kayıp değil, yerleşti:
 | S1 (kupon ayağı) | §6.7 — kapalı | bloke |
 | S2 | §6.8 | hazır, ek veri gerekmez |
 | S3 | Faz A/B girdisi | birikmeyi bekliyor |
-| İkramiye verisi | **B1** | araştırılmadı |
+| İkramiye verisi | **B1** | **veri geldi** (§6.3, PR #14); ölçüm B2'ye devrolmuş durumda |
 
 ### 6.7 S1'in kupon ayağı neden kapalı
 

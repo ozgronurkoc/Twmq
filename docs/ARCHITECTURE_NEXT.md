@@ -17,8 +17,8 @@ backend/spor_toto/     ← Fix-16, ILP, Bayes, MC, Markov, health
 ```
 
 Repo iki taraflıdır: Python'un tamamı `backend/`, arayüzün tamamı `frontend/`.
-Eski Jinja2 arayüzü `archive/templates/` altına alınmıştır; runtime'da servis
-**edilmez** ve hiçbir şey tarafından import edilmez.
+Eski Jinja2 arayüzü depodan silinmiştir; runtime'da servis **edilmez** ve
+hiçbir şey tarafından import edilmez.
 
 ## API
 

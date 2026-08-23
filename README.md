@@ -100,7 +100,7 @@ geçerli olduğunu kanıtlar.** 23 değişmez, 6 kategori, her çağrıda yenide
 | 41 haftalık sezon verisini ve piyasa oranlarını analiz edip **maç sonucu tahmini** üretir | Kazanmayı **garanti etmez** |
 | Tahmin isabetini ölçer ve hold-out ile aşırı uyumdan ayırır | Ölçülmemiş bir isabet iddiası sunmaz |
 | Hamming yarıçap-1 kaplama kodu üretir | 14-garantiyi olasılıkla "güçlendirmez" |
-| En kötü durumda 14 doğru **garantiler** (küme içinde) | İkramiye / beklenen değer hesabı yapmaz (havuz verisi yok — §11) |
+| En kötü durumda 14 doğru **garantiler** (küme içinde) | İkramiye / beklenen değer hesabı yapmaz (veri ilk kez birikiyor, ölçüm yok — §10) |
 | Küme dışı senaryoları **fire** olarak ölçer | Kâr vaadi vermez |
 | Exact + Monte Carlo olasılık raporu verir | Canlı bülten çekmez |
 | Bayes (Dirichlet) ile tahminlerini yumuşatır | İddaa geçmiş oranı sunmaz (yok — §5.3) |
@@ -736,8 +736,8 @@ Katmanın vizyonu, kontrol sözleşmesi ve yol haritası:
 ## 7. Mimari
 
 **Python = sadece backend (JSON API). HTML yok. Frontend = sadece Next.js
-(TS/TSX).** Bu kesin bir karardır; eski Jinja2 arayüzü `archive/` altında ölü kod
-olarak durur ve hiçbir şey tarafından import edilmez.
+(TS/TSX).** Bu kesin bir karardır; eski Jinja2 arayüzü depodan tamamen
+silinmiştir — yalnızca git geçmişinde durur.
 
 ```
 Tarayıcı
@@ -804,7 +804,6 @@ frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası 
 scripts/               setup.sh (bağımlılıklar) · run_next_dev.sh (API + UI birlikte)
                        build.sh + run_prod.sh (Replit dağıtımı)
 docs/                  Mimari, veri ve yol haritası belgeleri
-archive/               Kullanımdan kalkmış Jinja2 arayüzü ve tek-seferlik yamalar
 ```
 
 ### 7.1 Katman bağımsızlığı
@@ -1022,7 +1021,7 @@ Sıradakiler, "en çok belirsizliği kaldıran" ölçütüne göre:
 | **T4 — Referans skorları sağlık değişmezine** | `duzgun` her zaman 0,6667, `piyasa` kupon kesitinde 0,5747 vermeli | **Küçük ve sıranın başında.** Bu sayılar kayarsa bozulan model değil veri/boru hattıdır ve bugün hiçbir şey fark etmez |
 | **T5 — Piyasa dışı girdi: takım formu** | football-data'nın maç istatistiklerinden yuvarlanan pencereyle form özelliği | **Ölçüm bunu söylüyor.** Piyasayı yeniden kalibre etmek yön olarak doğru ama miktar yetersiz; sinyal ancak piyasada olmayan bir girdiden gelir. Ek kaynak gerekmez |
 | **S1 — Örneklem büyütme** | Kupon setini ikinci sezona çıkarmak | **Yarısı yapıldı, yarısı kapalı.** Tahmin ölçümü için gereken örneklem korpusla geldi (31.103 maç). Kupon ayağı bloke: sonuç kaynağı sezon parametresi taşımıyor + `robots.txt` kısıtı ([`docs/VERI_TOPLAMA_VE_ISLEME.md`](docs/VERI_TOPLAMA_VE_ISLEME.md) §10.2) |
-| **İkramiye / havuz verisi** | Hafta başına kazanan adedi ve ödenen tutar | **Hiç yok.** Müşterek bahiste "kazanma oranı" ile "beklenen getiri" farklı şeylerdir; ikincisi bugün hiç ölçülemiyor. Kaynak araştırılmadı |
+| **İkramiye / havuz verisi** | Hafta başına kazanan adedi ve ödenen tutar | **Fizibilite kapandı, ölçüm açık.** Kaynak bulundu (Spor Toto resmî ikramiye ekranı) ve ilk iki hafta elle girildi. Müşterek bahiste "kazanma oranı" ile "beklenen getiri" hâlâ farklı şeylerdir ve ikincisi **hâlâ ölçülmedi** — n = 2 hafta. Ayrıntı: [`docs/ISTATISTIK_YOL_HARITASI.md`](docs/ISTATISTIK_YOL_HARITASI.md) §6.3 |
 | **S2 — Geri testi zenginleştirmek** | Sabit kolon bütçesi kipi, ikinci strateji ailesi ("en belirsiz k maçı çifte yap"), bütçe danışmanıyla bağ | **Hazır** — ek veri gerekmez |
 | **S3 — İddaa arşivi olgunlaşınca** | Snapshot'ları kupon maçlarıyla eşleştir; iddaa ile piyasa oranını yan yana koy; geri testi vekil değil gerçek fiyatla tekrarla | **Birikmeyi bekliyor** — ~10 snapshot sonra anlamlı |
 | **S4 — Küçük işler** | Geri testte eşik çiftini URL'e yazmak, tarama tablosunu CSV'ye çıkarmak, hafta detayında Brier | Veri tarafı yok |
@@ -1159,7 +1158,6 @@ olması gerekir. Tanımlıysa yalnızca **durum değişiminde** bildirim gider.
 | [`docs/FORMUL_YOL_HARITASI.md`](docs/FORMUL_YOL_HARITASI.md) | Formül sayfasının yol haritası ve yapılmayacaklar listesi |
 | [`backend/README.md`](backend/README.md) | Motor + API kurulumu, oran arşivi kullanımı |
 | [`frontend/README.md`](frontend/README.md) | Arayüz yapısı, tasarım sistemi, grafik kuralları |
-| [`archive/README.md`](archive/README.md) | Ölü kodun envanteri ve neden silinmediği |
 
 ---
 
