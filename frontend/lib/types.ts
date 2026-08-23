@@ -893,6 +893,49 @@ export interface HealthChecksResponse {
   checks: HealthCheckInfo[];
 }
 
+/* ── Benzer maçlar (A5) ──────────────────────────────────────────────────── */
+
+/** Bir sembolün geçmişteki karnesi. Yüzde ASLA n ve aralık olmadan gelmez. */
+export interface BenzerSembol {
+  adet: number;
+  oran: number | null;
+  ga_alt: number;
+  ga_ust: number;
+  /** Piyasanın aynı fiyatta dediği olasılık. */
+  piyasa: number;
+  fark: number | null;
+  /** Piyasa güven aralığının içinde mi — asıl okunacak alan budur. */
+  piyasa_ga_icinde: boolean | null;
+}
+
+export interface BenzerKarne {
+  n: number;
+  /** `AZ_ORNEK` (30) altındaysa yüzde okunmaz. */
+  yeterli: boolean;
+  semboller: Record<string, BenzerSembol>;
+}
+
+export interface BenzerDilim {
+  deger: string;
+  karne: BenzerKarne;
+}
+
+export interface BenzerResponse {
+  oranlar: Record<string, number>;
+  marj: number;
+  arindirma: string;
+  hedef_olasilik: Record<string, number>;
+  /** Fiilen kullanılan yarıçap — genişlemiş arama kendini gizlemez. */
+  tolerans: number;
+  tolerans_uyarlandi: boolean;
+  tolerans_genisledi: boolean;
+  tolerans_tavana_dayandi: boolean;
+  evren: number;
+  toplam: BenzerKarne;
+  dilimler: { lig: BenzerDilim[]; sezon: BenzerDilim[] };
+  uyarilar: string[];
+}
+
 /* ── Tahmin (C2) ─────────────────────────────────────────────────────────── */
 
 /** Tek maçın tahmini. `olasilik` marj arındırılmıştır ve 1'e toplanır. */

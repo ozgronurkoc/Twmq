@@ -277,3 +277,41 @@ def test_olasilik_satirlari_bicimi():
     probs = parse_probs(";".join(["1:1,0:1,2:1"] * 15), enc.selections)
     satirlar = olasilik_satirlari(olasilik_raporu(enc, cols, probs))
     assert any("kar/beklenen-deger hesabi degildir" in s for s in satirlar)
+
+
+# ─── bağımsızlık varsayımı ────────────────────────────────────────────────────
+
+def test_bagimsizlik_varsayimi_hafta_duzeyinde_tutuyor():
+    """`P(≥12)`, `p_kume_ici`, Poisson-binom — hepsi 15 maçın bağımsızlığına
+    dayanıyor ve bu varsayım hiç sınanmamıştı.
+
+    Sınama: haftalık favori isabetinin **gözlenen** varyansı, bağımsızlığın
+    öngördüğü `Σp(1−p)` ile aynı büyüklükte mi. Maçlar birlikte hareket
+    etseydi (favori haftası / sürpriz haftası) gözlenen varyans belirgin
+    biçimde büyük çıkardı.
+
+    Sınırlar geniş (0,5–1,6) ve bilerek: 36 haftada varyans oranının kendi
+    örneklem dağılımı geniştir. Test "varsayım tam doğru" demiyor,
+    **"kırılmadı"** diyor — dar bir sınır burada kendi gürültüsünü ölçerdi.
+    """
+    import statistics
+
+    from spor_toto.backtest import hafta_girdileri
+
+    haftalar = [g for g in hafta_girdileri(None) if g["usable"]]
+    if len(haftalar) < 20:
+        pytest.skip("bagimsizlik sinamasi icin en az 20 tam hafta gerekli")
+
+    gozlenen, ongorulen = [], []
+    for w in haftalar:
+        favs = [max(p, key=p.get) for p in w["probs"]]
+        pf = [p[f] for p, f in zip(w["probs"], favs)]
+        gozlenen.append(sum(1 for f, k in zip(favs, w["results"]) if f == k))
+        ongorulen.append(sum(x * (1 - x) for x in pf))
+
+    oran = statistics.variance(gozlenen) / statistics.mean(ongorulen)
+    assert 0.5 < oran < 1.6, (
+        f"haftalik favori isabetinin varyans orani {oran:.2f} — bagimsizlik "
+        f"varsayimi kirilmis olabilir; P(>=12) ve p_kume_ici bu varsayima "
+        f"dayaniyor (gozlenen var {statistics.variance(gozlenen):.2f}, "
+        f"ongorulen {statistics.mean(ongorulen):.2f})")

@@ -1,5 +1,6 @@
 import type {
   BacktestResponse,
+  BenzerResponse,
   HealthChecksResponse,
   HealthHistoryResponse,
   HealthReport,
@@ -199,4 +200,24 @@ export function getTahmin(
   if (opt.limit && opt.limit > 0) q.set("limit", String(opt.limit));
   const qs = q.toString();
   return istek<TahminResponse>(`/api/tahmin${qs ? `?${qs}` : ""}`, { signal });
+}
+
+/**
+ * "Bu oranda gecmiste ne olmus?" — 31 bin maclik korpusta ayni fiyata sahip
+ * maclarin nasil bittigi.
+ *
+ * `oranlar` 1/0/2 sirasiyla gonderilir. Cevap bir TAHMIN degildir: her yuzde
+ * yaninda n ve Wilson %95 araligi gelir ve `piyasa_ga_icinde` alani asil
+ * soruyu cevaplar — *piyasa sozunu tutmus mu*.
+ */
+export function getBenzer(
+  oranlar: Record<string, number>,
+  secenek?: { lig?: string; tolerans?: number },
+  signal?: AbortSignal,
+) {
+  const oran = ["1", "0", "2"].map((s) => oranlar[s]).join(",");
+  const q = new URLSearchParams({ oran });
+  if (secenek?.lig) q.set("lig", secenek.lig);
+  if (secenek?.tolerans !== undefined) q.set("tolerans", String(secenek.tolerans));
+  return istek<BenzerResponse>(`/api/benzer?${q}`, { signal });
 }

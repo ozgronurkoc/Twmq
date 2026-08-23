@@ -22,7 +22,7 @@ sayesinde eğitim setinden o haftayı çıkarabiliyor.
 
     duzgun          her sembole 1/3.  Brier 0,667. Mutlak zemin.
     sezon_sabiti    sezonun 1/0/2 dağılımı.  Naif taban.
-    piyasa          marj arındırılmış kapanış oranı.  Brier 0,579.
+    piyasa          marj arındırılmış kapanış oranı.  Brier 0,574.
 
 **`piyasa` aşılması gereken çizgidir, referans değil.** Bir tahminci onu
 out-of-sample geçmedikçe "iyileşme" sayılmaz — `evaluate.karsilastir` bu kuralı
@@ -129,9 +129,13 @@ class SezonSabitiTahminci(Tahminci):
 class PiyasaTahminci(Tahminci):
     """Marj arındırılmış kapanış oranı — aşılması gereken çizgi.
 
-    Hiçbir şey öğrenmez; oranı olduğu gibi okur. Ölçülen Brier skoru 0,579
+    Hiçbir şey öğrenmez; oranı olduğu gibi okur. Ölçülen Brier skoru 0,574
     (eşit dağıtım 0,667), yani piyasa bilgi taşıyor ama az. Yeni bir
     tahmincinin değeri, bu sayıyı out-of-sample geçip geçmediğidir.
+
+    Sayı **arındırma yöntemine bağlıdır**: 0,574 bugünkü varsayılan (`shin`)
+    ile; `orantili` ölçeğinde 0,5747'ydi (A5, `docs/ISTATISTIK_YOL_HARITASI.md`
+    §3.18). Eski ölçümlerle kıyaslarken hangi ölçekte olduğuna bakılmalı.
 
     Oranı bulunamayan maç için düzgün dağılım döner. Bu durum yalnızca
     `usable=False` haftalarda olur ve koşum o haftaları zaten dışarıda

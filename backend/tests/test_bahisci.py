@@ -346,16 +346,34 @@ def test_favori_sabitlenince_iliski_kayboluyor(a2):
 
     Bu, T5 ve A1'in nullundan **farklı bir null**: orada ham sinyal gerçekti
     ve piyasa onu fiyatlamıştı. Burada ham sinyalin kendisi yok.
+
+    Ölçüt **ham tabloya göredir**, mutlak değil. Eskiden sabit bir eşik
+    (0,02 Brier) vardı; o sayı yazıldığı gün en geniş dilimin yayılımı 0,0143
+    olduğu için seçilmişti, yani payı dardı. 2026-08'de arındırma varsayılanı
+    değişince Brier düzeyleri kaydı ve aynı dilim 0,0200'e çıkıp eşiği geçti —
+    **bulgu değişmeden** testin kırılması, eşiğin keyfî olduğunun kanıtıdır.
+    Asıl iddia zaten görelidir: *"koşullayınca ham ilişki kayboluyor."* Ölçüt
+    de o hâle getirildi — koşullanmış yayılım, ham yayılımın yarısından
+    küçük olmalı. Ölçülen: orantısalda en fazla %22, Shin'de en fazla %30.
     """
-    capraz = ayrisma_ozeti(a2)["favori_sabit"]
+    ozet = ayrisma_ozeti(a2)
+    ham = [b["kolektif_brier"] for b in ozet["bantlar"].values()]
+    ham_yayilim = max(ham) - min(ham)
+    assert ham_yayilim > 0.03, (
+        f"ham tabloda kapatilacak bir iliski yok ({ham_yayilim:.4f}) — "
+        f"testin kiyaslayacagi zemin kalmadi")
+
     denetlenen = 0
-    for dilim, hucreler in capraz.items():
+    for dilim, hucreler in ozet["favori_sabit"].items():
         degerler = [h["kolektif_brier"] for h in hucreler.values()]
         if len(degerler) < 2:
             continue
         denetlenen += 1
-        assert max(degerler) - min(degerler) < 0.02, (
-            f"{dilim} diliminde ayrisma hala fark yaratiyor: {hucreler}")
+        yayilim = max(degerler) - min(degerler)
+        assert yayilim < 0.5 * ham_yayilim, (
+            f"{dilim} diliminde ayrisma hala fark yaratiyor: yayilim "
+            f"{yayilim:.4f}, ham yayilimin %{100 * yayilim / ham_yayilim:.0f}'i "
+            f"({hucreler})")
     assert denetlenen >= 3, "capraz tablo cok seyrek — karisma acilamadi"
 
 

@@ -61,6 +61,31 @@ jobs:
         if: matrix.python-version == '3.12'
         run: python -m spor_toto.health
 
+      # Super Toto boru hatti: canli sezonun tek yolu ve birlestirildiginde
+      # hic testi yoktu. Veri repoda oldugu icin ag gerekmez; JSON ciktisi
+      # ayrica ayristirilir — sifir cikis kodu tek basina yeterli degil,
+      # bozuk JSON da sifirla donebilir.
+      - name: Super Toto boru hatti duman
+        if: matrix.python-version == '3.12'
+        run: |
+          for h in 1 2; do
+            python scripts/super_toto_hafta.py --hafta $h --json \
+              | python -c "import json,sys; d=json.load(sys.stdin); \
+                  assert len(d['profile']['rows'])==15; \
+                  assert d['coupons'][0]['picks']"
+          done
+          python scripts/super_toto_degerlendir.py --hafta 1 --json \
+            | python -c "import json,sys; d=json.load(sys.stdin); \
+                assert len(d['results'])==15; \
+                assert abs(sum(d['coupons'][0]['dist'])-1) < 1e-9"
+
+      # Arayuzun okudugu besleme backend verisinden uretilir. Hafta verisi
+      # girilip besleme yenilenmezse sayfa SESSIZCE eskir — bos bir arayuzden
+      # daha kotudur cunku yanlis oldugu belli olmaz.
+      - name: Super Toto beslemesi guncel mi
+        if: matrix.python-version == '3.12'
+        run: python scripts/super_toto_frontend.py --kontrol
+
       # CLI duman: fix16 + Bayes preset parity
       - name: CLI smoke
         if: matrix.python-version == '3.12'

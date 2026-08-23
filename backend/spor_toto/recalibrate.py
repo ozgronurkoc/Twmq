@@ -407,6 +407,149 @@ class KalibreTahminci(Tahminci):
         return None if self._theta is None else [float(v) for v in self._theta]
 
 
+#: İzotonik kalibrasyonun bir kovaya koyduğu en az nokta. Ham PAV, 93 bin
+#: noktada tek maçlık bloklar üretebilir ve o blok gürültünün kendisidir;
+#: önce eşit sayıda noktalı kovalara bölünüp kova ortalamaları üzerinde
+#: çalışılır. 1000 nokta ≈ 93 kova — eğri okumaya yetecek kadar ince,
+#: sezon dışarıda bırakmalı ölçümde ezberlemeyecek kadar kalın.
+#:
+#: **Ölçüm sonucuna bakılarak seçilmedi** (L2 ile aynı gerekçe, bkz. `L2`).
+EN_AZ_KOVA = 1000
+
+
+def _pav(x: Sequence[float], y: Sequence[float],
+         w: Sequence[float]) -> List[float]:
+    """Ağırlıklı PAV (pool-adjacent-violators) — monoton artan en iyi uyum.
+
+    Komşu iki blok sırayı bozuyorsa birleştirilir ve ağırlıklı ortalamaları
+    alınır; işlem yukarı doğru yayılır. Sonuç, ağırlıklı kareler toplamını
+    monotonluk kısıtı altında **kesin** olarak enküçülten dizidir — yaklaşık
+    bir çözüm değil.
+    """
+    # Her blok: [toplam agirlikli y, toplam agirlik, kac kovayi yuttu].
+    # Kova adedi agirliktan geri hesaplanmaz, acikca tasinir — agirliklar
+    # kesirli oldugunda geri hesap kayardi.
+    bloklar: List[List[float]] = []
+    for yi, wi in zip(y, w):
+        bloklar.append([yi * wi, wi, 1])
+        while len(bloklar) > 1:
+            onceki, son = bloklar[-2], bloklar[-1]
+            if onceki[0] / onceki[1] <= son[0] / son[1]:
+                break
+            bloklar[-2] = [onceki[0] + son[0], onceki[1] + son[1],
+                           onceki[2] + son[2]]
+            bloklar.pop()
+    out: List[float] = []
+    for toplam, agirlik, adet in bloklar:
+        out.extend([toplam / agirlik] * int(adet))
+    return out
+
+
+class IzotonikTahminci(Tahminci):
+    """Piyasa olasılığını **monoton** bir eğriyle düzelten aday (A5).
+
+    `KalibreTahminci`den farkı model sınıfı: orada düzeltme parametrik bir
+    softmax (sıcaklık + sabitler), burada parametresiz monoton bir eşleme.
+    Sebep ölçülmüş: sapma düzenli ama **düz değil** — sürprizler abartılıyor,
+    favoriler küçümseniyor ve iki uçta eğim farklı. Sıcaklık ölçeklemesi tek
+    bir eğim taşıyabildiği için bu şekli tam yakalayamaz.
+
+    Üç sembol **havuzlanır**: eğri "piyasa p dediğinde gerçekte ne oluyor"
+    sorusuna sembolden bağımsız cevap verir. Ayrı ayrı eğri uydurmak üç kat
+    parametre demek olurdu ve ölçülen sapma zaten sembole göre ayrışmıyor.
+
+    Eşlemeden sonra olasılıklar 1'e **yeniden normalize edilir**; monoton
+    düzeltme toplamı korumaz.
+
+    Eğitilmeden çağrılırsa piyasayı olduğu gibi geçirir.
+    """
+
+    ad = "izotonik"
+    aciklama = "Piyasanın monoton (izotonik) yeniden kalibrasyonu"
+
+    def __init__(self, en_az_kova: int = EN_AZ_KOVA) -> None:
+        self.en_az_kova = en_az_kova
+        self._x: List[float] = []
+        self._y: List[float] = []
+
+    def egit(self, haftalar: Sequence[Girdi]) -> None:
+        noktalar: List[Tuple[float, float]] = []
+        for hafta in haftalar:
+            kodlar = hafta.get("results") or ""
+            for k, blok in enumerate(hafta["probs"]):
+                if not blok or k >= len(kodlar):
+                    continue
+                for s in SYMBOLS:
+                    noktalar.append((blok[s], 1.0 if kodlar[k] == s else 0.0))
+        if len(noktalar) < 2 * self.en_az_kova:
+            # Eğri kurulamayacak kadar az veri: düzeltme yapmamak, kötü bir
+            # düzeltme yapmaktan iyidir.
+            self._x, self._y = [], []
+            return
+
+        noktalar.sort(key=lambda t: t[0])
+        # Kova sayısı önce belirlenir, sonra noktalar eşit paylaştırılır.
+        # `range(0, n, en_az_kova)` yazılsaydı sondaki artık kova tek başına
+        # kalır ve en az veriye sahip uçta en oynak değeri üretirdi.
+        kova_sayisi = max(1, len(noktalar) // self.en_az_kova)
+        sinirlar = [round(i * len(noktalar) / kova_sayisi)
+                    for i in range(kova_sayisi + 1)]
+        x: List[float] = []
+        y: List[float] = []
+        w: List[float] = []
+        for bas, son in zip(sinirlar, sinirlar[1:]):
+            kova = noktalar[bas:son]
+            if not kova:
+                continue
+            n = len(kova)
+            x.append(sum(t[0] for t in kova) / n)
+            y.append(sum(t[1] for t in kova) / n)
+            w.append(float(n))
+        self._x, self._y = x, _pav(x, y, w)
+
+    def _duzelt(self, p: float) -> float:
+        """Eğriyi kova merkezleri arasında doğrusal ara-değerleyerek uygula.
+
+        Veri aralığının dışında eğri **düzleşir** (uçtaki kova değeri).
+        Uçları eğimle uzatmak, en az veriye sahip bölgede en cesur tahmini
+        yapmak olurdu.
+        """
+        if not self._x:
+            return p
+        if p <= self._x[0]:
+            return self._y[0]
+        if p >= self._x[-1]:
+            return self._y[-1]
+        # Kova sayısı ~93; doğrusal tarama okunaklı ve yeterince hızlı.
+        for i in range(1, len(self._x)):
+            if p <= self._x[i]:
+                x0, x1 = self._x[i - 1], self._x[i]
+                y0, y1 = self._y[i - 1], self._y[i]
+                if x1 <= x0:
+                    return y1
+                return y0 + (y1 - y0) * (p - x0) / (x1 - x0)
+        return self._y[-1]
+
+    def tahmin(self, hafta: Girdi) -> List[Olasilik]:
+        esit = {s: 1.0 / len(SYMBOLS) for s in SYMBOLS}
+        out: List[Olasilik] = []
+        for blok in hafta["probs"]:
+            if not blok or not self._x:
+                out.append(dict(blok) if blok else dict(esit))
+                continue
+            ham = {s: max(OLASILIK_TABANI, self._duzelt(blok[s]))
+                   for s in SYMBOLS}
+            toplam = sum(ham.values())
+            out.append({s: ham[s] / toplam for s in SYMBOLS} if toplam > 0
+                       else dict(esit))
+        return out
+
+    @property
+    def egri(self) -> List[Tuple[float, float]]:
+        """Uydurulmuş eğri — tanılama ve test için (piyasa p, düzeltilmiş p)."""
+        return list(zip(self._x, self._y))
+
+
 def kademe_fabrikalari() -> List[Any]:
     """Kademenin her basamağı için bir fabrika."""
     return [(lambda k=k: KalibreTahminci(k)) for k in KADEMELER]

@@ -288,3 +288,39 @@ def test_hicbir_referans_piyasayi_gecmez():
     for s in r["tahminciler"]:
         if s["ad"] != "piyasa":
             assert s["gecti"] is False
+
+
+# ─── karar yuvarlanmamış sayıdan verilir ──────────────────────────────────────
+
+def _kayit(brier_toplam: float, n: int = 15):
+    return {"n": n, "brier_toplam": brier_toplam, "log_toplam": 0.0}
+
+
+def test_bootstrap_ham_degerleri_tasir():
+    from spor_toto.evaluate import bootstrap_farki
+    aday = [_kayit(8.9) for _ in range(20)]
+    ref = [_kayit(9.0) for _ in range(20)]
+    f = bootstrap_farki(aday, ref)
+    assert {"ham_fark", "ham_alt", "ham_ust"} <= set(f)
+    assert f["ham_ust"] == pytest.approx(f["ust"], abs=5e-5)
+
+
+def test_cok_dar_aralik_gecmis_sayilir():
+    """Yuvarlanmış üst sınırla karar vermek sessiz bir hataydı.
+
+    `round(-0.000031, 4)` `-0.0` verir ve `-0.0 < 0` `False`'tur; yani güven
+    aralığının tamamı sıfırın altındayken aday "geçmedi" yazılırdı. Hata tam
+    da aralığın daraldığı — kararın zorlaştığı — yerde ortaya çıkıyordu.
+    """
+    from spor_toto.evaluate import bootstrap_farki
+    # Her hafta aday referanstan azıcık ama İSTİSNASIZ iyi: hangi haftalar
+    # örneklenirse örneklensin fark negatif kalır, yani aralık tamamen
+    # sıfırın altındadır.
+    aday = [_kayit(9.0 - 0.0005) for _ in range(30)]
+    ref = [_kayit(9.0) for _ in range(30)]
+    f = bootstrap_farki(aday, ref)
+    assert f["ust"] == 0.0, "yuvarlanmis ust sinir sifira dusmeli (senaryonun sarti)"
+    assert f["ham_ust"] < 0, "ham ust sinir sifirin altinda olmali"
+    assert bool(f["ham_ust"] < 0) is True
+    # Eski kural bu adayı "geçmedi" sayardı:
+    assert bool(f["ust"] < 0) is False
