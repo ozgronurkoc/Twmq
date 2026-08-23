@@ -179,6 +179,12 @@ servisin sağlık durumu değildir; 503 izlemeyi yanlış yere baktırırdı.
 
 **79 test** (tur başı 24). Tüm süit: **1.022 test**.
 
+> **Bugünkü sayılar (2026-08-23).** Yukarısı bu turun kaydıdır ve öyle kalır.
+> O turdan bu yana sağlık katmanı **84 teste** (`health` 41 · `api_health` 21 ·
+> `meta` 14 · `health_history` 8), süitin tamamı **1.030 teste** ve değişmez
+> sayısı **23'ten 24'e** çıktı — eklenen kontrol `api_sozlesmesi` (`ucuca`
+> kategorisi): on üç ucun gövdesi kurulabiliyor ve ilan edildiği şekilde mi.
+
 | Dosya | Konu |
 |---|---|
 | `tests/test_health.py` | Rapor şekli, kategori bütünlüğü, `only`, kırılma yeri, **süre bütçeleri**, **kupon sınıfları**, **örnek kimliği**, **kupon denetimi** |
@@ -249,8 +255,8 @@ gerektirir, yani 9.1 olmadan yapılamaz.
 | Alarm | kapalı (`HEALTH_ALARM_URL` ile açılır) |
 | En yavaş kontrol | `mod_envanteri` (~129 ms, 7 mod) |
 | `auto` modu (256 nokta) | ~3,5 sn (önce ~11,3 sn) |
-| Sağlık katmanının testi | 79 |
-| Tüm süit | 1.022 test, ~7 dk |
+| Sağlık katmanının testi | 79 *(bugün 84 — §8'deki nota bakınız)* |
+| Tüm süit | 1.022 test, ~7 dk *(bugünkü sayı için `README.md` §9)* |
 | Kupon sınıfları | 8 çift/256 · 7 çift+8 banko/128 · 9 çift/512 · üçlü içeren/768 |
 
 ---

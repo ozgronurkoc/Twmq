@@ -787,7 +787,7 @@ tablolar (script'in bastığı lig dağılımı) bunu yakalayan şeydi.
 | `test_snapshot_iddaa.py::test_askidaki_ayak_maci_eler` | 1.00 fiyat sayılmaz |
 | `test_snapshot_iddaa.py::test_farkli_snapshot_birikir` | Arşiv gerçekten birikiyor, üstüne yazmıyor |
 
-Toplam 82 test bu üç veri setini korur (backend paketi 1.022 test). `python -m spor_toto.health`
+Toplam 82 test bu üç veri setini korur (backend paketi 1.030 test). `python -m spor_toto.health`
 24 değişmez çalıştırır; `oran_arsivi` ve `geri_test` bu katmanı, `tahmin_referanslari`
 tahmin katmanının ölçüm koşumunu korur.
 
@@ -833,8 +833,13 @@ Amaç tahmine döndüğü için iki sınır daha kritik hale geldi ve ayrıca ya
    > Planı: [`ISTATISTIK_YOL_HARITASI.md`](ISTATISTIK_YOL_HARITASI.md) §6.2 A3.
 
    Yine de sınır gerçektir: bu özellikler de piyasanın gördüğü bilgiden türer, yalnızca
-   farklı biçimde. Ölçülen sayılar bu sınırla tutarlı — hold-out isabeti 0 hafta, formun
-   artık değeri ~0.
+   farklı biçimde. Ölçülen sayılar bu sınırla tutarlı — hold-out isabeti **36 haftada 1**
+   (%2,8; aralık %0,5–14,2), formun artık değeri ~0.
+
+   > **Sayı güncellendi (2026-08-23).** Burada "hold-out isabeti 0 hafta" yazıyordu; o
+   > sayı `orantili` arındırma ölçeğinde ölçülmüştü ve varsayılan `shin`e çevrilince 1
+   > oldu (A5). **Argüman değişmedi:** 36 haftada 1 isabet, "piyasa dışı sinyal aramanın
+   > sınırı" tezini aynen destekler — tek bir olay ve güven aralığı sıfırı içeriyor.
 
    > **A1 bu sınıra en sert kanıtı ekledi (2026-08-17).** Korpus artık her maçın **açılış
    > ve kapanış** çizgisini ayrı ayrı taşıyor (§6A.6) ve ikisi 31.099 maçta karşılaştırıldı:

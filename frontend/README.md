@@ -53,6 +53,7 @@ lib/
   utils.ts            cn(), normalize, yuzde (girdi 0–1), biçimlendirme
   kurulum.ts          formül kurulumunun kalıcılığı + paylaşılabilir bağlantı
   kume-ici.ts         üretmeden önce görülen koşul + küre-kaplama alt sınırı
+  senaryo.ts          çalıştırılan modların karşılaştırma listesi
   transfer.ts         hafta → formül devri (idempotent)
   super-toto.ts       canlı sezon beslemesi okuyucu
   super-toto-veri.json  ÜRETİLMİŞ (backend/scripts/super_toto_frontend.py)
@@ -270,8 +271,37 @@ tema bedava gelir, dosyalarda sabit hex yoktur (`viz.ts`). Üç kural:
 ## Kontroller
 
 ```bash
-npm run check        # tip kontrolü + kurulum gidiş-dönüş denetimi
+npm run check        # lint → typecheck → scripts/check.mjs (49 denetim)
+npm run lint         # yalnızca ESLint (next/core-web-vitals)
+npm run typecheck    # yalnızca tsc --noEmit
 npm run build        # üretim derlemesi
 ```
 
-İkisi de CI'da koşar (`.github/workflows/tests.yml`, `frontend` işi).
+`scripts/check.mjs` tarayıcı gerektirmeyen her şeyi denetler: kurulum
+kodlaması (kalıcılık + paylaşılabilir bağlantı), küme-içi hesabı, senaryo
+karşılaştırması ve **API sözleşmesi**. Sözleşme bölümü `lib/api-sozlesme.json`i
+okur — o dosyayı `backend/scripts/api_sozlesme.py` üretir — ve TypeScript
+derleyici API'siyle `lib/types.ts` arayüzlerini ayrıştırıp on üç ucun her
+biriyle karşılaştırır: sunucunun gönderdiği her alan tipte olmalı, tipte
+zorunlu diyen her alan sunucudan gelmeli. **Bağımlılık eklemez** (`tsc` zaten
+devDependency).
+
+CI'da `kapi` işi bunları `bash scripts/check.sh` üzerinden koşar — ayrı bir
+`frontend` işi **yoktur**; kök betiği iki tarafı da koşturur.
+
+### `noUncheckedIndexedAccess` açıktır
+
+`tsconfig.json` bu bayrağı taşır: dizi ve `Record` erişimi `T` değil
+`T | undefined` döner. **`strict: true` bunu kapsamaz** ve kapalı olduğu sürece
+tip sistemi olmayan bir garanti ilan ediyordu — teorik bir risk değil, iki
+gerçek çökme tam bu sınıftı ve ikisi de ancak uygulamayı çalıştırınca
+görülüyordu:
+
+1. `benzer/kart`: `karne.semboller[sembol]` eksik anahtarda `undefined`
+   dönüyordu ve `.adet` erişimi **beyaz sayfa** yapıyordu;
+2. `super-toto/haftalar`: `mac.odds?.[s].toFixed(2)` — `?.` yalnızca `odds`u
+   koruyordu, **anahtarı değil**.
+
+Yeni kod yazarken: eksik anahtar ihtimali `!` ile bastırılmaz. Ya erken bir
+guard konur, ya değer yerel bir değişkene alınıp daraltılır, ya da sözleşme
+"değer olmayabilir" diyecek şekilde genişletilir.

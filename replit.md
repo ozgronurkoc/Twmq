@@ -5,9 +5,14 @@ bu tahmini 14-garanti **kaplama kodu (covering code)** ile en az kupona indiren
 motor; üstüne bu motoru sonuna kadar açan bir web arayüzü.
 
 > **Amaç: kazanma oranını artırmak.** Hedefe bugünkü mesafe ölçülmüştür ve
-> `README.md` §1.1'de yazar (hold-out isabeti 0 hafta, piyasa Brier 0,579, iddaa
-> marjı %17,2). Ölçülmemiş hiçbir iyileşme iddia edilmez, ölçülmemiş hiçbir
-> tahminci arayüze çıkmaz.
+> `README.md` §1.1'de yazar (hold-out isabeti **1 hafta**, piyasa Brier 0,579,
+> iddaa marjı %17,2). Ölçülmemiş hiçbir iyileşme iddia edilmez, ölçülmemiş
+> hiçbir tahminci arayüze çıkmaz.
+>
+> Hold-out burada uzun süre **0** yazıyordu: marj arındırma varsayılanı
+> `orantili`dan `shin`e çevrilince (A5) o sayı 1'e çıkmıştı, bu satır ise
+> güncellenmemişti. Tek bir olaydır ve güven aralıkları fazlasıyla örtüşür —
+> okunacak sağlam sayı isabet değil maliyettir (kolon/hafta 6.897 → 2.228).
 
 > Bu dosya Replit çalışma alanının hafızasıdır. Depo iki parçalıdır ve
 > **Python HTML servis etmez**; arayüzün tamamı Next.js'tir. Mimari kararın
@@ -89,12 +94,32 @@ Sözleşmenin tamamı: `docs/ARCHITECTURE_NEXT.md` ve `frontend/lib/types.ts`.
 
 ## Motor (`backend/spor_toto/`)
 
-`core.py` (Encoder, Fix-16, ILP, heuristic) · `engines.py` (mod çalıştırıcıları
-— API ve sağlık aynı yolu kullanır) · `meta.py` (yetenek envanteri, `/api/meta`
-tek kaynağı) · `analysis.py` (Monte Carlo, hata frekansı) · `bayes.py` (Dirichlet
-prior → posterior) · `markov.py` (hata bütçesi) · `health.py` (değişmezler) ·
-`history.py` (tarihsel 1/0/2) · `odds.py` (oran arşivi, yalnızca analiz) ·
-`cli.py`.
+26 modül var; tam liste ve tek satırlık açıklamaları `README.md` §7'dedir.
+Katman katman:
+
+- **Çekirdek** — `core.py` (Encoder, Fix-16, ILP, heuristic) · `engines.py`
+  (mod çalıştırıcıları — API, CLI ve sağlık **aynı** yolu kullanır) ·
+  `meta.py` (yetenek envanteri, `/api/meta` tek kaynağı) · `cli.py`
+- **Analiz** — `analysis.py` (Monte Carlo, hata frekansı) · `bayes.py`
+  (Dirichlet prior → posterior) · `markov.py` (hata bütçesi) ·
+  `fire_scenarios.py`
+- **Veri** — `history.py` (tarihsel 1/0/2) · `odds.py` (oran arşivi) ·
+  `backtest.py` (eşikli strateji + hold-out) · `egitim.py` (31.103 maçlık
+  korpus)
+- **Tahmin** — `predict.py` (tahminci sözleşmesi) · `evaluate.py` (dışarıda
+  bırakmalı ölçüm + bootstrap) · `recalibrate.py` · `tahmin.py`
+  (`/api/tahmin`) · `benzer.py` (`/api/benzer`)
+- **Ölçüm araçları** (yalnızca `python -m spor_toto.<x>`, arayüze çıkmaz) —
+  `cizgi.py` (A1) · `bahisci.py` (A2) · `disari.py` (A3) · `kalibrasyon.py`
+- **Ortak / gövde** — `ortak.py` (normalizasyon, Wilson, Brier, bantlama) ·
+  `payloads.py` (uç gövdeleri, tek kaynak) · `health.py` (24 değişmez) ·
+  `health_history.py` · `report.py`
+
+> `odds.py` burada uzun süre "yalnızca analiz" diye yazılıydı; **artık değil**.
+> `/api/stats` bir `odds` bloğu döndürüyor ve `backtest` `match_1x2`yi
+> çağırıyor. Arayüze yalnızca **maç sonucu (1X2)** çıkar; arşivdeki diğer
+> pazarlar (2,5 alt/üst, Asya handikap) ve maç istatistikleri API'ye hiç
+> girmez.
 
 ### CLI
 
@@ -126,19 +151,35 @@ yazmazlar). Ayrıntı: `docs/VERI_TOPLAMA_VE_ISLEME.md`.
 ```bash
 cd backend
 python -m pytest -m "not slow" -q   # hızlı süit
-python -m pytest                    # tamamı (1.022 test, ILP dahil)
-bash scripts/check.sh               # TEK kapı (repo kökünden); CI de bunu çağırır
+python -m pytest                    # tamamı (1.030 test, ILP dahil)
+python -m pytest -n0 tests/test_egitim.py   # tek çekirdek (hata ayıklarken)
+cd .. && bash scripts/check.sh      # TEK kapı; CI de bunu çağırır
 ```
 
+Süit **paralel** koşar (`-n auto`, pytest-xdist — `pyproject.toml` `addopts`).
+`setup.sh` xdist'i de doğrular: o olmadan pytest hiç açılmaz.
+
+`check.sh` ruff ve mypy de koşturduğu için `kalite` ekstrasını ister:
+`pip install -e "./backend[test,kalite]"`.
+
 GitHub Actions: `tests.yml` (her push) ve `snapshot-iddaa.yml` (haftalık bülten
-arşivi).
+arşivi). `tests.yml` iki iştir — `matris` hızlı süiti ve değişmezleri Python
+3.10–3.13'te koşar (`.replit` python-3.10 kullanıyor, yani ürünün koştuğu sürüm
+de matriste), `kapi` ise `scripts/check.sh`i çağırır.
 
 ## Dağıtım (Deploy)
 
 Autoscale. `scripts/build.sh` bağımlılıkları kurup Next.js üretim derlemesini
 alır; `scripts/run_prod.sh` gunicorn'u `127.0.0.1:8080`'de arka planda, Next.js'i
-`0.0.0.0:3000`'de önde çalıştırır. Dışarıya tek port açılır (`3000 → 80`); API'ye
-erişim UI'nin `/api/*` proxy'si üzerindendir.
+`0.0.0.0:3000`'de önde çalıştırır. **Dağıtımda** dışarıya tek port açılır
+(`3000 → 80`); API'ye erişim UI'nin `/api/*` proxy'si üzerindendir ve gunicorn
+loopback'e bağlandığı için dışarıdan doğrudan erişilemez.
+
+> **Çalışma alanı bundan farklıdır ve bilerek öyledir.** `.replit` geliştirme
+> tarafında `8080 → 8080`'i de yayımlar, çünkü **API only** iş akışı
+> (`waitForPort = 8080`, webview) UI olmadan uçlara bakabilmek için buna
+> dayanır. "Tek port" cümlesi dağıtım hakkındadır, çalışma alanı hakkında
+> değil.
 
 ## Değişmeyen ürün kuralları
 

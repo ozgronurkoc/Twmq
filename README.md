@@ -41,7 +41,7 @@ katmanı bu seçime katkı verir ve **isabeti ölçülür** (§1.6).
 
 **Hedefe bugünkü mesafe ölçülmüştür ve küçüktür.** Piyasa oranlarından mekanik
 olarak üretilen strateji 36 haftanın 3'ünde 14+ tutturdu; eşik o haftayı görmeden
-seçildiğinde (hold-out) **1**. Piyasanın kendi Brier skoru 0,574 — eşit olasılık
+seçildiğinde (hold-out) **1**. Piyasanın kendi Brier skoru 0,579 — eşit olasılık
 dağıtmanın karşılığı 0,667, yani piyasa bilgi taşıyor ama az. İddaa marjı %17,2.
 Bu üç sayı tahmin katmanının **başlangıç çizgisidir, varış noktası değil**:
 ilerleme bunlara karşı ölçülür ve ölçülmeden ilerleme sayılmaz.
@@ -440,9 +440,9 @@ zayıftır ve isabeti ölçülmeden karara bağlanmaz (§10.2).
 orada beraberlik %29,8; Premier Lig'de %19,7. Bu fark "0" bütçesinin nereye
 harcanacağını değiştirir.
 
-**Piyasa hangi hafta yanıldı** — haftalık Brier skoru: sezon ortalaması **0,574**.
-Üç sembole eşit olasılık vermenin karşılığı 0,667, yani piyasa bilgi taşıyor ama
-az. Favori isabeti tek başına yanıltıcıdır: 1,05 oranlı favorinin tutmasıyla 2,40
+**Piyasa hangi hafta yanıldı** — haftalık Brier skoru: sezon ortalaması **0,579**
+(oranı olan 567 maç, 38 hafta). Üç sembole eşit olasılık vermenin karşılığı
+0,667, yani piyasa bilgi taşıyor ama az. Favori isabeti tek başına yanıltıcıdır: 1,05 oranlı favorinin tutmasıyla 2,40
 oranlınınki aynı sayılmaz; Brier olasılığın tamamını cezalandırır.
 
 **Geri test** — varsayılan eşiklerle 36 haftanın **3'ünde** 14+ tutuyor (%8,3; %95
@@ -800,7 +800,7 @@ backend/
     api_sozlesme.py           API sözleşmesini üretir/denetler (--kontrol: CI kapısı)
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/
-  tests/               pytest (30 dosya → 1.022 test)
+  tests/               pytest (31 dosya → 1.030 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -963,7 +963,14 @@ cd backend
 pytest                       # tamamı (ILP dahil)
 pytest -m "not slow"         # hızlı süit
 pytest -q tests/test_backtest.py                     # strateji, skorlama, hold-out
+pytest -n0 tests/test_backtest.py                    # tek çekirdek (hata ayıklarken)
 ```
+
+Süit **paralel** koşar: `pyproject.toml` `addopts`'a `-n auto` koyar
+(pytest-xdist) ve süitin ağırlığı korpus üzerinde dönen bağımsız modüllerde
+olduğu için tek süreçte çekirdeklerin çoğu boş duruyordu. Tek bir dosyayı
+koşarken sabit bir açılış maliyeti getirir; hata ayıklarken `-n0` onu kapatır
+ve çıktı sırası da o zaman düzelir.
 
 `scripts/check.sh` sırasıyla: ruff → mypy → pytest (hızlı + yavaş) → health →
 CLI dumanı → Süper Toto boru hattı → üretilmiş iki dosyanın tazeliği →
@@ -977,9 +984,19 @@ altı adımdan üçünü koşuyordu — yani "OK" demesi "CI geçer" demek deği
 Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant'lar, CLI (Bayes preset
 dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri test,
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
-yeniden kalibrasyon ve eğitim korpusu. 30 test dosyası, parametrizasyonla
-**1.022 test**; 82'si veri/istatistik/geri test, 79'u sağlık, **104'ü tahmin
-katmanı** (ayrım bekçileri dahil).
+yeniden kalibrasyon ve eğitim korpusu. **31 test dosyası, parametrizasyonla
+1.030 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
+karşı denetler):
+
+| Katman | Dosyalar | Test |
+|---|---|---|
+| Çekirdek + motorlar | `core` `engines` `invariants` `edge_cases` `cli` `analysis` `bayes` `markov` `fire_scenarios` | 511 |
+| Tahmin katmanı | `predict` `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin` `benzer` | 294 |
+| Sağlık | `health` `api_health` `meta` `health_history` | 84 |
+| Veri / istatistik / geri test | `history` `odds` `backtest` `api_stats` `api_backtest` `snapshot_iddaa` | 82 |
+| Süper Toto | `super_toto` | 54 |
+| Belgeler | `belgeler` | 3 |
 
 İki test bilerek **ağa çıkmaz**: `test_snapshot_iddaa.py` gerçek bültenden alınmış
 küçük bir örnek payload üzerinde koşar — ağ çağrısını sınamak bu paketin işi değil,
@@ -1019,12 +1036,20 @@ bütün testler geçer ve sayfa sessizce boş döner.
 
 | İş | Adım | Sürüm | Açıklama |
 |----|------|-------|----------|
-| `frontend` | `npm run check` | Node 22 | Tip denetimi + saf mantık denetimi |
-| `frontend` | `npm run build` | Node 22 | Üretim derlemesi |
-| `test` | `pytest -m "not slow"` | Python 3.10–3.13 | Hızlı süit |
-| `test` | `pytest -m slow` | 3.12 | ILP / yavaş |
-| `test` | `python -m spor_toto.health` | 3.12 | HEALTHY zorunlu (tüm kritik kontroller) |
-| `test` | CLI smoke | 3.12 | fix16 + Bayes preset parity |
+| `matris` | `pytest -m "not slow"` | Python 3.10 · 3.11 · 3.12 · 3.13 | Hızlı süit, her sürümde |
+| `matris` | `python -m spor_toto.health` | Python 3.10 · 3.11 · 3.12 · 3.13 | HEALTHY zorunlu, **her sürümde** |
+| `kapi` | `bash scripts/check.sh` | Python 3.10 + Node 22 | Yerelde koşulan komutun aynısı |
+
+İkisinin ayrımı bilinçli. **`matris` taşınabilirliği** ölçer: bir sürüme özgü
+kırılma erken görünsün. Değişmezler de her sürümde koşar — önce yalnızca
+3.12'deydi, oysa `.replit` çalışma ortamı python-3.10 kullanıyor, yani ürünün
+gerçekten koştuğu sürüm değişmezlerin hiç denenmediği sürümdü.
+
+**`kapi` ise adımları yeniden yazmaz, `scripts/check.sh`i çağırır** — bir satır.
+Önce öyle değildi ve ikisi ayrışmıştı: yerel betik CI'nın altı adımından üçünü
+koşuyordu, yani "OK" demesi "CI geçer" demek değildi. Tek satır olması tam bu
+yüzden: ayrışabilecekleri bir yer kalmasın. `check.sh`in adımları bu bölümün
+başında sayılıdır.
 
 Workflow: `.github/workflows/tests.yml`. Arayüzün uzun süre **hiçbir** otomatik
 kapısı yoktu; yukarıdaki kodlama hatası bu yüzden sessizce geçebilirdi.
@@ -1066,7 +1091,7 @@ Sıradakiler, "en çok belirsizliği kaldıran" ölçütüne göre:
 
 | # | Ne | Neden / veri durumu |
 |---|-----|---|
-| **T4 — Referans skorları sağlık değişmezine** | `duzgun` her zaman 0,6667, `piyasa` kupon kesitinde 0,5747 vermeli | **Küçük ve sıranın başında.** Bu sayılar kayarsa bozulan model değil veri/boru hattıdır ve bugün hiçbir şey fark etmez |
+| **T4 — Referans skorları sağlık değişmezine** | `duzgun` her zaman 0,6667 (sabit: `ortak.BRIER_ESIT`); `piyasa` kupon kesitinde bugün 0,5856 (41 hafta, 615 maç) | **Küçük ve sıranın başında.** Bu sayılar kayarsa bozulan model değil veri/boru hattıdır ve bugün hiçbir şey fark etmez. Ama ikisi aynı cinsten değil: `duzgun` bir sabittir, `piyasa` veri büyüdükçe kayar (0,5747 → 0,5740 arındırma çevriminde, → 0,5856 kupon seti 36→41 haftaya çıkınca). Yani T4 `piyasa`yı sabit bir sayıya değil, **`duzgun`un altında kalmasına** bağlamalıdır |
 | **T5 — Piyasa dışı girdi: takım formu** | football-data'nın maç istatistiklerinden yuvarlanan pencereyle form özelliği | **Ölçüm bunu söylüyor.** Piyasayı yeniden kalibre etmek yön olarak doğru ama miktar yetersiz; sinyal ancak piyasada olmayan bir girdiden gelir. Ek kaynak gerekmez |
 | **S1 — Örneklem büyütme** | Kupon setini ikinci sezona çıkarmak | **Yarısı yapıldı, yarısı kapalı.** Tahmin ölçümü için gereken örneklem korpusla geldi (31.103 maç). Kupon ayağı bloke: sonuç kaynağı sezon parametresi taşımıyor + `robots.txt` kısıtı ([`docs/VERI_TOPLAMA_VE_ISLEME.md`](docs/VERI_TOPLAMA_VE_ISLEME.md) §10.2) |
 | **İkramiye / havuz verisi** | Hafta başına kazanan adedi ve ödenen tutar | **Fizibilite kapandı, ölçüm açık.** Kaynak bulundu (Spor Toto resmî ikramiye ekranı) ve ilk iki hafta elle girildi. Müşterek bahiste "kazanma oranı" ile "beklenen getiri" hâlâ farklı şeylerdir ve ikincisi **hâlâ ölçülmedi** — n = 2 hafta. Ayrıntı: [`docs/ISTATISTIK_YOL_HARITASI.md`](docs/ISTATISTIK_YOL_HARITASI.md) §6.3 |
@@ -1204,8 +1229,14 @@ olması gerekir. Tanımlıysa yalnızca **durum değişiminde** bildirim gider.
 | [`docs/SAGLIK_GELISTIRME_RAPORU.md`](docs/SAGLIK_GELISTIRME_RAPORU.md) | Sağlık katmanının çalışma raporu ve ölçümleri |
 | [`docs/FORMUL_GELISTIRME_RAPORU.md`](docs/FORMUL_GELISTIRME_RAPORU.md) | Formül sayfasının çalışma raporu: teşhis, F0–F6, bulunan hatalar, ölçümler |
 | [`docs/FORMUL_YOL_HARITASI.md`](docs/FORMUL_YOL_HARITASI.md) | Formül sayfasının yol haritası ve yapılmayacaklar listesi |
-| [`backend/README.md`](backend/README.md) | Motor + API kurulumu, oran arşivi kullanımı |
-| [`frontend/README.md`](frontend/README.md) | Arayüz yapısı, tasarım sistemi, grafik kuralları |
+| [`docs/DIS_INCELEME.md`](docs/DIS_INCELEME.md) | Dış bir makine öğrenmesi çalışmasının bu projeye ne kattığı ve **ne katmadığı** — sayılar o çalışmanın kendi belgelerinden, bizim ölçümümüz değil |
+| [`backend/README.md`](backend/README.md) | Motor + API kurulumu, ortam değişkenleri, oran arşivi kullanımı |
+| [`frontend/README.md`](frontend/README.md) | Arayüz yapısı, tasarım sistemi, grafik kuralları, tip katmanı |
+| [`replit.md`](replit.md) | Replit çalışma alanının hafızası: iş akışları, portlar, dağıtım |
+
+Bu tablonun eksiksizliği `tests/test_belgeler.py` ile korunur: `docs/` altına
+eklenen bir belge buraya da girmezse test düşer. Boşluk sessiz kalmasın diye —
+`docs/DIS_INCELEME.md` tam olarak böyle, listede olmadan aylarca durdu.
 
 ---
 
