@@ -16,7 +16,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-test = ["pytest>=7"]
+test = ["pytest>=7", "pytest-xdist>=3"]
 #: Kalite kapisi. Uretim bagimliligi DEGIL — `pip install -e ".[kalite]"`
 #: ile ayrica kurulur, boylece calisan servis onlari tasimaz.
 kalite = ["ruff>=0.16", "mypy>=1.11"]
@@ -29,7 +29,18 @@ include = ["spor_toto*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-q --strict-markers"
+# `-n auto` cekirdek basina bir isci acar. Suite'in agirligi korpus
+# uzerinde donen bagimsiz modullerde ve tek surecte 4 cekirdegin ucu bos
+# duruyordu: 142 sn -> 77 sn (4 cekirdek).
+#
+# Dagitim kipi bilerek varsayilan (`load`): testleri modulden bagimsiz,
+# bosalan isciye verir. `loadscope`/`loadfile` bir modulu tek isciye
+# baglar ve en agir modul kritik yola donusur — olculdu, ikisi de daha
+# yavas (83 sn ve 89 sn).
+#
+# Tek bir dosyayi kosarken ~0,7 sn sabit ek yuk getirir; hata ayiklarken
+# `-n0` ile kapatilir (cikti sirasi da o zaman duzelir).
+addopts = "-q --strict-markers -n auto"
 markers = ["slow: uzun suren ILP testleri"]
 
 

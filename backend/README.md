@@ -41,12 +41,21 @@ Ortam değişkenleri (hepsi isteğe bağlı):
 
 ```bash
 cd backend
-pytest -m "not slow"        # hızlı süit
-pytest                      # tamamı (ILP testleri dahil, ~60 sn)
+pytest -m "not slow"        # hızlı süit (~77 sn, 4 çekirdek)
+pytest                      # tamamı (ILP testleri dahil)
 # Kalite kapisi repo KOKUNDEDIR ve iki tarafi da kosturur; CI de onu cagirir.
 # (Buradaki `backend/scripts/check.sh` silindi: "CI ile ayni cekirdek adimlar"
 #  diyordu ama alti adimdan ucunu kosuyordu.)
 cd .. && bash scripts/check.sh
+```
+
+Süit varsayılan olarak **paralel** koşar (`-n auto`, pytest-xdist): ağırlığı
+korpus üzerinde dönen birbirinden bağımsız modüllerde ve tek süreçte
+çekirdeklerin çoğu boş duruyordu. Hata ayıklarken `-n0` ile kapatılır —
+çıktı sırası da o zaman düzelir:
+
+```bash
+pytest -n0 tests/test_egitim.py -x
 ```
 
 ## Yapı

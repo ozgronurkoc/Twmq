@@ -446,7 +446,7 @@ def _zenginlestirilmis_korpus(yol: str | None = None) -> tuple[dict[str, Any], .
        docstring'inde "degistirmeyin" der. `_form`/`_takvim` alanlarini o
        satirlara YERINDE yazmak onbellegi ve o sozu birlikte bozuyordu; bu
        yuzden kopya uzerinde calisilir.
-    2. **Hiz.** Kopya ve iki tablo hesabi `korpus_haftalari`nin govdesinde
+    2. **Hiz.** Kopya ve iki tablo hesabi (birlikte ~1,3 sn) `korpus_haftalari`nin govdesinde
        duruyordu, yani HER cagrida 31 bin sozluk kopyalaniyor ve form/takvim
        tablolari bastan kuruluyordu. Suzgecler (sezon, lig, cizgi, bahisci)
        sonucu degistirir ama bu zenginlestirmeyi degistirmez — dolayisiyla
@@ -499,6 +499,38 @@ def korpus_haftalari(sezonlar_: Sequence[str] | None = None,
     `orantili`dır ve **değiştirilmemelidir**: A1–A3'ün yayımlanmış bütün
     sayıları onunla ölçüldü. Parametre, "aynı ölçüm başka arındırmayla ne
     verir" sorusunu sormak için var — cevabı görmek isteyen açıkça ister.
+
+    Sonuç **önbelleklidir** (`_korpus_haftalari`). Bu çağrı 31.103 satırlık
+    korpusu baştan geziyor, 217.701 kez marj arındırıyor ve tek başına ~16 sn
+    sürüyor; test suitinde 27 kez, hep aynı argümanlarla koşuyordu. Korpus
+    sürümlenmiş bir dosyadır — iki çağrı arasında değişmez.
+
+    Dönen liste **paylaşılır: değiştirilmemelidir.** Bir haftanın alanını
+    değiştirmesi gereken çağıran (`cizgi.kesit`, `bahisci.kesit`) kopyasını
+    alır; `test_egitim.py::test_korpus_haftalari_paylasilan_kaydi_korur`
+    bekçidir.
+    """
+    return _korpus_haftalari(
+        tuple(sezonlar_) if sezonlar_ is not None else None,
+        tuple(ligler) if ligler is not None else None,
+        en_az_mac, yol, cizgi_gerekli, bahisci_gerekli, yontem)
+
+
+#: Önbellek tavanı. Suite'te bir avuç farklı argüman kombinasyonu var; tavan
+#: bol tutuldu ama sınırsız değil — `yol` parametresi testlerde geçici
+#: dizinlerle çağrılıyor ve sınırsız bir önbellek onları biriktirirdi.
+_HAFTA_ONBELLEK_BOYU = 64
+
+
+@lru_cache(maxsize=_HAFTA_ONBELLEK_BOYU)
+def _korpus_haftalari(sezonlar_: tuple | None,
+                      ligler: tuple | None,
+                      en_az_mac: int,
+                      yol: str | None,
+                      cizgi_gerekli: bool,
+                      bahisci_gerekli: bool,
+                      yontem: str) -> list[dict[str, Any]]:
+    """`korpus_haftalari`nin önbelleklenebilir çekirdeği (dizi argümanlar demet).
     """
     satirlar: list[dict[str, Any]] = list(_zenginlestirilmis_korpus(yol))
     if cizgi_gerekli:

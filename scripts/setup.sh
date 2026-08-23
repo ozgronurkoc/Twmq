@@ -15,7 +15,12 @@ cd "$ROOT"
 PY="${PYTHON:-python3}"
 
 # ─── Python ───────────────────────────────────────────────────────────────────
-if "$PY" -c "import flask, numpy, spor_toto" >/dev/null 2>&1; then
+# `xdist` de kontrol ediliyor, cunku bu koruma AKSI HALDE ZARARLI: pytest
+# yapilandirmasi `-n auto` tasiyor ve xdist yoksa pytest hic acilmadan
+# "unrecognized arguments" verir. Kurulu bir makinede kosul yalnizca
+# spor_toto'ya baksaydi yeniden kurulum atlanir, xdist hic gelmez ve
+# "Testler" dugmesi calismaz olurdu.
+if "$PY" -c "import flask, numpy, spor_toto, xdist" >/dev/null 2>&1; then
   echo "✓ Python bagimliliklari kurulu"
 else
   echo "→ Python bagimliliklari kuruluyor (backend/)..."
@@ -30,8 +35,10 @@ else
 fi
 
 # Calisma ve test icin GEREKEN her sey burada dogrulanir — biri eksikse
-# kurulum basarisiz sayilir.
-for _m in flask numpy pytest; do
+# kurulum basarisiz sayilir. `xdist` de listede: pytest yapilandirmasi
+# `-n auto` tasidigi icin o olmadan suit hic acilmiyor (yukaridaki atlama
+# kosulu da tam bu yuzden onu soruyor; iki liste ayrisirsa guard bos kalir).
+for _m in flask numpy pytest xdist; do
   if ! "$PY" -c "import $_m" >/dev/null 2>&1; then
     echo "✗ '$_m' kurulamadi. Elle deneyin: $PY -m pip install -e './backend[test]'" >&2
     exit 1

@@ -527,10 +527,40 @@ def _carpim_kodu(a: list[Point], b_sizes: Sizes) -> list[Point]:
     return [tuple(x) + tuple(c) for x in a for c in combos]
 
 
+#: ILP'nin ISPATLADIGI, cebirsel karsiligi olmayan optimal blok.
+#:
+#: Asagidaki tablonun oteki girdileri cebirsel yapilardir (Hamming vb.) ve
+#: formulden turetilirler. Bu degil: 20 kolonu HiGHS buldu ve optimalligini
+#: ispatladi (`exact_cover(...)[1] is True`; kure alt siniri 16, yani sayi
+#: formulden okunamiyor). Kaynaga donmesinin tek sebebi bedeli: tek basina
+#: ~17,6 sn, ve testler onu her kosuda yeniden cozuyordu — (2,)*8 icin ayni
+#: karar zaten verilmisti.
+#:
+#: Iki bekci var: `block_optimal` onbellekteki her blogu ilk kullanimda
+#: dogrular (gecerli kaplama mi), ve `test_engines.py` icindeki yavas
+#: isaretli test ILP'yi yeniden kosarak sayinin hala optimal oldugunu
+#: denetler. Yani donmus bir yanlis ne sessizce gecerli sayilir, ne de
+#: ILP kodlamasi iyilesirse fark edilmeden eskir.
+#:
+#: Kolonlar siralidir; sira ILP kosumdan kosuma degisebilir, kaynak degismez.
+_ILP_3322_22: list[Point] = [
+    (0, 0, 0, 1, 0, 1), (0, 0, 1, 1, 1, 0), (0, 1, 0, 0, 1, 0),
+    (0, 1, 1, 0, 1, 1), (0, 2, 0, 1, 0, 1), (0, 2, 1, 0, 0, 0),
+    (1, 0, 0, 0, 1, 1), (1, 0, 1, 1, 1, 0), (1, 1, 0, 1, 0, 0),
+    (1, 1, 1, 1, 0, 1), (1, 2, 0, 0, 1, 1), (1, 2, 1, 0, 0, 0),
+    (2, 0, 0, 0, 0, 0), (2, 0, 1, 0, 0, 1), (2, 1, 0, 0, 0, 1),
+    (2, 1, 0, 1, 1, 1), (2, 1, 1, 0, 1, 0), (2, 1, 1, 1, 0, 0),
+    (2, 2, 0, 1, 1, 0), (2, 2, 1, 1, 1, 1),
+]
+
+
+
 def _varsayilan_bloklar() -> dict[Sizes, list[Point]]:
     """
-    Cebirsel olarak bilinen optimal bloklar. ILP'yi beklemeye gerek
-    birakmaz: (2,)*8 icin ILP tek basina ~12 sn suruyordu.
+    Onceden bilinen optimal bloklar. ILP'yi beklemeye gerek birakmaz:
+    (2,)*8 icin ILP tek basina ~12 sn, (3,3,2,2,2,2) icin ~17,6 sn suruyordu.
+
+    Bir tanesi disinda hepsi cebirseldir (bkz. `_ILP_3322_22`).
     """
     h7 = hamming74_codewords()
     t4 = ternary_hamming4()
@@ -545,6 +575,7 @@ def _varsayilan_bloklar() -> dict[Sizes, list[Point]]:
         (3, 3, 3, 3): t4,                            # ucluk Hamming, mukemmel
         (3, 3, 3, 3, 3): _carpim_kodu(t4, (3,)),     # 9 x 3 = 27 = K3(5,1)
         (3, 2): [(0, 0), (1, 1)],
+        (3, 3, 2, 2, 2, 2): _ILP_3322_22,            # ILP ispatli, K=20
     }
 
 

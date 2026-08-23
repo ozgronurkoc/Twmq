@@ -127,6 +127,12 @@ ARINDIRMA_VARSAYILAN = "shin"
 #: sonuç makineden makineye oynamasın.
 _ARINDIRMA_ADIM = 60
 
+#: Arındırma önbelleğinin boyu. Korpusta 126.274 eşsiz oran üçlüsü var
+#: (217.701 çağrının %42'si tekrar); tavan onun üstünde tutuldu ki tek bir
+#: korpus geçişi kendi kendini tahliye etmesin. Sınırsız DEĞİL: `implied_probs`
+#: dışarıdan gelen oranla da çağrılır ve önbellek bir bellek sızıntısı olmamalı.
+_ONBELLEK_BOYU = 1 << 18
+
 
 def implied_probs(oranlar: dict[str, float],
                   yontem: str = ARINDIRMA_VARSAYILAN) -> dict[str, float]:
@@ -151,38 +157,56 @@ def implied_probs(oranlar: dict[str, float],
 
     Marj sıfıra giderken üç yöntem de aynı sonuca yakınsar; ayrıştıkları yer
     yüksek marjdır — iddaa bülteni (~%18) tam olarak orası.
+
+    Hesabın kendisi `_arindirilmis` içinde ve **önbelleklidir**; burada
+    çağırana her seferinde taze bir sözlük verilir, çünkü önbellekteki kayıt
+    paylaşılır ve bir çağıranın onu değiştirmesi ötekini bozardı.
     """
-    if yontem not in ARINDIRMA_YONTEMLERI:
-        raise ValueError(
-            f"bilinmeyen arındırma yöntemi: {yontem!r} "
-            f"(seçenekler: {', '.join(ARINDIRMA_YONTEMLERI)})")
-    return dict(_arindir_onbellekli(tuple(sorted(oranlar.items())), yontem))
+    return dict(_arindirilmis(tuple(oranlar.items()), yontem))
 
 
 #: **Ölçülmüş sıcak nokta.** `shin` kök bulucusu 60 ikiye bölme adımı koşar
 #: ve her adım üç karekök alır; korpus üzerinde profillendiğinde
 #: `korpus_haftalari`nin süresinin **%92'si** buradaydı (217.685 çağrı,
-#: 39,7 sn). Korpusta aynı oran üçlüsü %42 oranında tekrar ediyor ve
-#: `korpus_haftalari` her çağrıldığında hepsini baştan hesaplıyordu.
+#: 39,7 sn) ve korpusta aynı oran üçlüsü %42 oranında tekrar ediyordu.
 #:
 #: Önbellek sonucu **bit birebir** korur — aynı girdi, aynı kayan nokta
 #: işlemleri. Adım sayısını düşürmek ya da `_dagilim`in içindeki sabitleri
 #: dışarı almak da hızlandırırdı ama ikisi de son basamağı oynatabilirdi;
 #: yayımlanmış ölçümlerin arkasındaki sayılar değişmemeli.
-#:
-#: Anahtar sıralı demet: `dict` hashlenemez ve sıra bağımsızlığı gerekir.
-@lru_cache(maxsize=200_000)
-def _arindir_onbellekli(
-    anahtar: tuple[tuple[str, float], ...], yontem: str,
-) -> tuple[tuple[str, float], ...]:
-    oranlar = dict(anahtar)
+@lru_cache(maxsize=_ONBELLEK_BOYU)
+def _arindirilmis(cift: tuple[tuple[str, float], ...],
+                  yontem: str) -> tuple[tuple[str, float], ...]:
+    """`implied_probs`in saf çekirdeği — yalnızca önbelleklenebilsin diye ayrı.
+
+    Arındırma **saf**tır: aynı oran üçlüsü hep aynı olasılığı verir. Shin kök
+    bulucusu çağrı başına 61 kez üç elemanlı bir vektör kuruyor (~61 µs,
+    orantısal yöntemin 54 katı) ve korpusta aynı üçlü ortalama iki kez geçiyor
+    — ikinci kez hesaplamanın hiçbir karşılığı yok.
+
+    Anahtar `oranlar.items()` sırasını **korur**. Sıralasaydık dönen sözlüğün
+    anahtar sırası değişir ve JSON gövdelerinin alan sırası sessizce oynardı;
+    korpus üçlüleri zaten hep ("1", "0", "2") sırasında kurulduğu için sıra
+    korunurken isabetten de bir şey kaybedilmiyor.
+
+    Sözlük yerine ikili demeti döner: önbellekte duran nesne **değişmez**
+    olmalı, yoksa çağıranlardan biri ötekinin sonucunu yazabilirdi.
+    """
+    oranlar = dict(cift)
     ters = {k: 1.0 / v for k, v in oranlar.items() if v and v > 0}
     toplam = sum(ters.values())
     if toplam <= 0:
         return ()
     if yontem == "orantili":
         return tuple((k, v / toplam) for k, v in ters.items())
-    ham = _arindir_guc(ters, toplam) if yontem == "guc" else _arindir_shin(ters, toplam)
+    if yontem == "guc":
+        ham = _arindir_guc(ters, toplam)
+    elif yontem == "shin":
+        ham = _arindir_shin(ters, toplam)
+    else:
+        raise ValueError(
+            f"bilinmeyen arındırma yöntemi: {yontem!r} "
+            f"(seçenekler: {', '.join(ARINDIRMA_YONTEMLERI)})")
     # Kök bulucunun bıraktığı son kırıntı da atılır: çağıran taraf
     # olasılıkların tam olarak 1'e toplandığına güvenebilmeli.
     kalan = sum(ham.values())
