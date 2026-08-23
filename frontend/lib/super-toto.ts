@@ -90,6 +90,18 @@ export interface SuperTotoBugunkuKupon {
   banko_esik: number;
   uclu_esik: number;
   arindirma: string;
+  /**
+   * Kuponu kuran kural. Dondurulmus kuponlar `esik` ile kuruldu;
+   * varsayilan `hedef`e cevrildi (docs §3.19). `hedef`, verilen butcede
+   * P(en iyi kolon >= 12)'yi dogrudan enbuyukler.
+   */
+  kural: string;
+  /** Butce (kolon) — esik kuralinin ayni haftada uretecegi maliyet. */
+  butce: number | null;
+  /** P(en iyi kolon >= 12) — kuponun asil sayisi. */
+  p_hedef: number;
+  /** Ayni haftada esik kurali kullanilsaydi cikacak deger. */
+  p_hedef_esik: number;
 }
 
 export interface SuperTotoHafta {

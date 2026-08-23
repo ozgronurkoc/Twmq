@@ -11,7 +11,9 @@
    "kaynak": "backtest.VARSAYILAN_BANKO / VARSAYILAN_UCLU — 2025/26 sezonu",
    "arindirma": "orantili",
    "arindirma_notu": "Bu kupon dondurulurken projenin marj arindirma varsayilani `orantili`ydi. Varsayilan 2026-08'de `shin`e cevrildi (A5, docs §3.18); AYNI esik baska bir olcekte baska isaretler uretir. Buradaki isaretler dondurulduklari gunku olcegin kaydidir ve yeniden hesaplanmaz.",
-   "marj_ort_pct": 19.28
+   "marj_ort_pct": 19.28,
+   "kural": "esik",
+   "kural_notu": "Bu kupon `esik` kuraliyla kuruldu (favorinin olasiligi iki sabit esige vurulur). Varsayilan kural 2026-08'de `hedef`e cevrildi (B0, docs §3.19): verilen butcede P(en iyi kolon >= 12) dogrudan enbuyuklenir. AYNI hafta iki kuralda farkli isaret uretir; buradaki isaretler donduruldugu gunku kuralin kaydidir."
   },
   "hedef_notu": "1. haftanın 1. dersi gereği asıl ölçü P(en iyi kolon ≥ 12); 14 bir yan üründür.",
   "veri_uyarilari": [
@@ -351,6 +353,7 @@
     ]
    }
   ],
-  "arindirma": "orantili"
+  "arindirma": "orantili",
+  "kural": "esik"
  }
 }

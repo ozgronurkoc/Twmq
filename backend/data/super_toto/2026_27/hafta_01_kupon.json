@@ -23,7 +23,9 @@
    },
    "arindirma": "orantili",
    "arindirma_notu": "Bu kupon dondurulurken projenin marj arindirma varsayilani `orantili`ydi. Varsayilan 2026-08'de `shin`e cevrildi (A5, docs §3.18); AYNI esik baska bir olcekte baska isaretler uretir. Buradaki isaretler dondurulduklari gunku olcegin kaydidir ve yeniden hesaplanmaz.",
-   "marj_ort_pct": 18.86
+   "marj_ort_pct": 18.86,
+   "kural": "esik",
+   "kural_notu": "Bu kupon `esik` kuraliyla kuruldu (favorinin olasiligi iki sabit esige vurulur). Varsayilan kural 2026-08'de `hedef`e cevrildi (B0, docs §3.19): verilen butcede P(en iyi kolon >= 12) dogrudan enbuyuklenir. AYNI hafta iki kuralda farkli isaret uretir; buradaki isaretler donduruldugu gunku kuralin kaydidir."
   },
   "warning": "14-garanti KOŞULLUDUR: ancak gerçek sonuç seçim kümesinin içindeyse geçerlidir. Küme-içi olasılık aşağıda yazılıdır."
  },

@@ -35,13 +35,14 @@ from spor_toto.backtest import (
     _kaplama,
     secim_uret,
 )
-from spor_toto.core import SEMBOLLER as _SEMBOLLER
 from spor_toto.core import (
+    HAMMING_BLOK_BOYU,
     Encoder,
     butce_danismani,
     merge_rows,
     solve_fix16,
 )
+from spor_toto.core import SEMBOLLER as _SEMBOLLER
 from spor_toto.history import history_analytics, history_summary
 from spor_toto.odds import (
     CIFT_BANTLARI,
@@ -50,6 +51,7 @@ from spor_toto.odds import (
     implied_probs,
     season_1x2_summary,
 )
+from spor_toto.secim import bedel_hesapla, en_iyi_secim, hedef_olasiligi
 
 #: Sembol duzeni TEK kaynaktan (`spor_toto.core`). Bu dosyada ayri bir
 #: demet olarak yaziliyordu; depoda ayni deger on bir kez tanimliydi.
@@ -304,9 +306,43 @@ def kamuoyu(d: dict[str, Any]) -> dict[str, Any]:
 
 # ─── kupon ────────────────────────────────────────────────────────────────────
 
-def kupon_kur(d: dict[str, Any], banko: float, uclu: float) -> dict[str, Any]:
+#: Kuponu kuran kural. `hedef` varsayılandır (B0, docs §3.19).
+#:
+#: **Neden bütçe eşik kuralından alınıyor.** `hedef` kuralı bir bütçe ister;
+#: eşik kuralı ise bütçeyi kendisi ÜRETİR. Üretimde "hangi bütçe" sorusu
+#: veriden türetilemez, harcama kararıdır. Bütçeyi eşik kuralının ürettiği
+#: maliyete sabitlemek bu boşluğu kapatıyor ve kuponu **hiçbir hafta daha
+#: pahalı yapamıyor**: aynı bütçede ya daha iyi hedef bulunur ya da aynısı.
+#: Ölçüldü — 36 haftanın 35'inde daha iyi, 1'inde eşit, ortalama %26 daha
+#: ucuz (docs §3.19).
+VARSAYILAN_KURAL = "hedef"
+KURALLAR = ("hedef", "esik")
+
+
+def kupon_kur(d: dict[str, Any], banko: float, uclu: float,
+              kural: str = VARSAYILAN_KURAL) -> dict[str, Any]:
+    if kural not in KURALLAR:
+        raise SystemExit(f"bilinmeyen kural: {kural} ({', '.join(KURALLAR)})")
     maclar = d["matches"]
-    secimler = [secim_uret(m["probs"], banko, uclu) for m in maclar]
+    probs = [m["probs"] for m in maclar]
+
+    # Eşik kuralı her iki yolda da koşar: `esik` için sonucun kendisi,
+    # `hedef` için bütçenin kaynağı.
+    esik_secim = [secim_uret(p, banko, uclu) for p in probs]
+    esik_cift = sum(1 for s in esik_secim if len(s) == 2)
+    esik_uclu = sum(1 for s in esik_secim if len(s) == 3)
+    butce = (bedel_hesapla(esik_cift, esik_uclu)
+             if esik_cift >= HAMMING_BLOK_BOYU else None)
+
+    plan = None
+    if kural == "hedef" and butce:
+        plan = en_iyi_secim(probs, butce)
+    # Eşik kuralı fix16 kuramıyorsa (yedi çifteden az) bütçe de yok; o hafta
+    # hedef kuralı çalıştırılamaz ve eşik seçimine düşülür. Sessizce değil:
+    # çıktıda `kural` alanı gerçekte hangisinin kullanıldığını yazar.
+    secimler = plan.secimler if plan else esik_secim
+    kullanilan = "hedef" if plan else "esik"
+
     boyutlar = tuple(len(s) for s in secimler if len(s) > 1)
     imza = tuple(sorted(boyutlar))
     kap = _kaplama(imza)
@@ -336,6 +372,14 @@ def kupon_kur(d: dict[str, Any], banko: float, uclu: float) -> dict[str, Any]:
     oneriler.sort(key=lambda r: -(r["verim"] or 0))
 
     return {
+        "kural": kullanilan,
+        "istenen_kural": kural,
+        "butce": butce,
+        # `hedef` kuralının enbüyüklediği sayı: P(kaçak ≤ 2) = P(en iyi
+        # kolon ≥ 12). Eşik kuralında da hesaplanır ki iki kupon aynı
+        # ölçekte kıyaslanabilsin.
+        "p_hedef": hedef_olasiligi(probs, secimler),
+        "p_hedef_esik": hedef_olasiligi(probs, esik_secim),
         "banko_esik": banko, "uclu_esik": uclu,
         "picks": ["".join(s) for s in secimler],
         "banko": [i + 1 for i, s in enumerate(secimler) if len(s) == 1],
@@ -472,11 +516,17 @@ def yaz(d: dict[str, Any], prof: dict[str, Any], kam: dict[str, Any],
     print(f"Kamuoyu ile piyasanın AYRIŞTIĞI maçlar: {kam['public_vs_market_disagree'] or 'yok'}")
 
     for k in kuponlar:
-        print(f"\n─── 5. KUPON · eşik {k['banko_esik']:.2f}/{k['uclu_esik']:.2f} ──────────────────────────────")
+        print(f"\n─── 5. KUPON · kural: {k['kural'].upper()} "
+              f"(bütçe eşik {k['banko_esik']:.2f}/{k['uclu_esik']:.2f}'ten: "
+              f"{k['butce']:,} kolon) ─────────")
         print(f"İşaretler : {' '.join(k['picks'])}")
         print(f"Banko {len(k['banko'])} (maç {k['banko']}) · çift {len(k['cift'])} · üçlü {len(k['uclu'])} (maç {k['uclu']})")
         print(f"Seçim uzayı {k['space']:,} → kolon {k['columns']:,} · satır {k['rows']} · {k['engine']}")
         print(f"14-garanti: {'VAR' if k['guaranteed'] else 'YOK'} (koşul: sonuç seçim kümesinde)")
+        # Asil sayi: P(en iyi kolon >= 12). Esik kuralinin ayni haftada ne
+        # verecegi yaninda yazar ki kazanc gorunur olsun.
+        print(f"P(en iyi kolon ≥ 12): %{100*k['p_hedef']:.2f}"
+              f"   (eşik kuralı olsaydı %{100*k['p_hedef_esik']:.2f})")
         print(f"Küme-içi olasılık: %{100*k['in_set_p']:.3f}  (≈ 1/{k['in_set_1_in']:,.0f})")
         print(f"Kalabalık-içi    : %{100*k['crowd_in_set_p']:.3f}  → oran "
               f"{k['crowd_ratio']:.2f} "
