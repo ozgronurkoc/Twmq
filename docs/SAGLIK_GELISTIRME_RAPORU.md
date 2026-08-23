@@ -177,7 +177,7 @@ servisin sağlık durumu değildir; 503 izlemeyi yanlış yere baktırırdı.
 
 ## 8. Testler ve doğrulama
 
-**79 test** (tur başı 23). Tüm süit: **664 test**.
+**79 test** (tur başı 24). Tüm süit: **1.022 test**.
 
 | Dosya | Konu |
 |---|---|
@@ -238,7 +238,7 @@ gerektirir, yani 9.1 olmadan yapılamaz.
 
 | Ölçü | Değer |
 |---|---|
-| Kayıtlı kontrol | 23 |
+| Kayıtlı kontrol | 24 |
 | Kategori | 6 |
 | Kritik olmayan kontrol | 1 (`scipy_flag`) |
 | Tam rapor süresi (ısınmış) | ~520 ms |
@@ -250,7 +250,7 @@ gerektirir, yani 9.1 olmadan yapılamaz.
 | En yavaş kontrol | `mod_envanteri` (~129 ms, 7 mod) |
 | `auto` modu (256 nokta) | ~3,5 sn (önce ~11,3 sn) |
 | Sağlık katmanının testi | 79 |
-| Tüm süit | 664 test, ~84 sn |
+| Tüm süit | 1.022 test, ~7 dk |
 | Kupon sınıfları | 8 çift/256 · 7 çift+8 banko/128 · 9 çift/512 · üçlü içeren/768 |
 
 ---

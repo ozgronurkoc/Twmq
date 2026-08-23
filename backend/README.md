@@ -43,7 +43,10 @@ Ortam değişkenleri (hepsi isteğe bağlı):
 cd backend
 pytest -m "not slow"        # hızlı süit
 pytest                      # tamamı (ILP testleri dahil, ~60 sn)
-bash scripts/check.sh       # CI ile aynı çekirdek adımlar
+# Kalite kapisi repo KOKUNDEDIR ve iki tarafi da kosturur; CI de onu cagirir.
+# (Buradaki `backend/scripts/check.sh` silindi: "CI ile ayni cekirdek adimlar"
+#  diyordu ama alti adimdan ucunu kosuyordu.)
+cd .. && bash scripts/check.sh
 ```
 
 ## Yapı
@@ -89,8 +92,13 @@ python scripts/build_odds.py        # oranları çek ve kupon maçlarına eşle�
 
 ## Oran arşivi (`data/odds/`)
 
-**Arayüze bağlı değildir** — ileride yapılacak analiz için durur. Hiçbir API
-ucu, sayfa ya da motor akışı buradan okumaz.
+**Arayüze yalnızca MAÇ SONUCU (1X2) çıkar.** Burada bir zamanlar "hiçbir API
+ucu, sayfa ya da motor akışı buradan okumaz" yazıyordu; artık doğru değil:
+`/api/stats` bir `odds` bloğu döndürüyor, `/api/benzer` bu korpusa dayanıyor
+ve `backtest` `match_1x2`yi çağırıyor.
+
+Arşivdeki **diğer pazarlar** (2,5 alt/üst, Asya handikap) ve maç istatistikleri
+API'ye hiç girmez — onlar analiz için durur ve bu ayrım kasıtlıdır.
 
 | Dosya | Durum | İçerik |
 |-------|-------|--------|

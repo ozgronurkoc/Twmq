@@ -52,7 +52,7 @@ Bu, istatistik sayfasının G kolunda adı konmuş kök sorunun aynısıdır: sa
 
 ### 1.1 Ölçülmüş en keskin bulgu
 
-README'nin kendi örnek kuponu, `backend/scripts/check.sh`'ın kendi örnek
+README'nin kendi örnek kuponu, `scripts/check.sh`'ın kendi örnek
 olasılıklarıyla çalıştırıldı:
 
 ```

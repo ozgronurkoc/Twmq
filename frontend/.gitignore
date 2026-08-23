@@ -12,3 +12,9 @@ next-env.d.ts
 # scripts/kurulum-check.mjs gecici cikti dizini (normalde kendi siler,
 # bu satir yalnizca cokme durumu icin)
 .kurulum-check-*/
+
+# Yerel ortam dosyalari. Next.js'in kendi varsayilan .gitignore'unda bunlar
+# vardir; burada YOKTU ve `.env.local` git'te izleniyordu. Uzerine
+# `scripts/run_next_dev.sh` onu calisma aninda YENIDEN YAZIYOR, yani her
+# kosum calisma agacini kirletiyordu.
+.env*.local

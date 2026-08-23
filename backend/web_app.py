@@ -986,7 +986,20 @@ def api_solve():
     return jsonify(body), (200 if body["ok"] else 400)
 
 
-_IZINLI_ALANLAR = ("replit.dev", "repl.co")
+#: CORS icin izin verilen alanlar.
+#:
+#: `replit.app` EKSIKTI ve bu bir bosluktu: autoscale DAGITIMININ alani
+#: odur (`replit.dev` onizleme, `repl.co` eski ad). Bugun sorun cikarmiyor
+#: cunku arayuz ayni origin'i kullaniyor ve istek `next.config.mjs`
+#: rewrite'iyle proxy'leniyor; ama `NEXT_PUBLIC_API_URL` bos birakilmadigi
+#: anda dagitimda CORS'a takilirdi.
+#:
+#: `CORS_ALANLARI` ile genisletilebilir (virgulle): liste kodda sabitti ve
+#: `backend/README.md`in ortam degiskeni tablosunda hic yazmiyordu.
+_VARSAYILAN_ALANLAR = ("replit.dev", "replit.app", "repl.co")
+_IZINLI_ALANLAR: tuple[str, ...] = tuple(
+    d.strip() for d in os.environ.get("CORS_ALANLARI", "").split(",") if d.strip()
+) or _VARSAYILAN_ALANLAR
 
 
 def _origin_izinli(origin: str) -> bool:

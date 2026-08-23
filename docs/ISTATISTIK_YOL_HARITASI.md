@@ -129,8 +129,8 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/app/super-toto/page.tsx` · `components/super-toto/haftalar.tsx` · `lib/super-toto.ts` | Sezonun hafta şeridi; `?hafta=N` adreste durur |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **911 test**; **82'si** istatistik katmanına, **229'u** tahmin katmanına ait.
-`python -m spor_toto.health` **23 değişmez** çalıştırır — ikisi (`oran_arsivi`, `geri_test`)
+paketi toplam **1.022 test**; **82'si** istatistik katmanına, **229'u** tahmin katmanına ait.
+`python -m spor_toto.health` **24 değişmez** çalıştırır — ikisi (`oran_arsivi`, `geri_test`)
 istatistik katmanını, biri (`tahmin_referanslari`) tahmin katmanının ölçüm koşumunu korur.
 
 **Korpusun bütünlüğü sağlık katmanında değil test paketinde korunur** ve bu bir üründür
@@ -707,7 +707,7 @@ olan model değil, **fikstür verisi**.
 ### 3.17 Tahmin ürünü — olasılık, ölçülmüş isabetiyle birlikte (C2)
 
 Tahmin katmanı bu işten önce **ürüne hiç bağlı değildi**: `web_app.py` onu import
-etmiyordu, 11 API ucunun hiçbiri tahmin döndürmüyordu, `/tahmin` diye bir sayfa yoktu.
+etmiyordu, API uçlarının hiçbiri tahmin döndürmüyordu, `/tahmin` diye bir sayfa yoktu.
 Ölçüm aracı olarak yaşıyordu, ürün olarak değil — oysa projenin amacı (README §1) *maç
 sonucu tahmini yapmak*.
 
@@ -1523,9 +1523,14 @@ kolonla 14+ hiç gelmedi" yazacak. Süslenmiş bir olasılık, süslenmemiş bir
 
 #### C2'nin üç parçası — sırayla
 
-Bugün tahmin katmanı **ürüne hiç bağlı değil**: `web_app.py` onu import etmiyor, 11 API
-ucunun hiçbiri tahmin döndürmüyor, `/tahmin` diye bir sayfa yok. Ölçüm aracı olarak yaşıyor,
-ürün olarak değil. Eksik olan üç şey:
+> **Bu bölüm C2 yapılMADAN önceki durumu anlatır ve tarihçe olarak duruyor.**
+> C2 bitti (aynı belgede §6.2'deki tabloda "✅ BİTTİ" işaretli): `web_app.py`
+> tahmin katmanını import ediyor, `/api/tahmin` yayında ve `/tahmin` sayfası
+> var. Aşağıdaki "yok" cümleleri o günün fotoğrafıdır.
+
+Bugün *(C2 öncesi)* tahmin katmanı **ürüne hiç bağlı değildi**: `web_app.py` onu
+import etmiyordu, API uçlarının hiçbiri tahmin döndürmüyordu, `/tahmin` diye bir
+sayfa yoktu. Ölçüm aracı olarak yaşıyordu, ürün olarak değil. Eksik olan üç şey:
 
 | | İş | Neden gerekli |
 |---|---|---|
@@ -1848,13 +1853,13 @@ python -m spor_toto.disari                 # A3: piyasa dışı özellikler
 python -m spor_toto.tahmin                 # ÜRÜN: yaklaşan maçlara olasılık
 
 # Denetim
-pytest -q                                  # 911 test (82'si bu katman, 229'u tahmin)
+pytest -q                                  # 1.022 test (82'si bu katman, 229'u tahmin)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out
 pytest -q tests/test_cizgi.py              # A1 ölçümü ve korpus bütünlüğü
 pytest -q tests/test_bahisci.py            # A2 ölçümü ve kaynak seçimi
 pytest -q tests/test_disari.py             # A3 ölçümü ve sızıntı bekçileri
-python -m spor_toto.health                 # 23 değişmez
+python -m spor_toto.health                 # 24 değişmez
 python -m spor_toto.health --help          # tek kontrol: ?only=geri_test
 
 # Arayüz

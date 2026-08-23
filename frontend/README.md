@@ -30,22 +30,33 @@ npm run dev
 app/
   layout.tsx          kök — tema sağlayıcı + kabuk
   page.tsx            Formül (motorun tamamı)
-  istatistik/         sezon dağılımı + hafta detayı
-  saglik/             sistem sağlığı (kategorili değişmezler)
+  tahmin/             yaklaşan maçlar + ölçülmüş isabet
+  super-toto/         canlı sezon defteri
+  istatistik/         sezon dağılımı + hafta detayı + geri test
+  saglik/             sistem sağlığı (değişmezler + kontrol envanteri)
   icon.tsx            favicon (next/og ile TSX'ten üretilir)
   globals.css         tasarım token'ları
 components/
   shell/              kenar çubuğu, sayfa geçişi, tema
   formul/             maç ızgarası, olasılık girişi, sonuç panelleri
   istatistik/         grafikler (inline SVG), hafta tablosu, filtre, veri kalitesi
-  ui/                 kart, buton, sekme, anahtar… (elle yazıldı)
+  saglik/             durum kartı, kategori kartları, kontrol envanteri
+  tahmin/             olasılık çubuğu, ölçülmüş isabet kartı
+  benzer/             "bu oranda geçmişte ne oldu" + lig kırılımı
+  super-toto/         hafta sekmeleri
+  ui/                 kart, buton, sekme, anahtar, tablo token'ları (elle yazıldı)
 lib/
   types.ts            /api/solve dahil tüm API sözleşmesi
   api.ts              tipli, AbortController ile iptal edilebilir istemci
-  utils.ts            cn(), normalize, biçimlendirme
+  istek.ts            TEK veri çekme kancası (iptal + hata + yükleniyor)
+  adres.ts            adres çubuğu sorgu parametreleri — tek mekanizma
+  utils.ts            cn(), normalize, yuzde (girdi 0–1), biçimlendirme
   kurulum.ts          formül kurulumunun kalıcılığı + paylaşılabilir bağlantı
   kume-ici.ts         üretmeden önce görülen koşul + küre-kaplama alt sınırı
   transfer.ts         hafta → formül devri (idempotent)
+  super-toto.ts       canlı sezon beslemesi okuyucu
+  super-toto-veri.json  ÜRETİLMİŞ (backend/scripts/super_toto_frontend.py)
+  api-sozlesme.json     ÜRETİLMİŞ (backend/scripts/api_sozlesme.py)
 ```
 
 ## Sonuç sekmeleri soruya göre bölünür

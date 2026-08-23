@@ -1,8 +1,13 @@
-"""Oran arşivi okuyucu — analiz katmanı için, arayüz için değil.
+"""Oran arşivi okuyucu.
 
-Bu modül hiçbir API ucuna, sayfaya ya da motor akışına bağlı DEĞİLDİR.
-``scripts/build_odds.py`` ile üretilen arşivi ileride yapılacak analizin
-kolayca okuyabilmesi için durur.
+``scripts/build_odds.py`` ile üretilen arşivi okur.
+
+**Arayüze yalnızca MAÇ SONUCU (1X2) çıkar.** Bu modül bir zamanlar hiçbir
+API ucuna bağlı değildi ve baş yorumu hâlâ öyle diyordu; artık öyle değil:
+``web_app`` ``week_1x2``i, ``payloads.stats_payload`` ``season_1x2_summary``i
+ve ``backtest`` ``match_1x2``yi çağırıyor. Arşivdeki **diğer pazarlar**
+(2,5 alt/üst, Asya handikap) ve maç istatistikleri API'ye hiç girmez;
+onlar analiz için durur.
 
     from spor_toto.odds import load_odds, market_odds
     rows = load_odds()                       # maç başına tek satır
@@ -251,9 +256,12 @@ def match_1x2(row: dict[str, Any],
     Hangi kaynaktan, hangi dönemden ve **hangi arındırmayla** geldiği çıktıda
     yazar — sayının nereden geldiği belirsiz kalmamalı.
 
-    `yontem` varsayılanı `orantili`dır ve arşivin yayımlanmış bütün sayıları
-    onunla üretildi; başka bir değer ancak açıkça istendiğinde kullanılır
-    (A5, bkz. `implied_probs`).
+    `yontem` varsayılanı `ARINDIRMA_VARSAYILAN`dır (bugün **`shin`**).
+    Burada bir zamanlar "varsayılanı `orantili`dır" yazıyordu; A5 ölçümünden
+    sonra varsayılan değişti ama bu satır kaldı. Arşivin **çevrimden önce**
+    yayımlanmış sayıları orantısal ölçekte ölçülmüştür ve yenileriyle
+    doğrudan kıyaslanamaz (bkz. `implied_probs` ve `ARINDIRMA_VARSAYILAN`
+    üstündeki not).
     """
     if not row.get("matched"):
         return None

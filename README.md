@@ -90,7 +90,7 @@ makinesinde, o günkü kilitli bağımlılıklarla, o commit üzerinde koşar.
 
 Bu yüzden sağlık katmanı ayrı bir katmandır ve `/saglik` sayfası ürünün eşit
 haklı bir parçasıdır: **ürünün vaadinin şu anda, bu makinede, bu sürümde hâlâ
-geçerli olduğunu kanıtlar.** 23 değişmez, 6 kategori, her çağrıda yeniden
+geçerli olduğunu kanıtlar.** 24 değişmez, 6 kategori, her çağrıda yeniden
 ölçülür — ve neyi kanıtlamadığını da açıkça yazar (§6.3).
 
 ### 1.6 Ne yapar / ne yapmaz
@@ -106,7 +106,7 @@ geçerli olduğunu kanıtlar.** 23 değişmez, 6 kategori, her çağrıda yenide
 | Bayes (Dirichlet) ile tahminlerini yumuşatır | İddaa geçmiş oranı sunmaz (yok — §5.3) |
 | Markov ile sıralı risk profili çıkarır | Geri testi bir kâr vaadine çevirmez; aşırı uyumu ölçüp gösterir |
 | Bir stratejiyi geçmiş sezonda çalıştırıp bedelini ve isabetini ölçer (**geri test**) | Mobil uygulama değildir |
-| Vaadin canlıda geçerliliğini 23 değişmezle ölçer | |
+| Vaadin canlıda geçerliliğini 24 değişmezle ölçer | |
 | Her sayının kaynağını ve sınırını yazar | |
 
 ---
@@ -118,7 +118,8 @@ Python tarafının tamamı `backend/`, arayüzün tamamı `frontend/` altındad�
 ```bash
 # 1) Motor + API
 cd backend
-pip install -e ".[test]"        # veya: uv sync --extra test
+pip install -e ".[test]"        # calistirma + test
+pip install -e ".[test,kalite]" # + ruff/mypy (scripts/check.sh bunlari ister)
 
 # 2) CLI
 spor-toto --picks "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"
@@ -645,7 +646,7 @@ handler'a bağlı olsalardı `/health`e vuran her şey tam raporu ödetirdi ve
 `/health`i canlılık sinyali sanan bir probe, zaman aşımına düşünce **sağlıklı**
 bir konteyneri öldürebilirdi.
 
-**23 kontrol, 6 kategori.** Kategoriler motorun katmanlarını izler ve yukarıdan
+**24 kontrol, 6 kategori.** Kategoriler motorun katmanlarını izler ve yukarıdan
 aşağıya doğru ciddiyet azalır — düşen kontrolün adı değil, **hangi katmanın
 bozulduğu** okunur. Güncel liste için `--list`:
 
@@ -769,29 +770,51 @@ backend/
     egitim.py          TAHMİN: eğitim korpusu okuyucu — /istatistik'e GİRMEZ
     health.py          Kategorili değişmez (invariant) kontrolleri — tek CHECKS tanımı
     meta.py            Yetenek envanteri (modlar, preset'ler, sınırlar) = /api/meta
-    engines.py         Mod çalıştırıcıları — /api/solve ve health AYNI yolu kullanır
+    engines.py         Mod çalıştırıcıları — /api/solve, CLI ve health AYNI yolu kullanır
+    ortak.py           Paylaşılan hesaplar: normalizasyon, Wilson, Brier, bantlama
+    payloads.py        /api/stats ve /api/backtest gövdeleri — tek kaynak
+    tahmin.py          TAHMİN: yaklaşan maçlar + ölçülmüş isabet = /api/tahmin
+    benzer.py          "Bu oranda geçmişte ne oldu" = /api/benzer
+    kalibrasyon.py     ÖLÇÜM: izotonik düzeltme piyasayı geçiyor mu
+    cizgi.py           ÖLÇÜM: açılış→kapanış çizgi hareketi (A1)
+    bahisci.py         ÖLÇÜM: bahisçiler arası ayrışma (A2)
+    disari.py          ÖLÇÜM: piyasanın fiyatlamadığı bir şey kalıyor mu (A3)
+    health_history.py  Sunucu tarafı sağlık geçmişi + durum değişimi bildirimi
     report.py          Konsol / dosya çıktısı
     cli.py             spor-toto komut satırı
   web_app.py           Flask — yalnızca JSON API, HTML servis etmez
-  scripts/
+  scripts/             (paket: `scripts/__init__.py` — kardeş betikler normal
+                        import ile çağrılır)
     build_history.py   Tarihsel veri setini kaynağından üretir
     build_odds.py      Kupon maçlarına piyasa oranlarını eşleştirir
-    snapshot_iddaa.py  İddaa açık bültenini tarih damgalı arşivler (haftalık)
     build_egitim.py    Eğitim korpusu (football-data, 22 lig × 4 geçmiş sezon)
-    check.sh           Yerel CI eşdeğeri
-  data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/
-  tests/               pytest (23 dosya → 700 test)
+    build_fixtures.py  Yaklaşan maç fikstürü (tahmin katmanının ölçülen kaynağı)
+    snapshot_iddaa.py  İddaa açık bültenini tarih damgalı arşivler (haftalık)
+    super_toto_hafta.py       Canlı sezon: hafta profili + kupon kurulumu
+    super_toto_degerlendir.py Sonuç girildikten sonra değerlendirme
+    super_toto_sezon.py       Kümülatif sezon defteri
+    super_toto_sayfa.py       Haftayı tek dosyalık HTML'e basar
+    super_toto_frontend.py    Arayüzün okuduğu sezon beslemesi (--kontrol: CI kapısı)
+    faz_b.py                  Havuz ekseni güç analizi
+    acilis_kapanis.py         Açılış–kapanış oranı karşılaştırması
+    api_sozlesme.py           API sözleşmesini üretir/denetler (--kontrol: CI kapısı)
+  data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
+                       fixtures/ · super_toto/
+  tests/               pytest (30 dosya → 1.022 test)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
-  app/                 sayfalar (/, /istatistik, /istatistik/[week],
-                       /istatistik/geri-test, /saglik)
+  app/                 7 sayfa (/, /tahmin, /super-toto, /istatistik,
+                       /istatistik/[week], /istatistik/geri-test, /saglik)
   components/
     shell/             kalıcı kenar çubuğu + sayfa geçişleri + tema
     formul/            maç ızgarası, olasılık girişi, sonuç panelleri
     istatistik/        grafikler (bağımlılıksız inline SVG), hafta tablosu, filtre,
                        geri test bileşenleri
-    saglik/            durum kartı, kategori kartları, çalışma geçmişi
+    saglik/            durum kartı, kategori kartları, çalışma geçmişi, kontrol envanteri
+    tahmin/            olasılık çubuğu, ölçülmüş isabet kartı
+    benzer/            "bu oranda geçmişte ne oldu" kartı + lig kırılımı
+    super-toto/        canlı sezon hafta sekmeleri
     ui/                temel bileşenler (elle yazıldı, Radix yok)
   lib/types.ts         API sözleşmesinin tamamı tipli
   lib/api.ts           tipli, AbortController ile iptal edilebilir istemci
@@ -799,10 +822,16 @@ frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası 
   lib/kurulum.ts       formül kurulumunun kalıcılığı + paylaşılabilir bağlantı
   lib/kume-ici.ts      üretmeden önce görülen koşul + küre-kaplama alt sınırı
   lib/senaryo.ts       çalıştırılan modların karşılaştırma listesi
-  scripts/             check.mjs (saf mantık denetimi, bağımlılıksız)
+  lib/istek.ts         tek veri çekme kancası (AbortController + hata + yükleniyor)
+  lib/adres.ts         adres çubuğu sorgu parametreleri — tek mekanizma
+  lib/super-toto.ts    canlı sezon beslemesi okuyucu
+  lib/super-toto-veri.json  ÜRETİLMİŞ besleme (super_toto_frontend.py)
+  lib/api-sozlesme.json     ÜRETİLMİŞ API sözleşmesi (api_sozlesme.py)
+  scripts/             check.mjs (saf mantık + sözleşme denetimi, bağımlılıksız)
 
 scripts/               setup.sh (bağımlılıklar) · run_next_dev.sh (API + UI birlikte)
                        build.sh + run_prod.sh (Replit dağıtımı)
+                       check.sh (TEK kalite kapısı — CI de bunu çağırır)
 docs/                  Mimari, veri ve yol haritası belgeleri
 ```
 
@@ -927,22 +956,29 @@ WHERE o.pazar = '1X2' AND o.donem = 'kupon';
 ## 9. Testler ve CI
 
 ```bash
+bash scripts/check.sh        # TEK kapı: iki tarafı da koşturur (repo kökünden)
+bash scripts/check.sh --hizli # yavaş ILP testlerini atlar
+
 cd backend
 pytest                       # tamamı (ILP dahil)
 pytest -m "not slow"         # hızlı süit
-pytest -q tests/test_history.py tests/test_odds.py tests/test_snapshot_iddaa.py
 pytest -q tests/test_backtest.py                     # strateji, skorlama, hold-out
-bash scripts/check.sh        # yerel CI eşdeğeri
 ```
 
-`backend/scripts/check.sh`: hızlı pytest → health → CLI fix16 +
-`--bayes-preset dengeli` dumanı. Exit code ≠ 0 ise bir adım kırık demektir.
+`scripts/check.sh` sırasıyla: ruff → mypy → pytest (hızlı + yavaş) → health →
+CLI dumanı → Süper Toto boru hattı → üretilmiş iki dosyanın tazeliği →
+eslint + tsc + arayüz denetimleri → üretim derlemesi.
+
+**CI bu betiği ÇAĞIRIR, adımları yeniden yazmaz.** Önceden
+`backend/scripts/check.sh` vardı ve "CI ile aynı çekirdek adımlar" diyordu ama
+altı adımdan üçünü koşuyordu — yani "OK" demesi "CI geçer" demek değildi.
+Şimdi ikisi tanım gereği ayrışamaz.
 
 Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant'lar, CLI (Bayes preset
 dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri test,
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
-yeniden kalibrasyon ve eğitim korpusu. 23 test dosyası, parametrizasyonla
-**700 test**; 82'si veri/istatistik/geri test, 79'u sağlık, **104'ü tahmin
+yeniden kalibrasyon ve eğitim korpusu. 30 test dosyası, parametrizasyonla
+**1.022 test**; 82'si veri/istatistik/geri test, 79'u sağlık, **104'ü tahmin
 katmanı** (ayrım bekçileri dahil).
 
 İki test bilerek **ağa çıkmaz**: `test_snapshot_iddaa.py` gerçek bültenden alınmış
@@ -953,7 +989,8 @@ ayrıştırmanın doğruluğu ise arşivin tamamının dayandığı şey.
 
 ```bash
 cd frontend
-npm run check                # tip denetimi + saf mantık denetimi (37 vaka)
+npm run check                # eslint + tsc + saf mantık ve sözleşme (49 vaka)
+npm run lint                 # yalnızca eslint
 npm run build                # üretim derlemesi
 ```
 
@@ -969,6 +1006,14 @@ birlik olasılık `1000` olabilir, yani dört basamak; `padStart(3)` alanı
 taşırıyordu). Aynı sınıfta olan iki hesap daha aynı dosyada bekçiye bağlıdır:
 küme-içi koşulunun backend'in `exact` değeriyle, küre-kaplama alt sınırının
 sunucunun `alt_sinir`'iyle birebir tutması.
+
+Bu sayılar artık **elle yazılmıyor**: `backend/scripts/api_sozlesme.py` onları
+üretip `frontend/lib/api-sozlesme.json`e koyuyor ve `check.mjs` oradan okuyor.
+Aynı dosya on üç ucun gövde **şeklini** de taşır; `check.mjs` TypeScript
+derleyici API'siyle `lib/types.ts` arayüzlerini okuyup karşılaştırır — sunucunun
+gönderdiği her alan tipte olmalı, tipte zorunlu diyen her alan sunucudan
+gelmeli. Bu boşluk gerçekti: bir alan adı değiştiğinde motor sapasağlam kalır,
+bütün testler geçer ve sayfa sessizce boş döner.
 
 **CI (GitHub Actions)** — her `main` push ve PR'da:
 
@@ -1006,8 +1051,11 @@ Amaç tahmine döndükten sonra **tahmin katmanının T1–T3'ü uygulandı**: t
 sözleşmesi + değerlendirme koşumu, piyasanın yeniden kalibrasyonu ve eğitim
 korpusu. Ölçülen sayılar ve gerekçeler:
 [`docs/ISTATISTIK_YOL_HARITASI.md`](docs/ISTATISTIK_YOL_HARITASI.md) §3.10–3.12
-ve §5.1. **Bu katmandan sayfaya hiçbir şey çıkmadı** — ölçülmemiş tahminci
-arayüze çıkmaz.
+ve §5.1. Kural değişmedi — **ölçülmemiş tahminci arayüze çıkmaz** — ama
+"hiçbir şey çıkmadı" artık doğru değil: `/tahmin` sayfası ve `/api/tahmin`
+yayında. Çıkabilmesinin sebebi kuralın gevşetilmesi değil, kuralın
+karşılanması: gövde `tahminler` ve `olculmus_isabet` bloklarını **ayrılmaz**
+biçimde taşır, yani ölçülmüş isabeti olmayan bir olasılık dışarı çıkamaz.
 
 > **Projenin tamamını kapsayan ve sonlanan plan:**
 > [`docs/ISTATISTIK_YOL_HARITASI.md`](docs/ISTATISTIK_YOL_HARITASI.md) §6. Hedefi üç
@@ -1165,8 +1213,8 @@ olması gerekir. Tanımlıysa yalnızca **durum değişiminde** bildirim gider.
 
 Bu aracın amacı kazanma oranını artırmaktır; ancak kazanmayı **garanti etmez** ve
 hedefe bugünkü mesafe açıkça ölçülmüştür (§1.1): piyasa oranlarından üretilen
-stratejinin **hold-out isabeti 0 haftadır.** Ölçülen bu sayı iyileşmeden, aracın
-kazanma oranını artırdığı iddia edilemez.
+stratejinin **hold-out isabeti 36 haftada 1'dir** (%2,8). Ölçülen bu sayı
+iyileşmeden, aracın kazanma oranını artırdığı iddia edilemez.
 
 Olasılık / Monte Carlo / Bayes / Markov çıktıları **beklenen-değer veya kâr hesabı
 değildir**; ikramiye havuzu ve kolon bedeli hesaba katılmaz.

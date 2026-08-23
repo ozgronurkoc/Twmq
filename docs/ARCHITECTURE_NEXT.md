@@ -7,7 +7,7 @@
 Tarayıcı
    │
    ▼
-frontend/              ← Next.js :3000, tek UI (Formül / İstatistik / Sağlık)
+frontend/              ← Next.js :3000, tek UI (7 sayfa — aşağıdaki tablo)
    │  /api/* rewrite
    ▼
 backend/web_app.py     ← Flask :8080, sadece JSON
@@ -22,20 +22,58 @@ hiçbir şey tarafından import edilmez.
 
 ## API
 
+Uçların **tamamı** (13). Bu tablo eskiden dokuz satırdı ve dördü eksikti
+(`/api/health/checks`, `/api/backtest`, `/api/tahmin`, `/api/benzer`) —
+üstelik `README.md` ve `backend/README.md` bu tabloyu *kaynak* gösteriyordu,
+yani boşluk üç belgeye birden yayılıyordu. Artık liste
+`frontend/lib/api-sozlesme.json` ile aynı 13 ucu sayar ve o dosya CI'da
+`scripts/api_sozlesme.py --kontrol` ile denetlenir.
+
 | Method | Path | Açıklama |
 |--------|------|----------|
-| GET | `/` | Servis bilgisi JSON |
-| GET | `/api/meta` | Modlar, Bayes preset'leri, motor varsayılanları, sınırlar |
+| GET | `/` | Servis bilgisi + uç envanteri |
 | GET | `/health` | Liveness — süreç ayakta mı; hiçbir değişmez koşmaz |
+| GET | `/api/meta` | Modlar, Bayes preset'leri, motor varsayılanları, sınırlar, geri test ızgarası |
 | GET | `/api/health` | Readiness — değişmezler; `?only=` kısmi, `?fresh=1` önbelleği atlar (bkz. `SAGLIK_VIZYONU.md`) |
+| GET | `/api/health/checks` | Kayıtlı kontrol envanteri — kontrolleri **koşturmadan** listeler |
 | GET | `/api/health/history` | Sunucudaki son koşuların özeti (süreç ömürlü) |
 | POST | `/api/health/kupon` | Kullanıcının kendi kuponunu aynı değişmezlerden geçirir |
 | GET | `/api/stats?last=N` | Tarihsel 1/0/2 + analiz blokları (`last` = son N hafta dilimi) |
 | GET | `/api/stats/<week>` | Tek hafta detayı (komşular, sıra, sapma, sıra-sıra bağlam) |
+| GET | `/api/backtest` | Geri test: sezon + hafta hafta + eşik taraması + hold-out |
+| GET | `/api/tahmin?limit=N` | Yaklaşan maçlar — olasılık **ve** ölçülmüş isabet birlikte |
+| GET | `/api/benzer?oran=…` | "Bu oranda geçmişte ne oldu" — 31 bin maçlık korpus |
 | POST | `/api/solve` | Tüm motor özellikleri |
 
 İstatistik katmanının durumu, alınan kararlar ve yol haritası:
 [`ISTATISTIK_YOL_HARITASI.md`](ISTATISTIK_YOL_HARITASI.md).
+
+## Sayfalar
+
+| Yol | Ne yapar |
+|-----|----------|
+| `/` | Formül — kaplama motoru, olasılık, senaryo karşılaştırma |
+| `/tahmin` | Yaklaşan maçlara 1/0/2 + ölçülmüş isabet |
+| `/super-toto` | Canlı sezon defteri (statik besleme, bkz. aşağısı) |
+| `/istatistik` | Tarihsel dağılım, analiz blokları, oran özeti |
+| `/istatistik/[week]` | Tek hafta detayı |
+| `/istatistik/geri-test` | Eşik taraması + hold-out |
+| `/saglik` | Değişmez raporu + kayıtlı kontrol envanteri |
+
+## Sözleşme nasıl korunuyor
+
+Arayüzün okuduğu gövdenin **şekli** `frontend/lib/api-sozlesme.json`
+dosyasında durur; `backend/scripts/api_sozlesme.py` onu 13 ucu gerçekten
+çağırarak üretir ve `--kontrol` ile bayatlığını denetler. `check.mjs` ayrıca
+TypeScript derleyici API'siyle `lib/types.ts` arayüzlerini okuyup aynı
+dosyayla karşılaştırır: **sunucunun gönderdiği her alan tipte olmalı, tipte
+zorunlu diyen her alan sunucudan gelmeli.**
+
+Bu boşluk gerçekti: bir alan adı değiştiğinde motor sapasağlam kalır, bütün
+testler geçer ve sayfa sessizce boş döner — tip denetimi de göremez, çünkü
+istemci cevabı doğrulamadan `as T` ile kalıba sokar. Denetim ilk koşusunda
+iki gerçek sapma yakaladı (`/api/meta`nın `backtest` bloğu ve
+`/api/benzer`in `filtre` bloğu tipte hiç yazmıyordu).
 
 `/api/meta` frontend'in tek gerçek kaynağıdır: mod listesi, preset'ler ve
 sayısal sınırlar arayüzde **sabit kodlanmaz**, buradan okunur. Gövde

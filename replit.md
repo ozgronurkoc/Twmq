@@ -60,6 +60,8 @@ yani Run düğmesi tek başına da yeterlidir.
 | Yol | İçerik |
 |-----|--------|
 | `/` | **Formül** — maç ızgarası, olasılık girişi, motorun tüm modları |
+| `/tahmin` | Yaklaşan maçlara 1/0/2 + **ölçülmüş isabet** (ayrılmaz) |
+| `/super-toto` | Canlı sezon defteri (statik besleme) |
 | `/istatistik` | Sezon dağılımı, oran/favori kırılımları, veri kalitesi |
 | `/istatistik/[week]` | Hafta detayı (olasılıkları formül sayfasına devredebilir) |
 | `/istatistik/geri-test` | Oranlardan strateji üretip 41 haftayı motorla koşturur |
@@ -76,7 +78,10 @@ GET  /api/health/history     son koşular ("ne zamandan beri kırmızı?")
 POST /api/health/kupon       kullanıcının kendi kuponunu doğrular
 GET  /api/stats              sezon istatistikleri (?last=N)
 GET  /api/stats/<week>       hafta detayı
-GET  /api/backtest           geri test
+GET  /api/backtest           geri test (eşik taraması + hold-out)
+GET  /api/tahmin             yaklaşan maçlar + ölçülmüş isabet
+GET  /api/benzer             "bu oranda geçmişte ne oldu" (31 bin maç)
+GET  /                       servis bilgisi + uç envanteri
 POST /api/solve              motorun tamamı
 ```
 
@@ -121,8 +126,8 @@ yazmazlar). Ayrıntı: `docs/VERI_TOPLAMA_VE_ISLEME.md`.
 ```bash
 cd backend
 python -m pytest -m "not slow" -q   # hızlı süit
-python -m pytest                    # tamamı (664 test, ILP dahil)
-bash scripts/check.sh               # CI ile aynı çekirdek adımlar
+python -m pytest                    # tamamı (1.022 test, ILP dahil)
+bash scripts/check.sh               # TEK kapı (repo kökünden); CI de bunu çağırır
 ```
 
 GitHub Actions: `tests.yml` (her push) ve `snapshot-iddaa.yml` (haftalık bülten

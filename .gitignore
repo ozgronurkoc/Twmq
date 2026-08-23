@@ -33,3 +33,10 @@ backend/data/iddaa/iddaa.sqlite3
 # uretilir. Bu korpus TAHMIN katmanina aittir; istatistik sayfasinin verisi
 # degildir. Yeniden olusturmak icin: python scripts/build_egitim.py
 backend/data/egitim/_kaynak/
+
+# Uretilmis Super Toto sayfalari (`scripts/super_toto_sayfa.py`).
+# Depodaki kopya olculdu ve ZATEN BAYATTI: `shin` arindirmasina gecisten
+# once uretilmis sayilarla duruyordu ve hicbir kapi bunu goremiyordu.
+# Ham/uretilmis ciktiyi versiyonlamama kurali diger butun boru hatlarinda
+# zaten uygulaniyor (odds, iddaa, egitim `_kaynak/`); bu tek istisnaydi.
+backend/data/super_toto/**/*.html
