@@ -230,18 +230,35 @@ export function DoluHafta({ hafta }: { hafta: SuperTotoHafta }) {
                 ) : null}
               </div>
             ) : null}
-            {bugun && bugun.arindirma !== k.arindirma ? (
+            {/*
+              Iki sey birden degisti: OLCEK (marj arindirma orantili -> shin)
+              ve KURAL (esik -> hedef). Ikisini de yazmak gerekiyor, cunku
+              isaret farkinin hangisinden geldigi aksi halde anlasilmaz.
+            */}
+            {bugun &&
+            (bugun.arindirma !== k.arindirma || bugun.kural !== "esik") ? (
               <div className="rounded-lg border border-line bg-muted/40 px-3 py-2">
                 <div className="text-[12px] font-medium">
-                  Bugünkü kural ({bugun.arindirma}) ne işaretlerdi
+                  Bugünkü kural ne işaretlerdi
+                  <span className="ml-1.5 font-normal text-muted-foreground">
+                    ({bugun.kural} · {bugun.arindirma})
+                  </span>
                 </div>
                 <div className="mt-1 font-mono text-[12.5px]">
                   {bugun.picks.join(" ")}
                 </div>
                 <div className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
+                  {bugun.columns
+                    ? `${bugun.columns.toLocaleString("tr-TR")} kolon · `
+                    : ""}
+                  P(en iyi kolon ≥ 12) {(100 * bugun.p_hedef).toFixed(1)}%
+                  {bugun.p_hedef_esik
+                    ? ` — eşik kuralıyla ${(100 * bugun.p_hedef_esik).toFixed(1)}%`
+                    : ""}
+                  .{" "}
                   {kayan && kayan.length
-                    ? `Eşik aynı, ölçek farklı: ${kayan.join(", ")}. maçta işaret değişiyor. `
-                    : "Ölçek değişimi bu haftada hiçbir işareti değiştirmiyor. "}
+                    ? `${kayan.join(", ")}. maçta işaret değişiyor. `
+                    : "Bu haftada hiçbir işaret değişmiyor. "}
                   Yukarıdaki kayıt <strong>yeniden hesaplanmaz</strong> —
                   sonuçlar görülmeden donduruldu.
                 </div>

@@ -129,7 +129,7 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/app/super-toto/page.tsx` · `components/super-toto/haftalar.tsx` · `lib/super-toto.ts` | Sezonun hafta şeridi; `?hafta=N` adreste durur |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **1.031 test**; **82'si** istatistik katmanına (`history` `odds` `backtest`
+paketi toplam **1.116 test**; **82'si** istatistik katmanına (`history` `odds` `backtest`
 `api_stats` `api_backtest` `snapshot_iddaa`), **294'ü** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer`). Dosya adlarıyla sayılıdır ki tablo elle bakım gerektirmesin —
@@ -1013,6 +1013,343 @@ Kupon yarı fiyata düşerken tutma olasılığı **artıyor** — iki eksende b
 aşması. 2. haftanın kupon dosyasına düşülen *"eşiği 0,6 puanla kaçırdı"* notu, bu
 yanlılığın ta kendisiydi.
 
+### 3.19 Karar katmanı: seçim artık hedefe göre kuruluyor (B0)
+
+A1–A5 tahmin eksenini ölçtü ve kapattı. Bu iş **tahmin değil karar** katmanına
+bakıyor ve önce şu soruyu sordu: *tahmin iyileşmesi zaten neyi satın alıyor?*
+
+#### Önce ölçü: tahmin becerisinin dönüşüm oranı
+
+Piyasa olasılığı gerçek sonuca doğru yapay olarak kaydırılıp (uydurma beceri)
+hem Brier hem `P(en iyi kolon ≥ 12)` izlendi (36 tam hafta):
+
+| yapay beceri | Brier | ΔBrier | P(≥12) | ΔP(≥12) |
+|---|---:|---:|---:|---:|
+| yok | 0,5740 | — | %33,5 | — |
+| +1 puan | 0,5562 | −0,0178 | %34,7 | +1,17 |
+| +5 puan | 0,4881 | −0,0859 | %38,1 | +4,61 |
+| +10 puan | 0,4099 | −0,1641 | %41,6 | +8,09 |
+
+**0,01 Brier ≈ +0,6 puan P(≥12).** A1–A5'te aranan/bulunan mertebe 0,0005
+Brier; karşılığı **+0,03 puan**. Yani tahmin ekseni, ürünün asıl sayısı için
+çok zayıf bir kaldıraç — bu, "tahmin geliştirmeyelim" değil, "tahmin
+geliştirerek kupon sonucunu değiştiremeyiz" demektir.
+
+#### Hedefin tam tanımı
+
+`k` maç seçim kümesinin dışında kalırsa o `k` maç her kolonda yanlıştır; kalan
+`15−k` içeridedir ve Hamming bloğu en fazla 1 hata bırakır. Yani en iyi kolon
+≥ `14−k`, dolayısıyla **P(en iyi kolon ≥ 12) ≥ P(k ≤ 2)**. Eşitlik değil **alt
+sınır**: hedef temkinlidir, optimize edilmesi güvenlidir.
+
+Yapı üç olguyla sadeleşiyor: banko `q = 1−p₁`, çifte `q = p₃`, **üçlü `q = 0`
+(asla kaçmaz)**; bedel yalnızca sayılara bağlı (`2^a·3^b·16/2⁷`).
+
+#### Bugünkü kural hiçbir yerde bu hedefi optimize etmiyordu
+
+`backtest.secim_uret` yalnızca favorinin olasılığına bakıyor: ikincinin
+olasılığını okumuyor, haftanın şeklini görmüyor, bütçeyi ve kaplama bedelini
+bilmiyor, maç maç bağımsız çalışıyor. `p_kume_ici`, Markov zinciri ve Monte
+Carlo **sonradan raporlama**; hiçbiri seçime geri beslenmiyor.
+`butce_danismani` planları `p_kume_ici`'ye göre sıralıyor ama yalnızca bütçe
+kısılırken — ve `p_kume_ici` **P(0 kaçak)** demek, oysa garanti iki kaçağa
+kadar 12 veriyor.
+
+#### Ölçüm — aynı bütçe, 36 hafta
+
+`spor_toto/secim.py`, bütçe içinde `P(k ≤ 2)`'yi enbüyüklüyor. Arama **kesin**:
+gelecekteki her evrişim kümülatiflerin pozitif doğrusal birleşimi olduğu için
+`(cum₀, cum₁, cum₂)` üzerinde Pareto baskınlığı gelecekte de korunur, yani
+budama yaklaşıklık değil. `tests/test_secim.py::test_optimizasyon_gercekten_optimal`
+bunu dört bütçede kaba kuvvetle karşılaştırarak çiviliyor.
+
+| kural | kolon/hafta | P(k≤2) | en iyi kolon ort. | ≥14 | ≥13 | ≥12 |
+|---|---:|---:|---:|---:|---:|---:|
+| eşik (0,68/0,38) | 1.987 | %33,50 | 11,50 | 3 | 7 | 21 |
+| **hedefe göre** | **1.461** | **%39,52** | **11,81** | 2 | **13** | **24** |
+
+**+6,02 puan hedef ve %26 daha az kolon.** Eşik kuralı 36 haftanın **35'inde**
+optimalin altında kalıyor.
+
+**Aşırı uyum yok ve bunu söylemek önemli.** Optimizasyon sonucu GÖRMEZ;
+piyasanın kendi olasılığına göre ex-ante bir hedefi enbüyükler. `esik_taramasi`
+sonuçlara bakıp eşik seçtiği için hold-out gerektiriyordu; burada seçilen bir
+parametre yok, dolayısıyla o risk de yok.
+
+**Okunmayacak satır:** ≥14 sayısının 3'ten 2'ye inmesi. 36 haftada 14+ tek
+olaydır ve iki yönde de gürültüdür. Sağlam olan iki sayı **hedef** ve
+**maliyet**tir. Gerçekleşenin modelin dediğinden yüksek çıkması (%39,5 ↔ 24/36)
+beklenendir: `P(k≤2)` alt sınırdır, kaplama bir kolonu tesadüfen daha iyi
+tutturabilir.
+
+#### Varsayılan kural DEĞİŞMEDİ
+
+`VARSAYILAN_BANKO/UCLU` ve `secim_uret` yerinde duruyor; `secim.py` ölçüm ve
+kıyas aracı olarak eklendi. Ürün davranışını çevirmek ayrı bir karardır ve
+A5'in arındırma çevriminde olduğu gibi açıkça alınmalıdır — çevrildiğinde
+dondurulmuş kuponların hangi kuralla kurulduğu da kayda yazılmalıdır.
+
+### 3.20 Asya handikabı + alt/üst → türetilmiş 1X2 (A6) — **geçmedi**
+
+A4 "mevcut veriden türetilebilir bir özellik piyasayı geçemiyor" demişti.
+Ama elde olup **hiç bakılmamış** bir veri kaynağı vardı: `build_egitim.py`'nin
+zaten indirdiği ana lig dosyaları iki fiyat daha taşıyor.
+
+| Pazar | Kapsam (22 lig × 4 sezon, 31.132 maç) | O güne kadar kullanan kod |
+|---|---:|---|
+| Alt/üst 2.5 (`AvgC>2.5` / `AvgC<2.5`) | **%99,9** | yok |
+| Asya handikabı (`AvgCAHH/AHA` + çizgi `AHCh`) | **%99,9** | yok |
+
+**Bu, A1–A3'ün dokuz özelliğinden farklı bir şey.** Onlar 1X2 fiyatının
+*üstüne* eklenen özelliklerdi; bunlar aynı maça verilmiş **bağımsız** iki
+fiyat: alt/üst beklenen toplam golü, handikap beklenen gol farkını çiviler.
+
+#### Türetme
+
+İki pazar da marj arındırılır → `P(toplam ≥ 3)` ile Poisson ortalaması μ,
+handikap kapama olasılığıyla supremacy δ çözülür (ikisi de tek köklü, ikiye
+bölme). `λ_ev, λ_dep = (μ±δ)/2` ve `D`'nin dağılımından 1X2.
+
+**Çeyrek çizgiler ihmal edilemezdi:** arşivdeki çizgilerin **%53'ü** çeyrek
+(−0,25 / +0,25 / −0,75 …). `spor_toto/skor.py:ah_kapama` bunları iki yarım
+bahse böler ve tam sayı çizgide iadeyi ayrı tutar.
+
+#### Ölçüm
+
+Ham türetme piyasadan **kötü** çıktı (+0,00104 Brier). Teşhis, bağımsız
+Poisson'un bilinen kusuru: **beraberliği eksik tahmin ediyor** — model
+%24,23, gerçek %26,09. İki parametre (beraberlik şişirme ρ, sıcaklık β)
+eklenip **sezon dışarıda bırakmalı** uyduruldu:
+
+| Tutulan | ρ | β | piyasa | türet+d | fark |
+|---|---:|---:|---:|---:|---:|
+| 2122 | 0,166 | 1,15 | 0,5943 | 0,5941 | −0,00021 |
+| 2223 | 0,179 | 1,15 | 0,5929 | 0,5928 | −0,00014 |
+| 2324 | 0,156 | 1,15 | 0,5921 | 0,5920 | −0,00015 |
+| 2425 | 0,168 | 1,16 | 0,5954 | 0,5956 | +0,00025 |
+
+Toplam (31.101 maç · 183 hafta), hafta düzeyinde eşleştirilmiş bootstrap:
+
+| Aday | Fark | %95 aralık | Geçti |
+|---|---:|---|---|
+| `türet+düzeltme` | −0,000063 | [−0,000287, **+0,000155**] | hayır |
+| `50/50 karışım` | −0,000107 | [−0,000223, **+0,0000038**] | hayır |
+
+#### Yöntem notu — bir kez yanlış okundu ve düzeltildi
+
+İlk koşumda karışımın üst sınırı sıfırın hemen altında göründü ve "geçti"
+sanıldı. **İki hata vardı:** bootstrap *maç* düzeyindeydi (proje kuralı
+*hafta* — aynı hafta sonu oynanan maçlar bağımsız değil) ve verdict tek bir
+bootstrap kuantiline dayanıyordu. Hafta düzeyine geçilip **on ayrı tohumla**
+koşulunca **onunda da geçmedi**; üst sınır her tohumda pozitif çıktı.
+
+Sınırdaki bir aralığı tek tohumla okumak, aralığın kendisini görmezden
+gelmektir. A5'teki yuvarlama hatasıyla aynı aile: karar, ölçünün
+belirsizliğinden daha ince bir ayrıntıya dayanmamalı.
+
+**Sonradan ölçüldü — birim seçimi gerçekten belirleyiciydi.** İki etken
+(birim ve tohum) ayrıştırıldı; gerçek hold-out ölçümünde, on tohumun kaçında
+"geçti" çıktığı:
+
+| Ölçüm | Birim | Ortalama üst sınır | Geçen tohum |
+|---|---|---:|---:|
+| **hold-out** (gerçek) | maç | −0,0000029 | **9 / 10** |
+| **hold-out** (gerçek) | hafta | +0,0000069 | **0 / 10** |
+| sabit parametre | maç | −0,0000227 | 10 / 10 |
+| sabit parametre | hafta | −0,0000130 | 10 / 10 |
+
+Birim tek başına verdict'i çeviriyor (9/10 ↔ 0/10). Oysa hafta düzeyinin
+maç düzeyine göre **tasarım etkisi yalnızca 1,11×** (Brier seviyesinde
+1,16×; hafta başına ortalama 170 maç). Ders bu ikisinin birlikte
+okunmasında: **küçük bir tasarım etkisi, sınırdaki bir bulguyu çevirmeye
+yeter.** Aralık sıfıra ne kadar yakınsa, birim seçimi o kadar belirleyici
+olur — ve bir bulgu tam da o zaman "sadece bir ayrıntı" diye savunulur.
+
+> Not: sabit parametreli kıyasta iki birim de "geçti" der. Bu satır, birimi
+> **gerçek ölçüm dışında** sınayan bir koşumun neden yanıltıcı olduğunu
+> gösterdiği için tabloda duruyor.
+
+#### Sonuç
+
+Handikap ve alt/üst fiyatları, 1X2 fiyatının **ötesinde** ölçülebilir bilgi
+taşımıyor — üç pazar aynı görüşün üç yüzü. **Korpus genişletilmedi:** ölü bir
+uç için 31 bin satıra on sütun eklemenin karşılığı yok. Türetme ve matematiği
+`spor_toto/skor.py`'de duruyor, 21 testle korunuyor; yeni bir veri kaynağı
+gelirse hesap hazır.
+
+A4'ün hükmü, elde olup bakılmamış **son** kaynakla da sınandı ve ayakta kaldı.
+
+### 3.21 Beraberliğe özel düzeltme (Ö3) — **şekil gerçek, büyüklük yok**
+
+Kalibrasyon eğrisi toplamda temiz (§3.18). Ama maçlar **favorinin gücüne**
+göre bölününce beraberlikte düzenli bir şekil çıkıyor:
+
+| favori olasılığı | n | piyasa "0" | gerçek "0" | fark |
+|---|---:|---:|---:|---:|
+| %30–40 | 6.350 | %29,55 | %30,25 | +0,70 |
+| **%40–50** | **11.837** | **%27,95** | **%28,86** | **+0,91** ← Wilson aralığı dışı |
+| %50–60 | 6.720 | %25,22 | %24,94 | −0,28 |
+| %60–70 | 3.446 | %21,22 | %20,63 | −0,59 |
+| %70+ | 2.750 | %14,69 | %14,22 | −0,47 |
+
+Sapma bantlar arasında **tek yönde ilerliyor** — rastgele beş sapma bu
+sırayla dizilmez. Hipotez: piyasa denk maçlarda beraberliği eksik, açık
+maçlarda fazla fiyatlıyor.
+
+#### Önce iki uyarı — ikisi de sonucu önceden haber veriyordu
+
+**(1) Çok kıyas.** Beş bant bakıldı; birinin %95 aralığının dışına düşmesi
+tek başına bulgu değil. Bonferroni ile eşik ~%99'a çıkar ve +0,91 orada kalır.
+
+**(2) Sezon sezon işaret tutmuyor.** %40–50 bandındaki fark: **+0,44 ·
+−0,70 · +1,77 · +2,14**. Dört sezonun biri ters işaretli. Havuzlanmış
+"anlamlı" sonuç, dört sezonun ikisinin taşıdığı bir şey.
+
+#### Neden karar kuralı değil, olasılık düzeltmesi
+
+Plan bunu "beraberliğe özel **karar kuralı**" diye yazmıştı. **Ö1'den sonra o
+biçim yanlış.** Eski eşik kuralı üç sembole simetrik davranıyor ve beraberliği
+mekanik olarak atıyordu; `secim.en_iyi_secim` öyle bir kural taşımıyor,
+verilen olasılıklara göre `P(k≤2)`'yi enbüyüklüyor. Seçim katmanına
+"beraberliği koru" istisnası eklemek, doğru olan optimizasyonu bozup üstüne
+yama koymak olurdu. Hipotez zaten olasılıkla ilgili → düzeltme olasılıkta
+yapılır, seçim katmanı kendiliğinden doğru şeyi yapar.
+
+#### Model: iki parametre, **iki ayrı iddia**
+
+    z₀ = log p₀ + a + b·(f − c)      f = max(p),  c = eğitim setinin ortalama f'i
+
+`a` beraberliği topluca kaydırır — **yeni değil**, `kalibre_bias` olarak
+ölçülüp geçmişti (§3.11). `b` sapmanın favori gücüyle değişmesi — Ö3'ün asıl
+iddiası. Bu yüzden asıl kıyas `bant − piyasa` değil **`bant − sabit`**.
+
+#### Ölçüm (sezon dışarıda bırakmalı, 31.103 maç · 183 hafta)
+
+| Tutulan | a | b | c |
+|---|---:|---:|---:|
+| 2122 | +0,0157 | **−0,1924** | 0,5051 |
+| 2223 | +0,0236 | **−0,2949** | 0,5059 |
+| 2324 | +0,0029 | **−0,2207** | 0,5029 |
+| 2425 | +0,0091 | **−0,3180** | 0,5035 |
+
+**`b` dört katlamanın dördünde de negatif** — şekil gerçek, sezon sezon
+tutarlı. Ama Brier'e yansıması yok:
+
+| Kıyas | Fark | %95 aralık | Geçen tohum |
+|---|---:|---|---:|
+| `sabit − piyasa` | +0,000027 | [−0,000021, +0,000079] | — |
+| `bant − piyasa` | −0,000031 | [−0,000126, +0,000061] | **0 / 10** |
+| **`bant − sabit`** | **−0,000057** | [−0,000137, **+0,000021**] | **0 / 10** |
+
+A6'nın dersi uygulandı: on tohum, hafta düzeyi. Aralık her tohumda sıfırı
+içeriyor.
+
+#### Aşağı akış: kuponda ne değişiyor
+
+Düzeltici korpusta eğitilip 36 kupon haftasına uygulandı (kupon haftaları
+korpusta yok — temiz out-of-sample):
+
+- İşareti değişen maç: **30/540 (%5,6)**, en az bir işareti değişen hafta 17/36.
+- Beraberlik içeren işaret: 292 → **309 (+17)** — düzeltme gerçekten
+  beraberliği daha çok koruyor, yani hipotezin öngördüğü şeyi yapıyor.
+
+| Plan | **piyasa** olasılığı altında `P(k≤2)` | **düzeltilmiş** altında |
+|---|---:|---:|
+| piyasa planı | **%39,52** | %39,61 |
+| düzeltilmiş plan | %39,48 | **%39,67** |
+
+**Her plan kendi cetveli altında kazanıyor, ~0,05 puanla.** Bu, bilgi
+olmadığının imzasıdır: fark gerçek bir kazanç değil, "hangi cetvelle
+ölçtüğün". Kıyas için: Ö1'in karar katmanı aynı sayıda **+6,02 puan**
+getirmişti — yüz kat.
+
+#### Sonuç
+
+Şekil gerçek (dört sezonda da aynı işaret), büyüklük ölçülemez. Piyasa
+beraberliği favori gücüne göre biraz kaydırıyor olabilir, ama kayma
+Brier'de de kupon kararında da gürültünün altında kalıyor. **Kural
+değişmedi.** `spor_toto/beraberlik.py` ve 19 testi duruyor: iddaa arşivi
+(Ö4) olgunlaşınca aynı soru **oynanan** piyasaya sorulacak ve hesap hazır
+olacak — marjı %18 olan bir piyasada aynı sapmanın büyük çıkması makul.
+
+> Ö3, planın "geçmezse yazılır ve bırakılır" maddesinin uygulanmasıdır.
+
+### 3.22 İddaa ekseni (Ö4) — durma kuralı yazıldı, ölçüm bekliyor
+
+**Ölçtüğümüz piyasa, oynadığımız piyasa değil.** Projenin bütün
+kalibrasyonu football-data üzerinde; kupon iddaa'da oynanıyor:
+
+| Piyasa | Marj | Nerede kullanılıyor |
+|---|---:|---|
+| football-data (`AvgC*`) | **%7,26** | A1–A6, kalibrasyon, geri test, eşikler |
+| iddaa — bayi (`odd`) | **%16,93** | kuponun gerçekten oynandığı yer |
+| iddaa — web (`wodd`) | **%21,32** | aynı bülten, ayrı fiyat |
+
+Oran **2,6 kat** ve bu önemsiz bir ayrıntı değil: marj, arındırma
+yönteminin ne kadar önemli olduğunu doğrudan belirleyen sayı. A5'in
+bulgusu (`orantili` → `shin`) düşük marjlı bir piyasada ölçüldü; yüksek
+marjlı bir piyasada aynı sorunun cevabı **aynı olmak zorunda değil**.
+
+#### Bugün elde ne var
+
+| Kaynak | Oran | Sonuç | Ölçüme girer mi |
+|---|---|---|---|
+| Bülten arşivi (`data/iddaa/*.csv`) | ✅ 469 maç | ❌ | hayır — kalibrasyon sonuç ister |
+| Kupon haftaları (`data/super_toto/2026_27/`) | ✅ iddaa | ✅ | **evet — 1 hafta, 15 maç** |
+
+Yani ölçümün yakıtı haftada **15 maç** ve bugün **bir hafta** var.
+
+#### Durma kuralı — sayı önceden yazıldı
+
+Standart iki taraflı güç hesabı (%80 güç, %5 anlamlılık). **sd
+uydurulmadı, ölçüldü:** aynı maçlarda iki arındırma yöntemi arasındaki
+hafta başına Brier farkının gerçek standart sapması, 38 haftada
+**0,00358**.
+
+| Aranan etki (Brier) | Gerekli hafta | Sezon |
+|---:|---:|---:|
+| 0,0050 | 5 | 0,1 |
+| 0,0030 | 12 | 0,3 |
+| **0,0015** | **45** | **1,1** |
+| 0,0010 | 101 | 2,5 |
+| 0,0005 | 403 | 9,8 |
+
+**Aranan etki 0,0015 seçildi ve gerekçesi ölçümden bağımsız:** A5'te
+arındırma seçimi football-data'da hafta başına 0,00059 Brier değiştirdi;
+Shin düzeltmesinin büyüklüğü marjla ölçeklenir, marj 2,6 kat, dolayısıyla
+beklenen etki ~0,0015. Bu sayı **önceden** yazılıyor ki sonuç görüldükten
+sonra "aslında daha küçüğü de sayılır" denemesin.
+
+> **Kural: 45 kupon haftası (iddaa oranı + sonuç) birikmeden kalibrasyon
+> koşulmaz.** Erken koşulup "fark yok" denmesi, gücün yetmediği bir ölçümü
+> bulgu sanmaktır. `tests/test_iddaa_hazirlik.py::test_elde_olan_veri_yetmiyor`
+> bilerek konmuş bir **tetiktir**: kırıldığı gün veri gelmiş demektir.
+
+#### Bugün ölçülebilen tek parça: bayi ↔ web
+
+Alt sorulardan biri sonuç gerektirmiyor — iki fiyatın **ayrışıp
+ayrışmadığı** yalnızca bülten arşivinden okunur (469 maç):
+
+- Marj ayrı: bayi %16,93 ↔ web %21,32 (**web daha büyük pay alıyor**).
+- Ama arındırmadan sonra en büyük sembol farkı ortalama **0,53 puan**,
+  ortanca 0,47 puan; 1 puandan çok ayrışan yalnızca **52/469 (%11,1)**.
+
+**Marj ayrı, görüş aynı.** İki fiyat aynı bültenin iki vitrini; fark
+büyük ölçüde komisyon, bilgi değil. "`odd`–`wodd` farkı sonucu öngörüyor
+mu" sorusunun ölçülecek tarafı maçların ancak %11'inde var — bu da o alt
+soruyu, ötekiler beklerken **düşük öncelikli** yapıyor.
+
+#### Neden bu eksen yine de tek gerçek uzun vadeli yatırım
+
+Geçmiş iddaa oranı **hiçbir kaynakta yayınlanmıyor**. Arşiv yalnızca
+ileriye doğru büyür ve kaçan hafta geri gelmez. `snapshot-iddaa.yml`
+haftalık koşuyor; bu iş, sonucu bir sezon sonra alınacak olsa bile
+**bugün doğru iş**.
+
+    python scripts/iddaa_hazirlik.py            # elde ne var, ne eksik
+    python scripts/iddaa_hazirlik.py --guc      # kac hafta gerekir
+    python scripts/iddaa_hazirlik.py --bayi-web # odd vs wodd
+
 ## 4. Sayfada bugün ne var
 
 **`/istatistik`** — sezon dağılımı (en sık sonuç + pay çubuğu) · 5 sayı kutusu (sembol
@@ -1130,6 +1467,10 @@ ve karşılıkları: kupon seti 0,5747 → **0,5740**, korpus 0,5940 → **0,593
 | **Favori–sürpriz yanlılığı (A5)** | 31.103 maç | Piyasanın %70–80 dediği maçlar gerçekte **%78,9** (n=1.702) — sapma tek yönlü ve düzenli |
 | **İzotonik kalibrasyon (A5)** | 31.103 maç | `orantili` üzerinde **geçti** (−0,00036 [−0,00067, −0,00003]); `shin` üzerinde **hiçbir şey eklemiyor** — aynı olgu, iki kez sayılamaz |
 | **Arındırma çevrimi (A5)** | 31.103 maç · 36 hafta | Varsayılan `shin` oldu. Kupon seti Brier 0,5747→**0,5740**; geri test hold-out kolon/hafta 6.897→**2.228**, seçilen eşik 31 hafta 0,68/0,42 → **34 hafta 0,68/0,38** (varsayılanın kendisi) |
+| **Karar katmanı (B0)** | 36 hafta | Seçim `P(k≤2)`'ye göre kurulunca **+6,02 puan** hedef ve **%26 daha az kolon**; eşik kuralı 35/36 haftada optimalin altında. Tahmin tarafında aynı kazanç için ~0,10 Brier gerekirdi |
+| **Handikap + alt/üst (A6)** | 31.101 maç · 183 hafta | Türetilmiş 1X2 **geçmedi**: −0,000063 [−0,000287, +0,000155]; 50/50 karışım da −0,000107 [−0,000223, +0,0000038]. Üç pazar aynı görüşün üç yüzü |
+| **Beraberlik düzeltmesi (Ö3)** | 31.103 maç · 183 hafta | Şekil gerçek (`b` dört katlamada da negatif), büyüklük yok: `bant − sabit` −0,000057 [−0,000137, +0,000021], **0/10 tohum**. Kuponda 30/540 işaret değişiyor, `P(k≤2)` her plan kendi cetveli altında ~0,05 puan kazanıyor — bilgisizliğin imzası |
+| **İddaa ekseni (Ö4)** | 469 bülten maçı · 1 kupon haftası | **Ölçülmedi, kural yazıldı.** Marj football-data %7,26 ↔ iddaa %16,93 (bayi) / %21,32 (web). Kalibrasyon için **45 kupon haftası** gerekiyor (ölçülen sd 0,00358, aranan etki 0,0015). Bugün ölçülebilen tek parça: bayi–web arındırmadan sonra ort. **0,53 puan** ayrışıyor — marj ayrı, görüş aynı |
 
 **Okuma.** Aşırı uyum modelin kapasitesinden değil örneklem küçüklüğünden geliyordu; büyük
 korpus onu kaldırdı. Ama kalan etki 0,0005–0,0015 Brier — 31 binde anlamlı, 540'ta değil ve
@@ -1867,7 +2208,7 @@ python -m spor_toto.disari                 # A3: piyasa dışı özellikler
 python -m spor_toto.tahmin                 # ÜRÜN: yaklaşan maçlara olasılık
 
 # Denetim
-pytest -q                                  # 1.031 test (82'si bu katman, 294'ü tahmin)
+pytest -q                                  # 1.116 test (82'si bu katman, 294'ü tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out

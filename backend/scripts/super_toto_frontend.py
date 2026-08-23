@@ -152,8 +152,16 @@ def uret(sezon: str = "2026_27") -> dict[str, Any]:
                 "banko_esik": bugun["banko_esik"],
                 "uclu_esik": bugun["uclu_esik"],
                 "arindirma": ARINDIRMA_VARSAYILAN,
+                # Bugunku kuralin adi. Dondurulmus kuponlar `esik` ile
+                # kuruldu; varsayilan 2026-08'de `hedef`e cevrildi (B0,
+                # docs §3.19). Hangi kuralin urettigi yazmazsa iki kupon
+                # arasindaki fark yorumlanamaz.
+                "kural": bugun["kural"],
+                "butce": bugun["butce"],
+                "p_hedef": round(bugun["p_hedef"], 6),
+                "p_hedef_esik": round(bugun["p_hedef_esik"], 6),
             },
-            # Kural ayni, olcek farkli: hangi maclarda isaret degisti.
+            # Isaret farki: hem OLCEK (arindirma) hem KURAL degisti.
             "coupon_drift": (
                 [i + 1 for i, (a, b) in enumerate(
                     zip(donmus["variants"][0]["picks"], bugun["picks"]))

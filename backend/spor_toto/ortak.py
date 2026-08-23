@@ -34,6 +34,7 @@ __all__ = [
     "bant_adi",
     "brier",
     "favori_dilimi",
+    "kacak_dagilimi",
     "normalize_olasilik",
     "wilson",
 ]
@@ -119,3 +120,26 @@ def favori_dilimi(probs: dict[str, float] | None) -> str:
     """Bir maçın favori olasılığının hangi dilime düştüğü."""
     en_yuksek = max(probs.values()) if probs else 0.0
     return bant_adi(en_yuksek, FAVORI_DILIMLERI)
+
+
+def kacak_dagilimi(kacak_olasiliklari: Sequence[float]) -> list[float]:
+    """Poisson-binom: bağımsız maçlarda **toplam kaçak sayısının** dağılımı.
+
+    `d[m]` = tam olarak `m` maçın seçim kümesinin dışında kalma olasılığı.
+    Maçlar bağımsız varsayılır; varsayım ölçüldü ve kırılmadı (haftalık
+    favori isabetinin gözlenen varyansı / öngörülen = 0,91, bkz.
+    `tests/test_invariants.py`).
+
+    `scripts/super_toto_degerlendir.py` içinde tanımlıydı ve oradan
+    kullanılıyordu; `secim` de aynı hesabı istediği için buraya taşındı —
+    iki gövde ayrışsaydı kuponu kuran hesap ile onu değerlendiren hesap
+    farklı şeyler söylerdi.
+    """
+    dagilim = [1.0]
+    for q in kacak_olasiliklari:
+        yeni = [0.0] * (len(dagilim) + 1)
+        for i, v in enumerate(dagilim):
+            yeni[i] += v * (1.0 - q)
+            yeni[i + 1] += v * q
+        dagilim = yeni
+    return dagilim
