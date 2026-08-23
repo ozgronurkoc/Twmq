@@ -15,7 +15,12 @@ cd "$ROOT"
 PY="${PYTHON:-python3}"
 
 # ─── Python ───────────────────────────────────────────────────────────────────
-if "$PY" -c "import flask, numpy, spor_toto" >/dev/null 2>&1; then
+# `xdist` de kontrol ediliyor, cunku bu koruma AKSI HALDE ZARARLI: pytest
+# yapilandirmasi `-n auto` tasiyor ve xdist yoksa pytest hic acilmadan
+# "unrecognized arguments" verir. Kurulu bir makinede kosul yalnizca
+# spor_toto'ya baksaydi yeniden kurulum atlanir, xdist hic gelmez ve
+# "Testler" dugmesi calismaz olurdu.
+if "$PY" -c "import flask, numpy, spor_toto, xdist" >/dev/null 2>&1; then
   echo "✓ Python bagimliliklari kurulu"
 else
   echo "→ Python bagimliliklari kuruluyor (backend/)..."
