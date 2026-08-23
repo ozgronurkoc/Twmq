@@ -36,6 +36,7 @@ KOK = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(KOK))
 
 from spor_toto.core import SEMBOLLER
+from spor_toto.ortak import kacak_dagilimi as ortak_kacak_dagilimi
 
 #: Sembol duzeni TEK kaynaktan (`spor_toto.core`). Bu dosyada ayri bir
 #: demet olarak yaziliyordu; depoda ayni deger on bir kez tanimliydi.
@@ -99,16 +100,11 @@ def en_iyi_kolon(secimler: Sequence[Sequence[str]], gercek: str) -> int:
     return en_iyi
 
 
-def kacak_dagilimi(p_kacak: Sequence[float]) -> list[float]:
-    """Poisson-binom: bağımsız maçlarda toplam kaçak sayısının dağılımı."""
-    dist = [1.0]
-    for p in p_kacak:
-        yeni = [0.0] * (len(dist) + 1)
-        for i, v in enumerate(dist):
-            yeni[i] += v * (1 - p)
-            yeni[i + 1] += v * p
-        dist = yeni
-    return dist
+#: Poisson-binom `spor_toto.ortak`a taşındı: `spor_toto.secim` kuponu
+#: KURARKEN aynı hesabı istiyor, bu betik ise onu DEĞERLENDİRİYOR. İki
+#: gövde ayrışsaydı kuponu kuran hesap ile onu ölçen hesap farklı şeyler
+#: söylerdi — ve bu, fark edilmesi en zor hata türüdür.
+kacak_dagilimi = ortak_kacak_dagilimi
 
 
 def kupon_degerlendir(d: dict[str, Any], picks: Sequence[str]) -> dict[str, Any]:

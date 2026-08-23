@@ -129,7 +129,7 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/app/super-toto/page.tsx` · `components/super-toto/haftalar.tsx` · `lib/super-toto.ts` | Sezonun hafta şeridi; `?hafta=N` adreste durur |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **1.031 test**; **82'si** istatistik katmanına (`history` `odds` `backtest`
+paketi toplam **1.052 test**; **82'si** istatistik katmanına (`history` `odds` `backtest`
 `api_stats` `api_backtest` `snapshot_iddaa`), **294'ü** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer`). Dosya adlarıyla sayılıdır ki tablo elle bakım gerektirmesin —
@@ -1013,6 +1013,82 @@ Kupon yarı fiyata düşerken tutma olasılığı **artıyor** — iki eksende b
 aşması. 2. haftanın kupon dosyasına düşülen *"eşiği 0,6 puanla kaçırdı"* notu, bu
 yanlılığın ta kendisiydi.
 
+### 3.19 Karar katmanı: seçim artık hedefe göre kuruluyor (B0)
+
+A1–A5 tahmin eksenini ölçtü ve kapattı. Bu iş **tahmin değil karar** katmanına
+bakıyor ve önce şu soruyu sordu: *tahmin iyileşmesi zaten neyi satın alıyor?*
+
+#### Önce ölçü: tahmin becerisinin dönüşüm oranı
+
+Piyasa olasılığı gerçek sonuca doğru yapay olarak kaydırılıp (uydurma beceri)
+hem Brier hem `P(en iyi kolon ≥ 12)` izlendi (36 tam hafta):
+
+| yapay beceri | Brier | ΔBrier | P(≥12) | ΔP(≥12) |
+|---|---:|---:|---:|---:|
+| yok | 0,5740 | — | %33,5 | — |
+| +1 puan | 0,5562 | −0,0178 | %34,7 | +1,17 |
+| +5 puan | 0,4881 | −0,0859 | %38,1 | +4,61 |
+| +10 puan | 0,4099 | −0,1641 | %41,6 | +8,09 |
+
+**0,01 Brier ≈ +0,6 puan P(≥12).** A1–A5'te aranan/bulunan mertebe 0,0005
+Brier; karşılığı **+0,03 puan**. Yani tahmin ekseni, ürünün asıl sayısı için
+çok zayıf bir kaldıraç — bu, "tahmin geliştirmeyelim" değil, "tahmin
+geliştirerek kupon sonucunu değiştiremeyiz" demektir.
+
+#### Hedefin tam tanımı
+
+`k` maç seçim kümesinin dışında kalırsa o `k` maç her kolonda yanlıştır; kalan
+`15−k` içeridedir ve Hamming bloğu en fazla 1 hata bırakır. Yani en iyi kolon
+≥ `14−k`, dolayısıyla **P(en iyi kolon ≥ 12) ≥ P(k ≤ 2)**. Eşitlik değil **alt
+sınır**: hedef temkinlidir, optimize edilmesi güvenlidir.
+
+Yapı üç olguyla sadeleşiyor: banko `q = 1−p₁`, çifte `q = p₃`, **üçlü `q = 0`
+(asla kaçmaz)**; bedel yalnızca sayılara bağlı (`2^a·3^b·16/2⁷`).
+
+#### Bugünkü kural hiçbir yerde bu hedefi optimize etmiyordu
+
+`backtest.secim_uret` yalnızca favorinin olasılığına bakıyor: ikincinin
+olasılığını okumuyor, haftanın şeklini görmüyor, bütçeyi ve kaplama bedelini
+bilmiyor, maç maç bağımsız çalışıyor. `p_kume_ici`, Markov zinciri ve Monte
+Carlo **sonradan raporlama**; hiçbiri seçime geri beslenmiyor.
+`butce_danismani` planları `p_kume_ici`'ye göre sıralıyor ama yalnızca bütçe
+kısılırken — ve `p_kume_ici` **P(0 kaçak)** demek, oysa garanti iki kaçağa
+kadar 12 veriyor.
+
+#### Ölçüm — aynı bütçe, 36 hafta
+
+`spor_toto/secim.py`, bütçe içinde `P(k ≤ 2)`'yi enbüyüklüyor. Arama **kesin**:
+gelecekteki her evrişim kümülatiflerin pozitif doğrusal birleşimi olduğu için
+`(cum₀, cum₁, cum₂)` üzerinde Pareto baskınlığı gelecekte de korunur, yani
+budama yaklaşıklık değil. `tests/test_secim.py::test_optimizasyon_gercekten_optimal`
+bunu dört bütçede kaba kuvvetle karşılaştırarak çiviliyor.
+
+| kural | kolon/hafta | P(k≤2) | en iyi kolon ort. | ≥14 | ≥13 | ≥12 |
+|---|---:|---:|---:|---:|---:|---:|
+| eşik (0,68/0,38) | 1.987 | %33,50 | 11,50 | 3 | 7 | 21 |
+| **hedefe göre** | **1.461** | **%39,52** | **11,81** | 2 | **13** | **24** |
+
+**+6,02 puan hedef ve %26 daha az kolon.** Eşik kuralı 36 haftanın **35'inde**
+optimalin altında kalıyor.
+
+**Aşırı uyum yok ve bunu söylemek önemli.** Optimizasyon sonucu GÖRMEZ;
+piyasanın kendi olasılığına göre ex-ante bir hedefi enbüyükler. `esik_taramasi`
+sonuçlara bakıp eşik seçtiği için hold-out gerektiriyordu; burada seçilen bir
+parametre yok, dolayısıyla o risk de yok.
+
+**Okunmayacak satır:** ≥14 sayısının 3'ten 2'ye inmesi. 36 haftada 14+ tek
+olaydır ve iki yönde de gürültüdür. Sağlam olan iki sayı **hedef** ve
+**maliyet**tir. Gerçekleşenin modelin dediğinden yüksek çıkması (%39,5 ↔ 24/36)
+beklenendir: `P(k≤2)` alt sınırdır, kaplama bir kolonu tesadüfen daha iyi
+tutturabilir.
+
+#### Varsayılan kural DEĞİŞMEDİ
+
+`VARSAYILAN_BANKO/UCLU` ve `secim_uret` yerinde duruyor; `secim.py` ölçüm ve
+kıyas aracı olarak eklendi. Ürün davranışını çevirmek ayrı bir karardır ve
+A5'in arındırma çevriminde olduğu gibi açıkça alınmalıdır — çevrildiğinde
+dondurulmuş kuponların hangi kuralla kurulduğu da kayda yazılmalıdır.
+
 ## 4. Sayfada bugün ne var
 
 **`/istatistik`** — sezon dağılımı (en sık sonuç + pay çubuğu) · 5 sayı kutusu (sembol
@@ -1130,6 +1206,7 @@ ve karşılıkları: kupon seti 0,5747 → **0,5740**, korpus 0,5940 → **0,593
 | **Favori–sürpriz yanlılığı (A5)** | 31.103 maç | Piyasanın %70–80 dediği maçlar gerçekte **%78,9** (n=1.702) — sapma tek yönlü ve düzenli |
 | **İzotonik kalibrasyon (A5)** | 31.103 maç | `orantili` üzerinde **geçti** (−0,00036 [−0,00067, −0,00003]); `shin` üzerinde **hiçbir şey eklemiyor** — aynı olgu, iki kez sayılamaz |
 | **Arındırma çevrimi (A5)** | 31.103 maç · 36 hafta | Varsayılan `shin` oldu. Kupon seti Brier 0,5747→**0,5740**; geri test hold-out kolon/hafta 6.897→**2.228**, seçilen eşik 31 hafta 0,68/0,42 → **34 hafta 0,68/0,38** (varsayılanın kendisi) |
+| **Karar katmanı (B0)** | 36 hafta | Seçim `P(k≤2)`'ye göre kurulunca **+6,02 puan** hedef ve **%26 daha az kolon**; eşik kuralı 35/36 haftada optimalin altında. Tahmin tarafında aynı kazanç için ~0,10 Brier gerekirdi |
 
 **Okuma.** Aşırı uyum modelin kapasitesinden değil örneklem küçüklüğünden geliyordu; büyük
 korpus onu kaldırdı. Ama kalan etki 0,0005–0,0015 Brier — 31 binde anlamlı, 540'ta değil ve
@@ -1867,7 +1944,7 @@ python -m spor_toto.disari                 # A3: piyasa dışı özellikler
 python -m spor_toto.tahmin                 # ÜRÜN: yaklaşan maçlara olasılık
 
 # Denetim
-pytest -q                                  # 1.031 test (82'si bu katman, 294'ü tahmin)
+pytest -q                                  # 1.052 test (82'si bu katman, 294'ü tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out
