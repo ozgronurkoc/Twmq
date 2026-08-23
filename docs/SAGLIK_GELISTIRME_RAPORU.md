@@ -181,7 +181,7 @@ servisin sağlık durumu değildir; 503 izlemeyi yanlış yere baktırırdı.
 
 > **Bugünkü sayılar (2026-08-23).** Yukarısı bu turun kaydıdır ve öyle kalır.
 > O turdan bu yana sağlık katmanı **85 teste** (`health` 41 · `api_health` 22 ·
-> `meta` 14 · `health_history` 8), süitin tamamı **1.052 teste** ve değişmez
+> `meta` 14 · `health_history` 8), süitin tamamı **1.073 teste** ve değişmez
 > sayısı **23'ten 24'e** çıktı — eklenen kontrol `api_sozlesmesi` (`ucuca`
 > kategorisi): on üç ucun gövdesi kurulabiliyor ve ilan edildiği şekilde mi.
 

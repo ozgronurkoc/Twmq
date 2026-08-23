@@ -129,7 +129,7 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/app/super-toto/page.tsx` · `components/super-toto/haftalar.tsx` · `lib/super-toto.ts` | Sezonun hafta şeridi; `?hafta=N` adreste durur |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **1.052 test**; **82'si** istatistik katmanına (`history` `odds` `backtest`
+paketi toplam **1.073 test**; **82'si** istatistik katmanına (`history` `odds` `backtest`
 `api_stats` `api_backtest` `snapshot_iddaa`), **294'ü** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer`). Dosya adlarıyla sayılıdır ki tablo elle bakım gerektirmesin —
@@ -1089,6 +1089,74 @@ kıyas aracı olarak eklendi. Ürün davranışını çevirmek ayrı bir karard�
 A5'in arındırma çevriminde olduğu gibi açıkça alınmalıdır — çevrildiğinde
 dondurulmuş kuponların hangi kuralla kurulduğu da kayda yazılmalıdır.
 
+### 3.20 Asya handikabı + alt/üst → türetilmiş 1X2 (A6) — **geçmedi**
+
+A4 "mevcut veriden türetilebilir bir özellik piyasayı geçemiyor" demişti.
+Ama elde olup **hiç bakılmamış** bir veri kaynağı vardı: `build_egitim.py`'nin
+zaten indirdiği ana lig dosyaları iki fiyat daha taşıyor.
+
+| Pazar | Kapsam (22 lig × 4 sezon, 31.132 maç) | O güne kadar kullanan kod |
+|---|---:|---|
+| Alt/üst 2.5 (`AvgC>2.5` / `AvgC<2.5`) | **%99,9** | yok |
+| Asya handikabı (`AvgCAHH/AHA` + çizgi `AHCh`) | **%99,9** | yok |
+
+**Bu, A1–A3'ün dokuz özelliğinden farklı bir şey.** Onlar 1X2 fiyatının
+*üstüne* eklenen özelliklerdi; bunlar aynı maça verilmiş **bağımsız** iki
+fiyat: alt/üst beklenen toplam golü, handikap beklenen gol farkını çiviler.
+
+#### Türetme
+
+İki pazar da marj arındırılır → `P(toplam ≥ 3)` ile Poisson ortalaması μ,
+handikap kapama olasılığıyla supremacy δ çözülür (ikisi de tek köklü, ikiye
+bölme). `λ_ev, λ_dep = (μ±δ)/2` ve `D`'nin dağılımından 1X2.
+
+**Çeyrek çizgiler ihmal edilemezdi:** arşivdeki çizgilerin **%53'ü** çeyrek
+(−0,25 / +0,25 / −0,75 …). `spor_toto/skor.py:ah_kapama` bunları iki yarım
+bahse böler ve tam sayı çizgide iadeyi ayrı tutar.
+
+#### Ölçüm
+
+Ham türetme piyasadan **kötü** çıktı (+0,00104 Brier). Teşhis, bağımsız
+Poisson'un bilinen kusuru: **beraberliği eksik tahmin ediyor** — model
+%24,23, gerçek %26,09. İki parametre (beraberlik şişirme ρ, sıcaklık β)
+eklenip **sezon dışarıda bırakmalı** uyduruldu:
+
+| Tutulan | ρ | β | piyasa | türet+d | fark |
+|---|---:|---:|---:|---:|---:|
+| 2122 | 0,166 | 1,15 | 0,5943 | 0,5941 | −0,00021 |
+| 2223 | 0,179 | 1,15 | 0,5929 | 0,5928 | −0,00014 |
+| 2324 | 0,156 | 1,15 | 0,5921 | 0,5920 | −0,00015 |
+| 2425 | 0,168 | 1,16 | 0,5954 | 0,5956 | +0,00025 |
+
+Toplam (31.101 maç · 183 hafta), hafta düzeyinde eşleştirilmiş bootstrap:
+
+| Aday | Fark | %95 aralık | Geçti |
+|---|---:|---|---|
+| `türet+düzeltme` | −0,000063 | [−0,000287, **+0,000155**] | hayır |
+| `50/50 karışım` | −0,000107 | [−0,000223, **+0,0000038**] | hayır |
+
+#### Yöntem notu — bir kez yanlış okundu ve düzeltildi
+
+İlk koşumda karışımın üst sınırı sıfırın hemen altında göründü ve "geçti"
+sanıldı. **İki hata vardı:** bootstrap *maç* düzeyindeydi (proje kuralı
+*hafta* — aynı hafta sonu oynanan maçlar bağımsız değil) ve verdict tek bir
+bootstrap kuantiline dayanıyordu. Hafta düzeyine geçilip **on ayrı tohumla**
+koşulunca **onunda da geçmedi**; üst sınır her tohumda pozitif çıktı.
+
+Sınırdaki bir aralığı tek tohumla okumak, aralığın kendisini görmezden
+gelmektir. A5'teki yuvarlama hatasıyla aynı aile: karar, ölçünün
+belirsizliğinden daha ince bir ayrıntıya dayanmamalı.
+
+#### Sonuç
+
+Handikap ve alt/üst fiyatları, 1X2 fiyatının **ötesinde** ölçülebilir bilgi
+taşımıyor — üç pazar aynı görüşün üç yüzü. **Korpus genişletilmedi:** ölü bir
+uç için 31 bin satıra on sütun eklemenin karşılığı yok. Türetme ve matematiği
+`spor_toto/skor.py`'de duruyor, 21 testle korunuyor; yeni bir veri kaynağı
+gelirse hesap hazır.
+
+A4'ün hükmü, elde olup bakılmamış **son** kaynakla da sınandı ve ayakta kaldı.
+
 ## 4. Sayfada bugün ne var
 
 **`/istatistik`** — sezon dağılımı (en sık sonuç + pay çubuğu) · 5 sayı kutusu (sembol
@@ -1207,6 +1275,7 @@ ve karşılıkları: kupon seti 0,5747 → **0,5740**, korpus 0,5940 → **0,593
 | **İzotonik kalibrasyon (A5)** | 31.103 maç | `orantili` üzerinde **geçti** (−0,00036 [−0,00067, −0,00003]); `shin` üzerinde **hiçbir şey eklemiyor** — aynı olgu, iki kez sayılamaz |
 | **Arındırma çevrimi (A5)** | 31.103 maç · 36 hafta | Varsayılan `shin` oldu. Kupon seti Brier 0,5747→**0,5740**; geri test hold-out kolon/hafta 6.897→**2.228**, seçilen eşik 31 hafta 0,68/0,42 → **34 hafta 0,68/0,38** (varsayılanın kendisi) |
 | **Karar katmanı (B0)** | 36 hafta | Seçim `P(k≤2)`'ye göre kurulunca **+6,02 puan** hedef ve **%26 daha az kolon**; eşik kuralı 35/36 haftada optimalin altında. Tahmin tarafında aynı kazanç için ~0,10 Brier gerekirdi |
+| **Handikap + alt/üst (A6)** | 31.101 maç · 183 hafta | Türetilmiş 1X2 **geçmedi**: −0,000063 [−0,000287, +0,000155]; 50/50 karışım da −0,000107 [−0,000223, +0,0000038]. Üç pazar aynı görüşün üç yüzü |
 
 **Okuma.** Aşırı uyum modelin kapasitesinden değil örneklem küçüklüğünden geliyordu; büyük
 korpus onu kaldırdı. Ama kalan etki 0,0005–0,0015 Brier — 31 binde anlamlı, 540'ta değil ve
@@ -1944,7 +2013,7 @@ python -m spor_toto.disari                 # A3: piyasa dışı özellikler
 python -m spor_toto.tahmin                 # ÜRÜN: yaklaşan maçlara olasılık
 
 # Denetim
-pytest -q                                  # 1.052 test (82'si bu katman, 294'ü tahmin)
+pytest -q                                  # 1.073 test (82'si bu katman, 294'ü tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out
