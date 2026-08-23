@@ -61,6 +61,13 @@ L2 = 1e-3
 #: model, aşırı uyumla aynı görüntüyü verir (dışarıda skor kötü). İkisini
 #: ayırmadan "kapasite zarar veriyor" demek yanlış olurdu.
 EN_COK_YINELEME = 100
+
+#: `np.einsum(optimize=...)` esigi — maç sayısı. Altında yol arama işin
+#: kendisinden pahalı (n=75'te 0,054 ms → 0,125 ms), üstünde iki kat kazanç
+#: (n=8.000'de 25,7 ms → 12,4 ms). Dönüm noktası n≈300 ölçüldü; eşik oraya
+#: kondu. Sonucu DEĞİŞTİRMEZ: yalnızca toplama sırası oynar, Newton adımı
+#: makine epsilonu kadar (3e-16) farklı çıkar ve durma eşiği 1e-10'dur.
+_BUZULME_ESIGI = 300
 DURMA_ESIGI = 1e-10
 
 #: Kendi katsayısını hak etmek için bir ligin/bandın eğitim setinde taşıması
@@ -306,14 +313,22 @@ def _uydur(X: np.ndarray, y: np.ndarray) -> np.ndarray:
     if n == 0:
         return theta
 
+    # `optimize` numpy'a buzulmeyi ikili adimlara bolup BLAS'a devretmesini
+    # soyler. Ucuz degil: her cagrida ~0,1 ms'lik bir yol arama yapiyor, o
+    # yuzden kosula bagli. Korpus olculerinde (n≈24.000, k=41) yineleme
+    # 74 ms'den 34 ms'ye iniyor; kucuk uydurmalarda ise yol arama isin
+    # kendisinden pahali ve saf dongu daha hizli. Esik olculdu (bkz. asagi).
+    optimize = n >= _BUZULME_ESIGI
+
     goz = np.eye(k)
     for _ in range(EN_COK_YINELEME):
         q = _softmax(X @ theta)
-        grad = np.einsum("isk,is->k", X, q - y) / n + L2 * theta
+        grad = np.einsum("isk,is->k", X, q - y, optimize=optimize) / n + L2 * theta
         # H_i = X_iᵀ (diag(q_i) − q_i q_iᵀ) X_i
-        agirlikli = (np.einsum("is,isk->isk", q, X)
-                     - np.einsum("is,it,itk->isk", q, q, X))
-        hess = np.einsum("isk,isj->kj", X, agirlikli) / n + L2 * goz
+        agirlikli = (np.einsum("is,isk->isk", q, X, optimize=optimize)
+                     - np.einsum("is,it,itk->isk", q, q, X, optimize=optimize))
+        hess = (np.einsum("isk,isj->kj", X, agirlikli, optimize=optimize) / n
+                + L2 * goz)
         try:
             adim = np.linalg.solve(hess, grad)
         except np.linalg.LinAlgError:  # pragma: no cover - L2 bunu engeller
