@@ -12,7 +12,7 @@ from itertools import combinations, product
 
 import pytest
 
-from spor_toto.core import Encoder, SEMBOLLER, parse_picks, solve_fix16
+from spor_toto.core import SEMBOLLER, Encoder, parse_picks, solve_fix16
 from spor_toto.fire_scenarios import fire_maliyeti, fire_scenario_report
 
 ORNEK = "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"

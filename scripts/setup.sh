@@ -19,16 +19,24 @@ if "$PY" -c "import flask, numpy, spor_toto" >/dev/null 2>&1; then
   echo "✓ Python bagimliliklari kurulu"
 else
   echo "→ Python bagimliliklari kuruluyor (backend/)..."
-  "$PY" -m pip install -q -e "./backend[test]" \
-    || "$PY" -m pip install -q -r backend/requirements.txt \
-    || true
+  # `|| true` YOK. Once vardi ve gercek kurulum hatasini yutuyordu; asagidaki
+  # guard yalnizca flask/numpy'ye baktigi icin eksik bir `pytest` ya da
+  # `gunicorn` sessizce geciyor, sorun ancak testi/dagitimi kosarken
+  # ortaya cikiyordu.
+  if ! "$PY" -m pip install -q -e "./backend[test]"; then
+    echo "! duzenlenebilir kurulum basarisiz; requirements.txt deneniyor" >&2
+    "$PY" -m pip install -q -r backend/requirements.txt
+  fi
 fi
 
-# Flask + numpy zorunlu: bunlar olmadan API acilmaz.
-if ! "$PY" -c "import flask, numpy" >/dev/null 2>&1; then
-  echo "✗ flask/numpy kurulamadi. Elle deneyin: $PY -m pip install -e './backend[test]'" >&2
-  exit 1
-fi
+# Calisma ve test icin GEREKEN her sey burada dogrulanir — biri eksikse
+# kurulum basarisiz sayilir.
+for _m in flask numpy pytest; do
+  if ! "$PY" -c "import $_m" >/dev/null 2>&1; then
+    echo "✗ '$_m' kurulamadi. Elle deneyin: $PY -m pip install -e './backend[test]'" >&2
+    exit 1
+  fi
+done
 
 # scipy istege bagli: yoksa yalnizca kesin cozucu (ILP) devre disi kalir.
 "$PY" -c "import scipy" >/dev/null 2>&1 \

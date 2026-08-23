@@ -28,7 +28,7 @@ import urllib.error
 import urllib.request
 from datetime import date
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 KOK = Path(__file__).resolve().parent.parent
 VARSAYILAN_CIKTI = KOK / "data" / "st_history_2025_26.json"
@@ -42,7 +42,7 @@ MAKUL_GOL = range(0, 21)
 
 # ─── payload cozumleme ────────────────────────────────────────────────────────
 
-def indir(week: int, cache: Optional[Path], timeout: float = 45.0) -> Optional[list]:
+def indir(week: int, cache: Path | None, timeout: float = 45.0) -> list | None:
     if cache:
         p = cache / f"w{week}.json"
         if p.exists():
@@ -80,7 +80,7 @@ def coz(dizi: list, idx: Any, derinlik: int = 0) -> Any:
     return v
 
 
-def hafta_katalogu(dizi: list, week: int) -> Dict[str, Any]:
+def hafta_katalogu(dizi: list, week: int) -> dict[str, Any]:
     """Kapanis tarihi ve sezon.
 
     Haftanin kendi nesnesi bu alanlari `roundCloseDate` / `year` diye tasir;
@@ -103,7 +103,7 @@ def hafta_katalogu(dizi: list, week: int) -> Dict[str, Any]:
     return yedek
 
 
-def hafta_maclari(dizi: list, week: int) -> List[Dict[str, Any]]:
+def hafta_maclari(dizi: list, week: int) -> list[dict[str, Any]]:
     """Haftanin KENDI `matches` dizisini sirasiyla cozer."""
     hedef = None
     for v in dizi:
@@ -117,7 +117,7 @@ def hafta_maclari(dizi: list, week: int) -> List[Dict[str, Any]]:
     if hedef is None:
         return []
 
-    out: List[Dict[str, Any]] = []
+    out: list[dict[str, Any]] = []
     for ham in hedef:
         kayit = coz(dizi, ham)
         if not isinstance(kayit, dict):
@@ -151,7 +151,7 @@ def hafta_maclari(dizi: list, week: int) -> List[Dict[str, Any]]:
 
 # ─── ozet ─────────────────────────────────────────────────────────────────────
 
-def bant(degerler: List[int]) -> Dict[str, Any]:
+def bant(degerler: list[int]) -> dict[str, Any]:
     ort = statistics.fmean(degerler)
     ust = [v for v in degerler if v > ort]
     alt = [v for v in degerler if v <= ort]
@@ -172,10 +172,10 @@ def bant(degerler: List[int]) -> Dict[str, Any]:
     }
 
 
-def veri_seti(haftalar: List[Dict[str, Any]], kaynak: str) -> Dict[str, Any]:
+def veri_seti(haftalar: list[dict[str, Any]], kaynak: str) -> dict[str, Any]:
     n = len(haftalar)
     mac = sum(len(w["matches"]) for w in haftalar)
-    toplam: Dict[str, Any] = {
+    toplam: dict[str, Any] = {
         s: sum(w["results"].count(s) for w in haftalar) for s in SEMBOLLER
     }
     for s in SEMBOLLER:
@@ -215,8 +215,8 @@ def main() -> int:
     ap.add_argument("--dry-run", action="store_true", help="dosyaya yazma")
     args = ap.parse_args()
 
-    kabul: List[Dict[str, Any]] = []
-    elenen: List[str] = []
+    kabul: list[dict[str, Any]] = []
+    elenen: list[str] = []
 
     for week in range(args.ilk, args.son + 1):
         dizi = indir(week, args.cache)

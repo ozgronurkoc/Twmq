@@ -5,7 +5,7 @@ import time
 
 import pytest
 
-from spor_toto.core import Encoder, parse_picks, solve_fix16
+from spor_toto.core import Encoder, Fix16Hatasi, parse_picks, solve_fix16
 from spor_toto.health import (
     CHECKS,
     KATEGORILER,
@@ -36,8 +36,19 @@ def test_health_report_dict_shape():
     assert "version" in d
     assert "timestamp" in d
     assert d["ok"] is True
-    assert d["degraded"] is False
+    # `degraded` BURADA IDDIA EDILMEZ ve bu bilincli. Tasarim geregi
+    # "dusmedi, yalnizca yavas" demektir (bkz. health.py bas yorumu) ve
+    # sure butceleri MAKINEYE BAGLIDIR: bu testin `degraded is False`
+    # istemesi, yavas bir CI kosucusunda ya da yuklu bir makinede saglam
+    # bir sistemi "bozuk" ilan ediyordu. Olculdu: `stats_sozlesmesi` bu
+    # kapsayicida 143 ms, butcesi 120 ms — hicbir degismez kirilmadan.
+    # Iddia edilen sey su: hicbir kontrol DUSMEDI.
     assert d["passed"] == d["total"]
+    if d["degraded"]:
+        yavaslar = [c["name"] for c in d["checks"] if c.get("yavas")]
+        dusenler = [c["name"] for c in d["checks"] if not c["ok"]]
+        assert not dusenler, f"kontrol dustu: {dusenler}"
+        assert yavaslar, "degraded ama ne yavas ne dusen var — celiski"
     assert d["duration_ms"] > 0
     assert isinstance(d["checks"], list)
     for c in d["checks"]:
@@ -86,7 +97,10 @@ def test_print_report_no_crash(capsys):
     print_report(run_health())
     out = capsys.readouterr().out
     assert "SYSTEM HEALTH" in out
-    assert "HEALTHY" in out
+    # HEALTHY ya da DEGRADED; ikisi de "hicbir degismez kirilmadi" demek.
+    # UNHEALTHY olmamali — asil iddia bu (gerekce: test_health_report_dict_shape).
+    assert "UNHEALTHY" not in out
+    assert ("HEALTHY" in out or "DEGRADED" in out)
     # Kategori başlıkları çıktıda görünmeli.
     assert "Çekirdek" in out
 
@@ -173,7 +187,9 @@ def test_dusen_kontrol_kirilma_yerini_yazar():
     kontrolü ayıklamak kaynak okumaya dönüşür.
     """
     def kirik() -> str:
-        assert False
+        # `assert False` DEGIL: `python -O` assert'leri siler ve kasitli
+        # kirik olmasi gereken bu yardimci sessizce basarili donerdi.
+        raise AssertionError("kasitli kirik kontrol")
 
     r = _run(CheckSpec("kirik_deneme", "cekirdek", "test", kirik))
     assert r.ok is False
@@ -302,7 +318,7 @@ def test_kupon_denetle_kayitli_rapordan_ayridir():
     """Tek bir kuponun doğrulanması, motorun genel sağlığı değildir; ikisi
     aynı tabloda görünürse HEALTHY yanlış okunur."""
     r = kupon_denetle(ORNEK)
-    assert "uyari" in r and r["uyari"]
+    assert r.get("uyari")
     assert {c["name"] for c in r["checks"]}.isdisjoint(
         {c.name for c in CHECKS}), "kupon kontrolleri kayıtlı adlarla karışıyor"
 
@@ -333,7 +349,9 @@ def test_kupon_denetle_butce_zorunlulugu():
 
 
 def test_kupon_denetle_yetersiz_cifte():
-    with pytest.raises(Exception):
+    # Kor `Exception` yerine GERCEK tip: boylece bambaska bir hata
+    # (ImportError, TypeError) testi sessizce gecirmez.
+    with pytest.raises(Fix16Hatasi):
         kupon_denetle("1,1,1,1,1,1,1,1,1,1,1,1,1,1,1")
 
 

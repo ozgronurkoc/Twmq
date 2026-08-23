@@ -5,33 +5,20 @@ on:
     branches: [main]
   pull_request:
 
+# Iki is var ve ayrimi bilincli:
+#
+#   matris  — testleri DESTEKLENEN her Python surumunde kosar. Amaci
+#             tasinabilirlik: bir surume ozgu kirilma erken gorunsun.
+#   kapi    — `scripts/check.sh`i cagirir, yani gelistiricinin yerelde
+#             kostugu KOMUTUN AYNISINI. Adimlar burada YENIDEN YAZILMAZ;
+#             once oyle yapiliyordu ve ikisi ayrismisti: yerel betik CI'nin
+#             alti adimindan ucunu kosuyordu, yani "OK" demesi "CI gecer"
+#             demek degildi.
 jobs:
-  # Arayuzun kendi kapisi. Once hicbir sey yoktu; kurulum kodlamasi
-  # (paylasilabilir baglanti) sabit genislikli ve bir alan tastiginda
-  # SESSIZCE baska bir kupon uretiyor — o yuzden tip denetimiyle birlikte
-  # gidis-donus denetimi de burada kosar.
-  frontend:
+  matris:
+    name: testler (py${{ matrix.python-version }})
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: npm
-          # `uses:` adimlari working-directory'yi almaz; yol repo kokune gore.
-          cache-dependency-path: frontend/package-lock.json
-      - run: npm ci
-      - name: Tip denetimi + kurulum gidis-donus
-        run: npm run check
-      - name: Uretim derlemesi
-        run: npm run build
-
-  test:
-    runs-on: ubuntu-latest
-    # Python projesinin tamami backend/ altinda; tum run adimlari oradan calisir.
+    # Python projesinin tamami backend/ altinda.
     defaults:
       run:
         working-directory: backend
@@ -52,58 +39,36 @@ jobs:
       - name: Hizli testler
         run: pytest -m "not slow"
 
-      - name: Yavas ILP testleri
-        if: matrix.python-version == '3.12'
-        run: pytest -m slow
-
-      # Degismezler — 14-garanti + Bayes/MC/Markov + veri katmani
+      # Degismezler HER surumde kosar. Once yalnizca 3.12'deydi, oysa
+      # `.replit` calisma ortami python-3.10 kullaniyor — yani urunun
+      # gercekten kostugu surum, degismezlerin hic denenmedigi surumdu.
       - name: System health
-        if: matrix.python-version == '3.12'
         run: python -m spor_toto.health
 
-      # Super Toto boru hatti: canli sezonun tek yolu ve birlestirildiginde
-      # hic testi yoktu. Veri repoda oldugu icin ag gerekmez; JSON ciktisi
-      # ayrica ayristirilir — sifir cikis kodu tek basina yeterli degil,
-      # bozuk JSON da sifirla donebilir.
-      - name: Super Toto boru hatti duman
-        if: matrix.python-version == '3.12'
+  kapi:
+    name: kalite kapisi (check.sh)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          # Matristeki en dusuk surum: kapi da urunun kostugu zeminde kossun.
+          python-version: "3.10"
+          cache: pip
+          cache-dependency-path: backend/pyproject.toml
+      - uses: actions/setup-node@v4
+        with:
+          # `frontend/package.json` -> engines ile ayni.
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Bagimliliklar
         run: |
-          for h in 1 2; do
-            python scripts/super_toto_hafta.py --hafta $h --json \
-              | python -c "import json,sys; d=json.load(sys.stdin); \
-                  assert len(d['profile']['rows'])==15; \
-                  assert d['coupons'][0]['picks']"
-          done
-          python scripts/super_toto_degerlendir.py --hafta 1 --json \
-            | python -c "import json,sys; d=json.load(sys.stdin); \
-                assert len(d['results'])==15; \
-                assert abs(sum(d['coupons'][0]['dist'])-1) < 1e-9"
+          pip install -e "./backend[test,kalite]"
+          npm --prefix frontend ci
 
-      # Arayuzun okudugu besleme backend verisinden uretilir. Hafta verisi
-      # girilip besleme yenilenmezse sayfa SESSIZCE eskir — bos bir arayuzden
-      # daha kotudur cunku yanlis oldugu belli olmaz.
-      - name: Super Toto beslemesi guncel mi
-        if: matrix.python-version == '3.12'
-        run: python scripts/super_toto_frontend.py --kontrol
-
-      # API sozlesmesi: arayuzun okudugu govdenin SEKLI. Bir alan adi
-      # degistiginde motor sapasaglam kalir, butun testler gecer ve sayfa
-      # sessizce bos doner — tip denetimi de goremez, cunku istemci cevabi
-      # dogrulamadan `as T` ile kaliba sokar. `frontend` isi ayrica bu
-      # dosyayi lib/types.ts ile karsilastirir.
-      - name: API sozlesmesi guncel mi
-        if: matrix.python-version == '3.12'
-        run: python scripts/api_sozlesme.py --kontrol
-
-      # CLI duman: fix16 + Bayes preset parity
-      - name: CLI smoke
-        if: matrix.python-version == '3.12'
-        run: |
-          python -m spor_toto.cli \
-            --picks "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10" \
-            --kisa
-          python -m spor_toto.cli \
-            --picks "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10" \
-            --probs "1:0.5,0:0.3,2:0.2;1:0.4,0:0.4,2:0.2;1:0.6,0:0.2,2:0.2;1:0.5,0:0.25,2:0.25;1:0.3,0:0.4,2:0.3;1:0.45,0:0.35,2:0.2;1:0.5,0:0.3,2:0.2;1:0.4,0:0.3,2:0.3;1:0.55,0:0.25,2:0.2;1:0.5,0:0.3,2:0.2;1:0.4,0:0.3,2:0.3;1:0.5,0:0.3,2:0.2;1:0.45,0:0.35,2:0.2;1:0.5,0:0.25,2:0.25;1:0.4,0:0.4,2:0.2" \
-            --bayes-preset dengeli \
-            --kisa
+      # Yerelde kosulan komutun AYNISI. Tek satir olmasi kasitli: CI ile
+      # yerel kapinin ayrisabilecegi hicbir yer kalmasin.
+      - name: check.sh
+        run: bash scripts/check.sh

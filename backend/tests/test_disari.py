@@ -157,8 +157,10 @@ def test_a3_basamagi_tek_sutun_ekler(kademe, alan):
     from spor_toto.recalibrate import KADEMELER, KalibreTahminci
     h = korpus_haftalari(sezonlar_=["2425"])
     onceki = KADEMELER[KADEMELER.index(kademe) - 1]
-    alt = KalibreTahminci(onceki); alt.egit(h)
-    ust = KalibreTahminci(kademe); ust.egit(h)
+    alt = KalibreTahminci(onceki)
+    alt.egit(h)
+    ust = KalibreTahminci(kademe)
+    ust.egit(h)
     assert len(ust.katsayilar) == len(alt.katsayilar) + 1
 
 
@@ -176,7 +178,8 @@ def test_a3_sutunu_gercekten_calisiyor(kademe, alan):
     hafta = next(x for x in h
                  if any(abs(o.get(alan) or 0.0) > 0.5 for o in x["ozellikler"]))
 
-    t = KalibreTahminci(kademe); t.egit(h)
+    t = KalibreTahminci(kademe)
+    t.egit(h)
     once = t.tahmin(hafta)
     t._theta[-1] += 10.0
     sonra = t.tahmin(hafta)

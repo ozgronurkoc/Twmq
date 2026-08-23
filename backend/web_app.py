@@ -6,43 +6,70 @@ import logging
 import os
 import threading
 import time
+from collections.abc import Callable
 from datetime import datetime, timezone
 from functools import lru_cache
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any
 from urllib.parse import urlparse
 
 from flask import Flask, jsonify, request
 
+from spor_toto import __version__
+from spor_toto import health_history as saglik_gecmisi
+from spor_toto.analysis import match_error_frequency, monte_carlo_report
+from spor_toto.backtest import VARSAYILAN_BANKO, VARSAYILAN_UCLU
+from spor_toto.bayes import (
+    STRENGTH_PRESETS,
+    bayes_summary,
+    bayes_update_matches,
+    recommend_strengths,
+)
 from spor_toto.core import (
-    Encoder, Fix16Hatasi, HAS_SCIPY, dogrula_kaplama,
-    merge_rows, parse_picks, row_cost, distance_layers, olasilik_raporu,
+    HAS_SCIPY,
     SEMBOLLER,
+    Encoder,
+    Fix16Hatasi,
+    distance_layers,
+    dogrula_kaplama,
+    merge_rows,
+    olasilik_raporu,
+    parse_picks,
+    row_cost,
 )
 from spor_toto.engines import (
-    run_auto, run_block, run_butce, run_exact, run_fix16, run_heuristic,
+    run_auto,
+    run_block,
+    run_butce,
+    run_exact,
+    run_fix16,
+    run_heuristic,
     run_maxcov,
 )
-from spor_toto.meta import (
-    ENGINE_DEFAULTS, FIRE_MAX_MALIYET, FIRE_MAX_VARSAYILAN, LIMITS,
-    MATCH_COUNT, MC_MAX, MC_MIN, MC_WEB_SAMPLES, MODE_IDS, MODES,
-    meta_payload,
-)
-from spor_toto.report import basliklar
-from spor_toto.analysis import monte_carlo_report, match_error_frequency
 from spor_toto.fire_scenarios import fire_maliyeti, fire_scenario_report
-from spor_toto.bayes import (
-    STRENGTH_PRESETS, bayes_summary, bayes_update_matches, recommend_strengths,
-)
-from spor_toto.markov import markov_report
-from spor_toto import health_history as saglik_gecmisi
 from spor_toto.health import (
-    check_envanteri, kupon_denetle, ornek_kimligi, run_health,
+    check_envanteri,
+    kupon_denetle,
+    ornek_kimligi,
+    run_health,
 )
 from spor_toto.history import history_week_detail
+from spor_toto.markov import markov_report
+from spor_toto.meta import (
+    ENGINE_DEFAULTS,
+    FIRE_MAX_MALIYET,
+    FIRE_MAX_VARSAYILAN,
+    LIMITS,
+    MATCH_COUNT,
+    MC_MAX,
+    MC_MIN,
+    MC_WEB_SAMPLES,
+    MODE_IDS,
+    MODES,
+    meta_payload,
+)
 from spor_toto.odds import week_1x2
-from spor_toto.backtest import VARSAYILAN_BANKO, VARSAYILAN_UCLU
 from spor_toto.payloads import backtest_payload, stats_payload
-from spor_toto import __version__
+from spor_toto.report import basliklar
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +110,7 @@ def _parse_prob_value(raw: Any) -> float:
 
 
 def _matches_to_picks(matches: list) -> str:
-    parts: List[str] = []
+    parts: list[str] = []
     for m in matches[:MATCH_COUNT]:
         if isinstance(m, list):
             order = {"1": 0, "0": 1, "2": 2}
@@ -96,15 +123,15 @@ def _matches_to_picks(matches: list) -> str:
     return ",".join(parts)
 
 
-def _parse_json_probs(data: dict, selections: List[List[str]]) -> Optional[List[Dict[str, float]]]:
+def _parse_json_probs(data: dict, selections: list[list[str]]) -> list[dict[str, float]] | None:
     """probs: [{1:0.5,0:0.3,2:0.2}, ...] veya {\"1\":[...],...} — yoksa None."""
     raw_probs = data.get("probs")
     if not raw_probs:
         return None
-    out: List[Dict[str, float]] = []
+    out: list[dict[str, float]] = []
     if isinstance(raw_probs, list):
         for i in range(MATCH_COUNT):
-            p = {s: 0.0 for s in SEMBOLLER}
+            p = dict.fromkeys(SEMBOLLER, 0.0)
             if i < len(raw_probs) and isinstance(raw_probs[i], dict):
                 for sym in SEMBOLLER:
                     if sym in raw_probs[i] and raw_probs[i][sym] not in (None, ""):
@@ -124,7 +151,7 @@ def _parse_json_probs(data: dict, selections: List[List[str]]) -> Optional[List[
 
 
 def _sayi(data: dict, key: str, default: Any, cast: Callable = float,
-          lo: Optional[float] = None, hi: Optional[float] = None) -> Any:
+          lo: float | None = None, hi: float | None = None) -> Any:
     """Govdeden sayi okur; bos/bozuk deger varsayilana duser, sinirlara kirpar."""
     raw = data.get(key)
     if raw is None or (isinstance(raw, str) and not raw.strip()):
@@ -140,7 +167,7 @@ def _sayi(data: dict, key: str, default: Any, cast: Callable = float,
     return val
 
 
-def _engine_params(data: dict) -> Dict[str, Any]:
+def _engine_params(data: dict) -> dict[str, Any]:
     """CLI'de acik olan motor ayarlari; API'de sabit kodlanmislardi.
 
     Sinirlar `meta.LIMITS`'ten okunur: arayuzun gordugu bant ile burada
@@ -161,7 +188,7 @@ def _engine_params(data: dict) -> Dict[str, Any]:
     }
 
 
-def _resolve_bayes(data: dict) -> Tuple[float, float, Optional[str]]:
+def _resolve_bayes(data: dict) -> tuple[float, float, str | None]:
     """
     Bayes alpha / n cozumleme. `bayes_preset` verilmisse CLI ile BIREBIR ayni
     degerler kullanilir (tek kaynak: bayes.STRENGTH_PRESETS); yoksa ham
@@ -183,7 +210,7 @@ def _resolve_bayes(data: dict) -> Tuple[float, float, Optional[str]]:
     )
 
 
-def _plan_to_dict(plan, index: int, secili: bool) -> Dict[str, Any]:
+def _plan_to_dict(plan, index: int, secili: bool) -> dict[str, Any]:
     """ButcePlani -> JSON. Kullanici planlar arasindan UI'dan secebilsin diye."""
     return {
         "index": index,
@@ -197,7 +224,7 @@ def _plan_to_dict(plan, index: int, secili: bool) -> Dict[str, Any]:
     }
 
 
-def _new_run_log() -> Dict[str, Any]:
+def _new_run_log() -> dict[str, Any]:
     return {
         "started_at": datetime.now(timezone.utc).isoformat(),
         "steps": [],
@@ -206,11 +233,11 @@ def _new_run_log() -> Dict[str, Any]:
     }
 
 
-def _log_step(log: Dict[str, Any], name: str, detail: str = "", ms: float = 0.0) -> None:
+def _log_step(log: dict[str, Any], name: str, detail: str = "", ms: float = 0.0) -> None:
     log["steps"].append({"name": name, "detail": detail, "ms": round(ms, 2)})
 
 
-def _format_run_log(log: Dict[str, Any]) -> str:
+def _format_run_log(log: dict[str, Any]) -> str:
     lines = [
         "=== SPOR TOTO ÇALIŞMA LOGU ===",
         f"başlangıç (UTC): {log.get('started_at', '')}",
@@ -247,14 +274,14 @@ def _build_result(
     enc: Encoder,
     cols,
     baslik: str,
-    notlar: List[str],
-    user_probs: Optional[List[Dict[str, float]]] = None,
+    notlar: list[str],
+    user_probs: list[dict[str, float]] | None = None,
     use_bayes: bool = False,
     prior_strength: float = 1.0,
     evidence_strength: float = 10.0,
     mc_samples: int = MC_WEB_SAMPLES,
     fire_max: int = FIRE_MAX_VARSAYILAN,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     rows = merge_rows(cols)
     total_cost = sum(row_cost(r) for r in rows)
     worst, acik = dogrula_kaplama(cols, enc.alphabet_sizes)
@@ -401,11 +428,11 @@ def _build_result(
 # kisadir — daha uzunu, sayfanin "az once olctum" iddiasini yalanlar.
 HEALTH_TTL_S = float(os.environ.get("HEALTH_TTL_S", "5"))
 _BASLANGIC = time.monotonic()
-_health_onbellek: Dict[str, Tuple[float, Dict[str, Any]]] = {}
+_health_onbellek: dict[str, tuple[float, dict[str, Any]]] = {}
 _health_kilit = threading.Lock()
 
 
-def _health_govde(only: Optional[str], fresh: bool) -> Dict[str, Any]:
+def _health_govde(only: str | None, fresh: bool) -> dict[str, Any]:
     """Raporu üretir; TTL içinde tekrar istenirse önbellekten döner.
 
     Önbellekten dönen gövde bunu SAKLAMAZ: `summary.onbellek` alanı yaşını
@@ -594,7 +621,7 @@ def api_meta():
     return jsonify(meta_payload(__version__))
 
 
-def _parse_last(raw: Any) -> Optional[int]:
+def _parse_last(raw: Any) -> int | None:
     """?last=N — son N hafta dilimi. Gecersiz/bos deger = tum sezon."""
     if raw is None or str(raw).strip() == "" or str(raw).strip().lower() == "all":
         return None
@@ -636,7 +663,7 @@ def _parse_esik(raw: Any, varsayilan: float) -> float:
     return min(1.0, max(0.0, v))
 
 
-def _tahmin_cached(limit: Optional[int]) -> Dict[str, Any]:
+def _tahmin_cached(limit: int | None) -> dict[str, Any]:
     """Tahmin govdesi — **onbelleklenmez ve bu kasitli.**
 
     Digerlerinden farki yonu: `stats` ve `backtest` surumlenmis bir dosyayi
@@ -653,8 +680,8 @@ def _tahmin_cached(limit: Optional[int]) -> Dict[str, Any]:
 
 
 @lru_cache(maxsize=32)
-def _backtest_cached(last: Optional[int], banko: float, uclu: float,
-                     sweep: bool) -> Dict[str, Any]:
+def _backtest_cached(last: int | None, banko: float, uclu: float,
+                     sweep: bool) -> dict[str, Any]:
     """Geri test sonucu istek basina yeniden hesaplanmaz.
 
     Veri seti surumlenmis bir dosyadir; ayni parametreler ayni cevabi verir.
@@ -705,9 +732,9 @@ def api_tahmin():
 
 
 @lru_cache(maxsize=128)
-def _benzer_cached(oran: Tuple[float, float, float], tolerans: Optional[float],
-                   en_az: int, lig: Optional[str], sezon: Optional[str],
-                   yontem: str) -> Dict[str, Any]:
+def _benzer_cached(oran: tuple[float, float, float], tolerans: float | None,
+                   en_az: int, lig: str | None, sezon: str | None,
+                   yontem: str) -> dict[str, Any]:
     """Benzer mac sorgusu onbelleklenir — korpus surumlenmis bir dosyadir.
 
     `tahmin`in aksine burada zaman gecmesi cevabi degistirmez: 31 bin maclik
@@ -794,7 +821,7 @@ def api_solve():
     plan_apply = _sayi(data, "plan_apply", 1, int, 1, 50)
     eng = _engine_params(data)
     # Bayes preset'i gecersizse burada patlamali (asagidaki try onu 400'e cevirir).
-    bayes_preset: Optional[str] = None
+    bayes_preset: str | None = None
     prior_strength, evidence_strength = 1.0, 10.0
 
     run_log["mode"] = mode

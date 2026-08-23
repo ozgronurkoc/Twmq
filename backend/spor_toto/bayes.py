@@ -38,13 +38,14 @@ KL(p‖q) yorumu (nats)
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional, Sequence
+from collections.abc import Sequence
+from typing import TypedDict
 
 from .core import SEMBOLLER
 from .ortak import normalize_olasilik
 
 # UI ve CLI için hazır preset'ler
-STRENGTH_PRESETS: Dict[str, Dict[str, float]] = {
+STRENGTH_PRESETS: dict[str, dict[str, float]] = {
     "zayif_prior": {"prior_strength": 0.5, "evidence_strength": 15.0},
     "dengeli": {"prior_strength": 1.0, "evidence_strength": 10.0},
     "guclu_prior": {"prior_strength": 5.0, "evidence_strength": 8.0},
@@ -58,9 +59,9 @@ _normalize = normalize_olasilik
 
 
 def default_prior(
-    selection: Optional[Sequence[str]] = None,
+    selection: Sequence[str] | None = None,
     strength: float = 1.0,
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """
     Seçim kümesine dayalı zayıf prior.
 
@@ -70,16 +71,16 @@ def default_prior(
     strength = max(1e-6, float(strength))
     eps = 1e-3
     if not selection:
-        return {s: strength for s in SEMBOLLER}
+        return dict.fromkeys(SEMBOLLER, strength)
     sel = set(selection)
     return {s: (strength if s in sel else eps) for s in SEMBOLLER}
 
 
 def dirichlet_posterior(
-    prior_alpha: Dict[str, float],
-    evidence: Dict[str, float],
+    prior_alpha: dict[str, float],
+    evidence: dict[str, float],
     strength: float = 10.0,
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """
     Dirichlet güncelleme.
 
@@ -91,7 +92,7 @@ def dirichlet_posterior(
     """
     strength = max(0.0, float(strength))
     ev = _normalize(evidence)
-    alpha_post: Dict[str, float] = {}
+    alpha_post: dict[str, float] = {}
     for s in SEMBOLLER:
         a0 = max(1e-9, float(prior_alpha.get(s, 1e-9)))
         alpha_post[s] = a0 + strength * ev[s]
@@ -99,7 +100,7 @@ def dirichlet_posterior(
     return {s: alpha_post[s] / total for s in SEMBOLLER}
 
 
-def prior_mean(prior_alpha: Dict[str, float]) -> Dict[str, float]:
+def prior_mean(prior_alpha: dict[str, float]) -> dict[str, float]:
     total = sum(max(1e-9, float(prior_alpha.get(s, 0.0))) for s in SEMBOLLER)
     return {s: max(1e-9, float(prior_alpha.get(s, 0.0))) / total for s in SEMBOLLER}
 
@@ -120,7 +121,7 @@ def interpret_kl(kl: float) -> str:
 
 def recommend_strengths(
     confidence: str = "dengeli",
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """
     Kullanıcı güven seviyesine göre α / n öner.
 
@@ -132,24 +133,38 @@ def recommend_strengths(
     return dict(STRENGTH_PRESETS[key])
 
 
+class BayesGuncelleme(TypedDict):
+    """Bir maçın prior → posterior güncellemesi.
+
+    Bu kayıt önce `dict[str, object]` diye tipleniyordu ve alanları yalnızca
+    docstring'de yazıyordu. Sonucu: `posteriors_only` kendi dönüşünü bir
+    `# type: ignore` ile geçiriyordu ve `web_app` bu sözlükten okuduğu her
+    değeri `object` görüyordu — yani tip denetimi tam da gövdenin arayüze
+    çıktığı yerde susuyordu.
+    """
+
+    prior_alpha: dict[str, float]
+    prior: dict[str, float]
+    evidence: dict[str, float]
+    posterior: dict[str, float]
+    kl_prior_post: float
+    kl_ev_post: float
+    kl_label: str
+
+
 def bayes_update_matches(
     selections: Sequence[Sequence[str]],
-    evidence_probs: Sequence[Dict[str, float]],
+    evidence_probs: Sequence[dict[str, float]],
     prior_strength: float = 1.0,
     evidence_strength: float = 10.0,
-) -> List[Dict[str, object]]:
-    """
-    Tüm maçlar için prior → posterior.
-
-    Dönen her eleman:
-      prior_alpha, prior, evidence, posterior, kl_prior_post, kl_ev_post, kl_label
-    """
+) -> list[BayesGuncelleme]:
+    """Tüm maçlar için prior → posterior (alanlar: `BayesGuncelleme`)."""
     if len(evidence_probs) != len(selections):
         raise ValueError(
             f"evidence {len(evidence_probs)} maç, selections {len(selections)} maç"
         )
 
-    out: List[Dict[str, object]] = []
+    out: list[BayesGuncelleme] = []
     for sel, ev in zip(selections, evidence_probs):
         alpha = default_prior(sel, strength=prior_strength)
         prior = prior_mean(alpha)
@@ -170,17 +185,17 @@ def bayes_update_matches(
 
 def posteriors_only(
     selections: Sequence[Sequence[str]],
-    evidence_probs: Sequence[Dict[str, float]],
+    evidence_probs: Sequence[dict[str, float]],
     prior_strength: float = 1.0,
     evidence_strength: float = 10.0,
-) -> List[Dict[str, float]]:
+) -> list[dict[str, float]]:
     """Sadece posterior olasılık listesi (exact/MC motoruna verilir)."""
     rows = bayes_update_matches(
         selections, evidence_probs, prior_strength, evidence_strength)
-    return [r["posterior"] for r in rows]  # type: ignore[misc]
+    return [r["posterior"] for r in rows]
 
 
-def _kl(p: Dict[str, float], q: Dict[str, float]) -> float:
+def _kl(p: dict[str, float], q: dict[str, float]) -> float:
     """KL(p || q) nats."""
     import math
     s = 0.0
@@ -192,8 +207,8 @@ def _kl(p: Dict[str, float], q: Dict[str, float]) -> float:
 
 
 def bayes_summary(
-    updates: Sequence[Dict[str, object]],
-) -> Dict[str, object]:
+    updates: Sequence[BayesGuncelleme],
+) -> dict[str, object]:
     """Maç listesi özeti: ortalama KL, etiket, en çok kayan maçlar."""
     if not updates:
         return {
@@ -232,7 +247,7 @@ def bayes_summary(
     }
 
 
-def _strength_guide() -> Dict[str, str]:
+def _strength_guide() -> dict[str, str]:
     """UI / rapor için kısa α–n kılavuzu."""
     return {
         "alpha": (

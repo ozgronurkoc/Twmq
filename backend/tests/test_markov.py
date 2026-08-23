@@ -2,7 +2,7 @@
 
 import pytest
 
-from spor_toto.core import parse_picks, solve_fix16, Encoder, olasilik_raporu
+from spor_toto.core import Encoder, olasilik_raporu, parse_picks, solve_fix16
 from spor_toto.markov import (
     error_budget_chain,
     markov_report,

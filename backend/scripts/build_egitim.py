@@ -38,7 +38,7 @@ import urllib.error
 import urllib.request
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 KOK = Path(__file__).resolve().parent.parent
 VARSAYILAN_CIKTI = KOK / "data" / "egitim"
@@ -48,10 +48,10 @@ ANA_URL = "https://www.football-data.co.uk/mmz4281/{sezon}/{lig}.csv"
 
 #: Varsayilan sezonlar — **2526 bilerek yok** (kupon degerlendirme seti o
 #: sezondan geliyor; korpusa katmak egitim/sinav ayrimini bozar).
-VARSAYILAN_SEZONLAR: Tuple[str, ...] = ("2122", "2223", "2324", "2425")
+VARSAYILAN_SEZONLAR: tuple[str, ...] = ("2122", "2223", "2324", "2425")
 
 #: build_odds.py ile ayni lig listesi — ayni kaynak, ayni etiketler.
-ANA_LIGLER: Tuple[str, ...] = (
+ANA_LIGLER: tuple[str, ...] = (
     "E0", "E1", "E2", "E3", "EC",
     "SC0", "SC1", "SC2", "SC3",
     "D1", "D2", "I1", "I2", "SP1", "SP2",
@@ -59,7 +59,7 @@ ANA_LIGLER: Tuple[str, ...] = (
 )
 
 #: Kapanis cizgisinin kaynak tercihi — piyasanin son sozu.
-KAPANIS_SIRASI: Tuple[str, ...] = ("AvgC", "B365C", "PSC")
+KAPANIS_SIRASI: tuple[str, ...] = ("AvgC", "B365C", "PSC")
 
 #: Acilis cizgisinin kaynak tercihi — piyasanin ilk sozu.
 #:
@@ -73,10 +73,10 @@ KAPANIS_SIRASI: Tuple[str, ...] = ("AvgC", "B365C", "PSC")
 #: macin acilisi `Avg`, kapanisi `B365C` cikarsa aradaki fark hareket degil
 #: kaynak farki olurdu. Bu yuzden `cizgi_cifti` yalnizca **ayni ailenin**
 #: iki ucunu esler (`Avg`↔`AvgC`, `B365`↔`B365C`, `PS`↔`PSC`).
-ACILIS_SIRASI: Tuple[str, ...] = ("Avg", "B365", "PS")
+ACILIS_SIRASI: tuple[str, ...] = ("Avg", "B365", "PS")
 
 #: Acilis→kapanis eslesmesi: ayni bahisci ailesinin iki ucu.
-CIZGI_AILELERI: Tuple[Tuple[str, str], ...] = (
+CIZGI_AILELERI: tuple[tuple[str, str], ...] = (
     ("Avg", "AvgC"), ("B365", "B365C"), ("PS", "PSC"),
 )
 
@@ -102,7 +102,7 @@ CIZGI_AILELERI: Tuple[Tuple[str, str], ...] = (
 #: olarak kayar (olculdu: ln(Max/Avg) sezonlara gore 0,0712→0,0577). Bu
 #: yuzden A2'nin BIRINCIL ozelligi sabit `B365`↔`PS` cifti, `Max/Avg` ise
 #: ikincil ve betimleyici kalir (bkz. `egitim.bahisci_ayrismasi`).
-A2_KAYNAKLARI: Tuple[Tuple[str, str], ...] = (
+A2_KAYNAKLARI: tuple[tuple[str, str], ...] = (
     ("B365C", "b_B365"), ("PSC", "b_PS"), ("MaxC", "b_Max"), ("AvgC", "b_Avg"),
 )
 
@@ -113,14 +113,14 @@ SONUC_KODU = {"H": "1", "D": "0", "A": "2"}
 #: girdisi OLAMAZLAR. Tek amaclari yuvarlanan takim formu uretmek: bir macin
 #: oncesindeki maclardan hesaplanan sut/isabetli sut farki. Eksik olabilirler
 #: ve eksikse UYDURULMAZ — form ureteci o maci gecmise katmaz (doktrin 2).
-ISTATISTIK_SUTUNLARI: Tuple[Tuple[str, str], ...] = (
+ISTATISTIK_SUTUNLARI: tuple[tuple[str, str], ...] = (
     ("HS", "ev_sut"), ("AS", "dep_sut"),
     ("HST", "ev_isabet"), ("AST", "dep_isabet"),
     ("HC", "ev_korner"), ("AC", "dep_korner"),
 )
 
 
-def indir(url: str, hedef: Path, timeout: float = 60.0) -> Optional[Path]:
+def indir(url: str, hedef: Path, timeout: float = 60.0) -> Path | None:
     """Kaynak dosyayi indir; varsa yeniden indirme (onbellek git disi)."""
     if hedef.exists() and hedef.stat().st_size > 0:
         return hedef
@@ -136,7 +136,7 @@ def indir(url: str, hedef: Path, timeout: float = 60.0) -> Optional[Path]:
     return hedef
 
 
-def tarih_coz(ham: str) -> Optional[datetime]:
+def tarih_coz(ham: str) -> datetime | None:
     for bicim in ("%d/%m/%Y", "%d/%m/%y"):
         try:
             return datetime.strptime(ham.strip(), bicim)
@@ -145,7 +145,7 @@ def tarih_coz(ham: str) -> Optional[datetime]:
     return None
 
 
-def _sayi(ham: Any) -> Optional[float]:
+def _sayi(ham: Any) -> float | None:
     try:
         v = float(str(ham).strip())
     except (TypeError, ValueError):
@@ -153,7 +153,7 @@ def _sayi(ham: Any) -> Optional[float]:
     return v if v > 1.0 else None
 
 
-def _ucluyu_oku(satir: Dict[str, Any], onek: str) -> Optional[Dict[str, float]]:
+def _ucluyu_oku(satir: dict[str, Any], onek: str) -> dict[str, float] | None:
     """Tek kaynagin 1X2 ucluSU. Biri eksik/askidaysa (<=1.00) kaynak dusEr."""
     degerler = [_sayi(satir.get(f"{onek}{s}")) for s in ("H", "D", "A")]
     if any(v is None for v in degerler):
@@ -161,7 +161,7 @@ def _ucluyu_oku(satir: Dict[str, Any], onek: str) -> Optional[Dict[str, float]]:
     return {"1": degerler[0], "0": degerler[1], "2": degerler[2]}
 
 
-def cizgi_sec(satir: Dict[str, Any], sira: Tuple[str, ...]) -> Optional[Dict[str, Any]]:
+def cizgi_sec(satir: dict[str, Any], sira: tuple[str, ...]) -> dict[str, Any] | None:
     """Verilen tercih sirasindaki ilk tam ucluyu dondur (yoksa None).
 
     Ucunden biri eksikse ya da 1.00 ise (askiya alinmis ayak) o kaynak
@@ -174,7 +174,7 @@ def cizgi_sec(satir: Dict[str, Any], sira: Tuple[str, ...]) -> Optional[Dict[str
     return None
 
 
-def cizgi_cifti(satir: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+def cizgi_cifti(satir: dict[str, Any]) -> dict[str, Any] | None:
     """Ayni bahisci ailesinden acilis+kapanis cifti (yoksa None).
 
     A1'in olctugu hareket ancak **ayni kaynagin** iki ucu arasinda anlamlidir;
@@ -190,7 +190,7 @@ def cizgi_cifti(satir: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     return None
 
 
-def bahisci_dortlusu(satir: Dict[str, Any]) -> Optional[Dict[str, Dict[str, float]]]:
+def bahisci_dortlusu(satir: dict[str, Any]) -> dict[str, dict[str, float]] | None:
     """A2 kaynaklarinin dordu birden (yoksa None).
 
     **Ya dordu ya hicbiri.** Anlasmazlik, eksik bir kaynak kumesinden
@@ -199,7 +199,7 @@ def bahisci_dortlusu(satir: Dict[str, Any]) -> Optional[Dict[str, Dict[str, floa
     kabul etseydik "anlasmazlik" sutunu, anlasmazligi degil hangi kaynaklarin
     o gun mevcut oldugunu olcerdi.
     """
-    out: Dict[str, Dict[str, float]] = {}
+    out: dict[str, dict[str, float]] = {}
     for onek, ad in A2_KAYNAKLARI:
         uclu = _ucluyu_oku(satir, onek)
         if uclu is None:
@@ -208,7 +208,7 @@ def bahisci_dortlusu(satir: Dict[str, Any]) -> Optional[Dict[str, Dict[str, floa
     return out
 
 
-def oran_sec(satir: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+def oran_sec(satir: dict[str, Any]) -> dict[str, Any] | None:
     """Macin **birincil** orani — once kapanis, sonra acilis.
 
     `oran_*` sutunlari bunu tasir ve `piyasa` tahmincisinin okudugu sey budur:
@@ -226,11 +226,11 @@ def oran_sec(satir: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     return None
 
 
-def satirlari_coz(sezon: str, lig: str, yol: Path) -> Tuple[List[Dict[str, Any]], Dict[str, int]]:
+def satirlari_coz(sezon: str, lig: str, yol: Path) -> tuple[list[dict[str, Any]], dict[str, int]]:
     """Bir lig-sezon dosyasindan gecerli mac satirlari."""
     sayac = {"toplam": 0, "tarih_yok": 0, "sonuc_yok": 0, "oran_yok": 0,
              "cizgi_cifti_yok": 0, "bahisci_dortlusu_yok": 0}
-    out: List[Dict[str, Any]] = []
+    out: list[dict[str, Any]] = []
     with open(yol, encoding="latin-1", newline="") as fh:
         for ham in csv.DictReader(fh):
             # BOM latin-1 okumada ilk sutun adina yapisir (build_odds vakasi)
@@ -274,7 +274,7 @@ def satirlari_coz(sezon: str, lig: str, yol: Path) -> Tuple[List[Dict[str, Any]]
             dortlu = bahisci_dortlusu(satir)
             if dortlu is None:
                 sayac["bahisci_dortlusu_yok"] += 1
-            bahisci: Dict[str, Any] = {
+            bahisci: dict[str, Any] = {
                 f"{ad}_{s}": "" for _, ad in A2_KAYNAKLARI for s in ("1", "0", "2")}
             if dortlu is not None:
                 for ad, uclu in dortlu.items():
@@ -307,9 +307,9 @@ def satirlari_coz(sezon: str, lig: str, yol: Path) -> Tuple[List[Dict[str, Any]]
     return out, sayac
 
 
-def dogrula(satirlar: List[Dict[str, Any]]) -> List[str]:
+def dogrula(satirlar: list[dict[str, Any]]) -> list[str]:
     """Yazmadan once ic tutarlilik (doktrin 5). Bos liste = temiz."""
-    hatalar: List[str] = []
+    hatalar: list[str] = []
     if not satirlar:
         return ["korpus bos"]
     for i, r in enumerate(satirlar):
@@ -364,11 +364,11 @@ def main() -> int:
     args = ap.parse_args()
 
     cache = args.cache or (args.out_dir / "_kaynak")
-    satirlar: List[Dict[str, Any]] = []
-    sayaclar: Dict[str, int] = {"toplam": 0, "tarih_yok": 0, "sonuc_yok": 0,
+    satirlar: list[dict[str, Any]] = []
+    sayaclar: dict[str, int] = {"toplam": 0, "tarih_yok": 0, "sonuc_yok": 0,
                                 "oran_yok": 0, "cizgi_cifti_yok": 0,
                                 "bahisci_dortlusu_yok": 0}
-    alinamayan: List[str] = []
+    alinamayan: list[str] = []
 
     for sezon in args.sezonlar:
         for lig in args.ligler:

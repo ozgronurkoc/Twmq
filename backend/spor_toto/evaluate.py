@@ -28,12 +28,12 @@ from __future__ import annotations
 
 import math
 import random
-from typing import Any, Callable, Dict, List, Optional, Sequence
+from collections.abc import Callable, Sequence
+from typing import Any
 
 from .backtest import hafta_girdileri
-from .history import SYMBOLS
-from .predict import REFERANS_AD, Girdi, Olasilik, Tahminci, referans_fabrikalar
 from .ortak import brier as _ortak_brier
+from .predict import REFERANS_AD, Girdi, Olasilik, Tahminci, referans_fabrikalar
 
 #: Log kaybında sıfır olasılığa sonsuz ceza vermemek için kırpma tabanı.
 #: Tahminci "imkânsız" dediği bir sonuç gerçekleşirse ceza büyük olmalı ama
@@ -76,7 +76,7 @@ def log_kaybi(probs: Olasilik, code: str) -> float:
 
 # ─── ölçülebilir kesit ────────────────────────────────────────────────────────
 
-def olculebilir_haftalar(last: Optional[int] = None) -> List[Girdi]:
+def olculebilir_haftalar(last: int | None = None) -> list[Girdi]:
     """Karşılaştırmaya girebilecek haftalar.
 
     `usable=False` olan hafta elenir — 15 maçın hepsinin oranı yoksa piyasa
@@ -103,8 +103,8 @@ def sezon_anahtari(hafta: Girdi) -> Any:
 
 def hafta_disarida_birak(fabrika: Fabrika,
                          haftalar: Sequence[Girdi],
-                         grup: Optional[Callable[[Girdi], Any]] = None
-                         ) -> List[Dict[str, Any]]:
+                         grup: Callable[[Girdi], Any] | None = None
+                         ) -> list[dict[str, Any]]:
     """Her hafta için: dışarıda bırakılan grupta değil, ötekilerde eğit.
 
     `grup` verilmezse her hafta kendi grubudur — klasik hafta dışarıda
@@ -119,9 +119,9 @@ def hafta_disarida_birak(fabrika: Fabrika,
     anahtarlar = [grup(h) if grup else i for i, h in enumerate(haftalar)]
     # Aynı gruba düşen haftalar için model bir kez eğitilir; 4 sezonluk
     # korpusta bu, 180 uydurma yerine 4 uydurma demektir.
-    onbellek: Dict[Any, Any] = {}
+    onbellek: dict[Any, Any] = {}
 
-    out: List[Dict[str, Any]] = []
+    out: list[dict[str, Any]] = []
     for i, hafta in enumerate(haftalar):
         anahtar = anahtarlar[i]
         tahminci = onbellek.get(anahtar)
@@ -134,7 +134,7 @@ def hafta_disarida_birak(fabrika: Fabrika,
     return out
 
 
-def _hafta_skoru(tahminci: Tahminci, hafta: Girdi) -> Dict[str, Any]:
+def _hafta_skoru(tahminci: Tahminci, hafta: Girdi) -> dict[str, Any]:
     """Tek haftanın skor kaydı — hem dışarıda bırakmalı hem çapraz ölçüm kullanır."""
     tahminler = tahminci.tahmin(hafta)
     kodlar = hafta["results"]
@@ -158,7 +158,7 @@ def _hafta_skoru(tahminci: Tahminci, hafta: Girdi) -> Dict[str, Any]:
 
 def capraz_olc(fabrikalar: Sequence[Fabrika],
                egitim_haftalari: Sequence[Girdi],
-               test_haftalari: Sequence[Girdi]) -> Dict[str, Any]:
+               test_haftalari: Sequence[Girdi]) -> dict[str, Any]:
     """Bir veri setinde eğit, **bambaşka** bir veri setinde ölç.
 
     Dışarıda bırakmalı ölçümün veremediği şeyi verir: eğitim ve sınav yalnızca
@@ -170,7 +170,7 @@ def capraz_olc(fabrikalar: Sequence[Fabrika],
     tamamında ölçülür. Karşılaştırma kuralı aynıdır — `gecti` yalnızca
     eşleştirilmiş bootstrap aralığı tamamen sıfırın altındaysa `True`.
     """
-    sonuclar: List[Dict[str, Any]] = []
+    sonuclar: list[dict[str, Any]] = []
     for fabrika in fabrikalar:
         tahminci = fabrika()
         tahminci.egit(egitim_haftalari)
@@ -220,7 +220,7 @@ def capraz_olc(fabrikalar: Sequence[Fabrika],
 
 def degerlendir(fabrika: Fabrika,
                 haftalar: Sequence[Girdi],
-                grup: Optional[Callable[[Girdi], Any]] = None) -> Dict[str, Any]:
+                grup: Callable[[Girdi], Any] | None = None) -> dict[str, Any]:
     """Bir tahmincinin dışarıda bırakmalı toplam skoru (bkz. `grup`)."""
     kayitlar = hafta_disarida_birak(fabrika, haftalar, grup)
     n_mac = sum(k["n"] for k in kayitlar)
@@ -243,7 +243,7 @@ def degerlendir(fabrika: Fabrika,
 
 # ─── eşleştirilmiş bootstrap ──────────────────────────────────────────────────
 
-def _ortalama(kayitlar: Sequence[Dict[str, Any]], indeksler: Sequence[int],
+def _ortalama(kayitlar: Sequence[dict[str, Any]], indeksler: Sequence[int],
               alan: str) -> float:
     """Seçilen haftaların maç başına ortalaması."""
     top = sum(kayitlar[i][alan] for i in indeksler)
@@ -251,11 +251,11 @@ def _ortalama(kayitlar: Sequence[Dict[str, Any]], indeksler: Sequence[int],
     return top / n if n else 0.0
 
 
-def bootstrap_farki(aday: Sequence[Dict[str, Any]],
-                    referans: Sequence[Dict[str, Any]],
+def bootstrap_farki(aday: Sequence[dict[str, Any]],
+                    referans: Sequence[dict[str, Any]],
                     alan: str = "brier_toplam",
                     tekrar: int = BOOTSTRAP_TEKRAR,
-                    tohum: int = BOOTSTRAP_TOHUM) -> Dict[str, Any]:
+                    tohum: int = BOOTSTRAP_TOHUM) -> dict[str, Any]:
     """Aday − referans farkının eşleştirilmiş bootstrap güven aralığı.
 
     **Eşleştirilmiş**: her yinelemede aynı hafta kümesi iki tahminci için de
@@ -272,7 +272,7 @@ def bootstrap_farki(aday: Sequence[Dict[str, Any]],
         return {"fark": None, "alt": None, "ust": None, "tekrar": 0}
 
     rng = random.Random(tohum)
-    farklar: List[float] = []
+    farklar: list[float] = []
     for _ in range(tekrar):
         indeksler = [rng.randrange(n) for _ in range(n)]
         farklar.append(_ortalama(aday, indeksler, alan)
@@ -304,10 +304,10 @@ def bootstrap_farki(aday: Sequence[Dict[str, Any]],
 
 # ─── karşılaştırma ────────────────────────────────────────────────────────────
 
-def karsilastir(fabrikalar: Optional[Sequence[Fabrika]] = None,
-                last: Optional[int] = None,
-                haftalar: Optional[Sequence[Girdi]] = None,
-                grup: Optional[Callable[[Girdi], Any]] = None) -> Dict[str, Any]:
+def karsilastir(fabrikalar: Sequence[Fabrika] | None = None,
+                last: int | None = None,
+                haftalar: Sequence[Girdi] | None = None,
+                grup: Callable[[Girdi], Any] | None = None) -> dict[str, Any]:
     """Tahmincileri aynı kesitte ölç ve referansla karşılaştır.
 
     `fabrikalar` verilmezse yalnızca üç referans koşar — koşumun kendisinin

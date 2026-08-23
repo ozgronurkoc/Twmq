@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 import sys
 import time
-from typing import List, Optional, Sequence
+from collections.abc import Sequence
 
 from . import __version__
 from .bayes import (
@@ -14,12 +14,19 @@ from .bayes import (
     bayes_update_matches,
     recommend_strengths,
 )
-from .core import (Encoder, Fix16Hatasi, HAS_SCIPY, dogrula_kaplama,
-                   merge_rows, parse_picks, parse_probs, solve_by_blocks,
-                   solve_fix16)
-from .core import ORNEK_KUPON
-from .engines import (ButceSigmazHatasi, adaylar, en_iyi_aday, engine_params,
-                      run_butce, run_maxcov)
+from .core import (
+    HAS_SCIPY,
+    ORNEK_KUPON,
+    Encoder,
+    Fix16Hatasi,
+    dogrula_kaplama,
+    merge_rows,
+    parse_picks,
+    parse_probs,
+    solve_by_blocks,
+    solve_fix16,
+)
+from .engines import ButceSigmazHatasi, adaylar, en_iyi_aday, engine_params, run_butce, run_maxcov
 from .report import CIZGI, INCE, basliklar, yazdir_ve_kaydet
 
 #: Tek kaynak `core.ORNEK_KUPON`; ad burada korunuyor.
@@ -84,7 +91,7 @@ def _apply_bayes(enc: Encoder, args) -> None:
     summary = bayes_summary(updates)
     args.bayes_info = [
         f"Bayes           : Dirichlet posterior (preset={preset_name})",
-        f"  Kaynak        : bayes_posterior",
+        "  Kaynak        : bayes_posterior",
         f"  Prior α       : {prior_s}  ·  Evidence n : {evid_s}",
         f"  Ort. KL       : {summary['mean_kl_prior_post']}  "
         f"({summary.get('mean_kl_label', '')})",
@@ -240,7 +247,7 @@ def _mod_genel(enc: Encoder, args) -> None:
     en_iyi = en_iyi_aday(liste)
     cols, baslik = en_iyi.cols, en_iyi.baslik
 
-    notlar: List[str] = []
+    notlar: list[str] = []
     if len(cols) == enc.lower_bound():
         notlar.append("Alt sinira esit -> KANITLANMIS OPTIMAL")
     elif en_iyi.kanit:
@@ -346,7 +353,7 @@ yazilir. '1' banko ev sahibi, '10' cifte, '102' kapama (uclu).
     return p
 
 
-def main(argv: Optional[Sequence[str]] = None) -> int:
+def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
     t0 = time.time()

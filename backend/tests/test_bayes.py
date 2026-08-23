@@ -76,7 +76,7 @@ def test_bayes_update_matches_length():
 
 def test_posteriors_only_feeds_mc_shape():
     sels = parse_picks("1,10,1,12,0,10,2,10,1,12,02,1,10,2,10")
-    ev = [{s: 1.0 / 3 for s in SEMBOLLER} for _ in range(15)]
+    ev = [dict.fromkeys(SEMBOLLER, 1.0 / 3) for _ in range(15)]
     posts = posteriors_only(sels, ev, evidence_strength=5.0)
     assert len(posts) == 15
     assert all(abs(sum(p.values()) - 1.0) < 1e-9 for p in posts)

@@ -2,11 +2,20 @@
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional, Sequence
+from collections.abc import Sequence
 
-from .core import (Encoder, OlasilikRaporu, Point, Row, distance_layers,
-                   dogrula_kaplama, merge_rows, olasilik_raporu, row_cost,
-                   rows_to_points)
+from .core import (
+    Encoder,
+    OlasilikRaporu,
+    Point,
+    Row,
+    distance_layers,
+    dogrula_kaplama,
+    merge_rows,
+    olasilik_raporu,
+    row_cost,
+    rows_to_points,
+)
 
 CIZGI = "=" * 68
 INCE = "-" * 68
@@ -20,7 +29,7 @@ def kolon_metni(enc: Encoder, col: Point) -> str:
     return " ".join(enc.decode_full(col))
 
 
-def basliklar(enc: Encoder) -> List[str]:
+def basliklar(enc: Encoder) -> list[str]:
     return [
         f"Banko mac       : {len(enc.banko_pos)}  {[p + 1 for p in enc.banko_pos]}",
         f"Cifte mac       : {sum(1 for k in enc.alphabet_sizes if k == 2)}",
@@ -32,7 +41,7 @@ def basliklar(enc: Encoder) -> List[str]:
     ]
 
 
-def dagilim_satirlari(enc: Encoder, cols: Sequence[Point]) -> List[str]:
+def dagilim_satirlari(enc: Encoder, cols: Sequence[Point]) -> list[str]:
     dist = distance_layers(cols, enc.alphabet_sizes)
     total = enc.space_size()
     out = ["Kapsama dagilimi (degisken maclar uzerinden):"]
@@ -48,7 +57,7 @@ def dagilim_satirlari(enc: Encoder, cols: Sequence[Point]) -> List[str]:
     return out
 
 
-def olasilik_satirlari(rap: OlasilikRaporu) -> List[str]:
+def olasilik_satirlari(rap: OlasilikRaporu) -> list[str]:
     return [
         "Olasilik raporu (senin tahminlerine gore):",
         f"  Tum sonuclar secim kumende : %{100 * rap.p_kume_ici:6.2f}"
@@ -63,7 +72,7 @@ def olasilik_satirlari(rap: OlasilikRaporu) -> List[str]:
     ]
 
 
-def monte_carlo_satirlari(mc: dict) -> List[str]:
+def monte_carlo_satirlari(mc: dict) -> list[str]:
     lines = [
         f"Monte Carlo ({mc['n_samples']} deneme, %95 CI):",
         f"  Kume ici : %{mc['kume_ici']['pct']:6.3f}  ±{mc['kume_ici']['ci95']}",
@@ -77,7 +86,7 @@ def monte_carlo_satirlari(mc: dict) -> List[str]:
     return lines
 
 
-def fire_satirlari(fire: dict) -> List[str]:
+def fire_satirlari(fire: dict) -> list[str]:
     """
     Secim DISI fire raporu.
 
@@ -111,14 +120,14 @@ def fire_satirlari(fire: dict) -> List[str]:
     return lines
 
 
-def yazdir_ve_kaydet(enc: Encoder, cols: List[Point], baslik: str,
-                     output_path: Optional[str] = None,
+def yazdir_ve_kaydet(enc: Encoder, cols: list[Point], baslik: str,
+                     output_path: str | None = None,
                      ek_notlar: Sequence[str] = (),
-                     probs: Optional[Sequence[Dict[str, float]]] = None,
+                     probs: Sequence[dict[str, float]] | None = None,
                      tam_liste: bool = True,
                      mc_samples: int = 0,
                      mc_seed: int = 42,
-                     fire_max: int = 0) -> Dict[str, object]:
+                     fire_max: int = 0) -> dict[str, object]:
     """Sonucu ekrana basar, istenirse dosyaya yazar. Ozet sozluk dondurur."""
     rows = merge_rows(cols)
     toplam_bedel = sum(row_cost(r) for r in rows)

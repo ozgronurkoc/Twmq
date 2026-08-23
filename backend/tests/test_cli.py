@@ -4,9 +4,16 @@
 import pytest
 
 from spor_toto.cli import build_parser, main
-from spor_toto.core import (HAS_SCIPY, Encoder, butce_danismani, merge_rows,
-                            olasilik_raporu, parse_picks, parse_probs,
-                            solve_fix16)
+from spor_toto.core import (
+    HAS_SCIPY,
+    Encoder,
+    butce_danismani,
+    merge_rows,
+    olasilik_raporu,
+    parse_picks,
+    parse_probs,
+    solve_fix16,
+)
 
 ORNEK = "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"
 gerek_scipy = pytest.mark.skipif(not HAS_SCIPY, reason="scipy yok")

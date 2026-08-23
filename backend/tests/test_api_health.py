@@ -4,11 +4,11 @@ import pytest
 
 pytest.importorskip("flask")
 
-import web_app  # noqa: E402
-from web_app import app  # noqa: E402
-from spor_toto import __version__  # noqa: E402
-from spor_toto import health_history as hh  # noqa: E402
-from spor_toto.health import CHECKS, ORNEK  # noqa: E402
+import web_app
+from spor_toto import __version__
+from spor_toto import health_history as hh
+from spor_toto.health import CHECKS, ORNEK
+from web_app import app
 
 
 @pytest.fixture()
@@ -145,7 +145,9 @@ def test_history_ucu_kosulari_biriktirir(client):
     client.get("/api/health?fresh=1")
     body = client.get("/api/health/history").get_json()
     assert len(body["kayitlar"]) == 2
-    assert body["ozet"]["durum"] == "HEALTHY"
+    # Yavas bir makinede durum DEGRADED olur ve bu bir basarisizlik degil
+    # (gerekce: tests/test_health.py::test_health_report_dict_shape).
+    assert body["ozet"]["durum"] in ("HEALTHY", "DEGRADED")
     assert body["ozet"]["bu_durumda_kosu"] == 2
     assert body["ozet"]["degisim_zamani"]
     assert body["ornek"]["pid"]

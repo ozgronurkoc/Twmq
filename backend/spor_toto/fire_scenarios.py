@@ -19,14 +19,14 @@ from __future__ import annotations
 
 import math
 from collections import Counter
+from collections.abc import Sequence
 from itertools import combinations
-from typing import Dict, List, Optional, Sequence
 
 import numpy as _np
 
-from .core import Encoder, Point, SEMBOLLER
+from .core import SEMBOLLER, Encoder, Point
 
-_SEMBOL_KOD: Dict[str, int] = {s: i for i, s in enumerate(SEMBOLLER)}
+_SEMBOL_KOD: dict[str, int] = {s: i for i, s in enumerate(SEMBOLLER)}
 
 
 # ============================================================
@@ -60,7 +60,7 @@ def fire_maliyeti(enc: Encoder, cols: Sequence[Point], max_fires: int = 2) -> in
 # ============================================================
 
 def _senaryo_dizisi(
-    izinli: List[List[int]],
+    izinli: list[list[int]],
 ) -> _np.ndarray:
     """
     Pozisyon basina izinli sembol kodlarinin kartezyen carpimi -> (S, n) int8.
@@ -210,7 +210,7 @@ def fire_scenario_report(
             "p_ge_12": round(100.0 * sum(v for k, v in score_counts.items() if k >= 12) / n_total, 4) if n_total else 0.0,
         }
 
-    def skorla(fired: Sequence[int]) -> Optional[_np.ndarray]:
+    def skorla(fired: Sequence[int]) -> _np.ndarray | None:
         """Verilen fire kumesi icin skor (dogru sayisi) dizisi."""
         if len(kolonlar) == 0:
             return None
@@ -223,10 +223,10 @@ def fire_scenario_report(
 
     if max_fires >= 1:
         sc: Counter = Counter()
-        by_type: Dict[str, Counter] = {
+        by_type: dict[str, Counter] = {
             "banko": Counter(), "double": Counter(), "triple": Counter()
         }
-        by_match: Dict[int, Counter] = {i: Counter() for i in range(n)}
+        by_match: dict[int, Counter] = {i: Counter() for i in range(n)}
         n_total = 0
         for fail_i in failable:
             skorlar = skorla((fail_i,))

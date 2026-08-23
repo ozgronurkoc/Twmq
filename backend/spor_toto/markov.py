@@ -18,11 +18,10 @@ olasiliksal risk profili verir. 14-garantiyi bozmaz.
 from __future__ import annotations
 
 import math
-from typing import Dict, Sequence
+from collections.abc import Sequence
 
-from .core import SEMBOLLER, Encoder, Point, ball
+from .core import Encoder, Point, ball
 from .ortak import normalize_olasilik
-
 
 #: `bayes` ile birebir ayni govdeydi; tek kaynak artik `ortak`.
 _norm = normalize_olasilik
@@ -30,7 +29,7 @@ _norm = normalize_olasilik
 
 def selection_survival_chain(
     enc: Encoder,
-    probs: Sequence[Dict[str, float]],
+    probs: Sequence[dict[str, float]],
 ) -> dict:
     """
     Durumlar: IN (tüm maçlar şimdiye kadar seçimde), OUT (emici).
@@ -66,7 +65,7 @@ def selection_survival_chain(
 def error_budget_chain(
     enc: Encoder,
     cols: Sequence[Point],
-    probs: Sequence[Dict[str, float]],
+    probs: Sequence[dict[str, float]],
 ) -> dict:
     """
     Hata bütçesi Markov zinciri (0 → 1 → 2+).
@@ -107,14 +106,13 @@ def error_budget_chain(
 def _error_budget_exact(
     enc: Encoder,
     cols: Sequence[Point],
-    probs: Sequence[Dict[str, float]],
+    probs: Sequence[dict[str, float]],
 ) -> dict:
     """Değişken uzayı tarayarak min-mesafe dağılımı (küme-içi koşullu değil, tam)."""
     from itertools import product
 
     # Banko faktörü
     banko_p = 1.0
-    banko_fail = False
     for pos, sym in zip(enc.banko_pos, enc.banko_syms):
         pr = _norm(probs[pos])
         banko_p *= pr.get(sym, 0.0)
@@ -132,7 +130,6 @@ def _error_budget_exact(
         for var in product(*[range(k) for k in enc.alphabet_sizes]):
             # nokta olasılığı
             pc = banko_p
-            outcome_ok = True
             for i, pos in enumerate(enc.variable_pos):
                 sym = enc.variable_syms[i][var[i]]
                 pr = _norm(probs[pos])
@@ -178,7 +175,7 @@ def _error_budget_exact(
 def _error_budget_column_union(
     enc: Encoder,
     cols: Sequence[Point],
-    probs: Sequence[Dict[str, float]],
+    probs: Sequence[dict[str, float]],
 ) -> dict:
     """
     Buyuk uzay: d<=1 kutlesi kolonlarin r=1 toplarinin BIRLESIMI uzerinden.
@@ -251,7 +248,7 @@ def _error_budget_column_union(
 def markov_report(
     enc: Encoder,
     cols: Sequence[Point],
-    probs: Sequence[Dict[str, float]],
+    probs: Sequence[dict[str, float]],
 ) -> dict:
     """Birleşik rapor: survival + hata bütçesi."""
     survival = selection_survival_chain(enc, probs)

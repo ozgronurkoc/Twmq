@@ -27,7 +27,7 @@ ORNEK = "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"
 
 
 def _uniform_probs(n: int = 15):
-    return [{s: 1.0 / 3.0 for s in SEMBOLLER} for _ in range(n)]
+    return [dict.fromkeys(SEMBOLLER, 1.0 / 3.0) for _ in range(n)]
 
 
 def test_picks_bos():
@@ -189,7 +189,7 @@ def _api_probs(satirlar, sel):
 def test_ayrim_negatif_olasilik():
     """CLI reddeder, API sifira kirpar."""
     sel = [["1", "0", "2"]] * 15
-    with pytest.raises(ValueError, match="[Nn]egatif"):
+    with pytest.raises(ValueError, match=r"[Nn]egatif"):
         parse_probs(";".join(["1:-0.5,0:0.3,2:0.2"] * 15), sel)
 
     out = _api_probs([{"1": -0.5, "0": 0.3, "2": 0.2}] * 15, sel)

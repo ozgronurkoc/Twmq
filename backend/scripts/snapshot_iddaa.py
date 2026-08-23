@@ -54,7 +54,7 @@ import urllib.error
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 KOK = Path(__file__).resolve().parent.parent
 CIKTI_DIZIN = KOK / "data" / "iddaa"
@@ -79,7 +79,7 @@ def indir(url: str, zaman_asimi: float = 30.0) -> Any:
         return json.loads(cevap.read().decode("utf-8"))
 
 
-def _govde(payload: Any) -> Dict[str, Any]:
+def _govde(payload: Any) -> dict[str, Any]:
     """`{isSuccess, data, message}` sarmalini acar; sarmalsizi da kabul eder."""
     if isinstance(payload, dict) and "data" in payload:
         if payload.get("isSuccess") is False:
@@ -88,11 +88,11 @@ def _govde(payload: Any) -> Dict[str, Any]:
     return payload or {}
 
 
-def lig_adlari(payload: Any) -> Dict[int, str]:
+def lig_adlari(payload: Any) -> dict[int, str]:
     """Yaris (competition) kimligi -> okunur ad. Alinamazsa bos sozluk."""
     veri = _govde(payload)
     kayitlar = veri if isinstance(veri, list) else veri.get("competitions", [])
-    out: Dict[int, str] = {}
+    out: dict[int, str] = {}
     for c in kayitlar or []:
         if isinstance(c, dict) and isinstance(c.get("i"), int):
             ad = (c.get("n") or c.get("sn") or "").strip()
@@ -101,7 +101,7 @@ def lig_adlari(payload: Any) -> Dict[int, str]:
     return out
 
 
-def ms_orani(etkinlik: Dict[str, Any]) -> Optional[Dict[str, Dict[str, float]]]:
+def ms_orani(etkinlik: dict[str, Any]) -> dict[str, dict[str, float]] | None:
     """Etkinligin 1X2 pazari: {"odd": {...}, "wodd": {...}} ya da None.
 
     1.00 ve altindaki oran FIYAT DEGILDIR — bultende askiya alinmis ayagin
@@ -113,8 +113,8 @@ def ms_orani(etkinlik: Dict[str, Any]) -> Optional[Dict[str, Dict[str, float]]]:
     for m in etkinlik.get("m") or []:
         if m.get("t") != MS_TIP or m.get("st") != MS_ALT_TIP:
             continue
-        kupon: Dict[str, float] = {}
-        web: Dict[str, float] = {}
+        kupon: dict[str, float] = {}
+        web: dict[str, float] = {}
         for o in m.get("o") or []:
             ad = str(o.get("n") or "").strip()
             if ad not in SEMBOLLER:
@@ -136,16 +136,16 @@ def ms_orani(etkinlik: Dict[str, Any]) -> Optional[Dict[str, Dict[str, float]]]:
     return None
 
 
-def marj(oranlar: Dict[str, float]) -> Optional[float]:
+def marj(oranlar: dict[str, float]) -> float | None:
     """Bahisci payi: ham olasilik toplaminin 1'i asan kismi."""
     if len(oranlar) != len(SEMBOLLER) or any(v <= 0 for v in oranlar.values()):
         return None
     return round(sum(1.0 / v for v in oranlar.values()) - 1.0, 4)
 
 
-def satirlar_uret(veri: Dict[str, Any], ligler: Dict[int, str],
-                  alinma: str) -> List[Dict[str, Any]]:
-    out: List[Dict[str, Any]] = []
+def satirlar_uret(veri: dict[str, Any], ligler: dict[int, str],
+                  alinma: str) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
     for e in veri.get("events") or []:
         if e.get("sid") != FUTBOL_SID:
             continue
@@ -185,7 +185,7 @@ CSV_BASLIK = [
 ]
 
 
-def csv_yaz(yol: Path, satirlar: List[Dict[str, Any]]) -> None:
+def csv_yaz(yol: Path, satirlar: list[dict[str, Any]]) -> None:
     with open(yol, "w", encoding="utf-8", newline="") as fh:
         yazici = csv.DictWriter(fh, fieldnames=CSV_BASLIK)
         yazici.writeheader()
@@ -199,7 +199,7 @@ def csv_yaz(yol: Path, satirlar: List[Dict[str, Any]]) -> None:
             yazici.writerow(duz)
 
 
-def sqlite_yaz(yol: Path, satirlar: List[Dict[str, Any]]) -> None:
+def sqlite_yaz(yol: Path, satirlar: list[dict[str, Any]]) -> None:
     """Uzun bicim — `odds.sqlite3` ile ayni sekil, ayni sorgu diliyle okunur.
 
     Anahtar (alinma, event_id): ayni mac farkli snapshot'larda tekrar
@@ -254,7 +254,7 @@ def main() -> int:
 
     if args.kaynak:
         ham = json.loads(args.kaynak.read_text(encoding="utf-8"))
-        ligler: Dict[int, str] = {}
+        ligler: dict[int, str] = {}
     else:
         try:
             ham = indir(EVENTS_URL)

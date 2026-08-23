@@ -8,7 +8,10 @@ uzayında** yapılır, oran uzayında değil. Sebep ölçülmüş bir olgudur ve
 import pytest
 
 from spor_toto.benzer import (
-    AZ_ORNEK, EN_COK_TOLERANS, _mesafe, benzer_maclar,
+    AZ_ORNEK,
+    EN_COK_TOLERANS,
+    _mesafe,
+    benzer_maclar,
 )
 from spor_toto.egitim import korpus_yukle
 from spor_toto.odds import ARINDIRMA_YONTEMLERI, SEMBOLLER, implied_probs, margin

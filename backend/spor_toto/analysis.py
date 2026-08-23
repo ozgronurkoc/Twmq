@@ -5,17 +5,17 @@ from __future__ import annotations
 import math
 import random
 from collections import Counter
-from typing import Dict, List, Optional, Sequence, Tuple
+from collections.abc import Sequence
 
 import numpy as _np
 
-from .core import Encoder, Point, SEMBOLLER
+from .core import SEMBOLLER, Encoder, Point
 
 
 def monte_carlo_report(
     enc: Encoder,
     cols: Sequence[Point],
-    probs: Sequence[Dict[str, float]],
+    probs: Sequence[dict[str, float]],
     n_samples: int = 100_000,
     seed: int = 42,
 ) -> dict:
@@ -42,7 +42,7 @@ def monte_carlo_report(
             f"Monte Carlo icin n_samples >= 1 gerekli (alindi: {n_samples}). "
             f"CLI'de --mc-samples 0 MC'yi kapatir; acmak icin pozitif deger ver."
         )
-    warning: Optional[str] = None
+    warning: str | None = None
     if n_samples < 100:
         warning = (
             f"n_samples={n_samples} cok dusuk; %95 CI guvenilmez. "
@@ -56,7 +56,7 @@ def monte_carlo_report(
 
     rng = random.Random(seed)
 
-    cum: List[List[Tuple[float, str]]] = []
+    cum: list[list[tuple[float, str]]] = []
     for i in range(enc.total_len):
         p = probs[i]
         weights = [max(0.0, float(p.get(sym, 0.0))) for sym in SEMBOLLER]
@@ -66,7 +66,7 @@ def monte_carlo_report(
         else:
             weights = [w / total for w in weights]
         running = 0.0
-        entries: List[Tuple[float, str]] = []
+        entries: list[tuple[float, str]] = []
         for w, sym in zip(weights, SEMBOLLER):
             running += w
             entries.append((running, sym))
@@ -79,7 +79,7 @@ def monte_carlo_report(
     n_ici = n_15 = n_14 = n_13 = n_12 = 0
 
     for _ in range(n_samples):
-        outcome: List[str] = []
+        outcome: list[str] = []
         for i in range(enc.total_len):
             r = rng.random()
             chosen = cum[i][-1][1]
@@ -212,7 +212,7 @@ def match_error_frequency(
 
     err_d1, err_d2 = _counter(err_d1), _counter(err_d2)
 
-    def to_list(counter: Counter, total: int) -> List[dict]:
+    def to_list(counter: Counter, total: int) -> list[dict]:
         items = []
         for mac in sorted(counter.keys()):
             cnt = counter[mac]

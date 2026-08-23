@@ -293,7 +293,7 @@ def _sahte(**degisiklik):
                   "odds": {"1": 2.0, "0": 3.4, "2": 3.6},
                   "play_pct": {"1": 50, "0": 30, "2": 20}}
                  for i in range(2, 16)]
-    return {"meta": {}, "matches": [mac] + digerleri}
+    return {"meta": {}, "matches": [mac, *digerleri]}
 
 
 @pytest.mark.parametrize("degisiklik,beklenen", [

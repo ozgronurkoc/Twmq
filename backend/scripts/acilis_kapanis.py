@@ -24,11 +24,10 @@ from pathlib import Path
 KOK = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(KOK))
 
-from spor_toto.backtest import _en_iyi_skor, _kaplama, secim_uret  # noqa: E402
-from spor_toto.history import normalized_weeks  # noqa: E402
-from spor_toto.odds import implied_probs, load_odds, market_odds  # noqa: E402
-
-from spor_toto.core import SEMBOLLER  # noqa: E402
+from spor_toto.backtest import _en_iyi_skor, _kaplama, secim_uret
+from spor_toto.core import SEMBOLLER
+from spor_toto.history import normalized_weeks
+from spor_toto.odds import implied_probs, load_odds, market_odds
 
 #: Sembol duzeni TEK kaynaktan (`spor_toto.core`). Bu dosyada ayri bir
 #: demet olarak yaziliyordu; depoda ayni deger on bir kez tanimliydi.
@@ -143,7 +142,7 @@ def main() -> None:
     print(f"Favori değişen maç: {d['degisen']} — açılış {d['degisen_ac_hakli']}, "
           f"kapanış {d['degisen_ka_hakli']} kez haklı")
 
-    print(f"\n─── HAREKET BİLGİ TAŞIYOR MU ────────────────────────────────────────")
+    print("\n─── HAREKET BİLGİ TAŞIYOR MU ────────────────────────────────────────")
     print(f'{"hareket (puan)":<18}{"gözlem":>8}{"açılış":>10}{"kapanış":>10}{"gerçek":>10}  kim haklı')
     for h in hareket(rows):
         fark_ac = abs(h["gercek"] - h["acilis"])
@@ -153,7 +152,7 @@ def main() -> None:
         print(f'{etiket:<18}{h["n"]:>8}{h["acilis"]:>9.1f}%{h["kapanis"]:>9.1f}%'
               f'{h["gercek"]:>9.1f}%  {kim}')
 
-    print(f"\n─── KURAL HANGİ FİYATLA BESLENİRSE ──────────────────────────────────")
+    print("\n─── KURAL HANGİ FİYATLA BESLENİRSE ──────────────────────────────────")
     print(f'{"fiyat":<12}{"hafta":>6}{"14":>4}{"13":>4}{"12":>4}{"kolon/hafta":>13}')
     for ad, c in (("AÇILIŞ", False), ("KAPANIŞ", True)):
         r = kural_kosusu(c)

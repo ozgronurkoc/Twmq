@@ -12,10 +12,10 @@ haberi olmaz — `health._check_meta_sozlesmesi` artik bu bosluga bakar.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Set
+from typing import Any
 
 from .bayes import STRENGTH_PRESETS
-from .core import MAC_SAYISI, SEMBOLLER, HAS_SCIPY
+from .core import HAS_SCIPY, MAC_SAYISI, SEMBOLLER
 
 #: Kupon uzunlugu TEK kaynaktan (`core`) — ad korunuyor, deger degil.
 MATCH_COUNT = MAC_SAYISI
@@ -33,7 +33,7 @@ FIRE_MAX_VARSAYILAN = 2
 # Motorun tum modlari. `garanti` bir REKLAM degil sozlesmedir: saglik
 # katmani her modu kosturup uretilen kaplamayi bu bayrakla karsilastirir
 # (bkz. health._check_mod_envanteri).
-MODES: List[Dict[str, Any]] = [
+MODES: list[dict[str, Any]] = [
     {"id": "fix16", "label": "Sabit 16 satır", "garanti": True,
      "needs_budget": False, "needs_scipy": False,
      "aciklama": "Her zaman 16 kupon satırı. En az 7 çifte zorunlu. "
@@ -57,7 +57,7 @@ MODES: List[Dict[str, Any]] = [
      "needs_budget": True, "needs_scipy": False,
      "aciklama": "Sabit bütçeyle maksimum kapsama. GARANTİ VERMEZ."},
 ]
-MODE_IDS: Set[str] = {m["id"] for m in MODES}
+MODE_IDS: set[str] = {m["id"] for m in MODES}
 
 # CLI ile birebir ayni motor varsayilanlari (bkz. spor_toto/cli.py).
 #
@@ -67,7 +67,7 @@ MODE_IDS: Set[str] = {m["id"] for m in MODES}
 # kupon 3 saniyelik sinirla da 32 kolon veriyor, yalnizca "optimallik
 # kanitlandi" bayragini kaybediyor. `auto`nun sozu "en ucuzu ara"dir,
 # "optimalligi kanitla" degil — kanit isteyen `--mode exact` kullanir.
-ENGINE_DEFAULTS: Dict[str, Any] = {
+ENGINE_DEFAULTS: dict[str, Any] = {
     "trials": 5,
     "ls_iters": 30_000,
     "seed": 42,
@@ -79,7 +79,7 @@ ENGINE_DEFAULTS: Dict[str, Any] = {
 
 # Her sinir icin min <= default <= max tutmak ZORUNDADIR; arayuz kaydiraclari
 # dogrudan bu sayilardan uretiliyor.
-LIMITS: Dict[str, Dict[str, Any]] = {
+LIMITS: dict[str, dict[str, Any]] = {
     "mc_samples": {"min": MC_MIN, "max": MC_MAX, "default": MC_WEB_SAMPLES},
     "fire_max": {"min": 0, "max": 2, "default": FIRE_MAX_VARSAYILAN},
     "fire_maliyet": {"min": 0, "max": FIRE_MAX_MALIYET},
@@ -95,7 +95,7 @@ LIMITS: Dict[str, Dict[str, Any]] = {
 }
 
 
-def bayes_preset_listesi() -> List[Dict[str, Any]]:
+def bayes_preset_listesi() -> list[dict[str, Any]]:
     return [
         {"id": k,
          "prior_strength": v["prior_strength"],
@@ -104,13 +104,16 @@ def bayes_preset_listesi() -> List[Dict[str, Any]]:
     ]
 
 
-def meta_payload(version: str) -> Dict[str, Any]:
+def meta_payload(version: str) -> dict[str, Any]:
     """`/api/meta` govdesi. Uc yalnizca bunu jsonify eder."""
     # Geri test izgarasi da sabit kodlanmaz; motorla tek kaynaktan senkron
     # kalsin diye backtest modulunden okunur. Import burada: backtest, veri
     # katmanini acar ve meta modulunun import maliyeti olmamalidir.
     from .backtest import (
-        BANKO_IZGARA, UCLU_IZGARA, VARSAYILAN_BANKO, VARSAYILAN_UCLU,
+        BANKO_IZGARA,
+        UCLU_IZGARA,
+        VARSAYILAN_BANKO,
+        VARSAYILAN_UCLU,
     )
 
     return {

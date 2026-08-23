@@ -175,13 +175,22 @@ export function WeeksTable({
         <table className="w-full min-w-[720px] text-[12.5px]">
           <thead>
             <tr className={TABLO_BASLIK_SATIRI}>
+              {/* `aria-sort` <th>'e ait: <button> rolu bu ozniteligi
+                  DESTEKLEMEZ ve ekran okuyucu siralama durumunu hic
+                  duymuyordu. Oznitelik dogru elemana tasindi. */}
               {basliklar.map((h) => (
-                <th key={h.key} scope="col" className="pb-2 pr-3 font-medium">
+                <th
+                  key={h.key}
+                  scope="col"
+                  className="pb-2 pr-3 font-medium"
+                  aria-sort={
+                    sira === h.key ? (azalan ? "descending" : "ascending") : "none"
+                  }
+                >
                   <button
                     type="button"
                     onClick={() => degistir(h.key)}
                     title={`${h.baslik} — sırala`}
-                    aria-sort={sira === h.key ? (azalan ? "descending" : "ascending") : "none"}
                     className="inline-flex items-center gap-1 transition-colors hover:text-foreground"
                   >
                     {h.etiket}

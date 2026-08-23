@@ -22,26 +22,26 @@ modül yüzünden döngüye girmez.
 from __future__ import annotations
 
 import math
-from typing import Dict, Optional, Sequence, Tuple
+from collections.abc import Sequence
 
 from .core import SEMBOLLER
 
 __all__ = [
+    "BRIER_ESIT",
+    "FAVORI_DILIMLERI",
+    "GUVEN_Z",
     "SEMBOLLER",
+    "bant_adi",
+    "brier",
+    "favori_dilimi",
     "normalize_olasilik",
     "wilson",
-    "GUVEN_Z",
-    "brier",
-    "BRIER_ESIT",
-    "bant_adi",
-    "FAVORI_DILIMLERI",
-    "favori_dilimi",
 ]
 
 
 # ─── olasılık ────────────────────────────────────────────────────────────
 
-def normalize_olasilik(p: Dict[str, float]) -> Dict[str, float]:
+def normalize_olasilik(p: dict[str, float]) -> dict[str, float]:
     """1'e normalize edilmiş olasılık; negatif kırpılır, toplam 0 ise düzgün.
 
     Toplam sıfırken 1/3'e düşmek keyfi değil: "bilgi yok" durumunun tek
@@ -51,7 +51,7 @@ def normalize_olasilik(p: Dict[str, float]) -> Dict[str, float]:
     """
     toplam = sum(max(0.0, float(p.get(s, 0.0))) for s in SEMBOLLER)
     if toplam <= 0:
-        return {s: 1.0 / 3.0 for s in SEMBOLLER}
+        return dict.fromkeys(SEMBOLLER, 1.0 / 3.0)
     return {s: max(0.0, float(p.get(s, 0.0))) / toplam for s in SEMBOLLER}
 
 
@@ -61,7 +61,7 @@ def normalize_olasilik(p: Dict[str, float]) -> Dict[str, float]:
 GUVEN_Z = 1.959964
 
 
-def wilson(basari: int, n: int) -> Tuple[float, float]:
+def wilson(basari: int, n: int) -> tuple[float, float]:
     """Oran için Wilson %95 güven aralığı.
 
     Normal yaklaşım küçük örneklemde kenarlara yapışır — 40/41'de üst sınır
@@ -80,7 +80,7 @@ def wilson(basari: int, n: int) -> Tuple[float, float]:
 
 # ─── puanlama ────────────────────────────────────────────────────────────
 
-def brier(probs: Dict[str, float], kod: str) -> float:
+def brier(probs: dict[str, float], kod: str) -> float:
     """Tek maçın Brier skoru: Σ(p_s − 1{s=gerçek})².
 
     0 = kusursuz, 2 = tam ters. Olasılığın tamamını cezalandırır: 0,90
@@ -115,7 +115,7 @@ def bant_adi(deger: float, bantlar: Sequence[float]) -> str:
 FAVORI_DILIMLERI: Sequence[float] = (0.40, 0.50, 0.65)
 
 
-def favori_dilimi(probs: Optional[Dict[str, float]]) -> str:
+def favori_dilimi(probs: dict[str, float] | None) -> str:
     """Bir maçın favori olasılığının hangi dilime düştüğü."""
     en_yuksek = max(probs.values()) if probs else 0.0
     return bant_adi(en_yuksek, FAVORI_DILIMLERI)

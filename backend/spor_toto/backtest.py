@@ -21,8 +21,9 @@ sonuncusu, eşiği o haftayı görmeden seçtiğinde ne olacağını ölçer.
 from __future__ import annotations
 
 import math
+from collections.abc import Sequence
 from functools import lru_cache
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any
 
 from .core import (
     Encoder,
@@ -33,7 +34,7 @@ from .core import (
     solve_heuristic,
 )
 from .history import MATCH_COUNT, SYMBOLS, normalized_weeks
-from .odds import ARINDIRMA_VARSAYILAN, match_1x2, load_odds
+from .odds import ARINDIRMA_VARSAYILAN, load_odds, match_1x2
 from .ortak import wilson
 
 try:  # pragma: no cover - ortama bagli
@@ -54,14 +55,14 @@ VARSAYILAN_BANKO = 0.68
 VARSAYILAN_UCLU = 0.38
 
 #: Eşik taraması ızgarası. `uclu = 0.0` "hiç üçlü yok" demektir.
-BANKO_IZGARA: Tuple[float, ...] = (0.50, 0.55, 0.60, 0.65, 0.68, 0.72, 0.78)
-UCLU_IZGARA: Tuple[float, ...] = (0.0, 0.34, 0.38, 0.42)
+BANKO_IZGARA: tuple[float, ...] = (0.50, 0.55, 0.60, 0.65, 0.68, 0.72, 0.78)
+UCLU_IZGARA: tuple[float, ...] = (0.0, 0.34, 0.38, 0.42)
 
 
 # ─── strateji ─────────────────────────────────────────────────────────────────
 
-def secim_uret(probs: Dict[str, float], banko_esik: float,
-               uclu_esik: float) -> List[str]:
+def secim_uret(probs: dict[str, float], banko_esik: float,
+               uclu_esik: float) -> list[str]:
     """Bir maçın olasılığından işaretlenecek sembolleri seçer.
 
     Sıra kritik: önce banko sorulur. Böylece ``banko_esik <= uclu_esik`` gibi
@@ -78,7 +79,7 @@ def secim_uret(probs: Dict[str, float], banko_esik: float,
 
 # ─── kaplama (hafta bağımsız, imzaya göre önbellekli) ─────────────────────────
 
-def _sentetik_encoder(sizes: Tuple[int, ...]) -> Encoder:
+def _sentetik_encoder(sizes: tuple[int, ...]) -> Encoder:
     """Yalnız alfabe boyutlarından bir Encoder. Kaplamanın maliyeti hangi
     maçın çifte olduğuna değil, boyutların çokkümesine bağlıdır."""
     harf = {1: ["1"], 2: ["1", "0"], 3: ["1", "0", "2"]}
@@ -86,7 +87,7 @@ def _sentetik_encoder(sizes: Tuple[int, ...]) -> Encoder:
 
 
 @lru_cache(maxsize=256)
-def _kaplama(sizes: Tuple[int, ...]) -> Optional[Dict[str, Any]]:
+def _kaplama(sizes: tuple[int, ...]) -> dict[str, Any] | None:
     """Sıralanmış boyut imzası için kaplama. Uzay sınırı aşılırsa None.
 
     Önbellek anahtarı **sıralanmış** imzadır: 8 çifte + 2 üçlü, hangi maçlarda
@@ -140,7 +141,7 @@ def _kaplama(sizes: Tuple[int, ...]) -> Optional[Dict[str, Any]]:
     }
 
 
-def _en_iyi_skor(kap: Dict[str, Any], nokta: Sequence[int]) -> int:
+def _en_iyi_skor(kap: dict[str, Any], nokta: Sequence[int]) -> int:
     """Kolonlar içinde gerçekleşen sonuca en çok uyanın doğru sayısı.
 
     ``nokta`` içinde −1, o maçın seçim kümesi dışında kaldığını gösterir;
@@ -159,8 +160,8 @@ def _en_iyi_skor(kap: Dict[str, Any], nokta: Sequence[int]) -> int:
 
 # ─── hafta girdisi ────────────────────────────────────────────────────────────
 
-def hafta_girdileri(last: Optional[int] = None,
-                    yontem: str = ARINDIRMA_VARSAYILAN) -> List[Dict[str, Any]]:
+def hafta_girdileri(last: int | None = None,
+                    yontem: str = ARINDIRMA_VARSAYILAN) -> list[dict[str, Any]]:
     """Geri teste girecek haftalar: sonuç + 15 maçın olasılığı.
 
     Oranı eksik olan hafta **elenir, tamamlanmaz** (veri doktrini 2). Kaç
@@ -171,9 +172,9 @@ def hafta_girdileri(last: Optional[int] = None,
     ölçeğinde türetildi ve başka bir ölçekte aynı sayı başka bir kupon üretir.
     """
     oran_satiri = {(r["week"], r["no"]): r for r in load_odds()}
-    out: List[Dict[str, Any]] = []
+    out: list[dict[str, Any]] = []
     for w in normalized_weeks(last):
-        probs: List[Optional[Dict[str, float]]] = []
+        probs: list[dict[str, float] | None] = []
         for no in range(1, MATCH_COUNT + 1):
             satir = oran_satiri.get((w["week"], no))
             blok = match_1x2(satir, yontem) if satir else None
@@ -192,8 +193,8 @@ def hafta_girdileri(last: Optional[int] = None,
 
 # ─── tek hafta ────────────────────────────────────────────────────────────────
 
-def _hafta_calistir(girdi: Dict[str, Any], banko_esik: float,
-                    uclu_esik: float) -> Dict[str, Any]:
+def _hafta_calistir(girdi: dict[str, Any], banko_esik: float,
+                    uclu_esik: float) -> dict[str, Any]:
     secimler = [
         secim_uret(p or {}, banko_esik, uclu_esik) for p in girdi["probs"]
     ]
@@ -216,8 +217,8 @@ def _hafta_calistir(girdi: Dict[str, Any], banko_esik: float,
 
     # Gerçekleşen sonucun seçim uzayındaki koordinatı; küme dışıysa -1.
     banko_dogru = sum(1 for i in banko_pos if secimler[i][0] == gercek[i])
-    nokta: List[int] = []
-    kacak: List[int] = []
+    nokta: list[int] = []
+    kacak: list[int] = []
     for j in duzen:
         i = var_pos[j]
         sym = gercek[i]
@@ -257,7 +258,7 @@ def _hafta_calistir(girdi: Dict[str, Any], banko_esik: float,
 _wilson = wilson
 
 
-def _ozet(hafta_sonuclari: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
+def _ozet(hafta_sonuclari: Sequence[dict[str, Any]]) -> dict[str, Any]:
     calisan = [h for h in hafta_sonuclari if not h["skipped"]]
     n = len(calisan)
     if not n:
@@ -293,16 +294,16 @@ def _ozet(hafta_sonuclari: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
     }
 
 
-def _hepsini_calistir(girdiler: Sequence[Dict[str, Any]], banko_esik: float,
-                      uclu_esik: float) -> List[Dict[str, Any]]:
+def _hepsini_calistir(girdiler: Sequence[dict[str, Any]], banko_esik: float,
+                      uclu_esik: float) -> list[dict[str, Any]]:
     return [_hafta_calistir(g, banko_esik, uclu_esik)
             for g in girdiler if g["usable"]]
 
 
-Tablo = Dict[Tuple[float, float], List[Dict[str, Any]]]
+Tablo = dict[tuple[float, float], list[dict[str, Any]]]
 
 
-def izgara_tablosu(girdiler: Sequence[Dict[str, Any]],
+def izgara_tablosu(girdiler: Sequence[dict[str, Any]],
                    banko_izgara: Sequence[float] = BANKO_IZGARA,
                    uclu_izgara: Sequence[float] = UCLU_IZGARA) -> Tablo:
     """(banko, üçlü) → hafta hafta sonuç.
@@ -318,10 +319,10 @@ def izgara_tablosu(girdiler: Sequence[Dict[str, Any]],
     }
 
 
-def esik_taramasi(girdiler: Sequence[Dict[str, Any]],
+def esik_taramasi(girdiler: Sequence[dict[str, Any]],
                   banko_izgara: Sequence[float] = BANKO_IZGARA,
                   uclu_izgara: Sequence[float] = UCLU_IZGARA,
-                  tablo: Optional[Tablo] = None) -> List[Dict[str, Any]]:
+                  tablo: Tablo | None = None) -> list[dict[str, Any]]:
     """Izgaradaki her eşik çifti için sezon özeti.
 
     Tabloyu "en iyi satır" diye okumak tam olarak aşırı uyumun kendisidir;
@@ -329,7 +330,7 @@ def esik_taramasi(girdiler: Sequence[Dict[str, Any]],
     """
     if tablo is None:
         tablo = izgara_tablosu(girdiler, banko_izgara, uclu_izgara)
-    out: List[Dict[str, Any]] = []
+    out: list[dict[str, Any]] = []
     for (banko, uclu), sonuclar in tablo.items():
         ozet = _ozet(sonuclar)
         if not ozet.get("weeks"):
@@ -339,17 +340,17 @@ def esik_taramasi(girdiler: Sequence[Dict[str, Any]],
     return out
 
 
-def _en_iyi(satirlar: Sequence[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+def _en_iyi(satirlar: Sequence[dict[str, Any]]) -> dict[str, Any] | None:
     """Önce 14+ hafta sayısı, eşitlikte daha ucuz kupon."""
     if not satirlar:
         return None
     return max(satirlar, key=lambda r: (r["hit14"], -r["columns_total"]))
 
 
-def holdout(girdiler: Sequence[Dict[str, Any]],
+def holdout(girdiler: Sequence[dict[str, Any]],
             banko_izgara: Sequence[float] = BANKO_IZGARA,
             uclu_izgara: Sequence[float] = UCLU_IZGARA,
-            tablo: Optional[Tablo] = None) -> Dict[str, Any]:
+            tablo: Tablo | None = None) -> dict[str, Any]:
     """Bir hafta dışarıda bırak, eşiği kalan haftalarda seç, dışarıdakinde ölç.
 
     Eşik taramasının en iyi satırı geçmişin **en iyi açıklamasıdır**; bu
@@ -365,10 +366,10 @@ def holdout(girdiler: Sequence[Dict[str, Any]],
     n = len(kullanilir)
     tutan = 0
     kolon = 0
-    secimler: Dict[str, int] = {}
+    secimler: dict[str, int] = {}
     for disarida in range(n):
         en_iyi_anahtar = None
-        en_iyi_skor: Tuple[int, int] = (-1, 0)
+        en_iyi_skor: tuple[int, int] = (-1, 0)
         for anahtar, sonuclar in tablo.items():
             ic = [h for i, h in enumerate(sonuclar)
                   if i != disarida and not h["skipped"]]
@@ -411,11 +412,11 @@ UYARI = (
 )
 
 
-def backtest(last: Optional[int] = None,
+def backtest(last: int | None = None,
              banko_esik: float = VARSAYILAN_BANKO,
              uclu_esik: float = VARSAYILAN_UCLU,
              sweep: bool = True,
-             yontem: str = ARINDIRMA_VARSAYILAN) -> Dict[str, Any]:
+             yontem: str = ARINDIRMA_VARSAYILAN) -> dict[str, Any]:
     """Bir stratejinin sezon boyu geri testi + eşik taraması + hold-out.
 
     `yontem` marj arındırmasını seçer (A5); `meta.arindirma` ile çıktıda yazar

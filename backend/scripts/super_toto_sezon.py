@@ -28,13 +28,14 @@ import importlib.util
 import json
 import math
 import sys
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any
 
 KOK = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(KOK))
 
-from spor_toto.core import SEMBOLLER  # noqa: E402
+from spor_toto.core import SEMBOLLER
 
 #: Sembol duzeni TEK kaynaktan (`spor_toto.core`). Bu dosyada ayri bir
 #: demet olarak yaziliyordu; depoda ayni deger on bir kez tanimliydi.
@@ -63,7 +64,7 @@ def _modul(ad: str):
     return importlib.import_module(f"scripts.super_toto_{ad}")
 
 
-def haftalari_bul(sezon: str) -> List[int]:
+def haftalari_bul(sezon: str) -> list[int]:
     kok = VERI_KOK / sezon
     if not kok.exists():
         raise SystemExit(f"Sezon dizini yok: {kok}")
@@ -79,7 +80,7 @@ def haftalari_bul(sezon: str) -> List[int]:
     return out
 
 
-def topla(sezon: str) -> Dict[str, Any]:
+def topla(sezon: str) -> dict[str, Any]:
     """Girilmiş bütün haftaları tek tabloya indirger."""
     from spor_toto.benzer import _wilson
     from spor_toto.evaluate import brier, log_kaybi
@@ -88,13 +89,13 @@ def topla(sezon: str) -> Dict[str, Any]:
     hafta_mod = _modul("hafta")
     deg_mod = _modul("degerlendir")
 
-    haftalar: List[Dict[str, Any]] = []
-    noktalar: List[tuple] = []          # (piyasa p, gerceklesti mi)
+    haftalar: list[dict[str, Any]] = []
+    noktalar: list[tuple] = []          # (piyasa p, gerceklesti mi)
     for no in haftalari_bul(sezon):
         d = hafta_mod.hafta_yukle(sezon, no)
         meta = d["meta"]
         sonuc = meta.get("results")
-        kayit: Dict[str, Any] = {
+        kayit: dict[str, Any] = {
             "hafta": no,
             "program": meta.get("program"),
             "sonuc_var": bool(sonuc),
@@ -104,11 +105,11 @@ def topla(sezon: str) -> Dict[str, Any]:
         }
         if sonuc:
             b = sum(brier(m["probs"], k) for m, k in zip(d["matches"], sonuc)) / 15
-            l = sum(log_kaybi(m["probs"], k) for m, k in zip(d["matches"], sonuc)) / 15
+            lig = sum(log_kaybi(m["probs"], k) for m, k in zip(d["matches"], sonuc)) / 15
             fav_dogru = sum(1 for m, k in zip(d["matches"], sonuc)
                             if m["fav"] == k)
             fav_beklenen = sum(m["probs"][m["fav"]] for m in d["matches"] if m["fav"])
-            kayit.update({"brier": b, "log": l,
+            kayit.update({"brier": b, "log": lig,
                           "favori_dogru": fav_dogru,
                           "favori_beklenen": fav_beklenen})
             for m, k in zip(d["matches"], sonuc):
@@ -142,7 +143,7 @@ def topla(sezon: str) -> Dict[str, Any]:
                         "piyasa_ga_icinde": alt <= bekleniyor <= ust})
 
     n_mac = 15 * len(olculen)
-    ozet: Dict[str, Any] = {
+    ozet: dict[str, Any] = {
         "sezon": sezon,
         "arindirma": ARINDIRMA_VARSAYILAN,
         "hafta_girilmis": len(haftalar),
@@ -174,7 +175,7 @@ def topla(sezon: str) -> Dict[str, Any]:
     return ozet
 
 
-def yeterlilik_notu(n_mac: int) -> Dict[str, Any]:
+def yeterlilik_notu(n_mac: int) -> dict[str, Any]:
     """Bu örneklem neyi ayırt edebilir, neyi edemez — **her koşumda yazılır.**
 
     Peşinde olunan üstünlük ~0,0005 Brier. Maç başına Brier'in standart
@@ -202,7 +203,7 @@ def yeterlilik_notu(n_mac: int) -> Dict[str, Any]:
     }
 
 
-def yaz(o: Dict[str, Any]) -> None:
+def yaz(o: dict[str, Any]) -> None:
     print("=" * 78)
     print(f"{o['sezon']} · SEZON KARNESİ · arındırma: {o['arindirma']}")
     print("=" * 78)
@@ -222,7 +223,7 @@ def yaz(o: Dict[str, Any]) -> None:
               f"{h['uyari']:>7}")
 
     if o["hafta_olculen"]:
-        print(f"\n─── BİRİKİMLİ ───────────────────────────────────────────────────────────")
+        print("\n─── BİRİKİMLİ ───────────────────────────────────────────────────────────")
         print(f"Brier {o['brier']:.4f} · log {o['log']:.3f}")
         sd = o.get("favori_sapma_sd")
         print(f"Favori isabeti: gözlenen {o['favori_gozlenen']} ↔ beklenen "
@@ -235,7 +236,7 @@ def yaz(o: Dict[str, Any]) -> None:
                   f"{o['kacak_beklenen']:.2f}")
 
     if o["kovalar"]:
-        print(f"\n─── KALİBRASYON (canlı sezon) ───────────────────────────────────────────")
+        print("\n─── KALİBRASYON (canlı sezon) ───────────────────────────────────────────")
         print(f"{'kova':<12}{'n':>6}{'piyasa':>9}{'gerçek':>9}{'%95 aralık':>20}")
         for r in o["kovalar"]:
             isaret = "" if r["piyasa_ga_icinde"] else "  ← DIŞINDA"
@@ -243,11 +244,11 @@ def yaz(o: Dict[str, Any]) -> None:
                   f"{100*r['piyasa']:>8.1f}%{100*r['gercek']:>8.1f}%"
                   f"   [%{100*r['ga_alt']:>5.1f}, %{100*r['ga_ust']:>5.1f}]{isaret}")
 
-    print(f"\n─── ÖRNEKLEM YETERLİLİĞİ ────────────────────────────────────────────────")
+    print("\n─── ÖRNEKLEM YETERLİLİĞİ ────────────────────────────────────────────────")
     print(f"  {o['yeterlilik']['not']}")
 
 
-def main(argv: Optional[Sequence[str]] = None) -> None:
+def main(argv: Sequence[str] | None = None) -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--sezon", default="2026_27")
     ap.add_argument("--json", action="store_true")

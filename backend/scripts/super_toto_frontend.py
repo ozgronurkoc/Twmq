@@ -27,13 +27,14 @@ import argparse
 import importlib.util
 import json
 import sys
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any
 
 KOK = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(KOK))
 
-from spor_toto.core import SEMBOLLER  # noqa: E402
+from spor_toto.core import SEMBOLLER
 
 #: Sembol duzeni TEK kaynaktan (`spor_toto.core`). Bu dosyada ayri bir
 #: demet olarak yaziliyordu; depoda ayni deger on bir kez tanimliydi.
@@ -53,11 +54,11 @@ def _modul(ad: str):
     return importlib.import_module(f"scripts.super_toto_{ad}")
 
 
-def _yuvarla(p: Dict[str, float]) -> Dict[str, float]:
+def _yuvarla(p: dict[str, float]) -> dict[str, float]:
     return {s: round(p[s], 4) for s in SEM}
 
 
-def _donmus_blok(donmus: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+def _donmus_blok(donmus: dict[str, Any] | None) -> dict[str, Any] | None:
     """Dondurulmuş kupon dosyasından arayüzün okuyacağı kayıt.
 
     Ana varyant (`variants[0]`) alınır; kupon dosyası birden çok bütçe
@@ -83,14 +84,14 @@ def _donmus_blok(donmus: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
     }
 
 
-def uret(sezon: str = "2026_27") -> Dict[str, Any]:
+def uret(sezon: str = "2026_27") -> dict[str, Any]:
     from spor_toto.backtest import VARSAYILAN_BANKO, VARSAYILAN_UCLU
     from spor_toto.odds import ARINDIRMA_VARSAYILAN
 
     hafta_mod = _modul("hafta")
     sezon_mod = _modul("sezon")
 
-    haftalar: List[Dict[str, Any]] = []
+    haftalar: list[dict[str, Any]] = []
     for no in sezon_mod.haftalari_bul(sezon):
         d = hafta_mod.hafta_yukle(sezon, no)
         meta = d["meta"]
@@ -170,11 +171,11 @@ def uret(sezon: str = "2026_27") -> Dict[str, Any]:
     }
 
 
-def _metin(govde: Dict[str, Any]) -> str:
+def _metin(govde: dict[str, Any]) -> str:
     return json.dumps(govde, ensure_ascii=False, indent=1, sort_keys=True) + "\n"
 
 
-def main(argv: Optional[Sequence[str]] = None) -> None:
+def main(argv: Sequence[str] | None = None) -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--sezon", default="2026_27")
     ap.add_argument("--kontrol", action="store_true",

@@ -35,7 +35,7 @@ from spor_toto.predict import (
     Tahminci,
 )
 
-ESIT = {s: 1 / 3 for s in SYMBOLS}
+ESIT = dict.fromkeys(SYMBOLS, 1 / 3)
 
 
 def _girdi(week: int, results: str, probs=None) -> dict:
@@ -55,7 +55,7 @@ class KahinTahminci(Tahminci):
     def tahmin(self, hafta):
         out = []
         for kod in hafta["results"]:
-            p = {s: 0.05 for s in SYMBOLS}
+            p = dict.fromkeys(SYMBOLS, 0.05)
             p[kod] = 0.90
             out.append(p)
         return out

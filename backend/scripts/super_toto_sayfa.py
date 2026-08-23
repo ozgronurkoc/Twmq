@@ -16,8 +16,8 @@ from __future__ import annotations
 
 import argparse
 import html
-import json
 import importlib.util
+import json
 import sys
 from pathlib import Path
 
@@ -35,7 +35,7 @@ _a = _ap.parse_args(None if __name__ == "__main__" else [])
 
 m = importlib.import_module("scripts.super_toto_hafta")
 
-from spor_toto.core import SEMBOLLER  # noqa: E402
+from spor_toto.core import SEMBOLLER
 
 #: Sembol duzeni TEK kaynaktan (`spor_toto.core`). Bu dosyada ayri bir
 #: demet olarak yaziliyordu; depoda ayni deger on bir kez tanimliydi.
@@ -177,6 +177,7 @@ def varyant(v, etiket, vurgu=False):
 # ─── neden bu işaret? (maç maç gerekçe)
 SEM_AD = {"1": "ev sahibi", "0": "beraberlik", "2": "deplasman"}
 from spor_toto.core import Encoder as _Encoder
+
 enc_ana = _Encoder(
     [list(x) for x in ana["picks"]])
 blok_maclar = [enc_ana.variable_pos[j] + 1 for j in enc_ana.double_pos()[:7]]
@@ -221,8 +222,8 @@ def gerekce(r, kr, pick):
             f'%{100*sirali[2][1]:.0f}\'lik kütlesini tamamen dışarıda bırakırdı — '
             f'piyasanın ayırt edemediği bir maçta bu, bilgi olmadan risk almaktır.')
         parcalar.append(
-            f'<b class="ok">Kazancı:</b> bu maç kuponu <b>asla</b> dışarı atmaz. '
-            f'Bedeli, kolon sayısını 3 katına çıkarması.')
+            '<b class="ok">Kazancı:</b> bu maç kuponu <b>asla</b> dışarı atmaz. '
+            'Bedeli, kolon sayısını 3 katına çıkarması.')
     else:
         karar, sinif = "ÇİFTE", "cifte"
         ikinci = sirali[1]
@@ -256,7 +257,7 @@ def gerekce(r, kr, pick):
             f'<b class="risk">Bedeli:</b> %{100*disarida:.1f} ihtimalle bu maç kuponu dışarı atar.')
 
     # kalabalık notu
-    en_buyuk = max(((abs(kr["cells"][x]["diff"]), x) for x in S))
+    en_buyuk = max((abs(kr["cells"][x]["diff"]), x) for x in S)
     if en_buyuk[0] >= 0.08:
         x = en_buyuk[1]
         c = kr["cells"][x]
@@ -613,7 +614,8 @@ if BITTI and KULLANICI:
 else:
     iki_kupon_bolumu = ""
 
-ana_v = dict(ana); ana_v["cost"] = ana["columns"]
+ana_v = dict(ana)
+ana_v["cost"] = ana["columns"]
 HTML = f"""<title>Süper Toto {_a.hafta}. Hafta</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

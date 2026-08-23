@@ -18,15 +18,15 @@ birlestirilirse yaricap 2 olur ve garanti kirilir.
 """
 
 from __future__ import annotations
-import re
 
 import heapq
-import time as _time
 import math
 import random
+import re
+import time as _time
 from collections import Counter
+from collections.abc import Iterable, Sequence
 from itertools import product
-from typing import Dict, FrozenSet, Iterable, List, Optional, Sequence, Tuple
 
 #: Modulun ilan edilen yuzeyi. Depoda `import *` yok, yani bu liste bir
 #: sozlesme degil BELGE: "core'dan disari ne cikar" sorusunun cevabi.
@@ -59,8 +59,8 @@ __all__ = [
 # Spor Toto kupon duzeni. Sembollerin ekrana yazilma sirasi budur;
 # alfabetik siralama kullanilirsa 1/0 ciftesi "01" gorunur ki kupon
 # duzenine aykiridir ve okurken hataya yol acar.
-SEMBOLLER: Tuple[str, str, str] = ("1", "0", "2")
-_SEMBOL_INDEX: Dict[str, int] = {s: i for i, s in enumerate(SEMBOLLER)}
+SEMBOLLER: tuple[str, str, str] = ("1", "0", "2")
+_SEMBOL_INDEX: dict[str, int] = {s: i for i, s in enumerate(SEMBOLLER)}
 
 MAC_SAYISI = 15
 
@@ -72,14 +72,18 @@ ORNEK_KUPON = "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"
 HAMMING_BLOK_BOYU = 7
 HAMMING_KOLON = 16
 
-Point = Tuple[int, ...]
-Sizes = Tuple[int, ...]
-Row = Tuple[FrozenSet[int], ...]
+Point = tuple[int, ...]
+Sizes = tuple[int, ...]
+Row = tuple[frozenset[int], ...]
 
 try:  # pragma: no cover - ortama bagli
     import numpy as _np
-    from scipy.optimize import milp as _milp, LinearConstraint as _LC, Bounds as _Bounds
-    from scipy.sparse import lil_matrix as _lil, hstack as _hstack, identity as _ident
+    from scipy.optimize import Bounds as _Bounds
+    from scipy.optimize import LinearConstraint as _LC
+    from scipy.optimize import milp as _milp
+    from scipy.sparse import hstack as _hstack
+    from scipy.sparse import identity as _ident
+    from scipy.sparse import lil_matrix as _lil
     HAS_SCIPY = True
 except ImportError:  # pragma: no cover
     HAS_SCIPY = False
@@ -89,7 +93,7 @@ except ImportError:  # pragma: no cover
 # GIRDI: ayristirma ve dogrulama
 # ============================================================
 
-def sirala_semboller(syms: Iterable[str]) -> List[str]:
+def sirala_semboller(syms: Iterable[str]) -> list[str]:
     """
     Sembolleri kupon duzenine (1, 0, 2) gore siralar.
     Bilinmeyen sembolde KeyError degil, anlasilir bir ValueError firlatir.
@@ -103,12 +107,12 @@ def sirala_semboller(syms: Iterable[str]) -> List[str]:
     return sorted(syms, key=lambda x: _SEMBOL_INDEX[x])
 
 
-def dogrula_secimler(selections: Sequence[Sequence[str]], kati: bool = False) -> List[str]:
+def dogrula_secimler(selections: Sequence[Sequence[str]], kati: bool = False) -> list[str]:
     """
     Secim listesini dogrular. Hatalarda ValueError firlatir; kritik olmayan
     durumlar uyari metni olarak dondurulur.
     """
-    uyarilar: List[str] = []
+    uyarilar: list[str] = []
     if not selections:
         raise ValueError("Secim listesi bos.")
     if len(selections) != MAC_SAYISI:
@@ -135,7 +139,7 @@ def dogrula_secimler(selections: Sequence[Sequence[str]], kati: bool = False) ->
     return uyarilar
 
 
-def parse_picks(text: str) -> List[List[str]]:
+def parse_picks(text: str) -> list[list[str]]:
     """
     '1,10,1,12,0,...' -> [['1'], ['1','0'], ['1'], ['1','2'], ['0'], ...]
     Ayirici olarak virgul, bosluk, noktali virgul veya '/' kabul edilir.
@@ -169,7 +173,7 @@ def parse_picks(text: str) -> List[List[str]]:
 
 
 
-def parse_probs(text: str, selections: Sequence[Sequence[str]]) -> List[Dict[str, float]]:
+def parse_probs(text: str, selections: Sequence[Sequence[str]]) -> list[dict[str, float]]:
     """
     Mac basina olasilik ayristirir. Bicim: mac basina '1:0.5,0:0.3,2:0.2'
     ve maclar ';' ile ayrilir. Eksik semboller 0 kabul edilir.
@@ -179,9 +183,9 @@ def parse_probs(text: str, selections: Sequence[Sequence[str]]) -> List[Dict[str
     if len(bloklar) != len(selections):
         raise ValueError(
             f"--probs {len(bloklar)} mac icerdi, {len(selections)} mac bekleniyordu.")
-    out: List[Dict[str, float]] = []
+    out: list[dict[str, float]] = []
     for i, blok in enumerate(bloklar, 1):
-        p: Dict[str, float] = {s: 0.0 for s in SEMBOLLER}
+        p: dict[str, float] = dict.fromkeys(SEMBOLLER, 0.0)
         for parca in blok.split(","):
             parca = parca.strip()
             if not parca:
@@ -196,8 +200,9 @@ def parse_probs(text: str, selections: Sequence[Sequence[str]]) -> List[Dict[str
                 raise ValueError(f"{i}. macta gecersiz sembol {sym!r}.")
             try:
                 val = float(deger)
-            except ValueError:
-                raise ValueError(f"{i}. macta sayiya cevrilemedi: {deger!r}.")
+            except ValueError as e:
+                raise ValueError(
+                    f"{i}. macta sayiya cevrilemedi: {deger!r}.") from e
             if val < 0:
                 raise ValueError(f"{i}. macta negatif olasilik: {val}.")
             p[sym] = val
@@ -213,7 +218,7 @@ class Encoder:
 
     def __init__(self, selections: Sequence[Sequence[str]], kati: bool = False):
         self.uyarilar = dogrula_secimler(selections, kati=kati)
-        self.selections: List[List[str]] = [sirala_semboller(s) for s in selections]
+        self.selections: list[list[str]] = [sirala_semboller(s) for s in selections]
         self.total_len = len(self.selections)
         self.banko_pos = [i for i, s in enumerate(self.selections) if len(s) == 1]
         self.variable_pos = [i for i, s in enumerate(self.selections) if len(s) > 1]
@@ -235,30 +240,30 @@ class Encoder:
             return 1
         return -(-self.space_size() // self.ball_size())
 
-    def double_pos(self) -> List[int]:
+    def double_pos(self) -> list[int]:
         return [i for i, k in enumerate(self.alphabet_sizes) if k == 2]
 
-    def triple_pos(self) -> List[int]:
+    def triple_pos(self) -> list[int]:
         return [i for i, k in enumerate(self.alphabet_sizes) if k == 3]
 
     # -- donusumler ---------------------------------------------
     def variable_space(self):
         return product(*[range(k) for k in self.alphabet_sizes])
 
-    def decode_full(self, var_point: Point) -> Tuple[str, ...]:
+    def decode_full(self, var_point: Point) -> tuple[str, ...]:
         if len(var_point) != self.n:
             raise ValueError(
                 f"Nokta {len(var_point)} boyutlu, {self.n} bekleniyordu.")
-        full: List[str] = [""] * self.total_len
+        full: list[str] = [""] * self.total_len
         for pos, sym in zip(self.banko_pos, self.banko_syms):
             full[pos] = sym
         for i, pos in enumerate(self.variable_pos):
             full[pos] = self.variable_syms[i][var_point[i]]
         return tuple(full)
 
-    def decode_row(self, row: Row) -> Tuple[str, ...]:
+    def decode_row(self, row: Row) -> tuple[str, ...]:
         """Cok-isaretli satiri kupon metnine cevirir ('10', '102' gibi)."""
-        parts: List[str] = [""] * self.total_len
+        parts: list[str] = [""] * self.total_len
         for pos, sym in zip(self.banko_pos, self.banko_syms):
             parts[pos] = sym
         for i, pos in enumerate(self.variable_pos):
@@ -275,7 +280,7 @@ def hamming(a: Point, b: Point) -> int:
     return sum(x != y for x, y in zip(a, b))
 
 
-def ball(point: Point, sizes: Sizes) -> List[Point]:
+def ball(point: Point, sizes: Sizes) -> list[Point]:
     """
     r=1 topu. Degisken uzay tam bir kartezyen carpim oldugundan tek bir
     koordinati degistirmek her zaman uzay icinde kalir; uyelik kontrolu
@@ -286,7 +291,7 @@ def ball(point: Point, sizes: Sizes) -> List[Point]:
         orig = point[i]
         for s in range(k):
             if s != orig:
-                pts.append(point[:i] + (s,) + point[i + 1:])
+                pts.append((*point[:i], s, *point[i + 1:]))
     return pts
 
 
@@ -321,7 +326,7 @@ def distance_layers(cols: Sequence[Point], sizes: Sizes) -> Counter:
     return dist
 
 
-def dogrula_kaplama(cols: Sequence[Point], sizes: Sizes) -> Tuple[int, int]:
+def dogrula_kaplama(cols: Sequence[Point], sizes: Sizes) -> tuple[int, int]:
     """(en_kotu_mesafe, acik_nokta_sayisi). Bagimsiz dogrulama icin."""
     total = math.prod(sizes) if sizes else 1
     if not cols:
@@ -339,7 +344,7 @@ def dogrula_kaplama(cols: Sequence[Point], sizes: Sizes) -> Tuple[int, int]:
 # HAMMING(7,4) - MUKEMMEL KOD
 # ============================================================
 
-def hamming74_codewords() -> List[Point]:
+def hamming74_codewords() -> list[Point]:
     """
     Sistematik (7,4) Hamming kodunun 16 kod kelimesi.
 
@@ -347,7 +352,7 @@ def hamming74_codewords() -> List[Point]:
     olarak bir topa dusar. 7 cifte icin 16'dan az kolonla 14-garanti
     matematiksel olarak imkansizdir.
     """
-    out: List[Point] = []
+    out: list[Point] = []
     for d1, d2, d3, d4 in product((0, 1), repeat=4):
         out.append((d1, d2, d3, d4,
                     d1 ^ d2 ^ d3,
@@ -356,7 +361,7 @@ def hamming74_codewords() -> List[Point]:
     return out
 
 
-def hamming74_variant(variant: int = 0) -> List[Point]:
+def hamming74_variant(variant: int = 0) -> list[Point]:
     """
     Ayni garantiyi veren FARKLI bir 16 kelimelik mukemmel kod uretir.
 
@@ -384,7 +389,7 @@ class Fix16Hatasi(ValueError):
     """7 cifteden az mac varken sabit 16 satir modu calisamaz."""
 
 
-def solve_fix16(enc: Encoder, variant: int = 0) -> Tuple[List[Point], str]:
+def solve_fix16(enc: Encoder, variant: int = 0) -> tuple[list[Point], str]:
     """
     SABIT 16 SATIR modu.
 
@@ -423,7 +428,7 @@ def solve_fix16(enc: Encoder, variant: int = 0) -> Tuple[List[Point], str]:
     extra_sizes = [sizes[i] for i in extra_idx]
     carpim = math.prod(extra_sizes) if extra_sizes else 1
 
-    cols: List[Point] = []
+    cols: list[Point] = []
     extra_combos = list(product(*[range(k) for k in extra_sizes])) or [()]
     for cw in codewords:
         for ec in extra_combos:
@@ -446,7 +451,7 @@ def solve_fix16(enc: Encoder, variant: int = 0) -> Tuple[List[Point], str]:
 # MOTOR: KESIN COZUCU (ILP / HiGHS)
 # ============================================================
 
-def _kaplama_matrisi(space: List[Point], sizes: Sizes):
+def _kaplama_matrisi(space: list[Point], sizes: Sizes):
     idx = {p: i for i, p in enumerate(space)}
     n = len(space)
     M = _lil((n, n))
@@ -457,7 +462,7 @@ def _kaplama_matrisi(space: List[Point], sizes: Sizes):
 
 
 def exact_cover(sizes: Sizes, time_limit: float = 60.0
-                ) -> Tuple[Optional[List[Point]], bool]:
+                ) -> tuple[list[Point] | None, bool]:
     """
     Minimum kaplama kodunu ILP ile bulur.
     Donen: (kolonlar, optimallik_kanitlandi_mi). Cozulemezse (None, False).
@@ -478,7 +483,7 @@ def exact_cover(sizes: Sizes, time_limit: float = 60.0
 
 
 def exact_max_coverage(sizes: Sizes, budget: int, time_limit: float = 120.0
-                       ) -> Tuple[Optional[List[Point]], int, bool]:
+                       ) -> tuple[list[Point] | None, int, bool]:
     """Sabit kolon butcesiyle kapsanan nokta sayisini maksimize eder."""
     if not HAS_SCIPY or not sizes or budget <= 0:
         return None, 0, False
@@ -497,14 +502,14 @@ def exact_max_coverage(sizes: Sizes, budget: int, time_limit: float = 120.0
     if res.x is None:
         return None, 0, False
     cols = [space[j] for j in range(n) if res.x[j] > 0.5]
-    return cols, int(round(-res.fun)), bool(res.status == 0)
+    return cols, round(-res.fun), bool(res.status == 0)
 
 
 # ============================================================
 # MOTOR: BLOK AYRISTIRMA
 # ============================================================
 
-def ternary_hamming4() -> List[Point]:
+def ternary_hamming4() -> list[Point]:
     """
     Mukemmel uclu (ternary) Hamming kodu [4,2,3]_3: 9 kod kelimesi.
     9 x 9 = 81 = 3^4, yani her nokta tam olarak bir topa duser.
@@ -516,13 +521,13 @@ def ternary_hamming4() -> List[Point]:
             if all(sum(h[i] * x[i] for i in range(4)) % 3 == 0 for h in H)]
 
 
-def _carpim_kodu(a: List[Point], b_sizes: Sizes) -> List[Point]:
+def _carpim_kodu(a: list[Point], b_sizes: Sizes) -> list[Point]:
     """r=1 blogunu tam sistemle carpar (bedel carpilir, garanti korunur)."""
     combos = list(product(*[range(k) for k in b_sizes])) or [()]
     return [tuple(x) + tuple(c) for x in a for c in combos]
 
 
-def _varsayilan_bloklar() -> Dict[Sizes, List[Point]]:
+def _varsayilan_bloklar() -> dict[Sizes, list[Point]]:
     """
     Cebirsel olarak bilinen optimal bloklar. ILP'yi beklemeye gerek
     birakmaz: (2,)*8 icin ILP tek basina ~12 sn suruyordu.
@@ -543,11 +548,11 @@ def _varsayilan_bloklar() -> Dict[Sizes, List[Point]]:
     }
 
 
-_BLOCK_CACHE: Dict[Sizes, List[Point]] = _varsayilan_bloklar()
+_BLOCK_CACHE: dict[Sizes, list[Point]] = _varsayilan_bloklar()
 _DOGRULANMIS: set = set()
 
 
-def block_optimal(sizes: Sizes, time_limit: float = 30.0) -> Optional[List[Point]]:
+def block_optimal(sizes: Sizes, time_limit: float = 30.0) -> list[Point] | None:
     """
     Verilen blok icin optimal kaplamayi dondurur (onbellekli).
 
@@ -578,8 +583,8 @@ def block_optimal(sizes: Sizes, time_limit: float = 30.0) -> Optional[List[Point
 
 def solve_by_blocks(enc: Encoder, max_block_space: int = 256,
                     time_limit: float = 30.0,
-                    total_time_limit: Optional[float] = None
-                    ) -> Optional[Tuple[List[Point], str]]:
+                    total_time_limit: float | None = None
+                    ) -> tuple[list[Point], str] | None:
     """
     En ucuz (r=1 blogu + tam sistem) ayristirmasini bulur.
 
@@ -609,7 +614,7 @@ def solve_by_blocks(enc: Encoder, max_block_space: int = 256,
     adaylar.sort(key=lambda a: -a[0])
 
     baslangic = _time.monotonic()
-    bulunanlar: List[Tuple[int, List[int], List[Point]]] = []
+    bulunanlar: list[tuple[int, list[int], list[Point]]] = []
     for _, block_sizes, block_idx in adaylar:
         if block_sizes not in _BLOCK_CACHE:
             if total_time_limit is not None and bulunanlar \
@@ -636,7 +641,7 @@ def solve_by_blocks(enc: Encoder, max_block_space: int = 256,
     rest_idx = [i for i in range(len(sizes)) if i not in block_set]
     rest_combos = list(product(*[range(sizes[i]) for i in rest_idx])) or [()]
 
-    out: List[Point] = []
+    out: list[Point] = []
     for bc in block_cols:
         for rc in rest_combos:
             pt = [0] * len(sizes)
@@ -660,7 +665,7 @@ def solve_by_blocks(enc: Encoder, max_block_space: int = 256,
 # MOTOR: HEURISTIK
 # ============================================================
 
-def greedy_full(space: List[Point], sizes: Sizes, rng: random.Random) -> List[Point]:
+def greedy_full(space: list[Point], sizes: Sizes, rng: random.Random) -> list[Point]:
     """
     Tembel (lazy) max-heap ile klasik acgozlu kume kaplama.
     Aday havuzu tum uzaydir; ornekleme yapilmaz.
@@ -671,11 +676,11 @@ def greedy_full(space: List[Point], sizes: Sizes, rng: random.Random) -> List[Po
     balls = {p: ball(p, sizes) for p in space}
     heap = [(-len(balls[p]), rng.random(), p) for p in space]
     heapq.heapify(heap)
-    cols: List[Point] = []
+    cols: list[Point] = []
     while uncovered:
-        secilen: Optional[Point] = None
+        secilen: Point | None = None
         while heap:
-            neg_g, tie, p = heapq.heappop(heap)
+            _neg_g, tie, p = heapq.heappop(heap)
             g = sum(1 for q in balls[p] if q in uncovered)
             if not heap or g >= -heap[0][0]:
                 secilen = p
@@ -688,9 +693,9 @@ def greedy_full(space: List[Point], sizes: Sizes, rng: random.Random) -> List[Po
     return cols
 
 
-def ls_fixed_size(space: List[Point], sizes: Sizes, m: int, iters: int,
-                  rng: random.Random, start: Optional[List[Point]] = None
-                  ) -> Optional[List[Point]]:
+def ls_fixed_size(space: list[Point], sizes: Sizes, m: int, iters: int,
+                  rng: random.Random, start: list[Point] | None = None
+                  ) -> list[Point] | None:
     """
     Sabit m kolonla tam kaplama arar. Amac fonksiyonu: acik nokta sayisi.
 
@@ -753,12 +758,12 @@ def ls_fixed_size(space: List[Point], sizes: Sizes, m: int, iters: int,
 
 def solve_heuristic(enc: Encoder, trials: int = 5, ls_iters: int = 30000,
                     seed: int = 42, restarts: int = 3,
-                    log=None) -> List[Point]:
+                    log=None) -> list[Point]:
     sizes = enc.alphabet_sizes
     space = list(enc.variable_space())
     lb = enc.lower_bound()
 
-    best: Optional[List[Point]] = None
+    best: list[Point] | None = None
     for t in range(max(1, trials)):
         cols = greedy_full(space, sizes, random.Random(seed + t))
         if best is None or len(cols) < len(best):
@@ -795,7 +800,7 @@ def row_cost(row: Row) -> int:
     return math.prod(len(s) for s in row) if row else 1
 
 
-def _collapse(rows: List[Row], d: int) -> List[Row]:
+def _collapse(rows: list[Row], d: int) -> list[Row]:
     """
     d. koordinat boyunca birlestirir: diger tum koordinatlarda ayni olan
     satirlarin d. kumeleri birlestirilir.
@@ -805,8 +810,8 @@ def _collapse(rows: List[Row], d: int) -> List[Row]:
     tikanabiliyordu: 7 ciftelik tam sistem (128 satir) tek satira inmesi
     gerekirken 2 satirda kaliyordu.
     """
-    gruplar: Dict[Tuple, FrozenSet[int]] = {}
-    sira: List[Tuple] = []
+    gruplar: dict[tuple, frozenset[int]] = {}
+    sira: list[tuple] = []
     for r in rows:
         anahtar = r[:d] + r[d + 1:]
         if anahtar in gruplar:
@@ -814,10 +819,10 @@ def _collapse(rows: List[Row], d: int) -> List[Row]:
         else:
             gruplar[anahtar] = r[d]
             sira.append(anahtar)
-    return [k[:d] + (gruplar[k],) + k[d:] for k in sira]
+    return [(*k[:d], gruplar[k], *k[d:]) for k in sira]
 
 
-def merge_rows(cols: Sequence[Point], attempts: int = 4, seed: int = 0) -> List[Row]:
+def merge_rows(cols: Sequence[Point], attempts: int = 4, seed: int = 0) -> list[Row]:
     """
     Kolonlari cok-isaretli KUPON SATIRLARINA sikistirir (Quine-McCluskey
     mantigi): tek bir koordinatta farkli olan iki satir, o maca cifte veya
@@ -840,8 +845,8 @@ def merge_rows(cols: Sequence[Point], attempts: int = 4, seed: int = 0) -> List[
     if not cols:
         return []
     boyut = len(cols[0])
-    taban: List[Row] = [tuple(frozenset([v]) for v in c) for c in cols]
-    en_iyi: Optional[List[Row]] = None
+    taban: list[Row] = [tuple(frozenset([v]) for v in c) for c in cols]
+    en_iyi: list[Row] | None = None
     rng = random.Random(seed)
 
     for deneme in range(max(1, attempts)):
@@ -865,9 +870,9 @@ def merge_rows(cols: Sequence[Point], attempts: int = 4, seed: int = 0) -> List[
     return en_iyi
 
 
-def rows_to_points(rows: Sequence[Row]) -> List[Point]:
+def rows_to_points(rows: Sequence[Row]) -> list[Point]:
     """Satirlari tekrar tek tek kolonlara acar (dogrulama icin)."""
-    out: List[Point] = []
+    out: list[Point] = []
     for row in rows:
         for combo in product(*[sorted(s) for s in row]):
             out.append(tuple(combo))
@@ -879,7 +884,7 @@ def rows_to_points(rows: Sequence[Row]) -> List[Point]:
 # ============================================================
 
 class OlasilikRaporu:
-    __slots__ = ("p_kume_ici", "p_15", "p_14", "p_tek_kolon_15", "mac_olasiliklari")
+    __slots__ = ("mac_olasiliklari", "p_14", "p_15", "p_kume_ici", "p_tek_kolon_15")
 
     def __init__(self, p_kume_ici: float, p_15: float, p_14: float,
                  p_tek_kolon_15: float, mac_olasiliklari: Sequence[float]):
@@ -891,7 +896,7 @@ class OlasilikRaporu:
 
 
 def olasilik_raporu(enc: Encoder, cols: Sequence[Point],
-                    probs: Sequence[Dict[str, float]]) -> OlasilikRaporu:
+                    probs: Sequence[dict[str, float]]) -> OlasilikRaporu:
     """
     Kullanicinin kendi olasilik tahminlerine gore formulun basari sansi.
 
@@ -917,7 +922,7 @@ def olasilik_raporu(enc: Encoder, cols: Sequence[Point],
             f"{len(probs)} mac icin olasilik verildi, "
             f"{enc.total_len} bekleniyordu.")
 
-    mac_p: List[float] = []
+    mac_p: list[float] = []
     for i, sec in enumerate(enc.selections):
         mac_p.append(sum(probs[i].get(s, 0.0) for s in sec))
     p_kume_ici = math.prod(mac_p)
@@ -946,10 +951,10 @@ def olasilik_raporu(enc: Encoder, cols: Sequence[Point],
 # ============================================================
 
 class ButcePlani:
-    __slots__ = ("bedel", "satir", "selections", "degisiklikler", "p_kume_ici")
+    __slots__ = ("bedel", "degisiklikler", "p_kume_ici", "satir", "selections")
 
-    def __init__(self, bedel: int, satir: int, selections: List[List[str]],
-                 degisiklikler: List[str], p_kume_ici: Optional[float]):
+    def __init__(self, bedel: int, satir: int, selections: list[list[str]],
+                 degisiklikler: list[str], p_kume_ici: float | None):
         self.bedel = bedel
         self.satir = satir
         self.selections = selections
@@ -961,8 +966,8 @@ class ButcePlani:
 
 
 def butce_danismani(enc: Encoder, budget: int,
-                    probs: Optional[Sequence[Dict[str, float]]] = None,
-                    en_fazla: int = 5) -> List[ButcePlani]:
+                    probs: Sequence[dict[str, float]] | None = None,
+                    en_fazla: int = 5) -> list[ButcePlani]:
     """
     "Elimde N kolon var, hangi macimi kismaliyim?" sorusunu yanitlar.
 
@@ -982,7 +987,7 @@ def butce_danismani(enc: Encoder, budget: int,
         return []
 
     # Her degisken mac icin: (yeni_boyut, feda_edilen_semboller)
-    secenekler: List[List[Tuple[int, Tuple[str, ...]]]] = []
+    secenekler: list[list[tuple[int, tuple[str, ...]]]] = []
     for i, pos in enumerate(enc.variable_pos):
         syms = enc.variable_syms[i]
         p = probs[pos] if probs else None
@@ -996,7 +1001,7 @@ def butce_danismani(enc: Encoder, budget: int,
             mac_secenek.append((yeni, atilan))
         secenekler.append(mac_secenek)
 
-    planlar: List[ButcePlani] = []
+    planlar: list[ButcePlani] = []
     gorulen: set = set()
 
     for kombo in product(*secenekler):
@@ -1009,8 +1014,8 @@ def butce_danismani(enc: Encoder, budget: int,
             continue
 
         yeni_sel = [list(s) for s in enc.selections]
-        degisiklikler: List[str] = []
-        for i, (yeni, atilan) in enumerate(kombo):
+        degisiklikler: list[str] = []
+        for i, (_yeni, atilan) in enumerate(kombo):
             if not atilan:
                 continue
             pos = enc.variable_pos[i]

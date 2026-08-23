@@ -9,7 +9,6 @@ girmez. Bu ayrım yorumla değil, testle korunur — aksi halde bir sonraki
 
 import pytest
 
-from spor_toto import egitim
 from spor_toto.egitim import EN_AZ_MAC, korpus_haftalari, korpus_yukle, ozet
 from spor_toto.evaluate import (
     capraz_olc,
@@ -292,7 +291,9 @@ def test_form_gercek_veride_ham_sinyal_tasiyor(haftalar):
 
     iyi = [k for o, k in ciftler if o["form_puan_farki"] > 1.0]
     kotu = [k for o, k in ciftler if o["form_puan_farki"] < -1.0]
-    ev_orani = lambda g: sum(1 for k in g if k == "1") / len(g)
+    def ev_orani(g):
+        return sum(1 for k in g if k == "1") / len(g)
+
     assert ev_orani(iyi) > ev_orani(kotu) + 0.15, "form ham sinyal tasimiyor"
 
 
@@ -308,6 +309,8 @@ def test_kupon_haftasinda_form_notr():
 def test_form_kademesi_bant_ustune_iki_sutun_ekler():
     from spor_toto.recalibrate import KalibreTahminci
     h = korpus_haftalari(sezonlar_=["2425"])
-    bant = KalibreTahminci("bant"); bant.egit(h)
-    form = KalibreTahminci("form"); form.egit(h)
+    bant = KalibreTahminci("bant")
+    bant.egit(h)
+    form = KalibreTahminci("form")
+    form.egit(h)
     assert len(form.katsayilar) == len(bant.katsayilar) + 2

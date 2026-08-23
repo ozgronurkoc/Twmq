@@ -130,7 +130,15 @@ export function TrendChart({ weeks }: { weeks: WeekRow[] }) {
   const yMax = Math.max(4, ...weeks.flatMap((w) => SEMBOLLER.map((s) => w.counts[s])));
   const yTepe = Math.ceil(yMax / 2) * 2;
   const px = (i: number) => solB + (n <= 1 ? 0 : (i * (W - solB - sagB)) / (n - 1));
-  const py = (v: number) => H - altB - (v / yTepe) * (H - ustB - altB);
+  // `py` bir useMemo icinde kullaniliyor. Her render'da yeni bir kapanis
+  // olarak uretilirse bagimlilik listesine konamaz; useCallback ile kimligi
+  // `yTepe`ye baglanir. Kod zaten dogruydu (gercek bagimlilik yTepe, gerisi
+  // sabit) ama lint bunu goremiyordu ve boyle bir bosluk bir gun gercekten
+  // bayat bir deger yakalar.
+  const py = React.useCallback(
+    (v: number) => H - altB - (v / yTepe) * (H - ustB - altB),
+    [yTepe],
+  );
 
   const yEksen = React.useMemo(() => {
     const adim = yTepe > 8 ? 3 : 2;
@@ -157,11 +165,18 @@ export function TrendChart({ weeks }: { weeks: WeekRow[] }) {
   // cizgisinden kopar ve gurultu olur — o durumda efsane + ipucu tasir.
   const ucEtiket = React.useMemo(() => {
     if (!n) return [] as Array<{ sym: Sembol; y: number }>;
-    const items = SEMBOLLER.map((s) => ({ sym: s, y: py(weeks[n - 1].counts[s]) })).sort(
+    const son = weeks[n - 1];
+    if (!son) return [] as Array<{ sym: Sembol; y: number }>;
+    const items = SEMBOLLER.map((s) => ({ sym: s, y: py(son.counts[s]) })).sort(
       (a, b) => a.y - b.y,
     );
-    return items.every((it, i) => i === 0 || it.y - items[i - 1].y >= 14) ? items : [];
-  }, [weeks, n, yTepe]);
+    return items.every((it, i) => {
+      const onceki = items[i - 1];
+      return i === 0 || !onceki || it.y - onceki.y >= 14;
+    })
+      ? items
+      : [];
+  }, [weeks, n, py]);
 
   if (!n) return <p className="text-[13px] text-muted-foreground">Hafta yok.</p>;
 

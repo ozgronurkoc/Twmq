@@ -16,18 +16,28 @@ dondurur, cunku arayuz planlar arasindan secim yaptirir.
 from __future__ import annotations
 
 import random
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, Sequence
+from typing import Any
 
 from .core import (
-    Encoder, HAS_SCIPY, Point, ball, butce_danismani, exact_cover,
-    exact_max_coverage, greedy_full, merge_rows, solve_by_blocks,
-    solve_fix16, solve_heuristic,
+    HAS_SCIPY,
+    Encoder,
+    Point,
+    ball,
+    butce_danismani,
+    exact_cover,
+    exact_max_coverage,
+    greedy_full,
+    merge_rows,
+    solve_by_blocks,
+    solve_fix16,
+    solve_heuristic,
 )
 from .meta import ENGINE_DEFAULTS
 
 
-def engine_params(**kwargs: Any) -> Dict[str, Any]:
+def engine_params(**kwargs: Any) -> dict[str, Any]:
     """Eksik parametreleri motor varsayilanlariyla tamamlar."""
     p = dict(ENGINE_DEFAULTS)
     p.update({k: v for k, v in kwargs.items() if v is not None})
@@ -42,19 +52,19 @@ class Aday:
     takilmis bir ILP cozumu de gecerlidir ama kanitli degildir.
     """
 
-    cols: List[Point]
+    cols: list[Point]
     baslik: str
     kanit: bool = False
 
 
 def adaylar(
     enc: Encoder,
-    eng: Dict[str, Any],
+    eng: dict[str, Any],
     motorlar: Sequence[str] = ("block", "exact", "heuristic"),
-    log: Optional[Callable[[str], None]] = None,
+    log: Callable[[str], None] | None = None,
     ilp_zorunlu: bool = False,
-    heuristic_ls_cap: Optional[int] = None,
-) -> List[Aday]:
+    heuristic_ls_cap: int | None = None,
+) -> list[Aday]:
     """Istenen motorlari kosturup aday kaplamalari toplar.
 
     `/api/solve`'un `auto` modu, CLI'nin `--mode auto/block/exact/heuristic`
@@ -69,7 +79,7 @@ def adaylar(
         if log:
             log(mesaj)
 
-    out: List[Aday] = []
+    out: list[Aday] = []
 
     if "block" in motorlar:
         r = solve_by_blocks(enc, max_block_space=eng["block_limit"],
@@ -119,7 +129,7 @@ def en_iyi_aday(adaylar_: Sequence[Aday]) -> Aday:
     return min(esitler, key=lambda a: len(merge_rows(a.cols)))
 
 
-def run_fix16(enc: Encoder, variant: int = 0) -> Dict[str, Any]:
+def run_fix16(enc: Encoder, variant: int = 0) -> dict[str, Any]:
     cols, aciklama = solve_fix16(enc, variant=variant)
     notlar = [aciklama]
     if variant:
@@ -127,7 +137,7 @@ def run_fix16(enc: Encoder, variant: int = 0) -> Dict[str, Any]:
     return {"cols": cols, "baslik": f"Sabit 16 satır – {aciklama}", "notlar": notlar}
 
 
-def run_auto(enc: Encoder, eng: Dict[str, Any]) -> Dict[str, Any]:
+def run_auto(enc: Encoder, eng: dict[str, Any]) -> dict[str, Any]:
     """Blok + (uygunsa) ILP + sezgiselden en ucuzu.
 
     ILP burada KISA butceyle kosar (`auto_ilp_limit`, varsayılan 3 sn):
@@ -137,7 +147,7 @@ def run_auto(enc: Encoder, eng: Dict[str, Any]) -> Dict[str, Any]:
     """
     liste = adaylar(enc, eng, heuristic_ls_cap=10_000)
     en_iyi = en_iyi_aday(liste)
-    notlar: List[str] = []
+    notlar: list[str] = []
     if en_iyi.kanit:
         notlar.append("ILP optimalliği kanıtladı.")
     elif len(en_iyi.cols) == enc.lower_bound():
@@ -148,7 +158,7 @@ def run_auto(enc: Encoder, eng: Dict[str, Any]) -> Dict[str, Any]:
     return {"cols": en_iyi.cols, "baslik": en_iyi.baslik, "notlar": notlar}
 
 
-def run_heuristic(enc: Encoder, eng: Dict[str, Any]) -> Dict[str, Any]:
+def run_heuristic(enc: Encoder, eng: dict[str, Any]) -> dict[str, Any]:
     cols = solve_heuristic(enc, trials=eng["trials"], ls_iters=eng["ls_iters"],
                            seed=eng["seed"])
     return {"cols": cols, "baslik": "Sezgisel (açgözlü + local search)",
@@ -156,7 +166,7 @@ def run_heuristic(enc: Encoder, eng: Dict[str, Any]) -> Dict[str, Any]:
                        f"· seed={eng['seed']}"]}
 
 
-def run_exact(enc: Encoder, eng: Dict[str, Any]) -> Dict[str, Any]:
+def run_exact(enc: Encoder, eng: dict[str, Any]) -> dict[str, Any]:
     """Kesin cozucu (ILP). Kanit isteyen mod budur: uzay sinirini yok sayar
     ve tam `time_limit` butcesini kullanir."""
     if not HAS_SCIPY:
@@ -175,7 +185,7 @@ def run_exact(enc: Encoder, eng: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def run_block(enc: Encoder, eng: Dict[str, Any]) -> Dict[str, Any]:
+def run_block(enc: Encoder, eng: dict[str, Any]) -> dict[str, Any]:
     """Blok ayristirma motoru. CLI'de vardi, API'de hic acilmamisti."""
     r = solve_by_blocks(enc, max_block_space=eng["block_limit"],
                         time_limit=eng["time_limit"])
@@ -199,8 +209,8 @@ class ButceSigmazHatasi(ValueError):
 
 
 def run_maxcov(enc: Encoder, budget: int,
-               time_limit: Optional[float] = None,
-               seed: int = 42) -> Dict[str, Any]:
+               time_limit: float | None = None,
+               seed: int = 42) -> dict[str, Any]:
     """Sabit butceyle en genis kapsama. GARANTI VERMEZ — meta'da da oyle ilan
     edilir; saglik katmani bu iki ifadenin ayrismadigini denetler.
 
@@ -232,11 +242,11 @@ def run_maxcov(enc: Encoder, budget: int,
 def run_butce(
     enc: Encoder,
     budget: int,
-    user_probs: Optional[List[Dict[str, float]]] = None,
+    user_probs: list[dict[str, float]] | None = None,
     plan_count: int = 5,
     plan_apply: int = 1,
     variant: int = 0,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Butce danismani: butceye sigan planlari uretir ve secileni cozer.
 
     Donen sozlukte `enc` YENIDIR — uygulanan plan kuponu daralttigi icin

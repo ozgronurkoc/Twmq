@@ -6,9 +6,17 @@ from itertools import product
 
 import pytest
 
-from spor_toto.core import (Encoder, ball, distance_layers,
-                            dogrula_kaplama, dogrula_secimler, hamming,
-                            parse_picks, parse_probs, sirala_semboller)
+from spor_toto.core import (
+    Encoder,
+    ball,
+    distance_layers,
+    dogrula_kaplama,
+    dogrula_secimler,
+    hamming,
+    parse_picks,
+    parse_probs,
+    sirala_semboller,
+)
 
 ORNEK = "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"
 
@@ -30,7 +38,7 @@ def test_encoder_cikti_kupon_duzeninde():
     enc = Encoder(parse_picks(ORNEK))
     row = tuple(frozenset(range(k)) for k in enc.alphabet_sizes)
     metin = enc.decode_row(row)
-    for pos, i in zip(enc.variable_pos, range(enc.n)):
+    for pos, _i in zip(enc.variable_pos, range(enc.n)):
         assert metin[pos] in ("10", "12", "02", "102")
         assert metin[pos] != "01"
 

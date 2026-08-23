@@ -6,14 +6,29 @@ from itertools import product
 
 import pytest
 
-from spor_toto.core import (HAS_SCIPY, Encoder, Fix16Hatasi, ball,
-                            block_optimal, dogrula_kaplama, exact_cover,
-                            exact_max_coverage, greedy_full, hamming,
-                            hamming74_codewords, hamming74_variant,
-                            ls_fixed_size, merge_rows, parse_picks, row_cost,
-                            rows_to_points, solve_by_blocks, solve_fix16,
-                            solve_heuristic)
-from spor_toto.core import _varsayilan_bloklar
+from spor_toto.core import (
+    HAS_SCIPY,
+    Encoder,
+    Fix16Hatasi,
+    _varsayilan_bloklar,
+    ball,
+    block_optimal,
+    dogrula_kaplama,
+    exact_cover,
+    exact_max_coverage,
+    greedy_full,
+    hamming,
+    hamming74_codewords,
+    hamming74_variant,
+    ls_fixed_size,
+    merge_rows,
+    parse_picks,
+    row_cost,
+    rows_to_points,
+    solve_by_blocks,
+    solve_fix16,
+    solve_heuristic,
+)
 
 ORNEK = "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"
 gerek_scipy = pytest.mark.skipif(not HAS_SCIPY, reason="scipy yok")
@@ -207,11 +222,7 @@ def test_fix16_tam_7_cifte_sinirda_calisir():
 # Blok motoru
 # ------------------------------------------------------------
 
-BLOK_KUPONLARI = FIX16_KUPONLARI + [
-    "102,102,102,102,1,1,0,2,1,1,0,1,2,1,0",
-    "102,102,10,10,1,1,0,2,1,1,0,1,2,1,0",
-    "10,10,10,10,10,1,1,1,1,1,1,1,1,1,1",
-]
+BLOK_KUPONLARI = [*FIX16_KUPONLARI, "102,102,102,102,1,1,0,2,1,1,0,1,2,1,0", "102,102,10,10,1,1,0,2,1,1,0,1,2,1,0", "10,10,10,10,10,1,1,1,1,1,1,1,1,1,1"]
 
 
 @pytest.mark.parametrize("picks", BLOK_KUPONLARI)

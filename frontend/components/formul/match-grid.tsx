@@ -40,6 +40,11 @@ export function MatchGrid({
   function degistir(mac: number, sym: Sembol) {
     const next = matches.map((r) => [...r]);
     const satir = next[mac];
+    // `noUncheckedIndexedAccess`: dizi erisimi `undefined` de dondurebilir.
+    // Burada `mac` izgaradan gelir ve gecerlidir, ama guard hem tipi
+    // daraltir hem de cagrian taraf bir gun kayarsa sessiz cokme yerine
+    // sessiz NO-OP verir.
+    if (!satir) return;
     if (satir.includes(sym)) {
       // Son sembol kaldirilamaz.
       if (satir.length === 1) return;

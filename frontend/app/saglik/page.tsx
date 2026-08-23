@@ -525,7 +525,7 @@ export default function SaglikPage() {
 
           {rapor.summary.isinma ? (
             <Callout ton="primary" baslik="Bu, sürecin ilk koşusu">
-              İlk rapor numpy/scipy ilk import'unu ve veri setinin ilk
+              İlk rapor numpy/scipy ilk import&apos;unu ve veri setinin ilk
               okunmasını da üstlenir; süreleri sonraki koşularla
               karşılaştırmayın. Süre bütçeleri bu koşuda <strong>uygulanmaz</strong>,
               yoksa her soğuk başlangıç yanlış alarm üretirdi.

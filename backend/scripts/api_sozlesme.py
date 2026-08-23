@@ -36,9 +36,10 @@ import csv
 import json
 import sys
 import tempfile
+from collections.abc import Sequence
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any
 
 KOK = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(KOK))
@@ -110,7 +111,7 @@ def _gecici_fikstur(dizin: Path) -> Path:
         y.writerow(["lig", "tarih", "saat", "ev", "dep", "oran_1", "oran_0",
                     "oran_2", "oran_kaynak", "olculen_lig"])
         for satir in _ORNEK_FIKSTUR:
-            y.writerow([satir[0], tarih] + satir[2:])
+            y.writerow([satir[0], tarih, *satir[2:]])
     return yol
 
 
@@ -128,11 +129,11 @@ _SOLVE_PROBS = [
 ]
 
 
-def _uclar(istemci, ornek_kupon: str) -> Dict[str, Any]:
+def _uclar(istemci, ornek_kupon: str) -> dict[str, Any]:
     """Her ucu gercekten cagirip sekli cikarir."""
     from spor_toto.tahmin import olculmus_isabet
 
-    cagrilar: List[Dict[str, Any]] = [
+    cagrilar: list[dict[str, Any]] = [
         {"ad": "GET /", "yol": "/"},
         {"ad": "GET /health", "yol": "/health"},
         {"ad": "GET /api/meta", "yol": "/api/meta"},
@@ -162,7 +163,7 @@ def _uclar(istemci, ornek_kupon: str) -> Dict[str, Any]:
         if c["ad"] == "GET /api/stats/<week>":
             c["yol"] = f"/api/stats/{ilk_hafta}"
 
-    out: Dict[str, Any] = {}
+    out: dict[str, Any] = {}
     for c in cagrilar:
         if "govde" in c:
             cevap = istemci.post(c["yol"], json=c["govde"])
@@ -182,7 +183,7 @@ def _uclar(istemci, ornek_kupon: str) -> Dict[str, Any]:
 
 # ─── ölçülmüş referans değerler ──────────────────────────────────────────
 
-def _olculmus(ornek_kupon: str) -> Dict[str, Any]:
+def _olculmus(ornek_kupon: str) -> dict[str, Any]:
     """`check.mjs`in elle tasidigi sayilarin KAYNAGI.
 
     O dosyada `p_kume_ici = 0.00014902`, `altSinir = 29` gibi degerler duz
@@ -217,7 +218,7 @@ def _olculmus(ornek_kupon: str) -> Dict[str, Any]:
 
 # ─── sinirlar ────────────────────────────────────────────────────────────
 
-def _sinirlar(istemci) -> Dict[str, Any]:
+def _sinirlar(istemci) -> dict[str, Any]:
     """`/api/meta`nin ilan ettigi sayisal sinirlar.
 
     Arayuz bunlarin bir kismini SABIT kodluyordu (`lib/kurulum.ts`,
@@ -228,10 +229,10 @@ def _sinirlar(istemci) -> Dict[str, Any]:
     return istemci.get("/api/meta").get_json()["limits"]
 
 
-def uret() -> Dict[str, Any]:
+def uret() -> dict[str, Any]:
+    import spor_toto.tahmin as tahmin_mod
     from spor_toto import __version__
     from spor_toto.core import ORNEK_KUPON
-    import spor_toto.tahmin as tahmin_mod
     from web_app import app
 
     app.config.update(TESTING=True)
@@ -260,11 +261,11 @@ def uret() -> Dict[str, Any]:
     }
 
 
-def _metin(veri: Dict[str, Any]) -> str:
+def _metin(veri: dict[str, Any]) -> str:
     return json.dumps(veri, ensure_ascii=False, indent=1, sort_keys=True) + "\n"
 
 
-def main(argv: Optional[Sequence[str]] = None) -> int:
+def main(argv: Sequence[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--kontrol", action="store_true",
                     help="yazma, yalnizca dosyanin guncel olup olmadigina bak")

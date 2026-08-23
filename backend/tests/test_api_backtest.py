@@ -9,8 +9,8 @@ import pytest
 
 pytest.importorskip("flask")
 
-from web_app import app  # noqa: E402
-from spor_toto.odds import load_odds  # noqa: E402
+from spor_toto.odds import load_odds
+from web_app import app
 
 pytestmark = pytest.mark.skipif(
     not load_odds(), reason="oran arşivi yok (scripts/build_odds.py)"

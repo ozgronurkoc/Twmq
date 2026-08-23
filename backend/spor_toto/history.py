@@ -8,12 +8,14 @@ raporlanır — sessizce yutulmaz.
 """
 from __future__ import annotations
 
+import itertools
 import json
 import statistics
 from collections import Counter, defaultdict
+from collections.abc import Iterable, Sequence
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any
 
 from .core import MAC_SAYISI, SEMBOLLER
 
@@ -22,13 +24,13 @@ DATA_FILE = Path(__file__).resolve().parent.parent / "data" / "st_history_2025_2
 #: Sembol duzeni ve kupon uzunlugu TEK kaynaktan (`core`). Bu iki ad
 #: korunuyor cunku paketin yarisi onlari buradan import ediyor; degerin
 #: kendisi artik burada tanimli DEGIL.
-SYMBOLS: Tuple[str, str, str] = SEMBOLLER
+SYMBOLS: tuple[str, str, str] = SEMBOLLER
 MATCH_COUNT = MAC_SAYISI
 RECENT_WINDOW = 6
 
 
 @lru_cache(maxsize=1)
-def load_history() -> Dict[str, Any]:
+def load_history() -> dict[str, Any]:
     if not DATA_FILE.exists():
         return {
             "meta": {"weeks": 0, "matches": 0},
@@ -48,17 +50,17 @@ def _clean_results(raw: Any) -> str:
     return "".join(ch for ch in str(raw or "") if ch in SYMBOLS)
 
 
-def _zero_counts() -> Dict[str, int]:
-    return {s: 0 for s in SYMBOLS}
+def _zero_counts() -> dict[str, int]:
+    return dict.fromkeys(SYMBOLS, 0)
 
 
-def _counts_of(results: str) -> Dict[str, int]:
+def _counts_of(results: str) -> dict[str, int]:
     return {s: results.count(s) for s in SYMBOLS}
 
 
-def _runs(results: str) -> List[Dict[str, Any]]:
+def _runs(results: str) -> list[dict[str, Any]]:
     """Ardışık aynı sembol serilerini döndürür: [{symbol, start, length}]."""
-    out: List[Dict[str, Any]] = []
+    out: list[dict[str, Any]] = []
     for i, ch in enumerate(results):
         if out and out[-1]["symbol"] == ch:
             out[-1]["length"] += 1
@@ -67,7 +69,7 @@ def _runs(results: str) -> List[Dict[str, Any]]:
     return out
 
 
-def _max_run(results: str) -> Dict[str, Any]:
+def _max_run(results: str) -> dict[str, Any]:
     runs = _runs(results)
     if not runs:
         return {"symbol": "", "start": 0, "length": 0}
@@ -80,9 +82,9 @@ def _pct(part: float, total: float, digits: int = 4) -> float:
 
 # ─── hafta normalizasyonu ─────────────────────────────────────────────────────
 
-def _clean_matches(raw: Any) -> List[Dict[str, Any]]:
+def _clean_matches(raw: Any) -> list[dict[str, Any]]:
     """Maç satırlarını normalize eder; kodu skordan yeniden türetir."""
-    out: List[Dict[str, Any]] = []
+    out: list[dict[str, Any]] = []
     for i, m in enumerate(raw or []):
         if not isinstance(m, dict):
             continue
@@ -102,12 +104,12 @@ def _clean_matches(raw: Any) -> List[Dict[str, Any]]:
     return out
 
 
-def normalized_weeks(last: Optional[int] = None) -> List[Dict[str, Any]]:
+def normalized_weeks(last: int | None = None) -> list[dict[str, Any]]:
     """Hafta numarasına göre sıralı, türetilmiş alanlarla zenginleştirilmiş liste.
 
     ``last`` verilirse sadece son N hafta döner (istatistik dilimleme için).
     """
-    rows: List[Dict[str, Any]] = []
+    rows: list[dict[str, Any]] = []
     for w in load_history().get("weeks", []) or []:
         results = _clean_results(w.get("results"))
         derived = _counts_of(results)
@@ -144,7 +146,7 @@ def normalized_weeks(last: Optional[int] = None) -> List[Dict[str, Any]]:
     return rows
 
 
-def _band(values: Sequence[int]) -> Dict[str, Any]:
+def _band(values: Sequence[int]) -> dict[str, Any]:
     if not values:
         return {
             "avg": 0.0, "min": 0, "max": 0, "median": 0.0, "std": 0.0,
@@ -171,7 +173,7 @@ def _band(values: Sequence[int]) -> Dict[str, Any]:
     }
 
 
-def _data_quality(weeks: Iterable[Dict[str, Any]]) -> Dict[str, Any]:
+def _data_quality(weeks: Iterable[dict[str, Any]]) -> dict[str, Any]:
     weeks = list(weeks)
     conflicts = [
         {
@@ -188,7 +190,7 @@ def _data_quality(weeks: Iterable[Dict[str, Any]]) -> Dict[str, Any]:
     match_conflicts = [
         w["week"] for w in weeks if w["matches"] and not w["matches_match_results"]
     ]
-    by_results: Dict[str, List[int]] = defaultdict(list)
+    by_results: dict[str, list[int]] = defaultdict(list)
     for w in weeks:
         if w["results"]:
             by_results[w["results"]].append(w["week"])
@@ -213,13 +215,13 @@ def _data_quality(weeks: Iterable[Dict[str, Any]]) -> Dict[str, Any]:
 
 # ─── özet ─────────────────────────────────────────────────────────────────────
 
-def history_summary(last: Optional[int] = None) -> Dict[str, Any]:
+def history_summary(last: int | None = None) -> dict[str, Any]:
     data = load_history()
     weeks = normalized_weeks(last)
     n_weeks = len(weeks)
     matches = sum(len(w["results"]) for w in weeks)
 
-    totals: Dict[str, Any] = {s: sum(w["counts"][s] for w in weeks) for s in SYMBOLS}
+    totals: dict[str, Any] = {s: sum(w["counts"][s] for w in weeks) for s in SYMBOLS}
     for s in SYMBOLS:
         totals[f"pct_{s}"] = _pct(totals[s], matches)
 
@@ -252,15 +254,15 @@ def history_summary(last: Optional[int] = None) -> Dict[str, Any]:
     }
 
 
-def history_weeks(last: Optional[int] = None) -> List[Dict[str, Any]]:
+def history_weeks(last: int | None = None) -> list[dict[str, Any]]:
     return normalized_weeks(last)
 
 
 # ─── analitik bloklar ─────────────────────────────────────────────────────────
 
-def position_stats(weeks: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def position_stats(weeks: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
     """Maç sırasına (1..15) göre 1/0/2 dağılımı."""
-    out: List[Dict[str, Any]] = []
+    out: list[dict[str, Any]] = []
     for pos in range(MATCH_COUNT):
         counts = _zero_counts()
         for w in weeks:
@@ -277,12 +279,12 @@ def position_stats(weeks: Sequence[Dict[str, Any]]) -> List[Dict[str, Any]]:
     return out
 
 
-def transition_stats(weeks: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
+def transition_stats(weeks: Sequence[dict[str, Any]]) -> dict[str, Any]:
     """Hafta içinde ardışık maçlarda sembol geçiş matrisi (3x3)."""
-    counts: Dict[str, Dict[str, int]] = {s: _zero_counts() for s in SYMBOLS}
+    counts: dict[str, dict[str, int]] = {s: _zero_counts() for s in SYMBOLS}
     for w in weeks:
         r = w["results"]
-        for a, b in zip(r, r[1:]):
+        for a, b in itertools.pairwise(r):
             counts[a][b] += 1
     total = sum(sum(row.values()) for row in counts.values())
     pct = {
@@ -299,16 +301,16 @@ def transition_stats(weeks: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
     }
 
 
-def count_distribution(weeks: Sequence[Dict[str, Any]]) -> Dict[str, List[Dict[str, Any]]]:
+def count_distribution(weeks: Sequence[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
     """Her sembol için 'kaç haftada k adet çıktı' histogramı."""
     n = len(weeks)
-    out: Dict[str, List[Dict[str, Any]]] = {}
+    out: dict[str, list[dict[str, Any]]] = {}
     hi = 0
-    per: Dict[str, Counter] = {}
+    per: dict[str, Counter] = {}
     for s in SYMBOLS:
         c = Counter(w["counts"][s] for w in weeks)
         per[s] = c
-        hi = max([hi] + list(c))
+        hi = max([hi, *list(c)])
     for s in SYMBOLS:
         out[s] = [
             {"count": k, "weeks": per[s].get(k, 0), "pct": _pct(per[s].get(k, 0), n, 2)}
@@ -317,10 +319,10 @@ def count_distribution(weeks: Sequence[Dict[str, Any]]) -> Dict[str, List[Dict[s
     return out
 
 
-def streak_stats(weeks: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
+def streak_stats(weeks: Sequence[dict[str, Any]]) -> dict[str, Any]:
     """Hafta içi en uzun aynı-sembol serileri."""
-    best: Dict[str, Dict[str, Any]] = {s: {"length": 0, "week": None, "start": 0} for s in SYMBOLS}
-    all_runs: List[Dict[str, Any]] = []
+    best: dict[str, dict[str, Any]] = {s: {"length": 0, "week": None, "start": 0} for s in SYMBOLS}
+    all_runs: list[dict[str, Any]] = []
     for w in weeks:
         for run in _runs(w["results"]):
             item = {
@@ -339,9 +341,9 @@ def streak_stats(weeks: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
     return {"by_symbol": best, "top": all_runs[:8], "avg_week_max": avg_max}
 
 
-def extreme_weeks(weeks: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
+def extreme_weeks(weeks: Sequence[dict[str, Any]]) -> dict[str, Any]:
     """Her sembol için en yüksek/en düşük haftalar."""
-    out: Dict[str, Any] = {}
+    out: dict[str, Any] = {}
     for s in SYMBOLS:
         if not weeks:
             out[s] = {"max": None, "min": None}
@@ -355,7 +357,7 @@ def extreme_weeks(weeks: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
     return out
 
 
-def recent_form(weeks: Sequence[Dict[str, Any]], window: int = RECENT_WINDOW) -> Dict[str, Any]:
+def recent_form(weeks: Sequence[dict[str, Any]], window: int = RECENT_WINDOW) -> dict[str, Any]:
     """Son N haftanın ortalaması ve sezon ortalamasına göre sapması."""
     if not weeks:
         return {"window": 0, "weeks": [], "avg": _zero_counts(), "delta": _zero_counts()}
@@ -370,7 +372,7 @@ def recent_form(weeks: Sequence[Dict[str, Any]], window: int = RECENT_WINDOW) ->
     }
 
 
-def history_analytics(last: Optional[int] = None) -> Dict[str, Any]:
+def history_analytics(last: int | None = None) -> dict[str, Any]:
     weeks = normalized_weeks(last)
     return {
         "positions": position_stats(weeks),
@@ -384,14 +386,14 @@ def history_analytics(last: Optional[int] = None) -> Dict[str, Any]:
 
 # ─── tek hafta ────────────────────────────────────────────────────────────────
 
-def history_week(week: int) -> Optional[Dict[str, Any]]:
+def history_week(week: int) -> dict[str, Any] | None:
     for w in normalized_weeks():
         if w["week"] == week:
             return w
     return None
 
 
-def history_week_detail(week: int) -> Optional[Dict[str, Any]]:
+def history_week_detail(week: int) -> dict[str, Any] | None:
     """Tek hafta + komşular + sezon ortalamasına göre konum."""
     weeks = normalized_weeks()
     idx = next((i for i, w in enumerate(weeks) if w["week"] == week), None)
@@ -403,7 +405,7 @@ def history_week_detail(week: int) -> Optional[Dict[str, Any]]:
         s: round(statistics.fmean([x["counts"][s] for x in weeks]), 4) for s in SYMBOLS
     } if n else _zero_counts()
 
-    ranks: Dict[str, Any] = {}
+    ranks: dict[str, Any] = {}
     for s in SYMBOLS:
         ordered = sorted(weeks, key=lambda x: (-x["counts"][s], x["week"]))
         # Konum haritasi: varsayilansiz `next()` sira icinde tarardi ve

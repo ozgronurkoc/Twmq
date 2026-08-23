@@ -22,7 +22,8 @@ from __future__ import annotations
 
 import argparse
 import json
-from typing import Any, Dict, List, Optional, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 from .egitim import korpus_haftalari
 from .history import SYMBOLS
@@ -41,7 +42,7 @@ EN_AZ_BANT = 100
 
 
 def kalibrasyon_egrisi(yontem: str = ARINDIRMA_VARSAYILAN,
-                       yol: Optional[str] = None) -> Dict[str, Any]:
+                       yol: str | None = None) -> dict[str, Any]:
     """Piyasa ↔ gerçek, olasılık bandı bandı.
 
     Üç sembol havuzlanır: soru "ev sahipleri ne kadar kazanır" değil,
@@ -50,7 +51,7 @@ def kalibrasyon_egrisi(yontem: str = ARINDIRMA_VARSAYILAN,
     from .benzer import _wilson
     from .egitim import korpus_yukle
 
-    noktalar: List[tuple] = []
+    noktalar: list[tuple] = []
     for r in korpus_yukle(yol):
         p = implied_probs(r["oranlar"], yontem)
         if len(p) != 3:
@@ -58,7 +59,7 @@ def kalibrasyon_egrisi(yontem: str = ARINDIRMA_VARSAYILAN,
         for s in SYMBOLS:
             noktalar.append((p[s], r["kod"] == s))
 
-    satirlar: List[Dict[str, Any]] = []
+    satirlar: list[dict[str, Any]] = []
     sapan = 0
     for lo, hi in BANTLAR:
         g = [t for t in noktalar if lo <= t[0] < hi]
@@ -93,10 +94,10 @@ def kalibrasyon_egrisi(yontem: str = ARINDIRMA_VARSAYILAN,
     }
 
 
-def rapor(sezonlar_: Optional[Sequence[str]] = None,
-          yol: Optional[str] = None,
+def rapor(sezonlar_: Sequence[str] | None = None,
+          yol: str | None = None,
           en_az_kova: int = EN_AZ_KOVA,
-          yontem: str = ARINDIRMA_VARSAYILAN) -> Dict[str, Any]:
+          yontem: str = ARINDIRMA_VARSAYILAN) -> dict[str, Any]:
     """İzotonik düzeltme piyasayı sezon dışarıda bırakmalı geçiyor mu?
 
     `yontem` marj arındırma yöntemidir ve **hem** korpus hazırlığına **hem**
@@ -119,7 +120,7 @@ def rapor(sezonlar_: Optional[Sequence[str]] = None,
     return sonuc
 
 
-def _yaz_egri(e: Dict[str, Any]) -> None:
+def _yaz_egri(e: dict[str, Any]) -> None:
     print(f"\nKALİBRASYON EĞRİSİ — {e['n_mac']:,} maç · {e['n_nokta']:,} nokta "
           f"· arındırma: {e['arindirma']}")
     print(f"{'band':<12}{'n':>7}{'piyasa':>9}{'gerçek':>9}{'fark':>8}"
@@ -133,7 +134,7 @@ def _yaz_egri(e: Dict[str, Any]) -> None:
     print(f"\nAnlamlı sapan bant: {e['sapan_bant']} / {e['toplam_bant']}")
 
 
-def _yaz(sonuc: Dict[str, Any]) -> None:  # pragma: no cover - elle kullanim
+def _yaz(sonuc: dict[str, Any]) -> None:  # pragma: no cover - elle kullanim
     _yaz_egri(sonuc["egri"])
     print(f"\nÖLÇÜM — sezon dışarıda bırakmalı · {sonuc['n_hafta']} hafta "
           f"· {sonuc['n_mac']:,} maç · kova {sonuc['en_az_kova']}")
@@ -149,7 +150,7 @@ def _yaz(sonuc: Dict[str, Any]) -> None:  # pragma: no cover - elle kullanim
     print(f"\nSoru: {sonuc['soru']}")
 
 
-def main(argv: Optional[Sequence[str]] = None) -> None:
+def main(argv: Sequence[str] | None = None) -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--egri-only", action="store_true",
                     help="yalnizca kalibrasyon egrisi (olcum kosulmaz)")
