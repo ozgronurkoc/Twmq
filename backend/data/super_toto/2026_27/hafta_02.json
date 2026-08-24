@@ -11,15 +11,40 @@
   "play_note": "yüzdeler tek bir platformun kendi kullanıcılarıdır; Spor Toto havuzunun tamamı DEĞİLDİR",
   "entered_at": "2026-08-18",
   "results": "222121121210102",
-  "payout": null,
+  "payout": {
+   "source": "Spor Toto resmî ikramiye ekranı — kullanıcı ekran görüntüsü (2026-08-24)",
+   "currency": "TRY",
+   "note": "15 kademesinin havuzu 1. haftadan devreden 30.149.380,57 TL'yi İÇERİR; haftanın kendi payı 42.842.867,72 TL'dir.",
+   "tiers": [
+    {
+     "correct": 15,
+     "winners": 3,
+     "prize": 24330749.43
+    },
+    {
+     "correct": 14,
+     "winners": 121,
+     "prize": 202327.59
+    },
+    {
+     "correct": 13,
+     "winners": 2077,
+     "prize": 11787.01
+    },
+    {
+     "correct": 12,
+     "winners": 21272,
+     "prize": 1438.6
+    }
+   ]
+  },
   "data_warnings": [
    "4. maç (Fenerbahçe–Konyaspor): oranların ima ettiği marj %45,8. Bültenin geri kalanı %17,5–17,9 bandında. Bu satır KUŞKULU — kaynaktan doğrulanmalı.",
    "3. maç (Çorum–Kasımpaşa): marj %13,3, bültenin geri kalanının altında. Kullanılabilir ama işaretlendi.",
    "9. maç (Kocaelispor–Amed Sportif): oran SONRADAN geldi ve eklendi (1.97-3.05-2.92, marj %17.8). Kupon bu yüzden v2 olarak yeniden kuruldu; v1 kayıtta duruyor."
   ],
   "results_source": "Spor Toto sonuç ekranı — kullanıcı ekran görüntüsü (2026-08-24); yalnızca 1/0/2 sonucu verildi, skorlar girilmedi",
-  "results_entered_at": "2026-08-24",
-  "payout_note": "İkramiye ekranı bu hafta GİRİLMEDİ. 1. haftada girilmişti; kolon başına gerçek getiri bu hafta ölçülemez."
+  "results_entered_at": "2026-08-24"
  },
  "matches": [
   {

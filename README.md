@@ -425,6 +425,14 @@ kalıcı olarak kaybolur: **sonuç dizisi**, **skorlar** ve **ikramiye ekranı**
 (kişi başı ödül + kazanan adedi). 2. haftada son ikisi girilmedi; kalabalık
 ayarının parasal karşılığı bu yüzden ölçülemedi.
 
+**İkramiye tablosu ve ilk ölçülmüş getiri** — 2. haftanın ikramiye ekranı girildi
+(15: 3 kolon × 24.330.749,43 TL … 12: 21.272 kolon × 1.438,60 TL). Üç sonucu var:
+(1) havuzun kademelere dağılımı artık **varsayım değil ölçüm** — iki hafta da
+%35/%20/%20/%25 veriyor ve `getiri.VARSAYILAN_PAY` bundan türüyor; (2) getiri ilk kez
+para birimiyle hesaplandı: 2. Tahmin 1.296 kolonda 1.438,60 TL, başabaş kolon bedeli
+**1,11 TL**; (3) beklenen getiri kolon başına **doğrusal** çıktı, yani tam sistem
+üstünlük değil **varyans** satın alıyor. Ayrıntı §3.40.
+
 **Aynı haftanın 15 bileni** — 2. haftanın 15 bilen kuponu kayda geçti
 (bize ait değil; `hafta_02_kupon.json` → `referans`). Ölçüldüğünde iki şey
 çıktı: (1) 15'i satın alan şey işaret seçimi değil **tam sistem** — aynı
@@ -836,7 +844,7 @@ backend/
     api_sozlesme.py           API sözleşmesini üretir/denetler (--kontrol: CI kapısı)
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/
-  tests/               pytest (52 dosya → 1.602 test; §9'da katman dökümü)
+  tests/               pytest (52 dosya → 1.608 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1022,7 +1030,7 @@ dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri t
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
 eşleme, ikinci kayıt). **52 test dosyası, parametrizasyonla
-1.602 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+1.608 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
@@ -1032,7 +1040,7 @@ karşı denetler):
 | Tahmin katmanı | `predict` `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin` `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre` | 491 |
 | Sağlık | `health` `api_health` `meta` `health_history` | 85 |
 | Veri / istatistik / geri test | `history` `odds` `backtest` `api_stats` `api_backtest` `snapshot_iddaa` `pazar` | 113 |
-| Süper Toto | `super_toto` `degerlendir` | 78 |
+| Süper Toto | `super_toto` `degerlendir` | 84 |
 | 2. Tahmin (kalabalık ayarı · bağımsız görüş) | `tahmin2` | 29 |
 | Karar katmanı | `secim` | 21 |
 | Skor türetme | `skor` | 21 |

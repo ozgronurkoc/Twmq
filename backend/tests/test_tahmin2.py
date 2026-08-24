@@ -322,6 +322,21 @@ def test_diskteki_kayit_bayat_degil(t2, govde):
     # korunuyor. Geri kalan her alan birebir eşit olmak zorunda.
     for govde in (diskte, taze):
         govde["meta"].pop("results_known", None)
+
+    # Havuz bloğu VARSAYIMA dayanır ve varsayım kaydın donduğu günden
+    # sonra ÖLÇÜLDÜ: `getiri.VARSAYILAN_PAY` iki haftanın ikramiye
+    # ekranından türetilen orana çevrildi (docs §3.40). Kayıt yeniden
+    # hesaplanmaz; bunun yerine kaydın KENDİ varsayımını yazdığı
+    # doğrulanır ve blok kıyastan çıkarılır. Kayıt varsayımını yazmıyorsa
+    # bu bir bayatlık değil, izlenemezliktir — o zaman test kırılmalıdır.
+    from spor_toto.getiri import VARSAYILAN_PAY
+    kayitli = diskte["havuz"]["modeller"]["ayarli"]["favori"]["varsayimlar"]
+    assert "pay_dagilimi" in kayitli, "kayıt hangi varsayımla konuştuğunu yazmalı"
+    bugunku = {str(k): v for k, v in VARSAYILAN_PAY.items()}
+    if kayitli["pay_dagilimi"] != bugunku:
+        for govde in (diskte, taze):
+            govde.pop("havuz", None)
+
     assert taze == diskte
 
 

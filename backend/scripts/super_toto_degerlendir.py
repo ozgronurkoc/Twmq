@@ -550,6 +550,7 @@ def plan_karnesi(d: dict[str, Any], picks: Sequence[str],
         "kalabalik_ici": kalabalik,
         "oran": (kume / kalabalik) if kalabalik else None,
         "best": s["best"], "misses": s["misses"],
+        "getiri": getiri_karnesi(d, picks, sistem),
     }
 
 
@@ -618,6 +619,164 @@ def sapma_defteri(d: dict[str, Any], picks: Sequence[str]) -> dict[str, Any]:
         "kapsama_bedeli": sum(r["kapsama_bedeli"] for r in satir),
         "p_net": sum(pr for (a, b), pr in dag.items() if a - b >= net),
     }
+
+
+def oynanan_kolon_listesi(d: dict[str, Any], picks: Sequence[str],
+                          sistem: str = "fix16") -> list[tuple[str, ...]]:
+    """Gerçekten oynanan kolonların kendisi — sembol sembol.
+
+    `oynanan_kolonlar` bu listenin olasılık toplamını verir; getiri hesabı
+    ise kolonların **tek tek** kaç tutturduğunu ister, çünkü müşterek havuz
+    kolon başına bölünür. Tek bir sistem kuponu aynı hafta hem 15 hem 14
+    hem 13 kazanabilir ve bu, kupon bedelinin karşılığının tamamıdır.
+    """
+    from itertools import product
+
+    from spor_toto.core import Encoder, Fix16Hatasi, solve_fix16
+
+    listeler = [list(x) for x in picks]
+    if sistem == "tam":
+        return list(product(*listeler))
+    enc = Encoder(listeler)
+    try:
+        cols, _ = solve_fix16(enc)
+    except Fix16Hatasi:  # pragma: no cover - kuralin uretemedigi hal
+        return []
+    out = []
+    for c in cols:
+        kolon, j = [], 0
+        for sec in listeler:
+            if len(sec) == 1:
+                kolon.append(sec[0])
+            else:
+                kolon.append(enc.variable_syms[j][c[j]])
+                j += 1
+        out.append(tuple(kolon))
+    return out
+
+
+def getiri_karnesi(d: dict[str, Any], picks: Sequence[str],
+                   sistem: str = "fix16") -> dict[str, Any] | None:
+    """Kuponun **gerçekleşen** ve **beklenen** getirisi — ikramiye tablosundan.
+
+    Projede ilk kez para birimli bir sayı ölçümden geliyor: ikramiye ekranı
+    girilmişse kademe ödülleri bilinir ve kuponun her kolonu tek tek
+    puanlanabilir. İki sayı birden yazılır ve ikisi farklı soruya cevap
+    verir:
+
+    * **gerçekleşen** — bu hafta ne kazandı. Tek hafta, tek örneklem.
+    * **beklenen** — AYNI ödül vektörüyle, sonuç görülmeden önceki
+      beklenti. `E[k tutturan kolon sayısı] × ödül(k)` toplamı. Kuponları
+      kıyaslamanın dürüst yolu budur; gerçekleşen sayı haftanın kendi
+      gürültüsünü taşır.
+
+    **Başabaş kolon bedeli** ikisinin de yanında durur: kolon fiyatı
+    hiçbir ekranda yayınlanmadığı için getiri mutlak olarak değil, "kolon
+    başına şu fiyatın altındaysa kâr" biçiminde okunur.
+
+    Getiri **kolon başına doğrusaldır** — bu, sistem seçiminin (kaplama mı
+    tam sistem mi) beklenen getiriyi DEĞİŞTİRMEDİĞİ anlamına gelir; yalnız
+    dağılımını değiştirir. Ölçüm bunu doğruluyor (docs §3.40).
+    """
+    pay = d["meta"].get("payout")
+    if not pay:
+        return None
+    odul = {t["correct"]: t["prize"] for t in pay["tiers"]
+            if t.get("prize") is not None}
+    if not odul:
+        return None
+    gercek = d["meta"]["results"]
+    maclar = d["matches"]
+    kolonlar = oynanan_kolon_listesi(d, picks, sistem)
+    if not kolonlar:
+        return None
+
+    dagilim: dict[int, int] = {}
+    beklenen = [0.0] * (len(gercek) + 1)
+    for kolon in kolonlar:
+        k = sum(1 for a, b in zip(kolon, gercek) if a == b)
+        dagilim[k] = dagilim.get(k, 0) + 1
+        # Bu kolonun kac tutturacaginin dagilimi (Poisson-binom).
+        dp = [1.0]
+        for mm, s in zip(maclar, kolon):
+            q = mm["probs"][s]
+            yeni = [0.0] * (len(dp) + 1)
+            for i, v in enumerate(dp):
+                yeni[i] += v * (1 - q)
+                yeni[i + 1] += v * q
+            dp = yeni
+        for i, v in enumerate(dp):
+            beklenen[i] += v
+
+    n = len(kolonlar)
+    ger = sum(adet * odul[k] for k, adet in dagilim.items() if k in odul)
+    bek = sum(beklenen[k] * odul[k] for k in odul)
+    return {
+        "sistem": sistem, "kolon": n,
+        "kazanan_kolon": {k: dagilim[k] for k in sorted(dagilim, reverse=True)
+                          if k in odul},
+        "gerceklesen": ger, "gerceklesen_kolon_basi": ger / n,
+        "beklenen": bek, "beklenen_kolon_basi": bek / n,
+        "beklenen_kazanan": {k: beklenen[k] for k in sorted(odul, reverse=True)},
+        "not": ("Ödül vektörü bu haftanınkidir ve SABİT alınmıştır; gerçekte "
+                "haftadan haftaya değişir. Kolon bedeli yayınlanmadığı için "
+                "getiri başabaş fiyat olarak okunur."),
+    }
+
+
+def havuz_karnesi(d: dict[str, Any]) -> dict[str, Any] | None:
+    """İkramiye tablosu, kalabalık modelini **sınayan** ilk ölçüm.
+
+    `VERI_TOPLAMA_VE_ISLEME.md` §B2 testi tam olarak şuydu: *oynanma payı +
+    gerçekleşen sonuç, kazanan adetlerini önceden söyleyebilmelidir.*
+    Artık söyleyip söylemediğine bakılabilir.
+
+    Her kademe için bağımsız-kolon modeliyle `P(k doğru)` hesaplanır ve
+    gözlenen kazanan sayısı ona bölünür: sonuç, o kademenin ima ettiği
+    **havuzdaki kolon sayısı**. Model doğruysa dört kademe aynı sayıyı
+    vermeli — kademeler arası tutarlılık, modelin ŞEKLİNİ sınar.
+
+    İki model yan yana koşar (kalabalık ve piyasa) çünkü hangisinin
+    kazanan adetlerini daha iyi ürettiği, havuz ekseninin tamamının
+    dayandığı sorudur.
+
+    **Kademe havuzu** ayrıca yazılır: kazanan kolon × ödül. İki haftada da
+    14'e oranı 1,75 : 1 : 1 : 1,25 çıktı ve bu artık `getiri.OLCULEN_PAY`.
+    """
+    pay = d["meta"].get("payout")
+    if not pay:
+        return None
+    gercek = d["meta"]["results"]
+
+    def dagilim(kaynak: str) -> list[float]:
+        dp = [1.0]
+        for mm, x in zip(d["matches"], gercek):
+            q = mm[kaynak][x]
+            yeni = [0.0] * (len(dp) + 1)
+            for i, v in enumerate(dp):
+                yeni[i] += v * (1 - q)
+                yeni[i + 1] += v * q
+            dp = yeni
+        return dp
+
+    kalabalik, piyasa = dagilim("play"), dagilim("probs")
+    satir = []
+    for t in pay["tiers"]:
+        k, kazanan = t["correct"], t["winners"]
+        if not kazanan:
+            continue
+        havuz = kazanan * t["prize"] if t.get("prize") is not None else None
+        satir.append({
+            "kademe": k, "kazanan": kazanan, "odul": t.get("prize"),
+            "kademe_havuzu": havuz,
+            "p_kalabalik": kalabalik[k], "p_piyasa": piyasa[k],
+            "n_kalabalik": kazanan / kalabalik[k] if kalabalik[k] else None,
+            "n_piyasa": kazanan / piyasa[k] if piyasa[k] else None,
+        })
+    return {"rows": satir, "not": (
+        "Kazanan sayıları KİŞİ değil KOLONdur: tek bir sistem kuponu aynı "
+        "hafta onlarca kolonla kazanabilir. Bağımsız-kolon modeli bu "
+        "ilişkiyi göremez ve seviye tahmini bu yüzden şişer.")}
 
 
 def referans_kuponlar(d: dict[str, Any],
@@ -725,6 +884,7 @@ def rapor(sezon: str, hafta: int) -> dict[str, Any]:
         # Dis kuponlar ve bizim planlarimiz AYNI karne gövdesiyle ölçülür;
         # aksi hâlde 8 kat pahalı bir kupon ucuz olanla eşit görünürdü.
         "referans": referans_kuponlar(d, kupon),
+        "havuz": havuz_karnesi(d),
         "kartlar": ([plan_karnesi(d, sonuclar[0]["picks"], "fix16",
                                   sonuclar[0].get("label") or "1. Tahmin ana")]
                     + ([plan_karnesi(d, ayarli["picks"], "fix16",
@@ -908,6 +1068,48 @@ def yaz(o: dict[str, Any]) -> None:
     print(f"  Piyasanın favori kuponu      : {kal['piyasa_kuponu']} → {kal['piyasa_dogru']}/15 doğru")
     print(f"  Rastgele bir halk kuponunun beklenen doğrusu : {kal['beklenen_halk_dogru']:.2f}")
     print(f"  Piyasa olasılıklarının beklediği doğru       : {kal['beklenen_piyasa_dogru']:.2f}")
+
+    if o["havuz"]:
+        _basli("HAVUZ KARNESİ — kazanan adetleri modelden çıkıyor mu")
+        print(f"  {'kademe':<8}{'kazanan':>9}{'kademe havuzu':>18}"
+              f"{'N (kalabalık)':>16}{'N (piyasa)':>14}")
+        for r in o["havuz"]["rows"]:
+            hav = ("—" if r["kademe_havuzu"] is None
+                   else f"{r['kademe_havuzu']:,.2f}")
+            nk = "—" if r["n_kalabalik"] is None else f"{r['n_kalabalik']:,.0f}"
+            npi = "—" if r["n_piyasa"] is None else f"{r['n_piyasa']:,.0f}"
+            print(f"  {str(r['kademe']) + ' bilen':<8}{r['kazanan']:>9,}{hav:>18}"
+                  f"{nk:>16}{npi:>14}")
+        print("  N = o kademenin ima ettiği havuz kolonu (kazanan ÷ modelin "
+              "verdiği olasılık).")
+        print("  Model doğruysa dört satır AYNI N'i verir; kademeler arası "
+              "tutarlılık modelin şeklini sınar.")
+        print(f"  {o['havuz']['not']}")
+
+    if any(k.get("getiri") for k in o["kartlar"] + o["referans"]):
+        _basli("GETİRİ — gerçekleşen ve (aynı ödül vektörüyle) beklenen")
+        print(f"  {'kupon':<26}{'kolon':>7}  {'kazanan kolon':<24}"
+              f"{'gerçekleşen TL':>16}{'başabaş':>10}{'bekl.TL/kolon':>14}")
+        # Referansin OTEKI sistemdeki hali de listeye girer: "ayni isaretler,
+        # sekizde bir bedel" cumlesinin parasal karsiligi tam olarak burada
+        # gorunur.
+        kartlar = []
+        for k in o["referans"]:
+            kartlar.append(k)
+            if k.get("oteki_sistem"):
+                kartlar.append(k["oteki_sistem"])
+        for k in kartlar + o["kartlar"]:
+            g = k.get("getiri")
+            if not g:
+                continue
+            kaz = " ".join(f"{x}:{n}" for x, n in g["kazanan_kolon"].items()) or "—"
+            print(f"  {k['ad'][:26]:<26}{g['kolon']:>7,}  {kaz:<24}"
+                  f"{g['gerceklesen']:>16,.2f}{g['gerceklesen_kolon_basi']:>10,.2f}"
+                  f"{g['beklenen_kolon_basi']:>14,.2f}")
+        print("  'başabaş' = kolon bedeli bunun altındaysa hafta kâra geçti "
+              "(kolon fiyatı yayınlanmıyor).")
+        print("  Beklenen sütunu kuponları kıyaslar; gerçekleşen sütunu "
+              "haftanın kendi gürültüsünü taşır.")
 
     if o["payout"]:
         _basli("İKRAMİYE")

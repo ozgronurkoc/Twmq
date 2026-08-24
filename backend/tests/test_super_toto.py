@@ -459,9 +459,17 @@ def fazb():
 
 
 def test_fazb_bugun_olculemez_der(fazb):
-    """Durma kuralının 1. şıkkı: bir gözlemle bağıntı ölçülmez."""
+    """Durma kuralının 1. şıkkı: birkaç gözlemle bağıntı ölçülmez.
+
+    Hafta sayısı testte SABİT değil: 2. haftanın ikramiye tablosu girilince
+    sayı 1'den 2'ye çıktı ve testin ilk sürümü kırıldı. Korunacak şey sayı
+    değil kuraldır — güç analizi ~71 ikramiyeli hafta istiyor; o eşiğin
+    altında durum "ölçülemez" kalmalı.
+    """
     o = fazb.rapor("2026_27")
-    assert o["ikramiyeli_hafta"] == 1
+    ikramiyeli = sum(1 for h in fazb.elde_ne_var("2026_27")["haftalar"]
+                     if h["ikramiye_var"])
+    assert o["ikramiyeli_hafta"] == ikramiyeli
     assert o["durum"] == "olculemez"
     assert o["guc"]["yeterli"] is False
 
@@ -481,10 +489,14 @@ def test_fazb_bos_kademeyi_secmez(fazb):
 
 
 def test_fazb_ikramiyesiz_hafta_sayilmaz(fazb):
-    h2 = next(h for h in fazb.elde_ne_var("2026_27")["haftalar"]
-              if h["hafta"] == 2)
-    assert h2["ikramiye_var"] is False
-    assert "kisi_basi" not in h2
+    """İkramiye tablosu olmayan hafta ölçüme girmez, olan girer.
+
+    Test hafta numarasına değil ALANIN KENDİSİNE bağlı: `ikramiye_var`
+    ne diyorsa `kisi_basi` de onu demeli. (Önce "2. haftada ikramiye
+    yok" yazıyordu; tablo girilince doğru davranış testi kırdı.)
+    """
+    for h in fazb.elde_ne_var("2026_27")["haftalar"]:
+        assert ("kisi_basi" in h) is h["ikramiye_var"]
 
 
 def test_fazb_guc_orneklemle_birlikte_karar_degistirir(fazb):

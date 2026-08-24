@@ -394,3 +394,115 @@ def test_referans_kuponun_sapma_defteri(deg):
     assert sp["beklenen_net"] == pytest.approx(-0.196, abs=5e-3)
     assert sp["p_net"] == pytest.approx(0.056, abs=5e-3)
     assert [r["no"] for r in sp["rows"] if r["kazandi"]] == [7, 8, 12]
+
+
+# ─── getiri: ilk ölçülmüş para birimli sayı ───────────────────────────────
+
+def test_getiri_ikramiye_yoksa_hesaplanmaz(deg):
+    """İkramiye tablosu girilmemişse getiri **uydurulmaz**, `None` döner."""
+    d = _hafta([_dagilim(0.5, 0.3, 0.2)] * 15, "1" * 15)
+    assert deg.getiri_karnesi(d, ["1"] * 15) is None
+    assert deg.havuz_karnesi(d) is None
+
+
+def test_getiri_kolon_basina_dogrusaldir(deg):
+    """Sistem seçimi beklenen getiriyi DEĞİŞTİRMEZ — yalnız dağılımını.
+
+    Getiri kolon başına doğrusaldır: her kolonun beklentisi yalnız kendi
+    olasılık profiline bağlıdır. Kaplama, tam sistemin kolonlarının bir
+    alt kümesini oynar; kolon başına beklenti bu yüzden ikisinde de
+    yaklaşık aynı çıkar. Bu, "tam sistem oynayalım" tartışmasının cevabı:
+    tam sistem üstünlük satın almaz, **varyans** satın alır (P(15)).
+    """
+    o = deg.rapor("2026_27", 2)
+    k = next(x for x in o["referans"] if x["ad"] == "15 bilen kupon")
+    tam, kap = k["getiri"], k["oteki_sistem"]["getiri"]
+    assert kap["kolon"] * 8 == tam["kolon"]
+    assert kap["beklenen_kolon_basi"] == pytest.approx(
+        tam["beklenen_kolon_basi"], rel=0.05)
+
+
+def test_getiri_gerceklesen_kolon_kolon_sayilir(deg):
+    """15 bilen kupon aynı hafta dört kademeden birden kazandı.
+
+    Müşterek havuz **kolon başına** bölünür: 13 çiftesi olan bir tam
+    sistem, gerçek sonuç küme içindeyse 1 tane 15, 13 tane 14, 78 tane 13
+    ve 286 tane 12 üretir (`C(13, j)`). Getiri bu yüzden "en iyi kolon"dan
+    okunamaz; kolonların tamamı sayılır.
+    """
+    o = deg.rapor("2026_27", 2)
+    k = next(x for x in o["referans"] if x["ad"] == "15 bilen kupon")
+    g = k["getiri"]
+    assert g["kazanan_kolon"] == {15: 1, 14: 13, 13: 78, 12: 286}
+    assert g["gerceklesen"] == pytest.approx(28_291_834.48, abs=0.01)
+    # Aynı işaretler kaplamada: sekizde bir bedel, seksende bir getiri.
+    assert k["oteki_sistem"]["getiri"]["gerceklesen"] == pytest.approx(
+        361_638.88, abs=0.01)
+
+
+def test_getiri_bizim_planin_karnesi(deg):
+    """2. Tahmin ayarlı tek bir 12 tutturdu: 1.438,60 TL, 1.296 kolon.
+
+    Başabaş kolon bedeli 1,11 TL — yani kolon bunun üstündeyse hafta
+    zararla kapandı. Sayı acı ama ölçüm; kuralın hedefi bu haftayı
+    kazanmak değil, dağılımın doğru yerinde durmaktı (docs §3.38).
+    """
+    o = deg.rapor("2026_27", 2)
+    k = next(x for x in o["kartlar"] if x["ad"] == "2. Tahmin ayarlı")
+    g = k["getiri"]
+    assert g["kazanan_kolon"] == {12: 1}
+    assert g["gerceklesen"] == pytest.approx(1438.60, abs=0.01)
+    assert g["gerceklesen_kolon_basi"] == pytest.approx(1438.60 / 1296, abs=1e-4)
+
+
+# ─── havuz karnesi ────────────────────────────────────────────────────────
+
+def test_havuz_karnesi_iki_modeli_yan_yana_koyar(deg):
+    """Her kademe bir `N` tahmini verir; model doğruysa dördü aynı olmalı.
+
+    2. haftada kalabalık modelinin dört kademesi birbirinin %16'sı içinde
+    (37,8–43,9 milyon), piyasa modeli ise 2,9 kat sapıyor (4,0–11,6 milyon). Şekil ölçüsünde kalabalık modeli açık ara önde —
+    seviye ölçüsünde ikisi de yanlış (docs §3.40).
+    """
+    o = deg.rapor("2026_27", 2)
+    rows = o["havuz"]["rows"]
+    assert [r["kademe"] for r in rows] == [15, 14, 13, 12]
+    kal = [r["n_kalabalik"] for r in rows]
+    piy = [r["n_piyasa"] for r in rows]
+    assert max(kal) / min(kal) < 1.2
+    assert max(piy) / min(piy) > 2.5
+
+
+def test_olculen_pay_iki_haftanin_verisiyle_ayni(deg):
+    """`getiri.OLCULEN_PAY` **ham veriden** doğrulanır, ezberden değil.
+
+    Kademe havuzu = kazanan kolon × ödül. 2. haftanın 15 kademesi
+    1. haftadan devreden tutarı içerir; o çıkarılınca iki hafta da
+    1,75 : 1 : 1 : 1,25 veriyor. Sabit bu orandan türetiliyor; biri
+    kayarsa bu test kırılır ve `beklenen_getiri` sessizce yanlış
+    varsayımla konuşmaz.
+    """
+    from spor_toto.getiri import OLCULEN_PAY
+
+    m = importlib.import_module("scripts.super_toto_hafta")
+    devir = 0.0
+    havuzlar = {}
+    for hafta in (1, 2):
+        pay = m.hafta_yukle("2026_27", hafta)["meta"].get("payout")
+        if not pay:
+            pytest.skip("ikramiye tablosu girilmemiş")
+        h = {}
+        for t in pay["tiers"]:
+            if t.get("prize") is None:
+                devir = t.get("rollover") or 0.0
+                h[t["correct"]] = devir
+            else:
+                h[t["correct"]] = t["winners"] * t["prize"]
+        havuzlar[hafta] = h
+    havuzlar[2][15] -= devir            # devreden tutar haftanın kendi payı değil
+
+    for hafta, h in havuzlar.items():
+        toplam = sum(h.values())
+        for kademe, pay_orani in OLCULEN_PAY.items():
+            assert h[kademe] / toplam == pytest.approx(pay_orani, abs=1e-4), (
+                f"{hafta}. hafta {kademe} kademesi")
