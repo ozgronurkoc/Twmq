@@ -27,6 +27,13 @@ Cevap bu kez farklı: **çerçeve olarak hiçbir şey, ölçü olarak bir şey �
 aktarılan şey bir **eksik**: AlphaPy'ın metrik paneline bakarken bizde
 olmayan bir ayrım fark edildi ve o ayrım şimdi `ortak.brier_ayrisimi`.
 
+> **Bu belge iki aşamada yazıldı.** §1–§8 incelemenin kendisidir ve
+> yazıldığı hâliyle duruyor. §7 sonradan bir sütun kazandı, §9 sonradan
+> eklendi: projenin bütün kısıtları kaldırıldı, §7'nin *"denenmedi"*
+> dediği beş maddenin beşi de koşuldu ve **hiçbiri kapanış fiyatını
+> geçmedi**. Kısa cevap §9'da; tahmin doğruluğu için "hayır", ölçüm
+> yeteneği için "evet".
+
 ---
 
 ## 2. İki depo, iki farklı şey
@@ -179,18 +186,27 @@ Ayrıntı, sembol kırılımı ve okuma:
 
 ---
 
-## 7. Denenmedi, gerekçesiyle
+## 7. Denenmedi diye yazılmıştı — **hepsi denendi**
 
-`DIS_INCELEME.md` §8'in Elo/H2H satırlarıyla **aynı statüde** — *"denenmedi"*
-ile *"denenemez"* farklı şeylerdir ve ikisi de yazılır.
+Bu bölüm ilk yazıldığında beş satırlıktı ve başlığı *"Denenmedi,
+gerekçesiyle"*ydi. Sonra projenin bütün kısıtları kaldırıldı ve beşi de
+koşuldu. Tablo **olduğu gibi duruyor**, sağına bir sütun eklendi — çünkü
+"neden şimdi denenmedi" gerekçelerinin ne kadar isabetli olduğu da bir
+bilgidir.
 
-| Özellik | Kaynak | Türetilebilir mi | Neden şimdi denenmedi |
+| Özellik | Kaynak | O zamanki gerekçe | **Ölçüldü** |
 |---|---|---|---|
-| **Seriler (streak)** | `sport_flow.get_streak` — ardışık galibiyet/mağlubiyet, çizgiyi kapama, üst/alt serileri | **Evet**, korpustan | Onuncu deneme olur. `kalibre_form` (yuvarlanan ortalama) geçmedi; seri aynı büyüklüğün başka bir okuması. A1'in null'ı (piyasanın kendi çizgi hareketi bile kapanışı yenemiyor) beklentiyi zaten düşürüyor |
-| **İkili etkileşimler** | `features.get_polynomials(interaction_only=True)` | **Evet**, mevcut tasarım tensöründe | Yol haritasında `KADEMELER`e `etkilesim` basamağı olarak duruyor |
-| **Venn-Abers kalibrasyon** | Pro `model.py` | **Evet** — `venn-abers` paketi | §5'in ölçümü bunun beklenen değerini **düşürdü**: piyasanın toplam kalibrasyon borcu 0,00042 ve izotonik onu yarıya indirdiğinde toplam Brier kımıldamıyor. Kalibrasyon tarafında alınacak yol yok |
-| **LOFO önem** | Pro `features.py` | **Evet** — `lofo-importance` | Özelliklerimiz yüksek korelasyonlu (form, Elo, H2H hepsi takım gücü ölçüyor) ve LOFO tam bu durum için. Ama önce ölçülecek bir özellik kümesi gerekiyor |
-| **Optuna** | Pro `optimize.py` | **Evet** | Ancak `cv=` parametresine **kendi sezon katlayıcımız** verilerek; Pro'nun rastgele katlarıyla değil |
+| **Seriler (streak)** | `sport_flow.get_streak` | *"Onuncu deneme olur; `kalibre_form` geçmedi, seri aynı büyüklüğün başka okuması"* | `takim.seri_tablosu`; ham sinyal güçlü, artık sıfır. `kalibre_seri` **geçmedi** (§3.29). **Gerekçe isabetliydi** |
+| **İkili etkileşimler** | `get_polynomials(interaction_only=True)` | *"Yol haritasında `etkilesim` basamağı olarak duruyor"* | Kondu ve koşuldu: **anlamlı biçimde kötü** (§3.26, §3.29) — doğrusal kademe bir kısıt değil, bir koruma |
+| **Venn-Abers** | Pro `model.py` | *"§5'in ölçümü beklenen değerini düşürdü: kalibrasyon borcu 0,00042"* | `kalibre.py` (kendi PAV'ımız üzerine IVAP, **sezon bazlı** bölme). Geçmedi (+0,000264) ama yeni bir sayı verdi: ortalama aralık genişliği **0,00472** — §5'in bağımsız teyidi (§3.33). **Gerekçe isabetliydi** |
+| **LOFO önem** | Pro `features.py` | *"Önce ölçülecek bir özellik kümesi gerekiyor"* | Küme kuruldu (10 özellik) ve LOFO koşuldu: **hiçbiri taşımıyor**, beşi net negatif (§3.33) |
+| **Optuna** | Pro `optimize.py` | *"Ancak `cv=`'ye kendi sezon katlayıcımız verilerek"* | `arama.SezonKatlayici` yazıldı ve **Optuna alınmadı**: ızgara araması 4 aday için yeterli, yeni bir üretim bağımlılığı gerekmedi. Alınan şey **desendi**, paket değil |
+
+**Bir tanesi ters çıktı ve kayda değer.** Venn-Abers'ın `venn-abers` paketi
+bu ortamda kurulamadı; IVAP projenin kendi `recalibrate._pav`ı üzerine
+yazıldı ve **çalıştı**. Yani *"opsiyonel pakete bağımlanma"* doktrini bir
+tercih olmaktan çıkıp **ölçülmüş bir olgu** oldu: ihtiyaç duyulan şey
+paketin kendisi değil, içindeki 40 satırlık fikirdi.
 
 ---
 
@@ -211,3 +227,42 @@ değişikliği üretti — ama ürettiği şey **yeni bir tahminci değil, daha 
 cetvel**. Aradaki fark önemlidir: cetvel, hangi soruların sorulmaya değer
 olduğunu daha keskin söyler, ve §5'in sayısı tam bunu yaptı — kalibrasyon
 ekseninde alınacak yolun 0,00042 olduğunu ölçtü.
+
+---
+
+## 9. Sonradan: cetvel kuruldu, sorular soruldu
+
+Bu belge yazıldıktan sonra projenin **bütün kısıtları kaldırıldı** ve
+§7'nin beş maddesi dahil, çerçeveden gelen her desen koşuldu. Beş fazın
+tamamı bitti; sayılar `ISTATISTIK_YOL_HARITASI.md` §3.23–§3.36'da.
+
+**AlphaPy'dan gerçekten ne alındı:**
+
+| Alınan | Nereye | Sonuç |
+|---|---|---|
+| Brier'in ayrıştırılması gerektiği fikri | `ortak.brier_ayrisimi` | **Cetvel düzeldi** — serinin en değerli tek çıktısı |
+| Çok sınıflı metrik paneli | `ortak.karisiklik_matrisi`, `siralama_olculeri` | Beraberlik çözünürlüğünün on kat düşük olduğu görüldü |
+| Kat dışı **yığınlama deseni** (paket değil) | `yigin.py` — katlar `SezonKatlayici`dan | Serinin ilk negatif nokta tahmini, ama geçmedi (§3.32) |
+| LOFO **fikri** (paket değil) | `agac.lofo` | Hiçbir özellik taşımıyor (§3.33) |
+| Venn-Abers **fikri** (paket değil) | `kalibre.py` | Geçmedi, ama aralık genişliği yeni bir sayı verdi (§3.33) |
+| İç içe CV ihtiyacının dış doğrulaması | `arama.SezonKatlayici` | Pro'nun **yapmadığı** şey; bizde bekçili |
+
+**Ne alınmadı:** çerçevenin kendisi, Optuna, `venn-abers`,
+`lofo-importance`, polars, SMOTE, kodlayıcı zoo'su. Altı desen alındı,
+**sıfır yeni üretim bağımlılığı** eklendi. `scikit-learn` ve `lightgbm`
+yalnızca `model` ekstrasında, ölçüm için.
+
+**Ve asıl cevap.** Kullanıcının sorusu şuydu: *"bizim sistemimize entegre
+edebileceğimiz herhangi bir şey var mı — özellikle tahminlerin doğruluğunu
+artırmaya yönelik?"* Dürüst cevap iki parçalı:
+
+1. **Tahmin doğruluğu için: hayır.** AlphaPy'ın işaret ettiği her desen
+   koşuldu ve on ikisinin on ikisi de kapanış fiyatını geçemedi. Üstelik
+   AlphaPy'ın **kendi** spor öğreticisi de aynı tavana çarpıyor (§3) —
+   yani bu bir uygulama kusuru değil, alanın kendisi.
+2. **Ölçüm yeteneği için: evet, ve bu daha değerli çıktı.** Ayrışım
+   olmadan *"kalibrasyonda alınacak yol 0,00042"* denemezdi; o sayı
+   olmadan Venn-Abers'ın beklenen değeri **koşumdan önce** bilinemezdi.
+   Cetvel, hangi soruların sorulmaya değmediğini de söyler — ve bir
+   projede en pahalı şey, cevabı önceden bilinebilecek bir soruya
+   harcanan zamandır.

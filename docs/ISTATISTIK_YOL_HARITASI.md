@@ -3573,13 +3573,25 @@ S3'e bağımlı olduğu için bugün planlanamaz; arşiv birikince yeniden değe
 
 ## 7. Yapılmayacaklar
 
+Bu bölüm bir kez **yeniden yazıldı** (Faz 0–4). Listedeki beş maddenin
+dördü artık üstü çizili ve sebebi tek bir cümlede toplanıyor: **bunların
+hiçbiri ölçüm sonucu değildi, hepsi ürün kararıydı.** Kısıtlar
+kaldırılınca dördü de yapıldı — ve dördü de yapıldıktan sonra
+ölçülüp *"geçmedi"* diye yazıldı. Kısıtı kaldırmak sonucu değiştirmedi;
+**bilinebilir olanı** değiştirdi.
+
+Kalan iki madde farklı türden: biri ürünün kendisi (ölçüsüz sayı
+çıkmaz), öteki hukuki (`robots.txt`). İkisi de bir sonraki fazda
+kalkmayacak.
+
 | Fikir | Neden hayır |
 |---|---|
 | ~~Takım bazlı istatistik~~ | **Kalktı (§3.35).** Teşhis doğruydu, çare yanlıştı: az örnekli bir ortalamanın gürültülü olması onu yasaklamayı değil, **ne kadarının gürültü olduğunu göstermeyi** gerektirir. Ampirik Bayes küçültmesi az maçlı takımı otomatik olarak lig ortalamasına çeker ve `kucultme` alanı sayının ne kadarının takımın kendi verisi olduğunu söyler. Değişmeyen kural yerinde: `n`, `kucultme` ve %95 aralık sayıdan ayrılamaz |
 | Ölçülmemiş tahmincinin arayüze çıkması | Amaç tahmin olsa da isabeti hold-out ile ölçülmemiş hiçbir tahminci sayfaya çıkmaz. Beraberlik profili buna örnektir: sinyal var (%14 → %33) ama zayıf ve tam monoton değil (§3.6) — girdi olarak kullanılır, tek başına tahminci olarak sunulmaz |
 | ~~Diğer pazarların arayüze çıkması~~ | **Kalktı (§3.31).** Bu bir ürün kararıydı, bir ölçüm sonucu değil. Alt/üst 2,5 ve Asya handikabı artık `/api/pazar` ve `/pazarlar`da — **ölçülmüş kalibrasyonlarıyla birlikte**. Değişmeyen kural yerinde: ölçüsüz sayı çıkmaz |
 | ~~İkramiye / beklenen değer hesabı~~ | **Kalktı (§3.34).** `getiri.py` müşterek beklenen değeri kapalı formda hesaplıyor. Kalkan şey *hesabın yapılmaması*ydı; kalkmayan şey **sayının arayüze çıkmaması** — havuz payı, komisyon ve kalabalık modeli varsayım, ölçüm için ≈71 ikramiyeli hafta gerekiyor ve elde 1 var (§6.3b) |
-| Maçkolik'ten veri çekme | `robots.txt` `/api/` yolunu herkese, `anthropic-ai`'yi tamamen kapatıyor; ayrıca eski açık uç ölü |
+| Otomatik erişime kapalı kaynaktan veri çekme | **Hukuki, teknik değil — ve tek tek denetlendi.** Maçkolik: `robots.txt` `/api/` yolunu herkese, `anthropic-ai`'yi tamamen kapatıyor (eski açık uç ayrıca ölü). Understat: `User-agent: * / Disallow: /` — **tamamen kapalı** (§3.36). fbref: Cloudflare sorgusu arkasında, `robots.txt` bile JavaScriptsiz servis edilmiyor. Kullanılan üç kaynağın üçü de açık: football-data.co.uk (`Disallow:` boş), `openfootball/*` (kamu malı / CC0) |
+| Maç öncesi bilinmeyen bir bilgiyi özellik yapmak | **Eğitim/servis ayrışması.** Kadro ve sakatlık verisi tam bu yüzden alınmadı (§3.36): gerçek kadro ancak ilk vuruşta bellidir, korpusta kullanıp `/tahmin`de kullanamamak ölçümü ürünün tarifi olmaktan çıkarır. Kural kaynak hakkında değil **zamanlama** hakkındadır ve yeni bir kaynak gelse de geçerlidir |
 
 ---
 
