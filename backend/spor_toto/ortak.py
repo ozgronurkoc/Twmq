@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import math
 from collections.abc import Sequence
+from typing import Any
 
 from .core import SEMBOLLER
 
@@ -30,11 +31,14 @@ __all__ = [
     "BRIER_ESIT",
     "FAVORI_DILIMLERI",
     "GUVEN_Z",
+    "OLASILIK_BANTLARI",
     "SEMBOLLER",
     "bant_adi",
     "brier",
+    "brier_ayrisimi",
     "favori_dilimi",
     "kacak_dagilimi",
+    "karisiklik_matrisi",
     "normalize_olasilik",
     "wilson",
 ]
@@ -120,6 +124,222 @@ def favori_dilimi(probs: dict[str, float] | None) -> str:
     """Bir maçın favori olasılığının hangi dilime düştüğü."""
     en_yuksek = max(probs.values()) if probs else 0.0
     return bant_adi(en_yuksek, FAVORI_DILIMLERI)
+
+
+#: Olasılık bantları — kalibrasyon eğrisi ve Brier ayrışımı **aynı** kenarları
+#: kullanır. Kenarlar ölçüm sonucuna BAKILMADAN, okunabilirlik için seçildi:
+#: uçlarda seyrek olduğu için geniş, ortada yoğun olduğu için dar.
+#:
+#: Tanım uzun süre `kalibrasyon.BANTLAR`daydı; ayrışım da aynı kenarlara
+#: ihtiyaç duyunca buraya taşındı. İki ayrı kenar dizisi olsaydı eğrinin
+#: söylediği ile ayrışımın söylediği sessizce ayrışırdı — bu modülün var olma
+#: sebebi tam olarak budur.
+OLASILIK_BANTLARI: Sequence[tuple[float, float]] = (
+    (0.0, 0.05), (0.05, 0.10), (0.10, 0.15), (0.15, 0.20), (0.20, 0.25),
+    (0.25, 0.30), (0.30, 0.35), (0.35, 0.40), (0.40, 0.45), (0.45, 0.50),
+    (0.50, 0.55), (0.55, 0.60), (0.60, 0.70), (0.70, 0.80), (0.80, 1.01),
+)
+
+
+def _bant_indeksi(p: float, bantlar: Sequence[tuple[float, float]]) -> int:
+    """`p`'nin düştüğü bandın indeksi. Aralık `[lo, hi)`; dışarısı kenara kırpılır.
+
+    Kırpma sessiz bir düzeltme değil, tanım gereği doğru olan şey: olasılık
+    zaten `[0, 1]` içindedir ve son bandın üst kenarı `1.01`'dir, yani kırpma
+    yalnızca kayan nokta artığı için devreye girer.
+    """
+    for i, (lo, hi) in enumerate(bantlar):
+        if lo <= p < hi:
+            return i
+    return 0 if p < bantlar[0][0] else len(bantlar) - 1
+
+
+def brier_ayrisimi(tahminler: Sequence[dict[str, float]],
+                   kodlar: Sequence[str],
+                   bantlar: Sequence[tuple[float, float]] | None = None
+                   ) -> dict[str, Any]:
+    """Brier skorunun Murphy ayrışımı — **sembol başına**, dört terim.
+
+    Brier tek bir sayıdır ve iki farklı kusuru aynı torbaya koyar: olasılığın
+    **yanlış ayarlı** olması (piyasa %30 diyor, gerçek %35) ve olasılığın
+    **ayırt edemiyor** olması (her maça aynı sayıyı veriyor). Birincisi
+    yeniden kalibrasyonla geri alınabilir, ikincisi alınamaz — yeni bilgi
+    ister. Ayrışım bu ikisini ayırır::
+
+        BS_s = REL_s − RES_s + UNC_s + ICI_s
+
+        REL_s = Σ_k (n_k/N)(p̄_k − ō_k)²             güvenilirlik  ↓ iyi
+        RES_s = Σ_k (n_k/N)(ō_k − ō_s)²             çözünürlük    ↑ iyi
+        UNC_s = ō_s(1 − ō_s)                         belirsizlik   sabit
+        ICI_s = Σ_k (n_k/N)[Var_k(p) − 2Cov_k(p,o)]  bant içi artık
+
+    Bunun **ürüne dönük** karşılığı şudur: `REL`, *herhangi bir* yeniden
+    kalibrasyon basamağının kazanabileceğinin üst sınırıdır. Küçükse
+    kalibrasyon tarafında alınacak yol kalmamış demektir ve aranacak şey
+    çözünürlüktür.
+
+    ─── Üç tasarım kararı ────────────────────────────────────────────────
+
+    **1. Sembol başına, havuzlanmış değil.** `kalibrasyon.kalibrasyon_egrisi`
+    üç sembolü havuzlar ve eğri için bu doğrudur. Ama havuzlanmış ölçekte
+    `ō` her zaman tam `1/3`'tür — her maçta üç sembolden tam biri gerçekleşir,
+    yani `Σo = N` ve `ō = N/3N`. `UNC` böylece `2/9`'a çakılır ve **sınıf
+    dengesizliği ölçüden tamamen düşer.** Sembol başına ayrışımda `UNC_s`
+    gerçek taban oranını taşır ve beraberliğin satırı ayrı okunur.
+
+    **2. Dördüncü terim gizlenmez.** Klasik üç terimli ayrışım yalnızca bir
+    bandın içindeki tahminler birebir aynıysa tamdır; bantlama artık bırakır.
+    Artığı ayrı sütun olarak yazmak özdeşliği **kayan noktaya kadar tam**
+    yapar — ve `tests/test_ortak.py` bunu bekçiliyor. Gizlenseydi, ayrışım
+    "yaklaşık" olurdu ve yaklaşıklığın büyüklüğü bilinmezdi.
+
+    **3. Merkezlenmiş momentler.** `Var = E[p²] − E[p]²` kısayolu 1e-12'lik
+    bir özdeşlik için yeterince kararlı değil; iki geçişli merkezlenmiş
+    toplam kullanılır.
+
+    ─── `sapma_payi` — sayıyı okumadan önce bakılacak alan ─────────────────
+
+    `REL` ve `RES` sonlu örneklemde **yukarı yanlıdır**: bir bandın gözlenen
+    oranı `ō_k` gürültü taşır ve `(p̄_k − ō_k)²` o gürültünün karesini de
+    toplar. Yanlılığın büyüklüğü tahmin edilebilir::
+
+        sapma ≈ Σ_k (n_k/N) · ō_k(1 − ō_k) / (n_k − 1)
+
+    `sapma_payi` bu sayıdır ve **`REL`in yanına konmadan `REL` okunmaz**:
+    540 maçlık kupon setinde bant başına ~36 nokta düşer ve pay `REL`in
+    kendisiyle aynı mertebeye çıkar — yani orada `REL` çoğunlukla gürültüdür.
+    31 bin maçlık korpusta pay iki mertebe küçülür ve sayı okunabilir hâle
+    gelir. **Kesit büyüklüğü burada bir ayrıntı değil, ön koşuldur.**
+
+    Yanlılık `RES`i de yaklaşık aynı miktarda şişirdiği için **farkta büyük
+    ölçüde sadeleşir**; `RES − REL` tek tek terimlerden daha dayanıklıdır.
+
+    Dönen gövde: `toplam` (üç sembolün toplamı — `brier`in maç ortalamasıyla
+    birebir aynı ölçek) ve `semboller` (sembol başına aynı alanlar + taban
+    oranı + sapma payı). `artik` alanı özdeşliğin kapanma hatasıdır ve sıfır
+    olmalıdır; çıktıda durur ki bekçi yalnızca testte değil raporda da
+    görünsün.
+    """
+    if bantlar is None:
+        bantlar = OLASILIK_BANTLARI
+    n = min(len(tahminler), len(kodlar))
+    if n == 0 or not bantlar:
+        bos = {"brier": 0.0, "guvenilirlik": 0.0, "cozunurluk": 0.0,
+               "belirsizlik": 0.0, "bant_ici": 0.0, "sapma_payi": 0.0,
+               "artik": 0.0}
+        return {"n": 0, "bant_sayisi": len(bantlar),
+                "toplam": dict(bos),
+                "semboller": {s: {**bos, "taban_oran": 0.0} for s in SEMBOLLER}}
+
+    semboller: dict[str, dict[str, float]] = {}
+    for s in SEMBOLLER:
+        # (p, o) noktaları — o ∈ {0, 1}
+        kovalar: list[list[tuple[float, float]]] = [[] for _ in bantlar]
+        toplam_o = 0.0
+        brier_s = 0.0
+        for i in range(n):
+            p = float(tahminler[i].get(s, 0.0))
+            o = 1.0 if kodlar[i] == s else 0.0
+            toplam_o += o
+            brier_s += (p - o) ** 2
+            kovalar[_bant_indeksi(p, bantlar)].append((p, o))
+        brier_s /= n
+        taban = toplam_o / n
+
+        rel = res = ici = sapma = 0.0
+        for kova in kovalar:
+            nk = len(kova)
+            if nk == 0:
+                continue
+            agirlik = nk / n
+            p_ort = sum(p for p, _ in kova) / nk
+            o_ort = sum(o for _, o in kova) / nk
+            # merkezlenmiş momentler — özdeşliğin tam kapanması için
+            var_p = sum((p - p_ort) ** 2 for p, _ in kova) / nk
+            kov = sum((p - p_ort) * (o - o_ort) for p, o in kova) / nk
+            rel += agirlik * (p_ort - o_ort) ** 2
+            res += agirlik * (o_ort - taban) ** 2
+            ici += agirlik * (var_p - 2 * kov)
+            if nk > 1:
+                sapma += agirlik * o_ort * (1.0 - o_ort) / (nk - 1)
+        unc = taban * (1.0 - taban)
+
+        semboller[s] = {
+            "brier": brier_s,
+            "guvenilirlik": rel,
+            "cozunurluk": res,
+            "belirsizlik": unc,
+            "bant_ici": ici,
+            "taban_oran": taban,
+            "sapma_payi": sapma,
+            "artik": brier_s - (rel - res + unc + ici),
+        }
+
+    toplam = {
+        alan: sum(semboller[s][alan] for s in SEMBOLLER)
+        for alan in ("brier", "guvenilirlik", "cozunurluk", "belirsizlik",
+                     "bant_ici", "sapma_payi", "artik")
+    }
+    return {"n": n, "bant_sayisi": len(bantlar),
+            "toplam": toplam, "semboller": semboller}
+
+
+def karisiklik_matrisi(tahminler: Sequence[dict[str, float]],
+                       kodlar: Sequence[str]) -> dict[str, Any]:
+    """3×3 karışıklık matrisi ve sınıf başına duyarlılık/kesinlik.
+
+    Brier ve log kaybı **olasılığı** ölçer; bu panel tahmincinin *karar*
+    verdiğinde ne yaptığını ölçer — en olası sembolü seçseydi hangi sonucu
+    hangisiyle karıştırırdı.
+
+    Ayrı ölçülmesinin sebebi beraberliktir. Dış bir çalışma bütün
+    modellerinde beraberlikte ~sıfır duyarlılık ölçtü; bizde bunun ürün
+    tarafındaki karşılığı ölçülü (çiftede atılan beraberlik %25,8 ile geliyor,
+    ev sahibi %16,0) ama **tahmin tarafındaki karşılığı hiç ölçülmedi.**
+    `duyarlilik["0"]` tam olarak o sayıdır.
+
+    Eşitlik durumunda `SEMBOLLER` sırası (1, 0, 2) belirleyicidir — kupon
+    düzeni ve deterministiklik için; rastgele bozma ölçümü tekrarlanamaz
+    kılardı.
+
+    `dengeli_isabet` sınıf başına duyarlılıkların ortalamasıdır: sınıflar
+    dengesiz olduğu için (1: ~%44, 0: ~%24) ham isabet çoğunluğu tahmin
+    etmekle şişer, dengeli isabet şişmez.
+    """
+    n = min(len(tahminler), len(kodlar))
+    matris: dict[str, dict[str, int]] = {
+        g: dict.fromkeys(SEMBOLLER, 0) for g in SEMBOLLER
+    }
+    dogru = 0
+    for i in range(n):
+        p = tahminler[i]
+        secim = max(SEMBOLLER, key=lambda s: float(p.get(s, 0.0)))
+        gercek = kodlar[i]
+        if gercek not in matris:
+            continue
+        matris[gercek][secim] += 1
+        if gercek == secim:
+            dogru += 1
+
+    duyarlilik: dict[str, float] = {}
+    kesinlik: dict[str, float] = {}
+    for s in SEMBOLLER:
+        gercek_n = sum(matris[s].values())
+        secim_n = sum(matris[g][s] for g in SEMBOLLER)
+        duyarlilik[s] = matris[s][s] / gercek_n if gercek_n else 0.0
+        kesinlik[s] = matris[s][s] / secim_n if secim_n else 0.0
+
+    gecerli = [s for s in SEMBOLLER if sum(matris[s].values()) > 0]
+    return {
+        "n": n,
+        # satır = gerçek sonuç, sütun = tahmincinin seçimi
+        "matris": matris,
+        "isabet": dogru / n if n else 0.0,
+        "duyarlilik": duyarlilik,
+        "kesinlik": kesinlik,
+        "dengeli_isabet": (sum(duyarlilik[s] for s in gecerli) / len(gecerli)
+                           if gecerli else 0.0),
+    }
 
 
 def kacak_dagilimi(kacak_olasiliklari: Sequence[float]) -> list[float]:

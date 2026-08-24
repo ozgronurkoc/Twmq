@@ -953,9 +953,34 @@ def _check_tahmin_referanslari() -> str:
         if s["ad"] != r["referans"]:
             assert s["gecti"] is False, f"{s['ad']} referansi gecti — beklenmez"
 
+    # 5) Brier ayrisimi Brier'in KENDISINI toplamali. Bu bir model iddiasi
+    #    degil bir OZDESLIK: dort terim toplanmiyorsa ayrisim bir yaklasiklik
+    #    demektir ve yaklasikligin buyuklugu bilinmez. Testte de bekcili ama
+    #    burasi CANLI veri uzerinde kosar — sentetik kesitte kapanip gercek
+    #    dagilimda kapanmamasi mumkun olmasa da, iddia edilen sey odur.
+    for s in r["tahminciler"]:
+        a = s.get("ayrisim")
+        assert a, f"{s['ad']}: ayrisim blogu yok"
+        artik = a["toplam"]["artik"]
+        assert abs(artik) < 1e-9, f"{s['ad']}: ayrisim ozdesligi kapanmadi ({artik:+.2e})"
+
+    # 6) Cozunurluk siralamasi — (2)'nin ayrisim tarafindaki karsiligi ve
+    #    ondan DAHA keskin. Brier siralamasi belirsizlik terimini de tasir;
+    #    cozunurluk yalnizca "bu tahminci maclari birbirinden ayirt edebiliyor
+    #    mu" der. `duzgun` her maca ayni sayiyi verdigi icin TAM SIFIR olmali.
+    coz = {s["ad"]: s["ayrisim"]["toplam"]["cozunurluk"] for s in r["tahminciler"]}
+    assert abs(coz["duzgun"]) < 1e-12, (
+        f"duzgun cozunurlugu sifir olmali, {coz['duzgun']:.2e} cikti")
+    assert coz["piyasa"] > coz["sezon_sabiti"] > coz["duzgun"], (
+        f"cozunurluk siralamasi bozuk: piyasa={coz['piyasa']:.5f} "
+        f"sezon={coz['sezon_sabiti']:.5f} duzgun={coz['duzgun']:.5f}")
+
+    pa = skor["piyasa"]["ayrisim"]["toplam"]
     return (
         f"hafta={r['n_hafta']} mac={r['n_mac']} | piyasa={p:.4f} "
         f"sezon={skor['sezon_sabiti']['brier']:.4f} duzgun={skor['duzgun']['brier']:.4f}"
+        f" | ayrisim: guvenilir={pa['guvenilirlik']:.5f} "
+        f"cozunur={pa['cozunurluk']:.5f} (sapma payi {pa['sapma_payi']:.5f})"
     )
 
 
@@ -1191,9 +1216,10 @@ CHECKS: tuple[CheckSpec, ...] = (
     CheckSpec(
         "tahmin_referanslari", "analiz",
         "Tahmin katmanının ölçüm koşumu hâlâ aynı sayıyı veriyor mu: `duzgun` "
-        "tam olarak 0,667, sıralama piyasa < sezon_sabiti < duzgun. Denetlenen "
-        "şey modelin kalitesi değil ölçümün tekrarlanabilirliği — sıralama "
-        "bozulursa bozulan model değil oran arşividir.",
+        "tam olarak 0,667, sıralama piyasa < sezon_sabiti < duzgun, Brier "
+        "ayrışımının özdeşliği kapanıyor ve çözünürlük sıralaması aynı yönde. "
+        "Denetlenen şey modelin kalitesi değil ölçümün tekrarlanabilirliği — "
+        "sıralama bozulursa bozulan model değil oran arşividir.",
         _check_tahmin_referanslari,
         butce_ms=350,
     ),

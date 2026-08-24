@@ -33,6 +33,7 @@ from typing import Any
 
 from .backtest import hafta_girdileri
 from .ortak import brier as _ortak_brier
+from .ortak import brier_ayrisimi, karisiklik_matrisi
 from .predict import REFERANS_AD, Girdi, Olasilik, Tahminci, referans_fabrikalar
 
 #: Log kaybında sıfır olasılığa sonsuz ceza vermemek için kırpma tabanı.
@@ -153,7 +154,53 @@ def _hafta_skoru(tahminci: Tahminci, hafta: Girdi) -> dict[str, Any]:
         "log_toplam": l_top,
         "brier": round(b_top / n, 4) if n else 0.0,
         "log_kaybi": round(l_top / n, 4) if n else 0.0,
+        # Ham tahminler ayrisim ve karisiklik matrisi icin gerekli; ozel
+        # tutuluyor cunku 31 bin maclik korpusta API govdesini sisirirdi.
+        # `_panel` bunlari tuketir, `_panel_temizle` govdeden siler.
+        "_tahminler": [tahminler[k] for k in range(n)],
+        "_kodlar": list(kodlar),
     }
+
+
+#: Ayrisim/karisiklik bloklarinin ondalik hassasiyeti. Terimler kucuk
+#: (guvenilirlik ~1e-3), 4 basamak onlari sifira yuvarlardi.
+PANEL_BASAMAK = 6
+
+#: Hafta kaydinda tasinan, disariya CIKMAYAN alanlar.
+_OZEL_ALANLAR = ("brier_toplam", "log_toplam", "_tahminler", "_kodlar")
+
+
+def _panel(kayitlar: Sequence[dict[str, Any]]) -> dict[str, Any]:
+    """Butun haftalarin ham tahminlerinden ayrisim + karisiklik paneli.
+
+    Kayitlar hafta hafta tutuluyor cunku bootstrap hafta uzerinden yapiliyor
+    (modul basligi, karar 3). Panel ise **butun kesit** uzerinde hesaplanir:
+    bant basina yeterli nokta ancak boyle birikir — 15 macla bir kalibrasyon
+    bandi okunmaz.
+    """
+    tahminler: list[dict[str, float]] = []
+    kodlar: list[str] = []
+    for kayit in kayitlar:
+        tahminler.extend(kayit.get("_tahminler") or [])
+        kodlar.extend(kayit.get("_kodlar") or [])
+    return {
+        "ayrisim": _yuvarla(brier_ayrisimi(tahminler, kodlar)),
+        "karisiklik": karisiklik_matrisi(tahminler, kodlar),
+    }
+
+
+def _yuvarla(govde: Any) -> Any:
+    """Ic ice sozluklerdeki float'lari `PANEL_BASAMAK`a yuvarlar."""
+    if isinstance(govde, dict):
+        return {k: _yuvarla(v) for k, v in govde.items()}
+    if isinstance(govde, float):
+        return round(govde, PANEL_BASAMAK)
+    return govde
+
+
+def _hafta_govdesi(kayit: dict[str, Any]) -> dict[str, Any]:
+    """Disariya cikan hafta kaydi — ozel alanlar dusurulur."""
+    return {k: v for k, v in kayit.items() if k not in _OZEL_ALANLAR}
 
 
 def capraz_olc(fabrikalar: Sequence[Fabrika],
@@ -185,6 +232,7 @@ def capraz_olc(fabrikalar: Sequence[Fabrika],
             "n_mac": n_mac,
             "brier": round(b_top / n_mac, 4) if n_mac else None,
             "log_kaybi": round(l_top / n_mac, 4) if n_mac else None,
+            **_panel(kayitlar),
             "_kayitlar": kayitlar,
         })
 
@@ -234,9 +282,8 @@ def degerlendir(fabrika: Fabrika,
         "n_mac": n_mac,
         "brier": round(b_top / n_mac, 4) if n_mac else None,
         "log_kaybi": round(l_top / n_mac, 4) if n_mac else None,
-        "haftalar": [{k: v for k, v in kayit.items()
-                      if k not in ("brier_toplam", "log_toplam")}
-                     for kayit in kayitlar],
+        **_panel(kayitlar),
+        "haftalar": [_hafta_govdesi(kayit) for kayit in kayitlar],
         "_kayitlar": kayitlar,
     }
 
