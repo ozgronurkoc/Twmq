@@ -115,6 +115,7 @@ spor_toto/evaluate.py  ◄── spor_toto/predict.py     (sözleşme + 3 refera
 | Tahmin | `backend/spor_toto/arama.py` | — | İç içe CV (Faz 0.2): `SezonKatlayici` (sklearn splitter arayüzü) + ızgara araması; hiperparametre ayarı hold-out'u bozmadan serbest |
 | Tahmin | `backend/spor_toto/agac.py` | — | LightGBM çok sınıflı (Faz 2.2): piyasanın log-olasılığı `init_score`, ağaç yalnızca artığı öğrenir |
 | Pazar | `backend/spor_toto/pazar.py` | `/api/pazar` | 1X2 dışı pazarlar (Faz 4.1): alt/üst 2,5 (Brier'li) ve Asya handikabı (getiri kalibrasyonlu), ölçülmüş kalibrasyonlarıyla |
+| Tahmin | `backend/spor_toto/yigin.py` | — | Kat dışı yığınlama (Faz 2.4): sezon katlarıyla üretilmiş olasılıklar üzerinde multinom logit üst-öğrenici; taban başına tek ağırlık |
 | **Ürün** | `backend/spor_toto/tahmin.py` | — | **Tahmin ürünü (C2)**: yaklaşan maça olasılık + ölçülmüş isabet |
 | Üretim | `backend/scripts/build_fixtures.py` | — | Yaklaşan maçlar ve oranları (football-data `fixtures.csv`) |
 | UI | `frontend/app/tahmin/page.tsx` | — | Tahmin sayfası |
@@ -136,7 +137,7 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/app/super-toto/page.tsx` · `components/super-toto/haftalar.tsx` · `lib/super-toto.ts` | Sezonun hafta şeridi; `?hafta=N` adreste durur |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **1.330 test**; **82'si** istatistik katmanına (`history` `odds` `backtest`
+paketi toplam **1.340 test**; **82'si** istatistik katmanına (`history` `odds` `backtest`
 `api_stats` `api_backtest` `snapshot_iddaa`), **294'ü** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer`). Dosya adlarıyla sayılıdır ki tablo elle bakım gerektirmesin —
@@ -2168,6 +2169,77 @@ Sözleşme `scripts/api_sozlesme.py` ve `frontend/scripts/check.mjs`
 eşlemesine kayıtlı: `GET /api/pazar → PazarResponse`. Arayüz denetimi 49'dan
 **50**'ye çıktı.
 
+### 3.32 Yığınlama (Faz 2.4) — serinin **ilk negatif nokta tahmini**, ve niçin yetmiyor
+
+Tek tek her görüş ölçüldü ve hiçbiri geçmedi. Ama *"birleştirilseler bir şey
+çıkar mıydı"* ayrı bir sorudur ve tek tek denemeler onu cevaplayamaz.
+
+`spor_toto/yigin.py` dört tabanı bir multinom logit üst-öğreniciyle
+birleştiriyor. Tasarım `recalibrate`in `sicaklik` basamağıyla aynı: taban
+başına **tek** katsayı, yani ağırlık doğrudan okunabiliyor.
+
+#### AlphaPy'ın hatası burada düzeltiliyor
+
+`DIS_INCELEME_ALPHAPY.md` §4 madde 4: klasik AlphaPy'ın `predict_blend`i
+harman matrisini `model.probas[(algo, Partition.train)]`den — **örneklem
+içi** olasılıklardan — kuruyor. En çok ezberleyen model kendi eğitim
+setinde en iyi görünür ve üst-öğrenici ona en büyük ağırlığı verir. Pro
+bunu kat dışına çevirmiş ama katları **rastgele**; zaman sıralı veride o da
+sızdırır.
+
+Buradaki yığın iki şartı birden sağlıyor: üst-öğrenici **kat dışı**
+olasılıklarla eğitilir ve katlar `arama.SezonKatlayici`dan gelir, yani
+sezon sınırlarıdır.
+
+Bekçi doğrudan bu hatayı kovalıyor: `test_ust_ogrenici_kat_disi_olasilik_goruyor`
+eğitim setini ezberleyip dışarısında bilgisiz olan bir taban kuruyor ve
+üst-öğrenicinin ona ağırlık **vermediğini** doğruluyor. Örneklem içi
+görseydi ağırlık patlardı.
+
+#### Ölçülen — 31.103 maç · 183 hafta · kat dışı 31.103 maç
+
+| tahminci | Brier | fark | %95 aralık | geçti |
+|---|---:|---:|---|---|
+| **`yigin`** | **0,593500** | **−0,000137** | [−0,000402, +0,000148] | **hayır** |
+| piyasa | 0,593600 | — | — | referans |
+
+**Serinin ilk negatif nokta tahmini.** Faz 1–3'te ölçülen her aday pozitif
+taraftaydı (piyasadan kötü); yığın ilk kez sıfırın altına düşüyor. Ama
+aralık sıfırı kesiyor, yani **geçmiyor** — ve projenin kuralı ortalama
+değil aralıktır.
+
+#### Ağırlıklar sebebini söylüyor
+
+| taban | ağırlık |
+|---|---:|
+| piyasa | **+0,5307** |
+| kademe | +0,3242 |
+| agac | +0,2347 |
+| **dixon_coles** | **−0,0693** |
+
+Okuma: ilk üç taban **hepsi piyasa çıpalı**dır — `kademe` `β·log p`'den
+başlar, `agac` piyasanın log-olasılığını `init_score` alır. Ağırlıkları
+toplandığında **1,09** ediyor, yani yığın piyasanın kendi sinyalini üç
+parçaya bölüp geri topluyor.
+
+Piyasadan **bağımsız** olan tek taban Dixon-Coles ve ağırlığı **negatif**.
+Bu §3.28'in bulgusunun yığın tarafındaki tekrarı: orada `kalibre_dc`
+katsayısı −0,0492 çıkmıştı, burada −0,0693.
+
+Yani −0,000137'lik iyileşme yeni bilgiden değil, **aynı bilginin biraz
+farklı paketlenmesinden** geliyor — ve §3.23'te ölçülen paketleme tavanı
+(0,00042) bunun neden bu büyüklükte kaldığını da açıklıyor.
+
+#### Faz 2 kapanıyor
+
+| Alt adım | Sonuç |
+|---|---|
+| 2.1 Etkileşim kademesi | Geçmedi; §3.29'da anlamlı biçimde kötü |
+| 2.2 Ağaç toplulukları | Geçmedi (§3.30) |
+| **2.4 Yığınlama** | **Geçmedi** — ilk negatif nokta tahmini, aralık sıfırı kesiyor |
+
+    python -m spor_toto.yigin --rapor
+
 ## 4. Sayfada bugün ne var
 
 **`/istatistik`** — sezon dağılımı (en sık sonuç + pay çubuğu) · 5 sayı kutusu (sembol
@@ -2298,6 +2370,7 @@ ve karşılıkları: kupon seti 0,5747 → **0,5740**, korpus 0,5940 → **0,593
 | **H2H + seriler (§3.29)** | 31.103 maç · H2H %41 kapsama | **Aynı kalıp, üçüncü ve dördüncü kez.** Ham yayılım H2H'de 28, seride 30 puan; **on bandın onunda da** piyasa Wilson aralığının içinde. `kalibre_h2h` +0,000146, `kalibre_seri` +0,000145 — ikisi de geçmedi; `seri` katsayısı **−0,0385** (model seriyi söndürmek istiyor). Ayrıca `etkilesim_favori` artık **anlamlı biçimde kötü**: +0,000380 [+0,000009, +0,000782] |
 | **Ağaç toplulukları (§3.30)** | 31.103 maç · 183 hafta | **Model sınıfı itirazı kapandı.** `agac` +0,000368 [−0,000009, +0,000750], `agac_ham` +0,000667 [+0,000282, +0,001068] — ikincisi anlamlı biçimde kötü. Ayrışım mekanizmayı veriyor: ağaç **kalibrasyonu iyileştiriyor** (REL 0,00042 → 0,00015) ama **çözünürlük kaybediyor** (0,05657 → 0,05597). İç halka en küçük modeli seçti; kapasite monoton zararlı (yaprak 4 → 31: 0,5940 → 0,6120) |
 | **1X2 dışı pazarlar (§3.31)** | 539 maç · kupon oran arşivi | **Kısıt kalktı, kural kalmadı.** Alt/üst 2,5: Brier 0,4656, marj %7,14, sapan bant **0/4**. Asya handikabı: ortalama getiri 0,4833, marj %7,38, sapan bant **0/4** — Brier **tanım gereği yok** (çizgilerin %53'ü çeyrek, sonuç kesirli). Handikap bantları **çizgiye** göre: olasılığa göre dilimlendiğinde 539 maçın 531'i tek banda düşüyor, çünkü pazarın amacı olasılığı %50'ye çivilemek |
+| **Yığınlama (§3.32)** | 31.103 maç · kat dışı 31.103 | **Serinin ilk negatif nokta tahmini** ama geçmedi: −0,000137 [−0,000402, +0,000148]. Ağırlıklar sebebini söylüyor — piyasa +0,5307, kademe +0,3242, agac +0,2347 (**üçü de piyasa çıpalı**, toplamları 1,09) ve piyasadan bağımsız tek taban Dixon-Coles **−0,0693**. Yeni bilgi değil, aynı bilginin farklı paketlenmesi |
 
 **Okuma.** Aşırı uyum modelin kapasitesinden değil örneklem küçüklüğünden geliyordu; büyük
 korpus onu kaldırdı. Ama kalan etki 0,0005–0,0015 Brier — 31 binde anlamlı, 540'ta değil ve
@@ -3035,7 +3108,7 @@ python -m spor_toto.disari                 # A3: piyasa dışı özellikler
 python -m spor_toto.tahmin                 # ÜRÜN: yaklaşan maçlara olasılık
 
 # Denetim
-pytest -q                                  # 1.330 test (82'si bu katman, 294'ü tahmin)
+pytest -q                                  # 1.340 test (82'si bu katman, 294'ü tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out

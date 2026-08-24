@@ -64,6 +64,7 @@ from typing import Any
 import numpy as np
 
 from .history import SYMBOLS
+from .predict import Girdi, Tahminci
 
 #: Zaman sönümü — bir maçın ağırlığı `exp(−XI · geçen_gün)`.
 #: Dixon & Coles yarı ömrü ~1,5 yıl olan bir sönüm kullanır; futbol
@@ -406,3 +407,37 @@ def dc_tablosu(satirlar: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
             gun.append(gunler[i])
 
     return out
+
+
+class DcTahminci(Tahminci):
+    """Dixon-Coles'u tek başına bir tahminci olarak sunar.
+
+    Güçleri **yeniden uydurmaz**: `egitim._zenginlestirilmis_korpus` zaten
+    tur tur uydurup `dc_*` alanlarını haftaya yazıyor ve o hesap sızıntıya
+    karşı doğru sırada yapılıyor (`dc_tablosu`). Burada yeniden uydurmak
+    hem pahalı olurdu hem de **daha kötü**: `egit` çağrısı sezon dışarıda
+    bırakmalı koşumda gelecek sezonları da görür, oysa `dc_tablosu`
+    yalnızca geçmişi görüyor.
+
+    Bu yüzden `egit` bilerek no-op'tur ve bu bir eksiklik değil, ölçümün
+    doğru tarafında durmaktır.
+
+    Kupon haftalarında `dc_var` kapalıdır (korpus dışı takımlar için güç
+    yok) ve düzgün dağılım döner.
+    """
+
+    ad = "dixon_coles"
+    aciklama = "Gollerden hucum/savunma gucu; piyasadan bagimsiz gorus"
+
+    def tahmin(self, hafta: Girdi) -> list[dict[str, float]]:
+        esit = {s: 1.0 / len(SYMBOLS) for s in SYMBOLS}
+        ozellikler = hafta.get("ozellikler") or []
+        n = len(hafta.get("results") or "") or len(ozellikler)
+        out: list[dict[str, float]] = []
+        for i in range(n):
+            o = ozellikler[i] if i < len(ozellikler) else {}
+            if o.get("dc_var"):
+                out.append({s: float(o[f"dc_{s}"]) for s in SYMBOLS})
+            else:
+                out.append(dict(esit))
+        return out
