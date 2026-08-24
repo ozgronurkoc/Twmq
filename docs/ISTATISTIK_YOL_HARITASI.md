@@ -108,6 +108,7 @@ spor_toto/evaluate.py  ◄── spor_toto/predict.py     (sözleşme + 3 refera
 | Tahmin | `backend/spor_toto/cizgi.py` | — | Kapanış çizgisi verimliliği (A1): açılış tahmincisi, hareket ölçümü |
 | Tahmin | `backend/spor_toto/bahisci.py` | — | Bahisçi anlaşmazlığı (A2): tekil bahisçiler, ayrışma ölçümü |
 | Tahmin | `backend/spor_toto/disari.py` | — | Piyasa dışı türetilebilir özellikler (A3): artık taraması, kör nokta |
+| Ortak | `backend/spor_toto/ortak.py` | — | Paylaşılan hesapların tek kaynağı: Wilson, Brier, **Brier'in Murphy ayrışımı**, karışıklık matrisi, Poisson-binom, bantlama |
 | **Ürün** | `backend/spor_toto/tahmin.py` | — | **Tahmin ürünü (C2)**: yaklaşan maça olasılık + ölçülmüş isabet |
 | Üretim | `backend/scripts/build_fixtures.py` | — | Yaklaşan maçlar ve oranları (football-data `fixtures.csv`) |
 | UI | `frontend/app/tahmin/page.tsx` | — | Tahmin sayfası |
@@ -1350,6 +1351,124 @@ haftalık koşuyor; bu iş, sonucu bir sezon sonra alınacak olsa bile
     python scripts/iddaa_hazirlik.py --guc      # kac hafta gerekir
     python scripts/iddaa_hazirlik.py --bayi-web # odd vs wodd
 
+### 3.23 Brier'in ayrışımı (AlphaPy incelemesinin çıktısı) — **ölçüldü**
+
+Brier bugüne kadar **tek bir sayı** olarak raporlandı ve o sayı iki ayrı
+kusuru aynı torbaya koyuyordu:
+
+* olasılığın **yanlış ayarlı** olması — piyasa %30 diyor, gerçek %35;
+  yeniden kalibrasyonla geri alınabilir;
+* olasılığın **ayırt edememesi** — her maça benzer sayı veriyor; geri
+  alınamaz, yeni bilgi ister.
+
+T2, T3 ve A5'in tamamı birinci kusurun üstünde çalıştı ve hiçbiri geçmedi.
+Ama *neden* geçmediği ölçülmemişti: kademe mi yetersizdi, yoksa alınacak
+yol mu kalmamıştı? Murphy (1973) ayrışımı bu ikisini ayırır.
+
+`ortak.brier_ayrisimi` sembol başına dört terim veriyor:
+
+    BS_s = REL_s − RES_s + UNC_s + ICI_s
+
+    REL_s = Σ_k (n_k/N)(p̄_k − ō_k)²             güvenilirlik  ↓ iyi
+    RES_s = Σ_k (n_k/N)(ō_k − ō_s)²             çözünürlük    ↑ iyi
+    UNC_s = ō_s(1 − ō_s)                         belirsizlik   indirgenemez
+    ICI_s = Σ_k (n_k/N)[Var_k(p) − 2Cov_k(p,o)]  bant içi artık
+
+`Σ_s BS_s` tam olarak `ortak.brier`in maç ortalamasıdır — ayrışım projenin
+**kendi ölçeğinde** kapanır, yeni bir ölçek uydurulmadı.
+
+#### Ölçülen — 31.103 maç · 183 hafta · sezon dışarıda bırakmalı · `shin`
+
+| tahminci · sembol | Brier | güvenilirlik | çözünürlük | belirsizlik | bant içi | taban |
+|---|---:|---:|---:|---:|---:|---:|
+| **piyasa** · 1 | 0,2163 | 0,00012 | **0,02922** | 0,24560 | −0,00022 | 0,434 |
+| **piyasa** · 0 | 0,1901 | 0,00008 | **0,00257** | 0,19284 | −0,00020 | 0,261 |
+| **piyasa** · 2 | 0,1872 | 0,00022 | **0,02478** | 0,21215 | −0,00036 | 0,305 |
+| **piyasa** · TOPLAM | **0,5936** | **0,00042** | **0,05657** | 0,65058 | −0,00079 | — |
+| izotonik · TOPLAM | 0,5936 | 0,00022 | 0,05660 | 0,65058 | −0,00056 | — |
+
+Sapma payı 0,00021 (aşağıda). Özdeşlik artığı her satırda `0,0e+00`.
+
+#### Birinci okuma — kalibrasyon ekseninin tavanı bir sayıdır: **0,00042**
+
+`REL`, *herhangi bir* yeniden kalibrasyon basamağının kazanabileceğinin
+**üst sınırıdır**. Piyasa için 0,00042.
+
+T2/T3'te ölçülen etkiler 0,0005–0,0015 aralığındaydı; yani **bu tavanın
+üstünde.** O basamakların geçmemesi model kapasitesinden değil,
+**kalibrasyon tarafında alınacak yolun kalmamış olmasındanmış.** §5.1
+*"yön doğru, miktar yetersiz"* diyordu — ayrışım şimdi *niçin* yetersiz
+olduğunu söylüyor.
+
+Aynı koşum bunu doğrudan gösteriyor: `izotonik` `REL`i **yarıya indiriyor**
+(0,00042 → 0,00022) ama toplam Brier 0,5936'da **kımıldamıyor** —
+kazandığını bant içi terimde geri veriyor (−0,00079 → −0,00056). A5'in
+*"`shin` üzerinde izotonik hiçbir şey eklemiyor"* bulgusunun mekanizması
+budur.
+
+#### İkinci okuma — beraberlik: eksik kalibre değil, **görünmez**
+
+Piyasanın çözünürlüğü sembole göre on kat ayrışıyor:
+
+    1 → 0,02922      2 → 0,02478      0 → 0,00257
+
+Beraberlikte piyasa maçları birbirinden neredeyse **hiç ayırt edemiyor**.
+Karışıklık paneli aynı şeyi karar tarafından söylüyor:
+
+| | isabet | dengeli isabet | duyarlılık 1 | duyarlılık 0 | duyarlılık 2 |
+|---|---:|---:|---:|---:|---:|
+| korpus (31.103) | 0,511 | 0,443 | 0,819 | **0,003** | 0,508 |
+| kupon (540) | 0,556 | 0,487 | — | **0,000** | — |
+
+**Piyasanın argmax'ı hiçbir maça beraberlik demiyor.** Dış çalışmanın
+merkezi negatif bulgusuydu (`DIS_INCELEME.md` §5) ve bizim tahmincimiz
+için hiç ölçülmemişti.
+
+Bu, Ö3'ün sonucunu yeniden okutuyor. Ö3 beraberliğe özel bir **kalibrasyon**
+düzeltmesi denedi ve şekil gerçek çıktı ama büyüklük yoktu. Ayrışım sebebini
+veriyor: beraberliğin sorunu `REL` (0,00008 — üç sembolün en küçüğü) değil
+`RES`. **Kalibre edilecek bir şey yoktu; eksik olan ayırt etme gücü.**
+
+#### `sapma_payi` — sayıyı okumadan önce bakılacak alan
+
+`REL` ve `RES` sonlu örneklemde **yukarı yanlıdır**: bir bandın gözlenen
+oranı gürültü taşır ve `(p̄_k − ō_k)²` o gürültünün karesini de toplar.
+Büyüklüğü tahmin edilebilir ve `sapma_payi` alanı olarak yan yana basılır:
+
+| kesit | REL | sapma payı | okunur mu |
+|---|---:|---:|---|
+| korpus · 31.103 maç | 0,00042 | 0,00021 | **evet** — tahmin payın iki katı |
+| kupon · 540 maç | 0,00907 | **0,01085** | **hayır** — gürültü tabanı tahminin üstünde |
+
+Yani kupon setinde `REL` **okunamaz**; yukarıdaki bütün okuma korpus
+kesitine aittir. Kesit büyüklüğü burada bir ayrıntı değil **ön koşuldur**,
+ve sayı bunu kendi yanında söylüyor. Yanlılık `RES`i de yaklaşık aynı
+miktarda şişirdiği için farkta büyük ölçüde sadeleşir; `RES − REL` tek tek
+terimlerden dayanıklıdır.
+
+#### Ne yapıldı, ne yapılmadı
+
+**Bu yeni bir tahminci değildir.** Hiçbir tahmin değişmedi, hiçbir sayı
+arayüzde farklılaşmadı; değişen şey **cetvel**. A4'ün durma kuralına
+girmez: aynı veriyle yeni bir model denenmedi, var olan tahminci daha ince
+ölçüldü.
+
+Bekçiler:
+
+* `tests/test_ortak.py` (yeni, 18 test) — özdeşliğin **tam** kapanması
+  (1e-12), düzgün tahminci için kapalı form, ve terimlerin **yönü**:
+  `REL` ile `RES` yer değiştirseydi özdeşlik yine kapanırdı ama okuma
+  tersine dönerdi;
+* `health.tahmin_referanslari` — aynı özdeşliği **canlı veride** koşuyor ve
+  çözünürlük sıralamasını denetliyor: `piyasa > sezon_sabiti > duzgun = 0`.
+  Bu, Brier sıralamasından daha keskindir; Brier belirsizlik terimini de
+  taşır, çözünürlük yalnızca "ayırt edebiliyor mu" der.
+
+    python -m spor_toto.kalibrasyon --ayrisim
+    python -m spor_toto.evaluate
+
+Kaynak ve gerekçe: [`DIS_INCELEME_ALPHAPY.md`](DIS_INCELEME_ALPHAPY.md) §5.
+
 ## 4. Sayfada bugün ne var
 
 **`/istatistik`** — sezon dağılımı (en sık sonuç + pay çubuğu) · 5 sayı kutusu (sembol
@@ -1471,6 +1590,7 @@ ve karşılıkları: kupon seti 0,5747 → **0,5740**, korpus 0,5940 → **0,593
 | **Handikap + alt/üst (A6)** | 31.101 maç · 183 hafta | Türetilmiş 1X2 **geçmedi**: −0,000063 [−0,000287, +0,000155]; 50/50 karışım da −0,000107 [−0,000223, +0,0000038]. Üç pazar aynı görüşün üç yüzü |
 | **Beraberlik düzeltmesi (Ö3)** | 31.103 maç · 183 hafta | Şekil gerçek (`b` dört katlamada da negatif), büyüklük yok: `bant − sabit` −0,000057 [−0,000137, +0,000021], **0/10 tohum**. Kuponda 30/540 işaret değişiyor, `P(k≤2)` her plan kendi cetveli altında ~0,05 puan kazanıyor — bilgisizliğin imzası |
 | **İddaa ekseni (Ö4)** | 469 bülten maçı · 1 kupon haftası | **Ölçülmedi, kural yazıldı.** Marj football-data %7,26 ↔ iddaa %16,93 (bayi) / %21,32 (web). Kalibrasyon için **45 kupon haftası** gerekiyor (ölçülen sd 0,00358, aranan etki 0,0015). Bugün ölçülebilen tek parça: bayi–web arındırmadan sonra ort. **0,53 puan** ayrışıyor — marj ayrı, görüş aynı |
+| **Brier ayrışımı (§3.23)** | 31.103 maç · 183 hafta | Kalibrasyon ekseninin tavanı **ölçüldü**: piyasanın toplam güvenilirlik borcu **0,00042** (sapma payı 0,00021), çözünürlüğü 0,05657. T2/T3'ün 0,0005–0,0015'lik etkileri bu tavanın **üstünde** — geçmemeleri kapasiteden değil, alınacak yolun kalmamasından. Beraberlik çözünürlüğü 0,00257 (1 → 0,02922, 2 → 0,02478) ve duyarlılığı **0,003**: argmax neredeyse hiç beraberlik demiyor |
 
 **Okuma.** Aşırı uyum modelin kapasitesinden değil örneklem küçüklüğünden geliyordu; büyük
 korpus onu kaldırdı. Ama kalan etki 0,0005–0,0015 Brier — 31 binde anlamlı, 540'ta değil ve
