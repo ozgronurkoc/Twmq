@@ -33,7 +33,12 @@ from typing import Any
 
 from .backtest import hafta_girdileri
 from .ortak import brier as _ortak_brier
-from .ortak import brier_ayrisimi, karisiklik_matrisi
+from .ortak import (
+    brier_ayrisimi,
+    karisiklik_matrisi,
+    siralama_olculeri,
+    wilson,
+)
 from .predict import REFERANS_AD, Girdi, Olasilik, Tahminci, referans_fabrikalar
 
 #: Log kaybında sıfır olasılığa sonsuz ceza vermemek için kırpma tabanı.
@@ -186,6 +191,57 @@ def _panel(kayitlar: Sequence[dict[str, Any]]) -> dict[str, Any]:
     return {
         "ayrisim": _yuvarla(brier_ayrisimi(tahminler, kodlar)),
         "karisiklik": karisiklik_matrisi(tahminler, kodlar),
+        "siralama": _siralama(kayitlar),
+    }
+
+
+def _siralama(kayitlar: Sequence[dict[str, Any]]) -> dict[str, Any]:
+    """Hafta ici siralama olculerinin haftalar uzerinden toplanmis hali.
+
+    Ayrisim ve karisiklik butun kesit uzerinde havuzlanir; siralama
+    **havuzlanamaz**. "Bu haftanin en emin maci" haftanin kendi icinde
+    tanimlidir; 31 bin maci tek listeye dizip ilk 5'ine bakmak bambaska bir
+    soru olurdu (ve cevabi yalnizca "en kisa oranli 5 mac" olurdu).
+
+    NDCG hafta ortalamasidir ve **isabetsiz haftalar disarida kalir**: o
+    haftalarda ideal kazanc sifirdir ve oran tanimsizdir. Kac haftanin
+    girdigi `ndcg_hafta` alaninda yazar — pay bilinmeden ortalama okunmaz.
+
+    `isabet_k` ise havuzlanir: her hafta k mac katkı verir ve haftalar esit
+    agirliklidir, cunku hepsinde ayni k alinir.
+    """
+    ndcgler: list[float] = []
+    toplam: dict[int, list[int]] = {}
+    taban_dogru = taban_n = 0
+    for kayit in kayitlar:
+        o = siralama_olculeri(kayit.get("_tahminler") or [],
+                              kayit.get("_kodlar") or [])
+        if o["n"] == 0:
+            continue
+        if o["ndcg"] is not None:
+            ndcgler.append(o["ndcg"])
+        for k, blok in o["isabet_k"].items():
+            pay = toplam.setdefault(k, [0, 0])
+            pay[0] += blok["dogru"]
+            pay[1] += blok["n"]
+        taban_dogru += round(o["taban_isabet"] * o["n"])
+        taban_n += o["n"]
+
+    def _oran(dogru: int, n: int) -> dict[str, Any]:
+        """Oran + n + Wilson %95 — projenin her yuzde icin kurali.
+
+        `isabet_1` 36 haftada 36 gozlemdir; aralik olmadan okunursa
+        `isabet_3` ile arasindaki fark gercek bir fark sanilir.
+        """
+        alt, ust = wilson(dogru, n)
+        return {"oran": round(dogru / n, 4) if n else None, "dogru": dogru,
+                "n": n, "ga_alt": round(alt, 4), "ga_ust": round(ust, 4)}
+
+    return {
+        "ndcg": round(sum(ndcgler) / len(ndcgler), 4) if ndcgler else None,
+        "ndcg_hafta": len(ndcgler),
+        "isabet_k": {str(k): _oran(d, n) for k, (d, n) in sorted(toplam.items())},
+        "taban_isabet": _oran(taban_dogru, taban_n),
     }
 
 

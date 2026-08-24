@@ -28,6 +28,7 @@ from spor_toto.ortak import (
     brier,
     brier_ayrisimi,
     karisiklik_matrisi,
+    siralama_olculeri,
     wilson,
 )
 
@@ -265,3 +266,98 @@ def test_wilson_araligi_sinirlarda_kalir():
     for basari, n in ((0, 30), (30, 30), (1, 1), (0, 0)):
         alt, ust = wilson(basari, n)
         assert 0.0 <= alt <= ust <= 1.0
+
+
+# ─── hafta içi sıralama ───────────────────────────────────────────────────
+
+def test_siralama_kusursuz_tahmincide_ndcg_bir():
+    """Her maçı bilen tahminci: bütün ilgililer listede zaten, NDCG = 1."""
+    _, kodlar = _kesit(n=15)
+    tahminler = [{s: (0.9 if s == k else 0.05) for s in SEMBOLLER} for k in kodlar]
+    o = siralama_olculeri(tahminler, kodlar)
+    assert o["ndcg"] == pytest.approx(1.0)
+    assert o["taban_isabet"] == pytest.approx(1.0)
+    for blok in o["isabet_k"].values():
+        assert blok["dogru"] == blok["n"]
+
+
+def test_siralama_isabetsiz_haftada_ndcg_tanimsiz():
+    """Hiç isabet yoksa ideal kazanç sıfırdır ve oran tanımsız — None döner.
+
+    Sıfır dönmek yanlış olurdu: "en kötü sıralama" ile "sıralanacak bir şey
+    yok" aynı şey değildir ve ortalamaya sıfır olarak girerse ortalama
+    aşağı çekilir.
+    """
+    kodlar = ["1"] * 10
+    tahminler = [{"1": 0.1, "0": 0.6, "2": 0.3} for _ in kodlar]
+    o = siralama_olculeri(tahminler, kodlar)
+    assert o["ndcg"] is None
+    assert o["taban_isabet"] == 0.0
+
+
+def test_siralama_guveni_dogru_yerde_odullendirir():
+    """İsabetli maça YÜKSEK güven veren, düşük güven verenden iyi olmalı.
+
+    İki tahminci aynı isabeti verir (aynı argmax'lar) ama biri isabetlilere
+    yüksek güven yazar. Brier ikisini ayırt edebilir ya da edemez; NDCG'nin
+    ayırt etmesi ZORUNLUDUR — ölçtüğü şey tam olarak budur.
+    """
+    # AYNI olasiliklar; dordunde de argmax "1", guven azalan sirada.
+    tahminler = [
+        {"1": 0.80, "0": 0.10, "2": 0.10},
+        {"1": 0.70, "0": 0.20, "2": 0.10},
+        {"1": 0.40, "0": 0.35, "2": 0.25},
+        {"1": 0.38, "0": 0.37, "2": 0.25},
+    ]
+    # Yalnizca SONUCLAR farkli: iyi'de emin oldugu maclar tutuyor,
+    # kotu'de tam tersi. Taban isabet ikisinde de 2/4.
+    iyi = ["1", "1", "0", "0"]
+    kotu = ["0", "0", "1", "1"]
+
+    a = siralama_olculeri(tahminler, iyi)
+    b = siralama_olculeri(tahminler, kotu)
+    assert a["taban_isabet"] == pytest.approx(b["taban_isabet"])
+    assert a["ndcg"] == pytest.approx(1.0)
+    assert a["ndcg"] > b["ndcg"]
+    # Ve en emin macin isabeti dogrudan ayrisiyor.
+    assert a["isabet_k"][1]["dogru"] == 1
+    assert b["isabet_k"][1]["dogru"] == 0
+
+
+def test_siralama_en_emin_mac_ilk_sirada():
+    """`isabet_k[1]` en yüksek güvenli maçın isabetini okumalı, ilk maçınkini değil."""
+    kodlar = ["2", "1"]
+    tahminler = [
+        {"1": 0.50, "0": 0.30, "2": 0.20},   # argmax "1", yanlis, guven 0.50
+        {"1": 0.90, "0": 0.05, "2": 0.05},   # argmax "1", DOGRU, guven 0.90
+    ]
+    o = siralama_olculeri(tahminler, kodlar)
+    assert o["isabet_k"][1] == {"dogru": 1, "n": 1}
+
+
+def test_siralama_k_mac_sayisini_asamaz():
+    _, kodlar = _kesit(n=3)
+    tahminler = [dict.fromkeys(SEMBOLLER, 1 / 3) for _ in kodlar]
+    o = siralama_olculeri(tahminler, kodlar, k_listesi=(1, 5, 50))
+    for k, blok in o["isabet_k"].items():
+        assert blok["n"] == min(k, 3)
+
+
+def test_siralama_bos_girdiyle_patlamaz():
+    o = siralama_olculeri([], [])
+    assert o["n"] == 0 and o["ndcg"] is None and o["isabet_k"] == {}
+
+
+def test_siralama_bilgisiz_tahmincide_taban_uzerinde_degil():
+    """Her maça aynı olasılığı veren tahmincinin sıralaması bilgi taşımaz.
+
+    `max(p)` sabit olduğu için sıra girdinin kendi sırasıdır; `isabet_1`
+    tabandan sistematik olarak yüksek çıkmamalıdır. Çıkarsa ölçü sıralamayı
+    değil girdi sırasını ödüllendiriyordur.
+    """
+    _, kodlar = _kesit(n=600)
+    esit = [dict.fromkeys(SEMBOLLER, 1 / 3) for _ in kodlar]
+    o = siralama_olculeri(esit, kodlar, k_listesi=(200,))
+    blok = o["isabet_k"][200]
+    oran = blok["dogru"] / blok["n"]
+    assert abs(oran - o["taban_isabet"]) < 0.08

@@ -40,6 +40,7 @@ __all__ = [
     "kacak_dagilimi",
     "karisiklik_matrisi",
     "normalize_olasilik",
+    "siralama_olculeri",
     "wilson",
 ]
 
@@ -339,6 +340,73 @@ def karisiklik_matrisi(tahminler: Sequence[dict[str, float]],
         "kesinlik": kesinlik,
         "dengeli_isabet": (sum(duyarlilik[s] for s in gecerli) / len(gecerli)
                            if gecerli else 0.0),
+    }
+
+
+#: Hafta içi sıralamanın ölçüleceği kesme noktaları. 1 (tek banko), 3 ve 5
+#: — kuponda gerçekten kurulan banko sayısı aralığı. Ölçüm sonucuna
+#: BAKILMADAN seçildi.
+SIRALAMA_K: Sequence[int] = (1, 3, 5)
+
+
+def siralama_olculeri(tahminler: Sequence[dict[str, float]],
+                      kodlar: Sequence[str],
+                      k_listesi: Sequence[int] = SIRALAMA_K) -> dict[str, Any]:
+    """Hafta **içinde** güven sıralaması — Brier'in göremediği yetenek.
+
+    Brier ve log kaybı her maçı tek tek cezalandırır; ikisi de bir haftanın
+    15 maçını **birbirine göre** sıralamayı ölçmez. Oysa kuponun sorduğu şey
+    tam olarak budur: *"bu 15 maçın hangilerine banko koyayım?"*
+
+    İki tahminci aynı Brier'i verip farklı sıralayabilir. Sıralaması iyi olan
+    `secim.en_iyi_secim`e daha kullanışlı bir girdi verir — çünkü `secim`
+    bütçeyi en güvenilir maçlara harcar ve o "en güvenilir" listesi doğru
+    sıralanmamışsa bütçe yanlış yere gider.
+
+    ─── Ölçüler ──────────────────────────────────────────────────────────
+
+    Maçlar `max(p)` (favoriye verilen güven) azalan sırada dizilir. Bir maç
+    **isabetli** sayılır: en olası sembol gerçekleşmişse.
+
+    `ndcg`   Normalize edilmiş indirimli kazanç. İsabetli maçlar listenin
+             başına ne kadar toplanmışsa 1'e o kadar yakın. Haftada hiç
+             isabet yoksa tanımsızdır ve o hafta ortalamaya **girmez**
+             (`ndcg_hafta` kaç haftanın girdiğini söyler).
+    `isabet_k` En güvenilen `k` maçın isabet oranı. `k=1` "haftanın en emin
+             maçı ne sıklıkta tutuyor" demektir — bankonun doğrudan karşılığı.
+
+    `taban_isabet` bütün maçların isabet oranıdır ve `isabet_k`'nin yanında
+    durması şart: `isabet_1` tabandan yüksek değilse tahminci **güvenini
+    boşuna dağıtıyor** demektir — sıralama bilgi taşımıyordur.
+    """
+    n = min(len(tahminler), len(kodlar))
+    if n == 0:
+        return {"n": 0, "ndcg": None, "isabet_k": {}, "taban_isabet": 0.0}
+
+    kayit: list[tuple[float, int]] = []
+    for i in range(n):
+        p = tahminler[i]
+        secim = max(SEMBOLLER, key=lambda s: float(p.get(s, 0.0)))
+        kayit.append((float(p.get(secim, 0.0)), 1 if kodlar[i] == secim else 0))
+    kayit.sort(key=lambda x: -x[0])
+    ilgi = [r for _, r in kayit]
+
+    def _dcg(diz: Sequence[int]) -> float:
+        return sum(r / math.log2(i + 2) for i, r in enumerate(diz))
+
+    ideal = _dcg(sorted(ilgi, reverse=True))
+    ndcg = (_dcg(ilgi) / ideal) if ideal > 0 else None
+
+    isabet_k: dict[int, dict[str, int]] = {}
+    for k in k_listesi:
+        kk = min(k, n)
+        isabet_k[k] = {"dogru": sum(ilgi[:kk]), "n": kk}
+
+    return {
+        "n": n,
+        "ndcg": ndcg,
+        "isabet_k": isabet_k,
+        "taban_isabet": sum(ilgi) / n,
     }
 
 

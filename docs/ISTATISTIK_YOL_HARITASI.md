@@ -130,7 +130,7 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/app/super-toto/page.tsx` · `components/super-toto/haftalar.tsx` · `lib/super-toto.ts` | Sezonun hafta şeridi; `?hafta=N` adreste durur |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **1.141 test**; **82'si** istatistik katmanına (`history` `odds` `backtest`
+paketi toplam **1.148 test**; **82'si** istatistik katmanına (`history` `odds` `backtest`
 `api_stats` `api_backtest` `snapshot_iddaa`), **294'ü** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer`). Dosya adlarıyla sayılıdır ki tablo elle bakım gerektirmesin —
@@ -1532,6 +1532,78 @@ yolun **daha çok veriyle de alınamayacağını** ölçüyor.
     python -m spor_toto.evaluate --egri --korpus
     python -m spor_toto.evaluate --egri            # kupon setinde
 
+### 3.25 Hafta içi sıralama — Brier'in göremediği yetenek, **ölçüldü**
+
+Brier ve log kaybı her maçı **tek tek** cezalandırır. İkisi de bir haftanın
+maçlarını **birbirine göre** sıralamayı ölçmez — oysa kuponun sorduğu şey
+tam olarak budur: *"bu 15 maçın hangilerine banko koyayım?"*
+
+İki tahminci aynı Brier'i verip farklı sıralayabilir. Sıralaması iyi olan
+`secim.en_iyi_secim`e daha kullanışlı bir girdi verir, çünkü `secim` bütçeyi
+en güvenilir maçlara harcar ve o liste yanlış sıralanmışsa bütçe yanlış yere
+gider. `ortak.siralama_olculeri` bu yeteneği ayrı ölçüyor.
+
+Maçlar `max(p)` azalan sırada dizilir; bir maç **isabetli** sayılır en olası
+sembol gerçekleşmişse. `ndcg` isabetlilerin listenin başına ne kadar
+toplandığını, `isabet_k` en güvenilen `k` maçın isabetini söyler.
+
+#### Ölçülen — korpus · 31.103 maç · 183 sözde-hafta (ort. 170 maç/hafta)
+
+| | NDCG | taban | en emin 1 | en emin 3 | en emin 5 |
+|---|---:|---:|---:|---:|---:|
+| **piyasa** | **0,8971** | 0,5109 | **0,8634** | **0,8342** | **0,8230** |
+| | | [0,5054, 0,5165] | [0,8061, 0,9057] | [0,8008, 0,8630] | [0,7969, 0,8463] |
+| | | n=31.103 | n=183 | n=549 | n=915 |
+| sezon_sabiti · duzgun | 0,7896 | 0,4337 | 0,4536 | 0,4426 | 0,4295 |
+
+#### Ölçülen — kupon seti · 540 maç · 36 hafta (15 maç/hafta)
+
+| | NDCG | taban | en emin 1 | en emin 3 | en emin 5 |
+|---|---:|---:|---:|---:|---:|
+| **piyasa** | **0,8550** | 0,5556 | 0,6944 | **0,7407** | **0,6722** |
+| | | [0,513, 0,597] | [0,531, 0,820] | [0,651, 0,814] | [0,601, 0,737] |
+| | | n=540 | n=36 | n=108 | n=180 |
+| sezon_sabiti · duzgun | 0,7324 | 0,4407 | 0,5278 | 0,3889 | 0,4056 |
+
+> **İki tablo doğrudan karşılaştırılamaz.** Korpusta "en emin 5", 170 maçın
+> en üst **%3**'ü; kuponda 15 maçın en üst **üçte biri**. Aynı `k`, çok
+> farklı seçicilik. Her tablo kendi kesitinde okunur.
+>
+> Kupon setinde `isabet_1` (%69,4) ile `isabet_3` (%74,1) arasındaki
+> tersine dönüş **gürültüdür** — aralıklar fazlasıyla örtüşüyor ve `k=1`
+> yalnızca 36 gözlem taşıyor. Wilson aralıkları tam bu yüzden yüzdenin
+> yanında duruyor.
+
+#### Okuma — **piyasanın sıralaması, Brier'inin ima ettiğinden çok daha güçlü**
+
+Brier tarafından bakınca piyasa zayıf görünür: 0,5936, eşit dağıtımın
+karşılığı 0,6667. §3.23 bunu ayrıştırdı — çözünürlük 0,05657, belirsizliğin
+yalnızca **%8,7**'si.
+
+Sıralama tarafından bakınca aynı piyasa çok farklı görünüyor: korpusta taban
+isabet %51,1 iken en emin 5 maçın isabeti **%82,3**, ve aralıklar birbirine
+yaklaşmıyor bile. **Piyasa hangi maçlarda haklı olduğunu biliyor** — mutlak
+olasılıkları belirsiz olsa da.
+
+Bu, B0'ın (§3.19) neden bu kadar kazandığını açıklıyor. Karar katmanı eşik
+kuralından hedef kuralına geçince `P(k ≤ 2)` **+6,02 puan** kazanmıştı ve
+tahmin tarafında aynı kazanç için ~0,10 Brier gerekirdi. Sebebi şu:
+`en_iyi_secim` Brier'i değil **sıralamayı** kullanıyor, ve sıralama zaten
+güçlüydü. Ölçülmemişti, o kadar.
+
+**Pratik sonucu:** bir aday tahminci artık iki eksende değerlendirilir.
+Brier'i piyasayı geçmeyen ama sıralaması geçen bir tahminci kupon için yine
+de değerlidir — ve bu ayrım bugüne kadar yapılamıyordu.
+
+`sezon_sabiti` ile `duzgun`un birebir aynı çıkması sağlamadır: ikisi de her
+maça aynı olasılığı verir, dolayısıyla `max(p)` sabittir ve sıralama
+girdinin kendi sırasıdır. O satır **bilgisiz sıralamanın zeminidir**
+(NDCG 0,79) — bir tahminci onun altına inemiyorsa sıralama bilgisi taşımıyor
+demektir.
+
+    python -m spor_toto.evaluate --korpus
+    python -m spor_toto.evaluate
+
 ## 4. Sayfada bugün ne var
 
 **`/istatistik`** — sezon dağılımı (en sık sonuç + pay çubuğu) · 5 sayı kutusu (sembol
@@ -1655,6 +1727,7 @@ ve karşılıkları: kupon seti 0,5747 → **0,5740**, korpus 0,5940 → **0,593
 | **İddaa ekseni (Ö4)** | 469 bülten maçı · 1 kupon haftası | **Ölçülmedi, kural yazıldı.** Marj football-data %7,26 ↔ iddaa %16,93 (bayi) / %21,32 (web). Kalibrasyon için **45 kupon haftası** gerekiyor (ölçülen sd 0,00358, aranan etki 0,0015). Bugün ölçülebilen tek parça: bayi–web arındırmadan sonra ort. **0,53 puan** ayrışıyor — marj ayrı, görüş aynı |
 | **Brier ayrışımı (§3.23)** | 31.103 maç · 183 hafta | Kalibrasyon ekseninin tavanı **ölçüldü**: piyasanın toplam güvenilirlik borcu **0,00042** (sapma payı 0,00021), çözünürlüğü 0,05657. T2/T3'ün 0,0005–0,0015'lik etkileri bu tavanın **üstünde** — geçmemeleri kapasiteden değil, alınacak yolun kalmamasından. Beraberlik çözünürlüğü 0,00257 (1 → 0,02922, 2 → 0,02478) ve duyarlılığı **0,003**: argmax neredeyse hiç beraberlik demiyor |
 | **Öğrenme eğrisi (§3.24)** | 31.103 maç · 183 hafta | **Eğri düzleşti, gap kapanmadan.** `kalibre_bant` 2.216 → 23.327 maçta 0,00348 iniyor ama **son adım 0,00006** ve 0,59373'te duruyor — `piyasa` 0,59364. Aynı türden veri toplamak bu farkı kapatmıyor; sorun satır sayısı değil sütun. `piyasa` eğrisi tam düz (sağlama) |
+| **Hafta içi sıralama (§3.25)** | 31.103 maç · 183 hafta | **Piyasanın sıralaması Brier'inin ima ettiğinden çok güçlü.** Taban isabet %51,1 iken en emin 5 maç **%82,3** [%79,7, %84,6]; NDCG 0,8971, bilgisiz zemin 0,7896. B0'ın +6,02 puanının sebebi bu — `en_iyi_secim` Brier'i değil sıralamayı kullanıyor |
 
 **Okuma.** Aşırı uyum modelin kapasitesinden değil örneklem küçüklüğünden geliyordu; büyük
 korpus onu kaldırdı. Ama kalan etki 0,0005–0,0015 Brier — 31 binde anlamlı, 540'ta değil ve
@@ -2392,7 +2465,7 @@ python -m spor_toto.disari                 # A3: piyasa dışı özellikler
 python -m spor_toto.tahmin                 # ÜRÜN: yaklaşan maçlara olasılık
 
 # Denetim
-pytest -q                                  # 1.141 test (82'si bu katman, 294'ü tahmin)
+pytest -q                                  # 1.148 test (82'si bu katman, 294'ü tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out
