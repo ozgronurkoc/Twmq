@@ -131,6 +131,9 @@ export function BacktestStats({ season }: { season: BacktestSeason }) {
  * 41 hafta uzerinde en iyi gorunen esik tanimi geregi bu sezona uyar. Karar
  * icin okunacak sayi hold-out satiridir.
  */
+/** Eşik taramasında varsayılan satır sayısı — §6.8 G1 sayfa bütçesi. */
+export const SWEEP_VARSAYILAN = 12;
+
 export function SweepTable({
   rows,
   best,
@@ -142,10 +145,25 @@ export function SweepTable({
   secili: { banko: number; uclu: number };
   onSec: (banko: number, uclu: number) => void;
 }) {
+  const [hepsi, setHepsi] = React.useState(false);
+
   if (!rows.length) {
     return <p className="text-[13px] text-muted-foreground">Tarama sonucu yok.</p>;
   }
   const enCok = Math.max(...rows.map((r) => r.hit14));
+  // Sayfa butcesi (§6.8 G1: < 3.500 px). 28 satirlik tam tarama tek basina
+  // 1.190 px — sayfanin ucte biri. `BacktestWeeks` ile ayni desen: veri
+  // kaybolmuyor, bir tik uzaga gidiyor. SECILI ve EN IYI satirlar her zaman
+  // gorunur kalir; kisaltma bir karari gizlemez.
+  const kisaltiliyor = !hepsi && rows.length > SWEEP_VARSAYILAN;
+  const gorunen = kisaltiliyor
+    ? rows.filter(
+        (r, i) =>
+          i < SWEEP_VARSAYILAN ||
+          (r.banko === secili.banko && r.uclu === secili.uclu) ||
+          (best !== null && r.banko === best.banko && r.uclu === best.uclu),
+      )
+    : rows;
 
   return (
     <div className="space-y-3">
@@ -164,7 +182,7 @@ export function SweepTable({
             </tr>
           </thead>
           <tbody className="tnum">
-            {rows.map((r) => {
+            {gorunen.map((r) => {
               const aktif = r.banko === secili.banko && r.uclu === secili.uclu;
               const enIyi = best !== null && r.banko === best.banko && r.uclu === best.uclu;
               return (
@@ -227,6 +245,23 @@ export function SweepTable({
           </tbody>
         </table>
       </div>
+      {kisaltiliyor ? (
+        <div>
+          <Button tip="outline" boyut="sm" onClick={() => setHepsi(true)}>
+            {rows.length} stratejinin tamamı
+          </Button>
+          <span className="ml-2 text-[11px] text-muted-foreground">
+            İlk {SWEEP_VARSAYILAN} satır gösteriliyor; seçili ve en iyi satır
+            her zaman listede.
+          </span>
+        </div>
+      ) : rows.length > SWEEP_VARSAYILAN ? (
+        <div>
+          <Button tip="ghost" boyut="sm" onClick={() => setHepsi(false)}>
+            İlk {SWEEP_VARSAYILAN} satıra dön
+          </Button>
+        </div>
+      ) : null}
       <p className="text-[11.5px] leading-relaxed text-muted-foreground">
         Satıra tıklayınca o eşik çifti yukarıdaki sezon özetine uygulanır. “Hafta” sütunundaki
         turuncu eksi, seçim uzayı sınırını aştığı için çözülmeyen hafta sayısıdır — o satır

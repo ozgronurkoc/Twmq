@@ -3,11 +3,10 @@
 import * as React from "react";
 import Link from "next/link";
 
-import { getBacktest, getStats } from "@/lib/api";
+import { getStats } from "@/lib/api";
 import { useIstek } from "@/lib/istek";
 import {
   SEMBOLLER,
-  type BacktestResponse,
   type Sembol,
   type StatsResponse,
 } from "@/lib/types";
@@ -24,14 +23,8 @@ import {
 import { SEMBOL_ADI, SymbolLegend } from "@/components/ui/symbol";
 import {
   BandStrips,
-  CalibrationChart,
   DistributionChart,
-  DrawProfile,
-  FavouriteBands,
-  FavouriteBreakdown,
-  LeagueSplit,
   PositionHeatmap,
-  SetCoverage,
   ShareBar,
   TransitionMatrix,
   TrendChart,
@@ -44,8 +37,8 @@ import {
   aralikUrldenOku,
   aralikUrleYaz,
 } from "@/components/istatistik/parts";
-import { BacktestStats } from "@/components/istatistik/backtest";
 import { WeeksTable } from "@/components/istatistik/weeks-table";
+import { IstatistikSekmeleri } from "@/components/istatistik/sekmeler";
 import { SYM_BG } from "@/components/istatistik/viz";
 
 const ARALIKLAR: Array<{ deger: number | null; etiket: string }> = [
@@ -71,14 +64,6 @@ export default function IstatistikPage() {
     setLast(v);
     aralikUrleYaz(v);
   }
-
-  // Geri test ayri bir istek: tarama kapali (tek strateji ~1 sn) ve
-  // basarisiz olursa sayfanin geri kalani etkilenmez — kart gorunmez.
-  const { veri: gerite, hata: geriteHatasi } = useIstek(
-    (signal) => getBacktest({ last, sweep: false }, signal),
-    [last],
-    { hazir: urlOkundu, eskiyiKoru: false },
-  );
 
   const {
     veri,
@@ -131,7 +116,12 @@ export default function IstatistikPage() {
         <p className="mt-1 max-w-3xl text-[13.5px] leading-relaxed text-muted-foreground">
           Geçmiş sezon sonuçlarının dağılımı. Bu veri bir tahmin değildir ve formül üretimine
           girmez — yalnızca kendi olasılık tahminlerini kalibre etmen için referanstır.
+          Piyasanın karnesi <strong>Oranlar</strong>, stratejinin karnesi{" "}
+          <strong>Geri test</strong> sekmesinde.
         </p>
+        <div className="mt-4">
+          <IstatistikSekmeleri last={last} />
+        </div>
         <div className="mt-3 flex flex-wrap items-center gap-2">
           {meta.season ? <Badge ton="primary">{meta.season}</Badge> : null}
           <Badge>
@@ -267,143 +257,6 @@ export default function IstatistikPage() {
             </CardBody>
           </Card>
         </div>
-
-        {/* Maç sonucu oranlari */}
-        {veri.odds ? (
-          <Card>
-            <CardHeader
-              title="Oranlar ne diyordu?"
-              hint={`Maç sonucu (1/0/2) kapanış oranları — ${veri.odds.note}. Diğer pazarlar arayüze gelmez, arşivde durur.`}
-              action={
-                <Badge>
-                  {veri.odds.with_odds}/{veri.odds.matches} maç · %{ondalik(veri.odds.coverage_pct, 1)}
-                </Badge>
-              }
-            />
-            <CardBody className="space-y-5">
-              <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-                <DeltaStat
-                  etiket="Favori tuttu"
-                  deger={`%${ondalik(veri.odds.favourite_hit_pct, 1)}`}
-                  alt={`${veri.odds.favourite_hit} / ${veri.odds.with_odds} maç`}
-                />
-                <DeltaStat
-                  etiket="Favori 1 idi"
-                  deger={sayi(veri.odds.favourite_split["1"])}
-                  alt="maçta ev sahibi favoriydi"
-                />
-                <DeltaStat
-                  etiket="Favori 2 idi"
-                  deger={sayi(veri.odds.favourite_split["2"])}
-                  alt="maçta deplasman favoriydi"
-                />
-                <DeltaStat
-                  etiket="Favori 0 idi"
-                  deger={sayi(veri.odds.favourite_split["0"])}
-                  alt="beraberlik hiçbir maçta favori olmaz"
-                />
-              </div>
-
-              <div>
-                <SectionTitle hint="Favori tuttuğunda ve tutmadığında hangi sonuç kaç maçta gerçekleşti.">
-                  Favori tuttu mu, tutmayınca ne oldu?
-                </SectionTitle>
-                <FavouriteBreakdown
-                  hit={veri.odds.outcome_when_hit}
-                  miss={veri.odds.outcome_when_miss}
-                  cross={veri.odds.cross}
-                  hitTotal={veri.odds.favourite_hit}
-                  missTotal={veri.odds.favourite_miss}
-                  underdog={veri.odds.underdog_wins}
-                />
-              </div>
-
-              <div>
-                <SectionTitle hint="Favorinin oranı düştükçe isabet artar. Banko yapmadan önce bakılacak tablo budur; “tutmadı”nın ne kadarının beraberlikten geldiği ayrı gösterilir.">
-                  Banko güvenilirliği — favori oranına göre
-                </SectionTitle>
-                <FavouriteBands bands={veri.odds.favourite_bands} />
-                <p className="mt-3 text-[11.5px] leading-relaxed text-muted-foreground">
-                  Az maç içeren bantlarda yüzdeler oynaktır; “Maç” sütununa bakmadan karar
-                  vermeyin. Aralık filtresi bu tabloyu da kapsar.
-                </p>
-              </div>
-
-              <div>
-                <SectionTitle hint="Bir maça ikinci işareti koymak neyi satın alıyor? “Oran diyor” sütunu ilk iki olasılığın toplamıdır — yani piyasanın kendi kapsama tahmini; yanındaki sütun gerçekleşeni gösterir.">
-                  Çifte kapsaması — ikinci işaret neyi kurtarıyor
-                </SectionTitle>
-                <SetCoverage rows={veri.odds.set_coverage} esik={veri.odds.low_sample_at} />
-              </div>
-
-              <div>
-                <SectionTitle hint="Favori ile ikinci sembol birbirine yakınsa beraberlik ihtimali artar. Eğilim var ama zayıf: bu bir gösterge, tahminci değil.">
-                  Beraberlik profili
-                </SectionTitle>
-                <DrawProfile rows={veri.odds.draw_profile} esik={veri.odds.low_sample_at} />
-              </div>
-
-              <div>
-                <SectionTitle hint="Kuponun yarısı Süper Lig’den geliyor ve ligler beraberlik oranında birbirinden ayrışıyor — bu fark “0” bütçesinin nereye harcanacağını değiştirir. Lig etiketi oran arşivinden gelir.">
-                  Lig kırılımı
-                </SectionTitle>
-                <LeagueSplit rows={veri.odds.leagues} esik={veri.odds.low_sample_at} />
-              </div>
-
-              <div>
-                <SectionTitle hint="Oranın verdiği olasılık, gerçekte o sıklıkta oldu mu? İki nokta ne kadar üst üsteyse oran o kadar kalibre.">
-                  Kalibrasyon
-                </SectionTitle>
-                <CalibrationChart rows={veri.odds.calibration} />
-              </div>
-
-              <p className="text-[11.5px] leading-relaxed text-muted-foreground">
-                Ortalama bahisçi payı (marj) %{ondalik(veri.odds.avg_margin_pct, 2)}; yukarıdaki
-                olasılıklar bu pay arındırılarak hesaplandı. Kaynak: {veri.odds.books.join(", ")}
-                {" "}kapanış. Milli maç haftalarında oran yok, kapsama bu yüzden %100 değildir.
-              </p>
-            </CardBody>
-          </Card>
-        ) : null}
-
-        {/* Geri test ozeti */}
-        {gerite && gerite.season.weeks ? (
-          <Card>
-            <CardHeader
-              title="Bu strateji geçen sezon ne yapardı?"
-              hint={`${gerite.strategy.explain}. Kupon her hafta 14-garantili motorla çözülür; “tuttu” demek, üretilen kolonlardan birinin en az 14 doğru yakalaması demektir.`}
-              action={
-                <Link
-                  href="/istatistik/geri-test"
-                  className="inline-flex h-8 items-center rounded-xl border border-line-strong px-3 text-[12.5px] transition-colors hover:bg-muted"
-                >
-                  Eşik taraması →
-                </Link>
-              }
-            />
-            <CardBody className="space-y-4">
-              <BacktestStats season={gerite.season} />
-              <p className="text-[11.5px] leading-relaxed text-muted-foreground">
-                {gerite.meta.weeks_used} hafta çalıştırıldı
-                {gerite.meta.weeks_dropped.length
-                  ? `, ${gerite.meta.weeks_dropped.length} hafta oranı eksik olduğu için elendi`
-                  : ""}
-                . Bu, geçmişin kaydıdır; geleceğin garantisi değildir —{" "}
-                <Link className="text-primary hover:underline" href="/istatistik/geri-test">
-                  eşik taraması ve hold-out sağlaması
-                </Link>{" "}
-                aşırı uyumun büyüklüğünü gösterir.
-              </p>
-            </CardBody>
-          </Card>
-        ) : geriteHatasi ? (
-          /* Once bu hata `.catch(() => undefined)` ile yutuluyordu: kart
-             sessizce kayboluyor ve kullanici neden gitmis oldugunu
-             bilemiyordu. Sayfanin geri kalani hala etkilenmiyor. */
-          <Callout ton="warning" baslik="Geri test kartı gösterilemedi">
-            {geriteHatasi} — sayfanın geri kalanı bundan etkilenmez.
-          </Callout>
-        ) : null}
 
         {/* Mac sirasi */}
         <Card>

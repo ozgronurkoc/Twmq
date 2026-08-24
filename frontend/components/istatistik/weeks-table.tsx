@@ -22,6 +22,16 @@ const BASLIKLAR: Array<{ key: SiraAnahtari; etiket: string; baslik: string }> = 
 
 type BrierSatiri = OddsSummary["weekly_brier"][number];
 
+/**
+ * Varsayılan olarak gösterilen satır sayısı (§6.8 G1).
+ *
+ * Sayfa bölünürken kabul kriteri *"her sayfa < 3.500 px"*di ve 41 satırlık
+ * tam tablo tek başına o bütçenin yarısını yiyordu. Kural 2 ("her görselin
+ * tablo karşılığı vardır") **bozulmuyor**: veri kaybolmuyor, bir tık uzağa
+ * gidiyor — ve CSV zaten görünen değil **süzülen tüm** satırları veriyor.
+ */
+export const VARSAYILAN_SATIR = 12;
+
 /** CSV alanı: ayırıcı, tırnak ve satır sonu içeren değerler tırnaklanır. */
 function csvAlan(v: string | number): string {
   const s = String(v);
@@ -94,6 +104,7 @@ export function WeeksTable({
   const [arama, setArama] = React.useState("");
   const [sira, setSira] = React.useState<SiraAnahtari>("week");
   const [azalan, setAzalan] = React.useState(false);
+  const [tumu, setTumu] = React.useState(false);
 
   const brierHarita = React.useMemo(
     () => new Map((brier ?? []).map((b) => [b.week, b])),
@@ -134,6 +145,19 @@ export function WeeksTable({
     }
   }
 
+  // Arama yapiliyorsa KISALTMA YOK: kullanici zaten daralmis bir kumeye
+  // bakiyor ve "12 satir gosteriliyor" uyarisi orada yanlis okunurdu.
+  const kisaltiliyor = !tumu && !arama.trim() && satirlar.length > VARSAYILAN_SATIR;
+  // Son N hafta: siralama hafta numarasina gore ARTAN oldugunda son
+  // satirlar, azalan oldugunda ilk satirlar en yenidir. Bu yuzden dilim
+  // her zaman "listenin sonu" degil, "siralamanin bası"ndan alinir —
+  // kullanicinin sectigi sira korunur.
+  const gorunen = kisaltiliyor
+    ? sira === "week" && !azalan
+      ? satirlar.slice(-VARSAYILAN_SATIR)
+      : satirlar.slice(0, VARSAYILAN_SATIR)
+    : satirlar;
+
   const basliklar = brierVar
     ? [...BASLIKLAR, { key: "brier" as SiraAnahtari, etiket: "Brier", baslik: "Piyasanın o haftaki yanılma ölçüsü — yüksek = sürprizli hafta" }]
     : BASLIKLAR;
@@ -153,7 +177,9 @@ export function WeeksTable({
           )}
         />
         <div className="flex items-center gap-3">
-          <span className="tnum text-[11.5px] text-muted-foreground">{satirlar.length} hafta</span>
+          <span className="tnum text-[11.5px] text-muted-foreground">
+            {kisaltiliyor ? `${gorunen.length} / ${satirlar.length}` : satirlar.length} hafta
+          </span>
           <Button
             tip="outline"
             boyut="sm"
@@ -209,7 +235,7 @@ export function WeeksTable({
             </tr>
           </thead>
           <tbody className="tnum">
-            {satirlar.map((w) => {
+            {gorunen.map((w) => {
               const b = brierHarita.get(w.week);
               return (
                 <tr key={w.week} className="border-t border-line transition-colors hover:bg-muted">
@@ -286,6 +312,25 @@ export function WeeksTable({
           </tbody>
         </table>
       </div>
+
+      {kisaltiliyor ? (
+        <div className="mt-3">
+          <Button tip="outline" boyut="sm" onClick={() => setTumu(true)}>
+            {satirlar.length} haftanın tamamı
+          </Button>
+          <span className="ml-2 text-[11px] text-muted-foreground">
+            Son {VARSAYILAN_SATIR} hafta gösteriliyor; CSV her zaman tamamını
+            verir.
+          </span>
+        </div>
+      ) : null}
+      {!kisaltiliyor && tumu && satirlar.length > VARSAYILAN_SATIR ? (
+        <div className="mt-3">
+          <Button tip="ghost" boyut="sm" onClick={() => setTumu(false)}>
+            Son {VARSAYILAN_SATIR} haftaya dön
+          </Button>
+        </div>
+      ) : null}
 
       <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">
         Kalın yazılan sayılar, sezon ortalamasının 2 üstünde kapatan haftaları işaretler.

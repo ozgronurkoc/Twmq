@@ -3097,7 +3097,7 @@ kolonla 14+ hiç gelmedi" yazacak. Süslenmiş bir olasılık, süslenmemiş bir
 |---|---|---|
 | **C1** | Sentez katmanı (`insights.py`) | §6.6 G2'nin dört kuralı geçerli |
 | **C2** | **Tahmin arayüzü** | ✅ **BİTTİ** (§3.17) — `/tahmin`, `/api/tahmin` |
-| **C3** | Sayfayı soruya göre bölme | = eski **G1**. Bağımsız, her an yapılabilir |
+| **C3** | Sayfayı soruya göre bölme | ✅ **BİTTİ** (Faz 4.4) — `/istatistik` · `/istatistik/oranlar` · `/istatistik/geri-test`, ortak sekme şeridi; beş sayfanın beşi de 3.500 px bütçesinin altında (ölçüldü) |
 | **C4** | Dilim dürüstlüğü, gezinme, mobil | = eski **G3–G5** |
 
 #### C2'nin üç parçası — sırayla
@@ -3163,7 +3163,7 @@ Eski etiketler kayıp değil, yerleşti:
 | — | **A3** (§3.16) | **bitti** |
 | — | **A4** (§6.2) | **arayış kapandı; eksen açık** |
 | G2 | **C2** — tahmin arayüzü | **bitti** (§3.17) |
-| G1 | C3 | bekliyor |
+| G1 | C3 | **bitti** (§6.8 G1, Faz 4.4) |
 | G2 | C1 | koşullu |
 | G3–G5 | C4 | bekliyor |
 | S1 (korpus ayağı) | Faz A girdisi (§3.12) | bitti |
@@ -3244,6 +3244,33 @@ tamamını veriyor.
 - **Kabul kriteri:** her sayfa < 3.500 px (masaüstü, tüm sezon) · sekme geçişinde dilim korunur
   · `/istatistik` artık `/api/backtest` istemez · hiçbir görsel kaybolmaz
 - **Büyüklük:** orta
+
+> **✅ Yapıldı (Faz 4.4).** Dört kriterin dördü de **tarayıcıda ölçüldü** (Chromium,
+> 1440×900, tüm sezon):
+>
+> | sayfa | yükseklik | |
+> |---|---:|---|
+> | `/istatistik` | 3.225 px | ✅ |
+> | `/istatistik/oranlar` | 2.900 px | ✅ |
+> | `/istatistik/geri-test` | 3.018 px | ✅ |
+> | `/pazarlar` | 1.481 px | ✅ |
+> | `/takimlar` | 1.399 px | ✅ |
+>
+> Ölçüm iki gerçek kusur buldu ve ikisi de düzeltildi. **(1)** `/takimlar`
+> 22 ligi birden basıyordu: **26.287 px**, bütçenin yedi katı. Katlanabilir
+> kartlar yetmedi (3.569 px — 22 başlık tek başına 1,5 ekran); çözüm lig
+> **seçici** oldu, tek tablo basılıyor. **(2)** `/istatistik/geri-test`
+> 3.510 px'te kaldı — 28 satırlık eşik taraması tek başına 1.190 px.
+> Tarama `BacktestWeeks` ile aynı deseni aldı: ilk 12 satır + *"tamamı"*
+> düğmesi, ve **seçili ile en iyi satır her zaman listede** — kısaltma bir
+> kararı gizlemiyor.
+>
+> Öteki üç kriter de ölçüldü: `/istatistik?last=12` yalnızca
+> `/api/stats?last=12` istiyor (`/api/backtest` yok), üç sekmenin üçünde de
+> `last=12` korunuyor, ve oran bloklarının tamamı `/istatistik/oranlar`a
+> **olduğu gibi** taşındı. Dilim taşınması artık kalıcı bir bekçiye bağlı:
+> `sekmeAdresi` saf bir modüle (`lib/sekmeler.ts`) alındı ve
+> `frontend/scripts/check.mjs` onu tarayıcısız sınıyor.
 
 #### G2 — Sentez katmanı
 

@@ -501,7 +501,8 @@ Bugün `match_conflicts` tam olarak bunu yakalar. Vaka analizi:
 | Rota | İçerik |
 |------|--------|
 | `/` | **Formül** — motorun tamamı |
-| `/istatistik` | Sezon dağılımı, bantlar, oran kartı, karar destek tabloları, 41 hafta |
+| `/istatistik` | **Sezon** — dağılım, seyir, bantlar, adet, ısı haritası, geçiş, uçlar, haftalar |
+| `/istatistik/oranlar` | **Piyasa** — favori kırılımı, banko bantları, çift kapsaması, beraberlik profili, lig kırılımı, kalibrasyon |
 | `/istatistik/<hafta>` | Tek hafta detayı + "bu haftayı formüle gönder" |
 | `/pazarlar` | **1X2 dışı pazarlar** — alt/üst 2,5 · Asya handikabı, ölçülmüş kalibrasyonlarıyla |
 | `/takimlar` | **Takım gücü** — küçültülmüş; her satırda maç sayısı, küçültme oranı ve %95 aralık |
@@ -1021,7 +1022,7 @@ ayrıştırmanın doğruluğu ise arşivin tamamının dayandığı şey.
 
 ```bash
 cd frontend
-npm run check                # eslint + tsc + saf mantık ve sözleşme (51 vaka)
+npm run check                # eslint + tsc + saf mantık ve sözleşme (53 vaka)
 npm run lint                 # yalnızca eslint
 npm run build                # üretim derlemesi
 ```

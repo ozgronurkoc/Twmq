@@ -6,6 +6,7 @@ import { RefreshCw } from "lucide-react";
 import { getTakimlar } from "@/lib/api";
 import { useIstek } from "@/lib/istek";
 import type { KucultulmusOlcu, TakimSatiri } from "@/lib/types";
+import { cn } from "@/lib/utils";
 import {
   Button,
   Callout,
@@ -52,6 +53,15 @@ function OlcuHucresi({ o, basamak = 2 }: { o: KucultulmusOlcu; basamak?: number 
   );
 }
 
+/**
+ * Bir ligin tablosu.
+ *
+ * İlk sürüm 22 ligin tamamını açık basıyordu ve ölçüldü: **26.287 px**.
+ * §6.8 G1'in kabul kriteri sayfa başına 3.500 px'tir; 604 satırlık tek akış
+ * o bütçenin yedi katıydı ve tablo *bulunabilir* olmaktan çıkıyordu.
+ * Katlanabilir kartlar da yetmedi (3.569 px — 22 başlık tek başına 1,5
+ * ekran). Çözüm: lig **seçilir**, tek tablo basılır.
+ */
 function LigTablosu({
   lig,
   takimlar,
@@ -112,6 +122,39 @@ function LigTablosu({
   );
 }
 
+/** Lig seçici — 22 lig, sarmalanan düğmeler. Seçim **istemcide**. */
+function LigSeridi({
+  ligler,
+  secili,
+  sec,
+}: {
+  ligler: { lig: string; takim_sayisi: number }[];
+  secili: string;
+  sec: (l: string) => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {ligler.map((g) => (
+        <button
+          key={g.lig}
+          type="button"
+          onClick={() => sec(g.lig)}
+          aria-pressed={g.lig === secili}
+          title={`${g.takim_sayisi} takım`}
+          className={cn(
+            "rounded-md border px-2.5 py-1 text-[12px] transition-colors",
+            g.lig === secili
+              ? "border-foreground/40 bg-muted font-medium text-foreground"
+              : "border-border text-muted-foreground hover:text-foreground",
+          )}
+        >
+          {g.lig}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 /**
  * Takım bazlı istatistik.
  *
@@ -127,20 +170,24 @@ function LigTablosu({
  * kendisi söyler**.
  */
 export default function TakimlarSayfasi() {
-  const [lig, setLig] = React.useState<string>("");
   const [sezon, setSezon] = React.useState<string>("");
+  const [secili, setSecili] = React.useState<string>("");
+  // Govde HER ZAMAN suzulmemis cekilir ve lig secimi ISTEMCIDE yapilir.
+  // Sunucu tarafi suzme (`?lig=`) API'de duruyor ama sayfa onu kullanmiyor:
+  // her tikta yeni bir istek atmak, hesabi degistirmeyen bir suzgec icin
+  // 31 bin satiri yeniden okumak demekti.
   const { veri, hata, yukleniyor, yenile } = useIstek(
-    (signal) => getTakimlar(lig || undefined, sezon || undefined, signal),
-    [lig, sezon],
+    (signal) => getTakimlar(undefined, sezon || undefined, signal),
+    [sezon],
     { varsayilanHata: "Takım verisi alınamadı" },
   );
 
-  // Lig ve sezon listeleri SUZULMEMIS govdeden gelmeli; suzulmus govdede
-  // yalnizca secili olan bulunur ve acilir menu kendini kilitler.
-  const [ligler, setLigler] = React.useState<string[]>([]);
-  React.useEffect(() => {
-    if (!lig && veri) setLigler(veri.ligler.map((g) => g.lig));
-  }, [lig, veri]);
+  const ligler = veri?.ligler ?? [];
+  // Secili lig yoksa (ilk yukleme, ya da sezon degisince kaybolduysa)
+  // ilkine dus — bos ekran gostermek yerine.
+  const etkin =
+    ligler.find((g) => g.lig === secili)?.lig ?? ligler[0]?.lig ?? "";
+  const grup = ligler.find((g) => g.lig === etkin);
 
   return (
     <div className="mx-auto w-full max-w-[1180px] space-y-6 px-4 py-6 sm:px-6">
@@ -155,19 +202,6 @@ export default function TakimlarSayfasi() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <select
-            aria-label="Lig"
-            className="h-9 rounded-md border border-border bg-background px-2 text-[13px]"
-            value={lig}
-            onChange={(e) => setLig(e.target.value)}
-          >
-            <option value="">Tüm ligler</option>
-            {ligler.map((l) => (
-              <option key={l} value={l}>
-                {l}
-              </option>
-            ))}
-          </select>
           <input
             aria-label="Sezon"
             placeholder="sezon (2425)"
@@ -197,14 +231,17 @@ export default function TakimlarSayfasi() {
         </Callout>
       ) : null}
 
-      {veri?.ligler.map((g) => (
+      {ligler.length ? (
+        <LigSeridi ligler={ligler} secili={etkin} sec={setSecili} />
+      ) : null}
+
+      {grup ? (
         <LigTablosu
-          key={g.lig}
-          lig={g.lig}
-          takimlar={g.takimlar}
-          kucultmeYapildi={g.kucultme_yapildi}
+          lig={grup.lig}
+          takimlar={grup.takimlar}
+          kucultmeYapildi={grup.kucultme_yapildi}
         />
-      ))}
+      ) : null}
 
       {veri ? (
         <p className="text-[12px] leading-relaxed text-muted-foreground">

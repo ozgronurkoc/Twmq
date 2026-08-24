@@ -58,7 +58,8 @@ yani boşluk üç belgeye birden yayılıyordu. Artık liste
 | `/` | Formül — kaplama motoru, olasılık, senaryo karşılaştırma |
 | `/tahmin` | Yaklaşan maçlara 1/0/2 + ölçülmüş isabet |
 | `/super-toto` | Canlı sezon defteri (statik besleme, bkz. aşağısı) |
-| `/istatistik` | Tarihsel dağılım, analiz blokları, oran özeti |
+| `/istatistik` | **Sezon** — tarihsel dağılım ve analiz blokları (§6.8 G1'de bölündü) |
+| `/istatistik/oranlar` | **Piyasa** — favori kırılımı, banko bantları, kalibrasyon; ortak sekme şeridi `?last`i taşır |
 | `/takimlar` | Küçültülmüş takım gücü — puan, atılan, yenilen; maç sayısı ve küçültme oranıyla |
 | `/istatistik/[week]` | Tek hafta detayı |
 | `/istatistik/geri-test` | Eşik taraması + hold-out |

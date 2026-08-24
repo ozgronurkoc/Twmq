@@ -67,9 +67,11 @@ yani Run düğmesi tek başına da yeterlidir.
 | `/` | **Formül** — maç ızgarası, olasılık girişi, motorun tüm modları |
 | `/tahmin` | Yaklaşan maçlara 1/0/2 + **ölçülmüş isabet** (ayrılmaz) |
 | `/super-toto` | Canlı sezon defteri (statik besleme) |
-| `/istatistik` | Sezon dağılımı, oran/favori kırılımları, veri kalitesi |
+| `/istatistik` | **Sezon** — dağılım, seyir, bantlar, ısı haritası, haftalar (§6.8 G1'de bölündü) |
+| `/istatistik/oranlar` | **Piyasa** — favori kırılımı, banko bantları, kalibrasyon; sekme şeridi `?last`i taşır |
 | `/istatistik/[week]` | Hafta detayı (olasılıkları formül sayfasına devredebilir) |
 | `/pazarlar` | **Alt/üst 2,5 ve Asya handikabı** — fiyat + ölçülmüş kalibrasyon |
+| `/takimlar` | **Küçültülmüş takım gücü** — her satırda maç sayısı, küçültme oranı, %95 aralık |
 | `/istatistik/geri-test` | Oranlardan strateji üretip 41 haftayı motorla koşturur |
 | `/saglik` | Kategorili değişmez (invariant) kontrolleri, kısmi çalıştırma |
 
@@ -86,6 +88,8 @@ GET  /api/stats              sezon istatistikleri (?last=N)
 GET  /api/stats/<week>       hafta detayı
 GET  /api/backtest           geri test (eşik taraması + hold-out)
 GET  /api/tahmin             yaklaşan maçlar + ölçülmüş isabet
+GET  /api/pazar              1X2 disi pazarlar (alt/ust 2,5 · Asya handikabi)
+GET  /api/takimlar           kucultulmus takim gucu (?lig=, ?sezon=)
 GET  /api/benzer             "bu oranda geçmişte ne oldu" (31 bin maç)
 GET  /                       servis bilgisi + uç envanteri
 POST /api/solve              motorun tamamı
