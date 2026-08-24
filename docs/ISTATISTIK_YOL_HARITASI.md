@@ -130,7 +130,7 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/app/super-toto/page.tsx` · `components/super-toto/haftalar.tsx` · `lib/super-toto.ts` | Sezonun hafta şeridi; `?hafta=N` adreste durur |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **1.134 test**; **82'si** istatistik katmanına (`history` `odds` `backtest`
+paketi toplam **1.141 test**; **82'si** istatistik katmanına (`history` `odds` `backtest`
 `api_stats` `api_backtest` `snapshot_iddaa`), **294'ü** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer`). Dosya adlarıyla sayılıdır ki tablo elle bakım gerektirmesin —
@@ -1469,6 +1469,69 @@ Bekçiler:
 
 Kaynak ve gerekçe: [`DIS_INCELEME_ALPHAPY.md`](DIS_INCELEME_ALPHAPY.md) §5.
 
+### 3.24 Öğrenme eğrisi — *"daha çok veri işe yarar mı?"* **ölçüldü**
+
+Projenin en pahalı açık sorusu buydu ve bugüne kadar yalnızca **güç
+analiziyle** cevaplanıyordu: `scripts/faz_b.py` ≈71 ikramiyeli hafta diyor,
+`scripts/iddaa_hazirlik.py` 45 kupon haftası. İkisi de *"bu etkiyi görmek
+için kaç gözlem gerekir"* sorusunu, **etkinin var olduğunu varsayarak**
+cevaplıyor.
+
+Öğrenme eğrisi varsayım yapmaz ve başka bir şey sorar: *elimizdeki veriyle
+model hâlâ öğreniyor mu, yoksa doymuş mu?*
+
+`evaluate.ogrenme_egrisi` dış halkayı `hafta_disarida_birak` ile **aynı**
+tutar (sezon dışarıda bırakmalı); tek fark, eğitim setinin tamamı yerine
+tohumlu bir alt kümesi verilir. Alt örnekleme **hafta düzeyindedir**, maç
+düzeyinde değil — aynı haftanın 15 maçı bağımsız değildir ve maç düzeyinde
+örneklemek eğriyi olduğundan iyimser gösterirdi.
+
+#### Ölçülen — 31.103 maç · 183 hafta · 4 sezon, sezon dışarıda bırakmalı
+
+| eğitim maçı | `piyasa` | `sezon_sabiti` | `kalibre_bant` |
+|---:|---:|---:|---:|
+| 2.216 | 0,59364 | 0,65113 | 0,59721 |
+| 5.934 | 0,59364 | 0,65079 | 0,59483 |
+| 11.516 | 0,59364 | 0,65065 | 0,59409 |
+| 17.593 | 0,59364 | 0,65062 | 0,59379 |
+| **23.327** | **0,59364** | 0,65063 | **0,59373** |
+| **toplam iniş** | **+0,00000** | +0,00050 | +0,00348 |
+| **son adım** | +0,00000 | −0,00001 | **+0,00006** |
+
+`piyasa` sütunu bir sonuç değil **sağlamadır**: hiçbir şey öğrenmeyen bir
+tahmincinin eğrisi düz çıkmalıdır ve çıkıyor. Düz çıkmasaydı alt örnekleme
+ölçüm setine dokunuyor, yani eğitim/test ayrımı sızdırıyor olurdu
+(`test_ogrenmeyen_tahmincide_egri_duz` bunu bekçiliyor).
+
+#### Okuma — **eğri düzleşti, ve gap kapanmadan düzleşti**
+
+Kademe gerçekten öğreniyor: 2.216 maçtan 23.327'ye Brier 0,00348 iniyor.
+Ama **son adım 0,00006**: 17.593 → 23.327 maç (+5.734 maç, eğitim setinin
+üçte biri kadar) yalnızca bu kadar getirdi.
+
+Ve iniş **piyasaya yetişmeden durdu.** Bütün korpusla eğitilmiş
+`kalibre_bant` 0,59373; `piyasa` 0,59364. Kalan fark **0,00009** ve son
+5.734 maç 0,00006 kazandırdı — üstelik öğrenme eğrileri düzleşerek gider,
+yani sonraki maçların getirisi bundan **daha az** olacak.
+
+**Aynı türden veri toplamak bu farkı kapatmıyor.** Bu, A4'ün *"tahmin
+ekseni yeni bir veri KAYNAĞI ister"* cümlesini bir kanaatten bir **ölçüme**
+çeviriyor: sorun satır sayısı değil, sütun.
+
+`sezon_sabiti` aynı şeyi daha erken gösteriyor — ~5.900 maçta doymuş, son
+adımda **yukarı** dönüyor (−0,00001). Taşıdığı tek bilgi lig taban oranı ve
+o bilgi 6 bin maçta zaten öğrenilmiş.
+
+#### Ne yapıldı, ne yapılmadı
+
+§3.23 gibi bu da **yeni bir tahminci değildir** — cetvelin bir parçasıdır ve
+A4'ün durma kuralına girmez. Ama §3.23'ten farklı bir şey söylüyor: §3.23
+kalibrasyon ekseninde alınacak yolun **0,00042** olduğunu ölçtü; §3.24 o
+yolun **daha çok veriyle de alınamayacağını** ölçüyor.
+
+    python -m spor_toto.evaluate --egri --korpus
+    python -m spor_toto.evaluate --egri            # kupon setinde
+
 ## 4. Sayfada bugün ne var
 
 **`/istatistik`** — sezon dağılımı (en sık sonuç + pay çubuğu) · 5 sayı kutusu (sembol
@@ -1591,6 +1654,7 @@ ve karşılıkları: kupon seti 0,5747 → **0,5740**, korpus 0,5940 → **0,593
 | **Beraberlik düzeltmesi (Ö3)** | 31.103 maç · 183 hafta | Şekil gerçek (`b` dört katlamada da negatif), büyüklük yok: `bant − sabit` −0,000057 [−0,000137, +0,000021], **0/10 tohum**. Kuponda 30/540 işaret değişiyor, `P(k≤2)` her plan kendi cetveli altında ~0,05 puan kazanıyor — bilgisizliğin imzası |
 | **İddaa ekseni (Ö4)** | 469 bülten maçı · 1 kupon haftası | **Ölçülmedi, kural yazıldı.** Marj football-data %7,26 ↔ iddaa %16,93 (bayi) / %21,32 (web). Kalibrasyon için **45 kupon haftası** gerekiyor (ölçülen sd 0,00358, aranan etki 0,0015). Bugün ölçülebilen tek parça: bayi–web arındırmadan sonra ort. **0,53 puan** ayrışıyor — marj ayrı, görüş aynı |
 | **Brier ayrışımı (§3.23)** | 31.103 maç · 183 hafta | Kalibrasyon ekseninin tavanı **ölçüldü**: piyasanın toplam güvenilirlik borcu **0,00042** (sapma payı 0,00021), çözünürlüğü 0,05657. T2/T3'ün 0,0005–0,0015'lik etkileri bu tavanın **üstünde** — geçmemeleri kapasiteden değil, alınacak yolun kalmamasından. Beraberlik çözünürlüğü 0,00257 (1 → 0,02922, 2 → 0,02478) ve duyarlılığı **0,003**: argmax neredeyse hiç beraberlik demiyor |
+| **Öğrenme eğrisi (§3.24)** | 31.103 maç · 183 hafta | **Eğri düzleşti, gap kapanmadan.** `kalibre_bant` 2.216 → 23.327 maçta 0,00348 iniyor ama **son adım 0,00006** ve 0,59373'te duruyor — `piyasa` 0,59364. Aynı türden veri toplamak bu farkı kapatmıyor; sorun satır sayısı değil sütun. `piyasa` eğrisi tam düz (sağlama) |
 
 **Okuma.** Aşırı uyum modelin kapasitesinden değil örneklem küçüklüğünden geliyordu; büyük
 korpus onu kaldırdı. Ama kalan etki 0,0005–0,0015 Brier — 31 binde anlamlı, 540'ta değil ve
@@ -2328,7 +2392,7 @@ python -m spor_toto.disari                 # A3: piyasa dışı özellikler
 python -m spor_toto.tahmin                 # ÜRÜN: yaklaşan maçlara olasılık
 
 # Denetim
-pytest -q                                  # 1.134 test (82'si bu katman, 294'ü tahmin)
+pytest -q                                  # 1.141 test (82'si bu katman, 294'ü tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out

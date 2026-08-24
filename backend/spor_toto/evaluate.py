@@ -288,6 +288,110 @@ def degerlendir(fabrika: Fabrika,
     }
 
 
+# ─── öğrenme eğrisi ───────────────────────────────────────────────────────────
+
+#: Eğitim setinin hangi kesirlerinde ölçülür. Kenarlar ölçüm sonucuna
+#: BAKILMADAN seçildi (projenin geri kalanındaki `L2`, `EN_AZ_KOVA`,
+#: `FAVORI_DILIMLERI` ile aynı gerekçe): eğri okunacaksa kesirler eğriye
+#: göre ayarlanamaz.
+EGRI_KESIRLERI: Sequence[float] = (0.1, 0.25, 0.5, 0.75, 1.0)
+
+#: Alt örneklemenin tohumu. Sabit: aynı korpus aynı eğriyi vermezse
+#: "ölçtük" demenin anlamı kalmaz.
+EGRI_TOHUM = 20260824
+
+
+def ogrenme_egrisi(fabrika: Fabrika,
+                   haftalar: Sequence[Girdi],
+                   kesirler: Sequence[float] = EGRI_KESIRLERI,
+                   grup: Callable[[Girdi], Any] | None = None,
+                   tohum: int = EGRI_TOHUM) -> dict[str, Any]:
+    """Eğitim seti büyüdükçe dışarıda bırakmalı Brier nasıl değişiyor?
+
+    Projenin en pahalı açık sorusu şudur: **daha çok veri işe yarar mı?**
+    Bugüne kadar yalnızca güç analiziyle *tahmin* edildi (`scripts/faz_b.py`
+    ≈71 ikramiyeli hafta diyor, `scripts/iddaa_hazirlik.py` 45 kupon haftası)
+    — ikisi de "bu etkiyi görmek için kaç gözlem gerekir" sorusunu, etkinin
+    var olduğunu **varsayarak** cevaplıyor.
+
+    Öğrenme eğrisi başka bir şey sorar ve varsayım yapmaz: *elimizdeki
+    veriyle model hâlâ öğreniyor mu, yoksa doymuş mu?* Eğri hâlâ iniyorsa
+    veri toplamak karşılığı olan bir yatırımdır; **düzleşmişse değildir** ve
+    o zaman aranacak şey daha çok satır değil başka bir sütundur.
+
+    ─── Tasarım ──────────────────────────────────────────────────────────
+
+    Dış halka `hafta_disarida_birak` ile **aynı**dır: her grup (varsayılan
+    hafta, `grup=sezon_anahtari` ile sezon) sırayla dışarıda bırakılır. Tek
+    fark, eğitim setinin tamamı yerine tohumlu bir **alt kümesi** verilir.
+
+    Alt örnekleme hafta düzeyindedir, maç düzeyinde değil: aynı haftanın 15
+    maçı bağımsız değildir (aynı kupon, aynı hafta sonu, aynı ligler) ve maç
+    düzeyinde örneklemek eğriyi olduğundan iyimser gösterirdi — modül
+    başlığındaki 3. kararın eğitim tarafındaki karşılığı.
+
+    Tohum **kesire ve kata göre** türetilir, sabit değil: her kesir aynı
+    tohumu kullansaydı küçük kesirler büyüklerin öneki olurdu ve eğrinin
+    noktaları birbirine yapay olarak bağlanırdı.
+
+    Öğrenmeyen bir tahminci (`piyasa`, `duzgun`) için eğri **düz** çıkar ve
+    bu bir kusur değil sağlamadır: `tests/test_evaluate.py` bunu bekçiliyor.
+    """
+    anahtarlar = [grup(h) if grup else i for i, h in enumerate(haftalar)]
+    benzersiz = list(dict.fromkeys(anahtarlar))
+    noktalar: list[dict[str, Any]] = []
+
+    for kesir in kesirler:
+        kayitlar: list[dict[str, Any]] = []
+        egitim_hafta = egitim_mac = 0
+        for sira, anahtar in enumerate(benzersiz):
+            egitim = [h for h, a in zip(haftalar, anahtarlar) if a != anahtar]
+            test = [h for h, a in zip(haftalar, anahtarlar) if a == anahtar]
+            k = max(1, round(kesir * len(egitim))) if egitim else 0
+            rnd = random.Random(tohum * 1_000_003 + round(kesir * 1000) * 1009 + sira)
+            alt = rnd.sample(egitim, k) if k < len(egitim) else list(egitim)
+            egitim_hafta += len(alt)
+            egitim_mac += sum(len(h["results"]) for h in alt)
+
+            tahminci = fabrika()
+            tahminci.egit(alt)
+            kayitlar.extend(_hafta_skoru(tahminci, h) for h in test)
+
+        n_mac = sum(kayit["n"] for kayit in kayitlar)
+        b_top = sum(kayit["brier_toplam"] for kayit in kayitlar)
+        l_top = sum(kayit["log_toplam"] for kayit in kayitlar)
+        noktalar.append({
+            "kesir": kesir,
+            # Kat başına ORTALAMA eğitim büyüklüğü — tek bir modelin gördüğü
+            # veri budur; katlar toplanırsa aynı maç birden çok sayılır.
+            "egitim_hafta": round(egitim_hafta / len(benzersiz)) if benzersiz else 0,
+            "egitim_mac": round(egitim_mac / len(benzersiz)) if benzersiz else 0,
+            "n_mac": n_mac,
+            "brier": round(b_top / n_mac, 6) if n_mac else None,
+            "log_kaybi": round(l_top / n_mac, 6) if n_mac else None,
+        })
+
+    ornek = fabrika()
+    ilk = noktalar[0]["brier"] if noktalar else None
+    son = noktalar[-1]["brier"] if noktalar else None
+    return {
+        "ad": ornek.ad,
+        "n_grup": len(benzersiz),
+        "grup_olcusu": "sezon" if grup is not None else "hafta",
+        "tohum": tohum,
+        "noktalar": noktalar,
+        # Eğrinin toplam inişi. Sıfıra yakınsa tahminci veriden öğrenmiyor
+        # ya da doymuş demektir — hangisi olduğunu `ad` söyler.
+        "toplam_inis": (round(ilk - son, 6)
+                        if ilk is not None and son is not None else None),
+        # Son adımın inişi: "bir sonraki %25 veri ne getirir" sorusunun
+        # elimizdeki en yakın vekili.
+        "son_adim": (round(noktalar[-2]["brier"] - son, 6)
+                     if len(noktalar) > 1 and son is not None
+                     and noktalar[-2]["brier"] is not None else None),
+    }
+
+
 # ─── eşleştirilmiş bootstrap ──────────────────────────────────────────────────
 
 def _ortalama(kayitlar: Sequence[dict[str, Any]], indeksler: Sequence[int],
@@ -402,3 +506,87 @@ def karsilastir(fabrikalar: Sequence[Fabrika] | None = None,
                    + " disarida birakmali; bootstrap hafta uzerinden ve "
                    "eslestirilmis; gecti = guven araligi tamamen sifirin altinda"),
     }
+
+
+# ─── elle koşum ───────────────────────────────────────────────────────────────
+
+def _yaz_egri(e: dict[str, Any]) -> None:  # pragma: no cover - elle kullanim
+    print(f"\n  {e['ad']} — {e['grup_olcusu']} dışarıda bırakmalı, "
+          f"{e['n_grup']} grup")
+    print(f"  {'kesir':>7}{'eğitim hafta':>14}{'eğitim maç':>12}"
+          f"{'brier':>10}{'log':>10}")
+    for n in e["noktalar"]:
+        print(f"  {n['kesir']:>7.2f}{n['egitim_hafta']:>14}{n['egitim_mac']:>12}"
+              f"{n['brier']:>10.5f}{n['log_kaybi']:>10.5f}")
+    print(f"  toplam iniş {e['toplam_inis']:+.5f} · son adım "
+          f"{e['son_adim']:+.5f}")
+
+
+def main(argv: Sequence[str] | None = None) -> None:  # pragma: no cover
+    """Ölçüm koşumunun elle çalıştırılan yüzü.
+
+        python -m spor_toto.evaluate            # kupon setinde karsilastirma
+        python -m spor_toto.evaluate --korpus   # 31 bin maclik korpusta
+        python -m spor_toto.evaluate --egri     # ogrenme egrisi
+    """
+    import argparse
+    import json
+
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--korpus", action="store_true",
+                    help="kupon seti yerine egitim korpusunda kos")
+    ap.add_argument("--egri", action="store_true",
+                    help="ogrenme egrisi (veri buyudukce brier ne yapiyor)")
+    ap.add_argument("--last", type=int, default=None)
+    ap.add_argument("--json", action="store_true")
+    a = ap.parse_args(argv)
+
+    if a.korpus:
+        from .egitim import korpus_haftalari
+        haftalar: Sequence[Girdi] = korpus_haftalari()
+        grup: Callable[[Girdi], Any] | None = sezon_anahtari
+    else:
+        haftalar = olculebilir_haftalar(a.last)
+        grup = None
+
+    if a.egri:
+        from .predict import PiyasaTahminci, SezonSabitiTahminci
+        from .recalibrate import KalibreTahminci
+
+        egriler = [
+            ogrenme_egrisi(f, haftalar, grup=grup)
+            for f in (PiyasaTahminci, SezonSabitiTahminci,
+                      lambda: KalibreTahminci("bant"))
+        ]
+        if a.json:
+            print(json.dumps(egriler, ensure_ascii=False, indent=1))
+            return
+        print(f"\nÖĞRENME EĞRİSİ — {sum(len(h['results']) for h in haftalar):,} "
+              f"maç · {len(haftalar)} hafta")
+        for e in egriler:
+            _yaz_egri(e)
+        print("\nOkuma: eğri hâlâ iniyorsa veri toplamak karşılığı olan bir "
+              "yatırımdır; düzleşmişse aranacak şey daha çok satır değil "
+              "başka bir sütundur. Öğrenmeyen tahmincide eğri düz çıkar ve "
+              "bu bir kusur değil sağlamadır.")
+        return
+
+    r = karsilastir(haftalar=haftalar, grup=grup)
+    if a.json:
+        print(json.dumps(r, ensure_ascii=False, indent=1, default=str))
+        return
+    print(f"\nKARŞILAŞTIRMA — {r['n_mac']:,} maç · {r['n_hafta']} hafta "
+          f"· referans: {r['referans']}")
+    print(f"{'tahminci':<16}{'brier':>9}{'log':>9}{'fark':>10}"
+          f"{'%95 aralık':>22}  geçti")
+    for s in r["tahminciler"]:
+        f = s.get("fark") or {}
+        aralik = ("—" if f.get("alt") is None
+                  else f"[{f['alt']:+.4f}, {f['ust']:+.4f}]")
+        print(f"{s['ad']:<16}{s['brier']:>9.4f}{s['log_kaybi']:>9.4f}"
+              f"{(f.get('fark') or 0):>+10.4f}{aralik:>22}  "
+              f"{'EVET' if s.get('gecti') else 'hayır'}")
+
+
+if __name__ == "__main__":  # pragma: no cover
+    main()
