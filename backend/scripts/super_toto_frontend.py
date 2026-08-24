@@ -84,6 +84,123 @@ def _donmus_blok(donmus: dict[str, Any] | None) -> dict[str, Any] | None:
     }
 
 
+def _yuvarla_dagilim(p: dict[str, float] | None) -> dict[str, float] | None:
+    return None if p is None else {s: round(float(p[s]), 4) for s in SEM}
+
+
+def _tahmin2_blok(kayit: dict[str, Any] | None) -> dict[str, Any] | None:
+    """**2. Tahmin** kaydından arayüzün okuyacağı kısım.
+
+    Kayıt (`hafta_NN_tahmin2.json`) tam gövdedir ve havuz beklenen değeri
+    gibi **arayüze çıkmayacak** bloklar taşır (`getiri` modül başlığı,
+    docs §6.3b). Burada seçilerek alınır: para birimli hiçbir sayı geçmez.
+
+    1. Tahmin'in kaydı bu bloktan **etkilenmez**. İkisi ayrı alanlarda
+    durur ve arayüz aralarında geçiş yapar; biri ötekinin yerine geçmez.
+    """
+    if not kayit:
+        return None
+    meta = kayit["meta"]
+    k = kayit["kupon"]
+    ayarli, taban, esik = k["ayarli"], k["taban"], k["esik"]
+    duy = kayit.get("duyarlilik")
+    g = kayit["gorus"]
+    return {
+        "ad": meta["ad"],
+        "frozen_at": meta["frozen_at"],
+        "results_known": meta["results_known"],
+        "arindirma": meta["arindirma"],
+        "onceki_arindirma": meta["onceki_arindirma"],
+        "kural": meta["kural"],
+        "kayip_orani": meta["kayip_orani"],
+        "note": meta["note"],
+        "yenilikler": meta["yenilikler"],
+        "picks": ayarli["picks"],
+        "taban_picks": taban["picks"],
+        "esik_picks": esik["picks"],
+        "columns": ayarli["columns"], "rows": ayarli["rows"],
+        "engine": ayarli["engine"],
+        "guaranteed_14": ayarli["guaranteed_14"],
+        "banko": ayarli["banko"], "cift": ayarli["cift"],
+        "uclu": ayarli["uclu"],
+        "p_hedef": round(ayarli["p_hedef"], 6),
+        "in_set_p": round(ayarli["in_set_p"], 6),
+        "crowd_in_set_p": round(ayarli["crowd_in_set_p"], 6),
+        "crowd_ratio": round(ayarli["crowd_ratio"], 4),
+        "butce": k["butce"], "butce_kaynagi": k["butce_kaynagi"],
+        "lines": ayarli["lines"],
+        "ayar": {
+            "not": k["ayar"]["not"],
+            "p_hedef_taban": round(k["ayar"]["p_hedef_taban"], 6),
+            "p_hedef_ayarli": round(k["ayar"]["p_hedef_ayarli"], 6),
+            "oran_taban": round(k["ayar"]["oran_taban"], 4),
+            "oran_ayarli": round(k["ayar"]["oran_ayarli"], 4),
+            # Rakip yogunlugu YALNIZCA ayni sekildeki planlar arasinda
+            # okunur; taban ile ayarli tam olarak o cifttir.
+            "kat_taban": round(taban["kosullu_rakip"]["kat"], 3),
+            "kat_ayarli": round(ayarli["kosullu_rakip"]["kat"], 3),
+            "degisimler": [{
+                "no": x["no"], "taban": x["taban"], "yeni": x["yeni"],
+                "prob_taban": round(x["prob_taban"], 4),
+                "prob_yeni": round(x["prob_yeni"], 4),
+                "oynanma_taban": round(x["oynanma_taban"], 4),
+                "oynanma_yeni": round(x["oynanma_yeni"], 4),
+            } for x in k["ayar"]["degisimler"]],
+        },
+        "kiyas": (None if not kayit.get("kiyas") else {
+            "eski_picks": kayit["kiyas"]["eski_picks"],
+            "eski_arindirma": kayit["kiyas"]["eski_arindirma"],
+            "eski_kural": kayit["kiyas"]["eski_kural"],
+            "eski_p_hedef": round(
+                kayit["kiyas"]["eski_bugunku_olcekte"]["p_hedef"], 6),
+            "eski_columns": kayit["kiyas"]["eski_bugunku_olcekte"]["columns"],
+            "eski_crowd_ratio": round(
+                kayit["kiyas"]["eski_bugunku_olcekte"]["crowd_ratio"], 4),
+            "degisen_maclar": kayit["kiyas"]["degisen_maclar"],
+            "not": kayit["kiyas"]["not"],
+        }),
+        "gorus": {
+            "kapsama": round(g["kapsama"], 4),
+            "dc_olan": g["dc_olan"], "n": g["n"],
+            "kullanilabilir": g["kullanilabilir"],
+            "tarihce_mac": g["tarihce_mac"], "tarihce_son": g["tarihce_son"],
+            "eslesmeyen": g["eslesmeyen"],
+            "uyari": g["uyari"],
+        },
+        "ayrisma": [{
+            "no": r["no"], "mac": r["mac"],
+            "piyasa": _yuvarla_dagilim(r["piyasa"]),
+            "dc": _yuvarla_dagilim(r["dc"]),
+            "piyasa_fav": r["piyasa_fav"], "dc_fav": r["dc_fav"],
+            "sembol_farkli": r["sembol_farkli"],
+            "toplam_sapma": round(r["toplam_sapma"], 4),
+        } for r in kayit["ayrisma"]],
+        "duyarlilik": (None if not duy else {
+            "ortanca_marj": round(duy["ortanca_marj"], 4),
+            "duzeltilen": [{"no": x["no"], "mac": x["mac"],
+                            "marj": round(x["marj"], 4)}
+                           for x in duy["duzeltilen"]],
+            "picks": duy["picks"],
+            "p_hedef": round(duy["p_hedef"], 6),
+            # Asil cevap: isaretler DEGISIYOR mu. Arayuz bunu tek basina
+            # okuyabilsin diye burada hesaplanir.
+            "degisti": duy["picks"] != ayarli["picks"],
+            "not": duy["not"],
+        }),
+        "matches": [{
+            "no": r["no"],
+            "probs": _yuvarla_dagilim(r["probs"]),
+            "probs_onceki": _yuvarla_dagilim(r["probs_onceki"]),
+            "dc": _yuvarla_dagilim(r["dc"]), "dc_var": r["dc_var"],
+            "elo_farki": (None if r["elo_farki"] is None
+                          else round(r["elo_farki"], 1)),
+            "elo_beklenen": (None if r["elo_beklenen"] is None
+                             else round(r["elo_beklenen"], 4)),
+            "taban": r["taban"], "isaret": r["isaret"],
+        } for r in kayit["matches"]],
+    }
+
+
 def uret(sezon: str = "2026_27") -> dict[str, Any]:
     from spor_toto.backtest import VARSAYILAN_BANKO, VARSAYILAN_UCLU
     from spor_toto.odds import ARINDIRMA_VARSAYILAN
@@ -106,6 +223,10 @@ def uret(sezon: str = "2026_27") -> dict[str, Any]:
                       / f"hafta_{no:02d}_kupon.json")
         donmus = (json.loads(kupon_yolu.read_text(encoding="utf-8"))
                   if kupon_yolu.exists() else None)
+        tahmin2_yolu = (KOK / "data" / "super_toto" / sezon
+                        / f"hafta_{no:02d}_tahmin2.json")
+        tahmin2 = (json.loads(tahmin2_yolu.read_text(encoding="utf-8"))
+                   if tahmin2_yolu.exists() else None)
         # Bugunku kural ne uretirdi — AYRI alan, ayri etiket. Karsilastirma
         # bilgi tasir; kaydin yerine gecemez.
         bugun = hafta_mod.kupon_kur(d, VARSAYILAN_BANKO, VARSAYILAN_UCLU)
@@ -133,6 +254,10 @@ def uret(sezon: str = "2026_27") -> dict[str, Any]:
                            if meta.get("results") else None),
             } for m in d["matches"]],
             "coupon": _donmus_blok(donmus),
+            # IKINCI kayit — 1. Tahmin'in yerine GECMEZ, yanina durur.
+            # Uretici: `scripts/super_toto_tahmin2.py --yaz`. Dosya yoksa
+            # alan null'dir ve arayuz "2. Tahmin" dugmesini gostermez.
+            "tahmin2": _tahmin2_blok(tahmin2),
             # Revizyon kaydi: girdi degistigi icin (orn. sonradan ilan edilen
             # oran) kupon yeniden kuruldusa, ONCEKI surum de gorunur kalir.
             # Gorunmeyen bir revizyon, revizyon olmayan bir kayittan daha

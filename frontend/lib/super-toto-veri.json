@@ -506,6 +506,7 @@
    "play_source": "tek platform kullanıcı oynanma yüzdesi — kullanıcı ekran görüntüsü (2026-08-18)",
    "program": "14.08.2026 - 17.08.2026",
    "results": "002011110111011",
+   "tahmin2": null,
    "warnings_generated": [],
    "warnings_manual": [],
    "week": 1
@@ -1035,6 +1036,795 @@
    "play_source": "tek platform kullanıcı tercih yüzdesi (% Tercih) — kullanıcı ekran görüntüsü (2026-08-18)",
    "program": "21.08.2026 - 25.08.2026",
    "results": null,
+   "tahmin2": {
+    "ad": "2. Tahmin",
+    "arindirma": "shin",
+    "ayar": {
+     "degisimler": [
+      {
+       "no": 7,
+       "oynanma_taban": 0.83,
+       "oynanma_yeni": 0.73,
+       "prob_taban": 0.7651,
+       "prob_yeni": 0.7569,
+       "taban": "02",
+       "yeni": "12"
+      },
+      {
+       "no": 13,
+       "oynanma_taban": 0.81,
+       "oynanma_yeni": 0.68,
+       "prob_taban": 0.747,
+       "prob_yeni": 0.7255,
+       "taban": "10",
+       "yeni": "12"
+      },
+      {
+       "no": 14,
+       "oynanma_taban": 0.92,
+       "oynanma_yeni": 0.85,
+       "prob_taban": 0.7738,
+       "prob_yeni": 0.7511,
+       "taban": "10",
+       "yeni": "12"
+      }
+     ],
+     "kat_ayarli": 7.683,
+     "kat_taban": 9.219,
+     "not": "Isaret SAYILARI degismez — bedel, satir ve motor aynidir. Degisen yalnizca HANGI sembolun isaretlendigi.",
+     "oran_ayarli": 0.8052,
+     "oran_taban": 0.5889,
+     "p_hedef_ayarli": 0.38393,
+     "p_hedef_taban": 0.397901
+    },
+    "ayrisma": [
+     {
+      "dc": {
+       "0": 0.1595,
+       "1": 0.7305,
+       "2": 0.11
+      },
+      "dc_fav": "1",
+      "mac": "Fenerbahçe A.Ş. – Konyaspor",
+      "no": 4,
+      "piyasa": {
+       "0": 0.068,
+       "1": 0.6576,
+       "2": 0.2744
+      },
+      "piyasa_fav": "1",
+      "sembol_farkli": false,
+      "toplam_sapma": 0.1644
+     },
+     {
+      "dc": {
+       "0": 0.2603,
+       "1": 0.4788,
+       "2": 0.2609
+      },
+      "dc_fav": "1",
+      "mac": "Eyüpspor – Gaziantep F.K. A.Ş.",
+      "no": 5,
+      "piyasa": {
+       "0": 0.2806,
+       "1": 0.331,
+       "2": 0.3884
+      },
+      "piyasa_fav": "2",
+      "sembol_farkli": true,
+      "toplam_sapma": 0.1477
+     },
+     {
+      "dc": {
+       "0": 0.2397,
+       "1": 0.3788,
+       "2": 0.3815
+      },
+      "dc_fav": "2",
+      "mac": "Newcastle United – Liverpool",
+      "no": 12,
+      "piyasa": {
+       "0": 0.2275,
+       "1": 0.2578,
+       "2": 0.5148
+      },
+      "piyasa_fav": "2",
+      "sembol_farkli": false,
+      "toplam_sapma": 0.1333
+     },
+     {
+      "dc": {
+       "0": 0.2878,
+       "1": 0.4884,
+       "2": 0.2238
+      },
+      "dc_fav": "1",
+      "mac": "Göztepe A.Ş. – Gençlerbirliği",
+      "no": 8,
+      "piyasa": {
+       "0": 0.2279,
+       "1": 0.6055,
+       "2": 0.1667
+      },
+      "piyasa_fav": "1",
+      "sembol_farkli": false,
+      "toplam_sapma": 0.117
+     },
+     {
+      "dc": {
+       "0": 0.2508,
+       "1": 0.3557,
+       "2": 0.3935
+      },
+      "dc_fav": "2",
+      "mac": "Çaykur Rizespor A.Ş. – Samsunspor A.Ş.",
+      "no": 2,
+      "piyasa": {
+       "0": 0.2736,
+       "1": 0.4364,
+       "2": 0.29
+      },
+      "piyasa_fav": "1",
+      "sembol_farkli": true,
+      "toplam_sapma": 0.1035
+     },
+     {
+      "dc": {
+       "0": 0.3112,
+       "1": 0.2127,
+       "2": 0.4761
+      },
+      "dc_fav": "2",
+      "mac": "Torino – AC Milan",
+      "no": 15,
+      "piyasa": {
+       "0": 0.2451,
+       "1": 0.1953,
+       "2": 0.5595
+      },
+      "piyasa_fav": "2",
+      "sembol_farkli": false,
+      "toplam_sapma": 0.0835
+     },
+     {
+      "dc": {
+       "0": 0.2326,
+       "1": 0.5479,
+       "2": 0.2195
+      },
+      "dc_fav": "1",
+      "mac": "Real Betis – Real Sociedad",
+      "no": 13,
+      "piyasa": {
+       "0": 0.2745,
+       "1": 0.4725,
+       "2": 0.253
+      },
+      "piyasa_fav": "1",
+      "sembol_farkli": false,
+      "toplam_sapma": 0.0755
+     },
+     {
+      "dc": {
+       "0": 0.2774,
+       "1": 0.2754,
+       "2": 0.4472
+      },
+      "dc_fav": "2",
+      "mac": "Alanyaspor – Beşiktaş A.Ş.",
+      "no": 7,
+      "piyasa": {
+       "0": 0.2431,
+       "1": 0.2349,
+       "2": 0.522
+      },
+      "piyasa_fav": "2",
+      "sembol_farkli": false,
+      "toplam_sapma": 0.0747
+     },
+     {
+      "dc": {
+       "0": 0.2414,
+       "1": 0.4068,
+       "2": 0.3518
+      },
+      "dc_fav": "1",
+      "mac": "Trabzonspor A.Ş. – Başakşehir FK",
+      "no": 6,
+      "piyasa": {
+       "0": 0.2496,
+       "1": 0.4672,
+       "2": 0.2832
+      },
+      "piyasa_fav": "1",
+      "sembol_farkli": false,
+      "toplam_sapma": 0.0685
+     },
+     {
+      "dc": {
+       "0": 0.231,
+       "1": 0.5166,
+       "2": 0.2524
+      },
+      "dc_fav": "1",
+      "mac": "Marsilya – Strasbourg",
+      "no": 11,
+      "piyasa": {
+       "0": 0.2203,
+       "1": 0.5717,
+       "2": 0.208
+      },
+      "piyasa_fav": "1",
+      "sembol_farkli": false,
+      "toplam_sapma": 0.055
+     },
+     {
+      "dc": {
+       "0": 0.2075,
+       "1": 0.5784,
+       "2": 0.2141
+      },
+      "dc_fav": "1",
+      "mac": "Atletico Madrid – Villarreal",
+      "no": 14,
+      "piyasa": {
+       "0": 0.2489,
+       "1": 0.525,
+       "2": 0.2262
+      },
+      "piyasa_fav": "1",
+      "sembol_farkli": false,
+      "toplam_sapma": 0.0534
+     },
+     {
+      "dc": {
+       "0": 0.2194,
+       "1": 0.2138,
+       "2": 0.5668
+      },
+      "dc_fav": "2",
+      "mac": "B. Dortmund – Bayern Münih",
+      "no": 10,
+      "piyasa": {
+       "0": 0.1936,
+       "1": 0.1874,
+       "2": 0.619
+      },
+      "piyasa_fav": "2",
+      "sembol_farkli": false,
+      "toplam_sapma": 0.0522
+     }
+    ],
+    "banko": [
+     1,
+     8,
+     10,
+     11
+    ],
+    "butce": 2048,
+    "butce_kaynagi": "esik kuralinin ayni haftada urettigi maliyet (banko 0.68, uclu 0.38)",
+    "cift": [
+     4,
+     6,
+     7,
+     12,
+     13,
+     14,
+     15
+    ],
+    "columns": 1296,
+    "crowd_in_set_p": 0.034255,
+    "crowd_ratio": 0.8052,
+    "duyarlilik": {
+     "degisti": false,
+     "duzeltilen": [
+      {
+       "mac": "Fenerbahçe A.Ş. – Konyaspor",
+       "marj": 0.4577,
+       "no": 4
+      }
+     ],
+     "not": "Veri DUZELTILMEDI; yalnizca sonucun kuskulu satira duyarliligi olculdu. Duzeltilmis oranlar kupona GIRMEZ.",
+     "ortanca_marj": 0.1773,
+     "p_hedef": 0.377036,
+     "picks": [
+      "2",
+      "102",
+      "102",
+      "12",
+      "102",
+      "12",
+      "12",
+      "1",
+      "102",
+      "2",
+      "1",
+      "12",
+      "12",
+      "12",
+      "02"
+     ]
+    },
+    "engine": "sabit 16 satır (Hamming 7,4)",
+    "esik_picks": [
+     "2",
+     "12",
+     "12",
+     "12",
+     "12",
+     "12",
+     "02",
+     "10",
+     "12",
+     "02",
+     "10",
+     "12",
+     "10",
+     "10",
+     "02"
+    ],
+    "frozen_at": "2026-08-24",
+    "gorus": {
+     "dc_olan": 12,
+     "eslesmeyen": [
+      "Amed Sportif",
+      "Erzurumspor FK",
+      "Çorum FK"
+     ],
+     "kapsama": 0.8,
+     "kullanilabilir": true,
+     "n": 15,
+     "tarihce_mac": 31670,
+     "tarihce_son": "2026-07-27",
+     "uyari": "Bu gorus ISARET DEGISTIRMEZ. Dixon-Coles kupon setinde piyasanin gerisinde olculdu (docs §3.28); Elo bir 1X2 olasiligi degil beklenen SKOR verir (docs §3.27). Ikisi de kayda gecer, karar yoluna girmez."
+    },
+    "guaranteed_14": true,
+    "in_set_p": 0.027581,
+    "kayip_orani": 0.05,
+    "kiyas": {
+     "degisen_maclar": [
+      1,
+      2,
+      3,
+      5,
+      7,
+      8,
+      9,
+      10,
+      11,
+      13,
+      14
+     ],
+     "eski_arindirma": "orantili",
+     "eski_columns": 4096,
+     "eski_crowd_ratio": 0.725,
+     "eski_kural": "esik",
+     "eski_p_hedef": 0.348657,
+     "eski_picks": [
+      "02",
+      "12",
+      "12",
+      "12",
+      "12",
+      "12",
+      "02",
+      "10",
+      "12",
+      "02",
+      "10",
+      "12",
+      "10",
+      "10",
+      "02"
+     ],
+     "not": "Eski isaretler BUGUNKU olcekte yeniden olculdu; kayit yeniden hesaplanmadi. Dondurulmus kuponun kendi p_hedef'i orantili olceginde hesaplanmisti ve bu sayiyla dogrudan kiyaslanamaz."
+    },
+    "kural": "hedef",
+    "lines": [
+     "2   102 102 1   102 1   1   1   102 2   1   1   1   1   0  ",
+     "2   102 102 1   102 1   1   1   102 2   1   2   1   2   2  ",
+     "2   102 102 1   102 1   2   1   102 2   1   1   2   2   0  ",
+     "2   102 102 1   102 1   2   1   102 2   1   2   2   1   2  ",
+     "2   102 102 1   102 2   1   1   102 2   1   1   2   2   2  ",
+     "2   102 102 1   102 2   1   1   102 2   1   2   2   1   0  ",
+     "2   102 102 1   102 2   2   1   102 2   1   1   1   1   2  ",
+     "2   102 102 1   102 2   2   1   102 2   1   2   1   2   0  ",
+     "2   102 102 2   102 1   1   1   102 2   1   1   2   1   2  ",
+     "2   102 102 2   102 1   1   1   102 2   1   2   2   2   0  ",
+     "2   102 102 2   102 1   2   1   102 2   1   1   1   2   2  ",
+     "2   102 102 2   102 1   2   1   102 2   1   2   1   1   0  ",
+     "2   102 102 2   102 2   1   1   102 2   1   1   1   2   0  ",
+     "2   102 102 2   102 2   1   1   102 2   1   2   1   1   2  ",
+     "2   102 102 2   102 2   2   1   102 2   1   1   2   1   0  ",
+     "2   102 102 2   102 2   2   1   102 2   1   2   2   2   2  "
+    ],
+    "matches": [
+     {
+      "dc": null,
+      "dc_var": false,
+      "elo_beklenen": null,
+      "elo_farki": null,
+      "isaret": "2",
+      "no": 1,
+      "probs": {
+       "0": 0.192,
+       "1": 0.0901,
+       "2": 0.7179
+      },
+      "probs_onceki": {
+       "0": 0.2097,
+       "1": 0.1165,
+       "2": 0.6739
+      },
+      "taban": "2"
+     },
+     {
+      "dc": {
+       "0": 0.2508,
+       "1": 0.3557,
+       "2": 0.3935
+      },
+      "dc_var": true,
+      "elo_beklenen": 0.5148,
+      "elo_farki": 10.3,
+      "isaret": "102",
+      "no": 2,
+      "probs": {
+       "0": 0.2736,
+       "1": 0.4364,
+       "2": 0.29
+      },
+      "probs_onceki": {
+       "0": 0.2803,
+       "1": 0.4247,
+       "2": 0.2949
+      },
+      "taban": "102"
+     },
+     {
+      "dc": null,
+      "dc_var": false,
+      "elo_beklenen": null,
+      "elo_farki": null,
+      "isaret": "102",
+      "no": 3,
+      "probs": {
+       "0": 0.2601,
+       "1": 0.4137,
+       "2": 0.3261
+      },
+      "probs_onceki": {
+       "0": 0.2666,
+       "1": 0.4066,
+       "2": 0.3268
+      },
+      "taban": "102"
+     },
+     {
+      "dc": {
+       "0": 0.1595,
+       "1": 0.7305,
+       "2": 0.11
+      },
+      "dc_var": true,
+      "elo_beklenen": 0.8108,
+      "elo_farki": 252.8,
+      "isaret": "12",
+      "no": 4,
+      "probs": {
+       "0": 0.068,
+       "1": 0.6576,
+       "2": 0.2744
+      },
+      "probs_onceki": {
+       "0": 0.1216,
+       "1": 0.5814,
+       "2": 0.297
+      },
+      "taban": "12"
+     },
+     {
+      "dc": {
+       "0": 0.2603,
+       "1": 0.4788,
+       "2": 0.2609
+      },
+      "dc_var": true,
+      "elo_beklenen": 0.6224,
+      "elo_farki": 86.8,
+      "isaret": "102",
+      "no": 5,
+      "probs": {
+       "0": 0.2806,
+       "1": 0.331,
+       "2": 0.3884
+      },
+      "probs_onceki": {
+       "0": 0.2866,
+       "1": 0.3313,
+       "2": 0.3821
+      },
+      "taban": "102"
+     },
+     {
+      "dc": {
+       "0": 0.2414,
+       "1": 0.4068,
+       "2": 0.3518
+      },
+      "dc_var": true,
+      "elo_beklenen": 0.5953,
+      "elo_farki": 67.0,
+      "isaret": "12",
+      "no": 6,
+      "probs": {
+       "0": 0.2496,
+       "1": 0.4672,
+       "2": 0.2832
+      },
+      "probs_onceki": {
+       "0": 0.259,
+       "1": 0.452,
+       "2": 0.289
+      },
+      "taban": "12"
+     },
+     {
+      "dc": {
+       "0": 0.2774,
+       "1": 0.2754,
+       "2": 0.4472
+      },
+      "dc_var": true,
+      "elo_beklenen": 0.4516,
+      "elo_farki": -33.7,
+      "isaret": "12",
+      "no": 7,
+      "probs": {
+       "0": 0.2431,
+       "1": 0.2349,
+       "2": 0.522
+      },
+      "probs_onceki": {
+       "0": 0.2533,
+       "1": 0.246,
+       "2": 0.5007
+      },
+      "taban": "02"
+     },
+     {
+      "dc": {
+       "0": 0.2878,
+       "1": 0.4884,
+       "2": 0.2238
+      },
+      "dc_var": true,
+      "elo_beklenen": 0.6766,
+      "elo_farki": 128.3,
+      "isaret": "1",
+      "no": 8,
+      "probs": {
+       "0": 0.2279,
+       "1": 0.6055,
+       "2": 0.1667
+      },
+      "probs_onceki": {
+       "0": 0.2402,
+       "1": 0.5745,
+       "2": 0.1853
+      },
+      "taban": "1"
+     },
+     {
+      "dc": null,
+      "dc_var": false,
+      "elo_beklenen": null,
+      "elo_farki": null,
+      "isaret": "102",
+      "no": 9,
+      "probs": {
+       "0": 0.2713,
+       "1": 0.4435,
+       "2": 0.2852
+      },
+      "probs_onceki": {
+       "0": 0.2783,
+       "1": 0.4309,
+       "2": 0.2907
+      },
+      "taban": "102"
+     },
+     {
+      "dc": {
+       "0": 0.2194,
+       "1": 0.2138,
+       "2": 0.5668
+      },
+      "dc_var": true,
+      "elo_beklenen": 0.4286,
+      "elo_farki": -50.0,
+      "isaret": "2",
+      "no": 10,
+      "probs": {
+       "0": 0.1936,
+       "1": 0.1874,
+       "2": 0.619
+      },
+      "probs_onceki": {
+       "0": 0.2095,
+       "1": 0.204,
+       "2": 0.5866
+      },
+      "taban": "2"
+     },
+     {
+      "dc": {
+       "0": 0.231,
+       "1": 0.5166,
+       "2": 0.2524
+      },
+      "dc_var": true,
+      "elo_beklenen": 0.6091,
+      "elo_farki": 77.0,
+      "isaret": "1",
+      "no": 11,
+      "probs": {
+       "0": 0.2203,
+       "1": 0.5717,
+       "2": 0.208
+      },
+      "probs_onceki": {
+       "0": 0.2333,
+       "1": 0.5444,
+       "2": 0.2223
+      },
+      "taban": "1"
+     },
+     {
+      "dc": {
+       "0": 0.2397,
+       "1": 0.3788,
+       "2": 0.3815
+      },
+      "dc_var": true,
+      "elo_beklenen": 0.4975,
+      "elo_farki": -1.8,
+      "isaret": "12",
+      "no": 12,
+      "probs": {
+       "0": 0.2275,
+       "1": 0.2578,
+       "2": 0.5148
+      },
+      "probs_onceki": {
+       "0": 0.2394,
+       "1": 0.2664,
+       "2": 0.4941
+      },
+      "taban": "12"
+     },
+     {
+      "dc": {
+       "0": 0.2326,
+       "1": 0.5479,
+       "2": 0.2195
+      },
+      "dc_var": true,
+      "elo_beklenen": 0.6503,
+      "elo_farki": 107.8,
+      "isaret": "12",
+      "no": 13,
+      "probs": {
+       "0": 0.2745,
+       "1": 0.4725,
+       "2": 0.253
+      },
+      "probs_onceki": {
+       "0": 0.2812,
+       "1": 0.4566,
+       "2": 0.2621
+      },
+      "taban": "10"
+     },
+     {
+      "dc": {
+       "0": 0.2075,
+       "1": 0.5784,
+       "2": 0.2141
+      },
+      "dc_var": true,
+      "elo_beklenen": 0.662,
+      "elo_farki": 116.7,
+      "isaret": "12",
+      "no": 14,
+      "probs": {
+       "0": 0.2489,
+       "1": 0.525,
+       "2": 0.2262
+      },
+      "probs_onceki": {
+       "0": 0.2585,
+       "1": 0.5033,
+       "2": 0.2382
+      },
+      "taban": "10"
+     },
+     {
+      "dc": {
+       "0": 0.3112,
+       "1": 0.2127,
+       "2": 0.4761
+      },
+      "dc_var": true,
+      "elo_beklenen": 0.4455,
+      "elo_farki": -38.0,
+      "isaret": "02",
+      "no": 15,
+      "probs": {
+       "0": 0.2451,
+       "1": 0.1953,
+       "2": 0.5595
+      },
+      "probs_onceki": {
+       "0": 0.2555,
+       "1": 0.211,
+       "2": 0.5335
+      },
+      "taban": "02"
+     }
+    ],
+    "note": "SONUCLAR GORULMEDEN uretildi. 1. Tahmin'in kaydi yerinde durur ve yeniden hesaplanmaz; bu ikinci bir kayittir, bir duzeltme degil.",
+    "onceki_arindirma": "orantili",
+    "p_hedef": 0.38393,
+    "picks": [
+     "2",
+     "102",
+     "102",
+     "12",
+     "102",
+     "12",
+     "12",
+     "1",
+     "102",
+     "2",
+     "1",
+     "12",
+     "12",
+     "12",
+     "02"
+    ],
+    "results_known": false,
+    "rows": 16,
+    "taban_picks": [
+     "2",
+     "102",
+     "102",
+     "12",
+     "102",
+     "12",
+     "02",
+     "1",
+     "102",
+     "2",
+     "1",
+     "12",
+     "10",
+     "10",
+     "02"
+    ],
+    "uclu": [
+     2,
+     3,
+     5,
+     9
+    ],
+    "yenilikler": [
+     "olcek: marj arindirma orantili -> shin (docs §3.18)",
+     "kural: esik -> hedef, P(en iyi kolon >= 12) enbuyuklenir (docs §3.19)",
+     "havuz: kalabalik ayari — isaret sayilari sabit, sembol degisir (docs §3.34)",
+     "gorus: Dixon-Coles + Elo, piyasadan bagimsiz (docs §3.27–3.28)"
+    ]
+   },
    "warnings_generated": [
     "4. maç: marj %45.8, bültenin ortancası %17.7 — 28.0 puan sapma, KUŞKULU"
    ],

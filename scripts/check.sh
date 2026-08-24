@@ -66,6 +66,14 @@ done
   | "$PY" -c "import json,sys; d=json.load(sys.stdin); \
       assert len(d['results'])==15; assert abs(sum(d['coupons'][0]['dist'])-1) < 1e-9"
 
+# 2. Tahmin: ikinci kayit da ayni boru hattinin parcasi. Ayarli plan tabanla
+# AYNI bedelde olmali — degilse "ayar bedava" cumlesi yalan olur.
+"$PY" scripts/super_toto_tahmin2.py --hafta 2 --tarih 2026-01-01 --json \
+  | "$PY" -c "import json,sys; d=json.load(sys.stdin); k=d['kupon']; \
+      assert len(k['ayarli']['picks'])==15; \
+      assert k['taban']['columns']==k['ayarli']['columns']; \
+      assert d['meta']['results_known'] is False"
+
 # Üretilmiş iki dosya: bayatlarsa arayüz SESSIZCE yanlış olur.
 baslik "üretilmiş dosyalar güncel mi"
 "$PY" scripts/super_toto_frontend.py --kontrol
