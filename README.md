@@ -503,6 +503,8 @@ Bugün `match_conflicts` tam olarak bunu yakalar. Vaka analizi:
 | `/` | **Formül** — motorun tamamı |
 | `/istatistik` | Sezon dağılımı, bantlar, oran kartı, karar destek tabloları, 41 hafta |
 | `/istatistik/<hafta>` | Tek hafta detayı + "bu haftayı formüle gönder" |
+| `/pazarlar` | **1X2 dışı pazarlar** — alt/üst 2,5 · Asya handikabı, ölçülmüş kalibrasyonlarıyla |
+| `/takimlar` | **Takım gücü** — küçültülmüş; her satırda maç sayısı, küçültme oranı ve %95 aralık |
 | `/istatistik/geri-test` | **Geri test** — strateji, eşik taraması, hold-out |
 | `/saglik` | Değişmezler — kategori kategori, süre ve açıklamalarıyla |
 
@@ -777,6 +779,7 @@ backend/
     tahmin.py          TAHMİN: yaklaşan maçlar + ölçülmüş isabet = /api/tahmin
     pazar.py           1X2 DIŞI: alt/üst 2,5 + Asya handikabı = /api/pazar
     getiri.py          HAVUZ: müşterek beklenen değer — HESAP, arayüze ÇIKMAZ
+    takim_gucu.py      TAKIM: kucultulmus takim gucu = /api/takimlar
     artefakt.py        Egitilmis modelin diske yazimi + bayatlik denetimi
     benzer.py          "Bu oranda geçmişte ne oldu" = /api/benzer
     kalibrasyon.py     ÖLÇÜM: izotonik düzeltme piyasayı geçiyor mu
@@ -804,7 +807,7 @@ backend/
     api_sozlesme.py           API sözleşmesini üretir/denetler (--kontrol: CI kapısı)
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/
-  tests/               pytest (46 dosya → 1.453 test; §9'da katman dökümü)
+  tests/               pytest (47 dosya → 1.474 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -988,8 +991,8 @@ altı adımdan üçünü koşuyordu — yani "OK" demesi "CI geçer" demek deği
 Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant'lar, CLI (Bayes preset
 dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri test,
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
-yeniden kalibrasyon ve eğitim korpusu. **46 test dosyası, parametrizasyonla
-1.453 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+yeniden kalibrasyon ve eğitim korpusu. **47 test dosyası, parametrizasyonla
+1.474 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
@@ -1007,6 +1010,7 @@ karşı denetler):
 | Ortak gövde | `ortak` | 25 |
 | Havuz / beklenen değer | `getiri` | 72 |
 | Model kalıcılığı | `artefakt` | 24 |
+| Takım gücü | `takim_gucu` | 21 |
 | Belgeler | `belgeler` | 5 |
 
 İki test bilerek **ağa çıkmaz**: `test_snapshot_iddaa.py` gerçek bültenden alınmış
@@ -1017,7 +1021,7 @@ ayrıştırmanın doğruluğu ise arşivin tamamının dayandığı şey.
 
 ```bash
 cd frontend
-npm run check                # eslint + tsc + saf mantık ve sözleşme (49 vaka)
+npm run check                # eslint + tsc + saf mantık ve sözleşme (51 vaka)
 npm run lint                 # yalnızca eslint
 npm run build                # üretim derlemesi
 ```

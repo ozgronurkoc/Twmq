@@ -11,6 +11,7 @@ import type {
   PazarResponse,
   StatsResponse,
   TahminResponse,
+  TakimlarResponse,
   WeekDetail,
 } from "./types";
 import { SEMBOLLER } from "./types";
@@ -208,6 +209,21 @@ export function getPazar(
 ) {
   const qs = arindirma ? `?arindirma=${arindirma}` : "";
   return istek<PazarResponse>(`/api/pazar${qs}`, { signal });
+}
+
+export function getTakimlar(
+  lig?: string,
+  sezon?: string,
+  signal?: AbortSignal,
+) {
+  const q = new URLSearchParams();
+  if (lig) q.set("lig", lig);
+  if (sezon) q.set("sezon", sezon);
+  const qs = q.toString();
+  return istek<TakimlarResponse>(
+    `/api/takimlar${qs ? `?${qs}` : ""}`,
+    { signal },
+  );
 }
 
 export function getTahmin(

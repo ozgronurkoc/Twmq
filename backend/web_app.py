@@ -68,7 +68,12 @@ from spor_toto.meta import (
     meta_payload,
 )
 from spor_toto.odds import week_1x2
-from spor_toto.payloads import backtest_payload, pazar_payload, stats_payload
+from spor_toto.payloads import (
+    backtest_payload,
+    pazar_payload,
+    stats_payload,
+    takimlar_payload,
+)
 from spor_toto.report import basliklar
 
 logger = logging.getLogger(__name__)
@@ -661,6 +666,23 @@ def api_pazar():
         return jsonify(pazar_payload(yontem))
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
+
+
+@app.route("/api/takimlar", methods=["GET"])
+def api_takimlar():
+    """
+    Takim bazli istatistik — KUCULTULMUS.
+
+    §7 uzun sure "takim bazli istatistik yok" diyordu; teshis dogruydu
+    (216 takim, cogu az macli) ama care yanlisti. Ampirik Bayes kucultmesi
+    az macli takimi otomatik olarak lig ortalamasina ceker ve `kucultme`
+    alani sayinin ne kadarinin takimin KENDI verisi oldugunu soyler.
+
+    `?lig=` ciktiyi suzer (hesap degismez), `?sezon=` girdiyi suzer
+    (sayilar degisir, `n` duser, kucultme artar).
+    """
+    return jsonify(takimlar_payload(request.args.get("lig") or None,
+                                    request.args.get("sezon") or None))
 
 
 @app.route("/api/stats/<int:week>", methods=["GET"])

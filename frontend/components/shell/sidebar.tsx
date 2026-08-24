@@ -13,6 +13,7 @@ import {
   Scale,
   Target,
   Trophy,
+  Users,
   Zap,
 } from "lucide-react";
 
@@ -70,6 +71,12 @@ const GRUPLAR: NavGroup[] = [
         label: "Pazarlar",
         hint: "Alt/üst 2,5 · Asya handikabı",
         icon: <Scale size={17} />,
+      },
+      {
+        href: "/takimlar",
+        label: "Takımlar",
+        hint: "Küçültülmüş takım gücü",
+        icon: <Users size={17} />,
       },
       {
         href: "/istatistik/geri-test",

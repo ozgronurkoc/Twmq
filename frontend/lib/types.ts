@@ -1104,6 +1104,58 @@ export interface PazarOzeti {
   cizgi_tipleri?: Record<string, number>;
 }
 
+/* ─── Takım bazlı istatistik (`/api/takimlar`) ─────────────────────────── */
+
+/**
+ * Küçültülmüş bir ölçü. **`n` ve `kucultme` olmadan okunamaz** — ikisi
+ * olmadan 5 maçlık bir takımın sayısı 200 maçlıkla aynı görünür ve
+ * `ISTATISTIK_YOL_HARITASI.md` §7'nin *"güvenilir görünür ama gürültüdür"*
+ * itirazı aynen geri gelir.
+ */
+export interface KucultulmusOlcu {
+  /** Takımın kendi ham ortalaması — küçültme uygulanmadan. */
+  ham: number;
+  n: number;
+  /** Gösterilen sayı: lig ortalamasına doğru çekilmiş tahmin. */
+  kucultulmus: number;
+  /**
+   * `B ∈ [0, 1]` — sayının ne kadarının takımın **kendi** verisi olduğu.
+   * 1 = tamamen kendi, 0 = tamamen lig ortalaması.
+   */
+  kucultme: number;
+  /** %95 aralık — **küçültülmüş** tahminin aralığı, ham ortalamanın değil. */
+  alt: number;
+  ust: number;
+  lig_ortalamasi: number;
+}
+
+export interface TakimSatiri {
+  takim: string;
+  n: number;
+  /** Maç başına puan (3/1/0). */
+  puan: KucultulmusOlcu;
+  gol_at: KucultulmusOlcu;
+  gol_ye: KucultulmusOlcu;
+}
+
+export interface TakimLigi {
+  lig: string;
+  takim_sayisi: number;
+  /** `false` ise ligde küçültme için yeterli takım yok ve `kucultme = 1`. */
+  kucultme_yapildi: boolean;
+  takimlar: TakimSatiri[];
+}
+
+export interface TakimlarResponse {
+  sezon: string | null;
+  ligler: TakimLigi[];
+  olculer: { alan: string; aciklama: string }[];
+  en_az_mac: number;
+  en_az_takim: number;
+  /** Sayının nasıl okunacağı — arayüzde görünür durur, katlanmaz. */
+  kural: string;
+}
+
 export interface PazarResponse {
   arindirma: string;
   n_mac: number;

@@ -118,6 +118,7 @@ spor_toto/evaluate.py  ◄── spor_toto/predict.py     (sözleşme + 3 refera
 | Tahmin | `backend/spor_toto/yigin.py` | — | Kat dışı yığınlama (Faz 2.4): sezon katlarıyla üretilmiş olasılıklar üzerinde multinom logit üst-öğrenici; taban başına tek ağırlık |
 | Tahmin | `backend/spor_toto/kalibre.py` | — | Venn-Abers (Faz 2.3): kendi PAV'ımız üzerine indüktif IVAP, sezon bazlı kalibrasyon bölmesi, olasılık **aralığı** |
 | Havuz | `backend/spor_toto/getiri.py` | — | Müşterek beklenen değer (Faz 4.2): `E[1/(1+W)]` kapalı formu, kalabalık kolonu modeli, duyarlılık eğrileri — **arayüze çıkmaz**, sayı ölçülmemiştir |
+| Takım | `backend/spor_toto/takim_gucu.py` | `/api/takimlar` | Küçültülmüş takım gücü (Faz 4.3): ampirik Bayes, lig içinde; her satırda `n`, `kucultme` ve %95 aralık |
 | Altyapı | `backend/spor_toto/artefakt.py` | — | Model kalıcılığı (Faz 0.3): eğitilmiş modelin JSON zarfı (korpus sha256 + eğitim tarihi + sürüm); bayatlık `health`te kırmızı (§2.5) |
 | **Ürün** | `backend/spor_toto/tahmin.py` | — | **Tahmin ürünü (C2)**: yaklaşan maça olasılık + ölçülmüş isabet |
 | Üretim | `backend/scripts/build_fixtures.py` | — | Yaklaşan maçlar ve oranları (football-data `fixtures.csv`) |
@@ -140,7 +141,7 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/app/super-toto/page.tsx` · `components/super-toto/haftalar.tsx` · `lib/super-toto.ts` | Sezonun hafta şeridi; `?hafta=N` adreste durur |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **1.453 test**; **82'si** istatistik katmanına (`history` `odds` `backtest`
+paketi toplam **1.474 test**; **82'si** istatistik katmanına (`history` `odds` `backtest`
 `api_stats` `api_backtest` `snapshot_iddaa`), **479'u** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre`). Dosya adlarıyla sayılıdır ki tablo elle bakım gerektirmesin —
@@ -2473,6 +2474,82 @@ için ≈71 ikramiyeli hafta gerektiğini ölçtü; elde **1** var.
     python -m spor_toto.getiri
     python -m spor_toto.getiri --kalabalik favori
 
+### 3.35 Takım bazlı istatistik (Faz 4.3) — yasak yerine bir katsayı
+
+§7 uzun süre şunu yazıyordu:
+
+> *"Takım bazlı istatistik | 216 takım, Süper Lig takımları bile 32 maç.
+> Çıkacak sayı güvenilir görünür ama gürültüdür"*
+
+**Teşhis doğruydu, çare yanlıştı.** Az örnekli bir ortalamanın gürültülü
+olması onu yasaklamayı değil, *ne kadarının gürültü olduğunu göstermeyi*
+gerektirir. Ampirik Bayes küçültmesi (James–Stein) tam bunu yapar:
+
+    x̂_t = μ_L + B_t · (x_t − μ_L),      B_t = τ² / (τ² + σ²/n_t)
+
+`B_t` sayının **ne kadarının takımın kendi verisi** olduğudur. Yasak
+yerine bir katsayı — ve o katsayı arayüzde bir çubukla **görünür**.
+
+#### Üç karar, üçü de gerekçeli
+
+**Küçültme lig içinde.** 22 lig aynı havuza konsaydı Süper Lig'in bir
+takımı Belçika ikinci liginin ortalamasına çekilir, ligler arası gerçek
+güç farkı gürültü sayılıp silinirdi. `τ²` de lig içinde kestirilir:
+takımlar arası yayılım liglere göre değişir.
+
+**`τ̂² = max(0, Var(x_t) − ort(σ²/n_t))`.** `max(0, …)` şart: gözlenen
+yayılım gürültünün altına düşerse *"gerçek takım farkı yok"* demektir ve
+her takım lig ortalamasıdır. Negatif bir `τ²` küçültmeyi **tersine**
+çevirirdi — tahmin ortalamanın öbür yanına geçerdi. Bekçisi
+`test_gercek_fark_yoksa_hepsi_lig_ortalamasi`.
+
+**Puan ölçeği 3/1/0.** `takim._PUAN` bilerek ±1/0 kullanıyor çünkü orada
+soru *üstünlük*tü (§3.29). Burada soru **başarı** ve okurun beklediği ölçek
+lig tablosununkidir. Aynı projede iki ölçek olması bir tutarsızlık değil,
+iki ayrı sorunun iki ayrı cevabı.
+
+#### Ölçülen — 31.103 maç · 22 lig · 604 takım
+
+| | değer |
+|---|---:|
+| medyan maç sayısı | 108 |
+| ortalama küçültme `B` | **0,854** |
+| ortalama %95 aralık genişliği (puan) | 0,509 |
+
+Küçültmenin en çok konuştuğu satırlar — hepsi az maçlı takımlar:
+
+| lig | takım | n | ham | küçültülmüş | B |
+|---|---|---:|---:|---:|---:|
+| E3 | Scunthorpe | 46 | 0,565 | **0,875** | 0,61 |
+| SC3 | Kelty Hearts | 36 | 2,250 | **1,945** | 0,65 |
+| I2 | Pordenone | 38 | 0,474 | **0,738** | 0,69 |
+
+Scunthorpe'un ham 0,565'i, 46 maçta güvenilir bir sayı değil; küçültme onu
+lig ortalamasına doğru 0,875'e çekiyor ve aralığı [0,58, 1,17] yazıyor.
+**Yasak bu satırı hiç göstermezdi; küçültme onu ne kadar bilmediğimizle
+birlikte gösteriyor.**
+
+`?sezon=` verildiğinde `n` düşer ve sistem **kendiliğinden temkinli
+olur**: tek sezonda (2024-25, 397 takım) ortalama `B` 0,854'ten **0,697**'e
+iner, ortalama aralık 0,509'dan **0,690**'a genişler. Bu, doğru davranışın
+kod hâlidir — daha az veriye daha az güven, elle ayarlanmadan.
+
+#### Sınır, kayda geçiyor
+
+`τ²` momentler yöntemiyle kestiriliyor ve **kendi belirsizliği aralığa
+dahil değil**; az takımlı liglerde gerçek aralık buradakinden geniştir.
+Tam Bayesçi bir hiyerarşi bunu kapatırdı ama bir MCMC bağımlılığı getirir
+ve gösterilen sayının okunuşunu değiştirmezdi.
+
+İkinci sınır: sezonlar varsayılan olarak **havuzlanır**, yani sayı *"bu
+kulüp korpus dönemi boyunca ne yaptı"*dır, bugünkü formu değil. Anlık
+gidişat zaten `elo` ve `takim.seri_tablosu` tarafından taşınıyor — ve ikisi
+de piyasayı geçmedi (§3.27, §3.29). Buradaki soru başka: *"az maçlı bir
+takımın sayısına ne kadar güvenilir?"*
+
+    python -m spor_toto.takim_gucu --lig T1
+    python -m spor_toto.takim_gucu --lig T1 --sezon 2425
+
 ## 4. Sayfada bugün ne var
 
 **`/istatistik`** — sezon dağılımı (en sık sonuç + pay çubuğu) · 5 sayı kutusu (sembol
@@ -2606,6 +2683,7 @@ ve karşılıkları: kupon seti 0,5747 → **0,5740**, korpus 0,5940 → **0,593
 | **Yığınlama (§3.32)** | 31.103 maç · kat dışı 31.103 | **Serinin ilk negatif nokta tahmini** ama geçmedi: −0,000137 [−0,000402, +0,000148]. Ağırlıklar sebebini söylüyor — piyasa +0,5307, kademe +0,3242, agac +0,2347 (**üçü de piyasa çıpalı**, toplamları 1,09) ve piyasadan bağımsız tek taban Dixon-Coles **−0,0693**. Yeni bilgi değil, aynı bilginin farklı paketlenmesi |
 | **LOFO + Venn-Abers (§3.33)** | 31.103 maç · 4 sezon katı | **LOFO: hiçbir özellik taşımıyor**, onun beşi net negatif — en zararlısı `ayrisma` (−0,000159), ve `elo_farki` (−0,000042) ile `h2h_farki` (−0,000065) de negatif. **Venn-Abers geçmedi** (+0,000264) ama aralık yeni bir sayı verdi: ortalama genişlik **0,00472** — piyasanın olasılıkları sıkı destekleniyor, §3.23'ün bağımsız teyidi |
 | **Müşterek beklenen değer (§3.34)** | 51. hafta · 3.888 kolon · havuz varsayımı | **Ölçüm değil, hesap** — ve sonucu belirleyen tahminci değil kalabalık varsayımı: `orneklem` modelinde getiri oranı **0,156**, `favori` modelinde **0,007** — arada **22 kat**. Havuz büyüklüğü getiriyi hiç belirlemiyor (havuz ve rakip kolon birlikte ölçeklendiğinde eğri tam düz); belirleyen `p_k/q_k` oranı. Bu eksenin ihtiyacı yeni model değil, **oynanma paylarının ölçümü** |
+| **Takım bazlı istatistik (§3.35)** | 31.103 maç · 22 lig · 604 takım | **Yasak kalktı, kural kalmadı.** Ampirik Bayes küçültmesi: ortalama `B` **0,854**, ortalama %95 aralık 0,509. Tek sezona inildiğinde sistem **kendiliğinden temkinli oluyor** — `B` 0,697'ye düşüyor, aralık 0,690'a genişliyor. En çok konuşan satır Scunthorpe: 46 maçta ham 0,565 → küçültülmüş **0,875** [0,58, 1,17] |
 
 **Okuma.** Aşırı uyum modelin kapasitesinden değil örneklem küçüklüğünden geliyordu; büyük
 korpus onu kaldırdı. Ama kalan etki 0,0005–0,0015 Brier — 31 binde anlamlı, 540'ta değil ve
@@ -3302,7 +3380,7 @@ S3'e bağımlı olduğu için bugün planlanamaz; arşiv birikince yeniden değe
 
 | Fikir | Neden hayır |
 |---|---|
-| Takım bazlı istatistik | 216 takım, Süper Lig takımları bile 32 maç. Çıkacak sayı güvenilir görünür ama gürültüdür |
+| ~~Takım bazlı istatistik~~ | **Kalktı (§3.35).** Teşhis doğruydu, çare yanlıştı: az örnekli bir ortalamanın gürültülü olması onu yasaklamayı değil, **ne kadarının gürültü olduğunu göstermeyi** gerektirir. Ampirik Bayes küçültmesi az maçlı takımı otomatik olarak lig ortalamasına çeker ve `kucultme` alanı sayının ne kadarının takımın kendi verisi olduğunu söyler. Değişmeyen kural yerinde: `n`, `kucultme` ve %95 aralık sayıdan ayrılamaz |
 | Ölçülmemiş tahmincinin arayüze çıkması | Amaç tahmin olsa da isabeti hold-out ile ölçülmemiş hiçbir tahminci sayfaya çıkmaz. Beraberlik profili buna örnektir: sinyal var (%14 → %33) ama zayıf ve tam monoton değil (§3.6) — girdi olarak kullanılır, tek başına tahminci olarak sunulmaz |
 | ~~Diğer pazarların arayüze çıkması~~ | **Kalktı (§3.31).** Bu bir ürün kararıydı, bir ölçüm sonucu değil. Alt/üst 2,5 ve Asya handikabı artık `/api/pazar` ve `/pazarlar`da — **ölçülmüş kalibrasyonlarıyla birlikte**. Değişmeyen kural yerinde: ölçüsüz sayı çıkmaz |
 | ~~İkramiye / beklenen değer hesabı~~ | **Kalktı (§3.34).** `getiri.py` müşterek beklenen değeri kapalı formda hesaplıyor. Kalkan şey *hesabın yapılmaması*ydı; kalkmayan şey **sayının arayüze çıkmaması** — havuz payı, komisyon ve kalabalık modeli varsayım, ölçüm için ≈71 ikramiyeli hafta gerekiyor ve elde 1 var (§6.3b) |
@@ -3355,7 +3433,7 @@ python -m spor_toto.disari                 # A3: piyasa dışı özellikler
 python -m spor_toto.tahmin                 # ÜRÜN: yaklaşan maçlara olasılık
 
 # Denetim
-pytest -q                                  # 1.453 test (82'si bu katman, 479'u tahmin)
+pytest -q                                  # 1.474 test (82'si bu katman, 479'u tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out

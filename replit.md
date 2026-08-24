@@ -113,6 +113,9 @@ Katman katman:
 - **Ölçüm araçları** (yalnızca `python -m spor_toto.<x>`, arayüze çıkmaz) —
   `cizgi.py` (A1) · `bahisci.py` (A2) · `disari.py` (A3) · `kalibrasyon.py` ·
   `getiri.py` (müşterek beklenen değer — hesap var, **ölçüm yok**; §3.34)
+- **Takım** — `takim_gucu.py` (`/api/takimlar`): ampirik Bayes kucultmesi,
+  lig icinde; her satirda `n`, `kucultme` ve %95 aralik. §7'nin "takim bazli
+  istatistik yok" yasagi buradan kalkti (§3.35)
 - **Altyapı** — `artefakt.py` (egitilmis modelin JSON zarfi: korpus sha256 +
   egitim tarihi + surum; bayatlik `health`te KIRMIZI — `--yaz` ile uretilir,
   surumlenmez)
@@ -158,7 +161,7 @@ yazmazlar). Ayrıntı: `docs/VERI_TOPLAMA_VE_ISLEME.md`.
 ```bash
 cd backend
 python -m pytest -m "not slow" -q   # hızlı süit
-python -m pytest                    # tamamı (1.453 test, ILP dahil)
+python -m pytest                    # tamamı (1.474 test, ILP dahil)
 python -m pytest -n0 tests/test_egitim.py   # tek çekirdek (hata ayıklarken)
 cd .. && bash scripts/check.sh      # TEK kapı; CI de bunu çağırır
 ```

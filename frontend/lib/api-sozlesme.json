@@ -1463,6 +1463,58 @@
     }
    ]
   },
+  "GET /api/takimlar": {
+   "en_az_mac": "int",
+   "en_az_takim": "int",
+   "kural": "str",
+   "ligler": [
+    {
+     "kucultme_yapildi": "bool",
+     "lig": "str",
+     "takim_sayisi": "int",
+     "takimlar": [
+      {
+       "gol_at": {
+        "alt": "float",
+        "ham": "float",
+        "kucultme": "float",
+        "kucultulmus": "float",
+        "lig_ortalamasi": "float",
+        "n": "int",
+        "ust": "float"
+       },
+       "gol_ye": {
+        "alt": "float",
+        "ham": "float",
+        "kucultme": "float",
+        "kucultulmus": "float",
+        "lig_ortalamasi": "float",
+        "n": "int",
+        "ust": "float"
+       },
+       "n": "int",
+       "puan": {
+        "alt": "float",
+        "ham": "float",
+        "kucultme": "float",
+        "kucultulmus": "float",
+        "lig_ortalamasi": "float",
+        "n": "int",
+        "ust": "float"
+       },
+       "takim": "str"
+      }
+     ]
+    }
+   ],
+   "olculer": [
+    {
+     "aciklama": "str",
+     "alan": "str"
+    }
+   ],
+   "sezon": "null"
+  },
   "GET /health": {
    "ornek": {
     "baslangic": "str",
