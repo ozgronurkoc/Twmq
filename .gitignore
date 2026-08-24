@@ -40,3 +40,19 @@ backend/data/egitim/_kaynak/
 # Ham/uretilmis ciktiyi versiyonlamama kurali diger butun boru hatlarinda
 # zaten uygulaniyor (odds, iddaa, egitim `_kaynak/`); bu tek istisnaydi.
 backend/data/super_toto/**/*.html
+
+# Egitilmis model artefaktlari (`python -m spor_toto.artefakt --yaz`).
+# Turetilmis cikti: korpustan uretilir, SURUMLENMEZ. Bayat kalirsa
+# `python -m spor_toto.health` kirmizi gosterir.
+backend/data/artefakt/
+
+# Avrupa fiksturu ve sehir tablosu: TURETILMIS CSV + rapor SURUMLENIR
+# (kaynak GitHub'da ve zamanla degisebilir; olculen sayilar bu dosyalara
+# dayaniyor), ham kaynak kopyasi uretilir. Yeniden olusturmak icin:
+# python scripts/build_avrupa.py · python scripts/build_sehir.py
+backend/data/avrupa/_kaynak/
+
+# Olcum kosum defteri (`--kaydet`). Yerel bir defterdir: bir sayiyi
+# savunmak gerektiginde bakilir, paylasilmaz. Surumlenseydi her olcum
+# depoyu buyutur ve depo bir veri ambarina donerdi.
+backend/data/kosumlar/

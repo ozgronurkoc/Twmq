@@ -18,12 +18,14 @@ import pytest
 from spor_toto.evaluate import (
     AZ_HAFTA,
     BOOTSTRAP_TOHUM,
+    EGRI_KESIRLERI,
     bootstrap_farki,
     brier,
     degerlendir,
     hafta_disarida_birak,
     karsilastir,
     log_kaybi,
+    ogrenme_egrisi,
     olculebilir_haftalar,
 )
 from spor_toto.history import MATCH_COUNT, SYMBOLS
@@ -324,3 +326,82 @@ def test_cok_dar_aralik_gecmis_sayilir():
     assert bool(f["ham_ust"] < 0) is True
     # Eski kural bu adayı "geçmedi" sayardı:
     assert bool(f["ust"] < 0) is False
+
+
+# ─── öğrenme eğrisi ───────────────────────────────────────────────────────
+
+def _egri_kesiti(n: int = 24):
+    """Eğri için yeterli hafta — kesirlerin ayrışabilmesi lazım."""
+    import random
+
+    rnd = random.Random(4242)
+    return [_girdi(i + 1, "".join(rnd.choice(SYMBOLS) for _ in range(MATCH_COUNT)))
+            for i in range(n)]
+
+
+def test_ogrenmeyen_tahmincide_egri_duz():
+    """**Asıl bekçi.** `piyasa` hiçbir şey öğrenmez; eğrisi düz olmalı.
+
+    Eğri düz çıkmıyorsa alt örnekleme *ölçüm* setine dokunuyor demektir —
+    yani eğitim/test ayrımı sızdırıyordur. Bu test o sızıntıyı yakalar ve
+    hiçbir sayı bilgisi gerektirmez: `piyasa` için eğitim büyüklüğünün
+    sonuca etkisi tanım gereği sıfırdır.
+    """
+    e = ogrenme_egrisi(PiyasaTahminci, _egri_kesiti())
+    brierler = {n["brier"] for n in e["noktalar"]}
+    assert len(brierler) == 1, f"ogrenmeyen tahminci egrisi duz degil: {brierler}"
+    assert e["toplam_inis"] == 0.0
+
+
+def test_egri_her_kesir_icin_nokta_uretir():
+    e = ogrenme_egrisi(PiyasaTahminci, _egri_kesiti())
+    assert [n["kesir"] for n in e["noktalar"]] == list(EGRI_KESIRLERI)
+    for n in e["noktalar"]:
+        assert n["egitim_hafta"] >= 1
+        assert n["n_mac"] > 0
+
+
+def test_egri_egitim_buyuklugu_kesirle_artar():
+    e = ogrenme_egrisi(PiyasaTahminci, _egri_kesiti())
+    boyutlar = [n["egitim_hafta"] for n in e["noktalar"]]
+    assert boyutlar == sorted(boyutlar)
+    assert boyutlar[0] < boyutlar[-1]
+
+
+def test_egri_tam_kesirde_butun_egitimi_kullanir():
+    """`kesir=1.0` alt örneklememeli — tam eğitim setiyle aynı sonucu vermeli."""
+    haftalar = _egri_kesiti()
+    e = ogrenme_egrisi(SezonSabitiTahminci, haftalar)
+    son = e["noktalar"][-1]
+    tam = degerlendir(SezonSabitiTahminci, haftalar)
+    assert son["brier"] == pytest.approx(tam["brier"], abs=5e-5)
+    assert son["egitim_hafta"] == len(haftalar) - 1
+
+
+def test_egri_deterministik():
+    """Aynı tohum aynı eğriyi vermeli; yoksa 'ölçtük' demenin anlamı yok."""
+    haftalar = _egri_kesiti()
+    a = ogrenme_egrisi(SezonSabitiTahminci, haftalar)
+    b = ogrenme_egrisi(SezonSabitiTahminci, haftalar)
+    assert a["noktalar"] == b["noktalar"]
+
+
+def test_egri_tohum_degisince_degisir():
+    """Farklı tohum farklı alt küme seçmeli — aksi halde örnekleme ölüdür."""
+    haftalar = _egri_kesiti()
+    a = ogrenme_egrisi(SezonSabitiTahminci, haftalar)
+    b = ogrenme_egrisi(SezonSabitiTahminci, haftalar, tohum=999)
+    kucuk_a = [n["brier"] for n in a["noktalar"][:2]]
+    kucuk_b = [n["brier"] for n in b["noktalar"][:2]]
+    assert kucuk_a != kucuk_b
+
+
+def test_egri_grup_olcusunu_bildirir():
+    from spor_toto.evaluate import sezon_anahtari
+
+    haftalar = _egri_kesiti()
+    for h in haftalar:
+        h["sezon"] = "2425" if h["week"] <= 12 else "2324"
+    e = ogrenme_egrisi(SezonSabitiTahminci, haftalar, grup=sezon_anahtari)
+    assert e["grup_olcusu"] == "sezon"
+    assert e["n_grup"] == 2

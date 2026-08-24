@@ -1057,3 +1057,110 @@ export interface TahminResponse {
   uyarilar: TahminUyarisi[];
   bos_sebep: string | null;
 }
+
+/* ─── 1X2 dışı pazarlar (`/api/pazar`) ─────────────────────────────────── */
+
+/**
+ * Bir kalibrasyon bandı. `lo`/`hi` **eksene göre** okunur: alt/üst tarafında
+ * olasılık (`0.35`–`0.45` gibi), handikap tarafında çizgi büyüklüğü
+ * (`0.30`–`0.60` gibi). Ayrımı `PazarOzeti.bant_ekseni` söyler.
+ */
+export interface PazarBandi {
+  lo: number;
+  hi: number;
+  n: number;
+  /** Piyasanın (marj arındırılmış) dediği ortalama. */
+  piyasa: number;
+  /** Gerçekleşen oran — handikapta ortalama **getiri**. */
+  gercek: number;
+  fark: number;
+  ga_alt: number;
+  ga_ust: number;
+  piyasa_ga_icinde: boolean;
+  /** Yalnızca handikapta: ortalamanın standart hatası. */
+  se?: number;
+}
+
+export interface PazarOzeti {
+  n: number;
+  kapsama: number;
+  marj: number | null;
+  /**
+   * Alt/üstte dolu, handikapta **null** — ve bu bir eksiklik değil bir
+   * tanım: çizgilerin %53'ü çeyrek, sonuç ikili değil kesirli bir getiri
+   * ve kesirli bir sonuca karşı Brier düzgün bir puanlama kuralı değil.
+   * Sebep `brier_yok_sebep` alanında yazılı.
+   */
+  brier: number | null;
+  brier_yok_sebep?: string;
+  /** Bantların hangi eksende dilimlendiği. */
+  bant_ekseni: "olasilik" | "cizgi";
+  bantlar: PazarBandi[];
+  sapan_bant: number;
+  /** Yalnızca alt/üstte: üst gelen maçların oranı. */
+  ust_orani?: number;
+  /** Yalnızca handikapta: ortalama getiri ve çizgi tipi dağılımı. */
+  ortalama_getiri?: number;
+  cizgi_tipleri?: Record<string, number>;
+}
+
+/* ─── Takım bazlı istatistik (`/api/takimlar`) ─────────────────────────── */
+
+/**
+ * Küçültülmüş bir ölçü. **`n` ve `kucultme` olmadan okunamaz** — ikisi
+ * olmadan 5 maçlık bir takımın sayısı 200 maçlıkla aynı görünür ve
+ * `ISTATISTIK_YOL_HARITASI.md` §7'nin *"güvenilir görünür ama gürültüdür"*
+ * itirazı aynen geri gelir.
+ */
+export interface KucultulmusOlcu {
+  /** Takımın kendi ham ortalaması — küçültme uygulanmadan. */
+  ham: number;
+  n: number;
+  /** Gösterilen sayı: lig ortalamasına doğru çekilmiş tahmin. */
+  kucultulmus: number;
+  /**
+   * `B ∈ [0, 1]` — sayının ne kadarının takımın **kendi** verisi olduğu.
+   * 1 = tamamen kendi, 0 = tamamen lig ortalaması.
+   */
+  kucultme: number;
+  /** %95 aralık — **küçültülmüş** tahminin aralığı, ham ortalamanın değil. */
+  alt: number;
+  ust: number;
+  lig_ortalamasi: number;
+}
+
+export interface TakimSatiri {
+  takim: string;
+  n: number;
+  /** Maç başına puan (3/1/0). */
+  puan: KucultulmusOlcu;
+  gol_at: KucultulmusOlcu;
+  gol_ye: KucultulmusOlcu;
+}
+
+export interface TakimLigi {
+  lig: string;
+  takim_sayisi: number;
+  /** `false` ise ligde küçültme için yeterli takım yok ve `kucultme = 1`. */
+  kucultme_yapildi: boolean;
+  takimlar: TakimSatiri[];
+}
+
+export interface TakimlarResponse {
+  sezon: string | null;
+  ligler: TakimLigi[];
+  olculer: { alan: string; aciklama: string }[];
+  en_az_mac: number;
+  en_az_takim: number;
+  /** Sayının nasıl okunacağı — arayüzde görünür durur, katlanmaz. */
+  kural: string;
+}
+
+export interface PazarResponse {
+  arindirma: string;
+  n_mac: number;
+  alt_ust: PazarOzeti;
+  handikap: PazarOzeti;
+  /** Kesitin sınırı — arayüzde görünür durur, katlanmaz. */
+  sinir: string;
+}

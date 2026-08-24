@@ -11,8 +11,16 @@
    koşar ve eşleştirilmiş bootstrap aralığını verir. Geçme ölçütü projenin
    geri kalanıyla aynıdır: aralığın **tamamı** sıfırın altında olmalı.
 
+3. **Ayrışım.** Brier'i Murphy'nin dört terimine böler
+   (`ortak.brier_ayrisimi`) ve *neden* böyle çıktığını söyler. Eğri
+   "piyasa sözünü tutuyor mu" sorusuna bant bant cevap verir; ayrışım aynı
+   cevabı **tek sayıya** indirger ve yanına ikinci bir sayı koyar:
+   çözünürlük. İkisi ayrı sorudur ve tek bir Brier değeri onları ayırt
+   ettirmez.
+
     python -m spor_toto.kalibrasyon
     python -m spor_toto.kalibrasyon --egri-only
+    python -m spor_toto.kalibrasyon --ayrisim
 
 UYARI: izotonik esnek bir düzelticidir. Aynı sezonda uydurulup aynı sezonda
 ölçülürse **kesin** yanıltır — bu yüzden burada tek ölçüm yolu sezon dışarıda
@@ -28,14 +36,18 @@ from typing import Any
 from .egitim import korpus_haftalari
 from .history import SYMBOLS
 from .odds import ARINDIRMA_VARSAYILAN, implied_probs
+from .ortak import OLASILIK_BANTLARI
 from .predict import PiyasaTahminci
 from .recalibrate import EN_AZ_KOVA, IzotonikTahminci
 
 #: Eğrinin bantları. Kenarlar ölçüm sonucuna bakılmadan, okunabilirlik için
 #: seçildi: uçlarda seyrek olduğu için geniş, ortada yoğun olduğu için dar.
-BANTLAR = ((0.0, 0.05), (0.05, 0.10), (0.10, 0.15), (0.15, 0.20), (0.20, 0.25),
-           (0.25, 0.30), (0.30, 0.35), (0.35, 0.40), (0.40, 0.45), (0.45, 0.50),
-           (0.50, 0.55), (0.55, 0.60), (0.60, 0.70), (0.70, 0.80), (0.80, 1.01))
+#:
+#: Tanım artık `ortak`ta. Brier ayrışımı (`ortak.brier_ayrisimi`) aynı
+#: kenarlara ihtiyaç duyuyor ve iki ayrı dizi olsaydı eğrinin söylediği ile
+#: ayrışımın söylediği sessizce ayrışırdı. Ad burada korunuyor çünkü
+#: `tests/test_kalibrasyon.py` onu buradan alıyor.
+BANTLAR = OLASILIK_BANTLARI
 
 #: Bir bandın yazılması için gereken en az nokta. Altında yüzde okunmaz.
 EN_AZ_BANT = 100
@@ -134,6 +146,41 @@ def _yaz_egri(e: dict[str, Any]) -> None:
     print(f"\nAnlamlı sapan bant: {e['sapan_bant']} / {e['toplam_bant']}")
 
 
+def _yaz_ayrisim(sonuc: dict[str, Any]) -> None:
+    """Sembol başına dört terim + sapma payı.
+
+    `sapma_payi` sütunu süs değil **okuma koşuludur**: `guvenilirlik` sonlu
+    örneklemde yukarı yanlıdır ve payla aynı mertebedeyse o sayı çoğunlukla
+    gürültüdür (bkz. `ortak.brier_ayrisimi`). Bu yüzden yan yana basılır,
+    dipnota atılmaz.
+    """
+    print(f"\nBRIER AYRIŞIMI — {sonuc['n_mac']:,} maç · {sonuc['n_hafta']} hafta")
+    for t_ in sonuc["tahminciler"]:
+        a = t_.get("ayrisim")
+        k = t_.get("karisiklik")
+        if not a:
+            continue
+        top = a["toplam"]
+        print(f"\n  {t_['ad']} — Brier {top['brier']:.4f}"
+              f"  (= güvenilirlik − çözünürlük + belirsizlik + bant içi)")
+        print(f"  {'sembol':<9}{'brier':>9}{'güvenilir':>11}{'çözünür':>10}"
+              f"{'belirsiz':>10}{'bant içi':>10}{'sapma payı':>12}{'taban':>8}")
+        for s in SYMBOLS:
+            b = a["semboller"][s]
+            print(f"  {s:<9}{b['brier']:>9.4f}{b['guvenilirlik']:>11.5f}"
+                  f"{b['cozunurluk']:>10.5f}{b['belirsizlik']:>10.5f}"
+                  f"{b['bant_ici']:>+10.5f}{b['sapma_payi']:>12.5f}"
+                  f"{b['taban_oran']:>8.3f}")
+        print(f"  {'TOPLAM':<9}{top['brier']:>9.4f}{top['guvenilirlik']:>11.5f}"
+              f"{top['cozunurluk']:>10.5f}{top['belirsizlik']:>10.5f}"
+              f"{top['bant_ici']:>+10.5f}{top['sapma_payi']:>12.5f}")
+        print(f"  özdeşlik artığı: {top['artik']:+.2e}")
+        if k:
+            print(f"  isabet {k['isabet']:.3f} · dengeli isabet "
+                  f"{k['dengeli_isabet']:.3f} · duyarlılık "
+                  + " · ".join(f"{s}={k['duyarlilik'][s]:.3f}" for s in SYMBOLS))
+
+
 def _yaz(sonuc: dict[str, Any]) -> None:  # pragma: no cover - elle kullanim
     _yaz_egri(sonuc["egri"])
     print(f"\nÖLÇÜM — sezon dışarıda bırakmalı · {sonuc['n_hafta']} hafta "
@@ -147,16 +194,22 @@ def _yaz(sonuc: dict[str, Any]) -> None:  # pragma: no cover - elle kullanim
         print(f"{t['ad']:<22}{t['brier']:>9.4f}{t['log_kaybi']:>9.4f}"
               f"{(f.get('fark') if f.get('fark') is not None else 0):>+10.4f}"
               f"{aralik:>20}  {'EVET' if t.get('gecti') else 'hayır'}")
+    _yaz_ayrisim(sonuc)
     print(f"\nSoru: {sonuc['soru']}")
 
 
 def main(argv: Sequence[str] | None = None) -> None:
+    from .kosum import belki_kaydet, cli_ekle
+
     ap = argparse.ArgumentParser()
     ap.add_argument("--egri-only", action="store_true",
                     help="yalnizca kalibrasyon egrisi (olcum kosulmaz)")
+    ap.add_argument("--ayrisim", action="store_true",
+                    help="yalnizca Brier ayrisimi (egri ve bootstrap basilmaz)")
     ap.add_argument("--arindirma", default=ARINDIRMA_VARSAYILAN)
     ap.add_argument("--kova", type=int, default=EN_AZ_KOVA)
     ap.add_argument("--json", action="store_true")
+    cli_ekle(ap)
     a = ap.parse_args(argv)
 
     if a.egri_only:
@@ -164,6 +217,11 @@ def main(argv: Sequence[str] | None = None) -> None:
         print(json.dumps(e, ensure_ascii=False, indent=1)) if a.json else _yaz_egri(e)
         return
     s = rapor(en_az_kova=a.kova, yontem=a.arindirma)
+    belki_kaydet("kalibrasyon", {k: v for k, v in s.items()
+                                 if not k.startswith("_")}, a)
+    if a.ayrisim and not a.json:
+        _yaz_ayrisim(s)
+        return
     if a.json:
         print(json.dumps({k: v for k, v in s.items() if not k.startswith("_")},
                          ensure_ascii=False, indent=1, default=str))

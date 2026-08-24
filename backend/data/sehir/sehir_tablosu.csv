@@ -1,0 +1,593 @@
+lig,ulke,takim,sehir
+B1,BEL,Anderlecht,Brussels
+B1,BEL,Antwerp,Antwerpen
+B1,BEL,Beerschot VA,Antwerpen
+B1,BEL,Cercle Brugge,Brugge
+B1,BEL,Charleroi,Charleroi
+B1,BEL,Club Brugge,Brugge
+B1,BEL,Dender,Denderleeuw
+B1,BEL,Eupen,Eupen
+B1,BEL,Genk,Genk
+B1,BEL,Gent,Gent
+B1,BEL,Kortrijk,Kortrijk
+B1,BEL,Mechelen,Mechelen
+B1,BEL,Oostende,Oostende
+B1,BEL,Oud-Heverlee Leuven,Leuven
+B1,BEL,RWD Molenbeek,Brussels
+B1,BEL,Seraing,Seraing
+B1,BEL,St Truiden,Sint-Truiden
+B1,BEL,St. Gilloise,Brussels
+B1,BEL,Standard,Liège
+B1,BEL,Waregem,Waregem
+B1,BEL,Westerlo,Westerlo
+D1,GER,Augsburg,Augsburg
+D1,GER,Bayern Munich,München
+D1,GER,Bielefeld,Bielefeld
+D1,GER,Bochum,Bochum
+D1,GER,Darmstadt,Darmstadt
+D1,GER,Dortmund,Dortmund
+D1,GER,Ein Frankfurt,Frankfurt am Main
+D1,GER,FC Koln,Köln
+D1,GER,Freiburg,Freiburg
+D1,GER,Greuther Furth,Fürth
+D1,GER,Heidenheim,Heidenheim an der Brenz
+D1,GER,Hertha,Berlin
+D1,GER,Hoffenheim,Sinsheim
+D1,GER,Holstein Kiel,Kiel
+D1,GER,Leverkusen,Leverkusen
+D1,GER,M'gladbach,Mönchengladbach
+D1,GER,Mainz,Mainz
+D1,GER,RB Leipzig,Leipzig
+D1,GER,Schalke 04,Gelsenkirchen
+D1,GER,St Pauli,Hamburg
+D1,GER,Stuttgart,Stuttgart
+D1,GER,Union Berlin,Berlin
+D1,GER,Werder Bremen,Bremen
+D1,GER,Wolfsburg,Wolfsburg
+D2,GER,Bielefeld,Bielefeld
+D2,GER,Braunschweig,Braunschweig
+D2,GER,Darmstadt,Darmstadt
+D2,GER,Dresden,Dresden
+D2,GER,Erzgebirge Aue,Aue
+D2,GER,FC Koln,Köln
+D2,GER,Fortuna Dusseldorf,Düsseldorf
+D2,GER,Greuther Furth,Fürth
+D2,GER,Hamburg,Hamburg
+D2,GER,Hannover,Hannover
+D2,GER,Hansa Rostock,Rostock
+D2,GER,Heidenheim,Heidenheim an der Brenz
+D2,GER,Hertha,Berlin
+D2,GER,Holstein Kiel,Kiel
+D2,GER,Ingolstadt,Ingolstadt
+D2,GER,Kaiserslautern,Kaiserslautern
+D2,GER,Karlsruhe,Karlsruhe
+D2,GER,Magdeburg,Magdeburg
+D2,GER,Nurnberg,Nürnberg
+D2,GER,Osnabruck,Osnabrück
+D2,GER,Paderborn,Paderborn
+D2,GER,PreuÃen MÃ¼nster,Münster
+D2,GER,Regensburg,Regensburg
+D2,GER,Sandhausen,Sandhausen
+D2,GER,Schalke 04,Gelsenkirchen
+D2,GER,St Pauli,Hamburg
+D2,GER,Ulm,Ulm
+D2,GER,Wehen,Wiesbaden
+D2,GER,Werder Bremen,Bremen
+E0,ENG,Arsenal,London
+E0,ENG,Aston Villa,Birmingham
+E0,ENG,Bournemouth,Bournemouth
+E0,ENG,Brentford,London
+E0,ENG,Brighton,Falmer
+E0,ENG,Burnley,Burnley
+E0,ENG,Chelsea,London
+E0,ENG,Crystal Palace,London
+E0,ENG,Everton,Liverpool
+E0,ENG,Fulham,London
+E0,ENG,Ipswich,Ipswich
+E0,ENG,Leeds,Leeds
+E0,ENG,Leicester,Leicester
+E0,ENG,Liverpool,Liverpool
+E0,ENG,Luton,Luton
+E0,ENG,Man City,Manchester
+E0,ENG,Man United,Manchester
+E0,ENG,Newcastle,Newcastle upon Tyne
+E0,ENG,Norwich,Norwich
+E0,ENG,Nott'm Forest,West Bridgford
+E0,ENG,Sheffield United,Sheffield
+E0,ENG,Southampton,Southampton
+E0,ENG,Tottenham,London
+E0,ENG,Watford,Watford
+E0,ENG,West Ham,London
+E0,ENG,Wolves,Wolverhampton
+E1,ENG,Barnsley,Barnsley
+E1,ENG,Birmingham,Birmingham
+E1,ENG,Blackburn,Blackburn
+E1,ENG,Blackpool,Blackpool
+E1,ENG,Bournemouth,Bournemouth
+E1,ENG,Bristol City,Bristol
+E1,ENG,Burnley,Burnley
+E1,ENG,Cardiff,Cardiff
+E1,ENG,Coventry,Coventry
+E1,ENG,Derby,Derby
+E1,ENG,Fulham,London
+E1,ENG,Huddersfield,Huddersfield
+E1,ENG,Hull,Hull
+E1,ENG,Ipswich,Ipswich
+E1,ENG,Leeds,Leeds
+E1,ENG,Leicester,Leicester
+E1,ENG,Luton,Luton
+E1,ENG,Middlesbrough,Middlesbrough
+E1,ENG,Millwall,London
+E1,ENG,Norwich,Norwich
+E1,ENG,Nott'm Forest,West Bridgford
+E1,ENG,Oxford,Oxford
+E1,ENG,Peterboro,Peterborough
+E1,ENG,Plymouth,Plymouth
+E1,ENG,Portsmouth,Portsmouth
+E1,ENG,Preston,Preston
+E1,ENG,QPR,London
+E1,ENG,Reading,Reading
+E1,ENG,Rotherham,Rotherham
+E1,ENG,Sheffield United,Sheffield
+E1,ENG,Sheffield Weds,Sheffield
+E1,ENG,Southampton,Southampton
+E1,ENG,Stoke,Stoke-on-Trent
+E1,ENG,Sunderland,Sunderland
+E1,ENG,Swansea,Swansea
+E1,ENG,Watford,Watford
+E1,ENG,West Brom,West Bromwich
+E1,ENG,Wigan,Wigan
+E2,ENG,AFC Wimbledon,London
+E2,ENG,Accrington,Accrington
+E2,ENG,Barnsley,Barnsley
+E2,ENG,Birmingham,Birmingham
+E2,ENG,Blackpool,Blackpool
+E2,ENG,Bolton,Bolton
+E2,ENG,Bristol Rvs,Bristol
+E2,ENG,Burton,Burton upon Trent
+E2,ENG,Cambridge,Cambridge
+E2,ENG,Carlisle,Carlisle
+E2,ENG,Charlton,London
+E2,ENG,Cheltenham,Cheltenham
+E2,ENG,Crawley Town,Crawley
+E2,ENG,Crewe,Crewe
+E2,ENG,Derby,Derby
+E2,ENG,Doncaster,Doncaster
+E2,ENG,Exeter,Exeter
+E2,ENG,Fleetwood Town,Fleetwood
+E2,ENG,Forest Green,Nailsworth
+E2,ENG,Gillingham,Gillingham
+E2,ENG,Huddersfield,Huddersfield
+E2,ENG,Ipswich,Ipswich
+E2,ENG,Leyton Orient,London
+E2,ENG,Lincoln,Lincoln
+E2,ENG,Mansfield,Mansfield
+E2,ENG,Milton Keynes Dons,Milton Keynes
+E2,ENG,Morecambe,Morecambe
+E2,ENG,Northampton,Northampton
+E2,ENG,Oxford,Oxford
+E2,ENG,Peterboro,Peterborough
+E2,ENG,Plymouth,Plymouth
+E2,ENG,Port Vale,Stoke-on-Trent
+E2,ENG,Portsmouth,Portsmouth
+E2,ENG,Reading,Reading
+E2,ENG,Rotherham,Rotherham
+E2,ENG,Sheffield Weds,Sheffield
+E2,ENG,Shrewsbury,Shrewsbury
+E2,ENG,Stevenage,Stevenage
+E2,ENG,Stockport,Stockport
+E2,ENG,Sunderland,Sunderland
+E2,ENG,Wigan,Wigan
+E2,ENG,Wrexham,Wrexham
+E2,ENG,Wycombe,High Wycombe
+E3,ENG,AFC Wimbledon,London
+E3,ENG,Accrington,Accrington
+E3,ENG,Barrow,Barrow-in-Furness
+E3,ENG,Bradford,Bradford
+E3,ENG,Bristol Rvs,Bristol
+E3,ENG,Bromley,London
+E3,ENG,Carlisle,Carlisle
+E3,ENG,Cheltenham,Cheltenham
+E3,ENG,Chesterfield,Chesterfield
+E3,ENG,Colchester,Colchester
+E3,ENG,Crawley Town,Crawley
+E3,ENG,Crewe,Crewe
+E3,ENG,Doncaster,Doncaster
+E3,ENG,Exeter,Exeter
+E3,ENG,Fleetwood Town,Fleetwood
+E3,ENG,Forest Green,Nailsworth
+E3,ENG,Gillingham,Gillingham
+E3,ENG,Grimsby,Cleethorpes
+E3,ENG,Harrogate,Harrogate
+E3,ENG,Hartlepool,Hartlepool
+E3,ENG,Leyton Orient,London
+E3,ENG,Mansfield,Mansfield
+E3,ENG,Milton Keynes Dons,Milton Keynes
+E3,ENG,Morecambe,Morecambe
+E3,ENG,Newport County,Newport
+E3,ENG,Northampton,Northampton
+E3,ENG,Notts County,Nottingham
+E3,ENG,Oldham,Oldham
+E3,ENG,Port Vale,Stoke-on-Trent
+E3,ENG,Rochdale,Rochdale
+E3,ENG,Salford,Salford
+E3,ENG,Scunthorpe,Scunthorpe
+E3,ENG,Stevenage,Stevenage
+E3,ENG,Stockport,Stockport
+E3,ENG,Sutton,London
+E3,ENG,Swindon,Swindon
+E3,ENG,Tranmere,Birkenhead
+E3,ENG,Walsall,Walsall
+E3,ENG,Wrexham,Wrexham
+EC,ENG,Aldershot,Aldershot
+EC,ENG,Altrincham,Altrincham
+EC,ENG,Barnet,London
+EC,ENG,Boreham Wood,Borehamwood
+EC,ENG,Boston Utd,Boston
+EC,ENG,Braintree Town,Braintree
+EC,ENG,Bromley,London
+EC,ENG,Chesterfield,Chesterfield
+EC,ENG,Dag and Red,London
+EC,ENG,Dorking,Dorking
+EC,ENG,Dover Athletic,Dover
+EC,ENG,Eastleigh,Eastleigh
+EC,ENG,Ebbsfleet,Northfleet
+EC,ENG,Forest Green,Nailsworth
+EC,ENG,Fylde,Wesham
+EC,ENG,Gateshead,Gateshead
+EC,ENG,Grimsby,Cleethorpes
+EC,ENG,Halifax,Halifax
+EC,ENG,Hartlepool,Hartlepool
+EC,ENG,Kidderminster,Kidderminster
+EC,ENG,Kings Lynn,King's Lynn
+EC,ENG,Maidenhead,Maidenhead
+EC,ENG,Maidstone,Maidstone
+EC,ENG,Notts County,Nottingham
+EC,ENG,Oldham,Oldham
+EC,ENG,Oxford City,Oxford
+EC,ENG,Rochdale,Rochdale
+EC,ENG,Scunthorpe,Scunthorpe
+EC,ENG,Solihull,Solihull
+EC,ENG,Southend,Southend-on-Sea
+EC,ENG,Stockport,Stockport
+EC,ENG,Sutton,London
+EC,ENG,Tamworth,Tamworth
+EC,ENG,Torquay,Torquay
+EC,ENG,Wealdstone,London
+EC,ENG,Weymouth,Weymouth
+EC,ENG,Woking,Woking
+EC,ENG,Wrexham,Wrexham
+EC,ENG,Yeovil,Yeovil
+EC,ENG,York,York
+F1,FRA,Ajaccio,Ajaccio
+F1,FRA,Angers,Angers
+F1,FRA,Auxerre,Auxerre
+F1,FRA,Bordeaux,Bordeaux
+F1,FRA,Brest,Brest
+F1,FRA,Clermont,Clermont
+F1,FRA,Le Havre,Le Havre
+F1,FRA,Lens,Lens
+F1,FRA,Lille,Lille
+F1,FRA,Lorient,Lorient
+F1,FRA,Lyon,Lyon
+F1,FRA,Marseille,Marseille
+F1,FRA,Metz,Metz
+F1,FRA,Monaco,Monaco
+F1,FRA,Montpellier,Montpellier
+F1,FRA,Nantes,Nantes
+F1,FRA,Nice,Nice
+F1,FRA,Paris SG,Paris
+F1,FRA,Reims,Reims
+F1,FRA,Rennes,Rennes
+F1,FRA,St Etienne,Saint-Étienne
+F1,FRA,Strasbourg,Strasbourg
+F1,FRA,Toulouse,Toulouse
+F1,FRA,Troyes,Troyes
+F2,FRA,Ajaccio,Ajaccio
+F2,FRA,Amiens,Amiens
+F2,FRA,Angers,Angers
+F2,FRA,Annecy,Annecy
+F2,FRA,Auxerre,Auxerre
+F2,FRA,Bastia,Bastia
+F2,FRA,Bordeaux,Bordeaux
+F2,FRA,Caen,Caen
+F2,FRA,Clermont,Clermont
+F2,FRA,Concarneau,Concarneau
+F2,FRA,Dijon,Dijon
+F2,FRA,Dunkerque,Dunkerque
+F2,FRA,Grenoble,Grenoble
+F2,FRA,Guingamp,Guingamp
+F2,FRA,Laval,Laval
+F2,FRA,Le Havre,Le Havre
+F2,FRA,Lorient,Lorient
+F2,FRA,Martigues,Martigues
+F2,FRA,Metz,Metz
+F2,FRA,Nancy,Nancy
+F2,FRA,Nimes,Nîmes
+F2,FRA,Niort,Niort
+F2,FRA,Paris FC,Paris
+F2,FRA,Pau FC,Pau
+F2,FRA,Quevilly Rouen,Petit-Quevilly
+F2,FRA,Red Star,Saint-Ouen
+F2,FRA,Rodez,Rodez
+F2,FRA,Sochaux,Montbéliard
+F2,FRA,St Etienne,Saint-Étienne
+F2,FRA,Toulouse,Toulouse
+F2,FRA,Troyes,Troyes
+F2,FRA,Valenciennes,Valenciennes
+G1,GRE,AEK,Athens
+G1,GRE,Apollon,Athens
+G1,GRE,Aris,Thessaloniki
+G1,GRE,Asteras Tripolis,Tripoli
+G1,GRE,Athens Kallithea,Kallithea
+G1,GRE,Atromitos,Athens
+G1,GRE,Giannina,Ioannina
+G1,GRE,Ionikos,Nikaia
+G1,GRE,Kifisia,Athens
+G1,GRE,Lamia,Lamia
+G1,GRE,Levadeiakos,Livadeia
+G1,GRE,OFI Crete,Heraklion
+G1,GRE,Olympiakos,Piraeus
+G1,GRE,PAOK,Thessaloniki
+G1,GRE,Panathinaikos,Athens
+G1,GRE,Panetolikos,Agrinio
+G1,GRE,Panserraikos,Serres
+G1,GRE,Volos NFC,Volos
+I1,ITA,Atalanta,Bergamo
+I1,ITA,Bologna,Bologna
+I1,ITA,Cagliari,Cagliari
+I1,ITA,Como,Como
+I1,ITA,Cremonese,Cremona
+I1,ITA,Empoli,Empoli
+I1,ITA,Fiorentina,Firenze
+I1,ITA,Frosinone,Frosinone
+I1,ITA,Genoa,Genova
+I1,ITA,Inter,Milano
+I1,ITA,Juventus,Torino
+I1,ITA,Lazio,Roma
+I1,ITA,Lecce,Lecce
+I1,ITA,Milan,Milano
+I1,ITA,Monza,Monza
+I1,ITA,Napoli,Napoli
+I1,ITA,Parma,Parma
+I1,ITA,Roma,Roma
+I1,ITA,Salernitana,Salerno
+I1,ITA,Sampdoria,Genova
+I1,ITA,Sassuolo,Sassuolo
+I1,ITA,Spezia,La Spezia
+I1,ITA,Torino,Torino
+I1,ITA,Udinese,Udine
+I1,ITA,Venezia,Venezia
+I1,ITA,Verona,Verona
+I2,ITA,Alessandria,Alessandria
+I2,ITA,Ascoli,Ascoli Piceno
+I2,ITA,Bari,Bari
+I2,ITA,Benevento,Benevento
+I2,ITA,Brescia,Brescia
+I2,ITA,Cagliari,Cagliari
+I2,ITA,Carrarese,Carrara
+I2,ITA,Catanzaro,Catanzaro
+I2,ITA,Cesena,Cesena
+I2,ITA,Cittadella,Cittadella
+I2,ITA,Como,Como
+I2,ITA,Cosenza,Cosenza
+I2,ITA,Cremonese,Cremona
+I2,ITA,Crotone,Crotone
+I2,ITA,FeralpiSalo,Salò
+I2,ITA,Frosinone,Frosinone
+I2,ITA,Genoa,Genova
+I2,ITA,Juve Stabia,Castellammare di Stabia
+I2,ITA,Lecce,Lecce
+I2,ITA,Lecco,Lecco
+I2,ITA,Mantova,Mantova
+I2,ITA,Modena,Modena
+I2,ITA,Monza,Monza
+I2,ITA,Palermo,Palermo
+I2,ITA,Parma,Parma
+I2,ITA,Perugia,Perugia
+I2,ITA,Pisa,Pisa
+I2,ITA,Pordenone,Pordenone
+I2,ITA,Reggiana,Reggio Emilia
+I2,ITA,Reggina,Reggio Calabria
+I2,ITA,Salernitana,Salerno
+I2,ITA,Sampdoria,Genova
+I2,ITA,Sassuolo,Sassuolo
+I2,ITA,Spal,Ferrara
+I2,ITA,Spezia,La Spezia
+I2,ITA,Sudtirol,Bolzano
+I2,ITA,Ternana,Terni
+I2,ITA,Venezia,Venezia
+I2,ITA,Vicenza,Vicenza
+N1,NED,AZ Alkmaar,Alkmaar
+N1,NED,Ajax,Amsterdam
+N1,NED,Almere City,Almere
+N1,NED,Cambuur,Leeuwarden
+N1,NED,Excelsior,Rotterdam
+N1,NED,FC Emmen,Emmen
+N1,NED,Feyenoord,Rotterdam
+N1,NED,For Sittard,Sittard
+N1,NED,Go Ahead Eagles,Deventer
+N1,NED,Groningen,Groningen
+N1,NED,Heerenveen,Heerenveen
+N1,NED,Heracles,Almelo
+N1,NED,NAC Breda,Breda
+N1,NED,Nijmegen,Nijmegen
+N1,NED,PSV Eindhoven,Eindhoven
+N1,NED,Sparta Rotterdam,Rotterdam
+N1,NED,Twente,Enschede
+N1,NED,Utrecht,Utrecht
+N1,NED,Vitesse,Arnhem
+N1,NED,Volendam,Volendam
+N1,NED,Waalwijk,Waalwijk
+N1,NED,Willem II,Tilburg
+N1,NED,Zwolle,Zwolle
+P1,POR,AVS,Vila das Aves
+P1,POR,Arouca,Arouca
+P1,POR,Belenenses,Lisboa
+P1,POR,Benfica,Lisboa
+P1,POR,Boavista,Porto
+P1,POR,Casa Pia,Lisboa
+P1,POR,Chaves,Chaves
+P1,POR,Estoril,Estoril
+P1,POR,Estrela,Amadora
+P1,POR,Famalicao,Vila Nova de Famalicão
+P1,POR,Farense,Faro
+P1,POR,Gil Vicente,Barcelos
+P1,POR,Guimaraes,Guimarães
+P1,POR,Maritimo,Funchal
+P1,POR,Moreirense,Moreira de Cónegos
+P1,POR,Nacional,Funchal
+P1,POR,Pacos Ferreira,Paços de Ferreira
+P1,POR,Portimonense,Portimão
+P1,POR,Porto,Porto
+P1,POR,Rio Ave,Vila do Conde
+P1,POR,Santa Clara,Ponta Delgada
+P1,POR,Sp Braga,Braga
+P1,POR,Sp Lisbon,Lisboa
+P1,POR,Tondela,Tondela
+P1,POR,Vizela,Vizela
+SC0,SCO,Aberdeen,Aberdeen
+SC0,SCO,Celtic,Glasgow
+SC0,SCO,Dundee,Dundee
+SC0,SCO,Dundee United,Dundee
+SC0,SCO,Hearts,Edinburgh
+SC0,SCO,Hibernian,Edinburgh
+SC0,SCO,Kilmarnock,Kilmarnock
+SC0,SCO,Livingston,Livingston
+SC0,SCO,Motherwell,Motherwell
+SC0,SCO,Rangers,Glasgow
+SC0,SCO,Ross County,Dingwall
+SC0,SCO,St Johnstone,Perth
+SC0,SCO,St Mirren,Paisley
+SC1,SCO,Airdrie Utd,Airdrie
+SC1,SCO,Arbroath,Arbroath
+SC1,SCO,Ayr,Ayr
+SC1,SCO,Cove Rangers,Aberdeen
+SC1,SCO,Dundee,Dundee
+SC1,SCO,Dundee United,Dundee
+SC1,SCO,Dunfermline,Dunfermline
+SC1,SCO,Falkirk,Falkirk
+SC1,SCO,Hamilton,Hamilton
+SC1,SCO,Inverness C,Inverness
+SC1,SCO,Kilmarnock,Kilmarnock
+SC1,SCO,Livingston,Livingston
+SC1,SCO,Morton,Greenock
+SC1,SCO,Partick,Glasgow
+SC1,SCO,Queen of Sth,Dumfries
+SC1,SCO,Queens Park,Glasgow
+SC1,SCO,Raith Rvs,Kirkcaldy
+SC2,SCO,Airdrie Utd,Airdrie
+SC2,SCO,Alloa,Alloa
+SC2,SCO,Annan Athletic,Annan
+SC2,SCO,Arbroath,Arbroath
+SC2,SCO,Clyde,Cumbernauld
+SC2,SCO,Cove Rangers,Aberdeen
+SC2,SCO,Dumbarton,Dumbarton
+SC2,SCO,Dunfermline,Dunfermline
+SC2,SCO,East Fife,Methil
+SC2,SCO,Edinburgh City,Edinburgh
+SC2,SCO,FC Edinburgh,Edinburgh
+SC2,SCO,Falkirk,Falkirk
+SC2,SCO,Hamilton,Hamilton
+SC2,SCO,Inverness C,Inverness
+SC2,SCO,Kelty Hearts,Kelty
+SC2,SCO,Montrose,Montrose
+SC2,SCO,Peterhead,Peterhead
+SC2,SCO,Queen of Sth,Dumfries
+SC2,SCO,Queens Park,Glasgow
+SC2,SCO,Stenhousemuir,Stenhousemuir
+SC2,SCO,Stirling,Stirling
+SC3,SCO,Albion Rvs,Coatbridge
+SC3,SCO,Annan Athletic,Annan
+SC3,SCO,Bonnyrigg Rose,Bonnyrigg
+SC3,SCO,Clyde,Cumbernauld
+SC3,SCO,Cowdenbeath,Cowdenbeath
+SC3,SCO,Dumbarton,Dumbarton
+SC3,SCO,East Fife,Methil
+SC3,SCO,Edinburgh City,Edinburgh
+SC3,SCO,Elgin,Elgin
+SC3,SCO,Forfar,Forfar
+SC3,SCO,Kelty Hearts,Kelty
+SC3,SCO,Peterhead,Peterhead
+SC3,SCO,Spartans,Edinburgh
+SC3,SCO,Stenhousemuir,Stenhousemuir
+SC3,SCO,Stirling,Stirling
+SC3,SCO,Stranraer,Stranraer
+SP1,ESP,Alaves,Vitoria
+SP1,ESP,Almeria,Almería
+SP1,ESP,Ath Bilbao,Bilbao
+SP1,ESP,Ath Madrid,Madrid
+SP1,ESP,Barcelona,Barcelona
+SP1,ESP,Betis,Sevilla
+SP1,ESP,Cadiz,Cádiz
+SP1,ESP,Celta,Vigo
+SP1,ESP,Elche,Elche
+SP1,ESP,Espanol,Barcelona
+SP1,ESP,Getafe,Madrid
+SP1,ESP,Girona,Gerona
+SP1,ESP,Granada,Granada
+SP1,ESP,Las Palmas,Las Palmas
+SP1,ESP,Levante,Valencia
+SP1,ESP,Mallorca,Palma de Mallorca
+SP1,ESP,Osasuna,Pamplona
+SP1,ESP,Real Madrid,Madrid
+SP1,ESP,Sevilla,Sevilla
+SP1,ESP,Sociedad,San Sebastián
+SP1,ESP,Valencia,Valencia
+SP1,ESP,Vallecano,Madrid
+SP1,ESP,Villarreal,Villarreal
+SP2,ESP,Alaves,Vitoria
+SP2,ESP,Albacete,Albacete
+SP2,ESP,Alcorcon,Alcorcón
+SP2,ESP,Almeria,Almería
+SP2,ESP,Amorebieta,Amorebieta-Etxano
+SP2,ESP,Burgos,Burgos
+SP2,ESP,Cadiz,Cádiz
+SP2,ESP,Cartagena,Cartagena
+SP2,ESP,Castellon,Castellón de la Plana
+SP2,ESP,Cordoba,Córdoba
+SP2,ESP,Eibar,Eibar
+SP2,ESP,Elche,Elche
+SP2,ESP,Eldense,Elda
+SP2,ESP,Espanol,Barcelona
+SP2,ESP,Ferrol,Ferrol
+SP2,ESP,Fuenlabrada,Fuenlabrada
+SP2,ESP,Girona,Gerona
+SP2,ESP,Granada,Granada
+SP2,ESP,Huesca,Huesca
+SP2,ESP,La Coruna,La Coruña
+SP2,ESP,Las Palmas,Las Palmas
+SP2,ESP,Levante,Valencia
+SP2,ESP,Malaga,Málaga
+SP2,ESP,Mirandes,Miranda de Ebro
+SP2,ESP,Santander,Santander
+SP2,ESP,Sp Gijon,Gijón
+SP2,ESP,Tenerife,Santa Cruz de Tenerife
+SP2,ESP,Zaragoza,Zaragoza
+T1,TUR,Ad. Demirspor,Adana
+T1,TUR,Alanyaspor,Alanya
+T1,TUR,Altay,İzmir
+T1,TUR,Ankaragucu,Ankara
+T1,TUR,Antalyaspor,Antalya
+T1,TUR,Besiktas,İstanbul
+T1,TUR,Bodrumspor,Bodrum
+T1,TUR,Buyuksehyr,İstanbul
+T1,TUR,Eyupspor,Istanbul
+T1,TUR,Fenerbahce,İstanbul
+T1,TUR,Galatasaray,İstanbul
+T1,TUR,Gaziantep,Gaziantep
+T1,TUR,Giresunspor,Giresun
+T1,TUR,Goztep,İzmir
+T1,TUR,Hatayspor,Antakya
+T1,TUR,Istanbulspor,İstanbul
+T1,TUR,Karagumruk,Istanbul
+T1,TUR,Kasimpasa,İstanbul
+T1,TUR,Kayserispor,Kayseri
+T1,TUR,Konyaspor,Konya
+T1,TUR,Pendikspor,İstanbul
+T1,TUR,Rizespor,Rize
+T1,TUR,Samsunspor,Samsun
+T1,TUR,Sivasspor,Sivas
+T1,TUR,Trabzonspor,Trabzon
+T1,TUR,Umraniyespor,İstanbul
+T1,TUR,Yeni Malatyaspor,Malatya

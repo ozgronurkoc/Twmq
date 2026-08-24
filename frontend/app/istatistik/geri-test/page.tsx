@@ -1,8 +1,6 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 
 import { getBacktest } from "@/lib/api";
 import { useIstek } from "@/lib/istek";
@@ -30,6 +28,7 @@ import {
   aralikUrldenOku,
   aralikUrleYaz,
 } from "@/components/istatistik/parts";
+import { IstatistikSekmeleri } from "@/components/istatistik/sekmeler";
 
 const ARALIKLAR: Array<{ deger: number | null; etiket: string }> = [
   { deger: null, etiket: "Tüm sezon" },
@@ -73,13 +72,7 @@ export default function GeriTestPage() {
   if (hata) {
     return (
       <div className="space-y-4">
-        <Link
-          href="/istatistik"
-          className="inline-flex items-center gap-1.5 text-[13px] text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft size={15} />
-          İstatistik
-        </Link>
+        <IstatistikSekmeleri last={last} />
         <Callout ton="danger" baslik="Geri test alınamadı">
           {hata}
         </Callout>
@@ -103,14 +96,6 @@ export default function GeriTestPage() {
 
   return (
     <div className="space-y-6">
-      <Link
-        href="/istatistik"
-        className="inline-flex items-center gap-1.5 text-[13px] text-muted-foreground transition-colors hover:text-foreground"
-      >
-        <ArrowLeft size={15} />
-        İstatistik
-      </Link>
-
       <header>
         <h1 className="font-display text-[30px] italic leading-tight">Geri test</h1>
         <p className="mt-1 max-w-3xl text-[13.5px] leading-relaxed text-muted-foreground">
@@ -119,6 +104,9 @@ export default function GeriTestPage() {
           o kupona ne yaptığı ölçülür. Sonuç bir kâr vaadi değil, stratejinin geçmişteki
           bedelinin ve isabetinin kaydıdır.
         </p>
+        <div className="mt-4">
+          <IstatistikSekmeleri last={last} />
+        </div>
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <Badge ton="primary">{veri.meta.weeks_used} hafta çalıştırıldı</Badge>
           <Badge>{veri.meta.weeks_available} hafta veri setinde</Badge>

@@ -22,11 +22,12 @@ hiçbir şey tarafından import edilmez.
 
 ## API
 
-Uçların **tamamı** (13). Bu tablo eskiden dokuz satırdı ve dördü eksikti
-(`/api/health/checks`, `/api/backtest`, `/api/tahmin`, `/api/benzer`) —
+Uçların **tamamı** (14). Bu tablo eskiden dokuz satırdı ve dördü eksikti
+(`/api/health/checks`, `/api/backtest`, `/api/pazar`, `/api/tahmin`,
+`/api/benzer`) —
 üstelik `README.md` ve `backend/README.md` bu tabloyu *kaynak* gösteriyordu,
 yani boşluk üç belgeye birden yayılıyordu. Artık liste
-`frontend/lib/api-sozlesme.json` ile aynı 13 ucu sayar ve o dosya CI'da
+`frontend/lib/api-sozlesme.json` ile aynı 14 ucu sayar ve o dosya CI'da
 `scripts/api_sozlesme.py --kontrol` ile denetlenir.
 
 | Method | Path | Açıklama |
@@ -41,6 +42,8 @@ yani boşluk üç belgeye birden yayılıyordu. Artık liste
 | GET | `/api/stats?last=N` | Tarihsel 1/0/2 + analiz blokları (`last` = son N hafta dilimi) |
 | GET | `/api/stats/<week>` | Tek hafta detayı (komşular, sıra, sapma, sıra-sıra bağlam) |
 | GET | `/api/backtest` | Geri test: sezon + hafta hafta + eşik taraması + hold-out |
+| GET | `/api/pazar?arindirma=…` | 1X2 dışı pazarlar (alt/üst 2,5 · Asya handikabı) — fiyat **ve** ölçülmüş kalibrasyonu birlikte |
+| GET | `/api/takimlar?lig=…&sezon=…` | Takım bazlı istatistik — **küçültülmüş**; her satırda `n` ve `kucultme` |
 | GET | `/api/tahmin?limit=N` | Yaklaşan maçlar — olasılık **ve** ölçülmüş isabet birlikte |
 | GET | `/api/benzer?oran=…` | "Bu oranda geçmişte ne oldu" — 31 bin maçlık korpus |
 | POST | `/api/solve` | Tüm motor özellikleri |
@@ -55,7 +58,9 @@ yani boşluk üç belgeye birden yayılıyordu. Artık liste
 | `/` | Formül — kaplama motoru, olasılık, senaryo karşılaştırma |
 | `/tahmin` | Yaklaşan maçlara 1/0/2 + ölçülmüş isabet |
 | `/super-toto` | Canlı sezon defteri (statik besleme, bkz. aşağısı) |
-| `/istatistik` | Tarihsel dağılım, analiz blokları, oran özeti |
+| `/istatistik` | **Sezon** — tarihsel dağılım ve analiz blokları (§6.8 G1'de bölündü) |
+| `/istatistik/oranlar` | **Piyasa** — favori kırılımı, banko bantları, kalibrasyon; ortak sekme şeridi `?last`i taşır |
+| `/takimlar` | Küçültülmüş takım gücü — puan, atılan, yenilen; maç sayısı ve küçültme oranıyla |
 | `/istatistik/[week]` | Tek hafta detayı |
 | `/istatistik/geri-test` | Eşik taraması + hold-out |
 | `/saglik` | Değişmez raporu + kayıtlı kontrol envanteri |

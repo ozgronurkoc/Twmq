@@ -90,7 +90,7 @@ makinesinde, o günkü kilitli bağımlılıklarla, o commit üzerinde koşar.
 
 Bu yüzden sağlık katmanı ayrı bir katmandır ve `/saglik` sayfası ürünün eşit
 haklı bir parçasıdır: **ürünün vaadinin şu anda, bu makinede, bu sürümde hâlâ
-geçerli olduğunu kanıtlar.** 24 değişmez, 6 kategori, her çağrıda yeniden
+geçerli olduğunu kanıtlar.** 25 değişmez, 6 kategori, her çağrıda yeniden
 ölçülür — ve neyi kanıtlamadığını da açıkça yazar (§6.3).
 
 ### 1.6 Ne yapar / ne yapmaz
@@ -100,13 +100,13 @@ geçerli olduğunu kanıtlar.** 24 değişmez, 6 kategori, her çağrıda yenide
 | 41 haftalık sezon verisini ve piyasa oranlarını analiz edip **maç sonucu tahmini** üretir | Kazanmayı **garanti etmez** |
 | Tahmin isabetini ölçer ve hold-out ile aşırı uyumdan ayırır | Ölçülmemiş bir isabet iddiası sunmaz |
 | Hamming yarıçap-1 kaplama kodu üretir | 14-garantiyi olasılıkla "güçlendirmez" |
-| En kötü durumda 14 doğru **garantiler** (küme içinde) | İkramiye / beklenen değer hesabı yapmaz (veri ilk kez birikiyor, ölçüm yok — §10) |
+| En kötü durumda 14 doğru **garantiler** (küme içinde) | Müşterek beklenen değeri **hesaplar ama arayüze çıkarmaz** — `getiri.py`, [`docs/ISTATISTIK_YOL_HARITASI.md`](docs/ISTATISTIK_YOL_HARITASI.md) §3.34: sayı ölçülmedi (havuz payı, komisyon ve kalabalık modeli varsayım) |
 | Küme dışı senaryoları **fire** olarak ölçer | Kâr vaadi vermez |
 | Exact + Monte Carlo olasılık raporu verir | Canlı bülten çekmez |
 | Bayes (Dirichlet) ile tahminlerini yumuşatır | İddaa geçmiş oranı sunmaz (yok — §5.3) |
 | Markov ile sıralı risk profili çıkarır | Geri testi bir kâr vaadine çevirmez; aşırı uyumu ölçüp gösterir |
 | Bir stratejiyi geçmiş sezonda çalıştırıp bedelini ve isabetini ölçer (**geri test**) | Mobil uygulama değildir |
-| Vaadin canlıda geçerliliğini 24 değişmezle ölçer | |
+| Vaadin canlıda geçerliliğini 25 değişmezle ölçer | |
 | Her sayının kaynağını ve sınırını yazar | |
 
 ---
@@ -119,6 +119,7 @@ Python tarafının tamamı `backend/`, arayüzün tamamı `frontend/` altındad�
 # 1) Motor + API
 cd backend
 pip install -e ".[test]"        # calistirma + test
+pip install -e ".[test,model]" # + olcum katmani (sklearn, lightgbm)
 pip install -e ".[test,kalite]" # + ruff/mypy (scripts/check.sh bunlari ister)
 
 # 2) CLI
@@ -500,8 +501,11 @@ Bugün `match_conflicts` tam olarak bunu yakalar. Vaka analizi:
 | Rota | İçerik |
 |------|--------|
 | `/` | **Formül** — motorun tamamı |
-| `/istatistik` | Sezon dağılımı, bantlar, oran kartı, karar destek tabloları, 41 hafta |
+| `/istatistik` | **Sezon** — dağılım, seyir, bantlar, adet, ısı haritası, geçiş, uçlar, haftalar |
+| `/istatistik/oranlar` | **Piyasa** — favori kırılımı, banko bantları, çift kapsaması, beraberlik profili, lig kırılımı, kalibrasyon |
 | `/istatistik/<hafta>` | Tek hafta detayı + "bu haftayı formüle gönder" |
+| `/pazarlar` | **1X2 dışı pazarlar** — alt/üst 2,5 · Asya handikabı, ölçülmüş kalibrasyonlarıyla |
+| `/takimlar` | **Takım gücü** — küçültülmüş; her satırda maç sayısı, küçültme oranı ve %95 aralık |
 | `/istatistik/geri-test` | **Geri test** — strateji, eşik taraması, hold-out |
 | `/saglik` | Değişmezler — kategori kategori, süre ve açıklamalarıyla |
 
@@ -774,6 +778,13 @@ backend/
     ortak.py           Paylaşılan hesaplar: normalizasyon, Wilson, Brier, bantlama
     payloads.py        /api/stats ve /api/backtest gövdeleri — tek kaynak
     tahmin.py          TAHMİN: yaklaşan maçlar + ölçülmüş isabet = /api/tahmin
+    pazar.py           1X2 DIŞI: alt/üst 2,5 + Asya handikabı = /api/pazar
+    getiri.py          HAVUZ: müşterek beklenen değer — HESAP, arayüze ÇIKMAZ
+    avrupa.py          VERI: UEFA fiksturu — dinlenme/sikisiklik duzeltmesi
+    sehir.py           VERI: kulup-sehir tablosu, derbi (sicaklik degiskeni)
+    takim_gucu.py      TAKIM: kucultulmus takim gucu = /api/takimlar
+    artefakt.py        Egitilmis modelin diske yazimi + bayatlik denetimi
+    kosum.py           Olcum kosum defteri (--kaydet) — surumlenmez
     benzer.py          "Bu oranda geçmişte ne oldu" = /api/benzer
     kalibrasyon.py     ÖLÇÜM: izotonik düzeltme piyasayı geçiyor mu
     cizgi.py           ÖLÇÜM: açılış→kapanış çizgi hareketi (A1)
@@ -800,7 +811,7 @@ backend/
     api_sozlesme.py           API sözleşmesini üretir/denetler (--kontrol: CI kapısı)
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/
-  tests/               pytest (35 dosya → 1.116 test; §9'da katman dökümü)
+  tests/               pytest (50 dosya → 1.549 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -984,23 +995,29 @@ altı adımdan üçünü koşuyordu — yani "OK" demesi "CI geçer" demek deği
 Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant'lar, CLI (Bayes preset
 dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri test,
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
-yeniden kalibrasyon ve eğitim korpusu. **35 test dosyası, parametrizasyonla
-1.116 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+yeniden kalibrasyon ve eğitim korpusu. **50 test dosyası, parametrizasyonla
+1.549 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
 | Katman | Dosyalar | Test |
 |---|---|---|
 | Çekirdek + motorlar | `core` `engines` `invariants` `edge_cases` `cli` `analysis` `bayes` `markov` `fire_scenarios` | 511 |
-| Tahmin katmanı | `predict` `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin` `benzer` | 294 |
+| Tahmin katmanı | `predict` `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin` `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre` | 491 |
 | Sağlık | `health` `api_health` `meta` `health_history` | 85 |
-| Veri / istatistik / geri test | `history` `odds` `backtest` `api_stats` `api_backtest` `snapshot_iddaa` | 82 |
+| Veri / istatistik / geri test | `history` `odds` `backtest` `api_stats` `api_backtest` `snapshot_iddaa` `pazar` | 113 |
 | Süper Toto | `super_toto` | 54 |
 | Karar katmanı | `secim` | 21 |
 | Skor türetme | `skor` | 21 |
 | Beraberlik düzeltmesi | `beraberlik` | 19 |
 | İddaa hazırlığı | `iddaa_hazirlik` | 24 |
-| Belgeler | `belgeler` | 3 |
+| Ortak gövde | `ortak` | 25 |
+| Havuz / beklenen değer | `getiri` | 72 |
+| Model kalıcılığı | `artefakt` | 24 |
+| Koşum defteri | `kosum` | 22 |
+| Takım gücü | `takim_gucu` | 21 |
+| Yeni veri (UEFA · şehir) | `avrupa` `sehir` | 41 |
+| Belgeler | `belgeler` | 5 |
 
 İki test bilerek **ağa çıkmaz**: `test_snapshot_iddaa.py` gerçek bültenden alınmış
 küçük bir örnek payload üzerinde koşar — ağ çağrısını sınamak bu paketin işi değil,
@@ -1010,7 +1027,7 @@ ayrıştırmanın doğruluğu ise arşivin tamamının dayandığı şey.
 
 ```bash
 cd frontend
-npm run check                # eslint + tsc + saf mantık ve sözleşme (49 vaka)
+npm run check                # eslint + tsc + saf mantık ve sözleşme (53 vaka)
 npm run lint                 # yalnızca eslint
 npm run build                # üretim derlemesi
 ```
@@ -1098,7 +1115,7 @@ Sıradakiler, "en çok belirsizliği kaldıran" ölçütüne göre:
 | **T4 — Referans skorları sağlık değişmezine** | `duzgun` her zaman 0,6667 (sabit: `ortak.BRIER_ESIT`); `piyasa` kupon kesitinde bugün 0,5856 (41 hafta, 615 maç) | **Küçük ve sıranın başında.** Bu sayılar kayarsa bozulan model değil veri/boru hattıdır ve bugün hiçbir şey fark etmez. Ama ikisi aynı cinsten değil: `duzgun` bir sabittir, `piyasa` veri büyüdükçe kayar (0,5747 → 0,5740 arındırma çevriminde, → 0,5856 kupon seti 36→41 haftaya çıkınca). Yani T4 `piyasa`yı sabit bir sayıya değil, **`duzgun`un altında kalmasına** bağlamalıdır |
 | **T5 — Piyasa dışı girdi: takım formu** | football-data'nın maç istatistiklerinden yuvarlanan pencereyle form özelliği | **Ölçüm bunu söylüyor.** Piyasayı yeniden kalibre etmek yön olarak doğru ama miktar yetersiz; sinyal ancak piyasada olmayan bir girdiden gelir. Ek kaynak gerekmez |
 | **S1 — Örneklem büyütme** | Kupon setini ikinci sezona çıkarmak | **Yarısı yapıldı, yarısı kapalı.** Tahmin ölçümü için gereken örneklem korpusla geldi (31.103 maç). Kupon ayağı bloke: sonuç kaynağı sezon parametresi taşımıyor + `robots.txt` kısıtı ([`docs/VERI_TOPLAMA_VE_ISLEME.md`](docs/VERI_TOPLAMA_VE_ISLEME.md) §10.2) |
-| **İkramiye / havuz verisi** | Hafta başına kazanan adedi ve ödenen tutar | **Fizibilite kapandı, ölçüm açık.** Kaynak bulundu (Spor Toto resmî ikramiye ekranı) ve ilk iki hafta elle girildi. Müşterek bahiste "kazanma oranı" ile "beklenen getiri" hâlâ farklı şeylerdir ve ikincisi **hâlâ ölçülmedi** — n = 2 hafta. Ayrıntı: [`docs/ISTATISTIK_YOL_HARITASI.md`](docs/ISTATISTIK_YOL_HARITASI.md) §6.3 |
+| **İkramiye / havuz verisi** | Hafta başına kazanan adedi ve ödenen tutar | **Fizibilite kapandı, ölçüm açık.** Kaynak bulundu (Spor Toto resmî ikramiye ekranı) ve ilk iki hafta elle girildi. Müşterek bahiste "kazanma oranı" ile "beklenen getiri" hâlâ farklı şeylerdir ve ikincisi **hâlâ ölçülmedi** — n = 2 hafta. Beklenen değerin **hesabı** artık var (`getiri.py`, §3.34) ve ölçümün neye ihtiyaç duyduğunu da o gösterdi: kalabalık modeli değişince sonuç 22 kat oynuyor, yani eksik olan tahminci değil **oynanma payları**. Ayrıntı: [`docs/ISTATISTIK_YOL_HARITASI.md`](docs/ISTATISTIK_YOL_HARITASI.md) §6.3 |
 | **S2 — Geri testi zenginleştirmek** | Sabit kolon bütçesi kipi, ikinci strateji ailesi ("en belirsiz k maçı çifte yap"), bütçe danışmanıyla bağ | **Hazır** — ek veri gerekmez |
 | **S3 — İddaa arşivi olgunlaşınca** | Snapshot'ları kupon maçlarıyla eşleştir; iddaa ile piyasa oranını yan yana koy; geri testi vekil değil gerçek fiyatla tekrarla | **Birikmeyi bekliyor** — ~10 snapshot sonra anlamlı |
 | **S4 — Küçük işler** | Geri testte eşik çiftini URL'e yazmak, tarama tablosunu CSV'ye çıkarmak, hafta detayında Brier | Veri tarafı yok |
@@ -1234,6 +1251,7 @@ olması gerekir. Tanımlıysa yalnızca **durum değişiminde** bildirim gider.
 | [`docs/FORMUL_GELISTIRME_RAPORU.md`](docs/FORMUL_GELISTIRME_RAPORU.md) | Formül sayfasının çalışma raporu: teşhis, F0–F6, bulunan hatalar, ölçümler |
 | [`docs/FORMUL_YOL_HARITASI.md`](docs/FORMUL_YOL_HARITASI.md) | Formül sayfasının yol haritası ve yapılmayacaklar listesi |
 | [`docs/DIS_INCELEME.md`](docs/DIS_INCELEME.md) | Dış bir makine öğrenmesi çalışmasının bu projeye ne kattığı ve **ne katmadığı** — sayılar o çalışmanın kendi belgelerinden, bizim ölçümümüz değil |
+| [`docs/DIS_INCELEME_ALPHAPY.md`](docs/DIS_INCELEME_ALPHAPY.md) | Bir ML **çerçevesinin** (AlphaPy / AlphaPy Pro) incelemesi: çerçeve alınmadı, ama metrik paneline bakarken görülen eksik ölçüldü ve koda girdi — Brier'in Murphy ayrışımı |
 | [`backend/README.md`](backend/README.md) | Motor + API kurulumu, ortam değişkenleri, oran arşivi kullanımı |
 | [`frontend/README.md`](frontend/README.md) | Arayüz yapısı, tasarım sistemi, grafik kuralları, tip katmanı |
 | [`replit.md`](replit.md) | Replit çalışma alanının hafızası: iş akışları, portlar, dağıtım |

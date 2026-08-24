@@ -17,18 +17,29 @@ import numpy as np
 import pytest
 
 from spor_toto import recalibrate
+from spor_toto.egitim import korpus_haftalari
 from spor_toto.evaluate import brier, olculebilir_haftalar
 from spor_toto.history import MATCH_COUNT, SYMBOLS
 from spor_toto.recalibrate import (
+    ETKILESIM_KADEMELERI,
     KADEMELER,
+    YON_ALANLARI,
     KalibreTahminci,
     _bant_adi,
+    _mac_ozellikleri,
     _softmax,
+    _tasarim_satiri,
+    kademe_en_az,
     kademe_fabrikalari,
     rapor,
 )
 
 PIYASA = {"1": 0.50, "0": 0.25, "2": 0.25}
+
+
+def _onceki_kademe(ad: str) -> str:
+    """`ad`'dan hemen önceki basamak — testler sıraya elle bağlanmasın diye."""
+    return KADEMELER[KADEMELER.index(ad) - 1]
 
 
 def _girdi(week: int, results: str, probs=None) -> dict:
@@ -246,3 +257,201 @@ def test_form_kupon_kesitinde_bant_ile_ozdes():
     assert form[:len(bant)] == pytest.approx(bant, abs=1e-6)
     assert form[len(bant):] == pytest.approx([0.0, 0.0], abs=1e-6), (
         "kuponda form katsayisi sifirdan farkli — notr sozlesmesi bozuk")
+
+
+# ─── etkileşim basamakları (Faz 2.1) ──────────────────────────────────────
+
+def test_etkilesim_kademeleri_kademe_listesinde():
+    for ad in ETKILESIM_KADEMELERI:
+        assert ad in KADEMELER
+    # Sıra kasıtlı: etkileşim EN SONDA, çünkü bir öncekinin üstüne biniyor.
+    assert KADEMELER[-2:] == ETKILESIM_KADEMELERI
+
+
+def test_etkilesim_sutun_sayisi_ikili_carpim_kadar():
+    """`etkilesim` C(6,2)=15, `etkilesim_favori` +6 sütun eklemeli."""
+    ozellik = {
+        "probs": {"1": 0.5, "0": 0.3, "2": 0.2},
+        "lig": "E0", "favori": "1", "bant": "<1.50",
+        "hareket": {"1": 0.0, "0": 0.0, "2": 0.0}, "ayrisma": 0.0,
+        **{alan: 1.0 for alan, _ in YON_ALANLARI},
+    }
+    ligler, bantlar = ["E0"], ["<1.50"]
+    # Taban, etkilesimden HEMEN ONCEKI basamak olmali: `etkilesim` ondan
+    # once eklenen butun sutunlari da tasir ve yanlis taban secilirse fark
+    # eklenen basamak sayisi kadar kayar.
+    taban = _tasarim_satiri(ozellik, _onceki_kademe("etkilesim"),
+                            ligler, bantlar).shape[1]
+    e1 = _tasarim_satiri(ozellik, "etkilesim", ligler, bantlar).shape[1]
+    e2 = _tasarim_satiri(ozellik, "etkilesim_favori", ligler, bantlar).shape[1]
+
+    n = len(YON_ALANLARI)
+    assert e1 - taban == n * (n - 1) // 2
+    assert e2 - e1 == n
+    assert not np.isnan(_tasarim_satiri(ozellik, "etkilesim_favori",
+                                        ligler, bantlar)).any()
+
+
+def test_etkilesim_sutunu_yon_ozelligi_gibi_davranir():
+    """Çarpım simetrik kaymalı: "1" yukarı, "2" aşağı, beraberlik sabit.
+
+    Yön büyüklüğü olduğu için beraberliğe dokunmamalı — beraberlik ayrı bir
+    sorudur ve `beraberlik.py`de kendi modeli var.
+    """
+    ozellik = {
+        "probs": {"1": 0.5, "0": 0.3, "2": 0.2},
+        "lig": "E0", "favori": "1", "bant": "<1.50",
+        "hareket": {"1": 0.0, "0": 0.0, "2": 0.0}, "ayrisma": 0.0,
+        **{alan: 2.0 for alan, _ in YON_ALANLARI},
+    }
+    X = _tasarim_satiri(ozellik, "etkilesim", ["E0"], ["<1.50"])
+    taban = _tasarim_satiri(ozellik, _onceki_kademe("etkilesim"),
+                            ["E0"], ["<1.50"]).shape[1]
+    for sutun in range(taban, X.shape[1]):
+        ev, ber, dep = X[0, sutun], X[1, sutun], X[2, sutun]
+        assert ber == 0.0
+        assert ev == pytest.approx(-dep)
+
+
+def test_etkilesim_olcekleri_tanimsal_ve_pozitif():
+    """Ölçekler veriden değil tanımdan gelir; sıfır ya da negatif olamaz."""
+    # Sayi degil YAPI sabitlenir: yeni bir yon ozelligi eklemek serbest,
+    # olceksiz eklemek degil.
+    assert len(YON_ALANLARI) >= 6
+    assert len({alan for alan, _ in YON_ALANLARI}) == len(YON_ALANLARI)
+    for _, olcek in YON_ALANLARI:
+        assert olcek > 0
+
+
+def test_kupon_haftasinda_etkilesim_notr():
+    """Kupon haftaları yön özelliği taşımaz — çarpımlar da sıfır olmalı.
+
+    Kupon haftaları form ve A3 taşımaz (`_mac_ozellikleri` nötr 0 yazar);
+    etkileşim sütunları orada hiçbir şey yapmamalı, yoksa kademenin kupon
+    üzerindeki davranışı sessizce değişir.
+    """
+    kupon = _girdi(1, "1" * MATCH_COUNT)
+    for satir in _mac_ozellikleri(kupon):
+        for alan, _ in YON_ALANLARI:
+            assert satir[alan] == 0.0
+
+    ozellik = _mac_ozellikleri(kupon)[0]
+    taban = _tasarim_satiri(ozellik, _onceki_kademe("etkilesim"),
+                            ["E0"], ["<1.50"])
+    genis = _tasarim_satiri(ozellik, "etkilesim_favori", ["E0"], ["<1.50"])
+    # Yeni sutunlarin TAMAMI sifir olmali.
+    assert (genis[:, taban.shape[1]:] == 0.0).all()
+
+
+@pytest.mark.parametrize("kademe", ["etkilesim", "etkilesim_favori"])
+def test_etkilesim_sutunu_gercekten_calisiyor(kademe):
+    """**Yokluk iddiasının bekçisi.**
+
+    "Etkileşim bir şey eklemiyor" ancak sütunlar gerçekten bağlıysa bir
+    ölçümdür. Katsayı elle değiştirilince tahmin değişmeli; değişmiyorsa
+    sütun ölüdür ve §3.26'yı kapatan cümle bağlanmamış koddan gelir.
+    """
+    h = korpus_haftalari(sezonlar_=["2425"])
+    # SON sutun her iki kademede de `sezon_sonu_pay_farki`yi tasiyor
+    # (`etkilesim`de ic_dis ile carpim, `etkilesim_favori`de aciklikla).
+    # Rastgele bir hafta secmek yetmez: sezon sonu payi sezonun son %20'si
+    # disinda sifirdir ve o haftalarda sutun HAKLI OLARAK olu gorunur.
+    hafta = next(
+        x for x in h
+        if any(abs(o.get("sezon_sonu_pay_farki") or 0.0) > 0.05
+               and abs(o.get("ic_dis_form_farki") or 0.0) > 0.05
+               for o in x["ozellikler"])
+    )
+    t = KalibreTahminci(kademe)
+    t.egit(h)
+    once = t.tahmin(hafta)
+    t._theta[-1] += 50.0
+    sonra = t.tahmin(hafta)
+    assert once != sonra, f"{kademe} son sutunu tahmini hic etkilemiyor — olu sutun"
+
+
+def test_kademe_tam_bir_sutun_ekler():
+    """**Yapısal bekçi.** Her basamak bir öncekine TAM OLARAK bir sütun eklemeli.
+
+    Kademenin bütün anlamı budur: fark tek bir özelliğe atfedilebilsin diye
+    her basamak yalnızca bir sütun ekler. Bozulduğunda ölçüm sessizce
+    yanlış olur — bir basamak komşusunun sütununu da taşırsa iki özelliğin
+    katkısı birbirine karışır.
+
+    Bu test gerçek bir hatadan doğdu: A3 döngüsündeki `break` fonksiyondan
+    çıkmadığı için `elo` sütunu `dinlenme`den itibaren bütün alt
+    basamaklara sızmıştı ve `kalibre_elo` ile `kalibre_sezon_sonu` birebir
+    aynı sayıyı veriyordu.
+
+    Etkileşim basamakları istisnadır ve **bilerek** birden çok sütun ekler
+    (çarpım kümesi bir bütündür); onlar için yalnızca artışın pozitif
+    olması denetlenir.
+    """
+    from spor_toto.recalibrate import YON_ALANLARI
+
+    ozellik = {
+        "probs": {"1": 0.5, "0": 0.3, "2": 0.2},
+        "lig": "E0", "favori": "1", "bant": "<1.50",
+        "hareket": {"1": 0.1, "0": 0.0, "2": -0.1}, "ayrisma": 0.2,
+        **{alan: 1.0 for alan, _ in YON_ALANLARI},
+    }
+    ligler, bantlar = ["E0", "diger"], ["<1.50", "diger"]
+
+    def genislik(kademe: str) -> int:
+        return _tasarim_satiri(ozellik, kademe, ligler, bantlar).shape[1]
+
+    n = len(YON_ALANLARI)
+    beklenen_artis = {
+        "bias": len(SYMBOLS) - 1,          # sinif sabitleri, "1" referans
+        "lig": len(ligler),
+        "bant": len(bantlar),
+        "form": 2,                          # puan + isabet
+        "etkilesim": n * (n - 1) // 2,
+        "etkilesim_favori": n,
+    }
+    for onceki, simdiki in itertools.pairwise(KADEMELER):
+        artis = genislik(simdiki) - genislik(onceki)
+        assert artis == beklenen_artis.get(simdiki, 1), (
+            f"{onceki} -> {simdiki}: {artis} sutun eklendi, "
+            f"{beklenen_artis.get(simdiki, 1)} bekleniyordu")
+
+
+@pytest.mark.parametrize("kademe,alan,deger", [
+    ("elo", "elo_farki", 300.0),
+    ("dc", "dc_1", 0.9),
+])
+def test_sutun_alt_basamaklara_sizmaz(kademe, alan, deger):
+    """Bir basamağın ALTINDAKI hiçbir basamak onun alanını okumamalı.
+
+    Gerileme testi: sızıntı olduğunda iki komşu kademe birebir aynı tahmini
+    verir ve "bu özellik bir şey eklemiyor" cümlesi bağlanmamış koddan
+    gelir. Elo'da tam bu yaşandı (§3.27): A3 döngüsündeki `break`
+    fonksiyondan çıkmadığı için Elo sütunu `dinlenme`den itibaren bütün alt
+    basamaklara girmişti.
+    """
+    ligler, bantlar = ["E0", "diger"], ["<1.50", "diger"]
+    taban = {
+        "probs": {"1": 0.5, "0": 0.3, "2": 0.2},
+        "lig": "E0", "favori": "1", "bant": "<1.50",
+        "hareket": {"1": 0.0, "0": 0.0, "2": 0.0}, "ayrisma": 0.0,
+        "elo_farki": 0.0,
+        **{f"dc_{s}": 1 / 3 for s in SYMBOLS},
+        **{a: 0.0 for a, _ in YON_ALANLARI},
+    }
+    # `dc` icin tek alan degistirmek yetmez: sutun uc DC olasiligini birden
+    # okur ve toplamlari 1 olmali.
+    degisik = dict(taban)
+    if alan.startswith("dc_"):
+        degisik.update({"dc_1": deger, "dc_0": (1 - deger) / 2,
+                        "dc_2": (1 - deger) / 2})
+    else:
+        degisik[alan] = deger
+
+    for k in KADEMELER:
+        a = _tasarim_satiri(taban, k, ligler, bantlar)
+        b = _tasarim_satiri(degisik, k, ligler, bantlar)
+        ayni = np.array_equal(a, b)
+        if kademe_en_az(k, kademe):
+            assert not ayni, f"{k} {alan} okumali ama okumuyor"
+        else:
+            assert ayni, f"{k} {alan} okumamali ama okuyor — sizinti"

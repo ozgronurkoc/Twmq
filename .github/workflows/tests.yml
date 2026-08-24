@@ -65,7 +65,11 @@ jobs:
 
       - name: Bagimliliklar
         run: |
-          pip install -e "./backend[test,kalite]"
+          # `model` ekstrasi da kuruluyor: `test_agac.py` ve `test_arama.py`
+          # `lightgbm`/`sklearn` yoksa ATLANIR, yani kurulmadiginda kapi
+          # yesil kalir ama olcum katmani hic kosmaz. Uretim bunlari
+          # tasimaz (`scripts/run_prod.sh`), CI tasir.
+          pip install -e "./backend[test,kalite,model]"
           npm --prefix frontend ci
 
       # Yerelde kosulan komutun AYNISI. Tek satir olmasi kasitli: CI ile

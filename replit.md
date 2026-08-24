@@ -67,8 +67,11 @@ yani Run düğmesi tek başına da yeterlidir.
 | `/` | **Formül** — maç ızgarası, olasılık girişi, motorun tüm modları |
 | `/tahmin` | Yaklaşan maçlara 1/0/2 + **ölçülmüş isabet** (ayrılmaz) |
 | `/super-toto` | Canlı sezon defteri (statik besleme) |
-| `/istatistik` | Sezon dağılımı, oran/favori kırılımları, veri kalitesi |
+| `/istatistik` | **Sezon** — dağılım, seyir, bantlar, ısı haritası, haftalar (§6.8 G1'de bölündü) |
+| `/istatistik/oranlar` | **Piyasa** — favori kırılımı, banko bantları, kalibrasyon; sekme şeridi `?last`i taşır |
 | `/istatistik/[week]` | Hafta detayı (olasılıkları formül sayfasına devredebilir) |
+| `/pazarlar` | **Alt/üst 2,5 ve Asya handikabı** — fiyat + ölçülmüş kalibrasyon |
+| `/takimlar` | **Küçültülmüş takım gücü** — her satırda maç sayısı, küçültme oranı, %95 aralık |
 | `/istatistik/geri-test` | Oranlardan strateji üretip 41 haftayı motorla koşturur |
 | `/saglik` | Kategorili değişmez (invariant) kontrolleri, kısmi çalıştırma |
 
@@ -85,6 +88,8 @@ GET  /api/stats              sezon istatistikleri (?last=N)
 GET  /api/stats/<week>       hafta detayı
 GET  /api/backtest           geri test (eşik taraması + hold-out)
 GET  /api/tahmin             yaklaşan maçlar + ölçülmüş isabet
+GET  /api/pazar              1X2 disi pazarlar (alt/ust 2,5 · Asya handikabi)
+GET  /api/takimlar           kucultulmus takim gucu (?lig=, ?sezon=)
 GET  /api/benzer             "bu oranda geçmişte ne oldu" (31 bin maç)
 GET  /                       servis bilgisi + uç envanteri
 POST /api/solve              motorun tamamı
@@ -110,16 +115,31 @@ Katman katman:
   bırakmalı ölçüm + bootstrap) · `recalibrate.py` · `tahmin.py`
   (`/api/tahmin`) · `benzer.py` (`/api/benzer`)
 - **Ölçüm araçları** (yalnızca `python -m spor_toto.<x>`, arayüze çıkmaz) —
-  `cizgi.py` (A1) · `bahisci.py` (A2) · `disari.py` (A3) · `kalibrasyon.py`
+  `cizgi.py` (A1) · `bahisci.py` (A2) · `disari.py` (A3) · `kalibrasyon.py` ·
+  `getiri.py` (müşterek beklenen değer — hesap var, **ölçüm yok**; §3.34)
+- **Veri (Faz 3.4)** — `avrupa.py` (UEFA fiksturu takvime ENJEKTE edilir;
+  `dinlenme`/`sikisiklik` artik o gunleri de gorur) · `sehir.py`
+  (kulup-sehir tablosu, `openfootball/clubs` CC0; derbi bir SICAKLIK
+  degiskeni). Uretim: `scripts/build_avrupa.py`, `scripts/build_sehir.py`
+- **Takım** — `takim_gucu.py` (`/api/takimlar`): ampirik Bayes kucultmesi,
+  lig icinde; her satirda `n`, `kucultme` ve %95 aralik. §7'nin "takim bazli
+  istatistik yok" yasagi buradan kalkti (§3.35)
+- **Altyapı** — `kosum.py` (olcum kosum defteri: yedi CLI'da `--kaydet`,
+  korpus sha256 + commit + tohum yazilir; defter SURUMLENMEZ) ·
+  `artefakt.py` (egitilmis modelin JSON zarfi: korpus sha256 +
+  egitim tarihi + surum; bayatlik `health`te KIRMIZI — `--yaz` ile uretilir,
+  surumlenmez)
 - **Ortak / gövde** — `ortak.py` (normalizasyon, Wilson, Brier, bantlama) ·
-  `payloads.py` (uç gövdeleri, tek kaynak) · `health.py` (24 değişmez) ·
+  `payloads.py` (uç gövdeleri, tek kaynak) · `health.py` (25 değişmez) ·
   `health_history.py` · `report.py`
 
 > `odds.py` burada uzun süre "yalnızca analiz" diye yazılıydı; **artık değil**.
 > `/api/stats` bir `odds` bloğu döndürüyor ve `backtest` `match_1x2`yi
-> çağırıyor. Arayüze yalnızca **maç sonucu (1X2)** çıkar; arşivdeki diğer
-> pazarlar (2,5 alt/üst, Asya handikap) ve maç istatistikleri API'ye hiç
-> girmez.
+> çağırıyor. **Arşivdeki diğer pazarlar da artık çıkıyor** (§3.31):
+> alt/üst 2,5 ve Asya handikabı `pazar.py` → `/api/pazar` → `/pazarlar`
+> yolunu izliyor, ölçülmüş kalibrasyonlarıyla birlikte. Maç istatistikleri
+> (şut, korner) hâlâ API'ye girmiyor — onlar `egitim.py`nin form
+> tablosunun girdisi.
 
 ### CLI
 
@@ -151,7 +171,7 @@ yazmazlar). Ayrıntı: `docs/VERI_TOPLAMA_VE_ISLEME.md`.
 ```bash
 cd backend
 python -m pytest -m "not slow" -q   # hızlı süit
-python -m pytest                    # tamamı (1.116 test, ILP dahil)
+python -m pytest                    # tamamı (1.549 test, ILP dahil)
 python -m pytest -n0 tests/test_egitim.py   # tek çekirdek (hata ayıklarken)
 cd .. && bash scripts/check.sh      # TEK kapı; CI de bunu çağırır
 ```

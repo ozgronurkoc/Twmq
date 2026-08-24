@@ -244,7 +244,7 @@ gerektirir, yani 9.1 olmadan yapılamaz.
 
 | Ölçü | Değer |
 |---|---|
-| Kayıtlı kontrol | 24 |
+| Kayıtlı kontrol | 25 |
 | Kategori | 6 |
 | Kritik olmayan kontrol | 1 (`scipy_flag`) |
 | Tam rapor süresi (ısınmış) | ~520 ms |

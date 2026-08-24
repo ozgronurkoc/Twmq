@@ -61,7 +61,20 @@ aradaki fark bahisçi marjıdır.
 
 ---
 
-## 3. Aktarılan tek şey — model sınıfı dış kontrolü
+## 3. Model sınıfı — **itiraz artık kendi ölçümümüzle kapandı**
+
+> **Güncelleme (2026-08-24).** Aşağıdaki bölüm, itirazın yalnızca *dış
+> kanıtla* karşılanabildiği dönemde yazıldı. O dönem bitti: itirazın adını
+> verdiği model sınıfı (ağaç toplulukları) **bizim kesitimizde, bizim
+> kapımızdan** koşturuldu ve geçmedi —
+> [`ISTATISTIK_YOL_HARITASI.md`](ISTATISTIK_YOL_HARITASI.md) §3.30:
+> `agac` +0,000368 [−0,000009, +0,000750], `agac_ham` +0,000667
+> [+0,000282, +0,001068]. Ara adım olarak doğrusal kademeye açık etkileşim
+> terimleri de eklendi ve o da geçmedi (§3.26, §3.29).
+>
+> Aşağıdaki dış kanıt **teyit olarak** duruyor, dayanak olarak değil.
+
+### 3'ün yazıldığı hâli — dış kontrol
 
 **Bu incelemenin asıl çıktısı budur.**
 
@@ -180,7 +193,7 @@ işarettir.
 
 ---
 
-## 8. Elo ve H2H — denenmedi, gerekçesiyle
+## 8. Elo ve H2H — **ikisi de denendi, ikisi de geçmedi**
 
 Dış çalışmada olup bizde **hiç bulunmayan** iki özellik var. Kod taramasıyla
 doğrulandı: `elo`, `h2h` ve `xg` dizgeleri `backend/` altında hiç geçmiyor.
@@ -190,7 +203,22 @@ doğrulandı: `elo`, `h2h` ve `xg` dizgeleri `backend/` altında hiç geçmiyor.
 | **Elo** (rakip gücüne göre düzeltilmiş takım gücü) | Dokuz denemenin hiçbirinde yok. `kalibre_form` **ham** formdu — rakip gücüne göre düzeltilmemişti; Elo tam o eksiği kapatan standart sinyaldir | **Evet**, korpustan türetilebilir. Yeni kaynak gerekmez |
 | **H2H** (son 5 karşılaşma) | Aynı | **Evet**, aynı şekilde |
 
-**Yine de şimdi denenmiyor.** Üç gerekçe, sonuncusu belirleyici:
+> **Güncelleme (2026-08-24): Elo artık denendi ve geçmedi.**
+> Aşağıdaki üç gerekçe yazıldığı gün doğruydu; Faz 1'in ölçümleri
+> (§3.23 kalibrasyon tavanı 0,00042 · §3.24 öğrenme eğrisi piyasaya
+> yetişmeden düzleşiyor) *"eksik olan sütun"* dediği için tahsis kararı
+> değişti. Sonuç: ham sinyal devasa (ev galibiyeti %16,8 → %68,1), artık
+> **sıfır**, `kalibre_elo` +0,000086 [−0,000242, +0,000429] ve uydurulan
+> katsayı **negatif**. Ayrıntı:
+> [`ISTATISTIK_YOL_HARITASI.md`](ISTATISTIK_YOL_HARITASI.md) §3.27.
+>
+> **H2H de denendi (§3.29) ve geçmedi**: ham yayılım 28 puan, artık sıfır,
+> `kalibre_h2h` +0,000146 [−0,000208, +0,000517] ve katsayı +0,0050 —
+> sıfıra yapışık. Kayıtlı sınır: `h2h_var` maçların yalnızca %41'inde açık.
+>
+> Bu satırın açık ucu kalmadı; aşağıdaki gerekçeler tarihçe olarak duruyor.
+
+**Yazıldığı günkü gerekçeler.** Üç tanesi, sonuncusu belirleyici:
 
 1. **A4 durma kuralı** — *"Gelmediği sürece aynı veriyle yeni model
    denenmez."* İkisi de aynı veriden türer; onuncu ve on birinci deneme

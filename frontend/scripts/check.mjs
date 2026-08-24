@@ -46,7 +46,7 @@ try {
     "npx",
     [
       "tsc", "lib/kurulum.ts", "lib/kume-ici.ts", "lib/senaryo.ts",
-      "lib/utils.ts", "lib/types.ts",
+      "lib/utils.ts", "lib/types.ts", "lib/sekmeler.ts",
       "--outDir", cikti,
       "--module", "commonjs", "--target", "es2022", "--skipLibCheck",
     ],
@@ -57,6 +57,7 @@ try {
   const K = iste(join(cikti, "kurulum.js"));
   const Z = iste(join(cikti, "kume-ici.js"));
   const S = iste(join(cikti, "senaryo.js"));
+  const T = iste(join(cikti, "sekmeler.js"));
 
   let gecen = 0;
   const dene = (ad, fn) => {
@@ -528,6 +529,8 @@ try {
     "GET /api/stats": "StatsResponse",
     "GET /api/stats/<week>": "WeekDetail",
     "GET /api/backtest": "BacktestResponse",
+    "GET /api/pazar": "PazarResponse",
+    "GET /api/takimlar": "TakimlarResponse",
     "GET /api/tahmin": "TahminResponse",
     "GET /api/benzer": "BenzerResponse",
     "POST /api/solve": "SolveResponse",
@@ -559,6 +562,32 @@ try {
       );
     });
   }
+
+  // ── Sekme seridi (§6.8 G1: "sekme gecisinde dilim korunur") ──────────
+  dene("sekme adresi dilimi tasir", () => {
+    // Kirildiginda SESSIZ: `/istatistik?last=12`'den oranlara gecen
+    // kullanici tum sezona duser ve iki sayfa ayni anda iki farkli kesiti
+    // anlatir. Olculdu (tarayici, 2026-08): uc sekmede de last=12 kaldi.
+    for (const s of T.ISTATISTIK_SEKMELERI) {
+      assert.equal(T.sekmeAdresi(s.href, 12), `${s.href}?last=12`);
+      assert.equal(T.sekmeAdresi(s.href, null), s.href);
+      // 0 ve negatif "dilim yok" demektir, uydurma bir parametre degil.
+      assert.equal(T.sekmeAdresi(s.href, 0), s.href);
+      assert.equal(T.sekmeAdresi(s.href, -3), s.href);
+    }
+  });
+
+  dene("sekme listesi ucu de kapsiyor", () => {
+    const yollar = T.ISTATISTIK_SEKMELERI.map((s) => s.href);
+    assert.deepEqual(yollar, [
+      "/istatistik",
+      "/istatistik/oranlar",
+      "/istatistik/geri-test",
+    ]);
+    // Adresler benzersiz olmali: iki sekme ayni yola giderse `usePathname`
+    // ikisini birden etkin gosterir.
+    assert.equal(new Set(yollar).size, yollar.length);
+  });
 
   dene("sozlesme: mc_samples sinirlari sunucuyla ayni", () => {
     // `lib/kurulum.ts` bu sinirlari SABIT tutmak zorunda (saf modul,

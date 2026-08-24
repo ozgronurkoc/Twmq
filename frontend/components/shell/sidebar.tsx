@@ -10,8 +10,10 @@ import {
   History,
   PanelLeftClose,
   PanelLeftOpen,
+  Scale,
   Target,
   Trophy,
+  Users,
   Zap,
 } from "lucide-react";
 
@@ -63,6 +65,18 @@ const GRUPLAR: NavGroup[] = [
         label: "İstatistik",
         hint: "Tarihsel 1 / 0 / 2",
         icon: <BarChart3 size={17} />,
+      },
+      {
+        href: "/pazarlar",
+        label: "Pazarlar",
+        hint: "Alt/üst 2,5 · Asya handikabı",
+        icon: <Scale size={17} />,
+      },
+      {
+        href: "/takimlar",
+        label: "Takımlar",
+        hint: "Küçültülmüş takım gücü",
+        icon: <Users size={17} />,
       },
       {
         href: "/istatistik/geri-test",

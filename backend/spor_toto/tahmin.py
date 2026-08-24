@@ -185,14 +185,26 @@ def _egitilmis_alternatif():
     Eğitim **bir kez** yapılır ve sonucu önbelleklenir: korpus sürümlenmiş
     bir dosyadır, değişmez. `/api/tahmin` gövdesi önbelleklenmez ama bu
     uydurma öyle — ikisi farklı şeyler.
+
+    **Önce diskteki artefakta bakılır** (Faz 0.3). Taze bir artefakt varsa
+    eğitim hiç yapılmaz: ilk isteğin bedeli 31.103 satırlık bir uydurma
+    olmaktan çıkar. Artefakt yoksa ya da **bayatsa** (korpus değişmiş,
+    sürüm değişmiş) eskisi gibi eğitilir — yani bu bir hızlandırma, bir
+    bağımlılık değil. Servis burada **yazmaz**: yazmak `--yaz`ın işidir,
+    yoksa bir istek sessizce diski değiştirirdi.
     """
+    from .artefakt import oku
     from .egitim import korpus_haftalari
     from .recalibrate import KalibreTahminci
+
+    t = KalibreTahminci(ALTERNATIF_KADEME)
+    yuklendi, _ = oku(t)
+    if yuklendi:
+        return t
 
     haftalar = korpus_haftalari()
     if not haftalar:
         return None
-    t = KalibreTahminci(ALTERNATIF_KADEME)
     t.egit(haftalar)
     return t
 

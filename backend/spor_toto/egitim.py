@@ -29,7 +29,10 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
+from .dixon_coles import dc_tablosu
+from .elo import elo_tablosu
 from .odds import ARINDIRMA_VARSAYILAN, implied_probs
+from .takim import h2h_tablosu, seri_tablosu
 
 KOK = Path(__file__).resolve().parent.parent
 VARSAYILAN_KORPUS = KOK / "data" / "egitim" / "egitim_korpus.csv"
@@ -119,6 +122,12 @@ def korpus_yukle(yol: str | None = None) -> list[dict[str, Any]]:
                 # Dortlu de ya tamdir ya yoktur: eksik bir kaynak kumesinden
                 # hesaplanan ayrisma maclar arasinda karsilastirilamaz.
                 "bahisciler": dortlu if all(dortlu.values()) else None,
+                # Goller CSV'de hep vardi (`hg`/`ag`) ama satira hic
+                # tasinmiyordu: `kod` onlardan turetiliyor, sonra
+                # atiliyorlardi. Elo (Faz 3.2) gol farkini K carpani olarak
+                # kullanan ILK ozellik — bu yuzden artik tasiniyorlar.
+                "ev_gol": _tam_sayi(r, "hg"),
+                "dep_gol": _tam_sayi(r, "ag"),
                 "ev_isabet": _tam_sayi(r, "ev_isabet"),
                 "dep_isabet": _tam_sayi(r, "dep_isabet"),
                 "ev_sut": _tam_sayi(r, "ev_sut"),
@@ -223,15 +232,20 @@ def _takvim_tablosu(satirlar: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
     ile aynı sıra disiplini geçerlidir (önce oku, sonra geçmişe ekle). Bu
     modüldeki bütün zamansal özelliklerin tek savunması budur.
 
-    **Korpusun göremediği bir kör nokta var ve ölçümü etkiler.** Korpus 22 lig
-    taşıyor; kupa ve Avrupa maçları içinde yok. Dolayısıyla dinlenme günü
-    olduğundan **uzun**, fikstür sıkışıklığı olduğundan **düşük** ölçülür — ve
-    hata rastgele değil, Avrupa oynayan (yani güçlü) takımlarda yoğunlaşır.
+    **Kör nokta yarısı kapandı (Faz 3.4).** Bu docstring uzun süre şunu
+    yazıyordu: *"korpus 22 lig taşıyor; kupa ve Avrupa maçları içinde yok,
+    dolayısıyla dinlenme günü olduğundan uzun ölçülür ve hata rastgele
+    değil — Avrupa oynayan (yani güçlü) takımlarda yoğunlaşır."*
 
-    Bu, A3'ün cevabını okurken taşınması gereken sınırdır: "yorgunluk yardım
-    etmiyor" sonucu, yorgunluğun **eksik ölçülmüş** olmasından da gelebilir.
-    Sonuç bu yüzden "yorgunluk fiyatlanmış" değil, *"korpustan türetilebilen
-    yorgunluk vekili fiyatlanmış"* diye yazılır.
+    `avrupa.py` artık UEFA maçlarını (ŞL + AL + Konferans, 768 maç, 84 takım)
+    takvime **enjekte ediyor**: `dinlenme` ve `sikisiklik` o günleri de
+    görüyor. Yeni bir sütun eklemek yerine mevcut sayının **düzeltilmesi**
+    kasıtlı — ayrı sütun olsaydı `dinlenme_farki` yanlış kalmaya devam eder,
+    model iki çelişkili girdiyi uzlaştırmak zorunda kalırdı.
+
+    **Kalan yarı:** iç kupalar (FA Cup, DFB-Pokal, Türkiye Kupası…) hâlâ
+    yok. Yani sınır küçüldü ama kaybolmadı ve cümle şöyle okunmalı:
+    *"lig + UEFA'dan türetilebilen yorgunluk vekili"*.
 
     Sezon sonu payı kaba bir vekildir: ligin son %20'sinde, sıralamanın uçlarına
     yakın takımların oynayacak bir şeyi olduğu varsayılır (şampiyonluk/küme
@@ -257,6 +271,18 @@ def _takvim_tablosu(satirlar: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
         anahtar = (r["sezon"], r["lig"])
         lig_toplam[anahtar] = lig_toplam.get(anahtar, 0) + 1
 
+    # UEFA gunleri: takvim bilgisi, sonuc DEGIL (bkz. `avrupa` modul basligi).
+    from .avrupa import avrupa_gunleri as _avrupa_gunleri
+    from .avrupa import pencere_sayisi as _avrupa_pencere
+    from .avrupa import son_avrupa as _son_avrupa
+
+    avrupa = _avrupa_gunleri()
+
+    from .sehir import derbi_mi as _derbi_mi
+    from .sehir import sehir_tablosu as _sehir_tablosu
+
+    _sehir = _sehir_tablosu()
+
     son_mac: dict[str, date] = {}
     mac_gunleri: dict[str, list[date]] = {}
     ic_form: dict[str, list[float]] = {}
@@ -267,14 +293,23 @@ def _takvim_tablosu(satirlar: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
     out: list[dict[str, Any] | None] = [None] * len(satirlar)
 
     def dinlenme(takim: str, bugun: date) -> float | None:
-        onceki = son_mac.get(takim)
-        return None if onceki is None else min((bugun - onceki).days,
-                                               DINLENME_TAVANI)
+        """Son maçtan bu yana geçen gün — **UEFA maçları dahil**.
+
+        `max` şart: takım Perşembe Avrupa'da, ondan on gün önce ligde
+        oynadıysa dinlenme 3 gündür, 10 değil. Eskiden 10 yazıyordu.
+        """
+        adaylar = [d for d in (son_mac.get(takim),
+                               _son_avrupa(avrupa.get(takim, ()), bugun))
+                   if d is not None]
+        if not adaylar:
+            return None
+        return min((bugun - max(adaylar)).days, DINLENME_TAVANI)
 
     def sikisiklik(takim: str, bugun: date) -> int:
         gunler = mac_gunleri.get(takim, [])
-        return sum(1 for g in gunler
-                   if 0 < (bugun - g).days <= SIKISIKLIK_PENCERE_GUN)
+        lig = sum(1 for g in gunler
+                  if 0 < (bugun - g).days <= SIKISIKLIK_PENCERE_GUN)
+        return lig + _avrupa_pencere(avrupa.get(takim, ()), bugun)
 
     def yuvarlanan(kayit: list[float], pencere: int) -> float | None:
         if len(kayit) < pencere:
@@ -328,6 +363,16 @@ def _takvim_tablosu(satirlar: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
             "ic_dis_form_farki": (float(ev_ic - dep_dis)
                                   if ev_ic is not None and dep_dis is not None
                                   else 0.0),
+            # Deplasmanin UEFA yuku EV lehinedir — butun A3 ozellikleriyle
+            # ayni isaret duzeni ("pozitif = ev lehine").
+            "avrupa_var": bool(avrupa.get(ev) or avrupa.get(dep)),
+            # Derbi bir YON degil SICAKLIK degiskenidir; `recalibrate`
+            # onu `ayrisma` gibi okur (bkz. `sehir` modul basligi).
+            "derbi": float(_derbi_mi(ev, dep, _sehir)[0]),
+            "derbi_bilinir": _derbi_mi(ev, dep, _sehir)[1],
+            "avrupa_farki": float(
+                _avrupa_pencere(avrupa.get(dep, ()), bugun)
+                - _avrupa_pencere(avrupa.get(ev, ()), bugun)),
             "sezon_sonu": sezon_sonu,
             "sezon_sonu_pay_farki": (float(ev_pay - dep_pay)
                                      if sezon_sonu and ev_pay is not None
@@ -437,7 +482,7 @@ def bahisci_ayrismasi(bahisciler: dict[str, dict[str, float] | None] | None
 
 @lru_cache(maxsize=2)
 def _zenginlestirilmis_korpus(yol: str | None = None) -> tuple[dict[str, Any], ...]:
-    """Korpus satirlari + `_form` / `_takvim` alanlari — **bir kez** hesaplanir.
+    """Korpus satirlari + `_form` / `_takvim` / `_elo` / `_dc` / `_h2h` / `_seri`.
 
     Iki sebeple ayri ve onbellekli:
 
@@ -461,10 +506,19 @@ def _zenginlestirilmis_korpus(yol: str | None = None) -> tuple[dict[str, Any], .
     # Once suzseydik, secilen sezonun ilk maclari gecmissiz kalirdi.
     formlar = _form_tablosu(ham)
     takvimler = _takvim_tablosu(ham)
+    elolar = elo_tablosu(ham)
+    dcler = dc_tablosu(ham)
+    h2hler = h2h_tablosu(ham)
+    seriler = seri_tablosu(ham)
     tumu = [dict(r) for r in ham]
-    for r, f, t in zip(tumu, formlar, takvimler):
+    for r, f, t, e, d, hh, sr in zip(tumu, formlar, takvimler, elolar, dcler,
+                                     h2hler, seriler):
         r["_form"] = f
         r["_takvim"] = t
+        r["_elo"] = e
+        r["_dc"] = d
+        r["_h2h"] = hh
+        r["_seri"] = sr
     return tuple(tumu)
 
 
@@ -563,12 +617,22 @@ def _korpus_haftalari(sezonlar_: tuple | None,
                                       "form_isabet_farki": 0.0}
             hareket = cizgi_hareketi(r.get("acilis"), r.get("kapanis"))
             takvim = r.get("_takvim") or {}
+            elo = r.get("_elo") or {"elo_var": False, "elo_farki": 0.0}
+            h2h = r.get("_h2h") or {"h2h_var": False, "h2h_farki": 0.0}
+            seri = r.get("_seri") or {"seri_ev": 0, "seri_dep": 0,
+                                      "seri_farki": 0.0}
+            dc = r.get("_dc") or {"dc_var": False,
+                                  **{f"dc_{s}": 1 / 3 for s in ("1", "0", "2")}}
             ozellikler.append({
                 "lig": r["lig"],
                 "favori": favori,
                 "favori_oran": r["oranlar"][favori],
                 **form,
                 **takvim,
+                **elo,
+                **dc,
+                **h2h,
+                **seri,
                 "cizgi_var": bool(r.get("acilis") and r.get("kapanis")),
                 "acilis_probs": (implied_probs(r["acilis"], yontem)
                                  if r.get("acilis") else None),

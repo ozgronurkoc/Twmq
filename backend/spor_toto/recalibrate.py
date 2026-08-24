@@ -80,7 +80,88 @@ EN_AZ_ORNEK = AZ_ORNEK
 #: yalnızca bir özellik ekler, böylece fark o özelliğe atfedilebilir.
 KADEMELER: tuple[str, ...] = ("sicaklik", "bias", "lig", "bant", "form",
                               "hareket", "dagilim",
-                              "dinlenme", "sikisiklik", "ic_dis", "sezon_sonu")
+                              "dinlenme", "sikisiklik", "avrupa",
+                              "ic_dis", "sezon_sonu",
+                              "elo", "dc", "h2h", "seri", "derbi",
+                              "etkilesim", "etkilesim_favori")
+
+#: **Etkileşim basamakları** — `DIS_INCELEME.md` §3'ün açık itirazına cevap.
+#:
+#: Dokuz denemenin hepsi tek bir model ailesiyle yapılmıştı: `ln p` üzerinde
+#: **doğrusal**, Newton ile uydurulan softmax. İtiraz haklı bir yere basıyor:
+#: *"piyasayı geçen özellik yok demediniz — sizin doğrusal kademeniz o
+#: özelliği kullanamadı demiş oldunuz."* Bu iki basamak o itirazı **bizim
+#: kesitimizde** ölçerek cevaplıyor.
+#:
+#: İki ayrı basamak, çünkü iki ayrı soru:
+#:
+#:     etkilesim          yön özellikleri BİRBİRİYLE etkileşiyor mu
+#:                        (ör. yorgunluk formu bastırıyor mu)
+#:     etkilesim_favori   yön özellikleri MAÇIN AÇIKLIĞIYLA etkileşiyor mu
+#:                        (ör. form denk maçlarda daha mı önemli)
+#:
+#: İkincisi teorik olarak daha güçlü bir aday: Ö3 beraberlik sapmasının
+#: favori gücüne bağlı olduğunu **ölçmüştü** (şekil gerçek, büyüklük yok).
+#: Aynı bağımlılık yön özelliklerinde de olabilir.
+ETKILESIM_KADEMELERI: tuple[str, ...] = ("etkilesim", "etkilesim_favori")
+
+def kademe_en_az(kademe: str, esik: str) -> bool:
+    """`kademe`, `esik` basamağında ya da ondan üstte mi?
+
+    Kapılar önce elle yazılmış demetlerdi ve `KADEMELER`e yeni bir basamak
+    eklendiğinde **sessizce** bozuluyorlardı (bkz. §3.26 vakası: lig/bant
+    sütunları tamamen düşmüştü). Sıra artık tek kaynaktan, `KADEMELER`in
+    kendisinden okunuyor.
+    """
+    if kademe not in KADEMELER:
+        return False
+    return KADEMELER.index(kademe) >= KADEMELER.index(esik)
+
+#: Etkileşime giren yön özellikleri ve **tanımsal** ölçekleri.
+#:
+#: Ölçek şart: `dinlenme_farki` ±14, `sezon_sonu_pay_farki` ±1 aralığında.
+#: Çarpımları ölçeklenmeden aynı L2 cezasına sokmak, büyük ölçekli
+#: özelliklerin katsayısını yapay olarak kısar ve karşılaştırmayı bozardı.
+#:
+#: Ölçekler **veriye bakılmadan**, her özelliğin kendi TANIMINDAN alındı
+#: (`L2` ve `EN_AZ_KOVA` ile aynı gerekçe — ölçüm sonucuna bakarak seçilirse
+#: hold-out'un anlamı kalmaz):
+#:
+#:     form_puan_farki       maç başına puan farkı, tanım gereği [-3, 3]
+#:     form_isabet_farki     isabetli şut farkı; doğal tavanı yok, 10 alındı
+#:     dinlenme_farki        `egitim.DINLENME_TAVANI` = 14
+#:     sikisiklik_farki      14 günde oynanan maç farkı; pratikte [-5, 5]
+#:     ic_dis_form_farki     yine maç başına puan farkı, [-3, 3]
+#:     sezon_sonu_pay_farki  `2·|yüzdelik - 0.5|` farkı, tanım gereği [-1, 1]
+YON_ALANLARI: tuple[tuple[str, float], ...] = (
+    ("form_puan_farki", 3.0),
+    ("form_isabet_farki", 10.0),
+    ("dinlenme_farki", 14.0),
+    ("sikisiklik_farki", 5.0),
+    # Pencere icinde oynanan UEFA maci farki. Olcek 2: pencere 10 gun ve
+    # bir takim o pencerede en fazla iki UEFA maci oynar (ölçüldü: 3 tek
+    # bir kez gorulmus). Yine veriden degil FIKSTUR TANIMINDAN.
+    ("avrupa_farki", 2.0),
+    ("ic_dis_form_farki", 3.0),
+    ("sezon_sonu_pay_farki", 1.0),
+    # Elo farki ev avantaji DAHIL puan farkidir. Olcek 400, Elo'nun kendi
+    # taniminin parcasi (400 puan fark ~ %90 kazanma beklentisi) — yine
+    # veriden degil tanimdan.
+    ("elo_farki", 400.0),
+    # H2H ve seri `takim.py`de zaten [-1, 1]'e olceklenmis donuyor.
+    ("h2h_farki", 1.0),
+    ("seri_farki", 1.0),
+)
+
+#: Elo farkının ölçeği — `YON_ALANLARI`daki değerle **aynı olmalı**.
+#: `elo` basamağı ile etkileşim çarpımları aynı ölçekte okunmazsa aynı
+#: özellik iki farklı büyüklük gibi davranır.
+ELO_OLCEK = 400.0
+
+#: Favori gücünün merkezlendiği nokta. Üç sembolde favorinin alabileceği en
+#: küçük değer 1/3'tür; merkezleme oradan yapılır ki "favori yok" durumu
+#: sıfır versin. Uydurulmuş bir eşik DEĞİL, sembol sayısının aritmetiği.
+FAVORI_MERKEZ = 1.0 / 3.0
 
 #: A3 basamaklarının okuduğu alanlar — hepsi **yön** özelliğidir ve hepsi
 #: "pozitif = ev lehine" diye kurulmuştur (bkz. `egitim._takvim_tablosu`).
@@ -89,6 +170,12 @@ KADEMELER: tuple[str, ...] = ("sicaklik", "bias", "lig", "bant", "form",
 A3_ALANLARI: tuple[tuple[str, str], ...] = (
     ("dinlenme", "dinlenme_farki"),
     ("sikisiklik", "sikisiklik_farki"),
+    # `avrupa` yorgunluk grubuna aittir ve oraya konuldu (Faz 3.4). Dikkat:
+    # bu basamak eklendiginde `dinlenme_farki` ile `sikisiklik_farki`nin
+    # KENDILERI de degisti — UEFA gunleri artik takvime giriyor. Yani A3'un
+    # butun sayilari yeniden olculdu; eski degerler §3.16'da tarihce olarak
+    # duruyor.
+    ("avrupa", "avrupa_farki"),
     ("ic_dis", "ic_dis_form_farki"),
     ("sezon_sonu", "sezon_sonu_pay_farki"),
 )
@@ -148,6 +235,16 @@ def _mac_ozellikleri(hafta: Girdi) -> list[dict[str, Any]]:
             "form_isabet_farki": float(o.get("form_isabet_farki") or 0.0),
             "hareket": {s: float(o.get(f"hareket_{s}") or 0.0) for s in SYMBOLS},
             "ayrisma": float(o.get("ayrisma") or 0.0),
+            "elo_farki": float(o.get("elo_farki") or 0.0),
+            **{f"dc_{s}": float(o.get(f"dc_{s}") or 1 / 3) for s in SYMBOLS},
+            "h2h_farki": float(o.get("h2h_farki") or 0.0),
+            "seri_farki": float(o.get("seri_farki") or 0.0),
+            # Bu sozluk bir BEYAZ LISTEDIR ve yeni bir ozellik eklendiginde
+            # sessizce dusurur: `derbi` bir kez tam bunu yasadi — sutun
+            # tasarimda vardi, hep sifirdi, katsayi tam 0,000000 cikti ve
+            # olcum "derbi bir sey soylemiyor" diye okunacakti. Bekcisi
+            # `test_sehir.py::test_derbi_korpustan_tasariMA_ulasiyor`.
+            "derbi": float(o.get("derbi") or 0.0),
             **{alan: float(o.get(alan) or 0.0) for _, alan in A3_ALANLARI},
         } for i, o in enumerate(tasinan)]
 
@@ -166,6 +263,19 @@ def _mac_ozellikleri(hafta: Girdi) -> list[dict[str, Any]]:
             "form_puan_farki": 0.0,
             "form_isabet_farki": 0.0,
             "hareket": dict.fromkeys(SYMBOLS, 0.0),
+            # Kupon haftalari Elo da tasimaz — korpus disindaki takimlar
+            # icin defter yok. Notr 0, `form` ile ayni kural.
+            "elo_farki": 0.0,
+            # Kupon haftalarinda DC de yok: korpus disindaki takimlar icin
+            # guc uydurulmadi. Duzgun dagilim = "soylenecek bir sey yok" ve
+            # `ln(1/3)` her sembolde ayni oldugu icin sutun NOTRdur.
+            **dict.fromkeys((f"dc_{s}" for s in SYMBOLS), 1 / 3),
+            "h2h_farki": 0.0,
+            "seri_farki": 0.0,
+            # Kupon haftalarinda sehir tablosu YOK (korpus disi takimlar).
+            # 0 = "derbi degil" — `sehir` modulundeki tek yonlu hatanin
+            # aynisi ve ayni gerekce.
+            "derbi": 0.0,
             "ayrisma": 0.0,
             **{alan: 0.0 for _, alan in A3_ALANLARI},
         })
@@ -272,6 +382,105 @@ def _tasarim_satiri(ozellik: dict[str, Any], kademe: str,
                          for s in SYMBOLS])
         if kademe == ad:
             break
+    # A3 dongusundeki `break` fonksiyondan CIKMAZ, yalnizca donguden cikar.
+    # Bu yuzden asagisi acikca kapiya baglanmak zorunda: kapisiz birakilinca
+    # Elo sutunu `dinlenme`den itibaren BUTUN alt basamaklara sizmisti ve
+    # `kalibre_elo` ile `kalibre_sezon_sonu` birebir ayni sayiyi vermisti.
+    # `test_kademe_tam_bir_sutun_ekler` bu hata sinifini bekciliyor.
+    if not kademe_en_az(kademe, "elo"):
+        return np.array(sutunlar, dtype=float).T
+
+    # 12) elo — rakip gucune gore duzeltilmis takim gucu (Faz 3.2).
+    #     `form` ile ayni simetrik kaydirma. `kalibre_form` HAM formdu;
+    #     Elo tam o eksigi kapatir ve bu yuzden ayri bir basamaktir:
+    #     "form denendi" demek "Elo denendi" demek degil.
+    e = float(ozellik.get("elo_farki") or 0.0) / ELO_OLCEK
+    sutunlar.append([e if s == "1" else (-e if s == "2" else 0.0)
+                     for s in SYMBOLS])
+    if not kademe_en_az(kademe, "dc"):
+        return np.array(sutunlar, dtype=float).T
+
+    # 13) dc — Dixon-Coles'un GOLLERDEN turettigi ikinci gorus (Faz 3.1).
+    #     Sutun `sicaklik` ile ayni bicimde girer: her sembolun logitine o
+    #     sembolun DC log-olasiligi eklenir ve geriye TEK bir katsayi kalir.
+    #     Isareti dogrudan soruyu cevaplar:
+    #
+    #         c > 0  DC bilgi tasiyor — piyasa gollerin soyledigini eksik
+    #                fiyatlamis
+    #         c ~ 0  DC'nin soyledigi zaten fiyatta
+    #         c < 0  DC'nin gorusu piyasaninkiyle ters ve zararli
+    #
+    #     Sembol basina ayri katsayi verilseydi isaret okunamazdi — `hareket`
+    #     basamagindaki gerekcenin aynisi.
+    dc_p = [max(float(ozellik.get(f"dc_{s}") or 0.0), OLASILIK_TABANI)
+            for s in SYMBOLS]
+    sutunlar.append([np.log(v) for v in dc_p])
+    if not kademe_en_az(kademe, "h2h"):
+        return np.array(sutunlar, dtype=float).T
+
+    # 14) h2h — eslesmeye OZEL gecmis (Faz 3.3). Elo ve DC bunu tanim
+    #     geregi goremez: ikisi de her takima TEK bir guc atar ve
+    #     eslesmeye ozel bir terim tasimaz. `form` ile ayni simetrik
+    #     kaydirma.
+    v = float(ozellik.get("h2h_farki") or 0.0)
+    sutunlar.append([v if s == "1" else (-v if s == "2" else 0.0)
+                     for s in SYMBOLS])
+    if not kademe_en_az(kademe, "seri"):
+        return np.array(sutunlar, dtype=float).T
+
+    # 15) seri — ardisik galibiyet/maglubiyet farki. `form`dan farki ince
+    #     ama gercek: form son 5 macin PUAN ORTALAMASIDIR, seri
+    #     ARDISIKLIGI olcer. 3 galibiyet + 2 maglubiyet ile 5 beraberlik
+    #     ayni ortalamayi verebilir; ayni seriyi veremez.
+    v = float(ozellik.get("seri_farki") or 0.0)
+    sutunlar.append([v if s == "1" else (-v if s == "2" else 0.0)
+                     for s in SYMBOLS])
+    if not kademe_en_az(kademe, "derbi"):
+        return np.array(sutunlar, dtype=float).T
+
+    # 16) derbi — bir YON degil SICAKLIK degiskeni (Faz 3.4). Ayni sehirde
+    #     oynanan bir mac iki tarafa da ayni seyi yapar; iddia "kim
+    #     avantajli" degil "belirsizlik farkli mi". Bu yuzden `ayrisma` ile
+    #     ayni bicimde girer — `ln p_s`in modulasyonu:
+    #
+    #         z_s = (β + δ·derbi)·ln p_s
+    #
+    #     δ < 0  derbide piyasanin guvenini AZALT (surpriz daha olasi)
+    #     δ ≈ 0  derbi bir sey soylemiyor
+    #
+    #     Sehri bilinmeyen takimda deger 0'dir, yani "derbi degil" — tek
+    #     yonlu ve kasitli bir hata (bkz. `sehir` modul basligi).
+    derbi = float(ozellik.get("derbi") or 0.0)
+    sutunlar.append([derbi * np.log(max(probs.get(s, 0.0), OLASILIK_TABANI))
+                     for s in SYMBOLS])
+    if not kademe_en_az(kademe, "etkilesim"):
+        return np.array(sutunlar, dtype=float).T
+
+    # 16) etkilesim — yon ozelliklerinin IKILI carpimlari.
+    #     Olcekli okunur (bkz. `YON_ALANLARI`), ve `form` ile ayni simetrik
+    #     kaydirmayla girer: pozitif carpim "1"i yukari, "2"yi asagi iter.
+    #     Beraberlige dokunmaz, cunku bir YON buyuklugudur — beraberlik
+    #     sorusu ayridir ve `beraberlik.py`de kendi modeline sahiptir.
+    olcekli = [float(ozellik.get(alan) or 0.0) / olcek
+               for alan, olcek in YON_ALANLARI]
+    for i in range(len(olcekli)):
+        for j in range(i + 1, len(olcekli)):
+            v = olcekli[i] * olcekli[j]
+            sutunlar.append([v if s == "1" else (-v if s == "2" else 0.0)
+                             for s in SYMBOLS])
+    if kademe == "etkilesim":
+        return np.array(sutunlar, dtype=float).T
+
+    # 17) etkilesim_favori — her yon ozelligi x macin ACIKLIGI.
+    #     Aciklik = favorinin olasiligi, 1/3'ten merkezlenmis. Denk macta
+    #     ~0, ezici favoride ~0,6. Katsayinin ISARETI dogrudan soruyu
+    #     cevaplar: pozitifse ozellik acik maclarda daha cok is goruyor,
+    #     negatifse denk maclarda.
+    aciklik = (max(probs.values()) - FAVORI_MERKEZ) if probs else 0.0
+    for v0 in olcekli:
+        v = v0 * aciklik
+        sutunlar.append([v if s == "1" else (-v if s == "2" else 0.0)
+                         for s in SYMBOLS])
     return np.array(sutunlar, dtype=float).T
 
 
@@ -375,10 +584,17 @@ class KalibreTahminci(Tahminci):
                 sayim[o[alan]] = sayim.get(o[alan], 0) + 1
             return [*sorted([k for k, v in sayim.items() if v >= EN_AZ_ORNEK and k != "bilinmiyor"]), "diger"]
 
-        ust = ("lig", "bant", "form", "hareket", "dagilim",
-               "dinlenme", "sikisiklik", "ic_dis", "sezon_sonu")
-        self._ligler = yeterli("lig") if self.kademe in ust else []
-        self._bantlar = yeterli("bant") if self.kademe in ust[1:] else []
+        # Lig ve bant sutunlari, kendi basamaklarindan ITIBAREN butun ust
+        # kademelerde bulunur. Bu daha once elle yazilmis bir liste olarak
+        # duruyordu ve `KADEMELER`e yeni bir basamak eklendiginde SESSIZCE
+        # bozuluyordu: yeni basamak listede olmadigi icin lig/bant sutunlari
+        # tamamen dusuyor, kademe bias seviyesine geriliyordu. Tam da bu
+        # yasandi (etkilesim basamaklari eklenirken) ve
+        # `test_gercek_veride_egitim_ici_kapasiteyle_iyilesiyor` yakaladi.
+        # Sira artik `KADEMELER`in kendisinden okunuyor — tek kaynak.
+        sira = KADEMELER.index(self.kademe) if self.kademe in KADEMELER else -1
+        self._ligler = yeterli("lig") if sira >= KADEMELER.index("lig") else []
+        self._bantlar = yeterli("bant") if sira >= KADEMELER.index("bant") else []
 
     def egit(self, haftalar: Sequence[Girdi]) -> None:
         ozellikler: list[dict[str, Any]] = []
@@ -421,6 +637,37 @@ class KalibreTahminci(Tahminci):
     def katsayilar(self) -> list[float] | None:
         """Uydurulmuş katsayılar — tanılama ve test için."""
         return None if self._theta is None else [float(v) for v in self._theta]
+
+    # -- kalicilik (artefakt.Kalici) ------------------------------------------
+
+    def durum(self) -> dict[str, Any]:
+        """Uydurulmuş her şey, JSON'a çevrilebilir hâlde (`artefakt`).
+
+        **Üç alanın üçü de zorunlu.** `_ligler` ve `_bantlar` tasarım
+        matrisinin sütun düzenini belirler; yalnızca `_theta` taşınsaydı
+        katsayılar geri gelir ama **başka sütunlara** binerdi ve model
+        sessizce başka bir şey hesaplardı. Bekçisi
+        `test_artefakt.py::test_yuklenen_model_ayni_tahmini_veriyor`.
+        """
+        return {
+            "kademe": self.kademe,
+            "ligler": list(self._ligler),
+            "bantlar": list(self._bantlar),
+            # `tolist()` sekilden bagimsizdir: tasarim tensoru (n, sembol, k)
+            # oldugu icin theta 1 boyutludur, ama bicim degisirse burasi
+            # sessizce dogru kalir.
+            "theta": (None if self._theta is None else self._theta.tolist()),
+        }
+
+    def yukle(self, durum: dict[str, Any]) -> None:
+        """`durum`u geri koy — eğitim yapılmaz."""
+        kademe = durum["kademe"]
+        if kademe != self.kademe:
+            raise ValueError(f"kademe tutmuyor: {kademe} != {self.kademe}")
+        self._ligler = list(durum["ligler"])
+        self._bantlar = list(durum["bantlar"])
+        theta = durum["theta"]
+        self._theta = None if theta is None else np.asarray(theta, dtype=float)
 
 
 #: İzotonik kalibrasyonun bir kovaya koyduğu en az nokta. Ham PAV, 93 bin

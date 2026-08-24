@@ -8,8 +8,10 @@ import type {
   MetaResponse,
   SolveRequest,
   SolveResponse,
+  PazarResponse,
   StatsResponse,
   TahminResponse,
+  TakimlarResponse,
   WeekDetail,
 } from "./types";
 import { SEMBOLLER } from "./types";
@@ -193,6 +195,37 @@ export function solve(body: SolveRequest, signal?: AbortSignal) {
  *
  * `limit` yalnizca listeyi kirpar; olculmus isabet ve uyarilar hep tam gelir.
  */
+/**
+ * 1X2 disi pazarlar: alt/ust 2,5 ve Asya handikabi.
+ *
+ * Cevap bir TAHMIN degil, bir OLCUMdur: her pazarin kapsamasi, marji,
+ * kalibrasyon bantlari ve sapan bant sayisi govdeyle birlikte gelir.
+ * `handikap.brier` **null** doner ve bu bir eksiklik degil bir tanimdir —
+ * sebep `brier_yok_sebep` alaninda yazili.
+ */
+export function getPazar(
+  arindirma?: ArindirmaYontemi,
+  signal?: AbortSignal,
+) {
+  const qs = arindirma ? `?arindirma=${arindirma}` : "";
+  return istek<PazarResponse>(`/api/pazar${qs}`, { signal });
+}
+
+export function getTakimlar(
+  lig?: string,
+  sezon?: string,
+  signal?: AbortSignal,
+) {
+  const q = new URLSearchParams();
+  if (lig) q.set("lig", lig);
+  if (sezon) q.set("sezon", sezon);
+  const qs = q.toString();
+  return istek<TakimlarResponse>(
+    `/api/takimlar${qs ? `?${qs}` : ""}`,
+    { signal },
+  );
+}
+
 export function getTahmin(
   opt: { limit?: number } = {},
   signal?: AbortSignal,
