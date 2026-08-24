@@ -27,6 +27,7 @@ from spor_toto.agac import (
     AgacTahminci,
     _tasarim,
     fabrikalar,
+    lofo,
 )
 
 PIYASA = {"1": 0.50, "0": 0.25, "2": 0.25}
@@ -201,3 +202,44 @@ def test_ozellik_kumesi_kademeyle_ayni():
 
     yon = {alan for alan, _ in YON_ALANLARI}
     assert yon <= set(OZELLIK_ALANLARI), yon - set(OZELLIK_ALANLARI)
+
+
+# ─── LOFO (Faz 2.5) ───────────────────────────────────────────────────────
+
+def test_lofo_her_ozellik_icin_satir_uretir():
+    r = lofo(_kesit(n_sezon=3, hafta=6))
+    assert r["n"] > 0
+    assert r["n_kat"] == 3
+    assert {x["alan"] for x in r["ozellikler"]} == set(OZELLIK_ALANLARI)
+    for x in r["ozellikler"]:
+        assert x["zarar"] == pytest.approx(x["brier"] - r["taban"], abs=1e-12)
+
+
+def test_lofo_zarara_gore_sirali():
+    """En çok zarar veren (yani en çok taşıyan) özellik başta olmalı."""
+    r = lofo(_kesit(n_sezon=3, hafta=6))
+    zararlar = [x["zarar"] for x in r["ozellikler"]]
+    assert zararlar == sorted(zararlar, reverse=True)
+
+
+def test_lofo_alt_kume_secilebiliyor():
+    r = lofo(_kesit(n_sezon=3, hafta=6), alanlar=["elo_farki", "h2h_farki"])
+    assert {x["alan"] for x in r["ozellikler"]} == {"elo_farki", "h2h_farki"}
+
+
+def test_lofo_bilinmeyen_alani_atlar():
+    r = lofo(_kesit(n_sezon=3, hafta=6), alanlar=["elo_farki", "yok_boyle"])
+    assert {x["alan"] for x in r["ozellikler"]} == {"elo_farki"}
+
+
+def test_lofo_tek_sezonda_kosmaz_ve_sebep_yazar():
+    """İç halka kurulamıyorsa LOFO **yapılmaz** — sessizce tek katla değil."""
+    r = lofo(_kesit(n_sezon=1, hafta=10))
+    assert r["taban"] is None
+    assert r["ozellikler"] == []
+    assert "sezon" in r["sebep"]
+
+
+def test_lofo_bos_kesitte_cokmez():
+    r = lofo([])
+    assert r["n"] == 0 and r["ozellikler"] == []

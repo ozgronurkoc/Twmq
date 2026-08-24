@@ -245,6 +245,78 @@ def fabrikalar() -> list[Any]:
     return [AgacTahminci, lambda: AgacTahminci(piyasadan_basla=False)]
 
 
+# ─── LOFO — bir özelliği çıkarınca ne oluyor (Faz 2.5) ────────────────────────
+
+def lofo(haftalar: Sequence[Girdi],
+         alanlar: Sequence[str] = OZELLIK_ALANLARI,
+         params: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Leave-One-Feature-Out önem — **sezon katlarıyla**.
+
+    Tekil önem ölçüleri (ağaç bölünme sayısı, permütasyon) korelasyonlu
+    özelliklerde yanıltır: `elo_farki`, `form_puan_farki` ve `h2h_farki`
+    üçü de takım gücünü ölçüyor ve biri düştüğünde ötekiler açığı kapatıyor.
+    LOFO tam bunu ölçer — *"bu özelliği tamamen çıkarsam skor ne kadar
+    kötüleşir?"*
+
+    Pozitif `zarar` = özellik çıkarılınca Brier **arttı**, yani özellik
+    işe yarıyordu. Sıfır ya da negatif = özellik hiçbir şey taşımıyor
+    (ya da gürültü ekliyor).
+
+    Katlar `arama.SezonKatlayici`dan gelir. AlphaPy Pro'nun `select_features_lofo`u
+    aynı işi rastgele katlarla yapıyor (`DIS_INCELEME_ALPHAPY.md` §4.1) ve
+    zaman sıralı veride o katlar sızdırır.
+    """
+    ozellikler, y_list, gruplar = _satirlar(haftalar)
+    if not ozellikler:
+        return {"n": 0, "taban": None, "ozellikler": []}
+
+    X, ham = _tasarim(ozellikler)
+    y = np.asarray(y_list, dtype=int)
+    katlayici = SezonKatlayici(gruplar)
+    p = dict(params or ADAYLAR[0])
+
+    def skorla(sutunlar: Sequence[int]) -> float:
+        toplam = 0.0
+        n = 0
+        for egitim, test in katlayici.split():
+            # Sutunu SILMEK yerine SIFIRLAMAK: matris sekli sabit kalir ve
+            # `init_score` hizasi bozulmaz. Sifir sutun agac icin bilgisiz
+            # bir sutundur — bolunme uretmez.
+            Xk = X.copy()
+            for j in sutunlar:
+                Xk[:, j] = 0.0
+            model = self_uydur(Xk[egitim], y[egitim], ham[egitim], p)
+            q = self_olasilik(model, Xk[test], ham[test])
+            hedef = np.zeros_like(q)
+            hedef[np.arange(len(test)), y[test]] = 1.0
+            toplam += float(((q - hedef) ** 2).sum(axis=1).sum())
+            n += len(test)
+        return toplam / n if n else float("nan")
+
+    # Uydurma/olasilik gövdeleri tahmincinin kendisinden alinir ki iki kopya
+    # olmasin; `piyasadan_basla=True` sabit, cunku LOFO'nun sorusu
+    # "piyasanin USTUNE ne ekliyor" sorusudur.
+    _ornek = AgacTahminci()
+    self_uydur = _ornek._uydur
+    self_olasilik = _ornek._olasilik
+
+    if not katlayici.yeterli():
+        return {"n": len(y), "taban": None, "ozellikler": [],
+                "sebep": "ic halka icin en az iki sezon gerekiyor"}
+
+    taban = skorla(())
+    out: list[dict[str, Any]] = []
+    for alan in alanlar:
+        if alan not in OZELLIK_ALANLARI:
+            continue
+        i = OZELLIK_ALANLARI.index(alan)
+        skor = skorla((i,))
+        out.append({"alan": alan, "brier": skor, "zarar": skor - taban})
+    out.sort(key=lambda r: -r["zarar"])
+    return {"n": len(y), "taban": taban, "n_kat": katlayici.get_n_splits(),
+            "parametreler": p, "ozellikler": out}
+
+
 # ─── elle koşum ───────────────────────────────────────────────────────────────
 
 def rapor(sezonlar_: Sequence[str] | None = None) -> dict[str, Any]:

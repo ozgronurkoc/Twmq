@@ -116,6 +116,7 @@ spor_toto/evaluate.py  ◄── spor_toto/predict.py     (sözleşme + 3 refera
 | Tahmin | `backend/spor_toto/agac.py` | — | LightGBM çok sınıflı (Faz 2.2): piyasanın log-olasılığı `init_score`, ağaç yalnızca artığı öğrenir |
 | Pazar | `backend/spor_toto/pazar.py` | `/api/pazar` | 1X2 dışı pazarlar (Faz 4.1): alt/üst 2,5 (Brier'li) ve Asya handikabı (getiri kalibrasyonlu), ölçülmüş kalibrasyonlarıyla |
 | Tahmin | `backend/spor_toto/yigin.py` | — | Kat dışı yığınlama (Faz 2.4): sezon katlarıyla üretilmiş olasılıklar üzerinde multinom logit üst-öğrenici; taban başına tek ağırlık |
+| Tahmin | `backend/spor_toto/kalibre.py` | — | Venn-Abers (Faz 2.3): kendi PAV'ımız üzerine indüktif IVAP, sezon bazlı kalibrasyon bölmesi, olasılık **aralığı** |
 | **Ürün** | `backend/spor_toto/tahmin.py` | — | **Tahmin ürünü (C2)**: yaklaşan maça olasılık + ölçülmüş isabet |
 | Üretim | `backend/scripts/build_fixtures.py` | — | Yaklaşan maçlar ve oranları (football-data `fixtures.csv`) |
 | UI | `frontend/app/tahmin/page.tsx` | — | Tahmin sayfası |
@@ -137,7 +138,7 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/app/super-toto/page.tsx` · `components/super-toto/haftalar.tsx` · `lib/super-toto.ts` | Sezonun hafta şeridi; `?hafta=N` adreste durur |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **1.340 test**; **82'si** istatistik katmanına (`history` `odds` `backtest`
+paketi toplam **1.357 test**; **82'si** istatistik katmanına (`history` `odds` `backtest`
 `api_stats` `api_backtest` `snapshot_iddaa`), **294'ü** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer`). Dosya adlarıyla sayılıdır ki tablo elle bakım gerektirmesin —
@@ -2240,6 +2241,98 @@ farklı paketlenmesinden** geliyor — ve §3.23'te ölçülen paketleme tavanı
 
     python -m spor_toto.yigin --rapor
 
+### 3.33 LOFO ve Venn-Abers (Faz 2.5 + 2.3) — Faz 2'nin son iki adımı
+
+#### LOFO — bir özelliği çıkarınca ne oluyor
+
+Tekil önem ölçüleri (ağaç bölünme sayısı, permütasyon) **korelasyonlu**
+özelliklerde yanıltır: `elo_farki`, `form_puan_farki` ve `h2h_farki` üçü de
+takım gücünü ölçüyor ve biri düştüğünde ötekiler açığı kapatıyor. LOFO tam
+bunu ölçer — *"bu özelliği tamamen çıkarsam skor ne kadar kötüleşir?"*
+
+Katlar `arama.SezonKatlayici`dan gelir. AlphaPy Pro'nun
+`select_features_lofo`u aynı işi **rastgele** katlarla yapıyor.
+
+**Ölçülen — 31.103 maç · 4 sezon katı · taban Brier 0,594005:**
+
+| özellik | Brier (çıkarınca) | zarar |
+|---|---:|---:|
+| `form_isabet_farki` | 0,594147 | **+0,000142** |
+| `sezon_sonu_pay_farki` | 0,594048 | +0,000043 |
+| `ic_dis_form_farki` | 0,594029 | +0,000025 |
+| `sikisiklik_farki` | 0,594024 | +0,000019 |
+| `seri_farki` | 0,594024 | +0,000019 |
+| `dinlenme_farki` | 0,593967 | **−0,000038** |
+| `elo_farki` | 0,593963 | **−0,000042** |
+| `form_puan_farki` | 0,593939 | **−0,000065** |
+| `h2h_farki` | 0,593939 | **−0,000065** |
+| `ayrisma` | 0,593846 | **−0,000159** |
+
+**Onun beşi negatif**: o özellikleri çıkarmak skoru **iyileştiriyor**.
+
+İki okuma öne çıkıyor. Birincisi `ayrisma` (bahisçi anlaşmazlığı) en zararlı
+sütun — A2'nin *"ham sinyalin kendisi bir görüntüydü"* bulgusunun ortak
+modeldeki karşılığı. İkincisi `elo_farki` ve `h2h_farki`, yani projenin
+kendi belgelerinde **en umutlu** diye işaretlenmiş iki sütun, net negatif.
+
+LOFO'nun değeri bu tabloda tek tek ölçümlerin veremediği şeyi vermesi:
+özellikler **birlikte** de bir şey taşımıyor.
+
+#### Venn-Abers — nokta tahmininde bir şey yok, **aralık yeni**
+
+AlphaPy Pro'nun en dikkat çeken parçasıydı. Üç sapmayla alındı ve üçü de
+gerekçeli:
+
+1. **Paket alınmadı, algoritma yazıldı.** `pip install venn-abers` bu
+   ortamda **derlenmiyor**. `recalibrate._pav` zaten elimizdeydi:
+   Venn-Abers iki PAV uydurmasıdır. `_uydur`un *"sessizce kaybolabilecek
+   bir isteğe bağlı bağımlılık, kendi çözücünü yazmaktan kötüdür"*
+   gerekçesi burada teorik değil **ölçülmüş** bir gerçek çıktı.
+2. **Kalibrasyon bölmesi sezon bazlı.** Pro'nun `cal_size=0.2`si rastgele
+   bir dilim alır ve zaman sıralı veride aynı sezonu hem uydurmaya hem
+   kalibrasyona koyar. Burada **son sezon** ayrılıyor.
+3. **Üç sınıf için bire-karşı-hepsi** — ve bu bir ödünç: geçerlilik
+   garantisi her sembol için ayrı ayrı geçerlidir, normalize edilmiş üçlü
+   için değil. Yazılı duruyor.
+
+**Ölçülen:**
+
+| tahminci | Brier | fark | %95 aralık | geçti |
+|---|---:|---:|---|---|
+| piyasa | 0,593600 | — | — | referans |
+| `venn_abers` | 0,593900 | +0,000264 | [−0,000081, +0,000584] | hayır |
+
+Beklenen sonuç buydu ve **koşumdan önce yazılmıştı**: §3.23 kalibrasyon
+tavanını 0,00042 ölçmüştü, izotonik `shin` üzerinde zaten hiçbir şey
+eklemiyordu.
+
+**Asıl çıktı aralığın kendisi** ve o projede daha önce hiç ölçülmedi:
+
+| | değer |
+|---|---:|
+| ortalama `p1 − p0` | **0,00472** |
+| en geniş | 0,64179 |
+| nokta (maç × sembol) | 93.309 |
+
+Ortalama genişlik 0,0047 — kalibrasyon kümesi tipik bir olasılığı ±0,0024
+içine hapsediyor. Bu, §3.23'ün `REL = 0,00042`sinin bağımsız bir teyidi:
+piyasanın olasılıkları **sıkı biçimde destekleniyor**, oynatılacak yer yok.
+
+En geniş aralık (0,64) kalibrasyon kümesinin desteği dışına düşen
+skorlarda; orada model *"bilmiyorum"* diyor ve bunu artık **söyleyebiliyor**.
+
+#### Faz 2 kapandı
+
+| Alt adım | Sonuç |
+|---|---|
+| 2.1 Etkileşim kademesi | Geçmedi; §3.29'da anlamlı biçimde kötü |
+| 2.2 Ağaç toplulukları | Geçmedi (§3.30) |
+| **2.3 Venn-Abers** | **Geçmedi** — tavan koşumdan önce biliniyordu |
+| 2.4 Yığınlama | Geçmedi; ilk negatif nokta tahmini (§3.32) |
+| **2.5 LOFO** | **Hiçbir özellik taşımıyor**; onun beşi net negatif |
+
+    python -m spor_toto.kalibre --rapor
+
 ## 4. Sayfada bugün ne var
 
 **`/istatistik`** — sezon dağılımı (en sık sonuç + pay çubuğu) · 5 sayı kutusu (sembol
@@ -2371,6 +2464,7 @@ ve karşılıkları: kupon seti 0,5747 → **0,5740**, korpus 0,5940 → **0,593
 | **Ağaç toplulukları (§3.30)** | 31.103 maç · 183 hafta | **Model sınıfı itirazı kapandı.** `agac` +0,000368 [−0,000009, +0,000750], `agac_ham` +0,000667 [+0,000282, +0,001068] — ikincisi anlamlı biçimde kötü. Ayrışım mekanizmayı veriyor: ağaç **kalibrasyonu iyileştiriyor** (REL 0,00042 → 0,00015) ama **çözünürlük kaybediyor** (0,05657 → 0,05597). İç halka en küçük modeli seçti; kapasite monoton zararlı (yaprak 4 → 31: 0,5940 → 0,6120) |
 | **1X2 dışı pazarlar (§3.31)** | 539 maç · kupon oran arşivi | **Kısıt kalktı, kural kalmadı.** Alt/üst 2,5: Brier 0,4656, marj %7,14, sapan bant **0/4**. Asya handikabı: ortalama getiri 0,4833, marj %7,38, sapan bant **0/4** — Brier **tanım gereği yok** (çizgilerin %53'ü çeyrek, sonuç kesirli). Handikap bantları **çizgiye** göre: olasılığa göre dilimlendiğinde 539 maçın 531'i tek banda düşüyor, çünkü pazarın amacı olasılığı %50'ye çivilemek |
 | **Yığınlama (§3.32)** | 31.103 maç · kat dışı 31.103 | **Serinin ilk negatif nokta tahmini** ama geçmedi: −0,000137 [−0,000402, +0,000148]. Ağırlıklar sebebini söylüyor — piyasa +0,5307, kademe +0,3242, agac +0,2347 (**üçü de piyasa çıpalı**, toplamları 1,09) ve piyasadan bağımsız tek taban Dixon-Coles **−0,0693**. Yeni bilgi değil, aynı bilginin farklı paketlenmesi |
+| **LOFO + Venn-Abers (§3.33)** | 31.103 maç · 4 sezon katı | **LOFO: hiçbir özellik taşımıyor**, onun beşi net negatif — en zararlısı `ayrisma` (−0,000159), ve `elo_farki` (−0,000042) ile `h2h_farki` (−0,000065) de negatif. **Venn-Abers geçmedi** (+0,000264) ama aralık yeni bir sayı verdi: ortalama genişlik **0,00472** — piyasanın olasılıkları sıkı destekleniyor, §3.23'ün bağımsız teyidi |
 
 **Okuma.** Aşırı uyum modelin kapasitesinden değil örneklem küçüklüğünden geliyordu; büyük
 korpus onu kaldırdı. Ama kalan etki 0,0005–0,0015 Brier — 31 binde anlamlı, 540'ta değil ve
@@ -3108,7 +3202,7 @@ python -m spor_toto.disari                 # A3: piyasa dışı özellikler
 python -m spor_toto.tahmin                 # ÜRÜN: yaklaşan maçlara olasılık
 
 # Denetim
-pytest -q                                  # 1.340 test (82'si bu katman, 294'ü tahmin)
+pytest -q                                  # 1.357 test (82'si bu katman, 294'ü tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out
