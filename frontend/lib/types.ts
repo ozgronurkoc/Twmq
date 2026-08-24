@@ -1057,3 +1057,58 @@ export interface TahminResponse {
   uyarilar: TahminUyarisi[];
   bos_sebep: string | null;
 }
+
+/* ─── 1X2 dışı pazarlar (`/api/pazar`) ─────────────────────────────────── */
+
+/**
+ * Bir kalibrasyon bandı. `lo`/`hi` **eksene göre** okunur: alt/üst tarafında
+ * olasılık (`0.35`–`0.45` gibi), handikap tarafında çizgi büyüklüğü
+ * (`0.30`–`0.60` gibi). Ayrımı `PazarOzeti.bant_ekseni` söyler.
+ */
+export interface PazarBandi {
+  lo: number;
+  hi: number;
+  n: number;
+  /** Piyasanın (marj arındırılmış) dediği ortalama. */
+  piyasa: number;
+  /** Gerçekleşen oran — handikapta ortalama **getiri**. */
+  gercek: number;
+  fark: number;
+  ga_alt: number;
+  ga_ust: number;
+  piyasa_ga_icinde: boolean;
+  /** Yalnızca handikapta: ortalamanın standart hatası. */
+  se?: number;
+}
+
+export interface PazarOzeti {
+  n: number;
+  kapsama: number;
+  marj: number | null;
+  /**
+   * Alt/üstte dolu, handikapta **null** — ve bu bir eksiklik değil bir
+   * tanım: çizgilerin %53'ü çeyrek, sonuç ikili değil kesirli bir getiri
+   * ve kesirli bir sonuca karşı Brier düzgün bir puanlama kuralı değil.
+   * Sebep `brier_yok_sebep` alanında yazılı.
+   */
+  brier: number | null;
+  brier_yok_sebep?: string;
+  /** Bantların hangi eksende dilimlendiği. */
+  bant_ekseni: "olasilik" | "cizgi";
+  bantlar: PazarBandi[];
+  sapan_bant: number;
+  /** Yalnızca alt/üstte: üst gelen maçların oranı. */
+  ust_orani?: number;
+  /** Yalnızca handikapta: ortalama getiri ve çizgi tipi dağılımı. */
+  ortalama_getiri?: number;
+  cizgi_tipleri?: Record<string, number>;
+}
+
+export interface PazarResponse {
+  arindirma: string;
+  n_mac: number;
+  alt_ust: PazarOzeti;
+  handikap: PazarOzeti;
+  /** Kesitin sınırı — arayüzde görünür durur, katlanmaz. */
+  sinir: string;
+}

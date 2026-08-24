@@ -69,6 +69,7 @@ yani Run düğmesi tek başına da yeterlidir.
 | `/super-toto` | Canlı sezon defteri (statik besleme) |
 | `/istatistik` | Sezon dağılımı, oran/favori kırılımları, veri kalitesi |
 | `/istatistik/[week]` | Hafta detayı (olasılıkları formül sayfasına devredebilir) |
+| `/pazarlar` | **Alt/üst 2,5 ve Asya handikabı** — fiyat + ölçülmüş kalibrasyon |
 | `/istatistik/geri-test` | Oranlardan strateji üretip 41 haftayı motorla koşturur |
 | `/saglik` | Kategorili değişmez (invariant) kontrolleri, kısmi çalıştırma |
 
@@ -117,9 +118,11 @@ Katman katman:
 
 > `odds.py` burada uzun süre "yalnızca analiz" diye yazılıydı; **artık değil**.
 > `/api/stats` bir `odds` bloğu döndürüyor ve `backtest` `match_1x2`yi
-> çağırıyor. Arayüze yalnızca **maç sonucu (1X2)** çıkar; arşivdeki diğer
-> pazarlar (2,5 alt/üst, Asya handikap) ve maç istatistikleri API'ye hiç
-> girmez.
+> çağırıyor. **Arşivdeki diğer pazarlar da artık çıkıyor** (§3.31):
+> alt/üst 2,5 ve Asya handikabı `pazar.py` → `/api/pazar` → `/pazarlar`
+> yolunu izliyor, ölçülmüş kalibrasyonlarıyla birlikte. Maç istatistikleri
+> (şut, korner) hâlâ API'ye girmiyor — onlar `egitim.py`nin form
+> tablosunun girdisi.
 
 ### CLI
 
@@ -151,7 +154,7 @@ yazmazlar). Ayrıntı: `docs/VERI_TOPLAMA_VE_ISLEME.md`.
 ```bash
 cd backend
 python -m pytest -m "not slow" -q   # hızlı süit
-python -m pytest                    # tamamı (1.299 test, ILP dahil)
+python -m pytest                    # tamamı (1.330 test, ILP dahil)
 python -m pytest -n0 tests/test_egitim.py   # tek çekirdek (hata ayıklarken)
 cd .. && bash scripts/check.sh      # TEK kapı; CI de bunu çağırır
 ```

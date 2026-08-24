@@ -10,6 +10,7 @@ import {
   History,
   PanelLeftClose,
   PanelLeftOpen,
+  Scale,
   Target,
   Trophy,
   Zap,
@@ -63,6 +64,12 @@ const GRUPLAR: NavGroup[] = [
         label: "İstatistik",
         hint: "Tarihsel 1 / 0 / 2",
         icon: <BarChart3 size={17} />,
+      },
+      {
+        href: "/pazarlar",
+        label: "Pazarlar",
+        hint: "Alt/üst 2,5 · Asya handikabı",
+        icon: <Scale size={17} />,
       },
       {
         href: "/istatistik/geri-test",

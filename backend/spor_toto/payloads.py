@@ -18,6 +18,7 @@ from typing import Any
 from .backtest import VARSAYILAN_BANKO, VARSAYILAN_UCLU, backtest
 from .history import history_analytics, history_summary, history_weeks
 from .odds import season_1x2_summary
+from .pazar import sezon_ozeti
 
 
 def stats_payload(last: int | None = None) -> dict[str, Any]:
@@ -35,8 +36,11 @@ def stats_payload(last: int | None = None) -> dict[str, Any]:
         "bands": summary.get("bands", {}),
         "data_quality": summary.get("data_quality", {}),
         "analytics": history_analytics(last),
-        # Yalnizca MAC SONUCU (1X2). Arsivdeki diger pazarlar (alt/ust, Asya
-        # handikap) analiz icindir, API'den cikmaz. Arsiv yoksa None doner.
+        # Yalnizca MAC SONUCU (1X2). Diger pazarlar ARTIK cikiyor ama AYRI
+        # bir uctan (`/api/pazar`, bkz. `pazar_payload`): olcumleri farkli
+        # (alt/ust ikili ve Brier'li, handikap kesirli getirili ve Brier'siz)
+        # ve ayni govdeye sikistirmak ikisini de yanlis okuturdu.
+        # Arsiv yoksa None doner.
         "odds": season_1x2_summary([w["week"] for w in weeks]),
         "weeks": weeks,
         "last": last,
@@ -57,3 +61,16 @@ def backtest_payload(
     her zaman birlikte okunmalidir.
     """
     return backtest(last=last, banko_esik=banko, uclu_esik=uclu, sweep=sweep)
+
+
+def pazar_payload(yontem: str | None = None) -> dict[str, Any]:
+    """1X2 disi pazarlarin olculmus ozeti — `/api/pazar`in tek kaynagi.
+
+    `stats_payload`tan AYRI durmasi bilincli: alt/ust temiz bir ikili olay
+    (Brier var), handikap kesirli getirili (Brier tanim geregi yok) ve
+    bantlari farkli eksende (olasilik yerine cizgi). Tek govdede
+    birlestirmek arayuzu ikisini ayni sanmaya iterdi.
+    """
+    from .odds import ARINDIRMA_VARSAYILAN
+
+    return sezon_ozeti(yontem or ARINDIRMA_VARSAYILAN)

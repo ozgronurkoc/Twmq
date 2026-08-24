@@ -23,7 +23,8 @@ hiçbir şey tarafından import edilmez.
 ## API
 
 Uçların **tamamı** (13). Bu tablo eskiden dokuz satırdı ve dördü eksikti
-(`/api/health/checks`, `/api/backtest`, `/api/tahmin`, `/api/benzer`) —
+(`/api/health/checks`, `/api/backtest`, `/api/pazar`, `/api/tahmin`,
+`/api/benzer`) —
 üstelik `README.md` ve `backend/README.md` bu tabloyu *kaynak* gösteriyordu,
 yani boşluk üç belgeye birden yayılıyordu. Artık liste
 `frontend/lib/api-sozlesme.json` ile aynı 13 ucu sayar ve o dosya CI'da
@@ -41,6 +42,7 @@ yani boşluk üç belgeye birden yayılıyordu. Artık liste
 | GET | `/api/stats?last=N` | Tarihsel 1/0/2 + analiz blokları (`last` = son N hafta dilimi) |
 | GET | `/api/stats/<week>` | Tek hafta detayı (komşular, sıra, sapma, sıra-sıra bağlam) |
 | GET | `/api/backtest` | Geri test: sezon + hafta hafta + eşik taraması + hold-out |
+| GET | `/api/pazar?arindirma=…` | 1X2 dışı pazarlar (alt/üst 2,5 · Asya handikabı) — fiyat **ve** ölçülmüş kalibrasyonu birlikte |
 | GET | `/api/tahmin?limit=N` | Yaklaşan maçlar — olasılık **ve** ölçülmüş isabet birlikte |
 | GET | `/api/benzer?oran=…` | "Bu oranda geçmişte ne oldu" — 31 bin maçlık korpus |
 | POST | `/api/solve` | Tüm motor özellikleri |

@@ -114,6 +114,7 @@ spor_toto/evaluate.py  ◄── spor_toto/predict.py     (sözleşme + 3 refera
 | Tahmin | `backend/spor_toto/takim.py` | — | Eşleşmeye özel geçmiş ve anlık gidişat (Faz 3.3): H2H son 5 karşılaşma, ardışık galibiyet/mağlubiyet serisi |
 | Tahmin | `backend/spor_toto/arama.py` | — | İç içe CV (Faz 0.2): `SezonKatlayici` (sklearn splitter arayüzü) + ızgara araması; hiperparametre ayarı hold-out'u bozmadan serbest |
 | Tahmin | `backend/spor_toto/agac.py` | — | LightGBM çok sınıflı (Faz 2.2): piyasanın log-olasılığı `init_score`, ağaç yalnızca artığı öğrenir |
+| Pazar | `backend/spor_toto/pazar.py` | `/api/pazar` | 1X2 dışı pazarlar (Faz 4.1): alt/üst 2,5 (Brier'li) ve Asya handikabı (getiri kalibrasyonlu), ölçülmüş kalibrasyonlarıyla |
 | **Ürün** | `backend/spor_toto/tahmin.py` | — | **Tahmin ürünü (C2)**: yaklaşan maça olasılık + ölçülmüş isabet |
 | Üretim | `backend/scripts/build_fixtures.py` | — | Yaklaşan maçlar ve oranları (football-data `fixtures.csv`) |
 | UI | `frontend/app/tahmin/page.tsx` | — | Tahmin sayfası |
@@ -135,7 +136,7 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/app/super-toto/page.tsx` · `components/super-toto/haftalar.tsx` · `lib/super-toto.ts` | Sezonun hafta şeridi; `?hafta=N` adreste durur |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **1.299 test**; **82'si** istatistik katmanına (`history` `odds` `backtest`
+paketi toplam **1.330 test**; **82'si** istatistik katmanına (`history` `odds` `backtest`
 `api_stats` `api_backtest` `snapshot_iddaa`), **294'ü** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer`). Dosya adlarıyla sayılıdır ki tablo elle bakım gerektirmesin —
@@ -2085,6 +2086,88 @@ tam olarak orası (`DIS_INCELEME_ALPHAPY.md` §4.1).
 
     python -m spor_toto.agac --rapor
 
+### 3.31 1X2 dışı pazarlar (Faz 4.1) — kısıt kalktı, kural kalmadı
+
+§7 uzun süre şunu yazıyordu:
+
+> *"Diğer pazarların arayüze çıkması — ürün kararı: 1X2 dışındakiler analiz
+> içindir, arşivde kalır."*
+
+Bu bir **ürün kararıydı**, bir ölçüm sonucu değil. Kısıtlar kalkarken o da
+kalktı. Kalkmayan kural sayfanın kuruluşunu belirledi: **hiçbir sayı
+ölçülmüş isabeti olmadan görünmez.**
+
+#### İki pazar, iki farklı ölçüm — ve fark bir tanım
+
+**Alt/üst 2,5 temiz bir ikili olaydır.** 2,5 yarım çizgidir, iade yoktur.
+Brier, kalibrasyon eğrisi ve Wilson aralığı 1X2 için ne yapılıyorsa aynen
+uygulanır.
+
+**Asya handikabı değildir.** Arşivdeki çizgilerin **%53'ü çeyrektir** ve
+öyle bir bahis iki yarım bahse bölünür: sonuç `{0, ¼, ½, ¾, 1}` kümesinden
+bir **getiri**dir, ikili bir olay değil. Tam sayı çizgide ayrıca iade var.
+
+Bu yüzden AH için Brier **hesaplanmıyor** ve gövde bunu `brier: null` +
+`brier_yok_sebep` ile açıkça söylüyor. Kesirli bir sonuca karşı Brier düzgün
+bir puanlama kuralı değildir; hesaplansaydı sayı bir şeye benzerdi ama
+hiçbir şey ölçmezdi. Yerine **beklenen getiri kalibrasyonu** ölçülüyor.
+
+#### Ölçülen — kupon oran arşivi · 615 maç · `shin`
+
+**Alt/üst 2,5** (n = 539, kapsama %87,6, marj **%7,14**, Brier **0,4656**,
+üst gelen %55,3):
+
+| olasılık bandı | maç | piyasa | gerçek üst | fark | %95 aralık |
+|---|---:|---:|---:|---:|---|
+| %35–45 | 68 | %42,3 | %39,7 | −2,6 | [28,9 · 51,6] |
+| %45–55 | 213 | %50,0 | %48,4 | −1,6 | [41,7 · 55,0] |
+| %55–65 | 163 | %59,4 | %59,5 | +0,1 | [51,8 · 66,7] |
+| %65+ | 87 | %69,8 | %78,2 | +8,3 | [68,4 · 85,5] |
+
+**Sapan bant 0/4.** En büyük sapma üst bantta (+8,3) ve orada bile piyasanın
+söylediği sayı aralığın içinde — dar kesitte aralıklar geniş.
+
+**Asya handikabı** (n = 539, marj **%7,38**, ortalama getiri **0,4833**;
+çizgiler: 286 çeyrek · 137 yarım · 116 tam):
+
+| çizgi | maç | piyasa | gerçek getiri | fark |
+|---|---:|---:|---:|---:|
+| \|h\| 0,00–0,30 | 211 | %49,7 | %49,3 | −0,4 |
+| \|h\| 0,30–0,60 | 111 | %49,8 | %48,6 | −1,1 |
+| \|h\| 0,60–1,10 | 123 | %49,9 | %44,7 | −5,2 |
+| \|h\| 1,10+ | 94 | %50,2 | %50,5 | +0,3 |
+
+**Sapan bant 0/4.**
+
+#### Bantlar neden **çizgiye** göre — ölçülmüş bir tasarım kararı
+
+İlk sürüm handikabı da olasılığa göre dilimledi ve eğri boş çıktı: 539 maçın
+**531'i** tek banda düştü. Sebep pazarın **tanımı**dır — Asya handikabının
+bütün amacı iki tarafı eşitlemektir, yani olasılık kasten %50'ye çivilenir.
+Yukarıdaki tabloda dört bandın dördünde de piyasa %49,7–%50,2 arasında;
+bu bir bulgu değil, pazarın kendisi.
+
+Çizgi ise gerçekten değişiyor (0'dan ±2,5'e) ve *"piyasa büyük handikaplarda
+da haklı mı"* sorusu ancak öyle sorulabilir. Cevap: evet, dört dilimde de.
+
+Bekçi: `test_handikap_bantlari_cizgiye_gore` ve
+`test_handikap_olasiligi_yariya_civili`.
+
+#### Kayıtlı sınır
+
+Kesit **bir sezon** (kupon oran arşivi, 615 maç), 31 binlik eğitim korpusu
+değil — korpus bu iki fiyatı taşımıyor (`build_egitim.py` yalnızca 1X2
+çekiyor). Bantlar bu yüzden kaba ve aralıklar 1X2 ölçümlerinden geniş.
+Sınır gövdenin `sinir` alanında yazılı ve **sayfada katlanmadan** duruyor.
+
+#### Yüzey
+
+    pazar.py → payloads.pazar_payload → /api/pazar → /pazarlar
+
+Sözleşme `scripts/api_sozlesme.py` ve `frontend/scripts/check.mjs`
+eşlemesine kayıtlı: `GET /api/pazar → PazarResponse`. Arayüz denetimi 49'dan
+**50**'ye çıktı.
+
 ## 4. Sayfada bugün ne var
 
 **`/istatistik`** — sezon dağılımı (en sık sonuç + pay çubuğu) · 5 sayı kutusu (sembol
@@ -2214,6 +2297,7 @@ ve karşılıkları: kupon seti 0,5747 → **0,5740**, korpus 0,5940 → **0,593
 | **Dixon-Coles (§3.28)** | 30.654 maç · %98,6 kapsama | **Piyasadan bağımsız ilk görüş, ve o da geçmedi.** Tek başına Brier 0,6153 (piyasa 0,5933): REL sekiz katı, RES üçte iki. Piyasanın üstüne eklenince `kalibre_dc` +0,000100 [−0,000261, +0,000472], katsayı **negatif** (−0,0492). Artık taramasında altı bandın altısında da piyasa Wilson aralığının içinde. γ=1,2297 · ρ=−0,0330 |
 | **H2H + seriler (§3.29)** | 31.103 maç · H2H %41 kapsama | **Aynı kalıp, üçüncü ve dördüncü kez.** Ham yayılım H2H'de 28, seride 30 puan; **on bandın onunda da** piyasa Wilson aralığının içinde. `kalibre_h2h` +0,000146, `kalibre_seri` +0,000145 — ikisi de geçmedi; `seri` katsayısı **−0,0385** (model seriyi söndürmek istiyor). Ayrıca `etkilesim_favori` artık **anlamlı biçimde kötü**: +0,000380 [+0,000009, +0,000782] |
 | **Ağaç toplulukları (§3.30)** | 31.103 maç · 183 hafta | **Model sınıfı itirazı kapandı.** `agac` +0,000368 [−0,000009, +0,000750], `agac_ham` +0,000667 [+0,000282, +0,001068] — ikincisi anlamlı biçimde kötü. Ayrışım mekanizmayı veriyor: ağaç **kalibrasyonu iyileştiriyor** (REL 0,00042 → 0,00015) ama **çözünürlük kaybediyor** (0,05657 → 0,05597). İç halka en küçük modeli seçti; kapasite monoton zararlı (yaprak 4 → 31: 0,5940 → 0,6120) |
+| **1X2 dışı pazarlar (§3.31)** | 539 maç · kupon oran arşivi | **Kısıt kalktı, kural kalmadı.** Alt/üst 2,5: Brier 0,4656, marj %7,14, sapan bant **0/4**. Asya handikabı: ortalama getiri 0,4833, marj %7,38, sapan bant **0/4** — Brier **tanım gereği yok** (çizgilerin %53'ü çeyrek, sonuç kesirli). Handikap bantları **çizgiye** göre: olasılığa göre dilimlendiğinde 539 maçın 531'i tek banda düşüyor, çünkü pazarın amacı olasılığı %50'ye çivilemek |
 
 **Okuma.** Aşırı uyum modelin kapasitesinden değil örneklem küçüklüğünden geliyordu; büyük
 korpus onu kaldırdı. Ama kalan etki 0,0005–0,0015 Brier — 31 binde anlamlı, 540'ta değil ve
@@ -2901,7 +2985,7 @@ S3'e bağımlı olduğu için bugün planlanamaz; arşiv birikince yeniden değe
 |---|---|
 | Takım bazlı istatistik | 216 takım, Süper Lig takımları bile 32 maç. Çıkacak sayı güvenilir görünür ama gürültüdür |
 | Ölçülmemiş tahmincinin arayüze çıkması | Amaç tahmin olsa da isabeti hold-out ile ölçülmemiş hiçbir tahminci sayfaya çıkmaz. Beraberlik profili buna örnektir: sinyal var (%14 → %33) ama zayıf ve tam monoton değil (§3.6) — girdi olarak kullanılır, tek başına tahminci olarak sunulmaz |
-| Diğer pazarların arayüze çıkması | Ürün kararı: 1X2 dışındakiler analiz içindir, arşivde kalır |
+| ~~Diğer pazarların arayüze çıkması~~ | **Kalktı (§3.31).** Bu bir ürün kararıydı, bir ölçüm sonucu değil. Alt/üst 2,5 ve Asya handikabı artık `/api/pazar` ve `/pazarlar`da — **ölçülmüş kalibrasyonlarıyla birlikte**. Değişmeyen kural yerinde: ölçüsüz sayı çıkmaz |
 | Maçkolik'ten veri çekme | `robots.txt` `/api/` yolunu herkese, `anthropic-ai`'yi tamamen kapatıyor; ayrıca eski açık uç ölü |
 
 ---
@@ -2951,7 +3035,7 @@ python -m spor_toto.disari                 # A3: piyasa dışı özellikler
 python -m spor_toto.tahmin                 # ÜRÜN: yaklaşan maçlara olasılık
 
 # Denetim
-pytest -q                                  # 1.299 test (82'si bu katman, 294'ü tahmin)
+pytest -q                                  # 1.330 test (82'si bu katman, 294'ü tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out

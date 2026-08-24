@@ -146,6 +146,7 @@ def _uclar(istemci, ornek_kupon: str) -> dict[str, Any]:
         {"ad": "GET /api/stats/<week>", "yol": "/api/stats/<cozulecek>"},
         # Tarama KAPALI: acik hali dakikalar surer ve sekli degistirmez.
         {"ad": "GET /api/backtest", "yol": "/api/backtest?sweep=0"},
+        {"ad": "GET /api/pazar", "yol": "/api/pazar"},
         {"ad": "GET /api/tahmin", "yol": "/api/tahmin"},
         {"ad": "GET /api/benzer", "yol": "/api/benzer?oran=1.82,3.04,2.44"},
         {"ad": "POST /api/solve", "yol": "/api/solve",

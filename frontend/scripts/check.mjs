@@ -528,6 +528,7 @@ try {
     "GET /api/stats": "StatsResponse",
     "GET /api/stats/<week>": "WeekDetail",
     "GET /api/backtest": "BacktestResponse",
+    "GET /api/pazar": "PazarResponse",
     "GET /api/tahmin": "TahminResponse",
     "GET /api/benzer": "BenzerResponse",
     "POST /api/solve": "SolveResponse",

@@ -528,6 +528,62 @@
    ],
    "version": "str"
   },
+  "GET /api/pazar": {
+   "alt_ust": {
+    "bant_ekseni": "str",
+    "bantlar": [
+     {
+      "fark": "float",
+      "ga_alt": "float",
+      "ga_ust": "float",
+      "gercek": "float",
+      "hi": "float",
+      "lo": "float",
+      "n": "int",
+      "piyasa": "float",
+      "piyasa_ga_icinde": "bool"
+     }
+    ],
+    "brier": "float",
+    "kapsama": "float",
+    "marj": "float",
+    "n": "int",
+    "sapan_bant": "int",
+    "ust_orani": "float"
+   },
+   "arindirma": "str",
+   "handikap": {
+    "bant_ekseni": "str",
+    "bantlar": [
+     {
+      "fark": "float",
+      "ga_alt": "float",
+      "ga_ust": "float",
+      "gercek": "float",
+      "hi": "float",
+      "lo": "float",
+      "n": "int",
+      "piyasa": "float",
+      "piyasa_ga_icinde": "bool",
+      "se": "float"
+     }
+    ],
+    "brier": "null",
+    "brier_yok_sebep": "str",
+    "cizgi_tipleri": {
+     "ceyrek": "int",
+     "tam": "int",
+     "yarim": "int"
+    },
+    "kapsama": "float",
+    "marj": "float",
+    "n": "int",
+    "ortalama_getiri": "float",
+    "sapan_bant": "int"
+   },
+   "n_mac": "int",
+   "sinir": "str"
+  },
   "GET /api/stats": {
    "analytics": {
     "distribution": {
