@@ -110,6 +110,7 @@ spor_toto/evaluate.py  ◄── spor_toto/predict.py     (sözleşme + 3 refera
 | Tahmin | `backend/spor_toto/disari.py` | — | Piyasa dışı türetilebilir özellikler (A3): artık taraması, kör nokta |
 | Ortak | `backend/spor_toto/ortak.py` | — | Paylaşılan hesapların tek kaynağı: Wilson, Brier, **Brier'in Murphy ayrışımı**, karışıklık matrisi, Poisson-binom, bantlama |
 | Tahmin | `backend/spor_toto/elo.py` | — | Rakip gücüne göre düzeltilmiş takım gücü (Faz 3.2): Elo defteri, gol farkı çarpanı, sezon taşıma |
+| Tahmin | `backend/spor_toto/dixon_coles.py` | — | Gollerden hücum/savunma güçleri (Faz 3.1): ağırlıklı IPF, düşük skor `τ` düzeltmesi, tur tur yeniden uydurma |
 | **Ürün** | `backend/spor_toto/tahmin.py` | — | **Tahmin ürünü (C2)**: yaklaşan maça olasılık + ölçülmüş isabet |
 | Üretim | `backend/scripts/build_fixtures.py` | — | Yaklaşan maçlar ve oranları (football-data `fixtures.csv`) |
 | UI | `frontend/app/tahmin/page.tsx` | — | Tahmin sayfası |
@@ -131,7 +132,7 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/app/super-toto/page.tsx` · `components/super-toto/haftalar.tsx` · `lib/super-toto.ts` | Sezonun hafta şeridi; `?hafta=N` adreste durur |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **1.205 test**; **82'si** istatistik katmanına (`history` `odds` `backtest`
+paketi toplam **1.233 test**; **82'si** istatistik katmanına (`history` `odds` `backtest`
 `api_stats` `api_backtest` `snapshot_iddaa`), **294'ü** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer`). Dosya adlarıyla sayılıdır ki tablo elle bakım gerektirmesin —
@@ -1790,6 +1791,101 @@ kapanıyor. H2H hâlâ açık ve aynı statüde duruyor.
 
     python -m spor_toto.recalibrate
 
+### 3.28 Dixon-Coles (Faz 3.1) — piyasadan **bağımsız** ilk görüş, ve o da geçmedi
+
+Projede takım gücünü **sonuçlardan** türeten hiçbir şey yoktu. `skor.py`
+(A6) gol parametrelerini *fiyattan* çıkarıyordu ve tam bu yüzden geçmemişti:
+*"üç pazar aynı görüşün üç yüzü."* Elo (§3.27) bir sonuç modelidir ama tek
+bir sayı taşır ve gol üretimini hiç bilmez.
+
+Dixon-Coles her takıma **iki** sayı verir — hücum ve savunma — ve bir skor
+dağılımı üretir. Bunun projedeki değeri şudur: **piyasadan bağımsız ilk
+görüş.** Yığınlamanın anlamlı olabilmesi için en az iki bağımsız görüş
+gerekir ve bugüne kadar hepsi aynı fiyatın türevleriydi.
+
+#### Kurulum
+
+`λ_ev = α_h·β_a·γ`, `λ_dep = α_a·β_h`; ağırlıklı Poisson olabilirlik
+**kapalı biçimde** güncellenir (IPF / koordinat yükselişi), `scipy.optimize`
+kullanılmadı — `recalibrate._uydur` ile aynı gerekçe. Düşük skor düzeltmesi
+Dixon & Coles'un `τ` parametrizasyonu; `ρ` tek skalerdir ve üçe bölmeyle
+aranır.
+
+Zaman sönümü `exp(−0,0045·gün)` ≈ **154 günlük yarı ömür**, veriye
+bakılmadan seçildi. Sızıntı disiplini `elo.elo_tablosu` ile aynı, tek
+farkla: Elo maç maç güncellenirken DC **tur tur yeniden uydurulur** (ISO
+hafta). Bir turun maçları birbirinin sonucunu görmez.
+
+Uydurulan tanı sayıları (31.103 maç, 477 takım): **γ = 1,2297** (ev sahibi
+%23 daha çok gol atıyor) ve **ρ = −0,0330**. Bu parametrizasyonda negatif
+`ρ`, 0-0 ve 1-1'i yukarı iter — yani bağımsız Poisson'un beraberliği eksik
+tahmin etme kusurunu düzeltir. Dixon & Coles'un kendi bulgusuyla **aynı
+yönde**, daha küçük büyüklükte.
+
+#### Ölçülen — tek başına
+
+| | Brier | REL | RES |
+|---|---:|---:|---:|
+| Dixon-Coles | **0,6153** | 0,00348 | 0,03817 |
+| piyasa | 0,5933 | 0,00042 | 0,05669 |
+
+DC piyasadan **belirgin biçimde kötü** (+0,0221) ve ayrışım nedenini
+söylüyor: kalibrasyon borcu **sekiz katı**, çözünürlüğü **üçte iki**.
+Gerçek ama zayıf bir görüş — beklenen de buydu, çünkü yalnızca golleri
+görüyor.
+
+#### Ölçülen — piyasanın üstüne eklenince
+
+| tahminci | Brier | fark | %95 aralık | geçti |
+|---|---:|---:|---|---|
+| piyasa | 0,593600 | — | — | referans |
+| `kalibre_sezon_sonu` | 0,593700 | +0,000076 | [−0,000240, +0,000408] | hayır |
+| `kalibre_elo` | 0,593700 | +0,000086 | [−0,000242, +0,000429] | hayır |
+| **`kalibre_dc`** | 0,593700 | **+0,000100** | [−0,000261, +0,000472] | **hayır** |
+
+Ve katsayı yine **negatif** (−0,0492): model DC'nin görüşünü eklemek değil
+**çıkarmak** istiyor.
+
+#### Artık taraması — altı bandın altısında da piyasa aralığın içinde
+
+| DC'nin dediği P(ev) | maç | gerçek | piyasa | artık | %95 aralık |
+|---|---:|---:|---:|---:|---|
+| %0–25 | 4.746 | %22,3 | %23,2 | −0,9 | [21,1 · 23,5] |
+| %25–35 | 5.552 | %33,7 | %33,7 | +0,0 | [32,5 · 34,9] |
+| %35–45 | 7.243 | %41,8 | %41,3 | +0,5 | [40,7 · 42,9] |
+| %45–55 | 5.827 | %47,1 | %48,4 | −1,3 | [45,9 · 48,4] |
+| %55–70 | 4.874 | %58,5 | %57,5 | +1,1 | [57,1 · 59,9] |
+| %70+ | 2.412 | %73,1 | %72,5 | +0,6 | [71,3 · 74,8] |
+
+DC bir bandı işaretlediğinde piyasa zaten oradadır. Hiçbir bantta anlamlı
+sapma yok.
+
+#### Okuma — bu, serinin **en sert** sonucu
+
+A1 piyasanın kendi hareketinin kapanışı yenemediğini ölçtü. A3 türetilebilir
+özelliklerin fiyatlandığını. §3.27 Elo'nun fiyatlandığını. Hepsinin ortak
+zayıflığı aynıydı: **denenen şey piyasanın kendi bilgisinin bir
+türeviydi.**
+
+Dixon-Coles o itiraza kapalıdır. Fiyata hiç bakmaz; yalnızca atılan golleri
+görür ve kendi görüşünü kurar. **O görüş de kapanış fiyatının içinde
+çıktı.**
+
+Bunun Faz 2.4 (yığınlama) için sonucu doğrudan: yığınlamanın ön koşulu iki
+bağımsız görüştü, o görüş kuruldu ve **piyasadan bağımsız olması onu
+yararlı yapmadı.** Katsayının negatif olması, üst-öğrenicinin de aynı şeyi
+söyleyeceğini gösteriyor.
+
+#### Bir iddia ölçüme çekildi
+
+İlk sürümde skor ızgarası 10'da kesiliyordu ve docstring *"kesilen kuyruk
+milyonda bir"* diyordu. Test bunu düşürdü: `λ = 3` için gerçek kayıp
+**2,9·10⁻⁴** (on binde üç). Izgara 18'e çıkarıldı ve docstring'e kaybın
+**ölçülmüş tablosu** yazıldı. Küçük bir olay ama projenin kuralının
+kendisi: yazılan sayı ölçülmüş sayı olmalı.
+
+    python -m spor_toto.recalibrate
+
 ## 4. Sayfada bugün ne var
 
 **`/istatistik`** — sezon dağılımı (en sık sonuç + pay çubuğu) · 5 sayı kutusu (sembol
@@ -1916,6 +2012,7 @@ ve karşılıkları: kupon seti 0,5747 → **0,5740**, korpus 0,5940 → **0,593
 | **Hafta içi sıralama (§3.25)** | 31.103 maç · 183 hafta | **Piyasanın sıralaması Brier'inin ima ettiğinden çok güçlü.** Taban isabet %51,1 iken en emin 5 maç **%82,3** [%79,7, %84,6]; NDCG 0,8971, bilgisiz zemin 0,7896. B0'ın +6,02 puanının sebebi bu — `en_iyi_secim` Brier'i değil sıralamayı kullanıyor |
 | **Etkileşim kademeleri (§3.26)** | 31.103 maç · 183 hafta | **Geçmedi ve kapasite bedel yazdı**: `etkilesim` +0,000150 [−0,000189, +0,000505], `etkilesim_favori` +0,000165 [−0,000180, +0,000520] — `sezon_sonu`nun +0,000076'sından kötü. Model sınıfı itirazı **daraldı, kapanmadı**: GLM'e açık etkileşim terimi eklemek bir şey getirmiyor; keyfî doğrusal olmama ölçülmedi |
 | **Elo (§3.27)** | 31.103 maç · 183 hafta · %95,6 kapsama | **Güçlü sinyal, sıfır katkı.** Ham fark devasa: ev galibiyeti %16,8 → %68,1 (51 puan). Artık sıfır: piyasa her bantta Wilson aralığının içinde. `kalibre_elo` +0,000086 [−0,000242, +0,000429] — geçmedi, ve katsayı **negatif** (−0,0597): piyasa Elo'yu eğer bir şey varsa fazla fiyatlıyor |
+| **Dixon-Coles (§3.28)** | 30.654 maç · %98,6 kapsama | **Piyasadan bağımsız ilk görüş, ve o da geçmedi.** Tek başına Brier 0,6153 (piyasa 0,5933): REL sekiz katı, RES üçte iki. Piyasanın üstüne eklenince `kalibre_dc` +0,000100 [−0,000261, +0,000472], katsayı **negatif** (−0,0492). Artık taramasında altı bandın altısında da piyasa Wilson aralığının içinde. γ=1,2297 · ρ=−0,0330 |
 
 **Okuma.** Aşırı uyum modelin kapasitesinden değil örneklem küçüklüğünden geliyordu; büyük
 korpus onu kaldırdı. Ama kalan etki 0,0005–0,0015 Brier — 31 binde anlamlı, 540'ta değil ve
@@ -2653,7 +2750,7 @@ python -m spor_toto.disari                 # A3: piyasa dışı özellikler
 python -m spor_toto.tahmin                 # ÜRÜN: yaklaşan maçlara olasılık
 
 # Denetim
-pytest -q                                  # 1.205 test (82'si bu katman, 294'ü tahmin)
+pytest -q                                  # 1.233 test (82'si bu katman, 294'ü tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out

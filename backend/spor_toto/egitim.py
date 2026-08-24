@@ -29,6 +29,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
+from .dixon_coles import dc_tablosu
 from .elo import elo_tablosu
 from .odds import ARINDIRMA_VARSAYILAN, implied_probs
 
@@ -444,7 +445,7 @@ def bahisci_ayrismasi(bahisciler: dict[str, dict[str, float] | None] | None
 
 @lru_cache(maxsize=2)
 def _zenginlestirilmis_korpus(yol: str | None = None) -> tuple[dict[str, Any], ...]:
-    """Korpus satirlari + `_form` / `_takvim` / `_elo` alanlari — **bir kez**.
+    """Korpus satirlari + `_form` / `_takvim` / `_elo` / `_dc` — **bir kez**.
 
     Iki sebeple ayri ve onbellekli:
 
@@ -469,11 +470,13 @@ def _zenginlestirilmis_korpus(yol: str | None = None) -> tuple[dict[str, Any], .
     formlar = _form_tablosu(ham)
     takvimler = _takvim_tablosu(ham)
     elolar = elo_tablosu(ham)
+    dcler = dc_tablosu(ham)
     tumu = [dict(r) for r in ham]
-    for r, f, t, e in zip(tumu, formlar, takvimler, elolar):
+    for r, f, t, e, d in zip(tumu, formlar, takvimler, elolar, dcler):
         r["_form"] = f
         r["_takvim"] = t
         r["_elo"] = e
+        r["_dc"] = d
     return tuple(tumu)
 
 
@@ -573,6 +576,8 @@ def _korpus_haftalari(sezonlar_: tuple | None,
             hareket = cizgi_hareketi(r.get("acilis"), r.get("kapanis"))
             takvim = r.get("_takvim") or {}
             elo = r.get("_elo") or {"elo_var": False, "elo_farki": 0.0}
+            dc = r.get("_dc") or {"dc_var": False,
+                                  **{f"dc_{s}": 1 / 3 for s in ("1", "0", "2")}}
             ozellikler.append({
                 "lig": r["lig"],
                 "favori": favori,
@@ -580,6 +585,7 @@ def _korpus_haftalari(sezonlar_: tuple | None,
                 **form,
                 **takvim,
                 **elo,
+                **dc,
                 "cizgi_var": bool(r.get("acilis") and r.get("kapanis")),
                 "acilis_probs": (implied_probs(r["acilis"], yontem)
                                  if r.get("acilis") else None),

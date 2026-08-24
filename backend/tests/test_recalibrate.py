@@ -29,11 +29,17 @@ from spor_toto.recalibrate import (
     _mac_ozellikleri,
     _softmax,
     _tasarim_satiri,
+    kademe_en_az,
     kademe_fabrikalari,
     rapor,
 )
 
 PIYASA = {"1": 0.50, "0": 0.25, "2": 0.25}
+
+
+def _onceki_kademe(ad: str) -> str:
+    """`ad`'dan hemen önceki basamak — testler sıraya elle bağlanmasın diye."""
+    return KADEMELER[KADEMELER.index(ad) - 1]
 
 
 def _girdi(week: int, results: str, probs=None) -> dict:
@@ -271,9 +277,11 @@ def test_etkilesim_sutun_sayisi_ikili_carpim_kadar():
         **{alan: 1.0 for alan, _ in YON_ALANLARI},
     }
     ligler, bantlar = ["E0"], ["<1.50"]
-    # Taban `elo`dur, `sezon_sonu` degil: `etkilesim` Elo sutununu da
-    # tasir ve yanlis taban secilirse fark bir fazla cikar.
-    taban = _tasarim_satiri(ozellik, "elo", ligler, bantlar).shape[1]
+    # Taban, etkilesimden HEMEN ONCEKI basamak olmali: `etkilesim` ondan
+    # once eklenen butun sutunlari da tasir ve yanlis taban secilirse fark
+    # eklenen basamak sayisi kadar kayar.
+    taban = _tasarim_satiri(ozellik, _onceki_kademe("etkilesim"),
+                            ligler, bantlar).shape[1]
     e1 = _tasarim_satiri(ozellik, "etkilesim", ligler, bantlar).shape[1]
     e2 = _tasarim_satiri(ozellik, "etkilesim_favori", ligler, bantlar).shape[1]
 
@@ -297,7 +305,8 @@ def test_etkilesim_sutunu_yon_ozelligi_gibi_davranir():
         **{alan: 2.0 for alan, _ in YON_ALANLARI},
     }
     X = _tasarim_satiri(ozellik, "etkilesim", ["E0"], ["<1.50"])
-    taban = _tasarim_satiri(ozellik, "elo", ["E0"], ["<1.50"]).shape[1]
+    taban = _tasarim_satiri(ozellik, _onceki_kademe("etkilesim"),
+                            ["E0"], ["<1.50"]).shape[1]
     for sutun in range(taban, X.shape[1]):
         ev, ber, dep = X[0, sutun], X[1, sutun], X[2, sutun]
         assert ber == 0.0
@@ -327,7 +336,8 @@ def test_kupon_haftasinda_etkilesim_notr():
             assert satir[alan] == 0.0
 
     ozellik = _mac_ozellikleri(kupon)[0]
-    taban = _tasarim_satiri(ozellik, "elo", ["E0"], ["<1.50"])
+    taban = _tasarim_satiri(ozellik, _onceki_kademe("etkilesim"),
+                            ["E0"], ["<1.50"])
     genis = _tasarim_satiri(ozellik, "etkilesim_favori", ["E0"], ["<1.50"])
     # Yeni sutunlarin TAMAMI sifir olmali.
     assert (genis[:, taban.shape[1]:] == 0.0).all()
@@ -406,29 +416,42 @@ def test_kademe_tam_bir_sutun_ekler():
             f"{beklenen_artis.get(simdiki, 1)} bekleniyordu")
 
 
-def test_elo_sutunu_alt_basamaklara_sizmaz():
-    """`elo`nun ALTINDAKI hiçbir basamak Elo farkını okumamalı.
+@pytest.mark.parametrize("kademe,alan,deger", [
+    ("elo", "elo_farki", 300.0),
+    ("dc", "dc_1", 0.9),
+])
+def test_sutun_alt_basamaklara_sizmaz(kademe, alan, deger):
+    """Bir basamağın ALTINDAKI hiçbir basamak onun alanını okumamalı.
 
-    Gerileme testi: sızıntı olduğunda `sezon_sonu` ile `elo` birebir aynı
-    tahmini verir ve "Elo bir şey eklemiyor" cümlesi bağlanmamış koddan
-    gelir.
+    Gerileme testi: sızıntı olduğunda iki komşu kademe birebir aynı tahmini
+    verir ve "bu özellik bir şey eklemiyor" cümlesi bağlanmamış koddan
+    gelir. Elo'da tam bu yaşandı (§3.27): A3 döngüsündeki `break`
+    fonksiyondan çıkmadığı için Elo sütunu `dinlenme`den itibaren bütün alt
+    basamaklara girmişti.
     """
-    from spor_toto.recalibrate import ELO_KADEMELERI, YON_ALANLARI
-
     ligler, bantlar = ["E0", "diger"], ["<1.50", "diger"]
     taban = {
         "probs": {"1": 0.5, "0": 0.3, "2": 0.2},
         "lig": "E0", "favori": "1", "bant": "<1.50",
         "hareket": {"1": 0.0, "0": 0.0, "2": 0.0}, "ayrisma": 0.0,
-        **{alan: 0.0 for alan, _ in YON_ALANLARI},
+        "elo_farki": 0.0,
+        **{f"dc_{s}": 1 / 3 for s in SYMBOLS},
+        **{a: 0.0 for a, _ in YON_ALANLARI},
     }
-    elolu = {**taban, "elo_farki": 300.0}
+    # `dc` icin tek alan degistirmek yetmez: sutun uc DC olasiligini birden
+    # okur ve toplamlari 1 olmali.
+    degisik = dict(taban)
+    if alan.startswith("dc_"):
+        degisik.update({"dc_1": deger, "dc_0": (1 - deger) / 2,
+                        "dc_2": (1 - deger) / 2})
+    else:
+        degisik[alan] = deger
 
-    for kademe in KADEMELER:
-        a = _tasarim_satiri(taban, kademe, ligler, bantlar)
-        b = _tasarim_satiri(elolu, kademe, ligler, bantlar)
+    for k in KADEMELER:
+        a = _tasarim_satiri(taban, k, ligler, bantlar)
+        b = _tasarim_satiri(degisik, k, ligler, bantlar)
         ayni = np.array_equal(a, b)
-        if kademe in ELO_KADEMELERI:
-            assert not ayni, f"{kademe} Elo'yu okumali ama okumuyor"
+        if kademe_en_az(k, kademe):
+            assert not ayni, f"{k} {alan} okumali ama okumuyor"
         else:
-            assert ayni, f"{kademe} Elo'yu okumamali ama okuyor — sizinti"
+            assert ayni, f"{k} {alan} okumamali ama okuyor — sizinti"

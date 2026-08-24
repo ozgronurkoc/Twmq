@@ -81,7 +81,7 @@ EN_AZ_ORNEK = AZ_ORNEK
 KADEMELER: tuple[str, ...] = ("sicaklik", "bias", "lig", "bant", "form",
                               "hareket", "dagilim",
                               "dinlenme", "sikisiklik", "ic_dis", "sezon_sonu",
-                              "elo", "etkilesim", "etkilesim_favori")
+                              "elo", "dc", "etkilesim", "etkilesim_favori")
 
 #: **Etkileşim basamakları** — `DIS_INCELEME.md` §3'ün açık itirazına cevap.
 #:
@@ -103,8 +103,17 @@ KADEMELER: tuple[str, ...] = ("sicaklik", "bias", "lig", "bant", "form",
 #: Aynı bağımlılık yön özelliklerinde de olabilir.
 ETKILESIM_KADEMELERI: tuple[str, ...] = ("etkilesim", "etkilesim_favori")
 
-#: Elo sütununu taşıyan basamaklar — `elo` ve ondan üsttekiler.
-ELO_KADEMELERI: tuple[str, ...] = ("elo", *ETKILESIM_KADEMELERI)
+def kademe_en_az(kademe: str, esik: str) -> bool:
+    """`kademe`, `esik` basamağında ya da ondan üstte mi?
+
+    Kapılar önce elle yazılmış demetlerdi ve `KADEMELER`e yeni bir basamak
+    eklendiğinde **sessizce** bozuluyorlardı (bkz. §3.26 vakası: lig/bant
+    sütunları tamamen düşmüştü). Sıra artık tek kaynaktan, `KADEMELER`in
+    kendisinden okunuyor.
+    """
+    if kademe not in KADEMELER:
+        return False
+    return KADEMELER.index(kademe) >= KADEMELER.index(esik)
 
 #: Etkileşime giren yön özellikleri ve **tanımsal** ölçekleri.
 #:
@@ -212,6 +221,7 @@ def _mac_ozellikleri(hafta: Girdi) -> list[dict[str, Any]]:
             "hareket": {s: float(o.get(f"hareket_{s}") or 0.0) for s in SYMBOLS},
             "ayrisma": float(o.get("ayrisma") or 0.0),
             "elo_farki": float(o.get("elo_farki") or 0.0),
+            **{f"dc_{s}": float(o.get(f"dc_{s}") or 1 / 3) for s in SYMBOLS},
             **{alan: float(o.get(alan) or 0.0) for _, alan in A3_ALANLARI},
         } for i, o in enumerate(tasinan)]
 
@@ -233,6 +243,10 @@ def _mac_ozellikleri(hafta: Girdi) -> list[dict[str, Any]]:
             # Kupon haftalari Elo da tasimaz — korpus disindaki takimlar
             # icin defter yok. Notr 0, `form` ile ayni kural.
             "elo_farki": 0.0,
+            # Kupon haftalarinda DC de yok: korpus disindaki takimlar icin
+            # guc uydurulmadi. Duzgun dagilim = "soylenecek bir sey yok" ve
+            # `ln(1/3)` her sembolde ayni oldugu icin sutun NOTRdur.
+            **dict.fromkeys((f"dc_{s}" for s in SYMBOLS), 1 / 3),
             "ayrisma": 0.0,
             **{alan: 0.0 for _, alan in A3_ALANLARI},
         })
@@ -344,7 +358,7 @@ def _tasarim_satiri(ozellik: dict[str, Any], kademe: str,
     # Elo sutunu `dinlenme`den itibaren BUTUN alt basamaklara sizmisti ve
     # `kalibre_elo` ile `kalibre_sezon_sonu` birebir ayni sayiyi vermisti.
     # `test_kademe_tam_bir_sutun_ekler` bu hata sinifini bekciliyor.
-    if kademe not in ELO_KADEMELERI:
+    if not kademe_en_az(kademe, "elo"):
         return np.array(sutunlar, dtype=float).T
 
     # 12) elo — rakip gucune gore duzeltilmis takim gucu (Faz 3.2).
@@ -354,10 +368,28 @@ def _tasarim_satiri(ozellik: dict[str, Any], kademe: str,
     e = float(ozellik.get("elo_farki") or 0.0) / ELO_OLCEK
     sutunlar.append([e if s == "1" else (-e if s == "2" else 0.0)
                      for s in SYMBOLS])
-    if kademe not in ETKILESIM_KADEMELERI:
+    if not kademe_en_az(kademe, "dc"):
         return np.array(sutunlar, dtype=float).T
 
-    # 12) etkilesim — yon ozelliklerinin IKILI carpimlari.
+    # 13) dc — Dixon-Coles'un GOLLERDEN turettigi ikinci gorus (Faz 3.1).
+    #     Sutun `sicaklik` ile ayni bicimde girer: her sembolun logitine o
+    #     sembolun DC log-olasiligi eklenir ve geriye TEK bir katsayi kalir.
+    #     Isareti dogrudan soruyu cevaplar:
+    #
+    #         c > 0  DC bilgi tasiyor — piyasa gollerin soyledigini eksik
+    #                fiyatlamis
+    #         c ~ 0  DC'nin soyledigi zaten fiyatta
+    #         c < 0  DC'nin gorusu piyasaninkiyle ters ve zararli
+    #
+    #     Sembol basina ayri katsayi verilseydi isaret okunamazdi — `hareket`
+    #     basamagindaki gerekcenin aynisi.
+    dc_p = [max(float(ozellik.get(f"dc_{s}") or 0.0), OLASILIK_TABANI)
+            for s in SYMBOLS]
+    sutunlar.append([np.log(v) for v in dc_p])
+    if not kademe_en_az(kademe, "etkilesim"):
+        return np.array(sutunlar, dtype=float).T
+
+    # 14) etkilesim — yon ozelliklerinin IKILI carpimlari.
     #     Olcekli okunur (bkz. `YON_ALANLARI`), ve `form` ile ayni simetrik
     #     kaydirmayla girer: pozitif carpim "1"i yukari, "2"yi asagi iter.
     #     Beraberlige dokunmaz, cunku bir YON buyuklugudur — beraberlik
@@ -372,7 +404,7 @@ def _tasarim_satiri(ozellik: dict[str, Any], kademe: str,
     if kademe == "etkilesim":
         return np.array(sutunlar, dtype=float).T
 
-    # 13) etkilesim_favori — her yon ozelligi x macin ACIKLIGI.
+    # 15) etkilesim_favori — her yon ozelligi x macin ACIKLIGI.
     #     Aciklik = favorinin olasiligi, 1/3'ten merkezlenmis. Denk macta
     #     ~0, ezici favoride ~0,6. Katsayinin ISARETI dogrudan soruyu
     #     cevaplar: pozitifse ozellik acik maclarda daha cok is goruyor,
