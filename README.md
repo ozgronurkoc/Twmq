@@ -100,7 +100,7 @@ geçerli olduğunu kanıtlar.** 24 değişmez, 6 kategori, her çağrıda yenide
 | 41 haftalık sezon verisini ve piyasa oranlarını analiz edip **maç sonucu tahmini** üretir | Kazanmayı **garanti etmez** |
 | Tahmin isabetini ölçer ve hold-out ile aşırı uyumdan ayırır | Ölçülmemiş bir isabet iddiası sunmaz |
 | Hamming yarıçap-1 kaplama kodu üretir | 14-garantiyi olasılıkla "güçlendirmez" |
-| En kötü durumda 14 doğru **garantiler** (küme içinde) | İkramiye / beklenen değer hesabı yapmaz (veri ilk kez birikiyor, ölçüm yok — §10) |
+| En kötü durumda 14 doğru **garantiler** (küme içinde) | Müşterek beklenen değeri **hesaplar ama arayüze çıkarmaz** — `getiri.py`, [`docs/ISTATISTIK_YOL_HARITASI.md`](docs/ISTATISTIK_YOL_HARITASI.md) §3.34: sayı ölçülmedi (havuz payı, komisyon ve kalabalık modeli varsayım) |
 | Küme dışı senaryoları **fire** olarak ölçer | Kâr vaadi vermez |
 | Exact + Monte Carlo olasılık raporu verir | Canlı bülten çekmez |
 | Bayes (Dirichlet) ile tahminlerini yumuşatır | İddaa geçmiş oranı sunmaz (yok — §5.3) |
@@ -776,6 +776,7 @@ backend/
     payloads.py        /api/stats ve /api/backtest gövdeleri — tek kaynak
     tahmin.py          TAHMİN: yaklaşan maçlar + ölçülmüş isabet = /api/tahmin
     pazar.py           1X2 DIŞI: alt/üst 2,5 + Asya handikabı = /api/pazar
+    getiri.py          HAVUZ: müşterek beklenen değer — HESAP, arayüze ÇIKMAZ
     benzer.py          "Bu oranda geçmişte ne oldu" = /api/benzer
     kalibrasyon.py     ÖLÇÜM: izotonik düzeltme piyasayı geçiyor mu
     cizgi.py           ÖLÇÜM: açılış→kapanış çizgi hareketi (A1)
@@ -802,7 +803,7 @@ backend/
     api_sozlesme.py           API sözleşmesini üretir/denetler (--kontrol: CI kapısı)
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/
-  tests/               pytest (44 dosya → 1.357 test; §9'da katman dökümü)
+  tests/               pytest (45 dosya → 1.429 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -986,8 +987,8 @@ altı adımdan üçünü koşuyordu — yani "OK" demesi "CI geçer" demek deği
 Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant'lar, CLI (Bayes preset
 dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri test,
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
-yeniden kalibrasyon ve eğitim korpusu. **44 test dosyası, parametrizasyonla
-1.357 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+yeniden kalibrasyon ve eğitim korpusu. **45 test dosyası, parametrizasyonla
+1.429 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
@@ -1003,7 +1004,8 @@ karşı denetler):
 | Beraberlik düzeltmesi | `beraberlik` | 19 |
 | İddaa hazırlığı | `iddaa_hazirlik` | 24 |
 | Ortak gövde | `ortak` | 25 |
-| Belgeler | `belgeler` | 3 |
+| Havuz / beklenen değer | `getiri` | 72 |
+| Belgeler | `belgeler` | 5 |
 
 İki test bilerek **ağa çıkmaz**: `test_snapshot_iddaa.py` gerçek bültenden alınmış
 küçük bir örnek payload üzerinde koşar — ağ çağrısını sınamak bu paketin işi değil,
@@ -1101,7 +1103,7 @@ Sıradakiler, "en çok belirsizliği kaldıran" ölçütüne göre:
 | **T4 — Referans skorları sağlık değişmezine** | `duzgun` her zaman 0,6667 (sabit: `ortak.BRIER_ESIT`); `piyasa` kupon kesitinde bugün 0,5856 (41 hafta, 615 maç) | **Küçük ve sıranın başında.** Bu sayılar kayarsa bozulan model değil veri/boru hattıdır ve bugün hiçbir şey fark etmez. Ama ikisi aynı cinsten değil: `duzgun` bir sabittir, `piyasa` veri büyüdükçe kayar (0,5747 → 0,5740 arındırma çevriminde, → 0,5856 kupon seti 36→41 haftaya çıkınca). Yani T4 `piyasa`yı sabit bir sayıya değil, **`duzgun`un altında kalmasına** bağlamalıdır |
 | **T5 — Piyasa dışı girdi: takım formu** | football-data'nın maç istatistiklerinden yuvarlanan pencereyle form özelliği | **Ölçüm bunu söylüyor.** Piyasayı yeniden kalibre etmek yön olarak doğru ama miktar yetersiz; sinyal ancak piyasada olmayan bir girdiden gelir. Ek kaynak gerekmez |
 | **S1 — Örneklem büyütme** | Kupon setini ikinci sezona çıkarmak | **Yarısı yapıldı, yarısı kapalı.** Tahmin ölçümü için gereken örneklem korpusla geldi (31.103 maç). Kupon ayağı bloke: sonuç kaynağı sezon parametresi taşımıyor + `robots.txt` kısıtı ([`docs/VERI_TOPLAMA_VE_ISLEME.md`](docs/VERI_TOPLAMA_VE_ISLEME.md) §10.2) |
-| **İkramiye / havuz verisi** | Hafta başına kazanan adedi ve ödenen tutar | **Fizibilite kapandı, ölçüm açık.** Kaynak bulundu (Spor Toto resmî ikramiye ekranı) ve ilk iki hafta elle girildi. Müşterek bahiste "kazanma oranı" ile "beklenen getiri" hâlâ farklı şeylerdir ve ikincisi **hâlâ ölçülmedi** — n = 2 hafta. Ayrıntı: [`docs/ISTATISTIK_YOL_HARITASI.md`](docs/ISTATISTIK_YOL_HARITASI.md) §6.3 |
+| **İkramiye / havuz verisi** | Hafta başına kazanan adedi ve ödenen tutar | **Fizibilite kapandı, ölçüm açık.** Kaynak bulundu (Spor Toto resmî ikramiye ekranı) ve ilk iki hafta elle girildi. Müşterek bahiste "kazanma oranı" ile "beklenen getiri" hâlâ farklı şeylerdir ve ikincisi **hâlâ ölçülmedi** — n = 2 hafta. Beklenen değerin **hesabı** artık var (`getiri.py`, §3.34) ve ölçümün neye ihtiyaç duyduğunu da o gösterdi: kalabalık modeli değişince sonuç 22 kat oynuyor, yani eksik olan tahminci değil **oynanma payları**. Ayrıntı: [`docs/ISTATISTIK_YOL_HARITASI.md`](docs/ISTATISTIK_YOL_HARITASI.md) §6.3 |
 | **S2 — Geri testi zenginleştirmek** | Sabit kolon bütçesi kipi, ikinci strateji ailesi ("en belirsiz k maçı çifte yap"), bütçe danışmanıyla bağ | **Hazır** — ek veri gerekmez |
 | **S3 — İddaa arşivi olgunlaşınca** | Snapshot'ları kupon maçlarıyla eşleştir; iddaa ile piyasa oranını yan yana koy; geri testi vekil değil gerçek fiyatla tekrarla | **Birikmeyi bekliyor** — ~10 snapshot sonra anlamlı |
 | **S4 — Küçük işler** | Geri testte eşik çiftini URL'e yazmak, tarama tablosunu CSV'ye çıkarmak, hafta detayında Brier | Veri tarafı yok |

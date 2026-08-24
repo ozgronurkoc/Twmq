@@ -117,6 +117,7 @@ spor_toto/evaluate.py  ◄── spor_toto/predict.py     (sözleşme + 3 refera
 | Pazar | `backend/spor_toto/pazar.py` | `/api/pazar` | 1X2 dışı pazarlar (Faz 4.1): alt/üst 2,5 (Brier'li) ve Asya handikabı (getiri kalibrasyonlu), ölçülmüş kalibrasyonlarıyla |
 | Tahmin | `backend/spor_toto/yigin.py` | — | Kat dışı yığınlama (Faz 2.4): sezon katlarıyla üretilmiş olasılıklar üzerinde multinom logit üst-öğrenici; taban başına tek ağırlık |
 | Tahmin | `backend/spor_toto/kalibre.py` | — | Venn-Abers (Faz 2.3): kendi PAV'ımız üzerine indüktif IVAP, sezon bazlı kalibrasyon bölmesi, olasılık **aralığı** |
+| Havuz | `backend/spor_toto/getiri.py` | — | Müşterek beklenen değer (Faz 4.2): `E[1/(1+W)]` kapalı formu, kalabalık kolonu modeli, duyarlılık eğrileri — **arayüze çıkmaz**, sayı ölçülmemiştir |
 | **Ürün** | `backend/spor_toto/tahmin.py` | — | **Tahmin ürünü (C2)**: yaklaşan maça olasılık + ölçülmüş isabet |
 | Üretim | `backend/scripts/build_fixtures.py` | — | Yaklaşan maçlar ve oranları (football-data `fixtures.csv`) |
 | UI | `frontend/app/tahmin/page.tsx` | — | Tahmin sayfası |
@@ -138,10 +139,10 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/app/super-toto/page.tsx` · `components/super-toto/haftalar.tsx` · `lib/super-toto.ts` | Sezonun hafta şeridi; `?hafta=N` adreste durur |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **1.357 test**; **82'si** istatistik katmanına (`history` `odds` `backtest`
-`api_stats` `api_backtest` `snapshot_iddaa`), **294'ü** tahmin katmanına ait (`predict`
+paketi toplam **1.429 test**; **82'si** istatistik katmanına (`history` `odds` `backtest`
+`api_stats` `api_backtest` `snapshot_iddaa`), **479'u** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
-`benzer`). Dosya adlarıyla sayılıdır ki tablo elle bakım gerektirmesin —
+`benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre`). Dosya adlarıyla sayılıdır ki tablo elle bakım gerektirmesin —
 `tests/test_belgeler.py` onları gerçek koleksiyona karşı denetler.
 `python -m spor_toto.health` **24 değişmez** çalıştırır — ikisi (`oran_arsivi`, `geri_test`)
 istatistik katmanını, biri (`tahmin_referanslari`) tahmin katmanının ölçüm koşumunu korur.
@@ -2333,6 +2334,104 @@ skorlarda; orada model *"bilmiyorum"* diyor ve bunu artık **söyleyebiliyor**.
 
     python -m spor_toto.kalibre --rapor
 
+### 3.34 Müşterek beklenen değer (Faz 4.2) — kaldırılan son kısıt
+
+`README.md` §1.6 uzun süre şunu yazıyordu: *"İkramiye / beklenen değer
+hesabı yapmaz"*. O bir **ürün kararıydı** ve kısıtlar kalkarken o da kalktı.
+Kalkmayan şey **ölçülmemiş bir sayının arayüze çıkmaması**: `getiri.py`
+hesabı yapar, sayıyı yazar ve **arayüze çıkmaz**.
+
+#### Neden bu eksen ötekilerden farklı
+
+Faz 1–3 on bir kez aynı şeyi ölçtü: kapanış fiyatını geçen bir görüş yok.
+Sabit oranlı bahiste bu kapanan bir kapıdır, çünkü orada kenar
+`p_model − p_piyasa`'dır. Müşterek bahiste kapanmaz (`DIS_INCELEME.md` §7):
+
+    Sabit oranlı :  edge = p_model  − p_piyasa
+    Müşterek     :  edge = p_piyasa − oynanma_payı
+
+Yani piyasa olasılığını **olduğu gibi** kullanıp yalnızca kalabalığın ondan
+saptığı yeri işaretlemek yeter. Projenin bütün ölçüm serisi bu eksene
+dokunmuyor.
+
+#### Payın kapalı formu
+
+Bizimle birlikte kazanan rakip **kolon** sayısı `W ~ Binom(N, q)` ise:
+
+    E[1/(1+W)] = (1 − (1−q)^(N+1)) / ((N+1)·q)
+
+Monte Carlo yok; sayı kesin ve deterministik. Kod bunu doğrudan değil
+`−expm1(n·log1p(−q))/(n·q)` olarak yazıyor: doğrudan yazım `q = 1e-12`'de
+anlamlı basamak kaybından **üçüncü hanede** yanlış çıkıyordu.
+
+**Havuz oyuncu başına değil, kazanan kolon başına bölünür.** Bu ayrım
+büyüklüğü tamamen belirler: tek bir oyuncu on binlerce kolon oynar. Bu
+yüzden nüfus `rakip_kolon`, `q` ise **bir kolonun** tutturma olasılığıdır.
+
+#### İki sessiz hata, ikisi de bekçili
+
+**(1) Kupon ile tek kolon karıştırılamaz.** İlk sürümde CLI, tek kolonun
+`P(14+) ≈ 0,0009`'unu 2.228 kolonluk bir bedelle topluyordu — iki sayı iki
+farklı şeyin sayısıydı. Doğrusu garantinin aritmetiğinden gelir
+(`secim` modül başlığı): `P(en iyi = 14−k) = P(k)`, `k`'nın dağılımı
+Poisson-binom. `kupon_kademeleri()` bunu yapar; bekçisi
+`test_kupon_kademeleri_garanti_aritmetigiyle_uyumlu`.
+
+**(2) `p = q` alınırsa hesap çöker.** İkinci sürüm kalabalığın
+olasılığını bizimkine eşitliyordu. O özel durumda, `N·q ≫ 1` iken:
+
+    p_k = q_k  ⇒  E[kazanç] = havuz·(1−c)/(N+1)
+
+yani havuzun kademelere nasıl bölündüğünden de, bizim ne oynadığımızdan da
+**bağımsız** bir sayı. Çıktı çalışır görünüyordu ve **boştu**. Bekçisi
+`test_ortalama_kolonsak_pay_bolusumu_hicbir_sey_degistirmez`.
+Düzeltmesi `kalabalik_kademeleri()`: kalabalığın kolonu modellenir.
+
+#### Hesaplanan — 51. hafta · bütçe 4.096 · 3.888 kolon · bedel 5.832
+
+Başlık bilerek *"ölçülen"* değil: aşağıdaki sayılar bir gözlemden değil, yazılı varsayımlardan çıkıyor.
+
+Havuz 50.000.000 · komisyon %50 · rakip kolon havuzdan türetiliyor
+(50.000.000 / 1,5 − 3.888 = 33.329.445):
+
+| kalabalık modeli | q(14) | bekl. kazanç | beklenen getiri | **oran** |
+|---|---:|---:|---:|---:|
+| `orneklem` — rakip piyasadan çekiyor | 3,6e-05 | 910 | −4.922 | **0,156** |
+| `favori` — rakip hep favoriyi işaretliyor | 9,0e-04 | 40 | −5.792 | **0,007** |
+
+**Bu hesabın asıl sonucu tek bir sayı değil, iki sayının arasındaki 22 kattır.**
+Kalabalığın nasıl işaretlediğine dair varsayım, sonucu tahmin modelinin
+kendisinden **çok daha fazla** belirliyor. Bu, projenin bu eksende neye
+ihtiyacı olduğunu tam olarak söylüyor: daha iyi bir tahminci değil,
+**oynanma paylarının ölçümü** (§6.3b, `super_toto_hafta.kamuoyu`).
+
+#### Havuz büyüklüğü getiriyi belirlemiyor
+
+İki duyarlılık eğrisi ayrı sorular sorar ve karıştırılırsa yanlış okunur:
+
+| çarpan | havuz **sabit** | havuz **da ölçekli** |
+|---|---:|---:|
+| ×0,25 | 0,624 | 0,156 |
+| ×1 | 0,156 | 0,156 |
+| ×4 | 0,039 | 0,156 |
+
+İkinci sütun **tam olarak düz** — ve tesadüf değil: `N·q ≫ 1` iken pay
+`havuz(1−c)·w/(N·q)`'ya iner, havuz ve `N` aynı çarpanla ölçeklenince
+birbirlerini götürürler. Müşterek bahsin en önemli sezgisi budur:
+**getiriyi havuzun büyüklüğü değil, `p_k/q_k` oranı belirler.**
+
+#### Sonuç ve sınır
+
+Her iki modelde de oran 1'in çok altında — yani bu varsayımlarla kupon
+pozitif beklenen değerli değil. Ama bu **bir ölçüm değildir**: havuz payı
+(%55/25/20), komisyon (%50) ve kalabalık modeli varsayımdır ve gövde bunu
+`uyari` alanında taşımak zorundadır (bekçi:
+`test_uyari_ve_varsayimlar_govdede_duruyor`). §6.3b bağıntıyı görebilmek
+için ≈71 ikramiyeli hafta gerektiğini ölçtü; elde **1** var.
+
+    python -m spor_toto.getiri
+    python -m spor_toto.getiri --kalabalik favori
+
 ## 4. Sayfada bugün ne var
 
 **`/istatistik`** — sezon dağılımı (en sık sonuç + pay çubuğu) · 5 sayı kutusu (sembol
@@ -2465,6 +2564,7 @@ ve karşılıkları: kupon seti 0,5747 → **0,5740**, korpus 0,5940 → **0,593
 | **1X2 dışı pazarlar (§3.31)** | 539 maç · kupon oran arşivi | **Kısıt kalktı, kural kalmadı.** Alt/üst 2,5: Brier 0,4656, marj %7,14, sapan bant **0/4**. Asya handikabı: ortalama getiri 0,4833, marj %7,38, sapan bant **0/4** — Brier **tanım gereği yok** (çizgilerin %53'ü çeyrek, sonuç kesirli). Handikap bantları **çizgiye** göre: olasılığa göre dilimlendiğinde 539 maçın 531'i tek banda düşüyor, çünkü pazarın amacı olasılığı %50'ye çivilemek |
 | **Yığınlama (§3.32)** | 31.103 maç · kat dışı 31.103 | **Serinin ilk negatif nokta tahmini** ama geçmedi: −0,000137 [−0,000402, +0,000148]. Ağırlıklar sebebini söylüyor — piyasa +0,5307, kademe +0,3242, agac +0,2347 (**üçü de piyasa çıpalı**, toplamları 1,09) ve piyasadan bağımsız tek taban Dixon-Coles **−0,0693**. Yeni bilgi değil, aynı bilginin farklı paketlenmesi |
 | **LOFO + Venn-Abers (§3.33)** | 31.103 maç · 4 sezon katı | **LOFO: hiçbir özellik taşımıyor**, onun beşi net negatif — en zararlısı `ayrisma` (−0,000159), ve `elo_farki` (−0,000042) ile `h2h_farki` (−0,000065) de negatif. **Venn-Abers geçmedi** (+0,000264) ama aralık yeni bir sayı verdi: ortalama genişlik **0,00472** — piyasanın olasılıkları sıkı destekleniyor, §3.23'ün bağımsız teyidi |
+| **Müşterek beklenen değer (§3.34)** | 51. hafta · 3.888 kolon · havuz varsayımı | **Ölçüm değil, hesap** — ve sonucu belirleyen tahminci değil kalabalık varsayımı: `orneklem` modelinde getiri oranı **0,156**, `favori` modelinde **0,007** — arada **22 kat**. Havuz büyüklüğü getiriyi hiç belirlemiyor (havuz ve rakip kolon birlikte ölçeklendiğinde eğri tam düz); belirleyen `p_k/q_k` oranı. Bu eksenin ihtiyacı yeni model değil, **oynanma paylarının ölçümü** |
 
 **Okuma.** Aşırı uyum modelin kapasitesinden değil örneklem küçüklüğünden geliyordu; büyük
 korpus onu kaldırdı. Ama kalan etki 0,0005–0,0015 Brier — 31 binde anlamlı, 540'ta değil ve
@@ -2535,7 +2635,7 @@ Beklenen getiri  =  P(tutturma)  ×  Pay(tutturunca)  −  Bedel
 | Eksen | Ne belirler | Durum |
 |---|---|---|
 | **Tahmin** | 14+ tutturma olasılığı | İki bağımsız denemede ~sıfır artık (§5.1) |
-| **Havuz** | Tutturunca ikramiyenin kaçta kaçını aldığın | **Veri geldi, ölçülmedi** (§6.3, §6.3b). Oynanma 2 hafta, ikramiye kaydı 1 hafta |
+| **Havuz** | Tutturunca ikramiyenin kaçta kaçını aldığın | **Motor hazır, veri geldi, ölçüm yok** (§3.34, §6.3, §6.3b). Beklenen değer artık kapalı formda hesaplanıyor; oynanma 2 hafta, ikramiye kaydı 1 hafta |
 | **Kaplama** | Aynı garanti için ödenen kolon | **Çözüldü** — Hamming, kanıtlanmış optimal |
 
 Plan sonludur çünkü **etken sayısı üçtür.** Kaplama ekseninde iş yok ve olmayacak: bir
@@ -2842,6 +2942,17 @@ konmalıdır.
 Bu, ekseni şimdiden kapatmaz ama **beklentiyi bugünden düzeltir**: Faz B'nin
 cevabı bu sezon gelmeyecek. Gelecek olan şey, verinin **biriktirilmeye
 başlanmasıdır** — ve toplanmamış veri hiçbir zaman ölçülemez.
+
+#### Motor hazır, ölçüm değil (§3.34)
+
+Faz 4.2 bu eksenin **hesabını** kurdu: `getiri.py` müşterek beklenen değeri
+kapalı formda veriyor. Bu, durma kuralını değiştirmiyor — hesap ölçüm değildir
+— ama bir şeyi netleştirdi: kalabalık modeli `orneklem`den `favori`ye
+çevrildiğinde getiri oranı **0,156'dan 0,007'ye**, yani 22 kat düşüyor.
+
+**Yani bu eksende belirsizliğin kaynağı tahminci değil, kalabalık.** Yukarıdaki
+"≈71 hafta" hedefinin ölçtüğü şey de tam olarak budur; motorun varlığı hedefi
+küçültmez, yalnızca ölçüm geldiğinde takılacağı yeri hazır eder.
 
 #### Bilinen sınır — kaldırılmamalı
 
@@ -3153,6 +3264,7 @@ S3'e bağımlı olduğu için bugün planlanamaz; arşiv birikince yeniden değe
 | Takım bazlı istatistik | 216 takım, Süper Lig takımları bile 32 maç. Çıkacak sayı güvenilir görünür ama gürültüdür |
 | Ölçülmemiş tahmincinin arayüze çıkması | Amaç tahmin olsa da isabeti hold-out ile ölçülmemiş hiçbir tahminci sayfaya çıkmaz. Beraberlik profili buna örnektir: sinyal var (%14 → %33) ama zayıf ve tam monoton değil (§3.6) — girdi olarak kullanılır, tek başına tahminci olarak sunulmaz |
 | ~~Diğer pazarların arayüze çıkması~~ | **Kalktı (§3.31).** Bu bir ürün kararıydı, bir ölçüm sonucu değil. Alt/üst 2,5 ve Asya handikabı artık `/api/pazar` ve `/pazarlar`da — **ölçülmüş kalibrasyonlarıyla birlikte**. Değişmeyen kural yerinde: ölçüsüz sayı çıkmaz |
+| ~~İkramiye / beklenen değer hesabı~~ | **Kalktı (§3.34).** `getiri.py` müşterek beklenen değeri kapalı formda hesaplıyor. Kalkan şey *hesabın yapılmaması*ydı; kalkmayan şey **sayının arayüze çıkmaması** — havuz payı, komisyon ve kalabalık modeli varsayım, ölçüm için ≈71 ikramiyeli hafta gerekiyor ve elde 1 var (§6.3b) |
 | Maçkolik'ten veri çekme | `robots.txt` `/api/` yolunu herkese, `anthropic-ai`'yi tamamen kapatıyor; ayrıca eski açık uç ölü |
 
 ---
@@ -3202,7 +3314,7 @@ python -m spor_toto.disari                 # A3: piyasa dışı özellikler
 python -m spor_toto.tahmin                 # ÜRÜN: yaklaşan maçlara olasılık
 
 # Denetim
-pytest -q                                  # 1.357 test (82'si bu katman, 294'ü tahmin)
+pytest -q                                  # 1.429 test (82'si bu katman, 479'u tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out
