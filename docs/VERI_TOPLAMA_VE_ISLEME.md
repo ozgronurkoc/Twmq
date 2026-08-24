@@ -789,7 +789,7 @@ tablolar (script'in bastığı lig dağılımı) bunu yakalayan şeydi.
 | `test_snapshot_iddaa.py::test_askidaki_ayak_maci_eler` | 1.00 fiyat sayılmaz |
 | `test_snapshot_iddaa.py::test_farkli_snapshot_birikir` | Arşiv gerçekten birikiyor, üstüne yazmıyor |
 
-Toplam 82 test bu üç veri setini korur (backend paketi 1.577 test). `python -m spor_toto.health`
+Toplam 82 test bu üç veri setini korur (backend paketi 1.593 test). `python -m spor_toto.health`
 25 değişmez çalıştırır; `oran_arsivi` ve `geri_test` bu katmanı, `tahmin_referanslari`
 tahmin katmanının ölçüm koşumunu korur.
 
@@ -1024,6 +1024,25 @@ kullanıcı kitlesi). n = 2 iken hiçbir sayı sonuç değildir.
 
 İkincisi ölçülmesi gereken soruyu değiştiriyor: artık *"havuz avantajı var mı"* değil,
 **"net mi"**. Ayrıntı: [`ISTATISTIK_YOL_HARITASI.md`](ISTATISTIK_YOL_HARITASI.md) §6.3.
+
+**2. hafta (n = 2).** Halkın modal kuponu ile piyasanın favori kuponu bu kez **ayrıştı**
+— tek maçta (5. maç: halk ev sahibi %53, piyasa deplasman %38,8) — ve sonuç piyasayı
+doğruladı: halk 8/15, piyasa 9/15. Kalabalığın Brier'i o hafta 0,6752, piyasanınki 0,5839.
+İki hafta da aynı yönde: **oynanma verisi yön değil, pay taşıyor.**
+
+**Ve bu hafta bir veri açığı ölçümü durdurdu.** 2. haftanın ikramiye ekranı girilmedi;
+üstelik skorlar da girilmedi (yalnızca 1/0/2). Sonuç: kalabalık ayarının *asıl* karşılığı
+— kişi başı ödülü büyütüp büyütmediği — o hafta için **bir daha ölçülemez**. İkramiye
+tablosu yayından düştükten sonra hiçbir yerde yayınlanmıyor; iddaa bülteni gibi,
+kaçırılan hafta kaçmıştır.
+
+Sonuç girişi bu yüzden **üç parçalıdır** ve üçü aynı anda girilir:
+
+| Parça | Nereden | Kaybedilirse ne ölçülemez |
+|---|---|---|
+| Sonuç dizisi (15 sembol) | resmî sonuç ekranı | her şey — hafta hiç ölçülemez |
+| Skorlar (gol) | resmî sonuç ekranı | gol bazlı her ölçüm (Dixon-Coles kalibrasyonu) |
+| İkramiye tablosu (kat başına kazanan + ödül) | resmî ikramiye ekranı | havuz ekseninin tamamı: pay hesabı, kolon başına getiri, popülerlik modeli |
 
 Bu yol pozitif getiri garanti etmez; ölçülebilir hale getirdiği şey, bu belgenin önceki
 sürümünde hakkında hiçbir şey bilinmeyen bir boyuttur.

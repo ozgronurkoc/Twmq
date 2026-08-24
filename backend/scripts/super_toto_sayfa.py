@@ -340,7 +340,7 @@ if BITTI:
     dag_html = "".join(dag)
 
     ikr_satir = []
-    for t in ikramiye["tiers"]:
+    for t in ikramiye.get("tiers", []):
         if t["prize"] is None:
             kisi = "—"
             tutar = "çıkmadı"
@@ -355,14 +355,40 @@ if BITTI:
             f'<td class="num mono">{tutar}</td>'
             f'<td class="band">{not_}</td></tr>')
     ikr_html = "".join(ikr_satir)
+    ikr_var = bool(ikramiye.get("tiers"))
+    # Tablo YOKSA sayfa bos bir tablo basmaz: eksikligi yazar. Bos
+    # tablo "ikramiye dagilmadi" gibi okunur; oysa olan sey, verinin
+    # girilmemis olmasi (2. hafta tam olarak bu durumda).
+    ikr_bolum = (
+        '<div class="scroll"><table><thead><tr><th>Kademe</th>'
+        '<th class="num">Kişi</th><th class="num">Kişi başı</th>'
+        '<th>Not</th></tr></thead><tbody>' + ikr_html + '</tbody></table></div>'
+        if ikr_var else
+        '<p style="font-size:13.5px;color:var(--dim);max-width:70ch">Bu haftanın '
+        '<b style="color:var(--ink)">ikramiye ekranı girilmedi</b>. Kişi başı ödül ve '
+        'kazanan adedi olmadan havuz tarafı — kalabalık ayarının karşılığı, kolon '
+        'başına getiri — ölçülemez.</p>')
 else:
-    karne_html = dag_html = ikr_html = ""
+    karne_html = dag_html = ikr_html = ikr_bolum = ""
 
 
 if BITTI:
     dg = degerlendirme
     kayip = [r for r in dg["per_match"] if not r["tuttu"]]
     ber_kacak = [r for r in kayip if r["gercek"] == "0"]
+    # Nesirdeki her nitelemenin kaynagi. Bu blok sayfanin kendi sozunun
+    # ("bu dosyada elle yazilmis tek bir olcum yoktur") bekcisidir: burada
+    # once 1. haftaya OZGU cumleler sabit yaziliydi — ikramiye kademesine
+    # ulasilamadigi, kalabalik kuponunun piyasayla birebir ayni oldugu ve
+    # 14 bilenin kisi basi odulu. 2. hafta girildiginde ucu de yanlis oldu.
+    HEDEF = _deg.HEDEF_KADEME
+    hedefe_ulasti = dg["best"] >= HEDEF
+    enb_kacak = max(range(len(dg["dist"])), key=lambda i: dg["dist"][i])
+    ber_ort = ref["hist"]["bands"]["0"]["avg"]
+    halk_ayni = kal_karne["halk_kuponu"] == kal_karne["piyasa_kuponu"]
+    ber_notu = ("" if not ber_kacak else
+                f", bunların <b>{len(ber_kacak)}'ü beraberlikti</b> — çifte "
+                "yaparken üçüncü sembol olarak attığım beraberlikler")
     serit = "".join(
         f'<span class="sh">{chip(x)}<small>{i+1}</small></span>'
         for i, x in enumerate(gercek))
@@ -371,10 +397,10 @@ if BITTI:
     <header>
       <span class="eyebrow">Sonuç · kupon donduruldu, hafta oynandı</span>
       <h2>Kupon {dg['best']}/15 ile bitti</h2>
-      <p>İkramiye eşiği 12'ydi; kupon oraya ulaşamadı. On beş maçın <b>{dg['miss_count']}'sında</b> gerçek sonuç
-      işaretlerimin dışında kaldı ve bunların <b>{len(ber_kacak)}'ü beraberlikti</b> — üçü de "çifte" yaparken
-      üçüncü sembol olarak attığım beraberlikler. Haftanın sembol dağılımı {sayim_g['1']} / {sayim_g['0']} / {sayim_g['2']}:
-      tek bir deplasman galibiyeti var, geçen sezonun 36 haftasında bu yalnızca 2 kez görüldü.</p>
+      <p>İkramiye kademesi {HEDEF}'ydi; kupon oraya <b>{'ulaştı' if hedefe_ulasti else 'ulaşamadı'}</b>.
+      On beş maçın <b>{dg['miss_count']}'sında</b> gerçek sonuç işaretlerimin dışında kaldı{ber_notu}.
+      Haftanın sembol dağılımı {sayim_g['1']} / {sayim_g['0']} / {sayim_g['2']}: {sayim_g['0']} beraberlik
+      çıktı, geçen sezonun hafta ortalaması {ber_ort:.2f}'ti.</p>
     </header>
     <div class="sonuc-serit">{serit}</div>
     <div class="scroll">
@@ -387,26 +413,23 @@ if BITTI:
     <h3 style="margin:34px 0 6px">Şanssızlık mıydı, hata mıydı?</h3>
     <p style="font-size:13.5px;color:var(--dim);max-width:68ch;margin-bottom:16px">
       Kuponun kendi olasılıklarına göre <b style="color:var(--ink)">beklenen kaçak sayısı {dg['expected_misses']:.2f}</b>,
-      en olası senaryo 3 kaçaktı. {dg['miss_count']} kaçak geldi — bu, %{100*dg['p_at_least_actual']:.0f}
-      olasılıklı bir kuyruk. Yani hafta kötüydü, ama asıl mesele bu değil:
-      <b style="color:var(--ink)">3 kaçak da 14'e yetmezdi.</b> Kupon daha atılmadan beklentisi
-      {15-dg['expected_misses']:.1f} doğruydu; 14 hedefi için gereken "sıfır kaçak" ihtimali %{100*dg['p_in_set']:.2f} idi.</p>
+      en olası senaryo {enb_kacak} kaçaktı. {dg['miss_count']} kaçak geldi — bu, %{100*dg['p_at_least_actual']:.0f}
+      olasılıklı bir kuyruk; hafta <b style="color:var(--ink)">{'beklenenden kötü' if dg['miss_count'] > dg['expected_misses'] else 'beklenenden iyi'}</b> geçti.
+      Asıl mesele bu değil: {dg['miss_count']} kaçak
+      <b style="color:var(--ink)">{"14'e zaten yetmiyordu" if dg['miss_count'] > 1 else "14'ü hâlâ mümkün bırakıyordu"}.</b>
+      Kupon daha atılmadan beklentisi {15-dg['expected_misses']:.1f} doğruydu; 14 hedefi için gereken
+      "sıfır kaçak" ihtimali %{100*dg['p_in_set']:.2f} idi.</p>
     <ul class="dag">{dag_html}</ul>
 
     <h3 style="margin:34px 0 14px">İkramiye nasıl dağıldı</h3>
-    <div class="scroll">
-      <table>
-        <thead><tr><th>Kademe</th><th class="num">Kişi</th><th class="num">Kişi başı</th><th>Not</th></tr></thead>
-        <tbody>{ikr_html}</tbody>
-      </table>
-    </div>
+    {ikr_bolum}
     <p style="margin-top:14px;font-size:13px;color:var(--dim);max-width:70ch">
       Halkın en çok oynadığı kupon <span class="mono">{kal_karne['halk_kuponu']}</span> —
       <b style="color:var(--ink)">{kal_karne['halk_dogru']}/15</b> tutturdu. Piyasanın favori kuponu
-      <b style="color:var(--ink)">bunun birebir aynısı</b> ve o da {kal_karne['piyasa_dogru']}/15 yaptı.
-      Rastgele bir halk kuponunun beklenen doğrusu {kal_karne['beklenen_halk_dogru']:.2f}'ydi.
-      14 bilenin yalnızca 8 kişi çıkması ve kişi başı {para(2153527.18)} TL ödemesi bundandır:
-      <b style="color:var(--ink)">ikramiyeyi büyüten şey, bizi bitiren şeyin ta kendisi.</b></p>
+      <b style="color:var(--ink)">{'bunun birebir aynısı' if halk_ayni else 'ondan farklı'}</b>
+      ve o {kal_karne['piyasa_dogru']}/15 yaptı. Rastgele bir halk kuponunun beklenen doğrusu
+      {kal_karne['beklenen_halk_dogru']:.2f}'ydi. <b style="color:var(--ink)">İkramiyeyi büyüten şey,
+      kalabalığın da tutturamamasıdır</b> — kupon tuttuğunda bölüşülecek kişi sayısı buradan okunur.</p>
   </section>"""
 else:
     sonuc_bolumu = ""

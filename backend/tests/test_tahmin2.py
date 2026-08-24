@@ -226,8 +226,24 @@ def test_marj_esitleme_oranlarin_sirasini_bozmaz(t2):
 
 # ─── gövde ────────────────────────────────────────────────────────────────
 
-def test_govde_sonuclari_gormeden_uretilir(govde):
-    assert govde["meta"]["results_known"] is False
+def test_kayit_sonuclari_gormeden_uretildi():
+    """DİSKTEKİ kayıt sonuçlar görülmeden üretilmiş olmalı.
+
+    Ölçünün öznesi bilerek diskteki dosya: `uret()` bugün çağrılırsa
+    haftanın sonucu artık GİRİLMİŞTİR ve gövde `results_known: true`
+    döner — bu doğru davranıştır, `yaz()` de o gövdeyi yazmayı reddeder
+    (`test_sonuclari_bilinen_haftaya_ikinci_tahmin_yazilmaz`). Kaydın
+    değeri, sonuç girilmeden önce donmuş olmasındadır ve bunu ancak
+    dosyanın kendisi kanıtlar.
+    """
+    kayit = json.loads((VERI / "hafta_02_tahmin2.json").read_text(encoding="utf-8"))
+    assert kayit["meta"]["results_known"] is False
+    assert kayit["meta"]["frozen_at"] == "2026-08-24"
+
+
+def test_govde_sonuc_girilince_bunu_ilan_eder(govde):
+    """Sonuç girilmiş haftada gövde bunu SAKLAMAZ — yazım kapısı buna bakar."""
+    assert govde["meta"]["results_known"] is True
     assert govde["meta"]["frozen_at"] == "2026-08-24"
 
 
@@ -297,8 +313,16 @@ def test_diskteki_kayit_bayat_degil(t2, govde):
     if not yol.exists():
         pytest.skip("2. tahmin kaydi yok")
     diskte = json.loads(yol.read_text(encoding="utf-8"))
-    taze = t2.uret("2026_27", 2, tarih=diskte["meta"]["frozen_at"])
-    assert json.loads(t2._metin(taze)) == diskte
+    taze = json.loads(t2._metin(t2.uret("2026_27", 2,
+                                        tarih=diskte["meta"]["frozen_at"])))
+    # `results_known` dışarıda: kayıt sonuç girilmeden donduruldu, bugün
+    # aynı haftanın sonucu BİLİNİYOR ve taze gövde bunu doğru şekilde
+    # `true` yazıyor. Bu bir bayatlık değil, kaydın tanımı — flamanın
+    # kendisi ayrı bir testte (`test_kayit_sonuclari_gormeden_uretildi`)
+    # korunuyor. Geri kalan her alan birebir eşit olmak zorunda.
+    for govde in (diskte, taze):
+        govde["meta"].pop("results_known", None)
+    assert taze == diskte
 
 
 def test_yan_kayit_hafta_sanilmaz():

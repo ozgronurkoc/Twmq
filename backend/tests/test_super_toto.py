@@ -340,14 +340,20 @@ def test_defter_kupon_dosyasini_hafta_sanmaz(sezon):
     assert all(isinstance(x, int) for x in sezon.haftalari_bul("2026_27"))
 
 
-def test_defter_sonucsuz_haftayi_olcume_katmaz(sezon):
+def test_defter_yalnizca_sonucu_olan_haftayi_olcer(sezon):
+    """Ölçüm sonuca bağlıdır — sonucu olmayan hafta hiçbir ortalamaya girmez.
+
+    Test hafta NUMARASINA bağlanmaz: 2. hafta bir zamanlar sonuçsuzdu, sonuç
+    girildi ve testin ilk sürümü bu yüzden kırıldı. Bağlanacak şey haftanın
+    kendisi değil, kuraldır: `sonuc_var` ne diyorsa ölçüm de onu demeli.
+    """
     o = sezon.topla("2026_27")
-    assert o["hafta_girilmis"] == 2
-    assert o["hafta_olculen"] == 1
-    assert o["mac"] == 15
-    ikinci = next(h for h in o["haftalar"] if h["hafta"] == 2)
-    assert ikinci["sonuc_var"] is False
-    assert "brier" not in ikinci
+    assert o["hafta_girilmis"] == len(sezon.haftalari_bul("2026_27"))
+    olculen = [h for h in o["haftalar"] if h["sonuc_var"]]
+    assert o["hafta_olculen"] == len(olculen)
+    assert o["mac"] == 15 * len(olculen)
+    for h in o["haftalar"]:
+        assert ("brier" in h) is h["sonuc_var"]
 
 
 def test_defter_uretilen_uyarilari_sayar(sezon):
@@ -423,10 +429,21 @@ def test_besleme_iki_uyari_listesini_ayri_tasir(besleme):
     assert w2["warnings_manual"] != w2["warnings_generated"]
 
 
-def test_besleme_sonucsuz_haftada_sonuc_uydurmaz(besleme):
-    w2 = next(w for w in besleme.uret("2026_27")["weeks"] if w["week"] == 2)
-    assert w2["results"] is None
-    assert all(m["result"] is None for m in w2["matches"])
+def test_besleme_sonucu_uydurmaz_ve_kaydirmaz(besleme):
+    """Maç sonucu ya YOKTUR ya da dizideki KENDİ yerinden gelir.
+
+    İki hata da sessizdir ve ikisi de aynı bekçiyle kapanır: sonucu
+    girilmemiş haftada uydurulmuş bir sonuç, ve girilmiş haftada bir
+    kaydırma (15. maça 14. maçın sonucu). İkincisi ancak maç maç
+    denetlenirse görülür.
+    """
+    for w in besleme.uret("2026_27")["weeks"]:
+        if w["results"] is None:
+            assert all(m["result"] is None for m in w["matches"])
+            continue
+        assert len(w["results"]) == 15
+        for m in w["matches"]:
+            assert m["result"] == w["results"][m["no"] - 1]
 
 
 def test_besleme_arindirmayi_yazar(besleme):

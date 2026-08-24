@@ -412,6 +412,19 @@ için ~2,5 milyon maç gerekir. Defter kural değiştirmek için değil, kuralı
 yaptığını görmek içindir — 5-10 hafta sonra doğacak "eşiği oynatalım" baskısına
 karşı tek savunma budur.
 
+**İşlenen sezonun sonuçları** — 1. hafta en iyi kolon **9**/15, 2. hafta
+**12**/15 (ikramiye kademesi 12'dir). 2. haftada iki kayıt yan yana koşuldu ve
+ikisi de 12 verdi; 2. Tahmin bunu **3,2 kat az kolonla** aldı (1.296 ↔ 4.096).
+Bugünkü kural geçen sezonun 36 haftasında yeniden koşulduğunda ortalama en iyi
+kolon **11,81** ve haftaların %67'si 12+ — yani 12 kuralın *normali*, 9 ise alt
+kuyruğu. **Kural iki haftada da değiştirilmedi**; ayrıntı ve sekiz ölçülmüş ders:
+`docs/ISTATISTIK_YOL_HARITASI.md` §3.38.
+
+Sonuç girilirken üç şey birlikte girilir — biri eksikse o haftanın bir ölçüsü
+kalıcı olarak kaybolur: **sonuç dizisi**, **skorlar** ve **ikramiye ekranı**
+(kişi başı ödül + kazanan adedi). 2. haftada son ikisi girilmedi; kalabalık
+ayarının parasal karşılığı bu yüzden ölçülemedi.
+
 **Havuz ekseni (Faz B)** — `python scripts/faz_b.py`. Sorusu kuruldu: *aynı
 tutturma olasılığında az oynanan sembolü işaretlemek kişi başı ikramiyeyi
 büyütüyor mu?* Bu soru **piyasayı geçmeyi gerektirmiyor**, o yüzden A1–A3'ün
@@ -803,7 +816,8 @@ backend/
     build_fixtures.py  Yaklaşan maç fikstürü (tahmin katmanının ölçülen kaynağı)
     snapshot_iddaa.py  İddaa açık bültenini tarih damgalı arşivler (haftalık)
     super_toto_hafta.py       Canlı sezon: hafta profili + kupon kurulumu
-    super_toto_degerlendir.py Sonuç girildikten sonra değerlendirme
+    super_toto_degerlendir.py Sonuç girildikten sonra değerlendirme (iki kaydı
+                              da puanlar; ayar/atılan sembol/görüş/ölçek karneleri)
     super_toto_sezon.py       Kümülatif sezon defteri
     super_toto_sayfa.py       Haftayı tek dosyalık HTML'e basar
     super_toto_tahmin2.py     2. TAHMİN: aynı haftayı bugünkü aletlerle yeniden okur
@@ -813,7 +827,7 @@ backend/
     api_sozlesme.py           API sözleşmesini üretir/denetler (--kontrol: CI kapısı)
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/
-  tests/               pytest (51 dosya → 1.577 test; §9'da katman dökümü)
+  tests/               pytest (52 dosya → 1.593 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -998,8 +1012,8 @@ Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant'lar, CLI (Bayes pre
 dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri test,
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
-eşleme, ikinci kayıt). **51 test dosyası, parametrizasyonla
-1.577 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+eşleme, ikinci kayıt). **52 test dosyası, parametrizasyonla
+1.593 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
@@ -1009,8 +1023,8 @@ karşı denetler):
 | Tahmin katmanı | `predict` `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin` `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre` | 491 |
 | Sağlık | `health` `api_health` `meta` `health_history` | 85 |
 | Veri / istatistik / geri test | `history` `odds` `backtest` `api_stats` `api_backtest` `snapshot_iddaa` `pazar` | 113 |
-| Süper Toto | `super_toto` | 54 |
-| 2. Tahmin (kalabalık ayarı · bağımsız görüş) | `tahmin2` | 28 |
+| Süper Toto | `super_toto` `degerlendir` | 69 |
+| 2. Tahmin (kalabalık ayarı · bağımsız görüş) | `tahmin2` | 29 |
 | Karar katmanı | `secim` | 21 |
 | Skor türetme | `skor` | 21 |
 | Beraberlik düzeltmesi | `beraberlik` | 19 |

@@ -71,8 +71,26 @@ done
 "$PY" scripts/super_toto_tahmin2.py --hafta 2 --tarih 2026-01-01 --json \
   | "$PY" -c "import json,sys; d=json.load(sys.stdin); k=d['kupon']; \
       assert len(k['ayarli']['picks'])==15; \
-      assert k['taban']['columns']==k['ayarli']['columns']; \
-      assert d['meta']['results_known'] is False"
+      assert k['taban']['columns']==k['ayarli']['columns']"
+
+# "Sonuclar gorulmeden uretildi" DISKTEKI kayittan denetlenir. Once taze
+# govdeden okunuyordu; hafta kapanip sonuc girilince taze govde dogru
+# sekilde `true` demeye baslar ve kapi kendi dogru davranisina takilirdi.
+"$PY" -c "import json; \
+    d=json.load(open('data/super_toto/2026_27/hafta_02_tahmin2.json')); \
+    assert d['meta']['results_known'] is False"
+
+# Sonuc girilmis haftanin degerlendirmesi: iki kayit da puanlanmali.
+"$PY" scripts/super_toto_degerlendir.py --hafta 2 --json \
+  | "$PY" -c "import json,sys; d=json.load(sys.stdin); \
+      assert len(d['results'])==15; assert d['tahmin2']; \
+      assert d['kiyas']['union_best'] >= max(x['best'] for x in d['coupons'])"
+
+# Hafta raporu sayfasi: kapida hic kosmuyordu ve tam bu yuzden sessizce
+# kirildi (sonucu girilmis ama ikramiyesi girilmemis haftada KeyError).
+for h in 1 2; do
+  "$PY" scripts/super_toto_sayfa.py --hafta "$h" --cikti "$(mktemp -u).html" >/dev/null
+done
 
 # Üretilmiş iki dosya: bayatlarsa arayüz SESSIZCE yanlış olur.
 baslik "üretilmiş dosyalar güncel mi"

@@ -10,13 +10,16 @@
   "play_source": "tek platform kullanıcı tercih yüzdesi (% Tercih) — kullanıcı ekran görüntüsü (2026-08-18)",
   "play_note": "yüzdeler tek bir platformun kendi kullanıcılarıdır; Spor Toto havuzunun tamamı DEĞİLDİR",
   "entered_at": "2026-08-18",
-  "results": null,
+  "results": "222121121210102",
   "payout": null,
   "data_warnings": [
    "4. maç (Fenerbahçe–Konyaspor): oranların ima ettiği marj %45,8. Bültenin geri kalanı %17,5–17,9 bandında. Bu satır KUŞKULU — kaynaktan doğrulanmalı.",
    "3. maç (Çorum–Kasımpaşa): marj %13,3, bültenin geri kalanının altında. Kullanılabilir ama işaretlendi.",
    "9. maç (Kocaelispor–Amed Sportif): oran SONRADAN geldi ve eklendi (1.97-3.05-2.92, marj %17.8). Kupon bu yüzden v2 olarak yeniden kuruldu; v1 kayıtta duruyor."
-  ]
+  ],
+  "results_source": "Spor Toto sonuç ekranı — kullanıcı ekran görüntüsü (2026-08-24); yalnızca 1/0/2 sonucu verildi, skorlar girilmedi",
+  "results_entered_at": "2026-08-24",
+  "payout_note": "İkramiye ekranı bu hafta GİRİLMEDİ. 1. haftada girilmişti; kolon başına gerçek getiri bu hafta ölçülemez."
  },
  "matches": [
   {
@@ -35,7 +38,9 @@
     "1": 6,
     "0": 21,
     "2": 73
-   }
+   },
+   "result": "2",
+   "score": null
   },
   {
    "no": 2,
@@ -53,7 +58,9 @@
     "1": 44,
     "0": 37,
     "2": 19
-   }
+   },
+   "result": "2",
+   "score": null
   },
   {
    "no": 3,
@@ -72,7 +79,9 @@
     "0": 23,
     "2": 20
    },
-   "odds_flag": "marj %13,3 — bültenin altında"
+   "odds_flag": "marj %13,3 — bültenin altında",
+   "result": "2",
+   "score": null
   },
   {
    "no": 4,
@@ -91,7 +100,9 @@
     "0": 16,
     "2": 13
    },
-   "odds_flag": "KUŞKULU — marj %45,8; deplasman oranı bültenle tutarsız"
+   "odds_flag": "KUŞKULU — marj %45,8; deplasman oranı bültenle tutarsız",
+   "result": "1",
+   "score": null
   },
   {
    "no": 5,
@@ -109,7 +120,9 @@
     "1": 53,
     "0": 27,
     "2": 20
-   }
+   },
+   "result": "2",
+   "score": null
   },
   {
    "no": 6,
@@ -127,7 +140,9 @@
     "1": 60,
     "0": 24,
     "2": 16
-   }
+   },
+   "result": "1",
+   "score": null
   },
   {
    "no": 7,
@@ -145,7 +160,9 @@
     "1": 17,
     "0": 27,
     "2": 56
-   }
+   },
+   "result": "1",
+   "score": null
   },
   {
    "no": 8,
@@ -163,7 +180,9 @@
     "1": 76,
     "0": 16,
     "2": 8
-   }
+   },
+   "result": "2",
+   "score": null
   },
   {
    "no": 9,
@@ -182,7 +201,9 @@
     "0": 30,
     "2": 26
    },
-   "odds_flag": "oran sonradan ilan edildi (kullanıcı bildirimi, 2026-08-22); ilk girişte boştu"
+   "odds_flag": "oran sonradan ilan edildi (kullanıcı bildirimi, 2026-08-22); ilk girişte boştu",
+   "result": "1",
+   "score": null
   },
   {
    "no": 10,
@@ -200,7 +221,9 @@
     "1": 22,
     "0": 22,
     "2": 56
-   }
+   },
+   "result": "2",
+   "score": null
   },
   {
    "no": 11,
@@ -218,7 +241,9 @@
     "1": 63,
     "0": 22,
     "2": 15
-   }
+   },
+   "result": "1",
+   "score": null
   },
   {
    "no": 12,
@@ -236,7 +261,9 @@
     "1": 19,
     "0": 27,
     "2": 54
-   }
+   },
+   "result": "0",
+   "score": null
   },
   {
    "no": 13,
@@ -254,7 +281,9 @@
     "1": 49,
     "0": 32,
     "2": 19
-   }
+   },
+   "result": "1",
+   "score": null
   },
   {
    "no": 14,
@@ -272,7 +301,9 @@
     "1": 77,
     "0": 15,
     "2": 8
-   }
+   },
+   "result": "0",
+   "score": null
   },
   {
    "no": 15,
@@ -290,7 +321,9 @@
     "1": 11,
     "0": 20,
     "2": 69
-   }
+   },
+   "result": "2",
+   "score": null
   }
  ]
 }
