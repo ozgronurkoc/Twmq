@@ -17,6 +17,16 @@ dependencies = [
 
 [project.optional-dependencies]
 test = ["pytest>=7", "pytest-xdist>=3"]
+#: Model ekstrasi — URETIM BAGIMLILIGI DEGIL. Servis egitmez, yalnizca
+#: olcum kosumlari bu paketleri ister; `scripts/check.sh` ve CI kurar,
+#: `scripts/run_prod.sh` kurmaz. `spor_toto.agac` yoklugunu `HAS_LIGHTGBM`
+#: ile denetler ve modul yine ice aktarilabilir (`core.HAS_SCIPY` deseni).
+#:
+#: `alphapy-pro`'nun KENDISI alinmadi: Python >= 3.12 istiyor ve bizim
+#: `.replit` 3.10 kosuyor. Yalnizca isaret ettigi kutuphaneler alindi ve
+#: her biri kendi katlayicimiza (`arama.SezonKatlayici`) baglandi —
+#: ayrinti `docs/DIS_INCELEME_ALPHAPY.md` §4.1.
+model = ["scikit-learn>=1.4", "lightgbm>=4.3"]
 #: Kalite kapisi. Uretim bagimliligi DEGIL — `pip install -e ".[kalite]"`
 #: ile ayrica kurulur, boylece calisan servis onlari tasimaz.
 kalite = ["ruff>=0.16", "mypy>=1.11"]

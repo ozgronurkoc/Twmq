@@ -61,7 +61,20 @@ aradaki fark bahisçi marjıdır.
 
 ---
 
-## 3. Aktarılan tek şey — model sınıfı dış kontrolü
+## 3. Model sınıfı — **itiraz artık kendi ölçümümüzle kapandı**
+
+> **Güncelleme (2026-08-24).** Aşağıdaki bölüm, itirazın yalnızca *dış
+> kanıtla* karşılanabildiği dönemde yazıldı. O dönem bitti: itirazın adını
+> verdiği model sınıfı (ağaç toplulukları) **bizim kesitimizde, bizim
+> kapımızdan** koşturuldu ve geçmedi —
+> [`ISTATISTIK_YOL_HARITASI.md`](ISTATISTIK_YOL_HARITASI.md) §3.30:
+> `agac` +0,000368 [−0,000009, +0,000750], `agac_ham` +0,000667
+> [+0,000282, +0,001068]. Ara adım olarak doğrusal kademeye açık etkileşim
+> terimleri de eklendi ve o da geçmedi (§3.26, §3.29).
+>
+> Aşağıdaki dış kanıt **teyit olarak** duruyor, dayanak olarak değil.
+
+### 3'ün yazıldığı hâli — dış kontrol
 
 **Bu incelemenin asıl çıktısı budur.**
 

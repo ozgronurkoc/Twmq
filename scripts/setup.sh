@@ -28,7 +28,7 @@ else
   # guard yalnizca flask/numpy'ye baktigi icin eksik bir `pytest` ya da
   # `gunicorn` sessizce geciyor, sorun ancak testi/dagitimi kosarken
   # ortaya cikiyordu.
-  if ! "$PY" -m pip install -q -e "./backend[test]"; then
+  if ! "$PY" -m pip install -q -e "./backend[test,model]"; then
     echo "! duzenlenebilir kurulum basarisiz; requirements.txt deneniyor" >&2
     "$PY" -m pip install -q -r backend/requirements.txt
   fi
@@ -48,6 +48,12 @@ done
 # scipy istege bagli: yoksa yalnizca kesin cozucu (ILP) devre disi kalir.
 "$PY" -c "import scipy" >/dev/null 2>&1 \
   || echo "! scipy yok — arac calisir, yalnizca 'exact' (ILP) modu kapali"
+
+# lightgbm de istege bagli ve UYARI ILE gecer: agac tahmincisi (Faz 2.2)
+# yalnizca olcum katmanindadir, urune cikmaz. Yoksa `spor_toto.agac`
+# kurulamaz ve testleri atlanir; geri kalan her sey calisir.
+"$PY" -c "import lightgbm" >/dev/null 2>&1 \
+  || echo "! lightgbm yok — agac olcumu (python -m spor_toto.agac) kapali"
 
 # ─── Node ─────────────────────────────────────────────────────────────────────
 if [[ -d frontend/node_modules ]]; then

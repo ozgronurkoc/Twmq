@@ -112,6 +112,8 @@ spor_toto/evaluate.py  ◄── spor_toto/predict.py     (sözleşme + 3 refera
 | Tahmin | `backend/spor_toto/elo.py` | — | Rakip gücüne göre düzeltilmiş takım gücü (Faz 3.2): Elo defteri, gol farkı çarpanı, sezon taşıma |
 | Tahmin | `backend/spor_toto/dixon_coles.py` | — | Gollerden hücum/savunma güçleri (Faz 3.1): ağırlıklı IPF, düşük skor `τ` düzeltmesi, tur tur yeniden uydurma |
 | Tahmin | `backend/spor_toto/takim.py` | — | Eşleşmeye özel geçmiş ve anlık gidişat (Faz 3.3): H2H son 5 karşılaşma, ardışık galibiyet/mağlubiyet serisi |
+| Tahmin | `backend/spor_toto/arama.py` | — | İç içe CV (Faz 0.2): `SezonKatlayici` (sklearn splitter arayüzü) + ızgara araması; hiperparametre ayarı hold-out'u bozmadan serbest |
+| Tahmin | `backend/spor_toto/agac.py` | — | LightGBM çok sınıflı (Faz 2.2): piyasanın log-olasılığı `init_score`, ağaç yalnızca artığı öğrenir |
 | **Ürün** | `backend/spor_toto/tahmin.py` | — | **Tahmin ürünü (C2)**: yaklaşan maça olasılık + ölçülmüş isabet |
 | Üretim | `backend/scripts/build_fixtures.py` | — | Yaklaşan maçlar ve oranları (football-data `fixtures.csv`) |
 | UI | `frontend/app/tahmin/page.tsx` | — | Tahmin sayfası |
@@ -133,7 +135,7 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/app/super-toto/page.tsx` · `components/super-toto/haftalar.tsx` · `lib/super-toto.ts` | Sezonun hafta şeridi; `?hafta=N` adreste durur |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **1.268 test**; **82'si** istatistik katmanına (`history` `odds` `backtest`
+paketi toplam **1.299 test**; **82'si** istatistik katmanına (`history` `odds` `backtest`
 `api_stats` `api_backtest` `snapshot_iddaa`), **294'ü** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer`). Dosya adlarıyla sayılıdır ki tablo elle bakım gerektirmesin —
@@ -1978,6 +1980,111 @@ demektir.
 
     python -m spor_toto.recalibrate
 
+### 3.30 Gradyan artırmalı ağaçlar (Faz 2.2) — **model sınıfı itirazı kapandı**
+
+`DIS_INCELEME.md` §3'ün itirazı §3.26'da daraltılmıştı ama kapanmamıştı:
+açık etkileşim terimi ile **keyfî doğrusal olmama** aynı şey değildir. Bir
+ağaç topluluğu eşik kurabilir, bölgesel davranabilir ve hiçbir çarpım
+terimiyle yazılamayan şekiller öğrenebilir. Bu bölüm o sınıfı **bizim
+kesitimizde** ölçüyor.
+
+#### Kritik tasarım — ağaç **artığı** öğrenir, sıfırdan değil
+
+Naif kurulum ağaca bütün özellikleri verip 1X2'yi doğrudan tahmin
+ettirmektir. **O ölçüm işe yaramaz**: ağacın piyasa fiyatını yeniden
+keşfetmesi gerekir ve daha kötü keşfeder; sonuç *"ağaçlar kötü"* olur, oysa
+sorulan soru bu değildir.
+
+Doğru kurulum LightGBM'in `init_score`udur: başlangıç ham skoru
+**piyasanın log-olasılığına** sabitlenir, ağaçlar yalnızca sapmayı öğrenir.
+Bu, kademenin `sicaklik`/`bias` basamaklarının `β·log p`'den başlamasıyla
+aynı çerçevedir — yani ağaç ile kademe artık **aynı soruyu** cevaplıyor.
+
+Özellik kümesi de kademeninkiyle **aynı** (`test_ozellik_kumesi_kademeyle_ayni`);
+aksi halde "ağaç mı kademe mi" sorusu model sınıfını değil özellik farkını
+ölçerdi.
+
+#### İç içe CV — hiperparametre kısıtı kalktı, dürüstlük kalmadı
+
+Proje ayarı reddediyordu ve gerekçesi doğruydu: **tek halka vardı.**
+`arama.SezonKatlayici` iki halka kuruyor — dış halka sezon dışarıda
+bırakmalı (dokunulmaz), iç halka eğitim sezonlarının içinde. Bekçi:
+`test_ic_halka_dis_sezonu_gormez`.
+
+İç halkanın seçtiği **en küçük model** oldu ve kapasite monoton zarar
+verdi:
+
+| yaprak | iç halka skoru |
+|---:|---:|
+| **4** | **0,594010** ← seçilen |
+| 8 | 0,595784 |
+| 16 | 0,600629 |
+| 31 | 0,612048 |
+
+#### Ölçülen — 31.103 maç · 183 hafta · sezon dışarıda bırakmalı
+
+| tahminci | Brier | fark | %95 aralık | geçti |
+|---|---:|---:|---|---|
+| piyasa | 0,593600 | — | — | referans |
+| `agac` | 0,594000 | +0,000368 | [−0,000009, +0,000750] | hayır |
+| `agac_ham` | 0,594300 | **+0,000667** | **[+0,000282, +0,001068]** | hayır |
+
+`agac_ham`ın aralığı **tamamen sıfırın üstünde**: piyasayı fiyat olarak
+değil özellik olarak gören bir ağaç, ondan anlamlı biçimde kötü.
+
+#### Ayrışım **mekanizmayı** söylüyor — ve bu Faz 1'in karşılığı
+
+| | Brier | REL | RES | NDCG | beraberlik duyarlılığı |
+|---|---:|---:|---:|---:|---:|
+| piyasa | 0,593600 | 0,00042 | **0,05657** | **0,8971** | 0,003 |
+| `agac` | 0,594000 | **0,00015** | 0,05597 | 0,8963 | 0,012 |
+| `agac_ham` | 0,594300 | 0,00012 | 0,05581 | 0,8955 | 0,006 |
+
+*(sapma payı üçünde de 0,00021)*
+
+Ağaç piyasanın **kalibrasyonunu iyileştiriyor** — güvenilirlik borcunu
+0,00042'den 0,00015'e indiriyor, yani üçte birine. Ama **çözünürlük
+kaybediyor**: 0,05657 → 0,05597. Net sonuç kötü.
+
+Bu cümle §3.23'ün ayrışımı olmasa kurulamazdı. Tek bir Brier sayısıyla
+bakınca "ağaç biraz daha kötü" denirdi; ayrışımla bakınca **ne yaptığı**
+görünüyor: elindeki bilgiyi daha düzgün paketliyor ama yeni bilgi
+üretmiyor — ve zaten paketlemede alınacak yol §3.23'te 0,00042 olarak
+ölçülmüştü.
+
+Ağacın beraberlik duyarlılığı piyasanınkinin **dört katı** (0,012 ↔ 0,003),
+ama ikisi de sıfıra yakın; beraberliği görmek 31 binde de öğrenilmiyor.
+
+#### Okuma — itiraz kapandı
+
+| Denenen sınıf | Nerede | Sonuç |
+|---|---|---|
+| Doğrusal kademe (11 basamak) | T2–A3, §3.27–3.29 | Geçmedi |
+| + açık etkileşim terimleri | §3.26, §3.29 | Geçmedi; §3.29'da **anlamlı biçimde kötü** |
+| **Ağaç toplulukları** (keyfî doğrusal olmama) | **§3.30** | **Geçmedi** |
+
+`DIS_INCELEME.md` §3'ün *"sizin doğrusal kademeniz o özelliği
+kullanamadı"* itirazının cevabı artık bir teyit değil bir **ölçüm**:
+itirazın adını verdiği model sınıfı bizim kesitimizde, bizim kapımızdan,
+bizim özelliklerimizle koşturuldu ve geçmedi. Dış kanıtlar
+(`zakariae-boui`, AlphaPy'ın kendi NCAA öğreticisi) artık teyit olarak
+duruyor, dayanak olarak değil.
+
+#### Bağımlılık kararı
+
+`scikit-learn` ve `lightgbm` `model` **ekstrasına** girdi — üretim
+bağımlılığı değil. Servis bunları taşımaz (`scripts/run_prod.sh`), ölçüm
+katmanı ister; `scripts/setup.sh` ve CI kurar. `spor_toto.agac` yokluğu
+`HAS_LIGHTGBM` ile denetler ve modül yine içe aktarılabilir —
+`core.HAS_SCIPY` deseninin aynısı.
+
+**`alphapy-pro`'nun kendisi kurulmadı**: Python ≥ 3.12 istiyor, bizim
+`.replit` 3.10 koşuyor. Yalnızca işaret ettiği kütüphaneler alındı ve her
+biri **kendi katlayıcımıza** bağlandı — AlphaPy Pro'nun yarım bıraktığı yer
+tam olarak orası (`DIS_INCELEME_ALPHAPY.md` §4.1).
+
+    python -m spor_toto.agac --rapor
+
 ## 4. Sayfada bugün ne var
 
 **`/istatistik`** — sezon dağılımı (en sık sonuç + pay çubuğu) · 5 sayı kutusu (sembol
@@ -2106,6 +2213,7 @@ ve karşılıkları: kupon seti 0,5747 → **0,5740**, korpus 0,5940 → **0,593
 | **Elo (§3.27)** | 31.103 maç · 183 hafta · %95,6 kapsama | **Güçlü sinyal, sıfır katkı.** Ham fark devasa: ev galibiyeti %16,8 → %68,1 (51 puan). Artık sıfır: piyasa her bantta Wilson aralığının içinde. `kalibre_elo` +0,000086 [−0,000242, +0,000429] — geçmedi, ve katsayı **negatif** (−0,0597): piyasa Elo'yu eğer bir şey varsa fazla fiyatlıyor |
 | **Dixon-Coles (§3.28)** | 30.654 maç · %98,6 kapsama | **Piyasadan bağımsız ilk görüş, ve o da geçmedi.** Tek başına Brier 0,6153 (piyasa 0,5933): REL sekiz katı, RES üçte iki. Piyasanın üstüne eklenince `kalibre_dc` +0,000100 [−0,000261, +0,000472], katsayı **negatif** (−0,0492). Artık taramasında altı bandın altısında da piyasa Wilson aralığının içinde. γ=1,2297 · ρ=−0,0330 |
 | **H2H + seriler (§3.29)** | 31.103 maç · H2H %41 kapsama | **Aynı kalıp, üçüncü ve dördüncü kez.** Ham yayılım H2H'de 28, seride 30 puan; **on bandın onunda da** piyasa Wilson aralığının içinde. `kalibre_h2h` +0,000146, `kalibre_seri` +0,000145 — ikisi de geçmedi; `seri` katsayısı **−0,0385** (model seriyi söndürmek istiyor). Ayrıca `etkilesim_favori` artık **anlamlı biçimde kötü**: +0,000380 [+0,000009, +0,000782] |
+| **Ağaç toplulukları (§3.30)** | 31.103 maç · 183 hafta | **Model sınıfı itirazı kapandı.** `agac` +0,000368 [−0,000009, +0,000750], `agac_ham` +0,000667 [+0,000282, +0,001068] — ikincisi anlamlı biçimde kötü. Ayrışım mekanizmayı veriyor: ağaç **kalibrasyonu iyileştiriyor** (REL 0,00042 → 0,00015) ama **çözünürlük kaybediyor** (0,05657 → 0,05597). İç halka en küçük modeli seçti; kapasite monoton zararlı (yaprak 4 → 31: 0,5940 → 0,6120) |
 
 **Okuma.** Aşırı uyum modelin kapasitesinden değil örneklem küçüklüğünden geliyordu; büyük
 korpus onu kaldırdı. Ama kalan etki 0,0005–0,0015 Brier — 31 binde anlamlı, 540'ta değil ve
@@ -2843,7 +2951,7 @@ python -m spor_toto.disari                 # A3: piyasa dışı özellikler
 python -m spor_toto.tahmin                 # ÜRÜN: yaklaşan maçlara olasılık
 
 # Denetim
-pytest -q                                  # 1.268 test (82'si bu katman, 294'ü tahmin)
+pytest -q                                  # 1.299 test (82'si bu katman, 294'ü tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out

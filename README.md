@@ -119,6 +119,7 @@ Python tarafının tamamı `backend/`, arayüzün tamamı `frontend/` altındad�
 # 1) Motor + API
 cd backend
 pip install -e ".[test]"        # calistirma + test
+pip install -e ".[test,model]" # + olcum katmani (sklearn, lightgbm)
 pip install -e ".[test,kalite]" # + ruff/mypy (scripts/check.sh bunlari ister)
 
 # 2) CLI
@@ -800,7 +801,7 @@ backend/
     api_sozlesme.py           API sözleşmesini üretir/denetler (--kontrol: CI kapısı)
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/
-  tests/               pytest (39 dosya → 1.268 test; §9'da katman dökümü)
+  tests/               pytest (41 dosya → 1.299 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -984,15 +985,15 @@ altı adımdan üçünü koşuyordu — yani "OK" demesi "CI geçer" demek deği
 Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant'lar, CLI (Bayes preset
 dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri test,
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
-yeniden kalibrasyon ve eğitim korpusu. **39 test dosyası, parametrizasyonla
-1.268 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+yeniden kalibrasyon ve eğitim korpusu. **41 test dosyası, parametrizasyonla
+1.299 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
 | Katman | Dosyalar | Test |
 |---|---|---|
 | Çekirdek + motorlar | `core` `engines` `invariants` `edge_cases` `cli` `analysis` `bayes` `markov` `fire_scenarios` | 511 |
-| Tahmin katmanı | `predict` `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin` `benzer` `elo` `dixon_coles` `takim` | 421 |
+| Tahmin katmanı | `predict` `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin` `benzer` `elo` `dixon_coles` `takim` `arama` `agac` | 452 |
 | Sağlık | `health` `api_health` `meta` `health_history` | 85 |
 | Veri / istatistik / geri test | `history` `odds` `backtest` `api_stats` `api_backtest` `snapshot_iddaa` | 82 |
 | Süper Toto | `super_toto` | 54 |
