@@ -674,6 +674,7 @@ uygulanır: her blok kendi kaynağını ve tarihini kendi içinde taşır.
 |---|---|
 | **Her veri bloğu `*_source` alanı taşır** ve alan ekran görüntüsünün tarihini içerir | Yeniden üretilemeyen veride kaynak, tek doğrulama izidir |
 | **Yeniden üretilemez** — `scripts/` altında bu dosyayı yazan bir üretici yoktur, yalnızca okuyanlar vardır | Bunu gizlemek, dosyayı öteki dördüyle aynı statüde gösterirdi |
+| **Türetilmiş yan kayıtlar bu sınıfa GİRMEZ** — `hafta_NN_tahmin2.json` elle girilmiş veriden hesaplanır ve yeniden üretilebilir | Elle girilen ile ondan türetileni aynı sınıfta göstermek, doğrulama izini bulanıklaştırırdı |
 | **`data_quality` denetiminden geçmez** | O denetim `st_history` veri setine özgüdür (§7.3) |
 | **25 değişmezin hiçbiri ona bakmaz** | Sağlık katmanı vaadin canlıda geçerliliğini ölçer; bu dosya ürün vaadine girmiyor |
 | **Kuşkulu satır işaretlenir, düzeltilmez** | 2. haftada 4. maçın ima ettiği marj %45,8 iken bültenin geri kalanı %17,5–17,9'du; satır **KUŞKULU** olarak işaretlendi. Doğru marjla banko, verilen oranla çifte olurdu — sessizce "doğru olanı seçmek" §1.3'ün yasakladığı şeydir |
@@ -687,6 +688,7 @@ uygulanır: her blok kendi kaynağını ve tarihini kendi içinde taşır.
 | `meta.payout` | Kat başına (12/13/14/15) kazanan adedi, kişi başı tutar, devreden tutar |
 | `meta.results` | 15 karakterlik 1/0/2 dizisi |
 | `hafta_NN_kupon.json` | **Sonuç görülmeden dondurulmuş** kupon: işaretler, kolon sayısı, küme-içi olasılık, `crowd_ratio`; revize edilirse eski sürüm `superseded` altında gerekçesiyle saklanır |
+| `hafta_NN_tahmin2.json` | **2. Tahmin** — aynı hafta, bugünkü ölçek ve kuralla yeniden kurulmuş İKİNCİ kayıt (§3.37). Yukarıdaki kaydı **değiştirmez**; `hafta_NN.json`in fonksiyonu olduğu için sınıfı ayrıdır: elle girilmiş değil **türetilmiştir** ve `scripts/super_toto_tahmin2.py --yaz` ile yeniden üretilebilir. `meta.frozen_at` kaydın donduğu gündür ve `--tarih` ile açıkça verilir; `meta.results_known` doluysa betik yazmayı **reddeder** |
 
 **Oynanma yüzdesinin kendisi de vekildir** ve dosya bunu yazıyor: *"yüzdeler tek
 bir platformun kendi kullanıcılarıdır; Spor Toto havuzunun tamamı DEĞİLDİR."*
@@ -787,7 +789,7 @@ tablolar (script'in bastığı lig dağılımı) bunu yakalayan şeydi.
 | `test_snapshot_iddaa.py::test_askidaki_ayak_maci_eler` | 1.00 fiyat sayılmaz |
 | `test_snapshot_iddaa.py::test_farkli_snapshot_birikir` | Arşiv gerçekten birikiyor, üstüne yazmıyor |
 
-Toplam 82 test bu üç veri setini korur (backend paketi 1.549 test). `python -m spor_toto.health`
+Toplam 82 test bu üç veri setini korur (backend paketi 1.577 test). `python -m spor_toto.health`
 25 değişmez çalıştırır; `oran_arsivi` ve `geri_test` bu katmanı, `tahmin_referanslari`
 tahmin katmanının ölçüm koşumunu korur.
 

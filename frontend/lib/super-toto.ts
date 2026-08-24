@@ -104,6 +104,130 @@ export interface SuperTotoBugunkuKupon {
   p_hedef_esik: number;
 }
 
+/**
+ * IKINCI tahmin — ayni hafta, bugunku aletlerin tamamiyla yeniden okunmus.
+ *
+ * 1. Tahmin'in KAYDINI degistirmez ve onun yerine GECMEZ; yaninda ayri bir
+ * kayit olarak durur (uretici `scripts/super_toto_tahmin2.py`). Sayfa
+ * ikisi arasinda gecis yapar, birini otekiyle karistirmaz.
+ *
+ * Alan `null` ise o hafta icin ikinci bir kayit yok ve "2. Tahmin" dugmesi
+ * hic gosterilmez — bos bir panel, olmayan bir dugmeden kotudur.
+ */
+export interface SuperTotoTahmin2 {
+  ad: string;
+  frozen_at: string;
+  results_known: boolean;
+  /** Bugunku marj arindirma (`shin`). */
+  arindirma: string;
+  /** 1. Tahmin'in dondurulduğu olcek (`orantili`). */
+  onceki_arindirma: string;
+  /** Kuponu kuran kural (`hedef`). */
+  kural: string;
+  /** Kalabalik icin P(en iyi kolon >= 12)'den vazgecilen en cok oran. */
+  kayip_orani: number;
+  note: string;
+  yenilikler: string[];
+  /** 2. Tahmin'in isaretleri — kalabalik ayari uygulanmis plan. */
+  picks: string[];
+  /** Kalabalik gorulmeden kurulan plan (hedef kurali). */
+  taban_picks: string[];
+  /** Eski kural, yeni olcek — kiyas icin. */
+  esik_picks: string[];
+  columns: number | null;
+  rows: number | null;
+  engine: string | null;
+  guaranteed_14: boolean | null;
+  banko: number[];
+  cift: number[];
+  uclu: number[];
+  p_hedef: number;
+  in_set_p: number;
+  crowd_in_set_p: number;
+  /** Kume-ici / kalabalik-ici. 1'in USTU: olasiligina gore az oynanmis. */
+  crowd_ratio: number;
+  butce: number | null;
+  butce_kaynagi: string;
+  /** Oynanacak 16 satir. */
+  lines: string[];
+  ayar: {
+    not: string;
+    p_hedef_taban: number;
+    p_hedef_ayarli: number;
+    oran_taban: number;
+    oran_ayarli: number;
+    /** Kazaninca rakip yogunlugu — YALNIZCA taban ile ayarli arasinda okunur. */
+    kat_taban: number;
+    kat_ayarli: number;
+    degisimler: {
+      no: number;
+      taban: string;
+      yeni: string;
+      prob_taban: number;
+      prob_yeni: number;
+      oynanma_taban: number;
+      oynanma_yeni: number;
+    }[];
+  };
+  /** 1. Tahmin ile kiyas — eski isaretler BUGUNKU olcekte olculmus. */
+  kiyas: {
+    eski_picks: string[];
+    eski_arindirma: string;
+    eski_kural: string;
+    eski_p_hedef: number;
+    eski_columns: number | null;
+    eski_crowd_ratio: number;
+    degisen_maclar: number[];
+    not: string;
+  } | null;
+  /** Piyasadan bagimsiz gorusun kapsamasi. */
+  gorus: {
+    kapsama: number;
+    dc_olan: number;
+    n: number;
+    kullanilabilir: boolean;
+    tarihce_mac: number;
+    tarihce_son: string | null;
+    /** Korpusta karsiligi olmayan takimlar — o macta gorus YOKTUR. */
+    eslesmeyen: string[];
+    uyari: string;
+  };
+  /** Bagimsiz gorusun piyasadan koptugu maclar, sapmaya gore sirali. */
+  ayrisma: {
+    no: number;
+    mac: string;
+    piyasa: Record<string, number>;
+    dc: Record<string, number>;
+    piyasa_fav: string;
+    dc_fav: string;
+    sembol_farkli: boolean;
+    toplam_sapma: number;
+  }[];
+  /** Kuskulu marjli satir duzeltilseydi ne olurdu — veri DUZELTILMEDI. */
+  duyarlilik: {
+    ortanca_marj: number;
+    duzeltilen: { no: number; mac: string; marj: number }[];
+    picks: string[];
+    p_hedef: number;
+    degisti: boolean;
+    not: string;
+  } | null;
+  matches: {
+    no: number;
+    probs: Record<string, number>;
+    probs_onceki: Record<string, number>;
+    /** Dixon-Coles gorusu; `dc_var` kapaliysa null. */
+    dc: Record<string, number> | null;
+    dc_var: boolean;
+    /** Elo puan farki (ev lehine pozitif). 1X2 DEGILDIR. */
+    elo_farki: number | null;
+    /** Elo'nun beklenen SKORU (0..1) — beraberlik yarim sayilir. */
+    elo_beklenen: number | null;
+    taban: string;
+    isaret: string;
+  }[];
+}
+
 export interface SuperTotoHafta {
   /** 1'den baslayan hafta numarasi. */
   week: number;
@@ -128,6 +252,8 @@ export interface SuperTotoHafta {
   coupon_today: SuperTotoBugunkuKupon | null;
   /** Ikisinin ayristigi mac numaralari. Bos ise olcek degisimi isaret degistirmemis. */
   coupon_drift: number[] | null;
+  /** Ikinci kayit. Yoksa null — "2. Tahmin" dugmesi cikmaz. */
+  tahmin2: SuperTotoTahmin2 | null;
 }
 
 /** Verisi girilmis haftalar — beslemeden gelir. */
@@ -157,6 +283,7 @@ export const HAFTALAR: SuperTotoHafta[] = Array.from(
       coupon_superseded: null,
       coupon_today: null,
       coupon_drift: null,
+      tahmin2: null,
     },
 );
 
@@ -169,6 +296,11 @@ export const HAFTALAR: SuperTotoHafta[] = Array.from(
  */
 export function haftaDoluMu(h: SuperTotoHafta): boolean {
   return h.matches.length === MAC_SAYISI;
+}
+
+/** Haftanin IKINCI tahmini var mi — "2. Tahmin" dugmesinin tek kosulu. */
+export function ikinciTahminVarMi(h: SuperTotoHafta): boolean {
+  return h.tahmin2 !== null && h.tahmin2.picks.length === MAC_SAYISI;
 }
 
 /** Sonuclari gelmis hafta — yarim veri ortalamalara karismasin diye ayri. */

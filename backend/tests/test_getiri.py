@@ -300,10 +300,16 @@ def test_kalabalik_tek_kolon_kuponla_karistirilamaz():
 
 
 def test_kalabalik_kesin_hafta_bire_gider():
-    """Her maç kesinse tek kolon da tavanı tutturur."""
+    """Her maç kesinse tek kolon da tavanı tutturur.
+
+    Oynanma payları da veriliyor: `oynanma` modeli onları **ister** ve
+    verilmezse hata atar (ölçüm olmadan ölçüm modeli çalıştırılamaz).
+    Kesin haftada kalabalık da kesin olduğu için üç model de aynı yere
+    varmalı.
+    """
     kesin = [{"1": 1.0, "0": 0.0, "2": 0.0}] * MAC_SAYISI
     for model in KALABALIK_MODELLERI:
-        q = kalabalik_kademeleri(kesin, model)
+        q = kalabalik_kademeleri(kesin, model, kesin)
         assert q[KADEMELER[0]] == pytest.approx(1.0)
         assert q[13] == pytest.approx(0.0, abs=1e-12)
 

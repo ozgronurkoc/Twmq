@@ -27,6 +27,7 @@ import argparse
 import importlib.util
 import json
 import math
+import re
 import sys
 from collections.abc import Sequence
 from pathlib import Path
@@ -64,19 +65,26 @@ def _modul(ad: str):
     return importlib.import_module(f"scripts.super_toto_{ad}")
 
 
+#: Hafta dosyasının adı. Kalıp **kapalıdır** ve bu kasıtlı: aynı dizinde
+#: haftanın yan kayıtları da duruyor (`hafta_02_kupon.json`,
+#: `hafta_02_tahmin2.json`) ve her biri `hafta_*.json` kalıbına uyuyor.
+#:
+#: Önceki sürüm yalnızca `_kupon` sonekini eliyordu, yani **ek çıkardıkça
+#: sessizce bozulan** bir listeydi: `_tahmin2` eklendiğinde 2. hafta iki
+#: kez sayıldı ve arayüz beslemesi "3 hafta" yazdı. Beyaz liste yerine
+#: kalıp: yeni bir yan kayıt eklendiğinde burada hiçbir şey yapılmaz.
+_HAFTA_DOSYASI = re.compile(r"^hafta_(\d{2})$")
+
+
 def haftalari_bul(sezon: str) -> list[int]:
     kok = VERI_KOK / sezon
     if not kok.exists():
         raise SystemExit(f"Sezon dizini yok: {kok}")
     out = []
     for yol in sorted(kok.glob("hafta_*.json")):
-        ad = yol.stem
-        if ad.endswith("_kupon"):
-            continue
-        try:
-            out.append(int(ad.split("_")[1]))
-        except (IndexError, ValueError):
-            continue
+        m = _HAFTA_DOSYASI.match(yol.stem)
+        if m:
+            out.append(int(m.group(1)))
     return out
 
 

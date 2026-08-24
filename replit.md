@@ -66,7 +66,7 @@ yani Run düğmesi tek başına da yeterlidir.
 |-----|--------|
 | `/` | **Formül** — maç ızgarası, olasılık girişi, motorun tüm modları |
 | `/tahmin` | Yaklaşan maçlara 1/0/2 + **ölçülmüş isabet** (ayrılmaz) |
-| `/super-toto` | Canlı sezon defteri (statik besleme) |
+| `/super-toto` | Canlı sezon defteri (statik besleme); kaydı olan haftada `1. Tahmin` / `2. Tahmin` sekmeleri |
 | `/istatistik` | **Sezon** — dağılım, seyir, bantlar, ısı haritası, haftalar (§6.8 G1'de bölündü) |
 | `/istatistik/oranlar` | **Piyasa** — favori kırılımı, banko bantları, kalibrasyon; sekme şeridi `?last`i taşır |
 | `/istatistik/[week]` | Hafta detayı (olasılıkları formül sayfasına devredebilir) |
@@ -171,7 +171,7 @@ yazmazlar). Ayrıntı: `docs/VERI_TOPLAMA_VE_ISLEME.md`.
 ```bash
 cd backend
 python -m pytest -m "not slow" -q   # hızlı süit
-python -m pytest                    # tamamı (1.549 test, ILP dahil)
+python -m pytest                    # tamamı (1.577 test, ILP dahil)
 python -m pytest -n0 tests/test_egitim.py   # tek çekirdek (hata ayıklarken)
 cd .. && bash scripts/check.sh      # TEK kapı; CI de bunu çağırır
 ```

@@ -63,6 +63,11 @@ oynadığına dair varsayım. Eksik olan yeni bir model değil, **oynanma
 paylarının ölçümü**dür (`super_toto_hafta.kamuoyu`).
 
 `p_k = q_k` alınırsa hesap tamamen çöker — bkz. `kalabalik_kademeleri`.
+
+Not (§3.37): o ölçüm artık **var**. 2026/27 hafta dosyaları oynanma payını
+taşıyor ve `kalabalik_kademeleri`nin üçüncü modeli (`oynanma`) onu
+kullanıyor. Kalan boşluk paylardan değil, ikramiyeli hafta sayısından
+geliyor — ve o hâlâ 1.
 """
 from __future__ import annotations
 
@@ -245,13 +250,25 @@ def kupon_kademeleri(probs_listesi: Sequence[dict[str, float]],
             plan.bedel)
 
 
-#: Kalabalığın nasıl işaretlediğine dair modeller. İkisi de **varsayım**;
-#: gerçeği `super_toto_hafta.kamuoyu` ölçecek (§6.3b, elde 1 hafta var).
-KALABALIK_MODELLERI: tuple[str, ...] = ("orneklem", "favori")
+#: Kalabalığın nasıl işaretlediğine dair modeller.
+#:
+#: İlk ikisi **varsayım**: kalabalığın piyasa fiyatından ya da favoriden
+#: türetildiğini kabul ederler. Üçüncüsü (`oynanma`) varsayım değil
+#: **ölçüm** kullanır — gerçekten kaydedilmiş oynanma paylarını. `getiri`
+#: modül başlığı uzun süre şunu yazıyordu: *"Eksik olan yeni bir model
+#: değil, oynanma paylarının ölçümüdür."* O ölçüm 2026/27 hafta
+#: dosyalarında var (`super_toto_hafta.kamuoyu`) ve bu model onu kullanır.
+#:
+#: Ölçüm de kusursuz değil ve kusuru yazılmalı: paylar **tek bir
+#: platformun** kendi kullanıcılarınındır, Spor Toto havuzunun tamamı
+#: değildir. Yani `oynanma` modeli varsayımı daraltır, kaldırmaz.
+KALABALIK_MODELLERI: tuple[str, ...] = ("orneklem", "favori", "oynanma")
 
 
 def kalabalik_kademeleri(probs_listesi: Sequence[dict[str, float]],
-                         model: str = "orneklem") -> dict[int, float]:
+                         model: str = "orneklem",
+                         oynanma_listesi: Sequence[dict[str, float]] | None = None
+                         ) -> dict[int, float]:
     """**Tek bir rakip kolonun** her kademeyi tutturma olasılığı.
 
     Bu fonksiyon olmadan motorun çıktısı boştur. İlk sürüm `q`'yu bizim
@@ -275,24 +292,51 @@ def kalabalik_kademeleri(probs_listesi: Sequence[dict[str, float]],
     ``favori``
         Rakip her maçta favoriyi işaretliyor: `r = max_s p(s)`. Üst sınır —
         gerçek kalabalık bundan daha dağınıktır.
+    ``oynanma``
+        Rakip **ölçülmüş** oynanma paylarından çekiyor: `r = Σ_s o(s)·p(s)`.
+        Kare DEĞİL çapraz terim, ve fark esastır: rakibin işareti `o`dan,
+        gerçek sonuç `p`den gelir. `orneklem` bu ifadenin `o = p` özel
+        hâlidir — yani kalabalığın piyasayla aynı oynadığı varsayımı.
+        `oynanma_listesi` verilmezse bu model çağrılamaz.
 
-    Gerçek kalabalık ikisinin arasındadır ve hangisinin seçildiği sonucu
-    büyük ölçüde belirler; bu yüzden model adı `varsayimlar`a yazılır.
+    Gerçek kalabalık ilk ikisinin arasındadır ve hangisinin seçildiği
+    sonucu büyük ölçüde belirler; bu yüzden model adı `varsayimlar`a
+    yazılır. Üçüncüsü o aralığı tahmin etmez, **ölçer**.
+
+    Üçünün de gördüğü şey aynı biçimde **koşulsuzdur**: rakibin isabeti
+    bizim ne işaretlediğimize bakmaz, dolayısıyla bu sayı iki farklı plan
+    için birebir aynı çıkar. Havuz ise biz kazandığımızda bölünür; o
+    koşullu soruyu `scripts/super_toto_tahmin2._kosullu_rakip` cevaplar
+    (docs §3.37).
 
     Kademeler `KADEMELER` ile aynı okunur: en üst kademe **en az** o kadar
     doğru (kaplamanın tavanı 14'tür), alttakiler **tam** o kadar.
     """
     if model not in KALABALIK_MODELLERI:
         raise ValueError(f"bilinmeyen kalabalik modeli: {model}")
+    if model == "oynanma" and oynanma_listesi is None:
+        raise ValueError("'oynanma' modeli oynanma_listesi ister")
+    if (oynanma_listesi is not None
+            and len(oynanma_listesi) != len(probs_listesi)):
+        raise ValueError("oynanma ve olasilik listeleri ayni uzunlukta olmali")
     from .core import SEMBOLLER
     from .ortak import kacak_dagilimi
 
-    isabet = []
-    for p in probs_listesi:
-        v = [max(0.0, float(p.get(s, 0.0))) for s in SEMBOLLER]
+    def _normal(d: dict[str, float]) -> list[float]:
+        v = [max(0.0, float(d.get(s, 0.0))) for s in SEMBOLLER]
         toplam = sum(v) or 1.0
-        v = [x / toplam for x in v]
-        isabet.append(sum(x * x for x in v) if model == "orneklem" else max(v))
+        return [x / toplam for x in v]
+
+    isabet = []
+    for i, p in enumerate(probs_listesi):
+        v = _normal(p)
+        if model == "orneklem":
+            isabet.append(sum(x * x for x in v))
+        elif model == "favori":
+            isabet.append(max(v))
+        else:
+            o = _normal(oynanma_listesi[i])  # type: ignore[index]
+            isabet.append(sum(a * b for a, b in zip(o, v)))
 
     # `kacak_dagilimi` KACAK sayisinin dagilimini verir: d[m] = tam m yanlis.
     d = kacak_dagilimi([1.0 - r for r in isabet])

@@ -780,6 +780,7 @@ backend/
     tahmin.py          TAHMİN: yaklaşan maçlar + ölçülmüş isabet = /api/tahmin
     pazar.py           1X2 DIŞI: alt/üst 2,5 + Asya handikabı = /api/pazar
     getiri.py          HAVUZ: müşterek beklenen değer — HESAP, arayüze ÇIKMAZ
+    gorus.py           TAHMİN: piyasadan BAĞIMSIZ görüş (DC + Elo) — işaret DEĞİŞTİRMEZ
     avrupa.py          VERI: UEFA fiksturu — dinlenme/sikisiklik duzeltmesi
     sehir.py           VERI: kulup-sehir tablosu, derbi (sicaklik degiskeni)
     takim_gucu.py      TAKIM: kucultulmus takim gucu = /api/takimlar
@@ -805,13 +806,14 @@ backend/
     super_toto_degerlendir.py Sonuç girildikten sonra değerlendirme
     super_toto_sezon.py       Kümülatif sezon defteri
     super_toto_sayfa.py       Haftayı tek dosyalık HTML'e basar
+    super_toto_tahmin2.py     2. TAHMİN: aynı haftayı bugünkü aletlerle yeniden okur
     super_toto_frontend.py    Arayüzün okuduğu sezon beslemesi (--kontrol: CI kapısı)
     faz_b.py                  Havuz ekseni güç analizi
     acilis_kapanis.py         Açılış–kapanış oranı karşılaştırması
     api_sozlesme.py           API sözleşmesini üretir/denetler (--kontrol: CI kapısı)
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/
-  tests/               pytest (50 dosya → 1.549 test; §9'da katman dökümü)
+  tests/               pytest (51 dosya → 1.577 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -825,7 +827,7 @@ frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası 
     saglik/            durum kartı, kategori kartları, çalışma geçmişi, kontrol envanteri
     tahmin/            olasılık çubuğu, ölçülmüş isabet kartı
     benzer/            "bu oranda geçmişte ne oldu" kartı + lig kırılımı
-    super-toto/        canlı sezon hafta sekmeleri
+    super-toto/        canlı sezon hafta sekmeleri + 2. Tahmin paneli
     ui/                temel bileşenler (elle yazıldı, Radix yok)
   lib/types.ts         API sözleşmesinin tamamı tipli
   lib/api.ts           tipli, AbortController ile iptal edilebilir istemci
@@ -984,7 +986,7 @@ koşarken sabit bir açılış maliyeti getirir; hata ayıklarken `-n0` onu kapa
 ve çıktı sırası da o zaman düzelir.
 
 `scripts/check.sh` sırasıyla: ruff → mypy → pytest (hızlı + yavaş) → health →
-CLI dumanı → Süper Toto boru hattı → üretilmiş iki dosyanın tazeliği →
+CLI dumanı → Süper Toto boru hattı (**2. Tahmin dahil**) → üretilmiş iki dosyanın tazeliği →
 eslint + tsc + arayüz denetimleri → üretim derlemesi.
 
 **CI bu betiği ÇAĞIRIR, adımları yeniden yazmaz.** Önceden
@@ -995,8 +997,9 @@ altı adımdan üçünü koşuyordu — yani "OK" demesi "CI geçer" demek deği
 Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant'lar, CLI (Bayes preset
 dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri test,
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
-yeniden kalibrasyon ve eğitim korpusu. **50 test dosyası, parametrizasyonla
-1.549 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
+eşleme, ikinci kayıt). **51 test dosyası, parametrizasyonla
+1.577 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
@@ -1007,6 +1010,7 @@ karşı denetler):
 | Sağlık | `health` `api_health` `meta` `health_history` | 85 |
 | Veri / istatistik / geri test | `history` `odds` `backtest` `api_stats` `api_backtest` `snapshot_iddaa` `pazar` | 113 |
 | Süper Toto | `super_toto` | 54 |
+| 2. Tahmin (kalabalık ayarı · bağımsız görüş) | `tahmin2` | 28 |
 | Karar katmanı | `secim` | 21 |
 | Skor türetme | `skor` | 21 |
 | Beraberlik düzeltmesi | `beraberlik` | 19 |

@@ -6,6 +6,7 @@ import {
   HAFTALAR,
   haftaDoluMu,
   haftaSonuclandiMi,
+  ikinciTahminVarMi,
   type SuperTotoHafta,
   type SuperTotoMac,
 } from "@/lib/super-toto";
@@ -19,9 +20,10 @@ import { yuzde as _yuzde } from "@/lib/utils";
  *  bu durumu zaten "—" ile karsiliyor. Takma adi daraltmak, cagri yerinde
  *  `!` koymayi gerektirirdi — yani olmayan bir garantiyi ilan etmeyi. */
 const yuzde = (v: number | undefined) => _yuzde(v, 0);
-import { Tabs, type TabItem } from "@/components/ui/tabs";
+import { Tabs, TabPanel, type TabItem } from "@/components/ui/tabs";
 import { Badge, Card, CardBody, CardHeader } from "@/components/ui/primitives";
 import { BenzerKart } from "@/components/benzer/kart";
+import { Tahmin2Paneli } from "@/components/super-toto/tahmin2";
 import { adreseYaz, adrestenOku } from "@/lib/adres";
 
 const HAFTA_PARAM = "hafta";
@@ -153,6 +155,17 @@ function MacSatiri({
  * yeniden hesaplanan bir sayi, iki yerde iki farkli cevap demektir.
  */
 export function DoluHafta({ hafta }: { hafta: SuperTotoHafta }) {
+  // Ikinci tahmin AYRI bir sekmede durur, ilkinin ustune yazmaz. Sekme
+  // yalnizca kaydi olan haftada cikar: bos bir panel, olmayan bir
+  // dugmeden kotudur.
+  // Hafta degisince secim kendiliginden 1'e doner: her hafta kendi
+  // `TabPanel`i icinde yasiyor ve secili olmayan panel HIC render
+  // edilmiyor (bkz. `ui/tabs.tsx`), yani bilesen sokuluyor. Burada bir
+  // sifirlama efekti YOK — olsaydi hicbir sey yapmayan bir efekt olurdu.
+  const ikinci = ikinciTahminVarMi(hafta);
+  const [tahmin, setTahmin] = React.useState("1");
+  const secili = ikinci ? tahmin : "1";
+
   const k = hafta.coupon;
   const bugun = hafta.coupon_today;
   const kayan = hafta.coupon_drift;
@@ -172,7 +185,11 @@ export function DoluHafta({ hafta }: { hafta: SuperTotoHafta }) {
         }).length
       : null;
 
-  return (
+  // 1. Tahmin'in paneli. Bir degiskene alinmasinin sebebi asagidaki
+  // dallanma: ikinci kayit yoksa panel SEKMESIZ basilir. Sekme seridi
+  // olmadan `TabPanel` basmak, hicbir sekmeye baglanmayan bir
+  // `aria-labelledby` uretirdi.
+  const birinciPanel = (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2 text-[12.5px]">
         {hafta.program ? <Badge>{hafta.program}</Badge> : null}
@@ -317,6 +334,32 @@ export function DoluHafta({ hafta }: { hafta: SuperTotoHafta }) {
         değildir</strong>. İşaretler yalnızca 2025/26 geri testinin eşiğinden
         gelir; oynanma verisi seçime girmez.
       </p>
+    </div>
+  );
+
+  if (!ikinci) return birinciPanel;
+
+  // Sekme kimlikleri `tahmin-` onekli: sayfadaki HAFTA seridi de `Tabs`
+  // kullaniyor ve onun kimlikleri "1".."41". Onek olmasa `tab-1` DOM'da
+  // iki kez gecerdi — hem gecersiz HTML, hem de `HaftaSekmeleri`in
+  // `getElementById` ile buldugu seridin yanlis dugmesi.
+  return (
+    <div className="space-y-4">
+      <Tabs
+        items={[
+          { id: "tahmin-1", label: "1. Tahmin" },
+          { id: "tahmin-2", label: "2. Tahmin", badge: "yeni" },
+        ]}
+        value={`tahmin-${secili}`}
+        onChange={(id) => setTahmin(id === "tahmin-2" ? "2" : "1")}
+        className="max-w-[300px]"
+      />
+      <TabPanel id="tahmin-1" active={secili === "1"}>
+        {birinciPanel}
+      </TabPanel>
+      <TabPanel id="tahmin-2" active={secili === "2"}>
+        <Tahmin2Paneli hafta={hafta} />
+      </TabPanel>
     </div>
   );
 }
