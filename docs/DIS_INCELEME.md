@@ -180,7 +180,7 @@ işarettir.
 
 ---
 
-## 8. Elo ve H2H — **Elo denendi ve geçmedi**, H2H hâlâ denenmedi
+## 8. Elo ve H2H — **ikisi de denendi, ikisi de geçmedi**
 
 Dış çalışmada olup bizde **hiç bulunmayan** iki özellik var. Kod taramasıyla
 doğrulandı: `elo`, `h2h` ve `xg` dizgeleri `backend/` altında hiç geçmiyor.
@@ -199,8 +199,11 @@ doğrulandı: `elo`, `h2h` ve `xg` dizgeleri `backend/` altında hiç geçmiyor.
 > katsayı **negatif**. Ayrıntı:
 > [`ISTATISTIK_YOL_HARITASI.md`](ISTATISTIK_YOL_HARITASI.md) §3.27.
 >
-> **H2H hâlâ denenmedi** ve aşağıdaki gerekçeler onun için geçerliliğini
-> koruyor.
+> **H2H de denendi (§3.29) ve geçmedi**: ham yayılım 28 puan, artık sıfır,
+> `kalibre_h2h` +0,000146 [−0,000208, +0,000517] ve katsayı +0,0050 —
+> sıfıra yapışık. Kayıtlı sınır: `h2h_var` maçların yalnızca %41'inde açık.
+>
+> Bu satırın açık ucu kalmadı; aşağıdaki gerekçeler tarihçe olarak duruyor.
 
 **Yazıldığı günkü gerekçeler.** Üç tanesi, sonuncusu belirleyici:
 

@@ -111,6 +111,7 @@ spor_toto/evaluate.py  ◄── spor_toto/predict.py     (sözleşme + 3 refera
 | Ortak | `backend/spor_toto/ortak.py` | — | Paylaşılan hesapların tek kaynağı: Wilson, Brier, **Brier'in Murphy ayrışımı**, karışıklık matrisi, Poisson-binom, bantlama |
 | Tahmin | `backend/spor_toto/elo.py` | — | Rakip gücüne göre düzeltilmiş takım gücü (Faz 3.2): Elo defteri, gol farkı çarpanı, sezon taşıma |
 | Tahmin | `backend/spor_toto/dixon_coles.py` | — | Gollerden hücum/savunma güçleri (Faz 3.1): ağırlıklı IPF, düşük skor `τ` düzeltmesi, tur tur yeniden uydurma |
+| Tahmin | `backend/spor_toto/takim.py` | — | Eşleşmeye özel geçmiş ve anlık gidişat (Faz 3.3): H2H son 5 karşılaşma, ardışık galibiyet/mağlubiyet serisi |
 | **Ürün** | `backend/spor_toto/tahmin.py` | — | **Tahmin ürünü (C2)**: yaklaşan maça olasılık + ölçülmüş isabet |
 | Üretim | `backend/scripts/build_fixtures.py` | — | Yaklaşan maçlar ve oranları (football-data `fixtures.csv`) |
 | UI | `frontend/app/tahmin/page.tsx` | — | Tahmin sayfası |
@@ -132,7 +133,7 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/app/super-toto/page.tsx` · `components/super-toto/haftalar.tsx` · `lib/super-toto.ts` | Sezonun hafta şeridi; `?hafta=N` adreste durur |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **1.233 test**; **82'si** istatistik katmanına (`history` `odds` `backtest`
+paketi toplam **1.268 test**; **82'si** istatistik katmanına (`history` `odds` `backtest`
 `api_stats` `api_backtest` `snapshot_iddaa`), **294'ü** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer`). Dosya adlarıyla sayılıdır ki tablo elle bakım gerektirmesin —
@@ -1886,6 +1887,97 @@ kendisi: yazılan sayı ölçülmüş sayı olmalı.
 
     python -m spor_toto.recalibrate
 
+### 3.29 H2H ve seriler (Faz 3.3) — aynı kalıp, üçüncü ve dördüncü kez
+
+İki özellik, iki ayrı gerekçe ve ikisi de kayıtlı bir açık uçtu:
+
+* **H2H** — `DIS_INCELEME.md` §8'de Elo'nun yanında *"denenebilir ama
+  denenmedi"* diye duruyordu. Elo denendi ve geçmedi (§3.27); H2H açık
+  kaldı. Taşıdığı iddia şudur: *bazı eşleşmeler genel güç sıralamasının
+  söylemediği bir şey taşır.* Elo ve Dixon-Coles bunu **tanım gereği
+  göremez** — ikisi de her takıma **tek** bir güç atar ve eşleşmeye özel
+  bir terim taşımaz.
+* **Seriler** — `DIS_INCELEME_ALPHAPY.md` §7'nin *"türetilebilir,
+  denenmedi"* satırı; AlphaPy `sport_flow.get_streak`'in karşılığı.
+  Formdan farkı incedir ama gerçektir: form son 5 maçın **puan
+  ortalamasıdır**, seri **ardışıklığı** ölçer. 3 galibiyet + 2 mağlubiyet
+  ile 5 beraberlik aynı ortalamayı verebilir; aynı seriyi veremez.
+
+#### Ham sinyal — ikisi de güçlü
+
+| `h2h_farki` | maç | gerçek ev | piyasa | artık |
+|---|---:|---:|---:|---:|
+| −1,00 … −0,50 | 2.128 | %30,5 | %30,0 | +0,4 |
+| −0,50 … −0,15 | 3.280 | %37,4 | %38,9 | −1,5 |
+| −0,15 … +0,15 | 2.409 | %43,4 | %43,9 | −0,5 |
+| +0,15 … +0,50 | 2.759 | %49,7 | %48,8 | +0,8 |
+| +0,50 … +1,00 | 2.175 | **%58,5** | %58,0 | +0,5 |
+
+| `seri_farki` | maç | gerçek ev | piyasa | artık |
+|---|---:|---:|---:|---:|
+| −1,00 … −0,25 | 1.290 | %28,8 | %28,2 | +0,5 |
+| −0,25 … −0,06 | 12.658 | %39,4 | %39,2 | +0,2 |
+| −0,06 … +0,06 | 5.872 | %43,7 | %44,0 | −0,3 |
+| +0,06 … +0,25 | 9.363 | %47,3 | %47,9 | −0,6 |
+| +0,25 … +1,00 | 1.920 | **%59,1** | %58,9 | +0,2 |
+
+H2H'de 28 puanlık, seride 30 puanlık yayılım. İkisi de gerçek.
+
+#### Artık — ve bu kez **on bandın onunda da** piyasa aralığın içinde
+
+Sağdaki sütun aynı hikâyeyi dördüncü kez yazıyor. En büyük sapma H2H'nin
+ikinci bandında (−1,5) ve orada bile piyasanın söylediği sayı Wilson
+aralığının içinde kalıyor.
+
+| tahminci | Brier | fark | %95 aralık | geçti |
+|---|---:|---:|---|---|
+| piyasa | 0,593600 | — | — | referans |
+| `kalibre_dc` | 0,593700 | +0,000100 | [−0,000261, +0,000472] | hayır |
+| `kalibre_h2h` | 0,593800 | +0,000146 | [−0,000208, +0,000517] | hayır |
+| `kalibre_seri` | 0,593800 | +0,000145 | [−0,000203, +0,000518] | hayır |
+
+Katsayılar: `h2h` **+0,0050** (sıfıra yapışık), `seri` **−0,0385** (model
+seriyi **söndürmek** istiyor — momentum iddiasının tam tersi).
+
+#### Ve bir şey daha: kapasite artık **ölçülebilir biçimde** zararlı
+
+Dokuz yön özelliğiyle etkileşim kademeleri şuraya geldi:
+
+| tahminci | fark | %95 aralık |
+|---|---:|---|
+| `kalibre_etkilesim` | +0,000359 | [−0,000016, +0,000764] |
+| **`kalibre_etkilesim_favori`** | **+0,000380** | **[+0,000009, +0,000782]** |
+
+Son satırın aralığı **tamamen sıfırın üstünde.** Bu, projenin "geçti"
+ölçütünün ayna görüntüsüdür: aynı kural, ters yönde. §3.26 *"kapasite bedel
+yazıyor ama anlamlı değil"* diyordu; dokuz özellik ve 45+9 sütunla bedel
+**anlamlı** hâle geldi.
+
+Yani model sınıfı itirazının cevabı sertleşti: doğrusal kademeye etkileşim
+eklemek yalnızca yardım etmiyor değil, **ölçülebilir biçimde zarar veriyor.**
+
+#### Bir tanım hatası bulundu ve test yakaladı
+
+H2H'nin ilk sürümü lig tablosu puanlamasını (3/1/0) kullanıyordu.
+`test_h2h_hep_beraberlikte_sifir` onu düşürdü: o ölçekte bir beraberlik
+`[−1, 1]` aralığına **−1/3** olarak düşüyor, yani *"berabere kaldılar"*
+cümlesi *"ev sahibi geride"* diye okunuyordu. 3/1/0 bir **sıralama**
+geleneğidir ve galibiyeti beraberliğe göre kasten fazla ödüllendirir;
+H2H'nin sorduğu şey sıralama değil **üstünlük**. Kodlama ±1/0'a çevrildi.
+
+Sayı ölçümü değiştirmedi (katsayı zaten sıfıra yapışıktı) ama **özelliğin
+ne ölçtüğünü** değiştirdi — ve yanlış tanımlı bir özelliğin "geçmedi"
+sonucu bir ölçüm değildir.
+
+#### Kayıtlı sınır — H2H'nin kapsaması düşük
+
+`h2h_var` maçların yalnızca **%41**'inde açık: dört sezonluk ve 22 ligli bir
+korpusta çoğu eşleşme `H2H_EN_AZ = 3` karşılaşmayı bulamıyor. Ölçümün gücü
+okunurken bu hatırlanmalı — "geçmedi" burada "%41'lik kesitte geçmedi"
+demektir.
+
+    python -m spor_toto.recalibrate
+
 ## 4. Sayfada bugün ne var
 
 **`/istatistik`** — sezon dağılımı (en sık sonuç + pay çubuğu) · 5 sayı kutusu (sembol
@@ -2013,6 +2105,7 @@ ve karşılıkları: kupon seti 0,5747 → **0,5740**, korpus 0,5940 → **0,593
 | **Etkileşim kademeleri (§3.26)** | 31.103 maç · 183 hafta | **Geçmedi ve kapasite bedel yazdı**: `etkilesim` +0,000150 [−0,000189, +0,000505], `etkilesim_favori` +0,000165 [−0,000180, +0,000520] — `sezon_sonu`nun +0,000076'sından kötü. Model sınıfı itirazı **daraldı, kapanmadı**: GLM'e açık etkileşim terimi eklemek bir şey getirmiyor; keyfî doğrusal olmama ölçülmedi |
 | **Elo (§3.27)** | 31.103 maç · 183 hafta · %95,6 kapsama | **Güçlü sinyal, sıfır katkı.** Ham fark devasa: ev galibiyeti %16,8 → %68,1 (51 puan). Artık sıfır: piyasa her bantta Wilson aralığının içinde. `kalibre_elo` +0,000086 [−0,000242, +0,000429] — geçmedi, ve katsayı **negatif** (−0,0597): piyasa Elo'yu eğer bir şey varsa fazla fiyatlıyor |
 | **Dixon-Coles (§3.28)** | 30.654 maç · %98,6 kapsama | **Piyasadan bağımsız ilk görüş, ve o da geçmedi.** Tek başına Brier 0,6153 (piyasa 0,5933): REL sekiz katı, RES üçte iki. Piyasanın üstüne eklenince `kalibre_dc` +0,000100 [−0,000261, +0,000472], katsayı **negatif** (−0,0492). Artık taramasında altı bandın altısında da piyasa Wilson aralığının içinde. γ=1,2297 · ρ=−0,0330 |
+| **H2H + seriler (§3.29)** | 31.103 maç · H2H %41 kapsama | **Aynı kalıp, üçüncü ve dördüncü kez.** Ham yayılım H2H'de 28, seride 30 puan; **on bandın onunda da** piyasa Wilson aralığının içinde. `kalibre_h2h` +0,000146, `kalibre_seri` +0,000145 — ikisi de geçmedi; `seri` katsayısı **−0,0385** (model seriyi söndürmek istiyor). Ayrıca `etkilesim_favori` artık **anlamlı biçimde kötü**: +0,000380 [+0,000009, +0,000782] |
 
 **Okuma.** Aşırı uyum modelin kapasitesinden değil örneklem küçüklüğünden geliyordu; büyük
 korpus onu kaldırdı. Ama kalan etki 0,0005–0,0015 Brier — 31 binde anlamlı, 540'ta değil ve
@@ -2750,7 +2843,7 @@ python -m spor_toto.disari                 # A3: piyasa dışı özellikler
 python -m spor_toto.tahmin                 # ÜRÜN: yaklaşan maçlara olasılık
 
 # Denetim
-pytest -q                                  # 1.233 test (82'si bu katman, 294'ü tahmin)
+pytest -q                                  # 1.268 test (82'si bu katman, 294'ü tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out

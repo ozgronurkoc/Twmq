@@ -81,7 +81,8 @@ EN_AZ_ORNEK = AZ_ORNEK
 KADEMELER: tuple[str, ...] = ("sicaklik", "bias", "lig", "bant", "form",
                               "hareket", "dagilim",
                               "dinlenme", "sikisiklik", "ic_dis", "sezon_sonu",
-                              "elo", "dc", "etkilesim", "etkilesim_favori")
+                              "elo", "dc", "h2h", "seri",
+                              "etkilesim", "etkilesim_favori")
 
 #: **Etkileşim basamakları** — `DIS_INCELEME.md` §3'ün açık itirazına cevap.
 #:
@@ -142,6 +143,9 @@ YON_ALANLARI: tuple[tuple[str, float], ...] = (
     # taniminin parcasi (400 puan fark ~ %90 kazanma beklentisi) — yine
     # veriden degil tanimdan.
     ("elo_farki", 400.0),
+    # H2H ve seri `takim.py`de zaten [-1, 1]'e olceklenmis donuyor.
+    ("h2h_farki", 1.0),
+    ("seri_farki", 1.0),
 )
 
 #: Elo farkının ölçeği — `YON_ALANLARI`daki değerle **aynı olmalı**.
@@ -222,6 +226,8 @@ def _mac_ozellikleri(hafta: Girdi) -> list[dict[str, Any]]:
             "ayrisma": float(o.get("ayrisma") or 0.0),
             "elo_farki": float(o.get("elo_farki") or 0.0),
             **{f"dc_{s}": float(o.get(f"dc_{s}") or 1 / 3) for s in SYMBOLS},
+            "h2h_farki": float(o.get("h2h_farki") or 0.0),
+            "seri_farki": float(o.get("seri_farki") or 0.0),
             **{alan: float(o.get(alan) or 0.0) for _, alan in A3_ALANLARI},
         } for i, o in enumerate(tasinan)]
 
@@ -247,6 +253,8 @@ def _mac_ozellikleri(hafta: Girdi) -> list[dict[str, Any]]:
             # guc uydurulmadi. Duzgun dagilim = "soylenecek bir sey yok" ve
             # `ln(1/3)` her sembolde ayni oldugu icin sutun NOTRdur.
             **dict.fromkeys((f"dc_{s}" for s in SYMBOLS), 1 / 3),
+            "h2h_farki": 0.0,
+            "seri_farki": 0.0,
             "ayrisma": 0.0,
             **{alan: 0.0 for _, alan in A3_ALANLARI},
         })
@@ -386,10 +394,30 @@ def _tasarim_satiri(ozellik: dict[str, Any], kademe: str,
     dc_p = [max(float(ozellik.get(f"dc_{s}") or 0.0), OLASILIK_TABANI)
             for s in SYMBOLS]
     sutunlar.append([np.log(v) for v in dc_p])
+    if not kademe_en_az(kademe, "h2h"):
+        return np.array(sutunlar, dtype=float).T
+
+    # 14) h2h — eslesmeye OZEL gecmis (Faz 3.3). Elo ve DC bunu tanim
+    #     geregi goremez: ikisi de her takima TEK bir guc atar ve
+    #     eslesmeye ozel bir terim tasimaz. `form` ile ayni simetrik
+    #     kaydirma.
+    v = float(ozellik.get("h2h_farki") or 0.0)
+    sutunlar.append([v if s == "1" else (-v if s == "2" else 0.0)
+                     for s in SYMBOLS])
+    if not kademe_en_az(kademe, "seri"):
+        return np.array(sutunlar, dtype=float).T
+
+    # 15) seri — ardisik galibiyet/maglubiyet farki. `form`dan farki ince
+    #     ama gercek: form son 5 macin PUAN ORTALAMASIDIR, seri
+    #     ARDISIKLIGI olcer. 3 galibiyet + 2 maglubiyet ile 5 beraberlik
+    #     ayni ortalamayi verebilir; ayni seriyi veremez.
+    v = float(ozellik.get("seri_farki") or 0.0)
+    sutunlar.append([v if s == "1" else (-v if s == "2" else 0.0)
+                     for s in SYMBOLS])
     if not kademe_en_az(kademe, "etkilesim"):
         return np.array(sutunlar, dtype=float).T
 
-    # 14) etkilesim — yon ozelliklerinin IKILI carpimlari.
+    # 16) etkilesim — yon ozelliklerinin IKILI carpimlari.
     #     Olcekli okunur (bkz. `YON_ALANLARI`), ve `form` ile ayni simetrik
     #     kaydirmayla girer: pozitif carpim "1"i yukari, "2"yi asagi iter.
     #     Beraberlige dokunmaz, cunku bir YON buyuklugudur — beraberlik
@@ -404,7 +432,7 @@ def _tasarim_satiri(ozellik: dict[str, Any], kademe: str,
     if kademe == "etkilesim":
         return np.array(sutunlar, dtype=float).T
 
-    # 15) etkilesim_favori — her yon ozelligi x macin ACIKLIGI.
+    # 17) etkilesim_favori — her yon ozelligi x macin ACIKLIGI.
     #     Aciklik = favorinin olasiligi, 1/3'ten merkezlenmis. Denk macta
     #     ~0, ezici favoride ~0,6. Katsayinin ISARETI dogrudan soruyu
     #     cevaplar: pozitifse ozellik acik maclarda daha cok is goruyor,
