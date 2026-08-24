@@ -40,3 +40,8 @@ backend/data/egitim/_kaynak/
 # Ham/uretilmis ciktiyi versiyonlamama kurali diger butun boru hatlarinda
 # zaten uygulaniyor (odds, iddaa, egitim `_kaynak/`); bu tek istisnaydi.
 backend/data/super_toto/**/*.html
+
+# Egitilmis model artefaktlari (`python -m spor_toto.artefakt --yaz`).
+# Turetilmis cikti: korpustan uretilir, SURUMLENMEZ. Bayat kalirsa
+# `python -m spor_toto.health` kirmizi gosterir.
+backend/data/artefakt/

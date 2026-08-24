@@ -1044,6 +1044,32 @@ def _check_scipy_flag() -> str:
     return f"HAS_SCIPY={HAS_SCIPY}"
 
 
+def _check_artefakt_tazeligi() -> str:
+    """Diskteki model korpusla hâlâ uyuşuyor mu (Faz 0.3).
+
+    **Bu kontrolün kovaladığı hata sessizdir.** Korpus yeniden üretilir,
+    artefakt yerinde kalır, servis onu okur ve *eski* korpusun modeliyle
+    tahmin üretir. Hiçbir test bunu görmez: model çalışıyor, gövde doğru,
+    sayı yalnızca **başka bir dünyanın** sayısı.
+
+    Artefaktın **yokluğu hata değildir** — sistem o zaman istekte eğitir ve
+    doğru sonucu verir; yalnızca yavaş olur. Kırmızı olan tek şey
+    **bayat** bir artefakttır.
+    """
+    from .artefakt import durum as _artefakt_durum
+
+    d = _artefakt_durum()
+    n = len(d["artefaktlar"])
+    if n == 0:
+        return "artefakt yok (servis istekte egitir)"
+    bayat = [k for k in d["artefaktlar"] if k["bayat"]]
+    if bayat:
+        raise AssertionError(
+            "bayat artefakt: "
+            + "; ".join(f"{k['ad']} — {k['sebep']}" for k in bayat))
+    return f"{n} artefakt taze"
+
+
 def ornek_kimligi() -> dict[str, Any]:
     """Raporu HANGI surecin urettigi.
 
@@ -1253,6 +1279,15 @@ CHECKS: tuple[CheckSpec, ...] = (
         "sapasaglam kalir, testler gecer ve SAYFA sessizce bos doner.",
         _check_api_sozlesmesi,
         butce_ms=200,
+    ),
+    CheckSpec(
+        "artefakt_tazeligi", "ortam",
+        "Diskteki egitilmis model bugunku korpustan mi geldi. Korpus "
+        "degisip artefakt kalirsa servis ESKI korpusun modeliyle tahmin "
+        "uretir ve hicbir test bunu gormez. Artefaktin yoklugu hata "
+        "degildir; bayat olmasi hatadir.",
+        _check_artefakt_tazeligi,
+        butce_ms=120,
     ),
     CheckSpec(
         "scipy_flag", "ortam",

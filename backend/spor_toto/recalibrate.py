@@ -599,6 +599,37 @@ class KalibreTahminci(Tahminci):
         """Uydurulmuş katsayılar — tanılama ve test için."""
         return None if self._theta is None else [float(v) for v in self._theta]
 
+    # -- kalicilik (artefakt.Kalici) ------------------------------------------
+
+    def durum(self) -> dict[str, Any]:
+        """Uydurulmuş her şey, JSON'a çevrilebilir hâlde (`artefakt`).
+
+        **Üç alanın üçü de zorunlu.** `_ligler` ve `_bantlar` tasarım
+        matrisinin sütun düzenini belirler; yalnızca `_theta` taşınsaydı
+        katsayılar geri gelir ama **başka sütunlara** binerdi ve model
+        sessizce başka bir şey hesaplardı. Bekçisi
+        `test_artefakt.py::test_yuklenen_model_ayni_tahmini_veriyor`.
+        """
+        return {
+            "kademe": self.kademe,
+            "ligler": list(self._ligler),
+            "bantlar": list(self._bantlar),
+            # `tolist()` sekilden bagimsizdir: tasarim tensoru (n, sembol, k)
+            # oldugu icin theta 1 boyutludur, ama bicim degisirse burasi
+            # sessizce dogru kalir.
+            "theta": (None if self._theta is None else self._theta.tolist()),
+        }
+
+    def yukle(self, durum: dict[str, Any]) -> None:
+        """`durum`u geri koy — eğitim yapılmaz."""
+        kademe = durum["kademe"]
+        if kademe != self.kademe:
+            raise ValueError(f"kademe tutmuyor: {kademe} != {self.kademe}")
+        self._ligler = list(durum["ligler"])
+        self._bantlar = list(durum["bantlar"])
+        theta = durum["theta"]
+        self._theta = None if theta is None else np.asarray(theta, dtype=float)
+
 
 #: İzotonik kalibrasyonun bir kovaya koyduğu en az nokta. Ham PAV, 93 bin
 #: noktada tek maçlık bloklar üretebilir ve o blok gürültünün kendisidir;

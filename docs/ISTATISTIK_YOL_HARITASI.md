@@ -118,6 +118,7 @@ spor_toto/evaluate.py  ◄── spor_toto/predict.py     (sözleşme + 3 refera
 | Tahmin | `backend/spor_toto/yigin.py` | — | Kat dışı yığınlama (Faz 2.4): sezon katlarıyla üretilmiş olasılıklar üzerinde multinom logit üst-öğrenici; taban başına tek ağırlık |
 | Tahmin | `backend/spor_toto/kalibre.py` | — | Venn-Abers (Faz 2.3): kendi PAV'ımız üzerine indüktif IVAP, sezon bazlı kalibrasyon bölmesi, olasılık **aralığı** |
 | Havuz | `backend/spor_toto/getiri.py` | — | Müşterek beklenen değer (Faz 4.2): `E[1/(1+W)]` kapalı formu, kalabalık kolonu modeli, duyarlılık eğrileri — **arayüze çıkmaz**, sayı ölçülmemiştir |
+| Altyapı | `backend/spor_toto/artefakt.py` | — | Model kalıcılığı (Faz 0.3): eğitilmiş modelin JSON zarfı (korpus sha256 + eğitim tarihi + sürüm); bayatlık `health`te kırmızı (§2.5) |
 | **Ürün** | `backend/spor_toto/tahmin.py` | — | **Tahmin ürünü (C2)**: yaklaşan maça olasılık + ölçülmüş isabet |
 | Üretim | `backend/scripts/build_fixtures.py` | — | Yaklaşan maçlar ve oranları (football-data `fixtures.csv`) |
 | UI | `frontend/app/tahmin/page.tsx` | — | Tahmin sayfası |
@@ -139,13 +140,14 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/app/super-toto/page.tsx` · `components/super-toto/haftalar.tsx` · `lib/super-toto.ts` | Sezonun hafta şeridi; `?hafta=N` adreste durur |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **1.429 test**; **82'si** istatistik katmanına (`history` `odds` `backtest`
+paketi toplam **1.453 test**; **82'si** istatistik katmanına (`history` `odds` `backtest`
 `api_stats` `api_backtest` `snapshot_iddaa`), **479'u** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre`). Dosya adlarıyla sayılıdır ki tablo elle bakım gerektirmesin —
 `tests/test_belgeler.py` onları gerçek koleksiyona karşı denetler.
-`python -m spor_toto.health` **24 değişmez** çalıştırır — ikisi (`oran_arsivi`, `geri_test`)
-istatistik katmanını, biri (`tahmin_referanslari`) tahmin katmanının ölçüm koşumunu korur.
+`python -m spor_toto.health` **25 değişmez** çalıştırır — ikisi (`oran_arsivi`, `geri_test`)
+istatistik katmanını, biri (`tahmin_referanslari`) tahmin katmanının ölçüm koşumunu korur,
+biri (`artefakt_tazeligi`) diskteki modelin hâlâ bugünkü korpustan geldiğini denetler (§2.5).
 
 **Korpusun bütünlüğü sağlık katmanında değil test paketinde korunur** ve bu bir üründür
 kararıdır: korpus yalnızca tahmin katmanına aittir, `/api/health` ondan hiçbir sayı okumaz
@@ -207,6 +209,45 @@ Bunlar katmanın tasarım sözleşmesidir; yeni kart eklerken bozulmamalı:
 7. **Doğrulanmayan bedel raporlanmaz.** Geri testte her haftanın kaplaması bağımsız olarak
    denetlenir; açık nokta bırakan ya da uzay sınırını aşan hafta tabloya girmez, "atlandı"
    diye görünür.
+
+---
+
+### 2.5 Model kalıcılığı — artefakt (Faz 0.3)
+
+Üretimdeki tahminci ilk istekte eğitiliyordu (`lru_cache(maxsize=1)`). İki
+şey birden bozuluyordu: **ilk isteğin bedeli** (31.103 satır okunuyor ve
+model uyduruluyor) ve **hangi korpusla eğitildiğinin kayıtsızlığı** — süreç
+yeniden başlarsa model sessizce yeni korpusla yeniden eğitilir ve değişen
+bir şey olduğu hiçbir yerde görünmez.
+
+`artefakt.py` modeli diske yazar, dosya **hangi korpustan** geldiğini taşır
+ve korpus değiştiğinde `health.artefakt_tazeligi` **kırmızı** olur.
+
+**Turşu (pickle) değil JSON — üç sebeple.** (1) Yeni üretim bağımlılığı
+gerekmiyor: `joblib`in faydası büyük dizileri bellek eşlemeli yazmaktır,
+bizim durumumuz bir avuç katsayı. (2) `pickle.load` dosyadaki talimatları
+**yürütür**; bozuk bir artefakt sessiz bir yürütme yüzeyidir. (3) Artefakt
+bir ölçüm kaydıdır — hangi korpustan, ne zaman, hangi sürümle — ve `cat`
+ile okunabilmesi bu belgenin işine yarar.
+
+Bedeli, her tahmincinin durumunu **açıkça** yazması (`durum`/`yukle`). Bu
+bir maliyet gibi görünür ama kazançtır: turşu sınıfın *bütün* iç durumunu —
+önbellekler, kaza eseri kalmış her şey — sessizce taşır; açık durum
+taşınanı **seçmeye** zorlar. `KalibreTahminci` üç alan yazar ve üçü de
+zorunludur: `theta` tek başına taşınsaydı katsayılar geri gelir ama
+**başka sütunlara** binerdi (`ligler`/`bantlar` tasarım matrisinin düzenini
+belirler). Bekçisi `test_artefakt.py::test_yuklenen_model_ayni_tahmini_veriyor`.
+
+**Üç kural kayda geçiyor:**
+
+| Kural | Neden |
+|---|---|
+| Servis **yazmaz**, yalnızca okur | Bir HTTP isteği sessizce diski değiştirmemeli; yazmak `--yaz`ın işidir |
+| Artefaktın **yokluğu hata değildir** | Sistem o zaman istekte eğitir ve doğru sonucu verir, yalnızca yavaş olur. Kırmızı olan tek şey **bayat** artefakttır |
+| Artefakt **sürümlenmez** (`.gitignore`) | Türetilmiş çıktı; projenin diğer bütün boru hatlarında olduğu gibi kaynağından üretilir |
+
+    python -m spor_toto.artefakt --yaz    # egit ve diske yaz
+    python -m spor_toto.artefakt          # durumu goster
 
 ---
 
@@ -3314,14 +3355,14 @@ python -m spor_toto.disari                 # A3: piyasa dışı özellikler
 python -m spor_toto.tahmin                 # ÜRÜN: yaklaşan maçlara olasılık
 
 # Denetim
-pytest -q                                  # 1.429 test (82'si bu katman, 479'u tahmin)
+pytest -q                                  # 1.453 test (82'si bu katman, 479'u tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out
 pytest -q tests/test_cizgi.py              # A1 ölçümü ve korpus bütünlüğü
 pytest -q tests/test_bahisci.py            # A2 ölçümü ve kaynak seçimi
 pytest -q tests/test_disari.py             # A3 ölçümü ve sızıntı bekçileri
-python -m spor_toto.health                 # 24 değişmez
+python -m spor_toto.health                 # 25 değişmez
 python -m spor_toto.health --help          # tek kontrol: ?only=geri_test
 
 # Arayüz

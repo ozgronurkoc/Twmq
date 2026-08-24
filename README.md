@@ -90,7 +90,7 @@ makinesinde, o günkü kilitli bağımlılıklarla, o commit üzerinde koşar.
 
 Bu yüzden sağlık katmanı ayrı bir katmandır ve `/saglik` sayfası ürünün eşit
 haklı bir parçasıdır: **ürünün vaadinin şu anda, bu makinede, bu sürümde hâlâ
-geçerli olduğunu kanıtlar.** 24 değişmez, 6 kategori, her çağrıda yeniden
+geçerli olduğunu kanıtlar.** 25 değişmez, 6 kategori, her çağrıda yeniden
 ölçülür — ve neyi kanıtlamadığını da açıkça yazar (§6.3).
 
 ### 1.6 Ne yapar / ne yapmaz
@@ -106,7 +106,7 @@ geçerli olduğunu kanıtlar.** 24 değişmez, 6 kategori, her çağrıda yenide
 | Bayes (Dirichlet) ile tahminlerini yumuşatır | İddaa geçmiş oranı sunmaz (yok — §5.3) |
 | Markov ile sıralı risk profili çıkarır | Geri testi bir kâr vaadine çevirmez; aşırı uyumu ölçüp gösterir |
 | Bir stratejiyi geçmiş sezonda çalıştırıp bedelini ve isabetini ölçer (**geri test**) | Mobil uygulama değildir |
-| Vaadin canlıda geçerliliğini 24 değişmezle ölçer | |
+| Vaadin canlıda geçerliliğini 25 değişmezle ölçer | |
 | Her sayının kaynağını ve sınırını yazar | |
 
 ---
@@ -777,6 +777,7 @@ backend/
     tahmin.py          TAHMİN: yaklaşan maçlar + ölçülmüş isabet = /api/tahmin
     pazar.py           1X2 DIŞI: alt/üst 2,5 + Asya handikabı = /api/pazar
     getiri.py          HAVUZ: müşterek beklenen değer — HESAP, arayüze ÇIKMAZ
+    artefakt.py        Egitilmis modelin diske yazimi + bayatlik denetimi
     benzer.py          "Bu oranda geçmişte ne oldu" = /api/benzer
     kalibrasyon.py     ÖLÇÜM: izotonik düzeltme piyasayı geçiyor mu
     cizgi.py           ÖLÇÜM: açılış→kapanış çizgi hareketi (A1)
@@ -803,7 +804,7 @@ backend/
     api_sozlesme.py           API sözleşmesini üretir/denetler (--kontrol: CI kapısı)
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/
-  tests/               pytest (45 dosya → 1.429 test; §9'da katman dökümü)
+  tests/               pytest (46 dosya → 1.453 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -987,8 +988,8 @@ altı adımdan üçünü koşuyordu — yani "OK" demesi "CI geçer" demek deği
 Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant'lar, CLI (Bayes preset
 dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri test,
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
-yeniden kalibrasyon ve eğitim korpusu. **45 test dosyası, parametrizasyonla
-1.429 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+yeniden kalibrasyon ve eğitim korpusu. **46 test dosyası, parametrizasyonla
+1.453 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
@@ -1005,6 +1006,7 @@ karşı denetler):
 | İddaa hazırlığı | `iddaa_hazirlik` | 24 |
 | Ortak gövde | `ortak` | 25 |
 | Havuz / beklenen değer | `getiri` | 72 |
+| Model kalıcılığı | `artefakt` | 24 |
 | Belgeler | `belgeler` | 5 |
 
 İki test bilerek **ağa çıkmaz**: `test_snapshot_iddaa.py` gerçek bültenden alınmış
