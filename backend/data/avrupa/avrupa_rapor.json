@@ -1,0 +1,18 @@
+{
+ "uretildi": "2026-08-24T14:37:19+00:00",
+ "kaynak": "openfootball/champions-league (public domain)",
+ "sezonlar": [
+  "2122",
+  "2223",
+  "2324",
+  "2425"
+ ],
+ "turnuvalar": [
+  "cl",
+  "el",
+  "conf"
+ ],
+ "mac": 768,
+ "ad_kapsamasi": 1.0,
+ "eslesmeyen": {}
+}

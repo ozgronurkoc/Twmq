@@ -80,8 +80,9 @@ EN_AZ_ORNEK = AZ_ORNEK
 #: yalnızca bir özellik ekler, böylece fark o özelliğe atfedilebilir.
 KADEMELER: tuple[str, ...] = ("sicaklik", "bias", "lig", "bant", "form",
                               "hareket", "dagilim",
-                              "dinlenme", "sikisiklik", "ic_dis", "sezon_sonu",
-                              "elo", "dc", "h2h", "seri",
+                              "dinlenme", "sikisiklik", "avrupa",
+                              "ic_dis", "sezon_sonu",
+                              "elo", "dc", "h2h", "seri", "derbi",
                               "etkilesim", "etkilesim_favori")
 
 #: **Etkileşim basamakları** — `DIS_INCELEME.md` §3'ün açık itirazına cevap.
@@ -137,6 +138,10 @@ YON_ALANLARI: tuple[tuple[str, float], ...] = (
     ("form_isabet_farki", 10.0),
     ("dinlenme_farki", 14.0),
     ("sikisiklik_farki", 5.0),
+    # Pencere icinde oynanan UEFA maci farki. Olcek 2: pencere 10 gun ve
+    # bir takim o pencerede en fazla iki UEFA maci oynar (ölçüldü: 3 tek
+    # bir kez gorulmus). Yine veriden degil FIKSTUR TANIMINDAN.
+    ("avrupa_farki", 2.0),
     ("ic_dis_form_farki", 3.0),
     ("sezon_sonu_pay_farki", 1.0),
     # Elo farki ev avantaji DAHIL puan farkidir. Olcek 400, Elo'nun kendi
@@ -165,6 +170,12 @@ FAVORI_MERKEZ = 1.0 / 3.0
 A3_ALANLARI: tuple[tuple[str, str], ...] = (
     ("dinlenme", "dinlenme_farki"),
     ("sikisiklik", "sikisiklik_farki"),
+    # `avrupa` yorgunluk grubuna aittir ve oraya konuldu (Faz 3.4). Dikkat:
+    # bu basamak eklendiginde `dinlenme_farki` ile `sikisiklik_farki`nin
+    # KENDILERI de degisti — UEFA gunleri artik takvime giriyor. Yani A3'un
+    # butun sayilari yeniden olculdu; eski degerler §3.16'da tarihce olarak
+    # duruyor.
+    ("avrupa", "avrupa_farki"),
     ("ic_dis", "ic_dis_form_farki"),
     ("sezon_sonu", "sezon_sonu_pay_farki"),
 )
@@ -228,6 +239,12 @@ def _mac_ozellikleri(hafta: Girdi) -> list[dict[str, Any]]:
             **{f"dc_{s}": float(o.get(f"dc_{s}") or 1 / 3) for s in SYMBOLS},
             "h2h_farki": float(o.get("h2h_farki") or 0.0),
             "seri_farki": float(o.get("seri_farki") or 0.0),
+            # Bu sozluk bir BEYAZ LISTEDIR ve yeni bir ozellik eklendiginde
+            # sessizce dusurur: `derbi` bir kez tam bunu yasadi — sutun
+            # tasarimda vardi, hep sifirdi, katsayi tam 0,000000 cikti ve
+            # olcum "derbi bir sey soylemiyor" diye okunacakti. Bekcisi
+            # `test_sehir.py::test_derbi_korpustan_tasariMA_ulasiyor`.
+            "derbi": float(o.get("derbi") or 0.0),
             **{alan: float(o.get(alan) or 0.0) for _, alan in A3_ALANLARI},
         } for i, o in enumerate(tasinan)]
 
@@ -255,6 +272,10 @@ def _mac_ozellikleri(hafta: Girdi) -> list[dict[str, Any]]:
             **dict.fromkeys((f"dc_{s}" for s in SYMBOLS), 1 / 3),
             "h2h_farki": 0.0,
             "seri_farki": 0.0,
+            # Kupon haftalarinda sehir tablosu YOK (korpus disi takimlar).
+            # 0 = "derbi degil" — `sehir` modulundeki tek yonlu hatanin
+            # aynisi ve ayni gerekce.
+            "derbi": 0.0,
             "ayrisma": 0.0,
             **{alan: 0.0 for _, alan in A3_ALANLARI},
         })
@@ -413,6 +434,24 @@ def _tasarim_satiri(ozellik: dict[str, Any], kademe: str,
     #     ayni ortalamayi verebilir; ayni seriyi veremez.
     v = float(ozellik.get("seri_farki") or 0.0)
     sutunlar.append([v if s == "1" else (-v if s == "2" else 0.0)
+                     for s in SYMBOLS])
+    if not kademe_en_az(kademe, "derbi"):
+        return np.array(sutunlar, dtype=float).T
+
+    # 16) derbi — bir YON degil SICAKLIK degiskeni (Faz 3.4). Ayni sehirde
+    #     oynanan bir mac iki tarafa da ayni seyi yapar; iddia "kim
+    #     avantajli" degil "belirsizlik farkli mi". Bu yuzden `ayrisma` ile
+    #     ayni bicimde girer — `ln p_s`in modulasyonu:
+    #
+    #         z_s = (β + δ·derbi)·ln p_s
+    #
+    #     δ < 0  derbide piyasanin guvenini AZALT (surpriz daha olasi)
+    #     δ ≈ 0  derbi bir sey soylemiyor
+    #
+    #     Sehri bilinmeyen takimda deger 0'dir, yani "derbi degil" — tek
+    #     yonlu ve kasitli bir hata (bkz. `sehir` modul basligi).
+    derbi = float(ozellik.get("derbi") or 0.0)
+    sutunlar.append([derbi * np.log(max(probs.get(s, 0.0), OLASILIK_TABANI))
                      for s in SYMBOLS])
     if not kademe_en_az(kademe, "etkilesim"):
         return np.array(sutunlar, dtype=float).T

@@ -94,7 +94,7 @@ SABIT: dict[str, Any] = {
 #: yalnızca model sınıfıyla cevaplanır.
 OZELLIK_ALANLARI: tuple[str, ...] = (
     "form_puan_farki", "form_isabet_farki",
-    "dinlenme_farki", "sikisiklik_farki",
+    "dinlenme_farki", "sikisiklik_farki", "avrupa_farki",
     "ic_dis_form_farki", "sezon_sonu_pay_farki",
     "elo_farki", "h2h_farki", "seri_farki",
     "ayrisma",

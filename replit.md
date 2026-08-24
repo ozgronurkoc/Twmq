@@ -117,6 +117,10 @@ Katman katman:
 - **Ölçüm araçları** (yalnızca `python -m spor_toto.<x>`, arayüze çıkmaz) —
   `cizgi.py` (A1) · `bahisci.py` (A2) · `disari.py` (A3) · `kalibrasyon.py` ·
   `getiri.py` (müşterek beklenen değer — hesap var, **ölçüm yok**; §3.34)
+- **Veri (Faz 3.4)** — `avrupa.py` (UEFA fiksturu takvime ENJEKTE edilir;
+  `dinlenme`/`sikisiklik` artik o gunleri de gorur) · `sehir.py`
+  (kulup-sehir tablosu, `openfootball/clubs` CC0; derbi bir SICAKLIK
+  degiskeni). Uretim: `scripts/build_avrupa.py`, `scripts/build_sehir.py`
 - **Takım** — `takim_gucu.py` (`/api/takimlar`): ampirik Bayes kucultmesi,
   lig icinde; her satirda `n`, `kucultme` ve %95 aralik. §7'nin "takim bazli
   istatistik yok" yasagi buradan kalkti (§3.35)
@@ -165,7 +169,7 @@ yazmazlar). Ayrıntı: `docs/VERI_TOPLAMA_VE_ISLEME.md`.
 ```bash
 cd backend
 python -m pytest -m "not slow" -q   # hızlı süit
-python -m pytest                    # tamamı (1.474 test, ILP dahil)
+python -m pytest                    # tamamı (1.527 test, ILP dahil)
 python -m pytest -n0 tests/test_egitim.py   # tek çekirdek (hata ayıklarken)
 cd .. && bash scripts/check.sh      # TEK kapı; CI de bunu çağırır
 ```

@@ -119,6 +119,8 @@ spor_toto/evaluate.py  ◄── spor_toto/predict.py     (sözleşme + 3 refera
 | Tahmin | `backend/spor_toto/kalibre.py` | — | Venn-Abers (Faz 2.3): kendi PAV'ımız üzerine indüktif IVAP, sezon bazlı kalibrasyon bölmesi, olasılık **aralığı** |
 | Havuz | `backend/spor_toto/getiri.py` | — | Müşterek beklenen değer (Faz 4.2): `E[1/(1+W)]` kapalı formu, kalabalık kolonu modeli, duyarlılık eğrileri — **arayüze çıkmaz**, sayı ölçülmemiştir |
 | Takım | `backend/spor_toto/takim_gucu.py` | `/api/takimlar` | Küçültülmüş takım gücü (Faz 4.3): ampirik Bayes, lig içinde; her satırda `n`, `kucultme` ve %95 aralık |
+| Tahmin | `backend/spor_toto/avrupa.py` | — | UEFA fikstürü (Faz 3.4): 768 maç takvime **enjekte edilir**; `dinlenme` ve `sikisiklik` artık o günleri de görür |
+| Tahmin | `backend/spor_toto/sehir.py` | — | Şehir ve derbi (Faz 3.4): `openfootball/clubs` (CC0) tablosu; derbi bir **sıcaklık** değişkeni olarak girer |
 | Altyapı | `backend/spor_toto/artefakt.py` | — | Model kalıcılığı (Faz 0.3): eğitilmiş modelin JSON zarfı (korpus sha256 + eğitim tarihi + sürüm); bayatlık `health`te kırmızı (§2.5) |
 | **Ürün** | `backend/spor_toto/tahmin.py` | — | **Tahmin ürünü (C2)**: yaklaşan maça olasılık + ölçülmüş isabet |
 | Üretim | `backend/scripts/build_fixtures.py` | — | Yaklaşan maçlar ve oranları (football-data `fixtures.csv`) |
@@ -141,10 +143,11 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/app/super-toto/page.tsx` · `components/super-toto/haftalar.tsx` · `lib/super-toto.ts` | Sezonun hafta şeridi; `?hafta=N` adreste durur |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **1.474 test**; **82'si** istatistik katmanına (`history` `odds` `backtest`
-`api_stats` `api_backtest` `snapshot_iddaa`), **479'u** tahmin katmanına ait (`predict`
+paketi toplam **1.527 test**; **82'si** istatistik katmanına (`history` `odds` `backtest`
+`api_stats` `api_backtest` `snapshot_iddaa`), **491'i** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
-`benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre`). Dosya adlarıyla sayılıdır ki tablo elle bakım gerektirmesin —
+`benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre`
+`avrupa` `sehir`). Dosya adlarıyla sayılıdır ki tablo elle bakım gerektirmesin —
 `tests/test_belgeler.py` onları gerçek koleksiyona karşı denetler.
 `python -m spor_toto.health` **25 değişmez** çalıştırır — ikisi (`oran_arsivi`, `geri_test`)
 istatistik katmanını, biri (`tahmin_referanslari`) tahmin katmanının ölçüm koşumunu korur,
@@ -759,6 +762,12 @@ liglerinde **dört kat** güçlü — korpusta görünmeyen bir maç oynanmış 
 **Ama bu bir bulgu değil.** n=445, çok hücreli bir taramadan okunuyor ve dışarıda bırakmalı
 ölçümde katkısı sıfır. Değeri, A4(b)'nin yeniden açılma koşulunu **somutlaştırması**: eksik
 olan model değil, **fikstür verisi**.
+
+> **Sonradan (Faz 3.4, §3.36):** fikstür verisi geldi ve hipotez **doğrulandı**. UEFA
+> maçları takvime katılınca aynı hücre **+0,0613'ten +0,0325'e** düştü (yukarıdaki
+> +0,0655 daha eski bir korpus koşumundandır; kontrollü karşılaştırma §3.36'da). Yani bu
+> satırın yarısı bir sinyal değil, **görünmeyen bir maçtı**. Kalan yarı hâlâ duruyor ve
+> dışarıda bırakmalı ölçümde hâlâ sıfır.
 
 ### 3.17 Tahmin ürünü — olasılık, ölçülmüş isabetiyle birlikte (C2)
 
@@ -2550,6 +2559,118 @@ takımın sayısına ne kadar güvenilir?"*
     python -m spor_toto.takim_gucu --lig T1
     python -m spor_toto.takim_gucu --lig T1 --sezon 2425
 
+### 3.36 Yeni veri (Faz 3.4) — planın en yüksek beklenen değerli maddesi
+
+Plan bunu açıkça yazmıştı: *"En yüksek beklenen değer Faz 3.4'ün yeni veri
+kaynaklarında, Faz 2'nin yeni modellerinde değil."* Dört kaynak sıralanmıştı;
+ikisi **açıldı**, ikisi **arandı ve kapalı çıktı**.
+
+#### Neden bu madde ötekilerden farklıydı
+
+§3.16 (A3) bir şey ölçmüş ve açıklayamamıştı: deplasman "dinlenmiş"
+göründüğünde ev sahibi piyasayı aşıyordu, ve etki Avrupa liglerinde kat
+kat güçlüydü. `egitim._takvim_tablosu`ın kendi belgesi sebebi yazıyordu:
+
+> *"Korpus 22 lig taşıyor; kupa ve Avrupa maçları içinde yok. Dolayısıyla
+> dinlenme günü olduğundan **uzun** ölçülür — ve hata rastgele değil,
+> Avrupa oynayan takımlarda yoğunlaşır."*
+
+Yani bulgu bir **sinyal** değil bir **ölçüm hatası** olabilirdi. İkisini
+ayırt etmenin tek yolu eksik maçları korpusa katmaktı.
+
+#### (1) UEFA fikstürü — ve anomalinin yarısı buharlaştı
+
+`openfootball/champions-league` (kamu malı) ŞL + AL + Konferans maçlarını
+veriyor. `scripts/build_avrupa.py` 4 sezonun **768 maçını** çekiyor ve
+korpusun takım adlarına bağlıyor; ad eşleşmesi **%100** (2.222 ad ifadesi).
+
+Ad eşleme bu işin asıl zorluğuydu ve iki kural onu çözdü: **ülke kodu bir
+kısıttır** (`(GER)` yalnızca `D1`/`D2` içinde aranır) ve **bulanık eşleme
+yoktur** (alt dize eşlemesi denendi, "Rangers" ile "Cove Rangers"ı
+karıştırdı ve **%68**'de kaldı). Kalan istisnalar elle yazılmış, gözden
+geçirilmiş bir tabloda.
+
+**Tasarımın can alıcı yeri:** UEFA günleri ayrı bir sütun olarak
+eklenmedi, `dinlenme` ve `sikisiklik` hesaplarına **enjekte edildi**. Ayrı
+sütun olsaydı `dinlenme_farki` yanlış kalmaya devam eder, model iki
+çelişkili girdiyi uzlaştırmak zorunda kalırdı. Sayı artık *doğru*.
+
+**Kontrollü ölçüm — aynı korpus, tek değişken:**
+
+| Lig katmanı | Ev dinlenmiş | Dengeli | **Dep dinlenmiş** |
+|---|---:|---:|---:|
+| Avrupa ligi — **UEFA yok** | −0,0018 (511) | −0,0072 (11.746) | **+0,0613** (445) |
+| Avrupa ligi — **UEFA var** | −0,0058 (887) | −0,0075 (10.959) | **+0,0325** (835) |
+| Diğer lig — UEFA yok | +0,0027 (1.014) | +0,0002 (14.105) | +0,0114 (1.136) |
+| Diğer lig — UEFA var | +0,0027 (1.014) | +0,0002 (14.105) | +0,0114 (1.136) |
+
+Üç şey birden söylüyor:
+
+1. **Anomali neredeyse yarıya indi** (+0,0613 → +0,0325). Yani o sayının
+   yarısı bir sinyal değil, **görünmeyen bir maçtı**.
+2. **Hücre büyüdü** (445 → 835): korpus 390 maçı yanlış sınıflandırıyormuş.
+3. **Kontrol katmanı bit bit aynı.** Avrupa'ya takım vermeyen liglerde
+   hiçbir sayı kıpırdamadı — değişikliğin tam olarak dokunması gereken
+   yere dokunduğunun kanıtı.
+
+**Ama düzeltilmiş özellik de piyasayı geçmiyor.** `kalibre_avrupa`
++0,000028 [−0,000277, +0,000352] — hayır. Kalan yarı da fiyatlanmış.
+
+#### (2) Şehir tablosu — `TURETILEMEYEN` listesinden bir madde düştü
+
+`disari.TURETILEMEYEN` şunu yazıyordu: *"derbi: şehir eşlemesi ya da
+rekabet tablosu yok; **elle liste yazmak türetme değil kuratörlük
+olurdu**."* Cümle doğruydu ve kapıyı kapatmıyordu: elle liste yazmak
+kuratörlüktür, **kaynaktan şehir okumak türetmedir**.
+
+`openfootball/clubs` (CC0) kulüp–şehir tablosu veriyor. Kapsama **%98,0**
+(604 takımın 592'si); kalan 12'sinin şehri kaynakta **hiç yazmıyor** ve
+uydurulmuyor — o maçlarda derbi sorusu **cevapsız** kalıyor.
+
+Derbi bir **yön** değil **sıcaklık** değişkeni olarak girdi (`ayrisma` ile
+aynı biçim): aynı şehirde oynanan maç iki tarafa da aynı şeyi yapar; iddia
+"kim avantajlı" değil "belirsizlik farklı mı".
+
+**Ölçülen:** 30.187 maçta (%97,1) soru cevaplanabiliyor, bunların
+**667'si** (%2,21) derbi. `kalibre_derbi` +0,000176 [−0,000172, +0,000539]
+— `kalibre_seri`nin +0,000148'inden **kötü**. Geçmedi.
+
+**Bir sessiz hata yakalandı ve bekçiye bağlandı.** `recalibrate._mac_ozellikleri`
+bir **beyaz listedir**; `derbi` ilk koşumda ona eklenmemişti. Sütun tasarım
+matrisinde vardı, her satırda sıfırdı, katsayı **tam 0,000000** çıktı ve
+ölçüm *"derbi bir şey söylemiyor"* diye okunacaktı. Düzeltince katsayı
+**+0,0992** oldu — yani "hiçbir şey" değil, **ölçülmemiş** bir şeydi.
+Bekçi: `test_sehir.py::test_derbi_korpustan_tasarima_ulasiyor`.
+
+#### (3) ve (4) Arandı, kapalı çıktı — ve ikisi de teknik değil ilkesel
+
+| Kaynak | Neden kapalı |
+|---|---|
+| **xG** (Understat / fbref) | Understat `robots.txt`: `User-agent: * / Disallow: /` — otomatik erişime **tamamen kapalı**. fbref Cloudflare sorgusu arkasında. Ayrıca ikisi de Süper Lig'i ve korpusun çoğunluğunu oluşturan alt İngiliz liglerini kapsamıyor |
+| **Kadro / sakatlık** | Kaynak teknik olarak açık (transfermarkt `Allow: /`) ama özellik **ileriye dönük kullanılamaz**: gerçek kadro ancak ilk vuruşta bellidir. Korpusta kullanıp `/tahmin`de kullanamamak **eğitim/servis ayrışmasıdır** ve ölçümü anlamsız kılar. Gereken şey maç öncesi haber akışının **tarihsel anlık görüntüleridir**; arşivde yok ve geriye dönük kurulamaz |
+
+İkincisi kayda değer: bu, *"kaynak bulunamadı"* değil **"özellik bu ürün
+için geçersiz"** demektir. `/tahmin` oynanmamış maça olasılık verir; ölçümde
+kullanılan bir bilgiyi tahmin anında bulamıyorsak ölçüm ürünü tarif etmez.
+
+#### Faz 3.4 kapandı — ve söylediği şey
+
+Serinin en güçlü tek cümlesi burada: **eksik veri gerçekten eksikti,
+bulundu, eklendi, ölçüm hatasını düzelttiği doğrulandı — ve düzeltilmiş
+özellik de piyasayı geçmedi.**
+
+Bu, on bir ölçümün on ikincisi değil; **niteliksel olarak farklı** bir
+kapanış. Önceki ölçümler *"elimizdeki veriden çıkarılabilecek her şey
+fiyatlanmış"* diyordu. Bu ölçüm bir adım daha ileri gidiyor: *"elimizde
+olmayan ve bulunabilen veri de fiyatlanmış."* Kalan iki kaynak ise
+bulunamıyor değil, **kullanılamıyor**.
+
+    python scripts/build_avrupa.py
+    python scripts/build_sehir.py
+    python -m spor_toto.avrupa
+    python -m spor_toto.sehir
+    python -m spor_toto.disari
+
 ## 4. Sayfada bugün ne var
 
 **`/istatistik`** — sezon dağılımı (en sık sonuç + pay çubuğu) · 5 sayı kutusu (sembol
@@ -2684,6 +2805,7 @@ ve karşılıkları: kupon seti 0,5747 → **0,5740**, korpus 0,5940 → **0,593
 | **LOFO + Venn-Abers (§3.33)** | 31.103 maç · 4 sezon katı | **LOFO: hiçbir özellik taşımıyor**, onun beşi net negatif — en zararlısı `ayrisma` (−0,000159), ve `elo_farki` (−0,000042) ile `h2h_farki` (−0,000065) de negatif. **Venn-Abers geçmedi** (+0,000264) ama aralık yeni bir sayı verdi: ortalama genişlik **0,00472** — piyasanın olasılıkları sıkı destekleniyor, §3.23'ün bağımsız teyidi |
 | **Müşterek beklenen değer (§3.34)** | 51. hafta · 3.888 kolon · havuz varsayımı | **Ölçüm değil, hesap** — ve sonucu belirleyen tahminci değil kalabalık varsayımı: `orneklem` modelinde getiri oranı **0,156**, `favori` modelinde **0,007** — arada **22 kat**. Havuz büyüklüğü getiriyi hiç belirlemiyor (havuz ve rakip kolon birlikte ölçeklendiğinde eğri tam düz); belirleyen `p_k/q_k` oranı. Bu eksenin ihtiyacı yeni model değil, **oynanma paylarının ölçümü** |
 | **Takım bazlı istatistik (§3.35)** | 31.103 maç · 22 lig · 604 takım | **Yasak kalktı, kural kalmadı.** Ampirik Bayes küçültmesi: ortalama `B` **0,854**, ortalama %95 aralık 0,509. Tek sezona inildiğinde sistem **kendiliğinden temkinli oluyor** — `B` 0,697'ye düşüyor, aralık 0,690'a genişliyor. En çok konuşan satır Scunthorpe: 46 maçta ham 0,565 → küçültülmüş **0,875** [0,58, 1,17] |
+| **Yeni veri (§3.36)** | 768 UEFA maçı · 592 takım şehri · 31.103 maç | **Serinin niteliksel olarak farklı kapanışı.** Eksik veri gerçekten eksikti: UEFA fikstürü eklenince §3.16'nın açıklanamayan anomalisi **+0,0613 → +0,0325**'e indi (kontrol katmanı bit bit aynı kaldı). Ama düzeltilmiş özellik de geçmedi — `kalibre_avrupa` +0,000028 [−0,000277, +0,000352]. Derbi de türetilebilir oldu (667 maç) ve geçmedi (+0,000176). xG ve kadro **kapalı**: biri `robots.txt`, öteki eğitim/servis ayrışması |
 
 **Okuma.** Aşırı uyum modelin kapasitesinden değil örneklem küçüklüğünden geliyordu; büyük
 korpus onu kaldırdı. Ama kalan etki 0,0005–0,0015 Brier — 31 binde anlamlı, 540'ta değil ve
@@ -2895,7 +3017,7 @@ belirsiz bırakmadı, üçünü de somutlaştırdı:
 
 | Kaynak | Hangi ölçüm işaret etti |
 |---|---|
-| **Fikstür verisi** (kupa + Avrupa) | A3'ün kör nokta taraması: deplasman "dinlenmiş" göründüğünde ev takımı piyasayı +0,0655 aşıyor, etki Avrupa liglerinde dört kat güçlü. Türetebildiğimiz yorgunluk vekili fiyatlanmış; **gerçek yorgunluk ölçülmedi** |
+| ~~**Fikstür verisi** (kupa + Avrupa)~~ | ✅ **YAPILDI (§3.36).** UEFA maçları geldi (768 maç, ad eşlemesi %100) ve takvime enjekte edildi. Kör nokta taraması **+0,0613 → +0,0325**: anomalinin yarısı ölçüm hatasıymış. Kalan yarı da fiyatlanmış — `kalibre_avrupa` geçmedi. **İç kupalar hâlâ yok**, yani sınır küçüldü ama kaybolmadı |
 | **Kadro / sakatlık** | Hiçbir veri setinde yok. Piyasanın gördüğü, bizim görmediğimiz en büyük girdi |
 | **Şehir / rekabet tablosu** | A3'te seyahat ve derbi bu yüzden elendi — hesaplanamadıkları için |
 | ~~**xG (Understat)**~~ | **Kaynak değil — ölçülmüş negatif.** Listede yoktu, yani örtük olarak açık duruyordu. Dış bir çalışma 14 xG özelliğiyle denedi ve piyasayı geçemedi; üstelik Understat **Süper Lig'i kapsamıyor**. Ayrıntı: [`DIS_INCELEME.md`](DIS_INCELEME.md) §4 |
@@ -3460,7 +3582,7 @@ python -m spor_toto.disari                 # A3: piyasa dışı özellikler
 python -m spor_toto.tahmin                 # ÜRÜN: yaklaşan maçlara olasılık
 
 # Denetim
-pytest -q                                  # 1.474 test (82'si bu katman, 479'u tahmin)
+pytest -q                                  # 1.527 test (82'si bu katman, 491'i tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out

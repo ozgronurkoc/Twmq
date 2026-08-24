@@ -213,9 +213,18 @@ def test_kapsama_yeterli(a3):
 # ─── türetilemeyenler ─────────────────────────────────────────────────────────
 
 def test_turetilemeyenler_gerekceli_kayitli():
-    """"Denenmedi" ile "denenemez" farklı şeyler; A4 bu ayrımı yazmak zorunda."""
-    assert set(TURETILEMEYEN) == {"seyahat", "derbi"}
-    for gerekce in TURETILEMEYEN.values():
+    """"Denenmedi" ile "denenemez" farklı şeyler; A4 bu ayrımı yazmak zorunda.
+
+    Liste Faz 3.4'te **hem kısaldı hem uzadı**: `derbi` çıktı (şehir tablosu
+    geldi), `xg` ve `kadro_sakatlik` girdi — ikisi de arandı ve kapalı
+    bulundu. Kayıt tutulmazsa "aranmadı" ile "aranıp bulunamadı" karışır.
+    """
+    from spor_toto.disari import TURETILEBILIR_OLDU
+
+    assert set(TURETILEMEYEN) == {"seyahat", "xg", "kadro_sakatlik"}
+    assert set(TURETILEBILIR_OLDU) == {"derbi", "avrupa"}
+    assert not (set(TURETILEMEYEN) & set(TURETILEBILIR_OLDU))
+    for gerekce in (*TURETILEMEYEN.values(), *TURETILEBILIR_OLDU.values()):
         assert len(gerekce) > 30
 
 
@@ -230,8 +239,10 @@ def test_seyahat_gercekten_turetilemez():
     if not satirlar:
         pytest.skip("korpus yok")
     assert all("lig" in r for r in satirlar[:100])
-    # Sehir/koordinat alani yok — derbi de bu yuzden turetilemiyor.
-    assert not ({"sehir", "ev_sehir", "enlem", "boylam"} & set(satirlar[0]))
+    # Korpusun kendisinde hala koordinat yok. Sehir ARTIK var ama ayri bir
+    # dosyada (`data/sehir/`) ve sehir adindan mesafe cikmaz — `seyahat`in
+    # gerekcesi Faz 3.4'te "sehir yok"tan "koordinat yok"a dondu.
+    assert not ({"enlem", "boylam", "lat", "lon"} & set(satirlar[0]))
 
 
 # ─── bulgu ────────────────────────────────────────────────────────────────────

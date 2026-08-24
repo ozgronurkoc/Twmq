@@ -232,15 +232,20 @@ def _takvim_tablosu(satirlar: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
     ile aynı sıra disiplini geçerlidir (önce oku, sonra geçmişe ekle). Bu
     modüldeki bütün zamansal özelliklerin tek savunması budur.
 
-    **Korpusun göremediği bir kör nokta var ve ölçümü etkiler.** Korpus 22 lig
-    taşıyor; kupa ve Avrupa maçları içinde yok. Dolayısıyla dinlenme günü
-    olduğundan **uzun**, fikstür sıkışıklığı olduğundan **düşük** ölçülür — ve
-    hata rastgele değil, Avrupa oynayan (yani güçlü) takımlarda yoğunlaşır.
+    **Kör nokta yarısı kapandı (Faz 3.4).** Bu docstring uzun süre şunu
+    yazıyordu: *"korpus 22 lig taşıyor; kupa ve Avrupa maçları içinde yok,
+    dolayısıyla dinlenme günü olduğundan uzun ölçülür ve hata rastgele
+    değil — Avrupa oynayan (yani güçlü) takımlarda yoğunlaşır."*
 
-    Bu, A3'ün cevabını okurken taşınması gereken sınırdır: "yorgunluk yardım
-    etmiyor" sonucu, yorgunluğun **eksik ölçülmüş** olmasından da gelebilir.
-    Sonuç bu yüzden "yorgunluk fiyatlanmış" değil, *"korpustan türetilebilen
-    yorgunluk vekili fiyatlanmış"* diye yazılır.
+    `avrupa.py` artık UEFA maçlarını (ŞL + AL + Konferans, 768 maç, 84 takım)
+    takvime **enjekte ediyor**: `dinlenme` ve `sikisiklik` o günleri de
+    görüyor. Yeni bir sütun eklemek yerine mevcut sayının **düzeltilmesi**
+    kasıtlı — ayrı sütun olsaydı `dinlenme_farki` yanlış kalmaya devam eder,
+    model iki çelişkili girdiyi uzlaştırmak zorunda kalırdı.
+
+    **Kalan yarı:** iç kupalar (FA Cup, DFB-Pokal, Türkiye Kupası…) hâlâ
+    yok. Yani sınır küçüldü ama kaybolmadı ve cümle şöyle okunmalı:
+    *"lig + UEFA'dan türetilebilen yorgunluk vekili"*.
 
     Sezon sonu payı kaba bir vekildir: ligin son %20'sinde, sıralamanın uçlarına
     yakın takımların oynayacak bir şeyi olduğu varsayılır (şampiyonluk/küme
@@ -266,6 +271,18 @@ def _takvim_tablosu(satirlar: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
         anahtar = (r["sezon"], r["lig"])
         lig_toplam[anahtar] = lig_toplam.get(anahtar, 0) + 1
 
+    # UEFA gunleri: takvim bilgisi, sonuc DEGIL (bkz. `avrupa` modul basligi).
+    from .avrupa import avrupa_gunleri as _avrupa_gunleri
+    from .avrupa import pencere_sayisi as _avrupa_pencere
+    from .avrupa import son_avrupa as _son_avrupa
+
+    avrupa = _avrupa_gunleri()
+
+    from .sehir import derbi_mi as _derbi_mi
+    from .sehir import sehir_tablosu as _sehir_tablosu
+
+    _sehir = _sehir_tablosu()
+
     son_mac: dict[str, date] = {}
     mac_gunleri: dict[str, list[date]] = {}
     ic_form: dict[str, list[float]] = {}
@@ -276,14 +293,23 @@ def _takvim_tablosu(satirlar: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
     out: list[dict[str, Any] | None] = [None] * len(satirlar)
 
     def dinlenme(takim: str, bugun: date) -> float | None:
-        onceki = son_mac.get(takim)
-        return None if onceki is None else min((bugun - onceki).days,
-                                               DINLENME_TAVANI)
+        """Son maçtan bu yana geçen gün — **UEFA maçları dahil**.
+
+        `max` şart: takım Perşembe Avrupa'da, ondan on gün önce ligde
+        oynadıysa dinlenme 3 gündür, 10 değil. Eskiden 10 yazıyordu.
+        """
+        adaylar = [d for d in (son_mac.get(takim),
+                               _son_avrupa(avrupa.get(takim, ()), bugun))
+                   if d is not None]
+        if not adaylar:
+            return None
+        return min((bugun - max(adaylar)).days, DINLENME_TAVANI)
 
     def sikisiklik(takim: str, bugun: date) -> int:
         gunler = mac_gunleri.get(takim, [])
-        return sum(1 for g in gunler
-                   if 0 < (bugun - g).days <= SIKISIKLIK_PENCERE_GUN)
+        lig = sum(1 for g in gunler
+                  if 0 < (bugun - g).days <= SIKISIKLIK_PENCERE_GUN)
+        return lig + _avrupa_pencere(avrupa.get(takim, ()), bugun)
 
     def yuvarlanan(kayit: list[float], pencere: int) -> float | None:
         if len(kayit) < pencere:
@@ -337,6 +363,16 @@ def _takvim_tablosu(satirlar: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
             "ic_dis_form_farki": (float(ev_ic - dep_dis)
                                   if ev_ic is not None and dep_dis is not None
                                   else 0.0),
+            # Deplasmanin UEFA yuku EV lehinedir — butun A3 ozellikleriyle
+            # ayni isaret duzeni ("pozitif = ev lehine").
+            "avrupa_var": bool(avrupa.get(ev) or avrupa.get(dep)),
+            # Derbi bir YON degil SICAKLIK degiskenidir; `recalibrate`
+            # onu `ayrisma` gibi okur (bkz. `sehir` modul basligi).
+            "derbi": float(_derbi_mi(ev, dep, _sehir)[0]),
+            "derbi_bilinir": _derbi_mi(ev, dep, _sehir)[1],
+            "avrupa_farki": float(
+                _avrupa_pencere(avrupa.get(dep, ()), bugun)
+                - _avrupa_pencere(avrupa.get(ev, ()), bugun)),
             "sezon_sonu": sezon_sonu,
             "sezon_sonu_pay_farki": (float(ev_pay - dep_pay)
                                      if sezon_sonu and ev_pay is not None

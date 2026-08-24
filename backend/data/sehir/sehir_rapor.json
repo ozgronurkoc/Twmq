@@ -1,0 +1,21 @@
+{
+ "uretildi": "2026-08-24T15:11:47+00:00",
+ "kaynak": "openfootball/clubs (CC0)",
+ "takim": 592,
+ "kapsama": 0.9801,
+ "sehir": 397,
+ "sehri_bilinmeyen": [
+  "D2:Elversberg",
+  "SP1:Leganes",
+  "SP1:Valladolid",
+  "SP2:Andorra",
+  "SP2:Ibiza",
+  "SP2:Leganes",
+  "SP2:Lugo",
+  "SP2:Oviedo",
+  "SP2:Ponferradina",
+  "SP2:Sociedad B",
+  "SP2:Valladolid",
+  "SP2:Villarreal B"
+ ]
+}

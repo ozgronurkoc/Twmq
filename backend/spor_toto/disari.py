@@ -48,10 +48,33 @@ from .recalibrate import A3_ALANLARI
 #: Listeden elenen özellikler ve gerekçeleri. Kodda durur çünkü "denenmedi"
 #: ile "denenemez" farklı şeylerdir ve A4 bu ayrımı yazmak zorunda.
 TURETILEMEYEN: dict[str, str] = {
-    "seyahat": ("sehir/koordinat yok; ayrica bir macin iki takimi her zaman "
-                "ayni ligde — mac duzeyinde bir buyukluk degil"),
-    "derbi": ("sehir eslemesi ya da rekabet tablosu yok; elle liste yazmak "
-              "turetme degil kuratorluk olurdu"),
+    # Liste Faz 3.4'te KISALDI: `derbi` cikti, `seyahat` kaldi ve
+    # gerekcesi degisti — artik "sehir yok" degil, "KOORDINAT yok".
+    "seyahat": ("sehir var (`sehir.py`, %98,0) ama KOORDINAT yok; iki "
+                "sehrin arasindaki mesafe sehir adindan cikmaz"),
+    # Faz 3.4'te ARANDI ve kapali cikti — ikisi de teknik degil ILKESEL.
+    "xg": ("Understat robots.txt'i `Disallow: /` diyor (otomatik erisime "
+           "TAMAMEN kapali), fbref Cloudflare sorgusu arkasinda. Ayrica "
+           "ikisi de Super Lig'i ve korpusun cogunlugunu olusturan alt "
+           "Ingiliz liglerini kapsamiyor"),
+    "kadro_sakatlik": (
+        "kaynak teknik olarak acik (transfermarkt `Allow: /`) ama ozellik "
+        "ILERIYE DONUK KULLANILAMAZ: gercek kadro ancak ilk vurusta bellidir. "
+        "Korpusta kullanip `/tahmin`de kullanamamak egitim/servis ayrismasidir "
+        "ve olcumu anlamsiz kilar. Gereken sey MAC ONCESI haber akisinin "
+        "tarihsel anlik goruntuleridir; arsivde yok ve geriye donuk "
+        "kurulamaz"),
+}
+
+#: Faz 3.4'te turetilebilir hale gelenler — liste bir kez kisaldi ve
+#: nedeni kayda gecti. Yeni bir model degil, YENI VERI acti.
+TURETILEBILIR_OLDU: dict[str, str] = {
+    "derbi": ("`openfootball/clubs` (CC0) kulup-sehir tablosu veriyor; elle "
+              "liste yazmak kuratorluk olurdu ama KAYNAKTAN sehir okumak "
+              "turetmedir — `scripts/build_sehir.py`, 592/604 takim"),
+    "avrupa": ("`openfootball/champions-league` (kamu mali) UEFA fiksturu "
+               "veriyor; `dinlenme` ve `sikisiklik` artik o gunleri de "
+               "goruyor — `scripts/build_avrupa.py`, ad eslemesi %100"),
 }
 
 #: Ham sinyal taramasında bir özelliğin "yüksek"/"düşük" sayıldığı eşik.
@@ -66,6 +89,9 @@ TURETILEMEYEN: dict[str, str] = {
 TARAMA_ESIKLERI: dict[str, float] = {
     "dinlenme_farki": 2.0,
     "sikisiklik_farki": 0.5,
+    # `avrupa_farki` de tam sayidir (pencere icindeki UEFA maci farki) ve
+    # esigi ayni gerekcelerle 0,5: "en az bir mac fark". Faz 3.4.
+    "avrupa_farki": 0.5,
     "ic_dis_form_farki": 1.0,
     "sezon_sonu_pay_farki": 0.3,
 }
@@ -273,6 +299,7 @@ def rapor(sezonlar_: Sequence[str] | None = None,
     sonuc["artik"] = artik_taramasi(haftalar)
     sonuc["kor_nokta"] = kor_nokta_taramasi(haftalar)
     sonuc["turetilemeyen"] = TURETILEMEYEN
+    sonuc["turetilebilir_oldu"] = TURETILEBILIR_OLDU
     sonuc["soru"] = (
         "piyasa disi turetilebilir bir ozellik piyasayi geciyor mu — "
         "`kalibre_sezon_sonu` (dordu birden) `kalibre_dagilim`i gecmiyorsa "
@@ -323,6 +350,10 @@ def _yazdir(sonuc: dict[str, Any]) -> None:  # pragma: no cover - elle kullanim
             h = kn[katman][ad]
             hucreler.append(f"{h['artik']:+.4f} (n={h['n']})" if h else "—")
         print(f"  {katman:<14}" + "".join(f"{m:>18}" for m in hucreler))
+
+    print("\ntüretilebilir OLDU (Faz 3.4 — yeni veri geldi):")
+    for ad, gerekce in sonuc.get("turetilebilir_oldu", {}).items():
+        print(f"  {ad}: {gerekce}")
 
     print("\ntüretilemeyen (yeni veri kaynağı ister):")
     for ad, gerekce in sonuc["turetilemeyen"].items():

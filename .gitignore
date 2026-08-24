@@ -45,3 +45,9 @@ backend/data/super_toto/**/*.html
 # Turetilmis cikti: korpustan uretilir, SURUMLENMEZ. Bayat kalirsa
 # `python -m spor_toto.health` kirmizi gosterir.
 backend/data/artefakt/
+
+# Avrupa fiksturu ve sehir tablosu: TURETILMIS CSV + rapor SURUMLENIR
+# (kaynak GitHub'da ve zamanla degisebilir; olculen sayilar bu dosyalara
+# dayaniyor), ham kaynak kopyasi uretilir. Yeniden olusturmak icin:
+# python scripts/build_avrupa.py · python scripts/build_sehir.py
+backend/data/avrupa/_kaynak/

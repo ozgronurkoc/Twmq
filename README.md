@@ -780,6 +780,8 @@ backend/
     tahmin.py          TAHMİN: yaklaşan maçlar + ölçülmüş isabet = /api/tahmin
     pazar.py           1X2 DIŞI: alt/üst 2,5 + Asya handikabı = /api/pazar
     getiri.py          HAVUZ: müşterek beklenen değer — HESAP, arayüze ÇIKMAZ
+    avrupa.py          VERI: UEFA fiksturu — dinlenme/sikisiklik duzeltmesi
+    sehir.py           VERI: kulup-sehir tablosu, derbi (sicaklik degiskeni)
     takim_gucu.py      TAKIM: kucultulmus takim gucu = /api/takimlar
     artefakt.py        Egitilmis modelin diske yazimi + bayatlik denetimi
     benzer.py          "Bu oranda geçmişte ne oldu" = /api/benzer
@@ -808,7 +810,7 @@ backend/
     api_sozlesme.py           API sözleşmesini üretir/denetler (--kontrol: CI kapısı)
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/
-  tests/               pytest (47 dosya → 1.474 test; §9'da katman dökümü)
+  tests/               pytest (49 dosya → 1.527 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -992,15 +994,15 @@ altı adımdan üçünü koşuyordu — yani "OK" demesi "CI geçer" demek deği
 Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant'lar, CLI (Bayes preset
 dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri test,
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
-yeniden kalibrasyon ve eğitim korpusu. **47 test dosyası, parametrizasyonla
-1.474 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+yeniden kalibrasyon ve eğitim korpusu. **49 test dosyası, parametrizasyonla
+1.527 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
 | Katman | Dosyalar | Test |
 |---|---|---|
 | Çekirdek + motorlar | `core` `engines` `invariants` `edge_cases` `cli` `analysis` `bayes` `markov` `fire_scenarios` | 511 |
-| Tahmin katmanı | `predict` `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin` `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre` | 479 |
+| Tahmin katmanı | `predict` `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin` `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre` | 491 |
 | Sağlık | `health` `api_health` `meta` `health_history` | 85 |
 | Veri / istatistik / geri test | `history` `odds` `backtest` `api_stats` `api_backtest` `snapshot_iddaa` `pazar` | 113 |
 | Süper Toto | `super_toto` | 54 |
@@ -1012,6 +1014,7 @@ karşı denetler):
 | Havuz / beklenen değer | `getiri` | 72 |
 | Model kalıcılığı | `artefakt` | 24 |
 | Takım gücü | `takim_gucu` | 21 |
+| Yeni veri (UEFA · şehir) | `avrupa` `sehir` | 41 |
 | Belgeler | `belgeler` | 5 |
 
 İki test bilerek **ağa çıkmaz**: `test_snapshot_iddaa.py` gerçek bültenden alınmış

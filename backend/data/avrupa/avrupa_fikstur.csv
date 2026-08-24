@@ -1,0 +1,769 @@
+sezon,turnuva,tarih,ev_lig,ev,dep_lig,dep
+2122,cl,2021-09-15,B1,Club Brugge,F1,Paris SG
+2122,cl,2021-09-15,E0,Man City,D1,RB Leipzig
+2122,el,2021-09-16,SC0,Rangers,F1,Lyon
+2122,cl,2021-09-28,F1,Paris SG,E0,Man City
+2122,cl,2021-09-28,D1,RB Leipzig,B1,Club Brugge
+2122,cl,2021-10-19,B1,Club Brugge,E0,Man City
+2122,cl,2021-10-19,F1,Paris SG,D1,RB Leipzig
+2122,cl,2021-11-03,E0,Man City,B1,Club Brugge
+2122,cl,2021-11-03,D1,RB Leipzig,F1,Paris SG
+2122,cl,2021-11-24,B1,Club Brugge,D1,RB Leipzig
+2122,cl,2021-11-24,E0,Man City,F1,Paris SG
+2122,cl,2021-12-07,F1,Paris SG,B1,Club Brugge
+2122,cl,2021-12-07,D1,RB Leipzig,E0,Man City
+2122,el,2021-12-09,F1,Lyon,SC0,Rangers
+2122,cl,2022-02-15,F1,Paris SG,SP1,Real Madrid
+2122,cl,2022-02-15,P1,Sp Lisbon,E0,Man City
+2122,cl,2022-02-16,I1,Inter,E0,Liverpool
+2122,el,2022-02-17,I1,Atalanta,G1,Olympiakos
+2122,el,2022-02-17,SP1,Barcelona,I1,Napoli
+2122,el,2022-02-17,D1,Dortmund,SC0,Rangers
+2122,el,2022-02-17,P1,Porto,I1,Lazio
+2122,el,2022-02-17,D1,RB Leipzig,SP1,Sociedad
+2122,cl,2022-02-22,E0,Chelsea,F1,Lille
+2122,cl,2022-02-22,SP1,Villarreal,I1,Juventus
+2122,cl,2022-02-23,SP1,Ath Madrid,E0,Man United
+2122,cl,2022-02-23,P1,Benfica,N1,Ajax
+2122,el,2022-02-24,I1,Lazio,P1,Porto
+2122,el,2022-02-24,I1,Napoli,SP1,Barcelona
+2122,el,2022-02-24,G1,Olympiakos,I1,Atalanta
+2122,el,2022-02-24,SC0,Rangers,D1,Dortmund
+2122,el,2022-02-24,SP1,Sociedad,D1,RB Leipzig
+2122,cl,2022-03-08,E0,Liverpool,I1,Inter
+2122,cl,2022-03-09,E0,Man City,P1,Sp Lisbon
+2122,cl,2022-03-09,SP1,Real Madrid,F1,Paris SG
+2122,el,2022-03-09,SP1,Betis,D1,Ein Frankfurt
+2122,el,2022-03-09,P1,Porto,F1,Lyon
+2122,conf,2022-03-10,E0,Leicester,F1,Rennes
+2122,conf,2022-03-10,G1,PAOK,B1,Gent
+2122,conf,2022-03-10,N1,Vitesse,I1,Roma
+2122,el,2022-03-10,I1,Atalanta,D1,Leverkusen
+2122,el,2022-03-10,SP1,Barcelona,T1,Galatasaray
+2122,el,2022-03-10,SP1,Sevilla,E0,West Ham
+2122,el,2022-03-10,P1,Sp Braga,F1,Monaco
+2122,cl,2022-03-15,N1,Ajax,P1,Benfica
+2122,cl,2022-03-15,E0,Man United,SP1,Ath Madrid
+2122,cl,2022-03-16,I1,Juventus,SP1,Villarreal
+2122,cl,2022-03-16,F1,Lille,E0,Chelsea
+2122,conf,2022-03-17,B1,Gent,G1,PAOK
+2122,conf,2022-03-17,F1,Rennes,E0,Leicester
+2122,conf,2022-03-17,I1,Roma,N1,Vitesse
+2122,el,2022-03-17,D1,Ein Frankfurt,SP1,Betis
+2122,el,2022-03-17,T1,Galatasaray,SP1,Barcelona
+2122,el,2022-03-17,D1,Leverkusen,I1,Atalanta
+2122,el,2022-03-17,F1,Lyon,P1,Porto
+2122,el,2022-03-17,F1,Monaco,P1,Sp Braga
+2122,el,2022-03-17,E0,West Ham,SP1,Sevilla
+2122,cl,2022-04-05,P1,Benfica,E0,Liverpool
+2122,cl,2022-04-05,E0,Man City,SP1,Ath Madrid
+2122,cl,2022-04-06,E0,Chelsea,SP1,Real Madrid
+2122,cl,2022-04-06,SP1,Villarreal,D1,Bayern Munich
+2122,conf,2022-04-07,E0,Leicester,N1,PSV Eindhoven
+2122,conf,2022-04-07,F1,Marseille,G1,PAOK
+2122,el,2022-04-07,D1,Ein Frankfurt,SP1,Barcelona
+2122,el,2022-04-07,D1,RB Leipzig,I1,Atalanta
+2122,el,2022-04-07,P1,Sp Braga,SC0,Rangers
+2122,el,2022-04-07,E0,West Ham,F1,Lyon
+2122,cl,2022-04-12,D1,Bayern Munich,SP1,Villarreal
+2122,cl,2022-04-12,SP1,Real Madrid,E0,Chelsea
+2122,cl,2022-04-13,SP1,Ath Madrid,E0,Man City
+2122,cl,2022-04-13,E0,Liverpool,P1,Benfica
+2122,conf,2022-04-14,G1,PAOK,F1,Marseille
+2122,conf,2022-04-14,N1,PSV Eindhoven,E0,Leicester
+2122,el,2022-04-14,I1,Atalanta,D1,RB Leipzig
+2122,el,2022-04-14,SP1,Barcelona,D1,Ein Frankfurt
+2122,el,2022-04-14,F1,Lyon,E0,West Ham
+2122,el,2022-04-14,SC0,Rangers,P1,Sp Braga
+2122,cl,2022-04-26,E0,Man City,SP1,Real Madrid
+2122,cl,2022-04-27,E0,Liverpool,SP1,Villarreal
+2122,conf,2022-04-28,N1,Feyenoord,F1,Marseille
+2122,conf,2022-04-28,E0,Leicester,I1,Roma
+2122,el,2022-04-28,D1,RB Leipzig,SC0,Rangers
+2122,el,2022-04-28,E0,West Ham,D1,Ein Frankfurt
+2122,cl,2022-05-03,SP1,Villarreal,E0,Liverpool
+2122,cl,2022-05-04,SP1,Real Madrid,E0,Man City
+2122,conf,2022-05-05,F1,Marseille,N1,Feyenoord
+2122,conf,2022-05-05,I1,Roma,E0,Leicester
+2122,el,2022-05-05,D1,Ein Frankfurt,E0,West Ham
+2122,el,2022-05-05,SC0,Rangers,D1,RB Leipzig
+2122,el,2022-05-18,D1,Ein Frankfurt,SC0,Rangers
+2122,conf,2022-05-25,I1,Roma,N1,Feyenoord
+2122,cl,2022-05-28,E0,Liverpool,SP1,Real Madrid
+2223,cl,2022-09-07,N1,Ajax,SC0,Rangers
+2223,cl,2022-09-07,I1,Napoli,E0,Liverpool
+2223,conf,2022-09-08,SC0,Hearts,T1,Buyuksehyr
+2223,cl,2022-09-13,E0,Liverpool,N1,Ajax
+2223,cl,2022-09-14,SC0,Rangers,I1,Napoli
+2122,cl,2022-09-15,SP1,Ath Madrid,P1,Porto
+2122,cl,2022-09-15,E0,Liverpool,I1,Milan
+2223,conf,2022-09-15,T1,Buyuksehyr,I1,Fiorentina
+2122,el,2022-09-16,N1,PSV Eindhoven,SP1,Sociedad
+2122,cl,2022-09-28,I1,Milan,SP1,Ath Madrid
+2122,cl,2022-09-28,P1,Porto,E0,Liverpool
+2122,el,2022-09-30,SP1,Sociedad,F1,Monaco
+2223,cl,2022-10-04,N1,Ajax,I1,Napoli
+2223,cl,2022-10-04,E0,Liverpool,SC0,Rangers
+2223,conf,2022-10-06,SC0,Hearts,I1,Fiorentina
+2223,cl,2022-10-12,I1,Napoli,N1,Ajax
+2223,cl,2022-10-12,SC0,Rangers,E0,Liverpool
+2223,conf,2022-10-13,I1,Fiorentina,SC0,Hearts
+2122,cl,2022-10-19,SP1,Ath Madrid,E0,Liverpool
+2122,cl,2022-10-19,P1,Porto,I1,Milan
+2223,el,2022-10-20,E0,Arsenal,N1,PSV Eindhoven
+2122,el,2022-10-21,N1,PSV Eindhoven,F1,Monaco
+2223,cl,2022-10-26,N1,Ajax,E0,Liverpool
+2223,cl,2022-10-26,I1,Napoli,SC0,Rangers
+2223,conf,2022-10-27,I1,Fiorentina,T1,Buyuksehyr
+2223,el,2022-10-27,N1,PSV Eindhoven,E0,Arsenal
+2223,cl,2022-11-01,E0,Liverpool,I1,Napoli
+2223,cl,2022-11-01,SC0,Rangers,N1,Ajax
+2122,cl,2022-11-03,E0,Liverpool,SP1,Ath Madrid
+2122,cl,2022-11-03,I1,Milan,P1,Porto
+2223,conf,2022-11-03,T1,Buyuksehyr,SC0,Hearts
+2122,el,2022-11-04,F1,Monaco,N1,PSV Eindhoven
+2122,cl,2022-11-24,SP1,Ath Madrid,I1,Milan
+2122,cl,2022-11-24,E0,Liverpool,P1,Porto
+2122,el,2022-11-25,F1,Monaco,SP1,Sociedad
+2122,cl,2022-12-07,I1,Milan,E0,Liverpool
+2122,cl,2022-12-07,P1,Porto,SP1,Ath Madrid
+2122,el,2022-12-09,SP1,Sociedad,N1,PSV Eindhoven
+2223,cl,2023-02-14,I1,Milan,E0,Tottenham
+2223,cl,2023-02-14,F1,Paris SG,D1,Bayern Munich
+2223,cl,2023-02-15,B1,Club Brugge,P1,Benfica
+2223,cl,2023-02-15,D1,Dortmund,E0,Chelsea
+2223,conf,2023-02-16,P1,Sp Braga,I1,Fiorentina
+2223,el,2023-02-16,N1,Ajax,D1,Union Berlin
+2223,el,2023-02-16,SP1,Barcelona,E0,Man United
+2223,el,2023-02-16,I1,Juventus,F1,Nantes
+2223,el,2023-02-16,D1,Leverkusen,F1,Monaco
+2223,el,2023-02-16,SP1,Sevilla,N1,PSV Eindhoven
+2223,cl,2023-02-21,D1,Ein Frankfurt,I1,Napoli
+2223,cl,2023-02-21,E0,Liverpool,SP1,Real Madrid
+2223,cl,2023-02-22,I1,Inter,P1,Porto
+2223,cl,2023-02-22,D1,RB Leipzig,E0,Man City
+2223,conf,2023-02-23,I1,Fiorentina,P1,Sp Braga
+2223,el,2023-02-23,E0,Man United,SP1,Barcelona
+2223,el,2023-02-23,F1,Monaco,D1,Leverkusen
+2223,el,2023-02-23,F1,Nantes,I1,Juventus
+2223,el,2023-02-23,N1,PSV Eindhoven,SP1,Sevilla
+2223,el,2023-02-23,D1,Union Berlin,N1,Ajax
+2223,cl,2023-03-07,P1,Benfica,B1,Club Brugge
+2223,cl,2023-03-07,E0,Chelsea,D1,Dortmund
+2223,conf,2023-03-07,I1,Lazio,N1,AZ Alkmaar
+2223,cl,2023-03-08,D1,Bayern Munich,F1,Paris SG
+2223,cl,2023-03-08,E0,Tottenham,I1,Milan
+2223,conf,2023-03-09,B1,Anderlecht,SP1,Villarreal
+2223,conf,2023-03-09,I1,Fiorentina,T1,Sivasspor
+2223,conf,2023-03-09,B1,Gent,T1,Buyuksehyr
+2223,el,2023-03-09,I1,Juventus,D1,Freiburg
+2223,el,2023-03-09,E0,Man United,SP1,Betis
+2223,el,2023-03-09,I1,Roma,SP1,Sociedad
+2223,el,2023-03-09,SP1,Sevilla,T1,Fenerbahce
+2223,el,2023-03-09,P1,Sp Lisbon,E0,Arsenal
+2223,el,2023-03-09,D1,Union Berlin,B1,St. Gilloise
+2223,cl,2023-03-14,E0,Man City,D1,RB Leipzig
+2223,cl,2023-03-14,P1,Porto,I1,Inter
+2223,cl,2023-03-15,I1,Napoli,D1,Ein Frankfurt
+2223,cl,2023-03-15,SP1,Real Madrid,E0,Liverpool
+2223,conf,2023-03-15,T1,Buyuksehyr,B1,Gent
+2223,conf,2023-03-16,N1,AZ Alkmaar,I1,Lazio
+2223,conf,2023-03-16,T1,Sivasspor,I1,Fiorentina
+2223,conf,2023-03-16,SP1,Villarreal,B1,Anderlecht
+2223,el,2023-03-16,E0,Arsenal,P1,Sp Lisbon
+2223,el,2023-03-16,SP1,Betis,E0,Man United
+2223,el,2023-03-16,T1,Fenerbahce,SP1,Sevilla
+2223,el,2023-03-16,D1,Freiburg,I1,Juventus
+2223,el,2023-03-16,SP1,Sociedad,I1,Roma
+2223,el,2023-03-16,B1,St. Gilloise,D1,Union Berlin
+2223,cl,2023-04-11,P1,Benfica,I1,Inter
+2223,cl,2023-04-11,E0,Man City,D1,Bayern Munich
+2223,cl,2023-04-12,I1,Milan,I1,Napoli
+2223,cl,2023-04-12,SP1,Real Madrid,E0,Chelsea
+2223,conf,2023-04-13,B1,Anderlecht,N1,AZ Alkmaar
+2223,conf,2023-04-13,B1,Gent,E0,West Ham
+2223,el,2023-04-13,N1,Feyenoord,I1,Roma
+2223,el,2023-04-13,I1,Juventus,P1,Sp Lisbon
+2223,el,2023-04-13,D1,Leverkusen,B1,St. Gilloise
+2223,el,2023-04-13,E0,Man United,SP1,Sevilla
+2223,cl,2023-04-18,E0,Chelsea,SP1,Real Madrid
+2223,cl,2023-04-18,I1,Napoli,I1,Milan
+2223,cl,2023-04-19,D1,Bayern Munich,E0,Man City
+2223,cl,2023-04-19,I1,Inter,P1,Benfica
+2223,conf,2023-04-20,N1,AZ Alkmaar,B1,Anderlecht
+2223,conf,2023-04-20,E0,West Ham,B1,Gent
+2223,el,2023-04-20,I1,Roma,N1,Feyenoord
+2223,el,2023-04-20,SP1,Sevilla,E0,Man United
+2223,el,2023-04-20,P1,Sp Lisbon,I1,Juventus
+2223,el,2023-04-20,B1,St. Gilloise,D1,Leverkusen
+2223,cl,2023-05-09,SP1,Real Madrid,E0,Man City
+2223,cl,2023-05-10,I1,Milan,I1,Inter
+2223,conf,2023-05-11,E0,West Ham,N1,AZ Alkmaar
+2223,el,2023-05-11,I1,Juventus,SP1,Sevilla
+2223,el,2023-05-11,I1,Roma,D1,Leverkusen
+2223,cl,2023-05-16,I1,Inter,I1,Milan
+2223,cl,2023-05-17,E0,Man City,SP1,Real Madrid
+2223,conf,2023-05-18,N1,AZ Alkmaar,E0,West Ham
+2223,el,2023-05-18,D1,Leverkusen,I1,Roma
+2223,el,2023-05-18,SP1,Sevilla,I1,Juventus
+2223,el,2023-05-31,SP1,Sevilla,I1,Roma
+2223,conf,2023-06-07,I1,Fiorentina,E0,West Ham
+2223,cl,2023-06-10,E0,Man City,I1,Inter
+2223,cl,2023-09-07,SP1,Ath Madrid,P1,Porto
+2223,cl,2023-09-07,B1,Club Brugge,D1,Leverkusen
+2223,cl,2023-09-13,D1,Leverkusen,SP1,Ath Madrid
+2223,cl,2023-09-13,P1,Porto,B1,Club Brugge
+2122,cl,2023-09-15,T1,Besiktas,D1,Dortmund
+2122,cl,2023-09-15,P1,Sp Lisbon,N1,Ajax
+2223,el,2023-09-15,F1,Rennes,T1,Fenerbahce
+2122,el,2023-09-16,E0,Leicester,I1,Napoli
+2324,cl,2023-09-19,SP1,Barcelona,B1,Antwerp
+2324,cl,2023-09-19,N1,Feyenoord,SC0,Celtic
+2324,cl,2023-09-19,I1,Lazio,SP1,Ath Madrid
+2324,cl,2023-09-19,I1,Milan,E0,Newcastle
+2324,cl,2023-09-19,F1,Paris SG,D1,Dortmund
+2324,cl,2023-09-20,E0,Arsenal,N1,PSV Eindhoven
+2324,cl,2023-09-20,D1,Bayern Munich,E0,Man United
+2324,cl,2023-09-20,SP1,Real Madrid,D1,Union Berlin
+2324,cl,2023-09-20,SP1,Sevilla,F1,Lens
+2324,cl,2023-09-20,SP1,Sociedad,I1,Inter
+2324,cl,2023-09-20,P1,Sp Braga,I1,Napoli
+2324,el,2023-09-21,G1,Olympiakos,D1,Freiburg
+2122,cl,2023-09-28,N1,Ajax,T1,Besiktas
+2122,cl,2023-09-28,D1,Dortmund,P1,Sp Lisbon
+2324,cl,2023-10-03,I1,Inter,P1,Benfica
+2324,cl,2023-10-03,F1,Lens,E0,Arsenal
+2324,cl,2023-10-03,E0,Man United,T1,Galatasaray
+2324,cl,2023-10-03,I1,Napoli,SP1,Real Madrid
+2324,cl,2023-10-03,N1,PSV Eindhoven,SP1,Sevilla
+2324,cl,2023-10-03,D1,Union Berlin,P1,Sp Braga
+2324,cl,2023-10-04,SP1,Ath Madrid,N1,Feyenoord
+2324,cl,2023-10-04,SC0,Celtic,I1,Lazio
+2223,cl,2023-10-04,B1,Club Brugge,SP1,Ath Madrid
+2324,cl,2023-10-04,D1,Dortmund,I1,Milan
+2324,cl,2023-10-04,E0,Newcastle,F1,Paris SG
+2223,cl,2023-10-04,P1,Porto,D1,Leverkusen
+2324,cl,2023-10-04,P1,Porto,SP1,Barcelona
+2324,cl,2023-10-04,D1,RB Leipzig,E0,Man City
+2324,el,2023-10-05,D1,Freiburg,E0,West Ham
+2223,conf,2023-10-06,B1,Anderlecht,E0,West Ham
+2223,cl,2023-10-12,SP1,Ath Madrid,B1,Club Brugge
+2223,cl,2023-10-12,D1,Leverkusen,P1,Porto
+2223,conf,2023-10-13,E0,West Ham,B1,Anderlecht
+2122,cl,2023-10-19,N1,Ajax,D1,Dortmund
+2122,cl,2023-10-19,T1,Besiktas,P1,Sp Lisbon
+2324,cl,2023-10-24,P1,Benfica,SP1,Sociedad
+2324,cl,2023-10-24,T1,Galatasaray,D1,Bayern Munich
+2324,cl,2023-10-24,F1,Lens,N1,PSV Eindhoven
+2324,cl,2023-10-24,SP1,Sevilla,E0,Arsenal
+2324,cl,2023-10-24,P1,Sp Braga,SP1,Real Madrid
+2324,cl,2023-10-24,D1,Union Berlin,I1,Napoli
+2324,cl,2023-10-25,B1,Antwerp,P1,Porto
+2324,cl,2023-10-25,SC0,Celtic,SP1,Ath Madrid
+2324,cl,2023-10-25,N1,Feyenoord,I1,Lazio
+2324,cl,2023-10-25,E0,Newcastle,D1,Dortmund
+2324,cl,2023-10-25,F1,Paris SG,I1,Milan
+2223,cl,2023-10-26,SP1,Ath Madrid,D1,Leverkusen
+2223,cl,2023-10-26,B1,Club Brugge,P1,Porto
+2324,el,2023-10-26,G1,Olympiakos,E0,West Ham
+2223,el,2023-10-27,T1,Fenerbahce,F1,Rennes
+2223,cl,2023-11-01,D1,Leverkusen,B1,Club Brugge
+2223,cl,2023-11-01,P1,Porto,SP1,Ath Madrid
+2122,cl,2023-11-03,D1,Dortmund,N1,Ajax
+2122,cl,2023-11-03,P1,Sp Lisbon,T1,Besiktas
+2324,cl,2023-11-07,SP1,Ath Madrid,SC0,Celtic
+2324,cl,2023-11-07,D1,Dortmund,E0,Newcastle
+2324,cl,2023-11-07,I1,Lazio,N1,Feyenoord
+2324,cl,2023-11-07,I1,Milan,F1,Paris SG
+2324,cl,2023-11-07,P1,Porto,B1,Antwerp
+2324,cl,2023-11-08,E0,Arsenal,SP1,Sevilla
+2324,cl,2023-11-08,D1,Bayern Munich,T1,Galatasaray
+2324,cl,2023-11-08,I1,Napoli,D1,Union Berlin
+2324,cl,2023-11-08,N1,PSV Eindhoven,F1,Lens
+2324,cl,2023-11-08,SP1,Real Madrid,P1,Sp Braga
+2324,cl,2023-11-08,SP1,Sociedad,P1,Benfica
+2324,el,2023-11-09,E0,West Ham,G1,Olympiakos
+2122,cl,2023-11-24,T1,Besiktas,N1,Ajax
+2122,cl,2023-11-24,P1,Sp Lisbon,D1,Dortmund
+2324,cl,2023-11-28,SP1,Barcelona,P1,Porto
+2324,cl,2023-11-28,N1,Feyenoord,SP1,Ath Madrid
+2324,cl,2023-11-28,I1,Lazio,SC0,Celtic
+2324,cl,2023-11-28,E0,Man City,D1,RB Leipzig
+2324,cl,2023-11-28,I1,Milan,D1,Dortmund
+2324,cl,2023-11-28,F1,Paris SG,E0,Newcastle
+2324,cl,2023-11-29,E0,Arsenal,F1,Lens
+2324,cl,2023-11-29,P1,Benfica,I1,Inter
+2324,cl,2023-11-29,T1,Galatasaray,E0,Man United
+2324,cl,2023-11-29,SP1,Real Madrid,I1,Napoli
+2324,cl,2023-11-29,SP1,Sevilla,N1,PSV Eindhoven
+2324,cl,2023-11-29,P1,Sp Braga,D1,Union Berlin
+2324,el,2023-11-30,D1,Freiburg,G1,Olympiakos
+2122,cl,2023-12-07,N1,Ajax,P1,Sp Lisbon
+2122,cl,2023-12-07,D1,Dortmund,T1,Besiktas
+2122,el,2023-12-09,I1,Napoli,E0,Leicester
+2324,cl,2023-12-12,I1,Inter,SP1,Sociedad
+2324,cl,2023-12-12,F1,Lens,SP1,Sevilla
+2324,cl,2023-12-12,E0,Man United,D1,Bayern Munich
+2324,cl,2023-12-12,I1,Napoli,P1,Sp Braga
+2324,cl,2023-12-12,N1,PSV Eindhoven,E0,Arsenal
+2324,cl,2023-12-12,D1,Union Berlin,SP1,Real Madrid
+2324,cl,2023-12-13,B1,Antwerp,SP1,Barcelona
+2324,cl,2023-12-13,SP1,Ath Madrid,I1,Lazio
+2324,cl,2023-12-13,SC0,Celtic,N1,Feyenoord
+2324,cl,2023-12-13,D1,Dortmund,F1,Paris SG
+2324,cl,2023-12-13,E0,Newcastle,I1,Milan
+2324,el,2023-12-14,E0,West Ham,D1,Freiburg
+2324,cl,2024-02-13,D1,RB Leipzig,SP1,Real Madrid
+2324,cl,2024-02-14,I1,Lazio,D1,Bayern Munich
+2324,cl,2024-02-14,F1,Paris SG,SP1,Sociedad
+2324,conf,2024-02-15,B1,St. Gilloise,D1,Ein Frankfurt
+2324,el,2024-02-15,P1,Benfica,F1,Toulouse
+2324,el,2024-02-15,N1,Feyenoord,I1,Roma
+2324,el,2024-02-15,F1,Lens,D1,Freiburg
+2324,el,2024-02-15,I1,Milan,F1,Rennes
+2324,cl,2024-02-20,I1,Inter,SP1,Ath Madrid
+2324,cl,2024-02-20,N1,PSV Eindhoven,D1,Dortmund
+2324,cl,2024-02-21,I1,Napoli,SP1,Barcelona
+2324,cl,2024-02-21,P1,Porto,E0,Arsenal
+2324,conf,2024-02-22,D1,Ein Frankfurt,B1,St. Gilloise
+2324,el,2024-02-22,D1,Freiburg,F1,Lens
+2324,el,2024-02-22,F1,Rennes,I1,Milan
+2324,el,2024-02-22,I1,Roma,N1,Feyenoord
+2324,el,2024-02-22,F1,Toulouse,P1,Benfica
+2324,cl,2024-03-05,D1,Bayern Munich,I1,Lazio
+2324,cl,2024-03-05,SP1,Sociedad,F1,Paris SG
+2324,cl,2024-03-06,SP1,Real Madrid,D1,RB Leipzig
+2324,el,2024-03-06,P1,Sp Lisbon,I1,Atalanta
+2324,conf,2024-03-07,N1,Ajax,E0,Aston Villa
+2324,conf,2024-03-07,B1,St. Gilloise,T1,Fenerbahce
+2324,el,2024-03-07,P1,Benfica,SC0,Rangers
+2324,el,2024-03-07,D1,Freiburg,E0,West Ham
+2324,el,2024-03-07,F1,Marseille,SP1,Villarreal
+2324,el,2024-03-07,I1,Roma,E0,Brighton
+2324,cl,2024-03-12,E0,Arsenal,P1,Porto
+2324,cl,2024-03-12,SP1,Barcelona,I1,Napoli
+2324,cl,2024-03-13,SP1,Ath Madrid,I1,Inter
+2324,cl,2024-03-13,D1,Dortmund,N1,PSV Eindhoven
+2324,conf,2024-03-14,E0,Aston Villa,N1,Ajax
+2324,conf,2024-03-14,T1,Fenerbahce,B1,St. Gilloise
+2324,el,2024-03-14,I1,Atalanta,P1,Sp Lisbon
+2324,el,2024-03-14,E0,Brighton,I1,Roma
+2324,el,2024-03-14,SC0,Rangers,P1,Benfica
+2324,el,2024-03-14,SP1,Villarreal,F1,Marseille
+2324,el,2024-03-14,E0,West Ham,D1,Freiburg
+2324,cl,2024-04-09,E0,Arsenal,D1,Bayern Munich
+2324,cl,2024-04-09,SP1,Real Madrid,E0,Man City
+2324,cl,2024-04-10,SP1,Ath Madrid,D1,Dortmund
+2324,cl,2024-04-10,F1,Paris SG,SP1,Barcelona
+2324,conf,2024-04-11,E0,Aston Villa,F1,Lille
+2324,conf,2024-04-11,B1,Club Brugge,G1,PAOK
+2324,conf,2024-04-11,G1,Olympiakos,T1,Fenerbahce
+2324,el,2024-04-11,P1,Benfica,F1,Marseille
+2324,el,2024-04-11,D1,Leverkusen,E0,West Ham
+2324,el,2024-04-11,E0,Liverpool,I1,Atalanta
+2324,el,2024-04-11,I1,Milan,I1,Roma
+2324,cl,2024-04-16,SP1,Barcelona,F1,Paris SG
+2324,cl,2024-04-16,D1,Dortmund,SP1,Ath Madrid
+2324,cl,2024-04-17,D1,Bayern Munich,E0,Arsenal
+2324,cl,2024-04-17,E0,Man City,SP1,Real Madrid
+2324,conf,2024-04-18,T1,Fenerbahce,G1,Olympiakos
+2324,conf,2024-04-18,F1,Lille,E0,Aston Villa
+2324,conf,2024-04-18,G1,PAOK,B1,Club Brugge
+2324,el,2024-04-18,I1,Atalanta,E0,Liverpool
+2324,el,2024-04-18,F1,Marseille,P1,Benfica
+2324,el,2024-04-18,I1,Roma,I1,Milan
+2324,el,2024-04-18,E0,West Ham,D1,Leverkusen
+2324,cl,2024-04-30,D1,Bayern Munich,SP1,Real Madrid
+2324,cl,2024-05-01,D1,Dortmund,F1,Paris SG
+2324,conf,2024-05-02,E0,Aston Villa,G1,Olympiakos
+2324,conf,2024-05-02,I1,Fiorentina,B1,Club Brugge
+2324,el,2024-05-02,F1,Marseille,I1,Atalanta
+2324,el,2024-05-02,I1,Roma,D1,Leverkusen
+2324,cl,2024-05-07,F1,Paris SG,D1,Dortmund
+2324,cl,2024-05-08,SP1,Real Madrid,D1,Bayern Munich
+2324,conf,2024-05-08,B1,Club Brugge,I1,Fiorentina
+2324,conf,2024-05-09,G1,Olympiakos,E0,Aston Villa
+2324,el,2024-05-09,I1,Atalanta,F1,Marseille
+2324,el,2024-05-09,D1,Leverkusen,I1,Roma
+2324,el,2024-05-22,I1,Atalanta,D1,Leverkusen
+2324,conf,2024-05-29,G1,Olympiakos,I1,Fiorentina
+2324,cl,2024-06-01,D1,Dortmund,SP1,Real Madrid
+2223,cl,2024-09-07,I1,Inter,D1,Bayern Munich
+2223,cl,2024-09-13,D1,Bayern Munich,SP1,Barcelona
+2122,cl,2024-09-15,I1,Inter,SP1,Real Madrid
+2122,el,2024-09-16,D1,Ein Frankfurt,T1,Fenerbahce
+2122,el,2024-09-16,G1,Olympiakos,B1,Antwerp
+2425,cl,2024-09-17,I1,Juventus,N1,PSV Eindhoven
+2425,cl,2024-09-17,I1,Milan,E0,Liverpool
+2425,cl,2024-09-17,SP1,Real Madrid,D1,Stuttgart
+2425,cl,2024-09-17,P1,Sp Lisbon,F1,Lille
+2425,cl,2024-09-18,B1,Club Brugge,D1,Dortmund
+2425,cl,2024-09-18,E0,Man City,I1,Inter
+2425,cl,2024-09-18,F1,Paris SG,SP1,Girona
+2425,cl,2024-09-19,I1,Atalanta,E0,Arsenal
+2425,cl,2024-09-19,SP1,Ath Madrid,D1,RB Leipzig
+2425,cl,2024-09-19,N1,Feyenoord,D1,Leverkusen
+2324,el,2024-09-21,N1,Ajax,F1,Marseille
+2324,el,2024-09-21,E0,Brighton,G1,AEK
+2425,el,2024-09-25,T1,Galatasaray,G1,PAOK
+2425,el,2024-09-25,E0,Man United,N1,Twente
+2425,el,2024-09-25,F1,Nice,SP1,Sociedad
+2425,el,2024-09-26,N1,Ajax,T1,Besiktas
+2425,el,2024-09-26,T1,Fenerbahce,B1,St. Gilloise
+2425,el,2024-09-26,F1,Lyon,G1,Olympiakos
+2425,el,2024-09-26,I1,Roma,SP1,Ath Bilbao
+2122,el,2024-09-30,B1,Antwerp,D1,Ein Frankfurt
+2122,el,2024-09-30,T1,Fenerbahce,G1,Olympiakos
+2425,cl,2024-10-01,E0,Arsenal,F1,Paris SG
+2425,cl,2024-10-01,D1,Dortmund,SC0,Celtic
+2425,cl,2024-10-01,D1,Leverkusen,I1,Milan
+2425,cl,2024-10-01,N1,PSV Eindhoven,P1,Sp Lisbon
+2425,cl,2024-10-02,E0,Aston Villa,D1,Bayern Munich
+2425,cl,2024-10-02,P1,Benfica,SP1,Ath Madrid
+2425,cl,2024-10-02,SP1,Girona,N1,Feyenoord
+2425,cl,2024-10-02,F1,Lille,SP1,Real Madrid
+2425,cl,2024-10-02,E0,Liverpool,I1,Bologna
+2425,cl,2024-10-02,D1,RB Leipzig,I1,Juventus
+2425,conf,2024-10-03,E0,Chelsea,B1,Gent
+2425,el,2024-10-03,SP1,Ath Bilbao,N1,AZ Alkmaar
+2425,el,2024-10-03,T1,Besiktas,D1,Ein Frankfurt
+2425,el,2024-10-03,I1,Lazio,F1,Nice
+2425,el,2024-10-03,G1,Olympiakos,P1,Sp Braga
+2425,el,2024-10-03,P1,Porto,E0,Man United
+2425,el,2024-10-03,SC0,Rangers,F1,Lyon
+2425,el,2024-10-03,SP1,Sociedad,B1,Anderlecht
+2425,el,2024-10-03,N1,Twente,T1,Fenerbahce
+2223,cl,2024-10-04,I1,Inter,SP1,Barcelona
+2324,el,2024-10-05,G1,AEK,N1,Ajax
+2324,el,2024-10-05,F1,Marseille,E0,Brighton
+2223,el,2024-10-06,I1,Roma,SP1,Betis
+2223,cl,2024-10-12,SP1,Barcelona,I1,Inter
+2223,el,2024-10-13,SP1,Betis,I1,Roma
+2122,el,2024-10-21,D1,Ein Frankfurt,G1,Olympiakos
+2122,el,2024-10-21,T1,Fenerbahce,B1,Antwerp
+2425,cl,2024-10-22,E0,Aston Villa,I1,Bologna
+2425,cl,2024-10-22,I1,Juventus,D1,Stuttgart
+2425,cl,2024-10-22,I1,Milan,B1,Club Brugge
+2425,cl,2024-10-22,F1,Paris SG,N1,PSV Eindhoven
+2425,cl,2024-10-22,SP1,Real Madrid,D1,Dortmund
+2425,cl,2024-10-23,I1,Atalanta,SC0,Celtic
+2425,cl,2024-10-23,SP1,Ath Madrid,F1,Lille
+2425,cl,2024-10-23,SP1,Barcelona,D1,Bayern Munich
+2425,cl,2024-10-23,P1,Benfica,N1,Feyenoord
+2425,cl,2024-10-23,F1,Brest,D1,Leverkusen
+2425,cl,2024-10-23,D1,RB Leipzig,E0,Liverpool
+2425,conf,2024-10-24,G1,Panathinaikos,E0,Chelsea
+2425,el,2024-10-24,T1,Fenerbahce,E0,Man United
+2425,el,2024-10-24,F1,Lyon,T1,Besiktas
+2425,el,2024-10-24,P1,Porto,D1,Hoffenheim
+2425,el,2024-10-24,E0,Tottenham,N1,AZ Alkmaar
+2425,el,2024-10-24,N1,Twente,I1,Lazio
+2223,cl,2024-10-26,SP1,Barcelona,D1,Bayern Munich
+2324,el,2024-10-26,E0,Brighton,N1,Ajax
+2324,el,2024-10-26,F1,Marseille,G1,AEK
+2223,cl,2024-11-01,D1,Bayern Munich,I1,Inter
+2122,el,2024-11-04,B1,Antwerp,T1,Fenerbahce
+2122,el,2024-11-04,G1,Olympiakos,D1,Ein Frankfurt
+2425,cl,2024-11-05,SC0,Celtic,D1,RB Leipzig
+2425,cl,2024-11-05,F1,Lille,I1,Juventus
+2425,cl,2024-11-05,E0,Liverpool,D1,Leverkusen
+2425,cl,2024-11-05,N1,PSV Eindhoven,SP1,Girona
+2425,cl,2024-11-05,SP1,Real Madrid,I1,Milan
+2425,cl,2024-11-05,P1,Sp Lisbon,E0,Man City
+2425,cl,2024-11-06,D1,Bayern Munich,P1,Benfica
+2425,cl,2024-11-06,B1,Club Brugge,E0,Aston Villa
+2425,cl,2024-11-06,I1,Inter,E0,Arsenal
+2425,cl,2024-11-06,F1,Paris SG,SP1,Ath Madrid
+2425,cl,2024-11-06,D1,Stuttgart,I1,Atalanta
+2425,conf,2024-11-07,SC0,Hearts,D1,Heidenheim
+2425,el,2024-11-07,N1,AZ Alkmaar,T1,Fenerbahce
+2425,el,2024-11-07,T1,Galatasaray,E0,Tottenham
+2425,el,2024-11-07,D1,Hoffenheim,F1,Lyon
+2425,el,2024-11-07,I1,Lazio,P1,Porto
+2425,el,2024-11-07,E0,Man United,G1,PAOK
+2425,el,2024-11-07,F1,Nice,N1,Twente
+2425,el,2024-11-07,G1,Olympiakos,SC0,Rangers
+2425,el,2024-11-07,B1,St. Gilloise,I1,Roma
+2324,el,2024-11-09,G1,AEK,F1,Marseille
+2324,el,2024-11-09,N1,Ajax,E0,Brighton
+2122,el,2024-11-25,D1,Ein Frankfurt,B1,Antwerp
+2122,el,2024-11-25,G1,Olympiakos,T1,Fenerbahce
+2425,cl,2024-11-26,SP1,Barcelona,F1,Brest
+2425,cl,2024-11-26,D1,Bayern Munich,F1,Paris SG
+2425,cl,2024-11-26,I1,Inter,D1,RB Leipzig
+2425,cl,2024-11-26,E0,Man City,N1,Feyenoord
+2425,cl,2024-11-26,P1,Sp Lisbon,E0,Arsenal
+2425,cl,2024-11-27,E0,Aston Villa,I1,Juventus
+2425,cl,2024-11-27,I1,Bologna,F1,Lille
+2425,cl,2024-11-27,SC0,Celtic,B1,Club Brugge
+2425,cl,2024-11-27,E0,Liverpool,SP1,Real Madrid
+2425,conf,2024-11-28,B1,Cercle Brugge,SC0,Hearts
+2425,conf,2024-11-28,D1,Heidenheim,E0,Chelsea
+2425,el,2024-11-28,N1,AZ Alkmaar,T1,Galatasaray
+2425,el,2024-11-28,B1,Anderlecht,P1,Porto
+2425,el,2024-11-28,F1,Nice,SC0,Rangers
+2425,el,2024-11-28,SP1,Sociedad,N1,Ajax
+2425,el,2024-11-28,P1,Sp Braga,D1,Hoffenheim
+2425,el,2024-11-28,E0,Tottenham,I1,Roma
+2425,el,2024-11-28,N1,Twente,B1,St. Gilloise
+2324,el,2024-11-30,G1,AEK,E0,Brighton
+2324,el,2024-11-30,F1,Marseille,N1,Ajax
+2122,cl,2024-12-07,SP1,Real Madrid,I1,Inter
+2122,el,2024-12-09,B1,Antwerp,G1,Olympiakos
+2122,el,2024-12-09,T1,Fenerbahce,D1,Ein Frankfurt
+2425,cl,2024-12-10,I1,Atalanta,SP1,Real Madrid
+2425,cl,2024-12-10,F1,Brest,N1,PSV Eindhoven
+2425,cl,2024-12-10,B1,Club Brugge,P1,Sp Lisbon
+2425,cl,2024-12-10,SP1,Girona,E0,Liverpool
+2425,cl,2024-12-10,D1,Leverkusen,I1,Inter
+2425,cl,2024-12-10,D1,RB Leipzig,E0,Aston Villa
+2425,cl,2024-12-11,P1,Benfica,I1,Bologna
+2425,cl,2024-12-11,D1,Dortmund,SP1,Barcelona
+2425,cl,2024-12-11,I1,Juventus,E0,Man City
+2425,el,2024-12-11,T1,Fenerbahce,SP1,Ath Bilbao
+2425,conf,2024-12-12,T1,Buyuksehyr,D1,Heidenheim
+2425,el,2024-12-12,N1,Ajax,I1,Lazio
+2425,el,2024-12-12,F1,Lyon,D1,Ein Frankfurt
+2425,el,2024-12-12,G1,Olympiakos,N1,Twente
+2425,el,2024-12-12,SC0,Rangers,E0,Tottenham
+2425,el,2024-12-12,I1,Roma,P1,Sp Braga
+2425,el,2024-12-12,B1,St. Gilloise,F1,Nice
+2324,el,2024-12-14,N1,Ajax,G1,AEK
+2324,el,2024-12-14,E0,Brighton,F1,Marseille
+2425,conf,2024-12-19,B1,Cercle Brugge,T1,Buyuksehyr
+2425,conf,2024-12-19,P1,Guimaraes,I1,Fiorentina
+2425,cl,2025-01-21,SP1,Ath Madrid,D1,Leverkusen
+2425,cl,2025-01-21,P1,Benfica,SP1,Barcelona
+2425,cl,2025-01-21,I1,Bologna,D1,Dortmund
+2425,cl,2025-01-21,B1,Club Brugge,I1,Juventus
+2425,cl,2025-01-21,E0,Liverpool,F1,Lille
+2425,cl,2025-01-22,N1,Feyenoord,D1,Bayern Munich
+2425,cl,2025-01-22,I1,Milan,SP1,Girona
+2425,cl,2025-01-22,F1,Paris SG,E0,Man City
+2425,cl,2025-01-22,D1,RB Leipzig,P1,Sp Lisbon
+2425,el,2025-01-22,T1,Besiktas,SP1,Ath Bilbao
+2425,el,2025-01-23,N1,AZ Alkmaar,I1,Roma
+2425,el,2025-01-23,T1,Fenerbahce,F1,Lyon
+2425,el,2025-01-23,D1,Hoffenheim,E0,Tottenham
+2425,el,2025-01-23,I1,Lazio,SP1,Sociedad
+2425,el,2025-01-23,E0,Man United,SC0,Rangers
+2425,el,2025-01-23,P1,Porto,G1,Olympiakos
+2425,el,2025-01-23,B1,St. Gilloise,P1,Sp Braga
+2425,cl,2025-01-29,E0,Aston Villa,SC0,Celtic
+2425,cl,2025-01-29,SP1,Barcelona,I1,Atalanta
+2425,cl,2025-01-29,F1,Brest,SP1,Real Madrid
+2425,cl,2025-01-29,SP1,Girona,E0,Arsenal
+2425,cl,2025-01-29,I1,Juventus,P1,Benfica
+2425,cl,2025-01-29,F1,Lille,N1,Feyenoord
+2425,cl,2025-01-29,E0,Man City,B1,Club Brugge
+2425,cl,2025-01-29,N1,PSV Eindhoven,E0,Liverpool
+2425,cl,2025-01-29,P1,Sp Lisbon,I1,Bologna
+2425,cl,2025-01-29,D1,Stuttgart,F1,Paris SG
+2425,el,2025-01-30,N1,Ajax,T1,Galatasaray
+2425,el,2025-01-30,B1,Anderlecht,D1,Hoffenheim
+2425,el,2025-01-30,SC0,Rangers,B1,St. Gilloise
+2425,el,2025-01-30,I1,Roma,D1,Ein Frankfurt
+2425,el,2025-01-30,SP1,Sociedad,G1,PAOK
+2425,el,2025-01-30,P1,Sp Braga,I1,Lazio
+2425,el,2025-01-30,N1,Twente,T1,Besiktas
+2425,cl,2025-02-11,F1,Brest,F1,Paris SG
+2425,cl,2025-02-11,I1,Juventus,N1,PSV Eindhoven
+2425,cl,2025-02-11,E0,Man City,SP1,Real Madrid
+2425,cl,2025-02-11,P1,Sp Lisbon,D1,Dortmund
+2425,cl,2025-02-12,SC0,Celtic,D1,Bayern Munich
+2425,cl,2025-02-12,B1,Club Brugge,I1,Atalanta
+2425,cl,2025-02-12,N1,Feyenoord,I1,Milan
+2425,conf,2025-02-13,B1,Gent,SP1,Betis
+2425,el,2025-02-13,N1,AZ Alkmaar,T1,Galatasaray
+2425,el,2025-02-13,T1,Fenerbahce,B1,Anderlecht
+2425,el,2025-02-13,P1,Porto,I1,Roma
+2425,el,2025-02-13,B1,St. Gilloise,N1,Ajax
+2425,cl,2025-02-18,I1,Atalanta,B1,Club Brugge
+2425,cl,2025-02-18,D1,Bayern Munich,SC0,Celtic
+2425,cl,2025-02-18,I1,Milan,N1,Feyenoord
+2425,cl,2025-02-19,D1,Dortmund,P1,Sp Lisbon
+2425,cl,2025-02-19,N1,PSV Eindhoven,I1,Juventus
+2425,cl,2025-02-19,F1,Paris SG,F1,Brest
+2425,cl,2025-02-19,SP1,Real Madrid,E0,Man City
+2425,conf,2025-02-20,SP1,Betis,B1,Gent
+2425,el,2025-02-20,N1,Ajax,B1,St. Gilloise
+2425,el,2025-02-20,B1,Anderlecht,T1,Fenerbahce
+2425,el,2025-02-20,T1,Galatasaray,N1,AZ Alkmaar
+2425,el,2025-02-20,I1,Roma,P1,Porto
+2425,cl,2025-03-04,B1,Club Brugge,E0,Aston Villa
+2425,cl,2025-03-04,D1,Dortmund,F1,Lille
+2425,cl,2025-03-04,N1,PSV Eindhoven,E0,Arsenal
+2425,cl,2025-03-04,SP1,Real Madrid,SP1,Ath Madrid
+2425,cl,2025-03-05,D1,Bayern Munich,D1,Leverkusen
+2425,cl,2025-03-05,P1,Benfica,SP1,Barcelona
+2425,cl,2025-03-05,N1,Feyenoord,I1,Inter
+2425,cl,2025-03-05,F1,Paris SG,E0,Liverpool
+2425,conf,2025-03-06,SP1,Betis,P1,Guimaraes
+2425,conf,2025-03-06,G1,Panathinaikos,I1,Fiorentina
+2425,el,2025-03-06,N1,AZ Alkmaar,E0,Tottenham
+2425,el,2025-03-06,N1,Ajax,D1,Ein Frankfurt
+2425,el,2025-03-06,T1,Fenerbahce,SC0,Rangers
+2425,el,2025-03-06,I1,Roma,SP1,Ath Bilbao
+2425,el,2025-03-06,SP1,Sociedad,E0,Man United
+2425,cl,2025-03-11,SP1,Barcelona,P1,Benfica
+2425,cl,2025-03-11,I1,Inter,N1,Feyenoord
+2425,cl,2025-03-11,D1,Leverkusen,D1,Bayern Munich
+2425,cl,2025-03-11,E0,Liverpool,F1,Paris SG
+2425,cl,2025-03-12,E0,Arsenal,N1,PSV Eindhoven
+2425,cl,2025-03-12,E0,Aston Villa,B1,Club Brugge
+2425,cl,2025-03-12,SP1,Ath Madrid,SP1,Real Madrid
+2425,cl,2025-03-12,F1,Lille,D1,Dortmund
+2425,conf,2025-03-13,I1,Fiorentina,G1,Panathinaikos
+2425,conf,2025-03-13,P1,Guimaraes,SP1,Betis
+2425,el,2025-03-13,SP1,Ath Bilbao,I1,Roma
+2425,el,2025-03-13,D1,Ein Frankfurt,N1,Ajax
+2425,el,2025-03-13,E0,Man United,SP1,Sociedad
+2425,el,2025-03-13,SC0,Rangers,T1,Fenerbahce
+2425,el,2025-03-13,E0,Tottenham,N1,AZ Alkmaar
+2425,cl,2025-04-08,E0,Arsenal,SP1,Real Madrid
+2425,cl,2025-04-08,D1,Bayern Munich,I1,Inter
+2425,cl,2025-04-09,SP1,Barcelona,D1,Dortmund
+2425,cl,2025-04-09,F1,Paris SG,E0,Aston Villa
+2425,el,2025-04-10,F1,Lyon,E0,Man United
+2425,el,2025-04-10,SC0,Rangers,SP1,Ath Bilbao
+2425,el,2025-04-10,E0,Tottenham,D1,Ein Frankfurt
+2425,cl,2025-04-15,E0,Aston Villa,F1,Paris SG
+2425,cl,2025-04-15,D1,Dortmund,SP1,Barcelona
+2425,cl,2025-04-16,I1,Inter,D1,Bayern Munich
+2425,cl,2025-04-16,SP1,Real Madrid,E0,Arsenal
+2425,el,2025-04-17,SP1,Ath Bilbao,SC0,Rangers
+2425,el,2025-04-17,D1,Ein Frankfurt,E0,Tottenham
+2425,el,2025-04-17,E0,Man United,F1,Lyon
+2425,cl,2025-04-29,E0,Arsenal,F1,Paris SG
+2425,cl,2025-04-30,SP1,Barcelona,I1,Inter
+2425,conf,2025-05-01,SP1,Betis,I1,Fiorentina
+2425,el,2025-05-01,SP1,Ath Bilbao,E0,Man United
+2425,cl,2025-05-06,I1,Inter,SP1,Barcelona
+2425,cl,2025-05-07,F1,Paris SG,E0,Arsenal
+2425,conf,2025-05-08,I1,Fiorentina,SP1,Betis
+2425,el,2025-05-08,E0,Man United,SP1,Ath Bilbao
+2425,el,2025-05-21,E0,Tottenham,E0,Man United
+2425,conf,2025-05-28,SP1,Betis,E0,Chelsea
+2425,cl,2025-05-31,F1,Paris SG,I1,Inter
+2223,cl,2025-09-07,D1,Ein Frankfurt,P1,Sp Lisbon
+2223,cl,2025-09-07,E0,Tottenham,F1,Marseille
+2223,conf,2025-09-08,F1,Nice,D1,FC Koln
+2223,el,2025-09-08,D1,Union Berlin,B1,St. Gilloise
+2223,cl,2025-09-13,F1,Marseille,D1,Ein Frankfurt
+2223,cl,2025-09-13,P1,Sp Lisbon,E0,Tottenham
+2122,cl,2025-09-14,SP1,Barcelona,D1,Bayern Munich
+2223,el,2025-09-15,P1,Sp Braga,D1,Union Berlin
+2122,el,2025-09-16,T1,Galatasaray,I1,Lazio
+2324,el,2025-09-21,SC0,Rangers,SP1,Betis
+2122,cl,2025-09-29,P1,Benfica,SP1,Barcelona
+2122,el,2025-09-30,F1,Marseille,T1,Galatasaray
+2223,cl,2025-10-04,D1,Ein Frankfurt,E0,Tottenham
+2223,cl,2025-10-04,F1,Marseille,P1,Sp Lisbon
+2223,el,2025-10-06,P1,Sp Braga,B1,St. Gilloise
+2223,cl,2025-10-12,P1,Sp Lisbon,F1,Marseille
+2223,cl,2025-10-12,E0,Tottenham,D1,Ein Frankfurt
+2223,el,2025-10-13,B1,St. Gilloise,P1,Sp Braga
+2122,cl,2025-10-20,P1,Benfica,D1,Bayern Munich
+2122,conf,2025-10-21,N1,Feyenoord,D1,Union Berlin
+2122,el,2025-10-21,I1,Lazio,F1,Marseille
+2223,cl,2025-10-26,D1,Ein Frankfurt,F1,Marseille
+2223,cl,2025-10-26,E0,Tottenham,P1,Sp Lisbon
+2223,el,2025-10-27,D1,Union Berlin,P1,Sp Braga
+2223,cl,2025-11-01,F1,Marseille,E0,Tottenham
+2223,cl,2025-11-01,P1,Sp Lisbon,D1,Ein Frankfurt
+2122,cl,2025-11-02,D1,Bayern Munich,P1,Benfica
+2223,conf,2025-11-03,D1,FC Koln,F1,Nice
+2223,el,2025-11-03,B1,St. Gilloise,D1,Union Berlin
+2122,conf,2025-11-04,D1,Union Berlin,N1,Feyenoord
+2122,el,2025-11-04,F1,Marseille,I1,Lazio
+2122,cl,2025-11-23,SP1,Barcelona,P1,Benfica
+2122,el,2025-11-25,T1,Galatasaray,F1,Marseille
+2122,cl,2025-12-08,D1,Bayern Munich,SP1,Barcelona
+2122,el,2025-12-09,I1,Lazio,T1,Galatasaray
+2324,el,2025-12-14,SP1,Betis,SC0,Rangers
+2223,el,2026-09-08,E0,Man United,SP1,Sociedad
+2122,cl,2026-09-14,SP1,Villarreal,I1,Atalanta
+2324,conf,2026-09-21,B1,Club Brugge,T1,Besiktas
+2122,cl,2026-09-29,E0,Man United,SP1,Villarreal
+2223,cl,2026-10-05,E0,Chelsea,I1,Milan
+2324,el,2026-10-05,P1,Sp Lisbon,I1,Atalanta
+2223,cl,2026-10-11,I1,Milan,E0,Chelsea
+2122,cl,2026-10-20,E0,Man United,I1,Atalanta
+2122,cl,2026-11-02,I1,Atalanta,E0,Man United
+2223,el,2026-11-03,SP1,Sociedad,E0,Man United
+2122,cl,2026-11-23,SP1,Villarreal,E0,Man United
+2324,conf,2026-11-30,T1,Besiktas,B1,Club Brugge
+2324,el,2026-11-30,I1,Atalanta,P1,Sp Lisbon
+2122,cl,2026-12-09,I1,Atalanta,SP1,Villarreal
+2223,cl,2027-09-06,SC0,Celtic,SP1,Real Madrid
+2223,el,2027-09-08,I1,Lazio,N1,Feyenoord
+2122,cl,2027-09-14,F1,Lille,D1,Wolfsburg
+2223,cl,2027-09-14,SP1,Real Madrid,D1,RB Leipzig
+2122,conf,2027-09-16,F1,Rennes,E0,Tottenham
+2122,el,2027-09-16,SP1,Betis,SC0,Celtic
+2324,el,2027-09-21,B1,St. Gilloise,F1,Toulouse
+2122,cl,2027-09-29,D1,Wolfsburg,SP1,Sevilla
+2122,conf,2027-09-30,N1,Vitesse,F1,Rennes
+2122,el,2027-09-30,SC0,Celtic,D1,Leverkusen
+2223,cl,2027-10-05,D1,RB Leipzig,SC0,Celtic
+2324,el,2027-10-05,E0,Liverpool,B1,St. Gilloise
+2223,cl,2027-10-11,SC0,Celtic,D1,RB Leipzig
+2122,cl,2027-10-20,F1,Lille,SP1,Sevilla
+2122,conf,2027-10-21,N1,Vitesse,E0,Tottenham
+2122,el,2027-10-21,SP1,Betis,D1,Leverkusen
+2223,cl,2027-10-25,D1,RB Leipzig,SP1,Real Madrid
+2324,conf,2027-10-26,N1,AZ Alkmaar,E0,Aston Villa
+2324,el,2027-10-26,E0,Liverpool,F1,Toulouse
+2223,cl,2027-11-02,SP1,Real Madrid,SC0,Celtic
+2122,cl,2027-11-02,SP1,Sevilla,F1,Lille
+2223,el,2027-11-03,N1,Feyenoord,I1,Lazio
+2122,conf,2027-11-04,E0,Tottenham,N1,Vitesse
+2122,el,2027-11-04,D1,Leverkusen,SP1,Betis
+2324,conf,2027-11-09,E0,Aston Villa,N1,AZ Alkmaar
+2324,el,2027-11-09,F1,Toulouse,E0,Liverpool
+2122,cl,2027-11-23,SP1,Sevilla,D1,Wolfsburg
+2122,conf,2027-11-25,F1,Rennes,N1,Vitesse
+2122,el,2027-11-25,D1,Leverkusen,SC0,Celtic
+2324,el,2027-11-30,F1,Toulouse,B1,St. Gilloise
+2122,cl,2027-12-08,D1,Wolfsburg,F1,Lille
+2122,conf,2027-12-09,E0,Tottenham,F1,Rennes
+2122,el,2027-12-09,SC0,Celtic,SP1,Betis
+2324,el,2027-12-14,B1,St. Gilloise,E0,Liverpool
+2223,cl,2028-09-06,SP1,Sevilla,E0,Man City
+2223,el,2028-09-08,F1,Nantes,G1,Olympiakos
+2223,cl,2028-09-14,E0,Man City,D1,Dortmund
+2223,el,2028-09-15,G1,Olympiakos,D1,Freiburg
+2324,conf,2028-09-21,B1,Genk,I1,Fiorentina
+2324,el,2028-09-21,G1,Panathinaikos,SP1,Villarreal
+2122,cl,2028-09-29,I1,Juventus,E0,Chelsea
+2223,cl,2028-10-05,SP1,Sevilla,D1,Dortmund
+2324,el,2028-10-05,SP1,Villarreal,F1,Rennes
+2223,el,2028-10-06,D1,Freiburg,F1,Nantes
+2223,cl,2028-10-11,D1,Dortmund,SP1,Sevilla
+2223,el,2028-10-13,F1,Nantes,D1,Freiburg
+2122,el,2028-10-21,E0,West Ham,B1,Genk
+2223,cl,2028-10-25,D1,Dortmund,E0,Man City
+2324,el,2028-10-26,G1,Panathinaikos,F1,Rennes
+2223,el,2028-10-27,D1,Freiburg,G1,Olympiakos
+2223,cl,2028-11-02,E0,Man City,SP1,Sevilla
+2223,el,2028-11-03,G1,Olympiakos,F1,Nantes
+2122,el,2028-11-04,B1,Genk,E0,West Ham
+2324,el,2028-11-09,F1,Rennes,G1,Panathinaikos
+2122,cl,2028-11-23,E0,Chelsea,I1,Juventus
+2324,conf,2028-11-30,I1,Fiorentina,B1,Genk
+2324,el,2028-11-30,SP1,Villarreal,G1,Panathinaikos
+2324,el,2028-12-14,F1,Rennes,SP1,Villarreal
+2223,cl,2029-09-06,F1,Paris SG,I1,Juventus
+2223,cl,2029-09-14,I1,Juventus,P1,Benfica
+2324,conf,2029-09-21,D1,Ein Frankfurt,SC0,Aberdeen
+2223,cl,2029-10-05,P1,Benfica,F1,Paris SG
+2324,conf,2029-10-05,G1,PAOK,D1,Ein Frankfurt
+2223,el,2029-10-06,F1,Monaco,T1,Trabzonspor
+2223,cl,2029-10-11,F1,Paris SG,P1,Benfica
+2223,el,2029-10-13,T1,Trabzonspor,F1,Monaco
+2223,cl,2029-10-25,P1,Benfica,I1,Juventus
+2324,conf,2029-10-26,SC0,Aberdeen,G1,PAOK
+2223,cl,2029-11-02,I1,Juventus,F1,Paris SG
+2324,conf,2029-11-09,G1,PAOK,SC0,Aberdeen
+2324,conf,2029-11-30,D1,Ein Frankfurt,G1,PAOK
+2324,conf,2029-12-14,SC0,Aberdeen,D1,Ein Frankfurt
