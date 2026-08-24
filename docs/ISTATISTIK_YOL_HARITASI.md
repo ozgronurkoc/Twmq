@@ -138,7 +138,7 @@ ayrı tabloda tutulmuştur.
 | Katman | Dosya | Rol |
 |---|---|---|
 | Okuma | `backend/scripts/super_toto_hafta.py` | Haftayı **geçen sezonun kendi ölçümlerine** oturtur (favori bantları, çift kapsama, beraberlik profili, lig kırılımı). Arşive **yazmaz**. `kamuoyu()` havuz kenarını ölçer |
-| Analiz | `backend/scripts/super_toto_degerlendir.py` | Sonuç sonrası: kaçakların Poisson-binom dağılımı, banko karnesi, **kalabalık karnesi**, ikramiye özeti; **iki kaydın kıyası ve birleşimi**, kalabalık ayarı karnesi, atılan sembol defteri, görüş ve ölçek karneleri, **gerçeğin sırası** (§3.38) |
+| Analiz | `backend/scripts/super_toto_degerlendir.py` | Sonuç sonrası: kaçakların Poisson-binom dağılımı, banko karnesi, **kalabalık karnesi**, ikramiye özeti; **iki kaydın kıyası ve birleşimi**, kalabalık ayarı karnesi, atılan sembol defteri, görüş ve ölçek karneleri, **gerçeğin sırası** (§3.38); **dış kuponlar**, oynanma biçimi (`fix16`/`tam`), P(15) ve **azami kapsamadan sapma defteri** (§3.39) |
 | Üretim | `backend/scripts/super_toto_sayfa.py` | Hafta raporu sayfası; sayfadaki hiçbir sayı elle yazılmaz, boru hattından okunur |
 | **2. Tahmin** | `backend/scripts/super_toto_tahmin2.py` | Aynı haftayı bugünkü aletlerin tamamıyla yeniden okur (§3.37): `shin` ölçek + `hedef` kural + **kalabalık ayarı** + bağımsız görüş + marj duyarlılığı. 1. Tahmin'in kaydını **değiştirmez** |
 | Karar | `backend/spor_toto/secim.py` → `kalabalik_ayari` | İşaret **sayıları** sabit, hangi sembol sorusu yeniden sorulur; `küme-içi / kalabalık-içi` oranını Pareto DP ile enbüyükler |
@@ -148,11 +148,11 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/components/super-toto/tahmin2.tsx` | **2. Tahmin** paneli — `1. Tahmin` / `2. Tahmin` sekmeleri arasında geçilir; para birimli hiçbir sayı yok. Hafta kapandığında sonuç sütunu ve ayar karnesi açılır (§3.38) |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **1.593 test**; **82'si** istatistik katmanına (`history` `odds` `backtest`
+paketi toplam **1.602 test**; **82'si** istatistik katmanına (`history` `odds` `backtest`
 `api_stats` `api_backtest` `snapshot_iddaa`), **491'i** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre`
-`avrupa` `sehir`), **29'u** 2. Tahmin'e (`tahmin2`), **15'i** sonuç değerlendirmesine (`degerlendir`). Dosya adlarıyla sayılıdır ki tablo elle bakım gerektirmesin —
+`avrupa` `sehir`), **29'u** 2. Tahmin'e (`tahmin2`), **24'ü** sonuç değerlendirmesine (`degerlendir`). Dosya adlarıyla sayılıdır ki tablo elle bakım gerektirmesin —
 `tests/test_belgeler.py` onları gerçek koleksiyona karşı denetler.
 `python -m spor_toto.health` **25 değişmez** çalıştırır — ikisi (`oran_arsivi`, `geri_test`)
 istatistik katmanını, biri (`tahmin_referanslari`) tahmin katmanının ölçüm koşumunu korur,
@@ -3071,6 +3071,117 @@ varsayımı yapan her satırı bir kerede görünür kılıyor.
     python scripts/super_toto_degerlendir.py --hafta 2
     python scripts/super_toto_sezon.py
 
+### 3.39 15 bilen kupon — şekil değil, altı sembol
+
+2. haftanın 15 bilen kuponu kayda geçti (`hafta_02_kupon.json` → `referans`).
+Kupon **bize ait değil**, kuralın ürünü de değil; ayrı bir başlıkta, kaynağıyla
+durur. Sorusu tek: *bu kuponu bizimkinden ayıran şey neydi — bütçe mi, şekil mi,
+işaret seçimi mi?*
+
+    2  12 12 1  02 10 12 12 12 02 12 02 10 10 02      2 banko + 13 çifte
+
+#### Önce oynanma biçimi, çünkü puanı o belirliyor
+
+| Kupon | Sistem | Kolon | P(15) | P(≥14) | P(≥13) | P(≥12) | Kalabalık oranı | Gerçek |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| **15 bilen** | tam | 8.192 | %1,13 | %7,09 | %21,64 | %43,57 | 0,81 | **15**/15 |
+| 1. Tahmin ana | fix16 | 4.096 | %0,34 | %2,64 | %13,65 | %34,87 | 0,72 | 12/15 |
+| 2. Tahmin ayarlı | fix16 | 1.296 | %0,34 | %2,76 | %14,85 | %38,39 | 0,81 | 12/15 |
+
+İki sütun **sistemden** okunur ve bu ayrım kozmetik değil: 16 satırlık kaplama
+seçim uzayının bir dilimini oynar, küme içinde kalmak **14** demektir; tam sistem
+uzayın tamamını oynar, küme içinde kalmak **15** demektir.
+
+Bunun doğrudan sonucu: **aynı işaretler 16 satırda 1.024 kolon eder ve 14 verirdi.**
+Yani 15'i satın alan şey işaret seçimi değil, kalan 7.168 kolonluk **tam
+kapsamadır**. Bu kupon 14'ü sekizde bir fiyata alabilirdi; 15 için sekiz katını
+ödedi ve bu hafta karşılığını aldı.
+
+Ölçüde ters bir yer daha var: **P(15) kolon başına** bizim planımızda daha yüksek
+(2,6×10⁻⁶ ↔ 1,4×10⁻⁶). Kupon mutlak olasılığı 3,3 kat büyüttü, bedeli 6,3 kat
+büyüterek. Hangisinin doğru olduğu bütçeye ve ikramiye yapısına bağlıdır —
+15 devreden bir jackpot iken mutlak olasılık, 12-13 hedeflenirken kolon başına
+verim okunur. **Bu bir tercih farkı, hata değil.**
+
+#### Asıl fark: azami kapsamadan altı sapma
+
+Mekanik referans, her maçta en olası `k` sembolü işaretlemektir; kuralımız da
+tam olarak bunu yapar. Kupon bu seçimden **altı maçta** saptı ve toplam
+**19,6 puan** kapsama verdi:
+
+| # | Maç | İşaret | Azami | Gerçek | Sonuç |
+|---:|---|---|---|---|---|
+| 5 | Eyüpspor – Gaziantep | 02 | 12 | 2 | fark etmedi |
+| 6 | Trabzonspor – Başakşehir | 10 | 12 | 1 | fark etmedi |
+| 7 | Alanyaspor – Beşiktaş | 12 | 02 | 1 | **kazandı** |
+| 8 | Göztepe – Gençlerbirliği | 12 | 10 | 2 | **kazandı** |
+| 11 | Marsilya – Strasbourg | 12 | 10 | 1 | fark etmedi |
+| 12 | Newcastle – Liverpool | 02 | 12 | 0 | **kazandı** |
+
+Kazanan üç sapma, **bizim bütün planlarımızı bozan üç maçın ta kendisi**
+(§3.38: 7, 8 ve 12).
+
+Ve kritik karşı-olgusal: **aynı şeklin azami kapsama sürümü 12/15 alıyor** —
+bizim aldığımız sayının aynısı — üstelik küme-içi olasılığı daha yüksekken
+(%1,47 ↔ %1,13). Yani 8.192 kolon, 13 çifte ve tam sistem tek başına 12
+veriyor. **Farkı yapan şey şekil ya da bütçe değil, altı sembol.**
+
+#### Görüş mü, şans mı — ve niçin bir hafta ayıramaz
+
+Defterin karar sayısı bir özdeşlikten geliyor:
+
+> Bir sapmanın piyasa altındaki beklenen neti **tanım gereği eksi kapsama
+> bedelidir** (`P(tuttuğu) − P(attığı) = −(kapsama bedeli)`).
+
+Yani piyasanın olasılıklarına göre sapmak **her zaman** negatif beklenen
+değerlidir; sapmak ancak piyasadan **başka bir görüş** varsa mantıklıdır.
+Bu kuponun altı sapmasında:
+
+| | Gözlenen | Piyasanın beklediği |
+|---|---:|---:|
+| Kazanç | 3 | 1,37 |
+| Kayıp | **0** | 1,56 |
+| Net | **+3** | −0,20 |
+
+Piyasanın kendi olasılıklarıyla bu kadar iyi ya da daha iyi bir netin olasılığı
+**%5,6** — yaklaşık 18'de 1. Küçük, ama imkânsız değil ve **tek kupon görüşü
+şanstan ayıramaz**: 1. haftanın ikramiye tablosunda 12 bilen 2.859 kişiydi, yani
+havuzda on binlerce kupon var; 18'de 1'lik bir olayın birilerinin başına gelmesi
+beklenendir. Ayrım ancak **aynı oyuncunun** sapma defteri hafta hafta birikirse
+yapılabilir; ölçü hazır (`sapma_defteri`), durma kuralı §3.38'dekiyle aynı:
+**20 sapma birikmeden karar yok.**
+
+Bağımsız görüşümüz (Dixon-Coles) bu üç sapmanın **ikisini** destekliyordu:
+8. maçta deplasmana piyasadan fazla pay veriyordu (%22,4 ↔ %16,7), 7. maçta ev
+sahibine (%27,5 ↔ %23,5). Üçüncüsünde (12. maç) desteklemiyordu — DC ev
+sahibini piyasadan **yüksek** görüyordu (%37,9 ↔ %25,8), oysa kupon tam da onu
+attı. İki-bir, n = 3: hiçbir şey.
+
+#### Ne öğrendik, ne değişti
+
+**Değişmedi:** kural. Bu kuponun ölçülen üstünlüğü altı sembolde ve o
+üstünlüğün bilgi mi şans mı olduğu **ölçülemedi**. Bir haftanın kazananına
+bakarak kural değiştirmek, geçen sezonun hold-out'unun zaten ölçtüğü hatadır.
+
+**Değişti — ölçü tarafı.** Değerlendirme koşumu artık:
+
+- kuponları **oynanma biçimiyle** puanlıyor (`sistem: fix16 | tam`); aynı
+  işaretler iki biçimde farklı puan alır ve tablo bunu ayrı sütunda yazar,
+- **oynanan kolonların** toplam olasılığını (P(15)) hesaplıyor — küme-içi
+  olasılıkla karıştırılan sayı buydu,
+- **azami kapsamadan sapmaları** defter tutuyor: nerede, ne pahasına, ödedi mi,
+  ve piyasanın aynı sapmalara verdiği olasılık ne,
+- kupon dosyasına kaydedilen **dış kuponları** (kullanıcının kendi kuponu, o
+  haftanın 15 bileni) aynı gövdeyle ölçüyor ve iki karşı-olgusalı yanına
+  koyuyor: *aynı işaretler öteki sistemde* ve *aynı şekil, mekanik sembollerle*.
+
+Bu dört ölçü olmadan aynı kupon şöyle okunurdu: "8.192 kolon oynamış, 15
+bilmiş." Ölçülerle okunuşu şu: *"1.024 kolonluk bir işaret setini sekiz katına
+tam sistem oynamış; şekli bize göre daha zayıf (küme-içi %1,13 ↔ %2,76), farkı
+altı sapmada yapmış ve o sapmaların piyasa altındaki beklentisi negatifti."*
+
+    python scripts/super_toto_degerlendir.py --hafta 2
+
 ## 4. Sayfada bugün ne var
 
 **`/istatistik`** — sezon dağılımı (en sık sonuç + pay çubuğu) · 5 sayı kutusu (sembol
@@ -4017,7 +4128,7 @@ python -m spor_toto.kosum                  # kayıtlı koşumlar
 python -m spor_toto.kosum --son disari     # son koşumun ortamı
 
 # Denetim
-pytest -q                                  # 1.593 test (82'si bu katman, 491'i tahmin)
+pytest -q                                  # 1.602 test (82'si bu katman, 491'i tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out

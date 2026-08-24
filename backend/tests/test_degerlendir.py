@@ -275,3 +275,122 @@ def test_sayfa_her_girilmis_haftada_uretilir(tmp_path):
                     else "ulaşamadı")
         assert f"kupon oraya <b>{beklenen}</b>" in metin
         assert ("bilen</b>" in metin) is bool(d["meta"].get("payout"))
+
+
+# ─── oynanma biçimi: 16 satır ↔ tam sistem ────────────────────────────────
+
+def test_tam_sistem_ile_kaplama_ayni_isarette_farkli_puan_alir(deg):
+    """Aynı işaretler, iki sistem, iki puan — ve fark kozmetik değil.
+
+    16 satırlık kaplama seçim uzayının bir dilimini oynar: küme içinde
+    kalmak 14 demektir. Tam sistem uzayın tamamını oynar: küme içinde
+    kalmak 15 demektir. 2. haftanın 15 bilen kuponu tam sistemdi; aynı
+    işaretler kaplamada 14 verirdi ve 8 kat ucuza gelirdi.
+    """
+    probs = [_dagilim(0.5, 0.3, 0.2)] * 15
+    d = _hafta(probs, "1" * 15)
+    picks = ["1", "1"] + ["10"] * 13          # 2 banko + 13 çift
+    tam = deg.plan_karnesi(d, picks, "tam")
+    kap = deg.plan_karnesi(d, picks, "fix16")
+    # Kaplamanin GARANTISI 14'tur; 15 ancak gercek nokta oynanan
+    # kolonlardan birine denk gelirse gelir (bu sentetik kupon icin
+    # geliyor). Sozlesme bu yuzden ">= 14"tur, "== 14" degil — canli
+    # ornekte gercek 14 zaten olculuyor
+    # (`test_referans_kupon_kendi_sistemiyle_puanlanir`).
+    assert tam["best"] == 15 and kap["best"] >= 14
+    assert tam["kolon"] == 2 ** 13
+    assert kap["kolon"] == 2 ** 13 // 2 ** 7 * 16
+    # Tam sistemde oynanan kolonlar = kümenin kendisi.
+    assert tam["p15"] == pytest.approx(tam["kume_ici"])
+    # Kaplamada oynanan dilim kümeden KÜÇÜK olmalı.
+    assert kap["p15"] < kap["kume_ici"]
+
+
+def test_kademe_olasiliklari_sistemden_okunur(deg):
+    """`P(≥14)` kaplamada `P(k=0)`, tam sistemde `P(k ≤ 1)`dir."""
+    probs = [_dagilim(0.5, 0.3, 0.2)] * 15
+    d = _hafta(probs, "1" * 15)
+    picks = ["1", "1"] + ["10"] * 13
+    tam = deg.plan_karnesi(d, picks, "tam")
+    kap = deg.plan_karnesi(d, picks, "fix16")
+    dist = deg.kupon_degerlendir(d, picks)["dist"]
+    assert kap["p14"] == pytest.approx(dist[0])
+    assert tam["p14"] == pytest.approx(dist[0] + dist[1])
+
+
+def test_bilinmeyen_sistem_sessizce_gecmez(deg):
+    d = _hafta([_dagilim(0.5, 0.3, 0.2)] * 2, "11")
+    with pytest.raises(SystemExit):
+        deg.kupon_degerlendir(d, ["1", "1"], "yarim")
+
+
+# ─── azami kapsamadan sapmalar ────────────────────────────────────────────
+
+def test_sapma_defteri_mekanik_secimde_bos(deg):
+    """Kural her maçta en olası k sembolü işaretler — sapma üretmez."""
+    d = _hafta([_dagilim(0.5, 0.3, 0.2)] * 3, "111")
+    assert deg.sapma_defteri(d, ["1", "10", "102"])["sapma"] == 0
+
+
+def test_sapmanin_beklenen_neti_eksi_kapsama_bedelidir(deg):
+    """Bir özdeşlik, ve defterin okunma biçimi bundan çıkıyor.
+
+    Sapmanın beklenen neti = P(tuttuğu) − P(attığı) = −(kapsama bedeli).
+    Yani piyasanın olasılıklarına göre sapmak **her zaman** negatif
+    beklenen değerlidir; sapmak ancak piyasadan başka bir görüş varsa
+    mantıklıdır. Bu satır, defteri "kim daha çok kapsadı" yarışına
+    çevirmeye karşı bekçidir.
+    """
+    d = _hafta([_dagilim(0.5, 0.3, 0.2), _dagilim(0.4, 0.35, 0.25)], "12")
+    o = deg.sapma_defteri(d, ["12", "02"])
+    assert o["sapma"] == 2
+    assert o["beklenen_net"] == pytest.approx(-o["kapsama_bedeli"])
+
+
+def test_sapma_defteri_kazanci_kaybi_ve_olasiligi_ayirir(deg):
+    """Tuttuğu geldiyse kazanç, attığı geldiyse kayıp; ikisi ayrı sayılır."""
+    d = _hafta([_dagilim(0.5, 0.3, 0.2)] * 2, "21")
+    o = deg.sapma_defteri(d, ["12", "02"])   # azami ikisinde de "10"
+    assert o["kazanc"] == 1 and o["kayip"] == 1 and o["net"] == 0
+    assert 0 < o["p_net"] <= 1
+
+
+# ─── canlı kayıt: 2. haftanın 15 bilen kuponu ─────────────────────────────
+
+def test_referans_kupon_kendi_sistemiyle_puanlanir(deg):
+    """15 bilen kupon 15/15; aynı işaretler kaplamada 14, sekizde bir bedelle.
+
+    Kaydın değeri tam olarak bu iki satırın yan yana durmasıdır: 15'i
+    satın alan şey işaret seçimi DEĞİL, tam kapsamadır.
+    """
+    o = deg.rapor("2026_27", 2)
+    k = next(x for x in o["referans"] if x["ad"] == "15 bilen kupon")
+    assert k["sistem"] == "tam" and k["kolon"] == 8192
+    assert k["best"] == 15 and k["misses"] == []
+    assert k["oteki_sistem"]["kolon"] == 1024
+    assert k["oteki_sistem"]["best"] == 14
+
+
+def test_referans_kuponun_gorusu_sekilden_yalitilir(deg):
+    """Aynı şekil + mekanik semboller 12/15 — yani şekil değil, seçim kazandı.
+
+    Kuponun 8.192 kolonu ve 13 çiftesi tek başına 12 veriyor; bizim
+    planlarımızın aldığı sayının aynısı. Farkı yapan altı sapmadır.
+    """
+    o = deg.rapor("2026_27", 2)
+    k = next(x for x in o["referans"] if x["ad"] == "15 bilen kupon")
+    assert k["azami"]["best"] == 12
+    assert k["azami"]["misses"] == [7, 8, 12]
+    # Azami kapsama kümesi DAHA olası; buna rağmen gerçeği kaçırıyor.
+    assert k["azami"]["kume_ici"] > k["kume_ici"]
+
+
+def test_referans_kuponun_sapma_defteri(deg):
+    """Altı sapma, üçü kazandı, hiçbiri kaybetmedi — ve bu %5,6'lık bir kuyruk."""
+    o = deg.rapor("2026_27", 2)
+    sp = next(x for x in o["referans"] if x["ad"] == "15 bilen kupon")["sapma"]
+    assert sp["sapma"] == 6
+    assert sp["kazanc"] == 3 and sp["kayip"] == 0 and sp["net"] == 3
+    assert sp["beklenen_net"] == pytest.approx(-0.196, abs=5e-3)
+    assert sp["p_net"] == pytest.approx(0.056, abs=5e-3)
+    assert [r["no"] for r in sp["rows"] if r["kazandi"]] == [7, 8, 12]

@@ -38,6 +38,7 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
+import math
 import sys
 from collections.abc import Sequence
 from pathlib import Path
@@ -52,6 +53,9 @@ from spor_toto.ortak import kacak_dagilimi as ortak_kacak_dagilimi
 #: Sembol duzeni TEK kaynaktan (`spor_toto.core`). Bu dosyada ayri bir
 #: demet olarak yaziliyordu; depoda ayni deger on bir kez tanimliydi.
 SEM = SEMBOLLER
+
+#: Kisa ad — bu dosyada carpim cok geciyor.
+math_prod = math.prod
 
 
 def _hafta_modulu():
@@ -118,7 +122,25 @@ def en_iyi_kolon(secimler: Sequence[Sequence[str]], gercek: str) -> int:
 kacak_dagilimi = ortak_kacak_dagilimi
 
 
-def kupon_degerlendir(d: dict[str, Any], picks: Sequence[str]) -> dict[str, Any]:
+#: Bir kuponun OYNANMA biçimi — puanlama bundan değişir.
+#:
+#: `fix16`: 16 satırlık kaplama. Seçim uzayının tamamı değil, 14 garantisi
+#: veren bir alt kümesi oynanır; küme içindeyken en iyi kolon 14'tür, 15
+#: ancak şans eseri gelir.
+#:
+#: `tam`: seçim uzayının tamamı (uzay kadar kolon). Her kaçak birebir bir
+#: puan götürür ve küme içindeyken sonuç 15'tir.
+#:
+#: Ayrım kozmetik değil: **aynı işaretler iki biçimde farklı puan alır.**
+#: 2. haftanın 15 bilen kuponu tam sistemdi; aynı işaretler 16 satırda
+#: 14 verirdi (ve 8 kat ucuza gelirdi).
+SISTEMLER = ("fix16", "tam")
+
+
+def kupon_degerlendir(d: dict[str, Any], picks: Sequence[str],
+                      sistem: str = "fix16") -> dict[str, Any]:
+    if sistem not in SISTEMLER:
+        raise SystemExit(f"bilinmeyen sistem: {sistem} ({', '.join(SISTEMLER)})")
     gercek = d["meta"]["results"]
     maclar = d["matches"]
     kacaklar = [i + 1 for i, (p, g) in enumerate(zip(picks, gercek)) if g not in p]
@@ -127,9 +149,11 @@ def kupon_degerlendir(d: dict[str, Any], picks: Sequence[str]) -> dict[str, Any]
     n = len(kacaklar)
     return {
         "picks": list(picks),
+        "sistem": sistem,
         "misses": kacaklar,
         "miss_count": n,
-        "best": en_iyi_kolon([list(x) for x in picks], gercek),
+        "best": (len(gercek) - n if sistem == "tam"
+                 else en_iyi_kolon([list(x) for x in picks], gercek)),
         "expected_misses": sum(p_kacak),
         "p_in_set": dist[0],
         "p_at_least_actual": sum(dist[n:]),
@@ -452,6 +476,191 @@ def gercegin_sirasi(d: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def oynanan_kolonlar(d: dict[str, Any], picks: Sequence[str],
+                     sistem: str = "fix16") -> dict[str, Any]:
+    """OYNANAN kolonların toplam olasılığı — yani **P(15)**.
+
+    Küme-içi olasılıkla karıştırılmamalı: küme-içi, gerçeğin seçim
+    kümesinde kalma olasılığıdır. 16 satırlık kaplamada küme içinde
+    kalmak 15 demek DEĞİLDİR, çünkü kümenin yalnızca bir dilimi oynanır.
+    Bu fonksiyon o dilimin gerçek olasılığını, kolonları tek tek gezerek
+    toplar.
+
+    Tam sistemde dilim kümenin kendisidir ve sayı küme-içiye eşit çıkar;
+    fonksiyon yine de aynı yoldan hesaplar, çünkü iki sayının eşitliği
+    **sonuç**tur, varsayım değil.
+    """
+    from spor_toto.core import Encoder, Fix16Hatasi, solve_fix16
+
+    listeler = [list(x) for x in picks]
+    maclar = d["matches"]
+    if sistem == "tam":
+        from itertools import product
+        toplam = sum(
+            math_prod(mm["probs"][s] for mm, s in zip(maclar, kolon))
+            for kolon in product(*listeler))
+        return {"p15": toplam, "kolon": math_prod(len(x) for x in listeler)}
+
+    enc = Encoder(listeler)
+    try:
+        cols, _ = solve_fix16(enc)
+    except Fix16Hatasi:  # pragma: no cover - kuralin uretemedigi hal
+        return {"p15": None, "kolon": None}
+    toplam = 0.0
+    for c in cols:
+        p, j = 1.0, 0
+        for i, sec in enumerate(listeler):
+            sembol = sec[0] if len(sec) == 1 else enc.variable_syms[j][c[j]]
+            if len(sec) > 1:
+                j += 1
+            p *= maclar[i]["probs"][sembol]
+        toplam += p
+    return {"p15": toplam, "kolon": len(cols)}
+
+
+def plan_karnesi(d: dict[str, Any], picks: Sequence[str],
+                 sistem: str = "fix16", ad: str = "") -> dict[str, Any]:
+    """Bir kuponun tek satırlık karnesi — **iki sistemi kıyaslanabilir kılar.**
+
+    Kademe olasılıkları sistemden okunur: 16 satırlık kaplamada küme içi
+    kalmak 14 verir (`P(≥14) = P(k=0)`), tam sistemde 15 verir
+    (`P(≥14) = P(k ≤ 1)`). Aynı dağılımı iki sistemde aynı sütuna yazmak,
+    8 kat pahalı bir kuponu ucuz olanla eşit göstermek olurdu.
+    """
+    s = kupon_degerlendir(d, picks, sistem)
+    dist = s["dist"]
+    kaydir = 1 if sistem == "tam" else 0
+    kume = math_prod(sum(mm["probs"][x] for x in pk)
+                     for mm, pk in zip(d["matches"], picks))
+    kalabalik = math_prod(sum(mm["play"][x] for x in pk)
+                          for mm, pk in zip(d["matches"], picks))
+    oynanan = oynanan_kolonlar(d, picks, sistem)
+    return {
+        "ad": ad, "sistem": sistem, "picks": list(picks),
+        "banko": sum(1 for x in picks if len(x) == 1),
+        "cift": sum(1 for x in picks if len(x) == 2),
+        "uclu": sum(1 for x in picks if len(x) == 3),
+        "uzay": math_prod(len(x) for x in picks),
+        "kolon": oynanan["kolon"],
+        "p15": oynanan["p15"],
+        "p14": sum(dist[:1 + kaydir]),
+        "p13": sum(dist[:2 + kaydir]),
+        "p12": sum(dist[:3 + kaydir]),
+        "kume_ici": kume,
+        "kalabalik_ici": kalabalik,
+        "oran": (kume / kalabalik) if kalabalik else None,
+        "best": s["best"], "misses": s["misses"],
+    }
+
+
+def sapma_defteri(d: dict[str, Any], picks: Sequence[str]) -> dict[str, Any]:
+    """**Azami kapsamadan** sapmalar: nerede, ne pahasına, ödedi mi.
+
+    Mekanik referans, her maçta en olası `k` sembolü işaretlemektir; kural
+    da bunu yapar. Bir kupon o seçimden saptığında bir *görüş* beyan
+    etmiştir: kapsamadan puan verip başka bir sembol tutmuştur.
+
+    Defter üç şeyi ayırır ve üçü de gerekli:
+
+    * **kazanç** — attığı yerine tuttuğu sembol geldi (sapma kurtardı),
+    * **kayıp** — tuttuğu yerine attığı sembol geldi (sapma batırdı),
+    * **beklenen** — piyasanın aynı sapmalara verdiği olasılık.
+
+    Karar sayısı `p_net`: piyasanın kendi olasılıklarıyla, bu kadar iyi
+    ya da daha iyi bir netin ortaya çıkma olasılığı. Küçükse ya görüş
+    vardır ya da o hafta şanslıdır — **tek hafta ikisini ayıramaz**, ve
+    defter bu yüzden hafta hafta birikmek üzere yazılmıştır.
+    """
+    gercek = d["meta"]["results"]
+    satir = []
+    for mm, pk, g in zip(d["matches"], picks, gercek):
+        k = len(pk)
+        sirali = sorted(SEM, key=lambda x: -mm["probs"][x])
+        azami = set(sirali[:k])
+        if set(pk) == azami:
+            continue
+        fazla = [x for x in pk if x not in azami]
+        eksik = [x for x in azami if x not in pk]
+        satir.append({
+            "no": mm["no"], "mac": f"{mm['home']} – {mm['away']}",
+            "pick": pk, "azami": "".join(sorted(azami, key=SEM.index)),
+            "gercek": g,
+            "tuttugu": fazla, "attigi": eksik,
+            "p_tuttugu": sum(mm["probs"][x] for x in fazla),
+            "p_attigi": sum(mm["probs"][x] for x in eksik),
+            "kapsama_bedeli": (sum(mm["probs"][x] for x in azami)
+                               - sum(mm["probs"][x] for x in pk)),
+            "kazandi": g in fazla,
+            "kaybetti": g in eksik,
+        })
+
+    # (kazanç, kayıp) ortak dağılımı — maçlar bağımsız kabul edilir, aynı
+    # varsayım kaçak dağılımında da geçerli (`spor_toto.ortak`).
+    dag: dict[tuple[int, int], float] = {(0, 0): 1.0}
+    for r in satir:
+        yeni: dict[tuple[int, int], float] = {}
+        for (a, b), pr in dag.items():
+            yeni[(a + 1, b)] = yeni.get((a + 1, b), 0.0) + pr * r["p_tuttugu"]
+            yeni[(a, b + 1)] = yeni.get((a, b + 1), 0.0) + pr * r["p_attigi"]
+            kalan = 1 - r["p_tuttugu"] - r["p_attigi"]
+            yeni[(a, b)] = yeni.get((a, b), 0.0) + pr * kalan
+        dag = yeni
+    kazanc = sum(1 for r in satir if r["kazandi"])
+    kayip = sum(1 for r in satir if r["kaybetti"])
+    net = kazanc - kayip
+    return {
+        "rows": satir,
+        "sapma": len(satir),
+        "kazanc": kazanc, "kayip": kayip, "net": net,
+        "beklenen_kazanc": sum(r["p_tuttugu"] for r in satir),
+        "beklenen_kayip": sum(r["p_attigi"] for r in satir),
+        "beklenen_net": sum(r["p_tuttugu"] - r["p_attigi"] for r in satir),
+        "kapsama_bedeli": sum(r["kapsama_bedeli"] for r in satir),
+        "p_net": sum(pr for (a, b), pr in dag.items() if a - b >= net),
+    }
+
+
+def referans_kuponlar(d: dict[str, Any],
+                      kupon: dict[str, Any]) -> list[dict[str, Any]]:
+    """Kupon dosyasına kaydedilmiş DIŞ kuponlar (kullanıcının kendi kuponu,
+    o haftanın 15 bileni gibi) — kendi karneleri ve sapma defterleriyle.
+
+    Bunlar bizim kuralımızın ürünü değildir ve öyle sunulmaz: ayrı bir
+    başlıkta, kaynağıyla birlikte durur. Kıyasın anlamlı olması için
+    oynanma biçimi (`sistem`) mutlaka kayıtta yazılıdır — yazılmazsa
+    16 satır varsayılır ve 8 kat pahalı bir kupon ucuz gibi okunur.
+    """
+    out = []
+    for r in kupon.get("referans") or []:
+        kart = plan_karnesi(d, r["picks"], r.get("sistem", "fix16"),
+                            r.get("label", "referans"))
+        # Iki karsi-olgusal, ikisi de ayni gövdeyle ölçülür:
+        #
+        # `oteki_sistem` — AYNI isaretler oteki oynanma biciminde. "15'i
+        # satin alan sey isaretler mi, tam kapsama mi" sorusunun cevabi.
+        #
+        # `azami` — AYNI SEKIL (ayni sayida banko/cift/uclu) ama mekanik
+        # semboller. Bu satir kuponun kendi gorusunu yalitir: sekil ayni,
+        # bedel ayni, degisen yalnizca hangi sembolun tutuldugu.
+        oteki = "fix16" if r.get("sistem", "fix16") == "tam" else "tam"
+        azami_picks = []
+        for mm, pk in zip(d["matches"], r["picks"]):
+            sirali = sorted(SEM, key=lambda x: -mm["probs"][x])
+            azami_picks.append("".join(sorted(sirali[:len(pk)], key=SEM.index)))
+        kart.update({
+            "source": r.get("source"), "note": r.get("note"),
+            "system_note": r.get("system_note"),
+            "kayitli_kolon": r.get("columns"),
+            "sapma": sapma_defteri(d, r["picks"]),
+            "oteki_sistem": plan_karnesi(d, r["picks"], oteki,
+                                         f"{r.get('label', 'referans')} · {oteki}"),
+            "azami": plan_karnesi(d, azami_picks, r.get("sistem", "fix16"),
+                                  "aynı şekil · azami kapsama"),
+        })
+        out.append(kart)
+    return out
+
+
 def ikramiye_ozeti(d: dict[str, Any]) -> dict[str, Any]:
     pay = d["meta"].get("payout")
     if not pay:
@@ -513,6 +722,13 @@ def rapor(sezon: str, hafta: int) -> dict[str, Any]:
                               if ayarli else None)},
         "gorus": gorus_karnesi(d, kayit),
         "olcek": olcek_karnesi(d),
+        # Dis kuponlar ve bizim planlarimiz AYNI karne gövdesiyle ölçülür;
+        # aksi hâlde 8 kat pahalı bir kupon ucuz olanla eşit görünürdü.
+        "referans": referans_kuponlar(d, kupon),
+        "kartlar": ([plan_karnesi(d, sonuclar[0]["picks"], "fix16",
+                                  sonuclar[0].get("label") or "1. Tahmin ana")]
+                    + ([plan_karnesi(d, ayarli["picks"], "fix16",
+                                     "2. Tahmin ayarlı")] if ayarli else [])),
         "sira": gercegin_sirasi(d),
         "crowd": kalabalik_karnesi(d),
         "payout": ikramiye_ozeti(d),
@@ -625,6 +841,52 @@ def yaz(o: dict[str, Any]) -> None:
         for k in g["kaynaklar"]:
             print(f"  {k['ad']:<20} Brier {k['brier']:.4f} · log {k['log']:.4f}")
         print(f"  {g['not']}")
+
+    if o["referans"]:
+        _basli("REFERANS KUPONLAR (bize ait değil) ve AYNI ÖLÇEKTE BİZ")
+        print(f"  {'kupon':<26}{'sistem':>7}{'kolon':>8}{'P15':>8}{'≥14':>8}"
+              f"{'≥13':>8}{'≥12':>8}{'oran':>6}{'gerçek':>8}")
+        for k in o["referans"] + o["kartlar"]:
+            p15 = "—" if k["p15"] is None else f"%{100*k['p15']:.3f}"
+            print(f"  {k['ad'][:26]:<26}{k['sistem']:>7}{k['kolon']:>8,}{p15:>8}"
+                  f"{'%' + format(100*k['p14'], '.2f'):>8}"
+                  f"{'%' + format(100*k['p13'], '.2f'):>8}"
+                  f"{'%' + format(100*k['p12'], '.2f'):>8}"
+                  f"{k['oran']:>6.2f}{str(k['best']) + '/15':>8}")
+        print("  P15 = OYNANAN kolonların toplam olasılığı. 16 satırlık kaplamada "
+              "küme-içi kalmak 14 verir, 15 değil;")
+        print("  tam sistemde küme-içi kalmak 15 verir. İki sütun bu yüzden "
+              "sistemden okunur.")
+        for k in o["referans"]:
+            sp = k["sapma"]
+            print(f"\n  ─ {k['ad']} · {k.get('source') or '—'}")
+            print(f"    işaret: {' '.join(k['picks'])}")
+            print(f"    {k['banko']} banko · {k['cift']} çift · {k['uclu']} üçlü · "
+                  f"uzay {k['uzay']:,} · oynanan {k['kolon']:,} kolon "
+                  f"· en iyi kolon {k['best']}/15 · kaçak {k['misses']}")
+            if not sp["sapma"]:
+                print("    Azami kapsamadan sapma yok — mekanik seçimin aynısı.")
+                continue
+            print(f"    AZAMİ KAPSAMADAN {sp['sapma']} SAPMA "
+                  f"({100*sp['kapsama_bedeli']:.1f} puan kapsama bedeli):")
+            for r in sp["rows"]:
+                im = ("kazandı" if r["kazandi"]
+                      else ("kaybetti" if r["kaybetti"] else "fark etmedi"))
+                print(f"      {r['no']:>2} {r['mac'][:30]:<30} [{r['pick']:<3}] "
+                      f"azami [{r['azami']:<3}] gerçek {r['gercek']} · {im} "
+                      f"(tuttuğu %{100*r['p_tuttugu']:.0f} ↔ attığı %{100*r['p_attigi']:.0f})")
+            print(f"    Net {sp['net']:+d} (kazanç {sp['kazanc']} / kayıp {sp['kayip']}) · "
+                  f"piyasanın beklediği net {sp['beklenen_net']:+.2f} · "
+                  f"P(net ≥ {sp['net']}) = %{100*sp['p_net']:.1f}")
+            az, ot = k["azami"], k["oteki_sistem"]
+            print(f"    AYNI ŞEKİL, azami kapsama işaretleri ({az['kolon']:,} kolon): "
+                  f"{az['best']}/15 · kaçak {az['misses']}")
+            print(f"    AYNI İŞARET, {ot['sistem']} sisteminde ({ot['kolon']:,} kolon): "
+                  f"{ot['best']}/15")
+            print("    Sapmanın piyasa altındaki beklenen neti, tanım gereği "
+                  "eksi kapsama bedelidir: sapmak")
+            print("    ancak piyasadan BAŞKA bir görüş varsa mantıklıdır. "
+                  "Tek hafta görüşü şanstan ayıramaz.")
 
     ol = o["olcek"]
     _basli(f"ÖLÇEK KARNESİ ({ol['n']} maç — marj arındırma)")

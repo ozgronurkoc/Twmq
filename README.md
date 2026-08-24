@@ -425,6 +425,15 @@ kalıcı olarak kaybolur: **sonuç dizisi**, **skorlar** ve **ikramiye ekranı**
 (kişi başı ödül + kazanan adedi). 2. haftada son ikisi girilmedi; kalabalık
 ayarının parasal karşılığı bu yüzden ölçülemedi.
 
+**Aynı haftanın 15 bileni** — 2. haftanın 15 bilen kuponu kayda geçti
+(bize ait değil; `hafta_02_kupon.json` → `referans`). Ölçüldüğünde iki şey
+çıktı: (1) 15'i satın alan şey işaret seçimi değil **tam sistem** — aynı
+işaretler 16 satırlık kaplamada 1.024 kolon eder ve **14** verirdi, sekizde bir
+fiyata; (2) aynı şeklin **azami kapsama** sürümü 12/15 alıyor, yani farkı yapan
+altı sembol. O altı sapmanın piyasa altındaki beklenen neti −0,20 iken gözlenen
++3; böyle bir netin olasılığı **%5,6**. Bir kupon, görüşü şanstan ayıramaz —
+ayrıntı `docs/ISTATISTIK_YOL_HARITASI.md` §3.39.
+
 **Havuz ekseni (Faz B)** — `python scripts/faz_b.py`. Sorusu kuruldu: *aynı
 tutturma olasılığında az oynanan sembolü işaretlemek kişi başı ikramiyeyi
 büyütüyor mu?* Bu soru **piyasayı geçmeyi gerektirmiyor**, o yüzden A1–A3'ün
@@ -827,7 +836,7 @@ backend/
     api_sozlesme.py           API sözleşmesini üretir/denetler (--kontrol: CI kapısı)
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/
-  tests/               pytest (52 dosya → 1.593 test; §9'da katman dökümü)
+  tests/               pytest (52 dosya → 1.602 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1013,7 +1022,7 @@ dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri t
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
 eşleme, ikinci kayıt). **52 test dosyası, parametrizasyonla
-1.593 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+1.602 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
@@ -1023,7 +1032,7 @@ karşı denetler):
 | Tahmin katmanı | `predict` `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin` `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre` | 491 |
 | Sağlık | `health` `api_health` `meta` `health_history` | 85 |
 | Veri / istatistik / geri test | `history` `odds` `backtest` `api_stats` `api_backtest` `snapshot_iddaa` `pazar` | 113 |
-| Süper Toto | `super_toto` `degerlendir` | 69 |
+| Süper Toto | `super_toto` `degerlendir` | 78 |
 | 2. Tahmin (kalabalık ayarı · bağımsız görüş) | `tahmin2` | 29 |
 | Karar katmanı | `secim` | 21 |
 | Skor türetme | `skor` | 21 |
