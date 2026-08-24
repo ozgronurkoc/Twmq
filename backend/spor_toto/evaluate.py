@@ -588,6 +588,9 @@ def main(argv: Sequence[str] | None = None) -> None:  # pragma: no cover
     import argparse
     import json
 
+    from .kosum import belki_kaydet, cli_ekle
+
+
     ap = argparse.ArgumentParser()
     ap.add_argument("--korpus", action="store_true",
                     help="kupon seti yerine egitim korpusunda kos")
@@ -595,6 +598,7 @@ def main(argv: Sequence[str] | None = None) -> None:  # pragma: no cover
                     help="ogrenme egrisi (veri buyudukce brier ne yapiyor)")
     ap.add_argument("--last", type=int, default=None)
     ap.add_argument("--json", action="store_true")
+    cli_ekle(ap)
     a = ap.parse_args(argv)
 
     if a.korpus:
@@ -614,6 +618,7 @@ def main(argv: Sequence[str] | None = None) -> None:  # pragma: no cover
             for f in (PiyasaTahminci, SezonSabitiTahminci,
                       lambda: KalibreTahminci("bant"))
         ]
+        belki_kaydet("ogrenme_egrisi", {"egriler": egriler}, a)
         if a.json:
             print(json.dumps(egriler, ensure_ascii=False, indent=1))
             return
@@ -628,6 +633,7 @@ def main(argv: Sequence[str] | None = None) -> None:  # pragma: no cover
         return
 
     r = karsilastir(haftalar=haftalar, grup=grup)
+    belki_kaydet("evaluate_korpus" if a.korpus else "evaluate", r, a)
     if a.json:
         print(json.dumps(r, ensure_ascii=False, indent=1, default=str))
         return

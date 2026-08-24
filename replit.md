@@ -124,7 +124,9 @@ Katman katman:
 - **Takım** — `takim_gucu.py` (`/api/takimlar`): ampirik Bayes kucultmesi,
   lig icinde; her satirda `n`, `kucultme` ve %95 aralik. §7'nin "takim bazli
   istatistik yok" yasagi buradan kalkti (§3.35)
-- **Altyapı** — `artefakt.py` (egitilmis modelin JSON zarfi: korpus sha256 +
+- **Altyapı** — `kosum.py` (olcum kosum defteri: yedi CLI'da `--kaydet`,
+  korpus sha256 + commit + tohum yazilir; defter SURUMLENMEZ) ·
+  `artefakt.py` (egitilmis modelin JSON zarfi: korpus sha256 +
   egitim tarihi + surum; bayatlik `health`te KIRMIZI — `--yaz` ile uretilir,
   surumlenmez)
 - **Ortak / gövde** — `ortak.py` (normalizasyon, Wilson, Brier, bantlama) ·
@@ -169,7 +171,7 @@ yazmazlar). Ayrıntı: `docs/VERI_TOPLAMA_VE_ISLEME.md`.
 ```bash
 cd backend
 python -m pytest -m "not slow" -q   # hızlı süit
-python -m pytest                    # tamamı (1.527 test, ILP dahil)
+python -m pytest                    # tamamı (1.549 test, ILP dahil)
 python -m pytest -n0 tests/test_egitim.py   # tek çekirdek (hata ayıklarken)
 cd .. && bash scripts/check.sh      # TEK kapı; CI de bunu çağırır
 ```

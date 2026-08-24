@@ -51,3 +51,8 @@ backend/data/artefakt/
 # dayaniyor), ham kaynak kopyasi uretilir. Yeniden olusturmak icin:
 # python scripts/build_avrupa.py · python scripts/build_sehir.py
 backend/data/avrupa/_kaynak/
+
+# Olcum kosum defteri (`--kaydet`). Yerel bir defterdir: bir sayiyi
+# savunmak gerektiginde bakilir, paylasilmaz. Surumlenseydi her olcum
+# depoyu buyutur ve depo bir veri ambarina donerdi.
+backend/data/kosumlar/

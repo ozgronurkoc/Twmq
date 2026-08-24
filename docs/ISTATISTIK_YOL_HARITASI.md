@@ -121,6 +121,7 @@ spor_toto/evaluate.py  ◄── spor_toto/predict.py     (sözleşme + 3 refera
 | Takım | `backend/spor_toto/takim_gucu.py` | `/api/takimlar` | Küçültülmüş takım gücü (Faz 4.3): ampirik Bayes, lig içinde; her satırda `n`, `kucultme` ve %95 aralık |
 | Tahmin | `backend/spor_toto/avrupa.py` | — | UEFA fikstürü (Faz 3.4): 768 maç takvime **enjekte edilir**; `dinlenme` ve `sikisiklik` artık o günleri de görür |
 | Tahmin | `backend/spor_toto/sehir.py` | — | Şehir ve derbi (Faz 3.4): `openfootball/clubs` (CC0) tablosu; derbi bir **sıcaklık** değişkeni olarak girer |
+| Altyapı | `backend/spor_toto/kosum.py` | — | Koşum defteri (Faz 0.4): yedi ölçüm CLI'sında `--kaydet`; korpus sha256 + commit + tohum yazılır, defter **sürümlenmez** (§2.6) |
 | Altyapı | `backend/spor_toto/artefakt.py` | — | Model kalıcılığı (Faz 0.3): eğitilmiş modelin JSON zarfı (korpus sha256 + eğitim tarihi + sürüm); bayatlık `health`te kırmızı (§2.5) |
 | **Ürün** | `backend/spor_toto/tahmin.py` | — | **Tahmin ürünü (C2)**: yaklaşan maça olasılık + ölçülmüş isabet |
 | Üretim | `backend/scripts/build_fixtures.py` | — | Yaklaşan maçlar ve oranları (football-data `fixtures.csv`) |
@@ -143,7 +144,7 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/app/super-toto/page.tsx` · `components/super-toto/haftalar.tsx` · `lib/super-toto.ts` | Sezonun hafta şeridi; `?hafta=N` adreste durur |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **1.527 test**; **82'si** istatistik katmanına (`history` `odds` `backtest`
+paketi toplam **1.549 test**; **82'si** istatistik katmanına (`history` `odds` `backtest`
 `api_stats` `api_backtest` `snapshot_iddaa`), **491'i** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre`
@@ -252,6 +253,44 @@ belirler). Bekçisi `test_artefakt.py::test_yuklenen_model_ayni_tahmini_veriyor`
 
     python -m spor_toto.artefakt --yaz    # egit ve diske yaz
     python -m spor_toto.artefakt          # durumu goster
+
+---
+
+### 2.6 Koşum defteri (Faz 0.4) — *"bu sayı hangi koşumdan geldi?"*
+
+Bu belgedeki her sayı bir koşumdan gelir ve o bağ bugüne kadar **elle**
+kuruluyordu: bir insan CLI'yı çalıştırıyor, çıktıyı okuyup buraya
+yazıyordu. Ara adım üç şeyi kaybediyor — sayının hangi **korpustan**,
+hangi **kod sürümünden** ve hangi **tohumdan** geldiğini.
+
+**Kaybın maliyeti soyut değil.** §3.16 uzun süre `+0,0655` yazıyordu;
+Faz 3.4'te aynı hücre kontrollü koşumda `+0,0613` çıktı. İkisi de
+doğruydu — farklı korpus sürümleriydi — ama bunu anlamak **yeni bir
+koşum** gerektirdi. Koşum kaydı olsaydı fark bakılarak görülürdü.
+
+`kosum.py` yedi ölçüm CLI'sına `--kaydet` bayrağı ekler ve
+`data/kosumlar/<zaman>-<ad>/` altına iki dosya yazar:
+
+| dosya | ne |
+|---|---|
+| `cikti.json` | ölçümün gövdesi, olduğu gibi |
+| `ortam.json` | **asıl olan** — korpus sha256'sı, git commit'i + *kirli mi*, paket sürümleri, tohumlar |
+
+`kirli` alanı olmadan commit kimliği **yanıltır**: commit edilmemiş
+değişikliklerle koşulan bir ölçüm o commit'ten üretilemez.
+
+**Defter sürümlenmez** (`.gitignore`) ve bu bilinçli: her ölçüm koşumu
+depoya girseydi depo bir veri ambarına dönerdi. Kayıt yerel bir defterdir
+— bir sayıyı savunmak gerektiğinde bakılır, paylaşılmaz. Belgeye giren şey
+sayının kendisi ve koşum kimliğidir.
+
+Bekçi `test_kosum.py::test_olcum_clileri_kaydet_bayragini_tasiyor`: yedi
+CLI'nın biri unutulursa o ölçümün sayısı yine belgeye girer ama **izsiz**
+girer — Faz 0.4'ün bütün amacı o izin var olmasıdır.
+
+    python -m spor_toto.disari --kaydet   # olc ve deftere yaz
+    python -m spor_toto.kosum             # kayitli kosumlar
+    python -m spor_toto.kosum --son agac  # son `agac` kosumunun ortami
 
 ---
 
@@ -3018,12 +3057,19 @@ belirsiz bırakmadı, üçünü de somutlaştırdı:
 | Kaynak | Hangi ölçüm işaret etti |
 |---|---|
 | ~~**Fikstür verisi** (kupa + Avrupa)~~ | ✅ **YAPILDI (§3.36).** UEFA maçları geldi (768 maç, ad eşlemesi %100) ve takvime enjekte edildi. Kör nokta taraması **+0,0613 → +0,0325**: anomalinin yarısı ölçüm hatasıymış. Kalan yarı da fiyatlanmış — `kalibre_avrupa` geçmedi. **İç kupalar hâlâ yok**, yani sınır küçüldü ama kaybolmadı |
-| **Kadro / sakatlık** | Hiçbir veri setinde yok. Piyasanın gördüğü, bizim görmediğimiz en büyük girdi |
-| **Şehir / rekabet tablosu** | A3'te seyahat ve derbi bu yüzden elendi — hesaplanamadıkları için |
-| ~~**xG (Understat)**~~ | **Kaynak değil — ölçülmüş negatif.** Listede yoktu, yani örtük olarak açık duruyordu. Dış bir çalışma 14 xG özelliğiyle denedi ve piyasayı geçemedi; üstelik Understat **Süper Lig'i kapsamıyor**. Ayrıntı: [`DIS_INCELEME.md`](DIS_INCELEME.md) §4 |
+| ~~**Kadro / sakatlık**~~ | ❌ **ARANDI, KAPALI (§3.36).** Kaynak teknik olarak açık (transfermarkt `Allow: /`) ama özellik **ileriye dönük kullanılamaz**: gerçek kadro ancak ilk vuruşta bellidir. Korpusta kullanıp `/tahmin`de kullanamamak eğitim/servis ayrışmasıdır. Bu "kaynak yok" değil, **"özellik bu ürün için geçersiz"** demektir |
+| ~~**Şehir / rekabet tablosu**~~ | ✅ **YAPILDI (§3.36).** `openfootball/clubs` (CC0) kulüp–şehir tablosu verdi: kapsama **%98,0**, 667 derbi. `derbi` bir sıcaklık değişkeni olarak girdi ve **geçmedi** (+0,000176). `seyahat` hâlâ kapalı ama gerekçesi değişti: artık "şehir yok" değil **"koordinat yok"** |
+| ~~**xG (Understat)**~~ | ❌ **Kaynak değil — ölçülmüş negatif, ve ayrıca erişime kapalı.** Dış bir çalışma 14 xG özelliğiyle denedi ve piyasayı geçemedi ([`DIS_INCELEME.md`](DIS_INCELEME.md) §4); üstelik Understat **Süper Lig'i kapsamıyor**. Faz 3.4 bir de erişimi denetledi: `robots.txt` `User-agent: * / Disallow: /` — otomatik erişime **tamamen kapalı**, fbref ise Cloudflare sorgusu arkasında (§3.36) |
 
-Biri geldiğinde açılacak soru bellidir ve altyapı hazır: `cizgi.py`/`bahisci.py`/`disari.py`
-deseni aynen kullanılır. Gelmediği sürece **aynı veriyle yeni model denenmez.**
+> **Dört madde de kapandı (Faz 3.4, §3.36).** İkisi geldi ve ölçüldü, ikisi arandı ve
+> kapalı çıktı. Bu tablonun okunuşu artık şudur: *"eksik veri gerçekten eksikti, bulundu,
+> eklendi, ölçüm hatasını düzelttiği doğrulandı — ve düzeltilmiş özellik de piyasayı
+> geçmedi."* Kalan iki kaynak bulunamıyor değil, **kullanılamıyor**.
+
+Yeni bir kaynak geldiğinde açılacak soru bellidir ve altyapı hazır:
+`cizgi.py`/`bahisci.py`/`disari.py` deseni aynen kullanılır — ve `build_avrupa.py` ile
+`build_sehir.py` artık *"dış bir kaynağı korpusa nasıl bağlarız"* sorusunun iki çalışan
+örneğidir (ülke kısıtı + bulanık eşleme yok + kapsama kapısı).
 
 #### Model sınıfı — dokuz denemenin ortak kör noktası ve dışarıdan gelen kontrol
 
@@ -3580,9 +3626,17 @@ python -m spor_toto.cizgi                  # A1: kapanış çizgisi verimliliği
 python -m spor_toto.bahisci                # A2: bahisçi anlaşmazlığı
 python -m spor_toto.disari                 # A3: piyasa dışı özellikler
 python -m spor_toto.tahmin                 # ÜRÜN: yaklaşan maçlara olasılık
+python -m spor_toto.avrupa                 # UEFA fikstürünün korpusa değmesi
+python -m spor_toto.sehir                  # şehir tablosu ve derbi kapsaması
+python -m spor_toto.takim_gucu --lig T1    # küçültülmüş takım gücü
+
+# Her ölçüm CLI'sı koşumunu deftere yazabilir (§2.6)
+python -m spor_toto.disari --kaydet
+python -m spor_toto.kosum                  # kayıtlı koşumlar
+python -m spor_toto.kosum --son disari     # son koşumun ortamı
 
 # Denetim
-pytest -q                                  # 1.527 test (82'si bu katman, 491'i tahmin)
+pytest -q                                  # 1.549 test (82'si bu katman, 491'i tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out

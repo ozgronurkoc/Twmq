@@ -784,6 +784,7 @@ backend/
     sehir.py           VERI: kulup-sehir tablosu, derbi (sicaklik degiskeni)
     takim_gucu.py      TAKIM: kucultulmus takim gucu = /api/takimlar
     artefakt.py        Egitilmis modelin diske yazimi + bayatlik denetimi
+    kosum.py           Olcum kosum defteri (--kaydet) — surumlenmez
     benzer.py          "Bu oranda geçmişte ne oldu" = /api/benzer
     kalibrasyon.py     ÖLÇÜM: izotonik düzeltme piyasayı geçiyor mu
     cizgi.py           ÖLÇÜM: açılış→kapanış çizgi hareketi (A1)
@@ -810,7 +811,7 @@ backend/
     api_sozlesme.py           API sözleşmesini üretir/denetler (--kontrol: CI kapısı)
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/
-  tests/               pytest (49 dosya → 1.527 test; §9'da katman dökümü)
+  tests/               pytest (50 dosya → 1.549 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -994,8 +995,8 @@ altı adımdan üçünü koşuyordu — yani "OK" demesi "CI geçer" demek deği
 Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant'lar, CLI (Bayes preset
 dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri test,
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
-yeniden kalibrasyon ve eğitim korpusu. **49 test dosyası, parametrizasyonla
-1.527 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+yeniden kalibrasyon ve eğitim korpusu. **50 test dosyası, parametrizasyonla
+1.549 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
@@ -1013,6 +1014,7 @@ karşı denetler):
 | Ortak gövde | `ortak` | 25 |
 | Havuz / beklenen değer | `getiri` | 72 |
 | Model kalıcılığı | `artefakt` | 24 |
+| Koşum defteri | `kosum` | 22 |
 | Takım gücü | `takim_gucu` | 21 |
 | Yeni veri (UEFA · şehir) | `avrupa` `sehir` | 41 |
 | Belgeler | `belgeler` | 5 |

@@ -360,5 +360,24 @@ def _yazdir(sonuc: dict[str, Any]) -> None:  # pragma: no cover - elle kullanim
         print(f"  {ad}: {gerekce}")
 
 
+def main(argv: Sequence[str] | None = None) -> None:  # pragma: no cover
+    import argparse
+    import json
+
+    from .kosum import belki_kaydet, cli_ekle
+
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--json", action="store_true")
+    cli_ekle(ap)
+    a = ap.parse_args(argv)
+
+    s = rapor()
+    if a.json:
+        print(json.dumps(s, ensure_ascii=False, indent=1, default=str))
+    else:
+        _yazdir(s)
+    belki_kaydet("disari", s, a)
+
+
 if __name__ == "__main__":  # pragma: no cover - elle kullanim
-    _yazdir(rapor())
+    main()

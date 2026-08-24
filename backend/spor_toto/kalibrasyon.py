@@ -199,6 +199,8 @@ def _yaz(sonuc: dict[str, Any]) -> None:  # pragma: no cover - elle kullanim
 
 
 def main(argv: Sequence[str] | None = None) -> None:
+    from .kosum import belki_kaydet, cli_ekle
+
     ap = argparse.ArgumentParser()
     ap.add_argument("--egri-only", action="store_true",
                     help="yalnizca kalibrasyon egrisi (olcum kosulmaz)")
@@ -207,6 +209,7 @@ def main(argv: Sequence[str] | None = None) -> None:
     ap.add_argument("--arindirma", default=ARINDIRMA_VARSAYILAN)
     ap.add_argument("--kova", type=int, default=EN_AZ_KOVA)
     ap.add_argument("--json", action="store_true")
+    cli_ekle(ap)
     a = ap.parse_args(argv)
 
     if a.egri_only:
@@ -214,6 +217,8 @@ def main(argv: Sequence[str] | None = None) -> None:
         print(json.dumps(e, ensure_ascii=False, indent=1)) if a.json else _yaz_egri(e)
         return
     s = rapor(en_az_kova=a.kova, yontem=a.arindirma)
+    belki_kaydet("kalibrasyon", {k: v for k, v in s.items()
+                                 if not k.startswith("_")}, a)
     if a.ayrisim and not a.json:
         _yaz_ayrisim(s)
         return

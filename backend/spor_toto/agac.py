@@ -343,12 +343,17 @@ def main(argv: Sequence[str] | None = None) -> None:  # pragma: no cover
     import argparse
     import json
 
+    from .kosum import belki_kaydet, cli_ekle
+
+
     ap = argparse.ArgumentParser()
     ap.add_argument("--rapor", action="store_true", help="varsayilan kosum")
     ap.add_argument("--json", action="store_true")
+    cli_ekle(ap)
     a = ap.parse_args(argv)
 
     s = rapor()
+    belki_kaydet("agac", s, a)
     if a.json:
         print(json.dumps(s, ensure_ascii=False, indent=1, default=str))
         return

@@ -249,13 +249,18 @@ def main(argv: Sequence[str] | None = None) -> None:  # pragma: no cover
     import argparse
     import json
 
+    from .kosum import belki_kaydet, cli_ekle
+
+
     ap = argparse.ArgumentParser()
     ap.add_argument("--lig", default=None)
     ap.add_argument("--sezon", default=None)
     ap.add_argument("--json", action="store_true")
+    cli_ekle(ap)
     a = ap.parse_args(argv)
 
     t = takim_tablosu(lig=a.lig, sezon=a.sezon)
+    belki_kaydet("takim_gucu", t, a)
     if a.json:
         print(json.dumps(t, ensure_ascii=False, indent=1))
         return
