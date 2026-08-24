@@ -99,6 +99,12 @@ def topla(sezon: str) -> dict[str, Any]:
 
     haftalar: list[dict[str, Any]] = []
     noktalar: list[tuple] = []          # (piyasa p, gerceklesti mi)
+    # Atilan sembol defteri, sezon boyu. 1. haftanin 2. dersi ARSIVDEN
+    # gelmisti (567 mac); bu, ayni olcunun CANLI karsiligidir. Beklenen
+    # sutunu olmadan okunamaz: "attigim beraberliklerin %38'i geldi"
+    # piyasa zaten %23 diyorsa iki maclik bir farktir.
+    atilan: dict[str, dict[str, float]] = {
+        s: {"atildi": 0.0, "geldi": 0.0, "beklenen": 0.0} for s in SEM}
     for no in haftalari_bul(sezon):
         d = hafta_mod.hafta_yukle(sezon, no)
         meta = d["meta"]
@@ -133,7 +139,12 @@ def topla(sezon: str) -> dict[str, Any]:
             kayit.update({"en_iyi_kolon": s0["best"],
                           "kacak": s0["miss_count"],
                           "beklenen_kacak": s0["expected_misses"],
-                          "kume_ici_p": s0["p_in_set"]})
+                          "kume_ici_p": s0["p_in_set"],
+                          "hedefe_ulasti": s0["best"] >= deg_mod.HEDEF_KADEME})
+            defter = deg_mod.atilan_defteri(d, kupon["variants"][0]["picks"])
+            for sem in SEM:
+                for alan in ("atildi", "geldi", "beklenen"):
+                    atilan[sem][alan] += defter["sembol"][sem][alan]
         haftalar.append(kayit)
 
     olculen = [h for h in haftalar if h["sonuc_var"]]
@@ -158,6 +169,7 @@ def topla(sezon: str) -> dict[str, Any]:
         "hafta_olculen": len(olculen),
         "mac": n_mac,
         "kovalar": kovalar,
+        "atilan": atilan,
     }
     if olculen:
         ozet["brier"] = sum(h["brier"] for h in olculen) / len(olculen)
@@ -178,6 +190,10 @@ def topla(sezon: str) -> dict[str, Any]:
             ozet["en_iyi_kolon"] = [h["en_iyi_kolon"] for h in kolonlu]
             ozet["kacak_gozlenen"] = sum(h["kacak"] for h in kolonlu)
             ozet["kacak_beklenen"] = sum(h["beklenen_kacak"] for h in kolonlu)
+            # Ikramiye kademesine ulasan hafta sayisi. Kuralin hedefi 14
+            # degil 12'dir (docs §3.19); defterin bunu ayrica sayması,
+            # "iyi hafta" tanimini tek yerde tutar.
+            ozet["hedefe_ulasan"] = sum(1 for h in kolonlu if h["hedefe_ulasti"])
     ozet["haftalar"] = haftalar
     ozet["yeterlilik"] = yeterlilik_notu(n_mac)
     return ozet
@@ -242,6 +258,20 @@ def yaz(o: dict[str, Any]) -> None:
             print(f"En iyi kolon: {k} · ortalama {sum(k)/len(k):.2f}")
             print(f"Kaçak: gözlenen {o['kacak_gozlenen']} ↔ beklenen "
                   f"{o['kacak_beklenen']:.2f}")
+            print(f"İkramiye kademesine (12+) ulaşan hafta: "
+                  f"{o['hedefe_ulasan']}/{len(k)}")
+
+    if any(v["atildi"] for v in o["atilan"].values()):
+        print("\n─── ATILAN SEMBOL DEFTERİ (birikimli) ───────────────────────────────────")
+        print(f"{'sembol':<8}{'atıldı':>8}{'geldi':>7}{'gözlenen':>10}{'beklenen':>10}")
+        for sem in SEM:
+            v = o["atilan"][sem]
+            if not v["atildi"]:
+                continue
+            print(f"{sem:<8}{v['atildi']:>8.0f}{v['geldi']:>7.0f}"
+                  f"{100*v['geldi']/v['atildi']:>9.0f}%"
+                  f"{100*v['beklenen']/v['atildi']:>9.0f}%")
+        print("  Okunacak sayı gözlenen ile beklenen ARASINDAKİ farktır; ham oran değil.")
 
     if o["kovalar"]:
         print("\n─── KALİBRASYON (canlı sezon) ───────────────────────────────────────────")

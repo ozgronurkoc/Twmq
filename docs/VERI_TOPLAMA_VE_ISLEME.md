@@ -789,7 +789,7 @@ tablolar (script'in bastığı lig dağılımı) bunu yakalayan şeydi.
 | `test_snapshot_iddaa.py::test_askidaki_ayak_maci_eler` | 1.00 fiyat sayılmaz |
 | `test_snapshot_iddaa.py::test_farkli_snapshot_birikir` | Arşiv gerçekten birikiyor, üstüne yazmıyor |
 
-Toplam 82 test bu üç veri setini korur (backend paketi 1.577 test). `python -m spor_toto.health`
+Toplam 82 test bu üç veri setini korur (backend paketi 1.608 test). `python -m spor_toto.health`
 25 değişmez çalıştırır; `oran_arsivi` ve `geri_test` bu katmanı, `tahmin_referanslari`
 tahmin katmanının ölçüm koşumunu korur.
 
@@ -1024,6 +1024,35 @@ kullanıcı kitlesi). n = 2 iken hiçbir sayı sonuç değildir.
 
 İkincisi ölçülmesi gereken soruyu değiştiriyor: artık *"havuz avantajı var mı"* değil,
 **"net mi"**. Ayrıntı: [`ISTATISTIK_YOL_HARITASI.md`](ISTATISTIK_YOL_HARITASI.md) §6.3.
+
+**2. hafta (n = 2).** Halkın modal kuponu ile piyasanın favori kuponu bu kez **ayrıştı**
+— tek maçta (5. maç: halk ev sahibi %53, piyasa deplasman %38,8) — ve sonuç piyasayı
+doğruladı: halk 8/15, piyasa 9/15. Kalabalığın Brier'i o hafta 0,6752, piyasanınki 0,5839.
+İki hafta da aynı yönde: **oynanma verisi yön değil, pay taşıyor.**
+
+**İkramiye tablosu sonradan girildi ve B2 ilk cevabını verdi.** Her kademe bir *havuz
+kolonu sayısı* ima eder (`N = kazanan ÷ P(k doğru)`); model doğruysa dört kademe aynı `N`'i
+vermelidir. 2. haftada **kalabalık modelinin dört kademesi birbirinin %16'sı içinde** kaldı
+(37,8–43,9 milyon, ortalamanın ±%8'i), piyasa modeli 2,9 kat saptı (4,0–11,6 milyon). Yani **şekil** ölçüsünde
+oynanma payları açık ara önde — havuz ekseninin ilk olumlu kanıtı.
+
+Ama **seviye** yanlış: 1. hafta 5,2–7,5 milyon kolon ima ediyordu, 2. hafta 37,8–43,9 milyon
+(6 kat), oysa dağıtılan havuz yalnızca 1,42 kat büyüdü. Sebebi tam da bu belgenin uyardığı
+şey: **kazanan sayıları kişi değil kolon.** Oynanma yüzdeleri BİLET başına ölçülür, havuz
+KOLON başına bölünür; tek bir sistem kuponu (8.192 kolon) o hafta 378 kazanan kolon üretti.
+Bağımsız-kolon modeli bu yığılmayı üretemez. Ayrıntı:
+[`ISTATISTIK_YOL_HARITASI.md`](ISTATISTIK_YOL_HARITASI.md) §3.40.
+
+**Skorlar hâlâ girilmedi** (yalnızca 1/0/2). Gol bazlı hiçbir ölçüm bu haftadan beslenemez;
+ve bu açık, ikramiye tablosunun aksine sonradan kapatılamaz.
+
+Sonuç girişi bu yüzden **üç parçalıdır** ve üçü aynı anda girilir:
+
+| Parça | Nereden | Kaybedilirse ne ölçülemez |
+|---|---|---|
+| Sonuç dizisi (15 sembol) | resmî sonuç ekranı | her şey — hafta hiç ölçülemez |
+| Skorlar (gol) | resmî sonuç ekranı | gol bazlı her ölçüm (Dixon-Coles kalibrasyonu) |
+| İkramiye tablosu (kat başına kazanan + ödül) | resmî ikramiye ekranı | havuz ekseninin tamamı: pay dağılımı (§3.40'ta ölçüldü), kolon başına getiri, popülerlik modeli |
 
 Bu yol pozitif getiri garanti etmez; ölçülebilir hale getirdiği şey, bu belgenin önceki
 sürümünde hakkında hiçbir şey bilinmeyen bir boyuttur.

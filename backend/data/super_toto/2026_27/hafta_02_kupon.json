@@ -355,5 +355,32 @@
   ],
   "arindirma": "orantili",
   "kural": "esik"
- }
+ },
+ "referans": [
+  {
+   "label": "15 bilen kupon",
+   "source": "kullanıcı ekran görüntüsü (2026-08-24) — üçüncü bir oyuncunun oynadığı kupon",
+   "picks": [
+    "2",
+    "12",
+    "12",
+    "1",
+    "02",
+    "10",
+    "12",
+    "12",
+    "12",
+    "02",
+    "12",
+    "02",
+    "10",
+    "10",
+    "02"
+   ],
+   "sistem": "tam",
+   "columns": 8192,
+   "system_note": "2 banko + 13 çifte, tam sistem: 2^13 = 8.192 kolon. Aynı işaretler 16 satırlık kaplamada 1.024 kolon eder ve 14 verirdi — 15'i satın alan şey işaretler değil, tam kapsamadır.",
+   "note": "Kupon bize AİT DEĞİL ve kuralın ürünü değildir; kıyas işaret seçimi ile oynanma biçimi üzerinedir. Bedel karşılaştırmasında sistem farkı hesaba katılır."
+  }
+ ]
 }

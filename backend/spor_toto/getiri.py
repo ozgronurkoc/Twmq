@@ -80,11 +80,37 @@ from typing import Any
 #: Kademeler yüksekten alçağa yazılır — pay dağıtımı öyle okunur.
 KADEMELER: tuple[int, ...] = (14, 13, 12)
 
-#: Havuzun kademelere dağılımı. **Varsayım, ölçüm değil**: gerçek oranlar
-#: kupon kurallarından gelir ve elde henüz bir haftalık kayıt var. Sayılar
-#: buraya yazılı ki çağıran onları değiştirebilsin ve *hangi varsayımla*
-#: konuştuğu görünsün.
-VARSAYILAN_PAY: dict[int, float] = {14: 0.55, 13: 0.25, 12: 0.20}
+#: Havuzun kademelere dağılımı — **artık varsayım değil, ÖLÇÜM.**
+#:
+#: Önce `{14: 0.55, 13: 0.25, 12: 0.20}` yazıyordu ve başlığında "varsayım,
+#: ölçüm değil; elde henüz bir haftalık kayıt var" diyordu. İki haftanın
+#: ikramiye ekranı girilince oran **kuruşuna kadar** çıktı ve iki haftada
+#: birebir aynı:
+#:
+#:     kademe havuzu = kazanan kolon × kolon başına ödül
+#:
+#:     hafta 1:  15: 30.149.380,57 (devretti) · 14: 17.228.217,44
+#:               13: 17.228.217,30 · 12: 21.535.245,96
+#:     hafta 2:  15: 42.842.867,72 (+ 30.149.380,57 devir) · 14: 24.481.638,39
+#:               13: 24.481.619,77 · 12: 30.601.899,20
+#:
+#: 14'e bölününce iki haftada da **1,75 : 1 : 1 : 1,25** çıkıyor, yani
+#: dağıtılan havuzun %35 / %20 / %20 / %25'i. Ölçüm `OLCULEN_PAY`de tam
+#: hâliyle durur; `VARSAYILAN_PAY` onun bu modülün kademelerine (14-13-12)
+#: düşen, 1'e normalize edilmiş dilimidir.
+#:
+#: **Değişmeyen varsayım:** havuzun kendisi (`havuz`) ve komisyon. Onlar
+#: satış cirosundan gelir ve ciro hiçbir ekranda yayınlanmıyor.
+OLCULEN_PAY: dict[int, float] = {15: 0.35, 14: 0.20, 13: 0.20, 12: 0.25}
+
+#: Ölçümün kaynağı — sayı kadar önemli, çünkü bu satır olmadan yukarıdaki
+#: oran bir daha "varsayım mı ölçüm mü" diye sorulur.
+PAY_KAYNAGI = ("2026/27 1. ve 2. hafta resmî ikramiye ekranları; iki hafta "
+               "da 1,75:1:1:1,25 veriyor (docs §3.40)")
+
+VARSAYILAN_PAY: dict[int, float] = {
+    k: OLCULEN_PAY[k] / sum(OLCULEN_PAY[x] for x in KADEMELER)
+    for k in KADEMELER}
 
 #: Havuzdan kesilen pay (komisyon + vergi). Yine **varsayım**.
 VARSAYILAN_KOMISYON = 0.50

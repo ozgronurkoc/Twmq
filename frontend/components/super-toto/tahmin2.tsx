@@ -27,9 +27,31 @@ import { TABLO_SARMAL } from "@/components/ui/tablo";
  * gorunen tek sey, olculmus oynanma paylarindan hesaplanan **kalabalik
  * orani**dir.
  */
+/**
+ * Hafta sonuclandiysa ikinci kaydin karnesi: hangi maclar kume disinda
+ * kaldi, kac isaret tuttu.
+ *
+ * Kaynak `hafta.results` — `tahmin2.results_known` DEGIL. O alan kaydin
+ * **donduruldugu andaki** durumu anlatir ve tanim geregi hep `false`tur;
+ * ondan okumak paneli "sonuc bekleniyor"da dondururdu (2. haftada tam
+ * olarak bu oldu).
+ */
+function karne(hafta: SuperTotoHafta, picks: string[]) {
+  const sonuc = hafta.results;
+  if (!sonuc || sonuc.length !== picks.length) return null;
+  const kacak = hafta.matches
+    .filter((mac) => {
+      const isaret = picks[mac.no - 1];
+      return !mac.result || !isaret || !isaret.includes(mac.result);
+    })
+    .map((mac) => mac.no);
+  return { kacak, tuttu: picks.length - kacak.length };
+}
+
 export function Tahmin2Paneli({ hafta }: { hafta: SuperTotoHafta }) {
   const t = hafta.tahmin2;
   if (!t) return null;
+  const k = karne(hafta, t.picks);
 
   return (
     <div className="space-y-4">
@@ -38,13 +60,17 @@ export function Tahmin2Paneli({ hafta }: { hafta: SuperTotoHafta }) {
         <Badge>{t.frozen_at} · sonuçlar görülmeden</Badge>
         <Badge>arındırma: {t.arindirma}</Badge>
         <Badge>kural: {t.kural}</Badge>
-        {t.results_known ? null : <Badge ton="warning">sonuç bekleniyor</Badge>}
+        {k ? (
+          <Badge ton="primary">sonuçlandı · {k.tuttu}/15 küme içinde</Badge>
+        ) : (
+          <Badge ton="warning">sonuç bekleniyor</Badge>
+        )}
       </div>
 
       <NicinIkinci tahmin={t} />
       <Kiyas tahmin={t} />
       <KuponKarti tahmin={t} />
-      <KalabalikAyari tahmin={t} />
+      <KalabalikAyari tahmin={t} sonuc={hafta.results} />
       <BagimsizGorus tahmin={t} />
       <MacTablosu hafta={hafta} tahmin={t} />
       <Duyarlilik tahmin={t} />
@@ -265,7 +291,42 @@ function Olcu({
  * Havuz ekseni. Kuponun kendisi degil, **hangi sembol** sorusu yeniden
  * soruldu: isaret sayilari sabit kaldigi icin bedel, satir ve motor aynidir.
  */
-function KalabalikAyari({ tahmin }: { tahmin: SuperTotoTahmin2 }) {
+/**
+ * Sembolu degisen macin sonucu: ayar o macta kazandi mi, kaybetti mi.
+ *
+ * Uc hal de ayri yazilir. Tek bir "basari" sayisina indirilseydi ayarin
+ * gercek olcusu (bolusme) gorunmez, isabet farki onun yerine gecerdi —
+ * oysa ayar isabetten bilerek vazgeciyor.
+ */
+function AyarSonucu({
+  sonuc,
+  degisim,
+}: {
+  sonuc: string | null;
+  degisim: { no: number; taban: string; yeni: string };
+}) {
+  if (!sonuc) return null;
+  const g = sonuc[degisim.no - 1];
+  if (!g) return null;
+  const taban = degisim.taban.includes(g);
+  const yeni = degisim.yeni.includes(g);
+  if (taban === yeni) {
+    return <span className="text-muted-foreground">değişmedi</span>;
+  }
+  return yeni ? (
+    <span className="text-success">kazandı</span>
+  ) : (
+    <span className="text-danger">kaybetti</span>
+  );
+}
+
+function KalabalikAyari({
+  tahmin,
+  sonuc,
+}: {
+  tahmin: SuperTotoTahmin2;
+  sonuc: string | null;
+}) {
   const a = tahmin.ayar;
   return (
     <Card>
@@ -306,7 +367,8 @@ function KalabalikAyari({ tahmin }: { tahmin: SuperTotoTahmin2 }) {
                   <th className="pb-1.5 pr-2 text-right">#</th>
                   <th className="pb-1.5 pr-3">İşaret</th>
                   <th className="pb-1.5 pr-3">Olasılık</th>
-                  <th className="pb-1.5">Oynanma</th>
+                  <th className="pb-1.5 pr-3">Oynanma</th>
+                  <th className="pb-1.5">{sonuc ? "Sonuç" : ""}</th>
                 </tr>
               </thead>
               <tbody className="tabular-nums">
@@ -321,8 +383,11 @@ function KalabalikAyari({ tahmin }: { tahmin: SuperTotoTahmin2 }) {
                     <td className="py-1.5 pr-3">
                       {yuzde(d.prob_taban, 0)} → {yuzde(d.prob_yeni, 0)}
                     </td>
-                    <td className="py-1.5 text-success">
+                    <td className="py-1.5 pr-3 text-success">
                       {yuzde(d.oynanma_taban, 0)} → {yuzde(d.oynanma_yeni, 0)}
+                    </td>
+                    <td className="py-1.5">
+                      <AyarSonucu sonuc={sonuc} degisim={d} />
                     </td>
                   </tr>
                 ))}
@@ -438,6 +503,10 @@ function MacTablosu({
   const adlar = new Map(
     hafta.matches.map((m) => [m.no, `${m.home} – ${m.away}`]),
   );
+  // Sonuc sutunu yalnizca hafta kapandiginda cikar. `hafta.results`
+  // yoksa sutun HIC basilmaz — bos bir sutun, sonucun gelmedigini degil
+  // verinin eksik oldugunu dusundurur.
+  const sonuc = hafta.results;
   return (
     <Card>
       <CardHeader
@@ -455,7 +524,8 @@ function MacTablosu({
                 <th className="pb-1.5 pr-3">{tahmin.onceki_arindirma}</th>
                 <th className="pb-1.5 pr-3">Dixon-Coles</th>
                 <th className="pb-1.5 pr-3">Elo farkı</th>
-                <th className="pb-1.5">İşaret</th>
+                <th className="pb-1.5 pr-3">İşaret</th>
+                {sonuc ? <th className="pb-1.5">Gerçek</th> : null}
               </tr>
             </thead>
             <tbody>
@@ -485,7 +555,7 @@ function MacTablosu({
                       ? "—"
                       : `${r.elo_farki > 0 ? "+" : ""}${r.elo_farki.toFixed(0)}`}
                   </td>
-                  <td className="py-1.5 font-mono">
+                  <td className="py-1.5 pr-3 font-mono">
                     {r.isaret}
                     {r.taban !== r.isaret ? (
                       <span className="ml-1.5 text-[11px] text-muted-foreground line-through">
@@ -493,6 +563,20 @@ function MacTablosu({
                       </span>
                     ) : null}
                   </td>
+                  {sonuc ? (
+                    <td className="py-1.5 font-mono">
+                      {sonuc[r.no - 1] ?? "—"}
+                      <span
+                        className={
+                          r.isaret.includes(sonuc[r.no - 1] ?? "")
+                            ? "ml-1.5 text-success"
+                            : "ml-1.5 text-danger"
+                        }
+                      >
+                        {r.isaret.includes(sonuc[r.no - 1] ?? "") ? "✓" : "✗"}
+                      </span>
+                    </td>
+                  ) : null}
                 </tr>
               ))}
             </tbody>

@@ -650,7 +650,7 @@
       "1": 0.0901,
       "2": 0.7179
      },
-     "result": null
+     "result": "2"
     },
     {
      "away": "Samsunspor A.Ş.",
@@ -677,7 +677,7 @@
       "1": 0.4364,
       "2": 0.29
      },
-     "result": null
+     "result": "2"
     },
     {
      "away": "Kasımpaşa A.Ş.",
@@ -704,7 +704,7 @@
       "1": 0.4137,
       "2": 0.3261
      },
-     "result": null
+     "result": "2"
     },
     {
      "away": "Konyaspor",
@@ -731,7 +731,7 @@
       "1": 0.6576,
       "2": 0.2744
      },
-     "result": null
+     "result": "1"
     },
     {
      "away": "Gaziantep F.K. A.Ş.",
@@ -758,7 +758,7 @@
       "1": 0.331,
       "2": 0.3884
      },
-     "result": null
+     "result": "2"
     },
     {
      "away": "Başakşehir FK",
@@ -785,7 +785,7 @@
       "1": 0.4672,
       "2": 0.2832
      },
-     "result": null
+     "result": "1"
     },
     {
      "away": "Beşiktaş A.Ş.",
@@ -812,7 +812,7 @@
       "1": 0.2349,
       "2": 0.522
      },
-     "result": null
+     "result": "1"
     },
     {
      "away": "Gençlerbirliği",
@@ -839,7 +839,7 @@
       "1": 0.6055,
       "2": 0.1667
      },
-     "result": null
+     "result": "2"
     },
     {
      "away": "Amed Sportif",
@@ -866,7 +866,7 @@
       "1": 0.4435,
       "2": 0.2852
      },
-     "result": null
+     "result": "1"
     },
     {
      "away": "Bayern Münih",
@@ -893,7 +893,7 @@
       "1": 0.1874,
       "2": 0.619
      },
-     "result": null
+     "result": "2"
     },
     {
      "away": "Strasbourg",
@@ -920,7 +920,7 @@
       "1": 0.5717,
       "2": 0.208
      },
-     "result": null
+     "result": "1"
     },
     {
      "away": "Liverpool",
@@ -947,7 +947,7 @@
       "1": 0.2578,
       "2": 0.5148
      },
-     "result": null
+     "result": "0"
     },
     {
      "away": "Real Sociedad",
@@ -974,7 +974,7 @@
       "1": 0.4725,
       "2": 0.253
      },
-     "result": null
+     "result": "1"
     },
     {
      "away": "Villarreal",
@@ -1001,7 +1001,7 @@
       "1": 0.525,
       "2": 0.2262
      },
-     "result": null
+     "result": "0"
     },
     {
      "away": "AC Milan",
@@ -1028,14 +1028,14 @@
       "1": 0.1953,
       "2": 0.5595
      },
-     "result": null
+     "result": "2"
     }
    ],
    "odds_kind": "iddaa-acilis",
    "odds_source": "iddaa AÇILIŞ oranları — kullanıcı ekran görüntüsü (2026-08-18 14:16)",
    "play_source": "tek platform kullanıcı tercih yüzdesi (% Tercih) — kullanıcı ekran görüntüsü (2026-08-18)",
    "program": "21.08.2026 - 25.08.2026",
-   "results": null,
+   "results": "222121121210102",
    "tahmin2": {
     "ad": "2. Tahmin",
     "arindirma": "shin",
