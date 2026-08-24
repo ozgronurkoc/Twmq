@@ -180,7 +180,7 @@ işarettir.
 
 ---
 
-## 8. Elo ve H2H — denenmedi, gerekçesiyle
+## 8. Elo ve H2H — **Elo denendi ve geçmedi**, H2H hâlâ denenmedi
 
 Dış çalışmada olup bizde **hiç bulunmayan** iki özellik var. Kod taramasıyla
 doğrulandı: `elo`, `h2h` ve `xg` dizgeleri `backend/` altında hiç geçmiyor.
@@ -190,7 +190,19 @@ doğrulandı: `elo`, `h2h` ve `xg` dizgeleri `backend/` altında hiç geçmiyor.
 | **Elo** (rakip gücüne göre düzeltilmiş takım gücü) | Dokuz denemenin hiçbirinde yok. `kalibre_form` **ham** formdu — rakip gücüne göre düzeltilmemişti; Elo tam o eksiği kapatan standart sinyaldir | **Evet**, korpustan türetilebilir. Yeni kaynak gerekmez |
 | **H2H** (son 5 karşılaşma) | Aynı | **Evet**, aynı şekilde |
 
-**Yine de şimdi denenmiyor.** Üç gerekçe, sonuncusu belirleyici:
+> **Güncelleme (2026-08-24): Elo artık denendi ve geçmedi.**
+> Aşağıdaki üç gerekçe yazıldığı gün doğruydu; Faz 1'in ölçümleri
+> (§3.23 kalibrasyon tavanı 0,00042 · §3.24 öğrenme eğrisi piyasaya
+> yetişmeden düzleşiyor) *"eksik olan sütun"* dediği için tahsis kararı
+> değişti. Sonuç: ham sinyal devasa (ev galibiyeti %16,8 → %68,1), artık
+> **sıfır**, `kalibre_elo` +0,000086 [−0,000242, +0,000429] ve uydurulan
+> katsayı **negatif**. Ayrıntı:
+> [`ISTATISTIK_YOL_HARITASI.md`](ISTATISTIK_YOL_HARITASI.md) §3.27.
+>
+> **H2H hâlâ denenmedi** ve aşağıdaki gerekçeler onun için geçerliliğini
+> koruyor.
+
+**Yazıldığı günkü gerekçeler.** Üç tanesi, sonuncusu belirleyici:
 
 1. **A4 durma kuralı** — *"Gelmediği sürece aynı veriyle yeni model
    denenmez."* İkisi de aynı veriden türer; onuncu ve on birinci deneme

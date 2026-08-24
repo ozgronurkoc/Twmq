@@ -29,6 +29,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
+from .elo import elo_tablosu
 from .odds import ARINDIRMA_VARSAYILAN, implied_probs
 
 KOK = Path(__file__).resolve().parent.parent
@@ -119,6 +120,12 @@ def korpus_yukle(yol: str | None = None) -> list[dict[str, Any]]:
                 # Dortlu de ya tamdir ya yoktur: eksik bir kaynak kumesinden
                 # hesaplanan ayrisma maclar arasinda karsilastirilamaz.
                 "bahisciler": dortlu if all(dortlu.values()) else None,
+                # Goller CSV'de hep vardi (`hg`/`ag`) ama satira hic
+                # tasinmiyordu: `kod` onlardan turetiliyor, sonra
+                # atiliyorlardi. Elo (Faz 3.2) gol farkini K carpani olarak
+                # kullanan ILK ozellik — bu yuzden artik tasiniyorlar.
+                "ev_gol": _tam_sayi(r, "hg"),
+                "dep_gol": _tam_sayi(r, "ag"),
                 "ev_isabet": _tam_sayi(r, "ev_isabet"),
                 "dep_isabet": _tam_sayi(r, "dep_isabet"),
                 "ev_sut": _tam_sayi(r, "ev_sut"),
@@ -437,7 +444,7 @@ def bahisci_ayrismasi(bahisciler: dict[str, dict[str, float] | None] | None
 
 @lru_cache(maxsize=2)
 def _zenginlestirilmis_korpus(yol: str | None = None) -> tuple[dict[str, Any], ...]:
-    """Korpus satirlari + `_form` / `_takvim` alanlari — **bir kez** hesaplanir.
+    """Korpus satirlari + `_form` / `_takvim` / `_elo` alanlari — **bir kez**.
 
     Iki sebeple ayri ve onbellekli:
 
@@ -461,10 +468,12 @@ def _zenginlestirilmis_korpus(yol: str | None = None) -> tuple[dict[str, Any], .
     # Once suzseydik, secilen sezonun ilk maclari gecmissiz kalirdi.
     formlar = _form_tablosu(ham)
     takvimler = _takvim_tablosu(ham)
+    elolar = elo_tablosu(ham)
     tumu = [dict(r) for r in ham]
-    for r, f, t in zip(tumu, formlar, takvimler):
+    for r, f, t, e in zip(tumu, formlar, takvimler, elolar):
         r["_form"] = f
         r["_takvim"] = t
+        r["_elo"] = e
     return tuple(tumu)
 
 
@@ -563,12 +572,14 @@ def _korpus_haftalari(sezonlar_: tuple | None,
                                       "form_isabet_farki": 0.0}
             hareket = cizgi_hareketi(r.get("acilis"), r.get("kapanis"))
             takvim = r.get("_takvim") or {}
+            elo = r.get("_elo") or {"elo_var": False, "elo_farki": 0.0}
             ozellikler.append({
                 "lig": r["lig"],
                 "favori": favori,
                 "favori_oran": r["oranlar"][favori],
                 **form,
                 **takvim,
+                **elo,
                 "cizgi_var": bool(r.get("acilis") and r.get("kapanis")),
                 "acilis_probs": (implied_probs(r["acilis"], yontem)
                                  if r.get("acilis") else None),

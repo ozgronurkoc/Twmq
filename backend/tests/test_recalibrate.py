@@ -271,13 +271,15 @@ def test_etkilesim_sutun_sayisi_ikili_carpim_kadar():
         **{alan: 1.0 for alan, _ in YON_ALANLARI},
     }
     ligler, bantlar = ["E0"], ["<1.50"]
-    taban = _tasarim_satiri(ozellik, "sezon_sonu", ligler, bantlar).shape[1]
+    # Taban `elo`dur, `sezon_sonu` degil: `etkilesim` Elo sutununu da
+    # tasir ve yanlis taban secilirse fark bir fazla cikar.
+    taban = _tasarim_satiri(ozellik, "elo", ligler, bantlar).shape[1]
     e1 = _tasarim_satiri(ozellik, "etkilesim", ligler, bantlar).shape[1]
     e2 = _tasarim_satiri(ozellik, "etkilesim_favori", ligler, bantlar).shape[1]
 
     n = len(YON_ALANLARI)
-    assert e1 - taban == n * (n - 1) // 2 == 15
-    assert e2 - e1 == n == 6
+    assert e1 - taban == n * (n - 1) // 2
+    assert e2 - e1 == n
     assert not np.isnan(_tasarim_satiri(ozellik, "etkilesim_favori",
                                         ligler, bantlar)).any()
 
@@ -295,7 +297,7 @@ def test_etkilesim_sutunu_yon_ozelligi_gibi_davranir():
         **{alan: 2.0 for alan, _ in YON_ALANLARI},
     }
     X = _tasarim_satiri(ozellik, "etkilesim", ["E0"], ["<1.50"])
-    taban = _tasarim_satiri(ozellik, "sezon_sonu", ["E0"], ["<1.50"]).shape[1]
+    taban = _tasarim_satiri(ozellik, "elo", ["E0"], ["<1.50"]).shape[1]
     for sutun in range(taban, X.shape[1]):
         ev, ber, dep = X[0, sutun], X[1, sutun], X[2, sutun]
         assert ber == 0.0
@@ -304,7 +306,10 @@ def test_etkilesim_sutunu_yon_ozelligi_gibi_davranir():
 
 def test_etkilesim_olcekleri_tanimsal_ve_pozitif():
     """Ölçekler veriden değil tanımdan gelir; sıfır ya da negatif olamaz."""
-    assert len(YON_ALANLARI) == 6
+    # Sayi degil YAPI sabitlenir: yeni bir yon ozelligi eklemek serbest,
+    # olceksiz eklemek degil.
+    assert len(YON_ALANLARI) >= 6
+    assert len({alan for alan, _ in YON_ALANLARI}) == len(YON_ALANLARI)
     for _, olcek in YON_ALANLARI:
         assert olcek > 0
 
@@ -322,7 +327,7 @@ def test_kupon_haftasinda_etkilesim_notr():
             assert satir[alan] == 0.0
 
     ozellik = _mac_ozellikleri(kupon)[0]
-    taban = _tasarim_satiri(ozellik, "sezon_sonu", ["E0"], ["<1.50"])
+    taban = _tasarim_satiri(ozellik, "elo", ["E0"], ["<1.50"])
     genis = _tasarim_satiri(ozellik, "etkilesim_favori", ["E0"], ["<1.50"])
     # Yeni sutunlarin TAMAMI sifir olmali.
     assert (genis[:, taban.shape[1]:] == 0.0).all()
@@ -353,3 +358,77 @@ def test_etkilesim_sutunu_gercekten_calisiyor(kademe):
     t._theta[-1] += 50.0
     sonra = t.tahmin(hafta)
     assert once != sonra, f"{kademe} son sutunu tahmini hic etkilemiyor — olu sutun"
+
+
+def test_kademe_tam_bir_sutun_ekler():
+    """**Yapısal bekçi.** Her basamak bir öncekine TAM OLARAK bir sütun eklemeli.
+
+    Kademenin bütün anlamı budur: fark tek bir özelliğe atfedilebilsin diye
+    her basamak yalnızca bir sütun ekler. Bozulduğunda ölçüm sessizce
+    yanlış olur — bir basamak komşusunun sütununu da taşırsa iki özelliğin
+    katkısı birbirine karışır.
+
+    Bu test gerçek bir hatadan doğdu: A3 döngüsündeki `break` fonksiyondan
+    çıkmadığı için `elo` sütunu `dinlenme`den itibaren bütün alt
+    basamaklara sızmıştı ve `kalibre_elo` ile `kalibre_sezon_sonu` birebir
+    aynı sayıyı veriyordu.
+
+    Etkileşim basamakları istisnadır ve **bilerek** birden çok sütun ekler
+    (çarpım kümesi bir bütündür); onlar için yalnızca artışın pozitif
+    olması denetlenir.
+    """
+    from spor_toto.recalibrate import YON_ALANLARI
+
+    ozellik = {
+        "probs": {"1": 0.5, "0": 0.3, "2": 0.2},
+        "lig": "E0", "favori": "1", "bant": "<1.50",
+        "hareket": {"1": 0.1, "0": 0.0, "2": -0.1}, "ayrisma": 0.2,
+        **{alan: 1.0 for alan, _ in YON_ALANLARI},
+    }
+    ligler, bantlar = ["E0", "diger"], ["<1.50", "diger"]
+
+    def genislik(kademe: str) -> int:
+        return _tasarim_satiri(ozellik, kademe, ligler, bantlar).shape[1]
+
+    n = len(YON_ALANLARI)
+    beklenen_artis = {
+        "bias": len(SYMBOLS) - 1,          # sinif sabitleri, "1" referans
+        "lig": len(ligler),
+        "bant": len(bantlar),
+        "form": 2,                          # puan + isabet
+        "etkilesim": n * (n - 1) // 2,
+        "etkilesim_favori": n,
+    }
+    for onceki, simdiki in itertools.pairwise(KADEMELER):
+        artis = genislik(simdiki) - genislik(onceki)
+        assert artis == beklenen_artis.get(simdiki, 1), (
+            f"{onceki} -> {simdiki}: {artis} sutun eklendi, "
+            f"{beklenen_artis.get(simdiki, 1)} bekleniyordu")
+
+
+def test_elo_sutunu_alt_basamaklara_sizmaz():
+    """`elo`nun ALTINDAKI hiçbir basamak Elo farkını okumamalı.
+
+    Gerileme testi: sızıntı olduğunda `sezon_sonu` ile `elo` birebir aynı
+    tahmini verir ve "Elo bir şey eklemiyor" cümlesi bağlanmamış koddan
+    gelir.
+    """
+    from spor_toto.recalibrate import ELO_KADEMELERI, YON_ALANLARI
+
+    ligler, bantlar = ["E0", "diger"], ["<1.50", "diger"]
+    taban = {
+        "probs": {"1": 0.5, "0": 0.3, "2": 0.2},
+        "lig": "E0", "favori": "1", "bant": "<1.50",
+        "hareket": {"1": 0.0, "0": 0.0, "2": 0.0}, "ayrisma": 0.0,
+        **{alan: 0.0 for alan, _ in YON_ALANLARI},
+    }
+    elolu = {**taban, "elo_farki": 300.0}
+
+    for kademe in KADEMELER:
+        a = _tasarim_satiri(taban, kademe, ligler, bantlar)
+        b = _tasarim_satiri(elolu, kademe, ligler, bantlar)
+        ayni = np.array_equal(a, b)
+        if kademe in ELO_KADEMELERI:
+            assert not ayni, f"{kademe} Elo'yu okumali ama okumuyor"
+        else:
+            assert ayni, f"{kademe} Elo'yu okumamali ama okuyor — sizinti"

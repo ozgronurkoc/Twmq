@@ -81,7 +81,7 @@ EN_AZ_ORNEK = AZ_ORNEK
 KADEMELER: tuple[str, ...] = ("sicaklik", "bias", "lig", "bant", "form",
                               "hareket", "dagilim",
                               "dinlenme", "sikisiklik", "ic_dis", "sezon_sonu",
-                              "etkilesim", "etkilesim_favori")
+                              "elo", "etkilesim", "etkilesim_favori")
 
 #: **Etkileşim basamakları** — `DIS_INCELEME.md` §3'ün açık itirazına cevap.
 #:
@@ -102,6 +102,9 @@ KADEMELER: tuple[str, ...] = ("sicaklik", "bias", "lig", "bant", "form",
 #: favori gücüne bağlı olduğunu **ölçmüştü** (şekil gerçek, büyüklük yok).
 #: Aynı bağımlılık yön özelliklerinde de olabilir.
 ETKILESIM_KADEMELERI: tuple[str, ...] = ("etkilesim", "etkilesim_favori")
+
+#: Elo sütununu taşıyan basamaklar — `elo` ve ondan üsttekiler.
+ELO_KADEMELERI: tuple[str, ...] = ("elo", *ETKILESIM_KADEMELERI)
 
 #: Etkileşime giren yön özellikleri ve **tanımsal** ölçekleri.
 #:
@@ -126,7 +129,16 @@ YON_ALANLARI: tuple[tuple[str, float], ...] = (
     ("sikisiklik_farki", 5.0),
     ("ic_dis_form_farki", 3.0),
     ("sezon_sonu_pay_farki", 1.0),
+    # Elo farki ev avantaji DAHIL puan farkidir. Olcek 400, Elo'nun kendi
+    # taniminin parcasi (400 puan fark ~ %90 kazanma beklentisi) — yine
+    # veriden degil tanimdan.
+    ("elo_farki", 400.0),
 )
+
+#: Elo farkının ölçeği — `YON_ALANLARI`daki değerle **aynı olmalı**.
+#: `elo` basamağı ile etkileşim çarpımları aynı ölçekte okunmazsa aynı
+#: özellik iki farklı büyüklük gibi davranır.
+ELO_OLCEK = 400.0
 
 #: Favori gücünün merkezlendiği nokta. Üç sembolde favorinin alabileceği en
 #: küçük değer 1/3'tür; merkezleme oradan yapılır ki "favori yok" durumu
@@ -199,6 +211,7 @@ def _mac_ozellikleri(hafta: Girdi) -> list[dict[str, Any]]:
             "form_isabet_farki": float(o.get("form_isabet_farki") or 0.0),
             "hareket": {s: float(o.get(f"hareket_{s}") or 0.0) for s in SYMBOLS},
             "ayrisma": float(o.get("ayrisma") or 0.0),
+            "elo_farki": float(o.get("elo_farki") or 0.0),
             **{alan: float(o.get(alan) or 0.0) for _, alan in A3_ALANLARI},
         } for i, o in enumerate(tasinan)]
 
@@ -217,6 +230,9 @@ def _mac_ozellikleri(hafta: Girdi) -> list[dict[str, Any]]:
             "form_puan_farki": 0.0,
             "form_isabet_farki": 0.0,
             "hareket": dict.fromkeys(SYMBOLS, 0.0),
+            # Kupon haftalari Elo da tasimaz — korpus disindaki takimlar
+            # icin defter yok. Notr 0, `form` ile ayni kural.
+            "elo_farki": 0.0,
             "ayrisma": 0.0,
             **{alan: 0.0 for _, alan in A3_ALANLARI},
         })
@@ -323,6 +339,21 @@ def _tasarim_satiri(ozellik: dict[str, Any], kademe: str,
                          for s in SYMBOLS])
         if kademe == ad:
             break
+    # A3 dongusundeki `break` fonksiyondan CIKMAZ, yalnizca donguden cikar.
+    # Bu yuzden asagisi acikca kapiya baglanmak zorunda: kapisiz birakilinca
+    # Elo sutunu `dinlenme`den itibaren BUTUN alt basamaklara sizmisti ve
+    # `kalibre_elo` ile `kalibre_sezon_sonu` birebir ayni sayiyi vermisti.
+    # `test_kademe_tam_bir_sutun_ekler` bu hata sinifini bekciliyor.
+    if kademe not in ELO_KADEMELERI:
+        return np.array(sutunlar, dtype=float).T
+
+    # 12) elo — rakip gucune gore duzeltilmis takim gucu (Faz 3.2).
+    #     `form` ile ayni simetrik kaydirma. `kalibre_form` HAM formdu;
+    #     Elo tam o eksigi kapatir ve bu yuzden ayri bir basamaktir:
+    #     "form denendi" demek "Elo denendi" demek degil.
+    e = float(ozellik.get("elo_farki") or 0.0) / ELO_OLCEK
+    sutunlar.append([e if s == "1" else (-e if s == "2" else 0.0)
+                     for s in SYMBOLS])
     if kademe not in ETKILESIM_KADEMELERI:
         return np.array(sutunlar, dtype=float).T
 

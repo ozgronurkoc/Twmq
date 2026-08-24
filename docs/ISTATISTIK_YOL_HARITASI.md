@@ -109,6 +109,7 @@ spor_toto/evaluate.py  ◄── spor_toto/predict.py     (sözleşme + 3 refera
 | Tahmin | `backend/spor_toto/bahisci.py` | — | Bahisçi anlaşmazlığı (A2): tekil bahisçiler, ayrışma ölçümü |
 | Tahmin | `backend/spor_toto/disari.py` | — | Piyasa dışı türetilebilir özellikler (A3): artık taraması, kör nokta |
 | Ortak | `backend/spor_toto/ortak.py` | — | Paylaşılan hesapların tek kaynağı: Wilson, Brier, **Brier'in Murphy ayrışımı**, karışıklık matrisi, Poisson-binom, bantlama |
+| Tahmin | `backend/spor_toto/elo.py` | — | Rakip gücüne göre düzeltilmiş takım gücü (Faz 3.2): Elo defteri, gol farkı çarpanı, sezon taşıma |
 | **Ürün** | `backend/spor_toto/tahmin.py` | — | **Tahmin ürünü (C2)**: yaklaşan maça olasılık + ölçülmüş isabet |
 | Üretim | `backend/scripts/build_fixtures.py` | — | Yaklaşan maçlar ve oranları (football-data `fixtures.csv`) |
 | UI | `frontend/app/tahmin/page.tsx` | — | Tahmin sayfası |
@@ -130,7 +131,7 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/app/super-toto/page.tsx` · `components/super-toto/haftalar.tsx` · `lib/super-toto.ts` | Sezonun hafta şeridi; `?hafta=N` adreste durur |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **1.165 test**; **82'si** istatistik katmanına (`history` `odds` `backtest`
+paketi toplam **1.205 test**; **82'si** istatistik katmanına (`history` `odds` `backtest`
 `api_stats` `api_backtest` `snapshot_iddaa`), **294'ü** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer`). Dosya adlarıyla sayılıdır ki tablo elle bakım gerektirmesin —
@@ -1684,6 +1685,111 @@ Sıra artık `KADEMELER`in kendisinden okunuyor; listenin iki kopyası yok.
 
     python -m spor_toto.recalibrate
 
+### 3.27 Elo (Faz 3.2) — **güçlü sinyal, sıfır katkı**
+
+`DIS_INCELEME.md` §8 Elo'yu *"denenebilir ama denenmedi"* diye kayda
+geçirmişti ve gerekçesi bir **tahsis kararıydı**, bir imkânsızlık değil.
+Faz 1'in iki ölçümü o kararı tersine çevirdi:
+
+* **§3.23** kalibrasyon ekseninin tavanının 0,00042 olduğunu ölçtü —
+  yeniden kalibrasyon tarafında alınacak yol kalmadı;
+* **§3.24** öğrenme eğrisinin piyasaya **yetişmeden** düzleştiğini ölçtü —
+  aynı türden daha çok satır bu farkı kapatmıyor.
+
+İkisi birlikte tek bir şey söylüyor: eksik olan **sütun**. Ve Elo, projenin
+kendi belgelerinde en çok işaret edilen eksik sütundu:
+
+> *"`kalibre_form` **ham** formdu, rakip gücüne göre düzeltilmemişti — Elo
+> tam o eksiği kapatan standart sinyaldir. Yani 'form denendi' demek 'Elo
+> denendi' demek değildir."*
+
+#### Kurulum — ve gol sütunlarının ilk kez kullanılması
+
+`spor_toto/elo.py`: 1500 başlangıç, K=20, ev avantajı 65 puan, 400'lük
+lojistik ölçek, sezonlar arası 0,75 taşıma, gol farkı çarpanı World
+Football Elo Ratings formülünden. **Hiçbir parametre veriden ölçülmedi** —
+hepsi yayınlanmış futbol Elo değerleri. Elo'nun bu projedeki avantajı tam
+buydu: parametrelerini uydurmaya gerek yok, dolayısıyla hold-out'a
+bakılarak seçilme riski de yok (`recalibrate.L2` ile aynı gerekçe).
+
+Kayda değer bir yan etki: korpus `hg`/`ag` sütunlarını CSV'de hep taşıyordu
+ama `korpus_yukle` onları satıra hiç koymuyordu — `kod` türetiliyor, goller
+atılıyordu. **Elo, gol farkını kullanan ilk özellik**, ve o sütunlar artık
+taşınıyor.
+
+Sızıntı disiplini `egitim._form_tablosu` ile birebir aynı: kronolojik gez,
+farkı **önce oku, sonra** maçı işle. Elo'da bu daha kritiktir çünkü form
+bir pencereyken Elo bütün geçmişi taşır.
+
+Kapsama: 31.103 maçın **%95,6**'sı (`elo_var`; iki tarafın da en az 5 maçı
+olması şartı). Farkın ortalaması **+65,4** — yani tam olarak ev avantajının
+kendisi, puanlar sıfır toplamlı olduğu için. Bu bir sağlamadır.
+
+#### Ham sinyal — devasa
+
+| Elo farkı | maç | gerçek ev galibiyeti | piyasanın beklediği | artık |
+|---|---:|---:|---:|---:|
+| −∞ … −100 | 1.850 | %16,8 | %17,2 | −0,4 |
+| −100 … −25 | 3.513 | %27,8 | %28,3 | −0,5 |
+| −25 … 25 | 4.573 | %35,4 | %35,2 | +0,1 |
+| 25 … 100 | 9.207 | %42,1 | %42,5 | −0,4 |
+| 100 … 175 | 6.495 | %51,6 | %51,7 | −0,1 |
+| 175 … +∞ | 4.090 | **%68,1** | %67,0 | +1,1 |
+
+Ev galibiyeti oranı %16,8'den %68,1'e çıkıyor — **51 puanlık** bir yayılım.
+Elo maç sonucunu güçlü biçimde ayırt ediyor.
+
+#### Artık — sıfır
+
+Sağdaki iki sütun aynı tabloyu ikinci kez okutuyor: **piyasa her bantta
+zaten orada.** Artıkların hepsi ±1,1 puanın içinde ve piyasanın söylediği
+sayı **her bantta Wilson %95 aralığının içinde** kalıyor — en büyük sapmada
+bile (üst bant, n=4.090) piyasa %67,0 diyor, gerçek %68,1 [%66,6, %69,5].
+
+Kademe ölçümü aynı şeyi söylüyor:
+
+| tahminci | Brier | fark | %95 aralık | geçti |
+|---|---:|---:|---|---|
+| piyasa | 0,593600 | — | — | referans |
+| `kalibre_form` | 0,593700 | +0,000039 | [−0,000275, +0,000351] | hayır |
+| `kalibre_sezon_sonu` | 0,593700 | +0,000076 | [−0,000240, +0,000408] | hayır |
+| **`kalibre_elo`** | 0,593700 | **+0,000086** | [−0,000242, +0,000429] | **hayır** |
+
+Ve uydurulan katsayı **negatif** (−0,0597): model Elo'nun etkisini
+büyütmek değil **kısmak** istiyor. `form`un katsayısı da negatifti
+(−0,0316). Yani piyasa Elo'yu fiyatlamakla kalmıyor, eğer bir şey varsa
+biraz **fazla** fiyatlıyor.
+
+#### Okuma — A3'ün iç/dış form satırının aynısı
+
+> **Güçlü sinyal, sıfır katkı.** Ham fark 51 puan, artığı sıfır.
+
+Bu, §3.16'da iç/dış form için ölçülen şeyin birebir tekrarı (ham fark
++0,247, artığı onda biri) ve A4'ün on birinci denemesidir. Elo'yu özel
+kılan şey, projenin kendi belgelerinin onu **en umutlu aday** olarak
+işaretlemiş olmasıydı — o umut artık ölçülmüş bir sayıya bağlandı.
+
+`DIS_INCELEME.md` §8'in *"denenmedi, gerekçesiyle"* satırı böylece
+kapanıyor. H2H hâlâ açık ve aynı statüde duruyor.
+
+#### İki hata bulundu, ikisi de bekçiye bağlandı
+
+1. **Elo sütunu alt basamaklara sızdı.** A3 döngüsündeki `break`
+   fonksiyondan çıkmaz, yalnızca döngüden çıkar; kapıya bağlanmayan Elo
+   bloğu `dinlenme`den itibaren **bütün** alt basamaklara girdi ve
+   `kalibre_elo` ile `kalibre_sezon_sonu` birebir aynı sayıyı verdi.
+   Şüphe uyandıran şey sayının kendisi oldu: iki farklı model aynı altı
+   haneyi vermez.
+2. Bunu yapısal olarak imkânsızlaştıran test yazıldı:
+   **`test_kademe_tam_bir_sutun_ekler`** — her basamak bir öncekine tam
+   olarak bir sütun eklemeli (etkileşim basamakları bilinçli istisna).
+   Kademenin bütün anlamı budur; bozulduğunda iki özelliğin katkısı
+   birbirine karışır ve ölçüm sessizce yanlış olur.
+   **`test_elo_sutunu_alt_basamaklara_sizmaz`** aynı sızıntıyı doğrudan
+   kovalıyor.
+
+    python -m spor_toto.recalibrate
+
 ## 4. Sayfada bugün ne var
 
 **`/istatistik`** — sezon dağılımı (en sık sonuç + pay çubuğu) · 5 sayı kutusu (sembol
@@ -1809,6 +1915,7 @@ ve karşılıkları: kupon seti 0,5747 → **0,5740**, korpus 0,5940 → **0,593
 | **Öğrenme eğrisi (§3.24)** | 31.103 maç · 183 hafta | **Eğri düzleşti, gap kapanmadan.** `kalibre_bant` 2.216 → 23.327 maçta 0,00348 iniyor ama **son adım 0,00006** ve 0,59373'te duruyor — `piyasa` 0,59364. Aynı türden veri toplamak bu farkı kapatmıyor; sorun satır sayısı değil sütun. `piyasa` eğrisi tam düz (sağlama) |
 | **Hafta içi sıralama (§3.25)** | 31.103 maç · 183 hafta | **Piyasanın sıralaması Brier'inin ima ettiğinden çok güçlü.** Taban isabet %51,1 iken en emin 5 maç **%82,3** [%79,7, %84,6]; NDCG 0,8971, bilgisiz zemin 0,7896. B0'ın +6,02 puanının sebebi bu — `en_iyi_secim` Brier'i değil sıralamayı kullanıyor |
 | **Etkileşim kademeleri (§3.26)** | 31.103 maç · 183 hafta | **Geçmedi ve kapasite bedel yazdı**: `etkilesim` +0,000150 [−0,000189, +0,000505], `etkilesim_favori` +0,000165 [−0,000180, +0,000520] — `sezon_sonu`nun +0,000076'sından kötü. Model sınıfı itirazı **daraldı, kapanmadı**: GLM'e açık etkileşim terimi eklemek bir şey getirmiyor; keyfî doğrusal olmama ölçülmedi |
+| **Elo (§3.27)** | 31.103 maç · 183 hafta · %95,6 kapsama | **Güçlü sinyal, sıfır katkı.** Ham fark devasa: ev galibiyeti %16,8 → %68,1 (51 puan). Artık sıfır: piyasa her bantta Wilson aralığının içinde. `kalibre_elo` +0,000086 [−0,000242, +0,000429] — geçmedi, ve katsayı **negatif** (−0,0597): piyasa Elo'yu eğer bir şey varsa fazla fiyatlıyor |
 
 **Okuma.** Aşırı uyum modelin kapasitesinden değil örneklem küçüklüğünden geliyordu; büyük
 korpus onu kaldırdı. Ama kalan etki 0,0005–0,0015 Brier — 31 binde anlamlı, 540'ta değil ve
@@ -2546,7 +2653,7 @@ python -m spor_toto.disari                 # A3: piyasa dışı özellikler
 python -m spor_toto.tahmin                 # ÜRÜN: yaklaşan maçlara olasılık
 
 # Denetim
-pytest -q                                  # 1.165 test (82'si bu katman, 294'ü tahmin)
+pytest -q                                  # 1.205 test (82'si bu katman, 294'ü tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out
