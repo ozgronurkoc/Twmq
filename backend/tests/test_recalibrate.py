@@ -17,13 +17,18 @@ import numpy as np
 import pytest
 
 from spor_toto import recalibrate
+from spor_toto.egitim import korpus_haftalari
 from spor_toto.evaluate import brier, olculebilir_haftalar
 from spor_toto.history import MATCH_COUNT, SYMBOLS
 from spor_toto.recalibrate import (
+    ETKILESIM_KADEMELERI,
     KADEMELER,
+    YON_ALANLARI,
     KalibreTahminci,
     _bant_adi,
+    _mac_ozellikleri,
     _softmax,
+    _tasarim_satiri,
     kademe_fabrikalari,
     rapor,
 )
@@ -246,3 +251,105 @@ def test_form_kupon_kesitinde_bant_ile_ozdes():
     assert form[:len(bant)] == pytest.approx(bant, abs=1e-6)
     assert form[len(bant):] == pytest.approx([0.0, 0.0], abs=1e-6), (
         "kuponda form katsayisi sifirdan farkli — notr sozlesmesi bozuk")
+
+
+# ─── etkileşim basamakları (Faz 2.1) ──────────────────────────────────────
+
+def test_etkilesim_kademeleri_kademe_listesinde():
+    for ad in ETKILESIM_KADEMELERI:
+        assert ad in KADEMELER
+    # Sıra kasıtlı: etkileşim EN SONDA, çünkü bir öncekinin üstüne biniyor.
+    assert KADEMELER[-2:] == ETKILESIM_KADEMELERI
+
+
+def test_etkilesim_sutun_sayisi_ikili_carpim_kadar():
+    """`etkilesim` C(6,2)=15, `etkilesim_favori` +6 sütun eklemeli."""
+    ozellik = {
+        "probs": {"1": 0.5, "0": 0.3, "2": 0.2},
+        "lig": "E0", "favori": "1", "bant": "<1.50",
+        "hareket": {"1": 0.0, "0": 0.0, "2": 0.0}, "ayrisma": 0.0,
+        **{alan: 1.0 for alan, _ in YON_ALANLARI},
+    }
+    ligler, bantlar = ["E0"], ["<1.50"]
+    taban = _tasarim_satiri(ozellik, "sezon_sonu", ligler, bantlar).shape[1]
+    e1 = _tasarim_satiri(ozellik, "etkilesim", ligler, bantlar).shape[1]
+    e2 = _tasarim_satiri(ozellik, "etkilesim_favori", ligler, bantlar).shape[1]
+
+    n = len(YON_ALANLARI)
+    assert e1 - taban == n * (n - 1) // 2 == 15
+    assert e2 - e1 == n == 6
+    assert not np.isnan(_tasarim_satiri(ozellik, "etkilesim_favori",
+                                        ligler, bantlar)).any()
+
+
+def test_etkilesim_sutunu_yon_ozelligi_gibi_davranir():
+    """Çarpım simetrik kaymalı: "1" yukarı, "2" aşağı, beraberlik sabit.
+
+    Yön büyüklüğü olduğu için beraberliğe dokunmamalı — beraberlik ayrı bir
+    sorudur ve `beraberlik.py`de kendi modeli var.
+    """
+    ozellik = {
+        "probs": {"1": 0.5, "0": 0.3, "2": 0.2},
+        "lig": "E0", "favori": "1", "bant": "<1.50",
+        "hareket": {"1": 0.0, "0": 0.0, "2": 0.0}, "ayrisma": 0.0,
+        **{alan: 2.0 for alan, _ in YON_ALANLARI},
+    }
+    X = _tasarim_satiri(ozellik, "etkilesim", ["E0"], ["<1.50"])
+    taban = _tasarim_satiri(ozellik, "sezon_sonu", ["E0"], ["<1.50"]).shape[1]
+    for sutun in range(taban, X.shape[1]):
+        ev, ber, dep = X[0, sutun], X[1, sutun], X[2, sutun]
+        assert ber == 0.0
+        assert ev == pytest.approx(-dep)
+
+
+def test_etkilesim_olcekleri_tanimsal_ve_pozitif():
+    """Ölçekler veriden değil tanımdan gelir; sıfır ya da negatif olamaz."""
+    assert len(YON_ALANLARI) == 6
+    for _, olcek in YON_ALANLARI:
+        assert olcek > 0
+
+
+def test_kupon_haftasinda_etkilesim_notr():
+    """Kupon haftaları yön özelliği taşımaz — çarpımlar da sıfır olmalı.
+
+    Kupon haftaları form ve A3 taşımaz (`_mac_ozellikleri` nötr 0 yazar);
+    etkileşim sütunları orada hiçbir şey yapmamalı, yoksa kademenin kupon
+    üzerindeki davranışı sessizce değişir.
+    """
+    kupon = _girdi(1, "1" * MATCH_COUNT)
+    for satir in _mac_ozellikleri(kupon):
+        for alan, _ in YON_ALANLARI:
+            assert satir[alan] == 0.0
+
+    ozellik = _mac_ozellikleri(kupon)[0]
+    taban = _tasarim_satiri(ozellik, "sezon_sonu", ["E0"], ["<1.50"])
+    genis = _tasarim_satiri(ozellik, "etkilesim_favori", ["E0"], ["<1.50"])
+    # Yeni sutunlarin TAMAMI sifir olmali.
+    assert (genis[:, taban.shape[1]:] == 0.0).all()
+
+
+@pytest.mark.parametrize("kademe", ["etkilesim", "etkilesim_favori"])
+def test_etkilesim_sutunu_gercekten_calisiyor(kademe):
+    """**Yokluk iddiasının bekçisi.**
+
+    "Etkileşim bir şey eklemiyor" ancak sütunlar gerçekten bağlıysa bir
+    ölçümdür. Katsayı elle değiştirilince tahmin değişmeli; değişmiyorsa
+    sütun ölüdür ve §3.26'yı kapatan cümle bağlanmamış koddan gelir.
+    """
+    h = korpus_haftalari(sezonlar_=["2425"])
+    # SON sutun her iki kademede de `sezon_sonu_pay_farki`yi tasiyor
+    # (`etkilesim`de ic_dis ile carpim, `etkilesim_favori`de aciklikla).
+    # Rastgele bir hafta secmek yetmez: sezon sonu payi sezonun son %20'si
+    # disinda sifirdir ve o haftalarda sutun HAKLI OLARAK olu gorunur.
+    hafta = next(
+        x for x in h
+        if any(abs(o.get("sezon_sonu_pay_farki") or 0.0) > 0.05
+               and abs(o.get("ic_dis_form_farki") or 0.0) > 0.05
+               for o in x["ozellikler"])
+    )
+    t = KalibreTahminci(kademe)
+    t.egit(h)
+    once = t.tahmin(hafta)
+    t._theta[-1] += 50.0
+    sonra = t.tahmin(hafta)
+    assert once != sonra, f"{kademe} son sutunu tahmini hic etkilemiyor — olu sutun"

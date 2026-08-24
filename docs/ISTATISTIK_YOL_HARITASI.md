@@ -130,7 +130,7 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/app/super-toto/page.tsx` · `components/super-toto/haftalar.tsx` · `lib/super-toto.ts` | Sezonun hafta şeridi; `?hafta=N` adreste durur |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **1.148 test**; **82'si** istatistik katmanına (`history` `odds` `backtest`
+paketi toplam **1.165 test**; **82'si** istatistik katmanına (`history` `odds` `backtest`
 `api_stats` `api_backtest` `snapshot_iddaa`), **294'ü** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer`). Dosya adlarıyla sayılıdır ki tablo elle bakım gerektirmesin —
@@ -1604,6 +1604,86 @@ demektir.
     python -m spor_toto.evaluate --korpus
     python -m spor_toto.evaluate
 
+### 3.26 Etkileşim kademeleri (Faz 2.1) — **geçmedi**, ve kapasite ceza yazdı
+
+`DIS_INCELEME.md` §3 bir itirazı açık bırakmıştı:
+
+> *"Piyasayı geçen özellik yok demediniz — sizin **doğrusal kademeniz** o
+> özelliği kullanamadı demiş oldunuz."*
+
+İtiraz haklı bir yere basıyordu: dokuz denemenin **hepsi** `ln p` üzerinde
+doğrusal, Newton ile uydurulan tek bir softmax ailesiyle yapılmıştı.
+Etkileşim yakalayan bir sınıf hiç denenmemişti. Bu bölüm o itirazı **bizim
+kesitimizde** ölçüyor.
+
+`KADEMELER`e iki basamak eklendi — iki ayrı soru olduğu için iki basamak:
+
+| basamak | soru | sütun |
+|---|---|---|
+| `etkilesim` | yön özellikleri **birbiriyle** etkileşiyor mu (yorgunluk formu bastırıyor mu) | C(6,2) = **15** |
+| `etkilesim_favori` | yön özellikleri **maçın açıklığıyla** etkileşiyor mu (form denk maçlarda daha mı önemli) | **+6** |
+
+İkincisi teorik olarak daha güçlü bir adaydı: Ö3 (§3.21) beraberlik
+sapmasının favori gücüne bağlı olduğunu *ölçmüştü* — şekil gerçek, büyüklük
+yok. Aynı bağımlılık yön özelliklerinde de olabilirdi.
+
+Ölçekler **veriye bakılmadan**, her özelliğin kendi tanımından alındı
+(`dinlenme_farki` ±14, `sezon_sonu_pay_farki` ±1 …). Ölçeklenmeden aynı L2
+cezasına sokmak büyük ölçekli özelliklerin katsayısını yapay olarak kısardı.
+
+#### Ölçülen — 31.103 maç · 183 hafta · sezon dışarıda bırakmalı
+
+| tahminci | Brier | fark | %95 aralık | geçti |
+|---|---:|---:|---|---|
+| piyasa | 0,593600 | — | — | referans |
+| `kalibre_sezon_sonu` | 0,593700 | +0,000076 | [−0,000240, +0,000408] | hayır |
+| `kalibre_etkilesim` | 0,593800 | **+0,000150** | [−0,000189, +0,000505] | hayır |
+| `kalibre_etkilesim_favori` | 0,593800 | **+0,000165** | [−0,000180, +0,000520] | hayır |
+
+#### Okuma — etkileşim yalnızca yardım etmiyor değil, **bedel yazıyor**
+
+Hiçbiri anlamlı değil (üç aralık da sıfırı kesiyor), ama nokta tahmini
+kapasiteyle birlikte **tek yönde** ilerliyor: 21 sütun eklemek dışarıdaki
+skoru 0,000076'dan 0,000165'e taşıyor. Aşırı uyumun imzası, ve 31 bin maçta
+bile görünüyor.
+
+**İtiraz daraldı, kapanmadı — ve bu ayrım yazılır.** Ölçülen şey şudur:
+*genelleştirilmiş doğrusal bir modele açık etkileşim terimleri eklemek bir
+şey getirmiyor.* Ölçülmeyen şey: ağaç toplulukları gibi keyfî doğrusal
+olmama. Bu ikisi aynı cümle değildir. Dış kanıt aynı yöne işaret ediyor
+(`DIS_INCELEME.md` §3: RF/XGB/SVM aynı tavan; `DIS_INCELEME_ALPHAPY.md` §3:
+AlphaPy'ın kendi spor öğreticisi %52–54) ama teyit ölçüm değildir.
+
+#### Bir hata bulundu ve bekçi yakaladı
+
+Basamaklar eklenirken `_gruplari_belirle` **elle yazılmış** bir kademe
+listesi tutuyordu ve yeni basamaklar o listede olmadığı için **lig ve bant
+sütunları tamamen düşüyordu**: etkileşim kademesi sessizce `bias`
+seviyesine geriliyor, ölçüm sakat bir model üzerinde koşuyordu.
+
+İlk ölçüm bu hâliyle alındı ve *"−0,0001, geçmedi"* diyordu — yani **yanlış
+bir sayı, doğru görünen bir sonuç veriyordu.** Onu yakalayan şey yeni bir
+test değil, zaten duran
+`test_gercek_veride_egitim_ici_kapasiteyle_iyilesiyor` oldu: eğitim-içi
+skor kapasiteyle **kötüleşemez** ve kötüleşti.
+
+Sıra artık `KADEMELER`in kendisinden okunuyor; listenin iki kopyası yok.
+
+#### Bekçiler
+
+* `test_etkilesim_sutunu_gercekten_calisiyor` — **yokluk iddiasının
+  bekçisi**. "Etkileşim bir şey eklemiyor" ancak sütunlar gerçekten
+  bağlıysa bir ölçümdür. Hafta seçimi rastgele değil: son sütun
+  `sezon_sonu_pay_farki` taşır ve o pay sezonun son %20'si dışında sıfırdır
+  — yanlış hafta seçilirse sütun **haklı olarak** ölü görünür ve test
+  yanlış sebeple yeşil kalırdı;
+* `test_etkilesim_sutunu_yon_ozelligi_gibi_davranir` — çarpım simetrik
+  kaymalı, beraberliğe dokunmamalı;
+* `test_kupon_haftasinda_etkilesim_notr` — kupon haftaları yön özelliği
+  taşımaz, yeni sütunların **tamamı** orada sıfır olmalı.
+
+    python -m spor_toto.recalibrate
+
 ## 4. Sayfada bugün ne var
 
 **`/istatistik`** — sezon dağılımı (en sık sonuç + pay çubuğu) · 5 sayı kutusu (sembol
@@ -1728,6 +1808,7 @@ ve karşılıkları: kupon seti 0,5747 → **0,5740**, korpus 0,5940 → **0,593
 | **Brier ayrışımı (§3.23)** | 31.103 maç · 183 hafta | Kalibrasyon ekseninin tavanı **ölçüldü**: piyasanın toplam güvenilirlik borcu **0,00042** (sapma payı 0,00021), çözünürlüğü 0,05657. T2/T3'ün 0,0005–0,0015'lik etkileri bu tavanın **üstünde** — geçmemeleri kapasiteden değil, alınacak yolun kalmamasından. Beraberlik çözünürlüğü 0,00257 (1 → 0,02922, 2 → 0,02478) ve duyarlılığı **0,003**: argmax neredeyse hiç beraberlik demiyor |
 | **Öğrenme eğrisi (§3.24)** | 31.103 maç · 183 hafta | **Eğri düzleşti, gap kapanmadan.** `kalibre_bant` 2.216 → 23.327 maçta 0,00348 iniyor ama **son adım 0,00006** ve 0,59373'te duruyor — `piyasa` 0,59364. Aynı türden veri toplamak bu farkı kapatmıyor; sorun satır sayısı değil sütun. `piyasa` eğrisi tam düz (sağlama) |
 | **Hafta içi sıralama (§3.25)** | 31.103 maç · 183 hafta | **Piyasanın sıralaması Brier'inin ima ettiğinden çok güçlü.** Taban isabet %51,1 iken en emin 5 maç **%82,3** [%79,7, %84,6]; NDCG 0,8971, bilgisiz zemin 0,7896. B0'ın +6,02 puanının sebebi bu — `en_iyi_secim` Brier'i değil sıralamayı kullanıyor |
+| **Etkileşim kademeleri (§3.26)** | 31.103 maç · 183 hafta | **Geçmedi ve kapasite bedel yazdı**: `etkilesim` +0,000150 [−0,000189, +0,000505], `etkilesim_favori` +0,000165 [−0,000180, +0,000520] — `sezon_sonu`nun +0,000076'sından kötü. Model sınıfı itirazı **daraldı, kapanmadı**: GLM'e açık etkileşim terimi eklemek bir şey getirmiyor; keyfî doğrusal olmama ölçülmedi |
 
 **Okuma.** Aşırı uyum modelin kapasitesinden değil örneklem küçüklüğünden geliyordu; büyük
 korpus onu kaldırdı. Ama kalan etki 0,0005–0,0015 Brier — 31 binde anlamlı, 540'ta değil ve
@@ -2465,7 +2546,7 @@ python -m spor_toto.disari                 # A3: piyasa dışı özellikler
 python -m spor_toto.tahmin                 # ÜRÜN: yaklaşan maçlara olasılık
 
 # Denetim
-pytest -q                                  # 1.148 test (82'si bu katman, 294'ü tahmin)
+pytest -q                                  # 1.165 test (82'si bu katman, 294'ü tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out

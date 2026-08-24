@@ -80,7 +80,58 @@ EN_AZ_ORNEK = AZ_ORNEK
 #: yalnızca bir özellik ekler, böylece fark o özelliğe atfedilebilir.
 KADEMELER: tuple[str, ...] = ("sicaklik", "bias", "lig", "bant", "form",
                               "hareket", "dagilim",
-                              "dinlenme", "sikisiklik", "ic_dis", "sezon_sonu")
+                              "dinlenme", "sikisiklik", "ic_dis", "sezon_sonu",
+                              "etkilesim", "etkilesim_favori")
+
+#: **Etkileşim basamakları** — `DIS_INCELEME.md` §3'ün açık itirazına cevap.
+#:
+#: Dokuz denemenin hepsi tek bir model ailesiyle yapılmıştı: `ln p` üzerinde
+#: **doğrusal**, Newton ile uydurulan softmax. İtiraz haklı bir yere basıyor:
+#: *"piyasayı geçen özellik yok demediniz — sizin doğrusal kademeniz o
+#: özelliği kullanamadı demiş oldunuz."* Bu iki basamak o itirazı **bizim
+#: kesitimizde** ölçerek cevaplıyor.
+#:
+#: İki ayrı basamak, çünkü iki ayrı soru:
+#:
+#:     etkilesim          yön özellikleri BİRBİRİYLE etkileşiyor mu
+#:                        (ör. yorgunluk formu bastırıyor mu)
+#:     etkilesim_favori   yön özellikleri MAÇIN AÇIKLIĞIYLA etkileşiyor mu
+#:                        (ör. form denk maçlarda daha mı önemli)
+#:
+#: İkincisi teorik olarak daha güçlü bir aday: Ö3 beraberlik sapmasının
+#: favori gücüne bağlı olduğunu **ölçmüştü** (şekil gerçek, büyüklük yok).
+#: Aynı bağımlılık yön özelliklerinde de olabilir.
+ETKILESIM_KADEMELERI: tuple[str, ...] = ("etkilesim", "etkilesim_favori")
+
+#: Etkileşime giren yön özellikleri ve **tanımsal** ölçekleri.
+#:
+#: Ölçek şart: `dinlenme_farki` ±14, `sezon_sonu_pay_farki` ±1 aralığında.
+#: Çarpımları ölçeklenmeden aynı L2 cezasına sokmak, büyük ölçekli
+#: özelliklerin katsayısını yapay olarak kısar ve karşılaştırmayı bozardı.
+#:
+#: Ölçekler **veriye bakılmadan**, her özelliğin kendi TANIMINDAN alındı
+#: (`L2` ve `EN_AZ_KOVA` ile aynı gerekçe — ölçüm sonucuna bakarak seçilirse
+#: hold-out'un anlamı kalmaz):
+#:
+#:     form_puan_farki       maç başına puan farkı, tanım gereği [-3, 3]
+#:     form_isabet_farki     isabetli şut farkı; doğal tavanı yok, 10 alındı
+#:     dinlenme_farki        `egitim.DINLENME_TAVANI` = 14
+#:     sikisiklik_farki      14 günde oynanan maç farkı; pratikte [-5, 5]
+#:     ic_dis_form_farki     yine maç başına puan farkı, [-3, 3]
+#:     sezon_sonu_pay_farki  `2·|yüzdelik - 0.5|` farkı, tanım gereği [-1, 1]
+YON_ALANLARI: tuple[tuple[str, float], ...] = (
+    ("form_puan_farki", 3.0),
+    ("form_isabet_farki", 10.0),
+    ("dinlenme_farki", 14.0),
+    ("sikisiklik_farki", 5.0),
+    ("ic_dis_form_farki", 3.0),
+    ("sezon_sonu_pay_farki", 1.0),
+)
+
+#: Favori gücünün merkezlendiği nokta. Üç sembolde favorinin alabileceği en
+#: küçük değer 1/3'tür; merkezleme oradan yapılır ki "favori yok" durumu
+#: sıfır versin. Uydurulmuş bir eşik DEĞİL, sembol sayısının aritmetiği.
+FAVORI_MERKEZ = 1.0 / 3.0
 
 #: A3 basamaklarının okuduğu alanlar — hepsi **yön** özelliğidir ve hepsi
 #: "pozitif = ev lehine" diye kurulmuştur (bkz. `egitim._takvim_tablosu`).
@@ -272,6 +323,34 @@ def _tasarim_satiri(ozellik: dict[str, Any], kademe: str,
                          for s in SYMBOLS])
         if kademe == ad:
             break
+    if kademe not in ETKILESIM_KADEMELERI:
+        return np.array(sutunlar, dtype=float).T
+
+    # 12) etkilesim — yon ozelliklerinin IKILI carpimlari.
+    #     Olcekli okunur (bkz. `YON_ALANLARI`), ve `form` ile ayni simetrik
+    #     kaydirmayla girer: pozitif carpim "1"i yukari, "2"yi asagi iter.
+    #     Beraberlige dokunmaz, cunku bir YON buyuklugudur — beraberlik
+    #     sorusu ayridir ve `beraberlik.py`de kendi modeline sahiptir.
+    olcekli = [float(ozellik.get(alan) or 0.0) / olcek
+               for alan, olcek in YON_ALANLARI]
+    for i in range(len(olcekli)):
+        for j in range(i + 1, len(olcekli)):
+            v = olcekli[i] * olcekli[j]
+            sutunlar.append([v if s == "1" else (-v if s == "2" else 0.0)
+                             for s in SYMBOLS])
+    if kademe == "etkilesim":
+        return np.array(sutunlar, dtype=float).T
+
+    # 13) etkilesim_favori — her yon ozelligi x macin ACIKLIGI.
+    #     Aciklik = favorinin olasiligi, 1/3'ten merkezlenmis. Denk macta
+    #     ~0, ezici favoride ~0,6. Katsayinin ISARETI dogrudan soruyu
+    #     cevaplar: pozitifse ozellik acik maclarda daha cok is goruyor,
+    #     negatifse denk maclarda.
+    aciklik = (max(probs.values()) - FAVORI_MERKEZ) if probs else 0.0
+    for v0 in olcekli:
+        v = v0 * aciklik
+        sutunlar.append([v if s == "1" else (-v if s == "2" else 0.0)
+                         for s in SYMBOLS])
     return np.array(sutunlar, dtype=float).T
 
 
@@ -375,10 +454,17 @@ class KalibreTahminci(Tahminci):
                 sayim[o[alan]] = sayim.get(o[alan], 0) + 1
             return [*sorted([k for k, v in sayim.items() if v >= EN_AZ_ORNEK and k != "bilinmiyor"]), "diger"]
 
-        ust = ("lig", "bant", "form", "hareket", "dagilim",
-               "dinlenme", "sikisiklik", "ic_dis", "sezon_sonu")
-        self._ligler = yeterli("lig") if self.kademe in ust else []
-        self._bantlar = yeterli("bant") if self.kademe in ust[1:] else []
+        # Lig ve bant sutunlari, kendi basamaklarindan ITIBAREN butun ust
+        # kademelerde bulunur. Bu daha once elle yazilmis bir liste olarak
+        # duruyordu ve `KADEMELER`e yeni bir basamak eklendiginde SESSIZCE
+        # bozuluyordu: yeni basamak listede olmadigi icin lig/bant sutunlari
+        # tamamen dusuyor, kademe bias seviyesine geriliyordu. Tam da bu
+        # yasandi (etkilesim basamaklari eklenirken) ve
+        # `test_gercek_veride_egitim_ici_kapasiteyle_iyilesiyor` yakaladi.
+        # Sira artik `KADEMELER`in kendisinden okunuyor — tek kaynak.
+        sira = KADEMELER.index(self.kademe) if self.kademe in KADEMELER else -1
+        self._ligler = yeterli("lig") if sira >= KADEMELER.index("lig") else []
+        self._bantlar = yeterli("bant") if sira >= KADEMELER.index("bant") else []
 
     def egit(self, haftalar: Sequence[Girdi]) -> None:
         ozellikler: list[dict[str, Any]] = []
