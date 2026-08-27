@@ -834,7 +834,18 @@ else:
 
 ana_v = dict(ana)
 ana_v["cost"] = ana["columns"]
-HTML = f"""<title>Süper Toto {_a.hafta}. Hafta</title>
+#: Belge kabugu. Sayfa uzun sure dogrudan `<title>` ile basliyordu: ne
+#: doctype, ne `<head>`, ne de **`<meta charset>`**. Baytlar UTF-8'di ama
+#: bildirim olmadan tarayici dosyayi kendi varsayilaniyla (cogu zaman
+#: latin-1) okuyor ve Turkce harfler bozuluyordu. Arayuzun icinde sorun
+#: gorunmuyordu cunku orada kabugu Next.js kuruyor; tek basina acilan
+#: dosyada gorunuyordu.
+HTML = f"""<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Süper Toto {_a.hafta}. Hafta</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@1,6..96,400;1,6..96,600;0,6..96,600&display=swap">
@@ -1052,6 +1063,8 @@ footer {{ margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--line)
   .ay-num {{ grid-column: 1 / -1; text-align: left; }}
 }}
 </style>
+</head>
+<body>
 
 <div class="wrap">
   <header class="hero">
@@ -1296,6 +1309,8 @@ footer {{ margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--line)
     Kupon sonuçlar görülmeden donduruldu ve commit'lendi.
   </footer>
 </div>
+</body>
+</html>
 """
 # Dosya yazma YALNIZCA dogrudan calistirilirken. Once modul duzeyindeydi:
 # bu dosyayi import etmek diske HTML yaziyordu. Dizindeki her script'in
