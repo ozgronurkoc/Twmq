@@ -54,6 +54,146 @@ KUPON_JSON = json.loads((KOK / "data" / "super_toto" / _a.sezon /
                          f"hafta_{_a.hafta:02d}_kupon.json").read_text(encoding="utf-8"))
 KULLANICI = KUPON_JSON.get("user")
 
+#: Fiyat kaynağının ADI sayfada üç yerde geçiyordu ve üçünde de "iddaa"
+#: diye SABİT yazılıydı. 3. haftada ana fiyat Pinnacle kapanışa geçince o
+#: etiketler yalan söylemeye başladı: sayfa hangi fiyatı gösterdiğini
+#: kendi verisinden okumak zorunda, yoksa rapor kendi kaynağını yanlış
+#: bildirir. Ad `odds_kind`ten türetilir; bilinmeyen bir değer gelirse
+#: uydurmak yerine ham değerin kendisi yazılır.
+_KIND = (d["meta"].get("odds_kind") or "").lower()
+_SAGLAYICI = {"iddaa": "iddaa", "pinnacle": "Pinnacle",
+              "bet365nl": "bet365.nl", "nesine": "Nesine"}
+_saglayici = next((v for k, v in _SAGLAYICI.items() if _KIND.startswith(k)),
+                  _KIND or "bilinmiyor")
+_an = ("açılış" if _KIND.endswith("acilis")
+       else "kapanış" if _KIND.endswith("kapanis") else "")
+FIYAT_ADI = f"{_saglayici} {_an} oranı".replace("  ", " ").strip()
+#: "Program" alanı boş olabilir (3. haftada tarihler girilmedi ve
+#: uydurulmadı). Şablon `html.escape`e doğrudan veriyordu ve None'da
+#: çöküyordu; eksik veri sayfayı düşürmemeli, eksik olduğunu SÖYLEMELİ.
+PROGRAM = d["meta"].get("program") or "program tarihleri girilmedi"
+
+#: Aşağıdaki üç "sınır" maddesi 1. haftanın sayılarıyla ELLE yazılıydı
+#: (belirli maç numaraları, sabit yüzdeler, tek yönlü bir marj yorumu).
+#: Bu dosyanın kendi başlığı "elle yazılmış tek bir ölçüm yoktur" diyor;
+#: 3. haftada ana fiyat Pinnacle'a geçince o satırlar hem başlığı hem
+#: gerçeği yalanlar hâle geldi. Üçü de artık haftanın kendi verisinden
+#: türetiliyor.
+#:
+#: Marj yönü İKİ TARAFLI: bu haftanın marjı arşivinkinden büyükse
+#: arındırma favoriden fazla kesip olasılığı küçük gösterir, küçükse
+#: tersi olur. Eski metin yalnızca "küçük" halini biliyordu.
+_MARJ_FARKI = prof["avg_margin_pct"] - ref["odds"]["avg_margin_pct"]
+if abs(_MARJ_FARKI) < 0.5:
+    MARJ_YONU = ("iki ölçek pratikte aynı, bu haftaya özel bir ölçek "
+                 "düzeltmesi gerekmiyor.")
+elif _MARJ_FARKI > 0:
+    MARJ_YONU = ("bu hafta <b>daha yüksek</b>. Arındırma favoriden daha çok "
+                 "kestiği için favori olasılıkları bir miktar <b>küçük</b> "
+                 "çıkıyor — gerçek banko sayısı buradakinden fazla olabilirdi.")
+else:
+    MARJ_YONU = ("bu hafta <b>daha düşük</b>. Eşikler daha marjlı bir fiyatta "
+                 "kalibre edildiği için favori olasılıkları bu hafta bir miktar "
+                 "<b>büyük</b> çıkıyor — eşik kuralı olduğundan cömert "
+                 "davranabilir. (Hedef kuralı eşiğe bakmadığı için bu "
+                 "sapmadan etkilenmez.)")
+
+_kal_sirali = sorted(ana["per_match_crowd"],
+                     key=lambda r: -(r["play_in"] - r["prob_in"]))[:3]
+KALABALIK_UC = ", ".join(
+    f"{r['no']}. maç [{r['sec']}] halkın %{100*r['play_in']:.0f}&#39;i"
+    for r in _kal_sirali) or "yok"
+
+#: Uyarılar hafta dosyasının kendisinden gelir (elle girilenler + `dogrula`
+#: üretenler), böylece sayfa hangi boşlukla yaşadığını saklamaz.
+_uyarilar = list(d["meta"].get("data_warnings") or [])
+_uyarilar += list(d["meta"].get("uretilen_uyarilar") or [])
+UYARI_OZETI = (f"Bu haftanın kaydında {len(_uyarilar)} veri uyarısı var "
+               "(tamamı yukarıdaki “veri uyarıları” bölümünde)."
+               if _uyarilar else "Bu haftanın kaydında veri uyarısı yok.")
+
+# ─── FİYAT KAYNAKLARI ────────────────────────────────────────────────────
+# 3. haftada hafta dosyası ilk kez birden çok bahisçinin AÇILIŞ ve KAPANIŞ
+# fiyatını taşıyor (`matches[].odds_books`). Bu bölüm yalnızca o alan varsa
+# çizilir; 1. ve 2. haftanın sayfaları değişmeden üretilmeye devam eder.
+#
+# Ölçüm arındırılmış olasılık üzerinden yapılır, ham oran üzerinden DEĞİL:
+# ham oranın hareketi, piyasanın fikir değiştirmesiyle bahisçinin marjını
+# değiştirmesini karıştırır (bkz. `spor_toto.cizgi` modül başlığı).
+_ilk_kitap = (d["matches"][0].get("odds_books") or {})
+KITAPLAR = sorted(_ilk_kitap)
+FIYAT_VAR = len(KITAPLAR) > 1
+
+
+def _oku(mac, anahtar):
+    from spor_toto.odds import implied_probs
+    o = (mac.get("odds_books") or {}).get(anahtar)
+    return (implied_probs(o), o) if o else (None, None)
+
+
+def _marj(o):
+    return sum(1.0 / v for v in o.values()) - 1.0
+
+
+FIYAT_SATIR: list[dict] = []
+KITAP_MARJ: dict[str, float] = {}
+BAYAT: list[str] = []
+if FIYAT_VAR:
+    for anahtar in KITAPLAR:
+        ms = [_marj(mm["odds_books"][anahtar]) for mm in d["matches"]]
+        KITAP_MARJ[anahtar] = 100 * sum(ms) / len(ms)
+    # Bir bahisçinin kapanışı açılışıyla BİREBİR aynıysa o satır bir fiyat
+    # değil, bayat bir kayıttır — ayrışma sayılırsa görüş farkı sanılır.
+    for anahtar in KITAPLAR:
+        if not anahtar.endswith("_kapanis"):
+            continue
+        ac = anahtar.replace("_kapanis", "_acilis")
+        if ac not in KITAPLAR:
+            continue
+        ayni = [mm["no"] for mm in d["matches"]
+                if mm["odds_books"][anahtar] == mm["odds_books"][ac]]
+        if ayni:
+            BAYAT.append(f"{anahtar.split('_')[0]}: "
+                         + ", ".join(map(str, ayni)) + ". maç")
+
+    _ana_kitap = (d["meta"].get("odds_kind") or "").replace("-", "_")
+    _ac_kitap = _ana_kitap.replace("_kapanis", "_acilis")
+    for mm in d["matches"]:
+        p_ka, _ = _oku(mm, _ana_kitap)
+        p_ac, _ = _oku(mm, _ac_kitap)
+        # Ayrışma: aynı anı gösteren bahisçiler arasındaki en büyük fark.
+        # Ana fiyat once gelir: tablonun ilk sutunu kuponu besleyen fiyat
+        # olmazsa okuyucu ikincil bir bahisciyi ana fiyat sanir.
+        esanlı = sorted((k for k in KITAPLAR
+                         if k.endswith(_ana_kitap.split("_")[-1])),
+                        key=lambda k: (k != _ana_kitap, k))
+        pler = [_oku(mm, k)[0] for k in esanlı]
+        pler = [x for x in pler if x]
+        ayrisma = max((abs(a[s] - b[s]) for a in pler for b in pler for s in S),
+                      default=0.0)
+        hareket = None
+        if p_ka and p_ac:
+            hareket = max(S, key=lambda s: abs(p_ka[s] - p_ac[s]))
+        FIYAT_SATIR.append({
+            "no": mm["no"], "ad": f"{mm['home']} – {mm['away']}",
+            "acilis": p_ac, "kapanis": p_ka,
+            "hareket_sembol": hareket,
+            "hareket": (p_ka[hareket] - p_ac[hareket]) if hareket else 0.0,
+            "ayrisma": ayrisma,
+            "kitaplar": {k: _oku(mm, k)[0] for k in esanlı},
+            "esanlı": esanlı,
+        })
+    _EN_HAREKET = max(FIYAT_SATIR, key=lambda r: abs(r["hareket"]))
+    _EN_AYRISMA = max(FIYAT_SATIR, key=lambda r: r["ayrisma"])
+
+# ─── DONDURULAN KUPON ────────────────────────────────────────────────────
+# Sayfanın kendi kurduğu kupon (`ana`) varsayılan kuralın çıktısıdır.
+# Kayıtta ondan farklı bir varyant DONDURULDUYSA gösterilecek olan odur —
+# oynanan kupon kayıttır, sayfanın o an yeniden hesapladığı şey değil.
+DONMUS = next((v for v in KUPON_JSON.get("variants", [])
+               if "DONDURULAN" in v.get("label", "")), None)
+DUYARLILIK = KUPON_JSON.get("duyarlilik")
+
 if BITTI:
     gercek = d["meta"]["results"]
     degerlendirme = _deg.kupon_degerlendir(d, ana["picks"])
@@ -157,6 +297,61 @@ for diff, no, mac, s, play, prob in ayrisma[:6]:
         <span class="ay-num">halk %{100*play:.0f} · piyasa %{100*prob:.0f}
           <b>{100*diff:+.0f} puan</b></span>
       </li>""")
+
+#: Fiyat tablosunun satırları. Her hücre arındırılmış olasılıktır; ham oran
+#: gösterilseydi marj değişimi fikir değişimi gibi okunurdu.
+_KITAP_ADI = {"pinnacle": "Pinnacle", "bet365nl": "bet365.nl",
+              "nesine": "Nesine", "iddaa": "iddaa"}
+
+
+def _kitap_adi(anahtar):
+    saglayici, _, an = anahtar.partition("_")
+    return (f"{_KITAP_ADI.get(saglayici, saglayici)} "
+            f"{'açılış' if an == 'acilis' else 'kapanış'}")
+
+
+fiyat_satir = []
+for r in FIYAT_SATIR:
+    huc = []
+    for k in r["esanlı"]:
+        p = r["kitaplar"].get(k)
+        huc.append(f'<td class="num mono">{100*p["1"]:.0f}/{100*p["0"]:.0f}/'
+                   f'{100*p["2"]:.0f}</td>' if p else '<td class="num">—</td>')
+    hs, hv = r["hareket_sembol"], r["hareket"]
+    hlaf = (f'<b style="color:var(--{"ok" if hv > 0 else "danger"})">{hs} '
+            f'{100*hv:+.1f}</b>' if hs and abs(hv) >= 0.005 else
+            '<span style="color:var(--dim)">—</span>')
+    fiyat_satir.append(
+        f'<tr><td class="num mono">{r["no"]}</td><td>{e(r["ad"])}</td>'
+        + "".join(huc)
+        + f'<td class="num mono">{hlaf}</td>'
+        + f'<td class="num mono">{100*r["ayrisma"]:.1f}</td></tr>')
+
+#: Dondurulan kuponun kıyas tablosu ve 16 satırlık ızgarası. Şablonun
+#: içinde f-string olarak kurulamıyor (iç içe tırnak), burada kuruluyor.
+donmus_satir = []
+donmus_grid = []
+if DONMUS:
+    for v in KUPON_JSON["variants"]:
+        vur = (' style="background:var(--accent)"'
+               if "DONDURULAN" in v["label"] else "")
+        donmus_satir.append(
+            f'<tr{vur}><td>{e(v["label"])}</td>'
+            f'<td class="num mono">%{100*v["hedef_p12"]:.2f}</td>'
+            f'<td class="num mono">{tr(v["kolon"])}</td>'
+            f'<td class="num mono">%{100*v["kume_ici"]:.3f}</td>'
+            f'<td class="num mono">%{100*v["kalabalik_ici"]:.3f}</td>'
+            f'<td class="num mono">{v["oran"]:.2f}</td></tr>')
+    for i, satir in enumerate(KUPON_JSON.get("rows") or []):
+        hucre = "".join(f"<td>{c}</td>" for c in satir.split())
+        donmus_grid.append(f'<tr><td class="rn">{i+1}</td>{hucre}</tr>')
+
+fiyat_baslik = "".join(f'<th class="num">{e(_kitap_adi(k))}</th>'
+                       for k in (FIYAT_SATIR[0]["esanlı"] if FIYAT_SATIR else []))
+marj_rozet = " · ".join(
+    f'{e(_kitap_adi(k))} <b style="color:var(--ink)">%{v:.2f}</b>'
+    for k, v in KITAP_MARJ.items())
+
 
 def varyant(v, etiket, vurgu=False):
     deg = "; ".join(v.get("changes", [])) or "kural birebir — kısılan yok"
@@ -862,10 +1057,10 @@ footer {{ margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--line)
   <header class="hero">
     <span class="eyebrow">Süper Toto 2026/2027 · işlenen sezon</span>
     <h1>{_a.hafta}. Hafta</h1>
-    <p class="prog">{e(d['meta']['program'])} · 15 maç · iddaa taraf oranları ve tek platform oynanma yüzdeleriyle</p>
+    <p class="prog">{e(PROGRAM)} · 15 maç · {e(FIYAT_ADI)} ve tek platform oynanma yüzdeleriyle</p>
     <div class="rozetler">
       <span class="rozet mor">2026/2027</span>
-      <span class="rozet">{"iddaa açılış oranı" if d["meta"].get("odds_kind","").endswith("acilis") else "iddaa oranı"}</span>
+      <span class="rozet">{e(FIYAT_ADI)}</span>
       <span class="rozet">oynanma yüzdesi</span>
       {'<span class="rozet uyari">SONUÇ: en iyi kolon ' + str(degerlendirme["best"]) + '/15 — ikramiye yok</span>' if BITTI else '<span class="rozet uyari">sonuçlar YOK — bu rapor sonuçlar görülmeden yazıldı</span>'}
       {'<span class="rozet">kupon sonuçlar görülmeden donduruldu</span>' if BITTI else ''}
@@ -873,7 +1068,7 @@ footer {{ margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--line)
   </header>
 
   <div class="stats">
-    <div class="stat"><div class="k">Bahisçi marjı</div><div class="v">%{prof['avg_margin_pct']:.1f}</div><div class="a">geçen sezon arşivi %{o['avg_margin_pct']:.2f} — {prof['avg_margin_pct']/o['avg_margin_pct']:.1f}× daha yüksek</div></div>
+    <div class="stat"><div class="k">Bahisçi marjı</div><div class="v">%{prof['avg_margin_pct']:.1f}</div><div class="a">geçen sezon arşivi %{o['avg_margin_pct']:.2f} — {prof['avg_margin_pct']/o['avg_margin_pct']:.2f}× {'daha yüksek' if prof['avg_margin_pct'] > o['avg_margin_pct'] else 'daha düşük'}</div></div>
     <div class="stat"><div class="k">Beklenen 1 / 0 / 2</div><div class="v">{prof['expected']['1']:.1f} · {prof['expected']['0']:.1f} · {prof['expected']['2']:.1f}</div><div class="a">geçen sezon ort. {wa['1']:.1f} · {wa['0']:.1f} · {wa['2']:.1f}</div></div>
     <div class="stat"><div class="k">Favori tutar</div><div class="v">{prof['fav_expected_market']:.1f}–{prof['fav_expected_history']:.1f}</div><div class="a">piyasa – geçen sezon bantları · sezon ort. {15*o['favourite_hit_pct']/100:.1f}</div></div>
     <div class="stat"><div class="k">Küme-içi</div><div class="v">%{100*ana['in_set_p']:.2f}</div><div class="a">≈ 1/{ana['in_set_1_in']:.0f} — 14-garantinin geçerlilik koşulu</div></div>
@@ -920,7 +1115,7 @@ footer {{ margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--line)
           <tr><td>Favori kaç maçta tutar</td><td class="num mono">{prof['fav_expected_market']:.2f} – {prof['fav_expected_history']:.2f}</td><td class="num mono">{15*o['favourite_hit_pct']/100:.2f}</td><td class="band">piyasa – geçen sezon bantları</td></tr>
           <tr><td>İlk iki sembol kapsar</td><td class="num mono">{prof['double_expected_market']:.2f} – {prof['double_expected_history']:.2f}</td><td class="num mono">—</td><td class="band">çift işaretin karşılığı</td></tr>
           <tr><td>Beraberlik (profil tablosu)</td><td class="num mono">{prof['draw_expected_history']:.2f}</td><td class="num mono">{wa['0']:.2f}</td><td class="band">favori–ikinci farkına göre</td></tr>
-          <tr><td>Bahisçi marjı</td><td class="num mono">%{prof['avg_margin_pct']:.2f}</td><td class="num mono">%{o['avg_margin_pct']:.2f}</td><td class="band">iddaa ↔ football-data kapanış</td></tr>
+          <tr><td>Bahisçi marjı</td><td class="num mono">%{prof['avg_margin_pct']:.2f}</td><td class="num mono">%{o['avg_margin_pct']:.2f}</td><td class="band">{e(_saglayici)} ↔ football-data kapanış</td></tr>
         </tbody>
       </table>
     </div>
@@ -933,6 +1128,27 @@ footer {{ margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--line)
       </table>
     </div>
   </section>
+
+  {f'''
+  <section>
+    <header>
+      <span class="eyebrow">Yeni boyut · ilk kez üç bahisçi, iki an</span>
+      <h2>Fiyat kimin fiyatı?</h2>
+      <p>Önceki iki hafta tek bir bültenin tek bir anını taşıyordu. Bu hafta üç bahisçinin hem açılış hem kapanış çizgisi kayıtta. Aşağıdaki her hücre <b>marj arındırılmış olasılıktır</b>, ham oran değil: ham oranın hareketi, piyasanın fikir değiştirmesiyle bahisçinin marjını değiştirmesini karıştırırdı. Ortalama marj — {marj_rozet}.</p>
+    </header>
+    <div class="scroll">
+      <table>
+        <thead><tr><th class="num">#</th><th>Maç</th>{fiyat_baslik}<th class="num">Hareket</th><th class="num">Ayrışma</th></tr></thead>
+        <tbody>{''.join(fiyat_satir)}</tbody>
+      </table>
+    </div>
+    <ul class="notlar" style="list-style:disc;padding-left:20px;gap:8px;margin-top:16px">
+      <li><b>Ana fiyat neden {e(FIYAT_ADI)}?</b> Seçim iddia değil ölçüm: <code>scripts/acilis_kapanis.py</code> geçen sezon arşivinde kapanışı açılışın önünde ölçtü (Brier %0,27 daha iyi; yedi hareket bandının beşinde gerçekleşme kapanışı takip etti; kural kapanışla beslenince 36 haftanın 36'sında ≥12 ve hafta başına 2.051 kolon, açılışta 2.664). Bahisçi tarafında ise en düşük marj seçildi.</li>
+      <li><b>En büyük hareket:</b> {_EN_HAREKET["no"]}. maç ({e(_EN_HAREKET["ad"])}) — <b>{_EN_HAREKET["hareket_sembol"]}</b> sembolü {100*_EN_HAREKET["hareket"]:+.1f} puan. Para bu maça geldi ve arşiv, bu büyüklükteki hareketlerde <b>kapanışın haklı çıktığını</b> ölçüyor.</li>
+      {'<li><b>Bayat kapanış.</b> Şu satırlarda kapanış oranı açılışla BİREBİR aynı — ' + '; '.join(BAYAT) + '. Bunlar fiyat değil, tazelenmemiş kayıttır: o maçlarda o bahisçinin kapanışı bilgi taşımıyor ve ayrışma sütununda görünen fark görüş farkı değil, kayıt farkıdır.</li>' if BAYAT else ''}
+      <li><b>Ayrışma nerede yoğunlaşıyor?</b> En büyüğü {_EN_AYRISMA["no"]}. maçta ({e(_EN_AYRISMA["ad"])}) {100*_EN_AYRISMA["ayrisma"]:.1f} puan. Ayrışmanın büyük olduğu satırlarda önce yukarıdaki bayatlık listesine bakılmalı: iki bahisçi farklı düşünüyor olabilir, ya da biri saatler önce durmuş olabilir.</li>
+    </ul>
+  </section>''' if FIYAT_VAR else ''}
 
   <section>
     <header>
@@ -955,7 +1171,7 @@ footer {{ margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--line)
     <header>
       <span class="eyebrow">Çıktı · sonuçlar görülmeden donduruldu</span>
       <h2>Kupon</h2>
-      <p>İşaret seçimi <b>yalnızca</b> 2025/2026 geri testinin varsayılan eşiğinden gelir: favori olasılığı ≥%68 ise banko, &lt;%38 ise üçlü, arası çifte. Bu haftanın oynanma yüzdeleri işaret seçimine <b>girmemiştir</b> — yukarıdaki kalabalık ölçüsü yalnızca sonucu okumak için hesaplandı. 16 satır, 14 doğru garantili; garanti koşulludur: ancak gerçek sonuç seçim kümesinin içindeyse geçerlidir.</p>
+      <p>{'İşaret seçimi verilen bütçede doğrudan <b>P(en iyi kolon ≥ 12)</b>&#39;yi enbüyükler; eşiğe bakmaz. ' + ('Bu haftanın oynanma yüzdeleri işaret <b>sayılarını</b> değiştirmeden hangi sembol sorusunu yeniden sordu — dondurulan kupon aşağıda, bu ızgaranın altında.' if DONMUS else 'Bu haftanın oynanma yüzdeleri işaret seçimine <b>girmemiştir</b>; yukarıdaki kalabalık ölçüsü yalnızca sonucu okumak için hesaplandı.') if KUPON_JSON.get('meta', {}).get('strategy', {}).get('kural', '').startswith('hedef') else 'İşaret seçimi <b>yalnızca</b> 2025/2026 geri testinin varsayılan eşiğinden gelir: favori olasılığı ≥%68 ise banko, &lt;%38 ise üçlü, arası çifte. Bu haftanın oynanma yüzdeleri işaret seçimine <b>girmemiştir</b> — yukarıdaki kalabalık ölçüsü yalnızca sonucu okumak için hesaplandı.'} 16 satır, 14 doğru garantili; garanti koşulludur: ancak gerçek sonuç seçim kümesinin içindeyse geçerlidir.</p>
     </header>
     <div class="scroll">
       <table class="grid-kupon">
@@ -968,8 +1184,33 @@ footer {{ margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--line)
       {varyant(mer[512], "Bütçeli")}
       {varyant(mer[256], "Kısıtlı")}
     </div>
-    <p style="margin-top:14px;font-size:12.5px;color:var(--dim)">Yukarıdaki 16 satırlık ızgara <b style="color:var(--ink)">ana</b> sürümündür. Bütçeli ve kısıtlı sürümlerin satırları da aynı motorla üretildi ve repoda <code>hafta_01_kupon.json</code> içinde duruyor.</p>
+    <p style="margin-top:14px;font-size:12.5px;color:var(--dim)">Yukarıdaki 16 satırlık ızgara <b style="color:var(--ink)">ana</b> sürümündür. Bütçeli ve kısıtlı sürümlerin satırları da aynı motorla üretildi ve repoda <code>hafta_{_a.hafta:02d}_kupon.json</code> içinde duruyor.</p>
   </section>
+
+  {f'''
+  <section>
+    <header>
+      <span class="eyebrow">Oynanan kayıt · {e(KUPON_JSON["meta"].get("frozen_at", ""))} tarihinde donduruldu</span>
+      <h2>Dondurulan kupon</h2>
+      <p>Yukarıdaki ızgara kuralın kalabalığı <b>görmeden</b> verdiği cevaptır. Oynanan kupon ondan farklı: müşterek bahiste kazanç isabetten değil, <b>isabeti kaç kişiyle paylaştığından</b> doğar. Kalabalık ayarı işaret <b>sayılarını</b> aynen korur (yani bedel değişmez) ve yalnızca hangi sembol sorusunu yeniden sorar.</p>
+    </header>
+    <div class="var-picks" style="margin-bottom:18px">{''.join(f'<span class="vp">{i+1}<em>{p}</em></span>' for i, p in enumerate(DONMUS["picks"]))}</div>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Kupon</th><th class="num">P(≥12)</th><th class="num">Kolon</th><th class="num">Küme-içi</th><th class="num">Aynı seti oynayan halk</th><th class="num">Oran</th></tr></thead>
+        <tbody>{''.join(donmus_satir)}</tbody>
+      </table>
+    </div>
+    <p style="margin-top:16px;font-size:13.5px;color:var(--dim);max-width:74ch">{e(KUPON_JSON["meta"].get("kalabalik_gerekcesi", ""))}</p>
+    {'<p style="margin-top:14px;font-size:13px;color:var(--dim);max-width:74ch"><b style="color:var(--ink)">Fiyat duyarlılığı.</b> ' + e(DUYARLILIK["not"]) + " " + e(DUYARLILIK["fark"]) + '</p>' if DUYARLILIK else ''}
+    <div class="scroll" style="margin-top:20px">
+      <table class="grid-kupon">
+        <thead><tr><th></th>{''.join(f'<th>{i}</th>' for i in range(1, 16))}</tr></thead>
+        <tbody>{''.join(donmus_grid)}</tbody>
+      </table>
+    </div>
+    <p style="margin-top:12px;font-size:12.5px;color:var(--dim)">Oynanacak 16 satır — dondurulan kupona ait. Motor aynı (<code>solve_fix16</code> + <code>merge_rows</code>), 14-garanti aynı koşulla duruyor.</p>
+  </section>''' if DONMUS else ''}
 
   <section>
     <header>
@@ -1042,9 +1283,9 @@ footer {{ margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--line)
         <p>Aynı strateji 2025/2026'da eşik taramasıyla 36 haftanın 3'ünde 14 tutturdu (%8,3). Ama eşik o haftayı <b>görmeden</b> seçildiğinde isabet <b>0/36</b> (%0, güven aralığı %0–9,6). Karara esas alınacak sayı budur. Bu araç maç sonucu tahmin etmez; tahmini garantiye alır.</p>
       </div>
       <ul class="notlar" style="list-style:disc;padding-left:20px;gap:8px">
-        <li><b>Marj farkı ölçek bozar.</b> Eşikler football-data kapanış oranlarıyla (%{o['avg_margin_pct']:.2f} marj) kalibre edildi; bu haftanın iddaa oranlarında marj %{prof['avg_margin_pct']:.1f}. Marj orantılı atıldığı için favori olasılıkları muhtemelen bir miktar <b>küçük</b> çıkıyor — yani gerçek banko sayısı 2'den fazla olabilirdi.</li>
-        <li><b>Kupon kalabalıkla aynı yöne bakıyor.</b> Seçim kümesinin kalabalık oranı {ana['crowd_ratio']:.2f} (1'in altı). Tutarsa ikramiye çok bölünür. En kalabalık işaretlerim: 8. maç [1] halkın %89'u, 15. maç [10] %91'i, 5. maç [02] %97'si.</li>
-        <li><b>Veri boşlukları.</b> 13. maçın lig etiketi hâlâ varsayım. (7. maçın etiketi düzeltildi: 2. haftanın bülteni, ilk dokuz maçın 1. haftayla <b>aynı 18 takımdan</b> kurulduğunu gösterdi — yani hepsi Süper Lig, TFF 1. Lig değil.) {'İkramiye boşluğu ise kapandı: bu hafta ilk gözlem kaydedildi (8 / 210 / 2.859 kişi). Bir gözlem dağılım değildir — “isabet mi, pay mı” sorusu 8–10 hafta sonra ölçülebilir.' if BITTI else 'Ve ikramiye/havuz verisi henüz yok — geldiğinde kalabalık ölçüsü vekil olmaktan çıkıp gerçek paya dönüşecek.'}</li>
+        <li><b>Marj farkı ölçek bozar.</b> Eşikler football-data kapanış oranlarıyla (%{o['avg_margin_pct']:.2f} marj) kalibre edildi; bu haftanın {e(_saglayici)} oranlarında marj %{prof['avg_margin_pct']:.1f} — {MARJ_YONU}</li>
+        <li><b>{'Kupon kalabalıkla aynı yöne bakıyor' if ana['crowd_ratio'] < 1 else 'Kupon kalabalıktan sapıyor'}.</b> Seçim kümesinin kalabalık oranı {ana['crowd_ratio']:.2f} ({'1&#39;in altı: tutarsa ikramiye çok bölünür' if ana['crowd_ratio'] < 1 else '1&#39;in üstü: tutarsa ikramiye az bölünür'}). En kalabalık işaretlerim: {KALABALIK_UC}.</li>
+        <li><b>Veri boşlukları.</b> {UYARI_OZETI} {'İkramiye kaydı bu hafta için girildi.' if BITTI else 'Ve bu haftanın ikramiye/havuz verisi henüz yok — geldiğinde kalabalık ölçüsü vekil olmaktan çıkıp gerçek paya dönüşecek.'}</li>
       </ul>
     </div>
   </section>

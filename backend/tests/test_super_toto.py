@@ -332,7 +332,14 @@ def sezon():
 
 
 def test_defter_girilmis_haftalari_bulur(sezon):
-    assert sezon.haftalari_bul("2026_27") == [1, 2]
+    # Liste sabit yazilmaz: her yeni hafta girildiginde bu test kirilirdi ve
+    # kirilma bir HATA degil, isin ilerlemesi olurdu. Cakilan sey defterin
+    # ISI: dosyadan bulunan haftalar, artan sirada, bosluksuz.
+    bulunan = sezon.haftalari_bul("2026_27")
+    assert bulunan, "girilmis hafta bulunamadi"
+    assert bulunan == sorted(bulunan)
+    assert bulunan == list(range(1, len(bulunan) + 1)), (
+        f"hafta numaralarinda bosluk var: {bulunan}")
 
 
 def test_defter_kupon_dosyasini_hafta_sanmaz(sezon):
@@ -534,11 +541,27 @@ def test_donmus_kupon_yeniden_hesaplanmaz(besleme, hafta):
 
 
 def test_donmus_kupon_hangi_olcekte_donduruldugunu_yazar(besleme):
-    """Ölçek yazmıyorsa işaretler yorumlanamaz."""
+    """Ölçek yazmıyorsa işaretler yorumlanamaz.
+
+    Test uzun sure `arindirma == "orantili"` ve `marj_ort_pct > 10` diye
+    cakiliydi. Ikisi de o gunku IKI haftanin tesadufuydu, kuralin kendisi
+    degil: 1. ve 2. hafta olcek degismeden once dondurulmustu ve ana fiyat
+    ~%18 marjli iddaa bulteniydi. 3. haftada kupon `shin` ile donduruldu ve
+    ana fiyat %4,6 marjli Pinnacle kapanisi oldu — test o hafta kirildi ama
+    kayitta yanlis olan hicbir sey yoktu.
+
+    Cakilan sey bu yuzden degerin kendisi degil, kaydin TAM olmasidir:
+    hangi arindirma, hangi marj, hangi tarih. Bu ucu yazan bir kayit
+    yorumlanabilir; yazmayan yorumlanamaz.
+    """
+    from spor_toto.odds import ARINDIRMA_YONTEMLERI
     for w in besleme.uret("2026_27")["weeks"]:
-        assert w["coupon"]["arindirma"] == "orantili"
-        assert w["coupon"]["marj_ort_pct"] > 10
-        assert w["coupon"]["frozen_at"]
+        k = w["coupon"]
+        assert k["arindirma"] in ARINDIRMA_YONTEMLERI, (
+            f"{w['week']}. hafta: taninmayan arindirma {k['arindirma']!r}")
+        assert isinstance(k["marj_ort_pct"], (int, float)) and k["marj_ort_pct"] > 0, (
+            f"{w['week']}. hafta: kupon hangi marjda donduruldugunu yazmiyor")
+        assert k["frozen_at"]
 
 
 def test_olcek_kaymasi_gorunur_kilinir(besleme):
