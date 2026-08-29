@@ -170,6 +170,7 @@ karşılığıdır: iddaa payı piyasanın iki katından fazla.
 | **iddaa resmi API** (`sportsbookv2.iddaa.com`) | İddaa oranı | **Kullanılıyor (ileriye dönük)** | Çalışıyor ama **yalnızca açık bülten**; geriye dönük arşiv ucu yok. Haftalık snapshot ile kendi arşivimizi kuruyoruz (§6) |
 | **Nesine** bülten API'si | İddaa oranı | Aynı | Canlı bülten; geçmiş yok |
 | **Misli** sonuç sayfası | Çapraz doğrulama | Nokta atışı kullanıldı | 51. haftanın sonuç satırı bağımsız doğrulama için kullanıldı (§7.2) |
+| **hudl/open-data** (StatsBomb Open Data) | Olay düzeyi veri, şut başına gerçek xG | **Kullanılıyor (yalnızca kalibrasyon)** | Korpusun liglerini kapsamıyor — Süper Lig ve alt İngiliz ligleri depoda yok, kesişim 92 maç. Ama kapsadığı 1.517 maçta gerçek xG ile korpusun şut sayımını yan yana veriyor; **girdi değil referans** (§6C) |
 
 ### 3.2 Neden geçmiş iddaa oranı yok
 
@@ -191,6 +192,25 @@ kullanılabileceğini somutlaştırıyor.
 - Kaynak siteler resmi devlet arşivi değildir. Bu yüzden eksik haftalar elenir ve en az bir
   hafta bağımsız kaynakla çapraz doğrulanır. Bu belge "tam sezon resmi dump" iddiası taşımaz;
   **41 tam haftalık filtrelenmiş set** iddiası taşır.
+- **StatsBomb verisi iki ek yükümlülük getiriyor ve deponun ilk lisans kısıtı odur.** Diğer
+  kaynaklar ya kişisel kullanıma serbest (football-data), ya CC0 (`openfootball/clubs`), ya
+  kamu malı (`openfootball/champions-league`); StatsBomb değil. "StatsBomb Public Data User
+  Agreement" iki maddesi doğrudan bu depoyu bağlıyor:
+
+  | Madde | Metin | Sonuç |
+  |---|---|---|
+  | 1.2.1 | kullanıcı veriyi *"edit, distort, distribute, reproduce, sell or in any way provide ... to any external or third party"* edemez | `ozgronurkoc/Twmq` **public**tir; ham JSON commit edilemez. Depoya yalnızca **katsayı ve rapor** girer — maç başına xG satırı bile girmez |
+  | 1.4 | *"The User is required to accredit any publication of analysis formed from StatsBomb Data with the StatsBomb brand logo"* | xG bulgusu arayüzde yayımlanırsa **StatsBomb logosu eşlik etmek zorundadır** |
+
+  Sözleşmenin girişi karşılığında şunu açıkça serbest bırakıyor: *"Any analysis or conclusions
+  that are created as a result of using this data, may be shared publicly."* `data/xg/`
+  altındaki iki dosya tam olarak bu kategoridedir — ölçülmüş katsayılar ve bir kapsama raporu,
+  verinin kendisi değil.
+
+  Sözleşmede **bahis/kumar yasağı yoktur** (metin arandı: `bet`, `gambl`, `wager` geçmiyor).
+  Kısıt ticari sömürüdedir (md. 1.2.2: veriyi *veya ondan türetilen analizi* ticari olarak
+  sömürmek yasak). Bu proje ticari değildir; olursa bu katman sökülebilir olmalıdır ve bu,
+  onu üretim tahmin yolundan uzak tutmanın ikinci gerekçesidir.
 
 ---
 
@@ -676,7 +696,7 @@ uygulanır: her blok kendi kaynağını ve tarihini kendi içinde taşır.
 | **Yeniden üretilemez** — `scripts/` altında bu dosyayı yazan bir üretici yoktur, yalnızca okuyanlar vardır | Bunu gizlemek, dosyayı öteki dördüyle aynı statüde gösterirdi |
 | **Türetilmiş yan kayıtlar bu sınıfa GİRMEZ** — `hafta_NN_tahmin2.json` elle girilmiş veriden hesaplanır ve yeniden üretilebilir | Elle girilen ile ondan türetileni aynı sınıfta göstermek, doğrulama izini bulanıklaştırırdı |
 | **`data_quality` denetiminden geçmez** | O denetim `st_history` veri setine özgüdür (§7.3) |
-| **26 değişmezin hiçbiri ona bakmaz** | Sağlık katmanı vaadin canlıda geçerliliğini ölçer; bu dosya ürün vaadine girmiyor |
+| **27 değişmezin hiçbiri ona bakmaz** | Sağlık katmanı vaadin canlıda geçerliliğini ölçer; bu dosya ürün vaadine girmiyor |
 | **Kuşkulu satır işaretlenir, düzeltilmez** | 2. haftada 4. maçın ima ettiği marj %45,8 iken bültenin geri kalanı %17,5–17,9'du; satır **KUŞKULU** olarak işaretlendi. Doğru marjla banko, verilen oranla çifte olurdu — sessizce "doğru olanı seçmek" §1.3'ün yasakladığı şeydir |
 | **Eksik oran uydurulmaz** | Oranı ilan edilmemiş maç 1/3–1/3–1/3 taşır. Bu bir tahmin değil, **bilgi yokluğunun ilanı**; kural onu otomatik olarak üçlü yapar |
 
@@ -703,6 +723,115 @@ gerekçeye dayanır: biri kapanmış kayıt, öteki işleyen sezon.
 Bir uyarı dosyanın kendi içinde duruyor ve taşınmalı: **oranlar iddaa oranıdır,
 geçen sezon arşivi football-data piyasa kapanışıdır.** Marj farkı (%17,2 ↔
 %7,26) yüzünden marj arındırılmış olasılıklar birebir aynı ölçekte değildir.
+
+## 6C. xG kalibrasyonu — veri değil, KATSAYI üreten boru hattı
+
+### 6C.1 Neden bu boru hattı ötekilerden farklı
+
+Öteki beş üretici bir **veri seti** üretir ve onu depoya koyar. Bu üretici bir **ölçüm**
+üretir ve yalnızca onu koyar. Fark iki sebepten:
+
+1. **Lisans** (§3.3): StatsBomb verisi çoğaltılamaz.
+2. **Kapsama**: StatsBomb korpusun liglerini kapsamıyor, yani veri kalıcı olarak taşınsa
+   bile korpusun %99,7'sinde kullanılamazdı.
+
+`spor_toto/disari.py` xG'yi *"türetilemeyen"* diye kayda geçirmişti ve gerekçesinin ilk
+yarısı artık geçersiz — kaynak açıldı. **İkinci yarısı ayakta** ve girdi `TURETILEMEYEN`
+listesinde kaldı; açılan şey ayrı bir anahtarla yazıldı: `xg_vekili`. Aradaki fark bu
+bölümün konusudur.
+
+### 6C.2 Kapsama — sayılarla
+
+Depo lig-sezon lig-sezon sayıldı (80 lig-sezon, 3.961 maç). Korpus penceresiyle (2122–2425)
+kesişim:
+
+| Lig-sezon | Maç | Not |
+|---|---|---|
+| Ligue 1 2021/22 | 26 | yalnız PSG'nin maçları |
+| Ligue 1 2022/23 | 32 | yalnız PSG'nin maçları |
+| Bundesliga 2023/24 | 34 | yalnız Leverkusen'in maçları |
+| **Toplam** | **92** | 31.103 maçlık korpusun **%0,3'ü** |
+
+**Süper Lig (T1) hiç yok. Alt İngiliz ligleri (E1/E2/E3/EC) hiç yok** — oysa korpusun
+çoğunluğu onlardan geliyor. Kupon maçlarının geldiği lig de T1'dir. Yani xG üretimde bir
+girdi olamaz; canlı akış da yok, veri maçlardan yıllar sonra yayımlanıyor.
+
+### 6C.3 Kullanılabilir olan: dört tam lig-sezon
+
+Buna karşılık şu dördü **eksiksiz** — tek takıma indirgenmemiş, bütün fikstür:
+
+| Lig | Sezon | Maç | football-data karşılığı |
+|---|---|---|---|
+| Premier League | 2015/16 | 380 | `1516/E0` |
+| La Liga | 2015/16 | 380 | `1516/SP1` |
+| Serie A | 2015/16 | 380 | `1516/I1` |
+| Ligue 1 | 2015/16 | 377 | `1516/F1` |
+| | | **1.517** | |
+
+Tek takıma indirgenmiş lig-sezonlar (Bundesliga 23/24, Ligue 1 21/22–22/23) kesite
+**bilerek alınmadı**: 34 maçın 34'ünde aynı takımın oynadığı bir kesitte ölçülen katsayı o
+takımın şut profilini ölçer, ligin değil.
+
+### 6C.4 Ne ölçülüyor
+
+Korpus zaten `ev_sut`/`dep_sut` (toplam şut) ve `ev_isabet`/`dep_isabet` (isabetli şut)
+taşıyor. Onlardan bir "fakir adamın xG'si" kurulabilir ama katsayısı bugüne kadar **keyfî**
+olurdu. Bu kesit tam olarak onu çözer:
+
+```
+xg ≈ a·isabet + b·(sut − isabet) + c
+```
+
+Ev ve deplasman **ayrı** uydurulur — ev sahibi şutlarının ortalama kalitesi farklıdır ve bunu
+varsaymak yerine ölçmek gerekir. Çözüm 3×3'lük normal denklemlerdir; `numpy` kullanılmaz
+(bkz. `scripts/__init__.py`: üretici katman hafif kalır).
+
+Penaltılar ayrı taşınır ve regresyona **girmez**: penaltı xG'si ~0,79 sabittir ve şut
+sayımıyla ilişkisi yoktur; aynı denkleme sokulsa katsayıları kirletirdi.
+
+### 6C.5 Eşleme — ada göre değil, MAÇA göre
+
+StatsBomb "Sporting Gijón" der, football-data "Sp Gijon". Bulanık ad eşlemesi bu depoda zaten
+bir zayıf nokta (`sehir_rapor.json`: 12 takım eşleşmiyor). Burada birincil anahtar
+**(lig, tarih ±1 gün, ev golü, deplasman golü)**; ad benzerliği yalnızca çakışma çözücüdür ve
+bir football-data satırı en fazla bir kez eşleşir.
+
+Böylece ad haritası küratörlük değil eşlemenin **çıktısı** olur — `xg_rapor.json` içine yazılır
+ve denetlenebilir. Tarih toleransı ±1 gündür çünkü StatsBomb yerel tarihi, football-data
+İngiltere tarihini yazar.
+
+### 6C.6 Doğrulama ve lig duyarlılığı
+
+Üretici doğrulamadan dosya yazmaz. İki kapı:
+
+- **Kapsama** ≥ %95 (eşleşen maç oranı).
+- **İşaret:** isabetli şutun katsayısı isabetsizinkinden büyük ve ikisi de pozitif olmalı.
+  Değilse vekil ters uydurulmuş demektir ve o dosyayı yazmak sessiz bir yalan olurdu.
+  Aynı kapı koşarken de duruyor: `health.py` `xg_kalibrasyonu` kontrolü (§7.1'in çalışma
+  zamanı karşılığı) — üreticiden geçmemiş, elle düzenlenmiş bir dosyayı o yakalar.
+
+Ayrıca **lig-dışarıda-bırak** raporlanır: dört ligden her biri sırayla dışarıda bırakılıp
+diğer üçüyle uydurulur. Katsayının lige ne kadar duyarlı olduğu ölçülmeden bu vekil 22 lige
+uygulanamaz. Dördün birbirine ne kadar benzediğini biliyoruz; beşinci bir ligde ne yapacağını
+**bilmiyoruz** ve rapor bunu böyle yazar.
+
+### 6C.7 Çıkış — ve neyin çıkmadığı
+
+`backend/data/xg/` altında **iki dosya**, ikisi de commit edilir:
+
+| Dosya | İçerik |
+|---|---|
+| `xg_kalibrasyon.json` | katsayılar, lig-dışarıda-bırak sonuçları, örneklem sayıları |
+| `xg_rapor.json` | eşleşen/eşleşmeyen maç, türetilen ad haritası, kapsama, lisans künyesi |
+
+**Çıkmayan:** ham olay JSON'u ve maç başına xG satırı (§3.3, md. 1.2.1).
+
+Ham dosyalar diske hiç yazılmaz — bir olay dosyası ~3,4 MB ve 1.517 tane var, yani **~5,2
+GB**. Akışta işlenir, maç başına dört sayıya indirgenir, atılır. `_kaynak/xg_ozet.jsonl`
+yalnızca o özeti tutar (birkaç yüz KB) ve tek işi ~25 dakikalık sıralı indirmeyi yeniden
+başlatılabilir kılmaktır; git dışıdır.
+
+---
 
 ## 7. Kalite güvencesi
 
@@ -789,8 +918,8 @@ tablolar (script'in bastığı lig dağılımı) bunu yakalayan şeydi.
 | `test_snapshot_iddaa.py::test_askidaki_ayak_maci_eler` | 1.00 fiyat sayılmaz |
 | `test_snapshot_iddaa.py::test_farkli_snapshot_birikir` | Arşiv gerçekten birikiyor, üstüne yazmıyor |
 
-Toplam 85 test bu üç veri setini korur (backend paketi 1.680 test). `python -m spor_toto.health`
-26 değişmez çalıştırır; `oran_arsivi` ve `geri_test` bu katmanı, `tahmin_referanslari`
+Toplam 85 test bu üç veri setini korur (backend paketi 1.701 test). `python -m spor_toto.health`
+27 değişmez çalıştırır; `oran_arsivi` ve `geri_test` bu katmanı, `tahmin_referanslari`
 tahmin katmanının ölçüm koşumunu korur.
 
 ### 7.7 Bilinen kabuller
@@ -874,7 +1003,23 @@ Amaç tahmine döndüğü için iki sınır daha kritik hale geldi ve ayrıca ya
    > (n=445, dışarıda bırakmalı katkısı sıfır) ama **fikstür verisi** artık somut bir veri
    > ihtiyacı olarak yazılı (§10.1 ile aynı statüde).
    > Ölçüm: [`ISTATISTIK_YOL_HARITASI.md`](ISTATISTIK_YOL_HARITASI.md) §3.16 ve §6.2 A4.
-8. **İkramiye ve havuz verisi: sınır daraldı, kalkmadı.** Dört üretim veri setinin hiçbiri
+9. **xG var ama kapsamıyor — ve bu, "kaynak yok"tan farklı bir sınırdır.** StatsBomb Open
+   Data (`hudl/open-data`) şut başına gerçek xG'yi serbestçe veriyor, yani `disari.py`nin
+   eski gerekçesi (Understat `robots.txt`, fbref Cloudflare) geçersizleşti. Ama depo **Süper
+   Lig'i ve alt İngiliz liglerini kapsamıyor** ve korpus penceresiyle kesişimi 92 maç (§6C.2).
+   Üstelik canlı akış yok: veri maçlardan yıllar sonra yayımlanıyor, yani `/tahmin` onu
+   ilkesel olarak da göremezdi.
+
+   Bu yüzden kaynak **girdi değil referans** olarak kullanıldı: kapsadığı 1.517 maçta korpusun
+   kendi şut sayımı gerçek xG'ye karşı kalibre edildi ve kalibre edilmiş vekil korpusun
+   tamamına uygulandı (§6C). Sınırın kendisi kalkmadı — vekil, gerçek xG değildir ve dört
+   ligde uydurulmuş bir katsayının beşinci bir ligde ne yapacağı ölçülmedi.
+
+   `TURETILEMEYEN` listesindeki diğer iki madde **kapalı kaldı** ve gerekçeleri denetlendi:
+   `seyahat` için StatsBomb'un `stadium` nesnesinde koordinat yok (yalnız `id`, `name`,
+   `country`); `kadro_sakatlik` için `lineups/` maç sonrası veridir ve itiraz zaten kaynak
+   değil eğitim/servis ayrışmasıydı.
+10. **İkramiye ve havuz verisi: sınır daraldı, kalkmadı.** Dört üretim veri setinin hiçbiri
    haftalık kazanan adedini veya ikramiye tutarını taşımıyor — hafta kaydı yalnızca
    `week, close_date, season, n1/n0/n2, results, matches` içerir. **Beşinci bir set bu boşluğu
    doldurmaya başladı** ve kökeni ötekilerden farklı: elle giriliyor (§6B, PR #14). Spor Toto
@@ -900,7 +1045,11 @@ python scripts/snapshot_iddaa.py             # bültenin anlık görüntüsünü
 python scripts/snapshot_iddaa.py --dry-run   # yazmadan özet
 python scripts/snapshot_iddaa.py --kaynak d.json   # kaydedilmiş ham dosyadan
 
-pytest -q tests/test_history.py tests/test_odds.py tests/test_snapshot_iddaa.py
+python scripts/build_xg.py                   # xG kalibrasyonunu olc (~25 dk, agli)
+python scripts/build_xg.py --dry-run         # kapsama + katsayi ozeti, yazmadan
+python scripts/build_xg.py --limit 40        # kucuk kesitle deneme
+
+pytest -q tests/test_history.py tests/test_odds.py tests/test_snapshot_iddaa.py tests/test_xg.py
 ```
 
 Üç script de doğrulamadan dosya yazmaz; testler yazıldıktan sonra aynı şeyi tekrar denetler.

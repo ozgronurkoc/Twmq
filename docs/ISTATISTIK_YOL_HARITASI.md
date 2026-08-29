@@ -125,6 +125,8 @@ spor_toto/evaluate.py  ◄── spor_toto/predict.py     (sözleşme + 3 refera
 | Takım | `backend/spor_toto/takim_gucu.py` | `/api/takimlar` | Küçültülmüş takım gücü (Faz 4.3): ampirik Bayes, lig içinde; her satırda `n`, `kucultme` ve %95 aralık |
 | Tahmin | `backend/spor_toto/avrupa.py` | — | UEFA fikstürü (Faz 3.4): 768 maç takvime **enjekte edilir**; `dinlenme` ve `sikisiklik` artık o günleri de görür |
 | Tahmin | `backend/spor_toto/sehir.py` | — | Şehir ve derbi (Faz 3.4): `openfootball/clubs` (CC0) tablosu; derbi bir **sıcaklık** değişkeni olarak girer |
+| Tahmin | `backend/spor_toto/xg.py` | — | xG vekili (Faz 3.5, §3.42): korpusun kendi `sut`/`isabet` sayımı **ölçülmüş** katsayılarla beklenen gole çevrilir. Katsayı StatsBomb'un 2015/16 dört lig kesitinde uydurulur — kaynak bir **girdi değil referanstır** |
+| Üretim | `backend/scripts/build_xg.py` | — | xG kalibrasyonu (Faz 3.5): 1.517 maç, **(lig, tarih±1, skor)** ile eşleme; **veri değil katsayı üretir** (lisans md. 1.2.1) |
 | Altyapı | `backend/spor_toto/kosum.py` | — | Koşum defteri (Faz 0.4): yedi ölçüm CLI'sında `--kaydet`; korpus sha256 + commit + tohum yazılır, defter **sürümlenmez** (§2.6) |
 | Altyapı | `backend/spor_toto/artefakt.py` | — | Model kalıcılığı (Faz 0.3): eğitilmiş modelin JSON zarfı (korpus sha256 + eğitim tarihi + sürüm); bayatlık `health`te kırmızı (§2.5) |
 | **Ürün** | `backend/spor_toto/tahmin.py` | — | **Tahmin ürünü (C2)**: yaklaşan maça olasılık + ölçülmüş isabet |
@@ -151,13 +153,13 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/components/super-toto/tahmin2.tsx` | **2. Tahmin** paneli — `1. Tahmin` / `2. Tahmin` sekmeleri arasında geçilir; para birimli hiçbir sayı yok. Hafta kapandığında sonuç sütunu ve ayar karnesi açılır (§3.38) |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **1.680 test**; **85'i** istatistik katmanına (`history` `odds` `backtest`
+paketi toplam **1.701 test**; **85'i** istatistik katmanına (`history` `odds` `backtest`
 `api_stats` `api_backtest` `snapshot_iddaa`), **567'si** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre`
 `avrupa` `sehir` **`arena`** **`sizinti`**), **29'u** 2. Tahmin'e (`tahmin2`), **30'u** sonuç değerlendirmesine (`degerlendir`). Dosya adlarıyla sayılıdır ki tablo elle bakım gerektirmesin —
 `tests/test_belgeler.py` onları gerçek koleksiyona karşı denetler.
-`python -m spor_toto.health` **26 değişmez** çalıştırır — ikisi (`oran_arsivi`, `geri_test`)
+`python -m spor_toto.health` **27 değişmez** çalıştırır — ikisi (`oran_arsivi`, `geri_test`)
 istatistik katmanını, biri (`tahmin_referanslari`) tahmin katmanının ölçüm koşumunu korur,
 biri (`artefakt_tazeligi`) diskteki modelin hâlâ bugünkü korpustan geldiğini denetler (§2.5).
 
@@ -2699,6 +2701,26 @@ Bekçi: `test_sehir.py::test_derbi_korpustan_tasarima_ulasiyor`.
 için geçersiz"** demektir. `/tahmin` oynanmamış maça olasılık verir; ölçümde
 kullanılan bir bilgiyi tahmin anında bulamıyorsak ölçüm ürünü tarif etmez.
 
+> **Düzeltme (2026-08-29) — xG satırının ilk yarısı geçersiz.** Yukarıdaki
+> tablo xG'yi *erişim* gerekçesiyle kapatıyordu ve o gerekçe artık ayakta
+> değil: `hudl/open-data` (eski adıyla `statsbomb/open-data`) olay düzeyi
+> veriyi serbestçe yayımlıyor, her şutta `shot.statsbomb_xg` var, ne
+> `robots.txt` engeli ne Cloudflare var.
+>
+> **Ama satırın ikinci yarısı ayakta ve tek başına yetiyor.** Depo lig-sezon
+> lig-sezon sayıldı: Süper Lig yok, alt İngiliz ligleri (E1/E2/E3/EC) yok,
+> korpus penceresiyle kesişim 31.103 maçta **92 maç** ve o 92'nin hepsi tek
+> takıma yanlı. Üstelik canlı akış yok — veri maçlardan yıllar sonra
+> yayımlanıyor, yani `/tahmin` onu ilkesel olarak da göremezdi.
+>
+> Bu yüzden `disari.TURETILEMEYEN["xg"]` **yerinde kaldı ve gerekçesi
+> değişti**. Bir kaynağın açılması sorunun çözülmesi demek değildi ve bu
+> ayrımı yazmak, "artık var" deyip kapsamayı sessizce görmezden gelmekten
+> iyidir. Açılan şey başkaydı ve ayrı bir anahtarla yazıldı — `xg_vekili`:
+> depo xG'yi *korpusun kendi şut sayımıyla aynı maçta* verdiği 1.517 maçlık
+> bir kesit sunuyor, yani bir **girdi** değil bir **kalibrasyon referansı**.
+> Ölçümü §3.42.
+
 #### Faz 3.4 kapandı — ve söylediği şey
 
 Serinin en güçlü tek cümlesi burada: **eksik veri gerçekten eksikti,
@@ -3452,6 +3474,167 @@ Yazarken iki gerçek kusur çıktı:
 Koşumlar `python -m spor_toto.arena --kaydet` ile koşum defterine yazıldı:
 korpus `sha256 949aee9f…`, 31.104 satır · bootstrap tohumu 20260817, 2.000
 tekrar · `numpy` 2.4.6, `scipy` 1.17.1, `lightgbm` 4.7.0.
+
+### 3.42 xG (Faz 3.5) — kaynak açıldı, soru kapanmadı
+
+§3.36 xG'yi *erişim* gerekçesiyle kapatmıştı: Understat `robots.txt`'i
+`Disallow: /` diyor, fbref Cloudflare arkasında. O gerekçe artık ayakta
+değil. `hudl/open-data` (eski adıyla `statsbomb/open-data`) olay düzeyi
+futbol verisini serbestçe yayımlıyor — 4.235 maç için `events/`, her şutta
+`shot.statsbomb_xg`, üstüne 12 oyuncu konumlu `freeze_frame`.
+
+Bu bölüm o kaynağın **ne verdiğini ve ne vermediğini** ölçüyor.
+
+#### Önce kapsama — ve hayal kırıklığı
+
+Depo 80 lig-sezon taşıyor (3.961 maç) ve her biri tek tek sayıldı. Korpus
+penceresiyle (2122–2425) kesişim:
+
+| Lig-sezon | Maç | Not |
+|---|---:|---|
+| Ligue 1 2021/22 | 26 | yalnız PSG |
+| Ligue 1 2022/23 | 32 | yalnız PSG |
+| Bundesliga 2023/24 | 34 | yalnız Leverkusen |
+| **Toplam** | **92** | 31.103 maçlık korpusun **%0,3'ü** |
+
+**Süper Lig yok. Alt İngiliz ligleri (E1/E2/E3/EC) yok** — oysa korpusun
+çoğunluğu onlardan geliyor, ve kupon maçları T1'den. Üstelik canlı akış da
+yok: veri maçlardan yıllar sonra yayımlanıyor.
+
+Yani §3.36'nın satırının **ikinci yarısı tek başına yetiyor** ve
+`TURETILEMEYEN["xg"]` yerinde kaldı. Bir kaynağın açılması sorunun çözülmesi
+demek değildi.
+
+#### Sonra: kaynağın gerçekten verdiği şey
+
+Buna karşılık dört lig-sezon **eksiksiz** — tek takıma indirgenmemiş:
+Premier League, La Liga, Serie A ve Ligue 1'in 2015/16'sı, toplam **1.517
+maç.** Ve aynı maçların 1X2 oranı ile şut sayımı football-data.co.uk'nin
+`mmz4281/1516/` klasöründe, `build_egitim.py`'nin zaten okuduğu şemayla
+duruyor.
+
+Bu kesit bir **girdi** değil ama bir **referans**: korpusun kendi
+`sut`/`isabet` sayımı ile gerçek xG'yi aynı maçta yan yana veriyor.
+
+#### Eşleme — ve beklenmedik bir sağlama
+
+Eşleme ada göre yapılmadı (StatsBomb "Sporting Gijón" der, football-data
+"Sp Gijon"); birincil anahtar **(lig, tarih ±1 gün, skor)**, ad benzerliği
+yalnızca çakışma çözücü. Sonuç: **1.517/1.517 = %100**, sıfır eşleşmeyen.
+
+Sağlama bunun yanında çıktı ve daha ilginç. İki kaynak şutları **bağımsız**
+sayıyor (farklı tanımlar, farklı gözlemciler). Maç başına ortalama fark:
+
+    StatsBomb şut sayısı − football-data (HS+AS) = −0,007
+
+Yani maç başına yüzde birden az şut. Bu, eşlemenin doğruluğunun bağımsız bir
+kanıtı: yanlış eşleşmiş maçlar olsaydı fark sıfırın etrafında toplanmazdı.
+
+#### Kalibrasyon
+
+    xg ≈ a·isabet + b·(sut − isabet) + c
+
+Ev ve deplasman ayrı uydurulur; penaltılar (xG'si ~0,79 sabit) regresyona
+girmez.
+
+| Yan | isabet | isabetsiz | sabit | R² | artık ss |
+|---|---:|---:|---:|---:|---:|
+| ev | 0,1670 | 0,0497 | +0,0428 | 0,514 | 0,487 |
+| dep | 0,1666 | 0,0558 | −0,0426 | 0,485 | 0,456 |
+
+İki sayı okunmaya değer. **İsabetli şut, isabetsizin ~3,2 katı** — kaba
+sayımı ağırlıksız toplamanın neden bilgi kaybettiğini doğrudan gösteriyor.
+Ve **ev/deplasman katsayıları neredeyse aynı** (0,1670 ↔ 0,1666): ev
+avantajı şutun *kalitesinde* değil *sayısında*; ayrı uydurmak gerekmiyormuş
+gibi görünüyor ama bu ancak ölçüldükten sonra söylenebilirdi.
+
+Sabitler ayrışıyor (+0,043 ↔ −0,043) ve deplasmanınki negatif — bu yüzden
+`xg_vekili` sıfıra kırpar; beklenen gol tanım gereği negatif olamaz ve
+kırpmanın yerinde durduğunu `health.py` `xg_kalibrasyonu` kontrolü
+denetliyor.
+
+#### Katsayı lige ne kadar duyarlı
+
+Dört ligden her biri sırayla dışarıda bırakıldı:
+
+| Dışarıdaki lig | ev katsayısı | dep katsayısı | dışarıda RMSE (ev / dep) |
+|---|---:|---:|---:|
+| E0 | 0,1738 | 0,1702 | 0,460 / 0,445 |
+| F1 | 0,1596 | 0,1699 | 0,507 / 0,499 |
+| I1 | 0,1736 | 0,1648 | 0,453 / 0,404 |
+| SP1 | 0,1605 | 0,1617 | 0,545 / 0,488 |
+
+İsabet katsayısı **0,160–0,174** aralığında kalıyor — %9'luk bir yayılma.
+Dördün birbirine benzediğini biliyoruz; **beşinci bir ligde ne yapacağını
+bilmiyoruz** ve bu sınır kayda geçmelidir. Korpus 22 lig taşıyor ve on
+sekizinde bu katsayı denenmemiş bir varsayımdır.
+
+#### Ölçüm — ve serinin on ikinci "hayır"ı
+
+Vekil `egitim._zenginlestirilmis_korpus`a `_xg` olarak girdi ve
+`recalibrate.KADEMELER`e `derbi` ile `etkilesim` arasında bir basamak
+eklendi. Şekil **bilerek** `form_isabet_farki` ile aynı: aynı 5 maçlık
+yuvarlanan pencere, aynı simetrik kaydırma, tek fark birim — ham isabetli
+şut sayısı yerine kalibre edilmiş beklenen gol. Pencere ya da şekil de
+değişseydi, aradaki farkın kalibrasyondan mı şekilden mi geldiğini
+söyleyemezdik (`xg.XG_PENCERE == egitim.FORM_PENCERE`, bekçisi
+`test_xg.py::test_pencere_form_penceresiyle_ayni`).
+
+**Önce sütunun gerçekten dolu olduğu doğrulandı.** `derbi` bir kez tam bu
+tuzağa düşmüştü: özellik korpusta vardı, tasarım matrisinde sütun vardı,
+arada duran sözlük beyaz listesi taşımıyordu ve katsayı **tam 0,000000**
+çıkıp *"derbi bir şey söylemiyor"* diye okunacaktı. Aynı tuzak burada da
+kurulu (`test_xg.py::test_xg_tasarima_ulasiyor`) ve uydurulan katsayı:
+
+| Basamak | Sütun | Uydurulan katsayı |
+|---|---:|---:|
+| `derbi` | 47 | +0,0990 |
+| **`xg`** | **48** | **+0,0845** |
+
+Yani model bu sütuna **yaslanmak istiyor** ve işareti beklenen yönde
+(pozitif = ev lehine). Sütun düşmüş değil; ölçülen şey gerçekten xG'nin
+kendisi.
+
+**Sonra dışarıda bırakmalı ölçüm.** Arena ile aynı kesit, aynı gruplama
+(sezon dışarıda bırakmalı), aynı referans — 183 hafta · 31.103 maç:
+
+| tahminci | Brier | ΔBrier | %95 aralık | geçti |
+|---|---:|---:|---:|---|
+| **`piyasa`** | **0,5936** | — | — | — |
+| `kalibre_form` | 0,5937 | +0,0000 | [−0,0003, +0,0004] | hayır |
+| `kalibre_seri` | 0,5938 | +0,0001 | [−0,0002, +0,0005] | hayır |
+| `kalibre_derbi` | 0,5938 | +0,0002 | [−0,0002, +0,0005] | hayır |
+| **`kalibre_xg`** | **0,5938** | **+0,0002** | **[−0,0002, +0,0005]** | **hayır** |
+
+`derbi` ile `xg` dört haneye kadar **aynı.** Basamak, kendinden öncekinin
+üstüne ölçülebilir hiçbir şey koymuyor.
+
+Arena tablosu da (§3.41) **rakam rakam değişmedi**: yeni sütun `kademe`
+ailesinin temsilcisine (`kalibre_etkilesim_favori`) ekleniyor ve o satır
+hâlâ 0,5941 · +0,0005 · [+0,0001, +0,0009]. Bir özellik eklemenin en dürüst
+sonucu budur — tabloyu kıpırdatmaması.
+
+#### Ne öğrenildi
+
+İki cümle, ve ikincisi birincisinden daha önemli:
+
+1. **Şut kalitesi piyasada zaten fiyatlanmış.** Katsayı sıfır değil (model
+   onu istiyor) ama dışarıda bırakmalı katkısı sıfır — §3.14'ün kapanış
+   çizgisi için, §3.16'nın yorgunluk vekili için söylediğinin aynısı.
+2. **Bu cevap ilk kez ÖLÇÜLDÜ.** §3.36 xG'yi *"kaynak kapalı"* diye
+   kaydetmişti; o cümle "denenmedi"nin kibar hâliydi. Artık denendi.
+   `TURETILEMEYEN` ile `TURETILEBILIR_OLDU` arasındaki fark tam olarak
+   budur ve `disari.py` ikisini ayrı anahtarlarda tutuyor: `xg` hâlâ
+   türetilemez (kapsama), `xg_vekili` türetilebilir oldu (kalibrasyon).
+
+Ve bir sınır, kayda geçmesi gereken: katsayı dört ligde uyduruldu, korpus
+yirmi iki lig taşıyor. Kalan on sekizinde bu vekil **denenmemiş bir
+varsayımdır** — ölçülen şey "xG işe yaramıyor" değil, *"dört Batı Avrupa
+liginde uydurulmuş bir xG vekili, yirmi iki ligde piyasayı geçmiyor."*
+
+    python scripts/build_xg.py
+    python -m spor_toto.health --only xg_kalibrasyonu
+    pytest -q tests/test_xg.py
 
 ## 4. Sayfada bugün ne var
 
@@ -4401,6 +4584,7 @@ python -m spor_toto.disari                 # A3: piyasa dışı özellikler
 python -m spor_toto.tahmin                 # ÜRÜN: yaklaşan maçlara olasılık
 python -m spor_toto.avrupa                 # UEFA fikstürünün korpusa değmesi
 python -m spor_toto.sehir                  # şehir tablosu ve derbi kapsaması
+python scripts/build_xg.py                 # xG kalibrasyonu (§3.42; ağlı, ~25 dk)
 python -m spor_toto.takim_gucu --lig T1    # küçültülmüş takım gücü
 
 # Model Arena — bütün aileler TEK kesitte, TEK tabloda (§3.41; ~10 dk)
@@ -4414,7 +4598,7 @@ python -m spor_toto.kosum                  # kayıtlı koşumlar
 python -m spor_toto.kosum --son disari     # son koşumun ortamı
 
 # Denetim
-pytest -q                                  # 1.680 test (85'i bu katman, 567'si tahmin)
+pytest -q                                  # 1.701 test (85'i bu katman, 567'si tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out
@@ -4423,7 +4607,8 @@ pytest -q tests/test_bahisci.py            # A2 ölçümü ve kaynak seçimi
 pytest -q tests/test_disari.py             # A3 ölçümü ve sızıntı bekçileri
 pytest -q tests/test_arena.py              # arena kaydı, kesit, çökme tespiti
 pytest -q tests/test_sizinti.py            # sızıntı sözleşmesi (§3.41)
-python -m spor_toto.health                 # 26 değişmez
+pytest -q tests/test_xg.py                 # xG vekili: sızıntı, beyaz liste, kalibrasyon
+python -m spor_toto.health                 # 27 değişmez
 python -m spor_toto.health --only sizinti_sozlesmesi
 python -m spor_toto.health --help          # tek kontrol: ?only=geri_test
 

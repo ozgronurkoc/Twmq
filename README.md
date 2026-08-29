@@ -90,7 +90,7 @@ makinesinde, o günkü kilitli bağımlılıklarla, o commit üzerinde koşar.
 
 Bu yüzden sağlık katmanı ayrı bir katmandır ve `/saglik` sayfası ürünün eşit
 haklı bir parçasıdır: **ürünün vaadinin şu anda, bu makinede, bu sürümde hâlâ
-geçerli olduğunu kanıtlar.** 26 değişmez, 6 kategori, her çağrıda yeniden
+geçerli olduğunu kanıtlar.** 27 değişmez, 6 kategori, her çağrıda yeniden
 ölçülür — ve neyi kanıtlamadığını da açıkça yazar (§6.3).
 
 ### 1.6 Ne yapar / ne yapmaz
@@ -106,7 +106,7 @@ geçerli olduğunu kanıtlar.** 26 değişmez, 6 kategori, her çağrıda yenide
 | Bayes (Dirichlet) ile tahminlerini yumuşatır | İddaa geçmiş oranı sunmaz (yok — §5.3) |
 | Markov ile sıralı risk profili çıkarır | Geri testi bir kâr vaadine çevirmez; aşırı uyumu ölçüp gösterir |
 | Bir stratejiyi geçmiş sezonda çalıştırıp bedelini ve isabetini ölçer (**geri test**) | Mobil uygulama değildir |
-| Vaadin canlıda geçerliliğini 26 değişmezle ölçer | |
+| Vaadin canlıda geçerliliğini 27 değişmezle ölçer | |
 | Her sayının kaynağını ve sınırını yazar | |
 
 ---
@@ -814,6 +814,7 @@ backend/
     gorus.py           TAHMİN: piyasadan BAĞIMSIZ görüş (DC + Elo) — işaret DEĞİŞTİRMEZ
     avrupa.py          VERI: UEFA fiksturu — dinlenme/sikisiklik duzeltmesi
     sehir.py           VERI: kulup-sehir tablosu, derbi (sicaklik degiskeni)
+    xg.py              VERI: sut sayimindan KALIBRE EDILMIS xG vekili (StatsBomb referans)
     takim_gucu.py      TAKIM: kucultulmus takim gucu = /api/takimlar
     artefakt.py        Egitilmis modelin diske yazimi + bayatlik denetimi
     kosum.py           Olcum kosum defteri (--kaydet) — surumlenmez
@@ -832,6 +833,8 @@ backend/
     build_odds.py      Kupon maçlarına piyasa oranlarını eşleştirir
     build_egitim.py    Eğitim korpusu (football-data, 22 lig × 4 geçmiş sezon)
     build_fixtures.py  Yaklaşan maç fikstürü (tahmin katmanının ölçülen kaynağı)
+    build_xg.py        xG vekili kalibrasyonu (StatsBomb 2015/16 dört lig kesiti;
+                       VERI DEGIL katsayi uretir — lisans md. 1.2.1)
     snapshot_iddaa.py  İddaa açık bültenini tarih damgalı arşivler (haftalık)
     super_toto_hafta.py       Canlı sezon: hafta profili + kupon kurulumu
     super_toto_degerlendir.py Sonuç girildikten sonra değerlendirme (iki kaydı
@@ -844,8 +847,8 @@ backend/
     acilis_kapanis.py         Açılış–kapanış oranı karşılaştırması
     api_sozlesme.py           API sözleşmesini üretir/denetler (--kontrol: CI kapısı)
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
-                       fixtures/ · super_toto/
-  tests/               pytest (55 dosya → 1.680 test; §9'da katman dökümü)
+                       fixtures/ · super_toto/ · avrupa/ · sehir/ · xg/
+  tests/               pytest (56 dosya → 1.701 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1030,8 +1033,8 @@ Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant'lar, CLI (Bayes pre
 dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri test,
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
-eşleme, ikinci kayıt). **55 test dosyası, parametrizasyonla
-1.680 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+eşleme, ikinci kayıt). **56 test dosyası, parametrizasyonla
+1.701 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
@@ -1053,6 +1056,7 @@ karşı denetler):
 | Koşum defteri | `kosum` | 22 |
 | Takım gücü | `takim_gucu` | 21 |
 | Yeni veri (UEFA · şehir) | `avrupa` `sehir` | 41 |
+| xG vekili kalibrasyonu | `xg` | 16 |
 | Belgeler | `belgeler` | 5 |
 
 İki test bilerek **ağa çıkmaz**: `test_snapshot_iddaa.py` gerçek bültenden alınmış

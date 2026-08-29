@@ -1,0 +1,111 @@
+{
+ "uretildi": "2026-08-29T21:22:54+00:00",
+ "kaynak": "StatsBomb Open Data (hudl/open-data)",
+ "kesit": [
+  "Premier League 2015/16 [E0]",
+  "La Liga 2015/16 [SP1]",
+  "Serie A 2015/16 [I1]",
+  "Ligue 1 2015/16 [F1]"
+ ],
+ "mac": 1517,
+ "katsayilar": {
+  "ev": {
+   "isabet": 0.16697,
+   "isabetsiz": 0.049733,
+   "sabit": 0.042816,
+   "n": 1517,
+   "artik_ss": 0.487491,
+   "r2": 0.514275
+  },
+  "dep": {
+   "isabet": 0.166634,
+   "isabetsiz": 0.055812,
+   "sabit": -0.042629,
+   "n": 1517,
+   "artik_ss": 0.455754,
+   "r2": 0.485177
+  }
+ },
+ "lig_disarida": {
+  "E0": {
+   "ev": {
+    "isabet": 0.173776,
+    "isabetsiz": 0.045594,
+    "sabit": 0.0471,
+    "n": 1137,
+    "artik_ss": 0.496827,
+    "r2": 0.504768,
+    "disarida_rmse": 0.460469
+   },
+   "dep": {
+    "isabet": 0.170165,
+    "isabetsiz": 0.051725,
+    "sabit": -0.042798,
+    "n": 1137,
+    "artik_ss": 0.45982,
+    "r2": 0.478035,
+    "disarida_rmse": 0.445498
+   }
+  },
+  "F1": {
+   "ev": {
+    "isabet": 0.159629,
+    "isabetsiz": 0.05002,
+    "sabit": 0.07091,
+    "n": 1140,
+    "artik_ss": 0.481407,
+    "r2": 0.518093,
+    "disarida_rmse": 0.506847
+   },
+   "dep": {
+    "isabet": 0.169897,
+    "isabetsiz": 0.053372,
+    "sabit": -0.012846,
+    "n": 1140,
+    "artik_ss": 0.441452,
+    "r2": 0.50957,
+    "disarida_rmse": 0.499304
+   }
+  },
+  "I1": {
+   "ev": {
+    "isabet": 0.173626,
+    "isabetsiz": 0.054309,
+    "sabit": -0.002796,
+    "n": 1137,
+    "artik_ss": 0.500435,
+    "r2": 0.51893,
+    "disarida_rmse": 0.452942
+   },
+   "dep": {
+    "isabet": 0.16479,
+    "isabetsiz": 0.059457,
+    "sabit": -0.042165,
+    "n": 1137,
+    "artik_ss": 0.47251,
+    "r2": 0.464096,
+    "disarida_rmse": 0.404145
+   }
+  },
+  "SP1": {
+   "ev": {
+    "isabet": 0.160531,
+    "isabetsiz": 0.050087,
+    "sabit": 0.047302,
+    "n": 1137,
+    "artik_ss": 0.467611,
+    "r2": 0.52044,
+    "disarida_rmse": 0.545432
+   },
+   "dep": {
+    "isabet": 0.161693,
+    "isabetsiz": 0.058961,
+    "sabit": -0.074025,
+    "n": 1137,
+    "artik_ss": 0.445822,
+    "r2": 0.492865,
+    "disarida_rmse": 0.488058
+   }
+  }
+ }
+}
