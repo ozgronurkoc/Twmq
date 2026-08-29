@@ -82,7 +82,7 @@ KADEMELER: tuple[str, ...] = ("sicaklik", "bias", "lig", "bant", "form",
                               "hareket", "dagilim",
                               "dinlenme", "sikisiklik", "avrupa",
                               "ic_dis", "sezon_sonu",
-                              "elo", "dc", "h2h", "seri", "derbi",
+                              "elo", "dc", "h2h", "seri", "derbi", "xg",
                               "etkilesim", "etkilesim_favori")
 
 #: **Etkileşim basamakları** — `DIS_INCELEME.md` §3'ün açık itirazına cevap.
@@ -152,6 +152,17 @@ YON_ALANLARI: tuple[tuple[str, float], ...] = (
     ("h2h_farki", 1.0),
     ("seri_farki", 1.0),
 )
+
+#: xG vekili farkının ölçeği. Büyüklük **maç başına net beklenen goldür** ve
+#: 2,0 tanımdan alındı: bir takımın son beş maçta rakibinden maç başına iki
+#: beklenen gol fazla üretmesi pratik üst sınırdır. Yine veriye bakılmadan —
+#: `ELO_OLCEK` ve `YON_ALANLARI` ile aynı gerekçe.
+#:
+#: `YON_ALANLARI`na **bilerek eklenmedi**: etkileşim basamakları oraya
+#: eklenen her alanla birlikte yeniden ölçülür ve §3'ün yayımlanmış bütün
+#: etkileşim sayıları değişirdi. `xg` kendi basamağında, tek başına ölçülür;
+#: etkileşime girip girmediği ayrı bir sorudur ve bu planın sorusu değildir.
+XG_OLCEK = 2.0
 
 #: Elo farkının ölçeği — `YON_ALANLARI`daki değerle **aynı olmalı**.
 #: `elo` basamağı ile etkileşim çarpımları aynı ölçekte okunmazsa aynı
@@ -245,6 +256,13 @@ def _mac_ozellikleri(hafta: Girdi) -> list[dict[str, Any]]:
             # olcum "derbi bir sey soylemiyor" diye okunacakti. Bekcisi
             # `test_sehir.py::test_derbi_korpustan_tasariMA_ulasiyor`.
             "derbi": float(o.get("derbi") or 0.0),
+            # `form_isabet_farki` ile AYNI sekil, kalibre edilmis birimde
+            # (bkz. `xg.py`). Ikisi yan yana tasinir cunku olcumun sorusu
+            # tam olarak aralarindaki farktir: kalibrasyon ham sayimin
+            # ustune bir sey koyuyor mu? Beyaz listeye eklenmeseydi sutun
+            # sessizce dusecek ve cevap "xG bir sey soylemiyor" diye
+            # okunacakti — `derbi` bir kez tam bunu yasadi.
+            "xg_farki": float(o.get("xg_farki") or 0.0),
             **{alan: float(o.get(alan) or 0.0) for _, alan in A3_ALANLARI},
         } for i, o in enumerate(tasinan)]
 
@@ -276,6 +294,9 @@ def _mac_ozellikleri(hafta: Girdi) -> list[dict[str, Any]]:
             # 0 = "derbi degil" — `sehir` modulundeki tek yonlu hatanin
             # aynisi ve ayni gerekce.
             "derbi": 0.0,
+            # Kupon haftalarinda sut sayimi da yok (oran arsivi yalnizca
+            # fiyat tasir). Notr 0, `form_isabet_farki` ile ayni kural.
+            "xg_farki": 0.0,
             "ayrisma": 0.0,
             **{alan: 0.0 for _, alan in A3_ALANLARI},
         })
@@ -452,6 +473,24 @@ def _tasarim_satiri(ozellik: dict[str, Any], kademe: str,
     #     yonlu ve kasitli bir hata (bkz. `sehir` modul basligi).
     derbi = float(ozellik.get("derbi") or 0.0)
     sutunlar.append([derbi * np.log(max(probs.get(s, 0.0), OLASILIK_TABANI))
+                     for s in SYMBOLS])
+    if not kademe_en_az(kademe, "xg"):
+        return np.array(sutunlar, dtype=float).T
+
+    # 17) xg — sut sayiminin KALIBRE EDILMIS hali. `form` basamagi zaten ham
+    #     isabetli sut farkini tasiyor (`form_isabet_farki`); bu sutun ayni
+    #     yuvarlanan pencereyi, ayni sekli, ama beklenen gol biriminde
+    #     tasiyor (`xg.py`). Ikisi ayni modelde yan yana durdugu icin
+    #     katsayinin isareti dogrudan sunu cevaplar:
+    #
+    #         c > 0  kalibrasyon ham sayimin ustune bir sey koyuyor
+    #         c ~ 0  isabetli sut sayisi zaten yetiyordu
+    #
+    #     Kalibrasyon dosyasi yoksa deger her macta 0'dir ve sutun notrdur
+    #     (`xg.katsayilar()` bos doner) — basamak sessizce yanlis bir sey
+    #     olcmek yerine hicbir sey olcmez.
+    v = float(ozellik.get("xg_farki") or 0.0) / XG_OLCEK
+    sutunlar.append([v if s == "1" else (-v if s == "2" else 0.0)
                      for s in SYMBOLS])
     if not kademe_en_az(kademe, "etkilesim"):
         return np.array(sutunlar, dtype=float).T

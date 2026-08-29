@@ -222,7 +222,11 @@ def test_turetilemeyenler_gerekceli_kayitli():
     from spor_toto.disari import TURETILEBILIR_OLDU
 
     assert set(TURETILEMEYEN) == {"seyahat", "xg", "kadro_sakatlik"}
-    assert set(TURETILEBILIR_OLDU) == {"derbi", "avrupa"}
+    # `xg_vekili` listeye Faz 3.5'te girdi ve `xg` yukarida KALDI. Ikisi
+    # ayri anahtar cunku ayri seyler: StatsBomb kaynagi acildi ama korpusun
+    # liglerini kapsamadigi icin xG hala bir GIRDI degil — acilan sey
+    # korpusun kendi sut sayiminin KALIBRASYONU.
+    assert set(TURETILEBILIR_OLDU) == {"derbi", "avrupa", "xg_vekili"}
     assert not (set(TURETILEMEYEN) & set(TURETILEBILIR_OLDU))
     for gerekce in (*TURETILEMEYEN.values(), *TURETILEBILIR_OLDU.values()):
         assert len(gerekce) > 30

@@ -812,6 +812,60 @@ def _check_veri_seti() -> str:
     return f"hafta={meta['weeks']} mac={meta['matches']} catisma=0"
 
 
+def _check_xg_kalibrasyonu() -> str:
+    """
+    xG vekilinin katsayilari makul mu ve ozellik korpusa ULASIYOR mu.
+
+    Iki ayri sessiz hataya karsi. Birincisi ISARET: isabetli sutun katsayisi
+    isabetsizinkinden buyuk ve ikisi de pozitif olmali. Degilse vekil ters
+    uydurulmus demektir ve `xg_farki` sutunu modele yanlis isaretli bir
+    buyukluk sokar — olcum sessizce anlamsizlasir. Uretici de ayni kapiyi
+    yaziyor (`scripts/build_xg.py::dogrula`) ama o kapi YAZARKEN, bu kapi
+    KOSARKEN bakiyor: elle duzenlenmis ya da eski surumden kalmis bir dosya
+    ureticiden gecmez.
+
+    Ikincisi VEKILIN KENDISI: sifir sut cekilmis bir mac icin beklenen gol
+    negatif olamaz. `dep` tarafinin sabiti negatif olculdu, yani dogrusal
+    uydurma tek basina eksi bir sayi verir; `xg_vekili` onu sifira kirpar ve
+    bu kontrol kirpmanin yerinde durdugunu dogrular.
+
+    **Korpus kapsamasi burada OLCULMEZ ve bu kasitli.** `health` istatistik
+    katmanindadir ve egitim korpusunu tanimaz (`test_egitim.py::
+    test_ayrim_istatistik_katmani_korpusu_import_etmez`). Ozelligin korpusun
+    ne kadarinda tanimli oldugu bir bekci olarak duruyor ama test katmaninda:
+    `tests/test_xg.py::test_korpusta_kapsama_yuksek`.
+
+    Dosya yoksa kontrol DUSMEZ. Kalibrasyon istege baglidir; yoksa
+    `xg_tablosu` her mac icin notr 0 dondurur ve `xg` basamagi hicbir sey
+    olcmez (bkz. `spor_toto/xg.py`).
+    """
+    from .xg import katsayilar, xg_vekili
+
+    kat = katsayilar()
+    if not kat:
+        return "xg kalibrasyonu yok — `xg` basamağı nötr koşar"
+
+    for yan, ev_mi in (("ev", True), ("dep", False)):
+        k = kat[yan]
+        assert k["isabet"] > 0, f"{yan}: isabet katsayısı pozitif değil"
+        assert k["isabetsiz"] >= 0, f"{yan}: isabetsiz katsayısı negatif"
+        assert k["isabet"] > k["isabetsiz"], (
+            f"{yan}: isabetli şut isabetsizden değerli değil "
+            f"({k['isabet']} <= {k['isabetsiz']})")
+        assert xg_vekili(0, 0, ev_mi, kat) >= 0.0, (
+            f"{yan}: sıfır şutta beklenen gol negatif — kırpma düşmüş")
+        # Isabetli sut EKLEMEK beklenen golu artirmali. Isaret kontrolunun
+        # ucuncu ayagi: katsayilar tek tek dogru gorunup birlikte ters
+        # davranamasin.
+        assert xg_vekili(10, 6, ev_mi, kat) > xg_vekili(10, 2, ev_mi, kat), (
+            f"{yan}: isabetli şut artınca beklenen gol artmıyor")
+
+    return (f"ev: {kat['ev']['isabet']:.4f}·isabet + "
+            f"{kat['ev']['isabetsiz']:.4f}·isabetsiz + {kat['ev']['sabit']:.4f} · "
+            f"dep: {kat['dep']['isabet']:.4f} / {kat['dep']['isabetsiz']:.4f} / "
+            f"{kat['dep']['sabit']:.4f}")
+
+
 def _check_oran_arsivi() -> str:
     """
     Piyasa orani arsivi. Yoksa istatistik sayfasi oran bloklarini gizler;
@@ -1361,6 +1415,14 @@ CHECKS: tuple[CheckSpec, ...] = (
         "tablonun toplamları tutuyor mu.",
         _check_oran_arsivi,
         butce_ms=250,
+    ),
+    CheckSpec(
+        "xg_kalibrasyonu", "analiz",
+        "xG vekilinin katsayıları: isabetli şut isabetsizden değerli mi, "
+        "sıfır şutta beklenen gol negatife düşüyor mu. Ters işaretli bir "
+        "kalibrasyon ölçümü sessizce anlamsızlaştırır.",
+        _check_xg_kalibrasyonu,
+        butce_ms=20,
     ),
     CheckSpec(
         "geri_test", "analiz",

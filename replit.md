@@ -121,6 +121,14 @@ Katman katman:
   `dinlenme`/`sikisiklik` artik o gunleri de gorur) · `sehir.py`
   (kulup-sehir tablosu, `openfootball/clubs` CC0; derbi bir SICAKLIK
   degiskeni). Uretim: `scripts/build_avrupa.py`, `scripts/build_sehir.py`
+- **Veri (Faz 3.5)** — `xg.py`: korpusun kendi `sut`/`isabet` sayimindan
+  KALIBRE EDILMIS beklenen gol. Katsayi `hudl/open-data`in (StatsBomb) 2015/16
+  dort lig kesitinde (1.517 mac) gercek xG'ye karsi olculur; StatsBomb bir
+  GIRDI degil REFERANStir — depo Super Lig'i ve alt Ingiliz liglerini
+  kapsamiyor, korpusla kesisimi 92 mac ve canli akisi yok. Uretim:
+  `scripts/build_xg.py`. **Lisans: ham veri commit EDILEMEZ** (StatsBomb
+  Public Data User Agreement md. 1.2.1); depoya yalnizca katsayi + rapor
+  girer, yayimlanan analiz StatsBomb logosuyla kunyelenir (md. 1.4)
 - **Takım** — `takim_gucu.py` (`/api/takimlar`): ampirik Bayes kucultmesi,
   lig icinde; her satirda `n`, `kucultme` ve %95 aralik. §7'nin "takim bazli
   istatistik yok" yasagi buradan kalkti (§3.35)
@@ -130,7 +138,7 @@ Katman katman:
   egitim tarihi + surum; bayatlik `health`te KIRMIZI — `--yaz` ile uretilir,
   surumlenmez)
 - **Ortak / gövde** — `ortak.py` (normalizasyon, Wilson, Brier, bantlama) ·
-  `payloads.py` (uç gövdeleri, tek kaynak) · `health.py` (26 değişmez) ·
+  `payloads.py` (uç gövdeleri, tek kaynak) · `health.py` (27 değişmez) ·
   `health_history.py` · `report.py`
 
 > `odds.py` burada uzun süre "yalnızca analiz" diye yazılıydı; **artık değil**.
@@ -171,7 +179,7 @@ yazmazlar). Ayrıntı: `docs/VERI_TOPLAMA_VE_ISLEME.md`.
 ```bash
 cd backend
 python -m pytest -m "not slow" -q   # hızlı süit
-python -m pytest                    # tamamı (1.680 test, ILP dahil)
+python -m pytest                    # tamamı (1.701 test, ILP dahil)
 python -m pytest -n0 tests/test_egitim.py   # tek çekirdek (hata ayıklarken)
 cd .. && bash scripts/check.sh      # TEK kapı; CI de bunu çağırır
 ```

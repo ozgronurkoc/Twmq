@@ -52,11 +52,29 @@ TURETILEMEYEN: dict[str, str] = {
     # gerekcesi degisti — artik "sehir yok" degil, "KOORDINAT yok".
     "seyahat": ("sehir var (`sehir.py`, %98,0) ama KOORDINAT yok; iki "
                 "sehrin arasindaki mesafe sehir adindan cikmaz"),
-    # Faz 3.4'te ARANDI ve kapali cikti — ikisi de teknik degil ILKESEL.
-    "xg": ("Understat robots.txt'i `Disallow: /` diyor (otomatik erisime "
-           "TAMAMEN kapali), fbref Cloudflare sorgusu arkasinda. Ayrica "
-           "ikisi de Super Lig'i ve korpusun cogunlugunu olusturan alt "
-           "Ingiliz liglerini kapsamiyor"),
+    # Gerekce DEGISTI ve girdi yerinde kaldi. Onceki gerekce erisim
+    # hakkindaydi: "Understat robots.txt'i `Disallow: /` diyor, fbref
+    # Cloudflare arkasinda". O yari artik gecersiz — `hudl/open-data`
+    # (eski adiyla `statsbomb/open-data`) olay duzeyi veriyi serbestce
+    # yayimliyor ve her sutta `shot.statsbomb_xg` var.
+    #
+    # Ama ikinci yari AYAKTA ve tek basina yetiyor. Depo lig-sezon
+    # lig-sezon sayildi: Super Lig YOK, alt Ingiliz ligleri (E1/E2/E3/EC)
+    # YOK. Korpus penceresiyle (2122-2425) kesisim 31.103 macta topu topu
+    # 92 mac ve o 92'nin hepsi tek takima yanli (PSG'nin Ligue 1 maclari,
+    # Leverkusen'in Bundesliga maclari). Ustelik canli akis yok: veri
+    # maclardan yillar sonra yayimlaniyor, yani `/tahmin` onu ilkesel
+    # olarak da goremezdi.
+    #
+    # Girdinin kalmasi onemli: kaynagin acilmasi SORUNUN cozulmesi
+    # demek degildi ve bu ayrimi yazmak, "artik var" deyip kapsamayi
+    # sessizce gormezden gelmekten iyidir. Acilan sey ayri bir
+    # anahtarla asagida: `xg_vekili`.
+    "xg": ("kaynak ARTIK ACIK (`hudl/open-data`, her sutta "
+           "`shot.statsbomb_xg`) ama kapsamiyor: Super Lig ve alt Ingiliz "
+           "ligleri depoda yok, korpus penceresiyle kesisim 92 mac ve hepsi "
+           "tek takima yanli. Canli akis da yok — veri maclardan yillar "
+           "sonra yayimlaniyor, yani ileriye donuk kullanilamaz"),
     "kadro_sakatlik": (
         "kaynak teknik olarak acik (transfermarkt `Allow: /`) ama ozellik "
         "ILERIYE DONUK KULLANILAMAZ: gercek kadro ancak ilk vurusta bellidir. "
@@ -75,6 +93,18 @@ TURETILEBILIR_OLDU: dict[str, str] = {
     "avrupa": ("`openfootball/champions-league` (kamu mali) UEFA fiksturu "
                "veriyor; `dinlenme` ve `sikisiklik` artik o gunleri de "
                "goruyor — `scripts/build_avrupa.py`, ad eslemesi %100"),
+    # xG'nin KENDISI degil, korpusun kendi sut sayiminin KALIBRASYONU.
+    # Ayrim onemli: `xg` yukarida kapali kaldi cunku StatsBomb korpusun
+    # liglerini kapsamiyor. Kapsamadigi icin bir GIRDI olamaz — ama
+    # kapsadigi 1.517 macta gercek xG ile korpusun `sut`/`isabet`
+    # sayimlarini YAN YANA gordugu icin bir REFERANS olabilir. Vekil o
+    # kesitte uydurulur, korpusun tamamina uygulanir ve StatsBomb verisi
+    # depoya hic girmez (lisans md. 1.2.1).
+    "xg_vekili": ("`hudl/open-data`in 2015/16 dort lig kesiti (PL, La Liga, "
+                  "Serie A, Ligue 1; 1.517 mac) gercek xG'yi football-data "
+                  "sut sayimiyla ayni macta veriyor; `ev_sut`/`ev_isabet` "
+                  "artik KEYFI degil OLCULMUS katsayilarla beklenen gole "
+                  "ceviriliyor — `scripts/build_xg.py`, `spor_toto/xg.py`"),
 }
 
 #: Ham sinyal taramasında bir özelliğin "yüksek"/"düşük" sayıldığı eşik.

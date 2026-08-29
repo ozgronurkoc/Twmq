@@ -159,7 +159,13 @@ def test_derbi_yokken_sutun_sifir():
 
 
 def test_turetilemeyen_listesi_kisaldi():
-    """Faz 3.4'ün kaydı: `derbi` listeden **çıktı**, `seyahat` kaldı."""
+    """Faz 3.4'ün kaydı: `derbi` listeden **çıktı**, `seyahat` kaldı.
+
+    Faz 3.5 buna bir ayrım ekledi: `xg` listede KALDI ama gerekçesi
+    değişti (erişim değil kapsama), ve açılan şey ayrı bir anahtarla
+    yazıldı — `xg_vekili`. "Kaynak açıldı" ile "sorun çözüldü" farklı
+    şeylerdir; bu bekçi farkı tutar.
+    """
     from spor_toto.disari import TURETILEBILIR_OLDU, TURETILEMEYEN
 
     assert "derbi" not in TURETILEMEYEN
@@ -168,7 +174,17 @@ def test_turetilemeyen_listesi_kisaldi():
     assert {"derbi", "avrupa"} <= set(TURETILEBILIR_OLDU)
     # Faz 3.4 iki kaynagi ARADI ve kapali buldu — kayit duruyor.
     assert {"xg", "kadro_sakatlik"} <= set(TURETILEMEYEN)
-    assert "robots.txt" in TURETILEMEYEN["xg"]
+    # Faz 3.5: `xg`in GEREKCESI degisti, girdinin kendisi degil. Onceki
+    # gerekce erisim hakkindaydi ("robots.txt", Cloudflare) ve StatsBomb'un
+    # acik deposuyla gecersizlesti; kapali tutan sey artik KAPSAMA. Bu
+    # yuzden bekci robots.txt'i degil kapsama gerekcesini ariyor — aksi
+    # halde eski, artik yanlis bir cumleyi korumus olurdu.
+    assert "robots.txt" not in TURETILEMEYEN["xg"]
+    assert "kapsamiyor" in TURETILEMEYEN["xg"]
+    # ...ve acilan sey AYRI bir anahtar: xG'nin kendisi degil, korpusun
+    # kendi sut sayiminin kalibrasyonu.
+    assert "xg_vekili" in TURETILEBILIR_OLDU
+    assert "xg" not in TURETILEBILIR_OLDU
 
 
 def test_derbi_korpustan_tasarima_ulasiyor():

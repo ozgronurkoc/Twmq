@@ -56,3 +56,18 @@ backend/data/avrupa/_kaynak/
 # savunmak gerektiginde bakilir, paylasilmaz. Surumlenseydi her olcum
 # depoyu buyutur ve depo bir veri ambarina donerdi.
 backend/data/kosumlar/
+
+# StatsBomb (hudl/open-data) mac ozetleri. Iki ayri sebeple git disi:
+#
+# 1. LISANS. "StatsBomb Public Data User Agreement" md. 1.2.1 veriyi
+#    "distribute, reproduce ... to any external or third party" etmeyi
+#    yasaklar ve bu depo public'tir. Depoya yalnizca KATSAYI ve RAPOR
+#    girer (`data/xg/xg_kalibrasyon.json`, `xg_rapor.json`) — bunlar
+#    lisansin serbest biraktigi "analysis or conclusions"tir.
+# 2. BOYUT. Ham olay dosyalari 1.517 mac icin ~5,2 GB. `build_xg.py`
+#    onlari diske hic yazmaz; burada onbelleklenen sey maç basina dort
+#    sayilik ozettir ve yalnizca ~25 dakikalik indirmeyi yeniden
+#    baslatilabilir kilar.
+#
+# Yeniden olusturmak icin: python scripts/build_xg.py
+backend/data/xg/_kaynak/
