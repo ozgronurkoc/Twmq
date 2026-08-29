@@ -137,7 +137,16 @@ export interface McRate {
   p: number;
   pct: number;
   se: number;
+  /**
+   * Normal yaklasimin YARI GENISLIGI (yuzde puani) — aralik degil.
+   * Adi yaniltici ama sozlesme; kaldirmak yerine yanina gercek aralik
+   * konuldu. Aralik icin `ci_alt`/`ci_ust` kullanin.
+   */
   ci95: number;
+  /** %95 Wilson araliginin alt siniri (yuzde). Her zaman [0, 100] icinde. */
+  ci_alt: number;
+  /** %95 Wilson araliginin ust siniri (yuzde). Her zaman [0, 100] icinde. */
+  ci_ust: number;
   count: number;
 }
 
