@@ -352,16 +352,23 @@ export function DoluHafta({ hafta }: { hafta: SuperTotoHafta }) {
         {hafta.play_source ?? "—"} ve <strong>Spor Toto havuzunun tamamı
         değildir</strong>.{" "}
         {/*
-          Bu cumle "oynanma verisi secime girmez" diye SABIT yaziliydi ve
-          ilk iki hafta icin dogruydu. 3. hafta `hedef + kalabalik ayari`
-          ile dondurulunca oynanma yuzdeleri secime GIRDI — cumle kaydin
-          tersini soylemeye basladi. Artik kuraldan okunuyor.
+          Bu cumle "isaretler yalnizca 2025/26 geri testinin ESIGINDEN
+          gelir" diye SABIT yaziliydi. Ilk iki hafta icin dogruydu; 3.
+          hafta `hedef` kuraliyla dondurulunca esik hic kullanilmadi ve
+          cumle kaydin tersini soylemeye basladi. Kural artik kayittan
+          okunuyor ve uc durumun her biri kendi cumlesini alir.
         */}
         {k?.kural?.includes("kalabalık") ? (
           <>
             İşaret <strong>sayıları</strong> yalnızca fiyattan gelir; oynanma
             yüzdeleri yalnızca <strong>hangi sembol</strong> sorusuna girer
             (kalabalık ayarı), bedeli değiştirmez.
+          </>
+        ) : k?.kural === "hedef" ? (
+          <>
+            İşaretler verilen bütçede doğrudan{" "}
+            <strong>P(en iyi kolon ≥ 12)</strong>&apos;yi enbüyükler; eşiğe
+            bakmaz ve <strong>oynanma verisi seçime girmez</strong>.
           </>
         ) : (
           <>
