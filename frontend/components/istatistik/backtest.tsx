@@ -305,7 +305,15 @@ export function HoldoutPanel({
         boyut="lg"
           etiket="Hold-out (haftayı görmeden)"
           deger={`${holdout.hit14} / ${holdout.weeks}`}
-          alt={`%${ondalik(holdout.hit14_pct ?? 0, 1)} · %95 aralık %${ondalik(lo, 1)}–%${ondalik(hi, 1)}`}
+          alt={
+            `%${ondalik(holdout.hit14_pct ?? 0, 1)} · %95 aralık %${ondalik(lo, 1)}–%${ondalik(hi, 1)}` +
+            // Olculemeyen kat SESSIZCE dusmez: paydada duruyor (iska
+            // sayiliyor) ve bunu soylemek zorundayiz, yoksa oran
+            // olculmemis haftalari yok saymis gibi okunur.
+            (holdout.atlanan
+              ? ` · ${holdout.atlanan} hafta ölçülemedi (arama uzayı) ve ıska sayıldı`
+              : "")
+          }
           ton={holdout.hit14 === 0 ? "warning" : "neutral"}
         />
         <Stat

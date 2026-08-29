@@ -737,12 +737,19 @@ export interface BacktestWeek {
  * satırlarıyla arasındaki fark, aşırı uyumun büyüklüğüdür.
  */
 export interface BacktestHoldout {
+  /** Kesitin buyuklugu: kullanilabilir hafta sayisi. `hit14`in paydasi. */
   weeks: number;
+  /** Gercekten olculen kat sayisi. `columns_avg`in paydasi. */
+  olculen?: number;
+  /** `weeks - olculen`: arama uzayi yuzunden olculemeyen kat. */
+  atlanan?: number;
+  /** Hangi metrigin hangi paydaya dayandigi — sunucudan gelir, uydurulmaz. */
+  payda?: { hit14: string; columns_avg: string };
   hit14?: number;
   hit14_pct?: number;
   hit14_ci?: [number, number];
   columns_total?: number;
-  columns_avg?: number;
+  columns_avg?: number | null;
   chosen?: Array<{ threshold: string; weeks: number }>;
 }
 
