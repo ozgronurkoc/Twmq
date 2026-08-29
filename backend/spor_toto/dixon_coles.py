@@ -161,8 +161,15 @@ class DixonColes:
         yenen = (np.bincount(h, weights=w * ag, minlength=T)
                  + np.bincount(a, weights=w * hg, minlength=T))
 
-        atak = np.ones(T)
-        savunma = np.ones(T)
+        # Tur acikca yazilir. `np.ones(T)` numpy 2.2 govdesinde SEKILLI bir tur
+        # cikarsiyor (`ndarray[tuple[int], float64]`, yani "tam 1 boyutlu") ve
+        # asagidaki `np.where` / carpim genel `ndarray` dondurdugu icin mypy her
+        # yeniden atamayi reddediyordu. Kod dogru; daralan sey numpy'nin sekil
+        # tiplemesiydi ve surumden surume degisiyor (numpy 2.4 govdesinde ayni
+        # kod uyari uretmiyor). Acik anotasyon ikisinde de gecer, davranisi
+        # degistirmez ve bir dahaki stub degisikliginde yeniden kirilmaz.
+        atak: np.ndarray = np.ones(T)
+        savunma: np.ndarray = np.ones(T)
         gamma = 1.3  # ev avantajı için makul başlangıç; sonuç ondan bağımsız
 
         for _ in range(EN_COK_YINELEME):

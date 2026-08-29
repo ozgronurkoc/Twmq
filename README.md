@@ -844,7 +844,7 @@ backend/
     api_sozlesme.py           API sözleşmesini üretir/denetler (--kontrol: CI kapısı)
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/
-  tests/               pytest (53 dosya → 1.621 test; §9'da katman dökümü)
+  tests/               pytest (53 dosya → 1.622 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1030,7 +1030,7 @@ dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri t
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
 eşleme, ikinci kayıt). **53 test dosyası, parametrizasyonla
-1.621 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+1.622 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
@@ -1041,7 +1041,7 @@ karşı denetler):
 | Sağlık | `health` `api_health` `meta` `health_history` | 85 |
 | Veri / istatistik / geri test | `history` `odds` `backtest` `api_stats` `api_backtest` `snapshot_iddaa` `pazar` | 113 |
 | Süper Toto | `super_toto` `degerlendir` | 84 |
-| 2. Tahmin (kalabalık ayarı · bağımsız görüş) | `tahmin2` | 29 |
+| 2. Tahmin (kalabalık ayarı · bağımsız görüş) | `tahmin2` | 30 |
 | Karar katmanı | `secim` | 21 |
 | Skor türetme | `skor` | 21 |
 | Beraberlik düzeltmesi | `beraberlik` | 19 |
