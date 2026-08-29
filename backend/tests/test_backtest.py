@@ -182,6 +182,80 @@ def test_holdout_taramadan_iyi_olamaz():
     assert ho["chosen"], "hangi eşiğin seçildiği raporlanmalı"
 
 
+# ─── hold-out paydaları ───────────────────────────────────────────────────────
+#
+# `holdout` iki farklı paydaya dayanıyor ve ikisi de görünmek zorunda:
+# kesit (`weeks`) ile gerçekten ölçülen kat (`olculen`). Döngü, dışarıda
+# bırakılan hafta arama uzayı yüzünden `skipped` ise o katı ölçmeden geçer.
+
+@pytestmark_veri
+def test_holdout_paydalari_tutarli():
+    girdiler = hafta_girdileri()
+    ho = holdout(girdiler)
+    assert ho["olculen"] + ho["atlanan"] == ho["weeks"]
+    assert ho["olculen"] == sum(c["weeks"] for c in ho["chosen"]), (
+        "olculen kat sayisi, secilen esiklerin toplamiyla ayni olmali")
+    # Hangi metrigin hangi paydaya dayandigi cikitida YAZILI olmali.
+    assert set(ho["payda"]) == {"hit14", "columns_avg"}
+
+
+def test_holdout_kolon_ortalamasi_olculen_kata_bolunur():
+    """Atlanan kat varken `columns_avg`, kesite değil **ölçülene** bölünür.
+
+    Düzeltilen kusur budur ve **gerçek veriyle bugün görünmez**: 36
+    haftalık kesitte kazanan eşik çifti (0,68/0,38) hiçbir haftayı
+    atlamıyor, yani `kolon / n` ile `kolon / olculen` aynı sayıyı veriyor.
+    Kusur gizliydi — bir hafta arama uzayına takıldığı anda pay yalnızca
+    ölçülen katlarda birikirken payda bütün kesiti saymaya devam ediyor ve
+    ortalama kolon **olduğundan düşük** çıkıyordu.
+
+    Gizli olması güvenli olduğu anlamına gelmiyor: 28 eşik çiftinden
+    dördü hafta atlıyor ve bunlardan 0,68/0,42 bugün kazananla **aynı**
+    hit14'ü (3) veriyor — eşitliği ucuz kolon lehine bozulduğu için
+    kaybediyor. Veri bir tık kayarsa atlayan çift kazanır ve ortalama
+    sessizce düşer.
+
+    Kurgu tabloyla ölçülmesinin sebebi bu: eşik ızgarasında `uclu = 0,0`
+    satırı olduğu için sentetik bir haftayı BÜTÜN çiftlerde atlatmak
+    mümkün değil (çifte kalır, 2^15 = 32.768 < `UZAY_SINIRI`). Ölçülmek
+    istenen şey eşik seçimi değil zaten, **payda**.
+    """
+    girdiler = [{"usable": True} for _ in range(5)]
+    anahtar = (0.68, 0.38)
+    # Dordu olculebilir, biri arama uzayina takilmis.
+    tablo = {anahtar: [
+        {"skipped": False, "best": 13, "columns": 100},
+        {"skipped": False, "best": 14, "columns": 200},
+        {"skipped": False, "best": 12, "columns": 300},
+        {"skipped": False, "best": 13, "columns": 400},
+        {"skipped": True, "reason": f"seçim uzayı > {UZAY_SINIRI:,}"},
+    ]}
+
+    ho = holdout(girdiler, tablo=tablo)
+    assert ho["weeks"] == 5 and ho["olculen"] == 4 and ho["atlanan"] == 1
+    assert ho["columns_total"] == 1000
+    # Eski davranis `1000 / 5 = 200,0` derdi; dogrusu `1000 / 4 = 250,0`.
+    assert ho["columns_avg"] == 250.0
+    # `hit14` paydasi BILEREK kesit: olculemeyen hafta iska sayilir, cunku
+    # paydadan dusmek stratejinin cozemedigi haftalari yok saymak olurdu.
+    assert ho["hit14"] == 1
+    assert ho["hit14_pct"] == round(100 * 1 / 5, 1)
+
+
+def test_holdout_atlanan_yoksa_iki_payda_ayni():
+    """Atlanan kat yokken eski ve yeni payda aynı sayıyı verir.
+
+    Düzeltmenin yayımlanmış sayıyı değiştirmediğinin kanıtı: fark yalnızca
+    atlanan kat varken doğuyor.
+    """
+    girdiler = [{"usable": True} for _ in range(4)]
+    tablo = {(0.68, 0.38): [
+        {"skipped": False, "best": 13, "columns": 100} for _ in range(4)]}
+    ho = holdout(girdiler, tablo=tablo)
+    assert ho["atlanan"] == 0
+    assert ho["columns_avg"] == round(ho["columns_total"] / ho["weeks"], 1)
+
+
 @pytestmark_veri
 def test_hicbir_hafta_garantisiz_kalmaz():
     r = backtest(sweep=False)

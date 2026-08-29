@@ -374,6 +374,33 @@ def holdout(girdiler: Sequence[dict[str, Any]],
     Eşik taramasının en iyi satırı geçmişin **en iyi açıklamasıdır**; bu
     fonksiyon aynı yöntemin görmediği bir hafta üzerinde ne yaptığını söyler.
     İki sayı arasındaki fark, aşırı uyumun büyüklüğüdür.
+
+    ─── Paydalar ────────────────────────────────────────────────────────
+
+    Burada **iki farklı payda** var ve ayrı durmaları zorunlu, çünkü döngü
+    bazı katları ölçmeden geçebiliyor: dışarıda bırakılan hafta arama
+    uzayı yüzünden `skipped` ise (`UZAY_SINIRI`) o kat ölçülmez.
+
+    `weeks` (= `n`)   kesitin büyüklüğü: kullanılabilir hafta sayısı.
+    `olculen`         gerçekten ölçülen kat sayısı.
+    `atlanan`         `weeks - olculen`, ve niçin atlandığı aşağıda.
+
+    Kolon ortalaması **ölçülen kata** bölünür. Önceden `kolon / n` idi ve
+    bu gerçek bir pay/payda uyuşmazlığıydı: `kolon` yalnızca ölçülen
+    katlarda birikiyor, `n` bütün kullanılabilir haftaları sayıyordu — yani
+    bir hafta atlandığı anda ortalama kolon **olduğundan düşük** çıkardı.
+    Bugünkü 36 haftalık kesitte hiçbir hafta atlanmıyor, yani yayımlanmış
+    sayı (2.228,4) değişmiyor; düzeltilen şey sayı değil, sayının hangi
+    koşulda yanlış olacağıydı.
+
+    `hit14` paydası **bilerek `weeks`** olarak kalıyor: ölçülemeyen bir
+    hafta ıska sayılır. Bu muhafazakâr okumadır ve kasıtlıdır — atlanan
+    haftayı paydadan da düşmek, stratejinin çözemediği haftaları yok
+    sayarak isabet oranını yukarı çekerdi (backtest'in en kolay kendini
+    kandırma yolu). Ama artık **görünür**: `olculen` ve `atlanan` çıktıda
+    yazıyor, yani okuyan hangi paydanın kullanıldığını sormak zorunda
+    kalmıyor. Karşılaştırma noktası `_ozet`tir; o da `n`'i hayatta kalan
+    listeden yeniden hesaplayıp `skipped`'ı yanına yazar.
     """
     kullanilir = [g for g in girdiler if g["usable"]]
     if len(kullanilir) < 3:
@@ -384,6 +411,7 @@ def holdout(girdiler: Sequence[dict[str, Any]],
     n = len(kullanilir)
     tutan = 0
     kolon = 0
+    olculen = 0
     secimler: dict[str, int] = {}
     for disarida in range(n):
         en_iyi_anahtar = None
@@ -406,15 +434,24 @@ def holdout(girdiler: Sequence[dict[str, Any]],
         secimler[etiket] = secimler.get(etiket, 0) + 1
         tutan += 1 if test["best"] >= 14 else 0
         kolon += test["columns"]
+        olculen += 1
 
     lo, hi = _wilson(tutan, n)
     return {
         "weeks": n,
+        "olculen": olculen,
+        "atlanan": n - olculen,
+        # Iki paydanin niceni ayri durdugu docstring'de yazili. `hit14`
+        # kesite (`n`) bolunur, kolon ortalamasi OLCULEN kata.
+        "payda": {
+            "hit14": "weeks (olculemeyen hafta iska sayilir)",
+            "columns_avg": "olculen (yalnizca gercekten olculen katlar)",
+        },
         "hit14": tutan,
         "hit14_pct": round(100 * tutan / n, 1),
         "hit14_ci": [round(100 * lo, 1), round(100 * hi, 1)],
         "columns_total": kolon,
-        "columns_avg": round(kolon / n, 1),
+        "columns_avg": round(kolon / olculen, 1) if olculen else None,
         "chosen": sorted(
             ({"threshold": k, "weeks": v} for k, v in secimler.items()),
             key=lambda d: -d["weeks"],

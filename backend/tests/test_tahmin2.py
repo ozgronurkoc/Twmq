@@ -15,6 +15,7 @@ kendi gövdelerinde yazıyor:
 
 import importlib
 import json
+import math
 from pathlib import Path
 
 import pytest
@@ -302,6 +303,62 @@ def test_sonuclari_bilinen_haftaya_ikinci_tahmin_yazilmaz(t2, tmp_path):
 
 # ─── diskteki kayıt ───────────────────────────────────────────────────────
 
+#: Bayatlık karşılaştırmasında bir sayıyı "aynı" saymak için gereken yakınlık.
+#: 1e-9, ölçmek istediğimiz şeyle ölçemediğimiz şey arasındaki boşlukta
+#: bilerek geniş seçildi (bkz. `_farklar` docstring'i): gerçek bir bayatlık
+#: 3. basamağı oynatır, ortam gürültüsü 16.'yı.
+BAYATLIK_TOLERANSI = 1e-9
+
+
+def _farklar(taze, diskte, yol="") -> list[str]:
+    """İki JSON gövdesi arasındaki **anlamlı** farklar; float'lar toleranslı.
+
+    Tam eşitlik (`taze == diskte`) burada yanlış araçtı ve CI'da dört Python
+    sürümünün her birinde farklı sayıda test kırdı — aynı commit'te, aynı
+    veriyle. Sebep Dixon-Coles'un yinelemeli uydurması: `np.bincount`
+    indirgeme sırası BLAS/derleme yapısına göre değişiyor ve sonuç son
+    basamakta 1-2 ulp oynuyor:
+
+        0.23256118712676604   vs   0.23256118712676616
+
+    Kararsızlığı ortam üretiyor, kod değil — yani test kırmızı yandığında
+    söylediği şey "kayıt bayat" değil, "runner değişti" oluyordu. Bir
+    değişmez, ölçmediği bir şey yüzünden kırılıyorsa değişmez olmaktan
+    çıkar.
+
+    Testin **sorusu** tolerans altında aynen duruyor: kayıt bugünkü kodun
+    ürettiğiyle aynı mı? Gerçek bir bayatlık — model, ölçek, kural ya da
+    veri değişikliği — üçüncü basamakta görünür; `1e-9` onu fazlasıyla
+    yakalar, son basamak gürültüsünü yakalamaz.
+
+    Eşitlik dışındaki her şey (anahtar kümesi, tip, dizi uzunluğu, metin,
+    bool) hâlâ **tam** karşılaştırılıyor; gevşeyen tek şey float'ın kendisi.
+    """
+    if isinstance(taze, dict) and isinstance(diskte, dict):
+        out = []
+        for k in sorted(set(taze) | set(diskte)):
+            if k not in taze:
+                out.append(f"{yol}.{k}: kayitta var, tazede yok")
+            elif k not in diskte:
+                out.append(f"{yol}.{k}: tazede var, kayitta yok")
+            else:
+                out += _farklar(taze[k], diskte[k], f"{yol}.{k}")
+        return out
+    if isinstance(taze, list) and isinstance(diskte, list):
+        if len(taze) != len(diskte):
+            return [f"{yol}: uzunluk {len(taze)} != {len(diskte)}"]
+        return [f for i, (a, b) in enumerate(zip(taze, diskte))
+                for f in _farklar(a, b, f"{yol}[{i}]")]
+    # `bool` da `float` sayilir; tam karsilastirilmasi icin once elenir.
+    if (isinstance(taze, float | int) and isinstance(diskte, float | int)
+            and not isinstance(taze, bool) and not isinstance(diskte, bool)):
+        if math.isclose(taze, diskte, rel_tol=BAYATLIK_TOLERANSI,
+                        abs_tol=BAYATLIK_TOLERANSI):
+            return []
+        return [f"{yol}: {taze} != {diskte}"]
+    return [] if taze == diskte else [f"{yol}: {taze!r} != {diskte!r}"]
+
+
 def test_diskteki_kayit_bayat_degil(t2, govde):
     """`hafta_02_tahmin2.json` bugünkü kodun ürettiğiyle aynı olmalı.
 
@@ -319,7 +376,8 @@ def test_diskteki_kayit_bayat_degil(t2, govde):
     # aynı haftanın sonucu BİLİNİYOR ve taze gövde bunu doğru şekilde
     # `true` yazıyor. Bu bir bayatlık değil, kaydın tanımı — flamanın
     # kendisi ayrı bir testte (`test_kayit_sonuclari_gormeden_uretildi`)
-    # korunuyor. Geri kalan her alan birebir eşit olmak zorunda.
+    # korunuyor. Geri kalan her alan eşit olmak zorunda — float'lar
+    # `BAYATLIK_TOLERANSI` içinde, geri kalan her şey birebir (`_farklar`).
     for govde in (diskte, taze):
         govde["meta"].pop("results_known", None)
 
@@ -337,7 +395,42 @@ def test_diskteki_kayit_bayat_degil(t2, govde):
         for govde in (diskte, taze):
             govde.pop("havuz", None)
 
-    assert taze == diskte
+    farklar = _farklar(taze, diskte)
+    assert not farklar, "kayit bayat:\n" + "\n".join(farklar[:20])
+
+
+def test_bayatlik_bekcisi_gercekten_atesleniyor():
+    """Bekçinin diğer ucu — gerçek bir bayatlık YAKALANMALI.
+
+    Toleransı gevşetmenin bedeli, denetimin sessizce hiçbir şey korumaz hâle
+    gelmesidir. Yalnızca "eşitte boş liste döndürüyor" diye gösterilen bir
+    karşılaştırıcı, `return []` yazmakla aynı şeydir.
+
+    Buradaki dört senaryo bilerek `BAYATLIK_TOLERANSI`nın iki yakasında:
+    son basamak gürültüsü geçer, model değişikliğinin büyüklüğündeki bir
+    kayma (1e-4) geçmez; yapısal fark (eksik anahtar, farklı uzunluk,
+    değişen metin) toleranstan hiç etkilenmez.
+    """
+    taban = {"dc": {"0": 0.23256118712676604}, "ad": "2. Tahmin",
+             "liste": [1, 2, 3], "bayrak": True}
+
+    # (1) son basamak gurultusu — GECMELI
+    gurultu = {**taban, "dc": {"0": 0.23256118712676616}}
+    assert _farklar(gurultu, taban) == []
+
+    # (2) model degisikligi buyuklugunde kayma — GECMEMELI
+    kayma = {**taban, "dc": {"0": 0.2326}}
+    assert _farklar(kayma, taban)
+
+    # (3) yapisal fark — GECMEMELI
+    assert _farklar({**taban, "liste": [1, 2]}, taban)
+    assert _farklar({k: v for k, v in taban.items() if k != "ad"}, taban)
+    assert _farklar({**taban, "ad": "3. Tahmin"}, taban)
+
+    # (4) bool, float yolundan GECMEZ. Gecseydi `isclose(1.0, 0.9999999999)`
+    #     toleransin icinde kalir ve bir bayrak bir sayiya donusmus olmasina
+    #     ragmen fark GORULMEZDI. Elenmesinin sebebi budur.
+    assert _farklar({**taban, "bayrak": 0.9999999999}, taban)
 
 
 def test_yan_kayit_hafta_sanilmaz():

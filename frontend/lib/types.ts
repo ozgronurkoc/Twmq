@@ -137,7 +137,16 @@ export interface McRate {
   p: number;
   pct: number;
   se: number;
+  /**
+   * Normal yaklasimin YARI GENISLIGI (yuzde puani) — aralik degil.
+   * Adi yaniltici ama sozlesme; kaldirmak yerine yanina gercek aralik
+   * konuldu. Aralik icin `ci_alt`/`ci_ust` kullanin.
+   */
   ci95: number;
+  /** %95 Wilson araliginin alt siniri (yuzde). Her zaman [0, 100] icinde. */
+  ci_alt: number;
+  /** %95 Wilson araliginin ust siniri (yuzde). Her zaman [0, 100] icinde. */
+  ci_ust: number;
   count: number;
 }
 
@@ -728,12 +737,19 @@ export interface BacktestWeek {
  * satırlarıyla arasındaki fark, aşırı uyumun büyüklüğüdür.
  */
 export interface BacktestHoldout {
+  /** Kesitin buyuklugu: kullanilabilir hafta sayisi. `hit14`in paydasi. */
   weeks: number;
+  /** Gercekten olculen kat sayisi. `columns_avg`in paydasi. */
+  olculen?: number;
+  /** `weeks - olculen`: arama uzayi yuzunden olculemeyen kat. */
+  atlanan?: number;
+  /** Hangi metrigin hangi paydaya dayandigi — sunucudan gelir, uydurulmaz. */
+  payda?: { hit14: string; columns_avg: string };
   hit14?: number;
   hit14_pct?: number;
   hit14_ci?: [number, number];
   columns_total?: number;
-  columns_avg?: number;
+  columns_avg?: number | null;
   chosen?: Array<{ threshold: string; weeks: number }>;
 }
 

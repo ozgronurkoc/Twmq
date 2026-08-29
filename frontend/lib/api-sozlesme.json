@@ -1583,6 +1583,8 @@
      "monte_carlo": {
       "kume_ici": {
        "ci95": "float",
+       "ci_alt": "float",
+       "ci_ust": "float",
        "count": "int",
        "p": "float",
        "pct": "float",
@@ -1591,6 +1593,8 @@
       "n_samples": "int",
       "p12": {
        "ci95": "float",
+       "ci_alt": "float",
+       "ci_ust": "float",
        "count": "int",
        "p": "float",
        "pct": "float",
@@ -1598,6 +1602,8 @@
       },
       "p13": {
        "ci95": "float",
+       "ci_alt": "float",
+       "ci_ust": "float",
        "count": "int",
        "p": "float",
        "pct": "float",
@@ -1605,6 +1611,8 @@
       },
       "p14": {
        "ci95": "float",
+       "ci_alt": "float",
+       "ci_ust": "float",
        "count": "int",
        "p": "float",
        "pct": "float",
@@ -1612,6 +1620,8 @@
       },
       "p15": {
        "ci95": "float",
+       "ci_alt": "float",
+       "ci_ust": "float",
        "count": "int",
        "p": "float",
        "pct": "float",

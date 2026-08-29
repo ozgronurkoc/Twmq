@@ -128,7 +128,36 @@ def _gercek_test_sayisi() -> int:
     yalnızca kendi payını görür, yani `request.session`den okumak paralel
     koşuda yanlış (ve işçi sayısına göre değişken) cevap verirdi. Alt
     süreçte `addopts` boşaltılır — hem xdist'i, hem de özyinelemeyi keser.
+
+    **Sayı ortama bağlıdır ve bu bir kusur değil, tanımdır.** `test_agac.py`
+    modül düzeyinde `pytest.importorskip("lightgbm")` yapıyor; paket yoksa
+    modül hiç TOPLANMAZ, yalnızca "atlandı" da denmez — 22 test ortadan
+    kalkar. Yani "süitte kaç test var" sorusunun tek bir cevabı yok:
+    eksiksiz kurulumda 1.622, `lightgbm`siz kurulumda 1.600.
+
+    Depo bu ikiliği zaten taşıyor ve bilerek taşıyor: üretim `lightgbm`
+    kurmuyor (`scripts/run_prod.sh`), kalite kapısı kuruyor
+    (`.[test,kalite,model]`), CI'nın sürüm matrisi kurmuyor (`.[test]`).
+    Belgelerdeki sayı **eksiksiz süitin** sayısıdır, çünkü belgelerin
+    anlattığı depo odur.
+
+    Bu yüzden eksik kurulumda bekçi kırılmaz, **atlar**. Kırılsaydı
+    söylediği şey "belgeler bayat" değil, "bu ortamda lightgbm yok" olurdu
+    ve yanlış bir cümleyi kırmızı yakmak, bekçiyi zamanla görmezden
+    gelinen bir gürültüye çevirir. Atladığında da sessiz kalmaz: sebebi
+    yazar, ve kapı işini yapmaya devam eder — eksiksiz kurulumun bulunduğu
+    tek koşum (kalite kapısı) sayıyı TAM olarak denetler.
     """
+    import importlib.util
+
+    eksik = [ad for ad in ("lightgbm",) if importlib.util.find_spec(ad) is None]
+    if eksik:
+        pytest.skip(
+            f"eksik istege bagli paket: {', '.join(eksik)} — bu kurulumda "
+            "sureden bazi modüller hic toplanmiyor, yani sayilan sey "
+            "eksiksiz suit degil. Tam denetim kalite kapisinda "
+            "(`pip install -e '.[test,kalite,model]'`).")
+
     out = subprocess.run(
         [sys.executable, "-m", "pytest", "--collect-only", "-q",
          "-o", "addopts=", "-p", "no:cacheprovider"],
