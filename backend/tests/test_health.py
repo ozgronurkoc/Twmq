@@ -425,3 +425,45 @@ def test_tahmin_referanslari_kesit_yoksa_cokmez(monkeypatch):
 
     monkeypatch.setattr(evaluate, "olculebilir_haftalar", lambda *a, **kw: [])
     assert "olculebilir hafta yok" in health._check_tahmin_referanslari()
+
+
+# ─── sızıntı sözleşmesi ───────────────────────────────────────────────────────
+
+def test_sizinti_sozlesmesi_kayitli():
+    """Kontrol envantere girdi ve doğru kategoride."""
+    spec = next((c for c in CHECKS if c.name == "sizinti_sozlesmesi"), None)
+    assert spec is not None, "sizinti_sozlesmesi kayitli degil"
+    assert spec.category == "analiz"
+    assert spec.critical is True
+
+
+def test_sizinti_sozlesmesi_gecer():
+    """Canlı kayıt üzerinde koşar; mesaj aile sayısını ve tavanı taşır."""
+    sonuc = _run(next(c for c in CHECKS if c.name == "sizinti_sozlesmesi"))
+    assert sonuc.ok is True, sonuc.detail
+    assert "aile sozlesmede" in sonuc.detail
+    assert "sizinti tavani" in sonuc.detail
+
+
+def test_sizinti_sozlesmesi_kronoloji_bozulursa_kirilir(monkeypatch):
+    """Bekçilik testi — ileri yürüyüş geleceği eğitime sokarsa kırılmalı.
+
+    `hafta_disarida_birak` bilerek geleceği de görür; kontrolün gerçekten
+    bir şey koruduğunu göstermenin en kısa yolu onu yerine koymaktır.
+    """
+    from spor_toto import evaluate, health
+
+    monkeypatch.setattr(
+        evaluate, "ileri_yuruyus",
+        lambda f, h, g=None, **kw: evaluate.hafta_disarida_birak(f, h, g))
+    with pytest.raises(AssertionError, match="gelecek grup var"):
+        health._check_sizinti_sozlesmesi()
+
+
+def test_sizinti_sozlesmesi_kayit_bosalirsa_kirilir(monkeypatch):
+    """Kayıt boşalırsa kontrol sessizce yeşil kalmamalı."""
+    from spor_toto import arena, health
+
+    monkeypatch.setattr(arena, "roster", lambda: [])
+    with pytest.raises(AssertionError, match="arena kaydi bos"):
+        health._check_sizinti_sozlesmesi()
