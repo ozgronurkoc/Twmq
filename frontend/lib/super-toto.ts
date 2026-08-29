@@ -63,6 +63,12 @@ export interface SuperTotoKupon {
   in_set_p: number | null;
   banko_esik: number | null;
   uclu_esik: number | null;
+  /**
+   * Hangi KURALLA donduruldugu. Ilk iki hafta `esik`ti ve kart kural adini
+   * SABIT yaziyordu; 3. hafta `hedef + kalabalik ayari` ile dondurulunca
+   * esikler bos kaldi ve kart "esik / " diye yanlis bir kural bildirdi.
+   */
+  kural: string | null;
   /** Hangi olcekte donduruldugu — bu alan olmadan isaretler yorumlanamaz. */
   arindirma: string | null;
   marj_ort_pct: number | null;

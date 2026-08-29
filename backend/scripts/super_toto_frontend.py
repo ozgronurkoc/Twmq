@@ -75,6 +75,12 @@ def _donmus_blok(donmus: dict[str, Any] | None) -> dict[str, Any] | None:
         "in_set_p": v.get("in_set_p"),
         "banko_esik": st.get("banko_esik"),
         "uclu_esik": st.get("uclu_esik"),
+        # Hangi KURALLA donduruldugu. Ilk iki hafta `esik`ti ve arayuz
+        # kuralin adini hic tasimiyordu — kartta "esik <banko>/<uclu>"
+        # SABIT yaziliydi. 3. hafta `hedef + kalabalik ayari` ile
+        # dondurulunca esikler bos kaldi ve kart "esik / " diye YANLIS bir
+        # kural bildirdi. Ad artik kayittan gelir.
+        "kural": st.get("kural"),
         # Hangi olcekte donduruldugu — bu alan olmadan isaretler
         # yorumlanamaz (bkz. strategy.arindirma_notu).
         "arindirma": st.get("arindirma"),

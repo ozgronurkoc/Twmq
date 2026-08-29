@@ -217,7 +217,16 @@ export function DoluHafta({ hafta }: { hafta: SuperTotoHafta }) {
           <CardBody className="space-y-1.5 text-[12.5px]">
             <div className="font-mono text-[13px]">{k.picks.join(" ")}</div>
             <div className="text-muted-foreground">
-              eşik {k.banko_esik} / {k.uclu_esik}
+              {/*
+                Kuralin ADI kayittan gelir. Burada "esik <banko>/<uclu>"
+                SABIT yaziliydi; esik disi bir kuralla dondurulan hafta
+                (3. hafta: hedef + kalabalik ayari) kartta "esik / " diye
+                gorunuyordu — yani kart kuralin kendisini yanlis
+                bildiriyordu. Esikler yalnizca ESIK kuralinda anlamlidir.
+              */}
+              {k.banko_esik !== null && k.uclu_esik !== null
+                ? `eşik ${k.banko_esik} / ${k.uclu_esik}`
+                : (k.kural ?? "kural yazılmamış")}
               {k.columns ? ` · ${k.columns.toLocaleString("tr-TR")} kolon` : ""}
               {k.rows ? ` · ${k.rows} satır` : ""}
               {k.in_set_p !== null

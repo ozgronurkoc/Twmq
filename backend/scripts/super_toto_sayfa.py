@@ -337,11 +337,11 @@ if DONMUS:
                if "DONDURULAN" in v["label"] else "")
         donmus_satir.append(
             f'<tr{vur}><td>{e(v["label"])}</td>'
-            f'<td class="num mono">%{100*v["hedef_p12"]:.2f}</td>'
-            f'<td class="num mono">{tr(v["kolon"])}</td>'
-            f'<td class="num mono">%{100*v["kume_ici"]:.3f}</td>'
-            f'<td class="num mono">%{100*v["kalabalik_ici"]:.3f}</td>'
-            f'<td class="num mono">{v["oran"]:.2f}</td></tr>')
+            f'<td class="num mono">%{100*v["hedef"]:.2f}</td>'
+            f'<td class="num mono">{tr(v["columns"])}</td>'
+            f'<td class="num mono">%{100*v["in_set_p"]:.3f}</td>'
+            f'<td class="num mono">%{100*v["crowd_in_set_p"]:.3f}</td>'
+            f'<td class="num mono">{v["crowd_ratio"]:.2f}</td></tr>')
     for i, satir in enumerate(KUPON_JSON.get("rows") or []):
         hucre = "".join(f"<td>{c}</td>" for c in satir.split())
         donmus_grid.append(f'<tr><td class="rn">{i+1}</td>{hucre}</tr>')

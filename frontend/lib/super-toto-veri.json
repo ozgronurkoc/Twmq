@@ -12,6 +12,7 @@
     "columns": 2304,
     "frozen_at": "2026-08-18",
     "in_set_p": 0.023089,
+    "kural": "esik",
     "label": "ana — kural birebir uygulandı",
     "marj_ort_pct": 18.86,
     "picks": [
@@ -519,6 +520,7 @@
     "columns": 4096,
     "frozen_at": "2026-08-18",
     "in_set_p": 0.020045,
+    "kural": "esik",
     "label": "ana — kural birebir (v2)",
     "marj_ort_pct": 19.28,
     "picks": [
@@ -1840,9 +1842,10 @@
    "coupon": {
     "arindirma": "shin",
     "banko_esik": null,
-    "columns": null,
+    "columns": 864,
     "frozen_at": "2026-08-27",
-    "in_set_p": null,
+    "in_set_p": 0.027328,
+    "kural": "hedef + kalabalık ayarı",
     "label": "ana — hedef + kalabalık ayarı (DONDURULAN)",
     "marj_ort_pct": 4.63,
     "picks": [
