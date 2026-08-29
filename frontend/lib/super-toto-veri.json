@@ -10,10 +10,30 @@
     "arindirma": "orantili",
     "banko_esik": 0.68,
     "columns": 2304,
+    "duyarlilik": null,
     "frozen_at": "2026-08-18",
     "in_set_p": 0.023089,
+    "kalabalik_gerekcesi": null,
     "kural": "esik",
     "label": "ana — kural birebir uygulandı",
+    "lines": [
+     "1   0   1   1   0   1   1   1   1   102 02  102 12  10  10 ",
+     "1   0   1   1   2   1   0   1   2   102 02  102 12  10  10 ",
+     "1   0   1   2   0   0   0   1   1   102 02  102 12  10  10 ",
+     "1   0   1   2   2   0   1   1   2   102 02  102 12  10  10 ",
+     "1   0   2   1   0   0   0   1   2   102 02  102 12  10  10 ",
+     "1   0   2   1   2   0   1   1   1   102 02  102 12  10  10 ",
+     "1   0   2   2   0   1   1   1   2   102 02  102 12  10  10 ",
+     "1   0   2   2   2   1   0   1   1   102 02  102 12  10  10 ",
+     "1   2   1   1   0   0   1   1   2   102 02  102 12  10  10 ",
+     "1   2   1   1   2   0   0   1   1   102 02  102 12  10  10 ",
+     "1   2   1   2   0   1   0   1   2   102 02  102 12  10  10 ",
+     "1   2   1   2   2   1   1   1   1   102 02  102 12  10  10 ",
+     "1   2   2   1   0   1   0   1   1   102 02  102 12  10  10 ",
+     "1   2   2   1   2   1   1   1   2   102 02  102 12  10  10 ",
+     "1   2   2   2   0   0   1   1   1   102 02  102 12  10  10 ",
+     "1   2   2   2   2   0   0   1   2   102 02  102 12  10  10 "
+    ],
     "marj_ort_pct": 18.86,
     "picks": [
      "1",
@@ -34,7 +54,84 @@
     ],
     "results_known": false,
     "rows": 16,
-    "uclu_esik": 0.38
+    "uclu_esik": 0.38,
+    "variants": [
+     {
+      "columns": 2304,
+      "crowd_in_set_p": 0.05115,
+      "crowd_ratio": 0.451,
+      "hedef": null,
+      "in_set_p": 0.023089,
+      "label": "ana — kural birebir uygulandı",
+      "picks": [
+       "1",
+       "02",
+       "12",
+       "12",
+       "02",
+       "10",
+       "10",
+       "1",
+       "12",
+       "102",
+       "02",
+       "102",
+       "12",
+       "10",
+       "10"
+      ]
+     },
+     {
+      "columns": 512,
+      "crowd_in_set_p": 0.020337,
+      "crowd_ratio": 0.31,
+      "hedef": null,
+      "in_set_p": 0.006297,
+      "label": "bütçeli — 512 kolon",
+      "picks": [
+       "1",
+       "02",
+       "12",
+       "12",
+       "02",
+       "10",
+       "10",
+       "1",
+       "12",
+       "12",
+       "02",
+       "1",
+       "12",
+       "10",
+       "10"
+      ]
+     },
+     {
+      "columns": 256,
+      "crowd_in_set_p": 0.010598,
+      "crowd_ratio": 0.304,
+      "hedef": null,
+      "in_set_p": 0.003223,
+      "label": "kısıtlı — 256 kolon",
+      "picks": [
+       "1",
+       "02",
+       "12",
+       "12",
+       "02",
+       "10",
+       "10",
+       "1",
+       "12",
+       "2",
+       "02",
+       "1",
+       "12",
+       "10",
+       "10"
+      ]
+     }
+    ]
    },
    "coupon_drift": [
     3,
@@ -505,6 +602,7 @@
    "odds_kind": "iddaa",
    "odds_source": "iddaa taraf oranları — kullanıcı ekran görüntüsü (2026-08-18)",
    "play_source": "tek platform kullanıcı oynanma yüzdesi — kullanıcı ekran görüntüsü (2026-08-18)",
+   "prices": null,
    "program": "14.08.2026 - 17.08.2026",
    "results": "002011110111011",
    "tahmin2": null,
@@ -518,10 +616,30 @@
     "arindirma": "orantili",
     "banko_esik": 0.68,
     "columns": 4096,
+    "duyarlilik": null,
     "frozen_at": "2026-08-18",
     "in_set_p": 0.020045,
+    "kalabalik_gerekcesi": null,
     "kural": "esik",
     "label": "ana — kural birebir (v2)",
+    "lines": [
+     "0   1   1   1   1   1   0   10  12  02  10  12  10  10  02 ",
+     "0   1   1   2   1   2   2   10  12  02  10  12  10  10  02 ",
+     "0   1   2   1   2   2   0   10  12  02  10  12  10  10  02 ",
+     "0   1   2   2   2   1   2   10  12  02  10  12  10  10  02 ",
+     "0   2   1   1   2   2   2   10  12  02  10  12  10  10  02 ",
+     "0   2   1   2   2   1   0   10  12  02  10  12  10  10  02 ",
+     "0   2   2   1   1   1   2   10  12  02  10  12  10  10  02 ",
+     "0   2   2   2   1   2   0   10  12  02  10  12  10  10  02 ",
+     "2   1   1   1   2   1   2   10  12  02  10  12  10  10  02 ",
+     "2   1   1   2   2   2   0   10  12  02  10  12  10  10  02 ",
+     "2   1   2   1   1   2   2   10  12  02  10  12  10  10  02 ",
+     "2   1   2   2   1   1   0   10  12  02  10  12  10  10  02 ",
+     "2   2   1   1   1   2   0   10  12  02  10  12  10  10  02 ",
+     "2   2   1   2   1   1   2   10  12  02  10  12  10  10  02 ",
+     "2   2   2   1   2   1   0   10  12  02  10  12  10  10  02 ",
+     "2   2   2   2   2   2   2   10  12  02  10  12  10  10  02 "
+    ],
     "marj_ort_pct": 19.28,
     "picks": [
      "02",
@@ -542,7 +660,99 @@
     ],
     "results_known": false,
     "rows": 16,
-    "uclu_esik": 0.38
+    "uclu_esik": 0.38,
+    "variants": [
+     {
+      "columns": 4096,
+      "crowd_in_set_p": 0.036462,
+      "crowd_ratio": 0.55,
+      "hedef": {
+       "beklenen_kacak": 3.4173,
+       "p12": 0.29933,
+       "p13": 0.11037,
+       "p14": 0.02004
+      },
+      "in_set_p": 0.020045,
+      "label": "ana — kural birebir (v2)",
+      "picks": [
+       "02",
+       "12",
+       "12",
+       "12",
+       "12",
+       "12",
+       "02",
+       "10",
+       "12",
+       "02",
+       "10",
+       "12",
+       "10",
+       "10",
+       "02"
+      ]
+     },
+     {
+      "columns": 2048,
+      "crowd_in_set_p": 0.028316,
+      "crowd_ratio": 0.54,
+      "hedef": {
+       "beklenen_kacak": 3.62695,
+       "p12": 0.25723,
+       "p13": 0.08957,
+       "p14": 0.01529
+      },
+      "in_set_p": 0.015288,
+      "label": "bütçeli — 2048 kolon",
+      "picks": [
+       "2",
+       "12",
+       "12",
+       "12",
+       "12",
+       "12",
+       "02",
+       "10",
+       "12",
+       "02",
+       "10",
+       "12",
+       "10",
+       "10",
+       "02"
+      ]
+     },
+     {
+      "columns": 1024,
+      "crowd_in_set_p": 0.020329,
+      "crowd_ratio": 0.554,
+      "hedef": {
+       "beklenen_kacak": 3.83644,
+       "p12": 0.21785,
+       "p13": 0.07105,
+       "p14": 0.01127
+      },
+      "in_set_p": 0.011265,
+      "label": "kısıtlı — 1024 kolon",
+      "picks": [
+       "2",
+       "12",
+       "12",
+       "12",
+       "12",
+       "12",
+       "02",
+       "10",
+       "12",
+       "2",
+       "10",
+       "12",
+       "10",
+       "10",
+       "02"
+      ]
+     }
+    ]
    },
    "coupon_drift": [
     1,
@@ -1036,6 +1246,7 @@
    "odds_kind": "iddaa-acilis",
    "odds_source": "iddaa AÇILIŞ oranları — kullanıcı ekran görüntüsü (2026-08-18 14:16)",
    "play_source": "tek platform kullanıcı tercih yüzdesi (% Tercih) — kullanıcı ekran görüntüsü (2026-08-18)",
+   "prices": null,
    "program": "21.08.2026 - 25.08.2026",
    "results": "222121121210102",
    "tahmin2": {
@@ -1843,10 +2054,51 @@
     "arindirma": "shin",
     "banko_esik": null,
     "columns": 864,
+    "duyarlilik": {
+     "fark": "Açılış ve kapanış kuponu TEK maçta ayrışıyor: 8. maç (Amed Sportif–Trabzonspor A.Ş.) açılışta 02, kapanışta 12. Bu, haftanın en büyük çizgi hareketinin olduğu maç (Trabzonspor %53 → %47, −5,7 puan). Yanlış ucu seçmenin bedeli 0,45 puan: kapanış kuponu açılış olasılıklarıyla %37,78, açılış kuponu kapanış olasılıklarıyla %37,64.",
+     "hedef": 0.37641,
+     "not": "Spor Toto kuponu ilk maçtan önce kapanır; haftanın son maçlarının KAPANIŞ çizgisi o anda normalde henüz yoktur. Aşağıdaki kupon, kupon anında kesinlikle elde olan fiyatla (Pinnacle AÇILIŞ) kuruldu.",
+     "picks": [
+      "10",
+      "10",
+      "1",
+      "102",
+      "102",
+      "10",
+      "02",
+      "02",
+      "1",
+      "1",
+      "02",
+      "12",
+      "12",
+      "102",
+      "2"
+     ]
+    },
     "frozen_at": "2026-08-27",
     "in_set_p": 0.027328,
+    "kalabalik_gerekcesi": "Kalabalık ayarı P(≥12)'yi %38,09'dan %36,58'e düşürür (−1,52 puan) ama aynı seti oynayan rakip payını %6,47'den %4,81'e indirir (×1,35 daha az bölüşme). Net oran 5,89 → 7,61, yani ×1,29. Müşterek bahiste ölçü budur: isabet değil, isabeti kaç kişiyle paylaştığın.",
     "kural": "hedef + kalabalık ayarı",
     "label": "ana — hedef + kalabalık ayarı (DONDURULAN)",
+    "lines": [
+     "1   1   1   102 102 1   0   1   1   1   0   1   12  102 2  ",
+     "1   1   1   102 102 1   2   1   1   1   2   2   12  102 2  ",
+     "1   1   1   102 102 0   0   2   1   1   2   1   12  102 2  ",
+     "1   1   1   102 102 0   2   2   1   1   0   2   12  102 2  ",
+     "1   2   1   102 102 1   0   2   1   1   2   2   12  102 2  ",
+     "1   2   1   102 102 1   2   2   1   1   0   1   12  102 2  ",
+     "1   2   1   102 102 0   0   1   1   1   0   2   12  102 2  ",
+     "1   2   1   102 102 0   2   1   1   1   2   1   12  102 2  ",
+     "2   1   1   102 102 1   0   2   1   1   0   2   12  102 2  ",
+     "2   1   1   102 102 1   2   2   1   1   2   1   12  102 2  ",
+     "2   1   1   102 102 0   0   1   1   1   2   2   12  102 2  ",
+     "2   1   1   102 102 0   2   1   1   1   0   1   12  102 2  ",
+     "2   2   1   102 102 1   0   1   1   1   2   1   12  102 2  ",
+     "2   2   1   102 102 1   2   1   1   1   0   2   12  102 2  ",
+     "2   2   1   102 102 0   0   2   1   1   0   1   12  102 2  ",
+     "2   2   1   102 102 0   2   2   1   1   2   2   12  102 2  "
+    ],
     "marj_ort_pct": 4.63,
     "picks": [
      "12",
@@ -1867,7 +2119,84 @@
     ],
     "results_known": false,
     "rows": 16,
-    "uclu_esik": null
+    "uclu_esik": null,
+    "variants": [
+     {
+      "columns": 864,
+      "crowd_in_set_p": 0.048081,
+      "crowd_ratio": 0.568,
+      "hedef": 0.365764,
+      "in_set_p": 0.027328,
+      "label": "ana — hedef + kalabalık ayarı (DONDURULAN)",
+      "picks": [
+       "12",
+       "12",
+       "1",
+       "102",
+       "102",
+       "10",
+       "02",
+       "12",
+       "1",
+       "1",
+       "02",
+       "12",
+       "12",
+       "102",
+       "2"
+      ]
+     },
+     {
+      "columns": 864,
+      "crowd_in_set_p": 0.064715,
+      "crowd_ratio": 0.458,
+      "hedef": 0.380941,
+      "in_set_p": 0.029613,
+      "label": "hedef kuralı — kalabalık görülmeden",
+      "picks": [
+       "10",
+       "10",
+       "1",
+       "102",
+       "102",
+       "10",
+       "02",
+       "12",
+       "1",
+       "1",
+       "02",
+       "12",
+       "12",
+       "102",
+       "2"
+      ]
+     },
+     {
+      "columns": 1024,
+      "crowd_in_set_p": 0.03114,
+      "crowd_ratio": 0.608,
+      "hedef": 0.290663,
+      "in_set_p": 0.018938,
+      "label": "eşik kuralı — eski kural, aynı ölçek (kıyas)",
+      "picks": [
+       "10",
+       "10",
+       "1",
+       "12",
+       "12",
+       "10",
+       "02",
+       "12",
+       "10",
+       "1",
+       "02",
+       "12",
+       "12",
+       "02",
+       "02"
+      ]
+     }
+    ]
    },
    "coupon_drift": [
     1,
@@ -2334,6 +2663,379 @@
    "odds_kind": "pinnacle-kapanis",
    "odds_source": "Pinnacle KAPANIŞ oranları — kullanıcı girdisi (2026-08-27)",
    "play_source": "tek platform kullanıcı tercih yüzdesi (% Tercih) — kullanıcı girdisi (2026-08-27)",
+   "prices": {
+    "books": [
+     "pinnacle_kapanis",
+     "bet365nl_kapanis",
+     "nesine_kapanis"
+    ],
+    "main_book": "pinnacle_kapanis",
+    "margins": {
+     "bet365nl_acilis": 7.89,
+     "bet365nl_kapanis": 6.01,
+     "nesine_acilis": 21.57,
+     "nesine_kapanis": 18.7,
+     "pinnacle_acilis": 4.57,
+     "pinnacle_kapanis": 4.63
+    },
+    "rows": [
+     {
+      "books": {
+       "bet365nl_kapanis": {
+        "0": 0.2555,
+        "1": 0.4998,
+        "2": 0.2446
+       },
+       "nesine_kapanis": {
+        "0": 0.2581,
+        "1": 0.4963,
+        "2": 0.2456
+       },
+       "pinnacle_kapanis": {
+        "0": 0.2651,
+        "1": 0.5004,
+        "2": 0.2345
+       }
+      },
+      "disagreement": 0.011,
+      "movement": 0.0383,
+      "movement_symbol": "1",
+      "no": 1
+     },
+     {
+      "books": {
+       "bet365nl_kapanis": {
+        "0": 0.2736,
+        "1": 0.4763,
+        "2": 0.2501
+       },
+       "nesine_kapanis": {
+        "0": 0.2748,
+        "1": 0.4728,
+        "2": 0.2524
+       },
+       "pinnacle_kapanis": {
+        "0": 0.2718,
+        "1": 0.4859,
+        "2": 0.2424
+       }
+      },
+      "disagreement": 0.0131,
+      "movement": 0.0168,
+      "movement_symbol": "1",
+      "no": 2
+     },
+     {
+      "books": {
+       "bet365nl_kapanis": {
+        "0": 0.1932,
+        "1": 0.6801,
+        "2": 0.1267
+       },
+       "nesine_kapanis": {
+        "0": 0.171,
+        "1": 0.7237,
+        "2": 0.1053
+       },
+       "pinnacle_kapanis": {
+        "0": 0.1895,
+        "1": 0.6878,
+        "2": 0.1227
+       }
+      },
+      "disagreement": 0.0436,
+      "movement": 0.0029,
+      "movement_symbol": "1",
+      "no": 3
+     },
+     {
+      "books": {
+       "bet365nl_kapanis": {
+        "0": 0.2644,
+        "1": 0.3768,
+        "2": 0.3588
+       },
+       "nesine_kapanis": {
+        "0": 0.2581,
+        "1": 0.3834,
+        "2": 0.3585
+       },
+       "pinnacle_kapanis": {
+        "0": 0.2682,
+        "1": 0.3811,
+        "2": 0.3507
+       }
+      },
+      "disagreement": 0.0101,
+      "movement": -0.0069,
+      "movement_symbol": "2",
+      "no": 4
+     },
+     {
+      "books": {
+       "bet365nl_kapanis": {
+        "0": 0.2746,
+        "1": 0.3027,
+        "2": 0.4227
+       },
+       "nesine_kapanis": {
+        "0": 0.2754,
+        "1": 0.2885,
+        "2": 0.4361
+       },
+       "pinnacle_kapanis": {
+        "0": 0.2939,
+        "1": 0.2977,
+        "2": 0.4084
+       }
+      },
+      "disagreement": 0.0277,
+      "movement": -0.0104,
+      "movement_symbol": "2",
+      "no": 5
+     },
+     {
+      "books": {
+       "bet365nl_kapanis": {
+        "0": 0.2445,
+        "1": 0.5825,
+        "2": 0.173
+       },
+       "nesine_kapanis": {
+        "0": 0.2238,
+        "1": 0.606,
+        "2": 0.1702
+       },
+       "pinnacle_kapanis": {
+        "0": 0.2356,
+        "1": 0.573,
+        "2": 0.1914
+       }
+      },
+      "disagreement": 0.033,
+      "movement": -0.0223,
+      "movement_symbol": "1",
+      "no": 6
+     },
+     {
+      "books": {
+       "bet365nl_kapanis": {
+        "0": 0.2188,
+        "1": 0.1814,
+        "2": 0.5998
+       },
+       "nesine_kapanis": {
+        "0": 0.2055,
+        "1": 0.1711,
+        "2": 0.6234
+       },
+       "pinnacle_kapanis": {
+        "0": 0.2212,
+        "1": 0.1804,
+        "2": 0.5984
+       }
+      },
+      "disagreement": 0.025,
+      "movement": 0.0134,
+      "movement_symbol": "2",
+      "no": 7
+     },
+     {
+      "books": {
+       "bet365nl_kapanis": {
+        "0": 0.2423,
+        "1": 0.2566,
+        "2": 0.5011
+       },
+       "nesine_kapanis": {
+        "0": 0.2423,
+        "1": 0.2582,
+        "2": 0.4995
+       },
+       "pinnacle_kapanis": {
+        "0": 0.2543,
+        "1": 0.2719,
+        "2": 0.4738
+       }
+      },
+      "disagreement": 0.0273,
+      "movement": -0.0574,
+      "movement_symbol": "2",
+      "no": 8
+     },
+     {
+      "books": {
+       "bet365nl_kapanis": {
+        "0": 0.183,
+        "1": 0.6902,
+        "2": 0.1268
+       },
+       "nesine_kapanis": {
+        "0": 0.1884,
+        "1": 0.6966,
+        "2": 0.115
+       },
+       "pinnacle_kapanis": {
+        "0": 0.2006,
+        "1": 0.6741,
+        "2": 0.1253
+       }
+      },
+      "disagreement": 0.0224,
+      "movement": -0.025,
+      "movement_symbol": "1",
+      "no": 9
+     },
+     {
+      "books": {
+       "bet365nl_kapanis": {
+        "0": 0.158,
+        "1": 0.7456,
+        "2": 0.0963
+       },
+       "nesine_kapanis": {
+        "0": 0.1475,
+        "1": 0.7636,
+        "2": 0.089
+       },
+       "pinnacle_kapanis": {
+        "0": 0.1587,
+        "1": 0.7406,
+        "2": 0.1007
+       }
+      },
+      "disagreement": 0.0229,
+      "movement": 0.006,
+      "movement_symbol": "1",
+      "no": 10
+     },
+     {
+      "books": {
+       "bet365nl_kapanis": {
+        "0": 0.246,
+        "1": 0.1941,
+        "2": 0.5599
+       },
+       "nesine_kapanis": {
+        "0": 0.2264,
+        "1": 0.2582,
+        "2": 0.5153
+       },
+       "pinnacle_kapanis": {
+        "0": 0.2418,
+        "1": 0.2041,
+        "2": 0.5541
+       }
+      },
+      "disagreement": 0.0641,
+      "movement": 0.0039,
+      "movement_symbol": "0",
+      "no": 11
+     },
+     {
+      "books": {
+       "bet365nl_kapanis": {
+        "0": 0.2544,
+        "1": 0.399,
+        "2": 0.3466
+       },
+       "nesine_kapanis": {
+        "0": 0.3239,
+        "1": 0.3988,
+        "2": 0.2773
+       },
+       "pinnacle_kapanis": {
+        "0": 0.2567,
+        "1": 0.3963,
+        "2": 0.347
+       }
+      },
+      "disagreement": 0.0697,
+      "movement": 0.0305,
+      "movement_symbol": "1",
+      "no": 12
+     },
+     {
+      "books": {
+       "bet365nl_kapanis": {
+        "0": 0.2492,
+        "1": 0.4245,
+        "2": 0.3263
+       },
+       "nesine_kapanis": {
+        "0": 0.2323,
+        "1": 0.5022,
+        "2": 0.2655
+       },
+       "pinnacle_kapanis": {
+        "0": 0.2501,
+        "1": 0.423,
+        "2": 0.3269
+       }
+      },
+      "disagreement": 0.0792,
+      "movement": 0.0122,
+      "movement_symbol": "2",
+      "no": 13
+     },
+     {
+      "books": {
+       "bet365nl_kapanis": {
+        "0": 0.2847,
+        "1": 0.2598,
+        "2": 0.4555
+       },
+       "nesine_kapanis": {
+        "0": 0.2765,
+        "1": 0.2775,
+        "2": 0.446
+       },
+       "pinnacle_kapanis": {
+        "0": 0.2789,
+        "1": 0.2685,
+        "2": 0.4527
+       }
+      },
+      "disagreement": 0.0177,
+      "movement": -0.0156,
+      "movement_symbol": "2",
+      "no": 14
+     },
+     {
+      "books": {
+       "bet365nl_kapanis": {
+        "0": 0.2042,
+        "1": 0.1262,
+        "2": 0.6697
+       },
+       "nesine_kapanis": {
+        "0": 0.215,
+        "1": 0.151,
+        "2": 0.634
+       },
+       "pinnacle_kapanis": {
+        "0": 0.2061,
+        "1": 0.1158,
+        "2": 0.6782
+       }
+      },
+      "disagreement": 0.0442,
+      "movement": 0.0093,
+      "movement_symbol": "2",
+      "no": 15
+     }
+    ],
+    "stale_closing": {
+     "nesine_kapanis": [
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+     ]
+    }
+   },
    "program": null,
    "results": null,
    "tahmin2": null,

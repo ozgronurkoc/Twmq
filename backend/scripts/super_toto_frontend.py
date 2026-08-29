@@ -35,6 +35,7 @@ KOK = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(KOK))
 
 from spor_toto.core import SEMBOLLER
+from spor_toto.odds import implied_probs
 
 #: Sembol duzeni TEK kaynaktan (`spor_toto.core`). Bu dosyada ayri bir
 #: demet olarak yaziliyordu; depoda ayni deger on bir kez tanimliydi.
@@ -87,7 +88,101 @@ def _donmus_blok(donmus: dict[str, Any] | None) -> dict[str, Any] | None:
         "marj_ort_pct": st.get("marj_ort_pct"),
         "frozen_at": donmus["meta"].get("frozen_at"),
         "results_known": donmus["meta"].get("results_known"),
+        # Oynanacak 16 satir. Kartta yalnizca isaretler vardi; kuponu
+        # gercekten DOLDURACAK kisi satirlari gormek zorunda.
+        "lines": v.get("lines"),
+        # Kuralin verdigi ALTERNATIFLER ve her birinin olculmus bedeli.
+        # Kupon "nicin bu" sorusunu ancak yaninda reddettikleriyle
+        # cevaplayabilir; rapor sayfasi bunu gosteriyordu, arayuz
+        # gostermiyordu.
+        "variants": [{
+            "label": x.get("label"),
+            "picks": x["picks"],
+            "columns": x.get("columns"),
+            "hedef": x.get("hedef"),
+            "in_set_p": x.get("in_set_p"),
+            "crowd_in_set_p": x.get("crowd_in_set_p"),
+            "crowd_ratio": x.get("crowd_ratio"),
+        } for x in donmus.get("variants", [])],
+        "kalabalik_gerekcesi": donmus["meta"].get("kalabalik_gerekcesi"),
+        # Fiyat duyarliligi: kupon aninda KESINLIKLE elde olan fiyatla
+        # (acilis) kurulan surum. Kapanisin o an elde olup olmadigi
+        # dogrulanamiyorsa, bedelinin olculmus olmasi gerekir.
+        "duyarlilik": ({
+            "not": donmus["duyarlilik"].get("not"),
+            "fark": donmus["duyarlilik"].get("fark"),
+            "picks": donmus["duyarlilik"].get("picks"),
+            "hedef": donmus["duyarlilik"].get("hedef"),
+        } if donmus.get("duyarlilik") else None),
     }
+
+
+def _fiyat_blok(d: dict[str, Any]) -> dict[str, Any] | None:
+    """Bir haftanın FİYAT KAYNAKLARI — üç bahisçi × açılış/kapanış.
+
+    3. haftadan itibaren hafta dosyası `matches[].odds_books` taşıyor.
+    Rapor sayfası (`super_toto_sayfa.py`) bunu çiziyordu, arayüz
+    göremiyordu; ikisi aynı haftayı anlatıp farklı şey söylüyordu.
+
+    **Her sayı marj arındırılmış olasılıktır, ham oran değil.** Ham oranın
+    hareketi, piyasanın fikir değiştirmesiyle bahisçinin marjını
+    değiştirmesini karıştırır (bkz. `spor_toto.cizgi` modül başlığı).
+
+    Alan yoksa `None` döner ve arayüz bölümü hiç çizmez — 1. ve 2.
+    haftanın kaydı tek bir bültenin tek anını taşıyor.
+    """
+    maclar = d["matches"]
+    kitaplar = sorted(maclar[0].get("odds_books") or {})
+    if len(kitaplar) < 2:
+        return None
+
+    ana = (d["meta"].get("odds_kind") or "").replace("-", "_")
+    ac = ana.replace("_kapanis", "_acilis")
+    an = ana.rsplit("_", 1)[-1]
+    esanlı = sorted((k for k in kitaplar if k.endswith(an)),
+                    key=lambda k: (k != ana, k))
+
+    def p(m, anahtar):
+        o = (m.get("odds_books") or {}).get(anahtar)
+        return implied_probs(o) if o else None
+
+    marj = {}
+    for k in kitaplar:
+        ms = [sum(1 / v for v in m["odds_books"][k].values()) - 1 for m in maclar]
+        marj[k] = round(100 * sum(ms) / len(ms), 2)
+
+    # Bir bahiscinin kapanisi acilisiyla BIREBIR ayniysa o satir bir fiyat
+    # degil, tazelenmemis bir kayittir. Ayrisma sutununda buyuk gorunur ve
+    # gorus farki sanilir; isaretlenmezse okuyucu yaniltilir.
+    bayat = {}
+    for k in kitaplar:
+        if not k.endswith("_kapanis"):
+            continue
+        esi = k.replace("_kapanis", "_acilis")
+        if esi in kitaplar:
+            ayni = [m["no"] for m in maclar
+                    if m["odds_books"][k] == m["odds_books"][esi]]
+            if ayni:
+                bayat[k] = ayni
+
+    satirlar = []
+    for m in maclar:
+        pk, pa = p(m, ana), p(m, ac)
+        kitap = {k: _yuvarla_dagilim(p(m, k)) for k in esanlı}
+        deger = [x for x in (p(m, k) for k in esanlı) if x]
+        ayrisma = max((abs(x[s] - y[s]) for x in deger for y in deger
+                       for s in SEM), default=0.0)
+        sembol = (max(SEM, key=lambda s: abs(pk[s] - pa[s]))
+                  if pk and pa else None)
+        satirlar.append({
+            "no": m["no"],
+            "books": kitap,
+            "movement_symbol": sembol,
+            "movement": round(pk[sembol] - pa[sembol], 4) if sembol else None,
+            "disagreement": round(ayrisma, 4),
+        })
+    return {"books": esanlı, "main_book": ana, "margins": marj,
+            "stale_closing": bayat, "rows": satirlar}
 
 
 def _yuvarla_dagilim(p: dict[str, float] | None) -> dict[str, float] | None:
@@ -260,6 +355,10 @@ def uret(sezon: str = "2026_27") -> dict[str, Any]:
                            if meta.get("results") else None),
             } for m in d["matches"]],
             "coupon": _donmus_blok(donmus),
+            # Fiyat kaynaklari — yalnizca hafta dosyasi birden cok bahisci
+            # tasiyorsa dolu. Ilk iki haftada null'dur ve arayuz bolumu
+            # hic cizmez.
+            "prices": _fiyat_blok(d),
             # IKINCI kayit — 1. Tahmin'in yerine GECMEZ, yanina durur.
             # Uretici: `scripts/super_toto_tahmin2.py --yaz`. Dosya yoksa
             # alan null'dir ve arayuz "2. Tahmin" dugmesini gostermez.

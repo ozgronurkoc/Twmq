@@ -24,6 +24,7 @@ import { Tabs, TabPanel, type TabItem } from "@/components/ui/tabs";
 import { Badge, Card, CardBody, CardHeader } from "@/components/ui/primitives";
 import { BenzerKart } from "@/components/benzer/kart";
 import { Tahmin2Paneli } from "@/components/super-toto/tahmin2";
+import { FiyatKaynaklari, KuponGerekcesi } from "@/components/super-toto/fiyatlar";
 import { adreseYaz, adrestenOku } from "@/lib/adres";
 
 const HAFTA_PARAM = "hafta";
@@ -319,6 +320,15 @@ export function DoluHafta({ hafta }: { hafta: SuperTotoHafta }) {
         </table>
       </div>
 
+      {/*
+        Kuponun gerekcesi ve fiyat kaynaklari. Ikisi de rapor sayfasinda
+        vardi, arayuzde yoktu; veri tasimayan haftalarda hic cizilmez.
+      */}
+      {k ? <KuponGerekcesi kupon={k} /> : null}
+      {hafta.prices ? (
+        <FiyatKaynaklari fiyatlar={hafta.prices} oddsKind={hafta.odds_kind} />
+      ) : null}
+
       {uyarilar.length ? (
         <Card>
           <CardHeader title="Veri uyarıları" hint={`${uyarilar.length} not`} />
@@ -340,8 +350,25 @@ export function DoluHafta({ hafta }: { hafta: SuperTotoHafta }) {
       <p className="text-[11.5px] leading-relaxed text-muted-foreground">
         Oran kaynağı: {hafta.odds_source ?? "—"}. Oynanma yüzdeleri{" "}
         {hafta.play_source ?? "—"} ve <strong>Spor Toto havuzunun tamamı
-        değildir</strong>. İşaretler yalnızca 2025/26 geri testinin eşiğinden
-        gelir; oynanma verisi seçime girmez.
+        değildir</strong>.{" "}
+        {/*
+          Bu cumle "oynanma verisi secime girmez" diye SABIT yaziliydi ve
+          ilk iki hafta icin dogruydu. 3. hafta `hedef + kalabalik ayari`
+          ile dondurulunca oynanma yuzdeleri secime GIRDI — cumle kaydin
+          tersini soylemeye basladi. Artik kuraldan okunuyor.
+        */}
+        {k?.kural?.includes("kalabalık") ? (
+          <>
+            İşaret <strong>sayıları</strong> yalnızca fiyattan gelir; oynanma
+            yüzdeleri yalnızca <strong>hangi sembol</strong> sorusuna girer
+            (kalabalık ayarı), bedeli değiştirmez.
+          </>
+        ) : (
+          <>
+            İşaretler yalnızca 2025/26 geri testinin eşiğinden gelir; oynanma
+            verisi seçime girmez.
+          </>
+        )}
       </p>
     </div>
   );

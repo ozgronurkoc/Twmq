@@ -74,6 +74,71 @@ export interface SuperTotoKupon {
   marj_ort_pct: number | null;
   frozen_at: string | null;
   results_known: boolean | null;
+  /** Oynanacak 16 satir — kuponu dolduracak kisi bunlari gorur. */
+  lines: string[] | null;
+  /**
+   * Kuralin verdigi alternatifler ve her birinin OLCULMUS bedeli. Kupon
+   * "nicin bu" sorusunu ancak yaninda reddettikleriyle cevaplayabilir.
+   */
+  variants: SuperTotoVaryant[];
+  /** Kalabalik ayarinin neyi neye degistigi — kaydin kendi gerekcesi. */
+  kalabalik_gerekcesi: string | null;
+  /** Kupon aninda KESINLIKLE elde olan fiyatla (acilis) kurulan surum. */
+  duyarlilik: SuperTotoDuyarlilik | null;
+}
+
+/** Kuralin ayni haftada urettigi bir secenek ve olculmus bedeli. */
+export interface SuperTotoVaryant {
+  label: string | null;
+  picks: string[];
+  columns: number | null;
+  /** P(en iyi kolon >= 12) — kuponun asil olcusu. */
+  hedef: number | null;
+  in_set_p: number | null;
+  crowd_in_set_p: number | null;
+  crowd_ratio: number | null;
+}
+
+/** Fiyat duyarliligi: kapanis elde degilse bedeli ne olurdu. */
+export interface SuperTotoDuyarlilik {
+  not: string | null;
+  fark: string | null;
+  picks: string[] | null;
+  hedef: number | null;
+}
+
+/**
+ * FIYAT KAYNAKLARI — uc bahisci x acilis/kapanis.
+ *
+ * Her sayi marj ARINDIRILMIS olasiliktir, ham oran degil: ham oranin
+ * hareketi, piyasanin fikir degistirmesiyle bahiscinin marjini
+ * degistirmesini karistirirdi.
+ *
+ * Ilk iki hafta tek bir bultenin tek anini tasiyor; orada `null`dur.
+ */
+export interface SuperTotoFiyatlar {
+  /** Ayni ani gosteren bahisciler; ilki ANA fiyattir. */
+  books: string[];
+  main_book: string;
+  /** Bahisci x an -> ortalama marj (yuzde puan). */
+  margins: Record<string, number>;
+  /**
+   * Kapanisi acilisiyla BIREBIR ayni olan satirlar. Bunlar fiyat degil,
+   * tazelenmemis kayittir: ayrismada buyuk gorunur ve gorus farki
+   * sanilir.
+   */
+  stale_closing: Record<string, number[]>;
+  rows: SuperTotoFiyatSatiri[];
+}
+
+export interface SuperTotoFiyatSatiri {
+  no: number;
+  books: Record<string, Record<string, number> | null>;
+  /** Acilistan kapanisa en cok oynayan sembol ve kaydigi miktar. */
+  movement_symbol: string | null;
+  movement: number | null;
+  /** Ayni ani gosteren bahisciler arasindaki en buyuk fark. */
+  disagreement: number;
 }
 
 /** Yerine yenisi kurulmus onceki surum. Revizyon gorunur kalmali. */
@@ -260,6 +325,11 @@ export interface SuperTotoHafta {
   coupon_drift: number[] | null;
   /** Ikinci kayit. Yoksa null — "2. Tahmin" dugmesi cikmaz. */
   tahmin2: SuperTotoTahmin2 | null;
+  /**
+   * Fiyat kaynaklari — uc bahisci x acilis/kapanis. Hafta dosyasi tek bir
+   * bulten tasiyorsa null'dur ve bolum hic cizilmez.
+   */
+  prices: SuperTotoFiyatlar | null;
 }
 
 /** Verisi girilmis haftalar — beslemeden gelir. */
@@ -290,6 +360,7 @@ export const HAFTALAR: SuperTotoHafta[] = Array.from(
       coupon_today: null,
       coupon_drift: null,
       tahmin2: null,
+      prices: null,
     },
 );
 
