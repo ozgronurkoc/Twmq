@@ -34,7 +34,12 @@ from .core import (
     solve_heuristic,
 )
 from .history import MATCH_COUNT, SYMBOLS, normalized_weeks
-from .odds import ARINDIRMA_VARSAYILAN, load_odds, match_1x2
+from .odds import (
+    ARINDIRMA_VARSAYILAN,
+    load_odds,
+    match_1x2,
+    provenance_notu,
+)
 from .ortak import wilson
 
 try:  # pragma: no cover - ortama bagli
@@ -175,10 +180,22 @@ def hafta_girdileri(last: int | None = None,
     out: list[dict[str, Any]] = []
     for w in normalized_weeks(last):
         probs: list[dict[str, float] | None] = []
+        #: Kullanilan her fiyatin kitabi/donemi. `girdiler` API'ye
+        #: serilestirilmiyor (yanit `_hepsini_calistir` ciktisindan gelir),
+        #: yani bu alan yanit boyutunu buyutmez.
+        kaynaklar: list[dict[str, Any]] = []
         for no in range(1, MATCH_COUNT + 1):
             satir = oran_satiri.get((w["week"], no))
             blok = match_1x2(satir, yontem) if satir else None
             probs.append(blok["probs"] if blok else None)
+            if blok:
+                # Fiyatin KIMDEN ve HANGI DONEMDEN geldigi burada
+                # atiliyordu: yalnizca `probs` alinip blok dusuruluyordu.
+                # Sonuc olarak geri testin meta notu "piyasa kapanis
+                # oranlari" diye SABIT yaziliydi ve fiyat karissa (kitap
+                # ya da acilis/kapanis) bunu kimse goremezdi.
+                kaynaklar.append({"book": blok["book"],
+                                  "closing": blok["closing"]})
         eksik = sum(1 for p in probs if p is None)
         out.append({
             "week": w["week"],
@@ -187,6 +204,7 @@ def hafta_girdileri(last: int | None = None,
             "probs": probs,
             "missing": eksik,
             "usable": eksik == 0 and len(w["results"]) == MATCH_COUNT,
+            "price_sources": kaynaklar,
         })
     return out
 
@@ -440,7 +458,13 @@ def backtest(last: int | None = None,
             "weeks_dropped": elenen,
             "match_count": MATCH_COUNT,
             "space_limit": UZAY_SINIRI,
-            "note": "piyasa kapanış oranları — iddaa oranı değildir",
+            # SABIT yaziliydi ve hangi bahisci oldugunu soylemiyordu; fiyat
+            # karissa okuyucu goremezdi. Artik KULLANILAN fiyatlardan
+            # uretiliyor — yalnizca geri teste GIREN haftalardan, cunku
+            # elenen haftanin fiyati sonuca girmiyor.
+            "note": provenance_notu([
+                k for g in girdiler if g["usable"] for k in g["price_sources"]
+            ]),
             "arindirma": yontem,
         },
         "strategy": {

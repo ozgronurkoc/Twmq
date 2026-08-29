@@ -35,7 +35,13 @@ from __future__ import annotations
 
 from typing import Any
 
-from .odds import ARINDIRMA_VARSAYILAN, implied_probs, load_odds, margin
+from .odds import (
+    ARINDIRMA_VARSAYILAN,
+    FIYAT_VARSAYILAN,
+    implied_probs,
+    load_odds,
+    margin,
+)
 from .ortak import wilson
 
 #: Alt/üst çizgisi. Arşiv yalnızca 2,5 taşıyor; sabit, seçim değil.
@@ -63,7 +69,7 @@ def _cizgi(oranlar: dict[str, Any]) -> float | None:
 
 
 def alt_ust(row: dict[str, Any], yontem: str = ARINDIRMA_VARSAYILAN,
-            book: str = "Avg") -> dict[str, Any] | None:
+            book: str = FIYAT_VARSAYILAN) -> dict[str, Any] | None:
     """Marj arındırılmış alt/üst 2,5 olasılığı + gerçekleşen sonuç.
 
     `None` döner ancak fiyat ya da gol eksikse — doktrin 2: eksik veri
@@ -117,7 +123,7 @@ def _ah_getiri(gol_farki: int, h: float) -> float:
 
 
 def handikap(row: dict[str, Any], yontem: str = ARINDIRMA_VARSAYILAN,
-             book: str = "Avg") -> dict[str, Any] | None:
+             book: str = FIYAT_VARSAYILAN) -> dict[str, Any] | None:
     """Marj arındırılmış Asya handikabı + gerçekleşen **getiri**.
 
     Sonuç alanı `getiri`dir, `sonuc` değil — ve bu bilinçli: çeyrek

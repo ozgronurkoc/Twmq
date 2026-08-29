@@ -932,6 +932,10 @@
      "1": "int",
      "2": "int"
     },
+    "periods": {
+     "acilis": "int",
+     "kapanis": "int"
+    },
     "set_coverage": [
      {
       "hi": "float",

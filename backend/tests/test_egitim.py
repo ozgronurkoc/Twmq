@@ -38,6 +38,10 @@ def haftalar():
 @pytest.mark.parametrize("modul", [
     "spor_toto.history", "spor_toto.odds", "spor_toto.payloads",
     "spor_toto.backtest", "spor_toto.core", "spor_toto.health",
+    # `fiyatlar` de istatistik katmanidir: arsivin fiyat sutunlarini okur,
+    # korpusu tanimaz. Listeye eklendi cunku eklenmeseydi bekci onu
+    # korumazdi ve ilk yazildiginda gercekten korpusa atif yapiyordu.
+    "spor_toto.fiyatlar",
 ])
 def test_ayrim_istatistik_katmani_korpusu_import_etmez(modul):
     """İstatistik/motor katmanı eğitim korpusunu tanımaz.

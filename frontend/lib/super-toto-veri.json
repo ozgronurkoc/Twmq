@@ -3057,7 +3057,9 @@
    "program": null,
    "results": null,
    "tahmin2": null,
-   "warnings_generated": [],
+   "warnings_generated": [
+    "nesine_kapanis: 6 maçta kapanış açılışla BİREBİR aynı (maçlar: 10, 11, 12, 13, 14, 15) — bu bir fiyat değil, tazelenmemiş kayıttır; o satırlarda ayrışma görüş farkı değil kayıt farkıdır"
+   ],
    "warnings_manual": [
     "Program tarihleri ve maç saatleri GİRİLMEDİ (kullanıcı vermedi). Uydurulmadı; `date`/`kickoff` boş bırakıldı. Kupon kapanış anını belgeleyen tek alan `entered_at`tır.",
     "Nesine'nin KAPANIŞ oranı 10–15. maçlarda AÇILIŞIYLA BİREBİR AYNI (maçlar: 10, 11, 12, 13, 14, 15). Bu bir fiyat değil, bayat bir kayıttır: o satırlarda Nesine kapanışı bilgi taşımıyor. Bahisçi ayrışmasının en büyük üçü (13. maç 7,9 puan, 12. maç 7,0 puan, 11. maç 6,4 puan) tam olarak bu bayat satırlardan geliyor — yani ayrışma görüş farkı değil, kayıt farkıdır.",

@@ -81,10 +81,15 @@ export default function OranlarPage() {
         <div>
           <h1 className="font-display text-[30px] italic leading-tight">Oranlar</h1>
           <p className="mt-1 max-w-3xl text-[13.5px] leading-relaxed text-muted-foreground">
-            Maç sonucu (1/0/2) kapanış oranlarının <strong>ölçülmüş</strong>{" "}
+            {/* "kapanis oranlarinin" diye SABIT yaziliydi. Hangi donem
+                kullanildigi artik veriden gelir (`odds.periods`) ve
+                asagidaki kartta yazar; burada dondurulmus bir sifat
+                birakmak, fiyat degistiginde yalan soylerdi. */}
+            Maç sonucu (1/0/2) piyasa oranlarının <strong>ölçülmüş</strong>{" "}
             karnesi: favori ne sıklıkta tuttu, banko nerede güvenli, ikinci
             işaret neyi kurtarıyor, piyasa kalibre mi. Bu bir tahmin değil —
-            piyasanın kendi sözünün tutulup tutulmadığıdır.
+            piyasanın kendi sözünün tutulup tutulmadığıdır. Hangi bahisçinin
+            hangi anı kullanıldığı aşağıdaki kartta yazılıdır.
           </p>
         </div>
         <IstatistikSekmeleri last={last} />
@@ -134,7 +139,10 @@ export default function OranlarPage() {
         <Card>
           <CardHeader
             title="Oranlar ne diyordu?"
-            hint={`Maç sonucu (1/0/2) kapanış oranları — ${odds.note}.`}
+            /* Baslik "kapanis oranlari" diye SABIT yaziyordu; `odds.note`
+               artik kitabi ve donemi verinin kendisinden uretiyor
+               (backend `odds.provenance_notu`), o yuzden tekrar edilmiyor. */
+            hint={`Maç sonucu (1/0/2) — ${odds.note}.`}
           />
           <CardBody className="space-y-5">
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -216,8 +224,21 @@ export default function OranlarPage() {
             <p className="text-[11.5px] leading-relaxed text-muted-foreground">
               Ortalama bahisçi payı (marj) %{ondalik(odds.avg_margin_pct, 2)};
               yukarıdaki olasılıklar bu pay arındırılarak hesaplandı. Kaynak:{" "}
-              {odds.books.join(", ")} kapanış. Milli maç haftalarında oran yok,
-              kapsama bu yüzden %100 değildir.
+              {odds.books.join(", ")}
+              {/* Donem SABIT "kapanis" yaziliydi. `match_1x2` kapanis yoksa
+                  acilisa duser ve karisim burada gorunmezdi; artik
+                  sayiliyor. */}
+              {odds.periods
+                ? odds.periods.acilis === 0
+                  ? " kapanış"
+                  : odds.periods.kapanis === 0
+                    ? " açılış"
+                    : ` — ${odds.periods.kapanis} maç kapanış, ${odds.periods.acilis} maç açılış (KARIŞIK)`
+                : ""}
+              . Milli maç haftalarında oran yok, kapsama bu yüzden %100
+              değildir. Bu sayfadaki her sayı bu fiyata aittir; başka bir
+              bahisçinin ölçümü için{" "}
+              <code>scripts/fiyat_kaynaklari.py</code>.
             </p>
           </CardBody>
         </Card>

@@ -77,6 +77,87 @@ MARJ_SAPMA_ESIGI = 5.0
 MARJ_ALT, MARJ_UST = 0.0, 0.60
 
 
+#: 3. haftadan itibaren hafta dosyasının taşıması BEKLENEN fiyat çifti.
+#: Ana fiyat `meta.odds_kind` ile ilan edilir; buradaki çift, açılış→kapanış
+#: hareketinin ölçülebilmesi için gereken en az veridir.
+BEKLENEN_FIYAT = ("pinnacle_acilis", "pinnacle_kapanis")
+
+
+#: `odds_kind` -> okunur fiyat adı. Sağlayıcı adları `odds.KITAP_ADLARI`da
+#: değil çünkü orası arşiv sütun öneklerini (Avg/PS/BFE) adlandırıyor;
+#: buradakiler elle girilen hafta dosyasının bülten adları.
+_SAGLAYICI_ADI = {"pinnacle": "Pinnacle", "bet365nl": "bet365.nl",
+                  "nesine": "Nesine", "iddaa": "iddaa"}
+
+
+def _fiyat_adi(odds_kind: str | None) -> str:
+    """`"pinnacle-kapanis"` → `"Pinnacle kapanış"`. Bilinmeyeni UYDURMAZ."""
+    ham = (odds_kind or "").lower().replace("-", "_")
+    if not ham:
+        return "fiyat kaynağı yazılmamış"
+    saglayici, _, an = ham.partition("_")
+    ad = _SAGLAYICI_ADI.get(saglayici, saglayici)
+    donem = {"acilis": " açılış", "kapanis": " kapanış"}.get(an, "")
+    return f"{ad}{donem}"
+
+
+def _fiyat_uyarilari(d: dict[str, Any],
+                     maclar: list[dict[str, Any]]) -> list[str]:
+    """`odds_books` taşıyan haftalarda fiyat kaydını denetler.
+
+    İki denetim de **gösterimde** hesaplanıyordu (`super_toto_sayfa`,
+    `super_toto_frontend._fiyat_blok`) ama veri uyarısı değildi: yani kayıt
+    kendi kusurunu bildirmiyordu, yalnızca sayfa çizerken görünüyordu.
+    Sayfa çizilmezse kusur da yok sayılırdı.
+
+    Denetimler:
+
+    1. **Ana fiyatın açılış eşi var mı.** `odds_kind` bir kapanış fiyatını
+       gösteriyorsa aynı ailenin açılışı da olmalı; yoksa çizgi hareketi
+       ölçülemez ve kupon anında hangi fiyatın elde olduğu doğrulanamaz.
+    2. **Bayat kapanış.** Bir bahisçinin kapanışı açılışıyla BİREBİR
+       aynıysa o satır bir fiyat değil, tazelenmemiş bir kayıttır. 3.
+       haftada bahisçi ayrışmasının en büyük üçü tam olarak bu satırlardan
+       geliyordu: ayrışma görüş farkı değil kayıt farkıydı. Arşivde de
+       ölçüldü ve orada da var (`spor_toto.fiyatlar._bayat`: Pinnacle
+       %4,5, Bet365 %2,4), yani bu bir Nesine tuhaflığı değil.
+    """
+    uyarilar: list[str] = []
+    kitaplar = sorted(maclar[0].get("odds_books") or {})
+    if not kitaplar:
+        return uyarilar
+
+    ana = ((d.get("meta") or {}).get("odds_kind") or "").replace("-", "_")
+    if ana and ana.endswith("_kapanis"):
+        es = ana.replace("_kapanis", "_acilis")
+        if es not in kitaplar:
+            uyarilar.append(
+                f"ana fiyat {ana} ama açılış eşi ({es}) kayıtta YOK — "
+                "çizgi hareketi ölçülemez")
+    for beklenen in BEKLENEN_FIYAT:
+        if beklenen not in kitaplar:
+            uyarilar.append(
+                f"{beklenen} kayıtta yok — 3. haftadan beri beklenen fiyat "
+                "çifti Pinnacle açılış+kapanıştır")
+
+    for k in kitaplar:
+        if not k.endswith("_kapanis"):
+            continue
+        es = k.replace("_kapanis", "_acilis")
+        if es not in kitaplar:
+            continue
+        ayni = [m["no"] for m in maclar
+                if (m.get("odds_books") or {}).get(k)
+                and m["odds_books"][k] == m["odds_books"].get(es)]
+        if ayni:
+            uyarilar.append(
+                f"{k}: {len(ayni)} maçta kapanış açılışla BİREBİR aynı "
+                f"(maçlar: {', '.join(map(str, ayni))}) — bu bir fiyat değil, "
+                "tazelenmemiş kayıttır; o satırlarda ayrışma görüş farkı "
+                "değil kayıt farkıdır")
+    return uyarilar
+
+
 def dogrula(d: dict[str, Any]) -> list[str]:
     """Elle girilen hafta dosyasını denetler ve uyarı listesi döner.
 
@@ -119,6 +200,8 @@ def dogrula(d: dict[str, Any]) -> list[str]:
             uyarilar.append(
                 f"{m['no']}. maç: oynanma yüzdeleri toplamı "
                 f"%{sum(pay.values()):.0f} — 100'den uzak")
+
+    uyarilar.extend(_fiyat_uyarilari(d, maclar))
 
     ligler = [m.get("league") for m in maclar]
     if any(not x for x in ligler):
@@ -459,9 +542,18 @@ def yaz(d: dict[str, Any], prof: dict[str, Any], kam: dict[str, Any],
             print(f"  [kod]     {u}")
 
     print("\n─── 1. MARJ ─────────────────────────────────────────────────────────────")
-    print(f"Bu hafta (iddaa)        : %{prof['avg_margin_pct']:.2f}")
-    print(f"Geçen sezon (football-data): %{o['avg_margin_pct']:.2f}")
-    print(f"Kat                     : {prof['avg_margin_pct'] / o['avg_margin_pct']:.2f}×")
+    # Sol taraf "iddaa" diye SABIT yaziliydi ve 3. haftada ana fiyat
+    # Pinnacle'a gecince etiket yalan soylemeye basladi. Dahasi `Kat`
+    # ORANI iki farkli olcegi adlandirmadan boluyordu: okuyucu neyin neye
+    # bolundugunu goremiyordu. Iki tarafin da adi artik veriden geliyor.
+    bu_hafta_ad = _fiyat_adi(d["meta"].get("odds_kind"))
+    arsiv_ad = ", ".join(o.get("books") or ["?"])
+    kat = prof["avg_margin_pct"] / o["avg_margin_pct"]
+    print(f"Bu hafta ({bu_hafta_ad}): %{prof['avg_margin_pct']:.2f}")
+    print(f"Geçen sezon ({arsiv_ad}, football-data): %{o['avg_margin_pct']:.2f}")
+    print(f"Kat: {kat:.2f}× — bu haftanın marjı arşivinkinin "
+          f"{'ÜSTÜNDE' if kat > 1 else 'ALTINDA'}; iki ölçek aynı değildir "
+          "ve arındırılmış olasılıklar birebir kıyaslanamaz")
 
     print("\n─── 2. MAÇ MAÇ ──────────────────────────────────────────────────────────")
     print(f"{'#':>2} {'Maç':<34} {'Lig':<4} {'oran 1/0/2':<20} {'olasılık':<20} "

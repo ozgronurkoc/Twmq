@@ -817,7 +817,7 @@ def _check_oran_arsivi() -> str:
     Piyasa orani arsivi. Yoksa istatistik sayfasi oran bloklarini gizler;
     varsa marj arindirilmis olasiliklar 1'e toplanmak zorundadir.
     """
-    from .odds import coverage, season_1x2_summary
+    from .odds import KITAP_ADLARI, coverage, season_1x2_summary
 
     cov = coverage()
     if not cov["matches"]:
@@ -853,9 +853,30 @@ def _check_oran_arsivi() -> str:
     for b in o["set_coverage"]:
         assert b["in_one"] <= b["in_two"] <= b["n"]
 
+    # ─── fiyat kimliği ────────────────────────────────────────────────────
+    # Bir olasilik, hangi bahisciden ve hangi donemden geldigi yazilmadan
+    # yorumlanamaz: ayni maca Pinnacle %4,6 marjla, iddaa %18 marjla fiyat
+    # verir ve arindirilmis olasiliklar AYNI OLCEKTE DEGILDIR. Bu alanlar
+    # bir zamanlar yoktu ve saglayici adi metne SABIT yaziliydi; fiyat
+    # degisse hicbir yerde gorunmezdi.
+    assert o["books"], "hangi bahisciden geldigi yazilmamis"
+    assert o["periods"]["kapanis"] + o["periods"]["acilis"] == o["with_odds"], \
+        "donem dagilimi mac sayisini bolusturmuyor"
+    for kitap in o["books"]:
+        assert kitap in KITAP_ADLARI, f"taninmayan fiyat kaynagi: {kitap}"
+        assert KITAP_ADLARI[kitap] in o["note"], \
+            "provenance notu kullanilan kitabi adlandirmiyor"
+    # Kapanis+acilis karisimi hata DEGIL ama sessiz kalamaz: not onu ilan
+    # etmeli, yoksa iki farkli an tek bir olcek sanilir.
+    if o["periods"]["acilis"] and o["periods"]["kapanis"]:
+        assert "KARIŞIK" in o["note"], "fiyat karisimi ilan edilmemis"
+
+    donem = ("kapanış" if not o["periods"]["acilis"]
+             else "açılış" if not o["periods"]["kapanis"] else "KARIŞIK")
     return (
         f"eslesme=%{o['coverage_pct']} favori_isabet=%{o['favourite_hit_pct']} "
-        f"marj=%{o['avg_margin_pct']} lig={len(o['leagues'])}"
+        f"marj=%{o['avg_margin_pct']} lig={len(o['leagues'])} "
+        f"fiyat={'+'.join(o['books'])}/{donem}"
     )
 
 
