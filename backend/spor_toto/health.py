@@ -1061,6 +1061,115 @@ def _check_api_sozlesmesi() -> str:
     return f"{len(uclar)} uc kayitli, {len(kesit)} tanesi canli dogrulandi"
 
 
+def _check_sizinti_sozlesmesi() -> str:
+    """Olcum kosumu hala gelecegi gizleyebiliyor mu (sizinti sozlesmesi).
+
+    Denetlenen sey bir MODEL degil, olcumun KENDISIdir. Projedeki butun
+    "gecmedi" sonuclari tek bir varsayima dayanir: tahminci olculdugu
+    haftayi gormedi. O varsayim bir gun sessizce bozulursa gecmis butun
+    olcumler bilgisiz hale gelir ve hicbir sey kirmizi yanmaz — cunku
+    sizan bir model DAHA IYI skor verir, hata gibi degil basari gibi
+    gorunur.
+
+    Uc madde, hepsi sentetik kesitte ve ucuz:
+
+      1. `arena.roster()`teki her aile `egit`/`tahmin` ayrimini tasiyor mu.
+         Ayrim olmadan "disarida biraktik" cumlesi kurulamaz
+         (`predict.py` modul basligi).
+      2. Ileri yuruyuste olculen grubun egitim setinde hicbir SONRAKI grup
+         var mi. `hafta_disarida_birak` bu denetimden kasten gecemez —
+         geleceği de gorur ve bu baska bir olcumdur, hata degil.
+      3. Sinavin cevabini okuyan bir kurgu YAKALANIYOR mu. Yakalanmiyorsa
+         kosum sizintiyi hicbir zaman goremez ve (2) bos yere yesildir.
+
+    Testteki karsiligi `tests/test_sizinti.py`; burasi ayni sozlesmeyi
+    CANLI kayit uzerinde kosar, yani depoya yeni bir aile eklendiginde
+    saglik da onu denetler.
+    """
+    from .arena import roster
+    from .evaluate import ileri_gruplar, ileri_yuruyus, sezon_anahtari
+    from .history import SYMBOLS
+    from .predict import Tahminci
+
+    esit = dict.fromkeys(SYMBOLS, 1 / 3)
+    kesit = [
+        {"week": 10 * i + j, "close_date": f"{2021 + i}-0{j + 1}-15",
+         "sezon": s, "results": "102" * 5,
+         "probs": [dict(esit)] * 15, "missing": 0, "usable": True}
+        for i, s in enumerate(("2122", "2223", "2324")) for j in range(2)
+    ]
+
+    # 1) sozlesme yuzeyi
+    kayit = roster()
+    assert kayit, "arena kaydi bos"
+    for aile, fabrika in kayit:
+        m = fabrika()
+        assert isinstance(m, Tahminci), f"{aile}: Tahminci sozlesmesi disinda"
+        assert callable(getattr(m, "egit", None)), f"{aile}: egit yok"
+        assert callable(getattr(m, "tahmin", None)), f"{aile}: tahmin yok"
+
+    # 2) kronoloji — defter tutan kurgu, HEM egitim setini HEM olctugu
+    #    haftalari kayda geciriyor. Ikisi de gerekli: yalnizca egitim
+    #    setine bakan bir denetim BOSTUR, cunku "bu setin en buyugunden
+    #    sonrasi yok" cumlesi setin kendisinden turetildiginde her zaman
+    #    dogrudur. Sorulmasi gereken sey setin ic tutarliligi degil,
+    #    egitim ile SINAV arasindaki siradir.
+    defterler: list[Any] = []
+
+    class _Defter(Tahminci):
+        ad = "defter"
+        aciklama = "saglik kurgusu"
+
+        def __init__(self) -> None:
+            self.gordugu: list[int] = []
+            self.olctugu: list[int] = []
+            defterler.append(self)
+
+        def egit(self, haftalar):
+            self.gordugu = [h["week"] for h in haftalar]
+
+        def tahmin(self, hafta):
+            self.olctugu.append(hafta["week"])
+            return [dict(esit)] * len(hafta["results"])
+
+    ileri_yuruyus(_Defter, kesit, sezon_anahtari)
+    sirali = ileri_gruplar(kesit, sezon_anahtari)
+    yeri = {h["week"]: sirali.index(h["sezon"]) for h in kesit}
+    olcen = [d for d in defterler if d.olctugu]
+    assert olcen, "ileri yuruyus hic olcum yapmadi"
+    for d in olcen:
+        sinav = min(yeri[w] for w in d.olctugu)
+        assert d.gordugu, "olcum yapildi ama egitim seti bos"
+        en_ileri = max(yeri[w] for w in d.gordugu)
+        assert en_ileri < sinav, (
+            f"egitim setinde gelecek grup var: egitim {sirali[en_ileri]} "
+            f">= sinav {sirali[sinav]}")
+
+    # 3) denetim atesleniyor mu — sinavin cevabini okuyan kurgu
+    class _Sizdiran(Tahminci):
+        ad = "sizdiran"
+        aciklama = "saglik kurgusu"
+
+        def tahmin(self, hafta):
+            out = []
+            for kod in hafta["results"]:
+                p = dict.fromkeys(SYMBOLS, 0.05)
+                p[kod] = 0.90
+                out.append(p)
+            return out
+
+    durust = ileri_yuruyus(_Defter, kesit, sezon_anahtari)
+    sizan = ileri_yuruyus(_Sizdiran, kesit, sezon_anahtari)
+    d_skor = sum(x["brier_toplam"] for x in durust) / sum(x["n"] for x in durust)
+    s_skor = sum(x["brier_toplam"] for x in sizan) / sum(x["n"] for x in sizan)
+    assert s_skor < d_skor / 2, (
+        f"sizdiran kurgu yakalanmadi (durust={d_skor:.3f} sizan={s_skor:.3f}) "
+        "— olcum sizintiya kor demektir")
+
+    return (f"{len(kayit)} aile sozlesmede | ileri yuruyus {len(sirali)} grup, "
+            f"atlanan {sirali[0]} | sizinti tavani {s_skor:.3f} < {d_skor:.3f}")
+
+
 def _check_scipy_flag() -> str:
     return f"HAS_SCIPY={HAS_SCIPY}"
 
@@ -1309,6 +1418,21 @@ CHECKS: tuple[CheckSpec, ...] = (
         "degildir; bayat olmasi hatadir.",
         _check_artefakt_tazeligi,
         butce_ms=120,
+    ),
+    CheckSpec(
+        "sizinti_sozlesmesi", "analiz",
+        "Olcum kosumu hala gelecegi gizleyebiliyor mu. Projedeki butun "
+        "'gecmedi' sonuclari tek varsayima dayanir: tahminci olculdugu "
+        "haftayi gormedi. O varsayim bozulursa sizan model DAHA IYI skor "
+        "verir — hata gibi degil basari gibi gorunur ve hicbir test "
+        "kirmiziya donmez.",
+        _check_sizinti_sozlesmesi,
+        # Isinmis sure olculdu: 0,4 ms — kesit sentetik ve hicbir aile
+        # UYDURULMAZ, yalnizca kurulur. Bant bilerek genis (25 ms, ayni
+        # `scipy_flag`in tabani): yakalamasi gereken gerileme bir kac
+        # milisaniye degil, kayda egitim yapan bir ailenin girmesidir —
+        # o zaman sure milisaniyeden saniyeye ciker.
+        butce_ms=25,
     ),
     CheckSpec(
         "scipy_flag", "ortam",

@@ -90,7 +90,7 @@ makinesinde, o günkü kilitli bağımlılıklarla, o commit üzerinde koşar.
 
 Bu yüzden sağlık katmanı ayrı bir katmandır ve `/saglik` sayfası ürünün eşit
 haklı bir parçasıdır: **ürünün vaadinin şu anda, bu makinede, bu sürümde hâlâ
-geçerli olduğunu kanıtlar.** 25 değişmez, 6 kategori, her çağrıda yeniden
+geçerli olduğunu kanıtlar.** 26 değişmez, 6 kategori, her çağrıda yeniden
 ölçülür — ve neyi kanıtlamadığını da açıkça yazar (§6.3).
 
 ### 1.6 Ne yapar / ne yapmaz
@@ -106,7 +106,7 @@ geçerli olduğunu kanıtlar.** 25 değişmez, 6 kategori, her çağrıda yenide
 | Bayes (Dirichlet) ile tahminlerini yumuşatır | İddaa geçmiş oranı sunmaz (yok — §5.3) |
 | Markov ile sıralı risk profili çıkarır | Geri testi bir kâr vaadine çevirmez; aşırı uyumu ölçüp gösterir |
 | Bir stratejiyi geçmiş sezonda çalıştırıp bedelini ve isabetini ölçer (**geri test**) | Mobil uygulama değildir |
-| Vaadin canlıda geçerliliğini 25 değişmezle ölçer | |
+| Vaadin canlıda geçerliliğini 26 değişmezle ölçer | |
 | Her sayının kaynağını ve sınırını yazar | |
 
 ---
@@ -799,7 +799,8 @@ backend/
     odds.py            Oran arşivi okuyucu, 1X2 özeti, kalibrasyon, karar destek blokları
     backtest.py        Eşikli strateji → kaplama → skor; eşik taraması + hold-out
     predict.py         TAHMİN: tahminci sözleşmesi + 3 referans (duzgun/sezon/piyasa)
-    evaluate.py        TAHMİN: dışarıda bırakmalı + çapraz ölçüm, eşleştirilmiş bootstrap
+    evaluate.py        TAHMİN: dışarıda bırakmalı + çapraz + İLERİ YÜRÜYÜŞ, bootstrap
+    arena.py           TAHMİN: Model Arena — bütün aileler TEK kesitte, TEK tabloda
     recalibrate.py     TAHMİN: piyasanın yeniden kalibrasyonu (kademe, Newton)
     egitim.py          TAHMİN: eğitim korpusu okuyucu — /istatistik'e GİRMEZ
     health.py          Kategorili değişmez (invariant) kontrolleri — tek CHECKS tanımı
@@ -844,7 +845,7 @@ backend/
     api_sozlesme.py           API sözleşmesini üretir/denetler (--kontrol: CI kapısı)
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/
-  tests/               pytest (53 dosya → 1.642 test; §9'da katman dökümü)
+  tests/               pytest (55 dosya → 1.680 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1029,16 +1030,16 @@ Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant'lar, CLI (Bayes pre
 dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri test,
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
-eşleme, ikinci kayıt). **53 test dosyası, parametrizasyonla
-1.642 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+eşleme, ikinci kayıt). **55 test dosyası, parametrizasyonla
+1.680 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
 | Katman | Dosyalar | Test |
 |---|---|---|
 | Çekirdek + motorlar | `core` `engines` `invariants` `edge_cases` `cli` `analysis` `bayes` `markov` `fire_scenarios` | 528 |
-| Tahmin katmanı | `predict` `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin` `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre` | 491 |
-| Sağlık | `health` `api_health` `meta` `health_history` | 85 |
+| Tahmin katmanı | `predict` `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin` `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre` **`arena`** **`sizinti`** | 526 |
+| Sağlık | `health` `api_health` `meta` `health_history` | 89 |
 | Veri / istatistik / geri test | `history` `odds` `backtest` `api_stats` `api_backtest` `snapshot_iddaa` `pazar` | 116 |
 | Süper Toto | `super_toto` `degerlendir` | 84 |
 | 2. Tahmin (kalabalık ayarı · bağımsız görüş) | `tahmin2` | 30 |
@@ -1145,12 +1146,16 @@ biçimde taşır, yani ölçülmüş isabeti olmayan bir olasılık dışarı ç
 
 Sıradakiler, "en çok belirsizliği kaldıran" ölçütüne göre:
 
+> **T1–T5 bitti.** T4 (referans skorlarının sağlık değişmezine bağlanması)
+> §3.13'te, T5 (piyasa dışı girdiler) §3.16'da kapandı ve ikisi de Faz A'nın
+> içine yerleşti (§6.6). Bu tablo bir süre onları "sıradaki" diye taşıdı;
+> düzeltildi.
+
 | # | Ne | Neden / veri durumu |
 |---|-----|---|
-| **T4 — Referans skorları sağlık değişmezine** | `duzgun` her zaman 0,6667 (sabit: `ortak.BRIER_ESIT`); `piyasa` kupon kesitinde bugün 0,5856 (41 hafta, 615 maç) | **Küçük ve sıranın başında.** Bu sayılar kayarsa bozulan model değil veri/boru hattıdır ve bugün hiçbir şey fark etmez. Ama ikisi aynı cinsten değil: `duzgun` bir sabittir, `piyasa` veri büyüdükçe kayar (0,5747 → 0,5740 arındırma çevriminde, → 0,5856 kupon seti 36→41 haftaya çıkınca). Yani T4 `piyasa`yı sabit bir sayıya değil, **`duzgun`un altında kalmasına** bağlamalıdır |
-| **T5 — Piyasa dışı girdi: takım formu** | football-data'nın maç istatistiklerinden yuvarlanan pencereyle form özelliği | **Ölçüm bunu söylüyor.** Piyasayı yeniden kalibre etmek yön olarak doğru ama miktar yetersiz; sinyal ancak piyasada olmayan bir girdiden gelir. Ek kaynak gerekmez |
 | **S1 — Örneklem büyütme** | Kupon setini ikinci sezona çıkarmak | **Yarısı yapıldı, yarısı kapalı.** Tahmin ölçümü için gereken örneklem korpusla geldi (31.103 maç). Kupon ayağı bloke: sonuç kaynağı sezon parametresi taşımıyor + `robots.txt` kısıtı ([`docs/VERI_TOPLAMA_VE_ISLEME.md`](docs/VERI_TOPLAMA_VE_ISLEME.md) §10.2) |
-| **İkramiye / havuz verisi** | Hafta başına kazanan adedi ve ödenen tutar | **Fizibilite kapandı, ölçüm açık.** Kaynak bulundu (Spor Toto resmî ikramiye ekranı) ve ilk iki hafta elle girildi. Müşterek bahiste "kazanma oranı" ile "beklenen getiri" hâlâ farklı şeylerdir ve ikincisi **hâlâ ölçülmedi** — n = 2 hafta. Beklenen değerin **hesabı** artık var (`getiri.py`, §3.34) ve ölçümün neye ihtiyaç duyduğunu da o gösterdi: kalabalık modeli değişince sonuç 22 kat oynuyor, yani eksik olan tahminci değil **oynanma payları**. Ayrıntı: [`docs/ISTATISTIK_YOL_HARITASI.md`](docs/ISTATISTIK_YOL_HARITASI.md) §6.3 |
+| **İkramiye / havuz verisi** | Hafta başına kazanan adedi ve ödenen tutar | **Fizibilite kapandı, ölçüm açık.** Kaynak bulundu (Spor Toto resmî ikramiye ekranı) ve ilk **üç** hafta elle girildi. Müşterek bahiste "kazanma oranı" ile "beklenen getiri" hâlâ farklı şeylerdir ve ikincisi **hâlâ ölçülmedi** — n = 3 hafta, gereken ≈71. Beklenen değerin **hesabı** artık var (`getiri.py`, §3.34) ve ölçümün neye ihtiyaç duyduğunu da o gösterdi: kalabalık modeli değişince sonuç 22 kat oynuyor, yani eksik olan tahminci değil **oynanma payları**. Ayrıntı: [`docs/ISTATISTIK_YOL_HARITASI.md`](docs/ISTATISTIK_YOL_HARITASI.md) §6.3 |
+| **Dağılım kayması (`drift.py`)** | Oran dağılımı, beraberlik oranı, ev avantajı kayması — PSI / KL | **Sıraya girdi, ölçülmüş gerekçeyle.** §3.41'in ileri yürüyüş bulgusu, eğitim setinin **hangi döneme ait olduğunun** sonucu değiştirdiğini gösterdi; kaymayı ölçmek o farkın nereden geldiğini söyleyebilecek tek şey. Bugünkü karşılığı kısmi (`ogrenme_egrisi`, `artefakt.bayat_mi`) |
 | **S2 — Geri testi zenginleştirmek** | Sabit kolon bütçesi kipi, ikinci strateji ailesi ("en belirsiz k maçı çifte yap"), bütçe danışmanıyla bağ | **Hazır** — ek veri gerekmez |
 | **S3 — İddaa arşivi olgunlaşınca** | Snapshot'ları kupon maçlarıyla eşleştir; iddaa ile piyasa oranını yan yana koy; geri testi vekil değil gerçek fiyatla tekrarla | **Birikmeyi bekliyor** — ~10 snapshot sonra anlamlı |
 | **S4 — Küçük işler** | Geri testte eşik çiftini URL'e yazmak, tarama tablosunu CSV'ye çıkarmak, hafta detayında Brier | Veri tarafı yok |
@@ -1187,11 +1192,16 @@ Sıra, "en çok belirsizliği kaldıran" ölçütüne göredir. Ayrıntı:
 
 ### 10.3 Bilinçli olarak yapılmayacaklar
 
+> **Bu tablo bir kez yeniden yazıldı.** Aşağıdaki üstü çizili iki madde
+> **ölçüm sonucu değildi, ürün kararıydı**; kısıt kaldırılınca ikisi de
+> yapıldı ve yapıldıktan sonra ölçülüp yazıldı. Tam gerekçeler:
+> [`docs/ISTATISTIK_YOL_HARITASI.md`](docs/ISTATISTIK_YOL_HARITASI.md) §7.
+
 | Fikir | Neden hayır |
 |---|---|
-| Takım bazlı istatistik | 216 takım, Süper Lig takımları bile 32 maç. Çıkacak sayı güvenilir *görünür* ama gürültüdür |
-| Ölçülmemiş bir tahmincinin arayüze çıkması | Amaç tahmin olsa da isabeti hold-out ile ölçülmemiş hiçbir tahminci sayfaya çıkmaz |
-| Diğer pazarların arayüze çıkması | Ürün kararı: 1X2 dışındakiler analiz içindir, arşivde kalır |
+| ~~Takım bazlı istatistik~~ | **Kalktı (§3.35).** Teşhis doğruydu, çare yanlıştı: az örnekli bir ortalamanın gürültülü olması onu **yasaklamayı** değil, ne kadarının gürültü olduğunu **göstermeyi** gerektirir. Ampirik Bayes küçültmesi az maçlı takımı lig ortalamasına çeker; `n`, `kucultme` ve %95 aralık sayıdan ayrılamaz |
+| Ölçülmemiş bir tahmincinin arayüze çıkması | Amaç tahmin olsa da isabeti hold-out ile ölçülmemiş hiçbir tahminci sayfaya çıkmaz. **Kalan iki kuraldan biri budur** — Model Arena ve ileri yürüyüş çıktıları (§3.41) da bu yüzden CLI + belgede kalıyor |
+| ~~Diğer pazarların arayüze çıkması~~ | **Kalktı (§3.31).** Bu bir ürün kararıydı, ölçüm sonucu değil. Alt/üst 2,5 ve Asya handikabı artık `/api/pazar` ve `/pazarlar`da — **ölçülmüş kalibrasyonlarıyla birlikte** |
 | Maçkolik'ten veri çekme | `robots.txt` otomatik erişimi kapatıyor; politika sınırı ihlal edilmez |
 | Kontrolleri arayüzden düzenlemek | Değişmezler koddadır, yapılandırmada değil |
 | Sağlık geçmişini metrik panosuna çevirmek | Bu bir APM işidir; sayfa motorun sağlığını ölçer, sürecin değil |
@@ -1287,6 +1297,7 @@ olması gerekir. Tanımlıysa yalnızca **durum değişiminde** bildirim gider.
 | [`docs/FORMUL_YOL_HARITASI.md`](docs/FORMUL_YOL_HARITASI.md) | Formül sayfasının yol haritası ve yapılmayacaklar listesi |
 | [`docs/DIS_INCELEME.md`](docs/DIS_INCELEME.md) | Dış bir makine öğrenmesi çalışmasının bu projeye ne kattığı ve **ne katmadığı** — sayılar o çalışmanın kendi belgelerinden, bizim ölçümümüz değil |
 | [`docs/DIS_INCELEME_ALPHAPY.md`](docs/DIS_INCELEME_ALPHAPY.md) | Bir ML **çerçevesinin** (AlphaPy / AlphaPy Pro) incelemesi: çerçeve alınmadı, ama metrik paneline bakarken görülen eksik ölçüldü ve koda girdi — Brier'in Murphy ayrışımı |
+| [`docs/DIS_INCELEME_AZ_RAPORU.md`](docs/DIS_INCELEME_AZ_RAPORU.md) | Depo dışından gelen 64 bölümlük bir değerlendirmenin madde madde karşılığı: çoğunun karşılığı zaten vardı, **üçü gerçekten eksikti** (Model Arena, ileri yürüyüş, sızıntı sözleşmesi) ve üçü de uygulandı — ürettikleri ölçüm §3.41'de |
 | [`docs/GELISTIRME_PLANI_ESLEMESI.md`](docs/GELISTIRME_PLANI_ESLEMESI.md) | Dışarıdan gelen iki geliştirme planının madde madde karşılığı: hangisi zaten vardı, hangisi gerçekten eksikti (dördü), hangisi **ölçülmüş gerekçeyle** reddedildi |
 | [`backend/README.md`](backend/README.md) | Motor + API kurulumu, ortam değişkenleri, oran arşivi kullanımı |
 | [`frontend/README.md`](frontend/README.md) | Arayüz yapısı, tasarım sistemi, grafik kuralları, tip katmanı |

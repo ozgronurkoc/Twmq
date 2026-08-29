@@ -5,7 +5,7 @@ karşılığı: **hangisi zaten var, hangisi kısmen var, hangisi gerçekten eks
 hangisi bilerek reddedildi.**
 **İncelenen belgeler:** `SPOR_TOTO_BACKTEST_CLAUDE_CODE_GELISTIRME_PLANI.md`
 (25 faz) · `SPOR_TOTO_ANALIZ_MOTORU_GELISTIRME_PLANI.md` (40 faz)
-**Bu belgenin tarihi:** 2026-08-29 · taban `2905c30`
+**Bu belgenin tarihi:** 2026-08-29 · taban `d607360` (PR #23 birleştikten sonra)
 **İlgili belgeler:** [`DIS_INCELEME_AZ_RAPORU.md`](DIS_INCELEME_AZ_RAPORU.md) ·
 [`DIS_INCELEME.md`](DIS_INCELEME.md) ·
 [`DIS_INCELEME_ALPHAPY.md`](DIS_INCELEME_ALPHAPY.md) (aynı türün önceki
@@ -14,8 +14,8 @@ hangisi bilerek reddedildi.**
 
 > **Künye — bu planlar depo okunmadan yazıldı.** İkisi de projeyi bulunduğu
 > yerden farklı tarif ediyor: `backtest.py` tek dosyalık bir script,
-> `analysis.py` tek dev modül, proje testsiz. Gerçekte 43 modül, 53 test
-> dosyası (1.642 test), ruff + kademeli mypy, on adımlı tek kalite kapısı ve
+> `analysis.py` tek dev modül, proje testsiz. Gerçekte 46 modül, 55 test
+> dosyası (1.680 test), ruff + kademeli mypy, on adımlı tek kalite kapısı ve
 > ayrı bir sağlık katmanı var. Bu, planları değersiz yapmaz — **üç yerde
 > gerçek kusura parmak bastılar** ve üçü de bugün koddaydı. Ama statüleri
 > **dış görüştür**, teyit değil.
@@ -27,7 +27,7 @@ hangisi bilerek reddedildi.**
 | Kova | Sayı | Örnek |
 |---|---:|---|
 | **Zaten var** | çoğunluk | bootstrap CI, hold-out, sezon dışarıda bırakmalı ölçüm, kalibrasyon kademesi, üç arındırma yöntemi, üç kademeli kaplama çözücüsü, baseline kaydı, eşik taraması |
-| **PR #23'te kapandı** | 3 | walk-forward (ileri yürüyüş) · model arenası · sızıntı sözleşmesi |
+| **PR #23'te kapandı** (main'de, `d607360`) | 3 | walk-forward (ileri yürüyüş) · model arenası · sızıntı sözleşmesi |
 | **Gerçekten eksikti → uygulandı** | 4 | atıl `max_d` · `d2` paydası · bütün uzayı RAM'e alan üretim · `holdout` kolon paydası |
 | **Reddedildi, gerekçesi ölçülmüş** | 3 | ROI/drawdown/Sharpe tabloları · `0/0/0`'ın hataya çevrilmesi · `analysis/` paket bölünmesi |
 
@@ -184,7 +184,7 @@ bedeli faydasından büyük.
 | Faz | Durum | Karşılığı |
 |---|---|---|
 | 1 — repository audit | KISMİ | Mimari `README.md` §7 ve `docs/`te; ayrı bir `AUDIT_REPORT.md` yok, yerini bu belge alıyor |
-| 2 — test / regresyon | VAR | 53 dosya, 1.642 test; `scripts/check.sh` on adım (ruff · mypy · pytest · yavaş ILP · sağlık · CLI · boru hattı · üretilmiş dosya tazeliği · arayüz · üretim derlemesi) |
+| 2 — test / regresyon | VAR | 55 dosya, 1.680 test; `scripts/check.sh` on adım (ruff · mypy · pytest · yavaş ILP · sağlık · CLI · boru hattı · üretilmiş dosya tazeliği · arayüz · üretim derlemesi) |
 | 3 — veri kalitesi, skip nedeni | VAR | **İki ayrı mekanizma**: eksik oran → `usable=False`, `meta.weeks_dropped` (hafta ve kaç maçın eksik olduğu); arama uzayı → `_ozet.skipped`. Değişmez `test_backtest.py`'de |
 | 4 — probability engine, overround | VAR | `odds.implied_probs`; üç arındırma (`orantili`/`guc`/`shin`), varsayılan `shin`; ham marj ayrı (`odds.margin`) |
 | 5 — kalibrasyon | VAR | `kalibrasyon.py`, `kalibre.py` (Venn-Abers), `recalibrate.py` (19 basamaklı kademe); Brier ve log kaybı `ortak.py`, Murphy ayrışımı `ortak.brier_ayrisimi` |

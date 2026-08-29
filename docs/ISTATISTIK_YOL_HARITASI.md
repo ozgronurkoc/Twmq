@@ -18,7 +18,8 @@
 > A1–A3) böyle bölümlerdir ve **bilerek olduğu gibi bırakıldı** — bir ölçüm
 > kaydı sonradan yeniden yazılmaz. Bugünkü sayılar §3.18 ve §5'tedir.
 **İlgili belgeler:** [`VERI_TOPLAMA_VE_ISLEME.md`](VERI_TOPLAMA_VE_ISLEME.md) (veri üretiminin
-tek kaynak dokümantasyonu) · [`ARCHITECTURE_NEXT.md`](ARCHITECTURE_NEXT.md) (API sözleşmesi)
+tek kaynak dokümantasyonu) · [`ARCHITECTURE_NEXT.md`](ARCHITECTURE_NEXT.md) (API sözleşmesi) ·
+[`DIS_INCELEME_AZ_RAPORU.md`](DIS_INCELEME_AZ_RAPORU.md) (dış incelemenin karşılığı; §3.41'in kaynağı)
 
 ---
 
@@ -117,6 +118,8 @@ spor_toto/evaluate.py  ◄── spor_toto/predict.py     (sözleşme + 3 refera
 | Pazar | `backend/spor_toto/pazar.py` | `/api/pazar` | 1X2 dışı pazarlar (Faz 4.1): alt/üst 2,5 (Brier'li) ve Asya handikabı (getiri kalibrasyonlu), ölçülmüş kalibrasyonlarıyla |
 | Tahmin | `backend/spor_toto/yigin.py` | — | Kat dışı yığınlama (Faz 2.4): sezon katlarıyla üretilmiş olasılıklar üzerinde multinom logit üst-öğrenici; taban başına tek ağırlık |
 | Tahmin | `backend/spor_toto/kalibre.py` | — | Venn-Abers (Faz 2.3): kendi PAV'ımız üzerine indüktif IVAP, sezon bazlı kalibrasyon bölmesi, olasılık **aralığı** |
+| Tahmin | `backend/spor_toto/arena.py` | 386 | **Model Arena** (§3.41): bütün tahminci aileleri **tek kesitte, tek tabloda**, tek referansa karşı. Aile başına tek temsilci (kural ölçüm görülmeden yazıldı); dar kesit isteyen aile `disarida()`da **gerekçesiyle**; eğitilemeyip bir tabana düşen aday `cokme` ile işaretlenir |
+| Tahmin | `backend/spor_toto/evaluate.py` | — | `ileri_yuruyus` (§3.41): kronolojik ölçüm — `k`. grup yalnızca `0..k-1`de eğitilmiş modelle ölçülür. `hafta_disarida_birak`ın geleceği gördüğü yerde tek fark budur |
 | Havuz | `backend/spor_toto/getiri.py` | — | Müşterek beklenen değer (Faz 4.2): `E[1/(1+W)]` kapalı formu, üç kalabalık modeli (`orneklem` `favori` **`oynanma`** — sonuncusu ölçülmüş paylardan), duyarlılık eğrileri — **arayüze çıkmaz**, sayı ölçülmemiştir |
 | Tahmin | `backend/spor_toto/gorus.py` | — | Piyasadan **bağımsız** görüş (§3.37): yaklaşan maça Dixon-Coles + Elo; lig kısıtlı, bulanık olmayan ad eşleme. **İşaret değiştirmez** |
 | Takım | `backend/spor_toto/takim_gucu.py` | `/api/takimlar` | Küçültülmüş takım gücü (Faz 4.3): ampirik Bayes, lig içinde; her satırda `n`, `kucultme` ve %95 aralık |
@@ -148,13 +151,13 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/components/super-toto/tahmin2.tsx` | **2. Tahmin** paneli — `1. Tahmin` / `2. Tahmin` sekmeleri arasında geçilir; para birimli hiçbir sayı yok. Hafta kapandığında sonuç sütunu ve ayar karnesi açılır (§3.38) |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **1.642 test**; **82'si** istatistik katmanına (`history` `odds` `backtest`
-`api_stats` `api_backtest` `snapshot_iddaa`), **491'i** tahmin katmanına ait (`predict`
+paketi toplam **1.680 test**; **85'i** istatistik katmanına (`history` `odds` `backtest`
+`api_stats` `api_backtest` `snapshot_iddaa`), **567'si** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre`
-`avrupa` `sehir`), **29'u** 2. Tahmin'e (`tahmin2`), **30'u** sonuç değerlendirmesine (`degerlendir`). Dosya adlarıyla sayılıdır ki tablo elle bakım gerektirmesin —
+`avrupa` `sehir` **`arena`** **`sizinti`**), **29'u** 2. Tahmin'e (`tahmin2`), **30'u** sonuç değerlendirmesine (`degerlendir`). Dosya adlarıyla sayılıdır ki tablo elle bakım gerektirmesin —
 `tests/test_belgeler.py` onları gerçek koleksiyona karşı denetler.
-`python -m spor_toto.health` **25 değişmez** çalıştırır — ikisi (`oran_arsivi`, `geri_test`)
+`python -m spor_toto.health` **26 değişmez** çalıştırır — ikisi (`oran_arsivi`, `geri_test`)
 istatistik katmanını, biri (`tahmin_referanslari`) tahmin katmanının ölçüm koşumunu korur,
 biri (`artefakt_tazeligi`) diskteki modelin hâlâ bugünkü korpustan geldiğini denetler (§2.5).
 
@@ -3320,6 +3323,136 @@ doğrulanır. Varsayımını yazmayan bir kayıt bayat değil, izlenemezdir.
 
     python scripts/super_toto_degerlendir.py --hafta 2
 
+### 3.41 Model Arena ve ileri yürüyüş — on bir ölçüm, ilk kez tek tabloda
+
+Bu bölümün kaynağı bir dış incelemedir
+([`DIS_INCELEME_AZ_RAPORU.md`](DIS_INCELEME_AZ_RAPORU.md)). Rapor 64 bölümde
+öneri sıraladı; çoğunun karşılığı zaten depodaydı, **üçü gerçekten eksikti**
+ve üçü de burada ölçüldü.
+
+#### Eksiğin kendisi: sayılar kıyaslanabilir değildi
+
+§3.26–§3.35 arasında on bir ölçüm koşumu var ve her biri **kendi modülünde
+kendi tablosunu** yazıyor. Bu tabloların sayıları doğrudan kıyaslanamıyordu:
+kesitleri farklı (`cizgi` açılış+kapanış çifti ister, `bahisci` bahisçi
+dörtlüsü), gruplamaları farklı, bir kısmı farklı marj arındırma çevriminde
+ölçüldü — §3.18'in ölçek uyarısı tam olarak bunun izidir.
+
+Yani *"Elo geçmedi"* ile *"Dixon-Coles geçmedi"* aynı cinsten iki cümle
+değildi. `arena.py` bunu düzeltir: **aynı haftalar, aynı gruplama, aynı
+bootstrap tohumu, aynı referans.**
+
+    python -m spor_toto.arena              # sezon disarida birakmali
+    python -m spor_toto.arena --ileri      # kronolojik
+    python -m spor_toto.arena --kupon      # kupon setinde
+
+#### Birinci ölçüm — arena, tam korpus
+
+183 hafta · 31.103 maç · 10 aile · sezon dışarıda bırakmalı · referans
+`piyasa`:
+
+| tahminci | Brier | log | ΔBrier | %95 aralık | geçti |
+|---|---:|---:|---:|---:|---|
+| `yigin` | 0,5935 | 0,9935 | −0,0001 | [−0,0004, +0,0002] | hayır |
+| **`piyasa`** | **0,5936** | **0,9938** | — | — | — |
+| `izotonik` | 0,5936 | 0,9939 | +0,0000 | [−0,0002, +0,0002] | hayır |
+| `beraberlik_bant` | 0,5936 | 0,9938 | −0,0000 | [−0,0001, +0,0001] | hayır |
+| `venn_abers` | 0,5939 | 0,9943 | +0,0003 | [−0,0001, +0,0006] | hayır |
+| `kalibre_etkilesim_favori` | 0,5941 | 0,9945 | +0,0005 | [+0,0001, +0,0009] | hayır |
+| `agac` | 0,5941 | 0,9945 | +0,0005 | [+0,0001, +0,0008] | hayır |
+| `dixon_coles` | 0,6160 | 1,0297 | +0,0224 | [+0,0191, +0,0262] | hayır |
+| `sezon_sabiti` | 0,6506 | 1,0752 | +0,0570 | [+0,0540, +0,0601] | hayır |
+| `duzgun` | 0,6667 | 1,0986 | +0,0730 | [+0,0695, +0,0768] | hayır |
+
+**Hiçbir aile geçmedi.** En yakın olan `yigin`'in aralığı sıfırı kesiyor.
+Bu, §5.1'in sonucunun tekrarı değil — ilk kez **kıyaslanabilir** hâlidir.
+
+#### İkinci ölçüm — ileri yürüyüş, ve bu yeni
+
+Dışarıda bırakmalı ölçüm bir şeyi ölçmüyordu: **zamanı.** 2021/22 ölçülürken
+model 2022/23, 2023/24 ve 2024/25'te eğitiliyordu — geleceği gören bir
+ölçüm. Bu onu geçersiz kılmaz (soru *"bu sinyal veride var mı?"* ise doğru
+araç odur) ama ürünün kendi sorusunu cevapsız bırakır: *o hafta, yalnızca o
+güne kadar bilinenle, ne kadar iyi tahmin edebilirdik?*
+
+`evaluate.ileri_yuruyus` bunu sorar: gruplar kronolojik dizilir ve `k`. grup
+ölçülürken eğitim yalnızca `0..k-1`dir. İlk grup ölçülemez (eğitim seti boş
+olurdu) ve **adı yazılır** — 2021/22 düşer, kesit 138 haftaya iner.
+
+Aşağıdaki iki sütun **birebir aynı 138 haftada** ölçüldü; değişen tek şey
+her katın eğitim setidir. (Kesitleri eşitlemek şart: arenanın 183 haftalık
+tablosuyla kıyaslamak, kronolojiyi örneklem farkıyla karıştırmak olurdu.)
+
+| aile | dışarıda bırakmalı | ileri yürüyüş | değişim |
+|---|---:|---:|---|
+| `kalibre_etkilesim_favori` | +0,0008 | +0,0018 | **2,3× kötü** |
+| `agac` (LightGBM) | +0,0004 | +0,0011 | **2,8× kötü** |
+| `venn_abers` | +0,0002 | +0,0006 | **3× kötü** |
+| `izotonik` | +0,0001 | +0,0000 | ~aynı |
+| `beraberlik_bant` | +0,0000 | −0,0000 | ~aynı |
+| `yigin` | −0,0002 | −0,0001 | ~aynı |
+| `dixon_coles` | +0,0167 | +0,0167 | dört basamakta aynı |
+
+Kalıp okunaklı: **piyasanın artığını öğrenen üç aile 2–3 kat kötüleşti;
+piyasaya bir düzeltme takmayanlar kıpırdamadı.** `dixon_coles` gollerden
+çalışır ve oranı hiç okumaz — yerinde durması bu okumayla tutarlı.
+
+> **Bulgu.** §3.26–§3.35'te ölçülen küçük kazançların bir kısmı sinyal
+> değil, **kronoloji dışı eğitimin** eseriydi. Ürünün gerçek kuralı
+> uygulandığında fark kapanmıyor, **açılıyor.**
+
+Bu §5.1'i zayıflatmıyor, sertleştiriyor. Faz A'nın (b) ile kapanışına
+(§6.2 A4) üçüncü bir kanıt daha ekliyor ve bu kez kanıt bir modelin
+başarısızlığı değil, **ölçüm kuralının kendisi**.
+
+İki kipin Brier'i doğrudan kıyaslanmaz ve `arena` bunu çıktısında yazar:
+ileri yürüyüşte son grup dışında hiçbir ölçüm bütün veriyi görmez, yani
+Brier sistematik olarak kötüdür. Kıyaslanan şey her kipin **kendi
+içindeki** aday–referans farkıdır.
+
+#### Yan ürün — çökme tespiti
+
+Arena kupon kesitinde koşturulunca dört satır *"ölçtük, fark yok"* gibi
+görünen bir sayı yazdı (`izotonik` +0,0000, `yigin` +0,0000, `dixon_coles`
+düzgünle aynı). Dördü de ölçüm değildi: tahmincilerin çoğu eğitilemediğinde
+**sessizce bir tabana düşer** — `yigin` üst-öğrenici kurulamazsa ilk
+tabanına, `beraberlik` yeterli nokta yoksa piyasayı olduğu gibi geçirir,
+`dixon_coles` takım eşleşemezse düzgüne. Her biri kendi yerinde doğru bir
+karardır (uydurma katsayı üretmektense bilinen görüşü taşımak) ama arenada
+bedeli var.
+
+`arena.cokme` bunu haftalık skor vektöründen yakalar — bir aday kesitteki
+**her** haftada bir zeminle aynı Brier ve log kaybını veriyorsa o zeminin
+kendisidir — ve satırı `↳piyasa` diye işaretler.
+
+#### Üçüncü eksik — sızıntı sözleşmesi
+
+Sızıntı denetimleri vardı (`test_arama.py`, `test_recalibrate.py`,
+`test_egitim.py`, `test_elo.py`) ve hiçbiri kaldırılmadı. Eksik olan bir
+**sözleşme**ydi: yeni bir tahminci eklendiğinde onu kimse otomatik
+denetlemiyordu. `tests/test_sizinti.py` (14 test) ve
+`health.sizinti_sozlesmesi` (26. değişmez) bunu yazıya döküyor.
+
+Bu kontrolün kovaladığı hata **ters yönlüdür**: sızan bir model *daha iyi*
+skor verir, yani hata gibi değil **başarı gibi** görünür. Sağlık katmanına
+girmesinin sebebi budur.
+
+Yazarken iki gerçek kusur çıktı:
+
+1. **İlk kronoloji denetimi boştu** — iddiayı denetlenecek setin kendisinden
+   türetiyordu ve her zaman doğruydu. Bekçilik testi yakaladı.
+2. **Katman ayrımı bekçisi iki yönden de yanlıştı** — kaynakta `"egitim"`
+   dizgesi aranıyordu. Yanlış pozitif: "eğitim seti" sıradan bir Türkçe
+   ifadedir. Yanlış negatif: `importlib` ile ya da korpus dosyasını doğrudan
+   açarak yapılan okumayı kaçırırdı. Denetim artık **import düzeyinde**
+   (AST) ve gövdenin tamamını geziyor — tembel import de yakalanıyor.
+
+#### Kesit künyesi
+
+Koşumlar `python -m spor_toto.arena --kaydet` ile koşum defterine yazıldı:
+korpus `sha256 949aee9f…`, 31.104 satır · bootstrap tohumu 20260817, 2.000
+tekrar · `numpy` 2.4.6, `scipy` 1.17.1, `lightgbm` 4.7.0.
+
 ## 4. Sayfada bugün ne var
 
 **`/istatistik`** — sezon dağılımı (en sık sonuç + pay çubuğu) · 5 sayı kutusu (sembol
@@ -3939,6 +4072,16 @@ C3 (bağımsız, her an)
 **Faz A bitti ve (b) ile kapandı** (§6.2 A4). **B1'in araştırma kısmı da kapandı** — veri geldi (§6.3, PR #14); açık kol artık **B2'nin yanlılık ölçümü**.
 **C3 hiçbir şeyi beklemez** (ölçülmüş kusur: 7.210 px, ilk ekranda 3/11 başlık).
 
+**Faz A'nın kapanışı §3.41'de üçüncü kez sınandı ve kapanış yerinde
+kaldı.** Dış inceleme (86/100) planın dışından üç eksik gösterdi — Model
+Arena, ileri yürüyüş, sızıntı sözleşmesi — üçü de uygulandı ve ilk ikisi
+ölçüm üretti. Arena on bir ayrı koşumu ilk kez tek kesitte topladı:
+**hiçbir aile piyasayı geçmedi.** İleri yürüyüş bundan fazlasını söyledi:
+kronoloji zorlandığında piyasanın artığını öğrenen aileler **2–3 kat
+kötüleşiyor**, yani §3.26–§3.35'in küçük kazançlarının bir kısmı kronoloji
+dışı eğitimin eseriydi. Bu, A4'ün (b) şıkkını **güçlendiren** dördüncü
+kanıttır. Ayrıntı: [`DIS_INCELEME_AZ_RAPORU.md`](DIS_INCELEME_AZ_RAPORU.md).
+
 Eski etiketler kayıp değil, yerleşti:
 
 | Eski | Yeni | Durum |
@@ -4260,20 +4403,28 @@ python -m spor_toto.avrupa                 # UEFA fikstürünün korpusa değmes
 python -m spor_toto.sehir                  # şehir tablosu ve derbi kapsaması
 python -m spor_toto.takim_gucu --lig T1    # küçültülmüş takım gücü
 
+# Model Arena — bütün aileler TEK kesitte, TEK tabloda (§3.41; ~10 dk)
+python -m spor_toto.arena                  # sezon dışarıda bırakmalı
+python -m spor_toto.arena --ileri          # kronolojik (ileri yürüyüş)
+python -m spor_toto.arena --kupon          # kupon setinde (tek sezon; uyarılı)
+
 # Her ölçüm CLI'sı koşumunu deftere yazabilir (§2.6)
 python -m spor_toto.disari --kaydet
 python -m spor_toto.kosum                  # kayıtlı koşumlar
 python -m spor_toto.kosum --son disari     # son koşumun ortamı
 
 # Denetim
-pytest -q                                  # 1.642 test (82'si bu katman, 491'i tahmin)
+pytest -q                                  # 1.680 test (85'i bu katman, 567'si tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out
 pytest -q tests/test_cizgi.py              # A1 ölçümü ve korpus bütünlüğü
 pytest -q tests/test_bahisci.py            # A2 ölçümü ve kaynak seçimi
 pytest -q tests/test_disari.py             # A3 ölçümü ve sızıntı bekçileri
-python -m spor_toto.health                 # 25 değişmez
+pytest -q tests/test_arena.py              # arena kaydı, kesit, çökme tespiti
+pytest -q tests/test_sizinti.py            # sızıntı sözleşmesi (§3.41)
+python -m spor_toto.health                 # 26 değişmez
+python -m spor_toto.health --only sizinti_sozlesmesi
 python -m spor_toto.health --help          # tek kontrol: ?only=geri_test
 
 # Arayüz
