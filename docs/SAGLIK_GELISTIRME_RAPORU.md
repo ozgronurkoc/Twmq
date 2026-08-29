@@ -244,9 +244,10 @@ gerektirir, yani 9.1 olmadan yapılamaz.
 
 | Ölçü | Değer |
 |---|---|
-| Kayıtlı kontrol | 25 |
+| Kayıtlı kontrol | 26 |
 | Kategori | 6 |
 | Kritik olmayan kontrol | 1 (`scipy_flag`) |
+| En yeni kontrol | `sizinti_sozlesmesi` (analiz) — ölçüm koşumu hâlâ geleceği gizleyebiliyor mu |
 | Tam rapor süresi (ısınmış) | ~520 ms |
 | Tam rapor süresi (ilk koşu) | ~2,1 sn |
 | Liveness (`/health`) | ~2 ms |
@@ -255,7 +256,7 @@ gerektirir, yani 9.1 olmadan yapılamaz.
 | Alarm | kapalı (`HEALTH_ALARM_URL` ile açılır) |
 | En yavaş kontrol | `mod_envanteri` (~129 ms, 7 mod) |
 | `auto` modu (256 nokta) | ~3,5 sn (önce ~11,3 sn) |
-| Sağlık katmanının testi | 79 *(bugün 84 — §8'deki nota bakınız)* |
+| Sağlık katmanının testi | 79 *(bugün 88 — §8'deki nota bakınız; son 4'ü `sizinti_sozlesmesi`nin kaydı, geçmesi ve iki bekçilik testi)* |
 | Tüm süit | 1.022 test, ~7 dk *(bugünkü sayı için `README.md` §9)* |
 | Kupon sınıfları | 8 çift/256 · 7 çift+8 banko/128 · 9 çift/512 · üçlü içeren/768 |
 

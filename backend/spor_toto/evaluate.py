@@ -58,6 +58,14 @@ GUVEN = 0.95
 #: bootstrap aralığı kendi gürültüsünü ölçer.
 AZ_HAFTA = 10
 
+#: İleri yürüyüşte ölçüm dışında bırakılan ilk grup sayısı. 1'dir ve
+#: **ölçüm sonucuna bakılmadan** seçildi: ilk grubun eğitim seti boştur,
+#: yani bu bir ayar değil bir zorunluluktur. Daha büyük bir değer ("ilk iki
+#: sezonu ısınmaya ayır") ölçüm görüldükten sonra seçilirse kesit ayarı
+#: olurdu — projenin `EGRI_KESIRLERI` ve `FAVORI_DILIMLERI` gerekçesiyle
+#: aynı sebeple sabit.
+ILERI_EN_AZ_GRUP = 1
+
 #: Tahminci fabrikası: her kat için sıfırdan bir örnek üretir.
 Fabrika = Callable[[], Tahminci]
 
@@ -135,6 +143,125 @@ def hafta_disarida_birak(fabrika: Fabrika,
             egitim = [h for j, h in enumerate(haftalar) if anahtarlar[j] != anahtar]
             tahminci = fabrika()
             tahminci.egit(egitim)
+            onbellek[anahtar] = tahminci
+        out.append(_hafta_skoru(tahminci, hafta))
+    return out
+
+
+# ─── ileri yürüyüş (walk-forward) ─────────────────────────────────────────────
+#
+# `hafta_disarida_birak` bir şeyi **ölçmüyor**: zamanı. Bir sezon dışarıda
+# bırakıldığında model kalan bütün sezonlarda eğitiliyor — 2021/22 ölçülürken
+# eğitim seti 2022/23, 2023/24 ve 2024/25'i içeriyor, yani modelin **geleceği
+# gördüğü** bir ölçüm. Bu, dışarıda bırakmalı ölçümü geçersiz kılmaz (soru
+# "bu sinyal veride var mı?" ise doğru araç odur) ama başka bir soruyu
+# cevapsız bırakır ve o soru ürünün kendi sorusudur:
+#
+#     O hafta, YALNIZCA o güne kadar bilinenle, ne kadar iyi tahmin
+#     edebilirdik?
+#
+# İleri yürüyüş bunu sorar: gruplar kronolojik sıraya dizilir ve `k`. grup
+# ölçülürken eğitim seti yalnızca `0..k-1`dir. Tek fark budur ve fark tam
+# olarak gelecek bilgisidir.
+#
+# İki bedeli var, ikisi de kaçınılmaz ve ikisi de yazılı olmalı:
+#
+#   1. **İlk grup ölçülemez** — eğitim seti boş olurdu. `en_az_grup` kaç
+#      grubun ölçüm dışında bırakılacağını söyler ve çıktıda ADI GEÇER;
+#      sessizce düşen bir hafta, kesiti küçültüp bunu söylememek olurdu.
+#   2. **Eğitim seti küçüktür.** Son grup dışında hiçbir ölçüm bütün veriyi
+#      görmez; ilk ölçülen grup yalnızca bir grup görür. Bu yüzden ileri
+#      yürüyüş Brier'i dışarıda bırakmalı Brier'den **sistematik olarak
+#      kötüdür** ve ikisi doğrudan kıyaslanmaz. Kıyaslanan şey her ölçümün
+#      KENDİ İÇİNDEKİ aday–referans farkıdır.
+
+
+def kronolojik_anahtar(hafta: Girdi) -> tuple[str, tuple[int, float, str]]:
+    """Haftanın zaman sırasındaki yeri — `close_date`, sonra `week`.
+
+    `close_date` kupon haftalarında da korpusun sözde-haftalarında da var
+    (`backtest.hafta_girdileri`, `egitim.korpus_haftalari`). `week` yalnızca
+    aynı gün kapanan iki haftayı **kararlı biçimde** ayırmak için ikinci
+    anahtardır; kronoloji iddiası tarihin kendisindedir.
+
+    İkinci alanın üçlü olmasının sebebi sıralamanın **çökmemesi**: `week`
+    bugün her üreticide `int` ama bu bir sözleşme değil. Eksik bir `week`
+    (`None`) ya da metin bir `week` karıştığında düz demet karşılaştırması
+    `TypeError` fırlatır ve ölçüm, veriye bağlı olarak bazen koşup bazen
+    çöker. Üçlü tam sıralama verir: önce sayı olanlar (sayısal sıraya göre),
+    sonra metin olanlar, en sonda eksik olan.
+    """
+    ham = hafta.get("week")
+    if ham is None:
+        yer = (2, 0.0, "")
+    else:
+        try:
+            yer = (0, float(ham), "")
+        except (TypeError, ValueError):
+            yer = (1, 0.0, str(ham))
+    return (str(hafta.get("close_date") or ""), yer)
+
+
+def ileri_gruplar(haftalar: Sequence[Girdi],
+                  grup: Callable[[Girdi], Any] | None = None) -> list[Any]:
+    """Grup anahtarları, **kronolojik** sırada.
+
+    Sıra grup anahtarının kendisinden değil, grubun **en erken haftasından**
+    türetilir. Sezon anahtarları bugün `'2122'`, `'2223'` biçiminde ve
+    alfabetik sıraları kronolojik sıralarına denk düşüyor — ama bu bir
+    tesadüftür ve ona dayanmak, biçim değiştiğinde sessizce yanlış sıra
+    üreten bir ölçüm bırakırdı. Tarihten türetmek biçimden bağımsızdır.
+    """
+    en_erken: dict[Any, tuple[str, Any]] = {}
+    for h in haftalar:
+        anahtar = grup(h) if grup else kronolojik_anahtar(h)
+        yer = kronolojik_anahtar(h)
+        if anahtar not in en_erken or yer < en_erken[anahtar]:
+            en_erken[anahtar] = yer
+    return sorted(en_erken, key=lambda a: en_erken[a])
+
+
+def ileri_yuruyus(fabrika: Fabrika,
+                  haftalar: Sequence[Girdi],
+                  grup: Callable[[Girdi], Any] | None = None,
+                  en_az_grup: int = ILERI_EN_AZ_GRUP) -> list[dict[str, Any]]:
+    """Kronolojik ölçüm: `k`. grup ölçülürken eğitim yalnızca `0..k-1`.
+
+    `grup` verilmezse her hafta kendi grubudur — hafta hafta ileri yürüyüş.
+    `grup=sezon_anahtari` verilirse sezon sezon yürünür; 31 bin maçlık
+    korpusta uydurma sayısını 183'ten 4'e indirdiği için varsayılan kullanım
+    budur (`arena`).
+
+    İlk `en_az_grup` grup ölçülmez ve dönen listede **yoktur**; adlarını
+    `ileri_gruplar(...)[:en_az_grup]` verir ve `degerlendir` çıktısına
+    `atlanan_gruplar` olarak yazar.
+
+    Dönen kayıtlar `hafta_disarida_birak` ile **aynı sözleşmededir**
+    (`_hafta_skoru`), bu yüzden `_panel`, `bootstrap_farki` ve `degerlendir`
+    hiç değişmeden çalışır.
+    """
+    if en_az_grup < 1:
+        raise ValueError("en_az_grup en az 1 olmali: ilk grup egitilemez")
+
+    sirali = ileri_gruplar(haftalar, grup)
+    indeks = {anahtar: i for i, anahtar in enumerate(sirali)}
+    anahtarlar = [grup(h) if grup else kronolojik_anahtar(h) for h in haftalar]
+
+    # Grup basina tek egitim — `hafta_disarida_birak`taki onbellek deseni.
+    onbellek: dict[Any, Any] = {}
+
+    out: list[dict[str, Any]] = []
+    for i, hafta in enumerate(haftalar):
+        anahtar = anahtarlar[i]
+        k = indeks[anahtar]
+        if k < en_az_grup:
+            continue
+        tahminci = onbellek.get(anahtar)
+        if tahminci is None:
+            gecmis = [h for j, h in enumerate(haftalar)
+                      if indeks[anahtarlar[j]] < k]
+            tahminci = fabrika()
+            tahminci.egit(gecmis)
             onbellek[anahtar] = tahminci
         out.append(_hafta_skoru(tahminci, hafta))
     return out
@@ -324,9 +451,22 @@ def capraz_olc(fabrikalar: Sequence[Fabrika],
 
 def degerlendir(fabrika: Fabrika,
                 haftalar: Sequence[Girdi],
-                grup: Callable[[Girdi], Any] | None = None) -> dict[str, Any]:
-    """Bir tahmincinin dışarıda bırakmalı toplam skoru (bkz. `grup`)."""
-    kayitlar = hafta_disarida_birak(fabrika, haftalar, grup)
+                grup: Callable[[Girdi], Any] | None = None,
+                ileri: bool = False) -> dict[str, Any]:
+    """Bir tahmincinin dışarıda bırakmalı toplam skoru (bkz. `grup`).
+
+    `ileri=True` verilirse ölçüm **kronolojiktir** (`ileri_yuruyus`): her
+    grup yalnızca kendinden önceki gruplarda eğitilmiş bir modelle ölçülür
+    ve ilk `ILERI_EN_AZ_GRUP` grup ölçüm dışında kalır. Atlanan grupların
+    adı `atlanan_gruplar` alanında yazılıdır — kesit küçülüyorsa bu görünmek
+    zorundadır.
+    """
+    if ileri:
+        kayitlar = ileri_yuruyus(fabrika, haftalar, grup)
+        atlanan = ileri_gruplar(haftalar, grup)[:ILERI_EN_AZ_GRUP]
+    else:
+        kayitlar = hafta_disarida_birak(fabrika, haftalar, grup)
+        atlanan = []
     n_mac = sum(k["n"] for k in kayitlar)
     b_top = sum(k["brier_toplam"] for k in kayitlar)
     l_top = sum(k["log_toplam"] for k in kayitlar)
@@ -338,6 +478,7 @@ def degerlendir(fabrika: Fabrika,
         "n_mac": n_mac,
         "brier": round(b_top / n_mac, 4) if n_mac else None,
         "log_kaybi": round(l_top / n_mac, 4) if n_mac else None,
+        "atlanan_gruplar": atlanan,
         **_panel(kayitlar),
         "haftalar": [_hafta_govdesi(kayit) for kayit in kayitlar],
         "_kayitlar": kayitlar,
@@ -514,7 +655,8 @@ def bootstrap_farki(aday: Sequence[dict[str, Any]],
 def karsilastir(fabrikalar: Sequence[Fabrika] | None = None,
                 last: int | None = None,
                 haftalar: Sequence[Girdi] | None = None,
-                grup: Callable[[Girdi], Any] | None = None) -> dict[str, Any]:
+                grup: Callable[[Girdi], Any] | None = None,
+                ileri: bool = False) -> dict[str, Any]:
     """Tahmincileri aynı kesitte ölç ve referansla karşılaştır.
 
     `fabrikalar` verilmezse yalnızca üç referans koşar — koşumun kendisinin
@@ -524,13 +666,19 @@ def karsilastir(fabrikalar: Sequence[Fabrika] | None = None,
     `gecti` bayrağı **yalnızca** güven aralığının tamamı sıfırın altındaysa
     `True` olur. Ortalaması daha iyi çıkan ama aralığı sıfırı içeren bir aday
     "geçmedi" sayılır — 41 haftalık örneklemde bu ayrım her şeydir.
+
+    `ileri=True` ölçümü kronolojiğe çevirir (`ileri_yuruyus`). Bütün
+    tahminciler **aynı** grupları atlar, bu yüzden eşleştirilmiş bootstrap
+    bozulmaz; iki kip arasında değişen tek şey her katın eğitim setidir.
+    İki kipin Brier'i doğrudan kıyaslanmaz (bkz. ileri yürüyüş bölüm notu),
+    kıyaslanan şey her kipin kendi içindeki aday–referans farkıdır.
     """
     if haftalar is None:
         haftalar = olculebilir_haftalar(last)
     if fabrikalar is None:
         fabrikalar = referans_fabrikalar()
 
-    sonuclar = [degerlendir(f, haftalar, grup) for f in fabrikalar]
+    sonuclar = [degerlendir(f, haftalar, grup, ileri=ileri) for f in fabrikalar]
     referans = next((s for s in sonuclar if s["ad"] == REFERANS_AD), None)
 
     # İki geçiş: karşılaştırmaların tamamı bitmeden hiçbir kayıt silinmez.
@@ -549,18 +697,30 @@ def karsilastir(fabrikalar: Sequence[Fabrika] | None = None,
     for s in sonuclar:
         s.pop("_kayitlar", None)
 
-    n_hafta = len(haftalar)
+    # Kesit sayilari OLCULEN haftalardan okunur, girdiden degil: ileri
+    # yuruyuste ilk grup olculmez ve `len(haftalar)` olmayan bir kesiti
+    # bildirirdi. Butun tahminciler ayni haftalarda olculuyor (eslestirilmis
+    # bootstrap bunu zaten zorunlu kiliyor), bu yuzden ilki temsil eder.
+    n_hafta = sonuclar[0]["n_hafta"] if sonuclar else 0
+    n_mac = sonuclar[0]["n_mac"] if sonuclar else 0
+    atlanan = sonuclar[0].get("atlanan_gruplar") or [] if sonuclar else []
+    grup_olcusu = "sezon" if grup is not None else "hafta"
     return {
         "referans": REFERANS_AD,
         "n_hafta": n_hafta,
-        "n_mac": sum(len(h["results"]) for h in haftalar),
+        "n_mac": n_mac,
+        "n_hafta_girdi": len(haftalar),
+        "atlanan_gruplar": atlanan,
         "az_ornek": n_hafta < AZ_HAFTA,
         "tahminciler": sorted(sonuclar, key=lambda s: (s["brier"] is None, s["brier"])),
         "bootstrap": {"tekrar": BOOTSTRAP_TEKRAR, "tohum": BOOTSTRAP_TOHUM,
                       "guven": GUVEN},
-        "yontem": (("sezon" if grup is not None else "hafta")
-                   + " disarida birakmali; bootstrap hafta uzerinden ve "
-                   "eslestirilmis; gecti = guven araligi tamamen sifirin altinda"),
+        "yontem": (
+            (f"ileri yuruyus ({grup_olcusu} grubu); egitim YALNIZCA gecmis "
+             f"gruplar; ilk {ILERI_EN_AZ_GRUP} grup olculmez"
+             if ileri else f"{grup_olcusu} disarida birakmali")
+            + "; bootstrap hafta uzerinden ve eslestirilmis; "
+            "gecti = guven araligi tamamen sifirin altinda"),
     }
 
 

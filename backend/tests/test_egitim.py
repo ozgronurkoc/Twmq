@@ -35,6 +35,57 @@ def haftalar():
 
 # ─── ayrım bekçisi ────────────────────────────────────────────────────────────
 
+def _korpus_atiflari(modul: str) -> list[str]:
+    """Modülün eğitim korpusuna yaptığı atıflar — boşsa ayrım korunuyor.
+
+    Denetim **import düzeyindedir**, metin araması değil, ve bu bilerek
+    değiştirildi: eskiden kaynakta `"egitim"` dizgesi aranıyordu ve o
+    arama iki yönden de yanlıştı.
+
+    *Yanlış pozitif:* `egitim` Türkçe'de sıradan bir kelimedir. "eğitim
+    seti", "eğitim ve sınav ayrımı" gibi ifadeler korpusla ilgisizdir;
+    `odds.py` bugün `korpus_haftalari`den bir **performans notunda**
+    bahsediyor ve bu da bir korpus okuması değildir. Dizge araması, ayrımı
+    hiç bozmayan bir yorumu yazmayı imkânsız kılıyordu.
+
+    *Yanlış negatif:* dizge araması `importlib.import_module` ile ya da
+    korpus dosyasını doğrudan açarak yapılan bir okumayı yakalamazdı.
+
+    Asıl kural tektir ve testin kendi başlığı zaten onu söylüyor: **korpus
+    import edilmez.** Korpusu import etmeden okumanın tek yolu dosyayı
+    elle açmaktır; `data/egitim` yolu da bu yüzden aranır.
+    """
+    import ast
+    import importlib
+
+    m = importlib.import_module(modul)
+    kaynak = getattr(m, "__file__", "")
+    with open(kaynak, encoding="utf-8") as fh:
+        metin = fh.read()
+
+    bulgular: list[str] = []
+    agac = ast.parse(metin)
+    # Govdenin TAMAMI gezilir: tembel (fonksiyon ici) import da atiftir.
+    for dugum in ast.walk(agac):
+        if isinstance(dugum, ast.Import):
+            for ad in dugum.names:
+                if ad.name.split(".")[-1] == "egitim":
+                    bulgular.append(f"import {ad.name}")
+        elif isinstance(dugum, ast.ImportFrom):
+            nereden = dugum.module or ""
+            if nereden.split(".")[-1] == "egitim":
+                bulgular.append(f"from {nereden} import ...")
+            elif any(ad.name == "egitim" for ad in dugum.names):
+                bulgular.append(f"from {nereden or '.'} import egitim")
+
+    # Modul yolu bir dizge olarak gecirilirse (importlib) ya da korpus
+    # dosyasi dogrudan acilirsa AST bunu import gibi gormez.
+    for iz in ("spor_toto.egitim", "data/egitim"):
+        if iz in metin:
+            bulgular.append(iz)
+    return bulgular
+
+
 @pytest.mark.parametrize("modul", [
     "spor_toto.history", "spor_toto.odds", "spor_toto.payloads",
     "spor_toto.backtest", "spor_toto.core", "spor_toto.health",
@@ -50,13 +101,28 @@ def test_ayrim_istatistik_katmani_korpusu_import_etmez(modul):
     `history.py` içinde korpustan bir sayı okumak isterse bu test kırılır ve
     kararın bilinçli olduğunu hatırlatır.
     """
-    import importlib
-    m = importlib.import_module(modul)
-    kaynak = getattr(m, "__file__", "")
-    with open(kaynak, encoding="utf-8") as fh:
-        metin = fh.read()
-    assert "egitim" not in metin.replace("egitim_", ""), (
-        f"{modul} egitim korpusuna atif yapiyor — ayrim bozuluyor")
+    bulgular = _korpus_atiflari(modul)
+    assert not bulgular, (
+        f"{modul} egitim korpusuna atif yapiyor — ayrim bozuluyor: {bulgular}")
+
+
+@pytest.mark.parametrize("modul", ["spor_toto.arena", "spor_toto.cizgi",
+                                   "spor_toto.agac"])
+def test_ayrim_bekcisi_gercekten_atesleniyor(modul):
+    """Bekçinin diğer ucu — korpusu okuyan modül YAKALANMALI.
+
+    Yalnızca `False` döndürdüğü gösterilen bir bekçi, hiçbir şey korumayan
+    bir bekçiden ayırt edilemez. Buradaki üç modül korpusu **meşru** biçimde
+    okur (tahmin katmanıdır) ve tam da bu yüzden denetimin onları görmesi
+    gerekir.
+
+    Üçü kasten farklı biçimde import ediyor: `cizgi` modül tepesinde,
+    `agac` ve `arena` fonksiyon içinde **tembel**. Denetim gövdenin
+    tamamını gezmeseydi son ikisini kaçırırdı — ve korpusa tembel erişim
+    tam olarak ayrımın en kolay sessizce bozulacağı yerdir.
+    """
+    assert _korpus_atiflari(modul), (
+        f"{modul} korpusu okuyor ama bekci gormedi — denetim bos")
 
 
 def test_ayrim_stats_govdesi_korpustan_etkilenmez():

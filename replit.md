@@ -130,7 +130,7 @@ Katman katman:
   egitim tarihi + surum; bayatlik `health`te KIRMIZI — `--yaz` ile uretilir,
   surumlenmez)
 - **Ortak / gövde** — `ortak.py` (normalizasyon, Wilson, Brier, bantlama) ·
-  `payloads.py` (uç gövdeleri, tek kaynak) · `health.py` (25 değişmez) ·
+  `payloads.py` (uç gövdeleri, tek kaynak) · `health.py` (26 değişmez) ·
   `health_history.py` · `report.py`
 
 > `odds.py` burada uzun süre "yalnızca analiz" diye yazılıydı; **artık değil**.
@@ -171,7 +171,7 @@ yazmazlar). Ayrıntı: `docs/VERI_TOPLAMA_VE_ISLEME.md`.
 ```bash
 cd backend
 python -m pytest -m "not slow" -q   # hızlı süit
-python -m pytest                    # tamamı (1.621 test, ILP dahil)
+python -m pytest                    # tamamı (1.659 test, ILP dahil)
 python -m pytest -n0 tests/test_egitim.py   # tek çekirdek (hata ayıklarken)
 cd .. && bash scripts/check.sh      # TEK kapı; CI de bunu çağırır
 ```
