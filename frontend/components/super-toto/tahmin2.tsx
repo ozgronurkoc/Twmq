@@ -27,31 +27,9 @@ import { TABLO_SARMAL } from "@/components/ui/tablo";
  * gorunen tek sey, olculmus oynanma paylarindan hesaplanan **kalabalik
  * orani**dir.
  */
-/**
- * Hafta sonuclandiysa ikinci kaydin karnesi: hangi maclar kume disinda
- * kaldi, kac isaret tuttu.
- *
- * Kaynak `hafta.results` — `tahmin2.results_known` DEGIL. O alan kaydin
- * **donduruldugu andaki** durumu anlatir ve tanim geregi hep `false`tur;
- * ondan okumak paneli "sonuc bekleniyor"da dondururdu (2. haftada tam
- * olarak bu oldu).
- */
-function karne(hafta: SuperTotoHafta, picks: string[]) {
-  const sonuc = hafta.results;
-  if (!sonuc || sonuc.length !== picks.length) return null;
-  const kacak = hafta.matches
-    .filter((mac) => {
-      const isaret = picks[mac.no - 1];
-      return !mac.result || !isaret || !isaret.includes(mac.result);
-    })
-    .map((mac) => mac.no);
-  return { kacak, tuttu: picks.length - kacak.length };
-}
-
 export function Tahmin2Paneli({ hafta }: { hafta: SuperTotoHafta }) {
   const t = hafta.tahmin2;
   if (!t) return null;
-  const k = karne(hafta, t.picks);
 
   return (
     <div className="space-y-4">
@@ -60,8 +38,11 @@ export function Tahmin2Paneli({ hafta }: { hafta: SuperTotoHafta }) {
         <Badge>{t.frozen_at} · sonuçlar görülmeden</Badge>
         <Badge>arındırma: {t.arindirma}</Badge>
         <Badge>kural: {t.kural}</Badge>
-        {k ? (
-          <Badge ton="primary">sonuçlandı · {k.tuttu}/15 küme içinde</Badge>
+        {/* Burada "sonuclandi · N/15 kume icinde" yaziyordu: dondurulmus
+            bir kaydin uzerine sonradan bilinen bir sey. Tahmin paneli
+            sonucu GORMEZ; karne kendi sekmesinde. */}
+        {hafta.results ? (
+          <Badge>sonuç: “Sonuç” sekmesinde</Badge>
         ) : (
           <Badge ton="warning">sonuç bekleniyor</Badge>
         )}
@@ -70,7 +51,7 @@ export function Tahmin2Paneli({ hafta }: { hafta: SuperTotoHafta }) {
       <NicinIkinci tahmin={t} />
       <Kiyas tahmin={t} />
       <KuponKarti tahmin={t} />
-      <KalabalikAyari tahmin={t} sonuc={hafta.results} />
+      <KalabalikAyari tahmin={t} sonuc={null} />
       <BagimsizGorus tahmin={t} />
       <MacTablosu hafta={hafta} tahmin={t} />
       <Duyarlilik tahmin={t} />
@@ -503,10 +484,12 @@ function MacTablosu({
   const adlar = new Map(
     hafta.matches.map((m) => [m.no, `${m.home} – ${m.away}`]),
   );
-  // Sonuc sutunu yalnizca hafta kapandiginda cikar. `hafta.results`
-  // yoksa sutun HIC basilmaz — bos bir sutun, sonucun gelmedigini degil
-  // verinin eksik oldugunu dusundurur.
-  const sonuc = hafta.results;
+  // "Gercek" sutunu buradan KALDIRILDI. Sonuc gelince tahmin tablosuna
+  // bir sutun eklemek, dondurulmus kaydin uzerine sonradan bilinen bir
+  // sey yazmakti; kayit artik "o an ne biliniyordu" sorusunu temiz
+  // cevaplayamiyordu. Sonuc kendi sekmesinde, iki kaydi da AYNI olcuyle
+  // karneliyor (`components/super-toto/sonuc.tsx`).
+  const sonuc: string | null = null;
   return (
     <Card>
       <CardHeader

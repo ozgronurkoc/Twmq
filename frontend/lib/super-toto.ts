@@ -131,6 +131,52 @@ export interface SuperTotoFiyatlar {
   rows: SuperTotoFiyatSatiri[];
 }
 
+/** Haftanin SONUC karnesi. Uretici: `super_toto_frontend._sonuc_blok`. */
+export interface SuperTotoSonuc {
+  /** 15 karakterlik gercek sonuc dizisi. */
+  results: string;
+  results_source: string | null;
+  results_entered_at: string | null;
+  /** Her dondurulmus kaydin AYNI olcuyle karnesi. */
+  kayitlar: SuperTotoKayitKarnesi[];
+  kalabalik: {
+    halk_kuponu: string;
+    halk_dogru: number;
+    piyasa_kuponu: string;
+    piyasa_dogru: number;
+    beklenen_halk_dogru: number;
+    beklenen_piyasa_dogru: number;
+  };
+  payout: Array<{
+    correct: number;
+    winners: number;
+    prize: number | null;
+  }> | null;
+  payout_source: string | null;
+  note: string;
+}
+
+export interface SuperTotoKayitKarnesi {
+  /** "1. Tahmin" / "2. Tahmin" */
+  ad: string;
+  picks: string[];
+  /** Kaplamanin en iyi kolonunun kac dogrusu var. */
+  best: number;
+  /** Secim kumesinin disinda kalan mac numaralari. */
+  misses: number[];
+  miss_count: number;
+  /** Kuponun KENDI olasiliklarindan gelen beklenti — hafta iyi mi gecti. */
+  expected_misses: number;
+  p_in_set: number;
+  p_at_least_actual: number;
+  per_match: Array<{
+    no: number;
+    pick: string;
+    gercek: string;
+    tuttu: boolean;
+  }>;
+}
+
 export interface SuperTotoFiyatSatiri {
   no: number;
   books: Record<string, Record<string, number> | null>;
@@ -330,6 +376,18 @@ export interface SuperTotoHafta {
    * bulten tasiyorsa null'dur ve bolum hic cizilmez.
    */
   prices: SuperTotoFiyatlar | null;
+  /**
+   * SONUC karnesi — tahmin kayitlarindan AYRI.
+   *
+   * Sonuc gelince tahmin panelleri sonucla doluyordu (mac tablosuna bir
+   * "Sonuc" sutunu, kupon kartina "N/15 kume icinde"). Dondurulmus bir
+   * kaydin uzerine sonradan bilinen bir sey yazmak, kaydin "o an ne
+   * biliniyordu" sorusunu temiz cevaplamasini bozuyordu. Sonuc artik
+   * kendi sekmesinde ve her iki kaydi da AYNI olcuyle karneliyor.
+   *
+   * Sonuc girilmemisse null'dur ve sekme hic gosterilmez.
+   */
+  sonuc: SuperTotoSonuc | null;
 }
 
 /** Verisi girilmis haftalar — beslemeden gelir. */
@@ -361,6 +419,7 @@ export const HAFTALAR: SuperTotoHafta[] = Array.from(
       coupon_drift: null,
       tahmin2: null,
       prices: null,
+      sonuc: null,
     },
 );
 
@@ -381,6 +440,18 @@ export function ikinciTahminVarMi(h: SuperTotoHafta): boolean {
 }
 
 /** Sonuclari gelmis hafta — yarim veri ortalamalara karismasin diye ayri. */
+/**
+ * Sonuc karnesi VAR mi — ucuncu sekme bunun uzerine cikar.
+ *
+ * `haftaSonuclandiMi`den ayri: o, hafta dosyasindaki `results` dizisine
+ * bakar; bu ise karnenin gercekten uretilip uretilmedigine. Ikisi normalde
+ * ayni cevabi verir ama besleme eskiyse ayrisir ve o durumda BOS bir
+ * sekme gostermek, olmayan bir sekmeden kotudur.
+ */
+export function sonucVarMi(h: SuperTotoHafta): boolean {
+  return h.sonuc !== null && h.sonuc.kayitlar.length > 0;
+}
+
 export function haftaSonuclandiMi(h: SuperTotoHafta): boolean {
   return typeof h.results === "string" && h.results.length === MAC_SAYISI;
 }

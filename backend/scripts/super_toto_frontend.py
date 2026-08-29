@@ -189,6 +189,77 @@ def _yuvarla_dagilim(p: dict[str, float] | None) -> dict[str, float] | None:
     return None if p is None else {s: round(float(p[s]), 4) for s in SEM}
 
 
+def _kayit_karnesi(d: dict[str, Any], ad: str, picks: list[str] | None,
+                   deg_mod: Any) -> dict[str, Any] | None:
+    """Bir dondurulmuş kaydın sonuç karnesi. Kaydın KENDİSİNE dokunmaz."""
+    if not picks:
+        return None
+    k = deg_mod.kupon_degerlendir(d, picks)
+    return {
+        "ad": ad,
+        "picks": k["picks"],
+        "best": k["best"],
+        "misses": k["misses"],
+        "miss_count": k["miss_count"],
+        "expected_misses": round(k["expected_misses"], 4),
+        "p_in_set": round(k["p_in_set"], 6),
+        # Hafta beklenenden iyi mi kotu mu gectiyse bu sayi soyler:
+        # gerceklesen kacak sayisi kadar VEYA daha cok kacagin olasiligi.
+        "p_at_least_actual": round(k["p_at_least_actual"], 6),
+        "per_match": [{"no": m["no"], "pick": m["pick"], "gercek": m["gercek"],
+                       "tuttu": m["tuttu"]} for m in k["per_match"]],
+    }
+
+
+def _sonuc_blok(d: dict[str, Any], donmus: dict[str, Any] | None,
+                tahmin2: dict[str, Any] | None) -> dict[str, Any] | None:
+    """Haftanın SONUÇ karnesi — tahmin kayıtlarından AYRI bir alan.
+
+    **Niçin ayrı.** Sonuç geldiğinde tahmin panelleri sonuçla doluyordu:
+    maç tablosuna bir "SONUÇ" sütunu giriyor, kupon kartına "9/15 küme
+    içinde" ekleniyordu. Yani dondurulmuş bir kaydın üzerine sonradan
+    bilinen bir şey yazılıyordu ve kayıt artık "o an ne biliniyordu"
+    sorusunu temiz cevaplayamıyordu.
+
+    Bu blok o bilgiyi kendi alanına alır. 1. ve 2. Tahmin panelleri
+    sonuçları GÖRMEZ; sonuç kendi sekmesinde durur ve her iki kaydı da
+    **aynı** ölçüyle karneler.
+
+    Sonuç girilmemişse `None` döner ve arayüz sekmeyi hiç göstermez.
+    """
+    sonuc = (d.get("meta") or {}).get("results")
+    if not sonuc:
+        return None
+    deg = _modul("degerlendir")
+
+    kayitlar = []
+    t1 = (donmus or {}).get("variants", [{}])[0].get("picks") if donmus else None
+    k1 = _kayit_karnesi(d, "1. Tahmin", t1, deg)
+    if k1:
+        kayitlar.append(k1)
+    t2 = ((tahmin2 or {}).get("kupon") or {}).get("ayarli", {}).get("picks")
+    k2 = _kayit_karnesi(d, "2. Tahmin", t2, deg)
+    if k2:
+        kayitlar.append(k2)
+
+    meta = d["meta"]
+    return {
+        "results": sonuc,
+        "results_source": meta.get("results_source"),
+        "results_entered_at": meta.get("results_entered_at"),
+        "kayitlar": kayitlar,
+        # Kalabaligin ve piyasanin kendi kuponu — ikramiyenin nicin buyuk
+        # ya da kucuk oldugunun cevabi burada.
+        "kalabalik": deg.kalabalik_karnesi(d),
+        # Ikramiye ekrani girilmisse kademeler. Para birimli sayilar
+        # arayuze cikar cunku bunlar OLCUM, tahmin degil.
+        "payout": (meta.get("payout") or {}).get("tiers"),
+        "payout_source": (meta.get("payout") or {}).get("source"),
+        "note": ("Bu sekmedeki her sayı sonuçlar görüldükten SONRA "
+                 "hesaplandı. Tahmin sekmeleri onu görmez ve değişmez."),
+    }
+
+
 def _tahmin2_blok(kayit: dict[str, Any] | None) -> dict[str, Any] | None:
     """**2. Tahmin** kaydından arayüzün okuyacağı kısım.
 
@@ -363,6 +434,9 @@ def uret(sezon: str = "2026_27") -> dict[str, Any]:
             # Uretici: `scripts/super_toto_tahmin2.py --yaz`. Dosya yoksa
             # alan null'dir ve arayuz "2. Tahmin" dugmesini gostermez.
             "tahmin2": _tahmin2_blok(tahmin2),
+            # SONUC — tahmin kayitlarindan AYRI. Sonuc girilmemisse null'dur
+            # ve arayuz sekmeyi hic gostermez.
+            "sonuc": _sonuc_blok(d, donmus, tahmin2),
             # Revizyon kaydi: girdi degistigi icin (orn. sonradan ilan edilen
             # oran) kupon yeniden kuruldusa, ONCEKI surum de gorunur kalir.
             # Gorunmeyen bir revizyon, revizyon olmayan bir kayittan daha

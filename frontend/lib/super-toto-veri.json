@@ -605,6 +605,171 @@
    "prices": null,
    "program": "14.08.2026 - 17.08.2026",
    "results": "002011110111011",
+   "sonuc": {
+    "kalabalik": {
+     "beklenen_halk_dogru": 5.890000000000001,
+     "beklenen_piyasa_dogru": 5.412042855553684,
+     "halk_dogru": 6,
+     "halk_kuponu": "121121111221211",
+     "piyasa_dogru": 6,
+     "piyasa_kuponu": "121121111221211"
+    },
+    "kayitlar": [
+     {
+      "ad": "1. Tahmin",
+      "best": 9,
+      "expected_misses": 3.0264,
+      "miss_count": 6,
+      "misses": [
+       1,
+       4,
+       5,
+       9,
+       11,
+       13
+      ],
+      "p_at_least_actual": 0.058179,
+      "p_in_set": 0.031283,
+      "per_match": [
+       {
+        "gercek": "0",
+        "no": 1,
+        "pick": "1",
+        "tuttu": false
+       },
+       {
+        "gercek": "0",
+        "no": 2,
+        "pick": "02",
+        "tuttu": true
+       },
+       {
+        "gercek": "2",
+        "no": 3,
+        "pick": "12",
+        "tuttu": true
+       },
+       {
+        "gercek": "0",
+        "no": 4,
+        "pick": "12",
+        "tuttu": false
+       },
+       {
+        "gercek": "1",
+        "no": 5,
+        "pick": "02",
+        "tuttu": false
+       },
+       {
+        "gercek": "1",
+        "no": 6,
+        "pick": "10",
+        "tuttu": true
+       },
+       {
+        "gercek": "1",
+        "no": 7,
+        "pick": "10",
+        "tuttu": true
+       },
+       {
+        "gercek": "1",
+        "no": 8,
+        "pick": "1",
+        "tuttu": true
+       },
+       {
+        "gercek": "0",
+        "no": 9,
+        "pick": "12",
+        "tuttu": false
+       },
+       {
+        "gercek": "1",
+        "no": 10,
+        "pick": "102",
+        "tuttu": true
+       },
+       {
+        "gercek": "1",
+        "no": 11,
+        "pick": "02",
+        "tuttu": false
+       },
+       {
+        "gercek": "1",
+        "no": 12,
+        "pick": "102",
+        "tuttu": true
+       },
+       {
+        "gercek": "0",
+        "no": 13,
+        "pick": "12",
+        "tuttu": false
+       },
+       {
+        "gercek": "1",
+        "no": 14,
+        "pick": "10",
+        "tuttu": true
+       },
+       {
+        "gercek": "1",
+        "no": 15,
+        "pick": "10",
+        "tuttu": true
+       }
+      ],
+      "picks": [
+       "1",
+       "02",
+       "12",
+       "12",
+       "02",
+       "10",
+       "10",
+       "1",
+       "12",
+       "102",
+       "02",
+       "102",
+       "12",
+       "10",
+       "10"
+      ]
+     }
+    ],
+    "note": "Bu sekmedeki her sayı sonuçlar görüldükten SONRA hesaplandı. Tahmin sekmeleri onu görmez ve değişmez.",
+    "payout": [
+     {
+      "correct": 15,
+      "prize": null,
+      "rollover": 30149380.57,
+      "winners": 0
+     },
+     {
+      "correct": 14,
+      "prize": 2153527.18,
+      "winners": 8
+     },
+     {
+      "correct": 13,
+      "prize": 82039.13,
+      "winners": 210
+     },
+     {
+      "correct": 12,
+      "prize": 7532.44,
+      "winners": 2859
+     }
+    ],
+    "payout_source": "Spor Toto resmî ikramiye ekranı — kullanıcı ekran görüntüsü (2026-08-18)",
+    "results": "002011110111011",
+    "results_entered_at": null,
+    "results_source": "Spor Toto resmî sonuç ekranı — kullanıcı ekran görüntüsü (2026-08-18)"
+   },
    "tahmin2": null,
    "warnings_generated": [],
    "warnings_manual": [],
@@ -1249,6 +1414,289 @@
    "prices": null,
    "program": "21.08.2026 - 25.08.2026",
    "results": "222121121210102",
+   "sonuc": {
+    "kalabalik": {
+     "beklenen_halk_dogru": 6.109999999999999,
+     "beklenen_piyasa_dogru": 6.391288087258119,
+     "halk_dogru": 8,
+     "halk_kuponu": "211111211212112",
+     "piyasa_dogru": 9,
+     "piyasa_kuponu": "211121211212112"
+    },
+    "kayitlar": [
+     {
+      "ad": "1. Tahmin",
+      "best": 12,
+      "expected_misses": 3.1923,
+      "miss_count": 3,
+      "misses": [
+       7,
+       8,
+       12
+      ],
+      "p_at_least_actual": 0.651343,
+      "p_in_set": 0.026434,
+      "per_match": [
+       {
+        "gercek": "2",
+        "no": 1,
+        "pick": "02",
+        "tuttu": true
+       },
+       {
+        "gercek": "2",
+        "no": 2,
+        "pick": "12",
+        "tuttu": true
+       },
+       {
+        "gercek": "2",
+        "no": 3,
+        "pick": "12",
+        "tuttu": true
+       },
+       {
+        "gercek": "1",
+        "no": 4,
+        "pick": "12",
+        "tuttu": true
+       },
+       {
+        "gercek": "2",
+        "no": 5,
+        "pick": "12",
+        "tuttu": true
+       },
+       {
+        "gercek": "1",
+        "no": 6,
+        "pick": "12",
+        "tuttu": true
+       },
+       {
+        "gercek": "1",
+        "no": 7,
+        "pick": "02",
+        "tuttu": false
+       },
+       {
+        "gercek": "2",
+        "no": 8,
+        "pick": "10",
+        "tuttu": false
+       },
+       {
+        "gercek": "1",
+        "no": 9,
+        "pick": "12",
+        "tuttu": true
+       },
+       {
+        "gercek": "2",
+        "no": 10,
+        "pick": "02",
+        "tuttu": true
+       },
+       {
+        "gercek": "1",
+        "no": 11,
+        "pick": "10",
+        "tuttu": true
+       },
+       {
+        "gercek": "0",
+        "no": 12,
+        "pick": "12",
+        "tuttu": false
+       },
+       {
+        "gercek": "1",
+        "no": 13,
+        "pick": "10",
+        "tuttu": true
+       },
+       {
+        "gercek": "0",
+        "no": 14,
+        "pick": "10",
+        "tuttu": true
+       },
+       {
+        "gercek": "2",
+        "no": 15,
+        "pick": "02",
+        "tuttu": true
+       }
+      ],
+      "picks": [
+       "02",
+       "12",
+       "12",
+       "12",
+       "12",
+       "12",
+       "02",
+       "10",
+       "12",
+       "02",
+       "10",
+       "12",
+       "10",
+       "10",
+       "02"
+      ]
+     },
+     {
+      "ad": "2. Tahmin",
+      "best": 12,
+      "expected_misses": 2.9928,
+      "miss_count": 3,
+      "misses": [
+       8,
+       12,
+       14
+      ],
+      "p_at_least_actual": 0.61607,
+      "p_in_set": 0.027581,
+      "per_match": [
+       {
+        "gercek": "2",
+        "no": 1,
+        "pick": "2",
+        "tuttu": true
+       },
+       {
+        "gercek": "2",
+        "no": 2,
+        "pick": "102",
+        "tuttu": true
+       },
+       {
+        "gercek": "2",
+        "no": 3,
+        "pick": "102",
+        "tuttu": true
+       },
+       {
+        "gercek": "1",
+        "no": 4,
+        "pick": "12",
+        "tuttu": true
+       },
+       {
+        "gercek": "2",
+        "no": 5,
+        "pick": "102",
+        "tuttu": true
+       },
+       {
+        "gercek": "1",
+        "no": 6,
+        "pick": "12",
+        "tuttu": true
+       },
+       {
+        "gercek": "1",
+        "no": 7,
+        "pick": "12",
+        "tuttu": true
+       },
+       {
+        "gercek": "2",
+        "no": 8,
+        "pick": "1",
+        "tuttu": false
+       },
+       {
+        "gercek": "1",
+        "no": 9,
+        "pick": "102",
+        "tuttu": true
+       },
+       {
+        "gercek": "2",
+        "no": 10,
+        "pick": "2",
+        "tuttu": true
+       },
+       {
+        "gercek": "1",
+        "no": 11,
+        "pick": "1",
+        "tuttu": true
+       },
+       {
+        "gercek": "0",
+        "no": 12,
+        "pick": "12",
+        "tuttu": false
+       },
+       {
+        "gercek": "1",
+        "no": 13,
+        "pick": "12",
+        "tuttu": true
+       },
+       {
+        "gercek": "0",
+        "no": 14,
+        "pick": "12",
+        "tuttu": false
+       },
+       {
+        "gercek": "2",
+        "no": 15,
+        "pick": "02",
+        "tuttu": true
+       }
+      ],
+      "picks": [
+       "2",
+       "102",
+       "102",
+       "12",
+       "102",
+       "12",
+       "12",
+       "1",
+       "102",
+       "2",
+       "1",
+       "12",
+       "12",
+       "12",
+       "02"
+      ]
+     }
+    ],
+    "note": "Bu sekmedeki her sayı sonuçlar görüldükten SONRA hesaplandı. Tahmin sekmeleri onu görmez ve değişmez.",
+    "payout": [
+     {
+      "correct": 15,
+      "prize": 24330749.43,
+      "winners": 3
+     },
+     {
+      "correct": 14,
+      "prize": 202327.59,
+      "winners": 121
+     },
+     {
+      "correct": 13,
+      "prize": 11787.01,
+      "winners": 2077
+     },
+     {
+      "correct": 12,
+      "prize": 1438.6,
+      "winners": 21272
+     }
+    ],
+    "payout_source": "Spor Toto resmî ikramiye ekranı — kullanıcı ekran görüntüsü (2026-08-24)",
+    "results": "222121121210102",
+    "results_entered_at": "2026-08-24",
+    "results_source": "Spor Toto sonuç ekranı — kullanıcı ekran görüntüsü (2026-08-24); yalnızca 1/0/2 sonucu verildi, skorlar girilmedi"
+   },
    "tahmin2": {
     "ad": "2. Tahmin",
     "arindirma": "shin",
@@ -3056,6 +3504,7 @@
    },
    "program": null,
    "results": null,
+   "sonuc": null,
    "tahmin2": null,
    "warnings_generated": [
     "nesine_kapanis: 6 maçta kapanış açılışla BİREBİR aynı (maçlar: 10, 11, 12, 13, 14, 15) — bu bir fiyat değil, tazelenmemiş kayıttır; o satırlarda ayrışma görüş farkı değil kayıt farkıdır"

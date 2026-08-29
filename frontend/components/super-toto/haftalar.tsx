@@ -7,6 +7,7 @@ import {
   haftaDoluMu,
   haftaSonuclandiMi,
   ikinciTahminVarMi,
+  sonucVarMi,
   type SuperTotoHafta,
   type SuperTotoMac,
 } from "@/lib/super-toto";
@@ -24,6 +25,7 @@ import { Tabs, TabPanel, type TabItem } from "@/components/ui/tabs";
 import { Badge, Card, CardBody, CardHeader } from "@/components/ui/primitives";
 import { BenzerKart } from "@/components/benzer/kart";
 import { Tahmin2Paneli } from "@/components/super-toto/tahmin2";
+import { SonucPaneli } from "@/components/super-toto/sonuc";
 import { FiyatKaynaklari, KuponGerekcesi } from "@/components/super-toto/fiyatlar";
 import { adreseYaz, adrestenOku } from "@/lib/adres";
 
@@ -97,7 +99,7 @@ export function HaftaSekmeleri({
 }
 
 
-/** Bir macin satiri: oran, olasilik, oynanma, isaret ve (varsa) sonuc. */
+/** Bir macin satiri: oran, olasilik, oynanma, isaret. Sonuc YOK. */
 function MacSatiri({
   mac,
   isaret,
@@ -105,7 +107,6 @@ function MacSatiri({
   mac: SuperTotoMac;
   isaret: string | null;
 }) {
-  const tuttu = mac.result && isaret ? isaret.includes(mac.result) : null;
   return (
     <tr className="border-t border-line">
       <td className="py-1.5 pr-2 text-right tabular-nums text-muted-foreground">
@@ -133,17 +134,12 @@ function MacSatiri({
       <td className="py-1.5 pr-3 tabular-nums text-muted-foreground">
         {SEM.map((s) => yuzde(mac.play[s]).slice(1)).join(" / ")}
       </td>
-      <td className="py-1.5 pr-3 font-mono">{isaret ?? "—"}</td>
-      <td className="py-1.5 tabular-nums">
-        {mac.result ? (
-          <span className={tuttu === false ? "text-danger" : undefined}>
-            {mac.result}
-            {tuttu === false ? " ✗" : tuttu ? " ✓" : ""}
-          </span>
-        ) : (
-          <span className="text-muted-foreground">—</span>
-        )}
-      </td>
+      {/* "SONUC" sutunu buradan KALDIRILDI: sonuc gelince tahmin
+          tablosuna gercek sonucu ve ✓/✗ isaretini eklemek, dondurulmus
+          kaydin uzerine sonradan bilinen bir sey yazmakti. Sonuc kendi
+          sekmesinde (`sonuc.tsx`) ve orada iki kayit da AYNI olcuyle
+          karneleniyor. */}
+      <td className="py-1.5 font-mono">{isaret ?? "—"}</td>
     </tr>
   );
 }
@@ -164,8 +160,14 @@ export function DoluHafta({ hafta }: { hafta: SuperTotoHafta }) {
   // edilmiyor (bkz. `ui/tabs.tsx`), yani bilesen sokuluyor. Burada bir
   // sifirlama efekti YOK — olsaydi hicbir sey yapmayan bir efekt olurdu.
   const ikinci = ikinciTahminVarMi(hafta);
+  // SONUC ucuncu sekmedir ve tahmin sekmelerine KARISMAZ. Bir zamanlar
+  // sonuc gelince tahmin panellerinin icine siziyordu (mac tablosuna bir
+  // sutun, kupon kartina "N/15 kume icinde", roze "sonuclandi"); yani
+  // dondurulmus kaydin ustune sonradan bilinen bir sey yaziliyordu.
+  const sonuclu = sonucVarMi(hafta);
   const [tahmin, setTahmin] = React.useState("1");
-  const secili = ikinci ? tahmin : "1";
+  const gecerli = ["1", ...(ikinci ? ["2"] : []), ...(sonuclu ? ["s"] : [])];
+  const secili = gecerli.includes(tahmin) ? tahmin : "1";
 
   const k = hafta.coupon;
   const bugun = hafta.coupon_today;
@@ -175,17 +177,6 @@ export function DoluHafta({ hafta }: { hafta: SuperTotoHafta }) {
     ...hafta.warnings_manual.map((m) => ({ kaynak: "elle" as const, m })),
     ...hafta.warnings_generated.map((m) => ({ kaynak: "kod" as const, m })),
   ];
-  const dogru =
-    hafta.results && k
-      ? hafta.matches.filter((mac) => {
-          // `picks` hafta verisinden gelir; mac numarasi ile hizasi
-          // bozulursa satir EKSIK olur. Once `.includes` dogrudan
-          // cagriliyordu ve o durumda sayfa cokerdi.
-          const isaret = k.picks[mac.no - 1];
-          return !!mac.result && !!isaret && isaret.includes(mac.result);
-        }).length
-      : null;
-
   // 1. Tahmin'in paneli. Bir degiskene alinmasinin sebebi asagidaki
   // dallanma: ikinci kayit yoksa panel SEKMESIZ basilir. Sekme seridi
   // olmadan `TabPanel` basmak, hicbir sekmeye baglanmayan bir
@@ -195,8 +186,10 @@ export function DoluHafta({ hafta }: { hafta: SuperTotoHafta }) {
       <div className="flex flex-wrap items-center gap-2 text-[12.5px]">
         {hafta.program ? <Badge>{hafta.program}</Badge> : null}
         {hafta.odds_kind ? <Badge>{hafta.odds_kind}</Badge> : null}
+        {/* Rozet "sonuclandi" diyordu ve panelin geri kalani sonucla
+            doluyordu. Artik yalnizca NEREDE oldugunu soyluyor. */}
         {haftaSonuclandiMi(hafta) ? (
-          <Badge ton="primary">sonuçlandı</Badge>
+          <Badge>sonuç: “Sonuç” sekmesinde</Badge>
         ) : (
           <Badge>sonuç bekleniyor</Badge>
         )}
@@ -233,7 +226,6 @@ export function DoluHafta({ hafta }: { hafta: SuperTotoHafta }) {
               {k.in_set_p !== null
                 ? ` · küme-içi ${_yuzde(k.in_set_p, 2)}`
                 : ""}
-              {dogru !== null ? ` · ${dogru}/15 küme içinde` : ""}
             </div>
             {/*
               Olcek degistiyse bunu SOYLEMEK zorundayiz. Kural ayni ama
@@ -304,8 +296,7 @@ export function DoluHafta({ hafta }: { hafta: SuperTotoHafta }) {
               <th className="pb-1.5 pr-3">Oran 1/0/2</th>
               <th className="pb-1.5 pr-3">Olasılık</th>
               <th className="pb-1.5 pr-3">Oynanma</th>
-              <th className="pb-1.5 pr-3">İşaret</th>
-              <th className="pb-1.5">Sonuç</th>
+              <th className="pb-1.5">İşaret</th>
             </tr>
           </thead>
           <tbody>
@@ -380,7 +371,9 @@ export function DoluHafta({ hafta }: { hafta: SuperTotoHafta }) {
     </div>
   );
 
-  if (!ikinci) return birinciPanel;
+  // Tek panel varsa sekme seridi basilmaz: hicbir sekmeye baglanmayan bir
+  // `aria-labelledby` uretirdi.
+  if (!ikinci && !sonuclu) return birinciPanel;
 
   // Sekme kimlikleri `tahmin-` onekli: sayfadaki HAFTA seridi de `Tabs`
   // kullaniyor ve onun kimlikleri "1".."41". Onek olmasa `tab-1` DOM'da
@@ -391,18 +384,28 @@ export function DoluHafta({ hafta }: { hafta: SuperTotoHafta }) {
       <Tabs
         items={[
           { id: "tahmin-1", label: "1. Tahmin" },
-          { id: "tahmin-2", label: "2. Tahmin", badge: "yeni" },
+          ...(ikinci
+            ? [{ id: "tahmin-2", label: "2. Tahmin", badge: "yeni" }]
+            : []),
+          ...(sonuclu ? [{ id: "tahmin-s", label: "Sonuç", badge: "●" }] : []),
         ]}
         value={`tahmin-${secili}`}
-        onChange={(id) => setTahmin(id === "tahmin-2" ? "2" : "1")}
-        className="max-w-[300px]"
+        onChange={(id) => setTahmin(id.replace("tahmin-", ""))}
+        className="max-w-[420px]"
       />
       <TabPanel id="tahmin-1" active={secili === "1"}>
         {birinciPanel}
       </TabPanel>
-      <TabPanel id="tahmin-2" active={secili === "2"}>
-        <Tahmin2Paneli hafta={hafta} />
-      </TabPanel>
+      {ikinci ? (
+        <TabPanel id="tahmin-2" active={secili === "2"}>
+          <Tahmin2Paneli hafta={hafta} />
+        </TabPanel>
+      ) : null}
+      {sonuclu ? (
+        <TabPanel id="tahmin-s" active={secili === "s"}>
+          <SonucPaneli hafta={hafta} />
+        </TabPanel>
+      ) : null}
     </div>
   );
 }
