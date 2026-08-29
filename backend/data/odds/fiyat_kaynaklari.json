@@ -1,0 +1,293 @@
+{
+ "matches": 567,
+ "arindirma": "shin",
+ "sources": [
+  {
+   "key": "Avg_acilis",
+   "book": "Avg",
+   "book_label": "piyasa ortalaması",
+   "closing": false,
+   "n": 539,
+   "coverage_pct": 95.06,
+   "avg_margin_pct": 7.44,
+   "brier": 0.581311,
+   "brier_n": 539,
+   "first_day": "2025-08-15",
+   "last_day": "2026-05-24"
+  },
+  {
+   "key": "Avg_kapanis",
+   "book": "Avg",
+   "book_label": "piyasa ortalaması",
+   "closing": true,
+   "n": 567,
+   "coverage_pct": 100.0,
+   "avg_margin_pct": 7.26,
+   "brier": 0.578708,
+   "brier_n": 567,
+   "first_day": "2025-08-15",
+   "last_day": "2026-07-27"
+  },
+  {
+   "key": "B365_acilis",
+   "book": "B365",
+   "book_label": "Bet365",
+   "closing": false,
+   "n": 537,
+   "coverage_pct": 94.71,
+   "avg_margin_pct": 6.87,
+   "brier": 0.582071,
+   "brier_n": 537,
+   "first_day": "2025-08-15",
+   "last_day": "2026-05-24"
+  },
+  {
+   "key": "B365_kapanis",
+   "book": "B365",
+   "book_label": "Bet365",
+   "closing": true,
+   "n": 567,
+   "coverage_pct": 100.0,
+   "avg_margin_pct": 6.98,
+   "brier": 0.578587,
+   "brier_n": 567,
+   "first_day": "2025-08-15",
+   "last_day": "2026-07-27"
+  },
+  {
+   "key": "BFE_acilis",
+   "book": "BFE",
+   "book_label": "Betfair Exchange",
+   "closing": false,
+   "n": 509,
+   "coverage_pct": 89.77,
+   "avg_margin_pct": 3.59,
+   "brier": 0.578664,
+   "brier_n": 509,
+   "first_day": "2025-08-15",
+   "last_day": "2026-05-24"
+  },
+  {
+   "key": "BFE_kapanis",
+   "book": "BFE",
+   "book_label": "Betfair Exchange",
+   "closing": true,
+   "n": 535,
+   "coverage_pct": 94.36,
+   "avg_margin_pct": 0.64,
+   "brier": 0.575785,
+   "brier_n": 535,
+   "first_day": "2025-08-15",
+   "last_day": "2026-07-27"
+  },
+  {
+   "key": "PS_acilis",
+   "book": "PS",
+   "book_label": "Pinnacle",
+   "closing": false,
+   "n": 244,
+   "coverage_pct": 43.03,
+   "avg_margin_pct": 4.4,
+   "brier": 0.551611,
+   "brier_n": 244,
+   "first_day": "2025-08-15",
+   "last_day": "2026-01-04"
+  },
+  {
+   "key": "PS_kapanis",
+   "book": "PS",
+   "book_label": "Pinnacle",
+   "closing": true,
+   "n": 247,
+   "coverage_pct": 43.56,
+   "avg_margin_pct": 3.42,
+   "brier": 0.552172,
+   "brier_n": 247,
+   "first_day": "2025-08-15",
+   "last_day": "2026-01-04"
+  }
+ ],
+ "agreement": [
+  {
+   "period": "acilis",
+   "a": "Avg",
+   "b": "PS",
+   "n": 244,
+   "mean_gap_pct": 0.607,
+   "max_gap_pct": 2.33,
+   "brier_a": 0.55193,
+   "brier_b": 0.551612
+  },
+  {
+   "period": "acilis",
+   "a": "Avg",
+   "b": "BFE",
+   "n": 509,
+   "mean_gap_pct": 1.2,
+   "max_gap_pct": 32.58,
+   "brier_a": 0.579236,
+   "brier_b": 0.578666
+  },
+  {
+   "period": "acilis",
+   "a": "Avg",
+   "b": "B365",
+   "n": 537,
+   "mean_gap_pct": 0.633,
+   "max_gap_pct": 2.66,
+   "brier_a": 0.582561,
+   "brier_b": 0.582069
+  },
+  {
+   "period": "acilis",
+   "a": "PS",
+   "b": "BFE",
+   "n": 244,
+   "mean_gap_pct": 1.148,
+   "max_gap_pct": 33.04,
+   "brier_a": 0.551612,
+   "brier_b": 0.549038
+  },
+  {
+   "period": "acilis",
+   "a": "PS",
+   "b": "B365",
+   "n": 244,
+   "mean_gap_pct": 0.733,
+   "max_gap_pct": 3.14,
+   "brier_a": 0.551612,
+   "brier_b": 0.551851
+  },
+  {
+   "period": "acilis",
+   "a": "BFE",
+   "b": "B365",
+   "n": 507,
+   "mean_gap_pct": 1.214,
+   "max_gap_pct": 33.68,
+   "brier_a": 0.578834,
+   "brier_b": 0.580056
+  },
+  {
+   "period": "kapanis",
+   "a": "Avg",
+   "b": "PS",
+   "n": 247,
+   "mean_gap_pct": 0.851,
+   "max_gap_pct": 6.35,
+   "brier_a": 0.551454,
+   "brier_b": 0.552174
+  },
+  {
+   "period": "kapanis",
+   "a": "Avg",
+   "b": "BFE",
+   "n": 535,
+   "mean_gap_pct": 0.701,
+   "max_gap_pct": 3.01,
+   "brier_a": 0.577216,
+   "brier_b": 0.575788
+  },
+  {
+   "period": "kapanis",
+   "a": "Avg",
+   "b": "B365",
+   "n": 567,
+   "mean_gap_pct": 0.741,
+   "max_gap_pct": 2.28,
+   "brier_a": 0.578708,
+   "brier_b": 0.578587
+  },
+  {
+   "period": "kapanis",
+   "a": "PS",
+   "b": "BFE",
+   "n": 247,
+   "mean_gap_pct": 0.863,
+   "max_gap_pct": 5.8,
+   "brier_a": 0.552174,
+   "brier_b": 0.550785
+  },
+  {
+   "period": "kapanis",
+   "a": "PS",
+   "b": "B365",
+   "n": 247,
+   "mean_gap_pct": 1.182,
+   "max_gap_pct": 8.09,
+   "brier_a": 0.552174,
+   "brier_b": 0.552332
+  },
+  {
+   "period": "kapanis",
+   "a": "BFE",
+   "b": "B365",
+   "n": 535,
+   "mean_gap_pct": 0.962,
+   "max_gap_pct": 3.04,
+   "brier_a": 0.575788,
+   "brier_b": 0.577083
+  }
+ ],
+ "movement": [
+  {
+   "book": "Avg",
+   "n": 539,
+   "mean_move_pct": 2.839,
+   "brier_acilis": 0.58131,
+   "brier_kapanis": 0.57976,
+   "kapanis_daha_iyi": true
+  },
+  {
+   "book": "PS",
+   "n": 244,
+   "mean_move_pct": 2.616,
+   "brier_acilis": 0.551612,
+   "brier_kapanis": 0.550532,
+   "kapanis_daha_iyi": true
+  },
+  {
+   "book": "BFE",
+   "n": 507,
+   "mean_move_pct": 3.674,
+   "brier_acilis": 0.578207,
+   "brier_kapanis": 0.576901,
+   "kapanis_daha_iyi": true
+  },
+  {
+   "book": "B365",
+   "n": 537,
+   "mean_move_pct": 3.311,
+   "brier_acilis": 0.582069,
+   "brier_kapanis": 0.581093,
+   "kapanis_daha_iyi": true
+  }
+ ],
+ "stale_closing": [
+  {
+   "book": "Avg",
+   "pairs": 539,
+   "identical": 0,
+   "identical_pct": 0.0
+  },
+  {
+   "book": "PS",
+   "pairs": 244,
+   "identical": 11,
+   "identical_pct": 4.51
+  },
+  {
+   "book": "BFE",
+   "pairs": 507,
+   "identical": 0,
+   "identical_pct": 0.0
+  },
+  {
+   "book": "B365",
+   "pairs": 537,
+   "identical": 13,
+   "identical_pct": 2.42
+  }
+ ],
+ "note": "Arındırılmış olasılıklar üzerinden ölçüldü. Omurga fiyatı `odds.FIYAT_VARSAYILAN`dır ve bu tablo onu DEĞİŞTİRMEZ; öteki fiyatlar paralel iz olarak ölçülür."
+}

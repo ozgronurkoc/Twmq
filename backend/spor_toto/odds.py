@@ -21,6 +21,7 @@ from __future__ import annotations
 import csv
 import math
 import re
+from collections.abc import Sequence
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -84,7 +85,39 @@ def odds_for(week: int, no: int) -> dict[str, Any] | None:
     return None
 
 
-def market_odds(row: dict[str, Any], market: str = "1X2", book: str = "Avg",
+#: Arşivin **omurga fiyatı**. Bu string on ayrı yerde tekrarlanıyordu
+#: (`market_odds` varsayılanı, `KAYNAK_SIRASI`, `pazar` ve birkaç betik) ve
+#: hiçbirinde niçin o olduğu yazmıyordu; yani projenin en belirleyici
+#: seçimi isimsizdi. Çağıranlar artık bu sabiti içe aktarır.
+#:
+#: **Niçin Avg, niçin Pinnacle değil.** 2026-08'de üç aday ölçüldü
+#: (`scripts/fiyat_kaynaklari.py` bunu her koşumda yeniden üretir):
+#:
+#:     fiyat       kapsama   15 maçı tam hafta   marj      Brier*
+#:     Avg           %92          36 / 41       %7,99     0,5515
+#:     Pinnacle      %40          15 / 41       %3,73     0,5522
+#:     Betfair Exc.  %94          32 / 41       %0,71     0,5508
+#:     (*) yalnızca üçünün de bulunduğu 247 maç üzerinde
+#:
+#: İki sebep Avg'yi omurgada tutuyor:
+#:
+#: 1. **football-data, 2026-01'de Pinnacle yayımlamayı bıraktı.** Eksiklik
+#:    rastgele değil, zamana bağlı: Şubat–Mayıs 2026 tamamen boş. Pinnacle'a
+#:    geçmek örneklemi küçültmekle kalmaz, sezonun ikinci yarısını düşürür
+#:    ve geri testi 36 haftadan 15'e indirir.
+#: 2. **Marj arındırıldıktan sonra üçü ayırt edilemiyor** — ortalama fark
+#:    0,70–0,86 puan ve Brier farkları gürültü içinde (Avg, Pinnacle'ın
+#:    önünde bile çıkıyor). Yani geçiş, 21 haftayı ölçülebilir hiçbir
+#:    doğruluk kazancı olmadan feda ederdi.
+#:
+#: Pinnacle ve Betfair **atılmadı**: var oldukları yerde paralel iz olarak
+#: ölçülür (`spor_toto.fiyatlar`). Omurga olmamaları, görünmez olmaları
+#: demek değildir.
+FIYAT_VARSAYILAN = "Avg"
+
+
+def market_odds(row: dict[str, Any], market: str = "1X2",
+                book: str = FIYAT_VARSAYILAN,
                 closing: bool = True) -> dict[str, float]:
     """Bir maçın tek pazarını sembol anahtarlı sözlüğe indirger.
 
@@ -269,8 +302,48 @@ def margin(oranlar: dict[str, float]) -> float:
 
 #: Sembol duzeni TEK kaynaktan (`core`) — ad korunuyor, deger degil.
 SEMBOLLER = _SEMBOLLER
-#: Tercih sırası: piyasa ortalaması, sonra tek tek bahisçiler.
-KAYNAK_SIRASI = ("Avg", "B365", "PS", "BFE", "Max")
+#: Tercih sırası: piyasa ortalaması, sonra tek tek bahisçiler. İlk eleman
+#: `FIYAT_VARSAYILAN`dır ve **öyle kalmalıdır** — gerekçesi orada yazılı.
+#: Sıra bugün pratikte hiç kullanılmıyor (arşivde Avg 567/567 maçı kapıyor,
+#: `season_1x2_summary().books == ["Avg"]`), ama kullanılırsa **kitap karışır**
+#: ve karışım zamana bağlı olur; o yüzden `match_1x2` hangi kitaptan geldiğini
+#: satır satır yazar ve özet onu ilan eder.
+KAYNAK_SIRASI = (FIYAT_VARSAYILAN, "B365", "PS", "BFE", "Max")
+
+#: `fiyatlar` modülünün paralel iz olarak ölçtüğü kitaplar ve okunur adları.
+#: Burada durur çünkü sütun öneki bilgisi bu modülün işidir.
+KITAP_ADLARI: dict[str, str] = {
+    "Avg": "piyasa ortalaması", "PS": "Pinnacle",
+    "BFE": "Betfair Exchange", "B365": "Bet365", "Max": "en iyi oran",
+}
+
+
+def donem_dagilimi(bloklar: Sequence[dict[str, Any]]) -> dict[str, int]:
+    """Kaç maç kapanış, kaç maç açılış fiyatından geldi."""
+    kap = sum(1 for b in bloklar if b.get("closing"))
+    return {"kapanis": kap, "acilis": len(bloklar) - kap}
+
+
+def provenance_notu(bloklar: Sequence[dict[str, Any]]) -> str:
+    """Sayıların hangi kitaptan ve hangi dönemden geldiğini **üretir**.
+
+    Elle yazılan bir provenance, fiyat değiştiği anda yalan söyler ve
+    yalan söylediği belli olmaz — bu depoda aynı hata `super_toto_sayfa`
+    ve hafta panelinde de çıktı. Bu yüzden metin veriden türetilir.
+    """
+    if not bloklar:
+        return "oran yok"
+    kitaplar = sorted({b["book"] for b in bloklar})
+    ad = ", ".join(KITAP_ADLARI.get(k, k) for k in kitaplar)
+    d = donem_dagilimi(bloklar)
+    if d["acilis"] == 0:
+        donem = "kapanış oranları"
+    elif d["kapanis"] == 0:
+        donem = "açılış oranları"
+    else:
+        donem = (f"{d['kapanis']} maç kapanış, {d['acilis']} maç açılış "
+                 "oranı — KARIŞIK")
+    return (f"{ad} · {donem} (football-data.co.uk) — iddaa oranı değildir")
 
 
 def match_1x2(row: dict[str, Any],
@@ -637,7 +710,15 @@ def season_1x2_summary(weeks: list[int] | None = None) -> dict[str, Any] | None:
         ),
         "calibration": kalibrasyon,
         "books": sorted({b["book"] for _, b in oranli}),
-        "note": "piyasa kapanış oranları (football-data.co.uk) — iddaa oranı değildir",
+        "periods": donem_dagilimi([b for _, b in oranli]),
+        # Bu metin SABIT yaziliydi: "piyasa kapanis oranlari
+        # (football-data.co.uk) — iddaa orani degildir". Iki seyi
+        # soylemiyordu: hangi bahisci ve gercekten hepsi kapanis mi.
+        # Arayuz onu oldugu gibi basiyor (istatistik/oranlar), yani fiyat
+        # degisse okuyucu anlamazdi. Artik KULLANILAN kitap ve donem
+        # karisimindan uretiliyor — `match_1x2` zaten satir satir yaziyordu,
+        # yalnizca ozetlenmiyordu.
+        "note": provenance_notu([b for _, b in oranli]),
     }
 
 

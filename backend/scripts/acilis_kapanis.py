@@ -18,6 +18,7 @@ fiyatın ne kadar değerli olduğunu ölçer.
 """
 from __future__ import annotations
 
+import argparse
 import sys
 from pathlib import Path
 
@@ -26,8 +27,15 @@ sys.path.insert(0, str(KOK))
 
 from spor_toto.backtest import _en_iyi_skor, _kaplama, secim_uret
 from spor_toto.core import SEMBOLLER
+from spor_toto.fiyatlar import KITAPLAR
 from spor_toto.history import normalized_weeks
-from spor_toto.odds import implied_probs, load_odds, market_odds
+from spor_toto.odds import (
+    FIYAT_VARSAYILAN,
+    KITAP_ADLARI,
+    implied_probs,
+    load_odds,
+    market_odds,
+)
 
 #: Sembol duzeni TEK kaynaktan (`spor_toto.core`). Bu dosyada ayri bir
 #: demet olarak yaziliyordu; depoda ayni deger on bir kez tanimliydi.
@@ -37,14 +45,23 @@ HAREKET_BANTLARI = ((-99, -4), (-4, -2), (-2, -0.5), (-0.5, 0.5),
                     (0.5, 2), (2, 4), (4, 99))
 
 
-def ciftler():
-    """Hem açılış hem kapanış fiyatı olan maçlar."""
+def ciftler(kaynak: str = FIYAT_VARSAYILAN):
+    """Hem açılış hem kapanış fiyatı olan maçlar — AYNI ailenin iki ucu.
+
+    `kaynak` bir zamanlar `"Avg"` diye çakılıydı ve deney yalnızca omurga
+    fiyatı üzerinde koşabiliyordu. Oysa "kapanış açılışı yeniyor" iddiası
+    3. haftanın ana fiyat gerekçesidir ve o hafta Pinnacle kullanıyor;
+    iddianın Pinnacle üzerinde de doğrulanabilmesi gerekir.
+
+    Aile karıştırılmaz: açılışı `Avg`, kapanışı `PSC` almak aradaki farkı
+    hareket değil **kaynak farkı** yapardı.
+    """
     out = []
     for r in load_odds():
         if not r.get("matched"):
             continue
-        ac = market_odds(r, "1X2", "Avg", closing=False)
-        ka = market_odds(r, "1X2", "Avg", closing=True)
+        ac = market_odds(r, "1X2", kaynak, closing=False)
+        ka = market_odds(r, "1X2", kaynak, closing=True)
         if len(ac) != 3 or len(ka) != 3:
             continue
         if any(v <= 1 for v in list(ac.values()) + list(ka.values())):
@@ -94,13 +111,13 @@ def hareket(rows):
     return out
 
 
-def kural_kosusu(closing: bool):
+def kural_kosusu(closing: bool, kaynak: str = FIYAT_VARSAYILAN):
     """Aynı strateji, farklı fiyatla beslenirse."""
     P = {}
     for r in load_odds():
         if not r.get("matched"):
             continue
-        o = market_odds(r, "1X2", "Avg", closing=closing)
+        o = market_odds(r, "1X2", kaynak, closing=closing)
         if len(o) != 3 or any(v <= 1 for v in o.values()):
             continue
         P.setdefault(r["week"], {})[r["no"]] = implied_probs(o)
@@ -132,9 +149,21 @@ def kural_kosusu(closing: bool):
 
 
 def main() -> None:
-    rows = ciftler()
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--kaynak", default=FIYAT_VARSAYILAN, choices=KITAPLAR,
+                    help="hangi bahisçinin açılış/kapanış çifti ölçülsün")
+    a = ap.parse_args()
+    rows = ciftler(a.kaynak)
+    if not rows:
+        raise SystemExit(f"{a.kaynak}: açılış+kapanış çifti olan maç yok")
     d = dogruluk(rows)
-    print(f"\n{'='*74}\nAÇILIŞ ↔ KAPANIŞ — {d['n']} maç (2025/26 arşivi)\n{'='*74}")
+    ad = KITAP_ADLARI.get(a.kaynak, a.kaynak)
+    gunler = sorted((r.get("kickoff") or "")[:10] for r, *_ in rows if r.get("kickoff"))
+    print(f"\n{'='*74}\nAÇILIŞ ↔ KAPANIŞ — {d['n']} maç · {ad} "
+          f"({gunler[0]} → {gunler[-1]})\n{'='*74}")
+    if len(rows) < 400:
+        print("UYARI: bu kaynak arşivin tamamını kapsamıyor; aşağıdaki sayılar")
+        print("yukarıdaki tarih aralığına aittir, sezonun tamamına DEĞİL.\n")
     print(f"Brier   açılış {d['brier_acilis']:.4f} · kapanış {d['brier_kapanis']:.4f}"
           f"  → kapanış %{100*(d['brier_acilis']-d['brier_kapanis'])/d['brier_acilis']:.2f} daha iyi")
     print(f"Favori  açılış {d['fav_acilis']}/{d['n']} (%{100*d['fav_acilis']/d['n']:.1f}) · "
@@ -155,7 +184,7 @@ def main() -> None:
     print("\n─── KURAL HANGİ FİYATLA BESLENİRSE ──────────────────────────────────")
     print(f'{"fiyat":<12}{"hafta":>6}{"14":>4}{"13":>4}{"12":>4}{"kolon/hafta":>13}')
     for ad, c in (("AÇILIŞ", False), ("KAPANIŞ", True)):
-        r = kural_kosusu(c)
+        r = kural_kosusu(c, a.kaynak)
         print(f'{ad:<12}{r["hafta"]:>6}{r["h14"]:>4}{r["h13"]:>4}{r["h12"]:>4}'
               f'{r["kolon_ort"]:>13,.0f}')
 

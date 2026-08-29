@@ -621,6 +621,14 @@ export interface OddsSummary {
     actual_pct: number;
   }>;
   books: string[];
+  /**
+   * Kac mac KAPANIS, kac mac ACILIS fiyatindan geldi.
+   *
+   * Sayfa "kapanis oranlari" diye SABIT yaziyordu; `match_1x2` kapanis
+   * yoksa acilisa dusuyor ve bu gorunmuyordu. Arsivde bugun karisim yok
+   * (567/567 kapanis) ama olsa da fark edilmezdi.
+   */
+  periods: { kapanis: number; acilis: number };
   note: string;
 }
 

@@ -41,14 +41,17 @@ from pathlib import Path
 from typing import Any
 
 KOK = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(KOK))
 VARSAYILAN_CIKTI = KOK / "data" / "fixtures"
+
+from spor_toto.odds import FIYAT_VARSAYILAN
 
 UA = "Mozilla/5.0 (compatible; spor-toto-lab/1.0)"
 FIXTURES_URL = "https://www.football-data.co.uk/fixtures.csv"
 
 #: Oran kaynagi tercihi. `Avg` once gelir cunku olcum onun uzerinde yapildi
 #: (`egitim.py` korpusu `Avg`/`AvgC` ailesini tercih eder).
-KAYNAK_SIRASI: tuple[str, ...] = ("Avg", "B365", "PS", "Max")
+KAYNAK_SIRASI: tuple[str, ...] = (FIYAT_VARSAYILAN, "B365", "PS", "Max")
 
 #: Korpusun tasidigi ligler — olculen isabet bu evrene ait. Disindaki bir lig
 #: icin tahmin uretilebilir ama olculmus isabet ONA AIT DEGILDIR, o yuzden

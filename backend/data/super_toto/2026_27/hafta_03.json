@@ -1,0 +1,804 @@
+{
+ "meta": {
+  "season": "2026/2027",
+  "week": 3,
+  "program": null,
+  "match_count": 15,
+  "odds_source": "Pinnacle KAPANIŞ oranları — kullanıcı girdisi (2026-08-27)",
+  "odds_kind": "pinnacle-kapanis",
+  "odds_note": "Bu hafta ilk kez ÜÇ bahisçi × İKİ an (açılış/kapanış) girildi; hepsi `odds_books` içinde duruyor. Ana fiyat Pinnacle kapanıştır ve bu seçim ölçümle yapıldı: (a) scripts/acilis_kapanis.py 2025/26 arşivinde kapanışı açılışın önünde ölçüyor (Brier %0,27 daha iyi; yedi hareket bandının beşinde gerçek kapanışı takip ediyor; kural kapanışla beslenince 36/36 hafta ≥12 ve hafta başına 2.051 kolon, açılışta 2.664), (b) Pinnacle'ın marjı %4,6 ile üç bahisçinin en düşüğü ve geri testin ölçüldüğü football-data Avg ölçeğine en yakını. 1. ve 2. haftada ana fiyat ~%18 marjlı iddaa oranıydı; bu hafta o ölçek farkı KALKTI, dolayısıyla haftalar arası olasılık karşılaştırması yaparken bu değişiklik hesaba katılmalıdır.",
+  "play_source": "tek platform kullanıcı tercih yüzdesi (% Tercih) — kullanıcı girdisi (2026-08-27)",
+  "play_note": "yüzdeler tek bir platformun kendi kullanıcılarıdır; Spor Toto havuzunun tamamı DEĞİLDİR",
+  "entered_at": "2026-08-27",
+  "results": null,
+  "data_warnings": [
+   "Program tarihleri ve maç saatleri GİRİLMEDİ (kullanıcı vermedi). Uydurulmadı; `date`/`kickoff` boş bırakıldı. Kupon kapanış anını belgeleyen tek alan `entered_at`tır.",
+   "Nesine'nin KAPANIŞ oranı 10–15. maçlarda AÇILIŞIYLA BİREBİR AYNI (maçlar: 10, 11, 12, 13, 14, 15). Bu bir fiyat değil, bayat bir kayıttır: o satırlarda Nesine kapanışı bilgi taşımıyor. Bahisçi ayrışmasının en büyük üçü (13. maç 7,9 puan, 12. maç 7,0 puan, 11. maç 6,4 puan) tam olarak bu bayat satırlardan geliyor — yani ayrışma görüş farkı değil, kayıt farkıdır.",
+   "12. maç (Monaco–Marsilya): Nesine beraberliği 2.49'a veriyor; Pinnacle 3.74, bet365 3.70. Arındırılmış beraberlik olasılığı Nesine'de %32, ötekilerde %25–26. Marj Nesine'nin kendi bandında (%23,4) olduğu için otomatik denetim bunu yakalamaz; satır KUŞKULU olarak işaretlendi ve ana fiyata girmedi.",
+   "Kapanış oranlarının tamamı kupon donarken elde miydi, doğrulanmadı. Spor Toto kuponu ilk maçtan önce kapanır; haftanın SON maçlarının kapanış çizgisi o anda normalde HENÜZ YOKTUR (bkz. scripts/acilis_kapanis.py başlığı). Bu yüzden Pinnacle AÇILIŞ fiyatıyla kurulan kupon da aynı kayda `duyarlilik` olarak konuldu: açılış, kupon anında kesinlikle elde olan fiyattır."
+  ],
+  "odds_books_note": "pinnacle/bet365nl/nesine × acilis/kapanis. Marj ortalamaları: Pinnacle %4,57/%4,63 · bet365.nl %7,89/%6,01 · Nesine %21,57/%18,70."
+ },
+ "matches": [
+  {
+   "no": 1,
+   "date": null,
+   "kickoff": null,
+   "league": "T1",
+   "home": "Gençlerbirliği",
+   "away": "Erzurumspor FK",
+   "odds": {
+    "1": 1.94,
+    "0": 3.6,
+    "2": 4.05
+   },
+   "odds_books": {
+    "pinnacle_acilis": {
+     "1": 2.08,
+     "0": 3.42,
+     "2": 3.6
+    },
+    "bet365nl_acilis": {
+     "1": 2.15,
+     "0": 3.5,
+     "2": 3.0
+    },
+    "nesine_acilis": {
+     "1": 2.0,
+     "0": 3.32,
+     "2": 2.67
+    },
+    "pinnacle_kapanis": {
+     "1": 1.94,
+     "0": 3.6,
+     "2": 4.05
+    },
+    "bet365nl_kapanis": {
+     "1": 1.9,
+     "0": 3.6,
+     "2": 3.75
+    },
+    "nesine_kapanis": {
+     "1": 1.78,
+     "0": 3.19,
+     "2": 3.33
+    }
+   },
+   "play_pct": {
+    "1": 58.0,
+    "0": 26.0,
+    "2": 16.0
+   },
+   "result": null,
+   "score": null
+  },
+  {
+   "no": 2,
+   "date": null,
+   "kickoff": null,
+   "league": "T1",
+   "home": "Konyaspor",
+   "away": "Kocaelispor",
+   "odds": {
+    "1": 1.98,
+    "0": 3.47,
+    "2": 3.87
+   },
+   "odds_books": {
+    "pinnacle_acilis": {
+     "1": 2.05,
+     "0": 3.38,
+     "2": 3.74
+    },
+    "bet365nl_acilis": {
+     "1": 2.0,
+     "0": 3.3,
+     "2": 3.6
+    },
+    "nesine_acilis": {
+     "1": 1.71,
+     "0": 3.19,
+     "2": 3.03
+    },
+    "pinnacle_kapanis": {
+     "1": 1.98,
+     "0": 3.47,
+     "2": 3.87
+    },
+    "bet365nl_kapanis": {
+     "1": 2.0,
+     "0": 3.4,
+     "2": 3.7
+    },
+    "nesine_kapanis": {
+     "1": 1.86,
+     "0": 3.02,
+     "2": 3.25
+    }
+   },
+   "play_pct": {
+    "1": 53.0,
+    "0": 30.0,
+    "2": 17.0
+   },
+   "result": null,
+   "score": null
+  },
+  {
+   "no": 3,
+   "date": null,
+   "kickoff": null,
+   "league": "T1",
+   "home": "Galatasaray A.Ş.",
+   "away": "Göztepe A.Ş.",
+   "odds": {
+    "1": 1.4,
+    "0": 4.8,
+    "2": 7.13
+   },
+   "odds_books": {
+    "pinnacle_acilis": {
+     "1": 1.41,
+     "0": 4.83,
+     "2": 7.06
+    },
+    "bet365nl_acilis": {
+     "1": 1.36,
+     "0": 4.5,
+     "2": 7.5
+    },
+    "nesine_acilis": {
+     "1": 1.29,
+     "0": 3.94,
+     "2": 5.06
+    },
+    "pinnacle_kapanis": {
+     "1": 1.4,
+     "0": 4.8,
+     "2": 7.13
+    },
+    "bet365nl_kapanis": {
+     "1": 1.42,
+     "0": 4.75,
+     "2": 7.0
+    },
+    "nesine_kapanis": {
+     "1": 1.25,
+     "0": 4.45,
+     "2": 6.49
+    }
+   },
+   "play_pct": {
+    "1": 76.0,
+    "0": 15.0,
+    "2": 9.0
+   },
+   "result": null,
+   "score": null
+  },
+  {
+   "no": 4,
+   "date": null,
+   "kickoff": null,
+   "league": "T1",
+   "home": "Gaziantep F.K. A.Ş.",
+   "away": "Çaykur Rizespor A.Ş.",
+   "odds": {
+    "1": 2.51,
+    "0": 3.52,
+    "2": 2.72
+   },
+   "odds_books": {
+    "pinnacle_acilis": {
+     "1": 2.54,
+     "0": 3.55,
+     "2": 2.67
+    },
+    "bet365nl_acilis": {
+     "1": 2.45,
+     "0": 3.5,
+     "2": 2.55
+    },
+    "nesine_acilis": {
+     "1": 2.06,
+     "0": 3.28,
+     "2": 2.28
+    },
+    "pinnacle_kapanis": {
+     "1": 2.51,
+     "0": 3.52,
+     "2": 2.72
+    },
+    "bet365nl_kapanis": {
+     "1": 2.5,
+     "0": 3.5,
+     "2": 2.62
+    },
+    "nesine_kapanis": {
+     "1": 2.25,
+     "0": 3.19,
+     "2": 2.39
+    }
+   },
+   "play_pct": {
+    "1": 34.0,
+    "0": 35.0,
+    "2": 31.0
+   },
+   "result": null,
+   "score": null
+  },
+  {
+   "no": 5,
+   "date": null,
+   "kickoff": null,
+   "league": "T1",
+   "home": "Eyüpspor",
+   "away": "Alanyaspor",
+   "odds": {
+    "1": 3.19,
+    "0": 3.23,
+    "2": 2.35
+   },
+   "odds_books": {
+    "pinnacle_acilis": {
+     "1": 3.23,
+     "0": 3.29,
+     "2": 2.29
+    },
+    "bet365nl_acilis": {
+     "1": 2.9,
+     "0": 3.3,
+     "2": 2.3
+    },
+    "nesine_acilis": {
+     "1": 2.27,
+     "0": 3.19,
+     "2": 2.1
+    },
+    "pinnacle_kapanis": {
+     "1": 3.19,
+     "0": 3.23,
+     "2": 2.35
+    },
+    "bet365nl_kapanis": {
+     "1": 3.1,
+     "0": 3.4,
+     "2": 2.25
+    },
+    "nesine_kapanis": {
+     "1": 2.89,
+     "0": 3.01,
+     "2": 2.0
+    }
+   },
+   "play_pct": {
+    "1": 26.0,
+    "0": 30.0,
+    "2": 44.0
+   },
+   "result": null,
+   "score": null
+  },
+  {
+   "no": 6,
+   "date": null,
+   "kickoff": null,
+   "league": "T1",
+   "home": "Başakşehir FK",
+   "away": "Kasımpaşa A.Ş.",
+   "odds": {
+    "1": 1.68,
+    "0": 3.95,
+    "2": 4.8
+   },
+   "odds_books": {
+    "pinnacle_acilis": {
+     "1": 1.62,
+     "0": 4.09,
+     "2": 5.17
+    },
+    "bet365nl_acilis": {
+     "1": 1.6,
+     "0": 3.9,
+     "2": 5.0
+    },
+    "nesine_acilis": {
+     "1": 1.59,
+     "0": 3.28,
+     "2": 3.37
+    },
+    "pinnacle_kapanis": {
+     "1": 1.68,
+     "0": 3.95,
+     "2": 4.8
+    },
+    "bet365nl_kapanis": {
+     "1": 1.65,
+     "0": 3.8,
+     "2": 5.25
+    },
+    "nesine_kapanis": {
+     "1": 1.48,
+     "0": 3.6,
+     "2": 4.52
+    }
+   },
+   "play_pct": {
+    "1": 65.0,
+    "0": 23.0,
+    "2": 12.0
+   },
+   "result": null,
+   "score": null
+  },
+  {
+   "no": 7,
+   "date": null,
+   "kickoff": null,
+   "league": "T1",
+   "home": "Samsunspor A.Ş.",
+   "away": "Fenerbahçe A.Ş.",
+   "odds": {
+    "1": 5.07,
+    "0": 4.19,
+    "2": 1.61
+   },
+   "odds_books": {
+    "pinnacle_acilis": {
+     "1": 5.05,
+     "0": 4.2,
+     "2": 1.67
+    },
+    "bet365nl_acilis": {
+     "1": 4.5,
+     "0": 4.2,
+     "2": 1.6
+    },
+    "nesine_acilis": {
+     "1": 4.14,
+     "0": 3.72,
+     "2": 1.39
+    },
+    "pinnacle_kapanis": {
+     "1": 5.07,
+     "0": 4.19,
+     "2": 1.61
+    },
+    "bet365nl_kapanis": {
+     "1": 5.0,
+     "0": 4.2,
+     "2": 1.6
+    },
+    "nesine_kapanis": {
+     "1": 4.49,
+     "0": 3.86,
+     "2": 1.44
+    }
+   },
+   "play_pct": {
+    "1": 14.0,
+    "0": 24.0,
+    "2": 62.0
+   },
+   "result": null,
+   "score": null
+  },
+  {
+   "no": 8,
+   "date": null,
+   "kickoff": null,
+   "league": "T1",
+   "home": "Amed Sportif",
+   "away": "Trabzonspor A.Ş.",
+   "odds": {
+    "1": 3.47,
+    "0": 3.7,
+    "2": 2.03
+   },
+   "odds_books": {
+    "pinnacle_acilis": {
+     "1": 4.0,
+     "0": 3.95,
+     "2": 1.81
+    },
+    "bet365nl_acilis": {
+     "1": 4.2,
+     "0": 4.0,
+     "2": 1.66
+    },
+    "nesine_acilis": {
+     "1": 3.37,
+     "0": 3.26,
+     "2": 1.6
+    },
+    "pinnacle_kapanis": {
+     "1": 3.47,
+     "0": 3.7,
+     "2": 2.03
+    },
+    "bet365nl_kapanis": {
+     "1": 3.6,
+     "0": 3.8,
+     "2": 1.9
+    },
+    "nesine_kapanis": {
+     "1": 3.19,
+     "0": 3.37,
+     "2": 1.77
+    }
+   },
+   "play_pct": {
+    "1": 13.0,
+    "0": 24.0,
+    "2": 63.0
+   },
+   "result": null,
+   "score": null
+  },
+  {
+   "no": 9,
+   "date": null,
+   "kickoff": null,
+   "league": "T1",
+   "home": "Beşiktaş A.Ş.",
+   "away": "Çorum FK",
+   "odds": {
+    "1": 1.43,
+    "0": 4.57,
+    "2": 7.03
+   },
+   "odds_books": {
+    "pinnacle_acilis": {
+     "1": 1.38,
+     "0": 4.77,
+     "2": 7.94
+    },
+    "bet365nl_acilis": {
+     "1": 1.33,
+     "0": 5.5,
+     "2": 6.5
+    },
+    "nesine_acilis": {
+     "1": 1.23,
+     "0": 4.11,
+     "2": 5.56
+    },
+    "pinnacle_kapanis": {
+     "1": 1.43,
+     "0": 4.57,
+     "2": 7.03
+    },
+    "bet365nl_kapanis": {
+     "1": 1.4,
+     "0": 5.0,
+     "2": 7.0
+    },
+    "nesine_kapanis": {
+     "1": 1.3,
+     "0": 4.15,
+     "2": 6.15
+    }
+   },
+   "play_pct": {
+    "1": 86.0,
+    "0": 10.0,
+    "2": 4.0
+   },
+   "result": null,
+   "score": null
+  },
+  {
+   "no": 10,
+   "date": null,
+   "kickoff": null,
+   "league": "D1",
+   "home": "B. Dortmund",
+   "away": "Hamburger SV",
+   "odds": {
+    "1": 1.32,
+    "0": 5.88,
+    "2": 8.98
+   },
+   "odds_books": {
+    "pinnacle_acilis": {
+     "1": 1.33,
+     "0": 5.8,
+     "2": 8.65
+    },
+    "bet365nl_acilis": {
+     "1": 1.33,
+     "0": 5.5,
+     "2": 8.0
+    },
+    "nesine_acilis": {
+     "1": 1.19,
+     "0": 5.01,
+     "2": 7.35
+    },
+    "pinnacle_kapanis": {
+     "1": 1.32,
+     "0": 5.88,
+     "2": 8.98
+    },
+    "bet365nl_kapanis": {
+     "1": 1.3,
+     "0": 5.75,
+     "2": 9.0
+    },
+    "nesine_kapanis": {
+     "1": 1.19,
+     "0": 5.01,
+     "2": 7.35
+    }
+   },
+   "play_pct": {
+    "1": 79.0,
+    "0": 14.0,
+    "2": 7.0
+   },
+   "result": null,
+   "score": null
+  },
+  {
+   "no": 11,
+   "date": null,
+   "kickoff": null,
+   "league": "F1",
+   "home": "Lille",
+   "away": "PSG",
+   "odds": {
+    "1": 4.65,
+    "0": 3.95,
+    "2": 1.76
+   },
+   "odds_books": {
+    "pinnacle_acilis": {
+     "1": 4.6,
+     "0": 4.0,
+     "2": 1.75
+    },
+    "bet365nl_acilis": {
+     "1": 4.33,
+     "0": 3.8,
+     "2": 1.7
+    },
+    "nesine_acilis": {
+     "1": 3.19,
+     "0": 3.57,
+     "2": 1.72
+    },
+    "pinnacle_kapanis": {
+     "1": 4.65,
+     "0": 3.95,
+     "2": 1.76
+    },
+    "bet365nl_kapanis": {
+     "1": 4.75,
+     "0": 3.8,
+     "2": 1.72
+    },
+    "nesine_kapanis": {
+     "1": 3.19,
+     "0": 3.57,
+     "2": 1.72
+    }
+   },
+   "play_pct": {
+    "1": 15.0,
+    "0": 24.0,
+    "2": 61.0
+   },
+   "result": null,
+   "score": null
+  },
+  {
+   "no": 12,
+   "date": null,
+   "kickoff": null,
+   "league": "F1",
+   "home": "Monaco",
+   "away": "Marsilya",
+   "odds": {
+    "1": 2.45,
+    "0": 3.74,
+    "2": 2.79
+   },
+   "odds_books": {
+    "pinnacle_acilis": {
+     "1": 2.65,
+     "0": 3.74,
+     "2": 2.57
+    },
+    "bet365nl_acilis": {
+     "1": 2.5,
+     "0": 3.75,
+     "2": 2.45
+    },
+    "nesine_acilis": {
+     "1": 2.08,
+     "0": 2.49,
+     "2": 2.84
+    },
+    "pinnacle_kapanis": {
+     "1": 2.45,
+     "0": 3.74,
+     "2": 2.79
+    },
+    "bet365nl_kapanis": {
+     "1": 2.4,
+     "0": 3.7,
+     "2": 2.75
+    },
+    "nesine_kapanis": {
+     "1": 2.08,
+     "0": 2.49,
+     "2": 2.84
+    }
+   },
+   "play_pct": {
+    "1": 41.0,
+    "0": 31.0,
+    "2": 28.0
+   },
+   "result": null,
+   "score": null
+  },
+  {
+   "no": 13,
+   "date": null,
+   "kickoff": null,
+   "league": "E0",
+   "home": "Tottenham",
+   "away": "Newcastle United",
+   "odds": {
+    "1": 2.3,
+    "0": 3.84,
+    "2": 2.96
+   },
+   "odds_books": {
+    "pinnacle_acilis": {
+     "1": 2.27,
+     "0": 3.74,
+     "2": 3.07
+    },
+    "bet365nl_acilis": {
+     "1": 2.15,
+     "0": 3.5,
+     "2": 3.1
+    },
+    "nesine_acilis": {
+     "1": 1.71,
+     "0": 3.33,
+     "2": 2.98
+    },
+    "pinnacle_kapanis": {
+     "1": 2.3,
+     "0": 3.84,
+     "2": 2.96
+    },
+    "bet365nl_kapanis": {
+     "1": 2.25,
+     "0": 3.75,
+     "2": 2.9
+    },
+    "nesine_kapanis": {
+     "1": 1.71,
+     "0": 3.33,
+     "2": 2.98
+    }
+   },
+   "play_pct": {
+    "1": 42.0,
+    "0": 27.0,
+    "2": 31.0
+   },
+   "result": null,
+   "score": null
+  },
+  {
+   "no": 14,
+   "date": null,
+   "kickoff": null,
+   "league": "SP1",
+   "home": "Sevilla",
+   "away": "Atletico Madrid",
+   "odds": {
+    "1": 3.58,
+    "0": 3.45,
+    "2": 2.15
+   },
+   "odds_books": {
+    "pinnacle_acilis": {
+     "1": 3.67,
+     "0": 3.56,
+     "2": 2.08
+    },
+    "bet365nl_acilis": {
+     "1": 3.4,
+     "0": 3.6,
+     "2": 2.05
+    },
+    "nesine_acilis": {
+     "1": 2.99,
+     "0": 3.0,
+     "2": 1.96
+    },
+    "pinnacle_kapanis": {
+     "1": 3.58,
+     "0": 3.45,
+     "2": 2.15
+    },
+    "bet365nl_kapanis": {
+     "1": 3.6,
+     "0": 3.3,
+     "2": 2.1
+    },
+    "nesine_kapanis": {
+     "1": 2.99,
+     "0": 3.0,
+     "2": 1.96
+    }
+   },
+   "play_pct": {
+    "1": 24.0,
+    "0": 29.0,
+    "2": 47.0
+   },
+   "result": null,
+   "score": null
+  },
+  {
+   "no": 15,
+   "date": null,
+   "kickoff": null,
+   "league": "I1",
+   "home": "Cagliari",
+   "away": "Inter",
+   "odds": {
+    "1": 7.9,
+    "0": 4.59,
+    "2": 1.44
+   },
+   "odds_books": {
+    "pinnacle_acilis": {
+     "1": 7.58,
+     "0": 4.51,
+     "2": 1.46
+    },
+    "bet365nl_acilis": {
+     "1": 8.5,
+     "0": 4.1,
+     "2": 1.42
+    },
+    "nesine_acilis": {
+     "1": 4.57,
+     "0": 3.47,
+     "2": 1.37
+    },
+    "pinnacle_kapanis": {
+     "1": 7.9,
+     "0": 4.59,
+     "2": 1.44
+    },
+    "bet365nl_kapanis": {
+     "1": 7.0,
+     "0": 4.5,
+     "2": 1.44
+    },
+    "nesine_kapanis": {
+     "1": 4.57,
+     "0": 3.47,
+     "2": 1.37
+    }
+   },
+   "play_pct": {
+    "1": 9.0,
+    "0": 18.0,
+    "2": 73.0
+   },
+   "result": null,
+   "score": null
+  }
+ ]
+}

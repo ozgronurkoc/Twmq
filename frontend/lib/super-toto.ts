@@ -63,11 +63,128 @@ export interface SuperTotoKupon {
   in_set_p: number | null;
   banko_esik: number | null;
   uclu_esik: number | null;
+  /**
+   * Hangi KURALLA donduruldugu. Ilk iki hafta `esik`ti ve kart kural adini
+   * SABIT yaziyordu; 3. hafta `hedef + kalabalik ayari` ile dondurulunca
+   * esikler bos kaldi ve kart "esik / " diye yanlis bir kural bildirdi.
+   */
+  kural: string | null;
   /** Hangi olcekte donduruldugu — bu alan olmadan isaretler yorumlanamaz. */
   arindirma: string | null;
   marj_ort_pct: number | null;
   frozen_at: string | null;
   results_known: boolean | null;
+  /** Oynanacak 16 satir — kuponu dolduracak kisi bunlari gorur. */
+  lines: string[] | null;
+  /**
+   * Kuralin verdigi alternatifler ve her birinin OLCULMUS bedeli. Kupon
+   * "nicin bu" sorusunu ancak yaninda reddettikleriyle cevaplayabilir.
+   */
+  variants: SuperTotoVaryant[];
+  /** Kalabalik ayarinin neyi neye degistigi — kaydin kendi gerekcesi. */
+  kalabalik_gerekcesi: string | null;
+  /** Kupon aninda KESINLIKLE elde olan fiyatla (acilis) kurulan surum. */
+  duyarlilik: SuperTotoDuyarlilik | null;
+}
+
+/** Kuralin ayni haftada urettigi bir secenek ve olculmus bedeli. */
+export interface SuperTotoVaryant {
+  label: string | null;
+  picks: string[];
+  columns: number | null;
+  /** P(en iyi kolon >= 12) — kuponun asil olcusu. */
+  hedef: number | null;
+  in_set_p: number | null;
+  crowd_in_set_p: number | null;
+  crowd_ratio: number | null;
+}
+
+/** Fiyat duyarliligi: kapanis elde degilse bedeli ne olurdu. */
+export interface SuperTotoDuyarlilik {
+  not: string | null;
+  fark: string | null;
+  picks: string[] | null;
+  hedef: number | null;
+}
+
+/**
+ * FIYAT KAYNAKLARI — uc bahisci x acilis/kapanis.
+ *
+ * Her sayi marj ARINDIRILMIS olasiliktir, ham oran degil: ham oranin
+ * hareketi, piyasanin fikir degistirmesiyle bahiscinin marjini
+ * degistirmesini karistirirdi.
+ *
+ * Ilk iki hafta tek bir bultenin tek anini tasiyor; orada `null`dur.
+ */
+export interface SuperTotoFiyatlar {
+  /** Ayni ani gosteren bahisciler; ilki ANA fiyattir. */
+  books: string[];
+  main_book: string;
+  /** Bahisci x an -> ortalama marj (yuzde puan). */
+  margins: Record<string, number>;
+  /**
+   * Kapanisi acilisiyla BIREBIR ayni olan satirlar. Bunlar fiyat degil,
+   * tazelenmemis kayittir: ayrismada buyuk gorunur ve gorus farki
+   * sanilir.
+   */
+  stale_closing: Record<string, number[]>;
+  rows: SuperTotoFiyatSatiri[];
+}
+
+/** Haftanin SONUC karnesi. Uretici: `super_toto_frontend._sonuc_blok`. */
+export interface SuperTotoSonuc {
+  /** 15 karakterlik gercek sonuc dizisi. */
+  results: string;
+  results_source: string | null;
+  results_entered_at: string | null;
+  /** Her dondurulmus kaydin AYNI olcuyle karnesi. */
+  kayitlar: SuperTotoKayitKarnesi[];
+  kalabalik: {
+    halk_kuponu: string;
+    halk_dogru: number;
+    piyasa_kuponu: string;
+    piyasa_dogru: number;
+    beklenen_halk_dogru: number;
+    beklenen_piyasa_dogru: number;
+  };
+  payout: Array<{
+    correct: number;
+    winners: number;
+    prize: number | null;
+  }> | null;
+  payout_source: string | null;
+  note: string;
+}
+
+export interface SuperTotoKayitKarnesi {
+  /** "1. Tahmin" / "2. Tahmin" */
+  ad: string;
+  picks: string[];
+  /** Kaplamanin en iyi kolonunun kac dogrusu var. */
+  best: number;
+  /** Secim kumesinin disinda kalan mac numaralari. */
+  misses: number[];
+  miss_count: number;
+  /** Kuponun KENDI olasiliklarindan gelen beklenti — hafta iyi mi gecti. */
+  expected_misses: number;
+  p_in_set: number;
+  p_at_least_actual: number;
+  per_match: Array<{
+    no: number;
+    pick: string;
+    gercek: string;
+    tuttu: boolean;
+  }>;
+}
+
+export interface SuperTotoFiyatSatiri {
+  no: number;
+  books: Record<string, Record<string, number> | null>;
+  /** Acilistan kapanisa en cok oynayan sembol ve kaydigi miktar. */
+  movement_symbol: string | null;
+  movement: number | null;
+  /** Ayni ani gosteren bahisciler arasindaki en buyuk fark. */
+  disagreement: number;
 }
 
 /** Yerine yenisi kurulmus onceki surum. Revizyon gorunur kalmali. */
@@ -254,6 +371,23 @@ export interface SuperTotoHafta {
   coupon_drift: number[] | null;
   /** Ikinci kayit. Yoksa null — "2. Tahmin" dugmesi cikmaz. */
   tahmin2: SuperTotoTahmin2 | null;
+  /**
+   * Fiyat kaynaklari — uc bahisci x acilis/kapanis. Hafta dosyasi tek bir
+   * bulten tasiyorsa null'dur ve bolum hic cizilmez.
+   */
+  prices: SuperTotoFiyatlar | null;
+  /**
+   * SONUC karnesi — tahmin kayitlarindan AYRI.
+   *
+   * Sonuc gelince tahmin panelleri sonucla doluyordu (mac tablosuna bir
+   * "Sonuc" sutunu, kupon kartina "N/15 kume icinde"). Dondurulmus bir
+   * kaydin uzerine sonradan bilinen bir sey yazmak, kaydin "o an ne
+   * biliniyordu" sorusunu temiz cevaplamasini bozuyordu. Sonuc artik
+   * kendi sekmesinde ve her iki kaydi da AYNI olcuyle karneliyor.
+   *
+   * Sonuc girilmemisse null'dur ve sekme hic gosterilmez.
+   */
+  sonuc: SuperTotoSonuc | null;
 }
 
 /** Verisi girilmis haftalar — beslemeden gelir. */
@@ -284,6 +418,8 @@ export const HAFTALAR: SuperTotoHafta[] = Array.from(
       coupon_today: null,
       coupon_drift: null,
       tahmin2: null,
+      prices: null,
+      sonuc: null,
     },
 );
 
@@ -304,6 +440,18 @@ export function ikinciTahminVarMi(h: SuperTotoHafta): boolean {
 }
 
 /** Sonuclari gelmis hafta — yarim veri ortalamalara karismasin diye ayri. */
+/**
+ * Sonuc karnesi VAR mi — ucuncu sekme bunun uzerine cikar.
+ *
+ * `haftaSonuclandiMi`den ayri: o, hafta dosyasindaki `results` dizisine
+ * bakar; bu ise karnenin gercekten uretilip uretilmedigine. Ikisi normalde
+ * ayni cevabi verir ama besleme eskiyse ayrisir ve o durumda BOS bir
+ * sekme gostermek, olmayan bir sekmeden kotudur.
+ */
+export function sonucVarMi(h: SuperTotoHafta): boolean {
+  return h.sonuc !== null && h.sonuc.kayitlar.length > 0;
+}
+
 export function haftaSonuclandiMi(h: SuperTotoHafta): boolean {
   return typeof h.results === "string" && h.results.length === MAC_SAYISI;
 }

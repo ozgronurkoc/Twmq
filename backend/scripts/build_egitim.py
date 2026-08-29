@@ -41,7 +41,10 @@ from pathlib import Path
 from typing import Any
 
 KOK = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(KOK))
 VARSAYILAN_CIKTI = KOK / "data" / "egitim"
+
+from spor_toto.odds import FIYAT_VARSAYILAN
 
 UA = "Mozilla/5.0 (compatible; spor-toto-lab/1.0)"
 ANA_URL = "https://www.football-data.co.uk/mmz4281/{sezon}/{lig}.csv"
@@ -59,7 +62,7 @@ ANA_LIGLER: tuple[str, ...] = (
 )
 
 #: Kapanis cizgisinin kaynak tercihi — piyasanin son sozu.
-KAPANIS_SIRASI: tuple[str, ...] = ("AvgC", "B365C", "PSC")
+KAPANIS_SIRASI: tuple[str, ...] = (FIYAT_VARSAYILAN + "C", "B365C", "PSC")
 
 #: Acilis cizgisinin kaynak tercihi — piyasanin ilk sozu.
 #:
@@ -73,11 +76,11 @@ KAPANIS_SIRASI: tuple[str, ...] = ("AvgC", "B365C", "PSC")
 #: macin acilisi `Avg`, kapanisi `B365C` cikarsa aradaki fark hareket degil
 #: kaynak farki olurdu. Bu yuzden `cizgi_cifti` yalnizca **ayni ailenin**
 #: iki ucunu esler (`Avg`↔`AvgC`, `B365`↔`B365C`, `PS`↔`PSC`).
-ACILIS_SIRASI: tuple[str, ...] = ("Avg", "B365", "PS")
+ACILIS_SIRASI: tuple[str, ...] = (FIYAT_VARSAYILAN, "B365", "PS")
 
 #: Acilis→kapanis eslesmesi: ayni bahisci ailesinin iki ucu.
 CIZGI_AILELERI: tuple[tuple[str, str], ...] = (
-    ("Avg", "AvgC"), ("B365", "B365C"), ("PS", "PSC"),
+    (FIYAT_VARSAYILAN, FIYAT_VARSAYILAN + "C"), ("B365", "B365C"), ("PS", "PSC"),
 )
 
 #: A2 (bahisci anlasmazligi) icin tasinan KAPANIS kaynaklari.
@@ -103,7 +106,8 @@ CIZGI_AILELERI: tuple[tuple[str, str], ...] = (
 #: yuzden A2'nin BIRINCIL ozelligi sabit `B365`↔`PS` cifti, `Max/Avg` ise
 #: ikincil ve betimleyici kalir (bkz. `egitim.bahisci_ayrismasi`).
 A2_KAYNAKLARI: tuple[tuple[str, str], ...] = (
-    ("B365C", "b_B365"), ("PSC", "b_PS"), ("MaxC", "b_Max"), ("AvgC", "b_Avg"),
+    ("B365C", "b_B365"), ("PSC", "b_PS"), ("MaxC", "b_Max"),
+    (FIYAT_VARSAYILAN + "C", "b_Avg"),
 )
 
 #: FTR -> kupon sembolu
