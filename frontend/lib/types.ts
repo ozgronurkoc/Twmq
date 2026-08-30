@@ -1103,6 +1103,35 @@ export interface OlculmusIsabet {
   alternatif?: TahminciSkoru | null;
 }
 
+/** Geniş kesitin bir katı: bir kupon sezonu, korpustan o sezon çıkarılarak. */
+export interface GenisKat extends TahminciSkoru {
+  sezon: string;
+  test_hafta: number;
+  egitim_hafta: number;
+  /** 2025/26'da 0 olması DOĞRU: o sezon korpusta zaten yok. */
+  korpustan_cikarilan_hafta: number;
+}
+
+/**
+ * Dört sezonluk ölçüm (114 hafta / 1.710 maç), sezon dışarıda bırakmalı.
+ *
+ * `olculmus_isabet`in YERINE geçmez, onu İÇİNE ALIR: dar kesit (2025/26)
+ * bu şemanın dördüncü katıdır. İkisi çelişmez.
+ *
+ * Yalnızca `?genis=1` ile gelir; alan yoksa istenmemiştir (ölçülemedi
+ * DEĞİL).
+ */
+export interface GenisKesit {
+  olculdu: boolean;
+  not?: string;
+  kesit?: string;
+  n_hafta?: number;
+  sezonlar?: string[];
+  referans?: string;
+  manset?: TahminciSkoru;
+  alternatif?: (TahminciSkoru & { katlar: GenisKat[] }) | null;
+}
+
 export interface TahminUyarisi {
   ad: string;
   metin: string;
@@ -1120,6 +1149,8 @@ export interface TahminResponse {
   olculen_kaynak: boolean;
   tahminler: TahminSatiri[];
   olculmus_isabet: OlculmusIsabet;
+  /** Yalnızca `?genis=1` istendiğinde gelir. Yokluğu "ölçülemedi" demek değildir. */
+  genis_kesit?: GenisKesit;
   uyarilar: TahminUyarisi[];
   bos_sebep: string | null;
 }

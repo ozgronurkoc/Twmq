@@ -135,7 +135,7 @@ spor_toto/evaluate.py  ◄── spor_toto/predict.py     (sözleşme + 3 refera
 | UI | `frontend/components/tahmin/parts.tsx` | — | Olasılık çubuğu, isabet kartı, sınırlar |
 | Tahmin | `backend/spor_toto/egitim.py` | — | Eğitim korpusu okuyucusu (**istatistiğe girmez**) |
 | Üretim | `backend/scripts/build_egitim.py` | — | Korpus üretimi (football-data, 4 sezon, **iki çizgi + bahisçi kırılımı**) |
-| Test | `backend/tests/test_predict.py` · `test_evaluate.py` · `test_recalibrate.py` · `test_egitim.py` · `test_cizgi.py` · `test_bahisci.py` · `test_disari.py` · `test_tahmin.py` | — | Tahmin katmanı, **ürün** ve ayrım bekçisi (229) |
+| Test | `backend/tests/test_predict.py` · `test_evaluate.py` · `test_recalibrate.py` · `test_egitim.py` · `test_cizgi.py` · `test_bahisci.py` · `test_disari.py` · `test_tahmin.py` | — | Tahmin katmanı, **ürün** ve ayrım bekçisi (321) |
 
 **İşleyen sezon (2026/27)** — bu satırlar yukarıdaki haritanın parçasıdır,
 ayrı tabloda tutulmuştur.
@@ -153,7 +153,7 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/components/super-toto/tahmin2.tsx` | **2. Tahmin** paneli — `1. Tahmin` / `2. Tahmin` sekmeleri arasında geçilir; para birimli hiçbir sayı yok. Hafta kapandığında sonuç sütunu ve ayar karnesi açılır (§3.38) |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **1.833 test**; **85'i** istatistik katmanına (`history` `odds` `backtest`
+paketi toplam **1.840 test**; **85'i** istatistik katmanına (`history` `odds` `backtest`
 `api_stats` `api_backtest` `snapshot_iddaa`), **567'si** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre`
@@ -3798,6 +3798,130 @@ koşulmadı.
 
 ---
 
+### 3.44 Geniş kesit tahmin katmanına bağlandı — ve yolda bir kusur çıktı
+
+§3.43 kesiti 114 haftaya çıkardı ama **arena ile sınırlı kaldı**: `/tahmin`ın
+ölçümü 36 haftada durdu. Bu bölüm o bağlantıyı ve bağlarken bulunan sessiz
+kusuru kaydeder.
+
+#### Önce kusur: özellikler üç sezonda BOŞ geliyordu
+
+`recalibrate._ozellik_tablosu` parametresizdi (`load_odds()` → her zaman
+2025/26 arşivi) ve arama `hafta["week"]` ile yapılıyordu. Oysa
+`evaluate.kupon_kesiti_tum` sezonları birleştirirken `week`i
+sentetikleştiriyor (`yil*100 + hafta` → `202305`) ve **orijinali
+`kupon_hafta`da saklıyor**. Sentetik numara varsayılan arşivde hiç yoktu.
+
+Ölçülen sonuç: üç yeni sezonun **1.170 maçının tamamında** lig
+"bilinmiyor", favori `None`.
+
+| Kesit | Özellik dolu | Boş |
+|---|---|---|
+| 2022/23 | 0 | **255** |
+| 2023/24 | 0 | **465** |
+| 2024/25 | 0 | **450** |
+| 2025/26 | 540 | 0 |
+
+Hiçbir şey patlamıyordu. `kademe` (arena temsilcisi `KADEMELER[-1]` =
+`etkilesim_favori`; lig, bant, form, elo, dc, h2h, xg, etkileşim okur) ve
+`agac` kesitin **%68'inde kör koşuyordu** ve arena tablosu bunu ölçüm diye
+raporluyordu. `/tahmin`ın `kalibre_bias`i etkilenmedi — `bias` basamağı o
+sütunları zaten okumuyor.
+
+Bedeli ölçüldü (tam basamak, geniş kesit):
+
+| | Brier | İsabet |
+|---|---|---|
+| Düzeltme öncesi (kör) | 0,5579 | %57,31 |
+| Düzeltme sonrası | **0,5568** | **%57,55** |
+
+Küçük, çünkü model körken zarifçe bozuluyor — sessiz kalmasının sebebi de
+tam olarak bu. Bekçileri: `test_recalibrate.py::test_genis_kesitte_ozellikler_BOS_gelmez`
+(sonuç) ve `::test_sentetik_hafta_numarasi_arsive_SORULMAZ` (mekanizma).
+İkisi ayrı, çünkü biri veri değişince öbürü kod değişince kırılır.
+
+#### Kat kurgusu: her sezon, korpustan o sezon çıkarılarak
+
+Geniş kesitte kupon maçlarının 1.155/1.605'i korpusta da var; düz ölçüm
+sızıntı olurdu. Her kupon sezonu ölçülürken korpustan **o sezonun tamamı**
+(22 ligin hepsi) çıkarılır ve model kalanla yeniden eğitilir. Ölçüldü —
+çıkarma sonrası ortaklık her katta **tam sıfır**:
+
+| Kat | Maç | Tam korpusla ortak | Sezon çıkarılınca |
+|---|---|---|---|
+| 2022/23 | 255 | 255 | **0** |
+| 2023/24 | 465 | 465 | **0** |
+| 2024/25 | 450 | 435 | **0** |
+| 2025/26 | 435 | 0 | **0** |
+
+Son satır kurgunun kilidi: korpus 2425'te bitiyor, yani 2025/26 korpusta
+zaten yok. **Bugünkü 36 haftalık ölçüm bu şemanın dördüncü katıdır.**
+Geniş kesit dar olanı değiştirmiyor, içine alıyor — iki sayı çelişmez.
+
+#### Ölçüm: belirsizlik küçüldü, etki değil
+
+| Kesit | n | piyasa Brier | `kalibre_bias` Brier | fark [%95] | geçti |
+|---|---|---|---|---|---|
+| Dar (2025/26) | 540 | 0,5740 | 0,5732 | −0,0008 [−0,0018, **+0,0003**] | hayır |
+| Geniş (4 sezon) | 1.710 | 0,5584 | 0,5571 | −0,0013 [−0,0021, **−0,0006**] | **EVET** |
+
+Kat kat:
+
+| Kat | test hf | eğitim hf | çıkarılan | Brier | İsabet |
+|---|---|---|---|---|---|
+| 2022/23 | 17 | 135 | 48 | 0,5670 | %57,6 |
+| 2023/24 | 31 | 138 | 45 | 0,5434 | %57,9 |
+| 2024/25 | 30 | 138 | 45 | 0,5462 | %59,1 |
+| 2025/26 | 36 | 183 | 0 | 0,5732 | %55,6 |
+
+**Bu "model iyileşti" DEĞİLDİR.** Etki büyüklüğü aynı kaldı (−0,0008 →
+−0,0013, ikisi de binde bir mertebesinde); küçülen şey belirsizlik. 540
+maçta kurulamayan anlamlılık 1.710 maçta kuruluyor. Verinin bütün kaldıracı
+buydu ve ölçülen tam olarak budur.
+
+İkinci ayrıntı aynı yöne bakıyor: geniş kesitte `kalibre_bias`ın Brier'i
+daha iyi (0,5571) ama **isabeti daha düşük** (%57,4'e karşı %57,5). Yani
+kalibrasyon olasılık kalitesini artırıyor, sembol seçimini değil — tek
+kolon oynayan biri için iki tahminci hâlâ aynı. Manşetin değişmemesinin
+gerekçesi budur.
+
+#### Neden `?genis=1` ile, gövdede koşulsuz değil
+
+`_egitilmis_alternatif` diskte taze artefakt bulursa korpusu **hiç okumaz**
+(~38 sn kazanç). Geniş ölçüm kat başına farklı bir eğitim seti ister, yani
+tek artefaktla yapılamaz ve korpusu zorunlu kılar. Koşulsuz çağrılsaydı
+`/api/tahmin`in soğuk bedeli sessizce 38 saniye artardı. Profil:
+
+| Aşama | Süre |
+|---|---|
+| Korpus okuması (bugün artefaktla atlanabiliyor) | 38,3 sn |
+| Geniş kesit kurulumu | 0,2 sn |
+| 4 kat eğitim + skor | 3,0 sn |
+| Eşleştirilmiş bootstrap | 0,1 sn |
+
+Yani korpus zaten yüklüyken **marjinal bedel ~3,3 sn**. Uç `?genis=1`,
+CLI `python -m spor_toto.tahmin --genis`.
+
+`_uyarilar` bloğuna `genis_kesitte_anlamli` eklendi: `alternatif_gecmedi`
+uyarısı "540 maçta anlamlılık kurulamıyor" diyor ve bu artık yarım bir
+doğru. Gövdenin kendi kendisiyle çelişmesindense çelişkiyi **taşıması**
+doktrindir (§doktrin 4).
+
+#### Yan bulgu: `_yazdir` yaklaşan maç varken çöküyordu
+
+Ölçüm bloklarını CLI'ya bağlarken çıktı. İç döngüdeki
+`g = "EVET"/"hayir"` ataması fonksiyonun `g` parametresini eziyordu; hemen
+ardından gelen `g["uyarilar"]` bir dizgede indeksleme olup `TypeError`
+veriyordu. Yaklaşan maç YOKKEN erken `return` araya girdiği için hata
+görünmüyordu — yani tam olarak elle kullanımda, fikstür doluyken
+patlıyordu. `# pragma: no cover` etiketi kapsamı susturuyordu; kaldırıldı.
+
+Aynı yerde ikinci bir düzeltme: o erken `return` ölçüm bloklarını da
+yutuyordu. Artık fikstür boşken de ölçüm basılıyor — o sayı yaklaşan maçtan
+bağımsız, sürümlenmiş arşivden koşuyor. Kırmızı çizgi "olasılık ölçümsüz
+çıkmaz" der; tersi serbesttir ve hafta arası tam da bakılacak zamandır.
+
+
 ## 4. Sayfada bugün ne var
 
 **`/istatistik`** — sezon dağılımı (en sık sonuç + pay çubuğu) · 5 sayı kutusu (sembol
@@ -4760,7 +4884,7 @@ python -m spor_toto.kosum                  # kayıtlı koşumlar
 python -m spor_toto.kosum --son disari     # son koşumun ortamı
 
 # Denetim
-pytest -q                                  # 1.833 test (85'i bu katman, 567'si tahmin)
+pytest -q                                  # 1.840 test (85'i bu katman, 567'si tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out

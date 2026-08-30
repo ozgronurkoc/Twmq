@@ -455,3 +455,70 @@ def test_sutun_alt_basamaklara_sizmaz(kademe, alan, deger):
             assert not ayni, f"{k} {alan} okumali ama okumuyor"
         else:
             assert ayni, f"{k} {alan} okumamali ama okuyor — sizinti"
+
+
+# ─── geniş kesitte özellik birleşmesi ────────────────────────────────────────
+
+def test_genis_kesitte_ozellikler_BOS_gelmez():
+    """Çok sezonlu kesitte lig/favori **gerçekten** birleşmeli.
+
+    **Bu kusur bir kez yaşandı ve tamamen sessizdi.** `_ozellik_tablosu`
+    parametresizdi (`load_odds()` → hep 2025/26 arşivi) ve arama
+    `hafta["week"]` ile yapılıyordu. Oysa `evaluate.kupon_kesiti_tum`
+    sezonları birleştirirken `week`i sentetikleştiriyor
+    (`yil*100 + hafta` → `202305`); o numara varsayılan arşivde **hiç**
+    bulunmuyordu.
+
+    Sonuç: üç yeni sezonun **1.170 maçının tamamında** `ek` boş sözlük
+    dönüyor, lig "bilinmiyor", favori `None` oluyordu. Hiçbir şey
+    patlamıyordu — `kademe` (tam basamak: lig, bant, form, elo, dc, h2h,
+    xg, etkileşim) ve `agac` kesitin **%68'inde kör koşuyordu** ve arena
+    tablosu bunu ölçüm diye raporluyordu.
+
+    Ölçülen bedel: tam basamak Brier 0,5579 → 0,5568, isabet %57,31 →
+    %57,55. Küçük, çünkü model körken zarifçe bozuluyor — sessiz kalmasının
+    sebebi de tam olarak bu.
+
+    Test niye eşiksiz ve tam: tolerans, bu kusurun geri sızacağı yerdir.
+    Bir tek maç bile boş gelirse birleşme bozulmuştur.
+    """
+    from spor_toto.evaluate import kupon_kesiti_tum
+    from spor_toto.recalibrate import _mac_ozellikleri
+
+    kesit = kupon_kesiti_tum()
+    if not kesit:
+        pytest.skip("kupon kesiti yok (oran arşivi ya da geçmiş sezon eksik)")
+
+    bos: dict[str, int] = {}
+    for hafta in kesit:
+        sezon = str(hafta.get("sezon") or "?")
+        for o in _mac_ozellikleri(hafta):
+            if o["lig"] == "bilinmiyor" or o["favori"] is None:
+                bos[sezon] = bos.get(sezon, 0) + 1
+
+    assert not bos, (
+        "geniş kesitte özellikler boş geldi — sezonlu birleşme bozuk: "
+        + ", ".join(f"{s}={n} maç" for s, n in sorted(bos.items()))
+    )
+
+
+def test_sentetik_hafta_numarasi_arsive_SORULMAZ():
+    """`kupon_hafta` varsa arama ONDAN gitmeli, sentetik `week`ten değil.
+
+    Yukarıdaki testin nedensel yarısı: o test sonucu (boş gelmedi) ölçer,
+    bu test **mekanizmayı** sabitler. İkisi ayrı, çünkü biri veri
+    değişince, öbürü kod değişince kırılır.
+    """
+    from spor_toto.recalibrate import hafta_numarasi, oran_sezonu
+
+    hafta = {"week": 202305, "kupon_hafta": 5, "sezon": "2023/2024"}
+    assert hafta_numarasi(hafta) == 5, "sentetik numara arşive sorulmuş"
+    assert oran_sezonu(hafta) == "2023_24"
+
+    # Varsayılan kesitte `kupon_hafta` YOK — davranış değişmemeli.
+    assert hafta_numarasi({"week": 30, "sezon": "2025/2026"}) == 30
+    assert oran_sezonu({"week": 30, "sezon": "2025/2026"}) == "2025_26"
+
+    # Sezon okunamıyorsa varsayılan arşive düşülür, uydurulmaz.
+    assert oran_sezonu({"week": 30}) is None
+    assert oran_sezonu({"week": 30, "sezon": "bozuk"}) is None

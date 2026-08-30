@@ -328,6 +328,34 @@ parametreleştirildi; yeni üç sezonda eşleşme **%100** çıktı.
 piyasaya çöktüğü, `venn_abers`'in ise **yanlış yöne** işaret ettiği ortaya
 çıktı.
 
+**Sonra aynı kesit `/tahmin`e de bağlandı** (§3.44) ve bağlarken sessiz bir
+kusur çıktı: `recalibrate._ozellik_tablosu` sezonsuzdu ve arama sentetik
+hafta numarasıyla yapılıyordu, yani üç yeni sezonun **1.170 maçının
+tamamında** lig/favori boş geliyordu — `kademe` ve `agac` kesitin %68'inde
+kör koşmuş. Düzeltildi (tam basamak Brier 0,5579 → 0,5568) ve iki bekçiye
+bağlandı.
+
+Ölçümün kendisi kat kat kuruldu: her kupon sezonu için korpustan **o sezonun
+tamamı** çıkarılıp model yeniden eğitiliyor; çıkarma sonrası ortaklık her
+katta tam sıfır. Bugünkü 36 haftalık ölçüm bu şemanın **dördüncü katıdır**,
+yani geniş kesit dar olanı değiştirmiyor, içine alıyor.
+
+| Kesit | n | piyasa | `kalibre_bias` | fark [%95] | geçti |
+|---|---|---|---|---|---|
+| Dar (2025/26) | 540 | 0,5740 | 0,5732 | −0,0008 [−0,0018, **+0,0003**] | hayır |
+| Geniş (4 sezon) | 1.710 | 0,5584 | 0,5571 | −0,0013 [−0,0021, **−0,0006**] | **EVET** |
+
+**Bu "model iyileşti" değildir**: etki büyüklüğü aynı kaldı, küçülen şey
+belirsizlik. 540 maçta kurulamayan anlamlılık 1.710 maçta kuruluyor — yeni
+verinin bütün kaldıracı buydu. Manşet yine de değişmedi: geniş kesitte
+`kalibre_bias`ın Brier'i daha iyi ama **isabeti daha düşük** (%57,4'e karşı
+%57,5), yani tek kolon seçen biri için iki tahminci hâlâ aynı.
+
+Ölçüm `?genis=1` (CLI'da `--genis`) ile gelir, varsayılan gövdede **yoktur**:
+kat başına farklı eğitim seti gerektiği için artefakt kestirmesi kullanılamaz
+ve korpus okunmak zorundadır (~38 sn soğuk; korpus zaten yüklüyse marjinal
+bedel ~3,3 sn).
+
 ### 5.1 Veri akışı
 
 ```
@@ -904,7 +932,7 @@ backend/
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
                        sehir/ · xg/
-  tests/               pytest (60 dosya → 1.833 test; §9'da katman dökümü)
+  tests/               pytest (60 dosya → 1.840 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1090,7 +1118,7 @@ dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri t
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
 eşleme, ikinci kayıt). **60 test dosyası, parametrizasyonla
-1.833 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+1.840 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 

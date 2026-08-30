@@ -493,7 +493,7 @@ def root():
             "GET  /api/stats",
             "GET  /api/stats/<week>",
             "GET  /api/backtest",
-            "GET  /api/tahmin         (yaklasan maclar + olculmus isabet)",
+            "GET  /api/tahmin         (yaklasan maclar + olculmus isabet; ?genis=1 dort sezonluk olcumu de ekler)",
             "GET  /api/benzer         (bu oranda gecmiste ne oldu)",
             "POST /api/solve",
             "GET  /health             (liveness: süreç ayakta mı)",
@@ -744,7 +744,7 @@ def _parse_esik(raw: Any, varsayilan: float) -> float:
     return min(1.0, max(0.0, v))
 
 
-def _tahmin_cached(limit: int | None) -> dict[str, Any]:
+def _tahmin_cached(limit: int | None, genis: bool = False) -> dict[str, Any]:
     """Tahmin govdesi — **onbelleklenmez ve bu kasitli.**
 
     Digerlerinden farki yonu: `stats` ve `backtest` surumlenmis bir dosyayi
@@ -755,9 +755,14 @@ def _tahmin_cached(limit: int | None) -> dict[str, Any]:
 
     Bedeli kucuk: govde iki dosya okur ve `olculmus_isabet` zaten kendi
     icinde `lru_cache`li (arsiv surumlenmis, degismez).
+
+    `genis=True` bu dengeyi degistirir ve bu yuzden VARSAYILAN DEGIL:
+    genis kesit olcumu korpusu okumak zorunda (~38 sn soguk, sonrasinda
+    `genis_kesit_isabeti` kendi `lru_cache`inde). Uc bunu yalnizca
+    `?genis=1` geldiginde oder.
     """
     from spor_toto.tahmin import rapor
-    return rapor(limit=limit)
+    return rapor(limit=limit, genis=genis)
 
 
 @lru_cache(maxsize=32)
@@ -815,7 +820,9 @@ def api_tahmin():
             limit = max(1, min(int(str(ham).strip()), 500))
         except (TypeError, ValueError):
             limit = None
-    return jsonify(_tahmin_cached(limit))
+    genis = str(request.args.get("genis") or "").strip().lower() in {
+        "1", "true", "evet", "yes"}
+    return jsonify(_tahmin_cached(limit, genis))
 
 
 @lru_cache(maxsize=128)
