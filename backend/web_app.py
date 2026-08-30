@@ -478,26 +478,60 @@ def _health_govde(only: str | None, fresh: bool) -> dict[str, Any]:
 
 # ─── API only ─────────────────────────────────────────────────────────────────
 
+#: Uçların tek satırlık açıklamaları. Liste DEĞİL sözlük: yolların kendisi
+#: Flask'ın kayıt tablosundan okunur, buradan yalnızca açıklama gelir.
+#:
+#: **Niçin böyle.** Liste uzun süre elle yazılıydı ve sessizce eskidi:
+#: `/api/pazar` ve `/api/takimlar` aylarca kayıtlı, çalışır ve
+#: `replit.md`de yazılıyken servis kökünün envanterinde YOKTU. Kusuru
+#: MCP deneyinin envanter denetimi buldu (§6H) — yani bir uç envanteri
+#: elle tutulduğu sürece, onu okuyan her yüzey eksik bir dünya görür.
+UC_ACIKLAMALARI: dict[str, str] = {
+    "/api/health": "readiness: tam değişmez raporu",
+    "/api/health/history": "son koşuların özeti",
+    "/api/health/kupon": "kullanıcının kendi kuponu",
+    "/api/tahmin": ("yaklasan maclar + olculmus isabet; "
+                    "?genis=1 dort sezonluk olcumu de ekler"),
+    "/api/benzer": "bu oranda gecmiste ne oldu",
+    "/api/pazar": "alt/ust 2,5 ve Asya handikabi",
+    "/api/takimlar": "kucultulmus takim gucu",
+    "/health": "liveness: süreç ayakta mı",
+}
+
+
+def uc_envanteri(uygulama: Flask | None = None) -> list[str]:
+    """Kayıtlı uçları `METOD  /yol  (açıklama)` biçiminde döndürür.
+
+    Kaynak Flask'ın kendi kayıt tablosudur, elle yazılmış bir liste değil;
+    yeni bir uç eklendiğinde envanter **kendiliğinden** doğru olur.
+
+    `uygulama` parametresi yalnızca test içindir: davranışı sınamak için
+    küresel `app`'e uç eklemek gerekmesin. Flask'ın `url_map`'i salt
+    okunur bir özelliktir ve testte kurcalanması hem kırılgan hem de
+    süreç genelinde sızıntıdır.
+    """
+    hedef = uygulama or app
+    satirlar = []
+    for kural in hedef.url_map.iter_rules():
+        yol = str(kural.rule)
+        if yol != "/health" and not yol.startswith("/api"):
+            continue
+        metodlar = sorted((kural.methods or set()) & {"GET", "POST"})
+        if not metodlar:
+            continue
+        aciklama = UC_ACIKLAMALARI.get(yol)
+        ek = f"  ({aciklama})" if aciklama else ""
+        satirlar.append(f"{'/'.join(metodlar):<4} {yol}{ek}")
+    return sorted(satirlar, key=lambda s: s.split()[1])
+
+
 @app.route("/", methods=["GET"])
 def root():
     return jsonify({
         "service": "spor-toto-api",
         "version": __version__,
         "frontend": "Next.js only — bu process HTML servis etmez",
-        "endpoints": [
-            "GET  /api/meta",
-            "GET  /api/health         (readiness: tam değişmez raporu)",
-            "GET  /api/health/checks",
-            "GET  /api/health/history  (son koşuların özeti)",
-            "POST /api/health/kupon    (kullanıcının kendi kuponu)",
-            "GET  /api/stats",
-            "GET  /api/stats/<week>",
-            "GET  /api/backtest",
-            "GET  /api/tahmin         (yaklasan maclar + olculmus isabet; ?genis=1 dort sezonluk olcumu de ekler)",
-            "GET  /api/benzer         (bu oranda gecmiste ne oldu)",
-            "POST /api/solve",
-            "GET  /health             (liveness: süreç ayakta mı)",
-        ],
+        "endpoints": uc_envanteri(),
     })
 
 
