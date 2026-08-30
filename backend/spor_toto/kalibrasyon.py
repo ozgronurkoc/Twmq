@@ -60,8 +60,8 @@ def kalibrasyon_egrisi(yontem: str = ARINDIRMA_VARSAYILAN,
     Üç sembol havuzlanır: soru "ev sahipleri ne kadar kazanır" değil,
     **"piyasa bir olasılık söylediğinde o olasılık tutuyor mu"**.
     """
-    from .benzer import _wilson
     from .egitim import korpus_yukle
+    from .ortak import wilson
 
     noktalar: list[tuple] = []
     for r in korpus_yukle(yol):
@@ -81,7 +81,7 @@ def kalibrasyon_egrisi(yontem: str = ARINDIRMA_VARSAYILAN,
         k = sum(1 for t in g if t[1])
         bekleniyor = sum(t[0] for t in g) / n
         gercek = k / n
-        alt, ust = _wilson(k, n)
+        alt, ust = wilson(k, n)
         icinde = alt <= bekleniyor <= ust
         sapan += 0 if icinde else 1
         satirlar.append({

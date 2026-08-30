@@ -164,6 +164,85 @@ def test_gecersiz_oran_reddedilir():
         benzer_maclar({"1": 1.0, "0": 3.0, "2": 3.0})
 
 
+# ─── girdi doğrulama ──────────────────────────────────────────────────────────
+
+@pytest.mark.parametrize("bozuk", [float("inf"), float("nan"), float("-inf")])
+def test_sonlu_olmayan_oran_adiyla_reddedilir(bozuk):
+    """`inf` eskiden **kabul ediliyordu** — bu testin asıl sebebi o.
+
+    `inf <= 1.0` yanlıştır, yani eski kapıdan geçerdi; `implied_probs` ona
+    `0.0` olasılık verir ve üç anahtar döndüğü için `len(hedef) != 3`
+    kontrolü de yakalamazdı. Sorgu koşar, bir sembolü olmayan hedef
+    vektörle korpusu tarar ve çıkan sayı bir cevap gibi görünürdü.
+
+    `nan` yakalanıyordu ama mesajı yanlış yeri gösteriyordu ("üç sembolün
+    de oranı gerekli" — kullanıcı üçünü de vermişken).
+    """
+    with pytest.raises(ValueError, match="sonlu"):
+        benzer_maclar({"1": bozuk, "0": 3.04, "2": 2.44})
+
+
+def test_tavani_asan_tolerans_reddedilir():
+    """Otomatik yolun durduğu yerde elle yol da durmalı.
+
+    `EN_COK_TOLERANS` uyarlanan aramanın tavanı ve gerekçesi sabitin kendi
+    yorumunda yazılı: *"Ötesi 'benzer maç' olmaktan çıkar."* Elle verilen
+    tolerans bu tavanı tanımıyordu; `tolerans=0.9` bütün korpusu "benzer"
+    sayardı.
+    """
+    with pytest.raises(ValueError, match="en çok"):
+        benzer_maclar(ORNEK, tolerans=0.50)
+
+
+def test_tavanin_kendisi_kabul_edilir():
+    """Sınır **dahil** — `test_tolerans_buyudukce_orneklem_artar` 0,05 kullanıyor."""
+    r = benzer_maclar(ORNEK, tolerans=EN_COK_TOLERANS)
+    assert r["tolerans"] == EN_COK_TOLERANS
+
+
+@pytest.mark.parametrize("bozuk", [-0.01, float("nan")])
+def test_gecersiz_tolerans_reddedilir(bozuk):
+    with pytest.raises(ValueError):
+        benzer_maclar(ORNEK, tolerans=bozuk)
+
+
+@pytest.mark.parametrize("bozuk", [0, -5])
+def test_gecersiz_en_az_reddedilir(bozuk):
+    with pytest.raises(ValueError, match="en_az"):
+        benzer_maclar(ORNEK, en_az=bozuk)
+
+
+# ─── mesafe kalitesi ──────────────────────────────────────────────────────────
+
+def test_mesafe_ozeti_yaricapin_icinde_ve_sirali():
+    r = benzer_maclar(ORNEK, tolerans=0.02)
+    m = r["mesafe"]
+    assert m["en_yakin"] <= m["ortanca"] <= m["en_uzak"]
+    assert m["en_yakin"] <= m["ortalama"] <= m["en_uzak"]
+    assert 0.0 <= m["en_yakin"]
+    assert m["en_uzak"] <= 0.02
+
+
+def test_bos_sonucta_mesafe_yok():
+    """Sayı yoksa mesafe de yok — boş kümede 0.0 basmak yanlış olurdu."""
+    r = benzer_maclar({"1": 1.01, "0": 1000.0, "2": 1000.0}, tolerans=0.0)
+    assert r["toplam"]["n"] == 0
+    assert r["mesafe"] is None
+
+
+def test_genisleyen_arama_ortancasini_tavana_dogru_iter():
+    """Mesafe bloğunun varlık sebebi: `tolerans_genisledi` bir boolean.
+
+    Genişlemiş bir arama "benzer maç buldum" der ama örneklemi sınırdan
+    toplamış olabilir. Ortanca mesafe bunu gösteren tek sayıdır.
+    """
+    dar = benzer_maclar(ORNEK, tolerans=0.02)
+    genis = benzer_maclar(ORNEK, tolerans=EN_COK_TOLERANS)
+    assert genis["mesafe"]["ortanca"] > dar["mesafe"]["ortanca"]
+    # En yakın maç değişmez — genişleyen şey kümenin ucu, çekirdeği değil.
+    assert genis["mesafe"]["en_yakin"] == dar["mesafe"]["en_yakin"]
+
+
 # ─── regresyon: ölçülen sayılar ───────────────────────────────────────────────
 
 def test_olculen_sayilar_korunur():
@@ -218,6 +297,13 @@ def test_api_govdesi_n_ve_ga_tasir(istemci):
 @pytest.mark.parametrize("sorgu", [
     "", "?oran=abc", "?oran=1.82,3.04", "?oran=1.0,3.0,3.0",
     "?oran=1.82,3.04,2.44&arindirma=kelly",
+    # Okunan ama sinir disi degerler. Bunlar eskiden **kirpiliyordu**:
+    # `tolerans=0.9` sessizce 1.0 olup butun korpusu "benzer" sayiyor,
+    # `en_az=0` sessizce 1 oluyordu. Istek reddedilmiyor, baska bir
+    # sorguya cevriliyordu.
+    "?oran=1.82,3.04,2.44&tolerans=0.9",
+    "?oran=1.82,3.04,2.44&tolerans=-0.1",
+    "?oran=1.82,3.04,2.44&en_az=0",
 ])
 def test_api_bozuk_girdi_400_verir(istemci, sorgu):
     assert istemci.get("/api/benzer" + sorgu).status_code == 400

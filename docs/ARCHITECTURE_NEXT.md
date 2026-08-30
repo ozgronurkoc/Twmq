@@ -45,7 +45,7 @@ yani boşluk üç belgeye birden yayılıyordu. Artık liste
 | GET | `/api/pazar?arindirma=…` | 1X2 dışı pazarlar (alt/üst 2,5 · Asya handikabı) — fiyat **ve** ölçülmüş kalibrasyonu birlikte |
 | GET | `/api/takimlar?lig=…&sezon=…` | Takım bazlı istatistik — **küçültülmüş**; her satırda `n` ve `kucultme` |
 | GET | `/api/tahmin?limit=N` | Yaklaşan maçlar — olasılık **ve** ölçülmüş isabet birlikte |
-| GET | `/api/benzer?oran=…` | "Bu oranda geçmişte ne oldu" — 31 bin maçlık korpus |
+| GET | `/api/benzer?oran=…&tarih=…` | "Bu oranda geçmişte ne oldu" — 31 bin maçlık korpus; `tarih` verilirse evren o günden **öncesiyle** sınırlı (kronolojik sorgu) |
 | POST | `/api/solve` | Tüm motor özellikleri |
 
 İstatistik katmanının durumu, alınan kararlar ve yol haritası:

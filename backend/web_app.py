@@ -776,7 +776,7 @@ def api_tahmin():
 @lru_cache(maxsize=128)
 def _benzer_cached(oran: tuple[float, float, float], tolerans: float | None,
                    en_az: int, lig: str | None, sezon: str | None,
-                   yontem: str) -> dict[str, Any]:
+                   yontem: str, tarih: str | None = None) -> dict[str, Any]:
     """Benzer mac sorgusu onbelleklenir — korpus surumlenmis bir dosyadir.
 
     `tahmin`in aksine burada zaman gecmesi cevabi degistirmez: 31 bin maclik
@@ -785,7 +785,7 @@ def _benzer_cached(oran: tuple[float, float, float], tolerans: float | None,
     from spor_toto.benzer import benzer_maclar
     return benzer_maclar({"1": oran[0], "0": oran[1], "2": oran[2]},
                          tolerans=tolerans, en_az=en_az, lig=lig,
-                         sezon=sezon, yontem=yontem)
+                         sezon=sezon, yontem=yontem, tarih=tarih)
 
 
 @app.route("/api/benzer", methods=["GET"])
@@ -794,7 +794,11 @@ def api_benzer():
     "Bu oranda gecmiste ne oldu?"
 
     `?oran=1.82,3.04,2.44` zorunlu; istege bagli `?tolerans=`, `?en_az=`,
-    `?lig=`, `?sezon=`, `?arindirma=`.
+    `?lig=`, `?sezon=`, `?arindirma=`, `?tarih=`.
+
+    `?tarih=YYYY-MM-DD` evreni o gunden ONCESIYLE sinirlar (kati kucuktur,
+    yani aynı gun oynanan maclar da disarida). Verilmezse butun korpus
+    aranir -- eski davranis.
 
     Govde bir TAHMIN degildir: 31 bin maclik korpusta ayni fiyata sahip
     maclarin nasil bittigini sayar. Her yuzde yaninda `n` ve Wilson %95
@@ -817,11 +821,27 @@ def api_benzer():
     if len(parcalar) != 3:
         return jsonify({"error": "oran uc sayi olmali: 1.82,3.04,2.44"}), 400
 
+    # Iki durum ayrildi ve ayrimi ONEMLI:
+    #
+    #   okunamayan deger (`?en_az=abc`) -> varsayilana duser, 200. Bu eski
+    #   sozlesme ve `test_api_gecerli_ve_bozuk_ek_parametreler_cokmez` onu
+    #   bekciliyor.
+    #
+    #   okunan ama sinir disi deger (`?tolerans=0.9`, `?en_az=0`) -> 400.
+    #   Eskiden `_parse_esik` toleransi `[0, 1]`'e, `max/min` ise `en_az`i
+    #   `[1, 20000]`'e **kirpiyordu** — yani istek reddedilmiyor, sessizce
+    #   BASKA BIR SORGUYA cevriliyordu. `?tolerans=0.9` butun korpusu
+    #   "benzer" sayan bir cevap donduruyordu ve kullanici bunu goremiyordu.
+    #   Sinir artik tek yerde (`benzer._dogrula`) ve buraya `ValueError` ->
+    #   400 yolundan geliyor.
     tolerans = None
     if request.args.get("tolerans") is not None:
-        tolerans = _parse_esik(request.args.get("tolerans"), 0.02)
+        try:
+            tolerans = float(request.args.get("tolerans"))
+        except (TypeError, ValueError):
+            tolerans = None
     try:
-        en_az = max(1, min(int(request.args.get("en_az", HEDEF_ORNEKLEM)), 20000))
+        en_az = int(request.args.get("en_az", HEDEF_ORNEKLEM))
     except (TypeError, ValueError):
         en_az = HEDEF_ORNEKLEM
     yontem = (request.args.get("arindirma") or ARINDIRMA_VARSAYILAN).strip()
@@ -831,7 +851,8 @@ def api_benzer():
     try:
         govde = _benzer_cached(parcalar, tolerans, en_az,
                                request.args.get("lig") or None,
-                               request.args.get("sezon") or None, yontem)
+                               request.args.get("sezon") or None, yontem,
+                               request.args.get("tarih") or None)
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
     return jsonify(govde)

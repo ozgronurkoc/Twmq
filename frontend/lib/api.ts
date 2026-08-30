@@ -257,6 +257,11 @@ export function getBenzer(
     /** Hedeflenen en az ornek — tolerans buna ulasana kadar genisler. */
     en_az?: number;
     sezon?: string;
+    /**
+     * `YYYY-MM-DD` — yalnizca bu gunun ONCESINDEKI maclar aranir. Kronolojik
+     * sorgu; verilmezse butun korpus aranir.
+     */
+    tarih?: string;
   },
   signal?: AbortSignal,
 ) {
@@ -271,5 +276,6 @@ export function getBenzer(
   if (secenek?.tolerans !== undefined) q.set("tolerans", String(secenek.tolerans));
   if (secenek?.arindirma) q.set("arindirma", secenek.arindirma);
   if (secenek?.en_az !== undefined) q.set("en_az", String(secenek.en_az));
+  if (secenek?.tarih) q.set("tarih", secenek.tarih);
   return istek<BenzerResponse>(`/api/benzer?${q}`, { signal });
 }
