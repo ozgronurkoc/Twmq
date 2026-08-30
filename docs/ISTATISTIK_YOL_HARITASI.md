@@ -1122,6 +1122,52 @@ Kupon yarı fiyata düşerken tutma olasılığı **artıyor** — iki eksende b
 aşması. 2. haftanın kupon dosyasına düşülen *"eşiği 0,6 puanla kaçırdı"* notu, bu
 yanlılığın ta kendisiydi.
 
+#### Sonradan: aracın kendisi kronolojiye sokulabilir hâle getirildi
+
+Dış bir geliştirme planı (bkz. [`BENZER_PLANI_ESLEMESI.md`](BENZER_PLANI_ESLEMESI.md))
+üç yerde gerçek kusura parmak bastı ve üçü de koddaydı.
+
+**En önemlisi:** `benzer_maclar` süzgeci yalnızca `lig` ve `sezon`du. `tarih`
+her satırda yüklüydü ama hiç okunmuyordu, yani 2022 tarihli bir fiyat
+sorulduğunda 2024–2025 maçları da "geçmişte ne oldu" cevabına giriyordu. Bu
+canlı tahmine sızıntı değil — korpus güncel sezonu içermiyor — ama araç o
+hâliyle **hiçbir kronolojik ölçümün içine konulamıyordu.** §6.6'nın ileri
+yürüyüş bulgusu (kronoloji zorlandığında piyasanın artığını öğrenen aileler
+2–3 kat kötüleşiyor) tam da bu aracın hiç geçmediği sınavdır.
+
+`tarih=` isteğe bağlı eklendi; varsayılan davranış birebir korundu (`n` = 241
+shin, 710 orantılı). Karşılaştırma katı küçüktür, yani sorulan maç kendi
+cevabına giremez. Ölçüldü: `2023-08-01` kesmesiyle evren 31.103 → 15.640 ve
+uyarlanan yarıçap %2,0'dan **%3,0'a** genişliyor — yarım korpusta hedef
+örnekleme ulaşmak zorlaşıyor. Bu, ileri yürüyüş koşumunun kendi örneklem
+sorusudur ve koşum henüz yapılmadı (eşleme belgesi §6.1).
+
+`benzer` ayrıca sızıntı sözleşmesinde (`tests/test_sizinti.py`) hiç
+geçmiyordu; üç denetimle bağlandı.
+
+**İkinci kusur:** `inf` oran kabul ediliyordu. `inf <= 1.0` yanlıştır, yani
+kapıdan geçiyor ve `implied_probs` ona %0 olasılık verdiği için üç anahtar
+dönüyordu — alt kattaki `len(hedef) != 3` kontrolü de yakalamıyordu. Sorgu
+koşup bir sembolü olmayan hedef vektörle korpusu tarıyordu.
+
+**Üçüncüsü:** tolerans üç kapıda üç farklı sınırdaydı ve HTTP kapısı sınır
+dışı değeri **reddetmek yerine kırpıyordu** — `?tolerans=0.9` sessizce başka
+bir sorguya dönüşüyordu. Kural tek yere alındı; tavan uyarlanan aramanın
+zaten durduğu yer (`EN_COK_TOLERANS`).
+
+Rapora `mesafe` bloğu da eklendi, çünkü `tolerans_genisledi` bir boolean'dı.
+Niçin karara girdiği ölçüldü — aynı oran, iki yarıçap:
+
+| tolerans | ortanca mesafe / tavan | piyasa |
+|---|---|---|
+| 0,02 | %1,58 / %2 | her sembolde GA içinde |
+| 0,05 | %3,88 / %5 | iki sembolde GA **dışında** |
+
+İkinci satır bir bulgu gibi görünüyor (3.596 maçta beraberlik piyasanın
+4,3 puan üstünde, aralık piyasayı dışarıda bırakıyor) ama ortancası tavanın
+dörtte üçünde: o küme "aynı fiyat" değil, yarıçapın kenarı. Eski çıktıda bu
+ayrımı yapacak sayı yoktu.
+
 ### 3.19 Karar katmanı: seçim artık hedefe göre kuruluyor (B0)
 
 A1–A5 tahmin eksenini ölçtü ve kapattı. Bu iş **tahmin değil karar** katmanına

@@ -1306,6 +1306,7 @@ olması gerekir. Tanımlıysa yalnızca **durum değişiminde** bildirim gider.
 | [`docs/DIS_INCELEME_ALPHAPY.md`](docs/DIS_INCELEME_ALPHAPY.md) | Bir ML **çerçevesinin** (AlphaPy / AlphaPy Pro) incelemesi: çerçeve alınmadı, ama metrik paneline bakarken görülen eksik ölçüldü ve koda girdi — Brier'in Murphy ayrışımı |
 | [`docs/DIS_INCELEME_AZ_RAPORU.md`](docs/DIS_INCELEME_AZ_RAPORU.md) | Depo dışından gelen 64 bölümlük bir değerlendirmenin madde madde karşılığı: çoğunun karşılığı zaten vardı, **üçü gerçekten eksikti** (Model Arena, ileri yürüyüş, sızıntı sözleşmesi) ve üçü de uygulandı — ürettikleri ölçüm §3.41'de |
 | [`docs/GELISTIRME_PLANI_ESLEMESI.md`](docs/GELISTIRME_PLANI_ESLEMESI.md) | Dışarıdan gelen iki geliştirme planının madde madde karşılığı: hangisi zaten vardı, hangisi gerçekten eksikti (dördü), hangisi **ölçülmüş gerekçeyle** reddedildi |
+| [`docs/BENZER_PLANI_ESLEMESI.md`](docs/BENZER_PLANI_ESLEMESI.md) | `benzer.py` için gelen dış planın aynı biçimde eşlemesi: gerçekten eksik olan üçü (`inf` oran · toleransın üç kapıda üç sınırı · zaman kesmesi) uygulandı, altısı gerekçesiyle reddedildi, üçü kaydedildi |
 | [`backend/README.md`](backend/README.md) | Motor + API kurulumu, ortam değişkenleri, oran arşivi kullanımı |
 | [`frontend/README.md`](frontend/README.md) | Arayüz yapısı, tasarım sistemi, grafik kuralları, tip katmanı |
 | [`replit.md`](replit.md) | Replit çalışma alanının hafızası: iş akışları, portlar, dağıtım |
