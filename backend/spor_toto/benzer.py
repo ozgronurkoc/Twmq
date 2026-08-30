@@ -42,6 +42,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 from collections.abc import Sequence
 from functools import lru_cache
 from typing import Any
@@ -69,6 +70,57 @@ COK_DILIM = 8
 #: `kalibrasyon` ve `scripts/super_toto_sezon` da bu kabugu import ediyordu,
 #: yani private bir sembol iki sicramayla dolasiyordu. Tek kaynak: `ortak`.
 _wilson = wilson
+
+
+def _dogrula(oranlar: dict[str, float], tolerans: float | None,
+             en_az: int) -> None:
+    """Girdiyi tek kapıda denetler — fonksiyon, CLI ve HTTP aynı kuralı görsün.
+
+    Kural üç kapıda üç türlüydü: fonksiyonun hiç sınırı yoktu, CLI `float`
+    neyi kabul ederse onu alıyordu, HTTP ise `_parse_esik` ile toleransı
+    sessizce `[0, 1]`'e **kırpıyordu** — yani `?tolerans=0.9` hata vermeden
+    başka bir sorguya dönüşüyordu.
+
+    İki delik ölçüldü ve ikisi de burada kapanıyor:
+
+    `inf` **kabul ediliyordu.** `inf <= 1.0` yanlıştır, yani eski kapıdan
+    geçerdi; `implied_probs` ona `0.0` olasılık verir ve üç anahtar döndüğü
+    için `len(hedef) != 3` kontrolü de yakalamazdı. Sorgu koşar ve bir
+    sembolü olmayan bir hedef vektörle korpusu tarardı.
+
+    `nan` yakalanıyordu ama **yanlış mesajla**: sembol arındırmadan sessizce
+    düşer, `len(hedef) != 3` devreye girer ve "üç sembolün de oranı gerekli"
+    denirdi. Kullanıcı üç oranı da vermiştir; mesaj yanlış yeri gösterirdi.
+
+    Tolerans tavanı uydurma değil: `EN_COK_TOLERANS` uyarlanan aramanın
+    zaten durduğu yer (bkz. sabitin kendi yorumu). Otomatik yolun "benzer
+    olmaktan çıkar" dediği yarıçapta elle yolun serbest kalması bir özellik
+    değil, tutarsızlıktı.
+    """
+    for s in SEMBOLLER:
+        v = oranlar.get(s)
+        if v is None:
+            raise ValueError(f"'{s}' oranı eksik")
+        if not isinstance(v, (int, float)) or isinstance(v, bool):
+            raise ValueError(f"'{s}' oranı sayı olmalı")
+        if not math.isfinite(v):
+            raise ValueError(f"'{s}' oranı sonlu bir sayı olmalı (verilen: {v})")
+        if v <= 1.0:
+            raise ValueError(f"'{s}' oranı 1.00'den büyük olmalı (verilen: {v})")
+
+    if tolerans is not None:
+        if not math.isfinite(tolerans):
+            raise ValueError(f"tolerans sonlu olmalı (verilen: {tolerans})")
+        if tolerans < 0:
+            raise ValueError(f"tolerans negatif olamaz (verilen: {tolerans})")
+        if tolerans > EN_COK_TOLERANS:
+            raise ValueError(
+                f"tolerans en çok {EN_COK_TOLERANS} olabilir (verilen: "
+                f"{tolerans}). Ötesi 'benzer maç' olmaktan çıkar — uyarlanan "
+                f"arama da orada duruyor.")
+
+    if en_az < 1:
+        raise ValueError(f"en_az en az 1 olmalı (verilen: {en_az})")
 
 
 def _mesafe(a: dict[str, float], b: dict[str, float]) -> float:
@@ -140,10 +192,11 @@ def benzer_maclar(oranlar: dict[str, float],
     Fiilen kullanılan yarıçap raporda her zaman yazar — genişlemiş bir arama
     kendini gizlememeli.
     """
-    if any(v is None or v <= 1.0 for v in oranlar.values()):
-        raise ValueError("her oran 1.00'den büyük olmalı")
+    _dogrula(oranlar, tolerans, en_az)
     hedef = implied_probs(oranlar, yontem)
     if len(hedef) != 3:
+        # `_dogrula`dan sonra bu artık gerçekten "arındırma üç sembol
+        # üretemedi" demek: `nan`/`inf` bir üst kapıda adıyla düşüyor.
         raise ValueError("üç sembolün de oranı gerekli")
 
     evren = [(p, r) for p, r in _olasilik_tablosu(yontem, korpus)
@@ -304,9 +357,16 @@ def main(argv: Sequence[str] | None = None) -> None:
     if len(parcalar) != 3:
         raise SystemExit("--oran üç sayı olmalı: 1.82,3.04,2.44")
 
-    rapor = benzer_maclar({"1": parcalar[0], "0": parcalar[1], "2": parcalar[2]},
-                          tolerans=a.tolerans, en_az=a.en_az, lig=a.lig,
-                          sezon=a.sezon, yontem=a.arindirma)
+    try:
+        rapor = benzer_maclar(
+            {"1": parcalar[0], "0": parcalar[1], "2": parcalar[2]},
+            tolerans=a.tolerans, en_az=a.en_az, lig=a.lig,
+            sezon=a.sezon, yontem=a.arindirma)
+    except ValueError as e:
+        # CLI kendi kuralını YAZMAZ. Doğrulama tek yerde (`_dogrula`) ve
+        # burası onun cümlesini olduğu gibi iletir; ikinci bir kopya iki
+        # kapının zamanla ayrışması demekti.
+        raise SystemExit(str(e)) from None
     if a.json:
         print(json.dumps(rapor, ensure_ascii=False, indent=1))
     else:

@@ -817,11 +817,27 @@ def api_benzer():
     if len(parcalar) != 3:
         return jsonify({"error": "oran uc sayi olmali: 1.82,3.04,2.44"}), 400
 
+    # Iki durum ayrildi ve ayrimi ONEMLI:
+    #
+    #   okunamayan deger (`?en_az=abc`) -> varsayilana duser, 200. Bu eski
+    #   sozlesme ve `test_api_gecerli_ve_bozuk_ek_parametreler_cokmez` onu
+    #   bekciliyor.
+    #
+    #   okunan ama sinir disi deger (`?tolerans=0.9`, `?en_az=0`) -> 400.
+    #   Eskiden `_parse_esik` toleransi `[0, 1]`'e, `max/min` ise `en_az`i
+    #   `[1, 20000]`'e **kirpiyordu** — yani istek reddedilmiyor, sessizce
+    #   BASKA BIR SORGUYA cevriliyordu. `?tolerans=0.9` butun korpusu
+    #   "benzer" sayan bir cevap donduruyordu ve kullanici bunu goremiyordu.
+    #   Sinir artik tek yerde (`benzer._dogrula`) ve buraya `ValueError` ->
+    #   400 yolundan geliyor.
     tolerans = None
     if request.args.get("tolerans") is not None:
-        tolerans = _parse_esik(request.args.get("tolerans"), 0.02)
+        try:
+            tolerans = float(request.args.get("tolerans"))
+        except (TypeError, ValueError):
+            tolerans = None
     try:
-        en_az = max(1, min(int(request.args.get("en_az", HEDEF_ORNEKLEM)), 20000))
+        en_az = int(request.args.get("en_az", HEDEF_ORNEKLEM))
     except (TypeError, ValueError):
         en_az = HEDEF_ORNEKLEM
     yontem = (request.args.get("arindirma") or ARINDIRMA_VARSAYILAN).strip()

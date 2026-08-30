@@ -164,6 +164,54 @@ def test_gecersiz_oran_reddedilir():
         benzer_maclar({"1": 1.0, "0": 3.0, "2": 3.0})
 
 
+# ─── girdi doğrulama ──────────────────────────────────────────────────────────
+
+@pytest.mark.parametrize("bozuk", [float("inf"), float("nan"), float("-inf")])
+def test_sonlu_olmayan_oran_adiyla_reddedilir(bozuk):
+    """`inf` eskiden **kabul ediliyordu** — bu testin asıl sebebi o.
+
+    `inf <= 1.0` yanlıştır, yani eski kapıdan geçerdi; `implied_probs` ona
+    `0.0` olasılık verir ve üç anahtar döndüğü için `len(hedef) != 3`
+    kontrolü de yakalamazdı. Sorgu koşar, bir sembolü olmayan hedef
+    vektörle korpusu tarar ve çıkan sayı bir cevap gibi görünürdü.
+
+    `nan` yakalanıyordu ama mesajı yanlış yeri gösteriyordu ("üç sembolün
+    de oranı gerekli" — kullanıcı üçünü de vermişken).
+    """
+    with pytest.raises(ValueError, match="sonlu"):
+        benzer_maclar({"1": bozuk, "0": 3.04, "2": 2.44})
+
+
+def test_tavani_asan_tolerans_reddedilir():
+    """Otomatik yolun durduğu yerde elle yol da durmalı.
+
+    `EN_COK_TOLERANS` uyarlanan aramanın tavanı ve gerekçesi sabitin kendi
+    yorumunda yazılı: *"Ötesi 'benzer maç' olmaktan çıkar."* Elle verilen
+    tolerans bu tavanı tanımıyordu; `tolerans=0.9` bütün korpusu "benzer"
+    sayardı.
+    """
+    with pytest.raises(ValueError, match="en çok"):
+        benzer_maclar(ORNEK, tolerans=0.50)
+
+
+def test_tavanin_kendisi_kabul_edilir():
+    """Sınır **dahil** — `test_tolerans_buyudukce_orneklem_artar` 0,05 kullanıyor."""
+    r = benzer_maclar(ORNEK, tolerans=EN_COK_TOLERANS)
+    assert r["tolerans"] == EN_COK_TOLERANS
+
+
+@pytest.mark.parametrize("bozuk", [-0.01, float("nan")])
+def test_gecersiz_tolerans_reddedilir(bozuk):
+    with pytest.raises(ValueError):
+        benzer_maclar(ORNEK, tolerans=bozuk)
+
+
+@pytest.mark.parametrize("bozuk", [0, -5])
+def test_gecersiz_en_az_reddedilir(bozuk):
+    with pytest.raises(ValueError, match="en_az"):
+        benzer_maclar(ORNEK, en_az=bozuk)
+
+
 # ─── regresyon: ölçülen sayılar ───────────────────────────────────────────────
 
 def test_olculen_sayilar_korunur():
@@ -218,6 +266,13 @@ def test_api_govdesi_n_ve_ga_tasir(istemci):
 @pytest.mark.parametrize("sorgu", [
     "", "?oran=abc", "?oran=1.82,3.04", "?oran=1.0,3.0,3.0",
     "?oran=1.82,3.04,2.44&arindirma=kelly",
+    # Okunan ama sinir disi degerler. Bunlar eskiden **kirpiliyordu**:
+    # `tolerans=0.9` sessizce 1.0 olup butun korpusu "benzer" sayiyor,
+    # `en_az=0` sessizce 1 oluyordu. Istek reddedilmiyor, baska bir
+    # sorguya cevriliyordu.
+    "?oran=1.82,3.04,2.44&tolerans=0.9",
+    "?oran=1.82,3.04,2.44&tolerans=-0.1",
+    "?oran=1.82,3.04,2.44&en_az=0",
 ])
 def test_api_bozuk_girdi_400_verir(istemci, sorgu):
     assert istemci.get("/api/benzer" + sorgu).status_code == 400
