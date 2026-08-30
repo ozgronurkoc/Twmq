@@ -75,12 +75,6 @@ HEDEF_ORNEKLEM = 200
 COK_DILIM = 8
 
 
-#: Once `backtest._wilson`i fonksiyon govdesinden import eden bir kabuktu;
-#: `kalibrasyon` ve `scripts/super_toto_sezon` da bu kabugu import ediyordu,
-#: yani private bir sembol iki sicramayla dolasiyordu. Tek kaynak: `ortak`.
-_wilson = wilson
-
-
 def _dogrula(oranlar: dict[str, float], tolerans: float | None,
              en_az: int) -> None:
     """Girdiyi tek kapıda denetler — fonksiyon, CLI ve HTTP aynı kuralı görsün.
@@ -230,7 +224,7 @@ def _sayim(maclar: Sequence[dict[str, Any]],
     for s in SEMBOLLER:
         k = sum(1 for m in maclar if m["kod"] == s)
         if n:
-            alt, ust = _wilson(k, n)
+            alt, ust = wilson(k, n)
         else:
             alt = ust = 0.0
         bekleniyor = piyasa[s]

@@ -90,9 +90,9 @@ def haftalari_bul(sezon: str) -> list[int]:
 
 def topla(sezon: str) -> dict[str, Any]:
     """Girilmiş bütün haftaları tek tabloya indirger."""
-    from spor_toto.benzer import _wilson
     from spor_toto.evaluate import brier, log_kaybi
     from spor_toto.odds import ARINDIRMA_VARSAYILAN
+    from spor_toto.ortak import wilson
 
     hafta_mod = _modul("hafta")
     deg_mod = _modul("degerlendir")
@@ -155,7 +155,7 @@ def topla(sezon: str) -> dict[str, Any]:
             continue
         n = len(g)
         k = sum(1 for t in g if t[1])
-        alt, ust = _wilson(k, n)
+        alt, ust = wilson(k, n)
         bekleniyor = sum(t[0] for t in g) / n
         kovalar.append({"lo": lo, "hi": hi, "n": n, "piyasa": bekleniyor,
                         "gercek": k / n, "ga_alt": alt, "ga_ust": ust,
