@@ -890,7 +890,10 @@ backend/
     payloads.py        /api/stats ve /api/backtest gövdeleri — tek kaynak
     tahmin.py          TAHMİN: yaklaşan maçlar + ölçülmüş isabet = /api/tahmin
     pazar.py           1X2 DIŞI: alt/üst 2,5 + Asya handikabı = /api/pazar
+    deger.py           ÖLÇÜM: sabit oranlı pazarlarda değer bahsi getirisi — üç
+                       pazarda da kâr YOK (§3.36); arayüze ÇIKMAZ
     getiri.py          HAVUZ: müşterek beklenen değer — HESAP, arayüze ÇIKMAZ
+    mcp_server.py      DENEY: MCP yüzeyi — ölçüt 1'i GEÇMEDİ, isteğe bağlı ekstra
     gorus.py           TAHMİN: piyasadan BAĞIMSIZ görüş (DC + Elo) — işaret DEĞİŞTİRMEZ
     avrupa.py          VERI: UEFA fiksturu — dinlenme/sikisiklik duzeltmesi
     sehir.py           VERI: kulup-sehir tablosu, derbi (sicaklik degiskeni)
@@ -1385,6 +1388,7 @@ olması gerekir. Tanımlıysa yalnızca **durum değişiminde** bildirim gider.
 | [`docs/FORMUL_YOL_HARITASI.md`](docs/FORMUL_YOL_HARITASI.md) | Formül sayfasının yol haritası ve yapılmayacaklar listesi |
 | [`docs/DIS_INCELEME.md`](docs/DIS_INCELEME.md) | Dış bir makine öğrenmesi çalışmasının bu projeye ne kattığı ve **ne katmadığı** — sayılar o çalışmanın kendi belgelerinden, bizim ölçümümüz değil |
 | [`docs/DIS_INCELEME_ALPHAPY.md`](docs/DIS_INCELEME_ALPHAPY.md) | Bir ML **çerçevesinin** (AlphaPy / AlphaPy Pro) incelemesi: çerçeve alınmadı, ama metrik paneline bakarken görülen eksik ölçüldü ve koda girdi — Brier'in Murphy ayrışımı |
+| [`docs/DIS_INCELEME_SPORTS_BETTING.md`](docs/DIS_INCELEME_SPORTS_BETTING.md) | Bir **sabit oranlı bahis araç kutusunun** (`georgedouzas/sports-betting`) incelemesi: model tarafında hiçbir şey, bir ölçü (`deger.py` — üç pazarda da kâr yok) ve bir kalite kapısı. Asıl getirisi **kendi kodumuzdaki dört kusur**: sessizce ölü bir sözlük (5 hafta kayıp), gizli bir duvar saati kırılganlığı, iki yanlış docstring sayısı, eskimiş bir uç envanteri |
 | [`docs/DIS_INCELEME_AZ_RAPORU.md`](docs/DIS_INCELEME_AZ_RAPORU.md) | Depo dışından gelen 64 bölümlük bir değerlendirmenin madde madde karşılığı: çoğunun karşılığı zaten vardı, **üçü gerçekten eksikti** (Model Arena, ileri yürüyüş, sızıntı sözleşmesi) ve üçü de uygulandı — ürettikleri ölçüm §3.41'de |
 | [`docs/GELISTIRME_PLANI_ESLEMESI.md`](docs/GELISTIRME_PLANI_ESLEMESI.md) | Dışarıdan gelen iki geliştirme planının madde madde karşılığı: hangisi zaten vardı, hangisi gerçekten eksikti (dördü), hangisi **ölçülmüş gerekçeyle** reddedildi |
 | [`docs/BENZER_PLANI_ESLEMESI.md`](docs/BENZER_PLANI_ESLEMESI.md) | `benzer.py` için gelen dış planın aynı biçimde eşlemesi: gerçekten eksik olan üçü (`inf` oran · toleransın üç kapıda üç sınırı · zaman kesmesi) uygulandı, altısı gerekçesiyle reddedildi, üçü kaydedildi |

@@ -99,7 +99,7 @@ Sözleşmenin tamamı: `docs/ARCHITECTURE_NEXT.md` ve `frontend/lib/types.ts`.
 
 ## Motor (`backend/spor_toto/`)
 
-26 modül var; tam liste ve tek satırlık açıklamaları `README.md` §7'dedir.
+50 modül var; tam liste ve tek satırlık açıklamaları `README.md` §7'dedir.
 Katman katman:
 
 - **Çekirdek** — `core.py` (Encoder, Fix-16, ILP, heuristic) · `engines.py`
@@ -116,7 +116,13 @@ Katman katman:
   (`/api/tahmin`) · `benzer.py` (`/api/benzer`)
 - **Ölçüm araçları** (yalnızca `python -m spor_toto.<x>`, arayüze çıkmaz) —
   `cizgi.py` (A1) · `bahisci.py` (A2) · `disari.py` (A3) · `kalibrasyon.py` ·
-  `getiri.py` (müşterek beklenen değer — hesap var, **ölçüm yok**; §3.34)
+  `getiri.py` (müşterek beklenen değer — hesap var, **ölçüm yok**; §3.34) ·
+  `deger.py` (sabit oranlı pazarlarda değer bahsi getirisi — **ölçüldü**,
+  üç pazarda da kâr yok; §3.36)
+- **Deney** — `mcp_server.py`: motoru bir yapay zekâ ajanına açan MCP
+  yüzeyi. Dört ölçütün üçünü geçti, **ölçüt 1'i (yeni yetenek) geçmedi**:
+  her aracı `curl` ile de erişilebiliyor. `mcp` isteğe bağlı ekstradır,
+  üretim onu kurmaz. Ayrıntı: `docs/DIS_INCELEME_SPORTS_BETTING.md` §7
 - **Veri (Faz 3.4)** — `avrupa.py` (UEFA fiksturu takvime ENJEKTE edilir;
   `dinlenme`/`sikisiklik` artik o gunleri de gorur) · `sehir.py`
   (kulup-sehir tablosu, `openfootball/clubs` CC0; derbi bir SICAKLIK
