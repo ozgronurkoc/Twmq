@@ -3757,7 +3757,7 @@ sonuçtur ve aralık ilk kez bir şey söyleyecek kadar dardır; ama
 
 #### Sızıntı: kesişim gerçek, çözüm koda bağlandı
 
-Kupon maçlarının **1.155 / 1.605'i (%72)** eğitim korpusunda da var
+Kupon maçlarının **1.200 / 1.680'i (%71)** eğitim korpusunda da var
 (2022/23 %100, 2023/24 %100, 2024/25 %97, 2025/26 %0). `arena.kesit(kupon=True)`
 artık `grup=sezon_anahtari` döndürüyor — `backtest.hafta_girdileri` `sezon`
 alanını yazdığı için mümkün oldu; önceden alan yoktu ve `sezon_anahtari`
@@ -3842,7 +3842,7 @@ tam olarak bu. Bekçileri: `test_recalibrate.py::test_genis_kesitte_ozellikler_B
 
 #### Kat kurgusu: her sezon, korpustan o sezon çıkarılarak
 
-Geniş kesitte kupon maçlarının 1.155/1.605'i korpusta da var; düz ölçüm
+Geniş kesitte kupon maçlarının 1.200/1.680'i korpusta da var; düz ölçüm
 sızıntı olurdu. Her kupon sezonu ölçülürken korpustan **o sezonun tamamı**
 (22 ligin hepsi) çıkarılır ve model kalanla yeniden eğitilir. Ölçüldü —
 çıkarma sonrası ortaklık her katta **tam sıfır**:

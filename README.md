@@ -282,8 +282,9 @@ ileriye dönük birikir.
 **Beşinci ve altıncı veri seti bunların üstüne kuruldu** (2026-08-30):
 `data/bulten/<sezon>.json` resmî bülten **görselinden** OCR ile okunan 15 maçlık
 listeler (156 hafta), `data/st_history/<sezon>.json` ise o listeleri football-data
-fikstürüne bağlayıp **tam 1/0/2 dizisi** üreten set — **4 sezon · 107 hafta ·
-1.605 kupon maçı**. Kupon değerlendirme seti 41 haftadan **148 haftaya** çıktı.
+fikstürüne bağlayıp **tam 1/0/2 dizisi** üreten set — **4 sezon · 112 hafta ·
+1.680 kupon maçı** (§6I'de 107'den çıktı: eşleştirmedeki Unicode kusuru
+düzeltildi). Kupon değerlendirme seti 41 haftadan **153 haftaya** çıktı.
 
 Bu ikisinin en güçlü kanıtı bir çapraz doğrulamadır: `st_history_2025_26.json`
 üçüncü parti bir payload'dan, yeni set resmî görselden gelir ve ikisi birbirini

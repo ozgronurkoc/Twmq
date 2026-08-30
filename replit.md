@@ -181,8 +181,9 @@ Modlar: `--mode auto|exact|heuristic|butce|maxcov` (`--budget` ile),
   (`build_odds.py --sezon`); yeni üç sezonda eşleşme %100. Ölçüm kesiti
   36 → **114 hafta**
 - `backend/data/st_history/` — bültenleri football-data fikstürüne bağlayıp
-  **tam 1/0/2 dizisi** üreten geçmiş sezon seti: **4 sezon · 107 hafta · 1.605
-  maç**. `st_history_2025_26.json` ile karışmaz; `/api/stats` hâlâ eskisine bakar
+  **tam 1/0/2 dizisi** üreten geçmiş sezon seti: **4 sezon · 112 hafta · 1.680
+  maç** (§6I'de 107'den çıktı — eşleştirmedeki Unicode kusuru düzeltildi).
+  `st_history_2025_26.json` ile karışmaz; `/api/stats` hâlâ eskisine bakar
 - `backend/data/sportoto_arsiv/` — **resmî** Spor Toto arşivi (`webapi.sportoto.gov.tr`):
   6 sezon · 225 hafta · **223 ikramiye tablosu**. Deponun ilk resmî kaynağı.
   **Maç listesi taşımaz** — o resmî uçta yalnızca bülten görseli olarak var
