@@ -4410,6 +4410,7 @@ denenmedi**, ve bu bilinçli bir tahsis kararıdır:
 |---|---|---|
 | **Elo** (rakip gücüne göre düzeltilmiş takım gücü) | **Evet**, korpustan; yeni kaynak gerekmez | Durma kuralı (aynı veri) · A1'in null'ı — piyasanın kendi çizgi hareketi bile kapanışı yenemedi · **fırsat maliyeti**: havuz ekseni veri taşıyor ve hiç ölçülmedi |
 | **H2H** (son 5 karşılaşma) | **Evet**, aynı şekilde | Aynı üç gerekçe |
+| **Maçlar arası bağımlılık** (kuyruk) | **Evet**, korpustan; yeni kaynak gerekmez | Yukarıdakilerden **farklı bir gerekçe**: bu bir tahmin özelliği değil, `secim.py`nin `_carpim`indeki *"maçlar bağımsız varsayılarak"* varsayımının **kuyruk** etkisi. Tahminde önemsiz (tek tek `P(Y_i)` değişmez), `P(k≥12)`'de olabilir — korelasyonlu Bernoulli toplamının kuyruğu şişer, yani geri test kendi riskini **iyimser** gösteriyor olabilir. Şimdi denenmiyor çünkü sıra havuz ekseninde (§6.3) |
 
 Elo'nun ayrıca kaydedilmesi gereken bir yanı var: `kalibre_form` **ham** formdu,
 rakip gücüne göre düzeltilmemişti — Elo tam o eksiği kapatan standart sinyaldir.
@@ -4417,6 +4418,15 @@ Yani "form denendi" demek "Elo denendi" demek değildir.
 
 **Yeniden açılma koşulu:** havuz ekseni ölçülüp kapanırsa (§6.3 B4/b), ya da
 yukarıdaki üç kaynaktan biri gelirse. Ayrıntı: [`DIS_INCELEME.md`](DIS_INCELEME.md) §8.
+
+**Bağımsızlık satırının kendi durma kuralı — ölçüm görülmeden yazıldı.**
+Elo ve H2H'den ayrı, çünkü ölçüsü de ayrı: aynı 36 haftada `P(k≥12)`'nin
+bağımsız hesabı ile gözlenen frekans karşılaştırılır. Bootstrap %95 aralığı
+sıfırı **kesiyorsa** eksen kapanır ve bugünkü geri test *savunulmuş* olur —
+kapanış da bir sonuçtur. **Kesmiyorsa** `secim.py` ve `backtest.py`'ın kuyruk
+hesabı düzeltilir. Madde dışarıdan gelen bir mimari makalesinin tek gerçek
+katkısıdır ve kaybolmasın diye buraya düşüldü:
+[`GELECEK_MIMARISI_ESLEMESI.md`](GELECEK_MIMARISI_ESLEMESI.md) §4.1.
 
 #### `ps` geçti — arayışı yeniden açar mı? Hayır
 
