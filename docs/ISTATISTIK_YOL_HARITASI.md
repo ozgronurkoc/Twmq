@@ -153,11 +153,11 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/components/super-toto/tahmin2.tsx` | **2. Tahmin** paneli — `1. Tahmin` / `2. Tahmin` sekmeleri arasında geçilir; para birimli hiçbir sayı yok. Hafta kapandığında sonuç sütunu ve ayar karnesi açılır (§3.38) |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **1.867 test**; **85'i** istatistik katmanına (`history` `odds` `backtest`
-`api_stats` `api_backtest` `snapshot_iddaa`), **567'si** tahmin katmanına ait (`predict`
+paketi toplam **1.879 test**; **85'i** istatistik katmanına (`history` `odds` `backtest`
+`api_stats` `api_backtest` `snapshot_iddaa`), **579'u** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre`
-`avrupa` `sehir` **`arena`** **`sizinti`**), **29'u** 2. Tahmin'e (`tahmin2`), **30'u** sonuç değerlendirmesine (`degerlendir`). Dosya adlarıyla sayılıdır ki tablo elle bakım gerektirmesin —
+`avrupa` `sehir` **`arena`** **`sizinti`** **`kuyruk`**), **29'u** 2. Tahmin'e (`tahmin2`), **30'u** sonuç değerlendirmesine (`degerlendir`). Dosya adlarıyla sayılıdır ki tablo elle bakım gerektirmesin —
 `tests/test_belgeler.py` onları gerçek koleksiyona karşı denetler.
 `python -m spor_toto.health` **27 değişmez** çalıştırır — ikisi (`oran_arsivi`, `geri_test`)
 istatistik katmanını, biri (`tahmin_referanslari`) tahmin katmanının ölçüm koşumunu korur,
@@ -4010,6 +4010,93 @@ sabit oranlı yan pazarlar** içindir ve kupon motoruna hiçbir şey söylemez.
     python -m spor_toto.deger --pazar 2.5 --pazar AH --kaydet
 
 
+### 3.46 Hafta içi bağımlılık ve kuyruk (§4.1) — **eksen kapandı**, ve bir bekçi düzeldi
+
+Dışarıdan gelen bir mimari makalesi (`GELECEK_MIMARISI_ESLEMESI.md`) tek gerçek boşluğa
+parmak bastı: `secim._carpim` açıkça *"maçlar bağımsız varsayılarak"* diyor ve aynı varsayım
+`ortak.kacak_dagilimi`nin Poisson-binomunda, `P(k≤2)`de ve geri testin `P(k≥12)`sinde
+tekrarlanıyor. Durma kuralı **ölçüm görülmeden** §6.2'ye yazıldı ve commit'lendi.
+
+**Soru tahminde değil kuyrukta.** Bağımsızlık tek tek `P(Y_i)`'leri değiştirmez — Brier de
+log kaybı da bu varsayımı hiç kullanmaz. Girdiği tek yer 15 maçı **birlikte** sayan
+büyüklüklerdir, ve korelasyonlu Bernoulli toplamının kuyruğu daha şişmandır: pozitif
+bağımlılık varsa bugünkü hesap kendi riskini *iyimser* gösteriyor demektir.
+
+#### Önce bir kusur: eski bekçinin istatistiği yanlıştı
+
+`test_invariants.py` bu varsayımı zaten sınıyordu ve `kacak_dagilimi`nin docstring'i onun
+sayısını (*"varyans oranı 0,91"*) varsayımın **kanıtı** diye anıyordu. Ölçtüğü şey sorulan
+şey değildi:
+
+    eski:  Var_haftalar(K) / E[V]          doğru:  Var_haftalar(K − M) / E[V]
+
+Kalibre bir tahmincide `Var(K) = E[V] + Var(M)`, yani eski oran hafta zorluğunun haftadan
+haftaya değişmesini bağımlılık sanıyordu. Sabit 15 maçlık kupon haftalarında bu yalnızca
+**yukarı** yönlü bir yanlılıktır — eski yeşil sonuç *a fortiori* ayakta kalır. Ama değişken
+boyutlu korpus haftalarında aynı istatistik **36,09** veriyor (doğrusu **0,98**): bekçi tam
+da gücün olduğu kesitte kullanılamazdı.
+
+#### Sonra bir tuzak: yanlılık, bağımlılık gibi görünüyor
+
+İlk koşum ham artıklarla yapıldı ve kupon geniş kesitinde `ρ = +0,0077` verdi — pozitif
+bağımlılık gibi. Tamamı **kalibrasyon yanlılığıydı**: favori, marj arındırılmış fiyatın
+söylediğinden maç başına ~5 puan sık tutuyor (§3.18'in favori–sürpriz yanlılığının aynısı) ve
+sabit bir yanlılık `b`, ikili artık çarpımlarına `b²` olarak biniyor. Üç büyüklük bu yüzden
+**ayrı** ölçülür: yanlılık, dağılım, ve demeanlenmiş artıkların ortalama ikili korelasyonu.
+
+#### Ölçüm
+
+Bootstrap birimi **hafta**dır ve bu bir tercih değil zorunluluk: maç düzeyinde yeniden
+örneklemek, tam da ölçülmek istenen şeyi yok ederdi.
+
+| Kesit | Hafta | Maç | Yanlılık | Dağılım | ρ | %95 aralık (ρ) |
+|---|---:|---:|---:|---:|---:|---|
+| Kupon (varsayılan sezon) | 36 | 540 | +0,0271 | 0,7242 | −0,02022 | [−0,03926, +0,00079] |
+| Kupon (geniş kesit) | 114 | 1.710 | +0,0510 | 0,9320 | −0,00349 | [−0,01724, +0,01020] |
+| **Korpus** | **183** | **31.103** | +0,0066 | 0,9762 | **−0,00009** | **[−0,00102, +0,00080]** |
+
+Üç kesitin üçünde de nokta tahmini **negatif** ve aralık sıfırı kesiyor. Korpus tek gerçek
+güç kaynağıdır: aralığın genişliği 0,0018, yani hafta içi eş-hareket varsa bile binde ikiden
+küçük.
+
+#### Kuyruğa çevirisi — RNG yok
+
+`ρ`nun `P(k≥12)`ye ne yaptığını görmek için tek parametreli standart bir model kuruldu:
+`Z_i = √a·U + √(1−a)·ε_i`, `Y_i = 1{Z_i < Φ⁻¹(p_i)}`. `U = u` verildiğinde maçlar koşullu
+bağımsız olduğu için `kacak_dagilimi`nin Poisson-binomu aynen kullanılır ve `u` üzerinden
+Gauss-Hermite ile integre edilir — **Monte Carlo değil**, deterministik, ve ikinci bir gövde
+yazılmadan.
+
+| Senaryo | ρ | latent a | P(K≥12) | oran | P(K≥14) | oran |
+|---|---:|---:|---:|---:|---:|---:|
+| Nokta tahmini (negatif → a=0) | +0,00000 | 0,0000 | 2,688·10⁻² | 1,00 | 8,876·10⁻⁴ | 1,00 |
+| Korpus aralığının üst sınırı | +0,00080 | 0,0013 | 2,754·10⁻² | **1,02** | 9,353·10⁻⁴ | **1,05** |
+| En kötü makul (kupon üst sınırı) | +0,01020 | 0,0166 | 3,548·10⁻² | 1,32 | 1,615·10⁻³ | 1,82 |
+
+**Makine kendi kendini doğruluyor.** `a = 0`da `P(K≥14)` = **8,876·10⁻⁴**; §6.2'nin bağımsız
+olarak yayımladığı sayı **8,6·10⁻⁴**. İki hesap birbirini tanımıyor.
+
+#### Karar — ön kayıtlı kural işletildi
+
+> Bootstrap %95 aralığı sıfırı **kesiyorsa** eksen kapanır ve bugünkü geri test *savunulmuş*
+> olur. — §6.2, ölçüm görülmeden yazıldı
+
+Aralık üç kesitte de sıfırı kesiyor: **eksen kapandı.** `P(k≤2)`, `P(k≥12)` ve
+`kacak_dagilimi` bugünkü hâlleriyle savunulmuş durumda.
+
+**Ama kapanışın sınırı da yazılmalı.** Kural sağlandı; buna karşılık kupon kesiti *tek başına*
+bu sonucu veremezdi — 114 haftanın aralığı, üst ucunda `P(k≥14)`ün **%82** şişmesine hâlâ izin
+veriyor. Sonucu taşıyan şey korpusun 183 haftasıdır ve orada tavan **%5**. Yani kapanan şey
+*"kuyruk şişmiyor"* değil, *"şiştiğine dair kanıt yok ve tavanı ölçüldü"*dür.
+
+**Yeniden açılma koşulu:** kupon kesiti ~300 haftaya çıkarsa (aralık yaklaşık yarıya iner), ya
+da korpusa hafta içi ortak etken taşıyabilecek bir kaynak girerse (hakem ataması, hava, aynı
+ülkede aynı gün oynanan maçların yoğunluğu).
+
+Koşum: `python -m spor_toto.kuyruk` (~70 sn). Ayrıntı ve gerekçeler `spor_toto/kuyruk.py`
+docstring'inde.
+
+
 ## 4. Sayfada bugün ne var
 
 **`/istatistik`** — sezon dağılımı (en sık sonuç + pay çubuğu) · 5 sayı kutusu (sembol
@@ -4153,6 +4240,7 @@ ve karşılıkları: kupon seti 0,5747 → **0,5740**, korpus 0,5940 → **0,593
 | **Müşterek beklenen değer (§3.34)** | 51. hafta · 3.888 kolon · havuz varsayımı | **Ölçüm değil, hesap** — ve sonucu belirleyen tahminci değil kalabalık varsayımı: `orneklem` modelinde getiri oranı **0,156**, `favori` modelinde **0,007** — arada **22 kat**. Havuz büyüklüğü getiriyi hiç belirlemiyor (havuz ve rakip kolon birlikte ölçeklendiğinde eğri tam düz); belirleyen `p_k/q_k` oranı. Bu eksenin ihtiyacı yeni model değil, **oynanma paylarının ölçümü** |
 | **Takım bazlı istatistik (§3.35)** | 31.103 maç · 22 lig · 604 takım | **Yasak kalktı, kural kalmadı.** Ampirik Bayes küçültmesi: ortalama `B` **0,854**, ortalama %95 aralık 0,509. Tek sezona inildiğinde sistem **kendiliğinden temkinli oluyor** — `B` 0,697'ye düşüyor, aralık 0,690'a genişliyor. En çok konuşan satır Scunthorpe: 46 maçta ham 0,565 → küçültülmüş **0,875** [0,58, 1,17] |
 | **Yeni veri (§3.36)** | 768 UEFA maçı · 592 takım şehri · 31.103 maç | **Serinin niteliksel olarak farklı kapanışı.** Eksik veri gerçekten eksikti: UEFA fikstürü eklenince §3.16'nın açıklanamayan anomalisi **+0,0613 → +0,0325**'e indi (kontrol katmanı bit bit aynı kaldı). Ama düzeltilmiş özellik de geçmedi — `kalibre_avrupa` +0,000028 [−0,000277, +0,000352]. Derbi de türetilebilir oldu (667 maç) ve geçmedi (+0,000176). xG ve kadro **kapalı**: biri `robots.txt`, öteki eğitim/servis ayrışması |
+| **Hafta içi bağımlılık (§3.46)** | 183 hafta · 31.103 maç + 114 kupon haftası | **Eksen kapandı — ön kayıtlı kuralla.** Demeanlenmiş artıkların ortalama ikili korelasyonu korpusta **−0,00009 [−0,00102, +0,00080]**, üç kesitte de aralık sıfırı kesiyor. Kuyruğa çevrildiğinde korpus üst sınırında `P(k≥14)` yalnızca **%5** şişiyor (kupon kesiti tek başına %82'ye izin verirdi — sonucu taşıyan korpus). Yan ürün: eski bekçinin istatistiği yanlıştı (`Var(K)` yerine `Var(K−M)`) ve düzeltildi; ham artıklarla görünen `ρ=+0,0077` tamamen **kalibrasyon yanlılığıydı** |
 
 **Okuma.** Aşırı uyum modelin kapasitesinden değil örneklem küçüklüğünden geliyordu; büyük
 korpus onu kaldırdı. Ama kalan etki 0,0005–0,0015 Brier — 31 binde anlamlı, 540'ta değil ve
@@ -4410,7 +4498,6 @@ denenmedi**, ve bu bilinçli bir tahsis kararıdır:
 |---|---|---|
 | **Elo** (rakip gücüne göre düzeltilmiş takım gücü) | **Evet**, korpustan; yeni kaynak gerekmez | Durma kuralı (aynı veri) · A1'in null'ı — piyasanın kendi çizgi hareketi bile kapanışı yenemedi · **fırsat maliyeti**: havuz ekseni veri taşıyor ve hiç ölçülmedi |
 | **H2H** (son 5 karşılaşma) | **Evet**, aynı şekilde | Aynı üç gerekçe |
-| **Maçlar arası bağımlılık** (kuyruk) | **Evet**, korpustan; yeni kaynak gerekmez | Yukarıdakilerden **farklı bir gerekçe**: bu bir tahmin özelliği değil, `secim.py`nin `_carpim`indeki *"maçlar bağımsız varsayılarak"* varsayımının **kuyruk** etkisi. Tahminde önemsiz (tek tek `P(Y_i)` değişmez), `P(k≥12)`'de olabilir — korelasyonlu Bernoulli toplamının kuyruğu şişer, yani geri test kendi riskini **iyimser** gösteriyor olabilir. Şimdi denenmiyor çünkü sıra havuz ekseninde (§6.3) |
 
 Elo'nun ayrıca kaydedilmesi gereken bir yanı var: `kalibre_form` **ham** formdu,
 rakip gücüne göre düzeltilmemişti — Elo tam o eksiği kapatan standart sinyaldir.
@@ -4419,13 +4506,15 @@ Yani "form denendi" demek "Elo denendi" demek değildir.
 **Yeniden açılma koşulu:** havuz ekseni ölçülüp kapanırsa (§6.3 B4/b), ya da
 yukarıdaki üç kaynaktan biri gelirse. Ayrıntı: [`DIS_INCELEME.md`](DIS_INCELEME.md) §8.
 
-**Bağımsızlık satırının kendi durma kuralı — ölçüm görülmeden yazıldı.**
-Elo ve H2H'den ayrı, çünkü ölçüsü de ayrı: aynı 36 haftada `P(k≥12)`'nin
-bağımsız hesabı ile gözlenen frekans karşılaştırılır. Bootstrap %95 aralığı
-sıfırı **kesiyorsa** eksen kapanır ve bugünkü geri test *savunulmuş* olur —
-kapanış da bir sonuçtur. **Kesmiyorsa** `secim.py` ve `backtest.py`'ın kuyruk
-hesabı düzeltilir. Madde dışarıdan gelen bir mimari makalesinin tek gerçek
-katkısıdır ve kaybolmasın diye buraya düşüldü:
+**Bağımsızlık maddesi — durma kuralı ölçüm görülmeden yazıldı, sonra
+İŞLETİLDİ (§3.46).** Madde bu tabloya girmişti; ölçüm koşulduğu için
+çıkarıldı. Kural şuydu: *bootstrap %95 aralığı sıfırı kesiyorsa eksen kapanır
+ve bugünkü geri test savunulmuş olur.* Aralık üç kesitte de sıfırı kesti
+(korpus: **−0,00009 [−0,00102, +0,00080]**, 183 hafta · 31.103 maç), yani
+**eksen kapandı** ve `P(k≤2)` · `P(k≥12)` · `kacak_dagilimi` savunuldu.
+Kapanışın sınırı da yazılı: sonucu taşıyan şey korpustur — kupon kesiti tek
+başına `P(k≥14)`ün %82 şişmesine hâlâ izin verirdi. Ölçümün kendisi
+`spor_toto/kuyruk.py`, gerekçesi
 [`GELECEK_MIMARISI_ESLEMESI.md`](GELECEK_MIMARISI_ESLEMESI.md) §4.1.
 
 #### `ps` geçti — arayışı yeniden açar mı? Hayır
@@ -4976,13 +5065,16 @@ python -m spor_toto.arena                  # sezon dışarıda bırakmalı
 python -m spor_toto.arena --ileri          # kronolojik (ileri yürüyüş)
 python -m spor_toto.arena --kupon          # kupon setinde (tek sezon; uyarılı)
 
+# Hafta ici bagimlilik ve kuyruk etkisi (§3.46; ~70 sn)
+python -m spor_toto.kuyruk
+
 # Her ölçüm CLI'sı koşumunu deftere yazabilir (§2.6)
 python -m spor_toto.disari --kaydet
 python -m spor_toto.kosum                  # kayıtlı koşumlar
 python -m spor_toto.kosum --son disari     # son koşumun ortamı
 
 # Denetim
-pytest -q                                  # 1.867 test (85'i bu katman, 567'si tahmin)
+pytest -q                                  # 1.879 test (85'i bu katman, 567'si tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out

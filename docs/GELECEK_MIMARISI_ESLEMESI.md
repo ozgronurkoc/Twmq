@@ -30,7 +30,7 @@ değil)
 |---|---:|---|
 | **Zaten var ve ölçüldü** | Faz I–V'in tamamı | ölçüm altyapısı · market intelligence · Elo/Poisson/form · ağaç toplulukları · yığın + kalibrasyon · model arenası · ileri yürüyüş · yeniden üretilebilirlik · veri kalitesi |
 | **Kısmen var, bağlanmadı** | 2 | ortak dağılım (bağımsızlık varsayımıyla) · beklenen fayda (hesap var, kupon kurmaya bağlı değil) |
-| **Gerçekten yeni** | 1 | maçlar arası bağımlılığın **kuyruk** etkisi |
+| **Gerçekten yeniydi → ölçüldü** | 1 | maçlar arası bağımlılığın **kuyruk** etkisi — ölçüldü ve **eksen kapandı** (§3.46, `spor_toto/kuyruk.py`) |
 | **Ölçülmüş null'a geri dönüyor** | 1 | entropi / bahisçi anlaşmazlığını *sinyal* olarak kullanmak |
 | **Makalede hiç yok** | 3 | havuz ekseni (müşterek bahis) · iddaa marjı · kupon-zamanı fiyat |
 
@@ -136,7 +136,14 @@ doğrulanmıştır: **kazanç karar katmanındadır, tahmin katmanında değil.*
 Her birine, deponun §6 disiplini gereği, **ölçüm görülmeden yazılmış durma
 kuralı** eklendi.
 
-### 4.1 Maçlar arası bağımlılık — makalenin §12–13'ü
+### 4.1 Maçlar arası bağımlılık — makalenin §12–13'ü · **ÖLÇÜLDÜ (§3.46)**
+
+> **Bu bölüm bir kez yanlış yazıldı ve düzeltildi (2026-08-30).** İlk sürüm
+> boşluğun *"hiç ölçülmediğini"* söylüyordu. Yanlıştı:
+> `tests/test_invariants.py` varsayımı zaten sınıyordu. Doğru cümle
+> *"sınandı ama dar sınırlı bir bekçiyle, güven aralığı olmadan, yalnızca
+> kupon kesitinde, ve kuyruğa çevrilmeden"*dır. Aradaki farkı yutmak, var
+> olan bir bekçiyi yok saymak olurdu.
 
 `secim.py:271` açıkça yazıyor:
 
@@ -149,21 +156,35 @@ Makale bunu doğru teşhis ediyor. Ama **önemi tahminde değil, kuyruktadır** 
 ve bu ayrım makalede yok:
 
 * **Tahminde önemsiz.** Bağımsızlık varsayımı tek tek `P(Y_i)`'leri
-  değiştirmez; kupon 15 farklı ligden 15 farklı maç taşır ve aralarındaki
-  ortak sürücü (hakem eğilimi, hava, lig dönemi) zayıftır.
+  değiştirmez; Brier de log kaybı da bu varsayımı hiç kullanmaz.
 * **Kuyrukta önemli olabilir.** `P(k ≥ 12)` korelasyonlu Bernoulli
-  toplamında **şişer**. Bugünkü geri test ve `P(k≤2)` tabanlı karar katmanı
-  bağımsızlık altında hesaplandığı için, kendi **riskini olduğundan iyimser**
-  gösteriyor olabilir. Hedefin `P(en iyi kolon ≥ 12)` olduğu ölçüldüğüne göre
-  (§5.2 bulgu 1) bu doğrudan hedef ölçüsünü ilgilendirir.
+  toplamında **şişer**. Hedefin `P(en iyi kolon ≥ 12)` olduğu ölçüldüğüne
+  göre (§5.2 bulgu 1) bu doğrudan hedef ölçüsünü ilgilendirir.
 
-**Durma kuralı (ölçüm görülmeden yazıldı).** Ölçülecek şey, aynı 36 haftada
-`P(k≥12)`'nin bağımsız hesabı ile gözlenen frekans arasındaki farktır. Bootstrap
-%95 aralığı sıfırı kesiyorsa **eksen kapanır** ve bugünkü geri test
-*savunulmuş* olur — kapanış da bir sonuçtur. Kesmiyorsa `secim.py` ve
-`backtest.py`'ın kuyruk hesabı düzeltilir.
+**Ölçüldü, ve eksen kapandı** (`spor_toto/kuyruk.py`, §3.46). Ön kayıtlı
+kural — *aralık sıfırı kesiyorsa eksen kapanır* — üç kesitte de sağlandı:
 
-Kaydı §6.2'nin "Denenmedi, gerekçesiyle" tablosuna düşüldü.
+| Kesit | Hafta | Maç | ρ | %95 aralık |
+|---|---:|---:|---:|---|
+| Kupon (varsayılan) | 36 | 540 | −0,02022 | [−0,03926, +0,00079] |
+| Kupon (geniş) | 114 | 1.710 | −0,00349 | [−0,01724, +0,01020] |
+| **Korpus** | **183** | **31.103** | **−0,00009** | **[−0,00102, +0,00080]** |
+
+Kuyruğa çevrildiğinde (tek faktör Gauss kopulası + Gauss-Hermite, RNG yok):
+korpus aralığının üst sınırında `P(k≥14)` yalnızca **%5** şişiyor. Nokta
+tahminleri negatif, yani kuyruk şişmiyor.
+
+**Kapanışın sınırı da yazıldı.** Kupon kesiti *tek başına* bu sonucu
+veremezdi: 114 haftanın aralığı üst ucunda %82'lik bir şişmeye hâlâ izin
+veriyor. Sonucu taşıyan şey korpusun 183 haftasıdır.
+
+**Yan ürün — makalenin dolaylı katkısı.** Ölçüm iki kusur buldu:
+(1) eski bekçinin istatistiği yanlıştı (`Var(K)` yerine `Var(K−M)` olmalıydı;
+korpusta 36,09 yerine 0,98) ve `ortak.kacak_dagilimi`nin docstring'i o yanlış
+sayıyı varsayımın kanıtı diye anıyordu — ikisi de düzeltildi;
+(2) ham artıklarla görünen `ρ = +0,0077` tamamen **kalibrasyon
+yanlılığıydı** (favori, fiyatın söylediğinden maç başına ~5 puan sık tutuyor).
+Ayrılmasalardı ölçüm var olmayan bir bağımlılık raporlayacaktı.
 
 ### 4.2 Beklenen fayda optimizasyonu — makalenin §15'i
 
@@ -314,10 +335,16 @@ toplanmamış bir haftadır — ve toplanmamış veri hiçbir zaman ölçülemez
 yürüyor (ürün), Faz D bitiş tanımı. Makale bu planı değiştirmiyor çünkü
 sorduğu soruların üçünün cevabı o planın içinde zaten var.
 
-**Değişiyor:** §6.2'nin "Denenmedi, gerekçesiyle" tablosuna **ortak dağılım /
-kuyruk bağımlılığı** satırı girdi — türetilebilir, yeni kaynak gerekmez,
-şimdi denenmiyor, ve **yeniden açılma koşulu yazılı**. Makalenin tek gerçek
-katkısı budur ve kaybolmasın diye plana düşürüldü.
+**Değişti, sonra kapandı:** makalenin tek gerçek katkısı olan **kuyruk
+bağımlılığı** önce §6.2'ye durma kuralıyla düşüldü, sonra **ölçüldü** ve kural
+işletildi — eksen kapandı (§3.46). Ölçüm `spor_toto/kuyruk.py`de, koşumu
+`python -m spor_toto.kuyruk`.
+
+Makale böylece kendi türünün en iyi sonucunu verdi: bir dış görüş, cevabı
+bilinen sorular listesi getirdi ama içinde **bir tane** gerçekten açık soru
+vardı, o soru ölçüldü ve iki kusur ortaya çıkardı (yanlış istatistikli bir
+bekçi, ve yanlılıkla karışan bir korelasyon). Dış incelemelerin bu depoda
+tuttuğu yer tam olarak burasıdır.
 
 **Makalenin kalıcı değeri** yol haritasında değil, §1–§2 ve §26–§30'daki
 **çerçevede**: tahmin ile garantiyi ayırması, kalibrasyonu doğruluktan

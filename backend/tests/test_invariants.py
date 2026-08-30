@@ -299,35 +299,37 @@ def test_olasilik_satirlari_bicimi():
 
 def test_bagimsizlik_varsayimi_hafta_duzeyinde_tutuyor():
     """`P(≥12)`, `p_kume_ici`, Poisson-binom — hepsi 15 maçın bağımsızlığına
-    dayanıyor ve bu varsayım hiç sınanmamıştı.
+    dayanıyor. Bu bekçi o varsayımın **kırılmadığını** tutar.
 
-    Sınama: haftalık favori isabetinin **gözlenen** varyansı, bağımsızlığın
-    öngördüğü `Σp(1−p)` ile aynı büyüklükte mi. Maçlar birlikte hareket
-    etseydi (favori haftası / sürpriz haftası) gözlenen varyans belirgin
-    biçimde büyük çıkardı.
+    **İstatistiği bir kez yanlıştı ve düzeltildi.** Önce
+    `Var_haftalar(K) / E[V]` hesaplanıyordu; kalibre bir tahmincide
+    `Var(K) = E[V] + Var(M)` olduğu için o oran, hafta zorluğunun haftadan
+    haftaya değişmesini bağımlılık sanıyordu. Sabit 15 maçlık kupon
+    haftalarında bu yalnızca yukarı yönlü bir yanlılıktı (yani eski yeşil
+    sonuç ayakta kalır), ama değişken boyutlu korpus haftalarında aynı
+    istatistik **36,09** veriyordu — doğrusu 0,98. Formül artık
+    `kuyruk.olc`ten geliyor; iki gövde ayrışamaz.
 
-    Sınırlar geniş (0,5–1,6) ve bilerek: 36 haftada varyans oranının kendi
-    örneklem dağılımı geniştir. Test "varsayım tam doğru" demiyor,
-    **"kırılmadı"** diyor — dar bir sınır burada kendi gürültüsünü ölçerdi.
+    **Tek yönlüdür, ve bu bilinçli.** Ürünü ilgilendiren yön yalnızca
+    yukarıdır: fazla dağılım (`> 1`) hafta içi eş-hareket demektir ve
+    `P(k≥12)`yi *iyimser* yapar. Az dağılım geri testi temkinli yapar, yani
+    bir kusur değildir — ve 36 haftada dağılımın kendi örneklem aralığı
+    zaten `[0,46, 1,00]`. İki yönlü bir sınır orada kendi gürültüsünü
+    ölçerdi.
+
+    Asıl ölçüm — güven aralığı, korpus kesiti ve `ρ`nun kuyruğa çevrilmesi —
+    bu bekçide değil `spor_toto.kuyruk`tadır (§3.46).
     """
-    import statistics
-
     from spor_toto.backtest import hafta_girdileri
+    from spor_toto.kuyruk import hafta_kayitlari, olc
 
     haftalar = [g for g in hafta_girdileri(None) if g["usable"]]
     if len(haftalar) < 20:
         pytest.skip("bagimsizlik sinamasi icin en az 20 tam hafta gerekli")
 
-    gozlenen, ongorulen = [], []
-    for w in haftalar:
-        favs = [max(p, key=p.get) for p in w["probs"]]
-        pf = [p[f] for p, f in zip(w["probs"], favs)]
-        gozlenen.append(sum(1 for f, k in zip(favs, w["results"]) if f == k))
-        ongorulen.append(sum(x * (1 - x) for x in pf))
-
-    oran = statistics.variance(gozlenen) / statistics.mean(ongorulen)
-    assert 0.5 < oran < 1.6, (
-        f"haftalik favori isabetinin varyans orani {oran:.2f} — bagimsizlik "
+    s = olc(hafta_kayitlari(haftalar))
+    assert s["dagilim"] < 1.6, (
+        f"haftalik favori isabetinin dagilimi {s['dagilim']:.2f} — bagimsizlik "
         f"varsayimi kirilmis olabilir; P(>=12) ve p_kume_ici bu varsayima "
-        f"dayaniyor (gozlenen var {statistics.variance(gozlenen):.2f}, "
-        f"ongorulen {statistics.mean(ongorulen):.2f})")
+        f"dayaniyor (rho={s['rho']:+.5f}, yanlilik={s['yanlilik']:+.4f}). "
+        f"Olcum icin: python -m spor_toto.kuyruk")

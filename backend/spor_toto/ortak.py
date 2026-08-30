@@ -480,9 +480,20 @@ def kacak_dagilimi(kacak_olasiliklari: Sequence[float]) -> list[float]:
     """Poisson-binom: bağımsız maçlarda **toplam kaçak sayısının** dağılımı.
 
     `d[m]` = tam olarak `m` maçın seçim kümesinin dışında kalma olasılığı.
-    Maçlar bağımsız varsayılır; varsayım ölçüldü ve kırılmadı (haftalık
-    favori isabetinin gözlenen varyansı / öngörülen = 0,91, bkz.
-    `tests/test_invariants.py`).
+    Maçlar bağımsız varsayılır.
+
+    **Varsayım ölçüldü ve kırılmadı** — ama bu docstring bir kez YANLIŞ
+    sayıyı gösteriyordu. Anılan 0,91, `Var_haftalar(K)/E[V]` oranıydı ve o
+    istatistik hafta zorluğunun değişmesini bağımlılık sanıyor (`Var(K) =
+    E[V] + Var(M)`). Düzeltilmiş ölçüm `spor_toto.kuyruk`tadır ve aralıkla
+    gelir: hafta içi ortalama ikili artık korelasyonu korpusta (183 hafta ·
+    31.103 maç) **−0,00009 [−0,00102, +0,00080]**, kupon geniş kesitinde
+    (114 hafta) **−0,00349 [−0,01724, +0,01020]**. Üç kesitte de aralık
+    sıfırı kesiyor, yani §6.2'nin ölçüm görülmeden yazılmış durma kuralı
+    gereği eksen kapandı (§3.46).
+
+    Kuyruğa çevrildiğinde: korpusun üst sınırında `P(k≥14)` yalnızca **%5**
+    şişiyor. Bu hesabın bugünkü hâli savunulmuş durumda.
 
     `scripts/super_toto_degerlendir.py` içinde tanımlıydı ve oradan
     kullanılıyordu; `secim` de aynı hesabı istediği için buraya taşındı —
