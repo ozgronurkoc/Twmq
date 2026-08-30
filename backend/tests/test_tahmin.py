@@ -546,3 +546,42 @@ def test_yazdir_bos_fiksturde_de_OLCUMU_basar(capsys):
     cikti = capsys.readouterr().out
     assert "OLCULMUS ISABET" in cikti, "boş fikstürde ölçüm bloğu yutuldu"
     assert "0.5740" in cikti
+
+
+def test_api_genis_parametresi_UCTAN_calisir(client):
+    """`?genis=` ayrıştırması uçtan sınanmalı, yalnızca fonksiyon düzeyinde değil.
+
+    Ayrıştırma `web_app.api_tahmin` içinde yazılı bir küme
+    (`{"1", "true", "evet", "yes"}`) ve fonksiyon testleri onu HİÇ
+    görmüyordu: `rapor(genis=True)` çağrısı doğru sonucu veriyor olsa da
+    uç parametreyi yanlış okusaydı kimse fark etmezdi.
+
+    Açık/kapalı iki yön de sınanır. Kapalı yön daha önemli: alan gövdeye
+    kazara sızarsa `/api/tahmin`in soğuk maliyeti sessizce ~38 sn artar.
+    """
+    kapali = client.get("/api/tahmin?limit=1").get_json()
+    assert "genis_kesit" not in kapali, "istenmeden geniş kesit gövdeye girdi"
+
+    for deger in ("1", "true", "evet", "yes", "TRUE", "Evet"):
+        g = client.get(f"/api/tahmin?limit=1&genis={deger}").get_json()
+        assert "genis_kesit" in g, f"?genis={deger} açmadı"
+
+    for deger in ("0", "false", "hayir", "", "sacma"):
+        g = client.get(f"/api/tahmin?limit=1&genis={deger}").get_json()
+        assert "genis_kesit" not in g, f"?genis={deger} yanlışlıkla açtı"
+
+
+def test_api_genis_govdesi_olculmus_isabeti_DUSURMEZ(client):
+    """Geniş kesit istendiğinde dar ölçüm bloğu da gelmeli.
+
+    Projenin kırmızı çizgisi `tahminler` ↔ `olculmus_isabet` ayrılmazlığı.
+    Geniş blok o ikilinin YANINA gelir; birini ötekinin yerine koymak
+    çizgiyi geniş kesit üzerinden delmek olurdu.
+    """
+    g = client.get("/api/tahmin?limit=1&genis=1").get_json()
+    assert g["olculmus_isabet"]["olculdu"] is True
+    assert "tahminler" in g and "uyarilar" in g
+    gk = g["genis_kesit"]
+    assert gk["olculdu"] is True
+    assert gk["n_hafta"] > g["olculmus_isabet"]["n_hafta"], (
+        "geniş kesit dar kesitten büyük olmalı")

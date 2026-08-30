@@ -135,7 +135,7 @@ spor_toto/evaluate.py  ◄── spor_toto/predict.py     (sözleşme + 3 refera
 | UI | `frontend/components/tahmin/parts.tsx` | — | Olasılık çubuğu, isabet kartı, sınırlar |
 | Tahmin | `backend/spor_toto/egitim.py` | — | Eğitim korpusu okuyucusu (**istatistiğe girmez**) |
 | Üretim | `backend/scripts/build_egitim.py` | — | Korpus üretimi (football-data, 4 sezon, **iki çizgi + bahisçi kırılımı**) |
-| Test | `backend/tests/test_predict.py` · `test_evaluate.py` · `test_recalibrate.py` · `test_egitim.py` · `test_cizgi.py` · `test_bahisci.py` · `test_disari.py` · `test_tahmin.py` | — | Tahmin katmanı, **ürün** ve ayrım bekçisi (321) |
+| Test | `backend/tests/test_predict.py` · `test_evaluate.py` · `test_recalibrate.py` · `test_egitim.py` · `test_cizgi.py` · `test_bahisci.py` · `test_disari.py` · `test_tahmin.py` | — | Tahmin katmanı, **ürün** ve ayrım bekçisi (323) |
 
 **İşleyen sezon (2026/27)** — bu satırlar yukarıdaki haritanın parçasıdır,
 ayrı tabloda tutulmuştur.
@@ -153,7 +153,7 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/components/super-toto/tahmin2.tsx` | **2. Tahmin** paneli — `1. Tahmin` / `2. Tahmin` sekmeleri arasında geçilir; para birimli hiçbir sayı yok. Hafta kapandığında sonuç sütunu ve ayar karnesi açılır (§3.38) |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **1.840 test**; **85'i** istatistik katmanına (`history` `odds` `backtest`
+paketi toplam **1.842 test**; **85'i** istatistik katmanına (`history` `odds` `backtest`
 `api_stats` `api_backtest` `snapshot_iddaa`), **567'si** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre`
@@ -4884,7 +4884,7 @@ python -m spor_toto.kosum                  # kayıtlı koşumlar
 python -m spor_toto.kosum --son disari     # son koşumun ortamı
 
 # Denetim
-pytest -q                                  # 1.840 test (85'i bu katman, 567'si tahmin)
+pytest -q                                  # 1.842 test (85'i bu katman, 567'si tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out
