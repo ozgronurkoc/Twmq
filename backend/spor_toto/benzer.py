@@ -37,6 +37,15 @@ Bu araç yanlış kullanılmaya en müsait yer olduğu için üç koruma taşır
 3. Dilimleme (lig × sezon) çoklu karşılaştırma uyarısı bastırır: 22 lig ×
    4 sezon taranırsa rastgele bir yerde çarpıcı bir oran **kesinlikle**
    çıkar ve o bir bulgu değildir.
+4. `tarih=T` verilirse evren **T'den öncesiyle** sınırlanır. Karşılaştırma
+   katı küçüktür — aynı gün oynanan maçlar da düşer — ve bu, sorulan maçın
+   kendi cevabına girmesini ayrı bir koda gerek kalmadan engeller. Gerekçe
+   `_dogrula_tarih` yorumunda; sözleşme `tests/test_sizinti.py`te.
+
+Korpusun birincil fiyatı 31.103 satırın **hepsinde kapanış** ortalamasıdır
+(`oran_kaynak = AvgC`). Yani bu modül bugün "kapanış çizgisinde bu fiyatı
+gören maçlar" sorusuna cevap veriyor; açılış çizgisi korpusta ayrıca duruyor
+ama burada kullanılmıyor.
 """
 from __future__ import annotations
 
@@ -123,6 +132,40 @@ def _dogrula(oranlar: dict[str, float], tolerans: float | None,
         raise ValueError(f"en_az en az 1 olmalı (verilen: {en_az})")
 
 
+def _dogrula_tarih(tarih: str | None) -> None:
+    """`tarih` süzgecinin biçimi — `YYYY-MM-DD`, korpusun kendi biçimi.
+
+    ─── Zaman kesme niçin var ─────────────────────────────────────────────
+
+    Süzgeç eskiden yalnızca `lig` ve `sezon`du. `tarih` her satırda yüklüydü
+    (`egitim.korpus_yukle`) ama hiç okunmuyordu. Sonuç: 2022 tarihli bir
+    fiyat sorulduğunda 2024–2025 maçları da "geçmişte ne oldu" cevabına
+    giriyordu.
+
+    **Bu canlı tahmine sızıntı DEĞİL** — korpus güncel sezonu içermiyor ve
+    bunu `test_egitim.test_varsayilan_korpus_guncel_sezonu_icermez`
+    bekçiliyor. Kusur başka: bu modül o hâliyle **hiçbir kronolojik ölçümün
+    içine konulamıyordu.** Depo bunun bedelini ölçtü — ileri yürüyüşte
+    kronoloji zorlandığında piyasanın artığını öğrenen aileler 2–3 kat
+    kötüleşti (`ISTATISTIK_YOL_HARITASI.md` §6.6). `benzer`in sayıları o
+    sınavdan hiç geçmedi, çünkü sınava sokulamıyordu.
+
+    Karşılaştırma **katı küçüktür** ve `datetime`sizdir: korpus tarihleri
+    ISO dizgi (`2021-07-23`), ISO dizgilerde sözlük sırası takvim sırasıdır.
+    Katılık aynı zamanda "kendini dışla"yı bedavaya çözer: aynı gün oynanan
+    maçlar da düştüğü için sorulan maç kendi cevabına giremez.
+    """
+    if tarih is None:
+        return
+    if not isinstance(tarih, str):
+        raise ValueError("tarih 'YYYY-MM-DD' biçiminde bir dizgi olmalı")
+    p = tarih.split("-")
+    if (len(p) != 3 or [len(x) for x in p] != [4, 2, 2]
+            or not all(x.isdigit() for x in p)):
+        raise ValueError(
+            f"tarih 'YYYY-MM-DD' biçiminde olmalı (verilen: {tarih!r})")
+
+
 def _mesafe(a: dict[str, float], b: dict[str, float]) -> float:
     """İki olasılık vektörü arasındaki en büyük tek sembol farkı (L∞).
 
@@ -184,24 +227,38 @@ def benzer_maclar(oranlar: dict[str, float],
                   lig: str | None = None,
                   sezon: str | None = None,
                   yontem: str = ARINDIRMA_VARSAYILAN,
-                  korpus: str | None = None) -> dict[str, Any]:
+                  korpus: str | None = None,
+                  tarih: str | None = None) -> dict[str, Any]:
     """Verilen orana benzeyen geçmiş maçları bulur ve karnelerini çıkarır.
 
     `tolerans=None` iken yarıçap **uyarlanır**: `BASLANGIC_TOLERANS`'tan
     başlar, `en_az` maça ulaşana kadar büyür, `EN_COK_TOLERANS`'ta durur.
     Fiilen kullanılan yarıçap raporda her zaman yazar — genişlemiş bir arama
     kendini gizlememeli.
+
+    `tarih="YYYY-MM-DD"` verilirse evren **o günden öncesiyle** sınırlanır.
+    Karşılaştırma katı küçüktür: aynı gün oynanan maçlar da dışarıda kalır,
+    böylece sorulan maçın kendisi kendi cevabına giremez — ayrı bir "kendini
+    dışla" koduna gerek yok. Gerekçe `_zaman_kesme` yorumunda.
+
+    `tarih=None` (varsayılan) bugünkü davranışı birebir korur.
     """
     _dogrula(oranlar, tolerans, en_az)
+    _dogrula_tarih(tarih)
     hedef = implied_probs(oranlar, yontem)
     if len(hedef) != 3:
         # `_dogrula`dan sonra bu artık gerçekten "arındırma üç sembol
         # üretemedi" demek: `nan`/`inf` bir üst kapıda adıyla düşüyor.
         raise ValueError("üç sembolün de oranı gerekli")
 
-    evren = [(p, r) for p, r in _olasilik_tablosu(yontem, korpus)
+    dilim = [(p, r) for p, r in _olasilik_tablosu(yontem, korpus)
              if (lig is None or r["lig"] == lig)
              and (sezon is None or r["sezon"] == sezon)]
+    # Kesme lig/sezon süzgecinden SONRA sayılır: `evren_kesilen` "bu sorgunun
+    # evreninden kaç maç düştü" demek, "korpustan" değil.
+    evren = ([(p, r) for p, r in dilim if r["tarih"] < tarih]
+             if tarih is not None else dilim)
+    kesilen = len(dilim) - len(evren)
     # Mesafe bir kez hesaplanır; hem uyarlanan arama hem dilimler bunu okur.
     olculu = sorted(((_mesafe(p, hedef), r) for p, r in evren),
                     key=lambda x: x[0])
@@ -229,6 +286,8 @@ def benzer_maclar(oranlar: dict[str, float],
                                     and kullanilan >= EN_COK_TOLERANS
                                     and len(bulunan) < en_az),
         "evren": len(olculu),
+        "as_of": tarih,
+        "evren_kesilen": kesilen,
         "filtre": {"lig": lig, "sezon": sezon},
         "toplam": _sayim(bulunan, hedef),
         "uyarilar": [],
@@ -304,6 +363,8 @@ def yaz(rapor: dict[str, Any]) -> None:
           f"   (arındırma: {rapor['arindirma']})")
     f = rapor["filtre"]
     kapsam = ", ".join(x for x in (f["lig"], f["sezon"]) if x) or "tüm korpus"
+    if rapor["as_of"]:
+        kapsam += f" · {rapor['as_of']} öncesi ({rapor['evren_kesilen']:,} maç kesildi)"
     print(f"Arama       : {kapsam} · {rapor['evren']:,} maç içinde, "
           f"olasılık uzayında ±{100*rapor['tolerans']:.1f} puan"
           f"{' (uyarlandı)' if rapor['tolerans_uyarlandi'] else ''}")
@@ -343,6 +404,9 @@ def main(argv: Sequence[str] | None = None) -> None:
                     help="uyarlanan aramanın hedeflediği en az maç")
     ap.add_argument("--lig", default=None)
     ap.add_argument("--sezon", default=None)
+    ap.add_argument("--tarih", default=None,
+                    help="YYYY-MM-DD; yalnızca bu günden ÖNCEKİ maçlar "
+                         "aranır (kronolojik sorgu)")
     ap.add_argument("--arindirma", default=ARINDIRMA_VARSAYILAN,
                     choices=("orantili", "guc", "shin"))
     ap.add_argument("--json", action="store_true")
@@ -361,7 +425,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         rapor = benzer_maclar(
             {"1": parcalar[0], "0": parcalar[1], "2": parcalar[2]},
             tolerans=a.tolerans, en_az=a.en_az, lig=a.lig,
-            sezon=a.sezon, yontem=a.arindirma)
+            sezon=a.sezon, yontem=a.arindirma, tarih=a.tarih)
     except ValueError as e:
         # CLI kendi kuralını YAZMAZ. Doğrulama tek yerde (`_dogrula`) ve
         # burası onun cümlesini olduğu gibi iletir; ikinci bir kopya iki

@@ -776,7 +776,7 @@ def api_tahmin():
 @lru_cache(maxsize=128)
 def _benzer_cached(oran: tuple[float, float, float], tolerans: float | None,
                    en_az: int, lig: str | None, sezon: str | None,
-                   yontem: str) -> dict[str, Any]:
+                   yontem: str, tarih: str | None = None) -> dict[str, Any]:
     """Benzer mac sorgusu onbelleklenir — korpus surumlenmis bir dosyadir.
 
     `tahmin`in aksine burada zaman gecmesi cevabi degistirmez: 31 bin maclik
@@ -785,7 +785,7 @@ def _benzer_cached(oran: tuple[float, float, float], tolerans: float | None,
     from spor_toto.benzer import benzer_maclar
     return benzer_maclar({"1": oran[0], "0": oran[1], "2": oran[2]},
                          tolerans=tolerans, en_az=en_az, lig=lig,
-                         sezon=sezon, yontem=yontem)
+                         sezon=sezon, yontem=yontem, tarih=tarih)
 
 
 @app.route("/api/benzer", methods=["GET"])
@@ -794,7 +794,11 @@ def api_benzer():
     "Bu oranda gecmiste ne oldu?"
 
     `?oran=1.82,3.04,2.44` zorunlu; istege bagli `?tolerans=`, `?en_az=`,
-    `?lig=`, `?sezon=`, `?arindirma=`.
+    `?lig=`, `?sezon=`, `?arindirma=`, `?tarih=`.
+
+    `?tarih=YYYY-MM-DD` evreni o gunden ONCESIYLE sinirlar (kati kucuktur,
+    yani aynı gun oynanan maclar da disarida). Verilmezse butun korpus
+    aranir -- eski davranis.
 
     Govde bir TAHMIN degildir: 31 bin maclik korpusta ayni fiyata sahip
     maclarin nasil bittigini sayar. Her yuzde yaninda `n` ve Wilson %95
@@ -847,7 +851,8 @@ def api_benzer():
     try:
         govde = _benzer_cached(parcalar, tolerans, en_az,
                                request.args.get("lig") or None,
-                               request.args.get("sezon") or None, yontem)
+                               request.args.get("sezon") or None, yontem,
+                               request.args.get("tarih") or None)
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
     return jsonify(govde)

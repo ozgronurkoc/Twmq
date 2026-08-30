@@ -165,6 +165,7 @@
   },
   "GET /api/benzer": {
    "arindirma": "str",
+   "as_of": "null",
    "dilimler": {
     "lig": [
      {
@@ -244,6 +245,7 @@
     ]
    },
    "evren": "int",
+   "evren_kesilen": "int",
    "filtre": {
     "lig": "null",
     "sezon": "null"

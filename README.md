@@ -456,6 +456,9 @@ ya da `GET /api/benzer?oran=1.82,3.04,2.44`. Verilen orana benzeyen geçmiş ma�
 yapılır, oran uzayında değil: örnek oran (marj %28,8) korpusta ±%10'luk oran
 komşuluğunda **hiç** maç bulmuyor, olasılık uzayında ±2 puanda **710** maç buluyor.
 Her yüzde yanında n ve Wilson %95 aralığı gelir; 30 maçın altındaki dilim sayı vermez.
+`--tarih 2023-08-01` verilirse evren o günden **öncesiyle** sınırlanır (katı küçüktür,
+yani sorulan maçın kendisi de kendi cevabına giremez) — kronolojik sorgu böyle
+kurulur. Korpusun birincil fiyatı 31.103 satırın hepsinde **kapanış** ortalamasıdır.
 
 **Çift kapsama** — ilk-iki olasılık toplamı 0,70–0,80 iken gerçek sonuç küme içinde
 kalma oranı %77,2; 0,80–0,90 iken %85,3; 0,90+ iken %95,1. Aynı bantlarda **banko**

@@ -377,3 +377,99 @@ def test_kayittaki_aileler_olculen_haftayi_gormez():
         assert skor > tavan, (
             f"{aile}: Brier {skor:.4f}, sizdiran kurgunun {tavan:.4f} "
             "skorundan iyi — olculen haftayi goruyor olabilir")
+
+
+# ─── 4. madde: ampirik sorgu kronolojiyi tanıyor mu? ─────────────────────────
+#
+# `benzer.py` bu sözleşmede uzun süre **hiç geçmiyordu.** Dosyanın kendi
+# gerekçesi burada birebir işledi: *"yeni bir tahminci eklendiğinde onu kimse
+# otomatik denetlemiyordu."* `benzer` bir tahminci değil — tahmin üretmez,
+# ampirik bir sayım verir — ama sızıntı riski aynıdır ve daha sinsidir:
+# ürettiği sayı "geçmişte ne oldu" diye sunulur.
+#
+# Denetlenen şey: `tarih=T` verildiğinde evren gerçekten T'nin öncesiyle
+# sınırlı mı, ve bu sınır **boş bir yeşil** değil mi (T'siz sorgu geleceği
+# gerçekten görüyor mu).
+
+_ORNEK_ORAN = {"1": 1.82, "0": 3.04, "2": 2.44}
+_KESME = "2023-08-01"
+
+
+def _benzer_korpus():
+    from spor_toto.egitim import korpus_yukle
+    return korpus_yukle()
+
+
+def _benzer_bul(**kw):
+    from spor_toto.benzer import benzer_maclar
+    return benzer_maclar(_ORNEK_ORAN, tolerans=0.02, **kw)
+
+
+def _korpus_yoksa_atla():
+    if not _benzer_korpus():
+        pytest.skip("egitim korpusu yok (scripts/build_egitim.py)")
+
+
+def test_benzer_kesme_tarihinden_sonrasini_gormez():
+    """1. madde: `tarih=T` verildiğinde hiçbir maç T'de ya da sonrasında değil.
+
+    Süzgeç **katı küçüktür**: aynı gün oynanan maçlar da düşer. Bu, ayrı bir
+    "kendini dışla" koduna gerek bırakmadan sorulan maçın kendi cevabına
+    girmesini engeller.
+    """
+    _korpus_yoksa_atla()
+    from spor_toto.benzer import _mesafe, _olasilik_tablosu
+    from spor_toto.odds import ARINDIRMA_VARSAYILAN, implied_probs
+
+    r = _benzer_bul(tarih=_KESME)
+    hedef = implied_probs(_ORNEK_ORAN, ARINDIRMA_VARSAYILAN)
+    bulunan = [kayit for p, kayit in _olasilik_tablosu(ARINDIRMA_VARSAYILAN, None)
+               if _mesafe(p, hedef) <= 0.02 and kayit["tarih"] < _KESME]
+
+    assert r["as_of"] == _KESME
+    assert r["toplam"]["n"] == len(bulunan)
+    assert all(m["tarih"] < _KESME for m in bulunan), "kesme tarihi sızdırdı"
+
+
+def test_benzer_kesmesiz_sorgu_gelecegi_gercekten_goruyor():
+    """Denetimin boş yeşil olmadığının kanıtı — bilerek sızdıran kurgu.
+
+    `test_evaluate.py` başlığındaki kural: *bir kuralın yalnızca `False`
+    döndürdüğünü kanıtlayan test takımı boştur.* Kesme çalışıyor demek için
+    kesmesiz yolun geleceği gerçekten kattığını göstermek gerekir; yoksa
+    yukarıdaki test korpusta hiç gelecek maç olmadığı için de yeşil kalırdı.
+    """
+    _korpus_yoksa_atla()
+    kesik = _benzer_bul(tarih=_KESME)
+    tam = _benzer_bul()
+
+    assert tam["evren"] > kesik["evren"], "kesmesiz sorgu daha büyük evren görmeli"
+    assert kesik["evren_kesilen"] == tam["evren"] - kesik["evren"]
+    assert tam["evren_kesilen"] == 0
+    # Kesilen kesitte gerçekten SONRAKI maçlar var.
+    sonraki = [m for m in _benzer_korpus() if m["tarih"] >= _KESME]
+    assert sonraki, "korpusta kesme tarihinden sonra maç yok — test anlamsız"
+
+
+def test_benzer_sorulan_macin_kendisi_kendi_cevabinda_yok():
+    """3. madde: bir maçı kendi tarihiyle sorarsan kendini sayamaz.
+
+    `test_benzer.test_macin_kendisi_kendi_komsulugunda`'nın kronolojik
+    ikizi: orada maçın kendi komşuluğunda **bulunması** doğrulanıyor (arama
+    çalışıyor mu), burada kendi tarihiyle sorulduğunda **bulunmaması**
+    (arama kendi cevabını okuyor mu).
+    """
+    _korpus_yoksa_atla()
+    from spor_toto.benzer import _mesafe, _olasilik_tablosu
+    from spor_toto.odds import ARINDIRMA_VARSAYILAN
+
+    tablo = _olasilik_tablosu(ARINDIRMA_VARSAYILAN, None)
+    hedef_p, hedef_mac = tablo[0]
+
+    kendi_tarihiyle = [k for p, k in tablo
+                       if _mesafe(p, hedef_p) <= 0.02
+                       and k["tarih"] < hedef_mac["tarih"]]
+    kesmesiz = [k for p, k in tablo if _mesafe(p, hedef_p) <= 0.02]
+
+    assert hedef_mac in kesmesiz, "maç kendi komşuluğunda bulunmuyor — arama bozuk"
+    assert hedef_mac not in kendi_tarihiyle, "maç kendi cevabına girdi"

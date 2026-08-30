@@ -993,6 +993,14 @@ export interface BenzerResponse {
   tolerans_tavana_dayandi: boolean;
   evren: number;
   /**
+   * Kronolojik kesme: doluysa evren bu gunun ONCESIYLE sinirli (kati
+   * kucuktur, yani ayni gun oynanan maclar da disarida). `null` = butun
+   * korpus arandi.
+   */
+  as_of: string | null;
+  /** Kesme yuzunden bu sorgunun evreninden dusen mac sayisi. */
+  evren_kesilen: number;
+  /**
    * Uygulanan suzgecler. Sunucu bunu bastan beri donduruyordu ama tip
    * bilmiyordu; sozlesme denetimi yakaladi. `null` = suzgec yok.
    */
