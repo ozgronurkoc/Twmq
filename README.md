@@ -936,7 +936,7 @@ backend/
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
                        sehir/ · xg/
-  tests/               pytest (62 dosya → 1.867 test; §9'da katman dökümü)
+  tests/               pytest (62 dosya → 1.879 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1121,8 +1121,8 @@ Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant'lar, CLI (Bayes pre
 dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri test,
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
-eşleme, ikinci kayıt). **62 test dosyası, parametrizasyonla
-1.867 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+eşleme, ikinci kayıt). **63 test dosyası, parametrizasyonla
+1.879 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
@@ -1393,6 +1393,7 @@ olması gerekir. Tanımlıysa yalnızca **durum değişiminde** bildirim gider.
 | [`docs/DIS_INCELEME_AZ_RAPORU.md`](docs/DIS_INCELEME_AZ_RAPORU.md) | Depo dışından gelen 64 bölümlük bir değerlendirmenin madde madde karşılığı: çoğunun karşılığı zaten vardı, **üçü gerçekten eksikti** (Model Arena, ileri yürüyüş, sızıntı sözleşmesi) ve üçü de uygulandı — ürettikleri ölçüm §3.41'de |
 | [`docs/GELISTIRME_PLANI_ESLEMESI.md`](docs/GELISTIRME_PLANI_ESLEMESI.md) | Dışarıdan gelen iki geliştirme planının madde madde karşılığı: hangisi zaten vardı, hangisi gerçekten eksikti (dördü), hangisi **ölçülmüş gerekçeyle** reddedildi |
 | [`docs/BENZER_PLANI_ESLEMESI.md`](docs/BENZER_PLANI_ESLEMESI.md) | `benzer.py` için gelen dış planın aynı biçimde eşlemesi: gerçekten eksik olan üçü (`inf` oran · toleransın üç kapıda üç sınırı · zaman kesmesi) uygulandı, altısı gerekçesiyle reddedildi, üçü kaydedildi |
+| [`docs/GELECEK_MIMARISI_ESLEMESI.md`](docs/GELECEK_MIMARISI_ESLEMESI.md) | Dışarıdan gelen bir **gelecek mimarisi makalesinin** aynı biçimde eşlemesi: önerdiği Faz I–V'in tamamı zaten yapılmış ve **ölçülmüştü** (hiçbir aile kapanış fiyatını geçmedi), gerçekten yeni olan tek madde **maçlar arası bağımlılığın kuyruk etkisi** oldu — ölçüldü ve **eksen kapandı** (§3.46); makalenin hiç görmediği şey ise açık olan tek eksen: **havuz** |
 | [`backend/README.md`](backend/README.md) | Motor + API kurulumu, ortam değişkenleri, oran arşivi kullanımı |
 | [`frontend/README.md`](frontend/README.md) | Arayüz yapısı, tasarım sistemi, grafik kuralları, tip katmanı |
 | [`replit.md`](replit.md) | Replit çalışma alanının hafızası: iş akışları, portlar, dağıtım |
