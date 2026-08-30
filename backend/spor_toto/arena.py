@@ -88,11 +88,14 @@ from .predict import REFERANS_AD, referans_fabrikalar
 #: Kupon setinin egitim korpusuyla ORTAK mac sayisi — olculdu, varsayilmadi.
 #:
 #: §6G kupon setini dort sezona cikardi ve uc sezonu korpusla cakisiyor:
-#: 2022/23 %100, 2023/24 %100, 2024/25 %97, 2025/26 %0 — toplam 1.605 macin
-#: 1.155'i (%72) korpusta BIREBIR var. Bu yuzden korpusta egitilmis bir
+#: 2022/23 %100, 2023/24 %100, 2024/25 %97, 2025/26 %0 — toplam 1.680 macin
+#: 1.200'u (%71) korpusta BIREBIR var. Bu yuzden korpusta egitilmis bir
 #: tahminci bu haftalarda `grup=None` ile olculemez.
+#:
+#: Sayilar §6H'de buyudu (107 -> 112 hafta, eslestirmedeki Unicode kusuru
+#: duzeltilince) ve burada ELLE guncellendi. Oran degismedi: %72 -> %71.
 KUPON_KORPUS_KESISIMI = (
-    "kupon maclarinin 1.155/1.605'i (%72) egitim korpusunda da var "
+    "kupon maclarinin 1.200/1.680'i (%71) egitim korpusunda da var "
     "(2022/23, 2023/24, 2024/25). Korpusta egitilen bir tahminci bu "
     "kesitte grup=sezon_anahtari OLMADAN olculemez."
 )
@@ -195,8 +198,8 @@ def kesit(kupon: bool = False,
     o uyarı artık yalnızca gerçekten tek sezon kaldığında çıkar.
 
     **Sızıntı uyarısı ayrı bir konudur ve kalkmaz:** kupon sezonlarının üçü
-    (2022/23, 2023/24, 2024/25) eğitim korpusunda da var — 1.605 maçın
-    1.155'i birebir. Korpusta eğitilmiş bir tahminci bu haftalarda
+    (2022/23, 2023/24, 2024/25) eğitim korpusunda da var — 1.680 maçın
+    1.200'ü birebir. Korpusta eğitilmiş bir tahminci bu haftalarda
     ölçülecekse `grup=sezon_anahtari` **şart**; künye bunu `sizinti` alanında
     söyler.
     """

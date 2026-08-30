@@ -63,6 +63,7 @@ import csv
 import json
 import re
 import sys
+import unicodedata
 import urllib.error
 import urllib.request
 from collections import Counter
@@ -146,6 +147,26 @@ BULTEN_ESLERI = {
     "sporting lizbon": "sp lisbon",
     "manchester utd": "man united",
     "milano": "milan",
+    # ─── `--teshis` ile bulunanlar ────────────────────────────────────────
+    # Asagidaki satirlarin hepsi ESIK ALTINDA kalmis maclarin en iyi
+    # adayindan okundu ve football-data'da karsiligi tek tek DOGRULANDI.
+    # Ayni listede duran ama karsiligi dogrulanamayan adaylar (Qingdao'nun
+    # ad degisikligi, Wuhan'in YANLIS deplasman esi) BILEREK alinmadi —
+    # esigin dogru biçimde reddettigi seyi sozlukle geri sokmak, esigi
+    # kaldirmakla ayni sey olurdu.
+    "union saint gilloise": "st. gilloise",   # Royale Union Saint-Gilloise
+    "la galaxy": "los angeles galaxy",
+    "kuopion": "kups",                        # Kuopion Palloseura
+    "vaasan ps": "vps",                       # Vaasan Palloseura
+    "seinojoen": "sjk",                       # Seinajoen Jalkapallokerho
+    "h.kameratene": "hamkam",                 # Hamarkameratene
+    # OCR kusurlari: bulten GORSELDEN okunuyor ve iki harf duzenli olarak
+    # karisiyor — `I`/`l` (AIK -> AlK) ve bitisik yazilan kulup on eki
+    # (FC KTP -> FCKTIP). Ikisi de ad degil OKUMA kusuru; duzeltmeleri
+    # burada duruyor cunku `build_bulten.py` goruntuyu yeniden okumuyor.
+    "fcktip": "ktp",                          # Kotkan Tyovaen Palloilijat
+    "alk solna": "aik",
+    "aik solna": "aik",
 }
 
 
@@ -155,11 +176,38 @@ def _bulten_adi(ad: str) -> str:
     Ceviri yalnizca TABLODAKI adlar icin yapilir; tabloda olmayan ad
     OLDUGU GIBI birakilir ve bulanik eslestirmeye gider. Yani bu tablo bir
     "yakinsatma" degil, dogrulanmis bir sozluktur (doktrin 2).
+
+    ─── BIRLESEN ISARETLER NICIN AYRICA SILINIYOR ────────────────────────
+
+    Bu satir uzun sure YOKTU ve sozlugun bir bolumunu **sessizce olu**
+    biraktu. Sebep Turkce noktali `I`nin (U+0130) Unicode kucultmesidir::
+
+        "MARSILYA".lower()  -> "marsilya"        sozlukte VAR
+        "MARSILYA".lower()  -> "marsi" + U+0307 + "lya"   sozlukte YOK
+
+    Ikisi ekranda ayni gorunur; ikincisinde `i`den sonra ayri bir
+    **birlesen nokta** durur. Asagidaki katlama tablosu `i`yi zaten
+    kapsamiyordu (kucuk `i` sorunlu degil), dolayisiyla `MARSILYA`,
+    `SPORTING LIZBON` ve `MILANO` satirlari hicbir zaman calismadi.
+
+    Bulten **buyuk harfli bir gorselden** OCR ile okundugu icin `I` orada
+    kural disi degil, NORMAL hal — yani kusur sozlugun tam da en cok
+    ihtiyac duyuldugu yerde vuruyordu. `build_odds.sadelestir` ayni
+    temizligi ilk gunden yapiyor; buradaki eksiklik bir ayrisma idi.
+
+    Olculdu: `--teshis` ile once/sonra sayilir.
     """
     s = (ad or "").lower()
     for a, b in (("\u0131", "i"), ("\u011f", "g"), ("\u015f", "s"),
                  ("\u00f6", "o"), ("\u00fc", "u"), ("\u00e7", "c")):
         s = s.replace(a, b)
+    s = unicodedata.normalize("NFKD", s)
+    s = "".join(c for c in s if not unicodedata.combining(c))
+    # OCR artigi: bulten gorselindeki sutun ayraci zaman zaman adin basina
+    # `/` olarak dusuyor ("/ MARSILYA"). Hicbir kulup adi `/` ile
+    # baslamaz, dolayisiyla bunu silmek bir "yakinsatma" degil bir
+    # TEMIZLIKTIR — ic `/` karakterine DOKUNULMAZ.
+    s = s.lstrip("/ ").rstrip("/ ")
     s = re.sub(r"\s+", " ", s).strip()
     return BULTEN_ESLERI.get(s, ad)
 
@@ -254,6 +302,48 @@ def eslestir(ev: str, dep: str,
         return None, (f"iki aday ayirt edilemedi ({puanlar[0][0]:.2f} vs "
                       f"{puanlar[1][0]:.2f})")
     return puanlar[0][1], ""
+
+
+#: `--teshis`in kullandigi sinif adlari. Ayrim tek bir soru icindir:
+#: **eslestirme STRATEJISINI degistirmek bu maci kurtarabilir mi?**
+#:
+#:     ayirt_edilemedi     evet — iki aday esigi gecti, secim yapilmadi
+#:     aday_yok_esik_alti  belki — yakin bir aday var, ad kusuru olabilir
+#:     aday_yok_uzak       hayir — pencerede benzeyen hicbir sey yok
+#:                                (ertelenmis mac ya da kapsam disi lig)
+TESHIS_SINIFLARI = ("eslesti", "ayirt_edilemedi",
+                    "aday_yok_esik_alti", "aday_yok_uzak")
+
+#: Bir adayin "yakin" sayilmasi icin gereken ham ortalama benzerlik.
+#: `ORTALAMA_ESIK`in ALTINDA ve teshis icindir — kabul esigi DEGIL.
+TESHIS_YAKIN = 0.5
+
+
+def teshis_sinifi(ev: str, dep: str,
+                  adaylar: list[dict[str, Any]]) -> tuple[str, float]:
+    """`eslestir`in gerekcesini AYRINTILI sinifla — yalnizca `--teshis` icin.
+
+    `eslestir` iki gerekce dondurur ("esigi gecen aday yok" / "iki aday
+    ayirt edilemedi") ve birincisi iki cok farkli durumu birlestirir:
+    *yakin bir aday var ama esigi gecmiyor* ile *pencerede benzeyen hicbir
+    sey yok*. Ayrimi yapmadan "eslestirmeyi iyilestirelim" demek olcusuz
+    bir cumledir; bu fonksiyon o cumleyi olculebilir yapar.
+    """
+    puanlar: list[float] = []
+    en_iyi_ham = 0.0
+    for aday in adaylar:
+        e = benzerlik(_bulten_adi(ev), aday["ev"])
+        d = benzerlik(_bulten_adi(dep), aday["dep"])
+        en_iyi_ham = max(en_iyi_ham, (e + d) / 2)
+        if e >= TARAF_ESIK and d >= TARAF_ESIK and (e + d) / 2 >= ORTALAMA_ESIK:
+            puanlar.append((e + d) / 2)
+    if not puanlar:
+        yakin = en_iyi_ham >= TESHIS_YAKIN
+        return ("aday_yok_esik_alti" if yakin else "aday_yok_uzak"), en_iyi_ham
+    puanlar.sort(reverse=True)
+    if len(puanlar) > 1 and puanlar[0] - puanlar[1] < AYIRT_EDICI_FARK:
+        return "ayirt_edilemedi", puanlar[0]
+    return "eslesti", puanlar[0]
 
 
 def kod(hg: int, ag: int) -> str:
@@ -393,10 +483,72 @@ def _kapanis_tablosu(anahtar: str) -> dict[int, str]:
             if w.get("week") is not None and w.get("close_date")}
 
 
+def teshis(dosyalar: list[Path], cache: Path) -> int:
+    """Elenen haftalarin gerekcelerini sayar ve dosya YAZMAZ.
+
+    Niçin ayri bir kip: *"eslestirmeyi iyilestirelim"* cumlesi, hangi
+    kusurun kac maci dusurdugu bilinmeden olculemez. Bu kip o dagilimi
+    verir; `TESHIS_SINIFLARI` her sinifin ne anlama geldigini yaziyor.
+    """
+    sinif = Counter()
+    hafta_sayaci = Counter()
+    yakin_ornekler: list[dict[str, Any]] = []
+    for yol in dosyalar:
+        anahtar = yol.stem
+        govde = json.loads(yol.read_text(encoding="utf-8"))
+        kapanislar = _kapanis_tablosu(anahtar)
+        indeks = fikstur(anahtar, cache)
+        for hafta in govde["weeks"]:
+            kapanis = kapanislar.get(hafta["week"])
+            if not kapanis:
+                hafta_sayaci["kapanis_tarihi_yok"] += 1
+                continue
+            try:
+                baslangic = datetime.fromisoformat(kapanis).date()
+            except ValueError:
+                hafta_sayaci["tarih_okunamadi"] += 1
+                continue
+            adaylar = _pencere(indeks, baslangic)
+            if not adaylar:
+                hafta_sayaci["pencerede_fikstur_yok"] += 1
+                continue
+            hafta_siniflari = Counter()
+            for m in hafta["matches"]:
+                s_, skor = teshis_sinifi(m["home"], m["away"], adaylar)
+                sinif[s_] += 1
+                hafta_siniflari[s_] += 1
+                if s_ == "aday_yok_esik_alti":
+                    yakin_ornekler.append({
+                        "sezon": anahtar, "hafta": hafta["week"],
+                        "bulten": f'{m["home"]} - {m["away"]}',
+                        "skor": round(skor, 3)})
+            tam = hafta_siniflari["eslesti"] == MAC_SAYISI
+            hafta_sayaci["KABUL" if tam else "ELENDI"] += 1
+
+    print("hafta:")
+    for ad, adet in sorted(hafta_sayaci.items(), key=lambda kv: -kv[1]):
+        print(f"  {adet:>4}  {ad}")
+    print("mac (elenen haftalar dahil):")
+    for ad in TESHIS_SINIFLARI:
+        print(f"  {sinif.get(ad, 0):>4}  {ad}")
+    print(f"\nesik altinda kalan ve YAKIN olan {len(yakin_ornekler)} mac —")
+    print("bunlar ad kusuru OLABILIR; en yuksek 12'si:")
+    for r in sorted(yakin_ornekler, key=lambda r: -r["skor"])[:12]:
+        print(f"  {r['skor']:.3f}  {r['sezon']} hf{r['hafta']:>3}  {r['bulten']}")
+    if not sinif.get("ayirt_edilemedi"):
+        print("\n`ayirt_edilemedi` SIFIR: pencerede iki adayin birden esigi")
+        print("gectigi tek bir mac yok. Yani eslestirme STRATEJISINI")
+        print("degistirmek (kuresel bire-bir atama, artik-tek kurali) bu")
+        print("kesitte hicbir seyi kurtarmaz — kalan kusur ad ya da kapsam.")
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(
         description="Bulten listesini fiksture baglayip 1/0/2 uretir")
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--teshis", action="store_true",
+                    help="elenen haftalarin gerekcelerini sinifla, dosya yazma")
     ap.add_argument("--sezon", action="append")
     ap.add_argument("--cache", type=Path, default=CIKTI_DIZIN / "_kaynak")
     ap.add_argument("--out-dir", type=Path, default=CIKTI_DIZIN)
@@ -409,6 +561,9 @@ def main() -> int:
     if not dosyalar:
         print("bulten verisi yok — once scripts/build_bulten.py", file=sys.stderr)
         return 1
+
+    if args.teshis:
+        return teshis(dosyalar, args.cache)
 
     kabul: dict[str, list[dict[str, Any]]] = {}
     red: list[dict[str, Any]] = []
@@ -504,12 +659,28 @@ def main() -> int:
         "esikler": {"taraf": TARAF_ESIK, "ortalama": ORTALAMA_ESIK,
                     "ayirt_edici_fark": AYIRT_EDICI_FARK,
                     "pencere_gun": PENCERE_GUN},
+        "eslesme": {
+            "yontem": ("mac basina bagimsiz pencere taramasi; belirsizde eler "
+                       "(kuresel bire-bir atama DENENDI ve GEREKMEDI — "
+                       "`--teshis` ayirt_edilemedi sinifini SIFIR olcuyor)"),
+            "onceki_kabul": 107,
+            "duzeltmeler": [
+                "Turkce noktali I (U+0130) sozluk aramasini bozuyordu: "
+                "`.lower()` i + U+0307 uretir ve duz ASCII anahtarla "
+                "eslesmez. BULTEN_ESLERI'nin 3 satiri hic calismamisti.",
+                "OCR sutun ayraci `/` adin basina dusuyordu.",
+                "`--teshis` ile bulunan ve dogrulanan 7 sozluk satiri.",
+            ],
+        },
         "elenenler": red,
         "limits": [
             "Eslestirme SKORSUZ yapilir; build_odds.py'nin skor kilidi burada yok.",
             "Iki aday ayirt edilemezse mac DUSER, en iyisi secilmez.",
             "Takim adlari OCR ciktisindan gelir (§6F).",
             "Oran ve mac istatistigi bu sette YOK.",
+            "Kalan 43 elenen haftanin kusuru ESLESTIRME DEGIL: 233 mac "
+            "pencerede benzeyen aday BULAMIYOR (ertelenmis mac ya da "
+            "kapsam disi lig), 84'u esigin altinda kaliyor.",
         ],
     }
     (args.out_dir / "gecmis_rapor.json").write_text(

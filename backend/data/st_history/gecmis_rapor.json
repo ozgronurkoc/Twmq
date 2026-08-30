@@ -2,8 +2,8 @@
  "generated_at": "2026-08-30",
  "capraz_dogrulama": {
   "kosuldu": true,
-  "ortak_hafta": 29,
-  "birebir_ayni": 28,
+  "ortak_hafta": 31,
+  "birebir_ayni": 30,
   "ayrisan": [
    {
     "week": 30,
@@ -15,19 +15,28 @@
   ]
  },
  "denenen_hafta": 156,
- "kabul_edilen": 107,
- "elenen": 49,
+ "kabul_edilen": 112,
+ "elenen": 44,
  "seasons": {
   "2022_23": 17,
   "2023_24": 31,
-  "2024_25": 30,
-  "2025_26": 29
+  "2024_25": 33,
+  "2025_26": 31
  },
  "esikler": {
   "taraf": 0.72,
   "ortalama": 0.82,
   "ayirt_edici_fark": 0.08,
   "pencere_gun": 8
+ },
+ "eslesme": {
+  "yontem": "mac basina bagimsiz pencere taramasi; belirsizde eler (kuresel bire-bir atama DENENDI ve GEREKMEDI — `--teshis` ayirt_edilemedi sinifini SIFIR olcuyor)",
+  "onceki_kabul": 107,
+  "duzeltmeler": [
+   "Turkce noktali I (U+0130) sozluk aramasini bozuyordu: `.lower()` i + U+0307 uretir ve duz ASCII anahtarla eslesmez. BULTEN_ESLERI'nin 3 satiri hic calismamisti.",
+   "OCR sutun ayraci `/` adin basina dusuyordu.",
+   "`--teshis` ile bulunan ve dogrulanan 7 sozluk satiri."
+  ]
  },
  "elenenler": [
   {
@@ -71,31 +80,25 @@
   {
    "season_key": "2022_23",
    "week": 47,
-   "gerekce": "12/15 mac eslesti",
+   "gerekce": "14/15 mac eslesti",
    "ornek": [
-    "4. PARANAENSE - CORINTHIANS: esigi gecen aday yok",
-    "9. H.KAMERATENE - ODDS BK: esigi gecen aday yok",
-    "15. / COLORADO RAPIDS - LA GALAXY: esigi gecen aday yok"
+    "4. PARANAENSE - CORINTHIANS: esigi gecen aday yok"
    ]
   },
   {
    "season_key": "2022_23",
    "week": 48,
-   "gerekce": "12/15 mac eslesti",
+   "gerekce": "14/15 mac eslesti",
    "ornek": [
-    "7. TAMPEREEN - SEİNÖJOEN: esigi gecen aday yok",
-    "8. MARIEHAMN - FCKTIP: esigi gecen aday yok",
-    "9. LAHTI - KUOPION: esigi gecen aday yok"
+    "7. TAMPEREEN - SEİNÖJOEN: esigi gecen aday yok"
    ]
   },
   {
    "season_key": "2022_23",
    "week": 50,
-   "gerekce": "11/15 mac eslesti",
+   "gerekce": "14/15 mac eslesti",
    "ornek": [
-    "3. TAMPEREEN - MARIEHAMN: esigi gecen aday yok",
-    "4. VAASAN PS - OULU: esigi gecen aday yok",
-    "5. LAHTI - SEINÖJOEN: esigi gecen aday yok"
+    "3. TAMPEREEN - MARIEHAMN: esigi gecen aday yok"
    ]
   },
   {
@@ -225,16 +228,15 @@
   {
    "season_key": "2023_24",
    "week": 49,
-   "gerekce": "13/15 mac eslesti",
+   "gerekce": "14/15 mac eslesti",
    "ornek": [
-    "6. TAMPEREEN - HJK HELSINKI: esigi gecen aday yok",
-    "9. OULU - SEINÖJOEN: esigi gecen aday yok"
+    "6. TAMPEREEN - HJK HELSINKI: esigi gecen aday yok"
    ]
   },
   {
    "season_key": "2023_24",
    "week": 51,
-   "gerekce": "10/15 mac eslesti",
+   "gerekce": "11/15 mac eslesti",
    "ornek": [
     "1. CLUB BRUGGE - U S-GİLLOİSE: esigi gecen aday yok",
     "9. DAEGUFC - GWANGJU FC: esigi gecen aday yok",
@@ -254,7 +256,7 @@
   {
    "season_key": "2023_24",
    "week": 53,
-   "gerekce": "5/15 mac eslesti",
+   "gerekce": "6/15 mac eslesti",
    "ornek": [
     "1. GALATASARAY AJŞ - BEŞİKTAŞ A.Ş: esigi gecen aday yok",
     "2. SCHALKE 04 - BRAUNSCHWEİG: esigi gecen aday yok",
@@ -271,14 +273,6 @@
   },
   {
    "season_key": "2024_25",
-   "week": 12,
-   "gerekce": "14/15 mac eslesti",
-   "ornek": [
-    "11. / MARSILYA - PARIS SAINT GERMAN: esigi gecen aday yok"
-   ]
-  },
-  {
-   "season_key": "2024_25",
    "week": 13,
    "gerekce": "14/15 mac eslesti",
    "ornek": [
@@ -291,22 +285,6 @@
    "gerekce": "14/15 mac eslesti",
    "ornek": [
     "15. FIORENTINA - INTER: esigi gecen aday yok"
-   ]
-  },
-  {
-   "season_key": "2024_25",
-   "week": 26,
-   "gerekce": "14/15 mac eslesti",
-   "ornek": [
-    "10. MARSİLYA - LYON: esigi gecen aday yok"
-   ]
-  },
-  {
-   "season_key": "2024_25",
-   "week": 36,
-   "gerekce": "14/15 mac eslesti",
-   "ornek": [
-    "11. MONACO - MARSİLYA: esigi gecen aday yok"
    ]
   },
   {
@@ -331,7 +309,7 @@
   {
    "season_key": "2024_25",
    "week": 52,
-   "gerekce": "8/15 mac eslesti",
+   "gerekce": "9/15 mac eslesti",
    "ornek": [
     "1. KVC WESTERLO - ZULTE WAREGEM: esigi gecen aday yok",
     "2. STANDARD LIEGE - FCV DENDER EH: esigi gecen aday yok",
@@ -378,22 +356,6 @@
   },
   {
    "season_key": "2025_26",
-   "week": 27,
-   "gerekce": "14/15 mac eslesti",
-   "ornek": [
-    "11. / PARIS SAINT GERMAIN - MARSİLYA: esigi gecen aday yok"
-   ]
-  },
-  {
-   "season_key": "2025_26",
-   "week": 42,
-   "gerekce": "14/15 mac eslesti",
-   "ornek": [
-    "2. UNION SAINT GİLLOİSE - ANDERLECHT: esigi gecen aday yok"
-   ]
-  },
-  {
-   "season_key": "2025_26",
    "week": 44,
    "gerekce": "0/15 mac eslesti",
    "ornek": [
@@ -425,11 +387,11 @@
   {
    "season_key": "2025_26",
    "week": 48,
-   "gerekce": "10/15 mac eslesti",
+   "gerekce": "11/15 mac eslesti",
    "ornek": [
-    "3. IFK GÖTEBORG - AlK SOLNA: esigi gecen aday yok",
     "7. EC ANYANG - POHANG STEELERS: esigi gecen aday yok",
-    "8. JEONBUK - GANGWON FC: esigi gecen aday yok"
+    "8. JEONBUK - GANGWON FC: esigi gecen aday yok",
+    "9. FC SEOUL - INCHEON UNİTED FC: esigi gecen aday yok"
    ]
   },
   {
@@ -463,10 +425,9 @@
   {
    "season_key": "2026_27",
    "week": 2,
-   "gerekce": "13/15 mac eslesti",
+   "gerekce": "14/15 mac eslesti",
    "ornek": [
-    "10. B. DORTMUND - BAYERN MÜNİH: esigi gecen aday yok",
-    "11. MARSİLYA - STRASBOURG: esigi gecen aday yok"
+    "10. B. DORTMUND - BAYERN MÜNİH: esigi gecen aday yok"
    ]
   },
   {
@@ -490,6 +451,7 @@
   "Eslestirme SKORSUZ yapilir; build_odds.py'nin skor kilidi burada yok.",
   "Iki aday ayirt edilemezse mac DUSER, en iyisi secilmez.",
   "Takim adlari OCR ciktisindan gelir (§6F).",
-  "Oran ve mac istatistigi bu sette YOK."
+  "Oran ve mac istatistigi bu sette YOK.",
+  "Kalan 43 elenen haftanin kusuru ESLESTIRME DEGIL: 233 mac pencerede benzeyen aday BULAMIYOR (ertelenmis mac ya da kapsam disi lig), 84'u esigin altinda kaliyor."
  ]
 }

@@ -265,3 +265,133 @@ def test_ayrisan_hafta_SIRA_farkidir_sonuc_farki_degil():
         assert f["ayni_mac_kumesi"], (
             f"hf {f['week']}: maç kümesi de farklı — bu bir SIRA sorunu değil, "
             "eşleştirme sorunudur ve incelenmelidir")
+
+
+# ─── ad çevirisi: sessizce ölü kalmış sözlük ──────────────────────────────────
+#
+# Aşağıdaki dört test tek bir kusurun bekçisidir ve kusur ÖLÇÜLEREK bulundu
+# (`build_gecmis_sezon.py --teshis`). `BULTEN_ESLERI` bir "yakınsatma" değil
+# doğrulanmış bir sözlüktür; ama satırlarının bir bölümü **hiçbir zaman
+# çalışmadı** çünkü aramanın anahtarı, bültenin kendi yazımıyla eşleşmiyordu.
+
+def test_noktali_I_sozlugu_OLU_BIRAKMAZ():
+    """Türkçe `İ` (U+0130) sözlüğü sessizce devre dışı bırakıyordu.
+
+    `"MARSİLYA".lower()` düz `marsilya` vermez: `i` + U+0307 (birleşen
+    nokta) verir. Ekranda ikisi aynı görünür, sözlükte biri yoktur.
+
+    Bülten **büyük harfli bir görselden** OCR ile okunuyor, yani `İ` orada
+    kural dışı değil normal hâl — kusur tam da sözlüğe en çok ihtiyaç
+    duyulan yerde vuruyordu.
+    """
+    assert gecmis._bulten_adi("MARSİLYA") == "marseille"
+    assert gecmis._bulten_adi("SPORTING LİZBON") == "sp lisbon"
+    assert gecmis._bulten_adi("MİLANO") == "milan"
+
+
+def test_noktali_I_ile_noktasiz_I_AYNI_yere_gider():
+    """Bülten iki yazımı da üretiyor; ikisi de aynı karşılığa varmalı."""
+    for noktali, noktasiz in (("MARSİLYA", "MARSILYA"),
+                              ("MİLANO", "MILANO")):
+        assert gecmis._bulten_adi(noktali) == gecmis._bulten_adi(noktasiz)
+
+
+def test_OCR_bolu_isareti_temizlenir():
+    """`/` sütun ayracı OCR'da adın başına düşüyor; hiçbir kulüp `/` ile başlamaz."""
+    assert gecmis._bulten_adi("/ MARSİLYA") == "marseille"
+    assert gecmis._bulten_adi("/ MANCHESTER UTD") == "man united"
+
+
+def test_ic_bolu_isaretine_DOKUNULMAZ():
+    """Temizlik yalnızca kenarlardadır — ad içindeki `/` bilgi olabilir."""
+    assert "/" in gecmis._bulten_adi("AAA / BBB")
+
+
+def test_teshisle_eklenen_sozluk_satirlari_calisir():
+    """`--teshis`in bulduğu ve football-data'da DOĞRULANAN karşılıklar."""
+    beklenen = {
+        "UNION SAINT GİLLOİSE": "st. gilloise",
+        "LA GALAXY": "los angeles galaxy",
+        "KUOPION": "kups",
+        "VAASAN PS": "vps",
+        "SEİNÖJOEN": "sjk",
+        "H.KAMERATENE": "hamkam",
+        "FCKTIP": "ktp",
+    }
+    for ham, karsilik in beklenen.items():
+        assert gecmis._bulten_adi(ham) == karsilik, ham
+
+
+def test_sozlukte_olmayan_ad_OLDUGU_GIBI_kalir():
+    """Sözlük bir yakınsatma değil; tanımadığı adı bulanık eşleştirmeye bırakır."""
+    assert gecmis._bulten_adi("GALATASARAY A.Ş") == "GALATASARAY A.Ş"
+
+
+# ─── teşhis kipi ──────────────────────────────────────────────────────────────
+
+def test_teshis_ayirt_edilemezligi_ayri_sinifa_koyar():
+    """`teshis_sinifi`, `eslestir`in tek gerekçesini ÜÇE ayırır.
+
+    Ayrım olmadan *"eşleştirmeyi iyileştirelim"* ölçüsüz bir cümledir:
+    strateji değişikliği yalnızca `ayirt_edilemedi` sınıfına dokunabilir,
+    `aday_yok_uzak` ertelenmiş maçtır ve hiçbir strateji onu kurtarmaz.
+    """
+    iki_benzer = [_aday("Kayserispor", "Konyaspor"),
+                  _aday("Kayserispor", "Konyaspor", hg=2, ag=2)]
+    sinif, _ = gecmis.teshis_sinifi("KAYSERİSPOR", "KONYASPOR", iki_benzer)
+    assert sinif == "ayirt_edilemedi"
+
+
+def test_teshis_uzak_ile_esik_altini_AYIRIR():
+    uzak = [_aday("Zzzzzzzz", "Wwwwwwww")]
+    sinif, _ = gecmis.teshis_sinifi("TRABZONSPOR", "ANTALYASPOR", uzak)
+    assert sinif == "aday_yok_uzak"
+
+    yakin = [_aday("Trabzonspor", "Wwwwwwww")]
+    sinif, _ = gecmis.teshis_sinifi("TRABZONSPOR", "ANTALYASPOR", yakin)
+    assert sinif == "aday_yok_esik_alti"
+
+
+def test_teshis_temiz_eslesmeyi_eslesti_sayar():
+    sinif, skor = gecmis.teshis_sinifi(
+        "TRABZONSPOR A.Ş.", "ANTALYASPOR A.Ş.",
+        [_aday("Trabzonspor", "Antalyaspor"), _aday("Konyaspor", "Sivasspor")])
+    assert sinif == "eslesti"
+    assert skor >= gecmis.ORTALAMA_ESIK
+
+
+def test_teshis_sinif_adlari_belgelenmis_kumeyle_ayni():
+    """Yeni bir sınıf eklenirse `TESHIS_SINIFLARI` de büyümeli."""
+    uretilen = set()
+    for adaylar in ([], [_aday("Zzzz", "Wwww")], [_aday("Trabzonspor", "Wwww")],
+                    [_aday("Trabzonspor", "Antalyaspor")]):
+        uretilen.add(gecmis.teshis_sinifi("TRABZONSPOR", "ANTALYASPOR", adaylar)[0])
+    assert uretilen.issubset(set(gecmis.TESHIS_SINIFLARI))
+
+
+# ─── kesit geriye gitmemeli ───────────────────────────────────────────────────
+
+def test_kabul_edilen_hafta_sayisi_DUSEMEZ():
+    """Ölçüldü: 107 → 112 (Unicode kusuru + `/` artığı + 7 sözlük satırı).
+
+    Eşik ölçülen değerin biraz altına konuldu. Düşerse eşleştirme ya da OCR
+    bozulmuş demektir; **yükselmesi serbesttir**.
+    """
+    yol = gecmis.CIKTI_DIZIN / "gecmis_rapor.json"
+    if not yol.exists():
+        pytest.skip("geçmiş sezon henüz üretilmemiş")
+    rapor = json.loads(yol.read_text(encoding="utf-8"))
+    assert rapor["kabul_edilen"] >= 110, rapor["kabul_edilen"]
+
+
+def test_canli_sezon_gecmis_sete_SIZMAZ():
+    """2026/27 bülteni okunuyor ama kabul edilen haftası olmamalı.
+
+    `evaluate.KUPON_SEZONLARI` aynı sezonu iki kez saymamak için özenle
+    kuruldu; canlı sezonun bu tarihsel sete sızması o özeni boşa çıkarırdı.
+    """
+    yol = gecmis.CIKTI_DIZIN / "gecmis_rapor.json"
+    if not yol.exists():
+        pytest.skip("geçmiş sezon henüz üretilmemiş")
+    seasons = json.loads(yol.read_text(encoding="utf-8"))["seasons"]
+    assert "2026_27" not in seasons, seasons

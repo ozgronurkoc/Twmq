@@ -410,7 +410,7 @@ def genis_kesit_isabeti() -> dict[str, Any]:
     Dar kesit (2025/26, 36 hafta, 540 maç) korpusla **tek bir maç bile**
     paylaşmıyor; oradaki ölçüm bu yüzden kat gerektirmeyen, en temiz
     biçimidir ve **olduğu gibi kalır**. Geniş kesitte durum başka: kupon
-    maçlarının 1.155/1.605'i korpusta da var (2022/23 ve 2023/24'ün
+    maçlarının 1.200/1.680'i korpusta da var (2022/23 ve 2023/24'ün
     tamamı, 2024/25'in %97'si). Orada düz ölçüm sızıntı olurdu.
 
     Çözüm kat: her kupon sezonu ölçülürken korpustan **o sezonun tamamı**
