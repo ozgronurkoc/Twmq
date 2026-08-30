@@ -944,6 +944,54 @@ kaynakta yan yana geldi, hepsi eşleşti ve `close_date` alanının iki kaynakta
 
 ---
 
+## 6D-ek. Korpus derinliği — ölçüldü, ama varsayılan yapılmadı
+
+`build_egitim.py` bugün 4 sezon × 22 lig çekiyor (31.103 maç). Altı sezona
+çıkarmak **denendi ve ölçüldü**:
+
+| Ölçüm | 4 sezon | 6 sezon (1920 + 2021) |
+|---|---:|---:|
+| Maç | 31.103 | **45.652** (+%47) |
+| Kapanış oranı | %100 | **%100** |
+| Açılış+kapanış çifti | %99,99 | **%100** |
+| Bahisçi dörtlüsü | %99,99 | **%99,9** |
+| Maç istatistiği | %93,01 | **%93,2** |
+
+**Şema hiç bozulmuyor.** Tavan da ölçüldü: football-data'nın tam şeması
+**2019/20'de başlıyor** — `mmz4281/1819/T1.csv` başlığında yalnızca
+`PSCH/PSCD/PSCA` ve eski `Bb*` toplayıcıları var, `B365C`/`MaxC`/`AvgC`
+yok. 1819 ve öncesi eklenirse `acilis_*`/`bahisci_*` kesitleri seyrelir ve
+A1/A2 ölçümleri sezona göre dengesizleşir — §6A.7'nin BW/WH/BF'yi dışarıda
+bırakma gerekçesiyle aynı gerekçe.
+
+### Neden varsayılan yapılmadı
+
+Korpusu büyütmek **serbest bir kazanç değildir**:
+
+1. **Ölçüm kayıtları bu korpusa çıpalı.** Yalnız
+   [`ISTATISTIK_YOL_HARITASI.md`](ISTATISTIK_YOL_HARITASI.md)'de "31.103"
+   **53 yerde** geçiyor ve bunların çoğu bir *ölçümün kaydıdır* ("31.103
+   maçta şu çıktı"). Korpusu değiştirip o satırları olduğu gibi bırakmak
+   onları yanlış yapar; sayıları değiştirmek ise **yapılmamış bir ölçümü
+   yapılmış gibi göstermek** olur. İkisi de bu deponun yasakladığı şeydir.
+2. **`artefakt.py`** eğitilmiş modelin korpus sha256'sını taşıyor;
+   `health` bayatlık görünce **kırmızı** yanıyor.
+3. **Kazanç ölçülmüş ve küçük.** README §1.1 ve §10 aynı türden daha çok
+   verinin Brier'i büyütmediğini zaten ölçtü (kalan etki 0,0005–0,0015).
+   Büyüyen şey **istatistiksel güçtür, sinyal değil**.
+
+Bu yüzden derinleştirme bir **komut seçeneğidir**, varsayılan değil:
+
+```bash
+python scripts/build_egitim.py --sezonlar 1920 2021 2122 2223 2324 2425
+```
+
+Varsayılanı çevirmek isteyen **önce §3.x ölçümlerini yeniden koşmalı** ve
+sayıları kaydıyla birlikte güncellemelidir. O ayrı bir iştir ve bu belgede
+açık bir iş olarak durur.
+
+---
+
 ## 6E. Havuz — ikramiye tablosundan geri hesap
 
 ### 6E.1 Ölçülen bölüşüm: 35 / 20 / 20 / 25
@@ -1163,7 +1211,29 @@ ayırt eder.
 > kaynağı işaret eder — ama bu bir **hipotezdir**, ölçüm değil, ve öyle
 > yazılmıştır.
 
-### 6G.6 `st_history_2025_26.json` ile karışmaz
+### 6G.6 Yeni bir sızıntı riski doğdu — ve görünür kılındı
+
+Kupon değerlendirme seti 2022/23–2025/26'yı kapsıyor. Eğitim korpusunun
+varsayılan sezonları ise `2122, 2223, 2324, 2425`. **Kesişim üç sezon:**
+`2223, 2324, 2425`.
+
+Bu bugün aktif bir hata değildir — yeni set henüz hiçbir ölçüme bağlı değil.
+Ama **sessiz kalırsa hataya dönüşür**: o sezonların kupon haftaları üzerinde
+ölçülen bir tahminci, aynı maçlarda *eğitilmiş* olur ve isabet olduğundan iyi
+görünür. §6A.3 aynı gerekçeyle 2025/26'yı korpusun dışında bırakmıştı; o
+gerekçe şimdi üç sezon daha için geçerli.
+
+Doktrin 4 gereği çelişki gizlenmedi, **veriyle birlikte taşınıyor**:
+`egitim_rapor.json` artık `kupon_sezonlari`, `kesisim` ve `kesisim_notu`
+alanlarını yazıyor, `build_egitim.py` da koşum sonunda ekrana uyarı basıyor.
+
+**Kural:** kesişimdeki sezonların kupon haftalarında ölçüm yapılacaksa
+`evaluate.sezon_anahtari` (sezon dışarıda bırakmalı) kullanılmalıdır; düz
+`capraz_olc` sızdırır. Kesişimi tamamen boşaltmak isteyen `--sezonlar` ile o
+sezonları çıkarır — ama bu korpusu 31 binden ~8 bine düşürür, yani bedeli
+ağırdır ve karar ölçümü yapanındır.
+
+### 6G.7 `st_history_2025_26.json` ile karışmaz
 
 Üretilen dosyalar `data/st_history/<sezon>.json` altındadır; eski dosya
 yerinde durur ve `/api/stats` ile 27 değişmez ona bakmaya devam eder. Yeni
@@ -1261,7 +1331,7 @@ tablolar (script'in bastığı lig dağılımı) bunu yakalayan şeydi.
 | `test_sportoto_arsiv.py::test_hafta_no_tahmin_edilmez` | Hafta numarası uydurulmaz (doktrin 2) |
 | `test_sportoto_arsiv.py::test_celisen_kapanis_tarihi_raporlanir` | İki uç çelişirse biri sessizce seçilmez (doktrin 4) |
 
-Toplam 113 test bu dört veri setini korur (backend paketi 1.808 test). `python -m spor_toto.health`
+Toplam 113 test bu dört veri setini korur (backend paketi 1.811 test). `python -m spor_toto.health`
 27 değişmez çalıştırır; `oran_arsivi` ve `geri_test` bu katmanı, `tahmin_referanslari`
 tahmin katmanının ölçüm koşumunu korur.
 
@@ -1469,6 +1539,7 @@ değil, **tahminin ölçülebilir hale gelmesini sağlayan veridir.**
 | **✔** | **S1'in kupon ayağı** | **Yapıldı** (§6F, §6G). 4 sezon · 107 hafta · 1.605 maç. Çapraz doğrulama 28/29 birebir. Tavan: milli takım haftaları |
 | **4** | **S3 — İddaa arşivi olgunlaşınca** | **Birikmeyi bekliyor.** Boru hattı ve haftalık tetik çalışıyor (§6.4); ~10 snapshot sonra eşleştirme anlamlı olur |
 | **5** | **S2 — Geri testi zenginleştir** | **Hazır.** Ek veri gerekmez |
+| — | **Korpus derinliği** | **Ölçüldü, açık bırakıldı** (§6D-ek). 6 sezon 45.652 maç; varsayılan yapmak §3.x ölçümlerinin yeniden koşulmasını gerektirir |
 | — | **S4 — Küçük işler** | Veri tarafı yok |
 
 **Örneklem sorununun yarısı çözüldü.** Tahminci ölçümü için gereken büyük örneklem korpusla
@@ -1676,6 +1747,7 @@ kapandığı an. §3.40'ın kolon sayısı hesabı bu çıpaya oturtulmalıdır.
 |---|---|
 | **v1** (2026-08-15) | İlk üretim. 41 hafta, 615 maç. Sonuç dizisi 15 haftada yanlış sırada, 6'sında yanlış sayımda (§7.4) — o zaman fark edilmedi |
 | **v2** (2026-08-16) | Sıra hatası kapatıldı; veri **maç düzeyine** indi (takım, saat, skor); üretim tek komutla tekrarlanabilir oldu; `data_quality` denetimi ve test bekçileri eklendi; **oran arşivi** kuruldu (§5) |
+| **v11** (2026-08-30) | **Korpus derinliği ölçüldü, varsayılan yapılmadı** (§6D-ek): 6 sezon 45.652 maç ve şema hiç bozulmuyor, ama 53 belgelenmiş ölçüm 31.103'e çıpalı — korpusu değiştirmek onları geçersiz kılar. Komut seçeneği olarak kaldı. **Yeni bir sızıntı riski görünür kılındı**: kupon seti 4 sezona çıkınca korpusla üç sezon kesişti; `egitim_rapor.json` artık `kesisim`i yazıyor, betik ekrana uyarı basıyor, üç bekçi testi çakışmanın görünür kalmasını koruyor |
 | **v10** (2026-08-30) | **Geçmiş sezon kupon verisi geldi.** Resmî bülten görseli OCR ile okundu (§6F, 156 hafta) ve football-data fikstürüne bağlandı (§6G): **4 sezon · 107 hafta · 1.605 maç**, tam 1/0/2 dizisiyle. §10.2/§10.3'ün kupon ayağı **kapandı**. Çapraz doğrulama: iki bağımsız boru hattı 29 ortak haftanın **28'inde birebir aynı**; ayrışan tek hafta bir **kupon sırası** farkıdır (aynı 15 maç) ve düzeltilmeden raporlandı. Pencere bir ayar değil koruma: ertelenen maçın aylar sonraki sonucu o haftanın sonucu değildir |
 | **v9** (2026-08-30) | **Resmî Spor Toto arşivi** kuruldu (§2.4, §6D): `webapi.sportoto.gov.tr` — deponun ilk **resmî** kaynağı. 6 sezon · 225 hafta · **223 ikramiye tablosu**. §10.1'in havuz ekseni n = 3'ten n = 223'e çıktı. §3.1'in "arşiv ucu bulunamadı" kaydı **düzeltildi** — kaynak kapalı değildi, uçlar JS parçalarındaydı. **Maç listesi hâlâ gelmiyor** (yalnızca bülten görseli); §10.2 kupon ayağı §10.3 olarak yeniden açıldı |
 | **v5** (2026-08-17) | **Eğitim korpusu** kuruldu (§6A): football-data'dan 22 lig × 4 geçmiş sezon, 31.103 maç. Kupon değerlendirme setinin 58 katı. `/istatistik` sayfasına **girmez** — ayrım `test_ayrim_*` ile bekçiye bağlandı. Varsayılan sezonlar 2025/26'yı dışarıda bırakır (sızıntı önlemi) |

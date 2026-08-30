@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-17",
+  "generated_at": "2026-08-30",
   "source": "football-data.co.uk (mmz4281) — piyasa oranlari, IDDAA DEGIL",
   "purpose": "tahmin katmaninin egitimi ve olcumu; istatistik sayfasinin verisi DEGILDIR",
   "seasons": [
@@ -9,6 +9,18 @@
     "2425"
   ],
   "season_note": "varsayilan sezonlar 2025/2026'yi disarida birakir: kupon degerlendirme seti o sezondan gelir, korpusa katmak egitim/sinav ayrimini bozar",
+  "kupon_sezonlari": [
+    "2223",
+    "2324",
+    "2425",
+    "2526"
+  ],
+  "kesisim": [
+    "2223",
+    "2324",
+    "2425"
+  ],
+  "kesisim_notu": "Bu sezonlar HEM korpusta HEM kupon degerlendirme setinde. Bu sezonlarin kupon haftalari uzerinde olcum yapilacaksa `evaluate.sezon_anahtari` (sezon disarida birakmali) KULLANILMALI; duz `capraz_olc` sizdirir. Kesisimi bosaltmak icin: `--sezonlar` ile o sezonlari cikarin.",
   "matches": 31103,
   "by_season": {
     "2122": 7822,

@@ -26,6 +26,8 @@ Bu yüzden her denetimin yanında **bilerek sızdıran** bir kurgu var ve
 denetimin onu yakaladığı ayrıca sınanıyor.
 """
 
+from pathlib import Path
+
 import pytest
 
 from spor_toto.arena import roster
@@ -473,3 +475,59 @@ def test_benzer_sorulan_macin_kendisi_kendi_cevabinda_yok():
 
     assert hedef_mac in kesmesiz, "maç kendi komşuluğunda bulunmuyor — arama bozuk"
     assert hedef_mac not in kendi_tarihiyle, "maç kendi cevabına girdi"
+
+
+# ─── korpus ∩ kupon seti: çakışma gizlenemez ──────────────────────────────────
+#
+# §6G kupon değerlendirme setini 4 sezona çıkardı (2022/23–2025/26) ve
+# korpusun varsayılan sezonları (`2122, 2223, 2324, 2425`) bunlarla ÜÇ sezon
+# kesişiyor. Bu bugün aktif bir hata değil — yeni set henüz hiçbir ölçüme
+# bağlı değil. Ama sessiz kalırsa hataya dönüşür: o sezonların kupon
+# haftalarında ölçülen bir tahminci, aynı maçlarda EĞİTİLMİŞ olur.
+#
+# Doktrin 4 gereği çelişki veriyle birlikte taşınır. Buradaki iki test
+# çakışmanın **görünür kaldığını** korur; çakışmanın kendisini yasaklamaz,
+# çünkü onu boşaltmanın bedeli korpusun üçte ikisidir ve o karar ölçümü
+# yapanındır.
+
+#: Bu dosya `KOK` tasimiyor; korpus yollari icin depo kokunu burada kurar.
+_KOK = Path(__file__).resolve().parent.parent
+
+
+def _egitim_raporu():
+    import json
+    yol = _KOK / "data" / "egitim" / "egitim_rapor.json"
+    if not yol.exists():
+        pytest.skip("korpus raporu yok")
+    return json.loads(yol.read_text(encoding="utf-8"))
+
+
+def test_korpus_raporu_kupon_kesisimini_yaziyor():
+    """Çakışma raporda DURMALI — kaybolursa kimse fark etmez."""
+    rapor = _egitim_raporu()
+    assert "kupon_sezonlari" in rapor, (
+        "korpus raporu kupon sezonlarını yazmıyor — çakışma görünmez oldu")
+    assert "kesisim" in rapor
+    assert rapor.get("kesisim_notu")
+
+
+def test_kesisim_gercekten_hesaplaniyor():
+    """Alan var ama boş bırakılıyorsa bekçi kör demektir."""
+    import importlib
+    rapor = _egitim_raporu()
+    egitim_betik = importlib.import_module("scripts.build_egitim")
+    beklenen = sorted(set(rapor["seasons"]) & set(egitim_betik.kupon_sezonlari()))
+    assert rapor["kesisim"] == beklenen, (
+        f"raporda yazan kesişim {rapor['kesisim']}, gerçek {beklenen}")
+
+
+def test_kupon_sezonlari_iki_kaynagi_da_goruyor():
+    """Hem eski tek dosya hem §6G'nin ürettiği dizin sayılmalı."""
+    import importlib
+    egitim_betik = importlib.import_module("scripts.build_egitim")
+    sezonlar = set(egitim_betik.kupon_sezonlari())
+    if (_KOK / "data" / "st_history_2025_26.json").exists():
+        assert "2526" in sezonlar, "eski kupon dosyası sayılmamış"
+    dizin = _KOK / "data" / "st_history"
+    if dizin.is_dir() and any(p.stem != "gecmis_rapor" for p in dizin.glob("*.json")):
+        assert len(sezonlar) > 1, "§6G dizini sayılmamış"
