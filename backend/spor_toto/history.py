@@ -21,6 +21,11 @@ from .core import MAC_SAYISI, SEMBOLLER
 
 DATA_FILE = Path(__file__).resolve().parent.parent / "data" / "st_history_2025_26.json"
 
+#: §6G'nin urettigi sezon dosyalari. `DATA_FILE`dan AYRI durur ve ayri
+#: kalmasi bilinclidir: ikisi farkli koken sinifidir (ucuncu parti payload
+#: ile resmi bulten + fikstur birlestirmesi) ve 2025/26 icin ikisi de var.
+SEZON_DIZIN = Path(__file__).resolve().parent.parent / "data" / "st_history"
+
 #: Sembol duzeni ve kupon uzunlugu TEK kaynaktan (`core`). Bu iki ad
 #: korunuyor cunku paketin yarisi onlari buradan import ediyor; degerin
 #: kendisi artik burada tanimli DEGIL.
@@ -29,18 +34,43 @@ MATCH_COUNT = MAC_SAYISI
 RECENT_WINDOW = 6
 
 
-@lru_cache(maxsize=1)
-def load_history() -> dict[str, Any]:
-    if not DATA_FILE.exists():
+def sezonlar() -> list[str]:
+    """Secilebilir sezon anahtarlari — varsayilan (None) HARIC.
+
+    Varsayilan liste disinda tutulur cunku o bir sezon SECIMI degil,
+    "hicbir sey secilmedi" hali: `st_history_2025_26.json` 41 hafta tasir
+    ve `data/st_history/2025_26.json` ayni sezonun 29 haftalik BASKA bir
+    okumasidir (§6G.5). Ikisini tek listede sunmak hangisinin secildigini
+    belirsizlestirirdi.
+    """
+    if not SEZON_DIZIN.is_dir():
+        return []
+    return sorted(p.stem for p in SEZON_DIZIN.glob("*.json")
+                  if p.stem != "gecmis_rapor")
+
+
+@lru_cache(maxsize=8)
+def load_history(sezon: str | None = None) -> dict[str, Any]:
+    """Kupon hafta kaydi. `sezon` None ise BUGUNKU dosya okunur.
+
+    Varsayilanin degismemesi bir urun karari: `/api/stats`, 27 degismez ve
+    testlerin cipalari (41 hafta · 615 mac) o dosyaya bakiyor. Yeni sezonlar
+    `?sezon=` ile EKLENIR, varsayilani degistirmez.
+
+    Onbellek sezona anahtarli (`maxsize=8`); onceki surumde `maxsize=1` idi
+    ve parametre eklenince ikinci sezon birincinin kaydini dusururdu.
+    """
+    yol = DATA_FILE if sezon is None else SEZON_DIZIN / f"{sezon}.json"
+    if not yol.exists():
         return {
             "meta": {"weeks": 0, "matches": 0},
             "totals": {},
             "weekly_avg": {},
             "bands": {},
             "weeks": [],
-            "error": f"Veri dosyasi yok: {DATA_FILE}",
+            "error": f"Veri dosyasi yok: {yol}",
         }
-    return json.loads(DATA_FILE.read_text(encoding="utf-8"))
+    return json.loads(yol.read_text(encoding="utf-8"))
 
 
 # ─── temel yardımcılar ────────────────────────────────────────────────────────
@@ -104,13 +134,22 @@ def _clean_matches(raw: Any) -> list[dict[str, Any]]:
     return out
 
 
-def normalized_weeks(last: int | None = None) -> list[dict[str, Any]]:
+def normalized_weeks(last: int | None = None,
+                     sezon: str | None = None) -> list[dict[str, Any]]:
     """Hafta numarasına göre sıralı, türetilmiş alanlarla zenginleştirilmiş liste.
 
     ``last`` verilirse sadece son N hafta döner (istatistik dilimleme için).
+    ``sezon`` verilirse o sezonun dosyası okunur; verilmezse varsayılan.
+
+    **Sezonlar BİRLEŞTİRİLMEZ, seçilir.** ``week`` bu modülde küresel bir
+    birincil anahtar gibi kullanılıyor — sıralama, ``history_week_detail``
+    araması, oran arşivinin ``(week, no)`` haritası ve ``stats_payload``ın
+    hafta-numarası köprüsü. Dört sezonu tek listeye koymak dördünü birden
+    bozardı ("30. hafta" hangi sezonun?) ve ``duplicate_results`` sezon
+    anahtarı taşımadığı için yanlış çakışma raporlardı.
     """
     rows: list[dict[str, Any]] = []
-    for w in load_history().get("weeks", []) or []:
+    for w in load_history(sezon).get("weeks", []) or []:
         results = _clean_results(w.get("results"))
         derived = _counts_of(results)
         reported = {
@@ -215,9 +254,10 @@ def _data_quality(weeks: Iterable[dict[str, Any]]) -> dict[str, Any]:
 
 # ─── özet ─────────────────────────────────────────────────────────────────────
 
-def history_summary(last: int | None = None) -> dict[str, Any]:
-    data = load_history()
-    weeks = normalized_weeks(last)
+def history_summary(last: int | None = None,
+                    sezon: str | None = None) -> dict[str, Any]:
+    data = load_history(sezon)
+    weeks = normalized_weeks(last, sezon)
     n_weeks = len(weeks)
     matches = sum(len(w["results"]) for w in weeks)
 
@@ -237,7 +277,11 @@ def history_summary(last: int | None = None) -> dict[str, Any]:
         "matches": matches,
         "week_from": weeks[0]["week"] if weeks else None,
         "week_to": weeks[-1]["week"] if weeks else None,
-        "sliced": bool(last and last > 0 and last < len(normalized_weeks())),
+        "sliced": bool(last and last > 0 and last < len(normalized_weeks(sezon=sezon))),
+        # Hangi kaydin okundugu payload'da GORUNMELI: 2025/26 icin iki ayri
+        # koken var (§6G.5) ve ikisi farkli hafta sayisi tasiyor.
+        "sezon_secimi": sezon,
+        "origin": data.get("meta", {}).get("origin", "varsayilan kayit"),
     })
     if weeks:
         meta["date_from"] = weeks[0]["close_date"] or meta.get("date_from")
@@ -254,8 +298,9 @@ def history_summary(last: int | None = None) -> dict[str, Any]:
     }
 
 
-def history_weeks(last: int | None = None) -> list[dict[str, Any]]:
-    return normalized_weeks(last)
+def history_weeks(last: int | None = None,
+                  sezon: str | None = None) -> list[dict[str, Any]]:
+    return normalized_weeks(last, sezon)
 
 
 # ─── analitik bloklar ─────────────────────────────────────────────────────────
@@ -372,8 +417,9 @@ def recent_form(weeks: Sequence[dict[str, Any]], window: int = RECENT_WINDOW) ->
     }
 
 
-def history_analytics(last: int | None = None) -> dict[str, Any]:
-    weeks = normalized_weeks(last)
+def history_analytics(last: int | None = None,
+                      sezon: str | None = None) -> dict[str, Any]:
+    weeks = normalized_weeks(last, sezon)
     return {
         "positions": position_stats(weeks),
         "transitions": transition_stats(weeks),
@@ -386,16 +432,22 @@ def history_analytics(last: int | None = None) -> dict[str, Any]:
 
 # ─── tek hafta ────────────────────────────────────────────────────────────────
 
-def history_week(week: int) -> dict[str, Any] | None:
-    for w in normalized_weeks():
+def history_week(week: int, sezon: str | None = None) -> dict[str, Any] | None:
+    for w in normalized_weeks(sezon=sezon):
         if w["week"] == week:
             return w
     return None
 
 
-def history_week_detail(week: int) -> dict[str, Any] | None:
-    """Tek hafta + komşular + sezon ortalamasına göre konum."""
-    weeks = normalized_weeks()
+def history_week_detail(week: int,
+                        sezon: str | None = None) -> dict[str, Any] | None:
+    """Tek hafta + komşular + sezon ortalamasına göre konum.
+
+    ``rank`` ve ``season_avg`` **seçilen sezonun içinde** hesaplanır; sezonlar
+    birleştirilmediği için "41 haftanın 7.si" gibi bir sayı iki sezon
+    karışmadan kalır.
+    """
+    weeks = normalized_weeks(sezon=sezon)
     idx = next((i for i, w in enumerate(weeks) if w["week"] == week), None)
     if idx is None:
         return None

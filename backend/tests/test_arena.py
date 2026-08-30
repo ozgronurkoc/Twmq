@@ -111,12 +111,39 @@ def test_disarida_kalanlar_kayitta_yok():
 
 # ─── kesit künyesi ────────────────────────────────────────────────────────────
 
-def test_kupon_kesiti_tek_sezon_uyarisini_tasir():
-    """Kupon kesitinde sezon dışarıda bırakmalı ölçüm kurulamaz."""
-    _, grup, kunye = kesit(kupon=True, last=3)
-    assert grup is None
-    assert kunye["grup_olcusu"] == "hafta"
-    assert kunye["uyari"], "tek sezon uyarisi dusmus"
+def test_kupon_kesiti_ARTIK_cok_sezonlu_ve_sezon_gruplu():
+    """Kupon kesitinde artık sezon dışarıda bırakmalı ölçüm KURULABİLİR.
+
+    Bu test bir davranış değişikliğini kaydeder ve eskisi bilinçli olarak
+    değiştirildi. Önceki sürüm şunu bekliyordu:
+
+        grup is None · grup_olcusu == "hafta" · uyari dolu
+
+    Gerekçesi doğruydu ama **veriye bağlıydı**: kupon seti tek sezondu ve
+    `backtest.hafta_girdileri` `sezon` alanı yazmıyordu, dolayısıyla
+    `sezon_anahtari` her haftaya `None` derdi. §6G seti dört sezona çıkardı
+    ve alan eklendi; kısıt kalktı.
+
+    `last=3` verilse bile kesit çok sezonlu kalır — dilim her sezona ayrı
+    ayrı uygulanır.
+    """
+    haftalar, grup, kunye = kesit(kupon=True, last=3)
+    assert len({h["sezon"] for h in haftalar}) > 1
+    assert grup is sezon_anahtari
+    assert kunye["grup_olcusu"] == "sezon"
+    assert kunye["uyari"] is None
+
+
+def test_kupon_kunyesi_KORPUS_KESISIMINI_yazar():
+    """Kupon maçlarının %72'si korpusta da var; künye bunu taşımalı.
+
+    Ölçüm bu kesitte `grup` olmadan koşulursa sayı olduğundan iyi çıkar;
+    uyarı kaybolursa kimse `grup` vermeyi hatırlamaz.
+    """
+    from spor_toto.arena import KUPON_KORPUS_KESISIMI
+
+    _, _, kunye = kesit(kupon=True, last=3)
+    assert kunye["sizinti"] == KUPON_KORPUS_KESISIMI
 
 
 def test_korpus_kesiti_sezon_gruplu():

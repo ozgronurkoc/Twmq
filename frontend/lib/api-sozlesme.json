@@ -95,6 +95,7 @@
     "arindirma": "str",
     "match_count": "int",
     "note": "str",
+    "sezon": "null",
     "space_limit": "int",
     "weeks_available": "int",
     "weeks_dropped": [
@@ -531,6 +532,13 @@
      "needs_scipy": "bool"
     }
    ],
+   "seasons": {
+    "available": [
+     "str"
+    ],
+    "default": "null",
+    "note": "str"
+   },
    "symbols": [
     "str"
    ],
@@ -829,8 +837,10 @@
     "date_to": "str",
     "generated_at": "str",
     "matches": "int",
+    "origin": "str",
     "rule": "str",
     "season": "str",
+    "sezon_secimi": "null",
     "sliced": "bool",
     "source": "str",
     "week_from": "int",
@@ -971,6 +981,7 @@
     ],
     "with_odds": "int"
    },
+   "sezon": "null",
    "totals": {
     "0": "int",
     "1": "int",

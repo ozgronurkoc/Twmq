@@ -1,0 +1,2139 @@
+{
+ "meta": {
+  "season": "2022/2023",
+  "season_key": "2022_23",
+  "weeks": 25,
+  "source": "sportoto.gov.tr resmi bulten GORSELI, OCR ile okundu (tesseract --psm 4 -l tur, x3 olcek)",
+  "generated_at": "2026-08-30 08:57",
+  "contains": "15 mac, KUPON SIRASIYLA — takim ADLARI",
+  "does_not_contain": "skor, sonuc (1/0/2) ve oran YOK. Takim adlari OCR ciktisidir ve DOGRULANMAMISTIR — gercek fiksture eslestirme build_gecmis_sezon.py'nin isidir; eslesmeyen mac orada duser.",
+  "rule": "yalnizca 15/15 okunan hafta yazilir"
+ },
+ "weeks": [
+  {
+   "week": 21,
+   "season": "2022/2023",
+   "game_round_id": 320,
+   "matches": [
+    {
+     "no": 1,
+     "home": "ANTALYASPOR",
+     "away": "MKE ANKARAGÜCÜ"
+    },
+    {
+     "no": 2,
+     "home": "ÜMRANİYESPOR",
+     "away": "M. BAŞAKŞEHİR"
+    },
+    {
+     "no": 3,
+     "home": "HATAYSPOR",
+     "away": "GİRESUNSPOR"
+    },
+    {
+     "no": 4,
+     "home": "KASIMPAŞA AJŞ",
+     "away": "SİVASSPOR"
+    },
+    {
+     "no": 5,
+     "home": "TRABZONSPOR AŞ",
+     "away": "FENERBAHÇE A.Ş"
+    },
+    {
+     "no": 6,
+     "home": "ADANA DEMİRSPOR A.Ş",
+     "away": "FATİH KARAGÜMRÜK"
+    },
+    {
+     "no": 7,
+     "home": "GAZİANTEP F.K. A.Ş",
+     "away": "BEŞİKTAŞ AŞ"
+    },
+    {
+     "no": 8,
+     "home": "KONYASPOR",
+     "away": "ALANYASPOR"
+    },
+    {
+     "no": 9,
+     "home": "GALATASARAY A.Ş",
+     "away": "İSTANBULSPOR A.Ş"
+    },
+    {
+     "no": 10,
+     "home": "BRENTFORD",
+     "away": "TOTTENHAM"
+    },
+    {
+     "no": 11,
+     "home": "CRYSTAL PALACE",
+     "away": "FULHAM"
+    },
+    {
+     "no": 12,
+     "home": "EVERTON",
+     "away": "WOLVERHAMPTON"
+    },
+    {
+     "no": 13,
+     "home": "LELCESTER CITY",
+     "away": "NEWCASTLE UNITED"
+    },
+    {
+     "no": 14,
+     "home": "SOUTHAMPTON",
+     "away": "BRIGHTON"
+    },
+    {
+     "no": 15,
+     "home": "ASTON VILLA",
+     "away": "LIVERPOOL"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 21
+  },
+  {
+   "week": 22,
+   "season": "2022/2023",
+   "game_round_id": 321,
+   "matches": [
+    {
+     "no": 1,
+     "home": "WEST HAM",
+     "away": "BRENTFORD"
+    },
+    {
+     "no": 2,
+     "home": "LWERPOOL",
+     "away": "LEİCESTER CITY"
+    },
+    {
+     "no": 3,
+     "home": "WOLVERHAMPTON",
+     "away": "MANCHESTER UNITED"
+    },
+    {
+     "no": 4,
+     "home": "BOURNEMOUTH",
+     "away": "CRYSTAL PALACE"
+    },
+    {
+     "no": 5,
+     "home": "FULHAM",
+     "away": "SOUTHAMPTON"
+    },
+    {
+     "no": 6,
+     "home": "MANCHESTER CITY",
+     "away": "EVERTON"
+    },
+    {
+     "no": 7,
+     "home": "NEWCASTLE UNITED",
+     "away": "LEEDS UNITED"
+    },
+    {
+     "no": 8,
+     "home": "BRIGHTON",
+     "away": "ARSENAL"
+    },
+    {
+     "no": 9,
+     "home": "TOTTENHAM",
+     "away": "ASTON VILLA"
+    },
+    {
+     "no": 10,
+     "home": "NOTTINGHAM FOREST",
+     "away": "CHELSEA"
+    },
+    {
+     "no": 11,
+     "home": "ANGERS",
+     "away": "LORIENT"
+    },
+    {
+     "no": 12,
+     "home": "MONACO",
+     "away": "BREST"
+    },
+    {
+     "no": 13,
+     "home": "NANTES",
+     "away": "AJ AUXERRE"
+    },
+    {
+     "no": 14,
+     "home": "TOULOUSE",
+     "away": "AJACCIO"
+    },
+    {
+     "no": 15,
+     "home": "LYON",
+     "away": "CLERMONT"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 22
+  },
+  {
+   "week": 23,
+   "season": "2022/2023",
+   "game_round_id": 322,
+   "matches": [
+    {
+     "no": 1,
+     "home": "HATAYSPOR",
+     "away": "ANTALYASPOR"
+    },
+    {
+     "no": 2,
+     "home": "BEŞİKTAŞAJŞ",
+     "away": "KASIMPAŞA AJŞ"
+    },
+    {
+     "no": 3,
+     "home": "FATIH KARAGÜMRÜK",
+     "away": "KONYASPOR"
+    },
+    {
+     "no": 4,
+     "home": "MKE ANKARAGÜCÜ",
+     "away": "KAYSERİSPOR"
+    },
+    {
+     "no": 5,
+     "home": "GİRESUNSPOR",
+     "away": "ÜMRANİYESPOR"
+    },
+    {
+     "no": 6,
+     "home": "FENERBAHÇE AJŞ",
+     "away": "GALATASARAY A.Ş"
+    },
+    {
+     "no": 7,
+     "home": "M. BAŞAKŞEHİR",
+     "away": "ADANA DEMİRSPOR A.Ş"
+    },
+    {
+     "no": 8,
+     "home": "ALANYASPOR",
+     "away": "TRABZONSPOR A.Ş"
+    },
+    {
+     "no": 9,
+     "home": "İSTANBULSPOR A.Ş",
+     "away": "GAZİANTEP F.K. A.Ş"
+    },
+    {
+     "no": 10,
+     "home": "ANTWERP",
+     "away": "KAA GENT"
+    },
+    {
+     "no": 11,
+     "home": "UTRECHT",
+     "away": "FEYENOORD"
+    },
+    {
+     "no": 12,
+     "home": "VILLARREAL",
+     "away": "REAL MADRID"
+    },
+    {
+     "no": 13,
+     "home": "ATLETICO MADRID",
+     "away": "BARCELONA"
+    },
+    {
+     "no": 14,
+     "home": "JUVENTUS",
+     "away": "UDINESE"
+    },
+    {
+     "no": 15,
+     "home": "AC MILAN",
+     "away": "ASROMA"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 23
+  },
+  {
+   "week": 24,
+   "season": "2022/2023",
+   "game_round_id": 323,
+   "matches": [
+    {
+     "no": 1,
+     "home": "ADANA DEMİRSPOR A.Ş",
+     "away": "MKE ANKARAGÜCÜ"
+    },
+    {
+     "no": 2,
+     "home": "ANTALYASPOR",
+     "away": "GİRESUNSPOR"
+    },
+    {
+     "no": 3,
+     "home": "GALATASARAY AJŞ",
+     "away": "HATAYSPOR"
+    },
+    {
+     "no": 4,
+     "home": "GAZİANTEP E.K. A.Ş",
+     "away": "FENERBAHÇE A.Ş"
+    },
+    {
+     "no": 5,
+     "home": "KASIMPAŞA AJŞ",
+     "away": "FATİH KARAGÜMRÜK"
+    },
+    {
+     "no": 6,
+     "home": "KAYSERİSPOR",
+     "away": "SİVASSPOR"
+    },
+    {
+     "no": 7,
+     "home": "KONYASPOR",
+     "away": "BEŞİKTAŞ AJŞ"
+    },
+    {
+     "no": 8,
+     "home": "TRABZONSPOR AJŞ",
+     "away": "M. BAŞAKŞEHİR"
+    },
+    {
+     "no": 9,
+     "home": "ÜMRANİYESPOR",
+     "away": "İSTANBULSPOR A.Ş"
+    },
+    {
+     "no": 10,
+     "home": "RENNES",
+     "away": "PARIS SAINT GERMAIN"
+    },
+    {
+     "no": 11,
+     "home": "AJAX",
+     "away": "TWENTE"
+    },
+    {
+     "no": 12,
+     "home": "MANCHESTER UNITED",
+     "away": "MANCHESTER CITY"
+    },
+    {
+     "no": 13,
+     "home": "TOTTENHAM",
+     "away": "ARSENAL"
+    },
+    {
+     "no": 14,
+     "home": "NAPOLI",
+     "away": "JUVENTUS"
+    },
+    {
+     "no": 15,
+     "home": "/ ASROMA",
+     "away": "FIOORENTINA"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 24
+  },
+  {
+   "week": 25,
+   "season": "2022/2023",
+   "game_round_id": 324,
+   "matches": [
+    {
+     "no": 1,
+     "home": "ADANA DEMİRSPOR A.Ş",
+     "away": "GİRESUNSPOR"
+    },
+    {
+     "no": 2,
+     "home": "KASIMPAŞA AŞ",
+     "away": "M.BAŞAKŞEHİR"
+    },
+    {
+     "no": 3,
+     "home": "GALATASARAY AJŞ",
+     "away": "ANTALYASPOR"
+    },
+    {
+     "no": 4,
+     "home": "GAZİANTEP F.K. AJŞ",
+     "away": "SİVASSPOR"
+    },
+    {
+     "no": 5,
+     "home": "ALANYASPOR",
+     "away": "FATİH KARAGÜMRÜK"
+    },
+    {
+     "no": 6,
+     "home": "KAYSERİSPOR",
+     "away": "BEŞİKTAŞ A.Ş"
+    },
+    {
+     "no": 7,
+     "home": "TRABZONSPOR AJŞ",
+     "away": "İSTANBULSPOR A.Ş"
+    },
+    {
+     "no": 8,
+     "home": "KONYASPOR",
+     "away": "MKE ANKARAGÜCÜ"
+    },
+    {
+     "no": 9,
+     "home": "ÜMRANİYESPOR",
+     "away": "FENERBAHÇE A.Ş"
+    },
+    {
+     "no": 10,
+     "home": "LEIPZIG",
+     "away": "BAYERN MUNIH"
+    },
+    {
+     "no": 11,
+     "home": "WOLFSBURG",
+     "away": "FREIBURG"
+    },
+    {
+     "no": 12,
+     "home": "FEYENOORD",
+     "away": "AJAX"
+    },
+    {
+     "no": 13,
+     "home": "LIVERPOOL",
+     "away": "CHELSEA"
+    },
+    {
+     "no": 14,
+     "home": "ARSENAL",
+     "away": "MANCHESTER UNITED"
+    },
+    {
+     "no": 15,
+     "home": "JUVENTUS",
+     "away": "ATALANTA"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 25
+  },
+  {
+   "week": 26,
+   "season": "2022/2023",
+   "game_round_id": 325,
+   "matches": [
+    {
+     "no": 1,
+     "home": "BEŞİKTAŞ AJŞ",
+     "away": "ALANYASPOR"
+    },
+    {
+     "no": 2,
+     "home": "SİVASSPOR",
+     "away": "ADANA DEMİRSPOR A.Ş"
+    },
+    {
+     "no": 3,
+     "home": "MKE ANKARAGÜCÜ",
+     "away": "GAZİANTEP F.K. A.Ş"
+    },
+    {
+     "no": 4,
+     "home": "HATAYSPOR",
+     "away": "TRABZONSPOR A.Ş"
+    },
+    {
+     "no": 5,
+     "home": "ANTALYASPOR",
+     "away": "ÜMRANİYESPOR"
+    },
+    {
+     "no": 6,
+     "home": "GİRESUNSPOR",
+     "away": "GALATASARAY A.Ş"
+    },
+    {
+     "no": 7,
+     "home": "İSTANBULSPOR AJŞ",
+     "away": "KAYSERİSPOR"
+    },
+    {
+     "no": 8,
+     "home": "M. BAŞAKŞEHİR",
+     "away": "KONYASPOR"
+    },
+    {
+     "no": 9,
+     "home": "FENERBAHÇE A.Ş",
+     "away": "KASIMPAŞA A;Ş"
+    },
+    {
+     "no": 10,
+     "home": "MARSILYA",
+     "away": "MONACO"
+    },
+    {
+     "no": 11,
+     "home": "TWENTE",
+     "away": "FEYENOORD"
+    },
+    {
+     "no": 12,
+     "home": "OSASUNA",
+     "away": "ATLETICO MADRID"
+    },
+    {
+     "no": 13,
+     "home": "REAL MADRID",
+     "away": "REAL SOCIEDAD"
+    },
+    {
+     "no": 14,
+     "home": "LAZIO",
+     "away": "FIOORENTINA"
+    },
+    {
+     "no": 15,
+     "home": "NAPOLI",
+     "away": "AS ROMA"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 26
+  },
+  {
+   "week": 27,
+   "season": "2022/2023",
+   "game_round_id": 326,
+   "matches": [
+    {
+     "no": 1,
+     "home": "MKE ANKARAGÜCÜ",
+     "away": "FATİH KARAGÜMRÜK"
+    },
+    {
+     "no": 2,
+     "home": "SİVASSPOR",
+     "away": "BEŞİKTAŞ AJŞ"
+    },
+    {
+     "no": 3,
+     "home": "ANTALYASPOR",
+     "away": "GAZİANTEP F.K. A.Ş"
+    },
+    {
+     "no": 4,
+     "home": "İSTANBULSPOR AJŞ",
+     "away": "ALANYASPOR"
+    },
+    {
+     "no": 5,
+     "home": "HATAYSPOR",
+     "away": "KASIMPAŞA A.Ş"
+    },
+    {
+     "no": 6,
+     "home": "GALATASARAY AŞ",
+     "away": "TRABZONSPOR A.Ş"
+    },
+    {
+     "no": 7,
+     "home": "ÜMRANİYESPOR",
+     "away": "ADANA DEMİRSPOR A.Ş"
+    },
+    {
+     "no": 8,
+     "home": "FENERBAHÇE AŞ",
+     "away": "KONYASPOR"
+    },
+    {
+     "no": 9,
+     "home": "GİRESUNSPOR",
+     "away": "KAYSERİSPOR"
+    },
+    {
+     "no": 10,
+     "home": "B. DORTMUND",
+     "away": "FREIBURG"
+    },
+    {
+     "no": 11,
+     "home": "EVERTON",
+     "away": "ARSENAL"
+    },
+    {
+     "no": 12,
+     "home": "TOTTENHAM",
+     "away": "MANCHESTER CITY"
+    },
+    {
+     "no": 13,
+     "home": "FEYENOORD",
+     "away": "PSV"
+    },
+    {
+     "no": 14,
+     "home": "BARCELONA",
+     "away": "SEVİLLA"
+    },
+    {
+     "no": 15,
+     "home": "INTER",
+     "away": "AC MILAN"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 27
+  },
+  {
+   "week": 28,
+   "season": "2022/2023",
+   "game_round_id": 327,
+   "matches": [
+    {
+     "no": 1,
+     "home": "KASIMPAŞA AJŞ",
+     "away": "ANTALYASPOR"
+    },
+    {
+     "no": 2,
+     "home": "BEŞİKTAŞ A.Ş",
+     "away": "MKE ANKARAGÜCÜ"
+    },
+    {
+     "no": 3,
+     "home": "FATİHKARAGÜMRÜK",
+     "away": "SİVASSPOR"
+    },
+    {
+     "no": 4,
+     "home": "ALANYASPOR",
+     "away": "M. BAŞAKŞEHİR"
+    },
+    {
+     "no": 5,
+     "home": "TRABZONSPOR A.Ş",
+     "away": "ÜMRANİYESPOR"
+    },
+    {
+     "no": 6,
+     "home": "KONYASPOR",
+     "away": "GİRESUNSPOR"
+    },
+    {
+     "no": 7,
+     "home": "ADANA DEMİRSPOR A.Ş",
+     "away": "HATAYSPOR"
+    },
+    {
+     "no": 8,
+     "home": "KAYSERİSPOR",
+     "away": "FENERBAHÇE A.Ş"
+    },
+    {
+     "no": 9,
+     "home": "GAZİANTEP F.K. AŞ",
+     "away": "GALATASARAY A.Ş"
+    },
+    {
+     "no": 10,
+     "home": "LEIPZIG",
+     "away": "UNION BERLİN"
+    },
+    {
+     "no": 11,
+     "home": "MONACO",
+     "away": "PARIS SAINT GERMAIN"
+    },
+    {
+     "no": 12,
+     "home": "ARSENAL",
+     "away": "BRENTFORD"
+    },
+    {
+     "no": 13,
+     "home": "VILLARREAL",
+     "away": "BARCELONA"
+    },
+    {
+     "no": 14,
+     "home": "LAZIO",
+     "away": "ATALANTA"
+    },
+    {
+     "no": 15,
+     "home": "JUVENTUS",
+     "away": "FIORENTINA"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 28
+  },
+  {
+   "week": 29,
+   "season": "2022/2023",
+   "game_round_id": 328,
+   "matches": [
+    {
+     "no": 1,
+     "home": "STUTTGART",
+     "away": "KÖLN"
+    },
+    {
+     "no": 2,
+     "home": "WOLFSBURG",
+     "away": "LEIPZİG"
+    },
+    {
+     "no": 3,
+     "home": "U S-GİLLOIİSE",
+     "away": "STANDARD LIEGE"
+    },
+    {
+     "no": 4,
+     "home": "PARISSAINT GERMAİN",
+     "away": "LİLLE"
+    },
+    {
+     "no": 5,
+     "home": "BREST",
+     "away": "MONACO"
+    },
+    {
+     "no": 6,
+     "home": "RC LENS",
+     "away": "NANTES"
+    },
+    {
+     "no": 7,
+     "home": "ASTON VİLLA",
+     "away": "ARSENAL"
+    },
+    {
+     "no": 8,
+     "home": "NEWCASTLE UNİTED",
+     "away": "LIVERPOOL"
+    },
+    {
+     "no": 9,
+     "home": "FEYENOORD",
+     "away": "AZ ALKMAAR"
+    },
+    {
+     "no": 10,
+     "home": "UTRECHT",
+     "away": "PSV"
+    },
+    {
+     "no": 11,
+     "home": "OSASUNA",
+     "away": "REAL MADRID"
+    },
+    {
+     "no": 12,
+     "home": "VALLECANO",
+     "away": "SEVİLLA"
+    },
+    {
+     "no": 13,
+     "home": "ATLETİCO MADRID",
+     "away": "ATHLETIC BILBAO"
+    },
+    {
+     "no": 14,
+     "home": "INTER",
+     "away": "UDINESE"
+    },
+    {
+     "no": 15,
+     "home": "SPEZIA",
+     "away": "JUVENTUS"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 29
+  },
+  {
+   "week": 30,
+   "season": "2022/2023",
+   "game_round_id": 329,
+   "matches": [
+    {
+     "no": 1,
+     "home": "MAINZ",
+     "away": "MONCHENGLADBACH"
+    },
+    {
+     "no": 2,
+     "home": "HERTHA BERLİN",
+     "away": "AUGSBURG"
+    },
+    {
+     "no": 3,
+     "home": "LEIPZIG",
+     "away": "EINTRACHT FRANKFURT"
+    },
+    {
+     "no": 4,
+     "home": "FREIBURG",
+     "away": "B. LEVERKUSEN"
+    },
+    {
+     "no": 5,
+     "home": "KVC WESTERLO",
+     "away": "U S-GİLLOISE"
+    },
+    {
+     "no": 6,
+     "home": "OLUB BRUGGE",
+     "away": "KAA GENT"
+    },
+    {
+     "no": 7,
+     "home": "MONTPELLIER",
+     "away": "RC LENS"
+    },
+    {
+     "no": 8,
+     "home": "NEWCASTLE UNİTED",
+     "away": "BRIGHTON"
+    },
+    {
+     "no": 9,
+     "home": "LEEDS UNİTED",
+     "away": "SOUTHAMPTON"
+    },
+    {
+     "no": 10,
+     "home": "TOTTENHAM",
+     "away": "CHELSEA"
+    },
+    {
+     "no": 11,
+     "home": "/ PSV",
+     "away": "TWENTE"
+    },
+    {
+     "no": 12,
+     "home": "REAL MADRID",
+     "away": "ATLETİCO MADRID"
+    },
+    {
+     "no": 13,
+     "home": "/ VALENCİA",
+     "away": "REAL SOCIEDAD"
+    },
+    {
+     "no": 14,
+     "home": "EMPOLI",
+     "away": "NAPOLİ"
+    },
+    {
+     "no": 15,
+     "home": "BOLOGNA",
+     "away": "INTER"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 30
+  },
+  {
+   "week": 31,
+   "season": "2022/2023",
+   "game_round_id": 330,
+   "matches": [
+    {
+     "no": 1,
+     "home": "ALANYASPOR",
+     "away": "M.BAŞAKŞEHİR"
+    },
+    {
+     "no": 2,
+     "home": "FATİH KARAGÜMRÜK",
+     "away": "SİVASSPOR"
+    },
+    {
+     "no": 3,
+     "home": "TRABZONSPOR AŞ",
+     "away": "ÜMRANİYESPOR"
+    },
+    {
+     "no": 4,
+     "home": "KAYSERİSPOR",
+     "away": "FENERBAHÇE A.Ş"
+    },
+    {
+     "no": 5,
+     "home": "KONYASPOR",
+     "away": "GİRESUNSPOR"
+    },
+    {
+     "no": 6,
+     "home": "BEŞİKTAŞAJŞ",
+     "away": "MKE ANKARAGÜCÜ"
+    },
+    {
+     "no": 7,
+     "home": "KASIMPAŞA AŞ",
+     "away": "ANTALYASPOR"
+    },
+    {
+     "no": 8,
+     "home": "B.DORTMUND",
+     "away": "LEIPZIG"
+    },
+    {
+     "no": 9,
+     "home": "RENNES",
+     "away": "MARSILYA"
+    },
+    {
+     "no": 10,
+     "home": "MANCHESTER CITY",
+     "away": "NEWCASTLE UNITED"
+    },
+    {
+     "no": 11,
+     "home": "LIVERPOOL",
+     "away": "MANCHESTER UNITED"
+    },
+    {
+     "no": 12,
+     "home": "ATLETİCO MADRID",
+     "away": "SEVİLLA"
+    },
+    {
+     "no": 13,
+     "home": "BARCELONA",
+     "away": "VALENCIA"
+    },
+    {
+     "no": 14,
+     "home": "FIORENTINA",
+     "away": "AC MILAN"
+    },
+    {
+     "no": 15,
+     "home": "AS ROMA",
+     "away": "JUVENTUS"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 31
+  },
+  {
+   "week": 32,
+   "season": "2022/2023",
+   "game_round_id": 331,
+   "matches": [
+    {
+     "no": 1,
+     "home": "GİRESUNSPOR",
+     "away": "FATİH KARAGÜMRÜK"
+    },
+    {
+     "no": 2,
+     "home": "ANTALYASPOR",
+     "away": "KAYSERİSPOR"
+    },
+    {
+     "no": 3,
+     "home": "GALATASARAY A.Ş",
+     "away": "KASIMPAŞA A.Ş"
+    },
+    {
+     "no": 4,
+     "home": "MKE ANKARAGÜCÜ",
+     "away": "ALANYASPOR"
+    },
+    {
+     "no": 5,
+     "home": "TRABZONSPOR A;Ş",
+     "away": "ADANA DEMİRSPOR A.Ş"
+    },
+    {
+     "no": 6,
+     "home": "M. BAŞAKŞEHİR",
+     "away": "BEŞİKTAŞ A.Ş"
+    },
+    {
+     "no": 7,
+     "home": "İSTANBULSPOR AJŞ",
+     "away": "SİVASSPOR"
+    },
+    {
+     "no": 8,
+     "home": "WERDER BREMEN",
+     "away": "B. LEVERKUSEN"
+    },
+    {
+     "no": 9,
+     "home": "WOLFSBURG",
+     "away": "UNION BERLİN"
+    },
+    {
+     "no": 10,
+     "home": "LILLE",
+     "away": "LYON"
+    },
+    {
+     "no": 11,
+     "home": "LEICESTER CITY",
+     "away": "CHELSEA"
+    },
+    {
+     "no": 12,
+     "home": "FULHAM",
+     "away": "ARSENAL"
+    },
+    {
+     "no": 13,
+     "home": "VALENCİA",
+     "away": "OSASUNA"
+    },
+    {
+     "no": 14,
+     "home": "ATHLETIC BILBAO",
+     "away": "BARCELONA"
+    },
+    {
+     "no": 15,
+     "home": "NAPOLİ",
+     "away": "ATALANTA"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 32
+  },
+  {
+   "week": 35,
+   "season": "2022/2023",
+   "game_round_id": 335,
+   "matches": [
+    {
+     "no": 1,
+     "home": "GİRESUNSPOR",
+     "away": "ALANYASPOR"
+    },
+    {
+     "no": 2,
+     "home": "İSTANBULSPOR AJŞ",
+     "away": "FATİH KARAGÜMRÜK"
+    },
+    {
+     "no": 3,
+     "home": "FENERBAHÇE A.Ş",
+     "away": "BEŞİKTAŞ A.Ş"
+    },
+    {
+     "no": 4,
+     "home": "M.BAŞAKŞEHİR",
+     "away": "MKE ANKARAGÜCÜ"
+    },
+    {
+     "no": 5,
+     "home": "GALATASARAY AJŞ",
+     "away": "ADANA DEMİRSPOR A.Ş"
+    },
+    {
+     "no": 6,
+     "home": "ÜMRANİYESPOR",
+     "away": "KONYASPOR"
+    },
+    {
+     "no": 7,
+     "home": "TRABZONSPOR A.Ş",
+     "away": "KAYSERİSPOR"
+    },
+    {
+     "no": 8,
+     "home": "BAYERN MUNİH",
+     "away": "B. DORTMUND"
+    },
+    {
+     "no": 9,
+     "home": "NANTES",
+     "away": "REIMS"
+    },
+    {
+     "no": 10,
+     "home": "MANCHESTER CITY",
+     "away": "LLVERPOOL"
+    },
+    {
+     "no": 11,
+     "home": "ARSENAL",
+     "away": "LEEDS UNITED"
+    },
+    {
+     "no": 12,
+     "home": "NEWCASTLE UNITED",
+     "away": "MANCHESTER UNITED"
+    },
+    {
+     "no": 13,
+     "home": "VILLARREAL",
+     "away": "REAL SOCIEDAD"
+    },
+    {
+     "no": 14,
+     "home": "INTER",
+     "away": "FIOORENTINA"
+    },
+    {
+     "no": 15,
+     "home": "JUVENTUS",
+     "away": "HELLAS VERONA"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 35
+  },
+  {
+   "week": 36,
+   "season": "2022/2023",
+   "game_round_id": 336,
+   "matches": [
+    {
+     "no": 1,
+     "home": "KONYASPOR",
+     "away": "ANTALYASPOR"
+    },
+    {
+     "no": 2,
+     "home": "MKE ANKARAGÜCÜ",
+     "away": "İSTANBULSPOR A.Ş"
+    },
+    {
+     "no": 3,
+     "home": "KASIMPAŞA AJŞ",
+     "away": "TRABZONSPOR AŞ"
+    },
+    {
+     "no": 4,
+     "home": "KAYSERİSPOR",
+     "away": "ÜMRANİYESPOR"
+    },
+    {
+     "no": 5,
+     "home": "SİVASSPOR",
+     "away": "M. BAŞAKŞEHİR"
+    },
+    {
+     "no": 6,
+     "home": "BEŞİKTAŞ A.Ş",
+     "away": "GİRESUNSPOR"
+    },
+    {
+     "no": 7,
+     "home": "FATİH KARAGÜMRÜK",
+     "away": "FENERBAHÇE A.Ş"
+    },
+    {
+     "no": 8,
+     "home": "B. DORTMUND",
+     "away": "UNION BERLİN"
+    },
+    {
+     "no": 9,
+     "home": "FREIBURG",
+     "away": "BAYERN MÜNİH"
+    },
+    {
+     "no": 10,
+     "home": "LYON",
+     "away": "RENNES"
+    },
+    {
+     "no": 11,
+     "home": "MANCHESTER UNITED",
+     "away": "EVERTON"
+    },
+    {
+     "no": 12,
+     "home": "LIVERPOOL",
+     "away": "ARSENAL"
+    },
+    {
+     "no": 13,
+     "home": "REAL MADRID",
+     "away": "VILLARREAL"
+    },
+    {
+     "no": 14,
+     "home": "ALMERİA",
+     "away": "VALENCİA"
+    },
+    {
+     "no": 15,
+     "home": "LAZIO",
+     "away": "JUVENTUS"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 36
+  },
+  {
+   "week": 37,
+   "season": "2022/2023",
+   "game_round_id": 337,
+   "matches": [
+    {
+     "no": 1,
+     "home": "ANTALYASPOR",
+     "away": "ALANYASPOR"
+    },
+    {
+     "no": 2,
+     "home": "GALATASARAY AJŞ",
+     "away": "KAYSERİSPOR"
+    },
+    {
+     "no": 3,
+     "home": "ADANA DEMİRSPOR A.Ş",
+     "away": "KASIMPAŞA AJŞ"
+    },
+    {
+     "no": 4,
+     "home": "İSTANBULSPOR A.Ş",
+     "away": "M.BAŞAKŞEHİR"
+    },
+    {
+     "no": 5,
+     "home": "FENERBAHÇE A.Ş",
+     "away": "MKE ANKARAGÜCÜ"
+    },
+    {
+     "no": 6,
+     "home": "GİRESUNSPOR",
+     "away": "SİVASSPOR"
+    },
+    {
+     "no": 7,
+     "home": "TRABZONSPOR AJŞ",
+     "away": "BEŞİKTAŞ A.Ş"
+    },
+    {
+     "no": 8,
+     "home": "SCHALKE 04",
+     "away": "HERTHA BERLİN"
+    },
+    {
+     "no": 9,
+     "home": "RENNES",
+     "away": "REİMS"
+    },
+    {
+     "no": 10,
+     "home": "/ PARIS SAINT GERMAIN",
+     "away": "RC LENS"
+    },
+    {
+     "no": 11,
+     "home": "AJ AUXERRE",
+     "away": "NANTES"
+    },
+    {
+     "no": 12,
+     "home": "EVERTON",
+     "away": "FULHAM"
+    },
+    {
+     "no": 13,
+     "home": "NOTTINGHAM FOREST",
+     "away": "MANCHESTER UNITED"
+    },
+    {
+     "no": 14,
+     "home": "ATHLETIC BILBAO",
+     "away": "REAL SOCIEDAD"
+    },
+    {
+     "no": 15,
+     "home": "GETAFE",
+     "away": "BARCELONA"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 37
+  },
+  {
+   "week": 38,
+   "season": "2022/2023",
+   "game_round_id": 338,
+   "matches": [
+    {
+     "no": 1,
+     "home": "ÜMRANİYESPOR",
+     "away": "BEŞİKTAŞ A.Ş"
+    },
+    {
+     "no": 2,
+     "home": "KASIMPAŞA AJŞ",
+     "away": "KONYASPOR"
+    },
+    {
+     "no": 3,
+     "home": "ADANA DEMİRSPOR A.Ş",
+     "away": "KAYSERİSPOR"
+    },
+    {
+     "no": 4,
+     "home": "GALATASARAY AŞ",
+     "away": "FATİH KARAGÜMRÜK"
+    },
+    {
+     "no": 5,
+     "home": "GİRESUNSPOR",
+     "away": "M.BAŞAKŞEHİR"
+    },
+    {
+     "no": 6,
+     "home": "ANTALYASPOR",
+     "away": "SİVASSPOR"
+    },
+    {
+     "no": 7,
+     "home": "FENERBAHÇE AJŞ",
+     "away": "İSTANBULSPOR A.Ş"
+    },
+    {
+     "no": 8,
+     "home": "B. LEVERKUSEN",
+     "away": "LEİPZIG"
+    },
+    {
+     "no": 9,
+     "home": "RCLENS",
+     "away": "MONACO"
+    },
+    {
+     "no": 10,
+     "home": "LYON",
+     "away": "MARSILYA"
+    },
+    {
+     "no": 11,
+     "home": "NEWCASTLE UNITED",
+     "away": "TOTTENHAM"
+    },
+    {
+     "no": 12,
+     "home": "PSV",
+     "away": "AJAX"
+    },
+    {
+     "no": 13,
+     "home": "BARCELONA",
+     "away": "ATLETİCO MADRID"
+    },
+    {
+     "no": 14,
+     "home": "SEVİLLA",
+     "away": "VILLARREAL"
+    },
+    {
+     "no": 15,
+     "home": "JUVENTUS",
+     "away": "NAPOLİ"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 38
+  },
+  {
+   "week": 39,
+   "season": "2022/2023",
+   "game_round_id": 339,
+   "matches": [
+    {
+     "no": 1,
+     "home": "ALANYASPOR",
+     "away": "ÜMRANİYESPOR"
+    },
+    {
+     "no": 2,
+     "home": "FATİHKARAGÜMRÜK",
+     "away": "ANTALYASPOR"
+    },
+    {
+     "no": 3,
+     "home": "KONYASPOR",
+     "away": "TRABZONSPOR A.Ş"
+    },
+    {
+     "no": 4,
+     "home": "SİVASSPOR",
+     "away": "FENERBAHÇE A.Ş"
+    },
+    {
+     "no": 5,
+     "home": "MKE ANKARAGÜCÜ",
+     "away": "KASIMPAŞA A.Ş"
+    },
+    {
+     "no": 6,
+     "home": "BEŞİKTAŞ AŞ",
+     "away": "GALATASARAY AŞ"
+    },
+    {
+     "no": 7,
+     "home": "İSTANBULSPOR A.Ş",
+     "away": "GİRESUNSPOR"
+    },
+    {
+     "no": 8,
+     "home": "UNION BERLİN",
+     "away": "B. LEVERKUSEN"
+    },
+    {
+     "no": 9,
+     "home": "WOLFSBURG",
+     "away": "MAINZ"
+    },
+    {
+     "no": 10,
+     "home": "STRASBOURG",
+     "away": "LYON"
+    },
+    {
+     "no": 11,
+     "home": "LIVERPOOL",
+     "away": "TOTTENHAM"
+    },
+    {
+     "no": 12,
+     "home": "BARCELONA",
+     "away": "REAL BETİS"
+    },
+    {
+     "no": 13,
+     "home": "CADIZ",
+     "away": "VALENCIA"
+    },
+    {
+     "no": 14,
+     "home": "ASROMA",
+     "away": "AC MILAN"
+    },
+    {
+     "no": 15,
+     "home": "INTER",
+     "away": "LAZIO"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 39
+  },
+  {
+   "week": 40,
+   "season": "2022/2023",
+   "game_round_id": 340,
+   "matches": [
+    {
+     "no": 1,
+     "home": "ADANA DEMİRSPOR A.Ş",
+     "away": "ALANYASPOR"
+    },
+    {
+     "no": 2,
+     "home": "ANTALYASPOR",
+     "away": "BEŞİKTAŞ AJŞ"
+    },
+    {
+     "no": 3,
+     "home": "ÜMRANİYESPOR",
+     "away": "SİVASSPOR"
+    },
+    {
+     "no": 4,
+     "home": "KONYASPOR",
+     "away": "KAYSERİSPOR"
+    },
+    {
+     "no": 5,
+     "home": "GİRESUNSPOR",
+     "away": "FENERBAHÇE A.Ş"
+    },
+    {
+     "no": 6,
+     "home": "GALATASARAY A.Ş",
+     "away": "M.BAŞAKŞEHİR"
+    },
+    {
+     "no": 7,
+     "home": "TRABZONSPOR AJŞ",
+     "away": "MKE ANKARAGÜCÜ"
+    },
+    {
+     "no": 8,
+     "home": "FREIBURG",
+     "away": "LEİPZIG"
+    },
+    {
+     "no": 9,
+     "home": "RCLENS",
+     "away": "MARSILYA"
+    },
+    {
+     "no": 10,
+     "home": "BRIGHTON",
+     "away": "EVERTON"
+    },
+    {
+     "no": 11,
+     "home": "NEWCASTLE UNITED",
+     "away": "ARSENAL"
+    },
+    {
+     "no": 12,
+     "home": "AC MILAN",
+     "away": "LAZIO"
+    },
+    {
+     "no": 13,
+     "home": "ASROMA",
+     "away": "INTER"
+    },
+    {
+     "no": 14,
+     "home": "ATALANTA",
+     "away": "JUVENTUS"
+    },
+    {
+     "no": 15,
+     "home": "NAPOLI",
+     "away": "FIOORENTINA"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 40
+  },
+  {
+   "week": 42,
+   "season": "2022/2023",
+   "game_round_id": 342,
+   "matches": [
+    {
+     "no": 1,
+     "home": "KASIMPAŞA AJŞ",
+     "away": "İSTANBULSPOR A.Ş"
+    },
+    {
+     "no": 2,
+     "home": "GALATASARAY AJŞ",
+     "away": "SİVASSPOR"
+    },
+    {
+     "no": 3,
+     "home": "KAYSERİSPOR",
+     "away": "ALANYASPOR"
+    },
+    {
+     "no": 4,
+     "home": "ÜMRANİYESPOR",
+     "away": "MKE ANKARAGÜCÜ"
+    },
+    {
+     "no": 5,
+     "home": "ADANA DEMİRSPOR A.Ş",
+     "away": "BEŞİKTAŞ A.Ş"
+    },
+    {
+     "no": 6,
+     "home": "ANTALYASPOR",
+     "away": "M.BAŞAKŞEHİR"
+    },
+    {
+     "no": 7,
+     "home": "TRABZONSPOR A.Ş",
+     "away": "FATİH KARAGÜMRÜK"
+    },
+    {
+     "no": 8,
+     "home": "BAYERN MUNİH",
+     "away": "LEIPZIG"
+    },
+    {
+     "no": 9,
+     "home": "B. LEVERKUSEN",
+     "away": "MONCHENGLADBACH"
+    },
+    {
+     "no": 10,
+     "home": "LILLE",
+     "away": "MARSILYA"
+    },
+    {
+     "no": 11,
+     "home": "FULHAM",
+     "away": "CRYSTAL PALACE"
+    },
+    {
+     "no": 12,
+     "home": "MANCHESTER CITY",
+     "away": "CHELSEA"
+    },
+    {
+     "no": 13,
+     "home": "BARCELONA",
+     "away": "REAL SOCIEDAD"
+    },
+    {
+     "no": 14,
+     "home": "VALENCİA",
+     "away": "REAL MADRID"
+    },
+    {
+     "no": 15,
+     "home": "NAPOLI",
+     "away": "INTER"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 42
+  },
+  {
+   "week": 43,
+   "season": "2022/2023",
+   "game_round_id": 343,
+   "matches": [
+    {
+     "no": 1,
+     "home": "BOCOHUM",
+     "away": "B. LEVERKUSEN"
+    },
+    {
+     "no": 2,
+     "home": "EİNTRACHT FRANKFURT",
+     "away": "FREIBURG"
+    },
+    {
+     "no": 3,
+     "home": "LEIPZIG",
+     "away": "SCHALKE 04"
+    },
+    {
+     "no": 4,
+     "home": "STUTTGART",
+     "away": "HOFFENHEIM"
+    },
+    {
+     "no": 5,
+     "home": "CLERMONT",
+     "away": "LORİENT"
+    },
+    {
+     "no": 6,
+     "home": "LİLLE",
+     "away": "NANTES"
+    },
+    {
+     "no": 7,
+     "home": "TOULOUSE",
+     "away": "AJ AUXERRE"
+    },
+    {
+     "no": 8,
+     "home": "ASTON VILLA",
+     "away": "BRIGHTON"
+    },
+    {
+     "no": 9,
+     "home": "CHELSEA",
+     "away": "NEWCASTLE UNİTED"
+    },
+    {
+     "no": 10,
+     "home": "LEEDS UNİTED",
+     "away": "TOTTENHAM"
+    },
+    {
+     "no": 11,
+     "home": "/ LEİCESTER CITY",
+     "away": "WEST HAM"
+    },
+    {
+     "no": 12,
+     "home": "ALMERİA",
+     "away": "REAL VALLADOLID"
+    },
+    {
+     "no": 13,
+     "home": "FIORENTINA",
+     "away": "ASROMA"
+    },
+    {
+     "no": 14,
+     "home": "INTER",
+     "away": "ATALANTA"
+    },
+    {
+     "no": 15,
+     "home": "JUVENTUS",
+     "away": "AC MILAN"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 43
+  },
+  {
+   "week": 46,
+   "season": "2022/2023",
+   "game_round_id": 346,
+   "matches": [
+    {
+     "no": 1,
+     "home": "LETONYA",
+     "away": "TÜRKİYE"
+    },
+    {
+     "no": 2,
+     "home": "BELARUS",
+     "away": "İSRAİL"
+    },
+    {
+     "no": 3,
+     "home": "DANİMARKA",
+     "away": "KUZEY İRLANDA"
+    },
+    {
+     "no": 4,
+     "home": "KMAKEDONYA CUM",
+     "away": "UKRAYNA"
+    },
+    {
+     "no": 5,
+     "home": "KOSOVA",
+     "away": "ROMANYA"
+    },
+    {
+     "no": 6,
+     "home": "YUNANİSTAN",
+     "away": "İRLANDA"
+    },
+    {
+     "no": 7,
+     "home": "LİTVANYA",
+     "away": "BULGARİSTAN"
+    },
+    {
+     "no": 8,
+     "home": "LÜKSEMBURG",
+     "away": "LİHTENŞTAYN"
+    },
+    {
+     "no": 9,
+     "home": "AZERBAYCAN",
+     "away": "ESTONYA"
+    },
+    {
+     "no": 10,
+     "home": "KARADAĞ",
+     "away": "MACARİSTAN"
+    },
+    {
+     "no": 11,
+     "home": "NORVEÇ",
+     "away": "İSKOÇYA"
+    },
+    {
+     "no": 12,
+     "home": "ARNAVUTLUK",
+     "away": "MOLDOVA"
+    },
+    {
+     "no": 13,
+     "home": "/ BELÇİKA",
+     "away": "AVUSTURYA"
+    },
+    {
+     "no": 14,
+     "home": "PORTEKİZ",
+     "away": "BOSNA HERSEK"
+    },
+    {
+     "no": 15,
+     "home": "İZLANDA",
+     "away": "SLOVAKYA"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 46
+  },
+  {
+   "week": 47,
+   "season": "2022/2023",
+   "game_round_id": 347,
+   "matches": [
+    {
+     "no": 1,
+     "home": "UNIONDE SANTA FE",
+     "away": "INDEPENDİENTE"
+    },
+    {
+     "no": 2,
+     "home": "ATHLANUS",
+     "away": "TALLERES"
+    },
+    {
+     "no": 3,
+     "home": "ARSENAL SARANDI",
+     "away": "CA PLATENSE"
+    },
+    {
+     "no": 4,
+     "home": "PARANAENSE",
+     "away": "CORINTHIANS"
+    },
+    {
+     "no": 5,
+     "home": "FLUMINENSE",
+     "away": "BAHIA BA"
+    },
+    {
+     "no": 6,
+     "home": "FORTALEZACE",
+     "away": "ATLETİCO MINEIRO"
+    },
+    {
+     "no": 7,
+     "home": "CRUZEIRO MG",
+     "away": "SAO PAULO SP"
+    },
+    {
+     "no": 8,
+     "home": "VIKING",
+     "away": "BRANN"
+    },
+    {
+     "no": 9,
+     "home": "H.KAMERATENE",
+     "away": "ODDS BK"
+    },
+    {
+     "no": 10,
+     "home": "MOLDE",
+     "away": "HAUGESUND"
+    },
+    {
+     "no": 11,
+     "home": "/ ROSENBORG",
+     "away": "SARPSBORG 08"
+    },
+    {
+     "no": 12,
+     "home": "TROMSOIL",
+     "away": "STABAEK"
+    },
+    {
+     "no": 13,
+     "home": "STROMSGODSET",
+     "away": "BODO GLIMT"
+    },
+    {
+     "no": 14,
+     "home": "PHILADELPHIA UNION",
+     "away": "INTER MIAMI CF"
+    },
+    {
+     "no": 15,
+     "home": "/ COLORADO RAPIDS",
+     "away": "LA GALAXY"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 47
+  },
+  {
+   "week": 48,
+   "season": "2022/2023",
+   "game_round_id": 348,
+   "matches": [
+    {
+     "no": 1,
+     "home": "SAO PAULO SP",
+     "away": "FLUMINENSE"
+    },
+    {
+     "no": 2,
+     "home": "BAHIA BA",
+     "away": "GREMİO PORTO"
+    },
+    {
+     "no": 3,
+     "home": "FLAMENGO",
+     "away": "FORTALEZA CE"
+    },
+    {
+     "no": 4,
+     "home": "INTERNACIONAL",
+     "away": "CRUZEIRO MG"
+    },
+    {
+     "no": 5,
+     "home": "CORINTHIANS",
+     "away": "BRAGANTINO SP"
+    },
+    {
+     "no": 6,
+     "home": "OULU",
+     "away": "HAKA"
+    },
+    {
+     "no": 7,
+     "home": "TAMPEREEN",
+     "away": "SEİNÖJOEN"
+    },
+    {
+     "no": 8,
+     "home": "MARIEHAMN",
+     "away": "FCKTIP"
+    },
+    {
+     "no": 9,
+     "home": "LAHTI",
+     "away": "KUOPION"
+    },
+    {
+     "no": 10,
+     "home": "MALMÖ",
+     "away": "IK SIRIUS"
+    },
+    {
+     "no": 11,
+     "home": "HALMSTADS BK",
+     "away": "GÖTEBORG"
+    },
+    {
+     "no": 12,
+     "home": "NORRKÖPİING",
+     "away": "HACKEN"
+    },
+    {
+     "no": 13,
+     "home": "VALERENGA",
+     "away": "VIKING"
+    },
+    {
+     "no": 14,
+     "home": "LİLLESTROM",
+     "away": "TROMSO IL"
+    },
+    {
+     "no": 15,
+     "home": "BODO GLIMT",
+     "away": "MOLDE"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 48
+  },
+  {
+   "week": 50,
+   "season": "2022/2023",
+   "game_round_id": 350,
+   "matches": [
+    {
+     "no": 1,
+     "home": "BOTAFOGO RJ",
+     "away": "BRAGANTINO SP"
+    },
+    {
+     "no": 2,
+     "home": "CRUZEIRO MG",
+     "away": "CORITIBA"
+    },
+    {
+     "no": 3,
+     "home": "TAMPEREEN",
+     "away": "MARIEHAMN"
+    },
+    {
+     "no": 4,
+     "home": "VAASAN PS",
+     "away": "OULU"
+    },
+    {
+     "no": 5,
+     "home": "LAHTI",
+     "away": "SEINÖJOEN"
+    },
+    {
+     "no": 6,
+     "home": "DEGERFORSİIF",
+     "away": "IK SIRIUS"
+    },
+    {
+     "no": 7,
+     "home": "HAMMARBY",
+     "away": "KALMAR"
+    },
+    {
+     "no": 8,
+     "home": "MJALLBY",
+     "away": "NORRKÖPİNG"
+    },
+    {
+     "no": 9,
+     "home": "VALERENGA",
+     "away": "MOLDE"
+    },
+    {
+     "no": 10,
+     "home": "AALESUNDS",
+     "away": "ODDS BK"
+    },
+    {
+     "no": 11,
+     "home": "BODO GLIMT",
+     "away": "HAUGESUND"
+    },
+    {
+     "no": 12,
+     "home": "LİLLESTROM",
+     "away": "SANDEFJORD"
+    },
+    {
+     "no": 13,
+     "home": "ROSENBORG",
+     "away": "TROMSO IL"
+    },
+    {
+     "no": 14,
+     "home": "SARPSBORG 08",
+     "away": "H.KAMERATENE"
+    },
+    {
+     "no": 15,
+     "home": "STABAEK",
+     "away": "VIKING"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 50
+  },
+  {
+   "week": 53,
+   "season": "2022/2023",
+   "game_round_id": 357,
+   "matches": [
+    {
+     "no": 1,
+     "home": "SCHALKE 04",
+     "away": "KAISERSLAUTERN"
+    },
+    {
+     "no": 2,
+     "home": "KARLSRUHE",
+     "away": "HAMBURG"
+    },
+    {
+     "no": 3,
+     "home": "NÜRNBERG",
+     "away": "HANNOVER 96"
+    },
+    {
+     "no": 4,
+     "home": "STANDARDLIEGE",
+     "away": "U S-GİLLOİSE"
+    },
+    {
+     "no": 5,
+     "home": "ANDERLECHT",
+     "away": "ANTWERP"
+    },
+    {
+     "no": 6,
+     "home": "FLUMINENSE",
+     "away": "PALMEIRAS SP"
+    },
+    {
+     "no": 7,
+     "home": "STADELAVAL",
+     "away": "ANGERS"
+    },
+    {
+     "no": 8,
+     "home": "FEYENOORD",
+     "away": "PSV"
+    },
+    {
+     "no": 9,
+     "home": "SHEFFİELD WEDNESDAY",
+     "away": "SOUTHAMPTON"
+    },
+    {
+     "no": 10,
+     "home": "BLACKBURN ROVERS",
+     "away": "WEST BROMWICH"
+    },
+    {
+     "no": 11,
+     "home": "/ NORWICH CITY",
+     "away": "HULL CITY"
+    },
+    {
+     "no": 12,
+     "home": "LEİCESTER CITY",
+     "away": "COVENTRY"
+    },
+    {
+     "no": 13,
+     "home": "LEEDS UNİTED",
+     "away": "CARDIFF CITY"
+    },
+    {
+     "no": 14,
+     "home": "SUNDERLAND",
+     "away": "IPSWICH TOWN"
+    },
+    {
+     "no": 15,
+     "home": "MANCHESTER CITY",
+     "away": "ARSENAL"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 53
+  }
+ ]
+}

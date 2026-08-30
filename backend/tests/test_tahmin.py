@@ -413,3 +413,175 @@ def test_gecti_karari_yuvarlanmamis_sinirdan_verilir(monkeypatch):
         "aralik tamamen sifirin altinda ama karar yuvarlanmis sinirdan "
         "verildigi icin 'gecmedi' dondu"
     )
+
+
+# ─── geniş kesit: dört sezon, sezon dışarıda bırakmalı ───────────────────────
+
+def test_genis_kesit_VARSAYILAN_govdede_yok():
+    """`?genis` istenmediyse alan gövdede HİÇ olmamalı.
+
+    `None` yazmak yanlış olurdu: "ölçülmedi" ile "ölçüldü, sonuç boş" ayrı
+    şeylerdir ve arayüz ikincisini "veri yok" diye gösterirdi. Ayrıca bu
+    testin asıl işi bedeli çıpalamak — alan gövdeye sızarsa `/api/tahmin`in
+    soğuk maliyeti sessizce ~38 sn artar (korpus okuması).
+    """
+    from spor_toto.tahmin import rapor
+
+    g = rapor()
+    assert "genis_kesit" not in g, (
+        "geniş kesit varsayılan gövdeye sızmış — soğuk bedel 38 sn artar")
+    assert g["olculmus_isabet"], "dar ölçüm bloğu düşmüş"
+
+
+def test_genis_kesit_dar_olcumu_DEGISTIRMEZ():
+    """Geniş ölçüm eklenince dar kesitin sayıları oynamamalı.
+
+    İkisi ayrı katlar: dar kesit (2025/26) korpusla tek maç paylaşmıyor ve
+    geniş şemanın **dördüncü katıdır**. Biri diğerini değiştirirse ya kat
+    kurgusu ya önbellek bozulmuştur.
+    """
+    from spor_toto.tahmin import olculmus_isabet, rapor
+
+    dar = olculmus_isabet()
+    g = rapor(genis=True)
+    assert g["olculmus_isabet"]["manset"] == dar["manset"]
+    assert g["olculmus_isabet"]["n_hafta"] == dar["n_hafta"]
+
+
+@pytest.mark.slow
+def test_genis_kesit_katlari_sizintisiz_ve_TAM():
+    """Her kupon sezonu için korpustan o sezon gerçekten çıkarılmış olmalı.
+
+    Bu testin sınadığı şey bir sayı değil bir **sözleşme**: geniş kesitte
+    kupon maçlarının 1.155/1.605'i korpusta da var, dolayısıyla katın
+    eğitim seti test sezonunu içeriyorsa ölçüm sızıntılıdır ve raporlanan
+    "piyasayı geçti" sonucu anlamsız olur.
+
+    2025/26 katı bilerek istisna: korpus 2425'te bitiyor, o sezon korpusta
+    zaten YOK, bu yüzden çıkarılan hafta sayısı sıfırdır ve olması gereken
+    de budur.
+    """
+    from spor_toto.tahmin import genis_kesit_isabeti
+
+    g = genis_kesit_isabeti()
+    if not g.get("olculdu"):
+        pytest.skip(g.get("not", "geniş kesit kurulamadı"))
+    alt = g.get("alternatif")
+    if alt is None:
+        pytest.skip("korpus yok — alternatif ölçülemedi")
+
+    katlar = {k["sezon"]: k for k in alt["katlar"]}
+    assert len(katlar) >= 2, "tek kat — sezon dışarıda bırakmalı ölçüm kurulmamış"
+
+    for sezon, k in katlar.items():
+        assert k["test_hafta"] > 0
+        assert k["egitim_hafta"] > 0, f"{sezon}: eğitim seti boş kalmış"
+        if sezon == "2025/2026":
+            assert k["korpustan_cikarilan_hafta"] == 0, (
+                "2025/26 korpusta yok; bir şey çıkarıldıysa eşleme yanlış")
+        else:
+            assert k["korpustan_cikarilan_hafta"] > 0, (
+                f"{sezon}: korpustan hiçbir hafta çıkarılmamış — SIZINTI")
+
+    assert alt["n_mac"] == sum(k["n_mac"] for k in alt["katlar"])
+
+
+def test_yazdir_yaklasan_mac_VARKEN_patlamaz():
+    """`_yazdir` yaklaşan maç varken çökmemeli — ve ölçümü basmalı.
+
+    **Bu bir kez gerçekten çöküyordu ve hiçbir test görmüyordu.** İç
+    döngüdeki `g = "EVET"/"hayir"` ataması fonksiyonun `g` parametresini
+    eziyordu; hemen ardından gelen `g["uyarilar"]` bir dizgede indeksleme
+    olup `TypeError` veriyordu. Yaklaşan maç YOKKEN erken `return` araya
+    girdiği için hata görünmüyordu — yani tam olarak elle kullanımda,
+    fikstür doluyken patlıyordu. `# pragma: no cover` etiketi de kapsamı
+    susturuyordu.
+
+    Test bu yüzden iki hâli birden koşar: dolu fikstür (asıl kusur) ve boş
+    fikstür (ölçüm blokları yine de basılmalı).
+    """
+    from spor_toto.tahmin import _yazdir
+
+    skor = {"ad": "piyasa", "brier": 0.5, "mac_basina_isabet": 0.5,
+            "hafta_ortalamasi": 8.0, "fark": None, "gecti": None}
+    govde = {
+        "n_mac": 1,
+        "kaynaklar": ["test"],
+        "alternatif_farkli_secim": 0,
+        "tahminler": [{
+            "tarih": "2026-01-01", "saat": "20:00", "lig": "T1",
+            "ev": "A", "dep": "B", "olasilik": {"1": 0.4, "0": 0.3, "2": 0.3},
+            "en_olasi": "1", "guven": 0.4, "alternatif": None,
+        }],
+        "uyarilar": [{"ad": "u", "metin": "m"}],
+        "bos_sebep": None,
+        "olculmus_isabet": {"olculdu": True, "kesit": "k", "n_hafta": 1,
+                            "manset": skor},
+    }
+    _yazdir(govde)                       # dolu fikstür — eski kusur burada
+
+    bos = dict(govde, n_mac=0, tahminler=[], bos_sebep="mac yok")
+    _yazdir(bos)                         # boş fikstür — ölçüm yine basılmalı
+
+
+def test_yazdir_bos_fiksturde_de_OLCUMU_basar(capsys):
+    """Fikstür penceresi boşken ölçülmüş isabet GÖRÜNMELİ.
+
+    Eskiden `if not g["n_mac"]: return` ölçüm bloklarını da yutuyordu.
+    Oysa o sayı yaklaşan maçtan bağımsız — sürümlenmiş arşivden koşuyor.
+    Projenin kırmızı çizgisi "olasılık ölçümsüz çıkmaz" der; tersi
+    serbesttir ve hafta arası tam da bakılacak zamandır.
+    """
+    from spor_toto.tahmin import _yazdir
+
+    _yazdir({
+        "n_mac": 0, "kaynaklar": [], "alternatif_farkli_secim": None,
+        "tahminler": [], "uyarilar": [], "bos_sebep": "mac yok",
+        "olculmus_isabet": {
+            "olculdu": True, "kesit": "kesit adi", "n_hafta": 36,
+            "manset": {"ad": "piyasa", "brier": 0.574,
+                       "mac_basina_isabet": 0.5556, "hafta_ortalamasi": 8.33,
+                       "fark": None, "gecti": None}},
+    })
+    cikti = capsys.readouterr().out
+    assert "OLCULMUS ISABET" in cikti, "boş fikstürde ölçüm bloğu yutuldu"
+    assert "0.5740" in cikti
+
+
+def test_api_genis_parametresi_UCTAN_calisir(client):
+    """`?genis=` ayrıştırması uçtan sınanmalı, yalnızca fonksiyon düzeyinde değil.
+
+    Ayrıştırma `web_app.api_tahmin` içinde yazılı bir küme
+    (`{"1", "true", "evet", "yes"}`) ve fonksiyon testleri onu HİÇ
+    görmüyordu: `rapor(genis=True)` çağrısı doğru sonucu veriyor olsa da
+    uç parametreyi yanlış okusaydı kimse fark etmezdi.
+
+    Açık/kapalı iki yön de sınanır. Kapalı yön daha önemli: alan gövdeye
+    kazara sızarsa `/api/tahmin`in soğuk maliyeti sessizce ~38 sn artar.
+    """
+    kapali = client.get("/api/tahmin?limit=1").get_json()
+    assert "genis_kesit" not in kapali, "istenmeden geniş kesit gövdeye girdi"
+
+    for deger in ("1", "true", "evet", "yes", "TRUE", "Evet"):
+        g = client.get(f"/api/tahmin?limit=1&genis={deger}").get_json()
+        assert "genis_kesit" in g, f"?genis={deger} açmadı"
+
+    for deger in ("0", "false", "hayir", "", "sacma"):
+        g = client.get(f"/api/tahmin?limit=1&genis={deger}").get_json()
+        assert "genis_kesit" not in g, f"?genis={deger} yanlışlıkla açtı"
+
+
+def test_api_genis_govdesi_olculmus_isabeti_DUSURMEZ(client):
+    """Geniş kesit istendiğinde dar ölçüm bloğu da gelmeli.
+
+    Projenin kırmızı çizgisi `tahminler` ↔ `olculmus_isabet` ayrılmazlığı.
+    Geniş blok o ikilinin YANINA gelir; birini ötekinin yerine koymak
+    çizgiyi geniş kesit üzerinden delmek olurdu.
+    """
+    g = client.get("/api/tahmin?limit=1&genis=1").get_json()
+    assert g["olculmus_isabet"]["olculdu"] is True
+    assert "tahminler" in g and "uyarilar" in g
+    gk = g["genis_kesit"]
+    assert gk["olculdu"] is True
+    assert gk["n_hafta"] > g["olculmus_isabet"]["n_hafta"], (
+        "geniş kesit dar kesitten büyük olmalı")

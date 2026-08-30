@@ -1,0 +1,495 @@
+{
+ "generated_at": "2026-08-30",
+ "capraz_dogrulama": {
+  "kosuldu": true,
+  "ortak_hafta": 29,
+  "birebir_ayni": 28,
+  "ayrisan": [
+   {
+    "week": 30,
+    "eski": "112210002102110",
+    "yeni": "112210000210211",
+    "farkli_sembol": 6,
+    "ayni_mac_kumesi": true
+   }
+  ]
+ },
+ "denenen_hafta": 156,
+ "kabul_edilen": 107,
+ "elenen": 49,
+ "seasons": {
+  "2022_23": 17,
+  "2023_24": 31,
+  "2024_25": 30,
+  "2025_26": 29
+ },
+ "esikler": {
+  "taraf": 0.72,
+  "ortalama": 0.82,
+  "ayirt_edici_fark": 0.08,
+  "pencere_gun": 8
+ },
+ "elenenler": [
+  {
+   "season_key": "2022_23",
+   "week": 27,
+   "gerekce": "12/15 mac eslesti",
+   "ornek": [
+    "7. ÜMRANİYESPOR - ADANA DEMİRSPOR A.Ş: esigi gecen aday yok",
+    "8. FENERBAHÇE AŞ - KONYASPOR: esigi gecen aday yok",
+    "9. GİRESUNSPOR - KAYSERİSPOR: esigi gecen aday yok"
+   ]
+  },
+  {
+   "season_key": "2022_23",
+   "week": 28,
+   "gerekce": "6/15 mac eslesti",
+   "ornek": [
+    "1. KASIMPAŞA AJŞ - ANTALYASPOR: esigi gecen aday yok",
+    "2. BEŞİKTAŞ A.Ş - MKE ANKARAGÜCÜ: esigi gecen aday yok",
+    "3. FATİHKARAGÜMRÜK - SİVASSPOR: esigi gecen aday yok"
+   ]
+  },
+  {
+   "season_key": "2022_23",
+   "week": 30,
+   "gerekce": "14/15 mac eslesti",
+   "ornek": [
+    "8. NEWCASTLE UNİTED - BRIGHTON: esigi gecen aday yok"
+   ]
+  },
+  {
+   "season_key": "2022_23",
+   "week": 46,
+   "gerekce": "0/15 mac eslesti",
+   "ornek": [
+    "1. LETONYA - TÜRKİYE: esigi gecen aday yok",
+    "2. BELARUS - İSRAİL: esigi gecen aday yok",
+    "3. DANİMARKA - KUZEY İRLANDA: esigi gecen aday yok"
+   ]
+  },
+  {
+   "season_key": "2022_23",
+   "week": 47,
+   "gerekce": "12/15 mac eslesti",
+   "ornek": [
+    "4. PARANAENSE - CORINTHIANS: esigi gecen aday yok",
+    "9. H.KAMERATENE - ODDS BK: esigi gecen aday yok",
+    "15. / COLORADO RAPIDS - LA GALAXY: esigi gecen aday yok"
+   ]
+  },
+  {
+   "season_key": "2022_23",
+   "week": 48,
+   "gerekce": "12/15 mac eslesti",
+   "ornek": [
+    "7. TAMPEREEN - SEİNÖJOEN: esigi gecen aday yok",
+    "8. MARIEHAMN - FCKTIP: esigi gecen aday yok",
+    "9. LAHTI - KUOPION: esigi gecen aday yok"
+   ]
+  },
+  {
+   "season_key": "2022_23",
+   "week": 50,
+   "gerekce": "11/15 mac eslesti",
+   "ornek": [
+    "3. TAMPEREEN - MARIEHAMN: esigi gecen aday yok",
+    "4. VAASAN PS - OULU: esigi gecen aday yok",
+    "5. LAHTI - SEINÖJOEN: esigi gecen aday yok"
+   ]
+  },
+  {
+   "season_key": "2022_23",
+   "week": 53,
+   "gerekce": "1/15 mac eslesti",
+   "ornek": [
+    "1. SCHALKE 04 - KAISERSLAUTERN: esigi gecen aday yok",
+    "2. KARLSRUHE - HAMBURG: esigi gecen aday yok",
+    "3. NÜRNBERG - HANNOVER 96: esigi gecen aday yok"
+   ]
+  },
+  {
+   "season_key": "2023_24",
+   "week": 1,
+   "gerekce": "14/15 mac eslesti",
+   "ornek": [
+    "11. BAYERN MÜNIH - LEIPZIG: esigi gecen aday yok"
+   ]
+  },
+  {
+   "season_key": "2023_24",
+   "week": 3,
+   "gerekce": "12/15 mac eslesti",
+   "ornek": [
+    "1. ADANA DEMİRSPOR A.Ş - BEŞİKTAŞ A.Ş: esigi gecen aday yok",
+    "4. FENERBAHÇE AŞ - BAŞAKŞEHİR FK: esigi gecen aday yok",
+    "10. İSTANBULSPOR A.Ş - GALATASARAY A.Ş: esigi gecen aday yok"
+   ]
+  },
+  {
+   "season_key": "2023_24",
+   "week": 4,
+   "gerekce": "13/15 mac eslesti",
+   "ornek": [
+    "8. SAMSUNSPOR - İSTANBULSPOR A.Ş: esigi gecen aday yok",
+    "14. ATLETİCO MADRID - SEVILLA: esigi gecen aday yok"
+   ]
+  },
+  {
+   "season_key": "2023_24",
+   "week": 5,
+   "gerekce": "0/15 mac eslesti",
+   "ornek": [
+    "1. TÜRKİYE - ERMENİSTAN: esigi gecen aday yok",
+    "2. SLOVAKYA - PORTEKİZ: esigi gecen aday yok",
+    "3. AZERBAYCAN - BELÇİKA: esigi gecen aday yok"
+   ]
+  },
+  {
+   "season_key": "2023_24",
+   "week": 15,
+   "gerekce": "0/15 mac eslesti",
+   "ornek": [
+    "1. DANİMARKA - SLOVENYA: esigi gecen aday yok",
+    "2. POLONYA - ÇEKYA: esigi gecen aday yok",
+    "3. ERMENİSTAN - GALLER: esigi gecen aday yok"
+   ]
+  },
+  {
+   "season_key": "2023_24",
+   "week": 19,
+   "gerekce": "5/15 mac eslesti",
+   "ornek": [
+    "1. ADANA DEMİRSPOR A.Ş - İSTANBULSPOR A.Ş: esigi gecen aday yok",
+    "2. HATAYSPOR - GAZİANTEP F.K. AJŞ: esigi gecen aday yok",
+    "3. KASIMPAŞA AJŞ - BAŞAKŞEHİR FK: esigi gecen aday yok"
+   ]
+  },
+  {
+   "season_key": "2023_24",
+   "week": 33,
+   "gerekce": "14/15 mac eslesti",
+   "ornek": [
+    "15. ATALANTA - FIORENTINA: esigi gecen aday yok"
+   ]
+  },
+  {
+   "season_key": "2023_24",
+   "week": 34,
+   "gerekce": "0/15 mac eslesti",
+   "ornek": [
+    "1. MACARİSTAN - TÜRKİYE: esigi gecen aday yok",
+    "2. ARNAVUTLUK - ŞİLİ: esigi gecen aday yok",
+    "3. HOLLANDA - İSKOÇYA: esigi gecen aday yok"
+   ]
+  },
+  {
+   "season_key": "2023_24",
+   "week": 37,
+   "gerekce": "13/15 mac eslesti",
+   "ornek": [
+    "13. MONACO - LİLLE: esigi gecen aday yok",
+    "15. UDINESE - AS ROMA: esigi gecen aday yok"
+   ]
+  },
+  {
+   "season_key": "2023_24",
+   "week": 45,
+   "gerekce": "0/15 mac eslesti",
+   "ornek": [
+    "1. POLONYA - TÜRKİYE: esigi gecen aday yok",
+    "2. ÇEKYA - MALTA: esigi gecen aday yok",
+    "3. ALMANYA - YUNANİSTAN: esigi gecen aday yok"
+   ]
+  },
+  {
+   "season_key": "2023_24",
+   "week": 46,
+   "gerekce": "5/15 mac eslesti",
+   "ornek": [
+    "1. ALMANYA - İSKOÇYA: esigi gecen aday yok",
+    "2. MACARİSTAN - İSVİÇRE: esigi gecen aday yok",
+    "3. İSPANYA - HIRVATİSTAN: esigi gecen aday yok"
+   ]
+  },
+  {
+   "season_key": "2023_24",
+   "week": 47,
+   "gerekce": "0/15 mac eslesti",
+   "ornek": [
+    "1. TÜRKİYE - PORTEKİZ: esigi gecen aday yok",
+    "2. SLOVAKYA - UKRAYNA: esigi gecen aday yok",
+    "3. POLONYA - AVUSTURYA: esigi gecen aday yok"
+   ]
+  },
+  {
+   "season_key": "2023_24",
+   "week": 49,
+   "gerekce": "13/15 mac eslesti",
+   "ornek": [
+    "6. TAMPEREEN - HJK HELSINKI: esigi gecen aday yok",
+    "9. OULU - SEINÖJOEN: esigi gecen aday yok"
+   ]
+  },
+  {
+   "season_key": "2023_24",
+   "week": 51,
+   "gerekce": "10/15 mac eslesti",
+   "ornek": [
+    "1. CLUB BRUGGE - U S-GİLLOİSE: esigi gecen aday yok",
+    "9. DAEGUFC - GWANGJU FC: esigi gecen aday yok",
+    "10. FC SEOUL - GIMCHEON SANGMU FC: esigi gecen aday yok"
+   ]
+  },
+  {
+   "season_key": "2023_24",
+   "week": 52,
+   "gerekce": "9/15 mac eslesti",
+   "ornek": [
+    "1. FCVDENDEREH - U S-GİLLOİSE: esigi gecen aday yok",
+    "2. BEERSCHOT - O.H. LEUVEN İ: esigi gecen aday yok",
+    "3. ANDERLECHT - ST. TRUIDENSE: esigi gecen aday yok"
+   ]
+  },
+  {
+   "season_key": "2023_24",
+   "week": 53,
+   "gerekce": "5/15 mac eslesti",
+   "ornek": [
+    "1. GALATASARAY AJŞ - BEŞİKTAŞ A.Ş: esigi gecen aday yok",
+    "2. SCHALKE 04 - BRAUNSCHWEİG: esigi gecen aday yok",
+    "3. DARMSTADI 98 - F. DÜSSELDORF: esigi gecen aday yok"
+   ]
+  },
+  {
+   "season_key": "2024_25",
+   "week": 2,
+   "gerekce": "14/15 mac eslesti",
+   "ornek": [
+    "10. B. LEVERKUSEN - STUTTGART: esigi gecen aday yok"
+   ]
+  },
+  {
+   "season_key": "2024_25",
+   "week": 12,
+   "gerekce": "14/15 mac eslesti",
+   "ornek": [
+    "11. / MARSILYA - PARIS SAINT GERMAN: esigi gecen aday yok"
+   ]
+  },
+  {
+   "season_key": "2024_25",
+   "week": 13,
+   "gerekce": "14/15 mac eslesti",
+   "ornek": [
+    "14. VALENCİA - REAL MADRID: esigi gecen aday yok"
+   ]
+  },
+  {
+   "season_key": "2024_25",
+   "week": 17,
+   "gerekce": "14/15 mac eslesti",
+   "ornek": [
+    "15. FIORENTINA - INTER: esigi gecen aday yok"
+   ]
+  },
+  {
+   "season_key": "2024_25",
+   "week": 26,
+   "gerekce": "14/15 mac eslesti",
+   "ornek": [
+    "10. MARSİLYA - LYON: esigi gecen aday yok"
+   ]
+  },
+  {
+   "season_key": "2024_25",
+   "week": 36,
+   "gerekce": "14/15 mac eslesti",
+   "ornek": [
+    "11. MONACO - MARSİLYA: esigi gecen aday yok"
+   ]
+  },
+  {
+   "season_key": "2024_25",
+   "week": 43,
+   "gerekce": "13/15 mac eslesti",
+   "ornek": [
+    "10. PARIS SAINT GERMAIN - INTER: esigi gecen aday yok",
+    "11. FK ROSTOV - CSKA MOSKOVA: esigi gecen aday yok"
+   ]
+  },
+  {
+   "season_key": "2024_25",
+   "week": 46,
+   "gerekce": "0/15 mac eslesti",
+   "ornek": [
+    "1. BENFICA - AUCKLAND CITY: esigi gecen aday yok",
+    "2. FLAMENGO - CHELSEA: esigi gecen aday yok",
+    "3. LOS ANGELES FC - ESPERANCE TUNIS: esigi gecen aday yok"
+   ]
+  },
+  {
+   "season_key": "2024_25",
+   "week": 52,
+   "gerekce": "8/15 mac eslesti",
+   "ornek": [
+    "1. KVC WESTERLO - ZULTE WAREGEM: esigi gecen aday yok",
+    "2. STANDARD LIEGE - FCV DENDER EH: esigi gecen aday yok",
+    "3. KRCGENK - ANTWERP: esigi gecen aday yok"
+   ]
+  },
+  {
+   "season_key": "2025_26",
+   "week": 5,
+   "gerekce": "0/15 mac eslesti",
+   "ornek": [
+    "1. TÜRKİYE - İSPANYA: esigi gecen aday yok",
+    "2. UKRAYNA - FRANSA: esigi gecen aday yok",
+    "3. İZLANDA - AZERBAYCAN: esigi gecen aday yok"
+   ]
+  },
+  {
+   "season_key": "2025_26",
+   "week": 10,
+   "gerekce": "0/15 mac eslesti",
+   "ornek": [
+    "1. BULGARİSTAN - TÜRKİYE: esigi gecen aday yok",
+    "2. PORTEKİZ - İRLANDA: esigi gecen aday yok",
+    "3. SIRBİSTAN - ARNAVUTLUK: esigi gecen aday yok"
+   ]
+  },
+  {
+   "season_key": "2025_26",
+   "week": 15,
+   "gerekce": "0/15 mac eslesti",
+   "ornek": [
+    "1. TÜRKİYE - BULGARİSTAN: esigi gecen aday yok",
+    "2. POLONYA - HOLLANDA: esigi gecen aday yok",
+    "3. GÜRCİSTAN - İSPANYA: esigi gecen aday yok"
+   ]
+  },
+  {
+   "season_key": "2025_26",
+   "week": 23,
+   "gerekce": "14/15 mac eslesti",
+   "ornek": [
+    "3. WERDER BREMEN - HOFFENHEIM: esigi gecen aday yok"
+   ]
+  },
+  {
+   "season_key": "2025_26",
+   "week": 27,
+   "gerekce": "14/15 mac eslesti",
+   "ornek": [
+    "11. / PARIS SAINT GERMAIN - MARSİLYA: esigi gecen aday yok"
+   ]
+  },
+  {
+   "season_key": "2025_26",
+   "week": 42,
+   "gerekce": "14/15 mac eslesti",
+   "ornek": [
+    "2. UNION SAINT GİLLOİSE - ANDERLECHT: esigi gecen aday yok"
+   ]
+  },
+  {
+   "season_key": "2025_26",
+   "week": 44,
+   "gerekce": "0/15 mac eslesti",
+   "ornek": [
+    "1. BINHDUONG - HOANG ANH: esigi gecen aday yok",
+    "2. BRABRAND - FREMAD AMAGER: esigi gecen aday yok",
+    "3. ROSKILDE - HELLERUP: esigi gecen aday yok"
+   ]
+  },
+  {
+   "season_key": "2025_26",
+   "week": 45,
+   "gerekce": "0/15 mac eslesti",
+   "ornek": [
+    "1. AVUSTRALYA - TÜRKİYE: esigi gecen aday yok",
+    "2. KANADA - BOSNA HERSEK: esigi gecen aday yok",
+    "3. ABD - PARAGUAY: esigi gecen aday yok"
+   ]
+  },
+  {
+   "season_key": "2025_26",
+   "week": 47,
+   "gerekce": "0/15 mac eslesti",
+   "ornek": [
+    "1. TÜRKİYE - ABD: esigi gecen aday yok",
+    "2. JAPONYA - İSVEÇ: esigi gecen aday yok",
+    "3. PARAGUAY - AVUSTRALYA: esigi gecen aday yok"
+   ]
+  },
+  {
+   "season_key": "2025_26",
+   "week": 48,
+   "gerekce": "10/15 mac eslesti",
+   "ornek": [
+    "3. IFK GÖTEBORG - AlK SOLNA: esigi gecen aday yok",
+    "7. EC ANYANG - POHANG STEELERS: esigi gecen aday yok",
+    "8. JEONBUK - GANGWON FC: esigi gecen aday yok"
+   ]
+  },
+  {
+   "season_key": "2025_26",
+   "week": 49,
+   "gerekce": "8/15 mac eslesti",
+   "ornek": [
+    "8. ULSAN HORA-I - JEONBUK: esigi gecen aday yok",
+    "9. FC SEOUL - GANGWON FC: esigi gecen aday yok",
+    "10. JEJU UNİTED - DAEJEON CİTİZEN: esigi gecen aday yok"
+   ]
+  },
+  {
+   "season_key": "2025_26",
+   "week": 51,
+   "gerekce": "14/15 mac eslesti",
+   "ornek": [
+    "4. TAMPEREEN - LAHTI: esigi gecen aday yok"
+   ]
+  },
+  {
+   "season_key": "2026_27",
+   "week": 1,
+   "gerekce": "12/15 mac eslesti",
+   "ornek": [
+    "10. ARSENAL - MANCHESTER CITY: esigi gecen aday yok",
+    "11. RCLENS - PARIS SAINT GERMAIN: esigi gecen aday yok",
+    "15. CELTA VIGO - OSASUNA: esigi gecen aday yok"
+   ]
+  },
+  {
+   "season_key": "2026_27",
+   "week": 2,
+   "gerekce": "13/15 mac eslesti",
+   "ornek": [
+    "10. B. DORTMUND - BAYERN MÜNİH: esigi gecen aday yok",
+    "11. MARSİLYA - STRASBOURG: esigi gecen aday yok"
+   ]
+  },
+  {
+   "season_key": "2026_27",
+   "week": 3,
+   "gerekce": "0/15 mac eslesti",
+   "ornek": [
+    "1. GENÇLERBİRLİĞİ - ERZURUMSPOR FK: esigi gecen aday yok",
+    "2. KONYASPOR - KOCAELİSPOR: esigi gecen aday yok",
+    "3. GALATASARAY A.Ş - GÖZTEPE A.Ş: esigi gecen aday yok"
+   ]
+  },
+  {
+   "season_key": "2026_27",
+   "week": 4,
+   "gerekce": "pencerede hic fikstur yok",
+   "ornek": []
+  }
+ ],
+ "limits": [
+  "Eslestirme SKORSUZ yapilir; build_odds.py'nin skor kilidi burada yok.",
+  "Iki aday ayirt edilemezse mac DUSER, en iyisi secilmez.",
+  "Takim adlari OCR ciktisindan gelir (§6F).",
+  "Oran ve mac istatistigi bu sette YOK."
+ ]
+}

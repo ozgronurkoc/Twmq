@@ -265,19 +265,96 @@ aşılırsa blok sessizce `null` olmaz, `{"skipped": true, "reason": …}` döne
 
 ## 5. Katman 3 — Veri ve istatistik
 
-Motor tek başına tarihsiz çalışır; istatistik katmanı ona bağlam verir. **Üç** veri
-seti vardır; ilk ikisi tek komutla kaynağından yeniden üretilebilir, üçüncüsü
-üretilemez — ileriye dönük birikir.
+Motor tek başına tarihsiz çalışır; istatistik katmanı ona bağlam verir. **Dört** veri
+seti vardır; üçü tek komutla kaynağından yeniden üretilebilir, biri üretilemez —
+ileriye dönük birikir.
 
-| | Tarihsel sonuçlar | Piyasa oranı arşivi | İddaa bülten arşivi |
-|---|---|---|---|
-| **Dosya** | `data/st_history_2025_26.json` | `data/odds/odds_2025_26.csv` | `data/iddaa/iddaa_<tarih>.csv` |
-| **Üreten** | `scripts/build_history.py` | `scripts/build_odds.py` | `scripts/snapshot_iddaa.py` |
-| **Okuyan** | `spor_toto/history.py` | `spor_toto/odds.py` | (henüz analize girmiyor) |
-| **Bekçi** | `tests/test_history.py` | `tests/test_odds.py` | `tests/test_snapshot_iddaa.py` |
-| **Yönü** | geriye dönük, tamam | geriye dönük, tamam | **ileriye dönük, birikiyor** |
+| | Tarihsel sonuçlar | Piyasa oranı arşivi | İddaa bülten arşivi | **Resmî Spor Toto arşivi** |
+|---|---|---|---|---|
+| **Dosya** | `data/st_history_2025_26.json` + `data/st_history/<sezon>.json` | `data/odds/odds_<sezon>.csv` | `data/iddaa/iddaa_<tarih>.csv` | `data/sportoto_arsiv/<sezon>.json` |
+| **Üreten** | `scripts/build_history.py` | `scripts/build_odds.py` | `scripts/snapshot_iddaa.py` | `scripts/build_sportoto_arsiv.py` |
+| **Okuyan** | `spor_toto/history.py` | `spor_toto/odds.py` | (henüz analize girmiyor) | (henüz analize girmiyor) |
+| **Bekçi** | `tests/test_history.py` | `tests/test_odds.py` | `tests/test_snapshot_iddaa.py` | `tests/test_sportoto_arsiv.py` |
+| **Yönü** | geriye dönük, tamam | geriye dönük, tamam | **ileriye dönük, birikiyor** | geriye dönük, **6 sezon** |
 
 (Yollar `backend/` altındadır.)
+
+**Beşinci ve altıncı veri seti bunların üstüne kuruldu** (2026-08-30):
+`data/bulten/<sezon>.json` resmî bülten **görselinden** OCR ile okunan 15 maçlık
+listeler (156 hafta), `data/st_history/<sezon>.json` ise o listeleri football-data
+fikstürüne bağlayıp **tam 1/0/2 dizisi** üreten set — **4 sezon · 107 hafta ·
+1.605 kupon maçı**. Kupon değerlendirme seti 41 haftadan **148 haftaya** çıktı.
+
+Bu ikisinin en güçlü kanıtı bir çapraz doğrulamadır: `st_history_2025_26.json`
+üçüncü parti bir payload'dan, yeni set resmî görselden gelir ve ikisi birbirini
+hiç görmez — **29 ortak haftanın 28'inde 1/0/2 dizisi birebir aynı.** Ayrışan tek
+hafta bir sonuç hatası değil, bir **kupon sırası** ayrışmasıdır ve düzeltilmeden
+raporlanır ([`docs/VERI_TOPLAMA_VE_ISLEME.md`](docs/VERI_TOPLAMA_VE_ISLEME.md)
+§6G.5).
+
+**Dördüncüsü deponun ilk resmî kaynağıdır** ve 2026-08-30'da eklendi. Öteki üçü
+üçüncü partidir; bu, `webapi.sportoto.gov.tr` — Spor Toto'nun kendi ucu. Taşıdığı
+şey **ikramiye tablosudur**: 225 haftanın 223'ünde kademe başına (15/14/13/12)
+kazanan adedi ve kişi başı tutar. Havuz ekseni bu yüzden n = 3'ten **n = 223**'e
+çıktı ([`docs/VERI_TOPLAMA_VE_ISLEME.md`](docs/VERI_TOPLAMA_VE_ISLEME.md) §6D).
+
+**Taşımadığı şey aynı ölçüde önemlidir:** resmî uçta **maç listesi yok** — haftanın
+15 maçı yalnızca bir bülten *görseli* olarak yayımlanıyor. Yani bu set kupon
+dizisi (1/0/2) vermiyor ve "geçmiş sezon kupon verisi" sorunu onunla kapanmadı;
+kapanmadığı bir test bekçisiyle sabitlendi
+(`test_sportoto_arsiv.py::test_yayindaki_arsivde_kupon_dizisi_YOK`).
+
+### 5.0 Sezon seçimi — ve ölçüm kesiti
+
+İlk üç set 2026-08-30'da **sezonlu** hale geldi:
+
+- `/api/stats?sezon=2023_24` seçilen sezonun tamamını (özet, bantlar, analiz
+  blokları **ve** oran kartı) tek dilimden anlatır. Varsayılan `?sezon` yoktur
+  ve varsayılan kayıt 41 haftadır — mevcut hiçbir sayı oynamadı.
+- Sezonlar **birleştirilmez, seçilir**. `week` bu katmanda birincil anahtar
+  gibi davranıyor (sıralama, hafta detayı, oranın `(hafta, no)` haritası);
+  dört sezonu tek listeye koymak dördünü birden bozardı.
+
+**Ölçüm tarafında kesit 36 → 114 haftaya çıktı** (540 → 1.710 maç) ve bu
+sayının bedeli önce ödendi: yeni haftalar oran taşımıyordu, oransız hafta
+`usable=False` olur ve ölçümden **sessizce** düşerdi. `build_odds.py` sezona
+parametreleştirildi; yeni üç sezonda eşleşme **%100** çıktı.
+
+Ölçülen sonuç ve neyin değiştiği
+[`docs/ISTATISTIK_YOL_HARITASI.md`](docs/ISTATISTIK_YOL_HARITASI.md) §3.43'te.
+Özeti: `piyasa` Brier'i **0,5740 → 0,5584** (yenilecek çizgi *zorlaştı*),
+`agac` ilk kez piyasanın altında (−0,0043) ama aralığı sıfıra değdiği için
+**geçmedi**; ve küçük kesitte `agac`/`yigin`/`izotonik`'in eğitilemeyip
+piyasaya çöktüğü, `venn_abers`'in ise **yanlış yöne** işaret ettiği ortaya
+çıktı.
+
+**Sonra aynı kesit `/tahmin`e de bağlandı** (§3.44) ve bağlarken sessiz bir
+kusur çıktı: `recalibrate._ozellik_tablosu` sezonsuzdu ve arama sentetik
+hafta numarasıyla yapılıyordu, yani üç yeni sezonun **1.170 maçının
+tamamında** lig/favori boş geliyordu — `kademe` ve `agac` kesitin %68'inde
+kör koşmuş. Düzeltildi (tam basamak Brier 0,5579 → 0,5568) ve iki bekçiye
+bağlandı.
+
+Ölçümün kendisi kat kat kuruldu: her kupon sezonu için korpustan **o sezonun
+tamamı** çıkarılıp model yeniden eğitiliyor; çıkarma sonrası ortaklık her
+katta tam sıfır. Bugünkü 36 haftalık ölçüm bu şemanın **dördüncü katıdır**,
+yani geniş kesit dar olanı değiştirmiyor, içine alıyor.
+
+| Kesit | n | piyasa | `kalibre_bias` | fark [%95] | geçti |
+|---|---|---|---|---|---|
+| Dar (2025/26) | 540 | 0,5740 | 0,5732 | −0,0008 [−0,0018, **+0,0003**] | hayır |
+| Geniş (4 sezon) | 1.710 | 0,5584 | 0,5571 | −0,0013 [−0,0021, **−0,0006**] | **EVET** |
+
+**Bu "model iyileşti" değildir**: etki büyüklüğü aynı kaldı, küçülen şey
+belirsizlik. 540 maçta kurulamayan anlamlılık 1.710 maçta kuruluyor — yeni
+verinin bütün kaldıracı buydu. Manşet yine de değişmedi: geniş kesitte
+`kalibre_bias`ın Brier'i daha iyi ama **isabeti daha düşük** (%57,4'e karşı
+%57,5), yani tek kolon seçen biri için iki tahminci hâlâ aynı.
+
+Ölçüm `?genis=1` (CLI'da `--genis`) ile gelir, varsayılan gövdede **yoktur**:
+kat başına farklı eğitim seti gerektiği için artefakt kestirmesi kullanılamaz
+ve korpus okunmak zorundadır (~38 sn soğuk; korpus zaten yüklüyse marjinal
+bedel ~3,3 sn).
 
 ### 5.1 Veri akışı
 
@@ -846,12 +923,16 @@ backend/
     super_toto_sayfa.py       Haftayı tek dosyalık HTML'e basar
     super_toto_tahmin2.py     2. TAHMİN: aynı haftayı bugünkü aletlerle yeniden okur
     super_toto_frontend.py    Arayüzün okuduğu sezon beslemesi (--kontrol: CI kapısı)
+    build_sportoto_arsiv.py   RESMÎ arşiv: hafta kaydı + ikramiye tablosu
+    build_bulten.py           Bülten görselinden 15 maç (OCR, `ocr` ekstrası)
+    build_gecmis_sezon.py     Bülten + fikstür → geçmiş sezon 1/0/2
     faz_b.py                  Havuz ekseni güç analizi
     acilis_kapanis.py         Açılış–kapanış oranı karşılaştırması
     api_sozlesme.py           API sözleşmesini üretir/denetler (--kontrol: CI kapısı)
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
-                       fixtures/ · super_toto/ · avrupa/ · sehir/ · xg/
-  tests/               pytest (56 dosya → 1.701 test; §9'da katman dökümü)
+                       fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
+                       sehir/ · xg/
+  tests/               pytest (60 dosya → 1.842 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1036,8 +1117,8 @@ Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant'lar, CLI (Bayes pre
 dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri test,
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
-eşleme, ikinci kayıt). **56 test dosyası, parametrizasyonla
-1.701 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+eşleme, ikinci kayıt). **60 test dosyası, parametrizasyonla
+1.842 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 

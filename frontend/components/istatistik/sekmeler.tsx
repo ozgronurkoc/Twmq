@@ -29,9 +29,12 @@ import { cn } from "@/lib/utils";
 
 export function IstatistikSekmeleri({
   last,
+  sezon = null,
   sekmeler = ISTATISTIK_SEKMELERI,
 }: {
   last: number | null;
+  /** Secili sezon; `?last` ile AYNI gerekceyle serit uzerinde tasinir. */
+  sezon?: string | null;
   sekmeler?: Sekme[];
 }) {
   const yol = usePathname();
@@ -48,7 +51,7 @@ export function IstatistikSekmeleri({
         return (
           <Link
             key={s.href}
-            href={sekmeAdresi(s.href, last)}
+            href={sekmeAdresi(s.href, last, sezon)}
             aria-current={etkin ? "page" : undefined}
             className={cn(
               "-mb-px border-b-2 px-3 py-2 text-[13px] transition-colors",

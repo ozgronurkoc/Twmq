@@ -166,7 +166,8 @@ def _en_iyi_skor(kap: dict[str, Any], nokta: Sequence[int]) -> int:
 # ─── hafta girdisi ────────────────────────────────────────────────────────────
 
 def hafta_girdileri(last: int | None = None,
-                    yontem: str = ARINDIRMA_VARSAYILAN) -> list[dict[str, Any]]:
+                    yontem: str = ARINDIRMA_VARSAYILAN,
+                    sezon: str | None = None) -> list[dict[str, Any]]:
     """Geri teste girecek haftalar: sonuç + 15 maçın olasılığı.
 
     Oranı eksik olan hafta **elenir, tamamlanmaz** (veri doktrini 2). Kaç
@@ -175,10 +176,15 @@ def hafta_girdileri(last: int | None = None,
     `yontem` marj arındırmasını seçer (A5). Varsayılan değişirse **eşikler de
     değişmek zorundadır**: `VARSAYILAN_BANKO=0,68` orantısal arındırmanın
     ölçeğinde türetildi ve başka bir ölçekte aynı sayı başka bir kupon üretir.
+
+    `sezon` hem hafta kaydını hem oran arşivini seçer; **ikisi birlikte
+    seçilmek zorundadır**, çünkü oran anahtarı `(week, no)` ve sezon
+    bileşeni yok — karışık verilirse başka bir sezonun oranları sessizce
+    bu haftalara yapışır.
     """
-    oran_satiri = {(r["week"], r["no"]): r for r in load_odds()}
+    oran_satiri = {(r["week"], r["no"]): r for r in load_odds(sezon=sezon)}
     out: list[dict[str, Any]] = []
-    for w in normalized_weeks(last):
+    for w in normalized_weeks(last, sezon):
         probs: list[dict[str, float] | None] = []
         #: Kullanilan her fiyatin kitabi/donemi. `girdiler` API'ye
         #: serilestirilmiyor (yanit `_hepsini_calistir` ciktisindan gelir),
@@ -200,6 +206,11 @@ def hafta_girdileri(last: int | None = None,
         out.append({
             "week": w["week"],
             "close_date": w["close_date"],
+            # `sezon` OLMADAN `evaluate.sezon_anahtari` her haftaya None der
+            # ve sezon disarida birakmali olcum tek gruba coker — yani hic
+            # kurulamaz. `arena.kesit(kupon=True)` bunu bir uyari dizesiyle
+            # yaziyordu; alan geldigi icin o uyari artik kalkabilir.
+            "sezon": w.get("season") or "",
             "results": w["results"],
             "probs": probs,
             "missing": eksik,
@@ -471,14 +482,20 @@ def backtest(last: int | None = None,
              banko_esik: float = VARSAYILAN_BANKO,
              uclu_esik: float = VARSAYILAN_UCLU,
              sweep: bool = True,
-             yontem: str = ARINDIRMA_VARSAYILAN) -> dict[str, Any]:
+             yontem: str = ARINDIRMA_VARSAYILAN,
+             sezon: str | None = None) -> dict[str, Any]:
     """Bir stratejinin sezon boyu geri testi + eşik taraması + hold-out.
 
     `yontem` marj arındırmasını seçer (A5); `meta.arindirma` ile çıktıda yazar
     çünkü eşikler ölçeğe bağlıdır ve hangi ölçekte ölçüldüğü sonradan
     anlaşılamazsa tablo yorumlanamaz.
+
+    `sezon` hafta kaydını ve oran arşivini birlikte seçer; `meta.sezon` ile
+    çıktıda yazar. **Sezonu çıktıya yazmak şart:** eşik taraması ve hold-out
+    hangi sezonda koşulduğu bilinmeden okunamaz, ve arayüzde sezon sekmeler
+    arasında taşınmazsa iki sayfa aynı anda iki farklı sezonu anlatır.
     """
-    girdiler = hafta_girdileri(last, yontem)
+    girdiler = hafta_girdileri(last, yontem, sezon)
     elenen = [
         {"week": g["week"], "missing": g["missing"]}
         for g in girdiler if not g["usable"]
@@ -490,6 +507,9 @@ def backtest(last: int | None = None,
 
     return {
         "meta": {
+            # Hangi sezonda kosuldugu ciktida DURMALI: esik taramasi ve
+            # hold-out sezon bilinmeden okunamaz.
+            "sezon": sezon,
             "weeks_available": len(girdiler),
             "weeks_used": len([g for g in girdiler if g["usable"]]),
             "weeks_dropped": elenen,

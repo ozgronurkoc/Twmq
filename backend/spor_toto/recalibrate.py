@@ -194,15 +194,56 @@ A3_ALANLARI: tuple[tuple[str, str], ...] = (
 
 # ─── özellik kaynağı ──────────────────────────────────────────────────────────
 
-@lru_cache(maxsize=1)
-def _ozellik_tablosu() -> dict[tuple[int, int], dict[str, Any]]:
+def oran_sezonu(hafta: Girdi) -> str | None:
+    """Kupon haftasının `sezon`u → oran arşivi anahtarı. Bilinmiyorsa `None`.
+
+    İki biçim var ve **aynı değiller**: kupon girdisi sezonu kaynağın kendi
+    yazdığı gibi taşır (`"2023/2024"`), oran arşivi ise dosya adından gelen
+    anahtarla aranır (`"2023_24"` → `odds_2023_24.csv`). Çevirmeyi burada
+    tek yerde yapıyoruz; iki biçimin karşılaştığı başka nokta yok.
+
+    `None` dönerse çağıran **varsayılan** arşive düşer — yani bugünkü
+    davranış. Varsayılan kesit (2025/26) için çeviri zaten aynı dosyayı
+    gösterir, o yüzden o yolda hiçbir sayı oynamaz.
+    """
+    parcalar = str(hafta.get("sezon") or "").split("/")
+    if len(parcalar) != 2 or len(parcalar[0]) != 4 or len(parcalar[1]) != 4:
+        return None
+    return f"{parcalar[0]}_{parcalar[1][2:]}"
+
+
+def hafta_numarasi(hafta: Girdi) -> int:
+    """Oran arşivinde aranacak hafta numarası — **sentetik olan değil**.
+
+    `evaluate.kupon_kesiti_tum` sezonları tek listede toplarken `week`i
+    `yil*100 + hafta` diye sentetikleştirir (iki sezonun 30. haftası
+    karışmasın diye) ve **orijinali `kupon_hafta`da saklar**. Oran arşivi
+    orijinal numarayla anahtarlı, dolayısıyla arama `kupon_hafta`dan
+    gitmek ZORUNDA.
+
+    Bu satır bir kez zaten yanlıştı ve sessizce yanlıştı: sentetik numara
+    (`202305`) arşivde hiç bulunmuyordu, `ek` her seferinde boş sözlük
+    dönüyordu ve model üç yeni sezonun **1.170 maçının tamamında** ligi
+    "bilinmiyor", favoriyi `None` görüyordu. Ölçüm patlamıyordu — sadece
+    modeli sessizce körleştiriyordu. Bekçisi
+    `test_recalibrate.py::test_genis_kesitte_ozellikler_BOS_gelmez`.
+    """
+    return int(hafta.get("kupon_hafta") or hafta["week"])
+
+
+@lru_cache(maxsize=8)
+def _ozellik_tablosu(sezon: str | None = None) -> dict[tuple[int, int], dict[str, Any]]:
     """(hafta, maç no) → lig etiketi ve favori oranı.
 
     `hafta_girdileri` yalnızca olasılık taşır; lig ve oran arşivde kalır.
     Buradan okunur, mevcut modüllerin sözleşmesi değiştirilmeden.
+
+    Önbellek **sezona anahtarlı** (`maxsize=8`): önceki sürümde `maxsize=1`
+    ve parametresizdi, yani hangi sezon ölçülürse ölçülsün 2025/26 arşivi
+    okunuyordu.
     """
     out: dict[tuple[int, int], dict[str, Any]] = {}
-    for r in load_odds():
+    for r in load_odds(sezon=sezon):
         blok = match_1x2(r)
         if not blok:
             continue
@@ -266,10 +307,11 @@ def _mac_ozellikleri(hafta: Girdi) -> list[dict[str, Any]]:
             **{alan: float(o.get(alan) or 0.0) for _, alan in A3_ALANLARI},
         } for i, o in enumerate(tasinan)]
 
-    tablo = _ozellik_tablosu()
+    tablo = _ozellik_tablosu(oran_sezonu(hafta))
+    hafta_no = hafta_numarasi(hafta)
     out: list[dict[str, Any]] = []
     for no in range(1, MATCH_COUNT + 1):
-        ek = tablo.get((hafta["week"], no), {})
+        ek = tablo.get((hafta_no, no), {})
         probs = probs_listesi[no - 1] if no - 1 < len(probs_listesi) else None
         out.append({
             "probs": probs,

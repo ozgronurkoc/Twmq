@@ -51,6 +51,41 @@ ANA_URL = "https://www.football-data.co.uk/mmz4281/{sezon}/{lig}.csv"
 
 #: Varsayilan sezonlar — **2526 bilerek yok** (kupon degerlendirme seti o
 #: sezondan geliyor; korpusa katmak egitim/sinav ayrimini bozar).
+#:
+#: ─── DERINLESTIRME: OLCULDU, AMA VARSAYILAN DEGIL ────────────────────────
+#:
+#: Korpus 1920 ve 2021 ile ALTI sezona cikarilabilir ve bu OLCULDU:
+#:
+#:     6 sezon · 45.652 mac  (4 sezon · 31.103'e karsi, +%47)
+#:     kapanis %100 · cizgi cifti %100 · bahisci dortlusu %99,9
+#:     mac istatistigi %93,2 · orani olmadigi icin elenen 32
+#:
+#: Yani sema HIC BOZULMUYOR. Tavan da olculdu: football-data'nin tam semasi
+#: **2019/20'de basliyor** — `mmz4281/1819/T1.csv` basliginda yalnizca
+#: PSCH/PSCD/PSCA ve eski `Bb*` toplayicilari var. 1819 ve oncesi eklenirse
+#: `acilis_*`/`bahisci_*` kesitleri seyrelir ve A1/A2 olcumleri sezona gore
+#: dengesizlesir (§6A.7'nin BW/WH/BF gerekcesiyle ayni).
+#:
+#: **Neden varsayilan degil.** Korpusu buyutmek serbest bir kazanc DEGILDIR:
+#:
+#:   1. Depodaki olculmus bulgularin cogu bu korpusa cipali. Yalniz
+#:      `ISTATISTIK_YOL_HARITASI.md`de "31.103" 53 yerde geciyor ve bunlarin
+#:      buyuk bolumu bir OLCUMUN kaydidir ("31.103 macta su cikti"). Korpusu
+#:      degistirip o satirlari oldugu gibi birakmak onlari yanlis yapar;
+#:      degistirmek ise yapilmamis bir olcumu yapilmis gibi gostermek olur.
+#:      Ikisi de bu deponun yasakladigi seydir.
+#:   2. `artefakt.py` egitilmis modelin korpus sha256'sini tasiyor ve
+#:      `health` bayatlik gorunce KIRMIZI yaniyor.
+#:   3. Kazanc olculmus ve kucuk: README §1.1/§10 ayni turden daha cok
+#:      verinin Brier'i buyutmedigini ZATEN olctu (kalan etki 0,0005-0,0015).
+#:      Buyuyen sey istatistiksel guctur, sinyal degil.
+#:
+#: Dolayisiyla derinlestirme bir KOMUT SECENEGIdir, bir varsayilan degil:
+#:
+#:     python scripts/build_egitim.py --sezonlar 1920 2021 2122 2223 2324 2425
+#:
+#: Varsayilani cevirmek isteyen once §3.x olcumlerini yeniden kosmali ve
+#: sayilari kaydiyla birlikte guncellemelidir. O ayri bir istir.
 VARSAYILAN_SEZONLAR: tuple[str, ...] = ("2122", "2223", "2324", "2425")
 
 #: build_odds.py ile ayni lig listesi — ayni kaynak, ayni etiketler.
@@ -355,6 +390,26 @@ def dogrula(satirlar: list[dict[str, Any]]) -> list[str]:
     return hatalar
 
 
+def kupon_sezonlari() -> list[str]:
+    """Kupon degerlendirme setinin kapsadigi sezonlar (football-data kodu).
+
+    Iki kaynaktan toplanir: eski tek dosya (`st_history_2025_26.json`) ve
+    §6G'nin urettigi `data/st_history/<sezon>.json` dizini.
+    """
+    out: set[str] = set()
+    if (KOK / "data" / "st_history_2025_26.json").exists():
+        out.add("2526")
+    dizin = KOK / "data" / "st_history"
+    if dizin.is_dir():
+        for yol in dizin.glob("*.json"):
+            if yol.name == "gecmis_rapor.json":
+                continue
+            bas, _, son = yol.stem.partition("_")
+            if bas[-2:].isdigit() and son.isdigit():
+                out.add(f"{bas[-2:]}{son}")
+    return sorted(out)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -437,6 +492,13 @@ def main() -> int:
         yazici.writerows(satirlar)
     print(f"\nyazildi: {csv_yol}")
 
+    kesisim = sorted(set(args.sezonlar) & set(kupon_sezonlari()))
+    if kesisim:
+        print(f"\nUYARI — SIZINTI RISKI: {', '.join(kesisim)} sezonlari hem "
+              f"korpusta hem kupon degerlendirme setinde.")
+        print("  Bu sezonlarin kupon haftalarinda olcum yapilacaksa "
+              "`evaluate.sezon_anahtari` kullanilmali.")
+
     rapor = {
         "generated_at": datetime.now().date().isoformat(),
         "source": "football-data.co.uk (mmz4281) — piyasa oranlari, IDDAA DEGIL",
@@ -446,6 +508,19 @@ def main() -> int:
         "season_note": ("varsayilan sezonlar 2025/2026'yi disarida birakir: kupon "
                         "degerlendirme seti o sezondan gelir, korpusa katmak "
                         "egitim/sinav ayrimini bozar"),
+        # Doktrin 4: celiski gizlenmez. §6G kupon setini 4 sezona cikardi ve
+        # bunlarin bir kismi korpusta DA var. Bu bir hata degil ama SESSIZ
+        # kalirsa hataya donusur: o sezonlarin kupon haftalari uzerinde
+        # olculen bir tahminci, ayni maclarda EGITILMIS olur.
+        "kupon_sezonlari": kupon_sezonlari(),
+        "kesisim": sorted(set(args.sezonlar) & set(kupon_sezonlari())),
+        "kesisim_notu": (
+            "Bu sezonlar HEM korpusta HEM kupon degerlendirme setinde. Bu "
+            "sezonlarin kupon haftalari uzerinde olcum yapilacaksa "
+            "`evaluate.sezon_anahtari` (sezon disarida birakmali) KULLANILMALI; "
+            "duz `capraz_olc` sizdirir. Kesisimi bosaltmak icin: "
+            "`--sezonlar` ile o sezonlari cikarin."
+        ),
         "matches": len(satirlar),
         "by_season": sezon_dagilim,
         "leagues": sorted({r["lig"] for r in satirlar}),

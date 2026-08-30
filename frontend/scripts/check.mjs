@@ -577,6 +577,22 @@ try {
     }
   });
 
+  dene("sekme adresi SEZONU da tasir", () => {
+    // Bu bekci `?last` icin vardi ve sezon eklendiginde SESSIZ bir arizayi
+    // gormedi: serit yalnizca `?last` tasiyordu, yani 2023/24 secip
+    // *Oranlar*a gecen kullanici varsayilan sezona dusuyordu. Ayni arizanin
+    // ikinci turu; bu yuzden artik iki parametre birlikte sinaniyor.
+    for (const s of T.ISTATISTIK_SEKMELERI) {
+      assert.equal(T.sekmeAdresi(s.href, null, "2023_24"), `${s.href}?sezon=2023_24`);
+      assert.equal(T.sekmeAdresi(s.href, 12, "2023_24"),
+                   `${s.href}?last=12&sezon=2023_24`);
+      // Sezon yoksa adres KIRLENMEZ — bos parametre eklenmez.
+      assert.equal(T.sekmeAdresi(s.href, null, null), s.href);
+      assert.equal(T.sekmeAdresi(s.href, null, ""), s.href);
+      assert.equal(T.sekmeAdresi(s.href, 12, null), `${s.href}?last=12`);
+    }
+  });
+
   dene("sekme listesi ucu de kapsiyor", () => {
     const yollar = T.ISTATISTIK_SEKMELERI.map((s) => s.href);
     assert.deepEqual(yollar, [

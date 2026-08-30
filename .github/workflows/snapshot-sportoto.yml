@@ -1,0 +1,85 @@
+name: sportoto resmi arsiv
+
+# NE ISE YARAR
+# ============
+# Spor Toto'nun kendi ucu (webapi.sportoto.gov.tr) hafta kaydini ve IKRAMIYE
+# tablosunu yayinliyor (docs/VERI_TOPLAMA_VE_ISLEME.md §2.4, §6D). Bu is
+# haftada bir arsivin tamamini yeniden uretir; kapanan haftanin ikramiyesi
+# ilan edilir edilmez depoya girer.
+#
+# ONEMLI FARK — bu is `snapshot-iddaa.yml` DEGILDIR
+# =================================================
+# Iddaa isinde atlanan hafta bir daha ele gecmez: acik bulten kapaninca
+# oran kaynaktan duser. Burada oyle bir risk YOK — resmi arsiv geriye
+# donuk duruyor ve script her kosumda alti sezonun tamamini yeniden ceker.
+# Yani bu is bir ARSIVLEME degil, bir TAZELEME isidir; bir hafta atlanirsa
+# ertesi hafta ayni veriyi getirir.
+#
+# Bu yuzden `cancel-in-progress` burada `true` olabilirdi, ama degil:
+# yarim kalmis bir kosum dosyayi yazmadan biter (script dogrulamadan
+# yazmaz) ve iki kosumun push yarisina girmesinin bir faydasi yok.
+#
+# ZAMANLAMA ACIK
+# ==============
+# Haftada bir CALISIR ve degisiklik varsa depoya COMMIT ATAR. Yazdigi tek
+# yer `backend/data/sportoto_arsiv/` — baska hicbir dosyaya dokunmaz.
+#
+# Durdurmak icin: Actions sekmesi -> bu is -> "..." -> "Disable workflow".
+# Durdurmanin bedeli dusuktur (yukaridaki farka bakin): arsiv bayatlar,
+# kaybolmaz.
+#
+# Elle calistirmak icin: Actions sekmesi -> bu is -> "Run workflow".
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Her sali 07:00 UTC (TR 10:00). Pazartesi degil: hafta pazar aksami
+    # kapaniyor ve ikramiye tablosu ilan ekranina genellikle ertesi gun
+    # dusuyor. Iddaa isinden (pazartesi 06:00) bir gun sonra kosmasi ayrica
+    # push yarisini da onler.
+    - cron: "0 7 * * 2"
+
+concurrency:
+  group: sportoto-arsiv
+  cancel-in-progress: false
+
+jobs:
+  arsiv:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # Script yalnizca standart kutuphane kullanir; bagimlilik kurulmaz.
+      - name: Resmi arsivi cek
+        run: python scripts/build_sportoto_arsiv.py
+
+      - name: Bicimi denetle
+        run: |
+          pip install -q pytest
+          pytest -q -p no:cacheprovider tests/test_sportoto_arsiv.py
+
+      - name: Degisiklik varsa isle
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Yalnizca arsiv dizini. `_kaynak/` .gitignore'da, ham payload
+          # depoya girmez (doktrin 6).
+          git add backend/data/sportoto_arsiv
+          if git diff --cached --quiet; then
+            echo "arsiv degismedi — islenecek degisiklik bulunamadi"
+            exit 0
+          fi
+          git commit -m "veri: sportoto resmi arsiv tazelemesi $(date -u +%Y-%m-%d)"
+
+          git pull --rebase --autostash origin "$GITHUB_REF_NAME"
+          git push origin "HEAD:$GITHUB_REF_NAME"

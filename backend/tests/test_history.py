@@ -238,3 +238,82 @@ def test_rank_en_yuksek_haftayi_birinci_yapar():
     for sym in SYMBOLS:
         hi = max(WEEKS, key=lambda w: (w["counts"][sym], -w["week"]))
         assert history_week_detail(hi["week"])["rank"][sym]["rank"] == 1
+
+
+# ─── sezon seçimi ─────────────────────────────────────────────────────────────
+#
+# §6G dört sezonluk bir kupon seti getirdi. Sezonlar **birleştirilmiyor,
+# seçiliyor**: `week` bu modülde birincil anahtar gibi davranıyor (sıralama,
+# `history_week_detail` araması, oranın `(week, no)` haritası) ve dört sezonu
+# tek listeye koymak dördünü birden bozardı.
+
+def test_varsayilan_sezon_DEGISMEDI():
+    """En önemli çıpa: `?sezon` verilmezse bugünkü kayıt okunur.
+
+    27 değişmez, `test_fiyatlar` ve `test_api_stats` bu sayılara bağlı.
+    """
+    m = history_summary()["meta"]
+    assert m["weeks"] == 41
+    assert m["matches"] == 615
+    assert m["sezon_secimi"] is None
+
+
+def test_sezon_listesi_varsayilani_ICERMEZ():
+    """`sezonlar()` bir SEÇİM listesidir; varsayılan bir seçim değildir.
+
+    `2025_26` listede olabilir ama o, varsayılanın aynı sezonu ikinci kez
+    okumasıdır (29 hafta ↔ 41 hafta) — ikisi karıştırılmamalı.
+    """
+    from spor_toto.history import sezonlar
+
+    liste = sezonlar()
+    assert liste, "hiç sezon bulunamadı"
+    assert all("_" in s for s in liste)
+    varsayilan = history_summary()["meta"]
+    for s in liste:
+        secili = history_summary(sezon=s)["meta"]
+        if s == "2025_26":
+            assert secili["weeks"] != varsayilan["weeks"], (
+                "aynı sezonun iki kaydı aynı hafta sayısını veriyorsa "
+                "ayrım kaybolmuş demektir")
+
+
+def test_secilen_sezon_kendi_haftalarini_dondurur():
+    from spor_toto.history import sezonlar
+
+    for s in sezonlar():
+        weeks = history_weeks(sezon=s)
+        ozet = history_summary(sezon=s)["meta"]
+        assert len(weeks) == ozet["weeks"]
+        assert ozet["sezon_secimi"] == s
+        assert all(len(w["results"]) == MATCH_COUNT for w in weeks)
+
+
+def test_bilinmeyen_sezon_bos_doner_hata_ile():
+    """Sessizce varsayılana düşmez — istenmeyen sezonun sayıları gösterilmez."""
+    ozet = history_summary(sezon="yok_boyle")
+    assert ozet["meta"]["weeks"] == 0
+    assert ozet["error"]
+
+
+def test_hafta_detayi_secilen_sezonun_ICINDE_siralanir():
+    """`rank` ve komşular sezon içinde kalmalı; sezonlar karışmamalı."""
+    from spor_toto.history import history_week_detail, sezonlar
+
+    s = sezonlar()[0]
+    weeks = history_weeks(sezon=s)
+    d = history_week_detail(weeks[0]["week"], sezon=s)
+    assert d is not None
+    assert d["prev_week"] is None
+    assert d["rank"]["1"]["of"] == len(weeks)
+
+
+def test_onbellek_sezonlar_arasi_karismaz():
+    """`load_history` önbelleği sezona anahtarlı olmalı (eskiden maxsize=1)."""
+    from spor_toto.history import sezonlar
+
+    s = sezonlar()[0]
+    a = history_summary()["meta"]["weeks"]
+    history_summary(sezon=s)
+    b = history_summary()["meta"]["weeks"]
+    assert a == b == 41, "sezon seçimi varsayılanın önbelleğini düşürdü"

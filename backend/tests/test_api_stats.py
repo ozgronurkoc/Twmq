@@ -191,3 +191,61 @@ def test_olmayan_hafta_404(client):
     r = client.get("/api/stats/99999")
     assert r.status_code == 404
     assert "error" in r.get_json()
+
+
+# ─── ?sezon= ──────────────────────────────────────────────────────────────────
+
+def test_stats_varsayilan_sezon_secimi_None(client):
+    b = client.get("/api/stats").get_json()
+    assert b["sezon"] is None
+    assert b["meta"]["weeks"] == 41
+
+
+def test_stats_sezon_secilince_o_sezon_gelir(client):
+    from spor_toto.history import history_summary, sezonlar
+
+    s = sezonlar()[0]
+    b = client.get(f"/api/stats?sezon={s}").get_json()
+    assert b["sezon"] == s
+    assert b["meta"]["weeks"] == history_summary(sezon=s)["meta"]["weeks"]
+
+
+def test_stats_oran_karti_AYNI_sezondan_gelir(client):
+    """En sinsi hata buydu: `weeks` yalnızca hafta NUMARASI taşır.
+
+    Sezon geçirilmezse başka bir sezonun arşivinde aynı numaralar bulunur
+    ve oran kartı sessizce başka bir sezonu anlatırdı.
+    """
+    from spor_toto.odds import season_1x2_summary
+
+    s = "2023_24"
+    b = client.get(f"/api/stats?sezon={s}").get_json()
+    beklenen = season_1x2_summary(
+        [w["week"] for w in b["weeks"]], s)
+    assert b["odds"]["with_odds"] == beklenen["with_odds"]
+    assert b["odds"]["brier_avg"] == beklenen["brier_avg"]
+    # Varsayılanla aynı olsaydı sezon geçmemiş demektir.
+    varsayilan = client.get("/api/stats").get_json()
+    assert b["odds"]["with_odds"] != varsayilan["odds"]["with_odds"]
+
+
+def test_bilinmeyen_sezon_400_ve_listeyi_yazar(client):
+    r = client.get("/api/stats?sezon=yok_boyle")
+    assert r.status_code == 400
+    assert r.get_json()["sezonlar"]
+
+
+def test_hafta_detayi_sezonla_calisir(client):
+    from spor_toto.history import history_weeks
+
+    s = "2023_24"
+    hafta = history_weeks(sezon=s)[0]["week"]
+    b = client.get(f"/api/stats/{hafta}?sezon={s}").get_json()
+    assert b["week"] == hafta
+    assert len(b["odds"]) == 15, "seçilen sezonun oranları gelmedi"
+
+
+def test_meta_sezon_listesini_yayinlar(client):
+    b = client.get("/api/meta").get_json()
+    assert b["seasons"]["default"] is None
+    assert b["seasons"]["available"]

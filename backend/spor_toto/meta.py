@@ -115,6 +115,7 @@ def meta_payload(version: str) -> dict[str, Any]:
         VARSAYILAN_BANKO,
         VARSAYILAN_UCLU,
     )
+    from .history import sezonlar as _sezonlar
 
     return {
         "version": version,
@@ -129,6 +130,16 @@ def meta_payload(version: str) -> dict[str, Any]:
             "uclu_default": VARSAYILAN_UCLU,
             "banko_grid": list(BANKO_IZGARA),
             "uclu_grid": list(UCLU_IZGARA),
+        },
+        # Arayuzun `?sezon=` icin kullanabilecegi liste. VARSAYILAN bu
+        # listede YOKTUR ve olmamali: o bir sezon secimi degil, "hicbir sey
+        # secilmedi" hali (§6G.5 — 2025/26'nin iki ayri okumasi var).
+        "seasons": {
+            "default": None,
+            "available": _sezonlar(),
+            "note": ("varsayilan secim yok; secilirse `?sezon=` ile "
+                     "gonderilir. `2025_26` varsayilanin AYNI sezonu ikinci "
+                     "kez okumasidir (29 hafta / 41 hafta)"),
         },
         "limits": LIMITS,
     }

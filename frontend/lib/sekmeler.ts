@@ -12,6 +12,12 @@
  * tüm sezona düşer — iki sayfa aynı anda iki farklı kesiti anlatır ve
  * hiçbir yerde yazmaz. §6.8 G1'in *"sekme geçişinde dilim korunur"*
  * kabul kriteri budur.
+ *
+ * **`?sezon` de aynı kuralın altındadır ve bir kez unutuldu.** Sezon seçimi
+ * eklendiğinde şerit yalnızca `?last` taşıyordu; 2023/24 seçip *Oranlar*a
+ * geçen kullanıcı sessizce varsayılan sezona düşüyordu. Aynı arıza, aynı
+ * gerekçe — ve `?last` için yazılan bekçi bunu görmemişti çünkü yalnızca
+ * `?last`e bakıyordu. Artık ikisi de sınanıyor.
  */
 export interface Sekme {
   href: string;
@@ -25,6 +31,14 @@ export const ISTATISTIK_SEKMELERI: Sekme[] = [
 ];
 
 /** `?last=N`'i koruyarak sekme adresi üretir. */
-export function sekmeAdresi(href: string, last: number | null): string {
-  return last && last > 0 ? `${href}?last=${last}` : href;
+export function sekmeAdresi(
+  href: string,
+  last: number | null,
+  sezon?: string | null,
+): string {
+  const q = new URLSearchParams();
+  if (last && last > 0) q.set("last", String(last));
+  if (sezon) q.set("sezon", sezon);
+  const qs = q.toString();
+  return qs ? `${href}?${qs}` : href;
 }

@@ -22,6 +22,8 @@ formul.txt
 # surumlenmez. Yeniden olusturmak icin: python scripts/build_odds.py
 backend/data/odds/_kaynak/
 backend/data/odds/odds.sqlite3
+# Sezon basina uretilen kopyalar (build_odds.py --sezon)
+backend/data/odds/odds_*.sqlite3
 
 # Iddaa bulten arsivi: tarih damgali CSV'ler SURUMLENIR (arsivin kendisi
 # odur), ham payload ve SQLite kopyasi uretilir. Yeniden olusturmak icin:
@@ -71,3 +73,15 @@ backend/data/kosumlar/
 #
 # Yeniden olusturmak icin: python scripts/build_xg.py
 backend/data/xg/_kaynak/
+
+# Resmi Spor Toto arsivi (§6D): sezon JSON'lari ve rapor SURUMLENIR,
+# indirilen ham payload git disidir — tek komutla yeniden uretilir.
+backend/data/sportoto_arsiv/_kaynak/
+
+# Bulten OCR (§6F): sezon JSON'lari ve rapor SURUMLENIR, indirilen gorseller
+# git disidir. Gorseller ~170 adet ve toplam onlarca MB; ciktisi metin.
+backend/data/bulten/_kaynak/
+
+# Gecmis sezon birlestirmesi (§6G): indirilen football-data CSV'leri git disi,
+# tek komutla yeniden iner.
+backend/data/st_history/_kaynak/

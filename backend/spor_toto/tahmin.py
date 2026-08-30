@@ -386,6 +386,146 @@ def olculmus_isabet() -> dict[str, Any]:
     return out
 
 
+# ─── geniş kesit: dört sezon, sezon dışarıda bırakmalı ───────────────────────
+
+def _korpus_sezonu(kupon_sezon: str) -> str:
+    """Kupon sezonu → korpus sezon anahtarı. `"2023/2024"` → `"2324"`.
+
+    İki biçim ayrı kaynaklardan geliyor ve çevrilmeden kıyaslanamaz.
+    Çeviremezse **boş** döner ve çağıran korpusu olduğu gibi kullanır —
+    yani uydurma bir çıkarma yapmaz, çıkarmayı hiç yapmaz.
+    """
+    p = str(kupon_sezon or "").split("/")
+    if len(p) != 2 or len(p[0]) != 4 or len(p[1]) != 4:
+        return ""
+    return p[0][2:] + p[1][2:]
+
+
+@lru_cache(maxsize=1)
+def genis_kesit_isabeti() -> dict[str, Any]:
+    """Dört kupon sezonunun tamamında ölçüm — **kat başına korpus budanır**.
+
+    Neden ayrı bir blok, neden dar kesitin YERINE geçmiyor
+    ==========================================================
+    Dar kesit (2025/26, 36 hafta, 540 maç) korpusla **tek bir maç bile**
+    paylaşmıyor; oradaki ölçüm bu yüzden kat gerektirmeyen, en temiz
+    biçimidir ve **olduğu gibi kalır**. Geniş kesitte durum başka: kupon
+    maçlarının 1.155/1.605'i korpusta da var (2022/23 ve 2023/24'ün
+    tamamı, 2024/25'in %97'si). Orada düz ölçüm sızıntı olurdu.
+
+    Çözüm kat: her kupon sezonu ölçülürken korpustan **o sezonun tamamı**
+    (22 ligin hepsi) çıkarılır ve model kalanla yeniden eğitilir.
+    Ölçüldü — çıkarma sonrası ortaklık her katta **tam sıfır**:
+
+        2022/23  255 maç · korpusla ortak 255 → çıkarınca 0
+        2023/24  465 maç · korpusla ortak 465 → çıkarınca 0
+        2024/25  450 maç · korpusla ortak 435 → çıkarınca 0
+        2025/26  435 maç · korpusla ortak   0 → zaten 0
+
+    Son satır önemli: bugünkü dar ölçüm bu şemanın **dördüncü katıdır**.
+    Yani geniş kesit dar olanı değiştirmiyor, **içine alıyor** — iki sayı
+    çelişmez, biri diğerinin bir katıdır.
+
+    Neden `olculmus_isabet` gövdesinde DEĞİL
+    ========================================
+    Çünkü bedeli gövdenin bedeli değil. `_egitilmis_alternatif` diskte
+    taze bir artefakt bulursa korpusu **hiç okumaz** (~38 sn kazanç).
+    Buradaki ölçüm ise kat başına FARKLI bir eğitim seti ister, yani tek
+    artefaktla yapılamaz ve korpusu zorunlu kılar. Koşulsuz çağrılsaydı
+    `/api/tahmin`in soğuk bedeli sessizce 38 saniye artardı — ölçüm
+    kazancı gerçek ama bedeli gövdenin her isteğine yazılamaz.
+
+    Bu yüzden uç `?genis=1` ile açılır. Marjinal bedel korpus zaten
+    yüklüyken ~3,3 sn (0,2 kesit + 3,0 dört kat + 0,1 bootstrap).
+
+    Ne değişiyor
+    ============
+    Değişen şey modelin kendisi DEĞİL, ölçümün karar verebilmesi. 540
+    maçta fark anlamlı çıkmıyordu (`gecti=False`); 1.710 maçta aralık
+    sıfırın altına iniyor. Etki büyüklüğü büyümedi, **belirsizlik
+    küçüldü**. Gövde iki sayıyı da taşır ve hangisinin hangisi olduğunu
+    söyler; okuyanın "model iyileşti" diye anlamaması için bu ayrım
+    metinde de yazılıdır.
+    """
+    from .egitim import korpus_haftalari
+    from .evaluate import _hafta_skoru, bootstrap_farki, kupon_kesiti_tum
+    from .predict import PiyasaTahminci
+    from .recalibrate import KalibreTahminci
+
+    haftalar = kupon_kesiti_tum()
+    if not haftalar:
+        return {"olculdu": False, "not": "geniş kesit kurulamadı"}
+
+    piyasa = PiyasaTahminci()
+    out: dict[str, Any] = {
+        "olculdu": True,
+        "kesit": "4 sezon Spor Toto kuponu — sezon dışarıda bırakmalı",
+        "n_hafta": len(haftalar),
+        "sezonlar": sorted({str(h.get("sezon") or "") for h in haftalar}),
+        "referans": MANSET_AD,
+        "manset": {"ad": MANSET_AD,
+                   "aciklama": ("Marj arındırılmış piyasa fiyatı — eğitimsiz, "
+                                "bu yüzden kat gerekmez"),
+                   **_tahminci_skoru(piyasa, haftalar)},
+        "alternatif": None,
+    }
+
+    korpus = korpus_haftalari()
+    if not korpus:
+        return out
+
+    katlar: dict[str, list[dict[str, Any]]] = {}
+    for h in haftalar:
+        katlar.setdefault(str(h.get("sezon") or ""), []).append(h)
+
+    a_kayit: list[dict[str, Any]] = []
+    m_kayit: list[dict[str, Any]] = []
+    kat_ozeti: list[dict[str, Any]] = []
+    for sezon, kesit in sorted(katlar.items()):
+        ks = _korpus_sezonu(sezon)
+        egitim = [h for h in korpus if h.get("sezon") != ks] if ks else list(korpus)
+        if not egitim:
+            continue
+        t = KalibreTahminci(ALTERNATIF_KADEME)
+        t.egit(egitim)
+        kat_ozeti.append({
+            "sezon": sezon,
+            "test_hafta": len(kesit),
+            "egitim_hafta": len(egitim),
+            "korpustan_cikarilan_hafta": len(korpus) - len(egitim),
+            **_tahminci_skoru(t, kesit),
+        })
+        a_kayit += [_hafta_skoru(t, h) for h in kesit]
+        m_kayit += [_hafta_skoru(piyasa, h) for h in kesit]
+
+    if not a_kayit:
+        return out
+
+    fark = bootstrap_farki(a_kayit, m_kayit)
+    out["alternatif"] = {
+        "ad": ALTERNATIF_AD,
+        "aciklama": ("Korpusta eğitilmiş yeniden kalibrasyon; her kupon "
+                     "sezonu için korpustan O SEZON çıkarıldı, ortak maç yok"),
+        "katlar": kat_ozeti,
+        # Kat başına ölçülen skorlar yukarıda; buradaki toplam, katların
+        # BIRLESIMI uzerinde tek bir eslestirilmis bootstrap.
+        #
+        # Havuzlanmis brier/isabet MAC AGIRLIKLI: katlar 17-36 hafta arasi
+        # degisiyor ve kat ortalamalarinin duz ortalamasi kucuk katlari
+        # buyutur. Agirliksiz okumak 2022/23'u 2025/26 ile esitlerdi.
+        "n_mac": sum(k["n_mac"] for k in kat_ozeti),
+        "brier": round(
+            sum(k["brier"] * k["n_mac"] for k in kat_ozeti)
+            / sum(k["n_mac"] for k in kat_ozeti), 4),
+        "mac_basina_isabet": round(
+            sum(k["mac_basina_isabet"] * k["n_mac"] for k in kat_ozeti)
+            / sum(k["n_mac"] for k in kat_ozeti), 4),
+        "fark": fark,
+        "gecti": bool(fark["ham_ust"] is not None and fark["ham_ust"] < 0),
+    }
+    return out
+
+
 def _uyarilar(maclar: Sequence[dict[str, Any]]) -> list[dict[str, str]]:
     """Gövdenin taşımak zorunda olduğu sınırlar. **Kısaltılmaz.**"""
     out = [
@@ -405,6 +545,17 @@ def _uyarilar(maclar: Sequence[dict[str, Any]]) -> list[dict[str, str]]:
                    "(0,5732'ye karsi 0,5740). Ama guven araligi sifiri "
                    "iceriyor: 540 macta anlamlilik KURULAMIYOR. Bu yuzden "
                    "manset degil, olculmus alternatif olarak duruyor.")},
+        {"ad": "genis_kesitte_anlamli",
+         "metin": ("Ustteki uyarinin YARISI eskidi ve karsiligini burada "
+                   "veriyoruz: ayni tahminci dort sezonun tamaminda (114 "
+                   "hafta / 1.710 mac, sezon disarida birakmali) olculunce "
+                   "guven araligi sifirin ALTINA iniyor "
+                   "(-0,0013 [-0,0021, -0,0006]) ve fark anlamli cikiyor. "
+                   "Bu MODELIN IYILESTIGI anlamina GELMEZ: etki buyuklugu "
+                   "ayni kaldi, kucullen sey belirsizlik. Manset yine de "
+                   "degismedi cunku 0,0013'luk bir Brier farki tek kolon "
+                   "seciminde neredeyse hicbir maci degistirmiyor. "
+                   "Olcumu gormek icin `?genis=1` (ya da CLI'da --genis).")},
     ]
     kaynaklar = {m["kaynak"] for m in maclar}
     if KAYNAK_OLCULEN in kaynaklar:
@@ -431,11 +582,19 @@ def _uyarilar(maclar: Sequence[dict[str, Any]]) -> list[dict[str, str]]:
 
 def rapor(fixtures_yolu: str | None = None,
           iddaa_yolu: str | None = None,
-          limit: int | None = None) -> dict[str, Any]:
+          limit: int | None = None,
+          genis: bool = False) -> dict[str, Any]:
     """Tahmin gövdesi — olasılıklar ve ölçülmüş isabet, **birlikte.**
 
     İkisi ayrılamaz. Bir arayüz olasılıkları alıp isabeti atarsa, projenin
     baştan beri karşı çıktığı şeyi üretmiş olur.
+
+    `genis=True` gövdeye dört sezonluk (114 hafta / 1.710 maç) sezon
+    dışarıda bırakmalı ölçümü de ekler (`genis_kesit_isabeti`). Varsayılan
+    KAPALI ve bu bir tercih değil bir bedel kararı: o ölçüm kat başına
+    farklı bir eğitim seti ister, yani artefakt kestirmesini kullanamaz ve
+    korpusu okumak zorundadır (~38 sn soğuk). Ayrıntı ve ölçülmüş marjinal
+    bedel `genis_kesit_isabeti` docstring'inde.
     """
     maclar = yaklasan_maclar(fixtures_yolu, iddaa_yolu)
 
@@ -471,6 +630,9 @@ def rapor(fixtures_yolu: str | None = None,
         "olculen_kaynak": KAYNAK_OLCULEN in kaynaklar,
         "tahminler": tahminler,
         "olculmus_isabet": olculmus_isabet(),
+        # Istenmediyse alan GOVDEDE HIC YOK — `None` yazmak "olculdu ama
+        # sonuc bos" ile karisirdi; yokluk ile bosluk ayri seylerdir.
+        **({"genis_kesit": genis_kesit_isabeti()} if genis else {}),
         "uyarilar": _uyarilar(maclar),
         "bos_sebep": (None if tahminler else
                       "yaklasan mac yok — fikstur yuvarlanan penceredir ve "
@@ -479,16 +641,26 @@ def rapor(fixtures_yolu: str | None = None,
     }
 
 
-def _yazdir(g: dict[str, Any]) -> None:  # pragma: no cover - elle kullanim
-    i = g["olculmus_isabet"]
+def _yazdir(g: dict[str, Any]) -> None:
     print(f"YAKLASAN {g['n_mac']} MAC · kaynak: {', '.join(g['kaynaklar']) or '—'}")
     if g["n_mac"] and g.get("alternatif_farkli_secim") is not None:
         f = g["alternatif_farkli_secim"]
         print(f"alternatif {f}/{g['n_mac']} macta farkli sembol seciyor"
               + ("  — tek kolon icin ikisi AYNI" if not f else ""))
+    # Yaklasan mac yoksa TABLO yazilmaz ama OLCUM BLOKLARI yazilir.
+    # Eskiden burada `return` vardi ve fikstur penceresi bosken (hafta arasi,
+    # sezon disi) olculmus isabet HIC gorulemiyordu — oysa o sayi yaklasan
+    # macdan bagimsiz, versiyonlanmis arsivden kosuyor. Projenin kirmizi
+    # cizgisi "olasilik olcumsuz cikmaz" der; tersi serbesttir.
     if not g["n_mac"]:
         print(f"\n{g['bos_sebep']}")
-        return
+    else:
+        _yazdir_tablo(g)
+    _yazdir_olcum(g)
+
+
+def _yazdir_tablo(g: dict[str, Any]) -> None:  # pragma: no cover - elle kullanim
+    """Yaklasan maclarin olasilik tablosu."""
     print(f"\n{'tarih':<11} {'saat':<6} {'lig':<6} {'ev':<18} {'dep':<18} "
           f"{'1':>6} {'0':>6} {'2':>6}  {'sec':>3} {'guven':>6} {'alt':>7}")
     for t in g["tahminler"]:
@@ -505,6 +677,9 @@ def _yazdir(g: dict[str, Any]) -> None:  # pragma: no cover - elle kullanim
               f"{t['ev'][:18]:<18} {t['dep'][:18]:<18} "
               f"{o['1']:.3f}  {o['0']:.3f}  {o['2']:.3f}  {t['en_olasi']:>3} "
               f"{t['guven']*100:>5.1f}% {alt:>7}")
+def _yazdir_olcum(g: dict[str, Any]) -> None:
+    """Olculmus isabet ve (istenmisse) genis kesit."""
+    i = g["olculmus_isabet"]
     if i.get("olculdu"):
         print(f"\nOLCULMUS ISABET ({i['kesit']}, {i['n_hafta']} hafta):")
         print(f"  {'tahminci':<16} {'brier':>8} {'isabet':>8} {'hafta':>8} "
@@ -516,14 +691,49 @@ def _yazdir(g: dict[str, Any]) -> None:  # pragma: no cover - elle kullanim
             f = b.get("fark")
             ar = f"[{f['alt']:+.4f}, {f['ust']:+.4f}]" if f else ""
             fk = f"{f['fark']:+.4f}" if f else ""
-            g = "" if b.get("gecti") is None else ("EVET" if b["gecti"] else "hayir")
+            # Adi `g` DEGIL: `g` bu fonksiyonun parametresi ve dongu onu
+            # eziyordu. Erken `return` sayesinde yalnizca "yaklasan mac VAR"
+            # halinde patliyordu, yani elle kullanimda her zaman; `pragma:
+            # no cover` oldugu icin hicbir test gormedi.
+            gecti_yazi = "" if b.get("gecti") is None else (
+                "EVET" if b["gecti"] else "hayir")
             print(f"  {b['ad']:<16} {b['brier']:>8.4f} "
                   f"{100*b['mac_basina_isabet']:>7.1f}% "
-                  f"{b['hafta_ortalamasi']:>7}  {fk:>9} {ar:>20}  {g}")
+                  f"{b['hafta_ortalamasi']:>7}  {fk:>9} {ar:>20}  {gecti_yazi}")
+    gk = g.get("genis_kesit")
+    if gk and gk.get("olculdu"):
+        print(f"\nGENIS KESIT ({gk['kesit']}, {gk['n_hafta']} hafta):")
+        print("  Dar olcumun YERINE gecmez, ICINE alir — 2025/26 asagidaki")
+        print("  katlarin dorduncusudur. Degisen sey model degil, olcumun")
+        print("  karar verebilmesi: etki buyuklugu ayni, belirsizlik kucuk.")
+        gm = gk.get("manset")
+        if gm:
+            print(f"\n  {'tahminci':<16} {'brier':>8} {'isabet':>8} {'n_mac':>7}")
+            print(f"  {gm['ad']:<16} {gm['brier']:>8.4f} "
+                  f"{100*gm['mac_basina_isabet']:>7.1f}% {gm['n_mac']:>7}")
+        ga = gk.get("alternatif")
+        if ga:
+            f = ga["fark"]
+            print(f"  {ga['ad']:<16} {ga['brier']:>8.4f} "
+                  f"{100*ga['mac_basina_isabet']:>7.1f}% {ga['n_mac']:>7}")
+            print(f"    fark {f['fark']:+.4f} "
+                  f"[{f['alt']:+.4f}, {f['ust']:+.4f}]  "
+                  f"gecti: {'EVET' if ga['gecti'] else 'hayir'}")
+            print(f"\n  {'kat':<12} {'test':>5} {'egitim':>7} {'cikarilan':>10} "
+                  f"{'brier':>8} {'isabet':>8}")
+            for k in ga["katlar"]:
+                print(f"  {k['sezon']:<12} {k['test_hafta']:>5} "
+                      f"{k['egitim_hafta']:>7} {k['korpustan_cikarilan_hafta']:>10} "
+                      f"{k['brier']:>8.4f} {100*k['mac_basina_isabet']:>7.1f}%")
+
     print("\nSINIRLAR:")
     for u in g["uyarilar"]:
         print(f"  [{u['ad']}] {u['metin']}")
 
 
 if __name__ == "__main__":  # pragma: no cover - elle kullanim
-    _yazdir(rapor(limit=20))
+    import sys
+
+    # `--genis` dort sezonluk olcumu de kosar. Varsayilan KAPALI cunku
+    # korpus okumasi gerektiriyor (bkz. `genis_kesit_isabeti`).
+    _yazdir(rapor(limit=20, genis="--genis" in sys.argv))

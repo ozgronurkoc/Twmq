@@ -1,0 +1,358 @@
+{
+ "meta": {
+  "season": "2026/2027",
+  "season_key": "2026_27",
+  "weeks": 4,
+  "source": "sportoto.gov.tr resmi bulten GORSELI, OCR ile okundu (tesseract --psm 4 -l tur, x3 olcek)",
+  "generated_at": "2026-08-30 08:57",
+  "contains": "15 mac, KUPON SIRASIYLA — takim ADLARI",
+  "does_not_contain": "skor, sonuc (1/0/2) ve oran YOK. Takim adlari OCR ciktisidir ve DOGRULANMAMISTIR — gercek fiksture eslestirme build_gecmis_sezon.py'nin isidir; eslesmeyen mac orada duser.",
+  "rule": "yalnizca 15/15 okunan hafta yazilir"
+ },
+ "weeks": [
+  {
+   "week": 1,
+   "season": "2026/2027",
+   "game_round_id": 1528,
+   "matches": [
+    {
+     "no": 1,
+     "home": "GALATASARAY AŞ",
+     "away": "ÇORUM FK"
+    },
+    {
+     "no": 2,
+     "home": "KASIMPAŞA AJŞ",
+     "away": "TRABZONSPOR A.Ş"
+    },
+    {
+     "no": 3,
+     "home": "KONYASPOR",
+     "away": "ÇAYKUR RİZESPOR A.Ş"
+    },
+    {
+     "no": 4,
+     "home": "GAZİANTEP F.K. A.Ş",
+     "away": "ALANYASPOR"
+    },
+    {
+     "no": 5,
+     "home": "GENÇLERBİRLİĞİ",
+     "away": "FENERBAHÇE A.Ş"
+    },
+    {
+     "no": 6,
+     "home": "BAŞAKŞEHİR FK",
+     "away": "KOCAELİSPOR"
+    },
+    {
+     "no": 7,
+     "home": "AMED SPORTİF FAALİYETLER",
+     "away": "ERZURUMSPOR FK"
+    },
+    {
+     "no": 8,
+     "home": "BEŞİKTAŞ A.Ş",
+     "away": "EYÜPSPOR"
+    },
+    {
+     "no": 9,
+     "home": "SAMSUNSPORA;JŞ",
+     "away": "GÖZTEPE A.Ş"
+    },
+    {
+     "no": 10,
+     "home": "ARSENAL",
+     "away": "MANCHESTER CITY"
+    },
+    {
+     "no": 11,
+     "home": "RCLENS",
+     "away": "PARIS SAINT GERMAIN"
+    },
+    {
+     "no": 12,
+     "home": "SEVİLLA",
+     "away": "VALLECANO"
+    },
+    {
+     "no": 13,
+     "home": "SANTANDER",
+     "away": "VILLARREAL"
+    },
+    {
+     "no": 14,
+     "home": "ESPANYOL",
+     "away": "LEVANTE"
+    },
+    {
+     "no": 15,
+     "home": "CELTA VIGO",
+     "away": "OSASUNA"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 1
+  },
+  {
+   "week": 2,
+   "season": "2026/2027",
+   "game_round_id": 1529,
+   "matches": [
+    {
+     "no": 1,
+     "home": ". ERZURUMSPOR FK",
+     "away": "GALATASARAY A.Ş"
+    },
+    {
+     "no": 2,
+     "home": "ÇAYKUR RİZESPOR A.Ş",
+     "away": "SAMSUNSPOR A.Ş"
+    },
+    {
+     "no": 3,
+     "home": "ÇORUM FK",
+     "away": "KASIMPAŞA A.Ş"
+    },
+    {
+     "no": 4,
+     "home": "FENERBAHÇE A.Ş",
+     "away": "KONYASPOR"
+    },
+    {
+     "no": 5,
+     "home": "EYUPSPOR",
+     "away": "GAZİANTEP F.K. A.Ş"
+    },
+    {
+     "no": 6,
+     "home": ". TRABZONSPORA;Ş",
+     "away": "BAŞAKŞEHİR FK"
+    },
+    {
+     "no": 7,
+     "home": "ALANYASPOR",
+     "away": "BEŞİKTAŞ A.Ş"
+    },
+    {
+     "no": 8,
+     "home": "GÖZTEPE A.Ş",
+     "away": "GENÇLERBİRLİĞİ"
+    },
+    {
+     "no": 9,
+     "home": "KOCAELİSPOR",
+     "away": "AMED SPORTİF"
+    },
+    {
+     "no": 10,
+     "home": "B. DORTMUND",
+     "away": "BAYERN MÜNİH"
+    },
+    {
+     "no": 11,
+     "home": "MARSİLYA",
+     "away": "STRASBOURG"
+    },
+    {
+     "no": 12,
+     "home": "NEWCASTLE UNİTED",
+     "away": "LIVERPOOL"
+    },
+    {
+     "no": 13,
+     "home": "REAL BETİS",
+     "away": "REAL SOCIEDAD"
+    },
+    {
+     "no": 14,
+     "home": "ATLETİCO MADRID",
+     "away": "VILLARREAL"
+    },
+    {
+     "no": 15,
+     "home": "TORINO",
+     "away": "AC MILAN"
+    }
+   ],
+   "data_warnings": [
+    "10 satirin numarasi okunamadi, sira konumdan alindi (okunan 5 numaranin hepsi tuttu)"
+   ],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 2
+  },
+  {
+   "week": 3,
+   "season": "2026/2027",
+   "game_round_id": 1530,
+   "matches": [
+    {
+     "no": 1,
+     "home": "GENÇLERBİRLİĞİ",
+     "away": "ERZURUMSPOR FK"
+    },
+    {
+     "no": 2,
+     "home": "KONYASPOR",
+     "away": "KOCAELİSPOR"
+    },
+    {
+     "no": 3,
+     "home": "GALATASARAY A.Ş",
+     "away": "GÖZTEPE A.Ş"
+    },
+    {
+     "no": 4,
+     "home": "GAZİANTEP F.K. A.Ş",
+     "away": "ÇAYKUR RİZESPOR A.Ş"
+    },
+    {
+     "no": 5,
+     "home": "EYÜPSPOR",
+     "away": "ALANYASPOR"
+    },
+    {
+     "no": 6,
+     "home": ". BAŞAKŞEHİR FK",
+     "away": "KASIMPAŞA A.Ş"
+    },
+    {
+     "no": 7,
+     "home": "SAMSUNSPOR A.Ş",
+     "away": "FENERBAHÇE A.Ş"
+    },
+    {
+     "no": 8,
+     "home": "AMED SPORTİF",
+     "away": "TRABZONSPOR A.Ş"
+    },
+    {
+     "no": 9,
+     "home": "BEŞİKTAŞ A.Ş",
+     "away": "ÇORUM FK"
+    },
+    {
+     "no": 10,
+     "home": "B. DORTMUND",
+     "away": "HAMBURG"
+    },
+    {
+     "no": 11,
+     "home": "LILLE",
+     "away": "PARIS SAINT GERMAIN"
+    },
+    {
+     "no": 12,
+     "home": "MONACO",
+     "away": "MARSILYA"
+    },
+    {
+     "no": 13,
+     "home": "TOTTENHAM",
+     "away": "NEWCASTLE UNITED"
+    },
+    {
+     "no": 14,
+     "home": "SEVİLLA",
+     "away": "ATLETİCO MADRID"
+    },
+    {
+     "no": 15,
+     "home": "CAGLIARI",
+     "away": "INTER"
+    }
+   ],
+   "data_warnings": [
+    "11 satirin numarasi okunamadi, sira konumdan alindi (okunan 4 numaranin hepsi tuttu)"
+   ],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 3
+  },
+  {
+   "week": 4,
+   "season": "2026/2027",
+   "game_round_id": 1531,
+   "matches": [
+    {
+     "no": 1,
+     "home": "ERZURUMSPOR FK",
+     "away": "KONYASPOR"
+    },
+    {
+     "no": 2,
+     "home": "KASIMPAŞA A.Ş",
+     "away": "AMED SPORTİF"
+    },
+    {
+     "no": 3,
+     "home": "ÇORUM FK",
+     "away": "EYÜPSPOR"
+    },
+    {
+     "no": 4,
+     "home": "FENERBAHÇE AJŞ",
+     "away": "BEŞİKTAŞ A.Ş"
+    },
+    {
+     "no": 5,
+     "home": "BAŞAKŞEHİR FK",
+     "away": "GALATASARAY A.Ş"
+    },
+    {
+     "no": 6,
+     "home": "KOCAELİSPOR",
+     "away": "SAMSUNSPOR A.Ş"
+    },
+    {
+     "no": 7,
+     "home": "TRABZONSPOR AJŞ",
+     "away": "GENÇLERBİRLİĞİ"
+    },
+    {
+     "no": 8,
+     "home": "ÇAYKUR RİZESPOR A.Ş",
+     "away": "ALANYASPOR"
+    },
+    {
+     "no": 9,
+     "home": "GÖZTEPE AJŞ",
+     "away": "GAZİANTEP F.K. AJŞ"
+    },
+    {
+     "no": 10,
+     "home": "EVERTON",
+     "away": "MANCHESTER UNITED"
+    },
+    {
+     "no": 11,
+     "home": "ARSENAL",
+     "away": "CHELSEA"
+    },
+    {
+     "no": 12,
+     "home": "ATHLETIC BILBAO",
+     "away": "ATLETİCO MADRID"
+    },
+    {
+     "no": 13,
+     "home": "INTER",
+     "away": "NAPOLİ"
+    },
+    {
+     "no": 14,
+     "home": "ASROMA",
+     "away": "ATALANTA"
+    },
+    {
+     "no": 15,
+     "home": "JUVENTUS",
+     "away": "AC MILAN"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 4
+  }
+ ]
+}

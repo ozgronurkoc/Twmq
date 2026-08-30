@@ -1,0 +1,127 @@
+{
+ "meta": {
+  "season": "2026/2027",
+  "season_key": "2026_27",
+  "weeks": 4,
+  "weeks_with_payout": 2,
+  "source": "sportoto.gov.tr resmi arsivi (webapi.sportoto.gov.tr) — RESMI KAYNAK",
+  "source_endpoints": [
+   "GET /api/GameRound",
+   "GET /api/GameResult/GetGameResultByGameRoundId?id=<gameRoundId>"
+  ],
+  "fetched_at": "2026-08-30 07:43",
+  "contains": "hafta kaydi + IKRAMIYE tablosu",
+  "close_date_note": "`close_date` KUPON KAPANISIDIR, haftanin bitisi degil. Olculdu: 2025/26'nin 41 haftasinin 41'inde bu tarih haftanin ILK macinin gunune esit. `st_history_2025_26.json`in ayni adli alani ise haftanin SON macina denk duser ve 1-4 gun sonradir; iki alan celismiyor, farkli seyleri olcuyor.",
+  "does_not_contain": "15 maclik liste ve 1/0/2 dizisi YOK — resmi ucta mac listesi yalnizca bulten GORSELI olarak var (bulletin_image). Kupon dizisi icin st_history veri setine bakilir."
+ },
+ "weeks": [
+  {
+   "week": 1,
+   "name": "1. Hafta",
+   "season": "2026/2027",
+   "game_round_id": 1528,
+   "close_date": "2026-08-14 21:25",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 0,
+      "prize": 30149380.57
+     },
+     {
+      "correct": 14,
+      "winners": 8,
+      "prize": 2153527.18
+     },
+     {
+      "correct": 13,
+      "winners": 210,
+      "prize": 82039.13
+     },
+     {
+      "correct": 12,
+      "winners": 2859,
+      "prize": 7532.44
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2026-08-14 21:25"
+   },
+   "bulletin_image": {
+    "name": "1001366704-gvuaoijc.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/1001366704-gvuaoijc.jpg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 2,
+   "name": "2. Hafta",
+   "season": "2026/2027",
+   "game_round_id": 1529,
+   "close_date": "2026-08-21 21:25",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 3,
+      "prize": 24330749.43
+     },
+     {
+      "correct": 14,
+      "winners": 121,
+      "prize": 202327.59
+     },
+     {
+      "correct": 13,
+      "winners": 2077,
+      "prize": 11787.01
+     },
+     {
+      "correct": 12,
+      "winners": 21272,
+      "prize": 1438.6
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2026-08-21 21:25"
+   },
+   "bulletin_image": {
+    "name": "1001378831-1uhblbzm.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/1001378831-1uhblbzm.jpg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 3,
+   "name": "3. Hafta",
+   "season": "2026/2027",
+   "game_round_id": 1530,
+   "close_date": "2026-08-28 21:25",
+   "is_published": true,
+   "payout": null,
+   "bulletin_image": {
+    "name": "1001390621-bm2irgka.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/1001390621-bm2irgka.jpg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 4,
+   "name": "4. Hafta",
+   "season": "2026/2027",
+   "game_round_id": 1531,
+   "close_date": "2026-09-05 17:10",
+   "is_published": true,
+   "payout": null,
+   "bulletin_image": {
+    "name": "1001405844-cvdlqrnr.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/1001405844-cvdlqrnr.jpg"
+   },
+   "data_warnings": []
+  }
+ ]
+}

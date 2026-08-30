@@ -1,0 +1,55 @@
+{
+ "generated_at": "2026-08-30 07:43",
+ "source": "sportoto.gov.tr resmi arsivi (webapi.sportoto.gov.tr) — RESMI KAYNAK",
+ "seasons": {
+  "2021_22": {
+   "season": "2021/2022",
+   "weeks": 10,
+   "with_payout": 10,
+   "with_bulletin_image": 10
+  },
+  "2022_23": {
+   "season": "2022/2023",
+   "weeks": 53,
+   "with_payout": 53,
+   "with_bulletin_image": 53
+  },
+  "2023_24": {
+   "season": "2023/2024",
+   "weeks": 53,
+   "with_payout": 53,
+   "with_bulletin_image": 53
+  },
+  "2024_25": {
+   "season": "2024/2025",
+   "weeks": 52,
+   "with_payout": 52,
+   "with_bulletin_image": 52
+  },
+  "2025_26": {
+   "season": "2025/2026",
+   "weeks": 53,
+   "with_payout": 53,
+   "with_bulletin_image": 52
+  },
+  "2026_27": {
+   "season": "2026/2027",
+   "weeks": 4,
+   "with_payout": 2,
+   "with_bulletin_image": 4
+  }
+ },
+ "totals": {
+  "weeks": 225,
+  "with_payout": 223,
+  "with_bulletin_image": 224,
+  "with_warnings": 0
+ },
+ "limits": [
+  "Mac listesi ve 1/0/2 dizisi bu kaynakta YOK; yalnizca bulten gorseli var.",
+  "Bulten gorseli 2023/2024'ten itibaren erisilebiliyor; oncesi 404.",
+  "Kazanan adedi KOLON sayisidir, bilet degil (§3.40) — havuz modeli kurulurken bu ayrim tasinir.",
+  "Havuzun kendisi (haftalik hasilat) ucta yok; yalnizca kademe basina kazanan adedi ve kisi basi ikramiye var."
+ ],
+ "note": "Deponun ilk RESMI kaynagi. §6B'nin elle girilen ikramiye blogunun yerini alir; elle girilen hafta kayitlari kendi sinifinda kalir ve bu dosya onlarla karsilastirilarak dogrulanabilir."
+}

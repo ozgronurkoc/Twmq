@@ -96,3 +96,38 @@ def test_diger_pazarlar_geri_teste_de_sizmaz(client):
     ham = client.get("/api/backtest?sweep=0").get_data(as_text=True).lower()
     for anahtar in ("asya", "handikap", '"ah"', "2.5", "over", "under"):
         assert anahtar not in ham
+
+
+# ─── ?sezon= ──────────────────────────────────────────────────────────────────
+#
+# Geri test uzun süre yalnızca varsayılan sezonu görüyordu. Sezon seçimi
+# `/api/stats`e eklendiğinde bu uç geride kaldı ve sonuç SESSİZ bir
+# tutarsızlıktı: kullanıcı 2023/24 seçip *Geri test* sekmesine geçince
+# 2025/26'nın tablosunu görüyordu ve bunu anlamasının bir yolu yoktu.
+
+def test_backtest_varsayilan_sezon_None(client):
+    b = client.get("/api/backtest?sweep=0").get_json()
+    assert b["meta"]["sezon"] is None
+    assert b["meta"]["weeks_available"] == 41
+
+
+def test_backtest_sezon_secilince_o_sezonu_kosar(client):
+    b = client.get("/api/backtest?sweep=0&sezon=2023_24").get_json()
+    assert b["meta"]["sezon"] == "2023_24"
+    assert b["meta"]["weeks_available"] == 31
+    # Yeni sezonlarda oran kapsaması %100 — elenen hafta olmamalı.
+    assert b["meta"]["weeks_used"] == 31
+
+
+def test_backtest_bilinmeyen_sezon_400(client):
+    r = client.get("/api/backtest?sweep=0&sezon=yok_boyle")
+    assert r.status_code == 400
+    assert r.get_json()["sezonlar"]
+
+
+def test_backtest_sezon_onbellegi_karistirmaz(client):
+    """`_backtest_cached` sezona anahtarlı olmalı."""
+    a = client.get("/api/backtest?sweep=0").get_json()
+    client.get("/api/backtest?sweep=0&sezon=2023_24")
+    b = client.get("/api/backtest?sweep=0").get_json()
+    assert a["meta"]["weeks_available"] == b["meta"]["weeks_available"] == 41

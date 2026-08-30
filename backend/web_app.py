@@ -53,6 +53,7 @@ from spor_toto.health import (
     run_health,
 )
 from spor_toto.history import history_week_detail
+from spor_toto.history import sezonlar as history_sezonlari
 from spor_toto.markov import markov_report
 from spor_toto.meta import (
     ENGINE_DEFAULTS,
@@ -492,7 +493,7 @@ def root():
             "GET  /api/stats",
             "GET  /api/stats/<week>",
             "GET  /api/backtest",
-            "GET  /api/tahmin         (yaklasan maclar + olculmus isabet)",
+            "GET  /api/tahmin         (yaklasan maclar + olculmus isabet; ?genis=1 dort sezonluk olcumu de ekler)",
             "GET  /api/benzer         (bu oranda gecmiste ne oldu)",
             "POST /api/solve",
             "GET  /health             (liveness: süreç ayakta mı)",
@@ -645,7 +646,12 @@ def api_stats():
     boylece butun gorselleri ayni veriye baglar.
     """
     last = _parse_last(request.args.get("last"))
-    return jsonify(stats_payload(last))
+    try:
+        sezon = _parse_sezon(request.args.get("sezon"))
+    except GecersizSezon:
+        return jsonify({"error": "bilinmeyen sezon",
+                        "sezonlar": history_sezonlari()}), 400
+    return jsonify(stats_payload(last, sezon))
 
 
 @app.route("/api/pazar", methods=["GET"])
@@ -687,13 +693,46 @@ def api_takimlar():
 
 @app.route("/api/stats/<int:week>", methods=["GET"])
 def api_stats_week(week: int):
-    w = history_week_detail(week)
+    try:
+        sezon = _parse_sezon(request.args.get("sezon"))
+    except GecersizSezon:
+        return jsonify({"error": "bilinmeyen sezon",
+                        "sezonlar": history_sezonlari()}), 400
+    w = history_week_detail(week, sezon)
     if not w:
         return jsonify({"error": f"{week}. hafta yok"}), 404
-    oranlar = week_1x2(week)
+    # Oran arsivi de AYNI sezondan okunmali: anahtar `(week, no)` ve sezon
+    # bileseni yok, yani sezon gecirilmezse baska bir sezonun oranlari bu
+    # haftaya sessizce yapisir.
+    oranlar = week_1x2(week, sezon)
     w["odds"] = {str(no): blok for no, blok in oranlar.items()}
     w["odds_hit"] = sum(1 for b in oranlar.values() if b["hit"])
     return jsonify(w)
+
+
+class GecersizSezon(ValueError):
+    """`?sezon=` bilinmeyen bir sezon gosteriyor."""
+
+
+def _parse_sezon(raw: Any) -> str | None:
+    """`?sezon=` cozumleyici. Bos -> None (varsayilan), gecersiz -> yukselir.
+
+    Gecersiz sezonu sessizce varsayilana dusurmuyoruz: kullanici bir sezon
+    ISTEDI ve baska bir sezonun sayilarini gormek, hic sayi gormemekten
+    kotudur. Ucler `GecersizSezon`u yakalayip 400 ve gecerli listeyi doner.
+
+    **Nobetci deger yerine istisna** kullaniliyor: ilk yazimda gecersizlik
+    `False` ile bildiriliyordu ve donus tipi `str | bool | None` oluyordu.
+    mypy hakli olarak `history_week_detail(week, sezon)` cagrisinda
+    `Literal[True]`in de gecebilecegini soyledi — yani nobetci, tip
+    sisteminin yakalayabilecegi bir kaymayi gizliyordu.
+    """
+    if raw is None or str(raw).strip() == "":
+        return None
+    sezon = str(raw).strip()
+    if sezon not in history_sezonlari():
+        raise GecersizSezon(sezon)
+    return sezon
 
 
 def _parse_esik(raw: Any, varsayilan: float) -> float:
@@ -705,7 +744,7 @@ def _parse_esik(raw: Any, varsayilan: float) -> float:
     return min(1.0, max(0.0, v))
 
 
-def _tahmin_cached(limit: int | None) -> dict[str, Any]:
+def _tahmin_cached(limit: int | None, genis: bool = False) -> dict[str, Any]:
     """Tahmin govdesi — **onbelleklenmez ve bu kasitli.**
 
     Digerlerinden farki yonu: `stats` ve `backtest` surumlenmis bir dosyayi
@@ -716,21 +755,27 @@ def _tahmin_cached(limit: int | None) -> dict[str, Any]:
 
     Bedeli kucuk: govde iki dosya okur ve `olculmus_isabet` zaten kendi
     icinde `lru_cache`li (arsiv surumlenmis, degismez).
+
+    `genis=True` bu dengeyi degistirir ve bu yuzden VARSAYILAN DEGIL:
+    genis kesit olcumu korpusu okumak zorunda (~38 sn soguk, sonrasinda
+    `genis_kesit_isabeti` kendi `lru_cache`inde). Uc bunu yalnizca
+    `?genis=1` geldiginde oder.
     """
     from spor_toto.tahmin import rapor
-    return rapor(limit=limit)
+    return rapor(limit=limit, genis=genis)
 
 
 @lru_cache(maxsize=32)
 def _backtest_cached(last: int | None, banko: float, uclu: float,
-                     sweep: bool) -> dict[str, Any]:
+                     sweep: bool, sezon: str | None = None) -> dict[str, Any]:
     """Geri test sonucu istek basina yeniden hesaplanmaz.
 
     Veri seti surumlenmis bir dosyadir; ayni parametreler ayni cevabi verir.
     Tek strateji ~1,2 sn, 28 esikli tarama ilk cagrida ~15 sn surer (kaplama
     imzalari onbelleklenene kadar) ve sonrasinda milisaniyeye iner.
     """
-    return backtest_payload(last=last, banko=banko, uclu=uclu, sweep=sweep)
+    return backtest_payload(last=last, banko=banko, uclu=uclu, sweep=sweep,
+                            sezon=sezon)
 
 
 @app.route("/api/backtest", methods=["GET"])
@@ -738,8 +783,8 @@ def api_backtest():
     """
     "Bu strateji gecen sezon ne yapardi?"
 
-    `?banko=` ve `?uclu=` esikleri, `?last=N` dilimi, `?sweep=0` ile tarama
-    kapali. Cevap UC blok tasir ve ucu birlikte okunmalidir: secili
+    `?banko=` ve `?uclu=` esikleri, `?last=N` dilimi, `?sezon=` sezon secimi,
+    `?sweep=0` ile tarama kapali. Cevap UC blok tasir ve ucu birlikte okunmalidir: secili
     stratejinin sezonu, esik taramasi ve **hold-out** — sonuncusu esigin o
     haftayi gormeden secildigi halde olculen sonuctur.
     """
@@ -747,7 +792,12 @@ def api_backtest():
     banko = _parse_esik(request.args.get("banko"), VARSAYILAN_BANKO)
     uclu = _parse_esik(request.args.get("uclu"), VARSAYILAN_UCLU)
     sweep = str(request.args.get("sweep", "1")).strip().lower() not in {"0", "false", "no"}
-    return jsonify(_backtest_cached(last, banko, uclu, sweep))
+    try:
+        sezon = _parse_sezon(request.args.get("sezon"))
+    except GecersizSezon:
+        return jsonify({"error": "bilinmeyen sezon",
+                        "sezonlar": history_sezonlari()}), 400
+    return jsonify(_backtest_cached(last, banko, uclu, sweep, sezon))
 
 
 @app.route("/api/tahmin", methods=["GET"])
@@ -770,7 +820,9 @@ def api_tahmin():
             limit = max(1, min(int(str(ham).strip()), 500))
         except (TypeError, ValueError):
             limit = None
-    return jsonify(_tahmin_cached(limit))
+    genis = str(request.args.get("genis") or "").strip().lower() in {
+        "1", "true", "evet", "yes"}
+    return jsonify(_tahmin_cached(limit, genis))
 
 
 @lru_cache(maxsize=128)

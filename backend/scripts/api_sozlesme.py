@@ -131,7 +131,7 @@ _SOLVE_PROBS = [
 
 def _uclar(istemci, ornek_kupon: str) -> dict[str, Any]:
     """Her ucu gercekten cagirip sekli cikarir."""
-    from spor_toto.tahmin import olculmus_isabet
+    from spor_toto.tahmin import genis_kesit_isabeti, olculmus_isabet
 
     cagrilar: list[dict[str, Any]] = [
         {"ad": "GET /", "yol": "/"},
@@ -179,7 +179,11 @@ def _uclar(istemci, ornek_kupon: str) -> dict[str, Any]:
                 f"{cevap.get_data(as_text=True)[:300]}")
         out[c["ad"]] = _sekil(cevap.get_json(), c["ad"])
     # `olculmus_isabet` lru_cache'li; gecici fikstur silinmeden once temizle.
+    # `genis_kesit_isabeti` de ayni desende ve AYRI bir onbellek: bugun bu
+    # betik `?genis=1` cagirmiyor, ama cagirdigi gun temizlenmezse gecici
+    # fikstur verisi surecin geri kalanina yapisirdi. Bir satirlik bedel.
     olculmus_isabet.cache_clear()
+    genis_kesit_isabeti.cache_clear()
     return out
 
 

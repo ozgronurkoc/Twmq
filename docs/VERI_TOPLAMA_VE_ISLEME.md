@@ -157,6 +157,45 @@ kapanır.
 Marj farkı, belgenin baştan beri söylediği "seviye tutmaz, yapı tutar" cümlesinin ölçülmüş
 karşılığıdır: iddaa payı piyasanın iki katından fazla.
 
+### 2.4 Resmî Spor Toto arşivi — ikramiye ve havuz
+
+| Alan | Değer |
+|---|---|
+| Kaynak | `webapi.sportoto.gov.tr` — **Spor Toto'nun kendi ucu**, kimlik doğrulamasız |
+| Sezon | **6** (2021/2022 kısmi → 2026/2027) |
+| Hafta | **225**, bunların **223'ünde ikramiye tablosu** (%99,1) |
+| Taşıdığı | Hafta adı, kapanış tarihi, kademe başına (15/14/13/12) **kazanan adedi + kişi başı ikramiye** |
+| **Taşımadığı** | **15 maçlık liste ve 1/0/2 dizisi** — resmî uçta maç listesi yalnızca bülten **görseli** olarak var |
+
+Bu, deponun **ilk resmî kaynağıdır.** Öteki dördü üçüncü partidir: football-data
+piyasa oranı, sportototahmin hafta payload'ı, iddaa bülteni, openfootball fikstür.
+Burası Spor Toto'nun kendisidir ve ikramiye ile kazanan adedinde başka hiçbir
+kaynak ona eşit değildir.
+
+**Neden şimdi bulundu.** §3.1 uzun süre "toplu, makine dostu arşiv ucu bulunamadı"
+yazıyordu ve bu yanlıştı. `sportoto.gov.tr` bir Next.js uygulamasıdır ve hafta
+verisini ayrı bir hosttan **istemci tarafında** çeker; uçlar sayfa kaynağında
+değil JS parçalarında durur. İlk aramada görünmemesinin sebebi budur, kaynağın
+kapalı olması değil.
+
+Ne çözdüğü §10.1'dedir ve tek cümleyle şudur: havuz ekseni **n = 3'ten n = 223'e**
+çıktı. Ne çözmediği de aynı ölçüde nettir — kupon dizisi hâlâ bu kaynaktan gelmiyor
+(§6D.3).
+
+### 2.5 Geçmiş sezon kupon arşivi (türetilmiş)
+
+| Alan | Değer |
+|---|---|
+| Kaynak | Resmî bülten **görseli** (OCR) + football-data fikstürü |
+| Sezon | **4** (2022/23 → 2025/26) |
+| Hafta | **107**, hepsi 15/15 |
+| Maç | **1.605**, kupon sırasıyla, skor ve 1/0/2 ile |
+| Çapraz doğrulama | 2025/26'nın 29 ortak haftasında **28'i birebir aynı** |
+| Taşımadığı | Oran ve maç istatistiği yok |
+
+Kupon değerlendirme seti 41 haftadan **148 haftaya** çıktı (41 eski + 107
+yeni; 29'u aynı sezonun iki bağımsız okuması). Ayrıntı §6F ve §6G.
+
 ## 3. Kaynak seçimi
 
 ### 3.1 Değerlendirilen kaynaklar
@@ -165,7 +204,7 @@ karşılığıdır: iddaa payı piyasanın iki katından fazla.
 |---|---|---|---|
 | **sportototahmin.com** hafta payload'ları | 15 maçlık liste + skor | **Kullanılıyor** | Maç listesi ve skor aynı kayıtta ve maç nesnesine bağlı; sıra haftanın kendi dizisinde |
 | **football-data.co.uk** arşivi | Oran | **Kullanılıyor** | Ücretsiz, geçmişi tam, açılış + kapanış, çok pazarlı; kişisel kullanıma açık |
-| `sportoto.gov.tr` | Resmi sonuç arşivi | Kullanılamadı | Toplu, makine dostu arşiv ucu bulunamadı |
+| **`webapi.sportoto.gov.tr`** | Resmî hafta kaydı + **ikramiye tablosu** | **Kullanılıyor** | Deponun ilk **resmî** kaynağı. 6 sezon · 225 hafta · 223 ikramiye tablosu. Kimlik doğrulamasız, sezon parametreli. Önceki "arşiv ucu bulunamadı" kaydı **yanlıştı**: site Next.js ve uçlar JS parçalarında (§2.4). **Maç listesi vermez** — o yalnızca bülten görseli |
 | **Maçkolik** | Skor + iddaa oranı | **Kullanılmıyor** | Eski açık uç (`goapi.mackolik.com`) ölü; `robots.txt` `/api/` yolunu herkese, `anthropic-ai`/`GPTBot`/`CCBot`'u tamamen kapatıyor. Teknik engelin yanında açık bir politika sınırı var (§3.3) |
 | **iddaa resmi API** (`sportsbookv2.iddaa.com`) | İddaa oranı | **Kullanılıyor (ileriye dönük)** | Çalışıyor ama **yalnızca açık bülten**; geriye dönük arşiv ucu yok. Haftalık snapshot ile kendi arşivimizi kuruyoruz (§6) |
 | **Nesine** bülten API'si | İddaa oranı | Aynı | Canlı bülten; geçmiş yok |
@@ -831,6 +870,419 @@ GB**. Akışta işlenir, maç başına dört sayıya indirgenir, atılır. `_kay
 yalnızca o özeti tutar (birkaç yüz KB) ve tek işi ~25 dakikalık sıralı indirmeyi yeniden
 başlatılabilir kılmaktır; git dışıdır.
 
+## 6D. Resmî Spor Toto arşivi — ikramiye boru hattı
+
+### 6D.1 Neden bu boru hattı §6B'yi kapatır
+
+§6B (elle girilen Süper Toto haftası) bir zorunluluktu ve gerekçesi şuydu:
+
+> §10.1'in tarif ettiği havuz verisi otomatik erişilebilir bir kaynakta yok;
+> ikramiye ve oynanma payı yalnızca ilan ekranlarında yayımlanıyor.
+
+**Bu cümlenin ilk yarısı artık doğru değil.** İkramiye tablosu resmî uçta,
+makine dostu biçimde, altı sezon geriye duruyor (§2.4). İkinci yarısı hâlâ
+doğru: **oynanma payı** hiçbir açık uçta yok ve elle girilmeye devam edecek.
+
+Yani §6B sınıfı kapanmıyor, **daralıyor**: ikramiye bloğu bu boru hattına
+devrediyor, oynanma yüzdesi elle girişte kalıyor.
+
+### 6D.2 Kaynak ve uçlar
+
+```
+GET /api/GameRound/GetGameRoundYears           sezon listesi
+GET /api/GameRound                             TÜM haftalar (her sezon, tek çağrı)
+GET /api/GameResult/GetGameResultByGameRoundId?id=<gameRoundId>
+```
+
+Üçü de kimlik doğrulamasız. `GetGameRoundNamesByYear?year=<sezon>` de var ama
+`GameRound` zaten hepsini tek çağrıda verdiği için kullanılmıyor.
+
+Sonuç ucunun parametresi **`id`**, `gameRoundId` değil — `gameRoundId` yazınca
+"Kayıt bulunamadı" döner ve bu sessiz bir tuzaktır: cevap HTTP 200'dür,
+`isSucceed: true` taşır ve yalnızca `object: null` verir.
+
+### 6D.3 Ne taşıyor, ne taşımıyor
+
+| Blok | İçerik |
+|---|---|
+| `weeks[].week` | Hafta numarası — `"9. Hafta"` adından okunur; desene uymayan ad **tahmin edilmez**, `null` kalır ve `data_warnings`a yazılır |
+| `weeks[].close_date` | Kapanış tarihi |
+| `weeks[].payout.tiers[]` | **15/14/13/12** için kazanan adedi + kişi başı ikramiye |
+| `weeks[].bulletin_image` | Bülten görselinin **adresi** — görsel indirilmez |
+| `weeks[].data_warnings[]` | Çelişki ve okunamayan alan kaydı |
+
+**Taşımadığı, ve bu bir test bekçisine bağlıdır
+(`test_sportoto_arsiv.py::test_yayindaki_arsivde_kupon_dizisi_YOK`):**
+15 maçlık liste ve 1/0/2 dizisi. Resmî uçta maç listesi yalnızca bir JPG/PNG
+olarak yayımlanıyor. Görseller de ancak **2023/2024'ten itibaren** erişilebiliyor;
+2021/22 ve 2022/23 için `/image/<ad>` 404 dönüyor.
+
+Dolayısıyla §10.2'nin kupon ayağı bu kaynakla **kapanmadı**. Kapanması için
+bültenin görselden okunması (OCR) ve okunanın bağımsız olarak doğrulanması
+gerekir — yolu §10.3'te.
+
+### 6D.4 Doktrinin uygulanışı
+
+| İlke | Uygulanışı |
+|---|---|
+| 2 — kesin olmayan elenir, doldurulmaz | İkramiyesi alınamayan hafta `payout: null` taşır; kademe alanı `null` ise o kademe **atlanır, sıfır sayılmaz** — "kimse bilemedi" ile "veri yok" ayrı şeylerdir |
+| 4 — çelişki gizlenmez | Kapanış tarihi iki uçtan farklı gelirse biri seçilmez; ikisi de saklanır ve `data_warnings`a yazılır |
+| 5 — doğrulanmadan yazılmaz | `dogrula()` mükerrer hafta/kimlik, tek dosyada iki sezon, ters sıralı kademe ve negatif değer arar; tutmuyorsa **hiçbir dosya yazılmaz** |
+| 6 — türetilmiş sürümlenir, ham sürümlenmez | Sezon JSON'ları ve rapor git'e girer; `_kaynak/` git dışıdır ve tek komutla yeniden üretilir |
+| 7 — kaynak dürüstlüğü | `meta.does_not_contain` alanı her dosyanın içinde sınırını yazar |
+
+### 6D.5 `st_history` ile karışmaz
+
+İki veri seti aynı sezonu anlatabilir ve bu **bilinçlidir**: kökenleri farklıdır.
+`st_history_2025_26.json` kupon sonuç arşividir (üçüncü parti payload'dan),
+`sportoto_arsiv/2025_26.json` ikramiye arşividir (resmî uçtan). Biri ötekinin
+yerine geçmez ve `/api/stats` yoluna yalnızca birincisi girer.
+
+Ayrımın ilk kazancı ölçüldü ve **§10.4**'te: 2025/26'nın 41 haftası iki bağımsız
+kaynakta yan yana geldi, hepsi eşleşti ve `close_date` alanının iki kaynakta
+**farklı anlama geldiği** ortaya çıktı.
+
+---
+
+## 6D-ek. Korpus derinliği — ölçüldü, ama varsayılan yapılmadı
+
+`build_egitim.py` bugün 4 sezon × 22 lig çekiyor (31.103 maç). Altı sezona
+çıkarmak **denendi ve ölçüldü**:
+
+| Ölçüm | 4 sezon | 6 sezon (1920 + 2021) |
+|---|---:|---:|
+| Maç | 31.103 | **45.652** (+%47) |
+| Kapanış oranı | %100 | **%100** |
+| Açılış+kapanış çifti | %99,99 | **%100** |
+| Bahisçi dörtlüsü | %99,99 | **%99,9** |
+| Maç istatistiği | %93,01 | **%93,2** |
+
+**Şema hiç bozulmuyor.** Tavan da ölçüldü: football-data'nın tam şeması
+**2019/20'de başlıyor** — `mmz4281/1819/T1.csv` başlığında yalnızca
+`PSCH/PSCD/PSCA` ve eski `Bb*` toplayıcıları var, `B365C`/`MaxC`/`AvgC`
+yok. 1819 ve öncesi eklenirse `acilis_*`/`bahisci_*` kesitleri seyrelir ve
+A1/A2 ölçümleri sezona göre dengesizleşir — §6A.7'nin BW/WH/BF'yi dışarıda
+bırakma gerekçesiyle aynı gerekçe.
+
+### Neden varsayılan yapılmadı
+
+Korpusu büyütmek **serbest bir kazanç değildir**:
+
+1. **Ölçüm kayıtları bu korpusa çıpalı.** Yalnız
+   [`ISTATISTIK_YOL_HARITASI.md`](ISTATISTIK_YOL_HARITASI.md)'de "31.103"
+   **53 yerde** geçiyor ve bunların çoğu bir *ölçümün kaydıdır* ("31.103
+   maçta şu çıktı"). Korpusu değiştirip o satırları olduğu gibi bırakmak
+   onları yanlış yapar; sayıları değiştirmek ise **yapılmamış bir ölçümü
+   yapılmış gibi göstermek** olur. İkisi de bu deponun yasakladığı şeydir.
+2. **`artefakt.py`** eğitilmiş modelin korpus sha256'sını taşıyor;
+   `health` bayatlık görünce **kırmızı** yanıyor.
+3. **Kazanç ölçülmüş ve küçük.** README §1.1 ve §10 aynı türden daha çok
+   verinin Brier'i büyütmediğini zaten ölçtü (kalan etki 0,0005–0,0015).
+   Büyüyen şey **istatistiksel güçtür, sinyal değil**.
+
+Bu yüzden derinleştirme bir **komut seçeneğidir**, varsayılan değil:
+
+```bash
+python scripts/build_egitim.py --sezonlar 1920 2021 2122 2223 2324 2425
+```
+
+Varsayılanı çevirmek isteyen **önce §3.x ölçümlerini yeniden koşmalı** ve
+sayıları kaydıyla birlikte güncellemelidir. O ayrı bir iştir ve bu belgede
+açık bir iş olarak durur.
+
+---
+
+## 6E. Havuz — ikramiye tablosundan geri hesap
+
+### 6E.1 Ölçülen bölüşüm: 35 / 20 / 20 / 25
+
+Havuzu hesaplanabilen **222 haftada** kademe havuzlarının birbirine oranı:
+
+| Oran | Beklenen | Sonuç |
+|---|---|---|
+| 14 ÷ 13 | 1,00 | 218 haftanın **214'ünde birebir**; kalan 4'ü binde birin altında |
+| 12 ÷ 13 | 1,25 | ortanca **tam 1,2500** |
+| 15 ÷ 13 | 1,75 | 176 haftanın **135'inde tam**, hiçbirinde **altında değil** |
+
+Bölüşüm sabit bir kuraldır ve `spor_toto/havuz.py::BOLUSUM`'da durur.
+
+### 6E.2 Devir 15'e özgü değildir — model bir kez düzeltildi
+
+İlk model yalnızca 15 kademesini devirli sayıyordu ve 222 haftanın **10'unu**
+"bölüşüm bozuk" diye işaretliyordu. Veri aksini gösterdi: **kazanansız kalan
+her kademe** payını ileri taşır ve ertesi hafta **aynı kademe** fazlasıyla
+döner.
+
+| Hafta | Kazanansız kademe | Ertesi hafta o kademe ÷ birim |
+|---|---|---|
+| 2021/22 hf 47 → 48 | 15 ve 14 | **1,58** |
+| 2022/23 hf 28 → 29 | 15 ve 14 | **1,03** |
+| 2025/26 hf 7 → 8   | 15 ve 14 | **1,67** |
+| 2025/26 hf 45 → 46 | 15 ve 14 | **1,59** |
+
+Model genelleştirilince açıklanamayan hafta **10'dan 2'ye** düştü.
+
+İkinci bir düzeltme daha gerekti ve o da ölçümden geldi: devir eşiği önce
+**1 TL mutlak**tı ve 176 haftanın 174'ü "devirli" görünüyordu. Sebep kuruş
+yuvarlaması — kişi başı ikramiye kuruşa yuvarlanıp on binlerce kazananla
+çarpılınca hata binlerce TL'ye çıkıyor. Eşik göreliye çevrildi ve ayrım
+temiz: gürültünün en büyüğü birimin **1,01e-3**'ü, gerçek devrin en küçüğü
+**4,82e-2**'si — arada üç mertebe boşluk var.
+
+### 6E.3 Zincir kapanıyor — modelin bağımsız kanıtı
+
+Bölüşüm oranları tek bir haftanın **içinden** okunur. Zincir ise **ardışık
+iki haftayı** birbirine bağlar, yani bağımsız bir sınamadır:
+
+| Ölçüm | Sonuç |
+|---|---|
+| Devreden haftanın ardından devir alan hafta | **41** |
+| gelen ÷ giden oranı, ortanca | **1,000** |
+| birebir eşit (%2 içinde) | **36 / 41** |
+| oranı 1'in **altına** düşen | **0 / 41** |
+
+Kalan 5'i ardışık devirdir (üst üste kazanansız kapanan haftalar). Oranın
+1'in altına hiç inmemesi kritiktir: devir ancak **ekleyebilir**, düşüremez.
+
+### 6E.4 Elle girilen kayıtla çapraz doğrulama
+
+2026/27 2. hafta için hesap **42.842.867,18 TL** veriyor; elle girilen kayıt
+(§6B, ekran görüntüsünden) **42.842.867,72 TL** yazıyor. Fark **0,54 TL** —
+42,8 milyonda, yani milyonda 0,013 — ve bu, 14-kademesinin kendi kuruş
+yuvarlaması payının (±0,61 TL) içindedir.
+
+> **Bu satır bir kez fazla iddialı yazıldı.** Önce "kuruşuna kadar aynı"
+> denmişti; o sırada birim 13-kademesiydi ve hata 33,12 TL'ydi, sıfır değil.
+> Birim seçimi hassaslaştırılınca (kazananı az olan kademe daha az yuvarlama
+> hatası taşır) 0,54 TL'ye indi. Ölçülen sayı ne ise o yazılır.
+
+### 6E.5 Ne vermiyor
+
+- **Brüt hasılat değil, DAĞITILAN havuz.** Aradaki fark Spor Toto'nun payıdır
+  ve bu veriden çıkarılamaz. Modül her yerde `dagitilan` der, "hasılat" demez.
+- **Kazananlar kolon sayısıdır, bilet değil** (§3.40). Bu ayrım çözülmedi.
+- **Açıklanamayan 2 hafta düzeltilmez, işaretlenir** (doktrin 4): 2024/25
+  hf 43 ve 2025/26 hf 10 — ikisinde de 12-kademesi beklenenin **altında**,
+  yani devir değil gerçek sapma.
+
+---
+
+## 6F. Bülten görseli — OCR boru hattı
+
+### 6F.1 Neden OCR, ve neden burada meşru
+
+§6D resmî arşivi kurdu ama maç listesini vermedi: haftanın 15 maçı yalnızca
+bir bülten **görseli** olarak yayımlanıyor. §10.3 bunu geçmiş kupon verisinin
+önündeki tek engel olarak yazmıştı.
+
+Görseller **makine üretimidir**: sabit şablon, yüksek kontrast, numaralı
+satırlar, `EV - DEPLASMAN` biçimi. OCR burada bir umut değil, uygun bir araç.
+
+Ayarlar denenerek seçildi, varsayılmadı:
+
+| Ayar | Gerekçe |
+|---|---|
+| `--psm 4` | Sütunlu metin. `psm 6` aynı görselde 15 satırın 9'unu okudu ve adları bozdu ("BAŞAKŞEMİM FK"); `psm 11`/`12` tabloyu hiç görmedi |
+| ×3 ölçek | Küçük görseller (595×756) ×1'de 9/15, ×2'de 14/15, ×3'te 15/15 |
+| `-l tur` | İ, Ş, Ğ, Ç, Ö, Ü olmadan adlar kullanılamaz |
+
+### 6F.2 Doktrin 2 burada gevşemez, sıkışır
+
+**OCR çıktısı bir veri değil, bir arama anahtarıdır.** Betik okuduğunu
+"düzeltmez", eksiği tamamlamaz, benzer isme yuvarlamaz. Harf düzeltmesi
+yapılmaz — "BAŞAKŞEMİM"i "BAŞAKŞEHİR"e çevirmek tam olarak yasak olan şeydir;
+o iş §6G'de fikstüre karşı yapılır ve orada tutmayan maç **düşer**.
+
+Bir kural bir kez **ihlal edildi ve test yakaladı**: biçimsel temizlik sondaki
+noktayı da kırpıyordu ve "A.Ş." → "A.Ş" oluyordu. Bu biçimsel değil içerik
+değişikliğidir; kural daraltıldı, nokta artık kırpılmıyor.
+
+### 6F.3 Sıra kilidi — §7.4'ün tekrarına karşı
+
+En büyük risk sıradır: OCR bir satırı düşürebilir ve düşen satır sessizce
+sırayı kaydırır. Ölçüldü — sol sütundaki küçük rakam görsele göre düşüyor
+(2023/24 5. haftada 15 maç adının tamamı doğru okundu, numaraların yalnızca
+3'ü çıktı).
+
+Numara **konumdan kurtarılır ama uydurulmaz**, ve iki kilit bunu güvenli
+kılar:
+
+1. **Tam olarak 15 satır bulunmalı.** 14 ya da 16'da hafta elenir — hangisinin
+   kaydığı bilinemez.
+2. **Numarası okunabilen her satır konumuyla uyuşmalı.** Bir tanesi bile
+   tutmuyorsa hafta elenir.
+
+### 6F.4 Kapsama
+
+| Ölçüm | Sonuç |
+|---|---|
+| Bülten görseli olan hafta | 224 |
+| Görseli erişilebilir olan | 194 (2021/22 ve 2022/23'ün çoğu **404**) |
+| **15/15 okunan** | **156** |
+| Erişilebilir görsellerin okunma oranı | **%80,4** |
+
+### 6F.5 Bağımlılık ayrı tutuldu
+
+Bu, deponun **stdlib dışına çıkan tek** üretim betiğidir: `tesseract` (sistem
+paketi) + `pillow`. Bu yüzden `pyproject.toml`da `ocr` **ekstrasıdır**,
+varsayılan kuruluma girmez; `check.sh` ve CI onu kurmaz; testler bağımlılık
+yoksa OCR'a dokunanları **atlar** ve saf ayrıştırma testleri her yerde koşar.
+Üretilen çıktı sürümlendiği için veriyi **okumak** için kimsenin tesseract
+kurması gerekmez.
+
+## 6G. Geçmiş sezon — bülten + fikstür birleştirme
+
+### 6G.1 Eşleştirme burada `build_odds.py`dan zordur
+
+`build_odds.py` eşleştirirken **skoru biliyor** ve onu ayırt edici olarak
+kullanıyor. Burada skor **aranan** şeydir, dolayısıyla o kilit yok. Yerine
+üç kilit kondu, üçü de "şüpheliyi ele" yönünde:
+
+1. İki taraf da eşiği geçmeli (`0,72` / ortalama `0,82`).
+2. **Aday tek olmalı** — pencerede eşiği geçen ikinci bir aday varsa maç
+   düşer. "En iyisini seç" demek iki benzer adlı takım arasında sessizce kura
+   çekmektir.
+3. 15/15 tamamlanmayan hafta düşer.
+
+`sadelestir`/`benzerlik` yeniden yazılmadı, `build_odds.py`dan içe aktarıldı.
+
+### 6G.2 Zaman penceresi bir AYAR değil, bir KORUMA
+
+Eşleşmeyen maçların büyük bölümü **ertelenmiş** maçlardır ve fikstürde
+haftalar/aylar sonra durur:
+
+| Bültende | Gerçekte oynandığı |
+|---|---|
+| hf 33 · 2024-03-15 · Atalanta – Fiorentina | **2024-06-02** |
+| hf 37 · 2024-04-12 · Monaco – Lille | 2024-04-24 |
+| hf 3 · 2023-08-25 · Ad. Demirspor – Beşiktaş | 2023-09-27 |
+| hf 4 · 2023-09-01 · Ath Madrid – Sevilla | **2023-12-23** |
+
+Ertelenen maçın aylar sonraki sonucu **o haftanın kupon sonucu değildir.**
+Pencereyi genişletmek bu satırları "eşleşti" gösterir ve sessizce yanlış bir
+1/0/2 dizisi üretir. Bu yüzden pencere dışında kalan maç düşer, onunla
+birlikte hafta düşer.
+
+### 6G.3 Türkçe ad tablosu — ölçülerek kuruldu
+
+Bülten yabancı kulüpler için Türkçe adlar kullanıyor (MARSILYA, BAYERN MÜNİH,
+B. LEVERKUSEN, WOLVERHAMPTON). 156 haftada eşleşmeyen adlar sayıldı ve
+yalnızca football-data'da karşılığı **doğrulananlar** tabloya girdi. Tablo bir
+"yakınsatma" değil, doğrulanmış bir sözlüktür; tabloda olmayan ad olduğu gibi
+bulanık eşleştirmeye gider.
+
+### 6G.4 Kapsama ve yapısal tavan
+
+| Ölçüm | Sonuç |
+|---|---|
+| Bülten okunan hafta | 156 |
+| **15/15 eşleşen hafta** | **107** (4 sezon) |
+| Kupon maçı | **1.605** |
+
+Elenenlerin çoğu **milli takım haftalarıdır**: football-data yalnızca kulüp
+liglerini kapsıyor, milli maçları hiç taşımıyor. Bu bir eşleştirme sorunu
+değil, kaynağın yapısal sınırıdır ve kapanmaz.
+
+### 6G.5 Çapraz doğrulama — ve bulunan bir SIRA ayrışması
+
+İki boru hattı birbirini hiç görmeden aynı sezonu üretiyor:
+
+    eski: sportototahmin hafta payload'ı (üçüncü parti Nuxt JSON)
+    yeni: resmî bülten görseli → OCR → football-data fikstürü
+
+| Ölçüm | Sonuç |
+|---|---|
+| Ortak hafta (2025/26) | 29 |
+| **1/0/2 dizisi birebir aynı** | **28 / 29** |
+
+**Ayrışan tek hafta bir sonuç hatası değil, bir SIRA ayrışmasıdır.** 2025/26
+30. haftada iki kaynak **aynı 15 maçı** taşıyor (skor kümeleri birebir aynı)
+ama kupon sırası farklı: bültende Göztepe–Eyüpspor **6.** sırada, payload'da
+**15.** sırada; aradaki dokuz maç birer kayıyor.
+
+Bu §7.4'ün v1 vakasıyla **aynı sınıfta** bir bulgudur ve doktrin 4 gereği
+düzeltilmedi: hangi kaynağın haklı olduğu ölçülmedi, fark raporlanıyor.
+Bekçi: `test_gecmis_sezon.py::test_ayrisan_hafta_SIRA_farkidir_sonuc_farki_degil`
+— maç kümesi de ayrışırsa sorun sırada değil eşleştirmededir ve o test bunu
+ayırt eder.
+
+> **Not:** resmî bülten görseli Spor Toto'nun kendi yayınıdır, payload üçüncü
+> partidir. Doktrin 3 ("sıra kaynağın kendi sırasıdır") bu ayrışmada resmî
+> kaynağı işaret eder — ama bu bir **hipotezdir**, ölçüm değil, ve öyle
+> yazılmıştır.
+
+### 6G.6 Yeni bir sızıntı riski doğdu — ve görünür kılındı
+
+Kupon değerlendirme seti 2022/23–2025/26'yı kapsıyor. Eğitim korpusunun
+varsayılan sezonları ise `2122, 2223, 2324, 2425`. **Kesişim üç sezon:**
+`2223, 2324, 2425`.
+
+Bu bugün aktif bir hata değildir — yeni set henüz hiçbir ölçüme bağlı değil.
+Ama **sessiz kalırsa hataya dönüşür**: o sezonların kupon haftaları üzerinde
+ölçülen bir tahminci, aynı maçlarda *eğitilmiş* olur ve isabet olduğundan iyi
+görünür. §6A.3 aynı gerekçeyle 2025/26'yı korpusun dışında bırakmıştı; o
+gerekçe şimdi üç sezon daha için geçerli.
+
+Doktrin 4 gereği çelişki gizlenmedi, **veriyle birlikte taşınıyor**:
+`egitim_rapor.json` artık `kupon_sezonlari`, `kesisim` ve `kesisim_notu`
+alanlarını yazıyor, `build_egitim.py` da koşum sonunda ekrana uyarı basıyor.
+
+**Kural:** kesişimdeki sezonların kupon haftalarında ölçüm yapılacaksa
+`evaluate.sezon_anahtari` (sezon dışarıda bırakmalı) kullanılmalıdır; düz
+`capraz_olc` sızdırır. Kesişimi tamamen boşaltmak isteyen `--sezonlar` ile o
+sezonları çıkarır — ama bu korpusu 31 binden ~8 bine düşürür, yani bedeli
+ağırdır ve karar ölçümü yapanındır.
+
+### 6G.7 `st_history_2025_26.json` ile karışmaz
+
+Üretilen dosyalar `data/st_history/<sezon>.json` altındadır; eski dosya
+yerinde durur ve `/api/stats` ile 27 değişmez ona bakmaya devam eder. Yeni
+dizin ayrı bir köken sınıfıdır (`origin: turetilmis`) ve meta'sında bunu
+yazar.
+
+---
+
+## 6H. Oran arşivi artık sezonlu
+
+§5'in oran boru hattı tek sezona çiviliydi ve **üç sabiti** vardı; üçü de
+sessiz hataya açıktı:
+
+| Sabit | Sessiz hata |
+|---|---|
+| `SEZON = "2526"` | başka sezon istenemezdi |
+| `odds_2025_26.csv` (sabit ad) | ikinci sezon birincinin **üstüne** yazardı |
+| ortak önbellek dizini | `indir()` var olan dosyayı atlar → başka sezon istendiğinde **sessizce 2025/26 CSV'leri** okunurdu |
+
+Üçü de sezondan türetiliyor artık (`--sezon`, `sezon_dosya_adi`,
+`_cache_dizini`). SQLite kopyası da ayrıldı: ortak dosyada `mac` ve `oran`
+tablolarının anahtarı `(week, no)` ve sezon bileşeni yok, yani ikinci sezon
+birincinin satırlarını `INSERT OR REPLACE` ile ezerdi.
+
+**Varsayılan yol hiç oynamadı:** `--sezon 2526` ile üretilen
+`odds_2025_26.csv` byte byte aynı çıktı, rapor adı da değişmedi.
+
+### Kapsama — ve neden yeni sezonlarda %100
+
+| Sezon | Eşleşen | Tam hafta |
+|---|---|---|
+| 2022/23 | 255 / 255 (**%100**) | 17 / 17 |
+| 2023/24 | 465 / 465 (**%100**) | 31 / 31 |
+| 2024/25 | 450 / 450 (**%100**) | 30 / 30 |
+| 2025/26 (eski kayıt) | 567 / 615 (%92,2) | 36 / 41 |
+
+Sebep yapısaldır: §6G'nin ürettiği takım adları **zaten football-data
+adlarıdır** — eşleştirme orada yapıldı ve `home`/`away` alanlarına kaynağın
+kendi yazımı kondu. Üstüne `build_odds.py` skoru da ayırt edici olarak
+kullanıyor. Yani bu %100 bir şans değil, iki aşamalı eşleştirmenin sonucu.
+
+### Sezonlar birleştirilmez
+
+`odds.py`nin anahtarı `(week, no)` ve sezon bileşeni **yok**. Bu yüzden her
+sezon kendi dosyasında durur ve `load_odds(sezon=…)` seçer.
+`season_1x2_summary` de sezon almak zorundadır: `weeks` bir hafta *numarası*
+listesidir, sezon taşımaz — sezon geçirilmezse başka bir sezonun arşivinde
+aynı numaralar bulunur ve özet sessizce başka bir sezonu anlatırdı.
+
 ---
 
 ## 7. Kalite güvencesi
@@ -917,8 +1369,12 @@ tablolar (script'in bastığı lig dağılımı) bunu yakalayan şeydi.
 | `test_api_backtest.py::test_diger_pazarlar_geri_teste_de_sizmaz` | 1X2 kuralı geri testte de geçerli |
 | `test_snapshot_iddaa.py::test_askidaki_ayak_maci_eler` | 1.00 fiyat sayılmaz |
 | `test_snapshot_iddaa.py::test_farkli_snapshot_birikir` | Arşiv gerçekten birikiyor, üstüne yazmıyor |
+| `test_sportoto_arsiv.py::test_yayindaki_arsivde_kupon_dizisi_YOK` | Resmî arşiv maç listesi taşımıyor — sınır sessizce kaymasın |
+| `test_sportoto_arsiv.py::test_eksik_kademe_sifir_sayilmaz` | "kimse bilemedi" ile "veri yok" ayrı kalır |
+| `test_sportoto_arsiv.py::test_hafta_no_tahmin_edilmez` | Hafta numarası uydurulmaz (doktrin 2) |
+| `test_sportoto_arsiv.py::test_celisen_kapanis_tarihi_raporlanir` | İki uç çelişirse biri sessizce seçilmez (doktrin 4) |
 
-Toplam 85 test bu üç veri setini korur (backend paketi 1.701 test). `python -m spor_toto.health`
+Toplam 113 test bu dört veri setini korur (backend paketi 1.842 test). `python -m spor_toto.health`
 27 değişmez çalıştırır; `oran_arsivi` ve `geri_test` bu katmanı, `tahmin_referanslari`
 tahmin katmanının ölçüm koşumunu korur.
 
@@ -939,7 +1395,17 @@ tahmin katmanının ölçüm koşumunu korur.
 ## 8. Sınırlar
 
 1. **Tam sezon değil:** 41 / ~53 hafta. Eksik skorlu haftalar bilinçli olarak yok.
-2. **Tek sezon:** 2025/2026. İstatistiksel güç sınırlı — 41 hafta küçük örneklem.
+
+   > **Genişledi (2026-08-30).** Bültenden okunup fikstüre bağlanan set (§6F, §6G)
+   > **4 sezon · 107 hafta · 1.605 maç** ekledi. Yine "tam sezon" değil ve olmayacak:
+   > tavan **milli takım haftalarıdır** — football-data yalnızca kulüp liglerini
+   > kapsıyor ve o haftalar bu yolla hiçbir zaman gelmeyecek. Ayrıca bültenin
+   > listelediği ama **ertelenen** maçı olan hafta da bilinçli olarak düşer (§6G.2).
+
+2. **Tek sezon değil, artık dört.** Bu madde "tek sezon: 2025/2026, 41 hafta küçük
+   örneklem" diyordu. Kupon değerlendirme seti **148 haftaya** çıktı (41 eski +
+   107 yeni, 29'u aynı sezonun iki bağımsız okuması). İstatistiksel güç hâlâ
+   sınırlı ama sınır artık "tek sezon" değil.
 3. **Milli maç haftalarında oran yok** (5, 10, 15). Oran blokları o haftalarda boş; kapsama
    hiçbir zaman %100 olmayacak.
 4. **Geçmiş iddaa oranı yok** (§3.2). Piyasa oranı vekildir; ölçülen marj farkı (%17,2 → %7,26)
@@ -1019,12 +1485,28 @@ Amaç tahmine döndüğü için iki sınır daha kritik hale geldi ve ayrıca ya
    `seyahat` için StatsBomb'un `stadium` nesnesinde koordinat yok (yalnız `id`, `name`,
    `country`); `kadro_sakatlik` için `lineups/` maç sonrası veridir ve itiraz zaten kaynak
    değil eğitim/servis ayrışmasıydı.
-10. **İkramiye ve havuz verisi: sınır daraldı, kalkmadı.** Dört üretim veri setinin hiçbiri
-   haftalık kazanan adedini veya ikramiye tutarını taşımıyor — hafta kaydı yalnızca
-   `week, close_date, season, n1/n0/n2, results, matches` içerir. **Beşinci bir set bu boşluğu
-   doldurmaya başladı** ve kökeni ötekilerden farklı: elle giriliyor (§6B, PR #14). Spor Toto
-   müşterek bahis olduğu için **kazanma oranı** ile **beklenen getiri** farklı şeylerdir;
-   ikincisi **hâlâ ölçülmedi** ama artık ölçülemez değil (§10.1).
+10. **İkramiye verisi: sınır kalktı. Havuz verisi: kalkmadı.** Bu madde önce "dört üretim
+   veri setinin hiçbiri haftalık kazanan adedini veya ikramiye tutarını taşımıyor" diyordu,
+   sonra §6B'nin elle girilen sınıfıyla n = 3'e çıkmıştı. **Artık resmî uçtan 223 hafta
+   geliyor** (§2.4, §6D) — kademe başına kazanan adedi ve kişi başı ikramiye, altı sezon.
+
+   > **Havuz da geldi — ama türetilerek, ve hasılat olarak değil.** Bu satır önce
+   > "haftalık hasılat resmî uçta yok" diyordu; doğru ama eksikti. Kademe havuzu
+   > `kazanan × kişi_başı`dır ve kademeler arası bölüşüm **sabit** çıkıyor
+   > (**35/20/20/25**, 222 haftada ölçüldü) — yani tablo dağıtılan havuzu zaten
+   > taşıyor. `spor_toto.havuz` onu geri hesaplıyor; ayrıntı §6E.
+   >
+   > **Kalan tek gerçek eksik: oynanma payı.** Hiçbir açık uçta yok, elle giriliyor
+   > (§6B), n = 3. Faz B'nin sorusu ikramiye × oynanma payı çarpımını istiyor;
+   > ikramiye tarafı 222 hafta, oynanma tarafı 3 hafta. **Darboğaz yer değiştirdi.**
+   >
+   > Değişmeyen iki uyarı: dağıtılan havuz **brüt hasılat değildir** (Spor Toto'nun
+   > payı bu veriden çıkarılamaz), ve kazanan adedi **kolon** sayısıdır, bilet değil
+   > — §3.40'ın yığılma sorunu çözülmedi, yalnızca 222 hafta üzerinde ölçülebilir
+   > hale geldi.
+
+   Spor Toto müşterek bahis olduğu için **kazanma oranı** ile **beklenen getiri** farklı
+   şeylerdir; ikincisi **hâlâ ölçülmedi** ama artık örneklem darlığı bahane değil (§10.1).
 
 ---
 
@@ -1045,11 +1527,16 @@ python scripts/snapshot_iddaa.py             # bültenin anlık görüntüsünü
 python scripts/snapshot_iddaa.py --dry-run   # yazmadan özet
 python scripts/snapshot_iddaa.py --kaynak d.json   # kaydedilmiş ham dosyadan
 
+python scripts/build_sportoto_arsiv.py       # RESMI arsiv: hafta + ikramiye (6 sezon, ~4 dk)
+python scripts/build_sportoto_arsiv.py --dry-run          # yazmadan kapsama raporu
+python scripts/build_sportoto_arsiv.py --sezon 2023/2024  # tek sezon
+
 python scripts/build_xg.py                   # xG kalibrasyonunu olc (~25 dk, agli)
 python scripts/build_xg.py --dry-run         # kapsama + katsayi ozeti, yazmadan
 python scripts/build_xg.py --limit 40        # kucuk kesitle deneme
 
-pytest -q tests/test_history.py tests/test_odds.py tests/test_snapshot_iddaa.py tests/test_xg.py
+pytest -q tests/test_history.py tests/test_odds.py tests/test_snapshot_iddaa.py \
+       tests/test_xg.py tests/test_sportoto_arsiv.py
 ```
 
 Üç script de doğrulamadan dosya yazmaz; testler yazıldıktan sonra aynı şeyi tekrar denetler.
@@ -1090,10 +1577,12 @@ değil, **tahminin ölçülebilir hale gelmesini sağlayan veridir.**
 | **✔** | **A2 — Bahisçi kırılımı** (§6A.7) | **Yapıldı.** Dört kaynak taşınıyor; kapsaması sezona göre değişenler bilerek dışarıda |
 | **✔** | **A3 — Türetilebilir özellikler** | **Yapıldı.** Dördü türetildi ve geçmedi; seyahat ile derbi türetilemedi. Faz A **(b) ile kapandı** |
 | **1** | **Fikstür verisi** (kupa + Avrupa) | **Hiç yok.** A3'ün kör noktası: korpus 22 ligi görüyor, kupa/Avrupa maçlarını görmüyor. Tahmin eksenini yeniden açabilecek üç kaynaktan biri |
-| **2** | **İkramiye / havuz verisi** (§10.1) | **Beşinci veri seti kuruldu** (§6B, PR #14). Kaynak bulundu, ilk iki hafta girildi; kalan iş **biriktirme ve yanlılık ölçümü** — n = 2 |
-| **3** | **S1'in kupon ayağı** | **Kapalı** (§10.2). Sonuç kaynağı sezon parametresi taşımıyor + `robots.txt` kısıtı |
+| **✔** | **İkramiye verisi** (§10.1) | **Yapıldı.** Resmî uçtan 6 sezon · 225 hafta · **223 ikramiye tablosu** (§2.4, §6D). n = 3 → 223. Kalan iş ölçüm, veri değil |
+| **2** | **Havuz + oynanma payı** (§10.1) | **Kısmen açık.** Haftalık hasılat resmî uçta yok; oynanma payı hiçbir açık uçta yok ve §6B'de elle giriliyor |
+| **✔** | **S1'in kupon ayağı** | **Yapıldı** (§6F, §6G). 4 sezon · 107 hafta · 1.605 maç. Çapraz doğrulama 28/29 birebir. Tavan: milli takım haftaları |
 | **4** | **S3 — İddaa arşivi olgunlaşınca** | **Birikmeyi bekliyor.** Boru hattı ve haftalık tetik çalışıyor (§6.4); ~10 snapshot sonra eşleştirme anlamlı olur |
 | **5** | **S2 — Geri testi zenginleştir** | **Hazır.** Ek veri gerekmez |
+| — | **Korpus derinliği** | **Ölçüldü, açık bırakıldı** (§6D-ek). 6 sezon 45.652 maç; varsayılan yapmak §3.x ölçümlerinin yeniden koşulmasını gerektirir |
 | — | **S4 — Küçük işler** | Veri tarafı yok |
 
 **Örneklem sorununun yarısı çözüldü.** Tahminci ölçümü için gereken büyük örneklem korpusla
@@ -1102,7 +1591,11 @@ geliyormuş. Ama kalan etki 0,0005–0,0015 Brier — 31 binde anlamlı, 540 kup
 Daha çok **aynı türden** veri bu sayıyı büyütmez; büyütecek olan şey **piyasada olmayan bir
 girdidir** (öncelik 1).
 
-### 10.2 S1'in kupon ayağı neden kapalı
+### 10.2 S1'in kupon ayağı neden kapalıydı
+
+> **Durum değişti (2026-08-30).** Aşağıdaki iki engel hâlâ geçerli ama artık
+> tek yol değiller: resmî arşiv (§6D) haftaların kendisini veriyor, eksik olan
+> yalnızca **maç listesi**. Yeni durum ve yol §10.3'te.
 
 İki bağımsız engel ölçüldü:
 
@@ -1117,7 +1610,20 @@ girdidir** (öncelik 1).
 olarak** bekliyor. Veri geldiğinde altyapı hazır: `evaluate.capraz_olc` "bir sette eğit,
 ötekinde ölç" yapıyor ve `sezon_anahtari` kupon setinde de çalışır.
 
-### 10.1 İkramiye ve havuz — ihtiyaç kapandı, ölçüm açık
+### 10.1 İkramiye ve havuz — ikramiye geldi, havuz açık
+
+> **Durum güncellendi (2026-08-30).** Bu bölüm "veri var, ölçüm yok — n = 2"
+> diye yazılmıştı ve o sayı elle girilen haftalardan geliyordu. Resmî arşiv
+> boru hattı (§6D) kurulunca **n = 223** oldu: altı sezon, kademe başına
+> kazanan adedi ve kişi başı ikramiye. Aşağıdaki argümanların hiçbiri
+> değişmedi — yalnızca "n = 2 iken hiçbir sayı sonuç değildir" cümlesinin
+> geçerliliği bitti. **B2 (popülerlik modeli) artık örneklem darlığıyla
+> gerekçelendirilemez.**
+>
+> Değişmeyen iki eksik: **haftalık hasılat** (havuzun kendisi) resmî uçta yok,
+> ve **oynanma payı** hiçbir açık uçta yok — o hâlâ §6B'nin elle girişinde.
+> §3.40'ın "kazananlar kişi değil kolon" bulgusu da aynen duruyor; 223 hafta
+> onu çözmüyor, ölçülebilir kılıyor.
 
 Yeni amaç iki farklı hedefi birbirine karıştırmaya açıktır ve veri tarafı bu ayrımı
 zorunlu kılar:
@@ -1206,12 +1712,88 @@ Sonuç girişi bu yüzden **üç parçalıdır** ve üçü aynı anda girilir:
 Bu yol pozitif getiri garanti etmez; ölçülebilir hale getirdiği şey, bu belgenin önceki
 sürümünde hakkında hiçbir şey bilinmeyen bir boyuttur.
 
+### 10.3 Kupon ayağı — KAPANDI
+
+> **Durum (2026-08-30).** Bu bölüm "kalan tek parça maç listesi" diye
+> açılmıştı. O parça §6F'de (bülten OCR) okundu, §6G'de fikstüre bağlandı ve
+> ayak **kapandı**: 4 sezon · **107 hafta** · **1.605 kupon maçı**, tam 1/0/2
+> dizisiyle. Aşağıdaki tablo o günün durumunu anlatıyor ve kayıt olarak
+> duruyor; güncel sayılar §6G.4'te.
+>
+> Kapanmayan tek şey **yapısal tavan**: milli takım haftaları football-data'da
+> hiç yok ve o haftalar bu yolla hiçbir zaman gelmeyecek.
+
+Resmî arşiv (§6D) §10.2'nin denklemini değiştirdi. Geçmiş bir kupon haftası
+dört parçadır ve üçü artık elde:
+
+| Parça | Durum | Kaynak |
+|---|---|---|
+| (a) Hangi hafta, ne zaman kapandı | **Var** | Resmî uç, 6 sezon · 225 hafta |
+| (b) İkramiye tablosu | **Var** | Resmî uç, 223 hafta |
+| (c) Hangi 15 maç, kupon sırasıyla | **YOK** | Yalnızca bülten **görseli** (2023/24'ten itibaren) |
+| (d) Skor ve 1/0/2 | **Türetilebilir** | (c) gelirse `build_odds.py` eşleştiricisiyle |
+
+**(d)'nin türetilebilir olması kilit noktadır ve ölçülmüştür.** `build_odds.py`
+maçları tarih ±1 gün + **birebir skor** + bulanık takım adıyla eşleştiriyor ve
+2025/26'da 615 maçın 567'sini tutturdu (%92,2). Yani bir kaynağın skor vermesi
+**gerekmiyor**; 15 takım çiftini doğru sırayla vermesi yetiyor.
+
+Dolayısıyla kalan iş tek bir şeye indi: **bülten görselinden 15 maçın okunması.**
+
+**Ama doktrin 2 burada gevşemez, sıkışır.** OCR çıktısı bir veri değil, bir
+**arama anahtarıdır**: okunan ad football-data'nın o tarihteki fikstürüne
+birebir oturmazsa maç düşer, 15/15 tamamlanmazsa hafta düşer. Uydurma yok,
+"yakın isim" yok, elle düzeltme yok. Bu kural olmadan OCR bu depoya giremez —
+çünkü sessizce yanlış bir kupon dizisi üretmek, hiç veri olmamasından kötüdür
+(§7.4'ün v1 sıra hatası tam olarak buydu).
+
+Ölçülmesi gereken sayı da bellidir ve peşin söylenmelidir: **kaç hafta 15/15
+tamamlanıyor.** Görseller elle yüklenmiş, çözünürlükleri ve biçimleri tutarsız
+(`whatsapp-image-2024-08-02-at-111013.jpeg`, `screenshot-2025-08-02-at-215731.png`,
+`toto2.jpg`). Bu oran düşük çıkarsa iş bir kaynak sorunu değil, bir sınırdır ve
+öyle yazılır.
+
+Kapsama tavanı da şimdiden bellidir: görseller **2023/2024'ten itibaren**
+erişilebiliyor, 2021/22 ve 2022/23 için 404. Yani bu yol en iyi ihtimalle
+**~160 hafta** getirir; 225'in tamamını değil.
+
+### 10.4 Ayrımın ilk kazancı: 41 haftalık çapraz doğrulama — ve ölçülen bir anlam farkı
+
+§7.2'nin "bağımsız çapraz doğrulama"sı tek haftaydı (51. hafta, Misli). Artık
+2025/26'nın **41 haftası** iki bağımsız kaynakta yan yana duruyor ve karşılaştırma
+koşuldu:
+
+| Ölçüm | Sonuç |
+|---|---|
+| `st_history`'nin 41 haftasının resmî arşivde karşılığı | **41 / 41** |
+| Kapanış tarihi birebir aynı | **0 / 41** |
+| Resmî `close_date` = haftanın **ilk** maçının günü | **41 / 41** |
+| `st_history.close_date` − resmî `close_date` | **1–4 gün** (ortanca 3) |
+
+**Bu bir çelişki değil, bir anlam farkıdır ve ikisi de doğrudur.** Resmî uçtaki
+`roundCloseDate` **kupon satışının kapandığı** andır — 41 haftanın 41'inde
+haftanın ilk maçının gününe eşit çıkması bunu kanıtlıyor. `st_history`'nin aynı
+adlı alanı ise haftanın **son** maçına denk düşer, yani turun bittiği gün.
+
+Doktrin 4 gereği hiçbiri "düzeltilmedi": iki dosya da kendi alanını taşıyor ve
+resmî arşivin `meta.close_date_note` alanı farkı kendi içinde yazıyor. Alan adı
+aynı olduğu için bu, sessizce yanlış hizalanabilecek türden bir tuzaktı —
+ölçülüp yazıldı.
+
+**Pratik değeri:** havuz modeli için doğru zaman çıpası **resmî** tarihtir.
+Oynanma payı ve iddaa oranı o an donuyor; haftanın son maçı değil, satışın
+kapandığı an. §3.40'ın kolon sayısı hesabı bu çıpaya oturtulmalıdır.
+
 ## 11. Sürüm geçmişi
 
 | Sürüm | Ne değişti |
 |---|---|
 | **v1** (2026-08-15) | İlk üretim. 41 hafta, 615 maç. Sonuç dizisi 15 haftada yanlış sırada, 6'sında yanlış sayımda (§7.4) — o zaman fark edilmedi |
 | **v2** (2026-08-16) | Sıra hatası kapatıldı; veri **maç düzeyine** indi (takım, saat, skor); üretim tek komutla tekrarlanabilir oldu; `data_quality` denetimi ve test bekçileri eklendi; **oran arşivi** kuruldu (§5) |
+| **v12** (2026-08-30) | **Yeni veri ölçüm hattına bağlandı.** Oran arşivi sezonlu (§6H): üç sabit sezondan türetildi, yeni sezonlarda eşleşme **%100** (255/255 · 465/465 · 450/450), varsayılan dosya byte byte aynı kaldı. `history` sezon seçer (birleştirmez), `/api/stats?sezon=` ve `/api/meta.seasons` geldi. `backtest.hafta_girdileri` artık `sezon` yazıyor — bu tek alan `arena.kesit(kupon=True)`de **sezon dışarıda bırakmalı** ölçümü açtı. Ölçüm kesiti **36 → 114 hafta** (540 → 1.710 maç). Ölçülen sonuçlar: ISTATISTIK_YOL_HARITASI §3.43 |
+| **v11** (2026-08-30) | **Korpus derinliği ölçüldü, varsayılan yapılmadı** (§6D-ek): 6 sezon 45.652 maç ve şema hiç bozulmuyor, ama 53 belgelenmiş ölçüm 31.103'e çıpalı — korpusu değiştirmek onları geçersiz kılar. Komut seçeneği olarak kaldı. **Yeni bir sızıntı riski görünür kılındı**: kupon seti 4 sezona çıkınca korpusla üç sezon kesişti; `egitim_rapor.json` artık `kesisim`i yazıyor, betik ekrana uyarı basıyor, üç bekçi testi çakışmanın görünür kalmasını koruyor |
+| **v10** (2026-08-30) | **Geçmiş sezon kupon verisi geldi.** Resmî bülten görseli OCR ile okundu (§6F, 156 hafta) ve football-data fikstürüne bağlandı (§6G): **4 sezon · 107 hafta · 1.605 maç**, tam 1/0/2 dizisiyle. §10.2/§10.3'ün kupon ayağı **kapandı**. Çapraz doğrulama: iki bağımsız boru hattı 29 ortak haftanın **28'inde birebir aynı**; ayrışan tek hafta bir **kupon sırası** farkıdır (aynı 15 maç) ve düzeltilmeden raporlandı. Pencere bir ayar değil koruma: ertelenen maçın aylar sonraki sonucu o haftanın sonucu değildir |
+| **v9** (2026-08-30) | **Resmî Spor Toto arşivi** kuruldu (§2.4, §6D): `webapi.sportoto.gov.tr` — deponun ilk **resmî** kaynağı. 6 sezon · 225 hafta · **223 ikramiye tablosu**. §10.1'in havuz ekseni n = 3'ten n = 223'e çıktı. §3.1'in "arşiv ucu bulunamadı" kaydı **düzeltildi** — kaynak kapalı değildi, uçlar JS parçalarındaydı. **Maç listesi hâlâ gelmiyor** (yalnızca bülten görseli); §10.2 kupon ayağı §10.3 olarak yeniden açıldı |
 | **v5** (2026-08-17) | **Eğitim korpusu** kuruldu (§6A): football-data'dan 22 lig × 4 geçmiş sezon, 31.103 maç. Kupon değerlendirme setinin 58 katı. `/istatistik` sayfasına **girmez** — ayrım `test_ayrim_*` ile bekçiye bağlandı. Varsayılan sezonlar 2025/26'yı dışarıda bırakır (sızıntı önlemi) |
 | **v6** (2026-08-17) | **Korpus artık iki çizgi taşıyor** (§6A.6): açılış ve kapanış oranı ayrı sütunlarda, yalnızca aynı bahisçi ailesinden eşleşmiş çift olarak. Maç sayısı değişmedi (31.103; 31.099'unda çift var), böylece önceki ölçümler karşılaştırılabilir kaldı. Bu değişiklik A1'i (kapanış çizgisi verimliliği) mümkün kıldı; sonucu §8 madde 7'ye işlendi |
 | **v7** (2026-08-17) | **Korpus bahisçi kırılımı taşıyor** (§6A.7): `B365C`, `PSC`, `MaxC`, `AvgC`. Kaynak seçimi ölçümün parçası — kapsaması sezona göre değişen bahisçiler (`BW`, `WH`, `BF`, `1XB`) bilerek dışarıda, çünkü kesiti sezona göre dengesizleştirip sezon dışarıda bırakmalı ölçümü yanlılarlardı. Aynı gerekçeyle model yalnızca sabit kaynak çiftinden gelen `ayrisma`yı görür; sürüklenen `en_iyi_prim` betimleyici kalır. Doğrulamaya `Max ≥ Avg` eklendi |
