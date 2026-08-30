@@ -74,6 +74,29 @@ def h2h_tablosu(satirlar: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
     bakmak — pencereyi yarıya indirirdi ve `H2H_EN_AZ` eşiğini çoğu
     eşleşmede hiç geçemezdi. Bu bir ödünç: saha etkisi H2H'den düşmüyor,
     ama zaten `EV_AVANTAJI` ve `γ` onu ayrıca taşıyor.
+
+    Ölçek `_PUAN`da yazılı ve **3/1/0 DEĞİL**. Sebebi burada görünür:
+    hep berabere kalmış bir eşleşme sıfır vermeli, "ev sahibi geride"
+    değil. Dört maç, dördü de beraberlik::
+
+        >>> maclar = [{"tarih": f"2024-01-0{i}", "lig": "T1",
+        ...            "ev": "A", "dep": "B", "kod": "0"} for i in range(1, 5)]
+        >>> tablo = h2h_tablosu(maclar)
+        >>> tablo[-1]["h2h_farki"]
+        0.0
+
+    `H2H_EN_AZ` altındaki karşılaşma "gerçek" sayılmaz — tek bir maçtan
+    eşleşmeye özel bir eğilim okumak gürültüyü bilgi sanmaktır::
+
+        >>> tablo[0]["h2h_var"], tablo[-1]["h2h_var"]
+        (False, True)
+
+    Ev sahibi geçmişte üstünse işaret pozitiftir::
+
+        >>> galip = [{"tarih": f"2024-01-0{i}", "lig": "T1",
+        ...           "ev": "A", "dep": "B", "kod": "1"} for i in range(1, 5)]
+        >>> h2h_tablosu(galip)[-1]["h2h_farki"]
+        1.0
     """
     sirali = sorted(range(len(satirlar)),
                     key=lambda i: (satirlar[i]["tarih"], satirlar[i]["lig"],

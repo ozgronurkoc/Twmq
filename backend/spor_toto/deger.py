@@ -211,7 +211,40 @@ def sec(kayit: dict[str, Any], alpha: float) -> str | None:
     2. Geçen birden fazla ayak varsa **yalnızca en iyisi** oynanır.
 
     İkincisi olmadan 1X2'de aynı maçın iki ayağına birden oynanabilir ve
-    bu, kendi kendine karşı bahis yapmaktır — marjı iki kez öder.
+    bu, kendi kendine karşı bahis yapmaktır — marjı iki kez öder::
+
+        >>> k = {"pazar": "1X2",
+        ...      "p": {"1": 0.40, "0": 0.30, "2": 0.30},
+        ...      "o": {"1": 3.00, "0": 4.00, "2": 2.00}}
+        >>> # beklenen getiri:  1 -> +0,20   0 -> +0,20   2 -> -0,40
+        >>> sec(k, 0.0) in ("1", "0")
+        True
+
+    Eşiği geçen ayak yoksa bahis de yok — `None` bir "oynama" işaretidir::
+
+        >>> zayif = {"pazar": "1X2",
+        ...          "p": {"1": 0.50, "0": 0.25, "2": 0.25},
+        ...          "o": {"1": 1.90, "0": 3.00, "2": 3.00}}
+        >>> sec(zayif, 0.0) is None
+        True
+
+    Eşit beklenen getiride **grup sırasındaki ilk** ayak seçilir; kural
+    deterministiktir ve `GRUPLAR`ın sırasından okunur. (`sports-betting`
+    burada ayaklara `eps` ekleyerek eşitliği bozar; sonuç aynı biçimde
+    keyfîdir ama bizde en azından okunabilir.)::
+
+        >>> sec(k, 0.10)
+        '1'
+
+    `alpha` eşiği yükseltir, yönü değiştirmez::
+
+        >>> ayrik = {"pazar": "1X2",
+        ...          "p": {"1": 0.40, "0": 0.30, "2": 0.30},
+        ...          "o": {"1": 2.80, "0": 4.00, "2": 2.00}}
+        >>> sec(ayrik, 0.0)
+        '0'
+        >>> sec(ayrik, 0.50) is None
+        True
     """
     en_iyi, en_iyi_ed = None, alpha
     for ayak in GRUPLAR[kayit["pazar"]]:

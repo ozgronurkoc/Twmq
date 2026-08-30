@@ -106,7 +106,20 @@ def test_readiness_tam_raporu_verir(client):
 
 # ─── önbellek ────────────────────────────────────────────────────────────────
 
-def test_ikinci_cagri_onbellekten_gelir(client):
+def test_ikinci_cagri_onbellekten_gelir(client, monkeypatch):
+    """İkinci çağrı önbellekten gelmeli — TTL testte SABİTLENİR.
+
+    Test uzun süre `HEALTH_TTL_S`in üretim değerine (5 sn) yaslanıyordu ve
+    bu **gizli bir duvar saati kırılganlığıydı**: 27 değişmezin ölçümü tek
+    başına 2,1 sn sürüyor ve süit `-n auto` koştuğu için yük altında bu
+    rahatça 5 sn'yi aşıyor. Aşınca ikinci çağrı taze ölçüm yapıyor ve test
+    "önbellek çalışmıyor" diye düşüyordu — oysa çalışıyordu, TTL dolmuştu.
+
+    `pytest-randomly` bunu ilk koşumda yakaladı (§6H); kusur sıralamada
+    değil **varsayımdaydı**. Ölçülen şey önbellek POLİTİKASI olmalı,
+    ölçümün hızı değil; TTL bu yüzden sabitleniyor.
+    """
+    monkeypatch.setattr(web_app, "HEALTH_TTL_S", 3600.0)
     ilk = client.get("/api/health").get_json()
     assert ilk["summary"]["onbellek"]["cached"] is False
 

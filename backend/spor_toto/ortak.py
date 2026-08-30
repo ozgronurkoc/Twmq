@@ -73,6 +73,21 @@ def wilson(basari: int, n: int) -> tuple[float, float]:
     Normal yaklaşım küçük örneklemde kenarlara yapışır — 40/41'de üst sınır
     1'i aşar, 0/30'da alt sınır eksiye iner. Wilson bu yüzden tercih edilir
     ve aralık her zaman [0, 1] içinde kalır.
+
+    Örnek — normal yaklaşımın taştığı iki uç, Wilson'da taşmıyor::
+
+        >>> alt, ust = wilson(40, 41)
+        >>> round(alt, 4), round(ust, 4)
+        (0.874, 0.9957)
+        >>> alt, ust = wilson(0, 30)
+        >>> alt, round(ust, 4)
+        (0.0, 0.1135)
+
+    Örneklem yoksa aralık da yoktur — sıfır yazılmaz, `(0, 0)` bir aralık
+    değil bir *"ölçülmedi"* işaretidir::
+
+        >>> wilson(0, 0)
+        (0.0, 0.0)
     """
     if n <= 0:
         return 0.0, 0.0
@@ -90,7 +105,25 @@ def brier(probs: dict[str, float], kod: str) -> float:
     """Tek maçın Brier skoru: Σ(p_s − 1{s=gerçek})².
 
     0 = kusursuz, 2 = tam ters. Olasılığın tamamını cezalandırır: 0,90
-    verip tutturmakla 0,40 verip tutturmak aynı sayılmaz.
+    verip tutturmakla 0,40 verip tutturmak aynı sayılmaz::
+
+        >>> kesin = {"1": 1.0, "0": 0.0, "2": 0.0}
+        >>> brier(kesin, "1")
+        0.0
+        >>> brier(kesin, "2")
+        2.0
+
+    "Tutturmak" tek başına yetmez — ne kadar emin olunduğu da sayılır::
+
+        >>> round(brier({"1": 0.9, "0": 0.05, "2": 0.05}, "1"), 4)
+        0.015
+        >>> round(brier({"1": 0.4, "0": 0.3, "2": 0.3}, "1"), 4)
+        0.54
+
+    Eşit olasılık referans çizgisini verir::
+
+        >>> round(brier({"1": 1/3, "0": 1/3, "2": 1/3}, "1"), 4) == BRIER_ESIT
+        True
     """
     return sum((probs.get(s, 0.0) - (1.0 if s == kod else 0.0)) ** 2
                for s in SEMBOLLER)
@@ -106,8 +139,25 @@ BRIER_ESIT = round(2 * (1 / 3.0) ** 2 + (1 - 1 / 3.0) ** 2, 4)
 def bant_adi(deger: float, bantlar: Sequence[float]) -> str:
     """Bir değeri artan eşik dizisine göre okunabilir bant adına çevirir.
 
-    `bantlar = (0.40, 0.50, 0.65)` için: 0,31 → `<0.40`, 0,52 → `<0.65`,
-    0,80 → `>=0.65`. Eşikler dahil değildir (üst sınır açık).
+    Eşikler dahil değildir (üst sınır açık)::
+
+        >>> bantlar = (0.40, 0.50, 0.65)
+        >>> bant_adi(0.31, bantlar)
+        '<0.40'
+        >>> bant_adi(0.52, bantlar)
+        '<0.65'
+        >>> bant_adi(0.80, bantlar)
+        '>=0.65'
+
+    Eşiğin tam üstünde olan değer bir ÜST banda düşer — sınır açıktır::
+
+        >>> bant_adi(0.40, bantlar)
+        '<0.50'
+
+    Bant yoksa bant adı da yoktur::
+
+        >>> bant_adi(0.5, ())
+        '—'
     """
     for esik in bantlar:
         if deger < esik:
@@ -122,7 +172,23 @@ FAVORI_DILIMLERI: Sequence[float] = (0.40, 0.50, 0.65)
 
 
 def favori_dilimi(probs: dict[str, float] | None) -> str:
-    """Bir maçın favori olasılığının hangi dilime düştüğü."""
+    """Bir maçın favori olasılığının hangi dilime düştüğü.
+
+    Okunan şey en yüksek olasılıktır, `"1"`in olasılığı değil — deplasman
+    favorisi de aynı dilime düşer::
+
+        >>> favori_dilimi({"1": 0.25, "0": 0.25, "2": 0.50})
+        '<0.65'
+        >>> favori_dilimi({"1": 0.50, "0": 0.25, "2": 0.25})
+        '<0.65'
+
+    Denk bir maç en alt dilimdedir::
+
+        >>> favori_dilimi({"1": 1/3, "0": 1/3, "2": 1/3})
+        '<0.40'
+        >>> favori_dilimi(None)
+        '<0.40'
+    """
     en_yuksek = max(probs.values()) if probs else 0.0
     return bant_adi(en_yuksek, FAVORI_DILIMLERI)
 

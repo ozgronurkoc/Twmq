@@ -121,7 +121,41 @@ def pay_beklentisi(rakip_kolon: int, q: float) -> float:
 
     `q` **bir rakip kolonun** o kademeyi tutturma olasılığıdır — bir
     oyuncunun değil (havuz kolon başına bölünür). `q = 0` ise kimse
-    tutturmuyor demektir ve pay tamdır (1,0); formülün 0/0 limiti de odur.
+    tutturmuyor demektir ve pay tamdır (1,0); formülün 0/0 limiti de odur::
+
+        >>> pay_beklentisi(1000, 0.0)
+        1.0
+        >>> pay_beklentisi(0, 0.5)
+        1.0
+
+    Küçük `q`'da doğrudan yazılan form **çöker**: `(1−q)**n` bire yapışır
+    ve çıkarma anlamlı basamakları yer. Fark yürütülebilir::
+
+        >>> import math
+        >>> n, q = 1001, 1e-12
+        >>> naif = (1 - (1 - q) ** n) / (n * q)
+        >>> round(naif, 10)
+        0.9999778783
+        >>> round(pay_beklentisi(1000, 1e-12), 10)
+        0.9999999995
+
+    Naif form dördüncü hanede yanlış — ve yanlış **yukarı** doğru değil
+    aşağı doğru, yani havuz payını olduğundan küçük gösterir.
+
+    Modülün asıl cümlesi bu iki satırda okunur — **tutturmak yetmez, az
+    kişiyle tutturmak gerekir.** `N·q` on kat büyüyünce pay altıda bire
+    iner::
+
+        >>> round(pay_beklentisi(1000, 0.001), 5)
+        0.63204
+        >>> round(pay_beklentisi(10000, 0.001), 5)
+        0.09999
+
+    Rakip sayısı sabitken `q`'yu on katlamak da aynı yere götürür — sayıyı
+    belirleyen `N·q` çarpımıdır::
+
+        >>> round(pay_beklentisi(1000, 0.01), 5)
+        0.0999
     """
     if rakip_kolon < 0:
         raise ValueError("rakip kolon sayisi negatif olamaz")
