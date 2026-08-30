@@ -102,6 +102,42 @@ def olculebilir_haftalar(last: int | None = None) -> list[Girdi]:
     return [h for h in hafta_girdileri(last) if h["usable"]]
 
 
+#: Ölçüme giren kupon sezonları — `history.sezonlar()`in TAMAMI DEĞİL.
+#:
+#: `2025_26` bilerek DIŞARIDA: §6G'nin ürettiği o dosya, varsayılan
+#: `st_history_2025_26.json`in **aynı sezonu ikinci kez okumasıdır**
+#: (29 hafta ↔ 41 hafta, 28'i birebir aynı — §6G.5). İkisini birden
+#: ölçüme sokmak aynı maçları iki kez saymak olurdu; paired bootstrap da
+#: bağımsız hafta varsayar.
+OLCUM_SEZONLARI: tuple[str, ...] = ("2022_23", "2023_24", "2024_25")
+
+
+def kupon_kesiti_tum(last: int | None = None) -> list[Girdi]:
+    """Varsayılan sezon + §6G sezonları, tek ölçüm kesitinde.
+
+    Birleştirme **burada** güvenlidir; `history` düzeyinde değildi. Fark
+    şu: `Girdi` `week`i bir anahtar olarak kullanmıyor — kronoloji
+    `close_date`ten geliyor (`kronolojik_anahtar`) ve gruplama `sezon`dan.
+    `history` tarafında ise `week` birincil anahtar gibi davranıyor.
+
+    Yine de rapor okunurken iki sezonun 30. haftası karışmasın diye `week`
+    sezonla ön-eklenir (`egitim.korpus_haftalari`nın sentetik `week`
+    deseniyle aynı fikir).
+    """
+    out: list[Girdi] = list(olculebilir_haftalar(last))
+    for sezon in OLCUM_SEZONLARI:
+        for h in hafta_girdileri(last, sezon=sezon):
+            if not h["usable"]:
+                continue
+            kayit = dict(h)
+            yil = int(sezon[:4])
+            kayit["week"] = yil * 100 + int(h["week"])
+            kayit["kupon_hafta"] = h["week"]
+            out.append(kayit)
+    out.sort(key=lambda h: (str(h.get("close_date") or ""), h["week"]))
+    return out
+
+
 # ─── hafta dışarıda bırakmalı koşum ───────────────────────────────────────────
 
 def sezon_anahtari(hafta: Girdi) -> Any:

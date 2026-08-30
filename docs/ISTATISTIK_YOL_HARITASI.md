@@ -153,7 +153,7 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/components/super-toto/tahmin2.tsx` | **2. Tahmin** paneli — `1. Tahmin` / `2. Tahmin` sekmeleri arasında geçilir; para birimli hiçbir sayı yok. Hafta kapandığında sonuç sütunu ve ayar karnesi açılır (§3.38) |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **1.811 test**; **85'i** istatistik katmanına (`history` `odds` `backtest`
+paketi toplam **1.829 test**; **85'i** istatistik katmanına (`history` `odds` `backtest`
 `api_stats` `api_backtest` `snapshot_iddaa`), **567'si** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre`
@@ -3682,6 +3682,105 @@ liginde uydurulmuş bir xG vekili, yirmi iki ligde piyasayı geçmiyor."*
     python -m spor_toto.health --only xg_kalibrasyonu
     pytest -q tests/test_xg.py
 
+### 3.43 Kupon kesiti 36 → 114 hafta: ölçüm ne değişti
+
+§6F ve §6G kupon setini dört sezona çıkardı. Bu bölüm o veriyi ölçüm
+hattına bağladıktan **sonra** çıkan sayıları taşır.
+
+#### Önce oran, sonra ölçüm
+
+Yeni haftalar oran taşımıyordu ve `evaluate.olculebilir_haftalar`
+`usable=False` haftaları **sessizce eliyor** — yani oran gelmeden istatistik
+büyür, ölçüm kesiti hiç büyümezdi. `build_odds.py` sezona parametreleştirildi
+ve üç sezon için koşuldu:
+
+| Sezon | Eşleşen maç | Tam hafta |
+|---|---|---|
+| 2022/23 | 255 / 255 (**%100**) | 17 / 17 |
+| 2023/24 | 465 / 465 (**%100**) | 31 / 31 |
+| 2024/25 | 450 / 450 (**%100**) | 30 / 30 |
+| 2025/26 (eski kayıt) | 567 / 615 (%92,2) | 36 / 41 |
+
+**Yeni sezonlarda kapsama %100** ve sebebi yapısal: §6G'nin ürettiği takım
+adları *zaten football-data adlarıdır* (eşleştirme orada yapıldı), üstelik
+`build_odds.py`nin eşleştiricisi skoru da ayırt edici olarak kullanıyor.
+
+`2025_26`nın §6G kaydı ölçüme **alınmadı**: varsayılan dosyanın aynı sezonu
+ikinci kez okumasıdır (§6G.5) ve iki kez saymak paired bootstrap'ı bozardı.
+Bekçi: `test_olcum_sezonlari_2025_26nin_IKINCI_okumasini_disarida_birakir`.
+
+Sonuç: ölçüm kesiti **36 → 114 hafta, 540 → 1.710 maç**.
+
+#### Piyasa çizgisi aşağı indi
+
+| Kesit | `piyasa` Brier |
+|---|---|
+| 36 hafta / 540 maç | 0,5740 |
+| **114 hafta / 1.710 maç** | **0,5584** |
+
+Bu bir iyileşme değil, **daha iyi ölçülmüş bir başlangıç çizgisidir** — ve
+yenilmesi gereken sayı böylece *zorlaştı*. Eski 2025/26 dilimi piyasa için
+görece kötü bir dilimmiş.
+
+#### Asıl bulgu: küçük kesitte tahminciler eğitilemiyormuş
+
+Aynı on aile iki kesitte koşuldu. Eski kesit hafta dışarıda bırakmalı
+(tek sezon vardı, başka seçenek yoktu), yeni kesit **sezon dışarıda
+bırakmalı** — yani daha *sıkı* protokol:
+
+| Aile | Eski fark (36 hf) | Yeni fark (114 hf) |
+|---|---|---|
+| `agac` | −0,0 [−0,0, 0,0] | **−0,0043** [−0,0085, **0,0001**] |
+| `kalibre_etkilesim_favori` | +0,0047 [−0,005, 0,0143] | **−0,0030** [−0,0066, 0,0007] |
+| `yigin` | 0,0 [0,0, 0,0] | **−0,0030** [−0,006, 0,0003] |
+| `venn_abers` | +0,0068 [0,0005, 0,0132] | **−0,0016** [−0,0042, 0,0009] |
+| `izotonik` | 0,0 [0,0, 0,0] | +0,0024 [−0,0012, 0,0058] |
+
+(Negatif = piyasadan iyi. `gecti` için aralığın tamamı sıfırın altında
+olmalı — **hiçbiri geçmedi**.)
+
+Eski kesitteki `−0,0` / `0,0` değerleri bir sonuç değil, bir **arıza
+belirtisiydi**: `agac`, `yigin` ve `izotonik` 36 haftada eğitilemiyor ve
+piyasaya çöküyordu. 114 haftada gerçekten eğitiliyorlar.
+
+İkinci ve daha keskin nokta: `venn_abers` eski kesitte piyasadan
+**anlamlı biçimde kötüydü** (aralık tamamen sıfırın üstünde) — yeni kesitte
+işareti döndü. Yani küçük kesit yalnızca belirsiz değildi, **yanlış yöne
+işaret ediyordu**.
+
+#### Yine de hiçbiri geçmedi — ve bu böyle yazılır
+
+En iyi aday `agac`: −0,0043, aralık **[−0,0085, +0,0001]**. Üst sınır
+sıfırın *üstünde*, dolayısıyla `gecti = False`. Bugüne kadarki en yakın
+sonuçtur ve aralık ilk kez bir şey söyleyecek kadar dardır; ama
+"piyasa geçildi" **denmez**.
+
+#### Sızıntı: kesişim gerçek, çözüm koda bağlandı
+
+Kupon maçlarının **1.155 / 1.605'i (%72)** eğitim korpusunda da var
+(2022/23 %100, 2023/24 %100, 2024/25 %97, 2025/26 %0). `arena.kesit(kupon=True)`
+artık `grup=sezon_anahtari` döndürüyor — `backtest.hafta_girdileri` `sezon`
+alanını yazdığı için mümkün oldu; önceden alan yoktu ve `sezon_anahtari`
+her haftaya `None` derdi. Künye çakışmayı `sizinti` alanında taşıyor,
+`tests/test_sizinti.py` beş bekçiyle bunu koruyor.
+
+#### Sezonlar arası ilk bulgu
+
+Ev sahibi kazanma oranı dört sezonda **düzenli düşüyor**:
+
+| Sezon | 1 | 0 | 2 |
+|---|---|---|---|
+| 2022/23 | %48,6 | %20,4 | %31,0 |
+| 2023/24 | %47,1 | %24,3 | %28,6 |
+| 2024/25 | %46,2 | %25,1 | %28,7 |
+| 2025/26 | %45,1 | %25,3 | %29,7 |
+
+Tek sezonda görülemeyecek bir eğilim. **Bir bulgu değil, bir gözlem**:
+sezon başına 17–31 hafta var ve güven aralıkları geniş; eğilim testi
+koşulmadı.
+
+---
+
 ## 4. Sayfada bugün ne var
 
 **`/istatistik`** — sezon dağılımı (en sık sonuç + pay çubuğu) · 5 sayı kutusu (sembol
@@ -4644,7 +4743,7 @@ python -m spor_toto.kosum                  # kayıtlı koşumlar
 python -m spor_toto.kosum --son disari     # son koşumun ortamı
 
 # Denetim
-pytest -q                                  # 1.811 test (85'i bu katman, 567'si tahmin)
+pytest -q                                  # 1.829 test (85'i bu katman, 567'si tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out

@@ -145,13 +145,27 @@ export function denetleKupon(
  * `last` verilirse ozet, bantlar ve analiz bloklarinin TAMAMI son N hafta
  * uzerinden hesaplanir — filtre tek noktadan butun gorselleri kapsar.
  */
-export function getStats(last?: number | null, signal?: AbortSignal) {
-  const q = last && last > 0 ? `?last=${last}` : "";
-  return istek<StatsResponse>(`/api/stats${q}`, { signal });
+export function getStats(
+  last?: number | null,
+  signal?: AbortSignal,
+  sezon?: string | null,
+) {
+  const q = new URLSearchParams();
+  if (last && last > 0) q.set("last", String(last));
+  if (sezon) q.set("sezon", sezon);
+  const qs = q.toString();
+  return istek<StatsResponse>(`/api/stats${qs ? `?${qs}` : ""}`, { signal });
 }
 
-export function getStatsWeek(week: number, signal?: AbortSignal) {
-  return istek<WeekDetail>(`/api/stats/${week}`, { signal });
+/**
+ * `sezon` VERILMEZSE varsayilan kayit okunur (2025/26, 41 hafta). Sezon
+ * verilirse hafta detayi ve oranlari AYNI sezondan gelir; oran arsivinin
+ * anahtari `(hafta, no)` ve sezon bileseni yok, yani ayri gonderilmezse
+ * baska bir sezonun oranlari bu haftaya yapisirdi.
+ */
+export function getStatsWeek(week: number, signal?: AbortSignal, sezon?: string | null) {
+  const q = sezon ? `?sezon=${encodeURIComponent(sezon)}` : "";
+  return istek<WeekDetail>(`/api/stats/${week}${q}`, { signal });
 }
 
 /**

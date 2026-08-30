@@ -67,6 +67,16 @@ export interface MetaResponse {
     uclu_default: number;
     uclu_grid: number[];
   };
+  /**
+   * Secilebilir kupon sezonlari. `default` her zaman `null`dir ve bu bir
+   * sezon ADI DEGIL, "hicbir sey secilmedi" halidir — varsayilan kayit
+   * `available` listesinde YOKTUR.
+   */
+  seasons: {
+    default: string | null;
+    available: string[];
+    note: string;
+  };
 }
 
 // ─── POST /api/solve — istek ──────────────────────────────────────────────
@@ -389,6 +399,10 @@ export interface StatsMeta {
   week_from: number | null;
   week_to: number | null;
   sliced: boolean;
+  /** Istenen sezon (`?sezon=`); varsayilan kayitta null. */
+  sezon_secimi?: string | null;
+  /** Kaydin kokeni — varsayilan ile turetilmis set ayni gorunmesin diye. */
+  origin?: string;
 }
 
 export interface Band {
@@ -653,6 +667,14 @@ export interface StatsResponse {
   weeks: WeekRow[];
   /** Uygulanan dilim (`?last=N`); tum sezon icin null. */
   last: number | null;
+  /**
+   * Secilen sezon (`?sezon=`); varsayilan kayit icin null.
+   *
+   * `null` bir sezon DEGIL, "hicbir sey secilmedi" halidir: varsayilan
+   * `st_history_2025_26.json` (41 hafta), `"2025_26"` ise ayni sezonun
+   * resmi bultenden okunan BASKA bir kaydidir (29 hafta).
+   */
+  sezon: string | null;
   error?: string | null;
 }
 

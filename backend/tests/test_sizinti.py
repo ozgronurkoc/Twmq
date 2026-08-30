@@ -531,3 +531,73 @@ def test_kupon_sezonlari_iki_kaynagi_da_goruyor():
     dizin = _KOK / "data" / "st_history"
     if dizin.is_dir() and any(p.stem != "gecmis_rapor" for p in dizin.glob("*.json")):
         assert len(sezonlar) > 1, "§6G dizini sayılmamış"
+
+
+# ─── kupon kesiti: çok sezonlu ölçüm ve sızıntı çıpaları ──────────────────────
+#
+# §6G kupon setini dört sezona çıkardı. Bu, iki şeyi aynı anda değiştirdi:
+#
+#   1. `arena.kesit(kupon=True)` artık **sezon dışarıda bırakmalı** ölçüm
+#      kurabiliyor — `backtest.hafta_girdileri` `sezon` alanını yazdığı için.
+#      Önceden alan yoktu, `sezon_anahtari` hepsine `None` derdi ve ölçüm
+#      tek gruba çökerdi.
+#   2. Kupon maçlarının %72'si eğitim korpusunda da var. Korpusta eğitilen
+#      bir tahminci bu kesitte `grup=None` ile ölçülürse sayı olduğundan
+#      iyi çıkar.
+#
+# Aşağıdaki testler ikisini de çıpalar.
+
+def test_kupon_kesiti_cok_sezonlu_ve_sezonla_gruplanir():
+    from spor_toto.arena import kesit
+
+    haftalar, grup, kunye = kesit(kupon=True)
+    sezonlar = {h.get("sezon") for h in haftalar}
+    assert len(sezonlar) > 1, f"kupon kesiti tek sezona düştü: {sezonlar}"
+    assert grup is sezon_anahtari, (
+        "çok sezonlu kupon kesitinde gruplama sezon olmalı; `None` kalırsa "
+        "aynı sezonun başka haftaları bilgi sızdırır")
+    assert kunye["grup_olcusu"] == "sezon"
+    assert kunye["uyari"] is None
+
+
+def test_kupon_kesiti_sizinti_uyarisini_TASIR():
+    """Künye çakışmayı yazmalı — kaybolursa kimse `grup` vermeyi hatırlamaz."""
+    from spor_toto.arena import KUPON_KORPUS_KESISIMI, kesit
+
+    _, _, kunye = kesit(kupon=True)
+    assert kunye.get("sizinti") == KUPON_KORPUS_KESISIMI
+    assert "korpus" in kunye["sizinti"].lower()
+
+
+def test_her_kupon_haftasi_sezon_alani_tasir():
+    """`sezon` alanı olmayan tek bir hafta bile LOSO'yu sessizce bozar."""
+    from spor_toto.evaluate import kupon_kesiti_tum
+
+    for h in kupon_kesiti_tum():
+        assert h.get("sezon"), f"{h.get('week')}. haftada sezon alanı yok"
+
+
+def test_sezon_anahtari_kupon_haftasinda_artik_None_DEGIL():
+    """Bekçinin ısırdığının kanıtı: alan kaldırılırsa gruplama çöker."""
+    from spor_toto.evaluate import kupon_kesiti_tum
+
+    hafta = dict(kupon_kesiti_tum()[0])
+    assert sezon_anahtari(hafta) is not None
+    hafta.pop("sezon")
+    assert sezon_anahtari(hafta) is None, (
+        "alan yokken None dönmeli — bu testin kendisi bunun üzerine kurulu")
+
+
+def test_olcum_sezonlari_2025_26nin_IKINCI_okumasini_disarida_birakir():
+    """Aynı sezonu iki kez saymak paired bootstrap'ı da bozar.
+
+    `data/st_history/2025_26.json` varsayılan dosyanın aynı sezonu ikinci
+    kez okumasıdır (29 ↔ 41 hafta, 28'i birebir aynı — §6G.5).
+    """
+    from spor_toto.evaluate import OLCUM_SEZONLARI
+
+    assert "2025_26" not in OLCUM_SEZONLARI
+    from spor_toto.evaluate import kupon_kesiti_tum
+    tarihler = [h["close_date"] for h in kupon_kesiti_tum()]
+    assert len(tarihler) == len(set(tarihler)), (
+        "aynı kapanış tarihi iki kez geçiyor — bir sezon iki kez sayılmış olabilir")

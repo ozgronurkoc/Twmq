@@ -22,6 +22,8 @@ formul.txt
 # surumlenmez. Yeniden olusturmak icin: python scripts/build_odds.py
 backend/data/odds/_kaynak/
 backend/data/odds/odds.sqlite3
+# Sezon basina uretilen kopyalar (build_odds.py --sezon)
+backend/data/odds/odds_*.sqlite3
 
 # Iddaa bulten arsivi: tarih damgali CSV'ler SURUMLENIR (arsivin kendisi
 # odur), ham payload ve SQLite kopyasi uretilir. Yeniden olusturmak icin:

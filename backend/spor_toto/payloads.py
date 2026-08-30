@@ -21,29 +21,37 @@ from .odds import season_1x2_summary
 from .pazar import sezon_ozeti
 
 
-def stats_payload(last: int | None = None) -> dict[str, Any]:
+def stats_payload(last: int | None = None,
+                  sezon: str | None = None) -> dict[str, Any]:
     """Tarihsel 1/0/2 + analiz bloklari + oran ozeti.
 
     `last` verilirse ozet, bantlar VE analiz bloklarinin tamami ayni dilim
     uzerinden hesaplanir — iki gorsel asla farkli veriyi anlatmaz.
+
+    `sezon` ayni sekilde HER IKI tarafa birden gecer. Bu sart: asagidaki
+    `season_1x2_summary` cagrisi haftalari yalnizca NUMARAYLA suzuyor ve
+    numara sezon tasimiyor — sezon gecirilmezse baska bir sezonun oran
+    arsivinde ayni numaralar bulunur ve oran karti SESSIZCE baska bir
+    sezonu anlatirdi.
     """
-    summary = history_summary(last)
-    weeks = history_weeks(last)
+    summary = history_summary(last, sezon)
+    weeks = history_weeks(last, sezon)
     return {
         "meta": summary.get("meta", {}),
         "totals": summary.get("totals", {}),
         "weekly_avg": summary.get("weekly_avg", {}),
         "bands": summary.get("bands", {}),
         "data_quality": summary.get("data_quality", {}),
-        "analytics": history_analytics(last),
+        "analytics": history_analytics(last, sezon),
         # Yalnizca MAC SONUCU (1X2). Diger pazarlar ARTIK cikiyor ama AYRI
         # bir uctan (`/api/pazar`, bkz. `pazar_payload`): olcumleri farkli
         # (alt/ust ikili ve Brier'li, handikap kesirli getirili ve Brier'siz)
         # ve ayni govdeye sikistirmak ikisini de yanlis okuturdu.
         # Arsiv yoksa None doner.
-        "odds": season_1x2_summary([w["week"] for w in weeks]),
+        "odds": season_1x2_summary([w["week"] for w in weeks], sezon),
         "weeks": weeks,
         "last": last,
+        "sezon": sezon,
         "error": summary.get("error"),
     }
 

@@ -271,7 +271,7 @@ ileriye dönük birikir.
 
 | | Tarihsel sonuçlar | Piyasa oranı arşivi | İddaa bülten arşivi | **Resmî Spor Toto arşivi** |
 |---|---|---|---|---|
-| **Dosya** | `data/st_history_2025_26.json` | `data/odds/odds_2025_26.csv` | `data/iddaa/iddaa_<tarih>.csv` | `data/sportoto_arsiv/<sezon>.json` |
+| **Dosya** | `data/st_history_2025_26.json` + `data/st_history/<sezon>.json` | `data/odds/odds_<sezon>.csv` | `data/iddaa/iddaa_<tarih>.csv` | `data/sportoto_arsiv/<sezon>.json` |
 | **Üreten** | `scripts/build_history.py` | `scripts/build_odds.py` | `scripts/snapshot_iddaa.py` | `scripts/build_sportoto_arsiv.py` |
 | **Okuyan** | `spor_toto/history.py` | `spor_toto/odds.py` | (henüz analize girmiyor) | (henüz analize girmiyor) |
 | **Bekçi** | `tests/test_history.py` | `tests/test_odds.py` | `tests/test_snapshot_iddaa.py` | `tests/test_sportoto_arsiv.py` |
@@ -303,6 +303,30 @@ kazanan adedi ve kişi başı tutar. Havuz ekseni bu yüzden n = 3'ten **n = 223
 dizisi (1/0/2) vermiyor ve "geçmiş sezon kupon verisi" sorunu onunla kapanmadı;
 kapanmadığı bir test bekçisiyle sabitlendi
 (`test_sportoto_arsiv.py::test_yayindaki_arsivde_kupon_dizisi_YOK`).
+
+### 5.0 Sezon seçimi — ve ölçüm kesiti
+
+İlk üç set 2026-08-30'da **sezonlu** hale geldi:
+
+- `/api/stats?sezon=2023_24` seçilen sezonun tamamını (özet, bantlar, analiz
+  blokları **ve** oran kartı) tek dilimden anlatır. Varsayılan `?sezon` yoktur
+  ve varsayılan kayıt 41 haftadır — mevcut hiçbir sayı oynamadı.
+- Sezonlar **birleştirilmez, seçilir**. `week` bu katmanda birincil anahtar
+  gibi davranıyor (sıralama, hafta detayı, oranın `(hafta, no)` haritası);
+  dört sezonu tek listeye koymak dördünü birden bozardı.
+
+**Ölçüm tarafında kesit 36 → 114 haftaya çıktı** (540 → 1.710 maç) ve bu
+sayının bedeli önce ödendi: yeni haftalar oran taşımıyordu, oransız hafta
+`usable=False` olur ve ölçümden **sessizce** düşerdi. `build_odds.py` sezona
+parametreleştirildi; yeni üç sezonda eşleşme **%100** çıktı.
+
+Ölçülen sonuç ve neyin değiştiği
+[`docs/ISTATISTIK_YOL_HARITASI.md`](docs/ISTATISTIK_YOL_HARITASI.md) §3.43'te.
+Özeti: `piyasa` Brier'i **0,5740 → 0,5584** (yenilecek çizgi *zorlaştı*),
+`agac` ilk kez piyasanın altında (−0,0043) ama aralığı sıfıra değdiği için
+**geçmedi**; ve küçük kesitte `agac`/`yigin`/`izotonik`'in eğitilemeyip
+piyasaya çöktüğü, `venn_abers`'in ise **yanlış yöne** işaret ettiği ortaya
+çıktı.
 
 ### 5.1 Veri akışı
 
@@ -880,7 +904,7 @@ backend/
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
                        sehir/ · xg/
-  tests/               pytest (60 dosya → 1.811 test; §9'da katman dökümü)
+  tests/               pytest (60 dosya → 1.829 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1066,7 +1090,7 @@ dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri t
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
 eşleme, ikinci kayıt). **60 test dosyası, parametrizasyonla
-1.811 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+1.829 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 

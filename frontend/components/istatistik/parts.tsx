@@ -38,6 +38,72 @@ export function aralikUrleYaz(deger: number | null): void {
   adreseYaz(ARALIK_PARAM, deger && deger > 0 ? String(deger) : null);
 }
 
+const SEZON_PARAM = "sezon";
+
+/** Secili sezonu URL'den okur (`?sezon=2023_24`); yoksa null (varsayilan). */
+export function sezonUrldenOku(): string | null {
+  const ham = adrestenOku(SEZON_PARAM);
+  return ham && ham.trim() ? ham.trim() : null;
+}
+
+/** Secili sezonu adrese yazar — `aralikUrleYaz` ile ayni gerekce. */
+export function sezonUrleYaz(deger: string | null): void {
+  adreseYaz(SEZON_PARAM, deger || null);
+}
+
+/** "2023_24" -> "2023/24". */
+export function sezonEtiketi(anahtar: string): string {
+  const [bas, son] = anahtar.split("_");
+  return son ? `${bas}/${son}` : anahtar;
+}
+
+/**
+ * Sezon secici.
+ *
+ * Ilk secenek "Varsayilan" ve bu bir sezon ADI DEGIL: varsayilan kayit
+ * (`st_history_2025_26.json`, 41 hafta) ile listedeki `2025_26` (resmi
+ * bultenden okunan 29 hafta) AYNI sezonun iki farkli kaydidir. Ikisini
+ * "2025/26" diye yan yana koymak hangisinin secildigini belirsizlestirirdi;
+ * bu yuzden varsayilan kendi adiyla durur ve rozet kokeni yazar.
+ */
+export function SeasonFilter({
+  deger,
+  secenekler,
+  onChange,
+  mesgul,
+}: {
+  deger: string | null;
+  secenekler: string[];
+  onChange: (v: string | null) => void;
+  mesgul?: boolean;
+}) {
+  if (!secenekler.length) return null;
+  const hepsi: Array<{ deger: string | null; etiket: string }> = [
+    { deger: null, etiket: "Varsayılan" },
+    ...secenekler.map((s) => ({ deger: s, etiket: sezonEtiketi(s) })),
+  ];
+  return (
+    <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Sezon">
+      {hepsi.map((o) => {
+        const secili = o.deger === deger;
+        return (
+          <Button
+            key={String(o.deger)}
+            type="button"
+            tip={secili ? "primary" : "outline"}
+            boyut="sm"
+            aria-pressed={secili}
+            onClick={() => onChange(o.deger)}
+            disabled={mesgul}
+          >
+            {o.etiket}
+          </Button>
+        );
+      })}
+    </div>
+  );
+}
+
 /**
  * Tum gorselleri kapsayan TEK filtre satiri. Kart icine filtre koymuyoruz:
  * secim degisince butun bloklar ayni dilim uzerinden yeniden hesaplanir,

@@ -20,7 +20,7 @@ import {
   Skeleton,
 } from "@/components/ui/primitives";
 import { SEMBOL_ADI, SymbolLegend } from "@/components/ui/symbol";
-import { DeltaStat } from "@/components/istatistik/parts";
+import { DeltaStat, sezonUrldenOku } from "@/components/istatistik/parts";
 import { SYM_BG } from "@/components/istatistik/viz";
 import { TABLO_BASLIK_SATIRI, TABLO_SARMAL } from "@/components/ui/tablo";
 
@@ -35,12 +35,20 @@ export default function HaftaPage({ params }: { params: { week: string } }) {
   // isFinite `/istatistik/1.5`'i kabul ediyordu ve istek genel
   // "Hafta bulunamadi" 404'une dusuyordu; hafta bir TAM sayidir.
   const gecerliHafta = Number.isInteger(week);
+  // Sezon adresten okunur ve ISTEKTEN ONCE hazir olmali; aksi halde sayfa
+  // once varsayilan sezonun haftasini cekip sonra dogruya donerdi.
+  const [sezon, setSezon] = React.useState<string | null>(null);
+  const [urlOkundu, setUrlOkundu] = React.useState(false);
+  React.useEffect(() => {
+    setSezon(sezonUrldenOku());
+    setUrlOkundu(true);
+  }, []);
   // `eskiyiKoru: false` — hafta degistiginde onceki haftanin verisi bir
   // an icin yeni haftaninmis gibi gorunmemeli.
   const { veri, hata: istekHatasi } = useIstek(
-    (signal) => getStatsWeek(week, signal),
-    [week],
-    { hazir: gecerliHafta, eskiyiKoru: false },
+    (signal) => getStatsWeek(week, signal, sezon),
+    [week, sezon],
+    { hazir: gecerliHafta && urlOkundu, eskiyiKoru: false },
   );
   const hata = gecerliHafta ? istekHatasi : "Geçersiz hafta numarası";
 

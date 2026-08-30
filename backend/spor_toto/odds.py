@@ -29,7 +29,18 @@ from typing import Any
 from .core import SEMBOLLER as _SEMBOLLER
 from .ortak import BRIER_ESIT, brier
 
-ODDS_FILE = Path(__file__).resolve().parent.parent / "data" / "odds" / "odds_2025_26.csv"
+ODDS_DIZIN = Path(__file__).resolve().parent.parent / "data" / "odds"
+ODDS_FILE = ODDS_DIZIN / "odds_2025_26.csv"
+
+
+def sezon_dosyasi(sezon: str | None) -> Path:
+    """Sezon anahtari -> oran dosyasi. `None` VARSAYILANI verir.
+
+    Sezonlar ayri dosyalarda tutuluyor ve **birlestirilmiyor**: bu modulun
+    anahtari `(week, no)` ve sezon bileseni yok, yani tek dosyada iki sezon
+    carpisirdi.
+    """
+    return ODDS_FILE if sezon is None else ODDS_DIZIN / f"odds_{sezon}.csv"
 
 KIMLIK_ALANLARI = {
     "week", "no", "kickoff", "home", "away", "hg", "ag", "code",
@@ -44,10 +55,15 @@ def _sayi(ham: str) -> float | None:
     return float(ham) if _SAYI.match(ham) else None
 
 
-@lru_cache(maxsize=1)
-def load_odds(path: str | None = None) -> list[dict[str, Any]]:
-    """Arşivi satır satır okur. Dosya yoksa boş liste döner (hata değil)."""
-    yol = Path(path) if path else ODDS_FILE
+@lru_cache(maxsize=8)
+def load_odds(path: str | None = None,
+              sezon: str | None = None) -> list[dict[str, Any]]:
+    """Arşivi satır satır okur. Dosya yoksa boş liste döner (hata değil).
+
+    Önbellek sezona anahtarlı (`maxsize=8`); önceki sürümde `maxsize=1` idi
+    ve sezon parametresi eklenince ikinci sezon birincinin kaydını düşürürdü.
+    """
+    yol = Path(path) if path else sezon_dosyasi(sezon)
     if not yol.exists():
         return []
     out: list[dict[str, Any]] = []
@@ -78,8 +94,8 @@ def load_odds(path: str | None = None) -> list[dict[str, Any]]:
     return out
 
 
-def odds_for(week: int, no: int) -> dict[str, Any] | None:
-    for r in load_odds():
+def odds_for(week: int, no: int, sezon: str | None = None) -> dict[str, Any] | None:
+    for r in load_odds(sezon=sezon):
         if r["week"] == week and r["no"] == no:
             return r
     return None
@@ -382,10 +398,10 @@ def match_1x2(row: dict[str, Any],
     return None
 
 
-def week_1x2(week: int) -> dict[int, dict[str, Any]]:
+def week_1x2(week: int, sezon: str | None = None) -> dict[int, dict[str, Any]]:
     """Bir haftanın maç numarasına göre 1X2 blokları (oranı olmayanlar yok)."""
     out: dict[int, dict[str, Any]] = {}
-    for r in load_odds():
+    for r in load_odds(sezon=sezon):
         if r["week"] != week:
             continue
         blok = match_1x2(r)
@@ -613,13 +629,19 @@ def _haftalik_brier(oranli: list[Any]) -> list[dict[str, Any]]:
     return out
 
 
-def season_1x2_summary(weeks: list[int] | None = None) -> dict[str, Any] | None:
+def season_1x2_summary(weeks: list[int] | None = None,
+                       sezon: str | None = None) -> dict[str, Any] | None:
     """Dilim için oran özeti: kapsama, favori isabeti, marj ve kalibrasyon.
 
     ``weeks`` verilirse yalnızca o haftalar sayılır — arayüzdeki aralık
-    filtresi böylece oran kartını da kapsar.
+    filtresi böylece oran kartını da kapsar. ``sezon`` verilmezse varsayılan
+    arşiv okunur.
+
+    **`weeks` bir hafta NUMARASI listesidir, sezon taşımaz.** Bu yüzden
+    ``sezon`` ile birlikte verilmesi şarttır: yanlış sezonun arşivinde aynı
+    numaralar bulunur ve özet sessizce başka bir sezonu anlatır.
     """
-    rows = load_odds()
+    rows = load_odds(sezon=sezon)
     if not rows:
         return None
     izin = set(weeks) if weeks is not None else None

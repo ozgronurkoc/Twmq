@@ -84,8 +84,8 @@ GET  /api/health             readiness — değişmezler (?only=, ?fresh=1)
 GET  /api/health/checks      kontrol envanteri (çalıştırmadan)
 GET  /api/health/history     son koşular ("ne zamandan beri kırmızı?")
 POST /api/health/kupon       kullanıcının kendi kuponunu doğrular
-GET  /api/stats              sezon istatistikleri (?last=N)
-GET  /api/stats/<week>       hafta detayı
+GET  /api/stats              sezon istatistikleri (?last=N, ?sezon=)
+GET  /api/stats/<week>       hafta detayı (?sezon=)
 GET  /api/backtest           geri test (eşik taraması + hold-out)
 GET  /api/tahmin             yaklaşan maçlar + ölçülmüş isabet
 GET  /api/pazar              1X2 disi pazarlar (alt/ust 2,5 · Asya handikabi)
@@ -171,6 +171,9 @@ Modlar: `--mode auto|exact|heuristic|butce|maxcov` (`--budget` ile),
   damgalı CSV'ler **sürümlenir** (arşivin kendisi odur)
 - `backend/data/bulten/` — resmî bülten **görselinden** OCR ile okunan 15 maçlık
   listeler; 156 hafta. Üretim `build_bulten.py` (`ocr` ekstrası + tesseract)
+- `backend/data/odds/odds_<sezon>.csv` — oran arşivi artık **sezonlu**
+  (`build_odds.py --sezon`); yeni üç sezonda eşleşme %100. Ölçüm kesiti
+  36 → **114 hafta**
 - `backend/data/st_history/` — bültenleri football-data fikstürüne bağlayıp
   **tam 1/0/2 dizisi** üreten geçmiş sezon seti: **4 sezon · 107 hafta · 1.605
   maç**. `st_history_2025_26.json` ile karışmaz; `/api/stats` hâlâ eskisine bakar
@@ -188,7 +191,7 @@ doğrulamadan dosya yazmazlar). Ayrıntı: `docs/VERI_TOPLAMA_VE_ISLEME.md`.
 ```bash
 cd backend
 python -m pytest -m "not slow" -q   # hızlı süit
-python -m pytest                    # tamamı (1.811 test, ILP dahil)
+python -m pytest                    # tamamı (1.829 test, ILP dahil)
 python -m pytest -n0 tests/test_egitim.py   # tek çekirdek (hata ayıklarken)
 cd .. && bash scripts/check.sh      # TEK kapı; CI de bunu çağırır
 ```

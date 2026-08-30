@@ -49,7 +49,18 @@ GECMIS = KOK / "data" / "st_history_2025_26.json"
 CIKTI_DIZIN = KOK / "data" / "odds"
 UA = "spor-toto-lab/1.0 (kisisel arsiv analizi)"
 
-SEZON = "2526"
+#: Varsayilan sezon — `--sezon` ile degistirilir.
+#:
+#: **Uc sey bu sabite bagliydi ve ucu de sessiz hataya aciktir**, bu yuzden
+#: hepsi sezondan TURETILIR (bkz. `sezon_dosya_adi`, `_cache_dizini`):
+#:
+#:   1. indirilen CSV'lerin URL'i
+#:   2. cikti dosyasinin adi — sabit kalsaydi ikinci sezon birincinin
+#:      uzerine yazardi
+#:   3. onbellek dizini — `indir()` var olan dosyayi ATLAR, yani ortak
+#:      onbellekle baska bir sezon istendiginde sessizce 2025/26 CSV'leri
+#:      okunur ve hicbir hata gorunmezdi. En tehlikelisi buydu.
+VARSAYILAN_SEZON = "2526"
 ANA_LIGLER = [
     "E0", "E1", "E2", "E3", "EC",            # Ingiltere
     "SC0", "SC1", "SC2", "SC3",              # Iskocya
@@ -182,17 +193,38 @@ def tarih_coz(ham: str) -> datetime | None:
     return None
 
 
-def kaynak_satirlari(cache: Path) -> dict[Any, list[dict[str, Any]]]:
-    """Gune gore indekslenmis kaynak satirlari."""
+def sezon_dosya_adi(sezon: str) -> str:
+    """"2324" -> "odds_2023_24.csv". Depodaki `<sezon>` duzeniyle ayni."""
+    if len(sezon) != 4 or not sezon.isdigit():
+        raise ValueError(f"sezon dort haneli olmali (or. 2324): {sezon!r}")
+    bas, son = sezon[:2], sezon[2:]
+    yuzyil = "19" if int(bas) > 50 else "20"
+    return f"odds_{yuzyil}{bas}_{son}.csv"
+
+
+def _cache_dizini(kok: Path, sezon: str) -> Path:
+    """Sezon basina AYRI onbellek. Ortak dizin sessiz veri karismasi demek."""
+    return kok / sezon
+
+
+def kaynak_satirlari(cache: Path,
+                     sezon: str = VARSAYILAN_SEZON) -> dict[Any, list[dict[str, Any]]]:
+    """Gune gore indekslenmis kaynak satirlari.
+
+    `cache` SEZONA OZEL bir dizin olmali; cagiran `_cache_dizini` kullanir.
+    Ek lig dosyalari (`new/<ulke>.csv`) cok sezonlu tek dosyadir, o yuzden
+    sezon dizininin disinda, ortak tutulur.
+    """
     indeks: dict[Any, list[dict[str, Any]]] = {}
     dosyalar: list[tuple[str, Path]] = []
 
     for lig in ANA_LIGLER:
-        p = indir(ANA_URL.format(sezon=SEZON, lig=lig), cache / f"{lig}.csv")
+        p = indir(ANA_URL.format(sezon=sezon, lig=lig), cache / f"{lig}.csv")
         if p:
             dosyalar.append((lig, p))
     for ulke in EK_ULKELER:
-        p = indir(EK_URL.format(ulke=ulke), cache / f"new_{ulke}.csv")
+        # Ek ligler cok sezonlu: sezon dizinine degil ustune yazilir.
+        p = indir(EK_URL.format(ulke=ulke), cache.parent / f"new_{ulke}.csv")
         if p:
             dosyalar.append((f"new_{ulke}", p))
 
@@ -305,7 +337,10 @@ def sqlite_yaz(yol: Path, satirlar: list[dict[str, Any]]) -> None:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--gecmis", type=Path, default=GECMIS)
+    ap.add_argument("--sezon", default=VARSAYILAN_SEZON,
+                    help="football-data sezon kodu, or. 2324 (varsayilan 2526)")
+    ap.add_argument("--gecmis", type=Path, default=None,
+                    help="kupon hafta dosyasi; verilmezse sezondan turetilir")
     ap.add_argument("--out-dir", type=Path, default=CIKTI_DIZIN)
     ap.add_argument("--cache", type=Path, default=None)
     ap.add_argument("--esik", type=float, default=0.55, help="takim adi benzerlik esigi")
@@ -313,15 +348,29 @@ def main() -> int:
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
 
-    cache = args.cache or (args.out_dir / "_kaynak")
-    if not args.gecmis.exists():
-        print(f"Gecmis veri seti yok: {args.gecmis}", file=sys.stderr)
+    try:
+        cikti_adi = sezon_dosya_adi(args.sezon)
+    except ValueError as e:
+        print(e, file=sys.stderr)
         return 1
-    gecmis = json.loads(args.gecmis.read_text(encoding="utf-8"))
+    cache = _cache_dizini(args.cache or (args.out_dir / "_kaynak"), args.sezon)
+
+    # Varsayilan sezonda ESKI dosya asil kalir (kullanici karari); oteki
+    # sezonlarda §6G'nin urettigi dizinden okunur.
+    gecmis_yol = args.gecmis
+    if gecmis_yol is None:
+        gecmis_yol = GECMIS if args.sezon == VARSAYILAN_SEZON else (
+            KOK / "data" / "st_history" / cikti_adi[len("odds_"):-len(".csv")]
+        ).with_suffix(".json")
+    if not gecmis_yol.exists():
+        print(f"Gecmis veri seti yok: {gecmis_yol}", file=sys.stderr)
+        return 1
+    print(f"sezon {args.sezon} · kupon kaynagi {gecmis_yol.name}")
+    gecmis = json.loads(gecmis_yol.read_text(encoding="utf-8"))
     haftalar = gecmis.get("weeks", [])
 
     print("kaynak dosyalar indiriliyor / okunuyor…")
-    indeks = kaynak_satirlari(cache)
+    indeks = kaynak_satirlari(cache, args.sezon)
     print(f"  {sum(len(v) for v in indeks.values())} kaynak satiri, {len(indeks)} gun\n")
 
     satirlar: list[dict[str, Any]] = []
@@ -391,7 +440,7 @@ def main() -> int:
     args.out_dir.mkdir(parents=True, exist_ok=True)
     oran_sirali = sorted(oran_sutunlari)
     stat_sirali = sorted(stat_sutunlari)
-    csv_yol = args.out_dir / "odds_2025_26.csv"
+    csv_yol = args.out_dir / cikti_adi
     basliklar = [
         "week", "no", "kickoff", "home", "away", "hg", "ag", "code",
         "kaynak_dosya", "kaynak_lig", "kaynak_ev", "kaynak_dep", "guven",
@@ -409,7 +458,10 @@ def main() -> int:
 
     rapor = {
         "generated_at": datetime.now().date().isoformat(),
-        "source": "football-data.co.uk (mmz4281/2526 + new/) — piyasa oranlari, IDDAA DEGIL",
+        "season": args.sezon,
+        "coupon_source": gecmis_yol.name,
+        "source": (f"football-data.co.uk (mmz4281/{args.sezon} + new/) — "
+                   "piyasa oranlari, IDDAA DEGIL"),
         "matches_total": toplam,
         "matches_matched": len(eslesen),
         "coverage_pct": round(100 * len(eslesen) / toplam, 2) if toplam else 0,
@@ -424,13 +476,25 @@ def main() -> int:
             for r in eksik
         ],
     }
-    rapor_yol = args.out_dir / "odds_rapor.json"
+    # Rapor da sezondan turer: sabit kalsaydi ikinci sezon birincinin
+    # kapsama raporunu silerdi ve hangi sayinin hangi sezona ait oldugu
+    # kaybolurdu. Varsayilan sezonda ad DEGISMEZ (`odds_rapor.json`) —
+    # mevcut testler ve belgeler ona bakiyor.
+    rapor_yol = args.out_dir / (
+        "odds_rapor.json" if args.sezon == VARSAYILAN_SEZON
+        else f"odds_rapor_{cikti_adi[len('odds_'):-len('.csv')]}.json")
     rapor_yol.write_text(json.dumps(rapor, ensure_ascii=False, indent=2) + "\n",
                          encoding="utf-8")
     print(f"yazildi: {rapor_yol}")
 
     if not args.no_sqlite:
-        db_yol = args.out_dir / "odds.sqlite3"
+        # SQLite de sezon basina AYRI. Ortak dosyada `mac` ve `oran`
+        # tablolarinin birincil anahtari (week, no) ve (week, no, sutun)
+        # oldugu icin ikinci sezon birincinin satirlarini INSERT OR REPLACE
+        # ile SESSIZCE ezerdi. Varsayilan sezonda ad degismez.
+        db_yol = args.out_dir / (
+            "odds.sqlite3" if args.sezon == VARSAYILAN_SEZON
+            else f"odds_{cikti_adi[len('odds_'):-len('.csv')]}.sqlite3")
         sqlite_yaz(db_yol, satirlar)
         print(f"yazildi: {db_yol}")
 

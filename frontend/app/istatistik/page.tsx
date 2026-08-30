@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 
-import { getStats } from "@/lib/api";
+import { getMeta, getStats } from "@/lib/api";
 import { useIstek } from "@/lib/istek";
 import {
   SEMBOLLER,
@@ -36,6 +36,9 @@ import {
   SliceNote,
   aralikUrldenOku,
   aralikUrleYaz,
+  SeasonFilter,
+  sezonUrldenOku,
+  sezonUrleYaz,
 } from "@/components/istatistik/parts";
 import { WeeksTable } from "@/components/istatistik/weeks-table";
 import { IstatistikSekmeleri } from "@/components/istatistik/sekmeler";
@@ -50,13 +53,24 @@ const ARALIKLAR: Array<{ deger: number | null; etiket: string }> = [
 
 export default function IstatistikPage() {
   const [last, setLast] = React.useState<number | null>(null);
+  const [sezon, setSezon] = React.useState<string | null>(null);
+  const [sezonlar, setSezonlar] = React.useState<string[]>([]);
   // Adresteki `?last=` okunana kadar istek atmiyoruz; aksi halde
   // paylasilan bir baglanti once tum sezonu cekip sonra dilime donerdi.
   const [urlOkundu, setUrlOkundu] = React.useState(false);
 
   React.useEffect(() => {
     setLast(aralikUrldenOku());
+    setSezon(sezonUrldenOku());
     setUrlOkundu(true);
+  }, []);
+
+  // Secilebilir sezonlar motorun yetenek envanterinden gelir; arayuzde
+  // sabit liste tutmuyoruz ki yeni bir sezon eklendiginde burasi bayatlamasin.
+  React.useEffect(() => {
+    getMeta()
+      .then((m) => setSezonlar(m.seasons?.available ?? []))
+      .catch(() => setSezonlar([]));
   }, []);
 
   /** Filtre secimi hem state'e hem adres cubuguna yazilir. */
@@ -65,11 +79,21 @@ export default function IstatistikPage() {
     aralikUrleYaz(v);
   }
 
+  function sezonSec(v: string | null) {
+    setSezon(v);
+    sezonUrleYaz(v);
+  }
+
+  // Hafta baglantilari secili sezonu TASIMALI: tasimazsa sezon secip bir
+  // haftaya tiklayan kullanici varsayilan sezonun o numarali haftasini
+  // gorurdu ve bunu anlamasinin bir yolu olmazdi.
+  const sezonSorgu = sezon ? `?sezon=${encodeURIComponent(sezon)}` : "";
+
   const {
     veri,
     hata,
     yukleniyor: mesgul,
-  } = useIstek((signal) => getStats(last, signal), [last], {
+  } = useIstek((signal) => getStats(last, signal, sezon), [last, sezon], {
     hazir: urlOkundu,
     varsayilanHata: "İstatistik alınamadı",
   });
@@ -135,8 +159,15 @@ export default function IstatistikPage() {
             </Badge>
           ) : null}
           {meta.sliced ? <Badge ton="warning">dilim</Badge> : null}
+          {sezon ? <Badge ton="warning">türetilmiş kayıt</Badge> : null}
         </div>
-        <div className="mt-4">
+        <div className="mt-4 space-y-3">
+          <SeasonFilter
+            deger={sezon}
+            secenekler={sezonlar}
+            onChange={sezonSec}
+            mesgul={mesgul}
+          />
           <RangeFilter deger={last} onChange={aralikSec} secenekler={ARALIKLAR} mesgul={mesgul} />
           <SliceNote
             weeks={veri.weeks.map((w) => w.week)}
@@ -305,7 +336,7 @@ export default function IstatistikPage() {
                           {etiket} {u.value} →{" "}
                           <Link
                             className="text-primary hover:underline"
-                            href={`/istatistik/${u.week}`}
+                            href={`/istatistik/${u.week}${sezonSorgu}`}
                           >
                             {u.week}. hf
                           </Link>
@@ -335,7 +366,7 @@ export default function IstatistikPage() {
                         {r.length}× {r.symbol}
                       </span>{" "}
                       ·{" "}
-                      <Link className="text-primary hover:underline" href={`/istatistik/${r.week}`}>
+                      <Link className="text-primary hover:underline" href={`/istatistik/${r.week}${sezonSorgu}`}>
                         {r.week}. hf
                       </Link>{" "}
                       · {r.start}. maçtan itibaren
