@@ -256,6 +256,12 @@
     "2": "float"
    },
    "marj": "float",
+   "mesafe": {
+    "en_uzak": "float",
+    "en_yakin": "float",
+    "ortalama": "float",
+    "ortanca": "float"
+   },
    "oranlar": {
     "0": "float",
     "1": "float",

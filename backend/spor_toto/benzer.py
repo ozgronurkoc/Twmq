@@ -195,6 +195,33 @@ def _olasilik_tablosu(yontem: str, korpus: str | None
                  if len(p) == 3)
 
 
+def _mesafe_ozeti(mesafeler: Sequence[float]) -> dict[str, float] | None:
+    """Bulunan maçların ne kadar "benzer" olduğu — sıralı listeden bedavaya.
+
+    Bu blok yeni bir soru sormuyor; **var olan bir bayrağı okunabilir
+    kılıyor.** `tolerans_genisledi` bugün bir boolean: "yarıçap büyüdü".
+    Büyüdüğünde okuyanın soracağı tek soru şudur — *gerçekten benzer maç mı
+    bulundu, yoksa örneklem toplamak için uzağa mı uzanıldı?* Ortanca mesafe
+    tavana dayanmışsa cevap ikincisidir ve bunu gösteren başka sayı yok.
+
+    Payda `bulunan`dır: bütün mesafeler tanım gereği `[0, tolerans]`
+    aralığındadır, yani tavana yakın bir ortanca doğrudan "sınırdan
+    toplandı" demektir.
+    """
+    if not mesafeler:
+        return None
+    n = len(mesafeler)
+    # Girdi `benzer_maclar`ta zaten sıralı; ortanca için yeniden sıralanmıyor.
+    orta = (mesafeler[n // 2] if n % 2
+            else (mesafeler[n // 2 - 1] + mesafeler[n // 2]) / 2)
+    return {
+        "en_yakin": mesafeler[0],
+        "ortanca": orta,
+        "ortalama": sum(mesafeler) / n,
+        "en_uzak": mesafeler[-1],
+    }
+
+
 def _sayim(maclar: Sequence[dict[str, Any]],
            piyasa: dict[str, float]) -> dict[str, Any]:
     """Bir maç kümesinin 1/0/2 karnesi — her satırda n, GA ve piyasa payı."""
@@ -273,7 +300,9 @@ def benzer_maclar(oranlar: dict[str, float],
             kullanilan = round(kullanilan + TOLERANS_ADIMI, 6)
             genisledi = True
 
-    bulunan = [r for d, r in olculu if d <= kullanilan]
+    # `olculu` sıralı: mesafeler de sırayla çıkıyor, ayrıca sıralanmıyor.
+    yakinlar = [(d, r) for d, r in olculu if d <= kullanilan]
+    bulunan = [r for _, r in yakinlar]
     rapor: dict[str, Any] = {
         "oranlar": dict(oranlar),
         "marj": margin(oranlar),
@@ -289,6 +318,7 @@ def benzer_maclar(oranlar: dict[str, float],
         "as_of": tarih,
         "evren_kesilen": kesilen,
         "filtre": {"lig": lig, "sezon": sezon},
+        "mesafe": _mesafe_ozeti([d for d, _ in yakinlar]),
         "toplam": _sayim(bulunan, hedef),
         "uyarilar": [],
     }
@@ -370,6 +400,13 @@ def yaz(rapor: dict[str, Any]) -> None:
           f"{' (uyarlandı)' if rapor['tolerans_uyarlandi'] else ''}")
     print()
     print(f"─── BULUNAN {rapor['toplam']['n']} MAÇ " + "─" * 45)
+    m = rapor["mesafe"]
+    if m:
+        # Yarıçap genişlediyse asıl okunacak satır bu: ortanca tavana
+        # dayanmışsa örneklem sınırdan toplanmış demektir.
+        print(f"  mesafe: en yakın %{100*m['en_yakin']:.2f} · ortanca "
+              f"%{100*m['ortanca']:.2f} · ortalama %{100*m['ortalama']:.2f} · "
+              f"en uzak %{100*m['en_uzak']:.2f} puan")
     _karne_satirlari(rapor["toplam"], "  ")
 
     for ad, baslik in (("lig", "LİG"), ("sezon", "SEZON")):

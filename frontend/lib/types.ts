@@ -1005,6 +1005,18 @@ export interface BenzerResponse {
    * bilmiyordu; sozlesme denetimi yakaladi. `null` = suzgec yok.
    */
   filtre: { lig: string | null; sezon: string | null };
+  /**
+   * Bulunan maclarin hedefe uzakligi (olasilik puani). `tolerans_genisledi`
+   * bir boolean; bu blok onu okunabilir kilar -- ortanca tavana dayanmissa
+   * orneklem "benzer" maclardan degil SINIRDAN toplanmis demektir.
+   * Bulunan yoksa `null`.
+   */
+  mesafe: {
+    en_yakin: number;
+    ortanca: number;
+    ortalama: number;
+    en_uzak: number;
+  } | null;
   toplam: BenzerKarne;
   dilimler: { lig: BenzerDilim[]; sezon: BenzerDilim[] };
   uyarilar: string[];

@@ -212,6 +212,37 @@ def test_gecersiz_en_az_reddedilir(bozuk):
         benzer_maclar(ORNEK, en_az=bozuk)
 
 
+# ─── mesafe kalitesi ──────────────────────────────────────────────────────────
+
+def test_mesafe_ozeti_yaricapin_icinde_ve_sirali():
+    r = benzer_maclar(ORNEK, tolerans=0.02)
+    m = r["mesafe"]
+    assert m["en_yakin"] <= m["ortanca"] <= m["en_uzak"]
+    assert m["en_yakin"] <= m["ortalama"] <= m["en_uzak"]
+    assert 0.0 <= m["en_yakin"]
+    assert m["en_uzak"] <= 0.02
+
+
+def test_bos_sonucta_mesafe_yok():
+    """Sayı yoksa mesafe de yok — boş kümede 0.0 basmak yanlış olurdu."""
+    r = benzer_maclar({"1": 1.01, "0": 1000.0, "2": 1000.0}, tolerans=0.0)
+    assert r["toplam"]["n"] == 0
+    assert r["mesafe"] is None
+
+
+def test_genisleyen_arama_ortancasini_tavana_dogru_iter():
+    """Mesafe bloğunun varlık sebebi: `tolerans_genisledi` bir boolean.
+
+    Genişlemiş bir arama "benzer maç buldum" der ama örneklemi sınırdan
+    toplamış olabilir. Ortanca mesafe bunu gösteren tek sayıdır.
+    """
+    dar = benzer_maclar(ORNEK, tolerans=0.02)
+    genis = benzer_maclar(ORNEK, tolerans=EN_COK_TOLERANS)
+    assert genis["mesafe"]["ortanca"] > dar["mesafe"]["ortanca"]
+    # En yakın maç değişmez — genişleyen şey kümenin ucu, çekirdeği değil.
+    assert genis["mesafe"]["en_yakin"] == dar["mesafe"]["en_yakin"]
+
+
 # ─── regresyon: ölçülen sayılar ───────────────────────────────────────────────
 
 def test_olculen_sayilar_korunur():
