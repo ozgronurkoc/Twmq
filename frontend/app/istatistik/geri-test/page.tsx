@@ -26,6 +26,7 @@ import {
 import {
   RangeFilter,
   aralikUrldenOku,
+  sezonUrldenOku,
   aralikUrleYaz,
 } from "@/components/istatistik/parts";
 import { IstatistikSekmeleri } from "@/components/istatistik/sekmeler";
@@ -38,11 +39,16 @@ const ARALIKLAR: Array<{ deger: number | null; etiket: string }> = [
 
 export default function GeriTestPage() {
   const [last, setLast] = React.useState<number | null>(null);
+  // Sezon SEKME SERIDINDEN gelir (`?sezon=`); bu sayfa onu secmez ama
+  // TASIMAK zorundadir, yoksa sezon secip bu sekmeye gecen kullanici
+  // sessizce varsayilan sezonun geri testini gorur.
+  const [sezon, setSezon] = React.useState<string | null>(null);
   const [esik, setEsik] = React.useState<{ banko: number; uclu: number } | null>(null);
   const [urlOkundu, setUrlOkundu] = React.useState(false);
 
   React.useEffect(() => {
     setLast(aralikUrldenOku());
+    setSezon(sezonUrldenOku());
     setUrlOkundu(true);
   }, []);
 
@@ -56,8 +62,8 @@ export default function GeriTestPage() {
     hata,
     yukleniyor: mesgul,
   } = useIstek(
-    (signal) => getBacktest({ last, banko: esik?.banko, uclu: esik?.uclu }, signal),
-    [last, esik?.banko, esik?.uclu],
+    (signal) => getBacktest({ last, banko: esik?.banko, uclu: esik?.uclu, sezon }, signal),
+    [last, esik?.banko, esik?.uclu, sezon],
     { hazir: urlOkundu, varsayilanHata: "Geri test alınamadı" },
   );
 
@@ -72,7 +78,7 @@ export default function GeriTestPage() {
   if (hata) {
     return (
       <div className="space-y-4">
-        <IstatistikSekmeleri last={last} />
+        <IstatistikSekmeleri last={last} sezon={sezon} />
         <Callout ton="danger" baslik="Geri test alınamadı">
           {hata}
         </Callout>
@@ -105,7 +111,7 @@ export default function GeriTestPage() {
           bedelinin ve isabetinin kaydıdır.
         </p>
         <div className="mt-4">
-          <IstatistikSekmeleri last={last} />
+          <IstatistikSekmeleri last={last} sezon={sezon} />
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <Badge ton="primary">{veri.meta.weeks_used} hafta çalıştırıldı</Badge>

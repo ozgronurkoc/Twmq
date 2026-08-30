@@ -144,7 +144,7 @@ export default function IstatistikPage() {
           <strong>Geri test</strong> sekmesinde.
         </p>
         <div className="mt-4">
-          <IstatistikSekmeleri last={last} />
+          <IstatistikSekmeleri last={last} sezon={sezon} />
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-2">
           {meta.season ? <Badge ton="primary">{meta.season}</Badge> : null}

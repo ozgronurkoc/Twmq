@@ -762,14 +762,15 @@ def _tahmin_cached(limit: int | None) -> dict[str, Any]:
 
 @lru_cache(maxsize=32)
 def _backtest_cached(last: int | None, banko: float, uclu: float,
-                     sweep: bool) -> dict[str, Any]:
+                     sweep: bool, sezon: str | None = None) -> dict[str, Any]:
     """Geri test sonucu istek basina yeniden hesaplanmaz.
 
     Veri seti surumlenmis bir dosyadir; ayni parametreler ayni cevabi verir.
     Tek strateji ~1,2 sn, 28 esikli tarama ilk cagrida ~15 sn surer (kaplama
     imzalari onbelleklenene kadar) ve sonrasinda milisaniyeye iner.
     """
-    return backtest_payload(last=last, banko=banko, uclu=uclu, sweep=sweep)
+    return backtest_payload(last=last, banko=banko, uclu=uclu, sweep=sweep,
+                            sezon=sezon)
 
 
 @app.route("/api/backtest", methods=["GET"])
@@ -777,8 +778,8 @@ def api_backtest():
     """
     "Bu strateji gecen sezon ne yapardi?"
 
-    `?banko=` ve `?uclu=` esikleri, `?last=N` dilimi, `?sweep=0` ile tarama
-    kapali. Cevap UC blok tasir ve ucu birlikte okunmalidir: secili
+    `?banko=` ve `?uclu=` esikleri, `?last=N` dilimi, `?sezon=` sezon secimi,
+    `?sweep=0` ile tarama kapali. Cevap UC blok tasir ve ucu birlikte okunmalidir: secili
     stratejinin sezonu, esik taramasi ve **hold-out** — sonuncusu esigin o
     haftayi gormeden secildigi halde olculen sonuctur.
     """
@@ -786,7 +787,12 @@ def api_backtest():
     banko = _parse_esik(request.args.get("banko"), VARSAYILAN_BANKO)
     uclu = _parse_esik(request.args.get("uclu"), VARSAYILAN_UCLU)
     sweep = str(request.args.get("sweep", "1")).strip().lower() not in {"0", "false", "no"}
-    return jsonify(_backtest_cached(last, banko, uclu, sweep))
+    try:
+        sezon = _parse_sezon(request.args.get("sezon"))
+    except GecersizSezon:
+        return jsonify({"error": "bilinmeyen sezon",
+                        "sezonlar": history_sezonlari()}), 400
+    return jsonify(_backtest_cached(last, banko, uclu, sweep, sezon))
 
 
 @app.route("/api/tahmin", methods=["GET"])

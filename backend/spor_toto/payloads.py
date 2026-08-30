@@ -61,6 +61,7 @@ def backtest_payload(
     banko: float = VARSAYILAN_BANKO,
     uclu: float = VARSAYILAN_UCLU,
     sweep: bool = True,
+    sezon: str | None = None,
 ) -> dict[str, Any]:
     """Geri test govdesi: sezon + hafta hafta + (istege bagli) esik taramasi.
 
@@ -68,7 +69,8 @@ def backtest_payload(
     secildigi halde olculen sonuc odur ve geriye uydurulmus sayinin yaninda
     her zaman birlikte okunmalidir.
     """
-    return backtest(last=last, banko_esik=banko, uclu_esik=uclu, sweep=sweep)
+    return backtest(last=last, banko_esik=banko, uclu_esik=uclu, sweep=sweep,
+                    sezon=sezon)
 
 
 def takimlar_payload(lig: str | None = None,

@@ -174,7 +174,13 @@ export function getStatsWeek(week: number, signal?: AbortSignal, sezon?: string 
  * onbellege alir, sonraki cagrilar milisaniyedir.
  */
 export function getBacktest(
-  opt: { last?: number | null; banko?: number; uclu?: number; sweep?: boolean } = {},
+  opt: {
+    last?: number | null;
+    banko?: number;
+    uclu?: number;
+    sweep?: boolean;
+    sezon?: string | null;
+  } = {},
   signal?: AbortSignal,
 ) {
   const q = new URLSearchParams();
@@ -182,6 +188,7 @@ export function getBacktest(
   if (opt.banko !== undefined) q.set("banko", String(opt.banko));
   if (opt.uclu !== undefined) q.set("uclu", String(opt.uclu));
   if (opt.sweep === false) q.set("sweep", "0");
+  if (opt.sezon) q.set("sezon", opt.sezon);
   const qs = q.toString();
   return istek<BacktestResponse>(`/api/backtest${qs ? `?${qs}` : ""}`, { signal });
 }

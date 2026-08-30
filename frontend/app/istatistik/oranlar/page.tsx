@@ -27,6 +27,7 @@ import {
   RangeFilter,
   SliceNote,
   aralikUrldenOku,
+  sezonUrldenOku,
   aralikUrleYaz,
 } from "@/components/istatistik/parts";
 import { IstatistikSekmeleri } from "@/components/istatistik/sekmeler";
@@ -52,10 +53,15 @@ const ARALIKLAR: Array<{ deger: number | null; etiket: string }> = [
  */
 export default function OranlarPage() {
   const [last, setLast] = React.useState<number | null>(null);
+  // Sezon SEKME SERIDINDEN gelir (`?sezon=`); bu sayfa onu secmez ama
+  // TASIMAK zorundadir, yoksa sezon secip bu sekmeye gecen kullanici
+  // sessizce varsayilan sezona duser.
+  const [sezon, setSezon] = React.useState<string | null>(null);
   const [urlOkundu, setUrlOkundu] = React.useState(false);
 
   React.useEffect(() => {
     setLast(aralikUrldenOku());
+    setSezon(sezonUrldenOku());
     setUrlOkundu(true);
   }, []);
 
@@ -68,7 +74,7 @@ export default function OranlarPage() {
     veri,
     hata,
     yukleniyor: mesgul,
-  } = useIstek((signal) => getStats(last, signal), [last], {
+  } = useIstek((signal) => getStats(last, signal, sezon), [last, sezon], {
     hazir: urlOkundu,
     varsayilanHata: "Oran özeti alınamadı",
   });
@@ -92,7 +98,7 @@ export default function OranlarPage() {
             hangi anı kullanıldığı aşağıdaki kartta yazılıdır.
           </p>
         </div>
-        <IstatistikSekmeleri last={last} />
+        <IstatistikSekmeleri last={last} sezon={sezon} />
         {odds ? (
           <div className="flex flex-wrap items-center gap-2">
             <Badge>

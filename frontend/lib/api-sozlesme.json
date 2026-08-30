@@ -95,6 +95,7 @@
     "arindirma": "str",
     "match_count": "int",
     "note": "str",
+    "sezon": "null",
     "space_limit": "int",
     "weeks_available": "int",
     "weeks_dropped": [

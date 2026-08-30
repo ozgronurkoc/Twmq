@@ -482,14 +482,20 @@ def backtest(last: int | None = None,
              banko_esik: float = VARSAYILAN_BANKO,
              uclu_esik: float = VARSAYILAN_UCLU,
              sweep: bool = True,
-             yontem: str = ARINDIRMA_VARSAYILAN) -> dict[str, Any]:
+             yontem: str = ARINDIRMA_VARSAYILAN,
+             sezon: str | None = None) -> dict[str, Any]:
     """Bir stratejinin sezon boyu geri testi + eşik taraması + hold-out.
 
     `yontem` marj arındırmasını seçer (A5); `meta.arindirma` ile çıktıda yazar
     çünkü eşikler ölçeğe bağlıdır ve hangi ölçekte ölçüldüğü sonradan
     anlaşılamazsa tablo yorumlanamaz.
+
+    `sezon` hafta kaydını ve oran arşivini birlikte seçer; `meta.sezon` ile
+    çıktıda yazar. **Sezonu çıktıya yazmak şart:** eşik taraması ve hold-out
+    hangi sezonda koşulduğu bilinmeden okunamaz, ve arayüzde sezon sekmeler
+    arasında taşınmazsa iki sayfa aynı anda iki farklı sezonu anlatır.
     """
-    girdiler = hafta_girdileri(last, yontem)
+    girdiler = hafta_girdileri(last, yontem, sezon)
     elenen = [
         {"week": g["week"], "missing": g["missing"]}
         for g in girdiler if not g["usable"]
@@ -501,6 +507,9 @@ def backtest(last: int | None = None,
 
     return {
         "meta": {
+            # Hangi sezonda kosuldugu ciktida DURMALI: esik taramasi ve
+            # hold-out sezon bilinmeden okunamaz.
+            "sezon": sezon,
             "weeks_available": len(girdiler),
             "weeks_used": len([g for g in girdiler if g["usable"]]),
             "weeks_dropped": elenen,
