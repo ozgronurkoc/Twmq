@@ -100,23 +100,34 @@ def alt_ust(row: dict[str, Any], yontem: str = ARINDIRMA_VARSAYILAN,
     }
 
 
+def ah_bilesenler(h: float) -> tuple[tuple[float, float], ...]:
+    """Asya handikabı çizgisini `(çizgi, pay)` bileşenlerine ayırır.
+
+    Çeyrek çizgi (±0,25 / ±0,75) **iki yarım bahistir**; tam ve yarım
+    çizgi tektir. Kural burada TEK YERDE yazılıdır çünkü iki ayrı yerde
+    yazılırsa ikisi ayrışır: `_ah_getiri` bunu *kapama oranı* için,
+    `deger._ah_para_getirisi` *para getirisi* için okur ve ikisinin aynı
+    bölünmeyi görmesi şarttır.
+    """
+    if round(h * 4) % 2 != 0:
+        return ((h - 0.25, 0.5), (h + 0.25, 0.5))
+    return ((h, 1.0),)
+
+
 def _ah_getiri(gol_farki: int, h: float) -> float:
-    """Ev sahibine `h` çizgisiyle oynanan bahsin getirisi — `[0, 1]`.
+    """Ev sahibine `h` çizgisiyle oynanan bahsin **kapama oranı** — `[0, 1]`.
 
     `skor.ah_kapama` **olasılık** dağılımı üzerinde çalışır; bu fonksiyon
     **gerçekleşmiş** bir skor üzerinde çalışır ve aynı kuralı uygular:
     çeyrek çizgi iki yarım bahse bölünür, tam sayı çizgide eşitlik iadedir
     (yarım getiri).
-    """
-    dortte_bir = round(h * 4)
-    bilesenler: tuple[tuple[float, float], ...]
-    if dortte_bir % 2 != 0:
-        bilesenler = ((h - 0.25, 0.5), (h + 0.25, 0.5))
-    else:
-        bilesenler = ((h, 1.0),)
 
+    **Bu bir para getirisi DEĞİLDİR** — iade burada 0,5 sayılır, oysa parada
+    iade 0'dır (yatırılan geri gelir, kâr yoktur). Para karşılığı için
+    `deger._ah_para_getirisi`.
+    """
     getiri = 0.0
-    for cizgi, pay in bilesenler:
+    for cizgi, pay in ah_bilesenler(h):
         d = gol_farki + cizgi
         getiri += pay * (1.0 if d > 0 else (0.5 if d == 0 else 0.0))
     return getiri

@@ -66,6 +66,14 @@ elde 3 haftalık ikramiye kaydı var ve §6.3b ölçülmüş biçimde yazıyor �
 orta büyüklükte bir etkiyi ayırt etmek ≈71 ikramiyeli hafta ister. Boş bir
 `ROI` sütunu, ölçülmemiş bir sayıya tabloda yer ayırmak olurdu.
 
+Bu gerekçe **havuz ekseni içindir ve orada aynen durur.** Sabit oranlı
+yan pazarlarda geçerli değil — orada fiyat sabittir ve getiri doğrudan
+hesaplanır. O ölçüm `deger.py`de yapıldı (§3.36) ve arenaya yine
+girmiyor, ama artık *"ölçülmedi"* diye değil *"başka bir kesitte, başka
+bir birimde ölçüldü"* diye: `deger.py`nin kesiti oran arşividir (1.737
+maç), arenanınki kupon haftalarıdır (114 hafta) ve birimi Brier'dir.
+İkisini aynı tabloya koymak arenanın kendi kesit kuralını bozardı.
+
     python -m spor_toto.arena              # sezon disarida birakmali
     python -m spor_toto.arena --ileri      # kronolojik (ileri yuruyus)
     python -m spor_toto.arena --kupon      # kupon setinde
