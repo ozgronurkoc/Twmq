@@ -891,7 +891,7 @@ backend/
     tahmin.py          TAHMİN: yaklaşan maçlar + ölçülmüş isabet = /api/tahmin
     pazar.py           1X2 DIŞI: alt/üst 2,5 + Asya handikabı = /api/pazar
     deger.py           ÖLÇÜM: sabit oranlı pazarlarda değer bahsi getirisi — üç
-                       pazarda da kâr YOK (§3.36); arayüze ÇIKMAZ
+                       pazarda da kâr YOK (§3.45); arayüze ÇIKMAZ
     getiri.py          HAVUZ: müşterek beklenen değer — HESAP, arayüze ÇIKMAZ
     mcp_server.py      DENEY: MCP yüzeyi — ölçüt 1'i GEÇMEDİ, isteğe bağlı ekstra
     gorus.py           TAHMİN: piyasadan BAĞIMSIZ görüş (DC + Elo) — işaret DEĞİŞTİRMEZ

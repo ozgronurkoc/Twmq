@@ -5,7 +5,7 @@ projeye ne kattığı ve **ne katmadığı**.
 **Tarih:** 2026-08-30 · İncelenen sürüm: `main`, 6.078 satır, MIT, PyPI'da
 **İlgili belgeler:** [`DIS_INCELEME.md`](DIS_INCELEME.md) (aynı türün ilki) ·
 [`DIS_INCELEME_ALPHAPY.md`](DIS_INCELEME_ALPHAPY.md) (ikincisi) ·
-`README.md` §7 · `ISTATISTIK_YOL_HARITASI.md` §3.36
+`README.md` §7 · `ISTATISTIK_YOL_HARITASI.md` §3.45 · `VERI_TOPLAMA_VE_ISLEME.md` §6I
 
 > **Künye — bu bizim ölçümümüz değildir.** Aşağıda `sports-betting`in
 > **kendi** belgelerinden alınan tek bir sayı yok; deponun README'sindeki

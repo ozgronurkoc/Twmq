@@ -115,7 +115,7 @@ def test_ikinci_cagri_onbellekten_gelir(client, monkeypatch):
     rahatça 5 sn'yi aşıyor. Aşınca ikinci çağrı taze ölçüm yapıyor ve test
     "önbellek çalışmıyor" diye düşüyordu — oysa çalışıyordu, TTL dolmuştu.
 
-    `pytest-randomly` bunu ilk koşumda yakaladı (§6H); kusur sıralamada
+    `pytest-randomly` bunu ilk koşumda yakaladı (§6I); kusur sıralamada
     değil **varsayımdaydı**. Ölçülen şey önbellek POLİTİKASI olmalı,
     ölçümün hızı değil; TTL bu yüzden sabitleniyor.
     """

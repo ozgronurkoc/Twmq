@@ -22,7 +22,7 @@ from spor_toto import mcp_server
 def test_uc_envanteri_KAYIT_TABLOSUNDAN_turer():
     """Liste elle yazılmamalı — eskiyen bir envanter sessizce yanlıştır.
 
-    Ölçüldü (§6H): `/api/pazar` ve `/api/takimlar` aylarca kayıtlı ve
+    Ölçüldü (§6I): `/api/pazar` ve `/api/takimlar` aylarca kayıtlı ve
     çalışırken servis kökünün listesinde YOKTU. Kusuru MCP deneyinin
     envanter denetimi buldu.
     """

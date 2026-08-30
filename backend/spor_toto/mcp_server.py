@@ -1,4 +1,4 @@
-"""MCP yüzeyi — motoru bir yapay zekâ ajanına açar (DENEY, §6H).
+"""MCP yüzeyi — motoru bir yapay zekâ ajanına açar (DENEY).
 
 **Bu modül bir karar değil bir deneydir.** `sports-betting` incelemesi bir
 MCP sunucusu önerdi (`src/sportsbet/mcp/_server.py`, 539 satır) ve soru

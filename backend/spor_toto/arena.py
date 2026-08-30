@@ -68,7 +68,7 @@ orta büyüklükte bir etkiyi ayırt etmek ≈71 ikramiyeli hafta ister. Boş bi
 
 Bu gerekçe **havuz ekseni içindir ve orada aynen durur.** Sabit oranlı
 yan pazarlarda geçerli değil — orada fiyat sabittir ve getiri doğrudan
-hesaplanır. O ölçüm `deger.py`de yapıldı (§3.36) ve arenaya yine
+hesaplanır. O ölçüm `deger.py`de yapıldı (§3.45) ve arenaya yine
 girmiyor, ama artık *"ölçülmedi"* diye değil *"başka bir kesitte, başka
 bir birimde ölçüldü"* diye: `deger.py`nin kesiti oran arşividir (1.737
 maç), arenanınki kupon haftalarıdır (114 hafta) ve birimi Brier'dir.
@@ -100,7 +100,7 @@ from .predict import REFERANS_AD, referans_fabrikalar
 #: 1.200'u (%71) korpusta BIREBIR var. Bu yuzden korpusta egitilmis bir
 #: tahminci bu haftalarda `grup=None` ile olculemez.
 #:
-#: Sayilar §6H'de buyudu (107 -> 112 hafta, eslestirmedeki Unicode kusuru
+#: Sayilar §6I'de buyudu (107 -> 112 hafta, eslestirmedeki Unicode kusuru
 #: duzeltilince) ve burada ELLE guncellendi. Oran degismedi: %72 -> %71.
 KUPON_KORPUS_KESISIMI = (
     "kupon maclarinin 1.200/1.680'i (%71) egitim korpusunda da var "

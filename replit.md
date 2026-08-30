@@ -118,7 +118,7 @@ Katman katman:
   `cizgi.py` (A1) · `bahisci.py` (A2) · `disari.py` (A3) · `kalibrasyon.py` ·
   `getiri.py` (müşterek beklenen değer — hesap var, **ölçüm yok**; §3.34) ·
   `deger.py` (sabit oranlı pazarlarda değer bahsi getirisi — **ölçüldü**,
-  üç pazarda da kâr yok; §3.36)
+  üç pazarda da kâr yok; §3.45)
 - **Deney** — `mcp_server.py`: motoru bir yapay zekâ ajanına açan MCP
   yüzeyi. Dört ölçütün üçünü geçti, **ölçüt 1'i (yeni yetenek) geçmedi**:
   her aracı `curl` ile de erişilebiliyor. `mcp` isteğe bağlı ekstradır,

@@ -3922,6 +3922,94 @@ bağımsız, sürümlenmiş arşivden koşuyor. Kırmızı çizgi "olasılık ö
 çıkmaz" der; tersi serbesttir ve hafta arası tam da bakılacak zamandır.
 
 
+### 3.45 Değer bahsi getirisi (Faz 4.3) — yan pazarlarda da kâr yok
+
+`georgedouzas/sports-betting` incelemesinden alınan tek ölçü. Tam gerekçe
+ve alınmayanların listesi
+[`DIS_INCELEME_SPORTS_BETTING.md`](DIS_INCELEME_SPORTS_BETTING.md)'de;
+burada yalnızca **sayı** var.
+
+#### Kapatılan boşluk
+
+§3.31 alt/üst 2,5 ve Asya handikabını arayüze çıkardı ve **kalibrasyonunu**
+ölçtü. Kalibrasyon *"piyasa dürüst mü"* der. Sorulmayan soru şuydu: *"bu
+masadan para kalkar mı"* — iyi kalibre bir fiyat, üstüne bahis oynanınca
+marj kadar kaybettirir.
+
+#### Modelin nereden geldiği
+
+`p·o > 1` kuralı bir olasılık ve bir fiyat ister. İkisi **aynı sütundan**
+alınırsa kural hiç ateşlenmez: ham ima edilen olasılıklar 1'den fazlasına
+toplanır, arındırma o fazlalığı geri alır, `p·o = 1/(1+marj) < 1` her
+ayakta. Bir fiyat kendi arındırılmış olasılığıyla yenilemez.
+
+Bu yüzden ikisi ayrı kaynaktan gelir ve ayrım arşivde zaten vardı:
+
+    p ← Avg   bütün bahisçilerin ortalaması, marj arındırılmış
+    o ← Max   her ayakta en iyi fiyat — bir zarf, bir bahisçi değil
+
+§3.15 `b_Max`in **olasılık olarak okunamayacağını** yazmıştı (toplamı 1'in
+altında kalır). Doğrudur ve burada engel değil **dayanaktır**: `Max` bir
+olasılık değil bir fiyattır. Yöntem *"Beating the bookies with their own
+numbers"* (Kaunitz ve ark., 2017).
+
+#### Ölçülen sonuç
+
+Yapı §3.9'un geri testiyle aynı üç parçalı: tek strateji · `alpha`
+taraması · **sezon dışarıda bırakmalı** sağlama. Okunacak sayı üçüncüsüdür.
+
+| Pazar | Maç | Bahis | Verim | %95 aralık | Karar |
+|---|---:|---:|---:|---|---|
+| 1X2 | 1.737 | 190 | +21,36% | [−15,78, +77,73] | geçmedi |
+| alt/üst 2,5 | 1.694 | 274 | +0,61% | [−11,52, +13,65] | geçmedi |
+| Asya handikabı | 1.694 | 52 | +18,96% | [−6,88, +43,34] | geçmedi |
+
+Üç aralık da sıfırı içeriyor. **On birinci ölçümün yanında on ikincisi.**
+
+Aralıkların genişliği kusur değil stratejinin özelliği: `Max/Avg` açığı
+uzun atışlarda en geniştir (bahisçi anlaşmazlığı orada büyür), yani kural
+doğal olarak uzun atışa yığılır — 1X2'de seçilen bahislerin medyan oranı
+**3,55**.
+
+#### Sharpe'ın Asya handikabındaki özel değeri
+
+§3.31 AH için Brier'i **bilerek** hesaplamıyor: çizgilerin %53'ü çeyrek,
+sonuç `{0, ¼, ½, ¾, 1}`'den bir getiridir ve kesirli bir sonuca karşı Brier
+düzgün bir puanlama kuralı değildir. Getiri tabanlı bir ölçü kesirli
+sonuçları **doğal olarak** yutar; yani bu, o boşluğu kapatan ilk düzgün
+sayıdır.
+
+#### ROI taşınmadı
+
+`sports-betting` onu `stake · toplam / init_cash` diye yazar; bu `verim`in
+`n · stake / init_cash` ile çarpımıdır — yeni bilgi değil bir **kasa
+parametresi**. Kasa büyüklüğü seçilerek ROI istenen sayıya getirilebilir.
+§3.41'in arenaya `ROI` sütunu koymama gerekçesi **havuz ekseni içindir ve
+orada aynen durur**; burada gerekçe farklı ve ayrıca yazılı.
+
+#### Yazarken çıkan iki kusur
+
+İkisi de **ölçümden önce yazılı olan** kurallara dayanarak düzeltildi:
+
+- `alpha` seçimi kısıtsızken kendi gürültüsünü seçiyordu: `alpha=0,12` üç
+  bahisle %1.267 "verim" gösteriyor ve seçim onu seçecek kadar yüksek.
+  Kısıt bir ayar değil, `EN_AZ_BAHIS`in zaten yazılı gerekçesinin
+  (*"altında ortalama kendi gürültüsünü ölçer"*) sonucudur.
+- `pazar._ah_getiri` bir **kapama oranıdır** (iade 0,5), para getirisi
+  değil (iade 0). İkisi ayrı fonksiyon ama çeyrek çizgi bölünmesi tek
+  yerde: `pazar.ah_bilesenler`.
+
+#### Kupona uygulanmaz
+
+§3.34'ün ayrımı aynen geçerli: müşterek havuzda ödeme kaç kolonun
+tutturduğuna bağlıdır, `edge = p_piyasa − oynanma_payı`. Kelly ve değer
+bahsi çerçevesi sabit bir fiyata karşı tanımlıdır. `deger.py` **yalnızca
+sabit oranlı yan pazarlar** içindir ve kupon motoruna hiçbir şey söylemez.
+
+    python -m spor_toto.deger
+    python -m spor_toto.deger --pazar 2.5 --pazar AH --kaydet
+
+
 ## 4. Sayfada bugün ne var
 
 **`/istatistik`** — sezon dağılımı (en sık sonuç + pay çubuğu) · 5 sayı kutusu (sembol

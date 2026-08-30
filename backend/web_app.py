@@ -484,7 +484,7 @@ def _health_govde(only: str | None, fresh: bool) -> dict[str, Any]:
 #: **Niçin böyle.** Liste uzun süre elle yazılıydı ve sessizce eskidi:
 #: `/api/pazar` ve `/api/takimlar` aylarca kayıtlı, çalışır ve
 #: `replit.md`de yazılıyken servis kökünün envanterinde YOKTU. Kusuru
-#: MCP deneyinin envanter denetimi buldu (§6H) — yani bir uç envanteri
+#: MCP deneyinin envanter denetimi buldu (§6I) — yani bir uç envanteri
 #: elle tutulduğu sürece, onu okuyan her yüzey eksik bir dünya görür.
 UC_ACIKLAMALARI: dict[str, str] = {
     "/api/health": "readiness: tam değişmez raporu",

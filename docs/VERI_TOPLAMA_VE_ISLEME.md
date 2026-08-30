@@ -1285,6 +1285,119 @@ aynı numaralar bulunur ve özet sessizce başka bir sezonu anlatırdı.
 
 ---
 
+## 6I. Eşleştirme teşhisi — ve sessizce ölü bir sözlük
+
+§6G'nin boru hattı 156 haftanın **107'sini** kabul ediyor, 49'unu eliyordu.
+`georgedouzas/sports-betting` incelemesi bir eşleştirme stratejisi önerdi
+(küresel bire-bir atama + artık-tek kuralı) ve soru şuydu: elenen 49
+haftanın kaçına dokunabilir?
+
+**Önce ölçüldü, sonra kod yazıldı** — ve ölçüm öneriyi reddetti.
+
+### 6I.1 `--teshis`: "eşleştirmeyi iyileştirelim" ölçülebilir bir cümle mi
+
+`eslestir` iki gerekçe döndürüyordu ve birincisi **iki çok farklı durumu
+birleştiriyordu**: *yakın bir aday var ama eşiği geçmiyor* ile *pencerede
+benzeyen hiçbir şey yok*. Ayrım yapılmadan hiçbir strateji kararı
+verilemez. `teshis_sinifi` gerekçeyi üçe ayırır:
+
+| Sınıf | Strateji değişikliği kurtarabilir mi |
+|---|---|
+| `ayirt_edilemedi` | **evet** — iki aday eşiği geçti, seçim yapılmadı |
+| `aday_yok_esik_alti` | belki — yakın aday var, ad kusuru olabilir |
+| `aday_yok_uzak` | **hayır** — ertelenmiş maç ya da kapsam dışı lig |
+
+Ölçüm:
+
+```
+mac (elenen haftalar dahil):
+     0  ayirt_edilemedi
+    86  aday_yok_esik_alti
+   233  aday_yok_uzak
+```
+
+**156 haftanın hiçbirinde** pencerede iki adayın birden eşiği geçtiği bir
+maç yok; hiçbir fikstür iki bülten maçına atanmıyor. Önerilen strateji bu
+kesitte çalışacak bir şey **bulamazdı** ve alınmadı.
+
+`build_odds.py` tarafı da aynı biçimde reddedildi: `odds_rapor.json`un 48
+eşleşmeyen maçının tamamı **milli takım haftasıdır** ve football-data o
+maçları hiç taşımıyor. Kapsama sorunu, eşleştirme sorunu değil.
+
+### 6I.2 Ama teşhis başka bir şey buldu — ve o gerçekti
+
+`aday_yok_esik_alti` sınıfının en yüksek skorlu satırları okununca kusur
+görünür oldu:
+
+```
+"MARSILYA".lower()  ->  "marsilya"                  sozlukte VAR
+"MARSİLYA".lower()  ->  "marsi" + U+0307 + "lya"    sozlukte YOK
+```
+
+Türkçe noktalı `İ` (U+0130) Unicode'da `i` + **birleşen nokta**ya küçülür.
+İkisi ekranda aynı görünür. `BULTEN_ESLERI`nin anahtarları düz ASCII
+olduğu için, bülten yazımında `İ` geçen her satır **hiçbir zaman
+çalışmadı** — `marsilya`, `sporting lizbon`, `milano`.
+
+Bülten **büyük harfli bir görselden** OCR ile okunuyor (§6F), yani `İ`
+orada kural dışı değil **normal hâldir**: kusur, sözlüğe en çok ihtiyaç
+duyulan yerde vuruyordu. `build_odds.sadelestir` aynı temizliği ilk günden
+yapıyor; buradaki eksiklik bir **ayrışmaydı**.
+
+### 6I.3 Üç düzeltme, her biri ayrı ölçüldü
+
+| Düzeltme | Kabul edilen hafta |
+|---|---|
+| (başlangıç) | 107 |
+| Unicode birleşen işaret temizliği | **110** |
+| OCR `/` sütun ayracı artığı | **112** |
+| teşhiste doğrulanan 7 sözlük satırı | **112** |
+
+`/` artığı ayrı bir sınıftır: bülten görselindeki sütun ayracı zaman zaman
+adın başına düşüyor (`/ MARSILYA`). Hiçbir kulüp adı `/` ile başlamaz,
+dolayısıyla bu bir "yakınsatma" değil bir **temizliktir**; iç `/`
+karakterine dokunulmaz.
+
+Eklenen 7 sözlük satırının hepsi eşik altında kalmış maçların en iyi
+adayından okundu ve football-data'da **tek tek doğrulandı**. Aynı listede
+duran ama karşılığı doğrulanamayanlar (Qingdao'nun ad değişikliği,
+Wuhan'ın **yanlış** deplasman eşi) bilerek alınmadı — eşiğin doğru biçimde
+reddettiği şeyi sözlükle geri sokmak, eşiği kaldırmakla aynı şeydir.
+
+### 6I.4 Katkı tamamen eklemeli, çapraz doğrulama güçlendi
+
+| | Önce | Sonra |
+|---|---|---|
+| Kabul edilen hafta | 107 | **112** |
+| Kupon maçı | 1.605 | **1.680** |
+| Kaybolan hafta | — | **0** |
+| Değişen 1/0/2 dizisi | — | **0** |
+| Çapraz doğrulama ortak hafta | 29 | **31** |
+| Birebir aynı | 28 | **30** |
+| Ayrışan | 1 | **1** (aynı bilinen kupon sırası vakası) |
+
+Kupon × korpus kesişimi yeniden ölçüldü: **1.155/1.605 → 1.200/1.680**
+(oran %72 → %71). `arena.py`, `tahmin.py` ve `test_tahmin.py`'daki sabit
+sayılar güncellendi.
+
+### 6I.5 Ölçüm kesiti KALDI, ve niçin
+
+`evaluate.kupon_kesiti_tum` hâlâ **114 hafta** döndürüyor: yeni beş
+haftanın oran kapsaması yok, dolayısıyla `usable` değiller. Büyüyen şey
+`st_history` setidir; ölçüm kesiti oran arşivi genişleyince büyür. Bu bir
+eksiklik değil, iki setin **ayrı kapılardan** geçtiğinin kanıtıdır.
+
+### 6I.6 Canlı sezon sızmıyor
+
+2026/27 bülteni okunuyor ama kabul edilen haftası **0**. `evaluate`in kupon
+sezonları aynı sezonu iki kez saymamak için özenle kurulmuştu (§6G.5);
+canlı sezonun bu tarihsel sete sızması o özeni boşa çıkarırdı. Bekçi:
+`test_canli_sezon_gecmis_sete_SIZMAZ`.
+
+    python scripts/build_gecmis_sezon.py --teshis
+    python scripts/build_gecmis_sezon.py
+
+
 ## 7. Kalite güvencesi
 
 ### 7.1 Üretim anında
