@@ -930,6 +930,81 @@ kaynakta yan yana geldi, hepsi eşleşti ve `close_date` alanının iki kaynakta
 
 ---
 
+## 6E. Havuz — ikramiye tablosundan geri hesap
+
+### 6E.1 Ölçülen bölüşüm: 35 / 20 / 20 / 25
+
+Havuzu hesaplanabilen **222 haftada** kademe havuzlarının birbirine oranı:
+
+| Oran | Beklenen | Sonuç |
+|---|---|---|
+| 14 ÷ 13 | 1,00 | 218 haftanın **214'ünde birebir**; kalan 4'ü binde birin altında |
+| 12 ÷ 13 | 1,25 | ortanca **tam 1,2500** |
+| 15 ÷ 13 | 1,75 | 176 haftanın **135'inde tam**, hiçbirinde **altında değil** |
+
+Bölüşüm sabit bir kuraldır ve `spor_toto/havuz.py::BOLUSUM`'da durur.
+
+### 6E.2 Devir 15'e özgü değildir — model bir kez düzeltildi
+
+İlk model yalnızca 15 kademesini devirli sayıyordu ve 222 haftanın **10'unu**
+"bölüşüm bozuk" diye işaretliyordu. Veri aksini gösterdi: **kazanansız kalan
+her kademe** payını ileri taşır ve ertesi hafta **aynı kademe** fazlasıyla
+döner.
+
+| Hafta | Kazanansız kademe | Ertesi hafta o kademe ÷ birim |
+|---|---|---|
+| 2021/22 hf 47 → 48 | 15 ve 14 | **1,58** |
+| 2022/23 hf 28 → 29 | 15 ve 14 | **1,03** |
+| 2025/26 hf 7 → 8   | 15 ve 14 | **1,67** |
+| 2025/26 hf 45 → 46 | 15 ve 14 | **1,59** |
+
+Model genelleştirilince açıklanamayan hafta **10'dan 2'ye** düştü.
+
+İkinci bir düzeltme daha gerekti ve o da ölçümden geldi: devir eşiği önce
+**1 TL mutlak**tı ve 176 haftanın 174'ü "devirli" görünüyordu. Sebep kuruş
+yuvarlaması — kişi başı ikramiye kuruşa yuvarlanıp on binlerce kazananla
+çarpılınca hata binlerce TL'ye çıkıyor. Eşik göreliye çevrildi ve ayrım
+temiz: gürültünün en büyüğü birimin **1,01e-3**'ü, gerçek devrin en küçüğü
+**4,82e-2**'si — arada üç mertebe boşluk var.
+
+### 6E.3 Zincir kapanıyor — modelin bağımsız kanıtı
+
+Bölüşüm oranları tek bir haftanın **içinden** okunur. Zincir ise **ardışık
+iki haftayı** birbirine bağlar, yani bağımsız bir sınamadır:
+
+| Ölçüm | Sonuç |
+|---|---|
+| Devreden haftanın ardından devir alan hafta | **41** |
+| gelen ÷ giden oranı, ortanca | **1,000** |
+| birebir eşit (%2 içinde) | **36 / 41** |
+| oranı 1'in **altına** düşen | **0 / 41** |
+
+Kalan 5'i ardışık devirdir (üst üste kazanansız kapanan haftalar). Oranın
+1'in altına hiç inmemesi kritiktir: devir ancak **ekleyebilir**, düşüremez.
+
+### 6E.4 Elle girilen kayıtla çapraz doğrulama
+
+2026/27 2. hafta için hesap **42.842.867,18 TL** veriyor; elle girilen kayıt
+(§6B, ekran görüntüsünden) **42.842.867,72 TL** yazıyor. Fark **0,54 TL** —
+42,8 milyonda, yani milyonda 0,013 — ve bu, 14-kademesinin kendi kuruş
+yuvarlaması payının (±0,61 TL) içindedir.
+
+> **Bu satır bir kez fazla iddialı yazıldı.** Önce "kuruşuna kadar aynı"
+> denmişti; o sırada birim 13-kademesiydi ve hata 33,12 TL'ydi, sıfır değil.
+> Birim seçimi hassaslaştırılınca (kazananı az olan kademe daha az yuvarlama
+> hatası taşır) 0,54 TL'ye indi. Ölçülen sayı ne ise o yazılır.
+
+### 6E.5 Ne vermiyor
+
+- **Brüt hasılat değil, DAĞITILAN havuz.** Aradaki fark Spor Toto'nun payıdır
+  ve bu veriden çıkarılamaz. Modül her yerde `dagitilan` der, "hasılat" demez.
+- **Kazananlar kolon sayısıdır, bilet değil** (§3.40). Bu ayrım çözülmedi.
+- **Açıklanamayan 2 hafta düzeltilmez, işaretlenir** (doktrin 4): 2024/25
+  hf 43 ve 2025/26 hf 10 — ikisinde de 12-kademesi beklenenin **altında**,
+  yani devir değil gerçek sapma.
+
+---
+
 ## 7. Kalite güvencesi
 
 ### 7.1 Üretim anında
@@ -1019,7 +1094,7 @@ tablolar (script'in bastığı lig dağılımı) bunu yakalayan şeydi.
 | `test_sportoto_arsiv.py::test_hafta_no_tahmin_edilmez` | Hafta numarası uydurulmaz (doktrin 2) |
 | `test_sportoto_arsiv.py::test_celisen_kapanis_tarihi_raporlanir` | İki uç çelişirse biri sessizce seçilmez (doktrin 4) |
 
-Toplam 113 test bu dört veri setini korur (backend paketi 1.747 test). `python -m spor_toto.health`
+Toplam 113 test bu dört veri setini korur (backend paketi 1.763 test). `python -m spor_toto.health`
 27 değişmez çalıştırır; `oran_arsivi` ve `geri_test` bu katmanı, `tahmin_referanslari`
 tahmin katmanının ölçüm koşumunu korur.
 
@@ -1125,11 +1200,20 @@ Amaç tahmine döndüğü için iki sınır daha kritik hale geldi ve ayrıca ya
    sonra §6B'nin elle girilen sınıfıyla n = 3'e çıkmıştı. **Artık resmî uçtan 223 hafta
    geliyor** (§2.4, §6D) — kademe başına kazanan adedi ve kişi başı ikramiye, altı sezon.
 
-   > **Ama iki şey hâlâ eksik ve karıştırılmamalı.** Birincisi **havuzun kendisi**:
-   > haftalık hasılat resmî uçta yok, yalnızca kazanan adedi ve kişi başı ikramiye var.
-   > İkincisi **oynanma payı**: hiçbir açık uçta yok, elle girilmeye devam ediyor (§6B).
-   > Üstelik kazanan adedi **kolon** sayısıdır, bilet değil — §3.40'ın ölçtüğü yığılma
-   > sorunu bu veriyle çözülmüyor, yalnızca 223 hafta üzerinde ölçülebilir hale geliyor.
+   > **Havuz da geldi — ama türetilerek, ve hasılat olarak değil.** Bu satır önce
+   > "haftalık hasılat resmî uçta yok" diyordu; doğru ama eksikti. Kademe havuzu
+   > `kazanan × kişi_başı`dır ve kademeler arası bölüşüm **sabit** çıkıyor
+   > (**35/20/20/25**, 222 haftada ölçüldü) — yani tablo dağıtılan havuzu zaten
+   > taşıyor. `spor_toto.havuz` onu geri hesaplıyor; ayrıntı §6E.
+   >
+   > **Kalan tek gerçek eksik: oynanma payı.** Hiçbir açık uçta yok, elle giriliyor
+   > (§6B), n = 3. Faz B'nin sorusu ikramiye × oynanma payı çarpımını istiyor;
+   > ikramiye tarafı 222 hafta, oynanma tarafı 3 hafta. **Darboğaz yer değiştirdi.**
+   >
+   > Değişmeyen iki uyarı: dağıtılan havuz **brüt hasılat değildir** (Spor Toto'nun
+   > payı bu veriden çıkarılamaz), ve kazanan adedi **kolon** sayısıdır, bilet değil
+   > — §3.40'ın yığılma sorunu çözülmedi, yalnızca 222 hafta üzerinde ölçülebilir
+   > hale geldi.
 
    Spor Toto müşterek bahis olduğu için **kazanma oranı** ile **beklenen getiri** farklı
    şeylerdir; ikincisi **hâlâ ölçülmedi** ama artık örneklem darlığı bahane değil (§10.1).

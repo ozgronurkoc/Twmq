@@ -15,7 +15,7 @@ hangisi bilerek reddedildi.**
 > **Künye — bu planlar depo okunmadan yazıldı.** İkisi de projeyi bulunduğu
 > yerden farklı tarif ediyor: `backtest.py` tek dosyalık bir script,
 > `analysis.py` tek dev modül, proje testsiz. Gerçekte 46 modül, 55 test
-> dosyası (1.747 test), ruff + kademeli mypy, on adımlı tek kalite kapısı ve
+> dosyası (1.763 test), ruff + kademeli mypy, on adımlı tek kalite kapısı ve
 > ayrı bir sağlık katmanı var. Bu, planları değersiz yapmaz — **üç yerde
 > gerçek kusura parmak bastılar** ve üçü de bugün koddaydı. Ama statüleri
 > **dış görüştür**, teyit değil.
@@ -184,7 +184,7 @@ bedeli faydasından büyük.
 | Faz | Durum | Karşılığı |
 |---|---|---|
 | 1 — repository audit | KISMİ | Mimari `README.md` §7 ve `docs/`te; ayrı bir `AUDIT_REPORT.md` yok, yerini bu belge alıyor |
-| 2 — test / regresyon | VAR | 57 dosya, 1.747 test; `scripts/check.sh` on adım (ruff · mypy · pytest · yavaş ILP · sağlık · CLI · boru hattı · üretilmiş dosya tazeliği · arayüz · üretim derlemesi) |
+| 2 — test / regresyon | VAR | 58 dosya, 1.763 test; `scripts/check.sh` on adım (ruff · mypy · pytest · yavaş ILP · sağlık · CLI · boru hattı · üretilmiş dosya tazeliği · arayüz · üretim derlemesi) |
 | 3 — veri kalitesi, skip nedeni | VAR | **İki ayrı mekanizma**: eksik oran → `usable=False`, `meta.weeks_dropped` (hafta ve kaç maçın eksik olduğu); arama uzayı → `_ozet.skipped`. Değişmez `test_backtest.py`'de |
 | 4 — probability engine, overround | VAR | `odds.implied_probs`; üç arındırma (`orantili`/`guc`/`shin`), varsayılan `shin`; ham marj ayrı (`odds.margin`) |
 | 5 — kalibrasyon | VAR | `kalibrasyon.py`, `kalibre.py` (Venn-Abers), `recalibrate.py` (19 basamaklı kademe); Brier ve log kaybı `ortak.py`, Murphy ayrışımı `ortak.brier_ayrisimi` |

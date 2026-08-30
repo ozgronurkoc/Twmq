@@ -103,6 +103,34 @@ def elde_ne_var(sezon: str = "2026_27") -> dict[str, Any]:
             "ikramiyeli_hafta": sum(1 for r in satirlar if r["ikramiye_var"])}
 
 
+def arsiv_durumu() -> dict[str, Any]:
+    """Resmi arsivin havuz tarafi — bu sorunun ikinci carpani.
+
+    Faz B'nin sorusu iki carpan ister: **kalabalik olcusu** (`crowd_ratio`)
+    ve **kisi basi ikramiye**. Ikincisi uzun sure yoktu ve bolumun tamami
+    onu bekliyordu. Artik var ve 222 hafta.
+
+    Ama soru hala olculemez, cunku birincisi yok: `crowd_ratio` oynanma
+    yuzdesinden turer ve o hicbir acik ucta yayinlanmiyor (§6B). Yani
+    **darbogaz yer degistirdi**, kalkmadi — ve bu ayrimin raporda gorunmesi
+    sart, yoksa "veri bekleniyor" cumlesi hangi veriyi bekledigini
+    soylemeden dogru kalmaya devam eder.
+    """
+    try:
+        from spor_toto.havuz import havuz_ozeti
+    except ImportError:  # pragma: no cover - paket kurulu degilse
+        return {"kullanilabilir": False}
+    o = havuz_ozeti()
+    return {
+        "kullanilabilir": True,
+        "havuzlu_hafta": o["havuz_hesaplanan"],
+        "sezon": len(o["sezonlar"]),
+        "dagitilan_ortanca": o["dagitilan_ortanca"],
+        "not": ("bu haftalarda IKRAMIYE var ama OYNANMA PAYI yok; "
+                "Faz B'nin sorusu ikisini birlikte ister"),
+    }
+
+
 def guc_analizi(n_hafta: int, sd: float = VARSAYILAN_SD,
                 etki: float = ARANAN_ETKI) -> dict[str, Any]:
     """Bu soruyu cevaplamak için kaç hafta gerekir.
@@ -147,6 +175,13 @@ def rapor(sezon: str = "2026_27") -> dict[str, Any]:
         **d, "guc": g, "durum": durum, "gerekce": gerekce,
         "soru": ("ayni tutturma olasiliginda az oynanan sembolu isaretlemek "
                  "kisi basi ikramiyeyi buyutuyor mu"),
+        "arsiv": arsiv_durumu(),
+        "darbogaz": (
+            "OYNANMA PAYI. Ikramiye artik darbogaz DEGIL: resmi arsiv 222 "
+            "haftanin havuzunu veriyor (spor_toto.havuz). Bu sorunun "
+            "esitliginde eksik kalan carpan `crowd_ratio`dir ve o yalnizca "
+            "elle girilen haftalarda var."
+        ),
         "sinir": ("oynanma yuzdeleri TEK PLATFORMUN kullanicilaridir, Spor "
                   "Toto havuzunun tamami degildir; butun crowd_* olculeri bu "
                   "vekile dayanir ve vekilin havuzu ne kadar temsil ettigi "
@@ -179,6 +214,17 @@ def yaz(o: dict[str, Any]) -> None:
     print("\n  Bu, ekseni kapatmaz ama beklentiyi bugünden düzeltir: Faz B'nin")
     print("  cevabı bu sezon gelmeyecek. Gelecek olan şey, verinin")
     print("  BİRİKTİRİLMEYE BAŞLANMASIDIR — toplanmamış veri hiç ölçülemez.")
+
+    a = o.get("arsiv") or {}
+    if a.get("kullanilabilir"):
+        print("\n─── RESMÎ ARŞİV (havuz tarafı) ──────────────────────────────────────────")
+        print(f"  Havuzu hesaplanan hafta: {a['havuzlu_hafta']} "
+              f"({a['sezon']} sezon) · dağıtılan ortanca "
+              f"{a['dagitilan_ortanca']:,.0f} TL")
+        print(f"  {a['not']}")
+
+    print("\n─── DARBOĞAZ ────────────────────────────────────────────────────────────")
+    print(f"  {o['darbogaz']}")
 
     print("\n─── BİLİNEN SINIR ───────────────────────────────────────────────────────")
     print(f"  {o['sinir']}")
