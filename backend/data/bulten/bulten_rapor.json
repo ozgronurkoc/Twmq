@@ -1,0 +1,435 @@
+{
+ "generated_at": "2026-08-30 08:57",
+ "source": "sportoto.gov.tr bulten gorseli (OCR)",
+ "settings": {
+  "psm": "4",
+  "lang": "tur",
+  "scale": 3
+ },
+ "denenen_hafta": 224,
+ "kabul_edilen": 156,
+ "elenen": 68,
+ "seasons": {
+  "2022_23": 25,
+  "2023_24": 47,
+  "2024_25": 39,
+  "2025_26": 41,
+  "2026_27": 4
+ },
+ "elenenler": [
+  {
+   "season_key": "2021_22",
+   "week": 39,
+   "gerekce": "gorsel indirilemedi: HTTP Error 404: Not Found",
+   "okunan_satir": null
+  },
+  {
+   "season_key": "2021_22",
+   "week": 40,
+   "gerekce": "gorsel indirilemedi: HTTP Error 404: Not Found",
+   "okunan_satir": null
+  },
+  {
+   "season_key": "2021_22",
+   "week": 41,
+   "gerekce": "gorsel indirilemedi: HTTP Error 404: Not Found",
+   "okunan_satir": null
+  },
+  {
+   "season_key": "2021_22",
+   "week": 42,
+   "gerekce": "gorsel indirilemedi: HTTP Error 404: Not Found",
+   "okunan_satir": null
+  },
+  {
+   "season_key": "2021_22",
+   "week": 43,
+   "gerekce": "gorsel indirilemedi: HTTP Error 404: Not Found",
+   "okunan_satir": null
+  },
+  {
+   "season_key": "2021_22",
+   "week": 44,
+   "gerekce": "gorsel indirilemedi: HTTP Error 404: Not Found",
+   "okunan_satir": null
+  },
+  {
+   "season_key": "2021_22",
+   "week": 45,
+   "gerekce": "gorsel indirilemedi: HTTP Error 404: Not Found",
+   "okunan_satir": null
+  },
+  {
+   "season_key": "2021_22",
+   "week": 46,
+   "gerekce": "gorsel indirilemedi: HTTP Error 404: Not Found",
+   "okunan_satir": null
+  },
+  {
+   "season_key": "2021_22",
+   "week": 47,
+   "gerekce": "gorsel indirilemedi: HTTP Error 404: Not Found",
+   "okunan_satir": null
+  },
+  {
+   "season_key": "2021_22",
+   "week": 48,
+   "gerekce": "gorsel indirilemedi: HTTP Error 404: Not Found",
+   "okunan_satir": null
+  },
+  {
+   "season_key": "2022_23",
+   "week": 1,
+   "gerekce": "gorsel indirilemedi: HTTP Error 404: Not Found",
+   "okunan_satir": null
+  },
+  {
+   "season_key": "2022_23",
+   "week": 2,
+   "gerekce": "gorsel indirilemedi: HTTP Error 404: Not Found",
+   "okunan_satir": null
+  },
+  {
+   "season_key": "2022_23",
+   "week": 3,
+   "gerekce": "gorsel indirilemedi: HTTP Error 404: Not Found",
+   "okunan_satir": null
+  },
+  {
+   "season_key": "2022_23",
+   "week": 4,
+   "gerekce": "gorsel indirilemedi: HTTP Error 404: Not Found",
+   "okunan_satir": null
+  },
+  {
+   "season_key": "2022_23",
+   "week": 5,
+   "gerekce": "gorsel indirilemedi: HTTP Error 404: Not Found",
+   "okunan_satir": null
+  },
+  {
+   "season_key": "2022_23",
+   "week": 6,
+   "gerekce": "gorsel indirilemedi: HTTP Error 404: Not Found",
+   "okunan_satir": null
+  },
+  {
+   "season_key": "2022_23",
+   "week": 7,
+   "gerekce": "gorsel indirilemedi: HTTP Error 404: Not Found",
+   "okunan_satir": null
+  },
+  {
+   "season_key": "2022_23",
+   "week": 8,
+   "gerekce": "gorsel indirilemedi: HTTP Error 404: Not Found",
+   "okunan_satir": null
+  },
+  {
+   "season_key": "2022_23",
+   "week": 9,
+   "gerekce": "gorsel indirilemedi: HTTP Error 404: Not Found",
+   "okunan_satir": null
+  },
+  {
+   "season_key": "2022_23",
+   "week": 10,
+   "gerekce": "gorsel indirilemedi: HTTP Error 404: Not Found",
+   "okunan_satir": null
+  },
+  {
+   "season_key": "2022_23",
+   "week": 11,
+   "gerekce": "gorsel indirilemedi: HTTP Error 404: Not Found",
+   "okunan_satir": null
+  },
+  {
+   "season_key": "2022_23",
+   "week": 12,
+   "gerekce": "gorsel indirilemedi: HTTP Error 404: Not Found",
+   "okunan_satir": null
+  },
+  {
+   "season_key": "2022_23",
+   "week": 13,
+   "gerekce": "gorsel indirilemedi: HTTP Error 404: Not Found",
+   "okunan_satir": null
+  },
+  {
+   "season_key": "2022_23",
+   "week": 14,
+   "gerekce": "gorsel indirilemedi: HTTP Error 404: Not Found",
+   "okunan_satir": null
+  },
+  {
+   "season_key": "2022_23",
+   "week": 15,
+   "gerekce": "gorsel indirilemedi: HTTP Error 404: Not Found",
+   "okunan_satir": null
+  },
+  {
+   "season_key": "2022_23",
+   "week": 16,
+   "gerekce": "gorsel indirilemedi: HTTP Error 404: Not Found",
+   "okunan_satir": null
+  },
+  {
+   "season_key": "2022_23",
+   "week": 17,
+   "gerekce": "gorsel indirilemedi: HTTP Error 404: Not Found",
+   "okunan_satir": null
+  },
+  {
+   "season_key": "2022_23",
+   "week": 18,
+   "gerekce": "gorsel indirilemedi: HTTP Error 404: Not Found",
+   "okunan_satir": null
+  },
+  {
+   "season_key": "2022_23",
+   "week": 19,
+   "gerekce": "gorsel indirilemedi: HTTP Error 404: Not Found",
+   "okunan_satir": null
+  },
+  {
+   "season_key": "2022_23",
+   "week": 20,
+   "gerekce": "gorsel indirilemedi: HTTP Error 404: Not Found",
+   "okunan_satir": null
+  },
+  {
+   "season_key": "2022_23",
+   "week": 33,
+   "gerekce": "0/15 satir okundu",
+   "okunan_satir": 0
+  },
+  {
+   "season_key": "2022_23",
+   "week": 34,
+   "gerekce": "0/15 satir okundu",
+   "okunan_satir": 0
+  },
+  {
+   "season_key": "2022_23",
+   "week": 41,
+   "gerekce": "0/15 satir okundu",
+   "okunan_satir": 0
+  },
+  {
+   "season_key": "2022_23",
+   "week": 44,
+   "gerekce": "0/15 satir okundu",
+   "okunan_satir": 0
+  },
+  {
+   "season_key": "2022_23",
+   "week": 45,
+   "gerekce": "0/15 satir okundu",
+   "okunan_satir": 0
+  },
+  {
+   "season_key": "2022_23",
+   "week": 49,
+   "gerekce": "0/15 satir okundu",
+   "okunan_satir": 0
+  },
+  {
+   "season_key": "2022_23",
+   "week": 51,
+   "gerekce": "0/15 satir okundu",
+   "okunan_satir": 0
+  },
+  {
+   "season_key": "2022_23",
+   "week": 52,
+   "gerekce": "0/15 satir okundu",
+   "okunan_satir": 0
+  },
+  {
+   "season_key": "2023_24",
+   "week": 10,
+   "gerekce": "0/15 satir okundu",
+   "okunan_satir": 0
+  },
+  {
+   "season_key": "2023_24",
+   "week": 22,
+   "gerekce": "0/15 satir okundu",
+   "okunan_satir": 0
+  },
+  {
+   "season_key": "2023_24",
+   "week": 36,
+   "gerekce": "0/15 satir okundu",
+   "okunan_satir": 0
+  },
+  {
+   "season_key": "2023_24",
+   "week": 44,
+   "gerekce": "0/15 satir okundu",
+   "okunan_satir": 0
+  },
+  {
+   "season_key": "2023_24",
+   "week": 48,
+   "gerekce": "0/15 satir okundu",
+   "okunan_satir": 0
+  },
+  {
+   "season_key": "2023_24",
+   "week": 50,
+   "gerekce": "0/15 satir okundu",
+   "okunan_satir": 0
+  },
+  {
+   "season_key": "2024_25",
+   "week": 1,
+   "gerekce": "0/15 satir okundu",
+   "okunan_satir": 0
+  },
+  {
+   "season_key": "2024_25",
+   "week": 4,
+   "gerekce": "0/15 satir okundu",
+   "okunan_satir": 0
+  },
+  {
+   "season_key": "2024_25",
+   "week": 5,
+   "gerekce": "0/15 satir okundu",
+   "okunan_satir": 0
+  },
+  {
+   "season_key": "2024_25",
+   "week": 10,
+   "gerekce": "0/15 satir okundu",
+   "okunan_satir": 0
+  },
+  {
+   "season_key": "2024_25",
+   "week": 15,
+   "gerekce": "0/15 satir okundu",
+   "okunan_satir": 0
+  },
+  {
+   "season_key": "2024_25",
+   "week": 31,
+   "gerekce": "OCR calistirilamadi: Command '['tesseract', '/home/user/Twmq/backend/data/bulten/_kaynak/spor-toto-listesi-31-hafta-3fe54d9b.x3.png', '-', '-l', 'tur', '--psm', '4', '--dpi', '300']' timed out after 180 seconds",
+   "okunan_satir": null
+  },
+  {
+   "season_key": "2024_25",
+   "week": 33,
+   "gerekce": "0/15 satir okundu",
+   "okunan_satir": 0
+  },
+  {
+   "season_key": "2024_25",
+   "week": 44,
+   "gerekce": "0/15 satir okundu",
+   "okunan_satir": 0
+  },
+  {
+   "season_key": "2024_25",
+   "week": 45,
+   "gerekce": "0/15 satir okundu",
+   "okunan_satir": 0
+  },
+  {
+   "season_key": "2024_25",
+   "week": 47,
+   "gerekce": "0/15 satir okundu",
+   "okunan_satir": 0
+  },
+  {
+   "season_key": "2024_25",
+   "week": 48,
+   "gerekce": "0/15 satir okundu",
+   "okunan_satir": 0
+  },
+  {
+   "season_key": "2024_25",
+   "week": 50,
+   "gerekce": "0/15 satir okundu",
+   "okunan_satir": 0
+  },
+  {
+   "season_key": "2024_25",
+   "week": 51,
+   "gerekce": "0/15 satir okundu",
+   "okunan_satir": 0
+  },
+  {
+   "season_key": "2025_26",
+   "week": 1,
+   "gerekce": "0/15 satir okundu",
+   "okunan_satir": 0
+  },
+  {
+   "season_key": "2025_26",
+   "week": 4,
+   "gerekce": "0/15 satir okundu",
+   "okunan_satir": 0
+  },
+  {
+   "season_key": "2025_26",
+   "week": 12,
+   "gerekce": "0/15 satir okundu",
+   "okunan_satir": 0
+  },
+  {
+   "season_key": "2025_26",
+   "week": 14,
+   "gerekce": "0/15 satir okundu",
+   "okunan_satir": 0
+  },
+  {
+   "season_key": "2025_26",
+   "week": 22,
+   "gerekce": "0/15 satir okundu",
+   "okunan_satir": 0
+  },
+  {
+   "season_key": "2025_26",
+   "week": 33,
+   "gerekce": "0/15 satir okundu",
+   "okunan_satir": 0
+  },
+  {
+   "season_key": "2025_26",
+   "week": 34,
+   "gerekce": "0/15 satir okundu",
+   "okunan_satir": 0
+  },
+  {
+   "season_key": "2025_26",
+   "week": 43,
+   "gerekce": "0/15 satir okundu",
+   "okunan_satir": 0
+  },
+  {
+   "season_key": "2025_26",
+   "week": 46,
+   "gerekce": "0/15 satir okundu",
+   "okunan_satir": 0
+  },
+  {
+   "season_key": "2025_26",
+   "week": 50,
+   "gerekce": "0/15 satir okundu",
+   "okunan_satir": 0
+  },
+  {
+   "season_key": "2025_26",
+   "week": 53,
+   "gerekce": "0/15 satir okundu",
+   "okunan_satir": 0
+  }
+ ],
+ "limits": [
+  "Takim adlari OCR ciktisidir; DOGRULANMAMIS metindir.",
+  "Skor, sonuc ve oran bu sette YOK.",
+  "15/15 okunmayan hafta ELENIR, doldurulmaz.",
+  "Bulten gorselleri 2023/2024'ten itibaren erisilebiliyor."
+ ]
+}

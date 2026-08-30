@@ -279,6 +279,19 @@ ileriye dönük birikir.
 
 (Yollar `backend/` altındadır.)
 
+**Beşinci ve altıncı veri seti bunların üstüne kuruldu** (2026-08-30):
+`data/bulten/<sezon>.json` resmî bülten **görselinden** OCR ile okunan 15 maçlık
+listeler (156 hafta), `data/st_history/<sezon>.json` ise o listeleri football-data
+fikstürüne bağlayıp **tam 1/0/2 dizisi** üreten set — **4 sezon · 107 hafta ·
+1.605 kupon maçı**. Kupon değerlendirme seti 41 haftadan **148 haftaya** çıktı.
+
+Bu ikisinin en güçlü kanıtı bir çapraz doğrulamadır: `st_history_2025_26.json`
+üçüncü parti bir payload'dan, yeni set resmî görselden gelir ve ikisi birbirini
+hiç görmez — **29 ortak haftanın 28'inde 1/0/2 dizisi birebir aynı.** Ayrışan tek
+hafta bir sonuç hatası değil, bir **kupon sırası** ayrışmasıdır ve düzeltilmeden
+raporlanır ([`docs/VERI_TOPLAMA_VE_ISLEME.md`](docs/VERI_TOPLAMA_VE_ISLEME.md)
+§6G.5).
+
 **Dördüncüsü deponun ilk resmî kaynağıdır** ve 2026-08-30'da eklendi. Öteki üçü
 üçüncü partidir; bu, `webapi.sportoto.gov.tr` — Spor Toto'nun kendi ucu. Taşıdığı
 şey **ikramiye tablosudur**: 225 haftanın 223'ünde kademe başına (15/14/13/12)
@@ -859,13 +872,15 @@ backend/
     super_toto_tahmin2.py     2. TAHMİN: aynı haftayı bugünkü aletlerle yeniden okur
     super_toto_frontend.py    Arayüzün okuduğu sezon beslemesi (--kontrol: CI kapısı)
     build_sportoto_arsiv.py   RESMÎ arşiv: hafta kaydı + ikramiye tablosu
+    build_bulten.py           Bülten görselinden 15 maç (OCR, `ocr` ekstrası)
+    build_gecmis_sezon.py     Bülten + fikstür → geçmiş sezon 1/0/2
     faz_b.py                  Havuz ekseni güç analizi
     acilis_kapanis.py         Açılış–kapanış oranı karşılaştırması
     api_sozlesme.py           API sözleşmesini üretir/denetler (--kontrol: CI kapısı)
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
                        sehir/ · xg/
-  tests/               pytest (58 dosya → 1.763 test; §9'da katman dökümü)
+  tests/               pytest (60 dosya → 1.808 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1050,8 +1065,8 @@ Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant'lar, CLI (Bayes pre
 dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri test,
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
-eşleme, ikinci kayıt). **58 test dosyası, parametrizasyonla
-1.763 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+eşleme, ikinci kayıt). **60 test dosyası, parametrizasyonla
+1.808 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 

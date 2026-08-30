@@ -75,3 +75,11 @@ backend/data/xg/_kaynak/
 # Resmi Spor Toto arsivi (§6D): sezon JSON'lari ve rapor SURUMLENIR,
 # indirilen ham payload git disidir — tek komutla yeniden uretilir.
 backend/data/sportoto_arsiv/_kaynak/
+
+# Bulten OCR (§6F): sezon JSON'lari ve rapor SURUMLENIR, indirilen gorseller
+# git disidir. Gorseller ~170 adet ve toplam onlarca MB; ciktisi metin.
+backend/data/bulten/_kaynak/
+
+# Gecmis sezon birlestirmesi (§6G): indirilen football-data CSV'leri git disi,
+# tek komutla yeniden iner.
+backend/data/st_history/_kaynak/

@@ -169,12 +169,18 @@ Modlar: `--mode auto|exact|heuristic|butce|maxcov` (`--budget` ile),
   SQLite kopyası ve ham kaynaklar git dışıdır
 - `backend/data/iddaa/` — ileriye dönük iddaa bülteni snapshot'ları; tarih
   damgalı CSV'ler **sürümlenir** (arşivin kendisi odur)
+- `backend/data/bulten/` — resmî bülten **görselinden** OCR ile okunan 15 maçlık
+  listeler; 156 hafta. Üretim `build_bulten.py` (`ocr` ekstrası + tesseract)
+- `backend/data/st_history/` — bültenleri football-data fikstürüne bağlayıp
+  **tam 1/0/2 dizisi** üreten geçmiş sezon seti: **4 sezon · 107 hafta · 1.605
+  maç**. `st_history_2025_26.json` ile karışmaz; `/api/stats` hâlâ eskisine bakar
 - `backend/data/sportoto_arsiv/` — **resmî** Spor Toto arşivi (`webapi.sportoto.gov.tr`):
   6 sezon · 225 hafta · **223 ikramiye tablosu**. Deponun ilk resmî kaynağı.
   **Maç listesi taşımaz** — o resmî uçta yalnızca bülten görseli olarak var
 
 Yeniden üretim: `python scripts/build_history.py`, `build_odds.py`,
-`snapshot_iddaa.py`, `build_sportoto_arsiv.py` (hepsi `backend/scripts/` altında;
+`snapshot_iddaa.py`, `build_sportoto_arsiv.py`, `build_bulten.py`,
+`build_gecmis_sezon.py` (hepsi `backend/scripts/` altında;
 doğrulamadan dosya yazmazlar). Ayrıntı: `docs/VERI_TOPLAMA_VE_ISLEME.md`.
 
 ## Testler
@@ -182,7 +188,7 @@ doğrulamadan dosya yazmazlar). Ayrıntı: `docs/VERI_TOPLAMA_VE_ISLEME.md`.
 ```bash
 cd backend
 python -m pytest -m "not slow" -q   # hızlı süit
-python -m pytest                    # tamamı (1.763 test, ILP dahil)
+python -m pytest                    # tamamı (1.808 test, ILP dahil)
 python -m pytest -n0 tests/test_egitim.py   # tek çekirdek (hata ayıklarken)
 cd .. && bash scripts/check.sh      # TEK kapı; CI de bunu çağırır
 ```

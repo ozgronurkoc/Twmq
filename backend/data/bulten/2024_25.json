@@ -1,0 +1,3335 @@
+{
+ "meta": {
+  "season": "2024/2025",
+  "season_key": "2024_25",
+  "weeks": 39,
+  "source": "sportoto.gov.tr resmi bulten GORSELI, OCR ile okundu (tesseract --psm 4 -l tur, x3 olcek)",
+  "generated_at": "2026-08-30 08:57",
+  "contains": "15 mac, KUPON SIRASIYLA — takim ADLARI",
+  "does_not_contain": "skor, sonuc (1/0/2) ve oran YOK. Takim adlari OCR ciktisidir ve DOGRULANMAMISTIR — gercek fiksture eslestirme build_gecmis_sezon.py'nin isidir; eslesmeyen mac orada duser.",
+  "rule": "yalnizca 15/15 okunan hafta yazilir"
+ },
+ "weeks": [
+  {
+   "week": 2,
+   "season": "2024/2025",
+   "game_round_id": 422,
+   "matches": [
+    {
+     "no": 1,
+     "home": "KONYASPOR",
+     "away": "GALATASARAY AŞ"
+    },
+    {
+     "no": 2,
+     "home": "KAYSERİSPOR",
+     "away": "SİVASSPOR"
+    },
+    {
+     "no": 3,
+     "home": "ADANADEMİRSPOR AŞ",
+     "away": "ÇAYKUR RİZESPOR A.Ş"
+    },
+    {
+     "no": 4,
+     "home": "GÖZTEPE AŞ",
+     "away": "FENERBAHÇE AŞ"
+    },
+    {
+     "no": 5,
+     "home": "BAŞAKŞEHİR FK",
+     "away": "ALANYASPOR"
+    },
+    {
+     "no": 6,
+     "home": "BEŞİKTAŞAŞŞ",
+     "away": "ANTALYASPOR AŞ"
+    },
+    {
+     "no": 7,
+     "home": "GAZİANTEP F.K. AŞ",
+     "away": "SAMSUNSPOR A.Ş"
+    },
+    {
+     "no": 8,
+     "home": "EYÜPSPOR",
+     "away": "BODRUM FK"
+    },
+    {
+     "no": 9,
+     "home": "HATAYSPOR",
+     "away": "KASIMPAŞA AJŞ"
+    },
+    {
+     "no": 10,
+     "home": "B. LEVERKUSEN",
+     "away": "STUTTGART"
+    },
+    {
+     "no": 11,
+     "home": "LE HAVRE",
+     "away": "PARIS SAINT GERMAİN"
+    },
+    {
+     "no": 12,
+     "home": "MONACO",
+     "away": "STETIENNE"
+    },
+    {
+     "no": 13,
+     "home": "CHELSEA",
+     "away": "MANCHESTER CITY"
+    },
+    {
+     "no": 14,
+     "home": "VALENCİA",
+     "away": "BARCELONA"
+    },
+    {
+     "no": 15,
+     "home": "AC MILAN",
+     "away": "TORINO"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 2
+  },
+  {
+   "week": 3,
+   "season": "2024/2025",
+   "game_round_id": 423,
+   "matches": [
+    {
+     "no": 1,
+     "home": ". ALANYASPOR",
+     "away": "GÖZTEPE A.Ş"
+    },
+    {
+     "no": 2,
+     "home": "SİVASSPOR",
+     "away": "EYUPSPOR"
+    },
+    {
+     "no": 3,
+     "home": "BODRUM FK",
+     "away": "KONYASPOR"
+    },
+    {
+     "no": 4,
+     "home": "KASIMPAŞA AJŞ",
+     "away": "ADANA DEMİRSPOR A.Ş"
+    },
+    {
+     "no": 5,
+     "home": "ÇAYKUR RİZESPOR A.Ş",
+     "away": "FENERBAHÇE A.Ş"
+    },
+    {
+     "no": 6,
+     "home": "ANTALYASPOR A.Ş",
+     "away": "HATAYSPOR"
+    },
+    {
+     "no": 7,
+     "home": "B. DORTMUND",
+     "away": "EINTRACHT FRANKFURT"
+    },
+    {
+     "no": 8,
+     "home": "WOLFSBURG",
+     "away": "BAYERN MÜNİH"
+    },
+    {
+     "no": 9,
+     "home": ". LYON",
+     "away": "MONACO"
+    },
+    {
+     "no": 10,
+     "home": "BRIGHTON",
+     "away": "MANCHESTER UNITED"
+    },
+    {
+     "no": 11,
+     "home": "ASTON VILLA",
+     "away": "ARSENAL"
+    },
+    {
+     "no": 12,
+     "home": "SEVİLLA",
+     "away": "VILLARREAL"
+    },
+    {
+     "no": 13,
+     "home": "BARCELONA",
+     "away": "ATHLETIC BILBAO"
+    },
+    {
+     "no": 14,
+     "home": "ATLETICO MADRID",
+     "away": "GIRONA"
+    },
+    {
+     "no": 15,
+     "home": "NAPOLI",
+     "away": "BOLOGNA"
+    }
+   ],
+   "data_warnings": [
+    "11 satirin numarasi okunamadi, sira konumdan alindi (okunan 4 numaranin hepsi tuttu)"
+   ],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 3
+  },
+  {
+   "week": 6,
+   "season": "2024/2025",
+   "game_round_id": 426,
+   "matches": [
+    {
+     "no": 1,
+     "home": "ALANYASPOR",
+     "away": "HATAYSPOR"
+    },
+    {
+     "no": 2,
+     "home": "ANTALYASPOR AJŞ",
+     "away": "ADANA DEMİRSPOR A.Ş"
+    },
+    {
+     "no": 3,
+     "home": "BODRUM FK",
+     "away": "BAŞAKŞEHİR FK"
+    },
+    {
+     "no": 4,
+     "home": "GALATASARAY AŞ",
+     "away": "ÇAYKUR RİZESPOR A.Ş"
+    },
+    {
+     "no": 5,
+     "home": "KASIMPAŞA AJŞ",
+     "away": "FENERBAHÇE AJŞ"
+    },
+    {
+     "no": 6,
+     "home": "KAYSERİSPOR",
+     "away": "EYÜPSPOR"
+    },
+    {
+     "no": 7,
+     "home": "SAMSUNSPOR AJŞ",
+     "away": "KONYASPOR"
+    },
+    {
+     "no": 8,
+     "home": "SİVASSPOR",
+     "away": "GAZİANTEP F.K. A.Ş"
+    },
+    {
+     "no": 9,
+     "home": "TRABZONSPOR A.Ş",
+     "away": "BEŞİKTAŞ A.Ş"
+    },
+    {
+     "no": 10,
+     "home": "LEIPZIG",
+     "away": "UNION BERLİN"
+    },
+    {
+     "no": 11,
+     "home": "MARSILYA",
+     "away": "NICE"
+    },
+    {
+     "no": 12,
+     "home": "TOTTENHAM",
+     "away": "ARSENAL"
+    },
+    {
+     "no": 13,
+     "home": "REAL SOCIEDAD",
+     "away": "REAL MADRID"
+    },
+    {
+     "no": 14,
+     "home": "GIRONA",
+     "away": "BARCELONA"
+    },
+    {
+     "no": 15,
+     "home": "ATALANTA",
+     "away": "FIORENTINA"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 6
+  },
+  {
+   "week": 7,
+   "season": "2024/2025",
+   "game_round_id": 427,
+   "matches": [
+    {
+     "no": 1,
+     "home": "HATAYSPOR",
+     "away": "BODRUM FK"
+    },
+    {
+     "no": 2,
+     "home": "KONYASPOR",
+     "away": "SİVASSPOR"
+    },
+    {
+     "no": 3,
+     "home": "FENERBAHÇE AJŞ",
+     "away": "GALATASARAY A.Ş"
+    },
+    {
+     "no": 4,
+     "home": "KASIMPAŞA AJŞ",
+     "away": "ANTALYASPOR A.Ş"
+    },
+    {
+     "no": 5,
+     "home": "ÇAYKUR RİZESPOR A.Ş",
+     "away": "SAMSUNSPOR A.Ş"
+    },
+    {
+     "no": 6,
+     "home": "ADANA DEMİRSPOR A.Ş",
+     "away": "ALANYASPOR"
+    },
+    {
+     "no": 7,
+     "home": "BEŞİKTAŞ A.Ş",
+     "away": "EYÜPSPOR"
+    },
+    {
+     "no": 8,
+     "home": "GAZİANTEP F.K. A.Ş",
+     "away": "TRABZONSPOR A.Ş"
+    },
+    {
+     "no": 9,
+     "home": "GÖZTEPE AJŞ",
+     "away": "KAYSERİSPOR"
+    },
+    {
+     "no": 10,
+     "home": "WERDER BREMEN",
+     "away": "BAYERN MÜNIH"
+    },
+    {
+     "no": 11,
+     "home": "STUTTGART",
+     "away": "B. DORTMUND"
+    },
+    {
+     "no": 12,
+     "home": "MANCHESTER CITY",
+     "away": "ARSENAL"
+    },
+    {
+     "no": 13,
+     "home": "VILLARREAL",
+     "away": "BARCELONA"
+    },
+    {
+     "no": 14,
+     "home": "JUVENTUS",
+     "away": "NAPOLI"
+    },
+    {
+     "no": 15,
+     "home": "INTER",
+     "away": "AC MILAN"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 7
+  },
+  {
+   "week": 8,
+   "season": "2024/2025",
+   "game_round_id": 428,
+   "matches": [
+    {
+     "no": 1,
+     "home": "SİVASSPOR",
+     "away": "BAŞAKŞEHİR FK"
+    },
+    {
+     "no": 2,
+     "home": "SAMSUNSPOR A;JŞ",
+     "away": "GÖZTEPE AJŞ"
+    },
+    {
+     "no": 3,
+     "home": "ALANYASPOR",
+     "away": "ÇAYKUR RİZESPOR A.Ş"
+    },
+    {
+     "no": 4,
+     "home": "GALATASARAY AJŞ",
+     "away": "KASIMPAŞA A.Ş"
+    },
+    {
+     "no": 5,
+     "home": "EYÜPSPOR",
+     "away": "GAZİANTEP F.K. A.Ş"
+    },
+    {
+     "no": 6,
+     "home": "TRABZONSPOR A.Ş",
+     "away": "KONYASPOR"
+    },
+    {
+     "no": 7,
+     "home": "ANTALYASPOR A.Ş",
+     "away": "FENERBAHÇE A.Ş"
+    },
+    {
+     "no": 8,
+     "home": "BODRUM FK",
+     "away": "ADANA DEMİRSPOR A.Ş"
+    },
+    {
+     "no": 9,
+     "home": "KAYSERİSPOR",
+     "away": "BEŞİKTAŞ A.Ş"
+    },
+    {
+     "no": 10,
+     "home": "BAYERN MÜNİH",
+     "away": "B. LEVERKUSEN"
+    },
+    {
+     "no": 11,
+     "home": "NEWCASTLE UNITED",
+     "away": "MANCHESTER CITY"
+    },
+    {
+     "no": 12,
+     "home": "CHELSEA",
+     "away": "BRIGHTON"
+    },
+    {
+     "no": 13,
+     "home": "/ MANCHESTER UNITED",
+     "away": "TOTTENHAM"
+    },
+    {
+     "no": 14,
+     "home": "ATLETİCO MADRID",
+     "away": "REAL MADRID"
+    },
+    {
+     "no": 15,
+     "home": "UDINESE",
+     "away": "INTER"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 8
+  },
+  {
+   "week": 9,
+   "season": "2024/2025",
+   "game_round_id": 429,
+   "matches": [
+    {
+     "no": 1,
+     "home": "ÇAYKUR RİZESPOR A.Ş",
+     "away": "ANTALYASPOR A.Ş"
+    },
+    {
+     "no": 2,
+     "home": "KASIMPAŞA AJŞ",
+     "away": "BODRUM FK"
+    },
+    {
+     "no": 3,
+     "home": "GÖZTEPE AJŞ",
+     "away": "SİVASSPOR"
+    },
+    {
+     "no": 4,
+     "home": "BAŞAKŞEHİR FK",
+     "away": "KAYSERİSPOR"
+    },
+    {
+     "no": 5,
+     "home": "HATAYSPOR",
+     "away": "TRABZONSPOR A.Ş"
+    },
+    {
+     "no": 6,
+     "home": "KONYASPOR",
+     "away": "EYÜPSPOR"
+    },
+    {
+     "no": 7,
+     "home": "ADANA DEMİRSPOR A.Ş",
+     "away": "SAMSUNSPOR A.Ş"
+    },
+    {
+     "no": 8,
+     "home": "GALATASARAY AJŞ",
+     "away": "ALANYASPOR"
+    },
+    {
+     "no": 9,
+     "home": "GAZİANTEP F.K. A.Ş",
+     "away": "BEŞİKTAŞ AJŞ"
+    },
+    {
+     "no": 10,
+     "home": "EINTRACHT FRANKFURT",
+     "away": "BAYERN MÜNIH"
+    },
+    {
+     "no": 11,
+     "home": "LYON",
+     "away": "NANTES"
+    },
+    {
+     "no": 12,
+     "home": "ASTON VILLA",
+     "away": "MANCHESTER UNITED"
+    },
+    {
+     "no": 13,
+     "home": "BRIGHTON",
+     "away": "TOTTENHAM"
+    },
+    {
+     "no": 14,
+     "home": "REAL MADRID",
+     "away": "VILLARREAL"
+    },
+    {
+     "no": 15,
+     "home": "ALAVES",
+     "away": "BARCELONA"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 9
+  },
+  {
+   "week": 11,
+   "season": "2024/2025",
+   "game_round_id": 431,
+   "matches": [
+    {
+     "no": 1,
+     "home": "KAYSERİSPOR",
+     "away": "GAZİANTEP F.K. A.Ş"
+    },
+    {
+     "no": 2,
+     "home": "TRABZONSPOR AJŞ",
+     "away": "BAŞAKŞEHİR FK"
+    },
+    {
+     "no": 3,
+     "home": "ANTALYASPOR A.Ş",
+     "away": "GALATASARAY A.Ş"
+    },
+    {
+     "no": 4,
+     "home": "EYÜPSPOR",
+     "away": "GÖZTEPE AŞ"
+    },
+    {
+     "no": 5,
+     "home": "SİVASSPOR",
+     "away": "HATAYSPOR"
+    },
+    {
+     "no": 6,
+     "home": "BEŞİKTAŞ A.Ş",
+     "away": "KONYASPOR"
+    },
+    {
+     "no": 7,
+     "home": "ALANYASPOR",
+     "away": "KASIMPAŞA A.Ş"
+    },
+    {
+     "no": 8,
+     "home": "SAMSUNSPOR A.Ş",
+     "away": "FENERBAHÇE A.Ş"
+    },
+    {
+     "no": 9,
+     "home": "BODRUM FK",
+     "away": "ÇAYKUR RİZESPOR A.Ş"
+    },
+    {
+     "no": 10,
+     "home": "B. LEVERKUSEN",
+     "away": "EINTRACHT FRANKFURT"
+    },
+    {
+     "no": 11,
+     "home": "NEWCASTLE UNITED",
+     "away": "BRIGHTON"
+    },
+    {
+     "no": 12,
+     "home": "LIVERPOOL",
+     "away": "CHELSEA"
+    },
+    {
+     "no": 13,
+     "home": "BARCELONA",
+     "away": "SEVİLLA"
+    },
+    {
+     "no": 14,
+     "home": "JUVENTUS",
+     "away": "LAZIO"
+    },
+    {
+     "no": 15,
+     "home": "AS ROMA",
+     "away": "INTER"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 11
+  },
+  {
+   "week": 12,
+   "season": "2024/2025",
+   "game_round_id": 432,
+   "matches": [
+    {
+     "no": 1,
+     "home": "ADANA DEMİRSPOR A.Ş",
+     "away": "SİVASSPOR"
+    },
+    {
+     "no": 2,
+     "home": "HATAYSPOR",
+     "away": "KAYSERİSPOR"
+    },
+    {
+     "no": 3,
+     "home": "KASIMPAŞA AJŞ",
+     "away": "SAMSUNSPOR AŞ"
+    },
+    {
+     "no": 4,
+     "home": "GÖZTEPE AJŞ",
+     "away": "TRABZONSPOR A.Ş"
+    },
+    {
+     "no": 5,
+     "home": "GAZİANTEP F.K. A.Ş",
+     "away": "KONYASPOR"
+    },
+    {
+     "no": 6,
+     "home": "ALANYASPOR",
+     "away": "ANTALYASPOR A.Ş"
+    },
+    {
+     "no": 7,
+     "home": "FENERBAHÇE A.Ş",
+     "away": "BODRUM FK"
+    },
+    {
+     "no": 8,
+     "home": "BAŞAKŞEHİR FK",
+     "away": "EYÜPSPOR"
+    },
+    {
+     "no": 9,
+     "home": "GALATASARAY A;JŞ",
+     "away": "BEŞİKTAŞ A.Ş"
+    },
+    {
+     "no": 10,
+     "home": "LEIPZIG",
+     "away": "FREIBURG"
+    },
+    {
+     "no": 11,
+     "home": "/ MARSILYA",
+     "away": "PARIS SAINT GERMAN"
+    },
+    {
+     "no": 12,
+     "home": "CHELSEA",
+     "away": "NEWCASTLE UNITED"
+    },
+    {
+     "no": 13,
+     "home": "ARSENAL",
+     "away": "LIVERPOOL"
+    },
+    {
+     "no": 14,
+     "home": "REAL MADRID",
+     "away": "BARCELONA"
+    },
+    {
+     "no": 15,
+     "home": "INTER",
+     "away": "JUVENTUS"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 12
+  },
+  {
+   "week": 13,
+   "season": "2024/2025",
+   "game_round_id": 433,
+   "matches": [
+    {
+     "no": 1,
+     "home": "GAZİANTEP F.K. A.Ş",
+     "away": "GÖZTEPE AŞ"
+    },
+    {
+     "no": 2,
+     "home": "SİVASSPOR",
+     "away": "ÇAYKUR RİZESPOR A.Ş"
+    },
+    {
+     "no": 3,
+     "home": "KAYSERİSPOR",
+     "away": "ADANA DEMİRSPOR A.Ş"
+    },
+    {
+     "no": 4,
+     "home": "BEŞİKTAŞ AJŞ",
+     "away": "KASIMPAŞA AJŞ"
+    },
+    {
+     "no": 5,
+     "home": "KONYASPOR",
+     "away": "BAŞAKŞEHİR FK"
+    },
+    {
+     "no": 6,
+     "home": "BODRUM FK",
+     "away": "ALANYASPOR"
+    },
+    {
+     "no": 7,
+     "home": "EYÜPSPOR",
+     "away": "HATAYSPOR"
+    },
+    {
+     "no": 8,
+     "home": "TRABZONSPOR A.Ş",
+     "away": "FENERBAHÇE A.Ş"
+    },
+    {
+     "no": 9,
+     "home": "SAMSUNSPOR A;Ş",
+     "away": "ANTALYASPOR A.Ş"
+    },
+    {
+     "no": 10,
+     "home": "B. LEVERKUSEN",
+     "away": "STUTTGART"
+    },
+    {
+     "no": 11,
+     "home": "/ B. DORTMUND",
+     "away": "LEIPZIG"
+    },
+    {
+     "no": 12,
+     "home": "NEWCASTLE UNITED",
+     "away": "ARSENAL"
+    },
+    {
+     "no": 13,
+     "home": "/ MANCHESTER UNITED",
+     "away": "CHELSEA"
+    },
+    {
+     "no": 14,
+     "home": "VALENCİA",
+     "away": "REAL MADRID"
+    },
+    {
+     "no": 15,
+     "home": "NAPOLI",
+     "away": "ATALANTA"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 13
+  },
+  {
+   "week": 14,
+   "season": "2024/2025",
+   "game_round_id": 434,
+   "matches": [
+    {
+     "no": 1,
+     "home": "KASIMPAŞA AJŞ",
+     "away": "KAYSERİSPOR"
+    },
+    {
+     "no": 2,
+     "home": "ANTALYASPOR A.Ş",
+     "away": "BODRUM FK"
+    },
+    {
+     "no": 3,
+     "home": "HATAYSPOR",
+     "away": "GAZİANTEP F.K. AŞ"
+    },
+    {
+     "no": 4,
+     "home": "ADANA DEMİRSPOR A.Ş",
+     "away": "EYÜPSPOR"
+    },
+    {
+     "no": 5,
+     "home": "ÇAYKUR RİZESPOR A.Ş",
+     "away": "TRABZONSPOR A.Ş"
+    },
+    {
+     "no": 6,
+     "home": "GÖZTEPE A.Ş",
+     "away": "KONYASPOR"
+    },
+    {
+     "no": 7,
+     "home": "GALATASARAY A.Ş",
+     "away": "SAMSUNSPOR A.Ş"
+    },
+    {
+     "no": 8,
+     "home": "BAŞAKŞEHİR FK",
+     "away": "BEŞİKTAŞ AŞ"
+    },
+    {
+     "no": 9,
+     "home": "FENERBAHÇE A.Ş",
+     "away": "SİVASSPOR"
+    },
+    {
+     "no": 10,
+     "home": "MAINZ",
+     "away": "B. DORTMUND"
+    },
+    {
+     "no": 11,
+     "home": "NICE",
+     "away": "LİLLE"
+    },
+    {
+     "no": 12,
+     "home": "BRIGHTON",
+     "away": "MANCHESTER CITY"
+    },
+    {
+     "no": 13,
+     "home": "LIVERPOOL",
+     "away": "ASTON VILLA"
+    },
+    {
+     "no": 14,
+     "home": "MALLORCA",
+     "away": "ATLETİCO MADRID"
+    },
+    {
+     "no": 15,
+     "home": "ATALANTA",
+     "away": "UDINESE"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": null
+  },
+  {
+   "week": 16,
+   "season": "2024/2025",
+   "game_round_id": 436,
+   "matches": [
+    {
+     "no": 1,
+     "home": "EYÜPSPOR",
+     "away": "ÇAYKUR RİZESPOR A.Ş"
+    },
+    {
+     "no": 2,
+     "home": "GAZİANTEP F.K. A.Ş",
+     "away": "BAŞAKŞEHİR FK"
+    },
+    {
+     "no": 3,
+     "home": "KAYSERİSPOR",
+     "away": "FENERBAHÇE A.Ş"
+    },
+    {
+     "no": 4,
+     "home": "BODRUM FK",
+     "away": "GALATASARAY AŞ"
+    },
+    {
+     "no": 5,
+     "home": "SİVASSPOR",
+     "away": "KASIMPAŞA AJŞ"
+    },
+    {
+     "no": 6,
+     "home": "KONYASPOR",
+     "away": "HATAYSPOR"
+    },
+    {
+     "no": 7,
+     "home": "SAMSUNSPORA;Ş",
+     "away": "ALANYASPOR"
+    },
+    {
+     "no": 8,
+     "home": "BEŞİKTAŞ A.Ş",
+     "away": "GÖZTEPE AJŞ"
+    },
+    {
+     "no": 9,
+     "home": "TRABZONSPOR AŞ",
+     "away": "ADANA DEMİRSPOR A.Ş"
+    },
+    {
+     "no": 10,
+     "home": "B. DORTMUND",
+     "away": "FREIBURG"
+    },
+    {
+     "no": 11,
+     "home": "HOFFENHEİM",
+     "away": "LEIPZIG"
+    },
+    {
+     "no": 12,
+     "home": "MANCHESTER CITY",
+     "away": "TOTTENHAM"
+    },
+    {
+     "no": 13,
+     "home": "ATHLETIC BILBAO",
+     "away": "REAL SOCIEDAD"
+    },
+    {
+     "no": 14,
+     "home": "AC MILAN",
+     "away": "JUVENTUS"
+    },
+    {
+     "no": 15,
+     "home": "NAPOLI",
+     "away": "AS ROMA"
+    }
+   ],
+   "data_warnings": [
+    "1 satirin numarasi okunamadi, sira konumdan alindi (okunan 14 numaranin hepsi tuttu)"
+   ],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 16
+  },
+  {
+   "week": 17,
+   "season": "2024/2025",
+   "game_round_id": 437,
+   "matches": [
+    {
+     "no": 1,
+     "home": "ANTALYASPOR",
+     "away": "SİVASSPOR"
+    },
+    {
+     "no": 2,
+     "home": "SAMSUNSPOR A.Ş",
+     "away": "BODRUM FK"
+    },
+    {
+     "no": 3,
+     "home": "ADANA DEMİRSPOR A.Ş",
+     "away": "KONYASPOR"
+    },
+    {
+     "no": 4,
+     "home": "ALANYASPOR",
+     "away": "TRABZONSPOR A.Ş"
+    },
+    {
+     "no": 5,
+     "home": "BAŞAKŞEHİR FK",
+     "away": "GÖZTEPE A.Ş"
+    },
+    {
+     "no": 6,
+     "home": "ÇAYKUR RİZESPOR A.Ş",
+     "away": "KAYSERİSPOR"
+    },
+    {
+     "no": 7,
+     "home": "GALATASARAY A.Ş",
+     "away": "EYÜPSPOR"
+    },
+    {
+     "no": 8,
+     "home": "FENERBAHÇE AŞ",
+     "away": "GAZİANTEP F.K. A.Ş"
+    },
+    {
+     "no": 9,
+     "home": "HATAYSPOR",
+     "away": "BEŞİKTAŞ A.Ş"
+    },
+    {
+     "no": 10,
+     "home": "B. DORTMUND",
+     "away": "BAYERN MÜNİH"
+    },
+    {
+     "no": 11,
+     "home": "MARSILYA",
+     "away": "MONACO"
+    },
+    {
+     "no": 12,
+     "home": "WEST HAM",
+     "away": "ARSENAL"
+    },
+    {
+     "no": 13,
+     "home": "CHELSEA",
+     "away": "ASTON VILLA"
+    },
+    {
+     "no": 14,
+     "home": "LIVERPOOL",
+     "away": "MANCHESTER CITY"
+    },
+    {
+     "no": 15,
+     "home": "FIORENTINA",
+     "away": "INTER"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 17
+  },
+  {
+   "week": 18,
+   "season": "2024/2025",
+   "game_round_id": 438,
+   "matches": [
+    {
+     "no": 1,
+     "home": "TRABZONSPOR AŞ",
+     "away": "KASIMPAŞA A.Ş"
+    },
+    {
+     "no": 2,
+     "home": "KONYASPOR",
+     "away": "ANTALYASPOR"
+    },
+    {
+     "no": 3,
+     "home": "GÖZTEPE AŞ",
+     "away": "ADANA DEMİRSPOR AŞ"
+    },
+    {
+     "no": 4,
+     "home": "BEŞİKTAŞ AJŞ",
+     "away": "FENERBAHÇE AJŞ"
+    },
+    {
+     "no": 5,
+     "home": "EYÜPSPOR",
+     "away": "SAMSUNSPOR A.Ş"
+    },
+    {
+     "no": 6,
+     "home": "KAYSERİSPOR",
+     "away": "ALANYASPOR"
+    },
+    {
+     "no": 7,
+     "home": "SİVASSPOR",
+     "away": "GALATASARAY AJŞ"
+    },
+    {
+     "no": 8,
+     "home": "BAŞAKŞEHİR FK",
+     "away": "HATAYSPOR"
+    },
+    {
+     "no": 9,
+     "home": "GAZİANTEPEF.K. A.Ş",
+     "away": "ÇAYKUR RİZESPOR A.Ş"
+    },
+    {
+     "no": 10,
+     "home": "MONCHENGLADBACH",
+     "away": "B. DORTMUND"
+    },
+    {
+     "no": 11,
+     "home": "NANTES",
+     "away": "RENNES"
+    },
+    {
+     "no": 12,
+     "home": "TOTTENHAM",
+     "away": "CHELSEA"
+    },
+    {
+     "no": 13,
+     "home": "REAL BETİS",
+     "away": "BARCELONA"
+    },
+    {
+     "no": 14,
+     "home": "ATLETİCO MADRİD",
+     "away": "SEVİLLA"
+    },
+    {
+     "no": 15,
+     "home": "ATALANTA",
+     "away": "AC MİLAN"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 18
+  },
+  {
+   "week": 19,
+   "season": "2024/2025",
+   "game_round_id": 439,
+   "matches": [
+    {
+     "no": 1,
+     "home": "BODRUM FK",
+     "away": "SİVASSPOR"
+    },
+    {
+     "no": 2,
+     "home": "KASIMPAŞA AJŞ",
+     "away": "EYÜPSPOR"
+    },
+    {
+     "no": 3,
+     "home": "ÇAYKUR RİZESPOR A.Ş",
+     "away": "KONYASPOR"
+    },
+    {
+     "no": 4,
+     "home": "ALANYASPOR",
+     "away": "GAZİANTEP F.K. A.Ş"
+    },
+    {
+     "no": 5,
+     "home": "HATAYSPOR",
+     "away": "GÖZTEPE AJŞ"
+    },
+    {
+     "no": 6,
+     "home": "ANTALYASPOR",
+     "away": "KAYSERİSPOR"
+    },
+    {
+     "no": 7,
+     "home": "FENERBAHÇE A.Ş",
+     "away": "BAŞAKŞEHİR FK"
+    },
+    {
+     "no": 8,
+     "home": "ADANA DEMİRSPOR A.Ş",
+     "away": "BEŞİKTAŞ A.Ş"
+    },
+    {
+     "no": 9,
+     "home": "GALATASARAY AJŞ",
+     "away": "TRABZONSPOR A.Ş"
+    },
+    {
+     "no": 10,
+     "home": "LEIPZIG",
+     "away": "EINTRACHT FRANKFURT"
+    },
+    {
+     "no": 11,
+     "home": "/ PARIS SAINT GERMAIN",
+     "away": "LYON"
+    },
+    {
+     "no": 12,
+     "home": "ARSENAL",
+     "away": "EVERTON"
+    },
+    {
+     "no": 13,
+     "home": "MANCHESTER CITY",
+     "away": "MANCHESTER UNITED"
+    },
+    {
+     "no": 14,
+     "home": "VILLARREAL",
+     "away": "REAL BETİS"
+    },
+    {
+     "no": 15,
+     "home": "UDINESE",
+     "away": "NAPOLI"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 19
+  },
+  {
+   "week": 20,
+   "season": "2024/2025",
+   "game_round_id": 440,
+   "matches": [
+    {
+     "no": 1,
+     "home": "EYÜPSPOR",
+     "away": "FENERBAHÇE A.Ş"
+    },
+    {
+     "no": 2,
+     "home": "SİVASSPOR",
+     "away": "SAMSUNSPOR A.Ş"
+    },
+    {
+     "no": 3,
+     "home": "BEŞİKTAŞ A.Ş",
+     "away": "ALANYASPOR"
+    },
+    {
+     "no": 4,
+     "home": "GAZİANTEP F.K. AJŞ",
+     "away": "ANTALYASPOR"
+    },
+    {
+     "no": 5,
+     "home": "GÖZTEPE AJŞ",
+     "away": "ÇAYKUR RİZESPOR A.Ş"
+    },
+    {
+     "no": 6,
+     "home": "KAYSERİSPOR",
+     "away": "GALATASARAY A.Ş"
+    },
+    {
+     "no": 7,
+     "home": "TRABZONSPOR AJŞ",
+     "away": "BODRUM FK"
+    },
+    {
+     "no": 8,
+     "home": "BAŞAKŞEHİR FK",
+     "away": "KASIMPAŞA A.Ş"
+    },
+    {
+     "no": 9,
+     "home": "HATAYSPOR",
+     "away": "ADANA DEMİRSPOR A.Ş"
+    },
+    {
+     "no": 10,
+     "home": "BAYERN MUNIH",
+     "away": "LEİPZIG"
+    },
+    {
+     "no": 11,
+     "home": "WOLFSBURG",
+     "away": "B. DORTMUND"
+    },
+    {
+     "no": 12,
+     "home": "PSV",
+     "away": "FEYENOORD"
+    },
+    {
+     "no": 13,
+     "home": "ASTON VILLA",
+     "away": "MANCHESTER CITY"
+    },
+    {
+     "no": 14,
+     "home": "TOTTENHAM",
+     "away": "LIVERPOOL"
+    },
+    {
+     "no": 15,
+     "home": "BARCELONA",
+     "away": "ATLETİCO MADRID"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 20
+  },
+  {
+   "week": 21,
+   "season": "2024/2025",
+   "game_round_id": 441,
+   "matches": [
+    {
+     "no": 1,
+     "home": "LEİCESTER CİTY",
+     "away": "MANCHESTER CITY"
+    },
+    {
+     "no": 2,
+     "home": "EVERTON",
+     "away": "NOTTINGHAM FOREST"
+    },
+    {
+     "no": 3,
+     "home": "FULHAM",
+     "away": "BOURNEMOUTH"
+    },
+    {
+     "no": 4,
+     "home": "TOTTENHAM",
+     "away": "WOLVERHAMPTON"
+    },
+    {
+     "no": 5,
+     "home": "WEST HAM",
+     "away": "LİVERPOOL"
+    },
+    {
+     "no": 6,
+     "home": "ASTON VILLA",
+     "away": "BRIGHTON"
+    },
+    {
+     "no": 7,
+     "home": "IPSWICHTOWN",
+     "away": "CHELSEA"
+    },
+    {
+     "no": 8,
+     "home": "MANCHESTER UNITED",
+     "away": "NEWCASTLE UNITED"
+    },
+    {
+     "no": 9,
+     "home": "CAGLIARI",
+     "away": "INTER"
+    },
+    {
+     "no": 10,
+     "home": "LAZIO",
+     "away": "ATALANTA"
+    },
+    {
+     "no": 11,
+     "home": "UDINESE",
+     "away": "TORINO"
+    },
+    {
+     "no": 12,
+     "home": "NAPOLI",
+     "away": "VENEZIA"
+    },
+    {
+     "no": 13,
+     "home": "JUVENTUS",
+     "away": "FIORENTINA"
+    },
+    {
+     "no": 14,
+     "home": "AC MILAN",
+     "away": "AS ROMA"
+    },
+    {
+     "no": 15,
+     "home": "SPORTING LIZBON",
+     "away": "BENFICA"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 21
+  },
+  {
+   "week": 22,
+   "season": "2024/2025",
+   "game_round_id": 442,
+   "matches": [
+    {
+     "no": 1,
+     "home": "ALANYASPOR",
+     "away": "KONYASPOR"
+    },
+    {
+     "no": 2,
+     "home": "ÇAYKUR RİZESPOR A.Ş",
+     "away": "BEŞİKTAŞ A.Ş"
+    },
+    {
+     "no": 3,
+     "home": "ADANA DEMİRSPOR A.Ş",
+     "away": "BAŞAKŞEHİR FK"
+    },
+    {
+     "no": 4,
+     "home": "ANTALYASPOR",
+     "away": "EYÜPSPOR"
+    },
+    {
+     "no": 5,
+     "home": "GALATASARAY A.Ş",
+     "away": "GÖZTEPE AŞ"
+    },
+    {
+     "no": 6,
+     "home": "SAMSUNSPOR A.Ş",
+     "away": "TRABZONSPOR A.Ş"
+    },
+    {
+     "no": 7,
+     "home": "KASIMPAŞA AJŞ",
+     "away": "GAZİANTEP F.K. A.Ş"
+    },
+    {
+     "no": 8,
+     "home": "BODRUM FK",
+     "away": "KAYSERİSPOR"
+    },
+    {
+     "no": 9,
+     "home": "FENERBAHÇE A.Ş",
+     "away": "HATAYSPOR"
+    },
+    {
+     "no": 10,
+     "home": "TOTTENHAM",
+     "away": "NEWCASTLE UNITED"
+    },
+    {
+     "no": 11,
+     "home": "ASTON VILLA",
+     "away": "LEICESTER CITY"
+    },
+    {
+     "no": 12,
+     "home": "BRIGHTON",
+     "away": "ARSENAL"
+    },
+    {
+     "no": 13,
+     "home": "LIVERPOOL",
+     "away": "MANCHESTER UNITED"
+    },
+    {
+     "no": 14,
+     "home": "VALENCİA",
+     "away": "REAL MADRID"
+    },
+    {
+     "no": 15,
+     "home": "FIORENTINA",
+     "away": "NAPOLI"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 22
+  },
+  {
+   "week": 23,
+   "season": "2024/2025",
+   "game_round_id": 443,
+   "matches": [
+    {
+     "no": 1,
+     "home": "KAYSERİSPOR",
+     "away": "SAMSUNSPOR A.Ş"
+    },
+    {
+     "no": 2,
+     "home": "HATAYSPOR",
+     "away": "ÇAYKUR RİZESPOR A.Ş"
+    },
+    {
+     "no": 3,
+     "home": "BEŞİKTAŞ A.Ş",
+     "away": "BODRUM FK"
+    },
+    {
+     "no": 4,
+     "home": "SİVASSPOR",
+     "away": "ALANYASPOR"
+    },
+    {
+     "no": 5,
+     "home": "TRABZONSPOR A.Ş",
+     "away": "ANTALYASPOR"
+    },
+    {
+     "no": 6,
+     "home": "BAŞAKŞEHİR FK",
+     "away": "GALATASARAY A.Ş"
+    },
+    {
+     "no": 7,
+     "home": "GAZİANTEP F.K. AŞ",
+     "away": "ADANA DEMİRSPOR A.Ş"
+    },
+    {
+     "no": 8,
+     "home": "GÖZTEPE AJŞ",
+     "away": "KASIMPAŞA AJŞ"
+    },
+    {
+     "no": 9,
+     "home": "KONYASPOR",
+     "away": "FENERBAHÇE A.Ş"
+    },
+    {
+     "no": 10,
+     "home": "LEIPZIG",
+     "away": "WERDER BREMEN"
+    },
+    {
+     "no": 11,
+     "home": "ANDERLECHT",
+     "away": "CLUB BRUGGE"
+    },
+    {
+     "no": 12,
+     "home": "ESPANYOL",
+     "away": "LEGANES"
+    },
+    {
+     "no": 13,
+     "home": "/ SEVİLLA",
+     "away": "VALENCİA"
+    },
+    {
+     "no": 14,
+     "home": "GENOA",
+     "away": "PARMA"
+    },
+    {
+     "no": 15,
+     "home": "BOLOGNA",
+     "away": "AS ROMA"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 23
+  },
+  {
+   "week": 24,
+   "season": "2024/2025",
+   "game_round_id": 444,
+   "matches": [
+    {
+     "no": 1,
+     "home": "HATAYSPOR",
+     "away": "GALATASARAY A.Ş"
+    },
+    {
+     "no": 2,
+     "home": "BAŞAKŞEHİR FK",
+     "away": "ÇAYKUR RİZESPOR A.Ş"
+    },
+    {
+     "no": 3,
+     "home": "GAZİANTEPF.K. AŞ",
+     "away": "BODRUM FK"
+    },
+    {
+     "no": 4,
+     "home": "BEŞİKTAŞ A.Ş",
+     "away": "SAMSUNSPOR AJŞ"
+    },
+    {
+     "no": 5,
+     "home": "GÖZTEPE AJŞ",
+     "away": "ANTALYASPOR"
+    },
+    {
+     "no": 6,
+     "home": "KONYASPOR",
+     "away": "KASIMPAŞA A.Ş"
+    },
+    {
+     "no": 7,
+     "home": "ADANA DEMİRSPOR A.Ş",
+     "away": "FENERBAHÇE A.Ş"
+    },
+    {
+     "no": 8,
+     "home": "EYÜPSPOR",
+     "away": "ALANYASPOR"
+    },
+    {
+     "no": 9,
+     "home": "TRABZONSPOR A.Ş",
+     "away": "SİVASSPOR"
+    },
+    {
+     "no": 10,
+     "home": "EINTRACHT FRANKFURT",
+     "away": "B. DORTMUND"
+    },
+    {
+     "no": 11,
+     "home": "RC LENS",
+     "away": "PARIS SAINT GERMAN"
+    },
+    {
+     "no": 12,
+     "home": "ARSENAL",
+     "away": "ASTON VILLA"
+    },
+    {
+     "no": 13,
+     "home": "MANCHESTER UNITED",
+     "away": "BRIGHTON"
+    },
+    {
+     "no": 14,
+     "home": "JUVENTUS",
+     "away": "AC MILAN"
+    },
+    {
+     "no": 15,
+     "home": "ATALANTA",
+     "away": "NAPOLİ"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 24
+  },
+  {
+   "week": 25,
+   "season": "2024/2025",
+   "game_round_id": 445,
+   "matches": [
+    {
+     "no": 1,
+     "home": "SAMSUNSPOR A.Ş",
+     "away": "GAZİANTEP F.K. A.Ş"
+    },
+    {
+     "no": 2,
+     "home": "SİVASSPOR",
+     "away": "KAYSERİSPOR"
+    },
+    {
+     "no": 3,
+     "home": "ALANYASPOR",
+     "away": "BAŞAKŞEHİR FK"
+    },
+    {
+     "no": 4,
+     "home": "GALATASARAY AJŞ",
+     "away": "KONYASPOR"
+    },
+    {
+     "no": 5,
+     "home": "ÇAYKURRİZESPOR A.Ş",
+     "away": "ADANA DEMİRSPOR A.Ş"
+    },
+    {
+     "no": 6,
+     "home": "ANTALYASPOR",
+     "away": "BEŞİKTAŞ A.Ş"
+    },
+    {
+     "no": 7,
+     "home": "BODRUM FK",
+     "away": "EYÜPSPOR"
+    },
+    {
+     "no": 8,
+     "home": "FENERBAHÇE A.Ş",
+     "away": "GÖZTEPE AJŞ"
+    },
+    {
+     "no": 9,
+     "home": "KASIMPAŞA AJŞ",
+     "away": "HATAYSPOR"
+    },
+    {
+     "no": 10,
+     "home": "LEIPZIG",
+     "away": "B. LEVERKUSEN"
+    },
+    {
+     "no": 11,
+     "home": "NICE",
+     "away": "MARSILYA"
+    },
+    {
+     "no": 12,
+     "home": "MANCHESTER CITY",
+     "away": "CHELSEA"
+    },
+    {
+     "no": 13,
+     "home": "ATLETİCO MADRID",
+     "away": "VILLARREAL"
+    },
+    {
+     "no": 14,
+     "home": "NAPOLI",
+     "away": "JUVENTUS"
+    },
+    {
+     "no": 15,
+     "home": "LAZIO",
+     "away": "FIOORENTINA"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 25
+  },
+  {
+   "week": 26,
+   "season": "2024/2025",
+   "game_round_id": 446,
+   "matches": [
+    {
+     "no": 1,
+     "home": "EYÜPSPOR",
+     "away": "SİVASSPOR"
+    },
+    {
+     "no": 2,
+     "home": "KONYASPOR",
+     "away": "BODRUM FK"
+    },
+    {
+     "no": 3,
+     "home": "HATAYSPOR",
+     "away": "ANTALYASPOR"
+    },
+    {
+     "no": 4,
+     "home": "KAYSERİSPOR",
+     "away": "TRABZONSPOR A.Ş"
+    },
+    {
+     "no": 5,
+     "home": "BAŞAKŞEHİR FK",
+     "away": "SAMSUNSPOR AŞ"
+    },
+    {
+     "no": 6,
+     "home": "ADANA DEMİRSPOR A.Ş",
+     "away": "KASIMPAŞA A.Ş"
+    },
+    {
+     "no": 7,
+     "home": "GÖZTEPE AJŞ",
+     "away": "ALANYASPOR"
+    },
+    {
+     "no": 8,
+     "home": "FENERBAHÇE A.Ş",
+     "away": "ÇAYKUR RİZESPOR A.Ş"
+    },
+    {
+     "no": 9,
+     "home": "GAZİANTEP F.K. AJŞ",
+     "away": "GALATASARAY AJŞ"
+    },
+    {
+     "no": 10,
+     "home": "MARSİLYA",
+     "away": "LYON"
+    },
+    {
+     "no": 11,
+     "home": "AJAX",
+     "away": "FEYENOORD"
+    },
+    {
+     "no": 12,
+     "home": "NOTTINGHAM FOREST",
+     "away": "BRIGHTON"
+    },
+    {
+     "no": 13,
+     "home": "ARSENAL",
+     "away": "MANCHESTER CITY"
+    },
+    {
+     "no": 14,
+     "home": "AC MILAN",
+     "away": "INTER"
+    },
+    {
+     "no": 15,
+     "home": "ASROMA",
+     "away": "NAPOLİ"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 26
+  },
+  {
+   "week": 27,
+   "season": "2024/2025",
+   "game_round_id": 447,
+   "matches": [
+    {
+     "no": 1,
+     "home": "SAMSUNSPOR AJŞ",
+     "away": "HATAYSPOR"
+    },
+    {
+     "no": 2,
+     "home": "KAYSERİSPOR",
+     "away": "KONYASPOR"
+    },
+    {
+     "no": 3,
+     "home": "SİVASSPOR",
+     "away": "BEŞİKTAŞ A.Ş"
+    },
+    {
+     "no": 4,
+     "home": "KASIMPAŞA AŞ",
+     "away": "ÇAYKUR RİZESPOR A.Ş"
+    },
+    {
+     "no": 5,
+     "home": "ALANYASPOR",
+     "away": "FENERBAHÇE A.Ş"
+    },
+    {
+     "no": 6,
+     "home": "ANTALYASPOR",
+     "away": "BAŞAKŞEHİR FK"
+    },
+    {
+     "no": 7,
+     "home": "GALATASARAY AŞ",
+     "away": "ADANA DEMİRSPOR A.Ş"
+    },
+    {
+     "no": 8,
+     "home": "BODRUM FK",
+     "away": "GÖZTEPE AŞ"
+    },
+    {
+     "no": 9,
+     "home": "TRABZONSPOR AŞ",
+     "away": "EYÜPSPOR"
+    },
+    {
+     "no": 10,
+     "home": "B. DORTMUND",
+     "away": "STUTTGART"
+    },
+    {
+     "no": 11,
+     "home": "MONCHENGLADBACH",
+     "away": "EINTRACHT FRANKFURT"
+    },
+    {
+     "no": 12,
+     "home": "PARIS SAINT GERMAIN",
+     "away": "MONACO"
+    },
+    {
+     "no": 13,
+     "home": "ATHLETIC BILBAO",
+     "away": "GIRONA"
+    },
+    {
+     "no": 14,
+     "home": "REAL MADRID",
+     "away": "ATLETİCO MADRID"
+    },
+    {
+     "no": 15,
+     "home": "SEVİLLA",
+     "away": "BARCELONA"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 27
+  },
+  {
+   "week": 28,
+   "season": "2024/2025",
+   "game_round_id": 448,
+   "matches": [
+    {
+     "no": 1,
+     "home": "ADANA DEMİRSPOR A.Ş",
+     "away": "ANTALYASPOR"
+    },
+    {
+     "no": 2,
+     "home": "GAZİANTEP F.K. A.Ş",
+     "away": "SİVASSPOR"
+    },
+    {
+     "no": 3,
+     "home": "BAŞAKŞEHİR FK",
+     "away": "BODRUM FK"
+    },
+    {
+     "no": 4,
+     "home": "BEŞİKTAŞ A.Ş",
+     "away": "TRABZONSPOR A.Ş"
+    },
+    {
+     "no": 5,
+     "home": "HATAYSPOR",
+     "away": "ALANYASPOR"
+    },
+    {
+     "no": 6,
+     "home": "EYÜPSPOR",
+     "away": "KAYSERİSPOR"
+    },
+    {
+     "no": 7,
+     "home": "KONYASPOR",
+     "away": "SAMSUNSPOR AJŞ"
+    },
+    {
+     "no": 8,
+     "home": "FENERBAHÇE A.Ş",
+     "away": "KASIMPAŞA A.Ş"
+    },
+    {
+     "no": 9,
+     "home": "ÇAYKUR RİZESPOR A.Ş",
+     "away": "GALATASARAY A.Ş"
+    },
+    {
+     "no": 10,
+     "home": "B. LEVERKUSEN",
+     "away": "BAYERN MÜNİH"
+    },
+    {
+     "no": 11,
+     "home": "MANCHESTER CITY",
+     "away": "NEWCASTLE UNITED"
+    },
+    {
+     "no": 12,
+     "home": "TOTTENHAM",
+     "away": "MANCHESTER UNITED"
+    },
+    {
+     "no": 13,
+     "home": "/ OSASUNA",
+     "away": "REAL MADRID"
+    },
+    {
+     "no": 14,
+     "home": "LAZIO",
+     "away": "NAPOLI"
+    },
+    {
+     "no": 15,
+     "home": "JUVENTUS",
+     "away": "INTER"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 28
+  },
+  {
+   "week": 29,
+   "season": "2024/2025",
+   "game_round_id": 449,
+   "matches": [
+    {
+     "no": 1,
+     "home": "EYÜPSPOR",
+     "away": "BEŞİKTAŞ A.Ş"
+    },
+    {
+     "no": 2,
+     "home": "BODRUM FK",
+     "away": "HATAYSPOR"
+    },
+    {
+     "no": 3,
+     "home": "SİVASSPOR",
+     "away": "KONYASPOR"
+    },
+    {
+     "no": 4,
+     "home": "ANTALYASPOR",
+     "away": "KASIMPAŞA A.Ş"
+    },
+    {
+     "no": 5,
+     "home": "SAMSUNSPOR A.Ş",
+     "away": "ÇAYKUR RİZESPOR A.Ş"
+    },
+    {
+     "no": 6,
+     "home": "KAYSERİSPOR",
+     "away": "GÖZTEPE A.Ş"
+    },
+    {
+     "no": 7,
+     "home": "ALANYASPOR",
+     "away": "ADANA DEMİRSPOR A.Ş"
+    },
+    {
+     "no": 8,
+     "home": "TRABZONSPOR AJŞ",
+     "away": "GAZİANTEP F.K. A.Ş"
+    },
+    {
+     "no": 9,
+     "home": "GALATASARAY A.Ş",
+     "away": "FENERBAHÇE A.Ş"
+    },
+    {
+     "no": 10,
+     "home": "BAYERN MÜNİH",
+     "away": "EİNTRACHT FRANKFURT"
+    },
+    {
+     "no": 11,
+     "home": "LİLLE",
+     "away": "MONACO"
+    },
+    {
+     "no": 12,
+     "home": "LYON",
+     "away": "PARİS SAİNT GERMAİN"
+    },
+    {
+     "no": 13,
+     "home": "ASTON VİLLA",
+     "away": "CHELSEA"
+    },
+    {
+     "no": 14,
+     "home": "MANCHESTER CİTY",
+     "away": "LİVERPOOL"
+    },
+    {
+     "no": 15,
+     "home": "VALENCİA",
+     "away": "ATLETİCO MADRİD"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 29
+  },
+  {
+   "week": 30,
+   "season": "2024/2025",
+   "game_round_id": 450,
+   "matches": [
+    {
+     "no": 1,
+     "home": "ADANA DEMİRSPOR A.Ş",
+     "away": "BODRUM FK"
+    },
+    {
+     "no": 2,
+     "home": "BEŞİKTAŞ A.Ş",
+     "away": "KAYSERİSPOR"
+    },
+    {
+     "no": 3,
+     "home": "ÇAYKUR RİZESPOR A.Ş",
+     "away": "ALANYASPOR"
+    },
+    {
+     "no": 4,
+     "home": "KASIMPAŞA AJŞ",
+     "away": "GALATASARAY A.Ş"
+    },
+    {
+     "no": 5,
+     "home": "FENERBAHÇE A.Ş",
+     "away": "ANTALYASPOR"
+    },
+    {
+     "no": 6,
+     "home": "GAZİANTEP F.K. A.Ş",
+     "away": "EYÜPSPOR"
+    },
+    {
+     "no": 7,
+     "home": "KONYASPOR",
+     "away": "TRABZONSPOR AJŞ"
+    },
+    {
+     "no": 8,
+     "home": "BAŞAKŞEHİR FK",
+     "away": "SİVASSPOR"
+    },
+    {
+     "no": 9,
+     "home": "GÖZTEPE AJŞ",
+     "away": "SAMSUNSPOR AŞ"
+    },
+    {
+     "no": 10,
+     "home": "WERDER BREMEN",
+     "away": "WOLFSBURG"
+    },
+    {
+     "no": 11,
+     "home": "EINTRACHT FRANKFURT",
+     "away": "B. LEVERKUSEN"
+    },
+    {
+     "no": 12,
+     "home": "PARIS SAINT GERMAİN",
+     "away": "LİLLE"
+    },
+    {
+     "no": 13,
+     "home": "ATLETICO MADRID",
+     "away": "ATHLETİC BILBAO"
+    },
+    {
+     "no": 14,
+     "home": "AC MILAN",
+     "away": "LAZIO"
+    },
+    {
+     "no": 15,
+     "home": "NAPOLI",
+     "away": "INTER"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 30
+  },
+  {
+   "week": 32,
+   "season": "2024/2025",
+   "game_round_id": 452,
+   "matches": [
+    {
+     "no": 1,
+     "home": "GALATASARAY AŞ",
+     "away": "ANTALYASPOR"
+    },
+    {
+     "no": 2,
+     "home": "GAZİANTEP F.K. A.Ş",
+     "away": "KAYSERİSPOR"
+    },
+    {
+     "no": 3,
+     "home": "KASIMPAŞA AJŞ",
+     "away": "ALANYASPOR"
+    },
+    {
+     "no": 4,
+     "home": "BAŞAKŞEHİR FK",
+     "away": "TRABZONSPOR A.Ş"
+    },
+    {
+     "no": 5,
+     "home": "KONYASPOR",
+     "away": "BEŞİKTAŞ A.Ş"
+    },
+    {
+     "no": 6,
+     "home": "ÇAYKUR RİZESPOR A.Ş",
+     "away": "BODRUM FK"
+    },
+    {
+     "no": 7,
+     "home": "GÖZTEPE A.Ş",
+     "away": "EYÜPSPOR"
+    },
+    {
+     "no": 8,
+     "home": "HATAYSPOR",
+     "away": "SİVASSPOR"
+    },
+    {
+     "no": 9,
+     "home": "FENERBAHÇE A.Ş",
+     "away": "SAMSUNSPOR A.Ş"
+    },
+    {
+     "no": 10,
+     "home": "MAINZ",
+     "away": "FREIBURG"
+    },
+    {
+     "no": 11,
+     "home": "TWENTE",
+     "away": "FEYENOORD"
+    },
+    {
+     "no": 12,
+     "home": "MANCHESTER CITY",
+     "away": "BRIGHTON"
+    },
+    {
+     "no": 13,
+     "home": "/ ARSENAL",
+     "away": "CHELSEA"
+    },
+    {
+     "no": 14,
+     "home": "VILLARREAL",
+     "away": "REAL MADRID"
+    },
+    {
+     "no": 15,
+     "home": "FIORENTINA",
+     "away": "JUVENTUS"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 32
+  },
+  {
+   "week": 34,
+   "season": "2024/2025",
+   "game_round_id": 454,
+   "matches": [
+    {
+     "no": 1,
+     "home": "ANTALYASPOR",
+     "away": "ALANYASPOR"
+    },
+    {
+     "no": 2,
+     "home": "KAYSERİSPOR",
+     "away": "HATAYSPOR"
+    },
+    {
+     "no": 3,
+     "home": "BODRUM FK",
+     "away": "FENERBAHÇE AŞ"
+    },
+    {
+     "no": 4,
+     "home": "KONYASPOR",
+     "away": "GAZİANTEP F.K. A.Ş"
+    },
+    {
+     "no": 5,
+     "home": "SİVASSPOR",
+     "away": "ADANA DEMİRSPOR A.Ş"
+    },
+    {
+     "no": 6,
+     "home": "SAMSUNSPORAŞ",
+     "away": "KASIMPAŞA AŞ"
+    },
+    {
+     "no": 7,
+     "home": "TRABZONSPOR AŞ",
+     "away": "GÖZTEPE A.Ş"
+    },
+    {
+     "no": 8,
+     "home": "BEŞİKTAŞAJŞ",
+     "away": "GALATASARAY AJŞ"
+    },
+    {
+     "no": 9,
+     "home": "9. EYÜPSPOR",
+     "away": "BAŞAKŞEHİR FK"
+    },
+    {
+     "no": 10,
+     "home": "B. DORTMUND",
+     "away": "MAINZ"
+    },
+    {
+     "no": 11,
+     "home": "CLUB BRUGGE",
+     "away": "ANDERLECHT"
+    },
+    {
+     "no": 12,
+     "home": "MONACO",
+     "away": "NICE"
+    },
+    {
+     "no": 13,
+     "home": "PSV",
+     "away": "AJAX"
+    },
+    {
+     "no": 14,
+     "home": "BARCELONA",
+     "away": "GIRONA"
+    },
+    {
+     "no": 15,
+     "home": "NAPOLI",
+     "away": "AC MILAN"
+    }
+   ],
+   "data_warnings": [
+    "1 satirin numarasi okunamadi, sira konumdan alindi (okunan 14 numaranin hepsi tuttu)"
+   ],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 34
+  },
+  {
+   "week": 35,
+   "season": "2024/2025",
+   "game_round_id": 455,
+   "matches": [
+    {
+     "no": 1,
+     "home": "ADANA DEMİRSPOR A;Ş",
+     "away": "KAYSERİSPOR"
+    },
+    {
+     "no": 2,
+     "home": "ÇAYKUR RİZESPOR A.Ş",
+     "away": "SİVASSPOR"
+    },
+    {
+     "no": 3,
+     "home": "BAŞAKŞEHİR FK",
+     "away": "KONYASPOR"
+    },
+    {
+     "no": 4,
+     "home": "ANTALYASPOR",
+     "away": "SAMSUNSPOR A.Ş"
+    },
+    {
+     "no": 5,
+     "home": "ALANYASPOR",
+     "away": "BODRUM FK"
+    },
+    {
+     "no": 6,
+     "home": "HATAYSPOR",
+     "away": "EYÜPSPOR"
+    },
+    {
+     "no": 7,
+     "home": "FENERBAHÇE A.Ş",
+     "away": "TRABZONSPOR AŞ"
+    },
+    {
+     "no": 8,
+     "home": "GÖZTEPEAJŞ",
+     "away": "GAZİANTEP F.K. A.Ş"
+    },
+    {
+     "no": 9,
+     "home": "KASIMPAŞA AJŞ",
+     "away": "BEŞİKTAŞ AJŞ"
+    },
+    {
+     "no": 10,
+     "home": "FREIBURG",
+     "away": "B. DORTMUND"
+    },
+    {
+     "no": 11,
+     "home": "LYON",
+     "away": "LİLLE"
+    },
+    {
+     "no": 12,
+     "home": "MANCHESTER UNITED",
+     "away": "MANCHESTER CITY"
+    },
+    {
+     "no": 13,
+     "home": "BARCELONA",
+     "away": "REAL BETİS"
+    },
+    {
+     "no": 14,
+     "home": "AC MILAN",
+     "away": "FIORENTINA"
+    },
+    {
+     "no": 15,
+     "home": "ASROMA",
+     "away": "JUVENTUS"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 35
+  },
+  {
+   "week": 36,
+   "season": "2024/2025",
+   "game_round_id": 456,
+   "matches": [
+    {
+     "no": 1,
+     "home": "BEŞİKTAŞ AŞ",
+     "away": "BAŞAKŞEHİR FK"
+    },
+    {
+     "no": 2,
+     "home": "BODRUM FK",
+     "away": "ANTALYASPOR"
+    },
+    {
+     "no": 3,
+     "home": "EYÜPSPOR",
+     "away": "ADANA DEMİRSPOR A.Ş"
+    },
+    {
+     "no": 4,
+     "home": "GAZİANTEP F.K. AŞ",
+     "away": "HATAYSPOR"
+    },
+    {
+     "no": 5,
+     "home": "KAYSERİSPOR",
+     "away": "KASIMPAŞA A.Ş"
+    },
+    {
+     "no": 6,
+     "home": "KONYASPOR",
+     "away": "GÖZTEPE AŞ"
+    },
+    {
+     "no": 7,
+     "home": "SAMSUNSPOR AJŞ",
+     "away": "GALATASARAY AJŞ"
+    },
+    {
+     "no": 8,
+     "home": "SİVASSPOR",
+     "away": "FENERBAHÇE AJŞ"
+    },
+    {
+     "no": 9,
+     "home": "TRABZONSPOR AŞ",
+     "away": "ÇAYKUR RİZESPOR A.Ş"
+    },
+    {
+     "no": 10,
+     "home": "BAYERN MÜNİH",
+     "away": "B. DORTMUND"
+    },
+    {
+     "no": 11,
+     "home": "MONACO",
+     "away": "MARSİLYA"
+    },
+    {
+     "no": 12,
+     "home": "NEWCASTLE UNITED",
+     "away": "MANCHESTER UNITED"
+    },
+    {
+     "no": 13,
+     "home": "REAL BETİS",
+     "away": "VILLARREAL"
+    },
+    {
+     "no": 14,
+     "home": "UDINESE",
+     "away": "AC MILAN"
+    },
+    {
+     "no": 15,
+     "home": "LAZIO",
+     "away": "ASROMA"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 36
+  },
+  {
+   "week": 37,
+   "season": "2024/2025",
+   "game_round_id": 457,
+   "matches": [
+    {
+     "no": 1,
+     "home": "GALATASARAY A.Ş",
+     "away": "BODRUM FK"
+    },
+    {
+     "no": 2,
+     "home": "HATAYSPOR",
+     "away": "KONYASPOR"
+    },
+    {
+     "no": 3,
+     "home": "KASIMPAŞA AJŞ",
+     "away": "SİVASSPOR"
+    },
+    {
+     "no": 4,
+     "home": "ADANA DEMİRSPOR A.Ş",
+     "away": "TRABZONSPOR A.Ş"
+    },
+    {
+     "no": 5,
+     "home": "GÖZTEPE AŞ",
+     "away": "BEŞİKTAŞ AJŞ"
+    },
+    {
+     "no": 6,
+     "home": "BAŞAKŞEHİR FK",
+     "away": "GAZİANTEP F.K. A.Ş"
+    },
+    {
+     "no": 7,
+     "home": "ÇAYKUR RİZESPOR A.Ş",
+     "away": "EYÜPSPOR"
+    },
+    {
+     "no": 8,
+     "home": "FENERBAHÇE A.Ş",
+     "away": "KAYSERİSPOR"
+    },
+    {
+     "no": 9,
+     "home": "ALANYASPOR",
+     "away": "SAMSUNSPOR A.Ş"
+    },
+    {
+     "no": 10,
+     "home": "B. DORTMUND",
+     "away": "MONCHENGLADBACH"
+    },
+    {
+     "no": 11,
+     "home": "/ MONACO",
+     "away": "STRASBOURG"
+    },
+    {
+     "no": 12,
+     "home": "BARCELONA",
+     "away": "CELTA VIGO"
+    },
+    {
+     "no": 13,
+     "home": "/ REAL MADRID",
+     "away": "ATHLETIC BILBAO"
+    },
+    {
+     "no": 14,
+     "home": "BOLOGNA",
+     "away": "INTER"
+    },
+    {
+     "no": 15,
+     "home": "AC MILAN",
+     "away": "ATALANTA"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 37
+  },
+  {
+   "week": 38,
+   "season": "2024/2025",
+   "game_round_id": 458,
+   "matches": [
+    {
+     "no": 1,
+     "home": "BEŞİKTAŞ A.Ş",
+     "away": "HATAYSPOR"
+    },
+    {
+     "no": 2,
+     "home": "SİVASSPOR",
+     "away": "ANTALYASPOR"
+    },
+    {
+     "no": 3,
+     "home": "GAZİANTEP F.K. A.Ş",
+     "away": "FENERBAHÇE A.Ş"
+    },
+    {
+     "no": 4,
+     "home": "BODRUM FK",
+     "away": "SAMSUNSPOR A.Ş"
+    },
+    {
+     "no": 5,
+     "home": "TRABZONSPOR A.Ş",
+     "away": "ALANYASPOR"
+    },
+    {
+     "no": 6,
+     "home": "KONYASPOR",
+     "away": "ADANA DEMİRSPOR A.Ş"
+    },
+    {
+     "no": 7,
+     "home": "KAYSERİSPOR",
+     "away": "ÇAYKUR RİZESPOR A.Ş"
+    },
+    {
+     "no": 8,
+     "home": "EYÜPSPOR",
+     "away": "GALATASARAY A.Ş"
+    },
+    {
+     "no": 9,
+     "home": "GÖZTEPE A.Ş",
+     "away": "BAŞAKŞEHİR FK"
+    },
+    {
+     "no": 10,
+     "home": "EINTRACHT FRANKFURT",
+     "away": "LEİPZIG"
+    },
+    {
+     "no": 11,
+     "home": "RCLENS",
+     "away": "AJ AUXERRE"
+    },
+    {
+     "no": 12,
+     "home": "BOURNEMOUTH",
+     "away": "MANCHESTER UNITED"
+    },
+    {
+     "no": 13,
+     "home": "LIVERPOOL",
+     "away": "TOTTENHAM"
+    },
+    {
+     "no": 14,
+     "home": "HELLAS VERONA",
+     "away": "CAGLIARI"
+    },
+    {
+     "no": 15,
+     "home": "INTER",
+     "away": "AS ROMA"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 38
+  },
+  {
+   "week": 39,
+   "season": "2024/2025",
+   "game_round_id": 459,
+   "matches": [
+    {
+     "no": 1,
+     "home": "ANTALYASPOR",
+     "away": "KONYASPOR"
+    },
+    {
+     "no": 2,
+     "home": "ALANYASPOR",
+     "away": "KAYSERİSPOR"
+    },
+    {
+     "no": 3,
+     "home": "ÇAYKURRİZESPOR A.Ş",
+     "away": "GAZİANTEP F.K. A.Ş"
+    },
+    {
+     "no": 4,
+     "home": "GALATASARAY A.Ş",
+     "away": "SİVASSPOR"
+    },
+    {
+     "no": 5,
+     "home": "HATAYSPOR",
+     "away": "BAŞAKŞEHİR FK"
+    },
+    {
+     "no": 6,
+     "home": "SAMSUNSPOR A.Ş",
+     "away": "EYÜPSPOR"
+    },
+    {
+     "no": 7,
+     "home": "ADANA DEMİRSPOR A.Ş",
+     "away": "GÖZTEPE A.Ş"
+    },
+    {
+     "no": 8,
+     "home": "FENERBAHÇE A.Ş",
+     "away": "BEŞİKTAŞAŞŞ"
+    },
+    {
+     "no": 9,
+     "home": "KASIMPAŞA A.Ş",
+     "away": "TRABZONSPOR A.Ş"
+    },
+    {
+     "no": 10,
+     "home": "LEIPZIG",
+     "away": "BAYERN MÜNİH"
+    },
+    {
+     "no": 11,
+     "home": "UILLE",
+     "away": "MARSILYA"
+    },
+    {
+     "no": 12,
+     "home": "WEST HAM",
+     "away": "TOTTENHAM"
+    },
+    {
+     "no": 13,
+     "home": "CHELSEA",
+     "away": "LIVERPOOL"
+    },
+    {
+     "no": 14,
+     "home": "REAL MADRID",
+     "away": "CELTA VIGO"
+    },
+    {
+     "no": 15,
+     "home": "ASROMA",
+     "away": "FIORENTINA"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 39
+  },
+  {
+   "week": 40,
+   "season": "2024/2025",
+   "game_round_id": 460,
+   "matches": [
+    {
+     "no": 1,
+     "home": "BAŞAKŞEHİR FK",
+     "away": "FENERBAHÇE A.Ş"
+    },
+    {
+     "no": 2,
+     "home": "GAZİANTEP F.K. AJŞ",
+     "away": "ALANYASPOR"
+    },
+    {
+     "no": 3,
+     "home": "EYÜPSPOR",
+     "away": "KASIMPAŞA AŞ"
+    },
+    {
+     "no": 4,
+     "home": "KONYASPOR",
+     "away": "ÇAYKUR RİZESPOR AŞ"
+    },
+    {
+     "no": 5,
+     "home": "TRABZONSPOR A.Ş",
+     "away": "GALATASARAY AŞ"
+    },
+    {
+     "no": 6,
+     "home": "SİVASSPOR",
+     "away": "BODRUM FK"
+    },
+    {
+     "no": 7,
+     "home": "BEŞİKTAŞA.Ş",
+     "away": "ADANA DEMİRSPOR A.Ş"
+    },
+    {
+     "no": 8,
+     "home": "GÖZTEPE AŞ",
+     "away": "HATAYSPOR"
+    },
+    {
+     "no": 9,
+     "home": "KAYSERİSPOR",
+     "away": "ANTALYASPOR"
+    },
+    {
+     "no": 10,
+     "home": "B. LEVERKUSEN",
+     "away": "B. DORTMUND"
+    },
+    {
+     "no": 11,
+     "home": "MONACO",
+     "away": "LYON"
+    },
+    {
+     "no": 12,
+     "home": "FEYENOORD",
+     "away": "PSV"
+    },
+    {
+     "no": 13,
+     "home": "LVERPOOL",
+     "away": "ARSENAL"
+    },
+    {
+     "no": 14,
+     "home": "BARCELONA",
+     "away": "REAL MADRID"
+    },
+    {
+     "no": 15,
+     "home": "LAZIO",
+     "away": "JUVENTUS"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 40
+  },
+  {
+   "week": 41,
+   "season": "2024/2025",
+   "game_round_id": 461,
+   "matches": [
+    {
+     "no": 1,
+     "home": "ADANA DEMİRSPOR A.Ş",
+     "away": "HATAYSPOR"
+    },
+    {
+     "no": 2,
+     "home": "ALANYASPOR",
+     "away": "BEŞİKTAŞ A.Ş"
+    },
+    {
+     "no": 3,
+     "home": "ANTALYASPOR",
+     "away": "GAZİANTEP F.K. A.Ş"
+    },
+    {
+     "no": 4,
+     "home": "BODRUM FK",
+     "away": "TRABZONSPOR A.Ş"
+    },
+    {
+     "no": 5,
+     "home": "FENERBAHÇE A.Ş",
+     "away": "EYÜPSPOR"
+    },
+    {
+     "no": 6,
+     "home": "GALATASARAY AŞ",
+     "away": "KAYSERİSPOR"
+    },
+    {
+     "no": 7,
+     "home": "KASIMPAŞA A.Ş",
+     "away": "BAŞAKŞEHİR FK"
+    },
+    {
+     "no": 8,
+     "home": "ÇAYKUR RİZESPOR A;Ş",
+     "away": "GÖZTEPE A.Ş"
+    },
+    {
+     "no": 9,
+     "home": "SAMSUNSPOR A.Ş",
+     "away": "SİVASSPOR"
+    },
+    {
+     "no": 10,
+     "home": "ANDERLECHT",
+     "away": "CLUB BRUGGE"
+    },
+    {
+     "no": 11,
+     "home": "AJAX",
+     "away": "TWENTE"
+    },
+    {
+     "no": 12,
+     "home": "ARSENAL",
+     "away": "NEWCASTLE UNITED"
+    },
+    {
+     "no": 13,
+     "home": "AS ROMA",
+     "away": "AC MILAN"
+    },
+    {
+     "no": 14,
+     "home": "INTER",
+     "away": "LAZIO"
+    },
+    {
+     "no": 15,
+     "home": "JUVENTUS",
+     "away": "UDINESE"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 41
+  },
+  {
+   "week": 42,
+   "season": "2024/2025",
+   "game_round_id": 462,
+   "matches": [
+    {
+     "no": 1,
+     "home": "BAŞAKŞEHİR FK",
+     "away": "ADANA DEMİRSPOR A.Ş"
+    },
+    {
+     "no": 2,
+     "home": "BEŞİKTAŞ A.Ş",
+     "away": "ÇAYKUR RİZESPOR A.Ş"
+    },
+    {
+     "no": 3,
+     "home": "EYÜPSPOR",
+     "away": "ANTALYASPOR"
+    },
+    {
+     "no": 4,
+     "home": "GAZİANTEP F.K. A.Ş",
+     "away": "KASIMPAŞA A.Ş"
+    },
+    {
+     "no": 5,
+     "home": "GÖZTEPE A.Ş",
+     "away": "GALATASARAY A.Ş"
+    },
+    {
+     "no": 6,
+     "home": "HATAYSPOR",
+     "away": "FENERBAHÇE A.Ş"
+    },
+    {
+     "no": 7,
+     "home": "KAYSERİSPOR",
+     "away": "BODRUM FK"
+    },
+    {
+     "no": 8,
+     "home": "KONYASPOR",
+     "away": "ALANYASPOR"
+    },
+    {
+     "no": 9,
+     "home": "TRABZONSPOR A.Ş",
+     "away": "SAMSUNSPOR A.Ş"
+    },
+    {
+     "no": 10,
+     "home": "LIVERPOOL",
+     "away": "CRYSTAL PALACE"
+    },
+    {
+     "no": 11,
+     "home": "TOTTENHAM",
+     "away": "BRIGHTON"
+    },
+    {
+     "no": 12,
+     "home": "EMPOLI",
+     "away": "HELLAS VERONA"
+    },
+    {
+     "no": 13,
+     "home": "LAZIO",
+     "away": "LECCE"
+    },
+    {
+     "no": 14,
+     "home": "UDINESE",
+     "away": "FIOORENTINA"
+    },
+    {
+     "no": 15,
+     "home": "VENEZIA",
+     "away": "JUVENTUS"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 42
+  },
+  {
+   "week": 43,
+   "season": "2024/2025",
+   "game_round_id": 463,
+   "matches": [
+    {
+     "no": 1,
+     "home": "ADANA DEMİRSPOR A.Ş",
+     "away": "GAZİANTEP F.K. A.Ş"
+    },
+    {
+     "no": 2,
+     "home": "ALANYASPOR",
+     "away": "SİVASSPOR"
+    },
+    {
+     "no": 3,
+     "home": "ANTALYASPOR",
+     "away": "TRABZONSPOR A.Ş"
+    },
+    {
+     "no": 4,
+     "home": "BODRUM FK",
+     "away": "BEŞİKTAŞ A.Ş"
+    },
+    {
+     "no": 5,
+     "home": "FENERBAHÇE A.Ş",
+     "away": "KONYASPOR"
+    },
+    {
+     "no": 6,
+     "home": "GALATASARAY A.Ş",
+     "away": "BAŞAKŞEHİR FK"
+    },
+    {
+     "no": 7,
+     "home": "KASIMPAŞA A.Ş",
+     "away": "GÖZTEPE A.Ş"
+    },
+    {
+     "no": 8,
+     "home": "ÇAYKUR RİZESPOR A.Ş",
+     "away": "HATAYSPOR"
+    },
+    {
+     "no": 9,
+     "home": "SAMSUNSPOR A.Ş",
+     "away": "KAYSERİSPOR"
+    },
+    {
+     "no": 10,
+     "home": "PARIS SAINT GERMAIN",
+     "away": "INTER"
+    },
+    {
+     "no": 11,
+     "home": "FK ROSTOV",
+     "away": "CSKA MOSKOVA"
+    },
+    {
+     "no": 12,
+     "home": "/ LEVANTE",
+     "away": "EİBAR"
+    },
+    {
+     "no": 13,
+     "home": "/ SANTANDER",
+     "away": "GRANADA"
+    },
+    {
+     "no": 14,
+     "home": "HALMSTADS BK",
+     "away": "DJURGARDENS"
+    },
+    {
+     "no": 15,
+     "home": "MALMÖ",
+     "away": "HACKEN"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 43
+  },
+  {
+   "week": 46,
+   "season": "2024/2025",
+   "game_round_id": 466,
+   "matches": [
+    {
+     "no": 1,
+     "home": "BENFICA",
+     "away": "AUCKLAND CITY"
+    },
+    {
+     "no": 2,
+     "home": "FLAMENGO",
+     "away": "CHELSEA"
+    },
+    {
+     "no": 3,
+     "home": "LOS ANGELES FC",
+     "away": "ESPERANCE TUNIS"
+    },
+    {
+     "no": 4,
+     "home": "BAYERN MÜNİH",
+     "away": "BOCA JUNIORS"
+    },
+    {
+     "no": 5,
+     "home": "MAMEL SUNDOW",
+     "away": "B. DORTMUND"
+    },
+    {
+     "no": 6,
+     "home": "INTER",
+     "away": "URAWA RED"
+    },
+    {
+     "no": 7,
+     "home": "FLUMINENSE",
+     "away": "ULSAN HORA-I"
+    },
+    {
+     "no": 8,
+     "home": "RIVER PLATE",
+     "away": "CF MONTERREY"
+    },
+    {
+     "no": 9,
+     "home": "JUVENTUS",
+     "away": "WYDAD"
+    },
+    {
+     "no": 10,
+     "home": "REAL MADRID",
+     "away": "CF PACHUCA"
+    },
+    {
+     "no": 11,
+     "home": "SALZBURG",
+     "away": "AL HILAL"
+    },
+    {
+     "no": 12,
+     "home": "MANCHESTER CITY",
+     "away": "AL AIN FC"
+    },
+    {
+     "no": 13,
+     "home": "ATLETİCO MADRID",
+     "away": "BOTAFOGO RJ"
+    },
+    {
+     "no": 14,
+     "home": "SEATTLE SOUNDERS",
+     "away": "PARIS SAİNT GERMAN"
+    },
+    {
+     "no": 15,
+     "home": "INTER MIAMI CF",
+     "away": "PALMEIRAS SP"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 46
+  },
+  {
+   "week": 49,
+   "season": "2024/2025",
+   "game_round_id": 469,
+   "matches": [
+    {
+     "no": 1,
+     "home": "IFK GÖTEBORG",
+     "away": "IF ELFSBORG"
+    },
+    {
+     "no": 2,
+     "home": "MALMÖ",
+     "away": "NORRKÖPİNG"
+    },
+    {
+     "no": 3,
+     "home": "BROMMAPOJKARNA",
+     "away": "OSTERS"
+    },
+    {
+     "no": 4,
+     "home": "GAIS",
+     "away": "HAMMARBY"
+    },
+    {
+     "no": 5,
+     "home": "BK HACKEN",
+     "away": "HALMSTADS BK"
+    },
+    {
+     "no": 6,
+     "home": "BODO GLIMT",
+     "away": "SANDEFJORD"
+    },
+    {
+     "no": 7,
+     "home": "FREDRIKSTAD",
+     "away": "MOLDE"
+    },
+    {
+     "no": 8,
+     "home": "BRYNE",
+     "away": "VALERENGA"
+    },
+    {
+     "no": 9,
+     "home": "HAUGESUND",
+     "away": "KFUM OSLO"
+    },
+    {
+     "no": 10,
+     "home": "KRISTIANSUND",
+     "away": "SARPSBORG 08"
+    },
+    {
+     "no": 11,
+     "home": "ROSENBORG",
+     "away": "HAMKAM"
+    },
+    {
+     "no": 12,
+     "home": "BRANN",
+     "away": "VIKING"
+    },
+    {
+     "no": 13,
+     "home": "INTER TURKU",
+     "away": "FF JARO"
+    },
+    {
+     "no": 14,
+     "home": "GNISTAN",
+     "away": "HAKA"
+    },
+    {
+     "no": 15,
+     "home": "OULU",
+     "away": "FC KTP"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 49
+  },
+  {
+   "week": 52,
+   "season": "2024/2025",
+   "game_round_id": 472,
+   "matches": [
+    {
+     "no": 1,
+     "home": "KVC WESTERLO",
+     "away": "ZULTE WAREGEM"
+    },
+    {
+     "no": 2,
+     "home": "STANDARD LIEGE",
+     "away": "FCV DENDER EH"
+    },
+    {
+     "no": 3,
+     "home": "KRCGENK",
+     "away": "ANTWERP"
+    },
+    {
+     "no": 4,
+     "home": "CERCLE BRUGGE",
+     "away": "ANDERLECHT"
+    },
+    {
+     "no": 5,
+     "home": "US-GİLLOİSE",
+     "away": "O.H. LEUVEN"
+    },
+    {
+     "no": 6,
+     "home": "CHARLEROİ",
+     "away": "ST. TRUIDENSE"
+    },
+    {
+     "no": 7,
+     "home": "KUOPION",
+     "away": "HAKA"
+    },
+    {
+     "no": 8,
+     "home": "DJURGARDENS",
+     "away": "HALMSTADS BK"
+    },
+    {
+     "no": 9,
+     "home": "SERVETTE",
+     "away": "ST. GALLEN"
+    },
+    {
+     "no": 10,
+     "home": "BASEL",
+     "away": "GRASSHOPPERS"
+    },
+    {
+     "no": 11,
+     "home": "LUZERN",
+     "away": "ZÜRİH"
+    },
+    {
+     "no": 12,
+     "home": "SION",
+     "away": "LUGANO"
+    },
+    {
+     "no": 13,
+     "home": "TROMSO IL",
+     "away": "FREDRIKSTAD"
+    },
+    {
+     "no": 14,
+     "home": "HAMKAM",
+     "away": "BODO GLIMT"
+    },
+    {
+     "no": 15,
+     "home": "MOLDE",
+     "away": "BRYNE"
+    }
+   ],
+   "data_warnings": [],
+   "okunan_satir": 15,
+   "basliktaki_hafta": 52
+  }
+ ]
+}

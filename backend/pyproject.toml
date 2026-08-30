@@ -31,6 +31,18 @@ model = ["scikit-learn>=1.4", "lightgbm>=4.3"]
 #: ile ayrica kurulur, boylece calisan servis onlari tasimaz.
 kalite = ["ruff>=0.16", "mypy>=1.11"]
 
+#: OCR ekstrasi — URETIM BAGIMLILIGI DEGIL ve varsayilan kuruluma GIRMEZ.
+#: Yalnizca `scripts/build_bulten.py` kullanir ve o, deponun stdlib disina
+#: cikan tek uretim betigidir. Ayrica bir SISTEM paketi de ister:
+#:
+#:     apt-get install tesseract-ocr tesseract-ocr-tur
+#:
+#: `scripts/check.sh` ve CI bunlari kurmaz; `tests/test_bulten.py` OCR'a
+#: dokunan testleri bagimlilik yoksa ATLAR ve saf ayristirma testleri her
+#: yerde kosar. Uretilen cikti surumlendigi icin veriyi OKUMAK icin kimsenin
+#: tesseract kurmasi gerekmez — yalnizca YENIDEN URETMEK icin gerekir.
+ocr = ["pillow>=10"]
+
 [project.scripts]
 spor-toto = "spor_toto.cli:main"
 
