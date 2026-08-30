@@ -265,19 +265,31 @@ aşılırsa blok sessizce `null` olmaz, `{"skipped": true, "reason": …}` döne
 
 ## 5. Katman 3 — Veri ve istatistik
 
-Motor tek başına tarihsiz çalışır; istatistik katmanı ona bağlam verir. **Üç** veri
-seti vardır; ilk ikisi tek komutla kaynağından yeniden üretilebilir, üçüncüsü
-üretilemez — ileriye dönük birikir.
+Motor tek başına tarihsiz çalışır; istatistik katmanı ona bağlam verir. **Dört** veri
+seti vardır; üçü tek komutla kaynağından yeniden üretilebilir, biri üretilemez —
+ileriye dönük birikir.
 
-| | Tarihsel sonuçlar | Piyasa oranı arşivi | İddaa bülten arşivi |
-|---|---|---|---|
-| **Dosya** | `data/st_history_2025_26.json` | `data/odds/odds_2025_26.csv` | `data/iddaa/iddaa_<tarih>.csv` |
-| **Üreten** | `scripts/build_history.py` | `scripts/build_odds.py` | `scripts/snapshot_iddaa.py` |
-| **Okuyan** | `spor_toto/history.py` | `spor_toto/odds.py` | (henüz analize girmiyor) |
-| **Bekçi** | `tests/test_history.py` | `tests/test_odds.py` | `tests/test_snapshot_iddaa.py` |
-| **Yönü** | geriye dönük, tamam | geriye dönük, tamam | **ileriye dönük, birikiyor** |
+| | Tarihsel sonuçlar | Piyasa oranı arşivi | İddaa bülten arşivi | **Resmî Spor Toto arşivi** |
+|---|---|---|---|---|
+| **Dosya** | `data/st_history_2025_26.json` | `data/odds/odds_2025_26.csv` | `data/iddaa/iddaa_<tarih>.csv` | `data/sportoto_arsiv/<sezon>.json` |
+| **Üreten** | `scripts/build_history.py` | `scripts/build_odds.py` | `scripts/snapshot_iddaa.py` | `scripts/build_sportoto_arsiv.py` |
+| **Okuyan** | `spor_toto/history.py` | `spor_toto/odds.py` | (henüz analize girmiyor) | (henüz analize girmiyor) |
+| **Bekçi** | `tests/test_history.py` | `tests/test_odds.py` | `tests/test_snapshot_iddaa.py` | `tests/test_sportoto_arsiv.py` |
+| **Yönü** | geriye dönük, tamam | geriye dönük, tamam | **ileriye dönük, birikiyor** | geriye dönük, **6 sezon** |
 
 (Yollar `backend/` altındadır.)
+
+**Dördüncüsü deponun ilk resmî kaynağıdır** ve 2026-08-30'da eklendi. Öteki üçü
+üçüncü partidir; bu, `webapi.sportoto.gov.tr` — Spor Toto'nun kendi ucu. Taşıdığı
+şey **ikramiye tablosudur**: 225 haftanın 223'ünde kademe başına (15/14/13/12)
+kazanan adedi ve kişi başı tutar. Havuz ekseni bu yüzden n = 3'ten **n = 223**'e
+çıktı ([`docs/VERI_TOPLAMA_VE_ISLEME.md`](docs/VERI_TOPLAMA_VE_ISLEME.md) §6D).
+
+**Taşımadığı şey aynı ölçüde önemlidir:** resmî uçta **maç listesi yok** — haftanın
+15 maçı yalnızca bir bülten *görseli* olarak yayımlanıyor. Yani bu set kupon
+dizisi (1/0/2) vermiyor ve "geçmiş sezon kupon verisi" sorunu onunla kapanmadı;
+kapanmadığı bir test bekçisiyle sabitlendi
+(`test_sportoto_arsiv.py::test_yayindaki_arsivde_kupon_dizisi_YOK`).
 
 ### 5.1 Veri akışı
 
@@ -846,12 +858,14 @@ backend/
     super_toto_sayfa.py       Haftayı tek dosyalık HTML'e basar
     super_toto_tahmin2.py     2. TAHMİN: aynı haftayı bugünkü aletlerle yeniden okur
     super_toto_frontend.py    Arayüzün okuduğu sezon beslemesi (--kontrol: CI kapısı)
+    build_sportoto_arsiv.py   RESMÎ arşiv: hafta kaydı + ikramiye tablosu
     faz_b.py                  Havuz ekseni güç analizi
     acilis_kapanis.py         Açılış–kapanış oranı karşılaştırması
     api_sozlesme.py           API sözleşmesini üretir/denetler (--kontrol: CI kapısı)
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
-                       fixtures/ · super_toto/ · avrupa/ · sehir/ · xg/
-  tests/               pytest (56 dosya → 1.701 test; §9'da katman dökümü)
+                       fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
+                       sehir/ · xg/
+  tests/               pytest (57 dosya → 1.747 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1036,8 +1050,8 @@ Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant'lar, CLI (Bayes pre
 dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri test,
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
-eşleme, ikinci kayıt). **56 test dosyası, parametrizasyonla
-1.701 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+eşleme, ikinci kayıt). **57 test dosyası, parametrizasyonla
+1.747 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 

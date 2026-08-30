@@ -1,0 +1,2139 @@
+{
+ "meta": {
+  "season": "2023/2024",
+  "season_key": "2023_24",
+  "weeks": 53,
+  "weeks_with_payout": 53,
+  "source": "sportoto.gov.tr resmi arsivi (webapi.sportoto.gov.tr) — RESMI KAYNAK",
+  "source_endpoints": [
+   "GET /api/GameRound",
+   "GET /api/GameResult/GetGameResultByGameRoundId?id=<gameRoundId>"
+  ],
+  "fetched_at": "2026-08-30 07:43",
+  "contains": "hafta kaydi + IKRAMIYE tablosu",
+  "close_date_note": "`close_date` KUPON KAPANISIDIR, haftanin bitisi degil. Olculdu: 2025/26'nin 41 haftasinin 41'inde bu tarih haftanin ILK macinin gunune esit. `st_history_2025_26.json`in ayni adli alani ise haftanin SON macina denk duser ve 1-4 gun sonradir; iki alan celismiyor, farkli seyleri olcuyor.",
+  "does_not_contain": "15 maclik liste ve 1/0/2 dizisi YOK — resmi ucta mac listesi yalnizca bulten GORSELI olarak var (bulletin_image). Kupon dizisi icin st_history veri setine bakilir."
+ },
+ "weeks": [
+  {
+   "week": 1,
+   "name": "1. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 368,
+   "close_date": "2023-08-11 20:55",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 3,
+      "prize": 1734435.88
+     },
+     {
+      "correct": 14,
+      "winners": 109,
+      "prize": 27278.15
+     },
+     {
+      "correct": 13,
+      "winners": 2143,
+      "prize": 1387.45
+     },
+     {
+      "correct": 12,
+      "winners": 22215,
+      "prize": 167.3
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2023-08-11 20:55"
+   },
+   "bulletin_image": {
+    "name": "spor-toto-listesi-1-hafta-vx3sgbj1.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/spor-toto-listesi-1-hafta-vx3sgbj1.jpg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 2,
+   "name": "2. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 369,
+   "close_date": "2023-08-18 20:55",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 2,
+      "prize": 3077537.3
+     },
+     {
+      "correct": 14,
+      "winners": 45,
+      "prize": 78159.67
+     },
+     {
+      "correct": 13,
+      "winners": 768,
+      "prize": 4579.66
+     },
+     {
+      "correct": 12,
+      "winners": 9425,
+      "prize": 466.47
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2023-08-18 20:55"
+   },
+   "bulletin_image": {
+    "name": "spor-toto-listesi-2-hafta-oxgillgw.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/spor-toto-listesi-2-hafta-oxgillgw.jpg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 3,
+   "name": "3. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 370,
+   "close_date": "2023-08-25 20:55",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 0,
+      "prize": 4875486.32
+     },
+     {
+      "correct": 14,
+      "winners": 4,
+      "prize": 696498.04
+     },
+     {
+      "correct": 13,
+      "winners": 137,
+      "prize": 20335.7
+     },
+     {
+      "correct": 12,
+      "winners": 2223,
+      "prize": 1566.57
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2023-08-25 20:55"
+   },
+   "bulletin_image": {
+    "name": "spor-toto-listesi-3-hafta-pop14osu.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/spor-toto-listesi-3-hafta-pop14osu.jpg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 4,
+   "name": "4. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 371,
+   "close_date": "2023-09-01 20:55",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 94,
+      "prize": 143305.77
+     },
+     {
+      "correct": 14,
+      "winners": 3035,
+      "prize": 1618.31
+     },
+     {
+      "correct": 13,
+      "winners": 35925,
+      "prize": 136.71
+     },
+     {
+      "correct": 12,
+      "winners": 220348,
+      "prize": 27.86
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2023-09-01 20:55"
+   },
+   "bulletin_image": {
+    "name": "spor-toto-listesi-4-hafta-01-5xmilhk6.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/spor-toto-listesi-4-hafta-01-5xmilhk6.jpg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 5,
+   "name": "5. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 372,
+   "close_date": "2023-09-08 21:40",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 137,
+      "prize": 37308.73
+     },
+     {
+      "correct": 14,
+      "winners": 3848,
+      "prize": 759.02
+     },
+     {
+      "correct": 13,
+      "winners": 44415,
+      "prize": 65.76
+     },
+     {
+      "correct": 12,
+      "winners": 268836,
+      "prize": 13.58
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2023-09-08 21:40"
+   },
+   "bulletin_image": {
+    "name": "spor-toto-listesi-5-hafta-ajhkoqij.png",
+    "url": "https://webapi.sportoto.gov.tr/image/spor-toto-listesi-5-hafta-ajhkoqij.png"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 6,
+   "name": "6. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 373,
+   "close_date": "2023-09-16 16:55",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 9,
+      "prize": 908087.04
+     },
+     {
+      "correct": 14,
+      "winners": 234,
+      "prize": 19957.95
+     },
+     {
+      "correct": 13,
+      "winners": 3641,
+      "prize": 1282.65
+     },
+     {
+      "correct": 12,
+      "winners": 33815,
+      "prize": 172.63
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2023-09-16 16:55"
+   },
+   "bulletin_image": {
+    "name": "spor-toto-listesi-6-hafta-a96jphla.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/spor-toto-listesi-6-hafta-a96jphla.jpg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 7,
+   "name": "7. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 374,
+   "close_date": "2023-09-22 19:55",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 9,
+      "prize": 763354.63
+     },
+     {
+      "correct": 14,
+      "winners": 287,
+      "prize": 13678.82
+     },
+     {
+      "correct": 13,
+      "winners": 4078,
+      "prize": 962.68
+     },
+     {
+      "correct": 12,
+      "winners": 35221,
+      "prize": 139.32
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2023-09-22 19:55"
+   },
+   "bulletin_image": {
+    "name": "spor-toto-listesi-7-hafta-fbmljsg7.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/spor-toto-listesi-7-hafta-fbmljsg7.jpg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 8,
+   "name": "8. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 375,
+   "close_date": "2023-09-29 19:55",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 180,
+      "prize": 42106.95
+     },
+     {
+      "correct": 14,
+      "winners": 4132,
+      "prize": 1048.16
+     },
+     {
+      "correct": 13,
+      "winners": 42030,
+      "prize": 103.04
+     },
+     {
+      "correct": 12,
+      "winners": 242082,
+      "prize": 22.36
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2023-09-29 19:55"
+   },
+   "bulletin_image": {
+    "name": "sportoto-utcuhyjp.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/sportoto-utcuhyjp.jpg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 9,
+   "name": "9. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 376,
+   "close_date": "2023-10-06 19:55",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 2992,
+      "prize": 2630.92
+     },
+     {
+      "correct": 14,
+      "winners": 50601,
+      "prize": 88.89
+     },
+     {
+      "correct": 13,
+      "winners": 316251,
+      "prize": 14.22
+     },
+     {
+      "correct": 12,
+      "winners": 995881,
+      "prize": 5.64
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2023-10-06 19:55"
+   },
+   "bulletin_image": {
+    "name": "spor-toto-listesi-9-hafta-qmrv9mkt.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/spor-toto-listesi-9-hafta-qmrv9mkt.jpg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 10,
+   "name": "10. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 377,
+   "close_date": "2023-10-13 18:55",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 0,
+      "prize": 4309801.81
+     },
+     {
+      "correct": 14,
+      "winners": 3,
+      "prize": 820914.63
+     },
+     {
+      "correct": 13,
+      "winners": 69,
+      "prize": 35691.94
+     },
+     {
+      "correct": 12,
+      "winners": 954,
+      "prize": 3226.86
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2023-10-13 18:55"
+   },
+   "bulletin_image": {
+    "name": "sportoto-1-olpwdfuv.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/sportoto-1-olpwdfuv.jpg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 11,
+   "name": "11. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 378,
+   "close_date": "2023-10-21 13:25",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 0,
+      "prize": 15007842.34
+     },
+     {
+      "correct": 14,
+      "winners": 27,
+      "prize": 226413.55
+     },
+     {
+      "correct": 13,
+      "winners": 549,
+      "prize": 11135.09
+     },
+     {
+      "correct": 12,
+      "winners": 6024,
+      "prize": 1268.5
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2023-10-21 13:25"
+   },
+   "bulletin_image": {
+    "name": "spor-toto-listesi-11-hafta-ifyccshf.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/spor-toto-listesi-11-hafta-ifyccshf.jpg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 12,
+   "name": "12. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 379,
+   "close_date": "2023-10-27 19:55",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 317,
+      "prize": 98089.69
+     },
+     {
+      "correct": 14,
+      "winners": 7964,
+      "prize": 1154.23
+     },
+     {
+      "correct": 13,
+      "winners": 86101,
+      "prize": 106.76
+     },
+     {
+      "correct": 12,
+      "winners": 521025,
+      "prize": 22.05
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2023-10-27 19:55"
+   },
+   "bulletin_image": {
+    "name": "spor-toto-listesi-12-hafta-kpar5zjx.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/spor-toto-listesi-12-hafta-kpar5zjx.jpg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 13,
+   "name": "13. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 380,
+   "close_date": "2023-11-03 19:55",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 0,
+      "prize": 9011638.72
+     },
+     {
+      "correct": 14,
+      "winners": 74,
+      "prize": 69587.94
+     },
+     {
+      "correct": 13,
+      "winners": 1547,
+      "prize": 3328.7
+     },
+     {
+      "correct": 12,
+      "winners": 16429,
+      "prize": 391.8
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2023-11-03 19:55"
+   },
+   "bulletin_image": {
+    "name": "spor-toto-listesi-13-hafta-5tchmycv.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/spor-toto-listesi-13-hafta-5tchmycv.jpg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 14,
+   "name": "14. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 381,
+   "close_date": "2023-11-09 19:55",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 9,
+      "prize": 2356056.97
+     },
+     {
+      "correct": 14,
+      "winners": 535,
+      "prize": 13023.09
+     },
+     {
+      "correct": 13,
+      "winners": 9020,
+      "prize": 772.43
+     },
+     {
+      "correct": 12,
+      "winners": 80174,
+      "prize": 108.62
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2023-11-09 19:55"
+   },
+   "bulletin_image": {
+    "name": "spor-toto-listesi-14-hafta-kirco3fy.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/spor-toto-listesi-14-hafta-kirco3fy.jpg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 15,
+   "name": "15. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 382,
+   "close_date": "2023-11-17 22:40",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 181,
+      "prize": 32837.73
+     },
+     {
+      "correct": 14,
+      "winners": 5418,
+      "prize": 626.86
+     },
+     {
+      "correct": 13,
+      "winners": 59962,
+      "prize": 56.64
+     },
+     {
+      "correct": 12,
+      "winners": 337124,
+      "prize": 12.59
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2023-11-17 22:40"
+   },
+   "bulletin_image": {
+    "name": "spor-toto-listesi-15-hafta_page-0001-b4ve2oa9.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/spor-toto-listesi-15-hafta_page-0001-b4ve2oa9.jpg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 16,
+   "name": "16. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 383,
+   "close_date": "2023-11-25 13:25",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 14,
+      "prize": 649376.19
+     },
+     {
+      "correct": 14,
+      "winners": 280,
+      "prize": 18553.6
+     },
+     {
+      "correct": 13,
+      "winners": 3221,
+      "prize": 1612.85
+     },
+     {
+      "correct": 12,
+      "winners": 24170,
+      "prize": 268.67
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2023-11-25 13:25"
+   },
+   "bulletin_image": {
+    "name": "spor-toto-listesi-16-hafta-inhq1grc.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/spor-toto-listesi-16-hafta-inhq1grc.jpg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 17,
+   "name": "17. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 384,
+   "close_date": "2023-12-01 19:55",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 1,
+      "prize": 8824390.34
+     },
+     {
+      "correct": 14,
+      "winners": 16,
+      "prize": 315156.79
+     },
+     {
+      "correct": 13,
+      "winners": 489,
+      "prize": 10311.87
+     },
+     {
+      "correct": 12,
+      "winners": 7441,
+      "prize": 847.08
+     }
+    ],
+    "description": "15 BİLEN İŞTİRAKÇİMİZ SANAL BAYİMİZDEN 8 TL KUPON BEDELİ KARŞILIĞINDA İKRAMİYE KAZANMIŞTIR.",
+    "close_date": "2023-12-01 19:55"
+   },
+   "bulletin_image": {
+    "name": "spor-toto-listesi-17-hafta-k6knjek6.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/spor-toto-listesi-17-hafta-k6knjek6.jpg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 18,
+   "name": "18. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 385,
+   "close_date": "2023-12-08 19:55",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 32,
+      "prize": 285161.26
+     },
+     {
+      "correct": 14,
+      "winners": 778,
+      "prize": 6702.28
+     },
+     {
+      "correct": 13,
+      "winners": 9260,
+      "prize": 563.1
+     },
+     {
+      "correct": 12,
+      "winners": 66090,
+      "prize": 98.62
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2023-12-08 19:55"
+   },
+   "bulletin_image": {
+    "name": "spor-toto-listesi-18-hafta-udldhveu.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/spor-toto-listesi-18-hafta-udldhveu.jpg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 19,
+   "name": "19. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 386,
+   "close_date": "2023-12-15 19:55",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 0,
+      "prize": 395951.21
+     },
+     {
+      "correct": 14,
+      "winners": 6,
+      "prize": 37709.63
+     },
+     {
+      "correct": 13,
+      "winners": 83,
+      "prize": 2725.99
+     },
+     {
+      "correct": 12,
+      "winners": 842,
+      "prize": 335.89
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2023-12-15 19:55"
+   },
+   "bulletin_image": {
+    "name": "spor-toto-listesi-19-hafta-52qx9zmr.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/spor-toto-listesi-19-hafta-52qx9zmr.jpg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 20,
+   "name": "20. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 387,
+   "close_date": "2023-12-16 20:25",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 4691,
+      "prize": 1592.79
+     },
+     {
+      "correct": 14,
+      "winners": 64228,
+      "prize": 62.95
+     },
+     {
+      "correct": 13,
+      "winners": 374401,
+      "prize": 10.79
+     },
+     {
+      "correct": 12,
+      "winners": 1207571,
+      "prize": 4.18
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2023-12-16 20:25"
+   },
+   "bulletin_image": {
+    "name": "spor-toto-listesi-20-hafta-15yenmlw.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/spor-toto-listesi-20-hafta-15yenmlw.jpg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 21,
+   "name": "21. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 388,
+   "close_date": "2023-12-23 13:25",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 1,
+      "prize": 7615345.64
+     },
+     {
+      "correct": 14,
+      "winners": 78,
+      "prize": 55790.07
+     },
+     {
+      "correct": 13,
+      "winners": 1239,
+      "prize": 3512.2
+     },
+     {
+      "correct": 12,
+      "winners": 11345,
+      "prize": 479.46
+     }
+    ],
+    "description": "15 BİLEN İŞTİRAKÇİMİZ SANAL BAYİMİZDEN 4096 TL KUPON BEDELİ KARŞILIĞINDA İKRAMİYE KAZANMIŞTIR.",
+    "close_date": "2023-12-23 13:25"
+   },
+   "bulletin_image": {
+    "name": "whatsapp-image-2023-12-17-at-135547-maiizymt.jpeg",
+    "url": "https://webapi.sportoto.gov.tr/image/whatsapp-image-2023-12-17-at-135547-maiizymt.jpeg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 22,
+   "name": "22. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 389,
+   "close_date": "2023-12-29 20:40",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 18,
+      "prize": 423032.23
+     },
+     {
+      "correct": 14,
+      "winners": 578,
+      "prize": 7528.0
+     },
+     {
+      "correct": 13,
+      "winners": 8181,
+      "prize": 531.86
+     },
+     {
+      "correct": 12,
+      "winners": 67980,
+      "prize": 80.0
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2023-12-29 20:40"
+   },
+   "bulletin_image": {
+    "name": "spor-toto-listesi-22-hafta-oaui79tv.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/spor-toto-listesi-22-hafta-oaui79tv.jpg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 23,
+   "name": "23. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 390,
+   "close_date": "2024-01-05 16:55",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 0,
+      "prize": 7776961.48
+     },
+     {
+      "correct": 14,
+      "winners": 45,
+      "prize": 98755.06
+     },
+     {
+      "correct": 13,
+      "winners": 758,
+      "prize": 5862.76
+     },
+     {
+      "correct": 12,
+      "winners": 7777,
+      "prize": 714.28
+     }
+    ],
+    "description": "Te",
+    "close_date": "2024-01-05 16:55"
+   },
+   "bulletin_image": {
+    "name": "spor-toto-listesi-23-hafta-gdjtux1h.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/spor-toto-listesi-23-hafta-gdjtux1h.jpg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 24,
+   "name": "24. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 391,
+   "close_date": "2024-01-13 13:25",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 1365,
+      "prize": 14748.19
+     },
+     {
+      "correct": 14,
+      "winners": 22327,
+      "prize": 316.19
+     },
+     {
+      "correct": 13,
+      "winners": 163998,
+      "prize": 43.04
+     },
+     {
+      "correct": 12,
+      "winners": 712444,
+      "prize": 12.38
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2024-01-13 13:25"
+   },
+   "bulletin_image": {
+    "name": "spor-toto-listesi-24-hafta-to8ujocw.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/spor-toto-listesi-24-hafta-to8ujocw.jpg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 25,
+   "name": "25. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 392,
+   "close_date": "2024-01-20 13:25",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 0,
+      "prize": 10124997.31
+     },
+     {
+      "correct": 14,
+      "winners": 18,
+      "prize": 321428.48
+     },
+     {
+      "correct": 13,
+      "winners": 418,
+      "prize": 13841.41
+     },
+     {
+      "correct": 12,
+      "winners": 5685,
+      "prize": 1272.14
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2024-01-20 13:25"
+   },
+   "bulletin_image": {
+    "name": "spor-toto-listesi-25-hafta-99dmwxyo.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/spor-toto-listesi-25-hafta-99dmwxyo.jpg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 26,
+   "name": "26. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 393,
+   "close_date": "2024-01-27 15:55",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 0,
+      "prize": 23296063.45
+     },
+     {
+      "correct": 14,
+      "winners": 24,
+      "prize": 313596.81
+     },
+     {
+      "correct": 13,
+      "winners": 674,
+      "prize": 11166.65
+     },
+     {
+      "correct": 12,
+      "winners": 8487,
+      "prize": 1108.5
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2024-01-27 15:55"
+   },
+   "bulletin_image": {
+    "name": "spor-toto-listesi-26-hafta-oygregtg.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/spor-toto-listesi-26-hafta-oygregtg.jpg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 27,
+   "name": "27. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 394,
+   "close_date": "2024-02-02 16:55",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 73,
+      "prize": 596466.91
+     },
+     {
+      "correct": 14,
+      "winners": 2216,
+      "prize": 5220.73
+     },
+     {
+      "correct": 13,
+      "winners": 25327,
+      "prize": 456.79
+     },
+     {
+      "correct": 12,
+      "winners": 169739,
+      "prize": 85.19
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2024-02-02 16:55"
+   },
+   "bulletin_image": {
+    "name": "spor-toto-listesi-27-hafta-oyn9ycio.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/spor-toto-listesi-27-hafta-oyn9ycio.jpg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 28,
+   "name": "28. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 395,
+   "close_date": "2024-02-09 19:55",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 11,
+      "prize": 1103673.91
+     },
+     {
+      "correct": 14,
+      "winners": 675,
+      "prize": 10277.59
+     },
+     {
+      "correct": 13,
+      "winners": 11803,
+      "prize": 587.76
+     },
+     {
+      "correct": 12,
+      "winners": 98395,
+      "prize": 88.13
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2024-02-09 19:55"
+   },
+   "bulletin_image": {
+    "name": "spor-toto-listesi-28hafta-57vf3xsk.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/spor-toto-listesi-28hafta-57vf3xsk.jpg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 29,
+   "name": "29. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 396,
+   "close_date": "2024-02-16 19:55",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 2,
+      "prize": 6278413.52
+     },
+     {
+      "correct": 14,
+      "winners": 44,
+      "prize": 163075.67
+     },
+     {
+      "correct": 13,
+      "winners": 694,
+      "prize": 10339.09
+     },
+     {
+      "correct": 12,
+      "winners": 7393,
+      "prize": 1213.19
+     }
+    ],
+    "description": "15 BİLEN İŞTİRAKÇİLERİMİZ SANAL BAYİMİZDEN 4608 TL VE 64 TL KUPON BEDELİ KARŞILIĞINDA İKRAMİYE KAZANMIŞLARDIR.",
+    "close_date": "2024-02-16 19:55"
+   },
+   "bulletin_image": {
+    "name": "spor-toto-listesi-29-hafta-m1aasvmx.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/spor-toto-listesi-29-hafta-m1aasvmx.jpg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 30,
+   "name": "30. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 397,
+   "close_date": "2024-02-23 19:55",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 2293,
+      "prize": 5122.0
+     },
+     {
+      "correct": 14,
+      "winners": 39906,
+      "prize": 168.17
+     },
+     {
+      "correct": 13,
+      "winners": 284045,
+      "prize": 23.62
+     },
+     {
+      "correct": 12,
+      "winners": 1149050,
+      "prize": 7.3
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2024-02-23 19:55"
+   },
+   "bulletin_image": {
+    "name": "spor-toto-listesi-30-hafta-iv8l6yer.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/spor-toto-listesi-30-hafta-iv8l6yer.jpg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 31,
+   "name": "31. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 398,
+   "close_date": "2024-03-01 19:55",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 7,
+      "prize": 1742819.46
+     },
+     {
+      "correct": 14,
+      "winners": 242,
+      "prize": 28806.93
+     },
+     {
+      "correct": 13,
+      "winners": 3898,
+      "prize": 1788.42
+     },
+     {
+      "correct": 12,
+      "winners": 36717,
+      "prize": 237.33
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2024-03-01 19:55"
+   },
+   "bulletin_image": {
+    "name": "spor-toto-listesi-31-hafta-qddnvgej.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/spor-toto-listesi-31-hafta-qddnvgej.jpg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 32,
+   "name": "32. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 399,
+   "close_date": "2024-03-08 19:55",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 13,
+      "prize": 913316.23
+     },
+     {
+      "correct": 14,
+      "winners": 543,
+      "prize": 12494.72
+     },
+     {
+      "correct": 13,
+      "winners": 9056,
+      "prize": 749.18
+     },
+     {
+      "correct": 12,
+      "winners": 76416,
+      "prize": 110.98
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2024-03-08 19:55"
+   },
+   "bulletin_image": {
+    "name": "spor-toto-listesi-32-hafta-1zrak4iq.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/spor-toto-listesi-32-hafta-1zrak4iq.jpg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 33,
+   "name": "33. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 400,
+   "close_date": "2024-03-15 20:25",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 35,
+      "prize": 332644.63
+     },
+     {
+      "correct": 14,
+      "winners": 1240,
+      "prize": 5365.23
+     },
+     {
+      "correct": 13,
+      "winners": 17532,
+      "prize": 379.47
+     },
+     {
+      "correct": 12,
+      "winners": 137425,
+      "prize": 60.51
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2024-03-15 20:25"
+   },
+   "bulletin_image": {
+    "name": "spor-toto-listesi-33-hafta-eriayehm.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/spor-toto-listesi-33-hafta-eriayehm.jpg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 34,
+   "name": "34. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 401,
+   "close_date": "2024-03-22 22:40",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 4,
+      "prize": 1539155.0
+     },
+     {
+      "correct": 14,
+      "winners": 43,
+      "prize": 81815.54
+     },
+     {
+      "correct": 13,
+      "winners": 627,
+      "prize": 5610.95
+     },
+     {
+      "correct": 12,
+      "winners": 6253,
+      "prize": 703.27
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2024-03-22 22:40"
+   },
+   "bulletin_image": {
+    "name": "whatsapp-image-2024-03-17-at-153913-b6f1v6vr.jpeg",
+    "url": "https://webapi.sportoto.gov.tr/image/whatsapp-image-2024-03-17-at-153913-b6f1v6vr.jpeg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 35,
+   "name": "35. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 402,
+   "close_date": "2024-03-30 14:25",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 6,
+      "prize": 1674656.78
+     },
+     {
+      "correct": 14,
+      "winners": 107,
+      "prize": 53660.56
+     },
+     {
+      "correct": 13,
+      "winners": 1964,
+      "prize": 2923.46
+     },
+     {
+      "correct": 12,
+      "winners": 21322,
+      "prize": 336.6
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2024-03-30 14:25"
+   },
+   "bulletin_image": {
+    "name": "spor-toto-listesi-35-hafta-rdayz358.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/spor-toto-listesi-35-hafta-rdayz358.jpg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 36,
+   "name": "36. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 403,
+   "close_date": "2024-04-06 14:25",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 13,
+      "prize": 737230.83
+     },
+     {
+      "correct": 14,
+      "winners": 505,
+      "prize": 10844.69
+     },
+     {
+      "correct": 13,
+      "winners": 7203,
+      "prize": 760.31
+     },
+     {
+      "correct": 12,
+      "winners": 59753,
+      "prize": 114.56
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2024-04-06 14:25"
+   },
+   "bulletin_image": {
+    "name": "whatsapp-image-2024-03-30-at-12302-pm-59tyj72t.jpeg",
+    "url": "https://webapi.sportoto.gov.tr/image/whatsapp-image-2024-03-30-at-12302-pm-59tyj72t.jpeg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 37,
+   "name": "37. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 404,
+   "close_date": "2024-04-12 19:55",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 0,
+      "prize": 9670680.34
+     },
+     {
+      "correct": 14,
+      "winners": 3,
+      "prize": 1842034.35
+     },
+     {
+      "correct": 13,
+      "winners": 144,
+      "prize": 38375.71
+     },
+     {
+      "correct": 12,
+      "winners": 2802,
+      "prize": 2465.24
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2024-04-12 19:55"
+   },
+   "bulletin_image": {
+    "name": "whatsapp-image-2024-04-07-at-161905-ddmvmrl8.jpeg",
+    "url": "https://webapi.sportoto.gov.tr/image/whatsapp-image-2024-04-07-at-161905-ddmvmrl8.jpeg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 38,
+   "name": "38. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 405,
+   "close_date": "2024-04-19 19:55",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 9,
+      "prize": 2686647.9
+     },
+     {
+      "correct": 14,
+      "winners": 399,
+      "prize": 20779.3
+     },
+     {
+      "correct": 13,
+      "winners": 6664,
+      "prize": 1244.13
+     },
+     {
+      "correct": 12,
+      "winners": 62437,
+      "prize": 165.98
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2024-04-19 19:55"
+   },
+   "bulletin_image": {
+    "name": "whatsapp-image-2024-04-13-at-142314-qzo7xclo.jpeg",
+    "url": "https://webapi.sportoto.gov.tr/image/whatsapp-image-2024-04-13-at-142314-qzo7xclo.jpeg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 39,
+   "name": "39. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 406,
+   "close_date": "2024-04-26 19:55",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 1669,
+      "prize": 7112.74
+     },
+     {
+      "correct": 14,
+      "winners": 28093,
+      "prize": 241.46
+     },
+     {
+      "correct": 13,
+      "winners": 202765,
+      "prize": 33.45
+     },
+     {
+      "correct": 12,
+      "winners": 840592,
+      "prize": 10.08
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2024-04-26 19:55"
+   },
+   "bulletin_image": {
+    "name": "toto39hafta-f5jfchoj.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/toto39hafta-f5jfchoj.jpg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 40,
+   "name": "40. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 407,
+   "close_date": "2024-05-03 19:55",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 1,
+      "prize": 12051008.12
+     },
+     {
+      "correct": 14,
+      "winners": 110,
+      "prize": 62602.63
+     },
+     {
+      "correct": 13,
+      "winners": 2053,
+      "prize": 3354.25
+     },
+     {
+      "correct": 12,
+      "winners": 20557,
+      "prize": 418.73
+     }
+    ],
+    "description": "15 BİLEN İŞTİRAKÇİMİZ SANAL BAYİMİZDEN 3.456 TL KARŞILIĞINDA İKRAMİYE KAZANMIŞTIR.",
+    "close_date": "2024-05-03 19:55"
+   },
+   "bulletin_image": {
+    "name": "sportoto40-ffrad8eg.png",
+    "url": "https://webapi.sportoto.gov.tr/image/sportoto40-ffrad8eg.png"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 41,
+   "name": "41. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 408,
+   "close_date": "2024-05-11 23:59",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 1167,
+      "prize": 8811.26
+     },
+     {
+      "correct": 14,
+      "winners": 23200,
+      "prize": 253.26
+     },
+     {
+      "correct": 13,
+      "winners": 186046,
+      "prize": 31.58
+     },
+     {
+      "correct": 12,
+      "winners": 772198,
+      "prize": 9.51
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2024-05-11 23:59"
+   },
+   "bulletin_image": {
+    "name": "spor-toto-listesi-41-hafta-eo6cjy61.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/spor-toto-listesi-41-hafta-eo6cjy61.jpg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 42,
+   "name": "42. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 409,
+   "close_date": "2024-05-17 16:55",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 9,
+      "prize": 1129324.94
+     },
+     {
+      "correct": 14,
+      "winners": 373,
+      "prize": 15570.92
+     },
+     {
+      "correct": 13,
+      "winners": 5629,
+      "prize": 1031.79
+     },
+     {
+      "correct": 12,
+      "winners": 48717,
+      "prize": 149.02
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2024-05-17 16:55"
+   },
+   "bulletin_image": {
+    "name": "spor-toto-listesi-42-hafta-hru83piq.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/spor-toto-listesi-42-hafta-hru83piq.jpg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 43,
+   "name": "43. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 410,
+   "close_date": "2024-05-24 19:55",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 17,
+      "prize": 597919.29
+     },
+     {
+      "correct": 14,
+      "winners": 729,
+      "prize": 7967.57
+     },
+     {
+      "correct": 13,
+      "winners": 11843,
+      "prize": 490.44
+     },
+     {
+      "correct": 12,
+      "winners": 96638,
+      "prize": 75.13
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2024-05-24 19:55"
+   },
+   "bulletin_image": {
+    "name": "spor-toto-listesi-43-hafta-zaztnmyt.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/spor-toto-listesi-43-hafta-zaztnmyt.jpg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 44,
+   "name": "44. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 411,
+   "close_date": "2024-06-01 21:55",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 0,
+      "prize": 6832699.1
+     },
+     {
+      "correct": 14,
+      "winners": 18,
+      "prize": 216911.08
+     },
+     {
+      "correct": 13,
+      "winners": 526,
+      "prize": 7422.81
+     },
+     {
+      "correct": 12,
+      "winners": 6651,
+      "prize": 733.79
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2024-06-01 21:55"
+   },
+   "bulletin_image": {
+    "name": "ecb9408d-e696-4cf5-974d-31a00dcc26fb-yp9x3zuu.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/ecb9408d-e696-4cf5-974d-31a00dcc26fb-yp9x3zuu.jpg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 45,
+   "name": "45. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 412,
+   "close_date": "2024-06-07 18:25",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 2,
+      "prize": 7346036.97
+     },
+     {
+      "correct": 14,
+      "winners": 49,
+      "prize": 91654.51
+     },
+     {
+      "correct": 13,
+      "winners": 1370,
+      "prize": 3278.15
+     },
+     {
+      "correct": 12,
+      "winners": 21789,
+      "prize": 257.64
+     }
+    ],
+    "description": "15 BİLEN İŞTİRAKÇİLERİMİZ SANAL BAYİMİZDEN 2.048 TL KUPON BEDELİ KARŞILIĞINDA VE İSTANBUL İLİ SABİT BAYİMİZDEN 224 TL KUPON BEDELİ KARŞILIĞINDA İKRAMİYE KAZANMIŞLARDIR",
+    "close_date": "2024-06-07 18:25"
+   },
+   "bulletin_image": {
+    "name": "toto45-qqciidr6.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/toto45-qqciidr6.jpg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 46,
+   "name": "46. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 413,
+   "close_date": "2024-06-14 21:55",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 8,
+      "prize": 1063769.21
+     },
+     {
+      "correct": 14,
+      "winners": 1856,
+      "prize": 2620.12
+     },
+     {
+      "correct": 13,
+      "winners": 27572,
+      "prize": 176.37
+     },
+     {
+      "correct": 12,
+      "winners": 184171,
+      "prize": 33.0
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2024-06-14 21:55"
+   },
+   "bulletin_image": {
+    "name": "toto46-sxpkzcej.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/toto46-sxpkzcej.jpg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 47,
+   "name": "47. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 414,
+   "close_date": "2024-06-21 15:55",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 16,
+      "prize": 514805.5
+     },
+     {
+      "correct": 14,
+      "winners": 606,
+      "prize": 7766.98
+     },
+     {
+      "correct": 13,
+      "winners": 8977,
+      "prize": 524.31
+     },
+     {
+      "correct": 12,
+      "winners": 69263,
+      "prize": 84.94
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2024-06-21 15:55"
+   },
+   "bulletin_image": {
+    "name": "toto47-fgo4qawk.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/toto47-fgo4qawk.jpg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 48,
+   "name": "48. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 415,
+   "close_date": "2024-06-29 00:55",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 47,
+      "prize": 132467.7
+     },
+     {
+      "correct": 14,
+      "winners": 1501,
+      "prize": 2370.22
+     },
+     {
+      "correct": 13,
+      "winners": 18431,
+      "prize": 193.02
+     },
+     {
+      "correct": 12,
+      "winners": 124419,
+      "prize": 35.74
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2024-06-29 00:55"
+   },
+   "bulletin_image": {
+    "name": "whatsapp-image-2024-06-21-at-182802-pygqg3mv.jpeg",
+    "url": "https://webapi.sportoto.gov.tr/image/whatsapp-image-2024-06-21-at-182802-pygqg3mv.jpeg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 49,
+   "name": "49. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 416,
+   "close_date": "2024-07-06 14:55",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 57,
+      "prize": 113739.88
+     },
+     {
+      "correct": 14,
+      "winners": 2362,
+      "prize": 1568.44
+     },
+     {
+      "correct": 13,
+      "winners": 33483,
+      "prize": 110.64
+     },
+     {
+      "correct": 12,
+      "winners": 226893,
+      "prize": 20.4
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2024-07-06 14:55"
+   },
+   "bulletin_image": {
+    "name": "toto49-sdrrmw4g.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/toto49-sdrrmw4g.jpg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 50,
+   "name": "50. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 417,
+   "close_date": "2024-07-13 15:55",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 0,
+      "prize": 6939190.16
+     },
+     {
+      "correct": 14,
+      "winners": 6,
+      "prize": 660875.25
+     },
+     {
+      "correct": 13,
+      "winners": 105,
+      "prize": 37764.3
+     },
+     {
+      "correct": 12,
+      "winners": 1310,
+      "prize": 3783.63
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2024-07-13 15:55"
+   },
+   "bulletin_image": {
+    "name": "image-1-bgzjmi6v.jpeg",
+    "url": "https://webapi.sportoto.gov.tr/image/image-1-bgzjmi6v.jpeg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 51,
+   "name": "51. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 418,
+   "close_date": "2024-07-20 20:55",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 2,
+      "prize": 8478165.56
+     },
+     {
+      "correct": 14,
+      "winners": 43,
+      "prize": 133118.15
+     },
+     {
+      "correct": 13,
+      "winners": 757,
+      "prize": 7561.53
+     },
+     {
+      "correct": 12,
+      "winners": 8702,
+      "prize": 822.23
+     }
+    ],
+    "description": "15 BİLEN İŞTİRAKÇİLERİMİZ SANAL BAYİLERİMİZDEN 8 TL VE 108 TL KUPON BEDELİ KARŞILIĞINDA İKRAMİYE KAZANMIŞLARDIR.",
+    "close_date": "2024-07-20 20:55"
+   },
+   "bulletin_image": {
+    "name": "toto51-rk7ahogx.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/toto51-rk7ahogx.jpg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 52,
+   "name": "52. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 419,
+   "close_date": "2024-07-27 15:55",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 1,
+      "prize": 7430417.39
+     },
+     {
+      "correct": 14,
+      "winners": 32,
+      "prize": 132686.02
+     },
+     {
+      "correct": 13,
+      "winners": 550,
+      "prize": 7719.91
+     },
+     {
+      "correct": 12,
+      "winners": 5458,
+      "prize": 972.41
+     }
+    ],
+    "description": "15 BİLEN İŞTİRAKÇİMİZ SANAL BAYİMİZDEN 4,096 TL KUPON BEDELİ KARŞILIĞINDA İKRAMİYE KAZANMIŞTIR.",
+    "close_date": "2024-07-27 15:55"
+   },
+   "bulletin_image": {
+    "name": "toto52-jgkhhuej.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/toto52-jgkhhuej.jpg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 53,
+   "name": "53. Hafta",
+   "season": "2023/2024",
+   "game_round_id": 420,
+   "close_date": "2024-08-03 20:40",
+   "is_published": false,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 2,
+      "prize": 4107639.33
+     },
+     {
+      "correct": 14,
+      "winners": 44,
+      "prize": 106691.93
+     },
+     {
+      "correct": 13,
+      "winners": 653,
+      "prize": 7189.04
+     },
+     {
+      "correct": 12,
+      "winners": 6397,
+      "prize": 917.31
+     }
+    ],
+    "description": "15 BİLEN İŞTİRAKÇİLERİMİZ SANAL BAYİLERİMİZDEN 2 TL VE 256 TL KUPON BEDELİ KARŞILIĞINDA İKRAMİYE KAZANMIŞLARDIR.",
+    "close_date": "2024-08-03 20:40"
+   },
+   "bulletin_image": {
+    "name": "toto53-5ednrpaf.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/toto53-5ednrpaf.jpg"
+   },
+   "data_warnings": []
+  }
+ ]
+}

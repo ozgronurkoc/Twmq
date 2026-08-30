@@ -71,3 +71,7 @@ backend/data/kosumlar/
 #
 # Yeniden olusturmak icin: python scripts/build_xg.py
 backend/data/xg/_kaynak/
+
+# Resmi Spor Toto arsivi (§6D): sezon JSON'lari ve rapor SURUMLENIR,
+# indirilen ham payload git disidir — tek komutla yeniden uretilir.
+backend/data/sportoto_arsiv/_kaynak/
