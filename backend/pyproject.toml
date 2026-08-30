@@ -16,7 +16,12 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-test = ["pytest>=7", "pytest-xdist>=3"]
+#: `pytest-randomly` `sports-betting` incelemesinden geldi. Suite zaten
+#: `-n auto` ile kosuyor, yani sira ZATEN belirsiz — ama belirsizlik
+#: SESSIZDI: testler arasi gizli bir bagimlilik ancak sanssiz bir
+#: dagitimda ortaya cikardi ve tekrar uretilemezdi. Rastgele tohum onu
+#: gorunur ve tohumla TEKRAR EDILEBILIR kilar.
+test = ["pytest>=7", "pytest-xdist>=3", "pytest-randomly>=3.15"]
 #: Model ekstrasi — URETIM BAGIMLILIGI DEGIL. Servis egitmez, yalnizca
 #: olcum kosumlari bu paketleri ister; `scripts/check.sh` ve CI kurar,
 #: `scripts/run_prod.sh` kurmaz. `spor_toto.agac` yoklugunu `HAS_LIGHTGBM`
@@ -29,7 +34,12 @@ test = ["pytest>=7", "pytest-xdist>=3"]
 model = ["scikit-learn>=1.4", "lightgbm>=4.3"]
 #: Kalite kapisi. Uretim bagimliligi DEGIL — `pip install -e ".[kalite]"`
 #: ile ayrica kurulur, boylece calisan servis onlari tasimaz.
-kalite = ["ruff>=0.16", "mypy>=1.11"]
+#:
+#: `bandit` BILEREK YOK: ruff'in `select` listesi zaten `S`
+#: (flake8-bandit) kurallarini kosuyor ve ikinci bir arac ayni bulguyu
+#: iki kez yazardi. `pip-audit` ve `interrogate` ise ruff'in bakmadigi
+#: iki seye bakiyor — bagimlilik aciklari ve docstring kapsamasi.
+kalite = ["ruff>=0.16", "mypy>=1.11", "pip-audit>=2.7", "interrogate>=1.7"]
 
 #: OCR ekstrasi — URETIM BAGIMLILIGI DEGIL ve varsayilan kuruluma GIRMEZ.
 #: Yalnizca `scripts/build_bulten.py` kullanir ve o, deponun stdlib disina
@@ -42,6 +52,18 @@ kalite = ["ruff>=0.16", "mypy>=1.11"]
 #: yerde kosar. Uretilen cikti surumlendigi icin veriyi OKUMAK icin kimsenin
 #: tesseract kurmasi gerekmez — yalnizca YENIDEN URETMEK icin gerekir.
 ocr = ["pillow>=10"]
+
+#: MCP ekstrasi — DENEY, URETIM BAGIMLILIGI DEGIL (bkz. `mcp_server.py`).
+#: `run_prod.sh` kurmaz, `.replit` bilmez, suite yoksa ATLAR.
+#:
+#: Ayak izi kucuk degil: `mcp` starlette + uvicorn (ASGI) getiriyor, yani
+#: mevcut Flask/gunicorn (WSGI) yiginin yanina IKINCI bir sunucu yigini.
+#: Varsayilan kuruluma girmemesinin sebebi budur.
+#:
+#: `<2` pini kasitli DEGIL — tam tersi: 2.x'te `FastMCP` `MCPServer` oldu
+#: ve `sports-betting`in kendi `mcp>=1.2` pini bugun kurulunca KENDI
+#: kodunu kiriyor. Biz 2.x API'siyle yazdik ve alt siniri oraya koyduk.
+mcp = ["mcp>=2.0"]
 
 [project.scripts]
 spor-toto = "spor_toto.cli:main"
@@ -143,3 +165,32 @@ module = [
     "spor_toto.cli", "spor_toto.bayes",
 ]
 ignore_errors = true
+
+
+# ─── interrogate (docstring kapsamasi) ────────────────────────────────────
+#
+# Bu depoda docstring bir gelenek: her modul kendi GEREKCESINI yaziyor ve
+# okunacak asil belge odur. Gelenek ancak bir kapiya baglanirsa kural
+# olur.
+#
+# Esik ONCE OLCULDU (%75,9), sonra biraz altina konuldu. Ilk yazilan deger
+# 90'di ve bu bir TAHMINDI — kapi onu hemen dusurdu, ki isi de budur.
+#
+# Eksiklerin neredeyse tamami dusuk degerli: `main()` giris noktalari,
+# `Tahminci` sozlesmesini uygulayan `egit`/`tahmin` govdeleri (gerekce
+# sinifin kendi docstring'inde) ve sklearn'in `get_n_splits`i. Kapinin
+# isi mukemmellik degil TABANI korumak: yeni bir modul gerekcesiz
+# giremesin.
+#
+# `tests/` disarida: test adlari zaten cumle ve modul basliklari
+# gerekceyi tasiyor; her `def test_...`e docstring zorlamak, bilgi
+# tasimayan tek satirlik docstringler uretirdi.
+[tool.interrogate]
+fail-under = 75
+exclude = ["tests", "data", "build", "scripts"]
+ignore-init-method = true
+ignore-magic = true
+ignore-private = false
+ignore-nested-functions = true
+omit-covered-files = false
+quiet = false

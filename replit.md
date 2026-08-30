@@ -99,7 +99,7 @@ Sözleşmenin tamamı: `docs/ARCHITECTURE_NEXT.md` ve `frontend/lib/types.ts`.
 
 ## Motor (`backend/spor_toto/`)
 
-26 modül var; tam liste ve tek satırlık açıklamaları `README.md` §7'dedir.
+50 modül var; tam liste ve tek satırlık açıklamaları `README.md` §7'dedir.
 Katman katman:
 
 - **Çekirdek** — `core.py` (Encoder, Fix-16, ILP, heuristic) · `engines.py`
@@ -116,7 +116,13 @@ Katman katman:
   (`/api/tahmin`) · `benzer.py` (`/api/benzer`)
 - **Ölçüm araçları** (yalnızca `python -m spor_toto.<x>`, arayüze çıkmaz) —
   `cizgi.py` (A1) · `bahisci.py` (A2) · `disari.py` (A3) · `kalibrasyon.py` ·
-  `getiri.py` (müşterek beklenen değer — hesap var, **ölçüm yok**; §3.34)
+  `getiri.py` (müşterek beklenen değer — hesap var, **ölçüm yok**; §3.34) ·
+  `deger.py` (sabit oranlı pazarlarda değer bahsi getirisi — **ölçüldü**,
+  üç pazarda da kâr yok; §3.45)
+- **Deney** — `mcp_server.py`: motoru bir yapay zekâ ajanına açan MCP
+  yüzeyi. Dört ölçütün üçünü geçti, **ölçüt 1'i (yeni yetenek) geçmedi**:
+  her aracı `curl` ile de erişilebiliyor. `mcp` isteğe bağlı ekstradır,
+  üretim onu kurmaz. Ayrıntı: `docs/DIS_INCELEME_SPORTS_BETTING.md` §7
 - **Veri (Faz 3.4)** — `avrupa.py` (UEFA fiksturu takvime ENJEKTE edilir;
   `dinlenme`/`sikisiklik` artik o gunleri de gorur) · `sehir.py`
   (kulup-sehir tablosu, `openfootball/clubs` CC0; derbi bir SICAKLIK
@@ -175,8 +181,9 @@ Modlar: `--mode auto|exact|heuristic|butce|maxcov` (`--budget` ile),
   (`build_odds.py --sezon`); yeni üç sezonda eşleşme %100. Ölçüm kesiti
   36 → **114 hafta**
 - `backend/data/st_history/` — bültenleri football-data fikstürüne bağlayıp
-  **tam 1/0/2 dizisi** üreten geçmiş sezon seti: **4 sezon · 107 hafta · 1.605
-  maç**. `st_history_2025_26.json` ile karışmaz; `/api/stats` hâlâ eskisine bakar
+  **tam 1/0/2 dizisi** üreten geçmiş sezon seti: **4 sezon · 112 hafta · 1.680
+  maç** (§6I'de 107'den çıktı — eşleştirmedeki Unicode kusuru düzeltildi).
+  `st_history_2025_26.json` ile karışmaz; `/api/stats` hâlâ eskisine bakar
 - `backend/data/sportoto_arsiv/` — **resmî** Spor Toto arşivi (`webapi.sportoto.gov.tr`):
   6 sezon · 225 hafta · **223 ikramiye tablosu**. Deponun ilk resmî kaynağı.
   **Maç listesi taşımaz** — o resmî uçta yalnızca bülten görseli olarak var
@@ -191,7 +198,7 @@ doğrulamadan dosya yazmazlar). Ayrıntı: `docs/VERI_TOPLAMA_VE_ISLEME.md`.
 ```bash
 cd backend
 python -m pytest -m "not slow" -q   # hızlı süit
-python -m pytest                    # tamamı (1.842 test, ILP dahil)
+python -m pytest                    # tamamı (1.867 test, ILP dahil)
 python -m pytest -n0 tests/test_egitim.py   # tek çekirdek (hata ayıklarken)
 cd .. && bash scripts/check.sh      # TEK kapı; CI de bunu çağırır
 ```

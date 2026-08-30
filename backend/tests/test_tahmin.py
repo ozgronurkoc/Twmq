@@ -453,7 +453,7 @@ def test_genis_kesit_katlari_sizintisiz_ve_TAM():
     """Her kupon sezonu için korpustan o sezon gerçekten çıkarılmış olmalı.
 
     Bu testin sınadığı şey bir sayı değil bir **sözleşme**: geniş kesitte
-    kupon maçlarının 1.155/1.605'i korpusta da var, dolayısıyla katın
+    kupon maçlarının 1.200/1.680'i korpusta da var, dolayısıyla katın
     eğitim seti test sezonunu içeriyorsa ölçüm sızıntılıdır ve raporlanan
     "piyasayı geçti" sonucu anlamsız olur.
 

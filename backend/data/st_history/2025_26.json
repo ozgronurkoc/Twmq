@@ -2,8 +2,8 @@
  "meta": {
   "season": "2025/2026",
   "season_key": "2025_26",
-  "weeks": 29,
-  "matches": 435,
+  "weeks": 31,
+  "matches": 465,
   "source": "bulten GORSELI (OCR, §6F) + football-data.co.uk fiksturu — takim adlari eslestirilerek baglandi",
   "rule": "yalnizca 15/15 eslesen hafta; iki aday ayirt edilemezse mac DUSER",
   "generated_at": "2026-08-30",
@@ -11,9 +11,9 @@
   "note": "`st_history_2025_26.json` ile KARISMAZ: o dosya ucuncu parti hafta payload'indan gelir ve /api/stats ona bakar. Bu dizin ayri bir koken sinifidir."
  },
  "totals": {
-  "1": 196,
-  "0": 110,
-  "2": 129
+  "1": 207,
+  "0": 118,
+  "2": 140
  },
  "weeks": [
   {
@@ -3281,6 +3281,198 @@
    "season": "2025/2026"
   },
   {
+   "week": 27,
+   "matches": [
+    {
+     "no": 1,
+     "home": "Karagumruk",
+     "away": "Antalyaspor",
+     "bulten_home": "FATİH KARAGÜMRÜK",
+     "bulten_away": "ANTALYASPOR",
+     "lig": "T1",
+     "kickoff": "2026-02-07",
+     "hg": 1,
+     "ag": 0,
+     "code": "1"
+    },
+    {
+     "no": 2,
+     "home": "Samsunspor",
+     "away": "Trabzonspor",
+     "bulten_home": "SAMSUNSPOR AJŞ",
+     "bulten_away": "TRABZONSPOR A.Ş",
+     "lig": "T1",
+     "kickoff": "2026-02-07",
+     "hg": 0,
+     "ag": 3,
+     "code": "2"
+    },
+    {
+     "no": 3,
+     "home": "Eyupspor",
+     "away": "Buyuksehyr",
+     "bulten_home": "EYÜPSPOR",
+     "bulten_away": "BAŞAKŞEHİR FK",
+     "lig": "T1",
+     "kickoff": "2026-02-08",
+     "hg": 1,
+     "ag": 2,
+     "code": "2"
+    },
+    {
+     "no": 4,
+     "home": "Konyaspor",
+     "away": "Goztep",
+     "bulten_home": "KONYASPOR",
+     "bulten_away": "GÖZTEPE A.Ş",
+     "lig": "T1",
+     "kickoff": "2026-02-08",
+     "hg": 0,
+     "ag": 0,
+     "code": "0"
+    },
+    {
+     "no": 5,
+     "home": "Rizespor",
+     "away": "Galatasaray",
+     "bulten_home": "ÇAYKUR RİZESPOR A.Ş",
+     "bulten_away": "GALATASARAY A.Ş",
+     "lig": "T1",
+     "kickoff": "2026-02-08",
+     "hg": 0,
+     "ag": 3,
+     "code": "2"
+    },
+    {
+     "no": 6,
+     "home": "Besiktas",
+     "away": "Alanyaspor",
+     "bulten_home": "BEŞİKTAŞ A.Ş",
+     "bulten_away": "ALANYASPOR",
+     "lig": "T1",
+     "kickoff": "2026-02-08",
+     "hg": 2,
+     "ag": 2,
+     "code": "0"
+    },
+    {
+     "no": 7,
+     "home": "Kayserispor",
+     "away": "Kocaelispor",
+     "bulten_home": "KAYSERİSPOR",
+     "bulten_away": "KOCAELİSPOR",
+     "lig": "T1",
+     "kickoff": "2026-02-09",
+     "hg": 1,
+     "ag": 2,
+     "code": "2"
+    },
+    {
+     "no": 8,
+     "home": "Fenerbahce",
+     "away": "Genclerbirligi",
+     "bulten_home": "FENERBAHÇE A.Ş",
+     "bulten_away": "GENÇLERBİRLİĞİ",
+     "lig": "T1",
+     "kickoff": "2026-02-09",
+     "hg": 3,
+     "ag": 1,
+     "code": "1"
+    },
+    {
+     "no": 9,
+     "home": "Gaziantep",
+     "away": "Kasimpasa",
+     "bulten_home": "GAZİANTEP F.K. A.Ş",
+     "bulten_away": "KASIMPAŞA A.Ş",
+     "lig": "T1",
+     "kickoff": "2026-02-09",
+     "hg": 2,
+     "ag": 1,
+     "code": "1"
+    },
+    {
+     "no": 10,
+     "home": "Bayern Munich",
+     "away": "Hoffenheim",
+     "bulten_home": "BAYERN MÜNİH",
+     "bulten_away": "HOFFENHEIM",
+     "lig": "D1",
+     "kickoff": "2026-02-08",
+     "hg": 5,
+     "ag": 1,
+     "code": "1"
+    },
+    {
+     "no": 11,
+     "home": "Paris SG",
+     "away": "Marseille",
+     "bulten_home": "/ PARIS SAINT GERMAIN",
+     "bulten_away": "MARSİLYA",
+     "lig": "F1",
+     "kickoff": "2026-02-08",
+     "hg": 5,
+     "ag": 0,
+     "code": "1"
+    },
+    {
+     "no": 12,
+     "home": "Liverpool",
+     "away": "Man City",
+     "bulten_home": "LIVERPOOL",
+     "bulten_away": "MANCHESTER CITY",
+     "lig": "E0",
+     "kickoff": "2026-02-08",
+     "hg": 1,
+     "ag": 2,
+     "code": "2"
+    },
+    {
+     "no": 13,
+     "home": "Ath Madrid",
+     "away": "Betis",
+     "bulten_home": "ATLETICO MADRİD",
+     "bulten_away": "REAL BETİS",
+     "lig": "SP1",
+     "kickoff": "2026-02-08",
+     "hg": 0,
+     "ag": 1,
+     "code": "2"
+    },
+    {
+     "no": 14,
+     "home": "Valencia",
+     "away": "Real Madrid",
+     "bulten_home": "VALENCİA",
+     "bulten_away": "REAL MADRID",
+     "lig": "SP1",
+     "kickoff": "2026-02-08",
+     "hg": 0,
+     "ag": 2,
+     "code": "2"
+    },
+    {
+     "no": 15,
+     "home": "Juventus",
+     "away": "Lazio",
+     "bulten_home": "JUVENTUS",
+     "bulten_away": "LAZIO",
+     "lig": "I1",
+     "kickoff": "2026-02-08",
+     "hg": 2,
+     "ag": 2,
+     "code": "0"
+    }
+   ],
+   "data_warnings": [],
+   "results": "122020211112220",
+   "n1": 5,
+   "n0": 3,
+   "n2": 7,
+   "close_date": "2026-02-07",
+   "season": "2025/2026"
+  },
+  {
    "week": 28,
    "matches": [
     {
@@ -5582,6 +5774,198 @@
    "n0": 3,
    "n2": 4,
    "close_date": "2026-05-15",
+   "season": "2025/2026"
+  },
+  {
+   "week": 42,
+   "matches": [
+    {
+     "no": 1,
+     "home": "Club Brugge",
+     "away": "Gent",
+     "bulten_home": "OLUB BRUGGE",
+     "bulten_away": "KAA GENT",
+     "lig": "B1",
+     "kickoff": "2026-05-24",
+     "hg": 5,
+     "ag": 0,
+     "code": "1"
+    },
+    {
+     "no": 2,
+     "home": "St. Gilloise",
+     "away": "Anderlecht",
+     "bulten_home": "UNION SAINT GİLLOİSE",
+     "bulten_away": "ANDERLECHT",
+     "lig": "B1",
+     "kickoff": "2026-05-24",
+     "hg": 5,
+     "ag": 1,
+     "code": "1"
+    },
+    {
+     "no": 3,
+     "home": "Crystal Palace",
+     "away": "Arsenal",
+     "bulten_home": "ORYSTAL PALACE",
+     "bulten_away": "ARSENAL",
+     "lig": "E0",
+     "kickoff": "2026-05-24",
+     "hg": 1,
+     "ag": 2,
+     "code": "2"
+    },
+    {
+     "no": 4,
+     "home": "Liverpool",
+     "away": "Brentford",
+     "bulten_home": "LIVERPOOL",
+     "bulten_away": "BRENTFORD",
+     "lig": "E0",
+     "kickoff": "2026-05-24",
+     "hg": 1,
+     "ag": 1,
+     "code": "0"
+    },
+    {
+     "no": 5,
+     "home": "Man City",
+     "away": "Aston Villa",
+     "bulten_home": "MANCHESTER CITY",
+     "bulten_away": "ASTON VİLLA",
+     "lig": "E0",
+     "kickoff": "2026-05-24",
+     "hg": 1,
+     "ag": 2,
+     "code": "2"
+    },
+    {
+     "no": 6,
+     "home": "Tottenham",
+     "away": "Everton",
+     "bulten_home": "TOTTENHAM",
+     "bulten_away": "EVERTON",
+     "lig": "E0",
+     "kickoff": "2026-05-24",
+     "hg": 1,
+     "ag": 0,
+     "code": "1"
+    },
+    {
+     "no": 7,
+     "home": "Celta",
+     "away": "Sevilla",
+     "bulten_home": "CELTA VİGO",
+     "bulten_away": "SEVİLLA",
+     "lig": "SP1",
+     "kickoff": "2026-05-23",
+     "hg": 1,
+     "ag": 0,
+     "code": "1"
+    },
+    {
+     "no": 8,
+     "home": "Espanol",
+     "away": "Sociedad",
+     "bulten_home": "ESPANYOL",
+     "bulten_away": "REAL SOCIEDAD",
+     "lig": "SP1",
+     "kickoff": "2026-05-23",
+     "hg": 1,
+     "ag": 1,
+     "code": "0"
+    },
+    {
+     "no": 9,
+     "home": "Girona",
+     "away": "Elche",
+     "bulten_home": "GIRONA",
+     "bulten_away": "ELCHE",
+     "lig": "SP1",
+     "kickoff": "2026-05-23",
+     "hg": 1,
+     "ag": 1,
+     "code": "0"
+    },
+    {
+     "no": 10,
+     "home": "Betis",
+     "away": "Levante",
+     "bulten_home": "REAL BETİS",
+     "bulten_away": "LEVANTE",
+     "lig": "SP1",
+     "kickoff": "2026-05-23",
+     "hg": 2,
+     "ag": 1,
+     "code": "1"
+    },
+    {
+     "no": 11,
+     "home": "Real Madrid",
+     "away": "Ath Bilbao",
+     "bulten_home": "/ REAL MADRID",
+     "bulten_away": "ATHLETIC BILBAO",
+     "lig": "SP1",
+     "kickoff": "2026-05-23",
+     "hg": 4,
+     "ag": 2,
+     "code": "1"
+    },
+    {
+     "no": 12,
+     "home": "Milan",
+     "away": "Cagliari",
+     "bulten_home": "AC MILAN",
+     "bulten_away": "CAGLIARI",
+     "lig": "I1",
+     "kickoff": "2026-05-24",
+     "hg": 1,
+     "ag": 2,
+     "code": "2"
+    },
+    {
+     "no": 13,
+     "home": "Cremonese",
+     "away": "Como",
+     "bulten_home": "/ CREMONESE",
+     "bulten_away": "COMO 1907",
+     "lig": "I1",
+     "kickoff": "2026-05-24",
+     "hg": 1,
+     "ag": 4,
+     "code": "2"
+    },
+    {
+     "no": 14,
+     "home": "Fiorentina",
+     "away": "Atalanta",
+     "bulten_home": "FIORENTINA",
+     "bulten_away": "ATALANTA",
+     "lig": "I1",
+     "kickoff": "2026-05-22",
+     "hg": 1,
+     "ag": 1,
+     "code": "0"
+    },
+    {
+     "no": 15,
+     "home": "Torino",
+     "away": "Juventus",
+     "bulten_home": "TORINO",
+     "bulten_away": "JUVENTUS",
+     "lig": "I1",
+     "kickoff": "2026-05-24",
+     "hg": 2,
+     "ag": 2,
+     "code": "0"
+    }
+   ],
+   "data_warnings": [],
+   "results": "112021100112200",
+   "n1": 6,
+   "n0": 5,
+   "n2": 4,
+   "close_date": "2026-05-22",
    "season": "2025/2026"
   }
  ]

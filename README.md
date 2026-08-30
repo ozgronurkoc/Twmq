@@ -282,8 +282,9 @@ ileriye dönük birikir.
 **Beşinci ve altıncı veri seti bunların üstüne kuruldu** (2026-08-30):
 `data/bulten/<sezon>.json` resmî bülten **görselinden** OCR ile okunan 15 maçlık
 listeler (156 hafta), `data/st_history/<sezon>.json` ise o listeleri football-data
-fikstürüne bağlayıp **tam 1/0/2 dizisi** üreten set — **4 sezon · 107 hafta ·
-1.605 kupon maçı**. Kupon değerlendirme seti 41 haftadan **148 haftaya** çıktı.
+fikstürüne bağlayıp **tam 1/0/2 dizisi** üreten set — **4 sezon · 112 hafta ·
+1.680 kupon maçı** (§6I'de 107'den çıktı: eşleştirmedeki Unicode kusuru
+düzeltildi). Kupon değerlendirme seti 41 haftadan **153 haftaya** çıktı.
 
 Bu ikisinin en güçlü kanıtı bir çapraz doğrulamadır: `st_history_2025_26.json`
 üçüncü parti bir payload'dan, yeni set resmî görselden gelir ve ikisi birbirini
@@ -890,7 +891,10 @@ backend/
     payloads.py        /api/stats ve /api/backtest gövdeleri — tek kaynak
     tahmin.py          TAHMİN: yaklaşan maçlar + ölçülmüş isabet = /api/tahmin
     pazar.py           1X2 DIŞI: alt/üst 2,5 + Asya handikabı = /api/pazar
+    deger.py           ÖLÇÜM: sabit oranlı pazarlarda değer bahsi getirisi — üç
+                       pazarda da kâr YOK (§3.45); arayüze ÇIKMAZ
     getiri.py          HAVUZ: müşterek beklenen değer — HESAP, arayüze ÇIKMAZ
+    mcp_server.py      DENEY: MCP yüzeyi — ölçüt 1'i GEÇMEDİ, isteğe bağlı ekstra
     gorus.py           TAHMİN: piyasadan BAĞIMSIZ görüş (DC + Elo) — işaret DEĞİŞTİRMEZ
     avrupa.py          VERI: UEFA fiksturu — dinlenme/sikisiklik duzeltmesi
     sehir.py           VERI: kulup-sehir tablosu, derbi (sicaklik degiskeni)
@@ -932,7 +936,7 @@ backend/
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
                        sehir/ · xg/
-  tests/               pytest (60 dosya → 1.842 test; §9'da katman dökümü)
+  tests/               pytest (62 dosya → 1.867 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1117,8 +1121,8 @@ Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant'lar, CLI (Bayes pre
 dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri test,
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
-eşleme, ikinci kayıt). **60 test dosyası, parametrizasyonla
-1.842 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+eşleme, ikinci kayıt). **62 test dosyası, parametrizasyonla
+1.867 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
@@ -1385,6 +1389,7 @@ olması gerekir. Tanımlıysa yalnızca **durum değişiminde** bildirim gider.
 | [`docs/FORMUL_YOL_HARITASI.md`](docs/FORMUL_YOL_HARITASI.md) | Formül sayfasının yol haritası ve yapılmayacaklar listesi |
 | [`docs/DIS_INCELEME.md`](docs/DIS_INCELEME.md) | Dış bir makine öğrenmesi çalışmasının bu projeye ne kattığı ve **ne katmadığı** — sayılar o çalışmanın kendi belgelerinden, bizim ölçümümüz değil |
 | [`docs/DIS_INCELEME_ALPHAPY.md`](docs/DIS_INCELEME_ALPHAPY.md) | Bir ML **çerçevesinin** (AlphaPy / AlphaPy Pro) incelemesi: çerçeve alınmadı, ama metrik paneline bakarken görülen eksik ölçüldü ve koda girdi — Brier'in Murphy ayrışımı |
+| [`docs/DIS_INCELEME_SPORTS_BETTING.md`](docs/DIS_INCELEME_SPORTS_BETTING.md) | Bir **sabit oranlı bahis araç kutusunun** (`georgedouzas/sports-betting`) incelemesi: model tarafında hiçbir şey, bir ölçü (`deger.py` — üç pazarda da kâr yok) ve bir kalite kapısı. Asıl getirisi **kendi kodumuzdaki dört kusur**: sessizce ölü bir sözlük (5 hafta kayıp), gizli bir duvar saati kırılganlığı, iki yanlış docstring sayısı, eskimiş bir uç envanteri |
 | [`docs/DIS_INCELEME_AZ_RAPORU.md`](docs/DIS_INCELEME_AZ_RAPORU.md) | Depo dışından gelen 64 bölümlük bir değerlendirmenin madde madde karşılığı: çoğunun karşılığı zaten vardı, **üçü gerçekten eksikti** (Model Arena, ileri yürüyüş, sızıntı sözleşmesi) ve üçü de uygulandı — ürettikleri ölçüm §3.41'de |
 | [`docs/GELISTIRME_PLANI_ESLEMESI.md`](docs/GELISTIRME_PLANI_ESLEMESI.md) | Dışarıdan gelen iki geliştirme planının madde madde karşılığı: hangisi zaten vardı, hangisi gerçekten eksikti (dördü), hangisi **ölçülmüş gerekçeyle** reddedildi |
 | [`docs/BENZER_PLANI_ESLEMESI.md`](docs/BENZER_PLANI_ESLEMESI.md) | `benzer.py` için gelen dış planın aynı biçimde eşlemesi: gerçekten eksik olan üçü (`inf` oran · toleransın üç kapıda üç sınırı · zaman kesmesi) uygulandı, altısı gerekçesiyle reddedildi, üçü kaydedildi |

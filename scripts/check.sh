@@ -35,6 +35,26 @@ baslik "ruff (lint)"
 baslik "mypy (kademeli tip denetimi)"
 "$PY" -m mypy
 
+baslik "docstring kapsaması (interrogate)"
+# Bu depoda docstring bir gelenek; kapı onu kural yapar. Eşiğin gerekçesi
+# ve ölçülen değer `pyproject.toml` `[tool.interrogate]` içinde.
+"$PY" -m interrogate -c pyproject.toml spor_toto/
+
+baslik "bağımlılık açıkları (pip-audit)"
+# BEYAN EDİLEN bağımlılıklar denetlenir, bütün ortam değil — gerekçe
+# `backend/scripts/bagimliliklar.py` başlığında (taban imajın paketleri
+# bizim seçimimiz değil ve kapıyı kalıcı kırmızıya boyardı).
+"$PY" scripts/bagimliliklar.py | "$PY" -m pip_audit -r /dev/stdin --progress-spinner off
+
+baslik "doctest (belgelerdeki sayılar hâlâ doğru mu)"
+# `sports-betting` incelemesinden geldi: docstring'lerimiz bu deponun en
+# değerli parçalarından biri ama HİÇBİRİ yürütülmüyordu — sayı içeren bir
+# docstring sessizce eskiyebilirdi. Tamamına değil, SAYI ÜRETEN
+# fonksiyonlara örnek konuldu. `no:randomly`: doctest'ler tanım gereği
+# sırasızdır, sabit sıra kapı çıktısını okunur tutar.
+"$PY" -m pytest --doctest-modules -p no:randomly -q \
+  spor_toto/ortak.py spor_toto/getiri.py spor_toto/takim.py spor_toto/deger.py
+
 baslik "pytest (hızlı)"
 "$PY" -m pytest -m "not slow" -q
 
