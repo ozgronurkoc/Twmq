@@ -7,6 +7,11 @@ modül görevleri, kalite kapıları, boru hatları ve **ölçülmüş sayı kü
 (hangi sayı hangi komuttan çıktı, hangi belgede anılıyor). Git dışıdır ve
 tamamı depodan yeniden üretilebilir.
 
+Mesajın grafla ilgiliyse **ilgili girdiler bu mesaja zaten enjekte edilmiştir**
+(`.claude/hooks/user-prompt.sh`). Yukarıda "Bilgi grafından ... ilgili girdiler"
+başlıklı bir blok görüyorsan o blok ölçülmüş kayıttır — aynı şeyi yeniden
+tarama. Blok "tek mesaja sığmaz" diyorsa sorguyu **sen** çalıştır.
+
 **Kural:** aşağıdaki sorulardan biriyle karşılaşınca depoyu taramadan **önce**
 grafı sorgula. Cevap graftaysa tarama yapma; yoksa tara, sonra grafa yaz.
 

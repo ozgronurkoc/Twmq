@@ -83,6 +83,28 @@ python3 .claude/graf_sorgu.py tazelik      # bayat girdi 0 olmalı
 
 ---
 
+## Otomatik enjeksiyon — ölçülen bedeli
+
+`.claude/hooks/user-prompt.sh` her mesajda çalışır ve mesaj grafla ilgiliyse
+ilgili girdileri bağlama koyar. **Bu bir token kazancı değil, bir güvence
+mekanizmasıdır** ve ölçülen bedeli şudur:
+
+| Durum | Elle sorgu | Hook ile | Fark |
+|---|---:|---:|---:|
+| Geniş soru (51 modül + `check.sh`) | 2.920 | 3.036 | **+116** |
+| Hedefli soru (tek modül) | 168 + *çağrı kararı* | 202 | ~eşit |
+| Grafla ilgisiz mesaj | 0 | **0** | 0 |
+
+Geniş soruda hook **pahalıya geliyor** (+%4): `moduller` 51 girdiyle tek mesaja
+sığmadığı için enjeksiyon yalnızca işaret koyar, sorgu yine koşar. Karşılığında
+alınan şey token değil **kesinlik**: `CLAUDE.md` yönlendirmedir ve atlanabilir;
+enjeksiyon atlanamaz.
+
+Bir kusur ölçümle bulundu ve düzeltildi: enjektörün ilk hali 51 girdinin 8'ini
+basıyordu. Bu soruyu cevaplamıyordu, Claude yine sorgu koşuyordu ve enjeksiyon
+**668 token'lık saf ek yük** oluyordu (668 + 2.920 > 2.920). Kural değişti: tam
+cevap veremiyorsan kısmi cevabın parasını ödeme, tek satır işaret koy (~30 token).
+
 ## Grafı ne zaman yeniden çıkarmalı
 
 Ölçüt **zaman değil, dosyanın değişip değişmediğidir**
