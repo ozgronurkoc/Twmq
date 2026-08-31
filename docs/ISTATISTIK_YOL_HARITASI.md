@@ -3054,7 +3054,8 @@ göstermek için duruyor.
 piyasa deplasman) ve sonuç piyasayı doğruladı: halk 8/15, piyasa 9/15.
 Kalabalığın Brier'i piyasadan **0,09 kötü**. Havuz ekseninin dayandığı varsayım
 — *oynanma verisi yön değil, pay taşır* — iki haftada da ayakta
-(bkz. `VERI_TOPLAMA_VE_ISLEME.md` §"Ölçülen ilk şey").
+(bkz. `VERI_TOPLAMA_VE_ISLEME.md` §"Ölçülen ilk şey"). *(3. haftada da ayakta:
+halk 7/15, piyasa 7/15, kalabalığın Brier'i 0,5948 ↔ piyasa 0,5544 — §3.47.)*
 
 #### 7. ders — bu hafta ulaşılabilir değildi, ve bunun bir ölçüsü var
 
@@ -3284,6 +3285,10 @@ Yani dağıtılan havuzun **%35 / %20 / %20 / %25**'i. `spor_toto/getiri.py`
 başlığında şu yazıyordu: *"Havuzun kademelere dağılımı. **Varsayım, ölçüm
 değil**… elde henüz bir haftalık kayıt var."* Artık iki hafta var ve ikisi
 aynı; sabit ölçümden türetiliyor (`OLCULEN_PAY`, `PAY_KAYNAGI`).
+
+> **Sonradan:** 3. hafta oranı **üçüncü kez** verdi ve ilk kez **devir
+> düzeltmesi yapılmadan** — o hafta 15 bileni çıktığı için devreden pay yoktu
+> (§3.47, 7. ders). `PAY_KAYNAGI` üç haftayı sayar.
 
 Değişim küçük değil: modülün kademeleri (14-13-12) için pay dağılımı
 `0,55 / 0,25 / 0,20` varsayımından **`0,31 / 0,31 / 0,38` ölçümüne** geçti.

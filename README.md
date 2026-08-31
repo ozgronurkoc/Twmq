@@ -519,8 +519,9 @@ kapanmadan önce alınmış **en geç kayıttır** (§3.47, 3. ders).
 
 **İkramiye tablosu ve ilk ölçülmüş getiri** — 2. haftanın ikramiye ekranı girildi
 (15: 3 kolon × 24.330.749,43 TL … 12: 21.272 kolon × 1.438,60 TL). Üç sonucu var:
-(1) havuzun kademelere dağılımı artık **varsayım değil ölçüm** — iki hafta da
-%35/%20/%20/%25 veriyor ve `getiri.VARSAYILAN_PAY` bundan türüyor; (2) getiri ilk kez
+(1) havuzun kademelere dağılımı artık **varsayım değil ölçüm** — **üç hafta da**
+%35/%20/%20/%25 veriyor (3. hafta 15 bileni çıktığı için **devirsiz**, yani
+düzeltme yapılmadan) ve `getiri.VARSAYILAN_PAY` bundan türüyor; (2) getiri ilk kez
 para birimiyle hesaplandı: 2. Tahmin 1.296 kolonda 1.438,60 TL, başabaş kolon bedeli
 **1,11 TL**; (3) beklenen getiri kolon başına **doğrusal** çıktı, yani tam sistem
 üstünlük değil **varyans** satın alıyor. Ayrıntı §3.40.
