@@ -2,7 +2,7 @@
  "meta": {
   "season": "2026/2027",
   "week": 3,
-  "program": null,
+  "program": "28.08.2026 - 31.08.2026",
   "match_count": 15,
   "odds_source": "Pinnacle KAPANIŞ oranları — kullanıcı girdisi (2026-08-27)",
   "odds_kind": "pinnacle-kapanis",
@@ -10,20 +10,48 @@
   "play_source": "tek platform kullanıcı tercih yüzdesi (% Tercih) — kullanıcı girdisi (2026-08-27)",
   "play_note": "yüzdeler tek bir platformun kendi kullanıcılarıdır; Spor Toto havuzunun tamamı DEĞİLDİR",
   "entered_at": "2026-08-27",
-  "results": null,
+  "results": "021210211101222",
+  "results_entered_at": "2026-09-01",
   "data_warnings": [
-   "Program tarihleri ve maç saatleri GİRİLMEDİ (kullanıcı vermedi). Uydurulmadı; `date`/`kickoff` boş bırakıldı. Kupon kapanış anını belgeleyen tek alan `entered_at`tır.",
+   "Program tarihleri ve maç saatleri kupon kurulurken GİRİLMEMİŞTİ; sonuç ekranıyla birlikte (2026-09-01) girildi. Kupon dondurulurken elde olan tek zaman damgası `entered_at`tır (2026-08-27).",
    "Nesine'nin KAPANIŞ oranı 10–15. maçlarda AÇILIŞIYLA BİREBİR AYNI (maçlar: 10, 11, 12, 13, 14, 15). Bu bir fiyat değil, bayat bir kayıttır: o satırlarda Nesine kapanışı bilgi taşımıyor. Bahisçi ayrışmasının en büyük üçü (13. maç 7,9 puan, 12. maç 7,0 puan, 11. maç 6,4 puan) tam olarak bu bayat satırlardan geliyor — yani ayrışma görüş farkı değil, kayıt farkıdır.",
    "12. maç (Monaco–Marsilya): Nesine beraberliği 2.49'a veriyor; Pinnacle 3.74, bet365 3.70. Arındırılmış beraberlik olasılığı Nesine'de %32, ötekilerde %25–26. Marj Nesine'nin kendi bandında (%23,4) olduğu için otomatik denetim bunu yakalamaz; satır KUŞKULU olarak işaretlendi ve ana fiyata girmedi.",
-   "Kapanış oranlarının tamamı kupon donarken elde miydi, doğrulanmadı. Spor Toto kuponu ilk maçtan önce kapanır; haftanın SON maçlarının kapanış çizgisi o anda normalde HENÜZ YOKTUR (bkz. scripts/acilis_kapanis.py başlığı). Bu yüzden Pinnacle AÇILIŞ fiyatıyla kurulan kupon da aynı kayda `duyarlilik` olarak konuldu: açılış, kupon anında kesinlikle elde olan fiyattır."
+   "`odds_kind` FAZLA ETİKETLİ. Tarihler girilince görüldü: bütün oranlar 2026-08-27'de kaydedildi (`entered_at`), maçlar 28-31.08'de oynandı — yani HİÇBİR maçın gerçek kapanış çizgisi kayıtta yok. `pinnacle_kapanis` aslında 27.08 anlık kaydıdır; ilk maça 1 gün, son maçlara 4 gün kalmıştı. Bu bir sızıntı DEĞİLDİR (fiyatların ikisi de kupon donarken eldeydi), ama geri testin gerekçesi doğrudan devredilemez: arşivde ölçülen şey GERÇEK kapanıştı, burada ölçülen şey `iki anlık kayıttan geç olanı`. Sonuçlar geç olanı doğruladı (Brier 0,5645 → 0,5544; gerçekleşen getiride ×11), ama tek hafta ve 15 maçtır."
   ],
-  "odds_books_note": "pinnacle/bet365nl/nesine × acilis/kapanis. Marj ortalamaları: Pinnacle %4,57/%4,63 · bet365.nl %7,89/%6,01 · Nesine %21,57/%18,70."
+  "odds_books_note": "pinnacle/bet365nl/nesine × acilis/kapanis. Marj ortalamaları: Pinnacle %4,57/%4,63 · bet365.nl %7,89/%6,01 · Nesine %21,57/%18,70.",
+  "results_source": "Nesine Spor Toto resmî sonuç ekranı — kullanıcı ekran görüntüsü (2026-09-01 00:21)",
+  "payout": {
+   "source": "Spor Toto İkramiye Bilgileri ekranı — kullanıcı ekran görüntüsü (2026-09-01 00:21)",
+   "currency": "TRY",
+   "tiers": [
+    {
+     "correct": 15,
+     "winners": 9,
+     "prize": 4261867.07
+    },
+    {
+     "correct": 14,
+     "winners": 188,
+     "prize": 116586.02
+    },
+    {
+     "correct": 13,
+     "winners": 2540,
+     "prize": 8629.2
+    },
+    {
+     "correct": 12,
+     "winners": 22282,
+     "prize": 1229.58
+    }
+   ]
+  }
  },
  "matches": [
   {
    "no": 1,
-   "date": null,
-   "kickoff": null,
+   "date": "2026-08-28",
+   "kickoff": "21:30",
    "league": "T1",
    "home": "Gençlerbirliği",
    "away": "Erzurumspor FK",
@@ -69,13 +97,16 @@
     "0": 26.0,
     "2": 16.0
    },
-   "result": null,
-   "score": null
+   "result": "0",
+   "score": {
+    "hg": 1,
+    "ag": 1
+   }
   },
   {
    "no": 2,
-   "date": null,
-   "kickoff": null,
+   "date": "2026-08-29",
+   "kickoff": "19:00",
    "league": "T1",
    "home": "Konyaspor",
    "away": "Kocaelispor",
@@ -121,13 +152,16 @@
     "0": 30.0,
     "2": 17.0
    },
-   "result": null,
-   "score": null
+   "result": "2",
+   "score": {
+    "hg": 1,
+    "ag": 2
+   }
   },
   {
    "no": 3,
-   "date": null,
-   "kickoff": null,
+   "date": "2026-08-29",
+   "kickoff": "21:30",
    "league": "T1",
    "home": "Galatasaray A.Ş.",
    "away": "Göztepe A.Ş.",
@@ -173,13 +207,16 @@
     "0": 15.0,
     "2": 9.0
    },
-   "result": null,
-   "score": null
+   "result": "1",
+   "score": {
+    "hg": 3,
+    "ag": 2
+   }
   },
   {
    "no": 4,
-   "date": null,
-   "kickoff": null,
+   "date": "2026-08-29",
+   "kickoff": "21:30",
    "league": "T1",
    "home": "Gaziantep F.K. A.Ş.",
    "away": "Çaykur Rizespor A.Ş.",
@@ -225,13 +262,16 @@
     "0": 35.0,
     "2": 31.0
    },
-   "result": null,
-   "score": null
+   "result": "2",
+   "score": {
+    "hg": 1,
+    "ag": 2
+   }
   },
   {
    "no": 5,
-   "date": null,
-   "kickoff": null,
+   "date": "2026-08-30",
+   "kickoff": "19:00",
    "league": "T1",
    "home": "Eyüpspor",
    "away": "Alanyaspor",
@@ -277,13 +317,16 @@
     "0": 30.0,
     "2": 44.0
    },
-   "result": null,
-   "score": null
+   "result": "1",
+   "score": {
+    "hg": 2,
+    "ag": 1
+   }
   },
   {
    "no": 6,
-   "date": null,
-   "kickoff": null,
+   "date": "2026-08-30",
+   "kickoff": "21:30",
    "league": "T1",
    "home": "Başakşehir FK",
    "away": "Kasımpaşa A.Ş.",
@@ -329,13 +372,16 @@
     "0": 23.0,
     "2": 12.0
    },
-   "result": null,
-   "score": null
+   "result": "0",
+   "score": {
+    "hg": 1,
+    "ag": 1
+   }
   },
   {
    "no": 7,
-   "date": null,
-   "kickoff": null,
+   "date": "2026-08-30",
+   "kickoff": "21:30",
    "league": "T1",
    "home": "Samsunspor A.Ş.",
    "away": "Fenerbahçe A.Ş.",
@@ -381,13 +427,16 @@
     "0": 24.0,
     "2": 62.0
    },
-   "result": null,
-   "score": null
+   "result": "2",
+   "score": {
+    "hg": 0,
+    "ag": 2
+   }
   },
   {
    "no": 8,
-   "date": null,
-   "kickoff": null,
+   "date": "2026-08-31",
+   "kickoff": "21:30",
    "league": "T1",
    "home": "Amed Sportif",
    "away": "Trabzonspor A.Ş.",
@@ -433,13 +482,16 @@
     "0": 24.0,
     "2": 63.0
    },
-   "result": null,
-   "score": null
+   "result": "1",
+   "score": {
+    "hg": 2,
+    "ag": 1
+   }
   },
   {
    "no": 9,
-   "date": null,
-   "kickoff": null,
+   "date": "2026-08-31",
+   "kickoff": "21:30",
    "league": "T1",
    "home": "Beşiktaş A.Ş.",
    "away": "Çorum FK",
@@ -485,13 +537,16 @@
     "0": 10.0,
     "2": 4.0
    },
-   "result": null,
-   "score": null
+   "result": "1",
+   "score": {
+    "hg": 6,
+    "ag": 2
+   }
   },
   {
    "no": 10,
-   "date": null,
-   "kickoff": null,
+   "date": "2026-08-29",
+   "kickoff": "19:30",
    "league": "D1",
    "home": "B. Dortmund",
    "away": "Hamburger SV",
@@ -537,13 +592,16 @@
     "0": 14.0,
     "2": 7.0
    },
-   "result": null,
-   "score": null
+   "result": "1",
+   "score": {
+    "hg": 2,
+    "ag": 0
+   }
   },
   {
    "no": 11,
-   "date": null,
-   "kickoff": null,
+   "date": "2026-08-28",
+   "kickoff": "21:45",
    "league": "F1",
    "home": "Lille",
    "away": "PSG",
@@ -589,13 +647,16 @@
     "0": 24.0,
     "2": 61.0
    },
-   "result": null,
-   "score": null
+   "result": "0",
+   "score": {
+    "hg": 2,
+    "ag": 2
+   }
   },
   {
    "no": 12,
-   "date": null,
-   "kickoff": null,
+   "date": "2026-08-30",
+   "kickoff": "21:45",
    "league": "F1",
    "home": "Monaco",
    "away": "Marsilya",
@@ -641,13 +702,16 @@
     "0": 31.0,
     "2": 28.0
    },
-   "result": null,
-   "score": null
+   "result": "1",
+   "score": {
+    "hg": 2,
+    "ag": 0
+   }
   },
   {
    "no": 13,
-   "date": null,
-   "kickoff": null,
+   "date": "2026-08-29",
+   "kickoff": "19:30",
    "league": "E0",
    "home": "Tottenham",
    "away": "Newcastle United",
@@ -693,13 +757,16 @@
     "0": 27.0,
     "2": 31.0
    },
-   "result": null,
-   "score": null
+   "result": "2",
+   "score": {
+    "hg": 0,
+    "ag": 2
+   }
   },
   {
    "no": 14,
-   "date": null,
-   "kickoff": null,
+   "date": "2026-08-29",
+   "kickoff": "22:30",
    "league": "SP1",
    "home": "Sevilla",
    "away": "Atletico Madrid",
@@ -745,13 +812,16 @@
     "0": 29.0,
     "2": 47.0
    },
-   "result": null,
-   "score": null
+   "result": "2",
+   "score": {
+    "hg": 1,
+    "ag": 3
+   }
   },
   {
    "no": 15,
-   "date": null,
-   "kickoff": null,
+   "date": "2026-08-30",
+   "kickoff": "21:45",
    "league": "I1",
    "home": "Cagliari",
    "away": "Inter",
@@ -797,8 +867,11 @@
     "0": 18.0,
     "2": 73.0
    },
-   "result": null,
-   "score": null
+   "result": "2",
+   "score": {
+    "hg": 0,
+    "ag": 1
+   }
   }
  ]
 }

@@ -491,22 +491,37 @@ yaptığını görmek içindir — 5-10 hafta sonra doğacak "eşiği oynatalım
 karşı tek savunma budur.
 
 **İşlenen sezonun sonuçları** — 1. hafta en iyi kolon **9**/15, 2. hafta
-**12**/15 (ikramiye kademesi 12'dir). 2. haftada iki kayıt yan yana koşuldu ve
-ikisi de 12 verdi; 2. Tahmin bunu **3,2 kat az kolonla** aldı (1.296 ↔ 4.096).
-Bugünkü kural geçen sezonun 36 haftasında yeniden koşulduğunda ortalama en iyi
-kolon **11,81** ve haftaların %67'si 12+ — yani 12 kuralın *normali*, 9 ise alt
-kuyruğu. **Kural iki haftada da değiştirilmedi**; ayrıntı ve sekiz ölçülmüş ders:
-`docs/ISTATISTIK_YOL_HARITASI.md` §3.38.
+**12**/15, 3. hafta **14**/15 (ikramiye kademesi 12'dir). 2. haftada iki kayıt
+yan yana koşuldu ve ikisi de 12 verdi; 2. Tahmin bunu **3,2 kat az kolonla** aldı
+(1.296 ↔ 4.096). Bugünkü kural geçen sezonun 36 haftasında yeniden koşulduğunda
+ortalama en iyi kolon **11,81**, haftaların %67'si 12+ ve yalnızca %6'sı 14+ —
+yani 12 kuralın *normali*, 9 alt kuyruğu, 14 ise **üst** kuyruğu. Üç haftanın
+ortalaması 11,67. **Kural üç haftada da değiştirilmedi**; ayrıntı ve on ölçülmüş
+ders: `docs/ISTATISTIK_YOL_HARITASI.md` §3.38 (2. hafta) ve §3.47 (3. hafta).
+
+**3. haftanın iki cümlesi.** (1) Hafta sürprizle doluydu — favori 8 maçta
+tutmadı, beklenen 6,97'ydi — ve kupon tam bu yüzden tuttu: sekiz sürprizin
+yedisi çift/üçlü işaretlenmiş maçlara düştü. Sürprizin **sayısı** değil, işaretli
+sembolde mi atılan sembolde mi olduğu belirliyor. (2) O 14'te **görüş yok**:
+sapma defteri sıfır sapma yazıyor, yani kupon mekanik azami kapsamanın birebir
+aynısı. Haftada verilen iki karar da kuponun dışındaydı — hangi fiyat kaydı
+(geç kayıt **14/15**, erken kayıt 13/15; gerçekleşen getiride ×11) ve hangi
+varyant (kalabalığı görmeyen 14/15, ayarlı 13/15). İkincisi **ölçüme rağmen** verilmişti ve
+kazandı; defter bunu bir uyarı olarak taşıyor, bir onay olarak değil (§3.47).
 
 Sonuç girilirken üç şey birlikte girilir — biri eksikse o haftanın bir ölçüsü
 kalıcı olarak kaybolur: **sonuç dizisi**, **skorlar** ve **ikramiye ekranı**
 (kişi başı ödül + kazanan adedi). 2. haftada son ikisi girilmedi; kalabalık
-ayarının parasal karşılığı bu yüzden ölçülemedi.
+ayarının parasal karşılığı bu yüzden ölçülemedi. 3. haftada dördü birden girildi
+(program tarihleri dahil) ve tarihler, `odds_kind` etiketinin fazla olduğunu
+gösterdi: kayıttaki "kapanış" hiçbir maçın gerçek kapanış çizgisi değil, kupon
+kapanmadan önce alınmış **en geç kayıttır** (§3.47, 3. ders).
 
 **İkramiye tablosu ve ilk ölçülmüş getiri** — 2. haftanın ikramiye ekranı girildi
 (15: 3 kolon × 24.330.749,43 TL … 12: 21.272 kolon × 1.438,60 TL). Üç sonucu var:
-(1) havuzun kademelere dağılımı artık **varsayım değil ölçüm** — iki hafta da
-%35/%20/%20/%25 veriyor ve `getiri.VARSAYILAN_PAY` bundan türüyor; (2) getiri ilk kez
+(1) havuzun kademelere dağılımı artık **varsayım değil ölçüm** — **üç hafta da**
+%35/%20/%20/%25 veriyor (3. hafta 15 bileni çıktığı için **devirsiz**, yani
+düzeltme yapılmadan) ve `getiri.VARSAYILAN_PAY` bundan türüyor; (2) getiri ilk kez
 para birimiyle hesaplandı: 2. Tahmin 1.296 kolonda 1.438,60 TL, başabaş kolon bedeli
 **1,11 TL**; (3) beklenen getiri kolon başına **doğrusal** çıktı, yani tam sistem
 üstünlük değil **varyans** satın alıyor. Ayrıntı §3.40.
