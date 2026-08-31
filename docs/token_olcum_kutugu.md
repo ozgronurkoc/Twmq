@@ -27,8 +27,8 @@ sorusunda gerçek maliyet `2.920 + 666 = 3.586` token, yani düşüş **%86,2**.
 İkinci sorudan itibaren bu maliyet bir daha ödenmez.
 
 Oto tazeleme hook'u ayrıca oturum başına çıktı üretir: her şey yolundaysa
-**0 satır** (sessiz), şüpheli sayı varsa **4 satır**. Şu an 4 satır yazıyor,
-çünkü 1901/1879 sapması duruyor.
+**0 satır** (sessiz), şüpheli sayı varsa sayı başına 1 satır. **Şu an 0 satır**
+— bayat girdi 0, şüpheli sayı 0.
 
 ## Ölçümün yapıldığı komutlar
 
@@ -104,6 +104,31 @@ Bir kusur ölçümle bulundu ve düzeltildi: enjektörün ilk hali 51 girdinin 8
 basıyordu. Bu soruyu cevaplamıyordu, Claude yine sorgu koşuyordu ve enjeksiyon
 **668 token'lık saf ek yük** oluyordu (668 + 2.920 > 2.920). Kural değişti: tam
 cevap veremiyorsan kısmi cevabın parasını ödeme, tek satır işaret koy (~30 token).
+
+## Grafın bulup kapattığı üç şey
+
+Graf kurulurken üç gerçek kusur ortaya çıktı. Üçü de ölçümle bulundu, üçü de
+kapatıldı:
+
+1. **Belgelerdeki test sayısı 22 eksikti.** 5 belgede 7 yerde `1.879` yazıyordu;
+   eksiksiz süit (lightgbm + scikit-learn kurulu) **1.901** topluyor. Fark
+   `test_agac.py`'nin 22 testi: `lightgbm` yoksa modül `importorskip` ile hiç
+   toplanmıyor ve bekçi o kurulumda **atlıyor**, yani sapma yerelde görünmüyordu.
+   CI `[test,kalite,model]` kurduğu için orada kırmızıydı. Yedi yer düzeltildi.
+
+2. **Bir bekçinin kör noktası vardı.** `test_test_dosya_sayisi_belgelerle_ayni`
+   yalnızca `"N test dosyası"` ifadesini tarıyordu; `README.md` §9 aynı sayıyı
+   `"(62 dosya → 1.879 test)"` biçiminde yazıyor ve oradaki **62 yanlıştı**
+   (gerçek 63). Bekçi göremedi. İkinci desen (`N dosya →`) eklendi — 5 belgede
+   sıfır yanlış pozitif üretiyor, ve 62 geri konularak kırmızı yaktığı
+   **kanıtlandı**.
+
+3. **Üç boru hattının yeniden üretim komutu yazılı değildi.** `.gitignore`
+   "tek komutla yeniden uretilir" diyordu ama komutu vermiyordu, dolayısıyla
+   graf onları **yazamıyordu** (kaynağı olmayan girdi yazılmaz). Komutlar koddan
+   doğrulanıp `.gitignore`'a yazıldı; graf 7 → **10** boru hattına çıktı.
+   `kosumlar/` bilerek dışarıda: boru hattı değil, `--kaydet` ile biriken yerel
+   defter — geçmiş ölçüm koşumları yeniden üretilemez.
 
 ## Grafı ne zaman yeniden çıkarmalı
 
