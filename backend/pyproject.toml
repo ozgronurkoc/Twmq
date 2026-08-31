@@ -22,10 +22,18 @@ dependencies = [
 #: dagitimda ortaya cikardi ve tekrar uretilemezdi. Rastgele tohum onu
 #: gorunur ve tohumla TEKRAR EDILEBILIR kilar.
 test = ["pytest>=7", "pytest-xdist>=3", "pytest-randomly>=3.15"]
-#: Model ekstrasi — URETIM BAGIMLILIGI DEGIL. Servis egitmez, yalnizca
-#: olcum kosumlari bu paketleri ister; `scripts/check.sh` ve CI kurar,
-#: `scripts/run_prod.sh` kurmaz. `spor_toto.agac` yoklugunu `HAS_LIGHTGBM`
-#: ile denetler ve modul yine ice aktarilabilir (`core.HAS_SCIPY` deseni).
+#: Model ekstrasi — CALISMA ZAMANI bagimliligi degil. Servis egitmez;
+#: `web_app` ice aktarimda ne `sklearn` ne `lightgbm` yukler (olculdu —
+#: `arena.py` gibi yerlerde importlar fonksiyon govdesinde, tembel).
+#: `spor_toto.agac` yoklugunu `HAS_LIGHTGBM` ile denetler ve modul yine
+#: ice aktarilabilir (`core.HAS_SCIPY` deseni).
+#:
+#: ONCE BURADA "`scripts/run_prod.sh` kurmaz" YAZIYORDU VE YANLISTI.
+#: `.replit` `[deployment] build` -> `scripts/build.sh` -> `scripts/setup.sh`
+#: zinciri bu ekstrayi (ve `test`i) deploy imajina kuruyor. Yani paketler
+#: uretim imajinda VAR; olan sey calisma zamani bagimliligi degil, imaj
+#: sismesi. Cumle gercege gore duzeltildi, davranis DEGISTIRILMEDI — deploy
+#: kurulum kumesini daraltmak ayri bir karar ve ayri bir risk.
 #:
 #: `alphapy-pro`'nun KENDISI alinmadi: Python >= 3.12 istiyor ve bizim
 #: `.replit` 3.10 kosuyor. Yalnizca isaret ettigi kutuphaneler alindi ve
