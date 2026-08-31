@@ -148,6 +148,7 @@ def _uclar(istemci, ornek_kupon: str) -> dict[str, Any]:
         {"ad": "GET /api/backtest", "yol": "/api/backtest?sweep=0"},
         {"ad": "GET /api/pazar", "yol": "/api/pazar"},
         {"ad": "GET /api/takimlar", "yol": "/api/takimlar"},
+        {"ad": "GET /api/surpriz", "yol": "/api/surpriz"},
         {"ad": "GET /api/tahmin", "yol": "/api/tahmin"},
         {"ad": "GET /api/benzer", "yol": "/api/benzer?oran=1.82,3.04,2.44"},
         {"ad": "POST /api/solve", "yol": "/api/solve",

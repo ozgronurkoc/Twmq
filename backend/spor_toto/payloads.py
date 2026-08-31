@@ -87,6 +87,33 @@ def takimlar_payload(lig: str | None = None,
     return takim_tablosu(lig=lig, sezon=sezon)
 
 
+def surpriz_payload(sezon: str | None = None) -> dict[str, Any]:
+    """Surpriz ekseni — `/api/surpriz`in tek kaynagi.
+
+    Govde IKI YARIMDAN olusur ve ikisi AYRILAMAZ bicimde birlikte doner:
+
+        ``olcum``     betimleyici — surprizin havuzda ne ETTIGI
+        ``kalabalik`` model       — kalabaligin piyasadan ne kadar SAPTIGI (tau)
+
+    Ayrilmamalarinin sebebi urun degil olcum: `olcum`un bant tablosu
+    ("cok surprizli haftada 15'i 0 kisi biliyor") tek basina okunursa bir
+    STRATEJI gibi gorunur, oysa oradan bir karar cikmaz — karari veren sey
+    tau'nun 1'den buyuk olup olmadigidir ve onun araligi genistir.
+    Bant tablosunu tau'nun saglamasindan ayirmak, deponun en kolay
+    yanilacagi yeri arayuze tasirdi.
+
+    `sezon` her iki yarima birden gecer. Gecmeseydi bantlar bir sezonu,
+    tau baska bir kesiti anlatirdi ve hicbir yerde yazmazdi — ayni gerekce
+    `stats_payload`taki `sezon` notunda.
+    """
+    from .kalabalik import tau_olcumu
+    from .surpriz import surpriz_ozeti
+
+    return {"olcum": surpriz_ozeti(sezon),
+            "kalabalik": tau_olcumu(sezon),
+            "sezon": sezon}
+
+
 def pazar_payload(yontem: str | None = None) -> dict[str, Any]:
     """1X2 disi pazarlarin olculmus ozeti — `/api/pazar`in tek kaynagi.
 

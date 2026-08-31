@@ -1403,6 +1403,54 @@ canlı sezonun bu tarihsel sete sızması o özeni boşa çıkarırdı. Bekçi:
     python scripts/build_gecmis_sezon.py
 
 
+## 6J. Üç arşivin birleştirilmesi — ve niçin numaraya güvenilmiyor
+
+Bu bölüm yeni bir veri seti anlatmıyor; **var olan üçünün kesişimini**
+anlatıyor. `spor_toto/surpriz.py` şunları tek satırda buluşturuyor:
+
+| Kaynak | Ne veriyor | Bölüm |
+|---|---|---|
+| Resmî Spor Toto arşivi | kademe başına kazanan adedi + kişi başı tutar | §2.4, §6D |
+| Oran arşivi | kapanış fiyatı → **favori** tanımı | §3.1, §6H |
+| Oran arşivinin `code` sütunu | kupon dizisi (1/0/2) | §6G |
+
+Kesişim **119 hafta**; oranı eksik 5 hafta elenince ölçülen kesit 114.
+Ölçümün kendisi `docs/ISTATISTIK_YOL_HARITASI.md` §3.47'de — burada
+yalnızca **birleştirmenin nasıl denetlendiği** var, çünkü bu bir veri
+işleme kararıdır.
+
+### 6J.1 Hafta numarası bir anahtar DEĞİL
+
+İki arşivin `week` alanı ayrı kökenden gelir: resmî tarafta Spor Toto'nun
+kendi `GameRound`'u, oran tarafında bültenden/football-data'dan türetilmiş
+sıra. İkisi bugün örtüşüyor ama örtüşmeleri **garanti değil**, ve
+kaydıklarında haftanın ikramiyesi başka bir haftanın sonucuna yapışır.
+
+Bu arızanın en kötü özelliği sessiz olmasıdır: hiçbir `assert` düşmez,
+hiçbir sayı boş gelmez, sezon toplamları bile doğru kalır. §7.4'teki v1
+sıra hatası tam olarak böyle aylarca görünmedi.
+
+### 6J.2 Denetim tarih üzerinden yapılıyor
+
+Doktrin 1 ("tek doğruluk kaynağı vardır ve zinciri bellidir") burada
+numarayı zincirin dışında bırakmayı gerektiriyor. Kullanılan bağımsız
+alan `close_date`: resmî uçta **kupon kapanışıdır** ve §6D'de ölçüldü —
+2025/26'nın 41 haftasının 41'inde haftanın **ilk** maçının gününe eşit.
+
+    |min(kickoff)  −  close_date|  >  1 gün   →  hafta ELENİR
+
+Tolerans 1 gündür ve gerekçesi saat dilimi + gece yarısını geçen maçlardır.
+Bugünkü sonuç: **119 haftanın 119'u geçiyor, sapan yok.**
+
+### 6J.3 Eleme sessiz değil
+
+Doktrin 4 ("çelişki gizlenmez, raporlanır") gereği elenen her hafta sebebi
+ve ayrıntısıyla gövdede döner (`denetim.elenenler`) ve **arayüzde tabloya
+çıkar**. Bugün elenen 5 haftanın hepsi "oran eksik": milli maç araları
+(5·10·15) ve iki kısmi hafta. Bekçiler `tests/test_surpriz.py` içinde;
+`test_birlestirme_tarihle_denetleniyor` numaralar kaydığı an kırılır.
+
+
 ## 7. Kalite güvencesi
 
 ### 7.1 Üretim anında
@@ -1492,7 +1540,7 @@ tablolar (script'in bastığı lig dağılımı) bunu yakalayan şeydi.
 | `test_sportoto_arsiv.py::test_hafta_no_tahmin_edilmez` | Hafta numarası uydurulmaz (doktrin 2) |
 | `test_sportoto_arsiv.py::test_celisen_kapanis_tarihi_raporlanir` | İki uç çelişirse biri sessizce seçilmez (doktrin 4) |
 
-Toplam 113 test bu dört veri setini korur (backend paketi 1.879 test). `python -m spor_toto.health`
+Toplam 113 test bu dört veri setini korur (backend paketi 1.941 test). `python -m spor_toto.health`
 27 değişmez çalıştırır; `oran_arsivi` ve `geri_test` bu katmanı, `tahmin_referanslari`
 tahmin katmanının ölçüm koşumunu korur.
 

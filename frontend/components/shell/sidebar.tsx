@@ -11,6 +11,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Scale,
+  Shuffle,
   Target,
   Trophy,
   Users,
@@ -77,6 +78,16 @@ const GRUPLAR: NavGroup[] = [
         label: "Takımlar",
         hint: "Küçültülmüş takım gücü",
         icon: <Users size={17} />,
+      },
+      {
+        // `/istatistik/surpriz` sekme seridinde de var; burada BIR DE
+        // durmasinin sebebi `/istatistik/geri-test` ile ayni: kendi
+        // sorusu olan bir eksen ("surpriz havuzda ne ediyor") ve sekme
+        // seridi ancak Istatistik'e girmis olani bulur.
+        href: "/istatistik/surpriz",
+        label: "Sürpriz",
+        hint: "Sürprizin havuzdaki karşılığı",
+        icon: <Shuffle size={17} />,
       },
       {
         href: "/istatistik/geri-test",

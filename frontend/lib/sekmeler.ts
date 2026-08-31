@@ -27,6 +27,7 @@ export interface Sekme {
 export const ISTATISTIK_SEKMELERI: Sekme[] = [
   { href: "/istatistik", etiket: "Sezon" },
   { href: "/istatistik/oranlar", etiket: "Oranlar" },
+  { href: "/istatistik/surpriz", etiket: "Sürpriz" },
   { href: "/istatistik/geri-test", etiket: "Geri test" },
 ];
 

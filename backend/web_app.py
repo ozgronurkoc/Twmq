@@ -73,9 +73,11 @@ from spor_toto.payloads import (
     backtest_payload,
     pazar_payload,
     stats_payload,
+    surpriz_payload,
     takimlar_payload,
 )
 from spor_toto.report import basliklar
+from spor_toto.surpriz import sezonlar as surpriz_sezonlari
 
 logger = logging.getLogger(__name__)
 
@@ -708,6 +710,25 @@ def api_pazar():
         return jsonify({"error": str(e)}), 400
 
 
+@app.route("/api/surpriz", methods=["GET"])
+def api_surpriz():
+    """
+    Surpriz ekseni: haftanin surprizi ve onun MUSTEREK havuzdaki karsiligi.
+
+    Uc, "hangi mac surpriz olacak" sorusuna CEVAP VERMEZ — o eksen §5.1'de
+    on bes kez olculdu ve hicbiri gecmedi. Verdigi cevap sudur: surprizli
+    hafta ile favorili hafta arasinda 15 bilen sayisi kac kat ayrisiyor ve
+    kalabalik piyasadan ne kadar sapiyor (`kalabalik.tam.tau`).
+
+    `?sezon=` govdenin HER IKI yarimina birden gecer.
+    """
+    ham = request.args.get("sezon") or None
+    if ham is not None and ham not in surpriz_sezonlari():
+        return jsonify({"error": "bilinmeyen sezon",
+                        "sezonlar": surpriz_sezonlari()}), 400
+    return jsonify(_surpriz_cached(ham))
+
+
 @app.route("/api/takimlar", methods=["GET"])
 def api_takimlar():
     """
@@ -810,6 +831,18 @@ def _backtest_cached(last: int | None, banko: float, uclu: float,
     """
     return backtest_payload(last=last, banko=banko, uclu=uclu, sweep=sweep,
                             sezon=sezon)
+
+
+@lru_cache(maxsize=8)
+def _surpriz_cached(sezon: str | None) -> dict[str, Any]:
+    """Surpriz govdesi istek basina yeniden hesaplanmaz.
+
+    Iki arsiv de surumlenmis dosyalardir; ayni sezon ayni cevabi verir.
+    Bedeli onbelleksiz ~2,2 sn ve neredeyse tamami tau taramasidir:
+    dokuz uyum (tam + sezon disarida + tek sezon), her biri kaba->ince
+    tarama ve iki yonlu ikili arama.
+    """
+    return surpriz_payload(sezon)
 
 
 @app.route("/api/backtest", methods=["GET"])

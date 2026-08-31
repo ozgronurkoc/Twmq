@@ -153,7 +153,7 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/components/super-toto/tahmin2.tsx` | **2. Tahmin** paneli — `1. Tahmin` / `2. Tahmin` sekmeleri arasında geçilir; para birimli hiçbir sayı yok. Hafta kapandığında sonuç sütunu ve ayar karnesi açılır (§3.38) |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **1.879 test**; **85'i** istatistik katmanına (`history` `odds` `backtest`
+paketi toplam **1.941 test**; **85'i** istatistik katmanına (`history` `odds` `backtest`
 `api_stats` `api_backtest` `snapshot_iddaa`), **579'u** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre`
@@ -4097,6 +4097,153 @@ Koşum: `python -m spor_toto.kuyruk` (~70 sn). Ayrıntı ve gerekçeler `spor_to
 docstring'inde.
 
 
+### 3.47 Sürpriz ekseni — piyasayı yenmeden kenar aranan ilk ölçüm
+
+Bu bölümün sorusu kullanıcıdan geldi ve ilk hâli **yanlış eksendeydi**: *"maçların
+diğer oranlarından sürpriz sinyali çıkarabilir miyiz?"* O soru §5.1'de on beş kez
+soruldu ve on beşinde de aynı cevabı aldı — A6 türetilmiş 1X2'yi (−0,000063
+[−0,000287, +0,000155]), A1 çizgi hareketini, A2 bahisçi anlaşmazlığını, T5 formu,
+§3.27–§3.30 Elo/Dixon-Coles/H2H/ağaçları denedi ve hiçbiri kapanış fiyatını geçmedi.
+§3.24'ün öğrenme eğrisi de düzleşti. Yani "hangi maç sürpriz olacak" sorusuna
+elimizdeki veriyle verilecek yeni bir cevap **yok**.
+
+Ama sorunun arkasındaki şikâyet tahmin şikâyeti değildi: *"15 bilsek bile az para
+alıyoruz."* O, bir **havuz** şikâyetidir ve `getiri.py` ayrımı zaten yazmıştı:
+
+    Sabit oranlı :  edge = p_model  − p_piyasa      ← 15 kez ölçüldü, yok
+    Müşterek     :  edge = p_piyasa − oynanma_payı  ← hiç ölçülmemişti
+
+İkincisinde piyasayı yenmek gerekmiyor. Ve §3.34 eksenin tam olarak neye ihtiyaç
+duyduğunu yazmıştı: *"yeni model değil, oynanma paylarının ölçümü."*
+
+#### Engel veriydi ve kalkmıştı — kimse fark etmemişti
+
+`getiri.py` §6.3b'de duruyordu: *"elde 1 haftalık ikramiye kaydı var, güç analizi
+≈71 hafta istiyor."* O cümle yazıldığından beri üç veri seti birbirinden bağımsız
+büyüdü ve **kesişimleri hiç alınmadı**:
+
+| Kaynak | Ne getirdi |
+|---|---|
+| Resmî arşiv (§6D) | 223 ikramiye tablosu — kademe başına kazanan adedi ve kişi başı tutar |
+| Bülten OCR + geçmiş sezon (§6G) | 4 sezon kupon dizisi |
+| Oran arşivi (§3.43) | 4 sezon kapanış fiyatı, favori tanımı |
+
+Üçünün kesişimi **119 hafta**; oran eksikliğiyle 5'i elenince ölçülen kesit
+**114 hafta · 27.040 adet 15 bilen kolon**. `faz_b.py`'nin sayısı yeniden
+koşulmadı ve olduğu gibi bırakıldı (bir ölçüm kaydı sonradan yeniden yazılmaz);
+eksen `surpriz.py` + `kalabalik.py` ile devam etti.
+
+#### Birleştirme numaraya değil TARİHE göre denetleniyor
+
+İki arşivin hafta numaraları ayrı kökenden gelir: resmî `GameRound` ↔
+bülten/football-data. Kaysalardı haftanın ikramiyesi **başka bir haftanın
+sonucuna** yapışır ve hiçbir sayı hata vermezdi — §5.6'daki v1 sıra hatası tam
+olarak böyle aylarca görünmedi, orada da sezon toplamları doğruydu.
+
+Denetim `close_date` üzerinden yapılıyor. Resmî `close_date` kupon kapanışıdır ve
+ölçülmüştür: 2025/26'nın 41 haftasının 41'inde haftanın **ilk** maçının gününe
+eşit. Oran arşivindeki en erken `kickoff` ile arasındaki fark 1 günü geçen hafta
+elenir. Bugün: **119/119 geçiyor, sapan yok.** Elenen 5 haftanın hepsi "oran
+eksik" (milli maç araları 5·10·15 ve iki kısmi hafta) ve elenme gövdede yazılı.
+
+#### Betimleyici sonuç: değişen havuz değil, kaça bölündüğü
+
+| Haftanın sürprizi | Hafta | 15 bilen (ortanca) | 15 kişi başı (ortanca) | 15 kazanansız |
+|---|---:|---:|---:|---:|
+| 0–4 | 21 | **528** | 62.598 TL | 0 |
+| 5–6 | 36 | 18,5 | 2.157.320 TL | 3 |
+| 7–8 | 41 | 2 | 6.767.106 TL | 13 |
+| 9+ | 16 | **0** | 11.088.003 TL | 10 |
+
+15 kademesinin havuzu (kazanan × kişi başı) bantlar arasında aynı büyüklükte
+kalıyor — yani tabloyu yapan şey havuzun büyümesi değil, **paylaşan sayısının
+çökmesi**. Kişi başı tutar nominal TL'dir; ölçekten bağımsız okunacak sütun
+*15 bilen*dir.
+
+Hafta başına favori-dışı sonuç **6,38/15**, gerçek sürpriz **2,73/15**, en temiz
+hafta **2 sürprizli**. Sürpriz bir olay değil bir sabit — bu bir sinyal sorunu
+değil, bir **bütçe** sorunu.
+
+Sıra korelasyonu kalabalığın ne yaptığını doğrudan söylüyor: haftanın sonuç
+dizisinin piyasa altındaki ortalama log-olasılığı ile 15 bilen sayısı arasında
+**ρ = +0,841** (13 ve 12 kademelerinde +0,898 / +0,890). Kalabalık piyasayı
+oynuyor, ve oynadığı şey **oranlardan tahmin edilebilir bir nesne**.
+
+#### Model: `c ∝ p^τ` ve τ'nun ölçümü
+
+    c_i(sembol) ∝ p_i(sembol)^τ        (maç içinde normalize)
+    E[15 bilen] = N_sezon · Π_i c_i(gerçek)
+
+Poisson log-bağ, sezon sabiti kapalı formda, hafta hacmi ofseti `ln(12 kademesi
+havuzu)` — 12 seçildi çünkü hiç kazanansız kalmıyor, yani devir almıyor ve payı
+doğrudan o haftanın satışıyla ölçekleniyor; 15 bunu yapamazdı, devri ölçmek
+istediğimiz şeyin kendisiyle kirlenirdi.
+
+**Aşırı yayılım gizlenmiyor.** Ham Poisson φ ≈ **389** veriyor: bir oyuncu tek
+başına on binlerce kolon oynayabildiği için "kolon" bağımsız bir deneme değil.
+Aralıklar profil olabilirlikte φ ile ölçekleniyor (`Δ(−2ℓ) ≤ 1,92·φ`);
+ölçeklenmeseydi τ'nun aralığı ±0,01 çıkar ve sayı olduğundan kat kat kesin
+görünürdü.
+
+| Kesit | n | τ | %95 aralık (φ ölçekli) |
+|---|---:|---:|---|
+| **Tam** | 114 | **1,282** | **[1,025, 1,558]** |
+| 2022/23 hariç | 97 | 1,268 | [0,987, 1,574] |
+| 2023/24 hariç | 83 | 1,573 | [1,284, 1,883] |
+| 2024/25 hariç | 84 | 1,089 | [0,830, 1,391] |
+| 2025/26 hariç | 78 | 1,304 | [0,990, 1,646] |
+| yalnız 2022/23 | 17 | 1,522 | [1,173, 1,888] |
+| yalnız 2023/24 | 31 | 1,043 | [0,630, 1,586] |
+| yalnız 2024/25 | 30 | 1,795 | [1,310, 2,388] |
+| yalnız 2025/26 | 36 | 1,119 | [0,803, 1,524] |
+
+**Okunacak cümle "τ = 1,28" değil, "τ birden büyük"tür.** Dokuz uyumun dokuzunda
+da nokta tahmini 1'in üstünde — ama **aralığı 1'i geçen yalnızca dördü** ve nokta
+tahmini sezondan sezona 1,04–1,80 arasında geziyor. Deponun diliyle: yön sağlam,
+miktar belirsiz.
+
+Genişletilmiş uyum (τ + beraberlik + deplasman kayması) φ ölçekli olabilirlik
+oranı **7,07** veriyor, χ²₂ eşiği 5,99 — **geçti**. Yani kalabalığın sapması tek
+bir üsle tam açıklanmıyor. Ama nokta tahminleri (τ = 1,52, beraberlik +0,32)
+manşete **girmiyor**: hangi yönde saptığı ayrı bir iddiadır ve sağlaması
+yapılmadı.
+
+#### Para karşılığı — ve ölçülMEYEN
+
+Müşterek havuzda bir işaretin beklenen getirisi `p / c` ile orantılı; iki işaretin
+oranı `(p_h/p_f)^(1−τ)`. Normalizasyon aynı maç içinde bölündüğü için düşer ve
+**isabet kaybı oranın içindedir** (pay `p`'dir).
+
+| Değişim | Prim | τ aralığında | Üç maçta |
+|---|---|---|---|
+| p 0,55 → 0,25 | ×1,249 | [1,020, 1,553] | ×1,948 |
+| p 0,50 → 0,28 | ×1,178 | [1,015, 1,382] | ×1,633 |
+| p 0,45 → 0,30 | ×1,121 | [1,010, 1,254] | ×1,409 |
+| p 0,40 → 0,32 | ×1,065 | [1,006, 1,133] | ×1,208 |
+
+**Bu bir kâr sayısı değildir ve modül bunu iddia etmiyor.** Havuzun satışa oranı
+(RTP) resmî uçta yok — dağıtılan havuzu geri hesaplayabiliyoruz (§6D, `havuz.py`),
+satış hacmini hesaplayamıyoruz. Ölçülen şey iki kupon arasındaki **orandır**:
+"sürpriz kuponu favori kuponundan şu oranda daha iyi öder", "para kazandırır"
+değil. τ = 1 çıksaydı oran tam 1 olurdu ve `test_kalabalik.py` bunu ayrıca
+kilitliyor — işaret ters yazılsaydı araç sürprizden *kaçmayı* önerirdi ve sayılar
+yine makul görünürdü.
+
+#### Ne kilitlendi
+
+`test_surpriz.py` + `test_kalabalik.py`, 40 test. En sert ikisi: **sentetik geri
+kazanım** (bilinen τ ile üretilmiş veriden aynı τ çıkmıyorsa gerçek veriden çıkan
+sayı da bir şey ölçmüyordur — dört τ değerinde ±0,01) ve **tarih denetimi** (hafta
+numaraları kayarsa bekçi kırılır, sayılar sessizce yanlışlanmaz).
+
+#### Sırada ne var
+
+Ölçüm bitti, ürün başlamadı. Bir sonraki adım `getiri.py`'nin bugün **varsayım**
+olan `q`'sunu bu ölçülen kalabalıkla beslemek — §3.34'ün "22 kat" belirsizliği tam
+olarak orada kapanır. Ondan sonra `secim.py`'ye ikinci amaç fonksiyonu
+(`E[pay]` maksimizasyonu) gelebilir. **Kupon B arayüze ancak bu iki adım ölçülüp
+geçtikten sonra çıkar**; bugün çıkan tek şey ölçümün kendisidir.
+
 ## 4. Sayfada bugün ne var
 
 **`/istatistik`** — sezon dağılımı (en sık sonuç + pay çubuğu) · 5 sayı kutusu (sembol
@@ -4240,6 +4387,7 @@ ve karşılıkları: kupon seti 0,5747 → **0,5740**, korpus 0,5940 → **0,593
 | **Müşterek beklenen değer (§3.34)** | 51. hafta · 3.888 kolon · havuz varsayımı | **Ölçüm değil, hesap** — ve sonucu belirleyen tahminci değil kalabalık varsayımı: `orneklem` modelinde getiri oranı **0,156**, `favori` modelinde **0,007** — arada **22 kat**. Havuz büyüklüğü getiriyi hiç belirlemiyor (havuz ve rakip kolon birlikte ölçeklendiğinde eğri tam düz); belirleyen `p_k/q_k` oranı. Bu eksenin ihtiyacı yeni model değil, **oynanma paylarının ölçümü** |
 | **Takım bazlı istatistik (§3.35)** | 31.103 maç · 22 lig · 604 takım | **Yasak kalktı, kural kalmadı.** Ampirik Bayes küçültmesi: ortalama `B` **0,854**, ortalama %95 aralık 0,509. Tek sezona inildiğinde sistem **kendiliğinden temkinli oluyor** — `B` 0,697'ye düşüyor, aralık 0,690'a genişliyor. En çok konuşan satır Scunthorpe: 46 maçta ham 0,565 → küçültülmüş **0,875** [0,58, 1,17] |
 | **Yeni veri (§3.36)** | 768 UEFA maçı · 592 takım şehri · 31.103 maç | **Serinin niteliksel olarak farklı kapanışı.** Eksik veri gerçekten eksikti: UEFA fikstürü eklenince §3.16'nın açıklanamayan anomalisi **+0,0613 → +0,0325**'e indi (kontrol katmanı bit bit aynı kaldı). Ama düzeltilmiş özellik de geçmedi — `kalibre_avrupa` +0,000028 [−0,000277, +0,000352]. Derbi de türetilebilir oldu (667 maç) ve geçmedi (+0,000176). xG ve kadro **kapalı**: biri `robots.txt`, öteki eğitim/servis ayrışması |
+| **Sürpriz ekseni (§3.47)** | 114 hafta · 27.040 kolon | **Piyasayı yenmeden ölçülen ilk kenar.** Kalabalık piyasayı oynuyor (ρ = +0,841) ama ondan **daha keskin**: `c ∝ p^τ`, τ = **1,282** [1,025, 1,558] (φ = 389 ölçekli). Dokuz uyumun dokuzunda τ > 1, **aralığı 1'i geçen dördü**, sezon aralığı 1,04–1,80 — yön sağlam, miktar belirsiz. Prim `(p_h/p_f)^(1−τ)`: p 0,55→0,25 için ×1,25 [1,02, 1,55]. **Mutlak getiri ölçülmedi** (RTP uçta yok) |
 | **Hafta içi bağımlılık (§3.46)** | 183 hafta · 31.103 maç + 114 kupon haftası | **Eksen kapandı — ön kayıtlı kuralla.** Demeanlenmiş artıkların ortalama ikili korelasyonu korpusta **−0,00009 [−0,00102, +0,00080]**, üç kesitte de aralık sıfırı kesiyor. Kuyruğa çevrildiğinde korpus üst sınırında `P(k≥14)` yalnızca **%5** şişiyor (kupon kesiti tek başına %82'ye izin verirdi — sonucu taşıyan korpus). Yan ürün: eski bekçinin istatistiği yanlıştı (`Var(K)` yerine `Var(K−M)`) ve düzeltildi; ham artıklarla görünen `ρ=+0,0077` tamamen **kalibrasyon yanlılığıydı** |
 
 **Okuma.** Aşırı uyum modelin kapasitesinden değil örneklem küçüklüğünden geliyordu; büyük
@@ -5074,7 +5222,7 @@ python -m spor_toto.kosum                  # kayıtlı koşumlar
 python -m spor_toto.kosum --son disari     # son koşumun ortamı
 
 # Denetim
-pytest -q                                  # 1.879 test (85'i bu katman, 567'si tahmin)
+pytest -q                                  # 1.941 test (85'i bu katman, 567'si tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out

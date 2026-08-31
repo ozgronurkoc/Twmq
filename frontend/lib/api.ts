@@ -10,6 +10,7 @@ import type {
   SolveResponse,
   PazarResponse,
   StatsResponse,
+  SurprizResponse,
   TahminResponse,
   TakimlarResponse,
   WeekDetail,
@@ -230,6 +231,18 @@ export function getPazar(
 ) {
   const qs = arindirma ? `?arindirma=${arindirma}` : "";
   return istek<PazarResponse>(`/api/pazar${qs}`, { signal });
+}
+
+/**
+ * Surpriz ekseni: haftanin surprizi ve onun MUSTEREK havuzdaki karsiligi.
+ *
+ * Cevap "hangi mac surpriz olacak" DEMEZ — o eksen depoda on bes kez
+ * olculdu ve hicbiri gecmedi. Soyledigi sey surprizin havuzda ne ettigi
+ * (`olcum`) ve kalabaligin piyasadan ne kadar saptigidir (`kalabalik.tam`).
+ */
+export function getSurpriz(sezon?: string | null, signal?: AbortSignal) {
+  const qs = sezon ? `?sezon=${encodeURIComponent(sezon)}` : "";
+  return istek<SurprizResponse>(`/api/surpriz${qs}`, { signal });
 }
 
 export function getTakimlar(

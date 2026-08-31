@@ -101,6 +101,8 @@ geçerli olduğunu kanıtlar.** 27 değişmez, 6 kategori, her çağrıda yenide
 | Tahmin isabetini ölçer ve hold-out ile aşırı uyumdan ayırır | Ölçülmemiş bir isabet iddiası sunmaz |
 | Hamming yarıçap-1 kaplama kodu üretir | 14-garantiyi olasılıkla "güçlendirmez" |
 | En kötü durumda 14 doğru **garantiler** (küme içinde) | Müşterek beklenen değeri **hesaplar ama arayüze çıkarmaz** — `getiri.py`, [`docs/ISTATISTIK_YOL_HARITASI.md`](docs/ISTATISTIK_YOL_HARITASI.md) §3.34: sayı ölçülmedi (havuz payı, komisyon ve kalabalık modeli varsayım) |
+| Sürprizin **havuzdaki** karşılığını 114 haftada ölçer ve kalabalığın piyasadan sapmasını (τ) aralığıyla verir | **Hangi maçın sürpriz olacağını söylemez** — o eksen §5.1'de on beş kez ölçüldü, hiçbiri kapanış fiyatını geçmedi |
+| τ'yu sezon dışarıda bırakmalı sağlamasıyla birlikte gösterir | Sürpriz priminden **mutlak kâr** çıkarmaz: RTP resmî uçta yok, ölçülen şey iki kupon arasındaki **oran** |
 | Küme dışı senaryoları **fire** olarak ölçer | Kâr vaadi vermez |
 | Exact + Monte Carlo olasılık raporu verir | Canlı bülten çekmez |
 | Bayes (Dirichlet) ile tahminlerini yumuşatır | İddaa geçmiş oranı sunmaz (yok — §5.3) |
@@ -520,6 +522,56 @@ altı sembol. O altı sapmanın piyasa altındaki beklenen neti −0,20 iken gö
 +3; böyle bir netin olasılığı **%5,6**. Bir kupon, görüşü şanstan ayıramaz —
 ayrıntı `docs/ISTATISTIK_YOL_HARITASI.md` §3.39.
 
+**Sürpriz ekseni — üç arşivin kesişimi ilk kez alındı** — `python -m spor_toto.surpriz`
+ve `python -m spor_toto.kalabalik`, arayüzde */istatistik/surpriz*. Oran arşivi,
+kupon dizisi ve **resmî ikramiye tablosu** bugüne kadar hiç birleştirilmemişti;
+kesişimleri **114 hafta** (119 haftadan 5'i oran eksikliğiyle elendi ve elenmesi
+gövdede yazılı). Birleştirme numaraya değil **tarihe** göre denetleniyor: iki
+arşivin hafta numaraları ayrı kökenden gelir ve kaysalardı hiçbir sayı hata
+vermez, sadece hepsi yanlış olurdu (§5.6'daki v1 sıra hatasının aynısı). Bugün
+sapan hafta yok.
+
+Ölçülen ilk şey **betimleyici** ve doğrudan resmî tablodan gelir:
+
+| Haftanın sürprizi | Hafta | 15 bilen (ortanca) | 15 kişi başı (ortanca) | 15 kazanansız |
+|---|---:|---:|---:|---:|
+| 0–4 | 21 | **528** | 62.598 TL | 0 |
+| 5–6 | 36 | 18,5 | 2.157.320 TL | 3 |
+| 7–8 | 41 | 2 | 6.767.106 TL | 13 |
+| 9+ | 16 | **0** | 11.088.003 TL | 10 |
+
+Değişen şey havuz değil, **kaça bölündüğü**: 15 kademesinin havuzu bantlar
+arasında aynı büyüklükte kalıyor. Kişi başı tutar nominal TL'dir ve sezonlar
+arası enflasyon taşır; ölçekten bağımsız okunacak sütun *15 bilen*dir.
+
+Hafta başına favori-dışı sonuç **6,38/15**, gerçek sürpriz **2,73/15** ve
+114 haftanın en temizi **2 sürprizli**. Yani sürpriz bir olay değil bir
+sabittir — bu bir sinyal sorunu değil, bir **bütçe** sorunudur.
+
+**Kalabalık modeli (τ)** — `c ∝ p^τ`, Poisson log-bağ, sezon sabitli, hafta
+hacmi ofsetli, aralıklar aşırı yayılımla (φ = 389) ölçekli:
+
+| Kesit | n | τ | %95 aralık |
+|---|---:|---:|---|
+| **Tam** | 114 | **1,282** | **[1,025, 1,558]** |
+| 2022/23 hariç | 97 | 1,268 | [0,987, 1,574] |
+| 2023/24 hariç | 83 | 1,573 | [1,284, 1,883] |
+| 2024/25 hariç | 84 | 1,089 | [0,830, 1,391] |
+| 2025/26 hariç | 78 | 1,304 | [0,990, 1,646] |
+| tek sezonlar | 17–36 | 1,04 · 1,12 · 1,52 · 1,80 | — |
+
+τ > 1 demek: kalabalık favoriye piyasadan **daha çok** yükleniyor, yani
+sürprizler ucuz. Tam kesitin aralığı 1'i geçiyor ve dokuz uyumun dokuzunda da
+nokta tahmini 1'in üstünde — **ama** aralığı 1'i geçen yalnızca dördü ve
+nokta tahmini sezondan sezona 1,04–1,80 arasında geziyor. Okunacak cümle
+"τ = 1,28" değil, **"τ birden büyük"**tür.
+
+Bunun para karşılığı `prim = (p_sürpriz / p_favori)^(1−τ)` — isabet kaybı
+oranın içindedir: p 0,55 → 0,25 değişimi ×1,25 [1,02, 1,55], üç maçta ×1,95.
+**Bu bir kâr sayısı değildir:** havuzun satışa oranı (RTP) resmî uçta yok, o
+yüzden ölçülen şey mutlak getiri değil **iki kupon arasındaki orandır**.
+Ayrıntı: `docs/ISTATISTIK_YOL_HARITASI.md` §3.47.
+
 **Havuz ekseni (Faz B)** — `python scripts/faz_b.py`. Sorusu kuruldu: *aynı
 tutturma olasılığında az oynanan sembolü işaretlemek kişi başı ikramiyeyi
 büyütüyor mu?* Bu soru **piyasayı geçmeyi gerektirmiyor**, o yüzden A1–A3'ün
@@ -527,6 +579,14 @@ kapattığı arayış bu ekseni kapatmıyor. Bugünkü cevap **ölçülemez**: e
 haftalık ikramiye kaydı var, güç analizi ≈71 ikramiyeli hafta (≈3,5 sezon)
 istiyor. Durma kuralı şimdiden yazılı (`docs/ISTATISTIK_YOL_HARITASI.md`
 §6.3b).
+
+> **Bu paragrafın "ölçülemez"i artık geçerli değil ve sebebi veriydi, model
+> değil.** Yukarıdaki sürpriz ekseni aynı soruyu **114 haftada** sorabildi:
+> resmî arşiv 223 ikramiye tablosu, bülten OCR'ı kupon dizileri ve oran
+> arşivi dört sezon getirdi; üçünün kesişimi güç analizinin istediği 71
+> haftanın üstüne çıktı. `faz_b.py`'nin kendi sayısı **yeniden koşulmadı**
+> ve yukarıdaki hâliyle duruyor — bir ölçüm kaydı sonradan yeniden
+> yazılmaz; eksen `surpriz.py` + `kalabalik.py` ile devam etti.
 
 **"Bu oranda geçmişte ne olmuş?"** — `python -m spor_toto.benzer --oran 1.82,3.04,2.44`
 ya da `GET /api/benzer?oran=1.82,3.04,2.44`. Verilen orana benzeyen geçmiş maçları
@@ -614,6 +674,7 @@ Bugün `match_conflicts` tam olarak bunu yakalar. Vaka analizi:
 | `/` | **Formül** — motorun tamamı |
 | `/istatistik` | **Sezon** — dağılım, seyir, bantlar, adet, ısı haritası, geçiş, uçlar, haftalar |
 | `/istatistik/oranlar` | **Piyasa** — favori kırılımı, banko bantları, çift kapsaması, beraberlik profili, lig kırılımı, kalibrasyon |
+| `/istatistik/surpriz` | **Sürpriz** — sürprizin havuzdaki karşılığı, kalabalık modeli (τ), ödeme primi, birleştirme denetimi |
 | `/istatistik/<hafta>` | Tek hafta detayı + "bu haftayı formüle gönder" |
 | `/pazarlar` | **1X2 dışı pazarlar** — alt/üst 2,5 · Asya handikabı, ölçülmüş kalibrasyonlarıyla |
 | `/takimlar` | **Takım gücü** — küçültülmüş; her satırda maç sayısı, küçültme oranı ve %95 aralık |
@@ -692,6 +753,7 @@ bayrağını rapordan okur — hiçbirini sabit kodlamaz.
 | GET | `/api/stats?last=N` | Tarihsel 1/0/2 + analiz blokları + oran özeti |
 | GET | `/api/stats/<week>` | Tek hafta detayı (komşular, sıra, sapma, maç listesi) |
 | GET | `/api/backtest` | Geri test: sezon, hafta hafta, eşik taraması, hold-out |
+| GET | `/api/surpriz?sezon=` | Sürpriz ekseni: havuzdaki karşılığı (`olcum`) + kalabalık modeli (`kalabalik`) |
 | POST | `/api/solve` | Motorun tamamı |
 
 `/api/backtest` parametreleri: `?banko=` / `?uclu=` (strateji eşikleri), `?last=N`
@@ -709,6 +771,10 @@ bayrağını rapordan okur — hiçbirini sabit kodlamaz.
    `test_api_backtest.py` aynı kuralı geri test için de bekçiye bağlar.
 4. **Geçmişe uydurulan sayı tek başına dönmez.** `/api/backtest` eşik taramasını
    her zaman hold-out ve uyarı metniyle birlikte verir.
+5. **Sürpriz gövdesi iki yarımı ayrılamaz biçimde taşır.** `/api/surpriz`
+   betimleyici bant tablosunu (`olcum`) ve kalabalık modelini (`kalabalik`)
+   birlikte döner; bant tablosu tek başına bir strateji gibi okunurdu, oysa
+   karar τ'nun aralığına bakar ve o aralık geniştir.
 
 Gövde şeması ve alan alan sözleşme:
 [`docs/ARCHITECTURE_NEXT.md`](docs/ARCHITECTURE_NEXT.md).
@@ -936,7 +1002,7 @@ backend/
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
                        sehir/ · xg/
-  tests/               pytest (62 dosya → 1.879 test; §9'da katman dökümü)
+  tests/               pytest (65 dosya → 1.941 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1121,8 +1187,8 @@ Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant'lar, CLI (Bayes pre
 dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri test,
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
-eşleme, ikinci kayıt). **63 test dosyası, parametrizasyonla
-1.879 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+eşleme, ikinci kayıt). **65 test dosyası, parametrizasyonla
+1.941 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
@@ -1140,6 +1206,7 @@ karşı denetler):
 | İddaa hazırlığı | `iddaa_hazirlik` | 24 |
 | Ortak gövde | `ortak` | 25 |
 | Havuz / beklenen değer | `getiri` | 72 |
+| Sürpriz ekseni (havuzdaki karşılığı · kalabalık modeli) | `surpriz` `kalabalik` | 40 |
 | Model kalıcılığı | `artefakt` | 24 |
 | Koşum defteri | `kosum` | 22 |
 | Takım gücü | `takim_gucu` | 21 |
@@ -1155,7 +1222,7 @@ ayrıştırmanın doğruluğu ise arşivin tamamının dayandığı şey.
 
 ```bash
 cd frontend
-npm run check                # eslint + tsc + saf mantık ve sözleşme (53 vaka)
+npm run check                # eslint + tsc + saf mantık ve sözleşme (55 vaka)
 npm run lint                 # yalnızca eslint
 npm run build                # üretim derlemesi
 ```

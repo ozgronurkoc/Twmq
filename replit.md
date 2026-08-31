@@ -72,6 +72,7 @@ yani Run düğmesi tek başına da yeterlidir.
 | `/istatistik/[week]` | Hafta detayı (olasılıkları formül sayfasına devredebilir) |
 | `/pazarlar` | **Alt/üst 2,5 ve Asya handikabı** — fiyat + ölçülmüş kalibrasyon |
 | `/takimlar` | **Küçültülmüş takım gücü** — her satırda maç sayısı, küçültme oranı, %95 aralık |
+| `/istatistik/surpriz` | **Sürpriz** — sürprizin havuzdaki karşılığı + kalabalık modeli (τ); hangi maçın sürpriz olacağını SÖYLEMEZ |
 | `/istatistik/geri-test` | Oranlardan strateji üretip 41 haftayı motorla koşturur |
 | `/saglik` | Kategorili değişmez (invariant) kontrolleri, kısmi çalıştırma |
 
@@ -90,6 +91,7 @@ GET  /api/backtest           geri test (eşik taraması + hold-out)
 GET  /api/tahmin             yaklaşan maçlar + ölçülmüş isabet
 GET  /api/pazar              1X2 disi pazarlar (alt/ust 2,5 · Asya handikabi)
 GET  /api/takimlar           kucultulmus takim gucu (?lig=, ?sezon=)
+GET  /api/surpriz            surpriz ekseni: havuzdaki karsiligi + kalabalik modeli (?sezon=)
 GET  /api/benzer             "bu oranda geçmişte ne oldu" (31 bin maç)
 GET  /                       servis bilgisi + uç envanteri
 POST /api/solve              motorun tamamı
@@ -138,6 +140,12 @@ Katman katman:
 - **Takım** — `takim_gucu.py` (`/api/takimlar`): ampirik Bayes kucultmesi,
   lig icinde; her satirda `n`, `kucultme` ve %95 aralik. §7'nin "takim bazli
   istatistik yok" yasagi buradan kalkti (§3.35)
+- **Sürpriz / kalabalık** — `surpriz.py` (oran arsivi + kupon dizisi + RESMI
+  ikramiye tablosu, kesisim 114 hafta; birlestirme numaraya degil TARIHE gore
+  denetlenir) · `kalabalik.py` (`c ∝ p^τ`, Poisson log-bag, sezon sabitli,
+  asiri yayilimla olcekli aralik; τ = 1,282 [1,025, 1,558]). Ikisi
+  `/api/surpriz` → `/istatistik/surpriz` yolunu izler. **Mutlak getiri
+  olculmedi**: RTP resmi ucta yok (§3.47)
 - **Altyapı** — `kosum.py` (olcum kosum defteri: yedi CLI'da `--kaydet`,
   korpus sha256 + commit + tohum yazilir; defter SURUMLENMEZ) ·
   `artefakt.py` (egitilmis modelin JSON zarfi: korpus sha256 +
@@ -198,7 +206,7 @@ doğrulamadan dosya yazmazlar). Ayrıntı: `docs/VERI_TOPLAMA_VE_ISLEME.md`.
 ```bash
 cd backend
 python -m pytest -m "not slow" -q   # hızlı süit
-python -m pytest                    # tamamı (1.879 test, ILP dahil)
+python -m pytest                    # tamamı (1.941 test, ILP dahil)
 python -m pytest -n0 tests/test_egitim.py   # tek çekirdek (hata ayıklarken)
 cd .. && bash scripts/check.sh      # TEK kapı; CI de bunu çağırır
 ```

@@ -1397,6 +1397,231 @@
    "top": "str",
    "week": "int"
   },
+  "GET /api/surpriz": {
+   "kalabalik": {
+    "denetim": {
+     "elenen": "int",
+     "elenenler": [
+      {
+       "ayrinti": "str",
+       "hafta": "int",
+       "sebep": "str",
+       "sezon": "str"
+      }
+     ],
+     "kesit": "int",
+     "not": "str",
+     "tarih_toleransi_gun": "int"
+    },
+    "genisletilmis": {
+     "beraberlik": "float",
+     "deplasman": "float",
+     "esik_khi2_2": "float",
+     "gecti": "bool",
+     "not": "str",
+     "olabilirlik_orani": "float",
+     "tau": "float"
+    },
+    "kademe": "int",
+    "kesit": "int",
+    "ofset": "bool",
+    "prim": [
+     {
+      "p_favori": "float",
+      "p_surpriz": "float",
+      "prim": "float",
+      "prim_3": "float",
+      "prim_alt": "float",
+      "prim_ust": "float"
+     }
+    ],
+    "saglama": {
+     "aralik_biri_geciyor": "int",
+     "tau_alt": "float",
+     "tau_birden_buyuk": "int",
+     "tau_ust": "float",
+     "uyum": "int"
+    },
+    "sezon": "null",
+    "sezon_disarida": {
+     "2022_23": {
+      "birden_buyuk": "bool",
+      "ga_alt": "float",
+      "ga_ust": "float",
+      "kazanan_kolon": "int",
+      "kenarda": "bool",
+      "n": "int",
+      "phi": "float",
+      "tau": "float"
+     },
+     "2023_24": {
+      "birden_buyuk": "bool",
+      "ga_alt": "float",
+      "ga_ust": "float",
+      "kazanan_kolon": "int",
+      "kenarda": "bool",
+      "n": "int",
+      "phi": "float",
+      "tau": "float"
+     },
+     "2024_25": {
+      "birden_buyuk": "bool",
+      "ga_alt": "float",
+      "ga_ust": "float",
+      "kazanan_kolon": "int",
+      "kenarda": "bool",
+      "n": "int",
+      "phi": "float",
+      "tau": "float"
+     },
+     "2025_26": {
+      "birden_buyuk": "bool",
+      "ga_alt": "float",
+      "ga_ust": "float",
+      "kazanan_kolon": "int",
+      "kenarda": "bool",
+      "n": "int",
+      "phi": "float",
+      "tau": "float"
+     }
+    },
+    "sezonlar": [
+     "str"
+    ],
+    "sinir": "str",
+    "tam": {
+     "birden_buyuk": "bool",
+     "ga_alt": "float",
+     "ga_ust": "float",
+     "kazanan_kolon": "int",
+     "kenarda": "bool",
+     "n": "int",
+     "phi": "float",
+     "tau": "float"
+    },
+    "tek_sezon": {
+     "2022_23": {
+      "birden_buyuk": "bool",
+      "ga_alt": "float",
+      "ga_ust": "float",
+      "kazanan_kolon": "int",
+      "kenarda": "bool",
+      "n": "int",
+      "phi": "float",
+      "tau": "float"
+     },
+     "2023_24": {
+      "birden_buyuk": "bool",
+      "ga_alt": "float",
+      "ga_ust": "float",
+      "kazanan_kolon": "int",
+      "kenarda": "bool",
+      "n": "int",
+      "phi": "float",
+      "tau": "float"
+     },
+     "2024_25": {
+      "birden_buyuk": "bool",
+      "ga_alt": "float",
+      "ga_ust": "float",
+      "kazanan_kolon": "int",
+      "kenarda": "bool",
+      "n": "int",
+      "phi": "float",
+      "tau": "float"
+     },
+     "2025_26": {
+      "birden_buyuk": "bool",
+      "ga_alt": "float",
+      "ga_ust": "float",
+      "kazanan_kolon": "int",
+      "kenarda": "bool",
+      "n": "int",
+      "phi": "float",
+      "tau": "float"
+     }
+    }
+   },
+   "olcum": {
+    "bantlar": [
+     {
+      "havuz_15": "float",
+      "hi": "int",
+      "kazanan_12": "int",
+      "kazanan_15": "int",
+      "kazanansiz_15": "int",
+      "lo": "int",
+      "n": "int",
+      "odul_12": "float",
+      "odul_15": "float",
+      "yeterli": "bool"
+     }
+    ],
+    "dagilim": [
+     {
+      "adet": "int",
+      "hafta": "int"
+     }
+    ],
+    "dagilim_gercek": [
+     {
+      "adet": "int",
+      "hafta": "int"
+     }
+    ],
+    "denetim": {
+     "elenen": "int",
+     "elenenler": [
+      {
+       "ayrinti": "str",
+       "hafta": "int",
+       "sebep": "str",
+       "sezon": "str"
+      }
+     ],
+     "kesit": "int",
+     "not": "str",
+     "tarih_toleransi_gun": "int"
+    },
+    "en_az_surprizli_hafta": "int",
+    "hafta_basi": {
+     "ger_surpriz": "float",
+     "surpriz": "float"
+    },
+    "kesit": "int",
+    "korelasyon": {
+     "ger_surpriz": {
+      "kazanan_12": "float",
+      "kazanan_13": "float",
+      "kazanan_14": "float",
+      "kazanan_15": "float"
+     },
+     "ort_logp": {
+      "kazanan_12": "float",
+      "kazanan_13": "float",
+      "kazanan_14": "float",
+      "kazanan_15": "float"
+     },
+     "surpriz": {
+      "kazanan_12": "float",
+      "kazanan_13": "float",
+      "kazanan_14": "float",
+      "kazanan_15": "float"
+     }
+    },
+    "sezon": "null",
+    "sezonlar": [
+     "str"
+    ],
+    "sinir": "str",
+    "tanim": {
+     "ger_surpriz": "str",
+     "ort_logp": "str",
+     "surpriz": "str"
+    }
+   },
+   "sezon": "null"
+  },
   "GET /api/tahmin": {
    "alternatif_farkli_secim": "int",
    "bos_sebep": "null",

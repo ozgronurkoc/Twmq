@@ -531,6 +531,7 @@ try {
     "GET /api/backtest": "BacktestResponse",
     "GET /api/pazar": "PazarResponse",
     "GET /api/takimlar": "TakimlarResponse",
+    "GET /api/surpriz": "SurprizResponse",
     "GET /api/tahmin": "TahminResponse",
     "GET /api/benzer": "BenzerResponse",
     "POST /api/solve": "SolveResponse",
@@ -598,6 +599,7 @@ try {
     assert.deepEqual(yollar, [
       "/istatistik",
       "/istatistik/oranlar",
+      "/istatistik/surpriz",
       "/istatistik/geri-test",
     ]);
     // Adresler benzersiz olmali: iki sekme ayni yola giderse `usePathname`

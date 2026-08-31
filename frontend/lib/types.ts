@@ -1261,3 +1261,123 @@ export interface PazarResponse {
   /** Kesitin sınırı — arayüzde görünür durur, katlanmaz. */
   sinir: string;
 }
+
+/* ─── Sürpriz ekseni (`/api/surpriz`) ──────────────────────────────────── */
+
+/**
+ * Sürpriz sayısı bandı → havuzun o bantta ne yaptığı.
+ *
+ * `yeterli` false ise **hiçbir sayı gelmez** (opsiyonel alanlar boş): bant
+ * `ASGARI_HAFTA`nın altında ve orada ortanca kendi gürültüsünü ölçer.
+ * Arayüz eksik alanı "0" diye göstermemeli, "az veri" diye göstermeli.
+ */
+export interface SurprizBandi {
+  lo: number;
+  hi: number;
+  n: number;
+  yeterli: boolean;
+  /** Ortanca — ortalama DEĞİL: tek bir favorili hafta ortalamayı belirler. */
+  kazanan_15?: number;
+  kazanan_12?: number;
+  /** Kişi başı ikramiye, **nominal TL** (sezonlar arası enflasyon taşır). */
+  odul_15?: number;
+  odul_12?: number;
+  havuz_15?: number;
+  kazanansiz_15?: number;
+}
+
+export interface SurprizOlcum {
+  kesit: number;
+  sezon: string | null;
+  sezonlar: string[];
+  hafta_basi: { surpriz: number; ger_surpriz: number };
+  en_az_surprizli_hafta: number;
+  dagilim: Array<{ adet: number; hafta: number }>;
+  dagilim_gercek: Array<{ adet: number; hafta: number }>;
+  bantlar: SurprizBandi[];
+  korelasyon: Record<string, Record<string, number | null>>;
+  denetim: {
+    kesit: number;
+    elenen: number;
+    elenenler: Array<{
+      sezon: string; hafta: number; sebep: string; ayrinti: string;
+    }>;
+    tarih_toleransi_gun: number;
+    not: string;
+  };
+  tanim: Record<string, string>;
+  /** Ölçümün sınırı — arayüzde görünür durur, katlanmaz. */
+  sinir: string;
+  error?: string;
+}
+
+/**
+ * Tek bir τ uyumu.
+ *
+ * `birden_buyuk`, `ga_alt > 1` demektir — yani "kalabalık favoriye
+ * piyasadan daha çok yükleniyor" iddiası bu kesitte **aralıkla birlikte**
+ * ayakta. `tau > 1` tek başına bunu söylemez ve arayüz ikisini
+ * karıştırmamalı.
+ */
+export interface TauUyumu {
+  n: number;
+  tau: number;
+  ga_alt: number;
+  ga_ust: number;
+  /** Aşırı yayılım. 1 ise Poisson tutuyor; ~390 ise tutmuyor. */
+  phi: number;
+  birden_buyuk: boolean;
+  /** Arama penceresine dayandıysa sayı ölçüm değil kırpmadır. */
+  kenarda: boolean;
+  kazanan_kolon: number;
+}
+
+export interface SurprizKalabalik {
+  kesit: number;
+  sezon: string | null;
+  sezonlar: string[];
+  ofset: boolean;
+  kademe: number;
+  tam: TauUyumu;
+  sezon_disarida: Record<string, TauUyumu>;
+  tek_sezon: Record<string, TauUyumu>;
+  genisletilmis: {
+    tau: number;
+    beraberlik: number;
+    deplasman: number;
+    olabilirlik_orani: number;
+    esik_khi2_2: number;
+    gecti: boolean;
+    not: string;
+  };
+  saglama: {
+    uyum: number;
+    tau_birden_buyuk: number;
+    aralik_biri_geciyor: number;
+    tau_alt: number;
+    tau_ust: number;
+  };
+  prim: Array<{
+    p_favori: number;
+    p_surpriz: number;
+    prim: number;
+    prim_3: number;
+    /** Prim τ ile artar: `prim_alt` τ'nun ALT ucundan gelir. */
+    prim_alt: number;
+    prim_ust: number;
+  }>;
+  denetim: SurprizOlcum["denetim"];
+  sinir: string;
+  error?: string;
+}
+
+/**
+ * İki yarım **ayrılamaz** biçimde birlikte gelir. `olcum`un bant tablosu
+ * tek başına bir strateji gibi görünür; oradan bir karar çıkmaz — kararı
+ * veren şey `kalabalik.tam.birden_buyuk`tur ve onun aralığı geniştir.
+ */
+export interface SurprizResponse {
+  olcum: SurprizOlcum;
+  kalabalik: SurprizKalabalik;
+  sezon: string | null;
+}
