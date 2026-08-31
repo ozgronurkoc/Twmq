@@ -130,6 +130,46 @@ kapatıldı:
    `kosumlar/` bilerek dışarıda: boru hattı değil, `--kaydet` ile biriken yerel
    defter — geçmiş ölçüm koşumları yeniden üretilemez.
 
+## Graphify ile karşılaştırma (aynı soru, aynı cetvel)
+
+`graphify` 0.9.53 kuruldu (`uv tool install graphifyy`) ve `graphify update .`
+ile çalıştırıldı: **19,6 sn**, 363 dosya, 8.773 düğüm, 18.366 kenar, 343
+topluluk. Aracın kendi raporu **"Token cost: 0 input · 0 output"** diyor ve bu
+doğrulandı — çıkarım saf AST (tree-sitter), LLM çağırmıyor.
+
+| Soru | Grafik yok | Bu depo (elle) | Bu depo (hook) | Graphify |
+|---|---:|---:|---:|---:|
+| Geniş (51 modül + `check.sh`) | 26.020 | 2.920 | 3.036 | **2.158** |
+| Hedefli (tek modül) | — | 168 | 202 | **2.231** |
+
+**Yalnız token sayarsan Graphify kazanıyor** (26.020 → 2.158, %91,7). Ama sayı
+tek başına yanıltıcı ve bu, kütüğün baştan beri uyardığı tuzağın ta kendisi:
+
+* Geniş soruda dönen şey bir *cevap* değil, **kesilmiş bir düğüm listesi**
+  (645 düğümün 58'i) — içinde `frontend/package.json`, `token-optimizer`
+  betikleri gibi soruyla ilgisiz düğümler var. "Her modül ne yapıyor" ve
+  "`check.sh` hangi kontrolleri koşuyor" sorularının ikisi de cevapsız kaldı.
+* Hedefli soruda (`kalibrasyon modülü ne yapıyor?`) **yanlış düğümler** döndü:
+  `test_getiri.py`, `FORMUL_GELISTIRME_RAPORU.md` bölümleri, xG belgesi —
+  `backend/spor_toto/kalibrasyon.py` listede **yok**. Bu depodaki graf aynı
+  soruya 202 token'da doğru üç modülü verdi.
+
+**Bu karşılaştırma eksiktir ve öyle sayılmalıdır.** `graphify update` aracın
+yalnızca LLM'siz yarısıdır; `graphify extract` semantik geçişi bir API anahtarı
+ister ve bu ortamda anahtar yoktu. Aracın kendi çıktısı da bunu söylüyor:
+"set GEMINI_API_KEY … to use Gemini for semantic extraction". Semantik geçişle
+`query` sonuçları belirgin biçimde daha iyi olabilir — **ölçmedim, dolayısıyla
+iddia etmiyorum.**
+
+Graphify'ın gerçekten iyi olduğu yer başka bir soru sınıfı: yapısal bağımlılık.
+`graphify explain "health.py"` 607 token'da modülün 101 bağlantısını
+(imports / imported-by, satır numaralarıyla) veriyor — bu depodaki graf bunu
+hiç yapmıyor. İki araç aynı işi yapmıyor.
+
+**Uyarı:** `graphify-out/` **25 MB** ve içindeki `GRAPH_REPORT.md` tek başına
+**~37.500 token**. Tamamı okunursa kazanç değil kayıp olur. `.gitignore`'a
+eklendi (türetilmiş çıktı sürümlenmez).
+
 ## Grafı ne zaman yeniden çıkarmalı
 
 Ölçüt **zaman değil, dosyanın değişip değişmediğidir**

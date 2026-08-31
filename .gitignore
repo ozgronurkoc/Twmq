@@ -97,3 +97,10 @@ backend/data/st_history/_kaynak/
 # Yeniden olusturmak icin: skill'deki tarifler
 # (`.claude/skills/knowledge-graph/references/sorgular.md`).
 .claude/bilgi_grafi.json
+
+# Graphify ciktisi (`graphify update .`). ~25 MB, TURETILMIS ve tamami
+# yeniden uretilebilir — deponun "turetilmis cikti surumlenmez" kuralina
+# girer. Icinde graph.json (8.773 dugum), graph.html ve GRAPH_REPORT.md
+# (~37.500 token — TAMAMINI OKUMA) var.
+# Yeniden olusturmak icin: graphify update .
+graphify-out/
