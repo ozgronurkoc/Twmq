@@ -75,3 +75,37 @@ python3 .claude/graf_sorgu.py komut check
 python3 .claude/graf_sorgu.py ozet
 python3 .claude/graf_sorgu.py tazelik      # bayat girdi 0 olmalı
 ```
+
+---
+
+## Grafı ne zaman yeniden çıkarmalı
+
+Ölçüt **zaman değil, dosyanın değişip değişmediğidir**
+(`.claude/skills/knowledge-graph/references/sinirlar.md`): hash tutuyorsa altı
+ay önceki girdi geçerlidir, tutmuyorsa dünkü girdi geçersizdir.
+
+**Önce her zaman bunu koş — kararı o versin:**
+```bash
+python3 .claude/graf_sorgu.py tazelik
+```
+`bayat girdi: 0` ise yapacak bir şey yok. Değilse aşağıya bak.
+
+| Ne olduysa | Ne yapmalı |
+|---|---|
+| `tazelik` **DEGISTI** diyor | Yalnızca o girdiyi yeniden ölç. Tamamını üretme. |
+| `tazelik` **DOSYA YOK** diyor | Girdiyi **sil**. Taşındıysa yeni yolla yeniden yaz. |
+| `backend/spor_toto/` altına modül eklendi/silindi | `moduller` bölümünü yeniden üret. |
+| `test_belgeler.py` bekçisi eklendi/değişti | `kapilar` bölümünü yeniden üret. |
+| `.gitignore` boru hattı yorumları değişti | `boru_hatlari` bölümünü yeniden üret. |
+| Bir sayı değişti (test, kontrol, metrik) | `sayilar` girdisini yeniden ölç **ve** `anildigi_yerler`i `grep` ile doğrula — asıl pahalı hata bu listenin eksik kalmasıdır. |
+| Dal değiştirdin ya da büyük birleştirme geldi | `tazelik` koş; `bayat girdi: 0` ise dokunma. |
+| Üzerinden zaman geçti, kod değişmedi | **Hiçbir şey.** Zaman tek başına hiçbir girdiyi yanlışlamaz. |
+
+**Sıfırdan üretmek** yalnızca şema sürümü değiştiğinde ya da graf bozulduğunda
+gerekir. O zaman dosya **silinir** ve göç yazılmaz — defter yerel ve tamamen
+yeniden üretilebilir (`references/schema.md`).
+
+**Bir uyarı:** bu grafın CI bekçisi **yok**. `tazelik` elle çağrılır; kimse
+çağırmazsa graf sessizce bayatlar. Git dışı olmasının sebebi tam olarak budur —
+bayat bir defter yalnızca onu yazan makineyi yanıltır, `git pull` yapan
+herkesi değil.
