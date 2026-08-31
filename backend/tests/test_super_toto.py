@@ -465,20 +465,28 @@ def fazb():
     return importlib.import_module("scripts.faz_b")
 
 
-def test_fazb_bugun_olculemez_der(fazb):
-    """Durma kuralının 1. şıkkı: birkaç gözlemle bağıntı ölçülmez.
+def test_fazb_gucu_yetmeden_olculebilir_demez(fazb):
+    """Durma kuralı: güç yetmedikçe eksen "ölçülebilir" ilan edilmez.
 
-    Hafta sayısı testte SABİT değil: 2. haftanın ikramiye tablosu girilince
-    sayı 1'den 2'ye çıktı ve testin ilk sürümü kırıldı. Korunacak şey sayı
-    değil kuraldır — güç analizi ~71 ikramiyeli hafta istiyor; o eşiğin
-    altında durum "ölçülemez" kalmalı.
+    Test iki kez kırıldı ve ikisinde de kırılan şey testin SABİTİYDİ,
+    kural değil. Önce hafta sayısı sabitti (1 → 2). Sonra durum etiketi
+    sabitlendi (`== "olculemez"`); 3. haftanın ikramiye tablosu girilince
+    ikramiyeli hafta 3'e çıktı ve `faz_b` doğru davranarak
+    "acik ama olculmemis" demeye başladı — yani **doğru davranış testi
+    kırdı**. Bu, 2. haftanın "bugünkü durumu kalıcı sanmak" kalıbının
+    üçüncü örneğiydi (docs §3.38).
+
+    Korunan kural: `guc.yeterli` false olduğu sürece durum
+    "olculebilir" OLAMAZ. Etiketin hangi ara kademede olduğu (hiç kayıt
+    yok / bağıntıya bakılamaz / açık ama ölçülmemiş) haftaların sayısıyla
+    değişir ve testin işi değildir.
     """
     o = fazb.rapor("2026_27")
     ikramiyeli = sum(1 for h in fazb.elde_ne_var("2026_27")["haftalar"]
                      if h["ikramiye_var"])
     assert o["ikramiyeli_hafta"] == ikramiyeli
-    assert o["durum"] == "olculemez"
     assert o["guc"]["yeterli"] is False
+    assert o["durum"] != "olculebilir"
 
 
 def test_fazb_bos_kademeyi_secmez(fazb):

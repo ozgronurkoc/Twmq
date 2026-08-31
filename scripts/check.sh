@@ -93,14 +93,36 @@ PROBS="1:0.5,0:0.3,2:0.2;1:0.4,0:0.4,2:0.2;1:0.6,0:0.2,2:0.2;1:0.5,0:0.25,2:0.25
 # JSON çıktısı ayrıca ayrıştırılır — sıfır çıkış kodu tek başına yeterli
 # değil, bozuk JSON da sıfırla dönebilir.
 baslik "Süper Toto boru hattı dumanı"
-for h in 1 2; do
+# Haftalar SABIT YAZILMAZ. Once "for h in 1 2" yaziyordu ve 3. hafta
+# girildiginde kapi ona hic bakmadi — kapinin sessizce kuculmesi, tam olarak
+# yakalamasi gereken sey. Liste artik diskteki hafta dosyalarindan cikiyor.
+HAFTALAR=$("$PY" -c "
+from pathlib import Path
+import re
+d = Path('data/super_toto/2026_27')
+print(' '.join(sorted(str(int(re.findall(r'hafta_(\\d+)\\.json', f.name)[0]))
+                      for f in d.glob('hafta_[0-9][0-9].json'))))")
+echo "   haftalar: $HAFTALAR"
+for h in $HAFTALAR; do
   "$PY" scripts/super_toto_hafta.py --hafta "$h" --json \
     | "$PY" -c "import json,sys; d=json.load(sys.stdin); \
         assert len(d['profile']['rows'])==15; assert d['coupons'][0]['picks']"
 done
-"$PY" scripts/super_toto_degerlendir.py --hafta 1 --json \
-  | "$PY" -c "import json,sys; d=json.load(sys.stdin); \
-      assert len(d['results'])==15; assert abs(sum(d['coupons'][0]['dist'])-1) < 1e-9"
+# Sonucu girilmis HER hafta degerlendirilir; liste yine diskten gelir.
+SONUCLU=$("$PY" -c "
+import json
+from pathlib import Path
+out = []
+for f in sorted(Path('data/super_toto/2026_27').glob('hafta_[0-9][0-9].json')):
+    if json.loads(f.read_text(encoding='utf-8'))['meta'].get('results'):
+        out.append(str(int(f.stem.split('_')[1])))
+print(' '.join(out))")
+echo "   sonuclu haftalar: $SONUCLU"
+for h in $SONUCLU; do
+  "$PY" scripts/super_toto_degerlendir.py --hafta "$h" --json \
+    | "$PY" -c "import json,sys; d=json.load(sys.stdin); \
+        assert len(d['results'])==15; assert abs(sum(d['coupons'][0]['dist'])-1) < 1e-9"
+done
 
 # 2. Tahmin: ikinci kayit da ayni boru hattinin parcasi. Ayarli plan tabanla
 # AYNI bedelde olmali — degilse "ayar bedava" cumlesi yalan olur.
@@ -124,7 +146,7 @@ done
 
 # Hafta raporu sayfasi: kapida hic kosmuyordu ve tam bu yuzden sessizce
 # kirildi (sonucu girilmis ama ikramiyesi girilmemis haftada KeyError).
-for h in 1 2; do
+for h in $HAFTALAR; do
   "$PY" scripts/super_toto_sayfa.py --hafta "$h" --cikti "$(mktemp -u).html" >/dev/null
 done
 

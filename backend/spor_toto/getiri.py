@@ -83,8 +83,8 @@ KADEMELER: tuple[int, ...] = (14, 13, 12)
 #: Havuzun kademelere dağılımı — **artık varsayım değil, ÖLÇÜM.**
 #:
 #: Önce `{14: 0.55, 13: 0.25, 12: 0.20}` yazıyordu ve başlığında "varsayım,
-#: ölçüm değil; elde henüz bir haftalık kayıt var" diyordu. İki haftanın
-#: ikramiye ekranı girilince oran **kuruşuna kadar** çıktı ve iki haftada
+#: ölçüm değil; elde henüz bir haftalık kayıt var" diyordu. Üç haftanın
+#: ikramiye ekranı girilince oran **kuruşuna kadar** çıktı ve üç haftada
 #: birebir aynı:
 #:
 #:     kademe havuzu = kazanan kolon × kolon başına ödül
@@ -93,8 +93,13 @@ KADEMELER: tuple[int, ...] = (14, 13, 12)
 #:               13: 17.228.217,30 · 12: 21.535.245,96
 #:     hafta 2:  15: 42.842.867,72 (+ 30.149.380,57 devir) · 14: 24.481.638,39
 #:               13: 24.481.619,77 · 12: 30.601.899,20
+#:     hafta 3:  15: 38.356.803,63 (devir YOK) · 14: 21.918.171,76
+#:               13: 21.918.168,00 · 12: 27.397.501,56
 #:
-#: 14'e bölününce iki haftada da **1,75 : 1 : 1 : 1,25** çıkıyor, yani
+#: 3. hafta, oranın **devir düzeltmesi yapılmadan** doğrulandığı ilk hafta:
+#: 15 bileni çıktığı için devreden pay yok ve tablo ham hâliyle okunuyor.
+#:
+#: 14'e bölününce üç haftada da **1,75 : 1 : 1 : 1,25** çıkıyor, yani
 #: dağıtılan havuzun %35 / %20 / %20 / %25'i. Ölçüm `OLCULEN_PAY`de tam
 #: hâliyle durur; `VARSAYILAN_PAY` onun bu modülün kademelerine (14-13-12)
 #: düşen, 1'e normalize edilmiş dilimidir.
@@ -105,8 +110,9 @@ OLCULEN_PAY: dict[int, float] = {15: 0.35, 14: 0.20, 13: 0.20, 12: 0.25}
 
 #: Ölçümün kaynağı — sayı kadar önemli, çünkü bu satır olmadan yukarıdaki
 #: oran bir daha "varsayım mı ölçüm mü" diye sorulur.
-PAY_KAYNAGI = ("2026/27 1. ve 2. hafta resmî ikramiye ekranları; iki hafta "
-               "da 1,75:1:1:1,25 veriyor (docs §3.40)")
+PAY_KAYNAGI = ("2026/27 1., 2. ve 3. hafta resmî ikramiye ekranları; üç "
+               "hafta da 1,75:1:1:1,25 veriyor — 3. hafta devirsiz "
+               "(docs §3.40, §3.47)")
 
 VARSAYILAN_PAY: dict[int, float] = {
     k: OLCULEN_PAY[k] / sum(OLCULEN_PAY[x] for x in KADEMELER)

@@ -2497,7 +2497,7 @@
    "week": 2
   },
   {
-   "close_date": null,
+   "close_date": "2026-08-28",
    "coupon": {
     "arindirma": "shin",
     "banko_esik": null,
@@ -2722,10 +2722,10 @@
    "matches": [
     {
      "away": "Erzurumspor FK",
-     "date": null,
+     "date": "2026-08-28",
      "fav": "1",
      "home": "Gençlerbirliği",
-     "kickoff": null,
+     "kickoff": "21:30",
      "league": "T1",
      "margin": 0.0402,
      "no": 1,
@@ -2745,14 +2745,14 @@
       "1": 0.5004,
       "2": 0.2345
      },
-     "result": null
+     "result": "0"
     },
     {
      "away": "Kocaelispor",
-     "date": null,
+     "date": "2026-08-29",
      "fav": "1",
      "home": "Konyaspor",
-     "kickoff": null,
+     "kickoff": "19:00",
      "league": "T1",
      "margin": 0.0516,
      "no": 2,
@@ -2772,14 +2772,14 @@
       "1": 0.4859,
       "2": 0.2424
      },
-     "result": null
+     "result": "2"
     },
     {
      "away": "Göztepe A.Ş.",
-     "date": null,
+     "date": "2026-08-29",
      "fav": "1",
      "home": "Galatasaray A.Ş.",
-     "kickoff": null,
+     "kickoff": "21:30",
      "league": "T1",
      "margin": 0.0629,
      "no": 3,
@@ -2799,14 +2799,14 @@
       "1": 0.6878,
       "2": 0.1227
      },
-     "result": null
+     "result": "1"
     },
     {
      "away": "Çaykur Rizespor A.Ş.",
-     "date": null,
+     "date": "2026-08-29",
      "fav": "1",
      "home": "Gaziantep F.K. A.Ş.",
-     "kickoff": null,
+     "kickoff": "21:30",
      "league": "T1",
      "margin": 0.0501,
      "no": 4,
@@ -2826,14 +2826,14 @@
       "1": 0.3811,
       "2": 0.3507
      },
-     "result": null
+     "result": "2"
     },
     {
      "away": "Alanyaspor",
-     "date": null,
+     "date": "2026-08-30",
      "fav": "2",
      "home": "Eyüpspor",
-     "kickoff": null,
+     "kickoff": "19:00",
      "league": "T1",
      "margin": 0.0486,
      "no": 5,
@@ -2853,14 +2853,14 @@
       "1": 0.2977,
       "2": 0.4084
      },
-     "result": null
+     "result": "1"
     },
     {
      "away": "Kasımpaşa A.Ş.",
-     "date": null,
+     "date": "2026-08-30",
      "fav": "1",
      "home": "Başakşehir FK",
-     "kickoff": null,
+     "kickoff": "21:30",
      "league": "T1",
      "margin": 0.0567,
      "no": 6,
@@ -2880,14 +2880,14 @@
       "1": 0.573,
       "2": 0.1914
      },
-     "result": null
+     "result": "0"
     },
     {
      "away": "Fenerbahçe A.Ş.",
-     "date": null,
+     "date": "2026-08-30",
      "fav": "2",
      "home": "Samsunspor A.Ş.",
-     "kickoff": null,
+     "kickoff": "21:30",
      "league": "T1",
      "margin": 0.057,
      "no": 7,
@@ -2907,14 +2907,14 @@
       "1": 0.1804,
       "2": 0.5984
      },
-     "result": null
+     "result": "2"
     },
     {
      "away": "Trabzonspor A.Ş.",
-     "date": null,
+     "date": "2026-08-31",
      "fav": "2",
      "home": "Amed Sportif",
-     "kickoff": null,
+     "kickoff": "21:30",
      "league": "T1",
      "margin": 0.0511,
      "no": 8,
@@ -2934,14 +2934,14 @@
       "1": 0.2719,
       "2": 0.4738
      },
-     "result": null
+     "result": "1"
     },
     {
      "away": "Çorum FK",
-     "date": null,
+     "date": "2026-08-31",
      "fav": "1",
      "home": "Beşiktaş A.Ş.",
-     "kickoff": null,
+     "kickoff": "21:30",
      "league": "T1",
      "margin": 0.0604,
      "no": 9,
@@ -2961,14 +2961,14 @@
       "1": 0.6741,
       "2": 0.1253
      },
-     "result": null
+     "result": "1"
     },
     {
      "away": "Hamburger SV",
-     "date": null,
+     "date": "2026-08-29",
      "fav": "1",
      "home": "B. Dortmund",
-     "kickoff": null,
+     "kickoff": "19:30",
      "league": "D1",
      "margin": 0.039,
      "no": 10,
@@ -2988,14 +2988,14 @@
       "1": 0.7406,
       "2": 0.1007
      },
-     "result": null
+     "result": "1"
     },
     {
      "away": "PSG",
-     "date": null,
+     "date": "2026-08-28",
      "fav": "2",
      "home": "Lille",
-     "kickoff": null,
+     "kickoff": "21:45",
      "league": "F1",
      "margin": 0.0364,
      "no": 11,
@@ -3015,14 +3015,14 @@
       "1": 0.2041,
       "2": 0.5541
      },
-     "result": null
+     "result": "0"
     },
     {
      "away": "Marsilya",
-     "date": null,
+     "date": "2026-08-30",
      "fav": "1",
      "home": "Monaco",
-     "kickoff": null,
+     "kickoff": "21:45",
      "league": "F1",
      "margin": 0.034,
      "no": 12,
@@ -3042,14 +3042,14 @@
       "1": 0.3963,
       "2": 0.347
      },
-     "result": null
+     "result": "1"
     },
     {
      "away": "Newcastle United",
-     "date": null,
+     "date": "2026-08-29",
      "fav": "1",
      "home": "Tottenham",
-     "kickoff": null,
+     "kickoff": "19:30",
      "league": "E0",
      "margin": 0.033,
      "no": 13,
@@ -3069,14 +3069,14 @@
       "1": 0.423,
       "2": 0.3269
      },
-     "result": null
+     "result": "2"
     },
     {
      "away": "Atletico Madrid",
-     "date": null,
+     "date": "2026-08-29",
      "fav": "2",
      "home": "Sevilla",
-     "kickoff": null,
+     "kickoff": "22:30",
      "league": "SP1",
      "margin": 0.0343,
      "no": 14,
@@ -3096,14 +3096,14 @@
       "1": 0.2685,
       "2": 0.4527
      },
-     "result": null
+     "result": "2"
     },
     {
      "away": "Inter",
-     "date": null,
+     "date": "2026-08-30",
      "fav": "2",
      "home": "Cagliari",
-     "kickoff": null,
+     "kickoff": "21:45",
      "league": "I1",
      "margin": 0.0389,
      "no": 15,
@@ -3123,7 +3123,7 @@
       "1": 0.1158,
       "2": 0.6782
      },
-     "result": null
+     "result": "2"
     }
    ],
    "odds_kind": "pinnacle-kapanis",
@@ -3502,18 +3502,176 @@
      ]
     }
    },
-   "program": null,
-   "results": null,
-   "sonuc": null,
+   "program": "28.08.2026 - 31.08.2026",
+   "results": "021210211101222",
+   "sonuc": {
+    "kalabalik": {
+     "beklenen_halk_dogru": 6.549999999999999,
+     "beklenen_piyasa_dogru": 6.460201358843372,
+     "halk_dogru": 7,
+     "halk_kuponu": "111021221121122",
+     "piyasa_dogru": 7,
+     "piyasa_kuponu": "111121221121122"
+    },
+    "kayitlar": [
+     {
+      "ad": "1. Tahmin",
+      "best": 14,
+      "expected_misses": 3.0331,
+      "miss_count": 1,
+      "misses": [
+       2
+      ],
+      "p_at_least_actual": 0.970387,
+      "p_in_set": 0.029613,
+      "per_match": [
+       {
+        "gercek": "0",
+        "no": 1,
+        "pick": "10",
+        "tuttu": true
+       },
+       {
+        "gercek": "2",
+        "no": 2,
+        "pick": "10",
+        "tuttu": false
+       },
+       {
+        "gercek": "1",
+        "no": 3,
+        "pick": "1",
+        "tuttu": true
+       },
+       {
+        "gercek": "2",
+        "no": 4,
+        "pick": "102",
+        "tuttu": true
+       },
+       {
+        "gercek": "1",
+        "no": 5,
+        "pick": "102",
+        "tuttu": true
+       },
+       {
+        "gercek": "0",
+        "no": 6,
+        "pick": "10",
+        "tuttu": true
+       },
+       {
+        "gercek": "2",
+        "no": 7,
+        "pick": "02",
+        "tuttu": true
+       },
+       {
+        "gercek": "1",
+        "no": 8,
+        "pick": "12",
+        "tuttu": true
+       },
+       {
+        "gercek": "1",
+        "no": 9,
+        "pick": "1",
+        "tuttu": true
+       },
+       {
+        "gercek": "1",
+        "no": 10,
+        "pick": "1",
+        "tuttu": true
+       },
+       {
+        "gercek": "0",
+        "no": 11,
+        "pick": "02",
+        "tuttu": true
+       },
+       {
+        "gercek": "1",
+        "no": 12,
+        "pick": "12",
+        "tuttu": true
+       },
+       {
+        "gercek": "2",
+        "no": 13,
+        "pick": "12",
+        "tuttu": true
+       },
+       {
+        "gercek": "2",
+        "no": 14,
+        "pick": "102",
+        "tuttu": true
+       },
+       {
+        "gercek": "2",
+        "no": 15,
+        "pick": "2",
+        "tuttu": true
+       }
+      ],
+      "picks": [
+       "10",
+       "10",
+       "1",
+       "102",
+       "102",
+       "10",
+       "02",
+       "12",
+       "1",
+       "1",
+       "02",
+       "12",
+       "12",
+       "102",
+       "2"
+      ]
+     }
+    ],
+    "note": "Bu sekmedeki her sayı sonuçlar görüldükten SONRA hesaplandı. Tahmin sekmeleri onu görmez ve değişmez.",
+    "payout": [
+     {
+      "correct": 15,
+      "prize": 4261867.07,
+      "winners": 9
+     },
+     {
+      "correct": 14,
+      "prize": 116586.02,
+      "winners": 188
+     },
+     {
+      "correct": 13,
+      "prize": 8629.2,
+      "winners": 2540
+     },
+     {
+      "correct": 12,
+      "prize": 1229.58,
+      "winners": 22282
+     }
+    ],
+    "payout_source": "Spor Toto İkramiye Bilgileri ekranı — kullanıcı ekran görüntüsü (2026-09-01 00:21)",
+    "results": "021210211101222",
+    "results_entered_at": null,
+    "results_source": "Nesine Spor Toto resmî sonuç ekranı — kullanıcı ekran görüntüsü (2026-09-01 00:21)"
+   },
    "tahmin2": null,
    "warnings_generated": [
     "nesine_kapanis: 6 maçta kapanış açılışla BİREBİR aynı (maçlar: 10, 11, 12, 13, 14, 15) — bu bir fiyat değil, tazelenmemiş kayıttır; o satırlarda ayrışma görüş farkı değil kayıt farkıdır"
    ],
    "warnings_manual": [
-    "Program tarihleri ve maç saatleri GİRİLMEDİ (kullanıcı vermedi). Uydurulmadı; `date`/`kickoff` boş bırakıldı. Kupon kapanış anını belgeleyen tek alan `entered_at`tır.",
+    "Program tarihleri ve maç saatleri kupon kurulurken GİRİLMEMİŞTİ; sonuç ekranıyla birlikte (2026-09-01) girildi. Kupon dondurulurken elde olan tek zaman damgası `entered_at`tır (2026-08-27).",
     "Nesine'nin KAPANIŞ oranı 10–15. maçlarda AÇILIŞIYLA BİREBİR AYNI (maçlar: 10, 11, 12, 13, 14, 15). Bu bir fiyat değil, bayat bir kayıttır: o satırlarda Nesine kapanışı bilgi taşımıyor. Bahisçi ayrışmasının en büyük üçü (13. maç 7,9 puan, 12. maç 7,0 puan, 11. maç 6,4 puan) tam olarak bu bayat satırlardan geliyor — yani ayrışma görüş farkı değil, kayıt farkıdır.",
     "12. maç (Monaco–Marsilya): Nesine beraberliği 2.49'a veriyor; Pinnacle 3.74, bet365 3.70. Arındırılmış beraberlik olasılığı Nesine'de %32, ötekilerde %25–26. Marj Nesine'nin kendi bandında (%23,4) olduğu için otomatik denetim bunu yakalamaz; satır KUŞKULU olarak işaretlendi ve ana fiyata girmedi.",
-    "Kapanış oranlarının tamamı kupon donarken elde miydi, doğrulanmadı. Spor Toto kuponu ilk maçtan önce kapanır; haftanın SON maçlarının kapanış çizgisi o anda normalde HENÜZ YOKTUR (bkz. scripts/acilis_kapanis.py başlığı). Bu yüzden Pinnacle AÇILIŞ fiyatıyla kurulan kupon da aynı kayda `duyarlilik` olarak konuldu: açılış, kupon anında kesinlikle elde olan fiyattır."
+    "`odds_kind` FAZLA ETİKETLİ. Tarihler girilince görüldü: bütün oranlar 2026-08-27'de kaydedildi (`entered_at`), maçlar 28-31.08'de oynandı — yani HİÇBİR maçın gerçek kapanış çizgisi kayıtta yok. `pinnacle_kapanis` aslında 27.08 anlık kaydıdır; ilk maça 1 gün, son maçlara 4 gün kalmıştı. Bu bir sızıntı DEĞİLDİR (fiyatların ikisi de kupon donarken eldeydi), ama geri testin gerekçesi doğrudan devredilemez: arşivde ölçülen şey GERÇEK kapanıştı, burada ölçülen şey `iki anlık kayıttan geç olanı`. Sonuçlar geç olanı doğruladı (Brier 0,5645 → 0,5544; gerçekleşen getiride ×11), ama tek hafta ve 15 maçtır."
    ],
    "week": 3
   }

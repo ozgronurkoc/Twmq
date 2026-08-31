@@ -4097,6 +4097,293 @@ Koşum: `python -m spor_toto.kuyruk` (~70 sn). Ayrıntı ve gerekçeler `spor_to
 docstring'inde.
 
 
+### 3.47 3. haftanın sonucu — 14/15, ve haftayı kazandıran şey işaret değil fiyattı
+
+Sonuç dizisi, skorlar, program tarihleri ve ikramiye ekranı birlikte girildi
+(2. haftanın "üç şeyi birlikte gir" dersi bu hafta uygulandı):
+**0 2 1 2 1 0 2 1 1 1 0 1 2 2 2** (1/0/2 = 6/3/6).
+
+Dondurulan kupon **14/15** yaptı — 864 kolonda tek kaçak, 2. maç. Bu, üç
+haftanın en iyisi ve geri testin dağılımında **üst kuyruk**: bugünkü kural
+geçen sezonun 36 haftasında %6 (2/36) oranında 14+ veriyordu.
+
+| Kayıt | Kural · fiyat | Kolon | En iyi | Kaçak | Gerçekleşen |
+|---|---|---:|---:|---|---:|
+| **ana — DONDURULAN, oynanan** | hedef · Pinnacle geç kayıt | 864 | **14**/15 | 2 | **202.811,60 TL** |
+| hedef + kalabalık ayarı (ölçüldü, oynanmadı) | hedef · aynı fiyat | 864 | 13/15 | 1 | 39.390,84 TL |
+| eşik kuralı (kıyas) | eşik · aynı fiyat | 1.024 | 13/15 | 2 | 36.931,68 TL |
+| duyarlılık — Pinnacle **erken** kayıt | hedef · erken fiyat | 864 | 13/15 | 2, 8 | 18.465,84 TL |
+| aynı şekil · azami kapsama (mekanik referans) | — | 864 | **14**/15 | 2 | 202.811,60 TL |
+
+Kolon bedeli yayınlanmadığı için para mutlak değil **başabaş** okunur: oynanan
+kupon 234,74 TL/kolon, açılış fiyatıyla kurulmuş olan 21,37 TL/kolon.
+
+#### 1. ders — hafta sürprizle doluydu ve kupon tam bu yüzden tuttu
+
+Favori **8 maçta** tutmadı; piyasanın kendi olasılıklarının beklediği sayı
+6,97'ydi. Yani hafta, üç haftanın ikinci en sürprizli haftasıydı — ve kuponun
+en iyi haftası oldu.
+
+| | 1. hafta | 2. hafta | 3. hafta |
+|---|---:|---:|---:|
+| Favori tutmadı | 9 (bekl. 7,23) | 6 (bekl. 7,09) | **8** (bekl. 6,97) |
+| En iyi kolon | 9 | 12 | **14** |
+
+Karşılaştırma tek başına dersi veriyor: **sürprizin sayısı kuponun skorunu
+belirlemiyor, nereye düştüğü belirliyor.** Sekiz sürprizin yedisi kuponun çift
+ya da üçlü işaretlediği maçlara düştü:
+
+| Maç | Favori | Gerçek | İşaret | |
+|---|---|---|---|---|
+| 1 Gençlerbirliği – Erzurumspor | 1 %50 | **0** %27 | `10` | tuttu |
+| 2 Konyaspor – Kocaelispor | 1 %49 | **2** %24 | `10` | **kaçtı** |
+| 4 Gaziantep – Ç. Rizespor | 1 %38 | **2** %35 | `102` | tuttu |
+| 5 Eyüpspor – Alanyaspor | 2 %41 | **1** %30 | `102` | tuttu |
+| 6 Başakşehir – Kasımpaşa | 1 %57 | **0** %24 | `10` | tuttu |
+| 8 Amed Sportif – Trabzonspor | 2 %47 | **1** %27 | `12` | tuttu |
+| 11 Lille – PSG | 2 %55 | **0** %24 | `02` | tuttu |
+| 13 Tottenham – Newcastle | 1 %42 | **2** %33 | `12` | tuttu |
+
+Bu bir tesadüf değil, kuralın **tanımı**: kural işaret sayısını piyasanın
+belirsizliğine göre dağıtıyor, sürpriz de tanım gereği belirsiz maçlarda
+çıkıyor. Sürpriz sayan bir manşet ("hafta sürprizle doluydu") kuponun kaderi
+hakkında **hiçbir şey** söylemez; söyleyen şey, sürprizin işaretlenmiş sembolde
+mi atılmış sembolde mi olduğudur. 2. maçta atılan semboldeydi ve haftanın tek
+kaybı orasıdır.
+
+Bankolar 4/4 (beklenen 2,78), çiftler 7/8 (beklenen 6,19), üçlüler 3/3.
+
+#### 2. ders — bu 14'te görüş yok; iki karar var, ikisi de fiyat ve varyant kararıydı
+
+Sapma defteri **sıfır sapma** yazıyor: oynanan kupon, her maçta en olası `k`
+sembolü işaretleyen **mekanik azami kapsamanın birebir aynısı**. Tabloda son
+satır bunu gösteriyor — aynı şekil, mekanik semboller, aynı 14, aynı para.
+
+Yani bu haftada tutturulan hiçbir sembol bir görüşün ürünü değil. Haftada
+gerçekten verilen iki karar vardı ve ikisi de kuponun **dışında**:
+
+1. **Hangi fiyat** kuralı besleyecek (geç kayıt ↔ erken kayıt),
+2. **Hangi varyant** oynanacak (kalabalığı görmeyen ↔ kalabalık ayarlı).
+
+İkisi de +1 maç kazandırdı. Aşağıdaki iki ders bu iki kararın hikâyesidir ve
+**biri övülecek, öteki dikkatle okunacak** cinstendir.
+
+#### 3. ders — geç fiyat kazandırdı; ama `odds_kind` fazla etiketliydi
+
+İki fiyat kaydı arasındaki tek işaret farkı 8. maçtaydı (Amed Sportif –
+Trabzonspor): erken kayıtta `02`, geç kayıtta `12`. Sonuç **1** geldi, yani
+Amed kazandı. Bedeli bu haftada tam olarak şu:
+
+* en iyi kolon **14 ↔ 13**,
+* gerçekleşen **202.811,60 TL ↔ 18.465,84 TL** — **×11**.
+
+Ve bu tek maç, haftanın en büyük çizgi hareketinin olduğu maçtı: Amed'in
+olasılığı %23,3 → %27,2 (+3,9 puan). Hareketin genel karnesi de aynı yöne
+bakıyor: 15 maçın 7'sinde çizgi gerçek sonuca doğru, 5'inde ters, 3'ünde
+durgun; net **+6,2 puan**. Brier de geç kaydı önde ölçüyor: 0,5645 → **0,5544**.
+
+**Ama etiket yanlıştı ve tarihler girilince görüldü.** Bütün oranlar
+2026-08-27'de kaydedildi; maçlar 28-31.08'de oynandı. Yani kayıttaki
+`pinnacle_kapanis` **hiçbir maçın gerçek kapanış çizgisi değildir** — ilk maça
+bir gün, son maçlara dört gün kalmış bir anlık kayıttır. Bu bir **sızıntı
+değildir** (iki fiyat da kupon donarken eldeydi ve seçim sonuç görülmeden
+yapıldı), ama geri testin gerekçesi **doğrudan devredilemez**: `A1` ve
+`scripts/acilis_kapanis.py` arşivde **gerçek kapanışı** ölçmüştü, burada ölçülen
+şey *"iki anlık kayıttan geç olanı"*. Uyarı `hafta_03.json` içinde düzeltildi.
+
+Operasyonel kural bundan çıkıyor ve zaten uygulanan şey: **kupon kapanmadan
+önce alınabilen en geç kaydı al.** Gerçek kapanışı beklemek, tanımı gereği
+kuponu kaçırmaktır.
+
+#### 4. ders — varyant kararı ölçüme RAĞMEN verildi ve kazandı; bu, haftanın en tehlikeli sayısıdır
+
+Kupon dondurulurken iki varyant ölçülmüştü. Ölçüm kalabalık ayarlısını
+**müşterek beklenen değerde ×1,29 önde** gösteriyordu; oynayan yüksek isabet
+olasılığını (%38,09 > %36,58) tercih edip ayarsız olanı oynadı — yani ölçümün
+işaret ettiği yönün tersine.
+
+Sonuç: ayarsız 14 ve 202.811,60 TL, ayarlı 13 ve 39.390,84 TL. **Ölçüme rağmen
+verilen karar ×5,15 kazandırdı.**
+
+Bu satır defterde bir uyarı olarak duruyor. İki varyant **yalnızca 1. ve 2.
+maçta** ayrışıyordu ve iki maçın ikisi de sürprizdi: 1. maç beraberlik (ayarsız
+tuttu), 2. maç deplasman (ayarlı tuttu). Yani fark tek bir maçın yazı-turasıdır
+ve n=1'dir. Ayarın **iddiası zaten isabet değildi**, bölüşmeydi; bu hafta iki
+varyant farklı kademelerde bittiği için bölüşme tarafı yine **ölçülemedi**.
+
+Kayda geçen kural: kalabalık ayarı hakkındaki karar, §3.38'de yazıldığı gibi
+**sembolü değişen maç sayısı 20'yi geçmeden** verilmez (bugün 5). Bir haftalık
+sevinçle bu eşiği kaldırmak, projenin en kolay hatası olurdu — ve ödüllendirilmiş
+bir sapma, cezalandırılmış bir sapmadan daha zor unutulur.
+
+#### 5. ders — 14 kuralın normali değil, şanslı kuyruğudur
+
+Kuponun kendi olasılıklarına göre:
+
+| | değer |
+|---|---:|
+| Beklenen kaçak | 3,03 |
+| En olası kaçak | 3 (%26,0) |
+| **Gerçekleşen kaçak** | **1** (%12,2) |
+| P(kaçak ≤ 1) | **%15,2** |
+| Küme-içi (sıfır kaçak) | %2,96 |
+
+Yani bu hafta, kuralın kendi dağılımında **1/6,6'lık iyi kuyruktu**. Sezon
+defteri aynı şeyi üç haftanın toplamında söylüyor: en iyi kolonlar 9, 12, 14 →
+ortalama **11,67**, geri testin ortalaması 11,81. Üç hafta, biri alt kuyruk biri
+üst kuyruk, ortalama tam yerinde.
+
+**Kural değişmedi.** Sezon defterinin yeterlilik satırı her koşumda aynı şeyi
+yazıyor: aranan üstünlük 0,0005 Brier, bu örneklemde %95 aralığın yarı genişliği
+onun **234 katı**; ayırt etmek için ~2,46 milyon maç gerekiyor.
+
+#### 6. ders — hafta ilk kez ULAŞILABİLİRDİ, ve bunun bedeli ölçüldü
+
+Gerçek kolon, olasılığa göre dizilmiş 14.348.907 kolonun **181.547.**'sinde
+(2. haftada 203.403., 1. haftada 3.410.684.). Ama asıl sayı şu: iki varyantın
+**birleşimi** gerçek sonucun tamamını kapsıyor —
+
+* birleşim işaretleri: `102 102 1 102 102 10 02 12 1 1 02 12 12 102 2`
+* 15.552 kolon · **15/15** · gerçekleşen **7.722.095,59 TL**
+
+Yani 15 bu hafta işaretlerin içindeydi; dışarıda kalan şey **bütçeydi**. Üç
+haftanın ilki. Ve ölçüm burada ters yöne bakmayı da zorunlu kılıyor: birleşimin
+kolon başına **beklenen** getirisi 32,98 TL, oynanan kuponunki 41,39 TL. Yani
+birleşim ex ante **daha kötü** bir kupondu; 15'i veren şey görüş değil hacim.
+Aynı cümle §3.40'ta 2. haftanın 15 bileni için yazılmıştı.
+
+Aynı dersin bu haftaki ikinci sürümü: **aynı işaretler tam sistemde** (6.912
+kolon) oynansaydı yine 14 gelirdi ama 641.968,24 TL kazanırdı; kolon başına
+beklenen getiri neredeyse birebir aynı kalıyor (41,39 ↔ 41,49). Tam sistem
+üstünlük değil **varyans** satın alıyor — P(15) %0,37 → %2,96.
+
+#### 7. ders — havuz dağılımı üçüncü kez, bu kez devirsiz doğrulandı
+
+3. haftada 15 bilen çıktı (9 kolon), yani **devir yok** ve tablo temiz okunuyor:
+
+| Kademe | Kazanan kolon | Kişi başı | Kademe havuzu | 14'e oranı | Havuzun payı |
+|---|---:|---:|---:|---:|---:|
+| 15 | 9 | 4.261.867,07 TL | 38.356.803,63 TL | **1,7500** | %35,00 |
+| 14 | 188 | 116.586,02 TL | 21.918.171,76 TL | **1,0000** | %20,00 |
+| 13 | 2.540 | 8.629,20 TL | 21.918.168,00 TL | **1,0000** | %20,00 |
+| 12 | 22.282 | 1.229,58 TL | 27.397.501,56 TL | **1,2500** | %25,00 |
+
+Toplam dağıtılan: **109.590.644,95 TL**. `getiri.OLCULEN_PAY`ın dayandığı
+%35/%20/%20/%25 üçüncü kez, kuruş düzeyinde çıkıyor — ve ilk kez devir
+düzeltmesi yapılmadan.
+
+#### 8. ders — popülerlik modeli iki haftada iki farklı yer gösteriyor
+
+Havuz karnesi her kademe için "bu kazanan sayısı kaç kolonluk bir havuz ima
+eder"i hesaplıyor. Model doğruysa dört satır aynı sayıyı vermeli:
+
+| Model | 2. hafta (N aralığı) | 3. hafta (N aralığı) |
+|---|---|---|
+| kalabalık | 37,8 – 43,9 milyon (1,16×) | 15,2 – 25,2 milyon (1,66×) |
+| piyasa | 4,0 – 11,6 milyon (2,88×) | 8,4 – 11,5 milyon (1,37×) |
+
+İki haftada **sıralama ters döndü** ve seviye kalabalık modelinde neredeyse
+yarıya indi. Bu, iki modelden birini eleyen bir sayı değil; eleyemeyeceğini
+gösteren bir sayı. Bir hipotez var ve kayda geçiyor: 3. haftanın fiyatı %4,6
+marjlı, 2. haftanınki ~%18 marjlı iddaa oranıydı — piyasa modelinin bu hafta
+toparlanması ölçek farkından geliyor olabilir. Sınanması için marjı düşük fiyatın
+birkaç hafta daha sürmesi gerekiyor.
+
+Kalabalık tarafında değişmeyen şey: halkın modal kuponu **7/15**, piyasanın
+favori kuponu da **7/15**. İkisi bu hafta ilk kez üç maçta ayrıştı ve fark
+sıfır çıktı.
+
+#### 9. ders — altı fiyat kaydı yan yana: bayat kayıt sonuçta da bayat çıktı
+
+Bu hafta üç bahisçi × iki an girilmişti; sonuç geldiğinde altısı da puanlanabildi
+(15 maç — hiçbir sıralama bu örneklemde anlamlı değildir, tablo **kaydın kendisi**
+olduğu için duruyor):
+
+| Kayıt | Brier | log | Favori | Marj |
+|---|---:|---:|---:|---:|
+| bet365.nl geç | **0,5539** | 0,9286 | 7/15 | %6,01 |
+| Pinnacle geç (**ana fiyat**) | 0,5544 | 0,9319 | 7/15 | %4,63 |
+| Nesine erken | 0,5599 | 0,9456 | 7/15 | %21,57 |
+| Pinnacle erken | 0,5645 | 0,9466 | 6/15 | %4,57 |
+| bet365.nl erken | 0,5655 | 0,9489 | 6/15 | %7,89 |
+| Nesine geç | 0,5673 | 0,9515 | 7/15 | %18,70 |
+| *kalabalık* | 0,5948 | 0,9897 | 7/15 | — |
+| *eşit 1/3* | 0,6667 | 1,0986 | — | — |
+
+İki okuma: (1) iki gerçek bahisçide de geç kayıt erken kaydı geçiyor;
+(2) **Nesine'de tersi** — geç kayıt kendi erken kaydından kötü. Kupon
+kurulurken yazılan uyarı tam bunu söylüyordu: Nesine'nin "kapanış"ı 10-15.
+maçlarda açılışıyla birebir aynıydı, yani tazelenmemiş bir kayıttı. Uyarı
+sonuç görülmeden yazılmıştı; sonuç onu doğruladı.
+
+#### 10. ders — ölçek seçimi bu hafta da haftanın skorunu açıklamıyor
+
+| Ölçek | 1. hafta | 2. hafta | 3. hafta | **Birikimli (45 maç)** |
+|---|---:|---:|---:|---:|
+| orantılı | 0,6777 | 0,5617 | 0,5557 | 0,5984 |
+| güç | 0,6941 | 0,5453 | **0,5538** | **0,5977** |
+| shin (varsayılan) | 0,6873 | 0,5526 | 0,5544 | 0,5981 |
+
+Üç haftada da sıralama oynuyor, birikimli fark dördüncü basamakta. **14'ün
+`shin`e yazılacak hiçbir payı yok** — §3.38'de 12 için yazılan cümlenin aynısı.
+
+#### Ölçülemeyenler
+
+1. **Kolon bedeli** hâlâ yayınlanmıyor; getiri başabaş fiyat olarak okunuyor.
+2. **Kalabalık ayarının bölüşme tarafı** yine ölçülemedi: iki varyant farklı
+   kademelerde bitti.
+3. **Gerçek kapanış çizgisi** yapısal olarak elde edilemiyor — kupon ilk maçtan
+   önce kapanıyor. Ölçülebilen şey "en geç alınabilen kayıt"tır ve bu hafta
+   ölçüldü.
+4. **Havuzun kendisi ve komisyon** — satış cirosu hiçbir ekranda yok.
+
+#### Yan üründe beş sessiz hata yakalandı
+
+2. haftanın kalıbı üçüncü kez çıktı: *bugünkü durumu kalıcı sanmak.*
+
+1. **Hafta raporu sayfası oynanmamış bir kuponun karnesini yazıyordu.** Sayfa,
+   sonuç bölümünü `ana` üzerinden puanlıyordu; `ana` sayfanın O AN bugünkü
+   varsayılan kuralla yeniden kurduğu kupondur. Kayıttaki dondurulmuş kupon
+   ancak `label` içinde "DONDURULAN" geçiyorsa fark ediliyordu ve o etiketi
+   yalnızca 3. haftanın dosyası taşıyor. Sonuç: **1. haftanın sayfası 11/15
+   yazıyordu, oynanan kupon 9/15 yapmıştı** (2.304 ↔ 1.296 kolon); 2. haftada
+   skor rastlantıyla tutuyordu ama işaretler ve bedel tutmuyordu. Sonuç bölümü
+   artık kaydın kendi ana varyantını puanlıyor ve sayfada hangi kuponu
+   puanladığını **adıyla ve kolon sayısıyla** yazıyor.
+2. **Rozet "ikramiye yok" diye sabitlenmişti.** 1. haftanın 9'una göre yazılmış
+   bir cümleydi; 3. hafta 14 yapınca rozet ile gövde birbirini yalanladı
+   (gövde doğru şekilde "kupon kademeye ulaştı" diyordu). Rozet artık
+   `HEDEF_KADEME`den hesaplanıyor.
+3. **Şanssızlık ölçüsü yanlış kuyruğu yazıyordu.** Sayfa her hafta
+   `P(kaçak ≥ gerçekleşen)` basıyordu; bu, **kötü** haftanın ölçüsüdür. İyi
+   haftada sayı 1'e yaklaşır ve 3. hafta *"%97 olasılıklı bir kuyruk"* diye
+   yazıldı — oysa doğru sayı `P(kaçak ≤ 1) = %15,2`. Kuyruk yönü artık sonuca
+   göre seçiliyor.
+4. **Kalite kapısı 3. haftayı hiç görmüyordu.** `check.sh` üç yerde
+   `for h in 1 2` yazıyordu. Kapının sessizce küçülmesi, tam olarak yakalaması
+   gereken şeydir; hafta listesi artık diskteki dosyalardan çıkıyor (boru hattı
+   dumanı ve sayfa üretimi **girilmiş** haftaların hepsinde, değerlendirme
+   **sonucu olan** haftaların hepsinde koşuyor).
+5. **Faz B testi durum etiketine sabitlenmişti.** Üçüncü ikramiye kaydı
+   girilince `faz_b` doğru davranarak `olculemez` → `acik ama olculmemis` dedi
+   ve test kırıldı — yani **doğru davranış testi kırdı**. Test artık korunması
+   gereken kuralı tutuyor: `guc.yeterli` false olduğu sürece durum
+   `olculebilir` olamaz (bugün 3 ikramiyeli hafta var, ~71 gerekiyor).
+
+#### Ne değişti, ne değişmedi
+
+**Değişti:** 3. haftanın sonucu, skorları, program tarihleri ve ikramiye ekranı
+girildi; `odds_kind` uyarısı düzeltildi; sayfa üç hatasından arındı; kapı hafta
+listesini diskten okuyor; Faz B testi kuralı tutuyor.
+
+**Değişmedi:** kural. Ne eşik, ne hedef, ne kalabalık ayarı, ne fiyat seçimi.
+Üç haftalık canlı veri (45 maç), aranan büyüklükteki farkı ayırt etmekten hâlâ
+234 kat uzakta.
+
+    python scripts/super_toto_degerlendir.py --hafta 3
+    python scripts/super_toto_sezon.py
+
+
 ## 4. Sayfada bugün ne var
 
 **`/istatistik`** — sezon dağılımı (en sık sonuç + pay çubuğu) · 5 sayı kutusu (sembol

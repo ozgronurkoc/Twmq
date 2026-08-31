@@ -194,9 +194,29 @@ DONMUS = next((v for v in KUPON_JSON.get("variants", [])
                if "DONDURULAN" in v.get("label", "")), None)
 DUYARLILIK = KUPON_JSON.get("duyarlilik")
 
+#: SONUÇ bölümünün puanladığı kupon — **kayıttaki**, yani gerçekten
+#: dondurulmuş olan.
+#:
+#: Burası önceden `ana`yı, yani sayfanın O AN yeniden kurduğu kuponu
+#: puanlıyordu; oysa `ana` bugünkü varsayılan kuralın (eşik 0,68/0,38,
+#: bugünkü arındırma) çıktısıdır ve haftanın dondurulduğu andaki kuralla
+#: aynı olmak zorunda değildir. 3. hafta girildiğinde ayrışma görünür oldu:
+#: 1. haftanın sayfası **11/15** yazıyordu, kayıttaki oynanan kupon ise
+#: **9**/15 yapmıştı (2.304 kolon ↔ 1.296) — yani sayfa hiç oynanmamış bir
+#: kuponun karnesini haftanın sonucu diye ilan ediyordu. 2. haftada skor
+#: rastlantıyla tutuyordu (12 ↔ 12) ama işaretler ve bedel tutmuyordu.
+#:
+#: `DONDURULAN` etiketi yalnızca 3. haftadan itibaren yazılıyor; o yüzden
+#: geri düşüş kaydın İLK varyantıdır (kayıtların kendi ana planı), sayfanın
+#: yeniden hesabı değil. Yeniden hesap ancak kayıt hiç yoksa kullanılır.
+_KAYIT_ANA = DONMUS or next(iter(KUPON_JSON.get("variants") or []), None)
+OYNANAN = list(_KAYIT_ANA["picks"]) if _KAYIT_ANA else list(ana["picks"])
+OYNANAN_AD = (_KAYIT_ANA.get("label") if _KAYIT_ANA else "sayfanın yeniden kurduğu kupon")
+OYNANAN_KOLON = (_KAYIT_ANA.get("columns") if _KAYIT_ANA else ana["columns"])
+
 if BITTI:
     gercek = d["meta"]["results"]
-    degerlendirme = _deg.kupon_degerlendir(d, ana["picks"])
+    degerlendirme = _deg.kupon_degerlendir(d, OYNANAN)
     kal_karne = _deg.kalabalik_karnesi(d)
     ikramiye = _deg.ikramiye_ozeti(d)
     sayim_g = {x: gercek.count(x) for x in S}
@@ -205,8 +225,8 @@ if BITTI:
         kul_p = KULLANICI["picks"]
         kul_deg = _deg.kupon_degerlendir(d, kul_p)
         kul_banko = _deg.banko_karnesi(d, kul_p)
-        ben_banko = _deg.banko_karnesi(d, ana["picks"])
-        kiyas = _deg.kupon_kiyas(d, kul_p, ana["picks"])
+        ben_banko = _deg.banko_karnesi(d, OYNANAN)
+        kiyas = _deg.kupon_kiyas(d, kul_p, OYNANAN)
         kul_kal = _math.prod(
             sum(mm["play"][x] for x in pk) for mm, pk in zip(d["matches"], kul_p))
         kul_uzay = _math.prod(len(x) for x in kul_p)
@@ -578,6 +598,18 @@ if BITTI:
     # 14 bilenin kisi basi odulu. 2. hafta girildiginde ucu de yanlis oldu.
     HEDEF = _deg.HEDEF_KADEME
     hedefe_ulasti = dg["best"] >= HEDEF
+    # Rozet 1. haftanin 9'una sabitlenmisti ("ikramiye yok"); 3. haftada
+    # kupon 14 yapinca rozet ile govde birbirini yalanladi.
+    ROZET_KADEME = (f"{HEDEF}+ kademesinde" if hedefe_ulasti else "ikramiye yok")
+    # Kuyruk YONU sonuca gore secilir. `p_at_least_actual` kotu haftanin
+    # olcusudur (P(kacak >= gerceklesen)); iyi bir haftada o sayi 1'e yakin
+    # cikar ve sansli hafta siradan gorunurdu — 3. haftada tam bu oldu:
+    # 1 kacak %97'lik "kuyruk" diye yazildi, oysa P(kacak <= 1) %15,2'ydi.
+    _p_alt = sum(dg["dist"][: dg["miss_count"] + 1])
+    _iyi = dg["miss_count"] <= dg["expected_misses"]
+    KUYRUK_YON = "beklenenden iyi" if _iyi else "beklenenden kötü"
+    KUYRUK_AD = "iyi" if _iyi else "kötü"
+    KUYRUK_P = _p_alt if _iyi else dg["p_at_least_actual"]
     enb_kacak = max(range(len(dg["dist"])), key=lambda i: dg["dist"][i])
     ber_ort = ref["hist"]["bands"]["0"]["avg"]
     halk_ayni = kal_karne["halk_kuponu"] == kal_karne["piyasa_kuponu"]
@@ -596,6 +628,10 @@ if BITTI:
       On beş maçın <b>{dg['miss_count']}'sında</b> gerçek sonuç işaretlerimin dışında kaldı{ber_notu}.
       Haftanın sembol dağılımı {sayim_g['1']} / {sayim_g['0']} / {sayim_g['2']}: {sayim_g['0']} beraberlik
       çıktı, geçen sezonun hafta ortalaması {ber_ort:.2f}'ti.</p>
+      <p style="font-size:12.5px;color:var(--dim);max-width:74ch">Bu bölümün puanladığı kupon
+      <b style="color:var(--ink)">kayıttakidir</b> — “{e(str(OYNANAN_AD))}”, {tr(OYNANAN_KOLON)} kolon.
+      Sayfanın yukarıdaki bölümlerde <i>bugünkü</i> kuralla yeniden kurduğu kupon
+      {'aynısıdır' if list(ana['picks']) == list(OYNANAN) else 'bundan FARKLIDIR ve oynanmamıştır'}.</p>
     </header>
     <div class="sonuc-serit">{serit}</div>
     <div class="scroll">
@@ -608,8 +644,9 @@ if BITTI:
     <h3 style="margin:34px 0 6px">Şanssızlık mıydı, hata mıydı?</h3>
     <p style="font-size:13.5px;color:var(--dim);max-width:68ch;margin-bottom:16px">
       Kuponun kendi olasılıklarına göre <b style="color:var(--ink)">beklenen kaçak sayısı {dg['expected_misses']:.2f}</b>,
-      en olası senaryo {enb_kacak} kaçaktı. {dg['miss_count']} kaçak geldi — bu, %{100*dg['p_at_least_actual']:.0f}
-      olasılıklı bir kuyruk; hafta <b style="color:var(--ink)">{'beklenenden kötü' if dg['miss_count'] > dg['expected_misses'] else 'beklenenden iyi'}</b> geçti.
+      en olası senaryo {enb_kacak} kaçaktı. {dg['miss_count']} kaçak geldi — hafta
+      <b style="color:var(--ink)">{KUYRUK_YON}</b> geçti ve bu kadar {KUYRUK_AD} bir haftanın
+      olasılığı %{100*KUYRUK_P:.0f} idi.
       Asıl mesele bu değil: {dg['miss_count']} kaçak
       <b style="color:var(--ink)">{"14'e zaten yetmiyordu" if dg['miss_count'] > 1 else "14'ü hâlâ mümkün bırakıyordu"}.</b>
       Kupon daha atılmadan beklentisi {15-dg['expected_misses']:.1f} doğruydu; 14 hedefi için gereken
@@ -1075,7 +1112,7 @@ footer {{ margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--line)
       <span class="rozet mor">2026/2027</span>
       <span class="rozet">{e(FIYAT_ADI)}</span>
       <span class="rozet">oynanma yüzdesi</span>
-      {'<span class="rozet uyari">SONUÇ: en iyi kolon ' + str(degerlendirme["best"]) + '/15 — ikramiye yok</span>' if BITTI else '<span class="rozet uyari">sonuçlar YOK — bu rapor sonuçlar görülmeden yazıldı</span>'}
+      {'<span class="rozet uyari">SONUÇ: en iyi kolon ' + str(degerlendirme["best"]) + '/15 — ' + ROZET_KADEME + '</span>' if BITTI else '<span class="rozet uyari">sonuçlar YOK — bu rapor sonuçlar görülmeden yazıldı</span>'}
       {'<span class="rozet">kupon sonuçlar görülmeden donduruldu</span>' if BITTI else ''}
     </div>
   </header>

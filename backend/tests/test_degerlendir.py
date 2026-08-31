@@ -275,6 +275,15 @@ def test_sayfa_her_girilmis_haftada_uretilir(tmp_path):
                     else "ulaşamadı")
         assert f"kupon oraya <b>{beklenen}</b>" in metin
         assert ("bilen</b>" in metin) is bool(d["meta"].get("payout"))
+        # Sayfanin ILAN ETTIGI skor, KAYITTAKI kuponun skoru olmali.
+        #
+        # Bu satir bir hataya bagli: sayfa sonuc bolumunu kendi O AN
+        # yeniden kurdugu kupon uzerinden puanliyordu. 1. haftanin sayfasi
+        # bu yuzden 11/15 yaziyordu; oynanan kupon 9/15 yapmisti. Ustteki
+        # "ulasti/ulasamadi" cumlesi bunu yakalayamadi, cunku 9 da 11 de
+        # ikramiye kademesinin (12) altindaydi ve iki sayi ayni cumleyi
+        # uretti. Skorun kendisi karsilastirilmadikca ayrisma sessiz kalir.
+        assert f"en iyi kolon {o['coupons'][0]['best']}/15" in metin
 
 
 # ─── oynanma biçimi: 16 satır ↔ tam sistem ────────────────────────────────
