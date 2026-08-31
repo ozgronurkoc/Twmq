@@ -1,168 +1,167 @@
 ---
 name: knowledge-graph
-description: "Manage persistent Knowledge Graph for specifications. Provides read, query, update, and validation capabilities for codebase analysis caching. Use when: spec-to-tasks needs to cache/reuse codebase analysis, task-implementation needs to validate task dependencies or contracts, spec-quality needs to synchronize provides, or any command needs to query existing patterns/components/APIs. Reduces redundant codebase exploration by caching agent discoveries."
+description: "Bu depo için kalıcı bilgi grafı (`.claude/bilgi_grafi.json`): modül/komut/kapı envanteri ve ölçülmüş sayı kütüğü — hangi sayı hangi komuttan çıktı, hangi belgede anılıyor, hangi bekçi tutuyor. Şunlarda kullan: bir modülün veya CLI komutunun ne yaptığı yeniden keşfedilecekse, bir belgedeki sayının kaynağı ya da bayatlığı sorulduysa, bir iddianın bekçisi var mı araştırılıyorsa, çok adımlı bir işe başlarken keşif tekrarlanmasın isteniyorsa. Tetikleyiciler: bilgi grafı, modül haritası, bu sayı nereden geliyor, hangi belgede anılıyor, hangi kapı tutuyor, keşfi önbellekle, knowledge graph."
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash
 ---
 
-# Knowledge Graph Skill
+# Bilgi Grafı
 
-## Overview
+## Ne işe yarar
 
-The Knowledge Graph (KG) is a persistent JSON file that stores discoveries from codebase analysis, eliminating redundant exploration and enabling task validation.
+`.claude/bilgi_grafi.json`, bu depoda **bir kez yapılan keşfin ikinci kez
+yapılmaması** için tutulan yerel bir defterdir. İki şeyi kaydeder:
 
-**Location**: `docs/specs/[ID-feature]/knowledge-graph.json`
+1. **Envanter** — hangi modül neyi yapıyor, hangi komut neyi üretiyor, hangi
+   bekçi hangi iddiayı tutuyor, hangi boru hattı hangi dosyayı yazıyor.
+2. **Ölçülmüş sayı kütüğü** — bir sayının **değeri**, onu **üreten komut** ve
+   **anıldığı yerler** (belge + bölüm). Depodaki en pahalı bilgi budur.
 
-**Key Benefits:**
-- ✅ Avoid re-exploring already-analyzed codebases
-- ✅ Validate task dependencies against actual codebase state
-- ✅ Share discoveries across team members
-- ✅ Accelerate task generation with cached context
+İkincisi bu deponun bilinen kusurunu hedefler. `backend/tests/test_belgeler.py`
+docstring'i denetimde bulunanları sayıyor: test sayısı **dört belgede dört
+farklı** değerdi, `README.md` aynı hold-out isabetini bir bölümde 1 diğerinde 0
+diyordu, bir API tablosunda dört uç eksikti ve iki belge daha o tabloyu kaynak
+gösteriyordu. Bir sayı değiştiğinde onu anan **bütün** yerleri bulmak, her
+seferinde depoyu yeniden taramayı gerektiriyor. Kütük tam bu taramayı biriktirir.
 
-## When to Use
+## Nerede durur ve neden git dışıdır
 
-Use this skill when:
+**Dosya**: `.claude/bilgi_grafi.json` — `.gitignore`'da, **sürümlenmez**.
 
-1. **spec-to-tasks needs to cache/reuse codebase analysis** - Store agent discoveries for future reuse
-2. **task-implementation needs to validate task dependencies and contracts** - Check if required components exist before implementing
-3. **Any command needs to query existing patterns/components/APIs** - Retrieve cached codebase context
-4. **Reducing redundant codebase exploration** - Avoid re-analyzing already-explored code
+Sebep bu deponun kendi kuralıdır: türetilmiş çıktı sürümlenmez, çünkü sürümlenen
+türetilmiş çıktı sessizce bayatlar. Bilgi grafı tanımı gereği türetilmiştir —
+tamamı depodan yeniden üretilebilir. Git'e girseydi, `git pull` yapan herkes
+başkasının bir hafta önceki keşfini **bugünün gerçeği** sanarak okurdu; yani
+belgelerdeki bayat sayı sorununun aynısı, üstelik bekçisiz bir kopyası olurdu.
 
-**Trigger phrases:**
-- "Load knowledge graph"
-- "Query knowledge graph"
-- "Update knowledge graph"
-- "Validate against knowledge graph"
-- "Check if component exists"
-- "Find existing patterns"
+Bunun bedeli açıktır: **graf takım arasında paylaşılmaz**, her makinede yeniden
+birikir. Paylaşılan şey bu skill'in kendisidir, defterin içeriği değil.
 
-## Instructions
+## Yazma kuralı — kaynağı olmayan girdi yazılmaz
 
-### Available Operations
+Bu depoda ölçülmemiş iddia yazılmaz; graf da istisna değildir. **Her girdi bir
+`kaynak` alanı taşır** ve bu alan iki şeyden biridir:
 
-**1. read-knowledge-graph** - Load and parse KG for a specification
-- **Input**: Path to spec folder (e.g., `docs/specs/001-feature/`)
-- **Output**: KG object with metadata, patterns, components, APIs
+* `dosya:satır` — iddianın okunduğu yer (`backend/spor_toto/health.py:1`), ya da
+* çalıştırılan **komutun tam metni** ve çalıştırıldığı tarih.
 
-**2. query-knowledge-graph** - Query specific sections (components, patterns, APIs)
-- **Input**: Spec folder, query type, optional filters
-- **Output**: Filtered results matching criteria
+`kaynak` alanı boş bir girdi yazmak yerine girdiyi **hiç yazma**. "Sanırım şu
+modül şunu yapıyor" grafın işine yaramaz, zararlıdır: bir sonraki oturum onu
+ölçülmüş bilgi sanır.
 
-**3. update-knowledge-graph** - Update KG with new discoveries
-- **Input**: Spec folder, updates (partial KG), source description
-- **Output**: Merged KG with new findings
+Ayrıca her girdi, dayandığı dosyanın **içerik hash'ini** taşır. Bayatlığı
+görünür kılan mekanizma budur (aşağıya bak).
 
-**4. validate-against-knowledge-graph** - Validate task dependencies against KG
-- **Input**: Spec folder, requirements (components, APIs, patterns)
-- **Output**: Validation report with errors/warnings
+## İşlemler
 
-**5. validate-contract** - Validate provides/expects between tasks
-- **Input**: Spec folder, expects (files + symbols), completed dependencies
-- **Output**: Satisfied/unsatisfied expectations report
+### 1. Oku
 
-**6. extract-provides** - Extract symbols from implemented files
-- **Input**: Array of file paths
-- **Output**: Array of provides with file, symbols, type
-
-**7. aggregate-knowledge-graphs** - Merge patterns from all specs
-- **Input**: Project root path
-- **Output**: Global KG with deduplicated patterns
-
-See [references/query-examples.md](references/query-examples.md) for detailed usage examples.
-
-## Examples
-
-### Input/Output Examples
-
-**Read Knowledge Graph:**
-```
-Input: /knowledge-graph read docs/specs/001-hotel-search/
-Output: {
-  metadata: { spec_id: "001-hotel-search", version: "1.0" },
-  patterns: { architectural: [...], conventions: [...] },
-  components: { controllers: [...], services: [...]}
-}
+```bash
+test -f .claude/bilgi_grafi.json && python3 -m json.tool .claude/bilgi_grafi.json | head -40
 ```
 
-**Query Components:**
-```
-Input: /knowledge-graph query docs/specs/001-hotel-search/ components {"category": "services"}
-Output: [{ id: "comp-svc-001", name: "HotelSearchService", type: "service"}]
-```
+Dosya yoksa bu bir hata değildir: graf henüz birikmemiştir. Boş iskeletle başlat
+(şema: [references/schema.md](references/schema.md)).
 
-**Update Knowledge Graph:**
-```
-Input: /knowledge-graph update docs/specs/001-hotel-search/ {
-  patterns: { architectural: [{ name: "Repository Pattern"}] }
-}
-Output: "Added 1 pattern to knowledge graph"
-```
+### 2. Sorgula
 
-**Validate Dependencies:**
-```
-Input: /knowledge-graph validate docs/specs/001-hotel-search/ {
-  components: ["comp-repo-001"]
-}
-Output: { valid: true, errors: [], warnings: [] }
+Doğrudan `jq`/`python3` ile. Hazır tarifler:
+[references/sorgular.md](references/sorgular.md).
+
+```bash
+# "0,579 nereden geliyor, nerelerde anılıyor?"
+python3 -c "
+import json;g=json.load(open('.claude/bilgi_grafi.json'))
+for s in g['sayilar']:
+    if '0,579' in s['deger']: print(s['ne'],'|',s['ureten'],'|',s['anildigi_yerler'])
+"
 ```
 
-See [references/examples.md](references/examples.md) for comprehensive workflow examples.
+### 3. Güncelle
 
-## KG Schema Reference
+Keşif **yapıldıktan sonra**, aynı oturumda yaz — sonraya bırakılan kayıt
+yazılmaz. Birleştirme kuralı: aynı `yol`/`deger` varsa üzerine yaz, yeni
+`anildigi_yerler` girdilerini **ekle** (üzerine yazma, birleştir).
 
-See [references/schema.md](references/schema.md) for complete JSON schema with examples.
+### 4. Tazelik denetle
 
-## Integration Patterns
+Graf bayatlığını **kendisi** göstermeli, kullanıcı fark etmemeli:
 
-See [references/integration-patterns.md](references/integration-patterns.md) for detailed integration with Developer Kit commands.
+```bash
+python3 - <<'PY'
+import json, subprocess, pathlib
+g = json.load(open('.claude/bilgi_grafi.json'))
+bayat = []
+for bolum in ('moduller', 'kapilar', 'boru_hatlari'):
+    for gd in g.get(bolum, []):
+        p = pathlib.Path(gd['yol'])
+        if not p.exists():
+            bayat.append((bolum, gd['yol'], 'DOSYA YOK')); continue
+        h = subprocess.run(['git','hash-object',gd['yol']],
+                           capture_output=True, text=True).stdout.strip()
+        if h != gd.get('hash'):
+            bayat.append((bolum, gd['yol'], 'DEGISTI'))
+print(f"HEAD kaydı: {g['git']['head']}  ·  şimdi: "
+      + subprocess.run(['git','rev-parse','HEAD'],capture_output=True,text=True).stdout.strip())
+print(f"bayat girdi: {len(bayat)}")
+for b in bayat: print('  ', *b)
+PY
+```
 
-## Error Handling
+Bayat girdiyle ne yapılır: **silinir ya da yeniden ölçülür, düzeltilmiş sayılmaz.**
+Kaynak dosya değişmişse o girdinin taşıdığı iddia artık ölçülmemiş bir iddiadır.
 
-See [references/error-handling.md](references/error-handling.md) for comprehensive error handling strategies and recovery procedures.
+Sayı kütüğü için ek denetim: kayıtlı `anildigi_yerler` hâlâ o sayıyı içeriyor mu?
 
-## Performance Considerations
+```bash
+grep -n "0,579" README.md docs/*.md backend/README.md || echo "artik hicbir belgede yok"
+```
 
-See [references/performance.md](references/performance.md) for optimization strategies and performance characteristics.
+### 5. Envanterin mekanik kısmını üret
 
-## Security
+Modül/komut/test listesi elle yazılmaz, ölçülür:
 
-See [references/security.md](references/security.md) for security considerations, threat mitigation, and best practices.
+```bash
+ls backend/spor_toto/*.py backend/scripts/*.py            # modüller, boru hatları
+grep -rc 'def test_' backend/tests/*.py | awk -F: '{s+=$2} END {print s}'   # test sayısı
+python -m spor_toto.health --list                          # kapı/kontrol envanteri
+bash scripts/check.sh                                      # kalite kapısı (CI de bunu çağırır)
+```
 
-## Best Practices
+Modül **görevi** için o dosyanın docstring'i okunur ve `kaynak` olarak
+`yol:1` yazılır — özet uydurulmaz, docstring'den alınır.
 
-**When to Query KG**: Before codebase analysis, task generation, dependency validation
+## Bu depoda gerçek kullanım
 
-**When to Update KG**: After agent discoveries, component implementation, pattern discovery
+**Sayı değişti, nereleri düzeltmem gerek?**
+Kütükte `deger` ara → `anildigi_yerler` listesini al → hepsini düzelt →
+`bash scripts/check.sh` ile bekçilere sor. Kütükte yoksa: depoyu tara, düzelt,
+**sonra kütüğe yaz** ki üçüncü kez taranmasın.
 
-**KG Freshness**:
-- < 7 days: Fresh
-- 7-30 days: Stale, warn user
-- > 30 days: Very stale, offer regeneration
+**Bu iddianın bekçisi var mı?**
+`kapilar` bölümünde `tuttugu_iddia` alanlarında ara. Yoksa cevap "bekçisi yok" —
+ve bu, bekçi yazmak için bir gerekçedir, grafa not düşmek için değil.
 
-See [references/performance.md](references/performance.md) and [references/security.md](references/security.md) for detailed best practices.
+**Yeni bir katmana dokunacağım, neyi bilmem lazım?**
+`moduller` + `boru_hatlari` bölümlerini oku: hangi script hangi dosyayı üretiyor,
+hangisi git dışı, yeniden üretme komutu ne. Bu bilgi `.gitignore` yorumlarında
+zaten yazıyor — graf onu tek yerde toplar, **yerine geçmez**.
 
-## Constraints and Warnings
+## Sınırlar
 
-### Critical Constraints
+* **Graf kanıt değildir.** Çelişki halinde kazanan sırayla: çalışan ölçüm > kod >
+  belge > graf. Graf en zayıf halkadır çünkü en kolay bayatlar.
+* **Kaynak kodu değiştirmez.** Yalnızca `.claude/bilgi_grafi.json` yazar.
+* **Kod üretmez.** Keşfi önbelleğe alır, uygulama yazmaz.
+* **Veri taşımaz.** Oran arşivi, korpus, StatsBomb özetleri, gizli anahtar —
+  hiçbiri grafa girmez; graf yalnızca *nerede olduklarını* ve *nasıl üretildiklerini*
+  kaydeder. (StatsBomb verisi lisans gereği depoda dağıtılamaz; bkz. `.gitignore`.)
+* **Bekçisi yoktur.** Bu grafın doğruluğunu tutan bir pytest kapısı **yok** —
+  tazelik denetimi elle çağrılır. Bu yüzden git dışıdır: bekçisiz bir iddia
+  sürümlenmez.
 
-- **Source-Code Safe Operations**: Does NOT modify source code files. Only creates/updates `knowledge-graph.json` files.
-- **Path Validation**: Only reads/writes KG files from `docs/specs/[ID]/` paths.
-- **No Automatic Code Generation**: Caches analysis results, does NOT generate implementation code.
+## Referanslar
 
-### Limitations
-
-- **Validation Scope**: Checks components exist in KG, but cannot verify if they exist in actual codebase if KG is outdated
-- **Freshness Dependency**: KG accuracy depends on how recently it was updated
-- **Single-Spec First**: Each KG is primarily specific to a single specification
-- **File Size**: KG files can grow large (>1MB) for complex specifications
-
-See [references/error-handling.md](references/error-handling.md) and [references/security.md](references/security.md) for complete constraints and warnings.
-
-## Reference Files
-
-- [schema.md](references/schema.md) - Complete JSON schema
-- [query-examples.md](references/query-examples.md) - Query patterns
-- [integration-patterns.md](references/integration-patterns.md) - Command integration
-- [error-handling.md](references/error-handling.md) - Error handling guide
-- [performance.md](references/performance.md) - Performance optimization
-- [security.md](references/security.md) - Security considerations
-- [examples.md](references/examples.md) - Practical examples
+* [references/schema.md](references/schema.md) — JSON şeması, alan alan
+* [references/sorgular.md](references/sorgular.md) — sorgu ve güncelleme tarifleri
+* [references/sinirlar.md](references/sinirlar.md) — bayatlık, boyut, gizlilik
+* [ORIGIN.md](ORIGIN.md) — nereden geldi, ne kadarı yeniden yazıldı
