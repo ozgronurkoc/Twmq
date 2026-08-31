@@ -99,7 +99,8 @@ Sözleşmenin tamamı: `docs/ARCHITECTURE_NEXT.md` ve `frontend/lib/types.ts`.
 
 ## Motor (`backend/spor_toto/`)
 
-50 modül var; tam liste ve tek satırlık açıklamaları `README.md` §7'dedir.
+51 modül var; tam liste ve tek satırlık açıklamaları `README.md` §7'dedir
+(orayı dosya sistemine karşı bir bekçi tutar, bu cümle bir iddia değil).
 Katman katman:
 
 - **Çekirdek** — `core.py` (Encoder, Fix-16, ILP, heuristic) · `engines.py`
@@ -198,7 +199,7 @@ doğrulamadan dosya yazmazlar). Ayrıntı: `docs/VERI_TOPLAMA_VE_ISLEME.md`.
 ```bash
 cd backend
 python -m pytest -m "not slow" -q   # hızlı süit
-python -m pytest                    # tamamı (1.901 test, ILP dahil)
+python -m pytest                    # tamamı (1.902 test, ILP dahil)
 python -m pytest -n0 tests/test_egitim.py   # tek çekirdek (hata ayıklarken)
 cd .. && bash scripts/check.sh      # TEK kapı; CI de bunu çağırır
 ```

@@ -69,8 +69,14 @@ pytest -n0 tests/test_egitim.py -x
 
 ## Yapı
 
+> **Aşağıdaki modül listesi bir SEÇKİdir, envanter değil.** 51 modülün tam
+> listesi tek yerdedir — kök `README.md` §7 — ve orayı bir bekçi dosya
+> sistemine karşı tutar (`tests/test_belgeler.py::test_readme_modul_listesi_eksiksiz`).
+> Buraya ikinci bir tam liste yazmak, eskiyecek ikinci bir liste yaratmak
+> olurdu; bu dosyanın sayıları tam olarak öyle bayatladı.
+
 ```
-spor_toto/                        (26 modül)
+spor_toto/                        (51 modül — aşağısı yönlendirici seçki)
   core.py      Encoder, Fix-16, ILP, heuristic, exact olasılık
   engines.py   Mod çalıştırıcıları — /api/solve, health ve CLI AYNI yolu kullanır
   meta.py      Yetenek envanteri (modlar, preset'ler, sınırlar) = /api/meta
@@ -95,10 +101,10 @@ spor_toto/                        (26 modül)
   kalibrasyon.py  ÖLÇÜM: izotonik düzeltme piyasayı geçiyor mu
   ortak.py     Paylaşılan hesaplar: normalizasyon, Wilson, Brier, bantlama
   payloads.py  Uç gövdeleri — tek kaynak (health bunları denetler)
-  health.py    Kategorili değişmez (invariant) kontrolleri — 24 kontrol
+  health.py    Kategorili değişmez (invariant) kontrolleri — 27 kontrol
   health_history.py  Sunucu tarafı koşu geçmişi + durum değişimi bildirimi
-web_app.py     Flask — 13 uç, yalnızca JSON (tam liste: ARCHITECTURE_NEXT.md)
-scripts/                          (13 betik + __init__.py — normal paket)
+web_app.py     Flask — 15 uç, yalnızca JSON (tam liste: ARCHITECTURE_NEXT.md)
+scripts/                          (24 betik + __init__.py — normal paket)
   build_history.py  Tarihsel veri setini kaynağından üretir
   build_odds.py     Kupon maçlarına piyasa oranlarını eşleştirir
   build_egitim.py   Eğitim korpusu (football-data, 22 lig × 4 geçmiş sezon)
@@ -113,7 +119,7 @@ data/
   st_history_2025_26.json   Tarihsel 1/0/2 (history.py buradan okur)
   odds/                     Oran arşivi (aşağıda)
   iddaa/ egitim/ fixtures/ super_toto/
-tests/                            (31 dosya → 1.030 test)
+tests/                            (63 dosya → 1.902 test)
 ```
 
 > **ÖLÇÜM modülleri arayüze çıkmaz** ve yalnızca `python -m spor_toto.<ad>`
