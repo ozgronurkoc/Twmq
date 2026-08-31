@@ -29,6 +29,22 @@ baslik() { printf '\n\033[1m==> %s\033[0m\n' "$1"; }
 # ─── Backend ─────────────────────────────────────────────────────────────
 cd "$KOK/backend"
 
+# Kalite araclari `[kalite]` ekstrasinda ve `setup.sh`in VARSAYILANI onlari
+# kurmuyor (gerekce orada: bu betik uretim derlemesinde de kosuyor). Onceden
+# kapi bunu soylemeden `python -m ruff` satirinda `No module named ruff` ile
+# duserdi — hangi komutun eksik oldugu ancak izi okuyarak anlasilirdi.
+# Asagidaki `node_modules` bekcisinin simetrigi: eksigi ADIYLA ve caresiyle
+# soyler, ilk adima hic girmeden.
+EKSIK_KALITE=()
+for _m in ruff mypy interrogate pip_audit; do
+  "$PY" -c "import $_m" >/dev/null 2>&1 || EKSIK_KALITE+=("$_m")
+done
+if (( ${#EKSIK_KALITE[@]} )); then
+  echo "! kalite araci yok (${EKSIK_KALITE[*]}) —" \
+       "'bash scripts/setup.sh --kalite' calistirin" >&2
+  exit 1
+fi
+
 baslik "ruff (lint)"
 "$PY" -m ruff check .
 

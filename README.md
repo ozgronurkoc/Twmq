@@ -882,6 +882,14 @@ backend/
     predict.py         TAHMİN: tahminci sözleşmesi + 3 referans (duzgun/sezon/piyasa)
     evaluate.py        TAHMİN: dışarıda bırakmalı + çapraz + İLERİ YÜRÜYÜŞ, bootstrap
     arena.py           TAHMİN: Model Arena — bütün aileler TEK kesitte, TEK tabloda
+    dixon_coles.py     TAHMİN: takım gücünü GOLLERDEN türeten model (Faz 3.1)
+    elo.py             TAHMİN: rakip gücüne göre düzeltilmiş takım gücü (Faz 3.2)
+    agac.py            TAHMİN: gradyan artırmalı ağaçlar (Faz 2.2) — `lightgbm` isteğe bağlı
+    yigin.py           TAHMİN: yığınlama — bağımsız görüşleri kat DIŞI birleştirir (Faz 2.4)
+    arama.py           TAHMİN: iç içe CV — hiperparametre aramasını hold-out'u bozmadan açar
+    kalibre.py         TAHMİN: Venn-Abers — geçerlilik garantili olasılık aralığı (Faz 2.3)
+    takim.py           TAHMİN: H2H ve seriler — geçmiş + anlık gidişat (Faz 3.3)
+    beraberlik.py      TAHMİN: beraberliğe özel düzeltme, favori gücüne bağlı (Ö3)
     recalibrate.py     TAHMİN: piyasanın yeniden kalibrasyonu (kademe, Newton)
     egitim.py          TAHMİN: eğitim korpusu okuyucu — /istatistik'e GİRMEZ
     health.py          Kategorili değişmez (invariant) kontrolleri — tek CHECKS tanımı
@@ -903,6 +911,11 @@ backend/
     artefakt.py        Egitilmis modelin diske yazimi + bayatlik denetimi
     kosum.py           Olcum kosum defteri (--kaydet) — surumlenmez
     benzer.py          "Bu oranda geçmişte ne oldu" = /api/benzer
+    secim.py           KUPON: işaretleri HEDEFE göre seçer — eşiğe göre değil
+    havuz.py           HAVUZ: resmî ikramiye tablosundan havuzu ve devri geri hesaplar
+    skor.py            ÖLÇÜM: Asya handikabı + alt/üst 2.5 → skor dağılımı → 1X2 (A6)
+    kuyruk.py          ÖLÇÜM: hafta içi bağımlılık ve kuyruk etkisi — P(k≥12) iyimser mi (§4.1)
+    fiyatlar.py        ÖLÇÜM: fiyat kaynakları — üç bahisçi × açılış/kapanış
     kalibrasyon.py     ÖLÇÜM: izotonik düzeltme piyasayı geçiyor mu
     cizgi.py           ÖLÇÜM: açılış→kapanış çizgi hareketi (A1)
     bahisci.py         ÖLÇÜM: bahisçiler arası ayrışma (A2)
@@ -936,7 +949,7 @@ backend/
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
                        sehir/ · xg/
-  tests/               pytest (63 dosya → 1.901 test; §9'da katman dökümü)
+  tests/               pytest (63 dosya → 1.902 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1122,7 +1135,7 @@ dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri t
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
 eşleme, ikinci kayıt). **63 test dosyası, parametrizasyonla
-1.901 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+1.902 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 

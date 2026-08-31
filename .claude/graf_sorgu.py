@@ -35,8 +35,38 @@ def modul(g: dict, ara: str) -> None:
             print(f"{m['yol']}\n    {m['gorev']}\n    kaynak: {m['kaynak']}")
 
 
+#: Elle biriken bölümler. Graf `.gitignore`'da (satır 99) ve tazeleyici
+#: bunları ÜRETEMEZ — kaynakları komut koşmak / belge okumaktır. Yani taze
+#: bir klonda (her uzak oturum) ikisi de boş gelir.
+ELLE_BIRIKEN = {
+    "sayilar": ("sayı kütüğü", ".claude/skills/knowledge-graph/SKILL.md"),
+    "komutlar": ("komut envanteri", ".claude/skills/knowledge-graph/SKILL.md"),
+}
+
+
+def _bos_mu(g: dict, bolum: str) -> bool:
+    """Bölüm boşsa bunu AÇIKÇA söyler ve True döner.
+
+    **Neden var.** Bu iki fonksiyon boş bölümde döngüye hiç girmiyordu, yani
+    hiçbir şey basmıyordu — ve "kütük bu klonda yok" ile "böyle bir sayı
+    kayıtlı değil" çıktı olarak AYNI görünüyordu. `CLAUDE.md` "sayı sorulunca
+    taramadan önce kütüğe bak" diyor; kütük boşken o kural sessizce hiçbir şey
+    yapmıyordu. Sessizlik bir cevap değildir: boşluk ADIYLA söylenir.
+    """
+    if g.get(bolum):
+        return False
+    ad, kaynak = ELLE_BIRIKEN[bolum]
+    print(f"{ad} BOŞ — bu klonda hiç girdi yok (graf git dışı, elle birikir).")
+    print("  Bu, 'böyle bir kayıt yok' DEĞİLDİR: kütüğün kendisi gelmemiştir.")
+    print("  Sonuç: aranan şey ÖLÇÜLMEDEN kullanılamaz — komutu koş, sonra")
+    print(f"  kütüğe yaz. Kural: {kaynak}")
+    return True
+
+
 def sayi(g: dict, ara: str) -> None:
     """Değerde veya açıklamada geçen sayı kütüğü girdilerini basar."""
+    if _bos_mu(g, "sayilar"):
+        return
     for s in g["sayilar"]:
         if ara in s["deger"] or ara in s["ne"].lower():
             print(f"{s['deger']} — {s['ne']}")
@@ -48,6 +78,8 @@ def sayi(g: dict, ara: str) -> None:
 
 def komut(g: dict, ara: str) -> None:
     """Komut metninde veya açıklamasında geçen komutları basar."""
+    if _bos_mu(g, "komutlar"):
+        return
     for k in g["komutlar"]:
         if ara in k["komut"].lower() or ara in k["ne_yapar"].lower():
             print(f"{k['komut']}\n    {k['ne_yapar']}\n    kaynak: {k['kaynak']}")

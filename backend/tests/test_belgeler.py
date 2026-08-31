@@ -87,27 +87,58 @@ def test_saglik_kontrol_sayisi_belgeyle_ayni():
     )
 
 
-#: Test sayısının geçtiği **yaşayan** belgeler. Yeni bir belge bu sayıyı
-#: yazarsa buraya eklenir; eklenmezse bekçi onu görmez.
+#: Sayı taşımasına **izin verilen** donmuş kayıtlar. Bu liste bir opt-OUT'tur:
+#: taranan küme depodaki bütün `*.md` dosyalarıdır, buradakiler hariç.
 #:
-#: `docs/SAGLIK_GELISTIRME_RAPORU.md` bilerek DIŞARIDADIR. O belge tarihli bir
-#: çalışma kaydıdır ("bu turda şu ölçüldü") ve içindeki 1.022, yazıldığı gün
-#: doğruydu — bir ölçüm kaydı sonradan yeniden yazılmaz. Bekçi onu da tarasaydı
-#: **doğru bir cümleyi yanlış** diye işaretlerdi; aynı gerekçeyle bu dosyadan
-#: bir hold-out bekçisi de kaldırılmıştı (aşağıdaki nota bakınız). Bugünkü
-#: sayıyı arayan o belgeden README §9'a yönlendirilir, ve README taranır.
-SAYI_TASIYAN_BELGELER = (
-    "README.md", "replit.md",
-    "docs/ISTATISTIK_YOL_HARITASI.md",
-    "docs/SAGLIK_VIZYONU.md",
-    "docs/VERI_TOPLAMA_VE_ISLEME.md",
-)
+#: **Neden ters çevrildi.** Önce burada `SAYI_TASIYAN_BELGELER` adlı bir
+#: opt-IN demeti vardı — beş belge elle sayılıydı ve yeni bir belge
+#: varsayılan olarak **korumasız** kalıyordu. `backend/README.md` tam olarak
+#: böyle kaçtı: içinde `tests/ (31 dosya → 1.030 test)` yazıyordu, gerçek
+#: 63 dosya / 1.901 testti, ve bekçi yeşil kaldı. Yani bekçinin kör noktası
+#: sayının kendisi değil, **listenin kendisiydi**. Artık varsayılan
+#: korumalıdır ve muafiyet açıkça, gerekçesiyle yazılır.
+#:
+#: Buradaki her satır belgenin KENDİSİNDE yazılı bir damgaya dayanır — bir
+#: ölçüm kaydı sonradan yeniden yazılmaz, ve bekçinin **doğru bir cümleyi
+#: yanlış** diye işaretlemesi hiç bekçi olmamasından kötüdür (aynı gerekçeyle
+#: bu dosyadan bir hold-out bekçisi de kaldırılmıştı — aşağıdaki nota bakınız).
+DONMUS_BELGELER = {
+    # "Bugünkü sayılar (2026-08-23). Yukarısı bu turun kaydıdır ve öyle kalır."
+    "docs/SAGLIK_GELISTIRME_RAPORU.md",
+    # "Bu belgenin tarihi: 2026-08-29 · taban `d607360`"
+    "docs/GELISTIRME_PLANI_ESLEMESI.md",
+    # Aynı türden künye damgası taşır ("48 modüllük bir paket").
+    "docs/BENZER_PLANI_ESLEMESI.md",
+    # Ölçüm kütüğünün kendisi: her girdi tarihli bir turun kaydı ve
+    # içindeki sayılar bilerek geçmişi anlatır (ör. "62 dosya → 1.879 test"
+    # düzeltilmiş bir kör noktanın ANLATIMIDIR, bugünkü iddia değil).
+    "docs/token_olcum_kutugu.md",
+}
+
+#: `.claude/` taranmaz: ajan kurulumudur, ürünün iddiası değil — ve
+#: `skills/token-optimizer/` upstream'den olduğu gibi alınmıştır
+#: (`VENDORED.md`), oradaki sayılar bu deponun ölçümü değildir.
+TARANMAYAN_KOK = ".claude/"
+
+
+def _belge_listesi() -> list[str]:
+    """Depodaki taranacak `*.md` dosyaları — donmuş kayıtlar hariç.
+
+    Kaynak `git ls-files`: elle tutulan bir liste tam olarak yukarıda
+    anlatılan şekilde eskiyordu. Git yoksa bekçi kör kalmaktansa atlar.
+    """
+    out = subprocess.run(["git", "ls-files", "*.md"], cwd=DEPO,
+                         capture_output=True, text=True)
+    if out.returncode != 0 or not out.stdout.strip():
+        pytest.skip("git ls-files okunamadı — belge listesi çıkarılamıyor")
+    return [y for y in out.stdout.split()
+            if not y.startswith(TARANMAYAN_KOK) and y not in DONMUS_BELGELER]
 
 
 def _belgelerdeki_test_sayilari() -> dict[str, set[int]]:
     """Belgelerde geçen "N test" ifadelerini dosya dosya toplar."""
     bulunan: dict[str, set[int]] = {}
-    for d in SAYI_TASIYAN_BELGELER:
+    for d in _belge_listesi():
         p = DEPO / d
         if not p.exists():
             continue
@@ -211,6 +242,36 @@ def test_readme_belge_dizini_eksiksiz():
     )
 
 
+def test_readme_modul_listesi_eksiksiz():
+    """README §7 modül ağacı `spor_toto/`teki her modülü saymalı.
+
+    `replit.md` bu ağacı **"tam liste"** diye gösteriyor ve `backend/README.md`
+    artık kendi seçkisinden buraya yönlendiriyor — yani bu tek listedir ve
+    eksik bir satır üç belgeye birden yayılır. Ölçüldüğünde 51 modülün
+    **13'ü** ağaçta yoktu (`fiyatlar.py` README'de hiç geçmiyordu), ve hiçbir
+    bekçi bunu tutmuyordu.
+
+    **Sayı değil liste karşılaştırılır.** Belgelerde `48/46/26/50` gibi
+    modül sayıları geçiyor; bir kısmı meşru alt küme, bir kısmı donmuş künye.
+    Sayısal bir bekçi doğru cümleleri kırmızı yakardı — bu dosyanın kuralı
+    tam tersi. `test_readme_belge_dizini_eksiksiz` ile aynı desen: kaynak
+    dosya sistemi, karşılaştırma isim isim.
+    """
+    metin = _oku("README.md")
+    diskte = sorted(p.name for p in (KOK / "spor_toto").glob("*.py")
+                    if p.name != "__init__.py")
+    # Ağaç satırı `    <ad>.py   <açıklama>` biçiminde; nesirdeki `odds.py`
+    # gibi anmalar sayılmasın diye satır başı girinti aranır.
+    listede = set(re.findall(r"^\s+([a-z_0-9]+\.py)\s", metin, re.MULTILINE))
+    eksik = [ad for ad in diskte if ad not in listede]
+    assert not eksik, (
+        f"README §7 modül ağacında eksik: {eksik}. "
+        f"spor_toto/ {len(diskte)} modül taşıyor, ağaç bunların "
+        f"{len(diskte) - len(eksik)}'ini sayıyor. "
+        "Liste tek kaynaktır — replit.md ve backend/README.md buraya yönlendirir."
+    )
+
+
 def test_test_dosya_sayisi_belgelerle_ayni():
     """"N test dosyası" diyen belgeler dosya sistemiyle örtüşmeli.
 
@@ -230,7 +291,7 @@ def test_test_dosya_sayisi_belgelerle_ayni():
     """
     gercek = len(list((KOK / "tests").glob("test_*.py")))
     yanlis: dict[str, list[int]] = {}
-    for d in SAYI_TASIYAN_BELGELER:
+    for d in _belge_listesi():
         p = DEPO / d
         if not p.exists():
             continue
