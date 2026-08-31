@@ -3087,7 +3087,9 @@ Sayı **gözlenen ile beklenen arasındaki farktır**, ham oran değil.
    ilk kez para birimiyle hesaplandı ve popülerlik modeli ilk sınavını verdi
    (§3.40). Kalan tek eksik, kolon bedelinin yayınlanmaması.
 2. **Skorlar girilmedi.** Yalnızca 1/0/2 var; gol bazlı hiçbir ölçüm (DC'nin
-   kendi kalibrasyonu dahil) bu haftadan beslenemez.
+   kendi kalibrasyonu dahil) bu haftadan beslenemez. *(3. haftada veri tarafı
+   kapandı — skorlar girildi — ama tüketici tarafı hâlâ açık: `score` alanını
+   okuyan tek yer arşiv boru hattı. Bkz. §3.47 "Ölçülemeyenler" 5.)*
 3. **Kuşkulu satır kaynağından doğrulanmadı.** 4. maçın marjı %45,8'di
    (bültenin ortancası %17,7). Duyarlılık ölçümü kaydediyor ki düzeltilmiş
    marjla **işaretler değişmiyordu** — yani bu hafta bedeli sıfır. Uyarı yine de
@@ -4336,6 +4338,14 @@ sonuç görülmeden yazılmıştı; sonuç onu doğruladı.
    önce kapanıyor. Ölçülebilen şey "en geç alınabilen kayıt"tır ve bu hafta
    ölçüldü.
 4. **Havuzun kendisi ve komisyon** — satış cirosu hiçbir ekranda yok.
+5. **Skorlar girildi ama hiçbir şey okumuyor.** 2. haftanın açık maddesiydi
+   (*"gol bazlı hiçbir ölçüm bu haftadan beslenemez"*) ve veri tarafı bu hafta
+   kapandı: 15 maçın skoru `hafta_03.json` içinde duruyor. Tüketici tarafı
+   kapanmadı — depoda `score` alanını okuyan tek yer `build_history.py`, o da
+   **arşiv** boru hattı. Canlı sezonun skorları bugün hiçbir kalibrasyona,
+   hiçbir Dixon-Coles güncellemesine girmiyor. Yani madde "veri yok"tan
+   "veri var, yolu yok"a döndü; kapanması için canlı sezonu arşiv şemasına
+   bağlayan bir adım gerekiyor ve o adım **bu hafta atılmadı**.
 
 #### Yan üründe beş sessiz hata yakalandı
 

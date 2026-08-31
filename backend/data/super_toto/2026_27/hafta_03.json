@@ -11,6 +11,7 @@
   "play_note": "yüzdeler tek bir platformun kendi kullanıcılarıdır; Spor Toto havuzunun tamamı DEĞİLDİR",
   "entered_at": "2026-08-27",
   "results": "021210211101222",
+  "results_entered_at": "2026-09-01",
   "data_warnings": [
    "Program tarihleri ve maç saatleri kupon kurulurken GİRİLMEMİŞTİ; sonuç ekranıyla birlikte (2026-09-01) girildi. Kupon dondurulurken elde olan tek zaman damgası `entered_at`tır (2026-08-27).",
    "Nesine'nin KAPANIŞ oranı 10–15. maçlarda AÇILIŞIYLA BİREBİR AYNI (maçlar: 10, 11, 12, 13, 14, 15). Bu bir fiyat değil, bayat bir kayıttır: o satırlarda Nesine kapanışı bilgi taşımıyor. Bahisçi ayrışmasının en büyük üçü (13. maç 7,9 puan, 12. maç 7,0 puan, 11. maç 6,4 puan) tam olarak bu bayat satırlardan geliyor — yani ayrışma görüş farkı değil, kayıt farkıdır.",

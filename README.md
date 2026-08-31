@@ -505,8 +505,8 @@ yedisi çift/üçlü işaretlenmiş maçlara düştü. Sürprizin **sayısı** d
 sembolde mi atılan sembolde mi olduğu belirliyor. (2) O 14'te **görüş yok**:
 sapma defteri sıfır sapma yazıyor, yani kupon mekanik azami kapsamanın birebir
 aynısı. Haftada verilen iki karar da kuponun dışındaydı — hangi fiyat kaydı
-(geç kayıt 14 verdi, erken kayıt 13; gerçekleşen getiride ×11) ve hangi varyant
-(kalabalığı görmeyen 14, ayarlı 13). İkincisi **ölçüme rağmen** verilmişti ve
+(geç kayıt **14/15**, erken kayıt 13/15; gerçekleşen getiride ×11) ve hangi
+varyant (kalabalığı görmeyen 14/15, ayarlı 13/15). İkincisi **ölçüme rağmen** verilmişti ve
 kazandı; defter bunu bir uyarı olarak taşıyor, bir onay olarak değil (§3.47).
 
 Sonuç girilirken üç şey birlikte girilir — biri eksikse o haftanın bir ölçüsü
