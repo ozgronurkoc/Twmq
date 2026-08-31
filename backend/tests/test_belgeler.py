@@ -216,6 +216,17 @@ def test_test_dosya_sayisi_belgelerle_ayni():
 
     Ayrı bir test: dosya sayısı diskten okunur, alt süreç gerekmez — yani
     yukarıdaki toplama düşse bile bu bekçi ayakta kalır.
+
+    **Bu bekçinin bir kör noktası vardı ve kapatıldı.** Yalnızca "N test
+    dosyası" ifadesini arıyordu, oysa `README.md` §9 aynı sayıyı başka
+    biçimde yazıyor: "(62 dosya → 1.879 test)". O 62 yanlıştı (gerçek 63),
+    bekçi göremedi ve sayı sessizce bayat kaldı — tam olarak bu bekçinin
+    engellemek için var olduğu şey. İkinci desen o biçimi de tarar.
+
+    Ok biçimi (`N dosya →`) bilerek dar tutuldu: yalın "N dosya" taransaydı
+    football-data arşivinin "38 dosya"sı yanlış yere kırmızı yanardı ve
+    doğru bir cümleyi yanlış diye işaretleyen bekçi, hiç bekçi olmamasından
+    kötüdür.
     """
     gercek = len(list((KOK / "tests").glob("test_*.py")))
     yanlis: dict[str, list[int]] = {}
@@ -223,9 +234,11 @@ def test_test_dosya_sayisi_belgelerle_ayni():
         p = DEPO / d
         if not p.exists():
             continue
+        metin = p.read_text(encoding="utf-8")
         sayilar = {
             int(x) for x in
-            re.findall(r"(\d+)\s*test dosyası", p.read_text(encoding="utf-8"))
+            re.findall(r"(\d+)\s*test dosyası", metin)
+            + re.findall(r"(\d+)\s*dosya\s*(?:→|->)", metin)
         }
         if sayilar and sayilar != {gercek}:
             yanlis[d] = sorted(sayilar)

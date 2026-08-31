@@ -54,7 +54,9 @@ backend/data/artefakt/
 # python scripts/build_avrupa.py · python scripts/build_sehir.py
 backend/data/avrupa/_kaynak/
 
-# Olcum kosum defteri (`--kaydet`). Yerel bir defterdir: bir sayiyi
+# Olcum kosum defteri (`--kaydet`, `spor_toto/kosum.py`). BORU HATTI DEGIL:
+# yeniden uretme komutu YOKTUR ve olmamalidir — gecmis olcum kosumlari
+# yeniden uretilemez, birikir. Yerel bir defterdir: bir sayiyi
 # savunmak gerektiginde bakilir, paylasilmaz. Surumlenseydi her olcum
 # depoyu buyutur ve depo bir veri ambarina donerdi.
 backend/data/kosumlar/
@@ -75,15 +77,17 @@ backend/data/kosumlar/
 backend/data/xg/_kaynak/
 
 # Resmi Spor Toto arsivi (§6D): sezon JSON'lari ve rapor SURUMLENIR,
-# indirilen ham payload git disidir — tek komutla yeniden uretilir.
+# indirilen ham payload git disidir.
+# Yeniden olusturmak icin: python scripts/build_sportoto_arsiv.py
 backend/data/sportoto_arsiv/_kaynak/
 
 # Bulten OCR (§6F): sezon JSON'lari ve rapor SURUMLENIR, indirilen gorseller
 # git disidir. Gorseller ~170 adet ve toplam onlarca MB; ciktisi metin.
+# Yeniden olusturmak icin: python scripts/build_bulten.py
 backend/data/bulten/_kaynak/
 
-# Gecmis sezon birlestirmesi (§6G): indirilen football-data CSV'leri git disi,
-# tek komutla yeniden iner.
+# Gecmis sezon birlestirmesi (§6G): indirilen football-data CSV'leri git disi.
+# Yeniden olusturmak icin: python scripts/build_gecmis_sezon.py
 backend/data/st_history/_kaynak/
 
 # Ajan bilgi grafi (`.claude/skills/knowledge-graph/`). Depodan TURETILIR ve
@@ -93,3 +97,10 @@ backend/data/st_history/_kaynak/
 # Yeniden olusturmak icin: skill'deki tarifler
 # (`.claude/skills/knowledge-graph/references/sorgular.md`).
 .claude/bilgi_grafi.json
+
+# Graphify ciktisi (`graphify update .`). ~25 MB, TURETILMIS ve tamami
+# yeniden uretilebilir — deponun "turetilmis cikti surumlenmez" kuralina
+# girer. Icinde graph.json (8.773 dugum), graph.html ve GRAPH_REPORT.md
+# (~37.500 token — TAMAMINI OKUMA) var.
+# Yeniden olusturmak icin: graphify update .
+graphify-out/
