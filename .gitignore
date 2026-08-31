@@ -85,3 +85,11 @@ backend/data/bulten/_kaynak/
 # Gecmis sezon birlestirmesi (§6G): indirilen football-data CSV'leri git disi,
 # tek komutla yeniden iner.
 backend/data/st_history/_kaynak/
+
+# Ajan bilgi grafi (`.claude/skills/knowledge-graph/`). Depodan TURETILIR ve
+# tamami yeniden uretilebilir; surumlenseydi `git pull` yapan herkes bir
+# baskasinin eski kesfini bugunun gercegi sanardi — yani belgelerdeki bayat
+# sayi sorununun bekcisiz bir kopyasi olurdu. Bu defter yereldir.
+# Yeniden olusturmak icin: skill'deki tarifler
+# (`.claude/skills/knowledge-graph/references/sorgular.md`).
+.claude/bilgi_grafi.json
