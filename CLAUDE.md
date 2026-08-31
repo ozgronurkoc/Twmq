@@ -16,7 +16,8 @@ grafı sorgula. Cevap graftaysa tarama yapma; yoksa tara, sonra grafa yaz.
 
 ```bash
 python3 .claude/graf_sorgu.py ozet          # bölüm bölüm girdi sayısı
-python3 .claude/graf_sorgu.py modul kalibr  # modül ara
+python3 .claude/graf_sorgu.py modul kalibr  # modül ara (terimsiz = hepsi)
+python3 .claude/graf_sorgu.py komut check    # komut envanterinde ara
 python3 .claude/graf_sorgu.py sayi 1901     # sayı kütüğünde ara
 python3 .claude/graf_sorgu.py kapi belge    # bekçi ara
 python3 .claude/graf_sorgu.py tazelik       # bayat girdi var mı

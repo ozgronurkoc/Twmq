@@ -46,6 +46,13 @@ def sayi(g: dict, ara: str) -> None:
                 print(f"    anilir : {y}")
 
 
+def komut(g: dict, ara: str) -> None:
+    """Komut metninde veya açıklamasında geçen komutları basar."""
+    for k in g["komutlar"]:
+        if ara in k["komut"].lower() or ara in k["ne_yapar"].lower():
+            print(f"{k['komut']}\n    {k['ne_yapar']}\n    kaynak: {k['kaynak']}")
+
+
 def kapi(g: dict, ara: str) -> None:
     """Adında veya tuttuğu iddiada geçen bekçileri basar."""
     for k in g["kapilar"]:
@@ -88,17 +95,18 @@ def main() -> None:
     """Alt komutu seçip çalıştırır."""
     if len(sys.argv) < 2:
         sys.exit(__doc__ + "\nkullanim: graf_sorgu.py "
-                 "{ozet|modul|sayi|kapi|boru|tazelik} [arama]")
+                 "{ozet|modul|komut|sayi|kapi|boru|tazelik} [arama]")
     g = yukle()
     islem, arg = sys.argv[1], (sys.argv[2].lower() if len(sys.argv) > 2 else "")
     if islem == "ozet":
         ozet(g)
     elif islem == "tazelik":
         tazelik(g)
-    elif islem in ("modul", "sayi", "kapi", "boru"):
-        if not arg:
-            sys.exit(f"'{islem}' bir arama terimi ister")
-        {"modul": modul, "sayi": sayi, "kapi": kapi, "boru": boru}[islem](g, arg)
+    elif islem in ("modul", "sayi", "kapi", "boru", "komut"):
+        # Arama terimi bos ise bolumun TAMAMI listelenir: "" her metinde
+        # gecer, yani filtre kendiliginden acilir.
+        {"modul": modul, "sayi": sayi, "kapi": kapi,
+         "boru": boru, "komut": komut}[islem](g, arg)
     else:
         sys.exit(f"bilinmeyen islem: {islem}")
 
