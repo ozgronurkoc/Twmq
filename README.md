@@ -1394,6 +1394,7 @@ olması gerekir. Tanımlıysa yalnızca **durum değişiminde** bildirim gider.
 | [`docs/GELISTIRME_PLANI_ESLEMESI.md`](docs/GELISTIRME_PLANI_ESLEMESI.md) | Dışarıdan gelen iki geliştirme planının madde madde karşılığı: hangisi zaten vardı, hangisi gerçekten eksikti (dördü), hangisi **ölçülmüş gerekçeyle** reddedildi |
 | [`docs/BENZER_PLANI_ESLEMESI.md`](docs/BENZER_PLANI_ESLEMESI.md) | `benzer.py` için gelen dış planın aynı biçimde eşlemesi: gerçekten eksik olan üçü (`inf` oran · toleransın üç kapıda üç sınırı · zaman kesmesi) uygulandı, altısı gerekçesiyle reddedildi, üçü kaydedildi |
 | [`docs/GELECEK_MIMARISI_ESLEMESI.md`](docs/GELECEK_MIMARISI_ESLEMESI.md) | Dışarıdan gelen bir **gelecek mimarisi makalesinin** aynı biçimde eşlemesi: önerdiği Faz I–V'in tamamı zaten yapılmış ve **ölçülmüştü** (hiçbir aile kapanış fiyatını geçmedi), gerçekten yeni olan tek madde **maçlar arası bağımlılığın kuyruk etkisi** oldu — ölçüldü ve **eksen kapandı** (§3.46); makalenin hiç görmediği şey ise açık olan tek eksen: **havuz** |
+| [`docs/token_olcum_kutugu.md`](docs/token_olcum_kutugu.md) | Ajan bilgi grafının token kazancının **ölçüm kütüğü**: hangi soru, hangi cetvel, grafik öncesi ve sonrası kaç token — sayılar ölçüldü, tahmin edilmedi |
 | [`backend/README.md`](backend/README.md) | Motor + API kurulumu, ortam değişkenleri, oran arşivi kullanımı |
 | [`frontend/README.md`](frontend/README.md) | Arayüz yapısı, tasarım sistemi, grafik kuralları, tip katmanı |
 | [`replit.md`](replit.md) | Replit çalışma alanının hafızası: iş akışları, portlar, dağıtım |
