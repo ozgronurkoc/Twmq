@@ -21,9 +21,14 @@ geçerli; ham sayılar Claude faturasının birebir karşılığı değildir.
 
 **Fark: 23.100 token · düşüş %88,8.**
 
-`CLAUDE.md` her oturumda **530 token** sabit maliyet getiriyor. Oturumun ilk
-sorusunda gerçek maliyet `2.920 + 530 = 3.450` token, yani düşüş **%86,7**.
+`CLAUDE.md` her oturumda **666 token** sabit maliyet getiriyor (ilk ölçümde 530
+idi; oto tazeleme belgelenince büyüdü — sayı güncellendi). Oturumun ilk
+sorusunda gerçek maliyet `2.920 + 666 = 3.586` token, yani düşüş **%86,2**.
 İkinci sorudan itibaren bu maliyet bir daha ödenmez.
+
+Oto tazeleme hook'u ayrıca oturum başına çıktı üretir: her şey yolundaysa
+**0 satır** (sessiz), şüpheli sayı varsa **4 satır**. Şu an 4 satır yazıyor,
+çünkü 1901/1879 sapması duruyor.
 
 ## Ölçümün yapıldığı komutlar
 
@@ -84,7 +89,13 @@ python3 .claude/graf_sorgu.py tazelik      # bayat girdi 0 olmalı
 (`.claude/skills/knowledge-graph/references/sinirlar.md`): hash tutuyorsa altı
 ay önceki girdi geçerlidir, tutmuyorsa dünkü girdi geçersizdir.
 
-**Önce her zaman bunu koş — kararı o versin:**
+**Envanter artık kendiliğinden tazeleniyor.** `.claude/hooks/session-start.sh`
+her Claude oturumunun başında `moduller`/`kapilar`/`boru_hatlari` bölümlerini
+kaynaktan yeniden ölçer (~0,3 sn) ve `sayilar`ı denetleyip **yalnızca uyarır**.
+Aşağıdaki tablo, hook'un yapamadığı ya da senin karar vermen gereken durumlar
+içindir.
+
+**Elle kontrol için:**
 ```bash
 python3 .claude/graf_sorgu.py tazelik
 ```
@@ -92,11 +103,10 @@ python3 .claude/graf_sorgu.py tazelik
 
 | Ne olduysa | Ne yapmalı |
 |---|---|
-| `tazelik` **DEGISTI** diyor | Yalnızca o girdiyi yeniden ölç. Tamamını üretme. |
-| `tazelik` **DOSYA YOK** diyor | Girdiyi **sil**. Taşındıysa yeni yolla yeniden yaz. |
-| `backend/spor_toto/` altına modül eklendi/silindi | `moduller` bölümünü yeniden üret. |
-| `test_belgeler.py` bekçisi eklendi/değişti | `kapilar` bölümünü yeniden üret. |
-| `.gitignore` boru hattı yorumları değişti | `boru_hatlari` bölümünü yeniden üret. |
+| `tazelik` **DEGISTI** / **DOSYA YOK** diyor | **Hook halleder** — bir sonraki oturumda tazelenir. Beklemek istemiyorsan: `python3 .claude/graf_uret.py` |
+| Modül, bekçi ya da boru hattı eklendi/silindi/değişti | **Hook halleder.** Üç envanter bölümü de kaynaktan yeniden ölçülür. |
+| Oturum açılışında **SUPHELI SAYI** uyarısı | Hook bunu **düzeltmez**, düzeltemez. Sayıyı üreten komutu koş, sonucu `sayilar`a yaz, `anildigi_yerler`i güncelle. |
+| Taze klon açtın | Envanter kendiliğinden gelir; **`komutlar` ve `sayilar` GELMEZ** — graf git dışıdır, o iki bölüm elle birikir. Hook bunu açılışta yazar. |
 | Bir sayı değişti (test, kontrol, metrik) | `sayilar` girdisini yeniden ölç **ve** `anildigi_yerler`i `grep` ile doğrula — asıl pahalı hata bu listenin eksik kalmasıdır. |
 | Dal değiştirdin ya da büyük birleştirme geldi | `tazelik` koş; `bayat girdi: 0` ise dokunma. |
 | Üzerinden zaman geçti, kod değişmedi | **Hiçbir şey.** Zaman tek başına hiçbir girdiyi yanlışlamaz. |

@@ -25,6 +25,12 @@ python3 .claude/graf_sorgu.py tazelik       # bayat girdi var mı
 
 **Grafın tamamını okuma** (~8.000 token); yalnızca ilgili bölümü sorgula.
 
+Envanter bölümleri (`moduller`/`kapilar`/`boru_hatlari`) **oturum başında
+kendiliğinden tazelenir** (`.claude/hooks/session-start.sh`, ~0,3 sn), o yüzden
+onlara güvenebilirsin. `sayilar` tazelenmez, yalnızca **denetlenir**: oturum
+açılışında "SUPHELI SAYI" uyarısı gördüysen o sayı **yeniden ölçülmeden
+kullanılmaz**.
+
 **Graf kanıt değildir.** Çelişkide sıra: çalışan ölçüm > kod > belge > graf.
 `tazelik` bayat girdi gösteriyorsa o girdi **yeniden ölçülür**, düzeltilmiş
 sayılmaz. Ayrıntı: `.claude/skills/knowledge-graph/SKILL.md`.
