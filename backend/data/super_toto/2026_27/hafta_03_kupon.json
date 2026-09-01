@@ -215,5 +215,136 @@
   "0   0   1   102 102 1   2   1   1   1   0   2   12  102 2  ",
   "0   0   1   102 102 0   0   2   1   1   0   1   12  102 2  ",
   "0   0   1   102 102 0   2   2   1   1   2   2   12  102 2  "
- ]
+ ],
+ "referans": [
+  {
+   "label": "15 bilen · A (₺6.350 · 635 kolon)",
+   "source": "kullanıcı ekran görüntüsü (2026-09-01 04:10-04:11) — ST EXTRA kupon aracının ilan ettiği 3. hafta 15 bilen kuponları; bize AİT DEĞİL",
+   "note": "Kupon bizim değil ve kuralımızın ürünü değildir. İşaretler ekrandaki renk kodundan okundu (koyu yeşil = işaretli ve gerçek sonuç, açık yeşil = işaretli, pembe = işaretsiz) ve üç bağımsız yoldan doğrulandı: (1) her kupon gerçek sonucun tamamını kapsıyor — '15 Giden: 1' bunu zorunlu kılar, (2) ekrandaki dört örnek kolonun sembolleri işaretlerin içinde, (3) ekrandaki Kazanç, resmî ödül vektörü × kademe adetlerine KURUŞUNA KADAR eşit.",
+   "sistem": "kayitli",
+   "columns": 635,
+   "bedel": 6350,
+   "kademeler": {
+    "15": 1,
+    "14": 0,
+    "13": 4,
+    "12": 19
+   },
+   "kazanc_ekran": 4319745.89,
+   "picks": [
+    "102",
+    "102",
+    "1",
+    "12",
+    "102",
+    "10",
+    "02",
+    "102",
+    "1",
+    "1",
+    "102",
+    "12",
+    "102",
+    "102",
+    "2"
+   ]
+  },
+  {
+   "label": "15 bilen · B (₺4.000 · 400 kolon — en ucuz)",
+   "source": "kullanıcı ekran görüntüsü (2026-09-01 04:10-04:11) — ST EXTRA kupon aracının ilan ettiği 3. hafta 15 bilen kuponları; bize AİT DEĞİL",
+   "note": "Kupon bizim değil ve kuralımızın ürünü değildir. İşaretler ekrandaki renk kodundan okundu (koyu yeşil = işaretli ve gerçek sonuç, açık yeşil = işaretli, pembe = işaretsiz) ve üç bağımsız yoldan doğrulandı: (1) her kupon gerçek sonucun tamamını kapsıyor — '15 Giden: 1' bunu zorunlu kılar, (2) ekrandaki dört örnek kolonun sembolleri işaretlerin içinde, (3) ekrandaki Kazanç, resmî ödül vektörü × kademe adetlerine KURUŞUNA KADAR eşit.",
+   "sistem": "kayitli",
+   "columns": 400,
+   "bedel": 4000,
+   "kademeler": {
+    "15": 1,
+    "14": 1,
+    "13": 2,
+    "12": 14
+   },
+   "kazanc_ekran": 4412925.61,
+   "picks": [
+    "102",
+    "12",
+    "1",
+    "02",
+    "12",
+    "10",
+    "02",
+    "102",
+    "10",
+    "1",
+    "102",
+    "10",
+    "02",
+    "12",
+    "2"
+   ]
+  },
+  {
+   "label": "15 bilen · C (₺12.920 · 1.292 kolon)",
+   "source": "kullanıcı ekran görüntüsü (2026-09-01 04:10-04:11) — ST EXTRA kupon aracının ilan ettiği 3. hafta 15 bilen kuponları; bize AİT DEĞİL",
+   "note": "Kupon bizim değil ve kuralımızın ürünü değildir. İşaretler ekrandaki renk kodundan okundu (koyu yeşil = işaretli ve gerçek sonuç, açık yeşil = işaretli, pembe = işaretsiz) ve üç bağımsız yoldan doğrulandı: (1) her kupon gerçek sonucun tamamını kapsıyor — '15 Giden: 1' bunu zorunlu kılar, (2) ekrandaki dört örnek kolonun sembolleri işaretlerin içinde, (3) ekrandaki Kazanç, resmî ödül vektörü × kademe adetlerine KURUŞUNA KADAR eşit.",
+   "sistem": "kayitli",
+   "columns": 1292,
+   "bedel": 12920,
+   "kademeler": {
+    "15": 1,
+    "14": 4,
+    "13": 17,
+    "12": 62
+   },
+   "kazanc_ekran": 4951141.51,
+   "picks": [
+    "10",
+    "102",
+    "10",
+    "02",
+    "12",
+    "10",
+    "2",
+    "102",
+    "1",
+    "1",
+    "102",
+    "102",
+    "02",
+    "102",
+    "02"
+   ]
+  },
+  {
+   "label": "15 bilen · D (₺39.750 · 3.975 kolon — 14 garantili)",
+   "source": "kullanıcı ekran görüntüsü (2026-09-01 04:10-04:11) — ST EXTRA kupon aracının ilan ettiği 3. hafta 15 bilen kuponları; bize AİT DEĞİL",
+   "note": "Kupon bizim değil ve kuralımızın ürünü değildir. İşaretler ekrandaki renk kodundan okundu (koyu yeşil = işaretli ve gerçek sonuç, açık yeşil = işaretli, pembe = işaretsiz) ve üç bağımsız yoldan doğrulandı: (1) her kupon gerçek sonucun tamamını kapsıyor — '15 Giden: 1' bunu zorunlu kılar, (2) ekrandaki dört örnek kolonun sembolleri işaretlerin içinde, (3) ekrandaki Kazanç, resmî ödül vektörü × kademe adetlerine KURUŞUNA KADAR eşit. D'nin 15. maçı ekranda KESİK; '2' işaretli olduğu kesin (sonuç 2 ve kupon 15 yaptı), başka sembol var mı okunamadı. Seçim uzayı bu yüzden ALT SINIRDIR; oynanan kolon sayısı (3.975) ekranda yazılı olduğu için hiçbir ölçü etkilenmiyor.",
+   "sistem": "kayitli",
+   "columns": 3975,
+   "bedel": 39750,
+   "kademeler": {
+    "15": 1,
+    "14": 0,
+    "13": 23,
+    "12": 50
+   },
+   "kazanc_ekran": 4521817.67,
+   "picks": [
+    "102",
+    "102",
+    "1",
+    "102",
+    "102",
+    "10",
+    "2",
+    "12",
+    "10",
+    "10",
+    "102",
+    "12",
+    "102",
+    "02",
+    "2"
+   ]
+  }
+ ],
+ "referans_notu": "Dördü de o haftanın 9 adet 15 bilen kolonundan birer tanesini üretti. SAĞKALIM YANLILIĞI: ekran KAZANANLARI gösteriyor; bu dört kupon, aracın kaç kupon ürettiğinin paydası olmadan aracın başarısı hakkında hiçbir şey söylemez. Ölçülebilen şey, KAZANMIŞ OLMAK KOŞULUYLA maliyet yapısıdır."
 }
