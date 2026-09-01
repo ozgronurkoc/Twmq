@@ -4399,6 +4399,214 @@ listesini diskten okuyor; Faz B testi kuralı tutuyor.
     python scripts/super_toto_sezon.py
 
 
+### 3.48 3. haftanın dört 15 bileni — ve projenin ölçemediği son fiyat
+
+O haftanın **9** adet 15 bilen kolonu vardı. Bir kupon aracının (ST EXTRA)
+ekranı bunlardan **dördünü** işaretleriyle, bedeliyle ve kademe dağılımıyla
+birlikte gösteriyor. Dördü de kayda geçti (`hafta_03_kupon.json` → `referans`).
+
+> **Künye — bunlar bizim kuponumuz değil ve bizim ölçeğimizde üretilmedi.**
+> İşaretler ekrandaki renk kodundan okundu. Okuma **üç bağımsız yoldan**
+> doğrulandı: (1) dört kuponun dördü de gerçek sonucun tamamını kapsıyor —
+> "15 Giden: 1" bunu matematiksel olarak zorunlu kılar; (2) ekranda gösterilen
+> örnek kolonların sembolleri işaretlerin içinde kalıyor; (3) ekrandaki
+> **Kazanç**, resmî ödül vektörü × kademe adetlerine **kuruşuna kadar** eşit
+> (dört kuponda da fark ₺0,00). Üçüncüsü aynı zamanda bizim ikramiye
+> girdimizi de çapraz doğruluyor.
+
+#### 1. ders — kolon bedeli ölçüldü: **₺10**
+
+§3.40 iki hafta boyunca şunu yazıyordu: *"Kalan tek eksik, kolon bedelinin
+yayınlanmaması."* Getiri bu yüzden mutlak değil **başabaş fiyat** olarak
+okunuyordu ve hiçbir hafta kâr ya da zarar diye kapanamıyordu.
+
+| Kupon | Bedel | Kolon | Bedel / kolon |
+|---|---:|---:|---:|
+| A | ₺6.350 | 635 | **₺10,00** |
+| B | ₺4.000 | 400 | **₺10,00** |
+| C | ₺12.920 | 1.292 | **₺10,00** |
+| D | ₺39.750 | **3.975** *(ekranda yazılı)* | **₺10,00** |
+
+D'nin satırı türetme değil **okuma**: ekran hem bedeli hem kolon sayısını
+gösteriyor; öteki üçü onu doğruluyor. Sayı `getiri.KOLON_BEDELI` olarak koda
+girdi — ama **varsayılan hesaba karışmadan**, çünkü künyesi `PAY_KAYNAGI` ile
+aynı statüde değil: havuz oranı resmî ikramiye ekranından **üç kez** okundu, bu
+ise tek bir dış aracın dört kuponundan. Aracın kendi hizmet bedelini bedele
+katıp katmadığı doğrulanmadı. Raporlarda başabaş satırı **kaldırılmadı**; iki
+sayı yan yana duruyor.
+
+**Karşılığı: projenin ilk kâr/zarar defteri.**
+
+| Hafta | Oynanan kupon | Kolon | Maliyet | Getiri | **Net** |
+|---|---|---:|---:|---:|---:|
+| 1 | ana · eşik | 2.304 | ₺23.040 | ₺0 | **−₺23.040** |
+| 2 | ana · eşik (v2) | 4.096 | ₺40.960 | ₺5.754,40 | **−₺35.205,60** |
+| 3 | ana · hedef | 864 | ₺8.640 | ₺202.811,60 | **+₺194.171,60** |
+| | **toplam** | | **₺72.640** | **₺208.566** | **+₺135.926** |
+
+Üç haftanın birleşik ROI'si ×2,87. Ama okunacak satır bu değil: **kârın
+tamamı tek haftadan geliyor**, ilk iki hafta birlikte ₺58.245,60 zarar. Üç
+gözlemin biri ötekilerin toplamının üç katını üretiyorsa ortalama bir şey
+anlatmaz — ve bu, müşterek bahsin dağılımının normalidir.
+
+#### 2. ders — dördü de bizim kaçırdığımız maçı kapsamıştı, ve bu bir görüş değildi
+
+Haftanın tek kaçağımız 2. maçtı (Konyaspor–Kocaelispor, piyasa 1=%48,6 /
+0=%27,2 / 2=%24,2, sonuç **2**).
+
+| Kupon | 2. maçtaki işaret | |
+|---|---|---|
+| A | `102` | üçlü — mekanik azami kapsama |
+| B | `12` | **sapma**: beraberliği (%27) atıp deplasmanı (%24) tuttu |
+| C | `102` | üçlü |
+| D | `102` | üçlü |
+| **biz** | `10` | çift — kural üçüncü sembolü almadı |
+
+Üçü orayı **üçlü** işaretlemiş, yani bir görüş beyan etmemiş: sadece daha
+fazla sembol satın almış. Yalnızca B bir görüş beyan etti ve tuttu.
+
+Sapma defteri dördünü birden ölçüyor:
+
+| Kupon | Azami kapsamadan sapma | Net | Piyasanın beklediği net | P(net ≥ gözlenen) |
+|---|---:|---:|---:|---:|
+| A | **0** | — | — | — |
+| B | 5 | +1 | −0,42 | %29,7 |
+| C | 2 | +0 | −0,29 | %56,6 |
+| D | **0** | — | — | — |
+| biz | **0** | — | — | — |
+
+Yani **dört kazanan kupondan ikisi hiçbir görüş taşımıyor**; biri bir görüş
+taşıyor ve o görüşün bu kadar iyi gitme olasılığı zaten %29,7. §3.39'un 2.
+hafta için yazdığı cümle üçüncü haftada da ayakta: *15'i satın alan şey işaret
+seçimi değil, kapsama.*
+
+#### 3. ders — kural, bütçe artsa bile o üçüncü sembolü almıyordu
+
+En cazip yanlış şu olurdu: *"daha çok kolon oynasaydık biz de 15 yapardık."*
+Ölçüldü — **yanlış.** `hedef` kuralı aynı fiyatlarla, artan bütçelerle yeniden
+koşuldu:
+
+| Bütçe (kolon) | P(≥12) | 2. maçtaki işaret | Küme-içi | Gerçeği kapsıyor mu |
+|---:|---:|---|---:|---|
+| 864 *(oynanan)* | 0,381 | `10` | %2,96 | hayır |
+| 2.048 | 0,447 | `10` | %3,98 | hayır |
+| 4.096 | 0,581 | `10` | %6,97 | hayır |
+| 10.368 | 0,643 | `10` | %9,04 | hayır |
+| 15.552 | 0,720 | `10` | %12,05 | hayır |
+| **34.992** | 0,843 | **`102`** | %20,29 | **evet** |
+
+Kural 2. maçı, bütçe **40 katına** çıkana kadar çift bırakıyor — en pahalı
+kazananın (D, 3.975 kolon) bile dokuz katı. Parayı önce 8, 9, 12, 13 ve 15.
+maçları genişletmeye harcıyor.
+
+Sebep bir kusur değil, **amaç farkı**: `hedef` kuralı `P(en iyi kolon ≥ 12)`'yi
+enbüyüklüyor (1. haftanın 1. dersi, §3.19). O amaç için, favorisi %48,6 olan bir
+maçta üçüncü sembolü (%24,2) almak zayıf bir alım; `P(15)` için ise tam olarak
+alınması gereken şey odur. **İki amaç ayrışıyor ve bu hafta ayrışma parayla
+görünür oldu.** Bizim kupon kendi amacını tutturdu (12 kademesi hedefti, 14
+geldi); onlarınki kendi amacını tutturdu.
+
+Bu bir kural değişikliği **önermiyor**. Neyi hedeflemek gerektiği — 12 mi 15 mi
+— ancak beklenen ikramiye ve kaç kişiyle bölüşüleceği ölçülünce cevaplanır; o
+da Faz B'nin sorusudur ve bugün ~71 ikramiyeli hafta gerektiriyor (elde 3).
+Ölçüm buraya, cevabı geldiğinde bağlanmak üzere yazıldı.
+
+#### 4. ders — kazanmış olmak koşuluyla, fazladan kolon neredeyse saf maliyet
+
+| Kupon | Bedel | Kolon | Getiri | **ROI** | Jackpot dışı getiri |
+|---|---:|---:|---:|---:|---:|
+| **B** | ₺4.000 | 400 | ₺4.412.925,61 | **×1.103** | ₺151.058,54 |
+| A | ₺6.350 | 635 | ₺4.319.745,89 | ×680 | ₺57.878,82 |
+| C | ₺12.920 | 1.292 | ₺4.951.141,51 | ×383 | ₺689.274,44 |
+| D | ₺39.750 | 3.975 | ₺4.521.817,67 | ×114 | ₺259.950,60 |
+
+ROI, bedelde **tam monoton azalıyor**. Sebep aritmetik: 15 kademesinin ödülü
+(₺4.261.867,07) sabit bir yumrudur ve her kuponda **birebir bir kez** düşer;
+fazladan kolonlar yalnızca alt kademeleri satın alır.
+
+**Ama bu tabloyu "ucuz oyna" diye okumak, sağkalım yanlılığının ta kendisidir.**
+Ekran kazananları gösteriyor; oynanmış ama tutturamamış kuponların paydası
+yok. Daha çok kolon, *kazanma olasılığını* büyütür — tablo yalnızca
+**kazandıktan sonra** fazladan kolonun ne getirdiğini söyler. Doğru cümle şudur:
+*jackpot geldiğinde hacmin katkısı marjinaldir.* Bu, §3.40'ın "tam sistem
+üstünlük değil varyans satın alır" ölçümünün dördüncü kez, bu kez dört gerçek
+kuponla ve gerçek parayla doğrulanmasıdır.
+
+#### 5. ders — işaretlerin kalitesiyle kazanılan para arasında ilişki yok (bu hafta)
+
+Beş kuponu **sonuç görülmeden** sıralanabilecek iki ölçüyle yan yana koyalım:
+
+| Kupon | Küme-içi (gerçeği kapsama olasılığı) | E[TL/kolon] | Gerçekleşen ROI |
+|---|---:|---:|---:|
+| A | **%8,39** | ₺25,17 | ×680 |
+| D | %7,20 | ₺16,73 | ×114 |
+| C | %3,62 | ₺13,22 | ×383 |
+| **biz** | %2,96 | **₺41,49** | **×23,5** |
+| B | **%1,73** | ₺14,18 | **×1.103** |
+
+İki sütun da gerçekleşen ROI ile ters ya da ilgisiz: en yüksek beklenen değerli
+işaretler (bizimki, ₺41,49/kolon) en düşük ROI'yi, gerçeği kapsama olasılığı
+**en düşük** kupon (B, %1,73) en yüksek ROI'yi verdi. Beş kupon ve bir hafta
+bunu açıklayamaz — açıklayabileceğini sanmak, bu defterin baştan beri
+uyardığı hatadır. Tablo bir sonuç için değil, **bir sonuç çıkarılamayacağını
+göstermek için** duruyor.
+
+*(E[TL/kolon] seçim uzayının tamamı üzerinden hesaplandı; indirgenmiş sistemin
+yansız olduğu varsayımıyla. Bizim satırımızda kolon listesi elde olduğu için
+sayı doğrudan oynanan kolonlardan geliyor.)*
+
+#### 6. ders — 15 kademesinde "kolon ≠ kişi" uyarısı GEÇERSİZ
+
+`havuz_karnesi` her koşumda şunu basıyor: *"Kazanan sayıları KİŞİ değil
+KOLONdur: tek bir sistem kuponu aynı hafta onlarca kolonla kazanabilir."*
+Doğru — ama **15 kademesinde değil.** Bir kuponun kolonlarından en fazla
+**biri** on beş maçın hepsini tutturabilir; ikisi tutturamaz, çünkü iki farklı
+kolon tanım gereği en az bir maçta ayrışır.
+
+Dört kupon bunu görünür kılıyor: dördü de "15 Giden: **1**" yazıyor — biri
+400 kolonluk, biri 3.975 kolonluk olmasına rağmen. Alt kademelerde ise aynı
+kuponlar 0 ile 62 arasında kolonla kazanıyor.
+
+Sonuç: **15 kademesinin kazanan sayısı, havuzdaki oyuncu sayısını ölçmenin en
+temiz aracıdır** — o hafta 9 kupon gerçeği kapsadı ve oynadı. 14-13-12
+adetleri ise kupon değil kolon sayar ve sistem kuponlarıyla şişer. `havuz_karnesi`
+notu bu ayrımı yazacak biçimde düzeltildi.
+
+Ve bir bağ: gördüğümüz dört kupon o dokuzun **dördü**. Tek bir aracın
+kullanıcıları jackpot kolonlarının en az %44'ünü üretmiş görünüyor. Bu bir
+ölçüm değil bir gözlemdir (payda yok) ama havuz ekseninin sorduğu soruyu
+keskinleştiriyor: bölüşmeyi belirleyen şey bireysel oyuncular değil, **aynı
+aleti kullanan kümeler** olabilir.
+
+#### Ölçülemeyenler
+
+1. **Payda yok.** Araç kaç kupon üretti, kaçı tutturamadı — bilinmiyor. Bu
+   dört kupon aracın başarısı hakkında **hiçbir şey** söylemez.
+2. **Kolon bedelinin künyesi dış.** ₺10 dört kuponda birebir çıkıyor ama
+   resmî bir Spor Toto ekranından okunmadı; aracın hizmet bedeli içeriyor mu
+   doğrulanmadı.
+3. **İndirgenmiş sistemlerin kolon listesi yok.** Kademe dağılımı kayıttan
+   geliyor (bu iyi), ama "bu indirgeme tasarımı iyi miydi" sorusu kolonlar
+   olmadan cevaplanamaz.
+4. **D'nin 15. maçı ekranda kesik.** `2` işaretli olduğu kesin (sonuç 2 ve
+   kupon 15 yaptı); başka sembol var mı okunamadı. Seçim uzayı bu yüzden alt
+   sınırdır — oynanan kolon sayısı ekranda yazılı olduğu için hiçbir para
+   ölçüsü etkilenmiyor.
+
+#### Ne değişti, ne değişmedi
+
+**Değişti:** `getiri.KOLON_BEDELI` (₺10, dış künyeyle) ve getiri karnesinde
+maliyet/net/ROI satırları; değerlendirme betiği artık **kolon listesi
+olmayan** dış kuponları da puanlıyor (`kayitli` sistem — kademe dağılımı
+modelden değil kayıttan); dört kupon `referans` olarak kayda geçti;
+`havuz_karnesi` notu 15 kademesindeki istisnayı yazıyor.
+
+**Değişmedi:** kural. Bu bölüm bir kural değişikliği önermiyor; 12 mi 15 mi
+hedeflenmeli sorusunu **açıyor** ve cevabın nereden geleceğini yazıyor.
+
+    python scripts/super_toto_degerlendir.py --hafta 3
+
+
 ## 4. Sayfada bugün ne var
 
 **`/istatistik`** — sezon dağılımı (en sık sonuç + pay çubuğu) · 5 sayı kutusu (sembol

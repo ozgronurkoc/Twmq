@@ -121,6 +121,39 @@ VARSAYILAN_PAY: dict[int, float] = {
 #: Havuzdan kesilen pay (komisyon + vergi). Yine **varsayım**.
 VARSAYILAN_KOMISYON = 0.50
 
+#: **Kolon bedeli — TL.** Projenin uzun süre ölçemediği tek fiyat.
+#:
+#: `docs/ISTATISTIK_YOL_HARITASI.md` §3.40 şunu yazıyordu: *"Kalan tek
+#: eksik, kolon bedelinin yayınlanmaması."* Getiri bu yüzden mutlak değil
+#: **başabaş fiyat** olarak okunuyordu ("kolon şu fiyatın altındaysa kâra
+#: geçti"), yani hiçbir hafta kâr/zarar diye kapanamıyordu.
+#:
+#: 3. haftada bir kupon aracının ekran görüntüleri sayıyı verdi ve
+#: **dört bağımsız kuponda da birebir aynı** çıktı::
+#:
+#:     ₺6.350  /   635 kolon = ₺10,00
+#:     ₺4.000  /   400 kolon = ₺10,00
+#:     ₺12.920 / 1.292 kolon = ₺10,00
+#:     ₺39.750 / 3.975 kolon = ₺10,00   ← kolon sayısı EKRANDA yazılı
+#:
+#: Dördüncüsü türetme değil **okuma**: ekran hem bedeli hem kolon sayısını
+#: gösteriyor, ötekiler onu doğruluyor.
+#:
+#: **Künye — bu bizim ölçümümüz değil.** Sayı resmî Spor Toto ekranından
+#: değil, üçüncü taraf bir kupon aracının ekranından geliyor. Statüsü
+#: `PAY_KAYNAGI` ile aynı değildir: o, resmî ikramiye ekranından üç kez
+#: okundu; bu, tek bir dış aracın dört kuponundan. Aracın kendi hizmet
+#: bedelini bedele katıp katmadığı **doğrulanmadı**. Bu yüzden sayı
+#: varsayılan hesaba GİRMEZ; yalnızca raporlarda kâr/zarar satırı üretir
+#: ve her kullanıldığı yerde kaynağıyla birlikte anılır.
+KOLON_BEDELI = 10.0
+
+#: Yukarıdaki sayının künyesi — değerin kendisi kadar önemli.
+KOLON_BEDELI_KAYNAGI = (
+    "ST EXTRA kupon araci ekran goruntuleri (2026-09-01); 3. haftanin dort "
+    "15 bilen kuponunda da bedel/kolon = 10,00 TL, birinde kolon sayisi "
+    "ekranda yazili. DIS KAYIT — resmi Spor Toto ekrani degil (docs §3.48)")
+
 
 def pay_beklentisi(rakip_kolon: int, q: float) -> float:
     """`E[1/(1+W)]`, `W ~ Binom(rakip_kolon, q)` — kapalı form.

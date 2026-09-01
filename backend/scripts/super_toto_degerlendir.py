@@ -48,6 +48,7 @@ KOK = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(KOK))
 
 from spor_toto.core import SEMBOLLER
+from spor_toto.getiri import KOLON_BEDELI, KOLON_BEDELI_KAYNAGI
 from spor_toto.ortak import kacak_dagilimi as ortak_kacak_dagilimi
 
 #: Sembol duzeni TEK kaynaktan (`spor_toto.core`). Bu dosyada ayri bir
@@ -711,6 +712,11 @@ def getiri_karnesi(d: dict[str, Any], picks: Sequence[str],
     n = len(kolonlar)
     ger = sum(adet * odul[k] for k, adet in dagilim.items() if k in odul)
     bek = sum(beklenen[k] * odul[k] for k in odul)
+    # Kolon bedeli 3. haftada olculdu (`getiri.KOLON_BEDELI`, DIS KAYIT):
+    # basabas fiyatin yaninda artik kar/zarar da yazilabiliyor. Basabas
+    # satiri KALDIRILMADI — bedelin kaynagi disaridir ve dogrulanirsa da
+    # degisebilir; iki sayi yan yana durur.
+    mal = n * KOLON_BEDELI
     return {
         "sistem": sistem, "kolon": n,
         "kazanan_kolon": {k: dagilim[k] for k in sorted(dagilim, reverse=True)
@@ -718,6 +724,10 @@ def getiri_karnesi(d: dict[str, Any], picks: Sequence[str],
         "gerceklesen": ger, "gerceklesen_kolon_basi": ger / n,
         "beklenen": bek, "beklenen_kolon_basi": bek / n,
         "beklenen_kazanan": {k: beklenen[k] for k in sorted(odul, reverse=True)},
+        "kolon_bedeli": KOLON_BEDELI, "maliyet": mal,
+        "net": ger - mal, "roi": ger / mal,
+        "beklenen_net": bek - mal, "beklenen_roi": bek / mal,
+        "bedel_kaynagi": KOLON_BEDELI_KAYNAGI,
         "not": ("Ödül vektörü bu haftanınkidir ve SABİT alınmıştır; gerçekte "
                 "haftadan haftaya değişir. Kolon bedeli yayınlanmadığı için "
                 "getiri başabaş fiyat olarak okunur."),
@@ -774,9 +784,73 @@ def havuz_karnesi(d: dict[str, Any]) -> dict[str, Any] | None:
             "n_piyasa": kazanan / piyasa[k] if piyasa[k] else None,
         })
     return {"rows": satir, "not": (
-        "Kazanan sayıları KİŞİ değil KOLONdur: tek bir sistem kuponu aynı "
-        "hafta onlarca kolonla kazanabilir. Bağımsız-kolon modeli bu "
-        "ilişkiyi göremez ve seviye tahmini bu yüzden şişer.")}
+        "14-13-12 kademelerinde kazanan sayıları KİŞİ değil KOLONdur: tek "
+        "bir sistem kuponu aynı hafta onlarca kolonla kazanabilir. "
+        "Bağımsız-kolon modeli bu ilişkiyi göremez ve seviye tahmini bu "
+        "yüzden şişer. 15 kademesi İSTİSNADIR: bir kuponun en fazla BİR "
+        "kolonu on beşi birden tutturabilir (iki kolon tanım gereği en az "
+        "bir maçta ayrışır), dolayısıyla 15 bilen adedi doğrudan KUPON "
+        "sayar. 3. haftanın dört 15 bileni bunu gösteriyor — 400 ve 3.975 "
+        "kolonluk kuponlar da dahil, dördü de tam 1 (docs §3.48).")}
+
+
+def kayitli_karne(d: dict[str, Any], r: dict[str, Any]) -> dict[str, Any]:
+    """Kolon LİSTESİ elimizde olmayan dış kuponun karnesi.
+
+    3. haftanın dört 15 bileni indirgenmiş sistemlerdir: hangi kolonların
+    oynandığı ekranda yok, ama **kaç kolon oynandığı** ve **her kademede
+    kaç kolon kazandığı** yazıyor. Bu, modellemekten iyidir — kademe
+    dağılımı burada varsayım değil **kayıt**tır.
+
+    O yüzden bu karne `plan_karnesi`den ayrı durur: oradaki `p14/p13/p12`
+    ve `kazanan_kolon` bir kaplama modelinden türer ve indirgenmiş bir
+    sisteme uymaz; 8 kat pahalı bir kuponu ucuz göstermenin aynası, burada
+    kolonları YANLIŞ SAYMAK olurdu.
+
+    Modelden gelen tek sayı `beklenen_kolon_basi`dir ve **seçim uzayının
+    tamamı** üzerinden hesaplanır: indirgeme yansız olduğu sürece bir alt
+    kümenin kolon başı beklentisi uzayın ortalamasına eşittir. Bu bir
+    varsayımdır ve çıktıda öyle işaretlenir.
+    """
+    gercek = d["meta"]["results"]
+    picks = r["picks"]
+    kacaklar = [i + 1 for i, (p, g) in enumerate(zip(picks, gercek)) if g not in p]
+    kademeler = {int(k): v for k, v in (r.get("kademeler") or {}).items()}
+    odul = {t["correct"]: t["prize"]
+            for t in (d["meta"].get("payout") or {}).get("tiers", [])
+            if t.get("prize") is not None}
+    ger = sum(adet * odul[k] for k, adet in kademeler.items() if k in odul)
+    kolon = r.get("columns")
+    bedel = r.get("bedel")
+    mal = bedel if bedel is not None else (kolon * KOLON_BEDELI if kolon else None)
+    # Uzayin tamami uzerinden kolon basi beklenti — indirgemenin yansiz
+    # oldugu VARSAYIMIYLA. Kayitli kolon sayisiyla carpilmaz; oran olarak
+    # okunur.
+    tam = plan_karnesi(d, picks, "tam", r.get("label", "referans"))
+    return {
+        "ad": r.get("label"), "sistem": "kayitli", "picks": list(picks),
+        "source": r.get("source"), "note": r.get("note"),
+        "banko": sum(1 for x in picks if len(x) == 1),
+        "cift": sum(1 for x in picks if len(x) == 2),
+        "uclu": sum(1 for x in picks if len(x) == 3),
+        "uzay": math_prod(len(x) for x in picks),
+        "kolon": kolon,
+        "indirgeme": (kolon / math_prod(len(x) for x in picks)) if kolon else None,
+        "misses": kacaklar,
+        "best": (max(kademeler) if kademeler else None),
+        "kume_ici": tam["kume_ici"], "kalabalik_ici": tam["kalabalik_ici"],
+        "oran": tam["oran"],
+        "kademeler": kademeler,
+        "gerceklesen": ger, "maliyet": mal,
+        "net": (ger - mal) if mal is not None else None,
+        "roi": (ger / mal) if mal else None,
+        "beklenen_kolon_basi_uzay": (tam["getiri"]["beklenen_kolon_basi"]
+                                     if tam["getiri"] else None),
+        "sapma": sapma_defteri(d, picks),
+        "not": ("Kademe dağılımı KAYITTAN gelir, modelden değil. Kolon başı "
+                "beklenti seçim uzayının tamamı üzerinden hesaplandı "
+                "(indirgemenin yansız olduğu varsayımıyla)."),
+    }
 
 
 def referans_kuponlar(d: dict[str, Any],
@@ -791,6 +865,9 @@ def referans_kuponlar(d: dict[str, Any],
     """
     out = []
     for r in kupon.get("referans") or []:
+        if r.get("sistem") == "kayitli":
+            out.append(kayitli_karne(d, r))
+            continue
         kart = plan_karnesi(d, r["picks"], r.get("sistem", "fix16"),
                             r.get("label", "referans"))
         # Iki karsi-olgusal, ikisi de ayni gövdeyle ölçülür:
@@ -884,6 +961,7 @@ def rapor(sezon: str, hafta: int) -> dict[str, Any]:
         # Dis kuponlar ve bizim planlarimiz AYNI karne gövdesiyle ölçülür;
         # aksi hâlde 8 kat pahalı bir kupon ucuz olanla eşit görünürdü.
         "referans": referans_kuponlar(d, kupon),
+        "referans_notu": kupon.get("referans_notu"),
         "havuz": havuz_karnesi(d),
         "kartlar": ([plan_karnesi(d, sonuclar[0]["picks"], "fix16",
                                   sonuclar[0].get("label") or "1. Tahmin ana")]
@@ -1002,11 +1080,57 @@ def yaz(o: dict[str, Any]) -> None:
             print(f"  {k['ad']:<20} Brier {k['brier']:.4f} · log {k['log']:.4f}")
         print(f"  {g['not']}")
 
-    if o["referans"]:
+    kayitli = [k for k in o["referans"] if k["sistem"] == "kayitli"]
+    modelli = [k for k in o["referans"] if k["sistem"] != "kayitli"]
+    if kayitli:
+        _basli("KAYITLI DIŞ KUPONLAR — kademe dağılımı MODELDEN DEĞİL EKRANDAN")
+        print(f"  {'kupon':<34}{'kolon':>7}{'maliyet':>11}{'getiri':>15}"
+              f"{'NET':>15}{'ROI':>9}{'küme-içi':>9}{'E[TL/kolon]':>12}")
+        for k in kayitli + [dict(kart, kolon=kart["kolon"],
+                                 maliyet=kart["getiri"]["maliyet"],
+                                 gerceklesen=kart["getiri"]["gerceklesen"],
+                                 net=kart["getiri"]["net"], roi=kart["getiri"]["roi"],
+                                 beklenen_kolon_basi_uzay=None)
+                           for kart in o["kartlar"] if kart.get("getiri")]:
+            e = k.get("beklenen_kolon_basi_uzay")
+            print(f"  {k['ad'][:34]:<34}{k['kolon']:>7,}"
+                  f"{'₺' + format(k['maliyet'], ',.0f'):>11}"
+                  f"{'₺' + format(k['gerceklesen'], ',.2f'):>15}"
+                  f"{'₺' + format(k['net'], ',.2f'):>15}"
+                  f"{format(k['roi'], '.1f') + 'x':>9}"
+                  f"{format(100*k['kume_ici'], '.2f') + '%':>9}"
+                  f"{('₺' + format(e, '.2f')) if e else '—':>12}")
+        print(f"  Kolon bedeli ₺{KOLON_BEDELI:.0f} — {KOLON_BEDELI_KAYNAGI}")
+        print("  E[TL/kolon] seçim uzayının TAMAMI üzerinden; indirgemenin "
+              "yansız olduğu varsayımıyla.")
+        for k in kayitli:
+            sp = k["sapma"]
+            print(f"\n  ─ {k['ad']}")
+            print(f"    işaret: {' '.join(k['picks'])}")
+            print(f"    {k['banko']} banko · {k['cift']} çift · {k['uclu']} üçlü · "
+                  f"uzay {k['uzay']:,} · oynanan {k['kolon']:,} kolon "
+                  f"(uzayın %{100*k['indirgeme']:.1f}'i) · kaçak "
+                  f"{k['misses'] or 'YOK — 15 kapsandı'}")
+            print("    kademeler: " + " · ".join(
+                f"{kk}: {vv}" for kk, vv in sorted(k["kademeler"].items(), reverse=True)))
+            if not sp["sapma"]:
+                print("    Azami kapsamadan sapma YOK — mekanik seçimin aynısı.")
+            else:
+                print(f"    Azami kapsamadan {sp['sapma']} sapma · net {sp['net']:+d} "
+                      f"(piyasanın beklediği {sp['beklenen_net']:+.2f}) · "
+                      f"P(net ≥ {sp['net']}) = %{100*sp['p_net']:.1f}")
+                for r in sp["rows"]:
+                    im = ("kazandı" if r["kazandi"]
+                          else ("kaybetti" if r["kaybetti"] else "fark etmedi"))
+                    print(f"      {r['no']:>2} {r['mac'][:30]:<30} [{r['pick']:<3}] "
+                          f"azami [{r['azami']:<3}] gerçek {r['gercek']} · {im}")
+        print(f"\n  {o['referans_notu']}" if o.get("referans_notu") else "")
+
+    if modelli:
         _basli("REFERANS KUPONLAR (bize ait değil) ve AYNI ÖLÇEKTE BİZ")
         print(f"  {'kupon':<26}{'sistem':>7}{'kolon':>8}{'P15':>8}{'≥14':>8}"
               f"{'≥13':>8}{'≥12':>8}{'oran':>6}{'gerçek':>8}")
-        for k in o["referans"] + o["kartlar"]:
+        for k in modelli + o["kartlar"]:
             p15 = "—" if k["p15"] is None else f"%{100*k['p15']:.3f}"
             print(f"  {k['ad'][:26]:<26}{k['sistem']:>7}{k['kolon']:>8,}{p15:>8}"
                   f"{'%' + format(100*k['p14'], '.2f'):>8}"
@@ -1017,7 +1141,7 @@ def yaz(o: dict[str, Any]) -> None:
               "küme-içi kalmak 14 verir, 15 değil;")
         print("  tam sistemde küme-içi kalmak 15 verir. İki sütun bu yüzden "
               "sistemden okunur.")
-        for k in o["referans"]:
+        for k in modelli:
             sp = k["sapma"]
             print(f"\n  ─ {k['ad']} · {k.get('source') or '—'}")
             print(f"    işaret: {' '.join(k['picks'])}")

@@ -515,3 +515,57 @@ def test_olculen_pay_iki_haftanin_verisiyle_ayni(deg):
         for kademe, pay_orani in OLCULEN_PAY.items():
             assert h[kademe] / toplam == pytest.approx(pay_orani, abs=1e-4), (
                 f"{hafta}. hafta {kademe} kademesi")
+
+
+# ─── kayıtlı dış kupon: kolon listesi olmayan indirgenmiş sistem ──────────
+
+def test_kayitli_kupon_kademeleri_MODELDEN_DEGIL_KAYITTAN_okur(deg):
+    """3. haftanın dört 15 bileni: dağılım ekrandan gelir, modelden değil.
+
+    Bu bekçi bir yanlış ölçüm türünü kapatıyor. Dört kupon **indirgenmiş**
+    sistemlerdir (uzayın %1,8–%8,5'i oynanmış) ve hangi kolonların
+    oynandığı ekranda yok. `plan_karnesi` ile puanlansalardı `tam` sistem
+    varsayılır ve 400 kolonluk bir kupon 13.824 kolonluk gibi okunurdu —
+    §3.39'un "8 kat pahalı kuponu ucuz göstermek" hatasının aynısı.
+    """
+    o = deg.rapor("2026_27", 3)
+    kayitli = [k for k in o["referans"] if k["sistem"] == "kayitli"]
+    assert len(kayitli) == 4
+    for k in kayitli:
+        # Dordu de 15 kapsadi: kacak YOK. "15 Giden: 1" bunu zorunlu kilar.
+        assert k["misses"] == [], k["ad"]
+        assert k["best"] == 15
+        assert k["kademeler"][15] == 1
+        # Oynanan kolon, secim uzayindan KUCUK olmali (indirgenmis sistem).
+        assert 0 < k["kolon"] < k["uzay"]
+        assert k["maliyet"] == k["kolon"] * 10.0
+
+
+def test_kayitli_kuponun_ekran_kazanci_resmi_odul_vektorunu_tutar(deg):
+    """Okumanın en güçlü doğrulaması: ekrandaki Kazanç ↔ resmî ödül tablosu.
+
+    Kademe adetleri ekrandan, ödüller resmî ikramiye ekranından geliyor.
+    İkisi bağımsız kayıtlar; çarpımlarının kuruşuna kadar tutması hem
+    işaret okumasını hem ikramiye girdimizi doğruluyor.
+    """
+    o = deg.rapor("2026_27", 3)
+    kupon = json.loads(
+        (KOK / "data/super_toto/2026_27/hafta_03_kupon.json").read_text("utf-8"))
+    ekran = {r["label"]: r["kazanc_ekran"] for r in kupon["referans"]}
+    for k in o["referans"]:
+        if k["sistem"] != "kayitli":
+            continue
+        assert abs(k["gerceklesen"] - ekran[k["ad"]]) < 0.005, k["ad"]
+
+
+def test_kolon_bedeli_kaynagiyla_birlikte_durur():
+    """Ölçülmüş sayı, künyesi olmadan kullanılamaz.
+
+    ₺10 dış bir aracın ekranından geliyor; `PAY_KAYNAGI` gibi resmî
+    ekrandan değil. Kaynağın koddan silinmesi, sayının statüsünü sessizce
+    yükseltmek olurdu.
+    """
+    from spor_toto.getiri import KOLON_BEDELI, KOLON_BEDELI_KAYNAGI
+    assert KOLON_BEDELI == 10.0
+    assert "DIS KAYIT" in KOLON_BEDELI_KAYNAGI
+    assert "3.48" in KOLON_BEDELI_KAYNAGI

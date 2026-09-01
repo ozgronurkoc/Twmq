@@ -526,6 +526,25 @@ para birimiyle hesaplandı: 2. Tahmin 1.296 kolonda 1.438,60 TL, başabaş kolon
 **1,11 TL**; (3) beklenen getiri kolon başına **doğrusal** çıktı, yani tam sistem
 üstünlük değil **varyans** satın alıyor. Ayrıntı §3.40.
 
+**Kolon bedeli ölçüldü: ₺10** — ve projenin ilk kâr/zarar defteri açıldı.
+3. haftanın dört 15 bilen kuponu (bir kupon aracının ekranından; bize ait
+değil) bedelini ve kolon sayısını birlikte gösteriyor ve dördünde de oran
+**birebir ₺10,00**; birinde kolon sayısı ekranda yazılı, yani sayı türetme
+değil okuma. Künyesi dış olduğu için `getiri.KOLON_BEDELI` varsayılan hesaba
+karışmaz ve başabaş satırı kaldırılmadı. Karşılığı: **1. hafta −₺23.040,
+2. hafta −₺35.205,60, 3. hafta +₺194.171,60; toplam +₺135.926** (₺72.640
+maliyet, ×2,87). Okunacak satır ortalama değil dağılım: **kârın tamamı tek
+haftadan** geliyor. Ayrıntı §3.48.
+
+**3. haftanın dört 15 bileni** — dördü de bizim kaçırdığımız 2. maçı
+kapsamıştı, üçü orayı **üçlü** işaretleyerek (yani görüş beyan etmeden);
+sapma defteri dördünün ikisinde **sıfır sapma** buluyor. "Daha çok kolon
+oynasaydık biz de 15 yapardık" ölçüldü ve **yanlış çıktı**: `hedef` kuralı o
+üçüncü sembolü bütçe **34.992** kolona çıkana kadar almıyor — en pahalı
+kazananın dokuz katı. Sebep kusur değil **amaç farkı**: kural `P(≥12)`
+enbüyüklüyor, onlar `P(15)` peşindeydi. Ayrıntı ve sağkalım yanlılığı
+uyarısı §3.48.
+
 **Aynı haftanın 15 bileni** — 2. haftanın 15 bilen kuponu kayda geçti
 (bize ait değil; `hafta_02_kupon.json` → `referans`). Ölçüldüğünde iki şey
 çıktı: (1) 15'i satın alan şey işaret seçimi değil **tam sistem** — aynı
