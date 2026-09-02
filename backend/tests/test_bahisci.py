@@ -43,10 +43,8 @@ uretici = importlib.import_module("scripts.build_egitim")
 
 @pytest.fixture(scope="module")
 def a2():
-    h = kesit()
-    if not h:
-        pytest.skip("egitim korpusu yok — once scripts/build_egitim.py")
-    return h
+    """Korpus yoksa ATLA — uc satirlik bu govde dort dosyada aynidir."""
+    return korpus_yoksa_atla(kesit)
 
 
 def _dortlu(b365, ps, mx, avg):
@@ -143,8 +141,8 @@ def test_model_en_iyi_primi_gormez():
 
 # ─── üretici: dörtlünün bütünlüğü ─────────────────────────────────────────────
 
-def _ham(**alanlar):
-    return {k: str(v) for k, v in alanlar.items()}
+from tests.conftest import ham_satir as _ham  # tek kaynak
+from tests.conftest import korpus_yoksa_atla
 
 
 def test_dortlu_ya_tam_ya_hic():

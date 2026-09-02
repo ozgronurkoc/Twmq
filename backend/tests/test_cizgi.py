@@ -40,17 +40,15 @@ uretici = importlib.import_module("scripts.build_egitim")
 
 @pytest.fixture(scope="module")
 def a1():
-    h = kesit()
-    if not h:
-        pytest.skip("egitim korpusu yok — once scripts/build_egitim.py")
-    return h
+    """Korpus yoksa ATLA — uc satirlik bu govde dort dosyada aynidir."""
+    return korpus_yoksa_atla(kesit)
 
 
 # ─── üretici: çiftin kaynağı ──────────────────────────────────────────────────
 
-def _ham(**alanlar) -> dict:
-    """football-data satırının ilgili sütunları."""
-    return {k: str(v) for k, v in alanlar.items()}
+#: football-data satirinin ilgili sutunlari — tek kaynak `conftest`.
+from tests.conftest import ham_satir as _ham
+from tests.conftest import korpus_yoksa_atla
 
 
 def test_cift_ayni_bahisci_ailesinden_gelir():

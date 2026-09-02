@@ -36,16 +36,18 @@ from spor_toto.predict import (
     SezonSabitiTahminci,
     Tahminci,
 )
+from tests.conftest import hafta_girdisi, kahin_olasiliklari
 
 ESIT = dict.fromkeys(SYMBOLS, 1 / 3)
 
 
 def _girdi(week: int, results: str, probs=None) -> dict:
-    return {
-        "week": week, "close_date": "2026-01-01", "results": results,
-        "probs": list(probs) if probs else [dict(ESIT)] * MATCH_COUNT,
-        "missing": 0, "usable": True,
-    }
+    """Hafta girdisi — govde `conftest.hafta_girdisi`da.
+
+    Taban olasilik BURADAN geciyor: `evaluate` esit dagilim kullaniyor,
+    `recalibrate` piyasa. Fark govdeye gomulseydi birlestirme testlerden
+    birini sessizce degistirirdi."""
+    return hafta_girdisi(week, results, probs, varsayilan=ESIT)
 
 
 class KahinTahminci(Tahminci):
@@ -55,12 +57,10 @@ class KahinTahminci(Tahminci):
     aciklama = "test kurgusu: gerçek sonuca 0,9 verir"
 
     def tahmin(self, hafta):
-        out = []
-        for kod in hafta["results"]:
-            p = dict.fromkeys(SYMBOLS, 0.05)
-            p[kod] = 0.90
-            out.append(p)
-        return out
+        # Mekanizma `conftest.kahin_olasiliklari`da — ayni govde
+        # `test_sizinti.SizdiranTahminci`de de yaziliydi. Rolleri ayri,
+        # govdeleri ayni olmamali.
+        return kahin_olasiliklari(hafta)
 
 
 # ─── tek maç ölçütleri ────────────────────────────────────────────────────────
@@ -139,7 +139,12 @@ def _kayit(week: int, brier_ort: float, n: int = MATCH_COUNT) -> dict:
 def test_bootstrap_ayni_tohumla_ayni_sonuc():
     a = [_kayit(i, 0.50) for i in range(20)]
     b = [_kayit(i, 0.55) for i in range(20)]
-    assert bootstrap_farki(a, b) == bootstrap_farki(a, b)
+    f = bootstrap_farki(a, b)
+    # Bos donen bir govde de "deterministik" olurdu; asagidaki satir
+    # sonucun BOS OLMADIGINI da tutar — determinizm tek basina
+    # calistigini kanitlamaz.
+    assert f and f.get("fark") is not None, "bootstrap bos dondu"
+    assert f == bootstrap_farki(a, b)
 
 
 def test_bootstrap_tohumu_gercekten_kullanir():

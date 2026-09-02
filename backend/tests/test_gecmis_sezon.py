@@ -160,6 +160,14 @@ def _kabul_hafta(n: int = 1):
 
 
 def test_dogrulama_saglam_seti_gecirir():
+    """Sağlam bir set **yükseltmeden** geçmeli — asıl iddia budur.
+
+    Bu testte bilerek `assert` yok: `dogrula()` bir kapı ve sözleşmesi
+    "bozuksa yükselt"tir, yani sağlam girdide sessiz kalması TAM OLARAK
+    beklenen davranıştır. Anlamını hemen altındaki negatif testlerden alır
+    (`pytest.raises(AssertionError, ...)`): kapı no-op'a çevrilseydi bu test
+    yeşil kalır ama o testler DÜŞERDİ. Çift birlikte tamdır.
+    """
     gecmis.dogrula({"2023_24": [_kabul_hafta(1), _kabul_hafta(2)]})
 
 

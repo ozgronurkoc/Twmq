@@ -1277,14 +1277,11 @@ def ornek_kimligi() -> dict[str, Any]:
 
 def _env_info() -> dict[str, Any]:
     """Calisan surumun bagimlilik envanteri — 'bende calisiyordu' icin."""
-    from importlib.metadata import version as _paket_surum
 
-    def _surum(paket: str) -> str | None:
-        # Surum bilgisi raporun kritik parcasi degil: bulunamazsa None gecer.
-        try:
-            return _paket_surum(paket)
-        except Exception:
-            return None
+    # Surum yedegi TEK kaynaktan: `kosum.paket_surumu`. Ayni govde burada da
+    # yaziliydi; ayrissalardi saglik raporu ile kosum defteri ayni ortam icin
+    # iki farkli surum listesi gosterirdi.
+    from .kosum import paket_surumu as _surum
 
     return {
         "python": platform.python_version(),

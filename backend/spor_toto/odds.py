@@ -310,7 +310,34 @@ def _arindir_shin(ters: dict[str, float], toplam: float) -> dict[str, float]:
 
 
 def margin(oranlar: dict[str, float]) -> float:
-    """Bültenin marjı (overround): ``Σ(1/o) − 1``. Arındırmadan bağımsızdır."""
+    """Bültenin marjı (overround): ``Σ(1/o) − 1``. Arındırmadan bağımsızdır.
+
+    **Bu sayı projenin manşetlerinden biri** (football-data %7,26 ↔ iddaa
+    %18,86, oran 2,6 kat — `docs/ISTATISTIK_YOL_HARITASI.md`) ve uzun süre
+    **hiçbir testi yoktu**: mutasyon denemesinde `- 1.0` düşürüldüğünde süit
+    yeşil kaldı. Tanım artık burada, yürütülen örneklerle duruyor.
+
+    Adil bir bülten (marj yok) sıfır verir::
+
+        >>> round(margin({"1": 3.0, "0": 3.0, "2": 3.0}), 10)
+        0.0
+
+    Marj, olasılık toplamının 1'i ne kadar aştığıdır::
+
+        >>> round(margin({"1": 2.0, "0": 4.0, "2": 4.0}), 4)
+        0.0
+        >>> round(margin({"1": 1.9, "0": 3.8, "2": 3.8}), 4)
+        0.0526
+
+    **Sıfır ve negatif oran ELENIR, sıfır sayılmaz.** Boş bir hücre `0.0`
+    olarak gelir ve `1/0` sonsuza giderdi; eleme olmadan bütün ölçüm
+    çöker::
+
+        >>> round(margin({"1": 3.0, "0": 3.0, "2": 3.0, "yok": 0.0}), 10)
+        0.0
+        >>> round(margin({"1": 2.0, "0": 2.0}), 4)
+        0.0
+    """
     return sum(1.0 / v for v in oranlar.values() if v and v > 0) - 1.0
 
 
@@ -332,6 +359,56 @@ KITAP_ADLARI: dict[str, str] = {
     "Avg": "piyasa ortalaması", "PS": "Pinnacle",
     "BFE": "Betfair Exchange", "B365": "Bet365", "Max": "en iyi oran",
 }
+
+#: Hafta dosyasindaki `odds_kind` saglayicilari -> okunur ad.
+#:
+#: `KITAP_ADLARI`den AYRI ve ayri kalmali: o football-data sutun kodlari
+#: (`Avg`, `PS`), bu ise Super Toto hafta dosyasinin fiyat kaynagi
+#: (`pinnacle_kapanis`, `iddaa`). Ikisini birlestirmek iki farkli evreni
+#: ayni sozluge sikistirirdi.
+#:
+#: **Tek kaynak olmasinin sebebi olculdu:** ayni dort cift UC yerde birden
+#: yaziliydi — `super_toto_sayfa.py`de IKI KEZ (259 satir arayla) ve
+#: `frontend/components/super-toto/fiyatlar.tsx`te. Arayuze `super-toto`
+#: beslemesiyle tasiniyor, yani elle tutulan kopya kalmadi.
+SAGLAYICI_ADLARI: dict[str, str] = {
+    "iddaa": "iddaa", "pinnacle": "Pinnacle",
+    "bet365nl": "bet365.nl", "nesine": "Nesine",
+}
+
+
+def saglayici_adi(odds_kind: str | None) -> str:
+    """`"pinnacle_kapanis"` -> `"Pinnacle kapanış"`.
+
+    Sonek TANINMIYORSA uydurulmaz. Onceki Python govdesi `else` dalinda
+    her zaman "kapanış" yaziyordu, yani soneksiz bir `"pinnacle"` degeri
+    ekranda **"Pinnacle kapanış"** diye gorunuyordu — olmayan bir bilgi.
+    TypeScript govdesi ayni girdide yalnizca "Pinnacle" diyordu; iki taraf
+    ayrismisti.
+
+        >>> saglayici_adi("pinnacle_kapanis")
+        'Pinnacle kapanış'
+        >>> saglayici_adi("iddaa_acilis")
+        'iddaa açılış'
+        >>> saglayici_adi("pinnacle")
+        'Pinnacle'
+        >>> saglayici_adi("bilinmeyen_kaynak")
+        'bilinmeyen_kaynak'
+        >>> saglayici_adi(None)
+        'bilinmiyor'
+    """
+    ham = (odds_kind or "").strip().lower()
+    if not ham:
+        return "bilinmiyor"
+    saglayici, _, an = ham.partition("_")
+    ad = SAGLAYICI_ADLARI.get(saglayici)
+    if ad is None:
+        return ham
+    if an == "acilis":
+        return f"{ad} açılış"
+    if an == "kapanis":
+        return f"{ad} kapanış"
+    return ad
 
 
 def donem_dagilimi(bloklar: Sequence[dict[str, Any]]) -> dict[str, int]:

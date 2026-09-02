@@ -156,13 +156,9 @@ def test_engine_params_varsayilanlari_tamamlar():
 
 # ─── uç: /api/meta ve ilan edilen modların çalışabilirliği ────────────────────
 
-@pytest.fixture()
-def client():
-    flask = pytest.importorskip("flask")  # noqa: F841
-    from web_app import app
-    app.config.update(TESTING=True)
-    with app.test_client() as c:
-        yield c
+# `client` fixture'i `tests/conftest.py`den geliyor — ayni govde bes
+# dosyada, ucu BIREBIR yaziliydi. (Ezmesi gereken ikisi eziyor:
+# `test_api_health` onbellek temizliyor, `test_tahmin` modul kapsamli.)
 
 
 def test_meta_ucu_ayni_govdeyi_verir(client):

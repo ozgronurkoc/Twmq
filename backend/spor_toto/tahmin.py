@@ -43,6 +43,7 @@ from typing import Any
 
 from .history import SYMBOLS
 from .odds import implied_probs
+from .ortak import oran_sayisi
 
 KOK = Path(__file__).resolve().parent.parent
 VARSAYILAN_FIXTURES = KOK / "data" / "fixtures" / "fixtures.csv"
@@ -92,12 +93,10 @@ def _gelecekte(kickoff: str | None, simdi: datetime) -> bool:
     return False
 
 
-def _sayi(ham: Any) -> float | None:
-    try:
-        v = float(str(ham).strip())
-    except (TypeError, ValueError):
-        return None
-    return v if v > 1.0 else None
+#: Oran okuma TEK kaynaktan: `ortak.oran_sayisi`. Ayni govde burada,
+#: `scripts/build_egitim` ve `scripts/build_fixtures`ta birebir yazilliydi
+#: ve ucu de ayni football-data sutunlarini okuyordu.
+_sayi = oran_sayisi
 
 
 def fixtures_maclari(yol: str | None = None) -> list[dict[str, Any]]:

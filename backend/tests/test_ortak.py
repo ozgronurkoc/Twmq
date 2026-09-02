@@ -13,6 +13,7 @@ koddan değil matematikten alır.
 """
 from __future__ import annotations
 
+import ast
 import sys
 from itertools import pairwise
 from pathlib import Path
@@ -21,6 +22,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+import spor_toto.ortak as _ortak_modul
 from spor_toto.ortak import (
     BRIER_ESIT,
     OLASILIK_BANTLARI,
@@ -31,6 +33,10 @@ from spor_toto.ortak import (
     siralama_olculeri,
     wilson,
 )
+
+#: `ortak`in ilan ettigi public yuzey — tek kaynak bekcisi buradan turer,
+#: yani `ortak.__all__`a eklenen her hesap kendiliginde korunur.
+_ORTAK_ALL = frozenset(_ortak_modul.__all__)
 
 ALANLAR = ("brier", "guvenilirlik", "cozunurluk", "belirsizlik", "bant_ici")
 
@@ -361,3 +367,135 @@ def test_siralama_bilgisiz_tahmincide_taban_uzerinde_degil():
     blok = o["isabet_k"][200]
     oran = blok["dogru"] / blok["n"]
     assert abs(oran - o["taban_isabet"]) < 0.08
+
+
+# ─── tek kaynak bekçisi ───────────────────────────────────────────────────
+
+def _govde_imzasi(fn: ast.FunctionDef) -> str:
+    """Fonksiyon gövdesinin **ada bağımsız** imzası.
+
+    Bütün tanımlayıcılar (değişken, argüman, çağrılan ad) ilk görülme
+    sırasına göre yeniden adlandırılır ve docstring atılır. Böylece aynı
+    hesabın `p`/`probs`, `SEM`/`SEMBOLLER` gibi kozmetik farklarla yazılmış
+    kopyaları **aynı** imzayı üretir — kopyayı yakalayan şey budur.
+    """
+    govde = list(fn.body)
+    if (govde and isinstance(govde[0], ast.Expr)
+            and isinstance(govde[0].value, ast.Constant)
+            and isinstance(govde[0].value.value, str)):
+        govde = govde[1:]          # docstring hesabın parçası değil
+    if not govde:
+        return ""
+
+    sozluk: dict[str, str] = {}
+
+    def _ad(x: str) -> str:
+        return sozluk.setdefault(x, f"_{len(sozluk)}")
+
+    kopya = ast.Module(body=[ast.copy_location(d, fn) for d in govde],
+                       type_ignores=[])
+    for d in ast.walk(kopya):
+        if isinstance(d, ast.Name):
+            d.id = _ad(d.id)
+        elif isinstance(d, ast.arg):
+            d.arg = _ad(d.arg)
+        elif isinstance(d, ast.Attribute):
+            d.attr = _ad(d.attr)
+    return ast.dump(kopya)
+
+
+def test_ortak_hesaplari_baska_yerde_YENIDEN_YAZILMAMIS():
+    """`ortak`taki hesaplardan hiçbiri başka bir dosyada ikinci kez yazılmamalı.
+
+    **Bu bekçi ölçülmüş dört ihlalden geldi.** `ortak.py` başlığı "tek kaynak
+    artık `ortak`" diyordu ama `brier` üç yerde daha yazılıydı
+    (`fiyatlar.py`, `scripts/acilis_kapanis.py`, `scripts/iddaa_hazirlik.py`)
+    ve `kacak_dagilimi` bir yerde daha (`scripts/kademe_analizi.py`). Üçü tam
+    sözlükte birebir aynı sonucu veriyordu, ama ikisi `p[s]` yazdığı için
+    eksik sembolde `KeyError` fırlatıyordu — yani kopyalar zaten **ayrışmıştı**.
+
+    `kacak_dagilimi`nin docstring'i tehlikeyi açıkça yazıyor: *"iki gövde
+    ayrışsaydı kuponu kuran hesap ile onu değerlendiren hesap farklı şeyler
+    söylerdi."* Cümlenin bekçisi yoktu; artık var.
+
+    Bekçi **sınıfa** bakar, tek tek adlara değil: `ortak.__all__`taki her
+    fonksiyonun gövde imzası çıkarılır ve deponun geri kalanında aynı imza
+    aranır. Yarın `ortak`a eklenen bir hesap da kendiliğinden korunur.
+
+    Sarmalayıcılar bilerek serbest: gövdesi kanonik adı **çağıran** bir
+    fonksiyon (örn. `kademe_analizi.kacak_dagilimi`, diziye çeviren kabuk)
+    ikinci bir hesap değildir ve imzası da zaten tutmaz.
+    """
+    kok = Path(__file__).resolve().parents[1]
+    ortak_agac = ast.parse((kok / "spor_toto" / "ortak.py").read_text(encoding="utf-8"))
+
+    kanonik: dict[str, str] = {}
+    for d in ortak_agac.body:
+        if isinstance(d, ast.FunctionDef) and d.name in _ORTAK_ALL:
+            imza = _govde_imzasi(d)
+            # Tek satırlık, gövdesi cılız yardımcılar rastgele çakışabilir;
+            # bekçi yalnızca ayırt edici gövdelere bakar.
+            if len(imza) >= 200:
+                kanonik[imza] = d.name
+
+    assert kanonik, "ortak.__all__ içinden hiçbir fonksiyon imzalanamadı — bekçi kör"
+
+    hedefler = [*(kok / "spor_toto").glob("*.py"),
+                *(kok / "scripts").glob("*.py"),
+                kok / "web_app.py"]
+    ihlal: list[str] = []
+    for yol in sorted(hedefler):
+        if yol.name == "ortak.py":
+            continue
+        agac = ast.parse(yol.read_text(encoding="utf-8"))
+        for d in ast.walk(agac):
+            if not isinstance(d, ast.FunctionDef):
+                continue
+            ad = kanonik.get(_govde_imzasi(d))
+            if ad:
+                ihlal.append(f"{yol.relative_to(kok)}:{d.lineno} {d.name}() "
+                             f"= ortak.{ad}()")
+
+    assert not ihlal, (
+        "`ortak`taki hesap başka bir dosyada YENIDEN YAZILMIŞ — tek kaynak "
+        "iddiası yalan olur: " + "; ".join(ihlal)
+    )
+
+
+#: Üç boru hattının da aynı anahtara indirgemek zorunda olduğu adlar.
+#: Türkçe `ı`/`ş`/`ğ`, İskandinav `ø`, Alman `ß` ve Hırvat `đ` — NFKD
+#: bunların yalnızca bir kısmını ayrıştırır, kalanı tabloya bağlıdır.
+_ESLEME_ORNEKLERI = (
+    ("Kasımpaşa", "kasimpasa"),
+    ("Şanlıurfaspor", "sanliurfaspor"),
+    ("Altınordu", "altinordu"),
+    ("Fatih Karagümrük", "fatih karagumruk"),
+    ("Çaykur Rizespor", "caykur rizespor"),
+    ("Bayern München", "bayern munchen"),
+    ("Molde FK", "molde"),   # `fk` uc atma listesinde de var
+    ("Borussia M'gladbach", "borussia m gladbach"),
+)
+
+
+@pytest.mark.parametrize("ham,beklenen", _ESLEME_ORNEKLERI)
+def test_ad_sadelestir_uc_boru_hattinda_AYNI_anahtari_verir(ham, beklenen):
+    """Aynı kulüp, üç boru hattında **aynı** anahtara düşmeli.
+
+    **Ölçülmüş kusurdan geldi.** `sadelestir` üç yerde ayrı yazılıydı ve
+    harf tabloları farklıydı; `build_avrupa`nınki `ı`yı hiç tanımıyordu, o
+    yüzden `Kasımpaşa` orada `kas mpasa` oluyordu — ad **ikiye bölünüyordu**.
+    Zarar vermemişti çünkü karşılaştırma iki tarafını da aynı bozuk gövdeden
+    geçiriyordu, ama anahtar bir boru hattı sınırını geçtiği gün sessizce
+    eşleşmezdi.
+
+    Test **davranışa** bakar, yapıya değil: yarın biri gövdeyi tekrar
+    ayırırsa buradan düşer. Atma listeleri modüle özgü kalır ve bu testte
+    yer almaz — ayrışması gereken tek şey odur.
+    """
+    from scripts.build_avrupa import sadelestir as avrupa_sade
+    from scripts.build_sehir import sadelestir as sehir_sade
+    from spor_toto.gorus import sadelestir as gorus_sade
+
+    assert gorus_sade(ham) == beklenen
+    assert avrupa_sade(ham) == beklenen
+    assert sehir_sade(ham) == beklenen

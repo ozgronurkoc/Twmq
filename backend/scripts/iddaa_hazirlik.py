@@ -143,13 +143,15 @@ def hafta_sd(yol: Path | None = None) -> tuple[float, int]:
     from spor_toto.history import SYMBOLS
     from spor_toto.odds import implied_probs
 
+    # Brier BURADA IC FONKSIYON OLARAK YENIDEN YAZILMISTI. Govde kanonikle
+    # birebir ayniydi — `history.SYMBOLS` zaten `core.SEMBOLLER`in kendisi
+    # (`history.py:32`), yani iterasyon duzeni de ayniydi. Tek kaynak
+    # `spor_toto.ortak.brier`.
+    from spor_toto.ortak import brier
+
     yol = yol or GERI_TEST_ORAN
     if not yol.is_file():
         return VARSAYILAN_SD, 0
-
-    def brier(p: dict[str, float], kod: str) -> float:
-        return sum((p.get(s, 0.0) - (1.0 if kod == s else 0.0)) ** 2
-                   for s in SYMBOLS)
 
     gruplar: dict[str, list[tuple[dict[str, float], str]]] = {}
     with yol.open(encoding="utf-8") as fh:

@@ -1,8 +1,37 @@
 {
-  "extends": ["next/core-web-vitals"],
-  "ignorePatterns": [".next/", "node_modules/"],
+  "extends": [
+    "next/core-web-vitals"
+  ],
+  "ignorePatterns": [
+    ".next/",
+    "node_modules/"
+  ],
   "rules": {
-    "eqeqeq": ["error", "always", { "null": "ignore" }],
-    "no-console": ["warn", { "allow": ["warn", "error"] }]
-  }
+    "eqeqeq": [
+      "error",
+      "always",
+      {
+        "null": "ignore"
+      }
+    ],
+    "no-console": [
+      "warn",
+      {
+        "allow": [
+          "warn",
+          "error"
+        ]
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": [
+        "scripts/**"
+      ],
+      "rules": {
+        "no-console": "off"
+      }
+    }
+  ]
 }

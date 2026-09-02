@@ -12,14 +12,8 @@ from spor_toto.core import SEMBOLLER, Encoder, parse_picks, solve_fix16
 ORNEK = "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"
 
 
-def _enc_cols():
-    enc = Encoder(parse_picks(ORNEK))
-    cols, _ = solve_fix16(enc)
-    return enc, cols
-
-
-def _uniform_probs(n: int = 15):
-    return [dict.fromkeys(SEMBOLLER, 1.0 / 3.0) for _ in range(n)]
+from tests.conftest import enc_ve_kolonlar as _enc_cols  # tek kaynak
+from tests.conftest import esit_olasiliklar as _uniform_probs  # tek kaynak
 
 
 def test_monte_carlo_shape_and_bounds():

@@ -20,7 +20,6 @@ from pathlib import Path
 
 import pytest
 
-from spor_toto.core import SEMBOLLER
 from spor_toto.getiri import kalabalik_kademeleri
 from spor_toto.gorus import coz, sadelestir, takim_havuzu
 from spor_toto.ortak import kacak_dagilimi
@@ -45,9 +44,7 @@ def govde(t2):
     return t2.uret("2026_27", 2, tarih="2026-08-24")
 
 
-def _dagilim(*p: float) -> dict[str, float]:
-    return dict(zip(SEMBOLLER, p))
-
+from tests.conftest import dagilim as _dagilim  # tek kaynak
 
 # ─── kalabalık ayarı ──────────────────────────────────────────────────────
 

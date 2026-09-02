@@ -171,7 +171,12 @@ def test_uydurma_baslangictan_bagimsizdir():
     """Kayıp dışbükey — Newton tek çözüme gitmeli, iki koşum aynı çıkmalı."""
     c = 0.50
     veri = _sentetik(0.25, -0.60, c, tohum=4242)
-    assert _uydur(veri, c, egimli=True) == _uydur(veri, c, egimli=True)
+    u = _uydur(veri, c, egimli=True)
+    # Bos donen bir govde de "deterministik" olurdu; asagidaki satir
+    # sonucun BOS OLMADIGINI da tutar — determinizm tek basina
+    # calistigini kanitlamaz.
+    assert u is not None, "uydurma bos dondu"
+    assert u == _uydur(veri, c, egimli=True)
 
 
 # ─── tahminci sözleşmesi ──────────────────────────────────────────────────

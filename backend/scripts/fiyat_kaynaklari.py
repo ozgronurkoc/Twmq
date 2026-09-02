@@ -13,7 +13,15 @@ olmayan bir alternatiften daha kötüdür: seçimin bedeli ölçülemez.
 
     python scripts/fiyat_kaynaklari.py
     python scripts/fiyat_kaynaklari.py --json
-    python scripts/fiyat_kaynaklari.py --yaz    # data/odds/fiyat_kaynaklari.json
+    python scripts/fiyat_kaynaklari.py --yaz      # data/odds/fiyat_kaynaklari.json
+    python scripts/fiyat_kaynaklari.py --kontrol  # yalnizca bayat mi diye bakar (CI)
+
+**`--kontrol` neden var.** `data/odds/fiyat_kaynaklari.json` surumleniyor ve
+`odds.py` ile `fiyatlar.py` docstring'lerinden ANILIYOR, ama uretildikten
+sonra hicbir sey onu diskteki gercekle karsilastirmiyordu: arsiv buyudugunde
+ya da arindirma varsayilani degistiginde dosya sessizce bayatlar ve kimse
+gormezdi. `super_toto_frontend.py` ve `api_sozlesme.py` ayni korumayi kendi
+uretilmis dosyalari icin zaten tasiyor; bu ucuncusuydu ve eksikti.
 
 UYARI: farklı kapsamalı iki kitabın Brier'i **doğrudan kıyaslanamaz** —
 Pinnacle yalnızca sezonun ilk yarısını kapsıyor ve o kesit daha kolay
@@ -89,16 +97,34 @@ def main() -> None:
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--yaz", action="store_true",
                     help=f"{CIKTI.relative_to(KOK)} dosyasına yaz")
+    ap.add_argument("--kontrol", action="store_true",
+                    help="dosya güncel mi — yazmaz, farklıysa 1 ile çıkar")
     a = ap.parse_args()
     o = sezon_fiyat_ozeti()
+    govde = json.dumps(o, ensure_ascii=False, indent=1) + "\n"
+
+    if a.kontrol:
+        # Yazmaz. Kapının işi dosyayı tazelemek değil, BAYATLADIĞINI
+        # söylemektir: sessizce yeniden yazsaydı, ölçümün değiştiğini
+        # kimse görmeden commit'e girerdi.
+        if not CIKTI.is_file():
+            print(f"✗ {CIKTI.relative_to(KOK)} yok — "
+                  "'python scripts/fiyat_kaynaklari.py --yaz' çalıştırın")
+            raise SystemExit(1)
+        if CIKTI.read_text(encoding="utf-8") != govde:
+            print(f"✗ {CIKTI.relative_to(KOK)} BAYAT — "
+                  "'python scripts/fiyat_kaynaklari.py --yaz' çalıştırın")
+            raise SystemExit(1)
+        print(f"{CIKTI.name} guncel")
+        return
+
     if a.json:
-        print(json.dumps(o, ensure_ascii=False, indent=1))
+        print(govde)
     else:
         yazdir(o)
     if a.yaz:
         CIKTI.parent.mkdir(parents=True, exist_ok=True)
-        CIKTI.write_text(json.dumps(o, ensure_ascii=False, indent=1) + "\n",
-                         encoding="utf-8")
+        CIKTI.write_text(govde, encoding="utf-8")
         print(f"\nyazıldı: {CIKTI}")
 
 

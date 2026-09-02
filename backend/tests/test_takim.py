@@ -201,8 +201,13 @@ def test_tablolar_girdiyle_ayni_uzunlukta():
 def test_tablolar_deterministik():
     maclar = [_mac(g, f"T{g % 4}", f"T{(g + 1) % 4}", "102"[g % 3])
               for g in range(30)]
-    assert h2h_tablosu(maclar) == h2h_tablosu(maclar)
-    assert seri_tablosu(maclar) == seri_tablosu(maclar)
+    h, s = h2h_tablosu(maclar), seri_tablosu(maclar)
+    # Bos donen bir govde de "deterministik" olurdu; asagidaki satir
+    # sonucun BOS OLMADIGINI da tutar — determinizm tek basina
+    # calistigini kanitlamaz.
+    assert h and s, "tablolar bos — determinizm tek basina yetmez"
+    assert h == h2h_tablosu(maclar)
+    assert s == seri_tablosu(maclar)
 
 
 # ─── korpus üzerinde ──────────────────────────────────────────────────────

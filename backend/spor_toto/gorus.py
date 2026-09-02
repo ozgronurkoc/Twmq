@@ -47,8 +47,6 @@ uydurulmaz.
 """
 from __future__ import annotations
 
-import re
-import unicodedata
 from collections.abc import Sequence
 from typing import Any
 
@@ -57,6 +55,7 @@ from .dixon_coles import DixonColes, _gun
 from .egitim import korpus_yukle
 from .elo import EloDefteri, beklenen
 from .odds import load_odds
+from .ortak import ad_sadelestir
 
 #: Sadeleştirmede atılan kulüp ekleri. Liste **kısa** tutuldu: her ek,
 #: iki farklı takımı aynı ada indirme riski taşır. Buradakiler ligde tekil
@@ -133,19 +132,12 @@ EN_AZ_KAPSAMA = 0.60
 def sadelestir(ad: str) -> str:
     """Aksan, noktalama ve kulüp eki olmadan karşılaştırılabilir ad.
 
-    Türkçe harfler NFKD ile ayrışmayanlar dâhil elle indirgenir: `ı` ve `i`
-    aynı sade harfe düşer, çünkü iki kaynak aynı takımı iki biçimde yazıyor
-    (`Kasımpaşa` ↔ `Kasimpasa`) ve fark ayırt edici değil, tipografik.
+    Harf indirgeme **`ortak.ad_sadelestir`e** taşındı: aynı gövde burada,
+    `build_avrupa`da ve `build_sehir`de üç ayrı harf tablosuyla yazılıydı
+    ve `build_avrupa`nınki `ı`yı hiç tanımıyordu. Atılan kelime listesi
+    modüle özgü kalır (aşağıdaki `_ATILAN`), harf tablosu tektir.
     """
-    a = unicodedata.normalize("NFKD", ad)
-    a = "".join(c for c in a if not unicodedata.combining(c))
-    for eski, yeni in (("ı", "i"), ("İ", "I"), ("ğ", "g"), ("Ğ", "G"),
-                       ("ş", "s"), ("Ş", "S"), ("ø", "o"), ("ß", "ss"),
-                       ("đ", "d"), ("Đ", "D")):
-        a = a.replace(eski, yeni)
-    a = re.sub(r"[^a-z0-9]+", " ", a.lower())
-    kelimeler = [k for k in a.split() if k not in _ATILAN]
-    return " ".join(kelimeler) if kelimeler else a.strip()
+    return ad_sadelestir(ad, _ATILAN)
 
 
 def _ham_tarihce() -> list[dict[str, Any]]:

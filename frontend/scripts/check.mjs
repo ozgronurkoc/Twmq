@@ -20,7 +20,7 @@
  */
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { createRequire } from "node:module";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -35,6 +35,11 @@ const cikti = mkdtempSync(join(kok, ".kurulum-check-"));
  * `olculmus` blogu, bu dosyada eskiden DUZ YAZILI duran "(olculdu)"
  * sayilarinin yerine gecer.
  */
+/** Uretilmis Super Toto beslemesi (`super_toto_frontend.py`). */
+const BESLEME = JSON.parse(
+  readFileSync(join(kok, "lib", "super-toto-veri.json"), "utf8"),
+);
+
 const SOZLESME = JSON.parse(
   readFileSync(join(kok, "lib", "api-sozlesme.json"), "utf8"),
 );
@@ -47,8 +52,11 @@ try {
     [
       "tsc", "lib/kurulum.ts", "lib/kume-ici.ts", "lib/senaryo.ts",
       "lib/utils.ts", "lib/types.ts", "lib/sekmeler.ts",
+      "lib/super-toto.ts",
       "--outDir", cikti,
       "--module", "commonjs", "--target", "es2022", "--skipLibCheck",
+      // `lib/super-toto.ts` beslemeyi import ediyor.
+      "--resolveJsonModule", "--esModuleInterop",
     ],
     { cwd: kok, stdio: "inherit" },
   );
@@ -58,6 +66,11 @@ try {
   const Z = iste(join(cikti, "kume-ici.js"));
   const S = iste(join(cikti, "senaryo.js"));
   const T = iste(join(cikti, "sekmeler.js"));
+  // `types.ts` yalnizca tip TASIMIYOR; `MAC_SAYISI` ve `SEMBOLLER`
+  // gibi calisma zamani sabitleri de orada ve ikisi de sunucuyla
+  // karsilastirilmak zorunda.
+  const TIP = iste(join(cikti, "types.js"));
+  const ST = iste(join(cikti, "super-toto.js"));
 
   let gecen = 0;
   const dene = (ad, fn) => {
@@ -144,7 +157,8 @@ try {
     k.variant = 3;
     k.fireMax = 0;
     k.kati = true;
-    k.eng = { trials: 9, ls_iters: 12345, seed: 7, time_limit: 90, block_limit: 512, exact_limit: 1024 };
+    k.eng = { trials: 9, ls_iters: 12345, seed: 7, time_limit: 90,
+              block_limit: 512, exact_limit: 1024, auto_ilp_limit: 7.5 };
     const geri = K.kurulumuCoz(K.kurulumuKodla(k)).kurulum;
     assert.equal(geri.mode, "butce");
     assert.equal(geri.budget, 4096);
@@ -154,6 +168,21 @@ try {
     assert.equal(geri.fireMax, 0);
     assert.equal(geri.kati, true);
     assert.deepEqual(geri.eng, k.eng);
+  });
+
+  dene("eski 6 alanli motor baglantisi hala cozuluyor", () => {
+    // `auto_ilp_limit` motor dizisine SONRADAN eklendi (6 -> 7 alan).
+    // Daha once paylasilmis adresler kirilmamali: eksik alan varsayilana
+    // duser, dizinin tamami "bozuk" sayilip ATLANMAZ.
+    const k = K.varsayilanKurulum();
+    const adres = K.kurulumuKodla(k) + "&e=9,12345,7,90,512,1024";
+    const { kurulum: geri, atlanan } = K.kurulumuCoz(adres);
+    assert.equal(atlanan.includes("motor ayarları"), false,
+      "eski baglanti bozuk sayilmis");
+    assert.equal(geri.eng.trials, 9);
+    assert.equal(geri.eng.exact_limit, 1024);
+    assert.equal(geri.eng.auto_ilp_limit, K.VARSAYILAN_ENG.auto_ilp_limit,
+      "eksik alan varsayilana dusmeli");
   });
 
   dene("bayes ayarlari gidis-donus", () => {
@@ -487,7 +516,14 @@ try {
     for (const uye of d.members) {
       if (!ts.isPropertySignature(uye) || !uye.name) continue;
       const ad = uye.name.getText(tipAgaci).replace(/^["']|["']$/g, "");
-      alanlar.set(ad, { istegeBagli: !!uye.questionToken });
+      // Tip METNI de saklaniyor: derinlemesine denetim ic ice arayuzu
+      // buradan cozuyor. Once yalnizca `istegeBagli` tutuluyordu ve
+      // denetim 1 SEVIYE derinde kaliyordu.
+      alanlar.set(ad, {
+        istegeBagli: !!uye.questionToken,
+        tip: uye.type ? uye.type.getText(tipAgaci) : "",
+        uye,
+      });
     }
     const atalar = (d.heritageClauses ?? [])
       .filter((h) => h.token === ts.SyntaxKind.ExtendsKeyword)
@@ -536,6 +572,119 @@ try {
     "POST /api/solve": "SolveResponse",
   };
 
+  /**
+   * Bir alan TIP DUGUMUNDEN alan haritasi cikarir.
+   *
+   * Tek bir arayuz adi yetmiyor; depodaki tipler bilesik:
+   *   `TahminBlogu & { ad: string }`   kesisim
+   *   `TahminciSkoru | null`           birlesim
+   *   `BacktestWeek[]`                 dizi
+   * Ilk yazim yalnizca "tip metninde gecen ilk buyuk harfli ad"a bakiyordu
+   * ve kesisimin inline yarisini kaciriyordu — yanlis alarm verdi
+   * (`alternatif.ad` "tipte yok" dedi, oysa kesisimin oteki yarisindaydi).
+   */
+  const alanlariCoz = (dugum, derinlik = 0) => {
+    if (!dugum || derinlik > 6) return null;
+    if (ts.isParenthesizedTypeNode(dugum)) {
+      return alanlariCoz(dugum.type, derinlik + 1);
+    }
+    if (ts.isArrayTypeNode(dugum)) {
+      return alanlariCoz(dugum.elementType, derinlik + 1);
+    }
+    if (ts.isTypeLiteralNode(dugum)) {
+      const m = new Map();
+      for (const u of dugum.members) {
+        if (!ts.isPropertySignature(u) || !u.name) continue;
+        m.set(u.name.getText(tipAgaci).replace(/^["']|["']$/g, ""), {
+          istegeBagli: !!u.questionToken,
+          tip: u.type ? u.type.getText(tipAgaci) : "",
+          uye: u,
+        });
+      }
+      return m;
+    }
+    if (ts.isIntersectionTypeNode(dugum)) {
+      // Kesisim: butun dallarin alanlari birlesir, zorunluluk korunur.
+      const birlesik = new Map();
+      let bulundu = false;
+      for (const p of dugum.types) {
+        const m = alanlariCoz(p, derinlik + 1);
+        if (!m) continue;
+        bulundu = true;
+        for (const [k, v] of m) birlesik.set(k, v);
+      }
+      return bulundu ? birlesik : null;
+    }
+    if (ts.isUnionTypeNode(dugum)) {
+      // Birlesim BASKA bir kural ister: bir alan ancak HER dalda varsa
+      // zorunludur. `ErrorFreq = {...} | { skipped: true; reason: string }`
+      // gibi "atlandi" varyantlarinda kesisim kurali yanlis alarm verir —
+      // ilk yazimda tam bunu yapti.
+      const dallar = dugum.types
+        .map((p) => alanlariCoz(p, derinlik + 1))
+        .filter((m) => m && m.size);
+      if (!dallar.length) return null;
+      const birlesik = new Map();
+      for (const m of dallar) {
+        for (const [k, v] of m) {
+          const hepsinde = dallar.every((d) => d.has(k));
+          const zorunlu = hepsinde && dallar.every((d) => !d.get(k).istegeBagli);
+          const onceki = birlesik.get(k);
+          birlesik.set(k, onceki ?? { ...v, istegeBagli: !zorunlu });
+        }
+      }
+      return birlesik;
+    }
+    if (ts.isTypeReferenceNode(dugum)) {
+      const ad = dugum.typeName.getText(tipAgaci);
+      // `Record<string, X>`: alan adlari VERIDEN gelir, tipten degil.
+      if (ad === "Record") return null;
+      if (arayuzler.has(ad)) return arayuzler.get(ad);
+      // `Array<X>`, `Partial<X>` gibi sarmalayicilar
+      for (const arg of dugum.typeArguments ?? []) {
+        const m = alanlariCoz(arg, derinlik + 1);
+        if (m) return m;
+      }
+      return null;
+    }
+    return null;
+  };
+
+  /**
+   * Sunucu govdesi ile arayuzu **ic ice** karsilastirir.
+   *
+   * ONCEDEN 1 SEVIYE DERINDI ve bu, iki gercek ayrismanin CI'dan yesil
+   * gecmesine yol acti: `MetaResponse.engine_defaults` ust duzeyde vardi,
+   * ama ICINDEKI `auto_ilp_limit` tipte yoktu (sunucu ilan ediyor, arayuz
+   * gonderemiyor); `TahminciSkoru.fark` dort alan diyordu, sunucu yedi
+   * gonderiyordu. Ust duzey anahtar tuttugu icin denetim ikisini de
+   * gormedi.
+   *
+   * Diziler: ilk eleman ornek alinir (sozlesme uretimi zaten tek bir
+   * gercek cagriyi ornekliyor, elemanlar ayni sekli tasir).
+   */
+  const karsilastir = (yol, govde, alanlar, hatalar, derinlik = 0) => {
+    if (derinlik > 6 || !alanlar) return;
+    for (const [k, v] of Object.entries(govde)) {
+      if (!alanlar.has(k)) hatalar.push(`${yol}.${k} sunucuda VAR, tipte YOK`);
+    }
+    for (const [k, meta] of alanlar) {
+      if (!meta.istegeBagli && !(k in govde)) {
+        hatalar.push(`${yol}.${k} tipte ZORUNLU, sunucu gondermiyor`);
+      }
+    }
+    for (const [k, v] of Object.entries(govde)) {
+      const meta = alanlar.get(k);
+      if (!meta) continue;
+      let deger = v;
+      if (Array.isArray(deger)) deger = deger[0];
+      if (!deger || typeof deger !== "object") continue;
+      const ic = alanlariCoz(meta.uye?.type);
+      if (!ic || ic.size === 0) continue;
+      karsilastir(`${yol}.${k}`, deger, ic, hatalar, derinlik + 1);
+    }
+  };
+
   for (const [uc, tipAdi] of Object.entries(ESLEME)) {
     dene(`sozlesme: ${uc} -> ${tipAdi}`, () => {
       const govde = SOZLESME.uclar[uc];
@@ -543,23 +692,9 @@ try {
       const alanlar = arayuzler.get(tipAdi);
       assert.ok(alanlar, `types.ts icinde ${tipAdi} arayuzu yok`);
 
-      const sunucu = Object.keys(govde).sort();
-      const eksik = sunucu.filter((k) => !alanlar.has(k));
-      assert.deepEqual(
-        eksik, [],
-        `${tipAdi} sunucunun gonderdigi alanlari TANIMIYOR: ${eksik.join(", ")}`,
-      );
-
-      // Tipte olup sunucunun gondermedigi alanlar: yalnizca `?` ile
-      // isaretlenmisse kabul. Isaretsiz bir alan "her zaman gelir" demektir
-      // ve gelmiyorsa tip YALAN soyluyor.
-      const fazla = [...alanlar.entries()]
-        .filter(([k, v]) => !v.istegeBagli && !(k in govde))
-        .map(([k]) => k);
-      assert.deepEqual(
-        fazla, [],
-        `${tipAdi} zorunlu diyor ama sunucu gondermiyor: ${fazla.join(", ")}`,
-      );
+      const hatalar = [];
+      karsilastir(tipAdi, govde, alanlar, hatalar);
+      assert.deepEqual(hatalar, [], hatalar.join("; "));
     });
   }
 
@@ -605,17 +740,149 @@ try {
     assert.equal(new Set(yollar).size, yollar.length);
   });
 
-  dene("sozlesme: mc_samples sinirlari sunucuyla ayni", () => {
-    // `lib/kurulum.ts` bu sinirlari SABIT tutmak zorunda (saf modul,
-    // istek atamaz). Iki taraf ayrismisti: burada 1.000.000, sunucuda
-    // 200.000 yaziyordu.
-    const s = SOZLESME.sinirlar.mc_samples;
-    assert.equal(K.MC_MIN, s.min, "MC_MIN sunucudan farkli");
-    assert.equal(K.MC_MAX, s.max, "MC_MAX sunucudan farkli");
-    assert.equal(K.VARSAYILAN_MC, s.default, "VARSAYILAN_MC sunucudan farkli");
+  dene("sozlesme: SINIRLARIN TAMAMI sunucuyla ayni", () => {
+    // `lib/kurulum.ts` bu sinirlari SABIT tutmak zorunda (saf modul, istek
+    // atamaz). Ayrisma gecmisi:
+    //   · `mc_samples` burada 1.000.000, sunucuda 200.000 yaziyordu;
+    //   · bekci o tek ornege baglandi ve KALAN ONU denetlenmedi;
+    //   · denetlenmeyen onda gercek bir ayrisma vardi: `budget` burada
+    //     10 M'e kirpiliyor, sunucu hicbir sinir ILAN ETMIYOR ve
+    //     `/api/solve` onu SINIRSIZ aliyordu.
+    // Bekci artik SINIFA bakiyor: sunucunun ilan ettigi her sinir, arayuzun
+    // `SINIRLAR` tablosunda ayni degerle bulunmak zorunda.
+    const sunucu = SOZLESME.sinirlar;
+    const arayuz = K.SINIRLAR;
+
+    // Sunucuya OZGU sinirlar: arayuz bunlari uygulamaz, yalnizca gosterir.
+    // `fire_maliyet` bir kullanici girdisi degil, sunucunun HESAPLADIGI
+    // maliyetin tavani (`meta.FIRE_MAX_MALIYET`) — arayuzde kirpilacak bir
+    // alan yok. Liste bilerek kisa ve gerekceli: buyudugu gun bekci
+    // anlamsizlasir.
+    const SUNUCUYA_OZGU = new Set(["fire_maliyet"]);
+
+    const eksik = Object.keys(sunucu)
+      .filter((k) => !SUNUCUYA_OZGU.has(k))
+      .filter((k) => !(k in arayuz));
+    assert.deepEqual(eksik, [],
+      `sunucunun ilan ettigi sinir arayuzde YOK: ${eksik.join(", ")}`);
+
+    const fazla = Object.keys(arayuz).filter((k) => !(k in sunucu));
+    assert.deepEqual(fazla, [],
+      `arayuz sinir uyguluyor ama sunucu ILAN ETMIYOR: ${fazla.join(", ")}`);
+
+    const ayrisan = [];
+    for (const [ad, s] of Object.entries(sunucu)) {
+      if (SUNUCUYA_OZGU.has(ad)) continue;
+      const a = arayuz[ad];
+      for (const alan of ["min", "max", "default"]) {
+        if (!(alan in s)) continue;
+        if (a[alan] !== s[alan]) {
+          ayrisan.push(`${ad}.${alan}: arayuz=${a[alan]} sunucu=${s[alan]}`);
+        }
+      }
+    }
+    assert.deepEqual(ayrisan, [], ayrisan.join("; "));
+  });
+
+  dene("sozlesme: MAC_SAYISI ve SEMBOLLER sunucuyla ayni", () => {
+    // Ikisi de iki tarafta SABIT yaziliydi ve hic karsilastirilmiyordu.
+    // `lib/api.ts` `/api/benzer?oran=` dizesini `SEMBOLLER`den KONUMSAL
+    // kuruyor: sunucu `symbols` sirasini degistirirse her oran ucluşu
+    // sessizce yer degistirir ve hicbir yerde patlamaz.
+    //
+    // Sozlesme anlik goruntusu `/api/meta` icin DEGER degil SEKIL sakliyor
+    // ("int", ["str"]), o yuzden karsilastirma `olculmus` blogundan yapilir:
+    // ornek kupon sunucunun gercek ciktisidir.
+    const kupon = SOZLESME.olculmus.ornek_kupon.split(",");
+    assert.equal(kupon.length, TIP.MAC_SAYISI,
+      `MAC_SAYISI=${TIP.MAC_SAYISI} ama sunucunun ornek kuponu ${kupon.length} mac`);
+
+    // Kupondaki her isaret `SEMBOLLER` alfabesinden olmali.
+    const alfabe = new Set(TIP.SEMBOLLER);
+    const yabanci = [...new Set(kupon.join("").split(""))]
+      .filter((c) => !alfabe.has(c));
+    assert.deepEqual(yabanci, [],
+      `sunucunun kuponunda SEMBOLLER disinda isaret var: ${yabanci.join(", ")}`);
+
+    // Duzen de onemli: `/api/benzer?oran=` konumsal kuruluyor.
+    assert.deepEqual([...TIP.SEMBOLLER], ["1", "0", "2"],
+      "SEMBOLLER duzeni degismis — `lib/api.ts` oran dizesini KONUMSAL kuruyor");
   });
 
   console.log(`\nOK — ${gecen} arayuz denetimi gecti`);
+
+// ─── yuzde/sayi gibi bicimleyiciler tek kaynakta mi ─────────────────────
+//
+// `app/pazarlar/page.tsx` `yuzde`yi YENIDEN YAZMISTI ve kanonik govdeden
+// zayifti: yalnizca `v == null` eliyordu, `NaN`/`Infinity` elemiyordu — yani
+// kapsanmayan bir banttaki bolme ekrana "%NaN" basardi. `/api/pazar` tam da
+// null tasiyan uc. `lib/utils.ts` bu tekillestirmenin yapildigini yaziyordu;
+// bir kopya hayatta kalmisti. Bekci sinifa bakar, tek dosyaya degil.
+dene("bicimleyiciler lib/utils.ts'ten TURER (yeniden yazilmaz)", () => {
+  const kok = join(dirname(fileURLToPath(import.meta.url)), "..");
+  const adlar = ["yuzde", "sayi", "ondalik"];
+  const bulunan = [];
+  const gez = (dizin) => {
+    for (const g of readdirSync(dizin, { withFileTypes: true })) {
+      const yol = join(dizin, g.name);
+      if (g.isDirectory()) { gez(yol); continue; }
+      if (!/\.tsx?$/.test(g.name)) continue;
+      const metin = readFileSync(yol, "utf8");
+      // `@/lib/utils`ten ne getirilmis? Sarmalayici mesrudur: kanonik
+      // govdeyi CAGIRIP bir argumani sabitler (`_yuzde(v, 0)` gibi).
+      // Yasak olan, kanonigi hic getirmeden yeniden YAZMAK.
+      const getirilen = new Set();
+      for (const m of metin.matchAll(/import\s*\{([^}]*)\}\s*from\s*"@\/lib\/utils"/g)) {
+        for (const parca of m[1].split(",")) {
+          const ad = parca.trim().split(/\s+as\s+/).pop();
+          if (ad) getirilen.add(ad.trim());
+        }
+      }
+      for (const ad of adlar) {
+        const yerel = new RegExp(
+          `(?:^|\\n)\\s*(?:export\\s+)?(?:const|function)\\s+${ad}\\b[^\\n]*(?:\\n[^\\n]*){0,3}`);
+        const m = yerel.exec(metin);
+        if (!m) continue;
+        const govde = m[0];
+        const turemis = [...getirilen].some((g) => new RegExp(`\\b${g}\\b`).test(govde));
+        if (!turemis) bulunan.push(`${g.name}:${ad}`);
+      }
+    }
+  };
+  for (const alt of ["app", "components"]) gez(join(kok, alt));
+  assert.deepEqual(
+    bulunan, [],
+    `bicimleyici lib/utils.ts'ten TUREMEDEN yeniden yazilmis: ${bulunan.join(", ")}`,
+  );
+});
+
+// ─── capraz dil: saglayici etiketi iki dilde AYNI mi ────────────────────
+dene("saglayici etiketi Python ile birebir ayni", () => {
+  // Harita tek kaynak (`spor_toto.odds.SAGLAYICI_ADLARI`) ama BICIMLEYICI
+  // iki dilde iki govde ve ayrismislardi: soneksiz bir anahtarda
+  // ("pinnacle") Python `else` dalina dusup "kapanış" UYDURUYOR, TypeScript
+  // uydurmuyordu. Yani ayni fiyat kaynagi rapor sayfasinda ve arayuzde iki
+  // farkli adla gorunuyordu.
+  //
+  // Besleme Python'un GERCEK ciktisini tasiyor; burada arayuzun onu birebir
+  // yeniden urettigi dogrulanir. Sinir durumlar (soneksiz, bilinmeyen)
+  // bilerek listede.
+  const ornekler = BESLEME.saglayici_ornekleri;
+  assert.ok(ornekler && Object.keys(ornekler).length >= 6,
+    "beslemede `saglayici_ornekleri` yok — Python tarafi eskimis olabilir");
+  const ayrisan = [];
+  for (const [kind, beklenen] of Object.entries(ornekler)) {
+    const bulunan = ST.saglayiciAdi(kind);
+    if (bulunan !== beklenen) {
+      ayrisan.push(`${kind}: arayuz=${bulunan} python=${beklenen}`);
+    }
+  }
+  assert.deepEqual(ayrisan, [], ayrisan.join("; "));
+  // Bos/None girdide iki taraf da ayni sozu vermeli.
+  assert.equal(ST.saglayiciAdi(""), "bilinmiyor");
+  assert.equal(ST.saglayiciAdi(null), "bilinmiyor");
+});
+
 } finally {
   rmSync(cikti, { recursive: true, force: true });
 }

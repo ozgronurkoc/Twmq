@@ -1,4 +1,14 @@
 {
+  "//allowJs": [
+    "OLU GORUNUYOR AMA DEGIL — kaldirmayin, geri gelir.",
+    "",
+    "`frontend/` altinda tek bir `.js` dosyasi yok (tek JS-ailesi kaynak",
+    "`scripts/check.mjs` ve `include` kaliplari `.mjs`i tutmuyor), yani bu",
+    "bayrak bir denetimde hakli olarak 'kullanilmiyor' diye isaretlendi.",
+    "OLCULDU: kaldirilip `npm run build` kosuldugunda Next.js onu",
+    "KENDILIGINDEN geri yaziyor. Yani silmek bir onarim degil, her",
+    "derlemede geri alinacak bir gurultudur."
+  ],
   "//noUncheckedIndexedAccess": [
     "Dizi ve Record erisimi `T` degil `T | undefined` doner.",
     "",
@@ -17,7 +27,6 @@
     "genisletilmesiyle kapatildi (`lib/kurulum` ayristiricilari zaten",
     "\"deger yoksa yedek\" diyordu — `undefined` de tam olarak \"yok\" demek)."
   ],
-
   "compilerOptions": {
     "target": "ES2017",
     "lib": [
@@ -25,7 +34,6 @@
       "dom.iterable",
       "esnext"
     ],
-    "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
     "noEmit": true,
@@ -46,7 +54,8 @@
         "./*"
       ]
     },
-    "noUncheckedIndexedAccess": true
+    "noUncheckedIndexedAccess": true,
+    "allowJs": true
   },
   "include": [
     "next-env.d.ts",

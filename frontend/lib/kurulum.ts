@@ -75,6 +75,35 @@ export interface Kurulum {
 }
 
 /** README'deki örnek kupon: "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10" */
+
+/**
+ * Arayuzun uyguladigi KIRPMA SINIRLARI — sunucunun `/api/meta` `limits`
+ * blogunun aynasi.
+ *
+ * **Neden tablo.** Sinirlar once cagri yerlerine duz yazilmisti ve
+ * `check.mjs` yalnizca `mc_samples`i karsilastiriyordu. Denetlenmeyen onda
+ * gercek bir ayrisma vardi: `budget` burada 10 M'e kirpiliyor, sunucu hicbir
+ * sinir ILAN ETMIYOR ve `/api/solve` onu sinirsiz aliyordu — tek soruya uc
+ * cevap. Tablo tek kaynak oldugu icin `check.mjs` artik HEPSINI sunucuyla
+ * karsilastirabiliyor.
+ *
+ * `plan_apply`in ust siniri calisma aninda `planCount`a baglidir; tabloda
+ * ilan edilen deger mutlak tavandir.
+ */
+export const SINIRLAR = {
+  mc_samples: { min: MC_MIN, max: MC_MAX, default: VARSAYILAN_MC },
+  budget: { min: 1, max: 10_000_000, default: 32 },
+  plan_count: { min: 1, max: 50, default: 5 },
+  plan_apply: { min: 1, max: 50, default: 1 },
+  fire_max: { min: 0, max: 2, default: 2 },
+  trials: { min: 1, max: 50, default: 5 },
+  ls_iters: { min: 100, max: 500_000, default: 30_000 },
+  time_limit: { min: 1, max: 300, default: 60 },
+  block_limit: { min: 2, max: 6561, default: 256 },
+  exact_limit: { min: 2, max: 4096, default: 512 },
+  auto_ilp_limit: { min: 0.5, max: 300, default: 3 },
+} as const;
+
 export const VARSAYILAN_MACLAR: Sembol[][] = [
   ["1"], ["1", "0"], ["1"], ["1", "2"], ["0"],
   ["1", "0"], ["2"], ["1", "0"], ["1"], ["1", "2"],
@@ -88,6 +117,10 @@ export const VARSAYILAN_ENG: EngineDefaults = {
   time_limit: 60,
   block_limit: 256,
   exact_limit: 512,
+  //: Sunucunun `engine_defaults`i ile AYNI (3,0 sn). Arayuz calisma
+  //: aninda `/api/meta`yi okur; bu deger yalnizca ilk cizim icin var.
+  //: Ikisi ayrisirsa `check.mjs` sinir denetiminden duser.
+  auto_ilp_limit: 3,
 };
 
 const MODLAR: readonly ModeId[] = [
@@ -294,11 +327,14 @@ export function kurulumuKodla(k: Kurulum): string {
   if (
     e.trials !== ev.trials || e.ls_iters !== ev.ls_iters || e.seed !== ev.seed ||
     e.time_limit !== ev.time_limit || e.block_limit !== ev.block_limit ||
-    e.exact_limit !== ev.exact_limit
+    e.exact_limit !== ev.exact_limit || e.auto_ilp_limit !== ev.auto_ilp_limit
   ) {
+    // Alan sayisi ARTTI (6 -> 7). Cozucu eski 6'lik baglantilari da kabul
+    // ediyor, yani daha once paylasilmis adresler kirilmaz.
     p.set(
       "e",
-      [e.trials, e.ls_iters, e.seed, e.time_limit, e.block_limit, e.exact_limit].join(","),
+      [e.trials, e.ls_iters, e.seed, e.time_limit, e.block_limit,
+       e.exact_limit, e.auto_ilp_limit].join(","),
     );
   }
 
@@ -340,20 +376,29 @@ export function kurulumuCoz(arama: string): UrlCozum | null {
   const probsAcik = probHam !== null && pr.gecerli;
   if (probHam !== null && !pr.gecerli) atlanan.push("olasılıklar");
 
-  const planCount = tamsayi(p.get("pc"), 1, 50, v.planCount);
+  const planCount = tamsayi(p.get("pc"), SINIRLAR.plan_count.min,
+                            SINIRLAR.plan_count.max, v.planCount);
 
   let eng = { ...v.eng };
   const engHam = p.get("e");
   if (engHam !== null) {
     const parca = engHam.split(",");
-    if (parca.length === 6 && parca.every((x) => Number.isFinite(Number(x)))) {
+    // 6 VE 7 kabul ediliyor: `auto_ilp_limit` sonradan eklendi ve daha once
+    // paylasilmis 6 alanli adresler kirilmamali — eksik alan varsayilana
+    // duser, dizinin tamami "bozuk" sayilip ATLANMAZ.
+    if ((parca.length === 6 || parca.length === 7)
+        && parca.every((x) => Number.isFinite(Number(x)))) {
       eng = {
-        trials: tamsayi(parca[0], 1, 50, v.eng.trials),
-        ls_iters: tamsayi(parca[1], 100, 500000, v.eng.ls_iters),
+        trials: tamsayi(parca[0], SINIRLAR.trials.min, SINIRLAR.trials.max, v.eng.trials),
+        ls_iters: tamsayi(parca[1], SINIRLAR.ls_iters.min, SINIRLAR.ls_iters.max, v.eng.ls_iters),
         seed: tamsayi(parca[2], 0, Number.MAX_SAFE_INTEGER, v.eng.seed),
-        time_limit: tamsayi(parca[3], 1, 300, v.eng.time_limit),
-        block_limit: tamsayi(parca[4], 2, 6561, v.eng.block_limit),
-        exact_limit: tamsayi(parca[5], 2, 4096, v.eng.exact_limit),
+        time_limit: tamsayi(parca[3], SINIRLAR.time_limit.min, SINIRLAR.time_limit.max, v.eng.time_limit),
+        block_limit: tamsayi(parca[4], SINIRLAR.block_limit.min, SINIRLAR.block_limit.max, v.eng.block_limit),
+        exact_limit: tamsayi(parca[5], SINIRLAR.exact_limit.min, SINIRLAR.exact_limit.max, v.eng.exact_limit),
+        auto_ilp_limit: parca.length === 7
+          ? ondalikDeger(parca[6], SINIRLAR.auto_ilp_limit.min,
+                         SINIRLAR.auto_ilp_limit.max, v.eng.auto_ilp_limit)
+          : v.eng.auto_ilp_limit,
       };
     } else {
       atlanan.push("motor ayarları");
@@ -371,11 +416,11 @@ export function kurulumuCoz(arama: string): UrlCozum | null {
       probs: probsAcik ? pr.probs : mac.matches.map((s) => esitPay(s)),
       mode,
       variant: tamsayi(p.get("v"), 0, 9999, v.variant),
-      budget: tamsayi(p.get("b"), 1, 10_000_000, v.budget),
+      budget: tamsayi(p.get("b"), SINIRLAR.budget.min, SINIRLAR.budget.max, v.budget),
       planCount,
       planApply: tamsayi(p.get("pa"), 1, planCount, v.planApply),
       kati: bayrak(p.get("kt"), v.kati),
-      fireMax: tamsayi(p.get("f"), 0, 2, v.fireMax),
+      fireMax: tamsayi(p.get("f"), SINIRLAR.fire_max.min, SINIRLAR.fire_max.max, v.fireMax),
       useBayes: bayrak(p.get("by"), v.useBayes),
       preset: p.get("bp") || v.preset,
       elleAyar: bayrak(p.get("be"), v.elleAyar),

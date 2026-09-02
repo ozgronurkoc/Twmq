@@ -83,6 +83,12 @@ LIMITS: dict[str, dict[str, Any]] = {
     "mc_samples": {"min": MC_MIN, "max": MC_MAX, "default": MC_WEB_SAMPLES},
     "fire_max": {"min": 0, "max": 2, "default": FIRE_MAX_VARSAYILAN},
     "fire_maliyet": {"min": 0, "max": FIRE_MAX_MALIYET},
+    # Butce (kolon sayisi) SINIRI. Onceden hicbir yerde ilan EDILMIYORDU ve
+    # `/api/solve` onu ust sinirsiz aliyordu (`int(budget_raw)`); arayuz ise
+    # paylasilabilir baglantida 10 M'e kirpiyordu. Yani tek soruya uc cevap
+    # vardi ve sunucununki "sinir yok"tu — herkese acik bir POST icin bu bir
+    # kaynak riski. Ust sinir arayuzunkiyle AYNI secildi.
+    "budget": {"min": 1, "max": 10_000_000, "default": 32},
     "plan_count": {"min": 1, "max": 50, "default": 5},
     "plan_apply": {"min": 1, "max": 50, "default": 1},
     "trials": {"min": 1, "max": 50, "default": ENGINE_DEFAULTS["trials"]},

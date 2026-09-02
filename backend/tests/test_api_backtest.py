@@ -10,18 +10,15 @@ import pytest
 pytest.importorskip("flask")
 
 from spor_toto.odds import load_odds
-from web_app import app
 
 pytestmark = pytest.mark.skipif(
     not load_odds(), reason="oran arşivi yok (scripts/build_odds.py)"
 )
 
 
-@pytest.fixture()
-def client():
-    app.config.update(TESTING=True)
-    with app.test_client() as c:
-        yield c
+# `client` fixture'i `tests/conftest.py`den geliyor — ayni govde bes
+# dosyada, ucu BIREBIR yaziliydi. (Ezmesi gereken ikisi eziyor:
+# `test_api_health` onbellek temizliyor, `test_tahmin` modul kapsamli.)
 
 
 def test_govde_ve_ozet(client):

@@ -36,6 +36,7 @@ _a = _ap.parse_args(None if __name__ == "__main__" else [])
 m = importlib.import_module("scripts.super_toto_hafta")
 
 from spor_toto.core import SEMBOLLER
+from spor_toto.odds import margin, saglayici_adi
 
 #: Sembol duzeni TEK kaynaktan (`spor_toto.core`). Bu dosyada ayri bir
 #: demet olarak yaziliyordu; depoda ayni deger on bir kez tanimliydi.
@@ -60,14 +61,14 @@ KULLANICI = KUPON_JSON.get("user")
 #: kendi verisinden okumak zorunda, yoksa rapor kendi kaynağını yanlış
 #: bildirir. Ad `odds_kind`ten türetilir; bilinmeyen bir değer gelirse
 #: uydurmak yerine ham değerin kendisi yazılır.
+#: Harita ve bicimleyici TEK kaynaktan: `spor_toto.odds.saglayici_adi`.
+#: Ayni dort cift bu dosyada IKI KEZ (asagida `_KITAP_ADI` olarak) ve
+#: arayuzde bir kez daha yaziliydi.
 _KIND = (d["meta"].get("odds_kind") or "").lower()
-_SAGLAYICI = {"iddaa": "iddaa", "pinnacle": "Pinnacle",
-              "bet365nl": "bet365.nl", "nesine": "Nesine"}
-_saglayici = next((v for k, v in _SAGLAYICI.items() if _KIND.startswith(k)),
-                  _KIND or "bilinmiyor")
-_an = ("açılış" if _KIND.endswith("acilis")
-       else "kapanış" if _KIND.endswith("kapanis") else "")
-FIYAT_ADI = f"{_saglayici} {_an} oranı".replace("  ", " ").strip()
+#: Soneksiz saglayici adi ("Pinnacle") — donem bilgisinin istenmedigi
+#: yerlerde kullaniliyor.
+_saglayici = saglayici_adi(_KIND.partition("_")[0])
+FIYAT_ADI = f"{saglayici_adi(_KIND)} oranı"
 #: "Program" alanı boş olabilir (3. haftada tarihler girilmedi ve
 #: uydurulmadı). Şablon `html.escape`e doğrudan veriyordu ve None'da
 #: çöküyordu; eksik veri sayfayı düşürmemeli, eksik olduğunu SÖYLEMELİ.
@@ -131,8 +132,10 @@ def _oku(mac, anahtar):
     return (implied_probs(o), o) if o else (None, None)
 
 
-def _marj(o):
-    return sum(1.0 / v for v in o.values()) - 1.0
+#: Marj (overround) TEK kaynaktan: `spor_toto.odds.margin`. Ayni govde
+#: iki betikte birebir yaziliydi; kanonik govde ustelik daha korumali
+#: (sifir/negatif orani eler, bu kopyalar ZeroDivisionError verirdi).
+_marj = margin
 
 
 FIYAT_SATIR: list[dict] = []
@@ -320,14 +323,10 @@ for diff, no, mac, s, play, prob in ayrisma[:6]:
 
 #: Fiyat tablosunun satırları. Her hücre arındırılmış olasılıktır; ham oran
 #: gösterilseydi marj değişimi fikir değişimi gibi okunurdu.
-_KITAP_ADI = {"pinnacle": "Pinnacle", "bet365nl": "bet365.nl",
-              "nesine": "Nesine", "iddaa": "iddaa"}
-
-
-def _kitap_adi(anahtar):
-    saglayici, _, an = anahtar.partition("_")
-    return (f"{_KITAP_ADI.get(saglayici, saglayici)} "
-            f"{'açılış' if an == 'acilis' else 'kapanış'}")
+#: Ayni harita 259 satir yukarida `_SAGLAYICI` olarak DA duruyordu ve
+#: buradaki bicimleyici soneksiz bir anahtarda ("pinnacle") `else` dalina
+#: dusup "kapanış" UYDURUYORDU. Tek kaynak `odds.saglayici_adi`.
+_kitap_adi = saglayici_adi
 
 
 fiyat_satir = []

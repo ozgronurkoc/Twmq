@@ -54,10 +54,7 @@ def rastgele_kupon(rng: random.Random, en_az_cifte: int = 0) -> list:
                 return kupon
 
 
-def kaplama_gecerli(cols, sizes):
-    worst, acik = dogrula_kaplama(cols, sizes)
-    return worst <= 1 and acik == 0
-
+from tests.conftest import kaplama_gecerli  # tek kaynak
 
 # ------------------------------------------------------------
 # fix16 degismezleri

@@ -30,7 +30,7 @@ type BrierSatiri = OddsSummary["weekly_brier"][number];
  * tablo karşılığı vardır") **bozulmuyor**: veri kaybolmuyor, bir tık uzağa
  * gidiyor — ve CSV zaten görünen değil **süzülen tüm** satırları veriyor.
  */
-export const VARSAYILAN_SATIR = 12;
+const VARSAYILAN_SATIR = 12;
 
 /** CSV alanı: ayırıcı, tırnak ve satır sonu içeren değerler tırnaklanır. */
 function csvAlan(v: string | number): string {

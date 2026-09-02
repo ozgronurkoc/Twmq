@@ -39,7 +39,7 @@ function useFare() {
   };
 }
 
-export function Tooltip({
+function Tooltip({
   x,
   y,
   w,

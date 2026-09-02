@@ -432,11 +432,25 @@ def history_analytics(last: int | None = None,
 
 # ─── tek hafta ────────────────────────────────────────────────────────────────
 
+def _hafta_indeksi(weeks: Sequence[dict[str, Any]], week: int) -> int | None:
+    """Hafta numarasının listedeki yeri — bulunamazsa `None`.
+
+    Arama TEK yerde. `history_week` satırı, `history_week_detail` ise
+    **indeksi** istiyor (komşu haftalar `weeks[i±1]`den geliyor), yani biri
+    ötekini çağıramaz; ama ikisi de aynı aramayı yapıyordu ve iki ayrı
+    gövdeydi. Ortak olan arama, ayrışan ise ondan ne istendiği.
+
+    Varsayılanlı `next()` bilinçli: varsayılansız hâli eşleşme yoksa
+    `StopIteration` yükseltir ve o, çağıran uçta HTTP 500 olarak görünürdü.
+    """
+    return next((i for i, w in enumerate(weeks) if w["week"] == week), None)
+
+
 def history_week(week: int, sezon: str | None = None) -> dict[str, Any] | None:
-    for w in normalized_weeks(sezon=sezon):
-        if w["week"] == week:
-            return w
-    return None
+    """Tek haftanın normalize edilmiş satırı; yoksa `None`."""
+    weeks = normalized_weeks(sezon=sezon)
+    idx = _hafta_indeksi(weeks, week)
+    return weeks[idx] if idx is not None else None
 
 
 def history_week_detail(week: int,
@@ -448,7 +462,7 @@ def history_week_detail(week: int,
     karışmadan kalır.
     """
     weeks = normalized_weeks(sezon=sezon)
-    idx = next((i for i, w in enumerate(weeks) if w["week"] == week), None)
+    idx = _hafta_indeksi(weeks, week)
     if idx is None:
         return None
     w = dict(weeks[idx])

@@ -52,6 +52,28 @@ KOSUM_DIZINI = KOK / "data" / "kosumlar"
 ZAMAN_BICIMI = "%Y%m%dT%H%M%SZ"
 
 
+def paket_surumu(paket: str) -> str | None:
+    """Kurulu paketin sürümü — bulunamazsa `None`, YÜKSELTMEZ.
+
+    Sürüm bilgisi hiçbir raporun kritik parçası değil: eksikliği bir hata
+    değil, bir gerçektir (`pip install -e` ile kurulmamış bir ortam ya da
+    isteğe bağlı bir ekstra). Bu yüzden `PackageNotFoundError` yutulur.
+
+    **Aynı gövde `health._surum` olarak da yazılıydı.** İki koşum künyesi
+    aynı soruyu iki ayrı gövdeyle cevaplıyordu; ayrışsalardı sağlık raporu
+    ile koşum defteri aynı ortam için iki farklı sürüm listesi gösterirdi.
+    Kanonik ev burası: `kosum` zaten çalışma ortamının künyesini tutuyor ve
+    paket içinden hiçbir şey import etmiyor, yani kimse bu yüzden döngüye
+    girmez.
+    """
+    from importlib.metadata import version as _surum
+
+    try:
+        return _surum(paket)
+    except Exception:
+        return None
+
+
 def _git_commit() -> str | None:
     """Calisan kodun commit'i — yoksa None (git disi bir kurulum olabilir)."""
     try:
@@ -78,23 +100,16 @@ def _kirli_mi() -> bool | None:
 
 def ortam() -> dict[str, Any]:
     """Koşumun **yeniden üretilebilirlik** zarfı."""
-    from importlib.metadata import version as _surum
 
     from .artefakt import korpus_parmak_izi
     from .evaluate import BOOTSTRAP_TEKRAR, BOOTSTRAP_TOHUM, EGRI_TOHUM
-
-    def _v(paket: str) -> str | None:
-        try:
-            return _surum(paket)
-        except Exception:
-            return None
 
     return {
         "zaman": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "surum": __version__,
         "git": {"commit": _git_commit(), "kirli": _kirli_mi()},
         "python": platform.python_version(),
-        "paketler": {a: _v(a) for a in ("numpy", "scipy", "scikit-learn",
+        "paketler": {a: paket_surumu(a) for a in ("numpy", "scipy", "scikit-learn",
                                         "lightgbm")},
         "korpus": korpus_parmak_izi(),
         "tohumlar": {

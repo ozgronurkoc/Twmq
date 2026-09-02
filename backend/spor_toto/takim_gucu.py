@@ -204,6 +204,10 @@ def takim_tablosu(satirlar: Sequence[dict[str, Any]] | None = None,
     from .egitim import korpus_yukle
 
     ham = list(satirlar) if satirlar is not None else korpus_yukle()
+    # Secilebilir sezonlar SUZMEDEN ONCE cikarilir. Sonra cikarilsaydi liste
+    # secilen sezona duserdi ve arayuzdeki secici ilk secimden sonra tek
+    # secenekli kalirdi — yani kullanici geri donemezdi.
+    tum_sezonlar = sorted({r["sezon"] for r in ham if r.get("sezon")})
     if sezon is not None:
         ham = [r for r in ham if r.get("sezon") == sezon]
     tablo = _gozlemler(ham)
@@ -232,6 +236,13 @@ def takim_tablosu(satirlar: Sequence[dict[str, Any]] | None = None,
         })
     return {
         "sezon": sezon,
+        # Secilebilir sezonlar GOVDEDE tasiniyor, `/api/meta`da DEGIL.
+        # Gerekce maliyet: bu liste korpustan cikiyor ve korpus zaten burada
+        # acik; `/api/meta`ya konsaydi her sayfa acilisinda 31 bin satir
+        # okunurdu. Arayuz sezon secicisini bu alandan kuruyor — serbest
+        # metin kutusu, ilan edilmeyen bir anahtar bicimi yuzunden sessizce
+        # bos tablo gosteriyordu.
+        "sezonlar": tum_sezonlar,
         "ligler": ligler,
         "olculer": [{"alan": ad, "aciklama": acik} for ad, acik in OLCULER],
         "en_az_mac": EN_AZ_MAC,

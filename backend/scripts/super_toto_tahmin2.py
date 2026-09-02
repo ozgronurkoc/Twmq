@@ -49,6 +49,7 @@ from typing import Any
 KOK = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(KOK))
 
+from scripts._ortak import metin
 from scripts.super_toto_hafta import hafta_yukle, kupon_satirlari
 from spor_toto import kosum
 from spor_toto.backtest import (
@@ -66,7 +67,11 @@ from spor_toto.getiri import (
     kalabalik_kademeleri,
 )
 from spor_toto.gorus import ayrisma, gorus_uret
-from spor_toto.odds import ARINDIRMA_VARSAYILAN, implied_probs
+from spor_toto.odds import (
+    ARINDIRMA_VARSAYILAN,
+    implied_probs,
+    margin,
+)
 from spor_toto.ortak import kacak_dagilimi
 from spor_toto.secim import (
     VARSAYILAN_KAYIP_ORANI,
@@ -101,8 +106,10 @@ def _oynanma(mac: dict[str, Any]) -> dict[str, float]:
     return {s: float(mac["play"][s]) for s in SEM}
 
 
-def _marj(oranlar: dict[str, float]) -> float:
-    return sum(1.0 / v for v in oranlar.values()) - 1.0
+#: Marj (overround) TEK kaynaktan: `spor_toto.odds.margin`. Ayni govde
+#: iki betikte birebir yaziliydi; kanonik govde ustelik daha korumali
+#: (sifir/negatif orani eler, bu kopyalar ZeroDivisionError verirdi).
+_marj = margin
 
 
 def _marji_esitle(oranlar: dict[str, float], hedef_marj: float
@@ -485,8 +492,10 @@ def uret(sezon: str, hafta: int,
 
 # ─── yazım ────────────────────────────────────────────────────────────────
 
-def _metin(govde: dict[str, Any]) -> str:
-    return json.dumps(govde, ensure_ascii=False, indent=1, sort_keys=True) + "\n"
+#: Uretilmis JSON metni TEK kaynaktan: `scripts._ortak.metin`. Ayni govde
+#: uc betikte birebir yaziliydi ve `--kontrol` bayraklari tam da bu metnin
+#: kararliligina dayaniyor.
+_metin = metin
 
 
 def yaz(govde: dict[str, Any], sezon: str, hafta: int,

@@ -5,6 +5,13 @@ import { RefreshCw } from "lucide-react";
 
 import { ARINDIRMA_YONTEMLERI, getPazar, type ArindirmaYontemi } from "@/lib/api";
 import { useIstek } from "@/lib/istek";
+// `yuzde` BURADA YENIDEN YAZILMISTI ve kanonik govdeden zayifti:
+// yalnizca `v == null` eliyordu, `NaN`/`Infinity` elemiyordu — yani
+// kapsanmayan bir banttaki bolme ekrana "%NaN" basardi. `/api/pazar`
+// tam da null tasiyan uc (`handikap.brier` tanim geregi null).
+// `lib/utils.ts:12` bu tekillestirmenin yapildigini yaziyordu; bir
+// kopya hayatta kalmisti.
+import { yuzde } from "@/lib/utils";
 import type { PazarOzeti } from "@/lib/types";
 import {
   Button,
@@ -17,8 +24,7 @@ import {
   Stat,
 } from "@/components/ui/primitives";
 
-const yuzde = (v: number | null | undefined, basamak = 1) =>
-  v == null ? "—" : `%${(100 * v).toFixed(basamak)}`;
+
 
 /**
  * Bir bandın etiketi **eksene göre** okunur. Alt/üstte olasılık,

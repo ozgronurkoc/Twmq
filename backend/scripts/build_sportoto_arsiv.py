@@ -20,9 +20,14 @@ duruyor — bu yuzden ilk aramada gorunmedi.
 
 Bulunan uclar (hepsi kimlik dogrulamasiz, acik):
 
-    /api/GameRound/GetGameRoundYears              sezon listesi
     /api/GameRound                                TUM haftalar (her sezon)
     /api/GameResult/GetGameResultByGameRoundId    haftanin IKRAMIYE tablosu
+
+`GetGameRoundYears` (sezon listesi) de var ama BU BETIK ONU CAGIRMIYOR:
+`/api/GameRound` zaten butun sezonlarin butun haftalarini tek seferde
+veriyor, yani ayri bir sezon listesi ikinci bir ag cagrisi olurdu ve hicbir
+sey eklemezdi. Uzun sure bir `YIL_URL` sabiti duruyordu ve hicbir yerden
+okunmuyordu — cagrilmayan bir uc, uc degil yorumdur; burada oyle duruyor.
 
 Bu, deponun ilk **resmi** veri kaynagidir. Oteki dordu ucuncu parti:
 football-data piyasa orani, sportototahmin hafta payload'i, iddaa bulteni,
@@ -76,11 +81,18 @@ from pathlib import Path
 from typing import Any
 
 KOK = Path(__file__).resolve().parent.parent
+# Kardes betiklerle paylasilan SAF STDLIB yardimcilar. `spor_toto` DEGIL:
+# bu betik GitHub Actions'ta hicbir bagimlilik kurulmadan kosuyor ve
+# `scripts/_ortak.py` tam da bunun icin stdlib disina cikmiyor
+# (bekcisi `tests/test_scripts_ortak.py`).
+sys.path.insert(0, str(KOK))
+
+from scripts._ortak import indir_json
+
 CIKTI_DIZIN = KOK / "data" / "sportoto_arsiv"
 UA = "spor-toto-lab/1.0 (kisisel arsiv analizi)"
 
 TABAN = "https://webapi.sportoto.gov.tr"
-YIL_URL = f"{TABAN}/api/GameRound/GetGameRoundYears"
 HAFTA_URL = f"{TABAN}/api/GameRound"
 SONUC_URL = f"{TABAN}/api/GameResult/GetGameResultByGameRoundId"
 GORSEL_TABAN = f"{TABAN}/image/"
@@ -101,12 +113,8 @@ HAFTA_DESENI = re.compile(r"^\s*(\d{1,2})\s*\.\s*Hafta\s*$", re.IGNORECASE)
 
 # ─── indirme ──────────────────────────────────────────────────────────────────
 
-def indir(url: str, zaman_asimi: float = 30.0) -> Any:
-    istek = urllib.request.Request(
-        url, headers={"User-Agent": UA, "Accept": "application/json"}
-    )
-    with urllib.request.urlopen(istek, timeout=zaman_asimi) as cevap:
-        return json.loads(cevap.read().decode("utf-8"))
+#: Indirme TEK kaynaktan: `scripts._ortak.indir_json`. Ayni govde iki
+#: betikte birebir yaziliydi ve ikisi de Actions'ta depoya commit atiyor.
 
 
 def _govde(payload: Any) -> Any:
@@ -257,7 +265,7 @@ def dogrula(sezonlar: dict[str, list[dict[str, Any]]]) -> None:
 def _ham_haftalar(kaynak_dizin: Path | None) -> list[dict[str, Any]]:
     if kaynak_dizin:
         return json.loads((kaynak_dizin / "gamerounds.json").read_text(encoding="utf-8"))
-    govde = _govde(indir(HAFTA_URL))
+    govde = _govde(indir_json(HAFTA_URL))
     if not isinstance(govde, list):
         raise RuntimeError("GameRound listesi beklenen bicimde degil")
     return govde
@@ -305,7 +313,7 @@ def main() -> int:
                 continue
             try:
                 ham_ikramiye[kimlik] = _govde(
-                    indir(f"{SONUC_URL}?id={kimlik}")
+                    indir_json(f"{SONUC_URL}?id={kimlik}")
                 )
             except (urllib.error.URLError, TimeoutError, OSError, RuntimeError) as e:
                 # Tek haftanin dusmesi kosumu bitirmez; rapora yazilir.

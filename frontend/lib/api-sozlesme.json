@@ -24,6 +24,11 @@
    "max": 6561,
    "min": 2
   },
+  "budget": {
+   "default": 32,
+   "max": 10000000,
+   "min": 1
+  },
   "exact_limit": {
    "default": 512,
    "max": 4096,
@@ -89,6 +94,25 @@
     ]
    },
    "holdout": {
+    "atlanan": "int",
+    "chosen": [
+     {
+      "threshold": "str",
+      "weeks": "int"
+     }
+    ],
+    "columns_avg": "float",
+    "columns_total": "int",
+    "hit14": "int",
+    "hit14_ci": [
+     "float"
+    ],
+    "hit14_pct": "float",
+    "olculen": "int",
+    "payda": {
+     "columns_avg": "str",
+     "hit14": "str"
+    },
     "weeks": "int"
    },
    "meta": {
@@ -135,9 +159,57 @@
     "uclu": "float"
    },
    "sweep": [
-    "<bos>"
+    {
+     "all_guaranteed": "bool",
+     "banko": "float",
+     "banko_avg": "float",
+     "columns_avg": "float",
+     "columns_max": "int",
+     "columns_per_hit14": "null",
+     "columns_total": "int",
+     "double_avg": "float",
+     "hit13": "int",
+     "hit14": "int",
+     "hit14_ci": [
+      "float"
+     ],
+     "hit14_pct": "float",
+     "hit15": "int",
+     "in_set": "int",
+     "in_set_pct": "float",
+     "misses_total": "int",
+     "rows_avg": "float",
+     "skipped": "int",
+     "triple_avg": "float",
+     "uclu": "float",
+     "weeks": "int"
+    }
    ],
-   "sweep_best": "null",
+   "sweep_best": {
+    "all_guaranteed": "bool",
+    "banko": "float",
+    "banko_avg": "float",
+    "columns_avg": "float",
+    "columns_max": "int",
+    "columns_per_hit14": "float",
+    "columns_total": "int",
+    "double_avg": "float",
+    "hit13": "int",
+    "hit14": "int",
+    "hit14_ci": [
+     "float"
+    ],
+    "hit14_pct": "float",
+    "hit15": "int",
+    "in_set": "int",
+    "in_set_pct": "float",
+    "misses_total": "int",
+    "rows_avg": "float",
+    "skipped": "int",
+    "triple_avg": "float",
+    "uclu": "float",
+    "weeks": "int"
+   },
    "warning": "str",
    "weeks": [
     {
@@ -472,6 +544,11 @@
      "min": "float"
     },
     "block_limit": {
+     "default": "int",
+     "max": "int",
+     "min": "int"
+    },
+    "budget": {
      "default": "int",
      "max": "int",
      "min": "int"
@@ -1536,7 +1613,10 @@
      "alan": "str"
     }
    ],
-   "sezon": "null"
+   "sezon": "null",
+   "sezonlar": [
+    "str"
+   ]
   },
   "GET /health": {
    "ornek": {

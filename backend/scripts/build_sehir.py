@@ -49,11 +49,18 @@ import re
 import subprocess
 import sys
 import tempfile
-import unicodedata
 from datetime import datetime
 from pathlib import Path
 
 KOK = Path(__file__).resolve().parent.parent
+# `spor_toto.ortak.ad_sadelestir` icin: bu betik zaten `spor_toto.egitim`e
+# bagli (korpus takimlarini oradan okuyor), yani yeni bir bagimlilik degil —
+# yalnizca tembel olan import modul duzeyine cikti. `sadelestir` dongude
+# cagriliyor ve her cagrida import cozmek gereksiz.
+sys.path.insert(0, str(KOK))
+
+from spor_toto.ortak import ad_sadelestir
+
 VARSAYILAN_CIKTI = KOK / "data" / "sehir"
 
 DEPO = "https://github.com/openfootball/clubs"
@@ -105,21 +112,16 @@ _ATILAN = {
 
 
 def sadelestir(ad: str) -> str:
-    """`build_avrupa.sadelestir` ile ayni fikir, biraz daha genis atma listesi.
+    """`build_avrupa.sadelestir` ile AYNI govde, biraz daha genis atma listesi.
+
+    Harf tablosu `spor_toto.ortak.ad_sadelestir`e tasindi; ayri duran tek
+    sey atma listesidir ve gerekcesi asagida.
 
     Burada `utd`/`united`/`city`/`county` de atilir cunku kaynak tam adi
     ("Newport County AFC"), korpus kisaltmasini ("Newport County") yazar ve
     ikisi arasindaki fark bu kelimelerdedir.
     """
-    a = unicodedata.normalize("NFKD", ad)
-    a = "".join(c for c in a if not unicodedata.combining(c))
-    for eski, yeni in (("ø", "o"), ("ß", "ss"), ("ð", "d"), ("þ", "th"),
-                       ("đ", "d"), ("ı", "i"), ("İ", "I")):
-        a = a.replace(eski, yeni)
-    a = re.sub(r"[^a-z0-9]+", " ", a.lower())
-    kel = [w for w in a.split()
-           if w not in _ATILAN and not re.fullmatch(r"1[89]\d\d", w)]
-    return " ".join(kel) if kel else a.strip()
+    return ad_sadelestir(ad, _ATILAN, yil_at=True)
 
 
 def sehir_coz(satir: str) -> tuple[str, str | None]:

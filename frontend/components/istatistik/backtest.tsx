@@ -132,7 +132,7 @@ export function BacktestStats({ season }: { season: BacktestSeason }) {
  * icin okunacak sayi hold-out satiridir.
  */
 /** Eşik taramasında varsayılan satır sayısı — §6.8 G1 sayfa bütçesi. */
-export const SWEEP_VARSAYILAN = 12;
+const SWEEP_VARSAYILAN = 12;
 
 export function SweepTable({
   rows,

@@ -12,8 +12,11 @@ okunur. Bekçi, formülü küçük `N` için tam binom toplamına karşı doğru
 from __future__ import annotations
 
 from math import comb
+from pathlib import Path
 
 import pytest
+
+KOK = Path(__file__).resolve().parent.parent
 
 from spor_toto.core import MAC_SAYISI
 from spor_toto.getiri import (
@@ -115,7 +118,8 @@ def test_uyari_ve_varsayimlar_govdede_duruyor():
     assert "OLCULMEDI" in r["uyari"]
     assert "Arayuze cikmaz" in r["uyari"]
     v = r["varsayimlar"]
-    assert set(v) == {"havuz", "komisyon", "rakip_kolon", "pay_dagilimi"}
+    assert set(v) == {"havuz", "komisyon", "rakip_kolon", "pay_dagilimi",
+                      "pay_kaynagi"}
     assert v["pay_dagilimi"] == VARSAYILAN_PAY
     assert v["komisyon"] == VARSAYILAN_KOMISYON
 
@@ -366,3 +370,73 @@ def test_havuz_sabitken_egri_duzlesmiyor():
     sabit = [d["getiri_orani"] for d in duyarlilik(taban, (0.25, 1.0, 4.0))]
     assert sabit == sorted(sabit, reverse=True)
     assert sabit[0] > 3 * sabit[-1]
+
+
+def test_rapor_pay_kunyesini_TASIR():
+    """Havuz payı oranının künyesi rapor gövdesinde bulunmalı.
+
+    `PAY_KAYNAGI` tanımlıydı ama **hiçbir yerden okunmuyordu**: "bu oran
+    ölçüm mü varsayım mı" bilgisi yalnızca kaynak dosyada duruyor, raporu
+    okuyana ulaşmıyordu. `KOLON_BEDELI_KAYNAGI` ile aynı desen — o zaten
+    gövdede taşınıyor ve testi var.
+    """
+    from spor_toto.getiri import PAY_KAYNAGI
+
+    kunye = _taban()["varsayimlar"]["pay_kaynagi"]
+    assert kunye == PAY_KAYNAGI
+    # Kunye ise yarar: hangi haftalardan olculdugunu SOYLEMELI.
+    assert "hafta" in kunye.lower()
+
+
+def test_olculen_ve_varsayilan_kolon_bedeli_KARISTIRILMIYOR():
+    """İki kolon bedeli var ve ayrı kalmak zorundalar.
+
+    `KOLON_BEDELI` (₺10) **ölçüldü** ve künyesi var
+    (`KOLON_BEDELI_KAYNAGI`); `VARSAYILAN_KOLON_BEDELI` (₺1,50) ise
+    doğrulanmamış bir varsayımdır ve hesabın varsayılanıdır.
+
+    **Ölçülmüş bir ayrışmadan geldi.** Varsayım üç yerde birden yazılıydı:
+    `getiri` CLI'sının `--kolon-bedeli` bayrağında çıplak bir sabit olarak,
+    `scripts/kademe_analizi.py`de ikinci kez, ve belge onu "`getiri.py` CLI
+    varsayılanıdır" diye anarak üçüncü kez. Yani ölçülmüş ₺10 ile varsayılan
+    ₺1,50 arasındaki ayrım hiçbir yerde ADLANDIRILMAMIŞTI — ikisi aynı
+    kavramın iki değeri gibi görünüyordu.
+
+    Bu test ayrımı tutar: değerler eşitlenirse ya bir ölçüm sessizce
+    varsayıma dönmüş ya da varsayım ölçüm gibi kullanılmaya başlanmıştır.
+    """
+    from spor_toto.getiri import (
+        KOLON_BEDELI,
+        KOLON_BEDELI_KAYNAGI,
+        VARSAYILAN_KOLON_BEDELI,
+    )
+
+    assert KOLON_BEDELI != VARSAYILAN_KOLON_BEDELI, (
+        "olculen bedel ile varsayilan esitlenmis — hangisinin oldugu belirsizlesir")
+    assert KOLON_BEDELI_KAYNAGI, "olculen bedelin kunyesi bos"
+
+    # Betik tarafi da AYNI varsayimi okumali, kendi kopyasini degil.
+    import sys
+    sys.path.insert(0, str(KOK))
+    from scripts.kademe_analizi import KOLON_BEDELI as betik_bedeli
+
+    assert betik_bedeli == VARSAYILAN_KOLON_BEDELI, (
+        "kademe_analizi kendi kolon bedelini tasiyor — ucuncu kopya geri gelmis")
+
+
+def test_kapisiz_olcum_betikleri_KOSUYOR():
+    """`kademe_analizi` ve `acilis_kapanis` çalışabilir durumda olmalı.
+
+    İkisi de dosya üretmiyor, **stdout'a** basıyor — yani bir "bayatlık
+    kapısı" (`--kontrol`) onlara uymaz. Ama ikisinin de sayıları belgelere
+    ve rapor sayfasına giriyor, dolayısıyla sessizce kırılmaları belgelerin
+    kaynağını yok eder. En az koruma: gerçekten koşuyorlar mı.
+    """
+    import subprocess
+    import sys
+
+    for betik in ("kademe_analizi.py", "acilis_kapanis.py"):
+        r = subprocess.run([sys.executable, str(KOK / "scripts" / betik)],
+                           cwd=KOK, capture_output=True, text=True, timeout=600)
+        assert r.returncode == 0, f"{betik} dustu:\n{r.stderr[-800:]}"
+        assert r.stdout.strip(), f"{betik} hicbir sey basmadi"

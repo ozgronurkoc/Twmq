@@ -23,6 +23,7 @@ from spor_toto.arena import cokme, disarida, kesit, notlar, rapor, roster
 from spor_toto.evaluate import karsilastir, sezon_anahtari
 from spor_toto.history import MATCH_COUNT, SYMBOLS
 from spor_toto.predict import REFERANS_AD, DuzgunTahminci, PiyasaTahminci, Tahminci
+from tests.conftest import esit_tahmin
 
 ESIT = dict.fromkeys(SYMBOLS, 1 / 3)
 
@@ -192,7 +193,7 @@ def test_cokme_duzgune_duseni_de_yakalar():
         aciklama = "test kurgusu"
 
         def tahmin(self, hafta):
-            return [dict(ESIT)] * len(hafta["results"])
+            return esit_tahmin(hafta)
 
     s = karsilastir([PiyasaTahminci, DuzgunTahminci, DuzgunKopyasi],
                     haftalar=_kesit(), grup=sezon_anahtari)

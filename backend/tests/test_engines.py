@@ -13,7 +13,6 @@ from spor_toto.core import (
     _varsayilan_bloklar,
     ball,
     block_optimal,
-    dogrula_kaplama,
     exact_cover,
     exact_max_coverage,
     greedy_full,
@@ -34,10 +33,9 @@ ORNEK = "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"
 gerek_scipy = pytest.mark.skipif(not HAS_SCIPY, reason="scipy yok")
 
 
-def kaplama_gecerli(cols, sizes):
-    worst, acik = dogrula_kaplama(cols, sizes)
-    return worst <= 1 and acik == 0
-
+#: Kaplama gecerliligi TEK kaynaktan (`tests/conftest.py`). Ayni govde uc
+#: dosyada birebir yaziliydi.
+from tests.conftest import kaplama_gecerli
 
 # ------------------------------------------------------------
 # Hamming(7,4) - mukemmel kod
@@ -226,7 +224,14 @@ def test_fix16_varyantlar_farkli_kupon_uretir():
 
 def test_fix16_ayni_varyant_ayni_sonuc():
     enc = Encoder(parse_picks(ORNEK))
-    assert solve_fix16(enc, variant=7)[0] == solve_fix16(enc, variant=7)[0]
+    cols = solve_fix16(enc, variant=7)[0]
+    # Bos donen bir govde de "deterministik" olurdu; asagidaki satir
+    # sonucun BOS OLMADIGINI da tutar — determinizm tek basina
+    # calistigini kanitlamaz.
+    # `solve_fix16` KOLON doner (satir degil). Ornek kupon icin olculen
+    # deger 32 ve sozlesme dosyasi da onu tasiyor (`fix16_kolon`).
+    assert cols, "fix16 bos dondu"
+    assert cols == solve_fix16(enc, variant=7)[0]
 
 
 @pytest.mark.parametrize("picks", [

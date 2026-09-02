@@ -101,6 +101,15 @@ outputType = "console"
 localPort = 3000
 externalPort = 80
 
+# Calisma alaninda (dev) API'ye dogrudan erisim: `[workflows] API only`
+# is akisi UI'siz kosuyor ve preview'da uclara bakabilmek icin bu port
+# disari aciliyor.
+#
+# URETIMDE BOYLE DEGIL ve karistirilmamali: `[deployment] run` ->
+# `scripts/run_prod.sh` gunicorn'u `127.0.0.1:8080`e bagliyor, disariya
+# acilan tek port Next'in 3000'i ve `/api/*` oraya rewrite'la gidiyor.
+# `run_prod.sh` basligindaki "disariya kapali" cumlesi URETIM icindir;
+# burasi calisma alani.
 [[ports]]
 localPort = 8080
 externalPort = 8080

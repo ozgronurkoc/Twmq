@@ -148,6 +148,22 @@ VARSAYILAN_KOMISYON = 0.50
 #: ve her kullanıldığı yerde kaynağıyla birlikte anılır.
 KOLON_BEDELI = 10.0
 
+#: **Hesabın varsayılanı — ve bilerek `KOLON_BEDELI` DEĞİL.**
+#:
+#: Yukarıdaki ₺10 ölçüldü ama künyesi "dış kayıt" diyor ve o yüzden
+#: varsayılan hesaba girmez (gerekçe hemen üstte). Geriye kalan bu sayı bir
+#: **varsayım**dır ve doğrulanmadı — `docs/KADEME_OLASILIKLARI.md` §5.3-4
+#: bunu açıkça yazıyor.
+#:
+#: **Neden ad kazandı.** Değer üç yerde birden duruyordu: burada CLI'nın
+#: `--kolon-bedeli` bayrağında ÇIPLAK bir sabit olarak, `scripts/
+#: kademe_analizi.py`de ikinci kez, ve belge "1,50 TL, `getiri.py` CLI
+#: varsayılanıdır" diyerek üçüncü kez. Yani ölçülmüş ₺10 ile varsayılan
+#: ₺1,50 arasındaki AYRIM hiçbir yerde adlandırılmamıştı; ikisi aynı
+#: kavramın iki değeri gibi görünüyordu. Artık ikisinin de adı ve gerekçesi
+#: var, ve varsayım tek yerden okunuyor.
+VARSAYILAN_KOLON_BEDELI = 1.5
+
 #: Yukarıdaki sayının künyesi — değerin kendisi kadar önemli.
 KOLON_BEDELI_KAYNAGI = (
     "ST EXTRA kupon araci ekran goruntuleri (2026-09-01); 3. haftanin dort "
@@ -264,6 +280,11 @@ def beklenen_getiri(kademe_olasiliklari: dict[int, float],
         "varsayimlar": {
             "havuz": havuz, "komisyon": komisyon, "rakip_kolon": rakip_kolon,
             "pay_dagilimi": dict(dagilim),
+            # Payin KUNYESI govdede tasiniyor — `KOLON_BEDELI_KAYNAGI` ile
+            # ayni desen. `PAY_KAYNAGI` uzun sure tanimliydi ve HICBIR
+            # YERDEN OKUNMUYORDU: "bu oran olcum mu varsayim mi" bilgisi
+            # yalnizca kaynak dosyada duruyordu, raporu okuyana ulasmiyordu.
+            "pay_kaynagi": PAY_KAYNAGI,
         },
         "uyari": (
             "Bu sayi OLCULMEDI. Havuz payi, komisyon ve kalabalik "
@@ -464,7 +485,9 @@ def main(argv: Sequence[str] | None = None) -> None:  # pragma: no cover
     ap.add_argument("--havuz", type=float, default=50_000_000.0)
     ap.add_argument("--butce", type=int, default=4096,
                     help="kolon butcesi (secim plani buna gore kurulur)")
-    ap.add_argument("--kolon-bedeli", type=float, default=1.5)
+    ap.add_argument("--kolon-bedeli", type=float,
+                    default=VARSAYILAN_KOLON_BEDELI,
+                    help="dogrulanmamis VARSAYIM; olculen bedel `KOLON_BEDELI`")
     ap.add_argument("--komisyon", type=float, default=VARSAYILAN_KOMISYON)
     ap.add_argument("--kalabalik", choices=KALABALIK_MODELLERI,
                     default="orneklem")

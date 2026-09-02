@@ -23,7 +23,6 @@ kuralının 1. şıkkı (§6.3b) tam olarak budur.
 from __future__ import annotations
 
 import argparse
-import importlib.util
 import json
 import math
 import sys
@@ -33,6 +32,8 @@ from typing import Any
 
 KOK = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(KOK))
+
+from scripts._ortak import modul
 
 VERI_KOK = KOK / "data" / "super_toto"
 
@@ -47,16 +48,10 @@ ARANAN_ETKI = 0.5
 VARSAYILAN_SD = 1.5
 
 
-def _modul(ad: str):
-    """Kardes betigi getirir — artik sıradan bir import.
-
-    Once `spec_from_file_location` ile dosya yolundan yukleniyordu ve
-    yuklerken `sys.argv`yi geciciyle degistiriyordu. Ikisi de gereksizdi:
-    bu dizin bir paket (`scripts/__init__.py`) ve hedef betiklerin hepsinde
-    `if __name__ == "__main__"` guard'i var, yani import etmek argparse'i
-    tetiklemiyor.
-    """
-    return importlib.import_module(f"scripts.super_toto_{ad}")
+#: Kardes betigi getirme TEK kaynaktan: `scripts._ortak.modul`. Ayni govde
+#: VE ayni docstring uc betikte birebir duruyordu — o docstring bir ONCEKI
+#: tekillestirme turunu anlatiyor.
+_modul = modul
 
 
 def elde_ne_var(sezon: str = "2026_27") -> dict[str, Any]:

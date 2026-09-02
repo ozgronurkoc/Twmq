@@ -41,6 +41,16 @@ export interface EngineDefaults {
   time_limit: number;
   block_limit: number;
   exact_limit: number;
+  /**
+   * `auto` modunun ILP kesme suresi (sn). Sunucu bunu hem
+   * `engine_defaults` hem `limits` icinde ILAN EDIYOR ve `/api/solve`
+   * kabul ediyor (`web_app.py:192`), ama arayuz tipinde YOKTU — yani
+   * ilan edilen bir denetim arayuzden hic gonderilemiyordu.
+   *
+   * Sozlesme denetimi bunu goremiyordu cunku yalnizca 1 seviye derin
+   * bakiyordu: `engine_defaults` ust duzeyde vardi, icine bakilmiyordu.
+   */
+  auto_ilp_limit: number;
 }
 
 export interface Limit { min: number; max: number; default?: number }
@@ -783,6 +793,10 @@ export interface BacktestResponse {
     match_count: number;
     space_limit: number;
     note: string;
+    /** Oran arındırma yöntemi — hangi olasılıkların ölçüldüğünü söyler. */
+    arindirma: string;
+    /** Seçili sezon; seçim yoksa `null` (varsayılan = bütün korpus). */
+    sezon: string | null;
   };
   strategy: { banko: number; uclu: number; explain: string };
   season: BacktestSeason;
@@ -1088,7 +1102,26 @@ export interface TahminciSkoru {
   hafta_14_arti: number;
   hafta_13_arti: number;
   /** Yalnızca alternatifte: manşete göre fark ve güven aralığı. */
-  fark?: { fark: number; alt: number; ust: number; tekrar: number };
+  fark?: {
+    /** Gösterime yuvarlanmış (4 basamak) fark ve aralık. */
+    fark: number;
+    alt: number;
+    ust: number;
+    tekrar: number;
+    /**
+     * **Yuvarlanmamış** hâli. Ayrı bir aralık DEĞİL — aynı aralığın ham
+     * değeri. Sunucu `gecti` kararını `ham_ust`ten veriyor
+     * (`spor_toto/tahmin.py:380`): `round(-0.000031, 4)` `-0.0` verir ve
+     * `-0.0 < 0` False'tur, yani aralık tamamen sıfırın altındayken aday
+     * yuvarlanmış değerle "geçmedi" diye yazılırdı.
+     *
+     * Tip bu üç alanı taşımıyordu; sözleşme denetimi (`scripts/check.mjs`)
+     * yalnızca 1 seviye derin baktığı için eksiklik CI'dan yeşil geçti.
+     */
+    ham_fark: number;
+    ham_alt: number;
+    ham_ust: number;
+  };
   /** Yalnızca alternatifte: aralık tamamen sıfırın altında mı. */
   gecti?: boolean;
 }
@@ -1245,6 +1278,17 @@ export interface TakimLigi {
 
 export interface TakimlarResponse {
   sezon: string | null;
+  /**
+   * Seçilebilir sezonlar — **sunucunun ilan ettiği** korpus anahtarları
+   * (`2425`), `/api/meta` `seasons.available`ın (`2024_25`) değil.
+   *
+   * Bu alan bir hatadan doğdu: sezon kutusu serbest metindi ve kullanıcı
+   * öteki sayfaların kullandığı `2024_25`i yazınca uç 200 OK + boş gövde
+   * dönüyordu; sayfa hatasız boşalıyordu. Sunucu artık iki yazımı da kabul
+   * ediyor, tanımayanı 400'lüyor ve seçilebilir listeyi burada yayımlıyor —
+   * seçici bundan kurulur, elle yazılmaz.
+   */
+  sezonlar: string[];
   ligler: TakimLigi[];
   olculer: { alan: string; aciklama: string }[];
   en_az_mac: number;

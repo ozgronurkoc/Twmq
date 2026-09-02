@@ -49,14 +49,20 @@ import csv
 import json
 import re
 import sys
-import unicodedata
-import urllib.error
-import urllib.request
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
 KOK = Path(__file__).resolve().parent.parent
+# `spor_toto.ortak.ad_sadelestir` icin: bu betik zaten `spor_toto.egitim`e
+# bagli (korpus takimlarini oradan okuyor), yani yeni bir bagimlilik degil —
+# yalnizca tembel olan import modul duzeyine cikti. `sadelestir` dongude
+# cagriliyor ve her cagrida import cozmek gereksiz.
+sys.path.insert(0, str(KOK))
+
+from scripts._ortak import indir
+from spor_toto.ortak import ad_sadelestir
+
 VARSAYILAN_CIKTI = KOK / "data" / "avrupa"
 
 UA = "Mozilla/5.0 (compatible; spor-toto-lab/1.0)"
@@ -182,32 +188,24 @@ _TAKIM_RE = re.compile(r"^(.*?)\s*\((\w{3})\)$")
 
 
 def sadelestir(ad: str) -> str:
-    """Aksan, noktalama ve kulup eki olmadan karsilastirilabilir ad."""
-    a = unicodedata.normalize("NFKD", ad)
-    a = "".join(c for c in a if not unicodedata.combining(c))
-    for eski, yeni in (("ø", "o"), ("Ø", "O"), ("ß", "ss"), ("ð", "d"),
-                       ("þ", "th"), ("đ", "d"), ("Đ", "D")):
-        a = a.replace(eski, yeni)
-    a = re.sub(r"[^a-z0-9]+", " ", a.lower())
-    kel = [w for w in a.split()
-           if w not in _ATILAN and not re.fullmatch(r"1[89]\d\d", w)]
-    return " ".join(kel) if kel else a.strip()
+    """Aksan, noktalama ve kulup eki olmadan karsilastirilabilir ad.
+
+    **Harf tablosu BURADA EKSIKTI ve `i`yi hic tanimiyordu.** NFKD `i`yi
+    ayristirmaz (taban harftir), dolayisiyla `[^a-z0-9]+` onu bosluga
+    ceviriyor ve ad ikiye boluyordu: `Kasimpasa` -> `kas mpasa`.
+
+    Zarar vermemisti cunku `eslestir` karsilastirmanin IKI TARAFINI da bu
+    ayni govdeden geciriyor, yani bolunme simetrikti (`ad_kapsamasi: 1.0`).
+    Ama anahtar bir boru hatti sinirini gectigi gun sessizce eslesmezdi.
+
+    Tek kaynak artik `spor_toto.ortak.ad_sadelestir`. Birlestirme gercek
+    korpusta olculdu: 518 ad, **anahtari degisen 0**, cakisma 0.
+    """
+    return ad_sadelestir(ad, _ATILAN, yil_at=True)
 
 
-def indir(url: str, hedef: Path, timeout: float = 60.0) -> Path | None:
-    """Kaynak dosyayi indir; varsa yeniden indirme (onbellek git disi)."""
-    if hedef.exists() and hedef.stat().st_size > 0:
-        return hedef
-    istek = urllib.request.Request(url, headers={"User-Agent": UA})
-    try:
-        with urllib.request.urlopen(istek, timeout=timeout) as r:
-            ham = r.read()
-    except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError) as e:
-        print(f"  {url} alinamadi ({e})", file=sys.stderr)
-        return None
-    hedef.parent.mkdir(parents=True, exist_ok=True)
-    hedef.write_bytes(ham)
-    return hedef
+#: Indirme TEK kaynaktan: `scripts._ortak.indir` (ayni govde uc betikte
+#: birebir yaziliydi; UA da oradan gelir).
 
 
 def maclari_coz(metin: str) -> list[dict[str, Any]]:

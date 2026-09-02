@@ -23,14 +23,13 @@ from spor_toto.predict import (
     mac_sayisi,
 )
 from spor_toto.recalibrate import KalibreTahminci
+from tests.conftest import korpus_yoksa_atla
 
 
 @pytest.fixture(scope="module")
 def haftalar():
-    h = korpus_haftalari()
-    if not h:
-        pytest.skip("egitim korpusu yok — once scripts/build_egitim.py")
-    return h
+    """Korpus yoksa ATLA — uc satirlik bu govde dort dosyada aynidir."""
+    return korpus_yoksa_atla(korpus_haftalari)
 
 
 # ─── ayrım bekçisi ────────────────────────────────────────────────────────────

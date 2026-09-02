@@ -48,6 +48,19 @@ fi
 baslik "ruff (lint)"
 "$PY" -m ruff check .
 
+# `.claude/` KAPSAM DISINDAYDI. Yukaridaki cagri `backend/`ten kosuyor ve
+# deponun kendi ajan betikleri (`graf_uret`, `graf_sorgu`, `graf_baglam`,
+# hook'lar — ~700 satir) ne lint ne tip denetimi goruyordu. Ayni kural
+# kumesiyle kosuluyor; yapilandirma `backend/pyproject.toml`da oldugu icin
+# bayraklar acikca veriliyor.
+#
+# Vendor edilmis skill (`.claude/skills/`) BILEREK disarida: bizim kodumuz
+# degil, upstream'den geldigi gibi duruyor ve tek basina 1.596 bulgu
+# uretiyor — yani gercek bulgularin uzerini orterdi.
+"$PY" -m ruff check "$KOK/.claude"/*.py "$KOK/.claude/hooks" \
+  --line-length 100 --target-version py310 \
+  --select E,W,F,I,UP,B,C4,RUF --ignore E501,B905,RUF001,RUF002,RUF003
+
 baslik "mypy (kademeli tip denetimi)"
 "$PY" -m mypy
 
@@ -69,7 +82,8 @@ baslik "doctest (belgelerdeki sayılar hâlâ doğru mu)"
 # fonksiyonlara örnek konuldu. `no:randomly`: doctest'ler tanım gereği
 # sırasızdır, sabit sıra kapı çıktısını okunur tutar.
 "$PY" -m pytest --doctest-modules -p no:randomly -q \
-  spor_toto/ortak.py spor_toto/getiri.py spor_toto/takim.py spor_toto/deger.py
+  spor_toto/ortak.py spor_toto/getiri.py spor_toto/takim.py spor_toto/deger.py \
+  spor_toto/odds.py spor_toto/egitim.py
 
 baslik "pytest (hızlı)"
 "$PY" -m pytest -m "not slow" -q
@@ -126,23 +140,41 @@ done
 
 # 2. Tahmin: ikinci kayit da ayni boru hattinin parcasi. Ayarli plan tabanla
 # AYNI bedelde olmali — degilse "ayar bedava" cumlesi yalan olur.
-"$PY" scripts/super_toto_tahmin2.py --hafta 2 --tarih 2026-01-01 --json \
-  | "$PY" -c "import json,sys; d=json.load(sys.stdin); k=d['kupon']; \
-      assert len(k['ayarli']['picks'])==15; \
-      assert k['taban']['columns']==k['ayarli']['columns']"
+#
+# HAFTA SABIT YAZILMIYOR. Once "--hafta 2" yaziyordu ve bu, yukaridaki
+# "Haftalar SABIT YAZILMAZ" kuralini kendi dosyasinda cigniyordu: ucuncu bir
+# `_tahmin2` kaydi girildigi gun kapi ona hic bakmayacakti — kapinin sessizce
+# kuculmesi, tam olarak yakalamasi gereken sey. Liste artik diskten cikiyor.
+TAHMIN2=$("$PY" -c "
+import re
+from pathlib import Path
+d = Path('data/super_toto/2026_27')
+print(' '.join(sorted(str(int(re.findall(r'hafta_(\\d+)_tahmin2\\.json', f.name)[0]))
+                      for f in d.glob('hafta_[0-9][0-9]_tahmin2.json'))))")
+echo "   2. tahmin kayitli haftalar: $TAHMIN2"
+for h in $TAHMIN2; do
+  "$PY" scripts/super_toto_tahmin2.py --hafta "$h" --tarih 2026-01-01 --json \
+    | "$PY" -c "import json,sys; d=json.load(sys.stdin); k=d['kupon']; \
+        assert len(k['ayarli']['picks'])==15; \
+        assert k['taban']['columns']==k['ayarli']['columns']"
 
-# "Sonuclar gorulmeden uretildi" DISKTEKI kayittan denetlenir. Once taze
-# govdeden okunuyordu; hafta kapanip sonuc girilince taze govde dogru
-# sekilde `true` demeye baslar ve kapi kendi dogru davranisina takilirdi.
-"$PY" -c "import json; \
-    d=json.load(open('data/super_toto/2026_27/hafta_02_tahmin2.json')); \
-    assert d['meta']['results_known'] is False"
+  # "Sonuclar gorulmeden uretildi" DISKTEKI kayittan denetlenir. Once taze
+  # govdeden okunuyordu; hafta kapanip sonuc girilince taze govde dogru
+  # sekilde `true` demeye baslar ve kapi kendi dogru davranisina takilirdi.
+  "$PY" -c "import json,sys; \
+      d=json.load(open('data/super_toto/2026_27/hafta_%02d_tahmin2.json' % int(sys.argv[1]))); \
+      assert d['meta']['results_known'] is False" "$h"
 
-# Sonuc girilmis haftanin degerlendirmesi: iki kayit da puanlanmali.
-"$PY" scripts/super_toto_degerlendir.py --hafta 2 --json \
-  | "$PY" -c "import json,sys; d=json.load(sys.stdin); \
-      assert len(d['results'])==15; assert d['tahmin2']; \
-      assert d['kiyas']['union_best'] >= max(x['best'] for x in d['coupons'])"
+  # Sonuc girilmis haftanin degerlendirmesi: iki kayit da puanlanmali.
+  # Sonucu GIRILMEMIS hafta bu adimi atlar — `_tahmin2` kaydinin olmasi
+  # sonucun da girildigi anlamina gelmez.
+  if echo " $SONUCLU " | grep -q " $h "; then
+    "$PY" scripts/super_toto_degerlendir.py --hafta "$h" --json \
+      | "$PY" -c "import json,sys; d=json.load(sys.stdin); \
+          assert len(d['results'])==15; assert d['tahmin2']; \
+          assert d['kiyas']['union_best'] >= max(x['best'] for x in d['coupons'])"
+  fi
+done
 
 # Hafta raporu sayfasi: kapida hic kosmuyordu ve tam bu yuzden sessizce
 # kirildi (sonucu girilmis ama ikramiyesi girilmemis haftada KeyError).
@@ -151,9 +183,14 @@ for h in $HAFTALAR; do
 done
 
 # Üretilmiş iki dosya: bayatlarsa arayüz SESSIZCE yanlış olur.
-baslik "üretilmiş dosyalar güncel mi"
+baslik "üretilmiş üç dosya güncel mi"
 "$PY" scripts/super_toto_frontend.py --kontrol
 "$PY" scripts/api_sozlesme.py --kontrol
+# Ucuncu uretilmis dosya. `data/odds/fiyat_kaynaklari.json` surumleniyor ve
+# `odds.py` ile `fiyatlar.py` docstring'lerinden aniliyordu, ama hicbir sey
+# onu diskteki gercekle karsilastirmiyordu — arsiv buyudugunde sessizce
+# bayatlardi. Ustteki iki bekcinin ayni deseni.
+"$PY" scripts/fiyat_kaynaklari.py --kontrol
 
 # ─── Frontend ────────────────────────────────────────────────────────────
 cd "$KOK/frontend"

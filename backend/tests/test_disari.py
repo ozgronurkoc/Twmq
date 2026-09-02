@@ -30,14 +30,13 @@ from spor_toto.egitim import (
     korpus_haftalari,
 )
 from spor_toto.recalibrate import A3_ALANLARI
+from tests.conftest import korpus_yoksa_atla
 
 
 @pytest.fixture(scope="module")
 def a3():
-    h = kesit()
-    if not h:
-        pytest.skip("egitim korpusu yok — once scripts/build_egitim.py")
-    return h
+    """Korpus yoksa ATLA — uc satirlik bu govde dort dosyada aynidir."""
+    return korpus_yoksa_atla(kesit)
 
 
 def _mac(tarih, ev, dep, kod, lig="XX", sezon="9999"):

@@ -795,7 +795,7 @@ handler'a bağlı olsalardı `/health`e vuran her şey tam raporu ödetirdi ve
 `/health`i canlılık sinyali sanan bir probe, zaman aşımına düşünce **sağlıklı**
 bir konteyneri öldürebilirdi.
 
-**24 kontrol, 6 kategori.** Kategoriler motorun katmanlarını izler ve yukarıdan
+**27 kontrol, 6 kategori.** Kategoriler motorun katmanlarını izler ve yukarıdan
 aşağıya doğru ciddiyet azalır — düşen kontrolün adı değil, **hangi katmanın
 bozulduğu** okunur. Güncel liste için `--list`:
 
@@ -983,7 +983,7 @@ backend/
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
                        sehir/ · xg/
-  tests/               pytest (63 dosya → 1.902 test; §9'da katman dökümü)
+  tests/               pytest (64 dosya → 1.931 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1155,9 +1155,16 @@ olduğu için tek süreçte çekirdeklerin çoğu boş duruyordu. Tek bir dosyay
 koşarken sabit bir açılış maliyeti getirir; hata ayıklarken `-n0` onu kapatır
 ve çıktı sırası da o zaman düzelir.
 
-`scripts/check.sh` sırasıyla: ruff → mypy → pytest (hızlı + yavaş) → health →
-CLI dumanı → Süper Toto boru hattı (**2. Tahmin dahil**) → üretilmiş iki dosyanın tazeliği →
-eslint + tsc + arayüz denetimleri → üretim derlemesi.
+`scripts/check.sh` sırasıyla **on iki adım**: ruff (backend) → ruff (`.claude/`) →
+mypy → interrogate (docstring kapsaması) → pip-audit (bağımlılık açıkları) →
+doctest → pytest (hızlı) → pytest (yavaş ILP) → health → CLI dumanı → Süper Toto
+boru hattı (**2. Tahmin dahil**) + üretilmiş üç dosyanın tazeliği → eslint + tsc +
+arayüz denetimleri + üretim derlemesi.
+
+Bu liste bir kez **eskidi ve fark edilmedi**: interrogate, pip-audit ve doctest
+adımları betikte vardı, burada yoktu — üstelik aşağıda "`check.sh`in adımları bu
+bölümün başında sayılıdır" diyerek bu listeyi yetkili gösteriyordu. Bekçisi
+`tests/test_belgeler.py::test_check_sh_adimlari_belgeyle_ayni`.
 
 **CI bu betiği ÇAĞIRIR, adımları yeniden yazmaz.** Önceden
 `backend/scripts/check.sh` vardı ve "CI ile aynı çekirdek adımlar" diyordu ama
@@ -1168,31 +1175,36 @@ Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant'lar, CLI (Bayes pre
 dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri test,
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
-eşleme, ikinci kayıt). **63 test dosyası, parametrizasyonla
-1.902 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+eşleme, ikinci kayıt). **64 test dosyası, parametrizasyonla
+1.931 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
 | Katman | Dosyalar | Test |
 |---|---|---|
 | Çekirdek + motorlar | `core` `engines` `invariants` `edge_cases` `cli` `analysis` `bayes` `markov` `fire_scenarios` | 528 |
-| Tahmin katmanı | `predict` `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin` `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre` **`arena`** **`sizinti`** | 526 |
+| Tahmin katmanı | `predict` `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin` `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre` **`arena`** **`sizinti`** | 567 |
 | Sağlık | `health` `api_health` `meta` `health_history` | 89 |
-| Veri / istatistik / geri test | `history` `odds` `backtest` `api_stats` `api_backtest` `snapshot_iddaa` `pazar` | 116 |
-| Süper Toto | `super_toto` `degerlendir` | 84 |
+| Veri / istatistik / geri test | `history` `odds` `backtest` `api_stats` `api_backtest` `snapshot_iddaa` `pazar` **`gecmis_sezon`** **`sportoto_arsiv`** **`bulten`** | 217 |
+| Süper Toto | `super_toto` `degerlendir` | 87 |
 | 2. Tahmin (kalabalık ayarı · bağımsız görüş) | `tahmin2` | 30 |
 | Karar katmanı | `secim` | 21 |
 | Skor türetme | `skor` | 21 |
 | Beraberlik düzeltmesi | `beraberlik` | 19 |
 | İddaa hazırlığı | `iddaa_hazirlik` | 24 |
-| Ortak gövde | `ortak` | 25 |
-| Havuz / beklenen değer | `getiri` | 72 |
+| Ortak gövde | `ortak` | 34 |
+| Havuz / beklenen değer | `getiri` **`havuz`** | 91 |
 | Model kalıcılığı | `artefakt` | 24 |
 | Koşum defteri | `kosum` | 22 |
-| Takım gücü | `takim_gucu` | 21 |
+| Takım gücü | `takim_gucu` | 24 |
 | Yeni veri (UEFA · şehir) | `avrupa` `sehir` | 41 |
 | xG vekili kalibrasyonu | `xg` | 16 |
-| Belgeler | `belgeler` | 5 |
+| Belgeler | `belgeler` | 10 |
+| Değer bahsi (yan pazarlar) | **`deger`** | 24 |
+| Fiyat kaynakları | **`fiyatlar`** | 12 |
+| Kuyruk / bağımsızlık | **`kuyruk`** | 12 |
+| MCP deneyi | **`mcp`** | 11 |
+| Betik ortak katmanı | **`scripts_ortak`** | 7 |
 
 İki test bilerek **ağa çıkmaz**: `test_snapshot_iddaa.py` gerçek bültenden alınmış
 küçük bir örnek payload üzerinde koşar — ağ çağrısını sınamak bu paketin işi değil,
@@ -1202,7 +1214,7 @@ ayrıştırmanın doğruluğu ise arşivin tamamının dayandığı şey.
 
 ```bash
 cd frontend
-npm run check                # eslint + tsc + saf mantık ve sözleşme (53 vaka)
+npm run check                # eslint + tsc + saf mantık ve sözleşme (56 vaka)
 npm run lint                 # yalnızca eslint
 npm run build                # üretim derlemesi
 ```
@@ -1255,6 +1267,22 @@ bir (pazartesi 06:00 UTC) iddaa bültenini arşivler ve yeni veri varsa depoya i
 Botun yazma alanı dardır: yalnızca `backend/data/iddaa/`, değişiklik yoksa commit
 yok, testler push'tan önce koşar, eşzamanlı çalışma engellenir. Durdurmak: Actions →
 "Disable workflow".
+
+**Üçüncü workflow — resmî arşiv.** `.github/workflows/snapshot-sportoto.yml`
+haftada bir (salı 07:00 UTC) `webapi.sportoto.gov.tr` üzerinden ikramiye ve
+kazanan adedi arşivini çeker ve `backend/data/sportoto_arsiv/` altına işler.
+Aynı dar yazma alanı, aynı "değişiklik yoksa commit yok" kuralı.
+
+Bu workflow **hiçbir belgede anılmıyordu** — yukarıdaki paragraf "İkinci
+workflow" deyip yalnızca iddaa'yı anlatıyordu, oysa depoya haftalık commit
+atan iki iş var. Boşluk artık bir bekçiyle kapalı
+(`test_workflow_envanteri_belgeyle_ayni`).
+
+İkisinin de "Biçimi denetle" adımı uzun süre **hiç koşmadı**: `pytest` çağrısı
+`pyproject.toml`daki `-n auto` yüzünden xdist olmadan açılamıyor ve iki iş de
+bilerek yalnızca `pytest` kuruyor. Ölçüldü (`unrecognized arguments: -n`, çıkış
+4) ve `-o addopts=` ile onarıldı; bekçisi
+`test_workflowlarda_pytest_gercekten_kosabilir`.
 
 CD (otomatik deploy) yoktur: yayın manuel kalır — **health kırmızıysa
 yayınlanmaz.**

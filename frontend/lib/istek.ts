@@ -52,8 +52,20 @@ export function iptalMi(e: unknown, signal?: AbortSignal): boolean {
 }
 
 export function hataMetni(e: unknown, varsayilan: string): string {
-  if (e instanceof Error && e.message) return e.message;
-  return varsayilan;
+  const mesaj = e instanceof Error && e.message ? e.message : varsayilan;
+  // `ApiError.status` uzun sure OKUNMUYORDU: alan tasiniyordu ama 404 ile
+  // 500 tuketici icin ayirt edilemiyordu. Onemli olan ayrim su: 4xx
+  // KULLANICININ istegiyle ilgilidir ve sunucunun mesaji zaten aciklar;
+  // 5xx ise sunucunun kendi hatasidir ve okuyucunun yapabilecegi tek sey
+  // yeniden denemektir — bunu SOYLEMEK gerekir.
+  //
+  // Ordek tipleme bilerek: `ApiError` `lib/api.ts`te ve orasi bu modulu
+  // import ediyor; ters yon dairesel olurdu.
+  const durum = (e as { status?: unknown } | null)?.status;
+  if (typeof durum === "number" && durum >= 500) {
+    return `${mesaj} (sunucu hatası — yeniden deneyin)`;
+  }
+  return mesaj;
 }
 
 export function useIstek<T>(

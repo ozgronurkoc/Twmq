@@ -6,9 +6,9 @@
     "dev": "next dev -H 0.0.0.0 -p 3000",
     "build": "next build",
     "start": "next start -H 0.0.0.0 -p 3000",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit --allowJs --checkJs --target es2022 --module nodenext --moduleResolution nodenext --skipLibCheck scripts/check.mjs",
     "check": "npm run lint && npm run typecheck && node scripts/check.mjs",
-    "lint": "next lint --dir app --dir components --dir lib"
+    "lint": "next lint --dir app --dir components --dir lib --dir scripts"
   },
   "dependencies": {
     "clsx": "^2.1.1",

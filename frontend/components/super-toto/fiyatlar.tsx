@@ -15,25 +15,17 @@ import type {
   SuperTotoFiyatlar,
   SuperTotoKupon,
 } from "@/lib/super-toto";
+import { saglayiciAdi } from "@/lib/super-toto";
 import { SEMBOLLER as SEM } from "@/lib/types";
 import { Badge, Card, CardBody, CardHeader } from "@/components/ui/primitives";
 import { yuzde as _yuzde } from "@/lib/utils";
 
-/** Bahisci anahtarini ("pinnacle_kapanis") okunur ada cevirir. */
-const SAGLAYICI: Record<string, string> = {
-  pinnacle: "Pinnacle",
-  bet365nl: "bet365.nl",
-  nesine: "Nesine",
-  iddaa: "iddaa",
-};
-
-export function kitapAdi(anahtar: string): string {
-  const [saglayici, an] = anahtar.split("_");
-  const ad = SAGLAYICI[saglayici ?? ""] ?? saglayici ?? anahtar;
-  if (an === "acilis") return `${ad} açılış`;
-  if (an === "kapanis") return `${ad} kapanış`;
-  return ad;
-}
+// Harita ve bicimleyici BURADA YAZILIYDI ve Python tarafiyla ayrismisti
+// (soneksiz anahtarda orasi "kapanış" uyduruyor, burasi uydurmuyordu).
+// Ikisi de artik `spor_toto.odds`tan turuyor ve arayuze besleme ile
+// geliyor — bkz. `lib/super-toto.ts`. `kitapAdi` adi korunuyor: bu dosya
+// icinde bes yerde cagriliyor.
+const kitapAdi = saglayiciAdi;
 
 function ucluAd(p: Record<string, number> | null): string {
   if (!p) return "—";

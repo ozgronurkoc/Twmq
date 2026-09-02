@@ -37,14 +37,18 @@ import re
 import sqlite3
 import sys
 import unicodedata
-import urllib.error
-import urllib.request
 from datetime import datetime, timedelta
 from difflib import SequenceMatcher
 from pathlib import Path
 from typing import Any
 
 KOK = Path(__file__).resolve().parent.parent
+# Kardes betiklerle paylasilan SAF STDLIB yardimcilar. `spor_toto` DEGIL:
+# bu betik bagimliliksiz kosabilmeli.
+sys.path.insert(0, str(KOK))
+
+from scripts._ortak import indir, tarih_coz
+
 GECMIS = KOK / "data" / "st_history_2025_26.json"
 CIKTI_DIZIN = KOK / "data" / "odds"
 UA = "spor-toto-lab/1.0 (kisisel arsiv analizi)"
@@ -169,28 +173,15 @@ def sutun_ayristir(sutun: str) -> tuple[str, str, str, str]:
 
 # ─── kaynak dosyalar ──────────────────────────────────────────────────────────
 
-def indir(url: str, hedef: Path, timeout: float = 60.0) -> Path | None:
-    if hedef.exists() and hedef.stat().st_size > 0:
-        return hedef
-    istek = urllib.request.Request(url, headers={"User-Agent": UA})
-    try:
-        with urllib.request.urlopen(istek, timeout=timeout) as r:
-            ham = r.read()
-    except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError) as e:
-        print(f"  {url} alinamadi ({e})", file=sys.stderr)
-        return None
-    hedef.parent.mkdir(parents=True, exist_ok=True)
-    hedef.write_bytes(ham)
-    return hedef
+#: Indirme TEK kaynaktan: `scripts._ortak.indir` (ayni govde uc betikte
+#: birebir yaziliydi; UA da oradan gelir).
 
 
-def tarih_coz(ham: str) -> datetime | None:
-    for bicim in ("%d/%m/%Y", "%d/%m/%y"):
-        try:
-            return datetime.strptime(ham, bicim)
-        except ValueError:
-            continue
-    return None
+#: Tarih cozme TEK kaynaktan (`scripts._ortak.tarih_coz`). BURADAKI KOPYA
+#: `.strip()` YAPMIYORDU: ayni football-data sutunundaki bosluklu bir tarih
+#: bu boru hattinda satiri dusuruyor, `build_egitim`de dusurmuyordu.
+#: Bugunku veride bosluklu tarih yok (1.785 alan tarandi, 0), yani onarim
+#: gercek veride no-op — kapatilan sey latent ayrisma.
 
 
 def sezon_dosya_adi(sezon: str) -> str:

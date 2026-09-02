@@ -38,7 +38,7 @@ export interface Senaryo {
   kurulum: Kurulum;
 }
 
-export const SENARYO_SINIRI = 6;
+const SENARYO_SINIRI = 6;
 
 /**
  * Sonuctan senaryo satiri uretir.

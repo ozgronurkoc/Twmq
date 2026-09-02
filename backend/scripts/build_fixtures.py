@@ -34,17 +34,19 @@ import argparse
 import csv
 import json
 import sys
-import urllib.error
-import urllib.request
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
 KOK = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(KOK))
+
+from scripts._ortak import indir_bellek
+
 VARSAYILAN_CIKTI = KOK / "data" / "fixtures"
 
 from spor_toto.odds import FIYAT_VARSAYILAN
+from spor_toto.ortak import oran_sayisi
 
 UA = "Mozilla/5.0 (compatible; spor-toto-lab/1.0)"
 FIXTURES_URL = "https://www.football-data.co.uk/fixtures.csv"
@@ -67,22 +69,13 @@ BASLIKLAR = ["lig", "tarih", "saat", "ev", "dep",
              "oran_1", "oran_0", "oran_2", "oran_kaynak", "olculen_lig"]
 
 
-def indir(url: str, timeout: float = 60.0) -> bytes | None:
-    istek = urllib.request.Request(url, headers={"User-Agent": UA})
-    try:
-        with urllib.request.urlopen(istek, timeout=timeout) as r:
-            return r.read()
-    except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError) as e:
-        print(f"  {url} alinamadi ({e})", file=sys.stderr)
-        return None
+#: Bellege indirme TEK kaynaktan: `scripts._ortak.indir_bellek`.
+#: Ayni govde `build_xg._getir` olarak da yaziliydi.
+indir = indir_bellek
 
 
-def _sayi(ham: Any) -> float | None:
-    try:
-        v = float(str(ham).strip())
-    except (TypeError, ValueError):
-        return None
-    return v if v > 1.0 else None
+#: Oran okuma TEK kaynaktan (`spor_toto.ortak.oran_sayisi`).
+_sayi = oran_sayisi
 
 
 def oran_sec(satir: dict[str, Any]) -> dict[str, Any] | None:

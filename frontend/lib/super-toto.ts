@@ -18,15 +18,50 @@ import { MAC_SAYISI } from "./types";
 export const SUPER_TOTO_SEZON = veri.season;
 
 /**
- * Sezonun planlanan hafta sayisi. Gecen sezon 41 tam hafta uretti;
- * takvim uzarsa TEK degistirilecek yer burasidir.
+ * Sezonun planlanan hafta sayisi — **beslemeden** gelir, elle yazilmaz.
+ *
+ * Burada `41` sabit duruyordu ve o GECEN sezonun sayisiydi; besleme ise
+ * 2026/27 diyor. `super_toto_frontend.py` basligi tam da bu elle-tutmayi
+ * bitirmek icin yazilmisti — hafta LISTESI uretilir olmus, hafta SAYISI
+ * elde kalmisti. Sayinin nereden turedigi artik uretici tarafta yazili.
  */
-export const HAFTA_SAYISI = 41;
+export const HAFTA_SAYISI: number = veri.planlanan_hafta;
 
 /** Bir kuponun mac sayisi — motorun sabiti (backend `meta.MATCH_COUNT`). */
 
 /** Beslemeyi ureten marj arindirma yontemi — sayfada yazar. */
 export const ARINDIRMA = veri.arindirma;
+
+/**
+ * Fiyat saglayici etiketleri — **beslemeden** gelir, elle tutulmaz.
+ *
+ * Ayni dort cift uc yerde birden yaziliydi: `super_toto_sayfa.py`de iki kez
+ * ve `fiyatlar.tsx`te. Kaynak `spor_toto.odds.SAGLAYICI_ADLARI`; besleme
+ * CI-kapili (`super_toto_frontend.py --kontrol`), yani ayrisamaz.
+ */
+export const SAGLAYICI_ADLARI: Record<string, string> = veri.saglayici_adlari;
+
+/**
+ * `"pinnacle_kapanis"` -> `"Pinnacle kapanış"`.
+ *
+ * Sonek TANINMIYORSA uydurulmaz. Python govdesi `else` dalinda her zaman
+ * "kapanış" yaziyordu, yani soneksiz bir `"pinnacle"` degeri orada
+ * **"Pinnacle kapanış"**, burada yalnizca "Pinnacle" oluyordu — iki taraf
+ * ayrismisti. Iki govde de artik ayni kurali uyguluyor
+ * (`spor_toto.odds.saglayici_adi`, doctest'li).
+ */
+export function saglayiciAdi(odds_kind: string | null | undefined): string {
+  const ham = (odds_kind ?? "").trim().toLowerCase();
+  if (!ham) return "bilinmiyor";
+  const ayirac = ham.indexOf("_");
+  const saglayici = ayirac === -1 ? ham : ham.slice(0, ayirac);
+  const an = ayirac === -1 ? "" : ham.slice(ayirac + 1);
+  const ad = SAGLAYICI_ADLARI[saglayici];
+  if (ad === undefined) return ham;
+  if (an === "acilis") return `${ad} açılış`;
+  if (an === "kapanis") return `${ad} kapanış`;
+  return ad;
+}
 
 export interface SuperTotoMac {
   no: number;
@@ -391,7 +426,7 @@ export interface SuperTotoHafta {
 }
 
 /** Verisi girilmis haftalar — beslemeden gelir. */
-export const GIRILEN_HAFTALAR = veri.weeks as unknown as SuperTotoHafta[];
+const GIRILEN_HAFTALAR = veri.weeks as unknown as SuperTotoHafta[];
 
 const GIRILEN = new Map(GIRILEN_HAFTALAR.map((h) => [h.week, h]));
 

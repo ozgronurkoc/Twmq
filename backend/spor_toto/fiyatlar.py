@@ -43,6 +43,7 @@ from .odds import (
     load_odds,
     market_odds,
 )
+from .ortak import brier as _brier
 
 #: Paralel iz olarak ölçülen kitaplar. `Max` bilerek YOK: bahisçiler
 #: üzerindeki en iyi orandır, tek bir bahisçinin fiyatı değildir ve marjı
@@ -89,10 +90,12 @@ def mac_fiyatlari(row: dict[str, Any],
     return out
 
 
-def _brier(p: dict[str, float], kod: str) -> float:
-    return sum((p[s] - (1.0 if s == kod else 0.0)) ** 2 for s in SEMBOLLER)
-
-
+#: Brier BURADA YENIDEN YAZILMISTI ve `ortak.py`nin baslik cumlesini
+#: ("tek kaynak artik `ortak`") yalanliyordu. Govde tam sozlukte birebir
+#: ayni sonucu veriyordu (36 kiyas, fark 0 — olculdu), ama tek bir yerde
+#: AYRISIYORDU: `p[s]` yazdigi icin eksik bir sembolde `KeyError` firlatiyor,
+#: kanonik govde ise `.get(s, 0.0)` ile 0 sayip devam ediyor. Yani kopya
+#: yalnizca gereksiz degil, daha kirilgandi.
 def sezon_fiyat_ozeti(yontem: str = ARINDIRMA_VARSAYILAN) -> dict[str, Any]:
     """Kitap × dönem başına kapsama, marj, Brier, dönem ve hareket.
 

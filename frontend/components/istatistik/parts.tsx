@@ -52,7 +52,7 @@ export function sezonUrleYaz(deger: string | null): void {
 }
 
 /** "2023_24" -> "2023/24". */
-export function sezonEtiketi(anahtar: string): string {
+function sezonEtiketi(anahtar: string): string {
   const [bas, son] = anahtar.split("_");
   return son ? `${bas}/${son}` : anahtar;
 }

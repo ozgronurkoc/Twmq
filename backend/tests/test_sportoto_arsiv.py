@@ -156,6 +156,14 @@ def test_anlasilmayan_hafta_adi_elenmez_isaretlenir():
 # ─── doğrulama kapısı ─────────────────────────────────────────────────────────
 
 def test_dogrulama_saglam_seti_gecirir():
+    """Sağlam bir set **yükseltmeden** geçmeli — asıl iddia budur.
+
+    Bu testte bilerek `assert` yok: `dogrula()` bir kapı ve sözleşmesi
+    "bozuksa yükselt"tir, yani sağlam girdide sessiz kalması TAM OLARAK
+    beklenen davranıştır. Anlamını hemen altındaki negatif testlerden alır
+    (`pytest.raises(AssertionError, ...)`): kapı no-op'a çevrilseydi bu test
+    yeşil kalır ama o testler DÜŞERDİ. Çift birlikte tamdır.
+    """
     haftalar = [arsiv.hafta_kaydi(_hafta(kimlik=368, ad="1. Hafta"),
                                   arsiv.ikramiye_ayristir(ORNEK_SONUC)),
                 arsiv.hafta_kaydi(_hafta(kimlik=369, ad="2. Hafta"), None)]

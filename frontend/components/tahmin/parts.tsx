@@ -28,7 +28,7 @@ function gunEtiketi(iso: string): string {
  * En olası sembol kalınlaşır — ama **rengi değişmez**, çünkü renk "hangi
  * sembol" sorusunu cevaplar, "hangisi favori" sorusunu değil.
  */
-export function OlasilikCubugu({ olasilik, enOlasi }: {
+function OlasilikCubugu({ olasilik, enOlasi }: {
   olasilik: Record<string, number>;
   enOlasi: string | null;
 }) {

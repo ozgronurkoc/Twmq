@@ -263,7 +263,12 @@ def test_tablo_girdiyle_ayni_uzunlukta_ve_sirada():
 
 def test_tablo_deterministik():
     maclar = [_mac(f"2024-01-{g:02d}", "A", "B", "102"[g % 3]) for g in range(1, 20)]
-    assert elo_tablosu(maclar) == elo_tablosu(maclar)
+    t = elo_tablosu(maclar)
+    # Bos donen bir govde de "deterministik" olurdu; asagidaki satir
+    # sonucun BOS OLMADIGINI da tutar — determinizm tek basina
+    # calistigini kanitlamaz.
+    assert len(t) == len(maclar), "tablo eksik — determinizm yeterli degil"
+    assert t == elo_tablosu(maclar)
 
 
 def test_tablo_kronolojik_isliyor_girdi_sirasi_onemsiz():
