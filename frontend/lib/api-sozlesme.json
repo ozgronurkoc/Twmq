@@ -24,6 +24,11 @@
    "max": 6561,
    "min": 2
   },
+  "budget": {
+   "default": 32,
+   "max": 10000000,
+   "min": 1
+  },
   "exact_limit": {
    "default": 512,
    "max": 4096,
@@ -472,6 +477,11 @@
      "min": "float"
     },
     "block_limit": {
+     "default": "int",
+     "max": "int",
+     "min": "int"
+    },
+    "budget": {
      "default": "int",
      "max": "int",
      "min": "int"

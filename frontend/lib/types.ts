@@ -41,6 +41,16 @@ export interface EngineDefaults {
   time_limit: number;
   block_limit: number;
   exact_limit: number;
+  /**
+   * `auto` modunun ILP kesme suresi (sn). Sunucu bunu hem
+   * `engine_defaults` hem `limits` icinde ILAN EDIYOR ve `/api/solve`
+   * kabul ediyor (`web_app.py:192`), ama arayuz tipinde YOKTU — yani
+   * ilan edilen bir denetim arayuzden hic gonderilemiyordu.
+   *
+   * Sozlesme denetimi bunu goremiyordu cunku yalnizca 1 seviye derin
+   * bakiyordu: `engine_defaults` ust duzeyde vardi, icine bakilmiyordu.
+   */
+  auto_ilp_limit: number;
 }
 
 export interface Limit { min: number; max: number; default?: number }
@@ -783,6 +793,10 @@ export interface BacktestResponse {
     match_count: number;
     space_limit: number;
     note: string;
+    /** Oran arındırma yöntemi — hangi olasılıkların ölçüldüğünü söyler. */
+    arindirma: string;
+    /** Seçili sezon; seçim yoksa `null` (varsayılan = bütün korpus). */
+    sezon: string | null;
   };
   strategy: { banko: number; uclu: number; explain: string };
   season: BacktestSeason;

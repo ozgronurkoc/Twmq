@@ -793,6 +793,25 @@ def _parse_sezon(raw: Any) -> str | None:
     return sezon
 
 
+def _butce_oku(raw: Any) -> int:
+    """`budget` alanini SINIRLARIYLA okur.
+
+    Onceden `int(budget_raw)` idi ve **ust siniri yoktu**. `/api/solve`
+    kimlik istemeyen bir POST ucu; sinirsiz bir butce, motoru istege bagli
+    olarak uzun surecek bir ise sokabilirdi. Arayuz paylasilabilir
+    baglantida zaten 10 M'e kirpiyordu, yani tek soruya uc cevap vardi
+    (arayuz 10 M, ilan edilen sinir YOK, sunucu sinirsiz). Sinir artik
+    `meta.LIMITS["budget"]`ten geliyor ve UC TARAF da onu okuyor.
+    """
+    sinir = LIMITS["budget"]
+    deger = int(raw)
+    if deger < sinir["min"] or deger > sinir["max"]:
+        raise ValueError(
+            f"budget {sinir['min']}-{sinir['max']} araliginda olmali "
+            f"(gelen: {deger})")
+    return deger
+
+
 def _parse_esik(raw: Any, varsayilan: float) -> float:
     """Eşik [0, 1] araligina kirpilir; gecersiz deger varsayilana duser."""
     try:
@@ -1058,7 +1077,7 @@ def api_solve():
         elif mode == "butce":
             if budget_raw is None or str(budget_raw).strip() == "":
                 raise ValueError("Bütçe modu için budget gerekli")
-            budget = int(budget_raw)
+            budget = _butce_oku(budget_raw)
             # CLI'deki --plan-uygula karsiligi (1 tabanli). Once sadece
             # planlar[0] uygulanabiliyordu; artik kullanici UI'dan secebilir.
             b = run_butce(enc, budget, user_probs,
@@ -1088,7 +1107,7 @@ def api_solve():
         elif mode == "maxcov":
             if budget_raw is None or str(budget_raw).strip() == "":
                 raise ValueError("maxcov için budget gerekli")
-            budget = int(budget_raw)
+            budget = _butce_oku(budget_raw)
             r = run_maxcov(enc, budget)
 
         if r is not None:
