@@ -264,6 +264,11 @@ def beklenen_getiri(kademe_olasiliklari: dict[int, float],
         "varsayimlar": {
             "havuz": havuz, "komisyon": komisyon, "rakip_kolon": rakip_kolon,
             "pay_dagilimi": dict(dagilim),
+            # Payin KUNYESI govdede tasiniyor — `KOLON_BEDELI_KAYNAGI` ile
+            # ayni desen. `PAY_KAYNAGI` uzun sure tanimliydi ve HICBIR
+            # YERDEN OKUNMUYORDU: "bu oran olcum mu varsayim mi" bilgisi
+            # yalnizca kaynak dosyada duruyordu, raporu okuyana ulasmiyordu.
+            "pay_kaynagi": PAY_KAYNAGI,
         },
         "uyari": (
             "Bu sayi OLCULMEDI. Havuz payi, komisyon ve kalabalik "

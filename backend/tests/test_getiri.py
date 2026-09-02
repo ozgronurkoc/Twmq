@@ -115,7 +115,8 @@ def test_uyari_ve_varsayimlar_govdede_duruyor():
     assert "OLCULMEDI" in r["uyari"]
     assert "Arayuze cikmaz" in r["uyari"]
     v = r["varsayimlar"]
-    assert set(v) == {"havuz", "komisyon", "rakip_kolon", "pay_dagilimi"}
+    assert set(v) == {"havuz", "komisyon", "rakip_kolon", "pay_dagilimi",
+                      "pay_kaynagi"}
     assert v["pay_dagilimi"] == VARSAYILAN_PAY
     assert v["komisyon"] == VARSAYILAN_KOMISYON
 
@@ -366,3 +367,19 @@ def test_havuz_sabitken_egri_duzlesmiyor():
     sabit = [d["getiri_orani"] for d in duyarlilik(taban, (0.25, 1.0, 4.0))]
     assert sabit == sorted(sabit, reverse=True)
     assert sabit[0] > 3 * sabit[-1]
+
+
+def test_rapor_pay_kunyesini_TASIR():
+    """Havuz payı oranının künyesi rapor gövdesinde bulunmalı.
+
+    `PAY_KAYNAGI` tanımlıydı ama **hiçbir yerden okunmuyordu**: "bu oran
+    ölçüm mü varsayım mı" bilgisi yalnızca kaynak dosyada duruyor, raporu
+    okuyana ulaşmıyordu. `KOLON_BEDELI_KAYNAGI` ile aynı desen — o zaten
+    gövdede taşınıyor ve testi var.
+    """
+    from spor_toto.getiri import PAY_KAYNAGI
+
+    kunye = _taban()["varsayimlar"]["pay_kaynagi"]
+    assert kunye == PAY_KAYNAGI
+    # Kunye ise yarar: hangi haftalardan olculdugunu SOYLEMELI.
+    assert "hafta" in kunye.lower()

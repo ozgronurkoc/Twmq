@@ -52,7 +52,7 @@ export const DURUM_TONU: Record<Durum, "success" | "warning" | "danger"> = {
   bozuk: "danger",
 };
 
-export const DURUM_RENK: Record<Durum, string> = {
+const DURUM_RENK: Record<Durum, string> = {
   saglikli: "text-success",
   kisitli: "text-warning",
   bozuk: "text-danger",
@@ -94,7 +94,7 @@ export function goreliZaman(iso: string, simdi: number | null): string {
 
 // ─── Kontrol satiri ───────────────────────────────────────────────────────
 
-export function KontrolSatiri({
+function KontrolSatiri({
   check,
   enUzunMs,
 }: {

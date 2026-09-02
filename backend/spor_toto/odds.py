@@ -333,6 +333,56 @@ KITAP_ADLARI: dict[str, str] = {
     "BFE": "Betfair Exchange", "B365": "Bet365", "Max": "en iyi oran",
 }
 
+#: Hafta dosyasindaki `odds_kind` saglayicilari -> okunur ad.
+#:
+#: `KITAP_ADLARI`den AYRI ve ayri kalmali: o football-data sutun kodlari
+#: (`Avg`, `PS`), bu ise Super Toto hafta dosyasinin fiyat kaynagi
+#: (`pinnacle_kapanis`, `iddaa`). Ikisini birlestirmek iki farkli evreni
+#: ayni sozluge sikistirirdi.
+#:
+#: **Tek kaynak olmasinin sebebi olculdu:** ayni dort cift UC yerde birden
+#: yaziliydi — `super_toto_sayfa.py`de IKI KEZ (259 satir arayla) ve
+#: `frontend/components/super-toto/fiyatlar.tsx`te. Arayuze `super-toto`
+#: beslemesiyle tasiniyor, yani elle tutulan kopya kalmadi.
+SAGLAYICI_ADLARI: dict[str, str] = {
+    "iddaa": "iddaa", "pinnacle": "Pinnacle",
+    "bet365nl": "bet365.nl", "nesine": "Nesine",
+}
+
+
+def saglayici_adi(odds_kind: str | None) -> str:
+    """`"pinnacle_kapanis"` -> `"Pinnacle kapanış"`.
+
+    Sonek TANINMIYORSA uydurulmaz. Onceki Python govdesi `else` dalinda
+    her zaman "kapanış" yaziyordu, yani soneksiz bir `"pinnacle"` degeri
+    ekranda **"Pinnacle kapanış"** diye gorunuyordu — olmayan bir bilgi.
+    TypeScript govdesi ayni girdide yalnizca "Pinnacle" diyordu; iki taraf
+    ayrismisti.
+
+        >>> saglayici_adi("pinnacle_kapanis")
+        'Pinnacle kapanış'
+        >>> saglayici_adi("iddaa_acilis")
+        'iddaa açılış'
+        >>> saglayici_adi("pinnacle")
+        'Pinnacle'
+        >>> saglayici_adi("bilinmeyen_kaynak")
+        'bilinmeyen_kaynak'
+        >>> saglayici_adi(None)
+        'bilinmiyor'
+    """
+    ham = (odds_kind or "").strip().lower()
+    if not ham:
+        return "bilinmiyor"
+    saglayici, _, an = ham.partition("_")
+    ad = SAGLAYICI_ADLARI.get(saglayici)
+    if ad is None:
+        return ham
+    if an == "acilis":
+        return f"{ad} açılış"
+    if an == "kapanis":
+        return f"{ad} kapanış"
+    return ad
+
 
 def donem_dagilimi(bloklar: Sequence[dict[str, Any]]) -> dict[str, int]:
     """Kaç maç kapanış, kaç maç açılış fiyatından geldi."""

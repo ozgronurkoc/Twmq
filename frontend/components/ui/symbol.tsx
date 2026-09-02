@@ -2,12 +2,13 @@ import * as React from "react";
 
 import { SEMBOLLER, type Sembol } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { SYM_TEXT } from "@/components/istatistik/viz";
 
-const RENK: Record<Sembol, string> = {
-  "1": "text-sym-1",
-  "0": "text-sym-0",
-  "2": "text-sym-2",
-};
+// Bu harita `components/istatistik/viz.ts`teki `SYM_TEXT` ile BIREBIR
+// ayniydi ve iki dosya birbirini import etmiyordu. `viz.ts` zaten
+// `SYM_FILL`/`SYM_STROKE`/`SYM_BG`i tasiyor, yani sembol renklerinin dogal
+// evi orasi — burasi ondan turuyor.
+const RENK = SYM_TEXT;
 
 const ZEMIN: Record<Sembol, string> = {
   "1": "bg-sym-1/12 text-sym-1 border-sym-1/25",

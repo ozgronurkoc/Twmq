@@ -101,17 +101,20 @@ YUZDE: dict[int, float] = {k: v / sum(BOLUSUM.values()) for k, v in BOLUSUM.item
 #: Kuruş yuvarlamasindan gelen sapma payı. Ölçülen en büyük sapma binde 2'ydi
 #: (14÷13 için %95 dilimi 1,0002); eşik onun bir mertebe üstünde tutuldu ki
 #: yuvarlama gürültüsü "bölüşüm bozuldu" diye raporlanmasın.
-SAPMA_PAYI = 0.005
-
-#: Devir eşiği MUTLAK DEĞİL GÖRELİDİR ve `SAPMA_PAYI` ile aynı sayıdır.
+#: Hem yuvarlama gürültüsünün payı hem de **devir eşiği** — tek sayı.
 #:
-#: İlk yazımda 1 TL mutlak eşik kullanılmıştı ve **yanlıştı**: kişi başı
-#: ikramiye kuruşa yuvarlanıp on binlerce kazananla çarpılınca yuvarlama
-#: hatası binlerce TL'ye çıkıyor, dolayısıyla 176 haftanın 174'ü "devirli"
-#: görünüyordu. Ölçüm ayrımı nettir ve iki küme arasında üç mertebe boşluk
-#: var: gürültünün en büyüğü `birim`in **1,01e-3**'ü, gerçek devrin en
-#: küçüğü **4,82e-2**'si. 0,005 tam ortadaki boşluğa düşer ve 41 hafta verir.
-DEVIR_PAYI = SAPMA_PAYI
+#: Devir eşiği MUTLAK DEĞİL GÖRELİDİR. İlk yazımda 1 TL mutlak eşik
+#: kullanılmıştı ve **yanlıştı**: kişi başı ikramiye kuruşa yuvarlanıp on
+#: binlerce kazananla çarpılınca yuvarlama hatası binlerce TL'ye çıkıyor,
+#: dolayısıyla 176 haftanın 174'ü "devirli" görünüyordu. Ölçüm ayrımı
+#: nettir ve iki küme arasında üç mertebe boşluk var: gürültünün en büyüğü
+#: `birim`in **1,01e-3**'ü, gerçek devrin en küçüğü **4,82e-2**'si. 0,005
+#: tam ortadaki boşluğa düşer ve 41 hafta verir.
+#:
+#: Burada ayrıca `DEVIR_PAYI = SAPMA_PAYI` diye bir **takma ad** duruyordu
+#: ve hiçbir yerde okunmuyordu (kod her iki yerde de `SAPMA_PAYI`
+#: kullanıyor). İki adı olan tek sayı, ayrışacak iki sayıya davetiyedir.
+SAPMA_PAYI = 0.005
 
 
 def _kademe_havuzlari(payout: dict[str, Any]) -> dict[int, float]:

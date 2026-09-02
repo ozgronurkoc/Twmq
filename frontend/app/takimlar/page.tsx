@@ -172,8 +172,13 @@ function LigSeridi({
 /**
  * `2425` -> `2024/25`. Sunucu korpus anahtarini yayimlar; kullaniciya
  * okunur hali gosterilir ama SECENEK DEGERI daima sunucunun anahtaridir.
+ *
+ * `components/istatistik/parts.tsx`teki `sezonEtiketi` ile KARISTIRILMAMALI
+ * ve onunla birlestirilemez: o `history` anahtarini (`2025_26` -> 2025/26)
+ * bicimliyor, bu ise KORPUS anahtarini (`2425` -> 2024/25). Iki ayri
+ * anahtar evreni; adin ayri olmasi bunu gorunur kilar.
  */
-function sezonEtiketi(anahtar: string): string {
+function korpusSezonEtiketi(anahtar: string): string {
   const m = /^(\d{2})(\d{2})$/.exec(anahtar);
   return m ? `20${m[1]}/${m[2]}` : anahtar;
 }
@@ -229,7 +234,7 @@ export default function TakimlarSayfasi() {
             <option value="">bütün sezonlar</option>
             {(veri?.sezonlar ?? []).map((s) => (
               <option key={s} value={s}>
-                {sezonEtiketi(s)}
+                {korpusSezonEtiketi(s)}
               </option>
             ))}
           </select>

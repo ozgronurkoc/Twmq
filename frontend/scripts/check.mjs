@@ -35,6 +35,11 @@ const cikti = mkdtempSync(join(kok, ".kurulum-check-"));
  * `olculmus` blogu, bu dosyada eskiden DUZ YAZILI duran "(olculdu)"
  * sayilarinin yerine gecer.
  */
+/** Uretilmis Super Toto beslemesi (`super_toto_frontend.py`). */
+const BESLEME = JSON.parse(
+  readFileSync(join(kok, "lib", "super-toto-veri.json"), "utf8"),
+);
+
 const SOZLESME = JSON.parse(
   readFileSync(join(kok, "lib", "api-sozlesme.json"), "utf8"),
 );
@@ -47,8 +52,11 @@ try {
     [
       "tsc", "lib/kurulum.ts", "lib/kume-ici.ts", "lib/senaryo.ts",
       "lib/utils.ts", "lib/types.ts", "lib/sekmeler.ts",
+      "lib/super-toto.ts",
       "--outDir", cikti,
       "--module", "commonjs", "--target", "es2022", "--skipLibCheck",
+      // `lib/super-toto.ts` beslemeyi import ediyor.
+      "--resolveJsonModule", "--esModuleInterop",
     ],
     { cwd: kok, stdio: "inherit" },
   );
@@ -62,6 +70,7 @@ try {
   // gibi calisma zamani sabitleri de orada ve ikisi de sunucuyla
   // karsilastirilmak zorunda.
   const TIP = iste(join(cikti, "types.js"));
+  const ST = iste(join(cikti, "super-toto.js"));
 
   let gecen = 0;
   const dene = (ad, fn) => {
@@ -846,6 +855,34 @@ dene("bicimleyiciler lib/utils.ts'ten TURER (yeniden yazilmaz)", () => {
     `bicimleyici lib/utils.ts'ten TUREMEDEN yeniden yazilmis: ${bulunan.join(", ")}`,
   );
 });
+
+// ─── capraz dil: saglayici etiketi iki dilde AYNI mi ────────────────────
+dene("saglayici etiketi Python ile birebir ayni", () => {
+  // Harita tek kaynak (`spor_toto.odds.SAGLAYICI_ADLARI`) ama BICIMLEYICI
+  // iki dilde iki govde ve ayrismislardi: soneksiz bir anahtarda
+  // ("pinnacle") Python `else` dalina dusup "kapanış" UYDURUYOR, TypeScript
+  // uydurmuyordu. Yani ayni fiyat kaynagi rapor sayfasinda ve arayuzde iki
+  // farkli adla gorunuyordu.
+  //
+  // Besleme Python'un GERCEK ciktisini tasiyor; burada arayuzun onu birebir
+  // yeniden urettigi dogrulanir. Sinir durumlar (soneksiz, bilinmeyen)
+  // bilerek listede.
+  const ornekler = BESLEME.saglayici_ornekleri;
+  assert.ok(ornekler && Object.keys(ornekler).length >= 6,
+    "beslemede `saglayici_ornekleri` yok — Python tarafi eskimis olabilir");
+  const ayrisan = [];
+  for (const [kind, beklenen] of Object.entries(ornekler)) {
+    const bulunan = ST.saglayiciAdi(kind);
+    if (bulunan !== beklenen) {
+      ayrisan.push(`${kind}: arayuz=${bulunan} python=${beklenen}`);
+    }
+  }
+  assert.deepEqual(ayrisan, [], ayrisan.join("; "));
+  // Bos/None girdide iki taraf da ayni sozu vermeli.
+  assert.equal(ST.saglayiciAdi(""), "bilinmiyor");
+  assert.equal(ST.saglayiciAdi(null), "bilinmiyor");
+});
+
 } finally {
   rmSync(cikti, { recursive: true, force: true });
 }

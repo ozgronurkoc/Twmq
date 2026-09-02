@@ -1,6 +1,23 @@
 {
  "arindirma": "shin",
  "note": "backend/data/super_toto altindan uretildi — elle duzenlenmez; scripts/super_toto_frontend.py",
+ "planlanan_hafta": 41,
+ "saglayici_adlari": {
+  "bet365nl": "bet365.nl",
+  "iddaa": "iddaa",
+  "nesine": "Nesine",
+  "pinnacle": "Pinnacle"
+ },
+ "saglayici_ornekleri": {
+  "bet365nl_kapanis": "bet365.nl kapanış",
+  "bilinmeyen_kaynak": "bilinmeyen_kaynak",
+  "iddaa": "iddaa",
+  "iddaa_acilis": "iddaa açılış",
+  "nesine": "Nesine",
+  "pinnacle": "Pinnacle",
+  "pinnacle_acilis": "Pinnacle açılış",
+  "pinnacle_kapanis": "Pinnacle kapanış"
+ },
  "season": "2026/2027",
  "season_key": "2026_27",
  "weeks": [

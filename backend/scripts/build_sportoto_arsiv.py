@@ -20,9 +20,14 @@ duruyor — bu yuzden ilk aramada gorunmedi.
 
 Bulunan uclar (hepsi kimlik dogrulamasiz, acik):
 
-    /api/GameRound/GetGameRoundYears              sezon listesi
     /api/GameRound                                TUM haftalar (her sezon)
     /api/GameResult/GetGameResultByGameRoundId    haftanin IKRAMIYE tablosu
+
+`GetGameRoundYears` (sezon listesi) de var ama BU BETIK ONU CAGIRMIYOR:
+`/api/GameRound` zaten butun sezonlarin butun haftalarini tek seferde
+veriyor, yani ayri bir sezon listesi ikinci bir ag cagrisi olurdu ve hicbir
+sey eklemezdi. Uzun sure bir `YIL_URL` sabiti duruyordu ve hicbir yerden
+okunmuyordu — cagrilmayan bir uc, uc degil yorumdur; burada oyle duruyor.
 
 Bu, deponun ilk **resmi** veri kaynagidir. Oteki dordu ucuncu parti:
 football-data piyasa orani, sportototahmin hafta payload'i, iddaa bulteni,
@@ -80,7 +85,6 @@ CIKTI_DIZIN = KOK / "data" / "sportoto_arsiv"
 UA = "spor-toto-lab/1.0 (kisisel arsiv analizi)"
 
 TABAN = "https://webapi.sportoto.gov.tr"
-YIL_URL = f"{TABAN}/api/GameRound/GetGameRoundYears"
 HAFTA_URL = f"{TABAN}/api/GameRound"
 SONUC_URL = f"{TABAN}/api/GameResult/GetGameResultByGameRoundId"
 GORSEL_TABAN = f"{TABAN}/image/"

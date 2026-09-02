@@ -367,9 +367,29 @@ def _tahmin2_blok(kayit: dict[str, Any] | None) -> dict[str, Any] | None:
     }
 
 
+def _planlanan_hafta() -> int:
+    """Sezonun planlanan hafta sayisi — gecen sezonun GERCEKLESMIS sayisi.
+
+    Yeni sezonun takvimi bastan belli degil; en iyi tahmin bir onceki
+    sezonun kac hafta urettigidir ve o sayi korpustan okunur. Korpus yoksa
+    41'e duser (2025/26'nin olculmus degeri) — ama o zaman bile sayi BURADA
+    turer, arayuzde elle yazili durmaz.
+    """
+    from spor_toto.history import normalized_weeks
+
+    try:
+        return len(normalized_weeks()) or 41
+    except Exception:
+        return 41
+
+
 def uret(sezon: str = "2026_27") -> dict[str, Any]:
     from spor_toto.backtest import VARSAYILAN_BANKO, VARSAYILAN_UCLU
-    from spor_toto.odds import ARINDIRMA_VARSAYILAN
+    from spor_toto.odds import (
+        ARINDIRMA_VARSAYILAN,
+        SAGLAYICI_ADLARI,
+        saglayici_adi,
+    )
 
     hafta_mod = _modul("hafta")
     sezon_mod = _modul("sezon")
@@ -470,7 +490,40 @@ def uret(sezon: str = "2026_27") -> dict[str, Any]:
     return {
         "season": "2026/2027",
         "season_key": sezon,
+        # Sezonun PLANLANAN hafta sayisi — arayuzde ELLE yaziliydi (41) ve
+        # o sayi GECEN sezonun sayisiydi; besleme ise 2026/27 diyor. Bu
+        # modulun basligi tam da bu elle-tutmayi bitirmek icin yazilmisti:
+        # hafta LISTESI uretilir olmus, hafta SAYISI elde kalmisti.
+        #
+        # Kaynak: gecen sezonun gerceklesmis hafta sayisi
+        # (`spor_toto.history` korpusu). Yeni sezonun takvimi belli
+        # olmadigi surece en iyi tahmin odur ve nereden geldigi burada
+        # yazili — arayuzde bir sabit olarak degil.
+        "planlanan_hafta": _planlanan_hafta(),
         "arindirma": ARINDIRMA_VARSAYILAN,
+        # Fiyat saglayici etiketleri BESLEMEDE tasiniyor.
+        #
+        # Ayni dort cift uc yerde birden yaziliydi: `super_toto_sayfa.py`de
+        # IKI KEZ (259 satir arayla) ve `fiyatlar.tsx`te. Ustelik
+        # bicimleyiciler AYRISMISTI — Python soneksiz bir anahtarda
+        # ("pinnacle") `else` dalina dusup "kapanış" uyduruyordu,
+        # TypeScript yalnizca "Pinnacle" diyordu. Besleme zaten CI-kapili
+        # (`--kontrol`), yani harita buradan gectiginde elle tutulan kopya
+        # kalmiyor.
+        "saglayici_adlari": dict(SAGLAYICI_ADLARI),
+        # Bicimleyicinin ORNEK CIKTILARI. Harita tek kaynak olsa bile iki
+        # dilde iki govde var (`odds.saglayici_adi` ve `saglayiciAdi`) ve
+        # ayrisabilirler — nitekim ayrismislardi: soneksiz bir anahtarda
+        # Python "kapanış" uyduruyor, TypeScript uydurmuyordu. Bu tablo
+        # Python'un GERCEK ciktisidir; `check.mjs` arayuzun onu birebir
+        # yeniden urettigini dogrular. Sinir durumlar bilerek listede.
+        "saglayici_ornekleri": {
+            k: saglayici_adi(k) for k in (
+                "pinnacle_kapanis", "pinnacle_acilis", "pinnacle",
+                "iddaa", "iddaa_acilis", "bet365nl_kapanis",
+                "nesine", "bilinmeyen_kaynak",
+            )
+        },
         "note": ("backend/data/super_toto altindan uretildi — elle "
                  "duzenlenmez; scripts/super_toto_frontend.py"),
         "weeks": haftalar,
