@@ -224,7 +224,14 @@ def test_fix16_varyantlar_farkli_kupon_uretir():
 
 def test_fix16_ayni_varyant_ayni_sonuc():
     enc = Encoder(parse_picks(ORNEK))
-    assert solve_fix16(enc, variant=7)[0] == solve_fix16(enc, variant=7)[0]
+    cols = solve_fix16(enc, variant=7)[0]
+    # Bos donen bir govde de "deterministik" olurdu; asagidaki satir
+    # sonucun BOS OLMADIGINI da tutar — determinizm tek basina
+    # calistigini kanitlamaz.
+    # `solve_fix16` KOLON doner (satir degil). Ornek kupon icin olculen
+    # deger 32 ve sozlesme dosyasi da onu tasiyor (`fix16_kolon`).
+    assert cols, "fix16 bos dondu"
+    assert cols == solve_fix16(enc, variant=7)[0]
 
 
 @pytest.mark.parametrize("picks", [

@@ -82,7 +82,8 @@ baslik "doctest (belgelerdeki sayılar hâlâ doğru mu)"
 # fonksiyonlara örnek konuldu. `no:randomly`: doctest'ler tanım gereği
 # sırasızdır, sabit sıra kapı çıktısını okunur tutar.
 "$PY" -m pytest --doctest-modules -p no:randomly -q \
-  spor_toto/ortak.py spor_toto/getiri.py spor_toto/takim.py spor_toto/deger.py
+  spor_toto/ortak.py spor_toto/getiri.py spor_toto/takim.py spor_toto/deger.py \
+  spor_toto/odds.py spor_toto/egitim.py
 
 baslik "pytest (hızlı)"
 "$PY" -m pytest -m "not slow" -q

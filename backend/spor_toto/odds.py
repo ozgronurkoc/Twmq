@@ -310,7 +310,34 @@ def _arindir_shin(ters: dict[str, float], toplam: float) -> dict[str, float]:
 
 
 def margin(oranlar: dict[str, float]) -> float:
-    """Bültenin marjı (overround): ``Σ(1/o) − 1``. Arındırmadan bağımsızdır."""
+    """Bültenin marjı (overround): ``Σ(1/o) − 1``. Arındırmadan bağımsızdır.
+
+    **Bu sayı projenin manşetlerinden biri** (football-data %7,26 ↔ iddaa
+    %18,86, oran 2,6 kat — `docs/ISTATISTIK_YOL_HARITASI.md`) ve uzun süre
+    **hiçbir testi yoktu**: mutasyon denemesinde `- 1.0` düşürüldüğünde süit
+    yeşil kaldı. Tanım artık burada, yürütülen örneklerle duruyor.
+
+    Adil bir bülten (marj yok) sıfır verir::
+
+        >>> round(margin({"1": 3.0, "0": 3.0, "2": 3.0}), 10)
+        0.0
+
+    Marj, olasılık toplamının 1'i ne kadar aştığıdır::
+
+        >>> round(margin({"1": 2.0, "0": 4.0, "2": 4.0}), 4)
+        0.0
+        >>> round(margin({"1": 1.9, "0": 3.8, "2": 3.8}), 4)
+        0.0526
+
+    **Sıfır ve negatif oran ELENIR, sıfır sayılmaz.** Boş bir hücre `0.0`
+    olarak gelir ve `1/0` sonsuza giderdi; eleme olmadan bütün ölçüm
+    çöker::
+
+        >>> round(margin({"1": 3.0, "0": 3.0, "2": 3.0, "yok": 0.0}), 10)
+        0.0
+        >>> round(margin({"1": 2.0, "0": 2.0}), 4)
+        0.0
+    """
     return sum(1.0 / v for v in oranlar.values() if v and v > 0) - 1.0
 
 

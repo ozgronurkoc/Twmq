@@ -139,7 +139,12 @@ def _kayit(week: int, brier_ort: float, n: int = MATCH_COUNT) -> dict:
 def test_bootstrap_ayni_tohumla_ayni_sonuc():
     a = [_kayit(i, 0.50) for i in range(20)]
     b = [_kayit(i, 0.55) for i in range(20)]
-    assert bootstrap_farki(a, b) == bootstrap_farki(a, b)
+    f = bootstrap_farki(a, b)
+    # Bos donen bir govde de "deterministik" olurdu; asagidaki satir
+    # sonucun BOS OLMADIGINI da tutar — determinizm tek basina
+    # calistigini kanitlamaz.
+    assert f and f.get("fark") is not None, "bootstrap bos dondu"
+    assert f == bootstrap_farki(a, b)
 
 
 def test_bootstrap_tohumu_gercekten_kullanir():

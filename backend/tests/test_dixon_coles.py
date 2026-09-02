@@ -274,7 +274,12 @@ def test_tablo_bos_girdiyle_patlamaz():
 
 def test_tablo_deterministik():
     maclar = _sentetik(n=800)
-    assert dc_tablosu(maclar) == dc_tablosu(maclar)
+    t = dc_tablosu(maclar)
+    # Bos donen bir govde de "deterministik" olurdu; asagidaki satir
+    # sonucun BOS OLMADIGINI da tutar — determinizm tek basina
+    # calistigini kanitlamaz.
+    assert t, "tablo bos — determinizm tek basina bir sey kanitlamaz"
+    assert t == dc_tablosu(maclar)
 
 
 def test_golu_olmayan_mac_modele_girmez():

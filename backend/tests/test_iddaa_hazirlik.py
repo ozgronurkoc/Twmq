@@ -121,7 +121,19 @@ def test_rapor_durumu_ve_kurali_tasir():
 
 
 def test_rapor_json_serilesebilir():
-    json.dumps(rapor(), ensure_ascii=False, default=str)
+    """Rapor gövdesi JSON'a **kaçamaksız** çevrilebilmeli.
+
+    Test önceden `default=str` ile koşuyordu ve bu, iddiasını neredeyse
+    düşürülemez kılıyordu: serileşemeyen HER nesne sessizce dizgeye çevrilir,
+    yani gövdeye bir `datetime` ya da `Path` sızsa test yine yeşil kalırdı —
+    oysa testin adı tam olarak bunun olmadığını söylüyor. Ölçüldü: gövde
+    `default` olmadan da çevriliyor, yani kaçamağın hiçbir gerekçesi yoktu.
+    """
+    ham = json.dumps(rapor(), ensure_ascii=False)
+    geri = json.loads(ham)
+    # Gidis-donus: yalnizca "patlamadi" degil, govde de KORUNDU.
+    assert geri["durum"] in ("olculemez", "birikiyor", "olculebilir")
+    assert geri == json.loads(json.dumps(rapor(), ensure_ascii=False))
 
 
 # ─── elde ne var ──────────────────────────────────────────────────────────

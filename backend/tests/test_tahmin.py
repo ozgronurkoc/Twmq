@@ -486,7 +486,7 @@ def test_genis_kesit_katlari_sizintisiz_ve_TAM():
     assert alt["n_mac"] == sum(k["n_mac"] for k in alt["katlar"])
 
 
-def test_yazdir_yaklasan_mac_VARKEN_patlamaz():
+def test_yazdir_yaklasan_mac_VARKEN_patlamaz(capsys):
     """`_yazdir` yaklaşan maç varken çökmemeli — ve ölçümü basmalı.
 
     **Bu bir kez gerçekten çöküyordu ve hiçbir test görmüyordu.** İç
@@ -519,9 +519,17 @@ def test_yazdir_yaklasan_mac_VARKEN_patlamaz():
                             "manset": skor},
     }
     _yazdir(govde)                       # dolu fikstür — eski kusur burada
+    # Testin adi "patlamaz" diyor ama docstring "ve olcumu basmali" da
+    # diyordu; o ikinci vaat HIC SINANMIYORDU. Cikti bos donseydi test yine
+    # yesil kalirdi — yani kusurun yarisi korumasizdi.
+    dolu = capsys.readouterr().out
+    assert "A" in dolu and "B" in dolu, "yaklasan mac basilmadi"
+    assert "piyasa" in dolu, "olculmus isabet basilmadi"
 
     bos = dict(govde, n_mac=0, tahminler=[], bos_sebep="mac yok")
     _yazdir(bos)                         # boş fikstür — ölçüm yine basılmalı
+    bos_cikti = capsys.readouterr().out
+    assert "piyasa" in bos_cikti, "bos fiksturde olcum yutuldu"
 
 
 def test_yazdir_bos_fiksturde_de_OLCUMU_basar(capsys):
