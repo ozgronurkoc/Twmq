@@ -26,8 +26,7 @@ from spor_toto.core import (
 ORNEK = "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"
 
 
-def _uniform_probs(n: int = 15):
-    return [dict.fromkeys(SEMBOLLER, 1.0 / 3.0) for _ in range(n)]
+from tests.conftest import esit_olasiliklar as _uniform_probs  # tek kaynak
 
 
 def test_picks_bos():

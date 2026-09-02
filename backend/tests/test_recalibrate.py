@@ -33,6 +33,7 @@ from spor_toto.recalibrate import (
     kademe_fabrikalari,
     rapor,
 )
+from tests.conftest import hafta_girdisi
 
 PIYASA = {"1": 0.50, "0": 0.25, "2": 0.25}
 
@@ -43,11 +44,8 @@ def _onceki_kademe(ad: str) -> str:
 
 
 def _girdi(week: int, results: str, probs=None) -> dict:
-    return {
-        "week": week, "close_date": "2026-01-01", "results": results,
-        "probs": list(probs) if probs else [dict(PIYASA)] * MATCH_COUNT,
-        "missing": 0, "usable": True,
-    }
+    """Hafta girdisi — govde `conftest.hafta_girdisi`da; taban PIYASA."""
+    return hafta_girdisi(week, results, probs, varsayilan=PIYASA)
 
 
 # ─── sözleşme ─────────────────────────────────────────────────────────────────

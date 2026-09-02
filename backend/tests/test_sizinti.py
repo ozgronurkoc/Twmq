@@ -40,6 +40,7 @@ from spor_toto.evaluate import (
 )
 from spor_toto.history import MATCH_COUNT, SYMBOLS
 from spor_toto.predict import Tahminci
+from tests.conftest import esit_tahmin, kahin_olasiliklari, korpus_yoksa_atla
 
 ESIT = dict.fromkeys(SYMBOLS, 1 / 3)
 
@@ -107,12 +108,8 @@ class SizdiranTahminci(Tahminci):
     aciklama = "test kurgusu: olculen haftanin sonucunu okur"
 
     def tahmin(self, hafta):
-        out = []
-        for kod in hafta["results"]:
-            p = dict.fromkeys(SYMBOLS, 0.05)
-            p[kod] = 0.90
-            out.append(p)
-        return out
+        # Mekanizma `conftest.kahin_olasiliklari`da (bkz. oradaki gerekce).
+        return kahin_olasiliklari(hafta)
 
 
 class SagirTahminci(Tahminci):
@@ -122,7 +119,7 @@ class SagirTahminci(Tahminci):
     aciklama = "test kurgusu: egitim setini hic okumaz"
 
     def tahmin(self, hafta):
-        return [dict(ESIT)] * len(hafta["results"])
+        return esit_tahmin(hafta)
 
 
 # ─── 1. madde: egit/tahmin ayrımı gerçek mi ───────────────────────────────────
@@ -408,8 +405,9 @@ def _benzer_bul(**kw):
 
 
 def _korpus_yoksa_atla():
-    if not _benzer_korpus():
-        pytest.skip("egitim korpusu yok (scripts/build_egitim.py)")
+    """Korpus yoksa ATLA. Karar `conftest.korpus_yoksa_atla`da — bu kabuk
+    yalnizca donen degeri atiyor (buradaki cagiranlar veriyi kullanmiyor)."""
+    korpus_yoksa_atla(_benzer_korpus)
 
 
 def test_benzer_kesme_tarihinden_sonrasini_gormez():

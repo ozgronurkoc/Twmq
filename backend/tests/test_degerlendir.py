@@ -37,8 +37,7 @@ def deg():
     return importlib.import_module("scripts.super_toto_degerlendir")
 
 
-def _dagilim(*p: float) -> dict[str, float]:
-    return dict(zip(SEMBOLLER, p))
+from tests.conftest import dagilim as _dagilim  # tek kaynak
 
 
 def _hafta(probs, sonuc, play=None):

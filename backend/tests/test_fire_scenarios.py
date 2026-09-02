@@ -20,10 +20,7 @@ ORNEK = "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"
 UCLULU = "1,1,1,1,1,1,1,1,1,1,10,10,10,10,102"
 
 
-def _enc_cols(picks: str = ORNEK):
-    enc = Encoder(parse_picks(picks))
-    cols, _ = solve_fix16(enc)
-    return enc, cols
+from tests.conftest import enc_ve_kolonlar as _enc_cols  # tek kaynak
 
 
 def _enc_tam_sistem(picks: str):

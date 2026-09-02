@@ -5,14 +5,10 @@ import pytest
 pytest.importorskip("flask")
 
 from spor_toto.history import MATCH_COUNT, SYMBOLS, history_weeks
-from web_app import app
 
-
-@pytest.fixture()
-def client():
-    app.config.update(TESTING=True)
-    with app.test_client() as c:
-        yield c
+# `client` fixture'i `tests/conftest.py`den geliyor — ayni govde bes
+# dosyada, ucu BIREBIR yaziliydi. (Ezmesi gereken ikisi eziyor:
+# `test_api_health` onbellek temizliyor, `test_tahmin` modul kapsamli.)
 
 
 def test_stats_govdesi(client):

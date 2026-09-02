@@ -13,7 +13,6 @@ from spor_toto.core import (
     _varsayilan_bloklar,
     ball,
     block_optimal,
-    dogrula_kaplama,
     exact_cover,
     exact_max_coverage,
     greedy_full,
@@ -34,10 +33,9 @@ ORNEK = "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"
 gerek_scipy = pytest.mark.skipif(not HAS_SCIPY, reason="scipy yok")
 
 
-def kaplama_gecerli(cols, sizes):
-    worst, acik = dogrula_kaplama(cols, sizes)
-    return worst <= 1 and acik == 0
-
+#: Kaplama gecerliligi TEK kaynaktan (`tests/conftest.py`). Ayni govde uc
+#: dosyada birebir yaziliydi.
+from tests.conftest import kaplama_gecerli
 
 # ------------------------------------------------------------
 # Hamming(7,4) - mukemmel kod
