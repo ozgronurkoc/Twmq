@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import csv
 import math
+import re
 from collections.abc import Sequence
 from functools import lru_cache
 from pathlib import Path
@@ -399,6 +400,46 @@ def _takvim_tablosu(satirlar: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
 def sezonlar() -> list[str]:
     """Korpustaki sezonlar, kronolojik."""
     return sorted({r["sezon"] for r in korpus_yukle()})
+
+
+def sezon_anahtari(ham: str | None) -> str | None:
+    """Serbest yazılmış bir sezonu **korpus anahtarına** çevirir.
+
+    Depoda sezonun iki yazımı var ve ikisi de `?sezon=` adını taşıyordu:
+    `history` tarafı `2024_25`, korpus tarafı `2425`. `/api/meta` BIRINCISINI
+    ilan ediyor, `/api/takimlar` ise IKINCISINI bekliyordu — yani arayüzün
+    yayımlanan listeden aldığı değer sessizce boş tablo döndürüyordu.
+
+    Bu fonksiyon ikisini de kabul eder; ayırt edici olan **rakamlardır**::
+
+        >>> sezon_anahtari("2425")
+        '2425'
+        >>> sezon_anahtari("2024_25")
+        '2425'
+        >>> sezon_anahtari("2024-25")
+        '2425'
+        >>> sezon_anahtari("2024/2025")
+        '2425'
+
+    Tanınmayan her şey `None` — çağıran 400 döndürür, sessizce varsayılana
+    DÜŞMEZ (`web_app._parse_sezon` ile aynı doktrin: başka bir sezonun
+    sayılarını görmek, hiç sayı görmemekten kötüdür)::
+
+        >>> sezon_anahtari("gecen sezon") is None
+        True
+        >>> sezon_anahtari("") is None
+        True
+        >>> sezon_anahtari(None) is None
+        True
+    """
+    rakam = re.sub(r"\D", "", str(ham or ""))
+    if len(rakam) == 4:
+        return rakam
+    if len(rakam) == 6:
+        return rakam[2:]
+    if len(rakam) == 8:
+        return rakam[2:4] + rakam[6:]
+    return None
 
 
 def cizgi_hareketi(acilis: dict[str, float] | None,

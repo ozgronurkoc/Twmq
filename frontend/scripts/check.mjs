@@ -20,7 +20,7 @@
  */
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { createRequire } from "node:module";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -616,6 +616,51 @@ try {
   });
 
   console.log(`\nOK — ${gecen} arayuz denetimi gecti`);
+
+// ─── yuzde/sayi gibi bicimleyiciler tek kaynakta mi ─────────────────────
+//
+// `app/pazarlar/page.tsx` `yuzde`yi YENIDEN YAZMISTI ve kanonik govdeden
+// zayifti: yalnizca `v == null` eliyordu, `NaN`/`Infinity` elemiyordu — yani
+// kapsanmayan bir banttaki bolme ekrana "%NaN" basardi. `/api/pazar` tam da
+// null tasiyan uc. `lib/utils.ts` bu tekillestirmenin yapildigini yaziyordu;
+// bir kopya hayatta kalmisti. Bekci sinifa bakar, tek dosyaya degil.
+dene("bicimleyiciler lib/utils.ts'ten TURER (yeniden yazilmaz)", () => {
+  const kok = join(dirname(fileURLToPath(import.meta.url)), "..");
+  const adlar = ["yuzde", "sayi", "ondalik"];
+  const bulunan = [];
+  const gez = (dizin) => {
+    for (const g of readdirSync(dizin, { withFileTypes: true })) {
+      const yol = join(dizin, g.name);
+      if (g.isDirectory()) { gez(yol); continue; }
+      if (!/\.tsx?$/.test(g.name)) continue;
+      const metin = readFileSync(yol, "utf8");
+      // `@/lib/utils`ten ne getirilmis? Sarmalayici mesrudur: kanonik
+      // govdeyi CAGIRIP bir argumani sabitler (`_yuzde(v, 0)` gibi).
+      // Yasak olan, kanonigi hic getirmeden yeniden YAZMAK.
+      const getirilen = new Set();
+      for (const m of metin.matchAll(/import\s*\{([^}]*)\}\s*from\s*"@\/lib\/utils"/g)) {
+        for (const parca of m[1].split(",")) {
+          const ad = parca.trim().split(/\s+as\s+/).pop();
+          if (ad) getirilen.add(ad.trim());
+        }
+      }
+      for (const ad of adlar) {
+        const yerel = new RegExp(
+          `(?:^|\\n)\\s*(?:export\\s+)?(?:const|function)\\s+${ad}\\b[^\\n]*(?:\\n[^\\n]*){0,3}`);
+        const m = yerel.exec(metin);
+        if (!m) continue;
+        const govde = m[0];
+        const turemis = [...getirilen].some((g) => new RegExp(`\\b${g}\\b`).test(govde));
+        if (!turemis) bulunan.push(`${g.name}:${ad}`);
+      }
+    }
+  };
+  for (const alt of ["app", "components"]) gez(join(kok, alt));
+  assert.deepEqual(
+    bulunan, [],
+    `bicimleyici lib/utils.ts'ten TUREMEDEN yeniden yazilmis: ${bulunan.join(", ")}`,
+  );
+});
 } finally {
   rmSync(cikti, { recursive: true, force: true });
 }

@@ -720,9 +720,33 @@ def api_takimlar():
 
     `?lig=` ciktiyi suzer (hesap degismez), `?sezon=` girdiyi suzer
     (sayilar degisir, `n` duser, kucultme artar).
+
+    ─── `?sezon=` neden burada ayrica dogrulaniyor ───────────────────────
+
+    Depoda sezonun IKI yazimi var ve ikisi de `?sezon=` adini tasiyordu:
+    `/api/stats` ve `/api/backtest` `history` anahtarini (`2024_25`)
+    bekliyor, bu uc ise KORPUS anahtarini (`2425`). `/api/meta` birincisini
+    ilan ediyordu, yani arayuzun yayimlanan listeden aldigi deger buraya
+    gelince govde 200 OK ve BOS donuyordu — sayfa hatasiz boslaniyordu.
+
+    Iki care birden uygulaniyor: `egitim.sezon_anahtari` iki yazimi da
+    kabul ediyor, ve taninmayan bir sezon artik SESSIZ DUSMUYOR — 400 ve
+    gecerli liste doner (`_parse_sezon` ile ayni doktrin).
     """
-    return jsonify(takimlar_payload(request.args.get("lig") or None,
-                                    request.args.get("sezon") or None))
+    # Import GOVDEDE: `egitim` korpusu acar ve `web_app`in ice aktarim
+    # maliyetine girmemeli (`payloads.takimlar_payload` ayni gerekceyle
+    # `takim_gucu`yu govdede aliyor).
+    from spor_toto.egitim import sezon_anahtari as korpus_sezon_anahtari
+    from spor_toto.egitim import sezonlar as korpus_sezonlari
+
+    ham = request.args.get("sezon") or None
+    sezon = None
+    if ham is not None:
+        sezon = korpus_sezon_anahtari(ham)
+        if sezon is None or sezon not in korpus_sezonlari():
+            return jsonify({"error": "bilinmeyen sezon",
+                            "sezonlar": korpus_sezonlari()}), 400
+    return jsonify(takimlar_payload(request.args.get("lig") or None, sezon))
 
 
 @app.route("/api/stats/<int:week>", methods=["GET"])

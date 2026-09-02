@@ -252,3 +252,60 @@ def test_gercek_korpusta_az_macli_takim_daha_temkinli():
     cok = satirlar[-20:]
     assert (sum(x["puan"]["kucultme"] for x in az) / len(az)
             < sum(x["puan"]["kucultme"] for x in cok) / len(cok))
+
+
+# ─── sezon anahtarı: iki yazım, tek uç ────────────────────────────────────
+
+def test_takimlar_ucu_IKI_sezon_yazimini_da_kabul_eder():
+    """`/api/takimlar` hem `2425` hem `2024_25` ile aynı tabloyu vermeli.
+
+    **Ölçülmüş kusurdan geldi.** Depoda sezonun iki yazımı vardı ve ikisi de
+    `?sezon=` adını taşıyordu: `/api/stats` ve `/api/backtest` `2024_25`
+    bekliyor, bu uç `2425`. `/api/meta` `seasons.available` içinde
+    **birincisini** ilan ediyordu, yani arayüzün yayımlanan listeden aldığı
+    değer buraya gelince gövde `200 OK` ve **boş** dönüyordu; sayfa hatasız
+    boşalıyordu (ölçüldü: 604 takım → 0 takım).
+    """
+    pytest.importorskip("flask")
+    import web_app
+
+    c = web_app.app.test_client()
+    a = c.get("/api/takimlar?sezon=2425")
+    b = c.get("/api/takimlar?sezon=2024_25")
+    assert a.status_code == b.status_code == 200
+    assert a.get_json()["ligler"] == b.get_json()["ligler"]
+    assert a.get_json()["ligler"], "sezon suzgeci bos tablo verdi"
+
+
+def test_takimlar_ucu_bilinmeyen_sezonda_SESSIZ_DUSMEZ():
+    """Tanınmayan sezon 400 ve geçerli listeyle dönmeli, boş tabloyla değil.
+
+    `web_app._parse_sezon` docstring'inin doktrini: *"gecersiz sezonu
+    sessizce varsayilana dusurmuyoruz … baska bir sezonun sayilarini gormek,
+    hic sayi gormemekten kotudur."* Bu uçta uygulanmamıştı.
+    """
+    pytest.importorskip("flask")
+    import web_app
+
+    c = web_app.app.test_client()
+    for ham in ("1999_00", "abc", "9999"):
+        r = c.get(f"/api/takimlar?sezon={ham}")
+        assert r.status_code == 400, ham
+        assert r.get_json()["sezonlar"], "400 gecerli listeyi tasimali"
+
+
+def test_takimlar_govdesi_secilebilir_sezonlari_SUZMEDEN_ONCE_yayimlar():
+    """Seçici listesi seçimden sonra daralmamalı.
+
+    İlk yazımda liste süzülmüş satırlardan çıkarılıyordu; kullanıcı bir sezon
+    seçtiğinde seçici tek seçenekli kalıyor ve geri dönemiyordu. Ölçülerek
+    yakalandı.
+    """
+    pytest.importorskip("flask")
+    import web_app
+
+    c = web_app.app.test_client()
+    hepsi = c.get("/api/takimlar").get_json()["sezonlar"]
+    suzulmus = c.get(f"/api/takimlar?sezon={hepsi[-1]}").get_json()["sezonlar"]
+    assert len(hepsi) > 1, "korpus tek sezonluk — bu bekci anlamsizlasti"
+    assert suzulmus == hepsi

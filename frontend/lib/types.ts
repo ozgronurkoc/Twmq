@@ -1088,7 +1088,26 @@ export interface TahminciSkoru {
   hafta_14_arti: number;
   hafta_13_arti: number;
   /** Yalnızca alternatifte: manşete göre fark ve güven aralığı. */
-  fark?: { fark: number; alt: number; ust: number; tekrar: number };
+  fark?: {
+    /** Gösterime yuvarlanmış (4 basamak) fark ve aralık. */
+    fark: number;
+    alt: number;
+    ust: number;
+    tekrar: number;
+    /**
+     * **Yuvarlanmamış** hâli. Ayrı bir aralık DEĞİL — aynı aralığın ham
+     * değeri. Sunucu `gecti` kararını `ham_ust`ten veriyor
+     * (`spor_toto/tahmin.py:380`): `round(-0.000031, 4)` `-0.0` verir ve
+     * `-0.0 < 0` False'tur, yani aralık tamamen sıfırın altındayken aday
+     * yuvarlanmış değerle "geçmedi" diye yazılırdı.
+     *
+     * Tip bu üç alanı taşımıyordu; sözleşme denetimi (`scripts/check.mjs`)
+     * yalnızca 1 seviye derin baktığı için eksiklik CI'dan yeşil geçti.
+     */
+    ham_fark: number;
+    ham_alt: number;
+    ham_ust: number;
+  };
   /** Yalnızca alternatifte: aralık tamamen sıfırın altında mı. */
   gecti?: boolean;
 }
@@ -1245,6 +1264,17 @@ export interface TakimLigi {
 
 export interface TakimlarResponse {
   sezon: string | null;
+  /**
+   * Seçilebilir sezonlar — **sunucunun ilan ettiği** korpus anahtarları
+   * (`2425`), `/api/meta` `seasons.available`ın (`2024_25`) değil.
+   *
+   * Bu alan bir hatadan doğdu: sezon kutusu serbest metindi ve kullanıcı
+   * öteki sayfaların kullandığı `2024_25`i yazınca uç 200 OK + boş gövde
+   * dönüyordu; sayfa hatasız boşalıyordu. Sunucu artık iki yazımı da kabul
+   * ediyor, tanımayanı 400'lüyor ve seçilebilir listeyi burada yayımlıyor —
+   * seçici bundan kurulur, elle yazılmaz.
+   */
+  sezonlar: string[];
   ligler: TakimLigi[];
   olculer: { alan: string; aciklama: string }[];
   en_az_mac: number;

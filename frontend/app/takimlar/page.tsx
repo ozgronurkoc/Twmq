@@ -169,6 +169,15 @@ function LigSeridi({
  * görünür. Az maçlı takımın sayısı lig ortalamasına yaklaşır ve **bunu
  * kendisi söyler**.
  */
+/**
+ * `2425` -> `2024/25`. Sunucu korpus anahtarini yayimlar; kullaniciya
+ * okunur hali gosterilir ama SECENEK DEGERI daima sunucunun anahtaridir.
+ */
+function sezonEtiketi(anahtar: string): string {
+  const m = /^(\d{2})(\d{2})$/.exec(anahtar);
+  return m ? `20${m[1]}/${m[2]}` : anahtar;
+}
+
 export default function TakimlarSayfasi() {
   const [sezon, setSezon] = React.useState<string>("");
   const [secili, setSecili] = React.useState<string>("");
@@ -202,13 +211,28 @@ export default function TakimlarSayfasi() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <input
+          {/*
+            SERBEST METIN DEGIL, secici. Once serbest metindi ve tuzakti:
+            oteki her sayfa sezonu `2024_25` biciminde kullaniyor, bu ucun
+            korpus anahtari ise `2425`. Kullanici `2024_25` yazinca sunucu
+            200 OK + BOS govde donuyor, asagidaki `ligler[0]` yedegi devreye
+            giriyor ve sayfa HATASIZ BOSALIYORDU. Sunucu artik iki yazimi da
+            kabul ediyor ve secilebilir listeyi govdede ilan ediyor; secenekler
+            oradan kuruluyor, yani uydurulabilecek bir deger kalmiyor.
+          */}
+          <select
             aria-label="Sezon"
-            placeholder="sezon (2425)"
-            className="h-9 w-[130px] rounded-md border border-border bg-background px-2 text-[13px]"
+            className="h-9 w-[150px] rounded-md border border-border bg-background px-2 text-[13px]"
             value={sezon}
-            onChange={(e) => setSezon(e.target.value.trim())}
-          />
+            onChange={(e) => setSezon(e.target.value)}
+          >
+            <option value="">bütün sezonlar</option>
+            {(veri?.sezonlar ?? []).map((s) => (
+              <option key={s} value={s}>
+                {sezonEtiketi(s)}
+              </option>
+            ))}
+          </select>
           <Button tip="ghost" onClick={yenile} aria-label="Yenile">
             <RefreshCw size={15} />
           </Button>
