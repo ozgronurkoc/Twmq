@@ -145,8 +145,20 @@ def _uclar(istemci, ornek_kupon: str) -> dict[str, Any]:
          "govde": {"picks": ornek_kupon, "mode": "fix16"}},
         {"ad": "GET /api/stats", "yol": "/api/stats"},
         {"ad": "GET /api/stats/<week>", "yol": "/api/stats/<cozulecek>"},
-        # Tarama KAPALI: acik hali dakikalar surer ve sekli degistirmez.
-        {"ad": "GET /api/backtest", "yol": "/api/backtest?sweep=0"},
+        # Tarama ACIK ama KESIT DAR. Onceden `?sweep=0` ile aliniyordu ve
+        # gerekcesi "acik hali dakikalar surer ve SEKLI DEGISTIRMEZ" idi.
+        # Ikinci yari OLCULDU ve YANLIS cikti: tarama kapaliyken `holdout`
+        # yalnizca `weeks` tasiyor, acikken ON alan (`hit14`, `hit14_ci`,
+        # `columns_avg`, `payda`, `chosen`…). Yani sozlesme tam da belgelerin
+        # sayi verdigi yerde kordu ve arayuz tipinin o alanlari hicbir sey
+        # denetlemiyordu.
+        #
+        # `last=12` maliyeti cozuyor — olculdu:
+        #     sweep=0          2,12 sn   holdout  1 alan
+        #     sweep=1         23,58 sn   holdout 10 alan
+        #     sweep=1&last=12  0,07 sn   holdout 10 alan
+        # Dar kesit hicbir alani DUSURMUYOR (60 -> 115 yol, kayip yok).
+        {"ad": "GET /api/backtest", "yol": "/api/backtest?sweep=1&last=12"},
         {"ad": "GET /api/pazar", "yol": "/api/pazar"},
         {"ad": "GET /api/takimlar", "yol": "/api/takimlar"},
         {"ad": "GET /api/tahmin", "yol": "/api/tahmin"},

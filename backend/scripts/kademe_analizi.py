@@ -48,12 +48,19 @@ import numpy as np
 
 from spor_toto import odds as O
 from spor_toto.core import SEMBOLLER
+from spor_toto.getiri import VARSAYILAN_KOLON_BEDELI
 from spor_toto.ortak import kacak_dagilimi as _kacak_dagilimi
 
-#: Spor Toto kolon bedeli. `getiri.py` CLI varsayılanıyla aynı tutulur;
-#: **doğrulanmış bir fiyat değildir** ve para sonuçları buna doğrusal
-#: bağlıdır (2,50 TL olsaydı bütün geri dönüşler %40 düşerdi).
-KOLON_BEDELI = 1.50
+#: Spor Toto kolon bedeli — **doğrulanmış bir fiyat değildir** ve para
+#: sonuçları buna doğrusal bağlıdır (2,50 TL olsaydı bütün geri dönüşler
+#: %40 düşerdi).
+#:
+#: Değer burada `1.50` diye ÜÇÜNCÜ kez yazılıydı ve hangi sayı olduğu
+#: (ölçülmüş mü varsayım mı) hiçbir yerde yazmıyordu — oysa `getiri` aynı
+#: kavram için ölçülmüş bir ₺10 de taşıyor. Tek kaynak
+#: `getiri.VARSAYILAN_KOLON_BEDELI`; ölçülmüş olanı `getiri.KOLON_BEDELI`
+#: ve ikisi bilerek AYRI (gerekçe orada).
+KOLON_BEDELI = VARSAYILAN_KOLON_BEDELI
 
 #: Ölçümde kullanılan sezonlar — oran arşivi olan bütün sezonlar.
 SEZONLAR = ("2025_26", "2024_25", "2023_24", "2022_23")
