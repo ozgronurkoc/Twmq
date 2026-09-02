@@ -460,3 +460,42 @@ def test_ortak_hesaplari_baska_yerde_YENIDEN_YAZILMAMIS():
         "`ortak`taki hesap başka bir dosyada YENIDEN YAZILMIŞ — tek kaynak "
         "iddiası yalan olur: " + "; ".join(ihlal)
     )
+
+
+#: Üç boru hattının da aynı anahtara indirgemek zorunda olduğu adlar.
+#: Türkçe `ı`/`ş`/`ğ`, İskandinav `ø`, Alman `ß` ve Hırvat `đ` — NFKD
+#: bunların yalnızca bir kısmını ayrıştırır, kalanı tabloya bağlıdır.
+_ESLEME_ORNEKLERI = (
+    ("Kasımpaşa", "kasimpasa"),
+    ("Şanlıurfaspor", "sanliurfaspor"),
+    ("Altınordu", "altinordu"),
+    ("Fatih Karagümrük", "fatih karagumruk"),
+    ("Çaykur Rizespor", "caykur rizespor"),
+    ("Bayern München", "bayern munchen"),
+    ("Molde FK", "molde"),   # `fk` uc atma listesinde de var
+    ("Borussia M'gladbach", "borussia m gladbach"),
+)
+
+
+@pytest.mark.parametrize("ham,beklenen", _ESLEME_ORNEKLERI)
+def test_ad_sadelestir_uc_boru_hattinda_AYNI_anahtari_verir(ham, beklenen):
+    """Aynı kulüp, üç boru hattında **aynı** anahtara düşmeli.
+
+    **Ölçülmüş kusurdan geldi.** `sadelestir` üç yerde ayrı yazılıydı ve
+    harf tabloları farklıydı; `build_avrupa`nınki `ı`yı hiç tanımıyordu, o
+    yüzden `Kasımpaşa` orada `kas mpasa` oluyordu — ad **ikiye bölünüyordu**.
+    Zarar vermemişti çünkü karşılaştırma iki tarafını da aynı bozuk gövdeden
+    geçiriyordu, ama anahtar bir boru hattı sınırını geçtiği gün sessizce
+    eşleşmezdi.
+
+    Test **davranışa** bakar, yapıya değil: yarın biri gövdeyi tekrar
+    ayırırsa buradan düşer. Atma listeleri modüle özgü kalır ve bu testte
+    yer almaz — ayrışması gereken tek şey odur.
+    """
+    from scripts.build_avrupa import sadelestir as avrupa_sade
+    from scripts.build_sehir import sadelestir as sehir_sade
+    from spor_toto.gorus import sadelestir as gorus_sade
+
+    assert gorus_sade(ham) == beklenen
+    assert avrupa_sade(ham) == beklenen
+    assert sehir_sade(ham) == beklenen

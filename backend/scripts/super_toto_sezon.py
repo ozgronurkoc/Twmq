@@ -24,7 +24,6 @@ vardır.
 from __future__ import annotations
 
 import argparse
-import importlib.util
 import json
 import math
 import re
@@ -36,6 +35,7 @@ from typing import Any
 KOK = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(KOK))
 
+from scripts._ortak import modul
 from spor_toto.core import SEMBOLLER
 
 #: Sembol duzeni TEK kaynaktan (`spor_toto.core`). Bu dosyada ayri bir
@@ -53,16 +53,10 @@ KOVALAR = ((0.0, 0.20), (0.20, 0.30), (0.30, 0.40),
            (0.40, 0.55), (0.55, 0.70), (0.70, 1.01))
 
 
-def _modul(ad: str):
-    """Kardes betigi getirir — artik sıradan bir import.
-
-    Once `spec_from_file_location` ile dosya yolundan yukleniyordu ve
-    yuklerken `sys.argv`yi geciciyle degistiriyordu. Ikisi de gereksizdi:
-    bu dizin bir paket (`scripts/__init__.py`) ve hedef betiklerin hepsinde
-    `if __name__ == "__main__"` guard'i var, yani import etmek argparse'i
-    tetiklemiyor.
-    """
-    return importlib.import_module(f"scripts.super_toto_{ad}")
+#: Kardes betigi getirme TEK kaynaktan: `scripts._ortak.modul`. Ayni govde
+#: VE ayni docstring uc betikte birebir duruyordu — o docstring bir ONCEKI
+#: tekillestirme turunu anlatiyor.
+_modul = modul
 
 
 #: Hafta dosyasının adı. Kalıp **kapalıdır** ve bu kasıtlı: aynı dizinde

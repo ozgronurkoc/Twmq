@@ -33,7 +33,6 @@ from __future__ import annotations
 
 import argparse
 import csv
-import json
 import sys
 import tempfile
 from collections.abc import Sequence
@@ -43,6 +42,8 @@ from typing import Any
 
 KOK = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(KOK))
+
+from scripts._ortak import metin
 
 CIKTI = KOK.parent / "frontend" / "lib" / "api-sozlesme.json"
 
@@ -267,8 +268,10 @@ def uret() -> dict[str, Any]:
     }
 
 
-def _metin(veri: dict[str, Any]) -> str:
-    return json.dumps(veri, ensure_ascii=False, indent=1, sort_keys=True) + "\n"
+#: Uretilmis JSON metni TEK kaynaktan: `scripts._ortak.metin`. Ayni govde
+#: uc betikte birebir yaziliydi ve `--kontrol` bayraklari tam da bu metnin
+#: kararliligina dayaniyor.
+_metin = metin
 
 
 def main(argv: Sequence[str] | None = None) -> int:

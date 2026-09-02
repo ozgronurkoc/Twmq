@@ -49,6 +49,7 @@ from typing import Any
 KOK = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(KOK))
 
+from scripts._ortak import metin
 from scripts.super_toto_hafta import hafta_yukle, kupon_satirlari
 from spor_toto import kosum
 from spor_toto.backtest import (
@@ -485,8 +486,10 @@ def uret(sezon: str, hafta: int,
 
 # ─── yazım ────────────────────────────────────────────────────────────────
 
-def _metin(govde: dict[str, Any]) -> str:
-    return json.dumps(govde, ensure_ascii=False, indent=1, sort_keys=True) + "\n"
+#: Uretilmis JSON metni TEK kaynaktan: `scripts._ortak.metin`. Ayni govde
+#: uc betikte birebir yaziliydi ve `--kontrol` bayraklari tam da bu metnin
+#: kararliligina dayaniyor.
+_metin = metin
 
 
 def yaz(govde: dict[str, Any], sezon: str, hafta: int,

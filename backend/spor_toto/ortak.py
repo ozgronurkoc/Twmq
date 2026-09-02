@@ -22,6 +22,8 @@ modül yüzünden döngüye girmez.
 from __future__ import annotations
 
 import math
+import re
+import unicodedata
 from collections.abc import Sequence
 from typing import Any
 
@@ -33,6 +35,8 @@ __all__ = [
     "GUVEN_Z",
     "OLASILIK_BANTLARI",
     "SEMBOLLER",
+    "SIRALAMA_K",
+    "ad_sadelestir",
     "bant_adi",
     "brier",
     "brier_ayrisimi",
@@ -40,6 +44,7 @@ __all__ = [
     "kacak_dagilimi",
     "karisiklik_matrisi",
     "normalize_olasilik",
+    "oran_sayisi",
     "siralama_olculeri",
     "wilson",
 ]
@@ -97,6 +102,108 @@ def wilson(basari: int, n: int) -> tuple[float, float]:
     yari = GUVEN_Z * math.sqrt(
         p * (1 - p) / n + GUVEN_Z * GUVEN_Z / (4 * n * n)) / payda
     return max(0.0, merkez - yari), min(1.0, merkez + yari)
+
+
+# ─── ad eşleme ───────────────────────────────────────────────────────────
+
+#: NFKD'nin **ayrıştırmadığı** harfler. Ötekiler (ğ, ş, ü, é, å…) zaten
+#: ayrışıp birleştirici işaretleri atıldığı için burada yazılı olmalarına
+#: gerek yok — yazılı olanlar açıklık içindir, sonucu değiştirmezler.
+#:
+#: Kritik olan `ı`: **taban harftir, ayrışmaz.** Tabloda olmazsa
+#: `[^a-z0-9]+` onu boşluğa çevirir ve ad **ikiye bölünür**
+#: (`Kasımpaşa` → `kas mpasa`). `build_avrupa` tam olarak böyleydi.
+_HARF_INDIRGEME: Sequence[tuple[str, str]] = (
+    ("ı", "i"), ("İ", "I"), ("ğ", "g"), ("Ğ", "G"), ("ş", "s"), ("Ş", "S"),
+    ("ø", "o"), ("Ø", "O"), ("ß", "ss"), ("ð", "d"), ("þ", "th"),
+    ("đ", "d"), ("Đ", "D"),
+)
+
+
+def ad_sadelestir(ad: str,
+                  atilan: Any = frozenset(),
+                  yil_at: bool = False) -> str:
+    """Takım adını karşılaştırılabilir bir anahtara indirger.
+
+    Aksan, noktalama ve kulüp eki olmadan; `atilan` kelimeleri düşerek.
+    `yil_at` verilirse kuruluş yılı da atılır (`1907`, `1899`…).
+
+    **Neden tek kaynak.** Bu gövde üç yerde ayrı ayrı yazılıydı
+    (`build_avrupa`, `build_sehir`, `gorus`) ve **üçünün harf tablosu
+    farklıydı**. Aynı kulüp üç boru hattında üç ayrı anahtara düşebiliyordu;
+    bugün düşmüyordu yalnızca çünkü her karşılaştırma iki tarafını da aynı
+    bozuk gövdeden geçiriyordu. Birleştirme 518 ad üzerinde ölçüldü:
+    **hiçbirinin anahtarı değişmedi.**
+
+    Aksanlar ayrışır ve düşer::
+
+        >>> ad_sadelestir("Çaykur Rizespor")
+        'caykur rizespor'
+        >>> ad_sadelestir("Bayern München")
+        'bayern munchen'
+
+    `ı` ayrışmaz; tablo olmasaydı ad ikiye bölünürdü::
+
+        >>> ad_sadelestir("Kasımpaşa")
+        'kasimpasa'
+        >>> ad_sadelestir("Altınordu")
+        'altinordu'
+
+    Atılan kelimeler ve yıl::
+
+        >>> ad_sadelestir("Fenerbahçe SK", atilan={"sk"})
+        'fenerbahce'
+        >>> ad_sadelestir("Schalke 04 1904", atilan=set(), yil_at=True)
+        'schalke 04'
+
+    Her şey atılırsa anahtar boş kalmaz — ham hâline düşer::
+
+        >>> ad_sadelestir("SK", atilan={"sk"})
+        'sk'
+    """
+    a = unicodedata.normalize("NFKD", ad)
+    a = "".join(c for c in a if not unicodedata.combining(c))
+    for eski, yerine in _HARF_INDIRGEME:
+        a = a.replace(eski, yerine)
+    a = re.sub(r"[^a-z0-9]+", " ", a.lower())
+    kelimeler = [k for k in a.split()
+                 if k not in atilan
+                 and not (yil_at and re.fullmatch(r"1[89]\d\d", k))]
+    return " ".join(kelimeler) if kelimeler else a.strip()
+
+
+def oran_sayisi(ham: Any) -> float | None:
+    """Bahis oranı olarak okunabilen sayı — okunamazsa `None`.
+
+    **1,0 sınırı gövdenin parçasıdır.** Bahis oranı tanım gereği 1'den
+    büyüktür; `1.0` ve altı ya boş hücre ya bozuk kayıttır ve sayı gibi
+    okunursa `1/oran` sonsuza gider, arındırma da onunla birlikte.
+
+    Bu gövde üç yerde birebir yazılıydı (`tahmin`, `scripts/build_egitim`,
+    `scripts/build_fixtures`) ve üçü aynı football-data sütunlarını
+    okuyordu::
+
+        >>> oran_sayisi("2.35")
+        2.35
+        >>> oran_sayisi(" 1.90 ")
+        1.9
+
+    Oran olmayan her şey `None`::
+
+        >>> oran_sayisi("1.0") is None
+        True
+        >>> oran_sayisi("") is None
+        True
+        >>> oran_sayisi(None) is None
+        True
+        >>> oran_sayisi("abc") is None
+        True
+    """
+    try:
+        v = float(str(ham).strip())
+    except (TypeError, ValueError):
+        return None
+    return v if v > 1.0 else None
 
 
 # ─── puanlama ────────────────────────────────────────────────────────────

@@ -45,6 +45,7 @@ sys.path.insert(0, str(KOK))
 VARSAYILAN_CIKTI = KOK / "data" / "fixtures"
 
 from spor_toto.odds import FIYAT_VARSAYILAN
+from spor_toto.ortak import oran_sayisi
 
 UA = "Mozilla/5.0 (compatible; spor-toto-lab/1.0)"
 FIXTURES_URL = "https://www.football-data.co.uk/fixtures.csv"
@@ -77,12 +78,8 @@ def indir(url: str, timeout: float = 60.0) -> bytes | None:
         return None
 
 
-def _sayi(ham: Any) -> float | None:
-    try:
-        v = float(str(ham).strip())
-    except (TypeError, ValueError):
-        return None
-    return v if v > 1.0 else None
+#: Oran okuma TEK kaynaktan (`spor_toto.ortak.oran_sayisi`).
+_sayi = oran_sayisi
 
 
 def oran_sec(satir: dict[str, Any]) -> dict[str, Any] | None:

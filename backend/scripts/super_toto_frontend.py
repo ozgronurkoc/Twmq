@@ -24,7 +24,6 @@ kapanmış haftaların kaydıdır.
 from __future__ import annotations
 
 import argparse
-import importlib.util
 import json
 import sys
 from collections.abc import Sequence
@@ -34,6 +33,7 @@ from typing import Any
 KOK = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(KOK))
 
+from scripts._ortak import metin, modul
 from spor_toto.core import SEMBOLLER
 from spor_toto.odds import implied_probs
 
@@ -43,16 +43,10 @@ SEM = SEMBOLLER
 CIKTI = KOK.parent / "frontend" / "lib" / "super-toto-veri.json"
 
 
-def _modul(ad: str):
-    """Kardes betigi getirir — artik sıradan bir import.
-
-    Once `spec_from_file_location` ile dosya yolundan yukleniyordu ve
-    yuklerken `sys.argv`yi geciciyle degistiriyordu. Ikisi de gereksizdi:
-    bu dizin bir paket (`scripts/__init__.py`) ve hedef betiklerin hepsinde
-    `if __name__ == "__main__"` guard'i var, yani import etmek argparse'i
-    tetiklemiyor.
-    """
-    return importlib.import_module(f"scripts.super_toto_{ad}")
+#: Kardes betigi getirme TEK kaynaktan: `scripts._ortak.modul`. Ayni govde
+#: VE ayni docstring uc betikte birebir duruyordu — o docstring bir ONCEKI
+#: tekillestirme turunu anlatiyor.
+_modul = modul
 
 
 def _yuvarla(p: dict[str, float]) -> dict[str, float]:
@@ -483,8 +477,10 @@ def uret(sezon: str = "2026_27") -> dict[str, Any]:
     }
 
 
-def _metin(govde: dict[str, Any]) -> str:
-    return json.dumps(govde, ensure_ascii=False, indent=1, sort_keys=True) + "\n"
+#: Uretilmis JSON metni TEK kaynaktan: `scripts._ortak.metin`. Ayni govde
+#: uc betikte birebir yaziliydi ve `--kontrol` bayraklari tam da bu metnin
+#: kararliligina dayaniyor.
+_metin = metin
 
 
 def main(argv: Sequence[str] | None = None) -> None:

@@ -34,8 +34,6 @@ import argparse
 import csv
 import json
 import sys
-import urllib.error
-import urllib.request
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -44,7 +42,9 @@ KOK = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(KOK))
 VARSAYILAN_CIKTI = KOK / "data" / "egitim"
 
+from scripts._ortak import indir, tarih_coz
 from spor_toto.odds import FIYAT_VARSAYILAN
+from spor_toto.ortak import oran_sayisi
 
 UA = "Mozilla/5.0 (compatible; spor-toto-lab/1.0)"
 ANA_URL = "https://www.football-data.co.uk/mmz4281/{sezon}/{lig}.csv"
@@ -159,37 +159,15 @@ ISTATISTIK_SUTUNLARI: tuple[tuple[str, str], ...] = (
 )
 
 
-def indir(url: str, hedef: Path, timeout: float = 60.0) -> Path | None:
-    """Kaynak dosyayi indir; varsa yeniden indirme (onbellek git disi)."""
-    if hedef.exists() and hedef.stat().st_size > 0:
-        return hedef
-    istek = urllib.request.Request(url, headers={"User-Agent": UA})
-    try:
-        with urllib.request.urlopen(istek, timeout=timeout) as r:
-            ham = r.read()
-    except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError) as e:
-        print(f"  {url} alinamadi ({e})", file=sys.stderr)
-        return None
-    hedef.parent.mkdir(parents=True, exist_ok=True)
-    hedef.write_bytes(ham)
-    return hedef
+#: Indirme TEK kaynaktan: `scripts._ortak.indir` (ayni govde uc betikte
+#: birebir yaziliydi; UA da oradan gelir).
 
 
-def tarih_coz(ham: str) -> datetime | None:
-    for bicim in ("%d/%m/%Y", "%d/%m/%y"):
-        try:
-            return datetime.strptime(ham.strip(), bicim)
-        except ValueError:
-            continue
-    return None
+#: Tarih cozme TEK kaynaktan (`scripts._ortak.tarih_coz`).
 
 
-def _sayi(ham: Any) -> float | None:
-    try:
-        v = float(str(ham).strip())
-    except (TypeError, ValueError):
-        return None
-    return v if v > 1.0 else None
+#: Oran okuma TEK kaynaktan (`spor_toto.ortak.oran_sayisi`).
+_sayi = oran_sayisi
 
 
 def _ucluyu_oku(satir: dict[str, Any], onek: str) -> dict[str, float] | None:
