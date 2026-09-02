@@ -256,10 +256,6 @@ def _takvim_tablosu(satirlar: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
     """
     from datetime import date
 
-    def _gun(ham: str) -> date:
-        y, a, g = (int(p) for p in ham.split("-"))
-        return date(y, a, g)
-
     sirali = sorted(range(len(satirlar)),
                     key=lambda i: (satirlar[i]["tarih"], satirlar[i]["lig"],
                                    satirlar[i]["ev"]))
@@ -273,6 +269,11 @@ def _takvim_tablosu(satirlar: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
         lig_toplam[anahtar] = lig_toplam.get(anahtar, 0) + 1
 
     # UEFA gunleri: takvim bilgisi, sonuc DEGIL (bkz. `avrupa` modul basligi).
+    # `_gun` BURADA IC FONKSIYON OLARAK IKINCI KEZ YAZILMISTI; govde
+    # `avrupa._gun` ile birebir ayniydi. Iki modul ayni tarih bicimini
+    # (`YYYY-AA-GG`) ayni korpustan okuyor, yani ayrisirlarsa ayni satir iki
+    # modulde iki farkli gune duserdi. Tek kaynak `avrupa._gun`.
+    from .avrupa import _gun
     from .avrupa import avrupa_gunleri as _avrupa_gunleri
     from .avrupa import pencere_sayisi as _avrupa_pencere
     from .avrupa import son_avrupa as _son_avrupa

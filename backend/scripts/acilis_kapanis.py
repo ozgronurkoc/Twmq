@@ -36,6 +36,7 @@ from spor_toto.odds import (
     load_odds,
     market_odds,
 )
+from spor_toto.ortak import brier
 
 #: Sembol duzeni TEK kaynaktan (`spor_toto.core`). Bu dosyada ayri bir
 #: demet olarak yaziliyordu; depoda ayni deger on bir kez tanimliydi.
@@ -70,8 +71,9 @@ def ciftler(kaynak: str = FIYAT_VARSAYILAN):
     return out
 
 
-def brier(p, kod):
-    return sum((p[s] - (1.0 if s == kod else 0.0)) ** 2 for s in SEM)
+#: Brier BURADA YENIDEN YAZILMISTI; tek kaynak `spor_toto.ortak.brier`.
+#: Govde tam sozlukte birebir ayniydi, yalnizca `p[s]` yazdigi icin eksik
+#: bir sembolde `KeyError` firlatiyordu (kanonik govde `.get(s, 0.0)`).
 
 
 def dogruluk(rows):

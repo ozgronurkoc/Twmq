@@ -47,8 +47,8 @@ sys.path.insert(0, str(KOK))
 import numpy as np
 
 from spor_toto import odds as O
-
-SEMBOLLER = ("1", "0", "2")
+from spor_toto.core import SEMBOLLER
+from spor_toto.ortak import kacak_dagilimi as _kacak_dagilimi
 
 #: Spor Toto kolon bedeli. `getiri.py` CLI varsayılanıyla aynı tutulur;
 #: **doğrulanmış bir fiyat değildir** ve para sonuçları buna doğrusal
@@ -157,13 +157,20 @@ def en_iyi_sistem(P: np.ndarray, butce: int) -> tuple[list[int], int]:
 
 
 def kacak_dagilimi(q: Sequence[float]) -> np.ndarray:
-    """k kaçağın Poisson-binom dağılımı."""
-    d = np.zeros(len(q) + 1)
-    d[0] = 1.0
-    for qi in q:
-        d[1:] = d[1:] * (1 - qi) + d[:-1] * qi
-        d[0] *= (1 - qi)
-    return d
+    """k kaçağın Poisson-binom dağılımı — `ortak.kacak_dagilimi`nin dizi hâli.
+
+    **Hesap burada YENIDEN YAZILMISTI** ve `ortak.py:499`un açık uyarısını
+    çiğniyordu: *"`secim` de aynı hesabı istediği için buraya taşındı — iki
+    gövde ayrışsaydı kuponu kuran hesap ile onu değerlendiren hesap farklı
+    şeyler söylerdi."* İki gövde bugün ayrışmamıştı (404 kıyas, n=1..15 ve
+    sınır durumlar dâhil, en büyük mutlak fark **0,000e+00** — ölçüldü), ama
+    ayrışmaya açıktı ve bu betik kapının koşmadığı bir betiktir.
+
+    Geriye kalan tek fark **kabuk**: çağıran taraf `dag[:2].sum()` gibi dizi
+    işlemleri yapıyor. O yüzden burada bir sarmalayıcı duruyor, ikinci bir
+    hesap değil.
+    """
+    return np.asarray(_kacak_dagilimi(q), dtype=float)
 
 
 def kademe_sayimlari(s: Sequence[int], kacak: Sequence[int]) -> dict[int, int]:

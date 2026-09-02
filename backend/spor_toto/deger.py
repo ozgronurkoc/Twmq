@@ -86,7 +86,7 @@ from .odds import (
     load_odds,
     market_odds,
 )
-from .pazar import ah_bilesenler
+from .pazar import _cizgi, ah_bilesenler
 
 #: Ölçülen pazarlar. 1X2 **dahil**: `pazar.py` yalnızca yan pazarlara
 #: bakıyordu ama değer sorusu 1X2'de de sorulmamıştı ve orada kesit en
@@ -124,13 +124,15 @@ EN_AZ_BAHIS = 30
 YIL_GUN = 365
 
 
-def _cizgi(oranlar: dict[str, Any]) -> float | None:
-    """Asya handikabı çizgisi — `pazar._cizgi` ile aynı, kapanış öncelikli."""
-    for ad in ("AHCh", "AHh"):
-        v = oranlar.get(ad)
-        if v is not None:
-            return float(v)
-    return None
+#: Asya handikabı çizgisi. **Burada ikinci bir gövde duruyordu** ve
+#: docstring'i bunu zaten itiraf ediyordu ("`pazar._cizgi` ile aynı");
+#: gövdeler byte byte aynıydı. Bu modül `pazar`ı zaten import ediyor
+#: (`ah_bilesenler`), yani ayrı durmalarının hiçbir gerekçesi yoktu — tek
+#: kaynak `pazar._cizgi`.
+#:
+#: Yanındaki `_ah_para_getirisi` ise BILEREK ayrı kalıyor: iade (push) orada
+#: 0, `pazar._ah_getiri`de 0,5 sayılır ve gerekçesi aşağıda yazılı. Aynı
+#: dosyada biri birleşiyor, öteki birleşmiyor — fark belgelidir.
 
 
 def _ah_para_getirisi(gol_farki: int, h: float, oran: float) -> float:
