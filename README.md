@@ -1158,7 +1158,7 @@ ve çıktı sırası da o zaman düzelir.
 `scripts/check.sh` sırasıyla **on iki adım**: ruff (backend) → ruff (`.claude/`) →
 mypy → interrogate (docstring kapsaması) → pip-audit (bağımlılık açıkları) →
 doctest → pytest (hızlı) → pytest (yavaş ILP) → health → CLI dumanı → Süper Toto
-boru hattı (**2. Tahmin dahil**) + üretilmiş iki dosyanın tazeliği → eslint + tsc +
+boru hattı (**2. Tahmin dahil**) + üretilmiş üç dosyanın tazeliği → eslint + tsc +
 arayüz denetimleri + üretim derlemesi.
 
 Bu liste bir kez **eskidi ve fark edilmedi**: interrogate, pip-audit ve doctest

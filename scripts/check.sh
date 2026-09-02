@@ -182,9 +182,14 @@ for h in $HAFTALAR; do
 done
 
 # Üretilmiş iki dosya: bayatlarsa arayüz SESSIZCE yanlış olur.
-baslik "üretilmiş dosyalar güncel mi"
+baslik "üretilmiş üç dosya güncel mi"
 "$PY" scripts/super_toto_frontend.py --kontrol
 "$PY" scripts/api_sozlesme.py --kontrol
+# Ucuncu uretilmis dosya. `data/odds/fiyat_kaynaklari.json` surumleniyor ve
+# `odds.py` ile `fiyatlar.py` docstring'lerinden aniliyordu, ama hicbir sey
+# onu diskteki gercekle karsilastirmiyordu — arsiv buyudugunde sessizce
+# bayatlardi. Ustteki iki bekcinin ayni deseni.
+"$PY" scripts/fiyat_kaynaklari.py --kontrol
 
 # ─── Frontend ────────────────────────────────────────────────────────────
 cd "$KOK/frontend"
