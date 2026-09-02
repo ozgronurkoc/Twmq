@@ -22,12 +22,12 @@ hiçbir şey tarafından import edilmez.
 
 ## API
 
-Uçların **tamamı** (14). Bu tablo eskiden dokuz satırdı ve dördü eksikti
+Uçların **tamamı** (15). Bu tablo eskiden dokuz satırdı ve dördü eksikti
 (`/api/health/checks`, `/api/backtest`, `/api/pazar`, `/api/tahmin`,
 `/api/benzer`) —
 üstelik `README.md` ve `backend/README.md` bu tabloyu *kaynak* gösteriyordu,
 yani boşluk üç belgeye birden yayılıyordu. Artık liste
-`frontend/lib/api-sozlesme.json` ile aynı 14 ucu sayar ve o dosya CI'da
+`frontend/lib/api-sozlesme.json` ile aynı 15 ucu sayar ve o dosya CI'da
 `scripts/api_sozlesme.py --kontrol` ile denetlenir.
 
 | Method | Path | Açıklama |

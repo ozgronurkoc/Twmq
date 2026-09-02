@@ -94,7 +94,7 @@ def test_saglik_kontrol_sayisi_belgeyle_ayni():
 #: opt-IN demeti vardı — beş belge elle sayılıydı ve yeni bir belge
 #: varsayılan olarak **korumasız** kalıyordu. `backend/README.md` tam olarak
 #: böyle kaçtı: içinde `tests/ (31 dosya → 1.030 test)` yazıyordu, gerçek
-#: 63 dosya / 1.901 testti, ve bekçi yeşil kaldı. Yani bekçinin kör noktası
+#: 63 dosya / 1.901 testti (o günün sayısı), ve bekçi yeşil kaldı. Yani bekçinin kör noktası
 #: sayının kendisi değil, **listenin kendisiydi**. Artık varsayılan
 #: korumalıdır ve muafiyet açıkça, gerekçesiyle yazılır.
 #:
@@ -164,7 +164,15 @@ def _gercek_test_sayisi() -> int:
     modül düzeyinde `pytest.importorskip("lightgbm")` yapıyor; paket yoksa
     modül hiç TOPLANMAZ, yalnızca "atlandı" da denmez — 22 test ortadan
     kalkar. Yani "süitte kaç test var" sorusunun tek bir cevabı yok:
-    eksiksiz kurulumda 1.622, `lightgbm`siz kurulumda 1.600.
+    eksiksiz kurulumda 1.929, `lightgbm`siz kurulumda 22 test eksiği.
+
+    **Bu iki sayı bir kez burada eskidi ve kimse görmedi.** Docstring
+    `1.622` / `1.600` yazıyordu; o değerler README §9 tablosunun 15.
+    satırına kadarki ara toplamıydı, yani tablo bakımsız kaldığı dönemden
+    kalmaydı. Bekçinin kendi dosyası, bekçilediği hatayı taşıyordu — ve
+    `.py` olduğu için hiçbir belge taraması ona bakmıyordu. Mutlak sayı
+    yerine artık **fark** yazılı: `lightgbm` yoksa `test_agac.py` modül
+    düzeyinde atlanır ve 22 test toplanmaz.
 
     Depo bu ikiliği zaten taşıyor ve bilerek taşıyor: üretim `lightgbm`
     kurmuyor (`scripts/run_prod.sh`), kalite kapısı kuruyor
@@ -383,3 +391,89 @@ def test_workflowlarda_pytest_gercekten_kosabilir():
 #
 # Asil celiski (§14'un §1.1 ile catismasi) elle duzeltildi; onu tutan sey
 # artik `api_sozlesme.py`nin urettigi olculmus degerler, nesir taramasi degil.
+
+
+def test_readme_test_tablosu_GERCEK_koleksiyonu_sayar():
+    """README §9 katman tablosu hem eksiksiz hem doğru toplamalı.
+
+    **Bu tablo "bekçisi var" diye yazıyordu ve YOKTU.** Tablonun hemen
+    üstündeki cümle *"dosyalar adıyla sayılıdır ki bu tablo elle bakımı
+    gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona karşı
+    denetler"* diyordu; hiçbir test o tabloyu okumuyordu. Ölçüldüğünde
+    tablo **1.684** topluyordu ama manşeti **1.902** diyordu (Δ 218) ve
+    63 dosyanın yalnızca **55'ini** sayıyordu — sekiz dosya (`bulten`,
+    `deger`, `fiyatlar`, `gecmis_sezon`, `havuz`, `kuyruk`, `mcp`,
+    `sportoto_arsiv`) eklendikten sonra tabloya hiç girmemişti.
+
+    Test iki şeyi birden tutar: **kapsama** (her test dosyası tabloda
+    anılmalı) ve **toplam** (satırların toplamı manşetle aynı olmalı).
+    Dosya başına sayıyı doğrulamak için gerçek koleksiyon gerekir; o
+    `test_test_sayisi_belgelerde_tek_ve_dogru`un işi.
+    """
+    metin = _oku("README.md")
+    bas = metin.find("| Katman | Dosyalar | Test |")
+    assert bas > 0, "README §9 katman tablosu bulunamadı"
+    son = metin.find("\n\n", bas)
+    tablo = metin[bas:son]
+
+    anilan = set(re.findall(r"`([a-z_0-9]+)`", tablo))
+    diskte = {p.stem[len("test_"):] for p in (KOK / "tests").glob("test_*.py")}
+    eksik = sorted(diskte - anilan)
+    assert not eksik, (
+        f"README §9 tablosunda ANILMAYAN test dosyası: {eksik}. "
+        f"Tablo {len(anilan & diskte)} dosya sayıyor, diskte {len(diskte)} var."
+    )
+
+    toplam = sum(int(x) for x in re.findall(r"\|\s*(\d+)\s*\|", tablo))
+    manset = re.search(r"\*\*(\d+) test dosyası, parametrizasyonla\s*\n?([\d.]+) test",
+                       metin)
+    assert manset, "README §9 manşeti (N test dosyası / M test) bulunamadı"
+    beklenen = int(manset.group(2).replace(".", ""))
+    assert toplam == beklenen, (
+        f"README §9 tablosu {toplam} topluyor ama manşeti {beklenen} diyor "
+        f"(Δ {beklenen - toplam}). Tablo satır satır elle tutuluyor; "
+        "süite test eklendiğinde ilgili satır da güncellenmeli."
+    )
+
+
+def test_check_sh_adimlari_belgeyle_ayni():
+    """README'nin saydığı `check.sh` adım sayısı betikle örtüşmeli.
+
+    Liste bir kez eskidi ve fark edilmedi: **interrogate, pip-audit ve
+    doctest** betikte vardı, README'de yoktu — üstelik README aşağıda
+    "`check.sh`in adımları bu bölümün başında sayılıdır" diyerek o eksik
+    listeyi yetkili gösteriyordu.
+    """
+    betik = (DEPO / "scripts" / "check.sh").read_text(encoding="utf-8")
+    gercek = len(re.findall(r"^baslik ", betik, re.MULTILINE))
+    metin = _oku("README.md")
+    m = re.search(r"`scripts/check\.sh` sırasıyla \*\*([a-zçğıöşü ]+?) adım\*\*", metin)
+    assert m, "README `check.sh` adım sayısını yazmıyor"
+    yazili = {"on": 10, "on bir": 11, "on iki": 12, "on üç": 13, "on dört": 14}
+    beklenen = yazili.get(m.group(1).strip())
+    assert beklenen is not None, f"tanınmayan sayı: {m.group(1)!r}"
+    assert beklenen == gercek, (
+        f"README `check.sh`i {beklenen} adım diyor, betikte {gercek} `baslik` var"
+    )
+
+
+def test_workflow_envanteri_belgeyle_ayni():
+    """`.github/workflows/` altındaki her workflow bir belgede anılmalı.
+
+    `snapshot-sportoto.yml` **hiçbir `.md` dosyasında geçmiyordu**: README
+    "İkinci workflow" deyip yalnızca iddaa'yı anlatıyordu, oysa depoya
+    haftalık commit atan iki iş var. Belgesiz bir yazma yetkisi, en kötü
+    türden sessizliktir.
+    """
+    wf = DEPO / ".github" / "workflows"
+    if not wf.is_dir():
+        pytest.skip(".github/workflows yok")
+    belgeler = "\n".join(
+        (DEPO / d).read_text(encoding="utf-8")
+        for d in _belge_listesi() if (DEPO / d).exists()
+    )
+    eksik = [y.name for y in sorted(wf.glob("*.yml")) if y.name not in belgeler]
+    assert not eksik, (
+        f"hicbir belgede anilmayan workflow: {eksik}. "
+        "Depoya commit atan bir isin belgesiz kalmasi kabul edilemez."
+    )
