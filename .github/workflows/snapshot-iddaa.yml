@@ -53,10 +53,23 @@ jobs:
       - name: Bulteni al
         run: python scripts/snapshot_iddaa.py
 
+      # `-o addopts=` ZORUNLU ve ihmal edilirse bu adim HIC KOSMAZ.
+      # `backend/pyproject.toml` `addopts` icinde `-n auto` tasiyor; o
+      # `pytest-xdist`in bayragidir ve buraya bilerek yalnizca `pytest`
+      # kuruluyor. Xdist yokken pytest tek test govdesine girmeden
+      # "unrecognized arguments: -n" ile cikis 4 verir — olculdu, ve bu
+      # adim tam olarak boyle sessizce oluydu.
+      #
+      # Care olarak xdist kurulmadi: bu is bilerek bagimliliksiz kosuyor ve
+      # tek dosyalik bir suit icin paralellik zaten kazanc getirmez.
+      # `--strict-markers` korunuyor, yalnizca `-n auto` dusuruluyor.
+      #
+      # Ayni tuzak `scripts/setup.sh`te bir paragrafla anlatiliyor; ders
+      # orada ogrenilmis, buraya uygulanmamisti.
       - name: Bicimi denetle
         run: |
           pip install -q pytest
-          pytest -q tests/test_snapshot_iddaa.py
+          pytest -q -o addopts="--strict-markers" tests/test_snapshot_iddaa.py
 
       - name: Degisiklik varsa isle
         run: |

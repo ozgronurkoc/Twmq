@@ -61,10 +61,14 @@ jobs:
       - name: Resmi arsivi cek
         run: python scripts/build_sportoto_arsiv.py
 
+      # `-o addopts=` ZORUNLU — gerekce `snapshot-iddaa.yml`de ayrintili:
+      # `pyproject.toml` `addopts` icindeki `-n auto` xdist ister, bu is ise
+      # bilerek yalnizca `pytest` kuruyor ve adim tek test govdesine girmeden
+      # "unrecognized arguments: -n" ile cikis 4 veriyordu.
       - name: Bicimi denetle
         run: |
           pip install -q pytest
-          pytest -q -p no:cacheprovider tests/test_sportoto_arsiv.py
+          pytest -q -p no:cacheprovider -o addopts="--strict-markers" tests/test_sportoto_arsiv.py
 
       - name: Degisiklik varsa isle
         run: |

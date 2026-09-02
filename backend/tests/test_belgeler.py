@@ -306,6 +306,75 @@ def test_test_dosya_sayisi_belgelerle_ayni():
     assert not yanlis, f"test dosyası sayısı yanlış (gerçek: {gercek}): {yanlis}"
 
 
+def test_workflowlarda_pytest_gercekten_kosabilir():
+    """`pytest` çağıran her workflow adımı GERÇEKTEN koşabilmeli.
+
+    **Bu bekçi ölçülmüş bir sessiz ölümden geldi.** `pyproject.toml`
+    `addopts` içinde `-n auto` taşıyor; o `pytest-xdist`in bayrağıdır. İki
+    veri toplama workflow'u (`snapshot-iddaa.yml`, `snapshot-sportoto.yml`)
+    bilerek yalnızca `pytest` kuruyordu ve xdist yokken pytest **tek test
+    gövdesine girmeden** `unrecognized arguments: -n` ile çıkış 4 veriyordu.
+    Yani haftalık cron ile depoya commit atan iki boru hattının tek biçim
+    denetimi aylarca ölüydü ve hiçbir yerde görünmüyordu.
+
+    Ders `scripts/setup.sh` içinde bir paragrafla zaten yazılıydı ("xdist
+    yoksa pytest hic acilmadan 'unrecognized arguments' verir") — orada
+    öğrenilmiş, workflow'lara uygulanmamıştı. Bekçi o boşluğu kapatır.
+
+    Kabul edilen üç çare: xdist'i kurmak, `-o addopts=` ile ini'yi geçersiz
+    kılmak, ya da `-p no:cacheprovider` gibi değil ama `-n` veren bir eklenti
+    getirmek. Test bunlardan **en az birini** arar.
+    """
+    wf_dizin = DEPO / ".github" / "workflows"
+    if not wf_dizin.is_dir():
+        pytest.skip(".github/workflows yok")
+
+    pyproject = (KOK / "pyproject.toml").read_text(encoding="utf-8")
+    # `addopts` gerçekten `-n` taşıyor mu? Taşımıyorsa bu bekçinin konusu
+    # kalmaz ve sessizce geçmesi doğrudur.
+    if "-n auto" not in pyproject:
+        pytest.skip("pyproject.toml artık `-n auto` taşımıyor")
+
+    # Xdist DOLAYLI da gelebilir: `test` ekstrası onu taşıyorsa
+    # `pip install -e ".[test]"` diyen bir workflow'da "xdist" kelimesi hiç
+    # geçmez ama paket kurulur. İlk yazımda bu gözden kaçtı ve bekçi
+    # `tests.yml`i haksız yere kırmızıya boyadı — bir bekçinin doğru
+    # cümleyi yanlış diye işaretlemesi, hiç bekçi olmamasından kötüdür.
+    test_ekstrasi = re.search(r"^test\s*=\s*\[[^\]]*\]", pyproject, re.MULTILINE)
+    ekstra_xdist_veriyor = bool(test_ekstrasi and "xdist" in test_ekstrasi.group(0))
+
+    kusurlu: list[str] = []
+    for yol in sorted(wf_dizin.glob("*.yml")):
+        satirlar = yol.read_text(encoding="utf-8").splitlines()
+        # **Yorumlar konuşur, kurmaz.** Kanıt yalnızca KOŞAN satırlarda
+        # aranır. İlk yazımda tüm dosyada aranıyordu ve bekçi kendi
+        # açıklama yorumundaki "xdist" kelimesini kanıt sayıp kör kaldı —
+        # onarımı geri alıp sınadığımda yakalandı.
+        kod = "\n".join(s for s in satirlar if not s.strip().startswith("#"))
+        # `pip install -e ".[test,...]"` biçimindeki her kurulum.
+        ekstra_kuruluyor = bool(re.search(r"pip install[^\n]*\[[^\]]*\btest\b", kod))
+        xdist_var = ("xdist" in kod
+                     or (ekstra_xdist_veriyor and ekstra_kuruluyor))
+        for satir in satirlar:
+            s = satir.strip()
+            # Yorum satırları konuşur, koşmaz.
+            if s.startswith("#") or "pytest" not in s:
+                continue
+            # `pip install ... pytest` bir çağrı değil, kurulum.
+            if "pip install" in s:
+                continue
+            if not re.search(r"(^|\s|&&\s*)pytest\s", s):
+                continue
+            if not (xdist_var or "-o addopts=" in s):
+                kusurlu.append(f"{yol.name}: {s}")
+
+    assert not kusurlu, (
+        "bu pytest çağrıları `-n auto` yüzünden HİÇ KOŞMAZ "
+        "(xdist kurulmuyor ve `-o addopts=` ile ini geçersiz kılınmıyor): "
+        + "; ".join(kusurlu)
+    )
+
+
 # NOT: burada bir de "README hold-out sayisini kendi icinde celismiyor mu"
 # testi vardi ve KALDIRILDI. Nesir uzerinde regex kirilgan cikti: README
 # §5.4 bilerek TARIHSEL bir karsilastirma yapiyor ("orantisal olcekte ayni
