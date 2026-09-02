@@ -82,14 +82,15 @@ import csv
 import io
 import json
 import sys
-import urllib.error
-import urllib.request
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 KOK = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(KOK))
+
+from scripts._ortak import indir_bellek
+
 VARSAYILAN_CIKTI = KOK / "data" / "xg"
 
 from scripts.build_avrupa import sadelestir
@@ -122,15 +123,9 @@ PENALTI = "Penalty"
 
 # ─── indirme ──────────────────────────────────────────────────────────────
 
-def _getir(url: str, timeout: float = 60.0) -> bytes | None:
-    """Belleğe indir — **diske yazmaz** (bkz. docstring: 5,2 GB)."""
-    istek = urllib.request.Request(url, headers={"User-Agent": UA})
-    try:
-        with urllib.request.urlopen(istek, timeout=timeout) as r:
-            return r.read()
-    except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError) as e:
-        print(f"  {url} alinamadi ({e})", file=sys.stderr)
-        return None
+#: Bellege indirme TEK kaynaktan: `scripts._ortak.indir_bellek`.
+#: Ayni govde `build_fixtures.indir` olarak da yaziliydi.
+_getir = indir_bellek
 
 
 def sb_maclari(comp: int, sezon: int) -> list[dict[str, Any]]:

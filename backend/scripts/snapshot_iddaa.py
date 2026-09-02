@@ -57,6 +57,14 @@ from pathlib import Path
 from typing import Any
 
 KOK = Path(__file__).resolve().parent.parent
+# Kardes betiklerle paylasilan SAF STDLIB yardimcilar. `spor_toto` DEGIL:
+# bu betik GitHub Actions'ta hicbir bagimlilik kurulmadan kosuyor ve
+# `scripts/_ortak.py` tam da bunun icin stdlib disina cikmiyor
+# (bekcisi `tests/test_scripts_ortak.py`).
+sys.path.insert(0, str(KOK))
+
+from scripts._ortak import indir_json
+
 CIKTI_DIZIN = KOK / "data" / "iddaa"
 UA = "spor-toto-lab/1.0 (kisisel arsiv analizi)"
 
@@ -73,10 +81,8 @@ MS_TIP, MS_ALT_TIP = 1, 1
 SEMBOLLER = ("1", "0", "2")
 
 
-def indir(url: str, zaman_asimi: float = 30.0) -> Any:
-    istek = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "application/json"})
-    with urllib.request.urlopen(istek, timeout=zaman_asimi) as cevap:
-        return json.loads(cevap.read().decode("utf-8"))
+#: Indirme TEK kaynaktan: `scripts._ortak.indir_json`. Ayni govde iki
+#: betikte birebir yaziliydi ve ikisi de Actions'ta depoya commit atiyor.
 
 
 def _govde(payload: Any) -> dict[str, Any]:
@@ -257,12 +263,12 @@ def main() -> int:
         ligler: dict[int, str] = {}
     else:
         try:
-            ham = indir(EVENTS_URL)
+            ham = indir_json(EVENTS_URL)
         except (urllib.error.URLError, TimeoutError, OSError) as e:
             print(f"bulten alinamadi: {e}", file=sys.stderr)
             return 1
         try:
-            ligler = lig_adlari(indir(COMP_URL))
+            ligler = lig_adlari(indir_json(COMP_URL))
         except (urllib.error.URLError, TimeoutError, OSError, RuntimeError) as e:
             # Lig adi olmadan da snapshot degerlidir; kod zaten satirda duruyor.
             print(f"uyari: lig adlari alinamadi ({e}); lig sutunu bos kalacak")

@@ -36,7 +36,7 @@ _a = _ap.parse_args(None if __name__ == "__main__" else [])
 m = importlib.import_module("scripts.super_toto_hafta")
 
 from spor_toto.core import SEMBOLLER
-from spor_toto.odds import saglayici_adi
+from spor_toto.odds import margin, saglayici_adi
 
 #: Sembol duzeni TEK kaynaktan (`spor_toto.core`). Bu dosyada ayri bir
 #: demet olarak yaziliyordu; depoda ayni deger on bir kez tanimliydi.
@@ -132,8 +132,10 @@ def _oku(mac, anahtar):
     return (implied_probs(o), o) if o else (None, None)
 
 
-def _marj(o):
-    return sum(1.0 / v for v in o.values()) - 1.0
+#: Marj (overround) TEK kaynaktan: `spor_toto.odds.margin`. Ayni govde
+#: iki betikte birebir yaziliydi; kanonik govde ustelik daha korumali
+#: (sifir/negatif orani eler, bu kopyalar ZeroDivisionError verirdi).
+_marj = margin
 
 
 FIYAT_SATIR: list[dict] = []

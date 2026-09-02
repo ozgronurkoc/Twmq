@@ -78,6 +78,39 @@ def indir(url: str, hedef: Path, zaman_asimi: float = 60.0) -> Path | None:
     return hedef
 
 
+def indir_bellek(url: str, zaman_asimi: float = 60.0) -> bytes | None:
+    """Kaynağı **belleğe** indirir; diske yazmaz. Hata olursa `None`.
+
+    `indir`den ayrı bir ilkel ve ayrı kalmalı: bazı kaynaklar tek seferlik ve
+    çok büyük (`build_xg` 5,2 GB'lık bir arşivi diske yazmadan geçiriyor),
+    bazıları ise önbelleklenmek zorunda. İkisini tek gövdeye sıkıştırmak
+    çağıranı "yaz ama sakla ama silme" gibi bir bayrağa mahkûm ederdi.
+    """
+    istek = urllib.request.Request(url, headers={"User-Agent": UA})
+    try:
+        with urllib.request.urlopen(istek, timeout=zaman_asimi) as cevap:
+            return cevap.read()
+    except (urllib.error.URLError, urllib.error.HTTPError,
+            TimeoutError, OSError) as e:
+        print(f"  {url} alinamadi ({e})", file=sys.stderr)
+        return None
+
+
+def indir_json(url: str, zaman_asimi: float = 30.0,
+               kabul: str = "application/json") -> Any:
+    """JSON döndüren bir ucu çağırır. **Hata YUTULMAZ, yükselir.**
+
+    Öteki iki ilkelden kasıtlı olarak farklı. Bunu kullanan iki betik
+    (`snapshot_iddaa`, `build_sportoto_arsiv`) GitHub Actions'ta koşup depoya
+    **commit atıyor**; orada yarım bir arşivi sessizce yazmak hiç
+    yazmamaktan kötüdür. Ağ hatası işi düşürmeli ki cron kırmızı yansın.
+    """
+    istek = urllib.request.Request(
+        url, headers={"User-Agent": UA, "Accept": kabul})
+    with urllib.request.urlopen(istek, timeout=zaman_asimi) as cevap:
+        return json.loads(cevap.read().decode("utf-8"))
+
+
 def metin(veri: Any) -> str:
     """Üretilmiş JSON'un **kararlı** metni — tazelik denetimi buna dayanır.
 
