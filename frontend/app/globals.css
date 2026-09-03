@@ -3,6 +3,49 @@
 @tailwind utilities;
 
 /*
+  Bodoni Moda'nin OLCU UYUMLU geri dusus yuzu.
+
+  **Nicin elle yazildi.** `next/font` normalde her Google yazi tipi icin
+  bir `...Fallback` `@font-face` uretir; `size-adjust` ve `ascent-override`
+  ile geri dusus yuzunu asil yuzun olculerine oturtur, boylece
+  `display: swap` devreye girdiginde satirlar oynamaz. Bodoni Moda'da bunu
+  URETEMIYOR ve soguk derlemede iki kez soyluyor:
+
+      ⨯ Failed to find font override values for font `Bodoni Moda`
+
+  Sebep Next 14'un KENDI IKI TABLOSUNUN celismesi: font listesinde
+  (`font-data.json`) aile "Bodoni Moda" adiyla var, olcu tablosunda
+  (`capsize-font-metrics.json`) ise yalnizca "bodoniModa11pt" var. Arama
+  ilk addan gidiyor, bulamiyor ve SESSIZCE — cikis kodunu bozmadan —
+  vazgeciyor. Uretilen CSS'te tek bir `size-adjust` bile yoktu (olculdu:
+  0 adet), yani her sayfa acilisinda baslik yuzunde gorunur bir sicrama
+  vardi.
+
+  Degistirilecek bir varyant YOK: `Bodoni_Moda_11pt` diye bir disari
+  aktarim bulunmuyor. O yuzden yuz burada tanimlaniyor.
+
+  **Sayilar elle uydurulmadi.** Next'in kendi olcu tablosundan, Next'in
+  kendi formuluyle turetildi:
+
+      size-adjust = (xWidthAvg/unitsPerEm)_bodoni / (xWidthAvg/unitsPerEm)_georgia
+      ascent-override  = ascent  / (unitsPerEm * size-adjust)
+      descent-override = |descent| / (unitsPerEm * size-adjust)
+
+  `frontend/scripts/check.mjs` bu dort sayiyi her kosumda
+  `node_modules/next/.../capsize-font-metrics.json`dan YENIDEN HESAPLAYIP
+  asagidakilerle karsilastirir — yani Next tablosunu guncellerse ya da
+  taban yuz degisirse kapi kirmizi yanar.
+*/
+@font-face {
+  font-family: "Bodoni Moda Fallback";
+  src: local("Georgia");
+  size-adjust: 104.08%;
+  ascent-override: 108.09%;
+  descent-override: 38.43%;
+  line-gap-override: 0.00%;
+}
+
+/*
   Tasarim sistemi — referans: nonplo.com (Tailwind + shadcn token duzeni).
   Renkler HSL bilesenleri olarak tutulur ki Tailwind <alpha-value> ile
   opaklik uygulayabilsin: hsl(var(--primary) / .15)

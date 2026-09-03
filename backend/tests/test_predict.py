@@ -16,7 +16,6 @@ from spor_toto.predict import (
     SezonSabitiTahminci,
     Tahminci,
     referans_fabrikalar,
-    referans_tahminciler,
 )
 
 TEK_TIP = {"1": 0.5, "0": 0.3, "2": 0.2}
@@ -60,7 +59,7 @@ def test_taban_sinif_tahmin_yazilmadan_calismaz():
 def test_referans_ad_piyasadir():
     """Karşılaştırmanın çizgisi piyasadır; değişirse koşumun anlamı değişir."""
     assert REFERANS_AD == "piyasa"
-    assert REFERANS_AD in {t.ad for t in referans_tahminciler()}
+    assert REFERANS_AD in {f.ad for f in referans_fabrikalar()}
 
 
 # ─── duzgun ───────────────────────────────────────────────────────────────────

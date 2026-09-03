@@ -983,7 +983,7 @@ backend/
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
                        sehir/ · xg/
-  tests/               pytest (64 dosya → 1.938 test; §9'da katman dökümü)
+  tests/               pytest (64 dosya → 1.933 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1155,11 +1155,22 @@ olduğu için tek süreçte çekirdeklerin çoğu boş duruyordu. Tek bir dosyay
 koşarken sabit bir açılış maliyeti getirir; hata ayıklarken `-n0` onu kapatır
 ve çıktı sırası da o zaman düzelir.
 
-`scripts/check.sh` sırasıyla **on iki adım**: ruff (backend) → ruff (`.claude/`) →
-mypy → interrogate (docstring kapsaması) → pip-audit (bağımlılık açıkları) →
+`scripts/check.sh` sırasıyla **on üç adım**: ruff (backend) → ruff (`.claude/`) →
+mypy (`spor_toto` + `web_app` + `scripts` + `tests`, ayrıca `.claude/`) →
+interrogate (docstring kapsaması) → pip-audit (bağımlılık açıkları) →
 doctest → pytest (hızlı) → pytest (yavaş ILP) → health → CLI dumanı → Süper Toto
 boru hattı (**2. Tahmin dahil**) + üretilmiş üç dosyanın tazeliği → eslint + tsc +
-arayüz denetimleri + üretim derlemesi.
+arayüz denetimleri + üretim derlemesi → **üretim topolojisi dumanı**.
+
+Son adım en yeni ve boşluğu en büyük olandı: ürünün gerçekten koştuğu yol
+(`run_prod.sh` → gunicorn `127.0.0.1` + `next start` + `/api/*` rewrite) hiçbir
+testte, hiçbir kapıda, hiçbir CI işinde **ayağa kalkmıyordu**. Uçlar `test_api_*`
+ile Flask'ın `test_client`ından geçiyordu — yani WSGI çağrısı deneniyor, ama
+gunicorn, port bağlama, Next'in ayakta olması ve rewrite'ın hedefi tutması
+denenmiyordu. Adım iki süreci gerçekten kaldırır, dokuz sayfayı ve üç ucu
+**UI portundan** çeker (yani proxy'yi de sınar) ve kapatır. Portlar her koşumda
+boş bir porttan seçilir; bu ayrıca `next.config.mjs`in "backend'in portu
+değişince proxy onu izler" düzeltmesini de koşturur.
 
 Bu liste bir kez **eskidi ve fark edilmedi**: interrogate, pip-audit ve doctest
 adımları betikte vardı, burada yoktu — üstelik aşağıda "`check.sh`in adımları bu
@@ -1176,7 +1187,7 @@ dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri t
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
 eşleme, ikinci kayıt). **64 test dosyası, parametrizasyonla
-1.938 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+1.933 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
@@ -1185,11 +1196,11 @@ karşı denetler):
 | Çekirdek + motorlar | `core` `engines` `invariants` `edge_cases` `cli` `analysis` `bayes` `markov` `fire_scenarios` | 528 |
 | Tahmin katmanı | `predict` `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin` `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre` **`arena`** **`sizinti`** | 567 |
 | Sağlık | `health` `api_health` `meta` `health_history` | 90 |
-| Veri / istatistik / geri test | `history` `odds` `backtest` `api_stats` `api_backtest` `snapshot_iddaa` `pazar` **`gecmis_sezon`** **`sportoto_arsiv`** **`bulten`** | 217 |
+| Veri / istatistik / geri test | `history` `odds` `backtest` `api_stats` `api_backtest` `snapshot_iddaa` `pazar` **`gecmis_sezon`** **`sportoto_arsiv`** **`bulten`** | 216 |
 | Süper Toto | `super_toto` `degerlendir` | 87 |
 | 2. Tahmin (kalabalık ayarı · bağımsız görüş) | `tahmin2` | 31 |
 | Karar katmanı | `secim` | 21 |
-| Skor türetme | `skor` | 21 |
+| Skor türetme | `skor` | 17 |
 | Beraberlik düzeltmesi | `beraberlik` | 19 |
 | İddaa hazırlığı | `iddaa_hazirlik` | 24 |
 | Ortak gövde | `ortak` | 34 |

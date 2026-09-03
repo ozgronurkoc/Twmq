@@ -348,9 +348,36 @@ def main(argv: Sequence[str] | None = None) -> None:  # pragma: no cover
 
     ap = argparse.ArgumentParser()
     ap.add_argument("--rapor", action="store_true", help="varsayilan kosum")
+    # `--lofo` BAGLANDI. `lofo` yazildigi gunden beri hicbir yerden
+    # cagrilmiyordu: iki belge (`DIS_INCELEME_AZ_RAPORU.md` §31,
+    # `DIS_INCELEME_ALPHAPY.md`) ondan bir yetenek olarak soz ediyor ama
+    # calistirmanin bir YOLU yoktu — yani belge, kodda karsiligi olmayan
+    # bir sey vaat ediyordu. Tek cagirani kendi testiydi.
+    ap.add_argument("--lofo", action="store_true",
+                    help="ozellik ablasyonu (Leave-One-Feature-Out, sezon katlariyla)")
     ap.add_argument("--json", action="store_true")
     cli_ekle(ap)
     a = ap.parse_args(argv)
+
+    if a.lofo:
+        from .egitim import korpus_haftalari
+
+        s = lofo(korpus_haftalari())
+        belki_kaydet("agac_lofo", s, a)
+        if a.json:
+            print(json.dumps(s, ensure_ascii=False, indent=1, default=str))
+            return
+        if s.get("sebep"):
+            print(f"LOFO kosulamadi: {s['sebep']}")
+            return
+        print(f"\nLOFO — {s['n']:,} satir · {s['n_kat']} kat "
+              f"· taban Brier {s['taban']:.6f}")
+        print(f"{'ozellik':<22}{'brier':>11}{'zarar':>12}")
+        for r in s["ozellikler"]:
+            print(f"{r['alan']:<22}{r['brier']:>11.6f}{r['zarar']:>+12.6f}")
+        print("\nPozitif zarar = ozellik cikarilinca Brier ARTTI, yani ise "
+              "yariyordu.\nSifir ya da negatif = hicbir sey tasimiyor.")
+        return
 
     s = rapor()
     belki_kaydet("agac", s, a)

@@ -45,6 +45,37 @@ jobs:
       - name: System health
         run: python -m spor_toto.health
 
+      # URETILMIS DOSYALAR HER SURUMDE YENIDEN URETILIP DISKTEKIYLE
+      # KARSILASTIRILIR — ve bu adim tam olarak bir gercek kirilmadan
+      # dogdu.
+      #
+      # CPython 3.12 gomulu `sum()`i float'lar icin Neumaier telafili
+      # toplamaya cevirdi. `super_toto_degerlendir` iki beklenen deger
+      # uretiyor ve bunlar SURUMLENMIS `frontend/lib/super-toto-veri.json`a
+      # yaziliyor: 3.10/3.11'de `5.890000000000001`, 3.12/3.13'te `5.89`.
+      # Yani dosyanin BAYT icerigi onu ureten yorumlayiciya bagliydi ve
+      # tazeligini bayt esitligiyle denetleyen iki bekci vardi — kod
+      # degismeden CI'nin iki bacagi aylarca kirmizi kaldi.
+      #
+      # Kok neden `math.fsum` ile kapatildi ama SINIFI acikti: ayni
+      # modulde float toplayan baska `sum()`lar var ve bugunku veriyle
+      # sapmiyorlar — bu bir garanti degil bir tesadut. Asil bekci
+      # duzeltmenin kendisi degil KARSILASTIRMADIR: dosyayi her
+      # desteklenen surumde yeniden uret, diskteki ile ayni mi diye bak.
+      # Matris zaten dort surum kosuyor, yani bedeli sifira yakin.
+      #
+      # BEKCININ TUTTUGU MUTASYONLA DENENDI (2026-09-03): `math.fsum`
+      # geri `sum` yapilinca py3.10 bacagi "BAYAT" diyor, py3.13 demiyor
+      # — cunku diskteki deger artik dogru yuvarlanmis olan. Onemli olan
+      # da bu: matris 3.12 sinirinin IKI YANINI da kapsadigi icin
+      # herhangi bir yorumlayici bagimliligi en az bir bacagi kirmiziya
+      # cekiyor. Tek surumde kosan bir bekci bunu goremezdi.
+      - name: Üretilmiş dosyalar bu sürümde de aynı mı
+        run: |
+          python scripts/super_toto_frontend.py --kontrol
+          python scripts/api_sozlesme.py --kontrol
+          python scripts/fiyat_kaynaklari.py --kontrol
+
   kapi:
     name: kalite kapisi (check.sh)
     runs-on: ubuntu-latest

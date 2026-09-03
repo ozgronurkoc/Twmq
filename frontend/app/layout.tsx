@@ -16,6 +16,11 @@ const display = Bodoni_Moda({
   weight: ["400", "500", "600"],
   variable: "--font-display",
   display: "swap",
+  // Next bu aile icin olcu uyumlu geri dusus URETEMIYOR (gerekce ve
+  // sayilar `app/globals.css`teki "Bodoni Moda Fallback" blogunda).
+  // Kapali birakmak SECIM: acikken her soguk derlemede iki hata satiri
+  // yaziyor ve karsiliginda hicbir sey uretmiyordu.
+  adjustFontFallback: false,
 });
 
 export const metadata: Metadata = {
