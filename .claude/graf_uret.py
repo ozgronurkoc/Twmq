@@ -65,7 +65,9 @@ MODUL_DIZIN = "backend/spor_toto"
 
 def _git(*arg: str) -> str:
     """Depo kökünde bir git komutu koşar ve çıktısını döndürür."""
-    return subprocess.run(["git", *arg], cwd=KOK, capture_output=True,
+    # S603 gerekcesi: cagrilar bu modulun kendi sabitleri
+    # (`rev-parse`, `hash-object`), disaridan arguman gelmiyor.
+    return subprocess.run(["git", *arg], cwd=KOK, capture_output=True,  # noqa: S603
                           text=True).stdout.strip()
 
 

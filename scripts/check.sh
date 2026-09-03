@@ -57,9 +57,13 @@ baslik "ruff (lint)"
 # Vendor edilmis skill (`.claude/skills/`) BILEREK disarida: bizim kodumuz
 # degil, upstream'den geldigi gibi duruyor ve tek basina 1.596 bulgu
 # uretiyor — yani gercek bulgularin uzerini orterdi.
+# Kural kumesi `backend/pyproject.toml` ile AYNI — `S` (guvenlik) dahil.
+# Onceden `S` burada yoktu, yani depo kendi ajan betiklerini backend'e
+# uyguladigi kuralla olcmuyordu; iki `subprocess` cagrisi denetimsizdi.
 "$PY" -m ruff check "$KOK/.claude"/*.py "$KOK/.claude/hooks" \
   --line-length 100 --target-version py310 \
-  --select E,W,F,I,UP,B,C4,RUF --ignore E501,B905,RUF001,RUF002,RUF003
+  --select E,W,F,I,UP,B,C4,RUF,S \
+  --ignore E501,B905,RUF001,RUF002,RUF003,S101,S311,S607
 
 baslik "mypy (kademeli tip denetimi)"
 "$PY" -m mypy

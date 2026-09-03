@@ -109,7 +109,9 @@ def tazelik(g: dict) -> None:
             if not p.exists():
                 bayat.append((bolum, gd["yol"], "DOSYA YOK"))
                 continue
-            h = subprocess.run(["git", "hash-object", gd["yol"]],
+            # S603 gerekcesi: degismez argv; `gd["yol"]` grafin kendi
+            # kaydi (depo ici goreli yol), kabuk yok.
+            h = subprocess.run(["git", "hash-object", gd["yol"]],  # noqa: S603
                                capture_output=True, text=True).stdout.strip()
             if h != gd.get("hash"):
                 bayat.append((bolum, gd["yol"], "DEGISTI"))
