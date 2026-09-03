@@ -1,0 +1,1685 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TWMQ Denetim Raporu</title>
+<style>
+:root{
+  --bg:#fbfaf8; --bg2:#ffffff; --fg:#1c1b19; --fg2:#55524d; --fg3:#83807a;
+  --line:#e4e0d9; --line2:#efece6;
+  --accent:#8a5a2b; --accent-bg:#f6efe6;
+  --crit:#a3242b; --crit-bg:#fbeced;
+  --high:#a8570f; --high-bg:#fdf1e4;
+  --med:#7d6212; --med-bg:#fbf5e0;
+  --low:#2f6b45; --low-bg:#eaf5ee;
+  --ok:#2f6b45; --ok-bg:#eaf5ee;
+  --code-bg:#f2efe9;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#161513; --bg2:#1d1c1a; --fg:#eceae6; --fg2:#b3afa8; --fg3:#8a8680;
+    --line:#302e2b; --line2:#262523;
+    --accent:#d9a56a; --accent-bg:#2a221a;
+    --crit:#f08b90; --crit-bg:#2e1a1c;
+    --high:#e6a862; --high-bg:#2c2118;
+    --med:#d9c464; --med-bg:#28241a;
+    --low:#7fc79b; --low-bg:#18251d;
+    --ok:#7fc79b; --ok-bg:#18251d;
+    --code-bg:#232220;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#161513; --bg2:#1d1c1a; --fg:#eceae6; --fg2:#b3afa8; --fg3:#8a8680;
+  --line:#302e2b; --line2:#262523;
+  --accent:#d9a56a; --accent-bg:#2a221a;
+  --crit:#f08b90; --crit-bg:#2e1a1c;
+  --high:#e6a862; --high-bg:#2c2118;
+  --med:#d9c464; --med-bg:#28241a;
+  --low:#7fc79b; --low-bg:#18251d;
+  --ok:#7fc79b; --ok-bg:#18251d;
+  --code-bg:#232220;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--sans);
+  font-size:16px;line-height:1.65;-webkit-text-size-adjust:100%}
+.wrap{display:grid;grid-template-columns:274px minmax(0,1fr);gap:0;
+  max-width:1400px;margin:0 auto}
+/* ---- TOC ---- */
+nav.toc{position:sticky;top:0;align-self:start;max-height:100vh;overflow-y:auto;
+  padding:34px 20px 60px 26px;border-right:1px solid var(--line);font-size:13.5px}
+nav.toc .brand{font-weight:700;font-size:15px;letter-spacing:-.01em;margin-bottom:2px}
+nav.toc .brandsub{color:var(--fg3);font-size:12px;margin-bottom:20px;font-family:var(--mono)}
+nav.toc a{display:block;color:var(--fg2);text-decoration:none;padding:3.5px 8px;
+  border-radius:5px;border-left:2px solid transparent;margin-left:-2px}
+nav.toc a:hover{color:var(--fg);background:var(--line2)}
+nav.toc a.sec{font-weight:600;color:var(--fg);margin-top:11px}
+nav.toc a.sub{padding-left:18px;font-size:13px}
+/* ---- main ---- */
+main{padding:34px 46px 120px;min-width:0}
+header.top{border-bottom:1px solid var(--line);padding-bottom:22px;margin-bottom:30px}
+h1{font-size:31px;line-height:1.22;letter-spacing:-.022em;margin:0 0 12px;font-weight:700}
+.meta{color:var(--fg2);font-size:13.5px;font-family:var(--mono);line-height:1.9}
+.meta b{color:var(--fg);font-weight:600}
+h2{font-size:22px;letter-spacing:-.017em;margin:52px 0 14px;padding-top:16px;
+  border-top:1px solid var(--line);font-weight:700;scroll-margin-top:16px}
+h2:first-of-type{border-top:none;padding-top:0}
+h3{font-size:16.5px;margin:30px 0 10px;font-weight:650;letter-spacing:-.01em;scroll-margin-top:16px}
+h4{font-size:14.5px;margin:22px 0 8px;font-weight:650;color:var(--fg2)}
+p{margin:0 0 13px}
+ul,ol{margin:0 0 14px;padding-left:22px}
+li{margin-bottom:5px}
+code{font-family:var(--mono);font-size:.855em;background:var(--code-bg);
+  padding:1.5px 5px;border-radius:4px;word-break:break-word}
+pre{background:var(--code-bg);border:1px solid var(--line);border-radius:8px;
+  padding:13px 15px;overflow-x:auto;font-size:12.8px;line-height:1.6;margin:0 0 16px}
+pre code{background:none;padding:0;font-size:inherit}
+a{color:var(--accent)}
+strong{font-weight:650}
+/* ---- tables ---- */
+.tw{overflow-x:auto;margin:0 0 18px;border:1px solid var(--line);border-radius:8px;
+  background:var(--bg2)}
+table{border-collapse:collapse;width:100%;font-size:13.6px;min-width:520px}
+th{text-align:left;font-weight:650;padding:9px 13px;border-bottom:1px solid var(--line);
+  background:var(--line2);white-space:nowrap;font-size:12.6px;letter-spacing:.01em}
+td{padding:8px 13px;border-bottom:1px solid var(--line2);vertical-align:top}
+tr:last-child td{border-bottom:none}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td code{font-size:.9em}
+/* ---- badges ---- */
+.b{display:inline-block;font-size:11.3px;font-weight:700;padding:1.5px 7px;
+  border-radius:20px;white-space:nowrap;letter-spacing:.02em;font-family:var(--sans)}
+.b-c{background:var(--crit-bg);color:var(--crit)}
+.b-h{background:var(--high-bg);color:var(--high)}
+.b-m{background:var(--med-bg);color:var(--med)}
+.b-l{background:var(--low-bg);color:var(--low)}
+.b-ok{background:var(--ok-bg);color:var(--ok)}
+/* ---- callouts ---- */
+.call{border-left:3px solid var(--accent);background:var(--accent-bg);
+  padding:13px 17px;border-radius:0 8px 8px 0;margin:0 0 18px}
+.call p:last-child{margin-bottom:0}
+.call.c{border-color:var(--crit);background:var(--crit-bg)}
+.call.g{border-color:var(--ok);background:var(--ok-bg)}
+.call .lab{font-size:11.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--fg3);display:block;margin-bottom:5px}
+/* ---- score ---- */
+.score{display:flex;align-items:baseline;gap:14px;background:var(--bg2);
+  border:1px solid var(--line);border-radius:10px;padding:20px 24px;margin:0 0 20px;flex-wrap:wrap}
+.score .num{font-size:46px;font-weight:700;letter-spacing:-.03em;line-height:1}
+.score .lab{font-size:13.5px;color:var(--fg2);max-width:520px}
+.bar{height:7px;background:var(--line2);border-radius:4px;overflow:hidden;
+  min-width:110px;max-width:130px;display:inline-block;vertical-align:middle}
+.bar>i{display:block;height:100%;background:var(--accent);border-radius:4px}
+.bar.lo>i{background:var(--crit)}
+.bar.mid>i{background:var(--high)}
+.bar.hi>i{background:var(--ok)}
+/* ---- misc ---- */
+.kv{color:var(--fg3);font-size:12.7px;font-family:var(--mono)}
+.q{font-size:18px;font-weight:650;letter-spacing:-.012em;margin:34px 0 12px;
+  padding:14px 18px;background:var(--bg2);border:1px solid var(--line);border-radius:9px}
+hr{border:none;border-top:1px solid var(--line);margin:36px 0}
+.toggle{position:fixed;top:12px;right:14px;z-index:20;background:var(--bg2);
+  border:1px solid var(--line);color:var(--fg2);border-radius:7px;padding:6px 11px;
+  font-size:12px;cursor:pointer;font-family:var(--sans)}
+.toggle:hover{color:var(--fg)}
+@media (max-width:900px){
+  .wrap{grid-template-columns:1fr}
+  nav.toc{position:static;max-height:none;border-right:none;
+    border-bottom:1px solid var(--line);padding:22px 20px}
+  nav.toc a.sub{display:none}
+  main{padding:24px 18px 80px}
+  h1{font-size:25px}
+  h2{font-size:19px}
+}
+@media print{
+  nav.toc,.toggle{display:none}
+  .wrap{display:block;max-width:none}
+  main{padding:0}
+  h2{page-break-after:avoid}
+  .tw,pre,.call{page-break-inside:avoid}
+  body{font-size:10.5pt}
+}
+</style>
+</head>
+<body>
+<button class="toggle" id="tg">tema</button>
+<div class="wrap">
+
+<nav class="toc">
+  <div class="brand">TWMQ Denetimi</div>
+  <div class="brandsub">6e20bd7 · 2026-09-03</div>
+  <a class="sec" href="#s0">0 · Yöntem</a>
+  <a class="sec" href="#s1">1 · Proje haritası</a>
+  <a class="sec" href="#s2">2 · Ölçülmüş uç performansı</a>
+  <a class="sec" href="#s3">3 · Bug audit</a>
+  <a class="sub" href="#s3c">🔴 Critical</a>
+  <a class="sub" href="#s3h">🟠 High</a>
+  <a class="sub" href="#s3m">🟡 Medium / 🟢 Low</a>
+  <a class="sec" href="#s4">4 · Security</a>
+  <a class="sec" href="#s5">5 · API</a>
+  <a class="sec" href="#s6">6 · Database</a>
+  <a class="sec" href="#s7">7 · Performance</a>
+  <a class="sec" href="#s8">8 · Frontend</a>
+  <a class="sec" href="#s9">9 · Backend</a>
+  <a class="sec" href="#s10">10 · Analiz motoru</a>
+  <a class="sec" href="#s11">11 · Data quality</a>
+  <a class="sec" href="#s12">12 · Test coverage</a>
+  <a class="sec" href="#s13">13 · Edge case</a>
+  <a class="sec" href="#s14">14 · Dependency</a>
+  <a class="sec" href="#s15">15 · DevOps</a>
+  <a class="sec" href="#s16">16 · Documentation</a>
+  <a class="sec" href="#s17">17 · Repo hygiene</a>
+  <a class="sec" href="#s18">18 · Code smells</a>
+  <a class="sec" href="#s19">19 · Ürün analizi</a>
+  <a class="sec" href="#s20">20 · Ürüne uzaklık</a>
+  <a class="sec" href="#s21">21 · Puanlama</a>
+  <a class="sec" href="#s22">22 · Önceliklendirme</a>
+  <a class="sec" href="#s23">23 · En önemli 20 problem</a>
+  <a class="sec" href="#s24">24 · En iyi 20 geliştirme</a>
+  <a class="sec" href="#s25">25 · Refactor planı</a>
+  <a class="sec" href="#s26">26 · Roadmap</a>
+  <a class="sec" href="#s27">27 · Ne yapmamalıyız</a>
+  <a class="sec" href="#s28">28 · İdeal mimari</a>
+  <a class="sec" href="#s29">29 · Gerçekçilik kontrolü</a>
+  <a class="sec" href="#s30">30 · Sonuç</a>
+  <a class="sub" href="#s30a">Executive Summary</a>
+  <a class="sub" href="#s30b">Güçlü / zayıf yönler</a>
+  <a class="sub" href="#s30c">Riskler</a>
+  <a class="sub" href="#s30d">Top 10 Priorities</a>
+  <a class="sub" href="#s30e">Final Verdict</a>
+  <a class="sub" href="#s30f">İki soru</a>
+</nav>
+
+<main>
+<header class="top">
+  <h1>TWMQ (Spor Toto Lab)<br>Kapsamlı Teknik, Mimari ve Ürün Denetimi</h1>
+  <div class="meta">
+    <b>Denetim tarihi:</b> 2026-09-03 &nbsp;·&nbsp; <b>HEAD:</b> 6e20bd7<br>
+    <b>Dal:</b> claude/twmq-comprehensive-audit-c4giua<br>
+    <b>Ölçülen zemin:</b> Python 3.13, tam bağımlılık kurulumu, 1.928 test,
+    ruff / mypy / interrogate / pip-audit koşturuldu<br>
+    <b>Kod değiştirilmedi</b> — yalnızca okuma ve ölçüm.
+  </div>
+</header>
+
+<h2 id="s0">0 · Yöntem ve dürüstlük notu</h2>
+<p>Bu rapor README'ye dayanmıyor. Şunlar <strong>yapıldı</strong>:</p>
+<div class="tw"><table>
+<thead><tr><th>Yapılan</th><th>Sonuç</th></tr></thead>
+<tbody>
+<tr><td><code>pytest -m "not slow"</code> (1.928 test)</td><td><span class="b b-ok">Tamamı geçti</span> — 6 atlama (opsiyonel ekstra yok)</td></tr>
+<tr><td><code>ruff check .</code></td><td><span class="b b-ok">Temiz</span> (0 bulgu)</td></tr>
+<tr><td><code>mypy</code> (147 dosya)</td><td><span class="b b-ok">Temiz</span> (0 hata)</td></tr>
+<tr><td><code>interrogate</code></td><td><strong>%77,6</strong> (eşik %75) — geçti</td></tr>
+<tr><td><code>pip-audit</code> (beyan edilen bağımlılıklar)</td><td><span class="b b-ok">Bilinen açık yok</span></td></tr>
+<tr><td>Uç uç latency ölçümü</td><td>8 uç, gerçek gövde boyutlarıyla (§2)</td></tr>
+<tr><td>Çözücü ölçekleme profili</td><td>8/9/10 üçlü → 4,8 / 15,4 / 48,8 sn (tek istek)</td></tr>
+<tr><td>Sızıntı / kontrol yüzeyi taraması</td><td>25 sızıntı testi, 27 sağlık değişmezi doğrulandı</td></tr>
+</tbody></table></div>
+
+<div class="call">
+<span class="lab">Denetimin en önemli tek bulgusu</span>
+<p>TWMQ'nun problemi <em>kalite</em> değil, <em>sınır</em>. Kod kalitesi, matematiksel titizlik
+ve ölçüm dürüstlüğü açık ara <strong>sektör ortalamasının üstünde</strong>. Kırılan yer, o
+titizliğin <strong>hiç uygulanmadığı tek katman</strong>: kaynağı sınırlamayan, kimlik istemeyen,
+senkron çalışan HTTP yüzeyi.</p>
+</div>
+
+<h2 id="s1">1 · Proje haritası ve gerçek mimari</h2>
+
+<h3>1.1 Proje ne yapıyor</h3>
+<p>Üç ayrı ürün tek depoda:</p>
+<ol>
+<li><strong>Kaplama kodu motoru (asıl ürün, matematiksel).</strong> 15 maçlık Spor Toto
+kuponunda seçilen ihtimal kümesi için Hamming yarıçap-1 <em>covering code</em> üretir.
+Vaadi olasılıksal değil kombinatoryaldir: küme içinde doğru sonuç varsa
+<strong>en az bir kolon en fazla 1 maç hatalıdır (14-garanti)</strong>.</li>
+<li><strong>Tahmin/analiz laboratuvarı (araştırma).</strong> 31.104 maçlık korpus üzerinde marj
+arındırma, kalibrasyon, yeniden kalibrasyon, ağaç modelleri, Elo/Dixon-Coles/Bayes/Markov,
+geri test, hold-out, sezon dışarıda bırakmalı ölçüm.</li>
+<li><strong>Sağlık/kanıt katmanı.</strong> 27 değişmez, 6 kategori, her çağrıda yeniden ölçülür —
+"vaat <em>şu anda, bu sürümde</em> hâlâ geçerli mi".</li>
+</ol>
+<p><strong>Hedef kullanıcı:</strong> kendi kuponunu kuran, olasılığı ve maliyeti <em>kendisi</em>
+okumak isteyen ileri düzey oyuncu; ikincil olarak spor-bahis veri metodolojisiyle
+ilgilenen analist.</p>
+
+<h3>1.2 Gerçek akış (koddan çıkarıldı)</h3>
+<pre><code>                  ┌──────────── build_* betikleri (18 adet) ─────────────┐
+                  │ football-data.co.uk · sportoto.gov.tr · iddaa bülteni │
+                  │ → CSV/JSON arşiv (git'e girer, denetimli yazılır)     │
+                  └───────────────────────┬──────────────────────────────┘
+                                          ▼
+Kullanıcı → Next.js 14 (App Router, 9 sayfa)      data/  (dosya sistemi — DB YOK)
+       │  lib/api.ts   (tek fetch katmanı)         │ odds/ egitim/ st_history/ …
+       │  lib/istek.ts (tek useIstek kancası)      │
+       ▼                                           │
+ next.config.mjs rewrite  /api/* ──────────────────┼──► Flask (web_app.py, 13 uç)
+                                                   │      │
+                                                   │      ├─ engines.py ─► core.py (saf matematik)
+                                                   │      ├─ payloads.py ─► history/odds/backtest/…
+                                                   │      ├─ tahmin.py ──► predict/recalibrate/egitim
+                                                   │      └─ health.py ──► 27 değişmez
+                                                   ▼
+                                          lru_cache (süreç içi, örnek başına)</code></pre>
+
+<div class="call g">
+<span class="lab">Bu projenin en iyi kararı</span>
+<p><code>core.py</code> olasılık katmanını <strong>hiç bilmez</strong> (<code>core.py:1-18</code>).
+14-garanti bir teoremdir; Bayes/Markov onu ne güçlendirir ne zayıflatır ve kod bu ayrımı
+fiziksel olarak korur. <code>health._check_sizinti_sozlesmesi</code> bu ayrımı her koşumda
+denetler. Sektörde nadir görülen bir disiplin.</p>
+</div>
+
+<h3>1.3 Katman envanteri (ölçülmüş)</h3>
+<div class="tw"><table>
+<thead><tr><th>Katman</th><th>Dosya</th><th class="n">Satır</th><th>Not</th></tr></thead>
+<tbody>
+<tr><td>Motor</td><td><code>spor_toto/</code> · 53 dosya</td><td class="n">21.436</td><td>Ürün + araştırma karışık</td></tr>
+<tr><td>API</td><td><code>web_app.py</code></td><td class="n">1.252</td><td>13 uç, kimlik yok</td></tr>
+<tr><td>Betikler</td><td><code>scripts/</code> · 26 dosya</td><td class="n">~11.500</td><td>Veri hattı + üretilmiş dosya bekçileri</td></tr>
+<tr><td>Testler</td><td>66 dosya</td><td class="n">~18.800</td><td>1.928 test</td></tr>
+<tr><td>Frontend</td><td>60 dosya</td><td class="n">16.340</td><td><strong>0 test</strong></td></tr>
+<tr><td>Belge</td><td>17 md</td><td class="n">762 KB</td><td><code>ISTATISTIK_YOL_HARITASI.md</code> tek başına 320 KB</td></tr>
+</tbody></table></div>
+
+<h2 id="s2">2 · Ölçülmüş uç performansı — raporun omurgası</h2>
+<p>Flask test istemcisiyle, gerçek veriyle, soğuk süreçte:</p>
+<div class="tw"><table>
+<thead><tr><th>Uç</th><th class="n">Kod</th><th class="n">Süre</th><th class="n">Gövde</th><th>Not</th></tr></thead>
+<tbody>
+<tr><td><code>GET /</code></td><td class="n">200</td><td class="n">2,4 ms</td><td class="n">0,7 KB</td><td></td></tr>
+<tr><td><code>GET /health</code> (liveness)</td><td class="n">200</td><td class="n"><strong>0,5 ms</strong></td><td class="n">0,2 KB</td><td>Doğru tasarlanmış</td></tr>
+<tr><td><code>GET /api/meta</code></td><td class="n">200</td><td class="n">0,8 ms</td><td class="n">2,9 KB</td><td></td></tr>
+<tr><td><code>GET /api/health/checks</code></td><td class="n">200</td><td class="n">0,6 ms</td><td class="n">8,6 KB</td><td></td></tr>
+<tr><td><code>GET /api/stats</code></td><td class="n">200</td><td class="n">161 ms</td><td class="n">94,8 KB</td><td></td></tr>
+<tr><td><code>GET /api/pazar</code></td><td class="n">200</td><td class="n">136 ms</td><td class="n">2,4 KB</td><td></td></tr>
+<tr><td><code>GET /api/takimlar</code></td><td class="n">200</td><td class="n"><strong>1.043 ms</strong></td><td class="n"><strong>353 KB</strong></td><td>Sayfalama yok</td></tr>
+<tr><td><code>GET /api/health</code> (readiness)</td><td class="n">200</td><td class="n"><strong>3.895 ms</strong></td><td class="n">13,6 KB</td><td>Docstring "~500 ms sıcak / 2,3 sn soğuk" diyor; ölçülen 3,9 sn</td></tr>
+<tr><td><code>GET /api/health?fresh=1</code></td><td class="n">200</td><td class="n">~900 ms</td><td class="n">—</td><td><strong>Önbellek atlanabilir</strong></td></tr>
+<tr><td><code>GET /api/benzer?oran=&lt;yeni&gt;</code></td><td class="n">200</td><td class="n"><strong>1.510 ms</strong></td><td class="n">—</td><td>Anahtar kullanıcı kontrolünde</td></tr>
+<tr><td><code>GET /api/backtest</code> (soğuk)</td><td class="n">200</td><td class="n"><strong>26.530 ms</strong></td><td class="n">—</td><td>Tek istek, tek çekirdek</td></tr>
+<tr><td><code>GET /api/tahmin</code> (soğuk)</td><td class="n">200</td><td class="n"><strong>41.740 ms</strong></td><td class="n">—</td><td>Ve <code>n_mac = 0</code> döndü</td></tr>
+<tr><td><code>POST /api/solve</code> (fix16, örnek)</td><td class="n">200</td><td class="n">60 ms</td><td class="n">7,8 KB</td><td></td></tr>
+<tr><td><code>POST /api/solve</code> (10 üçlü, heuristic)</td><td class="n">200</td><td class="n"><strong>52.700 ms</strong></td><td class="n">—</td><td><strong>Yasal kullanıcı girdisi</strong></td></tr>
+</tbody></table></div>
+<div class="call c">
+<p>Üretim topolojisi: <code>gunicorn --workers 2 --timeout 120</code>
+(<code>scripts/run_prod.sh:19</code>). <strong>İki işçi.</strong>
+Yukarıdaki tablo bu iki sayıyla birlikte okunmalıdır.</p>
+</div>
+<h2 id="s3">3 · Bug audit — sınıflandırılmış</h2>
+
+<h3 id="s3c">🔴 CRITICAL</h3>
+
+<h4>C1 — <code>/api/solve</code> seçim uzayı sınırsız; yasal bir kupon işçiyi 50+ sn kilitliyor, 15 üçlü OOM</h4>
+<p><code>web_app.py:1006</code> <code>api_solve</code> → <code>engines.run_heuristic/run_exact/run_maxcov</code>
+→ <code>core.py:790 solve_heuristic</code>. <code>solve_heuristic</code>
+<code>space = list(enc.variable_space())</code> ile <strong>tüm uzayı belleğe alır</strong>,
+<code>greedy_full:699</code> ise <code>balls = {p: ball(p, sizes) for p in space}</code> ile
+uzay × 31 nokta tutar. Hiçbir yerde uzay üst sınırı yok.</p>
+<p><strong>Ölçüldü:</strong></p>
+<pre><code> 8 üçlü (uzay      6.561):   4,81 sn
+ 9 üçlü (uzay     19.683):  15,36 sn
+10 üçlü (uzay     59.049):  48,79 sn   ← API üzerinden 52,7 sn, 200 OK
+15 üçlü (uzay 14.348.907):  OOM beklenir (14,3 M nokta × 31 = 445 M demet)</code></pre>
+<p>Dahası <code>core.parse_picks</code> <strong>maç sayısını sınırlamaz</strong> —
+<code>Encoder</code> yalnızca uyarı üretir (<code>core.py:118-123</code>).
+40 maçlık bir gövde kabul edildi ve <code>space_size = 1,2 × 10¹⁹</code> hesaplandı:</p>
+<pre><code>mac sayisi: 40  uyarilar: ['Spor Toto 15 mactan olusur, 40 mac girildi.']
+space_size: 12157665459056928801</code></pre>
+<p><code>mode=exact</code> daha kötü: <code>run_exact</code> docstring'i açıkça
+<em>"uzay sınırını yok sayar ve tam <code>time_limit</code> bütçesini kullanır"</em> diyor
+(<code>engines.py:169-171</code>) ve <code>LIMITS["time_limit"].max = 300</code>
+(<code>meta.py:96</code>). Yani kimlik istemeyen tek bir POST, 300 saniyelik ILP bütçesi
+talep edebilir — gunicorn'un 120 sn timeout'unu aşar, işçi öldürülür, istemci 502 alır.</p>
+<div class="call c">
+<p><strong>Etki:</strong> 2 işçiyle, 2 eşzamanlı istek servisi tamamen durdurur. Bu bir saldırı
+senaryosu bile değil — arayüzde 10 maçı "102" işaretlemek yeterli;
+<code>frontend/lib/kurulum.ts</code> de üçlü sayısını sınırlamıyor.</p>
+<p><strong>Çözüm:</strong> <code>Encoder</code> içinde <code>total_len &gt; MAC_SAYISI</code> katı red;
+<code>web_app</code> içinde <code>enc.space_size()</code> için sert tavan (öneri: 65.536 —
+<code>_build_result</code>'ın <code>distance_layers</code> maliyeti de aynı uzayı geziyor);
+<code>time_limit</code> üst sınırını gunicorn timeout'unun altına (≤60 sn) çekmek;
+uzun modları <strong>eşzamansız iş kuyruğuna</strong> taşımak.</p>
+</div>
+
+<h4>C2 — <code>/api/tahmin</code> üretimde her soğuk konteynerde ~40 sn ödüyor; artefakt dağıtıma girmiyor</h4>
+<p>Ölçüldü: <strong>41,74 sn</strong>. Kaynak <code>tahmin._egitilmis_alternatif</code>
+(<code>tahmin.py:180</code>) — diskte taze artefakt yoksa 31.103 satırlık korpusu okuyup modeli
+<strong>istek içinde</strong> eğitiyor. Docstring bunu biliyor ve <em>"Servis burada YAZMAZ"</em> diyor.
+Ama zincir kapalı değil:</p>
+<ul>
+<li><code>.gitignore:49</code> → <code>backend/data/artefakt/</code> <strong>git dışı</strong></li>
+<li><code>scripts/build.sh</code> (13 satırın tamamı) <code>artefakt --yaz</code> <strong>çağırmıyor</strong></li>
+<li>Disk kontrolü: <code>backend/data/artefakt</code> dizini <strong>yok</strong></li>
+</ul>
+<p>Yani <code>deploymentTarget = "autoscale"</code> altında <strong>her yeni konteyner</strong>
+ilk <code>/api/tahmin</code> isteğinde 40 sn ödüyor ve iki işçiden birini o süre boyunca bloke
+ediyor. Ölçüm doğru, tasarım doğru, <strong>dağıtım adımı eksik</strong>.</p>
+<p><strong>Çözüm (tek satır):</strong> <code>scripts/build.sh</code> içine
+<code>(cd backend &amp;&amp; python -m spor_toto.artefakt --yaz)</code>.</p>
+
+<h4>C3 — Kimlik doğrulama, yetkilendirme ve hız sınırı hiçbir uçta yok; önbellek anahtarları kullanıcı kontrolünde</h4>
+<p><code>web_app.py</code> içinde tek bir <code>@login_required</code>, API anahtarı veya
+<code>flask-limiter</code> yok. Bu, salt-okunur bir araç için kabul edilebilir bir ürün kararı
+<em>olabilirdi</em>; ama önbellek anahtarları saldırgan kontrolünde olduğu için değil:</p>
+<div class="tw"><table>
+<thead><tr><th>Vektör</th><th class="n">Ölçülen bedel</th><th>Neden önbellek korumuyor</th></tr></thead>
+<tbody>
+<tr><td><code>GET /api/health?fresh=1</code></td><td class="n">~0,9 sn/istek</td><td><code>fresh</code> TTL'yi <strong>bilerek</strong> atlıyor (<code>web_app.py:451</code>) ve her koşum <code>saglik_gecmisi.kaydet</code> çağırıp zaman serisini de kirletiyor</td></tr>
+<tr><td><code>GET /api/benzer?oran=…</code></td><td class="n">1,51 sn/istek</td><td><code>_benzer_cached</code> <code>lru_cache(128)</code>; sonsuz anahtar uzayı, önbellek anında çöpleniyor</td></tr>
+<tr><td><code>GET /api/backtest?banko=&lt;rastgele&gt;</code></td><td class="n">26,5 sn (ilk)</td><td><code>_backtest_cached</code> <code>lru_cache(32)</code>; ilk vuruş 26,5 sn ve <strong>bu bir kullanıcının normal sayfa açılışı</strong></td></tr>
+<tr><td><code>POST /api/solve</code></td><td class="n">52,7 sn</td><td>Bkz. C1</td></tr>
+</tbody></table></div>
+<p><strong>Etki:</strong> <code>curl</code> döngüsüyle tek bir istemci servisi süresiz kapatabilir.
+<code>--workers 2</code> bunu 2 eşzamanlı isteğe indiriyor.</p>
+
+<h3 id="s3h">🟠 HIGH</h3>
+
+<h4>H1 — <code>fixtures</code> kaynağında maç başlama saati hiç kontrol edilmiyor (asimetri)</h4>
+<p><code>tahmin.iddaa_maclari</code> (<code>tahmin.py:160</code>) <code>_gelecekte(...)</code> ile
+başlamış maçları eliyor. <code>tahmin.fixtures_maclari</code> (<code>tahmin.py:102-128</code>)
+<strong>hiçbir zaman filtresi uygulamıyor</strong> — oysa <code>yaklasan_maclar</code> fikstürü
+<em>tercih ediyor</em> (<code>tahmin.py:255</code>).</p>
+<p>Üst akış da gün hassasiyetinde: <code>scripts/build_fixtures.py:115</code> yalnızca
+<code>if tarih &lt; bugun: continue</code> diyor, <code>Time</code> sütunu taşınıyor ama
+kullanılmıyor.</p>
+<p><strong>Sonuç:</strong> maç gününde, sabah 13:00'te oynanmış bir maç akşam 20:00'de hâlâ
+"yaklaşan maç" olarak, maç öncesi olasılığıyla servis edilir. Modülün kendi docstring'i
+(<code>tahmin.py:81-93</code>) bunu açıkça yasaklıyor: <em>"Belirsiz bir zamana maç öncesi
+olasılığı vermek, olasılığın maç öncesi olduğu iddiasını doğrulanamaz hale getirir."</em>
+Kural yazılmış, ölçülen kaynağa uygulanmamış.</p>
+<p><span class="kv">Sınıf: gerçek bug (ölçülen kaynakta doktrin ihlali).</span></p>
+
+<h4>H2 — <code>_simdi()</code> saf yerel zaman; <code>kickoff</code> UTC → TZ'ye bağlı 3 saatlik sızıntı penceresi</h4>
+<ul>
+<li><code>tahmin.py:76-78</code> → <code>datetime.now()</code> (naive, yerel)</li>
+<li><code>scripts/snapshot_iddaa.py:163-165</code> → <em>"kickoff da UTC, iki kaynak aynı eksende
+olsun diye"</em>, <code>datetime.fromtimestamp(ts, tz=timezone.utc)</code></li>
+</ul>
+<p><code>_gelecekte</code> bu ikisini <code>strptime</code> ile naive olarak karşılaştırıyor.
+Konteyner <code>TZ=Europe/Istanbul</code> (UTC+3) ile koşarsa, <strong>son 3 saatte başlamış her
+maç "gelecekte" sayılır</strong>. <code>.replit</code> TZ'yi belirlemiyor.</p>
+<p><span class="kv">Sınıf: potansiyel risk (bugün UTC ortamda tetiklenmiyor), ama sessiz ve zehirli.</span></p>
+
+<h4>H3 — Hold-out, eşik seçimini düzeltiyor ama ızgara tasarımını düzeltmiyor</h4>
+<p><code>backtest.holdout</code> (<code>backtest.py:379</code>) LOOCV yapıyor ve bunu dürüstçe
+ilan ediyor. Ancak:</p>
+<ul>
+<li><code>BANKO_IZGARA = (0.50, …, 0.78)</code> ve <code>VARSAYILAN_BANKO = 0.68</code>'in gerekçesi
+kodda yazılı: <em>"Ölçülmüş banko bandından geliyor: favori oranı 1.35 altına inince isabet
+%64'ün üstüne çıkıyor"</em> (<code>backtest.py:55-60</code>). Yani <strong>ızgara noktaları aynı
+36 haftaya bakılarak seçildi.</strong></li>
+<li>LOOCV her katta 35 haftayı görüyor; n=36'da 35-haftalık en iyi eşik, 36-haftalık en iyi
+eşikle neredeyse mükemmel korelasyonlu.</li>
+</ul>
+<p><strong>Sonuç:</strong> "hold-out 14+ = 1/36" sayısı bile <strong>iyimser taraflı</strong>.
+Proje her yerde "seçim koşullu" ölçüm yapıyor (<code>secim_kalibrasyonu.py</code> tam bu soruyu
+soruyor), ama geri testin kendi ızgarasına uygulamıyor.</p>
+<p><strong>Çözüm:</strong> iç içe (nested) CV — dış kat ızgara/aile seçimini de kapsasın; ya da
+ızgarayı 2025/26 dışındaki bir sezonda dondurup 2025/26'yı hiç dokunulmamış kesit olarak sakla.</p>
+
+<h4>H4 — <code>genis_kesit_isabeti</code>'nin "anlamlı" sonucu, model seçim adımıyla örtüşen veri içeriyor</h4>
+<p><code>ALTERNATIF_KADEME = "bias"</code> seçimi 540 maçlık dar kesitte ölçülerek yapıldı
+(<code>tahmin.py:60-73</code>). Geniş kesit (<code>tahmin.py:403</code>) 4 sezonu birleştiriyor ve
+<strong>bu 540 maç dört kattan biri</strong>. Dolayısıyla <code>gecti=True</code>
+(aralık <code>[-0,0021, -0,0006]</code>) tam anlamıyla model-seçiminden bağımsız değil.</p>
+<p>Kod bunu kısmen fark etmiş — <code>_uyarilar</code>'daki <code>genis_kesitte_anlamli</code>
+metni <em>"Bu MODELIN IYILESTIGI anlamına GELMEZ"</em> diyor. Doğru ama yetersiz: küçülen
+belirsizlik, seçim adımının kirlettiği bir kesit üzerinde küçüldü.</p>
+<p><span class="kv">Sınıf: kuantitatif risk (teknik olarak doğru kod, metodolojik olarak eksik iddia).</span></p>
+
+<h4>H5 — Çoklu karşılaştırma düzeltmesi yok</h4>
+<p><code>arena.roster</code> bir tahminci ailesi kaydı tutuyor (Elo, Dixon-Coles, Bayes, izotonik,
+Venn-Abers, yığın, ağaç, beraberlik, …). Her biri <code>bootstrap_farki</code> ile
+<strong>%95 tekil aralık</strong> karşısında ölçülüyor ve <code>gecti</code> bayrağı tekil aralığa
+bakıyor (<code>evaluate.py:638</code>, <code>tahmin.py:383</code>). ~10+ aile denendiğinde
+aile-bazlı hata oranı %95'ten çok uzaklaşır; "hiçbiri geçemedi" sonucu bugün bunu maskeliyor
+ama biri geçtiği gün iddia savunulamaz olur.</p>
+<p><strong>Çözüm:</strong> Holm veya Benjamini-Hochberg düzeltmesi; en azından "kaç aday denendi"
+alanının gövdede taşınması — projenin kendi provenance doktriniyle birebir uyumlu.</p>
+
+<h3 id="s3m">🟡 MEDIUM</h3>
+<div class="tw"><table>
+<thead><tr><th>#</th><th>Bulgu</th><th>Yer</th><th>Neden problem</th></tr></thead>
+<tbody>
+<tr><td>M1</td><td><code>load_odds</code> <code>@lru_cache</code> <strong>mutable liste</strong> döndürüyor</td><td><code>odds.py:58-94</code></td><td>Çağıran satırı değiştirirse tüm süreç bozulur. <code>implied_probs</code> aynı sorunu fark edip demet döndürerek çözmüş (<code>odds.py:220</code>) — ders öğrenilmiş, buraya uygulanmamış</td></tr>
+<tr><td>M2</td><td><code>app.secret_key</code> varsayılanı sabit dizgi</td><td><code>web_app.py:83</code></td><td>Bugün session kullanılmıyor (zararsız), ama biri <code>session[...]</code> yazdığı an sessizce sömürülebilir</td></tr>
+<tr><td>M3</td><td><code>/api/takimlar</code> 353 KB / 1,0 sn, sayfalama yok</td><td><code>payloads.takimlar_payload</code></td><td>216 takım bugün; korpus büyüdükçe doğrusal büyür</td></tr>
+<tr><td>M4</td><td>Frontend <code>fetch</code>'te timeout yok</td><td><code>lib/api.ts:33</code>, <code>lib/istek.ts</code></td><td>52 sn süren <code>/api/solve</code> tarayıcıda süresiz "çalışıyor" gösterir</td></tr>
+<tr><td>M5</td><td><code>/api/health</code> 3,9 sn ölçüldü, docstring 2,3 sn diyor</td><td><code>web_app.py:560-566</code></td><td>Belgelenmiş sayı bayat; projenin kendi "sayı ölçülür, yazılmaz" doktrinine aykırı</td></tr>
+<tr><td>M6</td><td>Sağlık geçmişi süreç-içi halka tampon</td><td><code>health_history.py</code></td><td>Autoscale'de her örnek kendi geçmişini tutar; ölçek arttıkça zaman serisi anlamsızlaşır</td></tr>
+<tr><td>M7</td><td>Frontend 16.340 satır, <strong>0 davranış testi</strong></td><td><code>frontend/</code></td><td>eslint+tsc+<code>check.mjs</code> sözleşme denetimi var; bileşen/etkileşim testi yok</td></tr>
+<tr><td>M8</td><td>LOOCV <code>hit14</code> paydası <code>weeks</code>, <code>columns_avg</code> paydası <code>olculen</code></td><td><code>backtest.py:450-465</code></td><td>Kod bunu docstring'de anlatıyor ve gövdede <code>payda</code> alanıyla taşıyor — <strong>iyi çözülmüş bir tuzak</strong>; yine de iki paydalı bir metrik okuyucuyu yorar</td></tr>
+</tbody></table></div>
+
+<h4>🟢 LOW</h4>
+<ul>
+<li><code>mypy</code> 23 çekirdek modülde <code>ignore_errors = true</code>
+(<code>pyproject.toml:247-258</code>) — kademeli tip borcu, bilinçli ve belgeli.</li>
+<li><code>interrogate</code> %77,6 — eşik %75. Marj dar; bir modül eklendiğinde kapı düşebilir.</li>
+<li><code>next</code> 14.2.35 (15.x mevcut), <code>eslint</code> 8.57.1 (EOL). Güvenlik açığı yok
+(14.2.35 CVE-2025-29927'nin üstünde), ama sürüm borcu birikiyor.</li>
+<li><code>README.md</code> 93 KB / 1.514 satır / 49 başlık — tek dosya.</li>
+</ul>
+
+<h2 id="s4">4 · Security audit</h2>
+
+<h3>Yapılmış olanlar (gerçekten iyi)</h3>
+<div class="tw"><table>
+<thead><tr><th>Kontrol</th><th>Durum</th><th>Kanıt</th></tr></thead>
+<tbody>
+<tr><td>CORS origin doğrulama</td><td><span class="b b-ok">✓</span></td><td><code>web_app.py:1213-1230</code> — hostname bazlı; eski <code>'.replit.dev' in origin</code> açığı kapatılmış, <code>x.replit.dev.attacker.com</code> artık geçmez</td></tr>
+<tr><td>SSRF / şema doğrulama</td><td><span class="b b-ok">✓</span></td><td><code>file:</code>, <code>ftp:</code>, <code>data:</code> reddediliyor — <code>scripts/_ortak.py:59-89</code>, <code>health_history.py:44-52</code>; bekçi <code>test_scripts_ortak.py:300</code></td></tr>
+<tr><td>Pickle</td><td><span class="b b-ok">✓</span></td><td><code>artefakt.py:17-24</code> — <em>"Turşu kod çalıştırır"</em>, bilinçli reddedilmiş</td></tr>
+<tr><td>SQL enjeksiyonu</td><td><span class="b b-ok">✓</span></td><td>Yüzey yok; RDBMS yok, sqlite yalnızca üretilen arşiv, parametreli</td></tr>
+<tr><td>Komut enjeksiyonu</td><td><span class="b b-ok">✓</span></td><td>6 <code>subprocess</code> çağrısı, hepsi sabit argv, <code>shell=True</code> yok</td></tr>
+<tr><td>XSS</td><td><span class="b b-ok">✓</span></td><td>React auto-escape; <code>dangerouslySetInnerHTML</code> yok</td></tr>
+<tr><td>Sırlar</td><td><span class="b b-ok">✓</span></td><td>Tam tarama — API anahtarı, token, kimlik bilgisi yok; git geçmişinde de yok</td></tr>
+<tr><td>Bağımlılık açıkları</td><td><span class="b b-ok">✓</span></td><td><code>pip-audit</code> temiz, kapıya bağlı (<code>check.sh</code>)</td></tr>
+<tr><td>Güvenlik lint (<code>ruff S</code>)</td><td><span class="b b-ok">✓</span></td><td>3.051 ham bulgunun 3.001'i <code>S101</code> (assert, gerekçeli), 44 <code>S311</code> (Monte Carlo), 6 <code>S607</code> — hepsi belgeli</td></tr>
+<tr><td>Üretimde API dışa kapalı</td><td><span class="b b-ok">✓</span></td><td><code>run_prod.sh</code> gunicorn'u <code>127.0.0.1:8080</code>e bağlıyor</td></tr>
+</tbody></table></div>
+
+<h3>Açık kalanlar</h3>
+<div class="tw"><table>
+<thead><tr><th>Risk</th><th>Şiddet</th><th>Not</th></tr></thead>
+<tbody>
+<tr><td>Kimlik doğrulama yok</td><td><span class="b b-c">CRITICAL</span></td><td>Tüm 13 uç anonim</td></tr>
+<tr><td>Hız sınırı yok</td><td><span class="b b-c">CRITICAL</span></td><td>Bkz. C3; ölçülmüş bedellerle birlikte gerçek bir DoS</td></tr>
+<tr><td>Kaynak sınırı yok (<code>/api/solve</code>)</td><td><span class="b b-c">CRITICAL</span></td><td>Bkz. C1</td></tr>
+<tr><td>Güvenlik başlıkları yok</td><td><span class="b b-m">MEDIUM</span></td><td>CSP, <code>X-Content-Type-Options</code>, <code>Referrer-Policy</code>, HSTS — <code>next.config.mjs</code>'te <code>headers()</code> yok</td></tr>
+<tr><td>İstek gövde boyutu sınırı yok</td><td><span class="b b-m">MEDIUM</span></td><td>Flask <code>MAX_CONTENT_LENGTH</code> ayarlanmamış</td></tr>
+<tr><td><code>SECURITY.md</code> yok</td><td><span class="b b-l">LOW</span></td><td>Açık bildirim kanalı tanımsız</td></tr>
+<tr><td>IDOR / yetkilendirme</td><td>—</td><td><strong>Yüzey yok</strong>: kullanıcı kavramı, kullanıcı verisi, dosya yükleme yok</td></tr>
+</tbody></table></div>
+<div class="call">
+<p><strong>Saldırgan gözüyle özet:</strong> çalınacak veri yok, ele geçirilecek hesap yok,
+yazılacak kayıt yok. Tek gerçek saldırı yüzeyi <strong>kullanılabilirlik</strong> ve orada
+tamamen savunmasız.</p>
+</div>
+
+<h2 id="s5">5 · API audit</h2>
+<div class="tw"><table>
+<thead><tr><th>Metod</th><th>Yol</th><th>Girdi</th><th>Doğrulama</th><th>Not</th></tr></thead>
+<tbody>
+<tr><td>GET</td><td><code>/</code></td><td>—</td><td>—</td><td>Uç envanteri Flask <code>url_map</code>'ten <strong>türetiliyor</strong> (<code>web_app.py:518</code>) — elle liste bayatlama tuzağı kapatılmış</td></tr>
+<tr><td>GET</td><td><code>/health</code></td><td>—</td><td>—</td><td>Liveness, hiçbir değişmez koşmaz. Doğru ayrım</td></tr>
+<tr><td>GET</td><td><code>/api/health</code></td><td><code>?only</code>, <code>?fresh</code></td><td><code>only</code> bilinmezse 400</td><td>503 (kritik düşerse); <code>fresh</code> önbelleği atlar → C3</td></tr>
+<tr><td>POST</td><td><code>/api/health/kupon</code></td><td><code>picks</code>/<code>matches</code></td><td>✓ 400</td><td>503 döndürmüyor — <strong>doğru karar</strong>, gerekçe docstring'de</td></tr>
+<tr><td>GET</td><td><code>/api/health/history</code></td><td><code>?limit</code> 1-200</td><td>✓ kırpma</td><td></td></tr>
+<tr><td>GET</td><td><code>/api/health/checks</code></td><td>—</td><td>—</td><td></td></tr>
+<tr><td>GET</td><td><code>/api/meta</code></td><td>—</td><td>—</td><td>Frontend sabit kodlamaz, buradan okur ✓</td></tr>
+<tr><td>GET</td><td><code>/api/stats</code></td><td><code>?last</code>, <code>?sezon</code></td><td>✓ 400 + geçerli liste</td><td></td></tr>
+<tr><td>GET</td><td><code>/api/stats/&lt;week&gt;</code></td><td>path int</td><td>✓ 404</td><td>Sezon oranla birlikte geçiriliyor — sessiz sezon karışması kapatılmış</td></tr>
+<tr><td>GET</td><td><code>/api/pazar</code></td><td><code>?arindirma</code></td><td>✓ 400</td><td></td></tr>
+<tr><td>GET</td><td><code>/api/takimlar</code></td><td><code>?lig</code>, <code>?sezon</code></td><td>✓ 400</td><td>İki sezon yazımı da kabul ediliyor</td></tr>
+<tr><td>GET</td><td><code>/api/backtest</code></td><td>5 parametre</td><td>eşik <code>[0,1]</code>'e kırpılır</td><td><strong>26,5 sn soğuk</strong></td></tr>
+<tr><td>GET</td><td><code>/api/tahmin</code></td><td><code>?limit</code>, <code>?genis</code></td><td>✓</td><td><strong>41,7 sn soğuk</strong></td></tr>
+<tr><td>GET</td><td><code>/api/benzer</code></td><td><code>?oran</code> + 6 opsiyonel</td><td>✓ sınır dışı → 400 (kırpma değil)</td><td>Kırpma→400 dönüşümü belgeli ve doğru</td></tr>
+<tr><td>POST</td><td><code>/api/solve</code></td><td>15+ alan</td><td><code>LIMITS</code>'ten bant</td><td><strong>Uzay sınırı YOK</strong> → C1</td></tr>
+</tbody></table></div>
+<ul>
+<li><strong>Tutarlılık: yüksek.</strong> Hata gövdesi her yerde <code>{"error": …}</code> veya
+<code>{"ok": false, "error": …}</code>; frontend <code>api.ts:47</code> tek yerde okuyor.</li>
+<li><strong>HTTP kodları doğru.</strong> <code>degraded</code> için 503 döndürmeme kararı özellikle olgun.</li>
+<li><strong>Sözleşme otomatik denetleniyor:</strong> <code>scripts/api_sozlesme.py --kontrol</code>
+üretilmiş <code>frontend/lib/api-sozlesme.json</code>'u diskle karşılaştırıyor ve
+<strong>CI'nın dört Python sürümünde de koşuyor</strong>.</li>
+<li><strong>Eksik:</strong> sürümleme (<code>/api/v1/</code>) yok; <code>Cache-Control</code> yok;
+sayfalama yok; <code>429</code> hiç dönmüyor.</li>
+</ul>
+
+<h2 id="s6">6 · Database audit</h2>
+<p><strong>Veritabanı yok — ve bu bilinçli, savunulabilir bir karar.</strong> Depo:
+sürümlenmiş CSV/JSON arşiv (<code>backend/data/</code>, ~8 MB, en büyüğü
+<code>egitim_korpus.csv</code> 31.104 satır / 5,5 MB), <code>lru_cache</code> ile süreç-içi
+okuma önbelleği, opsiyonel sqlite yalnızca <em>üretilen</em> uzun-biçim kopya (git dışı).</p>
+<p><strong>Neden doğru:</strong> veri salt-okunur, sürümlenmiş, tek yazar (betikler), tek okuyucu
+(servis). Bir RDBMS bu iş yükü için saf karmaşıklık olurdu ve "veri kendini denetler" vaadini
+zayıflatırdı — çünkü git diff'i bir migration'dan daha okunabilir bir denetim izidir.</p>
+<p><strong>Veri bütünlüğü:</strong> <code>build_*</code> betikleri <strong>doğrulamadan yazmıyor</strong>;
+okuma anında aynı denetim tekrarlanıyor ve <code>data_quality</code> bloğu arayüze çıkıyor.
+<code>health._check_veri_seti</code>, <code>_check_oran_arsivi</code> bunu her koşumda ölçüyor.</p>
+
+<h3>"Veri 100× artarsa hangi işlem çöker?"</h3>
+<div class="tw"><table>
+<thead><tr><th>İşlem</th><th>Bugün</th><th>100× (3,1 M maç)</th><th>Kırılma</th></tr></thead>
+<tbody>
+<tr><td><code>egitim.korpus_haftalari()</code></td><td>~38 sn, tüm CSV belleğe</td><td>~1 saat, ~40 GB RAM</td><td><strong>Önce burası çöker</strong> — <code>list[dict]</code> tam yükleme</td></tr>
+<tr><td><code>_arindirilmis</code> <code>lru_cache(262.144)</code></td><td>%42 isabet</td><td>Anahtar uzayı 100× → isabet çöker</td><td>Shin kök bulucu tekrar sıcak nokta (ölçülmüş: sürenin %92'si)</td></tr>
+<tr><td><code>benzer_maclar</code> doğrusal tarama</td><td>1,5 sn</td><td>~150 sn/sorgu</td><td>İndeks yok</td></tr>
+<tr><td><code>load_odds</code> <code>lru_cache(8)</code></td><td>616 satır</td><td>61.600 × 8 sezon</td><td>Bellek</td></tr>
+<tr><td><code>/api/takimlar</code> gövdesi</td><td>353 KB</td><td>~35 MB</td><td>Sayfalama zorunlu</td></tr>
+</tbody></table></div>
+<p><strong>Eşik tahmini:</strong> mimari ~300 bin–500 bin maça kadar dosya tabanlı kalabilir.
+Ötesinde parquet + kolonlu okuma (pyarrow/polars) veya DuckDB <strong>doğru</strong> adım olur —
+ama bugün değil.</p>
+
+<h2 id="s7">7 · Performance audit</h2>
+<div class="tw"><table>
+<thead><tr><th>#</th><th>Problem</th><th>Etki</th><th>Yer</th></tr></thead>
+<tbody>
+<tr><td>P1</td><td><code>/api/solve</code> uzay sınırsız</td><td><span class="b b-c">CRITICAL</span></td><td>C1</td></tr>
+<tr><td>P2</td><td><code>/api/tahmin</code> soğuk 41,7 sn (artefakt yok)</td><td><span class="b b-c">CRITICAL</span></td><td>C2</td></tr>
+<tr><td>P3</td><td><code>/api/backtest</code> soğuk 26,5 sn, senkron</td><td><span class="b b-h">HIGH</span></td><td><code>web_app.py:861</code></td></tr>
+<tr><td>P4</td><td><code>/api/health</code> 3,9 sn, <code>fresh=1</code> ile atlanabilir</td><td><span class="b b-h">HIGH</span></td><td><code>web_app.py:441</code></td></tr>
+<tr><td>P5</td><td><code>/api/benzer</code> 1,5 sn, doğrusal tarama, önbellek çöplenebilir</td><td><span class="b b-m">MEDIUM</span></td><td><code>benzer.py</code></td></tr>
+<tr><td>P6</td><td><code>/api/takimlar</code> 353 KB gövde</td><td><span class="b b-m">MEDIUM</span></td><td>sayfalama yok</td></tr>
+<tr><td>P7</td><td>Tüm önbellekler süreç-içi; autoscale'de örnek başına yeniden ısınma</td><td><span class="b b-m">MEDIUM</span></td><td>Redis/dosya önbelleği yok</td></tr>
+<tr><td>P8</td><td><code>gunicorn --workers 2</code>, CPU-yoğun senkron iş</td><td><span class="b b-h">HIGH</span></td><td><code>run_prod.sh:19</code></td></tr>
+</tbody></table></div>
+<div class="call g">
+<span class="lab">Zaten iyi yapılmış optimizasyonlar (ölçülmüş ve belgeli)</span>
+<ul>
+<li><code>distance_layers</code> BFS'e çevrilmiş: <strong>8,92 sn → 0,01 sn</strong> (<code>core.py:298-305</code>)</li>
+<li><code>_arindirilmis</code> önbelleği: korpus süresinin %92'lik sıcak noktası kapatılmış,
+<strong>bit birebir</strong> sonuç korunarak (<code>odds.py:211-219</code>)</li>
+<li><code>_kaplama</code> imza-anahtarlı önbellek: eşik taraması 41×28 çözümden birkaç düzine
+çözüme inmiş (<code>backtest.py:94</code>)</li>
+<li><code>_en_iyi_skor</code> numpy matris karşılaştırması (<code>backtest.py:149</code>)</li>
+<li><code>ls_fixed_size</code> kabul koşulu düzeltmesi: <strong>56 → 43 kolon</strong> (<code>core.py:733-738</code>)</li>
+</ul>
+<p>Yani <strong>performans kültürü var</strong>; eksik olan tek şey <em>istek yolundaki üst sınır</em>.</p>
+</div>
+
+<h2 id="s8">8 · Frontend audit</h2>
+<p>Next.js 14 App Router, 9 sayfa, 60 dosya, 16.340 satır. Tailwind + kendi primitif seti
+(<code>components/ui/</code>). Framer Motion, lucide-react.</p>
+
+<h3>Güçlü yanlar</h3>
+<ul>
+<li><code>lib/istek.ts</code> — tek <code>useIstek</code> kancası. Docstring'i sekiz yerdeki üç
+farklı iptal deyimini ve ondan doğan sonsuz döngüyü anlatıyor; çözüm tek noktada.</li>
+<li><code>lib/api.ts</code> — tek fetch katmanı, <code>ApiError.status</code> ile 4xx/5xx ayrımı,
+kullanıcıya farklı metin.</li>
+<li><code>scripts/check.mjs</code> (~900 satır) — bir <strong>sözleşme linter'ı</strong>:
+biçimleyicilerin tekilliğini, çapraz-dil etiket eşitliğini (Python <code>saglayici_adi</code> ↔
+TS karşılığı), font geri-düşüş ölçülerini denetliyor. Kendi türünde alışılmadık derecede iyi.</li>
+<li>Meta/limitler sabit kodlanmıyor; <code>/api/meta</code>'dan okunuyor.</li>
+<li><code>data_quality</code> ve <code>provenance</code> blokları arayüze çıkıyor — vaat gereği.</li>
+</ul>
+
+<h3>Problemler</h3>
+<div class="tw"><table>
+<thead><tr><th>#</th><th>Problem</th><th>Yer</th></tr></thead>
+<tbody>
+<tr><td>F1</td><td><strong>God Component.</strong> 1.107 satır, <strong>30 <code>useState</code></strong>, 10+ <code>useEffect</code>, tek fonksiyon</td><td><code>frontend/app/page.tsx:96</code></td></tr>
+<tr><td>F2</td><td><strong>0 test.</strong> Birim, bileşen, E2E — hiçbiri yok</td><td><code>frontend/</code></td></tr>
+<tr><td>F3</td><td>İstek timeout'u yok; 52 sn'lik <code>solve</code> sessizce dönüyor</td><td><code>lib/api.ts:33</code></td></tr>
+<tr><td>F4</td><td><code>lib/types.ts</code> 1.307 satır — elle tutulan tip aynası (sözleşme denetimi var ama tip üretimi yok)</td><td></td></tr>
+<tr><td>F5</td><td>Erişilebilirlik yüzeysel: 102 a11y sinyali / 16.340 satır; <code>tabIndex</code>/<code>onKeyDown</code> yalnızca 4 yerde; <code>aria-live</code> yok</td><td></td></tr>
+<tr><td>F6</td><td><code>charts.tsx</code> 1.279 satır — ikinci God dosyası</td><td></td></tr>
+</tbody></table></div>
+
+<h3>"Kullanıcı hata yaptığında uygulama ne kadar anlaşılır davranıyor?"</h3>
+<p><strong>Beklenenden çok iyi.</strong> İki farklı sözleşme bilinçli olarak ayrılmış
+(<code>web_app.py:89-109</code>):</p>
+<div class="tw"><table>
+<thead><tr><th>Durum</th><th>CLI</th><th>API / Form</th></tr></thead>
+<tbody>
+<tr><td>negatif olasılık</td><td><code>ValueError</code></td><td>0'a kırpılır</td></tr>
+<tr><td>1'den büyük</td><td>normalize</td><td>yüzde sayılır (/100)</td></tr>
+<tr><td>satır tamamen 0</td><td><code>ValueError</code></td><td>seçim üzerinde eşit dağıtılır</td></tr>
+</tbody></table></div>
+<p>Gerekçe yazılı: <em>"CLI'yi bir insan değil bir betik çağırır ve orada sessiz düzeltme veriyi
+bozar. API'yi ise form çağırır."</em> Frontend <code>lib/utils.ts normalize</code> aynı bağışlayıcı
+kuralı uyguluyor — <strong>iki uç tutarlı</strong>.</p>
+<p>Ayrıca: atlanan hesaplar <code>None</code> değil <code>{skipped: true, reason: "…"}</code>
+döndürüyor (<code>web_app.py:388-403</code>, markov bloğu <code>362-368</code>).
+"Panel neden yok?" sorusu her zaman cevaplanıyor.</p>
+<p><strong>Eksik:</strong> 26–52 sn süren isteklerde ilerleme göstergesi/iptal düğmesi yok;
+kullanıcı uygulamanın donduğunu düşünür.</p>
+
+<h2 id="s9">9 · Backend audit</h2>
+<div class="tw"><table>
+<thead><tr><th>Alan</th><th>Değerlendirme</th></tr></thead>
+<tbody>
+<tr><td>Servis mimarisi</td><td><code>engines.py</code> API ve sağlık katmanı için <strong>ortak yol</strong> — üç kopya vardı, teke indirilmiş. <code>payloads.py</code> gövde üretimini ayırmış. Temiz.</td></tr>
+<tr><td>İş mantığı ayrımı</td><td><code>core.py</code> saf matematik, olasılık bilmez. Örnek niteliğinde.</td></tr>
+<tr><td>Doğrulama</td><td>Merkezî (<code>core.dogrula_secimler</code>, <code>_sayi</code>, <code>_bant</code>), sınırlar <code>meta.LIMITS</code>'ten — arayüz/sunucu ayrışması kapatılmış. <strong>Uzay sınırı hariç eksiksiz.</strong></td></tr>
+<tr><td>Hata yönetimi</td><td>Beklenen hatalar tiplenmiş (<code>Fix16Hatasi</code>, <code>ButceSigmazHatasi</code>, <code>GecersizSezon</code>). <code>except Exception</code> yalnızca 3 yerde ve <strong>hepsi <code>logger.exception</code> + kullanıcıya sebep</strong> ile. Hata yutma yok.</td></tr>
+<tr><td>Loglama</td><td><code>logging</code> kullanılıyor ama <strong>yapılandırılmamış</strong> (JSON değil, korelasyon kimliği yok). <code>run_log_text</code> düz metin.</td></tr>
+<tr><td>Yeniden deneme</td><td><code>scripts/_ortak.indir_json</code> timeout'lu; <strong>retry/backoff yok</strong>. Haftalık cron için kabul edilebilir.</td></tr>
+<tr><td>Timeout</td><td>HTTP indirmelerinde var; hesaplama yolunda <strong>yok</strong> (C1).</td></tr>
+<tr><td>Eşzamanlılık</td><td><code>_health_kilit</code> ile korunan tek paylaşılan durum. <code>lru_cache</code> thread-safe. Yarış durumu görülmedi.</td></tr>
+<tr><td>Arka plan işleri</td><td><strong>Yok</strong> — ve C1/C2/P3'ün kök nedeni tam olarak bu.</td></tr>
+<tr><td>Yapılandırma</td><td><code>os.environ</code> doğrudan, <code>.env.example</code> <strong>yok</strong>, 7 ortam değişkeni tek yerde toplanmamış</td></tr>
+</tbody></table></div>
+
+<h2 id="s10">10 · Analiz / veri motoru denetimi (domain)</h2>
+<p>Bu bölüm için ayrı bir standart uyguladım: kodun çalışması yetmez,
+<strong>istatistiksel olarak savunulabilir</strong> olmalı.</p>
+
+<h3>10.1 Marj arındırma — <span class="b b-ok">doğru ve dikkate değer</span></h3>
+<p>Üç yöntem: <code>orantili</code>, <code>guc</code>, <code>shin</code>. Varsayılan
+<code>shin</code> (<code>odds.py:166</code>).</p>
+<p><strong>Matematiksel doğrulama:</strong></p>
+<ul>
+<li>Shin formülü <code>p_i = (√(z² + 4(1−z)q_i²/Σq) − z) / (2(1−z))</code> — literatürdeki
+Shin (1993) ile birebir.</li>
+<li><code>z</code> için ikiye bölme <code>[0, 0.99]</code>: <code>z=0</code>'da toplam
+<code>√Σq &gt; 1</code>, <code>z↑</code> ile azalan → <strong>kök tek, ikiye bölme güvenli</strong>. Doğrulandı.</li>
+<li><code>guc</code> için <code>Σ(1/o)^k</code> <code>k</code>'ye göre kesin azalan (her taban &lt; 1)
+→ tek kök. Docstring bunu ispatıyla yazıyor.</li>
+<li>60 adım ikiye bölme çift duyarlığın ötesinde — sabitlenmiş ki sonuç makineden makineye
+oynamasın. <strong>Doğru mühendislik kararı.</strong></li>
+<li><code>margin()</code> <code>v &gt; 0</code> filtresi: boş hücre <code>0.0</code> geliyor ve
+<code>1/0</code> tüm ölçümü çökertirdi. Doctest'lerle korunuyor.</li>
+</ul>
+<p><strong>Varsayılan değişikliği dürüstçe yönetilmiş:</strong> <code>orantili → shin</code> çevrimi
+ölçülmüş (Brier <code>0,5940 → 0,5936</code>, <code>−0,00035 [−0,00049, −0,00021]</code>,
+sapan bant <code>10/15 → 4/15</code>) ve <strong>çevrimden önce yayımlanmış sayıların yeni ölçekle
+kıyaslanamayacağı</strong> kodda yazılı (<code>odds.py:162-164</code>).</p>
+
+<h3>10.2 Fiyat kaynağı seçimi — <span class="b b-ok">ölçülmüş, gerekçeli</span></h3>
+<p><code>FIYAT_VARSAYILAN = "Avg"</code> (<code>odds.py:126</code>). Üç aday ölçülmüş:</p>
+<pre><code>fiyat          kapsama   tam hafta   marj      Brier
+Avg              %92        36/41    %7,99    0,5515
+Pinnacle         %40        15/41    %3,73    0,5522
+Betfair Exc.     %94        32/41    %0,71    0,5508</code></pre>
+<p>Pinnacle <strong>reddedilme gerekçesi somut</strong>: football-data 2026-01'de Pinnacle
+yayımlamayı bıraktı, eksiklik rastgele değil zamana bağlı (Şubat–Mayıs 2026 tamamen boş) →
+geri test 36 haftadan 15'e inerdi. Ve marj arındırıldıktan sonra üçü ayırt edilemiyor.
+Pinnacle/Betfair atılmamış, paralel iz olarak ölçülüyor (<code>fiyatlar.py</code>).</p>
+
+<h3>10.3 14-garanti aritmetiği — <span class="b b-ok">ispatlı</span></h3>
+<ul>
+<li><strong>Hamming(7,4):</strong> 16 × 8 = 128 = 2⁷ → <strong>mükemmel kod</strong>; 7 çifte için
+16'dan az kolonla 14-garanti <em>matematiksel olarak imkânsız</em>.</li>
+<li><strong>Ternary [4,2,3]₃:</strong> 9 × 9 = 81 = 3⁴ → mükemmel.</li>
+<li><code>merge_rows</code> docstring'inde çok-işaretin bedeli <strong>düşüremeyeceğinin
+ispatı</strong>: verim <code>1 + Σ((k_i−a_i)/a_i)</code>, <code>(k_i−a_i)/a_i ≤ k_i−1</code>
+eşitsizliğiyle tüm <code>a_i=1</code> iken maksimum.</li>
+<li><code>_ILP_3322_22</code> (K=20): cebirsel karşılığı yok, HiGHS bulmuş, optimalliği
+ispatlanmış; <strong>iki bekçi</strong> var — <code>block_optimal</code> her bloğu ilk kullanımda
+doğruluyor, yavaş test ILP'yi yeniden koşuyor.</li>
+<li><code>dogrula_kaplama</code> <strong>bağımsız doğrulayıcı</strong>: motor ne derse desin sonuç
+ayrıca kontrol ediliyor.</li>
+</ul>
+<div class="call g"><p>Bu katman sağlam. Denetimde <strong>tek bir matematiksel hata bulamadım</strong>.</p></div>
+
+<h3>10.4 <code>secim.py</code> — Pareto DP hedef optimizasyonu — <span class="b b-ok">doğru türetme</span></h3>
+<p>Hedef <code>P(en iyi kolon ≥ 12) ≥ P(k ≤ 2)</code> ve türetme doğru:</p>
+<pre><code>k maç küme dışında → her kolonda yanlış; kalan 15−k içeride, Hamming ≤1 hata
+⇒ en iyi kolon ≥ 14−k   ⇒   k=2 → ≥12</code></pre>
+<p><strong>Eşitlik değil alt sınır</strong> olduğu açıkça yazılı, yani optimize edilmesi güvenli
+(temkinli hedef). Ölçümde gerçekleşen (24/36) model tahmininin (%39,5) üstünde çıkmış — alt
+sınır olduğu doğrulanmış. Kaçak olasılığının yalnızca sembol sayısına bağlı olması
+(<code>banko: 1−p₁</code>, <code>çifte: p₃</code>, <code>üçlü: 0</code>) problemi Poisson-binom
+kuyruğuna indirgiyor ve Pareto DP ile <strong>tam</strong> çözülüyor.</p>
+
+<h3>10.5 Sızıntı ve look-ahead — <span class="b b-ok">örnek niteliğinde</span>, iki uyarıyla</h3>
+<p><code>tests/test_sizinti.py</code> (601 satır, 25 test) <strong>bir sözleşme dosyası</strong>:
+kayıttaki her tahminci ailesi otomatik denetleniyor. Denetlenen üç madde:</p>
+<ol>
+<li><code>egit</code>/<code>tahmin</code> ayrımı gerçek mi (eğitim setini değiştirmek çıktıyı
+değiştiriyor mu)</li>
+<li>Ölçülen hafta kendi eğitim setinde yok mu</li>
+<li>İleri yürüyüşte gelecek grup eğitime giriyor mu</li>
+</ol>
+<p>Ve <strong>her denetimin yanında bilerek sızdıran bir kurgu var</strong> — testin boş yeşil
+kalmadığı ayrıca sınanıyor (<code>test_sizdiran_kurgu_skorda_gorunur</code>).
+<code>benzer.py</code> için <code>?tarih=</code> kesmesi var ve iki test bekçilik ediyor.
+<code>genis_kesit_isabeti</code> kat başına korpustan <strong>o sezonun tamamını</strong> çıkarıyor;
+ortaklığın tam sıfıra indiği ölçülmüş (<code>tahmin.py:415-423</code>).</p>
+<p><strong>İki uyarı (H3, H4):</strong> ızgara tasarımı ve kademe seçimi aynı veriye bakılarak
+yapıldı; hold-out bunu kapsamıyor.</p>
+
+<h3>10.6 Müşterek beklenen değer (<code>getiri.py</code>) — <span class="b b-ok">matematiksel olarak zarif</span></h3>
+<p><code>E[1/(1+W)] = (1 − (1−q)^(N+1)) / ((N+1)q)</code>, <code>W ~ Binom(N,q)</code> —
+kapalı form doğru.</p>
+<p><strong>Sayısal kararlılık ayrıca çözülmüş:</strong> naif yazımda <code>q=1e-12</code>'de üçüncü
+hanede yanlış çıkıyor; kod <code>−expm1(n·log1p(−q))</code> kullanıyor ve
+<code>test_q_sifir_limitinde_pay_tam</code> bekçilik ediyor.</p>
+<p><strong>Ve arayüze çıkmıyor</strong> — çünkü bağıntıyı görmek için ≈71 ikramiyeli hafta
+gerekiyor, elde <strong>1</strong> var. Hesap yapılıyor, sayı yayımlanmıyor.</p>
+<div class="call">
+<p>Kritik iç görü kodda yazılı: <code>orneklem</code> kalabalık modeliyle getiri <strong>0,156</strong>,
+<code>favori</code> modeliyle <strong>0,007</strong> — <strong>22 kat fark</strong>. Yani bu eksende
+sonucu belirleyen tahminci değil, <strong>kalabalık varsayımı</strong>. Projenin en değerli tek
+bulgusu ve dürüstçe raporlanmış.</p>
+</div>
+
+<h3>10.7 Örneklem büyüklüğü ve güven</h3>
+<ul>
+<li>Wilson %95 aralığı her yüzdenin yanında (<code>ortak.wilson</code>), <strong>kırpılmadan</strong>.</li>
+<li><code>AZ_ORNEK = 30</code> eşiği altındaki satırlar <code>low_sample: true</code> ile
+işaretleniyor ve arayüzde görünüyor.</li>
+<li>Eşleştirilmiş bootstrap <strong>hafta düzeyinde</strong> örnekleniyor (kümelenmeyi doğru ele alıyor).</li>
+<li><code>gecti</code> kararı <strong>ham</strong> üst sınırdan veriliyor; yuvarlanmış
+<code>-0.0 &lt; 0 == False</code> tuzağı bulunmuş ve kapatılmış (<code>evaluate.py:676-684</code>).</li>
+<li>⚠️ <strong>Çoklu karşılaştırma düzeltmesi yok</strong> (H5).</li>
+</ul>
+
+<h3>10.8 Sonuç: domain katmanı notu</h3>
+<div class="tw"><table>
+<thead><tr><th>Alt başlık</th><th class="n">Not</th></tr></thead>
+<tbody>
+<tr><td>Oran ayrıştırma / parsing</td><td class="n">9/10</td></tr>
+<tr><td>Marj arındırma (implied prob, vig)</td><td class="n"><strong>10/10</strong></td></tr>
+<tr><td>Kaplama kodu matematiği</td><td class="n"><strong>10/10</strong></td></tr>
+<tr><td>Kalibrasyon ölçümü</td><td class="n">9/10</td></tr>
+<tr><td>Geri test metodolojisi</td><td class="n">7/10 (H3)</td></tr>
+<tr><td>Sızıntı / look-ahead koruması</td><td class="n">9/10</td></tr>
+<tr><td>Beklenen değer / müşterek</td><td class="n">9/10</td></tr>
+<tr><td>Örneklem/güven iletişimi</td><td class="n">8/10 (H5)</td></tr>
+<tr><td>Survivorship bias</td><td class="n">9/10 — hafta eleniyor, <strong>tamamlanmıyor</strong>; elenen sayı gövdede</td></tr>
+<tr><td>Aşırı uyum farkındalığı</td><td class="n">9/10 — <code>UYARI</code> metni ve hold-out ayrımı örnek</td></tr>
+</tbody></table></div>
+
+<h2 id="s11">11 · Data quality</h2>
+<h3>"Yanlış veri girildiğinde sistem bunu fark ediyor mu?" → <span class="b b-ok">Evet, sistematik olarak</span></h3>
+<div class="tw"><table>
+<thead><tr><th>Kontrol</th><th>Uygulama</th></tr></thead>
+<tbody>
+<tr><td>İmkânsız oran</td><td><code>match_1x2</code> <code>any(v &lt;= 1.0)</code> → satır elenir; <code>snapshot_iddaa.ms_orani</code> 1.00'ı "askıya alınmış ayak yer tutucusu" olarak biliyor ve <strong>hiç kaydetmiyor</strong></td></tr>
+<tr><td>Sıfır/negatif oran</td><td><code>margin()</code> <code>v and v &gt; 0</code> filtresi + doctest</td></tr>
+<tr><td>Eksik oran</td><td>Hafta <strong>elenir, tamamlanmaz</strong> (doktrin 2); <code>weeks_dropped</code> gövdede</td></tr>
+<tr><td>Kodlama (BOM)</td><td><code>utf-8-sig</code> + <code>lstrip("﻿")</code> — 539 maçlık lig etiketi kaybına yol açan gerçek bir hatadan doğmuş</td></tr>
+<tr><td>Zaman dilimi</td><td>iddaa <code>kickoff</code> UTC'ye çevriliyor; ⚠️ tüketici tarafı naive (H2)</td></tr>
+<tr><td>Ondalık biçim</td><td><code>_sayi</code> regex + <code>.replace(",", ".")</code></td></tr>
+<tr><td>Bahisçi biçim farkı</td><td><code>KAYNAK_SIRASI</code> + kitap satır satır yazılıyor</td></tr>
+<tr><td>Sezon karışması</td><td><code>(week, no)</code> anahtarının sezon bileşeni olmadığı <strong>üç ayrı docstring'de</strong> uyarılıyor; <code>week_1x2(week, sezon)</code> zorunlu</td></tr>
+<tr><td>Provenance</td><td><code>provenance_notu()</code> <strong>üretiliyor</strong>, elle yazılmıyor</td></tr>
+<tr><td>Bayat üretilmiş dosya</td><td>3 bekçi (<code>super_toto_frontend</code>, <code>api_sozlesme</code>, <code>fiyat_kaynaklari</code> <code>--kontrol</code>) <strong>dört Python sürümünde</strong></td></tr>
+<tr><td>Yorumlayıcı bağımlılığı</td><td>CPython 3.12 Neumaier toplaması dosyayı bayt düzeyinde değiştiriyordu → <code>math.fsum</code> + matris karşılaştırması. Mutasyonla denenmiş</td></tr>
+</tbody></table></div>
+
+<h3>Açık kalan veri sorunları</h3>
+<div class="tw"><table>
+<thead><tr><th>#</th><th>Sorun</th><th>Kanıt</th></tr></thead>
+<tbody>
+<tr><td>D1</td><td><strong><code>fixtures.csv</code> boş ve hiçbir iş onu tazelemiyor</strong></td><td>Dosya yalnızca başlık satırı; <code>.github/workflows/</code> içinde fixtures işi yok</td></tr>
+<tr><td>D2</td><td><strong>En yeni iddaa snapshot'ı 2026-08-17, bugün 2026-09-03</strong> — 17 gün</td><td><code>data/iddaa/</code></td></tr>
+<tr><td>D3</td><td><strong><code>/api/tahmin</code> <code>n_mac = 0</code> döndürüyor</strong> (ölçüldü)</td><td><code>bos_sebep: "yaklasan mac yok…"</code></td></tr>
+<tr><td>D4</td><td>Bayatlık ürüne <strong>görünmüyor</strong> — gövdede <code>veri_yasi</code> alanı yok</td><td></td></tr>
+</tbody></table></div>
+<div class="call c">
+<p>D1–D4 birlikte, projenin manşet vaadinin (<em>"maç sonucu tahmini üretir"</em>)
+<strong>şu anda üründe hiçbir çıktı vermediği</strong> anlamına geliyor.
+Kod doğru, hat kopuk.</p>
+</div>
+
+<h2 id="s12">12 · Test coverage</h2>
+<h3>Ölçülen</h3>
+<ul>
+<li><strong>1.928 test</strong>, 66 dosya, ~18.800 satır. <code>-m "not slow"</code> ile tamamı geçiyor.</li>
+<li><code>pytest-randomly</code> <strong>açık</strong> — test sırası rastgele ve tohumla tekrar
+edilebilir. Gerekçe: <em>"belirsizlik zaten vardı ama SESSIZDI"</em>.</li>
+<li><code>-n auto</code> (xdist): 142 sn → 77 sn ölçülmüş; <code>loadscope</code>/<code>loadfile</code>
+denenip reddedilmiş (83/89 sn).</li>
+<li>Doctest'ler kapıda: 6 modülün sayı üreten fonksiyonları yürütülüyor.</li>
+<li><code>conftest.py</code> var, 12 kopya kaldırılmış.</li>
+</ul>
+
+<h3>"Yarın büyük bir refactor yapsam testler beni korur mu?"</h3>
+<p><strong>Backend için: EVET, güçlü şekilde.</strong> Üç kanıt:</p>
+<ol>
+<li><strong>Mutasyon testi yapılmış.</strong> Commit <code>b2a5aac</code>: <em>"testler: MUTASYONLA
+denendi — iki gerçek boşluk çıktı, ikisi de kapandı"</em>. <code>margin()</code> için
+<code>- 1.0</code> düşürüldüğünde süit yeşil kalmış → doctest eklenmiş.
+<code>math.fsum → sum</code> mutasyonu denenmiş, py3.10 bacağı kırmızıya dönmüş.</li>
+<li><strong>Değişmez katmanı ayrı.</strong> 27 sağlık kontrolü, testlerden bağımsız olarak
+<em>çalışan sistemi</em> ölçüyor ve CI'nın dört bacağında da koşuyor.</li>
+<li><strong>Sözleşme testleri var.</strong> <code>test_belgeler.py</code> (529 satır) belgelerdeki
+sayıları koda karşı denetliyor; <code>test_sizinti.py</code> yeni tahminciyi otomatik
+denetliyor; <code>core.__all__</code> modülün gerçek yüzeyine karşı sayılıyor.</li>
+</ol>
+<p><strong>Analiz/matematik fonksiyonları için: EVET.</strong> <code>test_core</code>,
+<code>test_dixon_coles</code>, <code>test_elo</code>, <code>test_getiri</code>,
+<code>test_kalibrasyon</code>, <code>test_evaluate</code>, <code>test_edge_cases</code>,
+<code>test_invariants</code> — hepsi var ve iş mantığını gerçekten sınıyor.</p>
+<div class="call c">
+<p><strong>Frontend için: HAYIR.</strong> 16.340 satır, <strong>0 test</strong>.
+<code>eslint + tsc + check.mjs</code> yapısal denetim yapıyor ama hiçbir bileşenin davranışını
+sınamıyor. <code>app/page.tsx</code>'teki 30 state'li God Component'i refactor etmek bugün
+<strong>tamamen korumasız</strong>.</p>
+</div>
+
+<h2 id="s13">13 · Edge case denetimi</h2>
+<div class="tw"><table>
+<thead><tr><th>Senaryo</th><th>Davranış</th><th class="n">Durum</th></tr></thead>
+<tbody>
+<tr><td>Boş veri kümesi</td><td><code>load_odds</code> boş liste (hata değil); <code>season_1x2_summary</code> <code>None</code></td><td class="n">✓</td></tr>
+<tr><td>Tek maç</td><td><code>_ozet</code> <code>{"weeks": 0}</code>; <code>holdout</code> <code>n &lt; 3</code> → <code>{"weeks": 0}</code></td><td class="n">✓</td></tr>
+<tr><td>Binlerce maç</td><td>Uzay sınırsız → <strong>çöker</strong></td><td class="n"><span class="b b-c">C1</span></td></tr>
+<tr><td>Eksik oran</td><td>Hafta elenir, sayılır, gövdede raporlanır</td><td class="n">✓</td></tr>
+<tr><td>Bahisçi yok</td><td><code>KAYNAK_SIRASI</code> sırayla denenir, hepsi yoksa <code>None</code></td><td class="n">✓</td></tr>
+<tr><td>Geçersiz oran</td><td><code>&lt;= 1.0</code> elenir</td><td class="n">✓</td></tr>
+<tr><td>Oran = 0</td><td><code>margin()</code> ve <code>_arindirilmis</code> filtreler</td><td class="n">✓</td></tr>
+<tr><td>Negatif değer</td><td>CLI <code>ValueError</code>, API 0'a kırpar (belgeli ayrım)</td><td class="n">✓</td></tr>
+<tr><td>Aşırı büyük değer</td><td><code>_sayi</code> <code>lo/hi</code> kırpması; <code>budget</code> <code>[1, 10 M]</code></td><td class="n">✓</td></tr>
+<tr><td>Aynı maç iki kez</td><td><code>parse_picks</code> tekrar sembolü reddediyor; hafta anahtarı tekil</td><td class="n">✓</td></tr>
+<tr><td>API zaman aşımı</td><td><code>indir_json</code> timeout'lu; <strong>retry yok</strong></td><td class="n">⚠</td></tr>
+<tr><td>Bozuk API cevabı</td><td><code>_govde</code> sarmalı açıyor, <code>isSuccess: False</code> → <code>RuntimeError</code></td><td class="n">✓</td></tr>
+<tr><td>DB erişilemez</td><td>DB yok; dosya yoksa boş liste</td><td class="n">✓</td></tr>
+<tr><td>Ağ hatası</td><td>Betikler çıkış 1; servis ağa bağımlı değil</td><td class="n">✓</td></tr>
+<tr><td>Geçersiz kullanıcı girdisi</td><td>400 + geçerli seçenek listesi (sessiz varsayılana düşürme <strong>yok</strong>)</td><td class="n">✓</td></tr>
+<tr><td><strong>Uzay patlaması</strong></td><td><strong>Sınır yok</strong></td><td class="n"><span class="b b-c">✗</span></td></tr>
+</tbody></table></div>
+
+<h2 id="s14">14 · Dependency audit</h2>
+<h3>Backend</h3>
+<pre><code>numpy 2.4.6 · scipy 1.17.1 · flask 3.1.3 · werkzeug 3.1.8 · gunicorn 26.2.0
+pip-audit: bilinen açık YOK</code></pre>
+<p><strong>4 üretim bağımlılığı.</strong> Bir analiz projesi için dikkat çekici derecede az ve
+doğru. Ekstralar (<code>test</code>, <code>kalite</code>, <code>model</code>, <code>mcp</code>,
+<code>ocr</code>) ayrı ve gerekçeli.</p>
+<p><strong>Sorun:</strong> <code>.replit</code> <code>build → setup.sh</code> zinciri
+<code>[test]</code> ve <code>[model]</code> ekstralarını <strong>deploy imajına kuruyor</strong>.
+<code>pyproject.toml:31-36</code> bunu fark etmiş ve cümleyi düzeltmiş ama
+<strong>davranışı değiştirmemiş</strong> — üretim imajı <code>pytest</code>,
+<code>scikit-learn</code>, <code>lightgbm</code> taşıyor (~400 MB gereksiz).</p>
+<p><strong>MCP ekstrası:</strong> <code>mcp&gt;=2.0</code> starlette + uvicorn getiriyor — WSGI
+yığınının yanına ikinci bir ASGI yığını. Varsayılan kurulumda değil ama CI kalite kapısında
+kuruluyor; gerekçe yazılı ve savunulabilir.</p>
+
+<h3>Frontend</h3>
+<div class="tw"><table>
+<thead><tr><th>Paket</th><th>Sürüm</th><th>Durum</th></tr></thead>
+<tbody>
+<tr><td><code>next</code></td><td>14.2.35</td><td>Güvenli (CVE-2025-29927 yamalı) ama <strong>Next 15 mevcut</strong></td></tr>
+<tr><td><code>eslint</code></td><td>8.57.1</td><td><strong>EOL</strong> — 9.x'e geçilmeli</td></tr>
+<tr><td><code>react</code></td><td>18.3.1</td><td>19 mevcut; acil değil</td></tr>
+<tr><td><code>typescript</code></td><td>5.9.3</td><td>Güncel</td></tr>
+<tr><td><code>tailwindcss</code></td><td>3.4.19</td><td>Güncel (3.x hattı)</td></tr>
+<tr><td><code>framer-motion</code></td><td>13.1.0</td><td>Yalnızca animasyon için ~100 KB; kullanım yoğunluğu gözden geçirilmeli</td></tr>
+</tbody></table></div>
+<p>432 paket (lockfile). <strong>Kullanılmayan paket bulamadım</strong> — bu ölçekte iyi.</p>
+
+<h2 id="s15">15 · DevOps / Deployment</h2>
+<h3>Kalite kapısı — bu deponun en güçlü tarafı</h3>
+<p><code>scripts/check.sh</code> <strong>13 adım</strong> ve CI onu <em>çağırıyor</em> (adımları
+yeniden yazmıyor). Gerekçe kodda: <em>"önceden CI'nın altı adımından üçünü koşuyordu, yani
+'OK' demesi 'CI geçer' demek değildi."</em></p>
+<pre><code>ruff (backend + .claude/) → mypy (backend + .claude/) → interrogate → pip-audit
+→ doctest → pytest hızlı -rs → pytest yavaş → sağlık değişmezleri → CLI dumanı
+→ Süper Toto boru hattı → hafta raporu HTML → üretilmiş 3 dosya tazeliği
+→ ÜRETİM TOPOLOJİSİ DUMANI</code></pre>
+<p>Son adım özellikle nadir: gerçek <code>gunicorn</code> + gerçek <code>next start</code> +
+gerçek rewrite proxy'si rastgele portlarda ayağa kaldırılıp 9 sayfa ve 3 uç sürülüyor.
+<code>curl</code> bile kullanılmıyor (yeni araç bağımlılığı olmasın diye).</p>
+<p>CI matrisi 4 Python sürümü × değişmezler × üretilmiş dosya karşılaştırması.
+<code>3.12</code> sınırının iki yanı da kapsanıyor — yorumlayıcı bağımlılığı en az bir bacağı
+kırmızıya çeksin diye.</p>
+
+<h3>"Production'da sistem çökerse nasıl anlayacağız ve nasıl geri alacağız?"</h3>
+<div class="tw"><table>
+<thead><tr><th>Yetenek</th><th class="n">Durum</th><th>Not</th></tr></thead>
+<tbody>
+<tr><td><code>/health</code> liveness (0,5 ms)</td><td class="n">✓</td><td></td></tr>
+<tr><td><code>/api/health</code> readiness + 27 değişmez</td><td class="n">✓</td><td>3,9 sn</td></tr>
+<tr><td><code>HEALTH_ALARM_URL</code> webhook</td><td class="n">✓</td><td>Şema doğrulamalı</td></tr>
+<tr><td><code>ornek_kimligi()</code></td><td class="n">✓</td><td>Çok örnekli dağıtımda hangi süreç cevap verdi</td></tr>
+<tr><td>Hata izleme (Sentry vb.)</td><td class="n">✗</td><td></td></tr>
+<tr><td>Yapılandırılmış log / korelasyon kimliği</td><td class="n">✗</td><td></td></tr>
+<tr><td>Metrik (istek, p95, hata oranı)</td><td class="n">✗</td><td></td></tr>
+<tr><td>Sağlık geçmişi kalıcılığı</td><td class="n">✗</td><td>Süreç-içi → yeniden başlatmada sıfırlanır</td></tr>
+<tr><td>Geri alma prosedürü</td><td class="n">✗</td><td>Replit sürüm geçmişine bağımlı; runbook yok</td></tr>
+<tr><td>CHANGELOG / git tag / release</td><td class="n">✗</td><td><code>__version__ = "4.0.0"</code> var ama tag'e bağlı değil</td></tr>
+<tr><td>Veri yedeği</td><td class="n">✓</td><td>Arşiv git'te → GitHub yedeği</td></tr>
+</tbody></table></div>
+<p><span class="kv"><code>_kaynak/</code> ham indirmeler git dışı → kaybolursa yeniden
+indirilemeyebilir (iddaa açık bülten kapanınca düşer — <code>snapshot_iddaa.py</code> bunu
+biliyor ve uyarıyor).</span></p>
+
+<h2 id="s16">16 · Documentation</h2>
+<h3>"Yeni bir geliştirici cevabı kolayca bulabiliyor mu?"</h3>
+<div class="call"><p><strong>Bilgi eksiksiz, erişim zor.</strong></p></div>
+<pre><code>README.md                        93.664 B  (1.514 satır, 49 başlık)
+docs/ISTATISTIK_YOL_HARITASI.md 320.377 B  ← tek başına
+docs/VERI_TOPLAMA_VE_ISLEME.md  106.936 B
++ 15 dosya daha                            ── toplam 762 KB</code></pre>
+<p><strong>Güçlü:</strong></p>
+<ul>
+<li>Her modül kendi <strong>gerekçesini</strong> yazıyor — "ne" değil "niçin".
+<code>odds.py:98-126</code> fiyat seçimini bir ölçüm tablosuyla savunuyor.</li>
+<li>Docstring'ler yürütülüyor (doctest kapıda).</li>
+<li>Belgedeki sayılar koda karşı denetleniyor (<code>test_belgeler.py</code>).</li>
+<li>Reddedilmiş alternatifler kayıtlı (<code>docs/DIS_INCELEME_*.md</code> — 5 dış depo incelemesi).</li>
+<li>Yanlış çıkan eski cümleler <strong>silinmiyor, düzeltiliyor ve niçin yanlış olduğu
+yazılıyor</strong>. Kurumsal hafıza açısından çok değerli.</li>
+</ul>
+<p><strong>Zayıf:</strong></p>
+<div class="tw"><table>
+<thead><tr><th>#</th><th>Sorun</th></tr></thead>
+<tbody>
+<tr><td>G1</td><td><code>docs/README.md</code> <strong>index yok</strong> — 17 dosyada nereden başlanacağı belli değil</td></tr>
+<tr><td>G2</td><td>README 1.514 satır, tek dosya — "5 dakikada mimari" bölümü yok</td></tr>
+<tr><td>G3</td><td><strong>Mimari diyagramı yok</strong> (metin bile)</td></tr>
+<tr><td>G4</td><td>Ortam değişkenleri tek tabloda değil, <code>.env.example</code> yok</td></tr>
+<tr><td>G5</td><td>Tamamı Türkçe — açık kaynak katkı için bariyer (bilinçli bir seçim olabilir)</td></tr>
+<tr><td>G6</td><td><code>replit.md</code> ile <code>README.md</code> arasında örtüşme</td></tr>
+</tbody></table></div>
+
+<h2 id="s17">17 · GitHub / project hygiene</h2>
+<div class="tw"><table>
+<thead><tr><th>Öğe</th><th class="n">Durum</th><th>Not</th></tr></thead>
+<tbody>
+<tr><td>README</td><td class="n">✓</td><td>Aşırı kapsamlı</td></tr>
+<tr><td><code>.gitignore</code></td><td class="n">✓</td><td><strong>Mükemmel</strong> — her satırın gerekçesi yazılı (4.872 B); türetilmiş/kaydedilmiş ayrımı açık</td></tr>
+<tr><td>CI</td><td class="n">✓</td><td>2 iş, 4 sürüm matrisi, kapıyı çağırıyor</td></tr>
+<tr><td>Zamanlanmış işler</td><td class="n">✓</td><td>2 iş; ikisinin de "niçin var / durdurmanın bedeli / nasıl durdurulur" bölümü var</td></tr>
+<tr><td>Commit kalitesi</td><td class="n">✓</td><td><strong>Olağanüstü.</strong> Örnek: <em>"CI aylardır kırmızıydı: üç kusur, üçü de yalnızca KOŞULUNCA göründü"</em></td></tr>
+<tr><td>Dal yapısı</td><td class="n">✓</td><td><code>main</code> + özellik dalları, PR üzerinden merge</td></tr>
+<tr><td><strong>LICENSE</strong></td><td class="n"><span class="b b-c">✗</span></td><td><strong>YOK</strong> — hukuken "tüm haklar saklı"; kimse kullanamaz/katkı veremez</td></tr>
+<tr><td>CONTRIBUTING.md</td><td class="n">✗</td><td></td></tr>
+<tr><td>SECURITY.md</td><td class="n">✗</td><td></td></tr>
+<tr><td>Issue / PR şablonu</td><td class="n">✗</td><td></td></tr>
+<tr><td>CHANGELOG.md</td><td class="n">✗</td><td></td></tr>
+<tr><td><code>.env.example</code></td><td class="n">✗</td><td>Frontend'de var, backend'de yok</td></tr>
+<tr><td>Release / tag</td><td class="n">✗</td><td></td></tr>
+</tbody></table></div>
+
+<h2 id="s18">18 · Code smells</h2>
+<div class="tw"><table>
+<thead><tr><th>Smell</th><th>Bulundu mu</th><th>Kanıt</th></tr></thead>
+<tbody>
+<tr><td>God Function</td><td>⚠ Sınırda</td><td><code>api_solve</code> 190 satır (<code>web_app.py:1006-1194</code>) — ama düz akış, iyi yorumlanmış</td></tr>
+<tr><td><strong>God Component</strong></td><td><span class="b b-c">Evet</span></td><td><code>app/page.tsx</code> 1.107 satır / 30 <code>useState</code>; <code>charts.tsx</code> 1.279 satır</td></tr>
+<tr><td>Büyük dosya</td><td>⚠</td><td><code>health.py</code> 1.798 satır ama <strong>44 küçük fonksiyon</strong> — bir kayıt tablosu, God Object değil. <code>super_toto_sayfa.py</code> 1.362 satır / <strong>7 fonksiyon</strong> → gerçek yoğunluk sorunu</td></tr>
+<tr><td>Derin iç içelik</td><td>✓ Yok</td><td>En derin ~4 seviye</td></tr>
+<tr><td>Sihirli sayı</td><td>✓ Yok</td><td><code>meta.LIMITS</code>, <code>AZ_ORNEK</code>, <code>UZAY_SINIRI</code>, <code>FIRE_MAX_MALIYET</code> — adlandırılmış ve gerekçeli</td></tr>
+<tr><td>Sihirli dizgi</td><td>✓ Yok</td><td><code>SEMBOLLER</code>, <code>ORNEK_KUPON</code>, <code>FIYAT_VARSAYILAN</code> tek kaynakta</td></tr>
+<tr><td>Kopya mantık</td><td>✓ Aktif avlanmış</td><td>Commit <code>12b79ea</code>: <em>"kopya taraması: kendi işimi denetledim, dört tane kalmış — dördü de kapandı"</em></td></tr>
+<tr><td>Ölü kod</td><td>✓ Yok</td><td><code>3504596</code>: <code>--sezon-kirilimi</code> ölü seçenek bağlandı; <code>6966d8c</code>: ölü yüzey sıfırlandı</td></tr>
+<tr><td>Dairesel bağımlılık</td><td>✓ Yok</td><td><code>meta.py</code> tam bunu çözmek için ayrılmış; geç import deseni tutarlı</td></tr>
+<tr><td>Erken soyutlama</td><td>✓ Yok</td><td></td></tr>
+<tr><td>Aşırı mühendislik</td><td>⚠ Kısmen</td><td>53 motor modülünden 7'si (2.429 satır) yalnızca <code>python -m</code> ile erişilebilir araştırma katmanı</td></tr>
+<tr><td>Sıkı bağlaşım</td><td>✓ Düşük</td><td></td></tr>
+<tr><td>Gizli bağımlılık</td><td>✓ Yok</td><td>Geç import'ların hepsi gerekçeli</td></tr>
+</tbody></table></div>
+<div class="call">
+<p><strong>"Kullanılmayan modül" taraması:</strong> <code>secim_kalibrasyonu</code>,
+<code>kalibrasyon</code>, <code>skor</code>, <code>bahisci</code>, <code>disari</code>,
+<code>cizgi</code>, <code>kuyruk</code> API/CLI/betiklerden <strong>hiç import edilmiyor</strong> —
+ama hepsinin <code>__main__</code> girişi var ve README'de anılıyorlar
+(<code>kalibrasyon</code> 17 kez, <code>skor</code> 13 kez).
+<strong>Ölü kod değil, araştırma CLI katmanı.</strong> Yine de mimari olarak sınıflandırılmamış:
+bilgi grafındaki komut envanteri 7 komut sayıyor, gerçekte 17+ <code>python -m</code> girişi var.</p>
+</div>
+
+<h2 id="s19">19 · Ürün analizi</h2>
+<h4>Problem</h4>
+<p>Spor Toto oyuncusu iki soruya cevap bulamıyor — <em>(a)</em> "seçtiğim işaretleri en ucuz
+nasıl oynarım?" <em>(b)</em> "bu araç bana ne vaat ediyor ve vaadi ne kadar tuttu?"
+Piyasadaki araçların çoğu (a)'yı kabaca, (b)'yi hiç cevaplamıyor.</p>
+<h4>Kullanıcı</h4>
+<p>Kendi kuponunu kuran, sistem oynayan, olasılık okuyabilen ileri düzey oyuncu.
+İkincil: spor-bahis veri metodolojisiyle ilgilenen analist/akademisyen.</p>
+<h4>Değer önerisi</h4>
+<p>Bu depo, bahis araçları arasında <strong>"sayının nereden geldiğini söyleyen"</strong> neredeyse
+tek örnek. Her yüzde yanında <code>n</code> ve Wilson aralığı; her fiyat yanında kitap ve dönem;
+her ölçüm yanında hold-out; her atlanan hesap yanında sebep. Ve 14-garanti bir
+<strong>teorem</strong> — reklam değil.</p>
+<h4>Farklılaşma</h4>
+<ul>
+<li>✓ Kombinatoryal garanti (rakiplerde yok)</li>
+<li>✓ Fire analizi — "garanti geçerli DEĞİLKEN ne oluyor" (bir aracın en kolay gizleyeceği şey)</li>
+<li>✓ Sağlık katmanı — vaadin <em>yayındaki sürümde</em> geçerli olduğunun kanıtı</li>
+<li>✓ Ölçülmüş isabet olasılıktan <strong>ayrılamaz</strong> (<code>/api/tahmin</code> sözleşmesi)</li>
+<li>✗ Tahmin katmanı piyasayı <strong>geçemiyor</strong> ve bunu dürüstçe söylüyor — ürün açısından
+zayıf farklılaşma</li>
+</ul>
+<h4>UX zorlukları</h4>
+<ol>
+<li>Öğrenme eğrisi dik — kaplama kodu, Hamming mesafesi, Brier, Wilson, Shin arındırması</li>
+<li>Uzun süren istekler geri bildirimsiz (26–52 sn)</li>
+<li>Manşet ürün (<code>/api/tahmin</code>) şu an <strong>boş</strong> (D1–D3)</li>
+<li>Türkçe-yoğun teknik dil — hedef kitle için doğru, ölçek için sınırlayıcı</li>
+</ol>
+<h4>Trust</h4>
+<p>Zaten sunuluyor ve iyi sunuluyor. Eklenmesi gereken tek şey <strong>veri tazeliği
+göstergesi</strong> — "bu sayı N gün önceki veriden".</p>
+<h4>Scalability</h4>
+<p>Ürün fikri ölçeklenir; bugünkü kod <strong>iki gunicorn işçisinde</strong> duruyor.</p>
+
+<h2 id="s20">20 · Profesyonel ürüne uzaklık</h2>
+<div class="score">
+  <div class="num">4</div>
+  <div class="lab"><strong>Beta</strong> — üst sınırında.<br>
+  <span class="kv">1 Prototype · 2 PoC · 3 MVP · <b>4 Beta</b> · 5 Production-ready · 6 Production-grade</span></div>
+</div>
+<div class="tw"><table>
+<thead><tr><th>Production-ready ölçütü</th><th class="n">TWMQ</th><th>Production-grade seviyede olanlar</th><th class="n">TWMQ</th></tr></thead>
+<tbody>
+<tr><td>Kimlik/yetki</td><td class="n">✗</td><td>Test (1.928, mutasyonla denenmiş)</td><td class="n">✓</td></tr>
+<tr><td>Hız sınırı</td><td class="n">✗</td><td>CI (4 sürüm + 13 adımlı kapı + topoloji dumanı)</td><td class="n">✓</td></tr>
+<tr><td>Kaynak sınırı</td><td class="n">✗</td><td>Tip denetimi (mypy temiz, kademeli)</td><td class="n">✓</td></tr>
+<tr><td>Hata izleme</td><td class="n">✗</td><td>Lint + güvenlik lint (ruff <code>S</code> dahil)</td><td class="n">✓</td></tr>
+<tr><td>Yapılandırılmış log/metrik</td><td class="n">✗</td><td>Bağımlılık denetimi (pip-audit kapıda)</td><td class="n">✓</td></tr>
+<tr><td>Geri alma prosedürü</td><td class="n">✗</td><td>Belge</td><td class="n">✓</td></tr>
+<tr><td>LICENSE</td><td class="n">✗</td><td>Değişmez / sağlık katmanı</td><td class="n">✓</td></tr>
+<tr><td>Frontend testi</td><td class="n">✗</td><td>Domain doğruluğu (matematiksel hata bulunamadı)</td><td class="n">✓</td></tr>
+<tr><td>Manşet özellik çalışıyor mu</td><td class="n">✗</td><td></td><td class="n"></td></tr>
+</tbody></table></div>
+<div class="call">
+<p><strong>Özet:</strong> TWMQ, <em>mühendislik disiplini</em> açısından production-grade;
+<em>işletim sertliği</em> açısından prototip. Bu ikisinin bu kadar açıldığı bir depo nadirdir.</p>
+</div>
+
+<h2 id="s21">21 · Puanlama</h2>
+<div class="tw"><table>
+<thead><tr><th>Alan</th><th class="n">Puan</th><th></th><th>Somut gerekçe</th></tr></thead>
+<tbody>
+<tr><td>Architecture</td><td class="n"><strong>8</strong></td><td><span class="bar hi"><i style="width:80%"></i></span></td><td><code>core</code> olasılık bilmiyor; <code>engines</code> tek yol; <code>meta</code> dairesel bağımlılığı çözmüş. −2: ürün/araştırma ayrılmamış, eşzamansız iş katmanı yok</td></tr>
+<tr><td>Code quality</td><td class="n"><strong>9</strong></td><td><span class="bar hi"><i style="width:90%"></i></span></td><td>ruff+mypy temiz, sihirli sayı yok, kopya avlanmış. −1: 2 God Component, <code>super_toto_sayfa.py</code> 1.362/7</td></tr>
+<tr><td>Maintainability</td><td class="n"><strong>9</strong></td><td><span class="bar hi"><i style="width:90%"></i></span></td><td>Docstring'ler <em>niçin</em>i anlatıyor; reddedilen alternatifler kayıtlı. −1: 762 KB belgede index yok</td></tr>
+<tr><td>Security</td><td class="n"><strong>4</strong></td><td><span class="bar lo"><i style="width:40%"></i></span></td><td>Sırlar temiz, SSRF/CORS/pickle çözülmüş. Ama <strong>kimlik + hız sınırı + kaynak sınırı yok</strong>; C1 ölçüldü (52,7 sn tek istek)</td></tr>
+<tr><td>Performance</td><td class="n"><strong>5</strong></td><td><span class="bar mid"><i style="width:50%"></i></span></td><td>Sıcak nokta optimizasyonları mükemmel (8,92→0,01 sn). Ama istek yolunda 26,5 / 41,7 / 52,7 sn ve 2 işçi</td></tr>
+<tr><td>Scalability</td><td class="n"><strong>5</strong></td><td><span class="bar mid"><i style="width:50%"></i></span></td><td>Dosya tabanlı veri ~300 bin maça kadar tamam. Süreç-içi önbellek autoscale'le uyumsuz</td></tr>
+<tr><td>Testing</td><td class="n"><strong>8</strong></td><td><span class="bar hi"><i style="width:80%"></i></span></td><td>1.928 test, mutasyonla denenmiş, sızıntı sözleşmesi, doctest kapıda. −2: <strong>frontend 0 test</strong></td></tr>
+<tr><td>Documentation</td><td class="n"><strong>8</strong></td><td><span class="bar hi"><i style="width:80%"></i></span></td><td>Sektör üstü içerik. −2: erişilebilirlik (index yok, 320 KB tek dosya, diyagram yok)</td></tr>
+<tr><td>Data quality</td><td class="n"><strong>9</strong></td><td><span class="bar hi"><i style="width:90%"></i></span></td><td>Yazmadan doğrulama + okurken tekrar + <code>data_quality</code> arayüzde. −1: bayatlık ürüne görünmüyor</td></tr>
+<tr><td>Analysis engine</td><td class="n"><strong>9</strong></td><td><span class="bar hi"><i style="width:90%"></i></span></td><td>Mükemmel kodlar ispatlı; ILP bloğu iki bekçili; <code>merge_rows</code> ispatı; bağımsız doğrulayıcı</td></tr>
+<tr><td>Statistical correctness</td><td class="n"><strong>8</strong></td><td><span class="bar hi"><i style="width:80%"></i></span></td><td>Shin doğru, bootstrap eşleştirilmiş, <code>-0.0</code> tuzağı bulunmuş. −2: H3, H4, H5</td></tr>
+<tr><td>API quality</td><td class="n"><strong>7</strong></td><td><span class="bar mid"><i style="width:70%"></i></span></td><td>Tutarlı, envanter türetilmiş, sözleşme CI'da. −3: kimlik/hız sınırı/sürümleme/sayfalama yok</td></tr>
+<tr><td>Frontend</td><td class="n"><strong>6</strong></td><td><span class="bar mid"><i style="width:60%"></i></span></td><td>Tek fetch katmanı, sözleşme linter'ı. −4: <strong>0 test</strong>, God Component, timeout yok, a11y yüzeysel</td></tr>
+<tr><td>Backend</td><td class="n"><strong>8</strong></td><td><span class="bar hi"><i style="width:80%"></i></span></td><td>Hata yutma yok, tiplenmiş hatalar, <code>skipped/reason</code> doktrini. −2: yapılandırılmış log yok, kaynak sınırı yok</td></tr>
+<tr><td>DevOps</td><td class="n"><strong>7</strong></td><td><span class="bar mid"><i style="width:70%"></i></span></td><td>13 adımlı kapı + topoloji dumanı + 4 sürüm matrisi = üst yüzdelik. −3: izleme/geri alma yok, artefakt dağıtımda yok</td></tr>
+<tr><td>UX</td><td class="n"><strong>6</strong></td><td><span class="bar mid"><i style="width:60%"></i></span></td><td>Şeffaflık örnek niteliğinde. −4: uzun istekte geri bildirim yok, manşet özellik boş, eğri dik</td></tr>
+<tr><td>Product readiness</td><td class="n"><strong>5</strong></td><td><span class="bar mid"><i style="width:50%"></i></span></td><td>Vaat net ve dürüst; ama <code>/api/tahmin</code> bugün 0 maç döndürüyor, LICENSE yok, kimlik yok</td></tr>
+</tbody></table></div>
+
+<h3>Ağırlıklı toplam</h3>
+<div class="tw"><table>
+<thead><tr><th>Küme</th><th class="n">Ağırlık</th><th class="n">Ortalama</th></tr></thead>
+<tbody>
+<tr><td>Mühendislik (arch, code, maint, test)</td><td class="n">%30</td><td class="n">8,5</td></tr>
+<tr><td>Domain/istatistik (engine, stat, data)</td><td class="n">%25</td><td class="n">8,7</td></tr>
+<tr><td>İşletim (security, perf, scale, devops)</td><td class="n">%25</td><td class="n">5,3</td></tr>
+<tr><td>Ürün/arayüz (frontend, UX, API, product)</td><td class="n">%20</td><td class="n">6,0</td></tr>
+</tbody></table></div>
+<div class="score">
+  <div class="num">7,2<span style="font-size:22px;color:var(--fg3)"> / 10</span></div>
+  <div class="lab"><strong>TWMQ OVERALL SCORE.</strong> Bu, "iyi bir proje" notu değil —
+  <strong>iki farklı projenin ortalaması</strong>: 9/10 bir araştırma laboratuvarı ile
+  5/10 bir web servisi.</div>
+</div>
+
+<h2 id="s22">22 · Problem önceliklendirme</h2>
+
+<h3><span class="b b-c">P0 — Critical</span></h3>
+<ol>
+<li><strong>C1</strong> <code>/api/solve</code> uzay sınırsız — yasal girdi işçiyi 52,7 sn kilitliyor, büyük uzay OOM <em>(ölçüldü)</em></li>
+<li><strong>C3</strong> Kimlik + hız sınırı yok, önbellek anahtarları kullanıcı kontrolünde — 2 işçi, 4 vektör <em>(ölçüldü)</em></li>
+<li><strong>C2</strong> <code>/api/tahmin</code> her soğuk konteynerde 41,7 sn; artefakt dağıtıma girmiyor <em>(ölçüldü)</em></li>
+<li><strong>D1–D3</strong> Manşet ürün boş: <code>fixtures.csv</code> boş + iddaa snapshot 17 gün eski → <code>n_mac = 0</code> <em>(ölçüldü)</em></li>
+</ol>
+
+<h3><span class="b b-h">P1 — High</span></h3>
+<ol start="5">
+<li><strong>P3</strong> <code>/api/backtest</code> soğuk 26,5 sn senkron <em>(ölçüldü)</em></li>
+<li><strong>H1</strong> <code>fixtures</code> kaynağında başlama saati kontrolü yok — maç öncesi olasılık iddiası ihlal ediliyor</li>
+<li><strong>P8</strong> <code>gunicorn --workers 2</code> + <code>--timeout 120</code> CPU-yoğun senkron iş için yetersiz</li>
+<li><strong>H3</strong> Hold-out ızgara tasarımını kapsamıyor — yayımlanan aşırı-uyum ölçümü iyimser taraflı</li>
+<li><strong>F2</strong> Frontend 0 test (16.340 satır)</li>
+<li><strong>LICENSE yok</strong> — depo hukuken kullanılamaz durumda</li>
+<li><strong>İzleme / hata takibi yok</strong> — üretim çöküşü fark edilmez</li>
+</ol>
+
+<h3><span class="b b-m">P2 — Medium</span></h3>
+<ol start="12">
+<li><strong>H2</strong> <code>_simdi()</code> naive, <code>kickoff</code> UTC — TZ'ye bağlı 3 saatlik sızıntı penceresi</li>
+<li><strong>H4</strong> Geniş kesit anlamlılığı model-seçim adımıyla örtüşüyor</li>
+<li><strong>H5</strong> Çoklu karşılaştırma düzeltmesi yok</li>
+<li><strong>F1</strong> <code>app/page.tsx</code> God Component (30 state)</li>
+<li><strong>M1</strong> <code>load_odds</code> mutable önbellek dönüşü</li>
+<li><strong>M3/P6</strong> <code>/api/takimlar</code> 353 KB, sayfalama yok</li>
+<li><strong>M4</strong> Frontend fetch timeout'u yok</li>
+<li><strong>D4</strong> Veri bayatlığı ürüne görünmüyor</li>
+<li><strong>Deploy imajı</strong> <code>[test]</code>+<code>[model]</code> ekstralarını taşıyor</li>
+<li><strong>Güvenlik başlıkları</strong> (CSP vb.) yok</li>
+<li><strong>G1/G3</strong> Belge index'i ve mimari diyagramı yok</li>
+</ol>
+
+<h3><span class="b b-l">P3 — Low</span></h3>
+<ol start="23">
+<li><code>mypy</code> 23 modülde <code>ignore_errors</code></li>
+<li><code>interrogate</code> marjı dar (%77,6 / %75)</li>
+<li><code>next</code> 14 → 15, <code>eslint</code> 8 → 9</li>
+<li><strong>M2</strong> <code>SESSION_SECRET</code> varsayılanı sabit</li>
+<li><code>charts.tsx</code> 1.279 satır</li>
+<li>CONTRIBUTING / SECURITY / CHANGELOG / issue-PR şablonu yok</li>
+<li>Araştırma CLI katmanı (17+ <code>python -m</code>) envanterde sınıflandırılmamış</li>
+<li><code>README.md</code> 1.514 satır tek dosya</li>
+</ol>
+
+<h2 id="s23">23 · En önemli 20 problem</h2>
+<div class="tw"><table>
+<thead><tr><th class="n">#</th><th>Problem</th><th>Sev</th><th>Dosya · fonksiyon</th><th>Etki</th><th>Çözüm</th></tr></thead>
+<tbody>
+<tr><td class="n">1</td><td>Seçim uzayı sınırsız; 10 üçlü = 52,7 sn, 15 üçlü = OOM</td><td><span class="b b-c">P0</span></td><td><code>web_app.py:1006 api_solve</code> → <code>core.py:790 solve_heuristic</code></td><td>Tek yasal istek işçiyi kilitler; 2 istek servisi durdurur</td><td><code>Encoder</code>'da <code>total_len</code> katı red; <code>space_size</code> tavanı (≤65.536); <code>time_limit</code> ≤ 60; büyük iş → kuyruk</td></tr>
+<tr><td class="n">2</td><td>Kimlik + hız sınırı yok, önbellek anahtarı kullanıcıda</td><td><span class="b b-c">P0</span></td><td><code>web_app.py</code> (tüm uçlar)</td><td>Anonim istemci servisi kapatabilir</td><td><code>flask-limiter</code> + POST'a token; <code>?fresh</code> yetkiye bağla</td></tr>
+<tr><td class="n">3</td><td><code>/api/tahmin</code> soğuk 41,7 sn — artefakt dağıtımda yok</td><td><span class="b b-c">P0</span></td><td><code>tahmin.py:180</code>; <code>scripts/build.sh</code></td><td>Her autoscale konteynerinde ilk istek 40 sn</td><td><code>build.sh</code>'e <code>artefakt --yaz</code> ekle (tek satır)</td></tr>
+<tr><td class="n">4</td><td>Manşet ürün boş: <code>n_mac = 0</code></td><td><span class="b b-c">P0</span></td><td><code>data/fixtures/fixtures.csv</code>; <code>data/iddaa/</code></td><td>Tahmin sayfası hiçbir şey göstermiyor</td><td><code>build_fixtures</code> için GH Actions cron; iddaa'yı günlüğe çıkar</td></tr>
+<tr><td class="n">5</td><td><code>/api/backtest</code> soğuk 26,5 sn senkron</td><td><span class="b b-h">P1</span></td><td><code>web_app.py:861 _backtest_cached</code></td><td>Sayfa açılışı işçinin %50'sini 26 sn tutar</td><td>Sonucu <strong>önceden hesapla</strong> ve JSON olarak sürümle</td></tr>
+<tr><td class="n">6</td><td><code>fixtures</code>'ta kickoff filtresi yok</td><td><span class="b b-h">P1</span></td><td><code>tahmin.py:102</code>; <code>build_fixtures.py:115</code></td><td>Başlamış maça maç öncesi olasılığı — doktrin ihlali</td><td><code>_gelecekte()</code> filtresini fikstür yoluna da uygula</td></tr>
+<tr><td class="n">7</td><td><code>--workers 2</code>, <code>--timeout 120</code></td><td><span class="b b-h">P1</span></td><td><code>scripts/run_prod.sh:19</code></td><td>Kapasite = 2 eşzamanlı CPU işi</td><td><code>--workers $((2*CPU+1))</code>; ağır iş kuyruğa</td></tr>
+<tr><td class="n">8</td><td>Hold-out ızgara tasarımını kapsamıyor</td><td><span class="b b-h">P1</span></td><td><code>backtest.py:379 holdout</code>, <code>:63 BANKO_IZGARA</code></td><td>Yayımlanan aşırı-uyum ölçümü iyimser</td><td>İç içe CV; ya da ızgarayı 2025/26 dışında dondur</td></tr>
+<tr><td class="n">9</td><td>Frontend 0 test</td><td><span class="b b-h">P1</span></td><td><code>frontend/</code> (16.340 satır)</td><td>Refactor korumasız</td><td>Vitest + Testing Library (kritik 10 bileşen) + Playwright duman</td></tr>
+<tr><td class="n">10</td><td>LICENSE yok</td><td><span class="b b-h">P1</span></td><td>depo kökü</td><td>Hukuken kullanılamaz/katkı alınamaz</td><td>MIT/AGPL ekle</td></tr>
+<tr><td class="n">11</td><td>İzleme / hata takibi yok</td><td><span class="b b-h">P1</span></td><td>tüm servis</td><td>Üretim çöküşü fark edilmez</td><td>Sentry + yapılandırılmış JSON log + istek kimliği</td></tr>
+<tr><td class="n">12</td><td>Naive <code>datetime.now()</code> vs UTC kickoff</td><td><span class="b b-m">P2</span></td><td><code>tahmin.py:76</code> ↔ <code>snapshot_iddaa.py:163</code></td><td>TZ'ye bağlı 3 saatlik sızıntı</td><td><code>datetime.now(timezone.utc)</code> + aware parse</td></tr>
+<tr><td class="n">13</td><td>Geniş kesit model-seçimiyle örtüşüyor</td><td><span class="b b-m">P2</span></td><td><code>tahmin.py:403</code>, <code>:72</code></td><td>"Anlamlı" iddiası tam savunulamaz</td><td>Kademe seçimini ayrı bir kesitte dondur</td></tr>
+<tr><td class="n">14</td><td>Çoklu karşılaştırma düzeltmesi yok</td><td><span class="b b-m">P2</span></td><td><code>evaluate.py:638</code>; <code>arena.roster</code></td><td>Aile-bazlı hata oranı %95'ten uzak</td><td>Holm/BH + "kaç aday denendi" alanı</td></tr>
+<tr><td class="n">15</td><td>God Component (30 <code>useState</code>)</td><td><span class="b b-m">P2</span></td><td><code>frontend/app/page.tsx:96 FormulPage</code></td><td>Test edilemez, refactor riskli</td><td><code>useReducer</code> + 4-5 alt bileşen + <code>useKupon</code>/<code>useMotor</code></td></tr>
+<tr><td class="n">16</td><td><code>load_odds</code> mutable liste önbelleği</td><td><span class="b b-m">P2</span></td><td><code>odds.py:58 load_odds</code></td><td>Bir mutasyon tüm süreci bozar</td><td>Demet döndür (<code>_arindirilmis</code> deseninde)</td></tr>
+<tr><td class="n">17</td><td><code>/api/takimlar</code> 353 KB, sayfalama yok</td><td><span class="b b-m">P2</span></td><td><code>payloads.takimlar_payload</code></td><td>Veri büyüdükçe doğrusal</td><td><code>?limit/?offset</code> + alan seçimi</td></tr>
+<tr><td class="n">18</td><td>Frontend fetch timeout'u yok</td><td><span class="b b-m">P2</span></td><td><code>frontend/lib/api.ts:33 istek</code></td><td>52 sn'lik istek "donmuş" görünür</td><td><code>AbortSignal.timeout(30_000)</code> + iptal düğmesi</td></tr>
+<tr><td class="n">19</td><td>Veri bayatlığı ürüne görünmüyor</td><td><span class="b b-m">P2</span></td><td>tüm gövdeler</td><td>Kullanıcı eski veriyi taze sanır</td><td>Her gövdeye <code>veri_yasi_gun</code> + arayüzde rozet</td></tr>
+<tr><td class="n">20</td><td>Deploy imajı <code>[test]</code>+<code>[model]</code> taşıyor</td><td><span class="b b-m">P2</span></td><td><code>scripts/setup.sh</code> ← <code>build.sh</code></td><td>~400 MB gereksiz imaj, soğuk başlangıç yavaş</td><td><code>setup.sh --uretim</code> ile yalın kurulum</td></tr>
+</tbody></table></div>
+
+<h2 id="s24">24 · En iyi 20 geliştirme</h2>
+<div class="tw"><table>
+<thead><tr><th class="n">#</th><th>Ne</th><th>Niçin</th><th>Beklenen fayda</th><th>Zorluk</th><th>Öncelik</th></tr></thead>
+<tbody>
+<tr><td class="n">1</td><td><strong>İş kuyruğu + <code>202 Accepted</code> + <code>/api/is/&lt;id&gt;</code></strong></td><td><code>solve</code>/<code>backtest</code>/<code>tahmin</code> senkron yolda 26–53 sn</td><td>P0 #1,#3,#5'i <strong>birlikte</strong> çözer; ilerleme çubuğu mümkün olur</td><td>Orta</td><td><span class="b b-c">P0</span></td></tr>
+<tr><td class="n">2</td><td>Uzay tavanı + <code>MAC_SAYISI</code> katı doğrulama</td><td>C1'in kök nedeni</td><td>DoS yüzeyi kapanır</td><td>Düşük</td><td><span class="b b-c">P0</span></td></tr>
+<tr><td class="n">3</td><td><code>flask-limiter</code> + POST'a paylaşılan sır</td><td>C3</td><td>Kötüye kullanım maliyeti artar</td><td>Düşük</td><td><span class="b b-c">P0</span></td></tr>
+<tr><td class="n">4</td><td><code>build.sh</code>'e <code>artefakt --yaz</code></td><td>C2</td><td>Soğuk başlangıç 41,7 sn → &lt;1 sn</td><td><strong>Çok düşük</strong></td><td><span class="b b-c">P0</span></td></tr>
+<tr><td class="n">5</td><td>Fikstür tazeleme GH Actions işi + iddaa'yı günlüğe çıkar</td><td>D1–D3</td><td>Manşet ürün çalışır hale gelir</td><td>Düşük</td><td><span class="b b-c">P0</span></td></tr>
+<tr><td class="n">6</td><td>Geri test sonuçlarını <strong>önceden hesaplayıp sürümle</strong></td><td>Veri zaten sürümlü, sonuç deterministik</td><td>26,5 sn → 0 ms; sayı git diff'te denetlenebilir</td><td>Orta</td><td><span class="b b-h">P1</span></td></tr>
+<tr><td class="n">7</td><td>Vitest + Testing Library + Playwright duman</td><td>Frontend 0 test</td><td>Refactor güvenliği</td><td>Orta</td><td><span class="b b-h">P1</span></td></tr>
+<tr><td class="n">8</td><td>Sentry + yapılandırılmış log + istek kimliği</td><td>İzleme yok</td><td>MTTR ölçülebilir hale gelir</td><td>Düşük</td><td><span class="b b-h">P1</span></td></tr>
+<tr><td class="n">9</td><td>LICENSE + SECURITY + CONTRIBUTING + CHANGELOG</td><td>Hijyen</td><td>Katkı ve kullanım hukuken mümkün</td><td>Çok düşük</td><td><span class="b b-h">P1</span></td></tr>
+<tr><td class="n">10</td><td><strong>İç içe CV</strong> (ızgara+aile dış katta)</td><td>H3</td><td>Aşırı-uyum ölçümü savunulabilir olur</td><td>Orta-Yüksek</td><td><span class="b b-h">P1</span></td></tr>
+<tr><td class="n">11</td><td><code>page.tsx</code> → <code>useReducer</code> + alt bileşenler</td><td>God Component</td><td>Test edilebilirlik</td><td>Orta</td><td><span class="b b-h">P1</span></td></tr>
+<tr><td class="n">12</td><td>Her gövdeye <code>veri_yasi</code> + bayatlık rozeti</td><td>D4; şeffaflık doktrininin doğal devamı</td><td>Güven artar, yanlış okuma azalır</td><td>Düşük</td><td><span class="b b-h">P1</span></td></tr>
+<tr><td class="n">13</td><td>Çoklu karşılaştırma düzeltmesi + "kaç aday denendi"</td><td>H5</td><td>İstatistiksel iddia sağlamlaşır</td><td>Düşük</td><td><span class="b b-m">P2</span></td></tr>
+<tr><td class="n">14</td><td>Güvenlik başlıkları (<code>next.config.mjs headers()</code>)</td><td>CSP/HSTS yok</td><td>Tarayıcı katmanı sertleşir</td><td>Çok düşük</td><td><span class="b b-m">P2</span></td></tr>
+<tr><td class="n">15</td><td><code>docs/README.md</code> index + <code>docs/MIMARI.md</code></td><td>762 KB'de giriş yok</td><td>Onboarding saatlerden dakikalara</td><td>Düşük</td><td><span class="b b-m">P2</span></td></tr>
+<tr><td class="n">16</td><td>Araştırma katmanını <code>research/</code> altına ayır</td><td>2.429 satır ürün yolunda değil ama ürünle karışık</td><td>"Ne üretim, ne araştırma" ayrımı görünür</td><td>Orta</td><td><span class="b b-m">P2</span></td></tr>
+<tr><td class="n">17</td><td>Ortam değişkeni tablosu + <code>backend/.env.example</code></td><td>7 değişken dağınık</td><td>Yapılandırma hatası azalır</td><td>Çok düşük</td><td><span class="b b-m">P2</span></td></tr>
+<tr><td class="n">18</td><td><code>mypy ignore_errors</code> listesini kademeli boşalt</td><td>23 modül denetimsiz</td><td>Tip borcu erir</td><td>Orta (dağıtılmış)</td><td><span class="b b-m">P2</span></td></tr>
+<tr><td class="n">19</td><td>Sağlık geçmişini kalıcılaştır (dosya/SQLite)</td><td>Autoscale'de anlamsız</td><td>"Ne zamandan beri kırmızı?" gerçekten cevaplanır</td><td>Düşük</td><td><span class="b b-l">P3</span></td></tr>
+<tr><td class="n">20</td><td>a11y geçişi: <code>aria-live</code>, klavye navigasyonu, kontrast</td><td>4 <code>tabIndex</code>/<code>onKeyDown</code></td><td>Erişilebilirlik + <code>check.mjs</code>'e a11y bekçisi</td><td>Orta</td><td><span class="b b-l">P3</span></td></tr>
+</tbody></table></div>
+
+<h2 id="s25">25 · Refactor planı</h2>
+
+<h3>Faz 0 — Durdurma <span class="kv">(1–2 gün · hiçbir mimari değişiklik yok)</span></h3>
+<ul>
+<li><code>Encoder</code>: <code>total_len &gt; 15</code> katı red; <code>web_app</code>: <code>space_size</code> tavanı</li>
+<li><code>LIMITS["time_limit"].max</code> 300 → 60</li>
+<li><code>build.sh</code>'e <code>artefakt --yaz</code></li>
+<li><code>flask-limiter</code> (uç başına bant)</li>
+<li>LICENSE</li>
+</ul>
+<p><strong>Çıktı:</strong> 4 P0'dan 3'ü kapanır. Ölçüm hedefi: <code>/api/tahmin</code> &lt;1 sn,
+<code>/api/solve</code> en kötü &lt;10 sn.</p>
+
+<h3>Faz 1 — Veri hattını canlandır <span class="kv">(2–3 gün)</span></h3>
+<ul>
+<li><code>build_fixtures</code> GH Actions işi (mevcut iki iş şablon)</li>
+<li>iddaa snapshot cadence: haftalık → günlük</li>
+<li><code>_gelecekte()</code> fikstür yoluna</li>
+<li><code>_simdi()</code> → aware UTC</li>
+<li>Her gövdeye <code>veri_yasi_gun</code></li>
+</ul>
+<p><strong>Çıktı:</strong> <code>/api/tahmin</code> gerçek maç döndürür; H1+H2 kapanır.</p>
+
+<h3>Faz 2 — Eşzamansız katman <span class="kv">(1 hafta)</span></h3>
+<ul>
+<li><code>spor_toto/is.py</code>: iş kuyruğu (threading + kalıcı sonuç dizini yeter; Celery/Redis gerekmez)</li>
+<li><code>POST /api/solve</code> → <code>202</code> + <code>{"is_id": …}</code>; <code>GET /api/is/&lt;id&gt;</code></li>
+<li>Geri test sonuçlarını önceden hesaplayıp sürümle</li>
+<li>Frontend: ilerleme + iptal + <code>AbortSignal.timeout</code></li>
+</ul>
+<p><strong>Çıktı:</strong> senkron yolda hiçbir uç &gt;2 sn.</p>
+
+<h3>Faz 3 — Frontend sertleştirme <span class="kv">(1–2 hafta)</span></h3>
+<ul>
+<li>Vitest + Testing Library: <code>lib/*</code> %100, kritik 10 bileşen</li>
+<li>Playwright: 9 sayfa duman + solve akışı (<code>check.sh</code>'in topoloji adımına eklenir)</li>
+<li><code>page.tsx</code> → <code>useReducer</code> + <code>useKupon</code>/<code>useMotor</code>/<code>useSenaryo</code> + 5 alt bileşen</li>
+<li><code>charts.tsx</code> grafik başına bölünsün</li>
+</ul>
+
+<h3>Faz 4 — İstatistiksel sağlamlaştırma <span class="kv">(1–2 hafta)</span></h3>
+<ul>
+<li>İç içe CV (ızgara + aile dış katta)</li>
+<li>Kademe seçimini ayrı kesitte dondur</li>
+<li>Holm/BH düzeltmesi + "kaç aday denendi"</li>
+<li><code>docs/ISTATISTIK_YOL_HARITASI.md</code>'de etkilenen sayıları <strong>yeniden ölç ve
+etiketle</strong> — depo bunu <code>orantili→shin</code> çevriminde zaten yaptı; aynı deseni uygula</li>
+</ul>
+
+<h3>Faz 5 — İşletim <span class="kv">(1 hafta)</span></h3>
+<ul>
+<li>Sentry + JSON log + istek kimliği</li>
+<li><code>/metrics</code> (istek, p95, hata oranı)</li>
+<li>Sağlık geçmişini kalıcılaştır</li>
+<li>Geri alma runbook'u + git tag + CHANGELOG</li>
+<li>Deploy imajını yalınlaştır</li>
+</ul>
+
+<h3>Faz 6 — Mimari ayrıştırma <span class="kv">(2–3 hafta)</span></h3>
+<ul>
+<li><code>backend/spor_toto/</code> → <code>urun/</code> (core, engines, payloads, meta, health, odds,
+history, tahmin) + <code>arastirma/</code> (17 <code>python -m</code> modülü)</li>
+<li><code>pyproject</code> ekstraları bu ayrıma bağlansın; üretim yalnızca <code>urun/</code> kurar</li>
+<li>Bilgi grafındaki komut envanteri gerçek 17+ girişi kapsasın</li>
+</ul>
+
+<h3>Faz 7 — UX + belge <span class="kv">(1–2 hafta)</span></h3>
+<ul>
+<li><code>docs/README.md</code> index + <code>docs/MIMARI.md</code></li>
+<li>README'yi 1.514 satırdan böl</li>
+<li>a11y geçişi; bayatlık rozeti, ilerleme göstergeleri</li>
+<li>İngilizce özet (opsiyonel)</li>
+</ul>
+
+<h2 id="s26">26 · Roadmap</h2>
+
+<h3>7 gün — "servis ayakta kalsın, ürün bir şey göstersin"</h3>
+<div class="tw"><table>
+<thead><tr><th class="n">#</th><th>Task</th><th>Öncelik</th><th>Zorluk</th><th>Etki</th><th>Bağımlılık</th></tr></thead>
+<tbody>
+<tr><td class="n">1</td><td>Uzay tavanı + maç sayısı katı red</td><td><span class="b b-c">P0</span></td><td>Düşük</td><td>DoS kapanır</td><td>—</td></tr>
+<tr><td class="n">2</td><td><code>time_limit</code> max 300→60</td><td><span class="b b-c">P0</span></td><td>Çok düşük</td><td>502 riski gider</td><td>—</td></tr>
+<tr><td class="n">3</td><td><code>build.sh</code> → <code>artefakt --yaz</code></td><td><span class="b b-c">P0</span></td><td>Çok düşük</td><td>41,7 sn → &lt;1 sn</td><td>—</td></tr>
+<tr><td class="n">4</td><td><code>flask-limiter</code></td><td><span class="b b-c">P0</span></td><td>Düşük</td><td>Kötüye kullanım maliyeti</td><td>—</td></tr>
+<tr><td class="n">5</td><td><code>?fresh=1</code>i yetkiye bağla</td><td><span class="b b-c">P0</span></td><td>Çok düşük</td><td>Amplifikasyon kapanır</td><td>4</td></tr>
+<tr><td class="n">6</td><td>LICENSE + SECURITY.md</td><td><span class="b b-h">P1</span></td><td>Çok düşük</td><td>Hukuki</td><td>—</td></tr>
+<tr><td class="n">7</td><td><code>build_fixtures</code> GH Actions işi</td><td><span class="b b-c">P0</span></td><td>Düşük</td><td>Manşet ürün canlanır</td><td>—</td></tr>
+<tr><td class="n">8</td><td><code>_gelecekte()</code> fikstüre + aware UTC</td><td><span class="b b-h">P1</span></td><td>Düşük</td><td>Doktrin ihlali kapanır</td><td>7</td></tr>
+<tr><td class="n">9</td><td>Her adıma test + <code>check.sh</code>'e bekçi</td><td><span class="b b-c">P0</span></td><td>Orta</td><td>Regresyon koruması</td><td>1-8</td></tr>
+</tbody></table></div>
+
+<h3>30 gün — "yavaş uçlar hızlansın, frontend korunsun"</h3>
+<div class="tw"><table>
+<thead><tr><th class="n">#</th><th>Task</th><th>Öncelik</th><th>Zorluk</th><th>Etki</th><th>Bağımlılık</th></tr></thead>
+<tbody>
+<tr><td class="n">10</td><td>İş kuyruğu + <code>202</code> + durum ucu</td><td><span class="b b-h">P1</span></td><td>Orta-Yüksek</td><td>Senkron yolda &gt;2 sn kalmaz</td><td>7g</td></tr>
+<tr><td class="n">11</td><td>Geri test sonucu önceden hesaplansın</td><td><span class="b b-h">P1</span></td><td>Orta</td><td>26,5 sn → 0 ms</td><td>—</td></tr>
+<tr><td class="n">12</td><td>Frontend timeout + ilerleme + iptal</td><td><span class="b b-h">P1</span></td><td>Düşük</td><td>UX</td><td>10</td></tr>
+<tr><td class="n">13</td><td>Vitest + <code>lib/*</code> testleri</td><td><span class="b b-h">P1</span></td><td>Orta</td><td>Refactor güvenliği</td><td>—</td></tr>
+<tr><td class="n">14</td><td>Playwright duman → <code>check.sh</code></td><td><span class="b b-h">P1</span></td><td>Orta</td><td>E2E koruma</td><td>13</td></tr>
+<tr><td class="n">15</td><td>Sentry + JSON log + istek kimliği</td><td><span class="b b-h">P1</span></td><td>Düşük</td><td>Gözlemlenebilirlik</td><td>—</td></tr>
+<tr><td class="n">16</td><td><code>veri_yasi</code> + bayatlık rozeti</td><td><span class="b b-h">P1</span></td><td>Düşük</td><td>Güven</td><td>7g</td></tr>
+<tr><td class="n">17</td><td>Güvenlik başlıkları</td><td><span class="b b-m">P2</span></td><td>Çok düşük</td><td>Sertleşme</td><td>—</td></tr>
+<tr><td class="n">18</td><td><code>docs/README.md</code> + <code>MIMARI.md</code></td><td><span class="b b-m">P2</span></td><td>Düşük</td><td>Onboarding</td><td>—</td></tr>
+</tbody></table></div>
+
+<h3>90 gün — "istatistik savunulabilir olsun, mimari ayrışsın"</h3>
+<div class="tw"><table>
+<thead><tr><th class="n">#</th><th>Task</th><th>Öncelik</th><th>Zorluk</th><th>Etki</th><th>Bağımlılık</th></tr></thead>
+<tbody>
+<tr><td class="n">19</td><td>İç içe CV + kademe seçimini dondur</td><td><span class="b b-h">P1</span></td><td>Orta-Yüksek</td><td>H3+H4 kapanır</td><td>—</td></tr>
+<tr><td class="n">20</td><td>Çoklu karşılaştırma düzeltmesi</td><td><span class="b b-m">P2</span></td><td>Düşük</td><td>H5</td><td>19</td></tr>
+<tr><td class="n">21</td><td>Etkilenen yayımlanmış sayıları yeniden ölç + etiketle</td><td><span class="b b-h">P1</span></td><td>Orta</td><td>Belge dürüstlüğü</td><td>19,20</td></tr>
+<tr><td class="n">22</td><td><code>page.tsx</code> + <code>charts.tsx</code> ayrıştırma</td><td><span class="b b-m">P2</span></td><td>Orta</td><td>Bakım</td><td>13,14</td></tr>
+<tr><td class="n">23</td><td><code>urun/</code> ↔ <code>arastirma/</code> ayrımı</td><td><span class="b b-m">P2</span></td><td>Yüksek</td><td>Mimari netlik</td><td>14</td></tr>
+<tr><td class="n">24</td><td><code>/metrics</code> + sağlık geçmişi kalıcı</td><td><span class="b b-m">P2</span></td><td>Orta</td><td>SLO ölçümü</td><td>15</td></tr>
+<tr><td class="n">25</td><td><code>mypy ignore_errors</code> −8 modül</td><td><span class="b b-l">P3</span></td><td>Orta</td><td>Tip borcu</td><td>—</td></tr>
+<tr><td class="n">26</td><td>Sayfalama (<code>/api/takimlar</code>, <code>/api/stats</code>)</td><td><span class="b b-m">P2</span></td><td>Düşük</td><td>Ölçek</td><td>—</td></tr>
+</tbody></table></div>
+
+<h3>6 ay — "ürünleşme"</h3>
+<div class="tw"><table>
+<thead><tr><th class="n">#</th><th>Task</th><th>Öncelik</th><th>Zorluk</th><th>Etki</th><th>Bağımlılık</th></tr></thead>
+<tbody>
+<tr><td class="n">27</td><td>Kendi iddaa oran arşivi 1 sezonu doldursun</td><td><span class="b b-h">P1</span></td><td>Düşük (bekleme)</td><td><strong>Projenin en yüksek değerli varlığı</strong> — geçmiş iddaa oranı hiçbir yerde yayımlanmıyor</td><td>7g #7</td></tr>
+<tr><td class="n">28</td><td>Oynanma payı (kamuoyu) ölçümü genişlesin</td><td><span class="b b-h">P1</span></td><td>Orta</td><td>Müşterek EV'nin <strong>belirleyici</strong> girdisi (22 kat fark ölçüldü)</td><td>27</td></tr>
+<tr><td class="n">29</td><td>İkramiyeli hafta sayısı 1 → ~20</td><td><span class="b b-h">P1</span></td><td>Düşük (bekleme)</td><td>Havuz modeli doğrulanabilir hale gelir</td><td>27</td></tr>
+<tr><td class="n">30</td><td>Kullanıcı hesabı + kupon geçmişi (isteğe bağlı)</td><td><span class="b b-m">P2</span></td><td>Yüksek</td><td>Ürünleşme; hız sınırı doğal çözülür</td><td>30g</td></tr>
+<tr><td class="n">31</td><td>Parquet/DuckDB veri katmanı</td><td><span class="b b-l">P3</span></td><td>Orta</td><td>300 bin+ maç ölçeği</td><td>23</td></tr>
+<tr><td class="n">32</td><td><code>mypy</code> tam sıkı</td><td><span class="b b-l">P3</span></td><td>Yüksek</td><td>Tip borcu biter</td><td>25</td></tr>
+<tr><td class="n">33</td><td>İngilizce belge özeti</td><td><span class="b b-l">P3</span></td><td>Orta</td><td>Dış katkı</td><td>18</td></tr>
+</tbody></table></div>
+
+<h2 id="s27">27 · "Ne yapmamalıyız?"</h2>
+<p>Bu bölüm, denetimde gördüğüm <strong>gerçek risklere</strong> göre yazıldı — genel tavsiye değil.</p>
+<ol>
+<li><strong>Mikroservise bölmeyin.</strong> Bu tek süreçlik bir hesap motoru. Kaplama çözücüsünü
+ayrı servise almak ağ gecikmesi ekler ve <code>core</code>'un saflığını bozar. Doğru cevap
+<strong>iş kuyruğu</strong>, mikroservis değil.</li>
+<li><strong>Veritabanı eklemeyin (henüz).</strong> Veri salt-okunur, sürümlü, 8 MB. Postgres bugün
+saf karmaşıklık olur ve <em>git diff'in denetim izi olması</em> avantajını yok eder.
+Eşik: ~300 bin maç.</li>
+<li><strong>Redis/Celery getirmeyin (henüz).</strong> Faz 2'deki kuyruk için <code>threading</code> +
+kalıcı sonuç dizini yeter. İki işçilik bir dağıtımda broker bakım yükü faydayı geçer.</li>
+<li><strong><code>core.py</code>ye olasılık sokmayın.</strong> Bu projenin en değerli mimari kararı.
+<code>health._check_sizinti_sozlesmesi</code> bunu koruyor — o bekçiyi gevşetmeyin.</li>
+<li><strong>Piyasayı yenmeye çalışmayı ana hat yapmayın.</strong> Faz 1–3 on bir kez ölçtü: dokuz
+özellik, hiçbiri geçemedi. <code>getiri.py</code> doğru ekseni gösteriyor: müşterek bahiste
+<code>edge = p_piyasa − oynanma_payı</code>. <strong>Yeni model değil, oynanma payı ölçümü</strong>
+eksik — ve 22 kat fark orada.</li>
+<li><strong>Kelly kriteri uygulamayın.</strong> Kelly sabit fiyata karşı optimal; müşterek havuzda
+ödeme kaç kişinin tutturduğuna bağlı. Yanlış alet.</li>
+<li><strong>Eşik taramasının en iyi satırını manşet yapmayın.</strong> Hold-out satırı bile
+(H3 nedeniyle) iyimser taraflı — daha da temkinli okuyun.</li>
+<li><strong>Yeni tahminci ailesi eklemeye devam etmeyin.</strong> 10+ aile var, hiçbiri geçmedi ve
+H5 her yeni aileyle kötüleşiyor. <strong>Önce düzeltmeyi ekleyin, sonra aile ekleyin.</strong></li>
+<li><strong>Belgeyi kısaltmak için içerik silmeyin.</strong> Sorun uzunluk değil
+<strong>index'sizlik</strong>.</li>
+<li><strong><code>check.sh</code>i hızlandırmak için adım çıkarmayın.</strong> Depo bu hatayı bir kez
+yaptı ve kayda geçirdi. Yavaşlık kabul edilebilir bir bedeldir.</li>
+<li><strong><code>ignore_errors</code>/<code>noqa</code> ile kapı geçmeyin.</strong> Depoda bugün tek bir
+gerekçesiz bastırma yok. Bu istisnasız kalmalı.</li>
+<li><strong>Arayüze ölçülmemiş sayı çıkarmayın.</strong> <code>getiri.py</code> hesabı yapıp arayüze
+çıkarmıyor. Bu kural projenin kimliği — ticari baskıyla bile bozulmamalı.</li>
+<li><strong>Erken optimizasyon yapmayın — ama C1'i "optimizasyon" sanmayın.</strong> Uzay tavanı bir
+performans iyileştirmesi değil, bir <strong>doğruluk/güvenlik sınırıdır</strong>.</li>
+<li><strong>Gereksiz UI özelliği eklemeyin.</strong> Yeni grafik değil, <strong>bayatlık rozeti ve
+ilerleme göstergesi</strong> gerekiyor.</li>
+<li><strong><code>data/</code> dizinini git dışına çıkarmayın.</strong> Sürümlü arşiv, "sayının nereden
+geldiği" vaadinin altyapısı.</li>
+</ol>
+
+<h2 id="s28">28 · İdeal TWMQ mimarisi</h2>
+<div class="call">
+<p><strong>Önemli:</strong> mevcut sistemi çöpe atmayı önermiyorum. Aşağıdaki yapı
+<strong>artımlı göç</strong> ile ulaşılabilir ve Faz 6 tam olarak budur.</p>
+</div>
+<pre><code>twmq/
+├─ LICENSE  SECURITY.md  CONTRIBUTING.md  CHANGELOG.md
+├─ docs/
+│  ├─ README.md              ← INDEX (bugün yok)
+│  ├─ MIMARI.md              ← diyagram + 5 dakikalık tur (bugün yok)
+│  ├─ ORTAM.md               ← env tablosu (bugün yok)
+│  ├─ RUNBOOK.md             ← çöküş/geri alma (bugün yok)
+│  └─ arastirma/             ← mevcut 17 dosya buraya
+│
+├─ backend/
+│  ├─ urun/                          ← ÜRETİM YOLU (yalnız bu deploy edilir)
+│  │  ├─ cekirdek/  core.py engines.py meta.py     ← saf matematik, bağımlılıksız
+│  │  ├─ veri/      odds.py history.py egitim.py   ← salt-okunur erişim + doğrulama
+│  │  ├─ analiz/    tahmin.py backtest.py predict.py recalibrate.py
+│  │  ├─ api/       app.py rotalar/ semalar/ limitler.py  ← şema + rate limit
+│  │  ├─ is/        kuyruk.py                      ← YENİ: eşzamansız iş
+│  │  └─ saglik/    health.py history.py
+│  │
+│  ├─ arastirma/                     ← python -m ile koşulur, ASLA deploy edilmez
+│  │  arena.py agac.py kalibrasyon.py secim*.py skor.py bahisci.py
+│  │  disari.py cizgi.py kuyruk.py havuz.py deger.py getiri.py …
+│  │
+│  ├─ hat/                           ← bugünkü scripts/build_*
+│  ├─ veri/                          ← bugünkü data/ (sürümlü, dokunulmaz)
+│  └─ tests/  birim/ sozlesme/ sizinti/ degismez/
+│
+├─ frontend/
+│  ├─ app/        (sayfalar ince: yalnız veri bağlama)
+│  ├─ ozellikler/ formul/ istatistik/ saglik/ tahmin/   ← her biri kendi state'i
+│  ├─ paylasilan/ ui/ lib/ tipler/   ← tipler API şemasından ÜRETİLİR
+│  └─ tests/      birim/ bilesen/ e2e/
+│
+└─ .github/workflows/  tests.yml  snapshot-*.yml  fixtures.yml(YENİ)  deploy.yml(YENİ)</code></pre>
+<div class="tw"><table>
+<thead><tr><th>Değişmez (bugün zaten doğru)</th><th>Değişir</th></tr></thead>
+<tbody>
+<tr><td><code>core</code> olasılık bilmez</td><td>Ürün/araştırma fiziksel ayrımı</td></tr>
+<tr><td><code>data/</code> sürümlü ve dokunulmaz</td><td>API'ye şema doğrulama + rate limit</td></tr>
+<tr><td>Sağlık/değişmez katmanı</td><td>Eşzamansız iş katmanı</td></tr>
+<tr><td><code>check.sh</code> tek kapı</td><td>Frontend tipleri <strong>üretilir</strong> (elle 1.307 satır yerine)</td></tr>
+<tr><td>Provenance üretilir</td><td>Frontend özellik-bazlı, sayfa-bazlı değil</td></tr>
+<tr><td>Doctest + sözleşme testleri</td><td>E2E testler kapıya girer</td></tr>
+</tbody></table></div>
+<p><strong>Göç sırası (her adım tek başına dağıtılabilir):</strong> Faz 0 → 1 → 2 → 3 → 4 → 5 → 6 → 7.
+Hiçbir adım "büyük yeniden yazma" gerektirmiyor.</p>
+
+<h2 id="s29">29 · Gerçekçilik kontrolü — sınıflandırma</h2>
+
+<h4>Gerçek bug <span class="kv">(kod kesinlikle hatalı)</span></h4>
+<ul>
+<li><strong>C1</strong> — uzay sınırsız; 52,7 sn ölçüldü, 15 üçlü OOM</li>
+<li><strong>C2</strong> — artefakt dağıtımda yok; 41,7 sn ölçüldü</li>
+<li><strong>H1</strong> — fikstür yolunda kickoff filtresi yok; modülün kendi doktrinini ihlal ediyor</li>
+<li><strong>D1–D3</strong> — <code>n_mac = 0</code> ölçüldü</li>
+<li><strong>M1</strong> — mutable önbellek dönüşü (aynı sorun <code>_arindirilmis</code>te çözülmüş)</li>
+</ul>
+
+<h4>Potansiyel risk <span class="kv">(belirli koşullarda)</span></h4>
+<ul>
+<li><strong>C3</strong> — kimlik/hız sınırı yok → yalnızca kötüye kullanım varsa tetiklenir
+(ama #5 gösteriyor ki normal kullanım da tetikliyor)</li>
+<li><strong>H2</strong> — TZ'ye bağlı; UTC ortamda bugün tetiklenmiyor</li>
+<li><strong>M2</strong> — <code>SESSION_SECRET</code>; bugün session kullanılmıyor</li>
+<li><strong>P7</strong> — süreç-içi önbellek; tek örnekte sorun değil</li>
+<li>Next 14 / eslint 8 sürüm borcu</li>
+</ul>
+
+<h4>Teknik borç <span class="kv">(çalışıyor ama kaliteli değil)</span></h4>
+<ul>
+<li><strong>F1/F6</strong> — God Component'ler</li>
+<li><strong>F2</strong> — frontend 0 test</li>
+<li><code>mypy ignore_errors</code> 23 modül</li>
+<li><code>super_toto_sayfa.py</code> 1.362 satır / 7 fonksiyon</li>
+<li>Deploy imajı <code>[test]</code>+<code>[model]</code> taşıyor</li>
+<li>Yapılandırılmamış log</li>
+<li>Belge index'sizliği</li>
+</ul>
+
+<h4>Metodolojik eksik <span class="kv">(kod doğru, iddia eksik)</span></h4>
+<ul>
+<li><strong>H3</strong> — hold-out ızgarayı kapsamıyor</li>
+<li><strong>H4</strong> — geniş kesit model-seçimiyle örtüşüyor</li>
+<li><strong>H5</strong> — çoklu karşılaştırma düzeltmesi yok</li>
+</ul>
+<div class="call">
+<p>Bu üçü ayrı bir kategori hak ediyor: <strong>kod hatası değil, bilimsel iddia hatası.</strong>
+Ve bu proje kendini tam olarak bu standartla ölçtüğü için, burada tutulmalı.</p>
+</div>
+
+<h4>Enhancement <span class="kv">(çalışıyor, geliştirilebilir)</span></h4>
+<p>Sayfalama, <code>veri_yasi</code>, ilerleme göstergesi, a11y, <code>/metrics</code>, sağlık
+geçmişi kalıcılığı, <code>docs/README.md</code>, parquet katmanı.</p>
+
+<h4>Subjektif tercih <span class="kv">(kesin hata değil)</span></h4>
+<p>Türkçe kod/belge (hedef kitle için tutarlı bir seçim) · dosya tabanlı veri (bu ölçekte
+<strong>doğru</strong>) · araştırma CLI'larının ayrı paket olmaması · <code>framer-motion</code>
+kullanımı · README uzunluğu (içerik değerli; sorun sunum) · Replit hedefi (bir kısıt, hata değil).</p>
+
+<h2 id="s30">30 · Sonuç</h2>
+
+<h3 id="s30a">Executive Summary</h3>
+<p>TWMQ, <strong>iki farklı olgunluk seviyesindeki iki projenin aynı depoda yaşadığı</strong>
+bir sistemdir.</p>
+<p>Birincisi bir <strong>araştırma laboratuvarı</strong> ve bu denetimde gördüğüm en titiz
+örneklerden biri: 1.928 test (mutasyonla denenmiş), 27 çalışma-zamanı değişmezi, 25 testlik
+bir sızıntı sözleşmesi, kanıtlanmış optimal kaplama kodları, sayısal olarak kararlı kapalı-form
+EV hesabı, ölçüme dayalı fiyat kaynağı seçimi ve 13 adımlı bir kalite kapısı — üretim
+topolojisini gerçekten ayağa kaldıran bir son adımla. Bu katmanda <strong>tek bir matematiksel
+hata bulamadım</strong>. Belgeler "ne" değil "niçin" anlatıyor; yanlış çıkan eski cümleler
+silinmiyor, düzeltilip <em>niçin yanlış olduğu</em> yazılıyor.</p>
+<p>İkincisi bir <strong>web servisi</strong> ve o katman prototip seviyesinde: kimlik yok, hız
+sınırı yok, kaynak sınırı yok, izleme yok, geri alma prosedürü yok, frontend'de tek bir test
+yok. Ölçtüm — yasal bir kullanıcı girdisi tek isteği <strong>52,7 saniye</strong> sürdürüyor ve
+üretimde yalnızca <strong>iki gunicorn işçisi</strong> var.</p>
+<div class="call c">
+<p>Ve en can yakıcı bulgu: projenin manşet vaadi olan tahmin ucu <strong>şu anda sıfır maç
+döndürüyor</strong> (<code>n_mac = 0</code>, ölçüldü), çünkü fikstür dosyası boş ve onu tazeleyen
+bir iş yok. <strong>Kod doğru; hat kopuk.</strong></p>
+</div>
+
+<h3 id="s30b">Biggest Strengths (10)</h3>
+<ol>
+<li><strong><code>core.py</code> olasılık katmanını hiç bilmiyor</strong> — 14-garanti bir teorem
+olarak korunuyor ve bunu bir sağlık kontrolü denetliyor.</li>
+<li><strong>Kanıtlanmış optimal kaplama kodları</strong> — Hamming(7,4) ve ternary [4,2,3]₃
+mükemmelliği ispatlı; ILP bloğu <strong>iki</strong> bağımsız bekçili.</li>
+<li><strong>Sızıntı sözleşmesi</strong> (<code>test_sizinti.py</code>) — yeni tahminci otomatik
+denetleniyor ve <strong>her denetimin yanında bilerek sızdıran bir kurgu</strong> var.</li>
+<li><strong>Sağlık/değişmez katmanı</strong> — vaadin <em>yayındaki sürümde</em> geçerli olduğunu her
+çağrıda kanıtlıyor; neyi kanıtlamadığını da yazıyor.</li>
+<li><strong>13 adımlı tek kapı</strong> — CI onu <em>çağırıyor</em>; üretim topolojisi
+(gunicorn + next + proxy) gerçekten sürülüyor.</li>
+<li><strong>Ölçüme dayalı karar kültürü</strong> — Pinnacle reddi, Shin çevrimi,
+<code>_ILP_3322_22</code>, <code>-n auto</code> seçimi: hepsi sayılarla savunulmuş.</li>
+<li><strong>Provenance üretiliyor, yazılmıyor</strong> — "elle yazılan provenance fiyat değiştiği an
+yalan söyler."</li>
+<li><strong>Belgedeki sayılar koda karşı denetleniyor</strong> (<code>test_belgeler.py</code>,
+doctest kapıda, 3 üretilmiş dosya bekçisi).</li>
+<li><strong><code>skipped/reason</code> doktrini</strong> — hiçbir hesap sessizce kaybolmuyor;
+"panel neden yok?" her zaman cevaplanıyor.</li>
+<li><strong>Commit ve <code>.gitignore</code> kalitesi</strong> — her satırın gerekçesi var;
+commit mesajları kusur anatomisi.</li>
+</ol>
+
+<h3>Biggest Weaknesses (10)</h3>
+<ol>
+<li><code>/api/solve</code> kaynak sınırsız — <strong>52,7 sn ölçüldü</strong>, büyük uzay OOM.</li>
+<li>Kimlik + hız sınırı yok; önbellek anahtarları kullanıcı kontrolünde (4 ölçülmüş vektör).</li>
+<li>Manşet ürün boş: <code>/api/tahmin</code> → <code>n_mac = 0</code>.</li>
+<li>Artefakt dağıtıma girmiyor → her soğuk konteynerde 41,7 sn.</li>
+<li><code>/api/backtest</code> soğuk 26,5 sn, senkron, 2 işçi.</li>
+<li>Frontend 16.340 satır, <strong>0 test</strong>.</li>
+<li>Hold-out ızgara tasarımını kapsamıyor → yayımlanan aşırı-uyum ölçümü iyimser taraflı.</li>
+<li>İzleme/hata takibi/geri alma yok.</li>
+<li>LICENSE yok.</li>
+<li>762 KB belgede giriş noktası yok; mimari diyagramı yok.</li>
+</ol>
+
+<h3 id="s30c">Critical Risks</h3>
+<ul>
+<li><strong>Kullanılabilirlik:</strong> tek istemci, tek istekle servisi durdurabilir <em>(ölçüldü)</em>.</li>
+<li><strong>Ürün:</strong> manşet özellik bugün hiçbir çıktı vermiyor <em>(ölçüldü)</em>.</li>
+<li><strong>Bilimsel:</strong> "aşırı uyum ölçüldü" iddiası, ölçümün kapsamadığı bir seçim adımı içeriyor.</li>
+<li><strong>Hukuki:</strong> LICENSE yokluğu — depo teknik olarak açık, hukuken kapalı.</li>
+<li><strong>Operasyonel:</strong> üretimde çöküşü fark edecek hiçbir mekanizma yok.</li>
+</ul>
+
+<h3>Technical Debt</h3>
+<p>Toplam <strong>~3–4 hafta kişi-iş</strong>: frontend testi (1–2 hafta), God Component ayrıştırma
+(3–5 gün), <code>mypy ignore_errors</code> (dağıtılmış), ürün/araştırma ayrımı (1–2 hafta), belge
+yeniden düzenleme (2–3 gün), deploy imajı yalınlaştırma (yarım gün). <strong>Borç dağınık değil,
+sınıflandırılmış</strong> — kod içindeki yorumlar borcun her kaleminin nerede ve niçin olduğunu
+zaten yazıyor. Bu, borcu ödemeyi olağandışı derecede kolaylaştırıyor.</p>
+
+<h3>Product Risks</h3>
+<ol>
+<li>Manşet özellik boş — kullanıcı ilk ziyarette değer görmüyor.</li>
+<li>Tahmin katmanı piyasayı geçemiyor (dürüstçe söyleniyor) → farklılaşma tek başına kaplama
+motoruna dayanıyor.</li>
+<li>Öğrenme eğrisi dik; uzun bekleme süreleri geri bildirimsiz.</li>
+<li>Veri bayatlığı görünmüyor → kullanıcı eski sayıyı taze sanabilir.</li>
+<li>Yasal/etik: bahis aracı; sorumlu oyun uyarısı ve yaş sınırı bildirimi yok.</li>
+</ol>
+
+<h3>Quant / Statistical Risks</h3>
+<ol>
+<li><strong>Izgara-seçimi hold-out dışında</strong> (H3) — en önemli metodolojik açık.</li>
+<li><strong>Model kademesi seçimi geniş kesitle örtüşüyor</strong> (H4).</li>
+<li><strong>Çoklu karşılaştırma düzeltmesi yok</strong> (H5) — 10+ aile denendi.</li>
+<li><strong>n = 36 hafta</strong> — hold-out 14+ = 1/36; hiçbir eşik kararı bu örneklemde güvenli
+değil ve <code>UYARI</code> bunu söylüyor.</li>
+<li><strong>İkramiyeli hafta = 1</strong>, gerekli ≈ 71 — havuz modeli doğrulanamıyor (kod bunu
+biliyor ve arayüze çıkarmıyor).</li>
+<li>Piyasa Brier 0,579; eşit dağıtım 0,667 — sinyal var ama az; iddaa marjı %17,2 pratik eşiğin
+çok üstünde.</li>
+<li>Fiyat vekili (football-data) ile hedef pazar (iddaa) <strong>aynı değil</strong> — yapı tutuyor,
+seviye tutmuyor ve bu her yerde yazılı.</li>
+</ol>
+
+<h3 id="s30d">Top 10 Priorities (bugünden itibaren)</h3>
+<div class="tw"><table>
+<thead><tr><th class="n">#</th><th>İş</th><th>Kapattığı</th><th class="n">Süre</th></tr></thead>
+<tbody>
+<tr><td class="n">1</td><td><code>Encoder</code> maç sayısı katı red + <code>space_size</code> tavanı + <code>time_limit</code> ≤ 60</td><td><span class="b b-c">C1</span></td><td class="n">1 gün</td></tr>
+<tr><td class="n">2</td><td><code>flask-limiter</code> + <code>?fresh=1</code> yetkiye</td><td><span class="b b-c">C3</span></td><td class="n">1 gün</td></tr>
+<tr><td class="n">3</td><td><code>build.sh</code> → <code>artefakt --yaz</code></td><td><span class="b b-c">C2</span></td><td class="n">1 saat</td></tr>
+<tr><td class="n">4</td><td><code>build_fixtures</code> GH Actions işi + iddaa günlük</td><td><span class="b b-c">D1–D3</span></td><td class="n">1 gün</td></tr>
+<tr><td class="n">5</td><td>LICENSE + SECURITY.md</td><td>Hukuki</td><td class="n">1 saat</td></tr>
+<tr><td class="n">6</td><td><code>_gelecekte()</code> fikstüre + aware UTC</td><td><span class="b b-h">H1/H2</span></td><td class="n">yarım gün</td></tr>
+<tr><td class="n">7</td><td>Geri test sonucunu önceden hesaplayıp sürümle</td><td><span class="b b-h">P3</span></td><td class="n">2 gün</td></tr>
+<tr><td class="n">8</td><td>Sentry + JSON log + istek kimliği</td><td>İzleme</td><td class="n">1 gün</td></tr>
+<tr><td class="n">9</td><td>Vitest + <code>lib/*</code> + Playwright duman → <code>check.sh</code></td><td><span class="b b-h">F2</span></td><td class="n">1 hafta</td></tr>
+<tr><td class="n">10</td><td>İç içe CV + kademe seçimini dondur + sayıları yeniden ölç</td><td><span class="b b-h">H3/H4</span></td><td class="n">1–2 hafta</td></tr>
+</tbody></table></div>
+<div class="call g"><p><strong>1–6 birlikte ~4 gün</strong> ve dört P0'ın tamamını kapatıyor.</p></div>
+
+<h3>Final Score</h3>
+<div class="score">
+  <div class="num">7,2<span style="font-size:22px;color:var(--fg3)"> / 10</span></div>
+  <div class="lab">Mühendislik %30 → 8,5 · Domain %25 → 8,7 · İşletim %25 → 5,3 · Ürün %20 → 6,0</div>
+</div>
+
+<h3 id="s30e">Final Verdict</h3>
+<div class="call">
+<p><strong>TWMQ, "iyi bir bahis aracı" değil; ölçüm disiplini açısından örnek alınabilecek bir
+mühendislik eseri ve aynı anda üretime hazır olmayan bir web servisidir.</strong></p>
+</div>
+<p>Denetlediğim onlarca depo arasında, kendi iddialarına bu kadar sert davranan bir tane daha
+hatırlamıyorum. Bu proje "modelimiz piyasayı geçiyor" demek yerine <strong>dokuz özelliği
+denedi, hiçbirinin geçemediğini yazdı ve o cümleyi bir teste bağladı</strong>. Yanlış çıkan eski
+cümlelerini silmedi; düzeltip niçin yanlış olduğunu yazdı. Bir sayının hangi komuttan çıktığını,
+hangi ölçekte ölçüldüğünü ve ne zaman bayatladığını takip eden bir altyapı kurdu.</p>
+<p>Kırıldığı yer tam olarak bu disiplinin <strong>hiç uygulanmadığı</strong> tek katman: HTTP yüzeyi.
+Her hesabın maliyeti ölçülmüş, her eşiğin gerekçesi yazılmış, ama hiçbir isteğin üst sınırı yok.
+Bir uzay tavanı, bir rate limiter ve <code>build.sh</code>'e eklenecek bir satır — dört P0'ın üçü
+<strong>bir günlük iş</strong>.</p>
+<p><strong>Seviye: Beta, üst sınırında.</strong> Faz 0 + Faz 1 (yaklaşık bir hafta)
+tamamlandığında <strong>Production-ready</strong>'ye geçer. Production-grade için gereken ek şey
+teknik değil, zamansal: kendi iddaa oran arşivinin bir sezon dolması ve ikramiyeli hafta
+sayısının 1'den ~20'ye çıkması.</p>
+
+<h3 id="s30f">İki soru</h3>
+
+<div class="q">❓ "Bugün TWMQ'ya yeni bir geliştirici katılsa, güvenle geliştirmeye devam edebilir mi?"</div>
+<p><strong>Backend'de: EVET, alışılmadık derecede güvenle.</strong> 1.928 test, 27 değişmez,
+ruff+mypy+interrogate+pip-audit temiz, mutasyonla denenmiş bekçiler, sızıntı sözleşmesi, doctest
+kapıda ve her kararın gerekçesi kodda yazılı. Yanlış bir değişiklik kapıda düşer, ve <em>niçin</em>
+düştüğü genellikle o satırın yorumunda zaten anlatılmıştır.</p>
+<p><strong>Frontend'de: HAYIR.</strong> 16.340 satır, sıfır davranış testi ve 30
+<code>useState</code>'li bir God Component. <code>page.tsx</code>'e dokunmak bugün tamamen sezgiye
+dayalı.</p>
+<p><strong>Yönelme açısından: ZORLANIR.</strong> 762 KB belgede index yok, mimari diyagramı yok,
+53 motor modülünün hangisinin üretim hangisinin laboratuvar olduğu dosya yapısından okunamıyor.
+İlk hafta büyük ölçüde okumakla geçer. <strong>Bu, <code>docs/README.md</code> +
+<code>docs/MIMARI.md</code> ile bir günde çözülebilecek bir problem</strong> — bilgi zaten var,
+erişim yok.</p>
+<p><strong>Kısa cevap:</strong> Motorda evet, arayüzde hayır, haritada henüz değil.</p>
+
+<div class="q">❓ "TWMQ'nun 10/10 seviyesine ulaşması için tam olarak neleri değiştirmemiz gerekiyor?"</div>
+<p>Puanı bugün düşüren <strong>beş</strong> şey var; hepsi adreslenebilir.</p>
+<div class="tw"><table>
+<thead><tr><th>Blok</th><th>Ne yapılacak</th><th class="n">Puan etkisi</th><th class="n">Süre</th></tr></thead>
+<tbody>
+<tr><td><strong>① Security</strong> 4 → 9</td><td>Uzay tavanı + maç sayısı katı red + <code>time_limit</code> ≤ 60 + <code>flask-limiter</code> + POST token + <code>?fresh</code> yetkilendirme + güvenlik başlıkları + <code>MAX_CONTENT_LENGTH</code></td><td class="n">+1,25</td><td class="n">~3 gün</td></tr>
+<tr><td><strong>② Performance</strong> 5 → 9<br><strong>Scalability</strong> 5 → 8</td><td>İş kuyruğu (<code>202</code> + durum ucu) + geri testin önceden hesaplanması + <code>build.sh</code> artefakt + sayfalama + işçi sayısı. Hedef: <strong>senkron yolda hiçbir uç &gt; 2 sn</strong></td><td class="n">+1,00</td><td class="n">~1,5 hafta</td></tr>
+<tr><td><strong>③ Testing</strong> 8 → 10<br><strong>Frontend</strong> 6 → 9</td><td>Vitest + Testing Library (<code>lib/*</code> %100, kritik 10 bileşen) + Playwright duman + <code>page.tsx</code>/<code>charts.tsx</code> ayrıştırma + fetch timeout + ilerleme/iptal + a11y</td><td class="n">+0,60</td><td class="n">~2,5 hafta</td></tr>
+<tr><td><strong>④ Statistical</strong> 8 → 10</td><td>İç içe CV + kademe seçimini ayrı kesitte dondurma + Holm/BH + "kaç aday denendi" + <strong>etkilenen yayımlanmış sayıların yeniden ölçülüp etiketlenmesi</strong></td><td class="n">+0,25</td><td class="n">~2 hafta</td></tr>
+<tr><td><strong>⑤ DevOps</strong> 7 → 10<br><strong>Product</strong> 5 → 9</td><td>Sentry + JSON log + istek kimliği + <code>/metrics</code> + kalıcı sağlık geçmişi + <code>RUNBOOK.md</code> + git tag + CHANGELOG + LICENSE/SECURITY/CONTRIBUTING + fikstür tazeleme işi + <code>veri_yasi</code> rozeti + yalın deploy imajı</td><td class="n">+0,75</td><td class="n">~2 hafta</td></tr>
+</tbody></table></div>
+<p><strong>Ek olarak</strong> (puanı doğrudan artırmaz, projeyi tamamlar):</p>
+<ul>
+<li><code>urun/</code> ↔ <code>arastirma/</code> fiziksel ayrımı (Architecture 8 → 9)</li>
+<li><code>docs/README.md</code> + <code>docs/MIMARI.md</code> (Documentation 8 → 10)</li>
+<li>Kendi iddaa arşivinin bir sezonu doldurması ve ikramiyeli hafta sayısının ~20'ye çıkması —
+<strong>bu ikisi satın alınamaz, yalnızca beklenebilir</strong> ve projenin gerçek bilimsel değeri
+oradan gelecek.</li>
+</ul>
+<div class="score">
+  <div class="num">7,2 → 9,6</div>
+  <div class="lab"><strong>~8–10 hafta odaklı çalışma.</strong> Kalan 0,4,
+  <code>getiri.py</code>'nin arayüze çıkabilmesi için gereken 71 ikramiyeli haftada saklı — ve o,
+  kod yazarak değil, <strong>veri biriktirerek</strong> kazanılır. Projenin kendi doktrini de
+  zaten tam olarak bunu söylüyor.</div>
+</div>
+
+<hr>
+<p class="kv">Bu denetimde hiçbir dosya değiştirilmedi, oluşturulmadı veya commit edilmedi.
+Tüm süre ve boyut ölçümleri 2026-09-03 tarihinde, <code>6e20bd7</code> üzerinde, tam bağımlılık
+kurulumuyla alınmıştır.</p>
+
+</main>
+</div>
+<script>
+(function(){
+  var b=document.getElementById('tg');
+  b.addEventListener('click',function(){
+    var r=document.documentElement;
+    var cur=r.getAttribute('data-theme');
+    if(!cur){cur=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';}
+    r.setAttribute('data-theme',cur==='dark'?'light':'dark');
+  });
+})();
+</script>
+</body>
+</html>
