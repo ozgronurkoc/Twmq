@@ -70,7 +70,10 @@ const config: Config = {
       },
       fontFamily: {
         // Bodoni Moda — nonplo'nun display serif'i (next/font ile yuklenir)
-        display: ["var(--font-display)", "Didot", "Bodoni MT", "Georgia", "serif"],
+        // "Bodoni Moda Fallback" ILK sirada: olcu uyumlu yuz (globals.css).
+        // Ondan sonrakiler o yuz de yuklenemezse devreye girer.
+        display: ["var(--font-display)", "Bodoni Moda Fallback",
+                  "Didot", "Bodoni MT", "Georgia", "serif"],
         // Not: burada `var(--font-sans)` duruyordu ama o degisken hicbir
         // yerde tanimli degil — next/font yalnizca display serif'ini
         // yukluyor (app/layout.tsx). Yani stack sessizce Helvetica'ya

@@ -208,10 +208,26 @@ def _kosullu_rakip(probs: list[dict[str, float]],
         capraz = sum(p[s] * oy[s] for s in sec)
         kosullu *= (capraz / icinde) if icinde > 0 else 0.0
         kosulsuz *= sum(p[s] * oy[s] for s in SEM)
+    # `kosulsuz == 0` SESSIZ `None` DEGIL, HATA. Once oyle degildi ve
+    # koruma cokmeyi onlemiyor, iki katman asagi itiyordu:
+    # `super_toto_frontend.py` govdeyi `round(...["kat"], 3)` ile okuyor
+    # (TypeError) ve arayuz `kat_taban: number` deyip `.toFixed(1)`
+    # cagiriyor. Uc katman da sayinin var oldugunu varsayiyordu; yalnizca
+    # ureticinin kendisi aksini soyluyor ve kimseye soylemiyordu.
+    #
+    # Kosul ancak BIR macta uc sembolun de ya olasiligi ya oynanma payi
+    # sifirsa saglanir — yani gercek veriyle degil, BOZUK veriyle. Boyle
+    # bir girdide dogru cevap "sayi yok" degil "girdi bozuk"tur; deponun
+    # `dixon_coles._gun` deki "bozuk tarih sessizce 0 olmaz, hata verir"
+    # kurali burada da gecerli.
+    if kosulsuz <= 0:
+        raise ValueError(
+            "kosulsuz rakip yogunlugu sifir: en az bir macta butun "
+            "sembollerin olasiligi ya da oynanma payi sifir — girdi bozuk")
     return {
         "kosullu": kosullu,
         "kosulsuz": kosulsuz,
-        "kat": (kosullu / kosulsuz) if kosulsuz > 0 else None,
+        "kat": kosullu / kosulsuz,
     }
 
 

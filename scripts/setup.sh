@@ -31,8 +31,12 @@ KALITE=0
 EKSTRALAR="test,model"
 DOGRULANACAK=(flask numpy pytest xdist)
 if [[ $KALITE -eq 1 ]]; then
-  EKSTRALAR="test,kalite,model"
-  DOGRULANACAK+=(ruff mypy interrogate pip_audit)
+  # CI'nin kalite kapisi isiyle AYNI kume. Ayrisirsa yerelde gecen kapi
+  # CI'da baska bir sey kosar — bu betigin var olma sebebinin tersi.
+  # `mcp` ve `ocr` de burada: yoklugunda testleri ATLANIR ve kapi yesil
+  # kalir, yani sessizce daralir.
+  EKSTRALAR="test,kalite,model,mcp,ocr"
+  DOGRULANACAK+=(ruff mypy interrogate pip_audit mcp PIL)
 fi
 
 # ─── Python ───────────────────────────────────────────────────────────────────

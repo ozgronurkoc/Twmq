@@ -176,7 +176,7 @@ def _gercek_test_sayisi() -> int:
 
     Depo bu ikiliği zaten taşıyor ve bilerek taşıyor: üretim `lightgbm`
     kurmuyor (`scripts/run_prod.sh`), kalite kapısı kuruyor
-    (`.[test,kalite,model]`), CI'nın sürüm matrisi kurmuyor (`.[test]`).
+    (`.[test,kalite,model,mcp,ocr]`), CI'nın sürüm matrisi kurmuyor (`.[test]`).
     Belgelerdeki sayı **eksiksiz süitin** sayısıdır, çünkü belgelerin
     anlattığı depo odur.
 
@@ -195,7 +195,7 @@ def _gercek_test_sayisi() -> int:
             f"eksik istege bagli paket: {', '.join(eksik)} — bu kurulumda "
             "sureden bazi modüller hic toplanmiyor, yani sayilan sey "
             "eksiksiz suit degil. Tam denetim kalite kapisinda "
-            "(`pip install -e '.[test,kalite,model]'`).")
+            "(`pip install -e '.[test,kalite,model,mcp,ocr]'`).")
 
     out = subprocess.run(
         [sys.executable, "-m", "pytest", "--collect-only", "-q",
@@ -312,6 +312,56 @@ def test_test_dosya_sayisi_belgelerle_ayni():
         if sayilar and sayilar != {gercek}:
             yanlis[d] = sorted(sayilar)
     assert not yanlis, f"test dosyası sayısı yanlış (gerçek: {gercek}): {yanlis}"
+
+
+def test_kalite_kapisi_ve_setup_AYNI_ekstralari_kurar():
+    """CI'nın kalite kapısı ile `setup.sh --kalite` aynı kümeyi kurmalı.
+
+    İkisi ayrışırsa yerelde geçen kapı CI'da **başka bir şey** koşar —
+    `scripts/check.sh`in var olma sebebinin tam tersi (CI onu çağırıyor ki
+    ayrışamasınlar; kurulum listesi ayrışırsa aynı betik farklı bir yüzeyi
+    ölçer).
+
+    **Ölçülmüş zarar.** Uzun süre iki ekstra (`mcp`, `ocr`) hiçbir CI
+    işinde kurulmadı. Bir ekstra kurulmadığında ona bağlı testler
+    **atlanır** ve kapı yine yeşil kalır: iki test bir kez bile CI'da
+    koşmadı ve hiçbir yerde görünmedi. Sessiz atlama, kırmızı bir kapıdan
+    kötüdür — çünkü korunuyor sanırsın.
+    """
+    import re as _re
+
+    ci = (DEPO / ".github" / "workflows" / "tests.yml").read_text(encoding="utf-8")
+    m = _re.search(r'pip install -e "\./backend\[([^\]]+)\]"', ci)
+    assert m, "CI kalite kapısında `pip install -e ./backend[...]` bulunamadı"
+    ci_kume = {x.strip() for x in m.group(1).split(",")}
+
+    kur = (DEPO / "scripts" / "setup.sh").read_text(encoding="utf-8")
+    kalite_satirlari = _re.findall(r'^\s*EKSTRALAR="([^"]+)"', kur, _re.MULTILINE)
+    assert len(kalite_satirlari) == 2, (
+        f"`setup.sh` iki `EKSTRALAR` ataması bekliyordu, {len(kalite_satirlari)} var")
+    setup_kume = {x.strip() for x in kalite_satirlari[-1].split(",")}
+
+    assert ci_kume == setup_kume, (
+        f"CI kalite kapısı {sorted(ci_kume)} kuruyor, "
+        f"`setup.sh --kalite` {sorted(setup_kume)} — ayrışmışlar")
+
+    # İlan edilen HER ekstra bu kümede olmalı; yenisi eklenince sessizce
+    # denetimsiz kalmasın. (`pyproject.toml`ın kendisi tek kaynak.)
+    #
+    # TOML AYRIŞTIRICISI KULLANILMIYOR ve sebebi bu deponun kendi dersi:
+    # `tomllib` 3.11+, `tomli` ise `[kalite]` ekstrasında. Bu test CI'nın
+    # matris işinde py3.10 + yalnızca `[test]` ile de koşuyor; ayrıştırıcıya
+    # dayanan bir bekçi tam orada ya düşer ya atlanır.
+    proje_metni = (KOK / "pyproject.toml").read_text(encoding="utf-8")
+    bolum = proje_metni.split("[project.optional-dependencies]", 1)
+    assert len(bolum) == 2, "`[project.optional-dependencies]` bölümü yok"
+    govde = bolum[1].split("\n[", 1)[0]
+    ilan = set(_re.findall(r"^([a-z][a-z0-9_-]*)\s*=\s*\[", govde, _re.MULTILINE))
+    assert ilan, "hiçbir ekstra adı okunamadı — bekçi kör kalmış"
+    eksik = ilan - ci_kume
+    assert not eksik, (
+        f"ilan edilen ama kalite kapısında KURULMAYAN ekstra: {sorted(eksik)} "
+        "— testleri sessizce atlanır")
 
 
 def test_workflowlarda_pytest_gercekten_kosabilir():

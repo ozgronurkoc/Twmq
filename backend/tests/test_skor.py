@@ -14,7 +14,6 @@ import pytest
 from spor_toto.skor import (
     MAKS_GOL,
     ah_kapama,
-    beraberlik_duzelt,
     delta_coz,
     fark_dagilimi,
     mu_coz,
@@ -168,30 +167,3 @@ def test_daha_cok_gol_daha_az_beraberlik():
     assert az_gol["0"] < cok_gol["0"]
 
 
-# ─── beraberlik düzeltmesi ────────────────────────────────────────────────
-
-def test_duzeltme_bire_toplar():
-    p = {"1": 0.44, "0": 0.24, "2": 0.32}
-    for rho, beta in ((0.0, 1.0), (0.17, 1.15), (-0.05, 0.9)):
-        q = beraberlik_duzelt(p, rho, beta)
-        assert sum(q.values()) == pytest.approx(1.0)
-
-
-def test_rho_beraberligi_buyutur():
-    p = {"1": 0.44, "0": 0.24, "2": 0.32}
-    assert beraberlik_duzelt(p, 0.20, 1.0)["0"] > p["0"]
-    assert beraberlik_duzelt(p, -0.20, 1.0)["0"] < p["0"]
-
-
-def test_notr_parametreler_dagilimi_degistirmez():
-    p = {"1": 0.44, "0": 0.24, "2": 0.32}
-    q = beraberlik_duzelt(p, 0.0, 1.0)
-    for s in SEM:
-        assert q[s] == pytest.approx(p[s])
-
-
-def test_beta_keskinlestirir():
-    """β > 1 en olasıyı büyütür, β < 1 dağılımı düzleştirir."""
-    p = {"1": 0.50, "0": 0.25, "2": 0.25}
-    assert beraberlik_duzelt(p, 0.0, 1.4)["1"] > p["1"]
-    assert beraberlik_duzelt(p, 0.0, 0.6)["1"] < p["1"]

@@ -29,6 +29,7 @@ import logging
 import os
 import threading
 import urllib.error
+import urllib.parse
 import urllib.request
 from collections import deque
 from datetime import datetime, timezone
@@ -40,7 +41,47 @@ logger = logging.getLogger(__name__)
 # ve saatlerce gecmis demektir.
 GECMIS_SINIRI = int(os.environ.get("HEALTH_HISTORY_LIMIT", "200"))
 
-ALARM_URL = os.environ.get("HEALTH_ALARM_URL", "").strip()
+#: `urlopen`in kabul ettigi ama bizim asla kastetmedigimiz semalar.
+#: `urllib.request.urlopen` `file:`, `ftp:` ve `data:` de acar.
+IZINLI_ALARM_SEMALARI = ("http", "https")
+
+
+def _alarm_url_oku() -> str:
+    """`HEALTH_ALARM_URL`i okur ve **semasini KURULUM aninda** dogrular.
+
+    Bu deponun tek `urlopen` cagrisi ki URL'si bir SABIT DEGIL: degeri
+    ortamdan geliyor, yani servisi kuran kisinin (ya da bir yanlis
+    kopyalanmis ortam dosyasinin) denetiminde. `file:///...` verilseydi
+    alarm gonderimi sessizce bir yerel dosya okumasina donusurdu.
+    Denetim yoktu; simdi var.
+    **Denetim CAGRI aninda degil OKUMA aninda.** Sebebi: bozuk bir ayar
+    ayarin okundugu anda bellidir ve alarm ancak saglik durumu DEGISINCE
+    gonderilir — yani hatanin en kotu zamanda, ilk gercek olayda ortaya
+    cikmasi icin saatlerce beklenirdi.
+    Bozuk deger servisi DUSURMEZ: alarm istege bagli bir yetenektir,
+    yoklugu servisin calismasini engellemez. Uyari yazilir ve ozellik
+    kapali sayilir — `rapor["alarm"]` da `false` doner, yani rapor
+    "acik ama bozuk" gibi bir yalan soylemez.
+    `scripts/_ortak.sema_dogrula` ile AYNI ISI yapar ama onu ice
+    aktaramaz: `scripts/_ortak` bilerek stdlib disina cikmayan ve
+    `spor_toto`ya bagimli OLMAYAN bir katman (bkz.
+    `test_bagimliliksiz_betikler_spor_toto_import_etmez`), tersi yon de
+    paketin `scripts/`e bagimli olmasi demek olurdu.
+    """
+    ham = os.environ.get("HEALTH_ALARM_URL", "").strip()
+    if not ham:
+        return ""
+    sema = urllib.parse.urlparse(ham).scheme.lower()
+    if sema not in IZINLI_ALARM_SEMALARI:
+        logger.warning(
+            "HEALTH_ALARM_URL semasi %r izinli degil (yalnizca %s) — "
+            "saglik alarmi KAPALI sayiliyor", sema,
+            ", ".join(IZINLI_ALARM_SEMALARI))
+        return ""
+    return ham
+
+
+ALARM_URL = _alarm_url_oku()
 ALARM_TIMEOUT_S = float(os.environ.get("HEALTH_ALARM_TIMEOUT_S", "5"))
 
 _kayitlar: deque[dict[str, Any]] = deque(maxlen=max(1, GECMIS_SINIRI))
@@ -156,13 +197,15 @@ def _bildir(onceki: str | None, kayit: dict[str, Any]) -> None:
 
     def _gonder() -> None:
         try:
-            istek = urllib.request.Request(
+            istek = urllib.request.Request(  # noqa: S310 - sema okuma aninda dogrulandi
                 ALARM_URL,
                 data=json.dumps(govde, ensure_ascii=False).encode("utf-8"),
                 headers={"Content-Type": "application/json"},
                 method="POST",
             )
-            urllib.request.urlopen(istek, timeout=ALARM_TIMEOUT_S).close()
+            # Asagidaki `noqa`: sema `_alarm_url_oku`da, degerin OKUNDUGU
+            # anda dogrulandi; `ALARM_URL` bos degilse http(s)tir.
+            urllib.request.urlopen(istek, timeout=ALARM_TIMEOUT_S).close()  # noqa: S310
         except (urllib.error.URLError, OSError, ValueError) as e:
             logger.warning("Sağlık alarmı gönderilemedi: %s", e)
 

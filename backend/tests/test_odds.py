@@ -11,7 +11,6 @@ from spor_toto.odds import (
     implied_probs,
     load_odds,
     market_odds,
-    odds_for,
 )
 
 ROWS = load_odds()
@@ -79,8 +78,3 @@ def test_favori_isabeti_gerceklikle_uyumlu():
     assert top > 400
     assert 0.45 <= tut / top <= 0.70, f"favori isabeti %{100 * tut / top:.1f} — eşleştirme şüpheli"
 
-
-def test_odds_for():
-    r = ROWS[0]
-    assert odds_for(r["week"], r["no"])["home"] == r["home"]
-    assert odds_for(9999, 1) is None

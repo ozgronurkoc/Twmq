@@ -624,7 +624,7 @@
    "results": "002011110111011",
    "sonuc": {
     "kalabalik": {
-     "beklenen_halk_dogru": 5.890000000000001,
+     "beklenen_halk_dogru": 5.89,
      "beklenen_piyasa_dogru": 5.412042855553684,
      "halk_dogru": 6,
      "halk_kuponu": "121121111221211",
@@ -1433,8 +1433,8 @@
    "results": "222121121210102",
    "sonuc": {
     "kalabalik": {
-     "beklenen_halk_dogru": 6.109999999999999,
-     "beklenen_piyasa_dogru": 6.391288087258119,
+     "beklenen_halk_dogru": 6.11,
+     "beklenen_piyasa_dogru": 6.391288087258118,
      "halk_dogru": 8,
      "halk_kuponu": "211111211212112",
      "piyasa_dogru": 9,
@@ -3523,7 +3523,7 @@
    "results": "021210211101222",
    "sonuc": {
     "kalabalik": {
-     "beklenen_halk_dogru": 6.549999999999999,
+     "beklenen_halk_dogru": 6.55,
      "beklenen_piyasa_dogru": 6.460201358843372,
      "halk_dogru": 7,
      "halk_kuponu": "111021221121122",

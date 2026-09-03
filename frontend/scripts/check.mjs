@@ -883,6 +883,57 @@ dene("saglayici etiketi Python ile birebir ayni", () => {
   assert.equal(ST.saglayiciAdi(null), "bilinmiyor");
 });
 
+// ─── font geri dusus olculeri Next'in KENDI tablosuyla ayni mi ──────────
+dene("Bodoni geri dusus olculeri Next'in tablosundan TURETILMIS", () => {
+  // `next/font` bu aile icin olcu uyumlu geri dusus URETEMIYOR: Next 14'un
+  // iki ic tablosu celisiyor — font listesinde aile "Bodoni Moda", olcu
+  // tablosunda ise yalnizca "bodoniModa11pt" var. Arama ilk addan gidiyor,
+  // bulamiyor ve SESSIZCE vazgeciyor (cikis kodu bozulmuyor, yalnizca
+  // soguk derlemede iki uyari satiri). Sonucu uretilen CSS'te gorunuyordu:
+  // tek bir `size-adjust` bile yoktu, yani `display: swap` her sayfa
+  // acilisinda baslik yuzunde gorunur bir sicrama uretiyordu.
+  //
+  // Yuz `globals.css`te ELLE tanimli ama SAYILARI elle uydurulmus DEGIL.
+  // Bu denetim onlari Next'in kendi olcu tablosundan, Next'in kendi
+  // formuluyle YENIDEN HESAPLAYIP karsilastirir: tablo guncellenirse ya da
+  // taban yuz (Georgia) degisirse kapi kirmizi yanar.
+  const iste = createRequire(import.meta.url);
+  const olcuYolu = iste.resolve("next/dist/server/capsize-font-metrics.json");
+  const olcu = JSON.parse(readFileSync(olcuYolu, "utf8"));
+  const b = olcu.bodoniModa11pt;
+  const g = olcu.georgia;
+  assert.ok(b && g, "Next olcu tablosunda bodoniModa11pt ya da georgia yok");
+
+  const sizeAdjust = (b.xWidthAvg / b.unitsPerEm) / (g.xWidthAvg / g.unitsPerEm);
+  const yuzde = (x) => `${(x * 100).toFixed(2)}%`;
+  const beklenen = {
+    "size-adjust": yuzde(sizeAdjust),
+    "ascent-override": yuzde(b.ascent / (b.unitsPerEm * sizeAdjust)),
+    "descent-override": yuzde(Math.abs(b.descent) / (b.unitsPerEm * sizeAdjust)),
+    "line-gap-override": yuzde(b.lineGap / (b.unitsPerEm * sizeAdjust)),
+  };
+
+  const css = readFileSync(join(kok, "app", "globals.css"), "utf8");
+  const blok = css.match(/@font-face\s*\{[^}]*Bodoni Moda Fallback[^}]*\}/);
+  assert.ok(blok, "globals.css icinde 'Bodoni Moda Fallback' yuzu yok");
+
+  const ayrisan = [];
+  for (const [ozellik, deger] of Object.entries(beklenen)) {
+    const bulunan = blok[0].match(new RegExp(`${ozellik}\\s*:\\s*([^;]+);`));
+    if (!bulunan) { ayrisan.push(`${ozellik}: CSS'te yok`); continue; }
+    if (bulunan[1].trim() !== deger) {
+      ayrisan.push(`${ozellik}: css=${bulunan[1].trim()} hesap=${deger}`);
+    }
+  }
+  assert.deepEqual(ayrisan, [],
+    `font geri dusus olculeri Next tablosundan ayrismis — ${ayrisan.join("; ")}`);
+
+  // Yuz yalnizca tanimli olmasin, KULLANILIYOR da olsun.
+  const tw = readFileSync(join(kok, "tailwind.config.ts"), "utf8");
+  assert.ok(/display:\s*\[[^\]]*Bodoni Moda Fallback/s.test(tw),
+    "geri dusus yuzu tanimli ama `display` yiginina konmamis");
+});
+
 } finally {
   rmSync(cikti, { recursive: true, force: true });
 }

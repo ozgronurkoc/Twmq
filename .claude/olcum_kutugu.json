@@ -1,0 +1,226 @@
+{
+ "sayilar": [
+  {
+   "ne": "suit test sayisi (eksiksiz kurulum)",
+   "deger": "1.934",
+   "ureten": "cd backend && pytest -p no:randomly -n0 --collect-only -q  # dosya basi toplami",
+   "olculdu": "2026-09-03",
+   "anildigi_yerler": [
+    "README.md §7,§9",
+    "backend/README.md",
+    "docs/ISTATISTIK_YOL_HARITASI.md",
+    "docs/SAGLIK_VIZYONU.md",
+    "docs/VERI_TOPLAMA_VE_ISLEME.md",
+    "replit.md",
+    "docs/token_olcum_kutugu.md"
+   ],
+   "bekci": "backend/tests/test_belgeler.py::test_test_sayisi_belgelerde_tek_ve_dogru"
+  },
+  {
+   "ne": "test dosyasi sayisi",
+   "deger": "64",
+   "ureten": "ls backend/tests/test_*.py | wc -l",
+   "olculdu": "2026-09-03",
+   "anildigi_yerler": [
+    "README.md §7",
+    "backend/README.md"
+   ],
+   "bekci": null
+  },
+  {
+   "ne": "hizli test sayisi",
+   "deger": "1.926",
+   "ureten": "pytest -m 'not slow' --collect-only -q",
+   "olculdu": "2026-09-03",
+   "anildigi_yerler": [],
+   "bekci": null
+  },
+  {
+   "ne": "yavas (ILP) test sayisi",
+   "deger": "8",
+   "ureten": "pytest -m slow --collect-only -q",
+   "olculdu": "2026-09-03",
+   "anildigi_yerler": [],
+   "bekci": null
+  },
+  {
+   "ne": "kapida atlanan test",
+   "deger": "2 (ikisi de VERI yoklugu, bagimlilik degil)",
+   "ureten": "bash scripts/check.sh  # pytest artik -rs ile kosuyor",
+   "olculdu": "2026-09-03",
+   "anildigi_yerler": [],
+   "bekci": "atlananlar: test_sehir.py:100 (openfootball kopyasi), test_bulten.py:237 (indirilmis gorsel)"
+  },
+  {
+   "ne": "spor_toto modul sayisi",
+   "deger": "51",
+   "ureten": "ls backend/spor_toto/*.py | grep -v __init__ | wc -l",
+   "olculdu": "2026-09-03",
+   "anildigi_yerler": [
+    "README.md §7 modul agaci"
+   ],
+   "bekci": "backend/tests/test_belgeler.py::test_readme_modul_listesi_eksiksiz"
+  },
+  {
+   "ne": "saglik degismez sayisi",
+   "deger": "27",
+   "ureten": "python -c 'from spor_toto.health import CHECKS; print(len(CHECKS))'",
+   "olculdu": "2026-09-03",
+   "anildigi_yerler": [
+    "README.md",
+    "docs/SAGLIK_VIZYONU.md",
+    "docs/VERI_TOPLAMA_VE_ISLEME.md"
+   ],
+   "bekci": "backend/tests/test_belgeler.py::test_saglik_kontrol_sayisi_belgeyle_ayni"
+  },
+  {
+   "ne": "arayuz denetimi (ilk blok)",
+   "deger": "56",
+   "ureten": "cd frontend && node scripts/check.mjs",
+   "olculdu": "2026-09-03",
+   "anildigi_yerler": [
+    "README.md 'npm run check ... (56 vaka)'"
+   ],
+   "bekci": null
+  },
+  {
+   "ne": "doctest sayisi",
+   "deger": "12",
+   "ureten": "pytest --doctest-modules -p no:randomly -q spor_toto/{ortak,getiri,takim,deger,odds,egitim}.py",
+   "olculdu": "2026-09-03",
+   "anildigi_yerler": [],
+   "bekci": null
+  },
+  {
+   "ne": "docstring kapsamasi (interrogate)",
+   "deger": "%77,0  (esik %75)",
+   "ureten": "cd backend && python -m interrogate -c pyproject.toml spor_toto/",
+   "olculdu": "2026-09-03",
+   "anildigi_yerler": [],
+   "bekci": "anilmiyor — BILEREK. Kapsama kodla oynar, sabit olan esik ve onu check.sh tutuyor."
+  },
+  {
+   "ne": "kalite kapisi adim sayisi",
+   "deger": "13",
+   "ureten": "grep -c '^baslik ' scripts/check.sh",
+   "olculdu": "2026-09-03",
+   "anildigi_yerler": [
+    "README.md §? 'sirasiyla on uc adim'"
+   ],
+   "bekci": "backend/tests/test_belgeler.py::test_check_sh_adimlari_belgeyle_ayni"
+  },
+  {
+   "ne": "kalite kapisi suresi (4 cekirdek, sicak npm)",
+   "deger": "386-505 sn",
+   "ureten": "PYTHON=.venv/bin/python bash scripts/check.sh",
+   "olculdu": "2026-09-03",
+   "anildigi_yerler": [],
+   "bekci": null
+  },
+  {
+   "ne": "kayitli API ucu sayisi",
+   "deger": "15",
+   "ureten": "python -m spor_toto.mcp_server --envanter",
+   "olculdu": "2026-09-03",
+   "anildigi_yerler": [
+    "docs/ARCHITECTURE_NEXT.md API tablosu"
+   ],
+   "bekci": "backend/tests/test_belgeler.py::test_mimari_belgesi_butun_uclari_sayar"
+  },
+  {
+   "ne": "backend python satiri",
+   "deger": "52.711",
+   "ureten": "cd backend && find . -name '*.py' -not -path './build/*' | xargs wc -l | tail -1",
+   "olculdu": "2026-09-03",
+   "anildigi_yerler": [],
+   "bekci": null
+  },
+  {
+   "ne": "ruff bulgusu (S dahil, butun depo)",
+   "deger": "0",
+   "ureten": "cd backend && python -m ruff check .",
+   "olculdu": "2026-09-03",
+   "anildigi_yerler": [],
+   "bekci": "S ACIK. S101/S311/S607 depo geneli gerekceyle kapali; S603 acik ve her cagri satirinda gerekce tasiyor."
+  },
+  {
+   "ne": "mypy bulgusu",
+   "deger": "0 / 145 dosya",
+   "ureten": "cd backend && python -m mypy",
+   "olculdu": "2026-09-03",
+   "anildigi_yerler": [],
+   "bekci": "kapsam: spor_toto + web_app + scripts + tests, ayrica check.sh'te .claude/"
+  },
+  {
+   "ne": "cagirani olmayan genel yuzey (spor_toto)",
+   "deger": "0",
+   "ureten": "AST taramasi: govde disi + test disi atif sayisi 0 olan genel ad",
+   "olculdu": "2026-09-03",
+   "anildigi_yerler": [],
+   "bekci": "uc tanesi silindi (odds_for, beraberlik_duzelt, referans_tahminciler), lofo --lofo ile baglandi"
+  },
+  {
+   "ne": "uretim topolojisi dumani",
+   "deger": "9 sayfa + 3 uc, proxy uzerinden",
+   "ureten": "bash scripts/check.sh  # 13. adim: gunicorn + next start + rewrite",
+   "olculdu": "2026-09-03",
+   "anildigi_yerler": [],
+   "bekci": null
+  },
+  {
+   "ne": "uretilmis besleme yorumlayicidan bagimsiz mi",
+   "deger": "EVET — 3.10/3.11/3.12/3.13 ciktisi birebir",
+   "ureten": "her surumde super_toto_frontend.py --kontrol",
+   "olculdu": "2026-09-03",
+   "anildigi_yerler": [],
+   "bekci": "CI matrisinin dort bacaginda da kosuyor (tests.yml)"
+  },
+  {
+   "ne": "Bodoni geri dusus size-adjust (ascent %108,09 · descent %38,43 ayni bloktan)",
+   "deger": "104.08",
+   "ureten": "Next capsize tablosundan turetilir; frontend/scripts/check.mjs yeniden hesaplar",
+   "olculdu": "2026-09-03",
+   "anildigi_yerler": [
+    "frontend/app/globals.css"
+   ],
+   "bekci": "check.mjs::Bodoni geri dusus olculeri Next'in tablosundan TURETILMIS"
+  }
+ ],
+ "komutlar": [
+  {
+   "komut": "bash scripts/check.sh",
+   "kaynak": "scripts/check.sh:1",
+   "ne_yapar": "tek kalite kapisi — 13 adim, backend + frontend + URETIM TOPOLOJISI. CI 'kapi' isi bunu CAGIRIR."
+  },
+  {
+   "komut": "bash scripts/setup.sh [--kalite]",
+   "kaynak": "scripts/setup.sh:1",
+   "ne_yapar": "editable kurulum + npm ci. --kalite CI kapisiyla AYNI ekstra kumesini kurar (test,kalite,model,mcp,ocr); bekcisi test_kalite_kapisi_ve_setup_AYNI_ekstralari_kurar."
+  },
+  {
+   "komut": "bash scripts/run_prod.sh",
+   "kaynak": "scripts/run_prod.sh:1",
+   "ne_yapar": "gunicorn 127.0.0.1:8080 + next start 0.0.0.0:3000. Artik check.sh'in 13. adimi bu topolojiyi rastgele portlarda kosturuyor."
+  },
+  {
+   "komut": "python -m spor_toto.health",
+   "kaynak": "backend/spor_toto/health.py:1295",
+   "ne_yapar": "27 degismez raporu, 6 kategori. CI matrisinin dort bacaginda da kosar."
+  },
+  {
+   "komut": "python -m spor_toto.agac --lofo",
+   "kaynak": "backend/spor_toto/agac.py:250",
+   "ne_yapar": "ozellik ablasyonu (Leave-One-Feature-Out, sezon katlariyla). 2026-09'da baglandi; oncesinde fonksiyon vardi ama calistirma yolu YOKTU."
+  },
+  {
+   "komut": "python -m spor_toto.mcp_server --envanter",
+   "kaynak": "backend/spor_toto/mcp_server.py:106",
+   "ne_yapar": "MCP araclari <-> Flask kayit tablosu denetimi. mcp ekstrasi artik CI kalite kapisinda kuruluyor."
+  },
+  {
+   "komut": "python scripts/bagimliliklar.py | pip-audit -r /dev/stdin",
+   "kaynak": "backend/scripts/bagimliliklar.py:26",
+   "ne_yapar": "beyan edilen bagimlilik denetimi. Ekstra listesi pyproject'ten TUREVIR (elle yazili degil); bos cikti cikis 1 verir."
+  }
+ ]
+}

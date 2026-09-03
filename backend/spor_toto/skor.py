@@ -199,22 +199,6 @@ def oranlardan_1x2(ust: float, alt: float, ah_ev: float, ah_dep: float,
     return turetilmis_1x2(p_ust, p_ah, h)
 
 
-def beraberlik_duzelt(p: dict[str, float], rho: float, beta: float
-                      ) -> dict[str, float]:
-    """Bağımsız Poisson'un beraberlik açığını kapatan iki parametreli düzeltme.
-
-    `rho` beraberliği şişirir, `beta` dağılımı keskinleştirir/yumuşatır.
-    **Uydurulmuş parametrelerdir** ve sezon dışarıda bırakmalı ölçülmeleri
-    şarttır; modül içinde varsayılan değer yoktur, çağıran vermek zorundadır.
-    """
-    q0 = p["0"] * (1.0 + rho)
-    toplam = q0 + p["1"] + p["2"]
-    q = {"1": p["1"] / toplam, "0": q0 / toplam, "2": p["2"] / toplam}
-    z = {s: max(q[s], 1e-12) ** beta for s in ("1", "0", "2")}
-    t = sum(z.values())
-    return {s: v / t for s, v in z.items()}
-
-
 if __name__ == "__main__":  # pragma: no cover - elle kullanim
     ornek = oranlardan_1x2(ust=1.95, alt=1.85, ah_ev=1.90, ah_dep=1.90, h=-0.25)
     print("ornek turetme (ust 1.95 / alt 1.85, AH -0.25 @ 1.90-1.90):")

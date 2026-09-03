@@ -180,7 +180,9 @@ def _kaynagi_getir(kaynak: Path | None) -> Path:
     if (hedef / "europe").exists():
         return hedef
     print(f"  klonlaniyor: {DEPO}")
-    subprocess.run(["git", "clone", "--depth", "1", DEPO, str(hedef)],
+    # S603 gerekcesi: `DEPO` modul sabiti (openfootball adresi), `hedef`
+    # betigin kendi onbellek yolu; ikisi de disaridan gelmiyor.
+    subprocess.run(["git", "clone", "--depth", "1", DEPO, str(hedef)],  # noqa: S603
                    check=True, capture_output=True)
     return hedef
 

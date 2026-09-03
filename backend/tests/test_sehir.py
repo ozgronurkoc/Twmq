@@ -91,7 +91,11 @@ def test_elle_tablosu_kaynakla_tutarli():
 
     from scripts.build_sehir import ELLE, kulup_sehirleri, sadelestir
 
-    kaynak = pathlib.Path("/tmp/openfootball-clubs")
+    # S108 gerekcesi: YAZILMIYOR, yalnizca OKUNUYOR ve varligi test
+    # atlamanin kosulu. Yol `scripts/build_sehir.py`in klonladigi
+    # onbellek dizini; ikisi ayrisirsa test sessizce atlar (tehlike
+    # degil, kapsama kaybi).
+    kaynak = pathlib.Path("/tmp/openfootball-clubs")  # noqa: S108
     if not (kaynak / "europe").exists():
         pytest.skip("openfootball/clubs yerel kopyasi yok")
     tablo = kulup_sehirleri(kaynak)

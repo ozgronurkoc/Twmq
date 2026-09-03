@@ -94,12 +94,6 @@ def load_odds(path: str | None = None,
     return out
 
 
-def odds_for(week: int, no: int, sezon: str | None = None) -> dict[str, Any] | None:
-    for r in load_odds(sezon=sezon):
-        if r["week"] == week and r["no"] == no:
-            return r
-    return None
-
 
 #: Arşivin **omurga fiyatı**. Bu string on ayrı yerde tekrarlanıyordu
 #: (`market_odds` varsayılanı, `KAYNAK_SIRASI`, `pazar` ve birkaç betik) ve

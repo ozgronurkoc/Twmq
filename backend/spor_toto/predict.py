@@ -166,10 +166,6 @@ def referans_fabrikalar() -> list[type]:
     return [DuzgunTahminci, SezonSabitiTahminci, PiyasaTahminci]
 
 
-def referans_tahminciler() -> list[Tahminci]:
-    """Üç referansın yeni birer örneği (tanılama ve elle kullanım için)."""
-    return [f() for f in referans_fabrikalar()]
-
 
 #: Karşılaştırmanın referansı. Bir aday "iyileşme" sayılmak için bunu
 #: out-of-sample geçmek zorundadır.

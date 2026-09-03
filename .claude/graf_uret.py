@@ -23,13 +23,51 @@ import sys
 
 KOK = pathlib.Path(__file__).resolve().parent.parent
 GRAF = KOK / ".claude" / "bilgi_grafi.json"
+
+#: OLCUM KUTUGU — `sayilar` ve `komutlar`. Grafin geri kalanindan AYRI bir
+#: dosyada ve `.gitignore`da DEGIL; sebebi ikisinin farkli seyler olmasi:
+#:
+#:   `moduller`/`kapilar`/`boru_hatlari` TURETILMISTIR. Depoyu tarayarak
+#:   0,3 saniyede yeniden uretiliyorlar, dolayisiyla surumlenmemeleri
+#:   dogru — surumlenseydi bir baskasinin haftalik eski kesfi bugunun
+#:   gercegi sanilirdi.
+#:
+#:   `sayilar`/`komutlar` TURETILMIS DEGILDIR. "Bu sayi su komuttan su
+#:   tarihte cikti" bir KOSUM KAYDIDIR; depoyu tarayarak uretilemez, komut
+#:   kosmayi gerektirir. Git disi tutuldugunda her taze klonda — yani her
+#:   uzak oturumda — SIFIRDAN basliyordu ve deponun en pahali bilgisi her
+#:   seferinde kayboluyordu.
+#:
+#: "Bayat sayi" korkusu bu dosya icin de gecerli ama BEKCISIZ degil:
+#: `sayilar_denetle` her oturum acilisinda her kaydi anildigi yerle
+#: karsilastirip "SUPHELI SAYI" diye bildiriyor. Yani kutuk, belgelerin
+#: bekci kazanmadan onceki halinde degil.
+KUTUK = KOK / ".claude" / "olcum_kutugu.json"
+
+
+def kutuk_oku() -> dict:
+    """Surumlenmis olcum kutugunu okur; yoksa bos iskelet."""
+    if KUTUK.exists():
+        return json.loads(KUTUK.read_text(encoding="utf-8"))
+    return {"sayilar": [], "komutlar": []}
+
+
+def kutuk_yaz(g: dict) -> None:
+    """`sayilar` ve `komutlar`i kutuge yazar (graf dosyasina DEGIL)."""
+    KUTUK.write_text(
+        json.dumps({"sayilar": g.get("sayilar", []),
+                    "komutlar": g.get("komutlar", [])},
+                   ensure_ascii=False, indent=1) + "\n",
+        encoding="utf-8")
 KAPI_DOSYA = "backend/tests/test_belgeler.py"
 MODUL_DIZIN = "backend/spor_toto"
 
 
 def _git(*arg: str) -> str:
     """Depo kökünde bir git komutu koşar ve çıktısını döndürür."""
-    return subprocess.run(["git", *arg], cwd=KOK, capture_output=True,
+    # S603 gerekcesi: cagrilar bu modulun kendi sabitleri
+    # (`rev-parse`, `hash-object`), disaridan arguman gelmiyor.
+    return subprocess.run(["git", *arg], cwd=KOK, capture_output=True,  # noqa: S603
                           text=True).stdout.strip()
 
 
@@ -150,7 +188,7 @@ def _desen(deger: str) -> re.Pattern:
     return re.compile(r"(?<![\d.,])(?:" + "|".join(bicimler) + r")(?!\d)")
 
 
-def sayilar_denetle(g: dict) -> list[str]:
+def sayilar_denetle(g: dict) -> list[tuple[str, str, str]]:
     """Kayıtlı `anildigi_yerler` hâlâ o değeri içeriyor mu — YALNIZCA denetler.
 
     Sayı bölümünün hash'i yoktur (bir sayı tek bir dosyaya bağlı değildir),
@@ -160,7 +198,8 @@ def sayilar_denetle(g: dict) -> list[str]:
     bu, insanın kararıdır.
     """
     PENCERE = 5
-    supheli = []
+    #: (deger, yer, sebep) — cagiran ucunu de ac(iyor).
+    supheli: list[tuple[str, str, str]] = []
     for s in g.get("sayilar", []):
         desen = _desen(s["deger"])
         for yer in s.get("anildigi_yerler", []):
@@ -193,6 +232,18 @@ def tazele(sessiz: bool = False) -> int:
         g = {"surum": 1, "git": {}, "moduller": [], "komutlar": [],
              "kapilar": [], "sayilar": [], "boru_hatlari": []}
 
+    # Olcum kutugu SURUMLENMIS dosyadan gelir; graf dosyasindaki kopya
+    # yalnizca sorgunun tek yerden okumasi icin var. Taze klonda graf yok
+    # ama kutuk VAR — bolumlerin bos gelmemesinin tek sebebi bu.
+    kutuk = kutuk_oku()
+    if kutuk.get("sayilar") or kutuk.get("komutlar"):
+        g["sayilar"] = kutuk.get("sayilar", [])
+        g["komutlar"] = kutuk.get("komutlar", [])
+    elif g.get("sayilar") or g.get("komutlar"):
+        # GECIS: kutuk henuz yok ama graf dosyasinda elle birikmis kayit
+        # var — kaybolmadan kutuge tasinsin.
+        kutuk_yaz(g)
+
     onceki = {b: len(g.get(b, [])) for b in ("moduller", "kapilar", "boru_hatlari")}
     g["moduller"], g["kapilar"], g["boru_hatlari"] = moduller(), kapilar(), boru_hatlari()
     g["git"] = {"head": _git("rev-parse", "HEAD"),
@@ -201,6 +252,7 @@ def tazele(sessiz: bool = False) -> int:
         "%Y-%m-%dT%H:%M:%SZ")
     GRAF.parent.mkdir(exist_ok=True)
     GRAF.write_text(json.dumps(g, ensure_ascii=False, indent=2), encoding="utf-8")
+    kutuk_yaz(g)
 
     degisim = [f"{b} {onceki[b]}->{len(g[b])}"
                for b in onceki if onceki[b] != len(g[b])]

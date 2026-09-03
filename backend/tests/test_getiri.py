@@ -436,7 +436,8 @@ def test_kapisiz_olcum_betikleri_KOSUYOR():
     import sys
 
     for betik in ("kademe_analizi.py", "acilis_kapanis.py"):
-        r = subprocess.run([sys.executable, str(KOK / "scripts" / betik)],
+        # S603 gerekcesi: `sys.executable` ve depo ici sabit betik adi.
+        r = subprocess.run([sys.executable, str(KOK / "scripts" / betik)],  # noqa: S603
                            cwd=KOK, capture_output=True, text=True, timeout=600)
         assert r.returncode == 0, f"{betik} dustu:\n{r.stderr[-800:]}"
         assert r.stdout.strip(), f"{betik} hicbir sey basmadi"

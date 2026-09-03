@@ -236,16 +236,22 @@ def kaynak_satirlari(cache: Path,
                 dep = satir.get("AwayTeam") or satir.get("Away")
                 eg = satir.get("FTHG") if satir.get("FTHG") not in (None, "") else satir.get("HG")
                 dg = satir.get("FTAG") if satir.get("FTAG") not in (None, "") else satir.get("AG")
+                # Ham metin ile SAYI ayri isimlerde durur; once ikisi de
+                # `eg`/`dg`ydi. `None` artik acikca eleniyor — davranis
+                # ayni (`int(None)` zaten TypeError verip `continue`
+                # ediyordu), niyet ise gorunur.
+                if eg is None or dg is None:
+                    continue
                 try:
-                    eg, dg = int(eg), int(dg)
-                except (TypeError, ValueError):
+                    ev_gol, dep_gol = int(eg), int(dg)
+                except ValueError:
                     continue
                 if not ev or not dep:
                     continue
                 indeks.setdefault(dt.date(), []).append({
                     "_dosya": etiket,
                     "_lig": satir.get("Div") or f'{satir.get("Country","")}/{satir.get("League","")}',
-                    "_ev": ev, "_dep": dep, "_eg": eg, "_dg": dg,
+                    "_ev": ev, "_dep": dep, "_eg": ev_gol, "_dg": dep_gol,
                     "_tarih": dt.date().isoformat(),
                     "ham": satir,
                 })

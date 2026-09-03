@@ -19,12 +19,31 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-import tomllib
+# `tomllib` STANDART KUTUPHANEYE 3.11'DE GIRDI ve bu satir bir zamanlar
+# ciplak `import tomllib`di. Depo `requires-python = ">=3.10"` ilan ediyor,
+# `.replit` python-3.10 kosuyor ve CI'nin kalite kapisi da bilerek 3.10'a
+# sabitlenmis ("kapi da urunun kostugu zeminde kossun"). Yani bu betik
+# KAPININ KOSTUGU YORUMLAYICIDA HIC CALISMADI: her CI kosumunda
+# `ModuleNotFoundError: No module named 'tomllib'` verdi.
+#
+# Ne ruff ne mypy yakaladi — ruff `target-version` ile stdlib surumune
+# bakmaz, mypy'nin `files` listesi ise `["spor_toto", "web_app.py"]`, yani
+# `scripts/` tip denetiminin TAMAMEN DISINDA.
+try:
+    import tomllib
+except ModuleNotFoundError:            # pragma: no cover - yalnizca py3.10
+    import tomli as tomllib  # type: ignore[no-redef]
 
 #: Denetlenen ekstralar. `ocr` ve `model` de girer: uretim onlari
 #: kurmuyor ama CI ve olcum kosumlari kuruyor, yani bir acik oradan da
 #: gelir.
-EKSTRALAR = ("test", "kalite", "model", "ocr")
+#:
+#: Liste ELLE yazili DEGIL: `pyproject.toml`in ilan ettigi ekstralarin
+#: TAMAMI alinir. Onceden dort ad sabit yaziliydi ve `mcp` ekstrasi
+#: eklendiginde bu liste guncellenmedi — yani denetim yuzeyi kimse fark
+#: etmeden kuculdu. Bu, deponun baska yerlerde (check.sh'in hafta listesi)
+#: zaten ogrendigi ders: kapinin kapsami diskteki gercekten turemeli.
+EKSTRALAR_DISI: tuple[str, ...] = ()
 
 
 def bagimliliklar(yol: Path | None = None) -> list[str]:
@@ -34,14 +53,26 @@ def bagimliliklar(yol: Path | None = None) -> list[str]:
         proje = tomllib.load(fh)["project"]
     out = list(proje.get("dependencies", []))
     ekstralar = proje.get("optional-dependencies", {})
-    for ad in EKSTRALAR:
-        out.extend(ekstralar.get(ad, []))
+    for ad in sorted(ekstralar):
+        if ad in EKSTRALAR_DISI:
+            continue
+        out.extend(ekstralar[ad])
     return out
 
 
 def main() -> int:
-    """Bagimliliklari satir satir yazar."""
-    print("\n".join(bagimliliklar()))
+    """Bagimliliklari satir satir yazar; BOS cikti hatadir."""
+    satirlar = bagimliliklar()
+    # Bos cikti SESSIZCE YESIL bir guvenlik kapisi demektir ve tam olarak
+    # oyle oldu: `import tomllib` py3.10'da patlayinca bu betik hicbir sey
+    # yazmadi, `pip-audit -r /dev/stdin` BOS bir listeyi denetledi ve
+    # "No known vulnerabilities found" dedi. Kapiyi yalnizca check.sh'in
+    # `pipefail`i kirmizi tuttu; onsuz denetim hicligi onaylardi.
+    if not satirlar:
+        print("bagimlilik bulunamadi — pyproject.toml okunamadi ya da bos",
+              file=sys.stderr)
+        return 1
+    print("\n".join(satirlar))
     return 0
 
 

@@ -43,11 +43,33 @@ model = ["scikit-learn>=1.4", "lightgbm>=4.3"]
 #: Kalite kapisi. Uretim bagimliligi DEGIL — `pip install -e ".[kalite]"`
 #: ile ayrica kurulur, boylece calisan servis onlari tasimaz.
 #:
-#: `bandit` BILEREK YOK: ruff'in `select` listesi zaten `S`
-#: (flake8-bandit) kurallarini kosuyor ve ikinci bir arac ayni bulguyu
-#: iki kez yazardi. `pip-audit` ve `interrogate` ise ruff'in bakmadigi
-#: iki seye bakiyor — bagimlilik aciklari ve docstring kapsamasi.
-kalite = ["ruff>=0.16", "mypy>=1.11", "pip-audit>=2.7", "interrogate>=1.7"]
+#: `bandit` YOK ve GEREKCESI BIR ZAMANLAR YANLISTI. Burada "ruff'in
+#: `select` listesi zaten `S` (flake8-bandit) kurallarini kosuyor"
+#: yaziyordu; asagidaki `[tool.ruff.lint] select` listesine bakin:
+#: `S` ORADA DEGIL. Ayni cumle `docs/DIS_INCELEME_SPORTS_BETTING.md`de
+#: iki kez daha tekrarlaniyordu. Yani ikinci bir arac reddedildi, birincisi
+#: hic acilmadi ve guvenlik lint'i bu depoda HICBIR YERDE kosmadi.
+#:
+#: OLCULDU (2026-09-03, `ruff check --select S --statistics`): 3.037 bulgu.
+#: 2.966'si `S101` (`assert`) ve o saf gurultu — suit ve `health` bilerek
+#: `assert` uzerine kurulu. `S101` ve `tests/` disarida birakilinca geriye
+#: 36 bulgu kaliyor: 14 `S310` (`urlopen` semasi denetlenmiyor), 11 `S311`
+#: (Monte Carlo'nun `random`i — dogru ve zararsiz), 5 `S607` + 4 `S603`
+#: (`git` kismi yolla cagriliyor), 1 `S104`, 1 `S112`.
+#:
+#: Yani `S`yi acmak KUCUK ve SINIRLI bir is; yapilmadi cunku 36 bulgunun
+#: her biri ya bir gerekce yorumu ya da gercek bir sertlestirme istiyor ve
+#: bu ayri bir karar. Degisen sey yalnizca CUMLENIN DOGRULUGU: artik
+#: "kosuyor" demiyor, "kosmuyor ve bedeli su" diyor.
+#:
+#: `pip-audit` ve `interrogate` ruff'in bakmadigi iki seye bakiyor —
+#: bagimlilik aciklari ve docstring kapsamasi.
+kalite = ["ruff>=0.16", "mypy>=1.11", "pip-audit>=2.7", "interrogate>=1.7",
+          # `scripts/bagimliliklar.py` TOML okur ve `tomllib` stdlib'e
+          # 3.11'de girdi. Kapi bilerek 3.10'a sabitli, yani orada betik
+          # `ModuleNotFoundError` veriyordu — CI'nin kalite kapisi bu
+          # yuzden HIC gecmedi. Geri dusus paketi yalnizca 3.10'da kurulur.
+          "tomli>=2; python_version < '3.11'"]
 
 #: OCR ekstrasi — URETIM BAGIMLILIGI DEGIL ve varsayilan kuruluma GIRMEZ.
 #: Yalnizca `scripts/build_bulten.py` kullanir ve o, deponun stdlib disina
@@ -115,6 +137,7 @@ select = [
     "B",        # bugbear — sessiz hata sinifi
     "C4",       # comprehension
     "RUF",      # ruff'in kendi kurallari
+    "S",        # flake8-bandit — guvenlik
 ]
 ignore = [
     # Turkce docstring ve yorumlar uzun; satir uzunlugu formatter'in isi.
@@ -127,6 +150,40 @@ ignore = [
     # docstring ve yorumlar Turkce oldugu icin tek basina 7.017 bulgu
     # uretiyordu — yani gercek bulgularin uzerini orten saf gurultu.
     "RUF001", "RUF002", "RUF003",
+
+    # ─── S (flake8-bandit) — iki kural DEPO GENELINDE kapali ───────────
+    #
+    # `S` acilirken ham toplam 3.037 bulguydu. Ikisi tek tek `noqa`
+    # edilecek turden degil, DEPONUN TAMAMI icin gecerli birer olgu:
+    #
+    # S101 (`assert`) — 2.966 bulgu, yani hamin %98'i. Suit `assert`
+    # uzerine kurulu ve `spor_toto/health` degismezleri de bilerek
+    # `assert` ile yaziyor (rapor gövdesi hatanin metnini tasiyor).
+    # Kural Python'un `-O` ile assert'leri atmasina karsi uyariyor; bu
+    # depo `-O` ile kosmuyor ve kosarsa saglik katmani zaten anlamsizlasir.
+    # Tek tek susturmak 2.966 satirlik gurultu demekti.
+    "S101",
+    # S311 (`random` kriptografik degil) — 11 bulgu, hepsi Monte Carlo
+    # ve bootstrap: `analysis`, `core`, `deger`, `engines`, `evaluate`,
+    # `kuyruk`. Bu depoda KRIPTOGRAFI YOK; dahasi bu cagrilarin
+    # TEKRAR EDILEBILIR olmasi gerekiyor (tohumlu), yani CSPRNG dogru
+    # cevap DEGIL — yanlis cevap olurdu. Depo genelinde gecerli bir
+    # olgu oldugu icin depo genelinde yaziliyor.
+    "S311",
+    # S607 (`git`/`tesseract` PATH'ten cagriliyor) — 5 bulgu. Tam yol
+    # yazmak BILEREK reddedildi: `git` Replit'te, CI'da ve gelistirici
+    # makinesinde ayri yerlerde duruyor ve sabit bir yol tasinabilirligi
+    # kirar. PATH'ten cozmek bu deponun POLITIKASI, dolayisiyla depo
+    # genelinde yaziliyor.
+    #
+    # S603 (`subprocess` cagrisi) BILEREK ACIK BIRAKILDI. Ruff onu her
+    # `subprocess.run` cagrisinda atesler, yani bir dedektor degil bir
+    # hatirlaticidir — ve hatirlatmasi istenen sey degerli: her yeni
+    # cagri, argumanlarinin nereden geldigine dair BILINCLI bir karar
+    # gerektirsin. Bugunku alti cagrinin altisi da degismez argv listesi
+    # (kabuk yok, kullanici girdisi yok) ve her biri satirinda gerekcesini
+    # yaziyor.
+    "S607",
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -147,7 +204,33 @@ ignore = [
 # hicbiri okunmadan susturulurdu.
 [tool.mypy]
 python_version = "3.10"
-files = ["spor_toto", "web_app.py"]
+#: `scripts` ve `tests` DE denetleniyor. Onceden liste
+#: `["spor_toto", "web_app.py"]`ti, yani `backend/scripts/` (26 dosya,
+#: 11.499 satir) ve `backend/tests/` (66 dosya, 18.849 satir) tip
+#: denetiminin TAMAMEN disindaydi — deponun Python govdesinin yarisindan
+#: fazlasi.
+#:
+#: Acilinca 57 bulgu cikti ve HEPSI kapatildi (bastirma yok, `ignore_errors`
+#: eklenmedi). Cogu cikarim gurultusuydu ama ikisi gercekti:
+#:
+#:   * `tests/test_evaluate.py` iki farkli `_kayit` tanimliyordu; Python son
+#:     tanimi alir, yani dosyanin ilk yarisindaki alti cagri yanlis govdeye
+#:     dusuyordu. `_kayit(i, 0.50)` `brier_toplam=i, n=0.50` olarak
+#:     okunuyordu — hafta indeksi Brier toplami, Brier ortalamasi mac sayisi
+#:     yerine. `test_bootstrap_tohumu_gercekten_kullanir` docstring'inde
+#:     "haftalar bilerek birbirinden cok farkli" diyordu; golgelenmis halde
+#:     iki grubun `brier_toplam`i BIREBIR AYNIYDI. Testler geciyordu ama
+#:     yazdiklari seyi olcmuyorlardi.
+#:   * `scripts/super_toto_tahmin2.py` bolen sifirken `kat: None` donuyordu;
+#:     `super_toto_frontend.py` onu `round(..., 3)` ile okuyor ve arayuz
+#:     `kat_taban: number` deyip `.toFixed(1)` cagiriyor. Koruma cokmeyi
+#:     onlemiyor, iki katman asagi itiyordu. Artik kaynakta hata veriyor.
+#:
+#: NOT — bu kapi `tomllib` kusurunu YAKALAMAZDI. Olculdu: mypy
+#: `import tomllib`i `python_version = "3.10"` ile de, kendisi 3.10 altinda
+#: kosarken de, `--python-executable` ile de sorun saymiyor. O kusurun
+#: bekcisi `test_betikler_asgari_python_surumunde_ICE_AKTARILABILIR`tir.
+files = ["spor_toto", "web_app.py", "scripts", "tests"]
 ignore_missing_imports = true
 warn_unused_configs = true
 warn_redundant_casts = true
@@ -181,7 +264,10 @@ ignore_errors = true
 # okunacak asil belge odur. Gelenek ancak bir kapiya baglanirsa kural
 # olur.
 #
-# Esik ONCE OLCULDU (%75,9), sonra biraz altina konuldu. Ilk yazilan deger
+# Esik ONCE OLCULDU (o gun %75,9; 2026-09-03'te %76,9), sonra biraz
+# altina konuldu. KAPSAMA SAYISI KODLA BIRLIKTE OYNAR — sabit olan esiktir
+# (%75). Bu yuzden yuzdenin kendisi bir belgeye tek basina yazilmamali;
+# yazildigi uc yerde uc farkli deger olusmustu ve ucu de bayatti. Ilk yazilan deger
 # 90'di ve bu bir TAHMINDI — kapi onu hemen dusurdu, ki isi de budur.
 #
 # Eksiklerin neredeyse tamami dusuk degerli: `main()` giris noktalari,

@@ -77,7 +77,9 @@ def paket_surumu(paket: str) -> str | None:
 def _git_commit() -> str | None:
     """Calisan kodun commit'i — yoksa None (git disi bir kurulum olabilir)."""
     try:
-        r = subprocess.run(["git", "-C", str(KOK), "rev-parse", "HEAD"],
+        # S603 gerekcesi: degismez argv listesi, kabuk yok, disaridan gelen
+        # arguman yok. `KOK` modulun kendi yolu.
+        r = subprocess.run(["git", "-C", str(KOK), "rev-parse", "HEAD"],  # noqa: S603
                            capture_output=True, text=True, timeout=10)
     except (OSError, subprocess.SubprocessError):
         return None
@@ -91,7 +93,8 @@ def _kirli_mi() -> bool | None:
     olcum, o commit'ten uretilemez.
     """
     try:
-        r = subprocess.run(["git", "-C", str(KOK), "status", "--porcelain"],
+        # S603 gerekcesi: yukaridakiyle ayni: degismez argv, kabuk yok.
+        r = subprocess.run(["git", "-C", str(KOK), "status", "--porcelain"],  # noqa: S603
                            capture_output=True, text=True, timeout=10)
     except (OSError, subprocess.SubprocessError):
         return None

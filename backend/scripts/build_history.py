@@ -31,6 +31,13 @@ from pathlib import Path
 from typing import Any
 
 KOK = Path(__file__).resolve().parent.parent
+# `scripts` paketini ice aktarabilmek icin — oteki betiklerin
+# deseninin aynisi. Sema denetimi (`sema_dogrula`) TEK yerde yazili
+# olsun diye gerekli; ikinci bir kopya ilk gun ayrisir.
+sys.path.insert(0, str(KOK))
+
+from scripts._ortak import sema_dogrula
+
 VARSAYILAN_CIKTI = KOK / "data" / "st_history_2025_26.json"
 URL = "https://sportototahmin.com/spor-toto/{week}-hafta-tahminleri/_payload.json"
 UA = "spor-toto-lab/1.0 (veri yeniden uretimi; tek seferlik arsiv cekimi)"
@@ -50,11 +57,13 @@ def indir(week: int, cache: Path | None, timeout: float = 45.0) -> list | None:
                 return json.loads(p.read_text(encoding="utf-8"))
             except json.JSONDecodeError:
                 pass
-    istek = urllib.request.Request(URL.format(week=week), headers={
+    hedef_url = URL.format(week=week)
+    sema_dogrula(hedef_url)          # denetim `_ortak`ta, kopyalanmiyor
+    istek = urllib.request.Request(hedef_url, headers={  # noqa: S310
         "User-Agent": UA, "Accept": "application/json",
     })
     try:
-        with urllib.request.urlopen(istek, timeout=timeout) as r:
+        with urllib.request.urlopen(istek, timeout=timeout) as r:  # noqa: S310
             ham = r.read().decode("utf-8")
     except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError) as e:
         print(f"  hafta {week}: indirilemedi ({e})", file=sys.stderr)
