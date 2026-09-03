@@ -2,7 +2,7 @@
  "sayilar": [
   {
    "ne": "suit test sayisi (eksiksiz kurulum)",
-   "deger": "1.934",
+   "deger": "1.945",
    "ureten": "cd backend && pytest -p no:randomly -n0 --collect-only -q  # dosya basi toplami",
    "olculdu": "2026-09-03",
    "anildigi_yerler": [
@@ -18,7 +18,7 @@
   },
   {
    "ne": "test dosyasi sayisi",
-   "deger": "64",
+   "deger": "65",
    "ureten": "ls backend/tests/test_*.py | wc -l",
    "olculdu": "2026-09-03",
    "anildigi_yerler": [
@@ -184,6 +184,16 @@
     "frontend/app/globals.css"
    ],
    "bekci": "check.mjs::Bodoni geri dusus olculeri Next'in tablosundan TURETILMIS"
+  },
+  {
+   "ne": "secim kosullu kalibrasyon — model kurali, asiri guven (esik izgarasi)",
+   "deger": "esik 0,00→0,08: +%0,8 · +%0,3 · +%1,3 · +%4,8* · +%14,9*  (* = Wilson disi)",
+   "ureten": "cd backend && python -m spor_toto.secim_kalibrasyonu --kural model --tarama",
+   "olculdu": "2026-09-03",
+   "anildigi_yerler": [
+    "backend/spor_toto/secim_kalibrasyonu.py"
+   ],
+   "not": "Dis depolarin ongorusu KENDI verimizde dogrulandi: esik yukseldikce secilen kumede asiri guven monoton buyuyor, son iki esikte Wilson araliginin disina cikiyor. `deger` kuralinda ayni desen YOK (+%2,3 · +%1,4 · -%0,6 · +%3,1 · +%0,2, hepsi aralik icinde) — olgu model-piyasa secimine ozgu."
   }
  ],
  "komutlar": [
