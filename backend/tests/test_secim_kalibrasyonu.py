@@ -20,17 +20,21 @@ from spor_toto.secim_kalibrasyonu import (
     EN_AZ_BANT,
     ESIK_IZGARASI,
     Nokta,
+    bonferroni,
     egri,
     eslestir,
     noktalar_deger,
     noktalar_model,
+    sezon_kirilimi,
+    wilson_z,
 )
 
 
-def _sentetik(n: int, p: float, isabet_orani: float, tohum: int = 7) -> list[Nokta]:
+def _sentetik(n: int, p: float, isabet_orani: float, tohum: int = 7,
+              sezon: str = "2023/2024") -> list[Nokta]:
     """Verilen olasılıkta `n` nokta; isabet oranı bilerek `p`'den ayrı tutulabilir."""
     rng = random.Random(tohum)
-    return [(p, rng.random() < isabet_orani) for _ in range(n)]
+    return [(p, rng.random() < isabet_orani, sezon) for _ in range(n)]
 
 
 # ─── egri / eslestir mekanigi ────────────────────────────────────────────────
@@ -163,3 +167,46 @@ def test_model_kurali_haftasiz_kesitte_bos_doner() -> None:
     """Hafta yoksa ölçüm çökmez; boş kesit boş nokta kümesidir."""
     hepsi, secilen = noktalar_model(lambda: None, [], 0.02)
     assert hepsi == [] and secilen == []
+
+
+# ─── cok kiyas ve sezon kirilimi (§3.21 standardi) ───────────────────────────
+
+def test_wilson_z_ortakla_ayni_sayiyi_verir() -> None:
+    """`z = ortak.GUVEN_Z` verilirse genelleştirilmiş biçim `ortak.wilson`la aynıdır.
+
+    Formül kopyalanmadı, genelleştirildi; bu bekçi ikisinin ayrışmasını tutar.
+    """
+    from spor_toto.ortak import GUVEN_Z, wilson
+    for basari, n in ((40, 41), (0, 30), (119, 300), (0, 0)):
+        assert wilson_z(basari, n, GUVEN_Z) == pytest.approx(wilson(basari, n))
+
+
+def test_bonferroni_kiyas_arttikca_araligi_genisletir() -> None:
+    """Daha çok aralık okunduysa eşik yükselir; aralık daralamaz."""
+    noktalar = _sentetik(300, 0.60, 0.50)
+    dar = bonferroni(noktalar, 1)
+    genis = bonferroni(noktalar, 20)
+    assert genis["ga_alt"] <= dar["ga_alt"] and genis["ga_ust"] >= dar["ga_ust"]
+    assert genis["alfa"] < dar["alfa"]
+
+
+def test_bonferroni_tek_kiyasta_ozetle_ayni_karari_verir() -> None:
+    """`kiyas=1` düzeltmesiz demektir — `_ozet`in kararıyla örtüşmeli."""
+    from spor_toto.secim_kalibrasyonu import _ozet
+    noktalar = _sentetik(400, 0.80, 0.50)
+    assert bonferroni(noktalar, 1)["icinde"] == _ozet(noktalar)["icinde"]
+
+
+def test_sezon_kirilimi_noktayi_kaybetmez() -> None:
+    """Kırılımın `n` toplamı havuzlanmış `n`e eşit olmalı — süzgeç sızdırmasın."""
+    noktalar = (_sentetik(150, 0.55, 0.5, sezon="2023/2024")
+                + _sentetik(90, 0.55, 0.5, tohum=3, sezon="2024/2025"))
+    kirilim = sezon_kirilimi(noktalar)
+    assert [r["sezon"] for r in kirilim] == ["2023/2024", "2024/2025"]
+    assert sum(r["n"] for r in kirilim) == len(noktalar)
+
+
+def test_sezon_etiketi_olmayan_nokta_kirilima_girmez() -> None:
+    """Etiketsiz nokta sessizce bir sezona yazılmaz; kırılım onu dışarıda bırakır."""
+    noktalar = _sentetik(100, 0.55, 0.5, sezon="") + _sentetik(100, 0.55, 0.5)
+    assert sum(r["n"] for r in sezon_kirilimi(noktalar)) == 100

@@ -2,7 +2,7 @@
  "sayilar": [
   {
    "ne": "suit test sayisi (eksiksiz kurulum)",
-   "deger": "1.945",
+   "deger": "1.950",
    "ureten": "cd backend && pytest -p no:randomly -n0 --collect-only -q  # dosya basi toplami",
    "olculdu": "2026-09-03",
    "anildigi_yerler": [
@@ -186,14 +186,24 @@
    "bekci": "check.mjs::Bodoni geri dusus olculeri Next'in tablosundan TURETILMIS"
   },
   {
-   "ne": "secim kosullu kalibrasyon — model kurali, asiri guven (esik izgarasi)",
-   "deger": "esik 0,00→0,08: +%0,8 · +%0,3 · +%1,3 · +%4,8* · +%14,9*  (* = Wilson disi)",
+   "ne": "secim kosullu kalibrasyon — asiri guven, esik 0,08 (§3.49)",
+   "deger": "+%14,9",
    "ureten": "cd backend && python -m spor_toto.secim_kalibrasyonu --kural model --tarama",
    "olculdu": "2026-09-03",
    "anildigi_yerler": [
-    "backend/spor_toto/secim_kalibrasyonu.py"
+    "docs/ISTATISTIK_YOL_HARITASI.md"
    ],
-   "not": "Dis depolarin ongorusu KENDI verimizde dogrulandi: esik yukseldikce secilen kumede asiri guven monoton buyuyor, son iki esikte Wilson araliginin disina cikiyor. `deger` kuralinda ayni desen YOK (+%2,3 · +%1,4 · -%0,6 · +%3,1 · +%0,2, hepsi aralik icinde) — olgu model-piyasa secimine ozgu."
+   "not": "Model kurali, n=119. Hem %95 hem Bonferroni duzeltilmis aralikta DISARIDA; sezon isareti 4/4 ayni yonde (§3.21'in iki uyarisi da uygulandi). Dis depolarin 'daha secici olmak kotulestirir' ongorusunun kendi verimizdeki dogrulamasi."
+  },
+  {
+   "ne": "secim kosullu kalibrasyon — asiri guven, esik 0,04 (§3.49)",
+   "deger": "+%4,8",
+   "ureten": "cd backend && python -m spor_toto.secim_kalibrasyonu --kural model --tarama",
+   "olculdu": "2026-09-03",
+   "anildigi_yerler": [
+    "docs/ISTATISTIK_YOL_HARITASI.md"
+   ],
+   "not": "n=759. Bonferroni'de de disarida AMA sezon isareti DONUYOR (2022/23 -%1,6). §3.21'in durumu: sekil gercek, buyukluk butun sezonlarin degil."
   }
  ],
  "komutlar": [

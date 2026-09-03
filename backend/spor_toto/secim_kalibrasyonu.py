@@ -102,8 +102,14 @@ ESIK_VARSAYILAN = 0.02
 #: (`deger.ALPHA_IZGARASI` ile aynı gerekçe).
 ESIK_IZGARASI: tuple[float, ...] = (0.0, 0.01, 0.02, 0.04, 0.08)
 
-#: Bir nokta: (söylenen olasılık, gerçekleşti mi).
-Nokta = tuple[float, bool]
+#: Bir nokta: (söylenen olasılık, gerçekleşti mi, **sezon**).
+#:
+#: Sezon etiketi bu üçüncü alanla taşınıyor çünkü bu deponun bir sayıya
+#: "bulgu" demeden önce sorduğu iki sorudan biri odur (`§3.21`/Ö3):
+#: *"sezon sezon işaret tutuyor mu?"* Havuzlanmış bir sapma, sezonların
+#: yarısının taşıdığı bir şey olabilir ve Ö3 tam bu sınavda "şekil
+#: gerçek, büyüklük yok"a düştü. Etiket olmadan o sınav kurulamaz.
+Nokta = tuple[float, bool, str]
 
 
 def _bant_satiri(grup: Sequence[Nokta], lo: float, hi: float) -> dict[str, Any] | None:
@@ -190,7 +196,7 @@ def noktalar_model(fabrika: Any,
             p_piyasa = piyasa[i]
             for s in SYMBOLS:
                 pm = float(p_model.get(s, 0.0))
-                nokta: Nokta = (pm, kod == s)
+                nokta: Nokta = (pm, kod == s, str(hafta.get("sezon") or ""))
                 hepsi.append(nokta)
                 if pm - float(p_piyasa.get(s, 0.0)) > esik:
                     secilen.append(nokta)
@@ -226,7 +232,9 @@ def noktalar_deger(pazar: str = "1X2",
     for kayit in kayitlar(pazar, yontem):
         secili = sec(kayit, alpha)
         for ayak in GRUPLAR[pazar]:
-            nokta: Nokta = (float(kayit["p"][ayak]), kayit["para"][ayak] > 0)
+            nokta: Nokta = (float(kayit["p"][ayak]),
+                            kayit["para"][ayak] > 0,
+                            str(kayit.get("sezon") or ""))
             hepsi.append(nokta)
             if ayak == secili:
                 secilen.append(nokta)
@@ -294,6 +302,82 @@ def eslestir(hepsi: Sequence[Nokta], secilen: Sequence[Nokta]) -> dict[str, Any]
     }
 
 
+# ─── çok kıyas (Bonferroni) ──────────────────────────────────────────────────
+#
+# `§3.21` (Ö3) bu deponun standardını koyuyor: *"Beş bant bakıldı; birinin
+# %95 aralığının dışına düşmesi tek başına bulgu değil."* Bu modül bir
+# koşumda ONLARCA aralık okuyor (bant × eşik), yani düzeltme isteğe bağlı
+# değil. Rapor kıyas sayısını ve düzeltilmiş aralığı KENDİ yazar; okurun
+# hesaplaması gereken bir şey bırakmaz.
+
+
+def _z(alfa: float) -> float:
+    """İki yanlı `alfa` için standart normal kritik değer.
+
+    `ortak.wilson` %95'e sabittir (`GUVEN_Z`); Bonferroni düzeltilmiş aralık
+    başka bir `z` ister. Ters normal kapalı formda yoktur; `statistics`in
+    `NormalDist.inv_cdf`ı standart kütüphanededir ve yeni bağımlılık getirmez.
+    """
+    from statistics import NormalDist
+    return NormalDist().inv_cdf(1.0 - alfa / 2.0)
+
+
+def wilson_z(basari: int, n: int, z: float) -> tuple[float, float]:
+    """`ortak.wilson`ın `z` parametreli hâli — gövde birebir aynı.
+
+    Ayrı durmasının tek sebebi `ortak.GUVEN_Z`in sabit olması. Formül
+    kopyalanmadı, genelleştirildi: `z = ortak.GUVEN_Z` verilirse `ortak.wilson`
+    ile **aynı** sayıyı döndürür ve bekçi bunu sınar.
+    """
+    if n <= 0:
+        return 0.0, 0.0
+    import math
+    p = basari / n
+    payda = 1 + z * z / n
+    merkez = (p + z * z / (2 * n)) / payda
+    yari = z * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / payda
+    return max(0.0, merkez - yari), min(1.0, merkez + yari)
+
+
+def bonferroni(noktalar: Sequence[Nokta], kiyas: int) -> dict[str, Any]:
+    """`kiyas` kadar aralık okunduğunda bu kümenin sapması hâlâ duruyor mu.
+
+    Düzeltilmiş düzey `0,05 / kiyas`; `kiyas=1` verilirse sonuç `%95` ile,
+    yani `_ozet`le aynıdır.
+    """
+    n = len(noktalar)
+    if not n:
+        return {"kiyas": kiyas, "alfa": None, "icinde": None,
+                "ga_alt": None, "ga_ust": None}
+    alfa = 0.05 / max(1, kiyas)
+    k = sum(1 for t in noktalar if t[1])
+    soylenen = sum(t[0] for t in noktalar) / n
+    alt, ust = wilson_z(k, n, _z(alfa))
+    return {"kiyas": kiyas, "alfa": alfa, "ga_alt": alt, "ga_ust": ust,
+            "icinde": alt <= soylenen <= ust}
+
+
+# ─── sezon kırılımı ──────────────────────────────────────────────────────────
+
+def sezonlar(noktalar: Sequence[Nokta]) -> list[str]:
+    """Nokta kümesindeki sezon etiketleri, sıralı ve tekilleştirilmiş."""
+    return sorted({t[2] for t in noktalar if t[2]})
+
+
+def sezon_kirilimi(secilen: Sequence[Nokta]) -> list[dict[str, Any]]:
+    """Sezon sezon aşırı güven — `§3.21`in ikinci uyarısının aracı.
+
+    Havuzlanmış bir sapmanın kaç sezonun taşıdığını söyler. İşaret sezonlar
+    arasında dönüyorsa bulgu "şekil gerçek, büyüklük yok"tur; Ö3 tam olarak
+    bu sınavda düştü ve bu modülün ölçümü de aynı sınava girmek zorunda.
+    """
+    out: list[dict[str, Any]] = []
+    for sz in sezonlar(secilen):
+        alt_kume = [t for t in secilen if t[2] == sz]
+        out.append({"sezon": sz, **_ozet(alt_kume)})
+    return out
+
+
 def olc(kural: str = "model",
         esik: float = ESIK_VARSAYILAN,
         alpha: float = 0.05,
@@ -320,7 +404,14 @@ def olc(kural: str = "model",
     else:
         raise ValueError(f"bilinmeyen kural {kural!r}; seçenekler: model, deger")
 
-    return {"kural": kural, **baglam, **eslestir(hepsi, secilen)}
+    sonuc = {"kural": kural, **baglam, **eslestir(hepsi, secilen)}
+    # Kıyas sayısı: seçilen tarafta okunan her bant aralığı + toplam
+    # aralık. Rapor kendi düzeltmesini taşısın ki bir bandın yıldızı
+    # "bulgu" diye okunmasın (`§3.21`in birinci uyarısı).
+    kiyas = int(sonuc["toplam_bant_secilen"]) + 1
+    sonuc["bonferroni"] = bonferroni(secilen, kiyas)
+    sonuc["sezon_kirilimi"] = sezon_kirilimi(secilen)
+    return sonuc
 
 
 def tarama(kural: str = "model",
@@ -339,12 +430,20 @@ def tarama(kural: str = "model",
         # kurala gittiği okunur kalsın ve tip denetimi kurabilsin.
         sonuc = (olc(kural, alpha=e, **kw) if kural == "deger"
                  else olc(kural, esik=e, **kw))
+        kir = sonuc["sezon_kirilimi"]
+        isaretler = {(r["asiri_guven"] or 0) > 0 for r in kir}
         out.append({
             anahtar: e,
             "n_secilen": sonuc["ozet_secilen"]["n"],
             "secim_orani": sonuc["secim_orani"],
             "asiri_guven": sonuc["ozet_secilen"]["asiri_guven"],
             "icinde": sonuc["ozet_secilen"]["icinde"],
+            # Düzeltilmiş aralık ve işaret kararlılığı: taramanın "*"
+            # işaretleri düzeltmesiz okunursa beş iç içe alt küme beş
+            # bağımsız sınama sanılır.
+            "bonferroni_icinde": sonuc["bonferroni"]["icinde"],
+            "n_sezon": len(kir),
+            "isaret_tutuyor": len(isaretler) == 1 if kir else None,
         })
     return out
 
@@ -378,6 +477,20 @@ def _yaz(sonuc: dict[str, Any]) -> None:  # pragma: no cover - elle kullanım
           f"   ·   seçilen {_yuzde(s['asiri_guven'])}")
     print(f"  seçilen küme Wilson içinde mi: "
           f"{'EVET — ters seçim işareti yok' if s['icinde'] else 'HAYIR — sapma gürültüyle açıklanmıyor'}")
+    b = sonuc["bonferroni"]
+    if b["alfa"] is not None:
+        print(f"  çok kıyas: {b['kiyas']} aralık okundu → Bonferroni düzeyi "
+              f"%{100 * b['alfa']:.3f}; düzeltilmiş aralıkta "
+              f"{'İÇİNDE' if b['icinde'] else 'DIŞINDA'}")
+    kir = sonuc.get("sezon_kirilimi") or []
+    if kir:
+        print("\nsezon sezon aşırı güven (§3.21'in ikinci uyarısı):")
+        for r in kir:
+            print(f"  {r['sezon']:>10}  n={r['n']:>6,}  {_yuzde(r['asiri_guven'])}"
+                  f"  {'' if r['icinde'] else '*'}")
+        isaretler = {(r["asiri_guven"] or 0) > 0 for r in kir}
+        print("  → işaret " + ("TUTUYOR (hepsi aynı yönde)" if len(isaretler) == 1
+                               else "DÖNÜYOR — havuzlanmış sapma bütün sezonların değil"))
     print(f"sapan bant: hepsi {sonuc['sapan_bant_hepsi']}/{sonuc['toplam_bant_hepsi']}"
           f" · seçilen {sonuc['sapan_bant_secilen']}/{sonuc['toplam_bant_secilen']}"
           f" · eşleşmeyen {sonuc['eslesmeyen_bant']}"
@@ -398,6 +511,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     ap.add_argument("--pazar", default="1X2", choices=DEGER_PAZARLARI)
     ap.add_argument("--aday", default="izotonik")
     ap.add_argument("--last", type=int, default=None)
+    ap.add_argument("--sezon-kirilimi", action="store_true",
+                    dest="sezon_kirilimi",
+                    help="sezon sezon aşırı güven (§3.21'in ikinci uyarısı)")
     ap.add_argument("--tarama", action="store_true",
                     help="eşik duyarlılığı (arama DEĞİL — manşet sabit eşiktir)")
     ap.add_argument("--json", action="store_true")
@@ -414,11 +530,15 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(json.dumps(sonuc, ensure_ascii=False, indent=2, default=float))
     elif a.tarama:
         anahtar = "alpha" if a.kural == "deger" else "esik"
-        print(f"{anahtar:>6} {'n':>8} {'oran':>7} {'aşırı güven':>12}  GA")
+        print(f"{anahtar:>6} {'n':>8} {'oran':>7} {'aşırı güven':>12}  GA  Bonf.  işaret")
         for r in sonuc:
             bayrak = " " if r["icinde"] else "*"
+            bonf = "içinde" if r["bonferroni_icinde"] else "DIŞINDA"
+            isaret = ("—" if r["isaret_tutuyor"] is None
+                      else ("tutuyor" if r["isaret_tutuyor"] else "DÖNÜYOR"))
             print(f"{r[anahtar]:6.2f} {r['n_secilen']:8,} "
-                  f"{100 * r['secim_orani']:6.1f}% {_yuzde(r['asiri_guven'])} {bayrak}")
+                  f"{100 * r['secim_orani']:6.1f}% {_yuzde(r['asiri_guven'])} {bayrak} "
+                  f"{bonf:>7}  {isaret}")
     else:
         _yaz(sonuc)
     return 0
