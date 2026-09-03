@@ -27,6 +27,7 @@ import importlib
 import json
 import sys
 import urllib.error
+import urllib.parse
 import urllib.request
 from datetime import datetime
 from pathlib import Path
@@ -55,6 +56,39 @@ def tarih_coz(ham: str) -> datetime | None:
     return None
 
 
+#: `urlopen`in kabul ettigi ama BIZIM asla kastetmedigimiz semalar.
+#: `urllib.request.urlopen` `file:`, `ftp:` ve `data:` de acar; yani bir gun
+#: bir URL sabitten degil de VERIDEN gelirse (yapilandirma, cekilen bir
+#: dizin, bir yonlendirme) `file:///etc/passwd` sessizce OKUNUR ve indirilen
+#: sey sanilir. Bugun butun cagrilar sabit `https://` ile geliyor; bu
+#: denetim o dogrulugu bir VARSAYIM olmaktan cikarip KAPI yapiyor.
+IZINLI_SEMALAR = ("http", "https")
+
+
+def sema_dogrula(url: str) -> str:
+    """URL semasini denetler; izinli degilse `ValueError`. Semayi dondurur.
+
+    ACIK (private degil) cunku kendi `urlopen`ini kuran betikler de
+    (`build_bulten.gorsel_indir` gibi, ayri hata politikasi tasidiklari
+    icin ilkellere indirgenemeyenler) ayni denetimi kullanabilsin.
+    Denetim TEK yerde yazili olmali; ikinci bir kopya ilk gun ayrisir.
+    """
+    sema = urllib.parse.urlparse(url).scheme.lower()
+    if sema not in IZINLI_SEMALAR:
+        raise ValueError(
+            f"izin verilmeyen sema {sema!r}: {url} "
+            f"(yalnizca {', '.join(IZINLI_SEMALAR)})")
+    return sema
+
+
+def _istek(url: str, headers: dict[str, str]) -> urllib.request.Request:
+    """Semayi dogrulayip `Request` kurar — uc ilkelin ortak zemini."""
+    sema_dogrula(url)
+    # Asagidaki `noqa`nin gerekcesi: sema iki satir yukarida dogrulandi;
+    # bu satir denetimin KENDISININ ciktisidir, denetimsiz cagri degil.
+    return urllib.request.Request(url, headers=headers)  # noqa: S310
+
+
 def indir(url: str, hedef: Path, zaman_asimi: float = 60.0) -> Path | None:
     """Kaynağı indirip `hedef`e yazar; **varsa yeniden indirmez**.
 
@@ -64,9 +98,9 @@ def indir(url: str, hedef: Path, zaman_asimi: float = 60.0) -> Path | None:
     """
     if hedef.exists() and hedef.stat().st_size > 0:
         return hedef
-    istek = urllib.request.Request(url, headers={"User-Agent": UA})
+    istek = _istek(url, {"User-Agent": UA})
     try:
-        with urllib.request.urlopen(istek, timeout=zaman_asimi) as cevap:
+        with urllib.request.urlopen(istek, timeout=zaman_asimi) as cevap:  # noqa: S310 - sema _istek'te dogrulandi
             ham = cevap.read()
     except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, OSError) as e:
         print(f"  {url} alinamadi ({e})", file=sys.stderr)
@@ -86,9 +120,9 @@ def indir_bellek(url: str, zaman_asimi: float = 60.0) -> bytes | None:
     bazıları ise önbelleklenmek zorunda. İkisini tek gövdeye sıkıştırmak
     çağıranı "yaz ama sakla ama silme" gibi bir bayrağa mahkûm ederdi.
     """
-    istek = urllib.request.Request(url, headers={"User-Agent": UA})
+    istek = _istek(url, {"User-Agent": UA})
     try:
-        with urllib.request.urlopen(istek, timeout=zaman_asimi) as cevap:
+        with urllib.request.urlopen(istek, timeout=zaman_asimi) as cevap:  # noqa: S310 - sema _istek'te dogrulandi
             return cevap.read()
     except (urllib.error.URLError, urllib.error.HTTPError,
             TimeoutError, OSError) as e:
@@ -105,9 +139,8 @@ def indir_json(url: str, zaman_asimi: float = 30.0,
     **commit atıyor**; orada yarım bir arşivi sessizce yazmak hiç
     yazmamaktan kötüdür. Ağ hatası işi düşürmeli ki cron kırmızı yansın.
     """
-    istek = urllib.request.Request(
-        url, headers={"User-Agent": UA, "Accept": kabul})
-    with urllib.request.urlopen(istek, timeout=zaman_asimi) as cevap:
+    istek = _istek(url, {"User-Agent": UA, "Accept": kabul})
+    with urllib.request.urlopen(istek, timeout=zaman_asimi) as cevap:  # noqa: S310 - sema _istek'te dogrulandi
         return json.loads(cevap.read().decode("utf-8"))
 
 

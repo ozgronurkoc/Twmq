@@ -1244,4 +1244,9 @@ def _cors(resp):
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", "8080"))
-    app.run(host="0.0.0.0", port=port, debug=False)
+    # S104 gerekcesi: 0.0.0.0 burada KASITLI ve yalnizca GELISTIRME yolu.
+    # Bu blok `.replit` "API" workflow'undan (`python backend/web_app.py`)
+    # kosuyor. URETIM bu yoldan GECMEZ: `scripts/run_prod.sh` gunicorn'u
+    # `127.0.0.1:8080`e bagliyor (disariya kapali) ve disariya yalnizca
+    # Next cikiyor.
+    app.run(host="0.0.0.0", port=port, debug=False)  # noqa: S104

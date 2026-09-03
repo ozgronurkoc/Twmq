@@ -312,6 +312,12 @@ def main() -> int:
     csv_yaz(csv_yol, satirlar)
     print(f"\nyazildi: {csv_yol}")
 
+    #: Ayri degisken: `rapor` heterojen ve `len(rapor[...])`
+
+    #: cikarimda `Sized` olmayan bir birlesim tipine dusuyordu.
+
+    snapshot_adlari = sorted(p.name for p in args.out_dir.glob("iddaa_*.csv"))
+
     rapor = {
         "taken_at": alinma,
         "source": "sportsbookv2.iddaa.com/sportsbook/events — ACIK bulten, gecmis yok",
@@ -321,7 +327,7 @@ def main() -> int:
         "dropped": len(tum) - len(satirlar),
         "with_league_label": ligli,
         "avg_margin_pct": round(100 * sum(marjlar) / len(marjlar), 2) if marjlar else None,
-        "snapshots": sorted(p.name for p in args.out_dir.glob("iddaa_*.csv")),
+        "snapshots": snapshot_adlari,
         "note": (
             "Tek snapshot analize yetmez; deger haftalik birikimle olusur. "
             "Gecmis iddaa orani hicbir kaynakta yayinlanmadigi icin bu arsiv "
@@ -336,7 +342,7 @@ def main() -> int:
     if not args.no_sqlite:
         db_yol = args.out_dir / "iddaa.sqlite3"
         sqlite_yaz(db_yol, satirlar)
-        print(f"yazildi: {db_yol} ({len(rapor['snapshots'])} snapshot birikti)")
+        print(f"yazildi: {db_yol} ({len(snapshot_adlari)} snapshot birikti)")
 
     return 0
 

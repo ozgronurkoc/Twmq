@@ -361,9 +361,12 @@ if DONMUS:
             f'<td class="num mono">%{100*v["in_set_p"]:.3f}</td>'
             f'<td class="num mono">%{100*v["crowd_in_set_p"]:.3f}</td>'
             f'<td class="num mono">{v["crowd_ratio"]:.2f}</td></tr>')
-    for i, satir in enumerate(KUPON_JSON.get("rows") or []):
-        hucre = "".join(f"<td>{c}</td>" for c in satir.split())
-        donmus_grid.append(f'<tr><td class="rn">{i+1}</td>{hucre}</tr>')
+    for i, kupon_satiri in enumerate(KUPON_JSON.get("rows") or []):
+        # Ad `hucre` DEGIL: modul duzeyinde 99 satir yukarida `hucre` bir
+        # LISTE olarak baglaniyor (satir 266) ve bu betik butun govdesini
+        # modul kapsaminda kosuyor, yani ayni ad iki farkli tipi tasiyordu.
+        donmus_hucre = "".join(f"<td>{c}</td>" for c in kupon_satiri.split())
+        donmus_grid.append(f'<tr><td class="rn">{i+1}</td>{donmus_hucre}</tr>')
 
 fiyat_baslik = "".join(f'<th class="num">{e(_kitap_adi(k))}</th>'
                        for k in (FIYAT_SATIR[0]["esanlı"] if FIYAT_SATIR else []))

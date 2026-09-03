@@ -151,6 +151,26 @@ def test_kosullu_rakip_kalabalik_bankoda_buyur(t2):
     assert kalabalik["kat"] > tenha["kat"]
 
 
+def test_kosullu_rakip_bozuk_girdide_SESSIZ_None_donmez(t2):
+    """Bölen sıfırsa hata verir — `None` dönüp çökmeyi aşağı itmez.
+
+    Önce `kat` bu durumda `None` dönüyordu ve koruma çökmeyi **önlemiyor,
+    iki katman aşağı itiyordu**: `super_toto_frontend.py` gövdeyi
+    `round(...["kat"], 3)` ile okuyor (`TypeError`), arayüz ise
+    `kat_taban: number` deyip `.toFixed(1)` çağırıyor. Üç katmandan
+    yalnızca üretici sayının olmayabileceğini biliyordu ve kimseye
+    söylemiyordu.
+
+    Koşul yalnızca bozuk girdide sağlanır: bir maçta her sembolün ya
+    olasılığı ya oynanma payı sıfır. Doğru cevap "sayı yok" değil
+    "girdi bozuk".
+    """
+    probs = [_dagilim(0.5, 0.3, 0.2)]
+    oynanma = [_dagilim(0.0, 0.0, 0.0)]        # hiç kimse oynamamış
+    with pytest.raises(ValueError, match="girdi bozuk"):
+        t2._kosullu_rakip(probs, oynanma, [["1"]])
+
+
 # ─── kalabalık modeli (getiri) ────────────────────────────────────────────
 
 def test_oynanma_modeli_piyasayla_ayniysa_ornekleme_duser():

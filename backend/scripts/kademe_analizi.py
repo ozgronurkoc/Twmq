@@ -111,7 +111,16 @@ def tam_haftalar(ars: dict) -> list[tuple[str, int, list]]:
     for sezon in SEZONLAR:
         try:
             rows = O.load_odds(sezon=sezon)
-        except Exception:
+        except OSError as e:
+            # `except Exception: continue` YAZIYORDU ve olculdu: `load_odds`
+            # olmayan bir sezonda HIC HATA ATMIYOR, bos liste donuyor. Yani
+            # o blok hicbir gercek durumu yakalamiyor, yalnizca ileride
+            # cikacak GERCEK bir hatayi (bozuk CSV, `load_odds` icinde bir
+            # kusur) sessizce yutacak sekilde duruyordu.
+            #
+            # Daraltildi ve sesli yapildi: dosya duzeyinde bir sorun analizi
+            # durdurmasin ama GORUNSUN.
+            print(f"  {sezon}: oran arsivi okunamadi ({e})", file=sys.stderr)
             continue
         byw: dict[int, list] = {}
         for r in rows:
@@ -192,19 +201,24 @@ def kademe_sayimlari(s: Sequence[int], kacak: Sequence[int]) -> dict[int, int]:
     tanesinde yanılmanın kaç yolu olduğunu sayar. Kaçak maçlarda ise
     **her** işaret yanlıştır, o yüzden çarpan olarak girerler.
     """
-    kacak = set(kacak)
+    # Ad ayrildi: parametre `Sequence[int]`, govde ise KUME uzerinde
+    # calisiyor. Onceden ikisi de `kacak`ti. Uc kullanim da kumeye
+    # baglanmali — `len` ve carpim tekrar eden bir indekste kumeyle
+    # diziden FARKLI sonuc verir, yani bu bir bicim degil davranis
+    # meselesidir.
+    kacak_kume = set(kacak)
     e = [1, 0, 0, 0]
     for i in range(15):
-        if i in kacak:
+        if i in kacak_kume:
             continue
         x = s[i] - 1
         e[3] += e[2] * x
         e[2] += e[1] * x
         e[1] += e[0] * x
     carpan = 1
-    for i in kacak:
+    for i in kacak_kume:
         carpan *= s[i]
-    return {15 - len(kacak) - j: e[j] * carpan for j in range(4)}
+    return {15 - len(kacak_kume) - j: e[j] * carpan for j in range(4)}
 
 
 def hafta_kazanci(s: Sequence[int], kacak: Sequence[int],
@@ -249,16 +263,20 @@ def bolum_a(haftalar: list, cikti: dict) -> None:
         cum = np.cumsum(srt)
         kaps.append({n: float(cum[n - 1]) for n in esik})
         del joint, srt, cum
-    p1 = np.array(p1)
+    # Liste ile dizi AYRI isimlerde durur. Once ikisi de `p1`di ve bu,
+    # okuyana bir degiskenin dosyanin ortasinda tip degistirdigini
+    # soylemiyordu; tip denetimi de o noktadan sonraki her `.mean()`i
+    # hata sayiyordu (bu dosyadaki 17 bulgunun 16'si buydu).
+    p1_dizi = np.array(p1)
     rast = 1 / 3 ** 15
-    print(f"  ortalama      : {p1.mean():.3e}  = 1/{1 / p1.mean():,.0f}")
-    print(f"  medyan        : {np.median(p1):.3e}  = 1/{1 / np.median(p1):,.0f}")
-    print(f"  en iyi hafta  : {p1.max():.3e}  = 1/{1 / p1.max():,.0f}")
-    print(f"  en kötü hafta : {p1.min():.3e}  = 1/{1 / p1.min():,.0f}")
+    print(f"  ortalama      : {p1_dizi.mean():.3e}  = 1/{1 / p1_dizi.mean():,.0f}")
+    print(f"  medyan        : {np.median(p1_dizi):.3e}  = 1/{1 / np.median(p1_dizi):,.0f}")
+    print(f"  en iyi hafta  : {p1_dizi.max():.3e}  = 1/{1 / p1_dizi.max():,.0f}")
+    print(f"  en kötü hafta : {p1_dizi.min():.3e}  = 1/{1 / p1_dizi.min():,.0f}")
     print(f"  RASTGELE      : {rast:.3e}  = 1/{3 ** 15:,}")
-    print(f"  >>> projenin çarpanı: {p1.mean() / rast:,.0f}x")
-    cikti["A"] = {"ortalama": float(p1.mean()), "medyan": float(np.median(p1)),
-                  "rastgele": rast, "carpan": float(p1.mean() / rast)}
+    print(f"  >>> projenin çarpanı: {p1_dizi.mean() / rast:,.0f}x")
+    cikti["A"] = {"ortalama": float(p1_dizi.mean()), "medyan": float(np.median(p1_dizi)),
+                  "rastgele": rast, "carpan": float(p1_dizi.mean() / rast)}
     cikti["_rank"] = rank
     cikti["_kapsama"] = kaps
     print()
@@ -287,7 +305,7 @@ def bolum_c(haftalar: list, cikti: dict) -> None:
     tablo = {}
     n = len(haftalar)
     for butce in BUTCELER:
-        m = {15: [], 14: [], 13: [], 12: []}
+        m: dict[int, list[float]] = {15: [], 14: [], 13: [], 12: []}
         g = {15: 0, 14: 0, 13: 0, 12: 0}
         bd = []
         for _, _, lst in haftalar:
@@ -320,7 +338,10 @@ def bolum_de(haftalar: list, ars: dict, cikti: dict) -> None:
     print("D) PARA — hangi kademeden ne geliyor (resmî ikramiyeler, seyreltme modellenmiş)")
     print("=" * 94)
     print(f"{'haftalık TL':>11} | {'15':>7} | {'14':>7} | {'13':>7} | {'12':>7} | {'DÖNÜŞ':>7}")
-    dagilim = {}
+    #: butce -> (kazanc dizisi, maliyet dizisi, kademe payi). Tip ILAN
+    #: EDILIYOR cunku asagidaki iki dongu bu demeti `kaz`/`mal` adlariyla
+    #: aciyor ve o adlar yukarida once LISTE olarak baglaniyor.
+    dagilim: dict[int, tuple[np.ndarray, np.ndarray, dict[int, float]]] = {}
     for butce in BUTCELER:
         kad = {15: 0.0, 14: 0.0, 13: 0.0, 12: 0.0}
         kaz, mal = [], []
@@ -333,26 +354,28 @@ def bolum_de(haftalar: list, ars: dict, cikti: dict) -> None:
                 kad[c] = kad.get(c, 0.0) + x
             kaz.append(v)
             mal.append(bedel * KOLON_BEDELI)
-        kaz, mal = np.array(kaz), np.array(mal)
-        dagilim[butce] = (kaz, mal, kad)
+        kaz_dizi, mal_dizi = np.array(kaz), np.array(mal)
+        dagilim[butce] = (kaz_dizi, mal_dizi, kad)
         tk = sum(kad.values())
         if tk <= 0:
             continue
         print(f"{butce * KOLON_BEDELI:>11,.0f} | "
               + " | ".join(f"%{100 * kad[c] / tk:6.1f}" for c in (15, 14, 13, 12))
-              + f" | %{100 * kaz.sum() / mal.sum():6.0f}")
+              + f" | %{100 * kaz_dizi.sum() / mal_dizi.sum():6.0f}")
     print()
     print("=" * 94)
     print("E) HAFTALIK GERİ DÖNÜŞ DAĞILIMI — ortalama yanıltır, MEDYAN'a bakın")
     print("=" * 94)
     print(f"{'haftalık TL':>11} | {'medyan':>7} | {'ortalama':>9} | {'%25':>6} | {'%75':>6} | "
           f"{'-1 hafta':>9} | {'-3 hafta':>9} | {'-5 hafta':>9}")
-    ozet = {}
-    for butce, (kaz, mal, _) in dagilim.items():
-        oran = kaz / mal
-        net = kaz - mal
+    #: butce -> ozet. Degerler HOMOJEN DEGIL: dort skaler ve bir de
+    #: `ga` altinda iki elemanli guven araligi listesi var.
+    ozet: dict[int, dict[str, float | list[float]]] = {}
+    for butce, (k_dizi, m_dizi, _) in dagilim.items():
+        oran = k_dizi / m_dizi
+        net = k_dizi - m_dizi
         srt = np.sort(net)[::-1]
-        T, M = kaz.sum(), mal.sum()
+        T, M = k_dizi.sum(), m_dizi.sum()
 
         def cik(k: int, _T: float = T, _M: float = M, _s: np.ndarray = srt) -> float:
             """En çok kazandıran k hafta çıkarılınca kalan geri dönüş (%)."""
@@ -370,12 +393,12 @@ def bolum_de(haftalar: list, ars: dict, cikti: dict) -> None:
     for butce in (20000, 180000, 540000):
         if butce not in dagilim:
             continue
-        kaz, mal, _ = dagilim[butce]
-        n = len(kaz)
-        sims = np.array([(lambda i: kaz[i].sum() / mal[i].sum())(rng.integers(0, n, n))
+        k_dizi, m_dizi, _ = dagilim[butce]
+        n = len(k_dizi)
+        sims = np.array([(lambda i: k_dizi[i].sum() / m_dizi[i].sum())(rng.integers(0, n, n))
                          for _ in range(20000)])
         print(f"    haftalık {butce * KOLON_BEDELI:>9,.0f} TL: gözlenen "
-              f"%{100 * kaz.sum() / mal.sum():.0f} | GA [%{100 * np.percentile(sims, 2.5):.0f}, "
+              f"%{100 * k_dizi.sum() / m_dizi.sum():.0f} | GA [%{100 * np.percentile(sims, 2.5):.0f}, "
               f"%{100 * np.percentile(sims, 97.5):.0f}] | P(zarar)=%{100 * (sims < 1).mean():.0f}")
         ozet[butce]["ga"] = [float(np.percentile(sims, 2.5)), float(np.percentile(sims, 97.5))]
     cikti["DE"] = {str(k): v for k, v in ozet.items()}

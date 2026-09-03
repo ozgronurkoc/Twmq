@@ -510,14 +510,17 @@ def butce_merdiveni(d: dict[str, Any], secimler: list[list[str]],
         kalabalik = math.prod(
             sum(d["matches"][j]["play"][s] for s in pl.selections[j])
             for j in range(len(pl.selections)))
-        out.append({
+        #: Govde heterojen: iki int, bir liste, uc float/None. Cikarim
+        #: ilk uc girdiden `int | None` uretip kalanini hata sayiyordu.
+        satir_govde: dict[str, Any] = {
             "budget": b, "cost": pl.bedel, "rows": pl.satir,
             "picks": ["".join(x) for x in pl.selections],
             "changes": pl.degisiklikler,
             "in_set_p": pl.p_kume_ici,
             "crowd_in_set_p": kalabalik,
             "crowd_ratio": (pl.p_kume_ici / kalabalik) if kalabalik else None,
-        })
+        }
+        out.append(satir_govde)
     return out
 
 

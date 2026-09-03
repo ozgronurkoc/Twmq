@@ -299,14 +299,33 @@ def test_hicbir_referans_piyasayi_gecmez():
 
 # ─── karar yuvarlanmamış sayıdan verilir ──────────────────────────────────────
 
-def _kayit(brier_toplam: float, n: int = 15):
+def _ham_kayit(brier_toplam: float, n: int = MATCH_COUNT):
+    """Yalnızca **ham toplamı** taşıyan kayıt — yuvarlama testleri için.
+
+    ADI `_kayit` DEĞİL ve bu ad bir düzeltmedir. Önce `_kayit` deniyordu,
+    yani yukarıdaki `_kayit(week, brier_ort, n)`ı MODÜL DÜZEYİNDE eziyordu:
+    Python son tanımı alır, dolayısıyla dosyanın ilk yarısındaki altı çağrı
+    da bu gövdeye düşüyordu. Sonucu sessizdi ama ciddiydi —
+    `_kayit(i, 0.50)` çağrısı `brier_toplam=i, n=0.50` olarak okunuyordu:
+    hafta indeksi Brier toplamı yerine, Brier ortalaması ise maç sayısı
+    yerine geçiyordu.
+
+    En açık zararı `test_bootstrap_tohumu_gercekten_kullanir`daydı: docstring'i
+    "haftalar bilerek birbirinden çok farklı" diyor, oysa gölgelenmiş hâlde
+    iki grubun `brier_toplam`ı BİREBİR AYNI (0..15 rampası) oluyor ve
+    ayrıştıkları tek eksen `n` kalıyordu. Test geçiyordu ama yazdığı şeyi
+    ölçmüyordu.
+
+    mypy `no-redef` ile bunu tek satırda söylüyor; `tests/` o gün tip
+    denetiminin dışındaydı.
+    """
     return {"n": n, "brier_toplam": brier_toplam, "log_toplam": 0.0}
 
 
 def test_bootstrap_ham_degerleri_tasir():
     from spor_toto.evaluate import bootstrap_farki
-    aday = [_kayit(8.9) for _ in range(20)]
-    ref = [_kayit(9.0) for _ in range(20)]
+    aday = [_ham_kayit(8.9) for _ in range(20)]
+    ref = [_ham_kayit(9.0) for _ in range(20)]
     f = bootstrap_farki(aday, ref)
     assert {"ham_fark", "ham_alt", "ham_ust"} <= set(f)
     assert f["ham_ust"] == pytest.approx(f["ust"], abs=5e-5)
@@ -323,8 +342,8 @@ def test_cok_dar_aralik_gecmis_sayilir():
     # Her hafta aday referanstan azıcık ama İSTİSNASIZ iyi: hangi haftalar
     # örneklenirse örneklensin fark negatif kalır, yani aralık tamamen
     # sıfırın altındadır.
-    aday = [_kayit(9.0 - 0.0005) for _ in range(30)]
-    ref = [_kayit(9.0) for _ in range(30)]
+    aday = [_ham_kayit(9.0 - 0.0005) for _ in range(30)]
+    ref = [_ham_kayit(9.0) for _ in range(30)]
     f = bootstrap_farki(aday, ref)
     assert f["ust"] == 0.0, "yuvarlanmis ust sinir sifira dusmeli (senaryonun sarti)"
     assert f["ham_ust"] < 0, "ham ust sinir sifirin altinda olmali"

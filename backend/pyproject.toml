@@ -137,6 +137,7 @@ select = [
     "B",        # bugbear — sessiz hata sinifi
     "C4",       # comprehension
     "RUF",      # ruff'in kendi kurallari
+    "S",        # flake8-bandit — guvenlik
 ]
 ignore = [
     # Turkce docstring ve yorumlar uzun; satir uzunlugu formatter'in isi.
@@ -149,6 +150,40 @@ ignore = [
     # docstring ve yorumlar Turkce oldugu icin tek basina 7.017 bulgu
     # uretiyordu — yani gercek bulgularin uzerini orten saf gurultu.
     "RUF001", "RUF002", "RUF003",
+
+    # ─── S (flake8-bandit) — iki kural DEPO GENELINDE kapali ───────────
+    #
+    # `S` acilirken ham toplam 3.037 bulguydu. Ikisi tek tek `noqa`
+    # edilecek turden degil, DEPONUN TAMAMI icin gecerli birer olgu:
+    #
+    # S101 (`assert`) — 2.966 bulgu, yani hamin %98'i. Suit `assert`
+    # uzerine kurulu ve `spor_toto/health` degismezleri de bilerek
+    # `assert` ile yaziyor (rapor gövdesi hatanin metnini tasiyor).
+    # Kural Python'un `-O` ile assert'leri atmasina karsi uyariyor; bu
+    # depo `-O` ile kosmuyor ve kosarsa saglik katmani zaten anlamsizlasir.
+    # Tek tek susturmak 2.966 satirlik gurultu demekti.
+    "S101",
+    # S311 (`random` kriptografik degil) — 11 bulgu, hepsi Monte Carlo
+    # ve bootstrap: `analysis`, `core`, `deger`, `engines`, `evaluate`,
+    # `kuyruk`. Bu depoda KRIPTOGRAFI YOK; dahasi bu cagrilarin
+    # TEKRAR EDILEBILIR olmasi gerekiyor (tohumlu), yani CSPRNG dogru
+    # cevap DEGIL — yanlis cevap olurdu. Depo genelinde gecerli bir
+    # olgu oldugu icin depo genelinde yaziliyor.
+    "S311",
+    # S607 (`git`/`tesseract` PATH'ten cagriliyor) — 5 bulgu. Tam yol
+    # yazmak BILEREK reddedildi: `git` Replit'te, CI'da ve gelistirici
+    # makinesinde ayri yerlerde duruyor ve sabit bir yol tasinabilirligi
+    # kirar. PATH'ten cozmek bu deponun POLITIKASI, dolayisiyla depo
+    # genelinde yaziliyor.
+    #
+    # S603 (`subprocess` cagrisi) BILEREK ACIK BIRAKILDI. Ruff onu her
+    # `subprocess.run` cagrisinda atesler, yani bir dedektor degil bir
+    # hatirlaticidir — ve hatirlatmasi istenen sey degerli: her yeni
+    # cagri, argumanlarinin nereden geldigine dair BILINCLI bir karar
+    # gerektirsin. Bugunku alti cagrinin altisi da degismez argv listesi
+    # (kabuk yok, kullanici girdisi yok) ve her biri satirinda gerekcesini
+    # yaziyor.
+    "S607",
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -169,7 +204,33 @@ ignore = [
 # hicbiri okunmadan susturulurdu.
 [tool.mypy]
 python_version = "3.10"
-files = ["spor_toto", "web_app.py"]
+#: `scripts` ve `tests` DE denetleniyor. Onceden liste
+#: `["spor_toto", "web_app.py"]`ti, yani `backend/scripts/` (26 dosya,
+#: 11.499 satir) ve `backend/tests/` (66 dosya, 18.849 satir) tip
+#: denetiminin TAMAMEN disindaydi — deponun Python govdesinin yarisindan
+#: fazlasi.
+#:
+#: Acilinca 57 bulgu cikti ve HEPSI kapatildi (bastirma yok, `ignore_errors`
+#: eklenmedi). Cogu cikarim gurultusuydu ama ikisi gercekti:
+#:
+#:   * `tests/test_evaluate.py` iki farkli `_kayit` tanimliyordu; Python son
+#:     tanimi alir, yani dosyanin ilk yarisindaki alti cagri yanlis govdeye
+#:     dusuyordu. `_kayit(i, 0.50)` `brier_toplam=i, n=0.50` olarak
+#:     okunuyordu — hafta indeksi Brier toplami, Brier ortalamasi mac sayisi
+#:     yerine. `test_bootstrap_tohumu_gercekten_kullanir` docstring'inde
+#:     "haftalar bilerek birbirinden cok farkli" diyordu; golgelenmis halde
+#:     iki grubun `brier_toplam`i BIREBIR AYNIYDI. Testler geciyordu ama
+#:     yazdiklari seyi olcmuyorlardi.
+#:   * `scripts/super_toto_tahmin2.py` bolen sifirken `kat: None` donuyordu;
+#:     `super_toto_frontend.py` onu `round(..., 3)` ile okuyor ve arayuz
+#:     `kat_taban: number` deyip `.toFixed(1)` cagiriyor. Koruma cokmeyi
+#:     onlemiyor, iki katman asagi itiyordu. Artik kaynakta hata veriyor.
+#:
+#: NOT — bu kapi `tomllib` kusurunu YAKALAMAZDI. Olculdu: mypy
+#: `import tomllib`i `python_version = "3.10"` ile de, kendisi 3.10 altinda
+#: kosarken de, `--python-executable` ile de sorun saymiyor. O kusurun
+#: bekcisi `test_betikler_asgari_python_surumunde_ICE_AKTARILABILIR`tir.
+files = ["spor_toto", "web_app.py", "scripts", "tests"]
 ignore_missing_imports = true
 warn_unused_configs = true
 warn_redundant_casts = true

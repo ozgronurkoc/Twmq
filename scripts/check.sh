@@ -64,6 +64,19 @@ baslik "ruff (lint)"
 baslik "mypy (kademeli tip denetimi)"
 "$PY" -m mypy
 
+# `.claude/` TIP denetimi de burada. Yukaridaki ruff blogunun yorumu
+# "ne lint ne tip denetimi goruyordu" diye basliyor ama YALNIZCA lint
+# ekliyordu; cumlenin isaret ettigi boslugun yarisi acik kalmisti. O yarim
+# bu oturumda bir hata ortaya cikardi: `graf_uret.sayilar_denetle` uc
+# elemanli demet listesi donduruyor ama `list[str]` ilan ediyordu ve
+# cagirma yerinde "Unpacking a string is disallowed" veriyordu.
+#
+# Ayarlar acikca veriliyor: yapilandirma `backend/pyproject.toml`da ve o
+# dosya `files` ile kendi agacini sayiyor.
+"$PY" -m mypy "$KOK/.claude"/*.py \
+  --python-version 3.10 --ignore-missing-imports --no-error-summary \
+  && echo "  .claude: temiz"
+
 baslik "docstring kapsaması (interrogate)"
 # Bu depoda docstring bir gelenek; kapı onu kural yapar. Eşiğin gerekçesi
 # ve ölçülen değer `pyproject.toml` `[tool.interrogate]` içinde.

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from collections import Counter
 from itertools import combinations, product
+from typing import Any
 
 import pytest
 
@@ -105,12 +106,15 @@ def _referans(enc, cols, max_fires: int = 2) -> dict:
             "p_ge_12": round(100.0 * sum(v for k, v in score_counts.items() if k >= 12) / n_total, 4) if n_total else 0.0,
         }
 
-    out = {"note": "Secim disi fire: mac isaret disi. Uniform 1hata/2hata kume ici mesafedir."}
+    #: `note` bir metin, `fire1`/`fire2` ise sozluk — govde heterojen.
+    out: dict[str, Any] = {
+        "note": "Secim disi fire: mac isaret disi. Uniform 1hata/2hata kume ici mesafedir."}
 
     if max_fires >= 1:
-        sc = Counter()
-        by_type = {"banko": Counter(), "double": Counter(), "triple": Counter()}
-        by_match = {i: Counter() for i in range(n)}
+        sc: Counter[int] = Counter()
+        by_type: dict[str, Counter[int]] = {
+            "banko": Counter(), "double": Counter(), "triple": Counter()}
+        by_match: dict[int, Counter[int]] = {i: Counter() for i in range(n)}
         n_total = 0
         for fail_i in failable:
             ranges = [out_opts[k] if k == fail_i else in_opts[k] for k in range(n)]

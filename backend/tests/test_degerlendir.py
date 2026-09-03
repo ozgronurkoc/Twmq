@@ -257,7 +257,9 @@ def test_sayfa_her_girilmis_haftada_uretilir(tmp_path):
     sezon = importlib.import_module("scripts.super_toto_sezon")
     for hafta in sezon.haftalari_bul("2026_27"):
         cikti = tmp_path / f"h{hafta}.html"
-        r = subprocess.run(
+        # S603 gerekcesi: `sys.executable` ve depo ici sabit yol; testin
+        # kendi kurdugu argv.
+        r = subprocess.run(  # noqa: S603
             [sys.executable, "scripts/super_toto_sayfa.py", "--hafta", str(hafta),
              "--cikti", str(cikti)],
             cwd=KOK, capture_output=True, text=True, timeout=300)

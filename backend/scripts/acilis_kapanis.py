@@ -21,6 +21,7 @@ from __future__ import annotations
 import argparse
 import sys
 from pathlib import Path
+from typing import Any
 
 KOK = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(KOK))
@@ -115,7 +116,7 @@ def hareket(rows):
 
 def kural_kosusu(closing: bool, kaynak: str = FIYAT_VARSAYILAN):
     """Aynı strateji, farklı fiyatla beslenirse."""
-    P = {}
+    P: dict[str, Any] = {}
     for r in load_odds():
         if not r.get("matched"):
             continue

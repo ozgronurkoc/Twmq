@@ -7,6 +7,7 @@ katmanın **stdlib dışına çıkmaması** ve kopyaların **geri gelmemesi**.
 from __future__ import annotations
 
 import ast
+import os
 import re
 import sys
 import tempfile
@@ -280,3 +281,59 @@ def test_betikler_asgari_python_surumunde_ICE_AKTARILABILIR():
     assert not kusurlu, (
         "asgari surumde (3.10) BULUNMAYAN stdlib modulu korumasiz import "
         "ediliyor: " + "; ".join(kusurlu))
+
+
+# ─── sema denetimi — `S310`un gercek kapatilmasi ─────────────────────────
+
+def test_indirme_ilkelleri_HTTP_DISI_semayi_reddeder():
+    """`urlopen` `file:`/`ftp:`/`data:` de acar; ilkeller acmamali.
+
+    Bugun butun cagrilar sabit `https://` ile geliyor, yani bu bir
+    VARSAYIMDI. Bir gun bir URL sabitten degil veriden gelirse
+    (yapilandirma, cekilen bir dizin, bir yonlendirme) `file:///etc/passwd`
+    sessizce okunur ve "indirilen sey" sanilirdi. Varsayimi kapiya
+    ceviren sey bu test.
+    """
+    from scripts._ortak import IZINLI_SEMALAR, indir_bellek, indir_json, sema_dogrula
+
+    assert IZINLI_SEMALAR == ("http", "https")
+    for kotu in ("file:///etc/passwd", "ftp://example.com/x",
+                 "data:text/plain,merhaba", "gopher://x"):
+        with pytest.raises(ValueError, match="izin verilmeyen sema"):
+            sema_dogrula(kotu)
+    for iyi in ("http://example.com/a", "https://example.com/a", "HTTPS://X/y"):
+        assert sema_dogrula(iyi) in IZINLI_SEMALAR
+
+    # Ilkellerin KENDISI de reddetmeli — denetim govdeye BAGLI olmali,
+    # yalnizca yardimcinin icinde durmamali. (Ag'a cikilmaz: hata
+    # semadan, istek kurulmadan once gelir.)
+    for ilkel in (indir_bellek, indir_json):
+        with pytest.raises(ValueError, match="izin verilmeyen sema"):
+            ilkel("file:///etc/passwd")
+
+
+def test_saglik_alarmi_HTTP_DISI_url_ile_KAPALI_sayilir():
+    """`HEALTH_ALARM_URL` ortamdan gelir — deponun tek sabit-olmayan URL'si.
+
+    Bozuk sema servisi DUSURMEZ (alarm istege bagli bir yetenektir) ama
+    ozellik de sessizce "acik" gorunmemeli: rapor `alarm: false` demeli.
+    """
+    import importlib
+
+    import spor_toto.health_history as hh
+
+    onceki = os.environ.get("HEALTH_ALARM_URL")
+    try:
+        os.environ["HEALTH_ALARM_URL"] = "file:///etc/passwd"
+        yeniden = importlib.reload(hh)
+        assert yeniden.ALARM_URL == "", "http disi sema KAPALI sayilmali"
+
+        os.environ["HEALTH_ALARM_URL"] = "https://ornek.gecerli/uc"
+        yeniden = importlib.reload(hh)
+        assert yeniden.ALARM_URL == "https://ornek.gecerli/uc"
+    finally:
+        if onceki is None:
+            os.environ.pop("HEALTH_ALARM_URL", None)
+        else:
+            os.environ["HEALTH_ALARM_URL"] = onceki
+        importlib.reload(hh)

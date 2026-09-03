@@ -172,8 +172,11 @@ _sayi = oran_sayisi
 
 def _ucluyu_oku(satir: dict[str, Any], onek: str) -> dict[str, float] | None:
     """Tek kaynagin 1X2 ucluSU. Biri eksik/askidaysa (<=1.00) kaynak dusEr."""
-    degerler = [_sayi(satir.get(f"{onek}{s}")) for s in ("H", "D", "A")]
-    if any(v is None for v in degerler):
+    ham = [_sayi(satir.get(f"{onek}{s}")) for s in ("H", "D", "A")]
+    # `any(... is None)` ile eleniyor ama daraltma liste ELEMANINA
+    # yayilmiyor; acik suzme hem tipi hem niyeti tek satirda yaziyor.
+    degerler = [v for v in ham if v is not None]
+    if len(degerler) != 3:
         return None
     return {"1": degerler[0], "0": degerler[1], "2": degerler[2]}
 

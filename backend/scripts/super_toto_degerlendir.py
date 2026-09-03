@@ -105,9 +105,9 @@ def en_iyi_kolon(secimler: Sequence[Sequence[str]], gercek: str) -> int:
     for c in cols:
         skor = 0
         j = 0
-        for i, s in enumerate(secimler):
-            if len(s) == 1:
-                skor += 1 if s[0] == gercek[i] else 0
+        for i, sec in enumerate(secimler):
+            if len(sec) == 1:
+                skor += 1 if sec[0] == gercek[i] else 0
             else:
                 skor += 1 if enc.variable_syms[j][c[j]] == gercek[i] else 0
                 j += 1

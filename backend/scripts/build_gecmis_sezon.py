@@ -64,8 +64,6 @@ import json
 import re
 import sys
 import unicodedata
-import urllib.error
-import urllib.request
 from collections import Counter
 from datetime import date, datetime, timedelta
 from pathlib import Path
@@ -78,6 +76,7 @@ BULTEN_DIZIN = KOK / "data" / "bulten"
 ARSIV_DIZIN = KOK / "data" / "sportoto_arsiv"
 CIKTI_DIZIN = KOK / "data" / "st_history"
 
+from scripts._ortak import indir
 from scripts.build_odds import (
     ANA_LIGLER,
     EK_ULKELER,
@@ -218,20 +217,12 @@ def sezon_kodu(anahtar: str) -> str:
     return f"{bas[-2:]}{son}"
 
 
-def indir(url: str, hedef: Path, zaman_asimi: float = 60.0) -> Path | None:
-    if hedef.exists() and hedef.stat().st_size > 0:
-        return hedef
-    try:
-        istek = urllib.request.Request(url, headers={"User-Agent": UA})
-        with urllib.request.urlopen(istek, timeout=zaman_asimi) as cevap:
-            ham = cevap.read()
-    except (urllib.error.URLError, TimeoutError, OSError):
-        return None
-    if not ham:
-        return None
-    hedef.parent.mkdir(parents=True, exist_ok=True)
-    hedef.write_bytes(ham)
-    return hedef
+# `indir` BURADA YOKTUR ve olmamali: `scripts/_ortak.indir` ile neredeyse
+# birebir ayni govdeydi (tek fark stderr'e yazmamasi ve `HTTPError`i ayrica
+# saymamasi — o zaten `URLError`in alt sinifi). Kopya bekcisi
+# (`test_paylasilan_yardimcilar_geri_kopyalanmamis`) bunu KACIRMISTI; govde
+# imzasi esigin altinda kaliyordu. Paylasilan ilkel ayrica sema denetimi de
+# tasiyor, yani kopyayi kaldirmak `S310`u da kapatiyor.
 
 
 def fikstur(sezon_anahtar: str, cache: Path) -> dict[date, list[dict[str, Any]]]:
@@ -262,13 +253,16 @@ def fikstur(sezon_anahtar: str, cache: Path) -> dict[date, list[dict[str, Any]]]
                 dg = satir.get("FTAG") or satir.get("AG")
                 if not ev or not dep:
                     continue
+                # Ham metin ile SAYI ayri isimlerde (bkz. `build_odds.py`).
+                if eg is None or dg is None:
+                    continue
                 try:
-                    eg, dg = int(eg), int(dg)
-                except (TypeError, ValueError):
+                    ev_gol, dep_gol = int(eg), int(dg)
+                except ValueError:
                     continue
                 indeks.setdefault(dt.date(), []).append({
                     "lig": satir.get("Div") or etiket,
-                    "ev": ev, "dep": dep, "hg": eg, "ag": dg,
+                    "ev": ev, "dep": dep, "hg": ev_gol, "ag": dep_gol,
                     "tarih": dt.date(),
                 })
     return indeks
@@ -490,8 +484,8 @@ def teshis(dosyalar: list[Path], cache: Path) -> int:
     kusurun kac maci dusurdugu bilinmeden olculemez. Bu kip o dagilimi
     verir; `TESHIS_SINIFLARI` her sinifin ne anlama geldigini yaziyor.
     """
-    sinif = Counter()
-    hafta_sayaci = Counter()
+    sinif: Counter[str] = Counter()
+    hafta_sayaci: Counter[str] = Counter()
     yakin_ornekler: list[dict[str, Any]] = []
     for yol in dosyalar:
         anahtar = yol.stem
@@ -512,7 +506,7 @@ def teshis(dosyalar: list[Path], cache: Path) -> int:
             if not adaylar:
                 hafta_sayaci["pencerede_fikstur_yok"] += 1
                 continue
-            hafta_siniflari = Counter()
+            hafta_siniflari: Counter[str] = Counter()
             for m in hafta["matches"]:
                 s_, skor = teshis_sinifi(m["home"], m["away"], adaylar)
                 sinif[s_] += 1

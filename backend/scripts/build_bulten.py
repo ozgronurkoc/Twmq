@@ -76,6 +76,13 @@ from pathlib import Path
 from typing import Any
 
 KOK = Path(__file__).resolve().parent.parent
+# `scripts` paketini ice aktarabilmek icin — oteki betiklerin
+# deseninin aynisi. Sema denetimi (`sema_dogrula`) TEK yerde yazili
+# olsun diye gerekli; ikinci bir kopya ilk gun ayrisir.
+sys.path.insert(0, str(KOK))
+
+from scripts._ortak import sema_dogrula
+
 ARSIV_DIZIN = KOK / "data" / "sportoto_arsiv"
 CIKTI_DIZIN = KOK / "data" / "bulten"
 UA = "spor-toto-lab/1.0 (kisisel arsiv analizi)"
@@ -126,8 +133,12 @@ ARTIK_BAS = re.compile(r"^[|!I\u0130l\]\}i1]\s+")
 def gorsel_indir(url: str, hedef: Path, zaman_asimi: float = 60.0) -> bytes:
     if hedef.exists():
         return hedef.read_bytes()
-    istek = urllib.request.Request(url, headers={"User-Agent": UA})
-    with urllib.request.urlopen(istek, timeout=zaman_asimi) as cevap:
+    # Denetim `_ortak`tan geliyor, burada YENIDEN YAZILMIYOR: ikinci bir
+    # kopya ilk gun ayrisir. Bu govde ilkellere indirgenemiyor cunku hata
+    # politikasi farkli (yutmaz, yukseltir).
+    sema_dogrula(url)
+    istek = urllib.request.Request(url, headers={"User-Agent": UA})  # noqa: S310
+    with urllib.request.urlopen(istek, timeout=zaman_asimi) as cevap:  # noqa: S310
         ham = cevap.read()
     hedef.parent.mkdir(parents=True, exist_ok=True)
     hedef.write_bytes(ham)
@@ -144,11 +155,13 @@ def ocr_metni(gorsel: Path, olcek: int = OLCEK) -> str:
 
     with Image.open(gorsel) as im:
         buyuk = im.resize((im.width * olcek, im.height * olcek),
-                          Image.LANCZOS).convert("L")
+                          Image.Resampling.LANCZOS).convert("L")
         gecici = gorsel.with_suffix(f".x{olcek}.png")
         buyuk.save(gecici)
     try:
-        sonuc = subprocess.run(
+        # S603 gerekcesi: degismez argv; `gecici` betigin kendi urettigi
+        # gecici dosya yolu, `DIL`/`PSM` modul sabiti.
+        sonuc = subprocess.run(  # noqa: S603
             ["tesseract", str(gecici), "-", "-l", DIL, "--psm", PSM, "--dpi", "300"],
             capture_output=True, text=True, timeout=180, check=True,
         )
