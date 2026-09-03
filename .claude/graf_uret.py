@@ -150,7 +150,7 @@ def _desen(deger: str) -> re.Pattern:
     return re.compile(r"(?<![\d.,])(?:" + "|".join(bicimler) + r")(?!\d)")
 
 
-def sayilar_denetle(g: dict) -> list[str]:
+def sayilar_denetle(g: dict) -> list[tuple[str, str, str]]:
     """Kayıtlı `anildigi_yerler` hâlâ o değeri içeriyor mu — YALNIZCA denetler.
 
     Sayı bölümünün hash'i yoktur (bir sayı tek bir dosyaya bağlı değildir),
@@ -160,7 +160,8 @@ def sayilar_denetle(g: dict) -> list[str]:
     bu, insanın kararıdır.
     """
     PENCERE = 5
-    supheli = []
+    #: (deger, yer, sebep) — cagiran ucunu de ac(iyor).
+    supheli: list[tuple[str, str, str]] = []
     for s in g.get("sayilar", []):
         desen = _desen(s["deger"])
         for yer in s.get("anildigi_yerler", []):
