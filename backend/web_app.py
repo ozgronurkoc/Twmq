@@ -471,8 +471,24 @@ def _health_govde(only: str | None, fresh: bool) -> dict[str, Any]:
     # Zaman serisine YALNIZCA gercek olcumler girer; onbellekten donen bir
     # cevap ayni kosuyu ikinci kez saymazdi.
     saglik_gecmisi.kaydet(govde)
+    # Damga OLCUM BITTIKTEN SONRA alinir, `simdi` ile DEGIL.
+    #
+    # Onceden istegin BASINDAKI `simdi` damgalaniyordu ve kaydin omru
+    # `HEALTH_TTL_S - olcum_suresi` oluyordu. `run_health` sicakken ~500 ms,
+    # soguk baslangicta ~2,3 sn, yuklu bir makinede ise TTL'yi (5 sn) asiyor
+    # — olculdu: yuklu bir kosumda 7,7 sn. O an kayit DOGDUGU ANDA OLU
+    # dogar; onbellek tam da korumasi gereken durumda (yuk altinda, ard
+    # arda vuran izleme) sessizce devre disi kalir ve her istek yeniden
+    # olcer. Dahasi her yeniden olcum `saglik_gecmisi.kaydet` cagirir, yani
+    # TEK bir olcum penceresi zaman serisine birden fazla kayit birakir —
+    # `test_onbellekten_donen_cevap_seriye_ikinci_kez_girmez`in tam olarak
+    # bekcilik ettigi bozulma. Kapi ilk kez kosuldugunda bu testi dusuren
+    # sey buydu.
+    #
+    # Bitis damgasi `yas_ms`i de duzeltir: raporun yasi artik "olcum
+    # bitiseli ne kadar oldu", "olcume baslayali ne kadar oldu" degil.
     with _health_kilit:
-        _health_onbellek[anahtar] = (simdi, govde)
+        _health_onbellek[anahtar] = (time.monotonic(), govde)
     return govde
 
 

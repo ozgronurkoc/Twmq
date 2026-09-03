@@ -111,7 +111,7 @@ Graf kurulurken üç gerçek kusur ortaya çıktı. Üçü de ölçümle bulundu
 kapatıldı:
 
 1. **Belgelerdeki test sayısı 22 eksikti.** 5 belgede 7 yerde `1.879` yazıyordu;
-   eksiksiz süit (lightgbm + scikit-learn kurulu) **1.931** topluyor. Fark
+   eksiksiz süit (lightgbm + scikit-learn kurulu) **1.932** topluyor. Fark
    `test_agac.py`'nin 22 testi: `lightgbm` yoksa modül `importorskip` ile hiç
    toplanmıyor ve bekçi o kurulumda **atlıyor**, yani sapma yerelde görünmüyordu.
    CI `[test,kalite,model]` kurduğu için orada kırmızıydı. Yedi yer düzeltildi.

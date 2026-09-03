@@ -237,6 +237,56 @@ def test_onbellekten_donen_cevap_seriye_ikinci_kez_girmez(client):
     assert len(body["kayitlar"]) == 1
 
 
+def test_onbellek_damgasi_OLCUM_BITINCE_alinir(client, monkeypatch):
+    """Yavaş bir ölçümden sonra bile önbellek YAŞAR — deterministik hâli.
+
+    Üstteki test bunu ancak ölçüm TTL'yi aşarsa yakalar, yani makinenin
+    yüküne bağlıdır: kapı ilk kez koşulduğunda tam olarak öyle düştü
+    (ölçüm 7,7 sn sürdü, `HEALTH_TTL_S` 5 sn). Bu test ölçümü BİLEREK
+    TTL'den uzun tutar, dolayısıyla hatayı her makinede, her sırada
+    yakalar.
+
+    Bekçilik ettiği hata: önbellek damgası isteğin BAŞINDA alınırsa kaydın
+    ömrü `TTL - ölçüm_süresi` olur ve yavaş bir ölçümde kayıt **doğduğu
+    anda ölü** doğar. Sonucu iki katmanlıdır: (1) önbellek tam da
+    koruması gereken durumda — yük altında — devre dışı kalır, (2) her
+    yeniden ölçüm `saglik_gecmisi.kaydet` çağırdığı için tek bir ölçüm
+    penceresi zaman serisine birden fazla kayıt bırakır.
+    """
+    gercek = web_app.run_health
+
+    def yavas_olcum(only=None):
+        # TTL'den UZUN suren bir olcum: damga baslangictan alinirsa kayit
+        # daha yazilmadan bayatlar.
+        zaman.ilerlet(web_app.HEALTH_TTL_S + 1.0)
+        return gercek(only)
+
+    class _SahteSaat:
+        """`time.monotonic`i testin denetimine alır — gerçek uyku yok."""
+
+        def __init__(self):
+            self.t = 1000.0
+
+        def ilerlet(self, sn):
+            self.t += sn
+
+        def __call__(self):
+            return self.t
+
+    zaman = _SahteSaat()
+    monkeypatch.setattr(web_app.time, "monotonic", zaman)
+    monkeypatch.setattr(web_app, "run_health", yavas_olcum)
+
+    client.get("/api/health?fresh=1")
+    govde = client.get("/api/health").get_json()
+
+    assert govde["summary"]["onbellek"]["cached"] is True, (
+        "yavas olcumden sonra onbellek dusmus: damga olcum BASINDA aliniyor")
+    # Yas, olcumun BITISINDEN itibaren sayilir; olcum suresi ona eklenmez.
+    assert govde["summary"]["onbellek"]["yas_ms"] == 0.0
+    assert len(client.get("/api/health/history").get_json()["kayitlar"]) == 1
+
+
 def test_kismi_kosu_seriye_girmez(client):
     client.get("/api/health?only=cekirdek&fresh=1")
     body = client.get("/api/health/history").get_json()
