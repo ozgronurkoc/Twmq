@@ -153,7 +153,7 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/components/super-toto/tahmin2.tsx` | **2. Tahmin** paneli — `1. Tahmin` / `2. Tahmin` sekmeleri arasında geçilir; para birimli hiçbir sayı yok. Hafta kapandığında sonuç sütunu ve ayar karnesi açılır (§3.38) |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **1.934 test**; **85'i** istatistik katmanına (`history` `odds` `backtest`
+paketi toplam **1.950 test**; **85'i** istatistik katmanına (`history` `odds` `backtest`
 `api_stats` `api_backtest` `snapshot_iddaa`), **579'u** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre`
@@ -4607,6 +4607,102 @@ hedeflenmeli sorusunu **açıyor** ve cevabın nereden geleceğini yazıyor.
     python scripts/super_toto_degerlendir.py --hafta 3
 
 
+### 3.49 Seçim koşullu kalibrasyon — ters seçim ölçüldü, **yüksek eşikte gerçek**
+
+Otuz dış depo incelemesinin tek uygulanabilir çıktısı. Üç bağımsız depo aynı
+olguyu işaret etti: küresel olarak iyi kalibre bir model, **seçtiği** alt
+kümede sistematik aşırı güvenli olabilir — çünkü `p_model − p_piyasa > eşik`
+koşullaması modelin kestirim **gürültüsünü** seçer.
+
+* `mperi1208/value-bet-model` (P6) — *"küresel olarak iyi kalibre, ama
+  seçtiği bahislerde sistematik aşırı güvenli."*
+* `thewongdirection/soccer-betting-strategy` — *"overconfident on its bet
+  subset (model 0,45 vs realised 0,34) … **being more selective makes it
+  worse**."*
+* `jkrusina/SoccerPredictor` — aynı yapıyı ölçmedi, %1069 kâr raporladı
+  (eşik test setinde uyduruldu, n=32). Olgunun negatif kanıtı.
+
+Bizde bu ölçülmüyordu. `kalibrasyon.py` olasılık bandına, §3.21 favori
+gücüne koşulluydu — ikisi de **bütün** maçlar üzerinde. `deger.olc()` ise
+seçilen kümede yalnızca **ekonomik** sonucu veriyordu: kâr etmediğini
+biliyorduk, **niçin** etmediğini ayırt etmiyorduk.
+
+#### Ölçmeden önce: kupon bankosu bu soruyu SORAMAZ
+
+İlk tasarım kupon bankosunu (`backtest.secim_uret`) koşullama kuralı
+yapacaktı. Sınandı ve dejenere çıktı — `esik=0,68` için:
+
+| bant | p örnekleri | banko mu? |
+|---|---|---|
+| 0,60–0,70 | 0,601 · 0,650 · 0,699 | hayır · hayır · **evet** |
+| 0,70–0,80 | 0,701 · 0,750 · 0,799 | **evet · evet · evet** |
+| 0,80–1,01 | 0,801 · 0,905 · 1,009 | **evet · evet · evet** |
+
+**Banda ayırdığın değişkenle eşiklersen, eşiğin tamamen üstündeki bantta
+seçilen küme kümenin kendisidir.** Bant içi karşıtlık yalnızca eşiği kesen
+tek bantta kalır. Kural buradan çıktı: *seçim koşullu kalibrasyon ancak kural,
+banda ayrılan olasılığın **ötesinde** bilgi kullanıyorsa anlamlıdır.*
+
+İki araç bunu sağlıyor: **`model`** (piyasa fiyatını kullanır, tahminler
+`evaluate.hafta_disarida_birak` ile sezon dışarıda bırakmalı) ve **`deger`**
+(`Max` fiyatını kullanır).
+
+#### Ölçüm — dış depoların öngörüsü doğrulandı
+
+`python -m spor_toto.secim_kalibrasyonu --kural model --tarama`
+
+| eşik | n | seçim oranı | aşırı güven | %95 | Bonferroni | sezon işareti |
+|---:|---:|---:|---:|:--|:--|:--|
+| 0,00 | 2.080 | %40,5 | +%0,8 | içinde | içinde | dönüyor |
+| 0,01 | 1.776 | %34,6 | +%0,3 | içinde | içinde | dönüyor |
+| 0,02 | 1.472 | %28,7 | +%1,3 | içinde | içinde | dönüyor |
+| 0,04 | 759 | %14,8 | **+%4,8** | **dışında** | **dışında** | **dönüyor** |
+| 0,08 | 119 | %2,3 | **+%14,9** | **dışında** | **dışında** | **tutuyor** |
+
+Aşırı güven = söylenen − gerçek. Eşik yükseldikçe **monoton büyüyor**: model,
+seçtiği bahislerde 0,08'de gerçekleşenden **14,9 puan** fazlasını söylüyor.
+
+#### §3.21'in iki uyarısı — ikisi de uygulandı
+
+**(1) Çok kıyas.** Bir koşumda bant × eşik onlarca aralık okunuyor. Rapor
+düzeltmeyi kendi taşıyor (`bonferroni()`): 0,04 ve 0,08 eşikleri **düzeltilmiş
+aralıkta da dışarıda**. Yıldız Bonferroni'siz okunmuyor.
+
+**(2) Sezon sezon işaret tutuyor mu.** Ö3 tam bu sınavda düşmüştü; bu ölçüm
+düşmüyor — ama yalnız yüksek eşikte:
+
+| sezon | eşik 0,04 | eşik 0,08 |
+|---|---:|---:|
+| 2022/2023 | n=39 · **−%1,6** | n=4 · +%15,0 |
+| 2023/2024 | n=220 · +%3,6 | n=46 · +%17,8 |
+| 2024/2025 | n=197 · +%6,0 | n=41 · +%12,8 |
+| 2025/2026 | n=303 · +%5,7 | n=28 · +%12,9 |
+| | **işaret DÖNÜYOR** | **işaret TUTUYOR** |
+
+0,04'te bir sezon ters işaretli — havuzlanmış +%4,8 dört sezonun üçünün
+taşıdığı bir şey, yani **§3.21'in durumu**. 0,08'de dördü de aynı yönde ve
+ikisi tek başına aralık dışında; ama `n` küçük (4 · 46 · 41 · 28).
+
+#### `deger` kuralında aynı desen YOK
+
+| alpha | 0,00 | 0,01 | 0,02 | 0,04 | 0,08 |
+|---|---:|---:|---:|---:|---:|
+| aşırı güven | +%2,3 | +%1,4 | −%0,6 | +%3,1 | +%0,2 |
+
+Hepsi aralık içinde, monoton değil. Yani olgu **model↔piyasa seçimine
+özgü** — `mperi1208`in P6'sının dediği gibi, koşullama modelin kendi
+gürültüsünü seçtiğinde ortaya çıkıyor; en iyi fiyata göre seçimde değil.
+
+#### Verdikt
+
+**Ters seçim var ve yüksek eşikte deponun iki sınavını da geçiyor.** Pratik
+sonucu şudur: bir tahmincinin piyasadan saptığı yere ne kadar çok yaslanırsak,
+o sapmanın **gürültü olma payı o kadar büyüyor**. Eşiği yükselterek
+"daha seçici" olmak, ölçülen tek yönde durumu **kötüleştiriyor**.
+
+Bu bir teşhistir; seçim kuralını, kupon eşiğini veya piyasa çıtasını
+değiştirmez. Ne yapılacağı ayrı bir iştir ve bu ölçüm görülmeden verilemezdi.
+
 ## 4. Sayfada bugün ne var
 
 **`/istatistik`** — sezon dağılımı (en sık sonuç + pay çubuğu) · 5 sayı kutusu (sembol
@@ -5584,7 +5680,7 @@ python -m spor_toto.kosum                  # kayıtlı koşumlar
 python -m spor_toto.kosum --son disari     # son koşumun ortamı
 
 # Denetim
-pytest -q                                  # 1.934 test (85'i bu katman, 567'si tahmin)
+pytest -q                                  # 1.950 test (85'i bu katman, 583'ü tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out

@@ -2,7 +2,7 @@
  "sayilar": [
   {
    "ne": "suit test sayisi (eksiksiz kurulum)",
-   "deger": "1.934",
+   "deger": "1.950",
    "ureten": "cd backend && pytest -p no:randomly -n0 --collect-only -q  # dosya basi toplami",
    "olculdu": "2026-09-03",
    "anildigi_yerler": [
@@ -18,7 +18,7 @@
   },
   {
    "ne": "test dosyasi sayisi",
-   "deger": "64",
+   "deger": "65",
    "ureten": "ls backend/tests/test_*.py | wc -l",
    "olculdu": "2026-09-03",
    "anildigi_yerler": [
@@ -184,6 +184,26 @@
     "frontend/app/globals.css"
    ],
    "bekci": "check.mjs::Bodoni geri dusus olculeri Next'in tablosundan TURETILMIS"
+  },
+  {
+   "ne": "secim kosullu kalibrasyon — asiri guven, esik 0,08 (§3.49)",
+   "deger": "+%14,9",
+   "ureten": "cd backend && python -m spor_toto.secim_kalibrasyonu --kural model --tarama",
+   "olculdu": "2026-09-03",
+   "anildigi_yerler": [
+    "docs/ISTATISTIK_YOL_HARITASI.md"
+   ],
+   "not": "Model kurali, n=119. Hem %95 hem Bonferroni duzeltilmis aralikta DISARIDA; sezon isareti 4/4 ayni yonde (§3.21'in iki uyarisi da uygulandi). Dis depolarin 'daha secici olmak kotulestirir' ongorusunun kendi verimizdeki dogrulamasi."
+  },
+  {
+   "ne": "secim kosullu kalibrasyon — asiri guven, esik 0,04 (§3.49)",
+   "deger": "+%4,8",
+   "ureten": "cd backend && python -m spor_toto.secim_kalibrasyonu --kural model --tarama",
+   "olculdu": "2026-09-03",
+   "anildigi_yerler": [
+    "docs/ISTATISTIK_YOL_HARITASI.md"
+   ],
+   "not": "n=759. Bonferroni'de de disarida AMA sezon isareti DONUYOR (2022/23 -%1,6). §3.21'in durumu: sekil gercek, buyukluk butun sezonlarin degil."
   }
  ],
  "komutlar": [
