@@ -219,8 +219,23 @@ def kalabalik_karnesi(d: dict[str, Any]) -> dict[str, Any]:
         "piyasa_dogru": sum(1 for a, b in zip(piyasa, gercek) if a == b),
         # Bağımsızlık varsayımıyla rastgele bir halk kuponunun beklenen
         # doğru sayısı: her maçta gerçek sonuca oynayanların payı.
-        "beklenen_halk_dogru": sum(mm["play"][g] for mm, g in zip(maclar, gercek)),
-        "beklenen_piyasa_dogru": sum(mm["probs"][g] for mm, g in zip(maclar, gercek)),
+        #
+        # `math.fsum`, `sum` DEĞİL — ve fark bu depoda ÖLÇÜLDÜ. CPython
+        # 3.12 gömülü `sum()`ı float'lar için Neumaier telafili toplamaya
+        # çevirdi; aynı girdi 3.10/3.11'de `5.890000000000001`, 3.12/3.13'te
+        # `5.89` veriyor. İkisi de "doğru" ama bu değer SÜRÜMLENMİŞ bir
+        # üretilmiş dosyaya (`frontend/lib/super-toto-veri.json`) yazılıyor
+        # ve o dosyanın tazeliğini bayt eşitliğiyle denetleyen iki bekçi var
+        # (`super_toto_frontend.py --kontrol` ve
+        # `test_besleme_dosyasi_guncel`). Sonuç: dosyayı hangi yorumlayıcının
+        # ürettiği bayt düzeyinde görünür oluyordu ve CI'nın py3.12 ile
+        # py3.13 bacakları AYLARDIR bu yüzden kırmızıydı — kod değişmeden.
+        #
+        # `math.fsum` DOĞRU YUVARLANMIŞ sonucu verir, yani her CPython
+        # sürümünde aynıdır. Üretilmiş dosya böylece yorumlayıcıdan
+        # bağımsızlaşır; n=15'te maliyeti ölçülemez.
+        "beklenen_halk_dogru": math.fsum(mm["play"][g] for mm, g in zip(maclar, gercek)),
+        "beklenen_piyasa_dogru": math.fsum(mm["probs"][g] for mm, g in zip(maclar, gercek)),
     }
 
 

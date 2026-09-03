@@ -309,7 +309,7 @@ gövde ve doğrulama **tek**.
 |---|---|---|
 | `--doctest-modules` | Belgelerdeki **sayılar** eskiyor mu | İki yanlış sayı buldu (§5.3) |
 | `pytest-randomly` | Testler arası gizli varsayım | Bir kırılganlık buldu (§5.2) |
-| `interrogate` | Docstring kapsaması | Taban %75 (ölçülen %76,2) |
+| `interrogate` | Docstring kapsaması | Taban %75 (bugün ölçülen **%76,9** — kapının kendi çıktısı) |
 | `pip-audit` | Bağımlılık açıkları | Beyan edilen bağımlılıklar temiz |
 
 Doctest **tamamına değil, sayı üreten fonksiyonlara** konuldu:
@@ -325,11 +325,22 @@ yazılı değil ve projenin sürüm seçme yetkisi yok. Böyle bir kapı ya sür
 kırmızı durur ya da susturulur. `scripts/bagimliliklar.py` bu ayrımı yapıyor
 — `sports-betting`in `noxfile.py`ı da aynısını yapıyor.
 
-`bandit` **alınmadı**: ruff'in `select` listesi zaten `S` (flake8-bandit)
-kurallarını koşuyor.
+`bandit` **alınmadı** — ama buradaki gerekçe **yanlıştı ve düzeltildi**.
+Önce "ruff'in `select` listesi zaten `S` (flake8-bandit) kurallarını
+koşuyor" yazıyordu; `backend/pyproject.toml` `[tool.ruff.lint] select`
+listesinde **`S` yok**. Yani ikinci araç bu gerekçeyle reddedildi,
+birincisi hiç açılmadı ve güvenlik lint'i depoda **hiçbir yerde
+koşmadı**. Ölçüldü (2026-09-03): `S` toplam 3.037 bulgu üretiyor,
+2.966'sı `S101` (`assert` — süit ve `health` bilerek onun üstüne kurulu,
+saf gürültü). `S101` ve `tests/` dışarıda bırakılınca geriye **36**
+bulgu kalıyor. Açmak küçük bir iş; yapılmadı çünkü 36 bulgunun her biri
+ya bir gerekçe yorumu ya da gerçek bir sertleştirme istiyor.
 
 `interrogate` eşiği önce **90 yazıldı ve bu bir tahmindi**; kapı onu hemen
-düşürdü (gerçek %75,9). Ölçüldü, sonra biraz altına konuldu. Kendi kuralımızı
+düşürdü (o gün ölçülen %75,9; bugün %76,9 — sayı kod büyüdükçe **oynar**
+ve bu yüzden hiçbir belgeye tek başına yazılmamalıydı: eşik `%75` sabittir,
+kapsama değil. Yukarıdaki tablo artık günün ölçümünü değil, ölçümü üreten
+komutu gösteriyor). Ölçüldü, sonra biraz altına konuldu. Kendi kuralımızı
 (*"eşik ölçüm sonucuna bakılmadan değil, ölçülerek konur"*) ihlal eden bir
 satırı yine ölçüm düzeltti.
 
@@ -349,7 +360,7 @@ satırı yine ölçüm düzeltti.
 | `_resolver` (eşleştirme + normalizasyon) | Ölçüldü, dokunacağı vaka yok (§4) |
 | `find_betting_moment` | Aranan boşluk yoktu: `/api/tahmin` **açılış** oranı kullanıyor, ekranda yazıyor ve A1 farkını (Brier 0,5964 ↔ 0,5940) ölçmüş hâlde taşıyor |
 | `CHANGELOG.md` (53 KB) | `README.md` §-numaralı kayıt aynı işi gerekçeleriyle yapıyor; ikinci bir kronoloji ayrışırdı |
-| `bandit` | ruff `S` kurallarını zaten koşuyor |
+| `bandit` | **Gerekçe yanlıştı** — ruff `S` kurallarını koşmuyor (`select`te yok). §8'e bakın: ölçüldü, 36 gerçek bulgu, açmak ayrı bir karar |
 
 ---
 

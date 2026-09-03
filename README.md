@@ -983,7 +983,7 @@ backend/
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
                        sehir/ · xg/
-  tests/               pytest (64 dosya → 1.932 test; §9'da katman dökümü)
+  tests/               pytest (64 dosya → 1.935 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1176,7 +1176,7 @@ dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri t
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
 eşleme, ikinci kayıt). **64 test dosyası, parametrizasyonla
-1.932 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+1.935 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
@@ -1204,7 +1204,7 @@ karşı denetler):
 | Fiyat kaynakları | **`fiyatlar`** | 12 |
 | Kuyruk / bağımsızlık | **`kuyruk`** | 12 |
 | MCP deneyi | **`mcp`** | 11 |
-| Betik ortak katmanı | **`scripts_ortak`** | 7 |
+| Betik ortak katmanı | **`scripts_ortak`** | 10 |
 
 İki test bilerek **ağa çıkmaz**: `test_snapshot_iddaa.py` gerçek bültenden alınmış
 küçük bir örnek payload üzerinde koşar — ağ çağrısını sınamak bu paketin işi değil,
