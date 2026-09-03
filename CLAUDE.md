@@ -36,11 +36,15 @@ onlara güvenebilirsin. `sayilar` tazelenmez, yalnızca **denetlenir**: oturum
 açılışında "SUPHELI SAYI" uyarısı gördüysen o sayı **yeniden ölçülmeden
 kullanılmaz**.
 
-`sayilar` ve `komutlar` elle birikir ve graf git dışıdır — yani **taze klonda
-ikisi de boş gelir** (her uzak oturum böyledir). Sorgu bunu artık açıkça
-söylüyor ("… BOŞ — bu klonda hiç girdi yok"); o cevabı görürsen kütük yok
-demektir, "böyle bir kayıt yok" demek değildir. O durumda yukarıdaki kural
-seni taramadan muaf tutmaz: **ölç, sonra kütüğe yaz.**
+`sayilar` ve `komutlar` elle birikir ama **artık git'e girer**:
+`.claude/olcum_kutugu.json` sürümlenir, envanter (`.claude/bilgi_grafi.json`)
+sürümlenmez. Ayrım şu: envanter *türetilmiştir* (depodan 0,3 sn'de yeniden
+üretilir), ölçüm kütüğü *bir koşum kaydıdır* (komut koşmayı gerektirir,
+taranarak üretilemez). Önceden ikisi de git dışıydı ve kütük her taze klonda
+— yani her uzak oturumda — sıfırdan başlıyordu.
+
+Kütük boş gelirse bu artık "klon taze" değil **"hiç ölçülmemiş"** demektir.
+O durumda kural seni taramadan muaf tutmaz: **ölç, sonra kütüğe yaz.**
 
 **Graf kanıt değildir.** Çelişkide sıra: çalışan ölçüm > kod > belge > graf.
 `tazelik` bayat girdi gösteriyorsa o girdi **yeniden ölçülür**, düzeltilmiş

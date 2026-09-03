@@ -90,12 +90,21 @@ backend/data/bulten/_kaynak/
 # Yeniden olusturmak icin: python scripts/build_gecmis_sezon.py
 backend/data/st_history/_kaynak/
 
-# Ajan bilgi grafi (`.claude/skills/knowledge-graph/`). Depodan TURETILIR ve
-# tamami yeniden uretilebilir; surumlenseydi `git pull` yapan herkes bir
-# baskasinin eski kesfini bugunun gercegi sanardi — yani belgelerdeki bayat
-# sayi sorununun bekcisiz bir kopyasi olurdu. Bu defter yereldir.
-# Yeniden olusturmak icin: skill'deki tarifler
-# (`.claude/skills/knowledge-graph/references/sorgular.md`).
+# Ajan bilgi grafi (`.claude/skills/knowledge-graph/`) — ENVANTER bolumu.
+# `moduller`, `kapilar`, `boru_hatlari` depodan TURETILIR ve 0,3 saniyede
+# yeniden uretilir; surumlenseydi `git pull` yapan herkes bir baskasinin
+# eski kesfini bugunun gercegi sanardi — yani belgelerdeki bayat sayi
+# sorununun bekcisiz bir kopyasi olurdu. Bu dosya yereldir ve oturum
+# acilisinda kendiliginden tazelenir.
+#
+# OLCUM KUTUGU (`.claude/olcum_kutugu.json`) BURADA DEGIL ve BILEREK:
+# `sayilar`/`komutlar` turetilmis degil, bir KOSUM KAYDIDIR. "Bu sayi su
+# komuttan su tarihte cikti" depoyu tarayarak uretilemez. Git disi
+# tutuldugunda her taze klonda — yani her uzak oturumda — sifirdan
+# basliyordu ve deponun en pahali bilgisi her seferinde kayboluyordu.
+# Bayatlama korkusu orada da gecerli ama BEKCISIZ degil: `sayilar_denetle`
+# her oturum acilisinda her kaydi anildigi yerle karsilastirip "SUPHELI
+# SAYI" diye bildiriyor.
 .claude/bilgi_grafi.json
 
 # Graphify ciktisi (`graphify update .`). ~25 MB, TURETILMIS ve tamami

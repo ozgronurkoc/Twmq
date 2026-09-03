@@ -96,11 +96,21 @@ jobs:
 
       - name: Bagimliliklar
         run: |
-          # `model` ekstrasi da kuruluyor: `test_agac.py` ve `test_arama.py`
-          # `lightgbm`/`sklearn` yoksa ATLANIR, yani kurulmadiginda kapi
-          # yesil kalir ama olcum katmani hic kosmaz. Uretim bunlari
-          # tasimaz (`scripts/run_prod.sh`), CI tasir.
-          pip install -e "./backend[test,kalite,model]"
+          # BUTUN ekstralar kuruluyor ve gerekcesi tek cumle: bir ekstra
+          # kurulmadiginda ona bagli testler ATLANIR, kapi yine yesil kalir
+          # ve o yuzey HIC KOSMAZ. Sessiz atlama, kirmizi bir kapidan
+          # kotudur — cunku korunuyor sanirsin.
+          #
+          # Olculdu (2026-09-03), yalnizca `[test]` ile kosan matris isinde
+          # atlananlar: `test_agac.py`nin TAMAMI (lightgbm, modul duzeyi),
+          # `test_arama` (sklearn), `test_mcp` (mcp), `test_bulten` (ocr).
+          # `mcp` ve `ocr` bugune kadar HICBIR CI isinde kurulmamisti, yani
+          # o iki test bir kez bile CI'da kosmadi.
+          #
+          # Uretim bunlarin hicbirini tasimaz (`scripts/run_prod.sh`), CI
+          # tasir. `mcp` starlette+uvicorn getiriyor; bedeli kabul ediliyor
+          # cunku alternatifi denetlenmeyen bir yuzey.
+          pip install -e "./backend[test,kalite,model,mcp,ocr]"
           npm --prefix frontend ci
 
       # Yerelde kosulan komutun AYNISI. Tek satir olmasi kasitli: CI ile

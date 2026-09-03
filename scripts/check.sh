@@ -99,7 +99,12 @@ baslik "doctest (belgelerdeki sayılar hâlâ doğru mu)"
   spor_toto/odds.py spor_toto/egitim.py
 
 baslik "pytest (hızlı)"
-"$PY" -m pytest -m "not slow" -q
+# `-rs`: ATLANAN her test sebebiyle birlikte yazilir. `-q` onlari
+# gizliyordu ve sessiz atlama bu depoda gercek bir zarar verdi — `mcp` ve
+# `ocr` ekstralari hicbir CI isinde kurulmadigi icin iki test bir kez bile
+# kosmamisti ve kapi her seferinde yesil dedi. Gorunur bir atlama karar
+# konusudur; gorunmez olan bir yalandir.
+"$PY" -m pytest -m "not slow" -q -rs
 
 if [[ $HIZLI -eq 0 ]]; then
   baslik "pytest (yavaş ILP)"
