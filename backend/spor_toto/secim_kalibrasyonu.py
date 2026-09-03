@@ -70,6 +70,7 @@ edilen bir parametre değil. Manşet her zaman sabit varsayılan eşiktir;
 durumu kötüleştirir"*). Izgaranın "en iyi" satırı manşet DEĞİLDİR.
 
     python -m spor_toto.secim_kalibrasyonu
+    python -m spor_toto.secim_kalibrasyonu --esik 0.08 --sezon-kirilimi
     python -m spor_toto.secim_kalibrasyonu --kural deger --tarama
 """
 from __future__ import annotations
@@ -453,8 +454,14 @@ def _yuzde(x: float | None) -> str:
     return "—" if x is None else f"{100 * x:5.1f}%"
 
 
-def _yaz(sonuc: dict[str, Any]) -> None:  # pragma: no cover - elle kullanım
-    """Eşleştirilmiş tabloyu ve iki özeti okunur biçimde yazar."""
+def _yaz(sonuc: dict[str, Any],
+         sezon_tablosu: bool = False) -> None:  # pragma: no cover - elle kullanım
+    """Eşleştirilmiş tabloyu ve iki özeti okunur biçimde yazar.
+
+    `sezon_tablosu` yalnızca **dökümü** açar. Sezon işareti verdikti (tutuyor /
+    dönüyor) bayraktan bağımsız her zaman yazılır: `§3.21`in ikinci uyarısı
+    isteğe bağlı bir ek değil, bir sayıya "bulgu" demenin şartıdır.
+    """
     print(f"kural: {sonuc['kural']}  ·  " +
           "  ·  ".join(f"{k}={v}" for k, v in sonuc.items()
                        if k in ("aday", "esik", "pazar", "alpha", "n_hafta")))
@@ -484,13 +491,17 @@ def _yaz(sonuc: dict[str, Any]) -> None:  # pragma: no cover - elle kullanım
               f"{'İÇİNDE' if b['icinde'] else 'DIŞINDA'}")
     kir = sonuc.get("sezon_kirilimi") or []
     if kir:
-        print("\nsezon sezon aşırı güven (§3.21'in ikinci uyarısı):")
-        for r in kir:
-            print(f"  {r['sezon']:>10}  n={r['n']:>6,}  {_yuzde(r['asiri_guven'])}"
-                  f"  {'' if r['icinde'] else '*'}")
+        if sezon_tablosu:
+            print("\nsezon sezon aşırı güven (§3.21'in ikinci uyarısı):")
+            for r in kir:
+                print(f"  {r['sezon']:>10}  n={r['n']:>6,}  {_yuzde(r['asiri_guven'])}"
+                      f"  {'' if r['icinde'] else '*'}")
         isaretler = {(r["asiri_guven"] or 0) > 0 for r in kir}
-        print("  → işaret " + ("TUTUYOR (hepsi aynı yönde)" if len(isaretler) == 1
-                               else "DÖNÜYOR — havuzlanmış sapma bütün sezonların değil"))
+        tutuyor = len(isaretler) == 1
+        print(f"  sezon işareti ({len(kir)} sezon): " +
+              ("TUTUYOR — hepsi aynı yönde" if tutuyor
+               else "DÖNÜYOR — havuzlanmış sapma bütün sezonların değil") +
+              ("" if sezon_tablosu else "  (döküm: --sezon-kirilimi)"))
     print(f"sapan bant: hepsi {sonuc['sapan_bant_hepsi']}/{sonuc['toplam_bant_hepsi']}"
           f" · seçilen {sonuc['sapan_bant_secilen']}/{sonuc['toplam_bant_secilen']}"
           f" · eşleşmeyen {sonuc['eslesmeyen_bant']}"
@@ -540,7 +551,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                   f"{100 * r['secim_orani']:6.1f}% {_yuzde(r['asiri_guven'])} {bayrak} "
                   f"{bonf:>7}  {isaret}")
     else:
-        _yaz(sonuc)
+        _yaz(sonuc, sezon_tablosu=a.sezon_kirilimi)
     return 0
 
 
