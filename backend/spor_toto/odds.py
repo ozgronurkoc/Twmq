@@ -434,7 +434,9 @@ def provenance_notu(bloklar: Sequence[dict[str, Any]]) -> str:
 
 
 def match_1x2(row: dict[str, Any],
-              yontem: str = ARINDIRMA_VARSAYILAN) -> dict[str, Any] | None:
+              yontem: str = ARINDIRMA_VARSAYILAN,
+              kaynaklar: Sequence[str] = KAYNAK_SIRASI,
+              ) -> dict[str, Any] | None:
     """Bir maçın maç sonucu oranı: önce kapanış, yoksa açılış.
 
     Hangi kaynaktan, hangi dönemden ve **hangi arındırmayla** geldiği çıktıda
@@ -446,11 +448,19 @@ def match_1x2(row: dict[str, Any],
     yayımlanmış sayıları orantısal ölçekte ölçülmüştür ve yenileriyle
     doğrudan kıyaslanamaz (bkz. `implied_probs` ve `ARINDIRMA_VARSAYILAN`
     üstündeki not).
+
+    `kaynaklar` omurgayı **ölçülebilir** kılar. Varsayılan `KAYNAK_SIRASI`
+    ve o sırayla `Avg` kazanıyor (arşivde 567/567 maçı kapıyor). Tek
+    kaynaklı bir dizi verildiğinde — ör. `("BFE",)` — aynı kesit başka bir
+    fiyattan kurulur ve iki omurga eşleştirilmiş olarak kıyaslanabilir;
+    §3.52 Betfair'in Brier'de geçtiğini ölçtü ama omurga sorusu **kupon
+    düzeyinde** ölçülmeden değişmez. Kapsama eksikse `None` döner, yani
+    çağıran hangi maçların düştüğünü sayabilir.
     """
     if not row.get("matched"):
         return None
     for kapanis in (True, False):
-        for kaynak in KAYNAK_SIRASI:
+        for kaynak in kaynaklar:
             oranlar = market_odds(row, "1X2", kaynak, closing=kapanis)
             if len(oranlar) != 3 or any(v <= 1.0 for v in oranlar.values()):
                 continue

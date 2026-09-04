@@ -71,6 +71,7 @@ yoktur: aynı haftanın aynı TL'si iki kolda da kullanılır, enflasyon götür
     python -m spor_toto.karne --garanti 14 --butce 2000
     python -m spor_toto.karne --taban --garanti 14 --butce 2000   # E1
     python -m spor_toto.karne --hedef --garanti 14 --butce 2000   # E2
+    python -m spor_toto.karne --omurga BFE --garanti 14 --butce 2000  # E3
 """
 from __future__ import annotations
 
@@ -261,7 +262,9 @@ def anormal_hafta_anahtarlari(dizin: Any = None) -> set[tuple[str, int]]:
     return anormal_haftalar(dizin)
 
 
-def kupon_kesiti(dizin: Any = None) -> list[dict[str, Any]]:
+def kupon_kesiti(dizin: Any = None,
+                 kaynaklar: Sequence[str] | None = None,
+                 ) -> list[dict[str, Any]]:
     """Ölçümün kesiti: **on beş maçında da oran olan VE ikramiyesi ilan
     edilmiş** haftalar.
 
@@ -269,10 +272,16 @@ def kupon_kesiti(dizin: Any = None) -> list[dict[str, Any]]:
     tam olarak burasıdır: `data/odds/*.csv` kuponun maçlarını ve piyasa
     oranını, `data/sportoto_arsiv/*.json` o haftanın **gerçek** kademe
     tablosunu taşıyor.
+
+    `kaynaklar` verilirse kesit o fiyattan kurulur (`odds.match_1x2`).
+    **On beş maçın on beşinde de fiyat şartı korunur**, yani BFE gibi
+    kısmi kapsamalı bir kaynakta kesit kendiliğinden daralır — daraldığı
+    yer de bilgidir ve `omurga_kiyasi` onu sayar.
     """
     from .core import SEMBOLLER
-    from .odds import load_odds, match_1x2
+    from .odds import KAYNAK_SIRASI, load_odds, match_1x2
 
+    kay = KAYNAK_SIRASI if kaynaklar is None else tuple(kaynaklar)
     ars = ikramiye_tablolari(dizin)
     out: list[dict[str, Any]] = []
     for sezon in sorted({s for s, _ in ars}, reverse=True):
@@ -282,7 +291,7 @@ def kupon_kesiti(dizin: Any = None) -> list[dict[str, Any]]:
             continue
         haftalik: dict[int, list[tuple[dict[str, Any], str]]] = {}
         for r in satirlar:
-            b = match_1x2(r)
+            b = match_1x2(r, kaynaklar=kay)
             if b and r.get("code") in SEMBOLLER:
                 haftalik.setdefault(r["week"], []).append((b, r["code"]))
         for w, lst in sorted(haftalik.items()):
@@ -488,6 +497,154 @@ def hedef_kademe_kiyasi(butce_tl: float = 2000.0,
             "kollar": kollar_ozet, "farklar": farklar, "basabas": basabas}
 
 
+def omurga_kiyasi(butce_tl: float = 2000.0,
+                  garanti: int = 14,
+                  aday: str = "BFE",
+                  omurga: str | None = None) -> dict[str, Any]:
+    """E3: omurga fiyatını **kupon düzeyinde** kıyasla — Brier'de değil TL'de.
+
+    §3.52 Betfair Exchange'in Brier'de geçtiğini ölçtü (−0,00100, Holm'lu)
+    ve marjının omurganınkinin onda biri olduğunu gösterdi. Ama omurgayı
+    değiştirmenin ölçüsü Brier değildir: §3.19 karar katmanının +6,02
+    puanı için tahmin tarafında ~0,10 Brier gerekirdiğini ölçtü, yani
+    −0,001 kupon için görünmez. **Marj farkı ise Brier'de görünmeyen bir
+    etkidir** — arındırma ne kadar az müdahale ederse olasılık o kadar az
+    bozulur ve kupon şekli değişebilir.
+
+    Bu yüzden ölçü üç kupon sayısıdır: kolon, `P(hedef)` ve **gerçek kolon
+    ödülü**. Kesit ikisinde de aynı haftalardan kurulur (eşleştirme), yani
+    BFE'nin kapsamadığı haftalar iki koldan da düşer.
+    """
+    from .odds import FIYAT_VARSAYILAN
+
+    ana = FIYAT_VARSAYILAN if omurga is None else omurga
+    kollar: dict[str, dict[tuple[str, int], dict[str, Any]]] = {}
+    kesit_boy: dict[str, int] = {}
+    for ad in (ana, aday):
+        kesit = kupon_kesiti(kaynaklar=(ad,))
+        kesit_boy[ad] = len(kesit)
+        kol: dict[tuple[str, int], dict[str, Any]] = {}
+        for h in kesit:
+            plan = sistem_secimi(h["probs"], butce_tl, garanti=garanti)
+            if plan is None:
+                continue
+            ham = gercek_kolon_dagilimi(plan.secimler, h["gercek"])
+            if not ham:
+                continue
+            olcek = plan.bedel / sum(ham.values())
+            maliyet = plan.bedel * KOLON_BEDELI
+            odul = gercek_odul({k: v * olcek for k, v in ham.items()},
+                               h["tablo"]) or 0.0
+            kol[(h["sezon"], h["hafta"])] = {
+                "maliyet": maliyet, "odul": odul, "roi": odul / maliyet,
+                "kolon": plan.bedel, "p_hedef": plan.p_hedef,
+                "kacak": sum(1 for sc, c in zip(plan.secimler, h["gercek"])
+                             if c not in sc),
+            }
+        kollar[ad] = kol
+    ortak = sorted(set(kollar[ana]) & set(kollar[aday]))
+
+    ozet = []
+    for ad in (ana, aday):
+        v = [kollar[ad][k] for k in ortak]
+        ozet.append({
+            "kaynak": ad, "kesit_hafta": kesit_boy[ad], "hafta": len(v),
+            "roi": (sum(x["odul"] for x in v) / sum(x["maliyet"] for x in v)
+                    if v else 0.0),
+            "odul_alan_hafta": sum(1 for x in v if x["odul"] > 0),
+            "ort_kolon": _ortalama([x["kolon"] for x in v]),
+            "ort_p_hedef": _ortalama([x["p_hedef"] for x in v]),
+            "ort_kacak": _ortalama([float(x["kacak"]) for x in v]),
+        })
+
+    farklar = {}
+    for alan in ("roi", "p_hedef", "kacak"):
+        f = [float(kollar[aday][k][alan]) - float(kollar[ana][k][alan])
+             for k in ortak]
+        alt, ust = bootstrap_farki(f)
+        en_iyi = sorted(range(len(ortak)),
+                        key=lambda j: -kollar[aday][ortak[j]]["odul"]
+                        )[:KUYRUK_HAFTA]
+        ks = [x for j, x in enumerate(f) if j not in set(en_iyi)]
+        kalt, kust = bootstrap_farki(ks)
+        farklar[alan] = {
+            "ort": _ortalama(f), "alt": alt, "ust": ust,
+            "sifir_disinda": alt > 0.0 or ust < 0.0,
+            "kuyruksuz_ort": _ortalama(ks),
+            "kuyruksuz_alt": kalt, "kuyruksuz_ust": kust,
+            "kuyruksuz_sifir_disinda": kalt > 0.0 or kust < 0.0,
+        }
+    ayni_kupon = sum(1 for k in ortak
+                     if kollar[ana][k]["kolon"] == kollar[aday][k]["kolon"]
+                     and kollar[ana][k]["kacak"] == kollar[aday][k]["kacak"])
+    return {"butce": butce_tl, "garanti": garanti, "omurga": ana,
+            "aday": aday, "hafta": len(ortak), "kollar": ozet,
+            "farklar": farklar, "ayni_sekil_ve_kacak": ayni_kupon,
+            "p_ayrisimi": p_ayrisimi(butce_tl, garanti, aday, ana)}
+
+
+def _p_hedef(secimler: Sequence[Sequence[str]],
+             probs_listesi: Sequence[dict[str, float]], esik: int) -> float:
+    """`P(k ≤ esik)` — verilen işaret planını verilen olasılıkla puanlar.
+
+    `sistem_secimi` bunu DP'nin içinde hesaplıyor ve **kendi seçtiği**
+    planla; burası aynı hesabı **dışarıdan verilen** bir planla yapar, ki
+    aynı kupon iki farklı fiyatla puanlanabilsin.
+    """
+    q = [max(0.0, 1.0 - sum(p.get(sym, 0.0) for sym in sec))
+         for sec, p in zip(secimler, probs_listesi)]
+    kum = [1.0] + [0.0] * esik
+    for qq in q:
+        yeni = [kum[0] * (1.0 - qq)]
+        for m in range(1, esik + 1):
+            yeni.append(kum[m] * (1.0 - qq) + kum[m - 1] * qq)
+        kum = yeni
+    return sum(kum)
+
+
+def p_ayrisimi(butce_tl: float = 2000.0, garanti: int = 14,
+               aday: str = "BFE", omurga: str | None = None,
+               ) -> dict[str, Any]:
+    """`P(hedef)` farkının ne kadarı **seçim değişmeden** geliyor?
+
+    Bu ayrışım olmadan `omurga_kiyasi`nin `p_hedef` satırı yanlış okunur.
+    `P(hedef)` bir sonuç değil **modelin kendi güvenidir**: daha keskin bir
+    olasılık, isabet hiç değişmese bile onu büyütür. Yani aday fiyatın
+    `P(hedef)`i anlamlı biçimde yüksek çıkması tek başına *hiçbir şey*
+    söylemez.
+
+    Ayrışım şöyle kurulur: omurganın kurduğu kupon **sabit tutulur** ve iki
+    fiyatla ayrı ayrı puanlanır. Kalan pay seçimin gerçekten değişmesinden
+    gelir.
+    """
+    from .odds import FIYAT_VARSAYILAN
+    from .sistem import HEDEF_KADEME as _hk
+    from .sistem import kacak_esigi
+
+    ana = FIYAT_VARSAYILAN if omurga is None else omurga
+    esik = kacak_esigi(garanti, _hk)
+    a_kesit = {(h["sezon"], h["hafta"]): h
+               for h in kupon_kesiti(kaynaklar=(ana,))}
+    b_kesit = {(h["sezon"], h["hafta"]): h
+               for h in kupon_kesiti(kaynaklar=(aday,))}
+    sabit, serbest = [], []
+    for k in sorted(set(a_kesit) & set(b_kesit)):
+        pa = sistem_secimi(a_kesit[k]["probs"], butce_tl, garanti=garanti)
+        pb = sistem_secimi(b_kesit[k]["probs"], butce_tl, garanti=garanti)
+        if pa is None or pb is None:
+            continue
+        sabit.append(_p_hedef(pa.secimler, b_kesit[k]["probs"], esik)
+                     - _p_hedef(pa.secimler, a_kesit[k]["probs"], esik))
+        serbest.append(pb.p_hedef - pa.p_hedef)
+    o_sabit, o_serbest = _ortalama(sabit), _ortalama(serbest)
+    return {
+        "hafta": len(sabit),
+        "serbest": o_serbest,
+        "sekil_sabit": o_sabit,
+        "keskinlik_payi": (o_sabit / o_serbest) if o_serbest else None,
+    }
+
+
 def _main(argv: list[str] | None = None) -> int:  # pragma: no cover - elle
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--garanti", type=int, default=VARSAYILAN_GARANTI)
@@ -496,6 +653,8 @@ def _main(argv: list[str] | None = None) -> int:  # pragma: no cover - elle
                     help="tabanin gevsekligini olc (yalniz 14-garanti)")
     ap.add_argument("--hedef", action="store_true",
                     help="E2: hedef kademeyi paradan sec (yalniz 14-garanti)")
+    ap.add_argument("--omurga", metavar="ADAY", default=None,
+                    help="E3: omurga fiyatini kupon duzeyinde kiyasla (or. BFE)")
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args(argv)
 
@@ -520,6 +679,42 @@ def _main(argv: list[str] | None = None) -> int:  # pragma: no cover - elle
         print("\n  kacak -> 12+ tutturan ortalama kolon sayisi")
         for k, v in t["kacak_kolon"].items():
             print(f"  {k:>7} {v:>12.1f}")
+        return 0
+
+    if a.omurga:
+        o = omurga_kiyasi(a.butce or 2000.0, a.garanti, aday=a.omurga)
+        if a.json:
+            print(json.dumps(o, ensure_ascii=False, default=str))
+            return 0
+        print(f"\nOmurga fiyati — {o['omurga']} ↔ {o['aday']} · "
+              f"{o['garanti']}-garanti · {o['butce']:,.0f} TL · "
+              f"{o['hafta']} ORTAK hafta")
+        print(f"\n{'kaynak':>8}{'kesit':>7}{'ortak':>7}{'geri donus':>12}"
+              f"{'odul>0':>8}{'ort kolon':>11}{'ort P':>8}{'ort kacak':>11}")
+        for k in o["kollar"]:
+            print(f"{k['kaynak']:>8}{k['kesit_hafta']:>7}{k['hafta']:>7}"
+                  f"{k['roi']:>11.1%}{k['odul_alan_hafta']:>8}"
+                  f"{k['ort_kolon']:>11.0f}{k['ort_p_hedef']:>8.4f}"
+                  f"{k['ort_kacak']:>11.2f}")
+        print(f"\nayni sekil VE ayni kacak: {o['ayni_sekil_ve_kacak']}/"
+              f"{o['hafta']} hafta")
+        print(f"\nESLESTIRILMIS FARK ({o['aday']} − {o['omurga']}), "
+              "hafta bootstrap %95")
+        for alan, f in o["farklar"].items():
+            print(f"  {alan:>8}: {f['ort']:>+9.5f} "
+                  f"[{f['alt']:>+9.5f}, {f['ust']:>+9.5f}]  "
+                  f"{'SIFIR DISINDA' if f['sifir_disinda'] else 'sifiri kesiyor'}"
+                  f"  | kuyruksuz {f['kuyruksuz_ort']:>+9.5f} "
+                  f"[{f['kuyruksuz_alt']:>+9.5f}, {f['kuyruksuz_ust']:>+9.5f}]")
+        ay = o["p_ayrisimi"]
+        print(f"\nP(hedef) AYRISIMI — {ay['hafta']} hafta")
+        print(f"  serbest (her fiyat kendi kuponunu kurar): "
+              f"{ay['serbest']:>+9.5f}")
+        print(f"  sekil sabit ({o['omurga']} kuponu, {o['aday']} olasiligi): "
+              f"{ay['sekil_sabit']:>+9.5f}")
+        if ay["keskinlik_payi"] is not None:
+            print(f"  -> farkin %{100 * ay['keskinlik_payi']:.0f}'i SECIM "
+                  "DEGISMEDEN, yalnizca olasiligin keskinliginden geliyor")
         return 0
 
     if a.hedef:

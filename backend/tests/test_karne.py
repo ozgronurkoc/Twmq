@@ -329,3 +329,50 @@ def test_hedef_SIKILASINCA_tutturma_olasiligi_DUSER():
     h = karne.hedef_kademe_kiyasi(2000.0, garanti=14, hafta_siniri=6)
     p = {k["kademe"]: k["ort_p_hedef"] for k in h["kollar"]}
     assert p[12] > p[13] > p[14]
+
+
+# ─── E3: omurga fiyatı kupon düzeyinde ────────────────────────────────────
+
+def test_kupon_kesiti_FIYATA_gore_daralir():
+    """Kesit istenen fiyattan kurulur ve kapsama eksikse KENDILIGINDEN daralır.
+
+    BFE 2022/23–2023/24'te hiç yok; omurga (`Avg`) 567/567 maçı kapıyor.
+    Kıyas eşleştirilmiş olacaksa bu daralmanın görünür olması şart — yoksa
+    iki kol farklı haftalardan kurulur ve fark enflasyonu taşır.
+    """
+    from spor_toto.odds import FIYAT_VARSAYILAN
+
+    ana = karne.kupon_kesiti(kaynaklar=(FIYAT_VARSAYILAN,))
+    bfe = karne.kupon_kesiti(kaynaklar=("BFE",))
+    assert len(ana) > len(bfe) > 0
+    anahtar = {(h["sezon"], h["hafta"]) for h in ana}
+    assert {(h["sezon"], h["hafta"]) for h in bfe} <= anahtar, \
+        "aday fiyat omurganin gormedigi bir hafta uretemez"
+
+
+def test_p_hedef_AYNI_kuponu_iki_fiyatla_puanlayabiliyor():
+    """`_p_hedef` dışarıdan verilen planı puanlar — ayrışımın temeli."""
+    sec = [["1", "0"]] * 15
+    kesin = [{"1": 1.0, "0": 0.0, "2": 0.0}] * 15
+    belirsiz = [{"1": 0.34, "0": 0.33, "2": 0.33}] * 15
+    assert karne._p_hedef(sec, kesin, 2) == pytest.approx(1.0)
+    assert karne._p_hedef(sec, belirsiz, 2) < 0.2
+    # Esik genisledikce P buyur — tanim geregi.
+    assert karne._p_hedef(sec, belirsiz, 3) > karne._p_hedef(sec, belirsiz, 2)
+
+
+@pytest.mark.slow
+def test_omurga_kiyasi_P_farkinin_ayrisimini_ZORUNLU_veriyor():
+    """`p_hedef` farkı ayrışım olmadan yayımlanamaz.
+
+    `P(hedef)` bir sonuç değil modelin kendi güvenidir: daha keskin bir
+    olasılık, isabet hiç değişmese bile onu büyütür. Ayrışım o payı ölçer;
+    çıktıda yoksa satır yanlış okunur.
+    """
+    o = karne.omurga_kiyasi(2000.0, garanti=14, aday="BFE")
+    assert o["hafta"] > 0
+    ay = o["p_ayrisimi"]
+    assert ay["hafta"] > 0
+    assert ay["keskinlik_payi"] is not None
+    # Sekil sabitken de bir fark KALIR — yoksa ayrisim bilgi tasimiyordur.
+    assert abs(ay["sekil_sabit"]) > 0.0

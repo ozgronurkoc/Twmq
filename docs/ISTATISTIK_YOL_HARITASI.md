@@ -153,7 +153,7 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/components/super-toto/tahmin2.tsx` | **2. Tahmin** paneli — `1. Tahmin` / `2. Tahmin` sekmeleri arasında geçilir; para birimli hiçbir sayı yok. Hafta kapandığında sonuç sütunu ve ayar karnesi açılır (§3.38) |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **2.035 test**; **85'i** istatistik katmanına (`history` `odds` `backtest`
+paketi toplam **2.038 test**; **85'i** istatistik katmanına (`history` `odds` `backtest`
 `api_stats` `api_backtest` `snapshot_iddaa`), **579'u** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre`
@@ -4988,6 +4988,48 @@ noktası değil, kaçaksız hafta oranının 114'te 4 olması. Eski 13G kaydı
 silinmedi, ölçek notuyla yerinde bırakıldı — §3.51'in 15,1 katı garantiler
 arası taşımayı geçersiz kılıyor.
 
+### 3.58 Omurga fiyatı kupon düzeyinde (E3) — `Avg` kalıyor, ve "geçen" sayı bir tuzak
+
+§3.52 Betfair Exchange'in Brier'de geçtiğini ölçtü (−0,00100, beş aday
+üzerinde Holm'lu) ve marjının omurganınkinin onda biri olduğunu gösterdi.
+Omurgayı değiştirmenin ölçüsü ise Brier değil: §3.19 karar katmanının
++6,02 puanı için tahmin tarafında ~0,10 Brier gerekirdiğini ölçmüştü, yani
+−0,001 kupon için görünmez. Marj farkı ise Brier'de görünmez — o yüzden
+ölçüm kupon düzeyinde yeniden kuruldu.
+
+```
+cd backend && python -m spor_toto.karne --omurga BFE --garanti 14 --butce 2000
+```
+
+Kesit eşleştirilmiş (BFE 2022/23–2023/24'te hiç yok): **64 ortak hafta**.
+
+| ölçü (BFE − Avg) | ortalama | %95 aralık | |
+|---|---:|---|---|
+| gerçek kolon ROI | −0,01074 | [−0,06232, +0,02558] | sıfırı kesiyor |
+| `P(hedef)` | +0,00758 | **[+0,00594, +0,00924]** | sıfır dışında |
+| gerçekleşen kaçak | −0,04688 | [−0,14062, +0,04688] | sıfırı kesiyor |
+
+Durma kuralı gerçekleşen paraya bakıyordu: **omurga `Avg` kalır.**
+
+**Ve tek "geçen" satır bir tuzak — bu, sonucun kendisinden önemli.**
+`P(hedef)` bir sonuç değil **modelin kendi güvenidir**; daha keskin bir
+olasılık, isabet hiç değişmese bile onu büyütür. Ayrıştırıldı: aynı kupon
+(omurganın kurduğu) iki fiyatla puanlandığında fark **+0,00611**, serbest
+farkın tamamı +0,00758 — yani **%81'i seçim hiç değişmeden** geliyor. İlk
+iki sembolün ortalama kütlesi 0,7880 → 0,7904, favori isabeti 548/960 →
+550/960, ve 64 haftanın 53'ünde iki fiyat aynı şekli **ve** aynı kaçağı
+veriyor.
+
+Bu §3.52'yi çürütmez — BFE gerçekten daha iyi kalibre. Söylediği şey, o
+iyiliğin kupon düzeyinde ölçülebilir bir karşılığı olmadığı. Ayrışım artık
+`karne.omurga_kiyasi`nin zorunlu çıktısı ve bekçisi var: `P(hedef)` farkı
+ayrışım olmadan yayımlanamaz.
+
+**Genel ders, §3.57'nin yapısal bulgusuyla aynı yöne bakıyor.** Kupon
+sayıları iki gruba ayrılıyor: modelin kendi ürettiği (`P(hedef)`, `E[TL]`)
+ve dışarıdan gelen (gerçekleşen kaçak, gerçek kolon ödülü). Birincisi
+girdinin keskinliğiyle birlikte büyür ve kendi başına kanıt değildir.
+
 ## 4. Sayfada bugün ne var
 
 **`/istatistik`** — sezon dağılımı (en sık sonuç + pay çubuğu) · 5 sayı kutusu (sembol
@@ -5162,6 +5204,7 @@ her şeyi zaten içeriyor.
 > | **Kalabalık modeli** (§3.50) | `λ = 1,7608` [1,669, 1,865] — aralık 1'i içermiyor. K4 durma kuralı **geçti** (4/4 sezon, iki bootstrap aralığı da sıfırı kesmiyor). `favori` iki bağımsız yoldan çürüdü: hafta başına ~4 kat kötü uyum **ve** haftada 10¹⁷ kolonluk imkânsız havuz. §3.34'ün 22 katlık belirsizliğinin `favori` ucu **kapandı** |
 > | **Kalabalıktan sapmak** (§3.51) | Makul her kısıtta gerçekleşen kazanç **sıfır**; kısıtsız arama **−1.439 TL**. Tavan ölçümü üç kez düzeldi (2,63× → 1,003× → +0 TL) ve zincirin kendisi bulgudur. `n = 3` — eksen kapalı değil |
 > | **Garanti tabanının gevşekliği** (§3.56) | **2,39 kat** — taban %10,1 diyor, gerçek kolon dağılımı %24,2 veriyor (114 hafta, 14G, 2.000 TL). Yanlılık eğik: 12+ tutturan kolon sayısı kaçak 0'da 26,8, kaçak 2'de 1,3, taban her durumda 1. Ama açık kapanmadı — %24,2 hâlâ 1'in altında, yani geri dönüş açığı bir ölçüm kusuru değil. Yan bulgu: motorun kaplaması satıcınınkinden **%28,6 gevşek** |
+> | **Omurga fiyatı** (§3.58) | **`Avg` kalıyor.** BFE − Avg gerçek kolon ROI farkı −0,01074 [−0,06232, +0,02558] (64 ortak hafta) — sıfırı kesiyor. Tek geçen ölçü `P(hedef)` (+0,00758 [+0,00594, +0,00924]) ve o bir tuzak: farkın **%81'i seçim hiç değişmeden**, yalnızca BFE'nin olasılığının keskinliğinden geliyor. §3.52'nin Brier bulgusunun kupon düzeyinde karşılığı yok |
 > | **Hedef kademe** (§3.57) | **12 kalıyor.** 13 − 12 eşleştirilmiş ROI farkı +0,00928 [+0,00000, +0,02724] — sıfırı kesiyor, kuyruk sınavında da. Sebebi yapısal: üç hedef de aynı şekli alıyor (168 kolon), çünkü **şekli bütçe belirliyor, hedef değil**. Yan ürün: 12 tutturmak kaçaksız haftalarda maliyeti **karşılıyor** (medyan 1,34×) — tabana dayalı eski okumanın düzeltmesi |
 
 
@@ -5981,7 +6024,7 @@ python -m spor_toto.kosum                  # kayıtlı koşumlar
 python -m spor_toto.kosum --son disari     # son koşumun ortamı
 
 # Denetim
-pytest -q                                  # 2.035 test (85'i bu katman, 583'ü tahmin)
+pytest -q                                  # 2.038 test (85'i bu katman, 583'ü tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out

@@ -1413,6 +1413,53 @@ F2 geçti ama omurga hâlâ `Avg` kullanıyor. İki gerekçe var ve ikisi de
 ölçeğinde. Omurga değişirse `odds.py:162-164` kalıbı uygulanır — eski
 sayılar ölçek notuyla yerinde bırakılır.
 
+### E3 — ÖLÇÜLDÜ: omurga **`Avg` kalıyor**, ve "geçen" sayı bir tuzakmış
+
+```
+cd backend && python -m spor_toto.karne --omurga BFE --garanti 14 --butce 2000
+```
+
+Kesit eşleştirilmiş: BFE 2022/23–2023/24'te hiç yok, o yüzden 114 haftadan
+**64 ortak hafta** kalıyor ve iki kol da aynı haftalardan kuruluyor.
+
+| kaynak | kesit | ortak | geri dönüş | ödül>0 | ort. kolon | ort. `P` | ort. kaçak |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| `Avg` | 114 | 64 | %33,1 | 25 | 168 | 0,3233 | 2,94 |
+| `BFE` | 64 | 64 | %32,1 | 27 | 168 | 0,3309 | 2,89 |
+
+Eşleştirilmiş fark (BFE − Avg), hafta düzeyi bootstrap %95:
+
+| ölçü | ortalama | %95 aralık | |
+|---|---:|---|---|
+| **gerçek kolon ROI** | −0,01074 | [−0,06232, +0,02558] | sıfırı kesiyor |
+| `P(hedef)` | +0,00758 | **[+0,00594, +0,00924]** | sıfır dışında |
+| gerçekleşen kaçak | −0,04688 | [−0,14062, +0,04688] | sıfırı kesiyor |
+
+E3'ün önceden yazılmış durma kuralı gerçekleşen paraya bakıyordu ve o
+sıfırı kesiyor: **omurga `Avg` kalır.**
+
+**Ama asıl bulgu `P(hedef)` satırında ve o satır bir tuzak.** Tek "geçen"
+ölçü o — ve `P(hedef)` bir **sonuç değil, modelin kendi güvenidir**: daha
+keskin bir olasılık, isabet hiç değişmese bile onu büyütür. Ayrıştırıldı:
+
+| | |
+|---|---:|
+| serbest (her fiyat kendi kuponunu kurar) | +0,00758 |
+| **şekil sabit** (`Avg`'nin kuponu, `BFE` olasılığıyla puanlanmış) | **+0,00611** |
+| → farkın **%81**'i seçim **hiç değişmeden** geliyor | |
+
+Yani anlamlı görünen kazancın dörtte üçünden fazlası kuponda hiçbir şey
+değişmeden, yalnızca BFE'nin olasılığının keskin olmasından geliyor (ilk
+iki sembolün ortalama kütlesi 0,7880 → 0,7904). Favori isabeti pratikte
+aynı: 548/960 → 550/960. 64 haftanın 53'ünde iki fiyat **aynı şekli ve aynı
+kaçağı** veriyor.
+
+Bu, F2'nin Brier bulgusunu (§3.52) çürütmez — BFE gerçekten daha iyi
+kalibre. Söylediği şey, o iyiliğin kupon düzeyinde **ölçülebilir bir
+karşılığı olmadığı**. Ve `p_ayrisimi` artık `omurga_kiyasi`nin zorunlu
+çıktısı: bekçisi (`test_omurga_kiyasi_P_farkinin_ayrisimini_ZORUNLU_veriyor`)
+ayrışım olmadan bu satırın yayımlanmasını engelliyor.
+
 ---
 
 ## E4 — Sütun arayışının son denemesi: hakem (5. hafta)
@@ -1461,7 +1508,7 @@ yaklaşma.
 | E1 | `spor_toto/karne.py` · hafta yükü şeması | ✅ 14G ölçüldü (`--taban`); 13G için `kupon_sonuc` alanı bekliyor |
 | E2 | `spor_toto/sistem.py` · `spor_toto/secim.py` | ✅ ölçüldü (14G) — `HEDEF_KADEME = 12` **değişmedi**, ölçüm onu doğruladı |
 | E2 | `spor_toto/karne.py` | ✅ `hedef_kademe_kiyasi` (`--hedef`) — 114 hafta × gerçek kolon ödülü |
-| E3 | `spor_toto/odds.py` · `spor_toto/fiyatlar.py` | BFE omurga adayı, kupon düzeyi ölçüm |
+| E3 | `spor_toto/karne.py` (`omurga_kiyasi`) · `spor_toto/odds.py` (`match_1x2` fiyat parametresi) | ✅ ölçüldü — omurga `Avg` KALDI; `P(hedef)` ayrışımı zorunlu çıktı |
 | E4 | `scripts/build_egitim.py` · `spor_toto/disari.py` · `spor_toto/arena.py` | hakem sütunu + aile |
 | E5 | — | veri girişi |
 
@@ -1491,8 +1538,9 @@ sözleşmesi kırmızıydı.
 2. ~~**E2'nin cevabı "12 kalır" olabilir**~~ — **öyle çıktı** (2026-09-04,
    14G). Üç hedefin farkı da sıfırı kesiyor, kuyruk sınavında da. Meşru
    bir sonuç ve bölüm o cevapla kapandı. 13-garantide ölçülmedi.
-3. **E3 omurgayı değiştirirse** yayımlanmış bütün geri test sayıları eski
-   ölçekte kalır; not düşülür, silinmez.
+3. ~~**E3 omurgayı değiştirirse**~~ — **değiştirmedi** (2026-09-04):
+   gerçek kolon ROI farkı sıfırı kesti, omurga `Avg` kaldı ve yayımlanmış
+   hiçbir sayı ölçek değiştirmedi. Risk kapandı.
 4. **E4'ün önseli düşük** ve öyle yazıldı. Geçerse **Holm'la** geçmeli.
 5. **`n` hâlâ küçük.** Altı hafta sonunda 9; kuyruk ağırlıklı para
    sayıları için az. Bu tur bir cevap değil, cevaba **doğru bir adım**.

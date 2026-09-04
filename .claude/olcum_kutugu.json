@@ -2,7 +2,7 @@
  "sayilar": [
   {
    "ne": "suit test sayisi (eksiksiz kurulum)",
-   "deger": "2.035",
+   "deger": "2.038",
    "ureten": "cd backend && pytest -p no:randomly -n0 --collect-only -q  # dosya basi toplami",
    "olculdu": "2026-09-04",
    "anildigi_yerler": [
@@ -14,7 +14,7 @@
     "replit.md"
    ],
    "bekci": "backend/tests/test_belgeler.py::test_test_sayisi_belgelerde_tek_ve_dogru",
-   "not": "lightgbm siz kurulumda 22 test eksik toplanir; yerelde 1.958 olcumu 1.980-22 ile birebir tutuyor. E1'in alti, E2'nin iki testi eklendi (2.027 -> 2.035). Yerel kurulumda lightgbm yok, o yuzden toplama 2.013 diyor; fark test_agac.py'nin 22 testi."
+   "not": "lightgbm siz kurulumda 22 test eksik toplanir; yerelde 1.958 olcumu 1.980-22 ile birebir tutuyor. E1'in alti, E2'nin iki, E3'un uc testi eklendi (2.027 -> 2.038). Yerel kurulumda lightgbm yok, o yuzden toplama 2.016 diyor; fark test_agac.py'nin 22 testi."
   },
   {
    "ne": "test dosyasi sayisi",
@@ -512,6 +512,42 @@
    ],
    "bekci": "backend/tests/test_karne.py::test_hedef_kademe_kiyasi_ESLESTIRILMIS_ve_ayni_haftalar",
    "not": "KAT, medyan. 14G / 2.000 TL / hedef 12, kacak = 0 olan 4 haftada gerceklesen medyan geri donus 1,34x — yani 12 tutturmak maliyeti KARSILIYOR. Kacak 1'de 0,28x (ortalama 0,86x), kacak 2'de 0,12x, kacak >=3'te 0. Bu, tabana dayali eski 'basabas kademe 13' okumasini duzeltir: o okuma bir kolon sayiyordu ve E1 tabanin 2,39 kat gevsek oldugunu olctu. 13G'ye TASINMAZ (§3.51)."
+  },
+  {
+   "ne": "omurga BFE − Avg: eslestirilmis ROI farki, kupon duzeyi (E3)",
+   "deger": "−0,01074",
+   "ureten": "cd backend && python -m spor_toto.karne --omurga BFE --garanti 14 --butce 2000",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md",
+    "docs/ISTATISTIK_YOL_HARITASI.md"
+   ],
+   "bekci": "backend/tests/test_karne.py::test_omurga_kiyasi_P_farkinin_ayrisimini_ZORUNLU_veriyor",
+   "not": "64 ORTAK hafta (BFE 2022/23-2023/24'te hic yok), 14G, 2.000 TL, GERCEK kolon odulu. %95 [−0,06232, +0,02558] — sifiri kesiyor ve isaret EKSI. Kuyruksuz −0,01165 [−0,06836, +0,02787]. E3'un onceden yazilmis durma kurali: omurga Avg KALIR."
+  },
+  {
+   "ne": "omurga BFE − Avg: P(hedef) farki (E3)",
+   "deger": "+0,00758",
+   "ureten": "cd backend && python -m spor_toto.karne --omurga BFE --garanti 14 --butce 2000",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md",
+    "docs/ISTATISTIK_YOL_HARITASI.md"
+   ],
+   "bekci": "backend/tests/test_karne.py::test_omurga_kiyasi_P_farkinin_ayrisimini_ZORUNLU_veriyor",
+   "not": "%95 [+0,00594, +0,00924] — SIFIRI KESMIYOR. Ama bu bir sonuc DEGIL: P(hedef) modelin kendi guvenidir ve daha keskin bir olasilik isabet hic degismese bile onu buyutur. Ayrisim: farkin %81'i secim DEGISMEDEN geliyor. Gerceklesen kacak farki −0,04688 [−0,14062, +0,04688] — sifiri kesiyor."
+  },
+  {
+   "ne": "BFE'nin P(hedef) kazancinin kacta kaci secim degismeden geliyor",
+   "deger": "%81",
+   "ureten": "cd backend && python -m spor_toto.karne --omurga BFE --garanti 14 --butce 2000",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md",
+    "docs/ISTATISTIK_YOL_HARITASI.md"
+   ],
+   "bekci": "backend/tests/test_karne.py::test_omurga_kiyasi_P_farkinin_ayrisimini_ZORUNLU_veriyor",
+   "not": "64 hafta. Serbest (her fiyat kendi kuponunu kurar) +0,00758; sekil sabit (Avg'nin kuponu BFE olasiligiyla puanlanmis) +0,00611. Yani anlamli gorunen P kazancinin dortte ucunden fazlasi kuponda hicbir sey degismeden, yalnizca BFE'nin olasiliginin keskin olmasindan geliyor (ilk iki sembolun ortalama kutlesi Avg 0,7880 -> BFE 0,7904). Favori isabeti pratikte ayni: 548/960 -> 550/960."
   }
  ],
  "komutlar": [
@@ -559,6 +595,11 @@
    "komut": "cd backend && python -m spor_toto.karne --hedef --garanti 14 --butce 2000",
    "kaynak": "backend/spor_toto/karne.py:hedef_kademe_kiyasi",
    "ne_yapar": "E2: hedef kademeyi (12/13/14) 114 hafta boyunca GERCEK kolon oduluyle kiyaslar, eslestirilmis bootstrap + kuyruk sinavi. Yalniz 14G."
+  },
+  {
+   "komut": "cd backend && python -m spor_toto.karne --omurga BFE --garanti 14 --butce 2000",
+   "kaynak": "backend/spor_toto/karne.py:omurga_kiyasi",
+   "ne_yapar": "E3: omurga fiyatini KUPON duzeyinde kiyaslar (kolon, P(hedef), gercek kolon odulu), eslestirilmis bootstrap + kuyruk sinavi + P(hedef) ayrisimi. Yalniz 14G."
   }
  ]
 }
