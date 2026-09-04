@@ -1,0 +1,471 @@
+# Kazanma Planı — sekiz hafta, tek soru
+
+> **Bu belge bir özellik listesi değil, bir ölçüm sırasıdır.** Her fazın
+> **önceden yazılmış bir durma kuralı** vardır ve o kuralın *"hayır"* çıkması
+> meşru bir bitiştir. `ISTATISTIK_YOL_HARITASI.md` §6'nın doktrini aynen
+> geçerlidir: yalnızca başarıyla bitebilen bir plan, plan değil temennidir.
+>
+> Kapsam kararı (2026-09-04): bu plan **kaplama**, **arayüz/uygulama** ve
+> **güvenlik** eksenlerine dokunmaz. Tek hedef, kazanma şansının ölçülerek
+> artırılmasıdır.
+
+---
+
+## 1. Neden bu plan bu sırada
+
+Hedef üç çarpanlı bir çarpımdır (`ISTATISTIK_YOL_HARITASI.md` §6.1) ve üç
+çarpanın bugünkü durumu birbirinden çok farklıdır:
+
+```
+Beklenen getiri  =  P(tutturma)  ×  Pay(tutturunca)  −  Bedel
+                    ─────────────    ───────────────     ──────
+                    tahmin ekseni    HAVUZ ekseni        kaplama ekseni
+                    ölçülü KAPALI    ÖLÇÜLMEDİ           ÇÖZÜLDÜ
+```
+
+### 1.1 Tahmin ekseni ölçülerek kapandı
+
+On bir bağımsız denemede hiçbir aile kapanış çizgisini geçemedi (§5.1):
+Elo (§3.27), Dixon-Coles (§3.28), H2H ve seriler (§3.29), gradyan artırmalı
+ağaçlar (§3.30), yığınlama (§3.32), LOFO + Venn-Abers (§3.33), etkileşim
+kademeleri (§3.26), türetilmiş 1X2 (§3.20), beraberlik düzeltmesi (§3.21),
+takım formu (T5), xG (§3.42).
+
+Üç ölçüm bunun *niçin* böyle olduğunu da söylüyor:
+
+| Ölçüm | Sonuç |
+|---|---|
+| **Brier ayrışımı** (§3.23) | Kalibrasyon ekseninin tavanı: piyasanın toplam güvenilirlik borcu **0,00042**. Denenen etkiler bu tavanın **üstünde** — geçmemeleri kapasiteden değil, alınacak yolun kalmamasından |
+| **Öğrenme eğrisi** (§3.24) | Eğri düzleşti, gap kapanmadan: son adım **0,00006**. *"Sorun satır sayısı değil sütun"* |
+| **LOFO** (§3.33) | **Hiçbir özellik taşımıyor**; onun beşi net negatif |
+
+### 1.2 Ve tahmin gücü artsa bile kazanç orantılı artmıyor
+
+`KADEME_OLASILIKLARI.md` §6 bunu ölçtü ve bu, planın yönünü belirleyen tek
+sayıdır:
+
+> **Spearman(gerçek sonucun sırası, 15 bilen sayısı) = −0,843.**
+
+Model favoriye gidiyor; kalabalık da favoriye gidiyor. **Tuttuğunuz hafta
+herkesin tuttuğu haftadır.** Kişi başı ikramiye modelin en sevdiği bantta
+13.228 TL, en sevmediği bantta 14.734.596 TL — **1.100 kat** fark.
+
+Yani seyreltme, tahmin ekseninde kazanılanın büyük kısmını geri alıyor.
+Bu, README §1.1'in *"yön doğru, miktar yetersiz"* teşhisine üçüncü boyutu
+ekler: **yön doğru olsa ve miktar yetse bile seyreltme kazancı yiyor.**
+
+### 1.3 Ölçülmemiş varlık — planın çekirdeği
+
+Depoda iki arşiv yan yana duruyor ve **hiç birleştirilmedi**:
+
+| Kaynak | Kapsama |
+|---|---|
+| `data/sportoto_arsiv/*.json` | **223 hafta** · kademe başına kazanan adedi + kişi başı ikramiye (resmî uç) |
+| `data/st_history/*.json` + `data/odds/*.csv` | **112 hafta** · kuponun 15 maçı + piyasa oranı + gerçek sonuç (oran kapsaması %100) |
+| **kesişim** | **112 hafta × 4 kademe = 448 gözlem** |
+
+`getiri.KALABALIK_MODELLERI` bugün üç modelden ibaret ve **üçü de varsayımdır**
+(`orneklem`, `favori`, `oynanma`). §3.34 ilk ikisi arasında **22 kat** getiri
+farkı ölçtü:
+
+> *"Bu eksende belirsizliğin kaynağı tahminci değil, kalabalık."*
+
+O varsayım 448 gözleme **hiç oturtulmadı.**
+
+### 1.4 Bu, "≈71 hafta" duvarını aşıyor
+
+§6.3b Faz B için **≈71 ikramiyeli hafta** hesapladı ve elde 1 hafta olduğunu
+yazdı. O güç analizi *kişi başı ikramiye ↔ `crowd_ratio`* regresyonu içindi ve
+o regresyon, kişi başı ikramiyenin kazanan sayısına bölünmesinden gelen devasa
+oynaklığı taşır.
+
+**Kazanan adetlerinin kendisi çok daha bilgili bir gözlemdir** — kalabalığın
+ortak dağılımının doğrudan ölçüsüdür, oranı alındığında haftalık ölçekten
+bağımsızdır, ve **geçmişte 223 hafta boyunca zaten durmaktadır.**
+
+§6.3b'nin durma kuralı bu yüzden değişmiyor, **karşılanıyor**: 3. şık *"kaç
+hafta gerektiği şimdiden yazılır"* diyordu; bu plan o haftaların çoktan
+biriktiğini gösteriyor, yalnızca başka bir kestirimciyle.
+
+### 1.5 Planın tezi
+
+> Piyasayı tahminde yenmeye çalışmayı bırak — on bir kez ölçüldü, olmuyor.
+> **Kalabalığı ölç ve ondan kontrollü sap.** Bu, piyasayı geçmeyi gerektirmez
+> (`getiri.py` başlığı: sabit oranlıda `edge = p_model − p_piyasa`, müşterekte
+> `edge = p_piyasa − oynanma_payı`).
+
+**Bütçe kararı.** Varsayılan bant **1.000–3.000 TL/hafta**; ama her para sonucu
+ayrıca **bütçe → getiri eğrisi** olarak üretilir (`kademe_analizi.BUTCELER`
+basamakları). Tek bir bütçeye kilitlenmek, kararı ölçümün içine gömmek olurdu.
+
+---
+
+## 2. Değişmeyen kurallar
+
+Bu plan deponun doktrinini değiştirmez, ona uyar:
+
+1. **Önceden yazılmış durma kuralı.** Her fazın kuralı ölçüm yapılmadan yazılır
+   ve sonuca bakılarak değiştirilmez.
+2. **Ölçüsüz sayı çıkmaz.** Her sayının yanında `n`, %95 aralık ve hangi
+   koşumdan geldiği durur (`kosum.py`).
+3. **Kayıt yeniden yazılmaz.** Ölçek değişirse yeni ölçekte yeniden ölçülür ve
+   iki sayı ölçek notuyla yan yana durur (`odds.py:162-164` kalıbı).
+4. **Ölçülen her şey §3'e gerekçesiyle yazılır.** §5.2'nin *"PR #14 ölçtü ama
+   yazmadı, borç duruyor"* durumu tekrarlanmaz.
+
+---
+
+## 3. Hafta 1 — Faz 0: ölçümün önündeki üç blokaj
+
+Bu üçü kapanmadan Faz K/S'nin ürettiği hiçbir para sayısı savunulabilir değil.
+Üçünün de **durma kuralı yoktur** — ölçüm değil, borç kapatmadır.
+
+### 0.1 Kolon bedelini doğrula — `KADEME_OLASILIKLARI.md` §5.3(a)
+
+`getiri.KOLON_BEDELI` (ölçülmüş) ile `getiri.VARSAYILAN_KOLON_BEDELI`
+(doğrulanmamış) bilerek ayrı duruyor, ve **bütün para sonuçları buna doğrusal
+bağlıdır** — belgenin kendi ifadesiyle *"2,50 TL olsaydı her geri dönüş %40
+düşerdi ve tablo büyük ölçüde %100'ün altına inerdi."*
+
+- **Dışarıdan gereken:** güncel kolon bedeli + kaynağı (bayi fişi / resmî ekran).
+  Dış kayıt sınıfıdır, `kosum.py` defterine kaynağıyla yazılır.
+- Doğrulanınca `kademe_analizi.py` §5 tablosu **yeniden ölçülür**; eski tablo
+  ölçek notuyla yerinde bırakılır.
+
+### 0.2 Otuz iki anormal haftayı kapıya bağla — `KADEME_OLASILIKLARI.md` §8
+
+223 haftanın **32'sinde** 12. kademe kazanan sayısı medyanın (41.516) onda
+birinden az. Elenmeden alınan kademe ortalaması, tek kolonun beklenen değerini
+**4,99 TL** gösteriyor — yani %332 geri dönüş, imkânsız bir sayı.
+
+`kademe_analizi.anormal_haftalar()` bugün var ama **yalnızca o script'te**.
+Denetim `havuz.arsiv_haftalari()` okuma yoluna `data_quality` bloğu olarak
+bağlanır; kademe ortalaması alan her hesap **eleyip elemediğini beyan etmek
+zorunda** olur. Bekçi: anormal hafta elenmeden ortalama alan bir çağrı testte
+düşsün.
+
+### 0.3 Çoklu karşılaştırma ve canlı kaydın bütünlüğü
+
+**H5 — çoklu karşılaştırma düzeltmesi yok** (denetim §H5). `arena.roster` 10+
+aile deniyor, `gecti` bayrağı **tekil** %95 aralığa bakıyor (`evaluate.py:638`,
+`tahmin.py:383`). Bugün *"hiçbiri geçmedi"* bunu maskeliyor; **Faz K ya da S'de
+bir şey geçtiği gün iddia savunulamaz olur.** Holm/BH düzeltmesi + gövdede
+`denenen_aday_sayisi` alanı — projenin kendi köken doktriniyle birebir uyumlu.
+
+**H1/H2 — üç saatlik sızıntı penceresi** (denetim §H1, §H2).
+`tahmin.fixtures_maclari` (`tahmin.py:102-128`) **hiçbir zaman filtresi
+uygulamıyor**, oysa `yaklasan_maclar` fikstürü tercih ediyor (`tahmin.py:255`);
+`_simdi()` (`tahmin.py:76-78`) naive yerel zaman kullanıyor, `snapshot_iddaa`
+UTC yazıyor. `TZ=Europe/Istanbul` altında **son üç saatte başlamış her maç
+"gelecekte" sayılır**. Modülün kendi docstring'i (`tahmin.py:81-93`) bunu açıkça
+yasaklıyor. Bu haftadan itibaren her hafta canlı kayıt tutulacağı için doğrudan
+karneyi kirletir. `_gelecekte` tek yol olur; `build_fixtures.py:115` `Time`
+sütununu gerçekten kullanır.
+
+---
+
+## 4. Hafta 2–4 — Faz K: kalabalık modelini 448 gözleme oturt
+
+Planın en yüksek beklenen değerli işi. Yeni modül: **`spor_toto/kalabalik.py`**.
+
+### K1 — Veri hattı
+
+`(sezon, hafta) → [15 maç × shin olasılığı] + gerçek sonuç + kademe kazanan
+adetleri`. Yeniden kullanılanlar: `odds.load_odds` / `market_odds` /
+`implied_probs`, `data/st_history/*.json`, `havuz.arsiv_haftalari`,
+`kademe_analizi.ikramiye_tablolari`. Çıktı, 112 haftalık **tek** kesit; kapsama
+raporu 0.2'nin `data_quality` bloğuyla birlikte.
+
+### K2 — Model: iki parametre ve bir çarpan
+
+Bir halk kolonunun `i` maçında `s` sembolünü işaretleme payı:
+
+```
+o_i(s)  ∝  p_i(s)^λ · (1 + δ·[s = "0"]) · (1 + h·[s = ev])       (normalize)
+```
+
+- `λ > 1` → kalabalık favoriye piyasadan **daha çok** yığılıyor (beklenen yön;
+  §5.2 bulgu 6 ve `KADEME` §6 bu yönü destekliyor).
+- `δ` beraberlik iştahı, `h` ev sahibi yanlılığı.
+- Üçü de **ölçülür**, varsayılmaz.
+
+**Kademe sayımının iki farklı şeyi saydığı zaten kodda yazılı** ve tanımlamayı
+bedava veriyor (`super_toto_degerlendir.havuz_karnesi` notu, §3.48):
+
+| kademe | ne sayıyor |
+|---|---|
+| **15** | **kupon** — iki kolon tanım gereği en az bir maçta ayrışır, yani bir kuponun en fazla bir kolonu 15 yapar |
+| **14 / 13 / 12** | **kolon** — tek bir sistem kuponu onlarca kolonla kazanır |
+
+Dolayısıyla `kazanan_14 / kazanan_15` oranı **sistem çokluğunun ölçüsüdür** ve
+223 haftada gözlenebilir. Haftalık ölçek `N_hafta` sıkıntı parametresi olarak
+serbest bırakılır; **kademeler arası oranlar `N`'den bağımsızdır** ve modelin
+şeklini tek başına tanımlar.
+
+### K3 — Kestirim
+
+Kazanan adetleri üzerinde negatif binom olabilirlik (aşırı yayılımı soğurur;
+Poisson kesin olarak fazla dar aralık verir). `λ, δ, h` ve çokluk çarpanı
+global, `N_hafta` profil dışı. Kaçak dağılımı için `ortak.kacak_dagilimi` zaten
+Poisson-binom hesaplıyor.
+
+### K4 — Yanlışlanabilirlik · **durma kuralı, şimdiden yazıldı**
+
+Sezon dışarıda bırakmalı çapraz doğrulama: üç sezonda kestir, dördüncüde sına.
+
+> **Geçti sayılması için** `olculen` modeli, tutulan sezonun kazanan adetleri
+> üzerindeki log-olabilirlikte hem `orneklem` hem `favori` modelini geçmeli;
+> **hafta düzeyinde bootstrap %95 aralığı sıfırı kesmemeli**; ve dört sezonun
+> dördünde de aynı yön çıkmalı.
+>
+> **Geçmezse** havuz ekseni *"kalabalık ölçülemedi"* diye daralır. Faz S
+> yalnızca 2026/27 oynanma paylarıyla (n = 12) **betimleyici** koşulur ve bu
+> belgeye öyle yazılır. Bu meşru bir bitiştir.
+
+### K5 — Vekilin doğrulanması — §6.3b'nin *"bilinen sınır"*ı
+
+2026/27 hafta dosyalarındaki oynanma payları **tek bir platformun
+kullanıcılarıdır**, Spor Toto havuzunun tamamı değil, ve temsil edip etmediği
+**hiç ölçülmedi** — bütün `crowd_*` ölçüleri bu vekile dayanır.
+
+K4 geçerse kestirilen `o_i(s)` ile kaydedilmiş oynanma payı karşılaştırılır.
+Sistematik sapma varsa vekilin yanlılığı **sayıya dönüşür** ve bugünkü nitel
+uyarının yerine ölçülmüş bir sayı geçer. Bu, §6.3'ün B2 maddesinin ta kendisidir.
+
+### K6 — Seyreltme yasası
+
+Kestirilmiş modelle 112 haftanın her biri için kademe kazanan adetleri öngörülür
+ve gözlenenle karşılaştırılır. `KADEME` §6'nın Spearman −0,843'ü böylece
+**kullanılabilir bir fonksiyona** çevrilir: `E[pay | seçim kümesi]`.
+
+**Çıktı.** `getiri.KALABALIK_MODELLERI` dördüncü modelini alır — `"olculen"` —
+parametreler `artefakt.py` kalıbıyla sürümlenir ve bayatlığı görünür olur, koşum
+`kosum.py` defterine yazılır. `getiri.beklenen_getiri` artık varsayımla değil
+**ölçümle** çalışır.
+
+---
+
+## 5. Hafta 5–6 — Faz S: seyreltmeyi hesaba katan kupon (B3)
+
+§6.3'ün *"kaplamanın ve havuzun buluştuğu yer; projenin en özgün işi"* dediği iş.
+
+### S1 — Amaç fonksiyonunu değiştir
+
+Bugün `secim.en_iyi_secim` `P(k ≤ 2)`'yi enbüyüklüyor ve **kalabalığı hiç
+görmüyor**. `secim.kalabalik_ayari` var ama iki kısıtı taşıyor:
+
+- işaret **sayılarını sabit tutuyor**, yalnızca *hangi sembol* sorusunu yeniden
+  soruyor — bedeli değiştirmemek için alınmış bilinçli bir sadeleştirme;
+- ödünleşme `VARSAYILAN_KAYIP_ORANI = 0.05` ile **elle** veriliyor ve
+  docstring'i bunu dürüstçe *"ölçüm değil, harcama kararı"* diye etiketliyor.
+
+Yeni `secim.getiri_secim` Pareto DP'yi **`(bedel, P(k≤2), E[TL])`** üzerinde
+koşar: `getiri.beklenen_getiri` + K6'nın `olculen` modeli + arşivden gelen
+gerçek kademe havuzları. **`0.05` bir girdi olmaktan çıkar, çıktı olur** — ne
+kadar tutturma olasılığı satmanın optimal olduğu ölçülür.
+
+Budamanın geçerliliği korunur (`secim.py:203` gerekçesi aynen geçerli):
+kümülatifler gelecekteki her evrişimde pozitif doğrusal birleşimdir, `E[TL]` ise
+kademeler üzerinden toplamsaldır. Cephe taşınamazsa `kirpildi` bayrağı açılır —
+sessizce yaklaşık olunmaz.
+
+### S2 — 112 hafta üzerinde **gerçek parayla** geri test
+
+Üç kural yan yana: bugünkü `en_iyi_secim` ↔ bugünkü `kalabalik_ayari` ↔ yeni
+`getiri_secim`, **arşivdeki gerçek ikramiye tablolarına** karşı, aynı bütçede.
+
+Bütçe: varsayılan **1.000–3.000 TL** bandı **ve** `kademe_analizi.BUTCELER`in
+tamamı üzerinde bütçe → getiri eğrisi. Rapor edilen sayı **medyan** haftadır,
+ortalama değil — `KADEME` §5.2: 150 TL bandında ortalama %277 iken medyan **%0**.
+
+### S3 — Durma kuralı · **şimdiden yazıldı**
+
+`KADEME` §5.3'ün üç şartı devralınır ve bir dördüncüsü eklenir:
+
+| # | Şart |
+|---|---|
+| **a** | Kolon bedeli doğrulanmış (Faz 0.1) |
+| **b** | `getiri_secim` − `en_iyi_secim` farkında hafta düzeyinde bootstrap %95 aralığı sıfırı kesmiyor |
+| **c** | **En iyi 5 hafta çıkarıldığında fark hâlâ pozitif** — kuyruk taşımıyor |
+| **d** | Sezon dışarıda bırakmalı: kalabalık üç sezonda kestirildi, kupon dördüncüde kuruldu |
+
+Dördü birden sağlanmazsa Faz B *"ölçüldü, üstünlük yok"* diye kapanır ve
+`ISTATISTIK_YOL_HARITASI.md` §6.5'in 2. ve 3. soruları **hayır** cevabıyla
+kapanır. Bu da meşru bir bitiştir — ve bu alandaki araçların neredeyse tamamı
+birinciyi *iddia eder*, hiçbiri ikinciyi **ölçmez**.
+
+### S4 — Anormal hafta duyarlılığı
+
+Bütün S2 sayıları, 0.2'nin 32 anormal haftası **elenmiş** ve **elenmemiş** iki
+kolonda raporlanır. İki kolon işaret değiştiriyorsa sonuç stratejiden değil
+**veri kalitesinden** geliyordur ve öyle yazılır.
+
+---
+
+## 6. Hafta 7 — Faz F: tahmin ekseninden kalan üç ölçülmüş iş
+
+Eksen kapalı, ama bu üç işin **hiçbiri piyasayı yenmeyi gerektirmiyor** —
+bu yüzden buradalar.
+
+### F1 — Kupon-zamanı fiyatı: ölçülmüş %22'yi geri al
+
+§5.2 eki şunu ölçtü: kupon ilk maçtan önce kapanır, oranlar her maçın saatine
+kadar oynar — **haftanın son maçlarında kapanış fiyatı kupon verilirken elde
+yoktur.** Bedeli isabet değil **kolon: %22 artış (2.686 → 3.290)**.
+
+Bu, piyasayı yenmek değil **piyasanın kendi kapanışını öngörmektir.** Korpus
+31.103 maçta hem `acilis_*` hem `kapanis_*` taşıyor (`egitim.py`); hedef sonuç
+değil **kapanış fiyatının kendisi**. `cizgi.py`'ye `cizgi_tahmini` eklenir.
+
+**Ölçü:** geri testte kolon sayısındaki %22'nin ne kadarı geri alınıyor.
+**Durma kuralı:** kolon farkında hafta düzeyinde bootstrap aralığı sıfırı
+kesiyorsa madde kapanır.
+
+### F2 — Betfair Exchange: denenmemiş tek *fiyat*
+
+`build_egitim.A2_KAYNAKLARI` bilerek `("B365C", "PSC", "MaxC", "AvgC")` —
+BFE dışarıda ve gerekçesi kodda yazılı: *"BW/WH/BF/1XB/BFE eklenirse kesit
+sezona göre dengesizleşir"* (`build_egitim.py:131`). Ama kupon kesitinde
+`fiyatlar.py`'nin ölçtüğü tablo şunu diyor:
+
+| fiyat | kapsama | marj | Brier |
+|---|---:|---:|---:|
+| Avg | %92 | %7,99 | 0,5515 |
+| Pinnacle | %40 | %3,73 | 0,5522 |
+| **Betfair Exchange** | **%94** | **%0,71** | **0,5508** |
+
+A2'de yalnızca B365 ve PS denendi; **BFE hiçbir zaman arenaya girmedi** ve
+marjı bir büyüklük mertebesi düşük — yani gerçek olasılığa en yakın fiyat.
+Denenmemiş olan bir model değil, **bir fiyattır**.
+
+BFE'nin tam olduğu sezonlarla sınırlı bir kesit kurulur, `arena.roster`'a
+`b_BFE` eklenir ve **0.3'ün Holm düzeltmesiyle** ölçülür. Geçse bile tek başına
+bir ürün değildir: Faz S'nin **girdisini** iyileştirir.
+
+### F3 — Seçim koşullu kalibrasyonu seçime bağla (§3.49)
+
+§3.49 ters seçimi ölçtü ve **yüksek eşikte gerçek** buldu: seçtiğimiz yerde
+piyasa ortalamadan kötü kalibre. Bu bugün yalnızca bir **rapordur** —
+`secim_kalibrasyonu.py`'nin düzeltmesi `secim`in girdisine uygulanmıyor.
+Uygulanır; `P(k≤2)` ve S2'nin para sayıları üzerindeki etkisi ölçülür.
+**Durma kuralı:** S3(b) ile aynı ölçüt.
+
+---
+
+## 7. Hafta 8 — Faz D: karar defteri, haftalık koşum, belge
+
+### D1 — Tek komutluk haftalık döngü
+
+Canlı hafta bugün dört script'e dağılmış (`super_toto_hafta.py`,
+`super_toto_tahmin2.py`, `super_toto_degerlendir.py`, `super_toto_sezon.py`).
+`scripts/hafta_kos.py` iki alt komuta indirir:
+
+- `--oncesi`: bülten + oran + oynanma payı → kupon → **dondurulmuş** kayıt
+- `--sonrasi`: sonuç + ikramiye tablosu → karne → defter
+
+Kayıt donduğu an `kosum.py` defterine girer ve sonradan düzeltilemez — karne
+ancak böyle dürüst kalır.
+
+### D2 — `docs/KAZANMA_KARNESI.md` — asıl "eğitim" döngüsü
+
+Her hafta tek satır: öngörülen `P(k≤2)` ve `E[TL]` ↔ gerçekleşen kademe ve TL;
+kümülatif net; %95 aralık; kalabalık modelinin o haftaki öngörüsü ↔ gözlenen
+kazanan adetleri.
+
+**Model kendi hatasından burada öğrenir:** K2'nin `λ, δ, h` parametreleri her
+hafta yeniden kestirilir ve **kayması izlenir**. Kayıyorsa kalabalık zamanla
+değişiyor demektir — bu da bir bulgudur ve yazılır.
+
+### D3 — Belgeye ve grafa yaz
+
+- `ISTATISTIK_YOL_HARITASI.md` §3'e Faz K ve Faz S'nin gerekçeli yazımı.
+- §5.1 tablosuna yeni satırlar; §6.5'in 2. ve 3. soruları **cevaplanır**.
+- `.claude/olcum_kutugu.json`'a her sayının koşumu; `graf_sorgu.py tazelik`
+  temiz döner.
+
+---
+
+## 8. Sekiz hafta boyunca, paralel: canlı kayıt
+
+Her hafta elle girilen: bülten + iddaa oranları + **oynanma payları** + sonuç +
+ikramiye tablosu. `n` **4 → 12** olur.
+
+Bu, planın **satın alınamayan** tek parçasıdır ve iki iş görür: örneklemi
+büyütür, ve 2026/27 kesitini Faz K/S için **tamamen dokunulmamış** bir doğrulama
+seti olarak tutar — geçmiş 112 hafta üzerinde kestirilen model, hiç görmediği 12
+haftada sınanır.
+
+---
+
+## 9. Dokunulacak dosyalar
+
+| Faz | Dosya | İş |
+|---|---|---|
+| 0.1 | `spor_toto/getiri.py` · `scripts/kademe_analizi.py` | kolon bedeli tek kaynak + para sayılarının yeniden ölçümü |
+| 0.2 | `spor_toto/havuz.py` · `scripts/kademe_analizi.py` · `tests/test_havuz.py` | `anormal_haftalar` → `data_quality` kapısı |
+| 0.3 | `spor_toto/evaluate.py` · `spor_toto/arena.py` · `spor_toto/tahmin.py` | Holm/BH + `denenen_aday_sayisi` |
+| 0.3 | `spor_toto/tahmin.py` · `scripts/build_fixtures.py` | H1/H2 — saat filtresi ve UTC |
+| K | **`spor_toto/kalabalik.py`** *(yeni)* · `spor_toto/getiri.py` | kalabalık modeli + `"olculen"` |
+| K | `spor_toto/artefakt.py` · `spor_toto/kosum.py` | parametre sürümleme + koşum defteri |
+| S | `spor_toto/secim.py` | `getiri_secim` — Pareto DP'ye `E[TL]` boyutu |
+| S | `spor_toto/backtest.py` · `scripts/kademe_analizi.py` | 112 hafta gerçek parayla geri test + bütçe eğrisi |
+| F1 | `spor_toto/cizgi.py` · `spor_toto/egitim.py` | kapanış öngörüsü |
+| F2 | `scripts/build_egitim.py` · `spor_toto/arena.py` · `spor_toto/fiyatlar.py` | `b_BFE` |
+| F3 | `spor_toto/secim_kalibrasyonu.py` · `spor_toto/secim.py` | düzeltmeyi seçime bağla |
+| D | **`scripts/hafta_kos.py`** *(yeni)* · **`docs/KAZANMA_KARNESI.md`** *(yeni)* | haftalık döngü + karne |
+
+---
+
+## 10. Çalıştırma ve doğrulama
+
+Her fazın sonunda, sırayla:
+
+```bash
+bash scripts/check.sh                        # 13 adımlik tek kalite kapisi
+python -m spor_toto.health                   # 27 degismez
+python -m spor_toto.kalabalik --capraz       # K4 sezon disarida birakmali CV
+python scripts/kademe_analizi.py --bolum C   # kademe: model diyor / gozlenen
+python -m spor_toto.secim --kiyas            # en_iyi_secim <-> getiri_secim
+python scripts/faz_b.py                      # elde ne var, durma kurali neresi
+python -m spor_toto.arena                    # butun aileler tek tabloda (~10 dk)
+python3 .claude/graf_sorgu.py tazelik        # bayat sayi kaldi mi
+```
+
+**Uçtan uca kabul.** `hafta_kos.py --oncesi` ile kurulan kupon, hafta bitince
+`hafta_kos.py --sonrasi` ile karnesini alır ve `KAZANMA_KARNESI.md`'ye tek satır
+ekler; öngörülen ile gerçekleşen yan yana durur.
+
+---
+
+## 11. Riskler ve şimdiden kabul edilenler
+
+1. **K4 geçmeyebilir.** Kalabalık modeli kazanan adetlerini varsayım
+   modellerinden iyi üretemezse havuz ekseni daralır. Plan bunu bugünden
+   yazıyor; sonucu görünce hedef değiştirilmez.
+2. **112 hafta, para kuyruğu ağır.** Kalabalık *kestirimi* için 448 gözlem
+   boldur; ama para geri testi hâlâ 112 haftadır ve toplam kârın %34–55'i üç
+   haftadan geliyor (`KADEME` §5.3-1). S3(c) — en iyi 5 hafta çıkarılınca hâlâ
+   pozitif — tam bu yüzden kuralın içinde.
+3. **Kolon bedeli doğrulanmazsa** bütün para tablosu ölçek hatasıyla kayar.
+   Faz 0.1 bu yüzden birinci iştir.
+4. **Oynanma payı bir vekildir.** Tek platformun kullanıcıları. K5 bunu ölçer
+   ama **kaldıramaz**; kaldırılamayan sınır olarak yazılı kalır.
+5. **Piyasa oranı ≠ iddaa oranı.** Seviye tutmaz, yapı tutar (marj %7,26 ↔
+   %17,2). Faz S'nin para sayıları piyasa oranından türer. İddaa ekseninin
+   kalibrasyonu **45 kupon haftası** ister (§3.22) ve bu planda **kapanmaz**,
+   yalnızca birikir.
+6. **Kendi oynamamızın havuzu etkilemesi modellenmiyor** (`KADEME` §9). 1.000–
+   3.000 TL bandında geçerli bir varsayımdır; eğrinin üst ucunda (30.000 TL+)
+   tartışmalıdır ve orada işaretlenir.
+
+---
+
+## 12. Yapılmayacaklar
+
+| Fikir | Neden hayır |
+|---|---|
+| Yeni model ailesi aramak | On bir ölçüm var ve tavan ölçüldü (§3.23). F2 bir model değil bir **fiyattır** |
+| Kaplama ekseni | Hamming(7,4) mükemmel kod; optimallik kanıtlı. Bir optimum yenilemez |
+| Arayüz / uygulama / güvenlik | Bu planın kapsamı dışı. Tek istisna 0.3'ün H1/H2'sidir, çünkü **canlı karneyi kirletiyor** |
+| Ölçülmemiş bir üstünlüğü karneye ya da arayüze yazmak | Doktrinin değişmeyen kuralı. Süslenmiş bir olasılık, süslenmemiş bir yalandır |
+| Otomatik erişime kapalı kaynaktan veri çekmek | Hukuki; §7'de tek tek denetlendi ve bu planda değişmedi |
