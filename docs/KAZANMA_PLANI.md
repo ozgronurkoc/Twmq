@@ -233,6 +233,77 @@ Karar: varsayılan **13G** (`sistem.VARSAYILAN_GARANTI`), çünkü oynanan bu ve
 ölçüm onu dışlamıyor. Faz S bu üç seviyeyi `E[TL]` altında yeniden yarıştırır —
 bugünkü ölçü `P(k ≤ eşik)`, para değil.
 
+### 0.1c Para karnesi kuruldu — ve iki kusur daha çıktı ✅ yapıldı
+
+`spor_toto/karne.py`: kupon artık **gerçek ikramiye tablolarına** karşı
+ölçülüyor. Kesit iki arşivin kesişimi (`karne.kupon_kesiti`) — projenin
+bugüne kadar birleştirmediği yer: **114 hafta**, 15 maçında da oran olan ve
+ikramiyesi ilan edilmiş.
+
+**Ne ölçülüyor: garanti tabanı.** Kolon listesi elde yok (şekle biz karar
+veriyoruz, kolonları satıcı üretiyor), dolayısıyla hangi kolonun kaç
+tutturduğu bilinemez. Bilinen tek şey garantidir: `k` kaçakta **bir** kolon
+`G − k` kademesindedir. Karne tam olarak onu sayar — yani üretilen her sayı
+bir **alt sınırdır**.
+
+#### Kusur 1 — taban garantiler arası kıyas için kullanılamaz
+
+Arşivdeki 223 haftada `14 bilen ödülü / 13 bilen ödülü` oranının medyanı
+**15,1**. Kaçaksız bir haftada taban 14-garantiye 14. kademeyi, 13-garantiye
+13. kademeyi yazar; aradaki on beş kat farkın **tamamı sınırın eseridir** —
+288 kolonluk bir 13G sistemi o hafta 14'ü de büyük olasılıkla tutar ama
+garanti bunu *söylemediği* için taban saymaz.
+
+Sonuç: **"13G mi 14G mi daha çok para getirir" sorusu bu araçla
+cevaplanamaz** ve öyle yazıldı (`karne.gecerli_kiyas` yalnızca aynı seviyeyi
+kabul eder, bekçisi `test_garantiler_arasi_kiyas_YASAK`). Aynı garanti
+içindeki karşılaştırmalar geçerlidir — yanlılık iki kolda da aynıdır ve
+eşleştirilmiş farkta götürür. Faz S'nin asıl sorusu (kalabalıktan sapmak
+para getiriyor mu) tam olarak o türdendir, yani bu sınır onu engellemiyor.
+
+#### Kusur 2 — enflasyon: sezonlar toplanamaz
+
+Kademe ödülleri nominal TL ve dört sezonda **72 kat** büyümüş:
+
+| sezon | 12 bilen (medyan) | 13 bilen | 14 bilen |
+|---|---:|---:|---:|
+| 2022/23 | ₺62 | ₺415 | ₺6.497 |
+| 2023/24 | ₺166 | ₺1.244 | ₺18.554 |
+| 2024/25 | ₺181 | ₺1.206 | ₺19.183 |
+| 2025/26 | ₺928 | ₺6.357 | ₺122.154 |
+| 2026/27 | ₺4.486 | ₺46.913 | ₺1.177.927 |
+
+Maliyet ise **bugünün** fiyatından hesaplanıyor. İkisini bölmek sezonlar
+arasında anlamsız — ve etkisi ölçüldü: **2022/23 haftaların %15'i olduğu
+hâlde toplam ödülün %1'ini taşıyor.** Yani `kademe_analizi` §5'in *"114
+hafta"* ortalaması gerçekte bir 114-hafta ortalaması değil; eski haftalar
+sıfıra yakın ağırlıkla sayılıyor ve sayı fiilen son iki sezonun ölçümü.
+
+**Bu, ₺1,50 → ₺10 kusurundan bağımsız İKİNCİ bir kusurdur** ve ters yönde
+çalışır (biri getiriyi şişiriyordu, bu söndürüyor). İkisi birbirini
+götürmez — ölçüleri farklı. `karne()` bu yüzden her zaman **sezon kırılımı**
+döndürür ve havuzlanmış ortalamayı `uyari` alanıyla verir.
+
+#### Ölçülen: 13-garanti, 114 hafta, garanti tabanı
+
+| bütçe | ödül alan hafta | medyan ROI | ortalama ROI | en iyi 5 hafta çıkınca | en iyi 5'in payı |
+|---|---:|---:|---:|---:|---:|
+| 500 TL | 25/114 | %0,0 | %3,5 | %1,6 | %54,6 |
+| 1.000 TL | 34/114 | %0,0 | %4,9 | %2,6 | %48,3 |
+| 2.000 TL | 44/114 | %0,0 | %4,3 | %2,2 | %52,2 |
+| 3.000 TL | 52/114 | %0,0 | %5,4 | %2,9 | %48,6 |
+| 5.000 TL | 58/114 | %0,1 | %5,6 | %2,8 | %52,8 |
+
+Sezon kırılımı (2.000 TL): 2022/23 %0,2 · 2023/24 %1,9 · 2024/25 %5,0 ·
+2025/26 %7,8 — **medyan her sezonda %0.**
+
+**Üç okuma.** (1) Medyan hafta hiçbir şey döndürmüyor ve bu sonuç enflasyondan
+da tabandan da etkilenmiyor — `KADEME` §5.2'nin bulgusu ayakta. (2) Ödülün
+yarısı 114 haftanın **beşinden** geliyor; `KADEME` §5.3-1'in kuyruk uyarısı
+bu kesitte de aynen geçerli. (3) Ortalamalar **alt sınırdır**, gerçekleşen
+getiri bunlardan büyüktür — ama ne kadar büyük olduğu ancak gerçek kolon
+listeleriyle bilinir ve o, canlı haftalarda ST EXTRA kaydından gelecek (Faz D).
+
 ### 0.2 Otuz iki anormal haftayı kapıya bağla — `KADEME_OLASILIKLARI.md` §8
 
 223 haftanın **32'sinde** 12. kademe kazanan sayısı medyanın (41.516) onda

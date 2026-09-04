@@ -2,7 +2,7 @@
  "sayilar": [
   {
    "ne": "suit test sayisi (eksiksiz kurulum)",
-   "deger": "1.960",
+   "deger": "1.980",
    "ureten": "cd backend && pytest -p no:randomly -n0 --collect-only -q  # dosya basi toplami",
    "olculdu": "2026-09-04",
    "anildigi_yerler": [
@@ -13,13 +13,14 @@
     "docs/VERI_TOPLAMA_VE_ISLEME.md",
     "replit.md"
    ],
-   "bekci": "backend/tests/test_belgeler.py::test_test_sayisi_belgelerde_tek_ve_dogru"
+   "bekci": "backend/tests/test_belgeler.py::test_test_sayisi_belgelerde_tek_ve_dogru",
+   "not": "lightgbm siz kurulumda 22 test eksik toplanir; yerelde 1.958 olcumu 1.980-22 ile birebir tutuyor."
   },
   {
    "ne": "test dosyasi sayisi",
-   "deger": "65",
+   "deger": "67",
    "ureten": "ls backend/tests/test_*.py | wc -l",
-   "olculdu": "2026-09-03",
+   "olculdu": "2026-09-04",
    "anildigi_yerler": [
     "README.md §7",
     "backend/README.md"

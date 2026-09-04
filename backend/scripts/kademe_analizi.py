@@ -46,6 +46,7 @@ sys.path.insert(0, str(KOK))
 
 import numpy as np
 
+from spor_toto import karne as _karne
 from spor_toto import odds as O
 from spor_toto.core import SEMBOLLER
 from spor_toto.getiri import VARSAYILAN_KOLON_BEDELI
@@ -75,20 +76,13 @@ BUTCELER = (10, 20, 50, 100, 200, 500, 1000, 2000,
 # veri
 # --------------------------------------------------------------------------
 def ikramiye_tablolari() -> dict[tuple[str, int], dict[int, dict[str, Any]]]:
-    """Resmî arşivden (sezon, hafta) -> kademe tablosu."""
-    out: dict[tuple[str, int], dict[int, dict[str, Any]]] = {}
-    for f in sorted((KOK / "data" / "sportoto_arsiv").glob("*.json")):
-        d = json.loads(f.read_text())
-        if "meta" not in d:
-            continue
-        for w in d.get("weeks", []):
-            p = w.get("payout")
-            if not p:
-                continue
-            t = {x["correct"]: x for x in p.get("tiers", [])}
-            if 15 in t:
-                out[(d["meta"]["season_key"], w["week"])] = t
-    return out
+    """Resmî arşivden (sezon, hafta) -> kademe tablosu.
+
+    **Gövde artık burada değil.** Aynı okuma `spor_toto.karne` içinde de
+    duruyordu ve iki ölçüm hattı aynı arşivi iki ayrı kodla okuyordu; tek
+    kaynak `karne`dir ve burası ona yönlendirir.
+    """
+    return _karne.ikramiye_tablolari()
 
 
 def anormal_haftalar(ars: dict) -> set:
@@ -97,12 +91,15 @@ def anormal_haftalar(ars: dict) -> set:
     Bunlar arşivde **gerçek** haftalardır ama ikramiye tablosu normal bir
     Spor Toto haftasının şeklinde değildir (12. kademede 41.516 yerine 13
     kazanan gibi). Ortalama alan her hesabı bozarlar; §H'de sayılır.
+
+    `ars` argümanı geriye dönük uyum için duruyor ve **kullanılmıyor**:
+    eşik arşivin tamamından hesaplanır (`karne.anormal_hafta_anahtarlari`),
+    çağıranın verdiği alt kesitten değil. Alt kesitten hesaplamak eşiği
+    kesite göre oynatırdı — aynı hafta bir ölçümde anormal, ötekinde normal
+    çıkardı.
     """
-    w12 = [t[12]["winners"] for t in ars.values() if 12 in t]
-    if not w12:
-        return set()
-    med = float(np.median(w12))
-    return {k for k, t in ars.items() if 12 in t and t[12]["winners"] < med / 10}
+    del ars
+    return set(_karne.anormal_hafta_anahtarlari())
 
 
 def tam_haftalar(ars: dict) -> list[tuple[str, int, list]]:
