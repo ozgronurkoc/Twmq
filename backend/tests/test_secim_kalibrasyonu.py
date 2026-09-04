@@ -210,3 +210,50 @@ def test_sezon_etiketi_olmayan_nokta_kirilima_girmez() -> None:
     """Etiketsiz nokta sessizce bir sezona yazılmaz; kırılım onu dışarıda bırakır."""
     noktalar = _sentetik(100, 0.55, 0.5, sezon="") + _sentetik(100, 0.55, 0.5)
     assert sum(r["n"] for r in sezon_kirilimi(noktalar)) == 100
+
+
+# ─── F3: KUPON kuralının seçim koşullu kalibrasyonu ───────────────────────
+
+@pytest.mark.slow
+def test_kupon_kurali_kalibrasyonu_BOZMUYOR():
+    """F3 kapandı: kupon kuralı modelin yanıldığı yeri **seçmiyor**.
+
+    §3.49'un ölçtüğü ters seçim gerçektir ama `model` kuralına
+    (`p_model − p_piyasa > eşik`) aittir; kupon o kuralı kullanmıyor.
+    Kupon kuralı için soru **dejenere değildir** — `sistem_secimi` haftanın
+    tamamına ve bütçeye bakıyor, yani bilgi `p`'nin ötesinde.
+    """
+    from spor_toto.secim_kalibrasyonu import kupon_kurali
+
+    r = kupon_kurali()
+    assert r["n_hafta"] > 100
+    assert r["banko"]["n"] > 300 and r["banko_degil"]["n"] > 300
+    # Fark sifiri kesiyor -> secim kalibrasyonu bozmuyor.
+    assert r["alt"] <= 0.0 <= r["ust"], (r["alt"], r["ust"])
+    assert r["secim_bozuyor"] is False
+    assert abs(r["fark"]) < 0.02
+
+
+@pytest.mark.slow
+def test_kupon_kesitinde_iki_kol_da_EKSIK_guvenli():
+    """Yan bulgu ve yeni değil: favori–sürpriz yanlılığının izdüşümü.
+
+    §5.1 A5: *"piyasanın %70–80 dediği maçlar gerçekte %78,9"*. Burada da
+    iki kol da negatif çıkıyor — yani sapma seçimin ürettiği bir şey değil.
+    """
+    from spor_toto.secim_kalibrasyonu import kupon_kurali
+
+    r = kupon_kurali()
+    assert r["banko"]["asiri_guven"] < 0
+    assert r["banko_degil"]["asiri_guven"] < 0
+
+
+def test_ters_secim_ESIK_yukseldikce_buyuyor():
+    """§3.49'un kendisi: `model` kuralında ters seçim yüksek eşikte gerçek."""
+    from spor_toto.secim_kalibrasyonu import tarama
+
+    satir = {round(x["esik"], 3): x for x in tarama()}
+    assert satir[0.0]["icinde"] is True, "dusuk esikte anlamli olmamali"
+    assert satir[0.08]["icinde"] is False, "yuksek esikte anlamli olmali"
+    assert satir[0.08]["asiri_guven"] > satir[0.0]["asiri_guven"]
+    assert satir[0.08]["isaret_tutuyor"] is True

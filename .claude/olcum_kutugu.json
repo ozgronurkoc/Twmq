@@ -2,7 +2,7 @@
  "sayilar": [
   {
    "ne": "suit test sayisi (eksiksiz kurulum)",
-   "deger": "2.019",
+   "deger": "2.022",
    "ureten": "cd backend && pytest -p no:randomly -n0 --collect-only -q  # dosya basi toplami",
    "olculdu": "2026-09-04",
    "anildigi_yerler": [
@@ -377,6 +377,17 @@
    ],
    "bekci": "backend/tests/test_fiyatlar.py::test_betfair_exchange_kupon_kesitinde_GECIYOR",
    "not": "985 ortak mac, %95 araligi [-0,00181, -0,00021], p=0,0054, bes aday uzerinde Holm duzeltmesiyle de GECTI. Marj %0,62 (Avg %6,15). BFE 2022/23 ve 2023/24'te HIC YOK; 2024/25 %100, 2025/26 %87 kapsama."
+  },
+  {
+   "ne": "kupon kuralinda ters secim — banko ile banko-degil arasindaki fark (F3)",
+   "deger": "-0,0045",
+   "ureten": "cd backend && python -c 'from spor_toto.secim_kalibrasyonu import kupon_kurali; print(kupon_kurali())'",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md"
+   ],
+   "bekci": "backend/tests/test_secim_kalibrasyonu.py::test_kupon_kurali_kalibrasyonu_BOZMUYOR",
+   "not": "114 hafta, 13G, 2.000 TL. Hafta duzeyinde bootstrap %95 [-0,0506, +0,0414] — sifiri kesiyor, yani kupon kurali kalibrasyonu BOZMUYOR. §3.49'un ters secimi gercek ama 'model' kuralina (p_model - p_piyasa > esik) ait."
   }
  ],
  "komutlar": [

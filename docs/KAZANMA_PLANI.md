@@ -715,6 +715,57 @@ olmaktan çıkıp **aday** oldu. Kupon kurarken 2024/25 sonrası haftalarda
 BFE'nin kullanılması Faz S'nin girdisini iyileştirir; bu değişiklik ayrı
 ölçülmeli, çünkü geri testin bütün sayıları `Avg` ölçeğinde.
 
+### Faz F3 — kupon kuralında ters seçim **yok**; düzeltilecek şey yok ✅
+
+Plan şöyle yazmıştı: *"§3.49 ters seçimi ölçtü ve yüksek eşikte gerçek
+buldu; `secim_kalibrasyonu`'nun düzeltmesi `secim`in girdisine uygulanmıyor.
+Uygulanır."* Uygulanmadan önce **hangi kurala ait olduğu** sınandı ve
+plandaki varsayım düzeltildi.
+
+#### §3.49'un bulgusu doğru — ama `model` kuralına ait
+
+`secim_kalibrasyonu.tarama()` eşik taraması:
+
+| eşik | seçilen n | aşırı güven | anlamlı? | işaret 4/4 |
+|---:|---:|---:|---|---|
+| 0,00 | 2.080 | +0,0082 | hayır | — |
+| 0,02 | 1.472 | +0,0130 | hayır | — |
+| 0,04 | 759 | **+0,0478** | **evet** (Bonferroni dâhil) | hayır |
+| 0,08 | 119 | **+0,1487** | **evet** | **evet** |
+
+Ters seçim gerçek ve eşikle büyüyor. Ama kural `p_model − p_piyasa > eşik`,
+yani **değer bahsi** kuralı — **kupon o kuralı kullanmıyor.**
+
+#### Kupon kuralı için soru dejenere DEĞİL, ve ölçüldü
+
+Modülün kendi kuralı: *"banda ayırdığın değişkenle eşikliyorsan, seçilen
+küme kümenin kendisidir"*. `backtest.secim_uret`in eşik kuralı bu yüzden
+ölçülemiyordu. Ama `secim.sistem_secimi` farklı: kararı tek maçın `p`'sine
+değil **haftanın tamamına ve bütçeye** bağlı — Pareto DP bütün maçları
+birlikte çözüyor, dolayısıyla aynı `p`'ye sahip iki maç haftanın şekline
+göre biri banko biri çifte olabilir. Fazladan bilgi **haftanın
+bileşimidir**.
+
+114 hafta, 13-garanti, 2.000 TL:
+
+| | n | söylenen | gerçek | aşırı güven |
+|---|---:|---:|---:|---:|
+| **BANKO** | 684 | 0,6451 | 0,6988 | **−0,0537** |
+| banko değil | 1.026 | 0,4430 | 0,4922 | **−0,0492** |
+| **fark** | | | | **−0,0045** |
+
+Hafta düzeyinde bootstrap %95: **[−0,0506, +0,0414]** — sıfırı kesiyor.
+
+**Kupon kuralı modelin yanıldığı yeri seçmiyor. Düzeltilecek bir şey yok**
+ve madde bu cevapla kapandı.
+
+#### Yan bulgu: iki kolda da AŞIRI değil EKSİK güven
+
+İki taraf da negatif — piyasa favoriyi **olduğundan düşük** fiyatlıyor. Bu
+yeni değil: §5.1'in A5 satırı aynı olguyu ölçmüştü (*"piyasanın %70–80
+dediği maçlar gerçekte %78,9, n=1.702"*). Yani sapma seçimin ürettiği bir
+şey değil, favori–sürpriz yanlılığının kupon kesitindeki izdüşümü.
+
 ### 0.2 Otuz iki anormal haftayı kapıya bağla — `KADEME_OLASILIKLARI.md` §8
 
 223 haftanın **32'sinde** 12. kademe kazanan sayısı medyanın (41.516) onda
