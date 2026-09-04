@@ -153,7 +153,7 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/components/super-toto/tahmin2.tsx` | **2. Tahmin** paneli — `1. Tahmin` / `2. Tahmin` sekmeleri arasında geçilir; para birimli hiçbir sayı yok. Hafta kapandığında sonuç sütunu ve ayar karnesi açılır (§3.38) |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **2.031 test**; **85'i** istatistik katmanına (`history` `odds` `backtest`
+paketi toplam **2.035 test**; **85'i** istatistik katmanına (`history` `odds` `backtest`
 `api_stats` `api_backtest` `snapshot_iddaa`), **579'u** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre`
@@ -4947,6 +4947,47 @@ olmadan ölçülemez.
 geçersiz kılan şey olduğu için 14G ölçümü 13G'ye taşınamaz; o ölçüm ST
 EXTRA fişinin kademe başına kolon adedini bekliyor.
 
+### 3.57 Hedef kademe paradan seçildi (E2) — **12 kalıyor**, ve sebebi yapısal
+
+`sistem.kacak_esigi(garanti, kademe)` iki parametreli ama `kademe` sabit
+**12** yazılıydı, ve o 12 bir ölçümden değil bir varsayımdan geliyordu.
+§3.56 tabanın gevşekliğini ölçünce aday kademeleri **gerçek kolon ödülüne**
+karşı koşturmak mümkün oldu (taban eğik olduğu için tam bu karşılaştırmayı
+bastırırdı).
+
+```
+cd backend && python -m spor_toto.karne --hedef --garanti 14 --butce 2000
+```
+
+| hedef | geri dönüş | ödül>0 | ort. kolon | ort. `P(hedef)` |
+|---:|---:|---:|---:|---:|
+| **12** | %24,2 | 48 | 168 | 0,3016 |
+| 13 | %25,1 | 49 | 168 | 0,1064 |
+| 14 | %23,5 | 47 | 168 | 0,0182 |
+
+Eşleştirilmiş ROI farkı (hafta düzeyi bootstrap %95): 13 − 12 **+0,00928
+[+0,00000, +0,02724]**, 14 − 12 −0,00702 [−0,02358, +0,00405], 14 − 13
+−0,01629 [−0,04200, +0,00145]. **Üçü de sıfırı kesiyor**, en iyi 5 hafta
+çıkarıldığında da. Önceden yazılmış durma kuralı işledi: **hedef 12 kalır.**
+
+**Neden zayıf olduğu yapısal ve bu, sonuçtan daha kullanışlı.** Üç hedef de
+aynı şekli aldı: 3 çifte + 5 üçlü, 168 kolon. Aritmetik: çifte/üçlü eklemek
+`P(k ≤ eşik)`'i *hangi eşikte olursa olsun* büyütür, dolayısıyla bütçeye
+sığan en büyük şekil her hedefte kazanır. **Şekli bütçe belirliyor, hedef
+değil**; hedefin dokunabildiği tek şey hangi sembolün işaretlendiği.
+Sonucu genellenebilir: şeklin kendisiyle oynayan kollar (bütçe eğrisi) ve
+seçilen sembolün *değerini* değiştiren kollar (kalabalık ekseni) hedef
+kademesiyle oynayan koldan yapısal olarak daha güçlü.
+
+**Yan ürün — başabaş kademe düzeltildi.** Taban ölçeğinde ölçülmüş eski
+okuma *"12 tutturmak maliyeti karşılamıyor"* diyordu ve bir kolon sayıyordu.
+Gerçek kolonlarla, aynı kupon: kaçak 0 olan 4 haftada gerçekleşen medyan
+geri dönüş **1,34×** — 12. kademe kârda kapatıyor. Kaçak 1'de 0,28×
+(ortalama 0,86×), kaçak 2'de 0,12×, kaçak ≥3'te 0. Yani sorun başabaş
+noktası değil, kaçaksız hafta oranının 114'te 4 olması. Eski 13G kaydı
+silinmedi, ölçek notuyla yerinde bırakıldı — §3.51'in 15,1 katı garantiler
+arası taşımayı geçersiz kılıyor.
+
 ## 4. Sayfada bugün ne var
 
 **`/istatistik`** — sezon dağılımı (en sık sonuç + pay çubuğu) · 5 sayı kutusu (sembol
@@ -5120,6 +5161,8 @@ her şeyi zaten içeriyor.
 > |---|---|
 > | **Kalabalık modeli** (§3.50) | `λ = 1,7608` [1,669, 1,865] — aralık 1'i içermiyor. K4 durma kuralı **geçti** (4/4 sezon, iki bootstrap aralığı da sıfırı kesmiyor). `favori` iki bağımsız yoldan çürüdü: hafta başına ~4 kat kötü uyum **ve** haftada 10¹⁷ kolonluk imkânsız havuz. §3.34'ün 22 katlık belirsizliğinin `favori` ucu **kapandı** |
 > | **Kalabalıktan sapmak** (§3.51) | Makul her kısıtta gerçekleşen kazanç **sıfır**; kısıtsız arama **−1.439 TL**. Tavan ölçümü üç kez düzeldi (2,63× → 1,003× → +0 TL) ve zincirin kendisi bulgudur. `n = 3` — eksen kapalı değil |
+> | **Garanti tabanının gevşekliği** (§3.56) | **2,39 kat** — taban %10,1 diyor, gerçek kolon dağılımı %24,2 veriyor (114 hafta, 14G, 2.000 TL). Yanlılık eğik: 12+ tutturan kolon sayısı kaçak 0'da 26,8, kaçak 2'de 1,3, taban her durumda 1. Ama açık kapanmadı — %24,2 hâlâ 1'in altında, yani geri dönüş açığı bir ölçüm kusuru değil. Yan bulgu: motorun kaplaması satıcınınkinden **%28,6 gevşek** |
+> | **Hedef kademe** (§3.57) | **12 kalıyor.** 13 − 12 eşleştirilmiş ROI farkı +0,00928 [+0,00000, +0,02724] — sıfırı kesiyor, kuyruk sınavında da. Sebebi yapısal: üç hedef de aynı şekli alıyor (168 kolon), çünkü **şekli bütçe belirliyor, hedef değil**. Yan ürün: 12 tutturmak kaçaksız haftalarda maliyeti **karşılıyor** (medyan 1,34×) — tabana dayalı eski okumanın düzeltmesi |
 
 
 
@@ -5938,7 +5981,7 @@ python -m spor_toto.kosum                  # kayıtlı koşumlar
 python -m spor_toto.kosum --son disari     # son koşumun ortamı
 
 # Denetim
-pytest -q                                  # 2.031 test (85'i bu katman, 583'ü tahmin)
+pytest -q                                  # 2.035 test (85'i bu katman, 583'ü tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out

@@ -1331,6 +1331,65 @@ kapanır. Ayrıca `KADEME §5.3(c)`: en iyi 5 hafta çıkarıldığında da ayn�
 olasılıkla daralacak ve tutturma olasılığı düşecek. Soru *"daha çok mu
 kazanır"* değil, ***"daha az mı kaybeder"***.
 
+### E2 — 14-garantide ÖLÇÜLDÜ, durma kuralı işledi: **hedef 12 kalıyor**
+
+E1 tabanın gevşekliğini ölçtüğü an E2 aynı seviyede koşabilir hâle geldi.
+Puanlama taban değil **gerçek kolon ödülü** — taban eğik olduğu için
+(kaçak küçüldükçe yanlılık büyüyor) tam bu karşılaştırmayı bastırırdı.
+
+```
+cd backend && python -m spor_toto.karne --hedef --garanti 14 --butce 2000
+```
+
+| hedef | geri dönüş | ödül>0 | ort. kolon | ort. `P(hedef)` |
+|---:|---:|---:|---:|---:|
+| **12** | **%24,2** | 48 | 168 | 0,3016 |
+| 13 | %25,1 | 49 | 168 | 0,1064 |
+| 14 | %23,5 | 47 | 168 | 0,0182 |
+
+Eşleştirilmiş ROI farkı, hafta düzeyinde bootstrap %95:
+
+| fark | ortalama | %95 aralık | en iyi 5 hafta çıkınca |
+|---|---:|---|---|
+| 13 − 12 | +0,00928 | **[+0,00000, +0,02724]** | +0,00970 [+0,00000, +0,02849] |
+| 14 − 12 | −0,00702 | [−0,02358, +0,00405] | −0,00734 [−0,02459, +0,00402] |
+| 14 − 13 | −0,01629 | [−0,04200, +0,00145] | −0,01704 [−0,04354, +0,00152] |
+
+**Üçü de sıfırı kesiyor.** 13 − 12 en yakın olanı ve alt ucu tam sıfırda —
+kuyruk sınavı da bunu değiştirmiyor. E2'nin önceden yazılmış durma kuralı
+işliyor: **hedef 12 kalır** ve bu bölüm *"ölçüldü, fark yok"* diye kapanır.
+
+**Ve neden zayıf olduğu yapısal — bu, sonucun kendisinden daha kullanışlı.**
+Üç hedef de **aynı şekli** aldı: 3 çifte + 5 üçlü, 168 kolon. Sebebi
+aritmetik: çifte/üçlü eklemek `P(k ≤ eşik)`'i *hangi eşikte olursa olsun*
+büyütür, dolayısıyla bütçeye sığan en büyük şekil her hedefte kazanır.
+Yani **şekli bütçe belirliyor, hedef değil**; hedefin dokunabildiği tek
+şey hangi sembolün işaretlendiği. Kaldıraç orada zaten küçüktü.
+
+Bunun daha geniş sonucu şu: para ekseninde şeklin kendisiyle oynayan bir
+kol (bütçe eğrisi) hedef kademesiyle oynayan bir koldan **yapısal olarak**
+daha güçlü. Kalabalık ekseni de öyle — o, seçilen sembolün *değerini*
+değiştiriyor, sayısını değil.
+
+### E2a — başabaş kademe düzeltildi: 12 tutturmak maliyeti **karşılıyor**
+
+Taban ölçeğinde ölçülmüş eski okuma *"12 tutturmak maliyeti karşılamıyor"*
+diyordu ve o okuma **bir kolon** sayıyordu. Gerçek kolonlarla, aynı kupon:
+
+| kaçak | hafta | medyan geri dönüş | ortalama | ödül>0 | maliyeti karşılıyor |
+|---:|---:|---:|---:|---:|---|
+| 0 | 4 | **1,34×** | 1,42× | 4 | **EVET** |
+| 1 | 17 | 0,28× | 0,86× | 17 | hayır |
+| 2 | 26 | 0,12× | 0,28× | 26 | hayır |
+| ≥3 | 67 | 0,00× | 0,00× | 1 | hayır |
+
+Yani kupon kaçaksız gittiğinde 12. kademe **kârda kapatıyor**; sorun
+başabaş noktası değil, kaçaksız hafta oranının 114'te 4 olması.
+
+**Bu sayı 13-garantiye taşınamaz** — §3.51'in 15,1 katı tam olarak
+garantiler arası taşımayı geçersiz kılan şeydir. Eski 13G kaydı silinmedi,
+ölçek notuyla yerinde bırakıldı (`odds.py:162-164` kalıbı).
+
 ---
 
 ## E3 — Betfair Exchange'i omurgaya bağla (4. hafta)
@@ -1400,8 +1459,8 @@ yaklaşma.
 | Faz | Dosya | İş |
 |---|---|---|
 | E1 | `spor_toto/karne.py` · hafta yükü şeması | ✅ 14G ölçüldü (`--taban`); 13G için `kupon_sonuc` alanı bekliyor |
-| E2 | `spor_toto/sistem.py` · `spor_toto/secim.py` | hedef kademe parametresi ölçülerek seçilir |
-| E2 | `spor_toto/karne.py` | 114 hafta × gerçekleşen TL karşılaştırması |
+| E2 | `spor_toto/sistem.py` · `spor_toto/secim.py` | ✅ ölçüldü (14G) — `HEDEF_KADEME = 12` **değişmedi**, ölçüm onu doğruladı |
+| E2 | `spor_toto/karne.py` | ✅ `hedef_kademe_kiyasi` (`--hedef`) — 114 hafta × gerçek kolon ödülü |
 | E3 | `spor_toto/odds.py` · `spor_toto/fiyatlar.py` | BFE omurga adayı, kupon düzeyi ölçüm |
 | E4 | `scripts/build_egitim.py` · `spor_toto/disari.py` · `spor_toto/arena.py` | hakem sütunu + aile |
 | E5 | — | veri girişi |
@@ -1429,7 +1488,9 @@ sözleşmesi kırmızıydı.
    seviyede koşabilir. **13-garantide risk aynen duruyor** — oynadığınız
    ürün orası ve orada fiş hâlâ tek yol; garantiler arası taşıma §3.51
    yüzünden geçersiz.
-2. **E2'nin cevabı "12 kalır" olabilir** ve bu meşru bir sonuçtur.
+2. ~~**E2'nin cevabı "12 kalır" olabilir**~~ — **öyle çıktı** (2026-09-04,
+   14G). Üç hedefin farkı da sıfırı kesiyor, kuyruk sınavında da. Meşru
+   bir sonuç ve bölüm o cevapla kapandı. 13-garantide ölçülmedi.
 3. **E3 omurgayı değiştirirse** yayımlanmış bütün geri test sayıları eski
    ölçekte kalır; not düşülür, silinmez.
 4. **E4'ün önseli düşük** ve öyle yazıldı. Geçerse **Holm'la** geçmeli.

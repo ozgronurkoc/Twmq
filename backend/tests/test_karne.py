@@ -296,3 +296,36 @@ def test_motorun_kaplamasi_TABLODAN_gevsek_ve_bu_yazili():
     t = karne.taban_gevsekligi(2000.0, garanti=14, hafta_siniri=8)
     assert t["motor_kolon"] >= t["tablo_kolon"] > 0
     assert t["kaplama_farki"] >= 1.0
+
+
+# ─── E2: hedef kademe paradan seçiliyor ───────────────────────────────────
+
+@pytest.mark.slow
+def test_hedef_kademe_kiyasi_ESLESTIRILMIS_ve_ayni_haftalar():
+    """Karşılaştırma eşleştirilmiş olmalı — yoksa enflasyon farkı taşır.
+
+    Modül başlığı sezonların toplanamayacağını söylüyor (nominal TL dört
+    sezonda 72 kat). Eşleştirme o sorunun tek çözümü: aynı haftanın aynı
+    TL'si iki kolda da geçer. Bu test kolların GERÇEKTEN aynı haftalardan
+    kurulduğunu sınar.
+    """
+    h = karne.hedef_kademe_kiyasi(2000.0, garanti=14, hafta_siniri=10)
+    assert h["hafta"] > 0
+    assert {k["kademe"] for k in h["kollar"]} == {12, 13, 14}
+    assert all(k["hafta"] == h["hafta"] for k in h["kollar"]), \
+        "kollar farkli sayida haftadan kurulmus — eslestirme bozuk"
+    for f in h["farklar"]:
+        assert f["alt"] <= f["ort"] <= f["ust"]
+
+
+@pytest.mark.slow
+def test_hedef_SIKILASINCA_tutturma_olasiligi_DUSER():
+    """`kademe` büyüdükçe `P(hedef)` düşmeli — aritmetiğin kendisi.
+
+    `kacak_esigi(14, kademe) = 14 − kademe`, yani hedef yükseldikçe eşik
+    daralıyor ve `P(k ≤ eşik)` tanım gereği küçülüyor. Ölçüm bunu
+    doğrulamazsa kollar karışmış demektir.
+    """
+    h = karne.hedef_kademe_kiyasi(2000.0, garanti=14, hafta_siniri=6)
+    p = {k["kademe"]: k["ort_p_hedef"] for k in h["kollar"]}
+    assert p[12] > p[13] > p[14]

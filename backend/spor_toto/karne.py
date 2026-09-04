@@ -70,6 +70,7 @@ yoktur: aynı haftanın aynı TL'si iki kolda da kullanılır, enflasyon götür
     python -m spor_toto.karne                    # 13G, butce egrisi
     python -m spor_toto.karne --garanti 14 --butce 2000
     python -m spor_toto.karne --taban --garanti 14 --butce 2000   # E1
+    python -m spor_toto.karne --hedef --garanti 14 --butce 2000   # E2
 """
 from __future__ import annotations
 
@@ -382,12 +383,119 @@ def taban_gevsekligi(butce_tl: float = 2000.0,
     }
 
 
+def hedef_kademe_kiyasi(butce_tl: float = 2000.0,
+                        garanti: int = 14,
+                        kademeler: Sequence[int] = (12, 13, 14),
+                        hafta_siniri: int | None = None) -> dict[str, Any]:
+    """E2: hedef kademeyi **paradan** seç — tabandan değil gerçek kolondan.
+
+    `sistem.kacak_esigi(garanti, kademe)` iki parametreli ama `kademe`
+    sabit **12** yazılı, ve o 12 bir ölçümden değil bir varsayımdan
+    geliyordu. Bu fonksiyon her aday kademeyi 114 hafta boyunca **gerçek
+    ikramiye tablosuna** karşı koşturur ve eşleştirilmiş farkı verir.
+
+    Puanlama `gercek_odul`dur, taban değil: E1 tabanın 2,39 kat gevşek ve
+    **eğik** olduğunu ölçtü (kaçak küçüldükçe yanlılık büyüyor), yani taban
+    tam bu karşılaştırmayı bastırırdı — hedefi sıkılaştırmanın kazancı
+    kaçağın küçük olduğu yerdedir.
+
+    Fark **ROI** üzerinde ve hafta hafta eşleştirilmiş: aynı haftanın aynı
+    TL'si iki kolda da geçtiği için enflasyon götürür (modül başlığı).
+    Kesitler arası medyan **alınmaz** — nominal TL dört sezonda 72 kat
+    büyümüş, o yüzden kademe medyanlarını haftalara taşımak ölçümü kirletir.
+    """
+    kesit = kupon_kesiti()
+    if hafta_siniri:
+        kesit = kesit[:hafta_siniri]
+    kollar: dict[int, dict[tuple[str, int], dict[str, Any]]] = {}
+    for kad in kademeler:
+        kol: dict[tuple[str, int], dict[str, Any]] = {}
+        for h in kesit:
+            plan = sistem_secimi(h["probs"], butce_tl, garanti=garanti,
+                                 kademe=kad)
+            if plan is None:
+                continue
+            ham = gercek_kolon_dagilimi(plan.secimler, h["gercek"])
+            if not ham:
+                continue
+            olcek = plan.bedel / sum(ham.values())
+            dagilim = {k: v * olcek for k, v in ham.items()}
+            maliyet = plan.bedel * KOLON_BEDELI
+            odul = gercek_odul(dagilim, h["tablo"]) or 0.0
+            kol[(h["sezon"], h["hafta"])] = {
+                "maliyet": maliyet, "odul": odul, "roi": odul / maliyet,
+                "kolon": plan.bedel, "p_hedef": plan.p_hedef,
+                "cift": plan.cift, "uclu": plan.uclu,
+                "kacak": sum(1 for sc, c in zip(plan.secimler, h["gercek"])
+                             if c not in sc),
+            }
+        kollar[kad] = kol
+    ortak = sorted(set.intersection(*(set(k) for k in kollar.values()))
+                   ) if kollar else []
+
+    kollar_ozet = []
+    for kad, kol in kollar.items():
+        v = [kol[a] for a in ortak]
+        kollar_ozet.append({
+            "kademe": kad, "hafta": len(v),
+            "roi": (sum(x["odul"] for x in v) / sum(x["maliyet"] for x in v)
+                    if v else 0.0),
+            "odul_alan_hafta": sum(1 for x in v if x["odul"] > 0),
+            "ort_kolon": _ortalama([x["kolon"] for x in v]),
+            "ort_p_hedef": _ortalama([x["p_hedef"] for x in v]),
+            "sekiller": sorted({(x["cift"], x["uclu"]) for x in v}),
+        })
+
+    farklar = []
+    for i, a in enumerate(kademeler):
+        for b in kademeler[i + 1:]:
+            f = [kollar[b][k]["roi"] - kollar[a][k]["roi"] for k in ortak]
+            alt, ust = bootstrap_farki(f)
+            # Kuyruk sınavı: en çok kazandıran KUYRUK_HAFTA hafta çıkınca.
+            en_iyi = sorted(range(len(ortak)),
+                            key=lambda j: -kollar[b][ortak[j]]["odul"]
+                            )[:KUYRUK_HAFTA]
+            ks = [x for j, x in enumerate(f) if j not in set(en_iyi)]
+            kalt, kust = bootstrap_farki(ks)
+            farklar.append({
+                "kademe": f"{b}-{a}",
+                "ust_kademe": b, "alt_kademe": a,
+                "ort": _ortalama(f), "alt": alt, "ust": ust,
+                "sifir_disinda": alt > 0.0 or ust < 0.0,
+                "kuyruksuz_ort": _ortalama(ks),
+                "kuyruksuz_alt": kalt, "kuyruksuz_ust": kust,
+                "kuyruksuz_sifir_disinda": kalt > 0.0 or kust < 0.0,
+            })
+
+    varsayilan = kollar.get(HEDEF_KADEME, {})
+    kacak_kirilim: dict[int, dict[str, Any]] = {}
+    for anahtar in ortak:
+        x = varsayilan.get(anahtar)
+        if x is None:
+            continue
+        kacak_kirilim.setdefault(x["kacak"], {"roi": [], "odul_alan": 0})
+        kacak_kirilim[x["kacak"]]["roi"].append(x["roi"])
+        if x["odul"] > 0:
+            kacak_kirilim[x["kacak"]]["odul_alan"] += 1
+    basabas = {
+        k: {"hafta": len(v["roi"]), "medyan_roi": _medyan(v["roi"]),
+            "ortalama_roi": _ortalama(v["roi"]),
+            "odul_alan_hafta": v["odul_alan"],
+            "maliyeti_karsiliyor": _medyan(v["roi"]) >= 1.0}
+        for k, v in sorted(kacak_kirilim.items())
+    }
+    return {"butce": butce_tl, "garanti": garanti, "hafta": len(ortak),
+            "kollar": kollar_ozet, "farklar": farklar, "basabas": basabas}
+
+
 def _main(argv: list[str] | None = None) -> int:  # pragma: no cover - elle
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--garanti", type=int, default=VARSAYILAN_GARANTI)
     ap.add_argument("--butce", type=float, default=None)
     ap.add_argument("--taban", action="store_true",
                     help="tabanin gevsekligini olc (yalniz 14-garanti)")
+    ap.add_argument("--hedef", action="store_true",
+                    help="E2: hedef kademeyi paradan sec (yalniz 14-garanti)")
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args(argv)
 
@@ -412,6 +520,35 @@ def _main(argv: list[str] | None = None) -> int:  # pragma: no cover - elle
         print("\n  kacak -> 12+ tutturan ortalama kolon sayisi")
         for k, v in t["kacak_kolon"].items():
             print(f"  {k:>7} {v:>12.1f}")
+        return 0
+
+    if a.hedef:
+        h = hedef_kademe_kiyasi(a.butce or 2000.0, a.garanti)
+        if a.json:
+            print(json.dumps(h, ensure_ascii=False, default=str))
+            return 0
+        print(f"\nHedef kademe — {h['garanti']}-garanti · "
+              f"{h['butce']:,.0f} TL · {h['hafta']} hafta · GERCEK kolon odulu")
+        print(f"\n{'hedef':>7}{'geri donus':>12}{'odul>0':>8}"
+              f"{'ort kolon':>11}{'ort P(hedef)':>14}{'sekil':>10}")
+        for k in h["kollar"]:
+            print(f"{k['kademe']:>7}{k['roi']:>11.1%}{k['odul_alan_hafta']:>8}"
+                  f"{k['ort_kolon']:>11.0f}{k['ort_p_hedef']:>14.4f}"
+                  f"{len(k['sekiller']):>10}")
+        print("\nESLESTIRILMIS ROI FARKI (hafta duzeyi bootstrap %95)")
+        for f in h["farklar"]:
+            print(f"  {f['kademe']:>7}: {f['ort']:>+8.5f} "
+                  f"[{f['alt']:>+8.5f}, {f['ust']:>+8.5f}]  "
+                  f"{'SIFIR DISINDA' if f['sifir_disinda'] else 'sifiri kesiyor'}"
+                  f"  | kuyruksuz {f['kuyruksuz_ort']:>+8.5f} "
+                  f"[{f['kuyruksuz_alt']:>+8.5f}, {f['kuyruksuz_ust']:>+8.5f}]")
+        print(f"\nBASABAS — hedef {HEDEF_KADEME}, kacaga gore (gerceklesen)")
+        print(f"{'kacak':>7}{'hafta':>7}{'medyan':>9}{'ortalama':>10}"
+              f"{'odul>0':>8}{'maliyeti karsiliyor':>21}")
+        for k, v in h["basabas"].items():
+            print(f"{k:>7}{v['hafta']:>7}{v['medyan_roi']:>8.2f}x"
+                  f"{v['ortalama_roi']:>9.2f}x{v['odul_alan_hafta']:>8}"
+                  f"{'EVET' if v['maliyeti_karsiliyor'] else 'hayir':>21}")
         return 0
 
     butceler = (a.butce,) if a.butce else BUTCELER

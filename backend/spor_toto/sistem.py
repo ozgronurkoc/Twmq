@@ -69,6 +69,23 @@ VARSAYILAN_GARANTI = 13
 #: İkramiyenin başladığı kademe (§5.2 bulgu 1: *"14 hiçbir zaman ulaşılabilir
 #: hedef değildi; doğru ölçü P(en iyi kolon ≥ 12)"*). Kaçak eşiği buradan
 #: türer ve bu yüzden ayrı bir sabittir.
+#:
+#: **Ve artık bir varsayım değil, ölçülmüş bir seçim** (2026-09-04, E2):
+#: 12/13/14 adayları 114 hafta boyunca gerçek ikramiye tablolarına karşı
+#: koşturuldu (`karne.hedef_kademe_kiyasi`, 14-garanti, 2.000 TL) ve
+#: eşleştirilmiş ROI farklarının üçü de sıfırı kesti — en yakını 13 − 12,
+#: +0,00928 [+0,00000, +0,02724], kuyruk sınavında da aynı. Sabit değişmedi
+#: ama gerekçesi değişti.
+#:
+#: Ölçüm neden zayıf çıktı, o da yazılı olmalı: üç hedef de **aynı şekli**
+#: alıyor (3 çifte + 5 üçlü, 168 kolon), çünkü çifte/üçlü eklemek
+#: `P(k ≤ eşik)`'i hangi eşikte olursa olsun büyütür — yani şekli **bütçe**
+#: belirliyor, hedef değil. Hedefin dokunabildiği tek şey hangi sembolün
+#: işaretlendiği.
+#:
+#: Ölçüm 14-garantide yapıldı çünkü kolonları üretebilen tek yer orası
+#: (`engines.run_auto`, `core.py` yarıçap 1'e kilitli). 13-garantiye
+#: **taşınmaz** — §3.51'in 15,1 katı tam olarak o taşımayı geçersiz kılar.
 HEDEF_KADEME = 12
 
 
