@@ -81,10 +81,56 @@ from spor_toto.secim import (
     kalabalik_ayari,
 )
 
-#: Dondurulmuş 1. kuponun ölçeği. Kıyas yaparken bu ADIN yazılması şart:
-#: iki kuponun `p_hedef`i farklı ölçeklerde hesaplanmıştır ve doğrudan
-#: karşılaştırılırsa yanlış okunur (bkz. `_kiyas`).
+#: Dondurulmuş 1. kuponun ölçeği **kaydın kendisinden** okunur; bu sabit
+#: yalnızca kayıt hiç söylemiyorsa devreye giren geri düşüştür.
+#:
+#: **Neden sabit olamaz.** Bu değer bir dönem `"orantili"` diye yazılıydı ve
+#: 1.–2. haftada doğruydu: o kuponlar orantısal ölçekte donduruldu. 3. ve 4.
+#: hafta `shin` + `hedef` ile donduruldu ve sabit o gün YALAN söylemeye
+#: başladı — kayıt "ölçek orantılıdan shin'e değişti" ve "kural eşikten
+#: hedefe çevrildi" diye yazacaktı, oysa ikisi de değişmemişti; üstelik
+#: `_kiyas` "iki sayı doğrudan kıyaslanamaz" diyecekti, oysa tam olarak
+#: kıyaslanabilirler. Deponun üçüncü kez gördüğü kalıp: **bugünkü durumu
+#: kalıcı sanmak** (docs §3.38). Her dondurulmuş kayıt `strategy.arindirma`
+#: ve `strategy.kural` taşır — bekçisi
+#: `test_donmus_kupon_hangi_olcekte_donduruldugunu_yazar`.
 ONCEKI_ARINDIRMA = "orantili"
+
+
+def _onceki_olcek(donmus: dict[str, Any] | None) -> tuple[str, str]:
+    """Dondurulmuş kaydın KENDİ ölçeği ve kuralı — sabit yazılmaz."""
+    st = ((donmus or {}).get("meta") or {}).get("strategy") or {}
+    return st.get("arindirma") or ONCEKI_ARINDIRMA, st.get("kural") or "esik"
+
+
+def _yenilikler(onceki_arindirma: str, onceki_kural: str,
+                arindirma: str, kural: str) -> list[str]:
+    """1. Tahmin'den bu yana GERÇEKTEN ne değişti.
+
+    Liste sabit yazılıydı ve dört maddesinin ikisi 3. haftadan beri yalandı:
+    o hafta kupon zaten `shin` + `hedef` ile donduruldu, yani ölçek de kural
+    da değişmemişti. Artık iki alan da dondurulmuş kayıttan okunur ve madde
+    **yalnızca fark varsa** yazılır.
+
+    Son iki madde koşulsuz: dondurulan kupon kalabalığı görmez (kaydın
+    kendi `kalabalik_gerekcesi` alanı bunu söyler) ve bağımsız görüş hiçbir
+    kupon kuralına girmez — ikisi de tanım gereği bu kaydın eklediği şey.
+    Kalabalık ayarı dondurulmuş kuponun KENDİ kuralıysa o madde de düşer.
+    """
+    out = []
+    if onceki_arindirma != arindirma:
+        out.append(f"olcek: marj arindirma {onceki_arindirma} -> {arindirma} "
+                   "(docs §3.18)")
+    if onceki_kural != kural:
+        out.append(f"kural: {onceki_kural} -> {kural}, "
+                   "P(en iyi kolon >= 12) enbuyuklenir (docs §3.19)")
+    if "kalabal" not in onceki_kural.lower():
+        out.append("havuz: kalabalik ayari — isaret sayilari sabit, "
+                   "sembol degisir (docs §3.34)")
+    out.append("gorus: Dixon-Coles + Elo, piyasadan bagimsiz (docs §3.27–3.28)")
+    if not out:  # pragma: no cover - son madde kosulsuz, buraya dusulmez
+        out.append("1. Tahmin ile AYNI olcek ve kural; fark yalnizca kayit gunu")
+    return out
 
 #: Havuz ekseninin varsayımları. Hepsi **varsayım**, hiçbiri ölçüm — bu
 #: yüzden gövdeye yazılırlar ve arayüzde para birimli hiçbir sayı
@@ -383,7 +429,7 @@ def marj_duyarliligi(d: dict[str, Any], yontem: str,
 
 def _kiyas(donmus: dict[str, Any] | None, probs: list[dict[str, float]],
            oynanma: list[dict[str, float]],
-           kupon: dict[str, Any]) -> dict[str, Any] | None:
+           kupon: dict[str, Any], arindirma: str) -> dict[str, Any] | None:
     """1. Tahmin ↔ 2. Tahmin — **aynı ölçekte**.
 
     Dondurulmuş kuponun kendi `p_hedef`i orantısal ölçekte hesaplanmıştı;
@@ -397,10 +443,12 @@ def _kiyas(donmus: dict[str, Any] | None, probs: list[dict[str, float]],
     eski = [list(p) for p in donmus["variants"][0]["picks"]]
     eski_govde = _kupon_govdesi(probs, oynanma, eski)
     yeni = kupon["ayarli"]
+    eski_arindirma, eski_kural = _onceki_olcek(donmus)
+    ayni_olcek = eski_arindirma == arindirma
     return {
         "eski_picks": ["".join(s) for s in eski],
-        "eski_arindirma": ONCEKI_ARINDIRMA,
-        "eski_kural": "esik",
+        "eski_arindirma": eski_arindirma,
+        "eski_kural": eski_kural,
         "eski_bugunku_olcekte": {
             "p_hedef": eski_govde["p_hedef"],
             "columns": eski_govde["columns"],
@@ -414,10 +462,18 @@ def _kiyas(donmus: dict[str, Any] | None, probs: list[dict[str, float]],
         "degisen_maclar": [i + 1 for i, (a, b)
                            in enumerate(zip(donmus["variants"][0]["picks"],
                                             yeni["picks"])) if a != b],
+        # Uyari KOSULLU: iki kayit ayni olcekteyse "kiyaslanamaz" demek
+        # yanlis olurdu — ve 3. haftadan beri cogunlukla ayni olcektedirler.
+        "ayni_olcek": ayni_olcek,
         "not": ("Eski isaretler BUGUNKU olcekte yeniden olculdu; kayit "
-                "yeniden hesaplanmadi. Dondurulmus kuponun kendi p_hedef'i "
-                f"{ONCEKI_ARINDIRMA} olceginde hesaplanmisti ve bu sayiyla "
-                "dogrudan kiyaslanamaz."),
+                "yeniden hesaplanmadi. "
+                + (f"Dondurulmus kupon da {eski_arindirma} olceginde "
+                   "donduruldu, yani iki p_hedef DOGRUDAN kiyaslanabilir; "
+                   "asagidaki yeniden olcum bir dogrulamadir."
+                   if ayni_olcek else
+                   f"Dondurulmus kuponun kendi p_hedef'i {eski_arindirma} "
+                   "olceginde hesaplanmisti ve bu sayiyla dogrudan "
+                   "kiyaslanamaz.")),
     }
 
 
@@ -438,8 +494,17 @@ def uret(sezon: str, hafta: int,
     meta = d["meta"]
     maclar = d["matches"]
 
+    # Dondurulmus kayit ONCE okunur: "onceki olcek" ondan turer, sabitten
+    # degil. Once asagida okunuyordu ve `onceki` sabit bir yontemle
+    # hesaplaniyordu — 3. haftadan beri yanlis olan tam olarak buydu.
+    kupon_yolu = (KOK / "data" / "super_toto" / sezon
+                  / f"hafta_{hafta:02d}_kupon.json")
+    donmus = (json.loads(kupon_yolu.read_text(encoding="utf-8"))
+              if kupon_yolu.exists() else None)
+    onceki_arindirma, onceki_kural = _onceki_olcek(donmus)
+
     probs = [_probs(m, yontem) for m in maclar]
-    onceki = [_probs(m, ONCEKI_ARINDIRMA) for m in maclar]
+    onceki = [_probs(m, onceki_arindirma) for m in maclar]
     oynanma = [_oynanma(m) for m in maclar]
 
     # Görüşün zaman ağırlığı haftanın İLK maçından ölçülür — kaydın
@@ -448,11 +513,6 @@ def uret(sezon: str, hafta: int,
     ilk_mac = min((m["date"] for m in maclar if m.get("date")), default=None)
     g = gorus_uret(maclar, ilk_mac)
     kupon = kupon_kur(probs, oynanma, kayip_orani)
-
-    kupon_yolu = (KOK / "data" / "super_toto" / sezon
-                  / f"hafta_{hafta:02d}_kupon.json")
-    donmus = (json.loads(kupon_yolu.read_text(encoding="utf-8"))
-              if kupon_yolu.exists() else None)
 
     satirlar = []
     for i, m in enumerate(maclar):
@@ -481,18 +541,20 @@ def uret(sezon: str, hafta: int,
             "program": meta.get("program"),
             "results_known": bool(meta.get("results")),
             "arindirma": yontem,
-            "onceki_arindirma": ONCEKI_ARINDIRMA,
+            "onceki_arindirma": onceki_arindirma,
+            "onceki_kural": onceki_kural,
             "kural": kupon["kural"],
             "kayip_orani": kayip_orani,
             "note": ("SONUCLAR GORULMEDEN uretildi. 1. Tahmin'in kaydi "
                      "yerinde durur ve yeniden hesaplanmaz; bu ikinci bir "
                      "kayittir, bir duzeltme degil."),
-            "yenilikler": [
-                "olcek: marj arindirma orantili -> shin (docs §3.18)",
-                "kural: esik -> hedef, P(en iyi kolon >= 12) enbuyuklenir (docs §3.19)",
-                "havuz: kalabalik ayari — isaret sayilari sabit, sembol degisir (docs §3.34)",
-                "gorus: Dixon-Coles + Elo, piyasadan bagimsiz (docs §3.27–3.28)",
-            ],
+            # YENILIK LISTESI TURETILIR. Once dort madde sabit yaziliydi ve
+            # ilk ikisi 3. haftadan beri YALANDI: o kupon zaten shin+hedef
+            # ile donduruldu, yani "orantili -> shin" ve "esik -> hedef"
+            # diye bir degisiklik olmadi. Bir kayit, olmayan bir degisikligi
+            # ilan edemez.
+            "yenilikler": _yenilikler(onceki_arindirma, onceki_kural,
+                                      yontem, kupon["kural"]),
             "veri_uyarilari": ((meta.get("data_warnings") or [])
                                + (meta.get("uretilen_uyarilar") or [])),
         },
@@ -502,7 +564,7 @@ def uret(sezon: str, hafta: int,
         "kupon": kupon,
         "havuz": havuz_bloku(kupon, probs, oynanma, havuz),
         "duyarlilik": marj_duyarliligi(d, yontem, kayip_orani),
-        "kiyas": _kiyas(donmus, probs, oynanma, kupon),
+        "kiyas": _kiyas(donmus, probs, oynanma, kupon, yontem),
     }
 
 
@@ -536,8 +598,13 @@ def yazdir(govde: dict[str, Any]) -> None:  # pragma: no cover - elle kullanim
     for y in meta["yenilikler"]:
         print(f"  · {y}")
 
-    print("\n─── 1. ÖLÇEK — aynı oran, başka olasılık ────────────────────────────────")
-    print(f"{'#':>2} {'Maç':<34} {'shin 1/0/2':<16} {'orantili 1/0/2':<16} kayma (puan)")
+    _ony = meta["onceki_arindirma"]
+    if _ony == meta["arindirma"]:
+        print(f"\n─── 1. ÖLÇEK — 1. Tahmin ile AYNI ({_ony}); kayma yok ──────────────────")
+    else:
+        print("\n─── 1. ÖLÇEK — aynı oran, başka olasılık ────────────────────────────────")
+    print(f"{'#':>2} {'Maç':<34} {meta['arindirma']+' 1/0/2':<16} "
+          f"{_ony+' 1/0/2':<16} kayma (puan)")
     for r in govde["matches"]:
         yeni = "/".join(f"{100*r['probs'][s]:.0f}" for s in SEM)
         eski = "/".join(f"{100*r['probs_onceki'][s]:.0f}" for s in SEM)

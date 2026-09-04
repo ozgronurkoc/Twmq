@@ -124,9 +124,16 @@ def _fiyat_blok(d: dict[str, Any]) -> dict[str, Any] | None:
 
     Alan yoksa `None` döner ve arayüz bölümü hiç çizmez — 1. ve 2.
     haftanın kaydı tek bir bültenin tek anını taşıyor.
+
+    **Kitap listesi bütün maçların BİRLEŞİMİDİR ve her maçta dolu olduğu
+    varsayılmaz.** Önce 1. maçın kitapları alınıp bütün maçlarda o
+    anahtarla indeksleniyordu; 4. haftada Pinnacle iki maçı eksik bıraktı
+    ve besleme üretimi `KeyError` ile düştü. Ortalama marj artık o kitabı
+    TAŞIYAN maçlar üzerinden alınır ve kaç maçtan geldiği (`margin_n`)
+    ayrıca yazılır — 13 maçlık bir ortalama 15 maçlık sanılmasın.
     """
     maclar = d["matches"]
-    kitaplar = sorted(maclar[0].get("odds_books") or {})
+    kitaplar = sorted({k for m in maclar for k in (m.get("odds_books") or {})})
     if len(kitaplar) < 2:
         return None
 
@@ -141,9 +148,14 @@ def _fiyat_blok(d: dict[str, Any]) -> dict[str, Any] | None:
         return implied_probs(o) if o else None
 
     marj = {}
+    marj_n = {}
     for k in kitaplar:
-        ms = [sum(1 / v for v in m["odds_books"][k].values()) - 1 for m in maclar]
+        ms = [sum(1 / v for v in m["odds_books"][k].values()) - 1
+              for m in maclar if (m.get("odds_books") or {}).get(k)]
+        if not ms:
+            continue
         marj[k] = round(100 * sum(ms) / len(ms), 2)
+        marj_n[k] = len(ms)
 
     # Bir bahiscinin kapanisi acilisiyla BIREBIR ayniysa o satir bir fiyat
     # degil, tazelenmemis bir kayittir. Ayrisma sutununda buyuk gorunur ve
@@ -155,7 +167,8 @@ def _fiyat_blok(d: dict[str, Any]) -> dict[str, Any] | None:
         esi = k.replace("_kapanis", "_acilis")
         if esi in kitaplar:
             ayni = [m["no"] for m in maclar
-                    if m["odds_books"][k] == m["odds_books"][esi]]
+                    if (m.get("odds_books") or {}).get(k)
+                    and m["odds_books"][k] == m["odds_books"].get(esi)]
             if ayni:
                 bayat[k] = ayni
 
@@ -176,6 +189,7 @@ def _fiyat_blok(d: dict[str, Any]) -> dict[str, Any] | None:
             "disagreement": round(ayrisma, 4),
         })
     return {"books": esanlı, "main_book": ana, "margins": marj,
+            "margin_n": marj_n, "match_count": len(maclar),
             "stale_closing": bayat, "rows": satirlar}
 
 

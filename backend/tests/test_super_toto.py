@@ -30,6 +30,19 @@ def _modul(ad: str):
     return importlib.import_module(f"scripts.super_toto_{ad}")
 
 
+def _haftalar() -> list[int]:
+    """Girilmis hafta numaralari — DISKTEN, sabit yazilmadan.
+
+    Once burada `[1, 2]` sabit yaziliydi ve 3. ile 4. hafta girildiginde
+    testler onlara hic bakmadi. `scripts/check.sh` ayni hatayi yapmis, tesbit
+    edilmis ve orada duzeltilmisti (hafta listesi diskten cikiyor); test
+    tarafi ayni desenle geride kalmisti — kapinin sessizce kuculmesi, tam
+    olarak yakalamasi gereken sey.
+    """
+    return sorted(int(f.stem.split("_")[1])
+                  for f in VERI.glob("hafta_[0-9][0-9].json"))
+
+
 @pytest.fixture(scope="module")
 def hafta():
     return _modul("hafta")
@@ -42,7 +55,7 @@ def deg():
 
 # ─── hafta_yukle ──────────────────────────────────────────────────────────────
 
-@pytest.mark.parametrize("no", [1, 2])
+@pytest.mark.parametrize("no", _haftalar())
 def test_hafta_okunur_ve_olasiliklar_bire_toplanir(hafta, no):
     d = hafta.hafta_yukle("2026_27", no)
     assert len(d["matches"]) == 15
@@ -112,7 +125,7 @@ def test_olmayan_hafta_sessizce_gecmez(hafta):
 
 # ─── kupon ────────────────────────────────────────────────────────────────────
 
-@pytest.mark.parametrize("no", [1, 2])
+@pytest.mark.parametrize("no", _haftalar())
 def test_kupon_kume_ici_olasiligi_tutarli(hafta, no):
     from spor_toto.backtest import VARSAYILAN_BANKO, VARSAYILAN_UCLU
     d = hafta.hafta_yukle("2026_27", no)
@@ -316,6 +329,27 @@ def test_kapi_bozuk_sonuc_dizisini_yakalar(hafta):
     assert any("sonuç dizisi bozuk" in u for u in hafta.dogrula(d))
 
 
+def test_kapi_delikli_bahisciyi_isaretler(hafta):
+    """Bir bahiscinin kaydi BAZI maclarda yoksa bu soylenmeli.
+
+    4. haftada Pinnacle 2. maci hic fiyatlamadi ve 13. macin kapanisini
+    vermedi; o satirlarda ana fiyat baska bir kayittan gelmek zorunda kaldi.
+    Kapi once yalnizca 1. MACIN kitaplarina bakiyordu, yani 1. macta olmayip
+    baska macta olan bir bahisci hic denetlenmezdi.
+    """
+    d = _sahte()
+    d["matches"][0]["odds_books"] = {
+        "pinnacle_acilis": {"1": 2.0, "0": 3.4, "2": 3.6},
+        "pinnacle_kapanis": {"1": 2.0, "0": 3.4, "2": 3.6},
+    }
+    for m in d["matches"][1:]:
+        m["odds_books"] = {"nesine_acilis": {"1": 2.0, "0": 3.4, "2": 3.6}}
+    uyarilar = hafta.dogrula(d)
+    assert any("pinnacle_acilis" in u and "kayıt YOK" in u for u in uyarilar), uyarilar
+    # 1. macta olmayan bir kitap da denetlenmeli — birlesim, ilk mac degil.
+    assert any("nesine_acilis" in u and "kayıt YOK" in u for u in uyarilar), uyarilar
+
+
 def test_kapi_veriyi_degistirmez(hafta):
     """Uyarı üretir, onarmaz — belirsiz veri uydurulmaz (veri doktrini 2)."""
     d = _sahte(odds={"1": 1.05, "0": 1.05, "2": 1.05})
@@ -451,6 +485,32 @@ def test_besleme_sonucu_uydurmaz_ve_kaydirmaz(besleme):
         assert len(w["results"]) == 15
         for m in w["matches"]:
             assert m["result"] == w["results"][m["no"] - 1]
+
+
+def test_besleme_eksik_bahisci_satirinda_cokmez(besleme, hafta):
+    """Bir bahisci bazi maclarda yoksa besleme URETILEBILMELI.
+
+    Bu bir kuram degil: 4. hafta girildiginde `_fiyat_blok` `KeyError:
+    'pinnacle_acilis'` ile dustu, cunku kitap listesi 1. MACTAN aliniyor ve
+    butun maclarda o anahtarla indeksleniyordu. Ortalama marj artik yalnizca
+    o kitabi TASIYAN maclardan gelir ve kac macdan geldigi `margin_n`de
+    yazili — 13 maclik bir ortalama 15 maclik sanilmasin.
+    """
+    for w in besleme.uret("2026_27")["weeks"]:
+        f = w["prices"]
+        if not f:
+            continue
+        assert f["match_count"] == len(w["matches"])
+        for k, n in f["margin_n"].items():
+            assert 0 < n <= f["match_count"]
+            assert k in f["margins"]
+        # Eksik satiri olan bir kitap icin sayi mac sayisindan KUCUK olmali;
+        # tam olan icin esit. Ikisi de kaydin kendisinden dogrulanir.
+        d = hafta.hafta_yukle("2026_27", w["week"])
+        for k, n in f["margin_n"].items():
+            var = sum(1 for m in d["matches"]
+                      if (m.get("odds_books") or {}).get(k))
+            assert n == var, (w["week"], k, n, var)
 
 
 def test_besleme_arindirmayi_yazar(besleme):

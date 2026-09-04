@@ -1,0 +1,1777 @@
+{
+ "ayrisma": [
+  {
+   "dc": {
+    "0": 0.30248353624975516,
+    "1": 0.32982113432546073,
+    "2": 0.3676953294247842
+   },
+   "dc_fav": "2",
+   "lig": "I1",
+   "mac": "Roma – Atalanta",
+   "no": 14,
+   "piyasa": {
+    "0": 0.24167619562979403,
+    "1": 0.5695102352178941,
+    "2": 0.18881356915231184
+   },
+   "piyasa_fav": "1",
+   "sembol_farkli": true,
+   "toplam_sapma": 0.23968910089243345
+  },
+  {
+   "dc": {
+    "0": 0.24283685845865197,
+    "1": 0.3291986021876731,
+    "2": 0.4279645393536749
+   },
+   "dc_fav": "2",
+   "lig": "T1",
+   "mac": "Başakşehir FK – Galatasaray A.Ş.",
+   "no": 5,
+   "piyasa": {
+    "0": 0.2064506407463018,
+    "1": 0.18362234395282861,
+    "2": 0.6099270153008696
+   },
+   "piyasa_fav": "2",
+   "sembol_farkli": false,
+   "toplam_sapma": 0.18196247594719467
+  },
+  {
+   "dc": {
+    "0": 0.30858255882523533,
+    "1": 0.3729721261409362,
+    "2": 0.31844531503382856
+   },
+   "dc_fav": "1",
+   "lig": "I1",
+   "mac": "Juventus – AC Milan",
+   "no": 15,
+   "piyasa": {
+    "0": 0.2870471637607876,
+    "1": 0.4609374472383107,
+    "2": 0.25201538900090176
+   },
+   "piyasa_fav": "1",
+   "sembol_farkli": false,
+   "toplam_sapma": 0.08796532109737451
+  },
+  {
+   "dc": {
+    "0": 0.2852577406657334,
+    "1": 0.34870792683529456,
+    "2": 0.36603433249897194
+   },
+   "dc_fav": "2",
+   "lig": "E0",
+   "mac": "Everton – Manchester United",
+   "no": 10,
+   "piyasa": {
+    "0": 0.263450774922291,
+    "1": 0.2877798319027465,
+    "2": 0.4487693931749624
+   },
+   "piyasa_fav": "2",
+   "sembol_farkli": false,
+   "toplam_sapma": 0.08273506067599046
+  },
+  {
+   "dc": {
+    "0": 0.3516450462119947,
+    "1": 0.286160192453251,
+    "2": 0.3621947613347542
+   },
+   "dc_fav": "2",
+   "lig": "T1",
+   "mac": "Kocaelispor – Samsunspor A.Ş.",
+   "no": 6,
+   "piyasa": {
+    "0": 0.32058166456457643,
+    "1": 0.36216288394205404,
+    "2": 0.31725545149336953
+   },
+   "piyasa_fav": "1",
+   "sembol_farkli": true,
+   "toplam_sapma": 0.07600269148880298
+  },
+  {
+   "dc": {
+    "0": 0.2635651305108232,
+    "1": 0.4459465037914756,
+    "2": 0.2904883656977012
+   },
+   "dc_fav": "1",
+   "lig": "T1",
+   "mac": "Çaykur Rizespor A.Ş. – Alanyaspor",
+   "no": 8,
+   "piyasa": {
+    "0": 0.2788560416575002,
+    "1": 0.5009282171905006,
+    "2": 0.22021574115199927
+   },
+   "piyasa_fav": "1",
+   "sembol_farkli": false,
+   "toplam_sapma": 0.07027262454570199
+  },
+  {
+   "dc": {
+    "0": 0.2477754077973642,
+    "1": 0.36519954224581974,
+    "2": 0.38702504995681597
+   },
+   "dc_fav": "2",
+   "lig": "SP1",
+   "mac": "Athletic Bilbao – Atletico Madrid",
+   "no": 12,
+   "piyasa": {
+    "0": 0.2725307032261035,
+    "1": 0.3084265977212633,
+    "2": 0.41904269905263314
+   },
+   "piyasa_fav": "2",
+   "sembol_farkli": false,
+   "toplam_sapma": 0.05677294452455646
+  },
+  {
+   "dc": {
+    "0": 0.21415979338667462,
+    "1": 0.5685421810973502,
+    "2": 0.21729802551597519
+   },
+   "dc_fav": "1",
+   "lig": "T1",
+   "mac": "Fenerbahçe A.Ş. – Beşiktaş A.Ş.",
+   "no": 4,
+   "piyasa": {
+    "0": 0.24193030785971598,
+    "1": 0.5262575338655228,
+    "2": 0.23181215827476123
+   },
+   "piyasa_fav": "1",
+   "sembol_farkli": false,
+   "toplam_sapma": 0.04228464723182743
+  },
+  {
+   "dc": {
+    "0": 0.25644595758905303,
+    "1": 0.5389182563735818,
+    "2": 0.20463578603736518
+   },
+   "dc_fav": "1",
+   "lig": "T1",
+   "mac": "Göztepe A.Ş. – Gaziantep F.K. A.Ş.",
+   "no": 9,
+   "piyasa": {
+    "0": 0.25428286149969964,
+    "1": 0.509027794463804,
+    "2": 0.2366893440364963
+   },
+   "piyasa_fav": "1",
+   "sembol_farkli": false,
+   "toplam_sapma": 0.03205355799913118
+  },
+  {
+   "dc": {
+    "0": 0.22971505553966978,
+    "1": 0.5907169189564226,
+    "2": 0.17956802550390755
+   },
+   "dc_fav": "1",
+   "lig": "T1",
+   "mac": "Trabzonspor A.Ş. – Gençlerbirliği",
+   "no": 7,
+   "piyasa": {
+    "0": 0.22145988837635447,
+    "1": 0.6143470934440108,
+    "2": 0.16419301817963483
+   },
+   "piyasa_fav": "1",
+   "sembol_farkli": false,
+   "toplam_sapma": 0.023630174487588113
+  },
+  {
+   "dc": {
+    "0": 0.2295163292501239,
+    "1": 0.580275458830392,
+    "2": 0.1902082119194841
+   },
+   "dc_fav": "1",
+   "lig": "I1",
+   "mac": "Inter – Napoli",
+   "no": 13,
+   "piyasa": {
+    "0": 0.24515711736966186,
+    "1": 0.576684961883993,
+    "2": 0.1781579207463452
+   },
+   "piyasa_fav": "1",
+   "sembol_farkli": false,
+   "toplam_sapma": 0.015640788119537924
+  },
+  {
+   "dc": {
+    "0": 0.2444069068146156,
+    "1": 0.5869587844566281,
+    "2": 0.16863430872875634
+   },
+   "dc_fav": "1",
+   "lig": "E0",
+   "mac": "Arsenal – Chelsea",
+   "no": 11,
+   "piyasa": {
+    "0": 0.24584399137107973,
+    "1": 0.579384194206782,
+    "2": 0.17477181442213835
+   },
+   "piyasa_fav": "1",
+   "sembol_farkli": false,
+   "toplam_sapma": 0.007574590249846108
+  }
+ ],
+ "duyarlilik": {
+  "columns": 3888,
+  "duzeltilen": [
+   {
+    "duzeltilmis_oran": {
+     "0": 3.3443791583540032,
+     "1": 2.2333270218538477,
+     "2": 3.3107109117933926
+    },
+    "mac": "Kasımpaşa A.Ş. – Amed Sportif",
+    "marj": 0.1770660834601856,
+    "no": 2,
+    "probs": {
+     "0": 0.28334230012979494,
+     "1": 0.4303119566352525,
+     "2": 0.28634574323495254
+    }
+   }
+  ],
+  "not": "Veri DUZELTILMEDI; yalnizca sonucun kuskulu satira duyarliligi olculdu. Duzeltilmis oranlar kupona GIRMEZ.",
+  "ortanca_marj": 0.048821548821548655,
+  "p_hedef": 0.4485846457204274,
+  "picks": [
+   "102",
+   "102",
+   "1",
+   "12",
+   "2",
+   "102",
+   "1",
+   "10",
+   "12",
+   "102",
+   "10",
+   "102",
+   "10",
+   "10",
+   "12"
+  ]
+ },
+ "gorus": {
+  "dc_gamma": 1.2396328795343337,
+  "dc_olan": 12,
+  "dc_rho": -0.043121416954615216,
+  "eslesen": 12,
+  "eslesmeyen": [
+   "Amed Sportif",
+   "Erzurumspor FK",
+   "Çorum FK"
+  ],
+  "kapsama": 0.8,
+  "kullanilabilir": true,
+  "n": 15,
+  "rows": [
+   {
+    "dc": null,
+    "dc_var": false,
+    "dep": "Konyaspor",
+    "dep_ad": "Konyaspor",
+    "elo_beklenen": null,
+    "elo_farki": null,
+    "elo_var": false,
+    "eslesti": false,
+    "ev": null,
+    "ev_ad": "Erzurumspor FK",
+    "lig": "T1",
+    "no": 1
+   },
+   {
+    "dc": null,
+    "dc_var": false,
+    "dep": null,
+    "dep_ad": "Amed Sportif",
+    "elo_beklenen": null,
+    "elo_farki": null,
+    "elo_var": false,
+    "eslesti": false,
+    "ev": "Kasimpasa",
+    "ev_ad": "Kasımpaşa A.Ş.",
+    "lig": "T1",
+    "no": 2
+   },
+   {
+    "dc": null,
+    "dc_var": false,
+    "dep": "Eyupspor",
+    "dep_ad": "Eyüpspor",
+    "elo_beklenen": null,
+    "elo_farki": null,
+    "elo_var": false,
+    "eslesti": false,
+    "ev": null,
+    "ev_ad": "Çorum FK",
+    "lig": "T1",
+    "no": 3
+   },
+   {
+    "dc": {
+     "0": 0.21415979338667462,
+     "1": 0.5685421810973502,
+     "2": 0.21729802551597519
+    },
+    "dc_var": true,
+    "dep": "Besiktas",
+    "dep_ad": "Beşiktaş A.Ş.",
+    "elo_beklenen": 0.7195276427506195,
+    "elo_farki": 163.6629674828116,
+    "elo_var": true,
+    "eslesti": true,
+    "ev": "Fenerbahce",
+    "ev_ad": "Fenerbahçe A.Ş.",
+    "lig": "T1",
+    "no": 4
+   },
+   {
+    "dc": {
+     "0": 0.24283685845865197,
+     "1": 0.3291986021876731,
+     "2": 0.4279645393536749
+    },
+    "dc_var": true,
+    "dep": "Galatasaray",
+    "dep_ad": "Galatasaray A.Ş.",
+    "elo_beklenen": 0.46559326039159404,
+    "elo_farki": -23.94609656711532,
+    "elo_var": true,
+    "eslesti": true,
+    "ev": "Buyuksehyr",
+    "ev_ad": "Başakşehir FK",
+    "lig": "T1",
+    "no": 5
+   },
+   {
+    "dc": {
+     "0": 0.3516450462119947,
+     "1": 0.286160192453251,
+     "2": 0.3621947613347542
+    },
+    "dc_var": true,
+    "dep": "Samsunspor",
+    "dep_ad": "Samsunspor A.Ş.",
+    "elo_beklenen": 0.48715269227204616,
+    "elo_farki": -8.9291891681562,
+    "elo_var": true,
+    "eslesti": true,
+    "ev": "Kocaelispor",
+    "ev_ad": "Kocaelispor",
+    "lig": "T1",
+    "no": 6
+   },
+   {
+    "dc": {
+     "0": 0.22971505553966978,
+     "1": 0.5907169189564226,
+     "2": 0.17956802550390755
+    },
+    "dc_var": true,
+    "dep": "Genclerbirligi",
+    "dep_ad": "Gençlerbirliği",
+    "elo_beklenen": 0.7351241328199476,
+    "elo_farki": 177.32731541503358,
+    "elo_var": true,
+    "eslesti": true,
+    "ev": "Trabzonspor",
+    "ev_ad": "Trabzonspor A.Ş.",
+    "lig": "T1",
+    "no": 7
+   },
+   {
+    "dc": {
+     "0": 0.2635651305108232,
+     "1": 0.4459465037914756,
+     "2": 0.2904883656977012
+    },
+    "dc_var": true,
+    "dep": "Alanyaspor",
+    "dep_ad": "Alanyaspor",
+    "elo_beklenen": 0.6191157025919071,
+    "elo_farki": 84.39150024870514,
+    "elo_var": true,
+    "eslesti": true,
+    "ev": "Rizespor",
+    "ev_ad": "Çaykur Rizespor A.Ş.",
+    "lig": "T1",
+    "no": 8
+   },
+   {
+    "dc": {
+     "0": 0.25644595758905303,
+     "1": 0.5389182563735818,
+     "2": 0.20463578603736518
+    },
+    "dc_var": true,
+    "dep": "Gaziantep",
+    "dep_ad": "Gaziantep F.K. A.Ş.",
+    "elo_beklenen": 0.6974249295120939,
+    "elo_farki": 145.06572963051394,
+    "elo_var": true,
+    "eslesti": true,
+    "ev": "Goztep",
+    "ev_ad": "Göztepe A.Ş.",
+    "lig": "T1",
+    "no": 9
+   },
+   {
+    "dc": {
+     "0": 0.2852577406657334,
+     "1": 0.34870792683529456,
+     "2": 0.36603433249897194
+    },
+    "dc_var": true,
+    "dep": "Man United",
+    "dep_ad": "Manchester United",
+    "elo_beklenen": 0.5373457523761471,
+    "elo_farki": 25.99890657200558,
+    "elo_var": true,
+    "eslesti": true,
+    "ev": "Everton",
+    "ev_ad": "Everton",
+    "lig": "E0",
+    "no": 10
+   },
+   {
+    "dc": {
+     "0": 0.2444069068146156,
+     "1": 0.5869587844566281,
+     "2": 0.16863430872875634
+    },
+    "dc_var": true,
+    "dep": "Chelsea",
+    "dep_ad": "Chelsea",
+    "elo_beklenen": 0.6981592104970515,
+    "elo_farki": 145.6706174786616,
+    "elo_var": true,
+    "eslesti": true,
+    "ev": "Arsenal",
+    "ev_ad": "Arsenal",
+    "lig": "E0",
+    "no": 11
+   },
+   {
+    "dc": {
+     "0": 0.2477754077973642,
+     "1": 0.36519954224581974,
+     "2": 0.38702504995681597
+    },
+    "dc_var": true,
+    "dep": "Ath Madrid",
+    "dep_ad": "Atletico Madrid",
+    "elo_beklenen": 0.5414766306446342,
+    "elo_farki": 28.887297110298277,
+    "elo_var": true,
+    "eslesti": true,
+    "ev": "Ath Bilbao",
+    "ev_ad": "Athletic Bilbao",
+    "lig": "SP1",
+    "no": 12
+   },
+   {
+    "dc": {
+     "0": 0.2295163292501239,
+     "1": 0.580275458830392,
+     "2": 0.1902082119194841
+    },
+    "dc_var": true,
+    "dep": "Napoli",
+    "dep_ad": "Napoli",
+    "elo_beklenen": 0.6505904687841706,
+    "elo_farki": 107.98917960522999,
+    "elo_var": true,
+    "eslesti": true,
+    "ev": "Inter",
+    "ev_ad": "Inter",
+    "lig": "I1",
+    "no": 13
+   },
+   {
+    "dc": {
+     "0": 0.30248353624975516,
+     "1": 0.32982113432546073,
+     "2": 0.3676953294247842
+    },
+    "dc_var": true,
+    "dep": "Atalanta",
+    "dep_ad": "Atalanta",
+    "elo_beklenen": 0.5605640717471475,
+    "elo_farki": 42.291878856006406,
+    "elo_var": true,
+    "eslesti": true,
+    "ev": "Roma",
+    "ev_ad": "Roma",
+    "lig": "I1",
+    "no": 14
+   },
+   {
+    "dc": {
+     "0": 0.30858255882523533,
+     "1": 0.3729721261409362,
+     "2": 0.31844531503382856
+    },
+    "dc_var": true,
+    "dep": "Milan",
+    "dep_ad": "AC Milan",
+    "elo_beklenen": 0.5758255612962746,
+    "elo_farki": 53.098578310967696,
+    "elo_var": true,
+    "eslesti": true,
+    "ev": "Juventus",
+    "ev_ad": "Juventus",
+    "lig": "I1",
+    "no": 15
+   }
+  ],
+  "tarihce_mac": 31670,
+  "tarihce_son": "2026-07-27",
+  "uyari": "Bu gorus ISARET DEGISTIRMEZ. Dixon-Coles kupon setinde piyasanin gerisinde olculdu (docs §3.28); Elo bir 1X2 olasiligi degil beklenen SKOR verir (docs §3.27). Ikisi de kayda gecer, karar yoluna girmez."
+ },
+ "havuz": {
+  "model_notu": "`orneklem` ve `favori` kalabaligi PIYASADAN turetir; kalabalik ayarinin kazancini tanim geregi goremezler. `oynanma` modeli olculmus oynanma paylarini kullanir ama o da KOSULSUZ hesaplar: rakibin isabeti bizim ne isaretledigimize bakmaz, dolayisiyla her plan icin ayni cikar. Ayarin kazancini goren sayi `kupon.<plan>.kosullu_rakip`tir ve yalnizca AYNI sekildeki planlar arasinda okunur (taban <-> ayarli). Oynanma paylari ayrica TEK bir platformun kullanicilarina aittir, Spor Toto havuzunun tamami degildir.",
+  "modeller": {
+   "ayarli": {
+    "favori": {
+     "bedel": 5832.0,
+     "beklenen_getiri": -5800.366608413792,
+     "beklenen_kazanc": 31.63339158620805,
+     "getiri_orani": 0.005424106924932793,
+     "kademeler": [
+      {
+       "beklenen_kazanan": 17160.746235151873,
+       "beklenen_pay": 448.25017258175143,
+       "kademe": 14,
+       "katki": 16.53614559910968,
+       "p": 0.03689043889011294,
+       "q_kalabalik": 0.0005148223922027801
+      },
+      {
+       "beklenen_kazanan": 114193.75459083037,
+       "beklenen_pay": 67.36189285570745,
+       "kademe": 13,
+       "katki": 10.014560589877847,
+       "p": 0.14866804012365772,
+       "q_kalabalik": 0.003425812671983038
+      },
+      {
+       "beklenen_kazanan": 497590.83698253025,
+       "beklenen_pay": 19.32387739539638,
+       "kademe": 12,
+       "katki": 5.082685397220524,
+       "p": 0.26302616670665674,
+       "q_kalabalik": 0.01492772525875316
+      }
+     ],
+     "uyari": "Bu sayi OLCULMEDI. Havuz payi, komisyon ve kalabalik olasiliklari VARSAYIMDIR; §6.3b bagintiyi gorebilmek icin ~71 ikramiyeli hafta gerektigini olctu ve elde 1 var. Arayuze cikmaz.",
+     "varsayimlar": {
+      "havuz": 50000000.0,
+      "komisyon": 0.5,
+      "pay_dagilimi": {
+       "12": 0.3846153846153846,
+       "13": 0.3076923076923077,
+       "14": 0.3076923076923077
+      },
+      "pay_kaynagi": "2026/27 1., 2. ve 3. hafta resmî ikramiye ekranları; üç hafta da 1,75:1:1:1,25 veriyor — 3. hafta devirsiz (docs §3.40, §3.47)",
+      "rakip_kolon": 33333333
+     }
+    },
+    "orneklem": {
+     "bedel": 5832.0,
+     "beklenen_getiri": -5031.017214055517,
+     "beklenen_kazanc": 800.9827859444828,
+     "getiri_orani": 0.13734272735673572,
+     "kademeler": [
+      {
+       "beklenen_kazanan": 529.6233485440436,
+       "beklenen_pay": 14524.109412254835,
+       "kademe": 14,
+       "katki": 535.8007707061012,
+       "p": 0.03689043889011294,
+       "q_kalabalik": 1.5888700615208313e-05
+      },
+      {
+       "beklenen_kazanan": 5691.440643544479,
+       "beklenen_pay": 1351.5571791587552,
+       "kademe": 13,
+       "katki": 200.93335694059147,
+       "p": 0.14866804012365772,
+       "q_kalabalik": 0.0001707432210137666
+      },
+      {
+       "beklenen_kazanan": 39364.21005399945,
+       "beklenen_pay": 244.26717349929766,
+       "kademe": 12,
+       "katki": 64.24865829779012,
+       "p": 0.26302616670665674,
+       "q_kalabalik": 0.0011809263134292466
+      }
+     ],
+     "uyari": "Bu sayi OLCULMEDI. Havuz payi, komisyon ve kalabalik olasiliklari VARSAYIMDIR; §6.3b bagintiyi gorebilmek icin ~71 ikramiyeli hafta gerektigini olctu ve elde 1 var. Arayuze cikmaz.",
+     "varsayimlar": {
+      "havuz": 50000000.0,
+      "komisyon": 0.5,
+      "pay_dagilimi": {
+       "12": 0.3846153846153846,
+       "13": 0.3076923076923077,
+       "14": 0.3076923076923077
+      },
+      "pay_kaynagi": "2026/27 1., 2. ve 3. hafta resmî ikramiye ekranları; üç hafta da 1,75:1:1:1,25 veriyor — 3. hafta devirsiz (docs §3.40, §3.47)",
+      "rakip_kolon": 33333333
+     }
+    },
+    "oynanma": {
+     "bedel": 5832.0,
+     "beklenen_getiri": -5333.144973067163,
+     "beklenen_kazanc": 498.8550269328375,
+     "getiri_orani": 0.08553755605844264,
+     "kademeler": [
+      {
+       "beklenen_kazanan": 871.0278802799016,
+       "beklenen_pay": 8831.298785828269,
+       "kademe": 14,
+       "katki": 325.79048817892635,
+       "p": 0.03689043889011294,
+       "q_kalabalik": 2.6130836669705416e-05
+      },
+      {
+       "beklenen_kazanan": 8843.289070326313,
+       "beklenen_pay": 869.8468861941913,
+       "kademe": 13,
+       "katki": 129.31843177815676,
+       "p": 0.14866804012365772,
+       "q_kalabalik": 0.0002652986747627761
+      },
+      {
+       "beklenen_kazanan": 57813.09139859138,
+       "beklenen_pay": 166.31845995969974,
+       "kademe": 12,
+       "katki": 43.746106975754394,
+       "p": 0.26302616670665674,
+       "q_kalabalik": 0.001734392759301669
+      }
+     ],
+     "uyari": "Bu sayi OLCULMEDI. Havuz payi, komisyon ve kalabalik olasiliklari VARSAYIMDIR; §6.3b bagintiyi gorebilmek icin ~71 ikramiyeli hafta gerektigini olctu ve elde 1 var. Arayuze cikmaz.",
+     "varsayimlar": {
+      "havuz": 50000000.0,
+      "komisyon": 0.5,
+      "pay_dagilimi": {
+       "12": 0.3846153846153846,
+       "13": 0.3076923076923077,
+       "14": 0.3076923076923077
+      },
+      "pay_kaynagi": "2026/27 1., 2. ve 3. hafta resmî ikramiye ekranları; üç hafta da 1,75:1:1:1,25 veriyor — 3. hafta devirsiz (docs §3.40, §3.47)",
+      "rakip_kolon": 33333333
+     }
+    }
+   },
+   "taban": {
+    "favori": {
+     "bedel": 5832.0,
+     "beklenen_getiri": -5798.204520263961,
+     "beklenen_kazanc": 33.7954797360389,
+     "getiri_orani": 0.005794835345685682,
+     "kademeler": [
+      {
+       "beklenen_kazanan": 17160.746235151873,
+       "beklenen_pay": 448.25017258175143,
+       "kademe": 14,
+       "katki": 17.99499149012858,
+       "p": 0.04014497392490501,
+       "q_kalabalik": 0.0005148223922027801
+      },
+      {
+       "beklenen_kazanan": 114193.75459083037,
+       "beklenen_pay": 67.36189285570745,
+       "kademe": 13,
+       "katki": 10.589846007130623,
+       "p": 0.15720826060833243,
+       "q_kalabalik": 0.003425812671983038
+      },
+      {
+       "beklenen_kazanan": 497590.83698253025,
+       "beklenen_pay": 19.32387739539638,
+       "kademe": 12,
+       "katki": 5.210642238779699,
+       "p": 0.269647862701771,
+       "q_kalabalik": 0.01492772525875316
+      }
+     ],
+     "uyari": "Bu sayi OLCULMEDI. Havuz payi, komisyon ve kalabalik olasiliklari VARSAYIMDIR; §6.3b bagintiyi gorebilmek icin ~71 ikramiyeli hafta gerektigini olctu ve elde 1 var. Arayuze cikmaz.",
+     "varsayimlar": {
+      "havuz": 50000000.0,
+      "komisyon": 0.5,
+      "pay_dagilimi": {
+       "12": 0.3846153846153846,
+       "13": 0.3076923076923077,
+       "14": 0.3076923076923077
+      },
+      "pay_kaynagi": "2026/27 1., 2. ve 3. hafta resmî ikramiye ekranları; üç hafta da 1,75:1:1:1,25 veriyor — 3. hafta devirsiz (docs §3.40, §3.47)",
+      "rakip_kolon": 33333333
+     }
+    },
+    "orneklem": {
+     "bedel": 5832.0,
+     "beklenen_getiri": -4970.587931852022,
+     "beklenen_kazanc": 861.4120681479783,
+     "getiri_orani": 0.14770440125994141,
+     "kademeler": [
+      {
+       "beklenen_kazanan": 529.6233485440436,
+       "beklenen_pay": 14524.109412254835,
+       "kademe": 14,
+       "katki": 583.0699936374377,
+       "p": 0.04014497392490501,
+       "q_kalabalik": 1.5888700615208313e-05
+      },
+      {
+       "beklenen_kazanan": 5691.440643544479,
+       "beklenen_pay": 1351.5571791587552,
+       "kademe": 13,
+       "katki": 212.4759532482522,
+       "p": 0.15720826060833243,
+       "q_kalabalik": 0.0001707432210137666
+      },
+      {
+       "beklenen_kazanan": 39364.21005399945,
+       "beklenen_pay": 244.26717349929766,
+       "kademe": 12,
+       "katki": 65.86612126228829,
+       "p": 0.269647862701771,
+       "q_kalabalik": 0.0011809263134292466
+      }
+     ],
+     "uyari": "Bu sayi OLCULMEDI. Havuz payi, komisyon ve kalabalik olasiliklari VARSAYIMDIR; §6.3b bagintiyi gorebilmek icin ~71 ikramiyeli hafta gerektigini olctu ve elde 1 var. Arayuze cikmaz.",
+     "varsayimlar": {
+      "havuz": 50000000.0,
+      "komisyon": 0.5,
+      "pay_dagilimi": {
+       "12": 0.3846153846153846,
+       "13": 0.3076923076923077,
+       "14": 0.3076923076923077
+      },
+      "pay_kaynagi": "2026/27 1., 2. ve 3. hafta resmî ikramiye ekranları; üç hafta da 1,75:1:1:1,25 veriyor — 3. hafta devirsiz (docs §3.40, §3.47)",
+      "rakip_kolon": 33333333
+     }
+    },
+    "oynanma": {
+     "bedel": 5832.0,
+     "beklenen_getiri": -5295.873207289733,
+     "beklenen_kazanc": 536.1267927102671,
+     "getiri_orani": 0.0919284623988798,
+     "kademeler": [
+      {
+       "beklenen_kazanan": 871.0278802799016,
+       "beklenen_pay": 8831.298785828269,
+       "kademe": 14,
+       "katki": 354.53225948012107,
+       "p": 0.04014497392490501,
+       "q_kalabalik": 2.6130836669705416e-05
+      },
+      {
+       "beklenen_kazanan": 8843.289070326313,
+       "beklenen_pay": 869.8468861941913,
+       "kademe": 13,
+       "katki": 136.7471159741629,
+       "p": 0.15720826060833243,
+       "q_kalabalik": 0.0002652986747627761
+      },
+      {
+       "beklenen_kazanan": 57813.09139859138,
+       "beklenen_pay": 166.31845995969974,
+       "kademe": 12,
+       "katki": 44.84741725598311,
+       "p": 0.269647862701771,
+       "q_kalabalik": 0.001734392759301669
+      }
+     ],
+     "uyari": "Bu sayi OLCULMEDI. Havuz payi, komisyon ve kalabalik olasiliklari VARSAYIMDIR; §6.3b bagintiyi gorebilmek icin ~71 ikramiyeli hafta gerektigini olctu ve elde 1 var. Arayuze cikmaz.",
+     "varsayimlar": {
+      "havuz": 50000000.0,
+      "komisyon": 0.5,
+      "pay_dagilimi": {
+       "12": 0.3846153846153846,
+       "13": 0.3076923076923077,
+       "14": 0.3076923076923077
+      },
+      "pay_kaynagi": "2026/27 1., 2. ve 3. hafta resmî ikramiye ekranları; üç hafta da 1,75:1:1:1,25 veriyor — 3. hafta devirsiz (docs §3.40, §3.47)",
+      "rakip_kolon": 33333333
+     }
+    }
+   }
+  },
+  "varsayim_kolon_bedeli": 1.5
+ },
+ "kiyas": {
+  "ayni_olcek": true,
+  "degisen_maclar": [
+   4,
+   9,
+   15
+  ],
+  "eski_arindirma": "shin",
+  "eski_bugunku_olcekte": {
+   "columns": 3888,
+   "crowd_ratio": 0.42933798664156253,
+   "p_hedef": 0.46700109723500843
+  },
+  "eski_kural": "hedef",
+  "eski_picks": [
+   "102",
+   "102",
+   "1",
+   "10",
+   "2",
+   "102",
+   "1",
+   "10",
+   "10",
+   "102",
+   "10",
+   "102",
+   "10",
+   "10",
+   "10"
+  ],
+  "not": "Eski isaretler BUGUNKU olcekte yeniden olculdu; kayit yeniden hesaplanmadi. Dondurulmus kupon da shin olceginde donduruldu, yani iki p_hedef DOGRUDAN kiyaslanabilir; asagidaki yeniden olcum bir dogrulamadir.",
+  "yeni": {
+   "columns": 3888,
+   "crowd_ratio": 0.5553437730348776,
+   "p_hedef": 0.4485846457204274
+  }
+ },
+ "kupon": {
+  "ayar": {
+   "degisimler": [
+    {
+     "no": 4,
+     "oynanma_taban": 0.79,
+     "oynanma_yeni": 0.71,
+     "prob_taban": 0.7681878417252388,
+     "prob_yeni": 0.758069692140284,
+     "taban": "10",
+     "yeni": "12"
+    },
+    {
+     "no": 9,
+     "oynanma_taban": 0.9,
+     "oynanma_yeni": 0.83,
+     "prob_taban": 0.7633106559635037,
+     "prob_yeni": 0.7457171385003003,
+     "taban": "10",
+     "yeni": "12"
+    },
+    {
+     "no": 15,
+     "oynanma_taban": 0.77,
+     "oynanma_yeni": 0.66,
+     "prob_taban": 0.7479846109990983,
+     "prob_yeni": 0.7129528362392125,
+     "taban": "10",
+     "yeni": "12"
+    }
+   ],
+   "kirpildi": false,
+   "not": "Isaret SAYILARI degismez — bedel, satir ve motor aynidir. Degisen yalnizca HANGI sembolun isaretlendigi.",
+   "oran_ayarli": 0.5553437730348776,
+   "oran_taban": 0.42933798664156253,
+   "p_hedef_ayarli": 0.4485846457204274,
+   "p_hedef_taban": 0.46700109723500843
+  },
+  "ayarli": {
+   "banko": [
+    3,
+    5,
+    7
+   ],
+   "cift": [
+    4,
+    8,
+    9,
+    11,
+    13,
+    14,
+    15
+   ],
+   "columns": 3888,
+   "crowd_in_set_p": 0.06642811296597737,
+   "crowd_ratio": 0.5553437730348776,
+   "engine": "sabit 16 satır (Hamming 7,4)",
+   "guaranteed_14": true,
+   "in_set_p": 0.03689043889011294,
+   "kosullu_rakip": {
+    "kat": 6.916371055096176,
+    "kosullu": 7.59696415609077e-06,
+    "kosulsuz": 1.0984032082103394e-06
+   },
+   "lines": [
+    "102 102 1   1   2   102 1   1   1   102 1   102 1   1   1  ",
+    "102 102 1   1   2   102 1   1   1   102 0   102 1   0   2  ",
+    "102 102 1   1   2   102 1   1   2   102 1   102 0   0   1  ",
+    "102 102 1   1   2   102 1   1   2   102 0   102 0   1   2  ",
+    "102 102 1   1   2   102 1   0   1   102 1   102 0   0   2  ",
+    "102 102 1   1   2   102 1   0   1   102 0   102 0   1   1  ",
+    "102 102 1   1   2   102 1   0   2   102 1   102 1   1   2  ",
+    "102 102 1   1   2   102 1   0   2   102 0   102 1   0   1  ",
+    "102 102 1   2   2   102 1   1   1   102 1   102 0   1   2  ",
+    "102 102 1   2   2   102 1   1   1   102 0   102 0   0   1  ",
+    "102 102 1   2   2   102 1   1   2   102 1   102 1   0   2  ",
+    "102 102 1   2   2   102 1   1   2   102 0   102 1   1   1  ",
+    "102 102 1   2   2   102 1   0   1   102 1   102 1   0   1  ",
+    "102 102 1   2   2   102 1   0   1   102 0   102 1   1   2  ",
+    "102 102 1   2   2   102 1   0   2   102 1   102 0   1   1  ",
+    "102 102 1   2   2   102 1   0   2   102 0   102 0   0   2  "
+   ],
+   "p12": 0.26302616670665674,
+   "p13": 0.14866804012365772,
+   "p14": 0.03689043889011294,
+   "p_hedef": 0.4485846457204274,
+   "picks": [
+    "102",
+    "102",
+    "1",
+    "12",
+    "2",
+    "102",
+    "1",
+    "10",
+    "12",
+    "102",
+    "10",
+    "102",
+    "10",
+    "10",
+    "12"
+   ],
+   "rows": 16,
+   "uclu": [
+    1,
+    2,
+    6,
+    10,
+    12
+   ]
+  },
+  "butce": 6144,
+  "butce_kaynagi": "esik kuralinin ayni haftada urettigi maliyet (banko 0.68, uclu 0.38)",
+  "esik": {
+   "banko": [],
+   "cift": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15
+   ],
+   "columns": 6144,
+   "crowd_in_set_p": 0.052550353168047376,
+   "crowd_ratio": 0.5531632453710027,
+   "engine": "sabit 16 satır (Hamming 7,4)",
+   "guaranteed_14": true,
+   "in_set_p": 0.029068923903829442,
+   "kosullu_rakip": {
+    "kat": 5.769099261003699,
+    "kosullu": 6.336797136770361e-06,
+    "kosulsuz": 1.0984032082103394e-06
+   },
+   "lines": [
+    "1   1   1   1   0   102 1   1   10  12  10  12  10  10  10 ",
+    "1   1   1   0   0   102 0   0   10  12  10  12  10  10  10 ",
+    "1   1   0   1   2   102 0   1   10  12  10  12  10  10  10 ",
+    "1   1   0   0   2   102 1   0   10  12  10  12  10  10  10 ",
+    "1   2   1   1   2   102 0   0   10  12  10  12  10  10  10 ",
+    "1   2   1   0   2   102 1   1   10  12  10  12  10  10  10 ",
+    "1   2   0   1   0   102 1   0   10  12  10  12  10  10  10 ",
+    "1   2   0   0   0   102 0   1   10  12  10  12  10  10  10 ",
+    "2   1   1   1   2   102 1   0   10  12  10  12  10  10  10 ",
+    "2   1   1   0   2   102 0   1   10  12  10  12  10  10  10 ",
+    "2   1   0   1   0   102 0   0   10  12  10  12  10  10  10 ",
+    "2   1   0   0   0   102 1   1   10  12  10  12  10  10  10 ",
+    "2   2   1   1   0   102 0   1   10  12  10  12  10  10  10 ",
+    "2   2   1   0   0   102 1   0   10  12  10  12  10  10  10 ",
+    "2   2   0   1   2   102 1   1   10  12  10  12  10  10  10 ",
+    "2   2   0   0   2   102 0   0   10  12  10  12  10  10  10 "
+   ],
+   "p12": 0.22043834547927244,
+   "p13": 0.11772640738615028,
+   "p14": 0.029068923903829442,
+   "p_hedef": 0.36723367676925217,
+   "picks": [
+    "12",
+    "12",
+    "10",
+    "10",
+    "02",
+    "102",
+    "10",
+    "10",
+    "10",
+    "12",
+    "10",
+    "12",
+    "10",
+    "10",
+    "10"
+   ],
+   "rows": 16,
+   "uclu": [
+    6
+   ]
+  },
+  "kayip_orani": 0.05,
+  "kural": "hedef",
+  "taban": {
+   "banko": [
+    3,
+    5,
+    7
+   ],
+   "cift": [
+    4,
+    8,
+    9,
+    11,
+    13,
+    14,
+    15
+   ],
+   "columns": 3888,
+   "crowd_in_set_p": 0.09350436060627562,
+   "crowd_ratio": 0.42933798664156253,
+   "engine": "sabit 16 satır (Hamming 7,4)",
+   "guaranteed_14": true,
+   "in_set_p": 0.04014497392490501,
+   "kosullu_rakip": {
+    "kat": 8.232704712376702,
+    "kosullu": 9.042829268322948e-06,
+    "kosulsuz": 1.0984032082103394e-06
+   },
+   "lines": [
+    "102 102 1   1   2   102 1   1   1   102 1   102 1   1   1  ",
+    "102 102 1   1   2   102 1   1   1   102 0   102 1   0   0  ",
+    "102 102 1   1   2   102 1   1   0   102 1   102 0   0   1  ",
+    "102 102 1   1   2   102 1   1   0   102 0   102 0   1   0  ",
+    "102 102 1   1   2   102 1   0   1   102 1   102 0   0   0  ",
+    "102 102 1   1   2   102 1   0   1   102 0   102 0   1   1  ",
+    "102 102 1   1   2   102 1   0   0   102 1   102 1   1   0  ",
+    "102 102 1   1   2   102 1   0   0   102 0   102 1   0   1  ",
+    "102 102 1   0   2   102 1   1   1   102 1   102 0   1   0  ",
+    "102 102 1   0   2   102 1   1   1   102 0   102 0   0   1  ",
+    "102 102 1   0   2   102 1   1   0   102 1   102 1   0   0  ",
+    "102 102 1   0   2   102 1   1   0   102 0   102 1   1   1  ",
+    "102 102 1   0   2   102 1   0   1   102 1   102 1   0   1  ",
+    "102 102 1   0   2   102 1   0   1   102 0   102 1   1   0  ",
+    "102 102 1   0   2   102 1   0   0   102 1   102 0   1   1  ",
+    "102 102 1   0   2   102 1   0   0   102 0   102 0   0   0  "
+   ],
+   "p12": 0.269647862701771,
+   "p13": 0.15720826060833243,
+   "p14": 0.04014497392490501,
+   "p_hedef": 0.46700109723500843,
+   "picks": [
+    "102",
+    "102",
+    "1",
+    "10",
+    "2",
+    "102",
+    "1",
+    "10",
+    "10",
+    "102",
+    "10",
+    "102",
+    "10",
+    "10",
+    "10"
+   ],
+   "rows": 16,
+   "uclu": [
+    1,
+    2,
+    6,
+    10,
+    12
+   ]
+  }
+ },
+ "matches": [
+  {
+   "dc": null,
+   "dc_var": false,
+   "elo_beklenen": null,
+   "elo_farki": null,
+   "isaret": "102",
+   "lig": "T1",
+   "mac": "Erzurumspor FK – Konyaspor",
+   "marj": 0.050322960772497316,
+   "no": 1,
+   "odds": {
+    "0": 3.41,
+    "1": 2.28,
+    "2": 3.14
+   },
+   "odds_yok": false,
+   "olcek_kaymasi": {
+    "0": 0.0,
+    "1": 0.0,
+    "2": 0.0
+   },
+   "play": {
+    "0": 0.27,
+    "1": 0.32,
+    "2": 0.41
+   },
+   "probs": {
+    "0": 0.27718683795252347,
+    "1": 0.42072857508969,
+    "2": 0.3020845869577864
+   },
+   "probs_onceki": {
+    "0": 0.27718683795252347,
+    "1": 0.42072857508969,
+    "2": 0.3020845869577864
+   },
+   "taban": "102"
+  },
+  {
+   "dc": null,
+   "dc_var": false,
+   "elo_beklenen": null,
+   "elo_farki": null,
+   "isaret": "102",
+   "lig": "T1",
+   "mac": "Kasımpaşa A.Ş. – Amed Sportif",
+   "marj": 0.1770660834601856,
+   "no": 2,
+   "odds": {
+    "0": 2.98,
+    "1": 1.99,
+    "2": 2.95
+   },
+   "odds_yok": false,
+   "olcek_kaymasi": {
+    "0": 0.0,
+    "1": 0.0,
+    "2": 0.0
+   },
+   "play": {
+    "0": 0.32,
+    "1": 0.46,
+    "2": 0.22
+   },
+   "probs": {
+    "0": 0.2789138913345581,
+    "1": 0.4389132666467059,
+    "2": 0.28217284201873605
+   },
+   "probs_onceki": {
+    "0": 0.2789138913345581,
+    "1": 0.4389132666467059,
+    "2": 0.28217284201873605
+   },
+   "taban": "102"
+  },
+  {
+   "dc": null,
+   "dc_var": false,
+   "elo_beklenen": null,
+   "elo_farki": null,
+   "isaret": "1",
+   "lig": "T1",
+   "mac": "Çorum FK – Eyüpspor",
+   "marj": 0.056968900854623694,
+   "no": 3,
+   "odds": {
+    "0": 3.86,
+    "1": 1.69,
+    "2": 4.85
+   },
+   "odds_yok": false,
+   "olcek_kaymasi": {
+    "0": 0.0,
+    "1": 0.0,
+    "2": 0.0
+   },
+   "play": {
+    "0": 0.24,
+    "1": 0.57,
+    "2": 0.19
+   },
+   "probs": {
+    "0": 0.24133905320221696,
+    "1": 0.5694040043702658,
+    "2": 0.18925694242751734
+   },
+   "probs_onceki": {
+    "0": 0.24133905320221696,
+    "1": 0.5694040043702658,
+    "2": 0.18925694242751734
+   },
+   "taban": "1"
+  },
+  {
+   "dc": {
+    "0": 0.21415979338667462,
+    "1": 0.5685421810973502,
+    "2": 0.21729802551597519
+   },
+   "dc_var": true,
+   "elo_beklenen": 0.7195276427506195,
+   "elo_farki": 163.6629674828116,
+   "isaret": "12",
+   "lig": "T1",
+   "mac": "Fenerbahçe A.Ş. – Beşiktaş A.Ş.",
+   "marj": 0.05298497806460856,
+   "no": 4,
+   "odds": {
+    "0": 3.87,
+    "1": 1.83,
+    "2": 4.03
+   },
+   "odds_yok": false,
+   "olcek_kaymasi": {
+    "0": 0.0,
+    "1": 0.0,
+    "2": 0.0
+   },
+   "play": {
+    "0": 0.29,
+    "1": 0.5,
+    "2": 0.21
+   },
+   "probs": {
+    "0": 0.24193030785971598,
+    "1": 0.5262575338655228,
+    "2": 0.23181215827476123
+   },
+   "probs_onceki": {
+    "0": 0.24193030785971598,
+    "1": 0.5262575338655228,
+    "2": 0.23181215827476123
+   },
+   "taban": "10"
+  },
+  {
+   "dc": {
+    "0": 0.24283685845865197,
+    "1": 0.3291986021876731,
+    "2": 0.4279645393536749
+   },
+   "dc_var": true,
+   "elo_beklenen": 0.46559326039159404,
+   "elo_farki": -23.94609656711532,
+   "isaret": "2",
+   "lig": "T1",
+   "mac": "Başakşehir FK – Galatasaray A.Ş.",
+   "marj": 0.047309827984466146,
+   "no": 5,
+   "odds": {
+    "0": 4.53,
+    "1": 5.06,
+    "2": 1.59
+   },
+   "odds_yok": false,
+   "olcek_kaymasi": {
+    "0": 0.0,
+    "1": 0.0,
+    "2": 0.0
+   },
+   "play": {
+    "0": 0.2,
+    "1": 0.13,
+    "2": 0.67
+   },
+   "probs": {
+    "0": 0.2064506407463018,
+    "1": 0.18362234395282861,
+    "2": 0.6099270153008696
+   },
+   "probs_onceki": {
+    "0": 0.2064506407463018,
+    "1": 0.18362234395282861,
+    "2": 0.6099270153008696
+   },
+   "taban": "2"
+  },
+  {
+   "dc": {
+    "0": 0.3516450462119947,
+    "1": 0.286160192453251,
+    "2": 0.3621947613347542
+   },
+   "dc_var": true,
+   "elo_beklenen": 0.48715269227204616,
+   "elo_farki": -8.9291891681562,
+   "isaret": "102",
+   "lig": "T1",
+   "mac": "Kocaelispor – Samsunspor A.Ş.",
+   "marj": 0.048821548821548655,
+   "no": 6,
+   "odds": {
+    "0": 2.97,
+    "1": 2.64,
+    "2": 3.0
+   },
+   "odds_yok": false,
+   "olcek_kaymasi": {
+    "0": 0.0,
+    "1": 0.0,
+    "2": 0.0
+   },
+   "play": {
+    "0": 0.29,
+    "1": 0.4,
+    "2": 0.31
+   },
+   "probs": {
+    "0": 0.32058166456457643,
+    "1": 0.36216288394205404,
+    "2": 0.31725545149336953
+   },
+   "probs_onceki": {
+    "0": 0.32058166456457643,
+    "1": 0.36216288394205404,
+    "2": 0.31725545149336953
+   },
+   "taban": "102"
+  },
+  {
+   "dc": {
+    "0": 0.22971505553966978,
+    "1": 0.5907169189564226,
+    "2": 0.17956802550390755
+   },
+   "dc_var": true,
+   "elo_beklenen": 0.7351241328199476,
+   "elo_farki": 177.32731541503358,
+   "isaret": "1",
+   "lig": "T1",
+   "mac": "Trabzonspor A.Ş. – Gençlerbirliği",
+   "marj": 0.05611157480856388,
+   "no": 7,
+   "odds": {
+    "0": 4.19,
+    "1": 1.57,
+    "2": 5.54
+   },
+   "odds_yok": false,
+   "olcek_kaymasi": {
+    "0": 0.0,
+    "1": 0.0,
+    "2": 0.0
+   },
+   "play": {
+    "0": 0.11,
+    "1": 0.81,
+    "2": 0.08
+   },
+   "probs": {
+    "0": 0.22145988837635447,
+    "1": 0.6143470934440108,
+    "2": 0.16419301817963483
+   },
+   "probs_onceki": {
+    "0": 0.22145988837635447,
+    "1": 0.6143470934440108,
+    "2": 0.16419301817963483
+   },
+   "taban": "1"
+  },
+  {
+   "dc": {
+    "0": 0.2635651305108232,
+    "1": 0.4459465037914756,
+    "2": 0.2904883656977012
+   },
+   "dc_var": true,
+   "elo_beklenen": 0.6191157025919071,
+   "elo_farki": 84.39150024870514,
+   "isaret": "10",
+   "lig": "T1",
+   "mac": "Çaykur Rizespor A.Ş. – Alanyaspor",
+   "marj": 0.0530979408843566,
+   "no": 8,
+   "odds": {
+    "0": 3.38,
+    "1": 1.92,
+    "2": 4.23
+   },
+   "odds_yok": false,
+   "olcek_kaymasi": {
+    "0": 0.0,
+    "1": 0.0,
+    "2": 0.0
+   },
+   "play": {
+    "0": 0.3,
+    "1": 0.53,
+    "2": 0.17
+   },
+   "probs": {
+    "0": 0.2788560416575002,
+    "1": 0.5009282171905006,
+    "2": 0.22021574115199927
+   },
+   "probs_onceki": {
+    "0": 0.2788560416575002,
+    "1": 0.5009282171905006,
+    "2": 0.22021574115199927
+   },
+   "taban": "10"
+  },
+  {
+   "dc": {
+    "0": 0.25644595758905303,
+    "1": 0.5389182563735818,
+    "2": 0.20463578603736518
+   },
+   "dc_var": true,
+   "elo_beklenen": 0.6974249295120939,
+   "elo_farki": 145.06572963051394,
+   "isaret": "12",
+   "lig": "T1",
+   "mac": "Göztepe A.Ş. – Gaziantep F.K. A.Ş.",
+   "marj": 0.05326779608965482,
+   "no": 9,
+   "odds": {
+    "0": 3.69,
+    "1": 1.89,
+    "2": 3.95
+   },
+   "odds_yok": false,
+   "olcek_kaymasi": {
+    "0": 0.0,
+    "1": 0.0,
+    "2": 0.0
+   },
+   "play": {
+    "0": 0.17,
+    "1": 0.73,
+    "2": 0.1
+   },
+   "probs": {
+    "0": 0.25428286149969964,
+    "1": 0.509027794463804,
+    "2": 0.2366893440364963
+   },
+   "probs_onceki": {
+    "0": 0.25428286149969964,
+    "1": 0.509027794463804,
+    "2": 0.2366893440364963
+   },
+   "taban": "10"
+  },
+  {
+   "dc": {
+    "0": 0.2852577406657334,
+    "1": 0.34870792683529456,
+    "2": 0.36603433249897194
+   },
+   "dc_var": true,
+   "elo_beklenen": 0.5373457523761471,
+   "elo_farki": 25.99890657200558,
+   "isaret": "102",
+   "lig": "E0",
+   "mac": "Everton – Manchester United",
+   "marj": 0.03330955851385076,
+   "no": 10,
+   "odds": {
+    "0": 3.65,
+    "1": 3.35,
+    "2": 2.17
+   },
+   "odds_yok": false,
+   "olcek_kaymasi": {
+    "0": 0.0,
+    "1": 0.0,
+    "2": 0.0
+   },
+   "play": {
+    "0": 0.26,
+    "1": 0.24,
+    "2": 0.5
+   },
+   "probs": {
+    "0": 0.263450774922291,
+    "1": 0.2877798319027465,
+    "2": 0.4487693931749624
+   },
+   "probs_onceki": {
+    "0": 0.263450774922291,
+    "1": 0.2877798319027465,
+    "2": 0.4487693931749624
+   },
+   "taban": "102"
+  },
+  {
+   "dc": {
+    "0": 0.2444069068146156,
+    "1": 0.5869587844566281,
+    "2": 0.16863430872875634
+   },
+   "dc_var": true,
+   "elo_beklenen": 0.6981592104970515,
+   "elo_farki": 145.6706174786616,
+   "isaret": "10",
+   "lig": "E0",
+   "mac": "Arsenal – Chelsea",
+   "marj": 0.04020319223373714,
+   "no": 11,
+   "odds": {
+    "0": 3.87,
+    "1": 1.68,
+    "2": 5.36
+   },
+   "odds_yok": false,
+   "olcek_kaymasi": {
+    "0": 0.0,
+    "1": 0.0,
+    "2": 0.0
+   },
+   "play": {
+    "0": 0.23,
+    "1": 0.63,
+    "2": 0.14
+   },
+   "probs": {
+    "0": 0.24584399137107973,
+    "1": 0.579384194206782,
+    "2": 0.17477181442213835
+   },
+   "probs_onceki": {
+    "0": 0.24584399137107973,
+    "1": 0.579384194206782,
+    "2": 0.17477181442213835
+   },
+   "taban": "10"
+  },
+  {
+   "dc": {
+    "0": 0.2477754077973642,
+    "1": 0.36519954224581974,
+    "2": 0.38702504995681597
+   },
+   "dc_var": true,
+   "elo_beklenen": 0.5414766306446342,
+   "elo_farki": 28.887297110298277,
+   "isaret": "102",
+   "lig": "SP1",
+   "mac": "Athletic Bilbao – Atletico Madrid",
+   "marj": 0.033809419630164594,
+   "no": 12,
+   "odds": {
+    "0": 3.53,
+    "1": 3.13,
+    "2": 2.32
+   },
+   "odds_yok": false,
+   "olcek_kaymasi": {
+    "0": 0.0,
+    "1": 0.0,
+    "2": 0.0
+   },
+   "play": {
+    "0": 0.27,
+    "1": 0.21,
+    "2": 0.52
+   },
+   "probs": {
+    "0": 0.2725307032261035,
+    "1": 0.3084265977212633,
+    "2": 0.41904269905263314
+   },
+   "probs_onceki": {
+    "0": 0.2725307032261035,
+    "1": 0.3084265977212633,
+    "2": 0.41904269905263314
+   },
+   "taban": "102"
+  },
+  {
+   "dc": {
+    "0": 0.2295163292501239,
+    "1": 0.580275458830392,
+    "2": 0.1902082119194841
+   },
+   "dc_var": true,
+   "elo_beklenen": 0.6505904687841706,
+   "elo_farki": 107.98917960522999,
+   "isaret": "10",
+   "lig": "I1",
+   "mac": "Inter – Napoli",
+   "marj": 0.0381793244656603,
+   "no": 13,
+   "odds": {
+    "0": 3.89,
+    "1": 1.69,
+    "2": 5.28
+   },
+   "odds_yok": false,
+   "olcek_kaymasi": {
+    "0": 0.0,
+    "1": 0.0,
+    "2": 0.0
+   },
+   "play": {
+    "0": 0.24,
+    "1": 0.67,
+    "2": 0.09
+   },
+   "probs": {
+    "0": 0.24515711736966186,
+    "1": 0.576684961883993,
+    "2": 0.1781579207463452
+   },
+   "probs_onceki": {
+    "0": 0.24515711736966186,
+    "1": 0.576684961883993,
+    "2": 0.1781579207463452
+   },
+   "taban": "10"
+  },
+  {
+   "dc": {
+    "0": 0.30248353624975516,
+    "1": 0.32982113432546073,
+    "2": 0.3676953294247842
+   },
+   "dc_var": true,
+   "elo_beklenen": 0.5605640717471475,
+   "elo_farki": 42.291878856006406,
+   "isaret": "10",
+   "lig": "I1",
+   "mac": "Roma – Atalanta",
+   "marj": 0.039003229839618125,
+   "no": 14,
+   "odds": {
+    "0": 3.94,
+    "1": 1.71,
+    "2": 4.99
+   },
+   "odds_yok": false,
+   "olcek_kaymasi": {
+    "0": 0.0,
+    "1": 0.0,
+    "2": 0.0
+   },
+   "play": {
+    "0": 0.25,
+    "1": 0.6,
+    "2": 0.15
+   },
+   "probs": {
+    "0": 0.24167619562979403,
+    "1": 0.5695102352178941,
+    "2": 0.18881356915231184
+   },
+   "probs_onceki": {
+    "0": 0.24167619562979403,
+    "1": 0.5695102352178941,
+    "2": 0.18881356915231184
+   },
+   "taban": "10"
+  },
+  {
+   "dc": {
+    "0": 0.30858255882523533,
+    "1": 0.3729721261409362,
+    "2": 0.31844531503382856
+   },
+   "dc_var": true,
+   "elo_beklenen": 0.5758255612962746,
+   "elo_farki": 53.098578310967696,
+   "isaret": "12",
+   "lig": "I1",
+   "mac": "Juventus – AC Milan",
+   "marj": 0.03559900671250871,
+   "no": 15,
+   "odds": {
+    "0": 3.35,
+    "1": 2.11,
+    "2": 3.8
+   },
+   "odds_yok": false,
+   "olcek_kaymasi": {
+    "0": 0.0,
+    "1": 0.0,
+    "2": 0.0
+   },
+   "play": {
+    "0": 0.34,
+    "1": 0.43,
+    "2": 0.23
+   },
+   "probs": {
+    "0": 0.2870471637607876,
+    "1": 0.4609374472383107,
+    "2": 0.25201538900090176
+   },
+   "probs_onceki": {
+    "0": 0.2870471637607876,
+    "1": 0.4609374472383107,
+    "2": 0.25201538900090176
+   },
+   "taban": "10"
+  }
+ ],
+ "meta": {
+  "ad": "2. Tahmin",
+  "arindirma": "shin",
+  "frozen_at": "2026-09-04",
+  "kayip_orani": 0.05,
+  "kural": "hedef",
+  "note": "SONUCLAR GORULMEDEN uretildi. 1. Tahmin'in kaydi yerinde durur ve yeniden hesaplanmaz; bu ikinci bir kayittir, bir duzeltme degil.",
+  "onceki_arindirma": "shin",
+  "onceki_kural": "hedef",
+  "program": "",
+  "results_known": false,
+  "season": "2026/2027",
+  "veri_uyarilari": [
+   "Program tarihleri ve maç saatleri GİRİLMEDİ (kullanıcı vermedi). Uydurulmadı; `date`/`kickoff` boş bırakıldı. Kupon kapanış anını belgeleyen tek alan `entered_at`tır (2026-09-04). 3. haftada bu eksiklik sonradan kapandığında `odds_kind`in FAZLA ETİKETLİ olduğu görülmüştü; aynı şüphe bu hafta da geçerlidir — 'kapanış' diye duran şey, kupon donarken elde olan EN GEÇ kayıttır, maçın gerçek kapanış çizgisi değildir.",
+   "Pinnacle 2. maçı (Kasımpaşa–Amed) HİÇ fiyatlamamış: ne açılış ne kapanış. Ana fiyat o satırda Nesine kapanışıdır ve marjı %17,7 — bültenin ortancasının (%4,6) 13 puan üstünde. Otomatik kapı bu satırı KUŞKULU diye işaretliyor ve işaret DOĞRUDUR: sapma bir giriş hatası değil, ölçek farkıdır, ama arındırılmış olasılık yine de haftanın geri kalanıyla birebir aynı ölçekte değildir.",
+   "13. maçın (Inter–Napoli) Pinnacle KAPANIŞI bültende yok; o satırda ana fiyat Pinnacle AÇILIŞIDIR. Aynı bahisçi, bir önceki an — ölçek korunuyor, kaybolan şey yalnızca o maçın çizgi hareketidir.",
+   "Nesine'nin KAPANIŞ oranı 8 maçta AÇILIŞIYLA BİREBİR AYNI (maçlar: 1, 2, 3, 4, 7, 8, 9, 14). 3. haftada da aynısı olmuştu (6 maç) ve orada bahisçi ayrışmasının en büyük üçü tam bu bayat satırlardan geliyordu: bu bir fiyat değil, tazelenmemiş bir kayıttır.",
+   "Pinnacle'ın 9. maçı (Göztepe–Gaziantep) da bayat: kapanış (1.89–3.69–3.95) açılışla BİREBİR aynı. Bayatlık bu hafta ilk kez ana fiyat kaynağının kendisinde görünüyor — 3. haftada yalnızca Nesine'deydi. O satırda çizgi hareketi ölçülemez.",
+   "bet365.nl kaydı bu hafta YOK. 3. hafta üç bahisçiyle girilmişti; haftalar arası 'bahisçi ayrışması' karşılaştırması bu daralmayı hesaba katmalıdır — iki kaynağın ayrışması üç kaynağınkiyle aynı büyüklük değildir.",
+   "12. maçın ev sahibi bültende 'Atletico Bilbao' yazıyor; kulübün adı Athletic Club'dır ve kayda 'Athletic Bilbao' olarak girildi. Oranlar ve yüzdeler ekrandaki satırdan birebir alındı; değişen yalnızca takım adının yazımıdır.",
+   "2. maç: marj %17.7, bültenin ortancası %4.9 — 12.8 puan sapma, KUŞKULU",
+   "pinnacle_acilis: 1 maçta kayıt YOK (maçlar: 2) — o satırlarda ana fiyat başka bir kayıttan gelmek zorunda ve bu bahisçinin ortalama marjı da eksik satırlar üzerinden hesaplanmaz",
+   "pinnacle_kapanis: 2 maçta kayıt YOK (maçlar: 2, 13) — o satırlarda ana fiyat başka bir kayıttan gelmek zorunda ve bu bahisçinin ortalama marjı da eksik satırlar üzerinden hesaplanmaz",
+   "nesine_kapanis: 8 maçta kapanış açılışla BİREBİR aynı (maçlar: 1, 2, 3, 4, 7, 8, 9, 14) — bu bir fiyat değil, tazelenmemiş kayıttır; o satırlarda ayrışma görüş farkı değil kayıt farkıdır",
+   "pinnacle_kapanis: 1 maçta kapanış açılışla BİREBİR aynı (maçlar: 9) — bu bir fiyat değil, tazelenmemiş kayıttır; o satırlarda ayrışma görüş farkı değil kayıt farkıdır"
+  ],
+  "week": 4,
+  "yenilikler": [
+   "havuz: kalabalik ayari — isaret sayilari sabit, sembol degisir (docs §3.34)",
+   "gorus: Dixon-Coles + Elo, piyasadan bagimsiz (docs §3.27–3.28)"
+  ]
+ }
+}

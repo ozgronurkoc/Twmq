@@ -815,6 +815,7 @@
   "varsayim_kolon_bedeli": 1.5
  },
  "kiyas": {
+  "ayni_olcek": false,
   "degisen_maclar": [
    1,
    2,
@@ -1751,6 +1752,7 @@
   "kural": "hedef",
   "note": "SONUCLAR GORULMEDEN uretildi. 1. Tahmin'in kaydi yerinde durur ve yeniden hesaplanmaz; bu ikinci bir kayittir, bir duzeltme degil.",
   "onceki_arindirma": "orantili",
+  "onceki_kural": "esik",
   "program": "21.08.2026 - 25.08.2026",
   "results_known": false,
   "season": "2026/2027",

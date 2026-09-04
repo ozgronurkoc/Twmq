@@ -121,11 +121,29 @@ def _fiyat_uyarilari(d: dict[str, Any],
        geliyordu: ayrışma görüş farkı değil kayıt farkıydı. Arşivde de
        ölçüldü ve orada da var (`spor_toto.fiyatlar._bayat`: Pinnacle
        %4,5, Bet365 %2,4), yani bu bir Nesine tuhaflığı değil.
+    3. **Delikli bahisçi.** Bir bahisçinin kaydı BAZI maçlarda yok. 4.
+       haftada Pinnacle iki maçı eksik bıraktı (2. maçı hiç fiyatlamadı,
+       13. maçın kapanışını vermedi) ve o satırlarda ana fiyat başka bir
+       kayıttan geldi. Eksik satır, ortalama marjı da sessizce daraltır:
+       "%4,62" 15 maçın değil 13 maçın ortalamasıdır.
+
+    **Kitap listesi bütün maçların BİRLEŞİMİDİR.** Önce yalnızca 1. maçın
+    kitaplarına bakılıyordu; 1. maçta olmayıp başka maçta olan bir bahisçi
+    hiç denetlenmezdi.
     """
     uyarilar: list[str] = []
-    kitaplar = sorted(maclar[0].get("odds_books") or {})
+    kitaplar = sorted({k for m in maclar for k in (m.get("odds_books") or {})})
     if not kitaplar:
         return uyarilar
+
+    for k in kitaplar:
+        eksik = [m["no"] for m in maclar if k not in (m.get("odds_books") or {})]
+        if eksik:
+            uyarilar.append(
+                f"{k}: {len(eksik)} maçta kayıt YOK (maçlar: "
+                f"{', '.join(map(str, eksik))}) — o satırlarda ana fiyat "
+                "başka bir kayıttan gelmek zorunda ve bu bahisçinin ortalama "
+                "marjı da eksik satırlar üzerinden hesaplanmaz")
 
     ana = ((d.get("meta") or {}).get("odds_kind") or "").replace("-", "_")
     if ana and ana.endswith("_kapanis"):

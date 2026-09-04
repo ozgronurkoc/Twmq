@@ -312,6 +312,49 @@ def test_kiyas_eski_isaretleri_yeniden_secmez(govde):
     assert govde["kiyas"]["eski_picks"] == kupon["variants"][0]["picks"]
 
 
+@pytest.mark.parametrize("no", sorted(
+    int(f.stem.split("_")[1]) for f in VERI.glob("hafta_[0-9][0-9].json")))
+def test_onceki_olcek_KAYITTAN_okunur_sabitten_degil(t2, no):
+    """"Önceki ölçek/kural" dondurulmuş kaydın kendisinden gelmeli.
+
+    İkisi de sabit yazılıydı (`orantili`, `esik`) ve 1.–2. haftada doğruydu.
+    3. hafta `shin` + `hedef` ile donduruldu ve sabit o gün YALAN söylemeye
+    başladı: kayıt olmayan bir değişikliği ("ölçek orantılıdan shin'e",
+    "kural eşikten hedefe") ilan ediyor, üstelik `_kiyas` "iki sayı doğrudan
+    kıyaslanamaz" diyordu — oysa aynı ölçekteler ve tam olarak
+    kıyaslanabilirler. Deponun üçüncü "bugünkü durumu kalıcı sanmak"
+    örneği (docs §3.38).
+
+    Çakılan şey DEĞERLER değil kural: kayıt ne diyorsa gövde de onu demeli
+    ve yenilik maddesi **yalnızca gerçek fark varsa** yazılmalı.
+    """
+    donmus = json.loads(
+        (VERI / f"hafta_{no:02d}_kupon.json").read_text(encoding="utf-8"))
+    st = donmus["meta"]["strategy"]
+    g = t2.uret("2026_27", no, tarih="2026-01-01")
+
+    assert g["meta"]["onceki_arindirma"] == st["arindirma"]
+    assert g["meta"]["onceki_kural"] == st["kural"]
+    assert g["kiyas"]["eski_arindirma"] == st["arindirma"]
+    assert g["kiyas"]["eski_kural"] == st["kural"]
+
+    ayni = st["arindirma"] == g["meta"]["arindirma"]
+    assert g["kiyas"]["ayni_olcek"] is ayni
+    # Ayni olcekteyse "dogrudan kiyaslanamaz" DENMEMELI.
+    assert ("kiyaslanamaz" in g["kiyas"]["not"]) is not ayni
+
+    olcek_maddesi = [y for y in g["meta"]["yenilikler"] if y.startswith("olcek:")]
+    kural_maddesi = [y for y in g["meta"]["yenilikler"] if y.startswith("kural:")]
+    assert bool(olcek_maddesi) is not ayni, olcek_maddesi
+    assert bool(kural_maddesi) is (st["kural"] != g["kupon"]["kural"]), kural_maddesi
+
+    # Olcek AYNIYSA maclarin "kayma"si tam olarak sifir olmali; sabit bir
+    # yontemle hesaplanan eski surumde sifir DEGILDI.
+    if ayni:
+        for r in g["matches"]:
+            assert all(abs(v) < 1e-12 for v in r["olcek_kaymasi"].values())
+
+
 def test_sonuclari_bilinen_haftaya_ikinci_tahmin_yazilmaz(t2, tmp_path):
     govde = {"meta": {"results_known": True}}
     with pytest.raises(SystemExit):

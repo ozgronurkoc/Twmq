@@ -158,6 +158,15 @@ export interface SuperTotoFiyatlar {
   /** Bahisci x an -> ortalama marj (yuzde puan). */
   margins: Record<string, number>;
   /**
+   * O marjin KAC MACTAN geldigi. Bir bahiscinin kaydi butun maclarda
+   * olmayabilir (4. haftada Pinnacle 2. maci hic fiyatlamadi, 13. macin
+   * kapanisini vermedi) ve o zaman ortalama eksik satirlar uzerinden
+   * alinmaz. Sayi `match_count`ten kucukse rozet bunu yazar.
+   */
+  margin_n: Record<string, number>;
+  /** Haftanin mac sayisi — `margin_n` ile birlikte okunur. */
+  match_count: number;
+  /**
    * Kapanisi acilisiyla BIREBIR ayni olan satirlar. Bunlar fiyat degil,
    * tazelenmemis kayittir: ayrismada buyuk gorunur ve gorus farki
    * sanilir.
