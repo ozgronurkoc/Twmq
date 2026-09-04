@@ -384,6 +384,67 @@ modelin ikisi artık varsayım değil.
 para çıkıp çıkmadığı Faz S'nin sorusu ve `karne`nin garanti tabanı o soruyu
 henüz cevaplamıyor.
 
+### Faz S — `VARSAYILAN_KAYIP_ORANI` ölçüldü: **sıfır** ✅
+
+Plan §5 S1 şunu istiyordu: *"`0.05` bir girdi olmaktan çıkar, çıktı olur."*
+Çıktı oldu — ve değeri **sıfır**.
+
+Önce alet kuruldu: `getiri.kosullu_kademe_dagilimi` + `getiri.beklenen_tl`.
+`kalabalik_kademeleri` rakibin isabetini **koşulsuz** hesaplıyor ve kendi
+docstring'i bunu söylüyordu — *"bu sayı iki farklı plan için birebir aynı
+çıkar"* — yani kalabalık ayarının kazancını tanım gereği göremez. Oysa havuz
+**biz kazandığımızda** bölünür. `_kosullu_rakip` bu soruyu yalnızca 15
+kademesi için cevaplıyordu; ortak DP onu bütün kademelere açıyor: her maçta
+`(sonuç kümede mi) × (rakip uydu mu)` dört yolu birlikte taşınıyor.
+
+#### Üç bağımsız yol, aynı cevap
+
+1. **Kayıp bütçesi taraması.** `kalabalik_ayari`, ölçülen kalabalık modeliyle
+   bütçe 0'dan **0,70**'e çıkarılsa bile **tek bir maçın işaretini
+   değiştirmiyor** — yedi basamağın yedisinde de `değişen maç = 0,00`.
+2. **Doğrudan `E[TL]` yerel araması.** 25 haftanın 25'inde taban plan zaten
+   en iyi; tek maçlık en iyi değişimin kazancı **tam 1,0000×**. Arama
+   dejenere değil: aynı maçta favoriyi bırakmak E[TL]'yi **0,39×**'e,
+   ikinci alternatif **0,23×**'e düşürüyor.
+3. **Mekanizma analitik.** Ölçülen model `o(s) ∝ p(s)^λ` **monotondur**,
+   yani sembol sıralamasını korur. Kalabalıktan sapmanın tek yolu daha
+   düşük olasılıklı sembole geçmektir ve tutturma kaybı, pay kazancını
+   her bantta eziyor.
+
+`secim.VARSAYILAN_KAYIP_ORANI = 0.0` oldu ve künyesi artık *"harcama
+kararı"* değil ölçüm. **Sıfır "ayar kapalı" demek değil:** hedefi hiç
+düşürmeyen değişimler hâlâ yapılır; değişen şey, tutturma olasılığının
+**satılmamasıdır**.
+
+#### Ama bulgunun sınırı keskin ve kenar tam orada
+
+Bu sonuç **modelin monotonluğuna** bağlıdır. Kayıtlı oynanma payları
+(2026/27, 4 hafta, 60 maç) bunu doğrudan çürütüyor:
+
+> **60 maçın 21'inde (%35) oynanma sıralaması piyasa sıralamasından
+> farklı.** Monoton bir model bunu **asla** üretemez.
+
+Ortalama mutlak artık 0,060 (λ=1'e göre), en büyük sapma **0,28**. Ve
+sapmaların yönü sistematik: en büyük beş sapmanın dördü favorinin
+payını **düşürüyor** (−0,24, −0,23, −0,18, −0,17) — yani o platformun
+kullanıcıları piyasadan **daha yayvan** oynuyor.
+
+Bu, λ = 1,76 ile (kademe oranlarından: kalabalık piyasadan **daha keskin**)
+**çelişiyor**. İki açıklama var ve ikisi de kayda değer: ya platform
+havuzu temsil etmiyor (§6.3b'nin zaten yazılı sınırı), ya da iki ölçümden
+biri başka bir şeyi ölçüyor. `n = 4 hafta`, karar için yetmez.
+
+#### Faz B yeniden yönlendi
+
+Hedef artık **şekil parametresi değil, artık**. `p^λ` ailesinin içinde
+kenar yok — üç yoldan ölçüldü. Kenar varsa kalabalığın piyasadan
+**monoton olmayan** biçimde saptığı yerdedir ve onu görmek için oynanma
+payı kaydı gerekir, kademe adetleri değil: kademe adetleri yalnızca
+dağılımın *şeklini* taşır, hangi maçta hangi sembole yığıldığını değil.
+
+Bu, haftalık veri girişini planın en değerli parçası yapıyor — ve
+biriktirmekten başka yolu yok.
+
 ### 0.2 Otuz iki anormal haftayı kapıya bağla — `KADEME_OLASILIKLARI.md` §8
 
 223 haftanın **32'sinde** 12. kademe kazanan sayısı medyanın (41.516) onda

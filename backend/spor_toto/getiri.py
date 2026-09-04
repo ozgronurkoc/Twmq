@@ -566,3 +566,88 @@ def main(argv: Sequence[str] | None = None) -> None:  # pragma: no cover
 
 if __name__ == "__main__":  # pragma: no cover
     main()
+
+
+# ─── koşullu getiri — havuz BİZ kazandığımızda bölünür ────────────────────
+
+def kosullu_kademe_dagilimi(probs_listesi: Sequence[dict[str, float]],
+                            oynanma_listesi: Sequence[dict[str, float]],
+                            secimler: Sequence[Sequence[str]]) -> Any:
+    """`P(k kaçak, rakip tam j doğru)` **ortak** dağılımı.
+
+    `kalabalik_kademeleri` rakibin isabetini **koşulsuz** hesaplar ve kendi
+    docstring'i bunu söylüyor: *"bu sayı iki farklı plan için birebir aynı
+    çıkar"*. Oysa havuz **biz kazandığımızda** bölünür, dolayısıyla doğru
+    soru koşulludur ve `super_toto_tahmin2._kosullu_rakip` onu yalnızca
+    15 kademesi için (tam isabet) cevaplıyordu.
+
+    Burada koşullandırma bütün kademelere açılır. Her maçta dört yol var::
+
+        sonuç kümede  (p_S)     · rakip uydu  (a = Σ_S p·o / Σ_S p)
+        sonuç kümede            · uymadı
+        sonuç KAÇTI   (1 − p_S) · rakip uydu  (b = Σ_S̄ p·o / Σ_S̄ p)
+        sonuç kaçtı             · uymadı
+
+    Kaçak sayısı ile rakibin isabet sayısı böylece **birlikte** taşınır;
+    ikisini ayrı hesaplamak, kaçtığımız maçta rakibin de kaçma eğilimini
+    görmezden gelirdi.
+
+    Dönen dizi `dp[k][j]`: `k` kaçak ve rakip tam `j` doğru.
+    """
+    import numpy as np
+
+    from .core import SEMBOLLER
+
+    n = len(list(probs_listesi))
+    dp = np.zeros((n + 1, n + 1))
+    dp[0, 0] = 1.0
+    for p, oy, sec in zip(probs_listesi, oynanma_listesi, secimler):
+        icinde = sum(float(p.get(s, 0.0)) for s in sec)
+        capraz = sum(float(p.get(s, 0.0)) * float(oy.get(s, 0.0)) for s in sec)
+        a = capraz / icinde if icinde > 0 else 0.0
+        disi = 1.0 - icinde
+        capraz_d = sum(float(p.get(s, 0.0)) * float(oy.get(s, 0.0))
+                       for s in SEMBOLLER if s not in sec)
+        b = capraz_d / disi if disi > 1e-12 else 0.0
+        yeni = np.zeros_like(dp)
+        yeni[:, 1:] += dp[:, :-1] * icinde * a
+        yeni += dp * icinde * (1.0 - a)
+        yeni[1:, 1:] += dp[:-1, :-1] * disi * b
+        yeni[1:, :] += dp[:-1, :] * disi * (1.0 - b)
+        dp = yeni
+    return dp
+
+
+def beklenen_tl(probs_listesi: Sequence[dict[str, float]],
+                oynanma_listesi: Sequence[dict[str, float]],
+                secimler: Sequence[Sequence[str]],
+                odul: dict[int, float],
+                kademe_havuzu: dict[int, float],
+                garanti: int,
+                rakip_kolon: int,
+                hedef_kademe: int = 12) -> float:
+    """Kuponun beklenen TL getirisi — **garanti tabanı** üzerinden.
+
+    `k` kaçakta garanti bir kolonun `garanti − k` kademesinde olduğunu
+    söyler (`sistem` modül başlığı). O kademenin havuzu, aynı kademeyi
+    tutturan rakip kolonlarla bölünür ve payın kapalı formu
+    `pay_beklentisi`dir. Rakibin o kademeyi tutturma olasılığı **koşulludur**
+    ve `kosullu_kademe_dagilimi`den okunur.
+
+    `odul` kullanılmaz — imza uyumu için duruyor; büyüklüğü belirleyen
+    `kademe_havuzu`dur (kazanan × kişi başı).
+    """
+    del odul
+    dp = kosullu_kademe_dagilimi(probs_listesi, oynanma_listesi, secimler)
+    toplam = 0.0
+    for kacak in range(garanti - hedef_kademe + 1):
+        kademe = garanti - kacak
+        havuz = kademe_havuzu.get(kademe)
+        if not havuz:
+            continue
+        p_kacak = float(dp[kacak, :].sum())
+        if p_kacak <= 0:
+            continue
+        q = float(dp[kacak, kademe]) / p_kacak
+        toplam += p_kacak * float(havuz) * pay_beklentisi(rakip_kolon, q)
+    return toplam

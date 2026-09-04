@@ -987,7 +987,7 @@ backend/
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
                        sehir/ · xg/
-  tests/               pytest (68 dosya → 1.992 test; §9'da katman dökümü)
+  tests/               pytest (69 dosya → 2.000 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1190,8 +1190,8 @@ Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant'lar, CLI (Bayes pre
 dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri test,
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
-eşleme, ikinci kayıt). **68 test dosyası, parametrizasyonla
-1.992 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+eşleme, ikinci kayıt). **69 test dosyası, parametrizasyonla
+2.000 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
@@ -1207,6 +1207,7 @@ karşı denetler):
 | Sistem fiyat tablosu (bedel + garanti) | **`sistem`** | 10 |
 | Para karnesi (garanti tabanı · enflasyon) | **`karne`** | 10 |
 | Kalabalık modeli (λ · kademe adetleri) | **`kalabalik`** | 12 |
+| Koşullu getiri (havuz biz kazanınca bölünür) | **`kosullu_getiri`** | 8 |
 | Skor türetme | `skor` | 17 |
 | Beraberlik düzeltmesi | `beraberlik` | 19 |
 | İddaa hazırlığı | `iddaa_hazirlik` | 24 |

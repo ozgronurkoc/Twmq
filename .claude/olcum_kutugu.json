@@ -2,7 +2,7 @@
  "sayilar": [
   {
    "ne": "suit test sayisi (eksiksiz kurulum)",
-   "deger": "1.992",
+   "deger": "2.000",
    "ureten": "cd backend && pytest -p no:randomly -n0 --collect-only -q  # dosya basi toplami",
    "olculdu": "2026-09-04",
    "anildigi_yerler": [
@@ -18,7 +18,7 @@
   },
   {
    "ne": "test dosyasi sayisi",
-   "deger": "68",
+   "deger": "69",
    "ureten": "ls backend/tests/test_*.py | wc -l",
    "olculdu": "2026-09-04",
    "anildigi_yerler": [
@@ -287,7 +287,7 @@
   },
   {
    "ne": "kalabalik modeli lambda (favoriye yigilma keskinligi)",
-   "deger": "1,7608  %95 [1,669, 1,865]",
+   "deger": "1,7608",
    "ureten": "cd backend && python -m spor_toto.kalabalik",
    "olculdu": "2026-09-04",
    "anildigi_yerler": [
@@ -295,7 +295,19 @@
     "backend/spor_toto/kalabalik.py OLCULEN"
    ],
    "bekci": "backend/tests/test_kalabalik.py::test_olculen_iki_ucun_ARASINDA",
-   "not": "112 hafta x 3 kademe; olcek uyuma girmez (kademeler arasi oran). K4 durma kurali gecti: 4/4 sezon, iki bootstrap araligi da sifiri kesmiyor."
+   "not": "Hafta duzeyinde bootstrap %95 araligi [1,669, 1,865] — 1'i ICERMIYOR. 112 hafta x 3 kademe; olcek uyuma girmez (kademeler arasi oran). K4 durma kurali gecti: 4/4 sezon, iki bootstrap araligi da sifiri kesmiyor. delta/h denendi ve dustu (isaret degistiriyor, uc parametreli model ayirt edilemiyor)."
+  },
+  {
+   "ne": "oynanma siralamasi piyasadan FARKLI olan mac orani (2026/27, 4 hafta)",
+   "deger": "21",
+   "ureten": "elle: data/super_toto/2026_27/hafta_??.json play_pct vs implied_probs",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md Faz S",
+    "backend/spor_toto/secim.py VARSAYILAN_KAYIP_ORANI"
+   ],
+   "bekci": "-",
+   "not": "60 macin 21'i. Monoton bir kalabalik modeli (o ~ p^lambda) bunu URETEMEZ; kenar varsa bu artigin icindedir. n=4 hafta, karar icin yetmez."
   }
  ],
  "komutlar": [

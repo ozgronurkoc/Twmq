@@ -224,15 +224,33 @@ def _pareto(adaylar: list[tuple[tuple[float, ...], tuple[int, ...]]],
 
 # ─── kalabalık ayarı — hedefi bırakmadan az oynanana kaymak ───────────────
 
-#: `P(k ≤ 2)`'den vazgeçilecek EN ÇOK oran. Ayar bu kadarını harcayabilir,
-#: fazlasını değil.
+#: `P(k ≤ 2)`'den vazgeçilecek EN ÇOK oran.
 #:
-#: **Bu bir ölçüm değil, harcama kararıdır** ve öyle etiketlenir. Sıfır
-#: yazılırsa ayar yalnızca hedefi hiç düşürmeyen değişimleri yapar (böyle
-#: değişimler vardır: iki sembol kümesi aynı olasılığı taşıyıp farklı
-#: kalabalık çekebilir). Büyütmek, tutturma olasılığını ikramiyenin
-#: bölünmemesi karşılığında satmaktır.
-VARSAYILAN_KAYIP_ORANI = 0.05
+#: **Artık bir harcama kararı değil, ÖLÇÜM SONUCU — ve sıfır.**
+#:
+#: Bu sabit uzun süre `0.05` yazıyordu ve başlığı dürüstçe *"bu bir ölçüm
+#: değil, harcama kararıdır"* diyordu. Ölçüldü (`docs/KAZANMA_PLANI.md`
+#: Faz S) ve optimal değer **sıfır** çıktı — üç bağımsız yoldan:
+#:
+#: 1. `kalabalik_ayari`, ölçülen kalabalık modeliyle (`kalabalik.OLCULEN`)
+#:    kayıp bütçesi 0'dan **0,70**'e kadar taransa bile **tek bir maçın
+#:    işaretini değiştirmiyor**.
+#: 2. Doğrudan `E[TL]` üzerinde yerel arama: 25 haftanın 25'inde taban plan
+#:    zaten en iyi; tek maçlık en iyi değişimin kazancı **tam 1,0000×**.
+#:    (Arama dejenere değil: favoriyi bırakmak E[TL]'yi 0,39×'e düşürüyor.)
+#: 3. Mekanizma analitik: ölçülen model `o(s) ∝ p(s)^λ` **monotondur**,
+#:    yani sembol sıralamasını korur. Kalabalıktan sapmak ancak daha düşük
+#:    olasılıklı sembole geçerek mümkün olur ve tutturma kaybı, pay
+#:    kazancını her bantta eziyor.
+#:
+#: **Sıfır "ayar kapalı" demek değildir:** hedefi hiç düşürmeyen değişimler
+#: hâlâ yapılır (iki sembol kümesi aynı olasılığı taşıyıp farklı kalabalık
+#: çekebilir). Değişen şey, tutturma olasılığının **satılmamasıdır**.
+#:
+#: **Ve bu sonuç modelin monotonluğuna bağlıdır.** Kayıtlı oynanma payları
+#: 60 maçın **21'inde** piyasadan farklı sıralama gösteriyor — monoton bir
+#: model bunu üretemez. Kenar varsa oradadır ve bu sabit onu görmez.
+VARSAYILAN_KAYIP_ORANI = 0.0
 
 #: Bir durumda tutulacak en fazla Pareto noktası. `PARETO_SINIRI` ile aynı
 #: gerekçe, farklı sayı: buradaki cephe bir boyut daha taşıyor (kalabalık
