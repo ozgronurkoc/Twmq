@@ -253,6 +253,36 @@
     "backend/data/super_toto/2026_27/hafta_04_kupon.json"
    ],
    "bekci": null
+  },
+  {
+   "ne": "4. hafta 3. Kupon (surpriz) marjinal katkisi",
+   "deger": "0.04083",
+   "ureten": "iki kuponun ortak sonuc uzayinda (3^12) tam sayim; kalabalik_ayari(kayip=0.50) + butce_danismani(512)",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "backend/data/super_toto/2026_27/hafta_04_kupon.json"
+   ],
+   "bekci": null
+  },
+  {
+   "ne": "4. hafta 1. Kupon P(en iyi kolon >= 12) — kolonlardan olculen",
+   "deger": "0.58325",
+   "ureten": "ayni tam sayim; `hedef` (0.467001) bunun ALT SINIRIDIR",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "backend/data/super_toto/2026_27/hafta_04_kupon.json"
+   ],
+   "bekci": null
+  },
+  {
+   "ne": "4. hafta 3. Kupon kalabalik-ici pay",
+   "deger": "0.000475",
+   "ureten": "kalabalik-ici carpim; 1. Kupon 0.093504 -> x197 az bolusme",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "backend/data/super_toto/2026_27/hafta_04_kupon.json"
+   ],
+   "bekci": null
   }
  ],
  "komutlar": [
