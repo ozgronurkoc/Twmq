@@ -57,8 +57,10 @@ import argparse
 import json
 import random
 from collections.abc import Sequence
+from pathlib import Path
 from typing import Any
 
+from .core import SEMBOLLER
 from .havuz import arsiv_haftalari
 from .secim import sistem_secimi
 from .sistem import HEDEF_KADEME, VARSAYILAN_GARANTI
@@ -232,15 +234,9 @@ def anormal_hafta_anahtarlari(dizin: Any = None) -> set[tuple[str, int]]:
     yani kademe ortalaması alan her hesap bunlarla kirlenir. `karne` CLI'sı
     bu yüzden iki kolonu da basar; eleme sessizce yapılmaz.
     """
-    ars = ikramiye_tablolari(dizin)
-    w12 = [float(t[12]["winners"]) for t in ars.values()
-           if 12 in t and t[12].get("winners") is not None]
-    if not w12:
-        return set()
-    esik = _medyan(w12) / 10.0
-    return {k for k, t in ars.items()
-            if 12 in t and t[12].get("winners") is not None
-            and t[12]["winners"] < esik}
+    from .havuz import anormal_haftalar
+
+    return anormal_haftalar(dizin)
 
 
 def kupon_kesiti(dizin: Any = None) -> list[dict[str, Any]]:
@@ -341,3 +337,131 @@ def _main(argv: list[str] | None = None) -> int:  # pragma: no cover - elle
 
 if __name__ == "__main__":  # pragma: no cover
     raise SystemExit(_main())
+
+
+# ─── canlı hafta karnesi — öngörülen ↔ gerçekleşen ────────────────────────
+
+#: Canlı hafta yüklerinin kökü.
+CANLI_KOK = Path(__file__).resolve().parent.parent / "data" / "super_toto"
+
+
+def canli_hafta(sezon: str, hafta: int,
+                kok: Any = None) -> dict[str, Any] | None:
+    """Elle girilen hafta yükünü karne için okunur hâle getirir.
+
+    Yük `data/super_toto/<sezon>/hafta_NN.json`'dır ve **elle girilen kayıt**
+    sınıfındandır. Karne için gereken beş şeyi çıkarır: olasılıklar (marj
+    arındırılmış), oynanma payları (varsa), gerçek sonuç, resmî kademe
+    tablosu ve **fiyatın künyesi**.
+
+    Künye taşınmak zorunda çünkü **ölçek haftadan haftaya değişiyor**:
+    1. ve 2. haftada ana fiyat ~%18 marjlı iddaa oranıydı, 3. haftada
+    ~%4,6 marjlı Pinnacle. Haftalar arası olasılık karşılaştırması bu
+    farkı hesaba katmadan yapılamaz ve karne bunu satırında söyler.
+    """
+    from .odds import implied_probs
+
+    d = (Path(kok) if kok else CANLI_KOK) / sezon / f"hafta_{hafta:02d}.json"
+    if not d.exists():
+        return None
+    govde = json.loads(d.read_text(encoding="utf-8"))
+    meta = govde.get("meta") or {}
+    maclar = govde.get("matches") or []
+    if len(maclar) != 15:
+        return None
+
+    probs: list[dict[str, float]] = []
+    play: list[dict[str, float]] = []
+    for m in maclar:
+        oran = m.get("odds") or {}
+        try:
+            probs.append(implied_probs({s: float(oran[s]) for s in SEMBOLLER}))
+        except (KeyError, TypeError, ValueError):
+            return None
+        ham = m.get("play_pct") or {}
+        if all(s in ham for s in SEMBOLLER):
+            toplam = sum(float(ham[s]) for s in SEMBOLLER) or 1.0
+            play.append({s: float(ham[s]) / toplam for s in SEMBOLLER})
+
+    sonuc = (meta.get("results") or "").strip()
+    tablo: dict[int, dict[str, Any]] = {}
+    for x in ((meta.get("payout") or {}).get("tiers") or []):
+        tablo[int(x["correct"])] = x
+    return {
+        "sezon": sezon, "hafta": hafta,
+        "probs": probs,
+        "play": play if len(play) == 15 else None,
+        "gercek": list(sonuc) if len(sonuc) == 15 else None,
+        "tablo": tablo,
+        "payout": meta.get("payout"),
+        "fiyat_kunyesi": meta.get("odds_kind") or meta.get("odds_source") or "?",
+        "program": meta.get("program", ""),
+        "girildi": meta.get("entered_at", ""),
+    }
+
+
+def canli_karne_satiri(sezon: str, hafta: int, butce_tl: float,
+                       garanti: int = VARSAYILAN_GARANTI,
+                       kok: Any = None) -> dict[str, Any] | None:
+    """Bir canlı haftanın karne satırı: **öngörülen ↔ gerçekleşen**.
+
+    ─── Bu bir tahmin KAYDI değildir ve öyle etiketlenir ─────────────────
+
+    Plan, o haftanın **kupon öncesi** girdilerinden (oran + oynanma payı,
+    `entered_at`) **bugünkü motorla** yeniden türetilir. Sızıntı yoktur —
+    girdiler sonuç girilmeden önce kaydedilmiştir (`entered_at` <
+    `results_entered_at`) ve kalabalık modeli 2026/27'yi hiç görmeyen 112
+    tarihsel hafta üzerinde kestirildi. Ama bu, sonuç görülmeden
+    **dondurulmuş** bir kayıt da değildir: motor o gün bugünkü hâlinde
+    değildi. Satır `tur` alanında bunu söyler.
+
+    Gerçekleşen taraf `hafta_karnesi` ile aynı garanti tabanını kullanır:
+    `k` kaçakta **bir** kolon `garanti − k` kademesinde. Alt sınırdır.
+    """
+    h = canli_hafta(sezon, hafta, kok)
+    if h is None:
+        return None
+    plan = sistem_secimi(h["probs"], butce_tl, garanti=garanti)
+    if plan is None:
+        return None
+
+    from .getiri import beklenen_tl, kademe_havuzlari
+    from .kalabalik import OLCULEN, oynanma_paylari
+
+    oynanma = h["play"] or oynanma_paylari(h["probs"], OLCULEN)
+    havuzlar = kademe_havuzlari(h["payout"])
+    satir: dict[str, Any] = {
+        "sezon": sezon, "hafta": hafta, "program": h["program"],
+        "fiyat_kunyesi": h["fiyat_kunyesi"], "girildi": h["girildi"],
+        "garanti": garanti, "butce_tl": butce_tl,
+        "kolon": plan.bedel, "maliyet": plan.bedel * 10.0,
+        "banko": plan.banko, "cift": plan.cift, "uclu": plan.uclu,
+        "p_hedef": plan.p_hedef,
+        "oynanma_kaynagi": "kayit" if h["play"] else "model",
+        "beklenen_tl": (beklenen_tl(h["probs"], oynanma, plan.secimler, {},
+                                    havuzlar, garanti, RAKIP_KOLON)
+                        if havuzlar else None),
+        "tur": "yeniden turetildi (dondurulmus kayit DEGIL)",
+        "picks": plan.picks,
+    }
+    if h["gercek"] and h["tablo"]:
+        kacak = sum(1 for sec, c in zip(plan.secimler, h["gercek"])
+                    if c not in sec)
+        kademe = garanti - kacak
+        satir.update({
+            "kacak": kacak, "kademe": kademe,
+            "odul": _odul(h["tablo"], kademe),
+            "sonuc": "".join(h["gercek"]),
+        })
+        satir["net"] = satir["odul"] - satir["maliyet"]
+    return satir
+
+
+#: Karnenin `beklenen_tl` hesabında kullandığı rakip kolon sayısı.
+#:
+#: `kalabalik.havuz_sinavi` 2025/26'da haftalık **10–19 milyon** kolon ima
+#: ediyor (model ve sezona göre). Yuvarlak bir orta değer alınıyor ve
+#: **varsayım olarak etiketleniyor**: `beklenen_tl` bu sayıya `1/(N·q)`
+#: mertebesinde duyarlıdır, yani mutlak TL değil **karşılaştırma** için
+#: okunmalıdır.
+RAKIP_KOLON = 15_000_000

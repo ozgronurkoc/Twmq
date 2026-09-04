@@ -2,7 +2,7 @@
  "sayilar": [
   {
    "ne": "suit test sayisi (eksiksiz kurulum)",
-   "deger": "2.005",
+   "deger": "2.011",
    "ureten": "cd backend && pytest -p no:randomly -n0 --collect-only -q  # dosya basi toplami",
    "olculdu": "2026-09-04",
    "anildigi_yerler": [
@@ -343,6 +343,18 @@
    ],
    "bekci": "backend/tests/test_getiri.py::test_olculen_ve_varsayilan_kolon_bedeli_KARISTIRILMIYOR",
    "not": "200.000 TL bandinda %99; 1.800.000 ve 5.400.000 TL bandlarinda %100. ₺1,50 olceginde ayni tablo '%310, GA [%203, %433]' diyordu — getiri bedele ters orantili ve gecis her sayiyi 6,67'ye boldu."
+  },
+  {
+   "ne": "arsivdeki anormal hafta sayisi (12. kademe kazanani medyanin 1/10'undan az)",
+   "deger": "32",
+   "ureten": "cd backend && python -c 'from spor_toto.havuz import anormal_haftalar; print(len(anormal_haftalar()))'",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "docs/KADEME_OLASILIKLARI.md §8",
+    "docs/KAZANMA_PLANI.md"
+   ],
+   "bekci": "backend/tests/test_karne.py::test_anormal_haftalar_arsivin_tamamindan_hesaplanir",
+   "not": "225 haftanin 32'si. Esik arsivin TAMAMINDAN hesaplanir; alt kesitten hesaplansaydi ayni hafta bir olcumde anormal, otekinde normal cikardi."
   }
  ],
  "komutlar": [

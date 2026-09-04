@@ -987,7 +987,7 @@ backend/
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
                        sehir/ · xg/
-  tests/               pytest (69 dosya → 2.005 test; §9'da katman dökümü)
+  tests/               pytest (69 dosya → 2.011 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1191,7 +1191,7 @@ dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri t
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
 eşleme, ikinci kayıt). **69 test dosyası, parametrizasyonla
-2.005 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+2.011 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
@@ -1205,7 +1205,7 @@ karşı denetler):
 | 2. Tahmin (kalabalık ayarı · bağımsız görüş) | `tahmin2` | 35 |
 | Karar katmanı | `secim` | 21 |
 | Sistem fiyat tablosu (bedel + garanti) | **`sistem`** | 10 |
-| Para karnesi (garanti tabanı · enflasyon) | **`karne`** | 10 |
+| Para karnesi (garanti tabanı · enflasyon · canlı) | **`karne`** | 16 |
 | Kalabalık modeli (λ · kademe adetleri) | **`kalabalik`** | 12 |
 | Koşullu getiri (havuz biz kazanınca bölünür) | **`kosullu_getiri`** | 10 |
 | Skor türetme | `skor` | 17 |
@@ -1489,6 +1489,7 @@ olması gerekir. Tanımlıysa yalnızca **durum değişiminde** bildirim gider.
 | [`docs/BENZER_PLANI_ESLEMESI.md`](docs/BENZER_PLANI_ESLEMESI.md) | `benzer.py` için gelen dış planın aynı biçimde eşlemesi: gerçekten eksik olan üçü (`inf` oran · toleransın üç kapıda üç sınırı · zaman kesmesi) uygulandı, altısı gerekçesiyle reddedildi, üçü kaydedildi |
 | [`docs/GELECEK_MIMARISI_ESLEMESI.md`](docs/GELECEK_MIMARISI_ESLEMESI.md) | Dışarıdan gelen bir **gelecek mimarisi makalesinin** aynı biçimde eşlemesi: önerdiği Faz I–V'in tamamı zaten yapılmış ve **ölçülmüştü** (hiçbir aile kapanış fiyatını geçmedi), gerçekten yeni olan tek madde **maçlar arası bağımlılığın kuyruk etkisi** oldu — ölçüldü ve **eksen kapandı** (§3.46); makalenin hiç görmediği şey ise açık olan tek eksen: **havuz** |
 | [`docs/KADEME_OLASILIKLARI.md`](docs/KADEME_OLASILIKLARI.md) | **15/15 yapma olasılığı** ve onun üç kardeşi (14, 13, 12): 3^15 uzayının tamamı açılarak ölçülen tek kolon olasılığı (874x), gerçek sonucun 114 haftadaki sırası, bütçeye göre kademe tablosu, paranın hangi kademeden geldiği. İki yeni ölçüm: **seyreltme** (Spearman −0,843 — tuttuğun hafta herkesin tuttuğu haftadır) ve arşivde **32 anormal hafta**. Ölçüm hattı `scripts/kademe_analizi.py` |
+| [`docs/KAZANMA_KARNESI.md`](docs/KAZANMA_KARNESI.md) | **Canlı karne** — her hafta öngörülen (`P(k≤eşik)`, `E[TL]`) ↔ gerçekleşen (kaçak, kademe, ödül), kümülatif net. Bir tahmin kaydı DEĞİL: plan kupon öncesi girdilerden bugünkü motorla yeniden türetiliyor ve ödül **garanti tabanıdır** (alt sınır). `scripts/hafta_kos.py --sonrasi` ile yeniden üretilir |
 | [`docs/KAZANMA_PLANI.md`](docs/KAZANMA_PLANI.md) | **Sekiz haftalık ölçüm sırası** — kazanma şansını artırmanın planı. Teşhis: tahmin ekseni on bir ölçümle kapalı ve `KADEME` §6'nın seyreltmesi (Spearman −0,843) kalanı da yiyor; açık olan eksen havuz. Çekirdeği hiç birleştirilmemiş iki arşiv: 223 haftalık resmî kazanan adedi × 112 haftalık kupon+oran+sonuç = **448 gözlem**, ve `getiri.KALABALIK_MODELLERI`'nin üç **varsayımı** o gözleme hiç oturtulmadı. Her fazın durma kuralı önceden yazılı |
 | [`docs/token_olcum_kutugu.md`](docs/token_olcum_kutugu.md) | Ajan bilgi grafının token kazancının **ölçüm kütüğü**: hangi soru, hangi cetvel, grafik öncesi ve sonrası kaç token — sayılar ölçüldü, tahmin edilmedi |
 | [`backend/README.md`](backend/README.md) | Motor + API kurulumu, ortam değişkenleri, oran arşivi kullanımı |

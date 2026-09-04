@@ -114,3 +114,82 @@ def test_anormal_haftalar_arsivin_tamamindan_hesaplanir():
     """Eşik alt kesitten değil arşivin tamamından — §8'in 32 haftası."""
     anom = karne.anormal_hafta_anahtarlari()
     assert 20 <= len(anom) <= 45, len(anom)
+
+
+# ─── canlı hafta karnesi ──────────────────────────────────────────────────
+
+def _canli_yaz(kok, sezon, hafta, *, sonuc=None, payout=None, play=True):
+    import json as _json
+
+    d = kok / sezon
+    d.mkdir(parents=True, exist_ok=True)
+    maclar = []
+    for i in range(15):
+        m = {"no": i + 1, "odds": {"1": 1.9, "0": 3.5, "2": 4.2}}
+        if play:
+            m["play_pct"] = {"1": 60.0, "0": 25.0, "2": 15.0}
+        maclar.append(m)
+    meta = {"season": sezon, "week": hafta, "program": "x", "odds_kind": "test",
+            "entered_at": "2026-01-01"}
+    if sonuc:
+        meta["results"] = sonuc
+    if payout:
+        meta["payout"] = payout
+    (d / f"hafta_{hafta:02d}.json").write_text(
+        _json.dumps({"meta": meta, "matches": maclar}), encoding="utf-8")
+
+
+def test_canli_hafta_eksik_yukte_None(tmp_path):
+    """15 maçı olmayan ya da oranı eksik yük karneye girmez."""
+    assert karne.canli_hafta("2099_00", 1, kok=tmp_path) is None
+
+
+def test_canli_hafta_fiyat_kunyesini_TASIR(tmp_path):
+    """Ölçek haftadan haftaya değişiyor; künye taşınmazsa haftalar
+    karşılaştırılamaz hâle gelir ve bunu kimse fark etmez."""
+    _canli_yaz(tmp_path, "2099_00", 1)
+    h = karne.canli_hafta("2099_00", 1, kok=tmp_path)
+    assert h is not None
+    assert h["fiyat_kunyesi"] == "test"
+    assert len(h["probs"]) == 15
+    assert h["play"] is not None and len(h["play"]) == 15
+
+
+def test_canli_hafta_oynanma_yoksa_None_dondurur(tmp_path):
+    _canli_yaz(tmp_path, "2099_00", 2, play=False)
+    h = karne.canli_hafta("2099_00", 2, kok=tmp_path)
+    assert h is not None and h["play"] is None
+
+
+def test_canli_karne_satiri_sonucsuz_haftada_odul_YAZMAZ(tmp_path):
+    """Sonuç girilmemiş hafta plan taşır ama ödül taşımaz — uydurulmaz."""
+    _canli_yaz(tmp_path, "2099_00", 3)
+    r = karne.canli_karne_satiri("2099_00", 3, 2000.0, kok=tmp_path)
+    assert r is not None
+    assert "odul" not in r and "kacak" not in r
+    assert r["banko"] + r["cift"] + r["uclu"] == 15
+    assert r["oynanma_kaynagi"] == "kayit"
+
+
+def test_canli_karne_satiri_kademe_GARANTI_TABANINDAN(tmp_path):
+    """`kademe = garanti − kaçak` ve ödül o kademenin kişi başı ikramiyesi."""
+    payout = {"tiers": [
+        {"correct": 15, "winners": 1, "prize": 1e6},
+        {"correct": 14, "winners": 5, "prize": 1e5},
+        {"correct": 13, "winners": 50, "prize": 1e4},
+        {"correct": 12, "winners": 500, "prize": 1e3},
+    ]}
+    _canli_yaz(tmp_path, "2099_00", 4, sonuc="1" * 15, payout=payout)
+    r = karne.canli_karne_satiri("2099_00", 4, 2000.0, garanti=13,
+                                 kok=tmp_path)
+    assert r is not None
+    assert r["kademe"] == 13 - r["kacak"]
+    assert r["net"] == r["odul"] - r["maliyet"]
+
+
+def test_oynanma_kaydi_yoksa_MODELE_duser(tmp_path):
+    """Pay kaydı yoksa `kalabalik.OLCULEN` kullanılır ve satır bunu SÖYLER."""
+    _canli_yaz(tmp_path, "2099_00", 5, play=False)
+    r = karne.canli_karne_satiri("2099_00", 5, 2000.0, kok=tmp_path)
+    assert r is not None
+    assert r["oynanma_kaynagi"] == "model"

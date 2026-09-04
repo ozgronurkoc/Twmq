@@ -566,6 +566,54 @@ ilgili süitleri koştum**, tamamını değil. İki kapı bunu yakaladı:
    beyan ettiği** `meta.kayip_orani` ile yeniden üretiyor — daha güçlü bir
    sınav, çünkü beyan eksikse ya da yanlışsa yine düşer.
 
+### Faz 0.2 kapandı — anormal hafta bayrağı arşiv okuma yolunda ✅
+
+`KADEME §8`'in önerisi buydu: *"`sportoto_arsiv` okunurken aynı denetim
+`data_quality` bloğuna bağlanmalı — bu eksen bugün denetimsizdir."* Bağlandı.
+
+`havuz.anormal_haftalar()` eşiği **arşivin tamamından** hesaplıyor (çağıranın
+alt kesitinden değil — öyle olsaydı aynı hafta bir ölçümde anormal, ötekinde
+normal çıkardı) ve `arsiv_haftalari` her satıra `anormal` bayrağını koyuyor.
+**225 haftanın 32'si** işaretli — §8'in sayısıyla birebir.
+
+Bayrak **elemez, beyan eder**: kademe ortalaması alan her hesap eleyip
+elemediğini söylemek zorunda kalsın diye. Sessiz eleme de sessiz kirlenme
+kadar kötüdür.
+
+### Faz D başladı — haftalık koşum ve canlı karne ✅
+
+`scripts/hafta_kos.py` iki uçlu: `--oncesi` kupon öncesi girdilerden planı
+üretir ve bütün varsayımlarıyla basar, `--sonrasi` sonucu ve resmî ikramiye
+tablosunu okuyup `docs/KAZANMA_KARNESI.md`'yi **baştan yazar** (ekleme değil
+yeniden üretim — ekleme bir kez bozulunca sessizce bozuk kalır).
+
+#### İlk karne — 2026/27, üç sonuçlanmış hafta
+
+| hf | şekil | kolon | P(k≤1) | E[TL] | kaçak | kademe | ödül | net | fiyat |
+|---:|---|---:|---:|---:|---:|---:|---:|---:|---|
+| 1 | 6b/1ç/8ü | 162 | 0,249 | 75 | 4 | 9 | 0 | −1.620 | `iddaa` |
+| 2 | 6b/1ç/8ü | 162 | 0,219 | 94 | 1 | 12 | 1.439 | −181 | `iddaa-acilis` |
+| 3 | 6b/1ç/8ü | 162 | 0,282 | 93 | 1 | 12 | 1.230 | −390 | `pinnacle-kapanis` |
+| 4 | 6b/1ç/8ü | 162 | 0,175 | — | — | — | — | — | `pinnacle-kapanis` |
+
+**Toplam:** maliyet 4.860 TL · ödül 2.668 TL · net **−2.192 TL** ·
+geri dönüş **%54,9**.
+
+Üç okuma ve üçü de karnenin kendi başlığında yazılı:
+
+1. **Bu bir tahmin kaydı değildir.** Plan, kupon öncesi girdilerden
+   *bugünkü* motorla yeniden türetildi. Sızıntı yok (girdiler
+   `entered_at`te, sonuç `results_entered_at`te; kalabalık modeli 2026/27'yi
+   hiç görmedi), ama motor o gün bugünkü hâlinde de değildi.
+2. **Ödül alt sınırdır.** 162 kolonluk bir 13-garanti sistemi, garantinin
+   söylediği tek kolondan fazlasını da tutturur; karne onları saymaz çünkü
+   kolon listesi bizde değil. Gerçekleşen getiri bu tablodan **büyüktür**.
+3. **Fiyat ölçeği haftalar arasında değişti** (~%18 marjlı iddaa → ~%4,6
+   marjlı Pinnacle) ve olasılıklar bu yüzden doğrudan karşılaştırılamaz.
+   Sütun bunu her satırda söylüyor.
+
+`n = 3`. Bu tablo bir strateji karnesi değil, bir **kayıt başlangıcı**.
+
 ### 0.2 Otuz iki anormal haftayı kapıya bağla — `KADEME_OLASILIKLARI.md` §8
 
 223 haftanın **32'sinde** 12. kademe kazanan sayısı medyanın (41.516) onda

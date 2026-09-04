@@ -255,13 +255,55 @@ def hafta_havuzu(payout: dict[str, Any] | None) -> dict[str, Any] | None:
     }
 
 
-def arsiv_haftalari(dizin: Path | None = None) -> list[dict[str, Any]]:
-    """Resmî arşivin tüm sezonlarını tek listede döndürür, kronolojik.
+#: Bir haftanın **anormal** sayılması için 12. kademe kazanan adedinin
+#: medyanın kaçta kaçının altına inmesi gerektiği.
+#:
+#: `docs/KADEME_OLASILIKLARI.md` §8: 223 haftanın **32'sinde** 12. kademe
+#: kazananı medyanın (41.516) onda birinden az — örneğin 2024/25 42.
+#: haftada 12. kademede **13** kazanan ve 951.224 TL kişi başı ikramiye
+#: görünüyor. Normal bir Spor Toto haftasının şekli bu değildir.
+#:
+#: **Etkisi somuttur:** bu haftalar elenmeden alınan kademe ortalaması tek
+#: bir rastgele kolonun beklenen değerini **4,99 TL** gösteriyor, yani
+#: %332 geri dönüş — imkânsız. Elendikten sonra medyan hafta %8.
+ANORMAL_ORAN = 0.1
 
-    Her satır arşivdeki hafta kaydına `havuz` anahtarını ekler; ikramiyesi
-    olmayan haftada `havuz` None'dır ve satır **elenmez** — hafta vardır,
-    yalnızca ikramiyesi ilan edilmemiştir.
+
+def _ortanca(v: list[float]) -> float:
+    s = sorted(v)
+    n = len(s)
+    if not n:
+        return 0.0
+    return s[n // 2] if n % 2 else (s[n // 2 - 1] + s[n // 2]) / 2
+
+
+def anormal_haftalar(dizin: Path | None = None) -> set[tuple[str, int]]:
+    """12. kademe kazananı medyanın `ANORMAL_ORAN`ından az olan haftalar.
+
+    Eşik **arşivin tamamından** hesaplanır, çağıranın verdiği alt kesitten
+    değil. Alt kesitten hesaplamak eşiği kesite göre oynatırdı ve aynı
+    hafta bir ölçümde anormal, ötekinde normal çıkardı.
+
+    §8'in önerisi buydu: *"`sportoto_arsiv` okunurken aynı denetim
+    `data_quality` bloğuna bağlanmalı — bu eksen bugün denetimsizdir."*
+    Artık `arsiv_haftalari` her satıra `anormal` bayrağını koyuyor.
     """
+    kazananlar: dict[tuple[str, int], int] = {}
+    for h in _ham_haftalar(dizin):
+        pay = h.get("payout")
+        if not pay:
+            continue
+        t = {x["correct"]: x for x in pay.get("tiers", [])}
+        if 12 in t and t[12].get("winners") is not None:
+            kazananlar[(h["season_key"], h["week"])] = int(t[12]["winners"])
+    if not kazananlar:
+        return set()
+    esik = _ortanca([float(v) for v in kazananlar.values()]) * ANORMAL_ORAN
+    return {k for k, v in kazananlar.items() if v < esik}
+
+
+def _ham_haftalar(dizin: Path | None = None) -> list[dict[str, Any]]:
+    """Arşiv satırları — `anormal` bayrağı OLMADAN (özyinelemeyi keser)."""
     kok = dizin or VARSAYILAN_DIZIN
     out: list[dict[str, Any]] = []
     for yol in sorted(kok.glob("*.json")):
@@ -274,6 +316,25 @@ def arsiv_haftalari(dizin: Path | None = None) -> list[dict[str, Any]]:
             kayit["havuz"] = hafta_havuzu(hafta.get("payout"))
             out.append(kayit)
     out.sort(key=lambda h: (h["season_key"], h["week"] is None, h["week"] or 0))
+    return out
+
+
+def arsiv_haftalari(dizin: Path | None = None) -> list[dict[str, Any]]:
+    """Resmî arşivin tüm sezonlarını tek listede döndürür, kronolojik.
+
+    Her satır arşivdeki hafta kaydına `havuz` anahtarını ekler; ikramiyesi
+    olmayan haftada `havuz` None'dır ve satır **elenmez** — hafta vardır,
+    yalnızca ikramiyesi ilan edilmemiştir.
+
+    Ayrıca her satıra **`anormal`** bayrağı konur (`anormal_haftalar`).
+    Bayrak elemez, **beyan eder**: kademe ortalaması alan her hesap
+    eleyip elemediğini söylemek zorunda kalsın diye. Sessiz eleme de
+    sessiz kirlenme kadar kötüdür.
+    """
+    anom = anormal_haftalar(dizin)
+    out = _ham_haftalar(dizin)
+    for kayit in out:
+        kayit["anormal"] = (kayit["season_key"], kayit["week"]) in anom
     return out
 
 
