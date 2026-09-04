@@ -304,6 +304,86 @@ bu kesitte de aynen geçerli. (3) Ortalamalar **alt sınırdır**, gerçekleşen
 getiri bunlardan büyüktür — ama ne kadar büyük olduğu ancak gerçek kolon
 listeleriyle bilinir ve o, canlı haftalarda ST EXTRA kaydından gelecek (Faz D).
 
+### Faz K — kalabalık modeli **ölçüldü ve durma kuralını geçti** ✅
+
+`spor_toto/kalabalik.py`. Kesit: **112 hafta × 3 kademe**. Model:
+
+```
+o_i(s)  ∝  p_i(s)^λ          (λ=1 → orneklem · λ→∞ → favori)
+```
+
+Ölçek uyuma **hiç girmiyor**: gözlenen kazanan adetleri `N · P(k)` ile
+orantılı olduğu için kademeler arası oranlar `N`'den bağımsız ve modelin
+şeklini tek başına tanımlıyor. 15. kademe bilerek dışarıda — 14/13/12
+**kolon** sayar, 15 **kupon** (§3.48). Kazanan adedi ağırlık olarak
+kullanılmıyor: bir haftanın 40.000 kazananı 40.000 bağımsız gözlem değil,
+aynı 15 maçın 40.000 kez sayılmasıdır.
+
+#### Sonuç: λ = 1,7608 · %95 [1,669, 1,865]
+
+**Aralık 1'i içermiyor.** Kalabalık favoriye piyasadan daha keskin
+yığılıyor ve bu artık varsayım değil ölçüm. λ dört katın dördünde de
+kararlı (1,746–1,782).
+
+**Model bilerek tek parametreli.** `δ` (beraberlik) ve `h` (ev sahibi)
+denendi ve düştü: sezon sezon kestirildiğinde `δ` −0,19 ↔ +0,61, `h`
+−0,26 ↔ +0,50 arasında **işaret değiştiriyor**; üç parametreli model sezon
+dışarıda bırakmalı karşılaştırmada tek parametreliden **ayırt edilemiyor**
+(−0,00012, %95 [−0,00047, +0,00012]). Kazanmayan parametre modelde durmaz.
+
+#### K4 durma kuralı — üç şartın üçü de
+
+| tutulan sezon | hafta | olculen | orneklem | favori |
+|---|---:|---:|---:|---:|
+| 2022/23 | 17 | **0,3840** | 0,3849 | 1,7209 |
+| 2023/24 | 31 | **0,4123** | 0,4149 | 1,8068 |
+| 2024/25 | 29 | **0,4029** | 0,4052 | 1,9624 |
+| 2025/26 | 35 | **0,3598** | 0,3627 | 2,0545 |
+
+* `olculen − orneklem` = −0,00236, %95 **[−0,00317, −0,00156]** — sıfırı kesmiyor
+* `olculen − favori` = −1,52229, %95 **[−1,63701, −1,41023]** — sıfırı kesmiyor
+* aynı yön **4/4**
+
+**GEÇTİ.** Ve bu, projede bir eksende **önceden yazılmış bir durma kuralını
+geçen ilk ölçüm** — tahmin ekseninde on bir deneme geçememişti.
+
+#### K5 bağımsız sınav: `favori` ikinci kez çürüdü
+
+Uyum kademeler arası orana bakar ve `N`'yi hiç görmez; oradan çıkan `N` ise
+dağıtılan havuzla karşılaştırılabilir. **Sezon içinde** (havuz nominal TL ve
+dört sezonda 72 kat büyüdü — havuzlanmış korelasyon işaret bile değiştiriyor,
+ölçüldü: −0,21):
+
+| model | ort. sezon içi `r` | ima ettiği haftalık kolon |
+|---|---:|---|
+| olculen | **+0,542** | 10,4M – 31,3M |
+| orneklem | **+0,580** | 18,8M – 70,7M |
+| favori | **−0,298** | **10¹⁷ – 10¹⁹** |
+
+`favori` haftada 10¹⁷ kolon ima ediyor — dünya nüfusu 8×10⁹. Fiziksel
+olarak imkânsız, ve korelasyonun işareti de ters.
+
+**Sınav `olculen` ile `orneklem`'i ayırmıyor** ve niçin ayıramadığı zaten
+kodda yazılıydı: `havuz_karnesi` notu *"tek bir sistem kuponu aynı hafta
+onlarca kolonla kazanabilir; bağımsız-kolon modeli bu ilişkiyi göremez ve
+seviye tahmini bu yüzden şişer."* Seviye sınavı bu yüzden yalnızca
+makuliyet kontrolüdür — ve onu geçiyor: `orneklem` 2025/26'da kolon başına
+₺5,41 dağıtılan pay ima ediyor, ₺10 kolon bedelinin ~%54'ü.
+
+#### §3.34'ün 22 katlık belirsizliği kapandı
+
+§3.34 *"bu eksende belirsizliğin kaynağı tahminci değil, kalabalık"* diyor
+ve `orneklem` (getiri 0,156) ↔ `favori` (0,007) arasında **22 kat** fark
+ölçüyordu. `favori` ucu iki bağımsız yoldan çürüdü. Gerçek kalabalık
+`orneklem` ile `olculen` arasındadır — yani aralığın **iyimser** ucunda.
+
+`getiri.KALABALIK_MODELLERI` dördüncü modelini aldı (`olculen`) ve üç
+modelin ikisi artık varsayım değil.
+
+**Ama bu bir kâr vaadi değildir.** Ölçülen şey kalabalığın *şekli*; bundan
+para çıkıp çıkmadığı Faz S'nin sorusu ve `karne`nin garanti tabanı o soruyu
+henüz cevaplamıyor.
+
 ### 0.2 Otuz iki anormal haftayı kapıya bağla — `KADEME_OLASILIKLARI.md` §8
 
 223 haftanın **32'sinde** 12. kademe kazanan sayısı medyanın (41.516) onda

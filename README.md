@@ -948,6 +948,7 @@ backend/
     secim.py           KUPON: işaretleri HEDEFE göre seçer — eşiğe göre değil
     sistem.py          KUPON: indirgenmiş sistem BEDELİ — formülden değil satıcı tablosundan
     karne.py           PARA: kuponun gerçek ikramiye tablolarına karşı getirisi (garanti tabanı)
+    kalabalik.py       HAVUZ: kalabalık modeli — 112 haftanın kademe adetlerine oturtulmuş (λ)
     havuz.py           HAVUZ: resmî ikramiye tablosundan havuzu ve devri geri hesaplar
     skor.py            ÖLÇÜM: Asya handikabı + alt/üst 2.5 → skor dağılımı → 1X2 (A6)
     kuyruk.py          ÖLÇÜM: hafta içi bağımlılık ve kuyruk etkisi — P(k≥12) iyimser mi (§4.1)
@@ -986,7 +987,7 @@ backend/
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
                        sehir/ · xg/
-  tests/               pytest (67 dosya → 1.980 test; §9'da katman dökümü)
+  tests/               pytest (68 dosya → 1.992 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1189,8 +1190,8 @@ Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant'lar, CLI (Bayes pre
 dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri test,
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
-eşleme, ikinci kayıt). **67 test dosyası, parametrizasyonla
-1.980 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+eşleme, ikinci kayıt). **68 test dosyası, parametrizasyonla
+1.992 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
@@ -1205,6 +1206,7 @@ karşı denetler):
 | Karar katmanı | `secim` | 21 |
 | Sistem fiyat tablosu (bedel + garanti) | **`sistem`** | 10 |
 | Para karnesi (garanti tabanı · enflasyon) | **`karne`** | 10 |
+| Kalabalık modeli (λ · kademe adetleri) | **`kalabalik`** | 12 |
 | Skor türetme | `skor` | 17 |
 | Beraberlik düzeltmesi | `beraberlik` | 19 |
 | İddaa hazırlığı | `iddaa_hazirlik` | 24 |

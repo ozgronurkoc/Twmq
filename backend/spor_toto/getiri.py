@@ -382,7 +382,8 @@ def kupon_kademeleri(probs_listesi: Sequence[dict[str, float]],
 #: Ölçüm de kusursuz değil ve kusuru yazılmalı: paylar **tek bir
 #: platformun** kendi kullanıcılarınındır, Spor Toto havuzunun tamamı
 #: değildir. Yani `oynanma` modeli varsayımı daraltır, kaldırmaz.
-KALABALIK_MODELLERI: tuple[str, ...] = ("orneklem", "favori", "oynanma")
+KALABALIK_MODELLERI: tuple[str, ...] = ("orneklem", "favori", "oynanma",
+                                        "olculen")
 
 
 def kalabalik_kademeleri(probs_listesi: Sequence[dict[str, float]],
@@ -418,10 +419,20 @@ def kalabalik_kademeleri(probs_listesi: Sequence[dict[str, float]],
         gerçek sonuç `p`den gelir. `orneklem` bu ifadenin `o = p` özel
         hâlidir — yani kalabalığın piyasayla aynı oynadığı varsayımı.
         `oynanma_listesi` verilmezse bu model çağrılamaz.
+    ``olculen``
+        Rakip `kalabalik.OLCULEN`den çekiyor: `o(s) ∝ p(s)^λ`,
+        **λ = 1,7608 [1,669, 1,865]**. `oynanma` gibi çapraz terim ama
+        vekili tek platformun kullanıcıları değil, **112 haftanın resmî
+        kademe adetleri**. `orneklem` bunun `λ = 1` hâlidir ve ölçülen
+        aralık 1'i içermiyor.
 
-    Gerçek kalabalık ilk ikisinin arasındadır ve hangisinin seçildiği
-    sonucu büyük ölçüde belirler; bu yüzden model adı `varsayimlar`a
-    yazılır. Üçüncüsü o aralığı tahmin etmez, **ölçer**.
+    **Üç varsayımın ikisi artık ölçüldü.** §3.34 *"belirsizliğin kaynağı
+    tahminci değil kalabalık"* diyor ve `orneklem` ↔ `favori` arasında 22
+    kat getiri farkı ölçüyordu. `favori` ucu **kapandı**: sezon dışarıda
+    bırakmalı uyumda hafta başına ~4 kat kötü, ve dağıtılan havuzla
+    karşılaştırıldığında haftada 10¹⁷ kolonluk fiziksel olarak imkânsız bir
+    havuz ima ediyor (`kalabalik.havuz_sinavi`). Gerçek kalabalık
+    `orneklem` ile `olculen` arasındadır — yani aralığın **iyimser** ucunda.
 
     Üçünün de gördüğü şey aynı biçimde **koşulsuzdur**: rakibin isabeti
     bizim ne işaretlediğimize bakmaz, dolayısıyla bu sayı iki farklı plan
@@ -454,6 +465,10 @@ def kalabalik_kademeleri(probs_listesi: Sequence[dict[str, float]],
             isabet.append(sum(x * x for x in v))
         elif model == "favori":
             isabet.append(max(v))
+        elif model == "olculen":
+            from .kalabalik import OLCULEN, oynanma_paylari
+            o = _normal(oynanma_paylari([p], OLCULEN)[0])
+            isabet.append(sum(a * b for a, b in zip(o, v)))
         else:
             o = _normal(oynanma_listesi[i])  # type: ignore[index]
             isabet.append(sum(a * b for a, b in zip(o, v)))
