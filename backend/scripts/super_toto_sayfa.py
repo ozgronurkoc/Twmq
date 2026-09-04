@@ -121,8 +121,10 @@ UYARI_OZETI = (f"Bu haftanın kaydında {len(_uyarilar)} veri uyarısı var "
 # Ölçüm arındırılmış olasılık üzerinden yapılır, ham oran üzerinden DEĞİL:
 # ham oranın hareketi, piyasanın fikir değiştirmesiyle bahisçinin marjını
 # değiştirmesini karıştırır (bkz. `spor_toto.cizgi` modül başlığı).
-_ilk_kitap = (d["matches"][0].get("odds_books") or {})
-KITAPLAR = sorted(_ilk_kitap)
+# Kitap listesi butun maclarin BIRLESIMIDIR ve her macta dolu oldugu
+# varsayilmaz: 4. haftada Pinnacle 2. maci hic fiyatlamadi, 13. macin
+# kapanisini vermedi ve bu sayfa `KeyError` ile duserdi.
+KITAPLAR = sorted({k for mm in d["matches"] for k in (mm.get("odds_books") or {})})
 FIYAT_VAR = len(KITAPLAR) > 1
 
 
@@ -140,11 +142,18 @@ _marj = margin
 
 FIYAT_SATIR: list[dict] = []
 KITAP_MARJ: dict[str, float] = {}
+KITAP_MARJ_N: dict[str, int] = {}
 BAYAT: list[str] = []
 if FIYAT_VAR:
     for anahtar in KITAPLAR:
-        ms = [_marj(mm["odds_books"][anahtar]) for mm in d["matches"]]
+        # Yalnizca o kitabi TASIYAN maclar; kac macdan geldigi de yazilir
+        # ki 13 maclik bir ortalama 15 maclik sanilmasin.
+        ms = [_marj(mm["odds_books"][anahtar]) for mm in d["matches"]
+              if (mm.get("odds_books") or {}).get(anahtar)]
+        if not ms:
+            continue
         KITAP_MARJ[anahtar] = 100 * sum(ms) / len(ms)
+        KITAP_MARJ_N[anahtar] = len(ms)
     # Bir bahisçinin kapanışı açılışıyla BİREBİR aynıysa o satır bir fiyat
     # değil, bayat bir kayıttır — ayrışma sayılırsa görüş farkı sanılır.
     for anahtar in KITAPLAR:
@@ -154,7 +163,8 @@ if FIYAT_VAR:
         if ac not in KITAPLAR:
             continue
         ayni = [mm["no"] for mm in d["matches"]
-                if mm["odds_books"][anahtar] == mm["odds_books"][ac]]
+                if (mm.get("odds_books") or {}).get(anahtar)
+                and mm["odds_books"][anahtar] == mm["odds_books"].get(ac)]
         if ayni:
             BAYAT.append(f"{anahtar.split('_')[0]}: "
                          + ", ".join(map(str, ayni)) + ". maç")
@@ -370,8 +380,14 @@ if DONMUS:
 
 fiyat_baslik = "".join(f'<th class="num">{e(_kitap_adi(k))}</th>'
                        for k in (FIYAT_SATIR[0]["esanlı"] if FIYAT_SATIR else []))
+#: Marj rozeti kac macdan geldigini de yazar. Eksik satiri olan bir
+#: bahiscinin "%4,62"si 15 macin degil 13 macin ortalamasidir ve bu fark
+#: yazilmazsa okuyucu bultenin tamamini gordugunu sanir.
 marj_rozet = " · ".join(
     f'{e(_kitap_adi(k))} <b style="color:var(--ink)">%{v:.2f}</b>'
+    + ("" if KITAP_MARJ_N.get(k, len(d["matches"])) == len(d["matches"])
+       else f' <span style="color:var(--dim)">({KITAP_MARJ_N[k]}/'
+            f'{len(d["matches"])} maç)</span>')
     for k, v in KITAP_MARJ.items())
 
 

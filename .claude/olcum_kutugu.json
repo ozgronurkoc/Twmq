@@ -2,17 +2,16 @@
  "sayilar": [
   {
    "ne": "suit test sayisi (eksiksiz kurulum)",
-   "deger": "1.950",
+   "deger": "1.956",
    "ureten": "cd backend && pytest -p no:randomly -n0 --collect-only -q  # dosya basi toplami",
-   "olculdu": "2026-09-03",
+   "olculdu": "2026-09-04",
    "anildigi_yerler": [
     "README.md §7,§9",
     "backend/README.md",
     "docs/ISTATISTIK_YOL_HARITASI.md",
     "docs/SAGLIK_VIZYONU.md",
     "docs/VERI_TOPLAMA_VE_ISLEME.md",
-    "replit.md",
-    "docs/token_olcum_kutugu.md"
+    "replit.md"
    ],
    "bekci": "backend/tests/test_belgeler.py::test_test_sayisi_belgelerde_tek_ve_dogru"
   },
@@ -204,6 +203,56 @@
     "docs/ISTATISTIK_YOL_HARITASI.md"
    ],
    "not": "n=759. Bonferroni'de de disarida AMA sezon isareti DONUYOR (2022/23 -%1,6). §3.21'in durumu: sekil gercek, buyukluk butun sezonlarin degil."
+  },
+  {
+   "ne": "4. hafta kupon bedeli — hedef kurali, sabit 16 satir",
+   "deger": "3.888",
+   "ureten": "cd backend && python scripts/super_toto_hafta.py --hafta 4",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "backend/data/super_toto/2026_27/hafta_04_kupon.json"
+   ],
+   "bekci": "backend/tests/test_super_toto.py::test_kupon_kume_ici_olasiligi_tutarli"
+  },
+  {
+   "ne": "4. hafta P(en iyi kolon >= 12) — dondurulan ana varyant",
+   "deger": "46,70",
+   "ureten": "cd backend && python scripts/super_toto_hafta.py --hafta 4",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "backend/data/super_toto/2026_27/hafta_04_kupon.json"
+   ],
+   "bekci": null
+  },
+  {
+   "ne": "4. hafta ana fiyat ortalama marji (2. mac Nesine'den geldigi icin sisti)",
+   "deger": "5.44",
+   "ureten": "cd backend && python scripts/super_toto_hafta.py --hafta 4",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "backend/data/super_toto/2026_27/hafta_04_kupon.json"
+   ],
+   "bekci": "backend/tests/test_super_toto.py::test_besleme_eksik_bahisci_satirinda_cokmez"
+  },
+  {
+   "ne": "4. hafta Nesine bayat kapanis satiri sayisi (kapanis == acilis)",
+   "deger": "8",
+   "ureten": "cd backend && python scripts/super_toto_hafta.py --hafta 4  # [kod] uyarilari",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "backend/data/super_toto/2026_27/hafta_04.json"
+   ],
+   "bekci": "backend/scripts/super_toto_hafta.py::_fiyat_uyarilari"
+  },
+  {
+   "ne": "4. hafta acilis/kapanis kuponunun ayristigi mac sayisi",
+   "deger": "15/15",
+   "ureten": "cd backend && python scripts/super_toto_hafta.py --hafta 4 (+ ayni kural Pinnacle ACILIS fiyatiyla)",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "backend/data/super_toto/2026_27/hafta_04_kupon.json"
+   ],
+   "bekci": null
   }
  ],
  "komutlar": [

@@ -40,7 +40,14 @@ export function FiyatKaynaklari({
   fiyatlar: SuperTotoFiyatlar;
   oddsKind: string | null;
 }) {
-  const { books, margins, stale_closing: bayat, rows } = fiyatlar;
+  const {
+    books,
+    margins,
+    margin_n: marjN,
+    match_count: macSayisi,
+    stale_closing: bayat,
+    rows,
+  } = fiyatlar;
 
   // En buyuk hareket ve en buyuk ayrisma: ikisi de SATIRLARDAN secilir,
   // sabit yazilmaz — gelecek haftalarda baska maclar olacak.
@@ -68,11 +75,22 @@ export function FiyatKaynaklari({
         </p>
 
         <div className="flex flex-wrap gap-1.5">
-          {Object.entries(margins).map(([k, v]) => (
-            <Badge key={k}>
-              {kitapAdi(k)} %{v.toFixed(2)}
-            </Badge>
-          ))}
+          {Object.entries(margins).map(([k, v]) => {
+            // Eksik satiri olan bir bahiscinin ortalamasi butun bultenin
+            // ortalamasi DEGILDIR; kac macdan geldigi yazilmazsa okuyucu
+            // 15 mac gordugunu sanir.
+            const n = marjN?.[k] ?? macSayisi;
+            return (
+              <Badge key={k}>
+                {kitapAdi(k)} %{v.toFixed(2)}
+                {n < macSayisi ? (
+                  <span className="ml-1 opacity-70">
+                    ({n}/{macSayisi} maç)
+                  </span>
+                ) : null}
+              </Badge>
+            );
+          })}
         </div>
 
         <div className="-mx-1 overflow-x-auto px-1">

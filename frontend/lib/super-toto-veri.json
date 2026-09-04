@@ -3153,6 +3153,14 @@
      "nesine_kapanis"
     ],
     "main_book": "pinnacle_kapanis",
+    "margin_n": {
+     "bet365nl_acilis": 15,
+     "bet365nl_kapanis": 15,
+     "nesine_acilis": 15,
+     "nesine_kapanis": 15,
+     "pinnacle_acilis": 15,
+     "pinnacle_kapanis": 15
+    },
     "margins": {
      "bet365nl_acilis": 7.89,
      "bet365nl_kapanis": 6.01,
@@ -3161,6 +3169,7 @@
      "pinnacle_acilis": 4.57,
      "pinnacle_kapanis": 4.63
     },
+    "match_count": 15,
     "rows": [
      {
       "books": {
@@ -3691,6 +3700,989 @@
     "`odds_kind` FAZLA ETİKETLİ. Tarihler girilince görüldü: bütün oranlar 2026-08-27'de kaydedildi (`entered_at`), maçlar 28-31.08'de oynandı — yani HİÇBİR maçın gerçek kapanış çizgisi kayıtta yok. `pinnacle_kapanis` aslında 27.08 anlık kaydıdır; ilk maça 1 gün, son maçlara 4 gün kalmıştı. Bu bir sızıntı DEĞİLDİR (fiyatların ikisi de kupon donarken eldeydi), ama geri testin gerekçesi doğrudan devredilemez: arşivde ölçülen şey GERÇEK kapanıştı, burada ölçülen şey `iki anlık kayıttan geç olanı`. Sonuçlar geç olanı doğruladı (Brier 0,5645 → 0,5544; gerçekleşen getiride ×11), ama tek hafta ve 15 maçtır."
    ],
    "week": 3
+  },
+  {
+   "close_date": null,
+   "coupon": {
+    "arindirma": "shin",
+    "banko_esik": null,
+    "columns": 3888,
+    "duyarlilik": {
+     "fark": "Açılış ve kapanış kuponu HİÇBİR maçta ayrışmıyor — 15/15 aynı işaret. 3. haftada tek maçta ayrışmıştı. Sebep ölçüldü: bu haftanın en büyük Pinnacle çizgi hareketi 3,36 puan (5. maç, Galatasaray %57,6 → %61,0), ikincisi 3,06 puan (12. maç, Atletico Madrid %38,8 → %41,9); 3. haftada en büyük hareket 5,7 puandı ve kuponu tam o maçta çevirmişti. Fiyat anının bedeli bu hafta yalnızca P(≥12)'de görünüyor: kapanış olasılıklarıyla %46,70, açılış olasılıklarıyla %45,91.",
+     "hedef": 0.467001,
+     "not": "Spor Toto kuponu ilk maçtan önce kapanır; haftanın son maçlarının KAPANIŞ çizgisi o anda normalde henüz yoktur. Aşağıdaki kupon, kupon anında kesinlikle elde olan fiyatla kuruldu: Pinnacle AÇILIŞ (2. maçta Nesine açılış — Pinnacle o maçı hiç fiyatlamamış).",
+     "picks": [
+      "102",
+      "102",
+      "1",
+      "10",
+      "2",
+      "102",
+      "1",
+      "10",
+      "10",
+      "102",
+      "10",
+      "102",
+      "10",
+      "10",
+      "10"
+     ]
+    },
+    "frozen_at": "2026-09-04",
+    "in_set_p": 0.040145,
+    "kalabalik_gerekcesi": "Oynanan kupon kalabalığı GÖRMEZ: işaretler yalnızca fiyattan gelir. Kalabalık ayarlı alternatif de ölçüldü ve kayıtta duruyor — P(≥12)'yi %46,70'den %44,86'e düşürüyor (−1,84 puan), buna karşılık aynı seti oynayan rakip payını %9,35'den %6,64'e indiriyor (×1,41 daha az bölüşme); müşterek beklenen değerde net ×1,35 daha iyi çıkıyor. Ayrışma 3 maçta: 4. maç 10 → 12; 9. maç 10 → 12; 15. maç 10 → 12. 3. haftada oynayan ölçüme RAĞMEN ayarsız sürümü seçti ve o hafta kazandı; defter bunu uyarı olarak taşıyor — tek hafta bir ölçüm değildir.",
+    "kural": "hedef",
+    "label": "ana — hedef kuralı, kalabalık görülmeden (DONDURULAN)",
+    "lines": [
+     "102 102 1   1   2   102 1   1   1   102 1   102 1   1   1  ",
+     "102 102 1   1   2   102 1   1   1   102 0   102 1   0   0  ",
+     "102 102 1   1   2   102 1   1   0   102 1   102 0   0   1  ",
+     "102 102 1   1   2   102 1   1   0   102 0   102 0   1   0  ",
+     "102 102 1   1   2   102 1   0   1   102 1   102 0   0   0  ",
+     "102 102 1   1   2   102 1   0   1   102 0   102 0   1   1  ",
+     "102 102 1   1   2   102 1   0   0   102 1   102 1   1   0  ",
+     "102 102 1   1   2   102 1   0   0   102 0   102 1   0   1  ",
+     "102 102 1   0   2   102 1   1   1   102 1   102 0   1   0  ",
+     "102 102 1   0   2   102 1   1   1   102 0   102 0   0   1  ",
+     "102 102 1   0   2   102 1   1   0   102 1   102 1   0   0  ",
+     "102 102 1   0   2   102 1   1   0   102 0   102 1   1   1  ",
+     "102 102 1   0   2   102 1   0   1   102 1   102 1   0   1  ",
+     "102 102 1   0   2   102 1   0   1   102 0   102 1   1   0  ",
+     "102 102 1   0   2   102 1   0   0   102 1   102 0   1   1  ",
+     "102 102 1   0   2   102 1   0   0   102 0   102 0   0   0  "
+    ],
+    "marj_ort_pct": 5.44,
+    "picks": [
+     "102",
+     "102",
+     "1",
+     "10",
+     "2",
+     "102",
+     "1",
+     "10",
+     "10",
+     "102",
+     "10",
+     "102",
+     "10",
+     "10",
+     "10"
+    ],
+    "results_known": false,
+    "rows": 16,
+    "uclu_esik": null,
+    "variants": [
+     {
+      "columns": 3888,
+      "crowd_in_set_p": 0.093504,
+      "crowd_ratio": 0.429,
+      "hedef": 0.467001,
+      "in_set_p": 0.040145,
+      "label": "ana — hedef kuralı, kalabalık görülmeden (DONDURULAN)",
+      "picks": [
+       "102",
+       "102",
+       "1",
+       "10",
+       "2",
+       "102",
+       "1",
+       "10",
+       "10",
+       "102",
+       "10",
+       "102",
+       "10",
+       "10",
+       "10"
+      ]
+     },
+     {
+      "columns": 3888,
+      "crowd_in_set_p": 0.066428,
+      "crowd_ratio": 0.555,
+      "hedef": 0.448585,
+      "in_set_p": 0.03689,
+      "label": "hedef + kalabalık ayarı (ölçüldü, oynanmadı)",
+      "picks": [
+       "102",
+       "102",
+       "1",
+       "12",
+       "2",
+       "102",
+       "1",
+       "10",
+       "12",
+       "102",
+       "10",
+       "102",
+       "10",
+       "10",
+       "12"
+      ]
+     },
+     {
+      "columns": 6144,
+      "crowd_in_set_p": 0.05255,
+      "crowd_ratio": 0.553,
+      "hedef": 0.367234,
+      "in_set_p": 0.029069,
+      "label": "eşik kuralı — eski kural, aynı ölçek (kıyas)",
+      "picks": [
+       "12",
+       "12",
+       "10",
+       "10",
+       "02",
+       "102",
+       "10",
+       "10",
+       "10",
+       "12",
+       "10",
+       "12",
+       "10",
+       "10",
+       "10"
+      ]
+     },
+     {
+      "columns": 864,
+      "crowd_in_set_p": 0.034129,
+      "crowd_ratio": 0.384,
+      "hedef": 0.261767,
+      "in_set_p": 0.013106,
+      "label": "bütçe kısıtlı — 3. haftanın bedeli (864 kolon), motorun kendi planı",
+      "picks": [
+       "102",
+       "102",
+       "1",
+       "10",
+       "2",
+       "102",
+       "1",
+       "10",
+       "10",
+       "2",
+       "10",
+       "12",
+       "10",
+       "10",
+       "10"
+      ]
+     },
+     {
+      "columns": 1296,
+      "crowd_in_set_p": 0.046752,
+      "crowd_ratio": 0.385,
+      "hedef": 0.318363,
+      "in_set_p": 0.018016,
+      "label": "bütçe kısıtlı — orta kademe (1.296 kolon), motorun kendi planı",
+      "picks": [
+       "102",
+       "102",
+       "1",
+       "10",
+       "2",
+       "102",
+       "1",
+       "10",
+       "10",
+       "2",
+       "10",
+       "102",
+       "10",
+       "10",
+       "10"
+      ]
+     }
+    ]
+   },
+   "coupon_drift": [],
+   "coupon_superseded": null,
+   "coupon_today": {
+    "arindirma": "shin",
+    "banko": [
+     3,
+     5,
+     7
+    ],
+    "banko_esik": 0.68,
+    "butce": 6144,
+    "cift": [
+     4,
+     8,
+     9,
+     11,
+     13,
+     14,
+     15
+    ],
+    "columns": 3888,
+    "in_set_p": 0.040145,
+    "kural": "hedef",
+    "p_hedef": 0.467001,
+    "p_hedef_esik": 0.367234,
+    "picks": [
+     "102",
+     "102",
+     "1",
+     "10",
+     "2",
+     "102",
+     "1",
+     "10",
+     "10",
+     "102",
+     "10",
+     "102",
+     "10",
+     "10",
+     "10"
+    ],
+    "rows": 16,
+    "uclu": [
+     1,
+     2,
+     6,
+     10,
+     12
+    ],
+    "uclu_esik": 0.38
+   },
+   "matches": [
+    {
+     "away": "Konyaspor",
+     "date": "",
+     "fav": "1",
+     "home": "Erzurumspor FK",
+     "kickoff": "",
+     "league": "T1",
+     "margin": 0.0503,
+     "no": 1,
+     "odds": {
+      "0": 3.41,
+      "1": 2.28,
+      "2": 3.14
+     },
+     "odds_missing": false,
+     "play": {
+      "0": 0.27,
+      "1": 0.32,
+      "2": 0.41
+     },
+     "probs": {
+      "0": 0.2772,
+      "1": 0.4207,
+      "2": 0.3021
+     },
+     "result": null
+    },
+    {
+     "away": "Amed Sportif",
+     "date": "",
+     "fav": "1",
+     "home": "Kasımpaşa A.Ş.",
+     "kickoff": "",
+     "league": "T1",
+     "margin": 0.1771,
+     "no": 2,
+     "odds": {
+      "0": 2.98,
+      "1": 1.99,
+      "2": 2.95
+     },
+     "odds_missing": false,
+     "play": {
+      "0": 0.32,
+      "1": 0.46,
+      "2": 0.22
+     },
+     "probs": {
+      "0": 0.2789,
+      "1": 0.4389,
+      "2": 0.2822
+     },
+     "result": null
+    },
+    {
+     "away": "Eyüpspor",
+     "date": "",
+     "fav": "1",
+     "home": "Çorum FK",
+     "kickoff": "",
+     "league": "T1",
+     "margin": 0.057,
+     "no": 3,
+     "odds": {
+      "0": 3.86,
+      "1": 1.69,
+      "2": 4.85
+     },
+     "odds_missing": false,
+     "play": {
+      "0": 0.24,
+      "1": 0.57,
+      "2": 0.19
+     },
+     "probs": {
+      "0": 0.2413,
+      "1": 0.5694,
+      "2": 0.1893
+     },
+     "result": null
+    },
+    {
+     "away": "Beşiktaş A.Ş.",
+     "date": "",
+     "fav": "1",
+     "home": "Fenerbahçe A.Ş.",
+     "kickoff": "",
+     "league": "T1",
+     "margin": 0.053,
+     "no": 4,
+     "odds": {
+      "0": 3.87,
+      "1": 1.83,
+      "2": 4.03
+     },
+     "odds_missing": false,
+     "play": {
+      "0": 0.29,
+      "1": 0.5,
+      "2": 0.21
+     },
+     "probs": {
+      "0": 0.2419,
+      "1": 0.5263,
+      "2": 0.2318
+     },
+     "result": null
+    },
+    {
+     "away": "Galatasaray A.Ş.",
+     "date": "",
+     "fav": "2",
+     "home": "Başakşehir FK",
+     "kickoff": "",
+     "league": "T1",
+     "margin": 0.0473,
+     "no": 5,
+     "odds": {
+      "0": 4.53,
+      "1": 5.06,
+      "2": 1.59
+     },
+     "odds_missing": false,
+     "play": {
+      "0": 0.2,
+      "1": 0.13,
+      "2": 0.67
+     },
+     "probs": {
+      "0": 0.2065,
+      "1": 0.1836,
+      "2": 0.6099
+     },
+     "result": null
+    },
+    {
+     "away": "Samsunspor A.Ş.",
+     "date": "",
+     "fav": "1",
+     "home": "Kocaelispor",
+     "kickoff": "",
+     "league": "T1",
+     "margin": 0.0488,
+     "no": 6,
+     "odds": {
+      "0": 2.97,
+      "1": 2.64,
+      "2": 3.0
+     },
+     "odds_missing": false,
+     "play": {
+      "0": 0.29,
+      "1": 0.4,
+      "2": 0.31
+     },
+     "probs": {
+      "0": 0.3206,
+      "1": 0.3622,
+      "2": 0.3173
+     },
+     "result": null
+    },
+    {
+     "away": "Gençlerbirliği",
+     "date": "",
+     "fav": "1",
+     "home": "Trabzonspor A.Ş.",
+     "kickoff": "",
+     "league": "T1",
+     "margin": 0.0561,
+     "no": 7,
+     "odds": {
+      "0": 4.19,
+      "1": 1.57,
+      "2": 5.54
+     },
+     "odds_missing": false,
+     "play": {
+      "0": 0.11,
+      "1": 0.81,
+      "2": 0.08
+     },
+     "probs": {
+      "0": 0.2215,
+      "1": 0.6143,
+      "2": 0.1642
+     },
+     "result": null
+    },
+    {
+     "away": "Alanyaspor",
+     "date": "",
+     "fav": "1",
+     "home": "Çaykur Rizespor A.Ş.",
+     "kickoff": "",
+     "league": "T1",
+     "margin": 0.0531,
+     "no": 8,
+     "odds": {
+      "0": 3.38,
+      "1": 1.92,
+      "2": 4.23
+     },
+     "odds_missing": false,
+     "play": {
+      "0": 0.3,
+      "1": 0.53,
+      "2": 0.17
+     },
+     "probs": {
+      "0": 0.2789,
+      "1": 0.5009,
+      "2": 0.2202
+     },
+     "result": null
+    },
+    {
+     "away": "Gaziantep F.K. A.Ş.",
+     "date": "",
+     "fav": "1",
+     "home": "Göztepe A.Ş.",
+     "kickoff": "",
+     "league": "T1",
+     "margin": 0.0533,
+     "no": 9,
+     "odds": {
+      "0": 3.69,
+      "1": 1.89,
+      "2": 3.95
+     },
+     "odds_missing": false,
+     "play": {
+      "0": 0.17,
+      "1": 0.73,
+      "2": 0.1
+     },
+     "probs": {
+      "0": 0.2543,
+      "1": 0.509,
+      "2": 0.2367
+     },
+     "result": null
+    },
+    {
+     "away": "Manchester United",
+     "date": "",
+     "fav": "2",
+     "home": "Everton",
+     "kickoff": "",
+     "league": "E0",
+     "margin": 0.0333,
+     "no": 10,
+     "odds": {
+      "0": 3.65,
+      "1": 3.35,
+      "2": 2.17
+     },
+     "odds_missing": false,
+     "play": {
+      "0": 0.26,
+      "1": 0.24,
+      "2": 0.5
+     },
+     "probs": {
+      "0": 0.2635,
+      "1": 0.2878,
+      "2": 0.4488
+     },
+     "result": null
+    },
+    {
+     "away": "Chelsea",
+     "date": "",
+     "fav": "1",
+     "home": "Arsenal",
+     "kickoff": "",
+     "league": "E0",
+     "margin": 0.0402,
+     "no": 11,
+     "odds": {
+      "0": 3.87,
+      "1": 1.68,
+      "2": 5.36
+     },
+     "odds_missing": false,
+     "play": {
+      "0": 0.23,
+      "1": 0.63,
+      "2": 0.14
+     },
+     "probs": {
+      "0": 0.2458,
+      "1": 0.5794,
+      "2": 0.1748
+     },
+     "result": null
+    },
+    {
+     "away": "Atletico Madrid",
+     "date": "",
+     "fav": "2",
+     "home": "Athletic Bilbao",
+     "kickoff": "",
+     "league": "SP1",
+     "margin": 0.0338,
+     "no": 12,
+     "odds": {
+      "0": 3.53,
+      "1": 3.13,
+      "2": 2.32
+     },
+     "odds_missing": false,
+     "play": {
+      "0": 0.27,
+      "1": 0.21,
+      "2": 0.52
+     },
+     "probs": {
+      "0": 0.2725,
+      "1": 0.3084,
+      "2": 0.419
+     },
+     "result": null
+    },
+    {
+     "away": "Napoli",
+     "date": "",
+     "fav": "1",
+     "home": "Inter",
+     "kickoff": "",
+     "league": "I1",
+     "margin": 0.0382,
+     "no": 13,
+     "odds": {
+      "0": 3.89,
+      "1": 1.69,
+      "2": 5.28
+     },
+     "odds_missing": false,
+     "play": {
+      "0": 0.24,
+      "1": 0.67,
+      "2": 0.09
+     },
+     "probs": {
+      "0": 0.2452,
+      "1": 0.5767,
+      "2": 0.1782
+     },
+     "result": null
+    },
+    {
+     "away": "Atalanta",
+     "date": "",
+     "fav": "1",
+     "home": "Roma",
+     "kickoff": "",
+     "league": "I1",
+     "margin": 0.039,
+     "no": 14,
+     "odds": {
+      "0": 3.94,
+      "1": 1.71,
+      "2": 4.99
+     },
+     "odds_missing": false,
+     "play": {
+      "0": 0.25,
+      "1": 0.6,
+      "2": 0.15
+     },
+     "probs": {
+      "0": 0.2417,
+      "1": 0.5695,
+      "2": 0.1888
+     },
+     "result": null
+    },
+    {
+     "away": "AC Milan",
+     "date": "",
+     "fav": "1",
+     "home": "Juventus",
+     "kickoff": "",
+     "league": "I1",
+     "margin": 0.0356,
+     "no": 15,
+     "odds": {
+      "0": 3.35,
+      "1": 2.11,
+      "2": 3.8
+     },
+     "odds_missing": false,
+     "play": {
+      "0": 0.34,
+      "1": 0.43,
+      "2": 0.23
+     },
+     "probs": {
+      "0": 0.287,
+      "1": 0.4609,
+      "2": 0.252
+     },
+     "result": null
+    }
+   ],
+   "odds_kind": "pinnacle-kapanis",
+   "odds_source": "Pinnacle ve Nesine — açılış + kapanış oranları, kullanıcı ekran görüntüsü (2026-09-04 03:01)",
+   "play_source": "tek platform kullanıcı tercih yüzdesi (% Tercih) — kullanıcı girdisi (2026-09-04)",
+   "prices": {
+    "books": [
+     "pinnacle_kapanis",
+     "nesine_kapanis"
+    ],
+    "main_book": "pinnacle_kapanis",
+    "margin_n": {
+     "nesine_acilis": 15,
+     "nesine_kapanis": 15,
+     "pinnacle_acilis": 14,
+     "pinnacle_kapanis": 13
+    },
+    "margins": {
+     "nesine_acilis": 16.32,
+     "nesine_kapanis": 16.71,
+     "pinnacle_acilis": 4.65,
+     "pinnacle_kapanis": 4.62
+    },
+    "match_count": 15,
+    "rows": [
+     {
+      "books": {
+       "nesine_kapanis": {
+        "0": 0.2709,
+        "1": 0.4229,
+        "2": 0.3061
+       },
+       "pinnacle_kapanis": {
+        "0": 0.2772,
+        "1": 0.4207,
+        "2": 0.3021
+       }
+      },
+      "disagreement": 0.0063,
+      "movement": -0.0027,
+      "movement_symbol": "0",
+      "no": 1
+     },
+     {
+      "books": {
+       "nesine_kapanis": {
+        "0": 0.2789,
+        "1": 0.4389,
+        "2": 0.2822
+       },
+       "pinnacle_kapanis": null
+      },
+      "disagreement": 0.0,
+      "movement": null,
+      "movement_symbol": null,
+      "no": 2
+     },
+     {
+      "books": {
+       "nesine_kapanis": {
+        "0": 0.2397,
+        "1": 0.5882,
+        "2": 0.1721
+       },
+       "pinnacle_kapanis": {
+        "0": 0.2413,
+        "1": 0.5694,
+        "2": 0.1893
+       }
+      },
+      "disagreement": 0.0188,
+      "movement": -0.0071,
+      "movement_symbol": "1",
+      "no": 3
+     },
+     {
+      "books": {
+       "nesine_kapanis": {
+        "0": 0.2417,
+        "1": 0.5324,
+        "2": 0.2259
+       },
+       "pinnacle_kapanis": {
+        "0": 0.2419,
+        "1": 0.5263,
+        "2": 0.2318
+       }
+      },
+      "disagreement": 0.0061,
+      "movement": 0.0118,
+      "movement_symbol": "1",
+      "no": 4
+     },
+     {
+      "books": {
+       "nesine_kapanis": {
+        "0": 0.2061,
+        "1": 0.1823,
+        "2": 0.6115
+       },
+       "pinnacle_kapanis": {
+        "0": 0.2065,
+        "1": 0.1836,
+        "2": 0.6099
+       }
+      },
+      "disagreement": 0.0016,
+      "movement": 0.0336,
+      "movement_symbol": "2",
+      "no": 5
+     },
+     {
+      "books": {
+       "nesine_kapanis": {
+        "0": 0.2996,
+        "1": 0.3758,
+        "2": 0.3245
+       },
+       "pinnacle_kapanis": {
+        "0": 0.3206,
+        "1": 0.3622,
+        "2": 0.3173
+       }
+      },
+      "disagreement": 0.0209,
+      "movement": 0.0056,
+      "movement_symbol": "1",
+      "no": 6
+     },
+     {
+      "books": {
+       "nesine_kapanis": {
+        "0": 0.2168,
+        "1": 0.6289,
+        "2": 0.1543
+       },
+       "pinnacle_kapanis": {
+        "0": 0.2215,
+        "1": 0.6143,
+        "2": 0.1642
+       }
+      },
+      "disagreement": 0.0145,
+      "movement": -0.0039,
+      "movement_symbol": "1",
+      "no": 7
+     },
+     {
+      "books": {
+       "nesine_kapanis": {
+        "0": 0.2678,
+        "1": 0.514,
+        "2": 0.2181
+       },
+       "pinnacle_kapanis": {
+        "0": 0.2789,
+        "1": 0.5009,
+        "2": 0.2202
+       }
+      },
+      "disagreement": 0.0131,
+      "movement": -0.0046,
+      "movement_symbol": "1",
+      "no": 8
+     },
+     {
+      "books": {
+       "nesine_kapanis": {
+        "0": 0.2476,
+        "1": 0.5244,
+        "2": 0.228
+       },
+       "pinnacle_kapanis": {
+        "0": 0.2543,
+        "1": 0.509,
+        "2": 0.2367
+       }
+      },
+      "disagreement": 0.0154,
+      "movement": 0.0,
+      "movement_symbol": "1",
+      "no": 9
+     },
+     {
+      "books": {
+       "nesine_kapanis": {
+        "0": 0.259,
+        "1": 0.2868,
+        "2": 0.4542
+       },
+       "pinnacle_kapanis": {
+        "0": 0.2635,
+        "1": 0.2878,
+        "2": 0.4488
+       }
+      },
+      "disagreement": 0.0054,
+      "movement": 0.0187,
+      "movement_symbol": "2",
+      "no": 10
+     },
+     {
+      "books": {
+       "nesine_kapanis": {
+        "0": 0.2339,
+        "1": 0.5922,
+        "2": 0.1739
+       },
+       "pinnacle_kapanis": {
+        "0": 0.2458,
+        "1": 0.5794,
+        "2": 0.1748
+       }
+      },
+      "disagreement": 0.0128,
+      "movement": 0.0135,
+      "movement_symbol": "1",
+      "no": 11
+     },
+     {
+      "books": {
+       "nesine_kapanis": {
+        "0": 0.2744,
+        "1": 0.308,
+        "2": 0.4177
+       },
+       "pinnacle_kapanis": {
+        "0": 0.2725,
+        "1": 0.3084,
+        "2": 0.419
+       }
+      },
+      "disagreement": 0.0018,
+      "movement": 0.0306,
+      "movement_symbol": "2",
+      "no": 12
+     },
+     {
+      "books": {
+       "nesine_kapanis": {
+        "0": 0.2429,
+        "1": 0.6052,
+        "2": 0.152
+       },
+       "pinnacle_kapanis": null
+      },
+      "disagreement": 0.0,
+      "movement": null,
+      "movement_symbol": null,
+      "no": 13
+     },
+     {
+      "books": {
+       "nesine_kapanis": {
+        "0": 0.2418,
+        "1": 0.5835,
+        "2": 0.1747
+       },
+       "pinnacle_kapanis": {
+        "0": 0.2417,
+        "1": 0.5695,
+        "2": 0.1888
+       }
+      },
+      "disagreement": 0.0142,
+      "movement": 0.0039,
+      "movement_symbol": "1",
+      "no": 14
+     },
+     {
+      "books": {
+       "nesine_kapanis": {
+        "0": 0.2835,
+        "1": 0.4702,
+        "2": 0.2463
+       },
+       "pinnacle_kapanis": {
+        "0": 0.287,
+        "1": 0.4609,
+        "2": 0.252
+       }
+      },
+      "disagreement": 0.0092,
+      "movement": -0.0051,
+      "movement_symbol": "1",
+      "no": 15
+     }
+    ],
+    "stale_closing": {
+     "nesine_kapanis": [
+      1,
+      2,
+      3,
+      4,
+      7,
+      8,
+      9,
+      14
+     ],
+     "pinnacle_kapanis": [
+      9
+     ]
+    }
+   },
+   "program": "",
+   "results": null,
+   "sonuc": null,
+   "tahmin2": null,
+   "warnings_generated": [
+    "2. maç: marj %17.7, bültenin ortancası %4.9 — 12.8 puan sapma, KUŞKULU",
+    "pinnacle_acilis: 1 maçta kayıt YOK (maçlar: 2) — o satırlarda ana fiyat başka bir kayıttan gelmek zorunda ve bu bahisçinin ortalama marjı da eksik satırlar üzerinden hesaplanmaz",
+    "pinnacle_kapanis: 2 maçta kayıt YOK (maçlar: 2, 13) — o satırlarda ana fiyat başka bir kayıttan gelmek zorunda ve bu bahisçinin ortalama marjı da eksik satırlar üzerinden hesaplanmaz",
+    "nesine_kapanis: 8 maçta kapanış açılışla BİREBİR aynı (maçlar: 1, 2, 3, 4, 7, 8, 9, 14) — bu bir fiyat değil, tazelenmemiş kayıttır; o satırlarda ayrışma görüş farkı değil kayıt farkıdır",
+    "pinnacle_kapanis: 1 maçta kapanış açılışla BİREBİR aynı (maçlar: 9) — bu bir fiyat değil, tazelenmemiş kayıttır; o satırlarda ayrışma görüş farkı değil kayıt farkıdır"
+   ],
+   "warnings_manual": [
+    "Program tarihleri ve maç saatleri GİRİLMEDİ (kullanıcı vermedi). Uydurulmadı; `date`/`kickoff` boş bırakıldı. Kupon kapanış anını belgeleyen tek alan `entered_at`tır (2026-09-04). 3. haftada bu eksiklik sonradan kapandığında `odds_kind`in FAZLA ETİKETLİ olduğu görülmüştü; aynı şüphe bu hafta da geçerlidir — 'kapanış' diye duran şey, kupon donarken elde olan EN GEÇ kayıttır, maçın gerçek kapanış çizgisi değildir.",
+    "Pinnacle 2. maçı (Kasımpaşa–Amed) HİÇ fiyatlamamış: ne açılış ne kapanış. Ana fiyat o satırda Nesine kapanışıdır ve marjı %17,7 — bültenin ortancasının (%4,6) 13 puan üstünde. Otomatik kapı bu satırı KUŞKULU diye işaretliyor ve işaret DOĞRUDUR: sapma bir giriş hatası değil, ölçek farkıdır, ama arındırılmış olasılık yine de haftanın geri kalanıyla birebir aynı ölçekte değildir.",
+    "13. maçın (Inter–Napoli) Pinnacle KAPANIŞI bültende yok; o satırda ana fiyat Pinnacle AÇILIŞIDIR. Aynı bahisçi, bir önceki an — ölçek korunuyor, kaybolan şey yalnızca o maçın çizgi hareketidir.",
+    "Nesine'nin KAPANIŞ oranı 8 maçta AÇILIŞIYLA BİREBİR AYNI (maçlar: 1, 2, 3, 4, 7, 8, 9, 14). 3. haftada da aynısı olmuştu (6 maç) ve orada bahisçi ayrışmasının en büyük üçü tam bu bayat satırlardan geliyordu: bu bir fiyat değil, tazelenmemiş bir kayıttır.",
+    "Pinnacle'ın 9. maçı (Göztepe–Gaziantep) da bayat: kapanış (1.89–3.69–3.95) açılışla BİREBİR aynı. Bayatlık bu hafta ilk kez ana fiyat kaynağının kendisinde görünüyor — 3. haftada yalnızca Nesine'deydi. O satırda çizgi hareketi ölçülemez.",
+    "bet365.nl kaydı bu hafta YOK. 3. hafta üç bahisçiyle girilmişti; haftalar arası 'bahisçi ayrışması' karşılaştırması bu daralmayı hesaba katmalıdır — iki kaynağın ayrışması üç kaynağınkiyle aynı büyüklük değildir.",
+    "12. maçın ev sahibi bültende 'Atletico Bilbao' yazıyor; kulübün adı Athletic Club'dır ve kayda 'Athletic Bilbao' olarak girildi. Oranlar ve yüzdeler ekrandaki satırdan birebir alındı; değişen yalnızca takım adının yazımıdır."
+   ],
+   "week": 4
   }
  ]
 }
