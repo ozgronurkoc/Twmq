@@ -98,6 +98,20 @@ biriktiğini gösteriyor, yalnızca başka bir kestirimciyle.
 ayrıca **bütçe → getiri eğrisi** olarak üretilir (`kademe_analizi.BUTCELER`
 basamakları). Tek bir bütçeye kilitlenmek, kararı ölçümün içine gömmek olurdu.
 
+**Ve bu bant kolon cinsinden okunmalıdır.** Kolon bedeli birinci elden **₺10**
+teyit edildi (§3, Faz 0.1), yani:
+
+| | |
+|---|---|
+| Bütçe | 1.000–3.000 TL = **100–300 kolon** |
+| Alınabilen şekil (14-garanti) | `secim.bedel_hesapla` = `2^çifte · 3^üçlü / 8` → 10 çifte = **128 kolon** (1.280 TL) · 11 çifte = **256 kolon** (2.560 TL) · 12 çifte = 512 kolon, **bütçe dışı** |
+| Geri testin bugünkü varsayılanı | **1.987 kolon/hafta ≈ 19.870 TL** — bütçenin **yedi katı** |
+
+Faz S'nin çalışma noktası bu yüzden bugünkü geri testin çalıştığı yer değildir.
+Bütün `secim` / `backtest` ölçümleri **100–300 kolon** bandında yeniden kurulur.
+`en_iyi_secim(butce=…)` bütçeyi zaten kolon cinsinden alıyor — bu bir parametre
+değişikliğidir, yeni makine değil.
+
 ---
 
 ## 2. Değişmeyen kurallar
@@ -120,17 +134,54 @@ Bu plan deponun doktrinini değiştirmez, ona uyar:
 Bu üçü kapanmadan Faz K/S'nin ürettiği hiçbir para sayısı savunulabilir değil.
 Üçünün de **durma kuralı yoktur** — ölçüm değil, borç kapatmadır.
 
-### 0.1 Kolon bedelini doğrula — `KADEME_OLASILIKLARI.md` §5.3(a)
+### 0.1 Kolon bedeli — **cevaplandı: ₺10, birinci elden**
 
-`getiri.KOLON_BEDELI` (ölçülmüş) ile `getiri.VARSAYILAN_KOLON_BEDELI`
-(doğrulanmamış) bilerek ayrı duruyor, ve **bütün para sonuçları buna doğrusal
-bağlıdır** — belgenin kendi ifadesiyle *"2,50 TL olsaydı her geri dönüş %40
-düşerdi ve tablo büyük ölçüde %100'ün altına inerdi."*
+`getiri.KOLON_BEDELI = 10.0` zaten ölçülmüştü, ama künyesi onu varsayılan
+hesabın dışında tutuyordu:
 
-- **Dışarıdan gereken:** güncel kolon bedeli + kaynağı (bayi fişi / resmî ekran).
-  Dış kayıt sınıfıdır, `kosum.py` defterine kaynağıyla yazılır.
-- Doğrulanınca `kademe_analizi.py` §5 tablosu **yeniden ölçülür**; eski tablo
-  ölçek notuyla yerinde bırakılır.
+> *"Sayı resmî Spor Toto ekranından değil, üçüncü taraf bir kupon aracının
+> ekranından geliyor. … Aracın kendi hizmet bedelini bedele katıp katmadığı
+> **doğrulanmadı**. Bu yüzden sayı varsayılan hesaba GİRMEZ."*
+
+`kademe_analizi.py:63` bu nedenle `VARSAYILAN_KOLON_BEDELI`'yi (₺1,50, açıkça
+varsayım) kullanıyor — yani **`KADEME_OLASILIKLARI.md` §5'in bütün para tablosu
+₺1,50 üzerinden hesaplanmıştır.**
+
+**2026-09-04: bedel bayi / resmî Spor Toto uygulamasından ₺10 olarak teyit
+edildi.** Üçüncü taraf aracın kaydından **bağımsız, birinci-el** bir gözlemdir
+ve künyedeki hizmet-bedeli şüphesini kapatır.
+
+Yapılacak iş:
+
+1. `KOLON_BEDELI` künyesi güncellenir (dış kayıt → birinci el teyitli) ve
+   `kademe_analizi.KOLON_BEDELI` ₺1,50'den **₺10'a** geçer.
+2. `KADEME_OLASILIKLARI.md` §5 **yeniden ölçülür**; eski tablo ölçek notuyla
+   yerinde bırakılır (`odds.py:162-164` kalıbı — kayıt geriye dönük yeniden
+   yazılmaz).
+3. `VARSAYILAN_KOLON_BEDELI` **silinmez**: ₺1,50'yle yayımlanmış her sayı hangi
+   ölçekte olduğunu söyleyebilmelidir.
+
+#### Ve sonucu şimdiden okunuyor — bu bir bulgudur, formalite değil
+
+Geri dönüş oranı bedele ters orantılıdır, yani ₺1,50 → ₺10 geçişi yayımlanmış
+her getiriyi **6,67'ye böler**:
+
+| `KADEME` §5 satırı | tabloda (₺1,50) | ₺10'da |
+|---|---:|---:|
+| 3.000 TL bandı · medyan hafta | %19 | **%2,9** |
+| 270.000 TL bandı · ortalama | %310 [%203, %433] | **%46** [%30, %65] |
+| §5.3(c) *"en iyi 5 hafta çıkınca hâlâ %100 üstü"* | %102–207 | **%15–31** |
+
+Yani `KADEME` §5.3'ün durma kuralının **(a) şıkkı sağlandı ve (c) şıkkı
+düştü**: *"%100 üstü geri dönüş"* okuması gerçek fiyatta **hiçbir bütçede**
+ayakta kalmıyor.
+
+**Bu planı geçersiz kılmaz — doğrular.** Kaplama bedeli gerçek fiyatına
+oturduktan sonra geriye kalan tek pozitif kenar adayı havuz eksenidir, ve bu
+planın tamamı orayı ölçmek üzerine kuruludur. Kullanıcının bandında (100–300
+kolon) §5.2'nin karşılık gelen satırı zaten **medyan %0** diyordu — tipik hafta
+hiçbir şey döndürmüyor. **Faz S'nin sınavı bu sıfırı kımıldatıp
+kımıldatamadığıdır.**
 
 ### 0.2 Otuz iki anormal haftayı kapıya bağla — `KADEME_OLASILIKLARI.md` §8
 
@@ -274,9 +325,18 @@ sessizce yaklaşık olunmaz.
 Üç kural yan yana: bugünkü `en_iyi_secim` ↔ bugünkü `kalabalik_ayari` ↔ yeni
 `getiri_secim`, **arşivdeki gerçek ikramiye tablolarına** karşı, aynı bütçede.
 
-Bütçe: varsayılan **1.000–3.000 TL** bandı **ve** `kademe_analizi.BUTCELER`in
-tamamı üzerinde bütçe → getiri eğrisi. Rapor edilen sayı **medyan** haftadır,
-ortalama değil — `KADEME` §5.2: 150 TL bandında ortalama %277 iken medyan **%0**.
+Bütçe: **100–300 kolon** (₺10'da 1.000–3.000 TL) **ve**
+`kademe_analizi.BUTCELER`in tamamı üzerinde bütçe → getiri eğrisi. `BUTCELER`
+zaten kolon cinsinden yazılı; TL'ye çevrimi bedel sabiti yapar, yani 0.1'den
+sonra etiketler kendiliğinden düzelir.
+
+Rapor edilen sayı **medyan** haftadır, ortalama değil — `KADEME` §5.2: 100 kolon
+bandında ortalama %277 iken medyan **%0** (ve bunlar ₺1,50 ölçeğinde; ₺10'da
+ortalama %41,6, medyan yine %0).
+
+**Sınav açıkça budur:** 100–300 kolon bandında medyan hafta bugün **sıfır**
+döndürüyor. `getiri_secim` bu sıfırı kımıldatabiliyor mu? Ortalamayı büyütmek
+yetmez — ortalamayı üç hafta taşıyor (`KADEME` §5.3-1).
 
 ### S3 — Durma kuralı · **şimdiden yazıldı**
 
@@ -284,7 +344,7 @@ ortalama değil — `KADEME` §5.2: 150 TL bandında ortalama %277 iken medyan *
 
 | # | Şart |
 |---|---|
-| **a** | Kolon bedeli doğrulanmış (Faz 0.1) |
+| **a** | ✅ **Sağlandı** — kolon bedeli ₺10, bayi/resmî uygulamadan birinci elden teyitli (Faz 0.1) |
 | **b** | `getiri_secim` − `en_iyi_secim` farkında hafta düzeyinde bootstrap %95 aralığı sıfırı kesmiyor |
 | **c** | **En iyi 5 hafta çıkarıldığında fark hâlâ pozitif** — kuyruk taşımıyor |
 | **d** | Sezon dışarıda bırakmalı: kalabalık üç sezonda kestirildi, kupon dördüncüde kuruldu |
@@ -446,15 +506,23 @@ ekler; öngörülen ile gerçekleşen yan yana durur.
    boldur; ama para geri testi hâlâ 112 haftadır ve toplam kârın %34–55'i üç
    haftadan geliyor (`KADEME` §5.3-1). S3(c) — en iyi 5 hafta çıkarılınca hâlâ
    pozitif — tam bu yüzden kuralın içinde.
-3. **Kolon bedeli doğrulanmazsa** bütün para tablosu ölçek hatasıyla kayar.
-   Faz 0.1 bu yüzden birinci iştir.
-4. **Oynanma payı bir vekildir.** Tek platformun kullanıcıları. K5 bunu ölçer
+3. **Bedel çözüldü, ama tabloyu 6,67 kat küçültüyor.** ₺10 teyitli; yayımlanmış
+   her para sayısı hâlâ ₺1,50 ölçeğindedir ve **yeniden ölçülene kadar
+   okunmamalıdır** (Faz 0.1). Beklenen sonuç: §5.3'ün *"%100 üstü"* okuması
+   hiçbir bütçede ayakta kalmıyor.
+4. **Ölçülen kupon, oynanan kupon olmayabilir.** Motor yalnızca **14-garanti**
+   üretir (`core.py` yarıçap 1'e kilitli: *"Toplam hata bütçesi 1 olduğu için
+   yalnızca TEK bir alt küme r=1 olabilir"*); kullanıcı 13-garantiyi **başka bir
+   yerden** oynuyor (karar: 2026-09-04). Faz S'nin `E[TL]`si bu yüzden
+   **motorun kuponunu** tarif eder. Plan buna dokunmuyor, ama karne yazılırken
+   ayrım not düşülür — yoksa ölçüm oynanmayan bir ürünü övüyor olur.
+5. **Oynanma payı bir vekildir.** Tek platformun kullanıcıları. K5 bunu ölçer
    ama **kaldıramaz**; kaldırılamayan sınır olarak yazılı kalır.
-5. **Piyasa oranı ≠ iddaa oranı.** Seviye tutmaz, yapı tutar (marj %7,26 ↔
+6. **Piyasa oranı ≠ iddaa oranı.** Seviye tutmaz, yapı tutar (marj %7,26 ↔
    %17,2). Faz S'nin para sayıları piyasa oranından türer. İddaa ekseninin
    kalibrasyonu **45 kupon haftası** ister (§3.22) ve bu planda **kapanmaz**,
    yalnızca birikir.
-6. **Kendi oynamamızın havuzu etkilemesi modellenmiyor** (`KADEME` §9). 1.000–
+7. **Kendi oynamamızın havuzu etkilemesi modellenmiyor** (`KADEME` §9). 1.000–
    3.000 TL bandında geçerli bir varsayımdır; eğrinin üst ucunda (30.000 TL+)
    tartışmalıdır ve orada işaretlenir.
 
@@ -466,6 +534,7 @@ ekler; öngörülen ile gerçekleşen yan yana durur.
 |---|---|
 | Yeni model ailesi aramak | On bir ölçüm var ve tavan ölçüldü (§3.23). F2 bir model değil bir **fiyattır** |
 | Kaplama ekseni | Hamming(7,4) mükemmel kod; optimallik kanıtlı. Bir optimum yenilemez |
+| **13-garanti (yarıçap-2 kaplama kodu) motora eklemek** | Kullanıcı kararı (2026-09-04): 13-garanti başka bir yerden oynanıyor. Motor 14-garantide kalır ve `secim.VARSAYILAN_KACAK_ESIGI = 2` de bu aritmetikten türediği için değişmez. Risk 4'te not düşüldü |
 | Arayüz / uygulama / güvenlik | Bu planın kapsamı dışı. Tek istisna 0.3'ün H1/H2'sidir, çünkü **canlı karneyi kirletiyor** |
 | Ölçülmemiş bir üstünlüğü karneye ya da arayüze yazmak | Doktrinin değişmeyen kuralı. Süslenmiş bir olasılık, süslenmemiş bir yalandır |
 | Otomatik erişime kapalı kaynaktan veri çekmek | Hukuki; §7'de tek tek denetlendi ve bu planda değişmedi |
