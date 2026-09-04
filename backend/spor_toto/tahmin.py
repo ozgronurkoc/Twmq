@@ -36,7 +36,7 @@ from __future__ import annotations
 
 import csv
 from collections.abc import Sequence
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -73,23 +73,55 @@ ALTERNATIF_AD = "kalibre_bias"
 ALTERNATIF_KADEME = "bias"
 
 
+#: Başlama saatine bu kadar kalmamışsa maç **yaklaşan** sayılmaz.
+#:
+#: İki kaynak iki farklı saat ekseninde yazıyor: `snapshot_iddaa` kickoff'u
+#: açıkça **UTC** veriyor, `build_fixtures` ise football-data'nın `Time`
+#: sütununu (Birleşik Krallık yerel saati) taşıyor. Eksenleri maç maç
+#: çözmek yerine **temkinli pay** bırakılıyor: belirsizlik bir saatlik
+#: mertebede ve pay onu yutuyor.
+#:
+#: Yön kasıtlı: bir maçı erken elemek, başlamış bir maça maç öncesi
+#: olasılığı vermekten ucuzdur — modülün kendi doktrini (aşağıda) tam
+#: olarak bunu söylüyor.
+GUVENLIK_PAYI = timedelta(hours=2)
+
+
 def _simdi() -> datetime:
-    """Şimdi — testler sabitleyebilsin diye tek noktada."""
-    return datetime.now()
+    """Şimdi — **UTC ve zaman dilimi bilinçli**, testler sabitleyebilsin diye
+    tek noktada.
+
+    Önce `datetime.now()` idi, yani naive yerel saat; oysa `snapshot_iddaa`
+    kickoff'u UTC yazıyor ve *"iki kaynak aynı eksende olsun diye"* diyor.
+    `TZ=Europe/Istanbul` (UTC+3) altında karşılaştırma üç saatlik bir
+    **sızıntı penceresi** açıyordu: son üç saatte başlamış her maç
+    "gelecekte" sayılıyordu. Konteyner bugün UTC koştuğu için tetiklenmiyordu
+    — yani sessiz.
+    """
+    return datetime.now(timezone.utc)
 
 
-def _gelecekte(kickoff: str | None, simdi: datetime) -> bool:
-    """Başlama saati geçmiş mi. Saat çözülemezse maç **elenir** (doktrin 2).
+def _gelecekte(kickoff: str | None, simdi: datetime,
+               pay: timedelta = GUVENLIK_PAYI) -> bool:
+    """Başlama saatine `pay` kadar var mı. Saat çözülemezse maç **elenir**.
 
     Belirsiz bir zamana maç öncesi olasılığı vermek, olasılığın maç öncesi
-    olduğu iddiasını doğrulanamaz hale getirir.
+    olduğu iddiasını doğrulanamaz hale getirir (doktrin 2).
+
+    Yalnız tarih verilmişse (saat yok) gün **sonu** değil gün **başı**
+    varsayılır: erken elemek geç elemekten güvenlidir.
     """
     ham = (kickoff or "").strip()
     for bicim in ("%Y-%m-%d %H:%M", "%Y-%m-%d"):
         try:
-            return datetime.strptime(ham, bicim) > simdi
+            an = datetime.strptime(ham, bicim)
         except ValueError:
             continue
+        if an.tzinfo is None:
+            an = an.replace(tzinfo=timezone.utc)
+        if simdi.tzinfo is None:
+            simdi = simdi.replace(tzinfo=timezone.utc)
+        return an > simdi + pay
     return False
 
 
@@ -108,17 +140,27 @@ def fixtures_maclari(yol: str | None = None) -> list[dict[str, Any]]:
     p = Path(yol) if yol else VARSAYILAN_FIXTURES
     if not p.exists():
         return []
+    simdi = _simdi()
     out: list[dict[str, Any]] = []
     with open(p, encoding="utf-8", newline="") as fh:
         for r in csv.DictReader(fh):
             oranlar = {s: _sayi(r.get(f"oran_{s}")) for s in SYMBOLS}
             if any(v is None for v in oranlar.values()):
                 continue
+            # H1: bu filtre YOKTU ve `yaklasan_maclar` fikstürü TERCIH
+            # ediyor — yani mac gununde sabah oynanmis bir mac, aksam hala
+            # "yaklasan mac" olarak mac oncesi olasiligiyla servis ediliyordu.
+            # Kural modulun kendi docstring'inde yaziliydi, olculen kaynaga
+            # uygulanmamisti.
+            tarih = (r.get("tarih") or "").strip()
+            saat = (r.get("saat") or "").strip()
+            if not _gelecekte(f"{tarih} {saat}".strip(), simdi):
+                continue
             out.append({
                 "kaynak": KAYNAK_OLCULEN,
                 "lig": r.get("lig", ""),
-                "tarih": r.get("tarih", ""),
-                "saat": r.get("saat", ""),
+                "tarih": tarih,
+                "saat": saat,
                 "ev": r.get("ev", ""),
                 "dep": r.get("dep", ""),
                 "oranlar": oranlar,

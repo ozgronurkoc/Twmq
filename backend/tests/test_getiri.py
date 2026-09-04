@@ -404,6 +404,14 @@ def test_olculen_ve_varsayilan_kolon_bedeli_KARISTIRILMIYOR():
 
     Bu test ayrımı tutar: değerler eşitlenirse ya bir ölçüm sessizce
     varsayıma dönmüş ya da varsayım ölçüm gibi kullanılmaya başlanmıştır.
+
+    **2026-09-04: betiğin okuduğu sabit DEĞİŞTİ ve bu kasıtlı.** ₺10 üç
+    bağımsız kökenden doğrulanınca (`KOLON_BEDELI` künyesi) hesabın
+    varsayılanı ölçülen bedele geçti; `kademe_analizi` artık
+    `getiri.KOLON_BEDELI` okuyor. Testin asıl işi değişmedi — **üçüncü
+    kopyanın geri gelmemesi** — yalnızca hangi tek kaynağı okuduğu değişti.
+    `VARSAYILAN_KOLON_BEDELI` silinmedi: ₺1,50 ile yayımlanmış sayılar
+    hangi ölçekte olduklarını söyleyebilmeli.
     """
     from spor_toto.getiri import (
         KOLON_BEDELI,
@@ -420,8 +428,9 @@ def test_olculen_ve_varsayilan_kolon_bedeli_KARISTIRILMIYOR():
     sys.path.insert(0, str(KOK))
     from scripts.kademe_analizi import KOLON_BEDELI as betik_bedeli
 
-    assert betik_bedeli == VARSAYILAN_KOLON_BEDELI, (
-        "kademe_analizi kendi kolon bedelini tasiyor — ucuncu kopya geri gelmis")
+    assert betik_bedeli == KOLON_BEDELI, (
+        "kademe_analizi OLCULEN bedeli okumali; kendi kopyasini tasiyorsa "
+        "ucuncu kopya geri gelmis demektir")
 
 
 def test_kapisiz_olcum_betikleri_KOSUYOR():

@@ -49,19 +49,21 @@ import numpy as np
 from spor_toto import karne as _karne
 from spor_toto import odds as O
 from spor_toto.core import SEMBOLLER
-from spor_toto.getiri import VARSAYILAN_KOLON_BEDELI
+from spor_toto.getiri import KOLON_BEDELI as _OLCULEN_BEDEL
 from spor_toto.ortak import kacak_dagilimi as _kacak_dagilimi
 
-#: Spor Toto kolon bedeli — **doğrulanmış bir fiyat değildir** ve para
-#: sonuçları buna doğrusal bağlıdır (2,50 TL olsaydı bütün geri dönüşler
-#: %40 düşerdi).
+#: Spor Toto kolon bedeli — **artık ölçülmüş olan** (`getiri.KOLON_BEDELI`).
 #:
-#: Değer burada `1.50` diye ÜÇÜNCÜ kez yazılıydı ve hangi sayı olduğu
-#: (ölçülmüş mü varsayım mı) hiçbir yerde yazmıyordu — oysa `getiri` aynı
-#: kavram için ölçülmüş bir ₺10 de taşıyor. Tek kaynak
-#: `getiri.VARSAYILAN_KOLON_BEDELI`; ölçülmüş olanı `getiri.KOLON_BEDELI`
-#: ve ikisi bilerek AYRI (gerekçe orada).
-KOLON_BEDELI = VARSAYILAN_KOLON_BEDELI
+#: Bu satır uzun süre `getiri.VARSAYILAN_KOLON_BEDELI`yi (₺1,50, açıkça
+#: varsayım) okuyordu ve `docs/KADEME_OLASILIKLARI.md` §5'in **bütün para
+#: tablosu** o ölçekte hesaplanmıştı. ₺10 üç bağımsız kökenden doğrulanınca
+#: (gerekçe `getiri.KOLON_BEDELI` künyesinde) varsayım terk edildi.
+#:
+#: **Etkisi büyük ve tek yönlü:** getiri oranı bedele ters orantılıdır,
+#: yani ₺1,50 → ₺10 geçişi yayımlanmış her geri dönüşü **6,67'ye böler**.
+#: §5'in *"%100 üstü geri dönüş"* okuması bu ölçekte hiçbir bütçede ayakta
+#: kalmıyor. Eski tablo silinmez; ölçek notuyla yerinde bırakılır.
+KOLON_BEDELI = _OLCULEN_BEDEL
 
 #: Ölçümde kullanılan sezonlar — oran arşivi olan bütün sezonlar.
 SEZONLAR = ("2025_26", "2024_25", "2023_24", "2022_23")

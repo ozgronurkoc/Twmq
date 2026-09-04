@@ -502,6 +502,70 @@ Geçen haftanın payı **taşımıyor** ve bir haftada belirgin biçimde
 okunabiliyorsa açıktır. Bu teknik değil **operasyonel** bir soru ve cevabı
 planın geri kalanını belirliyor.
 
+### Faz 0.1 kapandı — kolon bedeli koda geçti, §5 yeniden ölçüldü ✅
+
+Faz 0.1 *"`kademe_analizi.KOLON_BEDELI` ₺1,50'den ₺10'a geçer"* diye yazılmıştı
+ve belgeye yazılmış ama **koda uygulanmamıştı**. Uygulandı.
+
+`getiri.KOLON_BEDELI` künyesi güncellendi: sayı artık üç bağımsız kökenden
+doğrulanıyor (ST EXTRA kupon ekranı · bayi/resmî uygulama beyanı · sistem
+fiyat tablosunun 250 satırının 250'sinin de 10'un katı olması), yani
+*"aracın hizmet bedelini katıp katmadığı doğrulanmadı"* şüphesi kapandı ve
+sayı **varsayılan hesaba girdi**.
+
+**Yeniden koşumun sonucu, öngörülen aritmetiği doğruluyor:**
+
+| haftalık | medyan | ortalama | −5 hafta | **P(zarar)** |
+|---:|---:|---:|---:|---:|
+| 1.000 TL | %0 | %42 | %13 | — |
+| 2.000 TL | %0 | %39 | %16 | — |
+| 200.000 TL | %5 | %44 | %20 | **%99** |
+| 1.800.000 TL | %8 | %47 | %35 | **%100** |
+| 5.400.000 TL | %6 | %49 | %29 | **%100** |
+
+`KADEME_OLASILIKLARI.md` §5.2'ye yeniden ölçüm bloğu eklendi ve eski tablo
+ölçek notuyla **yerinde bırakıldı**. §5.3'ün dördüncü sınırı (*"kolon bedeli
+doğrulanmadı"*) kapandı; üçüncü şartı (*"en iyi 5 hafta çıkınca %100 üstü"*)
+**düştü** — hiçbir bütçede %100'e yaklaşan gözlenen getiri yok.
+
+### Faz 0.3 — H1/H2 kapandı: canlı kaydı kirleten saat hatası ✅
+
+Denetimin iki bulgusu, ikisi de canlı haftalık kaydı doğrudan etkiliyordu:
+
+* **H1** — `tahmin.fixtures_maclari` **hiçbir zaman filtresi uygulamıyordu**,
+  oysa `yaklasan_maclar` fikstürü *tercih* ediyor. Yani maç gününde sabah
+  oynanmış bir maç, akşam hâlâ "yaklaşan maç" olarak maç öncesi
+  olasılığıyla servis ediliyordu — modülün kendi docstring'inin açıkça
+  yasakladığı şey. Filtre bağlandı.
+* **H2** — `_simdi()` naive **yerel** saatti; `snapshot_iddaa` ise kickoff'u
+  açıkça UTC yazıyor. `TZ=Europe/Istanbul` altında üç saatlik bir
+  **sızıntı penceresi** açılıyordu (konteyner UTC koştuğu için sessizdi).
+  `_simdi()` artık UTC ve zaman dilimi bilinçli.
+
+Ayrıca `GUVENLIK_PAYI = 2 saat` eklendi: iki kaynak iki farklı saat
+ekseninde yazıyor (biri UTC, öteki football-data'nın yerel saati) ve pay o
+belirsizliği yutuyor. Yön kasıtlı — bir maçı erken elemek, başlamış maça
+maç öncesi olasılığı vermekten ucuzdur.
+
+Üçü de bekçiye bağlandı (`test_BASLAMIS_mac_fikstur_kaynagindan_da_elenir`,
+`test_simdi_UTC_ve_zaman_dilimi_bilincli`,
+`test_guvenlik_payi_baslamak_UZERE_olan_maci_eler`).
+
+### İki bekçi düştü ve ikisi de haklıydı
+
+Faz S'de `VARSAYILAN_KAYIP_ORANI`'nı 0,05'ten 0'a çekerken **yalnızca
+ilgili süitleri koştum**, tamamını değil. İki kapı bunu yakaladı:
+
+1. `test_olculen_ve_varsayilan_kolon_bedeli_KARISTIRILMIYOR` — betiğin
+   hangi sabiti okuduğunu tutuyordu. Değişiklik kasıtlıydı; bekçinin asıl
+   işi (*"üçüncü kopya geri gelmesin"*) korunarak güncellendi.
+2. `test_diskteki_kayit_bayat_degil` — dondurulmuş 2. hafta kaydı bugünkü
+   kodun ürettiğiyle uyuşmuyordu. **Kayıt bayat değildi:** 0,05 ile
+   donduruldu ve öyle oynandı. Bugünün varsayılanıyla yeniden üretmek
+   kaydı geriye dönük yeniden yazmak olurdu. Bekçi artık kaydı **kendi
+   beyan ettiği** `meta.kayip_orani` ile yeniden üretiyor — daha güçlü bir
+   sınav, çünkü beyan eksikse ya da yanlışsa yine düşer.
+
 ### 0.2 Otuz iki anormal haftayı kapıya bağla — `KADEME_OLASILIKLARI.md` §8
 
 223 haftanın **32'sinde** 12. kademe kazanan sayısı medyanın (41.516) onda

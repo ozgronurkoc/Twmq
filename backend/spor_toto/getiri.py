@@ -139,13 +139,22 @@ VARSAYILAN_KOMISYON = 0.50
 #: Dördüncüsü türetme değil **okuma**: ekran hem bedeli hem kolon sayısını
 #: gösteriyor, ötekiler onu doğruluyor.
 #:
-#: **Künye — bu bizim ölçümümüz değil.** Sayı resmî Spor Toto ekranından
-#: değil, üçüncü taraf bir kupon aracının ekranından geliyor. Statüsü
-#: `PAY_KAYNAGI` ile aynı değildir: o, resmî ikramiye ekranından üç kez
-#: okundu; bu, tek bir dış aracın dört kuponundan. Aracın kendi hizmet
-#: bedelini bedele katıp katmadığı **doğrulanmadı**. Bu yüzden sayı
-#: varsayılan hesaba GİRMEZ; yalnızca raporlarda kâr/zarar satırı üretir
-#: ve her kullanıldığı yerde kaynağıyla birlikte anılır.
+#: **Künye — 2026-09-04'te üçüncü kez ve birinci elden doğrulandı.**
+#:
+#: Sayı önce yalnızca üçüncü taraf bir kupon aracının ekranından geliyordu
+#: ve künyesi *"aracın kendi hizmet bedelini bedele katıp katmadığı
+#: doğrulanmadı"* diyordu; o yüzden **varsayılan hesaba girmiyordu.** Üç
+#: bağımsız köken artık aynı sayıyı veriyor:
+#:
+#: 1. ST EXTRA kupon aracının ekranı (3. haftanın dört 15 bileni),
+#: 2. kullanıcının **bayi / resmî Spor Toto uygulaması** beyanı — araçtan
+#:    bağımsız birinci el, hizmet-bedeli şüphesini kapatan gözlem,
+#: 3. `data/sistem_fiyat/st_extra.json`: 250 sistem fiyatının **250'si de**
+#:    10'un tam katı, yani her satırda kolon sayısı tamsayı çıkıyor.
+#:
+#: Şüphe kapandığı için sayı artık **varsayılan hesaba girer**
+#: (`scripts/kademe_analizi.py`). `VARSAYILAN_KOLON_BEDELI` silinmedi:
+#: ₺1,50 ile yayımlanmış her sayı hangi ölçekte olduğunu söyleyebilmeli.
 KOLON_BEDELI = 10.0
 
 #: **Hesabın varsayılanı — ve bilerek `KOLON_BEDELI` DEĞİL.**

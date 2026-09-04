@@ -223,6 +223,50 @@ def test_eksik_oran_maci_eler(tmp_path):
     assert fixtures_maclari(str(yol)) == []
 
 
+def test_BASLAMIS_mac_fikstur_kaynagindan_da_elenir(tmp_path):
+    """H1: fikstür kaynağında saat filtresi **yoktu** ve bu ölçülen kaynak.
+
+    `yaklasan_maclar` fikstürü tercih ediyor; filtre yalnızca iddaa
+    yolundaydı. Sonuç: maç gününde sabah oynanmış bir maç, akşam hâlâ
+    "yaklaşan maç" olarak maç öncesi olasılığıyla servis ediliyordu —
+    modülün kendi docstring'inin açıkça yasakladığı şey.
+    """
+    yol = tmp_path / "f.csv"
+    _fixtures_yaz(yol, [_fixture_satiri(tarih="2000-01-01", saat="20:00")])
+    assert fixtures_maclari(str(yol)) == []
+
+    ileri = tmp_path / "g.csv"
+    _fixtures_yaz(ileri, [_fixture_satiri(tarih="2099-01-01", saat="20:00")])
+    assert len(fixtures_maclari(str(ileri))) == 1
+
+
+def test_simdi_UTC_ve_zaman_dilimi_bilincli():
+    """H2: naive yerel saat üç saatlik sızıntı penceresi açıyordu."""
+    from spor_toto.tahmin import _simdi
+
+    assert _simdi().tzinfo is not None, "naive saat TZ'ye gore kayar"
+
+
+def test_guvenlik_payi_baslamak_UZERE_olan_maci_eler():
+    """Belirsizlik payı: iki kaynak iki saat ekseninde yazıyor.
+
+    `snapshot_iddaa` UTC, `build_fixtures` football-data'nın yerel saati.
+    Pay bu belirsizliği yutar ve yönü kasıtlıdır — erken elemek, başlamış
+    maça maç öncesi olasılığı vermekten ucuzdur.
+    """
+    from datetime import timedelta, timezone
+
+    from spor_toto.tahmin import GUVENLIK_PAYI, _gelecekte
+
+    simdi = datetime(2099, 1, 1, 12, 0, tzinfo=timezone.utc)
+    assert GUVENLIK_PAYI > timedelta(0)
+    # Paydan SONRA baslayan mac gecer
+    assert _gelecekte("2099-01-01 20:00", simdi) is True
+    # Pay icinde baslayan mac ELENIR
+    yakin = (simdi + GUVENLIK_PAYI - timedelta(minutes=1)).strftime("%Y-%m-%d %H:%M")
+    assert _gelecekte(yakin, simdi) is False
+
+
 # ─── boş durum ────────────────────────────────────────────────────────────────
 
 def test_bos_durum_sebebini_soyler(tmp_path):
