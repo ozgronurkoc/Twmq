@@ -651,3 +651,30 @@ def beklenen_tl(probs_listesi: Sequence[dict[str, float]],
         q = float(dp[kacak, kademe]) / p_kacak
         toplam += p_kacak * float(havuz) * pay_beklentisi(rakip_kolon, q)
     return toplam
+
+
+def kademe_havuzlari(payout: dict[str, Any] | None) -> dict[int, float]:
+    """Kademe havuzlarını **resmî ikramiye tablosundan** türetir.
+
+    ─── Niçin bu fonksiyon var: ölçülmüş bir tuzak ────────────────────────
+
+    `beklenen_tl` kademe havuzlarını dışarıdan alır ve o sözlüğü elle yazmak
+    **cevabı çevirebilir.** Ölçüldü (`docs/KAZANMA_PLANI.md` Faz S):
+
+    * gerçek tablolarda `13. kademe havuzu / 12. kademe havuzu` = **0,800**
+      (yani `havuz.BOLUSUM`'un 20/25'i, üç haftada da birebir);
+    * elle yazılmış `{13: 1e7, 12: 1e6}` — yani 10,0 — aynı kuponlarda
+      *"kalabalıktan sapmak hiçbir şey kazandırmıyor"* sonucunu
+      *"20 haftanın 19'unda 12 kat kazandırıyor"*a çeviriyor.
+
+    Oran 12,5 kat saptığında sonuç ters döndü. Bu yüzden havuz sözlüğü
+    **türetilir, varsayılmaz**; kaynak `havuz._kademe_havuzlari` ve orada
+    bölüşüm 222 haftada ölçülmüş bir kuraldır.
+
+    `payout` yoksa boş sözlük döner — `beklenen_tl` o durumda sıfır verir.
+    """
+    if not payout:
+        return {}
+    from .havuz import _kademe_havuzlari
+
+    return _kademe_havuzlari(payout)

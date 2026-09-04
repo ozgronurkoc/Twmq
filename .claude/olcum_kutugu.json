@@ -2,7 +2,7 @@
  "sayilar": [
   {
    "ne": "suit test sayisi (eksiksiz kurulum)",
-   "deger": "2.000",
+   "deger": "2.002",
    "ureten": "cd backend && pytest -p no:randomly -n0 --collect-only -q  # dosya basi toplami",
    "olculdu": "2026-09-04",
    "anildigi_yerler": [
@@ -308,6 +308,29 @@
    ],
    "bekci": "-",
    "not": "60 macin 21'i. Monoton bir kalabalik modeli (o ~ p^lambda) bunu URETEMEZ; kenar varsa bu artigin icindedir. n=4 hafta, karar icin yetmez."
+  },
+  {
+   "ne": "kademe havuz orani 13/12 (resmi tablolardan)",
+   "deger": "0,800",
+   "ureten": "cd backend && python -c 'from spor_toto.getiri import kademe_havuzlari'",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md Faz S",
+    "backend/spor_toto/getiri.py kademe_havuzlari"
+   ],
+   "bekci": "backend/tests/test_kosullu_getiri.py::test_kademe_havuzu_ELLE_yazilinca_cevap_DEGISIYOR",
+   "not": "havuz.BOLUSUM'un 20/25'i; 2026/27'nin uc haftasinda da birebir. Elle yazilmis 10,0 ayni kuponlarda 'sapmak kazandirmaz' cevabini '19/20 haftada 12 kat kazandirir'a CEVIRIYORDU."
+  },
+  {
+   "ne": "artik ekseninin tavani (gercek oynanma payiyla, gercek havuzlarla)",
+   "deger": "1,003",
+   "ureten": "elle: 2026/27 hafta 1-3, sistem_secimi + beklenen_tl yerel arama",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md Faz S"
+   ],
+   "bekci": "-",
+   "not": "Medyan kat. n=3 hafta; ikisinde kazanc yok, biri 3,013x. ILK OLCUM 2,63x cikmisti ve YANLISTI — kademe bolusumu elle yazilmisti. Tavan ayrica mukemmel eszamanli bilgi varsayar: gecen haftanin payiyla 0,660x."
   }
  ],
  "komutlar": [

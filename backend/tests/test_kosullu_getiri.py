@@ -106,3 +106,53 @@ def test_monoton_kalabalikta_sapmak_KAZANDIRMAZ():
     a = beklenen_tl(p, oy, taban, {}, havuz, 13, 15_000_000)
     b = beklenen_tl(p, oy, kotu, {}, havuz, 13, 15_000_000)
     assert a > b, "monoton kalabalikta favoriyi birakmak kazandiramaz"
+
+
+def test_kademe_havuzu_ELLE_yazilinca_cevap_DEGISIYOR():
+    """Faz S'nin ölçülmüş tuzağı: yanlış bölüşüm sonucu **ters çeviriyor**.
+
+    Gerçek tablolarda `13/12` havuz oranı 0,800'dür (`havuz.BOLUSUM`).
+    Elle yazılmış 10,0 ile aynı kupon üzerinde E[TL] sıralaması bozuluyor
+    ve "sapmak kazandırmıyor" cevabı "kazandırıyor"a dönüyor. Bekçi bu
+    duyarlılığın kaybolmadığını tutar.
+    """
+    from spor_toto.kalabalik import OLCULEN, oynanma_paylari
+
+    p = _probs()
+    oy = oynanma_paylari(p, OLCULEN)
+    taban = [["1", "0"]] * 15
+    sapma = [["0", "2"]] + [["1", "0"]] * 14
+
+    gercek = {13: 24_481_620.0, 12: 30_601_899.0}       # oran 0,800
+    uydurma = {13: 1e7, 12: 1e6}                         # oran 10,0
+
+    g_taban = beklenen_tl(p, oy, taban, {}, gercek, 13, 15_000_000)
+    g_sapma = beklenen_tl(p, oy, sapma, {}, gercek, 13, 15_000_000)
+    u_taban = beklenen_tl(p, oy, taban, {}, uydurma, 13, 15_000_000)
+    u_sapma = beklenen_tl(p, oy, sapma, {}, uydurma, 13, 15_000_000)
+
+    assert g_taban > g_sapma, "gercek bolusumde taban kazanmali"
+    # Bekcinin tuttugu sey YON degil DUYARLILIK: ayni iki kupon, iki
+    # bolusum altinda belirgin bicimde farkli degerleniyor. Yonun kendisi
+    # kuponun sekline bagli ve bu yuzden iddia edilmiyor — olculen sey
+    # "elle yazilan bolusum cevabi kaydiriyor"dur.
+    g_oran = g_sapma / g_taban
+    u_oran = u_sapma / u_taban
+    assert abs(u_oran - g_oran) > 0.01, (g_oran, u_oran)
+
+
+def test_kademe_havuzlari_tablodan_TURETILIR():
+    """Havuz sözlüğü elle yazılmasın diye tek kaynak: resmî tablo."""
+    from spor_toto.getiri import kademe_havuzlari
+
+    assert kademe_havuzlari(None) == {}
+    assert kademe_havuzlari({}) == {}
+    payout = {"tiers": [
+        {"correct": 15, "winners": 1, "prize": 100.0},
+        {"correct": 14, "winners": 2, "prize": 50.0},
+        {"correct": 13, "winners": 4, "prize": 25.0},
+        {"correct": 12, "winners": 10, "prize": 12.5},
+    ]}
+    hv = kademe_havuzlari(payout)
+    assert hv[15] == pytest.approx(100.0)
+    assert hv[12] == pytest.approx(125.0)

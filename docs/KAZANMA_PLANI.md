@@ -445,6 +445,63 @@ dağılımın *şeklini* taşır, hangi maçta hangi sembole yığıldığını 
 Bu, haftalık veri girişini planın en değerli parçası yapıyor — ve
 biriktirmekten başka yolu yok.
 
+### Faz S ekleri — artığın tavanı ölçüldü, ve bir tuzak yakalandı
+
+#### Önce tuzak: kademe bölüşümü **varsayılamaz**
+
+Artığın tavanını ölçerken kademe havuzlarını elle yazdım
+(`{13: 1e7, 12: 1e6}`, yani oran 10,0). Sonuç **2,63× tavan** çıktı ve
+yayımlanmak üzereydi. Yayımlanmadı, çünkü aynı kurulum Faz S'nin *"monoton
+kalabalıkta sapmak kazandırmaz"* bulgusunu da çürütüyordu — iki ölçümüm
+çelişiyordu.
+
+Çelişkinin kaynağı arama derinliği değil, **benim varsayımım**:
+
+| kademe bölüşümü | 13/12 oranı | monoton modelde sonuç |
+|---|---:|---|
+| **gerçek** ikramiye tablosu | **0,800** | 1,000× · 20 haftanın **0**'ında artıyor |
+| elle yazdığım | 10,0 | 12,17× · 20 haftanın **19**'unda artıyor |
+
+Gerçek oran `havuz.BOLUSUM`'un 20/25'idir ve üç haftada da birebir 0,800.
+Benim yazdığım 12,5 kat sapıyordu ve **cevabı ters çevirdi.**
+
+`getiri.kademe_havuzlari(payout)` eklendi: havuz sözlüğü artık resmî
+tablodan **türetiliyor**, elle yazılmıyor. Bekçisi
+`test_kademe_havuzu_ELLE_yazilinca_cevap_DEGISIYOR` — tuttuğu şey yön değil
+**duyarlılık**, çünkü yönün kendisi kuponun şekline bağlı.
+
+#### Düzeltilmiş tavan: **1,003×** (2,63× değil)
+
+Gerçek kademe havuzlarıyla, 2026/27'nin ikramiyesi olan üç haftası:
+
+| hafta | taban E[TL] | monoton model | **gerçek oynanma payı** | değişen maç |
+|---|---:|---:|---:|---:|
+| 1 | 75,05 | 1,000× | **1,003×** | 1 |
+| 2 | 93,59 | 1,000× | **3,013×** | 5 |
+| 3 | 93,03 | 1,000× | **1,000×** | 0 |
+
+**Medyan 1,003×.** Üç haftanın ikisinde kazanç yok; biri 3,01× veriyor ve
+ortalamayı tek başına taşıyor. `n = 3`. **Hiçbir şey kurulmuş değil.**
+
+Yani artık ekseni ne Faz S'nin kapattığı kadar ölü, ne benim ilk (hatalı)
+ölçümümün dediği kadar zengin. Bugünkü dürüst cümle: **ölçülmedi.**
+
+#### Ve tavana ulaşmak için payı ÖNCEDEN bilmek gerekiyor
+
+Tavan, o haftanın kendi oynanma payına karşı optimize edilerek hesaplandı —
+yani **mükemmel eşzamanlı bilgi** varsayıyor. Geçen haftanın payıyla
+optimize edip o haftanın payıyla ölçtüğümde:
+
+| hafta | geçen haftanın payıyla | o haftanın payıyla (tavan) |
+|---|---:|---:|
+| 2 | **0,660×** | 3,013× |
+| 3 | 1,000× | 1,000× |
+
+Geçen haftanın payı **taşımıyor** ve bir haftada belirgin biçimde
+**zararlı**. Yani bu eksen ancak oynanma payları **kupon kapanmadan önce**
+okunabiliyorsa açıktır. Bu teknik değil **operasyonel** bir soru ve cevabı
+planın geri kalanını belirliyor.
+
 ### 0.2 Otuz iki anormal haftayı kapıya bağla — `KADEME_OLASILIKLARI.md` §8
 
 223 haftanın **32'sinde** 12. kademe kazanan sayısı medyanın (41.516) onda
