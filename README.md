@@ -987,7 +987,7 @@ backend/
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
                        sehir/ · xg/
-  tests/               pytest (69 dosya → 2.017 test; §9'da katman dökümü)
+  tests/               pytest (69 dosya → 2.019 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1191,7 +1191,7 @@ dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri t
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
 eşleme, ikinci kayıt). **69 test dosyası, parametrizasyonla
-2.017 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+2.019 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
@@ -1220,7 +1220,7 @@ karşı denetler):
 | xG vekili kalibrasyonu | `xg` | 16 |
 | Belgeler | `belgeler` | 11 |
 | Değer bahsi (yan pazarlar) | **`deger`** | 24 |
-| Fiyat kaynakları | **`fiyatlar`** | 12 |
+| Fiyat kaynakları | **`fiyatlar`** | 14 |
 | Kuyruk / bağımsızlık | **`kuyruk`** | 12 |
 | MCP deneyi | **`mcp`** | 11 |
 | Betik ortak katmanı | **`scripts_ortak`** | 12 |

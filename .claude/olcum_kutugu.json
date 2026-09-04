@@ -2,7 +2,7 @@
  "sayilar": [
   {
    "ne": "suit test sayisi (eksiksiz kurulum)",
-   "deger": "2.017",
+   "deger": "2.019",
    "ureten": "cd backend && pytest -p no:randomly -n0 --collect-only -q  # dosya basi toplami",
    "olculdu": "2026-09-04",
    "anildigi_yerler": [
@@ -366,6 +366,17 @@
    ],
    "bekci": "backend/tests/test_cizgi.py::test_kapanis_acilistan_ongorulEMIYOR",
    "not": "31.099 mac, sezon disarida birakmali. b ~ 1,009 yani acilis kapanisin YANSIZ kestiricisi; acik +0,002458, kazanc +0,000082. §5.2'nin %22'lik kolon bedeli bu yolla geri alinamaz."
+  },
+  {
+   "ne": "Betfair Exchange kapanis — Avg kapanisa gore Brier farki (F2)",
+   "deger": "-0,00100",
+   "ureten": "cd backend && python -c 'from spor_toto.fiyatlar import kitap_kiyasi; print(kitap_kiyasi())'",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md"
+   ],
+   "bekci": "backend/tests/test_fiyatlar.py::test_betfair_exchange_kupon_kesitinde_GECIYOR",
+   "not": "985 ortak mac, %95 araligi [-0,00181, -0,00021], p=0,0054, bes aday uzerinde Holm duzeltmesiyle de GECTI. Marj %0,62 (Avg %6,15). BFE 2022/23 ve 2023/24'te HIC YOK; 2024/25 %100, 2025/26 %87 kapsama."
   }
  ],
  "komutlar": [

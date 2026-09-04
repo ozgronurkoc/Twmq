@@ -258,3 +258,109 @@ def _bayat(satirlar: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
                 "identical_pct": round(100 * ayni / cift, 2),
             })
     return out
+
+
+# ─── F2: kitap karşılaştırması — denenmemiş tek FİYAT ────────────────────
+
+#: Karşılaştırmanın referansı — omurganın kendi fiyatı.
+KIYAS_REFERANSI = "Avg_kapanis"
+
+#: Arenaya hiç girmemiş adaylar. `A2` yalnızca B365 ve Pinnacle'ı denedi;
+#: Betfair Exchange **bir model değil bir fiyattır** ve marjı bir büyüklük
+#: mertebesi düşüktür (bkz. `kitap_kiyasi`).
+KIYAS_ADAYLARI: tuple[str, ...] = (
+    "BFE_kapanis", "PS_kapanis", "B365_kapanis", "Avg_acilis", "BFE_acilis")
+
+
+def kitap_kiyasi(adaylar: Sequence[str] = KIYAS_ADAYLARI,
+                 referans: str = KIYAS_REFERANSI,
+                 tekrar: int = 20_000,
+                 tohum: int = 29) -> dict[str, Any]:
+    """Kupon kesitinde **fiyat** karşılaştırması — eşleştirilmiş, Holm'lu.
+
+    ─── Niçin bu ölçüm: A2'nin görmediği aday ───────────────────────────
+
+    §3.15 (A2) bahisçi ayrışmasını ölçtü ama yalnızca **B365 ve Pinnacle**
+    ile; `build_egitim.A2_KAYNAKLARI` Betfair'i bilerek dışarıda bırakıyor
+    ve gerekçesi kesit dengesi. Oysa kupon kesitinde ölçülen tablo
+    (`sezon_fiyat_ozeti`) Betfair Exchange'i en düşük marjlı fiyat olarak
+    gösteriyordu ve o fiyat **hiçbir zaman arenaya girmedi**.
+
+    Aday bir model değil bir **fiyattır**: geçmesi *"piyasayı geçen bir
+    modelimiz var"* demek değil, *"daha iyi bir piyasa var"* demektir.
+
+    ─── Karşılaştırma yalnızca ORTAK maçlarda ───────────────────────────
+
+    Her aday, referansla **birlikte bulunduğu** maçlarda ölçülür; kapsama
+    ayrı bir sütundur ve karıştırılmaz. Bootstrap **hafta düzeyinde**
+    (aynı haftanın maçları bağımsız değil) ve karar `evaluate.holm` ile
+    aile bazlı düzeltilir — beş aday tekil aralığa bakılarak
+    değerlendirilemez.
+    """
+    import random as _random
+
+    from .evaluate import holm
+
+    haftalar: dict[tuple[str, int], list[tuple[dict[str, Any], str]]] = {}
+    for sezon in _SEZONLAR_KIYAS:
+        try:
+            satirlar = load_odds(sezon=sezon)
+        except OSError:
+            continue
+        for r in satirlar:
+            if r.get("code") not in SEMBOLLER:
+                continue
+            haftalar.setdefault((sezon, r["week"]), []).append(
+                (mac_fiyatlari(r), r["code"]))
+    toplam = sum(len(v) for v in haftalar.values())
+    out: list[dict[str, Any]] = []
+    p_degerleri: dict[str, float] = {}
+    for ad in adaylar:
+        hf: list[tuple[float, float, int]] = []
+        marjlar: list[float] = []
+        for lst in haftalar.values():
+            a = b = 0.0
+            n = 0
+            for f, kod in lst:
+                x, y = f.get(ad), f.get(referans)
+                if x and y:
+                    a += _brier(x["probs"], kod)
+                    b += _brier(y["probs"], kod)
+                    n += 1
+                    marjlar.append(float(x["margin"]))
+            if n:
+                hf.append((a, b, n))
+        na = sum(x[2] for x in hf)
+        if not na:
+            out.append({"ad": ad, "n": 0, "kapsama": 0.0, "gecti": None})
+            continue
+        rnd = _random.Random(tohum)
+        dag = []
+        for _ in range(tekrar):
+            idx = [rnd.randrange(len(hf)) for _ in range(len(hf))]
+            sn = sum(hf[i][2] for i in idx)
+            dag.append((sum(hf[i][0] for i in idx)
+                        - sum(hf[i][1] for i in idx)) / sn if sn else 0.0)
+        dag.sort()
+        alt = dag[int(0.025 * tekrar)]
+        ust = dag[int(0.975 * tekrar)]
+        p = (sum(1 for x in dag if x >= 0.0) + 1) / (tekrar + 1)
+        p_degerleri[ad] = p
+        out.append({
+            "ad": ad, "n": int(na), "kapsama": na / toplam if toplam else 0.0,
+            "marj": sum(marjlar) / len(marjlar) if marjlar else None,
+            "aday_brier": sum(x[0] for x in hf) / na,
+            "referans_brier": sum(x[1] for x in hf) / na,
+            "fark": (sum(x[0] for x in hf) - sum(x[1] for x in hf)) / na,
+            "alt": alt, "ust": ust, "p": p, "gecti": bool(ust < 0),
+        })
+    karar = holm(p_degerleri)
+    for satir in out:
+        satir["gecti_holm"] = karar.get(satir["ad"])
+    return {"referans": referans, "hafta": len(haftalar), "mac": toplam,
+            "denenen_aday_sayisi": len(p_degerleri), "adaylar": out}
+
+
+#: Karşılaştırmanın koştuğu sezonlar — oran arşivi olan bütün sezonlar.
+_SEZONLAR_KIYAS: tuple[str, ...] = (
+    "2022_23", "2023_24", "2024_25", "2025_26")

@@ -672,6 +672,49 @@ taşımıyor"* bulgusunun simetriği bu: **kapanış da açılışın içinden
 durma kuralı (hafta düzeyinde aralık sıfırı kesiyorsa kapan) fazlasıyla
 sağlandı — dört katın dördünde de kazanç açığın onda birinin altında.
 
+### Faz F2 — Betfair Exchange **GEÇTİ**, ve Holm düzeltmesiyle ✅
+
+A2 bahisçi ayrışmasını ölçmüştü ama yalnızca B365 ve Pinnacle ile;
+`build_egitim.A2_KAYNAKLARI` Betfair'i bilerek dışarıda bırakıyor ve
+gerekçesi kesit dengesi. Oysa kupon kesitinde ölçülen tablo Betfair
+Exchange'i **en düşük marjlı fiyat** olarak gösteriyordu ve o fiyat hiçbir
+zaman arenaya girmemişti.
+
+`fiyatlar.kitap_kiyasi()` — 119 hafta, 1.785 maç, referans `Avg_kapanis`,
+eşleştirilmiş hafta bootstrap'i, **beş aday üzerinde Holm**:
+
+| aday | n | kapsama | marj | fark | %95 aralık | p | Holm |
+|---|---:|---:|---:|---:|---|---:|---|
+| **BFE_kapanis** | 985 | %55 | **%0,62** | **−0,00100** | **[−0,00181, −0,00021]** | **0,0054** | **GEÇTİ** |
+| PS_kapanis | 1.417 | %79 | %3,17 | −0,00037 | [−0,00113, +0,00040] | 0,168 | hayır |
+| B365_kapanis | 1.721 | %96 | %6,54 | +0,00014 | [−0,00056, +0,00085] | 0,655 | hayır |
+| Avg_acilis | 1.694 | %95 | %6,15 | +0,00202 | [−0,00043, +0,00445] | 0,947 | hayır |
+| BFE_acilis | 943 | %53 | %5,99 | +0,00155 | [−0,00933, +0,01104] | 0,637 | hayır |
+
+**Bu bir model değil bir FİYAT.** Geçmesi *"piyasayı geçen bir modelimiz
+var"* demek değil, ***"daha iyi bir piyasa var"*** demektir. Mekanizma da
+tabloda: marj %0,62 — omurganın kullandığı fiyatın onda biri.
+
+#### Kapsama sezona göre: 2024/25'ten itibaren **kullanılabilir**
+
+%55'lik havuzlanmış kapsama yanıltıcıydı; BFE iki eski sezonda **hiç yok**:
+
+| sezon | maç | BFE var | kapsama | 15/15 tam hafta | fark |
+|---|---:|---:|---:|---:|---:|
+| 2022/23 | 255 | 0 | %0 | — | — |
+| 2023/24 | 465 | 0 | %0 | — | — |
+| 2024/25 | 450 | 450 | **%100** | 30/30 | −0,00049 |
+| 2025/26 | 615 | 535 | **%87** | 32/41 | −0,00143 |
+
+Yani etki iki sezondan geliyor ve **ikisinde de aynı yönde**; ileriye dönük
+kapsama sorunu yok. `n` sınırı açık: iki sezon, ~71 hafta.
+
+**Ne değişir:** omurganın fiyatı `Avg` olmaya devam ediyor (kesit bütünlüğü
+gerekçesi yerinde), ama BFE artık ölçülmüş bir üstünlükle paralel iz
+olmaktan çıkıp **aday** oldu. Kupon kurarken 2024/25 sonrası haftalarda
+BFE'nin kullanılması Faz S'nin girdisini iyileştirir; bu değişiklik ayrı
+ölçülmeli, çünkü geri testin bütün sayıları `Avg` ölçeğinde.
+
 ### 0.2 Otuz iki anormal haftayı kapıya bağla — `KADEME_OLASILIKLARI.md` §8
 
 223 haftanın **32'sinde** 12. kademe kazanan sayısı medyanın (41.516) onda

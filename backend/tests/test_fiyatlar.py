@@ -186,3 +186,45 @@ def test_bayat_kapanis_arsivde_de_var(ozet):
 def test_donemler_market_odds_bayragiyla_ayni():
     """`DONEMLER` `market_odds(closing=)` ile aynı anlamı taşımalı."""
     assert dict(DONEMLER) == {"acilis": False, "kapanis": True}
+
+
+# ─── F2: denenmemiş tek fiyat ─────────────────────────────────────────────
+
+@pytest.mark.slow
+def test_betfair_exchange_kupon_kesitinde_GECIYOR():
+    """F2 geçti — ve bu bir model değil bir **fiyat**.
+
+    A2 yalnızca B365 ve Pinnacle'ı denemişti; Betfair Exchange hiç arenaya
+    girmemişti. Geçmesi *"piyasayı geçen bir modelimiz var"* demek değil,
+    *"daha iyi bir piyasa var"* demektir.
+
+    Bekçi tek bir sayıyı değil **kararın yapısını** tutuyor: eşleştirilmiş
+    hafta bootstrap'i, Holm düzeltmesi ve kapsamanın ayrı sütun olması.
+    """
+    from spor_toto.fiyatlar import KIYAS_REFERANSI, kitap_kiyasi
+
+    r = kitap_kiyasi()
+    assert r["referans"] == KIYAS_REFERANSI
+    assert r["denenen_aday_sayisi"] >= 4
+    satir = {a["ad"]: a for a in r["adaylar"]}
+
+    bfe = satir["BFE_kapanis"]
+    assert bfe["n"] > 500
+    assert bfe["fark"] < 0, "BFE referansi gecmeli"
+    assert bfe["ust"] < 0, "aralik tamamen sifirin altinda olmali"
+    assert bfe["gecti_holm"] is True, "Holm duzeltmesiyle de gecmeli"
+    # Marj bir buyukluk mertebesi dusuk — gecmesinin mekanizmasi bu.
+    assert bfe["marj"] < 0.02 < satir["Avg_acilis"]["marj"]
+    # Kapsama AYRI sutun: gectigi kesit butun kupon degil.
+    assert 0.3 < bfe["kapsama"] < 1.0
+
+
+@pytest.mark.slow
+def test_acilis_fiyatlari_kapanisi_GECEMIYOR():
+    """Sağlama: açılış kapanışın gerisinde kalmalı (A1 ile tutarlı)."""
+    from spor_toto.fiyatlar import kitap_kiyasi
+
+    satir = {a["ad"]: a for a in kitap_kiyasi()["adaylar"]}
+    for ad in ("Avg_acilis", "BFE_acilis"):
+        assert satir[ad]["fark"] > 0, ad
+        assert not satir[ad]["gecti_holm"], ad
