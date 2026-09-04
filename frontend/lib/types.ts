@@ -1121,6 +1121,17 @@ export interface TahminciSkoru {
     ham_fark: number;
     ham_alt: number;
     ham_ust: number;
+    /**
+     * **Tek yönlü bootstrap p-değeri** — `(k+1)/(n+1)`, yani farkın sıfırı
+     * aşma oranı. Brier'de küçük iyi olduğu için adayın referansı
+     * GEÇMEMESİ `fark >= 0` demektir; sıfır p yayımlanmasın diye pay ve
+     * paydaya birer eklenir.
+     *
+     * `gecti` bunu OKUMAZ — o hâlâ tekil `ham_ust`e bakar. Bu alan çoklu
+     * karşılaştırma düzeltmesi için var (`evaluate.holm`, denetim H5): on'dan
+     * fazla aile tekil %95 aralıkla değerlendirilemez.
+     */
+    p: number;
   };
   /** Yalnızca alternatifte: aralık tamamen sıfırın altında mı. */
   gecti?: boolean;

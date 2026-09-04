@@ -1494,6 +1494,7 @@
       "ham_alt": "float",
       "ham_fark": "float",
       "ham_ust": "float",
+      "p": "float",
       "tekrar": "int",
       "ust": "float"
      },
