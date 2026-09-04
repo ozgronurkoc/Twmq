@@ -2,7 +2,7 @@
  "sayilar": [
   {
    "ne": "suit test sayisi (eksiksiz kurulum)",
-   "deger": "2.016",
+   "deger": "2.017",
    "ureten": "cd backend && pytest -p no:randomly -n0 --collect-only -q  # dosya basi toplami",
    "olculdu": "2026-09-04",
    "anildigi_yerler": [
@@ -355,6 +355,17 @@
    ],
    "bekci": "backend/tests/test_karne.py::test_anormal_haftalar_arsivin_tamamindan_hesaplanir",
    "not": "225 haftanin 32'si. Esik arsivin TAMAMINDAN hesaplanir; alt kesitten hesaplansaydi ayni hafta bir olcumde anormal, otekinde normal cikardi."
+  },
+  {
+   "ne": "kapanisi acilistan ongorme — acigin geri alinan orani (F1)",
+   "deger": "%3,3",
+   "ureten": "cd backend && python -c 'from spor_toto.cizgi import cizgi_tahmini; print(cizgi_tahmini())'",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md"
+   ],
+   "bekci": "backend/tests/test_cizgi.py::test_kapanis_acilistan_ongorulEMIYOR",
+   "not": "31.099 mac, sezon disarida birakmali. b ~ 1,009 yani acilis kapanisin YANSIZ kestiricisi; acik +0,002458, kazanc +0,000082. §5.2'nin %22'lik kolon bedeli bu yolla geri alinamaz."
   }
  ],
  "komutlar": [

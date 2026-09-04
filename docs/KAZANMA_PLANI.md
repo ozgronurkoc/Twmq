@@ -639,6 +639,39 @@ cevabı veriyor, çünkü hiçbir aile geçmiyor.
 Bekçilerin tuttuğu asıl şey H5'in kendisi: aynı `p = 0,03` tek başına
 geçerken on aday arasında **geçmiyor**.
 
+### Faz F1 — kupon-zamanı fiyatı: **kapandı, %22 geri alınamıyor** ✅
+
+Soru şuydu: kupon ilk maçtan önce kapanır, oranlar her maçın saatine kadar
+oynar — haftanın son maçlarında kapanış fiyatı kupon verilirken elimizde
+yok ve bedeli **%22 kolon** (2.686 → 3.290, §5.2 eki). Kapanışı açılıştan
+öngörebilir miyiz?
+
+Bu soru piyasayı yenmeyi gerektirmiyordu: hedef sonuç değil, piyasanın
+kendi kapanışı. `cizgi.cizgi_tahmini()`, merkezlenmiş log uzayında tek
+katsayılı bir ölçekleme kuruyor (`L_kapanış ≈ b · L_açılış`) ve sezon
+dışarıda bırakmalı ölçüyor:
+
+| tutulan sezon | n | `b` | açığın geri alınanı |
+|---|---:|---:|---:|
+| 2021/22 | 7.821 | 1,0073 | %2,7 |
+| 2022/23 | 7.800 | 1,0096 | %6,2 |
+| 2023/24 | 7.797 | 1,0099 | %2,9 |
+| 2024/25 | 7.681 | 1,0095 | %2,3 |
+| **toplam** | **31.099** | **≈1,009** | **%3,3** |
+
+Açılış–kapanış açığı Brier'de **+0,002458**; ölçeklemenin kazandırdığı
+**+0,000082**.
+
+**Okuma sert:** `b ≈ 1`, yani açılış zaten kapanışın **yansız
+kestiricisidir**. Aradaki fark açılıştan *sonra gelen bilgidir* ve tanımı
+gereği açılışta yoktur. A1'in *"hareket kapanışın ötesinde bilgi
+taşımıyor"* bulgusunun simetriği bu: **kapanış da açılışın içinden
+çıkarılamıyor.**
+
+§5.2'nin %22'lik kolon bedeli bu yolla geri alınamaz. Madde kapandı;
+durma kuralı (hafta düzeyinde aralık sıfırı kesiyorsa kapan) fazlasıyla
+sağlandı — dört katın dördünde de kazanç açığın onda birinin altında.
+
 ### 0.2 Otuz iki anormal haftayı kapıya bağla — `KADEME_OLASILIKLARI.md` §8
 
 223 haftanın **32'sinde** 12. kademe kazanan sayısı medyanın (41.516) onda

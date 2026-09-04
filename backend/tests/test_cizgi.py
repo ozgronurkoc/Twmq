@@ -343,3 +343,30 @@ def test_hareket_kapanisin_otesine_uzatilmiyor(a1):
     assert abs(k["uzatma"]) < 0.10, (
         f"hareket kapanisin otesine %{100 * k['uzatma']:.1f} uzatiliyor — "
         "A1 bulgusu degismis olabilir")
+
+
+# ─── F1: kupon-zamanı fiyatı ──────────────────────────────────────────────
+
+@pytest.mark.slow
+def test_kapanis_acilistan_ongorulEMIYOR():
+    """F1 kapandı: açığın yalnızca ~%3'ü geri alınıyor.
+
+    §5.2 eki kapanışın kupon verilirken elde olmadığını ve bedelinin **%22
+    kolon** olduğunu ölçmüştü. Bu ölçüm o bedelin ölçeklemeyle geri
+    alınamadığını söylüyor: `b ≈ 1`, yani açılış zaten kapanışın yansız
+    kestiricisi ve aradaki fark açılıştan **sonra gelen bilgidir**.
+    """
+    from spor_toto.cizgi import cizgi_tahmini
+
+    r = cizgi_tahmini()
+    assert r["n"] > 30_000
+    # Kapanis acilistan GERCEKTEN iyi — olculecek bir acik var.
+    assert r["acik"] > 0
+    # Ama olcekleme onu kapatmiyor.
+    assert 0.0 < r["geri_alinan"] < 0.15, r["geri_alinan"]
+    # Egim bire cok yakin: acilis yansiz.
+    for kat in r["katlar"]:
+        assert 0.95 < kat["b"] < 1.05, kat
+    # Dort katin dordunde de ayni yon.
+    assert len(r["katlar"]) == 4
+    assert all(k["acilis"] > k["kapanis"] for k in r["katlar"])
