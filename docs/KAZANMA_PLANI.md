@@ -614,6 +614,31 @@ geri dönüş **%54,9**.
 
 `n = 3`. Bu tablo bir strateji karnesi değil, bir **kayıt başlangıcı**.
 
+### Faz 0.3 tamamlandı — çoklu karşılaştırma düzeltmesi (H5) ✅
+
+Denetimin H5'i şunu diyordu: `arena.roster` on'dan fazla aile deniyor ve
+her biri **tekil** %95 aralığa karşı ölçülüyor; on bağımsız denemede en az
+bir yanlış "geçti" görme olasılığı %40'a yaklaşır. *"Bugün bunu maskeliyor
+ama biri geçtiği gün iddia savunulamaz olur."*
+
+Eklenenler:
+
+* `evaluate.bootstrap_farki` artık **tek yönlü bootstrap p-değeri** de
+  döndürüyor: `(k+1)/(n+1)`, yani sıfır p yayımlanmıyor.
+* `evaluate.holm()` — Holm–Bonferroni, adım adım. Bonferroni'den **kesinlikle
+  daha güçlü**: p'ler sıralanır, `i`. sıradaki `α/(m−i)` ile karşılaştırılır,
+  ilk kırılmada kalanların hepsi düşer.
+* Her satırda `gecti_holm` ve `denenen_aday_sayisi`; arenanın gövdesinde
+  `gecen_holm` listesi.
+
+**`gecti` bayrağının anlamı DEĞİŞMEDİ** — tekil aralık okuması yerinde
+kaldı ki yayımlanmış sayılar yeniden yorumlanmasın. Holm onun *yanına*
+yazılıyor ve iddia hangisine dayanıyorsa o söyleniyor. Bugün ikisi de aynı
+cevabı veriyor, çünkü hiçbir aile geçmiyor.
+
+Bekçilerin tuttuğu asıl şey H5'in kendisi: aynı `p = 0,03` tek başına
+geçerken on aday arasında **geçmiyor**.
+
 ### 0.2 Otuz iki anormal haftayı kapıya bağla — `KADEME_OLASILIKLARI.md` §8
 
 223 haftanın **32'sinde** 12. kademe kazanan sayısı medyanın (41.516) onda
