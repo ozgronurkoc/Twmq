@@ -599,3 +599,125 @@ def main(argv: list[str] | None = None) -> None:  # pragma: no cover
 
 if __name__ == "__main__":  # pragma: no cover
     main()
+
+
+# ─── tablo tabanlı seçim — bedel formülden değil KAYITTAN ─────────────────
+
+def sistem_secimi(probs_listesi: list[dict[str, float]],
+                  butce_tl: float,
+                  garanti: int | None = None,
+                  kademe: int | None = None,
+                  yol: str | None = None) -> Secim | None:
+    """`en_iyi_secim`in tablo tabanlı hâli — **oynanan ürünün kendisi.**
+
+    İki şeyde ayrılır ve ikisi de `en_iyi_secim`i yanlış değil **dar**
+    yapan şeydir:
+
+    ``bedel``
+        `bedel_hesapla` yalnızca `core.solve_fix16` modunun bedelidir:
+        Hamming(7,4) bloğu, en az yedi çifte, tek garanti seviyesi. Burada
+        bedel `sistem.bedel()`den, yani satıcının **ölçülmüş** fiyat
+        tablosundan gelir; 84 şeklin tamamı ve üç garanti seviyesi geçerli
+        adaydır. Yedi çifte şartı da bu yüzden yoktur — tabloda sıfır
+        çifteli satırlar da satılıyor.
+
+    ``kaçak eşiği``
+        `esik` artık sabit değil, `sistem.kacak_esigi(garanti, kademe)`den
+        türüyor: 14-garantide `k ≤ 2`, 13'te `k ≤ 1`, 12'de `k ≤ 0`.
+        Gerekçesi `sistem` modül başlığındadır.
+
+    Bütçe **TL** cinsindendir, kolon değil — tablo TL konuşuyor ve iki
+    birimi karıştırmak tam olarak `bedel_hesapla`nın kolon cinsinden
+    bütçesiyle karışacağı yerdir.
+
+    `None` döner ancak bütçeye satılan hiçbir şekil sığmıyorsa.
+    """
+    from . import sistem as _sistem
+
+    g = _sistem.VARSAYILAN_GARANTI if garanti is None else garanti
+    kad = _sistem.HEDEF_KADEME if kademe is None else kademe
+    esik = _sistem.kacak_esigi(g, kad)
+    if esik < 0:
+        raise ValueError(
+            f"{g}-garanti {kad}. kademeyi hic tutturamaz (esik {esik})")
+    if butce_tl <= 0:
+        raise ValueError("Butce pozitif olmali.")
+    n = len(probs_listesi)
+    if n == 0:
+        return None
+
+    # Satılan şekiller: (cift, kapali) -> (kolon, tl). Aynı ikili tabloda
+    # bir kez geçer, çünkü tek = 15 − cift − kapali ile belirlenir.
+    satilan: dict[tuple[int, int], tuple[int, float]] = {
+        (s.cift, s.kapali): (s.kolon, s.tl)
+        for s in _sistem.sekiller(g, yol=yol) if s.tek + s.cift + s.kapali == n
+    }
+    if not satilan:
+        return None
+
+    # Kesin budama: bir durumdan ileride yalnızca çifte/üçlü ARTAR, yani
+    # ulaşılabilir şekillerin en ucuzu bütçeyi aşıyorsa dal ölüdür.
+    # Formülle değil tabloyla çalıştığımız için alt sınır de tablodan gelir.
+    alt_sinir: dict[tuple[int, int], float] = {}
+    for a in range(n + 1):
+        for b in range(n + 1 - a):
+            uygun = [tl for (c, k), (_, tl) in satilan.items()
+                     if c >= a and k >= b]
+            if uygun:
+                alt_sinir[(a, b)] = min(uygun)
+
+    sirali = [_sirali(p) for p in probs_listesi]
+    q_seviye = [[max(0.0, 1.0 - sum(v for _, v in s[:k])) for k in (1, 2, 3)]
+                for s in sirali]
+
+    baslangic: tuple[float, ...] = tuple([1.0] * (esik + 1))
+    durumlar: dict[tuple[int, int], list[tuple[tuple[float, ...], tuple[int, ...]]]] = {
+        (0, 0): [(baslangic, ())],
+    }
+
+    for i in range(n):
+        yeni: dict[tuple[int, int], list[tuple[tuple[float, ...], tuple[int, ...]]]] = {}
+        for (a, b), kume in durumlar.items():
+            for seviye in (1, 2, 3):
+                ya, yb = a + (seviye == 2), b + (seviye == 3)
+                tl = alt_sinir.get((ya, yb))
+                if tl is None or tl > butce_tl:
+                    continue
+                qq = q_seviye[i][seviye - 1]
+                for kumulatif, izlek in kume:
+                    guncel = [kumulatif[0] * (1.0 - qq)]
+                    for m in range(1, esik + 1):
+                        guncel.append(kumulatif[m] * (1.0 - qq)
+                                      + kumulatif[m - 1] * qq)
+                    yeni.setdefault((ya, yb), []).append(
+                        (tuple(guncel), (*izlek, seviye)))
+        durumlar = {k: _pareto(v) for k, v in yeni.items()}
+        if not durumlar:
+            return None
+
+    en: tuple[float, float, int, tuple[int, ...]] | None = None
+    for (a, b), kume in durumlar.items():
+        sek = satilan.get((a, b))
+        if sek is None:
+            continue
+        kolon, tl = sek
+        if tl > butce_tl:
+            continue
+        for kumulatif, izlek in kume:
+            # Eşitlikte UCUZ olan kazanır — `en_iyi_secim` ile aynı kural.
+            if en is None or (kumulatif[esik], -tl) > (en[0], -en[1]):
+                en = (kumulatif[esik], tl, kolon, izlek)
+    if en is None:
+        return None
+
+    p_hedef, _tl, kolon, izlek = en
+    secimler = [sirala_semboller([s for s, _ in sirali[i][:izlek[i]]])
+                for i in range(n)]
+    return Secim(
+        secimler=secimler,
+        bedel=kolon,
+        p_hedef=p_hedef,
+        banko=sum(1 for s in secimler if len(s) == 1),
+        cift=sum(1 for s in secimler if len(s) == 2),
+        uclu=sum(1 for s in secimler if len(s) == 3),
+    )

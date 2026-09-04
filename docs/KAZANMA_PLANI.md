@@ -183,6 +183,56 @@ kolon) §5.2'nin karşılık gelen satırı zaten **medyan %0** diyordu — tipi
 hiçbir şey döndürmüyor. **Faz S'nin sınavı bu sıfırı kımıldatıp
 kımıldatamadığıdır.**
 
+### 0.1b Bedel artık formülden değil **tablodan** — ✅ yapıldı
+
+`secim.bedel_hesapla` bedeli `2^çifte · 3^üçlü / 8` diye hesaplıyordu. Formül
+yanlış değil ama **dar**: yalnızca `core.solve_fix16`ın (Hamming(7,4)) bedeli,
+en az yedi çifte şartıyla ve **tek** garanti seviyesinde.
+
+Oynanan ürün o değil. Satıcının fiyat tablosu **84 şeklin tamamını** ve **üç
+garanti seviyesini** taşıyor. Tablo `data/sistem_fiyat/st_extra.json`e birebir
+girildi (elle girilen kayıt sınıfı) ve `spor_toto/sistem.py` onu okuyor.
+
+**Tablo, kolon bedelinin üçüncü bağımsız teyidi.** 250 fiyatın 250'si de ₺10'un
+tam katı — yani kolon sayısı her satırda tamsayı. Üç köken: `getiri.KOLON_BEDELI`
+(ST EXTRA kupon ekranı) · kullanıcının bayi beyanı · tablonun kendi aritmetiği.
+
+**Garanti artık kaçak eşiğini belirliyor.** `G`-garanti *"doğru sonuç kümedeyse
+en az bir kolon en fazla `15 − G` hatalı"* demektir; `k` maç dışarıda kalırsa
+
+    en iyi kolon ≥ (15 − k) − (15 − G) = G − k
+
+`P(en iyi kolon ≥ 12)` için `k ≤ G − 12`, yani **14G → k≤2 · 13G → k≤1 ·
+12G → k≤0**. `secim.VARSAYILAN_KACAK_ESIGI = 2` bu ailenin tek bir üyesiydi;
+artık `sistem.kacak_esigi(garanti)` üçünü de veriyor.
+
+`secim.sistem_secimi()` bütçeyi **TL** alır, adayları tablodan çeker (yedi çifte
+şartı yok — tabloda sıfır çifteli satırlar da satılıyor) ve eşiği garantiden
+türetir. `en_iyi_secim` yerinde duruyor: yayımlanmış bütün ölçümler ona bağlı ve
+kayıt geriye dönük yeniden yazılmaz.
+
+#### Ve ölçüldü: 13G ile 14G ayırt edilemiyor
+
+114 tam kupon haftasında (4 sezon), aynı bütçede, aynı olasılıklarla:
+
+| bütçe | 13G | 14G | 12G |
+|---|---:|---:|---:|
+| 1.000 TL | 34/114 (%29,8) | **36/114 (%31,6)** | 18/114 (%15,8) |
+| 2.000 TL | 44/114 (%38,6) | **47/114 (%41,2)** | 30/114 (%26,3) |
+| 3.000 TL | **52/114 (%45,6)** | 49/114 (%43,0) | 31/114 (%27,2) |
+
+*(gerçekleşen `P(en iyi kolon ≥ 12)`; hafta düzeyinde eşleştirilmiş)*
+
+13G − 14G farkının hafta düzeyinde bootstrap %95 aralığı **beş bütçenin beşinde
+de sıfırı kesiyor** (1.000: [−0,088, +0,053] … 3.000: [−0,044, +0,096]). Yani
+**13-garanti ölçülebilir biçimde daha kötü değil**; 3.000 TL'de nominal olarak
+önde ama fark gürültü içinde. 12-garanti ise üç bütçede de **açık ara kötü** —
+`k ≤ 0` şartı hiç kaçak affetmiyor.
+
+Karar: varsayılan **13G** (`sistem.VARSAYILAN_GARANTI`), çünkü oynanan bu ve
+ölçüm onu dışlamıyor. Faz S bu üç seviyeyi `E[TL]` altında yeniden yarıştırır —
+bugünkü ölçü `P(k ≤ eşik)`, para değil.
+
 ### 0.2 Otuz iki anormal haftayı kapıya bağla — `KADEME_OLASILIKLARI.md` §8
 
 223 haftanın **32'sinde** 12. kademe kazanan sayısı medyanın (41.516) onda
@@ -534,7 +584,7 @@ ekler; öngörülen ile gerçekleşen yan yana durur.
 |---|---|
 | Yeni model ailesi aramak | On bir ölçüm var ve tavan ölçüldü (§3.23). F2 bir model değil bir **fiyattır** |
 | Kaplama ekseni | Hamming(7,4) mükemmel kod; optimallik kanıtlı. Bir optimum yenilemez |
-| **13-garanti (yarıçap-2 kaplama kodu) motora eklemek** | Kullanıcı kararı (2026-09-04): 13-garanti başka bir yerden oynanıyor. Motor 14-garantide kalır ve `secim.VARSAYILAN_KACAK_ESIGI = 2` de bu aritmetikten türediği için değişmez. Risk 4'te not düşüldü |
+| **Yarıçap-2 kaplama kodu ÜRETMEK** | Gerekmiyor: 13-garanti ST EXTRA'da oynanıyor ve fiyat tablosu bedeli zaten veriyor (§3.0). Motorun işi kolon üretmek değil **şekle karar vermek**; sütun üretimini satıcı yapıyor. `core.py` yarıçap 1'de kalır |
 | Arayüz / uygulama / güvenlik | Bu planın kapsamı dışı. Tek istisna 0.3'ün H1/H2'sidir, çünkü **canlı karneyi kirletiyor** |
 | Ölçülmemiş bir üstünlüğü karneye ya da arayüze yazmak | Doktrinin değişmeyen kuralı. Süslenmiş bir olasılık, süslenmemiş bir yalandır |
 | Otomatik erişime kapalı kaynaktan veri çekmek | Hukuki; §7'de tek tek denetlendi ve bu planda değişmedi |

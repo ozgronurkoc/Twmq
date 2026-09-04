@@ -946,6 +946,7 @@ backend/
     kosum.py           Olcum kosum defteri (--kaydet) — surumlenmez
     benzer.py          "Bu oranda geçmişte ne oldu" = /api/benzer
     secim.py           KUPON: işaretleri HEDEFE göre seçer — eşiğe göre değil
+    sistem.py          KUPON: indirgenmiş sistem BEDELİ — formülden değil satıcı tablosundan
     havuz.py           HAVUZ: resmî ikramiye tablosundan havuzu ve devri geri hesaplar
     skor.py            ÖLÇÜM: Asya handikabı + alt/üst 2.5 → skor dağılımı → 1X2 (A6)
     kuyruk.py          ÖLÇÜM: hafta içi bağımlılık ve kuyruk etkisi — P(k≥12) iyimser mi (§4.1)
@@ -984,7 +985,7 @@ backend/
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
                        sehir/ · xg/
-  tests/               pytest (65 dosya → 1.960 test; §9'da katman dökümü)
+  tests/               pytest (66 dosya → 1.970 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1187,8 +1188,8 @@ Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant'lar, CLI (Bayes pre
 dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri test,
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
-eşleme, ikinci kayıt). **65 test dosyası, parametrizasyonla
-1.960 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+eşleme, ikinci kayıt). **66 test dosyası, parametrizasyonla
+1.970 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
@@ -1201,6 +1202,7 @@ karşı denetler):
 | Süper Toto | `super_toto` `degerlendir` | 93 |
 | 2. Tahmin (kalabalık ayarı · bağımsız görüş) | `tahmin2` | 35 |
 | Karar katmanı | `secim` | 21 |
+| Sistem fiyat tablosu (bedel + garanti) | **`sistem`** | 10 |
 | Skor türetme | `skor` | 17 |
 | Beraberlik düzeltmesi | `beraberlik` | 19 |
 | İddaa hazırlığı | `iddaa_hazirlik` | 24 |
