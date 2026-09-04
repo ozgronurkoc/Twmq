@@ -766,6 +766,70 @@ yeni değil: §5.1'in A5 satırı aynı olguyu ölçmüştü (*"piyasanın %70�
 dediği maçlar gerçekte %78,9, n=1.702"*). Yani sapma seçimin ürettiği bir
 şey değil, favori–sürpriz yanlılığının kupon kesitindeki izdüşümü.
 
+### Faz B canlı oldu — ve tavan üçüncü kez düzeldi, aşağı ✅
+
+**Kullanıcı cevabı (2026-09-04): oynanma yüzdeleri kupon kapanmadan
+görülebiliyor.** Bu, tavan ölçümünün varsaydığı eşzamanlı bilgiyi gerçek
+kılıyor ve ekseni canlı hâle getiriyor.
+
+#### Önce bir engel kalktı: kademe havuzu karar anında biliniyor
+
+Tavan hesabı gerçek ikramiye tablosunu kullanıyordu, o da kupon kapanırken
+yok. Ama `E[TL]`'nin argmax'ı havuzun **ölçeğine** değil kademeler arası
+**oranına** bağlı — bütün kademeleri aynı katsayıyla çarpmak `E[TL]`'yi
+aynı katsayıyla çarpar. O oran `havuz.BOLUSUM` (222 haftada ölçülmüş kural,
+13/12 = 0,800). Sınandı: gerçek tabloyla ve `BOLUSUM` oranlarıyla optimize
+edilen kupon **üç haftanın üçünde de birebir aynı**.
+
+#### Sonra kurucu yazıldı — ve ilk hâli tuzağa düştü
+
+`secim.getiri_secim` şekli sabit tutup sembolleri `E[TL]`'ye göre arıyor.
+Kısıtsız ilk sürüm 2. haftada `E[TL]`'yi **3,01 kat** büyüttü ama:
+
+| | taban | kısıtsız ayar |
+|---|---:|---:|
+| `P(k≤1)` | 0,2194 | **0,0073** (−%96,7) |
+| gerçekleşen kaçak | 1 | **3** |
+| gerçekleşen ödül | **1.439 TL** | **0 TL** |
+
+Sebep yapısal: `pay_beklentisi` küçük `q`'da `1/(N·q)` gibi patlıyor, yani
+kısıtsız beklenen değer **neredeyse hiç gerçekleşmeyen ama gerçekleşirse
+çok büyük** bir dalı seçiyor. Ağır kuyruklu bir ödemede beklenen değeri tek
+başına enbüyüklemek, iyi olmakla aynı şey değil.
+
+`GETIRI_KAYIP_TAVANI = 0,05` eklendi: `P` tabanın %95'inin altına inemez.
+
+#### Ve kısıtla birlikte kazanç **sıfır**
+
+2026/27'nin üç sonuçlanmış haftasında, gerçekleşen ödülle:
+
+| kayıp tavanı | değişen maç | E[TL] kat | gerçekleşen ödül | taban | fark |
+|---:|---:|---:|---:|---:|---:|
+| 0,00–0,25 | ≤1 | 1,001× | 2.668 | 2.668 | **+0** |
+| 0,50 | 2 | 1,020× | 2.668 | 2.668 | **+0** |
+| 0,95 (kısıtsız) | 5 | 1,476× | 1.230 | 2.668 | **−1.439** |
+
+**Makul her kısıtta kalabalık ayarı hiçbir şey kazandırmıyor; kısıtsızken
+para kaybettiriyor.** `n = 3`.
+
+#### Tavan ölçümünün düzeltme zinciri — üçü de kayda geçti
+
+Bu eksen üç kez cazip bir sayı üretti ve üçünde de sayı incelendiğinde
+eridi. Zincirin kendisi bir bulgudur:
+
+| # | ölçüm | sonuç | niçin düştü |
+|---|---|---:|---|
+| 1 | ilk tavan | 2,63× | kademe havuzları **elle yazılmıştı** (13/12 = 10,0; gerçek 0,800) |
+| 2 | düzeltilmiş tavan | 1,003× | doğru havuzlarla, ama **kısıtsız** optimizasyon |
+| 3 | kısıtlı + gerçekleşen | **+0 TL** | tek büyük sayı (3,01×) tam da **kaybeden** haftadan geliyordu |
+
+`getiri_secim` `hafta_kos.py --oncesi`'nde **varsayılan değil, ayrı** bir
+satır olarak gösteriliyor ve çıktısı bu ölçümü her koşumda tekrarlıyor.
+
+**Faz B'nin bugünkü cevabı:** eksen artık *"veri yok"* diye değil,
+*"veri var, ölçüldü, kazanç görünmüyor"* diye duruyor — ve `n = 3` olduğu
+için kapalı da değil. Karne biriktikçe yeniden ölçülür.
+
 ### 0.2 Otuz iki anormal haftayı kapıya bağla — `KADEME_OLASILIKLARI.md` §8
 
 223 haftanın **32'sinde** 12. kademe kazanan sayısı medyanın (41.516) onda

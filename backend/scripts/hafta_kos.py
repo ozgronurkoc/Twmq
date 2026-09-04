@@ -34,7 +34,12 @@ from typing import Any
 KOK = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(KOK))
 
-from spor_toto.karne import CANLI_KOK, RAKIP_KOLON, canli_karne_satiri
+from spor_toto.karne import (
+    CANLI_KOK,
+    RAKIP_KOLON,
+    canli_hafta,
+    canli_karne_satiri,
+)
 from spor_toto.sistem import VARSAYILAN_GARANTI, kacak_esigi
 
 #: Karnenin yazıldığı yer.
@@ -174,6 +179,44 @@ def _main(argv: list[str] | None = None) -> int:
         print("\n  kupon:")
         for i, x in enumerate(r["picks"], 1):
             print(f"    {i:>2}. {x}")
+
+        # Kalabalik ayari AYRI gosterilir, varsayilan DEGIL: olculdugunde
+        # makul her kisitta kazanci sifir cikti (docs Faz B).
+        h = canli_hafta(sezon, hafta)
+        if h and h["play"]:
+            from spor_toto.getiri import beklenen_tl
+            from spor_toto.havuz import BOLUSUM
+            from spor_toto.secim import (
+                GETIRI_KAYIP_TAVANI,
+                getiri_secim,
+                sistem_secimi,
+            )
+            taban = sistem_secimi(h["probs"], a.butce, garanti=a.garanti)
+            ayar = getiri_secim(h["probs"], h["play"], a.butce,
+                                garanti=a.garanti)
+            if taban is not None and ayar is not None:
+                degisen = [i for i, (x, y) in enumerate(
+                    zip(taban.secimler, ayar.secimler), 1) if set(x) != set(y)]
+                hv = {k: BOLUSUM[k] * 1e7
+                      for k in range(12, a.garanti + 1) if k in BOLUSUM}
+                e0 = beklenen_tl(h["probs"], h["play"], taban.secimler, {},
+                                 hv, a.garanti, RAKIP_KOLON)
+                e1 = beklenen_tl(h["probs"], h["play"], ayar.secimler, {},
+                                 hv, a.garanti, RAKIP_KOLON)
+                print(f"\n  kalabalik ayari (kayip tavani "
+                      f"{GETIRI_KAYIP_TAVANI:.0%}) — VARSAYILAN DEGIL:")
+                print(f"    degisen mac : {len(degisen)}"
+                      f"{' (' + ', '.join(map(str, degisen)) + '. mac)' if degisen else ''}")
+                print(f"    P(hedef)    : {taban.p_hedef:.4f} -> "
+                      f"{ayar.p_hedef:.4f}")
+                print(f"    E[TL] kat   : {e1 / e0:.3f}x" if e0 else "")
+                if degisen:
+                    print("    ayarli kupon:")
+                    for i in degisen:
+                        print(f"      {i:>2}. {''.join(taban.secimler[i-1])}"
+                              f"  ->  {''.join(ayar.secimler[i-1])}")
+                print("    NOT: uc sonuclanmis haftada gerceklesen kazanc "
+                      "SIFIR; kisitsiz arama para kaybettiriyor (docs Faz B).")
         return 0
 
     metin = karne_metni(a.sezon, a.butce, a.garanti)

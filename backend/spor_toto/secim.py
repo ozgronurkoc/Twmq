@@ -739,3 +739,141 @@ def sistem_secimi(probs_listesi: list[dict[str, float]],
         cift=sum(1 for s in secimler if len(s) == 2),
         uclu=sum(1 for s in secimler if len(s) == 3),
     )
+
+
+# ─── kalabalığa göre E[TL] seçimi — kupon KAPANMADAN ─────────────────────
+
+#: Yerel aramanın en çok kaç tur döneceği. Ölçümde üçüncü turda hiçbir
+#: hafta değişmedi; sınır güvenlik supabı.
+GETIRI_TUR_SINIRI = 3
+
+
+#: `getiri_secim`in `P(k ≤ eşik)`'ten vazgeçebileceği EN ÇOK oran.
+#:
+#: **Bu kısıt bir kez kaldırıldı ve ölçüm onu geri getirdi.** Kısıtsız
+#: `E[TL]` enbüyüklemesi 2026/27 2. haftada `E[TL]`'yi 3,01 kat büyütürken
+#: `P(k≤1)`'i **0,2194 → 0,0073**'e (−%96,7) düşürdü; gerçekleşen sonuçta
+#: kaçak 1'den 3'e çıktı ve **1.439 TL'lik ödül sıfıra indi**.
+#:
+#: Sebep yapısal: `pay_beklentisi` çok küçük `q`'da `1/(N·q)` gibi patlıyor,
+#: dolayısıyla kısıtsız beklenen değer, neredeyse hiç gerçekleşmeyen ama
+#: gerçekleşirse çok büyük olan bir dalı seçiyor. Ağır kuyruklu bir ödemede
+#: beklenen değeri tek başına enbüyüklemek, iyi olmakla aynı şey değildir.
+#:
+#: Varsayılan temkinli: `P` tabanın **%95'inin altına inemez**. Bu bir
+#: ölçüm değil **harcama kararıdır** ve öyle etiketlenir — optimalini
+#: söyleyecek `n` yok (elde üç sonuçlanmış hafta var).
+GETIRI_KAYIP_TAVANI = 0.05
+
+
+def getiri_secim(probs_listesi: list[dict[str, float]],
+                 oynanma_listesi: list[dict[str, float]],
+                 butce_tl: float,
+                 garanti: int | None = None,
+                 rakip_kolon: int | None = None,
+                 kademe_havuzu: dict[int, float] | None = None,
+                 kayip_tavani: float = GETIRI_KAYIP_TAVANI,
+                 yol: str | None = None) -> Secim | None:
+    """`E[TL]`'yi enbüyükleyen işaret planı — **kayıtlı oynanma paylarıyla.**
+
+    ─── Niçin `kalabalik_ayari` yetmiyor ────────────────────────────────
+
+    `kalabalik_ayari` `küme-içi / kalabalık-içi` **oranını** enbüyüklüyor ve
+    hedefi bir bütçeyle koruyor. O amaç, ölçülen monoton kalabalık modeliyle
+    (`kalabalik.OLCULEN`) hiçbir maçı değiştirmiyor — kayıp bütçesi 0,70'e
+    kadar tarandı, `VARSAYILAN_KAYIP_ORANI` künyesinde. Sebebi yapısal:
+    `o ∝ p^λ` sembol sıralamasını koruyor.
+
+    Kayıtlı oynanma payları **monoton değil**: 60 maçın 21'inde kalabalığın
+    sıralaması piyasanınkinden farklı. Kenar oradadır ve onu görmek için
+    amacın oran değil doğrudan `E[TL]` olması gerekir.
+
+    ─── Şekil SABİT, yalnızca semboller değişir ─────────────────────────
+
+    İşaret sayıları kuponun bedelini belirler; sabit tutulunca arama
+    **bedava**dır: aynı kolon, aynı satır, aynı bütçe. `kalabalik_ayari`nın
+    gerekçesi aynen geçerli — bütçeyi de oynatmak iki ayrı kararı tek adımda
+    karıştırırdı.
+
+    ─── Kademe havuzu KARAR ANINDA biliniyor ────────────────────────────
+
+    `E[TL]`'nin argmax'ı havuzun **ölçeğine** değil kademeler arası
+    **oranına** bağlıdır (bütün kademeleri aynı katsayıyla çarpmak `E[TL]`'yi
+    aynı katsayıyla çarpar). O oran `havuz.BOLUSUM`'dur ve 222 haftada
+    ölçülmüş bir kuraldır — yani kupon kapanmadan **bilinir**. Ölçüldü:
+    gerçek ikramiye tablosuyla ve `BOLUSUM` oranlarıyla optimize edilen
+    kupon üç haftanın üçünde de **birebir aynı** çıktı.
+
+    `None` döner ancak bütçeye şekil sığmıyorsa.
+    """
+    from .getiri import beklenen_tl
+    from .havuz import BOLUSUM
+    from .sistem import HEDEF_KADEME, VARSAYILAN_GARANTI
+
+    g = VARSAYILAN_GARANTI if garanti is None else garanti
+    taban = sistem_secimi(probs_listesi, butce_tl, garanti=g, yol=yol)
+    if taban is None:
+        return None
+    if len(oynanma_listesi) != len(probs_listesi):
+        raise ValueError("oynanma ve olasilik listeleri ayni uzunlukta olmali")
+
+    # Olcek keyfi: yalnizca ORAN onemli (docstring).
+    havuz = kademe_havuzu or {k: BOLUSUM[k] * 1e7
+                              for k in range(HEDEF_KADEME, g + 1)
+                              if k in BOLUSUM}
+    n_rakip = rakip_kolon if rakip_kolon is not None else _RAKIP_KOLON
+
+    if not 0.0 <= kayip_tavani < 1.0:
+        raise ValueError("kayip_tavani [0, 1) araliginda olmali")
+    esik = g - HEDEF_KADEME
+    p_alt = hedef_olasiligi(probs_listesi, taban.secimler,
+                            esik) * (1.0 - kayip_tavani)
+
+    secimler = [list(x) for x in taban.secimler]
+    en_iyi = beklenen_tl(probs_listesi, oynanma_listesi, secimler, {},
+                         havuz, g, n_rakip)
+    for _ in range(GETIRI_TUR_SINIRI):
+        gelisti = False
+        for i, mevcut in enumerate(secimler):
+            k = len(mevcut)
+            for aday in _kombinasyonlar(k):
+                if set(aday) == set(mevcut):
+                    continue
+                yedek = secimler[i]
+                secimler[i] = sirala_semboller(list(aday))
+                # KISIT ONCE: hedefi tavanin otesinde harcayan hicbir
+                # degisim, E[TL] ne kadar buyurse buyusun kabul edilmez.
+                if hedef_olasiligi(probs_listesi, secimler, esik) < p_alt:
+                    secimler[i] = yedek
+                    continue
+                v = beklenen_tl(probs_listesi, oynanma_listesi, secimler, {},
+                                havuz, g, n_rakip)
+                if v > en_iyi * (1.0 + 1e-9):
+                    en_iyi = v
+                    gelisti = True
+                else:
+                    secimler[i] = yedek
+        if not gelisti:
+            break
+
+    return Secim(
+        secimler=secimler,
+        bedel=taban.bedel,
+        p_hedef=hedef_olasiligi(probs_listesi, secimler, esik),
+        banko=sum(1 for x in secimler if len(x) == 1),
+        cift=sum(1 for x in secimler if len(x) == 2),
+        uclu=sum(1 for x in secimler if len(x) == 3),
+    )
+
+
+def _kombinasyonlar(k: int) -> list[tuple[str, ...]]:
+    """`k` boyutlu bütün sembol kümeleri — şekli bozmadan aday üretir."""
+    from itertools import combinations
+
+    return list(combinations(SEMBOLLER, k))
+
+
+#: `getiri_secim`in varsayılan rakip kolon sayısı — `karne.RAKIP_KOLON` ile
+#: aynı gerekçe ve aynı sayı; döngüsel import olmasın diye burada da yazılı
+#: ve bekçisi `test_rakip_kolon_TEK_sayi`.
+_RAKIP_KOLON = 15_000_000

@@ -2,7 +2,7 @@
  "sayilar": [
   {
    "ne": "suit test sayisi (eksiksiz kurulum)",
-   "deger": "2.022",
+   "deger": "2.027",
    "ureten": "cd backend && pytest -p no:randomly -n0 --collect-only -q  # dosya basi toplami",
    "olculdu": "2026-09-04",
    "anildigi_yerler": [
@@ -330,7 +330,7 @@
     "docs/KAZANMA_PLANI.md Faz S"
    ],
    "bekci": "-",
-   "not": "Medyan kat. n=3 hafta; ikisinde kazanc yok, biri 3,013x. ILK OLCUM 2,63x cikmisti ve YANLISTI — kademe bolusumu elle yazilmisti. Tavan ayrica mukemmel eszamanli bilgi varsayar: gecen haftanin payiyla 0,660x."
+   "not": "UCUNCU KEZ DUZELTILDI. (1) ilk olcum 2,63x — kademe havuzlari elle yazilmisti. (2) duzeltilmis 1,003x — dogru havuzlar ama KISITSIZ optimizasyon. (3) kisitli olcum: uc sonuclanmis haftada gerceklesen kazanc SIFIR; kisitsiz arama 1.439 TL kaybettiriyor cunku tek buyuk sayi (3,01x) tam da kaybeden haftadan geliyordu. n=3."
   },
   {
    "ne": "haftalik geri donus P(zarar) — olculen kolon bedeliyle (₺10)",
@@ -388,6 +388,17 @@
    ],
    "bekci": "backend/tests/test_secim_kalibrasyonu.py::test_kupon_kurali_kalibrasyonu_BOZMUYOR",
    "not": "114 hafta, 13G, 2.000 TL. Hafta duzeyinde bootstrap %95 [-0,0506, +0,0414] — sifiri kesiyor, yani kupon kurali kalibrasyonu BOZMUYOR. §3.49'un ters secimi gercek ama 'model' kuralina (p_model - p_piyasa > esik) ait."
+  },
+  {
+   "ne": "kalabalik ayarinin gerceklesen kazanci (makul kisitta)",
+   "deger": "0",
+   "ureten": "cd backend && python scripts/hafta_kos.py --oncesi 2026_27 2",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md"
+   ],
+   "bekci": "backend/tests/test_secim.py::test_KISITSIZ_arama_hedefi_yok_edebilir",
+   "not": "TL. Uc sonuclanmis hafta, 13G, 2.000 TL. Kayip tavani 0,00-0,50 araliginda gerceklesen odul tabanla AYNI (2.668 TL); 0,95'te 1.230 TL, yani 1.439 TL kayip. n=3."
   }
  ],
  "komutlar": [
