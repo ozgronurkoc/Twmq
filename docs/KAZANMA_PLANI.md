@@ -1185,3 +1185,184 @@ ekler; öngörülen ile gerçekleşen yan yana durur.
 | Arayüz / uygulama / güvenlik | Bu planın kapsamı dışı. Tek istisna 0.3'ün H1/H2'sidir, çünkü **canlı karneyi kirletiyor** |
 | Ölçülmemiş bir üstünlüğü karneye ya da arayüze yazmak | Doktrinin değişmeyen kuralı. Süslenmiş bir olasılık, süslenmemiş bir yalandır |
 | Otomatik erişime kapalı kaynaktan veri çekmek | Hukuki; §7'de tek tek denetlendi ve bu planda değişmedi |
+
+
+---
+
+# İkinci tur — altı hafta
+
+> Birinci turun kod tarafı bitti: on madde ölçülerek kapandı, ikisi geçti
+> (kalabalık modeli · Betfair Exchange). Bu bölüm **ondan sonra ne
+> yapılacağını** yazar ve tek bir ölçümün üstüne kurulur.
+
+## Neden yeni bir tura ihtiyaç var: hedef yanlış kademeyi gösteriyor olabilir
+
+Karne kurulunca şu aritmetik göründü (114 hafta, ödül medyanları):
+
+| garanti | bütçe | maliyet | 12 bilen | 13 bilen | **başabaş kademe** |
+|---|---:|---:|---:|---:|---:|
+| 13G | 1.000 TL | 810 | 288 | 2.027 | **13** |
+| 13G | 2.000 TL | 1.620 | 288 | 2.027 | **13** |
+| 13G | 3.000 TL | 2.880 | 288 | 2.027 | **14+** |
+| 14G | 2.000 TL | 1.680 | 288 | 2.027 | **13** |
+
+Ve gerçekleşen karne bunu doğruluyor: 2. hafta 12 tutturdu ve **−181 TL**,
+3. hafta 12 tutturdu ve **−390 TL**. **Tutturmak yetmiyor.**
+
+Oysa `secim` bugün `P(en iyi kolon ≥ 12)`'yi enbüyüklüyor. O hedef §5.2
+bulgu 1'den geliyordu — *"14 hiçbir zaman ulaşılabilir hedef değildi; doğru
+ölçü P(k ≥ 12), ikramiye 12'den başlıyor"* — ve gerekçesi **ulaşılabilirlik**
+idi, **kârlılık** değil. İkramiye 12'den başlıyor ama 12 kuponu ödemiyor.
+
+**Ama bu henüz kanıt değil**, çünkü sayı **garanti tabanına** dayanıyor: bir
+kolon, `G−k` kademesinde. Gerçek bir 162 kolonluk sistem 12'yi birden çok
+kolonla tutar ve karne onları saymaz. Yani doğru cümle şu: *hedefin yanlış
+kademeyi gösterip göstermediği, tabanın ne kadar gevşek olduğuna bağlı — ve
+onu bilmiyoruz.*
+
+**İkinci turun omurgası bu belirsizliği kapatmak ve hedefi paradan yeniden
+türetmektir.**
+
+---
+
+## E1 — Gerçek kolon dağılımı: tabanın gevşekliğini ölç (1. hafta)
+
+**Bu turun tek ön koşulu ve tek dış girdisi.** Oynadığınız kuponun ST EXTRA
+fişi kademe başına **kaç kolonunuzun kazandığını** gösteriyor. Karne bugün
+o sayıyı bilmiyor ve yerine garantinin verdiği **1**'i koyuyor.
+
+| | |
+|---|---|
+| **Sizden** | Oynanan haftanın fişinden kademe başına kazanan **kolon adediniz** (ör. `13: 0, 12: 7`) |
+| **Kod** | Hafta yükü şemasına `kupon_sonuc` alanı; `karne` tabanla **birlikte** gerçekleşeni de yazar |
+| **Ölçü** | Çokluk `m_k` = gerçek kolon / tabanın 1'i, kademe kademe |
+| **Durma kuralı** | Yok — bu bir ölçüm değil **kalibrasyon**; iki fiş bile tabanın mertebesini verir |
+
+**Neyi açar:** (a) karnenin gerçek ROI'si, (b) 13G ↔ 14G para
+karşılaştırması — bugün taban 15,1 kat yüksek garantiyi kayırdığı için
+**yapılamıyor** (§3.51), (c) E2'nin cevabı.
+
+---
+
+## E2 — Hedefi paradan türet (2.–3. hafta)
+
+`sistem.kacak_esigi(garanti, kademe)` zaten iki parametreli; `kademe`
+sabit **12** yazılı. E1'in çokluğu gelince doğru kademe **ölçülerek**
+seçilir.
+
+| adım | iş |
+|---|---|
+| E2a | Her `(garanti, bütçe)` için başabaş kademeyi çokluk düzeltmesiyle hesapla |
+| E2b | `secim`i hedef kademeye göre koştur (13G'de `kademe=13` → `k ≤ 0`) |
+| E2c | 114 hafta × gerçek ikramiye tablosu ile **gerçekleşen TL**'de karşılaştır |
+
+**Durma kuralı (önceden):** hafta düzeyinde eşleştirilmiş bootstrap %95
+aralığı, `kademe=13` − `kademe=12` farkında sıfırı kesmiyorsa hedef
+değişir; kesiyorsa **12 kalır** ve bu bölüm *"ölçüldü, fark yok"* diye
+kapanır. Ayrıca `KADEME §5.3(c)`: en iyi 5 hafta çıkarıldığında da aynı yön.
+
+**Beklenti dürüstçe:** `k ≤ 0` çok daha zor bir hedef. Kupon büyük
+olasılıkla daralacak ve tutturma olasılığı düşecek. Soru *"daha çok mu
+kazanır"* değil, ***"daha az mı kaybeder"***.
+
+---
+
+## E3 — Betfair Exchange'i omurgaya bağla (4. hafta)
+
+F2 geçti ama omurga hâlâ `Avg` kullanıyor. İki gerekçe var ve ikisi de
+ölçülmeli:
+
+* **Brier −0,00100** — kupon için önemsiz (§3.19: karar katmanının +6,02
+  puanı için tahmin tarafında ~0,10 Brier gerekirdi).
+* **Marj %0,62 ↔ %6,15** — asıl fark burada olabilir: arındırma ne kadar az
+  müdahale ederse olasılık o kadar az bozulur. Bu **Brier'de görünmeyen**
+  bir etkidir ve kupon şeklini değiştirebilir.
+
+| | |
+|---|---|
+| **Kesit** | 2024/25 (%100 kapsama) + 2025/26 (%87) — BFE'nin var olduğu iki sezon |
+| **Ölçü** | Brier değil **kupon düzeyi**: kolon sayısı, `P(hedef)`, gerçekleşen TL |
+| **Durma kuralı** | Gerçekleşen TL farkında hafta bootstrap'i sıfırı kesiyorsa omurga `Avg` kalır |
+
+**Ve bir kayıt kuralı:** geri testin bütün yayımlanmış sayıları `Avg`
+ölçeğinde. Omurga değişirse `odds.py:162-164` kalıbı uygulanır — eski
+sayılar ölçek notuyla yerinde bırakılır.
+
+---
+
+## E4 — Sütun arayışının son denemesi: hakem (5. hafta)
+
+§3.24'ün teşhisi netti: *"sorun satır sayısı değil sütun."* Korpus
+football-data'dan yalnızca şut ve korneri alıyor. Alınmayan ve **hukuken
+açık** sütunlar: ilk yarı skoru, faul, kart, ve **hakem**.
+
+Hakem tek gerçekten yeni sütun ailesi: ev sahibi yanlılığı ve kart eğilimi
+takımdan bağımsız bir değişken.
+
+| | |
+|---|---|
+| **Önsel** | **Düşük.** On bir aile geçemedi ve LOFO hiçbir özelliğin taşımadığını ölçtü |
+| **Niçin yine de** | Model sorusu kapatıldı, **sütun sorusu kapatılmadı**. Bu onu aynı biçimde kapatır |
+| **Ölçü** | `arena`ya `kalibre_hakem` ailesi, sezon dışarıda bırakmalı, **Holm ile** |
+| **Durma kuralı** | Geçmezse **sütun ekseni kapanır** ve §7'ye *"denendi, geçmedi"* diye yazılır |
+
+Tek deneme. Geçmezse liste uzatılmaz — bu, birinci turun on bir ölçümüyle
+aynı disiplin.
+
+---
+
+## E5 — Haftalık birikim (altı hafta boyunca)
+
+Değişmedi ve **planın satın alınamayan tek parçası**:
+
+```bash
+python scripts/hafta_kos.py --oncesi  2026_27 <hafta>   # kupon
+python scripts/hafta_kos.py --sonrasi --yaz             # karne
+```
+
+Her hafta: bülten + oran + **oynanma payı** + sonuç + ikramiye tablosu +
+**(yeni) fişten kolon dağılımı**. `n` 3 → 9 olur.
+
+**Neyi açar:** Faz B'nin cevabı (bugün `n=3` ile *"kazanç görünmüyor"*),
+`getiri_secim`in yeniden ölçümü, iddaa ekseninin 45 haftalık eşiğine
+yaklaşma.
+
+---
+
+## Dokunulacak dosyalar
+
+| Faz | Dosya | İş |
+|---|---|---|
+| E1 | `spor_toto/karne.py` · hafta yükü şeması | `kupon_sonuc` + çokluk ölçümü |
+| E2 | `spor_toto/sistem.py` · `spor_toto/secim.py` | hedef kademe parametresi ölçülerek seçilir |
+| E2 | `spor_toto/karne.py` | 114 hafta × gerçekleşen TL karşılaştırması |
+| E3 | `spor_toto/odds.py` · `spor_toto/fiyatlar.py` | BFE omurga adayı, kupon düzeyi ölçüm |
+| E4 | `scripts/build_egitim.py` · `spor_toto/disari.py` · `spor_toto/arena.py` | hakem sütunu + aile |
+| E5 | — | veri girişi |
+
+## Doğrulama
+
+Her fazın sonunda **`bash scripts/check.sh`** — tamamı, parça değil.
+Birinci turda iki eksiği (bayat API sözleşmesi, tip aynasında eksik alan)
+yalnızca o kapı yakaladı; `pytest` + `ruff` + `mypy` yeşilken arayüz
+sözleşmesi kırmızıydı.
+
+## Yapılmayacaklar
+
+| Fikir | Neden |
+|---|---|
+| Yeni model ailesi | On bir ölçüm + tavan (§3.23). E4 bir **sütun** denemesi, model değil |
+| Yarıçap-2 kaplama kodu üretmek | Gerekmiyor — şekle biz karar veriyoruz, kolonu satıcı üretiyor |
+| Kalabalık modelini büyütmek | `δ`/`h` denendi ve düştü; kenar artıkta ve o **veri** istiyor, parametre değil |
+| Arayüz / uygulama / güvenlik | Kapsam dışı (birinci turdaki H1/H2 istisnası canlı kaydı kirlettiği içindi) |
+
+## Riskler
+
+1. **E1 gelmezse E2 yapılamaz.** Taban gevşekliği bilinmeden hedef
+   kademesi ölçülemez; o durumda E2 *"ölçülemez"* diye kapanır.
+2. **E2'nin cevabı "12 kalır" olabilir** ve bu meşru bir sonuçtur.
+3. **E3 omurgayı değiştirirse** yayımlanmış bütün geri test sayıları eski
+   ölçekte kalır; not düşülür, silinmez.
+4. **E4'ün önseli düşük** ve öyle yazıldı. Geçerse **Holm'la** geçmeli.
+5. **`n` hâlâ küçük.** Altı hafta sonunda 9; kuyruk ağırlıklı para
+   sayıları için az. Bu tur bir cevap değil, cevaba **doğru bir adım**.

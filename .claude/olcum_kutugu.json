@@ -399,6 +399,17 @@
    ],
    "bekci": "backend/tests/test_secim.py::test_KISITSIZ_arama_hedefi_yok_edebilir",
    "not": "TL. Uc sonuclanmis hafta, 13G, 2.000 TL. Kayip tavani 0,00-0,50 araliginda gerceklesen odul tabanla AYNI (2.668 TL); 0,95'te 1.230 TL, yani 1.439 TL kayip. n=3."
+  },
+  {
+   "ne": "basabas kademe — 13G / 2.000 TL kuponu kac tutturunca maliyeti karsilar",
+   "deger": "13",
+   "ureten": "cd backend && python -c 'karne + ikramiye_tablolari medyanlari'",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md"
+   ],
+   "bekci": "-",
+   "not": "GARANTI TABANI icin (bir kolon). 114 haftanin odul medyanlari: 12 bilen 288 TL, 13 bilen 2.027 TL; 13G/2.000 TL kuponu 162 kolon = 1.620 TL. Yani 12 tutturmak MALIYETI KARSILAMIYOR — gerceklesen karne de dogruluyor (2. hafta -181 TL, 3. hafta -390 TL, ikisi de 12 tutturdu). Gercek sistem 12'yi birden cok kolonla tutar ve tabanin gevsekligi OLCULMEDI — E1 onu olcer."
   }
  ],
  "komutlar": [
