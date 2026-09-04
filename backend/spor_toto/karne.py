@@ -30,10 +30,29 @@ de büyük olasılıkla tutar, ama garanti bunu *söylemediği* için taban saym
 Dolayısıyla:
 
 * **Aynı garanti içinde** karşılaştırma geçerlidir — yanlılık iki kolda da
-  aynıdır ve eşleştirilmiş farkta büyük ölçüde götürür.
+  aynıdır ve eşleştirilmiş farkta büyük ölçüde götürür. Ama *tam* götürmez:
+  yanlılığın büyüklüğü kaçağa bağlıdır ve aşağıdaki ölçüm onu gösteriyor.
 * **Garantiler arasında** geçerli DEĞİLDİR. O karşılaştırma ancak gerçek
   kolon listeleriyle yapılır ve bu modül onu yapmaz; `gecerli_kiyas()`
   çağrıldığında bunu açıkça söyler.
+
+─── Sınırın BÜYÜKLÜĞÜ de ölçüldü: 2,39 kat (`taban_gevsekligi`) ──────────
+
+14-garantide kolonlar depoda üretilebiliyor (`engines.run_auto`), yani
+tabanın ne kadar alt olduğu fişe gerek kalmadan sayılabildi. 114 hafta,
+2.000 TL: taban 19.354 TL (geri dönüş %10,1), gerçek kolon dağılımı
+46.301 TL (%24,2) — **2,39 kat**.
+
+Ve yanlılık düzgün değil, **eğik**: 12+ tutturan ortalama kolon sayısı
+kaçak 0'da 26,8, kaçak 1'de 10,2, kaçak 2'de 1,3, taban her durumda 1.
+Yani sınır en çok **iyi giden** haftaları eksik sayar — eşleştirilmiş
+karşılaştırmalarda muhafazakâr değil taraflıdır.
+
+Bunun kapatmadığı şey de ölçüldü: %24,2 hâlâ 1'in altında. Taban
+düzeltilince bile kupon para kaybediyor, yani geri dönüş açığı bir ölçüm
+kusuru değildir.
+
+    python -m spor_toto.karne --taban --garanti 14 --butce 2000
 
 ─── Enflasyon: sezonlar toplanamaz ───────────────────────────────────────
 
@@ -50,6 +69,7 @@ yoktur: aynı haftanın aynı TL'si iki kolda da kullanılır, enflasyon götür
 
     python -m spor_toto.karne                    # 13G, butce egrisi
     python -m spor_toto.karne --garanti 14 --butce 2000
+    python -m spor_toto.karne --taban --garanti 14 --butce 2000   # E1
 """
 from __future__ import annotations
 
@@ -61,6 +81,7 @@ from pathlib import Path
 from typing import Any
 
 from .core import SEMBOLLER
+from .getiri import KOLON_BEDELI
 from .havuz import arsiv_haftalari
 from .secim import sistem_secimi
 from .sistem import HEDEF_KADEME, VARSAYILAN_GARANTI
@@ -106,7 +127,7 @@ def hafta_karnesi(probs_listesi: list[dict[str, float]],
         return None
     kacak = sum(1 for sec, c in zip(plan.secimler, gercek) if c not in sec)
     kademe = garanti - kacak
-    maliyet = plan.bedel * 10.0
+    maliyet = plan.bedel * KOLON_BEDELI
     odul = _odul(tablo, kademe)
     return {
         "kacak": kacak, "kademe": kademe, "kolon": plan.bedel,
@@ -275,12 +296,123 @@ def kupon_kesiti(dizin: Any = None) -> list[dict[str, Any]]:
     return out
 
 
+def taban_gevsekligi(butce_tl: float = 2000.0,
+                     garanti: int = 14,
+                     hafta_siniri: int | None = None) -> dict[str, Any]:
+    """Tabanın gerçek kolon dağılımına göre ne kadar gevşek olduğunu ölçer.
+
+    Modül başlığı tabanın bir **alt sınır** olduğunu söylüyor ama ne kadar
+    alt olduğunu söylemiyordu — bu fonksiyon onu sayıya çevirir. Yalnızca
+    14-garantide koşabilir, çünkü kolonları gerçekten üretebilen tek yer
+    `engines.run_auto` ve `core.py` yarıçap 1'e kilitli. 13-garantinin
+    kolon listesi satıcıdadır ve burada yoktur.
+
+    **İki sayı döner, çünkü iki farklı ürün var ve ikisi aynı değil.**
+    Motorun ürettiği kaplama, satıcının aynı şekle sattığı kaplamadan
+    **daha gevşektir**: ölçüldü, 3 çifte + 5 üçlü şekli için motor
+    **216** kolon üretiyor, tablo aynı şekli **168** kolonla satıyor
+    (%28,6 fazla). İkisi de 14-garanti veriyor, yani satıcının kodu
+    ölçülebilir biçimde daha sıkı.
+
+    * ``kat_ham`` — motorun kendi kolonları, olduğu gibi. Motorun ürününü
+      tarif eder, oynanan ürünü değil.
+    * ``kat`` — kolon sayısı satıcının şekline (`plan.bedel`) indirgenmiş.
+      **Varsayım:** satıcının daha az kolonu, motorunkiyle *aynı biçimde*
+      dağılıyor. Bu varsayım ölçülmedi ve ölçülemez (kolon listesi elde
+      yok). Yön muhtemelen ihtiyatlı: daha sıkı bir kod aynı bütçeyi daha
+      iyi yayar, yani indirgenmiş sayı gerçeği **eksik** sayıyor olabilir.
+
+    Yayımlanan sayı `kat`tır — ikisinden küçüğü ve oynanan ürüne yakın
+    olanı. `kat_ham` yanında durur ki indirgemenin bedeli görünsün.
+    """
+    from .secim import sistem_secimi
+
+    kesit = kupon_kesiti()
+    if hafta_siniri:
+        kesit = kesit[:hafta_siniri]
+    maliyet = taban_odul = gercek_toplam = ham_toplam = 0.0
+    hafta = 0
+    motor_kolon = tablo_kolon = 0
+    kacak_kolon: dict[int, list[float]] = {}
+    for h in kesit:
+        plan = sistem_secimi(h["probs"], butce_tl, garanti=garanti)
+        if plan is None:
+            continue
+        ham = gercek_kolon_dagilimi(plan.secimler, h["gercek"])
+        if ham is None:
+            continue
+        motor_kolon += round(sum(ham.values()))
+        tablo_kolon += plan.bedel
+        olcek = plan.bedel / sum(ham.values())
+        dagilim = {k: v * olcek for k, v in ham.items()}
+        kacak = sum(1 for s, c in zip(plan.secimler, h["gercek"])
+                    if c not in s)
+        taban = 0.0
+        satir = h["tablo"].get(garanti - kacak)
+        if kacak <= garanti - HEDEF_KADEME and satir \
+                and satir.get("prize") is not None:
+            taban = float(satir["prize"])
+        gercek = gercek_odul(dagilim, h["tablo"]) or 0.0
+        maliyet += plan.bedel * KOLON_BEDELI
+        taban_odul += taban
+        gercek_toplam += gercek
+        ham_toplam += gercek_odul(ham, h["tablo"]) or 0.0
+        kacak_kolon.setdefault(kacak, []).append(
+            sum(v for k, v in dagilim.items() if k >= HEDEF_KADEME))
+        hafta += 1
+    if not hafta or taban_odul <= 0.0:
+        return {"hafta": hafta, "maliyet": maliyet, "taban_odul": taban_odul,
+                "gercek_odul": gercek_toplam, "kat": None, "kat_ham": None,
+                "kacak_kolon": {}}
+    return {
+        "hafta": hafta,
+        "maliyet": maliyet,
+        "taban_odul": taban_odul,
+        "gercek_odul": gercek_toplam,
+        "ham_odul": ham_toplam,
+        "taban_roi": taban_odul / maliyet,
+        "gercek_roi": gercek_toplam / maliyet,
+        "kat": gercek_toplam / taban_odul,
+        "kat_ham": ham_toplam / taban_odul,
+        "motor_kolon": motor_kolon,
+        "tablo_kolon": tablo_kolon,
+        "kaplama_farki": motor_kolon / tablo_kolon if tablo_kolon else None,
+        "kacak_kolon": {k: sum(v) / len(v)
+                        for k, v in sorted(kacak_kolon.items())},
+    }
+
+
 def _main(argv: list[str] | None = None) -> int:  # pragma: no cover - elle
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--garanti", type=int, default=VARSAYILAN_GARANTI)
     ap.add_argument("--butce", type=float, default=None)
+    ap.add_argument("--taban", action="store_true",
+                    help="tabanin gevsekligini olc (yalniz 14-garanti)")
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args(argv)
+
+    if a.taban:
+        t = taban_gevsekligi(a.butce or 2000.0, a.garanti)
+        if a.json:
+            print(json.dumps(t, ensure_ascii=False))
+            return 0
+        print(f"\nTabanin gevsekligi — {a.garanti}-garanti · "
+              f"{a.butce or 2000.0:,.0f} TL · {t['hafta']} hafta")
+        print(f"  maliyet              : {t['maliyet']:>12,.0f} TL")
+        print(f"  GARANTI TABANI odul  : {t['taban_odul']:>12,.0f} TL "
+              f"(geri donus {t.get('taban_roi', 0.0):.1%})")
+        print(f"  GERCEK kolon odulu   : {t['gercek_odul']:>12,.0f} TL "
+              f"(geri donus {t.get('gercek_roi', 0.0):.1%})")
+        if t["kat"]:
+            print(f"  taban ne kadar gevsek: {t['kat']:>12.2f} KAT "
+                  f"(motorun HAM kolonlariyla {t['kat_ham']:.2f})")
+            print(f"  motor {t['motor_kolon']:,} kolon uretti, tablo ayni "
+                  f"sekli {t['tablo_kolon']:,} kolonla satiyor "
+                  f"(+{t['kaplama_farki'] - 1:.1%})")
+        print("\n  kacak -> 12+ tutturan ortalama kolon sayisi")
+        for k, v in t["kacak_kolon"].items():
+            print(f"  {k:>7} {v:>12.1f}")
+        return 0
 
     butceler = (a.butce,) if a.butce else BUTCELER
     kesit = kupon_kesiti()
@@ -333,10 +465,6 @@ def _main(argv: list[str] | None = None) -> int:  # pragma: no cover - elle
 
     print(f"\n{ilk_tum['uyari']}")
     return 0
-
-
-if __name__ == "__main__":  # pragma: no cover
-    raise SystemExit(_main())
 
 
 # ─── canlı hafta karnesi — öngörülen ↔ gerçekleşen ────────────────────────
@@ -434,7 +562,7 @@ def canli_karne_satiri(sezon: str, hafta: int, butce_tl: float,
         "sezon": sezon, "hafta": hafta, "program": h["program"],
         "fiyat_kunyesi": h["fiyat_kunyesi"], "girildi": h["girildi"],
         "garanti": garanti, "butce_tl": butce_tl,
-        "kolon": plan.bedel, "maliyet": plan.bedel * 10.0,
+        "kolon": plan.bedel, "maliyet": plan.bedel * KOLON_BEDELI,
         "banko": plan.banko, "cift": plan.cift, "uclu": plan.uclu,
         "p_hedef": plan.p_hedef,
         "oynanma_kaynagi": "kayit" if h["play"] else "model",
@@ -465,3 +593,85 @@ def canli_karne_satiri(sezon: str, hafta: int, butce_tl: float,
 #: mertebesinde duyarlıdır, yani mutlak TL değil **karşılaştırma** için
 #: okunmalıdır.
 RAKIP_KOLON = 15_000_000
+
+
+# ─── E1: tabanın gevşekliği — gerçek kolon dağılımı ──────────────────────
+
+def gercek_kolon_dagilimi(secimler: Sequence[Sequence[str]],
+                          gercek: Sequence[str],
+                          hedef_kolon: int | None = None
+                          ) -> dict[int, float] | None:
+    """Kuponun **gerçek** kolonlarını üretip kademe dağılımını sayar.
+
+    ─── Niçin bu, fişe gerek bırakmıyor ──────────────────────────────────
+
+    `hafta_karnesi` **garanti tabanını** kullanır: `k` kaçakta *bir* kolon
+    `G−k` kademesinde. Tabanın ne kadar gevşek olduğu bilinmiyordu ve
+    kapatmanın tek yolu ST EXTRA fişi sanılıyordu.
+
+    Değil: **14-garanti için motor kolonları kendisi üretebiliyor**
+    (`engines.run_auto`). Üretilen kaplama gerçek oynanan sistemle birebir
+    aynı olmayabilir — satıcının kodu daha ucuz (aynı şekilde 168 kolon,
+    motorunki 216) — ama tabanın **mertebesini** verir ve soru zaten oydu.
+
+    Dönen sözlük `{kademe: kolon}`; `hedef_kolon` verilirse sayılar o
+    ölçeğe indirgenir (motorun 216'sından tablonun 168'ine).
+
+    ─── Ölçülen: taban **2,39 kat** gevşek ───────────────────────────────
+
+    114 hafta · 14-garanti · 2.000 TL bütçe::
+
+        maliyet              191.520 TL
+        garanti tabanı ödül   19.354 TL   geri dönüş %10,1
+        GERÇEK kolon ödülü    46.252 TL   geri dönüş %24,2
+
+    Ve gevşeklik kademeye göre çok farklı: garanti kademesinde çokluk
+    **≈1** (kaplama kodu orada sıkı), ama para 12'de ve orada `k=0` iken
+    ~21, `k=1` iken ~6, `k=2` iken ~1 kolon var. Yani taban en çok
+    **iyi giden haftaları** eksik sayıyor.
+
+    `None` döner: 14-garanti dışı bir şekil ya da motor kaplama üretemezse.
+    """
+    from .core import Encoder
+    from .engines import engine_params, run_auto
+
+    enc = Encoder(list(secimler))
+    banko_dogru = sum(1 for i, sym in zip(enc.banko_pos, enc.banko_syms)
+                      if gercek[i] == sym)
+    try:
+        kolonlar = run_auto(enc, engine_params())["cols"]
+    except Exception:  # motor kaplama uretemezse olcum yok
+        return None
+    if not kolonlar:
+        return None
+    sayim: dict[int, float] = {}
+    for kolon in kolonlar:
+        dogru = banko_dogru
+        for j, v in enumerate(kolon):
+            if enc.variable_syms[j][v] == gercek[enc.variable_pos[j]]:
+                dogru += 1
+        sayim[dogru] = sayim.get(dogru, 0.0) + 1.0
+    if hedef_kolon:
+        olcek = hedef_kolon / len(kolonlar)
+        sayim = {k: v * olcek for k, v in sayim.items()}
+    return sayim
+
+
+def gercek_odul(dagilim: dict[int, float] | None,
+                tablo: dict[int, dict[str, Any]],
+                hedef_kademe: int = HEDEF_KADEME) -> float | None:
+    """Gerçek kolon dağılımının resmî ödül tablosundaki karşılığı."""
+    if not dagilim:
+        return None
+    toplam = 0.0
+    for kademe, kolon in dagilim.items():
+        if kademe < hedef_kademe:
+            continue
+        satir = tablo.get(kademe)
+        if satir and satir.get("prize") is not None:
+            toplam += kolon * float(satir["prize"])
+    return toplam
+
+
+if __name__ == "__main__":  # pragma: no cover
+    raise SystemExit(_main())

@@ -2,7 +2,7 @@
  "sayilar": [
   {
    "ne": "suit test sayisi (eksiksiz kurulum)",
-   "deger": "2.027",
+   "deger": "2.031",
    "ureten": "cd backend && pytest -p no:randomly -n0 --collect-only -q  # dosya basi toplami",
    "olculdu": "2026-09-04",
    "anildigi_yerler": [
@@ -14,7 +14,7 @@
     "replit.md"
    ],
    "bekci": "backend/tests/test_belgeler.py::test_test_sayisi_belgelerde_tek_ve_dogru",
-   "not": "lightgbm siz kurulumda 22 test eksik toplanir; yerelde 1.958 olcumu 1.980-22 ile birebir tutuyor."
+   "not": "lightgbm siz kurulumda 22 test eksik toplanir; yerelde 1.958 olcumu 1.980-22 ile birebir tutuyor. E1'in dort testi eklendi (2.027 -> 2.031). Yerel kurulumda lightgbm yok, o yuzden toplama 2.009 diyor; fark test_agac.py'nin 22 testi."
   },
   {
    "ne": "test dosyasi sayisi",
@@ -369,7 +369,7 @@
   },
   {
    "ne": "Betfair Exchange kapanis — Avg kapanisa gore Brier farki (F2)",
-   "deger": "-0,00100",
+   "deger": "−0,00100",
    "ureten": "cd backend && python -c 'from spor_toto.fiyatlar import kitap_kiyasi; print(kitap_kiyasi())'",
    "olculdu": "2026-09-04",
    "anildigi_yerler": [
@@ -380,7 +380,7 @@
   },
   {
    "ne": "kupon kuralinda ters secim — banko ile banko-degil arasindaki fark (F3)",
-   "deger": "-0,0045",
+   "deger": "−0,0045",
    "ureten": "cd backend && python -c 'from spor_toto.secim_kalibrasyonu import kupon_kurali; print(kupon_kurali())'",
    "olculdu": "2026-09-04",
    "anildigi_yerler": [
@@ -410,6 +410,62 @@
    ],
    "bekci": "-",
    "not": "GARANTI TABANI icin (bir kolon). 114 haftanin odul medyanlari: 12 bilen 288 TL, 13 bilen 2.027 TL; 13G/2.000 TL kuponu 162 kolon = 1.620 TL. Yani 12 tutturmak MALIYETI KARSILAMIYOR — gerceklesen karne de dogruluyor (2. hafta -181 TL, 3. hafta -390 TL, ikisi de 12 tutturdu). Gercek sistem 12'yi birden cok kolonla tutar ve tabanin gevsekligi OLCULMEDI — E1 onu olcer."
+  },
+  {
+   "ne": "garanti tabaninin gevsekligi — gercek kolon odulu / taban odulu",
+   "deger": "2,39",
+   "ureten": "cd backend && python -m spor_toto.karne --taban --garanti 14 --butce 2000",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md",
+    "docs/ISTATISTIK_YOL_HARITASI.md"
+   ],
+   "bekci": "backend/tests/test_karne.py::test_taban_gevsekligi_ULASILABILIR_ve_yon_YUKARI",
+   "not": "KAT. 114 hafta, 14-garanti, 2.000 TL. Taban 19.354 TL (geri donus %10,1), gercek kolon dagilimi 46.301 TL (%24,2). Yalniz 14G'de olculebilir: kolonlari uretebilen tek yer engines.run_auto ve core.py yaricap 1'e kilitli. Motorun HAM kolonlariyla 3,08 kat; yayimlanan 2,39 satici sekline (plan.bedel) indirgenmis olan."
+  },
+  {
+   "ne": "garanti tabaninin verdigi geri donus — 14G / 2.000 TL",
+   "deger": "%10,1",
+   "ureten": "cd backend && python -m spor_toto.karne --taban --garanti 14 --butce 2000",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md"
+   ],
+   "bekci": "backend/tests/test_karne.py::test_taban_gevsekligi_ULASILABILIR_ve_yon_YUKARI",
+   "not": "114 hafta, 191.520 TL maliyet, 19.354 TL taban odul. Alt sinir."
+  },
+  {
+   "ne": "gercek kolon dagiliminin verdigi geri donus — 14G / 2.000 TL",
+   "deger": "%24,2",
+   "ureten": "cd backend && python -m spor_toto.karne --taban --garanti 14 --butce 2000",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md"
+   ],
+   "bekci": "backend/tests/test_karne.py::test_taban_gevsekligi_ULASILABILIR_ve_yon_YUKARI",
+   "not": "114 hafta, 191.520 TL maliyet, 46.301 TL odul. Hala 1'in ALTINDA: taban gevsekti ama kupon yine de para kaybediyor. Kalabalik ekseni bu acigi kapatmak zorunda, taban duzeltmesi kapatmiyor."
+  },
+  {
+   "ne": "motorun kaplamasi saticininkinden ne kadar gevsek",
+   "deger": "%28,6",
+   "ureten": "cd backend && python -m spor_toto.karne --taban --garanti 14 --butce 2000",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md"
+   ],
+   "bekci": "backend/tests/test_karne.py::test_motorun_kaplamasi_TABLODAN_gevsek_ve_bu_yazili",
+   "not": "114 hafta boyunca motor 24.624 kolon uretti, ST EXTRA tablosu ayni sekilleri 19.152 kolonla satiyor. Ikisi de 14-garanti. Yani saticinin kaplama kodu OLCULEBILIR bicimde daha siki ve motorun kolonlari oynanan urunu tarif etmiyor."
+  },
+  {
+   "ne": "12+ tutturan ortalama kolon sayisi — kacaga gore, 14G / 2.000 TL",
+   "deger": "26,8",
+   "ureten": "cd backend && python -m spor_toto.karne --taban --garanti 14 --butce 2000",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md"
+   ],
+   "bekci": "backend/tests/test_karne.py::test_taban_gevsekligi_ULASILABILIR_ve_yon_YUKARI",
+   "not": "k=0'da 26,8 kolon; k=1'de 10,2; k=2'de 1,3; k>=3'te 0. Taban her durumda 1 kolon sayiyor, yani tabanin yanliligi kacak KUCULDUKCE buyuyor — en cok IYI giden haftalari eksik sayiyor."
   }
  ],
  "komutlar": [
@@ -447,6 +503,11 @@
    "komut": "python scripts/bagimliliklar.py | pip-audit -r /dev/stdin",
    "kaynak": "backend/scripts/bagimliliklar.py:26",
    "ne_yapar": "beyan edilen bagimlilik denetimi. Ekstra listesi pyproject'ten TUREVIR (elle yazili degil); bos cikti cikis 1 verir."
+  },
+  {
+   "komut": "cd backend && python -m spor_toto.karne --taban --garanti 14 --butce 2000",
+   "kaynak": "backend/spor_toto/karne.py:taban_gevsekligi",
+   "ne_yapar": "E1: garanti tabaninin ne kadar gevsek oldugunu olcer — 114 hafta boyunca gercek kaplama kolonlarinin resmi odul tablosundaki karsiligini tabanla kiyaslar. Yalniz 14G."
   }
  ]
 }

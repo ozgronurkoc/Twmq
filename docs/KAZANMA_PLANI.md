@@ -1242,6 +1242,72 @@ o sayıyı bilmiyor ve yerine garantinin verdiği **1**'i koyuyor.
 karşılaştırması — bugün taban 15,1 kat yüksek garantiyi kayırdığı için
 **yapılamıyor** (§3.51), (c) E2'nin cevabı.
 
+### E1 — 14-garantide fişe gerek kalmadan ÖLÇÜLDÜ (2026-09-04)
+
+Fiş 13-garanti için hâlâ gerekli, ama **14-garantide gerekmiyordu**: o
+seviyede kolonları depo kendisi üretebiliyor (`engines.run_auto`,
+`core.py` yarıçap 1'e kilitli). Ölçüm koştu.
+
+```
+cd backend && python -m spor_toto.karne --taban --garanti 14 --butce 2000
+```
+
+| 114 hafta · 14G · 2.000 TL | |
+|---|---:|
+| maliyet | 191.520 TL |
+| **GARANTİ TABANI** ödül | 19.354 TL — geri dönüş **%10,1** |
+| **GERÇEK kolon** ödülü | 46.301 TL — geri dönüş **%24,2** |
+| **taban ne kadar gevşek** | **2,39 kat** |
+
+**Ve yanlılığın yönü ölçüldü — düzgün değil, eğik.** 12+ tutturan ortalama
+kolon sayısı kaçağa göre:
+
+| kaçak | 12+ tutturan kolon | tabanın saydığı |
+|---:|---:|---:|
+| 0 | **26,8** | 1 |
+| 1 | 10,2 | 1 |
+| 2 | 1,3 | 1 |
+| ≥3 | 0,0 | 0 |
+
+Yani taban en çok **iyi giden** haftaları eksik sayıyor. Kaçak sıfırken
+27 kat, iki kaçakta yalnızca 1,3 kat. Bu, tabanı kullanan her eşleştirilmiş
+karşılaştırmayı *muhafazakâr* değil **taraflı** yapar: iyi haftalar arasında
+ayrım gücünü sistematik olarak bastırır.
+
+### Ama açık kapanmadı — ve asıl bulgu bu
+
+**%24,2 hâlâ 1'in altında.** Taban gevşekti, düzeltildi, ve kupon **yine de
+her 100 TL'nin 76'sını kaybediyor.** E1'in en çok işe yarayan sonucu bir
+umut değil bir **elemedir**: geri dönüş açığının kaynağı ölçüm hatası
+değilmiş. Kalabalık ekseninin kapatması gereken şey %10 ile %100 arası
+değil, **%24 ile %100 arası** — daha küçük ama hâlâ dört katlık bir açık,
+ve onu taban düzeltmesi kapatmıyor.
+
+### Ölçerken çıkan ikinci bulgu: motorun kaplaması satıcınınkinden gevşek
+
+114 hafta boyunca motor **24.624** kolon üretti; ST EXTRA tablosu aynı
+şekilleri **19.152** kolonla satıyor — **%28,6 fazla**, ve ikisi de
+14-garanti veriyor. Yani satıcının kaplama kodu ölçülebilir biçimde daha
+sıkı ve **motorun kolonları oynanan ürünü tarif etmiyor.**
+
+Bu, yukarıdaki 2,39'un nasıl okunacağını belirler:
+
+* motorun **ham** kolonlarıyla oran **3,08 kat**;
+* yayımlanan **2,39**, kolon sayısı satıcının şekline indirgenmiş hâli.
+
+İndirgeme bir **varsayım** taşıyor ve yazılı olmadan kullanılmıyor
+(`karne.taban_gevsekligi` docstring'i): satıcının daha az kolonu,
+motorunkiyle *aynı biçimde* dağılıyor sayılıyor. Bu ölçülmedi ve kolon
+listesi elde olmadan ölçülemez. Yön muhtemelen ihtiyatlı — daha sıkı bir
+kod aynı bütçeyi daha iyi yayar — yani 2,39 gerçeği **eksik** sayıyor
+olabilir. İkisinden küçüğü yayımlanıyor.
+
+**Fişin hâlâ gerektiği yer:** 13-garanti — yani gerçekten oynadığınız ürün.
+14G ölçümü 13G'ye taşınamaz, çünkü §3.51'in 15,1 katı tam da garantiler
+arası taşımayı geçersiz kılan şeydir. E1'in fiş isteyen kısmı **açık
+kalıyor**; kapanan kısmı, ölçümün *yapılabilir olduğu* ve sonucunun ne
+yönde çıktığıdır.
+
 ---
 
 ## E2 — Hedefi paradan türet (2.–3. hafta)
@@ -1333,7 +1399,7 @@ yaklaşma.
 
 | Faz | Dosya | İş |
 |---|---|---|
-| E1 | `spor_toto/karne.py` · hafta yükü şeması | `kupon_sonuc` + çokluk ölçümü |
+| E1 | `spor_toto/karne.py` · hafta yükü şeması | ✅ 14G ölçüldü (`--taban`); 13G için `kupon_sonuc` alanı bekliyor |
 | E2 | `spor_toto/sistem.py` · `spor_toto/secim.py` | hedef kademe parametresi ölçülerek seçilir |
 | E2 | `spor_toto/karne.py` | 114 hafta × gerçekleşen TL karşılaştırması |
 | E3 | `spor_toto/odds.py` · `spor_toto/fiyatlar.py` | BFE omurga adayı, kupon düzeyi ölçüm |
@@ -1358,8 +1424,11 @@ sözleşmesi kırmızıydı.
 
 ## Riskler
 
-1. **E1 gelmezse E2 yapılamaz.** Taban gevşekliği bilinmeden hedef
-   kademesi ölçülemez; o durumda E2 *"ölçülemez"* diye kapanır.
+1. ~~**E1 gelmezse E2 yapılamaz.**~~ **14-garantide kalktı** (2026-09-04):
+   taban gevşekliği fişe gerek kalmadan ölçüldü (2,39 kat) ve E2 o
+   seviyede koşabilir. **13-garantide risk aynen duruyor** — oynadığınız
+   ürün orası ve orada fiş hâlâ tek yol; garantiler arası taşıma §3.51
+   yüzünden geçersiz.
 2. **E2'nin cevabı "12 kalır" olabilir** ve bu meşru bir sonuçtur.
 3. **E3 omurgayı değiştirirse** yayımlanmış bütün geri test sayıları eski
    ölçekte kalır; not düşülür, silinmez.

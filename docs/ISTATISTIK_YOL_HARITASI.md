@@ -153,7 +153,7 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/components/super-toto/tahmin2.tsx` | **2. Tahmin** paneli — `1. Tahmin` / `2. Tahmin` sekmeleri arasında geçilir; para birimli hiçbir sayı yok. Hafta kapandığında sonuç sütunu ve ayar karnesi açılır (§3.38) |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **2.027 test**; **85'i** istatistik katmanına (`history` `odds` `backtest`
+paketi toplam **2.031 test**; **85'i** istatistik katmanına (`history` `odds` `backtest`
 `api_stats` `api_backtest` `snapshot_iddaa`), **579'u** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre`
@@ -4898,6 +4898,55 @@ toplam ödülün %1'ini taşıyor.** Yani §5'in *"114 hafta"* ortalaması gerç
 bir 114-hafta ortalaması değil. `karne()` bu yüzden her zaman sezon kırılımı
 döndürüyor.
 
+### 3.56 Garanti tabanı 2,39 kat gevşek — ama açığı kapatmıyor
+
+`karne` modülü kuponun ödülünü **garantinin verdiği alt sınırdan** sayıyor:
+`k` maç seçim kümesinin dışında kalırsa *bir* kolon `G − k` tutturur, ve
+hesap tam olarak o bir kolonu yazıyor. Gerçek sistem aynı kademeyi onlarca
+kolonla tutar. Modül başlığı bunu ilk günden söylüyordu ama **ne kadar**
+alt olduğunu söylemiyordu.
+
+Ölçüldü — ve fişe gerek kalmadı. 14-garantide kolonları depo kendisi
+üretiyor (`engines.run_auto`; `core.py` yarıçap 1'e kilitli):
+
+```
+cd backend && python -m spor_toto.karne --taban --garanti 14 --butce 2000
+```
+
+| 114 hafta · 14G · 2.000 TL | maliyet 191.520 TL |
+|---|---:|
+| garanti tabanı ödülü | 19.354 TL · **%10,1** |
+| gerçek kolon ödülü | 46.301 TL · **%24,2** |
+| **taban ne kadar gevşek** | **2,39 kat** |
+
+**Yanlılık düzgün değil, eğik.** 12+ tutturan ortalama kolon sayısı
+kaçak 0'da **26,8**, kaçak 1'de 10,2, kaçak 2'de 1,3 — taban her durumda
+1 sayıyor. Yani sınır en çok **iyi giden** haftaları eksik sayar, ve tabanı
+kullanan eşleştirilmiş karşılaştırmalar muhafazakâr değil **taraflıdır**:
+iyi haftalar arasındaki ayrım gücünü sistematik olarak bastırırlar.
+
+**Asıl bulgu bir eleme.** %24,2 hâlâ 1'in çok altında: taban gevşekti,
+düzeltildi, ve kupon yine de her 100 TL'nin 76'sını kaybediyor. Geri dönüş
+açığının kaynağı ölçüm hatası değilmiş. Kalabalık ekseninin kapatması
+gereken şey %10↔%100 değil **%24↔%100** — daha küçük, ama hâlâ dört katlık
+bir açık ve onu taban düzeltmesi kapatmıyor.
+
+**Ölçerken çıkan ikinci bulgu — motorun kaplaması satıcınınkinden gevşek.**
+114 hafta boyunca motor **24.624** kolon üretti; ST EXTRA tablosu aynı
+şekilleri **19.152** kolonla satıyor (**%28,6 fazla**) ve ikisi de
+14-garanti veriyor. Satıcının kodu ölçülebilir biçimde daha sıkı, yani
+motorun kolonları **oynanan ürünü tarif etmiyor**. Bu yüzden yayımlanan
+oran motorun ham kolonlarınınki (3,08) değil, satıcının kolon sayısına
+indirgenmiş **2,39**'dur — ikisinden küçüğü. İndirgeme bir varsayım taşıyor
+(satıcının az kolonu motorunkiyle aynı biçimde dağılıyor) ve o varsayım
+`karne.taban_gevsekligi` docstring'inde yazılıdır; kolon listesi elde
+olmadan ölçülemez.
+
+**Kapanmayan yer:** 13-garanti. Oynanan ürün orası ve orada kolonları depo
+üretemiyor. §3.51'in 15,1 katı tam olarak garantiler arası taşımayı
+geçersiz kılan şey olduğu için 14G ölçümü 13G'ye taşınamaz; o ölçüm ST
+EXTRA fişinin kademe başına kolon adedini bekliyor.
+
 ## 4. Sayfada bugün ne var
 
 **`/istatistik`** — sezon dağılımı (en sık sonuç + pay çubuğu) · 5 sayı kutusu (sembol
@@ -5889,7 +5938,7 @@ python -m spor_toto.kosum                  # kayıtlı koşumlar
 python -m spor_toto.kosum --son disari     # son koşumun ortamı
 
 # Denetim
-pytest -q                                  # 2.027 test (85'i bu katman, 583'ü tahmin)
+pytest -q                                  # 2.031 test (85'i bu katman, 583'ü tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out

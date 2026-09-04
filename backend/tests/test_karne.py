@@ -193,3 +193,106 @@ def test_oynanma_kaydi_yoksa_MODELE_duser(tmp_path):
     r = karne.canli_karne_satiri("2099_00", 5, 2000.0, kok=tmp_path)
     assert r is not None
     assert r["oynanma_kaynagi"] == "model"
+
+
+# ─── E1: tabanın gevşekliği ───────────────────────────────────────────────
+
+def test_gercek_dagilim_kacak_yokken_GARANTI_KADEMESINE_ulasir():
+    """Kaçak yoksa en iyi kolon 14'e ulaşır — ama 15 GARANTİ DEĞİLDİR.
+
+    Şekil bilerek küçük: 15 üçlü `3^15 = 14M` nokta demek ve kaplama
+    çözücüsü orada çöker. Sınanan şey uzayın büyüklüğü değil **kaçağın
+    sıfırlığında garantinin tuttuğu**, o da üç üçlüyle görülür.
+
+    Beklenen 15 değil 14: yarıçap-1 kaplama kodu tam isabetli noktayı
+    kolonları arasında bulundurmak zorunda değildir — `core.py:943`
+    bunu açıkça yazıyor (*"en olasi tek nokta formulun kolonlari
+    arasinda olmayabilir. Sistemin degeri 14-garantidir"*). Bu şekilde
+    gerçekten de öyle oluyor: dağılımın tepesi 14.
+    """
+    sec = [["1"]] * 12 + [["1", "0", "2"]] * 3
+    d = karne.gercek_kolon_dagilimi(sec, ["1"] * 15)
+    assert d is not None
+    assert max(d) >= 14
+    assert sum(v for k, v in d.items() if k >= 14) >= 1
+
+
+def test_gercek_dagilim_bankolu_kuponda_toplam_KOLON_sayisi():
+    """Dağılımın toplamı kolon sayısına eşit; ölçek verilirse ona indirgenir."""
+    sec = [["1"]] * 8 + [["1", "0"]] * 7
+    d = karne.gercek_kolon_dagilimi(sec, ["1"] * 15)
+    assert d is not None
+    toplam = sum(d.values())
+    olcekli = karne.gercek_kolon_dagilimi(sec, ["1"] * 15, hedef_kolon=16)
+    assert olcekli is not None
+    assert sum(olcekli.values()) == pytest.approx(16.0)
+    assert toplam >= 16
+
+
+def test_gercek_odul_12nin_altini_saymaz():
+    tablo = {14: {"prize": 100.0}, 13: {"prize": 10.0}, 12: {"prize": 1.0},
+             11: {"prize": 0.5}}
+    d = {14: 1.0, 13: 2.0, 12: 3.0, 11: 100.0}
+    assert karne.gercek_odul(d, tablo) == pytest.approx(100 + 20 + 3)
+    assert karne.gercek_odul(None, tablo) is None
+
+
+@pytest.mark.slow
+def test_taban_gercekten_GEVSEK_ve_yonu_belli():
+    """E1'in çekirdek bulgusu: taban alt sınır, ve iyi haftaları eksik sayıyor.
+
+    Garanti kademesinde çokluk ≈1 (kaplama orada sıkı) ama para 12'de ve
+    orada `k` küçüldükçe kolon sayısı hızla artıyor — yani taban en çok
+    **iyi giden** haftaları eksik sayar.
+    """
+    from spor_toto.secim import sistem_secimi
+
+    kesit = karne.kupon_kesiti()
+    oranlar = []
+    for h in kesit[:25]:
+        p = sistem_secimi(h["probs"], 2000.0, garanti=14)
+        if p is None:
+            continue
+        kacak = sum(1 for s, c in zip(p.secimler, h["gercek"]) if c not in s)
+        if kacak > 1:
+            continue
+        d = karne.gercek_kolon_dagilimi(p.secimler, h["gercek"],
+                                        hedef_kolon=p.bedel)
+        if not d:
+            continue
+        # Taban: 1 kolon @ (14-kacak). Gercek: o kademede ve ALTINDA da kolon.
+        assert sum(v for k, v in d.items() if k >= 12) >= 1.0
+        oranlar.append(sum(v for k, v in d.items() if k >= 12))
+    assert oranlar, "olculebilir hafta cikmadi"
+    # Iyi haftalarda 12+ kademesinde birden COK kolon olmali.
+    assert max(oranlar) > 5.0
+
+
+@pytest.mark.slow
+def test_taban_gevsekligi_ULASILABILIR_ve_yon_YUKARI():
+    """`--taban` ölçümü koşuyor ve tabanın alt sınır olduğunu doğruluyor.
+
+    Yalnız yön sınanır, kat değeri değil: kat bir **ölçümdür** ve testte
+    dondurulursa ölçüm değişince test onu geriye dönük yeniden yazmaya
+    zorlar — depo doktrini bunu yasaklıyor. Sayının kendisi
+    `.claude/olcum_kutugu.json`'da, komutuyla birlikte durur.
+    """
+    t = karne.taban_gevsekligi(2000.0, garanti=14, hafta_siniri=12)
+    assert t["hafta"] > 0
+    assert t["kat"] is not None and t["kat"] >= 1.0, \
+        "gercek odul tabanin ALTINA dusemez — taban tanim geregi alt sinir"
+    assert t["kat_ham"] >= t["kat"], \
+        "indirgeme kolon sayisini kucultur, yani kat_ham buyuk olmali"
+
+
+@pytest.mark.slow
+def test_motorun_kaplamasi_TABLODAN_gevsek_ve_bu_yazili():
+    """Motor aynı şekle satıcıdan daha çok kolon üretiyor — ölçülen fark.
+
+    Bu, `taban_gevsekligi`nin indirgeme varsayımının **sebebidir**: iki
+    ürün aynı değil, o yüzden hangi kolon sayısına indirgendiği docstring'de
+    yazılı olmak zorunda.
+    """
+    t = karne.taban_gevsekligi(2000.0, garanti=14, hafta_siniri=8)
+    assert t["motor_kolon"] >= t["tablo_kolon"] > 0
+    assert t["kaplama_farki"] >= 1.0

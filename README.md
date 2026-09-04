@@ -987,7 +987,7 @@ backend/
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
                        sehir/ · xg/
-  tests/               pytest (69 dosya → 2.027 test; §9'da katman dökümü)
+  tests/               pytest (69 dosya → 2.031 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1191,7 +1191,7 @@ dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri t
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
 eşleme, ikinci kayıt). **69 test dosyası, parametrizasyonla
-2.027 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+2.031 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
@@ -1205,7 +1205,7 @@ karşı denetler):
 | 2. Tahmin (kalabalık ayarı · bağımsız görüş) | `tahmin2` | 35 |
 | Karar katmanı | `secim` | 26 |
 | Sistem fiyat tablosu (bedel + garanti) | **`sistem`** | 10 |
-| Para karnesi (garanti tabanı · enflasyon · canlı) | **`karne`** | 16 |
+| Para karnesi (garanti tabanı · enflasyon · canlı · GERÇEK kolon dağılımı) | **`karne`** | 20 |
 | Kalabalık modeli (λ · kademe adetleri) | **`kalabalik`** | 12 |
 | Koşullu getiri (havuz biz kazanınca bölünür) | **`kosullu_getiri`** | 10 |
 | Skor türetme | `skor` | 17 |
