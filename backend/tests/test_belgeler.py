@@ -553,3 +553,135 @@ def test_workflow_envanteri_belgeyle_ayni():
         f"hicbir belgede anilmayan workflow: {eksik}. "
         "Depoya commit atan bir isin belgesiz kalmasi kabul edilemez."
     )
+
+
+#: Dinamik rota parçası. Dosya sisteminde `[week]`, README §6.1'de
+#: `<hafta>`, README §7 ağacında ve `replit.md`de `[week]` yazılıyor —
+#: karşılaştırmadan önce üçü de tek biçime indirgenir. (Aynı sorun
+#: `test_mimari_belgesi_butun_uclari_sayar`da `<int:week>` → `<week>` diye
+#: çözülmüştü; burada üç biçim olduğu için normalleştirme genel tutuldu.)
+_DINAMIK_PARCA = re.compile(r"\[[^\]/]+\]|<[^>/]+>")
+
+#: "N sayfa" iddiasının DAR iki biçimi: sayı + parantez içi rota listesi
+#: (README §7 ağacı), ve sayı + tabloya havale (`ARCHITECTURE_NEXT.md`).
+#: Yalın `\d+ sayfa` taransaydı `super_toto_sayfa.py`nin bastığı HTML
+#: sayfalarından söz eden bir cümle yanlış yere kırmızı yanardı —
+#: `test_test_dosya_sayisi_belgelerle_ayni` "N dosya →" biçimini tam olarak
+#: bu gerekçeyle dar tutuyor.
+_SAYFA_SAYISI_LISTELI = re.compile(r"(\d+) sayfa \((/[^)]*)\)", re.DOTALL)
+_SAYFA_SAYISI_TABLOYA = re.compile(r"(\d+) sayfa — aşağıdaki tablo")
+
+
+def _rota_normal(yol: str) -> str:
+    """Rotayı biçimden bağımsız hale getirir: dinamik parça tek ada iner."""
+    return _DINAMIK_PARCA.sub(":dinamik", yol.strip().rstrip("/")) or "/"
+
+
+def _arayuz_rotalari() -> set[str]:
+    """`frontend/app/` altındaki her `page.tsx`in rotası — TEK kaynak."""
+    kok = DEPO / "frontend" / "app"
+    if not kok.is_dir():
+        pytest.skip("frontend/app yok")
+    rotalar = set()
+    for p in kok.rglob("page.tsx"):
+        # Next.js'te `(ad)` bir düzen grubudur, rotaya girmez.
+        parcalar = [x for x in p.parent.relative_to(kok).parts
+                    if not x.startswith("(")]
+        rotalar.add(_rota_normal("/" + "/".join(parcalar)))
+    return rotalar
+
+
+def _sayfa_bolumu(metin: str) -> str:
+    """"Sayfalar" başlıklı bölümün gövdesi — bir sonraki başlığa kadar.
+
+    Bölüme daraltmak şarttır: aynı belgelerde `/api/...` uçlarını listeleyen
+    BAŞKA tablolar var ve belgenin tamamı taransaydı onlar da rota sayılırdı.
+    `test_mimari_belgesi_butun_uclari_sayar`ın "yalnızca tablo satırları"
+    dersinin bir adım ilerisi: yalnızca DOĞRU tablonun satırları.
+    """
+    satirlar = metin.splitlines()
+    for i, s in enumerate(satirlar):
+        if s.startswith("#") and "Sayfalar" in s:
+            j = i + 1
+            while j < len(satirlar) and not satirlar[j].startswith("#"):
+                j += 1
+            return "\n".join(satirlar[i + 1:j])
+    return ""
+
+
+def _tablodaki_rotalar(bolum: str) -> set[str]:
+    """Tablo satırının İLK hücresindeki backtick'li yolu toplar."""
+    return {_rota_normal(m.group(1)) for m in
+            re.finditer(r"^\|\s*`(/[^`]*)`\s*\|", bolum, re.MULTILINE)}
+
+
+def test_sayfa_tablolari_eksiksiz():
+    """"Sayfalar" tablosu taşıyan her belge `frontend/app/`in TAMAMINI saymalı.
+
+    **Ölçülen boşluk buydu.** Bu dosya modülleri, testleri, uçları,
+    betikleri, workflow'ları ve kapı adımlarını sayan bekçiler içeriyordu —
+    ama sayfa sayan bir bekçi içermiyordu, ve sayının kaydığı yer bekçinin
+    olmadığı yerle birebir örtüştü. Dosya sisteminde **10** `page.tsx`
+    varken README §6.1 tablosu **8** rota (eksik: `/tahmin`, `/super-toto`),
+    README §7 ağacı **7** rota, `docs/ARCHITECTURE_NEXT.md` tablosu **9**
+    rota (eksik: `/pazarlar`) sayıyordu. `replit.md` tek doğru listeydi.
+
+    Kaynak dosya sistemi, karşılaştırma isim isim —
+    `test_readme_modul_listesi_eksiksiz` ile aynı desen. Belge listesi
+    `git ls-files`ten geldiği için ileride "Sayfalar" tablosu kazanan bir
+    belge kendiliğinden kapsama girer.
+
+    **Fazlalık da tutulur.** Silinmiş bir sayfanın tabloda kalması, eksik
+    satırla aynı türden bir yalandır ve arayan kişiyi var olmayan bir yola
+    gönderir.
+    """
+    gercek = _arayuz_rotalari()
+    kusurlu: dict[str, tuple[list[str], list[str]]] = {}
+    for d in _belge_listesi():
+        p = DEPO / d
+        if not p.exists():
+            continue
+        tablo = _tablodaki_rotalar(_sayfa_bolumu(p.read_text(encoding="utf-8")))
+        if not tablo:
+            continue
+        eksik, fazla = sorted(gercek - tablo), sorted(tablo - gercek)
+        if eksik or fazla:
+            kusurlu[d] = (eksik, fazla)
+    assert not kusurlu, (
+        "Sayfa tablosu gerçekle örtüşmüyor: "
+        + "; ".join(f"{d} eksik={e or '-'} fazla={f or '-'}"
+                    for d, (e, f) in sorted(kusurlu.items()))
+        + f". frontend/app/ {len(gercek)} sayfa taşıyor: {sorted(gercek)}"
+    )
+
+
+def test_belgelerdeki_sayfa_sayisi_gercekle_ayni():
+    """"N sayfa" diyen belge hem sayıyı hem listeyi doğru vermeli.
+
+    README §7 ağacı sayıyı ve listeyi YAN YANA yazıyor
+    (`app/  N sayfa (/, /tahmin, ...)`), yani ikisi birden bayatlayabilir ve
+    ölçüldüğünde ikisi birden bayattı: "7 sayfa" diyip yedi rota sayıyordu,
+    gerçek on. `ARCHITECTURE_NEXT.md` ise sayıyı yazıp listeyi tabloya
+    havale ediyor — orada yalnızca sayı denetlenir, tablonun kendisini
+    yukarıdaki bekçi tutar.
+    """
+    gercek = _arayuz_rotalari()
+    hata: list[str] = []
+    for d in _belge_listesi():
+        p = DEPO / d
+        if not p.exists():
+            continue
+        metin = p.read_text(encoding="utf-8")
+        for m in _SAYFA_SAYISI_LISTELI.finditer(metin):
+            yazili = {_rota_normal(x) for x in m.group(2).split(",") if x.strip()}
+            if int(m.group(1)) != len(gercek):
+                hata.append(f"{d}: '{m.group(1)} sayfa' yazıyor, gerçek {len(gercek)}")
+            if yazili != gercek:
+                hata.append(
+                    f"{d}: parantez içi liste eksik={sorted(gercek - yazili) or '-'} "
+                    f"fazla={sorted(yazili - gercek) or '-'}"
+                )
+        for m in _SAYFA_SAYISI_TABLOYA.finditer(metin):
+            if int(m.group(1)) != len(gercek):
+                hata.append(f"{d}: '{m.group(1)} sayfa' yazıyor, gerçek {len(gercek)}")
+    assert not hata, "Sayfa sayısı bayat: " + "; ".join(hata)
