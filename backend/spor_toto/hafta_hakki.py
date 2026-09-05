@@ -562,44 +562,138 @@ def _spearman(x: Sequence[float], y: Sequence[float]) -> float:
     return ust / alt if alt else 0.0
 
 
+def _referans(c: dict[str, Any], referans_tl: float) -> dict[str, Any] | None:
+    """Haftanın referans basamağı — bütçeye sığan en büyüğü."""
+    ref = [b for b in c["basamaklar"] if b["tl"] <= referans_tl]
+    return ref[-1] if ref else None
+
+
+def p_isareti(cetveller: Sequence[dict[str, Any]],
+              referans_tl: float = 2000.0) -> list[tuple[float, float]]:
+    """Birinci aday işaret: referans basamağın **kupon öncesi** `P(hedef)`'i."""
+    out = []
+    for c in cetveller:
+        ref = _referans(c, referans_tl)
+        if ref is not None:
+            out.append((ref["p_hedef"], ref["roi"]))
+    return out
+
+
+def devir_isareti(cetveller: Sequence[dict[str, Any]],
+                  referans_tl: float = 2000.0) -> list[tuple[float, float]]:
+    """İkinci aday işaret: **haftaya devreden para** (`devir_gelen / dağıtılan`).
+
+    Bu, bu oyunun dış literatürdeki tek somut koşulunun ta kendisidir
+    (`docs/DIS_TARAMA_PIYASAYI_YENME.md` §4: müşterek havuzda pozitif BD
+    ancak dışarıdan para girerse doğar, o para devirdir). Ve **kupon
+    öncesi bilinir** — devir bir önceki hafta kapanınca ilan edilir.
+
+    Ölçek bırakılmaz: `devir_gelen` nominal TL'dir ve dört sezona yayılı
+    kesitte doğrudan karşılaştırılamaz, o yüzden o haftanın **dağıtılan**
+    havuzuna oranlanır.
+
+    Havuzu ilan edilmemiş hafta **atlanır** (kesit 114 → 113).
+    """
+    from .havuz import arsiv_haftalari
+
+    ars = {(h["season_key"], h["week"]): h["havuz"]
+           for h in arsiv_haftalari() if h["havuz"]}
+    out = []
+    for c in cetveller:
+        ref = _referans(c, referans_tl)
+        h = ars.get((c["sezon"], c["hafta"]))
+        if ref is None or h is None or not (h["dagitilan"] or 0.0) > 0.0:
+            continue
+        out.append(((h["devir_gelen"] or 0.0) / h["dagitilan"], ref["roi"]))
+    return out
+
+
+#: Sınanan ex-ante işaretler. Liste **dondurulmuştur**: uzatmak isteyen
+#: Holm düzeltmesinin bölenini de büyütmek zorunda kalsın diye (E4'ün
+#: `hakem.ADAYLAR` kalıbı — aday eklemek bedava olmamalı).
+ISARETLER: dict[str, Any] = {
+    "P(hedef)": p_isareti,
+    "devir/dagitilan": devir_isareti,
+}
+
+
 def isaret_sinavi(cetveller: Sequence[dict[str, Any]],
                   referans_tl: float = 2000.0,
                   tohum: int = 13,
-                  n: int = BOOTSTRAP) -> dict[str, Any]:
+                  n: int = BOOTSTRAP,
+                  isaret: Any = None) -> dict[str, Any]:
     """**Değişken bütçenin ön şartı:** hafta öncesi bir işaret, o haftanın
     gerçekleşen ROI'sini bilebiliyor mu?
 
     Değişken bütçe ancak "iyi hafta"yı kupon kapanmadan tanıyabiliyorsak
-    sabitini yener. Sınav bunu doğrudan sorar: referans basamağın **kupon
-    öncesi** `P(hedef)`'i ile o haftanın **gerçekleşen** ROI'si arasındaki
-    Spearman korelasyonu, hafta düzeyinde bootstrap aralığıyla.
+    sabitini yener. Sınav bunu doğrudan sorar: işaretin **kupon öncesi**
+    değeri ile o haftanın **gerçekleşen** ROI'si arasındaki Spearman
+    korelasyonu — hafta düzeyinde bootstrap aralığı **ve** permütasyon
+    p'siyle.
 
-    Aralık sıfırı kesiyorsa işaret yok demektir ve değişken bütçenin
-    dayanacağı zemin de yok demektir — kuralların kıyası o durumda yalnızca
-    *ne kadar* harcandığını ölçer, *hangi haftaya* harcandığını değil.
+    İki sayı birden dönüyor çünkü ikisi iki ayrı soruya bakıyor: aralık
+    etkinin **büyüklüğünü** çerçeveler, permütasyon p ise "bu kadarı saf
+    şanstan çıkar mıydı" sorusunu yanıtlar ve **çok sınavlı düzeltmeye**
+    (`isaret_karnesi`) girecek olan odur.
+
+    `isaret` verilmezse birinci aday (`p_isareti`) koşar.
     """
-    p: list[float] = []
-    roi: list[float] = []
-    for c in cetveller:
-        ref = [b for b in c["basamaklar"] if b["tl"] <= referans_tl]
-        if not ref:
-            continue
-        p.append(ref[-1]["p_hedef"])
-        roi.append(ref[-1]["roi"])
-    if len(p) < 3:
-        return {"n": len(p), "rho": 0.0, "alt": 0.0, "ust": 0.0,
-                "kesiyor": True}
-    rho = _spearman(p, roi)
+    ciftler = (p_isareti if isaret is None else isaret)(cetveller, referans_tl)
+    x = [a for a, _ in ciftler]
+    y = [b for _, b in ciftler]
+    if len(x) < 3:
+        return {"n": len(x), "rho": 0.0, "alt": 0.0, "ust": 0.0,
+                "kesiyor": True, "p": 1.0}
+    rho = _spearman(x, y)
     rnd = random.Random(tohum)
-    m = len(p)
+    m = len(x)
     dag = []
     for _ in range(n):
         idx = [rnd.randrange(m) for _ in range(m)]
-        dag.append(_spearman([p[i] for i in idx], [roi[i] for i in idx]))
+        dag.append(_spearman([x[i] for i in idx], [y[i] for i in idx]))
     dag.sort()
     lo, hi = dag[int(0.025 * n)], dag[int(0.975 * n)]
+
+    # Permutasyon: ROI karistirilir, isaret yerinde kalir.
+    rnd2 = random.Random(tohum)
+    karisik = list(y)
+    asan = 0
+    for _ in range(n):
+        rnd2.shuffle(karisik)
+        if abs(_spearman(x, karisik)) >= abs(rho) - 1e-12:
+            asan += 1
     return {"n": m, "rho": rho, "alt": lo, "ust": hi,
-            "kesiyor": lo <= 0.0 <= hi}
+            "kesiyor": lo <= 0.0 <= hi, "p": (asan + 1) / (n + 1)}
+
+
+def isaret_karnesi(cetveller: Sequence[dict[str, Any]],
+                   referans_tl: float = 2000.0,
+                   tohum: int = 13,
+                   n: int = BOOTSTRAP) -> dict[str, Any]:
+    """Bütün adayları koşturur ve **Holm** düzeltmesini uygular.
+
+    Tek işaret sınamak ile iki işaret sınayıp en iyisini almak aynı şey
+    değildir; ikincisi düzeltilmeden raporlanırsa sayı şişer. E4'te
+    (`hakem`) aynı kural uygulandı, burada da uygulanır: p'ler küçükten
+    büyüğe sıralanır ve `i`. sıradaki `α / (k − i)` eşiğine vurulur.
+
+    `gecen` boşsa değişken bütçenin dayanacağı zemin yok demektir.
+    """
+    ham = {ad: isaret_sinavi(cetveller, referans_tl, tohum, n, fn)
+           for ad, fn in ISARETLER.items()}
+    k = len(ham)
+    sirali = sorted(ham.items(), key=lambda kv: kv[1]["p"])
+    for i, (_, s) in enumerate(sirali):
+        s["holm_esigi"] = 0.05 / (k - i)
+        s["holm_gecti"] = False
+    gecen = []
+    for ad, s in sirali:
+        # Holm zincirlidir: biri düşünce sonrakilerin hepsi düşer.
+        if s["p"] > s["holm_esigi"]:
+            break
+        s["holm_gecti"] = True
+        gecen.append(ad)
+    return {"isaret": ham, "gecen": gecen, "aday": k}
 
 
 def _yaz_cephe(adimlar: Sequence[Adim]) -> None:  # pragma: no cover - elle
@@ -671,7 +765,7 @@ def _main(argv: list[str] | None = None) -> int:  # pragma: no cover - elle
 
     cet = cetvel(hafta_siniri=a.hafta, en_cok_tl=a.tavan)
     k = kural_kiyasi(cet)
-    isaret = isaret_sinavi(cet)
+    isaret = isaret_karnesi(cet)
     if a.json:
         print(json.dumps({"kiyas": k, "isaret": isaret},
                          ensure_ascii=False, indent=1))
@@ -705,9 +799,14 @@ def _main(argv: list[str] | None = None) -> int:  # pragma: no cover - elle
         s = f[ad]
         print(f"{'':2}{etiket:<22}{s['n']:>5}{s['medyan']:>18,.0f}"
               f"{s['kat']:>12.1f}x")
-    print(f"\nisaret sinavi: rho = {isaret['rho']:+.3f} "
-          f"[{isaret['alt']:+.3f}, {isaret['ust']:+.3f}] "
-          f"(n={isaret['n']}) — {'ISARET YOK' if isaret['kesiyor'] else 'ISARET VAR'}")
+    print(f"\nISARET SINAVI — {isaret['aday']} aday, Holm duzeltmeli")
+    print(f"{'':2}{'isaret':<18}{'n':>5}{'rho':>9}{'%95 aralik':>22}"
+          f"{'p':>8}{'Holm esigi':>12}{'gecti':>7}")
+    for ad, s in isaret["isaret"].items():
+        print(f"{'':2}{ad:<18}{s['n']:>5}{s['rho']:>+9.4f}"
+              f"   [{s['alt']:+.4f}, {s['ust']:+.4f}]{s['p']:>8.4f}"
+              f"{s['holm_esigi']:>12.4f}{'EVET' if s['holm_gecti'] else 'hayir':>7}")
+    print(f"  -> gecen isaret: {isaret['gecen'] or 'YOK'}")
     print(f"tavan dayanma: {k['tavan_dayanma']}")
     return 0
 

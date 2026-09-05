@@ -214,6 +214,89 @@ def test_isaret_sinavi_ekilmis_isareti_BULUR():
     assert not s["kesiyor"], "ekilmis isaret sifiri kesmemeli"
 
 
+def test_isaret_sinavi_permutasyon_p_de_doner():
+    """Aralık **ve** p birlikte dönmeli — Holm'a girecek olan p'dir."""
+    c = []
+    for i in range(40):
+        c.append({"sezon": "s", "hafta": i, "basamak": 1, "basamaklar": [
+            {"tl": 2000.0, "kolon": 200, "sekil": "x", "banko": 7, "cift": 3,
+             "uclu": 5, "p_hedef": 0.1 + i / 100.0, "kacak": 0, "tuttu": True,
+             "odul": 100.0 * i, "net": 0.0, "roi": 0.05 * i}]})
+    s = hh.isaret_sinavi(c, n=2000)
+    assert s["p"] < 0.01, "ekilmis isaret permutasyondan gecmeli"
+
+
+def test_devir_isareti_arsivde_olmayan_haftayi_ATLAR():
+    """Havuzu ilan edilmemiş (ya da arşivde olmayan) hafta sınava girmez.
+
+    Sessiz atlama burada **istenen** davranıştır ama görünür olmalı: kesit
+    114'ten 113'e bu yüzden düşüyor. Test iki kolu da tutar — var olmayan
+    sezon hiç girmez, var olan hafta girer.
+    """
+    yok = _sahte_cetvel(3)
+    for c in yok:
+        c["sezon"] = "1999_00"
+    assert hh.devir_isareti(yok) == []
+
+    var = _sahte_cetvel(3)        # sezon 2025_26 — 1. ve 2. hafta arsivde var
+    ciftler = hh.devir_isareti(var)
+    assert ciftler, "gercek arsivden hicbir hafta eslesmedi"
+    assert all(d >= 0.0 for d, _ in ciftler)
+
+
+def test_isaret_karnesi_HOLM_zincirini_dogru_uyguluyor(monkeypatch):
+    """İki aday sınanınca eşik 0,05 değil 0,025'ten başlar — ve zincirlidir.
+
+    Güçlü işaret düşük `p` alır ve 0,025'i geçer; gürültü işareti geçmez.
+    Zincir kuralı da sınanır: sıradaki aday, önceki düştüyse geçemez.
+    """
+    rnd = random.Random(5)
+    c = []
+    for i in range(40):
+        c.append({"sezon": "s", "hafta": i, "basamak": 1, "basamaklar": [
+            {"tl": 2000.0, "kolon": 200, "sekil": "x", "banko": 7, "cift": 3,
+             "uclu": 5, "p_hedef": 0.1 + i / 100.0, "kacak": 0, "tuttu": True,
+             "odul": 0.0, "net": 0.0, "roi": 0.05 * i}]})
+
+    def guclu(cet, referans_tl=2000.0):
+        return [(b["basamaklar"][0]["p_hedef"], b["basamaklar"][0]["roi"])
+                for b in cet]
+
+    def gurultu(cet, referans_tl=2000.0):
+        return [(rnd.random(), b["basamaklar"][0]["roi"]) for b in cet]
+
+    monkeypatch.setattr(hh, "ISARETLER", {"guclu": guclu, "gurultu": gurultu})
+    k = hh.isaret_karnesi(c, n=2000)
+    assert k["aday"] == 2
+    assert k["isaret"]["guclu"]["holm_esigi"] == pytest.approx(0.025)
+    assert k["isaret"]["guclu"]["holm_gecti"]
+    assert not k["isaret"]["gurultu"]["holm_gecti"]
+    assert k["gecen"] == ["guclu"]
+
+
+def test_isaret_karnesi_hicbiri_gecmezse_gecen_BOS():
+    """Zincir ilk adayda kırılırsa ikincisi de düşer — `gecen` boş kalmalı."""
+    rnd = random.Random(11)
+    c = []
+    for i in range(40):
+        c.append({"sezon": "s", "hafta": i, "basamak": 1, "basamaklar": [
+            {"tl": 2000.0, "kolon": 200, "sekil": "x", "banko": 7, "cift": 3,
+             "uclu": 5, "p_hedef": rnd.random(), "kacak": 0, "tuttu": True,
+             "odul": 0.0, "net": 0.0, "roi": rnd.random()}]})
+
+    def gurultu(cet, referans_tl=2000.0):
+        return [(rnd.random(), b["basamaklar"][0]["roi"]) for b in cet]
+
+    monkeypatch = pytest.MonkeyPatch()
+    monkeypatch.setattr(hh, "ISARETLER", {"a": gurultu, "b": gurultu})
+    try:
+        k = hh.isaret_karnesi(c, n=2000)
+    finally:
+        monkeypatch.undo()
+    assert k["gecen"] == []
+    assert all(not s["holm_gecti"] for s in k["isaret"].values())
+
+
 def test_isaret_sinavi_gurultude_SIFIRI_keser():
     """Ve kandırmıyor: `p` ile ROI ilişkisiz olduğunda aralık sıfırı kesmeli."""
     rnd = random.Random(3)
@@ -302,6 +385,9 @@ def test_E6_KAPANISI_hala_gecerli():
     """
     cet = hh.cetvel(hafta_siniri=12)
     assert len(cet) >= 10
+    # Devir isareti gercek arsivden okunur: kesitle eslesmeli, yoksa
+    # ikinci aday sessizce bos kalir ve Holm boleni yalan olur.
+    assert len(hh.devir_isareti(cet)) >= len(cet) - 2
     k = hh.kural_kiyasi(cet)
     acan = [ad for ad, f in k["fark"].items() if not f["kesiyor"]]
     assert not acan, (

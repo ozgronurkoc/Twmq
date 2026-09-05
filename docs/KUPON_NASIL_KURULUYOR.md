@@ -572,7 +572,7 @@ ikramiye tabloları:
 |---|---|
 | Merdivende yukarı çıkmak geri dönüşü artırıyor mu? | **Hayır.** Basamak oranı %10,6–%37,9 arasında yönsüz zıplıyor; 320 → 4.860 TL'lik fazladan harcamanın karşılığı **%29** — ortalamanın aynısı |
 | Haftaya göre değişen bir kural sabiti yener mi? | **Hayır.** Sınanan on iki kuralın (λ kuralı yedi eşikte, LOO'lu hâli, "en büyük", iki sabit bütçe) on ikisinde de eşleştirilmiş %95 aralık **sıfırı kesiyor** — ve o on iki kural yalnız sekiz farklı seçim deseni üretiyor |
-| İyi hafta kupon kapanmadan tanınabiliyor mu? | **Hayır.** `rho(kupon öncesi P(hedef), gerçekleşen ROI) = +0,1175 [−0,0548, +0,2850]` |
+| İyi hafta kupon kapanmadan tanınabiliyor mu? | **Hayır — iki aday da düştü.** `P(hedef)`: rho +0,1175, p 0,2117. **Devir** (havuza dışarıdan giren para, kupon öncesi ilan edilir): rho **+0,2028 [+0,0134, +0,3863]**, p 0,0319 — sıfırı kesmiyor ama iki sınav yapıldığı için Holm eşiği 0,025. Geçseydi bile tavanı ölçülü: devir çarpanı azami 1,645, gereken 1,95–2,84 |
 | Öyleyse neden ayırt edilemiyor? | **Kuyruk.** Basamağa göre ödülün %42–%88'i 114 haftanın **en iyi 5'inden** geliyor |
 
 Fiyat cinsinden tek satır: bir birim `P(hedef)` tutturunca **984 TL**

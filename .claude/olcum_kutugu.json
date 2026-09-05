@@ -2,7 +2,7 @@
  "sayilar": [
   {
    "ne": "suit test sayisi (eksiksiz kurulum)",
-   "deger": "2.067",
+   "deger": "2.071",
    "ureten": "cd backend && pytest -p no:randomly -n0 --collect-only -q  # dosya basi toplami",
    "olculdu": "2026-09-05",
    "anildigi_yerler": [
@@ -14,7 +14,7 @@
     "replit.md"
    ],
    "bekci": "backend/tests/test_belgeler.py::test_test_sayisi_belgelerde_tek_ve_dogru",
-   "not": "lightgbm siz kurulumda 22 test eksik toplanir; yerelde 1.958 olcumu 1.980-22 ile birebir tutuyor. E1'in alti, E2'nin iki, E3'un uc, E4'un bes, E6'nin on sekiz testi eklendi (2.049 -> 2.067, dosya 71 -> 72). 2026-09-05'te eksiksiz kurulumla (scipy+lightgbm+flask+mcp+pillow) DOGRUDAN sayildi: 72 dosya, 2.067 test."
+   "not": "lightgbm siz kurulumda 22 test eksik toplanir; yerelde 1.958 olcumu 1.980-22 ile birebir tutuyor. E1'in alti, E2'nin iki, E3'un uc, E4'un bes, E6'nin yirmi iki testi eklendi (2.049 -> 2.071, dosya 71 -> 72). 2026-09-05'te eksiksiz kurulumla (scipy+lightgbm+flask+mcp+pillow) DOGRUDAN sayildi: 72 dosya, 2.071 test."
   },
   {
    "ne": "test dosyasi sayisi",
@@ -678,15 +678,15 @@
    "not": "%95 Wilson araligi [%50,54, %51,65]. 'Hep ev' kuralini 7,7 puan geciyor. Favorinin %68,4'u zaten ev sahibi, yani kural ayri bir eksen degil favori kuralinin zayiflatilmis hali."
   },
   {
-   "ne": "E6 — kupon oncesi P(hedef) ile gerceklesen ROI arasindaki sira korelasyonu",
-   "deger": "+0,1175 [-0,0548, +0,2850] (n=114)",
-   "ureten": "cd backend && python -m spor_toto.hafta_hakki --kiyas",
+   "ne": "E6 — ex-ante isaret sinavi (iki aday, Holm duzeltmeli)",
+   "deger": "P(hedef): rho +0,1175 [-0,0548, +0,2850], p 0,2117 (n=114) · devir/dagitilan: rho +0,2028 [+0,0134, +0,3863], p 0,0319 (n=113). Holm esikleri 0,050 ve 0,025 — GECEN YOK",
+   "ureten": "cd backend && python -m spor_toto.hafta_hakki --kiyas   # ISARET SINAVI bolumu (hafta_hakki.isaret_karnesi)",
    "olculdu": "2026-09-05",
    "anildigi_yerler": [
     "docs/KAZANMA_PLANI.md §E6"
    ],
-   "bekci": "backend/tests/test_hafta_hakki.py::test_E6_KAPANISI_hala_gecerli",
-   "not": "Sifiri kesiyor: iyi hafta kupon kapanmadan taninamiyor. E6 durma kuralinin 2. maddesi bu sayiya yaziliydi ve isledi — degisken butcenin dayanacagi zemin yok."
+   "bekci": "backend/tests/test_hafta_hakki.py::test_isaret_karnesi_HOLM_zincirini_dogru_uyguluyor",
+   "not": "Ikinci isaret (devir) sifiri KESMIYOR ama iki sinav yapildigi icin Holm esigi 0,025 ve p=0,0319 onun ustunde. Kaba ikili hali (devir alan 22 hafta ↔ almayan 91) zaten kesiyor: fark +0,0526 [-0,1803, +0,3080]. Ve gecseydi bile eksen acilmazdi: devir carpaninin tavani ayri olculu (azami 1,645, gereken 1,95-2,84 — §4.3). Aday listesi hafta_hakki.ISARETLER'de DONDURULDU; uzatan Holm bolenini de buyutur."
   },
   {
    "ne": "E6 — merdivende yukari cikmanin marjinal getirisi (14G, gercek kolon)",

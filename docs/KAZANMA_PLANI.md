@@ -1208,12 +1208,13 @@ sonradan haklı çıkmış gibi düzeltilmedi.
 | **E3** | Omurga `Avg` mi `BFE` mi? | **`Avg` kalıyor** (§3.58). Tek "geçen" ölçü `P(hedef)` ve o bir tuzaktı — farkın **%81'i seçim hiç değişmeden** geliyor |
 | **E4** | Alınmamış bir sütun var mı? | **Yok** (§3.59). Hakem ölçüldü: yayılım saf şansın **0,97–1,00 katı**, yani etki zayıf değil yok. Sütun ekseni kapandı |
 | **E5** | Haftalık birikim | **Sizde.** Satın alınamaz, koşturulamaz — her hafta girilir |
-| **E6** | Bütçe kısıtı kalksa, haftaya göre harcamak yener mi? | **Hayır — eksen kapandı** (§E6). Sınanan on iki kuralın on ikisinde de aralık sıfırı kesti (o on iki kural yalnız sekiz farklı seçim deseni üretiyor); ön şart hiç kurulmadı: kupon öncesi işaret `rho = +0,1175 [−0,0548, +0,2850]`. Ve merdivende yukarı çıkmak **oranı** açmıyor: 320 → 4.860 TL, fazla harcamanın karşılığı **%29** |
+| **E6** | Bütçe kısıtı kalksa, haftaya göre harcamak yener mi? | **Hayır — eksen kapandı** (§E6). Sınanan on iki kuralın on ikisinde de aralık sıfırı kesti (o on iki kural yalnız sekiz farklı seçim deseni üretiyor); ön şart kurulmadı: iki aday ex-ante işaretin ikisi de Holm'dan düştü (`P(hedef)` p=0,2117; **`devir/dağıtılan` rho=+0,2028, p=0,0319** — sıfırı kesmiyor ama iki sınavın eşiği 0,025). Ve merdivende yukarı çıkmak **oranı** açmıyor: 320 → 4.860 TL, fazla harcamanın karşılığı **%29** |
 
 **E6'nın eklediği (2026-09-05):** E2 *"şekli bütçe belirliyor"* demişti;
 E6 o bütçeyi kaldırdı ve bütçenin yerine koyulacak bir şey **bulamadı** —
 ama bulamamanın sebebi ölçüldü. Merdivenin her basamağı aynı oranı veriyor
-(%10,6–%37,9, yönsüz), iyi hafta kupon öncesi tanınamıyor, ve ödülün
+(%10,6–%37,9, yönsüz), iyi haftayı kupon öncesi tanıyan işaret iki adayda
+da Holm'dan geçmiyor, ve ödülün
 %42–%88'i 114 haftanın **en iyi 5'inden** geliyor. Yani bütçe ekseninde
 kaldıraç yok; ve olsaydı bile bu kuyrukla 114 hafta onu göremezdi.
 
@@ -1695,13 +1696,32 @@ sayısı 12 değil 8'dir ve λ bandının uçları merdivenin uçlarına yapış
 haftaya göre gerçekten **değişen** yalnız üç kural var (λ = 5.000 · 10.000 ·
 20.000).
 
-**3. Ve asıl kapanış ön şartta: kupon öncesi işaret YOK.**
+**3. Ve asıl kapanış ön şartta: kupon öncesi işaret geçmiyor.**
 
-```
-Spearman(kupon öncesi P(hedef), gerçekleşen ROI) = +0,1175 [−0,0548, +0,2850]   n=114
-```
+İki aday sınandı; ikincisi bu oyunun dış literatürdeki **tek somut
+koşulunun** kendisidir (§4.3 / `DIS_TARAMA_PIYASAYI_YENME.md`: müşterek
+havuzda pozitif BD ancak dışarıdan para girerse doğar, o para devirdir) ve
+kupon öncesi bilinir — devir, bir önceki hafta kapanınca ilan edilir.
 
-Aralık sıfırı kesiyor. Yani "iyi hafta" kupon kapanmadan **tanınamıyor**.
+| aday işaret | n | `rho` | %95 aralık | permütasyon `p` | Holm eşiği | geçti |
+|---|---:|---:|---|---:|---:|---|
+| `P(hedef)` (kupon öncesi) | 114 | +0,1175 | [−0,0548, +0,2850] | 0,2117 | 0,0500 | hayır |
+| **`devir / dağıtılan`** | 113 | **+0,2028** | **[+0,0134, +0,3863]** | **0,0319** | **0,0250** | **hayır** |
+
+**İkinci işaret sıfırı kesmiyor — ve buna rağmen geçmiyor.** İki sınav
+yapıldı; tek sınav yapmış gibi raporlamak sayıyı şişirirdi. Holm'la eşik
+0,05 değil **0,025**'ten başlıyor ve `p = 0,0319` onun üstünde kalıyor
+(E4'te `hakem` için uygulanan kuralın aynısı; aday listesi
+`hafta_hakki.ISARETLER`de **dondurulmuştur** ki uzatmak isteyen böleni de
+büyütmek zorunda kalsın). Kaba ikili hâli — devir alan hafta ↔ almayan —
+zaten sıfırı kesiyor: fark **+0,0526 [−0,1803, +0,3080]** (22 ↔ 91 hafta).
+
+**Ve geçseydi bile eksen açılmazdı, çünkü tavanı ayrı ölçülü.** Devir
+işaretinin söyleyebileceği en iyi şey *"devirli haftaya daha çok harca"*
+olurdu; §4.3 o haftanın çarpanını zaten ölçtü — azami **1,645**, pozitif
+BD için gereken **1,95–2,84**. Yani doğru haftayı seçmek getiriyi
+ölçeklendirir, 1'in üstüne çıkarmaz.
+
 Durma kuralının 2. maddesi tam bu duruma yazılmıştı: bu şartta bir kural
 sabit bütçeyi yense bile *"haftanın hakkı"* denmez, çünkü kazanç yalnızca
 **ne kadar** harcandığından gelirdi, **hangi haftaya** harcandığından değil.
@@ -1753,9 +1773,14 @@ işaret) 114 haftada bulunamadı.
   maliyet bugünün fiyatından. Havuzlanmış oranlar bu yüzden yeni sezonlara
   ağır biner — eşleştirilmiş fark bundan etkilenmez (aynı haftanın iki
   kolu aynı ölçekte), mutlak geri dönüş seviyeleri etkilenir.
-* `P(hedef)` tek aday işaretti. Başka bir ex-ante işaret (kalabalık
-  yoğunluğu, oran dağılımının keskinliği) sınanmadı; **eksen kapandı**
-  demek "bu işaretle açılmadı" demektir.
+* **İki** aday işaret sınandı (`P(hedef)`, `devir/dağıtılan`) ve ikisi de
+  Holm'dan düştü. Üçüncü bir aday — haftanın **oynanma payı** dağılımı —
+  sınanamadı: oynanma yüzdesi yalnız 2026/27'nin dört haftasında elle
+  girilmiş durumda, tarihsel 114 haftada **yok**. Kalabalık modelinden
+  türetilmiş bir vekil (`kalabalik.oynanma_paylari`) aday sayılmadı, çünkü
+  o olasılıkların deterministik bir fonksiyonudur ve `P(hedef)`ten bağımsız
+  bir sınav olmazdı. Yani **eksen kapandı** demek "bu iki işaretle
+  açılmadı, üçüncüsü için veri yok" demektir.
 
 ---
 
