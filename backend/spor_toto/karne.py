@@ -97,6 +97,34 @@ BUTCELER: tuple[float, ...] = (500.0, 1000.0, 1500.0, 2000.0, 3000.0, 5000.0)
 #: Bootstrap yeniden örnekleme adedi — `evaluate` ile aynı büyüklük sınıfı.
 BOOTSTRAP = 20_000
 
+#: §3.64'ün lig kırılımında bir ligin kendi satırını hak etmesi için gereken
+#: en az maç. Wilson aralığı bunun altında okunacak kadar dar olmuyor.
+EN_AZ_LIG_MAC = 100
+
+#: §3.64'ün **önceden yazılmış durma kuralı** — banko `q`'suna T1 düzeltmesi
+#: konmadan önce gereken banko-rejimi maç sayısı.
+#:
+#: Etki dört sezon boyunca gerçekti ve iki bağımsız örneklem doğruladı
+#: (korpus T1: +%5,7 · +%8,1 · +%7,0 · +%6,6; kupon T1: +%9,0 · +%10,5 ·
+#: +%5,4). Ama gözlenebilen **son** sezonda yok: 2025/26'da +%0,3, `n=150`
+#: ve Wilson aralığı söylenen `p`'yi içeriyor. İki okuma bugünkü veriyle
+#: ayrılamıyor — piyasa keskinleşti, ya da bir sezon gürültü.
+#:
+#: Kural: düzeltme ancak **2025/26 + 2026/27 birlikte** banko rejiminde bu
+#: eşiğe ulaşıp havuzlanmış sapmanın Wilson %95 aralığı `p`'yi **tamamıyla**
+#: dışarıda bıraktığında uygulanır. 2022–2024 üzerinde kalibre edilmiş bir
+#: düzeltme, ölçülebilen son sezonda etkisi olmayan bir şeyi geçmişe
+#: uydurmak olurdu (`esik_taramasi`nın bir kez yaptığı hata).
+#:
+#: Bekçisi `test_karne.py::test_banko_duzeltmesi_UYGULANMIYOR_kurali_yazili`:
+#: düzeltmeyi koymak isteyen önce o testi değiştirmek, yani kararı görünür
+#: kılmak zorunda.
+T1_DUZELTME_ESIGI = 300
+
+#: Bugün banko `q`'suna uygulanan düzeltme. §3.64'ün durma kuralı
+#: karşılanmadı, o yüzden **yok** ve sıfır olmasının gerekçesi yukarıdadır.
+BANKO_Q_DUZELTMESI = 0.0
+
 #: Kuyruk sınavı: en çok kazandıran kaç hafta çıkarılınca hâlâ ayakta mı
 #: (`docs/KADEME_OLASILIKLARI.md` §5.3(c) kuralı).
 KUYRUK_HAFTA = 5
@@ -296,6 +324,7 @@ def anormal_hafta_anahtarlari(dizin: Any = None) -> set[tuple[str, int]]:
 
 def kupon_kesiti(dizin: Any = None,
                  kaynaklar: Sequence[str] | None = None,
+                 yontem: str | None = None,
                  ) -> list[dict[str, Any]]:
     """Ölçümün kesiti: **on beş maçında da oran olan VE ikramiyesi ilan
     edilmiş** haftalar.
@@ -305,15 +334,19 @@ def kupon_kesiti(dizin: Any = None,
     oranını, `data/sportoto_arsiv/*.json` o haftanın **gerçek** kademe
     tablosunu taşıyor.
 
-    `kaynaklar` verilirse kesit o fiyattan kurulur (`odds.match_1x2`).
+    `kaynaklar` verilirse kesit o fiyattan kurulur (`odds.match_1x2`);
+    `yontem` marj arındırmasını seçer (varsayılan `odds.ARINDIRMA_VARSAYILAN`,
+    bugün `shin`). İkincisi §3.64 için eklendi: aynı maçlar üç arındırmayla
+    kurulup favori sembolün kalibrasyonu kıyaslanabilsin diye.
     **On beş maçın on beşinde de fiyat şartı korunur**, yani BFE gibi
     kısmi kapsamalı bir kaynakta kesit kendiliğinden daralır — daraldığı
     yer de bilgidir ve `omurga_kiyasi` onu sayar.
     """
     from .core import SEMBOLLER
-    from .odds import KAYNAK_SIRASI, load_odds, match_1x2
+    from .odds import ARINDIRMA_VARSAYILAN, KAYNAK_SIRASI, load_odds, match_1x2
 
     kay = KAYNAK_SIRASI if kaynaklar is None else tuple(kaynaklar)
+    yon = ARINDIRMA_VARSAYILAN if yontem is None else yontem
     ars = ikramiye_tablolari(dizin)
     out: list[dict[str, Any]] = []
     for sezon in sorted({s for s, _ in ars}, reverse=True):
@@ -321,18 +354,22 @@ def kupon_kesiti(dizin: Any = None,
             satirlar = load_odds(sezon=sezon)
         except OSError:
             continue
-        haftalik: dict[int, list[tuple[dict[str, Any], str]]] = {}
+        haftalik: dict[int, list[tuple[dict[str, Any], str, str]]] = {}
         for r in satirlar:
-            b = match_1x2(r, kaynaklar=kay)
+            b = match_1x2(r, yontem=yon, kaynaklar=kay)
             if b and r.get("code") in SEMBOLLER:
-                haftalik.setdefault(r["week"], []).append((b, r["code"]))
+                lig = (r.get("source") or {}).get("league") or "bilinmiyor"
+                haftalik.setdefault(r["week"], []).append((b, r["code"], lig))
         for w, lst in sorted(haftalik.items()):
             if len(lst) != 15 or (sezon, w) not in ars:
                 continue
             out.append({
                 "sezon": sezon, "hafta": w,
-                "probs": [b["probs"] for b, _ in lst],
-                "gercek": [c for _, c in lst],
+                "probs": [b["probs"] for b, _, _ in lst],
+                "gercek": [c for _, c, _ in lst],
+                # Lig, §3.64'un ayirici kesiti: kuponun yarisi Super Lig'den
+                # gelir ve korpusun lig agirligi bambaska.
+                "ligler": [g for _, _, g in lst],
                 "tablo": ars[(sezon, w)],
             })
     return out
@@ -994,6 +1031,165 @@ def _q_dilimleri(maclar: Sequence[dict[str, Any]],
     return out
 
 
+def banko_yanliligi(dilim: int = 3,
+                    yontemler: Sequence[str] = ("orantili", "guc", "shin"),
+                    korpus: bool = False,
+                    ligler: Sequence[str] | None = None) -> dict[str, Any]:
+    """§3.60'ın açık ucu: banko `q` sapması **arındırma eseri mi, yanlılık mı?**
+
+    §3.60 ölçtü: optimizatörün banko maçlarına atadığı `q` gerçekleşenden
+    **5,6 puan yüksek** (%37,3 ↔ %31,7). `q_banko = 1 − p₁` olduğuna göre
+    aynı cümle şudur: **en olası sembolün olasılığı 5,6 puan düşük
+    yazılıyor.** Sebep iki yerden gelebilir ve ikisi bambaşka işler
+    gerektirir:
+
+    ``arındırma eseri``
+        Marj kaldırma yöntemi favoriye hak ettiğinden az pay veriyordur.
+        Öyleyse çözüm `odds.ARINDIRMA_VARSAYILAN`ı değiştirmektir —
+        ücretsiz, ve A5'in zaten bir kez yaptığı iş.
+    ``piyasa yanlılığı``
+        Fiyatın kendisi favoriyi ucuza satıyordur (favori–uzunatış
+        yanlılığının bilinen yönü). Öyleyse hiçbir normalizasyon onu
+        kapatmaz; düzeltme kalibrasyon katmanında ve **banda özgü** olmak
+        zorundadır (§3.61 global bir düzeltmenin yetmediğini gösterdi).
+
+    ─── Sınavı ayıran kurulum: ÖRNEKLEM SABİT ────────────────────────────
+
+    Her yöntem kendi favorisini seçseydi karşılaştırma iki şeyi birden
+    değiştirirdi. Bu yüzden favori sembol **tek bir referansla** (`shin`)
+    bir kez belirlenir ve üç yöntem de **aynı maçın aynı sembolüne** ne
+    olasılık verdiğiyle sınanır. Dilimler de referansa göre kesilir. Böylece
+    değişen tek şey arındırmanın kendisidir.
+
+    `korpus=True` aynı sınavı 31.103 maçlık eğitim korpusunda koşar — kupon
+    kesitinin 1.710'una karşı 18 kat güç. Kupon kesiti **karar için**,
+    korpus **güç için** okunur.
+
+        cd backend && python -m spor_toto.karne --banko
+        cd backend && python -m spor_toto.karne --banko --korpus
+    """
+    from .odds import ARINDIRMA_VARSAYILAN
+
+    ref = ARINDIRMA_VARSAYILAN
+    suzgec = set(ligler) if ligler else None
+    kesitler = {y: [x for x in _favori_satirlari(y, korpus)
+                    if suzgec is None or x["lig"] in suzgec]
+                for y in yontemler}
+    if ref not in kesitler:
+        kesitler[ref] = [x for x in _favori_satirlari(ref, korpus)
+                         if suzgec is None or x["lig"] in suzgec]
+    n = min(len(v) for v in kesitler.values())
+    if not n:
+        raise KarneHatasi("kesit bos")
+    for y, v in kesitler.items():
+        if len(v) != n:
+            raise KarneHatasi(
+                f"{y} kesiti {len(v)} satir, {ref} {n} — eslesmiyor")
+
+    # Favori sembol ve dilim sinirlari REFERANSTAN; yontemler yalnizca o
+    # sembole verdikleri olasilikla yarisiyor.
+    referans = kesitler[ref]
+    sira = sorted(range(n), key=lambda i: referans[i]["p_favori"])
+    kollar: list[dict[str, Any]] = []
+    for y in yontemler:
+        satir = kesitler[y]
+        dilimler = []
+        for d in range(dilim):
+            idx = sira[d * n // dilim:(d + 1) * n // dilim]
+            if not idx:
+                continue
+            dilimler.append(_kalibrasyon_ozeti(
+                [satir[i]["p_favori"] for i in idx],
+                [satir[i]["tuttu"] for i in idx],
+                referans[idx[0]]["p_favori"], referans[idx[-1]]["p_favori"]))
+        # Banko rejimi: referansin en yuksek p_favori'li ust yarisi.
+        ust = sira[n // 2:]
+        kollar.append({
+            "yontem": y,
+            "tumu": _kalibrasyon_ozeti(
+                [x["p_favori"] for x in satir],
+                [x["tuttu"] for x in satir], None, None),
+            "banko_rejimi": _kalibrasyon_ozeti(
+                [satir[i]["p_favori"] for i in ust],
+                [satir[i]["tuttu"] for i in ust],
+                referans[ust[0]]["p_favori"], referans[ust[-1]]["p_favori"]),
+            "dilimler": dilimler,
+        })
+    # Lig kirilimi REFERANS yontemle: korpus ile kupon arasindaki fark
+    # lig agirligindan mi geliyor? Kuponun yarisi Super Lig'den gelir
+    # (932/1.785, %52,2) ve korpusun 22 liginin agirligi bambaska.
+    lig_sayim: dict[str, list[int]] = {}
+    for i, x in enumerate(referans):
+        lig_sayim.setdefault(x["lig"], []).append(i)
+    lig_ozeti = [
+        {"lig": lg, **_kalibrasyon_ozeti(
+            [referans[i]["p_favori"] for i in idx],
+            [referans[i]["tuttu"] for i in idx], None, None)}
+        for lg, idx in sorted(lig_sayim.items(), key=lambda kv: -len(kv[1]))
+        if len(idx) >= EN_AZ_LIG_MAC
+    ]
+    # Sezon isareti: Ö3 tam bu sinavda dustu (§3.21). Havuzlanmis bir sapma,
+    # bir iki sezonun tasidigi bir sey olabilir; kirilim onu gorunur kilar.
+    # BANKO REJIMINDE olculur, cunku karari veren o rejim.
+    ust_kume = set(sira[n // 2:])
+    sezon_sayim: dict[str, list[int]] = {}
+    for i in ust_kume:
+        sezon_sayim.setdefault(referans[i]["sezon"], []).append(i)
+    sezonlar = [
+        {"sezon": sz, **_kalibrasyon_ozeti(
+            [referans[i]["p_favori"] for i in idx],
+            [referans[i]["tuttu"] for i in idx], None, None)}
+        for sz, idx in sorted(sezon_sayim.items())
+    ]
+    return {"kesit": "korpus" if korpus else "kupon", "mac": n,
+            "referans": ref, "kollar": kollar, "ligler": lig_ozeti,
+            "sezonlar": sezonlar,
+            "lig_suzgeci": sorted(suzgec) if suzgec else None}
+
+
+def _favori_satirlari(yontem: str, korpus: bool) -> list[dict[str, Any]]:
+    """`(p_favori, tuttu)` satırları — favori sembol **her yöntemde kendi**.
+
+    Çağıran bunları referansın favorisiyle hizalar; burada hizalama
+    yapılmaz çünkü sıra iki kaynakta da maç sırasıdır ve `banko_yanliligi`
+    aynı indekse bakar.
+    """
+    out: list[dict[str, Any]] = []
+    if korpus:
+        from .egitim import korpus_haftalari
+        for h in korpus_haftalari(yontem=yontem):
+            for pr, kod, oz in zip(h["probs"], h["results"],
+                                    h["ozellikler"]):
+                if not pr:
+                    continue
+                fav = max(pr, key=lambda k: pr[k])
+                out.append({"p_favori": pr[fav],
+                            "lig": oz.get("lig") or "bilinmiyor",
+                            "sezon": h["sezon"],
+                            "tuttu": 1.0 if kod == fav else 0.0})
+        return out
+    for h in kupon_kesiti(yontem=yontem):
+        for pr, kod, lig in zip(h["probs"], h["gercek"], h["ligler"]):
+            fav = max(pr, key=lambda k: pr[k])
+            out.append({"p_favori": pr[fav], "lig": lig, "sezon": h["sezon"],
+                        "tuttu": 1.0 if kod == fav else 0.0})
+    return out
+
+
+def _kalibrasyon_ozeti(p: Sequence[float], tuttu: Sequence[float],
+                       alt_sinir: float | None,
+                       ust_sinir: float | None) -> dict[str, Any]:
+    """Söylenen ↔ gerçekleşen, Wilson aralığıyla ve `p` içeride mi diye."""
+    ort_p, gercek = _ortalama(list(p)), _ortalama(list(tuttu))
+    lo, hi = wilson(sum(int(x) for x in tuttu), len(tuttu))
+    return {
+        "mac": len(p), "alt_sinir": alt_sinir, "ust_sinir": ust_sinir,
+        "p": ort_p, "gerceklesen": gercek, "acik": gercek - ort_p,
+        "wilson_alt": lo, "wilson_ust": hi,
+        "sifir_disinda": not (lo <= ort_p <= hi),
+    }
+
+
 def kalibre_kesit(kesit: Sequence[dict[str, Any]],
                   kademe: str = "bias") -> list[dict[str, Any]]:
     """Kupon kesitinin olasılıklarını **sezon dışarıda bırakmalı** kalibre eder.
@@ -1255,6 +1451,12 @@ def _main(argv: list[str] | None = None) -> int:  # pragma: no cover - elle
                     help="omurga olasiligini karar cetveliyle kiyasla (bias)")
     ap.add_argument("--kapsama", action="store_true",
                     help="model P(k<=esik) ile gerceklesen arasindaki acik")
+    ap.add_argument("--banko", action="store_true",
+                    help="§3.64: banko q sapmasi arindirma eseri mi, yanlilik mi")
+    ap.add_argument("--korpus", action="store_true",
+                    help="--banko ile: kupon kesiti yerine 31.103 macliK korpus")
+    ap.add_argument("--lig", nargs="+", metavar="LIG", default=None,
+                    help="--banko ile: kesiti bu liglere kisitla (or. T1 E0)")
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args(argv)
 
@@ -1323,6 +1525,54 @@ def _main(argv: list[str] | None = None) -> int:  # pragma: no cover - elle
               "kalirsa degisir\n(ve bes aday oldugu icin Holm'dan da "
               "gecmelidir).")
         print("Yalniz 14-garanti. Sonuc 13G'ye TASINMAZ (§3.51, 15,1 kat).")
+        return 0
+
+    if a.banko:
+        b = banko_yanliligi(korpus=a.korpus, ligler=a.lig)
+        if a.json:
+            print(json.dumps(b, ensure_ascii=False, default=str))
+            return 0
+        print(f"\nBanko yanliligi — favori sembolun kalibrasyonu · "
+              f"{b['kesit']} kesiti · {b['mac']:,} mac")
+        print(f"  ORNEKLEM SABIT: favori sembol ve dilim sinirlari "
+              f"'{b['referans']}'dan; yontemler yalniz o sembole verdikleri "
+              f"olasilikla yarisiyor")
+        for kol in b["kollar"]:
+            print(f"\n  {kol['yontem'].upper()}")
+            print(f"{'grup':>16}{'mac':>8}{'soylenen':>11}{'gercek':>9}"
+                  f"{'acik':>9}{'Wilson %95':>22}{'p disinda':>11}")
+            for ad, r in (("tumu", kol["tumu"]),
+                          ("BANKO REJIMI", kol["banko_rejimi"]),
+                          *[(f"dilim {i + 1}", d)
+                            for i, d in enumerate(kol["dilimler"])]):
+                etiket = ad
+                if r["alt_sinir"] is not None and ad.startswith("dilim"):
+                    etiket = f"{r['alt_sinir']:.3f}-{r['ust_sinir']:.3f}"
+                aralik = f"[{r['wilson_alt']:.1%}, {r['wilson_ust']:.1%}]"
+                print(f"{etiket:>16}{r['mac']:>8,}{r['p']:>11.1%}"
+                      f"{r['gerceklesen']:>9.1%}{r['acik']:>+9.1%}{aralik:>22}"
+                      f"{'EVET' if r['sifir_disinda'] else 'hayir':>11}")
+        print(f"\n  LIG KIRILIMI ({b['referans']}; en az "
+              f"{EN_AZ_LIG_MAC} mac)")
+        print(f"{'lig':>16}{'mac':>8}{'soylenen':>11}{'gercek':>9}"
+              f"{'acik':>9}{'Wilson %95':>22}{'p disinda':>11}")
+        for r in b["ligler"]:
+            aralik = f"[{r['wilson_alt']:.1%}, {r['wilson_ust']:.1%}]"
+            print(f"{r['lig']:>16}{r['mac']:>8,}{r['p']:>11.1%}"
+                  f"{r['gerceklesen']:>9.1%}{r['acik']:>+9.1%}{aralik:>22}"
+                  f"{'EVET' if r['sifir_disinda'] else 'hayir':>11}")
+        print(f"\n  SEZON ISARETI — BANKO REJIMI ({b['referans']}; Ö3 bu "
+              f"sinavda dusmustu)")
+        print(f"{'sezon':>16}{'mac':>8}{'soylenen':>11}{'gercek':>9}"
+              f"{'acik':>9}{'Wilson %95':>22}{'p disinda':>11}")
+        for r in b["sezonlar"]:
+            aralik = f"[{r['wilson_alt']:.1%}, {r['wilson_ust']:.1%}]"
+            print(f"{r['sezon']:>16}{r['mac']:>8,}{r['p']:>11.1%}"
+                  f"{r['gerceklesen']:>9.1%}{r['acik']:>+9.1%}{aralik:>22}"
+                  f"{'EVET' if r['sifir_disinda'] else 'hayir':>11}")
+        print("\nOKUMA: sapma UC yontemde de duruyorsa arindirma eseri DEGIL,")
+        print("piyasa yanliligidir ve normalizasyonla kapanmaz (§3.61: global")
+        print("bir kalibrasyon duzeltmesi de yetmedi).")
         return 0
 
     if a.kapsama:

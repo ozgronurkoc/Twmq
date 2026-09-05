@@ -121,10 +121,25 @@ sonuç modelin olasılık sıralamasında **kaçıncı** sıradaydı?
 >   dilimi değil ayrık bir karardır, yani bulgu ortalamaya dönüş eseri
 >   olamaz.
 > * **Denendi ve yetmedi:** global yeniden kalibrasyon (`kalibre_bias`,
->   §3.61) — kusur banda özgü, dönüşüm global.
+>   §3.61).
 >
-> Bu paragrafın uyarısı **kalkmadı, daraldı**: açığın *varlığı* artık
-> ölçülü, *kaynağı* hâlâ tam açıklanmış değil.
+> **Kaynağı da ayrıştırıldı (§3.64) ve üç adaydan biri kaldı.** Arındırma
+> eseri değil (üç yöntemde de duruyor); genel piyasa yanlılığı değil
+> (31.103 maçlık korpusta `guc` ölçeğinde +%0,5 ve aralık içinde);
+> **kesit** — ve kesitin içinde tek bir lig, **T1 Süper Lig**, iki
+> bağımsız örneklemde de aynı büyüklükte (+%4,2 kuponda / +%4,9
+> korpusta). T1 kuponun yarısıdır, yani düzeltilseydi şeklin kendisi
+> değişirdi.
+>
+> **Ama düzeltme uygulanmadı, çünkü etki sönüyor.** T1 banko sapması
+> sezon sezon: korpusta +%5,7 · +%8,1 · +%7,0 · +%6,6, kuponda +%9,0 ·
+> +%10,5 · +%5,4 — ve gözlenebilen son sezonda (2025/26) **+%0,3**,
+> `n=150`, aralık `p`'yi içeriyor. Yukarıdaki §3'ün kendi sayıları da
+> aynı sönümü taşıyor. Durma kuralı önceden yazıldı ve koda geçti
+> (`karne.T1_DUZELTME_ESIGI`, bekçisi var).
+>
+> Bu paragrafın uyarısı **kalkmadı, daraldı**: açığın varlığı ve mekanizması
+> ölçülü, ama ileriye dönük kullanılabilir bir düzeltme **yok**.
 
 ---
 

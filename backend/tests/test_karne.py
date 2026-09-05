@@ -415,3 +415,47 @@ def test_karne_satiri_ODEYEN_olayi_AYRI_tasiyor():
         pytest.skip("canli hafta yuku yok")
     assert 0.0 < r["p_kacak_sifir"] < r["p_hedef"] <= 1.0, \
         "P(k=0) her zaman P(k<=esik)'in ICINDE ve ondan kucuk olmali"
+
+
+# ─── §3.64: banko q sapması ölçüldü, düzeltme UYGULANMADI ─────────────────
+
+def test_banko_duzeltmesi_UYGULANMIYOR_kurali_yazili():
+    """Düzeltme yok, ve yokluğunun gerekçesi koda yazılı.
+
+    §3.64 sapmayı ölçtü (T1 banko rejimi, dört sezon, iki bağımsız
+    örneklem) ama **son** sezonda etki yok (+%0,3, n=150). Düzeltmeyi
+    2022–2024 üzerinde kalibre etmek, ölçülebilen son sezonda etkisi
+    olmayan bir şeyi geçmişe uydurmak olurdu.
+
+    Bu test bir sayıyı dondurmuyor — bir **kararı** donduruyor. Düzeltmeyi
+    koymak isteyen önce buraya dokunmak, yani kararı görünür kılmak
+    zorunda.
+    """
+    assert karne.BANKO_Q_DUZELTMESI == 0.0, (
+        "banko q'suna duzeltme konmus; §3.64'un durma kurali karsilandi mi? "
+        f"Esik: {karne.T1_DUZELTME_ESIGI} banko-rejimi maci ve Wilson %95 "
+        "araliginin soylenen p'yi TAMAMIYLA disarida birakmasi."
+    )
+    assert karne.T1_DUZELTME_ESIGI > 150, (
+        "esik bugunku n'in (150) altina cekilmis — durma kurali sonuca "
+        "bakilarak gevsetilemez (doktrin md. 1)"
+    )
+
+
+def test_banko_yanliligi_ORNEKLEMI_SABIT_tutar():
+    """Üç arındırma **aynı maçların aynı sembolünü** puanlamalı.
+
+    Her yöntem kendi favorisini seçseydi karşılaştırma iki şeyi birden
+    değiştirir ve "arındırma eseri mi" sorusu cevaplanamazdı. Bekçi:
+    kollar aynı maç sayısını taşır ve gerçekleşen oran üçünde de AYNIDIR
+    (değişen yalnız söylenen olasılıktır).
+    """
+    b = karne.banko_yanliligi(yontemler=("orantili", "shin"))
+    assert b["mac"] > 0
+    gercekler = {round(k["banko_rejimi"]["gerceklesen"], 9) for k in b["kollar"]}
+    assert len(gercekler) == 1, (
+        "yontemler farkli gerceklesen oran goruyor — ornek sabit degil, "
+        f"yani her yontem kendi favorisini secmis: {gercekler}"
+    )
+    maclar = {k["banko_rejimi"]["mac"] for k in b["kollar"]}
+    assert len(maclar) == 1, f"kollarin mac sayisi ayrisiyor: {maclar}"
