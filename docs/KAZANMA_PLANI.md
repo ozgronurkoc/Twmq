@@ -1195,6 +1195,30 @@ ekler; öngörülen ile gerçekleşen yan yana durur.
 > (kalabalık modeli · Betfair Exchange). Bu bölüm **ondan sonra ne
 > yapılacağını** yazar ve tek bir ölçümün üstüne kurulur.
 
+## Durum (2026-09-05): kod tarafı bitti, kalan tek şey **hafta**
+
+E1–E4'ün dördü de koştu ve kapandı. Aşağıdaki bölümler planı yazıldığı
+hâliyle bırakıyor ve her birinin sonuna ölçümün kendisi eklendi — plan
+sonradan haklı çıkmış gibi düzeltilmedi.
+
+| # | Ne soruldu | Sonuç |
+|---|---|---|
+| **E1** | Garanti tabanı ne kadar gevşek? | **2,39 kat** (§3.56). Fişe gerek kalmadı: 14G'de kolonları depo üretiyor. Ama açık kapanmadı — %24,2 hâlâ 1'in altında. **13G için fiş hâlâ gerekli** |
+| **E2** | Hedef kademe 12 mi olmalı? | **12 kalıyor** (§3.57). Üç farkın üçü de sıfırı kesti. Sebebi yapısal: şekli **bütçe** belirliyor, hedef değil |
+| **E3** | Omurga `Avg` mi `BFE` mi? | **`Avg` kalıyor** (§3.58). Tek "geçen" ölçü `P(hedef)` ve o bir tuzaktı — farkın **%81'i seçim hiç değişmeden** geliyor |
+| **E4** | Alınmamış bir sütun var mı? | **Yok** (§3.59). Hakem ölçüldü: yayılım saf şansın **0,97–1,00 katı**, yani etki zayıf değil yok. Sütun ekseni kapandı |
+| **E5** | Haftalık birikim | **Sizde.** Satın alınamaz, koşturulamaz — her hafta girilir |
+
+**Dördünün ortak dersi ve ikinci turun asıl çıktısı bu:** kupon sayıları
+ikiye ayrılıyor. Modelin **kendi ürettikleri** (`P(hedef)`, `E[TL]`) girdi
+keskinleştikçe kendiliğinden büyür ve tek başına kanıt değildir; **dışarıdan
+gelenler** (gerçekleşen kaçak, gerçek kolon ödülü, kademe adetleri) öyle
+değildir. E3 bu ayrımı sayıya çevirdi, E2 aynı yere yapısal olarak vardı.
+
+Ve para tarafındaki teşhis şu an net: taban gevşekti (2,39 kat), düzeltildi,
+kupon **yine de kaybediyor**. Kapatılması gereken açık %24 ↔ %100 ve onu
+kapatabilecek tek aday kalabalık ekseni — ki oradaki tek eksik `n`.
+
 ## Neden yeni bir tura ihtiyaç var: hedef yanlış kademeyi gösteriyor olabilir
 
 Karne kurulunca şu aritmetik göründü (114 hafta, ödül medyanları):
