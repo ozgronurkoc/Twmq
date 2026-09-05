@@ -1578,11 +1578,56 @@ yaklaşma.
 
 ---
 
+## E6 — Bütçeyi kaldır: **haftanın hakkı**
+
+E2'nin yapısal bulgusu bu bölümün gerekçesidir:
+
+> *"Şekli **bütçe** belirliyor, hedef değil."*
+
+Yani haftanın planını haftanın kendisi değil, kenardan verilmiş sabit bir
+sayı (2.000 TL) seçiyordu. E6 o sayıyı kaldırır ve sorar: **haftaya göre
+değişen bir harcama, sabit harcamayı yener mi?**
+
+| adım | iş |
+|---|---|
+| E6a | Haftanın **cephesi**: satılan bütün şekiller için `(maliyet, P(hedef))` — bütçe kısıtı olmadan |
+| E6b | Cephenin her basamağında **gerçekleşen** ödül (E1'in gerçek kolon makinesi) → haftanın **cetveli** |
+| E6c | Kuralları aynı cetvelde puanla: `sabit-B` · `λ·p − maliyet` · `en-büyük` · LOO-λ |
+| E6d | **İşaret sınavı:** kupon öncesi bir işaret, o haftanın gerçekleşen ROI'sini biliyor mu? |
+
+**Durma kuralı (önceden — ölçüm koşmadan yazıldı):**
+
+1. λ kuralı ile `sabit-2000` arasındaki hafta düzeyinde **eşleştirilmiş**
+   ROI farkının %95 bootstrap aralığı sıfırı kesiyorsa **bütçe ekseni
+   kapanır** ve sabit bütçe, kolaylık değil **ölçülmüş** bir seçim olarak
+   kalır.
+2. Ve bir ön şart var, ondan güçlü: **işaret sınavı** sıfırı kesiyorsa —
+   yani kupon öncesi hiçbir işaret "iyi hafta"yı tanımıyorsa — 1. kural
+   nasıl çıkarsa çıksın *"değişken bütçe kazandı"* denmez. O durumda
+   kazanç yalnızca **ne kadar** harcandığından gelir, **hangi haftaya**
+   harcandığından değil; ve "her hafta daha çok harca" bir bütçe kuralıdır,
+   haftanın hakkı değildir.
+3. LOO kolu (λ o hafta dışarıda bırakılarak kestirilir) iç örneklem
+   kolundan belirgin biçimde kötüyse λ'nın **ölçülebilirliği** reddedilir.
+
+**Beklenti dürüstçe:** cephe `P`de monotondur, yani "bütçesiz `P`
+enbüyükle" dejeneredir (cevabı her hafta *en büyüğü al*); `E[TL]` tarafı da
+ters yönde dejeneredir (cevabı her hafta *en küçüğü al*). İkisi de haftayı
+görmez. Bu yüzden E6'nın ölçtüğü şey bir hedef fonksiyonu değil, **gerçekleşen
+paradır**; ve kuralın kaybetmesi meşru bir bitiştir.
+
+**Bu ölçüm 14-garantidedir** — E1'in sınırı aynen geçerli: kolonları
+üretebilen tek yer orası. Ürün 13-garanti oynuyor ve o seviyeye
+**taşınmaz** (§3.51, 15,1 kat).
+
+---
+
 ## Dokunulacak dosyalar
 
 | Faz | Dosya | İş |
 |---|---|---|
 | E1 | `spor_toto/karne.py` · hafta yükü şeması | ✅ 14G ölçüldü (`--taban`); 13G için `kupon_sonuc` alanı bekliyor |
+| E6 | **`spor_toto/hafta_hakki.py`** (yeni) · `tests/test_hafta_hakki.py` | cephe + cetvel + kural kıyası + işaret sınavı |
 | E2 | `spor_toto/sistem.py` · `spor_toto/secim.py` | ✅ ölçüldü (14G) — `HEDEF_KADEME = 12` **değişmedi**, ölçüm onu doğruladı |
 | E2 | `spor_toto/karne.py` | ✅ `hedef_kademe_kiyasi` (`--hedef`) — 114 hafta × gerçek kolon ödülü |
 | E3 | `spor_toto/karne.py` (`omurga_kiyasi`) · `spor_toto/odds.py` (`match_1x2` fiyat parametresi) | ✅ ölçüldü — omurga `Avg` KALDI; `P(hedef)` ayrışımı zorunlu çıktı |
