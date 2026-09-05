@@ -153,7 +153,7 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/components/super-toto/tahmin2.tsx` | **2. Tahmin** paneli — `1. Tahmin` / `2. Tahmin` sekmeleri arasında geçilir; para birimli hiçbir sayı yok. Hafta kapandığında sonuç sütunu ve ayar karnesi açılır (§3.38) |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **2.043 test**; **85'i** istatistik katmanına (`history` `odds` `backtest`
+paketi toplam **2.044 test**; **85'i** istatistik katmanına (`history` `odds` `backtest`
 `api_stats` `api_backtest` `snapshot_iddaa`), **579'u** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre`
@@ -5228,6 +5228,7 @@ ve karşılıkları: kupon seti 0,5747 → **0,5740**, korpus 0,5940 → **0,593
 | **Betfair Exchange (§3.52)** | 985 kupon maçı · 119 hafta | **GEÇTİ** — ve beş aday üzerinde **Holm düzeltmesiyle**: `BFE_kapanis` −0,00100 [−0,00181, −0,00021], p=0,0054. Bir model değil bir **fiyat**: marj **%0,62**, omurganınkinin onda biri. Kapsama 2022/23–2023/24'te **sıfır**, 2024/25 %100, 2025/26 %87 — ileriye dönük sorun yok, `n` iki sezon |
 | **Kupon-zamanı fiyatı (§3.53)** | 31.099 maç · sezon dışarıda | **Kapandı.** `L_kapanış ≈ b·L_açılış` kestirimi `b ≈ 1,009` veriyor ve açığın yalnızca **%3,3**'ünü geri alıyor (dört katta %2,3–6,2). Açılış zaten kapanışın **yansız kestiricisi**; §5.2'nin %22'lik kolon bedeli bu yolla geri alınamaz |
 | **Kupon kuralında ters seçim (§3.54)** | 114 hafta · 1.710 maç | **Yok.** Banko −0,0537, banko değil −0,0492, fark **−0,0045** [−0,0506, +0,0414] — sıfırı kesiyor. §3.49'un ters seçimi gerçek ama `model` kuralına ait; kupon onu kullanmıyor. İki kolda da *eksik* güven, ki A5'in favori–sürpriz yanlılığı |
+| **Hakem (§3.59)** | 13.332 maç · 254 hakem · 9 lig | **Yok — ve bu kez "yok" ölçüldü.** Üç aday da Holm'dan düştü (`hakem_ev` +0,000002 [−0,000003, +0,000008], p=0,8139), etki öteki ailelerin kalanından **üç mertebe** küçük. Ayrıştırıldı: hakemler arası gözlenen yayılım saf şansın ürettiğinin **0,97–1,00 katı**, yani `Var(gerçek)` negatif — yakalanacak etki yok, düzeltmenin kusuru değil. Kapsama **coğrafi** (%42,9; yalnız Britanya ligleri), o yüzden sütun korpusa katılmadı. **Sütun ekseni kapandı** |
 
 **Okuma.** Aşırı uyum modelin kapasitesinden değil örneklem küçüklüğünden geliyordu; büyük
 korpus onu kaldırdı. Ama kalan etki 0,0005–0,0015 Brier — 31 binde anlamlı, 540'ta değil ve
@@ -6077,7 +6078,7 @@ python -m spor_toto.kosum                  # kayıtlı koşumlar
 python -m spor_toto.kosum --son disari     # son koşumun ortamı
 
 # Denetim
-pytest -q                                  # 2.043 test (85'i bu katman, 583'ü tahmin)
+pytest -q                                  # 2.044 test (85'i bu katman, 583'ü tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out

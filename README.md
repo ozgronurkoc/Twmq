@@ -968,6 +968,8 @@ backend/
     build_history.py   Tarihsel veri setini kaynağından üretir
     build_odds.py      Kupon maçlarına piyasa oranlarını eşleştirir
     build_egitim.py    Eğitim korpusu (football-data, 22 lig × 4 geçmiş sezon)
+    build_hakem.py     Hakem sütunu — korpusa DEĞİL ayrı tabloya (E4; §3.59'un
+                       gerekçesi: kapsama coğrafi, korpusa katılırsa kesit bozulur)
     build_fixtures.py  Yaklaşan maç fikstürü (tahmin katmanının ölçülen kaynağı)
     build_xg.py        xG vekili kalibrasyonu (StatsBomb 2015/16 dört lig kesiti;
                        VERI DEGIL katsayi uretir — lisans md. 1.2.1)
@@ -983,12 +985,13 @@ backend/
     build_bulten.py           Bülten görselinden 15 maç (OCR, `ocr` ekstrası)
     build_gecmis_sezon.py     Bülten + fikstür → geçmiş sezon 1/0/2
     faz_b.py                  Havuz ekseni güç analizi
+    hafta_kos.py              Haftalık döngü: --oncesi kupon, --sonrasi karne
     acilis_kapanis.py         Açılış–kapanış oranı karşılaştırması
     api_sozlesme.py           API sözleşmesini üretir/denetler (--kontrol: CI kapısı)
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
-                       sehir/ · xg/
-  tests/               pytest (70 dosya → 2.043 test; §9'da katman dökümü)
+                       sehir/ · xg/ · sistem_fiyat/ · hakem/
+  tests/               pytest (70 dosya → 2.044 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1192,7 +1195,7 @@ dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri t
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
 eşleme, ikinci kayıt). **70 test dosyası, parametrizasyonla
-2.043 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+2.044 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
@@ -1220,7 +1223,7 @@ karşı denetler):
 | Takım gücü | `takim_gucu` | 24 |
 | Yeni veri (UEFA · şehir) | `avrupa` `sehir` | 41 |
 | xG vekili kalibrasyonu | `xg` | 16 |
-| Belgeler | `belgeler` | 11 |
+| Belgeler | `belgeler` | 12 |
 | Değer bahsi (yan pazarlar) | **`deger`** | 24 |
 | Fiyat kaynakları | **`fiyatlar`** | 14 |
 | Kuyruk / bağımsızlık | **`kuyruk`** | 12 |

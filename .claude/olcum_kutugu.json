@@ -2,9 +2,9 @@
  "sayilar": [
   {
    "ne": "suit test sayisi (eksiksiz kurulum)",
-   "deger": "2.043",
+   "deger": "2.044",
    "ureten": "cd backend && pytest -p no:randomly -n0 --collect-only -q  # dosya basi toplami",
-   "olculdu": "2026-09-04",
+   "olculdu": "2026-09-05",
    "anildigi_yerler": [
     "README.md §7,§9",
     "backend/README.md",
@@ -14,7 +14,7 @@
     "replit.md"
    ],
    "bekci": "backend/tests/test_belgeler.py::test_test_sayisi_belgelerde_tek_ve_dogru",
-   "not": "lightgbm siz kurulumda 22 test eksik toplanir; yerelde 1.958 olcumu 1.980-22 ile birebir tutuyor. E1'in alti, E2'nin iki, E3'un uc, E4'un bes testi eklendi (2.027 -> 2.043). Yerel kurulumda lightgbm yok, o yuzden toplama 2.021 diyor; fark test_agac.py'nin 22 testi."
+   "not": "lightgbm siz kurulumda 22 test eksik toplanir; yerelde 1.958 olcumu 1.980-22 ile birebir tutuyor. E1'in alti, E2'nin iki, E3'un uc, E4'un bes testi eklendi (2.027 -> 2.044). Yerel kurulumda lightgbm yok, o yuzden toplama 2.022 diyor; fark test_agac.py'nin 22 testi. Sonuncusu test_betik_sayisi_belgeyle_ayni: backend/README 24 betik diyordu, gercek 27'ydi ve bunu tutan bekci YOKTU."
   },
   {
    "ne": "test dosyasi sayisi",

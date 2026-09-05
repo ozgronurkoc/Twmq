@@ -699,6 +699,39 @@ kümesi anlaşmazlığı değil, o gün hangi kaynağın mevcut olduğunu ölçe
 Doğrulamaya ayrıca **`Max ≥ Avg`** eklendi — en iyi fiyat ortalamanın altına
 inemez; inerse kaynak sütunları karışmıştır (ilke 5).
 
+### 6A.8 Hakem sütunu — korpusa **katılmayan** veri, ve niçin
+
+Aynı kaynak (football-data) hakem adını da veriyor ve E4 onu ölçtü. Ama
+sütun `egitim_korpus.csv`'ye **katılmadı**; ayrı bir tabloda duruyor:
+
+| | |
+|---|---|
+| **Üreten** | `scripts/build_hakem.py` (`--kontrol`: bayatlık denetimi) |
+| **Dosya** | `backend/data/hakem/hakem.csv` — 13.334 satır, 255 hakem |
+| **Şema** | `sezon, lig, tarih, ev, dep, hakem` — korpusa **anahtarla** bağlanır |
+| **Okuyan** | `spor_toto.hakem` (yalnızca ölçüm; arayüze çıkmaz) |
+
+**Niçin katılmadı — kapsama coğrafi.** Ölçüldü: football-data hakemi dokuz
+Britanya liginde **%100** yazıyor (`E0 E1 E2 E3 EC SC0 SC1 SC2 SC3`), on üç
+kıta liginde **%0**. Korpusa bağlandığında 31.103 satırın 13.334'ü (%42,9)
+hakemli.
+
+Bu, §6A.7'nin bahisçi gerekçesiyle **aynı kusurdur ama daha kötüsüdür.**
+Orada dengesizlik sezona göreydi ve sezon dışarıda bırakmalı ölçüm onu en
+azından görünür kılıyordu; burada dengesizlik **coğrafi**, yani hiçbir sezon
+katlaması onu yakalayamaz. Model bir lig kümesini ötekinden farklı bir maç
+evreninde öğrenirdi ve sızıntı sessiz olurdu.
+
+İkinci ve teknik sebep: korpus değişirse `artefakt.py`'nin taşıdığı sha256
+bayatlar ve `health` kırmızı yanar; ayrıca `ISTATISTIK_YOL_HARITASI.md`de
+"31.103" 53 yerde geçiyor ve çoğu bir **ölçümün kaydı** — sütun eklemek satır
+sayısını değiştirmese de o dosyaların hiçbirine dokunmadan ölçmek zaten
+mümkündü.
+
+Ölçümün sonucu §3.59'da: hakem etkisi **yok** (hakemler arası yayılım saf
+şansın ürettiğinin 0,97–1,00 katı). Tablo yine de depoda duruyor — bir
+"ölçtük ve yoktu" kaydı, yeniden ölçülebilir olsun diye.
+
 ---
 
 ## 6B. Süper Toto haftası — elle girilen veri
@@ -1492,7 +1525,7 @@ tablolar (script'in bastığı lig dağılımı) bunu yakalayan şeydi.
 | `test_sportoto_arsiv.py::test_hafta_no_tahmin_edilmez` | Hafta numarası uydurulmaz (doktrin 2) |
 | `test_sportoto_arsiv.py::test_celisen_kapanis_tarihi_raporlanir` | İki uç çelişirse biri sessizce seçilmez (doktrin 4) |
 
-Toplam 113 test bu dört veri setini korur (backend paketi 2.043 test). `python -m spor_toto.health`
+Toplam 113 test bu dört veri setini korur (backend paketi 2.044 test). `python -m spor_toto.health`
 27 değişmez çalıştırır; `oran_arsivi` ve `geri_test` bu katmanı, `tahmin_referanslari`
 tahmin katmanının ölçüm koşumunu korur.
 

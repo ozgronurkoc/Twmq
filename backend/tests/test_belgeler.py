@@ -314,6 +314,32 @@ def test_test_dosya_sayisi_belgelerle_ayni():
     assert not yanlis, f"test dosyası sayısı yanlış (gerçek: {gercek}): {yanlis}"
 
 
+def test_betik_sayisi_belgeyle_ayni():
+    """"N betik" diyen belge `scripts/` ile örtüşmeli.
+
+    **Bu bekçi bir bayatlamadan SONRA yazıldı ve sebebi tam olarak budur.**
+    `backend/README.md` "24 betik" diyordu, gerçek 27'ydi: üçü birden
+    sessizce eskimişti, çünkü test dosyası ve modül listesinin bekçisi
+    varken betik sayısının **yoktu**. Aynı depoda aynı kusurun bekçisiz
+    kalan üçüncü kopyasıydı.
+
+    `__init__.py` sayılmaz — belge onu ayrıca ("+ `__init__.py`") yazıyor
+    ve pakete ait olduğunu söylüyor; sayılan şey **betiklerdir**.
+    """
+    gercek = len([y for y in (KOK / "scripts").glob("*.py")
+                  if y.name != "__init__.py"])
+    yanlis: dict[str, list[int]] = {}
+    for d in _belge_listesi():
+        p = DEPO / d
+        if not p.exists():
+            continue
+        sayilar = {int(x) for x in
+                   re.findall(r"(\d+)\s*betik", p.read_text(encoding="utf-8"))}
+        if sayilar and sayilar != {gercek}:
+            yanlis[d] = sorted(sayilar)
+    assert not yanlis, f"betik sayısı yanlış (gerçek: {gercek}): {yanlis}"
+
+
 def test_kalite_kapisi_ve_setup_AYNI_ekstralari_kurar():
     """CI'nın kalite kapısı ile `setup.sh --kalite` aynı kümeyi kurmalı.
 
