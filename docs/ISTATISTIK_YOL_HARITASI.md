@@ -153,7 +153,7 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/components/super-toto/tahmin2.tsx` | **2. Tahmin** paneli — `1. Tahmin` / `2. Tahmin` sekmeleri arasında geçilir; para birimli hiçbir sayı yok. Hafta kapandığında sonuç sütunu ve ayar karnesi açılır (§3.38) |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **2.038 test**; **85'i** istatistik katmanına (`history` `odds` `backtest`
+paketi toplam **2.043 test**; **85'i** istatistik katmanına (`history` `odds` `backtest`
 `api_stats` `api_backtest` `snapshot_iddaa`), **579'u** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre`
@@ -5030,6 +5030,57 @@ sayıları iki gruba ayrılıyor: modelin kendi ürettiği (`P(hedef)`, `E[TL]`)
 ve dışarıdan gelen (gerçekleşen kaçak, gerçek kolon ödülü). Birincisi
 girdinin keskinliğiyle birlikte büyür ve kendi başına kanıt değildir.
 
+### 3.59 Hakem (E4) — sütun ekseni kapandı, ve "geçmedi"nin sebebi de ölçüldü
+
+§3.24'ün teşhisi *"sorun satır sayısı değil sütun"*du ve on bir model
+ailesinin hepsi **aynı sütun kümesi** üzerinde koştu. Alınmamış sütunlar
+içinde hakem tek gerçek **aile**: takımdan bağımsız bir değişken. Ötekiler
+(faul, kart, ilk yarı skoru) maçın kendi sonucundan türer ve maç öncesi
+bilinmez, yani tahminde kullanılamaz.
+
+```
+cd backend && python scripts/build_hakem.py     # sütunu çek (korpusa DOKUNMAZ)
+cd backend && python -m spor_toto.hakem
+```
+
+**Kesitin sınırı bir bulgudur.** football-data hakemi yalnızca dokuz
+Britanya liginde yazıyor (%100), on üç kıta liginde hiç yazmıyor (%0);
+korpusa bağlandığında 31.103 satırın **13.334'ü** (%42,9) hakemli. Eksiklik
+rastgele değil **coğrafi**, o yüzden sütun korpusa katılmadı —
+`build_egitim.A2_KAYNAKLARI`nın gerekçesiyle aynı kusuru üretirdi, üstelik
+sezona değil coğrafyaya bağlı olduğu için sezon dışarıda bırakmalı çapraz
+doğrulama onu yakalayamazdı. Ölçüm hakemin %100 olduğu yerde koştu: 13.332
+maç, 254 hakem, 4 sezon dışarıda bırakmalı, Holm'lu.
+
+| aday | fark | %95 aralık | p | Holm |
+|---|---:|---|---:|---|
+| `hakem_ev` | +0,000002 | [−0,000003, +0,000008] | 0,8139 | hayır |
+| `hakem_beraberlik` | +0,000001 | [−0,000000, +0,000003] | 0,9302 | hayır |
+| `hakem_ikisi` | +0,000003 | [−0,000002, +0,000009] | 0,8774 | hayır |
+
+Üçü de geçmedi, işaret **pozitif** (kötü), ve büyüklük öteki ailelerin
+kalan etkisinden (0,0005–0,0015) **üç mertebe** küçük.
+
+**Ve bu sefer "geçmedi" demek yetmedi.** O cümle iki farklı şeyi örter:
+etki var ama düzeltme yakalayamıyor, ya da etki yok. Brier farkı ikisini
+ayırmaz — ve birinci turun on bir ölçümünde bu ayrım **hiç yapılmadı**.
+Hakemde yapılabildi, çünkü gürültünün büyüklüğü hesaplanabilir
+(`Σ p(1−p) / n²`):
+
+| eşik | hakem | gözlenen sd | saf şans sd | oran |
+|---:|---:|---:|---:|---:|
+| ≥30 maç | 160 | 0,0560 | 0,0576 | **0,97** |
+| ≥50 maç | 123 | 0,0512 | 0,0513 | **1,00** |
+
+`Var(gerçek) = Var(gözlenen) − Var(şans)` ikisinde de **negatif**: gözlenen
+hakemler-arası yayılım, şansın tek başına üreteceğinden bile küçük. Hakem
+etkisi zayıf değil, **yok**. Ham bakışta güçlü görünüyordu (en uç hakemlerde
+ev-artığı ±0,12) ve o sayı tamamen `n≈50`'nin gürültüsüydü.
+
+**Durma kuralı işledi: sütun ekseni kapanıyor** (§7). Aday listesi
+`hakem.ADAYLAR`da donmuş ve bekçisi var — uzatmak isteyen önce o testi
+değiştirmek, yani kararı görünür kılmak zorunda.
+
 ## 4. Sayfada bugün ne var
 
 **`/istatistik`** — sezon dağılımı (en sık sonuç + pay çubuğu) · 5 sayı kutusu (sembol
@@ -5204,6 +5255,7 @@ her şeyi zaten içeriyor.
 > | **Kalabalık modeli** (§3.50) | `λ = 1,7608` [1,669, 1,865] — aralık 1'i içermiyor. K4 durma kuralı **geçti** (4/4 sezon, iki bootstrap aralığı da sıfırı kesmiyor). `favori` iki bağımsız yoldan çürüdü: hafta başına ~4 kat kötü uyum **ve** haftada 10¹⁷ kolonluk imkânsız havuz. §3.34'ün 22 katlık belirsizliğinin `favori` ucu **kapandı** |
 > | **Kalabalıktan sapmak** (§3.51) | Makul her kısıtta gerçekleşen kazanç **sıfır**; kısıtsız arama **−1.439 TL**. Tavan ölçümü üç kez düzeldi (2,63× → 1,003× → +0 TL) ve zincirin kendisi bulgudur. `n = 3` — eksen kapalı değil |
 > | **Garanti tabanının gevşekliği** (§3.56) | **2,39 kat** — taban %10,1 diyor, gerçek kolon dağılımı %24,2 veriyor (114 hafta, 14G, 2.000 TL). Yanlılık eğik: 12+ tutturan kolon sayısı kaçak 0'da 26,8, kaçak 2'de 1,3, taban her durumda 1. Ama açık kapanmadı — %24,2 hâlâ 1'in altında, yani geri dönüş açığı bir ölçüm kusuru değil. Yan bulgu: motorun kaplaması satıcınınkinden **%28,6 gevşek** |
+> | **Hakem sütunu** (§3.59) | **Sütun ekseni kapandı.** 13.332 maç, 254 hakem, 4 sezon dışarıda bırakmalı, Holm'lu: üç aday da geçmedi ve etki +0,000002 (üç mertebe küçük). Ayrıştırıldı: hakemler arası gözlenen yayılım saf şansın ürettiğinin **0,97–1,00 katı** — `Var(gerçek)` negatif, yani etki zayıf değil **yok**. Kapsama coğrafi: 31.103 satırın %42,9'u (yalnız Britanya ligleri), o yüzden sütun korpusa **katılmadı** |
 > | **Omurga fiyatı** (§3.58) | **`Avg` kalıyor.** BFE − Avg gerçek kolon ROI farkı −0,01074 [−0,06232, +0,02558] (64 ortak hafta) — sıfırı kesiyor. Tek geçen ölçü `P(hedef)` (+0,00758 [+0,00594, +0,00924]) ve o bir tuzak: farkın **%81'i seçim hiç değişmeden**, yalnızca BFE'nin olasılığının keskinliğinden geliyor. §3.52'nin Brier bulgusunun kupon düzeyinde karşılığı yok |
 > | **Hedef kademe** (§3.57) | **12 kalıyor.** 13 − 12 eşleştirilmiş ROI farkı +0,00928 [+0,00000, +0,02724] — sıfırı kesiyor, kuyruk sınavında da. Sebebi yapısal: üç hedef de aynı şekli alıyor (168 kolon), çünkü **şekli bütçe belirliyor, hedef değil**. Yan ürün: 12 tutturmak kaçaksız haftalarda maliyeti **karşılıyor** (medyan 1,34×) — tabana dayalı eski okumanın düzeltmesi |
 
@@ -5958,6 +6010,7 @@ kalkmayacak.
 | ~~Diğer pazarların arayüze çıkması~~ | **Kalktı (§3.31).** Bu bir ürün kararıydı, bir ölçüm sonucu değil. Alt/üst 2,5 ve Asya handikabı artık `/api/pazar` ve `/pazarlar`da — **ölçülmüş kalibrasyonlarıyla birlikte**. Değişmeyen kural yerinde: ölçüsüz sayı çıkmaz |
 | ~~İkramiye / beklenen değer hesabı~~ | **Kalktı (§3.34).** `getiri.py` müşterek beklenen değeri kapalı formda hesaplıyor. Kalkan şey *hesabın yapılmaması*ydı; kalkmayan şey **sayının arayüze çıkmaması** — havuz payı, komisyon ve kalabalık modeli varsayım, ölçüm için ≈71 ikramiyeli hafta gerekiyor ve elde 1 var (§6.3b) |
 | Otomatik erişime kapalı kaynaktan veri çekme | **Hukuki, teknik değil — ve tek tek denetlendi.** Maçkolik: `robots.txt` `/api/` yolunu herkese, `anthropic-ai`'yi tamamen kapatıyor (eski açık uç ayrıca ölü). Understat: `User-agent: * / Disallow: /` — **tamamen kapalı** (§3.36). fbref: Cloudflare sorgusu arkasında, `robots.txt` bile JavaScriptsiz servis edilmiyor. Kullanılan üç kaynağın üçü de açık: football-data.co.uk (`Disallow:` boş), `openfootball/*` (kamu malı / CC0) |
+| Yeni bir **sütun ailesi** aramak | **Kapandı, ölçülerek (§3.59).** §3.24 *"sorun satır sayısı değil sütun"* demişti ve alınmamış tek gerçek aile hakemdi (ötekiler — faul, kart, ilk yarı — maçın kendi sonucundan türer, maç öncesi bilinmez). Hakem %100 kapsamalı dokuz ligde ölçüldü: üç aday da Holm'dan geçmedi, etki öteki ailelerin kalanından **üç mertebe** küçük. Ve "geçmedi" bu kez ayrıştırıldı — hakemler arası gözlenen yayılım saf şansın ürettiğinin **0,97–1,00 katı**, yani `Var(gerçek)` negatif: yakalanacak etki **yok**. Aday listesi `hakem.ADAYLAR`da donmuş, uzatmak isteyen önce bekçisini değiştirmek zorunda |
 | Maç öncesi bilinmeyen bir bilgiyi özellik yapmak | **Eğitim/servis ayrışması.** Kadro ve sakatlık verisi tam bu yüzden alınmadı (§3.36): gerçek kadro ancak ilk vuruşta bellidir, korpusta kullanıp `/tahmin`de kullanamamak ölçümü ürünün tarifi olmaktan çıkarır. Kural kaynak hakkında değil **zamanlama** hakkındadır ve yeni bir kaynak gelse de geçerlidir |
 
 ---
@@ -6024,7 +6077,7 @@ python -m spor_toto.kosum                  # kayıtlı koşumlar
 python -m spor_toto.kosum --son disari     # son koşumun ortamı
 
 # Denetim
-pytest -q                                  # 2.038 test (85'i bu katman, 583'ü tahmin)
+pytest -q                                  # 2.043 test (85'i bu katman, 583'ü tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out

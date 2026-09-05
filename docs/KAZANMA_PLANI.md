@@ -1481,6 +1481,59 @@ takımdan bağımsız bir değişken.
 Tek deneme. Geçmezse liste uzatılmaz — bu, birinci turun on bir ölçümüyle
 aynı disiplin.
 
+### E4 — ÖLÇÜLDÜ: geçmedi, ve **geçemeyeceği** de ölçüldü
+
+```
+cd backend && python scripts/build_hakem.py     # sütunu çek (korpusa DOKUNMAZ)
+cd backend && python -m spor_toto.hakem         # ölç
+```
+
+**Önce kesit, çünkü sınırın kendisi bir bulgu.** football-data hakemi
+yalnızca **dokuz Britanya liginde** yazıyor (%100); on üç kıta liginde
+**hiç yazmıyor** (%0). Korpusa bağlandığında 31.103 satırın **13.334'ü**
+(%42,9) hakemli. Eksiklik rastgele değil **coğrafi**, ve bu yüzden sütun
+korpusa katılmadı: katılsaydı `build_egitim.A2_KAYNAKLARI`nın gerekçesiyle
+aynı kusuru üretirdi — kesit sessizce dengesizleşir, model bir lig kümesini
+ötekinden farklı bir maç evreninde öğrenir. Oradaki dengesizlik sezona
+göreydi; bu **coğrafi** ve daha beter, çünkü sezon dışarıda bırakmalı çapraz
+doğrulama onu yakalayamaz. Ölçüm bu yüzden hakemin **%100 olduğu** yerde
+koşuyor: 13.332 maç, 254 hakem, 4 sezon dışarıda bırakmalı.
+
+| aday | n | piyasa | aday | fark | %95 aralık | p | Holm |
+|---|---:|---:|---:|---:|---|---:|---|
+| `hakem_ev` | 13.332 | 0,6038 | 0,6038 | +0,000002 | [−0,000003, +0,000008] | 0,8139 | hayır |
+| `hakem_beraberlik` | 13.332 | 0,6038 | 0,6038 | +0,000001 | [−0,000000, +0,000003] | 0,9302 | hayır |
+| `hakem_ikisi` | 13.332 | 0,6038 | 0,6038 | +0,000003 | [−0,000002, +0,000009] | 0,8774 | hayır |
+
+Üçü de geçmedi ve işaret **pozitif** (yani kötü). Büyüklük, öteki ailelerin
+kalan etkisinden (0,0005–0,0015) **üç mertebe** küçük.
+
+### Ve bu sefer "geçmedi" demek yetmiyor — sebebini de ölçtük
+
+*"Geçmedi"* iki farklı şeyden gelebilir: **etki var ama düzeltme onu
+yakalayamıyor**, ya da **etki yok**. Brier farkı ikisini ayırmaz, ve on bir
+ailelik birinci turda bu ayrım hiç yapılmadı. Hakemde yapılabiliyor, çünkü
+gürültünün büyüklüğü **hesaplanabilir**: bir hakemin ev-artığı ortalaması,
+hiçbir hakem etkisi olmasa bile sırf örnekleme gürültüsünden sapar
+(`Σ p(1−p) / n²`).
+
+| eşik | hakem | gözlenen sd | saf şans sd | oran |
+|---:|---:|---:|---:|---:|
+| ≥30 maç | 160 | 0,0560 | 0,0576 | **0,97** |
+| ≥50 maç | 123 | 0,0512 | 0,0513 | **1,00** |
+
+`Var(gerçek) = Var(gözlenen) − Var(şans)` **ikisinde de negatif.** Yani
+gözlenen hakemler-arası yayılım, şansın tek başına üreteceğinden bile
+küçük. Hakem etkisi zayıf değil — **yok**, ve düzeltmenin kusuru değil.
+
+*(Ham bakışta güçlü görünüyordu: en uç hakemlerde ev-artığı ±0,12. O sayı
+tamamen `n≈50`'nin gürültüsü.)*
+
+**Durma kuralı işledi: sütun ekseni kapanıyor.** Liste uzatılmıyor; aday
+listesi `hakem.ADAYLAR`da donmuş ve bekçisi var. Alınmamış kalan sütunlar
+(faul, kart, ilk yarı skoru) zaten kullanılamaz: üçü de maçın **kendi
+sonucundan** türer, yani maç öncesi bilinmez.
+
 ---
 
 ## E5 — Haftalık birikim (altı hafta boyunca)
@@ -1509,7 +1562,7 @@ yaklaşma.
 | E2 | `spor_toto/sistem.py` · `spor_toto/secim.py` | ✅ ölçüldü (14G) — `HEDEF_KADEME = 12` **değişmedi**, ölçüm onu doğruladı |
 | E2 | `spor_toto/karne.py` | ✅ `hedef_kademe_kiyasi` (`--hedef`) — 114 hafta × gerçek kolon ödülü |
 | E3 | `spor_toto/karne.py` (`omurga_kiyasi`) · `spor_toto/odds.py` (`match_1x2` fiyat parametresi) | ✅ ölçüldü — omurga `Avg` KALDI; `P(hedef)` ayrışımı zorunlu çıktı |
-| E4 | `scripts/build_egitim.py` · `spor_toto/disari.py` · `spor_toto/arena.py` | hakem sütunu + aile |
+| E4 | **`spor_toto/hakem.py`** (yeni) · **`scripts/build_hakem.py`** (yeni) · `data/hakem/hakem.csv` | ✅ ölçüldü — geçmedi, ve yayılım sınavı etkinin **yok** olduğunu gösterdi |
 | E5 | — | veri girişi |
 
 ## Doğrulama
@@ -1541,6 +1594,9 @@ sözleşmesi kırmızıydı.
 3. ~~**E3 omurgayı değiştirirse**~~ — **değiştirmedi** (2026-09-04):
    gerçek kolon ROI farkı sıfırı kesti, omurga `Avg` kaldı ve yayımlanmış
    hiçbir sayı ölçek değiştirmedi. Risk kapandı.
-4. **E4'ün önseli düşük** ve öyle yazıldı. Geçerse **Holm'la** geçmeli.
+4. ~~**E4'ün önseli düşük**~~ — **geçmedi** (2026-09-04), üçü de Holm'dan
+   düştü. Ve yayılım sınavı bir adım öteye geçti: hakemler arası yayılım
+   saf şansın ürettiğinden bile küçük, yani etki zayıf değil **yok**.
+   Sütun ekseni §7'ye *"denendi, geçmedi"* diye yazıldı.
 5. **`n` hâlâ küçük.** Altı hafta sonunda 9; kuyruk ağırlıklı para
    sayıları için az. Bu tur bir cevap değil, cevaba **doğru bir adım**.

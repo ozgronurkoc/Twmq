@@ -949,6 +949,7 @@ backend/
     sistem.py          KUPON: indirgenmiş sistem BEDELİ — formülden değil satıcı tablosundan
     karne.py           PARA: kuponun gerçek ikramiye tablolarına karşı getirisi (garanti tabanı)
     kalabalik.py       HAVUZ: kalabalık modeli — 112 haftanın kademe adetlerine oturtulmuş (λ)
+    hakem.py           SÜTUN: E4'ün tek denemesi — hakem etkisi ÖLÇÜLDÜ ve yok çıktı
     havuz.py           HAVUZ: resmî ikramiye tablosundan havuzu ve devri geri hesaplar
     skor.py            ÖLÇÜM: Asya handikabı + alt/üst 2.5 → skor dağılımı → 1X2 (A6)
     kuyruk.py          ÖLÇÜM: hafta içi bağımlılık ve kuyruk etkisi — P(k≥12) iyimser mi (§4.1)
@@ -987,7 +988,7 @@ backend/
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
                        sehir/ · xg/
-  tests/               pytest (69 dosya → 2.038 test; §9'da katman dökümü)
+  tests/               pytest (70 dosya → 2.043 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1190,8 +1191,8 @@ Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant'lar, CLI (Bayes pre
 dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri test,
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
-eşleme, ikinci kayıt). **69 test dosyası, parametrizasyonla
-2.038 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+eşleme, ikinci kayıt). **70 test dosyası, parametrizasyonla
+2.043 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
@@ -1206,6 +1207,7 @@ karşı denetler):
 | Karar katmanı | `secim` | 26 |
 | Sistem fiyat tablosu (bedel + garanti) | **`sistem`** | 10 |
 | Para karnesi (garanti tabanı · enflasyon · canlı · GERÇEK kolon dağılımı) | **`karne`** | 27 |
+| Hakem sütunu (E4 · sızıntısızlık · yayılım sınavı) | **`hakem`** | 5 |
 | Kalabalık modeli (λ · kademe adetleri) | **`kalabalik`** | 12 |
 | Koşullu getiri (havuz biz kazanınca bölünür) | **`kosullu_getiri`** | 10 |
 | Skor türetme | `skor` | 17 |
