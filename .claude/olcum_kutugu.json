@@ -2,7 +2,7 @@
  "sayilar": [
   {
    "ne": "suit test sayisi (eksiksiz kurulum)",
-   "deger": "2.065",
+   "deger": "2.067",
    "ureten": "cd backend && pytest -p no:randomly -n0 --collect-only -q  # dosya basi toplami",
    "olculdu": "2026-09-05",
    "anildigi_yerler": [
@@ -14,7 +14,7 @@
     "replit.md"
    ],
    "bekci": "backend/tests/test_belgeler.py::test_test_sayisi_belgelerde_tek_ve_dogru",
-   "not": "lightgbm siz kurulumda 22 test eksik toplanir; yerelde 1.958 olcumu 1.980-22 ile birebir tutuyor. E1'in alti, E2'nin iki, E3'un uc, E4'un bes, E6'nin on alti testi eklendi (2.049 -> 2.065, dosya 71 -> 72). 2026-09-05'te eksiksiz kurulumla (scipy+lightgbm+flask+mcp+pillow) DOGRUDAN sayildi: 72 dosya, 2.065 test."
+   "not": "lightgbm siz kurulumda 22 test eksik toplanir; yerelde 1.958 olcumu 1.980-22 ile birebir tutuyor. E1'in alti, E2'nin iki, E3'un uc, E4'un bes, E6'nin on sekiz testi eklendi (2.049 -> 2.067, dosya 71 -> 72). 2026-09-05'te eksiksiz kurulumla (scipy+lightgbm+flask+mcp+pillow) DOGRUDAN sayildi: 72 dosya, 2.067 test."
   },
   {
    "ne": "test dosyasi sayisi",
@@ -703,18 +703,18 @@
   {
    "ne": "E6 — bir birim P(hedef): tutturunca ettigi para ve merdivenin istedigi fiyat",
    "deger": "eder 984 TL; merdiven uctan uca medyan 12.002 TL/birim (12,2x), oynanan basamagin bir ustu 92.167 TL/birim (93,7x)",
-   "ureten": "cd backend && python -m spor_toto.hafta_hakki --kiyas",
+   "ureten": "cd backend && python -m spor_toto.hafta_hakki --kiyas   # FIYAT bolumu (hafta_hakki.fiyat_karnesi)",
    "olculdu": "2026-09-05",
    "anildigi_yerler": [
     "docs/KAZANMA_PLANI.md §E6"
    ],
-   "bekci": "yok — sayinin kendisi dondurulmadi (doktrin); kapanisi test_E6_KAPANISI_hala_gecerli tutuyor",
+   "bekci": "backend/tests/test_hafta_hakki.py::test_fiyat_karnesi_uc_olcuyu_de_lambdaya_oranlar (govde); kapanisi test_E6_KAPANISI_hala_gecerli tutuyor",
    "not": "984 TL = 2.000 TL basamaginda tutturan haftalarin ortalama gercek kolon odulu, yani lambda_kestir'in ciktisi. Haftanin EN UCUZ tek adimi medyan 1.077 TL/birim, yani basabas; ama ona ancak pahali bir adimdan sonra varilyor."
   },
   {
    "ne": "E6 — odulun kuyruk yogunlugu (14G, gercek kolon, basamak basina)",
-   "deger": "en iyi 5 hafta odulun %44-%65'ini tasiyor (114 hafta); 15 haftalik tavan sinavinda tek hafta %28-%100",
-   "ureten": "cd backend && python -m spor_toto.hafta_hakki --kiyas   # basamak karnesi",
+   "deger": "en iyi 5 hafta odulun %42-%88'ini tasiyor (114 hafta, 15 basamagin hepsinde; oynanan 168 kolonda %51); 15 haftalik tavan sinavinda tek hafta %28-%100",
+   "ureten": "cd backend && python -m spor_toto.hafta_hakki --kiyas   # basamak karnesi + kuyruk payi elle",
    "olculdu": "2026-09-05",
    "anildigi_yerler": [
     "docs/KAZANMA_PLANI.md §E6 (5. madde)"

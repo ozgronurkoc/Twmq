@@ -1208,13 +1208,13 @@ sonradan haklı çıkmış gibi düzeltilmedi.
 | **E3** | Omurga `Avg` mi `BFE` mi? | **`Avg` kalıyor** (§3.58). Tek "geçen" ölçü `P(hedef)` ve o bir tuzaktı — farkın **%81'i seçim hiç değişmeden** geliyor |
 | **E4** | Alınmamış bir sütun var mı? | **Yok** (§3.59). Hakem ölçüldü: yayılım saf şansın **0,97–1,00 katı**, yani etki zayıf değil yok. Sütun ekseni kapandı |
 | **E5** | Haftalık birikim | **Sizde.** Satın alınamaz, koşturulamaz — her hafta girilir |
-| **E6** | Bütçe kısıtı kalksa, haftaya göre harcamak yener mi? | **Hayır — eksen kapandı** (§E6). On üç kuralın on üçünde de aralık sıfırı kesti; ön şart hiç kurulmadı: kupon öncesi işaret `rho = +0,1175 [−0,0548, +0,2850]`. Ve merdivende yukarı çıkmak **oranı** açmıyor: 320 → 4.860 TL, fazla harcamanın karşılığı **%29** |
+| **E6** | Bütçe kısıtı kalksa, haftaya göre harcamak yener mi? | **Hayır — eksen kapandı** (§E6). Sınanan on iki kuralın on ikisinde de aralık sıfırı kesti (o on iki kural yalnız sekiz farklı seçim deseni üretiyor); ön şart hiç kurulmadı: kupon öncesi işaret `rho = +0,1175 [−0,0548, +0,2850]`. Ve merdivende yukarı çıkmak **oranı** açmıyor: 320 → 4.860 TL, fazla harcamanın karşılığı **%29** |
 
 **E6'nın eklediği (2026-09-05):** E2 *"şekli bütçe belirliyor"* demişti;
 E6 o bütçeyi kaldırdı ve bütçenin yerine koyulacak bir şey **bulamadı** —
 ama bulamamanın sebebi ölçüldü. Merdivenin her basamağı aynı oranı veriyor
 (%10,6–%37,9, yönsüz), iyi hafta kupon öncesi tanınamıyor, ve ödülün
-%44–%65'i 114 haftanın **en iyi 5'inden** geliyor. Yani bütçe ekseninde
+%42–%88'i 114 haftanın **en iyi 5'inden** geliyor. Yani bütçe ekseninde
 kaldıraç yok; ve olsaydı bile bu kuyrukla 114 hafta onu göremezdi.
 
 **Dördünün ortak dersi ve ikinci turun asıl çıktısı bu:** kupon sayıları
@@ -1634,22 +1634,34 @@ paradır**; ve kuralın kaybetmesi meşru bir bitiştir.
 cd backend && python -m spor_toto.hafta_hakki --kiyas   # ~20 dk
 ```
 
-114 hafta × 15 basamak = **1.710 gerçek kolon koşumu**; her basamak E1'in
+114 hafta × 9–15 basamak = **1.554 gerçek kolon koşumu**; her basamak E1'in
 makinesiyle (`karne.gercek_kolon_dagilimi`) üretildi ve o haftanın **resmî
 ikramiye tablosuna** vuruldu. Puanlama garanti tabanı değil gerçek kolon —
 taban kolon sayısını hiç görmediği için tam bu karşılaştırmayı bastırırdı.
 
+(Basamak sayısı haftadan haftaya **9–15** arasında değişiyor — satılan bir
+şekil o haftanın olasılıklarıyla cephede belirmeyebiliyor; toplam 1.554
+sayısı buradan geliyor. Aşağıdaki yedi satır bilerek **her hafta ölçülebilen**
+basamaklardan seçildi, yani `n = 114`'tür; yalnız 65–108 haftada ölçülebilen
+basamaklar — 62, 84, 122, 238, 324, 468 — tabloda değil, aralıkların içinde.)
+
 **1. Merdivenin her basamağı kaybediyor, ve oran basamaktan bağımsız.**
 
-| kolon | TL | ödül alan hafta | hafta başına ödül | geri dönüş | ödül \| tuttu |
-|---:|---:|---:|---:|---:|---:|
-| 32 | 320 | 20 | 85 | %26,5 | 434 |
-| 92 | 920 | 36 | 261 | %28,4 | 811 |
-| 128 | 1.280 | 41 | 446 | %34,9 | 1.208 |
-| **168** | **1.680** | **47** | **406** | **%24,2** | **984** |
-| 252 | 2.520 | 49 | 508 | %20,2 | 1.163 |
-| 333 | 3.330 | 58 | 1.263 | %37,9 | 2.351 |
-| 486 | 4.860 | 65 | 1.413 | %29,1 | 2.474 |
+| kolon | TL | tutturan hafta (`k ≤ 2`) | ödül alan hafta | hafta başına ödül | geri dönüş | ödül \| tuttu |
+|---:|---:|---:|---:|---:|---:|---:|
+| 32 | 320 | 20 | 28 | 85 | %26,5 | 434 |
+| 92 | 920 | 36 | 41 | 261 | %28,4 | 811 |
+| 128 | 1.280 | 41 | 44 | 446 | %34,9 | 1.208 |
+| **168** | **1.680** | **47** | **48** | **406** | **%24,2** | **984** |
+| 252 | 2.520 | 49 | 52 | 508 | %20,2 | 1.163 |
+| 333 | 3.330 | 58 | 63 | 1.263 | %37,9 | 2.351 |
+| 486 | 4.860 | 65 | 67 | 1.413 | %29,1 | 2.474 |
+
+İki sütun **bilerek** yan yana duruyor: ödül alan hafta sayısı her basamakta
+tutturan hafta sayısından **fazla**. Sebebi E1'in bulgusunun devamı —
+`k = 3` iken garanti hiçbir şey vaat etmez ama gerçek kolonlardan biri yine
+de 12'ye düşebilir. Yani garanti tabanı yalnız *ne kadar* kazanıldığını
+değil, *kaç hafta* kazanıldığını da eksik sayıyor (32 kolonda 20 yerine 28).
 
 Geri dönüş 15 basamakta **%10,6 – %37,9** arasında zıplıyor ve **yönü
 yok**: en ucuz basamak %26,5, en pahalısı %29,1. Uçtan uca aynı şey tek
@@ -1658,7 +1670,7 @@ yapıyor, yani **4.540 TL fazla harcamanın karşılığı 1.328 TL: %29.**
 Marjinal oran ortalama oranla aynı; merdivende yukarı çıkmak oranı
 değiştirmiyor.
 
-**2. On üç kuralın on üçü de sabit bütçeyi yenemiyor.**
+**2. Sınanan on iki kuralın on ikisi de sabit bütçeyi yenemiyor.**
 
 | kural | kolon/hafta | geri dönüş | ROI farkı (sabit-2000'e karşı) | %95 aralık |
 |---|---:|---:|---:|---|
@@ -1673,6 +1685,15 @@ değiştirmiyor.
 **Hepsi sıfırı kesiyor.** Durma kuralının 1. maddesi işledi. LOO kolu iç
 örneklem koluyla **birebir aynı** şekli seçiyor (3. madde de işledi: λ
 ölçülebilir, ama ölçülen değeri merdivenin en alt basamağını gösteriyor).
+
+**Ve sayım şişirilmemeli:** 13 kural tanımlandı, temel kendisiyle
+karşılaştırılmadığı için **12'si** sınandı — ama o 12 kural yalnız **8
+farklı seçim deseni** üretiyor. Dördü (λ = 1.000 · 2.000 · ölçülen 984 ·
+LOO) her hafta aynı en alt basamağı, üçü (λ = 50.000 · 100.000 ·
+"en-büyük") her hafta aynı en üst basamağı alıyor. Yani bağımsız deneme
+sayısı 12 değil 8'dir ve λ bandının uçları merdivenin uçlarına yapışıyor;
+haftaya göre gerçekten **değişen** yalnız üç kural var (λ = 5.000 · 10.000 ·
+20.000).
 
 **3. Ve asıl kapanış ön şartta: kupon öncesi işaret YOK.**
 
@@ -1689,7 +1710,7 @@ sabit bütçeyi yense bile *"haftanın hakkı"* denmez, çünkü kazanç yalnız
 `P(hedef)`; tutturunca ortalama **984 TL** ediyor (2.000 TL basamağı, 114
 hafta). Merdivenin sattığı fiyat:
 
-| | medyan TL / birim `P(hedef)` | λ'nın katı |
+| ölçü (`hafta_hakki.fiyat_karnesi`, n=114) | medyan TL / birim `P(hedef)` | λ'nın katı |
 |---|---:|---:|
 | uçtan uca ortalama | 12.002 | **12,2×** |
 | oynanan basamağın **bir üstü** | 92.167 | **93,7×** |
@@ -1705,7 +1726,8 @@ Tavan 20.000 TL'ye çıkarılıp 15 hafta koşuldu (2025/26, 1.728 kolona kadar)
 Üst basamaklarda geri dönüş %20,9 – %103,8 arasında zıplıyor, ama sayı
 okunamaz: **her basamağın toplam ödülünün %28–%100'ü tek bir haftadan
 geliyor.** Aynı yoğunluk 114 haftada da duruyor — en iyi **5** hafta,
-basamağa göre ödülün **%44–%65**'ini taşıyor.
+15 basamağın hepsinde ödülün **%42–%88**'ini taşıyor (oynanan 168 kolonluk
+basamakta %51).
 
 Yani bu eksen "daha iyi bir kural" ile kapanmıyor; **kuyruk** ile
 kapanmıyor. Ödül dağılımı öyle ağır kuyruklu ki 114 hafta, basamaklar

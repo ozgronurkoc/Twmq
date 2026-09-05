@@ -28,15 +28,17 @@ yitiriyor.
 **2. Para ölçüsü ise TERS yönde dejenere.** `beklenen_tl` de `hafta_karnesi`
 de **garanti tabanını** kullanır — `k` kaçakta *bir* kolon `G−k`
 kademesinde — ve o taban kolon sayısını hiç görmez: 32 kolonluk kupon da,
-486 kolonluk kupon da tek kolon ödülü sayılır. Ölçüldü (2026/27 2. ve 3.
-hafta, cephenin 15 basamağı, `beklenen_tl` · `RAKIP_KOLON`)::
+486 kolonluk kupon da tek kolon ödülü sayılır. Ölçüldü — 2026/27 **2.
+hafta**, cephenin 15 basamağı (`--para 2026_27:2`, `beklenen_tl` ·
+`RAKIP_KOLON`)::
 
-        320 TL →  E[TL]  39      E/maliyet 0,122
+        320 TL →  E[TL]  39      E/maliyet 0,121
       4.860 TL →  E[TL] 510      E/maliyet 0,105
 
 Yani model ödülü maliyetle birlikte büyüyor ama **oranı her basamakta
-1'in çok altında** kalıyor (0,10–0,12 — E1'in `taban_roi`'siyle aynı sayı,
-ve E1 o tabanın 2,39 kat gevşek olduğunu ölçmüştü). Dolayısıyla
+1'in çok altında** kalıyor: 2. haftanın 15 basamağında 0,093–0,121, 3.
+haftanın 14 basamağında 0,082–0,115 — E1'in `taban_roi`'siyle aynı
+mertebe, ve E1 o tabanın 2,39 kat gevşek olduğunu ölçmüştü. Dolayısıyla
 `E[TL] − maliyet` her adımda daha da negatifleşiyor ve "bütçe yok,
 `E[TL] − maliyet`'i enbüyükle" sorusunun cevabı da her hafta aynıdır ve
 haftaya hiç bakmaz: *en küçüğü al* — ya da hiç oynama.
@@ -96,6 +98,7 @@ from typing import Any, NamedTuple
 from .getiri import KOLON_BEDELI
 from .karne import (
     BOOTSTRAP,
+    _medyan,
     bootstrap_farki,
     gercek_kolon_dagilimi,
     gercek_odul,
@@ -366,6 +369,56 @@ def basamak_karnesi(cetveller: Sequence[dict[str, Any]]
             "odul_tuttu": ort_t,
             "odul_tuttu_kolon": ort_t / kolon if kolon else 0.0,
         })
+    return out
+
+
+def fiyat_karnesi(cetveller: Sequence[dict[str, Any]],
+                  referans_tl: float = 2000.0) -> dict[str, Any]:
+    """Merdivenin bir birim `P(hedef)`'i kaça sattığı — λ'nın karşı tarafı.
+
+    `lambda_kestir` satın alınan şeyin **ettiğini** ölçer; bu fonksiyon
+    **istenen fiyatı**. Üçü birden dönüyor çünkü üçü çok farklı:
+
+    * ``uctan_uca`` — en ucuz basamaktan en pahalıya toplam maliyet farkının
+      toplam `p` farkına oranı; merdivenin ortalama fiyatı.
+    * ``bir_ust`` — referans basamaktan (bugünkü bütçe) bir üst basamağa
+      geçmenin fiyatı. Karar tam olarak budur.
+    * ``en_ucuz_adim`` — haftanın en ucuz tek adımı. Merdivende bedavaya
+      yakın adımlar var, ama onlara ancak pahalı bir adımdan sonra
+      varılıyor; bu sayı yalnız o yüzden ayrı duruyor.
+
+    Medyan verilir, ortalama değil: dağılım sağa çok çarpık (tek bir hafta
+    ortalamayı iki katına çıkarabiliyor).
+    """
+    uctan_uca: list[float] = []
+    bir_ust: list[float] = []
+    en_ucuz: list[float] = []
+    for c in cetveller:
+        b = c["basamaklar"]
+        if len(b) < 2:
+            continue
+        adim = [(b[i + 1]["tl"] - b[i]["tl"])
+                / (b[i + 1]["p_hedef"] - b[i]["p_hedef"])
+                for i in range(len(b) - 1)
+                if b[i + 1]["p_hedef"] > b[i]["p_hedef"]]
+        if adim:
+            en_ucuz.append(min(adim))
+        if b[-1]["p_hedef"] > b[0]["p_hedef"]:
+            uctan_uca.append((b[-1]["tl"] - b[0]["tl"])
+                             / (b[-1]["p_hedef"] - b[0]["p_hedef"]))
+        ref = [i for i, x in enumerate(b) if x["tl"] <= referans_tl]
+        if ref and ref[-1] + 1 < len(b):
+            i = ref[-1]
+            if b[i + 1]["p_hedef"] > b[i]["p_hedef"]:
+                bir_ust.append((b[i + 1]["tl"] - b[i]["tl"])
+                               / (b[i + 1]["p_hedef"] - b[i]["p_hedef"]))
+    lam = lambda_kestir(cetveller, referans_tl=referans_tl)
+    out: dict[str, Any] = {"lambda": lam, "hafta": len(cetveller)}
+    for ad, v in (("uctan_uca", uctan_uca), ("bir_ust", bir_ust),
+                  ("en_ucuz_adim", en_ucuz)):
+        med = _medyan(v)
+        out[ad] = {"n": len(v), "medyan": med,
+                   "kat": med / lam if lam else 0.0}
     return out
 
 
@@ -642,6 +695,16 @@ def _main(argv: list[str] | None = None) -> int:  # pragma: no cover - elle
     for ad, f in k["fark"].items():
         print(f"{ad:<22}{f['ort_roi_farki']:>+11.3f}{f['alt']:>+11.3f}"
               f"{f['ust']:>+11.3f}{'EVET' if f['kesiyor'] else 'HAYIR':>16}")
+    f = fiyat_karnesi(cet)
+    print(f"\nFIYAT — bir birim P(hedef) {f['lambda']:,.0f} TL ediyor, "
+          f"merdiven kaca satiyor:")
+    print(f"{'':2}{'olcu':<22}{'n':>5}{'medyan TL/birim':>18}{'lambda kati':>13}")
+    for ad, etiket in (("uctan_uca", "uctan uca ortalama"),
+                       ("bir_ust", "oynananin bir ustu"),
+                       ("en_ucuz_adim", "haftanin en ucuz adimi")):
+        s = f[ad]
+        print(f"{'':2}{etiket:<22}{s['n']:>5}{s['medyan']:>18,.0f}"
+              f"{s['kat']:>12.1f}x")
     print(f"\nisaret sinavi: rho = {isaret['rho']:+.3f} "
           f"[{isaret['alt']:+.3f}, {isaret['ust']:+.3f}] "
           f"(n={isaret['n']}) — {'ISARET YOK' if isaret['kesiyor'] else 'ISARET VAR'}")

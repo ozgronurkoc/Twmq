@@ -154,6 +154,30 @@ def test_basamak_karnesi_her_basamagi_ayri_sayar():
         "ayni odul iki kat maliyette yari ROI vermeli"
 
 
+def test_fiyat_karnesi_uc_olcuyu_de_lambdaya_oranlar():
+    """§E6'nın 4. maddesinin sayıları buradan çıkıyor — üçü de λ'ya oranlı.
+
+    Sahte cetvelde iki basamak var: 1.000 TL/`p`=0,2 → 2.000 TL/`p`=0,3.
+    Uçtan uca fiyat `(2000−1000)/(0,3−0,2) = 10.000`; tek adım da aynı;
+    referans 1.000 TL alınırsa "bir üst" de aynı olmalı.
+    """
+    c = _sahte_cetvel(4)
+    f = hh.fiyat_karnesi(c, referans_tl=1000.0)
+    assert f["lambda"] == pytest.approx(2500.0)   # 1000*(1+2+3+4)/4
+    for ad in ("uctan_uca", "bir_ust", "en_ucuz_adim"):
+        assert f[ad]["n"] == 4, ad
+        assert f[ad]["medyan"] == pytest.approx(10_000.0), ad
+        assert f[ad]["kat"] == pytest.approx(10_000.0 / 2500.0), ad
+
+
+def test_fiyat_karnesi_bir_ust_referansin_USTUNDEKI_adimi_olcer():
+    """`bir_ust`, referans basamağın üstü yoksa o haftayı saymamalı."""
+    c = _sahte_cetvel(2)
+    f = hh.fiyat_karnesi(c, referans_tl=5000.0)   # iki basamak da referansin altinda
+    assert f["bir_ust"]["n"] == 0
+    assert f["uctan_uca"]["n"] == 2
+
+
 def test_lambda_kestirimi_tutturan_haftalarin_ortalamasi():
     c = _sahte_cetvel(4)
     assert hh.lambda_kestir(c) == pytest.approx(1000 * (1 + 2 + 3 + 4) / 4)
