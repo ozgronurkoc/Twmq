@@ -561,6 +561,33 @@ Yani bütçe + garanti şekli neredeyse çiviliyor; haftanın oranları
 *hangi maçın* hangi seviyeye düşeceğini ve *hangi sembollerin*
 işaretleneceğini belirliyor. ₺2.000'e sığan şekil sayısı: **37**.
 
+### 8.4 Ve bütçe kaldırılırsa? — **ölçüldü, hiçbir şey açılmıyor** (E6)
+
+*"Bütçe bir harcama kararıdır"* cümlesi bir kaçış olabilirdi: belki de
+doğru bütçe **haftaya göre** değişendi. `docs/KAZANMA_PLANI.md` §E6 bunu
+ölçtü — 114 hafta, 15 basamak, 14-garantide **gerçek kolonlar** ve resmî
+ikramiye tabloları:
+
+| soru | cevap |
+|---|---|
+| Merdivende yukarı çıkmak geri dönüşü artırıyor mu? | **Hayır.** Basamak oranı %10,6–%37,9 arasında yönsüz zıplıyor; 320 → 4.860 TL'lik fazladan harcamanın karşılığı **%29** — ortalamanın aynısı |
+| Haftaya göre değişen bir kural sabiti yener mi? | **Hayır.** On üç kuralın (λ kuralı, LOO'lu hâli, "en büyük", üç sabit bütçe) on üçünde de eşleştirilmiş %95 aralık **sıfırı kesiyor** |
+| İyi hafta kupon kapanmadan tanınabiliyor mu? | **Hayır.** `rho(kupon öncesi P(hedef), gerçekleşen ROI) = +0,1175 [−0,0548, +0,2850]` |
+| Öyleyse neden ayırt edilemiyor? | **Kuyruk.** Ödülün %44–%65'i 114 haftanın **en iyi 5'inden** geliyor |
+
+Fiyat cinsinden tek satır: bir birim `P(hedef)` tutturunca **984 TL**
+ediyor; merdiven onu uçtan uca medyan **12.002 TL**'ye satıyor (**12,2×**),
+oynanan basamağın bir üstünde **92.167 TL**'ye (**93,7×**).
+
+Bu yüzden `--oncesi` artık **merdiveni** de basıyor: bütçe hâlâ bir karar,
+ama artık görünmez bir karar değil — hangi basamağın ne kadara satıldığı ve
+seçili satıra göre bir puan olasılığın kaç TL ettiği ekranda duruyor.
+
+```bash
+python -m spor_toto.hafta_hakki --cephe --garanti 13   # merdivenin kendisi
+python -m spor_toto.hafta_hakki --kiyas                # E6 olcumu (~20 dk)
+```
+
 ---
 
 ## 9. ⑧ Kaplama kodu — 16 satır, ve neden tam olarak 1 hata
@@ -866,8 +893,13 @@ harcama kararıdır ve veriden türetilemez.**
 cd backend
 
 # Kupon öncesi plan (VARSAYILAN yol: TL bütçe, satıcı tablosu, 13-garanti)
-python scripts/hafta_kos.py --oncesi 2026_27 4
+python scripts/hafta_kos.py --oncesi 2026_27 4          # plan + MERDIVEN
 python scripts/hafta_kos.py --oncesi 2026_27 4 --butce 5000 --garanti 14
+
+# Bütçe ekseninin kendisi (E6)
+python -m spor_toto.hafta_hakki --cephe --garanti 13     # haftanın merdiveni
+python -m spor_toto.hafta_hakki --para 2026_27:3         # E[TL] cephesi
+python -m spor_toto.hafta_hakki --kiyas                  # 114 hafta, ~20 dk
 
 # Haftanın profili + kamuoyu + bütçe merdiveni (fix16 yolu, kıyas)
 python scripts/super_toto_hafta.py --hafta 4

@@ -141,6 +141,19 @@ def _sahte_cetvel(n: int = 6, odul: float = 1000.0):
     ]} for i in range(n)]
 
 
+def test_basamak_karnesi_her_basamagi_ayri_sayar():
+    """Kuralsız tablo: her kolon sayısı kendi haftalarıyla toplanmalı."""
+    c = _sahte_cetvel(3)
+    k = hh.basamak_karnesi(c)
+    assert [x["kolon"] for x in k] == [100, 200]
+    assert k[0]["hafta"] == k[1]["hafta"] == 3
+    assert k[0]["tutan"] == 3
+    assert k[0]["ort_odul"] == pytest.approx(1000 * (1 + 2 + 3) / 3)
+    assert k[0]["roi"] == pytest.approx(k[0]["ort_odul"] / 1000.0)
+    assert k[1]["roi"] == pytest.approx(k[0]["roi"] / 2), \
+        "ayni odul iki kat maliyette yari ROI vermeli"
+
+
 def test_lambda_kestirimi_tutturan_haftalarin_ortalamasi():
     c = _sahte_cetvel(4)
     assert hh.lambda_kestir(c) == pytest.approx(1000 * (1 + 2 + 3 + 4) / 4)
@@ -198,7 +211,29 @@ def test_cetvel_13_garantide_HATA_verir():
                           "gercek": ["1"] * 15, "tablo": {}}, garanti=13)
 
 
-# ─── 7. gerçek kesitte: cetvel kuruluyor ve kural onu okuyabiliyor ────────
+# ─── 7. haftalık koşumun merdiveni ────────────────────────────────────────
+
+def test_merdiven_secili_satiri_isaretler_ve_secilie_gore_olcer(capsys):
+    """`--oncesi` bütçenin ne satın aldığını göstermeli.
+
+    İki şey sınanır: seçilen basamak `->` ile işaretli, ve marjinal fiyat
+    **seçiliye göre** — yani seçili satırın kendi TL/puan hücresi boş.
+    """
+    from scripts.hafta_kos import _merdiven
+
+    probs = _probs()
+    adimlar = hh.cephe(probs, garanti=14, en_cok_tl=5000.0)
+    secili = adimlar[len(adimlar) // 2]
+    _merdiven(probs, 14, secili.kolon, en_cok_tl=5000.0)
+    satirlar = capsys.readouterr().out.splitlines()
+    isaretli = [s for s in satirlar if s.strip().startswith("->")]
+    assert len(isaretli) == 1
+    assert f"{secili.kolon}" in isaretli[0]
+    assert isaretli[0].rstrip().endswith(f"{secili.p_hedef:.4f}"), \
+        "secili satirin TL/puan hucresi bos olmali"
+
+
+# ─── 8. gerçek kesitte: cetvel kuruluyor ve kural onu okuyabiliyor ────────
 
 @pytest.mark.slow
 def test_gercek_kesitte_cetvel_ve_kural_ucdan_uca(request):
@@ -220,3 +255,35 @@ def test_gercek_kesitte_cetvel_ve_kural_ucdan_uca(request):
     assert "lambda-LOO" in k["ozet"]
     for ad, o in k["ozet"].items():
         assert o["hafta"] == len(cet), ad
+
+
+@pytest.mark.slow
+def test_E6_KAPANISI_hala_gecerli():
+    """§E6'nın kapanışı: hiçbir kural sabit bütçeyi ayrıştırılabilir biçimde
+    yenmiyor, ve merdivende yukarı çıkmak geri dönüş **oranını** açmıyor.
+
+    Bekçi kasıtlı olarak dar: ölçümün değerlerini (fark, ROI, `rho`)
+    dondurmaz — doktrin bunu yasaklıyor, sayılar `.claude/olcum_kutugu.json`da
+    komutuyla durur. Tuttuğu tek şey **kapanışın kendisi**:
+
+    1. eşleştirilmiş %95 aralıkların hepsi sıfırı keser;
+    2. basamak geri dönüşünün kolon sayısıyla monoton bir eğilimi yoktur.
+
+    Biri kırılırsa §E6 *"bütçe ekseni kapandı"* diyemez ve yeniden
+    yazılmak zorundadır — tam olarak istenen davranış.
+
+    Kesitin bir dilimidir (tam ölçüm ~20 dk); dilimde aralıklar daha geniş,
+    yani bu bekçi kapanışı **kolay** doğrular ve ancak güçlü bir tersine
+    dönüşte kırılır.
+    """
+    cet = hh.cetvel(hafta_siniri=12)
+    assert len(cet) >= 10
+    k = hh.kural_kiyasi(cet)
+    acan = [ad for ad, f in k["fark"].items() if not f["kesiyor"]]
+    assert not acan, (
+        f"butce ekseni ACILDI: {acan} sifiri kesmiyor — §E6 yeniden yazilmali")
+    kar = hh.basamak_karnesi(cet)
+    rho = hh._spearman([x["kolon"] for x in kar], [x["roi"] for x in kar])
+    assert abs(rho) < 0.7, (
+        f"basamak ROI'si kolon sayisiyla egilim gosteriyor (rho={rho:+.3f}) — "
+        "§E6'nin 'oran basamaktan bagimsiz' satiri yeniden olculmeli")

@@ -327,6 +327,48 @@ def lambda_kestir(cetveller: Sequence[dict[str, Any]],
     return sum(oduller) / len(oduller)
 
 
+def basamak_karnesi(cetveller: Sequence[dict[str, Any]]
+                    ) -> list[dict[str, Any]]:
+    """Her basamağın kendi karnesi — **kuralsız**, merdivenin çıplak hâli.
+
+    Kural kıyası "hangi seçim daha iyi" sorusunu sorar; bu tablo ondan
+    önceki soruyu sorar: *bir basamak parasını çıkarıyor mu?* Her kolon
+    sayısı için o basamağı ölçebilmiş bütün haftalar toplanır ve üç sayı
+    verilir:
+
+    * ``ort_odul`` — hafta başına gerçekleşen ödül (tutmayan hafta = 0)
+    * ``roi`` — `ort_odul / maliyet`; 1'in altındaysa o basamak kaybediyor
+    * ``odul_tuttu`` — **tutturunca** alınan ortalama para; λ'nın ta kendisi
+
+    `odul_tuttu`nun kolon sayısıyla nasıl büyüdüğü ayrıca döner
+    (`odul_tuttu_kolon`), çünkü `marjinal_secim`in taşıdığı varsayım tam
+    olarak "büyümez"dir ve buradan **ölçülür**.
+    """
+    from collections import defaultdict
+
+    hep: dict[int, list[float]] = defaultdict(list)
+    tuttu: dict[int, list[float]] = defaultdict(list)
+    for c in cetveller:
+        for b in c["basamaklar"]:
+            hep[b["kolon"]].append(b["odul"])
+            if b["tuttu"]:
+                tuttu[b["kolon"]].append(b["odul"])
+    out = []
+    for kolon in sorted(hep):
+        tl = kolon * KOLON_BEDELI
+        v = hep[kolon]
+        t = tuttu.get(kolon, [])
+        ort = sum(v) / len(v)
+        ort_t = sum(t) / len(t) if t else 0.0
+        out.append({
+            "kolon": kolon, "tl": tl, "hafta": len(v), "tutan": len(t),
+            "ort_odul": ort, "roi": ort / tl if tl else 0.0,
+            "odul_tuttu": ort_t,
+            "odul_tuttu_kolon": ort_t / kolon if kolon else 0.0,
+        })
+    return out
+
+
 def _uygula(c: dict[str, Any], secici: Any) -> dict[str, Any] | None:
     """Bir kuralı bir haftanın cetveline uygular."""
     adimlar = [Adim(tl=b["tl"], kolon=b["kolon"], banko=b["banko"],
@@ -385,31 +427,37 @@ def kural_kiyasi(cetveller: Sequence[dict[str, Any]],
     kurallar[f"lambda-olculen-{int(lam_ic)}"] = \
         lambda a, lam=lam_ic: marjinal_secim(a, lam)
 
-    secimler: dict[str, list[dict[str, Any]]] = {}
+    # Secimler HAFTA ANAHTARIYLA tutulur: bir kural bir haftada secim
+    # uretemezse listeler kayar ve esleştirilmiş fark sessizce yanlis
+    # haftalari karsilastirmaya baslar.
+    secimler: dict[str, dict[tuple[str, int], dict[str, Any]]] = {}
     for ad, fn in kurallar.items():
-        satir = [r for c in cetveller if (r := _uygula(c, fn)) is not None]
-        secimler[ad] = satir
+        secimler[ad] = {(c["sezon"], c["hafta"]): r for c in cetveller
+                        if (r := _uygula(c, fn)) is not None}
 
     # LOO: her haftanin lambda'si o hafta DISARIDA birakilarak kestirilir.
-    loo: list[dict[str, Any]] = []
+    loo: dict[tuple[str, int], dict[str, Any]] = {}
     for c in cetveller:
-        lam = lambda_kestir(cetveller, disarida=(c["sezon"], c["hafta"]))
+        anahtar = (c["sezon"], c["hafta"])
+        lam = lambda_kestir(cetveller, disarida=anahtar)
         r = _uygula(c, lambda a, lam=lam: marjinal_secim(a, lam))
         if r is not None:
-            loo.append(r)
+            loo[anahtar] = r
     secimler["lambda-LOO"] = loo
 
+    # Ortak hafta kumesi: butun kurallar AYNI haftalarda puanlanir.
+    ortak = set.intersection(*(set(s) for s in secimler.values()))
+    secimler = {ad: {k: v for k, v in s.items() if k in ortak}
+                for ad, s in secimler.items()}
+
     temel = "sabit-2000"
-    ozet = {ad: _ozet(s) for ad, s in secimler.items()}
+    ozet = {ad: _ozet(list(s.values())) for ad, s in secimler.items()}
+    taban = secimler[temel]
     farklar: dict[str, Any] = {}
-    taban = {(c["sezon"], c["hafta"]): r
-             for c, r in zip(cetveller, secimler[temel])}
     for ad, satir in secimler.items():
         if ad == temel:
             continue
-        fark = [r["roi"] - taban[(c["sezon"], c["hafta"])]["roi"]
-                for c, r in zip(cetveller, satir)
-                if (c["sezon"], c["hafta"]) in taban]
+        fark = [satir[k]["roi"] - taban[k]["roi"] for k in sorted(ortak)]
         lo, hi = bootstrap_farki(fark, tohum=tohum, n=BOOTSTRAP)
         farklar[ad] = {
             "ort_roi_farki": sum(fark) / len(fark) if fark else 0.0,
@@ -417,17 +465,19 @@ def kural_kiyasi(cetveller: Sequence[dict[str, Any]],
             "hafta": len(fark),
         }
 
-    en_ust = {ad: sum(1 for c, r in zip(cetveller, s)
-                      if c["basamaklar"] and r["kolon"] == c["basamaklar"][-1]["kolon"])
+    en_ust_kolon = {(c["sezon"], c["hafta"]): c["basamaklar"][-1]["kolon"]
+                    for c in cetveller if c["basamaklar"]}
+    en_ust = {ad: sum(1 for k, r in s.items()
+                      if r["kolon"] == en_ust_kolon.get(k))
               for ad, s in secimler.items()}
     return {
-        "hafta": len(cetveller),
+        "hafta": len(ortak),
         "temel": temel,
         "lambda_olculen": lam_ic,
         "ozet": ozet,
         "fark": farklar,
         "tavan_dayanma": en_ust,
-        "secim_dagilimi": {ad: sorted({r["kolon"] for r in s})
+        "secim_dagilimi": {ad: sorted({r["kolon"] for r in s.values()})
                            for ad, s in secimler.items()},
     }
 
@@ -576,6 +626,12 @@ def _main(argv: list[str] | None = None) -> int:  # pragma: no cover - elle
     print(f"\nHAFTANIN HAKKI — {k['hafta']} hafta · 14-garanti · "
           f"tavan {a.tavan:,.0f} TL")
     print(f"olculen lambda: {k['lambda_olculen']:,.0f} TL / birim P(hedef)")
+    print(f"\n{'kolon':>6}{'TL':>9}{'hafta':>7}{'tutan':>7}"
+          f"{'ort odul':>11}{'ROI':>8}{'odul|tuttu':>12}{'/kolon':>9}")
+    for s in basamak_karnesi(cet):
+        print(f"{s['kolon']:>6}{s['tl']:>9,.0f}{s['hafta']:>7}{s['tutan']:>7}"
+              f"{s['ort_odul']:>11,.0f}{s['roi']:>8.3f}"
+              f"{s['odul_tuttu']:>12,.0f}{s['odul_tuttu_kolon']:>9.1f}")
     print(f"\n{'kural':<22}{'kolon/hafta':>12}{'maliyet':>12}{'odul':>12}"
           f"{'ROI':>8}{'hafta ROI':>11}")
     for ad, o in k["ozet"].items():

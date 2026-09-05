@@ -1208,6 +1208,14 @@ sonradan haklı çıkmış gibi düzeltilmedi.
 | **E3** | Omurga `Avg` mi `BFE` mi? | **`Avg` kalıyor** (§3.58). Tek "geçen" ölçü `P(hedef)` ve o bir tuzaktı — farkın **%81'i seçim hiç değişmeden** geliyor |
 | **E4** | Alınmamış bir sütun var mı? | **Yok** (§3.59). Hakem ölçüldü: yayılım saf şansın **0,97–1,00 katı**, yani etki zayıf değil yok. Sütun ekseni kapandı |
 | **E5** | Haftalık birikim | **Sizde.** Satın alınamaz, koşturulamaz — her hafta girilir |
+| **E6** | Bütçe kısıtı kalksa, haftaya göre harcamak yener mi? | **Hayır — eksen kapandı** (§E6). On üç kuralın on üçünde de aralık sıfırı kesti; ön şart hiç kurulmadı: kupon öncesi işaret `rho = +0,1175 [−0,0548, +0,2850]`. Ve merdivende yukarı çıkmak **oranı** açmıyor: 320 → 4.860 TL, fazla harcamanın karşılığı **%29** |
+
+**E6'nın eklediği (2026-09-05):** E2 *"şekli bütçe belirliyor"* demişti;
+E6 o bütçeyi kaldırdı ve bütçenin yerine koyulacak bir şey **bulamadı** —
+ama bulamamanın sebebi ölçüldü. Merdivenin her basamağı aynı oranı veriyor
+(%10,6–%37,9, yönsüz), iyi hafta kupon öncesi tanınamıyor, ve ödülün
+%44–%65'i 114 haftanın **en iyi 5'inden** geliyor. Yani bütçe ekseninde
+kaldıraç yok; ve olsaydı bile bu kuyrukla 114 hafta onu göremezdi.
 
 **Dördünün ortak dersi ve ikinci turun asıl çıktısı bu:** kupon sayıları
 ikiye ayrılıyor. Modelin **kendi ürettikleri** (`P(hedef)`, `E[TL]`) girdi
@@ -1619,6 +1627,113 @@ paradır**; ve kuralın kaybetmesi meşru bir bitiştir.
 **Bu ölçüm 14-garantidedir** — E1'in sınırı aynen geçerli: kolonları
 üretebilen tek yer orası. Ürün 13-garanti oynuyor ve o seviyeye
 **taşınmaz** (§3.51, 15,1 kat).
+
+### E6 — ÖLÇÜLDÜ: bütçe ekseni kapandı, ve **haftanın hakkı bir işaret bulamadı**
+
+```bash
+cd backend && python -m spor_toto.hafta_hakki --kiyas   # ~20 dk
+```
+
+114 hafta × 15 basamak = **1.710 gerçek kolon koşumu**; her basamak E1'in
+makinesiyle (`karne.gercek_kolon_dagilimi`) üretildi ve o haftanın **resmî
+ikramiye tablosuna** vuruldu. Puanlama garanti tabanı değil gerçek kolon —
+taban kolon sayısını hiç görmediği için tam bu karşılaştırmayı bastırırdı.
+
+**1. Merdivenin her basamağı kaybediyor, ve oran basamaktan bağımsız.**
+
+| kolon | TL | ödül alan hafta | hafta başına ödül | geri dönüş | ödül \| tuttu |
+|---:|---:|---:|---:|---:|---:|
+| 32 | 320 | 20 | 85 | %26,5 | 434 |
+| 92 | 920 | 36 | 261 | %28,4 | 811 |
+| 128 | 1.280 | 41 | 446 | %34,9 | 1.208 |
+| **168** | **1.680** | **47** | **406** | **%24,2** | **984** |
+| 252 | 2.520 | 49 | 508 | %20,2 | 1.163 |
+| 333 | 3.330 | 58 | 1.263 | %37,9 | 2.351 |
+| 486 | 4.860 | 65 | 1.413 | %29,1 | 2.474 |
+
+Geri dönüş 15 basamakta **%10,6 – %37,9** arasında zıplıyor ve **yönü
+yok**: en ucuz basamak %26,5, en pahalısı %29,1. Uçtan uca aynı şey tek
+satırda — 320 TL'den 4.860 TL'ye çıkmak haftalık ödülü 85 → 1.413 TL
+yapıyor, yani **4.540 TL fazla harcamanın karşılığı 1.328 TL: %29.**
+Marjinal oran ortalama oranla aynı; merdivende yukarı çıkmak oranı
+değiştirmiyor.
+
+**2. On üç kuralın on üçü de sabit bütçeyi yenemiyor.**
+
+| kural | kolon/hafta | geri dönüş | ROI farkı (sabit-2000'e karşı) | %95 aralık |
+|---|---:|---:|---:|---|
+| sabit-1000 | 92 | %28,4 | +0,0422 | [−0,0772, +0,1633] |
+| sabit-3500 | 333 | %37,9 | +0,1376 | [−0,0757, +0,4453] |
+| λ=10.000 | 151 | %26,3 | +0,0022 | [−0,0038, +0,0108] |
+| λ=20.000 | 334 | %37,7 | +0,1323 | [−0,0801, +0,4414] |
+| **λ = ölçülen (984)** | **32** | **%26,5** | **+0,0233** | **[−0,1541, +0,2482]** |
+| **λ-LOO** | **32** | **%26,5** | **+0,0233** | **[−0,1541, +0,2482]** |
+| en-büyük | 486 | %29,1 | +0,0490 | [−0,0920, +0,2144] |
+
+**Hepsi sıfırı kesiyor.** Durma kuralının 1. maddesi işledi. LOO kolu iç
+örneklem koluyla **birebir aynı** şekli seçiyor (3. madde de işledi: λ
+ölçülebilir, ama ölçülen değeri merdivenin en alt basamağını gösteriyor).
+
+**3. Ve asıl kapanış ön şartta: kupon öncesi işaret YOK.**
+
+```
+Spearman(kupon öncesi P(hedef), gerçekleşen ROI) = +0,1175 [−0,0548, +0,2850]   n=114
+```
+
+Aralık sıfırı kesiyor. Yani "iyi hafta" kupon kapanmadan **tanınamıyor**.
+Durma kuralının 2. maddesi tam bu duruma yazılmıştı: bu şartta bir kural
+sabit bütçeyi yense bile *"haftanın hakkı"* denmez, çünkü kazanç yalnızca
+**ne kadar** harcandığından gelirdi, **hangi haftaya** harcandığından değil.
+
+**4. Fiyat ile değer, tek satırda.** Satın alınan şey bir birim
+`P(hedef)`; tutturunca ortalama **984 TL** ediyor (2.000 TL basamağı, 114
+hafta). Merdivenin sattığı fiyat:
+
+| | medyan TL / birim `P(hedef)` | λ'nın katı |
+|---|---:|---:|
+| uçtan uca ortalama | 12.002 | **12,2×** |
+| oynanan basamağın **bir üstü** | 92.167 | **93,7×** |
+| haftanın **en ucuz** tek adımı | 1.077 | 1,1× |
+
+Yani merdivende bedavaya yakın tek adımlar var (ikisi arası birkaç TL),
+ama onlara ancak pahalı bir adımdan sonra varılıyor; **anlamlı büyüklükte
+her sıçrama, aldığı şeyin ~12 katına satılıyor.** Kuponun neden
+kaybettiğinin fiyat cinsinden ifadesi budur ve bütçeyle ilgisi yoktur.
+
+**5. Tavan sınavı: yukarısı ölçülemiyor, çünkü ödül tek haftadan geliyor.**
+Tavan 20.000 TL'ye çıkarılıp 15 hafta koşuldu (2025/26, 1.728 kolona kadar).
+Üst basamaklarda geri dönüş %20,9 – %103,8 arasında zıplıyor, ama sayı
+okunamaz: **her basamağın toplam ödülünün %28–%100'ü tek bir haftadan
+geliyor.** Aynı yoğunluk 114 haftada da duruyor — en iyi **5** hafta,
+basamağa göre ödülün **%44–%65**'ini taşıyor.
+
+Yani bu eksen "daha iyi bir kural" ile kapanmıyor; **kuyruk** ile
+kapanmıyor. Ödül dağılımı öyle ağır kuyruklu ki 114 hafta, basamaklar
+arasındaki oran farkını ayırt etmeye yetmiyor — ve bu, E6'nın bütün geniş
+aralıklarının tek sebebidir.
+
+**Durma kuralının üçü de işledi → bütçe ekseni kapanır.** 2.000 TL sabit
+bütçe **kalıyor**, ama artık bir kolaylık değil **ölçülmüş** bir seçim:
+haftaya göre değişen hiçbir harcama kuralı onu ölçülebilir biçimde
+yenmiyor ve yenmesi için gereken şey (iyi haftayı önceden tanıyan bir
+işaret) 114 haftada bulunamadı.
+
+**Sınırlar, açıkça:**
+
+* Ölçüm **14-garantide**; ürün 13 oynuyor ve taşınmaz (§3.51).
+* Tavan **5.000 TL** (hesap sınırı, ürün kuralı değil). λ ≥ 50.000 kuralları
+  114 haftanın 114'ünde tavana dayandı — o satırlar *"en büyüğü al"*ın
+  kırpılmış hâlidir ve öyle okunmalıdır. λ = 20.000 dört haftada dayandı,
+  ötekiler hiç. Tavanın üstü 15 haftada ayrıca yoklandı (5. madde) ve
+  **ayırt edilemedi**; "yukarısı kötü" değil, "yukarısı bu `n` ile
+  ölçülemez" denmiştir.
+* Ödüller **nominal TL** ve kesit dört sezona yayılı (2022/23–2025/26);
+  maliyet bugünün fiyatından. Havuzlanmış oranlar bu yüzden yeni sezonlara
+  ağır biner — eşleştirilmiş fark bundan etkilenmez (aynı haftanın iki
+  kolu aynı ölçekte), mutlak geri dönüş seviyeleri etkilenir.
+* `P(hedef)` tek aday işaretti. Başka bir ex-ante işaret (kalabalık
+  yoğunluğu, oran dağılımının keskinliği) sınanmadı; **eksen kapandı**
+  demek "bu işaretle açılmadı" demektir.
 
 ---
 
