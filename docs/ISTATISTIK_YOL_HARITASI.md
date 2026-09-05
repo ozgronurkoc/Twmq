@@ -153,7 +153,7 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/components/super-toto/tahmin2.tsx` | **2. Tahmin** paneli — `1. Tahmin` / `2. Tahmin` sekmeleri arasında geçilir; para birimli hiçbir sayı yok. Hafta kapandığında sonuç sütunu ve ayar karnesi açılır (§3.38) |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **1.960 test**; **85'i** istatistik katmanına (`history` `odds` `backtest`
+paketi toplam **2.044 test**; **85'i** istatistik katmanına (`history` `odds` `backtest`
 `api_stats` `api_backtest` `snapshot_iddaa`), **579'u** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre`
@@ -4703,6 +4703,384 @@ o sapmanın **gürültü olma payı o kadar büyüyor**. Eşiği yükselterek
 Bu bir teşhistir; seçim kuralını, kupon eşiğini veya piyasa çıtasını
 değiştirmez. Ne yapılacağı ayrı bir iştir ve bu ölçüm görülmeden verilemezdi.
 
+### 3.50 Kalabalık modeli — havuz ekseninin ilk ölçümü, ve **durma kuralını geçti**
+
+`getiri.KALABALIK_MODELLERI` üç modelden ibaretti ve **üçü de varsayımdı**.
+§3.34 ilk ikisi arasında **22 kat** getiri farkı ölçüp şunu yazmıştı:
+*"bu eksende belirsizliğin kaynağı tahminci değil, kalabalık."* O belirsizlik
+hiç ölçülmemişti — oysa ölçmeye yetecek veri arşivde duruyordu.
+
+**Kesit.** `data/sportoto_arsiv` 223 haftada kademe başına kazanan adedini,
+`data/odds` + `data/st_history` 114 haftada kuponun 15 maçını ve piyasa
+oranını taşıyor. Kesişim **112 hafta × 3 kademe** ve bu, kalabalığın ortak
+dağılımının **doğrudan gözlemidir**. §6.3b *"≈71 ikramiyeli hafta gerekiyor,
+elde 1 var"* diyordu; o güç analizi `kişi başı ikramiye ↔ crowd_ratio`
+regresyonu içindi ve kazanan adetleri çok daha bilgili bir gözlemdir.
+
+**Model.** `o_i(s) ∝ p_i(s)^λ`. `λ = 1` `orneklem`, `λ → ∞` `favori`; yani
+model iki ucu da **içine alır** ve aralarındaki yeri ölçer.
+
+**Ölçek uyuma hiç girmiyor.** Gözlenen kazanan adetleri `N · P(k)` ile
+orantılı, dolayısıyla kademeler arası oranlar `N`'den bağımsız ve modelin
+şeklini tek başına tanımlıyor. 15. kademe bilerek dışarıda — 14/13/12
+**kolon** sayar, 15 **kupon** (§3.48). Kazanan adedi ağırlık değil: bir
+haftanın 40.000 kazananı 40.000 bağımsız gözlem değil, aynı 15 maçın 40.000
+kez sayılmasıdır.
+
+**Sonuç: λ = 1,7608 · %95 [1,669, 1,865].** Aralık **1'i içermiyor** —
+kalabalık favoriye piyasadan daha keskin yığılıyor. Dört katın dördünde de
+kararlı (1,746–1,782). Model bilerek **tek parametreli**: `δ` (beraberlik) ve
+`h` (ev) denendi, sezon sezon işaret değiştirdi (−0,19 ↔ +0,61) ve üç
+parametreli model tek parametreliden ayırt edilemedi (−0,00012, %95
+[−0,00047, +0,00012]).
+
+**K4 durma kuralı — üç şartın üçü de:**
+
+| tutulan sezon | hafta | olculen | orneklem | favori |
+|---|---:|---:|---:|---:|
+| 2022/23 | 17 | **0,3840** | 0,3849 | 1,7209 |
+| 2023/24 | 31 | **0,4123** | 0,4149 | 1,8068 |
+| 2024/25 | 29 | **0,4029** | 0,4052 | 1,9624 |
+| 2025/26 | 35 | **0,3598** | 0,3627 | 2,0545 |
+
+`olculen − orneklem` = −0,00236 [−0,00317, −0,00156]; `olculen − favori` =
+−1,52229 [−1,63701, −1,41023]; aynı yön **4/4**. **GEÇTİ** — ve bu, projede
+önceden yazılmış bir durma kuralını geçen **ilk ölçüm**.
+
+**Bağımsız sınav `favori`yi ikinci kez çürüttü.** Uyum `N`'yi hiç görmez;
+oradan çıkan `N` dağıtılan havuzla karşılaştırıldı (sezon içinde — havuz
+nominal TL ve dört sezonda 72 kat büyümüş, havuzlanmış korelasyon işaret
+bile değiştiriyor: −0,21):
+
+| model | sezon içi `r` | ima ettiği haftalık kolon |
+|---|---:|---|
+| olculen | +0,542 | 10,4M – 31,3M |
+| orneklem | +0,580 | 18,8M – 70,7M |
+| favori | **−0,298** | **10¹⁷ – 10¹⁹** |
+
+`favori` haftada 10¹⁷ kolon ima ediyor; dünya nüfusu 8×10⁹. Sınav `olculen`
+ile `orneklem`'i **ayırmıyor** ve ayıramayacağı zaten kodda yazılıydı
+(`havuz_karnesi`: sistem kuponları seviye tahminini şişirir).
+
+**§3.34'ün 22 katlık belirsizliğinin `favori` ucu kapandı.**
+`getiri.KALABALIK_MODELLERI` dördüncü modelini aldı (`olculen`).
+
+### 3.51 Kalabalıktan sapmak — üç ölçüm, üçü de sıfır ya da eksi
+
+§3.50 kalabalığın *şeklini* ölçtü. Bu bölüm ondan **para çıkıp çıkmadığını**
+soruyor ve cevabı üç aşamada veriyor.
+
+**(a) Monoton modelde sapmak kazandırmıyor.** `secim.kalabalik_ayari`,
+`olculen` modeliyle kayıp bütçesi 0'dan **0,70**'e taransa bile tek bir maçın
+işaretini değiştirmiyor. Doğrudan `E[TL]` yerel araması: 25 haftanın 25'inde
+taban plan zaten en iyi, tek maçlık en iyi değişimin kazancı **tam 1,0000×**
+(arama dejenere değil — favoriyi bırakmak E[TL]'yi 0,39×'e düşürüyor).
+Mekanizma analitik: `o ∝ p^λ` **monotondur**, sembol sıralamasını korur.
+`secim.VARSAYILAN_KAYIP_ORANI` bu yüzden **0** oldu ve künyesi artık *"harcama
+kararı"* değil ölçüm.
+
+**(b) Kenar monoton olmayan artıkta — ama tavan üç kez düzeldi, aşağı.**
+Kayıtlı oynanma payları monoton **değil**: 60 maçın **21'inde** kalabalığın
+sıralaması piyasanınkinden farklı ve monoton bir model bunu asla üretemez.
+Tavan ölçümü üç tur sürdü ve zincirin kendisi bulgudur:
+
+| # | ölçüm | sonuç | niçin düştü |
+|---|---|---:|---|
+| 1 | ilk tavan | 2,63× | kademe havuzları **elle yazılmıştı** (13/12 = 10,0; gerçek 0,800) |
+| 2 | düzeltilmiş tavan | 1,003× | doğru havuzlarla, ama **kısıtsız** optimizasyon |
+| 3 | kısıtlı + gerçekleşen | **+0 TL** | tek büyük sayı (3,01×) tam da **kaybeden** haftadan geliyordu |
+
+Kısıtsız `E[TL]` enbüyüklemesi 2. haftada `E[TL]`'yi 3,01 kat büyütürken
+`P(k≤1)`'i 0,2194 → **0,0073**'e düşürdü; gerçekleşen ödül **1.439 TL → 0**.
+Sebep yapısal: `pay_beklentisi` küçük `q`'da `1/(N·q)` gibi patlıyor.
+Ağır kuyruklu bir ödemede beklenen değeri tek başına enbüyüklemek, iyi
+olmakla aynı şey değildir.
+
+**(c) Kısıtla birlikte kazanç sıfır.** Üç sonuçlanmış haftada, kayıp tavanı
+0,00–0,50 aralığında gerçekleşen ödül tabanla **birebir aynı** (2.668 TL);
+0,95'te 1.230 TL, yani **1.439 TL kayıp**. `n = 3`.
+
+Eksen kapanmadı ama bugünkü cevabı *"veri var, ölçüldü, kazanç
+görünmüyor"*dur. Karar anında hesaplanabilirliği ayrıca sınandı: `E[TL]`'nin
+argmax'ı havuzun ölçeğine değil oranına bağlı ve o oran `havuz.BOLUSUM`;
+gerçek tabloyla ve `BOLUSUM` oranlarıyla optimize edilen kupon üç haftanın
+üçünde de **birebir aynı** çıktı.
+
+### 3.52 Betfair Exchange — denenmemiş tek **fiyat**, ve geçti
+
+A2 bahisçi ayrışmasını ölçtü ama yalnızca B365 ve Pinnacle ile;
+`build_egitim.A2_KAYNAKLARI` Betfair'i bilerek dışarıda bırakıyor. Oysa
+kupon kesitinde ölçülen tablo Betfair Exchange'i **en düşük marjlı fiyat**
+olarak gösteriyordu ve o fiyat hiçbir zaman arenaya girmemişti.
+
+119 hafta · 1.785 maç · referans `Avg_kapanis` · eşleştirilmiş hafta
+bootstrap'i · **beş aday üzerinde Holm**:
+
+| aday | n | kapsama | marj | fark | %95 aralık | p | Holm |
+|---|---:|---:|---:|---:|---|---:|---|
+| **BFE_kapanis** | 985 | %55 | **%0,62** | **−0,00100** | **[−0,00181, −0,00021]** | **0,0054** | **GEÇTİ** |
+| PS_kapanis | 1.417 | %79 | %3,17 | −0,00037 | [−0,00113, +0,00040] | 0,168 | hayır |
+| B365_kapanis | 1.721 | %96 | %6,54 | +0,00014 | [−0,00056, +0,00085] | 0,655 | hayır |
+| Avg_acilis | 1.694 | %95 | %6,15 | +0,00202 | [−0,00043, +0,00445] | 0,947 | hayır |
+
+**Bu bir model değil bir FİYAT.** Geçmesi *"piyasayı geçen bir modelimiz
+var"* demek değil, ***"daha iyi bir piyasa var"*** demektir — ve mekanizma
+tabloda: marj %0,62, omurganın kullandığı fiyatın onda biri.
+
+Kapsama sezona göre: BFE 2022/23 ve 2023/24'te **hiç yok**; 2024/25 %100
+(30/30 tam hafta, −0,00049), 2025/26 %87 (32/41, −0,00143). Etki iki
+sezondan geliyor, ikisinde de aynı yönde, ve ileriye dönük kapsama sorunu
+yok. `n` sınırı açık: iki sezon.
+
+### 3.53 Kupon-zamanı fiyatı (F1) — kapanış açılıştan öngörülemiyor
+
+§5.2 eki kapanış fiyatının kupon verilirken elde olmadığını ve bedelinin
+**%22 kolon** olduğunu ölçmüştü. Soru piyasayı yenmeyi gerektirmiyordu:
+hedef sonuç değil, piyasanın kendi kapanışı.
+
+`cizgi.cizgi_tahmini()` merkezlenmiş log uzayında `L_kapanış ≈ b · L_açılış`
+kuruyor, sezon dışarıda bırakmalı: **b ≈ 1,009** ve açığın geri alınanı dört
+katta **%2,3–6,2**, toplamda **%3,3**. Açık Brier'de +0,002458, kazanç
++0,000082.
+
+**Açılış zaten kapanışın yansız kestiricisidir**; aradaki fark açılıştan
+*sonra gelen bilgidir* ve tanımı gereği açılışta yoktur. A1'in *"hareket
+kapanışın ötesinde bilgi taşımıyor"* bulgusunun simetriği: kapanış da
+açılışın içinden çıkarılamıyor. %22'lik kolon bedeli bu yolla geri alınamaz.
+
+### 3.54 Kupon kuralında ters seçim yok (F3)
+
+§3.49 ters seçimi ölçtü ve yüksek eşikte gerçek buldu — ama kural
+`p_model − p_piyasa > eşik`, yani **değer bahsi** kuralı; kupon onu
+kullanmıyor. Kupon kuralı için soru **dejenere değil**: `sistem_secimi`
+kararı haftanın tamamına ve bütçeye bağlı, yani bilgi `p`'nin ötesinde.
+
+114 hafta · 13-garanti · 2.000 TL:
+
+| | n | söylenen | gerçek | aşırı güven |
+|---|---:|---:|---:|---:|
+| **BANKO** | 684 | 0,6451 | 0,6988 | −0,0537 |
+| banko değil | 1.026 | 0,4430 | 0,4922 | −0,0492 |
+| **fark** | | | | **−0,0045** |
+
+Hafta düzeyinde bootstrap %95: **[−0,0506, +0,0414]** — sıfırı kesiyor.
+**Kupon kuralı modelin yanıldığı yeri seçmiyor; düzeltilecek bir şey yok.**
+İki kolda da *eksik* güven çıkması yeni değil: §5.1'in A5 satırı aynı olguyu
+ölçmüştü.
+
+### 3.55 Kolon bedeli ₺10 — ve §5'in para tablosu 6,67 kat şişkinmiş
+
+`getiri.KOLON_BEDELI = 10.0` ölçülmüştü ama künyesi onu varsayılan hesabın
+**dışında** tutuyordu: sayı üçüncü taraf bir kupon aracının ekranından
+geliyordu ve *"aracın hizmet bedelini katıp katmadığı doğrulanmadı"*
+deniyordu. Üç bağımsız köken artık aynı sayıyı veriyor — araç ekranı,
+kullanıcının bayi/resmî uygulama beyanı, ve `data/sistem_fiyat/st_extra.json`
+tablosunun **250 fiyatının 250'sinin de 10'un tam katı** olması.
+
+Şüphe kapandı, sayı varsayılan hesaba girdi ve `KADEME_OLASILIKLARI.md` §5
+yeniden ölçüldü. Getiri bedele ters orantılı olduğu için her sayı **6,67'ye
+bölündü**:
+
+| haftalık | medyan | gözlenen | %95 aralık | **P(zarar)** |
+|---:|---:|---:|---|---:|
+| 200.000 TL | %5 | %44 | [%17, %88] | **%99** |
+| 1.800.000 TL | %8 | %47 | [%30, %65] | **%100** |
+| 5.400.000 TL | %6 | %49 | [%28, %74] | **%100** |
+
+§5.3'ün dördüncü sınırı (*"kolon bedeli doğrulanmadı"*) kapandı; üçüncü şartı
+(*"en iyi 5 hafta çıkınca %100 üstü"*) **düştü**. Eski tablo silinmedi, ölçek
+notuyla yerinde bırakıldı.
+
+**İkinci ve bağımsız bir kusur:** kademe ödülleri nominal TL ve dört sezonda
+**72 kat** büyümüş (12 bilen medyanı 2022/23 ₺62 → 2026/27 ₺4.486), maliyet
+ise bugünün fiyatından. Ölçüldü: **2022/23 haftaların %15'i olduğu hâlde
+toplam ödülün %1'ini taşıyor.** Yani §5'in *"114 hafta"* ortalaması gerçekte
+bir 114-hafta ortalaması değil. `karne()` bu yüzden her zaman sezon kırılımı
+döndürüyor.
+
+### 3.56 Garanti tabanı 2,39 kat gevşek — ama açığı kapatmıyor
+
+`karne` modülü kuponun ödülünü **garantinin verdiği alt sınırdan** sayıyor:
+`k` maç seçim kümesinin dışında kalırsa *bir* kolon `G − k` tutturur, ve
+hesap tam olarak o bir kolonu yazıyor. Gerçek sistem aynı kademeyi onlarca
+kolonla tutar. Modül başlığı bunu ilk günden söylüyordu ama **ne kadar**
+alt olduğunu söylemiyordu.
+
+Ölçüldü — ve fişe gerek kalmadı. 14-garantide kolonları depo kendisi
+üretiyor (`engines.run_auto`; `core.py` yarıçap 1'e kilitli):
+
+```
+cd backend && python -m spor_toto.karne --taban --garanti 14 --butce 2000
+```
+
+| 114 hafta · 14G · 2.000 TL | maliyet 191.520 TL |
+|---|---:|
+| garanti tabanı ödülü | 19.354 TL · **%10,1** |
+| gerçek kolon ödülü | 46.301 TL · **%24,2** |
+| **taban ne kadar gevşek** | **2,39 kat** |
+
+**Yanlılık düzgün değil, eğik.** 12+ tutturan ortalama kolon sayısı
+kaçak 0'da **26,8**, kaçak 1'de 10,2, kaçak 2'de 1,3 — taban her durumda
+1 sayıyor. Yani sınır en çok **iyi giden** haftaları eksik sayar, ve tabanı
+kullanan eşleştirilmiş karşılaştırmalar muhafazakâr değil **taraflıdır**:
+iyi haftalar arasındaki ayrım gücünü sistematik olarak bastırırlar.
+
+**Asıl bulgu bir eleme.** %24,2 hâlâ 1'in çok altında: taban gevşekti,
+düzeltildi, ve kupon yine de her 100 TL'nin 76'sını kaybediyor. Geri dönüş
+açığının kaynağı ölçüm hatası değilmiş. Kalabalık ekseninin kapatması
+gereken şey %10↔%100 değil **%24↔%100** — daha küçük, ama hâlâ dört katlık
+bir açık ve onu taban düzeltmesi kapatmıyor.
+
+**Ölçerken çıkan ikinci bulgu — motorun kaplaması satıcınınkinden gevşek.**
+114 hafta boyunca motor **24.624** kolon üretti; ST EXTRA tablosu aynı
+şekilleri **19.152** kolonla satıyor (**%28,6 fazla**) ve ikisi de
+14-garanti veriyor. Satıcının kodu ölçülebilir biçimde daha sıkı, yani
+motorun kolonları **oynanan ürünü tarif etmiyor**. Bu yüzden yayımlanan
+oran motorun ham kolonlarınınki (3,08) değil, satıcının kolon sayısına
+indirgenmiş **2,39**'dur — ikisinden küçüğü. İndirgeme bir varsayım taşıyor
+(satıcının az kolonu motorunkiyle aynı biçimde dağılıyor) ve o varsayım
+`karne.taban_gevsekligi` docstring'inde yazılıdır; kolon listesi elde
+olmadan ölçülemez.
+
+**Kapanmayan yer:** 13-garanti. Oynanan ürün orası ve orada kolonları depo
+üretemiyor. §3.51'in 15,1 katı tam olarak garantiler arası taşımayı
+geçersiz kılan şey olduğu için 14G ölçümü 13G'ye taşınamaz; o ölçüm ST
+EXTRA fişinin kademe başına kolon adedini bekliyor.
+
+### 3.57 Hedef kademe paradan seçildi (E2) — **12 kalıyor**, ve sebebi yapısal
+
+`sistem.kacak_esigi(garanti, kademe)` iki parametreli ama `kademe` sabit
+**12** yazılıydı, ve o 12 bir ölçümden değil bir varsayımdan geliyordu.
+§3.56 tabanın gevşekliğini ölçünce aday kademeleri **gerçek kolon ödülüne**
+karşı koşturmak mümkün oldu (taban eğik olduğu için tam bu karşılaştırmayı
+bastırırdı).
+
+```
+cd backend && python -m spor_toto.karne --hedef --garanti 14 --butce 2000
+```
+
+| hedef | geri dönüş | ödül>0 | ort. kolon | ort. `P(hedef)` |
+|---:|---:|---:|---:|---:|
+| **12** | %24,2 | 48 | 168 | 0,3016 |
+| 13 | %25,1 | 49 | 168 | 0,1064 |
+| 14 | %23,5 | 47 | 168 | 0,0182 |
+
+Eşleştirilmiş ROI farkı (hafta düzeyi bootstrap %95): 13 − 12 **+0,00928
+[+0,00000, +0,02724]**, 14 − 12 −0,00702 [−0,02358, +0,00405], 14 − 13
+−0,01629 [−0,04200, +0,00145]. **Üçü de sıfırı kesiyor**, en iyi 5 hafta
+çıkarıldığında da. Önceden yazılmış durma kuralı işledi: **hedef 12 kalır.**
+
+**Neden zayıf olduğu yapısal ve bu, sonuçtan daha kullanışlı.** Üç hedef de
+aynı şekli aldı: 3 çifte + 5 üçlü, 168 kolon. Aritmetik: çifte/üçlü eklemek
+`P(k ≤ eşik)`'i *hangi eşikte olursa olsun* büyütür, dolayısıyla bütçeye
+sığan en büyük şekil her hedefte kazanır. **Şekli bütçe belirliyor, hedef
+değil**; hedefin dokunabildiği tek şey hangi sembolün işaretlendiği.
+Sonucu genellenebilir: şeklin kendisiyle oynayan kollar (bütçe eğrisi) ve
+seçilen sembolün *değerini* değiştiren kollar (kalabalık ekseni) hedef
+kademesiyle oynayan koldan yapısal olarak daha güçlü.
+
+**Yan ürün — başabaş kademe düzeltildi.** Taban ölçeğinde ölçülmüş eski
+okuma *"12 tutturmak maliyeti karşılamıyor"* diyordu ve bir kolon sayıyordu.
+Gerçek kolonlarla, aynı kupon: kaçak 0 olan 4 haftada gerçekleşen medyan
+geri dönüş **1,34×** — 12. kademe kârda kapatıyor. Kaçak 1'de 0,28×
+(ortalama 0,86×), kaçak 2'de 0,12×, kaçak ≥3'te 0. Yani sorun başabaş
+noktası değil, kaçaksız hafta oranının 114'te 4 olması. Eski 13G kaydı
+silinmedi, ölçek notuyla yerinde bırakıldı — §3.51'in 15,1 katı garantiler
+arası taşımayı geçersiz kılıyor.
+
+### 3.58 Omurga fiyatı kupon düzeyinde (E3) — `Avg` kalıyor, ve "geçen" sayı bir tuzak
+
+§3.52 Betfair Exchange'in Brier'de geçtiğini ölçtü (−0,00100, beş aday
+üzerinde Holm'lu) ve marjının omurganınkinin onda biri olduğunu gösterdi.
+Omurgayı değiştirmenin ölçüsü ise Brier değil: §3.19 karar katmanının
++6,02 puanı için tahmin tarafında ~0,10 Brier gerekirdiğini ölçmüştü, yani
+−0,001 kupon için görünmez. Marj farkı ise Brier'de görünmez — o yüzden
+ölçüm kupon düzeyinde yeniden kuruldu.
+
+```
+cd backend && python -m spor_toto.karne --omurga BFE --garanti 14 --butce 2000
+```
+
+Kesit eşleştirilmiş (BFE 2022/23–2023/24'te hiç yok): **64 ortak hafta**.
+
+| ölçü (BFE − Avg) | ortalama | %95 aralık | |
+|---|---:|---|---|
+| gerçek kolon ROI | −0,01074 | [−0,06232, +0,02558] | sıfırı kesiyor |
+| `P(hedef)` | +0,00758 | **[+0,00594, +0,00924]** | sıfır dışında |
+| gerçekleşen kaçak | −0,04688 | [−0,14062, +0,04688] | sıfırı kesiyor |
+
+Durma kuralı gerçekleşen paraya bakıyordu: **omurga `Avg` kalır.**
+
+**Ve tek "geçen" satır bir tuzak — bu, sonucun kendisinden önemli.**
+`P(hedef)` bir sonuç değil **modelin kendi güvenidir**; daha keskin bir
+olasılık, isabet hiç değişmese bile onu büyütür. Ayrıştırıldı: aynı kupon
+(omurganın kurduğu) iki fiyatla puanlandığında fark **+0,00611**, serbest
+farkın tamamı +0,00758 — yani **%81'i seçim hiç değişmeden** geliyor. İlk
+iki sembolün ortalama kütlesi 0,7880 → 0,7904, favori isabeti 548/960 →
+550/960, ve 64 haftanın 53'ünde iki fiyat aynı şekli **ve** aynı kaçağı
+veriyor.
+
+Bu §3.52'yi çürütmez — BFE gerçekten daha iyi kalibre. Söylediği şey, o
+iyiliğin kupon düzeyinde ölçülebilir bir karşılığı olmadığı. Ayrışım artık
+`karne.omurga_kiyasi`nin zorunlu çıktısı ve bekçisi var: `P(hedef)` farkı
+ayrışım olmadan yayımlanamaz.
+
+**Genel ders, §3.57'nin yapısal bulgusuyla aynı yöne bakıyor.** Kupon
+sayıları iki gruba ayrılıyor: modelin kendi ürettiği (`P(hedef)`, `E[TL]`)
+ve dışarıdan gelen (gerçekleşen kaçak, gerçek kolon ödülü). Birincisi
+girdinin keskinliğiyle birlikte büyür ve kendi başına kanıt değildir.
+
+### 3.59 Hakem (E4) — sütun ekseni kapandı, ve "geçmedi"nin sebebi de ölçüldü
+
+§3.24'ün teşhisi *"sorun satır sayısı değil sütun"*du ve on bir model
+ailesinin hepsi **aynı sütun kümesi** üzerinde koştu. Alınmamış sütunlar
+içinde hakem tek gerçek **aile**: takımdan bağımsız bir değişken. Ötekiler
+(faul, kart, ilk yarı skoru) maçın kendi sonucundan türer ve maç öncesi
+bilinmez, yani tahminde kullanılamaz.
+
+```
+cd backend && python scripts/build_hakem.py     # sütunu çek (korpusa DOKUNMAZ)
+cd backend && python -m spor_toto.hakem
+```
+
+**Kesitin sınırı bir bulgudur.** football-data hakemi yalnızca dokuz
+Britanya liginde yazıyor (%100), on üç kıta liginde hiç yazmıyor (%0);
+korpusa bağlandığında 31.103 satırın **13.334'ü** (%42,9) hakemli. Eksiklik
+rastgele değil **coğrafi**, o yüzden sütun korpusa katılmadı —
+`build_egitim.A2_KAYNAKLARI`nın gerekçesiyle aynı kusuru üretirdi, üstelik
+sezona değil coğrafyaya bağlı olduğu için sezon dışarıda bırakmalı çapraz
+doğrulama onu yakalayamazdı. Ölçüm hakemin %100 olduğu yerde koştu: 13.332
+maç, 254 hakem, 4 sezon dışarıda bırakmalı, Holm'lu.
+
+| aday | fark | %95 aralık | p | Holm |
+|---|---:|---|---:|---|
+| `hakem_ev` | +0,000002 | [−0,000003, +0,000008] | 0,8139 | hayır |
+| `hakem_beraberlik` | +0,000001 | [−0,000000, +0,000003] | 0,9302 | hayır |
+| `hakem_ikisi` | +0,000003 | [−0,000002, +0,000009] | 0,8774 | hayır |
+
+Üçü de geçmedi, işaret **pozitif** (kötü), ve büyüklük öteki ailelerin
+kalan etkisinden (0,0005–0,0015) **üç mertebe** küçük.
+
+**Ve bu sefer "geçmedi" demek yetmedi.** O cümle iki farklı şeyi örter:
+etki var ama düzeltme yakalayamıyor, ya da etki yok. Brier farkı ikisini
+ayırmaz — ve birinci turun on bir ölçümünde bu ayrım **hiç yapılmadı**.
+Hakemde yapılabildi, çünkü gürültünün büyüklüğü hesaplanabilir
+(`Σ p(1−p) / n²`):
+
+| eşik | hakem | gözlenen sd | saf şans sd | oran |
+|---:|---:|---:|---:|---:|
+| ≥30 maç | 160 | 0,0560 | 0,0576 | **0,97** |
+| ≥50 maç | 123 | 0,0512 | 0,0513 | **1,00** |
+
+`Var(gerçek) = Var(gözlenen) − Var(şans)` ikisinde de **negatif**: gözlenen
+hakemler-arası yayılım, şansın tek başına üreteceğinden bile küçük. Hakem
+etkisi zayıf değil, **yok**. Ham bakışta güçlü görünüyordu (en uç hakemlerde
+ev-artığı ±0,12) ve o sayı tamamen `n≈50`'nin gürültüsüydü.
+
+**Durma kuralı işledi: sütun ekseni kapanıyor** (§7). Aday listesi
+`hakem.ADAYLAR`da donmuş ve bekçisi var — uzatmak isteyen önce o testi
+değiştirmek, yani kararı görünür kılmak zorunda.
+
 ## 4. Sayfada bugün ne var
 
 **`/istatistik`** — sezon dağılımı (en sık sonuç + pay çubuğu) · 5 sayı kutusu (sembol
@@ -4847,6 +5225,10 @@ ve karşılıkları: kupon seti 0,5747 → **0,5740**, korpus 0,5940 → **0,593
 | **Takım bazlı istatistik (§3.35)** | 31.103 maç · 22 lig · 604 takım | **Yasak kalktı, kural kalmadı.** Ampirik Bayes küçültmesi: ortalama `B` **0,854**, ortalama %95 aralık 0,509. Tek sezona inildiğinde sistem **kendiliğinden temkinli oluyor** — `B` 0,697'ye düşüyor, aralık 0,690'a genişliyor. En çok konuşan satır Scunthorpe: 46 maçta ham 0,565 → küçültülmüş **0,875** [0,58, 1,17] |
 | **Yeni veri (§3.36)** | 768 UEFA maçı · 592 takım şehri · 31.103 maç | **Serinin niteliksel olarak farklı kapanışı.** Eksik veri gerçekten eksikti: UEFA fikstürü eklenince §3.16'nın açıklanamayan anomalisi **+0,0613 → +0,0325**'e indi (kontrol katmanı bit bit aynı kaldı). Ama düzeltilmiş özellik de geçmedi — `kalibre_avrupa` +0,000028 [−0,000277, +0,000352]. Derbi de türetilebilir oldu (667 maç) ve geçmedi (+0,000176). xG ve kadro **kapalı**: biri `robots.txt`, öteki eğitim/servis ayrışması |
 | **Hafta içi bağımlılık (§3.46)** | 183 hafta · 31.103 maç + 114 kupon haftası | **Eksen kapandı — ön kayıtlı kuralla.** Demeanlenmiş artıkların ortalama ikili korelasyonu korpusta **−0,00009 [−0,00102, +0,00080]**, üç kesitte de aralık sıfırı kesiyor. Kuyruğa çevrildiğinde korpus üst sınırında `P(k≥14)` yalnızca **%5** şişiyor (kupon kesiti tek başına %82'ye izin verirdi — sonucu taşıyan korpus). Yan ürün: eski bekçinin istatistiği yanlıştı (`Var(K)` yerine `Var(K−M)`) ve düzeltildi; ham artıklarla görünen `ρ=+0,0077` tamamen **kalibrasyon yanlılığıydı** |
+| **Betfair Exchange (§3.52)** | 985 kupon maçı · 119 hafta | **GEÇTİ** — ve beş aday üzerinde **Holm düzeltmesiyle**: `BFE_kapanis` −0,00100 [−0,00181, −0,00021], p=0,0054. Bir model değil bir **fiyat**: marj **%0,62**, omurganınkinin onda biri. Kapsama 2022/23–2023/24'te **sıfır**, 2024/25 %100, 2025/26 %87 — ileriye dönük sorun yok, `n` iki sezon |
+| **Kupon-zamanı fiyatı (§3.53)** | 31.099 maç · sezon dışarıda | **Kapandı.** `L_kapanış ≈ b·L_açılış` kestirimi `b ≈ 1,009` veriyor ve açığın yalnızca **%3,3**'ünü geri alıyor (dört katta %2,3–6,2). Açılış zaten kapanışın **yansız kestiricisi**; §5.2'nin %22'lik kolon bedeli bu yolla geri alınamaz |
+| **Kupon kuralında ters seçim (§3.54)** | 114 hafta · 1.710 maç | **Yok.** Banko −0,0537, banko değil −0,0492, fark **−0,0045** [−0,0506, +0,0414] — sıfırı kesiyor. §3.49'un ters seçimi gerçek ama `model` kuralına ait; kupon onu kullanmıyor. İki kolda da *eksik* güven, ki A5'in favori–sürpriz yanlılığı |
+| **Hakem (§3.59)** | 13.332 maç · 254 hakem · 9 lig | **Yok — ve bu kez "yok" ölçüldü.** Üç aday da Holm'dan düştü (`hakem_ev` +0,000002 [−0,000003, +0,000008], p=0,8139), etki öteki ailelerin kalanından **üç mertebe** küçük. Ayrıştırıldı: hakemler arası gözlenen yayılım saf şansın ürettiğinin **0,97–1,00 katı**, yani `Var(gerçek)` negatif — yakalanacak etki yok, düzeltmenin kusuru değil. Kapsama **coğrafi** (%42,9; yalnız Britanya ligleri), o yüzden sütun korpusa katılmadı. **Sütun ekseni kapandı** |
 
 **Okuma.** Aşırı uyum modelin kapasitesinden değil örneklem küçüklüğünden geliyordu; büyük
 korpus onu kaldırdı. Ama kalan etki 0,0005–0,0015 Brier — 31 binde anlamlı, 540'ta değil ve
@@ -4864,6 +5246,21 @@ anlaşmazlıkta ham sinyal *hiç yok*, yalnızca favori gücüyle karışmış b
 her şeyi zaten içeriyor.
 
 ### 5.2 Havuz ekseninin ilk bulguları — ölçüldü, belgeye girmedi
+
+> **2026-09-04: havuz ekseni artık ölçülü.** Aşağıdaki altı bulgu 2026/27'nin
+> ilk iki haftasının betimleyici kaydıydı. O tarihten sonra eksen 112 haftalık
+> arşiv üzerinde ölçüldü ve iki sonuç §3'e gerekçesiyle yazıldı:
+>
+> | ölçüm | sonuç |
+> |---|---|
+> | **Kalabalık modeli** (§3.50) | `λ = 1,7608` [1,669, 1,865] — aralık 1'i içermiyor. K4 durma kuralı **geçti** (4/4 sezon, iki bootstrap aralığı da sıfırı kesmiyor). `favori` iki bağımsız yoldan çürüdü: hafta başına ~4 kat kötü uyum **ve** haftada 10¹⁷ kolonluk imkânsız havuz. §3.34'ün 22 katlık belirsizliğinin `favori` ucu **kapandı** |
+> | **Kalabalıktan sapmak** (§3.51) | Makul her kısıtta gerçekleşen kazanç **sıfır**; kısıtsız arama **−1.439 TL**. Tavan ölçümü üç kez düzeldi (2,63× → 1,003× → +0 TL) ve zincirin kendisi bulgudur. `n = 3` — eksen kapalı değil |
+> | **Garanti tabanının gevşekliği** (§3.56) | **2,39 kat** — taban %10,1 diyor, gerçek kolon dağılımı %24,2 veriyor (114 hafta, 14G, 2.000 TL). Yanlılık eğik: 12+ tutturan kolon sayısı kaçak 0'da 26,8, kaçak 2'de 1,3, taban her durumda 1. Ama açık kapanmadı — %24,2 hâlâ 1'in altında, yani geri dönüş açığı bir ölçüm kusuru değil. Yan bulgu: motorun kaplaması satıcınınkinden **%28,6 gevşek** |
+> | **Hakem sütunu** (§3.59) | **Sütun ekseni kapandı.** 13.332 maç, 254 hakem, 4 sezon dışarıda bırakmalı, Holm'lu: üç aday da geçmedi ve etki +0,000002 (üç mertebe küçük). Ayrıştırıldı: hakemler arası gözlenen yayılım saf şansın ürettiğinin **0,97–1,00 katı** — `Var(gerçek)` negatif, yani etki zayıf değil **yok**. Kapsama coğrafi: 31.103 satırın %42,9'u (yalnız Britanya ligleri), o yüzden sütun korpusa **katılmadı** |
+> | **Omurga fiyatı** (§3.58) | **`Avg` kalıyor.** BFE − Avg gerçek kolon ROI farkı −0,01074 [−0,06232, +0,02558] (64 ortak hafta) — sıfırı kesiyor. Tek geçen ölçü `P(hedef)` (+0,00758 [+0,00594, +0,00924]) ve o bir tuzak: farkın **%81'i seçim hiç değişmeden**, yalnızca BFE'nin olasılığının keskinliğinden geliyor. §3.52'nin Brier bulgusunun kupon düzeyinde karşılığı yok |
+> | **Hedef kademe** (§3.57) | **12 kalıyor.** 13 − 12 eşleştirilmiş ROI farkı +0,00928 [+0,00000, +0,02724] — sıfırı kesiyor, kuyruk sınavında da. Sebebi yapısal: üç hedef de aynı şekli alıyor (168 kolon), çünkü **şekli bütçe belirliyor, hedef değil**. Yan ürün: 12 tutturmak kaçaksız haftalarda maliyeti **karşılıyor** (medyan 1,34×) — tabana dayalı eski okumanın düzeltmesi |
+
+
 
 PR #14, 2026/27'nin ilk iki haftasında **altı ölçülmüş bulgu** üretti ve
 bunların tamamı bugün yalnızca **commit mesajlarında** duruyor. Bu belgenin
@@ -5307,8 +5704,8 @@ Proje şu **dört sorunun tamamı** ölçülmüş cevaba bağlandığında biter
 | # | Soru | Bugün | Nasıl kapanır |
 |---|---|---|---|
 | 1 | Kapanış çizgisini **yenebiliyor** muyuz? | **hayır, ölçüldü** | A1–A4 (§6.2 A4) — arayış kapandı, tahmin ekseni açık kaldı |
-| 2 | Kalabalığı yenebiliyor muyuz? | **bilinmiyor — ama artık "veri yok" diye değil, "veri geldi, ölçülmedi" diye** (§6.3) | B2–B4 |
-| 3 | Pozitif beklenen getirili kupon kurulabiliyor mu? | bilinmiyor | B3 |
+| 2 | Kalabalığı yenebiliyor muyuz? | **kısmen ölçüldü** (§3.50): kalabalığın *şekli* artık varsayım değil — `λ = 1,7608` [1,669, 1,865], durma kuralı geçti ve `favori` modeli iki bağımsız yoldan çürüdü | B2 ✔ · B3–B4 sürüyor |
+| 3 | Pozitif beklenen getirili kupon kurulabiliyor mu? | **ölçüldü, kazanç görünmüyor** (§3.51): makul her kısıtta gerçekleşen kazanç **sıfır**, kısıtsızken **−1.439 TL**. `n = 3` — kapalı değil, biriktikçe yeniden ölçülür | B3 |
 | 4 | Garanti hâlâ optimal mi? | **evet, kanıtlı** | kapandı |
 
 Faz D'nin tek çıktısı README'ye yazılacak **"Bu proje ne buldu"** bölümüdür: her soru için
@@ -5614,6 +6011,7 @@ kalkmayacak.
 | ~~Diğer pazarların arayüze çıkması~~ | **Kalktı (§3.31).** Bu bir ürün kararıydı, bir ölçüm sonucu değil. Alt/üst 2,5 ve Asya handikabı artık `/api/pazar` ve `/pazarlar`da — **ölçülmüş kalibrasyonlarıyla birlikte**. Değişmeyen kural yerinde: ölçüsüz sayı çıkmaz |
 | ~~İkramiye / beklenen değer hesabı~~ | **Kalktı (§3.34).** `getiri.py` müşterek beklenen değeri kapalı formda hesaplıyor. Kalkan şey *hesabın yapılmaması*ydı; kalkmayan şey **sayının arayüze çıkmaması** — havuz payı, komisyon ve kalabalık modeli varsayım, ölçüm için ≈71 ikramiyeli hafta gerekiyor ve elde 1 var (§6.3b) |
 | Otomatik erişime kapalı kaynaktan veri çekme | **Hukuki, teknik değil — ve tek tek denetlendi.** Maçkolik: `robots.txt` `/api/` yolunu herkese, `anthropic-ai`'yi tamamen kapatıyor (eski açık uç ayrıca ölü). Understat: `User-agent: * / Disallow: /` — **tamamen kapalı** (§3.36). fbref: Cloudflare sorgusu arkasında, `robots.txt` bile JavaScriptsiz servis edilmiyor. Kullanılan üç kaynağın üçü de açık: football-data.co.uk (`Disallow:` boş), `openfootball/*` (kamu malı / CC0) |
+| Yeni bir **sütun ailesi** aramak | **Kapandı, ölçülerek (§3.59).** §3.24 *"sorun satır sayısı değil sütun"* demişti ve alınmamış tek gerçek aile hakemdi (ötekiler — faul, kart, ilk yarı — maçın kendi sonucundan türer, maç öncesi bilinmez). Hakem %100 kapsamalı dokuz ligde ölçüldü: üç aday da Holm'dan geçmedi, etki öteki ailelerin kalanından **üç mertebe** küçük. Ve "geçmedi" bu kez ayrıştırıldı — hakemler arası gözlenen yayılım saf şansın ürettiğinin **0,97–1,00 katı**, yani `Var(gerçek)` negatif: yakalanacak etki **yok**. Aday listesi `hakem.ADAYLAR`da donmuş, uzatmak isteyen önce bekçisini değiştirmek zorunda |
 | Maç öncesi bilinmeyen bir bilgiyi özellik yapmak | **Eğitim/servis ayrışması.** Kadro ve sakatlık verisi tam bu yüzden alınmadı (§3.36): gerçek kadro ancak ilk vuruşta bellidir, korpusta kullanıp `/tahmin`de kullanamamak ölçümü ürünün tarifi olmaktan çıkarır. Kural kaynak hakkında değil **zamanlama** hakkındadır ve yeni bir kaynak gelse de geçerlidir |
 
 ---
@@ -5680,7 +6078,7 @@ python -m spor_toto.kosum                  # kayıtlı koşumlar
 python -m spor_toto.kosum --son disari     # son koşumun ortamı
 
 # Denetim
-pytest -q                                  # 1.960 test (85'i bu katman, 583'ü tahmin)
+pytest -q                                  # 2.044 test (85'i bu katman, 583'ü tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out

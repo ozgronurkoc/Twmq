@@ -287,3 +287,108 @@ def _yazdir(sonuc: dict[str, Any]) -> None:  # pragma: no cover - elle kullanim
 
 if __name__ == "__main__":  # pragma: no cover - elle kullanim
     _yazdir(rapor())
+
+
+# ─── F1: kupon-zamanı fiyatı — kapanışı açılıştan öngörmek ───────────────
+
+def cizgi_tahmini(sezon_disarida: bool = True) -> dict[str, Any]:
+    """Kapanış çizgisi açılıştan **öngörülebilir mi** — ve ne kadarı?
+
+    ─── Niçin sorulduğu: ölçülmüş bir bedel ─────────────────────────────
+
+    `docs/ISTATISTIK_YOL_HARITASI.md` §5.2 eki şunu ölçtü: kupon ilk maçtan
+    önce kapanır, oranlar her maçın saatine kadar oynar — yani **haftanın
+    son maçlarında kapanış fiyatı kupon verilirken elimizde yoktur.**
+    Bedeli isabet değil **kolon: %22 artış** (2.686 → 3.290).
+
+    Bu soru piyasayı yenmeyi **gerektirmiyor**: hedef sonucu değil,
+    piyasanın kendi kapanışını öngörmek. Kestirici de sonuçtan değil
+    kapanış fiyatından öğreniyor.
+
+    ─── Ölçüm: merkezlenmiş log uzayında tek katsayı ────────────────────
+
+    Açılış ve kapanış olasılıkları `FARK_ARINDIRMASI` ile arındırılır
+    (fark ölçüsü — gerekçe `egitim.FARK_ARINDIRMASI`), log alınır ve maç
+    içinde merkezlenir. Kapanış açılışın bir **ölçeklenmesi** olarak
+    yazılır::
+
+        L_kapanis  ≈  b · L_acilis
+
+    `b = 1` açılışın kapanışın yansız kestiricisi olduğu, yani
+    ölçeklemenin işe yaramadığı anlamına gelir.
+
+    ─── Sonuç: b ≈ 1, ve açığın yalnızca %3,3'ü geri alınıyor ───────────
+
+    Sezon dışarıda bırakmalı ölçümde `b = 1,009` ve dört katın dördünde de
+    kazanç açığın **%2,3–6,2**'si; toplamda **%3,3**. Açılış–kapanış açığı
+    Brier'de +0,002458, ölçeklemenin kazandırdığı +0,000082.
+
+    Okuma sert: açılış zaten kapanışın yansız kestiricisidir ve aradaki
+    fark, açılıştan sonra **gelen bilgidir** — tanımı gereği açılışta
+    yoktur. §5.2'nin %22'lik kolon bedeli bu yolla geri alınamaz.
+    """
+    import numpy as np
+
+    from .egitim import FARK_ARINDIRMASI, korpus_yukle
+    from .odds import implied_probs
+
+    rows = [r for r in korpus_yukle() if r.get("acilis") and r.get("kapanis")]
+    if not rows:
+        return {"n": 0, "geri_alinan": None}
+    sez = np.array([r["sezon"] for r in rows])
+    ac, kap, sonuc = [], [], []
+    for r in rows:
+        a = implied_probs(r["acilis"], yontem=FARK_ARINDIRMASI)
+        k = implied_probs(r["kapanis"], yontem=FARK_ARINDIRMASI)
+        ac.append([a[s] for s in SYMBOLS])
+        kap.append([k[s] for s in SYMBOLS])
+        sonuc.append(SYMBOLS.index(r["kod"]))
+    A = np.array(ac)
+    K = np.array(kap)
+    Y = np.array(sonuc)
+    eps = 1e-9
+    la = np.log(np.clip(A, eps, 1.0))
+    la -= la.mean(axis=1, keepdims=True)
+    lk = np.log(np.clip(K, eps, 1.0))
+    lk -= lk.mean(axis=1, keepdims=True)
+
+    def _geri(lg: Any) -> Any:
+        e = np.exp(lg)
+        return e / e.sum(axis=1, keepdims=True)
+
+    def _brier(P: Any, idx: Any) -> float:
+        h = np.zeros_like(P)
+        h[np.arange(len(P)), Y[idx]] = 1.0
+        return float(((P - h) ** 2).sum(axis=1).mean())
+
+    katlar = []
+    top_a = top_o = top_k = 0.0
+    n_top = 0
+    bolumler = sorted(set(sez)) if sezon_disarida else [None]
+    for s in bolumler:
+        if s is None:
+            te = np.arange(len(A))
+            tr = te
+        else:
+            te = np.where(sez == s)[0]
+            tr = np.where(sez != s)[0]
+        x = la[tr].ravel()
+        y = lk[tr].ravel()
+        b = float((x * y).sum() / (x * x).sum())
+        b_ac = _brier(_geri(la[te]), te)
+        b_ol = _brier(_geri(b * la[te]), te)
+        b_ka = _brier(_geri(lk[te]), te)
+        katlar.append({"sezon": s, "n": len(te), "b": b,
+                       "acilis": b_ac, "olcekli": b_ol, "kapanis": b_ka})
+        top_a += b_ac * len(te)
+        top_o += b_ol * len(te)
+        top_k += b_ka * len(te)
+        n_top += len(te)
+    ba, bo, bk = top_a / n_top, top_o / n_top, top_k / n_top
+    acik = ba - bk
+    return {
+        "n": int(n_top), "katlar": katlar,
+        "acilis": ba, "olcekli": bo, "kapanis": bk,
+        "acik": acik, "kazanc": ba - bo,
+        "geri_alinan": (ba - bo) / acik if acik else None,
+    }

@@ -298,6 +298,11 @@ def notlar(ileri: bool) -> list[str]:
     """
     out = [
         "Referans `piyasa`. Bir aday ancak esleştirilmis bootstrap araliginin "
+        "COKLU KARSILASTIRMA: `gecti` TEKIL %95 araliga bakar ve on'dan "
+        "fazla aile denendiginde aile bazli hata orani %95'ten uzaklasir. "
+        "`gecti_holm` Holm-Bonferroni duzeltmesiyle ayni karari verir ve "
+        "iddia edilecek olan odur; `denenen_aday_sayisi` govdede tasinir. "
+        "Bugun ikisi de ayni cevabi veriyor cunku hicbir aile gecmiyor.",
         "TAMAMI sifirin altindaysa `gecti` sayilir; ortalamasi daha iyi cikan "
         "ama araligi sifiri iceren aday gecmedi sayilir.",
         "Tablodaki sayilar bu kesitin sayilaridir. Modul basina raporlardaki "
@@ -351,6 +356,14 @@ def rapor(kupon: bool = False,
         + ", ".join(f"{a} -> {b}" for a, b in cokenler.items())
     ] if cokenler else [])
     sonuc["kip"] = "ileri_yuruyus" if ileri else "disarida_birakmali"
+    # Coklu karsilastirma: kac aile denendi ve Holm bunlarin hangisini
+    # gecirdi. `gecti` (tekil aralik) yerinde duruyor; ikisi YAN YANA
+    # okunur ve iddia hangisine dayaniyorsa o soylenir.
+    sonuc["denenen_aday_sayisi"] = max(
+        (s.get("denenen_aday_sayisi") or 0) for s in sonuc["tahminciler"]
+    ) if sonuc["tahminciler"] else 0
+    sonuc["gecen_holm"] = [s["ad"] for s in sonuc["tahminciler"]
+                           if s.get("gecti_holm")]
     sonuc["soru"] = (
         "ayni kesitte, ayni gruplamayla, ayni referansa karsi olculdugunde "
         "hangi model ailesi piyasayi geciyor — 'gecti' sutununda EVET yazan "

@@ -242,3 +242,92 @@ def test_fix16_kurulamayan_plan_uretilmez():
         except Fix16Hatasi as e:  # pragma: no cover - kirilirsa test patlar
             pytest.fail(f"butce {butce}: plan cozulemedi — {e}")
         assert len(cols) == s.bedel
+
+
+# ─── getiri_secim: kalabalığa göre E[TL] seçimi ───────────────────────────
+
+def _oyn(n: int = 15):
+    """Kalabalık favoriden SAPAN paylar — monoton olmayan kurgu."""
+    out = []
+    for i in range(n):
+        if i % 3 == 0:
+            out.append({"1": 0.20, "0": 0.30, "2": 0.50})
+        else:
+            out.append({"1": 0.60, "0": 0.25, "2": 0.15})
+    return out
+
+
+def _pr(n: int = 15):
+    out = []
+    for i in range(n):
+        p1 = 0.30 + 0.035 * i
+        p0 = (1 - p1) * 0.42
+        out.append({"1": p1, "0": p0, "2": 1 - p1 - p0})
+    return out
+
+
+def test_getiri_secim_sekli_ve_bedeli_KORUR():
+    """Şekil sabit: aynı kolon, aynı bütçe — ayar bedava olmalı."""
+    from spor_toto.secim import getiri_secim, sistem_secimi
+
+    a = sistem_secimi(_pr(), 2000.0, garanti=13)
+    b = getiri_secim(_pr(), _oyn(), 2000.0, garanti=13)
+    assert a is not None and b is not None
+    assert (b.banko, b.cift, b.uclu) == (a.banko, a.cift, a.uclu)
+    assert b.bedel == a.bedel
+
+
+def test_kayip_tavani_hedefi_KORUYOR():
+    """Kısıt bağlayıcı: `P` tabanın (1−tavan) katının altına inemez."""
+    from spor_toto.secim import getiri_secim, hedef_olasiligi, sistem_secimi
+
+    taban = sistem_secimi(_pr(), 2000.0, garanti=13)
+    assert taban is not None
+    p0 = hedef_olasiligi(_pr(), taban.secimler, 1)
+    for tavan in (0.0, 0.05, 0.25):
+        b = getiri_secim(_pr(), _oyn(), 2000.0, garanti=13,
+                         kayip_tavani=tavan)
+        assert b is not None
+        assert b.p_hedef >= p0 * (1 - tavan) - 1e-12, tavan
+
+
+def test_kayip_tavani_BUYUDUKCE_daha_cok_mac_degisir():
+    """Tavan monoton: gevşedikçe arama daha çok maça dokunabilir."""
+    from spor_toto.secim import getiri_secim, sistem_secimi
+
+    taban = sistem_secimi(_pr(), 2000.0, garanti=13)
+    assert taban is not None
+    onceki = -1
+    for tavan in (0.0, 0.25, 0.95):
+        b = getiri_secim(_pr(), _oyn(), 2000.0, garanti=13,
+                         kayip_tavani=tavan)
+        assert b is not None
+        dg = sum(1 for x, y in zip(taban.secimler, b.secimler)
+                 if set(x) != set(y))
+        assert dg >= onceki
+        onceki = dg
+
+
+def test_KISITSIZ_arama_hedefi_yok_edebilir():
+    """Kısıtın niçin var olduğu — ölçülmüş tuzağın bekçisi.
+
+    Kısıtsız `E[TL]` enbüyüklemesi, `pay_beklentisi`nin küçük `q`'da
+    patlaması yüzünden neredeyse hiç gerçekleşmeyen bir dalı seçebilir.
+    2026/27 2. haftada bu tam olarak yaşandı: `E[TL]` 3,01 kat büyürken
+    `P` 0,2194'ten 0,0073'e düştü ve gerçekleşen 1.439 TL sıfıra indi.
+    """
+    from spor_toto.secim import GETIRI_KAYIP_TAVANI, getiri_secim
+
+    assert 0.0 < GETIRI_KAYIP_TAVANI < 0.2, "varsayilan temkinli olmali"
+    sikı = getiri_secim(_pr(), _oyn(), 2000.0, garanti=13, kayip_tavani=0.0)
+    gevsek = getiri_secim(_pr(), _oyn(), 2000.0, garanti=13, kayip_tavani=0.95)
+    assert sikı is not None and gevsek is not None
+    assert gevsek.p_hedef <= sikı.p_hedef
+
+
+def test_gecersiz_kayip_tavani_sesli_duser():
+    from spor_toto.secim import getiri_secim
+
+    for kotu in (-0.1, 1.0, 1.5):
+        with pytest.raises(ValueError, match="kayip_tavani"):
+            getiri_secim(_pr(), _oyn(), 2000.0, kayip_tavani=kotu)

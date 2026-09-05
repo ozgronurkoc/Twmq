@@ -46,21 +46,24 @@ sys.path.insert(0, str(KOK))
 
 import numpy as np
 
+from spor_toto import karne as _karne
 from spor_toto import odds as O
 from spor_toto.core import SEMBOLLER
-from spor_toto.getiri import VARSAYILAN_KOLON_BEDELI
+from spor_toto.getiri import KOLON_BEDELI as _OLCULEN_BEDEL
 from spor_toto.ortak import kacak_dagilimi as _kacak_dagilimi
 
-#: Spor Toto kolon bedeli — **doğrulanmış bir fiyat değildir** ve para
-#: sonuçları buna doğrusal bağlıdır (2,50 TL olsaydı bütün geri dönüşler
-#: %40 düşerdi).
+#: Spor Toto kolon bedeli — **artık ölçülmüş olan** (`getiri.KOLON_BEDELI`).
 #:
-#: Değer burada `1.50` diye ÜÇÜNCÜ kez yazılıydı ve hangi sayı olduğu
-#: (ölçülmüş mü varsayım mı) hiçbir yerde yazmıyordu — oysa `getiri` aynı
-#: kavram için ölçülmüş bir ₺10 de taşıyor. Tek kaynak
-#: `getiri.VARSAYILAN_KOLON_BEDELI`; ölçülmüş olanı `getiri.KOLON_BEDELI`
-#: ve ikisi bilerek AYRI (gerekçe orada).
-KOLON_BEDELI = VARSAYILAN_KOLON_BEDELI
+#: Bu satır uzun süre `getiri.VARSAYILAN_KOLON_BEDELI`yi (₺1,50, açıkça
+#: varsayım) okuyordu ve `docs/KADEME_OLASILIKLARI.md` §5'in **bütün para
+#: tablosu** o ölçekte hesaplanmıştı. ₺10 üç bağımsız kökenden doğrulanınca
+#: (gerekçe `getiri.KOLON_BEDELI` künyesinde) varsayım terk edildi.
+#:
+#: **Etkisi büyük ve tek yönlü:** getiri oranı bedele ters orantılıdır,
+#: yani ₺1,50 → ₺10 geçişi yayımlanmış her geri dönüşü **6,67'ye böler**.
+#: §5'in *"%100 üstü geri dönüş"* okuması bu ölçekte hiçbir bütçede ayakta
+#: kalmıyor. Eski tablo silinmez; ölçek notuyla yerinde bırakılır.
+KOLON_BEDELI = _OLCULEN_BEDEL
 
 #: Ölçümde kullanılan sezonlar — oran arşivi olan bütün sezonlar.
 SEZONLAR = ("2025_26", "2024_25", "2023_24", "2022_23")
@@ -75,20 +78,13 @@ BUTCELER = (10, 20, 50, 100, 200, 500, 1000, 2000,
 # veri
 # --------------------------------------------------------------------------
 def ikramiye_tablolari() -> dict[tuple[str, int], dict[int, dict[str, Any]]]:
-    """Resmî arşivden (sezon, hafta) -> kademe tablosu."""
-    out: dict[tuple[str, int], dict[int, dict[str, Any]]] = {}
-    for f in sorted((KOK / "data" / "sportoto_arsiv").glob("*.json")):
-        d = json.loads(f.read_text())
-        if "meta" not in d:
-            continue
-        for w in d.get("weeks", []):
-            p = w.get("payout")
-            if not p:
-                continue
-            t = {x["correct"]: x for x in p.get("tiers", [])}
-            if 15 in t:
-                out[(d["meta"]["season_key"], w["week"])] = t
-    return out
+    """Resmî arşivden (sezon, hafta) -> kademe tablosu.
+
+    **Gövde artık burada değil.** Aynı okuma `spor_toto.karne` içinde de
+    duruyordu ve iki ölçüm hattı aynı arşivi iki ayrı kodla okuyordu; tek
+    kaynak `karne`dir ve burası ona yönlendirir.
+    """
+    return _karne.ikramiye_tablolari()
 
 
 def anormal_haftalar(ars: dict) -> set:
@@ -97,12 +93,15 @@ def anormal_haftalar(ars: dict) -> set:
     Bunlar arşivde **gerçek** haftalardır ama ikramiye tablosu normal bir
     Spor Toto haftasının şeklinde değildir (12. kademede 41.516 yerine 13
     kazanan gibi). Ortalama alan her hesabı bozarlar; §H'de sayılır.
+
+    `ars` argümanı geriye dönük uyum için duruyor ve **kullanılmıyor**:
+    eşik arşivin tamamından hesaplanır (`karne.anormal_hafta_anahtarlari`),
+    çağıranın verdiği alt kesitten değil. Alt kesitten hesaplamak eşiği
+    kesite göre oynatırdı — aynı hafta bir ölçümde anormal, ötekinde normal
+    çıkardı.
     """
-    w12 = [t[12]["winners"] for t in ars.values() if 12 in t]
-    if not w12:
-        return set()
-    med = float(np.median(w12))
-    return {k for k, t in ars.items() if 12 in t and t[12]["winners"] < med / 10}
+    del ars
+    return set(_karne.anormal_hafta_anahtarlari())
 
 
 def tam_haftalar(ars: dict) -> list[tuple[str, int, list]]:

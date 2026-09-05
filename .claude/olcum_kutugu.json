@@ -2,9 +2,9 @@
  "sayilar": [
   {
    "ne": "suit test sayisi (eksiksiz kurulum)",
-   "deger": "1.960",
+   "deger": "2.044",
    "ureten": "cd backend && pytest -p no:randomly -n0 --collect-only -q  # dosya basi toplami",
-   "olculdu": "2026-09-04",
+   "olculdu": "2026-09-05",
    "anildigi_yerler": [
     "README.md §7,§9",
     "backend/README.md",
@@ -13,18 +13,20 @@
     "docs/VERI_TOPLAMA_VE_ISLEME.md",
     "replit.md"
    ],
-   "bekci": "backend/tests/test_belgeler.py::test_test_sayisi_belgelerde_tek_ve_dogru"
+   "bekci": "backend/tests/test_belgeler.py::test_test_sayisi_belgelerde_tek_ve_dogru",
+   "not": "lightgbm siz kurulumda 22 test eksik toplanir; yerelde 1.958 olcumu 1.980-22 ile birebir tutuyor. E1'in alti, E2'nin iki, E3'un uc, E4'un bes testi eklendi (2.027 -> 2.044). Yerel kurulumda lightgbm yok, o yuzden toplama 2.022 diyor; fark test_agac.py'nin 22 testi. Sonuncusu test_betik_sayisi_belgeyle_ayni: backend/README 24 betik diyordu, gercek 27'ydi ve bunu tutan bekci YOKTU."
   },
   {
    "ne": "test dosyasi sayisi",
-   "deger": "65",
+   "deger": "70",
    "ureten": "ls backend/tests/test_*.py | wc -l",
-   "olculdu": "2026-09-03",
+   "olculdu": "2026-09-05",
    "anildigi_yerler": [
     "README.md §7",
     "backend/README.md"
    ],
-   "bekci": null
+   "bekci": null,
+   "not": "E4 tests/test_hakem.py'yi ekledi (69 -> 70)."
   },
   {
    "ne": "hizli test sayisi",
@@ -283,6 +285,306 @@
     "backend/data/super_toto/2026_27/hafta_04_kupon.json"
    ],
    "bekci": null
+  },
+  {
+   "ne": "kalabalik modeli lambda (favoriye yigilma keskinligi)",
+   "deger": "1,7608",
+   "ureten": "cd backend && python -m spor_toto.kalabalik",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md Faz K",
+    "backend/spor_toto/kalabalik.py OLCULEN"
+   ],
+   "bekci": "backend/tests/test_kalabalik.py::test_olculen_iki_ucun_ARASINDA",
+   "not": "Hafta duzeyinde bootstrap %95 araligi [1,669, 1,865] — 1'i ICERMIYOR. 112 hafta x 3 kademe; olcek uyuma girmez (kademeler arasi oran). K4 durma kurali gecti: 4/4 sezon, iki bootstrap araligi da sifiri kesmiyor. delta/h denendi ve dustu (isaret degistiriyor, uc parametreli model ayirt edilemiyor)."
+  },
+  {
+   "ne": "oynanma siralamasi piyasadan FARKLI olan mac orani (2026/27, 4 hafta)",
+   "deger": "21",
+   "ureten": "elle: data/super_toto/2026_27/hafta_??.json play_pct vs implied_probs",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md Faz S",
+    "backend/spor_toto/secim.py VARSAYILAN_KAYIP_ORANI"
+   ],
+   "bekci": "-",
+   "not": "60 macin 21'i. Monoton bir kalabalik modeli (o ~ p^lambda) bunu URETEMEZ; kenar varsa bu artigin icindedir. n=4 hafta, karar icin yetmez."
+  },
+  {
+   "ne": "kademe havuz orani 13/12 (resmi tablolardan)",
+   "deger": "0,800",
+   "ureten": "cd backend && python -c 'from spor_toto.getiri import kademe_havuzlari'",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md Faz S",
+    "backend/spor_toto/getiri.py kademe_havuzlari"
+   ],
+   "bekci": "backend/tests/test_kosullu_getiri.py::test_kademe_havuzu_ELLE_yazilinca_cevap_DEGISIYOR",
+   "not": "havuz.BOLUSUM'un 20/25'i; 2026/27'nin uc haftasinda da birebir. Elle yazilmis 10,0 ayni kuponlarda 'sapmak kazandirmaz' cevabini '19/20 haftada 12 kat kazandirir'a CEVIRIYORDU."
+  },
+  {
+   "ne": "artik ekseninin tavani (gercek oynanma payiyla, gercek havuzlarla)",
+   "deger": "1,003",
+   "ureten": "elle: 2026/27 hafta 1-3, sistem_secimi + beklenen_tl yerel arama",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md Faz S"
+   ],
+   "bekci": "-",
+   "not": "UCUNCU KEZ DUZELTILDI. (1) ilk olcum 2,63x — kademe havuzlari elle yazilmisti. (2) duzeltilmis 1,003x — dogru havuzlar ama KISITSIZ optimizasyon. (3) kisitli olcum: uc sonuclanmis haftada gerceklesen kazanc SIFIR; kisitsiz arama 1.439 TL kaybettiriyor cunku tek buyuk sayi (3,01x) tam da kaybeden haftadan geliyordu. n=3."
+  },
+  {
+   "ne": "haftalik geri donus P(zarar) — olculen kolon bedeliyle (₺10)",
+   "deger": "%99",
+   "ureten": "cd backend && python scripts/kademe_analizi.py --bolum E",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "docs/KADEME_OLASILIKLARI.md §5.2",
+    "docs/KAZANMA_PLANI.md"
+   ],
+   "bekci": "backend/tests/test_getiri.py::test_olculen_ve_varsayilan_kolon_bedeli_KARISTIRILMIYOR",
+   "not": "200.000 TL bandinda %99; 1.800.000 ve 5.400.000 TL bandlarinda %100. ₺1,50 olceginde ayni tablo '%310, GA [%203, %433]' diyordu — getiri bedele ters orantili ve gecis her sayiyi 6,67'ye boldu."
+  },
+  {
+   "ne": "arsivdeki anormal hafta sayisi (12. kademe kazanani medyanin 1/10'undan az)",
+   "deger": "32",
+   "ureten": "cd backend && python -c 'from spor_toto.havuz import anormal_haftalar; print(len(anormal_haftalar()))'",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "docs/KADEME_OLASILIKLARI.md §8",
+    "docs/KAZANMA_PLANI.md"
+   ],
+   "bekci": "backend/tests/test_karne.py::test_anormal_haftalar_arsivin_tamamindan_hesaplanir",
+   "not": "225 haftanin 32'si. Esik arsivin TAMAMINDAN hesaplanir; alt kesitten hesaplansaydi ayni hafta bir olcumde anormal, otekinde normal cikardi."
+  },
+  {
+   "ne": "kapanisi acilistan ongorme — acigin geri alinan orani (F1)",
+   "deger": "%3,3",
+   "ureten": "cd backend && python -c 'from spor_toto.cizgi import cizgi_tahmini; print(cizgi_tahmini())'",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md"
+   ],
+   "bekci": "backend/tests/test_cizgi.py::test_kapanis_acilistan_ongorulEMIYOR",
+   "not": "31.099 mac, sezon disarida birakmali. b ~ 1,009 yani acilis kapanisin YANSIZ kestiricisi; acik +0,002458, kazanc +0,000082. §5.2'nin %22'lik kolon bedeli bu yolla geri alinamaz."
+  },
+  {
+   "ne": "Betfair Exchange kapanis — Avg kapanisa gore Brier farki (F2)",
+   "deger": "−0,00100",
+   "ureten": "cd backend && python -c 'from spor_toto.fiyatlar import kitap_kiyasi; print(kitap_kiyasi())'",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md"
+   ],
+   "bekci": "backend/tests/test_fiyatlar.py::test_betfair_exchange_kupon_kesitinde_GECIYOR",
+   "not": "985 ortak mac, %95 araligi [-0,00181, -0,00021], p=0,0054, bes aday uzerinde Holm duzeltmesiyle de GECTI. Marj %0,62 (Avg %6,15). BFE 2022/23 ve 2023/24'te HIC YOK; 2024/25 %100, 2025/26 %87 kapsama."
+  },
+  {
+   "ne": "kupon kuralinda ters secim — banko ile banko-degil arasindaki fark (F3)",
+   "deger": "−0,0045",
+   "ureten": "cd backend && python -c 'from spor_toto.secim_kalibrasyonu import kupon_kurali; print(kupon_kurali())'",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md"
+   ],
+   "bekci": "backend/tests/test_secim_kalibrasyonu.py::test_kupon_kurali_kalibrasyonu_BOZMUYOR",
+   "not": "114 hafta, 13G, 2.000 TL. Hafta duzeyinde bootstrap %95 [-0,0506, +0,0414] — sifiri kesiyor, yani kupon kurali kalibrasyonu BOZMUYOR. §3.49'un ters secimi gercek ama 'model' kuralina (p_model - p_piyasa > esik) ait."
+  },
+  {
+   "ne": "kalabalik ayarinin gerceklesen kazanci (makul kisitta)",
+   "deger": "0",
+   "ureten": "cd backend && python scripts/hafta_kos.py --oncesi 2026_27 2",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md"
+   ],
+   "bekci": "backend/tests/test_secim.py::test_KISITSIZ_arama_hedefi_yok_edebilir",
+   "not": "TL. Uc sonuclanmis hafta, 13G, 2.000 TL. Kayip tavani 0,00-0,50 araliginda gerceklesen odul tabanla AYNI (2.668 TL); 0,95'te 1.230 TL, yani 1.439 TL kayip. n=3."
+  },
+  {
+   "ne": "basabas kademe — 13G / 2.000 TL kuponu kac tutturunca maliyeti karsilar",
+   "deger": "13",
+   "ureten": "cd backend && python -c 'karne + ikramiye_tablolari medyanlari'",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md"
+   ],
+   "bekci": "-",
+   "not": "GARANTI TABANI icin (bir kolon). 114 haftanin odul medyanlari: 12 bilen 288 TL, 13 bilen 2.027 TL; 13G/2.000 TL kuponu 162 kolon = 1.620 TL. Yani 12 tutturmak MALIYETI KARSILAMIYOR — gerceklesen karne de dogruluyor (2. hafta -181 TL, 3. hafta -390 TL, ikisi de 12 tutturdu). Gercek sistem 12'yi birden cok kolonla tutar ve tabanin gevsekligi OLCULMEDI — E1 onu olcer. || OLCEK NOTU (2026-09-04): bu sayi GARANTI TABANI olceginde, yani bir kolon sayarak. E1 tabanin 2,39 kat gevsek oldugunu olctu ve 14G'de gercek kolonlarla olculdugunde 12 tutturmak kacak=0 haftalarinda maliyeti KARSILIYOR (medyan 1,34x). Sayi yeniden yazilmadi: 13G olcumu hala yok ve §3.51 garantiler arasi tasimayi gecersiz kiliyor. Yeni kayit: 'basabas kademe — 12 tutturmak GERCEK kolonlarla maliyeti karsiliyor mu'."
+  },
+  {
+   "ne": "garanti tabaninin gevsekligi — gercek kolon odulu / taban odulu",
+   "deger": "2,39",
+   "ureten": "cd backend && python -m spor_toto.karne --taban --garanti 14 --butce 2000",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md",
+    "docs/ISTATISTIK_YOL_HARITASI.md"
+   ],
+   "bekci": "backend/tests/test_karne.py::test_taban_gevsekligi_ULASILABILIR_ve_yon_YUKARI",
+   "not": "KAT. 114 hafta, 14-garanti, 2.000 TL. Taban 19.354 TL (geri donus %10,1), gercek kolon dagilimi 46.301 TL (%24,2). Yalniz 14G'de olculebilir: kolonlari uretebilen tek yer engines.run_auto ve core.py yaricap 1'e kilitli. Motorun HAM kolonlariyla 3,08 kat; yayimlanan 2,39 satici sekline (plan.bedel) indirgenmis olan."
+  },
+  {
+   "ne": "garanti tabaninin verdigi geri donus — 14G / 2.000 TL",
+   "deger": "%10,1",
+   "ureten": "cd backend && python -m spor_toto.karne --taban --garanti 14 --butce 2000",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md"
+   ],
+   "bekci": "backend/tests/test_karne.py::test_taban_gevsekligi_ULASILABILIR_ve_yon_YUKARI",
+   "not": "114 hafta, 191.520 TL maliyet, 19.354 TL taban odul. Alt sinir."
+  },
+  {
+   "ne": "gercek kolon dagiliminin verdigi geri donus — 14G / 2.000 TL",
+   "deger": "%24,2",
+   "ureten": "cd backend && python -m spor_toto.karne --taban --garanti 14 --butce 2000",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md"
+   ],
+   "bekci": "backend/tests/test_karne.py::test_taban_gevsekligi_ULASILABILIR_ve_yon_YUKARI",
+   "not": "114 hafta, 191.520 TL maliyet, 46.301 TL odul. Hala 1'in ALTINDA: taban gevsekti ama kupon yine de para kaybediyor. Kalabalik ekseni bu acigi kapatmak zorunda, taban duzeltmesi kapatmiyor."
+  },
+  {
+   "ne": "motorun kaplamasi saticininkinden ne kadar gevsek",
+   "deger": "%28,6",
+   "ureten": "cd backend && python -m spor_toto.karne --taban --garanti 14 --butce 2000",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md"
+   ],
+   "bekci": "backend/tests/test_karne.py::test_motorun_kaplamasi_TABLODAN_gevsek_ve_bu_yazili",
+   "not": "114 hafta boyunca motor 24.624 kolon uretti, ST EXTRA tablosu ayni sekilleri 19.152 kolonla satiyor. Ikisi de 14-garanti. Yani saticinin kaplama kodu OLCULEBILIR bicimde daha siki ve motorun kolonlari oynanan urunu tarif etmiyor."
+  },
+  {
+   "ne": "12+ tutturan ortalama kolon sayisi — kacaga gore, 14G / 2.000 TL",
+   "deger": "26,8",
+   "ureten": "cd backend && python -m spor_toto.karne --taban --garanti 14 --butce 2000",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md"
+   ],
+   "bekci": "backend/tests/test_karne.py::test_taban_gevsekligi_ULASILABILIR_ve_yon_YUKARI",
+   "not": "k=0'da 26,8 kolon; k=1'de 10,2; k=2'de 1,3; k>=3'te 0. Taban her durumda 1 kolon sayiyor, yani tabanin yanliligi kacak KUCULDUKCE buyuyor — en cok IYI giden haftalari eksik sayiyor."
+  },
+  {
+   "ne": "hedef kademe 13 - 12: eslestirilmis ROI farki (E2)",
+   "deger": "+0,00928",
+   "ureten": "cd backend && python -m spor_toto.karne --hedef --garanti 14 --butce 2000",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md",
+    "docs/ISTATISTIK_YOL_HARITASI.md"
+   ],
+   "bekci": "backend/tests/test_karne.py::test_hedef_kademe_kiyasi_ESLESTIRILMIS_ve_ayni_haftalar",
+   "not": "114 hafta, 14G, 2.000 TL, GERCEK kolon odulu. %95 [+0,00000, +0,02724] — alt ucu tam sifirda, yani SIFIRI KESIYOR. Kuyruksuz (en iyi 5 hafta cikinca) +0,00970 [+0,00000, +0,02849], ayni sonuc. E2'nin onceden yazilmis durma kurali: hedef 12 KALIR."
+  },
+  {
+   "ne": "hedef kademe 14 - 12: eslestirilmis ROI farki (E2)",
+   "deger": "−0,00702",
+   "ureten": "cd backend && python -m spor_toto.karne --hedef --garanti 14 --butce 2000",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md"
+   ],
+   "bekci": "backend/tests/test_karne.py::test_hedef_kademe_kiyasi_ESLESTIRILMIS_ve_ayni_haftalar",
+   "not": "%95 [−0,02358, +0,00405] — sifiri kesiyor. Yon EKSI: hedefi 14'e cekmek zarar ediyor."
+  },
+  {
+   "ne": "hedefi sikilastirinca P(hedef) ne oluyor — 14G / 2.000 TL",
+   "deger": "0,3016",
+   "ureten": "cd backend && python -m spor_toto.karne --hedef --garanti 14 --butce 2000",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md"
+   ],
+   "bekci": "backend/tests/test_karne.py::test_hedef_SIKILASINCA_tutturma_olasiligi_DUSER",
+   "not": "hedef 12'de ortalama P(hedef) 0,3016; hedef 13'te 0,1064; hedef 14'te 0,0182. Ucu de AYNI sekli aliyor (3 cifte + 5 uclu, 168 kolon) cunku sekli butce belirliyor; hedef yalnizca hangi sembolun isaretlendigini degistiriyor. E2'nin yapisal olarak zayif bir kol olmasinin sebebi bu."
+  },
+  {
+   "ne": "basabas kademe — 12 tutturmak GERCEK kolonlarla maliyeti karsiliyor mu",
+   "deger": "1,34",
+   "ureten": "cd backend && python -m spor_toto.karne --hedef --garanti 14 --butce 2000",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md",
+    "docs/ISTATISTIK_YOL_HARITASI.md"
+   ],
+   "bekci": "backend/tests/test_karne.py::test_hedef_kademe_kiyasi_ESLESTIRILMIS_ve_ayni_haftalar",
+   "not": "KAT, medyan. 14G / 2.000 TL / hedef 12, kacak = 0 olan 4 haftada gerceklesen medyan geri donus 1,34x — yani 12 tutturmak maliyeti KARSILIYOR. Kacak 1'de 0,28x (ortalama 0,86x), kacak 2'de 0,12x, kacak >=3'te 0. Bu, tabana dayali eski 'basabas kademe 13' okumasini duzeltir: o okuma bir kolon sayiyordu ve E1 tabanin 2,39 kat gevsek oldugunu olctu. 13G'ye TASINMAZ (§3.51)."
+  },
+  {
+   "ne": "omurga BFE − Avg: eslestirilmis ROI farki, kupon duzeyi (E3)",
+   "deger": "−0,01074",
+   "ureten": "cd backend && python -m spor_toto.karne --omurga BFE --garanti 14 --butce 2000",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md",
+    "docs/ISTATISTIK_YOL_HARITASI.md"
+   ],
+   "bekci": "backend/tests/test_karne.py::test_omurga_kiyasi_P_farkinin_ayrisimini_ZORUNLU_veriyor",
+   "not": "64 ORTAK hafta (BFE 2022/23-2023/24'te hic yok), 14G, 2.000 TL, GERCEK kolon odulu. %95 [−0,06232, +0,02558] — sifiri kesiyor ve isaret EKSI. Kuyruksuz −0,01165 [−0,06836, +0,02787]. E3'un onceden yazilmis durma kurali: omurga Avg KALIR."
+  },
+  {
+   "ne": "omurga BFE − Avg: P(hedef) farki (E3)",
+   "deger": "+0,00758",
+   "ureten": "cd backend && python -m spor_toto.karne --omurga BFE --garanti 14 --butce 2000",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md",
+    "docs/ISTATISTIK_YOL_HARITASI.md"
+   ],
+   "bekci": "backend/tests/test_karne.py::test_omurga_kiyasi_P_farkinin_ayrisimini_ZORUNLU_veriyor",
+   "not": "%95 [+0,00594, +0,00924] — SIFIRI KESMIYOR. Ama bu bir sonuc DEGIL: P(hedef) modelin kendi guvenidir ve daha keskin bir olasilik isabet hic degismese bile onu buyutur. Ayrisim: farkin %81'i secim DEGISMEDEN geliyor. Gerceklesen kacak farki −0,04688 [−0,14062, +0,04688] — sifiri kesiyor."
+  },
+  {
+   "ne": "BFE'nin P(hedef) kazancinin kacta kaci secim degismeden geliyor",
+   "deger": "%81",
+   "ureten": "cd backend && python -m spor_toto.karne --omurga BFE --garanti 14 --butce 2000",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md",
+    "docs/ISTATISTIK_YOL_HARITASI.md"
+   ],
+   "bekci": "backend/tests/test_karne.py::test_omurga_kiyasi_P_farkinin_ayrisimini_ZORUNLU_veriyor",
+   "not": "64 hafta. Serbest (her fiyat kendi kuponunu kurar) +0,00758; sekil sabit (Avg'nin kuponu BFE olasiligiyla puanlanmis) +0,00611. Yani anlamli gorunen P kazancinin dortte ucunden fazlasi kuponda hicbir sey degismeden, yalnizca BFE'nin olasiliginin keskin olmasindan geliyor (ilk iki sembolun ortalama kutlesi Avg 0,7880 -> BFE 0,7904). Favori isabeti pratikte ayni: 548/960 -> 550/960."
+  },
+  {
+   "ne": "hakem sutununun kapsamasi — korpusun kaci hakemli (E4)",
+   "deger": "%42,9",
+   "ureten": "cd backend && python scripts/build_hakem.py",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md",
+    "docs/ISTATISTIK_YOL_HARITASI.md"
+   ],
+   "bekci": "backend/tests/test_hakem.py::test_kesit_YALNIZCA_hakemi_olan_liglerde",
+   "not": "31.103 korpus satirinin 13.334'u. Eksiklik RASTGELE DEGIL, COGRAFI: football-data hakemi dokuz Britanya liginde %100 yaziyor (E0 E1 E2 E3 EC SC0 SC1 SC2 SC3), on uc kita liginde %0. Bu yuzden sutun korpusa katilmadi — katilsa kesit sessizce dengesizlesirdi ve sezon disarida birakmali CV onu yakalayamazdi."
+  },
+  {
+   "ne": "hakem ozelliginin piyasa uzerine Brier katkisi (E4)",
+   "deger": "+0,000002",
+   "ureten": "cd backend && python -m spor_toto.hakem",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md",
+    "docs/ISTATISTIK_YOL_HARITASI.md"
+   ],
+   "bekci": "backend/tests/test_hakem.py::test_yayilim_sinavi_ETKI_VAR_MI_sorusunu_ayirir",
+   "not": "hakem_ev, 13.332 mac, 4 sezon disarida birakmali, hafta duzeyi bootstrap %95 [−0,000003, +0,000008], p=0,8139. hakem_beraberlik +0,000001 (p=0,9302), hakem_ikisi +0,000003 (p=0,8774). Ucu de Holm'dan gecmedi ve isaret POZITIF (yani kotu). Buyukluk, oteki ailelerin kalan etkisinden (0,0005-0,0015) uc mertebe kucuk."
+  },
+  {
+   "ne": "hakemler arasi yayilim / saf sansin urettigi yayilim (E4)",
+   "deger": "0,97",
+   "ureten": "cd backend && python -m spor_toto.hakem",
+   "olculdu": "2026-09-04",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md",
+    "docs/ISTATISTIK_YOL_HARITASI.md"
+   ],
+   "bekci": "backend/tests/test_hakem.py::test_yayilim_sinavi_ETKI_VAR_MI_sorusunu_ayirir",
+   "not": "ORAN. >=30 macli 160 hakem: gozlenen ev-artigi sd 0,0560, saf orneklem gurultusunun urettigi sd 0,0576 -> oran 0,97. >=50 macli 123 hakemde 0,0512 / 0,0513 = 1,00. Ikisinde de Var(gercek) = Var(gozlenen) − Var(sans) NEGATIF, yani gozlenen yayilim sansin urettiginden bile kucuk. Bu, 'gecmedi'den daha guclu bir cumle: yakalanacak bir hakem etkisi YOK, duzeltmenin kusuru degil."
   }
  ],
  "komutlar": [
@@ -320,6 +622,31 @@
    "komut": "python scripts/bagimliliklar.py | pip-audit -r /dev/stdin",
    "kaynak": "backend/scripts/bagimliliklar.py:26",
    "ne_yapar": "beyan edilen bagimlilik denetimi. Ekstra listesi pyproject'ten TUREVIR (elle yazili degil); bos cikti cikis 1 verir."
+  },
+  {
+   "komut": "cd backend && python -m spor_toto.karne --taban --garanti 14 --butce 2000",
+   "kaynak": "backend/spor_toto/karne.py:taban_gevsekligi",
+   "ne_yapar": "E1: garanti tabaninin ne kadar gevsek oldugunu olcer — 114 hafta boyunca gercek kaplama kolonlarinin resmi odul tablosundaki karsiligini tabanla kiyaslar. Yalniz 14G."
+  },
+  {
+   "komut": "cd backend && python -m spor_toto.karne --hedef --garanti 14 --butce 2000",
+   "kaynak": "backend/spor_toto/karne.py:hedef_kademe_kiyasi",
+   "ne_yapar": "E2: hedef kademeyi (12/13/14) 114 hafta boyunca GERCEK kolon oduluyle kiyaslar, eslestirilmis bootstrap + kuyruk sinavi. Yalniz 14G."
+  },
+  {
+   "komut": "cd backend && python -m spor_toto.karne --omurga BFE --garanti 14 --butce 2000",
+   "kaynak": "backend/spor_toto/karne.py:omurga_kiyasi",
+   "ne_yapar": "E3: omurga fiyatini KUPON duzeyinde kiyaslar (kolon, P(hedef), gercek kolon odulu), eslestirilmis bootstrap + kuyruk sinavi + P(hedef) ayrisimi. Yalniz 14G."
+  },
+  {
+   "komut": "cd backend && python -m spor_toto.hakem",
+   "kaynak": "backend/spor_toto/hakem.py",
+   "ne_yapar": "E4: hakem sutununu piyasanin ustune ekleyip sezon disarida birakmali olcer (Holm'lu), sonra yayilim sinaviyla 'etki yok mu yakalanamiyor mu' sorusunu ayirir."
+  },
+  {
+   "komut": "cd backend && python scripts/build_hakem.py",
+   "kaynak": "backend/scripts/build_hakem.py",
+   "ne_yapar": "football-data'dan hakem sutununu ceker ve korpusun satirlarina baglar; data/hakem/hakem.csv uretir. --kontrol ile bayatlik denetlenir. Korpusa DOKUNMAZ."
   }
  ]
 }

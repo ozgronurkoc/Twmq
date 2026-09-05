@@ -182,6 +182,45 @@ paranın yarısından fazlasını taşır.
 
 ### 5.2 Haftalık geri dönüş — ortalamaya değil medyana bakın
 
+> **YENİDEN ÖLÇÜLDÜ (2026-09-04) — kolon bedeli ₺1,50 değil ₺10.**
+>
+> Aşağıdaki tablo `getiri.VARSAYILAN_KOLON_BEDELI` (₺1,50, açıkça varsayım)
+> ile hesaplanmıştı ve §5.3-4 bunu bir sınır olarak yazıyordu. Bedel üç
+> bağımsız kökenden **₺10** olarak doğrulandı (ST EXTRA kupon ekranı ·
+> bayi/resmî uygulama beyanı · sistem fiyat tablosunun 250 satırının 250'si
+> de 10'un katı) ve `kademe_analizi.py` artık ölçülen bedeli kullanıyor.
+>
+> Getiri oranı bedele **ters orantılı** olduğu için aşağıdaki her sayı
+> ₺10 ölçeğinde **6,67'ye bölünür**. Yeniden koşumun kendisi:
+>
+> | haftalık | **medyan** | ortalama | %25 | %75 | −1 hafta | −3 hafta | −5 hafta |
+> |---:|---:|---:|---:|---:|---:|---:|---:|
+> | 1.000 TL | **%0** | %42 | %0 | %5 | %30 | %19 | %13 |
+> | 2.000 TL | **%0** | %39 | %0 | %8 | %32 | %21 | %16 |
+> | 5.000 TL | **%0** | %54 | %0 | %11 | %30 | %20 | %17 |
+> | 20.000 TL | **%3** | %37 | %0 | %15 | %29 | %20 | %19 |
+> | 200.000 TL | **%5** | %44 | %1 | %21 | %25 | %20 | %20 |
+> | 1.800.000 TL | **%8** | %47 | %2 | %27 | %42 | %38 | %35 |
+> | 5.400.000 TL | **%6** | %49 | %2 | %42 | %42 | %32 | %29 |
+>
+> Ve bootstrap artık tek yönde konuşuyor:
+>
+> | haftalık | gözlenen | %95 aralık | **P(zarar)** |
+> |---:|---:|---|---:|
+> | 200.000 TL | %44 | [%17, %88] | **%99** |
+> | 1.800.000 TL | %47 | [%30, %65] | **%100** |
+> | 5.400.000 TL | %49 | [%28, %74] | **%100** |
+>
+> **§5.3'ün üç şartından (c) düştü:** en iyi 5 hafta çıkarılınca hiçbir
+> bütçede %100'ün üstü kalmıyor — zaten hiçbir bütçede %100'e yaklaşan
+> gözlenen getiri de yok. *"%100 üstü geri dönüş"* okuması **ölçek
+> hatasıydı** ve kapandı.
+>
+> **Değişmeyen tek şey medyandır ve o zaten %0'dı.** Aşağıdaki tablo eski
+> ölçekte doğrudur ve öyle bırakılmıştır — kayıt yeniden yazılmaz.
+
+
+
 | haftalık | **medyan** | ortalama | %25 | %75 | −1 hafta | −3 hafta | −5 hafta |
 |---:|---:|---:|---:|---:|---:|---:|---:|
 | 150 TL | **%0** | %277 | %0 | %36 | %193 | %109 | %61 |
@@ -217,7 +256,7 @@ saklamıyoruz ama **kâr vaadi olarak okunması yanlıştır**:
 3. **Sermaye ve dayanma süresi.** 810.000 TL/hafta bandında haftaların
    yalnızca ~%37'si kârda; en uzun kayıp serisi 17–18 hafta; gereken
    sermaye onlarca milyon TL.
-4. **Kolon bedeli doğrulanmadı.** 1,50 TL, `getiri.py` CLI varsayılanıdır.
+4. ~~**Kolon bedeli doğrulanmadı.**~~ **KAPANDI (2026-09-04):** bedel ₺10, üç bağımsız kökenden. Eski metin: 1,50 TL, `getiri.py` CLI varsayılanıdır.
    Bütün para sonuçları buna **doğrusal** bağlıdır: 2,50 TL olsaydı her
    geri dönüş %40 düşerdi ve tablo büyük ölçüde %100'ün altına inerdi.
 5. **§3'teki açıklanmamış sapmaya yaslanıyor.** Gözlenen kapsama modelin

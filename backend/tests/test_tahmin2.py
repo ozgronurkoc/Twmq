@@ -430,8 +430,20 @@ def test_diskteki_kayit_bayat_degil(t2, govde):
     if not yol.exists():
         pytest.skip("2. tahmin kaydi yok")
     diskte = json.loads(yol.read_text(encoding="utf-8"))
-    taze = json.loads(t2._metin(t2.uret("2026_27", 2,
-                                        tarih=diskte["meta"]["frozen_at"])))
+    # Kayıt KENDİ varsayımlarıyla yeniden üretilir — `frozen_at` gibi
+    # `kayip_orani` da gövdede yazılı.
+    #
+    # **Bu satır bir kez düştü ve düşmesi doğruydu.** `secim`in kayıp
+    # oranı ölçülüp 0,05'ten 0'a çekilince (docs Faz S) taze gövde başka
+    # bir kupon üretti ve kayıt "bayat" göründü. Oysa bayat değildi: kayıt
+    # 0,05 ile donduruldu ve öyle oynandı. Bugünün varsayılanıyla yeniden
+    # üretmek kaydı geriye dönük yeniden yazmak olurdu — doktrinin
+    # yasakladığı şey. Doğru sınav, kaydın kendi beyanıyla yeniden
+    # üretilebilmesidir ve bu daha güçlü bir sınavdır: beyan eksikse ya da
+    # yanlışsa test yine düşer.
+    taze = json.loads(t2._metin(t2.uret(
+        "2026_27", 2, tarih=diskte["meta"]["frozen_at"],
+        kayip_orani=diskte["meta"]["kayip_orani"])))
     # `results_known` dışarıda: kayıt sonuç girilmeden donduruldu, bugün
     # aynı haftanın sonucu BİLİNİYOR ve taze gövde bunu doğru şekilde
     # `true` yazıyor. Bu bir bayatlık değil, kaydın tanımı — flamanın

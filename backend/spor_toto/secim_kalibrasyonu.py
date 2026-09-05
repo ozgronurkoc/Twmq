@@ -557,3 +557,98 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 if __name__ == "__main__":  # pragma: no cover - elle kullanım
     raise SystemExit(main())
+
+
+# ─── F3: KUPON kuralının seçim koşullu kalibrasyonu ──────────────────────
+
+#: Kupon ölçümünün bütçesi (TL) ve garantisi — `sistem` varsayılanları.
+KUPON_BUTCE = 2000.0
+
+
+def kupon_kurali(butce_tl: float = KUPON_BUTCE,
+                 garanti: int | None = None,
+                 tekrar: int = 20_000,
+                 tohum: int = 31) -> dict[str, Any]:
+    """*"Kuponun banko seçtiği yerde piyasa hâlâ kalibre mi?"*
+
+    ─── Soru niçin dejenere DEĞİL ────────────────────────────────────────
+
+    Modülün kendi kuralı şunu diyor: *"banda ayırdığın değişkenle
+    eşikliyorsan, eşiğin tamamen üstündeki bantta seçilen küme kümenin
+    kendisidir"* — ve `backtest.secim_uret`in eşik kuralı tam bu yüzden
+    ölçülemiyordu.
+
+    `secim.sistem_secimi` farklıdır. Kararı tek bir maçın `p`'sine değil
+    **haftanın tamamına ve bütçeye** bağlıdır: Pareto DP bütün maçları
+    birlikte çözer, dolayısıyla aynı `p`'ye sahip iki maç haftanın şekline
+    göre biri banko biri çifte işaretlenebilir. Fazladan bilgi **haftanın
+    bileşimidir** ve soru bu yüzden anlamlıdır.
+
+    ─── Ölçülen: seçim kalibrasyonu BOZMUYOR ────────────────────────────
+
+    114 kupon haftasında, 13-garanti ve 2.000 TL bütçeyle::
+
+        BANKO         söylenen 0,6451 · gerçek 0,6988 · aşırı güven −0,0537
+        banko DEĞİL   söylenen 0,4430 · gerçek 0,4922 · aşırı güven −0,0492
+        FARK                                                        −0,0045
+        hafta düzeyinde bootstrap %95: [−0,0506, +0,0414]  → sıfırı kesiyor
+
+    Yani **düzeltilecek bir şey yok**: kural, modelin yanıldığı yeri
+    seçmiyor. §3.49'un ölçtüğü ters seçim gerçektir ama `model` kuralına
+    (`p_model − p_piyasa > eşik`) aittir ve kupon o kuralı kullanmıyor.
+
+    ─── Yan bulgu: iki kolda da AŞIRI güven değil EKSİK güven ───────────
+
+    İki taraf da negatif, yani piyasa favoriyi **olduğundan düşük**
+    fiyatlıyor. Bu yeni değil: §5.1'in A5 satırı aynı olguyu ölçmüştü —
+    *"piyasanın %70–80 dediği maçlar gerçekte %78,9 (n=1.702), sapma tek
+    yönlü ve düzenli."* Burada görülen, seçimin ürettiği bir şey değil,
+    favori–sürpriz yanlılığının kupon kesitindeki izdüşümü.
+    """
+    import random as _random
+
+    from .karne import kupon_kesiti
+    from .secim import sistem_secimi
+    from .sistem import VARSAYILAN_GARANTI
+
+    g = VARSAYILAN_GARANTI if garanti is None else garanti
+    haftalar: list[tuple[list[tuple[float, float]], list[tuple[float, float]]]] = []
+    for h in kupon_kesiti():
+        plan = sistem_secimi(h["probs"], butce_tl, garanti=g)
+        if plan is None:
+            continue
+        banko: list[tuple[float, float]] = []
+        degil: list[tuple[float, float]] = []
+        for p, sec, kod in zip(h["probs"], plan.secimler, h["gercek"]):
+            fav = max(p, key=lambda x: p[x])
+            hedef = (float(p[fav]), 1.0 if kod == fav else 0.0)
+            (banko if len(sec) == 1 else degil).append(hedef)
+        haftalar.append((banko, degil))
+    if not haftalar:
+        return {"n_hafta": 0, "fark": None}
+
+    def _sapma(gruplar: list[list[tuple[float, float]]]) -> tuple[float, int]:
+        soylenen = sum(x[0] for grup in gruplar for x in grup)
+        gercek = sum(x[1] for grup in gruplar for x in grup)
+        n = sum(len(grup) for grup in gruplar)
+        return ((soylenen - gercek) / n if n else 0.0), n
+
+    s_b, n_b = _sapma([b for b, _ in haftalar])
+    s_d, n_d = _sapma([d for _, d in haftalar])
+    rnd = _random.Random(tohum)
+    dag = []
+    for _ in range(tekrar):
+        idx = [rnd.randrange(len(haftalar)) for _ in range(len(haftalar))]
+        a, _x = _sapma([haftalar[i][0] for i in idx])
+        c, _y = _sapma([haftalar[i][1] for i in idx])
+        dag.append(a - c)
+    dag.sort()
+    alt = dag[int(0.025 * tekrar)]
+    ust = dag[int(0.975 * tekrar)]
+    return {
+        "n_hafta": len(haftalar), "butce_tl": butce_tl, "garanti": g,
+        "banko": {"n": n_b, "asiri_guven": s_b},
+        "banko_degil": {"n": n_d, "asiri_guven": s_d},
+        "fark": s_b - s_d, "alt": alt, "ust": ust,
+        "secim_bozuyor": not (alt <= 0.0 <= ust),
+    }

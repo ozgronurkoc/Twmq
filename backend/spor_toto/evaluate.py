@@ -466,6 +466,7 @@ def capraz_olc(fabrikalar: Sequence[Fabrika],
             # Karar YUVARLANMAMIS ust sinirdan (bkz. `bootstrap_farki`).
             s["gecti"] = bool(fark.get("ham_ust") is not None
                               and fark["ham_ust"] < 0)
+    _holm_uygula(sonuclar)
     for s in sonuclar:
         s.pop("_kayitlar", None)
 
@@ -683,7 +684,79 @@ def bootstrap_farki(aday: Sequence[dict[str, Any]],
         "ham_alt": alt,
         "ham_ust": ust,
         "tekrar": tekrar,
+        # Tek yonlu bootstrap p-degeri: farkin sifiri asma orani. Brier'de
+        # kucuk iyi oldugu icin adayin referansi GECMEMESI `fark >= 0`
+        # demektir. Coklu karsilastirma duzeltmesi (`holm`) bunu okur;
+        # `gecti` bayragi degismedi ve hala TEKIL araliga bakiyor.
+        "p": (sum(1 for f in farklar if f >= 0.0) + 1) / (tekrar + 1),
     }
+
+
+# ─── çoklu karşılaştırma ──────────────────────────────────────────────────────
+
+#: Aile bazlı hata oranının tutulduğu düzey.
+HOLM_ALFA = 0.05
+
+
+def holm(p_degerleri: dict[str, float],
+         alfa: float = HOLM_ALFA) -> dict[str, bool]:
+    """Holm–Bonferroni: **aile bazlı** hata oranını `alfa`da tutar.
+
+    ─── Niçin gerekli: ölçülmüş bir açık ───────────────────────────────────
+
+    `arena.roster` on'dan fazla tahminci ailesi deniyor ve her biri **tekil**
+    %95 aralığa karşı ölçülüyor. On bağımsız denemede en az bir yanlış
+    "geçti" görme olasılığı %40'a yaklaşır; yani tekil aralık on aile için
+    doğru eşik değildir.
+
+    Bugün bu açık **maskeleniyor**: hiçbir aile geçemediği için yanlış bir
+    "geçti" de üretilmedi. Ama biri geçtiği gün iddia savunulamaz olurdu —
+    ve projenin bütün değeri o iddianın savunulabilirliğinde.
+
+    Holm, Bonferroni'nin adım adım (step-down) hâlidir ve ondan **kesinlikle
+    daha güçlüdür**: p-değerleri küçükten büyüğe sıralanır, `i`. sıradaki
+    `alfa / (m − i)` ile karşılaştırılır ve ilk başarısızlıkta **kalanların
+    hepsi** reddedilemez sayılır::
+
+        >>> sorted(holm({"a": 0.001, "b": 0.20}).items())
+        [('a', True), ('b', False)]
+
+    Tek aday varsa düzeltme hiçbir şey yapmaz — Bonferroni'nin aksine ceza
+    aday sayısıyla gelir, varlığıyla değil::
+
+        >>> holm({"a": 0.04})
+        {'a': True}
+    """
+    if not p_degerleri:
+        return {}
+    m = len(p_degerleri)
+    sirali = sorted(p_degerleri.items(), key=lambda kv: kv[1])
+    out: dict[str, bool] = {}
+    kirildi = False
+    for i, (ad, p) in enumerate(sirali):
+        if kirildi or p > alfa / (m - i):
+            kirildi = True
+            out[ad] = False
+        else:
+            out[ad] = True
+    return out
+
+
+def _holm_uygula(sonuclar: list[dict[str, Any]]) -> None:
+    """Her satıra `gecti_holm` ve `denenen_aday_sayisi` ekler.
+
+    Referans satırları (fark hesaplanmayanlar) aileye **girmez**: onlar
+    aday değil ölçünün kendisidir. `gecti` bayrağı değişmez — tekil aralık
+    okuması yerinde kalır ki eski sayılar yeniden yorumlanmasın; Holm onun
+    **yanına** yazılır ve iddia hangisine dayanıyorsa o söylenir.
+    """
+    adaylar = {s["ad"]: s["fark"]["p"] for s in sonuclar
+               if isinstance(s.get("fark"), dict) and s["fark"].get("p")
+               is not None}
+    karar = holm(adaylar)
+    for s in sonuclar:
+        s["denenen_aday_sayisi"] = len(adaylar)
+        s["gecti_holm"] = karar.get(s["ad"]) if s["ad"] in adaylar else None
 
 
 # ─── karşılaştırma ────────────────────────────────────────────────────────────
@@ -730,6 +803,7 @@ def karsilastir(fabrikalar: Sequence[Fabrika] | None = None,
             # Karar YUVARLANMAMIS ust sinirdan (bkz. `bootstrap_farki`).
             s["gecti"] = bool(fark.get("ham_ust") is not None
                               and fark["ham_ust"] < 0)
+    _holm_uygula(sonuclar)
     for s in sonuclar:
         s.pop("_kayitlar", None)
 

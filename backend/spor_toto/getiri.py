@@ -139,13 +139,22 @@ VARSAYILAN_KOMISYON = 0.50
 #: Dördüncüsü türetme değil **okuma**: ekran hem bedeli hem kolon sayısını
 #: gösteriyor, ötekiler onu doğruluyor.
 #:
-#: **Künye — bu bizim ölçümümüz değil.** Sayı resmî Spor Toto ekranından
-#: değil, üçüncü taraf bir kupon aracının ekranından geliyor. Statüsü
-#: `PAY_KAYNAGI` ile aynı değildir: o, resmî ikramiye ekranından üç kez
-#: okundu; bu, tek bir dış aracın dört kuponundan. Aracın kendi hizmet
-#: bedelini bedele katıp katmadığı **doğrulanmadı**. Bu yüzden sayı
-#: varsayılan hesaba GİRMEZ; yalnızca raporlarda kâr/zarar satırı üretir
-#: ve her kullanıldığı yerde kaynağıyla birlikte anılır.
+#: **Künye — 2026-09-04'te üçüncü kez ve birinci elden doğrulandı.**
+#:
+#: Sayı önce yalnızca üçüncü taraf bir kupon aracının ekranından geliyordu
+#: ve künyesi *"aracın kendi hizmet bedelini bedele katıp katmadığı
+#: doğrulanmadı"* diyordu; o yüzden **varsayılan hesaba girmiyordu.** Üç
+#: bağımsız köken artık aynı sayıyı veriyor:
+#:
+#: 1. ST EXTRA kupon aracının ekranı (3. haftanın dört 15 bileni),
+#: 2. kullanıcının **bayi / resmî Spor Toto uygulaması** beyanı — araçtan
+#:    bağımsız birinci el, hizmet-bedeli şüphesini kapatan gözlem,
+#: 3. `data/sistem_fiyat/st_extra.json`: 250 sistem fiyatının **250'si de**
+#:    10'un tam katı, yani her satırda kolon sayısı tamsayı çıkıyor.
+#:
+#: Şüphe kapandığı için sayı artık **varsayılan hesaba girer**
+#: (`scripts/kademe_analizi.py`). `VARSAYILAN_KOLON_BEDELI` silinmedi:
+#: ₺1,50 ile yayımlanmış her sayı hangi ölçekte olduğunu söyleyebilmeli.
 KOLON_BEDELI = 10.0
 
 #: **Hesabın varsayılanı — ve bilerek `KOLON_BEDELI` DEĞİL.**
@@ -382,7 +391,8 @@ def kupon_kademeleri(probs_listesi: Sequence[dict[str, float]],
 #: Ölçüm de kusursuz değil ve kusuru yazılmalı: paylar **tek bir
 #: platformun** kendi kullanıcılarınındır, Spor Toto havuzunun tamamı
 #: değildir. Yani `oynanma` modeli varsayımı daraltır, kaldırmaz.
-KALABALIK_MODELLERI: tuple[str, ...] = ("orneklem", "favori", "oynanma")
+KALABALIK_MODELLERI: tuple[str, ...] = ("orneklem", "favori", "oynanma",
+                                        "olculen")
 
 
 def kalabalik_kademeleri(probs_listesi: Sequence[dict[str, float]],
@@ -418,10 +428,20 @@ def kalabalik_kademeleri(probs_listesi: Sequence[dict[str, float]],
         gerçek sonuç `p`den gelir. `orneklem` bu ifadenin `o = p` özel
         hâlidir — yani kalabalığın piyasayla aynı oynadığı varsayımı.
         `oynanma_listesi` verilmezse bu model çağrılamaz.
+    ``olculen``
+        Rakip `kalabalik.OLCULEN`den çekiyor: `o(s) ∝ p(s)^λ`,
+        **λ = 1,7608 [1,669, 1,865]**. `oynanma` gibi çapraz terim ama
+        vekili tek platformun kullanıcıları değil, **112 haftanın resmî
+        kademe adetleri**. `orneklem` bunun `λ = 1` hâlidir ve ölçülen
+        aralık 1'i içermiyor.
 
-    Gerçek kalabalık ilk ikisinin arasındadır ve hangisinin seçildiği
-    sonucu büyük ölçüde belirler; bu yüzden model adı `varsayimlar`a
-    yazılır. Üçüncüsü o aralığı tahmin etmez, **ölçer**.
+    **Üç varsayımın ikisi artık ölçüldü.** §3.34 *"belirsizliğin kaynağı
+    tahminci değil kalabalık"* diyor ve `orneklem` ↔ `favori` arasında 22
+    kat getiri farkı ölçüyordu. `favori` ucu **kapandı**: sezon dışarıda
+    bırakmalı uyumda hafta başına ~4 kat kötü, ve dağıtılan havuzla
+    karşılaştırıldığında haftada 10¹⁷ kolonluk fiziksel olarak imkânsız bir
+    havuz ima ediyor (`kalabalik.havuz_sinavi`). Gerçek kalabalık
+    `orneklem` ile `olculen` arasındadır — yani aralığın **iyimser** ucunda.
 
     Üçünün de gördüğü şey aynı biçimde **koşulsuzdur**: rakibin isabeti
     bizim ne işaretlediğimize bakmaz, dolayısıyla bu sayı iki farklı plan
@@ -454,6 +474,10 @@ def kalabalik_kademeleri(probs_listesi: Sequence[dict[str, float]],
             isabet.append(sum(x * x for x in v))
         elif model == "favori":
             isabet.append(max(v))
+        elif model == "olculen":
+            from .kalabalik import OLCULEN, oynanma_paylari
+            o = _normal(oynanma_paylari([p], OLCULEN)[0])
+            isabet.append(sum(a * b for a, b in zip(o, v)))
         else:
             o = _normal(oynanma_listesi[i])  # type: ignore[index]
             isabet.append(sum(a * b for a, b in zip(o, v)))
@@ -551,3 +575,115 @@ def main(argv: Sequence[str] | None = None) -> None:  # pragma: no cover
 
 if __name__ == "__main__":  # pragma: no cover
     main()
+
+
+# ─── koşullu getiri — havuz BİZ kazandığımızda bölünür ────────────────────
+
+def kosullu_kademe_dagilimi(probs_listesi: Sequence[dict[str, float]],
+                            oynanma_listesi: Sequence[dict[str, float]],
+                            secimler: Sequence[Sequence[str]]) -> Any:
+    """`P(k kaçak, rakip tam j doğru)` **ortak** dağılımı.
+
+    `kalabalik_kademeleri` rakibin isabetini **koşulsuz** hesaplar ve kendi
+    docstring'i bunu söylüyor: *"bu sayı iki farklı plan için birebir aynı
+    çıkar"*. Oysa havuz **biz kazandığımızda** bölünür, dolayısıyla doğru
+    soru koşulludur ve `super_toto_tahmin2._kosullu_rakip` onu yalnızca
+    15 kademesi için (tam isabet) cevaplıyordu.
+
+    Burada koşullandırma bütün kademelere açılır. Her maçta dört yol var::
+
+        sonuç kümede  (p_S)     · rakip uydu  (a = Σ_S p·o / Σ_S p)
+        sonuç kümede            · uymadı
+        sonuç KAÇTI   (1 − p_S) · rakip uydu  (b = Σ_S̄ p·o / Σ_S̄ p)
+        sonuç kaçtı             · uymadı
+
+    Kaçak sayısı ile rakibin isabet sayısı böylece **birlikte** taşınır;
+    ikisini ayrı hesaplamak, kaçtığımız maçta rakibin de kaçma eğilimini
+    görmezden gelirdi.
+
+    Dönen dizi `dp[k][j]`: `k` kaçak ve rakip tam `j` doğru.
+    """
+    import numpy as np
+
+    from .core import SEMBOLLER
+
+    n = len(list(probs_listesi))
+    dp = np.zeros((n + 1, n + 1))
+    dp[0, 0] = 1.0
+    for p, oy, sec in zip(probs_listesi, oynanma_listesi, secimler):
+        icinde = sum(float(p.get(s, 0.0)) for s in sec)
+        capraz = sum(float(p.get(s, 0.0)) * float(oy.get(s, 0.0)) for s in sec)
+        a = capraz / icinde if icinde > 0 else 0.0
+        disi = 1.0 - icinde
+        capraz_d = sum(float(p.get(s, 0.0)) * float(oy.get(s, 0.0))
+                       for s in SEMBOLLER if s not in sec)
+        b = capraz_d / disi if disi > 1e-12 else 0.0
+        yeni = np.zeros_like(dp)
+        yeni[:, 1:] += dp[:, :-1] * icinde * a
+        yeni += dp * icinde * (1.0 - a)
+        yeni[1:, 1:] += dp[:-1, :-1] * disi * b
+        yeni[1:, :] += dp[:-1, :] * disi * (1.0 - b)
+        dp = yeni
+    return dp
+
+
+def beklenen_tl(probs_listesi: Sequence[dict[str, float]],
+                oynanma_listesi: Sequence[dict[str, float]],
+                secimler: Sequence[Sequence[str]],
+                odul: dict[int, float],
+                kademe_havuzu: dict[int, float],
+                garanti: int,
+                rakip_kolon: int,
+                hedef_kademe: int = 12) -> float:
+    """Kuponun beklenen TL getirisi — **garanti tabanı** üzerinden.
+
+    `k` kaçakta garanti bir kolonun `garanti − k` kademesinde olduğunu
+    söyler (`sistem` modül başlığı). O kademenin havuzu, aynı kademeyi
+    tutturan rakip kolonlarla bölünür ve payın kapalı formu
+    `pay_beklentisi`dir. Rakibin o kademeyi tutturma olasılığı **koşulludur**
+    ve `kosullu_kademe_dagilimi`den okunur.
+
+    `odul` kullanılmaz — imza uyumu için duruyor; büyüklüğü belirleyen
+    `kademe_havuzu`dur (kazanan × kişi başı).
+    """
+    del odul
+    dp = kosullu_kademe_dagilimi(probs_listesi, oynanma_listesi, secimler)
+    toplam = 0.0
+    for kacak in range(garanti - hedef_kademe + 1):
+        kademe = garanti - kacak
+        havuz = kademe_havuzu.get(kademe)
+        if not havuz:
+            continue
+        p_kacak = float(dp[kacak, :].sum())
+        if p_kacak <= 0:
+            continue
+        q = float(dp[kacak, kademe]) / p_kacak
+        toplam += p_kacak * float(havuz) * pay_beklentisi(rakip_kolon, q)
+    return toplam
+
+
+def kademe_havuzlari(payout: dict[str, Any] | None) -> dict[int, float]:
+    """Kademe havuzlarını **resmî ikramiye tablosundan** türetir.
+
+    ─── Niçin bu fonksiyon var: ölçülmüş bir tuzak ────────────────────────
+
+    `beklenen_tl` kademe havuzlarını dışarıdan alır ve o sözlüğü elle yazmak
+    **cevabı çevirebilir.** Ölçüldü (`docs/KAZANMA_PLANI.md` Faz S):
+
+    * gerçek tablolarda `13. kademe havuzu / 12. kademe havuzu` = **0,800**
+      (yani `havuz.BOLUSUM`'un 20/25'i, üç haftada da birebir);
+    * elle yazılmış `{13: 1e7, 12: 1e6}` — yani 10,0 — aynı kuponlarda
+      *"kalabalıktan sapmak hiçbir şey kazandırmıyor"* sonucunu
+      *"20 haftanın 19'unda 12 kat kazandırıyor"*a çeviriyor.
+
+    Oran 12,5 kat saptığında sonuç ters döndü. Bu yüzden havuz sözlüğü
+    **türetilir, varsayılmaz**; kaynak `havuz._kademe_havuzlari` ve orada
+    bölüşüm 222 haftada ölçülmüş bir kuraldır.
+
+    `payout` yoksa boş sözlük döner — `beklenen_tl` o durumda sıfır verir.
+    """
+    if not payout:
+        return {}
+    from .havuz import _kademe_havuzlari
+
+    return _kademe_havuzlari(payout)

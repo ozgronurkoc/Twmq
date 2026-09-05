@@ -274,3 +274,65 @@ def test_ileri_kip_atlanan_grubu_bildirir(sentetik_arena):
     # Kesit sayilari OLCULEN haftadan okunur, girdiden degil.
     assert s["n_hafta"] == 4
     assert s["n_hafta_girdi"] == 6
+
+
+# ─── çoklu karşılaştırma (denetim H5) ─────────────────────────────────────
+
+def test_holm_bonferroni_adim_adim_ve_ilk_kirilmada_durur():
+    """Holm sıralı çalışır ve ilk başarısızlıkta kalanların hepsi düşer."""
+    from spor_toto.evaluate import holm
+
+    assert holm({"a": 0.001, "b": 0.02, "c": 0.30}) == {
+        "a": True, "b": True, "c": False}
+    # Kirilma SIRALI p-degerine gore olur, sozluk sirasina gore DEGIL:
+    # {a:0,001, c:0,011, b:0,40} sirasinda a ve c gecer, b kirar.
+    karar = holm({"a": 0.001, "b": 0.40, "c": 0.011})
+    assert karar["a"] is True and karar["c"] is True and karar["b"] is False
+    # Kirilmanin ardindan gelen HERKES duser: b kirinca ondan buyuk p yok,
+    # ama esigi asan bir ara deger koyulursa sonrasi da dusmeli.
+    zincir = holm({"a": 0.001, "b": 0.30, "c": 0.31})
+    assert zincir == {"a": True, "b": False, "c": False}
+
+
+def test_holm_tek_adayda_ceza_UYGULAMAZ():
+    """Ceza aday SAYISIYLA gelir, varlığıyla değil — Bonferroni'den farkı."""
+    from spor_toto.evaluate import HOLM_ALFA, holm
+
+    assert holm({"a": 0.04}) == {"a": True}
+    assert holm({"a": HOLM_ALFA + 1e-9}) == {"a": False}
+    assert holm({}) == {}
+
+
+def test_holm_aday_COGALINCA_esigi_sikilastirir():
+    """H5'in ta kendisi: aynı p-değeri tek başına geçerken kalabalıkta geçmez."""
+    from spor_toto.evaluate import holm
+
+    assert holm({"a": 0.03}) == {"a": True}
+    coklu = {"a": 0.03, **{f"x{i}": 0.9 for i in range(9)}}
+    assert coklu["a"] == 0.03
+    assert holm(coklu)["a"] is False, (
+        "on aday arasinda p=0,03 aile bazli esigi gecmemeli")
+
+
+def test_bootstrap_p_degeri_sinirlarda_tanimli():
+    """p ∈ (0, 1] ve `(k+1)/(n+1)` — sıfır p yayımlamak yanlış olurdu."""
+    from spor_toto.evaluate import bootstrap_farki
+
+    a = [{"brier_toplam": 1.0, "n": 10} for _ in range(8)]
+    b = [{"brier_toplam": 5.0, "n": 10} for _ in range(8)]
+    iyi = bootstrap_farki(a, b, tekrar=500)
+    kotu = bootstrap_farki(b, a, tekrar=500)
+    assert 0.0 < iyi["p"] <= 1.0
+    assert iyi["p"] < kotu["p"]
+    assert kotu["p"] == pytest.approx(1.0, abs=1e-3)
+
+
+def test_karsilastir_govdesi_ADAY_SAYISINI_tasiyor():
+    """Denetim H5'in asgari istediği: "kaç aday denendi" gövdede olmalı."""
+    from spor_toto.evaluate import karsilastir
+
+    r = karsilastir()
+    assert r["tahminciler"]
+    for s in r["tahminciler"]:
+        assert "denenen_aday_sayisi" in s
+        assert "gecti_holm" in s

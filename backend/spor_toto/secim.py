@@ -224,15 +224,33 @@ def _pareto(adaylar: list[tuple[tuple[float, ...], tuple[int, ...]]],
 
 # ─── kalabalık ayarı — hedefi bırakmadan az oynanana kaymak ───────────────
 
-#: `P(k ≤ 2)`'den vazgeçilecek EN ÇOK oran. Ayar bu kadarını harcayabilir,
-#: fazlasını değil.
+#: `P(k ≤ 2)`'den vazgeçilecek EN ÇOK oran.
 #:
-#: **Bu bir ölçüm değil, harcama kararıdır** ve öyle etiketlenir. Sıfır
-#: yazılırsa ayar yalnızca hedefi hiç düşürmeyen değişimleri yapar (böyle
-#: değişimler vardır: iki sembol kümesi aynı olasılığı taşıyıp farklı
-#: kalabalık çekebilir). Büyütmek, tutturma olasılığını ikramiyenin
-#: bölünmemesi karşılığında satmaktır.
-VARSAYILAN_KAYIP_ORANI = 0.05
+#: **Artık bir harcama kararı değil, ÖLÇÜM SONUCU — ve sıfır.**
+#:
+#: Bu sabit uzun süre `0.05` yazıyordu ve başlığı dürüstçe *"bu bir ölçüm
+#: değil, harcama kararıdır"* diyordu. Ölçüldü (`docs/KAZANMA_PLANI.md`
+#: Faz S) ve optimal değer **sıfır** çıktı — üç bağımsız yoldan:
+#:
+#: 1. `kalabalik_ayari`, ölçülen kalabalık modeliyle (`kalabalik.OLCULEN`)
+#:    kayıp bütçesi 0'dan **0,70**'e kadar taransa bile **tek bir maçın
+#:    işaretini değiştirmiyor**.
+#: 2. Doğrudan `E[TL]` üzerinde yerel arama: 25 haftanın 25'inde taban plan
+#:    zaten en iyi; tek maçlık en iyi değişimin kazancı **tam 1,0000×**.
+#:    (Arama dejenere değil: favoriyi bırakmak E[TL]'yi 0,39×'e düşürüyor.)
+#: 3. Mekanizma analitik: ölçülen model `o(s) ∝ p(s)^λ` **monotondur**,
+#:    yani sembol sıralamasını korur. Kalabalıktan sapmak ancak daha düşük
+#:    olasılıklı sembole geçerek mümkün olur ve tutturma kaybı, pay
+#:    kazancını her bantta eziyor.
+#:
+#: **Sıfır "ayar kapalı" demek değildir:** hedefi hiç düşürmeyen değişimler
+#: hâlâ yapılır (iki sembol kümesi aynı olasılığı taşıyıp farklı kalabalık
+#: çekebilir). Değişen şey, tutturma olasılığının **satılmamasıdır**.
+#:
+#: **Ve bu sonuç modelin monotonluğuna bağlıdır.** Kayıtlı oynanma payları
+#: 60 maçın **21'inde** piyasadan farklı sıralama gösteriyor — monoton bir
+#: model bunu üretemez. Kenar varsa oradadır ve bu sabit onu görmez.
+VARSAYILAN_KAYIP_ORANI = 0.0
 
 #: Bir durumda tutulacak en fazla Pareto noktası. `PARETO_SINIRI` ile aynı
 #: gerekçe, farklı sayı: buradaki cephe bir boyut daha taşıyor (kalabalık
@@ -599,3 +617,263 @@ def main(argv: list[str] | None = None) -> None:  # pragma: no cover
 
 if __name__ == "__main__":  # pragma: no cover
     main()
+
+
+# ─── tablo tabanlı seçim — bedel formülden değil KAYITTAN ─────────────────
+
+def sistem_secimi(probs_listesi: list[dict[str, float]],
+                  butce_tl: float,
+                  garanti: int | None = None,
+                  kademe: int | None = None,
+                  yol: str | None = None) -> Secim | None:
+    """`en_iyi_secim`in tablo tabanlı hâli — **oynanan ürünün kendisi.**
+
+    İki şeyde ayrılır ve ikisi de `en_iyi_secim`i yanlış değil **dar**
+    yapan şeydir:
+
+    ``bedel``
+        `bedel_hesapla` yalnızca `core.solve_fix16` modunun bedelidir:
+        Hamming(7,4) bloğu, en az yedi çifte, tek garanti seviyesi. Burada
+        bedel `sistem.bedel()`den, yani satıcının **ölçülmüş** fiyat
+        tablosundan gelir; 84 şeklin tamamı ve üç garanti seviyesi geçerli
+        adaydır. Yedi çifte şartı da bu yüzden yoktur — tabloda sıfır
+        çifteli satırlar da satılıyor.
+
+    ``kaçak eşiği``
+        `esik` artık sabit değil, `sistem.kacak_esigi(garanti, kademe)`den
+        türüyor: 14-garantide `k ≤ 2`, 13'te `k ≤ 1`, 12'de `k ≤ 0`.
+        Gerekçesi `sistem` modül başlığındadır.
+
+    Bütçe **TL** cinsindendir, kolon değil — tablo TL konuşuyor ve iki
+    birimi karıştırmak tam olarak `bedel_hesapla`nın kolon cinsinden
+    bütçesiyle karışacağı yerdir.
+
+    `None` döner ancak bütçeye satılan hiçbir şekil sığmıyorsa.
+    """
+    from . import sistem as _sistem
+
+    g = _sistem.VARSAYILAN_GARANTI if garanti is None else garanti
+    kad = _sistem.HEDEF_KADEME if kademe is None else kademe
+    esik = _sistem.kacak_esigi(g, kad)
+    if esik < 0:
+        raise ValueError(
+            f"{g}-garanti {kad}. kademeyi hic tutturamaz (esik {esik})")
+    if butce_tl <= 0:
+        raise ValueError("Butce pozitif olmali.")
+    n = len(probs_listesi)
+    if n == 0:
+        return None
+
+    # Satılan şekiller: (cift, kapali) -> (kolon, tl). Aynı ikili tabloda
+    # bir kez geçer, çünkü tek = 15 − cift − kapali ile belirlenir.
+    satilan: dict[tuple[int, int], tuple[int, float]] = {
+        (s.cift, s.kapali): (s.kolon, s.tl)
+        for s in _sistem.sekiller(g, yol=yol) if s.tek + s.cift + s.kapali == n
+    }
+    if not satilan:
+        return None
+
+    # Kesin budama: bir durumdan ileride yalnızca çifte/üçlü ARTAR, yani
+    # ulaşılabilir şekillerin en ucuzu bütçeyi aşıyorsa dal ölüdür.
+    # Formülle değil tabloyla çalıştığımız için alt sınır de tablodan gelir.
+    alt_sinir: dict[tuple[int, int], float] = {}
+    for a in range(n + 1):
+        for b in range(n + 1 - a):
+            uygun = [tl for (c, k), (_, tl) in satilan.items()
+                     if c >= a and k >= b]
+            if uygun:
+                alt_sinir[(a, b)] = min(uygun)
+
+    sirali = [_sirali(p) for p in probs_listesi]
+    q_seviye = [[max(0.0, 1.0 - sum(v for _, v in s[:k])) for k in (1, 2, 3)]
+                for s in sirali]
+
+    baslangic: tuple[float, ...] = tuple([1.0] * (esik + 1))
+    durumlar: dict[tuple[int, int], list[tuple[tuple[float, ...], tuple[int, ...]]]] = {
+        (0, 0): [(baslangic, ())],
+    }
+
+    for i in range(n):
+        yeni: dict[tuple[int, int], list[tuple[tuple[float, ...], tuple[int, ...]]]] = {}
+        for (a, b), kume in durumlar.items():
+            for seviye in (1, 2, 3):
+                ya, yb = a + (seviye == 2), b + (seviye == 3)
+                tl = alt_sinir.get((ya, yb))
+                if tl is None or tl > butce_tl:
+                    continue
+                qq = q_seviye[i][seviye - 1]
+                for kumulatif, izlek in kume:
+                    guncel = [kumulatif[0] * (1.0 - qq)]
+                    for m in range(1, esik + 1):
+                        guncel.append(kumulatif[m] * (1.0 - qq)
+                                      + kumulatif[m - 1] * qq)
+                    yeni.setdefault((ya, yb), []).append(
+                        (tuple(guncel), (*izlek, seviye)))
+        durumlar = {k: _pareto(v) for k, v in yeni.items()}
+        if not durumlar:
+            return None
+
+    en: tuple[float, float, int, tuple[int, ...]] | None = None
+    for (a, b), kume in durumlar.items():
+        sek = satilan.get((a, b))
+        if sek is None:
+            continue
+        kolon, tl = sek
+        if tl > butce_tl:
+            continue
+        for kumulatif, izlek in kume:
+            # Eşitlikte UCUZ olan kazanır — `en_iyi_secim` ile aynı kural.
+            if en is None or (kumulatif[esik], -tl) > (en[0], -en[1]):
+                en = (kumulatif[esik], tl, kolon, izlek)
+    if en is None:
+        return None
+
+    p_hedef, _tl, kolon, izlek = en
+    secimler = [sirala_semboller([s for s, _ in sirali[i][:izlek[i]]])
+                for i in range(n)]
+    return Secim(
+        secimler=secimler,
+        bedel=kolon,
+        p_hedef=p_hedef,
+        banko=sum(1 for s in secimler if len(s) == 1),
+        cift=sum(1 for s in secimler if len(s) == 2),
+        uclu=sum(1 for s in secimler if len(s) == 3),
+    )
+
+
+# ─── kalabalığa göre E[TL] seçimi — kupon KAPANMADAN ─────────────────────
+
+#: Yerel aramanın en çok kaç tur döneceği. Ölçümde üçüncü turda hiçbir
+#: hafta değişmedi; sınır güvenlik supabı.
+GETIRI_TUR_SINIRI = 3
+
+
+#: `getiri_secim`in `P(k ≤ eşik)`'ten vazgeçebileceği EN ÇOK oran.
+#:
+#: **Bu kısıt bir kez kaldırıldı ve ölçüm onu geri getirdi.** Kısıtsız
+#: `E[TL]` enbüyüklemesi 2026/27 2. haftada `E[TL]`'yi 3,01 kat büyütürken
+#: `P(k≤1)`'i **0,2194 → 0,0073**'e (−%96,7) düşürdü; gerçekleşen sonuçta
+#: kaçak 1'den 3'e çıktı ve **1.439 TL'lik ödül sıfıra indi**.
+#:
+#: Sebep yapısal: `pay_beklentisi` çok küçük `q`'da `1/(N·q)` gibi patlıyor,
+#: dolayısıyla kısıtsız beklenen değer, neredeyse hiç gerçekleşmeyen ama
+#: gerçekleşirse çok büyük olan bir dalı seçiyor. Ağır kuyruklu bir ödemede
+#: beklenen değeri tek başına enbüyüklemek, iyi olmakla aynı şey değildir.
+#:
+#: Varsayılan temkinli: `P` tabanın **%95'inin altına inemez**. Bu bir
+#: ölçüm değil **harcama kararıdır** ve öyle etiketlenir — optimalini
+#: söyleyecek `n` yok (elde üç sonuçlanmış hafta var).
+GETIRI_KAYIP_TAVANI = 0.05
+
+
+def getiri_secim(probs_listesi: list[dict[str, float]],
+                 oynanma_listesi: list[dict[str, float]],
+                 butce_tl: float,
+                 garanti: int | None = None,
+                 rakip_kolon: int | None = None,
+                 kademe_havuzu: dict[int, float] | None = None,
+                 kayip_tavani: float = GETIRI_KAYIP_TAVANI,
+                 yol: str | None = None) -> Secim | None:
+    """`E[TL]`'yi enbüyükleyen işaret planı — **kayıtlı oynanma paylarıyla.**
+
+    ─── Niçin `kalabalik_ayari` yetmiyor ────────────────────────────────
+
+    `kalabalik_ayari` `küme-içi / kalabalık-içi` **oranını** enbüyüklüyor ve
+    hedefi bir bütçeyle koruyor. O amaç, ölçülen monoton kalabalık modeliyle
+    (`kalabalik.OLCULEN`) hiçbir maçı değiştirmiyor — kayıp bütçesi 0,70'e
+    kadar tarandı, `VARSAYILAN_KAYIP_ORANI` künyesinde. Sebebi yapısal:
+    `o ∝ p^λ` sembol sıralamasını koruyor.
+
+    Kayıtlı oynanma payları **monoton değil**: 60 maçın 21'inde kalabalığın
+    sıralaması piyasanınkinden farklı. Kenar oradadır ve onu görmek için
+    amacın oran değil doğrudan `E[TL]` olması gerekir.
+
+    ─── Şekil SABİT, yalnızca semboller değişir ─────────────────────────
+
+    İşaret sayıları kuponun bedelini belirler; sabit tutulunca arama
+    **bedava**dır: aynı kolon, aynı satır, aynı bütçe. `kalabalik_ayari`nın
+    gerekçesi aynen geçerli — bütçeyi de oynatmak iki ayrı kararı tek adımda
+    karıştırırdı.
+
+    ─── Kademe havuzu KARAR ANINDA biliniyor ────────────────────────────
+
+    `E[TL]`'nin argmax'ı havuzun **ölçeğine** değil kademeler arası
+    **oranına** bağlıdır (bütün kademeleri aynı katsayıyla çarpmak `E[TL]`'yi
+    aynı katsayıyla çarpar). O oran `havuz.BOLUSUM`'dur ve 222 haftada
+    ölçülmüş bir kuraldır — yani kupon kapanmadan **bilinir**. Ölçüldü:
+    gerçek ikramiye tablosuyla ve `BOLUSUM` oranlarıyla optimize edilen
+    kupon üç haftanın üçünde de **birebir aynı** çıktı.
+
+    `None` döner ancak bütçeye şekil sığmıyorsa.
+    """
+    from .getiri import beklenen_tl
+    from .havuz import BOLUSUM
+    from .sistem import HEDEF_KADEME, VARSAYILAN_GARANTI
+
+    g = VARSAYILAN_GARANTI if garanti is None else garanti
+    taban = sistem_secimi(probs_listesi, butce_tl, garanti=g, yol=yol)
+    if taban is None:
+        return None
+    if len(oynanma_listesi) != len(probs_listesi):
+        raise ValueError("oynanma ve olasilik listeleri ayni uzunlukta olmali")
+
+    # Olcek keyfi: yalnizca ORAN onemli (docstring).
+    havuz = kademe_havuzu or {k: BOLUSUM[k] * 1e7
+                              for k in range(HEDEF_KADEME, g + 1)
+                              if k in BOLUSUM}
+    n_rakip = rakip_kolon if rakip_kolon is not None else _RAKIP_KOLON
+
+    if not 0.0 <= kayip_tavani < 1.0:
+        raise ValueError("kayip_tavani [0, 1) araliginda olmali")
+    esik = g - HEDEF_KADEME
+    p_alt = hedef_olasiligi(probs_listesi, taban.secimler,
+                            esik) * (1.0 - kayip_tavani)
+
+    secimler = [list(x) for x in taban.secimler]
+    en_iyi = beklenen_tl(probs_listesi, oynanma_listesi, secimler, {},
+                         havuz, g, n_rakip)
+    for _ in range(GETIRI_TUR_SINIRI):
+        gelisti = False
+        for i, mevcut in enumerate(secimler):
+            k = len(mevcut)
+            for aday in _kombinasyonlar(k):
+                if set(aday) == set(mevcut):
+                    continue
+                yedek = secimler[i]
+                secimler[i] = sirala_semboller(list(aday))
+                # KISIT ONCE: hedefi tavanin otesinde harcayan hicbir
+                # degisim, E[TL] ne kadar buyurse buyusun kabul edilmez.
+                if hedef_olasiligi(probs_listesi, secimler, esik) < p_alt:
+                    secimler[i] = yedek
+                    continue
+                v = beklenen_tl(probs_listesi, oynanma_listesi, secimler, {},
+                                havuz, g, n_rakip)
+                if v > en_iyi * (1.0 + 1e-9):
+                    en_iyi = v
+                    gelisti = True
+                else:
+                    secimler[i] = yedek
+        if not gelisti:
+            break
+
+    return Secim(
+        secimler=secimler,
+        bedel=taban.bedel,
+        p_hedef=hedef_olasiligi(probs_listesi, secimler, esik),
+        banko=sum(1 for x in secimler if len(x) == 1),
+        cift=sum(1 for x in secimler if len(x) == 2),
+        uclu=sum(1 for x in secimler if len(x) == 3),
+    )
+
+
+def _kombinasyonlar(k: int) -> list[tuple[str, ...]]:
+    """`k` boyutlu bütün sembol kümeleri — şekli bozmadan aday üretir."""
+    from itertools import combinations
+
+    return list(combinations(SEMBOLLER, k))
+
+
+#: `getiri_secim`in varsayılan rakip kolon sayısı — `karne.RAKIP_KOLON` ile
+#: aynı gerekçe ve aynı sayı; döngüsel import olmasın diye burada da yazılı
+#: ve bekçisi `test_rakip_kolon_TEK_sayi`.
+_RAKIP_KOLON = 15_000_000
