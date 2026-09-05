@@ -2,7 +2,7 @@
  "sayilar": [
   {
    "ne": "suit test sayisi (eksiksiz kurulum)",
-   "deger": "2.049",
+   "deger": "2.051",
    "ureten": "cd backend && pytest -p no:randomly -n0 --collect-only -q  # dosya basi toplami",
    "olculdu": "2026-09-05",
    "anildigi_yerler": [
@@ -14,7 +14,7 @@
     "replit.md"
    ],
    "bekci": "backend/tests/test_belgeler.py::test_test_sayisi_belgelerde_tek_ve_dogru",
-   "not": "lightgbm siz kurulumda 22 test eksik toplanir; yerelde 1.958 olcumu 1.980-22 ile birebir tutuyor. E1'in alti, E2'nin iki, E3'un uc, E4'un bes testi eklendi (2.027 -> 2.044). Yerel kurulumda lightgbm yok, o yuzden toplama 2.022 diyor; fark test_agac.py'nin 22 testi. Sonuncusu test_betik_sayisi_belgeyle_ayni: backend/README 24 betik diyordu, gercek 27'ydi ve bunu tutan bekci YOKTU. Dis tarama (devir tavani) bes test ekledi (2.044 -> 2.049)."
+   "not": "lightgbm siz kurulumda 22 test eksik toplanir; yerelde 1.958 olcumu 1.980-22 ile birebir tutuyor. E1'in alti, E2'nin iki, E3'un uc, E4'un bes testi eklendi (2.027 -> 2.044). Yerel kurulumda lightgbm yok, o yuzden toplama 2.022 diyor; fark test_agac.py'nin 22 testi. Sonuncusu test_betik_sayisi_belgeyle_ayni: backend/README 24 betik diyordu, gercek 27'ydi ve bunu tutan bekci YOKTU. Dis tarama (devir tavani) bes test ekledi (2.044 -> 2.049). Is 1-4 iki test ekledi (2.049 -> 2.051): test_basabas_kacak_ELLE_YAZILMAZ_bedelden_ve_tablodan_turer ve test_karne_satiri_ODEYEN_olayi_AYRI_tasiyor."
   },
   {
    "ne": "test dosyasi sayisi",
@@ -676,6 +676,86 @@
    ],
    "bekci": "backend/tests/test_devir_tavani.py::test_ev_kurali_piyasa_favorisinden_ZAYIF",
    "not": "%95 Wilson araligi [%50,54, %51,65]. 'Hep ev' kuralini 7,7 puan geciyor. Favorinin %68,4'u zaten ev sahibi, yani kural ayri bir eksen degil favori kuralinin zayiflatilmis hali."
+  },
+  {
+   "ne": "kapsama acigi (model P(k<=2) <-> gerceklesen), 14G 2.000 TL",
+   "deger": "+%11,1 [+%2,1, +%20,0] — model %30,2, gerceklesen %41,2",
+   "ureten": "cd backend && python -m spor_toto.karne --kapsama --garanti 14 --butce 2000",
+   "olculdu": "2026-09-05",
+   "anildigi_yerler": [
+    "docs/ISTATISTIK_YOL_HARITASI.md §3.60",
+    "docs/KADEME_OLASILIKLARI.md §3"
+   ],
+   "bekci": null,
+   "not": "114 hafta. §3.46'nin bagimlilik tavani %5, yani (a) tek basina aciklayamaz. Sezon kirilimi 4/4 ayni yonde."
+  },
+  {
+   "ne": "banko q'sunun yanliligi — model q <-> gerceklesen kacma",
+   "deger": "-%5,6 (model %37,3, gerceklesen %31,7; Wilson [%28,6, %35,0], 798 mac)",
+   "ureten": "cd backend && python -m spor_toto.karne --kapsama --garanti 14 --butce 2000",
+   "olculdu": "2026-09-05",
+   "anildigi_yerler": [
+    "docs/ISTATISTIK_YOL_HARITASI.md §3.60"
+   ],
+   "bekci": null,
+   "not": "Kapsama aciginin MEKANIZMASI. Banko ayrik bir karardir, o yuzden bulgu q'ya gore siralamadan gelen ortalamaya donus eseri OLAMAZ. Cifte kolunda -%2,2 ve sifiri kesiyor."
+  },
+  {
+   "ne": "kalibre_bias kupon duzeyinde (Is 1) — P(hedef) farkinin keskinlik payi",
+   "deger": "%97,4 (fark +0,02577, sekil sabitken +0,02510)",
+   "ureten": "cd backend && python -m spor_toto.karne --kalibrasyon --garanti 14 --butce 2000",
+   "olculdu": "2026-09-05",
+   "anildigi_yerler": [
+    "docs/ISTATISTIK_YOL_HARITASI.md §3.61",
+    "backend/spor_toto/tahmin.py"
+   ],
+   "bekci": null,
+   "not": "GECMEDI. Gerceklesen kacak -0,061 [-0,140, +0,009], gercek kolon ROI +0,012 [-0,037, +0,067] — ikisi de sifiri kesiyor. Manset piyasa kaldi."
+  },
+  {
+   "ne": "butce egrisi tepe noktasi — 1.000 TL basina kacaksiz hafta",
+   "deger": "0,0286 (1.000 TL) · 0,0274 (1.500) · 0,0209 (2.000) — egri ic bukey",
+   "ureten": "cd backend && python -m spor_toto.karne --egri --garanti 14",
+   "olculdu": "2026-09-05",
+   "anildigi_yerler": [
+    "docs/ISTATISTIK_YOL_HARITASI.md §3.62"
+   ],
+   "bekci": null,
+   "not": "114 hafta, 14G. 1.500 TL tekil %95 araligi geciyor (p=0,0167) ama bes aday oldugu icin Holm'dan DUSUYOR (esik 0,01). Varsayilan 2.000 TL kaldi."
+  },
+  {
+   "ne": "gerceklesen P(kacak=0), 14G 2.000 TL",
+   "deger": "%3,5 (4/114 hafta)",
+   "ureten": "cd backend && python -m spor_toto.karne --egri --garanti 14",
+   "olculdu": "2026-09-05",
+   "anildigi_yerler": [
+    "docs/ISTATISTIK_YOL_HARITASI.md §3.62",
+    "docs/KAZANMA_KARNESI.md"
+   ],
+   "bekci": null,
+   "not": "Odeyen tek olay. §3.57'nin 'kacaksiz hafta oraninin 114'te 4 olmasi' satiriyla birebir."
+  },
+  {
+   "ne": "BFE isabet cetveliyle (Is 4) — kacaksiz hafta farki",
+   "deger": "+0,00000 [+0,00000, +0,00000]; kacak farki -0,04688 [-0,14062, +0,04688]",
+   "ureten": "cd backend && python -m spor_toto.karne --omurga BFE --garanti 14 --butce 2000",
+   "olculdu": "2026-09-05",
+   "anildigi_yerler": [
+    "docs/ISTATISTIK_YOL_HARITASI.md §3.63"
+   ],
+   "bekci": null,
+   "not": "GECMEDI, ucuncu cetvelle de. 64 ortak hafta. P(hedef) farkinin %81'i secim degismeden. Sezon isareti tutmuyor (24/25: +0,000, 25/26: -0,088)."
+  },
+  {
+   "ne": "gercek kolon odulunun KURULUM bagimliligi (scipy'li <-> scipy'siz)",
+   "deger": "0,2550 <-> 0,2693 (40 hafta, 500 TL, 14G; ayni kolon sayisi 1.920)",
+   "ureten": "cd backend && python -c \"import spor_toto.core as c; c.HAS_SCIPY=False; from spor_toto.karne import taban_gevsekligi; print(taban_gevsekligi(500.0,14,hafta_siniri=40)['gercek_roi'])\"",
+   "olculdu": "2026-09-05",
+   "anildigi_yerler": [
+    "docs/ISTATISTIK_YOL_HARITASI.md §3.62"
+   ],
+   "bekci": null,
+   "not": "scipy yokken engines.run_auto'nun ILP kolu DUSUYOR ve ayni bedelde FARKLI bir kaplama uretiliyor. Garanti etkilenmiyor, gercek kolon odulu etkileniyor (kuyruk agirlikli: 114 haftada ilk uc hafta odulun %57'si). 114 haftada 500 TL basamagi %18,8 <-> %39,5 oynadi. §3.56'nin 2,39 kati ve E2/E3'un ROI sayilari ayni hatti kullaniyor. Olcum kendi icinde TEKRARLANABILIR: yuk altinda ve art arda iki kosumda birebir ayni."
   }
  ],
  "komutlar": [
@@ -738,6 +818,21 @@
    "komut": "cd backend && python scripts/build_hakem.py",
    "kaynak": "backend/scripts/build_hakem.py",
    "ne_yapar": "football-data'dan hakem sutununu ceker ve korpusun satirlarina baglar; data/hakem/hakem.csv uretir. --kontrol ile bayatlik denetlenir. Korpusa DOKUNMAZ."
+  },
+  {
+   "komut": "cd backend && python -m spor_toto.karne --kapsama --garanti 14 --butce 2000",
+   "kaynak": "backend/spor_toto/karne.py:kapsama_acigi",
+   "ne_yapar": "Modelin ex-ante P(k<=esik)'i ile GERCEKLESEN arasindaki acigi olcer ve ayristirir: sezon, favori gucu, modelin kendi P'si, q dilimi, ve isaret sayisi (banko/cifte). Son kirilim sıralama eseri olamaz cunku ayrik karardir."
+  },
+  {
+   "komut": "cd backend && python -m spor_toto.karne --kalibrasyon --garanti 14 --butce 2000",
+   "kaynak": "backend/spor_toto/karne.py:kalibrasyon_kiyasi",
+   "ne_yapar": "Is 1: omurga olasiligini (piyasa <-> kalibre_bias) KARAR cetveliyle kiyaslar — gerceklesen kacak, kacaksiz hafta, gercek kolon ROI. p_ayrisimi E3 tuzagini ayirir. Sezon disarida birakmali kalibrasyon."
+  },
+  {
+   "komut": "cd backend && python -m spor_toto.karne --egri --garanti 14",
+   "kaynak": "backend/spor_toto/karne.py:butce_egrisi",
+   "ne_yapar": "Is 2: butce egrisi GERCEK kolon hattinda, 6 basamak x 114 hafta. Olcu '1.000 TL basina kacaksiz hafta'. Bes aday oldugu icin Holm-Bonferroni uygulanir. ~15 dk."
   }
  ]
 }

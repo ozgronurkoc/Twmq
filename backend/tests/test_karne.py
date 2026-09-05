@@ -376,3 +376,42 @@ def test_omurga_kiyasi_P_farkinin_ayrisimini_ZORUNLU_veriyor():
     assert ay["keskinlik_payi"] is not None
     # Sekil sabitken de bir fark KALIR — yoksa ayrisim bilgi tasimiyordur.
     assert abs(ay["sekil_sabit"]) > 0.0
+
+
+# ─── İş 3: ödeyen olay ile ödemeyen olay ayrılıyor ────────────────────────
+
+def test_basabas_kacak_ELLE_YAZILMAZ_bedelden_ve_tablodan_turer():
+    """Başabaş kaçak seviyesi bir sabit değil, iki girdinin **sonucu**.
+
+    Girdiler `getiri.KOLON_BEDELI` (maliyet) ve haftanın kendi resmî
+    ikramiye tablosu (ödül). Biri değişince sayı da değişmeli — yoksa
+    karnede elle yazılmış bir sayı duruyor demektir ve depo doktrini
+    (*"ölçüsüz sayı çıkmaz"*) o an sessizce ihlal edilir.
+    """
+    tablo = _tablo({14: 50_000.0, 13: 2_000.0, 12: 300.0})
+
+    # Ucuz kupon: 13. kademe (k=1) bile maliyeti karşılıyor.
+    assert karne._basabas_kacak(tablo, 14, maliyet=1_000.0) == 1
+    # Aynı tablo, pahalı kupon: yalnız 14. kademe (k=0) karşılıyor.
+    assert karne._basabas_kacak(tablo, 14, maliyet=10_000.0) == 0
+    # Daha da pahalı: hiçbir kaçak seviyesi karşılamıyor.
+    assert karne._basabas_kacak(tablo, 14, maliyet=100_000.0) is None
+
+    # Ödül tarafı değişince cevap değişmeli (tablo da girdidir).
+    zayif = _tablo({14: 5_000.0, 13: 100.0, 12: 10.0})
+    assert karne._basabas_kacak(zayif, 14, maliyet=1_000.0) == 0
+
+
+def test_karne_satiri_ODEYEN_olayi_AYRI_tasiyor():
+    """`P(k≤eşik)` iki olayı topluyor; ödeyen olay ayrı alanda durmalı.
+
+    13-garantide `k=0` 13. kademeyi verir ve maliyeti karşılar, `k=1`
+    12'yi verir ve karşılamaz (karnenin kendi kaydı: 2. ve 3. hafta 12
+    tutturdu, ikisi de zarar). Manşet olasılık bu ikisini topladığı için
+    tek başına bir kâr ölçüsü değildir.
+    """
+    r = karne.canli_karne_satiri("2026_27", 1, 2000.0, VARSAYILAN_GARANTI)
+    if r is None:
+        pytest.skip("canli hafta yuku yok")
+    assert 0.0 < r["p_kacak_sifir"] < r["p_hedef"] <= 1.0, \
+        "P(k=0) her zaman P(k<=esik)'in ICINDE ve ondan kucuk olmali"

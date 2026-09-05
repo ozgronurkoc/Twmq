@@ -101,18 +101,22 @@ def karne_metni(sezon: str, butce: float, garanti: int) -> str:
 | bütçe | {butce:,.0f} TL ({butce / 10:,.0f} kolon) |
 | bedel | ₺10/kolon — ölçülmüş (`getiri.KOLON_BEDELI`) |
 | ödül | **garanti tabanı**: `k` kaçakta **bir** kolon `{garanti}−k` kademesinde. **Alt sınır** — gerçekleşen getiri bundan büyüktür |
+| ödeyen olay | `k = 0` → {garanti}. kademe. `P(k≤{kacak_esigi(garanti)})` bunu `k = 1`'le **topluyor** ve o kademe maliyeti karşılamıyor — bkz. başabaş sütunu |
 | rakip kolon | {RAKIP_KOLON:,} — varsayım (`karne.RAKIP_KOLON`); `E[TL]` buna `1/(N·q)` mertebesinde duyarlı |
 
 ## Haftalar
 
-| hf | şekil | kolon | maliyet | P(k≤{kacak_esigi(garanti)}) | E[TL] | kaçak | kademe | ödül | net | fiyat ölçeği |
-|---:|---|---:|---:|---:|---:|---:|---:|---:|---:|---|"""]
+| hf | şekil | kolon | maliyet | P(k≤{kacak_esigi(garanti)}) | **P(k=0)** | E[TL] | kaçak | kademe | **başabaş k** | ödül | net | fiyat ölçeği |
+|---:|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|"""]
     for r in rows:
         sekil = f"{r['banko']}b/{r['cift']}ç/{r['uclu']}ü"
+        bb = r.get("basabas_kacak")
         p.append(
             f"| {r['hafta']} | {sekil} | {r['kolon']} | {_tl(r['maliyet'])} | "
-            f"{r['p_hedef']:.3f} | {_tl(r.get('beklenen_tl'))} | "
+            f"{r['p_hedef']:.3f} | **{r['p_kacak_sifir']:.3f}** | "
+            f"{_tl(r.get('beklenen_tl'))} | "
             f"{r.get('kacak', '—')} | {r.get('kademe', '—')} | "
+            f"{bb if bb is not None else ('—' if 'kacak' not in r else 'hiçbiri')} | "
             f"{_tl(r.get('odul'))} | {_tl(r.get('net'))} | "
             f"`{r['fiyat_kunyesi']}` |")
 
@@ -137,6 +141,16 @@ söylüyor.
 sistemi, garantinin söylediği tek kolondan fazlasını da tutturur; karne
 onları saymaz çünkü kolon listesi bizde değil (şekle biz karar veriyoruz,
 kolonları satıcı üretiyor). Gerçekleşen getiri bu tablodan **büyüktür**.
+
+**`P(k≤{kacak_esigi(garanti)})` bir kapsama ölçüsüdür, kâr ölçüsü değildir.**
+Manşet olasılık iki farklı olayı topluyor ve biri para kaybettiriyor:
+`k=0` {garanti}. kademeyi verir, `k=1` {garanti - 1}. kademeyi. Karnenin
+kendi kaydı bunu iki kez yazdı — 2. ve 3. hafta 12 tutturdu ve ikisi de
+zarar etti. Ödeyen olayın olasılığı `P(k=0)` sütununda ve manşetin
+**dörtte biri ile beşte biri** arasında. **Başabaş k** sütunu her haftanın
+KENDİ ikramiye tablosundan türetiliyor (medyan alınmıyor: nominal TL dört
+sezonda 72 kat büyümüş), ve o sütun sabit değil — 1. haftada `k=1` bile
+maliyeti karşılardı, 2. ve 3. haftada yalnızca `k=0`.
 
 **`n` küçük.** Bu tablo bir strateji karnesi değil, bir **kayıt
 başlangıcı**. Anlamlı bir yargı için haftaların birikmesi gerekiyor ve
@@ -172,7 +186,10 @@ def _main(argv: list[str] | None = None) -> int:
         print(f"  sekil         : {r['banko']} banko · {r['cift']} cifte · "
               f"{r['uclu']} uclu")
         print(f"  bedel         : {r['kolon']} kolon = {r['maliyet']:,.0f} TL")
-        print(f"  P(hedef)      : {r['p_hedef']:.4f}")
+        print(f"  P(hedef)      : {r['p_hedef']:.4f}   "
+              f"(k <= {kacak_esigi(a.garanti)}; KAPSAMA olcusu)")
+        print(f"  P(kacak=0)    : {r['p_kacak_sifir']:.4f}   "
+              f"(ODEYEN olay: {a.garanti}. kademe)")
         if r["beklenen_tl"] is not None:
             print(f"  E[TL]         : {r['beklenen_tl']:,.2f}  "
                   f"(rakip {RAKIP_KOLON:,} kolon VARSAYIMIYLA)")

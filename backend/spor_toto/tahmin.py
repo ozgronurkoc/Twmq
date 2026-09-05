@@ -69,6 +69,20 @@ MANSET_AD = "piyasa"
 #: setinde ölçüldüğünde piyasadan iyi çıkıyor (0,5732'ye karşı 0,5740) ama
 #: güven aralığı sıfırı içeriyor. Ürüne manşet olarak değil, **ölçülmüş
 #: alternatif** olarak girer — farkı ve aralığıyla birlikte.
+#:
+#: **2026-09-05: kesit büyüdü ve karar KARAR CETVELİYLE yeniden okundu.**
+#: Kupon kesiti 540 → 1.710 maça çıktı ve arenada `kalibre_bias` orada
+#: geçiyor (−0,0013 [−0,0021, −0,0006]). Yani yukarıdaki *"aralık sıfırı
+#: içeriyor"* gerekçesi Brier ekseninde artık geçerli değil. Manşet yine de
+#: değişmedi, ama sebebi başka ve ölçülü (§3.61): kupon düzeyinde
+#: `kalibre_bias`ın gerçekleşen kaçak farkı −0,061 [−0,140, +0,009] ve
+#: gerçek kolon ROI farkı +0,012 [−0,037, +0,067] — ikisi de sıfırı
+#: kesiyor. Tek geçen ölçü `P(hedef)` (+0,0258) ve onun **%97,4'ü seçim
+#: hiç değişmeden**, salt keskinlikten geliyor (E3'ün tuzağı, §3.58).
+#:
+#: Ayrım önemli: Brier'de geçmek kuponu değiştirmeye yetmiyor, ve bunu
+#: söyleyen §3.19'un dönüşüm oranıdır — 0,01 Brier ≈ +0,6 puan, yani
+#: −0,0013'ün kupon karşılığı +0,08 puan.
 ALTERNATIF_AD = "kalibre_bias"
 ALTERNATIF_KADEME = "bias"
 

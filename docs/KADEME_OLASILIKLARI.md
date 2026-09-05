@@ -106,6 +106,26 @@ sonuç modelin olasılık sıralamasında **kaçıncı** sıradaydı?
   temkinli, (b) 114 haftalık şans, (c) kesit yanlılığı (milli maç haftaları
   dışarıda). **Ayrıştırılmadan §5'in lehte sayıları buna yaslanmamalıdır.**
 
+> **2026-09-05 — ayrıştırıldı.** Açık gerçek ve ölçüldü
+> (`ISTATISTIK_YOL_HARITASI.md` §3.60): oynanan şeklin kesitinde
+> (114 hafta, 14G, 2.000 TL) model %30,2 derken gerçekleşen %41,2 —
+> **+%11,1 [+%2,1, +%20,0]**, sıfır dışında.
+>
+> * **(a) tek başına yetmiyor.** §3.46 hafta içi bağımlılığı ölçtü ve
+>   korpus üst sınırında kuyruk yalnız **%5** şişiyor; açık onun iki katı.
+> * **(c) zayıfladı.** İşaret 4/4 sezonda aynı yönde (+%10,2 · +%19,2 ·
+>   +%13,3 · +%2,6).
+> * **Mekanizma maç düzeyinde:** optimizatörün **banko** maçlarına
+>   atadığı `q` gerçekleşenden **5,6 puan yüksek** (%37,3 ↔ %31,7, Wilson
+>   [%28,6, %35,0] modelin `q`sunu dışarıda bırakıyor). Banko bir sıralama
+>   dilimi değil ayrık bir karardır, yani bulgu ortalamaya dönüş eseri
+>   olamaz.
+> * **Denendi ve yetmedi:** global yeniden kalibrasyon (`kalibre_bias`,
+>   §3.61) — kusur banda özgü, dönüşüm global.
+>
+> Bu paragrafın uyarısı **kalkmadı, daraldı**: açığın *varlığı* artık
+> ölçülü, *kaynağı* hâlâ tam açıklanmış değil.
+
 ---
 
 ## 4. Kademe olasılıkları — asıl tablo

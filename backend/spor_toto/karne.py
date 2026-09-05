@@ -72,6 +72,7 @@ yoktur: aynı haftanın aynı TL'si iki kolda da kullanılır, enflasyon götür
     python -m spor_toto.karne --taban --garanti 14 --butce 2000   # E1
     python -m spor_toto.karne --hedef --garanti 14 --butce 2000   # E2
     python -m spor_toto.karne --omurga BFE --garanti 14 --butce 2000  # E3
+    python -m spor_toto.karne --egri --garanti 14                     # butce egrisi
 """
 from __future__ import annotations
 
@@ -85,6 +86,7 @@ from typing import Any
 from .core import SEMBOLLER
 from .getiri import KOLON_BEDELI
 from .havuz import arsiv_haftalari
+from .ortak import wilson
 from .secim import sistem_secimi
 from .sistem import HEDEF_KADEME, VARSAYILAN_GARANTI
 
@@ -161,11 +163,41 @@ def bootstrap_farki(fark: Sequence[float], tohum: int = 13,
     """
     if not fark:
         return (0.0, 0.0)
+    dag = _bootstrap_dagilimi(fark, tohum, n)
+    return dag[int(0.025 * n)], dag[int(0.975 * n)]
+
+
+def _bootstrap_dagilimi(fark: Sequence[float], tohum: int,
+                        n: int) -> list[float]:
+    """Eşleştirilmiş bootstrap ortalamalarının **sıralı** dağılımı.
+
+    `bootstrap_farki` ile `bootstrap_p_degeri` aynı çekilişi okumak
+    zorundadır; ayrı ayrı örneklenirse aralık ile p-değeri birbirini
+    tutmayabilir ve hangisinin doğru olduğu belli olmaz.
+    """
     rnd = random.Random(tohum)
     m = len(fark)
-    dag = sorted(sum(fark[rnd.randrange(m)] for _ in range(m)) / m
-                 for _ in range(n))
-    return dag[int(0.025 * n)], dag[int(0.975 * n)]
+    return sorted(sum(fark[rnd.randrange(m)] for _ in range(m)) / m
+                  for _ in range(n))
+
+
+def bootstrap_p_degeri(fark: Sequence[float], tohum: int = 13,
+                       n: int = BOOTSTRAP, buyuk_iyi: bool = True) -> float:
+    """Tek yönlü bootstrap p-değeri — `evaluate.bootstrap_farki` ile aynı kalıp.
+
+    `buyuk_iyi=True` ise aday, farkın **pozitif** olmasıyla kazanır ve
+    p-değeri dağılımın sıfırın yanlış tarafında kalan payıdır. `+1 / (n+1)`
+    düzeltmesi sıfır p-değerini engeller (`evaluate.py:670` ile aynı).
+
+    Bu değer **yalnız** çoklu karşılaştırma düzeltmesi (`evaluate.holm`)
+    için vardır; tekil karar hâlâ güven aralığından verilir.
+    """
+    if not fark:
+        return 1.0
+    dag = _bootstrap_dagilimi(fark, tohum, n)
+    yanlis = (sum(1 for f in dag if f <= 0.0) if buyuk_iyi
+              else sum(1 for f in dag if f >= 0.0))
+    return (yanlis + 1) / (n + 1)
 
 
 def _sezon_kirilimi(satirlar: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -344,6 +376,8 @@ def taban_gevsekligi(butce_tl: float = 2000.0,
     hafta = 0
     motor_kolon = tablo_kolon = 0
     kacak_kolon: dict[int, list[float]] = {}
+    haftalar: list[dict[str, Any]] = []
+    sekiller: dict[tuple[int, int, int], int] = {}
     for h in kesit:
         plan = sistem_secimi(h["probs"], butce_tl, garanti=garanti)
         if plan is None:
@@ -369,11 +403,22 @@ def taban_gevsekligi(butce_tl: float = 2000.0,
         ham_toplam += gercek_odul(ham, h["tablo"]) or 0.0
         kacak_kolon.setdefault(kacak, []).append(
             sum(v for k, v in dagilim.items() if k >= HEDEF_KADEME))
+        sekiller[(plan.banko, plan.cift, plan.uclu)] = \
+            sekiller.get((plan.banko, plan.cift, plan.uclu), 0) + 1
+        haftalar.append({
+            "sezon": h["sezon"], "hafta_no": h["hafta"],
+            "kacak": kacak, "kolon": plan.bedel,
+            "maliyet": plan.bedel * KOLON_BEDELI,
+            "gercek_odul": gercek, "taban_odul": taban,
+            "p_hedef": plan.p_hedef,
+            "sekil": (plan.banko, plan.cift, plan.uclu),
+        })
         hafta += 1
     if not hafta or taban_odul <= 0.0:
         return {"hafta": hafta, "maliyet": maliyet, "taban_odul": taban_odul,
                 "gercek_odul": gercek_toplam, "kat": None, "kat_ham": None,
-                "kacak_kolon": {}}
+                "kacak_kolon": {}, "kacak_hafta": {}, "haftalar": haftalar,
+                "sekil": None, "ort_p_hedef": None}
     return {
         "hafta": hafta,
         "maliyet": maliyet,
@@ -389,7 +434,153 @@ def taban_gevsekligi(butce_tl: float = 2000.0,
         "kaplama_farki": motor_kolon / tablo_kolon if tablo_kolon else None,
         "kacak_kolon": {k: sum(v) / len(v)
                         for k, v in sorted(kacak_kolon.items())},
+        # Kaçak SIKLIĞI — `kacak_kolon` yalnız ortalamayı tutuyordu ve
+        # `len(v)` atılıyordu. Ödeyen tek olay `k = 0` olduğu için
+        # (§3.57: kaçak 0'da medyan 1,34×, kaçak 1'de 0,28×) dağılımın
+        # kendisi ortalamadan daha çok şey söylüyor.
+        "kacak_hafta": {k: len(v) for k, v in sorted(kacak_kolon.items())},
+        "sekil": max(sekiller.items(), key=lambda x: x[1])[0]
+        if sekiller else None,
+        "ort_p_hedef": sum(w["p_hedef"] for w in haftalar) / len(haftalar)
+        if haftalar else None,
+        "haftalar": haftalar,
     }
+
+
+def butce_egrisi(garanti: int = 14,
+                 butceler: Sequence[float] = BUTCELER,
+                 referans: float = 2000.0,
+                 hafta_siniri: int | None = None) -> dict[str, Any]:
+    """Bütçe eğrisi — **gerçek kolon ödülüyle** ve ödeyen olayın sıklığıyla.
+
+    ─── Niçin bu kol, ve niçin şimdiye kadar koşulmadı ───────────────────
+
+    §3.57 kendi sonucunu genelleyip şunu yazdı: *"şekli **bütçe** belirliyor,
+    hedef değil; şeklin kendisiyle oynayan kollar (bütçe eğrisi) hedef
+    kademesiyle oynayan koldan **yapısal olarak daha güçlü**."* Buna rağmen
+    E1–E4'ün dördü de tek bir sabit 2.000 TL'de koştu.
+
+    Var olan bütçe eğrisi (`_main`in varsayılan yolu) **garanti tabanına**
+    dayanıyor ve taban 2,39 kat gevşek **ve eğik**: 12+ tutturan kolon
+    sayısı kaçak 0'da 26,8, kaçak 2'de 1,3 iken taban her durumda 1 sayıyor
+    (§3.56). Yani mevcut eğri en çok *iyi giden* haftaları eksik sayıyor —
+    bütçeleri kıyaslamak için tam olarak yanlış cetvel. Bu fonksiyon aynı
+    eğriyi `taban_gevsekligi`nin **gerçek kolon** hattı üzerinde kurar.
+
+    ─── Ölçünün kendisi: kaçaksız hafta, lira başına ─────────────────────
+
+    Ödeyen tek olay `k = 0`'dır (§3.57: kaçak 0'da medyan geri dönüş
+    **1,34×**, kaçak 1'de 0,28×, kaçak 2'de 0,12×). Bütçe sorusu bu yüzden
+    *"daha çok kapsama alınır mı"* değil, **"aynı parayla daha çok kaçaksız
+    hafta alınır mı"**dır:
+
+        kacaksiz_bin_tl = 1.000 × (kaçaksız hafta) / (toplam maliyet)
+
+    Aritmetik iki yönü de mümkün kılıyor ve ölçüm gerekmesinin sebebi bu:
+    kaçak eklemek bedeli **çarpımsal** büyütür (2^çifte·3^üçlü) ama
+    `P(k=0) = Π(1−qᵢ)` çarpanları 1'e yaklaştıkça kazanç yavaşlar. Yani
+    lira başına tutturma bütçeyle **azalıyor** olabilir — öyleyse aynı
+    yıllık parayı çok haftaya yaymak, az haftaya yığmaktan iyidir.
+
+    ─── İki sayı, ve niçin ikisi de veriliyor ────────────────────────────
+
+    ``kacaksiz_bin_tl``
+        Toplulaştırılmış: `1.000 · n₀ / Σmaliyet`. Manşet sayı budur.
+    ``kacaksiz_bin_tl_hafta_ort``
+        Hafta düzeyinde ortalama (`1.000·[k=0]/maliyetₕ`'nin ortalaması).
+        Şekil haftadan haftaya değişebildiği için ikisi birebir aynı
+        değildir; **eşleştirilmiş bootstrap yalnız bunun üzerinde
+        kurulabilir**, çünkü aralık hafta düzeyinde örneklemeyi ister.
+
+    `fark` alanı her bütçenin `referans`a göre eşleştirilmiş farkıdır —
+    yalnız **iki bütçede de ölçülebilen** haftalar üzerinde.
+
+    ─── Durma kuralı (ölçümden ÖNCE yazıldı) ─────────────────────────────
+
+    Varsayılan bütçe ancak bir basamağın `fark` aralığının **tamamı sıfırın
+    üstünde** kalırsa değişir. Aralık sıfırı keserse eğri yayımlanır ve
+    varsayılan 2.000 TL'de kalır.
+
+    Yalnız 14-garantide koşar — `taban_gevsekligi` ile aynı gerekçe: kolon
+    listesi 13-garantide satıcıdadır. Sonuç 13G'ye **taşınmaz** (§3.51'in
+    15,1 katı).
+
+        cd backend && python -m spor_toto.karne --egri --garanti 14
+    """
+    kollar: list[dict[str, Any]] = []
+    hafta_kaydi: dict[float, dict[tuple[str, int], dict[str, Any]]] = {}
+    for tl in butceler:
+        t = taban_gevsekligi(tl, garanti, hafta_siniri)
+        if not t["hafta"]:
+            continue
+        hs: list[dict[str, Any]] = t["haftalar"]
+        hafta_kaydi[tl] = {(w["sezon"], w["hafta_no"]): w for w in hs}
+        kacaksiz = sum(1 for w in hs if w["kacak"] == 0)
+        kollar.append({
+            "butce": tl,
+            "hafta": t["hafta"],
+            "sekil": t["sekil"],
+            "ort_kolon": sum(w["kolon"] for w in hs) / len(hs),
+            "maliyet": t["maliyet"],
+            "kacaksiz_hafta": kacaksiz,
+            "p_kacak_sifir": kacaksiz / len(hs),
+            "ort_p_hedef": t["ort_p_hedef"],
+            "kacak_hafta": t["kacak_hafta"],
+            "gercek_odul": t["gercek_odul"],
+            "gercek_roi": t.get("gercek_roi"),
+            "taban_roi": t.get("taban_roi"),
+            "kat": t.get("kat"),
+            "kacaksiz_bin_tl": 1000.0 * kacaksiz / t["maliyet"]
+            if t["maliyet"] else None,
+            "kacaksiz_bin_tl_hafta_ort": sum(
+                1000.0 * (w["kacak"] == 0) / w["maliyet"] for w in hs
+            ) / len(hs),
+        })
+
+    ref = hafta_kaydi.get(referans)
+    for kol in kollar:
+        if ref is None or kol["butce"] == referans:
+            kol["fark"] = None
+            continue
+        bu = hafta_kaydi[kol["butce"]]
+        ortak = sorted(set(bu) & set(ref))
+        if not ortak:
+            kol["fark"] = None
+            continue
+        d_hit = [1000.0 * (bu[a]["kacak"] == 0) / bu[a]["maliyet"]
+                 - 1000.0 * (ref[a]["kacak"] == 0) / ref[a]["maliyet"]
+                 for a in ortak]
+        d_roi = [(bu[a]["gercek_odul"] - bu[a]["maliyet"]) / bu[a]["maliyet"]
+                 - (ref[a]["gercek_odul"] - ref[a]["maliyet"])
+                 / ref[a]["maliyet"] for a in ortak]
+        alt, ust = bootstrap_farki(d_hit)
+        r_alt, r_ust = bootstrap_farki(d_roi)
+        kol["fark"] = {
+            "ortak_hafta": len(ortak),
+            "kacaksiz_bin_tl": sum(d_hit) / len(d_hit),
+            "kacaksiz_bin_tl_alt": alt, "kacaksiz_bin_tl_ust": ust,
+            "gecti": alt > 0.0,
+            "p": bootstrap_p_degeri(d_hit),
+            "roi": sum(d_roi) / len(d_roi),
+            "roi_alt": r_alt, "roi_ust": r_ust,
+        }
+
+    # Çoklu karşılaştırma: referans dışındaki HER basamak bir adaydır ve
+    # beşinde tekil %95 aralığın aile bazlı hatası ~%23'e çıkar. Faz 0.3
+    # bu düzeltmeyi zorunlu kıldı (§3.44) — `gecti` tekil aralığı okumaya
+    # devam eder, `gecti_holm` yanına yazılır.
+    from .evaluate import holm
+
+    p_ler = {str(k["butce"]): k["fark"]["p"]
+             for k in kollar if k["fark"]}
+    kararlar = holm(p_ler) if p_ler else {}
+    for kol in kollar:
+        if kol["fark"]:
+            kol["fark"]["gecti_holm"] = bool(
+                kararlar.get(str(kol["butce"]), False)
+                and kol["fark"]["gecti"])
+    return {"garanti": garanti, "referans": referans, "kollar": kollar,
+            "holm_aday": len(p_ler)}
 
 
 def hedef_kademe_kiyasi(butce_tl: float = 2000.0,
@@ -514,6 +705,22 @@ def omurga_kiyasi(butce_tl: float = 2000.0,
     Bu yüzden ölçü üç kupon sayısıdır: kolon, `P(hedef)` ve **gerçek kolon
     ödülü**. Kesit ikisinde de aynı haftalardan kurulur (eşleştirme), yani
     BFE'nin kapsamadığı haftalar iki koldan da düşer.
+
+    ─── İş 4: dördüncü ölçü — ISABET (2026-09-05) ────────────────────────
+
+    E3 iki cetvelle karar verdi ve ikisi de sorunluydu: gerçek kolon
+    **ROI** kuyruk ağırlıklıdır ve 64 haftada gürültülüdür; `P(hedef)` ise
+    modelin kendi güvenidir ve farkın %81'i seçim hiç değişmeden geliyordu
+    (`p_ayrisimi`). Sorulmamış olan üçüncüsü **isabetin kendisiydi**:
+    gerçekleşen kaçak sayısı her hafta gözlenir ve ROI'den çok daha az
+    oynaktır.
+
+    `kacak` ve `kacaksiz` alanları bu yüzden eklendi. Ölçünün yönü ters:
+    kaçak **küçük** iyidir, kaçaksız hafta **büyük** iyidir.
+
+    **Kapsama sınırı şimdiden yazılı:** BFE kapsaması 2022/23–2023/24'te
+    sıfır, 2024/25 %100, 2025/26 %87. `n` iki sezon, ve `sezonlar` alanı
+    işaretin sezon sezon tutup tutmadığını ayrı gösterir.
     """
     from .odds import FIYAT_VARSAYILAN
 
@@ -555,12 +762,16 @@ def omurga_kiyasi(butce_tl: float = 2000.0,
             "ort_kolon": _ortalama([x["kolon"] for x in v]),
             "ort_p_hedef": _ortalama([x["p_hedef"] for x in v]),
             "ort_kacak": _ortalama([float(x["kacak"]) for x in v]),
+            "kacaksiz_hafta": sum(1 for x in v if x["kacak"] == 0),
         })
 
     farklar = {}
-    for alan in ("roi", "p_hedef", "kacak"):
-        f = [float(kollar[aday][k][alan]) - float(kollar[ana][k][alan])
-             for k in ortak]
+    for alan in ("roi", "p_hedef", "kacak", "kacaksiz"):
+        def _al(x: dict[str, Any], alan: str = alan) -> float:
+            if alan != "kacaksiz":
+                return float(x[alan])
+            return 1.0 if x["kacak"] == 0 else 0.0
+        f = [_al(kollar[aday][k]) - _al(kollar[ana][k]) for k in ortak]
         alt, ust = bootstrap_farki(f)
         en_iyi = sorted(range(len(ortak)),
                         key=lambda j: -kollar[aday][ortak[j]]["odul"]
@@ -577,10 +788,390 @@ def omurga_kiyasi(butce_tl: float = 2000.0,
     ayni_kupon = sum(1 for k in ortak
                      if kollar[ana][k]["kolon"] == kollar[aday][k]["kolon"]
                      and kollar[ana][k]["kacak"] == kollar[aday][k]["kacak"])
+    # Sezon işareti ayrı: BFE kapsaması 2022/23–2023/24'te SIFIR, yani
+    # havuzlanmış sayı iki sezonu temsil ediyor. Ö3 tam bu sınavda düştü
+    # (§3.21) ve aynı sınav burada da koşmalı.
+    sezonlar: dict[str, dict[str, Any]] = {}
+    for k in ortak:
+        sz = k[0]
+        d = sezonlar.setdefault(sz, {"hafta": 0, "kacak": [], "roi": []})
+        d["hafta"] += 1
+        d["kacak"].append(float(kollar[aday][k]["kacak"]
+                                - kollar[ana][k]["kacak"]))
+        d["roi"].append(kollar[aday][k]["roi"] - kollar[ana][k]["roi"])
+    sezon_ozeti = [{"sezon": sz, "hafta": d["hafta"],
+                    "d_kacak": _ortalama(d["kacak"]),
+                    "d_roi": _ortalama(d["roi"])}
+                   for sz, d in sorted(sezonlar.items())]
     return {"butce": butce_tl, "garanti": garanti, "omurga": ana,
             "aday": aday, "hafta": len(ortak), "kollar": ozet,
             "farklar": farklar, "ayni_sekil_ve_kacak": ayni_kupon,
+            "sezonlar": sezon_ozeti,
             "p_ayrisimi": p_ayrisimi(butce_tl, garanti, aday, ana)}
+
+
+def kapsama_acigi(butce_tl: float = 2000.0,
+                  garanti: int = 14,
+                  dilim: int = 3) -> dict[str, Any]:
+    """`KADEME_OLASILIKLARI.md` §3'ün açıklanmamış tek yönlü sapmasını ayrıştırır.
+
+    ─── Açık nedir ──────────────────────────────────────────────────────
+
+    Gözlenen kapsama modelin dediğini **her bütçede** aşıyor: 162 kolonda
+    model `P(≥12)` %28,85 derken gözlenen %39,5. Belge üç aday sayıyor —
+    (a) bağımsızlık varsayımı fazla temkinli, (b) 114 haftalık şans,
+    (c) kesit yanlılığı — ve *"ayrıştırılmadan §5'in lehte sayıları buna
+    yaslanmamalıdır"* diyor.
+
+    ─── (a) aradan geçen sürede büyük ölçüde elendi, ama TAM değil ───────
+
+    §3.46 hafta içi bağımlılığı ölçtü: korpusta ortalama ikili artık
+    korelasyonu −0,00009 [−0,00102, +0,00080] ve korpus **üst sınırında**
+    kuyruk yalnız **%5** şişiyor. Ama o sonucu taşıyan korpustur; kupon
+    kesiti tek başına ±%82'ye izin veriyordu. Yani (a) *korpus sınırının
+    kupona taşındığı varsayımıyla* eleniyor. Bu fonksiyon açığın
+    büyüklüğünü ölçer ki o varsayımın ne kadarını taşıması gerektiği
+    görülsün.
+
+    ─── Ne ölçülüyor ────────────────────────────────────────────────────
+
+    Modelin ex-ante `P(k ≤ eşik)`i bir **hafta düzeyi tahmindir** ve
+    gerçekleşen `[k ≤ eşik]` onun sonucudur. İkisinin farkı (gerçekleşen −
+    model) bu tahminin kalibrasyonudur; eşleştirilmiş bootstrap aralığı
+    sıfırı kesmiyorsa açık gürültü değildir.
+
+    Üç kırılım verilir ve üçü de **karar için** anlamlıdır:
+
+    ``sezon``
+        Açık tek bir sezondan mı geliyor (kesit yanlılığı, aday c)?
+    ``favori_gucu``
+        Haftanın ortalama favori olasılığına göre dilim. A5'in
+        favori–sürpriz yanlılığı bu eksende ölçülmüştü; açık favorinin
+        güçlü olduğu haftalarda büyüyorsa **kalibrasyon** adayı güçlenir.
+    ``model_p``
+        Modelin kendi `P(k ≤ eşik)`ine göre dilim. Bu kırılım ayrıca
+        **hafta seçimi** sorusunu cevaplar: ex-ante `P` haftalar arasında
+        kalibreyse, yüksek `P` haftalarına yığmak aritmetik olarak çalışır.
+
+        cd backend && python -m spor_toto.karne --kapsama --garanti 14
+    """
+    from .sistem import HEDEF_KADEME as _hk
+    from .sistem import kacak_esigi
+
+    esik = kacak_esigi(garanti, _hk)
+    satirlar: list[dict[str, Any]] = []
+    maclar: list[dict[str, Any]] = []
+    for h in kupon_kesiti():
+        plan = sistem_secimi(h["probs"], butce_tl, garanti=garanti)
+        if plan is None:
+            continue
+        kacak = sum(1 for sc, c in zip(plan.secimler, h["gercek"])
+                    if c not in sc)
+        satirlar.append({
+            "sezon": h["sezon"], "hafta": h["hafta"],
+            "model_p": plan.p_hedef,
+            "gerceklesen": 1.0 if kacak <= esik else 0.0,
+            "kacak": kacak,
+            "favori_gucu": _ortalama([max(p.values()) for p in h["probs"]]),
+        })
+        for sc, c, pr in zip(plan.secimler, h["gercek"], h["probs"]):
+            q = max(0.0, 1.0 - sum(pr.get(x, 0.0) for x in sc))
+            maclar.append({"q": q, "kacti": 0.0 if c in sc else 1.0,
+                           "seviye": len(sc), "sezon": h["sezon"]})
+    if not satirlar:
+        raise KarneHatasi("kesit bos")
+
+    def _ozet(alt: Sequence[dict[str, Any]]) -> dict[str, Any]:
+        f = [x["gerceklesen"] - x["model_p"] for x in alt]
+        lo, hi = bootstrap_farki(f)
+        return {
+            "hafta": len(alt),
+            "model_p": _ortalama([x["model_p"] for x in alt]),
+            "gerceklesen": _ortalama([x["gerceklesen"] for x in alt]),
+            "acik": _ortalama(f), "alt": lo, "ust": hi,
+            "sifir_disinda": lo > 0.0 or hi < 0.0,
+        }
+
+    def _dilimle(alan: str) -> list[dict[str, Any]]:
+        sirali = sorted(satirlar, key=lambda x: x[alan])
+        boy = len(sirali)
+        out = []
+        for i in range(dilim):
+            parca = sirali[i * boy // dilim:(i + 1) * boy // dilim]
+            if not parca:
+                continue
+            out.append({
+                "dilim": i + 1,
+                "alt_sinir": parca[0][alan], "ust_sinir": parca[-1][alan],
+                **_ozet(parca),
+            })
+        return out
+
+    return {
+        "butce": butce_tl, "garanti": garanti, "esik": esik,
+        "tumu": _ozet(satirlar),
+        "sezon": [{"sezon": sz,
+                   **_ozet([x for x in satirlar if x["sezon"] == sz])}
+                  for sz in sorted({x["sezon"] for x in satirlar})],
+        "favori_gucu": _dilimle("favori_gucu"),
+        "model_p": _dilimle("model_p"),
+        # Maç düzeyi: optimizatörün kullandığı `q` ile GERÇEKLEŞEN kaçma
+        # oranı. Hafta düzeyi kırılımlar düz çıkarsa mekanizma buradadır —
+        # `q` bir hafta özelliği değil, **sembol** özelliğidir.
+        "q_dilim": _q_dilimleri(maclar, dilim),
+        # Aynı soru, **sıralamadan bağımsız** kesitte: banko ↔ çifte.
+        # `q_dilim` tam da sınadığı değişkene göre sıralıyor ve o sıralama
+        # `q`nun gürültüsünü uçlara taşır (ortalamaya dönüş). Seviye ise
+        # optimizatörün **ayrık kararıdır**; aynı sapma orada da görünüyorsa
+        # bulgu sıralama eseri olamaz.
+        "seviye": _seviye_kirilimi(maclar),
+        "mac": len(maclar),
+        # §3.46'nın korpus üst sınırı: bağımlılık kuyruğu en fazla bu kadar
+        # şişirebilir. Açık bundan büyükse bağımsızlık adayı açığı TEK
+        # BAŞINA açıklayamaz.
+        "bagimlilik_tavani": 0.05,
+    }
+
+
+def _seviye_kirilimi(maclar: Sequence[dict[str, Any]]
+                     ) -> list[dict[str, Any]]:
+    """`q` ↔ gerçekleşen, **işaret sayısına** göre — sıralama eseri değil.
+
+    `_q_dilimleri` sınadığı değişkenin kendisine göre sıralıyor ve bu,
+    ortalamaya dönüş üretir: `q`nun kestirim gürültüsü pozitif olan maçlar
+    üst dilime toplanır, gerçekleşen oran o dilimde `q`nun altında çıkar —
+    sapma olmasa bile. Bu kırılım aynı soruyu optimizatörün **ayrık**
+    kararıyla sorar (banko / çifte), yani bucket sınırları `q`nun
+    gürültüsünden gelmez.
+    """
+    out: list[dict[str, Any]] = []
+    for sev, ad in ((1, "banko"), (2, "cifte")):
+        parca = [m for m in maclar if m["seviye"] == sev]
+        if not parca:
+            continue
+        q_ort = _ortalama([m["q"] for m in parca])
+        gercek = _ortalama([m["kacti"] for m in parca])
+        lo, hi = wilson(sum(int(m["kacti"]) for m in parca), len(parca))
+        out.append({
+            "seviye": sev, "ad": ad, "mac": len(parca),
+            "q": q_ort, "gerceklesen": gercek, "acik": gercek - q_ort,
+            "wilson_alt": lo, "wilson_ust": hi,
+            "sifir_disinda": not (lo <= q_ort <= hi),
+        })
+    return out
+
+
+def _q_dilimleri(maclar: Sequence[dict[str, Any]],
+                 dilim: int) -> list[dict[str, Any]]:
+    """Kaçma olasılığı `q` ↔ **gerçekleşen** kaçma oranı, `q` dilimlerinde.
+
+    Üçlüler dışarıda: `q = 0` tanım gereği ve asla kaçmazlar (`secim`
+    modül başlığı), yani dilimlemede yalnız gürültü yaparlardı. Kalan
+    banko ve çifteler kuponun **karar verilen** maçlarıdır.
+
+    Bu, kapsama açığının mekanizma sınavıdır: hafta düzeyi kırılımlar düz
+    çıkarken burada tek yönlü bir sapma varsa açık maç seçiminden değil
+    **sembol olasılığından** geliyor demektir.
+    """
+    kararli = sorted((m for m in maclar if m["q"] > 0.0),
+                     key=lambda m: m["q"])
+    boy = len(kararli)
+    out: list[dict[str, Any]] = []
+    for i in range(dilim):
+        parca = kararli[i * boy // dilim:(i + 1) * boy // dilim]
+        if not parca:
+            continue
+        q_ort = _ortalama([m["q"] for m in parca])
+        gercek = _ortalama([m["kacti"] for m in parca])
+        lo, hi = wilson(sum(int(m["kacti"]) for m in parca), len(parca))
+        out.append({
+            "dilim": i + 1, "mac": len(parca),
+            "alt_sinir": parca[0]["q"], "ust_sinir": parca[-1]["q"],
+            "q": q_ort, "gerceklesen": gercek, "acik": gercek - q_ort,
+            "wilson_alt": lo, "wilson_ust": hi,
+            "sifir_disinda": not (lo <= q_ort <= hi),
+        })
+    return out
+
+
+def kalibre_kesit(kesit: Sequence[dict[str, Any]],
+                  kademe: str = "bias") -> list[dict[str, Any]]:
+    """Kupon kesitinin olasılıklarını **sezon dışarıda bırakmalı** kalibre eder.
+
+    Kesit aynı kalır (aynı haftalar, aynı sonuçlar, aynı ikramiye tablosu);
+    değişen tek şey `probs`tur. Kalibrasyon her hafta için o haftanın
+    **bütün sezonu** eğitimden çıkarılarak kestirilir — `arena`nın
+    `KUPON_KORPUS_KESISIMI` uyarısının istediği budur: kupon maçlarının
+    %71'i korpusta da var, hafta dışarıda bırakmak yetmez.
+
+    `bias` basamağı yalnız `probs` okur (sıcaklık + iki sınıf sabiti), o
+    yüzden özellik satırları nötr geçilir; üst basamaklar bu yoldan
+    ölçülemez ve `KADEMELER` sırası bunu zorlar.
+    """
+    from .egitim import korpus_haftalari, sezon_anahtari
+    from .recalibrate import KADEMELER, KalibreTahminci
+
+    if KADEMELER.index(kademe) > KADEMELER.index("bias"):
+        raise ValueError(
+            f"{kademe} basamagi ozellik sutunu ister; bu yol yalniz "
+            "probs okuyan basamaklar icindir (sicaklik, bias)")
+    korpus = korpus_haftalari()
+    onbellek: dict[Any, KalibreTahminci] = {}
+    out: list[dict[str, Any]] = []
+    for h in kesit:
+        anahtar = sezon_anahtari(h["sezon"])
+        tahminci = onbellek.get(anahtar)
+        if tahminci is None:
+            tahminci = KalibreTahminci(kademe)
+            tahminci.egit([w for w in korpus
+                           if sezon_anahtari(w["sezon"]) != anahtar])
+            onbellek[anahtar] = tahminci
+        yeni_probs = tahminci.tahmin({
+            "probs": h["probs"],
+            "ozellikler": [{} for _ in h["probs"]],
+        })
+        out.append({**h, "probs": yeni_probs})
+    return out
+
+
+def kalibrasyon_kiyasi(butce_tl: float = 2000.0,
+                       garanti: int = 14,
+                       kademe: str = "bias") -> dict[str, Any]:
+    """İş 1: omurga olasılığını **karar cetveliyle** kıyasla — Brier'de değil.
+
+    ─── Niçin bu ölçüm, ve niçin Brier onu veremiyor ─────────────────────
+
+    `KADEME_OLASILIKLARI.md` §3'te açıklanmamış tek yönlü bir sapma duruyor:
+    **gözlenen kapsama modelin dediğini her bütçede aşıyor** (162 kolonda
+    model %28,85, gözlenen %39,5). Belge üç aday sayıyor — bağımsızlık,
+    şans, kesit yanlılığı — ve *"§5'in lehte sayıları buna yaslanmamalıdır"*
+    diye uyarıyor. Bağımsızlık §3.46'da büyük ölçüde elendi (korpus üst
+    sınırında kuyruk yalnız %5 şişiyor). Belgenin **saymadığı** dördüncü
+    aday ölçülmüş bir olgudur: A5'in favori–sürpriz yanlılığı — piyasanın
+    %70–80 dediği maçlar gerçekte **%78,9**, sapma tek yönlü ve düzenli.
+
+    Banko kararını tam olarak o bant verir. `q = 1 − p₁` sistematik olarak
+    fazla yüksekse `sistem_secimi` **gereğinden fazla kapsama satın alır**:
+    çiftenin yeteceği yere üçlü koyar. Aynı parayla daha az maç kapanır ve
+    bu doğrudan tutturma olasılığıdır.
+
+    Brier bunu göremez, ve bunu söyleyen sayı deponun kendisinde: §3.19
+    dönüşümü **0,01 Brier ≈ +0,6 puan** ölçtü, yani `kalibre_bias`ın
+    −0,0013'ü Brier ölçeğinde +0,08 puan eder. Karar cetveli farklı bir
+    şey sorar: **şekil değişiyor mu, ve değişince gerçekleşen kaçak
+    düşüyor mu?**
+
+    ─── Ölçü: modelin kendi sayısı DEĞİL, gerçekleşen ────────────────────
+
+    Üç sayı gerçekleşendir (`kacak`, `kacaksiz_hafta`, gerçek kolon
+    `roi`), biri modelin kendisidir (`p_hedef`) ve **o tek başına kanıt
+    sayılmaz** — E3 bunu ölçtü: BFE farkının %81'i seçim hiç değişmeden,
+    yalnız keskinlikten geliyordu (§3.58). `p_ayrisimi` alanı aynı
+    ayrıştırmayı burada da yapar.
+
+    ─── Durma kuralı (ölçümden ÖNCE yazıldı) ─────────────────────────────
+
+    `kalibre_bias` omurga olur ancak **kaçaksız hafta** farkının VE gerçek
+    kolon ROI farkının eşleştirilmiş hafta-bootstrap %95 aralığı **tamamı
+    sıfırın üstünde** kalırsa. Yalnız `P(hedef)` büyümesi geçmez. Aralık
+    sıfırı keserse manşet `piyasa` kalır ve `tahmin.py`nin gerekçesi
+    **güncel kesitle** yeniden yazılır.
+
+        cd backend && python -m spor_toto.karne --kalibrasyon --garanti 14
+    """
+    from .sistem import HEDEF_KADEME as _hk
+    from .sistem import kacak_esigi
+
+    ham = kupon_kesiti()
+    kesitler = {"piyasa": ham, f"kalibre_{kademe}": kalibre_kesit(ham, kademe)}
+    kollar: dict[str, dict[tuple[str, int], dict[str, Any]]] = {}
+    for ad, kesit in kesitler.items():
+        kol: dict[tuple[str, int], dict[str, Any]] = {}
+        for h in kesit:
+            plan = sistem_secimi(h["probs"], butce_tl, garanti=garanti)
+            if plan is None:
+                continue
+            dag = gercek_kolon_dagilimi(plan.secimler, h["gercek"])
+            if not dag:
+                continue
+            olcek = plan.bedel / sum(dag.values())
+            maliyet = plan.bedel * KOLON_BEDELI
+            odul = gercek_odul({k: v * olcek for k, v in dag.items()},
+                               h["tablo"]) or 0.0
+            kol[(h["sezon"], h["hafta"])] = {
+                "maliyet": maliyet, "odul": odul, "roi": odul / maliyet,
+                "kolon": plan.bedel, "p_hedef": plan.p_hedef,
+                "secimler": plan.secimler,
+                "kacak": sum(1 for sc, c in zip(plan.secimler, h["gercek"])
+                             if c not in sc),
+            }
+        kollar[ad] = kol
+    adlar = list(kesitler)
+    ortak = sorted(set(kollar[adlar[0]]) & set(kollar[adlar[1]]))
+
+    ozet = []
+    for ad in adlar:
+        v = [kollar[ad][k] for k in ortak]
+        ozet.append({
+            "kaynak": ad, "hafta": len(v),
+            "roi": (sum(x["odul"] for x in v) / sum(x["maliyet"] for x in v)
+                    if v else 0.0),
+            "kacaksiz_hafta": sum(1 for x in v if x["kacak"] == 0),
+            "ort_kacak": _ortalama([float(x["kacak"]) for x in v]),
+            "ort_kolon": _ortalama([x["kolon"] for x in v]),
+            "ort_p_hedef": _ortalama([x["p_hedef"] for x in v]),
+            "odul_alan_hafta": sum(1 for x in v if x["odul"] > 0),
+        })
+
+    a, b = adlar
+    farklar = {}
+    for alan in ("roi", "kacak", "p_hedef", "kacaksiz"):
+        def _al(x: dict[str, Any], alan: str = alan) -> float:
+            return 1.0 if alan == "kacaksiz" and x["kacak"] == 0 else (
+                0.0 if alan == "kacaksiz" else float(x[alan]))
+        f = [_al(kollar[b][k]) - _al(kollar[a][k]) for k in ortak]
+        alt, ust = bootstrap_farki(f)
+        en_iyi = sorted(range(len(ortak)),
+                        key=lambda j: -kollar[b][ortak[j]]["odul"]
+                        )[:KUYRUK_HAFTA]
+        ks = [x for j, x in enumerate(f) if j not in set(en_iyi)]
+        kalt, kust = bootstrap_farki(ks)
+        farklar[alan] = {
+            "ort": _ortalama(f), "alt": alt, "ust": ust,
+            "sifir_disinda": alt > 0.0 or ust < 0.0,
+            "kuyruksuz_ort": _ortalama(ks),
+            "kuyruksuz_alt": kalt, "kuyruksuz_ust": kust,
+            "kuyruksuz_sifir_disinda": kalt > 0.0 or kust < 0.0,
+        }
+
+    # E3 tuzagina karsi: P(hedef) farkinin ne kadari secim DEGISMEDEN?
+    esik = kacak_esigi(garanti, _hk)
+    kes_a = {(h["sezon"], h["hafta"]): h for h in kesitler[a]}
+    kes_b = {(h["sezon"], h["hafta"]): h for h in kesitler[b]}
+    sabit, serbest = [], []
+    for k in ortak:
+        sec_a = kollar[a][k]["secimler"]
+        sabit.append(_p_hedef(sec_a, kes_b[k]["probs"], esik)
+                     - _p_hedef(sec_a, kes_a[k]["probs"], esik))
+        serbest.append(kollar[b][k]["p_hedef"] - kollar[a][k]["p_hedef"])
+    o_sabit, o_serbest = _ortalama(sabit), _ortalama(serbest)
+
+    ayni = sum(1 for k in ortak
+               if kollar[a][k]["kolon"] == kollar[b][k]["kolon"]
+               and kollar[a][k]["kacak"] == kollar[b][k]["kacak"])
+    degisen = sum(1 for k in ortak
+                  if kollar[a][k]["secimler"] != kollar[b][k]["secimler"])
+    return {
+        "butce": butce_tl, "garanti": garanti, "kademe": kademe,
+        "hafta": len(ortak), "kollar": ozet, "farklar": farklar,
+        "ayni_sekil_ve_kacak": ayni, "isareti_degisen_hafta": degisen,
+        "p_ayrisimi": {"hafta": len(sabit), "serbest": o_serbest,
+                       "sekil_sabit": o_sabit,
+                       "keskinlik_payi": (o_sabit / o_serbest)
+                       if o_serbest else None},
+        "gecti": (farklar["kacaksiz"]["alt"] > 0.0
+                  and farklar["roi"]["alt"] > 0.0),
+    }
 
 
 def _p_hedef(secimler: Sequence[Sequence[str]],
@@ -653,8 +1244,17 @@ def _main(argv: list[str] | None = None) -> int:  # pragma: no cover - elle
                     help="tabanin gevsekligini olc (yalniz 14-garanti)")
     ap.add_argument("--hedef", action="store_true",
                     help="E2: hedef kademeyi paradan sec (yalniz 14-garanti)")
+    ap.add_argument("--egri", action="store_true",
+                    help="butce egrisi GERCEK kolon oduluyle (yalniz 14-garanti)")
+    ap.add_argument("--hafta-siniri", type=int, default=None,
+                    help="ilk N haftayla sinirla (deneme kosumu)")
     ap.add_argument("--omurga", metavar="ADAY", default=None,
                     help="E3: omurga fiyatini kupon duzeyinde kiyasla (or. BFE)")
+    ap.add_argument("--kalibrasyon", metavar="KADEME", nargs="?",
+                    const="bias", default=None,
+                    help="omurga olasiligini karar cetveliyle kiyasla (bias)")
+    ap.add_argument("--kapsama", action="store_true",
+                    help="model P(k<=esik) ile gerceklesen arasindaki acik")
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args(argv)
 
@@ -681,6 +1281,145 @@ def _main(argv: list[str] | None = None) -> int:  # pragma: no cover - elle
             print(f"  {k:>7} {v:>12.1f}")
         return 0
 
+    if a.egri:
+        e = butce_egrisi(a.garanti, hafta_siniri=a.hafta_siniri)
+        if a.json:
+            print(json.dumps(e, ensure_ascii=False, default=str))
+            return 0
+        print(f"\nButce egrisi — {e['garanti']}-garanti · GERCEK kolon odulu")
+        print("  odeyen tek olay k=0 (§3.57: k=0 medyan 1,34x, k=1 0,28x)")
+        print(f"\n{'butce':>8}{'sekil':>10}{'kolon':>7}{'hafta':>7}"
+              f"{'k=0':>6}{'P(k=0)':>9}{'ort P(hedef)':>14}"
+              f"{'gercek ROI':>12}{'k=0/1000TL':>12}")
+        for k in e["kollar"]:
+            sk = "/".join(str(x) for x in k["sekil"]) if k["sekil"] else "-"
+            print(f"{k['butce']:>8,.0f}{sk:>10}{k['ort_kolon']:>7.0f}"
+                  f"{k['hafta']:>7}{k['kacaksiz_hafta']:>6}"
+                  f"{k['p_kacak_sifir']:>9.1%}{k['ort_p_hedef']:>14.4f}"
+                  f"{k['gercek_roi']:>12.1%}{k['kacaksiz_bin_tl']:>12.4f}")
+        print(f"\nESLESTIRILMIS FARK — referans {e['referans']:,.0f} TL "
+              f"(hafta duzeyi bootstrap %95)")
+        print(f"{'butce':>8}{'ortak':>7}{'d k=0/1000TL':>15}{'%95 aralik':>26}"
+              f"{'tekil':>7}{'p':>9}{'HOLM':>7}{'d ROI':>10}")
+        for k in e["kollar"]:
+            f = k["fark"]
+            if not f:
+                continue
+            aralik = f"[{f['kacaksiz_bin_tl_alt']:+.4f}, " \
+                     f"{f['kacaksiz_bin_tl_ust']:+.4f}]"
+            print(f"{k['butce']:>8,.0f}{f['ortak_hafta']:>7}"
+                  f"{f['kacaksiz_bin_tl']:>+15.4f}{aralik:>26}"
+                  f"{'EVET' if f['gecti'] else 'hayir':>7}{f['p']:>9.4f}"
+                  f"{'EVET' if f['gecti_holm'] else 'hayir':>7}"
+                  f"{f['roi']:>+10.1%}")
+        print(f"  ({e['holm_aday']} aday, Holm–Bonferroni; tekil %95 bes "
+              "adayda ~%23 aile hatasi verir)")
+        print("\n  kacak histogrami (hafta sayisi)")
+        for k in e["kollar"]:
+            hist = " ".join(f"{a}:{b}" for a, b in k["kacak_hafta"].items())
+            print(f"  {k['butce']:>7,.0f} TL  {hist}")
+        print("\nDURMA KURALI (olcumden ONCE yazildi): varsayilan butce ancak "
+              "bir\nbasamagin farki %95 araligin TAMAMIYLA sifirin ustunde "
+              "kalirsa degisir\n(ve bes aday oldugu icin Holm'dan da "
+              "gecmelidir).")
+        print("Yalniz 14-garanti. Sonuc 13G'ye TASINMAZ (§3.51, 15,1 kat).")
+        return 0
+
+    if a.kapsama:
+        g = kapsama_acigi(a.butce or 2000.0, a.garanti)
+        if a.json:
+            print(json.dumps(g, ensure_ascii=False, default=str))
+            return 0
+        t = g["tumu"]
+        print(f"\nKapsama acigi — {g['garanti']}-garanti · "
+              f"{g['butce']:,.0f} TL · hedef P(k <= {g['esik']}) · "
+              f"{t['hafta']} hafta")
+        print(f"  model diyor  : {t['model_p']:.1%}")
+        print(f"  gerceklesen  : {t['gerceklesen']:.1%}")
+        print(f"  ACIK         : {t['acik']:+.1%}  "
+              f"[{t['alt']:+.1%}, {t['ust']:+.1%}]  "
+              f"{'SIFIR DISINDA' if t['sifir_disinda'] else 'sifiri kesiyor'}")
+        print(f"  §3.46 bagimlilik tavani: kuyrugu en fazla "
+              f"%{g['bagimlilik_tavani'] * 100:.0f} sisirebilir")
+        print(f"\nMAC DUZEYI — optimizatorun q'su ile GERCEKLESEN kacma "
+              f"({g['mac']:,} mac; ucluler haric, q=0)")
+        print(f"{'q araligi':>16}{'mac':>7}{'model q':>10}{'gercek':>9}"
+              f"{'acik':>9}{'Wilson %95':>22}{'q disinda':>11}")
+        for r in g["q_dilim"]:
+            etiket = f"{r['alt_sinir']:.3f}-{r['ust_sinir']:.3f}"
+            aralik = f"[{r['wilson_alt']:.1%}, {r['wilson_ust']:.1%}]"
+            print(f"{etiket:>16}{r['mac']:>7}{r['q']:>10.1%}"
+                  f"{r['gerceklesen']:>9.1%}{r['acik']:>+9.1%}{aralik:>22}"
+                  f"{'EVET' if r['sifir_disinda'] else 'hayir':>11}")
+        print("  UYARI: dilimler sinanan degiskene gore siralaniyor; "
+              "ortalamaya donus\n  ayni imzayi uretebilir. Siralamadan "
+              "bagimsiz kesit asagida.")
+        print("\nISARET SAYISINA GORE (siralama eseri OLAMAZ — ayrik karar)")
+        print(f"{'seviye':>16}{'mac':>7}{'model q':>10}{'gercek':>9}"
+              f"{'acik':>9}{'Wilson %95':>22}{'q disinda':>11}")
+        for r in g["seviye"]:
+            aralik = f"[{r['wilson_alt']:.1%}, {r['wilson_ust']:.1%}]"
+            print(f"{r['ad']:>16}{r['mac']:>7}{r['q']:>10.1%}"
+                  f"{r['gerceklesen']:>9.1%}{r['acik']:>+9.1%}{aralik:>22}"
+                  f"{'EVET' if r['sifir_disinda'] else 'hayir':>11}")
+        for ad, baslik in (("sezon", "SEZON"), ("favori_gucu", "FAVORI GUCU"),
+                           ("model_p", "MODEL P")):
+            print(f"\n{baslik}")
+            print(f"{'grup':>12}{'hafta':>7}{'model':>9}{'gercek':>9}"
+                  f"{'acik':>9}{'%95 aralik':>22}{'sifir disi':>12}")
+            for r in g[ad]:
+                etiket = (str(r["sezon"]) if ad == "sezon"
+                          else f"{r['alt_sinir']:.3f}-{r['ust_sinir']:.3f}")
+                aralik = f"[{r['alt']:+.1%}, {r['ust']:+.1%}]"
+                print(f"{etiket:>12}{r['hafta']:>7}{r['model_p']:>9.1%}"
+                      f"{r['gerceklesen']:>9.1%}{r['acik']:>+9.1%}"
+                      f"{aralik:>22}"
+                      f"{'EVET' if r['sifir_disinda'] else 'hayir':>12}")
+        return 0
+
+    if a.kalibrasyon:
+        c = kalibrasyon_kiyasi(a.butce or 2000.0, a.garanti,
+                               kademe=a.kalibrasyon)
+        if a.json:
+            print(json.dumps(c, ensure_ascii=False, default=str))
+            return 0
+        print(f"\nKalibrasyon — piyasa ↔ kalibre_{c['kademe']} · "
+              f"{c['garanti']}-garanti · {c['butce']:,.0f} TL · "
+              f"{c['hafta']} hafta")
+        print(f"\n{'kaynak':>16}{'hafta':>7}{'geri donus':>12}{'odul>0':>8}"
+              f"{'kacaksiz':>10}{'ort kacak':>11}{'ort kolon':>11}"
+              f"{'ort P':>9}")
+        for k in c["kollar"]:
+            print(f"{k['kaynak']:>16}{k['hafta']:>7}{k['roi']:>11.1%}"
+                  f"{k['odul_alan_hafta']:>8}{k['kacaksiz_hafta']:>10}"
+                  f"{k['ort_kacak']:>11.2f}{k['ort_kolon']:>11.0f}"
+                  f"{k['ort_p_hedef']:>9.4f}")
+        print(f"\nESLESTIRILMIS FARK (hafta duzeyi bootstrap %95; "
+              f"kuyruksuz = en iyi {KUYRUK_HAFTA} hafta cikarilmis)")
+        print(f"{'olcu':>12}{'ort':>11}{'%95 aralik':>26}{'sifir disi':>12}"
+              f"{'kuyruksuz':>11}{'sifir disi':>12}")
+        for ad, f in c["farklar"].items():
+            aralik = f"[{f['alt']:+.5f}, {f['ust']:+.5f}]"
+            print(f"{ad:>12}{f['ort']:>+11.5f}{aralik:>26}"
+                  f"{'EVET' if f['sifir_disinda'] else 'hayir':>12}"
+                  f"{f['kuyruksuz_ort']:>+11.5f}"
+                  f"{'EVET' if f['kuyruksuz_sifir_disinda'] else 'hayir':>12}")
+        pa = c["p_ayrisimi"]
+        print("\nE3 TUZAGI — P(hedef) farkinin ne kadari secim DEGISMEDEN?")
+        print(f"  serbest (secim degisebilir): {pa['serbest']:+.5f}")
+        print(f"  sekil sabit (salt keskinlik): {pa['sekil_sabit']:+.5f}")
+        if pa["keskinlik_payi"] is not None:
+            print(f"  keskinlik payi             : {pa['keskinlik_payi']:.1%}")
+        print(f"\nisareti degisen hafta: {c['isareti_degisen_hafta']}/"
+              f"{c['hafta']} · ayni sekil VE ayni kacak: "
+              f"{c['ayni_sekil_ve_kacak']}/{c['hafta']}")
+        print("\nDURMA KURALI (olcumden ONCE yazildi): omurga ancak KACAKSIZ "
+              "hafta VE\ngercek kolon ROI farklarinin ikisi de %95 araligin "
+              "TAMAMIYLA sifirin\nustunde kalirsa degisir. Yalniz P(hedef) "
+              "buyumesi GECMEZ.")
+        print(f"\nVERDIKT: {'GECTI' if c['gecti'] else 'GECMEDI'}")
+        return 0
+
     if a.omurga:
         o = omurga_kiyasi(a.butce or 2000.0, a.garanti, aday=a.omurga)
         if a.json:
@@ -696,6 +1435,11 @@ def _main(argv: list[str] | None = None) -> int:  # pragma: no cover - elle
                   f"{k['roi']:>11.1%}{k['odul_alan_hafta']:>8}"
                   f"{k['ort_kolon']:>11.0f}{k['ort_p_hedef']:>8.4f}"
                   f"{k['ort_kacak']:>11.2f}")
+        print(f"\nSEZON ISARETI ({o['aday']} kapsamasi sezona gore degisir)")
+        print(f"{'sezon':>10}{'hafta':>7}{'d kacak':>10}{'d ROI':>10}")
+        for sz in o["sezonlar"]:
+            print(f"{sz['sezon']:>10}{sz['hafta']:>7}{sz['d_kacak']:>+10.3f}"
+                  f"{sz['d_roi']:>+10.1%}")
         print(f"\nayni sekil VE ayni kacak: {o['ayni_sekil_ve_kacak']}/"
               f"{o['hafta']} hafta")
         print(f"\nESLESTIRILMIS FARK ({o['aday']} − {o['omurga']}), "
@@ -715,6 +1459,14 @@ def _main(argv: list[str] | None = None) -> int:  # pragma: no cover - elle
         if ay["keskinlik_payi"] is not None:
             print(f"  -> farkin %{100 * ay['keskinlik_payi']:.0f}'i SECIM "
                   "DEGISMEDEN, yalnizca olasiligin keskinliginden geliyor")
+        kk, kc = o["farklar"]["kacak"], o["farklar"]["kacaksiz"]
+        print("\nDURMA KURALI (olcumden ONCE yazildi): omurga ancak "
+              "GERCEKLESEN kacak\nfarki %95 araligin TAMAMIYLA sifirin "
+              "ALTINDA kalirsa degisir. P(hedef) buyumesi GECMEZ.")
+        print(f"VERDIKT: "
+              f"{'GECTI' if kk['ust'] < 0.0 else 'GECMEDI'}"
+              f"  (kacaksiz hafta farki {kc['ort']:+.5f} "
+              f"[{kc['alt']:+.5f}, {kc['ust']:+.5f}])")
         return 0
 
     if a.hedef:
@@ -860,6 +1612,28 @@ def canli_hafta(sezon: str, hafta: int,
     }
 
 
+def _basabas_kacak(tablo: dict[int, dict[str, Any]], garanti: int,
+                   maliyet: float) -> int | None:
+    """Hangi kaçak seviyesine kadar garanti tabanı maliyeti karşılıyor.
+
+    Taban `k` kaçakta **bir** kolonu `garanti − k` kademesinde sayar. Bu
+    fonksiyon o kolonun ödülünün maliyeti karşıladığı **en büyük** `k`'yi
+    döndürür; hiçbiri karşılamıyorsa `None`.
+
+    Sayı elle yazılmaz: `maliyet` `getiri.KOLON_BEDELI`den, ödül haftanın
+    **kendi** resmî tablosundan gelir. İkisinden biri değişirse bu sayı da
+    değişir — bekçisi `test_karne.py::test_basabas_kacak_ELLE_YAZILMAZ`.
+
+    Ölçülen alt sınırdır (`gercek_kolon_dagilimi` 2,39 kat gevşek olduğunu
+    gösterdi, §3.56), yani gerçek başabaş seviyesi bundan **büyük** olabilir.
+    """
+    en_iyi: int | None = None
+    for k in range(garanti - HEDEF_KADEME + 1):
+        if _odul(tablo, garanti - k) >= maliyet > 0.0:
+            en_iyi = k
+    return en_iyi
+
+
 def canli_karne_satiri(sezon: str, hafta: int, butce_tl: float,
                        garanti: int = VARSAYILAN_GARANTI,
                        kok: Any = None) -> dict[str, Any] | None:
@@ -887,6 +1661,7 @@ def canli_karne_satiri(sezon: str, hafta: int, butce_tl: float,
 
     from .getiri import beklenen_tl, kademe_havuzlari
     from .kalabalik import OLCULEN, oynanma_paylari
+    from .secim import hedef_olasiligi
 
     oynanma = h["play"] or oynanma_paylari(h["probs"], OLCULEN)
     havuzlar = kademe_havuzlari(h["payout"])
@@ -897,6 +1672,12 @@ def canli_karne_satiri(sezon: str, hafta: int, butce_tl: float,
         "kolon": plan.bedel, "maliyet": plan.bedel * KOLON_BEDELI,
         "banko": plan.banko, "cift": plan.cift, "uclu": plan.uclu,
         "p_hedef": plan.p_hedef,
+        # `p_hedef` = `P(k ≤ eşik)` ve o olasılık **iki farklı olayı
+        # topluyor**: 13-garantide `k=0` 13. kademeyi verir ve maliyeti
+        # karşılar, `k=1` 12'yi verir ve karşılamaz (karnenin kendi kaydı:
+        # 2. hafta 12 tutturdu −181 TL, 3. hafta 12 tutturdu −390 TL).
+        # Ödeyen olayın olasılığı bu yüzden ayrı durur.
+        "p_kacak_sifir": hedef_olasiligi(h["probs"], plan.secimler, 0),
         "oynanma_kaynagi": "kayit" if h["play"] else "model",
         "beklenen_tl": (beklenen_tl(h["probs"], oynanma, plan.secimler, {},
                                     havuzlar, garanti, RAKIP_KOLON)
@@ -912,6 +1693,13 @@ def canli_karne_satiri(sezon: str, hafta: int, butce_tl: float,
             "kacak": kacak, "kademe": kademe,
             "odul": _odul(h["tablo"], kademe),
             "sonuc": "".join(h["gercek"]),
+            # Başabaş kaçak seviyesi — o haftanın KENDİ ikramiye
+            # tablosundan, medyan alınmadan. Sezonlar arası medyan almak
+            # ölçümü kirletirdi (nominal TL dört sezonda 72 kat büyümüş,
+            # modül başlığı). `None` = kaçaksız hafta bile maliyeti
+            # karşılamıyor.
+            "basabas_kacak": _basabas_kacak(
+                h["tablo"], garanti, satir["maliyet"]),
         })
         satir["net"] = satir["odul"] - satir["maliyet"]
     return satir
