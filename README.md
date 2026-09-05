@@ -991,7 +991,7 @@ backend/
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
                        sehir/ · xg/ · sistem_fiyat/ · hakem/
-  tests/               pytest (70 dosya → 2.044 test; §9'da katman dökümü)
+  tests/               pytest (71 dosya → 2.049 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1194,8 +1194,8 @@ Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant'lar, CLI (Bayes pre
 dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri test,
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
-eşleme, ikinci kayıt). **70 test dosyası, parametrizasyonla
-2.044 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+eşleme, ikinci kayıt). **71 test dosyası, parametrizasyonla
+2.049 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
@@ -1229,6 +1229,7 @@ karşı denetler):
 | Kuyruk / bağımsızlık | **`kuyruk`** | 12 |
 | MCP deneyi | **`mcp`** | 11 |
 | Betik ortak katmanı | **`scripts_ortak`** | 12 |
+| Devir tavanı (dış tarama · pozitif BD koşulu) | **`devir_tavani`** | 5 |
 
 İki test bilerek **ağa çıkmaz**: `test_snapshot_iddaa.py` gerçek bültenden alınmış
 küçük bir örnek payload üzerinde koşar — ağ çağrısını sınamak bu paketin işi değil,
@@ -1489,6 +1490,7 @@ olması gerekir. Tanımlıysa yalnızca **durum değişiminde** bildirim gider.
 | [`docs/DIS_INCELEME.md`](docs/DIS_INCELEME.md) | Dış bir makine öğrenmesi çalışmasının bu projeye ne kattığı ve **ne katmadığı** — sayılar o çalışmanın kendi belgelerinden, bizim ölçümümüz değil |
 | [`docs/DIS_INCELEME_ALPHAPY.md`](docs/DIS_INCELEME_ALPHAPY.md) | Bir ML **çerçevesinin** (AlphaPy / AlphaPy Pro) incelemesi: çerçeve alınmadı, ama metrik paneline bakarken görülen eksik ölçüldü ve koda girdi — Brier'in Murphy ayrışımı |
 | [`docs/DIS_INCELEME_SPORTS_BETTING.md`](docs/DIS_INCELEME_SPORTS_BETTING.md) | Bir **sabit oranlı bahis araç kutusunun** (`georgedouzas/sports-betting`) incelemesi: model tarafında hiçbir şey, bir ölçü (`deger.py` — üç pazarda da kâr yok) ve bir kalite kapısı. Asıl getirisi **kendi kodumuzdaki dört kusur**: sessizce ölü bir sözlük (5 hafta kayıp), gizli bir duvar saati kırılganlığı, iki yanlış docstring sayısı, eskimiş bir uç envanteri |
+| [`docs/DIS_TARAMA_PIYASAYI_YENME.md`](docs/DIS_TARAMA_PIYASAYI_YENME.md) | **Dış literatürün** bu oyuna dair ne söylediği ve hangi iddianın burada denenmediği. İki eksen ölçülerek kapandı: **devir** (pozitif beklenen değer için gereken çarpan 1,95–2,84, altı sezonun azamisi **1,645**) ve naif **"hep ev sahibi"** kuralı (korpusta %43,37; piyasa favorisi 7,7 puan üstün). Açık kalan tek eksen havuz/kalabalık ve gereken kat artık yazılı |
 | [`docs/DIS_INCELEME_AZ_RAPORU.md`](docs/DIS_INCELEME_AZ_RAPORU.md) | Depo dışından gelen 64 bölümlük bir değerlendirmenin madde madde karşılığı: çoğunun karşılığı zaten vardı, **üçü gerçekten eksikti** (Model Arena, ileri yürüyüş, sızıntı sözleşmesi) ve üçü de uygulandı — ürettikleri ölçüm §3.41'de |
 | [`docs/GELISTIRME_PLANI_ESLEMESI.md`](docs/GELISTIRME_PLANI_ESLEMESI.md) | Dışarıdan gelen iki geliştirme planının madde madde karşılığı: hangisi zaten vardı, hangisi gerçekten eksikti (dördü), hangisi **ölçülmüş gerekçeyle** reddedildi |
 | [`docs/BENZER_PLANI_ESLEMESI.md`](docs/BENZER_PLANI_ESLEMESI.md) | `benzer.py` için gelen dış planın aynı biçimde eşlemesi: gerçekten eksik olan üçü (`inf` oran · toleransın üç kapıda üç sınırı · zaman kesmesi) uygulandı, altısı gerekçesiyle reddedildi, üçü kaydedildi |

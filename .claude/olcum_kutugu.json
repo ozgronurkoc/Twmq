@@ -2,7 +2,7 @@
  "sayilar": [
   {
    "ne": "suit test sayisi (eksiksiz kurulum)",
-   "deger": "2.044",
+   "deger": "2.049",
    "ureten": "cd backend && pytest -p no:randomly -n0 --collect-only -q  # dosya basi toplami",
    "olculdu": "2026-09-05",
    "anildigi_yerler": [
@@ -14,11 +14,11 @@
     "replit.md"
    ],
    "bekci": "backend/tests/test_belgeler.py::test_test_sayisi_belgelerde_tek_ve_dogru",
-   "not": "lightgbm siz kurulumda 22 test eksik toplanir; yerelde 1.958 olcumu 1.980-22 ile birebir tutuyor. E1'in alti, E2'nin iki, E3'un uc, E4'un bes testi eklendi (2.027 -> 2.044). Yerel kurulumda lightgbm yok, o yuzden toplama 2.022 diyor; fark test_agac.py'nin 22 testi. Sonuncusu test_betik_sayisi_belgeyle_ayni: backend/README 24 betik diyordu, gercek 27'ydi ve bunu tutan bekci YOKTU."
+   "not": "lightgbm siz kurulumda 22 test eksik toplanir; yerelde 1.958 olcumu 1.980-22 ile birebir tutuyor. E1'in alti, E2'nin iki, E3'un uc, E4'un bes testi eklendi (2.027 -> 2.044). Yerel kurulumda lightgbm yok, o yuzden toplama 2.022 diyor; fark test_agac.py'nin 22 testi. Sonuncusu test_betik_sayisi_belgeyle_ayni: backend/README 24 betik diyordu, gercek 27'ydi ve bunu tutan bekci YOKTU. Dis tarama (devir tavani) bes test ekledi (2.044 -> 2.049)."
   },
   {
    "ne": "test dosyasi sayisi",
-   "deger": "70",
+   "deger": "71",
    "ureten": "ls backend/tests/test_*.py | wc -l",
    "olculdu": "2026-09-05",
    "anildigi_yerler": [
@@ -26,7 +26,7 @@
     "backend/README.md"
    ],
    "bekci": null,
-   "not": "E4 tests/test_hakem.py'yi ekledi (69 -> 70)."
+   "not": "Dis tarama tests/test_devir_tavani.py'yi ekledi (70 -> 71)."
   },
   {
    "ne": "hizli test sayisi",
@@ -641,6 +641,41 @@
    ],
    "bekci": null,
    "not": "Saf Pinnacle DEGIL: 2. macin fiyati Nesine'den geldigi icin ortalama %4,62'den %5,44'e cikiyor. Pinnacle satirlarinin kendi ortalamasi %4,62 kapanis (13 mac) / %4,65 acilis (14 mac)."
+  },
+  {
+   "ne": "azami devir carpani 1+d (alti sezon, 222 hafta)",
+   "deger": "1,645",
+   "ureten": "cd backend && python scripts/devir_tavani.py --devir",
+   "olculdu": "2026-09-05",
+   "anildigi_yerler": [
+    "docs/DIS_TARAMA_PIYASAYI_YENME.md §4.2,§4.3,§6",
+    "README.md §13 belge dizini"
+   ],
+   "bekci": "backend/tests/test_devir_tavani.py::test_devir_carpani_belgedeki_azamiyle_ayni",
+   "not": "Pozitif beklenen deger icin gereken carpan 1,95-2,84 (odeme orani %35,2-%51,4 imasiyla). Azami 1,645 -> devir ekseni KAPANDI. Arsive sezon eklenirse bu sayi degisir; test_devir_ekseninin_KAPANISI_hala_gecerli o zaman kirilir ve belge §4.3 yeniden yazilir."
+  },
+  {
+   "ne": "ev sahibi galibiyeti orani (egitim korpusu, 31.103 mac)",
+   "deger": "%43,37",
+   "ureten": "cd backend && python scripts/devir_tavani.py --evkurali",
+   "olculdu": "2026-09-05",
+   "anildigi_yerler": [
+    "docs/DIS_TARAMA_PIYASAYI_YENME.md §5",
+    "README.md §13 belge dizini"
+   ],
+   "bekci": "backend/tests/test_devir_tavani.py::test_belgedeki_ev_orani_olculenle_ayni",
+   "not": "%95 Wilson araligi [%42,82, %43,92]. arXiv:2303.16648'in 'hep ev sahibi' kuralinin oncülü; makale Bundesliga'da %50,4 aliyor ve bu kesitin araligi %50,4'u ICERMIYOR."
+  },
+  {
+   "ne": "piyasa favorisi isabeti (egitim korpusu, 31.103 mac)",
+   "deger": "%51,09",
+   "ureten": "cd backend && python scripts/devir_tavani.py --evkurali",
+   "olculdu": "2026-09-05",
+   "anildigi_yerler": [
+    "docs/DIS_TARAMA_PIYASAYI_YENME.md §5"
+   ],
+   "bekci": "backend/tests/test_devir_tavani.py::test_ev_kurali_piyasa_favorisinden_ZAYIF",
+   "not": "%95 Wilson araligi [%50,54, %51,65]. 'Hep ev' kuralini 7,7 puan geciyor. Favorinin %68,4'u zaten ev sahibi, yani kural ayri bir eksen degil favori kuralinin zayiflatilmis hali."
   }
  ],
  "komutlar": [

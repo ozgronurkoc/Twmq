@@ -104,7 +104,7 @@ spor_toto/                        (51 modül — aşağısı yönlendirici seçk
   health.py    Kategorili değişmez (invariant) kontrolleri — 27 kontrol
   health_history.py  Sunucu tarafı koşu geçmişi + durum değişimi bildirimi
 web_app.py     Flask — 15 uç, yalnızca JSON (tam liste: ARCHITECTURE_NEXT.md)
-scripts/                          (27 betik + __init__.py — normal paket)
+scripts/                          (28 betik + __init__.py — normal paket)
   build_history.py  Tarihsel veri setini kaynağından üretir
   build_odds.py     Kupon maçlarına piyasa oranlarını eşleştirir
   build_egitim.py   Eğitim korpusu (football-data, 22 lig × 4 geçmiş sezon)
@@ -117,11 +117,13 @@ scripts/                          (27 betik + __init__.py — normal paket)
   faz_b.py          Havuz ekseni güç analizi
   hafta_kos.py      Haftalık döngü: `--oncesi` kupon, `--sonrasi` karne
   acilis_kapanis.py Açılış–kapanış oranı karşılaştırması
+  devir_tavani.py   ÖLÇÜM: devir çarpanı `1+d` ve pozitif BD koşulu
+                    (`DIS_TARAMA_PIYASAYI_YENME.md` §4–§5)
 data/
   st_history_2025_26.json   Tarihsel 1/0/2 (history.py buradan okur)
   odds/                     Oran arşivi (aşağıda)
   iddaa/ egitim/ fixtures/ super_toto/ hakem/
-tests/                            (70 dosya → 2.044 test)
+tests/                            (71 dosya → 2.049 test)
 ```
 
 > **ÖLÇÜM modülleri arayüze çıkmaz** ve yalnızca `python -m spor_toto.<ad>`
