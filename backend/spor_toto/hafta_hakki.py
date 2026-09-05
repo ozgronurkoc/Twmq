@@ -666,6 +666,80 @@ def isaret_sinavi(cetveller: Sequence[dict[str, Any]],
             "kesiyor": lo <= 0.0 <= hi, "p": (asan + 1) / (n + 1)}
 
 
+def devir_ikili(cetveller: Sequence[dict[str, Any]],
+                referans_tl: float = 2000.0,
+                tohum: int = 13,
+                n: int = BOOTSTRAP) -> dict[str, Any]:
+    """Devir işaretinin **kaba** hâli: devir alan hafta ↔ almayan.
+
+    `devir_isareti` sürekli oranı kullanır ve `rho` orada sıfırı kesmiyor;
+    bu fonksiyon aynı işareti ikiye bölüp bakar. İkisi ayrı ayrı raporlanır
+    çünkü **ayrışıyorlar** ve ayrışmanın kendisi bilgi: sürekli oran
+    sıralamada bir şey görüyor, kaba bölme göremiyor — yani varsa bile
+    etki, "devir var mı yok mu"dan çok "ne kadar devir" ile ilgili.
+
+    Eşleştirilemez (aynı hafta iki kolda birden olamaz), o yüzden fark
+    **eşleştirilmemiş** bootstrap ile aralıklanır.
+    """
+    ciftler = devir_isareti(cetveller, referans_tl)
+    devirli = [roi for d, roi in ciftler if d > 0.0]
+    devirsiz = [roi for d, roi in ciftler if d <= 0.0]
+    if not devirli or not devirsiz:
+        return {"devirli": len(devirli), "devirsiz": len(devirsiz),
+                "fark": 0.0, "alt": 0.0, "ust": 0.0, "kesiyor": True}
+    rnd = random.Random(tohum)
+    dag = []
+    for _ in range(n):
+        a = sum(devirli[rnd.randrange(len(devirli))]
+                for _ in range(len(devirli))) / len(devirli)
+        b = sum(devirsiz[rnd.randrange(len(devirsiz))]
+                for _ in range(len(devirsiz))) / len(devirsiz)
+        dag.append(a - b)
+    dag.sort()
+    lo, hi = dag[int(0.025 * n)], dag[int(0.975 * n)]
+    ort_a = sum(devirli) / len(devirli)
+    ort_b = sum(devirsiz) / len(devirsiz)
+    return {"devirli": len(devirli), "devirsiz": len(devirsiz),
+            "ort_devirli": ort_a, "ort_devirsiz": ort_b,
+            "fark": ort_a - ort_b, "alt": lo, "ust": hi,
+            "kesiyor": lo <= 0.0 <= hi}
+
+
+def kuyruk_payi(cetveller: Sequence[dict[str, Any]],
+                en_iyi: int = 5) -> dict[str, Any]:
+    """Her basamakta ödülün **en iyi `en_iyi` haftadan** gelen payı.
+
+    E6'nın bütün geniş aralıklarının sebebi budur ve `karne.karne`nin
+    `en_iyi_bes_hafta_payi` alanının basamak basamak hâlidir: ödül dağılımı
+    o kadar ağır kuyruklu ki 114 hafta, basamaklar arası oran farkını
+    ayırt etmeye yetmiyor.
+
+    Ödülü hiç olmayan basamak (toplam sıfır) atlanır — payı tanımsızdır.
+    """
+    from collections import defaultdict
+
+    havuz: dict[int, list[float]] = defaultdict(list)
+    for c in cetveller:
+        for b in c["basamaklar"]:
+            havuz[b["kolon"]].append(b["odul"])
+    satir = []
+    for kolon in sorted(havuz):
+        v = sorted(havuz[kolon], reverse=True)
+        toplam = sum(v)
+        if toplam <= 0.0:
+            continue
+        satir.append({"kolon": kolon, "hafta": len(v),
+                      "pay": sum(v[:en_iyi]) / toplam,
+                      "tek_hafta_payi": v[0] / toplam})
+    paylar = [s["pay"] for s in satir]
+    tekler = [s["tek_hafta_payi"] for s in satir]
+    return {"en_iyi": en_iyi, "basamak": len(satir), "satirlar": satir,
+            "pay_en_az": min(paylar) if paylar else 0.0,
+            "pay_en_cok": max(paylar) if paylar else 0.0,
+            "tek_hafta_en_az": min(tekler) if tekler else 0.0,
+            "tek_hafta_en_cok": max(tekler) if tekler else 0.0}
+
+
 def isaret_karnesi(cetveller: Sequence[dict[str, Any]],
                    referans_tl: float = 2000.0,
                    tohum: int = 13,
@@ -807,6 +881,17 @@ def _main(argv: list[str] | None = None) -> int:  # pragma: no cover - elle
               f"   [{s['alt']:+.4f}, {s['ust']:+.4f}]{s['p']:>8.4f}"
               f"{s['holm_esigi']:>12.4f}{'EVET' if s['holm_gecti'] else 'hayir':>7}")
     print(f"  -> gecen isaret: {isaret['gecen'] or 'YOK'}")
+    ik = devir_ikili(cet)
+    print(f"  devir KABA bolme: alan {ik['devirli']} hafta ort "
+          f"{ik.get('ort_devirli', 0):.4f} · almayan {ik['devirsiz']} hafta ort "
+          f"{ik.get('ort_devirsiz', 0):.4f}")
+    print(f"    fark {ik['fark']:+.4f} [{ik['alt']:+.4f}, {ik['ust']:+.4f}] "
+          f"— {'sifiri kesiyor' if ik['kesiyor'] else 'KESMIYOR'}")
+    ky = kuyruk_payi(cet)
+    print(f"\nKUYRUK — {ky['basamak']} basamakta odulun en iyi {ky['en_iyi']} "
+          f"haftadan gelen payi: %{100 * ky['pay_en_az']:.0f}-%"
+          f"{100 * ky['pay_en_cok']:.0f} (tek hafta: %"
+          f"{100 * ky['tek_hafta_en_az']:.0f}-%{100 * ky['tek_hafta_en_cok']:.0f})")
     print(f"tavan dayanma: {k['tavan_dayanma']}")
     return 0
 

@@ -244,6 +244,44 @@ def test_devir_isareti_arsivde_olmayan_haftayi_ATLAR():
     assert all(d >= 0.0 for d, _ in ciftler)
 
 
+def test_kuyruk_payi_bilinen_dagilimda_dogru_sayiyor():
+    """§E6'nın 5. maddesinin sayısı buradan çıkıyor — elle değil.
+
+    Tek basamak, dört hafta, ödüller 100/1/1/1: en iyi **bir** hafta payın
+    %97,1'ini taşır (100/103) ve en iyi 5 istenirse pay 1,0 olur.
+    """
+    c = []
+    for i, odul in enumerate((100.0, 1.0, 1.0, 1.0)):
+        c.append({"sezon": "s", "hafta": i, "basamak": 1, "basamaklar": [
+            {"tl": 1000.0, "kolon": 100, "sekil": "x", "banko": 7, "cift": 3,
+             "uclu": 5, "p_hedef": 0.2, "kacak": 0, "tuttu": True,
+             "odul": odul, "net": 0.0, "roi": odul / 1000.0}]})
+    k = hh.kuyruk_payi(c, en_iyi=1)
+    assert k["basamak"] == 1
+    assert k["satirlar"][0]["pay"] == pytest.approx(100 / 103)
+    assert k["tek_hafta_en_cok"] == pytest.approx(100 / 103)
+    assert hh.kuyruk_payi(c, en_iyi=5)["pay_en_az"] == pytest.approx(1.0)
+
+
+def test_kuyruk_payi_odulsuz_basamagi_ATLAR():
+    """Toplamı sıfır olan basamakta pay tanımsız — satır hiç çıkmamalı."""
+    c = _sahte_cetvel(2)
+    for w in c:
+        for b in w["basamaklar"]:
+            b["odul"] = 0.0
+    assert hh.kuyruk_payi(c)["basamak"] == 0
+
+
+def test_devir_ikili_tek_kol_bos_kalirsa_KESIYOR_der():
+    """İki koldan biri boşsa fark kurulamaz; sessizce sayı uydurulmamalı."""
+    yok = _sahte_cetvel(3)
+    for w in yok:
+        w["sezon"] = "1999_00"
+    i = hh.devir_ikili(yok)
+    assert i["devirli"] == i["devirsiz"] == 0
+    assert i["kesiyor"] and i["fark"] == 0.0
+
+
 def test_isaret_karnesi_HOLM_zincirini_dogru_uyguluyor(monkeypatch):
     """İki aday sınanınca eşik 0,05 değil 0,025'ten başlar — ve zincirlidir.
 
@@ -392,6 +430,13 @@ def test_E6_KAPANISI_hala_gecerli():
     acan = [ad for ad, f in k["fark"].items() if not f["kesiyor"]]
     assert not acan, (
         f"butce ekseni ACILDI: {acan} sifiri kesmiyor — §E6 yeniden yazilmali")
+    # Kuyruk: §E6'nin 5. maddesi "odul tek haftadan geliyor" diyor. Dilimde
+    # bile en iyi 5 hafta basamaklarin cogunda yarıdan fazlasini tasimali.
+    ky = hh.kuyruk_payi(cet)
+    assert ky["basamak"] > 0
+    assert ky["pay_en_cok"] > 0.5, (
+        "odul dagilimi beklenenden DUZ — §E6'nin kuyruk gerekcesi yeniden "
+        "olculmeli")
     kar = hh.basamak_karnesi(cet)
     rho = hh._spearman([x["kolon"] for x in kar], [x["roi"] for x in kar])
     assert abs(rho) < 0.7, (
