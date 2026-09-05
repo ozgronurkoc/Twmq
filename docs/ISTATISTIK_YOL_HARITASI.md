@@ -5295,7 +5295,16 @@ E3'ün dersi burada da geçerli.
 > yoktu. `core.HAS_SCIPY` yanlışken `engines.run_auto`ın ILP kolu düşüyor
 > ve kaplama blok + sezgiselden geliyor. Doğrudan ölçüldü (40 hafta,
 > 500 TL): iki kurulum **aynı kolon sayısını** üretiyor (1.920) ama farklı
-> kaplama, ve gerçek kolon geri dönüşü 0,2693 ↔ 0,2550.
+> kaplama, ve gerçek kolon geri dönüşü scipy'siz **0,2693**, scipy'li
+> **0,2550**.
+>
+> **Ve yönü sabit değil — bu, bulgunun kendisi.** 40 haftada scipy'siz
+> kurulum *daha yüksek* ödül verdi, 114 haftada *daha düşük* (%18,8 ↔
+> %39,5). Yani ILP kolu "daha iyi ödül" üretmiyor; **başka** bir kaplama
+> üretiyor ve ödül kuyruk ağırlıklı olduğu için fark hangi haftada bir
+> kolon eksik/fazla düştüğüne bakıyor. Sistematik bir avantaj olsaydı
+> düzeltilebilirdi; olan şey **gürültü**, ve gürültünün genliği
+> yayımlanan sayının mertebesinde.
 >
 > Yani kaplamanın **geçerliliği** etkilenmiyor (ikisi de 14-garanti veriyor,
 > aynı bedelle); etkilenen, o kaplamanın alt kademelerde kaç kolonla
@@ -5339,6 +5348,49 @@ kaçaksız hafta üretmedi. Sezon işareti de tutmuyor: 2024/25'te `d kaçak`
 isabet. §3.52'nin Brier bulgusu (−0,00100, Holm'lu, gerçek) doğruluğunu
 koruyor; kupon düzeyinde karşılığı yok ve bu, §3.19'un dönüşüm oranıyla
 tutarlı.
+
+#### Ayrı ve bağımsız bir kusur: canlı kayıt ile geri test **aynı ölçekte değil**
+
+Omurga sorusu ölçülürken şu görüldü ve buraya yazılmadan geçilmemeli.
+`KAZANMA_KARNESI.md`'nin canlı kaydı ile onun kıyaslandığı 114 haftalık
+geri test **üç ayrı fiyat ölçeğinde** duruyor:
+
+| kayıt | kesit | fiyat | ölçülmüş marj |
+|---|---|---|---:|
+| geri test (`kupon_kesiti`) | 2022/23–2025/26 | `Avg` kapanış | **%7,26** |
+| canlı hf 1 | 2026/27 | `iddaa` | **%16,7** |
+| canlı hf 2 | 2026/27 | `iddaa-acilis` | ~%16,7 |
+| canlı hf 3–4 | 2026/27 | `pinnacle-kapanis` | **%3,42** |
+
+Karne bunu her satırda ilan ediyor (doğru davranış) ama **ilan etmek
+karşılaştırmayı geçerli kılmıyor.** Marj arındırması yöntemden bağımsız
+olarak marjın büyüklüğüyle ölçeklenir (`odds.implied_probs` notu), yani
+%16,7'lik bir bültenden çıkan olasılık ile %3,42'lik bir borsadan çıkan
+olasılık aynı sayı değildir — ve `P(hedef)` doğrudan onlardan hesaplanır.
+
+**Ve bu, düzeltilebilir bir kusur değil: ölçülemez.** 2026/27'nin oran
+arşivi bugün **0 satır** (`load_odds(sezon="2026_27")`), yani canlı
+haftalar `Avg` ölçeğinde yeniden türetilemiyor. Ölçek farkının büyüklüğü
+kestirilemez de: canlı kayıtta iddaa ölçeğinde iki hafta
+(`P(hedef)` 0,249 · 0,219), Pinnacle ölçeğinde iki hafta (0,282 · 0,175)
+var — `n = 2` ve `n = 2`, ayırt edilecek bir şey yok.
+
+**Geçersiz olan karşılaştırmalar, açıkça:**
+
+* canlı `P(hedef)` ↔ geri testin `ort P(hedef)`i (§3.62'nin 0,3016'sı);
+* canlı haftaların `P(hedef)`leri **birbiriyle**, ölçek değiştiği yerde
+  (hf 2 ↔ hf 3);
+* canlı geri dönüş ↔ geri testin geri dönüşü, olasılık üzerinden kurulan
+  her ara adımda.
+
+**Geçerli kalanlar:** gerçekleşen kaçak sayısı, tutturulan kademe ve
+ödül — bunlar fiyattan değil **sonuçtan** gelir ve ölçekten bağımsızdır.
+§3.62'nin durma kuralını kaçak ekseninde kurmasının ikinci gerekçesi de
+budur.
+
+Kalıcı çözüm tek: canlı haftalarda **tek bir ölçeğe** bağlı kalmak ve
+değiştirmek gerekirse §3'ün kuralını uygulamak — *"kayıt yeniden
+yazılmaz, ölçek notuyla yan yana durur"* (`odds.py:162-164` kalıbı).
 
 ### 3.64 Banko `q` sapmasının kaynağı (§3.60'ın açık ucu) — **etki gerçekti, ama sönüyor**
 

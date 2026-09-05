@@ -133,9 +133,18 @@ def karne_metni(sezon: str, butce: float, garanti: int) -> str:
 ## Okuma
 
 **Fiyat ölçeği haftalar arasında değişti** ve bu, olasılıkları doğrudan
-karşılaştırmayı engeller: ilk haftalarda ana fiyat ~%18 marjlı iddaa
-oranıydı, sonra ~%4,6 marjlı Pinnacle'a geçildi. Sütun bunu her satırda
-söylüyor.
+karşılaştırmayı engeller: ilk haftalarda ana fiyat ~%17 marjlı iddaa
+oranıydı, sonra ~%3,4 marjlı Pinnacle'a geçildi. Sütun bunu her satırda
+söylüyor — ama **ilan etmek karşılaştırmayı geçerli kılmıyor** (§3.63).
+
+**Ve bu kayıt, kıyaslandığı geri testle de aynı ölçekte değil.** 114
+haftalık geri test `Avg` kapanışla (marj %7,26) koşuyor, yani ortada
+**üç** ölçek var. Düzeltilemez de: 2026/27'nin oran arşivi bugün boş,
+canlı haftalar `Avg` ölçeğinde yeniden türetilemiyor. Geçersiz olan
+karşılaştırmalar açıkça şunlar: canlı `P(k≤{kacak_esigi(garanti)})` ↔ geri
+testin ortalaması, ve ölçeğin değiştiği yerde canlı haftaların
+olasılıkları **birbiriyle**. Geçerli kalanlar sonuçtan gelenlerdir —
+kaçak, kademe, ödül; onlar fiyattan bağımsızdır.
 
 **Ödül sütunu alt sınırdır.** {r['kolon']} kolonluk bir {garanti}-garanti
 sistemi, garantinin söylediği tek kolondan fazlasını da tutturur; karne

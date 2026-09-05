@@ -800,6 +800,18 @@
    ],
    "bekci": "backend/tests/test_karne.py::test_banko_duzeltmesi_UYGULANMIYOR_kurali_yazili",
    "not": "2025/26, banko rejimi, n=150, Wilson [%54,0, %69,4] soylenen %61,7'yi ICERIYOR. Sezon sirasi korpusta +%5,7 · +%8,1 · +%7,0 · +%6,6, kuponda +%9,0 · +%10,5 · +%5,4 · +%0,3 — dort sezon gercek, sonra sifir. DUZELTME UYGULANMADI; durma kurali karne.T1_DUZELTME_ESIGI=300 olarak koda yazildi."
+  },
+  {
+   "ne": "canli kayit <-> geri test fiyat olcegi uyumsuzlugu (§3.63)",
+   "deger": "%7,26",
+   "ureten": "cd backend && python -c \"from spor_toto.odds import load_odds; print(len(load_odds(sezon='2026_27')))\"  # 0 satir: canli haftalar Avg olceginde YENIDEN TURETILEMEZ",
+   "olculdu": "2026-09-05",
+   "anildigi_yerler": [
+    "docs/ISTATISTIK_YOL_HARITASI.md §3.63",
+    "docs/KAZANMA_KARNESI.md"
+   ],
+   "bekci": null,
+   "not": "Uc olcek yan yana: geri test Avg kapanis (marj %7,26), canli hf1-2 iddaa (%16,7), canli hf3-4 pinnacle-kapanis (%3,42). Karne olcegi her satirda ILAN EDIYOR ama ilan etmek karsilastirmayi gecerli kilmiyor. Olculemez de: 2026_27 oran arsivi 0 satir. GECERSIZ: canli P(hedef) <-> geri test ortalamasi, ve olcek degisen yerde canli haftalar birbiriyle. GECERLI: kacak, kademe, odul — sonuctan gelir, fiyattan degil."
   }
  ],
  "komutlar": [

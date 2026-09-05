@@ -72,7 +72,10 @@ yoktur: aynı haftanın aynı TL'si iki kolda da kullanılır, enflasyon götür
     python -m spor_toto.karne --taban --garanti 14 --butce 2000   # E1
     python -m spor_toto.karne --hedef --garanti 14 --butce 2000   # E2
     python -m spor_toto.karne --omurga BFE --garanti 14 --butce 2000  # E3
-    python -m spor_toto.karne --egri --garanti 14                     # butce egrisi
+    python -m spor_toto.karne --egri --garanti 14                  # §3.62
+    python -m spor_toto.karne --kapsama --garanti 14 --butce 2000  # §3.60
+    python -m spor_toto.karne --kalibrasyon --garanti 14           # §3.61
+    python -m spor_toto.karne --banko [--korpus] [--lig T1]        # §3.64
 """
 from __future__ import annotations
 
