@@ -721,7 +721,7 @@
     "docs/ISTATISTIK_YOL_HARITASI.md:5237 §3.62"
    ],
    "bekci": null,
-   "not": "1.000 TL'de 0,0286 · 1.500'de 0,0274 · 2.000'de 0,0209 — egri IC BUKEY, tepe 1.000-1.500 bandinda. 114 hafta, 14G. 1.500 TL tekil %95 araligi geciyor (p=0,0167) ama bes aday oldugu icin HOLM'dan DUSUYOR (esik 0,01). Varsayilan 2.000 TL kaldi."
+   "not": "1.000 TL'de 0,0286 · 1.500'de 0,0274 · 2.000'de 0,0209 — egri IC BUKEY, tepe 1.000-1.500 bandinda. 114 hafta, 14G. 1.500 TL tekil %95 araligi geciyor (p=0,0167) ama bes aday oldugu icin HOLM'dan DUSUYOR (esik 0,01). Varsayilan 2.000 TL kaldi. E6 (PR #46) ayni ekseni butce kisitini tamamen kaldirarak olctu ve ayni sonuca vardi: on iki kuralin on ikisi de sabit butceyi yenemedi. §3.62 ondan dardir; ekledigi tek sey cetveldir (kacaksiz hafta/1000 TL), ve gerekcesi E6'nin kendi 5. maddesi: ROI kuyruk agirlikli, en iyi 5 hafta odulun %42-%88'ini tasiyor."
   },
   {
    "ne": "gerceklesen P(kacak=0), 14G 2.000 TL",
@@ -754,7 +754,7 @@
     "docs/ISTATISTIK_YOL_HARITASI.md:5291 §3.62"
    ],
    "bekci": null,
-   "not": "scipy'li 0,2550 <-> scipy'siz 0,2693 (40 hafta, 500 TL, 14G; AYNI kolon sayisi 1.920). scipy yokken engines.run_auto'nun ILP kolu DUSUYOR ve ayni bedelde FARKLI bir kaplama uretiliyor. Garanti etkilenmiyor, gercek kolon odulu etkileniyor (kuyruk agirlikli: 114 haftada ilk uc hafta odulun %57'si). 114 haftada 500 TL basamagi %18,8 <-> %39,5 oynadi. §3.56'nin 2,39 kati ve E2/E3'un ROI sayilari ayni hatti kullaniyor. Olcum kendi icinde TEKRARLANABILIR: yuk altinda ve art arda iki kosumda birebir ayni."
+   "not": "scipy yokken engines.run_auto'nun ILP kolu DUSUYOR ve ayni bedelde FARKLI bir kaplama uretiliyor. Garanti etkilenmiyor. KAPSAM DAR: iki kosum basamak basamak kiyaslandiginda yalniz 48 ve 92 kolonluk satirlar oynuyor (%18,8<->%39,5 ve %28,4<->%27,9); 128 kolondan itibaren BIREBIR AYNI. Yani §3.56'nin 2,39 kati ve E2/E3'un ROI sayilari (168 kolon) bu oynakligin DISINDA. Etkilenen merdivenin en alt ucu — ve E6'nin lambda/LOO kurallarinin sectigi 32 kolonluk basamak orada. Olcum kendi icinde tekrarlanabilir: yuk altinda ve art arda iki kosumda birebir ayni."
   },
   {
    "ne": "banko q sapmasi UC arindirmada da duruyor (§3.64 aday 1)",
@@ -812,6 +812,17 @@
    ],
    "bekci": null,
    "not": "Uc olcek yan yana: geri test Avg kapanis (marj %7,26), canli hf1-2 iddaa (%16,7), canli hf3-4 pinnacle-kapanis (%3,42). Karne olcegi her satirda ILAN EDIYOR ama ilan etmek karsilastirmayi gecerli kilmiyor. Olculemez de: 2026_27 oran arsivi 0 satir. GECERSIZ: canli P(hedef) <-> geri test ortalamasi, ve olcek degisen yerde canli haftalar birbiriyle. GECERLI: kacak, kademe, odul — sonuctan gelir, fiyattan degil."
+  },
+  {
+   "ne": "capraz dogrulama — §3.62 butce egrisi <-> E6 cetveli, ortak bes basamak",
+   "deger": "%34,9",
+   "ureten": "cd backend && python -m spor_toto.karne --egri --garanti 14  ·  python -m spor_toto.hafta_hakki --kiyas",
+   "olculdu": "2026-09-05",
+   "anildigi_yerler": [
+    "docs/ISTATISTIK_YOL_HARITASI.md §3.62"
+   ],
+   "bekci": null,
+   "not": "Iki BAGIMSIZ uygulama, ayni 114 hafta: 92->%28,4 · 128->%34,9 · 168->%24,2 · 252->%20,2 · 486->%29,1. Besinde de birebir. E6 cepheyi sekil sekil kuruyor, §3.62 butce basamaklarini tariyor. gercek_kolon_dagilimi hattinin yeniden uygulanabilir oldugunun kaydi."
   }
  ],
  "komutlar": [

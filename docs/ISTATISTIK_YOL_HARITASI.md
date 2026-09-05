@@ -5223,12 +5223,21 @@ gerekçeyi tazeler.
 
 ### 3.62 Bütçe eğrisi gerçek kolon hattında koştu (İş 2) — **eğri iç bükey**, karar değişmedi
 
+> **Bu bölüm E6 ile PARALEL koştu ve ondan dardır.** Aynı eksene aynı
+> günlerde iki iş birden girdi: `KAZANMA_PLANI.md` §E6 (PR #46) bütçe
+> kısıtını **tamamen kaldırıp** haftanın cephesini ve cetvelini kurdu,
+> on iki kural sınadı, kupon öncesi işaret sınavını koştu ve bütçe
+> eksenini kapattı. Bu bölüm aynı soruyu **altı sabit basamakta** ve
+> başka bir cetvelle sordu. E6 kapsam olarak üstündür; buranın eklediği
+> tek şey **ölçünün kendisidir** (aşağıda) ve iki iş birbirini
+> çürütmüyor, **doğruluyor** — ortak basamakların beşinde de sayılar
+> birebir aynı çıktı, iki bağımsız uygulamadan.
+
 §3.57 kendi sonucunu genelleyip *"şeklin kendisiyle oynayan kollar (bütçe
 eğrisi) hedef kademesiyle oynayan koldan **yapısal olarak daha güçlü**"*
-demişti. Buna rağmen E1–E4'ün dördü de tek bir sabit **2.000 TL**'de koştu,
-ve var olan bütçe eğrisi **garanti tabanına** dayanıyordu — taban 2,39 kat
-gevşek ve **eğik** (§3.56), yani bütçe kıyaslamak için tam olarak yanlış
-cetvel.
+demişti. E1–E4'ün dördü de tek bir sabit **2.000 TL**'de koşmuştu, ve var
+olan bütçe eğrisi **garanti tabanına** dayanıyordu — taban 2,39 kat gevşek
+ve **eğik** (§3.56), yani bütçe kıyaslamak için tam olarak yanlış cetvel.
 
 ```bash
 cd backend && python -m spor_toto.karne --egri --garanti 14
@@ -5273,7 +5282,48 @@ düzeltmeyi zorunlu kıldı). Holm'un en küçük p için istediği eşik
 
 **Önceden yazılmış durma kuralı işledi: varsayılan bütçe 2.000 TL kalır.**
 Eğri yayımlanıyor, karar değişmiyor — ve bu, kuralın sonuca bakılarak
-değiştirilmediğinin kaydıdır.
+değiştirilmediğinin kaydıdır. E6 aynı sonuca **bağımsız olarak** ve daha
+geniş bir kural kümesiyle vardı (on iki kuralın on ikisi de sabit bütçeyi
+yenemedi, hepsi sıfırı kesti).
+
+#### Çapraz doğrulama — iki bağımsız uygulama, aynı sayılar
+
+E6 cepheyi şekil şekil kuruyor, bu bölüm bütçe basamaklarını tarıyor; iki
+ayrı kod yolu, aynı 114 hafta. Ortak beş basamakta gerçek kolon geri
+dönüşü:
+
+| kolon | §3.62 | E6 |
+|---:|---:|---:|
+| 92 | %28,4 | %28,4 |
+| 128 | %34,9 | %34,9 |
+| 168 | %24,2 | %24,2 |
+| 252 | %20,2 | %20,2 |
+| 486 | %29,1 | %29,1 |
+
+Beşinde de birebir. Bu, `gercek_kolon_dagilimi` hattının **yeniden
+uygulanabilir** olduğunun kaydıdır ve aşağıdaki oynaklık sınırının
+kapsamını daraltır: oynaklık hattın kendisinde değil, en küçük
+şekillerdedir.
+
+**Ve iki cetvel aynı basamağı işaret ediyor.** Bu bölümün ölçüsünde
+(kaçaksız hafta / 1.000 TL) tekil %95 aralığı geçen tek basamak **128
+kolon**du; E6'nın ROI cetvelinde de o basamak en yüksek geri dönüşü veriyor
+(%34,9, yedi satırın en büyüğü). İki farklı ölçü, aynı aday. İkisi de
+anlamlılık sınavını geçemiyor — bu bölümde Holm'da, E6'da `sabit-1000`
+kolunun sıfırı kesmesiyle. Aynı adayın iki bağımsız cetvelde de belirip
+ikisinde de eşiği aşamaması, "bütçe ekseni kapalı" sonucunu **zayıflatmaz,
+güçlendirir**: aranan yerde bir şey var, ama 114 haftada ayırt edilecek
+kadar büyük değil.
+
+#### Ve bu bölümün E6'ya eklediği tek şey: **cetvelin kendisi**
+
+E6 kuralları **gerçekleşen ROI** ile puanlıyor. Bu bölüm ödeyen olayın
+lira başına sıklığıyla puanladı. Fark önemsiz değil, ve gerekçesini yine
+E6 veriyor: kendi 5. maddesi ROI'nin **kuyruk ağırlıklı** olduğunu ölçtü —
+en iyi 5 hafta, on beş basamağın hepsinde ödülün **%42–%88'ini** taşıyor.
+Kuyruk ağırlıklı bir ölçüde 114 hafta az `n`'dir; kaçaksız hafta sayısı ise
+her hafta gözlenir. İki cetvel aynı yöne işaret ediyor (sabit bütçe kalır)
+ve bu, sonucu **iki ayrı oynaklık rejiminde** doğrulanmış yapıyor.
 
 **Okunmayacak satır: `ort P(hedef)` sütunu.** Bütçeyle monoton büyüyor
 (0,1336 → 0,4823) ama bu modelin kendi güvenidir; gerçekleşen `P(k=0)`
@@ -5313,11 +5363,34 @@ E3'ün dersi burada da geçerli.
 > kolonluk fark toplamı taşıyor.
 >
 > **Durma kuralı bu yüzden kaçak ekseninde kuruldu:** kaçak, seçimin bir
-> fonksiyonudur ve kaplamadan **bağımsızdır**. §3.56'nın 2,39 katı,
-> E2 ve E3'ün ROI sayıları aynı hattı kullanıyor; kurulum bağımlılığı
-> **onların da sınırıdır** ve buraya yazılıyor. `scipy` `requirements.txt`
+> fonksiyonudur ve kaplamadan **bağımsızdır**. `scipy` `requirements.txt`
 > içindedir, yani düzgün bir kurulumda hep vardır — kusur eksikliğinde
 > değil, motorun eksikliği **sessizce** yutmasındadır.
+>
+> **Ve kusurun nerede olduğu ölçüldü: en küçük basamaklarda.** İki koşum
+> basamak basamak karşılaştırıldığında yalnız **iki** satır oynuyor:
+>
+> | kolon | koşum 1 (scipy yok) | koşum 2 (scipy var) |
+> |---:|---:|---:|
+> | 48 | %18,8 | **%39,5** |
+> | 92 | %28,4 | %27,9 |
+> | 128 | %34,9 | %34,9 |
+> | 168 | %24,2 | %24,2 |
+> | 252 | %20,2 | %20,2 |
+> | 486 | %29,1 | %29,1 |
+>
+> 128 kolondan itibaren **birebir aynı**. Sebebi anlaşılır: kaplama
+> büyüdükçe hangi kaplamanın seçildiği toplamı daha az belirliyor.
+> Dolayısıyla §3.56'nın 2,39 katı (168 kolon) ve E2/E3'ün ROI sayıları
+> (168 kolon) bu oynaklığın **dışındadır**; etkilenen, merdivenin en alt
+> ucudur.
+>
+> **Bu, E6 için bir uyarıdır ve buraya o yüzden yazılıyor.** E6'nın
+> ölçtüğü λ kuralı ve LOO kolu **32 kolonluk** basamağı seçiyor — yani
+> oynaklığın en yüksek olduğu uçtan da aşağısını. E6'nın o satırdaki
+> sonucu "sıfırı kesiyor" olduğu için oynaklık **kararı çevirmez** (bir
+> null'u gürültü daha da null yapar), ama o satırın tek bir koşumdan
+> okunmaması gerekir.
 
 ### 3.63 BFE üçüncü cetvelle de reddedildi (İş 4) — bu kez **isabetle**
 
