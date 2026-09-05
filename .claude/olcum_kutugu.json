@@ -585,6 +585,62 @@
    ],
    "bekci": "backend/tests/test_hakem.py::test_yayilim_sinavi_ETKI_VAR_MI_sorusunu_ayirir",
    "not": "ORAN. >=30 macli 160 hakem: gozlenen ev-artigi sd 0,0560, saf orneklem gurultusunun urettigi sd 0,0576 -> oran 0,97. >=50 macli 123 hakemde 0,0512 / 0,0513 = 1,00. Ikisinde de Var(gercek) = Var(gozlenen) − Var(sans) NEGATIF, yani gozlenen yayilim sansin urettiginden bile kucuk. Bu, 'gecmedi'den daha guclu bir cumle: yakalanacak bir hakem etkisi YOK, duzeltmenin kusuru degil."
+  },
+  {
+   "ne": "2026/27 4. hafta plani — sekil (13-garanti, 2.000 TL butce)",
+   "deger": "6 banko / 1 çifte / 8 üçlü",
+   "ureten": "cd backend && python scripts/hafta_kos.py --oncesi 2026_27 4",
+   "olculdu": "2026-09-05",
+   "anildigi_yerler": [
+    "docs/KUPON_NASIL_KURULUYOR.md"
+   ],
+   "bekci": null,
+   "not": "Dort haftanin dordunde de ayni sekil cikti: butce+garanti sekli neredeyse civiliyor, hafta yalnizca HANGI macin hangi seviyeye dusecegini ve hangi sembollerin isaretlenecegini belirliyor."
+  },
+  {
+   "ne": "2026/27 4. hafta plani — bedel (13-garanti, 2.000 TL butce)",
+   "deger": "162 kolon",
+   "ureten": "cd backend && python scripts/hafta_kos.py --oncesi 2026_27 4",
+   "olculdu": "2026-09-05",
+   "anildigi_yerler": [
+    "docs/KUPON_NASIL_KURULUYOR.md",
+    "docs/KAZANMA_KARNESI.md"
+   ],
+   "bekci": null,
+   "not": "Ayni sekil 12-garantide 45 kolon (450 TL), 14-garantide 972 kolon (9.720 TL) — sistem.bedel(6,1,8,G)."
+  },
+  {
+   "ne": "2026/27 4. hafta P(en iyi kolon >= 12) = P(k <= 1), 13-garanti",
+   "deger": "0,1748",
+   "ureten": "cd backend && python scripts/hafta_kos.py --oncesi 2026_27 4",
+   "olculdu": "2026-09-05",
+   "anildigi_yerler": [
+    "docs/KUPON_NASIL_KURULUYOR.md"
+   ],
+   "bekci": null,
+   "not": "Ayni haftanin 14-garanti fix16 yolundaki karsiligi %46,70 — ama orada butce 3.888 kolon (38.880 TL). Iki sayi ayni olcekte DEGILDIR."
+  },
+  {
+   "ne": "13-garantide 2.000 TL'ye sigan sekil sayisi (ST EXTRA tablosu)",
+   "deger": "37",
+   "ureten": "cd backend && python -c \"from spor_toto import sistem; print(len(sistem.sekiller(13, en_cok_tl=2000)))\"",
+   "olculdu": "2026-09-05",
+   "anildigi_yerler": [
+    "docs/KUPON_NASIL_KURULUYOR.md §8"
+   ],
+   "bekci": null,
+   "not": "Pareto DP'nin aday kumesi budur: formulun urettigi her (cifte, uclu) ikilisi degil, saticinin GERCEKTEN sattigi sekiller."
+  },
+  {
+   "ne": "2026/27 4. hafta ana fiyatinin ortalama marji",
+   "deger": "%5,44",
+   "ureten": "cd backend && python scripts/super_toto_hafta.py --hafta 4  # '1. MARJ' blogu",
+   "olculdu": "2026-09-05",
+   "anildigi_yerler": [
+    "docs/KUPON_NASIL_KURULUYOR.md"
+   ],
+   "bekci": null,
+   "not": "Saf Pinnacle DEGIL: 2. macin fiyati Nesine'den geldigi icin ortalama %4,62'den %5,44'e cikiyor. Pinnacle satirlarinin kendi ortalamasi %4,62 kapanis (13 mac) / %4,65 acilis (14 mac)."
   }
  ],
  "komutlar": [
