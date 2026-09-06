@@ -9,7 +9,7 @@ from __future__ import annotations
 import pytest
 
 from spor_toto import karne
-from spor_toto.sistem import VARSAYILAN_GARANTI
+from spor_toto.karne import VARSAYILAN_GARANTI
 
 
 def _probs(n: int = 15) -> list[dict[str, float]]:

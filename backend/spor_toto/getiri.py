@@ -149,8 +149,12 @@ VARSAYILAN_KOMISYON = 0.50
 #: 1. ST EXTRA kupon aracının ekranı (3. haftanın dört 15 bileni),
 #: 2. kullanıcının **bayi / resmî Spor Toto uygulaması** beyanı — araçtan
 #:    bağımsız birinci el, hizmet-bedeli şüphesini kapatan gözlem,
-#: 3. `data/sistem_fiyat/st_extra.json`: 250 sistem fiyatının **250'si de**
-#:    10'un tam katı, yani her satırda kolon sayısı tamsayı çıkıyor.
+#: 3. satıcının indirgenmiş sistem fiyat tablosu: 250 sistem fiyatının
+#:    **250'si de** 10'un tam katıydı, yani her satırda kolon sayısı tamsayı
+#:    çıkıyordu. (Tablo — `data/sistem_fiyat/st_extra.json` ve onu okuyan
+#:    `sistem.py` — kaplama katmanıyla birlikte söküldü; bkz.
+#:    `docs/DUZ_SISTEME_GECIS.md`. Bu üçüncü köken bu yüzden artık
+#:    **yeniden koşulamaz**; kaydı `kaplama-son` etiketli commit'tedir.)
 #:
 #: Şüphe kapandığı için sayı artık **varsayılan hesaba girer**
 #: (`scripts/kademe_analizi.py`). `VARSAYILAN_KOLON_BEDELI` silinmedi:

@@ -81,6 +81,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import random
 from collections.abc import Sequence
 from pathlib import Path
@@ -904,10 +905,10 @@ def kapsama_acigi(butce_tl: float = 2000.0,
 
         cd backend && python -m spor_toto.karne --kapsama --garanti 14
     """
-    from .sistem import HEDEF_KADEME as _hk
-    from .sistem import kacak_esigi
+    from .secim import HEDEF_KADEME as _hk
+    from .secim import kacak_esigi
 
-    esik = kacak_esigi(garanti, _hk)
+    esik = kacak_esigi(_hk)
     satirlar: list[dict[str, Any]] = []
     maclar: list[dict[str, Any]] = []
     for h in kupon_kesiti():
@@ -1287,8 +1288,8 @@ def kalibrasyon_kiyasi(butce_tl: float = 2000.0,
 
         cd backend && python -m spor_toto.karne --kalibrasyon --garanti 14
     """
-    from .sistem import HEDEF_KADEME as _hk
-    from .sistem import kacak_esigi
+    from .secim import HEDEF_KADEME as _hk
+    from .secim import kacak_esigi
 
     ham = kupon_kesiti()
     kesitler = {"piyasa": ham, f"kalibre_{kademe}": kalibre_kesit(ham, kademe)}
@@ -1353,7 +1354,7 @@ def kalibrasyon_kiyasi(butce_tl: float = 2000.0,
         }
 
     # E3 tuzagina karsi: P(hedef) farkinin ne kadari secim DEGISMEDEN?
-    esik = kacak_esigi(garanti, _hk)
+    esik = kacak_esigi(_hk)
     kes_a = {(h["sezon"], h["hafta"]): h for h in kesitler[a]}
     kes_b = {(h["sezon"], h["hafta"]): h for h in kesitler[b]}
     sabit, serbest = [], []
@@ -1417,11 +1418,11 @@ def p_ayrisimi(butce_tl: float = 2000.0, garanti: int = VARSAYILAN_GARANTI,
     gelir.
     """
     from .odds import FIYAT_VARSAYILAN
-    from .sistem import HEDEF_KADEME as _hk
-    from .sistem import kacak_esigi
+    from .secim import HEDEF_KADEME as _hk
+    from .secim import kacak_esigi
 
     ana = FIYAT_VARSAYILAN if omurga is None else omurga
-    esik = kacak_esigi(garanti, _hk)
+    esik = kacak_esigi(_hk)
     a_kesit = {(h["sezon"], h["hafta"]): h
                for h in kupon_kesiti(kaynaklar=(ana,))}
     b_kesit = {(h["sezon"], h["hafta"]): h
@@ -1983,59 +1984,68 @@ def gercek_kolon_dagilimi(secimler: Sequence[Sequence[str]],
                           gercek: Sequence[str],
                           hedef_kolon: int | None = None
                           ) -> dict[int, float] | None:
-    """Kuponun **gerçek** kolonlarını üretip kademe dağılımını sayar.
+    """Kuponun kolonlarının kademe dağılımı — düzde **tam sayım**.
 
     ─── Niçin bu, fişe gerek bırakmıyor ──────────────────────────────────
 
     `hafta_karnesi` **garanti tabanını** kullanır: `k` kaçakta *bir* kolon
-    `G−k` kademesinde. Tabanın ne kadar gevşek olduğu bilinmiyordu ve
-    kapatmanın tek yolu ST EXTRA fişi sanılıyordu.
+    `15−k` kademesinde. Oysa tam sistem 12'yi bir haftada bir kez değil
+    yüzlerce kez tutturur ve ikramiye kolon başına ödenir; taban bu yüzden
+    bir **alt sınırdır** ve bu fonksiyon onu sayıya çevirir.
 
-    Değil: **14-garanti için motor kolonları kendisi üretebiliyor**
-    (`engines.run_auto`). Üretilen kaplama gerçek oynanan sistemle birebir
-    aynı olmayabilir — satıcının kodu daha ucuz (aynı şekilde 168 kolon,
-    motorunki 216) — ama tabanın **mertebesini** verir ve soru zaten oydu.
+    ─── Bu fonksiyon eskiden YAKLAŞIKTI, artık KESİN ─────────────────────
 
-    Dönen sözlük `{kademe: kolon}`; `hedef_kolon` verilirse sayılar o
-    ölçeğe indirgenir (motorun 216'sından tablonun 168'ine).
+    Kaplama döneminde kolonlar `engines.run_auto` ile **üretilmek**
+    zorundaydı ve üç ayrı belirsizlik taşıyordu:
 
-    ─── Ölçülen: taban **2,39 kat** gevşek ───────────────────────────────
+    1. Motor kaplama üretemezse ölçüm hiç yoktu (`None`).
+    2. Motorun ürettiği kaplama satıcınınkiyle aynı değildi — aynı şekle
+       motor 216, tablo 168 kolon (%28,6 fazla).
+    3. Aradaki fark bir **ölçekleme varsayımıyla** kapatılıyordu:
+       *"satıcının daha az kolonu motorunkiyle aynı biçimde dağılıyor"* —
+       ölçülmemiş ve ölçülemez bir varsayım.
 
-    114 hafta · 14-garanti · 2.000 TL bütçe::
+    Düzde üçü birden düştü. Oynanan kolonlar seçim kümesinin tamamıdır;
+    kaç tanesinin hangi kademede olduğu `duz.kademe_sayimlari` ile
+    **tam** sayılır (elemanter simetrik polinom), üretim de ölçekleme de
+    gerekmez. `None` yalnızca kaçak sayısı 12'yi imkânsız kıldığında döner.
+
+    ─── Kaplama ölçeğinde ölçülmüştü: taban 2,39 kat gevşek ──────────────
+
+    114 hafta · 14-garanti · 2.000 TL bütçe (KAPLAMA ölçeği, yeniden
+    ölçülmedi)::
 
         maliyet              191.520 TL
         garanti tabanı ödül   19.354 TL   geri dönüş %10,1
         GERÇEK kolon ödülü    46.252 TL   geri dönüş %24,2
 
-    Ve gevşeklik kademeye göre çok farklı: garanti kademesinde çokluk
-    **≈1** (kaplama kodu orada sıkı), ama para 12'de ve orada `k=0` iken
-    ~21, `k=1` iken ~6, `k=2` iken ~1 kolon var. Yani taban en çok
-    **iyi giden haftaları** eksik sayıyor.
-
-    `None` döner: 14-garanti dışı bir şekil ya da motor kaplama üretemezse.
+    Gevşekliğin kademeye göre değiştiği bulgusu düzde daha da güçlenir:
+    orada `k=0` iken 12. kademede ~21 kolon vardı, düzde seçim kümesi sekiz
+    kat büyük olduğu için çok daha fazlası olacak. Sayı yeniden ölçülmeli
+    (Aşama 4).
     """
-    from .core import Encoder
-    from .engines import engine_params, run_auto
+    from .duz import EN_DUSUK_KADEME, kademe_sayimlari
 
-    enc = Encoder(list(secimler))
-    banko_dogru = sum(1 for i, sym in zip(enc.banko_pos, enc.banko_syms)
-                      if gercek[i] == sym)
-    try:
-        kolonlar = run_auto(enc, engine_params())["cols"]
-    except Exception:  # motor kaplama uretemezse olcum yok
+    kacak = [i for i, (sec, c) in enumerate(zip(secimler, gercek))
+             if c not in sec]
+    if len(kacak) > len(secimler) - EN_DUSUK_KADEME:
         return None
-    if not kolonlar:
+    s = [len(sec) for sec in secimler]
+    sayim = {k: float(v) for k, v in kademe_sayimlari(s, kacak).items()
+             if v > 0}
+    if not sayim:
         return None
-    sayim: dict[int, float] = {}
-    for kolon in kolonlar:
-        dogru = banko_dogru
-        for j, v in enumerate(kolon):
-            if enc.variable_syms[j][v] == gercek[enc.variable_pos[j]]:
-                dogru += 1
-        sayim[dogru] = sayim.get(dogru, 0.0) + 1.0
-    if hedef_kolon:
-        olcek = hedef_kolon / len(kolonlar)
-        sayim = {k: v * olcek for k, v in sayim.items()}
+    # `hedef_kolon` kaplama doneminin olcekleyicisiydi (motorun 216'sindan
+    # tablonun 168'ine). Duzde oynanan kolon sayisi carpimin kendisidir, yani
+    # olcek her zaman 1; parametre imza uyumu icin duruyor ve TUTARSIZSA
+    # sessizce olceklemek yerine hata atar — sessiz olcekleme tam olarak
+    # yukaridaki 3. belirsizligin kaynagiydi.
+    if hedef_kolon is not None:
+        gercek_kolon = math.prod(s)
+        if hedef_kolon != gercek_kolon:
+            raise ValueError(
+                f"duzde kolon sayisi carpimdir: {gercek_kolon}, "
+                f"hedef_kolon={hedef_kolon} verildi")
     return sayim
 
 
