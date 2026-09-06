@@ -2,9 +2,9 @@
  "sayilar": [
   {
    "ne": "suit test sayisi (eksiksiz kurulum)",
-   "deger": "2.074",
+   "deger": "2.076",
    "ureten": "cd backend && pytest -p no:randomly -n0 --collect-only -q  # dosya basi toplami",
-   "olculdu": "2026-09-05",
+   "olculdu": "2026-09-06",
    "anildigi_yerler": [
     "README.md §7,§9",
     "backend/README.md",
@@ -14,7 +14,7 @@
     "replit.md"
    ],
    "bekci": "backend/tests/test_belgeler.py::test_test_sayisi_belgelerde_tek_ve_dogru",
-   "not": "lightgbm siz kurulumda 22 test eksik toplanir; yerelde 1.958 olcumu 1.980-22 ile birebir tutuyor. E1'in alti, E2'nin iki, E3'un uc, E4'un bes, E6'nin yirmi bes testi eklendi (2.049 -> 2.074, dosya 71 -> 72). 2026-09-05'te eksiksiz kurulumla (scipy+lightgbm+flask+mcp+pillow) DOGRUDAN sayildi: 72 dosya, 2.074 test."
+   "not": "lightgbm siz kurulumda 22 test eksik toplanir; yerelde 1.958 olcumu 1.980-22 ile birebir tutuyor. E1'in alti, E2'nin iki, E3'un uc, E4'un bes, E6'nin yirmi bes testi eklendi (2.049 -> 2.074, dosya 71 -> 72). 2026-09-05'te eksiksiz kurulumla (scipy+lightgbm+flask+mcp+pillow) DOGRUDAN sayildi: 72 dosya, 2.074 test. PR #44 birlesirken sayfa bekcileri test_belgeler.py'ye iki test daha ekledi (2.074 -> 2.076, dosya 72'de kaldi); 2026-09-06'da ayni eksiksiz kurulumla yeniden sayildi: 72 dosya, 2.076 test."
   },
   {
    "ne": "test dosyasi sayisi",
@@ -585,6 +585,20 @@
    ],
    "bekci": "backend/tests/test_hakem.py::test_yayilim_sinavi_ETKI_VAR_MI_sorusunu_ayirir",
    "not": "ORAN. >=30 macli 160 hakem: gozlenen ev-artigi sd 0,0560, saf orneklem gurultusunun urettigi sd 0,0576 -> oran 0,97. >=50 macli 123 hakemde 0,0512 / 0,0513 = 1,00. Ikisinde de Var(gercek) = Var(gozlenen) − Var(sans) NEGATIF, yani gozlenen yayilim sansin urettiginden bile kucuk. Bu, 'gecmedi'den daha guclu bir cumle: yakalanacak bir hakem etkisi YOK, duzeltmenin kusuru degil."
+  },
+  {
+   "ne": "arayuz sayfasi sayisi (frontend/app/**/page.tsx)",
+   "deger": "10",
+   "ureten": "find frontend/app -name page.tsx | wc -l",
+   "olculdu": "2026-09-05",
+   "anildigi_yerler": [
+    "README.md §6.1 tablosu",
+    "README.md §7 mimari agaci",
+    "docs/ARCHITECTURE_NEXT.md",
+    "replit.md Sayfalar tablosu"
+   ],
+   "bekci": "backend/tests/test_belgeler.py::test_sayfa_tablolari_eksiksiz",
+   "not": "BEKCISIZ KALMISTI ve tam da bu yuzden kaydi. Olcum aninda uc belge uc farkli deger soyluyordu: README §6.1 tablosu 8 rota (eksik /tahmin, /super-toto), README §7 agaci '7 sayfa' (eksik /istatistik/oranlar, /pazarlar, /takimlar), docs/ARCHITECTURE_NEXT.md tablosu 9 rota (eksik /pazarlar) ustelik metninde '7 sayfa' yaziyordu. replit.md tek dogru listeydi. test_belgeler.py modul/test/uc/betik/workflow/kapi-adimi sayan bekciler tasiyordu ama sayfa sayani yoktu; sayinin kaydigi yer bekcinin olmadigi yerle birebir ortustu. Iki bekci eklendi (tablo listesi + 'N sayfa' iddiasi) ve uc belge duzeltildi. scripts/check.sh 13. adimi 9 statik rotayi duman testinden geciriyor; 10.'su /istatistik/[week], dinamik oldugu icin sabit yolla cagrilamaz."
   },
   {
    "ne": "2026/27 4. hafta plani — sekil (13-garanti, 2.000 TL butce)",
