@@ -261,13 +261,21 @@ def test_kiyas_birlesimi_iki_kupondan_genis(deg, hafta1):
 
 
 def test_en_iyi_kolon_az_cifteli_kuponda_cokmez(deg):
-    """`solve_fix16` en az 7 çifte ister; kural daha azını üretebilir.
+    """Az çifteli kuponda da en iyi kolon doğru sayılmalı.
 
-    Shin arındırmasına geçildikten sonra favori daha çok pay aldığı için
-    banko sayısı arttı ve bu hâl daha olası oldu. Sonuç değerlendirmesinin
-    o haftada çökmesi, ölçümün en çok gerektiği anda kaybolması olurdu.
+    **Bu test bir KAPLAMA kenar durumu için yazılmıştı:** `solve_fix16` en
+    az 7 çifte ister ve kural daha azını üretebiliyordu (Shin arındırmasına
+    geçildikten sonra favori daha çok pay aldığı için banko sayısı arttı ve
+    bu hâl daha olası oldu). Değerlendirmenin o haftada çökmesi, ölçümün en
+    çok gerektiği anda kaybolması olurdu.
+
+    Düzde öyle bir kenar durum yok — her şekil oynanabilir — ama test
+    duruyor çünkü **ölçtüğü şey değişmedi**: en iyi kolon `15 − kaçak` ve
+    bu, çifte sayısından bağımsız olarak doğru sayılmalı. 2026/27'nin ilk
+    dört haftası hâlâ kaplamayla değerlendiriliyor (`kaplama_arsiv`), yani
+    her iki yol da canlı.
     """
-    secim = ["1"] * 12 + ["12"] * 3          # 3 cifte — fix16 kurulamaz
+    secim = ["1"] * 12 + ["12"] * 3          # 3 cifte
     assert deg.en_iyi_kolon(secim, "1" * 15) == 15
     # Son uc mac cifte ve "2"yi kapsiyor; ilk on iki banko kacti.
     assert deg.en_iyi_kolon(secim, "0" * 12 + "2" * 3) == 3

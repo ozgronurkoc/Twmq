@@ -2,7 +2,11 @@
 
 Bugüne kadar haftanın planı tek bir çağrıyla kuruluyordu::
 
-    sistem_secimi(probs, butce_tl=2000.0, garanti=14)
+    sistem_secimi(probs, butce_tl=2000.0)
+
+(Kaplama döneminde bu çağrı üçüncü bir argüman alıyordu: `garanti=14`.
+Düzde seçilebilecek bir garanti seviyesi yok — en iyi kolon `15 − k` —
+ve `hafta_cetveli` `garanti` verilirse hata atar.)
 
 ve E2 bunun bedelini sayıya çevirdi (`docs/KAZANMA_PLANI.md` §3.57):
 
@@ -18,19 +22,21 @@ seçiyordu. Bu modül o sayıyı kaldırır ve yerine ne konabileceğini sorar.
 **1. `P(hedef)` bütçesiz enbüyüklenemez.** Bir maça sembol eklemek kaçak
 olasılığını düşürür, hiçbir zaman yükseltmez; dolayısıyla `P(k ≤ eşik)`
 harcamada **azalmayan** bir fonksiyondur (`cephe` bunu her hafta üretir ve
-`test_hafta_hakki` bekçisi tutar). Ve tavanı gerçekten görüyor: 14-garantide
-cephe **`P = 1`**'e çıkıyor — 2 banko + 13 üçlü, **590.490 TL**, çünkü eşik
-`k ≤ 2` iken 13 üçlü kaçağı tanım gereği ikiye kilitler. Yani "bütçe yok,
+`test_hafta_hakki` bekçisi tutar). Ve tavanı gerçekten görüyor: eşik
+`k ≤ 3` iken **12 üçlü** kaçağı tanım gereği üçe kilitler, yani cephe
+`P = 1`'e çıkıyor. (Kaplama ölçeğinde bu satır *"14-garantide 2 banko +
+13 üçlü, 590.490 TL, çünkü eşik `k ≤ 2`"* diyordu; düzde hem eşik hem
+bedel değişti.) Yani "bütçe yok,
 `P(hedef)`'i enbüyükle" sorusunun cevabı her hafta aynıdır ve haftaya hiç
 bakmaz: *en büyük şekli al.* Kısıt kalkınca hedef fonksiyonu anlamını
 yitiriyor.
 
 **2. Para ölçüsü ise TERS yönde dejenere.** `beklenen_tl` de `hafta_karnesi`
-de **garanti tabanını** kullanır — `k` kaçakta *bir* kolon `G−k`
+de **garanti tabanını** kullanır — `k` kaçakta *bir* kolon `15−k`
 kademesinde — ve o taban kolon sayısını hiç görmez: 32 kolonluk kupon da,
-486 kolonluk kupon da tek kolon ödülü sayılır. Ölçüldü — 2026/27 **2.
-hafta**, cephenin 15 basamağı (`--para 2026_27:2`, `beklenen_tl` ·
-`RAKIP_KOLON`)::
+486 kolonluk kupon da tek kolon ödülü sayılır. Ölçüldü (KAPLAMA ölçeği,
+yeniden ölçülmedi) — 2026/27 **2. hafta**, cephenin 15 basamağı
+(`--para 2026_27:2`, `beklenen_tl` · `RAKIP_KOLON`)::
 
         320 TL →  E[TL]  39      E/maliyet 0,121
       4.860 TL →  E[TL] 510      E/maliyet 0,105
@@ -38,7 +44,7 @@ hafta**, cephenin 15 basamağı (`--para 2026_27:2`, `beklenen_tl` ·
 Yani model ödülü maliyetle birlikte büyüyor ama **oranı her basamakta
 1'in çok altında** kalıyor: 2. haftanın 15 basamağında 0,093–0,121, 3.
 haftanın 14 basamağında 0,082–0,115 — E1'in `taban_roi`'siyle aynı
-mertebe, ve E1 o tabanın 2,39 kat gevşek olduğunu ölçmüştü. Dolayısıyla
+mertebe, ve E1 o tabanın 2,34 kat gevşek olduğunu ölçmüştü. Dolayısıyla
 `E[TL] − maliyet` her adımda daha da negatifleşiyor ve "bütçe yok,
 `E[TL] − maliyet`'i enbüyükle" sorusunun cevabı da her hafta aynıdır ve
 haftaya hiç bakmaz: *en küçüğü al* — ya da hiç oynama.
@@ -50,8 +56,11 @@ gerçekleşmiş sayıya karşı **sınar**.
 ─── O yüzden ölçü: haftanın CETVELİ ──────────────────────────────────────
 
 E1 tabanın gevşekliğini ölçerken gereken makineyi kurmuştu
-(`karne.gercek_kolon_dagilimi`): 14-garantide kolonları depo üretebiliyor,
-kademe dağılımı sayılabiliyor ve **resmî ikramiye tablosuna** vurulabiliyor.
+(`karne.gercek_kolon_dagilimi`): kolonların kademe dağılımı **tam** olarak
+sayılabiliyor (`duz.kademe_sayimlari`, elemanter simetrik polinom) ve
+**resmî ikramiye tablosuna** vurulabiliyor. Kaplama döneminde bu dağılım
+motorun ürettiği kolonlardan yaklaşık çıkarılıyordu; düzde üretim de
+ölçekleme de gerekmiyor.
 Cetvel budur — bir hafta için cephenin *her* basamağında:
 
     şekil · kolon · maliyet · P(hedef) · GERÇEKLEŞEN ödül

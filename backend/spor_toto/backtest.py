@@ -1,16 +1,21 @@
 """Geri test — "bu strateji geçen sezon ne yapardı?"
 
-Sezonun her haftası için oranlardan bir kupon üretir, kaplama motorunu
-çalıştırır ve **gerçekleşen sonucun** o kupona ne yaptığını ölçer: küme içinde
-mi kaldı, en iyi kolon kaç tutturdu, kaç kolona mal oldu.
+Sezonun her haftası için oranlardan bir kupon üretir, seçim kümesini
+kolonlara açar ve **gerçekleşen sonucun** o kupona ne yaptığını ölçer: küme
+içinde mi kaldı, en iyi kolon kaç tutturdu, kaç kolona mal oldu.
 
 Zincir tektir ve her adımı başka bir modülden gelir:
 
     odds.match_1x2   → maç başına marj arındırılmış olasılık
     strateji eşiği   → maç başına banko / çifte / üçlü
     core.Encoder     → seçimlerin tamsayı uzayı
-    core.solve_fix16 → 14-garantili kaplama (ya da blok/heuristik yedeği)
+    duz.kolonlar     → seçim kümesinin TAMAMI (2^çifte · 3^üçlü)
     history          → gerçekleşen sonuç
+
+Üçüncü satır eskiden `core.solve_fix16 → 14-garantili kaplama (ya da
+blok/heuristik yedeği)` idi ve bir **aramaydı**. Kaplama söküldü
+(`docs/DUZ_SISTEME_GECIS.md`); arama da doğrulama da gereksiz, çünkü
+kolonlar seçim kümesinin kendisi.
 
 **Bu bir kâr vaadi değildir.** 41 hafta küçük bir örneklemdir; eşik taraması
 yapıldığında en iyi görünen eşiğin gelecek sezon aynısını yapmayacağı

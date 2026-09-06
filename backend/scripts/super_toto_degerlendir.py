@@ -138,6 +138,31 @@ kacak_dagilimi = ortak_kacak_dagilimi
 #: 14 verirdi (ve 8 kat ucuza gelirdi).
 SISTEMLER = ("fix16", "tam")
 
+#: Kaydin oynandigi sistem — **varsayilana DUSULMEZ, kayittan okunur.**
+#:
+#: Bu fonksiyon bir hatanin uzerine yazildi. `sistem` her yerde
+#: `"fix16"` varsayilaniyla geciyordu ve 2026/27'nin ilk dort haftasi
+#: gercekten kaplamayla oynandigi icin dogruydu. Kaplama 2026-09-06'da
+#: sokuldu (`docs/DUZ_SISTEME_GECIS.md`): 5. haftadan itibaren kupon duz
+#: kuruluyor ve ayni varsayilan onu SESSIZCE yanlis degerlendirirdi —
+#: yedi ciftesi olan bir duz kupon 16 satirlik kaplamaya indirgenir, en
+#: iyi kolon 15 yerine 14 sayilir ve kupon kendi tuttugundan bir kademe
+#: kotu gorunur.
+#:
+#: Kayit ne diyorsa o: `meta.sistem`. Alan yoksa ESKI kayittir (kaplama
+#: doneminde yazilmis) ve `fix16` dogru cevaptir; yeni kayitlar alani
+#: `super_toto_hafta.py` tarafindan yazilir.
+def kayit_sistemi(d: dict[str, Any]) -> str:
+    """Donmus kaydin oynandigi sistem — `meta.sistem`, yoksa `fix16`."""
+    s = (d.get("meta") or {}).get("sistem")
+    if s in SISTEMLER:
+        return s
+    if s == "duz":            # kupon kaydinin adlandirmasi
+        return "tam"
+    if s is not None:
+        raise SystemExit(f"kayitta bilinmeyen sistem: {s!r}")
+    return "fix16"
+
 
 def kupon_degerlendir(d: dict[str, Any], picks: Sequence[str],
                       sistem: str = "fix16") -> dict[str, Any]:
@@ -879,14 +904,16 @@ def referans_kuponlar(d: dict[str, Any],
     Bunlar bizim kuralımızın ürünü değildir ve öyle sunulmaz: ayrı bir
     başlıkta, kaynağıyla birlikte durur. Kıyasın anlamlı olması için
     oynanma biçimi (`sistem`) mutlaka kayıtta yazılıdır — yazılmazsa
-    16 satır varsayılır ve 8 kat pahalı bir kupon ucuz gibi okunur.
+    HAFTANIN kendi sistemi (`kayit_sistemi`) varsayılır; eskiden burada
+    sabit `fix16` vardı ve düz bir haftada 8 kat pahalı bir kupon ucuz
+    gibi okunurdu.
     """
     out = []
     for r in kupon.get("referans") or []:
         if r.get("sistem") == "kayitli":
             out.append(kayitli_karne(d, r))
             continue
-        kart = plan_karnesi(d, r["picks"], r.get("sistem", "fix16"),
+        kart = plan_karnesi(d, r["picks"], r.get("sistem") or kayit_sistemi(d),
                             r.get("label", "referans"))
         # Iki karsi-olgusal, ikisi de ayni gövdeyle ölçülür:
         #
@@ -896,7 +923,7 @@ def referans_kuponlar(d: dict[str, Any],
         # `azami` — AYNI SEKIL (ayni sayida banko/cift/uclu) ama mekanik
         # semboller. Bu satir kuponun kendi gorusunu yalitir: sekil ayni,
         # bedel ayni, degisen yalnizca hangi sembolun tutuldugu.
-        oteki = "fix16" if r.get("sistem", "fix16") == "tam" else "tam"
+        oteki = "fix16" if (r.get("sistem") or kayit_sistemi(d)) == "tam" else "tam"
         azami_picks = []
         for mm, pk in zip(d["matches"], r["picks"]):
             sirali = sorted(SEM, key=lambda x: -mm["probs"][x])
@@ -908,7 +935,7 @@ def referans_kuponlar(d: dict[str, Any],
             "sapma": sapma_defteri(d, r["picks"]),
             "oteki_sistem": plan_karnesi(d, r["picks"], oteki,
                                          f"{r.get('label', 'referans')} · {oteki}"),
-            "azami": plan_karnesi(d, azami_picks, r.get("sistem", "fix16"),
+            "azami": plan_karnesi(d, azami_picks, r.get("sistem") or kayit_sistemi(d),
                                   "aynı şekil · azami kapsama"),
         })
         out.append(kart)
@@ -981,9 +1008,12 @@ def rapor(sezon: str, hafta: int) -> dict[str, Any]:
         "referans": referans_kuponlar(d, kupon),
         "referans_notu": kupon.get("referans_notu"),
         "havuz": havuz_karnesi(d),
-        "kartlar": ([plan_karnesi(d, sonuclar[0]["picks"], "fix16",
+        # **Sistem kayittan okunur, varsayilana DUSULMEZ** (bkz.
+        # `kayit_sistemi`): burada "fix16" sabit yaziliydi ve 5. haftadan
+        # itibaren duz kuponlari sessizce bir kademe kotu gosterirdi.
+        "kartlar": ([plan_karnesi(d, sonuclar[0]["picks"], kayit_sistemi(d),
                                   sonuclar[0].get("label") or "1. Tahmin ana")]
-                    + ([plan_karnesi(d, ayarli["picks"], "fix16",
+                    + ([plan_karnesi(d, ayarli["picks"], kayit_sistemi(d),
                                      "2. Tahmin ayarlı")] if ayarli else [])),
         "sira": gercegin_sirasi(d),
         "crowd": kalabalik_karnesi(d),

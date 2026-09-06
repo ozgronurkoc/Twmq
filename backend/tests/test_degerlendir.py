@@ -570,3 +570,44 @@ def test_kolon_bedeli_kaynagiyla_birlikte_durur():
     assert KOLON_BEDELI == 10.0
     assert "DIS KAYIT" in KOLON_BEDELI_KAYNAGI
     assert "3.48" in KOLON_BEDELI_KAYNAGI
+
+
+# ─── kayit kendi sistemini ILAN ETMEK ZORUNDA ─────────────────────────────
+
+def test_donmus_kupon_kaydi_SISTEMINI_ilan_eder():
+    """Her `hafta_NN_kupon.json` hangi sistemle oynandığını yazmalı.
+
+    **Bu bekçi bir hatanın üzerine yazıldı.** `super_toto_degerlendir`
+    sistemi bir parametre olarak taşıyordu ve varsayılanı `"fix16"`di —
+    2026/27'nin ilk dört haftası gerçekten kaplamayla oynandığı için
+    doğruydu. Kaplama 2026-09-06'da söküldü
+    (`docs/DUZ_SISTEME_GECIS.md`) ve 5. haftadan itibaren kupon düz
+    kuruluyor; aynı varsayılan onu **sessizce** yanlış değerlendirirdi:
+    yedi çiftesi olan bir düz kupon 16 satırlık kaplamaya indirgenir, en
+    iyi kolon 15 yerine 14 sayılır ve kupon kendi tuttuğundan bir kademe
+    kötü görünürdü. Çökme değil YANLIŞ SAYI, yani fark edilmesi en zor tür.
+
+    Değerlendirici artık `kayit_sistemi(d)` ile kayıttan okuyor; bu bekçi
+    de kaydın **yazmasını** şart koşuyor. Alan yoksa hangi sistemle
+    oynandığı bir daha kurtarılamaz — kupon dondurulduktan sonra kod
+    değişir, kayıt değişmez.
+    """
+    import json
+
+    from scripts.super_toto_degerlendir import SISTEMLER
+
+    kok = KOK / "data" / "super_toto"
+    kayitlar = sorted(kok.glob("*/hafta_*_kupon.json"))
+    assert kayitlar, "donmus kupon kaydi bulunamadi"
+    eksik = []
+    for yol in kayitlar:
+        meta = json.loads(yol.read_text(encoding="utf-8")).get("meta") or {}
+        s = meta.get("sistem")
+        if s is None:
+            eksik.append(f"{yol.name}: alan YOK")
+        elif s not in SISTEMLER and s != "duz":
+            eksik.append(f"{yol.name}: taninmayan deger {s!r}")
+    assert not eksik, (
+        "donmus kupon kaydi sistemini ilan etmiyor: " + "; ".join(eksik)
+        + " — `meta.sistem` 'fix16' (kaplama) ya da 'duz' olmali."
+    )

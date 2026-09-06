@@ -1,11 +1,18 @@
 """
 Seçim dışı fire senaryoları (1-fire / 2-fire, banko-çifte).
 
-14-garanti KOSULLUDUR: yalnizca gercek sonuc secim kumesinin icindeyse
-gecerlidir. Modulun geri kalani (distance_layers, match_error_frequency,
-markov) hep kume ICI mesafeyi olcer. Bu modul kume DISINI olcer:
+`en iyi kolon = 15 - k` KOSULLUDUR: kumenin disina dusen sonuc icin hicbir
+sey soylemez. Deponun geri kalani (`olasilik_raporu`,
+`match_error_frequency`, `markov`) hep kume ICINI olcer. Bu modul kume
+DISINI olcer:
 
     "Tam k mac isaretlerimin disina cikarsa en iyi kolonum kac tutturur?"
+
+Duzde cevap kapali formda bilinir (`15 - k`) ve bu modul onu SAYARAK
+dogrular. Kaplamada oyle degildi: 16 satirin hangi noktalari orttugune
+bagliydi ve fire turu (banko mu cifte mi) sonucu degistiriyordu — o fark
+olculdu ve duzde kayboldu (bkz. `tests/test_fire_scenarios.py::
+test_fire_TURU_artik_fark_etmiyor`).
 
 Iki hesap uretilir:
   fire1 : tam 1 mac secim disinda, digerleri secim icinde

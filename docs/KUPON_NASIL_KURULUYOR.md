@@ -660,8 +660,17 @@ cevap kapalı formda: her değişken maçta bütün semboller işaretli.
 ### 9.3 Oynanacak satırlar
 
 Donmuş kayıtlar (`hafta_NN_kupon.json → rows`) oynandıkları sistemi
-`meta.sistem` alanında taşır. 2026/27'nin ilk dört haftası `"kaplama"`
-yazar ve 16 satırlıdır; sonrakiler `"duz"` yazar ve tek satırlıdır.
+`meta.sistem` alanında taşır: `"fix16"` (kaplama, 16 satır) ya da `"duz"`
+(tam sistem, tek satır). 2026/27'nin ilk dört haftası `"fix16"`dır.
+
+> **Alan sonradan eklendi ve sebebi bir hata.** Değerlendirici sistemi bir
+> parametre olarak taşıyor ve varsayılanı `"fix16"` idi — ilk dört hafta
+> gerçekten kaplamayla oynandığı için doğruydu. 5. haftadan itibaren aynı
+> varsayılan düz kuponu **sessizce** bir kademe kötü gösterirdi. Artık
+> `kayit_sistemi()` kayıttan okuyor ve bekçisi
+> `test_degerlendir.py::test_donmus_kupon_kaydi_SISTEMINI_ilan_eder`:
+> alanı yazmayan bir kayıt donduralamaz.
+
 4. haftanın ilk üç satırı:
 
 ```

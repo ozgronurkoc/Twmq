@@ -20,33 +20,35 @@ kademelerde kazanır ve bu hesap onları hiç saymaz).
 
 ─── Alt sınırın YANLILIĞI ölçüldü ve yönü bellidir ───────────────────────
 
-**Bu taban iki farklı garanti seviyesini karşılaştırmak için kullanılamaz.**
-Sebebi ölçüldü: arşivdeki 223 haftada `14 bilen ödülü / 13 bilen ödülü`
-oranının medyanı **15,1**. Hiç kaçak olmayan bir haftada taban 14-garantiye
-14. kademeyi, 13-garantiye 13. kademeyi yazar ve aradaki on beş kat farkın
-**tamamı sınırın eseridir**: 288 kolonluk bir 13-garanti sistemi o hafta 14'ü
-de büyük olasılıkla tutar, ama garanti bunu *söylemediği* için taban saymaz.
+**Bu uyarı bir GARANTİ SEVİYESİ uyarısıydı ve konusu kalktı.** Şöyle
+diyordu: taban iki farklı garanti seviyesini karşılaştırmak için
+kullanılamaz, çünkü arşivdeki 223 haftada `14 bilen ödülü / 13 bilen
+ödülü` oranının medyanı **15,1** ve hiç kaçak olmayan bir haftada taban
+14-garantiye 14. kademeyi, 13-garantiye 13. kademeyi yazıyor — aradaki on
+beş kat farkın tamamı sınırın eseri.
 
-Dolayısıyla:
+Düzde seçilebilecek bir garanti seviyesi yok: en iyi kolon her zaman
+`15 − k`. Yani "garantiler arası kıyas" diye bir hata kalmadı. Yanlılığın
+**kendisi** duruyor ve aşağıda ölçülüyor: taban haftada *bir* kolon sayar,
+oysa tam sistem 12'yi yüzlerce kez tutturur.
 
-* **Aynı garanti içinde** karşılaştırma geçerlidir — yanlılık iki kolda da
-  aynıdır ve eşleştirilmiş farkta büyük ölçüde götürür. Ama *tam* götürmez:
-  yanlılığın büyüklüğü kaçağa bağlıdır ve aşağıdaki ölçüm onu gösteriyor.
-* **Garantiler arasında** geçerli DEĞİLDİR. O karşılaştırma ancak gerçek
-  kolon listeleriyle yapılır ve bu modül onu yapmaz; `gecerli_kiyas()`
-  çağrıldığında bunu açıkça söyler.
+─── Sınırın BÜYÜKLÜĞÜ de ölçüldü: 2,34 kat (`taban_gevsekligi`) ──────────
 
-─── Sınırın BÜYÜKLÜĞÜ de ölçüldü: 2,39 kat (`taban_gevsekligi`) ──────────
-
-14-garantide kolonlar depoda üretilebiliyor (`engines.run_auto`), yani
-tabanın ne kadar alt olduğu fişe gerek kalmadan sayılabildi. 114 hafta,
-2.000 TL: taban 19.354 TL (geri dönüş %10,1), gerçek kolon dağılımı
-46.301 TL (%24,2) — **2,39 kat**.
+Düzde kolonlar üretilmez, **sayılır** (`duz.kademe_sayimlari`), yani
+tabanın ne kadar alt olduğu fişe de motora da gerek kalmadan hesaplanır.
+114 hafta, 2.000 TL: taban 26.361 TL (geri dönüş **%14,3**), gerçek kolon
+dağılımı 61.615 TL (**%33,4**) — **2,34 kat**.
 
 Ve yanlılık düzgün değil, **eğik**: 12+ tutturan ortalama kolon sayısı
-kaçak 0'da 26,8, kaçak 1'de 10,2, kaçak 2'de 1,3, taban her durumda 1.
-Yani sınır en çok **iyi giden** haftaları eksik sayar — eşleştirilmiş
-karşılaştırmalarda muhafazakâr değil taraflıdır.
+kaçak 0'da **98,0**, kaçak 1'de **50,0**, kaçak 2'de **11,5**, kaçak 3'te
+**1,1**; taban her durumda 1. Yani sınır en çok **iyi giden** haftaları
+eksik sayar — eşleştirilmiş karşılaştırmalarda muhafazakâr değil
+taraflıdır.
+
+> **Kaplama ölçeğindeki kardeş ölçüm** (aynı para, aynı kesit, sökülmüş
+> sistem): taban 19.354 TL (%10,1), gerçek kolon 46.252 TL (%24,2) —
+> **2,39 kat**; 12+ kolon kaçak 0'da 26,8. Düz aynı cüzdanla **1,38 kat**
+> daha çok geri veriyor. İkisi de `.claude/olcum_kutugu.json`da.
 
 Bunun kapatmadığı şey de ölçüldü: %24,2 hâlâ 1'in altında. Taban
 düzeltilince bile kupon para kaybediyor, yani geri dönüş açığı bir ölçüm
@@ -513,8 +515,8 @@ def butce_egrisi(garanti: int = VARSAYILAN_GARANTI,
     E1–E4'ün dördü de tek bir sabit 2.000 TL'de koştu.
 
     Var olan bütçe eğrisi (`_main`in varsayılan yolu) **garanti tabanına**
-    dayanıyor ve taban 2,39 kat gevşek **ve eğik**: 12+ tutturan kolon
-    sayısı kaçak 0'da 26,8, kaçak 2'de 1,3 iken taban her durumda 1 sayıyor
+    dayanıyor ve taban 2,34 kat gevşek **ve eğik**: 12+ tutturan kolon
+    sayısı kaçak 0'da 98,0, kaçak 3'te 1,1 iken taban her durumda 1 sayıyor
     (§3.56). Yani mevcut eğri en çok *iyi giden* haftaları eksik sayıyor —
     bütçeleri kıyaslamak için tam olarak yanlış cetvel. Bu fonksiyon aynı
     eğriyi `taban_gevsekligi`nin **gerçek kolon** hattı üzerinde kurar.
@@ -647,7 +649,7 @@ def hedef_kademe_kiyasi(butce_tl: float = 2000.0,
     geliyordu. Bu fonksiyon her aday kademeyi 114 hafta boyunca **gerçek
     ikramiye tablosuna** karşı koşturur ve eşleştirilmiş farkı verir.
 
-    Puanlama `gercek_odul`dur, taban değil: E1 tabanın 2,39 kat gevşek ve
+    Puanlama `gercek_odul`dur, taban değil: E1 tabanın 2,34 kat gevşek ve
     **eğik** olduğunu ölçtü (kaçak küçüldükçe yanlılık büyüyor), yani taban
     tam bu karşılaştırmayı bastırırdı — hedefi sıkılaştırmanın kazancı
     kaçağın küçük olduğu yerdedir.
@@ -1915,7 +1917,7 @@ def _basabas_kacak(tablo: dict[int, dict[str, Any]], garanti: int,
     **kendi** resmî tablosundan gelir. İkisinden biri değişirse bu sayı da
     değişir — bekçisi `test_karne.py::test_basabas_kacak_ELLE_YAZILMAZ`.
 
-    Ölçülen alt sınırdır (`gercek_kolon_dagilimi` 2,39 kat gevşek olduğunu
+    Ölçülen alt sınırdır (`gercek_kolon_dagilimi` 2,34 kat gevşek olduğunu
     gösterdi, §3.56), yani gerçek başabaş seviyesi bundan **büyük** olabilir.
     """
     en_iyi: int | None = None
