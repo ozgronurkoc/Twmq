@@ -5,21 +5,23 @@ başına bakılıp favorinin olasılığı iki sabit eşiğe vuruluyordu. O kura
 haftanın şeklini görmez, bütçeyi bilmez, kaplama bedelini bilmez ve
 **hiçbir yerde asıl önemsenen sayıyı optimize etmez.**
 
-Asıl sayı `P(en iyi kolon ≥ 12)`'dir ve garantinin aritmetiği onu tam
-olarak tanımlar:
+Asıl sayı `P(en iyi kolon ≥ 12)`'dir ve aritmetiği tam olarak şudur:
 
     k maç seçim kümesinin DIŞINDA kalırsa o k maç her kolonda yanlıştır.
-    Kalan 15−k maç içeridedir; Hamming bloğu en fazla 1 hata bırakır
-    (ekstra maçlar tam oynandığı için 0). Yani en iyi kolon ≥ 14−k:
+    Kalan 15−k maç içeridedir ve **düz oynandığı için hepsi oynanır**, yani
+    bir kolon onların hepsini tutturur:
 
-        k=0 → ≥14    k=1 → ≥13    k=2 → ≥12    k=3 → ≥11
+        en iyi kolon = 15 − k
 
-    ⇒ P(en iyi kolon ≥ 12) ≥ P(k ≤ 2)
+        k=0 → 15    k=1 → 14    k=2 → 13    k=3 → 12
 
-Eşitlik değil **alt sınır**: kaplama bir kolonu tesadüfen daha iyi
-tutturabilir. Yani `P(k ≤ 2)` iyimser değil, **temkinli** bir hedeftir ve
-optimize edilmesi güvenlidir — ölçümde gerçekleşen isabet bu sayının
-üstünde çıkar (36 haftada model %39,5 derken gerçekleşen 24/36 oldu).
+    ⇒ P(en iyi kolon ≥ 12) = P(k ≤ 3)
+
+Bu bir **eşitliktir**, alt sınır değil. Depo bir zamanlar kuponu kaplama
+koduyla kuruyordu; orada en iyi kolon `≥ 14−k` idi, yani `P(k ≤ 2)`
+*temkinli* bir hedefti ve gerçekleşen isabet onun üstünde çıkabiliyordu.
+Kaplama söküldü (`docs/DUZ_SISTEME_GECIS.md`) ve o temkin payı da gitti:
+buradaki sayı artık ne iyimser ne temkinli, **tam**.
 
 ─── Yapının sadeleştirdiği nokta ─────────────────────────────────────────
 
@@ -29,9 +31,16 @@ Bir maçın kaçak olasılığı yalnızca kaç sembol işaretlendiğine bağlı
     çifte (2 sembol)   q = p₃        (en düşük olasılıklı sembol)
     üçlü  (3 sembol)   q = 0         ← üçlü ASLA kaçmaz
 
-Bedel ise yalnızca sayılara bağlıdır: `2^a · 3^b · 16 / 2⁷`, burada `a`
-çifte, `b` üçlü sayısıdır. Bu iki olgu, aramayı küçük ve **tam** çözülebilir
-bir probleme indirger.
+Bedel ise yalnızca sayılara bağlıdır: `2^a · 3^b`, burada `a` çifte, `b`
+üçlü sayısıdır — yani seçim kümesinin büyüklüğü. Bu iki olgu, aramayı küçük
+ve **tam** çözülebilir bir probleme indirger.
+
+─── Bütçe neden varsayılansız ────────────────────────────────────────────
+
+Üçlünün kaçağı sıfırdır. Tavan yoksa `P(k ≤ 3)`'ü enbüyükleyen plan **her
+maçı üçlü** yapmaktır: `3¹⁵ = 14.348.907` kolon, `P = 1,0`, ₺10 kolon
+bedeliyle ₺143 milyon. Yani "bütçe yok" matematiksel olarak dejenere bir
+cevaptır ve `en_iyi_secim` bunu sessizce üretmez: `butce` zorunludur.
 
 ─── Neden Pareto DP, neden açgözlü değil ─────────────────────────────────
 
@@ -54,13 +63,17 @@ import json
 import math
 from typing import Any, NamedTuple
 
-from .core import HAMMING_BLOK_BOYU, HAMMING_KOLON, SEMBOLLER, sirala_semboller
+from .core import SEMBOLLER, sirala_semboller
 from .ortak import kacak_dagilimi
 
-#: Kaç kaçağa kadar hedefe ulaşılmış sayılır. 2, `P(en iyi kolon ≥ 12)`
-#: demektir (yukarıdaki aritmetik). Ürün kararı: 14 bir yan üründür,
-#: ikramiye eşiği 12'dir.
-VARSAYILAN_KACAK_ESIGI = 2
+#: Kaç kaçağa kadar hedefe ulaşılmış sayılır. 3, `P(en iyi kolon ≥ 12)`
+#: demektir (yukarıdaki aritmetik: en iyi kolon = 15 − k). Ürün kararı:
+#: ikramiye eşiği 12'dir, 15 bir yan üründür.
+#:
+#: **Kaplama döneminde bu sayı 2'ydi** ve aynı para hedefini gösteriyordu:
+#: orada en iyi kolon 14 − k idi, yani ≥12 için k ≤ 2 gerekiyordu. Sayı
+#: değişti çünkü aritmetik değişti; hedef (en az 12) değişmedi.
+VARSAYILAN_KACAK_ESIGI = 3
 
 #: Bir durumda tutulacak en fazla Pareto noktası. Sınır güvenlik supabı;
 #: ölçümde sınıra dayanılmadı (en yoğun hafta 12 nokta gördü) ve dayanılsa
@@ -85,13 +98,19 @@ class Secim(NamedTuple):
 
 
 def bedel_hesapla(cift: int, uclu: int) -> int:
-    """Sabit 16 satır modunda kolon bedeli.
+    """Düz (tam sistem) kolon bedeli — seçim kümesinin büyüklüğü.
 
-    `core.solve_fix16` yedi çifteyi Hamming(7,4) bloğuna koyar (16 satır),
-    kalan her şeyi tam oynar. Bedel bu yüzden `2^a·3^b`'nin blok tarafından
-    yutulan `2⁷`'ye bölünüp 16 ile çarpılmış hâlidir.
+    Her maçta işaretlenen sembollerin çarpımı: `2^a · 3^b`. Tek işaretli
+    maçlar 1 ile çarpar, yani bedeli hiç büyütmez.
+
+    **Eskiden bu formül `/2⁷ · 16` taşıyordu** çünkü kupon kaplama koduyla
+    kuruluyordu ve Hamming(7,4) bloğu yedi çifteyi 16 satıra sığdırıyordu.
+    O katman söküldü (`docs/DUZ_SISTEME_GECIS.md`): bedel artık sekiz kat
+    pahalı ama en iyi kolon 14 değil **15** tutturuyor ve "en az yedi çifte"
+    şartı ortadan kalktı — ölçümde kuponun asıl kazandığı şey o şartın
+    kalkmasıydı.
     """
-    return (2 ** cift * 3 ** uclu) // (2 ** HAMMING_BLOK_BOYU) * HAMMING_KOLON
+    return 2 ** cift * 3 ** uclu
 
 
 def _sirali(probs: dict[str, float]) -> list[tuple[str, float]]:
@@ -120,13 +139,23 @@ def en_iyi_secim(probs_listesi: list[dict[str, float]],
                  esik: int = VARSAYILAN_KACAK_ESIGI) -> Secim | None:
     """Bütçe içinde `P(k ≤ esik)`'i **enbüyükleyen** işaret planı.
 
-    `None` döner ancak bütçe hiçbir geçerli planı karşılamıyorsa — pratikte
-    bu, yedi çiftenin bedelinin (16 kolon) bile karşılanamadığı anlamına
-    gelir ve o durumda `solve_fix16` zaten kurulamaz.
+    `butce` kolon cinsindendir ve **zorunludur**; varsayılanı yoktur.
+    Sebebi modül başlığında: üçlünün kaçağı sıfır olduğu için tavansız
+    aramanın cevabı her zaman "hepsi üçlü"dür (`3¹⁵` kolon, `P = 1,0`).
+    Dejenere bir cevabı sessizce üretmektense hata atmak doğrudur.
+
+    `None` döner ancak bütçe **hiçbir** planı karşılamıyorsa; düzde en ucuz
+    plan 15 maçın hepsi tek, yani 1 kolondur. Pratikte `butce ≥ 1` her zaman
+    bir plan bulur — kaplama dönemindeki "yedi çifte kurulamıyor" hâli artık
+    yok.
 
     Arama, kaçak eşiğine kadarki kümülatif olasılıkları taşır; `esik` büyürse
     taşınan vektör de büyür, karmaşıklık `esik` ile doğrusaldır.
     """
+    if butce is None:
+        raise ValueError(
+            "Butce zorunludur — tavansiz aramanin cevabi dejeneredir "
+            "(hepsi uclu, 3^15 = 14.348.907 kolon). Bkz. modul basligi.")
     if butce <= 0:
         raise ValueError("Butce pozitif olmali.")
     n = len(probs_listesi)
@@ -152,12 +181,12 @@ def en_iyi_secim(probs_listesi: list[dict[str, float]],
         for (a, b), kume in durumlar.items():
             for seviye in (1, 2, 3):
                 ya, yb = a + (seviye == 2), b + (seviye == 3)
-                # Budama: kalan maçların hepsi banko olsa bile bedel bütçeyi
-                # aşıyorsa bu dal ölüdür. Yedi çifte şartı da aynı yerden:
-                # kalan maçlarla yediye ulaşılamıyorsa dal kapanır.
+                # Budama: kalan maçların hepsi tek olsa bile bedel bütçeyi
+                # aşıyorsa bu dal ölüdür (tek, bedeli 1 ile çarpar).
+                # Kaplama döneminde burada ikinci bir budama daha vardı —
+                # "kalan maçlarla yedi çifteye ulaşılamıyorsa dal kapanır";
+                # o şart Hamming bloğunundu ve katmanla birlikte kalktı.
                 if bedel_hesapla(ya, yb) > butce:
-                    continue
-                if ya + kalan_mac < HAMMING_BLOK_BOYU:
                     continue
                 qq = q_seviye[i][seviye - 1]
                 for kumulatif, izlek in kume:
@@ -174,8 +203,6 @@ def en_iyi_secim(probs_listesi: list[dict[str, float]],
 
     en: tuple[float, int, tuple[int, ...]] | None = None
     for (a, b), kume in durumlar.items():
-        if a < HAMMING_BLOK_BOYU:
-            continue
         c = bedel_hesapla(a, b)
         if c > butce:
             continue
@@ -511,23 +538,17 @@ def kiyas(last: int | None = None,
     sorudur; bu yüzden gerçekleşen en iyi kolon da ölçülür.
     """
     from .backtest import VARSAYILAN_BANKO, VARSAYILAN_UCLU, hafta_girdileri, secim_uret
-    from .core import Encoder, solve_fix16
 
     def en_iyi_kolon(secimler: list[list[str]], gercek: str) -> int:
-        enc = Encoder([list(x) for x in secimler])
-        cols, _ = solve_fix16(enc)
-        en = 0
-        for c in cols:
-            skor = 0
-            j = 0
-            for i, s in enumerate(secimler):
-                if len(s) == 1:
-                    skor += 1 if s[0] == gercek[i] else 0
-                else:
-                    skor += 1 if enc.variable_syms[j][c[j]] == gercek[i] else 0
-                    j += 1
-            en = max(en, skor)
-        return en
+        """Düzde en iyi kolon **sayılmaz, hesaplanır**: `15 − kaçak`.
+
+        Seçim kümesinin tamamı oynandığı için, küme içinde kalan her maçı
+        tutturan bir kolon her zaman vardır; kaçan maçlar ise her kolonda
+        yanlıştır. Kaplama döneminde burada `solve_fix16` koşup 864 kolonu
+        tek tek gezmek gerekiyordu, çünkü orada en iyi kolon bir **alt
+        sınırdı** ve gerçek değeri ancak sayarak bulunuyordu.
+        """
+        return sum(1 for i, s in enumerate(secimler) if gercek[i] in s)
 
     haftalar = []
     for w in hafta_girdileri(last):
@@ -536,8 +557,6 @@ def kiyas(last: int | None = None,
         eski = [secim_uret(p or {}, VARSAYILAN_BANKO, VARSAYILAN_UCLU)
                 for p in w["probs"]]
         a = sum(1 for s in eski if len(s) == 2)
-        if a < HAMMING_BLOK_BOYU:
-            continue          # fix16 kurulamaz; iki taraf da ölçülemez
         b = sum(1 for s in eski if len(s) == 3)
         butce = bedel_hesapla(a, b)
         yeni = en_iyi_secim(list(w["probs"]), butce, esik)
@@ -619,126 +638,75 @@ if __name__ == "__main__":  # pragma: no cover
     main()
 
 
-# ─── tablo tabanlı seçim — bedel formülden değil KAYITTAN ─────────────────
+# ─── TL cinsinden seçim ───────────────────────────────────────────────────
+
+#: Düzde bir kademeyi tutturmak için gereken en çok kaçak: `en iyi kolon =
+#: 15 − k` olduğuna göre `k ≤ 15 − kademe`. Ürünün hedef kademesi 12'dir.
+HEDEF_KADEME = 12
+
+
+def kacak_esigi(kademe: int = HEDEF_KADEME) -> int:
+    """`kademe`yi tutturmak için izin verilen en çok kaçak — düzde `15 − kademe`.
+
+    Kaplama döneminde bu hesap `sistem.kacak_esigi(garanti, kademe)`ydi ve
+    üç garanti seviyesi tanıyordu (14-garantide `k ≤ 2`, 13'te `k ≤ 1`,
+    12'de `k ≤ 0`). Düzde garanti seviyesi diye bir seçim yoktur: seçim
+    kümesinin tamamı oynandığı için en iyi kolon her zaman `15 − k`'dir.
+    """
+    return 15 - kademe
+
 
 def sistem_secimi(probs_listesi: list[dict[str, float]],
                   butce_tl: float,
                   garanti: int | None = None,
                   kademe: int | None = None,
                   yol: str | None = None) -> Secim | None:
-    """`en_iyi_secim`in tablo tabanlı hâli — **oynanan ürünün kendisi.**
+    """`en_iyi_secim`in **TL** cinsinden hâli — oynanan ürünün kendisi.
 
-    İki şeyde ayrılır ve ikisi de `en_iyi_secim`i yanlış değil **dar**
-    yapan şeydir:
+    Tek işi birim çevirmek: düzde fiyat `kolon × getiri.KOLON_BEDELI`
+    (ölçülen ₺10) olduğu için TL bütçesi doğrudan kolon tavanına dönüşür ve
+    karar `en_iyi_secim`e devredilir.
 
-    ``bedel``
-        `bedel_hesapla` yalnızca `core.solve_fix16` modunun bedelidir:
-        Hamming(7,4) bloğu, en az yedi çifte, tek garanti seviyesi. Burada
-        bedel `sistem.bedel()`den, yani satıcının **ölçülmüş** fiyat
-        tablosundan gelir; 84 şeklin tamamı ve üç garanti seviyesi geçerli
-        adaydır. Yedi çifte şartı da bu yüzden yoktur — tabloda sıfır
-        çifteli satırlar da satılıyor.
+    **Bu fonksiyon eskiden 120 satırdı** ve satıcının indirgenmiş sistem
+    fiyat tablosunu (`sistem.py`, 84 şekil × üç garanti seviyesi) kendi
+    Pareto DP'siyle tarıyordu. Kaplama söküldüğünde o tablo anlamını
+    yitirdi: indirgenmiş sistem satın almıyoruz, seçim kümesinin tamamını
+    oynuyoruz. Geriye kalan tek gerçek fark birimdi.
 
-    ``kaçak eşiği``
-        `esik` artık sabit değil, `sistem.kacak_esigi(garanti, kademe)`den
-        türüyor: 14-garantide `k ≤ 2`, 13'te `k ≤ 1`, 12'de `k ≤ 0`.
-        Gerekçesi `sistem` modül başlığındadır.
+    ``garanti``
+        Düzde garanti seviyesi diye bir seçim yok — en iyi kolon her zaman
+        `15 − k`. Parametre yalnızca çağıranların imzası bozulmasın diye
+        duruyor ve **14 dışında bir değer verilirse hata atar**; sessizce
+        yok saymak, çağıranın 13-garanti istediğini sanmasına yol açardı.
 
-    Bütçe **TL** cinsindendir, kolon değil — tablo TL konuşuyor ve iki
-    birimi karıştırmak tam olarak `bedel_hesapla`nın kolon cinsinden
-    bütçesiyle karışacağı yerdir.
+    ``kademe``
+        Hedef ikramiye kademesi (varsayılan 12). Eşiği `kacak_esigi` verir.
 
-    `None` döner ancak bütçeye satılan hiçbir şekil sığmıyorsa.
+    ``yol``
+        Fiyat tablosunun yolu. Tablo kalktı; **verilirse hata atar.**
     """
-    from . import sistem as _sistem
+    from .getiri import KOLON_BEDELI
 
-    g = _sistem.VARSAYILAN_GARANTI if garanti is None else garanti
-    kad = _sistem.HEDEF_KADEME if kademe is None else kademe
-    esik = _sistem.kacak_esigi(g, kad)
-    if esik < 0:
+    if garanti is not None and garanti != 15:
         raise ValueError(
-            f"{g}-garanti {kad}. kademeyi hic tutturamaz (esik {esik})")
+            f"Duz sistemde garanti seviyesi secilmez (en iyi kolon = 15 - k); "
+            f"garanti={garanti} verildi. Hedef kademeyi `kademe` ile ver.")
+    if yol is not None:
+        raise ValueError(
+            "Sistem fiyat tablosu sokuldu (docs/DUZ_SISTEME_GECIS.md); "
+            "`yol` artik bir sey ifade etmiyor.")
     if butce_tl <= 0:
         raise ValueError("Butce pozitif olmali.")
-    n = len(probs_listesi)
-    if n == 0:
+    if not probs_listesi:
         return None
 
-    # Satılan şekiller: (cift, kapali) -> (kolon, tl). Aynı ikili tabloda
-    # bir kez geçer, çünkü tek = 15 − cift − kapali ile belirlenir.
-    satilan: dict[tuple[int, int], tuple[int, float]] = {
-        (s.cift, s.kapali): (s.kolon, s.tl)
-        for s in _sistem.sekiller(g, yol=yol) if s.tek + s.cift + s.kapali == n
-    }
-    if not satilan:
+    esik = kacak_esigi(HEDEF_KADEME if kademe is None else kademe)
+    if esik < 0:
+        raise ValueError(f"{kademe}. kademe 15 macta tutturulamaz.")
+    butce_kolon = int(butce_tl // KOLON_BEDELI)
+    if butce_kolon < 1:
         return None
-
-    # Kesin budama: bir durumdan ileride yalnızca çifte/üçlü ARTAR, yani
-    # ulaşılabilir şekillerin en ucuzu bütçeyi aşıyorsa dal ölüdür.
-    # Formülle değil tabloyla çalıştığımız için alt sınır de tablodan gelir.
-    alt_sinir: dict[tuple[int, int], float] = {}
-    for a in range(n + 1):
-        for b in range(n + 1 - a):
-            uygun = [tl for (c, k), (_, tl) in satilan.items()
-                     if c >= a and k >= b]
-            if uygun:
-                alt_sinir[(a, b)] = min(uygun)
-
-    sirali = [_sirali(p) for p in probs_listesi]
-    q_seviye = [[max(0.0, 1.0 - sum(v for _, v in s[:k])) for k in (1, 2, 3)]
-                for s in sirali]
-
-    baslangic: tuple[float, ...] = tuple([1.0] * (esik + 1))
-    durumlar: dict[tuple[int, int], list[tuple[tuple[float, ...], tuple[int, ...]]]] = {
-        (0, 0): [(baslangic, ())],
-    }
-
-    for i in range(n):
-        yeni: dict[tuple[int, int], list[tuple[tuple[float, ...], tuple[int, ...]]]] = {}
-        for (a, b), kume in durumlar.items():
-            for seviye in (1, 2, 3):
-                ya, yb = a + (seviye == 2), b + (seviye == 3)
-                tl = alt_sinir.get((ya, yb))
-                if tl is None or tl > butce_tl:
-                    continue
-                qq = q_seviye[i][seviye - 1]
-                for kumulatif, izlek in kume:
-                    guncel = [kumulatif[0] * (1.0 - qq)]
-                    for m in range(1, esik + 1):
-                        guncel.append(kumulatif[m] * (1.0 - qq)
-                                      + kumulatif[m - 1] * qq)
-                    yeni.setdefault((ya, yb), []).append(
-                        (tuple(guncel), (*izlek, seviye)))
-        durumlar = {k: _pareto(v) for k, v in yeni.items()}
-        if not durumlar:
-            return None
-
-    en: tuple[float, float, int, tuple[int, ...]] | None = None
-    for (a, b), kume in durumlar.items():
-        sek = satilan.get((a, b))
-        if sek is None:
-            continue
-        kolon, tl = sek
-        if tl > butce_tl:
-            continue
-        for kumulatif, izlek in kume:
-            # Eşitlikte UCUZ olan kazanır — `en_iyi_secim` ile aynı kural.
-            if en is None or (kumulatif[esik], -tl) > (en[0], -en[1]):
-                en = (kumulatif[esik], tl, kolon, izlek)
-    if en is None:
-        return None
-
-    p_hedef, _tl, kolon, izlek = en
-    secimler = [sirala_semboller([s for s, _ in sirali[i][:izlek[i]]])
-                for i in range(n)]
-    return Secim(
-        secimler=secimler,
-        bedel=kolon,
-        p_hedef=p_hedef,
-        banko=sum(1 for s in secimler if len(s) == 1),
-        cift=sum(1 for s in secimler if len(s) == 2),
-        uclu=sum(1 for s in secimler if len(s) == 3),
-    )
+    return en_iyi_secim(probs_listesi, butce_kolon, esik)
 
 
 # ─── kalabalığa göre E[TL] seçimi — kupon KAPANMADAN ─────────────────────
@@ -808,9 +776,9 @@ def getiri_secim(probs_listesi: list[dict[str, float]],
     """
     from .getiri import beklenen_tl
     from .havuz import BOLUSUM
-    from .sistem import HEDEF_KADEME, VARSAYILAN_GARANTI
 
-    g = VARSAYILAN_GARANTI if garanti is None else garanti
+    # Duzde en iyi kolon her zaman 15 - k; "garanti seviyesi" secimi yok.
+    g = 15 if garanti is None else garanti
     taban = sistem_secimi(probs_listesi, butce_tl, garanti=g, yol=yol)
     if taban is None:
         return None
@@ -825,7 +793,7 @@ def getiri_secim(probs_listesi: list[dict[str, float]],
 
     if not 0.0 <= kayip_tavani < 1.0:
         raise ValueError("kayip_tavani [0, 1) araliginda olmali")
-    esik = g - HEDEF_KADEME
+    esik = kacak_esigi(HEDEF_KADEME)
     p_alt = hedef_olasiligi(probs_listesi, taban.secimler,
                             esik) * (1.0 - kayip_tavani)
 
