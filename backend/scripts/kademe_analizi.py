@@ -49,6 +49,8 @@ import numpy as np
 from spor_toto import karne as _karne
 from spor_toto import odds as O
 from spor_toto.core import SEMBOLLER
+from spor_toto.duz import hafta_kazanci as _hafta_kazanci
+from spor_toto.duz import kademe_sayimlari as _kademe_sayimlari
 from spor_toto.getiri import KOLON_BEDELI as _OLCULEN_BEDEL
 from spor_toto.ortak import kacak_dagilimi as _kacak_dagilimi
 
@@ -144,31 +146,28 @@ def olasilik_matrisi(lst: list) -> tuple[np.ndarray, np.ndarray, list[int]]:
 # kombinatorik
 # --------------------------------------------------------------------------
 def en_iyi_sistem(P: np.ndarray, butce: int) -> tuple[list[int], int]:
-    """Bütçeye sığan en yüksek kapsamalı TAM sistem — açgözlü.
+    """Bütçeye sığan en iyi TAM sistem — `secim.en_iyi_secim`in kendisi.
 
-    `secim.en_iyi_secim`den farkı: orada bedel kaplama kodunun kolon
-    sayısıdır (14-garanti), burada sistemin **tamamıdır** (15 için gerekli).
-    Her adımda kolon başına en çok kapsama katan işaret eklenir.
+    **Bu fonksiyon açgözlüydü ve öyle olduğu için değer bırakıyordu.** Her
+    adımda "kolon başına en çok kapsama katan" işareti ekliyordu; oysa amaç
+    bir Poisson-binom kuyruğudur ve maçlar arasında ayrışmaz — `secim.py`
+    modül başlığının kendi gerekçesi budur. Kaplama söküldükten sonra
+    `en_iyi_secim`in bedeli zaten tam sistemin bedeli (`2^a·3^b`) olduğu
+    için ikisini ayrı tutmanın son sebebi de kalmadı: burada artık kesin
+    Pareto DP koşuyor.
+
+    `P` sıralı olasılık matrisi (satır başına büyükten küçüğe), `butce`
+    kolon tavanı. Dönen `s` her maçta işaretlenen sembol sayısıdır.
     """
-    s = [1] * 15
-    bedel = 1
-    while True:
-        en = None
-        for i in range(15):
-            if s[i] >= 3:
-                continue
-            yeni = bedel // s[i] * (s[i] + 1)
-            if yeni > butce:
-                continue
-            kazanc = sum(P[i][:s[i] + 1]) / sum(P[i][:s[i]])
-            oran = kazanc ** (1 / (yeni - bedel))
-            if en is None or oran > en[0]:
-                en = (oran, i)
-        if en is None:
-            return s, bedel
-        i = en[1]
-        bedel = bedel // s[i] * (s[i] + 1)
-        s[i] += 1
+    from spor_toto.core import SEMBOLLER as _SEM
+    from spor_toto.secim import en_iyi_secim as _coz
+
+    probs = [{_SEM[j]: float(P[i][j]) for j in range(3)} for i in range(15)]
+    plan = _coz(probs, butce)
+    if plan is None:                      # butce < 1 kolon
+        return [1] * 15, 1
+    s = [len(x) for x in plan.secimler]
+    return s, plan.bedel
 
 
 def kacak_dagilimi(q: Sequence[float]) -> np.ndarray:
@@ -188,55 +187,14 @@ def kacak_dagilimi(q: Sequence[float]) -> np.ndarray:
     return np.asarray(_kacak_dagilimi(q), dtype=float)
 
 
-def kademe_sayimlari(s: Sequence[int], kacak: Sequence[int]) -> dict[int, int]:
-    """Tam sistemde her kademeyi tutturan KOLON SAYISI.
-
-    Kaçak sayısı `k` ise en iyi kolon `15-k` doğru yapar. Tam olarak
-    `15-k-j` doğru yapan kolon sayısı::
-
-        e_j({s_i - 1 : i kaçak degil})  x  prod_{i kaçak} s_i
-
-    `e_j` elemanter simetrik polinomdur: kaçak olmayan maçların `j`
-    tanesinde yanılmanın kaç yolu olduğunu sayar. Kaçak maçlarda ise
-    **her** işaret yanlıştır, o yüzden çarpan olarak girerler.
-    """
-    # Ad ayrildi: parametre `Sequence[int]`, govde ise KUME uzerinde
-    # calisiyor. Onceden ikisi de `kacak`ti. Uc kullanim da kumeye
-    # baglanmali — `len` ve carpim tekrar eden bir indekste kumeyle
-    # diziden FARKLI sonuc verir, yani bu bir bicim degil davranis
-    # meselesidir.
-    kacak_kume = set(kacak)
-    e = [1, 0, 0, 0]
-    for i in range(15):
-        if i in kacak_kume:
-            continue
-        x = s[i] - 1
-        e[3] += e[2] * x
-        e[2] += e[1] * x
-        e[1] += e[0] * x
-    carpan = 1
-    for i in kacak_kume:
-        carpan *= s[i]
-    return {15 - len(kacak_kume) - j: e[j] * carpan for j in range(4)}
-
-
-def hafta_kazanci(s: Sequence[int], kacak: Sequence[int],
-                  tablo: dict[int, dict[str, Any]]) -> tuple[float, dict[int, float]]:
-    """Bir haftada tam sistemin kazandığı para — seyreltme modellenmiş.
-
-    Kademe havuzu sabittir; `m` kolonumuz eklenince havuz `w+m` kişiye
-    bölünür ve payımız `havuz * m / (w + m)` olur.
-    """
-    if len(kacak) > 3:
-        return 0.0, {}
-    kad: dict[int, float] = {}
-    for tier, m in kademe_sayimlari(s, kacak).items():
-        if tier < 12 or m <= 0 or tier not in tablo:
-            continue
-        w, pz = tablo[tier]["winners"], tablo[tier]["prize"]
-        havuz = pz * w if w > 0 else pz
-        kad[tier] = havuz * m / (w + m)
-    return sum(kad.values()), kad
+#: Kolon sayımı ve para hesabı **pakete taşındı** (`spor_toto/duz.py`).
+#:
+#: İkisi de bu dosyada yazılmıştı ve orada kalsalardı kuponu **kuran** hesapla
+#: onu **değerlendiren** hesap iki ayrı dosyada yaşayacaktı — `kacak_dagilimi`
+#: sarmalayıcısının hemen yukarıdaki künyesi tam olarak bu hatanın kaydıdır.
+#: Gövde tekilleşti; buradaki adlar yalnızca çağıranlar bozulmasın diye duruyor.
+kademe_sayimlari = _kademe_sayimlari
+hafta_kazanci = _hafta_kazanci
 
 
 # --------------------------------------------------------------------------

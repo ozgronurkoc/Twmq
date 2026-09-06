@@ -5,13 +5,17 @@ hedef) ve **optimizasyonun gerçekten optimal olduğunu**. İkincisi kritik:
 Pareto budaması "yaklaşık" olsaydı sessizce daha kötü kupon kurardı ve
 hiçbir şey patlamazdı — o yüzden küçük vakalarda kaba kuvvetle
 karşılaştırılıyor.
+
+**Referans KESİN rasyonel aritmetikle koşar, float'la değil** — ve bunun
+bir bedeli (bir saniye) ve çok somut bir sebebi var; sebep aşağıda
+`_kesin_tarama`nın başlığında yazılı.
 """
 
+from fractions import Fraction
 from itertools import product
 
 import pytest
 
-from spor_toto.core import HAMMING_BLOK_BOYU, Fix16Hatasi, solve_fix16
 from spor_toto.ortak import kacak_dagilimi
 from spor_toto.secim import (
     VARSAYILAN_KACAK_ESIGI,
@@ -60,21 +64,24 @@ def test_cifte_kacagi_en_dusuk_sembolun_olasiligidir():
     assert kacak_olasiligi(m, 2) == pytest.approx(0.20)
 
 
-def test_bedel_formulu_fix16_ile_uyusuyor():
-    """Bedel formülü motorun gerçekten ürettiği kolon sayısını vermeli.
+def test_bedel_SECIM_UZAYININ_kendisidir():
+    """Düzde bedel = oynanacak kolon sayısı = işaret sayılarının çarpımı.
 
-    Formül `2^a·3^b/2⁷·16`; motor `solve_fix16`. İkisi ayrışırsa bütçe
-    kısıtı yalan söyler ve optimizasyon karşılayamayacağı planlar seçer.
+    Formüle değil **sayıma** karşı sınanıyor: kolonlar `itertools.product`
+    ile tek tek üretilip sayılıyor. Formül ile sayım ayrışırsa bütçe kısıtı
+    yalan söyler ve optimizasyon karşılayamayacağı planlar seçer.
+
+    **Bu test eskiden `solve_fix16`ın ürettiği kolon sayısını sınıyordu**
+    (`2^a·3^b/2⁷·16`); kaplama söküldü, bedel sekiz kat büyüdü ve "en az
+    yedi çifte" varsayımı da testten kalktı — aşağıdaki şekillerin çoğu
+    fix16'da hiç kurulamazdı.
     """
-    from spor_toto.core import Encoder
-
-    for cift, uclu in ((7, 0), (8, 0), (7, 1), (9, 2), (10, 0)):
+    for cift, uclu in ((0, 0), (1, 0), (0, 1), (3, 2), (7, 0), (0, 8)):
         banko = 15 - cift - uclu
         secimler = ([["1"]] * banko + [["1", "0"]] * cift
                     + [["1", "0", "2"]] * uclu)
-        enc = Encoder([list(s) for s in secimler])
-        cols, _ = solve_fix16(enc)
-        assert len(cols) == bedel_hesapla(cift, uclu), (cift, uclu)
+        sayim = sum(1 for _ in product(*secimler))
+        assert sayim == bedel_hesapla(cift, uclu), (cift, uclu)
 
 
 def test_hedef_olasiligi_kacak_dagilimiyla_tutarli():
@@ -82,7 +89,7 @@ def test_hedef_olasiligi_kacak_dagilimiyla_tutarli():
     secimler = [["1", "0"]] * 15
     q = [1 - sum(m[s] for s in sec) for m, sec in zip(maclar, secimler)]
     assert hedef_olasiligi(maclar, secimler) == pytest.approx(
-        sum(kacak_dagilimi(q)[:3]))
+        sum(kacak_dagilimi(q)[:VARSAYILAN_KACAK_ESIGI + 1]))
 
 
 def test_hepsi_uclu_ise_hedef_kesindir():
@@ -92,25 +99,102 @@ def test_hepsi_uclu_ise_hedef_kesindir():
 
 # ─── optimizasyon ─────────────────────────────────────────────────────────
 
-def _kaba_kuvvet(maclar, butce, esik=VARSAYILAN_KACAK_ESIGI):
-    """Küçük vakada TÜM atamaları gezip en iyisini bulur — referans."""
-    n = len(maclar)
+def _seviye_kacaklari(maclar):
+    """Her maç için seviye başına **kesin** kaçak olasılığı.
+
+    `Fraction(v)` bir float'ın ikili değerini TAM olarak alır (yaklaştırmaz),
+    yani referans, DP'ye verilen sayıların aynısını görür — başka bir
+    girdiyi çözüp "farklı cevap verdi" demez.
+    """
     sirali = [sorted(m.items(), key=lambda kv: (-kv[1], SEM.index(kv[0])))
               for m in maclar]
-    en = None
-    for seviyeler in product((1, 2, 3), repeat=n):
-        cift = sum(1 for s in seviyeler if s == 2)
-        uclu = sum(1 for s in seviyeler if s == 3)
-        if cift < HAMMING_BLOK_BOYU:
-            continue
-        c = bedel_hesapla(cift, uclu)
-        if c > butce:
-            continue
-        secimler = [[s for s, _ in sirali[i][:seviyeler[i]]] for i in range(n)]
-        deger = hedef_olasiligi(maclar, secimler, esik)
-        if en is None or (deger, -c) > (en[0], -en[1]):
-            en = (deger, c)
-    return en
+    return [[max(Fraction(0), Fraction(1) - sum(Fraction(v) for _, v in s[:k]))
+             for k in (1, 2, 3)] for s in sirali]
+
+
+_TARAMA_ONBELLEGI: dict[tuple, list[tuple[Fraction, int, tuple[int, ...]]]] = {}
+
+
+def _kesin_tarama(maclar, esik=VARSAYILAN_KACAK_ESIGI):
+    """TÜM atamaların değeri — **kesin rasyonel**, float yuvarlaması yok.
+
+    Dönen her üçlü `(değer, bedel, seviye izleği)`.
+
+    ─── Neden float değil ────────────────────────────────────────────────
+
+    **Bu gövde float'la yazılmıştı ve CI'nin iki bacağını kırdı.** Eski hâli
+    en iyiyi `(deger, -c) > (en[0], -en[1])` ile seçiyordu, yani float'ları
+    `>` ile kıyaslıyordu. Kıyaslanan planların bir kısmı matematiksel olarak
+    **eşit** (üçlünün kaçağı sıfır olduğu için, kalan tek/çift maç sayısı
+    eşiği aşmıyorsa `P(k ≤ eşik)` tam olarak 1'dir) ama float'ta son ULP'de
+    ayrışıyorlar. CPython 3.12 gömülü `sum()`i float'lar için Neumaier
+    telafili toplamaya çevirdi; `hedef_olasiligi` o `sum()`i kullanıyor ve
+    son basamak değişince referans, **aynı** olasılığı iki katı bedelle
+    veren planı "daha iyi" saydı: 3.10/3.11'de 729, 3.12/3.13'te 1.458.
+    Ölçüldü: `en_iyi_secim` her iki sürümde de 729 döndürüyordu, yani hatalı
+    olan üretim kodu değil bu referanstı.
+
+    Bu, deponun daha önce bir kez ısırıldığı sınıfın aynısı:
+    `.github/workflows/tests.yml`de "Üretilmiş dosyalar" adımının gerekçesi
+    aynı 3.12 değişikliğini anlatıyor ve *"kök neden `math.fsum` ile
+    kapatıldı ama SINIFI açıktı"* diyor. Burası o sınıfın ikinci örneğiydi.
+
+    Çözüm bir tolerans DEĞİL: tolerans, eşitliği yuvarlama gürültüsünden
+    ayırmak için keyfî bir eşik seçmek olurdu ve testin iddiası ("budama
+    KESİN") tam olarak keyfî eşik kaldırmayan iddia. Referans rasyonel
+    aritmetiğe çevrildi; `Fraction` üzerinde eşitlik ve `>` matematiksel
+    anlamını taşır, yorumlayıcı sürümünden bağımsızdır.
+
+    ─── Neden yine de hızlı ──────────────────────────────────────────────
+
+    Atamalar önek paylaşır: `(1,2,…)` ile `(1,3,…)` ilk maçta aynı evrişimi
+    yapar. Derinlik-öncelikli gezerek 19.683 × 9 evrişim yerine 29.523
+    evrişim yapılıyor. Dağılımın `esik`ten büyük kuyruğu da taşınmıyor:
+    `d'[m]` yalnızca `d[j ≤ m]`e bağlı, yani `m > esik` hiçbir zaman geri
+    okunmuyor. İkisi birlikte taramayı ~1 saniyeye indiriyor.
+    """
+    anahtar = (tuple(tuple(sorted(m.items())) for m in maclar), esik)
+    if anahtar in _TARAMA_ONBELLEGI:
+        return _TARAMA_ONBELLEGI[anahtar]
+
+    n = len(maclar)
+    q = _seviye_kacaklari(maclar)
+    cikti: list[tuple[Fraction, int, tuple[int, ...]]] = []
+
+    def gez(i, dagilim, izlek, cift, uclu):
+        if i == n:
+            cikti.append((sum(dagilim), bedel_hesapla(cift, uclu), izlek))
+            return
+        for k in (1, 2, 3):
+            qq = q[i][k - 1]
+            yeni = [Fraction(0)] * (len(dagilim) + 1)
+            for j, v in enumerate(dagilim):
+                yeni[j] += v * (1 - qq)
+                yeni[j + 1] += v * qq
+            gez(i + 1, yeni[:esik + 1], (*izlek, k), cift + (k == 2),
+                uclu + (k == 3))
+
+    gez(0, [Fraction(1)], (), 0, 0)
+    _TARAMA_ONBELLEGI[anahtar] = cikti
+    return cikti
+
+
+def _kesin_referans(maclar, butce, esik=VARSAYILAN_KACAK_ESIGI):
+    """Bütçe içindeki `(en iyi değer, o değere ulaşan EN UCUZ bedel)`."""
+    uygun = [(d, c) for d, c, _ in _kesin_tarama(maclar, esik) if c <= butce]
+    if not uygun:
+        return None
+    en_iyi = max(d for d, _ in uygun)
+    return en_iyi, min(c for d, c in uygun if d == en_iyi)
+
+
+def _kesin_deger(maclar, secim, esik=VARSAYILAN_KACAK_ESIGI):
+    """DP'nin SEÇTİĞİ planın kesin değeri — `secim` bir `Secim` nesnesi."""
+    izlek = tuple(len(s) for s in secim.secimler)
+    for deger, _, aday in _kesin_tarama(maclar, esik):
+        if aday == izlek:
+            return deger
+    raise AssertionError(f"DP'nin izlegi taramada yok: {izlek}")
 
 
 @pytest.mark.parametrize("butce", [2048, 4096, 8192, 16384])
@@ -119,16 +203,27 @@ def test_optimizasyon_gercekten_optimal(butce):
 
     Budama yaklaşık olsaydı sessizce daha kötü kupon kurardı ve hiçbir yer
     patlamazdı; bu testin varlık sebebi tam olarak o sessizlik.
+
+    Üç şey ayrı ayrı sınanıyor ve üçü de gerekli:
+
+      1. DP'nin **seçtiği plan** kesin aritmetikte de en iyi değeri veriyor
+         (budama masada değer bırakmadı),
+      2. o değere ulaşan planların **en ucuzunu** seçti (eşitlikte ucuz
+         kazanır — `en_iyi_secim`in kendi sözü),
+      3. döndürdüğü `p_hedef` kesin değerin float karşılığı (aritmetiği
+         raporlarken kaymıyor).
     """
     maclar = hafta(9)          # 3^9 = 19.683 atama — kaba kuvvet mümkün
-    beklenen = _kaba_kuvvet(maclar, butce)
+    beklenen = _kesin_referans(maclar, butce)
     bulunan = en_iyi_secim(maclar, butce)
     if beklenen is None:
         assert bulunan is None
         return
+    en_iyi_deger, en_ucuz_bedel = beklenen
     assert bulunan is not None
-    assert bulunan.p_hedef == pytest.approx(beklenen[0], rel=1e-12)
-    assert bulunan.bedel == beklenen[1]
+    assert _kesin_deger(maclar, bulunan) == en_iyi_deger
+    assert bulunan.bedel == en_ucuz_bedel
+    assert bulunan.p_hedef == pytest.approx(float(en_iyi_deger), rel=1e-12)
 
 
 def test_optimizasyon_esik_kuralini_geciyor():
@@ -139,8 +234,6 @@ def test_optimizasyon_esik_kuralini_geciyor():
     eski = [secim_uret(m, VARSAYILAN_BANKO, VARSAYILAN_UCLU) for m in maclar]
     cift = sum(1 for s in eski if len(s) == 2)
     uclu = sum(1 for s in eski if len(s) == 3)
-    if cift < HAMMING_BLOK_BOYU:
-        pytest.skip("bu sentetik haftada esik kurali fix16 kuramiyor")
     butce = bedel_hesapla(cift, uclu)
     yeni = en_iyi_secim(maclar, butce)
     assert yeni is not None
@@ -158,18 +251,26 @@ def test_butce_kisiti_asilmaz():
         assert bedel_hesapla(s.cift, s.uclu) == s.bedel
 
 
-def test_yedi_cifte_kisiti_korunur():
-    """`solve_fix16` yedi çifteden azını kabul etmez; plan bunu taşımalı."""
-    from spor_toto.core import Encoder
+def test_yedi_cifte_kisiti_ARTIK_YOK():
+    """Kısıtın kalktığı **gösterilmeli**, yokluğu sessizce varsayılmamalı.
 
+    Kaplama döneminde bu testin adı `test_yedi_cifte_kisiti_korunur`'du ve
+    tersini sınıyordu: her planın en az yedi çifte taşıdığını. Kısıt
+    Hamming(7,4) bloğunundu ve katmanla birlikte kalktı — ölçümde kuponun
+    asıl kazandığı şey de buydu (`docs/DUZ_SISTEME_GECIS.md` §3).
+
+    Küçük bütçelerde motor yedi çifteden az taşıyan planlar seçebilmeli;
+    seçemiyorsa kısıt bir yerde hâlâ duruyor demektir.
+    """
     maclar = hafta()
-    for butce in (16, 128, 2048, 32768):
-        s = en_iyi_secim(maclar, butce)
-        if s is None:
-            continue
-        assert s.cift >= HAMMING_BLOK_BOYU
-        # Motor gerçekten kurabilmeli — kısıt kâğıt üzerinde kalmasın.
-        solve_fix16(Encoder([list(x) for x in s.secimler]))
+    az_ciftesi_olan = [en_iyi_secim(maclar, b) for b in (1, 4, 16, 64)]
+    assert any(s is not None and s.cift < 7 for s in az_ciftesi_olan), (
+        "hicbir kucuk butcede yedi ciftenin altina inilmedi — kisit duruyor mu?")
+    # En uc hal: butun maclar tek. Kaplamada bu plan HIC kurulamazdi.
+    hepsi_tek = en_iyi_secim(maclar, 1)
+    assert hepsi_tek is not None
+    assert (hepsi_tek.banko, hepsi_tek.cift, hepsi_tek.uclu) == (15, 0, 0)
+    assert hepsi_tek.bedel == 1
 
 
 def test_butce_buyudukce_hedef_kotulesmez():
@@ -183,14 +284,32 @@ def test_butce_buyudukce_hedef_kotulesmez():
         onceki = s.p_hedef
 
 
-def test_cok_kucuk_butce_none_doner():
-    """Yedi çiftenin bedeli 16 kolondur; altında kurulacak plan yok."""
-    assert en_iyi_secim(hafta(), 8) is None
+def test_en_ucuz_plan_BIR_kolondur():
+    """Düzde her bütçe bir plan bulur; en ucuzu 15 tek = 1 kolon.
+
+    **Bu test eskiden tersini söylüyordu**: *"yedi çiftenin bedeli 16
+    kolondur; altında kurulacak plan yok"* ve 8 kolonluk bütçede `None`
+    bekliyordu. Düzde öyle bir taban yok.
+    """
+    for butce in (1, 2, 8, 15):
+        s = en_iyi_secim(hafta(), butce)
+        assert s is not None, f"butce {butce}: plan bulunmali"
+        assert s.bedel <= butce
 
 
 def test_gecersiz_butce_reddedilir():
     with pytest.raises(ValueError, match="pozitif"):
         en_iyi_secim(hafta(), 0)
+
+
+def test_butce_ZORUNLU_dejenerelige_dusulmez():
+    """Tavansız aramanın cevabı "hepsi üçlü"dür; motor onu sessizce vermez.
+
+    Bütçe bir **harcama kararıdır** ve veriden türetilemez. `None` geçmek
+    dejenere planı (3^15 = 14.348.907 kolon) sipariş etmekle aynı şeydir.
+    """
+    with pytest.raises(ValueError, match="zorunlu"):
+        en_iyi_secim(hafta(), None)
 
 
 def test_bos_hafta_none_doner():
@@ -221,27 +340,34 @@ def test_secimler_en_olasi_sembollerden_kurulur():
 
 
 def test_bilinen_haftada_uclu_pahali_olduğunda_secilmez():
-    """Bütçe darsa üçlü (×3) yerine çifte (×2) tercih edilmeli."""
+    """Bütçe darsa üçlü (×3) yerine çifte (×2) tercih edilmeli.
+
+    16 kolona düzde dört çifte sığar (`2⁴ = 16`); beşincisi 32 eder. Üçlü
+    ×3 çarptığı için aynı bütçede daha az maç açar ve bu maçlarda `p₃`
+    (0,20) `p₂`'den (0,30) küçük olduğu için değmiyor.
+    """
     maclar = [p(0.50, 0.30, 0.20)] * 15
-    dar = en_iyi_secim(maclar, 16)         # yalnizca 7 cifte + 8 banko sigar
+    dar = en_iyi_secim(maclar, 16)
     assert dar is not None
     assert dar.uclu == 0
-    assert dar.cift == HAMMING_BLOK_BOYU
+    assert dar.cift == 4
+    assert dar.bedel == 16
 
 
-def test_fix16_kurulamayan_plan_uretilmez():
-    """Üretilen her plan motorda gerçekten çözülebilmeli."""
-    from spor_toto.core import Encoder
+def test_her_plan_OYNANABILIR():
+    """Üretilen her plan bedeli kadar kolon eder — sayımla doğrulanır.
 
-    for butce in (16, 48, 512, 6144, 49152):
+    **Bu test eskiden `solve_fix16`ın planı çözebildiğini sınıyordu**
+    (`test_fix16_kurulamayan_plan_uretilmez`): kaplamada plan "kurulamaz"
+    olabiliyordu ve bu gerçek bir risk kaynağıydı. Düzde öyle bir hâl yok —
+    her şekil oynanabilir; geriye kalan tek iddia bedelin doğruluğudur ve
+    o da formülle değil **sayımla** sınanır.
+    """
+    for butce in (1, 16, 48, 512, 6144, 49152):
         s = en_iyi_secim(hafta(), butce)
-        if s is None:
-            continue
-        try:
-            cols, _ = solve_fix16(Encoder([list(x) for x in s.secimler]))
-        except Fix16Hatasi as e:  # pragma: no cover - kirilirsa test patlar
-            pytest.fail(f"butce {butce}: plan cozulemedi — {e}")
-        assert len(cols) == s.bedel
+        assert s is not None, f"butce {butce}"
+        sayim = sum(1 for _ in product(*[list(x) for x in s.secimler]))
+        assert sayim == s.bedel <= butce, f"butce {butce}"
 
 
 # ─── getiri_secim: kalabalığa göre E[TL] seçimi ───────────────────────────
@@ -270,8 +396,8 @@ def test_getiri_secim_sekli_ve_bedeli_KORUR():
     """Şekil sabit: aynı kolon, aynı bütçe — ayar bedava olmalı."""
     from spor_toto.secim import getiri_secim, sistem_secimi
 
-    a = sistem_secimi(_pr(), 2000.0, garanti=13)
-    b = getiri_secim(_pr(), _oyn(), 2000.0, garanti=13)
+    a = sistem_secimi(_pr(), 2000.0, kademe=12)
+    b = getiri_secim(_pr(), _oyn(), 2000.0, kademe=12)
     assert a is not None and b is not None
     assert (b.banko, b.cift, b.uclu) == (a.banko, a.cift, a.uclu)
     assert b.bedel == a.bedel
@@ -281,11 +407,11 @@ def test_kayip_tavani_hedefi_KORUYOR():
     """Kısıt bağlayıcı: `P` tabanın (1−tavan) katının altına inemez."""
     from spor_toto.secim import getiri_secim, hedef_olasiligi, sistem_secimi
 
-    taban = sistem_secimi(_pr(), 2000.0, garanti=13)
+    taban = sistem_secimi(_pr(), 2000.0, kademe=12)
     assert taban is not None
     p0 = hedef_olasiligi(_pr(), taban.secimler, 1)
     for tavan in (0.0, 0.05, 0.25):
-        b = getiri_secim(_pr(), _oyn(), 2000.0, garanti=13,
+        b = getiri_secim(_pr(), _oyn(), 2000.0, kademe=12,
                          kayip_tavani=tavan)
         assert b is not None
         assert b.p_hedef >= p0 * (1 - tavan) - 1e-12, tavan
@@ -295,11 +421,11 @@ def test_kayip_tavani_BUYUDUKCE_daha_cok_mac_degisir():
     """Tavan monoton: gevşedikçe arama daha çok maça dokunabilir."""
     from spor_toto.secim import getiri_secim, sistem_secimi
 
-    taban = sistem_secimi(_pr(), 2000.0, garanti=13)
+    taban = sistem_secimi(_pr(), 2000.0, kademe=12)
     assert taban is not None
     onceki = -1
     for tavan in (0.0, 0.25, 0.95):
-        b = getiri_secim(_pr(), _oyn(), 2000.0, garanti=13,
+        b = getiri_secim(_pr(), _oyn(), 2000.0, kademe=12,
                          kayip_tavani=tavan)
         assert b is not None
         dg = sum(1 for x, y in zip(taban.secimler, b.secimler)
@@ -319,8 +445,8 @@ def test_KISITSIZ_arama_hedefi_yok_edebilir():
     from spor_toto.secim import GETIRI_KAYIP_TAVANI, getiri_secim
 
     assert 0.0 < GETIRI_KAYIP_TAVANI < 0.2, "varsayilan temkinli olmali"
-    sikı = getiri_secim(_pr(), _oyn(), 2000.0, garanti=13, kayip_tavani=0.0)
-    gevsek = getiri_secim(_pr(), _oyn(), 2000.0, garanti=13, kayip_tavani=0.95)
+    sikı = getiri_secim(_pr(), _oyn(), 2000.0, kademe=12, kayip_tavani=0.0)
+    gevsek = getiri_secim(_pr(), _oyn(), 2000.0, kademe=12, kayip_tavani=0.95)
     assert sikı is not None and gevsek is not None
     assert gevsek.p_hedef <= sikı.p_hedef
 

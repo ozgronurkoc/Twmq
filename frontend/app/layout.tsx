@@ -24,11 +24,11 @@ const display = Bodoni_Moda({
 });
 
 export const metadata: Metadata = {
-  title: "Spor Toto Lab · 14-garanti kaplama",
+  title: "Spor Toto Lab · düz sistem kupon",
   description:
-    "Spor Toto kuponu için kaplama kodu üretir: tahminin doğruysa onu en az " +
-    "kuponla garantiye alır. Ayrıca yaklaşan maçlara ölçülmüş isabetiyle " +
-    "birlikte 1/0/2 olasılığı verir.",
+    "Spor Toto kuponu için düz (tam sistem) kolonları üretir: seçim " +
+    "kümesinin tamamı oynanır, en iyi kolon 15 − kaçak tutturur. Ayrıca " +
+    "yaklaşan maçlara ölçülmüş isabetiyle birlikte 1/0/2 olasılığı verir.",
 };
 
 export const viewport: Viewport = {

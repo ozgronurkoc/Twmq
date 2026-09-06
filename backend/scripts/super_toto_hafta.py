@@ -32,15 +32,7 @@ sys.path.insert(0, str(KOK))
 from spor_toto.backtest import (
     VARSAYILAN_BANKO,
     VARSAYILAN_UCLU,
-    _kaplama,
     secim_uret,
-)
-from spor_toto.core import (
-    HAMMING_BLOK_BOYU,
-    Encoder,
-    butce_danismani,
-    merge_rows,
-    solve_fix16,
 )
 from spor_toto.core import SEMBOLLER as _SEMBOLLER
 from spor_toto.history import history_analytics, history_summary
@@ -244,6 +236,26 @@ def hafta_yukle(sezon: str, hafta: int) -> dict[str, Any]:
     # Kod insani duzeltmez, insan da kodu susturmaz — ikisi yan yana durur.
     d.setdefault("meta", {}).setdefault("data_warnings", [])
     d["meta"]["uretilen_uyarilar"] = dogrula(d)
+    # Haftanin hangi sistemle OYNANDIGI kupon kaydinda yazilidir
+    # (`hafta_NN_kupon.json` -> `meta.sistem`), hafta dosyasinda degil:
+    # hafta dosyasi maclari ve sonucu tasir, sistem ise kuponun ozelligi.
+    # Degerlendirici (`super_toto_degerlendir.kayit_sistemi`) sistemi `d`
+    # uzerinden okur, o yuzden alan yukleme aninda BURADA yuzeye cikarilir.
+    #
+    # BU SATIR OLMADAN DEGERLENDIRICI SESSIZCE YANLIS CEVAP VERIYORDU.
+    # `kayit_sistemi(d)` eklendiginde `d["meta"]["sistem"]`i okuyordu ama
+    # o alani hicbir yer yazmiyordu — yani fonksiyon HER hafta icin
+    # `fix16` donuyordu ve duz oynanan bir kupon 16 satirlik kaplamaya
+    # indirgenip bir kademe kotu gosteriliyordu (olculdu: gercekte 9
+    # tutturan bir plan 8 olarak raporlaniyordu). Cokme degil YANLIS SAYI.
+    # Bekcisi: tests/test_degerlendir.py::test_hafta_yukle_kuponun_SISTEMINI
+    # _yuzeye_cikarir ve ::test_duz_kupon_TAM_sistem_olarak_degerlendirilir.
+    kupon_yolu = yol.with_name(f"hafta_{hafta:02d}_kupon.json")
+    if kupon_yolu.exists():
+        kupon_meta = json.loads(kupon_yolu.read_text(encoding="utf-8"))
+        sistem = (kupon_meta.get("meta") or {}).get("sistem")
+        if sistem is not None:
+            d["meta"]["sistem"] = sistem
     for m in maclar:
         # Oranı ilan edilmemiş maç: olasılık 1/3–1/3–1/3. Bu bir TAHMİN
         # DEĞİL, bilgi yokluğunun ilanıdır — arayüzün ESIT kuralıyla aynı
@@ -421,7 +433,16 @@ KURALLAR = ("hedef", "esik")
 
 
 def kupon_kur(d: dict[str, Any], banko: float, uclu: float,
-              kural: str = VARSAYILAN_KURAL) -> dict[str, Any]:
+              kural: str = VARSAYILAN_KURAL,
+              butce: int | None = None) -> dict[str, Any]:
+    """`butce` verilirse kolon tavanı odur; verilmezse eşik kuralınınki.
+
+    **Eşik kuralından türeyen bütçe artık bir YER TUTUCUDUR.** Kaplama
+    döneminde makul bir sayı üretiyordu; düzde aynı işaretler sekiz kat
+    pahalı olduğu için türeyen tavan da sekiz kat büyüdü ve gerçekçi bir
+    harcama kararı olmaktan çıktı. Bütçe zaten veriden türetilemez — bir
+    harcama kararıdır ve `--butce` ile verilmelidir.
+    """
     if kural not in KURALLAR:
         raise SystemExit(f"bilinmeyen kural: {kural} ({', '.join(KURALLAR)})")
     maclar = d["matches"]
@@ -429,24 +450,26 @@ def kupon_kur(d: dict[str, Any], banko: float, uclu: float,
 
     # Eşik kuralı her iki yolda da koşar: `esik` için sonucun kendisi,
     # `hedef` için bütçenin kaynağı.
+    #
+    # Kaplama döneminde burada bir kapı vardı: eşik kuralı yedi çifteden az
+    # üretirse `solve_fix16` kurulamıyor, bütçe hesaplanamıyor ve hafta eşik
+    # seçimine düşüyordu. Düzde her şekil oynanabilir, o yüzden kapı kalktı —
+    # `hedef` kuralı artık her hafta koşar.
     esik_secim = [secim_uret(p, banko, uclu) for p in probs]
     esik_cift = sum(1 for s in esik_secim if len(s) == 2)
     esik_uclu = sum(1 for s in esik_secim if len(s) == 3)
-    butce = (bedel_hesapla(esik_cift, esik_uclu)
-             if esik_cift >= HAMMING_BLOK_BOYU else None)
+    butce_kaynagi = "verildi" if butce else "eşik kuralı (YER TUTUCU)"
+    if not butce:
+        butce = bedel_hesapla(esik_cift, esik_uclu)
 
-    plan = None
-    if kural == "hedef" and butce:
-        plan = en_iyi_secim(probs, butce)
-    # Eşik kuralı fix16 kuramıyorsa (yedi çifteden az) bütçe de yok; o hafta
-    # hedef kuralı çalıştırılamaz ve eşik seçimine düşülür. Sessizce değil:
-    # çıktıda `kural` alanı gerçekte hangisinin kullanıldığını yazar.
+    plan = en_iyi_secim(probs, butce) if kural == "hedef" else None
     secimler = plan.secimler if plan else esik_secim
     kullanilan = "hedef" if plan else "esik"
 
-    boyutlar = tuple(len(s) for s in secimler if len(s) > 1)
-    imza = tuple(sorted(boyutlar))
-    kap = _kaplama(imza)
+    # Düzde kupon işaretlerin kendisidir: seçim kümesinin tamamı oynanır,
+    # kolon sayısı çarpımdır ve en iyi kolon 15 − kaçak. "Satır" ve "motor"
+    # kaplama kavramlarıydı; ikisi de düştü.
+    bedel = math.prod(len(s) for s in secimler)
 
     kume_ici = 1.0
     kalabalik_ici = 1.0
@@ -476,7 +499,8 @@ def kupon_kur(d: dict[str, Any], banko: float, uclu: float,
         "kural": kullanilan,
         "istenen_kural": kural,
         "butce": butce,
-        # `hedef` kuralının enbüyüklediği sayı: P(kaçak ≤ 2) = P(en iyi
+        "butce_kaynagi": butce_kaynagi,
+        # `hedef` kuralının enbüyüklediği sayı: P(kaçak ≤ 3) = P(en iyi
         # kolon ≥ 12). Eşik kuralında da hesaplanır ki iki kupon aynı
         # ölçekte kıyaslanabilsin.
         "p_hedef": hedef_olasiligi(probs, secimler),
@@ -486,11 +510,14 @@ def kupon_kur(d: dict[str, Any], banko: float, uclu: float,
         "banko": [i + 1 for i, s in enumerate(secimler) if len(s) == 1],
         "cift": [i + 1 for i, s in enumerate(secimler) if len(s) == 2],
         "uclu": [i + 1 for i, s in enumerate(secimler) if len(s) == 3],
-        "space": math.prod(len(s) for s in secimler),
-        "columns": kap["columns"] if kap else None,
-        "rows": kap["rows"] if kap else None,
-        "engine": kap["engine"] if kap else None,
-        "guaranteed": kap["guaranteed"] if kap else None,
+        # Düzde seçim uzayı ile kolon sayısı AYNI şeydir; ikisi de yazılıyor
+        # çünkü kayıt biçimi kaplama döneminden geliyor ve okuyanlar iki
+        # alanı da arıyor. Kaplamada `space` 8 kat `columns`tu.
+        "space": bedel,
+        "columns": bedel,
+        "rows": None,
+        "engine": "düz (tam sistem — indirgeme yok)",
+        "guaranteed": 15,
         "in_set_p": kume_ici,
         "in_set_1_in": (1 / kume_ici) if kume_ici > 0 else None,
         # Kalabalık-içi: rastgele bir halk kuponunun bu seçim kümesine
@@ -511,32 +538,43 @@ def kupon_kur(d: dict[str, Any], banko: float, uclu: float,
 
 def butce_merdiveni(d: dict[str, Any], secimler: list[list[str]],
                     butceler: list[int]) -> list[dict[str, Any]]:
-    """Bütçe düşerse hangi maç kısılır — motorun kendi bütçe danışmanı.
+    """Bütçe düşerse plan ne olur — her basamakta motor **yeniden çözülür**.
 
-    Kısma sırasını olasılık belirler (en düşük olasılıklı sembol önce
-    düşer); bu script bir tercih üretmez, motorun planını okur.
+    **Bu fonksiyon eskiden `core.butce_danismani`yi çağırıyordu ve o kısma
+    yapıyordu**: eldeki plandan işaret düşürüp bütçeye sığdırıyordu. Kısma
+    ile yeniden en iyileme aynı şey değildir ve fark ölçüldü — 4. haftanın
+    kaydında iki kısılmış varyant "motorun kendi planı" diye etiketliydi ve
+    motorun aynı tavandaki gerçek cevabından 1,31 ve 1,43 puan geriydiler
+    (bkz. `hafta_04_kupon.json` → `meta.duzeltme`).
+
+    Artık her basamakta `secim.en_iyi_secim` doğrudan koşuyor. `changes`
+    alanı ana plandan farkı gösterir — bu bir kısma kaydı değil, iki bağımsız
+    çözümün karşılaştırmasıdır.
     """
-    enc = Encoder([list(s) for s in secimler])
     probs = [m["probs"] for m in d["matches"]]
+    ana = ["".join(s) for s in secimler]
     out = []
     for b in sorted(butceler):
-        planlar = butce_danismani(enc, b, probs, en_fazla=1)
-        if not planlar:
+        plan = en_iyi_secim(probs, b)
+        if plan is None:
             out.append({"budget": b, "plan": None})
             continue
-        pl = planlar[0]
         kalabalik = math.prod(
-            sum(d["matches"][j]["play"][s] for s in pl.selections[j])
-            for j in range(len(pl.selections)))
+            sum(d["matches"][j]["play"][s] for s in plan.secimler[j])
+            for j in range(len(plan.secimler)))
+        kume_ici = math.prod(
+            sum(probs[j][s] for s in plan.secimler[j])
+            for j in range(len(plan.secimler)))
         #: Govde heterojen: iki int, bir liste, uc float/None. Cikarim
         #: ilk uc girdiden `int | None` uretip kalanini hata sayiyordu.
         satir_govde: dict[str, Any] = {
-            "budget": b, "cost": pl.bedel, "rows": pl.satir,
-            "picks": ["".join(x) for x in pl.selections],
-            "changes": pl.degisiklikler,
-            "in_set_p": pl.p_kume_ici,
+            "budget": b, "cost": plan.bedel, "rows": None,
+            "picks": list(plan.picks),
+            "changes": [f"{i+1}. mac: {ana[i]} -> {plan.picks[i]}"
+                        for i in range(len(ana)) if ana[i] != plan.picks[i]],
+            "in_set_p": kume_ici,
             "crowd_in_set_p": kalabalik,
-            "crowd_ratio": (pl.p_kume_ici / kalabalik) if kalabalik else None,
+            "crowd_ratio": (kume_ici / kalabalik) if kalabalik else None,
         }
         out.append(satir_govde)
     return out
@@ -630,12 +668,16 @@ def yaz(d: dict[str, Any], prof: dict[str, Any], kam: dict[str, Any],
 
     for k in kuponlar:
         print(f"\n─── 5. KUPON · kural: {k['kural'].upper()} "
-              f"(bütçe eşik {k['banko_esik']:.2f}/{k['uclu_esik']:.2f}'ten: "
-              f"{k['butce']:,} kolon) ─────────")
+              f"· bütçe {k['butce']:,} kolon [{k['butce_kaynagi']}] ─────────")
+        if k["butce_kaynagi"].startswith("eşik"):
+            print("  UYARI: bütçe verilmedi, eşik kuralının düz bedelinden "
+                  "türetildi ve GERÇEKÇİ DEĞİL — `--butce N` ile verin.")
         print(f"İşaretler : {' '.join(k['picks'])}")
         print(f"Banko {len(k['banko'])} (maç {k['banko']}) · çift {len(k['cift'])} · üçlü {len(k['uclu'])} (maç {k['uclu']})")
-        print(f"Seçim uzayı {k['space']:,} → kolon {k['columns']:,} · satır {k['rows']} · {k['engine']}")
-        print(f"14-garanti: {'VAR' if k['guaranteed'] else 'YOK'} (koşul: sonuç seçim kümesinde)")
+        print(f"Kolon {k['columns']:,} · {k['engine']}")
+        print("Sonuç seçim kümesindeyse bir kolon 15'i tutturur; kümenin "
+              "dışında kalan her maç bir kademe düşürür (en iyi kolon = "
+              "15 − kaçak, eşitlik).")
         # Asil sayi: P(en iyi kolon >= 12). Esik kuralinin ayni haftada ne
         # verecegi yaninda yazar ki kazanc gorunur olsun.
         print(f"P(en iyi kolon ≥ 12): %{100*k['p_hedef']:.2f}"
@@ -657,50 +699,41 @@ def yaz(d: dict[str, Any], prof: dict[str, Any], kam: dict[str, Any],
 
 
 def kupon_satirlari(secimler: list[list[str]]) -> list[str]:
-    """Seçimleri OYNANACAK satırlara çevirir — 16 satır, 14-garantili.
+    """Kuponun oynanacak hâli — düzde **tek satır**: işaretlerin kendisi.
 
-    Motorun kendi `solve_fix16` + `merge_rows` yolu; burada yeniden
-    hesaplanan hiçbir şey yok, yalnızca insan okuyacak biçime dökülüyor.
-    `merge_rows` her değişken maç için bir frozenset döndürür (birleşmiş
-    satırda o maçta birden çok sembol işaretlidir).
+    **Bu fonksiyon eskiden `solve_fix16` + `merge_rows` koşuyordu** ve 16
+    satır üretiyordu, çünkü kaplama kodu seçim kümesinin küçük bir alt
+    kümesini oynatıyordu ve hangi kolonların oynanacağı hesaplanmak
+    zorundaydı. Düzde öyle bir hesap yok: seçim kümesinin tamamı oynanır,
+    yani kupon işaretlerin kendisidir ve bayiye tek sistem olarak girilir.
+
+    Dönüş biçimi liste olarak kaldı — çağıranlar (`yaz`, kupon kaydı) satır
+    listesi bekliyor; düzde o liste bir elemanlıdır.
     """
-    enc = Encoder([list(x) for x in secimler])
-    cols, _ = solve_fix16(enc)
-    out = []
-    for row in merge_rows(cols, attempts=4):
-        hucreler = []
-        j = 0
-        for sec in secimler:
-            if len(sec) == 1:
-                hucreler.append(sec[0])
-                continue
-            syms = enc.variable_syms[j]
-            idx = row[j]
-            secili = sorted(idx) if not isinstance(idx, int) else [idx]
-            hucreler.append("".join(syms[i] for i in secili))
-            j += 1
-        out.append(hucreler)
-    return [" ".join(f"{c:<3}" for c in r) for r in out]
+    return [" ".join(f"{''.join(s):<3}" for s in secimler)]
 
 
 def yaz_merdiven(merdiven: list[dict[str, Any]]) -> None:
-    print("\n─── 6. BÜTÇE MERDİVENİ (motorun bütçe danışmanı) ────────────────────────")
-    print("Kolon bedeli bilinmiyor; tablo KOLON cinsindendir. Kısma sırasını")
-    print("olasılık belirler — en düşük olasılıklı sembol önce düşer.")
-    print(f"{'bütçe':>8} {'kolon':>7} {'satır':>6} {'küme-içi':>10} {'kalabalık':>10} {'oran':>6}  kısılan")
+    print("\n─── 6. BÜTÇE MERDİVENİ (her basamakta motor yeniden çözülür) ────────────")
+    print("Tablo KOLON cinsindendir (düzde kolon = işaret sayılarının çarpımı).")
+    print("Satırlar kısma değil, her bütçede BAĞIMSIZ çözümlerdir.")
+    print(f"{'bütçe':>8} {'kolon':>7} {'küme-içi':>10} {'kalabalık':>10} {'oran':>6}  ana plandan farkı")
     for m in merdiven:
         if not m.get("cost"):
-            print(f"{m['budget']:>8} {'—':>7}  plan yok (fix16 en az 7 çifte ister)")
+            print(f"{m['budget']:>8} {'—':>7}  plan yok (bütçe 1 kolonun altında)")
             continue
-        print(f"{m['budget']:>8} {m['cost']:>7,} {m['rows']:>6} "
+        print(f"{m['budget']:>8} {m['cost']:>7,} "
               f"%{100*m['in_set_p']:>9.3f} %{100*m['crowd_in_set_p']:>9.3f} "
-              f"{m['crowd_ratio']:>6.2f}  {'; '.join(m['changes']) or 'değişiklik yok'}")
+              f"{m['crowd_ratio']:>6.2f}  {'; '.join(m['changes']) or 'fark yok'}")
 
 
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--sezon", default="2026_27")
     ap.add_argument("--hafta", type=int, default=1)
+    ap.add_argument("--butce", type=int, default=None,
+                    help="kolon tavani — verilmezse esik kuralindan turetilir "
+                         "ve o sayi duz olcekte YER TUTUCUDUR")
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args()
 
@@ -709,8 +742,8 @@ def main() -> None:
     prof = hafta_profili(d, ref)
     kam = kamuoyu(d)
     kuponlar = [
-        kupon_kur(d, VARSAYILAN_BANKO, VARSAYILAN_UCLU),
-        kupon_kur(d, 0.68, 0.42),
+        kupon_kur(d, VARSAYILAN_BANKO, VARSAYILAN_UCLU, butce=a.butce),
+        kupon_kur(d, 0.68, 0.42, butce=a.butce),
     ]
     ana_secim = [list(x) for x in kuponlar[0]["picks"]]
     merdiven = butce_merdiveni(d, ana_secim, [128, 256, 512, 1024, 2304])

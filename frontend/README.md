@@ -52,8 +52,8 @@ lib/
   adres.ts            adres çubuğu sorgu parametreleri — tek mekanizma
   utils.ts            cn(), normalize, yuzde (girdi 0–1), biçimlendirme
   kurulum.ts          formül kurulumunun kalıcılığı + paylaşılabilir bağlantı
-  kume-ici.ts         üretmeden önce görülen koşul + küre-kaplama alt sınırı
-  senaryo.ts          çalıştırılan modların karşılaştırma listesi
+  kume-ici.ts         üretmeden önce görülen koşul + kupon bedeli
+  senaryo.ts          çalıştırılan kuponların karşılaştırma listesi
   transfer.ts         hafta → formül devri (idempotent)
   super-toto.ts       canlı sezon beslemesi okuyucu
   super-toto-veri.json  ÜRETİLMİŞ (backend/scripts/super_toto_frontend.py)
@@ -89,19 +89,25 @@ olduğu — bir zaman değil — artık açıkça yazıyor.
 
 Mod seçimi bu sayfadaki en pahalı karardır ama gözle yapılamıyordu: bir
 modu çalıştırıp diğerine geçince öncekinin sayıları ekrandan siliniyordu.
-Artık çalıştırılan modlar bir tabloda yan yana durur (`lib/senaryo.ts`).
+Artık çalıştırılan kuponlar bir tabloda yan yana durur (`lib/senaryo.ts`).
+
+> **Kıyas ekseni değişti: mod değil, işaretler.** Bu liste mod seçimi için
+> yazılmıştı (`fix16` mı `bütçe` mi `maxcov` mu). Kaplama söküldü
+> (`../docs/DUZ_SISTEME_GECIS.md`) ve modlar düştü; düzde aynı işaretler
+> her zaman aynı kolonları verir. Geriye kalan eksen daha önemli olan:
+> bir maçı daha çifte yapmak küme-içi olasılığı büyütür ve **bedeli
+> katlar**. Sayfanın tek pahalı kararı artık bu.
 
 Üç kural karara doğruluk kazandırır:
 
-1. **Yalnızca aynı seçimle koşulanlar kıyaslanır.** Arada bir maç çifte
-   yapıldıysa "32 yerine 64 kolon" farkı moddan değil seçimden gelir;
-   liste bunu gizlemez, o satırları soluklaştırıp uyarır.
-2. **Garanti vermeyen bir çalışma "en ucuz" sayılmaz.** `maxcov` 12
-   kolonla en ucuz görünür ama 14-garanti vermez — farklı bir şey satın
-   alır. "En ucuz" cümlesi yalnızca garantili satırlardan seçilir.
-3. **Aynı kurulum tekrar koşulursa satır yerinde yenilenir.** Varyant
-   denerken liste aynı satırın kopyalarıyla dolup asıl karşılaştırmayı
-   ekrandan itmemeli.
+1. **Farklı seçimle koşulanlar işaretlenir.** Listenin asıl konusu onlar,
+   ama bedel farkının seçimin büyüklüğünden geldiği görünür kalmalı.
+2. **"En iyi" satır kolon başına küme-içi olasılıktan seçilir**, en ucuzdan
+   değil. Eskiden "14-garantiyi veren en ucuz çalışma" diye seçiliyordu;
+   düzde aynı seçim her zaman aynı bedeli verdiği için o soru dejenere.
+   Ve bu bir öneri değildir: küme-içi olasılık kazanma olasılığı değil,
+   `15 − k` aritmetiğinin geçerli olma koşuludur.
+3. **Aynı kurulum tekrar koşulursa satır yerinde yenilenir.**
 
 Liste **kaydedilmez**: senaryolar türetilmiş veridir, tıpkı `sonuc` gibi.
 Kalıcı olan tek şey kurulumdur — kullanıcının elle ürettiği tek şey odur.
@@ -150,9 +156,9 @@ sonucu bayatlatmaz.
 
 ## Üretmeden önce görülen koşul
 
-14-garanti **koşulludur**: ancak gerçek sonuç seçim kümesinin içindeyse
-devreye girer. Sayfanın en görünür ögesi büyük yeşil "14-garanti VAR"
-kalkanı, ama koşulun kendisi ölçülmeden bırakılıyordu — görmek için
+`en iyi kolon = 15 − k` aritmetiği bir şeyi ancak **seçim kümesi içinde**
+söyler: küme dışına düşen sonuç için hiçbir vaat yoktur. Sayfanın en
+görünür ögesi bu koşuldur, ama kendisi ölçülmeden bırakılıyordu — görmek için
 olasılık girip motoru çalıştırmak ve Olasılık sekmesini açmak gerekiyordu.
 
 `lib/kume-ici.ts` bunu istemcide hesaplar (`∏ᵢ Σ_{s∈secᵢ} pᵢ(s)`, 15 çarpma)
@@ -177,21 +183,21 @@ koşul **%0,0149** — yaklaşık 1/6.700. Kaybın çoğu üç bankoda: 7. maç 
 
 ## Üretmeden önce söylenen bedel
 
-Üç ayrı durum vardır ve tek sayıya indirilemezler:
+**Tek sayı, ve tam:** `2^çifte · 3^üçlü`. Alt sınır da üst sınır da budur;
+yazılan sayı ile ödenen sayı tanım gereği aynıdır.
 
-| Mod | Ne söylenir | Neden |
-|---|---|---|
-| `fix16` | kesin — `uzay / 8` | blok 2⁷ noktayı 16 satıra indirir |
-| `bütçe` / `maxcov` | tavan — girilen bütçe | motor bütçeyi aşmaz |
-| diğerleri | aralık — küre-kaplama alt sınırı … tam sistem | kesin sayıyı arama sonunda motor bilir |
-
-Önceki sürüm üçünü de tek formülle veriyor ve `fix16` dışında **uzayı**
-yazıyordu: `auto` modunda aynı kupon için "256 kolon" diyordu, motor 32
-üretiyordu — sekiz kat abartı, üstelik ödenecek tutarı söyleyen en görünür
-yerde.
+> Burada üç ayrı okuma vardı ve tek sayıya indirilemiyorlardı: `fix16`
+> **kesin** (`uzay / 8`), `bütçe`/`maxcov` **tavan** (girilen bütçe),
+> diğerleri **aralık** (küre-kaplama alt sınırı … tam sistem — kesin sayıyı
+> arama sonunda motor bilirdi).
+>
+> Bu bir sadeleşme değil **düzeltme** de: önceki sürüm üçünü de tek
+> formülle veriyor ve `fix16` dışında uzayı yazıyordu — `auto` modunda aynı
+> kupon için "256 kolon" diyordu, motor 32 üretiyordu. Sekiz kat abartı,
+> üstelik ödenecek tutarı söyleyen en görünür yerde.
 
 Yapışkan çubukta yalnızca **sayı** durur, tek satır. Açıklamanın tamamı
-Motor kartında, modun seçildiği yerdedir. Sebep ölçüldü: uzun açıklama
+"Nasıl oynanıyor" kartındadır. Sebep ölçüldü: uzun açıklama
 çubuğu 100 px'e çıkarmış ve çubuk, ilk açılışta altındaki kontrolün tam
 üstüne oturmuştu (düğme 1011–1074, çubuk 996–1088 → `elementFromPoint`
 çubuğu döndürüyordu, yani tıklanamıyordu).
@@ -238,9 +244,8 @@ gidiş-dönüş vakalarını bağımlılık eklemeden denetler.
 
 Ekrandaki sonucun hâlâ girdiyi anlatıp anlatmadığı da bu kodlamayla
 ölçülür: sonuç üretilirken kurulumun parmak izi alınır, girdi değiştiğinde
-sonuç **silinmez** ama "eski hâline ait" diye işaretlenir. Kodlama modun
-etkilemediği alanları dışarıda bıraktığı için `fix16`'dayken bütçeyi
-değiştirmek sonucu bayatlatmaz.
+sonuç **silinmez** ama "eski hâline ait" diye işaretlenir. Kodlamaya
+yalnızca sonucu **değiştiren** alanlar girer (maç adları girmez).
 
 ## Tasarım sistemi
 

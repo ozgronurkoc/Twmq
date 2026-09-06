@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Loader2, Play } from "lucide-react";
 
 import { getMeta, solve } from "@/lib/api";
-import { kaplamaAltSiniri } from "@/lib/kume-ici";
+import { kuponBedeli } from "@/lib/kume-ici";
 import { senaryoEkle, senaryoYap, type Senaryo } from "@/lib/senaryo";
 import {
   adresiTemizle,
@@ -16,7 +16,6 @@ import {
   varsayilanKurulum,
   MC_MAX,
   MC_MIN,
-  VARSAYILAN_ENG,
   VARSAYILAN_MACLAR,
   VARSAYILAN_MC,
   yereldenOku,
@@ -97,11 +96,10 @@ export default function FormulPage() {
   const [meta, setMeta] = React.useState<MetaResponse | null>(null);
   const [matches, setMatches] = React.useState<Sembol[][]>(VARSAYILAN_MACLAR);
   const [labels, setLabels] = React.useState<string[]>(() => Array(MAC_SAYISI).fill(""));
-  const [mode, setMode] = React.useState<ModeId>("fix16");
-  const [variant, setVariant] = React.useState(0);
-  const [budget, setBudget] = React.useState(32);
-  const [planCount, setPlanCount] = React.useState(5);
-  const [planApply, setPlanApply] = React.useState(1);
+  // `mode` / `variant` / `budget` / `planCount` / `planApply` ve motor
+  // ayarlari (`eng`) kaplama ARAMASININ girdileriydi; kaplama sokuldu
+  // (docs/DUZ_SISTEME_GECIS.md) ve arama diye bir sey kalmadi. Duzde
+  // kolonlar isaretlerin carpimidir, secilecek bir sey yok.
   const [kati, setKati] = React.useState(false);
 
   const [probsAcik, setProbsAcik] = React.useState(false);
@@ -116,13 +114,12 @@ export default function FormulPage() {
   const [mcSamples, setMcSamples] = React.useState(VARSAYILAN_MC);
   const [fireMax, setFireMax] = React.useState(2);
 
-  const [eng, setEng] = React.useState({ ...VARSAYILAN_ENG });
 
   const [sonuc, setSonuc] = React.useState<SolveResult | null>(null);
   /**
    * Ekrandaki sonucu ureten kurulumun parmak izi. Kurulum kodlamasi zaten
    * bunun icin bicilmis kaftan: modun ETKILEMEDIGI alanlari disarida
-   * birakir, yani fix16'dayken butceyi degistirmek sonucu bayatlatmaz.
+   * birakir; parmak izine yalnizca sonucu DEGISTIREN alanlar girer.
    */
   const [uretilenParmak, setUretilenParmak] = React.useState<string | null>(null);
   const [senaryolar, setSenaryolar] = React.useState<Senaryo[]>([]);
@@ -175,12 +172,12 @@ export default function FormulPage() {
 
   const kurulum: Kurulum = React.useMemo(
     () => ({
-      matches, labels, probsAcik, probs, mode, variant, budget, planCount, planApply,
-      kati, fireMax, useBayes, preset, elleAyar, prior, evidence, mcSamples, eng,
+      matches, labels, probsAcik, probs,
+      kati, fireMax, useBayes, preset, elleAyar, prior, evidence, mcSamples,
     }),
     [
-      matches, labels, probsAcik, probs, mode, variant, budget, planCount, planApply,
-      kati, fireMax, useBayes, preset, elleAyar, prior, evidence, mcSamples, eng,
+      matches, labels, probsAcik, probs,
+      kati, fireMax, useBayes, preset, elleAyar, prior, evidence, mcSamples,
     ],
   );
 
@@ -189,11 +186,6 @@ export default function FormulPage() {
     setLabels([...k.labels]);
     setProbs(k.probs.map((r) => ({ ...r })));
     setProbsAcik(k.probsAcik);
-    setMode(k.mode);
-    setVariant(k.variant);
-    setBudget(k.budget);
-    setPlanCount(k.planCount);
-    setPlanApply(k.planApply);
     setKati(k.kati);
     setFireMax(k.fireMax);
     setUseBayes(k.useBayes);
@@ -202,7 +194,6 @@ export default function FormulPage() {
     setPrior(k.prior);
     setEvidence(k.evidence);
     setMcSamples(k.mcSamples);
-    setEng({ ...k.eng });
   }, []);
 
   // Kurulumun geri yuklenmesi. Oncelik: URL > yerel depo. URL'de kurulum
@@ -266,7 +257,6 @@ export default function FormulPage() {
         // yokken uygulanir. Aksi halde gec gelen meta, kullanicinin
         // kaydettigi motor ayarlarini ve MC ornek sayisini sessizce ezerdi.
         if (geriYuklendiRef.current) return;
-        setEng((e) => ({ ...e, ...m.engine_defaults }));
         setMcSamples(m.limits?.mc_samples?.default ?? VARSAYILAN_MC);
       })
       .catch(() => {
@@ -334,38 +324,26 @@ export default function FormulPage() {
       else if (n === 2) cifte++;
       else uclu++;
     }
-    return { banko, cifte, uclu, ...kaplamaAltSiniri(matches) };
+    return { banko, cifte, uclu, ...kuponBedeli(matches) };
   }, [matches]);
 
-  const modInfo = meta?.modes.find((m) => m.id === mode);
-  const butceGerekli =
-    modInfo?.needs_budget ?? (mode === "butce" || mode === "maxcov");
-
   /**
-   * Uretmeden once soylenebilecek bedel. Uc AYRI durum var ve tek bir
-   * sayiya indirilemezler:
+   * Uretmeden once soylenebilecek bedel — ve artik TEK bir sayi.
    *
-   *   fix16   kesin — blok 2^7 noktayi 16 satira indirir, yani uzay/8.
-   *   butce   tavan — odeyecegin en fazla kendi girdigin butcedir.
-   *   digeri  aralik — motor kac kolon uretecegini arama sonunda bilir.
+   * Burada uc ayri durum vardi ve tek sayiya indirilemiyorlardi: `fix16`
+   * kesin (`uzay / 8`), `butce` tavan (girilen butce), digerleri ARALIK
+   * (motor kac kolon uretecegini arama sonunda bilirdi). Kaplama sokuldu
+   * (docs/DUZ_SISTEME_GECIS.md): duzde arama yok, bedel kumenin kendisi.
    *
-   * Onceki surum ucunu de tek formulle veriyordu ve fix16 disinda UZAYI
-   * yaziyordu: `auto` modunda ayni kupon icin "256 kolon" diyordu, motor
-   * 32 uretiyordu (olculdu). Sekiz kat abarti, hem de odenecek tutari
-   * soyleyen en gorunur yerde.
+   * Bu bir sadelesme degil DUZELTME de: eski surum `auto` modunda ayni
+   * kupon icin "256 kolon" diyordu, motor 32 uretiyordu — sekiz kat
+   * abarti, hem de odenecek tutari soyleyen en gorunur yerde. Simdi
+   * yazilan sayi ile odenen sayi TANIM GEREGI ayni.
    */
-  const bedel = React.useMemo(() => {
-    if (mode === "fix16" && canli.cifte >= HAMMING_BLOK) {
-      return { tip: "kesin" as const, deger: Math.round(canli.uzay / 8) };
-    }
-    if (butceGerekli) return { tip: "tavan" as const, deger: budget };
-    return { tip: "aralik" as const, alt: canli.altSinir, ust: canli.uzay };
-  }, [mode, butceGerekli, budget, canli]);
-  const scipyEksik = Boolean(modInfo?.needs_scipy && meta?.has_scipy === false);
-  const fix16Yetersiz = mode === "fix16" && canli.cifte < HAMMING_BLOK;
+  const bedel = canli.uzay;
 
   const calistir = React.useCallback(
-    async (planUygula?: number) => {
+    async () => {
       iptalRef.current?.abort();
       const ac = new AbortController();
       iptalRef.current = ac;
@@ -375,20 +353,15 @@ export default function FormulPage() {
       // Parmak izi istek KURULURKEN alinir, cevap donunce degil: arada
       // kullanici girdiyi degistirmisse sonuc zaten o degisiklige ait
       // olmayacak ve bayat isaretlenmesi gerekir.
-      const govdeKurulum =
-        planUygula === undefined ? kurulum : { ...kurulum, planApply: planUygula };
-      const parmak = kurulumuKodla(govdeKurulum);
+      const parmak = kurulumuKodla(kurulum);
 
+      // `mode` GONDERILMIYOR: sunucu `duz` disinda bir deger gelirse 400
+      // doner ve gondermemek tek dogru davranis. `variant`, `budget`,
+      // `plan_count`, `plan_apply` ve motor ayarlari da dustu.
       const govde: SolveRequest = {
         matches,
-        mode,
-        variant,
         kati,
         fire_max: fireMax,
-        ...(butceGerekli ? { budget } : {}),
-        ...(mode === "butce"
-          ? { plan_count: planCount, plan_apply: planUygula ?? planApply }
-          : {}),
         ...(probsAcik
           ? {
               probs: probs.map((p) => normalize(p)),
@@ -400,7 +373,6 @@ export default function FormulPage() {
                 : {}),
             }
           : {}),
-        ...eng,
       };
 
       try {
@@ -414,7 +386,7 @@ export default function FormulPage() {
           setSenaryolar((liste) =>
             senaryoEkle(
               liste,
-              senaryoYap(cevap.result!, govdeKurulum, parmak, maclariKodla(matches)),
+              senaryoYap(cevap.result!, kurulum, parmak, maclariKodla(matches)),
             ),
           );
         }
@@ -426,8 +398,8 @@ export default function FormulPage() {
       }
     },
     [
-      matches, mode, variant, kati, fireMax, butceGerekli, budget, planCount, planApply,
-      probsAcik, probs, mcSamples, useBayes, elleAyar, preset, prior, evidence, eng,
+      matches, kati, fireMax,
+      probsAcik, probs, mcSamples, useBayes, elleAyar, preset, prior, evidence,
       kurulum,
     ],
   );
@@ -462,10 +434,12 @@ export default function FormulPage() {
       <header>
         <h1 className="font-display text-[32px] italic leading-tight">Formül üret</h1>
         <p className="mt-1 max-w-3xl text-[13.5px] leading-relaxed text-muted-foreground">
-          Seçtiğin ihtimal kümeleri içinde doğru sonuç varsa, oynanan kolonlardan
-          en az biri en fazla 1 maç hatalı olur — yani <strong>14-garanti</strong>.
-          <strong>Kaplama motoru tahmin etmez</strong>; tahminin doğruysa onu en az
-          kuponla garantiye alır. Olasılık istiyorsan{" "}
+          Seçim kümesinin <strong>tamamı</strong> oynanır. Doğru sonuç kümenin
+          içindeyse bir kolon <strong>15 tutturur</strong>; küme dışında kalan her
+          maç en iyi kolonu tam bir kademe düşürür —{" "}
+          <strong>en iyi kolon = 15 − kaçak</strong>.{" "}
+          <strong>Kolon üretimi tahmin etmez</strong>; işaretlerini sayar.
+          Olasılık istiyorsan{" "}
           <Link href="/tahmin" className="underline underline-offset-2">
             Tahmin
           </Link>{" "}
@@ -545,13 +519,9 @@ export default function FormulPage() {
 
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <Stat etiket="Banko" deger={canli.banko} />
-            <Stat
-              etiket="Çifte"
-              deger={canli.cifte}
-              ton={fix16Yetersiz ? "danger" : "neutral"}
-            />
+            <Stat etiket="Çifte" deger={canli.cifte} />
             <Stat etiket="Üçlü" deger={canli.uclu} />
-            <Stat etiket="Uzay" deger={sayi(canli.uzay)} />
+            <Stat etiket="Kolon" deger={sayi(bedel)} ton="primary" />
           </div>
 
           <KumeIciKart
@@ -564,112 +534,37 @@ export default function FormulPage() {
             }
           />
 
-          {fix16Yetersiz ? (
-            <Callout
-              ton="danger"
-              baslik={`Sabit 16 satır en az ${HAMMING_BLOK} çifte ister`}
-            >
-              Şu an {canli.cifte} çifte var. Bir maçı daha çifte yap ya da{" "}
-              <strong>Otomatik</strong> moda geç — o mod eldeki en iyi bloğu kendi
-              seçer (satır sayısı 16 olmayabilir).
-            </Callout>
-          ) : null}
+          {/*
+            Burada "Motor" karti duruyordu: mod secici (yedi mod), varyant
+            alani, butce alani, butce plani alanlari, "bu mod 14-garanti
+            VERMEZ" uyarisi ve "scipy kurulu degil" uyarisi. Bir de ustunde
+            "Sabit 16 satir en az 7 cifte ister" uyarisi vardi.
+
+            Hepsi kaplama ARAMASININ arayuzuydu. Kaplama sokuldu
+            (docs/DUZ_SISTEME_GECIS.md): tek yol var, secilecek bir sey
+            yok, ve bedel yukaridaki "Kolon" kutusunda ZATEN yaziyor —
+            uc ayri okuma sekli (kesin / tavan / aralik) yerine tek sayi.
+          */}
 
           <Card>
-            <CardHeader title="Motor" hint={modInfo?.aciklama} />
-            <CardBody className="space-y-4">
-              <Select
-                label="Mod"
-                value={mode}
-                onChange={(v) => setMode(v as ModeId)}
-                options={
-                  meta?.modes.map((m) => ({ value: m.id, label: m.label })) ?? [
-                    { value: "fix16" as ModeId, label: "Sabit 16 satır" },
-                  ]
-                }
-              />
-
-              {/*
-                Bedelin nasil okunacagi MODUN SECILDIGI yerde anlatilir.
-                Yapiskan cubukta duruyordu ve orayi 100 px'e sisirip
-                altindaki kontrolleri kapatiyordu; ayrica aciklamanin
-                dogal yeri zaten burasi.
-              */}
+            <CardHeader
+              title="Nasıl oynanıyor"
+              hint="Düz (tam sistem) — seçim kümesinin tamamı"
+            />
+            <CardBody className="space-y-3">
               <p className="text-[11.5px] leading-relaxed text-muted-foreground">
-                {bedel.tip === "kesin" ? (
-                  <>
-                    Bu modda bedel <strong>kesindir</strong>: blok 2⁷ noktayı 16
-                    satıra indirir, yani değişken uzayın sekizde biri —{" "}
-                    <strong>{sayi(bedel.deger)} kolon</strong>.
-                  </>
-                ) : null}
-                {bedel.tip === "tavan" ? (
-                  <>
-                    Bu mod bütçeyi <strong>aşmaz</strong>: ödeyeceğin en fazla{" "}
-                    <strong>{sayi(bedel.deger)} kolon</strong>.
-                  </>
-                ) : null}
-                {bedel.tip === "aralik" ? (
-                  <>
-                    Bu modda kesin bedeli motor arama sonunda bilir.{" "}
-                    <strong>{sayi(bedel.alt)} kolonun</strong> altı
-                    küre-kaplama sınırı yüzünden imkânsız,{" "}
-                    <strong>{sayi(bedel.ust)} kolon</strong> ise tam sistem —
-                    sonuç bu ikisinin arasında çıkar.
-                  </>
-                ) : null}
+                Seçim kümesinin <strong>tamamı</strong> oynanır; indirgeme
+                yoktur. Bedel işaret sayılarının çarpımıdır —{" "}
+                <strong>{sayi(bedel)} kolon</strong> — ve bu sayı bir tahmin
+                değil, ödeyeceğin tutarın kendisidir.
               </p>
-
-              {modInfo && !modInfo.garanti ? (
-                <Callout ton="danger" baslik="Bu mod 14-garanti VERMEZ">
-                  Sabit bütçeyle mümkün olan en geniş kapsamayı arar. Kapsanmayan
-                  noktalar için hiçbir güvence yoktur.
-                </Callout>
-              ) : null}
-
-              {scipyEksik ? (
-                <Callout ton="warning" baslik="scipy kurulu değil">
-                  Bu mod ILP gerektirir ve şu an kullanılamaz.
-                </Callout>
-              ) : null}
-
-              <div className="grid grid-cols-2 gap-3">
-                <NumberField
-                  label="Varyant"
-                  value={variant}
-                  onChange={setVariant}
-                  min={0}
-                  hint="Aynı garantiyi veren farklı 16 satır"
-                />
-                {butceGerekli ? (
-                  <NumberField
-                    label="Bütçe"
-                    value={budget}
-                    onChange={setBudget}
-                    min={1}
-                    suffix="kolon"
-                  />
-                ) : null}
-              </div>
-
-              {mode === "butce" ? (
-                <div className="grid grid-cols-2 gap-3">
-                  <NumberField
-                    label="Plan sayısı"
-                    value={planCount}
-                    onChange={setPlanCount}
-                    min={1}
-                    max={50}
-                  />
-                  <NumberField
-                    label="Uygulanacak plan"
-                    value={planApply}
-                    onChange={setPlanApply}
-                    min={1}
-                    max={planCount}
-                  />
-                </div>
-              ) : null}
+              <p className="text-[11.5px] leading-relaxed text-muted-foreground">
+                Sonuç seçim kümesinin içindeyse bir kolon{" "}
+                <strong>15 tutturur</strong>. Küme dışında kalan her maç
+                (bir <em>kaçak</em>) en iyi kolonu tam bir kademe düşürür:{" "}
+                <strong>en iyi kolon = 15 − k</strong>. Bu bir alt sınır
+                değil eşitliktir.
+              </p>
 
               <Select
                 label="Fire analizi (seçim dışı)"
@@ -680,7 +575,7 @@ export default function FormulPage() {
                   { value: "1", label: "Yalnızca 1 maç dışarı çıkarsa" },
                   { value: "0", label: "Kapalı" },
                 ]}
-                hint="14-garantinin geçerli OLMADIĞI bölgeyi ölçer. Büyük kuponlarda pahalıdır; sınır aşılırsa atlanır."
+                hint="Seçim kümesinin DIŞINA düşen sonuçları ölçer — kaçak bölgesi. Büyük kuponlarda pahalıdır; sınır aşılırsa atlanır."
               />
 
               <Switch
@@ -714,7 +609,7 @@ export default function FormulPage() {
                         "uydurulmadı."
                       : "Tüm maçların oranı vardı."}{" "}
                     <strong>İşaretler taşınmadı:</strong> hangi maça banko, hangisine çifte
-                    koyacağın senin kararın — kaplama motoru bu seçimi yapmaz.
+                    koyacağın senin kararın — motor bu seçimi yapmaz.
                   </p>
                   {devir.labels.some(Boolean) ? (
                     <ol className="tnum mt-2 grid gap-x-4 gap-y-0.5 text-[11.5px] sm:grid-cols-2">
@@ -813,56 +708,14 @@ export default function FormulPage() {
             </CardBody>
           </Card>
 
-          <Collapsible
-            baslik="Motor ayarları"
-            hint="Sezgisel arama ve ILP parametreleri — CLI ile aynı"
-          >
-            <div className="grid grid-cols-2 gap-3">
-              <NumberField
-                label="trials"
-                value={eng.trials}
-                min={1}
-                max={50}
-                onChange={(v) => setEng((e) => ({ ...e, trials: v }))}
-              />
-              <NumberField
-                label="ls_iters"
-                value={eng.ls_iters}
-                min={100}
-                max={500000}
-                step={1000}
-                onChange={(v) => setEng((e) => ({ ...e, ls_iters: v }))}
-              />
-              <NumberField
-                label="seed"
-                value={eng.seed}
-                min={0}
-                onChange={(v) => setEng((e) => ({ ...e, seed: v }))}
-              />
-              <NumberField
-                label="time_limit"
-                value={eng.time_limit}
-                min={1}
-                max={300}
-                suffix="sn"
-                onChange={(v) => setEng((e) => ({ ...e, time_limit: v }))}
-              />
-              <NumberField
-                label="block_limit"
-                value={eng.block_limit}
-                min={2}
-                max={6561}
-                onChange={(v) => setEng((e) => ({ ...e, block_limit: v }))}
-              />
-              <NumberField
-                label="exact_limit"
-                value={eng.exact_limit}
-                min={2}
-                max={4096}
-                onChange={(v) => setEng((e) => ({ ...e, exact_limit: v }))}
-              />
-            </div>
-          </Collapsible>
+          {/*
+            Burada "Motor ayarlari" acilir bolumu duruyordu: trials,
+            ls_iters, seed, time_limit, block_limit, exact_limit. Alti da
+            kaplama ARAMASININ ayarlariydi (kac deneme, kac yerel arama
+            adimi, ILP'ye kac saniye). Kaplama sokuldu ve arama kalmadi;
+            duzde kolonlar carpimdan uretiliyor, ayarlanacak bir sey yok.
+            `/api/meta` de `engine_defaults`i bos sozluk gonderiyor.
+          */}
 
           {/*
             Yapiskan buton icerigin uzerinde durur; arkasina cam zemin
@@ -874,7 +727,7 @@ export default function FormulPage() {
               boyut="lg"
               className="w-full"
               onClick={() => void calistir()}
-              disabled={calisiyor || fix16Yetersiz || scipyEksik}
+              disabled={calisiyor}
             >
               {calisiyor ? (
                 <>
@@ -893,29 +746,13 @@ export default function FormulPage() {
               cubugu 100 px'e cikarmisti ve yapiskan cubuk, ilk acilista
               "Mac adlari" kontrolunun tam ustune oturuyordu (olculdu:
               elementFromPoint cubugu donuyordu). Aciklamanin tam hali
-              Motor kartinda, modun secildigi yerde duruyor — zaten oraya
-              ait.
+              "Nasil oynaniyor" kartinda duruyor.
+
+              Uc ayri okuma sekli (kesin / tavan / aralik) vardi ve
+              kaplamayla dustu; duzde tek sayi var ve o sayi TAM.
             */}
             <p className="mt-1.5 text-center text-[11px] leading-tight text-muted-foreground">
-              {bedel.tip === "kesin" ? (
-                <>
-                  <strong>{sayi(bedel.deger)} kolon</strong> · 16 satır
-                </>
-              ) : null}
-              {bedel.tip === "tavan" ? (
-                <>
-                  en çok <strong>{sayi(bedel.deger)} kolon</strong>
-                </>
-              ) : null}
-              {bedel.tip === "aralik" ? (
-                <>
-                  <strong>
-                    {sayi(bedel.alt)}–{sayi(bedel.ust)} kolon
-                  </strong>{" "}
-                  arası
-                </>
-              ) : null}
-              {" · ödenecek tutar"}
+              <strong>{sayi(bedel)} kolon</strong> · tek satır · ödenecek tutar
             </p>
           </div>
         </div>
@@ -934,12 +771,12 @@ export default function FormulPage() {
                 <Loader2 size={18} className="animate-spin text-primary" />
                 <div className="min-w-0">
                   <div className="text-[13.5px] font-medium">
-                    {modInfo?.label ?? mode} çalışıyor — {sure(gecen)}
+                    Kolonlar üretiliyor — {sure(gecen)}
                   </div>
                   <div className="text-[11.5px] text-muted-foreground">
                     {gecen > 6000
                       ? "Büyük uzaylarda bu normal. Adım süreleri Log sekmesinde."
-                      : "Kaplama üretiliyor…"}
+                      : "Seçim kümesinin tamamı açılıyor…"}
                   </div>
                 </div>
               </CardBody>
@@ -985,7 +822,7 @@ export default function FormulPage() {
                     boyut="sm"
                     className="mt-2.5"
                     onClick={() => void calistir()}
-                    disabled={calisiyor || fix16Yetersiz || scipyEksik}
+                    disabled={calisiyor}
                   >
                     <Play size={13} />
                     Yeniden üret
@@ -995,27 +832,23 @@ export default function FormulPage() {
 
               <Tabs items={sekmeler} value={sekme} onChange={setSekme} />
 
-              {/* Ne aldım — bedel, garanti ve kapsamanın geometrisi */}
+              {/* Ne aldım — bedel ve kaçak aritmetiği */}
               <TabPanel id="sonuc" active={sekme === "sonuc"}>
                 <div className="space-y-4">
-                  <OzetPanel
-                    r={sonuc}
-                    onPlanSec={
-                      sonuc.butce_planlari
-                        ? (p) => {
-                            setPlanApply(p.index);
-                            void calistir(p.index);
-                          }
-                        : undefined
-                    }
-                  />
+                  {/*
+                    `onPlanSec` KALKTI: butce planlari `core.butce_danismani`nin
+                    ciktisiydi ("elimde N kolon var, hangi isareti kisayim")
+                    ve kaplamayla birlikte dustu. Duzde kismak icin isareti
+                    degistirirsin; motora butce verip plan istemezsin.
+                  */}
+                  <OzetPanel r={sonuc} />
                   {/*
                     Karsilastirma ancak iki calisma varken bir sey anlatir;
                     tek satirlik bir tablo yer kaplamaktan baska is yapmaz.
                   */}
                   {senaryolar.length >= 2 ? (
                     <>
-                      <BolumBasligi>Başka modda ne alırdım</BolumBasligi>
+                      <BolumBasligi>Başka işaretlerle ne alırdım</BolumBasligi>
                       <SenaryoKart
                         liste={senaryolar}
                         guncelSecim={maclariKodla(matches)}
@@ -1060,8 +893,9 @@ export default function FormulPage() {
                   <BosPanel baslik="Olasılık verisi yok">
                     Soldaki <strong>Olasılık girişini kullan</strong> anahtarını aç ve
                     maç bazlı tahminlerini gir. Bu sekmedeki her şey senin
-                    tahminlerine bağlıdır; kombinatoryal 14-garanti onlardan
-                    bağımsızdır ve <strong>Ne aldım</strong> sekmesinde durur.
+                    tahminlerine bağlıdır; kaçak aritmetiği (<em>15 − k</em>)
+                    onlardan bağımsızdır ve <strong>Ne aldım</strong> sekmesinde
+                    durur.
                   </BosPanel>
                 )}
               </TabPanel>

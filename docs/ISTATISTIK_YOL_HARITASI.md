@@ -1,5 +1,19 @@
 # İstatistik Katmanı — Durum ve Yol Haritası
 
+> **ÖLÇÜM GÜNLÜĞÜ — §3.x bölümleri düzeltilmez.** Bu belge kronolojik bir
+> araştırma kaydıdır: her bölüm ölçüldüğü gün yazıldı ve o gün geçerli olan
+> ürünü anlatır. Depo 2026-09-06'ya kadar 14-garantili bir **kaplama kodu**
+> kullanıyordu; o tarihte söküldü ve düz (tam sistem) oynamaya geçti
+> (`docs/DUZ_SISTEME_GECIS.md`). Yani **§3.56 ve öncesindeki bütün kupon
+> sayıları kaplama ölçeğindedir** — silinmiyor, çünkü o gün oynanan ürünün
+> ölçümüdür. Düz karşılıkları `docs/KAZANMA_PLANI.md`nin başındaki tabloda
+> ve `.claude/olcum_kutugu.json`da durur; kütükte eski kayıtlar *"KAPLAMA
+> ÖLÇEĞİ (sökülmüştür)"* diye etiketlidir.
+>
+> Kaplamaya bağlı olmayan ölçümler (korpus istatistikleri, marj arındırma,
+> kalibrasyon, Elo/Dixon-Coles, devir çarpanı) sistem değişikliğinden
+> etkilenmez ve olduğu gibi geçerlidir.
+
 **Kapsam:** `/istatistik` sayfası, onu besleyen veri + oran altyapısı, tahmin katmanı ve
 **projenin tamamını kapsayan yol planı** (§6). Dosya adı tarihsel; kapsam §6 ile genişledi.
 **Güncellendi:** 2026-08-17 (proje amacı güncellendi — aşağıya bakınız)
@@ -53,7 +67,7 @@ GET /api/stats/<week>   ─────────────► /istatistik/<
         │                              çift kapsama, beraberlik, lig, Brier)     ▼
 data/odds/odds_2025_26.csv            567 maç · 108 oran sütunu             /  (formül)
         ▲       │
-        │       │  spor_toto/backtest.py   (eşikli seçim → kaplama → skor)
+        │       │  spor_toto/backtest.py   (eşikli seçim → düz kolonlar → skor)
         │       ▼
         │  GET /api/backtest[?banko=&uclu=&last=&sweep=] ──► /istatistik/geri-test
         │
@@ -86,7 +100,7 @@ spor_toto/evaluate.py  ◄── spor_toto/predict.py     (sözleşme + 3 refera
 | Üretim | `backend/scripts/snapshot_iddaa.py` | 339 | İddaa açık bültenini tarih damgalı saklar (F5) |
 | Okuma | `backend/spor_toto/history.py` | 423 | 6 analiz bloğu, `last=N` dilimleme, veri kalitesi denetimi |
 | Okuma | `backend/spor_toto/odds.py` | 489 | 1X2 seçimi, banko bantları, kalibrasyon, çift kapsama, beraberlik profili, lig kırılımı, haftalık Brier |
-| Analiz | `backend/spor_toto/backtest.py` | 458 | Eşikli strateji, kaplama önbelleği, skorlama, tarama, hold-out |
+| Analiz | `backend/spor_toto/backtest.py` | 458 | Eşikli strateji, kolon önbelleği, skorlama, tarama, hold-out |
 | API | `backend/web_app.py` | — | `api_stats`, `api_stats_week`, `api_backtest` |
 | UI | `frontend/app/istatistik/page.tsx` | 522 | Sayfa |
 | UI | `frontend/app/istatistik/[week]/page.tsx` | 391 | Hafta detayı + "formüle gönder" |
@@ -153,7 +167,7 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/components/super-toto/tahmin2.tsx` | **2. Tahmin** paneli — `1. Tahmin` / `2. Tahmin` sekmeleri arasında geçilir; para birimli hiçbir sayı yok. Hafta kapandığında sonuç sütunu ve ayar karnesi açılır (§3.38) |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **2.080 test**; **85'i** istatistik katmanına (`history` `odds` `backtest`
+paketi toplam **1.803 test**; **85'i** istatistik katmanına (`history` `odds` `backtest`
 `api_stats` `api_backtest` `snapshot_iddaa`), **579'u** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre`
@@ -5807,17 +5821,25 @@ Amaç "kazanma oranını artırmak" tek bir şey değil, **çarpımsal üç etke
 ```
 Beklenen getiri  =  P(tutturma)  ×  Pay(tutturunca)  −  Bedel
                     ─────────────    ───────────────     ──────
-                    tahmin ekseni    havuz ekseni        kaplama ekseni
+                    tahmin ekseni    havuz ekseni        bütçe ekseni
 ```
 
 | Eksen | Ne belirler | Durum |
 |---|---|---|
 | **Tahmin** | 14+ tutturma olasılığı | İki bağımsız denemede ~sıfır artık (§5.1) |
 | **Havuz** | Tutturunca ikramiyenin kaçta kaçını aldığın | **Motor hazır, veri geldi, ölçüm yok** (§3.34, §6.3, §6.3b). Beklenen değer artık kapalı formda hesaplanıyor; oynanma 2 hafta, ikramiye kaydı 1 hafta |
-| **Kaplama** | Aynı garanti için ödenen kolon | **Çözüldü** — Hamming, kanıtlanmış optimal |
+| **Bütçe** | Kaç kolon oynandığı | **Kapandı** (§E6) — 47 basamağın hiçbirinde gerçekleşen ROI 1,0'a ulaşmıyor (0,030–0,877); haftaya göre değişen hiçbir kural sabit bütçeyi aynı parayla yenmiyor |
 
-Plan sonludur çünkü **etken sayısı üçtür.** Kaplama ekseninde iş yok ve olmayacak: bir
-optimum yenilemez, oraya harcanacak her saat cevabı önceden bilinen bir soruya gider.
+Plan sonludur çünkü **etken sayısı üçtür.** Bütçe ekseninde iş yok: 114 hafta
+üzerinde ölçüldü ve kaldıraç bulunamadı.
+
+> Bu satır eskiden *"**Kaplama** — aynı garanti için ödenen kolon —
+> **Çözüldü**, Hamming, kanıtlanmış optimal"* diyordu ve **doğruydu**:
+> Hamming(7,4) yedi çifte için gerçekten optimaldir. Yanlış olan, sorunun
+> kendisiydi. "Aynı garanti için en az kolon" diye sorunca kaplama
+> yenilemez; "aynı kolon bütçesiyle en çok para" diye sorunca düz kazanıyor,
+> çünkü kaplamanın *en az yedi çifte* şartı şekli bozuyor
+> (`docs/DUZ_SISTEME_GECIS.md`). Optimal cevap, yanlış soruya verilmişti.
 
 ### 6.2 Faz A — tahmin eksenini kapat ya da aç
 
@@ -6577,7 +6599,7 @@ python -m spor_toto.kosum                  # kayıtlı koşumlar
 python -m spor_toto.kosum --son disari     # son koşumun ortamı
 
 # Denetim
-pytest -q                                  # 2.080 test (85'i bu katman, 583'ü tahmin)
+pytest -q                                  # 1.803 test (85'i bu katman, 583'ü tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out
@@ -6621,7 +6643,8 @@ implied_probs(market_odds(r, "1X2", "Avg"))   # {"1": .., "0": .., "2": ..}
 | **Banko** | Bir maça tek sembol işaretlemek |
 | **Çift / üçlü** | Bir maça iki / üç sembol işaretlemek; kolon bedelini çarpar |
 | **Küme içi** | Gerçek sonucun, işaretlenen sembollerin içinde kalması |
-| **14-garanti** | Tahmin küme içindeyse en fazla 1 hatayla en az 14 doğruyu garanti eden kaplama |
+| **Kaçak (`k`)** | Doğru sonucu işaretlenmemiş maç sayısı; en iyi kolon `15 − k` tutturur |
+| **14-garanti** | *(tarihsel, 2026-09-06'da söküldü)* Tahmin küme içindeyse en fazla 1 hatayla en az 14 doğruyu garanti eden kaplama |
 | **Kolon bedeli** | Ödenecek tutar. Satır sayısıyla karıştırılmamalı |
 | **Marj (overround)** | Bahisçi payı; ham olasılık toplamının 1'i aşan kısmı |
 | **Kalibrasyon** | Modelin verdiği olasılığın gerçekleşme sıklığıyla örtüşmesi |

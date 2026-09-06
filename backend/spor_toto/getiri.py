@@ -149,8 +149,12 @@ VARSAYILAN_KOMISYON = 0.50
 #: 1. ST EXTRA kupon aracının ekranı (3. haftanın dört 15 bileni),
 #: 2. kullanıcının **bayi / resmî Spor Toto uygulaması** beyanı — araçtan
 #:    bağımsız birinci el, hizmet-bedeli şüphesini kapatan gözlem,
-#: 3. `data/sistem_fiyat/st_extra.json`: 250 sistem fiyatının **250'si de**
-#:    10'un tam katı, yani her satırda kolon sayısı tamsayı çıkıyor.
+#: 3. satıcının indirgenmiş sistem fiyat tablosu: 250 sistem fiyatının
+#:    **250'si de** 10'un tam katıydı, yani her satırda kolon sayısı tamsayı
+#:    çıkıyordu. (Tablo — `data/sistem_fiyat/st_extra.json` ve onu okuyan
+#:    `sistem.py` — kaplama katmanıyla birlikte söküldü; bkz.
+#:    `docs/DUZ_SISTEME_GECIS.md`. Bu üçüncü köken bu yüzden artık
+#:    **yeniden koşulamaz**; kaydı `kaplama-son` etiketli commit'tedir.)
 #:
 #: Şüphe kapandığı için sayı artık **varsayılan hesaba girer**
 #: (`scripts/kademe_analizi.py`). `VARSAYILAN_KOLON_BEDELI` silinmedi:
@@ -350,19 +354,26 @@ def kupon_kademeleri(probs_listesi: Sequence[dict[str, float]],
     bedelle topluyordu; iki sayı farklı şeylerin sayısıydı ve beklenen
     getiri oranı yapay olarak yerlerde çıkıyordu.
 
-    Doğrusu garantinin aritmetiğinden gelir (`secim` modül başlığı):
-    seçim kümesinin dışında kalan maç sayısı `k` ise en iyi kolon
-    `14 − k` doğru tutturur. Yani::
+    Doğrusu aritmetikten gelir (`secim` modül başlığı): seçim kümesinin
+    dışında kalan maç sayısı `k` ise en iyi kolon `15 − k` doğru tutturur::
 
-        P(en iyi kolon = 14) = P(k = 0)
-        P(en iyi kolon = 13) = P(k = 1)
-        P(en iyi kolon = 12) = P(k = 2)
+        P(en iyi kolon = 15) = P(k = 0)
+        P(en iyi kolon = 14) = P(k = 1)
+        P(en iyi kolon = 13) = P(k = 2)
+        P(en iyi kolon = 12) = P(k = 3)
 
     `k`'nın dağılımı Poisson-binomdur (`ortak.kacak_dagilimi`) ve
     kaçak olasılıkları seçilen plandan çıkar.
 
-    Not: bu bir **alt sınırdır** — kaplama bir kolonu tesadüfen daha iyi
-    tutturabilir (§3.19). Yani beklenen getiri de temkinlidir.
+    **Eskiden 15 kademesi yoktu ve sayı bir ALT SINIRDI.** Kaplama kodunda
+    en iyi kolon `≥ 14 − k` idi; 15'e ancak tesadüfen ulaşılırdı ve beklenen
+    getiri bu yüzden temkinliydi. Düzde eşitlik: sayı ne iyimser ne temkinli.
+
+    **Kalan bir eksik, saklanmıyor:** burada yalnızca **en iyi kolonun**
+    kademesi sayılıyor. Düz sistem bir haftada 12'yi bir kez değil yüzlerce
+    kez tutturur ve ikramiye kolon başına ödenir — `duz.kademe_sayimlari`
+    o sayımı yapar. Yani buradaki beklenen getiri hâlâ alt sınırdır, ama
+    artık *garantinin gevşekliğinden* değil **kolon sayımından** dolayı.
     """
     from .ortak import kacak_dagilimi
     from .secim import en_iyi_secim, kacak_olasiligi
@@ -373,9 +384,8 @@ def kupon_kademeleri(probs_listesi: Sequence[dict[str, float]],
     kacaklar = [kacak_olasiligi(p, len(s))
                 for p, s in zip(probs_listesi, plan.secimler)]
     dagilim = kacak_dagilimi(kacaklar)
-    return ({14: dagilim[0] if len(dagilim) > 0 else 0.0,
-             13: dagilim[1] if len(dagilim) > 1 else 0.0,
-             12: dagilim[2] if len(dagilim) > 2 else 0.0},
+    return ({15 - k: (dagilim[k] if len(dagilim) > k else 0.0)
+             for k in range(4)},
             plan.bedel)
 
 

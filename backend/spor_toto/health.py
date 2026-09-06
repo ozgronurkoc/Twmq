@@ -30,19 +30,11 @@ from .core import (
     HAS_SCIPY,
     ORNEK_KUPON,
     Encoder,
-    Fix16Hatasi,
-    distance_layers,
-    dogrula_kaplama,
-    merge_rows,
     olasilik_raporu,
     parse_picks,
-    row_cost,
-    rows_to_points,
-    solve_by_blocks,
-    solve_fix16,
-    solve_heuristic,
 )
 from .core import SEMBOLLER as _SEMBOLLER
+from .duz import kolonlar as duz_kolonlar
 from .markov import markov_report
 from .report import basliklar
 
@@ -76,6 +68,10 @@ class KuponSinifi:
     etiket: str
     picks: str
     uzay: int
+    # `alt_sinir` (kure-kaplama alt siniri) ve `fix16_bedel` alanlari
+    # kaplamayla birlikte dustu; duzde bedel = uzay ve alt sinir diye bir
+    # kavram yok. Alanlar KAYIT olarak duruyor: sayilar kaplama olceginde
+    # olculmustu ve silinmiyor (docs/DUZ_SISTEME_GECIS.md).
     alt_sinir: int
     fix16_bedel: int
 
@@ -291,187 +287,80 @@ def _check_encoder() -> str:
         assert enc.total_len == 15, f"{s.etiket}: {enc.total_len} maç"
         assert enc.space_size() == s.uzay, (
             f"{s.etiket}: uzay {enc.space_size()} ≠ {s.uzay}")
-        assert enc.lower_bound() == s.alt_sinir == math.ceil(s.uzay / enc.ball_size())
-        olcum.append(f"{s.etiket}={s.uzay}/{s.alt_sinir}")
+        # Duzde bedel = uzay: kolonlar kumenin kendisi.
+        assert len(duz_kolonlar(enc)) == s.uzay
+        olcum.append(f"{s.etiket}={s.uzay}")
     return f"sınıf={len(KUPON_SINIFLARI)} " + " ".join(olcum)
 
 
-def _check_fix16_garanti() -> str:
-    """Urunun ana vaadi — DORT kupon sinifinda.
+def _check_duz_kolonlar() -> str:
+    """Üretilen kolonlar seçim kümesinin **tamamı** mı — sayarak.
 
-    Beklenen bedel her sinif icin tabloda yazilidir (`KUPON_SINIFLARI`):
-    kontrol "kaplama gecerli" demekle yetinmez, "bu sinifta bedel tam olarak
-    bu" der. Sessiz bir gerileme ancak boyle gorunur.
-    """
-    olcum: list[str] = []
-    for s in KUPON_SINIFLARI:
-        enc = Encoder(parse_picks(s.picks))
-        cols, _ = solve_fix16(enc)
-        rows = merge_rows(cols)
-        worst, acik = dogrula_kaplama(cols, enc.alphabet_sizes)
-        assert len(rows) == 16, f"{s.etiket}: {len(rows)} satır"
-        assert worst <= 1 and acik == 0, f"{s.etiket}: worst={worst} acik={acik}"
-        assert set(rows_to_points(rows)) == set(cols), f"{s.etiket}: satır↔kolon"
-        assert sum(row_cost(r) for r in rows) == len(cols), f"{s.etiket}: bedel"
-        assert len(cols) == s.fix16_bedel, (
-            f"{s.etiket}: bedel {len(cols)} ≠ {s.fix16_bedel}")
-        olcum.append(f"{s.etiket}={len(cols)}")
-    return f"sınıf={len(KUPON_SINIFLARI)} rows=16 worst≤1 bedel: " + " ".join(olcum)
+    Düzde ürünün ana vaadi budur: indirgeme yok. Kırılırsa küme-içi
+    olasılık, Monte Carlo ve fire analizi eksik bir kolon kümesi üzerinde
+    hesaplanır ve **eksikliği görünmez**.
 
-
-def _check_fix16_yetersiz_cifte() -> str:
-    enc = Encoder(parse_picks("10,10,10,10,10,10,1,1,1,1,1,1,1,1,1"))
-    try:
-        solve_fix16(enc)
-        raise AssertionError("Fix16Hatasi bekleniyordu")
-    except Fix16Hatasi:
-        return "6 cifte reddedildi"
-
-
-def _check_distance_layers() -> str:
-    """Mesafe muhasebesi — DORT kupon sinifinda.
-
-    0 ve 1 hatali noktalarin toplami arama uzayinin TAMAMINI vermeli:
-    tutmazsa kapsama raporundaki her yuzde yanlistir.
-    """
-    olcum: list[str] = []
-    for s in KUPON_SINIFLARI:
-        enc = Encoder(parse_picks(s.picks))
-        cols, _ = solve_fix16(enc)
-        dist = distance_layers(cols, enc.alphabet_sizes)
-        assert sum(dist.values()) == enc.space_size() == s.uzay, (
-            f"{s.etiket}: katman toplamı {sum(dist.values())} ≠ {s.uzay}")
-        assert dist.get(0, 0) == len(set(cols)), f"{s.etiket}: d=0 katmanı"
-        assert max(dist) <= 1, f"{s.etiket}: d={max(dist)} noktası açıkta"
-        olcum.append(f"{s.etiket}={dist.get(0, 0)}+{dist.get(1, 0)}")
-    return f"sınıf={len(KUPON_SINIFLARI)} d0+d1=uzay: " + " ".join(olcum)
-
-
-def _check_fix16_varyantlari() -> str:
-    """
-    `--variant` ile uretilen alternatif 16'liklar.
-
-    Varyantlar kod tabanini karistirarak baska bir kaplama uretir; ama
-    16-satir/14-garanti sozlesmesi HEPSI icin gecerli olmak zorundadir.
-    Kirilirsa "varyant sec" dugmesi sessizce garantisiz kupon dagitir.
+    Kaplama döneminde burada yedi ayrı denetim vardı (`fix16_garanti`,
+    `fix16_yetersiz_cifte`, `distance_layers`, `fix16_varyantlari`,
+    `blok_motor`, `heuristic`, `mod_envanteri`) ve hepsi aynı şeyi
+    kovalıyordu: *üretilen kaplama gerçekten örtüyor mu?* Düzde örtme diye
+    bir soru yok — kümenin kendisi oynanıyor.
     """
     enc = Encoder(parse_picks(ORNEK))
-    kanonik, _ = solve_fix16(enc, variant=0)
-    farkli = 0
-    for v in (1, 2, 3):
-        cols, _ = solve_fix16(enc, variant=v)
-        rows = merge_rows(cols)
-        worst, acik = dogrula_kaplama(cols, enc.alphabet_sizes)
-        assert len(rows) == 16, f"varyant {v}: {len(rows)} satır"
-        assert worst <= 1 and acik == 0, f"varyant {v}: worst={worst} acik={acik}"
-        assert sum(row_cost(r) for r in rows) == len(cols)
-        if set(cols) != set(kanonik):
-            farkli += 1
-    # Varyantlar ayni kaplamayi tekrarlarsa secenek olmaktan cikar.
-    assert farkli >= 1, "hicbir varyant kanonik kaplamadan farkli degil"
-    return f"varyant=1..3 satir=16 worst<=1 farkli={farkli}/3"
+    cols = duz_kolonlar(enc)
+    beklenen = 1
+    for syms in enc.variable_syms:
+        beklenen *= len(syms)
+    assert len(cols) == beklenen, f"{len(cols)} != {beklenen}"
+    assert len(set(cols)) == len(cols), "kolonlar tekrar ediyor"
+    assert len(cols) == enc.space_size(), "uzay ile kolon sayisi ayrisiyor"
+    return f"kolon={len(cols)} = uzay={beklenen} (tekrarsiz)"
 
 
-def _check_blok_motor() -> str:
+def _check_duz_kademe_aritmetigi() -> str:
+    """`en iyi kolon = 15 − kaçak` — formüle değil **sayıma** karşı.
+
+    Bütün kolonlar tek tek gezilip kaç doğru yaptıkları sayılır ve en
+    iyisinin `15 − kaçak` olduğu doğrulanır. Bu eşitlik `secim`,
+    `getiri.kupon_kademeleri` ve `karne`nin tamamının dayandığı yerdir.
+    """
     enc = Encoder(parse_picks(ORNEK))
-    r = solve_by_blocks(enc)
-    assert r is not None
-    cols, _ = r
-    worst, acik = dogrula_kaplama(cols, enc.alphabet_sizes)
-    assert worst <= 1 and acik == 0
-    f16, _ = solve_fix16(enc)
-    assert len(cols) <= len(f16)
-    return f"blok_bedel={len(cols)} <= fix16={len(f16)}"
-
-
-def _check_heuristic() -> str:
-    picks = "10,10,10,10,10,10,1,1,1,1,1,1,1,1,1"
-    enc = Encoder(parse_picks(picks))
-    cols = solve_heuristic(enc, trials=2, ls_iters=3000, seed=42)
-    worst, acik = dogrula_kaplama(cols, enc.alphabet_sizes)
-    assert worst <= 1 and acik == 0
-    return f"heuristic_bedel={len(cols)}"
+    secimler = enc.selections
+    cols = duz_kolonlar(enc)
+    sinanan = 0
+    for gercek in ("1" * 15, "102" * 5, "012" * 5):
+        kacak = sum(1 for i, sec in enumerate(secimler)
+                    if gercek[i] not in sec)
+        en_iyi = 0
+        for pt in cols:
+            tam = enc.decode_full(pt)
+            en_iyi = max(en_iyi, sum(1 for i in range(15)
+                                     if tam[i] == gercek[i]))
+        assert en_iyi == 15 - kacak, (
+            f"gercek={gercek[:5]}...: en iyi {en_iyi} != 15-{kacak}")
+        sinanan += 1
+    return f"15-kacak esitligi {sinanan}/3 sonucta sayimla dogrulandi"
 
 
 def _check_mod_envanteri() -> str:
+    """Meta'da ilan edilen tek mod gerçekten koşuyor mu.
+
+    **Bu denetim yedi modu koştururdu.** Kaplama söküldü, geriye `duz`
+    kaldı; liste tek elemanlı ama denetim aynı işi görüyor: ilan edilen
+    şeyin çalıştığını ve `garanti` bayrağının doğru olduğunu bağlar.
     """
-    Meta'da ILAN EDILEN her mod gercekten kosuyor mu ve `garanti` bayragi
-    dogru mu?
+    from .meta import DUZ_MOD, MODES
 
-    Saglik daha once yalnizca fix16/blok/sezgisel kosturuyordu; `auto`,
-    `exact`, `butce` ve `maxcov` hic sinanmiyordu. Bozuk bir mod, meta'da
-    ilan edildigi icin arayuzde secilebilir kalir ve dogrudan kullaniciya
-    carpar.
-
-    Baglanan degismez sudur: **garanti: True ilan eden bir mod acik nokta
-    birakamaz; garanti: False ilan eden maxcov ise alt sinirin altindaki bir
-    butceyle gercekten kaplayamaz.** Ikincisi kombinatoryal zorunluluktur:
-    8 kolonun toplam topu 8*(1+ekseriyet) < 128'dir.
-    """
-    from .engines import (
-        engine_params,
-        run_auto,
-        run_block,
-        run_butce,
-        run_exact,
-        run_fix16,
-        run_heuristic,
-        run_maxcov,
-    )
-    from .meta import MODES
-
+    assert [m["id"] for m in MODES] == [DUZ_MOD], (
+        f"beklenmeyen mod envanteri: {[m['id'] for m in MODES]}")
+    mod = MODES[0]
+    assert mod["garanti"] is True, "duz her zaman garanti verir"
+    assert mod["needs_budget"] is False and mod["needs_scipy"] is False
     enc = Encoder(parse_picks(MOD_ORNEK))
-    # ILP'yi ve local search'u sure butcesine cek: burada olculen sey
-    # kalite degil, modun ayakta olup olmadigi.
-    eng = engine_params(trials=1, ls_iters=2_000, time_limit=10.0,
-                        exact_limit=256, block_limit=256)
-
-    kosucular: dict[str, Callable[[], dict[str, Any]]] = {
-        "fix16": lambda: run_fix16(enc),
-        "auto": lambda: run_auto(enc, eng),
-        "exact": lambda: run_exact(enc, eng),
-        "block": lambda: run_block(enc, eng),
-        "heuristic": lambda: run_heuristic(enc, eng),
-        "butce": lambda: run_butce(enc, MOD_BUTCE),
-        "maxcov": lambda: run_maxcov(enc, MOD_MAXCOV_BUTCE),
-    }
-    eksik = [m["id"] for m in MODES if m["id"] not in kosucular]
-    assert not eksik, f"meta'da ilan edilen ama koşulmayan mod: {eksik}"
-
-    kosan: list[str] = []
-    atlanan: list[str] = []
-    for mod in MODES:
-        mid = mod["id"]
-        if mod["needs_scipy"] and not HAS_SCIPY:
-            # Bilgi amacli scipy_flag zaten bunu ayrica raporluyor.
-            atlanan.append(mid)
-            continue
-        r = kosucular[mid]()
-        e = r.get("enc", enc)
-        cols = r["cols"]
-        assert cols, f"{mid}: bos kaplama"
-        assert r.get("baslik"), f"{mid}: baslik yok"
-        worst, acik = dogrula_kaplama(cols, e.alphabet_sizes)
-        if mod["garanti"]:
-            assert worst <= 1 and acik == 0, (
-                f"{mid} meta'da garanti ilan ediyor ama worst={worst} acik={acik}"
-            )
-            assert len(merge_rows(cols)) >= 1
-        else:
-            assert acik > 0, (
-                f"{mid} garanti VERMEDIGINI ilan ediyor ama tam kapladi — "
-                f"ya bayrak ya kaplama yanlis"
-            )
-            assert len(cols) <= MOD_MAXCOV_BUTCE, f"{mid} bütçeyi aştı"
-            assert r["kapsanan"] + acik == e.space_size(), "kapsama muhasebesi tutmuyor"
-        if mod["needs_budget"]:
-            # Butce modunun urettigi kupon, verilen butceyi asamaz.
-            assert len(cols) <= (MOD_BUTCE if mid == "butce" else MOD_MAXCOV_BUTCE), \
-                f"{mid} bütçeyi aştı: {len(cols)}"
-        kosan.append(mid)
-
-    atlama = f" atlanan={','.join(atlanan)}" if atlanan else ""
-    return f"mod={len(kosan)}/{len(MODES)} uzay={enc.space_size()}{atlama}"
+    cols = duz_kolonlar(enc)
+    assert cols, "duz bos kolon uretti"
+    assert len(cols) == enc.space_size()
+    return f"mod={DUZ_MOD} kolon={len(cols)}"
 
 
 def _check_meta_sozlesmesi() -> str:
@@ -509,9 +398,13 @@ def _check_meta_sozlesmesi() -> str:
             assert mod.get(alan), f"{mod['id']}: {alan} boş"
         for bayrak in ("garanti", "needs_budget", "needs_scipy"):
             assert isinstance(mod.get(bayrak), bool), f"{mod['id']}: {bayrak}"
-    assert {x["id"] for x in m["modes"] if x["needs_scipy"]} == {"exact"}
-    assert {x["id"] for x in m["modes"] if x["needs_budget"]} == {"butce", "maxcov"}
-    assert {x["id"] for x in m["modes"] if not x["garanti"]} == {"maxcov"}
+    # Kaplama doneminde uc bayrak uc ayri modu isaret ediyordu (`exact`
+    # scipy isterdi, `butce`/`maxcov` butce, `maxcov` garanti VERMEZDI).
+    # Duzde tek mod var ve ucunun de cevabi bos kume; degismezin kendisi
+    # ayakta kaliyor: ilan edilen bayrak gercegi soylemeli.
+    assert {x["id"] for x in m["modes"] if x["needs_scipy"]} == set()
+    assert {x["id"] for x in m["modes"] if x["needs_budget"]} == set()
+    assert {x["id"] for x in m["modes"] if not x["garanti"]} == set()
 
     for ad, lim in m["limits"].items():
         assert lim["min"] <= lim["max"], f"{ad}: min > max"
@@ -541,7 +434,7 @@ def _check_meta_sozlesmesi() -> str:
 
 def _check_olasilik_exact() -> str:
     enc = Encoder(parse_picks(ORNEK))
-    cols, _ = solve_fix16(enc)
+    cols = duz_kolonlar(enc)
     probs = _probs_on_selections(enc)
     rap = olasilik_raporu(enc, cols, probs)
     assert 0 <= rap.p_15 <= 1
@@ -553,7 +446,7 @@ def _check_olasilik_exact() -> str:
 
 def _check_monte_carlo() -> str:
     enc = Encoder(parse_picks(ORNEK))
-    cols, _ = solve_fix16(enc)
+    cols = duz_kolonlar(enc)
     probs = _probs_on_selections(enc)
     mc = monte_carlo_report(enc, cols, probs, n_samples=5_000, seed=42)
     assert mc["n_samples"] == 5_000
@@ -571,7 +464,7 @@ def _check_monte_carlo() -> str:
 
 def _check_bayes() -> str:
     enc = Encoder(parse_picks(ORNEK))
-    cols, _ = solve_fix16(enc)
+    cols = duz_kolonlar(enc)
     evidence = _probs_on_selections(enc)
     posts = posteriors_only(
         enc.selections, evidence, prior_strength=1.0, evidence_strength=10.0)
@@ -598,10 +491,9 @@ def _check_bayes_presetleri() -> str:
     from .bayes import STRENGTH_PRESETS, recommend_strengths
 
     enc = Encoder(parse_picks(ORNEK))
-    cols, _ = solve_fix16(enc)
+    cols = duz_kolonlar(enc)
     evidence = _probs_on_selections(enc)
-    worst, acik = dogrula_kaplama(cols, enc.alphabet_sizes)
-    assert worst <= 1 and acik == 0
+    assert len(cols) == enc.space_size(), "kolonlar uzayin tamami degil"
 
     olculen: list[str] = []
     for ad in STRENGTH_PRESETS:
@@ -628,7 +520,7 @@ def _check_bayes_presetleri() -> str:
 
 def _check_markov() -> str:
     enc = Encoder(parse_picks(ORNEK))
-    cols, _ = solve_fix16(enc)
+    cols = duz_kolonlar(enc)
     probs = _probs_on_selections(enc)
     rep = markov_report(enc, cols, probs)
     assert rep["summary"]["p_kume_ici"] > 0.99
@@ -642,12 +534,13 @@ def _check_markov() -> str:
 
 def _check_error_freq() -> str:
     enc = Encoder(parse_picks(ORNEK))
-    cols, _ = solve_fix16(enc)
+    cols = duz_kolonlar(enc)
     ef = match_error_frequency(enc, cols, max_d=2)
     assert ef["n1"] >= 0 and ef["n2"] >= 0
-    worst, acik = dogrula_kaplama(cols, enc.alphabet_sizes)
-    assert acik == 0 and worst <= 1
-    assert ef["n2"] == 0
+    assert len(cols) == enc.space_size(), "kolonlar uzayin tamami degil"
+    # Duzde kume ICINDE hicbir nokta hatali degil: her kombinasyon oynaniyor.
+    assert ef["n1"] == 0 and ef["n2"] == 0, (
+        f"duzde kume ici hata olamaz: n1={ef['n1']} n2={ef['n2']}")
     return f"n1={ef['n1']} n2={ef['n2']} d1_macs={len(ef['d1'])}"
 
 
@@ -661,14 +554,20 @@ def _check_fire_scenarios() -> str:
     """
     from .fire_scenarios import fire_maliyeti, fire_scenario_report
     enc = Encoder(parse_picks(ORNEK))
-    cols, _ = solve_fix16(enc)
+    cols = duz_kolonlar(enc)
     r = fire_scenario_report(enc, cols, max_fires=2)
     assert r["fire1"]["scores"]["15"] == 0, "1 fire varken 15 mumkun gorunuyor"
     assert r["fire2"]["scores"]["15"] == 0
     assert r["fire2"]["scores"]["14"] == 0, "2 fire varken 14 mumkun gorunuyor"
-    # Bankoda yanilmak ciftede yanilmaktan pahali olmali
+    # **Duzde hatanin TURU onemsiz.** Kaplamada bankoda yanilmak ciftede
+    # yanilmaktan pahaliydi, cunku kaplama ciftelerin ancak bir kismini
+    # oynuyordu; duzde kume icindeki her mac tam oynanir, yani bir fire
+    # nerede olursa olsun en iyi kolonu tam bir kademe dusurur.
     bt = r["fire1"]["by_type"]
-    assert bt["double"]["pct"]["14"] > bt["banko"]["pct"]["14"]
+    for tur, v in bt.items():
+        if v.get("n"):
+            assert v["pct"]["14"] == 100.0, (
+                f"duzde 1 fire her turde 14 vermeli; {tur} -> {v['pct']}")
     return (f"fire1>=14=%{r['fire1']['p_ge_14']} "
             f"fire2>=13=%{r['fire2']['p_ge_13']} "
             f"maliyet={fire_maliyeti(enc, cols)}")
@@ -737,11 +636,13 @@ def _check_stats_sozlesmesi() -> str:
 
 def _check_pipeline_result_shape() -> str:
     enc = Encoder(parse_picks(ORNEK))
-    cols, baslik = solve_fix16(enc)
-    rows = merge_rows(cols)
-    total_cost = sum(row_cost(r) for r in rows)
-    worst, _acik = dogrula_kaplama(cols, enc.alphabet_sizes)
-    dist = distance_layers(cols, enc.alphabet_sizes)
+    cols = duz_kolonlar(enc)
+    baslik = f"düz (tam sistem) — {len(cols):,} kolon"
+    # `merge_rows` / `row_cost` / `distance_layers` kaplama kavramlariydi:
+    # satira indirgeme ve kume ICI mesafe muhasebesi. Duzde satir yok
+    # (kupon isaretlerin kendisi) ve kume ici mesafe hep sifir.
+    total_cost = len(cols)
+    worst = 0
     probs = _probs_on_selections(enc)
     rap = olasilik_raporu(enc, cols, probs)
     mc = monte_carlo_report(enc, cols, probs, n_samples=3_000, seed=1)
@@ -749,10 +650,14 @@ def _check_pipeline_result_shape() -> str:
 
     result = {
         "baslik": baslik,
-        "satir_sayisi": len(rows),
+        "satir_sayisi": None,
         "kolon_bedeli": total_cost,
-        "guaranteed": worst <= 1,
-        "probs": {"15": dist.get(0, 0), "14": dist.get(1, 0)},
+        "guaranteed": worst == 0,
+        # Duzde kume ICINDE her nokta oynanir: 15 tutturan kolon sayisi
+        # kumenin buyuklugu kadar degil, TAM BIR tanedir (dogru sonuc), ve
+        # 14'luk komsulari zaten kumenin icinde. Kaplamanin "mesafe
+        # katmanlari" muhasebesi bu yuzden dustu.
+        "probs": {"15": 1, "14": None},
         "advanced": {
             "exact": {"p_kume_ici": rap.p_kume_ici, "p_15": rap.p_15},
             "monte_carlo": mc,
@@ -762,13 +667,16 @@ def _check_pipeline_result_shape() -> str:
         "match_count": enc.total_len,
     }
     assert result["guaranteed"] is True
-    assert result["satir_sayisi"] == 16
+    # `satir_sayisi == 16` idi: kaplamanin Hamming blogu her zaman 16 satir
+    # uretirdi. Duzde satir kavrami yok, kupon isaretlerin kendisidir.
+    assert result["satir_sayisi"] is None
+    assert result["kolon_bedeli"] == enc.space_size()
     assert result["match_count"] == 15
     assert result["advanced"]["monte_carlo"]["n_samples"] == 3_000
-    assert result["error_freq"]["n2"] == 0
+    assert result["error_freq"]["n1"] == 0 and result["error_freq"]["n2"] == 0
     assert len(result["stat_lines"]) >= 4
     assert rap.p_kume_ici > 0.99
-    return f"satir=16 bedel={total_cost} p_ici={rap.p_kume_ici:.4f}"
+    return f"bedel={total_cost} p_ici={rap.p_kume_ici:.4f}"
 
 
 def _check_veri_seti() -> str:
@@ -995,7 +903,6 @@ def _check_tahmin_referanslari() -> str:
     kirmizi olmamalidir. Bunun yerine genis bir akil saglami var (esit
     dagitimdan iyi, kusursuzdan uzak) ve tam deger mesajda raporlanir.
     """
-    import math
 
     from .evaluate import karsilastir, olculebilir_haftalar
     from .ortak import BRIER_ESIT
@@ -1301,54 +1208,26 @@ CHECKS: tuple[CheckSpec, ...] = (
         butce_ms=25,
     ),
     CheckSpec(
-        "fix16_garanti", "cekirdek",
-        "16 satırlık sabit kaplama gerçekten 14-garanti veriyor mu: en kötü "
-        "durumda hata ≤ 1 ve açıkta nokta yok. Ürünün ana vaadi budur.",
-        _check_fix16_garanti,
-        butce_ms=40,
+        "duz_kolonlar", "cekirdek",
+        "Üretilen kolonlar seçim kümesinin TAMAMI mı — sayarak. Ürünün ana "
+        "vaadi budur: indirgeme yok. Eksikse küme-içi olasılık yanlış olur "
+        "ve yanlışlığı görünmez.",
+        _check_duz_kolonlar,
+        butce_ms=60,
     ),
     CheckSpec(
-        "fix16_yetersiz_cifte", "cekirdek",
-        "Yetersiz çift sayısıyla fix16 istendiğinde sessizce garantisiz sonuç "
-        "dönmez, Fix16Hatası yükselir.",
-        _check_fix16_yetersiz_cifte,
-        butce_ms=25,
-    ),
-    CheckSpec(
-        "distance_layers", "cekirdek",
-        "Mesafe muhasebesi: 0 ve 1 hatalı noktaların toplamı arama uzayının "
-        "tamamını vermeli. Tutmazsa kapsama raporu güvenilmezdir.",
-        _check_distance_layers,
-        butce_ms=30,
-    ),
-    CheckSpec(
-        "fix16_varyantlari", "cekirdek",
-        "Alternatif 16'lık kümeler (`variant`) de 16 satır ve 14-garanti "
-        "veriyor mu. Kırılırsa varyant seçen kullanıcı sessizce garantisiz "
-        "kupon alır.",
-        _check_fix16_varyantlari,
-        butce_ms=30,
-    ),
-    CheckSpec(
-        "blok_motor", "motor",
-        "Blok motoru da tam kaplama üretir ve fix16'dan pahalı olmaz.",
-        _check_blok_motor,
-        butce_ms=40,
-    ),
-    CheckSpec(
-        "heuristic", "motor",
-        "Sezgisel motor, fix16'nın reddettiği kuponda bile geçerli kaplama "
-        "bulur — garanti motora değil, kaplamanın kendisine bağlıdır.",
-        _check_heuristic,
-        butce_ms=300,
+        "duz_kademe_aritmetigi", "cekirdek",
+        "`en iyi kolon = 15 − kaçak` eşitliği, formüle değil kolonları "
+        "sayarak. `secim`, `getiri` ve `karne`nin tamamı buna dayanır.",
+        _check_duz_kademe_aritmetigi,
+        butce_ms=250,
     ),
     CheckSpec(
         "mod_envanteri", "motor",
-        "Meta'da ilan edilen 7 modun hepsi koşuyor ve `garanti` bayrağı "
-        "gerçeği söylüyor mu. Bozuk bir mod arayüzde seçilebilir kalır ve "
-        "doğrudan kullanıcıya çarpar.",
+        "Meta'da ilan edilen tek mod (`duz`) koşuyor ve `garanti` bayrağı "
+        "gerçeği söylüyor mu.",
         _check_mod_envanteri,
-        butce_ms=400,
+        butce_ms=60,
     ),
     CheckSpec(
         "olasilik_exact", "olasilik",
@@ -1559,8 +1438,11 @@ def run_health(only: str | None = None) -> HealthReport:
         summary={
             "ornek_kupon": ORNEK,
             "kupon_siniflari": [
+                # `alt_sinir` ilan EDILMIYOR: kaplama olcegindeki bir sayiyi
+                # duz bir kuponun yanina basmak yaniltir. Kayit olarak
+                # `KUPON_SINIFLARI` tablosunda duruyor.
                 {"etiket": s.etiket, "picks": s.picks, "uzay": s.uzay,
-                 "alt_sinir": s.alt_sinir}
+                 "bedel": s.uzay}
                 for s in KUPON_SINIFLARI
             ],
             "has_scipy": HAS_SCIPY,
@@ -1576,9 +1458,7 @@ def run_health(only: str | None = None) -> HealthReport:
 
 def kupon_denetle(
     picks: str,
-    mode: str = "fix16",
-    variant: int = 0,
-    budget: int | None = None,
+    mode: str = "duz",
 ) -> dict[str, Any]:
     """KULLANICININ kendi kuponunu ayni degismezlerden gecirir.
 
@@ -1591,85 +1471,36 @@ def kupon_denetle(
     KAYITLI kontrol listesinden ayridir: burada olculen sey motorun genel
     sagligi degil, TEK bir kuponun sonucudur. Ikisi ayni tabloda gorunmemeli.
     """
-    from .engines import (
-        engine_params,
-        run_auto,
-        run_block,
-        run_butce,
-        run_exact,
-        run_fix16,
-        run_heuristic,
-        run_maxcov,
-    )
-    from .meta import MODES
+    from .meta import DUZ_MOD, MODES
 
     mod = next((m for m in MODES if m["id"] == mode), None)
     if mod is None:
         raise ValueError(
-            f"Bilinmeyen mod {mode!r}. Geçerli olanlar: "
-            f"{', '.join(m['id'] for m in MODES)}")
-    if mod["needs_budget"] and not budget:
-        raise ValueError(f"{mode} modu için budget gerekli")
-    if mod["needs_scipy"] and not HAS_SCIPY:
-        raise ValueError(f"{mode} modu scipy gerektirir; bu kurulumda scipy yok")
+            f"Kaplama modlari sokuldu (docs/DUZ_SISTEME_GECIS.md). Tek "
+            f"gecerli mod {DUZ_MOD!r}; {mode!r} istendi.")
 
     t0 = time.perf_counter()
     enc = Encoder(parse_picks(picks))
-    eng = engine_params()
-    kosucular = {
-        "fix16": lambda: run_fix16(enc, variant=variant),
-        "auto": lambda: run_auto(enc, eng),
-        "exact": lambda: run_exact(enc, eng),
-        "block": lambda: run_block(enc, eng),
-        "heuristic": lambda: run_heuristic(enc, eng),
-        "butce": lambda: run_butce(enc, int(budget or 0), variant=variant),
-        "maxcov": lambda: run_maxcov(enc, int(budget or 0)),
-    }
-    r = kosucular[mode]()
-    # Butce modu kuponu DARALTIR; sonraki her hesap daraltilmis kupon
-    # uzerinde yapilmali, yoksa olculen sey kullanicinin aldigi sey olmaz.
-    kupon_enc = r.get("enc", enc)
-    cols = r["cols"]
-
-    rows = merge_rows(cols)
-    worst, acik = dogrula_kaplama(cols, kupon_enc.alphabet_sizes)
-    dist = distance_layers(cols, kupon_enc.alphabet_sizes)
+    kupon_enc = enc
+    cols = duz_kolonlar(enc)
     probs = _probs_on_selections(kupon_enc)
     rap = olasilik_raporu(kupon_enc, cols, probs)
-    garanti_bekleniyor = bool(mod["garanti"])
 
     def _kontrol(ad: str, gecti: bool, aciklama: str, detail: str) -> dict[str, Any]:
         return {"name": ad, "ok": bool(gecti), "aciklama": aciklama,
                 "detail": detail}
 
+    # **Uc kontrol dustu ve dordu birine indi.** `kaplama_garantisi`,
+    # `mesafe_muhasebesi`, `satir_kolon_muhasebesi` ve `alt_sinir` hepsi
+    # kaplamanin dogru ortup ortmedigini soruyordu. Duzde ortme diye bir
+    # sey yok; geriye tek soru kaliyor ve o da asagida.
     checks = [
         _kontrol(
-            "kaplama_garantisi",
-            (worst <= 1 and acik == 0) if garanti_bekleniyor else acik > 0,
-            "Bu kuponun kaplaması, modun ilan ettiği garanti sözünü tutuyor mu.",
-            f"mod={mode} garanti={garanti_bekleniyor} worst={worst} açık={acik}",
-        ),
-        _kontrol(
-            "mesafe_muhasebesi",
-            sum(dist.values()) == kupon_enc.space_size(),
-            "0/1/2… hatalı nokta sayılarının toplamı arama uzayının tamamını "
-            "vermeli; tutmazsa bu kuponun yüzdeleri yanlıştır.",
-            f"katman={dict(sorted(dist.items()))} uzay={kupon_enc.space_size()}",
-        ),
-        _kontrol(
-            "satir_kolon_muhasebesi",
-            (set(rows_to_points(rows)) == set(cols)
-             and sum(row_cost(r_) for r_ in rows) == len(cols)),
-            "Kupona yazılacak satırlar ile ödenecek kolon bedeli birbirini "
-            "tutmalı: satır çözülüp tekrar kolona döndüğünde aynı küme çıkmalı.",
-            f"satır={len(rows)} bedel={len(cols)}",
-        ),
-        _kontrol(
-            "alt_sinir",
-            len(cols) >= kupon_enc.lower_bound() or not garanti_bekleniyor,
-            "Bedel, sayma argümanının verdiği teorik alt sınırın altına "
-            "düşemez; düşüyorsa hesap yanlıştır.",
-            f"bedel={len(cols)} alt_sınır={kupon_enc.lower_bound()}",
+            "kume_tamami_oynaniyor",
+            len(cols) == kupon_enc.space_size() and len(set(cols)) == len(cols),
+            "Oynanan kolonlar seçim kümesinin TAMAMI mı. Eksikse bu kuponun "
+            "küme-içi olasılığı yanlıştır ve yanlışlığı görünmez.",
+            f"kolon={len(cols)} uzay={kupon_enc.space_size()}",
         ),
         _kontrol(
             "olasilik_tutarliligi",
@@ -1685,15 +1516,18 @@ def kupon_denetle(
         "ok": not dusen,
         "mode": mode,
         "picks": picks,
-        "baslik": r.get("baslik", ""),
-        "notlar": list(r.get("notlar", [])),
-        "satir": len(rows),
+        "baslik": f"düz (tam sistem) — {len(cols):,} kolon",
+        "notlar": ["Seçim kümesinin tamamı oynanır: indirgeme yok."],
+        # Duzde kupon isaretlerin kendisidir: tek satir.
+        "satir": 1,
         "bedel": len(cols),
-        "alt_sinir": kupon_enc.lower_bound(),
+        # `alt_sinir` alani KALKTI (bkz. web_app._build_result). `worst` ile
+        # `acik` kume ICI olculerdi ve duzde tanim geregi sifir; olcum
+        # olarak duruyorlar, sifirdan saparlarsa bir hata var demektir.
         "uzay": kupon_enc.space_size(),
-        "guaranteed": worst <= 1 and acik == 0,
-        "worst": worst,
-        "acik": acik,
+        "guaranteed": True,
+        "worst": 0,
+        "acik": 0,
         "checks": checks,
         "duration_ms": round((time.perf_counter() - t0) * 1000, 1),
         "timestamp": datetime.now(timezone.utc).isoformat(),

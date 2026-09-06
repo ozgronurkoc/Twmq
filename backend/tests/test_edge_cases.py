@@ -17,11 +17,10 @@ from spor_toto.cli import main
 from spor_toto.core import (
     SEMBOLLER,
     Encoder,
-    Fix16Hatasi,
     parse_picks,
     parse_probs,
-    solve_fix16,
 )
+from spor_toto.duz import kolonlar as duz_kolonlar
 
 ORNEK = "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"
 
@@ -64,24 +63,6 @@ def test_picks_sadece_bosluk_ayirici():
 def test_cli_bayes_probs_zorunlu(capsys):
     assert main(["--picks", ORNEK, "--bayes-preset", "dengeli", "--kisa"]) == 1
     assert "probs" in capsys.readouterr().err.lower()
-
-
-def test_cli_butce_budget_zorunlu(capsys):
-    assert main(["--picks", ORNEK, "--mode", "butce", "--kisa"]) == 1
-    assert "--budget" in capsys.readouterr().err
-
-
-def test_cli_maxcov_budget_zorunlu(capsys):
-    assert main(["--picks", ORNEK, "--mode", "maxcov", "--kisa"]) == 1
-    err = capsys.readouterr().err
-    assert "budget" in err.lower()
-
-
-def test_cli_budget_sifir(capsys):
-    assert main([
-        "--picks", ORNEK, "--mode", "butce", "--budget", "0", "--kisa",
-    ]) == 1
-    assert "pozitif" in capsys.readouterr().err.lower()
 
 
 def test_cli_mc_samples_negatif(capsys):
@@ -132,41 +113,39 @@ def test_bayes_update_no_nan():
         assert abs(sum(r["posterior"].values()) - 1.0) < 1e-9
 
 
-def test_fix16_6_cifte_red():
-    enc = Encoder(parse_picks("10,10,10,10,10,10,1,1,1,1,1,1,1,1,1"))
-    with pytest.raises(Fix16Hatasi, match="7 CIFTE"):
-        solve_fix16(enc)
+# **Uc "fix16" kenar durumu dustu ve yerine bir tanesi geldi.** Eskiden
+# sinanan seyler kaplamaya ozguydu: 6 ciftenin reddedilmesi (`7 CIFTE`
+# hatasi), 7 ciftede tam 16 kolon, 8 ciftede 32. Duzde "en az 7 cifte" diye
+# bir sart yok ve bedel her zaman `2^cifte * 3^uclu`; asagidaki tek test
+# ucunun de yerini tutar cunku KURALI sinar, uc ornegi degil.
 
 
-def test_fix16_7_cifte_ok():
-    enc = Encoder(parse_picks("10,10,10,10,10,10,10,1,1,1,1,1,1,1,1"))
-    cols, _ = solve_fix16(enc)
-    assert len(cols) == 16
-
-
-def test_fix16_8_cifte_bedel_32():
-    enc = Encoder(parse_picks("10,10,10,10,10,10,10,10,1,1,1,1,1,1,1"))
-    cols, _ = solve_fix16(enc)
-    assert len(cols) == 32
+@pytest.mark.parametrize("cifte,uclu", [(0, 0), (1, 0), (6, 0), (7, 0),
+                                        (8, 0), (5, 2), (0, 4)])
+def test_duz_bedel_her_sekilde_carpimin_kendisi(cifte, uclu):
+    isaret = ["10"] * cifte + ["102"] * uclu
+    isaret += ["1"] * (15 - len(isaret))
+    enc = Encoder(parse_picks(",".join(isaret)))
+    assert len(duz_kolonlar(enc)) == 2 ** cifte * 3 ** uclu
 
 
 def test_mc_n_samples_sifir_raises():
     enc = Encoder(parse_picks("10,10,10,10,10,10,10,1,1,1,1,1,1,1,1"))
-    cols, _ = solve_fix16(enc)
+    cols = duz_kolonlar(enc)
     with pytest.raises(ValueError, match="n_samples"):
         monte_carlo_report(enc, cols, _uniform_probs(15), n_samples=0)
 
 
 def test_mc_n_samples_negatif_raises():
     enc = Encoder(parse_picks("10,10,10,10,10,10,10,1,1,1,1,1,1,1,1"))
-    cols, _ = solve_fix16(enc)
+    cols = duz_kolonlar(enc)
     with pytest.raises(ValueError, match="n_samples"):
         monte_carlo_report(enc, cols, _uniform_probs(15), n_samples=-3)
 
 
 def test_mc_kucuk_n_warning():
     enc = Encoder(parse_picks("10,10,10,10,10,10,10,1,1,1,1,1,1,1,1"))
-    cols, _ = solve_fix16(enc)
+    cols = duz_kolonlar(enc)
     mc = monte_carlo_report(enc, cols, _uniform_probs(15), n_samples=5, seed=1)
     assert mc["n_samples"] == 5
     assert "warning" in mc
@@ -234,22 +213,28 @@ def test_etiketler_15_sabitine_bagli_degil():
     fark edilmesi en zor tur. Monte Carlo kovalari, API'nin `dist` blogu ve
     konsol raporu ayni sabiti tasiyordu.
     """
-    from spor_toto.core import distance_layers, solve_fix16
+    from spor_toto.duz import kolonlar as duz_kolonlar
     from spor_toto.report import dagilim_satirlari
 
     sel = [["1", "0"]] * 7 + [["1"]] * 7          # 14 mac, 7 cifte
     enc = Encoder(sel, kati=False)
     assert enc.total_len == 14
-    cols, _ = solve_fix16(enc)
+    cols = duz_kolonlar(enc)
 
+    # **Bu iddia degisti ve sebebi olcum degil YAPI.** Kaplamada rapor bir
+    # MESAFE dagilimiydi ("N dogru" etiketleri d=0,1,2... katmanlarindan
+    # geliyordu) ve 15 sabitine baglanmis olmasi gercek bir hataydi. Duzde
+    # mesafe yok; rapor kumenin tamaminin oynandigini gosteriyor ve tam
+    # isabeti mac sayisindan okuyor. Testin korudugu sey ayni kaliyor:
+    # **15 sabiti kodda gomulu olmamali.**
     satirlar = dagilim_satirlari(enc, cols)
-    assert any("14 dogru" in s for s in satirlar), \
-        f"tam isabet 14 dogru olmali, gelen: {satirlar}"
-    assert not any("15 dogru" in s for s in satirlar), \
-        "14 macli kuponda 15 dogru etiketi olamaz"
+    assert any(f"bir kolon {enc.total_len} tutturur" in s for s in satirlar), \
+        f"tam isabet {enc.total_len} olmali, gelen: {satirlar}"
+    assert not any("15 tutturur" in s for s in satirlar), \
+        "14 macli kuponda 15 etiketi olamaz"
 
-    # d=0 tam isabettir; kova sayisi uzunluktan bagimsiz olmali.
-    dist = distance_layers(cols, enc.alphabet_sizes)
+    # Monte Carlo kovalari da uzunluktan bagimsiz olmali. `distance_layers`
+    # kaplamayla dustu; duzde tam isabet kolonlarin icinde ZATEN var.
     mc = monte_carlo_report(enc, cols, _uniform_probs(14), n_samples=2000, seed=1)
-    assert mc["p15"]["count"] == 0 or dist.get(0, 0) > 0
+    assert len(cols) == enc.space_size()
     assert set(mc) >= {"p15", "p14", "p13", "p12", "kume_ici"}

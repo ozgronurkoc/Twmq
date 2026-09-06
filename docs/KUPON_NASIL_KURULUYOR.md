@@ -38,10 +38,10 @@ SEN VERİYORSUN                     data/super_toto/<sezon>/hafta_NN.json
   ⑤ SEÇİM — Pareto DP                    P(k ≤ eşik)'i BÜTÇE içinde enbüyükler
         │                                girdisi YALNIZCA olasılıklar + fiyat tablosu
         ▼
-  ⑥ BEDEL — satıcı fiyat tablosu         84 şekil × 3 garanti, ₺10/kolon
+  ⑥ BEDEL — 2^çifte · 3^üçlü             ₺10/kolon
         │
         ▼
-  ⑧ KAPLAMA — Hamming(7,4) / tablo       16 satır → oynanacak kolonlar
+  ⑧ KOLONLAR — `duz.kolonlar`            seçim kümesinin TAMAMI, tek satır
         │
         ▼
   ⑨ DONDURULAN KAYIT                     hafta_NN_kupon.json (+ varyantlar)
@@ -362,16 +362,26 @@ en iyi kolon  ≥  (15 − k) − (15 − G)  =  G − k
 
 Buradan doğrudan:
 
-| Garanti | `P(en iyi kolon ≥ 12)` için izin | Kaynağı |
+| Hedef kademe | `P(en iyi kolon ≥ kademe)` için izin | Kaynağı |
 |---|---|---|
-| 14 | `k ≤ 2` | `sistem.kacak_esigi(14)` |
-| **13** | **`k ≤ 1`** | **varsayılan** (kullanıcı 13-garantili oynuyor) |
-| 12 | `k ≤ 0` | |
+| **12** | **`k ≤ 3`** | **varsayılan** (`secim.kacak_esigi()` = 15 − 12) |
+| 13 | `k ≤ 2` | |
+| 14 | `k ≤ 1` | |
+| 15 | `k ≤ 0` | |
 
-Bu **eşitlik değil alt sınırdır** — kaplama bir kolonu tesadüfen daha iyi
-tutturabilir. Yani optimize edilmesi **güvenlidir**: ölçümde gerçekleşen
-isabet bu sayının üstünde çıkıyor (36 haftada model %39,5 derken
-gerçekleşen 24/36 oldu).
+**Bu bir alt sınır değil EŞİTLİK, ve fark yapısal.** Kaplama döneminde
+tablo *garanti seviyesine* göre kuruluyordu (`en iyi kolon ≥ G − k`) ve
+alt sınırdı: kaplama kümenin bir dilimini oynadığı için bir kolon
+tesadüfen daha iyi tutturabilirdi — ölçümde gerçekleşen isabet ilan
+edilenin üstünde çıkıyordu (36 haftada model %39,5 derken gerçekleşen
+24/36).
+
+Düzde kümenin tamamı oynanıyor, yani küme dışına çıkan her maç en iyi
+kolonu **tam bir kademe** düşürür: `en iyi kolon = 15 − k`. İlan edilen
+sayı artık temkinli değil tam; sayının üstünde çıkmaz, üstünde çıkarsa
+bir hata vardır. Bunun bekçisi `test_invariants.py::
+test_bir_kacak_en_iyi_kolonu_TAM_BIR_kademe_dusurur` — kolonları tek tek
+gezerek kaba kuvvetle sınar.
 
 **Hedef 14 değil 12.** İkramiye kademesi 12'de başlar; 14 bir yan
 üründür (1. haftanın 1. dersi). Bu bir varsayım değil ölçülmüş bir
@@ -497,26 +507,33 @@ DEĞİL" etiketiyle raporlanır.
 
 ---
 
-## 8. ⑦ Bedel — iki fiyat modeli, aynı depoda
-
-### 8.1 Eski model: `bedel_hesapla` (yalnızca fix16)
+## 8. ⑦ Bedel — tek fiyat modeli
 
 ```
-bedel = 2^çifte · 3^üçlü / 2⁷ · 16
+bedel = 2^çifte · 3^üçlü        (kolon)
+maliyet = bedel × ₺10
 ```
 
-Bu `core.solve_fix16`'nın bedelidir: Hamming(7,4) bloğu **en az yedi
-çifte** ister, tek garanti seviyesi (14) tanır. Yanlış değil, **dar**.
+Oynanan kolon sayısı seçim kümesinin büyüklüğüdür; ara bir "sistem"
+katmanı yok, dolayısıyla fiyat tablosu da yok.
 
-### 8.2 Bugünkü model: satıcı fiyat tablosu (`sistem.py`)
-
-Oynanan ürün o değil. Satıcının tablosu **84 şeklin tamamını** ve **üç
-garanti seviyesini** (12/13/14) taşıyor: `data/sistem_fiyat/st_extra.json`.
-
-Tablo bir fiyat listesi değil, bir **ölçümdür**: her satır o `(tek, çifte,
-kapalı)` şekli için satıcının üretebildiği indirgenmiş sistemin kolon
-sayısını verir — yani bizim kendi kaplama kodumuzun **bağımsız
-karşılaştırma noktası**.
+> **Burada eskiden İKİ fiyat modeli vardı ve ikisi de düştü.**
+>
+> *Birincisi* `core.solve_fix16`'nın bedeliydi: `2^çifte · 3^üçlü / 2⁷ · 16`
+> — Hamming(7,4) bloğu **en az yedi çifte** ister ve tek garanti seviyesi
+> (14) tanır. Yanlış değil, **dar**.
+>
+> *İkincisi* satıcının indirgenmiş sistem fiyat tablosuydu
+> (`data/sistem_fiyat/st_extra.json`, 84 şekil × üç garanti seviyesi
+> 12/13/14). Bir fiyat listesi değil bir **ölçümdü**: her satır o şekil
+> için satıcının üretebildiği indirgenmiş sistemin kolon sayısını
+> veriyordu — yani kendi kaplama kodumuzun bağımsız karşılaştırma
+> noktasıydı. Ölçüldü: motorumuz aynı şekle **%28,6 fazla** kolon
+> üretiyordu (216 ↔ 168).
+>
+> Kaplama sökülünce ikisi de anlamını yitirdi; `sistem.py` ve tablo
+> depodan çıktı. Düzde motor ile tablo arasında fark **yapısal olarak
+> sıfırdır** (ölçüldü: %0,0), çünkü indirgeme diye bir şey yok.
 
 **Kolon bedeli ₺10 — ölçülmüş.** Üç bağımsız kökenden aynı sayı:
 kupon aracı ekranları (dört 15 bilen kuponda da `bedel / kolon = 10,00`,
@@ -555,9 +572,11 @@ Bütçeyi eşik kuralına sabitlemek, kural kıyasını kuponu değil **kuralı*
 ölçen bir kıyas hâline getirir ve ölçüldü: 36 haftanın 35'inde `hedef`
 daha iyi, 1'inde eşit, ortalama **%26 daha ucuz**.
 
-**Ölçülmüş bir yan gözlem:** ₺2.000 bütçede 13-garantide dört haftanın
-dördünde de aynı şekil çıktı — **6 banko / 1 çifte / 8 üçlü, 162 kolon**.
-Yani bütçe + garanti şekli neredeyse çiviliyor; haftanın oranları
+**Ölçülmüş bir yan gözlem (KAPLAMA ölçeği):** ₺2.000 bütçede 13-garantide
+dört haftanın dördünde de aynı şekil çıktı — **6 banko / 1 çifte / 8 üçlü,
+162 kolon**. Düzde aynı bütçe 114 haftada **10 banko / 1 çifte / 4 üçlü,
+162 kolon** veriyor (bkz. `karne --egri`); yine tek şekil.
+Yani bütçe şekli neredeyse çiviliyor; haftanın oranları
 *hangi maçın* hangi seviyeye düşeceğini ve *hangi sembollerin*
 işaretleneceğini belirliyor. ₺2.000'e sığan şekil sayısı: **37**.
 
@@ -565,59 +584,63 @@ işaretleneceğini belirliyor. ₺2.000'e sığan şekil sayısı: **37**.
 
 *"Bütçe bir harcama kararıdır"* cümlesi bir kaçış olabilirdi: belki de
 doğru bütçe **haftaya göre** değişendi. `docs/KAZANMA_PLANI.md` §E6 bunu
-ölçtü — 114 hafta, 15 basamak, 14-garantide **gerçek kolonlar** ve resmî
-ikramiye tabloları:
+ölçtü. Düz ölçekte yeniden koştu (2026-09-06) — **114 hafta, 47 basamak**,
+gerçek kolonlar ve resmî ikramiye tabloları:
 
 | soru | cevap |
 |---|---|
-| Merdivende yukarı çıkmak geri dönüşü artırıyor mu? | **Hayır.** Basamak oranı %10,6–%37,9 arasında yönsüz zıplıyor; 320 → 4.860 TL'ye çıkmak haftalık ödülü 85 → 1.413 TL yapıyor, yani 4.540 TL fazladan harcamanın karşılığı **1.328 TL: %29** — ortalamanın aynısı |
-| Haftaya göre değişen bir kural sabiti yener mi? | **Hayır.** Sınanan on iki kuralın (λ kuralı yedi eşikte, LOO'lu hâli, "en büyük", iki sabit bütçe) on ikisinde de eşleştirilmiş %95 aralık **sıfırı kesiyor** — ve o on iki kural yalnız sekiz farklı seçim deseni üretiyor |
-| İyi hafta kupon kapanmadan tanınabiliyor mu? | **Hayır — iki aday da düştü.** `P(hedef)`: rho +0,1175, p 0,2117. **Devir** (havuza dışarıdan giren para, kupon öncesi ilan edilir): rho **+0,2028 [+0,0134, +0,3863]**, p 0,0319 — sıfırı kesmiyor ama iki sınav yapıldığı için Holm eşiği 0,025. Geçseydi bile tavanı ölçülü: devir çarpanı azami 1,645, gereken 1,95–2,84 |
-| Öyleyse neden ayırt edilemiyor? | **Kuyruk.** Basamağa göre ödülün %42–%88'i 114 haftanın **en iyi 5'inden** geliyor |
+| Merdivende yukarı çıkmak geri dönüşü artırıyor mu? | **Hayır.** 47 basamağın **hiçbirinde** gerçekleşen ROI 1,0'a ulaşmıyor: 1 kolonluk kupondan 39.366 kolonluğa kadar bant **0,030–0,877**, ve yönsüz zıplıyor |
+| Haftaya göre değişen bir kural sabiti yener mi? | **Hayır.** Sınanan on iki kuralın (λ kuralı yedi eşikte, LOO'lu hâli, "en büyük", iki sabit bütçe) on birinde eşleştirilmiş %95 aralık **sıfırı kesiyor**; kesmeyen tek kural (`lambda-ölçülen`, −0,335) sabit bütçeden **daha kötü**. Ayrıca her kural kendi ortalama harcamasını bütçe alan sabit kurala karşı da puanlanıyor (`fark_esit_para`) — o sütunda on üçünün on üçü sıfırı kesiyor |
+| İyi hafta kupon kapanmadan tanınabiliyor mu? | **Hayır — iki aday da düştü.** `P(hedef)`: rho +0,1817, p 0,0531 (Holm eşiği 0,025). **Devir** (havuza dışarıdan giren para, kupon öncesi ilan edilir): rho **+0,1791 [−0,0164, +0,3653]**, p 0,0598 (Holm eşiği 0,050) — bu sefer sıfırı da kesiyor. Geçseydi bile tavanı ölçülü: devir çarpanı azami 1,645, gereken 1,95–2,84 |
+| Öyleyse neden ayırt edilemiyor? | **Kuyruk.** Basamağa göre ödülün **%33–%100**'ü 114 haftanın en iyi 5'inden geliyor |
 
-Fiyat cinsinden tek satır: bir birim `P(hedef)` tutturunca **984 TL**
-ediyor; merdiven onu uçtan uca medyan **12.002 TL**'ye satıyor (**12,2×**),
-oynanan basamağın bir üstünde **92.167 TL**'ye (**93,7×**).
+Fiyat cinsinden tek satır: bir birim `P(hedef)` tutturunca **1.339 TL**
+ediyor; merdiven onu uçtan uca medyan **438.424 TL**'ye satıyor (**327,3×**),
+oynanan basamağın bir üstünde **47.980 TL**'ye (**35,8×**). Haftanın en ucuz
+adımı 901 TL, yani λ'nın **0,7 katı** — merdivenin dibi λ'nın altında,
+tepesi 327 katı.
 
 Bu yüzden `--oncesi` artık **merdiveni** de basıyor: bütçe hâlâ bir karar,
 ama artık görünmez bir karar değil — hangi basamağın ne kadara satıldığı ve
 seçili satıra göre bir puan olasılığın kaç TL ettiği ekranda duruyor.
 
 ```bash
-python -m spor_toto.hafta_hakki --cephe --garanti 13   # merdivenin kendisi
+python -m spor_toto.hafta_hakki --cephe                # merdivenin kendisi
 python -m spor_toto.hafta_hakki --kiyas                # E6 olcumu (~20 dk)
 ```
 
 ---
 
-## 9. ⑧ Kaplama kodu — 16 satır, ve neden tam olarak 1 hata
+## 9. ⑧ Kolonlar — seçim kümesinin tamamı, tek satır
 
 Bu katman **olasılığı hiç bilmez**. `core.py` içinde olasılık katmanına
-tek bir atıf yoktur; garanti bir tahmin değil **kombinatoryal teoremdir**.
+tek bir atıf yoktur; kaçak aritmetiği bir tahmin değil **sayma sonucudur**.
 
-### 9.1 Fix16
+### 9.1 `duz.kolonlar` — arama değil üretim
 
-`solve_fix16` yedi çifte maçı Hamming(7,4) bloğuna koyar — **16 kolon,
-kanıtlanmış optimal**. Bu yedinin dışında kalan her şey (fazladan
-çifteler ve bütün üçlüler) "ekstra" sayılır ve **tam sistem** olarak aynı
-16 satırın içine çifte/kapama işareti şeklinde girer.
+Oynanacak kolonlar seçim kümesinin kartezyen çarpımıdır:
 
-Garanti neden korunuyor: ekstra maçlarda bütün ihtimaller oynandığı için
-hata payı **sıfırdır**; toplam hata bütçesi Hamming bloğunda kalır, orada
-da en fazla 1 hata olur. **İki `r=1` bloğu birleştirilirse yarıçap 2 olur
-ve garanti kırılır** — bu yüzden yalnızca tek blok olabilir.
+```
+kolon sayısı = Π len(işaret_i) = 2^çifte · 3^üçlü
+```
 
-Bilinen alt sınırlar (küre-kaplama: `kolon ≥ |uzay| / top_boyutu`):
+Arayacak bir şey yok, o yüzden "motor" da yok. Bedel `₺10 × kolon`.
 
-| Durum | Optimal kolon |
-|---|---|
-| 5 çifte | 7 |
-| 6 çifte | 12 |
-| **7 çifte** | **16** (Hamming(7,4)) |
-| 8 çifte | 32 |
-| 4 üçlü | 9 |
-
-**8 çifteyi 16 kolona sığdırmak imkânsızdır.**
+> **Burada eskiden bir kaplama kodu vardı.** `solve_fix16` yedi çifte maçı
+> Hamming(7,4) bloğuna koyuyor — **16 kolon, kanıtlanmış optimal** — ve
+> geri kalan her şeyi (fazladan çifteler, bütün üçlüler) o 16 satırın
+> içine tam sistem olarak yerleştiriyordu. Bedel düz bedelin **1/8'i**
+> oluyor, karşılığında en iyi kolon 15 değil **14** ile sınırlanıyordu.
+>
+> Söküldü. Gerekçe `docs/DUZ_SISTEME_GECIS.md`de ve tek cümlesi şu: aynı
+> kolon bütçesinde düz, ölçülen her kademede öndeydi — sebep sistem değil
+> **şekil**di, çünkü "en az 7 çifte" şartı kaplamayı yayvan şekillere
+> hapsediyordu. Ölçülen fark E[TL]'de **1,78×–5,26×**, gerçekleşen ödülde
+> 114 hafta üzerinde **%24,2 → %33,4**.
+>
+> `solve_fix16` bugün yalnızca `spor_toto/kaplama_arsiv.py`de duruyor ve
+> üretim yolundan çağrılmaz: 2026/27'nin ilk dört haftası kaplamayla
+> **oynandığı** için o kuponların değerlendirilmesi ona bağlı.
 
 ### 9.2 Satır ≠ kolon
 
@@ -625,13 +648,30 @@ Bir maça çifte işaretlersen o satır **2 kolon** üretir ve 2 kolon bedeli
 ödersin. Bu bir ürün kuralıdır: kolon bedeli hiçbir yerde satır
 sayısından ayrı gösterilmez.
 
-4. haftanın fix16 kuponu: seçim uzayı 31.104 → **3.888 kolon · 16 satır**.
+Düzde kupon **tek satırdır** — işaretlerin kendisi (`duz.tek_satir`).
+Kaplamada 16 satır vardı ve onları üretmek bir aramaydı (`merge_rows`
+kolonları gezip bir koordinatta ayrışan çiftleri birleştiriyordu); düzde
+cevap kapalı formda: her değişken maçta bütün semboller işaretli.
+
+4. haftanın kuponu (kaplama ile oynanmıştı): seçim uzayı 31.104 →
+**3.888 kolon · 16 satır**. Aynı işaretler düz oynansa 31.104 kolon ·
+1 satır olurdu — sekiz kat pahalı, ve en iyi kolon 14 değil 15.
 
 ### 9.3 Oynanacak satırlar
 
-`merge_rows` 16 kolonu insan okuyacak satırlara döker (birleşmiş satırda
-bir maçta birden çok sembol işaretli olabilir). 4. haftanın 16 satırı
-`hafta_04_kupon.json → rows` içinde duruyor; ilk üçü:
+Donmuş kayıtlar (`hafta_NN_kupon.json → rows`) oynandıkları sistemi
+`meta.sistem` alanında taşır: `"fix16"` (kaplama, 16 satır) ya da `"duz"`
+(tam sistem, tek satır). 2026/27'nin ilk dört haftası `"fix16"`dır.
+
+> **Alan sonradan eklendi ve sebebi bir hata.** Değerlendirici sistemi bir
+> parametre olarak taşıyor ve varsayılanı `"fix16"` idi — ilk dört hafta
+> gerçekten kaplamayla oynandığı için doğruydu. 5. haftadan itibaren aynı
+> varsayılan düz kuponu **sessizce** bir kademe kötü gösterirdi. Artık
+> `kayit_sistemi()` kayıttan okuyor ve bekçisi
+> `test_degerlendir.py::test_donmus_kupon_kaydi_SISTEMINI_ilan_eder`:
+> alanı yazmayan bir kayıt donduralamaz.
+
+4. haftanın ilk üç satırı:
 
 ```
  1  102 102 1  1  2  102 1  1  1  102 1  102 1  1  1
@@ -862,6 +902,13 @@ değil, geriye dönük kurgu olurdu.
 
 ## 15. 4. haftanın uçtan uca koşumu
 
+> **Bu koşum KAPLAMA ile yapıldı ve öyle bırakılıyor.** 4. hafta gerçekten
+> 13-garantili indirgenmiş sistemle oynandı; sayıları düzeltmek olmayan bir
+> kuponu anlatmak olurdu. Depo 2026-09-06'dan itibaren düz oynuyor
+> (`docs/DUZ_SISTEME_GECIS.md`) — 5. haftadan itibaren bu akışta ⑤ *"hedef
+> kademe 12 → k ≤ 3"*, ⑥ *"şekil → 2^çifte·3^üçlü kolon"* olarak okunur ve
+> ⑦ bir alt sınır değil eşitliktir.
+
 ```
 GİRDİ    15 maç · pinnacle+nesine × açılış/kapanış · % tercih · 2026-09-04
   ①      5 otomatik uyarı (1 kuşkulu marj, 3 eksik/bayat kayıt, 1 delik)
@@ -881,7 +928,7 @@ KUPON    102 102 1 102 2 102 1 10 102 102 1 102 1 1 102
 ```
 
 Aynı hafta ₺38.880 bütçeyle (eşik kuralının ürettiği maliyet, 14-garanti
-fix16 yolu) başka bir kupon veriyor: 3 banko / 7 çifte / 5 üçlü,
+fix16 yolu — o yol da söküldü) başka bir kupon veriyor: 3 banko / 7 çifte / 5 üçlü,
 **3.888 kolon**, `P(≥12) = %46,70`. İkisi çelişmiyor — **bütçe bir
 harcama kararıdır ve veriden türetilemez.**
 
@@ -892,12 +939,12 @@ harcama kararıdır ve veriden türetilemez.**
 ```bash
 cd backend
 
-# Kupon öncesi plan (VARSAYILAN yol: TL bütçe, satıcı tablosu, 13-garanti)
+# Kupon öncesi plan (VARSAYILAN yol: TL bütçe, düz — garanti seviyesi YOK)
 python scripts/hafta_kos.py --oncesi 2026_27 4          # plan + MERDIVEN
-python scripts/hafta_kos.py --oncesi 2026_27 4 --butce 5000 --garanti 14
+python scripts/hafta_kos.py --oncesi 2026_27 4 --butce 5000
 
 # Bütçe ekseninin kendisi (E6)
-python -m spor_toto.hafta_hakki --cephe --garanti 13     # haftanın merdiveni
+python -m spor_toto.hafta_hakki --cephe                  # haftanın merdiveni
 python -m spor_toto.hafta_hakki --para 2026_27:3         # E[TL] cephesi
 python -m spor_toto.hafta_hakki --kiyas                  # 114 hafta, ~20 dk
 

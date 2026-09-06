@@ -37,10 +37,11 @@ sys.path.insert(0, str(KOK))
 from spor_toto.karne import (
     CANLI_KOK,
     RAKIP_KOLON,
+    VARSAYILAN_GARANTI,
     canli_hafta,
     canli_karne_satiri,
 )
-from spor_toto.sistem import VARSAYILAN_GARANTI, kacak_esigi
+from spor_toto.secim import kacak_esigi
 
 #: Karnenin yazıldığı yer.
 KARNE = KOK.parent / "docs" / "KAZANMA_KARNESI.md"
@@ -133,16 +134,16 @@ def karne_metni(sezon: str, butce: float, garanti: int) -> str:
 
 | | |
 |---|---|
-| garanti | **{garanti}** → kaçak eşiği `k ≤ {kacak_esigi(garanti)}`, hedef `P(en iyi kolon ≥ 12)` |
+| garanti | **{garanti}** → kaçak eşiği `k ≤ {kacak_esigi()}`, hedef `P(en iyi kolon ≥ 12)` |
 | bütçe | {butce:,.0f} TL ({butce / 10:,.0f} kolon) |
 | bedel | ₺10/kolon — ölçülmüş (`getiri.KOLON_BEDELI`) |
 | ödül | **garanti tabanı**: `k` kaçakta **bir** kolon `{garanti}−k` kademesinde. **Alt sınır** — gerçekleşen getiri bundan büyüktür |
-| ödeyen olay | `k = 0` → {garanti}. kademe. `P(k≤{kacak_esigi(garanti)})` bunu `k = 1`'le **topluyor** ve o kademe maliyeti karşılamıyor — bkz. başabaş sütunu |
+| ödeyen olay | `k = 0` → {garanti}. kademe. `P(k≤{kacak_esigi()})` bunu `k = 1`'le **topluyor** ve o kademe maliyeti karşılamıyor — bkz. başabaş sütunu |
 | rakip kolon | {RAKIP_KOLON:,} — varsayım (`karne.RAKIP_KOLON`); `E[TL]` buna `1/(N·q)` mertebesinde duyarlı |
 
 ## Haftalar
 
-| hf | şekil | kolon | maliyet | P(k≤{kacak_esigi(garanti)}) | **P(k=0)** | E[TL] | kaçak | kademe | **başabaş k** | ödül | net | fiyat ölçeği |
+| hf | şekil | kolon | maliyet | P(k≤{kacak_esigi()}) | **P(k=0)** | E[TL] | kaçak | kademe | **başabaş k** | ödül | net | fiyat ölçeği |
 |---:|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|"""]
     for r in rows:
         sekil = f"{r['banko']}b/{r['cift']}ç/{r['uclu']}ü"
@@ -177,7 +178,7 @@ söylüyor — ama **ilan etmek karşılaştırmayı geçerli kılmıyor** (§3.
 haftalık geri test `Avg` kapanışla (marj %7,26) koşuyor, yani ortada
 **üç** ölçek var. Düzeltilemez de: 2026/27'nin oran arşivi bugün boş,
 canlı haftalar `Avg` ölçeğinde yeniden türetilemiyor. Geçersiz olan
-karşılaştırmalar açıkça şunlar: canlı `P(k≤{kacak_esigi(garanti)})` ↔ geri
+karşılaştırmalar açıkça şunlar: canlı `P(k≤{kacak_esigi()})` ↔ geri
 testin ortalaması, ve ölçeğin değiştiği yerde canlı haftaların
 olasılıkları **birbiriyle**. Geçerli kalanlar sonuçtan gelenlerdir —
 kaçak, kademe, ödül; onlar fiyattan bağımsızdır.
@@ -187,7 +188,7 @@ sistemi, garantinin söylediği tek kolondan fazlasını da tutturur; karne
 onları saymaz çünkü kolon listesi bizde değil (şekle biz karar veriyoruz,
 kolonları satıcı üretiyor). Gerçekleşen getiri bu tablodan **büyüktür**.
 
-**`P(k≤{kacak_esigi(garanti)})` bir kapsama ölçüsüdür, kâr ölçüsü değildir.**
+**`P(k≤{kacak_esigi()})` bir kapsama ölçüsüdür, kâr ölçüsü değildir.**
 Manşet olasılık iki farklı olayı topluyor ve biri para kaybettiriyor:
 `k=0` {garanti}. kademeyi verir, `k=1` {garanti - 1}. kademeyi. Karnenin
 kendi kaydı bunu iki kez yazdı — 2. ve 3. hafta 12 tutturdu ve ikisi de
@@ -227,12 +228,12 @@ def _main(argv: list[str] | None = None) -> int:
         print(f"  fiyat kunyesi : {r['fiyat_kunyesi']}")
         print(f"  oynanma payi  : {r['oynanma_kaynagi']}")
         print(f"  garanti       : {a.garanti} (kacak esigi k <= "
-              f"{kacak_esigi(a.garanti)})")
+              f"{kacak_esigi()})")
         print(f"  sekil         : {r['banko']} banko · {r['cift']} cifte · "
               f"{r['uclu']} uclu")
         print(f"  bedel         : {r['kolon']} kolon = {r['maliyet']:,.0f} TL")
         print(f"  P(hedef)      : {r['p_hedef']:.4f}   "
-              f"(k <= {kacak_esigi(a.garanti)}; KAPSAMA olcusu)")
+              f"(k <= {kacak_esigi()}; KAPSAMA olcusu)")
         print(f"  P(kacak=0)    : {r['p_kacak_sifir']:.4f}   "
               f"(ODEYEN olay: {a.garanti}. kademe)")
         if r["beklenen_tl"] is not None:

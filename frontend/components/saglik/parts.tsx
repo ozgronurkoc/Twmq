@@ -541,12 +541,22 @@ export function KuponDenetimi({
               <Badge ton={sonuc.ok ? "success" : "danger"}>
                 {sonuc.ok ? "değişmezler geçti" : "değişmez düştü"}
               </Badge>
-              <Badge ton={sonuc.guaranteed ? "primary" : "warning"}>
-                {sonuc.guaranteed ? "14-garanti" : "garanti yok"}
+              {/*
+                Rozet eskiden "14-garanti" / "garanti yok" diyordu ve
+                `alt sinir` da yanindaydi. Duzde garanti bir SECENEK degil:
+                kumenin tamami oynaniyor, en iyi kolon 15 - kacak. Rozet
+                artik o sarti soyluyor; `guaranteed` sunucudan hala
+                geliyor ve duzde her zaman true — false gelirse bu bir
+                HATA belirtisidir, o yuzden gorunur kaliyor.
+              */}
+              <Badge ton={sonuc.guaranteed ? "primary" : "danger"}>
+                {sonuc.guaranteed
+                  ? "küme tamamı oynanıyor"
+                  : "KÜME EKSİK — hata"}
               </Badge>
               <Badge>{sonuc.satir} satır</Badge>
               <Badge>{sonuc.bedel} kolon</Badge>
-              <Badge>alt sınır {sonuc.alt_sinir}</Badge>
+              <Badge>uzay {sonuc.uzay}</Badge>
               <span className="tnum text-[11.5px] text-muted-foreground">
                 {sure(sonuc.duration_ms)}
               </span>

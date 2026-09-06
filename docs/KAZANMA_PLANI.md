@@ -1195,6 +1195,55 @@ ekler; öngörülen ile gerçekleşen yan yana durur.
 > (kalabalık modeli · Betfair Exchange). Bu bölüm **ondan sonra ne
 > yapılacağını** yazar ve tek bir ölçümün üstüne kurulur.
 
+## Durum (2026-09-06): kaplama söküldü, E1–E6 **düz ölçekte** yeniden ölçüldü
+
+> **Bu bölümden aşağıdaki bütün sayılar, aksi belirtilmedikçe KAPLAMA
+> ölçeğindedir.** Depo 2026-09-06'da düz (tam sistem) oynamaya geçti
+> (`docs/DUZ_SISTEME_GECIS.md`). Eski sayılar silinmedi — o gün oynanan
+> ürünün ölçümüdür ve `.claude/olcum_kutugu.json`da *"KAPLAMA ÖLÇEĞİ
+> (sökülmüştür)"* diye etiketlidir. Aşağıdaki tablo aynı ölçümlerin düz
+> karşılığıdır: **aynı para (2.000 TL), aynı kesit (114 hafta)**, yani
+> satır satır kıyaslanabilir.
+
+| ölçü | kaplama (14G) | **düz** | not |
+|---|---:|---:|---|
+| maliyet | 191.520 TL | 184.680 TL | aynı bütçe, biraz farklı şekil |
+| garanti tabanı ödülü | 19.354 TL · %10,1 | 26.361 TL · **%14,3** | |
+| **gerçek kolon ödülü** | 46.252 TL · %24,2 | 61.615 TL · **%33,4** | **1,38× daha çok geri dönüş** |
+| taban ne kadar gevşek | 2,39 kat | **2,34 kat** | kat aynı, altındaki iki sayı büyüdü |
+| motor ↔ tablo farkı | %28,6 | **%0,0** | yapısal: düzde kolon üretilmiyor, sayılıyor |
+| 12+ tutturan kolon | 26,8 (tek sayı) | **98,0 / 50,0 / 11,5 / 1,1** | k=0/1/2/3'e göre |
+| E2 · 13−12 ROI farkı | +0,00928 | **−0,00144** | işaret döndü, ikisi de sıfırı kesiyor |
+| E2 · 14−12 ROI farkı | −0,00702 | **−0,01400** | |
+| E3 · `P(hedef)` farkı | +0,00758 | **+0,00466** | hâlâ sıfır dışında |
+| E3 · keskinlik payı | %81 | **%85** | tuzak ayakta |
+| kalibrasyon keskinlik payı | %97,4 | **%98,6** | |
+| bütçe eğrisi tepesi | 0,0286 | **0,0108** | k=0 / 1.000 TL |
+| gerçekleşen P(k=0) | %3,5 | **%0,9** | 114 haftada 1 |
+| E6 · ölçülen λ | 984 TL | **1.339 TL** | birim `P(hedef)` başına |
+| E6 · uçtan uca fiyat | 12.002 TL (12,2×) | **438.424 TL (327,3×)** | merdiven 15 → 47 basamak |
+| E6 · bir üst basamak | 92.167 TL (93,7×) | **47.980 TL (35,8×)** | hâlâ savunulamaz |
+| E6 · kuyruk payı | %88 | **%33–%100** | tek sayı değil bant |
+| E6 · devir işareti | +0,2028 (p=0,0319) | **+0,1791 (p=0,0598)** | ikisi de Holm'dan geçmiyor |
+
+**Hiçbir VERDİKT değişmedi.** E1'in açığı kapanmadı (%33,4 hâlâ 1'in
+altında), E2 hedefi 12'de bıraktı, E3 ve kalibrasyon `Avg`ı korudu, E6'nın
+bütçe ekseni kapalı kaldı — merdivenin **47 basamağının hiçbirinde**
+gerçekleşen ROI 1,0'a ulaşmıyor (0,030–0,877). Yani düz kaplamadan
+ölçülebilir biçimde iyi, ve **iyi olan hâlâ kaybediyor**.
+
+**E6'nın kıyasında bir hata bulundu ve düzeltildi (2026-09-06).** Kurallar
+tek bir sabit temele (16.000 TL) karşı ölçülüyordu ve bu, *kural mı daha iyi
+seçiyor* ile *kural daha çok mu harcıyor* sorularını karıştırıyordu.
+Kaplamada görünmezdi: ölçüm tavanı (5.000 TL) bütün kuralları aynı para
+bandına kelepçeliyordu. `kural_kiyasi` artık **eşleşik para** sütunu da
+döndürür (her kural, kendi ortalama harcamasını bütçe alan sabit kurala
+karşı). Ölçüldü: tek temele karşı açılan tek kural (`lambda-800000`,
++0,543) aynı parayı veren sabit kurala karşı sıfırı kesiyor (+0,015) —
+aradaki farkın tamamı **para**ydı. §E6 ayakta.
+
+---
+
 ## Durum (2026-09-05): kod tarafı bitti, kalan tek şey **hafta**
 
 E1–E4'ün dördü de koştu ve kapandı. Aşağıdaki bölümler planı yazıldığı

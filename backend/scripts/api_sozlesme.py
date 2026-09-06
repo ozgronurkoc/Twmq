@@ -142,7 +142,7 @@ def _uclar(istemci, ornek_kupon: str) -> dict[str, Any]:
         {"ad": "GET /api/health/checks", "yol": "/api/health/checks"},
         {"ad": "GET /api/health/history", "yol": "/api/health/history?limit=5"},
         {"ad": "POST /api/health/kupon", "yol": "/api/health/kupon",
-         "govde": {"picks": ornek_kupon, "mode": "fix16"}},
+         "govde": {"picks": ornek_kupon, "mode": "duz"}},
         {"ad": "GET /api/stats", "yol": "/api/stats"},
         {"ad": "GET /api/stats/<week>", "yol": "/api/stats/<cozulecek>"},
         # Tarama ACIK ama KESIT DAR. Onceden `?sweep=0` ile aliniyordu ve
@@ -164,7 +164,7 @@ def _uclar(istemci, ornek_kupon: str) -> dict[str, Any]:
         {"ad": "GET /api/tahmin", "yol": "/api/tahmin"},
         {"ad": "GET /api/benzer", "yol": "/api/benzer?oran=1.82,3.04,2.44"},
         {"ad": "POST /api/solve", "yol": "/api/solve",
-         "govde": {"picks": ornek_kupon, "mode": "fix16",
+         "govde": {"picks": ornek_kupon, "mode": "duz",
                    "probs": _SOLVE_PROBS, "fire_max": 1}},
     ]
 
@@ -209,12 +209,18 @@ def _olculmus(ornek_kupon: str) -> dict[str, Any]:
     yaziliydi ve yanlarinda "(olculdu)" notu vardi. Backend matematigi
     degistiginde bu sayilar sessizce yanlislanirdi: test yesil kalir ama
     artik yanlis bir seyi dogrulardi. Artik ayni kaynaktan uretiliyorlar.
+
+    `alt_sinir` ve `top_boyutu` bu sozlukten DUSTU: kure-kaplama
+    olculeriydi ve kaplamayla birlikte kalktilar
+    (`docs/DUZ_SISTEME_GECIS.md`). `fix16_kolon` adi da yaniltici hale
+    gelmisti — duzde uretilen kolon sayisini tutuyordu — `duz_kolon` oldu.
     """
-    from spor_toto.core import Encoder, olasilik_raporu, parse_picks, solve_fix16
+    from spor_toto.core import Encoder, olasilik_raporu, parse_picks
+    from spor_toto.duz import kolonlar as duz_kolonlar
 
     sec = parse_picks(ornek_kupon)
     enc = Encoder(sec)
-    cols, _ = solve_fix16(enc)
+    cols = duz_kolonlar(enc)
     rap = olasilik_raporu(enc, cols, _SOLVE_PROBS)
 
     # Kume-ici olasiliga en cok zarar veren uc mac (1 tabanli sira).
@@ -227,11 +233,9 @@ def _olculmus(ornek_kupon: str) -> dict[str, Any]:
     return {
         "ornek_kupon": ornek_kupon,
         "p_kume_ici": round(rap.p_kume_ici, 10),
-        "alt_sinir": enc.lower_bound(),
         "uzay": enc.space_size(),
-        "top_boyutu": enc.ball_size(),
         "en_zayif_uc_mac": [i for i, _ in en_zayif],
-        "fix16_kolon": len(cols),
+        "duz_kolon": len(cols),
     }
 
 

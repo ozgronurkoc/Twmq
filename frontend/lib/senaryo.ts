@@ -1,37 +1,36 @@
 import type { Kurulum } from "./kurulum";
-import type { ModeId, SolveResult } from "./types";
+import type { SolveResult } from "./types";
 
 /**
- * Calistirilan formullerin karsilastirma listesi.
+ * Calistirilan kuponlarin karsilastirma listesi.
  *
- * NEDEN VAR: mod secimi bu sayfadaki en pahali karardir (fix16 mi, butce
- * mi, maxcov mu) ama bugune kadar gozle yapilamiyordu — bir modu
- * calistirip digerine gecince oncekinin sayilari ekrandan siliniyordu.
- * Kullanici 16 satir / 32 kolonu, 29 kolonluk bir alternatifle ancak
- * akildan kiyaslayabiliyordu.
+ * ─── KIYAS EKSENI DEGISTI: mod degil, ISARETLER ───────────────────────
+ *
+ * Bu liste mod secimi icin yazilmisti: *"mod secimi bu sayfadaki en pahali
+ * karardir (fix16 mi, butce mi, maxcov mu) ama gozle yapilamiyordu — bir
+ * modu calistirip digerine gecince oncekinin sayilari ekrandan
+ * siliniyordu."* Kaplama sokuldu (`docs/DUZ_SISTEME_GECIS.md`) ve modlar
+ * dustu; duzde ayni isaretler HER ZAMAN ayni kolonlari verir, yani mod
+ * ekseninde kiyaslanacak bir sey kalmadi.
+ *
+ * Geriye kalan eksen daha onemli olan: **isaretlerin kendisi.** Bir maci
+ * daha cifte yapmak kume-ici olasiligi buyutur ve bedeli katlar; bu
+ * takas artik sayfanin TEK pahali kararidir ve akildan yapiliyordu.
+ * Liste onu goze goruntuye cevirir.
  *
  * NEDEN KALICI DEGIL: senaryolar TURETILMIS veridir, tipki `sonuc` gibi.
  * Kurulum kalicidir cunku kullanicinin elle urettigi tek sey odur;
  * bunlar motorun ciktisidir ve her an yeniden uretilebilir.
- *
- * NEDEN SECIM PARMAK IZI TASIYOR: iki calismanin bedelleri ancak AYNI
- * isaretler uzerinde kosulduysa kiyaslanabilir. Kullanici arada bir maci
- * cifte yaptiysa "32 kolon yerine 64 kolon" karsilastirmasi modlarla
- * degil, secimle ilgilidir. Liste bunu gizlemez, isaretler.
  */
 export interface Senaryo {
   /** Kurulumun tam parmak izi — ayni kurulum tekrar kosulursa satir yenilenir. */
   id: string;
   /** Yalnizca işaretlerin parmak izi. */
   secimParmak: string;
-  mode: ModeId;
   baslik: string;
+  /** Duzde her zaman 1: kupon isaretlerin kendisidir. */
   satir: number;
   bedel: number;
-  /** 14-garanti geçerli mi (açık nokta yok ve en kötü durum ≤ 1). */
-  garanti: boolean;
-  acik: number;
-  altSinir: number;
   /** Seçim kümesinin doğru sonucu içerme olasılığı (0–1); yoksa null. */
   pKumeIci: number | null;
   /** Bu satıra dönebilmek için kurulumun kendisi. */
@@ -55,22 +54,16 @@ export function senaryoYap(
   return {
     id,
     secimParmak,
-    mode: r.mode ?? kurulum.mode,
     baslik: r.baslik,
     satir: r.satir_sayisi,
     bedel: r.kolon_bedeli,
-    garanti: r.acik === 0 && r.worst <= 1,
-    acik: r.acik,
-    altSinir: r.alt_sinir,
     pKumeIci: r.advanced ? r.advanced.exact.p_kume_ici / 100 : null,
     kurulum,
   };
 }
 
 /**
- * Listeye ekler. Ayni kurulum tekrar kosulursa YERINDE yenilenir —
- * varyant denerken listenin ayni satirin kopyalariyla dolmasi, asil
- * karsilastirmayi ekrandan iterdi.
+ * Listeye ekler. Ayni kurulum tekrar kosulursa YERINDE yenilenir.
  */
 export function senaryoEkle(
   liste: Senaryo[],
@@ -87,16 +80,26 @@ export function senaryoEkle(
 }
 
 /**
- * Karsilastirmada one cikacak satir: AYNI secim uzerinde kosulmus,
- * 14-garantiyi veren ve en ucuz olan. Garanti vermeyen bir senaryo daha
- * ucuz olabilir ama onunla kiyas yanlis olurdu — farkli sey satin
- * aliniyor. Boyle bir satir yoksa null.
+ * Kolon basina en cok kume-ici olasilik veren satir — duzdeki asil takas.
+ *
+ * Burada eskiden `enUcuzGarantili` vardi: *"AYNI secim uzerinde kosulmus,
+ * 14-garantiyi veren ve en ucuz olan"*. Duzde o soru dejenere — ayni
+ * secim her zaman ayni bedeli verir ve garanti diye bir secenek yok.
+ * Anlamli soru bunun yerine su: **odedigim her kolon bana ne kadar
+ * kume-ici olasilik aliyor?**
+ *
+ * BU BIR ONERI DEGILDIR. Verim yalnizca bir orandir; kume-ici olasilik
+ * kazanma olasiligi degil, kacak aritmetiginin gecerli olma kosuludur
+ * (bkz. `kume-ici.ts`). Ikramiye, kolon bedeli ve kac kisinin tutturdugu
+ * hesaba girmez.
+ *
+ * `pKumeIci` bilinmeyen (olasilik girilmemis) satirlar elenir; bedeli
+ * sifir olan satir olamaz ama savunmaci davraniliyor.
  */
-export function enUcuzGarantili(
-  liste: Senaryo[],
-  secimParmak: string,
-): Senaryo | null {
-  const adaylar = liste.filter((s) => s.secimParmak === secimParmak && s.garanti);
-  if (!adaylar.length) return null;
-  return adaylar.reduce((a, b) => (b.bedel < a.bedel ? b : a));
+export function enIyiVerim(liste: Senaryo[]): Senaryo | null {
+  const adaylar = liste.filter((s) => s.pKumeIci !== null && s.bedel > 0);
+  if (adaylar.length < 2) return null;
+  return adaylar.reduce((a, b) =>
+    (b.pKumeIci as number) / b.bedel > (a.pKumeIci as number) / a.bedel ? b : a,
+  );
 }

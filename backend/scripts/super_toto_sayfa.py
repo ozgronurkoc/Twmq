@@ -1277,7 +1277,7 @@ footer {{ margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--line)
         <tbody>{''.join(donmus_grid)}</tbody>
       </table>
     </div>
-    <p style="margin-top:12px;font-size:12.5px;color:var(--dim)">Oynanacak 16 satır — dondurulan kupona ait. Motor aynı (<code>solve_fix16</code> + <code>merge_rows</code>), 14-garanti aynı koşulla duruyor.</p>
+    <p style="margin-top:12px;font-size:12.5px;color:var(--dim)">Dondurulan kupona ait satırlar. Bu kupon <strong>kaplama</strong> ile oynandı (<code>solve_fix16</code>, 16 satır, 14-garanti); depo 2026-09-06'dan itibaren <strong>düz</strong> oynuyor — kümenin tamamı, tek satır, en iyi kolon 15−k. Kayıt olduğu gibi bırakılıyor: oynanmamış bir kuponu göstermek olurdu.</p>
   </section>''' if DONMUS else ''}
 
   <section>

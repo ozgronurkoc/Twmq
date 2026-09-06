@@ -151,61 +151,65 @@
     ]
    },
    "coupon_drift": [
+    2,
     3,
     4,
     5,
+    6,
+    7,
     9,
-    10,
-    11
+    11,
+    13,
+    14,
+    15
    ],
    "coupon_superseded": null,
    "coupon_today": {
     "arindirma": "shin",
     "banko": [
      1,
+     2,
      5,
+     6,
      8,
-     11
+     11,
+     13
     ],
     "banko_esik": 0.68,
-    "butce": 1536,
-    "cift": [
-     2,
-     6,
-     7,
-     10,
-     13,
-     14,
-     15
-    ],
-    "columns": 1296,
-    "in_set_p": 0.032351,
+    "butce": 12288,
+    "cift": [],
+    "columns": 6561,
+    "in_set_p": 0.034089,
     "kural": "hedef",
-    "p_hedef": 0.408817,
-    "p_hedef_esik": 0.319153,
+    "p_hedef": 0.761352,
+    "p_hedef_esik": 0.567667,
     "picks": [
      "1",
-     "02",
+     "2",
      "102",
      "102",
      "2",
-     "10",
-     "10",
      "1",
      "102",
-     "12",
+     "1",
+     "102",
+     "102",
      "2",
      "102",
-     "12",
-     "10",
-     "10"
+     "2",
+     "102",
+     "102"
     ],
-    "rows": 16,
+    "rows": null,
     "uclu": [
      3,
      4,
+     7,
      9,
-     12
+     10,
+     12,
+     14,
+     15
     ],
     "uclu_esik": 0.38
    },
@@ -941,10 +945,16 @@
     2,
     3,
     5,
+    6,
+    7,
     8,
     9,
     10,
-    11
+    11,
+    12,
+    13,
+    14,
+    15
    ],
    "coupon_superseded": {
     "arindirma": "orantili",
@@ -974,47 +984,47 @@
      1,
      8,
      10,
-     11
-    ],
-    "banko_esik": 0.68,
-    "butce": 2048,
-    "cift": [
-     4,
-     6,
-     7,
-     12,
-     13,
+     11,
      14,
      15
     ],
-    "columns": 1296,
-    "in_set_p": 0.029571,
+    "banko_esik": 0.68,
+    "butce": 16384,
+    "cift": [
+     4
+    ],
+    "columns": 13122,
+    "in_set_p": 0.042107,
     "kural": "hedef",
-    "p_hedef": 0.397901,
-    "p_hedef_esik": 0.306128,
+    "p_hedef": 0.803616,
+    "p_hedef_esik": 0.550912,
     "picks": [
      "2",
      "102",
      "102",
      "12",
      "102",
-     "12",
-     "02",
+     "102",
+     "102",
      "1",
      "102",
      "2",
      "1",
-     "12",
-     "10",
-     "10",
-     "02"
+     "102",
+     "102",
+     "1",
+     "2"
     ],
-    "rows": 16,
+    "rows": null,
     "uclu": [
      2,
      3,
      5,
-     9
+     6,
+     7,
+     9,
+     12,
+     13
     ],
     "uclu_esik": 0.38
    },
@@ -2663,7 +2673,16 @@
      }
     ]
    },
-   "coupon_drift": [],
+   "coupon_drift": [
+    1,
+    2,
+    6,
+    7,
+    8,
+    11,
+    12,
+    13
+   ],
    "coupon_superseded": {
     "arindirma": "shin",
     "picks": [
@@ -2690,48 +2709,47 @@
     "arindirma": "shin",
     "banko": [
      3,
+     6,
+     7,
      9,
      10,
+     11,
      15
     ],
     "banko_esik": 0.68,
-    "butce": 1024,
-    "cift": [
-     1,
-     2,
-     6,
-     7,
-     8,
-     11,
-     12,
-     13
-    ],
-    "columns": 864,
-    "in_set_p": 0.029613,
+    "butce": 8192,
+    "cift": [],
+    "columns": 6561,
+    "in_set_p": 0.044241,
     "kural": "hedef",
-    "p_hedef": 0.380941,
-    "p_hedef_esik": 0.290663,
+    "p_hedef": 0.791887,
+    "p_hedef_esik": 0.532612,
     "picks": [
-     "10",
-     "10",
+     "102",
+     "102",
      "1",
      "102",
      "102",
-     "10",
-     "02",
-     "12",
+     "1",
+     "2",
+     "102",
      "1",
      "1",
-     "02",
-     "12",
-     "12",
+     "2",
+     "102",
+     "102",
      "102",
      "2"
     ],
-    "rows": 16,
+    "rows": null,
     "uclu": [
+     1,
+     2,
      4,
      5,
+     8,
+     12,
+     13,
      14
     ],
     "uclu_esik": 0.38
@@ -3855,7 +3873,7 @@
       "crowd_ratio": 0.384,
       "hedef": 0.261767,
       "in_set_p": 0.013106,
-      "label": "bütçe kısıtlı — 3. haftanın bedeli (864 kolon), motorun kendi planı",
+      "label": "bütçe kısıtlı — 3. haftanın bedeli (864 kolon), ANA PLANDAN KISILMIŞ",
       "picks": [
        "102",
        "102",
@@ -3880,7 +3898,7 @@
       "crowd_ratio": 0.385,
       "hedef": 0.318363,
       "in_set_p": 0.018016,
-      "label": "bütçe kısıtlı — orta kademe (1.296 kolon), motorun kendi planı",
+      "label": "bütçe kısıtlı — orta kademe (1.296 kolon), ANA PLANDAN KISILMIŞ",
       "picks": [
        "102",
        "102",
@@ -3923,58 +3941,115 @@
        "10",
        "12"
       ]
+     },
+     {
+      "columns": 864,
+      "crowd_in_set_p": 0.035655,
+      "crowd_ratio": 0.424,
+      "hedef": 0.274852,
+      "in_set_p": 0.015102,
+      "label": "bütçe kısıtlı — tavan 1.024 kolon, MOTORUN KENDİ PLANI",
+      "picks": [
+       "102",
+       "102",
+       "1",
+       "10",
+       "2",
+       "102",
+       "1",
+       "10",
+       "10",
+       "12",
+       "10",
+       "12",
+       "10",
+       "1",
+       "10"
+      ]
+     },
+     {
+      "columns": 1296,
+      "crowd_in_set_p": 0.048842,
+      "crowd_ratio": 0.425,
+      "hedef": 0.332737,
+      "in_set_p": 0.020759,
+      "label": "bütçe kısıtlı — tavan 2.304 kolon, MOTORUN KENDİ PLANI",
+      "picks": [
+       "102",
+       "102",
+       "1",
+       "10",
+       "2",
+       "102",
+       "1",
+       "10",
+       "10",
+       "12",
+       "10",
+       "102",
+       "10",
+       "1",
+       "10"
+      ]
      }
     ]
    },
-   "coupon_drift": [],
+   "coupon_drift": [
+    4,
+    8,
+    9,
+    13,
+    14,
+    15
+   ],
    "coupon_superseded": null,
    "coupon_today": {
     "arindirma": "shin",
     "banko": [
      3,
      5,
-     7
+     7,
+     13,
+     14
     ],
     "banko_esik": 0.68,
-    "butce": 6144,
+    "butce": 49152,
     "cift": [
-     4,
-     8,
-     9,
-     11,
-     13,
-     14,
-     15
+     11
     ],
-    "columns": 3888,
-    "in_set_p": 0.040145,
+    "columns": 39366,
+    "in_set_p": 0.057826,
     "kural": "hedef",
-    "p_hedef": 0.467001,
-    "p_hedef_esik": 0.367234,
+    "p_hedef": 0.861346,
+    "p_hedef_esik": 0.620173,
     "picks": [
      "102",
      "102",
      "1",
-     "10",
+     "102",
      "2",
      "102",
      "1",
-     "10",
-     "10",
+     "102",
+     "102",
      "102",
      "10",
      "102",
-     "10",
-     "10",
-     "10"
+     "1",
+     "1",
+     "102"
     ],
-    "rows": 16,
+    "rows": null,
     "uclu": [
      1,
      2,
+     4,
      6,
+     8,
+     9,
      10,
-     12
+     12,
+     15
     ],
     "uclu_esik": 0.38
    },
@@ -4694,42 +4769,14 @@
     "ad": "2. Tahmin",
     "arindirma": "shin",
     "ayar": {
-     "degisimler": [
-      {
-       "no": 4,
-       "oynanma_taban": 0.79,
-       "oynanma_yeni": 0.71,
-       "prob_taban": 0.7682,
-       "prob_yeni": 0.7581,
-       "taban": "10",
-       "yeni": "12"
-      },
-      {
-       "no": 9,
-       "oynanma_taban": 0.9,
-       "oynanma_yeni": 0.83,
-       "prob_taban": 0.7633,
-       "prob_yeni": 0.7457,
-       "taban": "10",
-       "yeni": "12"
-      },
-      {
-       "no": 15,
-       "oynanma_taban": 0.77,
-       "oynanma_yeni": 0.66,
-       "prob_taban": 0.748,
-       "prob_yeni": 0.713,
-       "taban": "10",
-       "yeni": "12"
-      }
-     ],
-     "kat_ayarli": 6.916,
-     "kat_taban": 8.233,
+     "degisimler": [],
+     "kat_ayarli": 6.761,
+     "kat_taban": 6.761,
      "not": "Isaret SAYILARI degismez — bedel, satir ve motor aynidir. Degisen yalnizca HANGI sembolun isaretlendigi.",
-     "oran_ayarli": 0.5553,
-     "oran_taban": 0.4293,
-     "p_hedef_ayarli": 0.448585,
-     "p_hedef_taban": 0.467001
+     "oran_ayarli": 0.5407,
+     "oran_taban": 0.5407,
+     "p_hedef_ayarli": 0.861346,
+     "p_hedef_taban": 0.861346
     },
     "ayrisma": [
      {
@@ -4952,22 +4999,18 @@
     "banko": [
      3,
      5,
-     7
+     7,
+     13,
+     14
     ],
-    "butce": 6144,
+    "butce": 49152,
     "butce_kaynagi": "esik kuralinin ayni haftada urettigi maliyet (banko 0.68, uclu 0.38)",
     "cift": [
-     4,
-     8,
-     9,
-     11,
-     13,
-     14,
-     15
+     11
     ],
-    "columns": 3888,
-    "crowd_in_set_p": 0.066428,
-    "crowd_ratio": 0.5553,
+    "columns": 4374,
+    "crowd_in_set_p": 0.106945,
+    "crowd_ratio": 0.5407,
     "duyarlilik": {
      "degisti": false,
      "duzeltilen": [
@@ -4979,26 +5022,26 @@
      ],
      "not": "Veri DUZELTILMEDI; yalnizca sonucun kuskulu satira duyarliligi olculdu. Duzeltilmis oranlar kupona GIRMEZ.",
      "ortanca_marj": 0.0488,
-     "p_hedef": 0.448585,
+     "p_hedef": 0.861346,
      "picks": [
       "102",
       "102",
       "1",
-      "12",
+      "102",
       "2",
       "102",
       "1",
-      "10",
-      "12",
+      "102",
+      "102",
       "102",
       "10",
       "102",
-      "10",
-      "10",
-      "12"
+      "1",
+      "1",
+      "102"
      ]
     },
-    "engine": "sabit 16 satır (Hamming 7,4)",
+    "engine": "blok ayrıştırma",
     "esik_picks": [
      "12",
      "12",
@@ -5016,7 +5059,7 @@
      "10",
      "10"
     ],
-    "frozen_at": "2026-09-04",
+    "frozen_at": "2026-09-06",
     "gorus": {
      "dc_olan": 12,
      "eslesmeyen": [
@@ -5032,19 +5075,22 @@
      "uyari": "Bu gorus ISARET DEGISTIRMEZ. Dixon-Coles kupon setinde piyasanin gerisinde olculdu (docs §3.28); Elo bir 1X2 olasiligi degil beklenen SKOR verir (docs §3.27). Ikisi de kayda gecer, karar yoluna girmez."
     },
     "guaranteed_14": true,
-    "in_set_p": 0.03689,
-    "kayip_orani": 0.05,
+    "in_set_p": 0.057826,
+    "kayip_orani": 0.0,
     "kiyas": {
      "degisen_maclar": [
       4,
+      8,
       9,
+      13,
+      14,
       15
      ],
      "eski_arindirma": "shin",
      "eski_columns": 3888,
      "eski_crowd_ratio": 0.4293,
      "eski_kural": "hedef",
-     "eski_p_hedef": 0.467001,
+     "eski_p_hedef": 0.733951,
      "eski_picks": [
       "102",
       "102",
@@ -5066,22 +5112,7 @@
     },
     "kural": "hedef",
     "lines": [
-     "102 102 1   1   2   102 1   1   1   102 1   102 1   1   1  ",
-     "102 102 1   1   2   102 1   1   1   102 0   102 1   0   2  ",
-     "102 102 1   1   2   102 1   1   2   102 1   102 0   0   1  ",
-     "102 102 1   1   2   102 1   1   2   102 0   102 0   1   2  ",
-     "102 102 1   1   2   102 1   0   1   102 1   102 0   0   2  ",
-     "102 102 1   1   2   102 1   0   1   102 0   102 0   1   1  ",
-     "102 102 1   1   2   102 1   0   2   102 1   102 1   1   2  ",
-     "102 102 1   1   2   102 1   0   2   102 0   102 1   0   1  ",
-     "102 102 1   2   2   102 1   1   1   102 1   102 0   1   2  ",
-     "102 102 1   2   2   102 1   1   1   102 0   102 0   0   1  ",
-     "102 102 1   2   2   102 1   1   2   102 1   102 1   0   2  ",
-     "102 102 1   2   2   102 1   1   2   102 0   102 1   1   1  ",
-     "102 102 1   2   2   102 1   0   1   102 1   102 1   0   1  ",
-     "102 102 1   2   2   102 1   0   1   102 0   102 1   1   2  ",
-     "102 102 1   2   2   102 1   0   2   102 1   102 0   1   1  ",
-     "102 102 1   2   2   102 1   0   2   102 0   102 0   0   2  "
+     "102 102 1   102 2   102 1   102 102 102 10  102 1   1   102"
     ],
     "matches": [
      {
@@ -5150,7 +5181,7 @@
       "dc_var": true,
       "elo_beklenen": 0.7195,
       "elo_farki": 163.7,
-      "isaret": "12",
+      "isaret": "102",
       "no": 4,
       "probs": {
        "0": 0.2419,
@@ -5162,7 +5193,7 @@
        "1": 0.5263,
        "2": 0.2318
       },
-      "taban": "10"
+      "taban": "102"
      },
      {
       "dc": {
@@ -5242,7 +5273,7 @@
       "dc_var": true,
       "elo_beklenen": 0.6191,
       "elo_farki": 84.4,
-      "isaret": "10",
+      "isaret": "102",
       "no": 8,
       "probs": {
        "0": 0.2789,
@@ -5254,7 +5285,7 @@
        "1": 0.5009,
        "2": 0.2202
       },
-      "taban": "10"
+      "taban": "102"
      },
      {
       "dc": {
@@ -5265,7 +5296,7 @@
       "dc_var": true,
       "elo_beklenen": 0.6974,
       "elo_farki": 145.1,
-      "isaret": "12",
+      "isaret": "102",
       "no": 9,
       "probs": {
        "0": 0.2543,
@@ -5277,7 +5308,7 @@
        "1": 0.509,
        "2": 0.2367
       },
-      "taban": "10"
+      "taban": "102"
      },
      {
       "dc": {
@@ -5357,7 +5388,7 @@
       "dc_var": true,
       "elo_beklenen": 0.6506,
       "elo_farki": 108.0,
-      "isaret": "10",
+      "isaret": "1",
       "no": 13,
       "probs": {
        "0": 0.2452,
@@ -5369,7 +5400,7 @@
        "1": 0.5767,
        "2": 0.1782
       },
-      "taban": "10"
+      "taban": "1"
      },
      {
       "dc": {
@@ -5380,7 +5411,7 @@
       "dc_var": true,
       "elo_beklenen": 0.5606,
       "elo_farki": 42.3,
-      "isaret": "10",
+      "isaret": "1",
       "no": 14,
       "probs": {
        "0": 0.2417,
@@ -5392,7 +5423,7 @@
        "1": 0.5695,
        "2": 0.1888
       },
-      "taban": "10"
+      "taban": "1"
      },
      {
       "dc": {
@@ -5403,7 +5434,7 @@
       "dc_var": true,
       "elo_beklenen": 0.5758,
       "elo_farki": 53.1,
-      "isaret": "12",
+      "isaret": "102",
       "no": 15,
       "probs": {
        "0": 0.287,
@@ -5415,54 +5446,58 @@
        "1": 0.4609,
        "2": 0.252
       },
-      "taban": "10"
+      "taban": "102"
      }
     ],
     "note": "SONUCLAR GORULMEDEN uretildi. 1. Tahmin'in kaydi yerinde durur ve yeniden hesaplanmaz; bu ikinci bir kayittir, bir duzeltme degil.",
     "onceki_arindirma": "shin",
-    "p_hedef": 0.448585,
+    "p_hedef": 0.861346,
     "picks": [
      "102",
      "102",
      "1",
-     "12",
+     "102",
      "2",
      "102",
      "1",
-     "10",
-     "12",
+     "102",
+     "102",
      "102",
      "10",
      "102",
-     "10",
-     "10",
-     "12"
+     "1",
+     "1",
+     "102"
     ],
     "results_known": false,
-    "rows": 16,
+    "rows": 9,
     "taban_picks": [
      "102",
      "102",
      "1",
-     "10",
+     "102",
      "2",
      "102",
      "1",
-     "10",
-     "10",
+     "102",
+     "102",
      "102",
      "10",
      "102",
-     "10",
-     "10",
-     "10"
+     "1",
+     "1",
+     "102"
     ],
     "uclu": [
      1,
      2,
+     4,
      6,
+     8,
+     9,
      10,
-     12
+     12,
+     15
     ],
     "yenilikler": [
      "havuz: kalabalik ayari — isaret sayilari sabit, sembol degisir (docs §3.34)",

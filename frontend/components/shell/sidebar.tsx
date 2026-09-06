@@ -40,7 +40,7 @@ const GRUPLAR: NavGroup[] = [
       {
         href: "/",
         label: "Formül",
-        hint: "Kaplama kodu üret",
+        hint: "Düz kupon üret",
         icon: <Grid3x3 size={17} />,
       },
     ],
@@ -147,7 +147,7 @@ export function SidebarIcerik({
               Spor Toto Lab
             </div>
             <div className="truncate text-[11px] text-sidebar-muted">
-              14-garanti kaplama motoru
+              düz (tam sistem) kupon motoru
             </div>
           </div>
         ) : null}
@@ -237,7 +237,7 @@ export function SidebarIcerik({
             <p className="mt-3 text-[10.5px] leading-relaxed text-sidebar-muted">
               Next.js arayüz · Python motoru
               <br />
-              Kaplama motoru tahmin etmez, garanti verir.
+              Kolon üretimi tahmin etmez, sayar.
             </p>
           </>
         ) : (

@@ -18,15 +18,10 @@ from .core import (
     HAS_SCIPY,
     ORNEK_KUPON,
     Encoder,
-    Fix16Hatasi,
-    dogrula_kaplama,
-    merge_rows,
     parse_picks,
     parse_probs,
-    solve_by_blocks,
-    solve_fix16,
 )
-from .engines import ButceSigmazHatasi, adaylar, en_iyi_aday, engine_params, run_butce, run_maxcov
+from .duz import kolonlar as duz_kolonlar
 from .report import CIZGI, INCE, basliklar, yazdir_ve_kaydet
 
 #: Tek kaynak `core.ORNEK_KUPON`; ad burada korunuyor.
@@ -108,161 +103,28 @@ def _apply_bayes(enc: Encoder, args) -> None:
             args.bayes_info.append(f"    M{mac}: KL={kl:.4f}  ({lab})")
 
 
-def _mod_fix16(enc: Encoder, args) -> None:
-    cols, aciklama = solve_fix16(enc, variant=args.variant)
-    _log(f"Sabit 16 satir: {aciklama} -> {len(cols)} kolon bedeli")
-    notlar = [aciklama]
-    if args.variant:
-        notlar.append(f"Varyant {args.variant} (koset kaydirma + permutasyon)")
+def _mod_duz(enc: Encoder, args) -> None:
+    """Düz (tam sistem) — kaplama sökülünce geriye kalan tek yol.
 
-    if HAS_SCIPY and not args.no_compare:
-        r = solve_by_blocks(enc, max_block_space=args.block_limit,
-                            time_limit=min(args.time_limit, 10.0),
-                            total_time_limit=args.compare_budget)
-        if r and len(r[0]) < len(cols):
-            notlar.append(
-                f"NOT: --mode auto {len(r[0])} kolona iniyor "
-                f"({len(cols) - len(r[0])} kolon daha ucuz), ama "
-                f"{len(merge_rows(r[0]))} satir olurdu.")
-        elif r:
-            notlar.append("Genel motor daha iyisini bulamadi -> bu mod optimal.")
+    **Burada dört ayrı mod fonksiyonu vardı** (`_mod_fix16`, `_mod_butce`,
+    `_mod_maxcov`, `_mod_genel`) ve `_mod_genel` ayrıca `auto/block/exact/
+    heuristic` dağıtımı yapıyordu. Hepsi aynı soruyu soruyordu: *seçim
+    kümesini en az kaç kolonla örtebilirim?* Düzde o soru yok — kümenin
+    tamamı oynanır, yani kolonlar aranmaz, üretilir.
 
-    yazdir_ve_kaydet(enc, cols, "Sabit 16 satir (Hamming(7,4) + ekstra tam sistem)",
-                     args.output, notlar, probs=args.parsed_probs,
-                     tam_liste=not args.kisa, **_mc_kwargs(args))
-
-
-def _mod_butce(enc: Encoder, args) -> None:
-    if args.budget is None:
-        raise ValueError("--mode butce icin --budget gerekir.")
-    print(f"BUTCE DANISMANI: en fazla {args.budget} kolon\n")
-
-    try:
-        mevcut, _ = solve_fix16(enc)
-        print(f"Mevcut kuponun bedeli: {len(mevcut)} kolon")
-        if len(mevcut) <= args.budget:
-            print("Butcen zaten yetiyor, kismaya gerek yok.\n")
-            _mod_fix16(enc, args)
-            return
-    except Fix16Hatasi:
-        print("Mevcut kupon sabit 16 satir modu icin uygun degil "
-              "(7 cifteden az).")
-
-    # Plan uretimi, secim, yeniden kodlama ve cozum `engines.run_butce`ta.
-    # Buradaki kopya ayni diziyi yuruyordu; CLI yalnizca SUNUM katmanidir.
-    try:
-        r = run_butce(enc, args.budget, args.parsed_probs,
-                      plan_count=args.plan, plan_apply=args.plan_uygula,
-                      variant=args.variant)
-    except ButceSigmazHatasi:
-        print(f"\n{args.budget} kolonluk butceye sigan bir plan bulunamadi.")
-        print("Daha fazla maci bankoya cevirmen ya da butceyi artirman gerekiyor.")
-        return
-
-    planlar, idx = r["planlar"], r["secili_index"]
-    print(f"\n{len(planlar)} plan bulundu (en az feda edenden siraliyla):\n")
-    for i, pl in enumerate(planlar, 1):
-        ek = f"  kume-ici olasilik %{100 * pl.p_kume_ici:.2f}" if pl.p_kume_ici else ""
-        print(f"Plan {i}: {pl.bedel} kolon / {pl.satir} satir{ek}")
-        for d in pl.degisiklikler:
-            print(f"   - {d}")
-        if not pl.degisiklikler:
-            print("   - (degisiklik yok)")
-        print()
-
-    secili = planlar[idx]
-    print(INCE)
-    print(f"Plan {idx + 1} uygulaniyor (--plan-uygula ile degistirebilirsin).")
-    print(INCE)
-    _, aciklama = solve_fix16(r["enc"], variant=args.variant)
-    yazdir_ve_kaydet(r["enc"], r["cols"],
-                     f"Butce plani ({secili.bedel} kolon) - {aciklama}",
-                     args.output,
-                     [f"Uygulanan degisiklikler: {'; '.join(secili.degisiklikler) or 'yok'}"],
-                     probs=args.parsed_probs, tam_liste=not args.kisa,
-                     **_mc_kwargs(args))
-
-
-def _mod_maxcov(enc: Encoder, args) -> None:
-    if args.budget is None:
-        raise ValueError("--mode maxcov icin --budget gerekir.")
-    print(f"MAKSIMUM KAPSAMA MODU: {args.budget} kolon\n")
-    tavan = min(enc.space_size(), args.budget * enc.ball_size())
-    if args.budget < enc.lower_bound():
-        print(f"   Teorik tavan: {args.budget} x {enc.ball_size()} = {tavan} nokta "
-              f"= %{100 * tavan / enc.space_size():.1f}")
-        print("   14-GARANTI IMKANSIZ (sayma argumani). Kapsama maksimize edilecek.\n")
-
-    # Algoritma `engines.run_maxcov`ta (kesin cozucu -> acgozlu duse ->
-    # kapsama yeniden sayimi). Buradaki kopya ayni isi yapiyordu ama farkli
-    # varsayilanlarla. CLI yalnizca SUNUM katmanidir: notlar ASCII kalir
-    # cunku terminal ciktisinin tamami boyle (bkz. report.py).
-    r = run_maxcov(enc, args.budget, time_limit=args.time_limit, seed=args.seed)
-    cols, kapsanan, kanit = r["cols"], r["kapsanan"], r["kanit"]
-    if not kanit:
-        print("   Kesin cozucu kanit uretmedi (zaman siniri ya da scipy yok).")
-
-    notlar = [
-        f"Kapsanan nokta: {kapsanan}/{enc.space_size()} "
-        f"(%{100 * kapsanan / enc.space_size():.2f})",
-        f"Optimallik: {'KANITLANDI' if kanit else 'kanitlanmadi (zaman siniri)'}",
-        "DIKKAT: bu bir GARANTI DEGIL, olasiliktir.",
-    ]
-    yazdir_ve_kaydet(enc, cols, f"Maksimum kapsama - {args.budget} kolon",
-                     args.output, notlar, probs=args.parsed_probs,
-                     tam_liste=not args.kisa, **_mc_kwargs(args))
-
-
-def _mod_genel(enc: Encoder, args) -> None:
-    """auto / block / exact / heuristic — hepsi `engines.adaylar()` uzerinden.
-
-    Motor dagitiminin CLI kopyasi buradaydi; API ve saglik katmani ayni isi
-    `engines.py` icinde yapiyordu. Kopya kaldirildi: CLI artik yalnizca
-    SUNUM katmanidir (hangi motorun kostugunu yazar, sonucu bicimler),
-    hangi motorun kosacagina karar veren tek yer `engines.adaylar()`.
+    `--budget`, `--variant`, `--trials`, `--block-limit` gibi bayraklar da
+    o aramanın parametreleriydi ve arama ile birlikte düştü.
     """
-    motorlar = {
-        "auto": ("block", "exact", "heuristic"),
-        "block": ("block",),
-        "exact": ("exact",),
-        "heuristic": ("heuristic",),
-    }[args.mode]
-
-    eng = engine_params(
-        trials=args.trials, ls_iters=args.ls_iters, seed=args.seed,
-        time_limit=args.time_limit, block_limit=args.block_limit,
-        exact_limit=args.exact_limit,
-        # CLI'de `auto` kanit icin beklemeye razidir: kullanici komutu
-        # bilerek calistirmis ve karsisinda oturuyordur. Web'de ayni bekleme
-        # istek yolunu tikar, orada `auto_ilp_limit` varsayilani (3 sn) gecerli.
-        auto_ilp_limit=args.time_limit,
-    )
-    print(f"Motorlar calisiyor: {', '.join(motorlar)}...")
-    liste = adaylar(enc, eng, motorlar=motorlar, log=_log,
-                    ilp_zorunlu=(args.mode == "exact"))
-    if not liste:
-        raise RuntimeError(
-            "Hicbir motor sonuc uretemedi. scipy kurulu mu? (pip install scipy)")
-
-    en_iyi = en_iyi_aday(liste)
-    cols, baslik = en_iyi.cols, en_iyi.baslik
-
-    notlar: list[str] = []
-    if len(cols) == enc.lower_bound():
-        notlar.append("Alt sinira esit -> KANITLANMIS OPTIMAL")
-    elif en_iyi.kanit:
-        notlar.append("ILP optimalligi kanitladi -> KANITLANMIS OPTIMAL")
-    _, acik = dogrula_kaplama(cols, enc.alphabet_sizes)
-    if acik:
-        notlar.append(f"HATA: {acik} nokta acik kaldi!")
-    if len(liste) > 1:
-        notlar.append("Denenen motorlar: " +
-                      ", ".join(f"{a.baslik.split(' (')[0]}={len(a.cols)}"
-                                for a in liste))
-
-    yazdir_ve_kaydet(enc, cols, baslik, args.output, notlar,
-                     probs=args.parsed_probs, tam_liste=not args.kisa,
-                     **_mc_kwargs(args))
+    cols = duz_kolonlar(enc)
+    notlar = [
+        "Seçim kümesinin tamamı oynanır: indirgeme yok.",
+        "Sonuç kümenin içindeyse bir kolon 15 tutturur; küme dışında kalan "
+        "her maç en iyi kolonu bir kademe düşürür (en iyi kolon = 15 − kaçak).",
+    ]
+    _log(f"Duz (tam sistem): {len(cols)} kolon")
+    yazdir_ve_kaydet(enc, cols, f"Düz (tam sistem) — {len(cols):,} kolon",
+                     args.output, notlar, probs=args.parsed_probs,
+                     tam_liste=not args.kisa, **_mc_kwargs(args))
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -315,29 +177,11 @@ yazilir. '1' banko ev sahibi, '10' cifte, '102' kapama (uclu).
                    help="Dirichlet prior alpha (preset/bayes yoksa 1.0)")
     p.add_argument("--evidence-strength", type=float, default=None,
                    help="Evidence n / guven (preset/bayes yoksa 10.0)")
-    p.add_argument("--mode",
-                   choices=["fix16", "auto", "exact", "block", "heuristic",
-                            "butce", "maxcov"],
-                   default="fix16",
-                   help="fix16 (varsayilan): her zaman 16 satir, en az 7 cifte "
-                        "zorunlu. auto: en ucuz cozum, satir sayisi degisken. "
-                        "butce: hangi maci kismalisin. maxcov: sabit butceyle "
-                        "maksimum kapsama (garanti yok).")
-    p.add_argument("--variant", type=int, default=0,
-                   help="Ayni garantiyi veren farkli bir 16 satir uretir")
-    p.add_argument("--budget", type=int, default=None,
-                   help="butce/maxcov modlari icin kolon butcesi")
-    p.add_argument("--plan", type=int, default=5,
-                   help="butce modunda gosterilecek plan sayisi")
-    p.add_argument("--plan-uygula", type=int, default=1,
-                   help="butce modunda hangi planin kuponu basilsin")
-    p.add_argument("--block-limit", type=int, default=256,
-                   help="Blok motorunda ILP ile cozulecek maksimum blok uzayi")
-    p.add_argument("--exact-limit", type=int, default=512,
-                   help="auto modda ILP denenecek maksimum uzay boyutu")
-    p.add_argument("--time-limit", type=float, default=60.0,
-                   help="ILP zaman siniri (saniye)")
-    p.add_argument("--trials", type=int, default=5)
+    # `--mode`, `--variant`, `--budget`, `--plan`, `--plan-uygula`,
+    # `--block-limit`, `--exact-limit`, `--time-limit`, `--trials`,
+    # `--ls-iters`, `--compare-budget`, `--no-compare` bayraklari KALKTI:
+    # hepsi kaplama aramasinin parametreleriydi ve arama ile birlikte
+    # dustu (docs/DUZ_SISTEME_GECIS.md). Duzde secilecek bir mod yok.
     p.add_argument("--ls-iters", type=int, default=30000)
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--kisa", action="store_true",
@@ -384,14 +228,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 print(line)
         print(INCE)
 
-        if args.mode == "fix16":
-            _mod_fix16(enc, args)
-        elif args.mode == "butce":
-            _mod_butce(enc, args)
-        elif args.mode == "maxcov":
-            _mod_maxcov(enc, args)
-        else:
-            _mod_genel(enc, args)
+        _mod_duz(enc, args)
 
     except (ValueError, RuntimeError) as e:
         print(f"\nHATA: {e}\n", file=sys.stderr)

@@ -58,11 +58,19 @@ def test_anlamsiz_esik_ciftinde_bile_tanimli():
 # ─── skorlama ─────────────────────────────────────────────────────────────────
 
 def test_kume_ici_hafta_15_tutturur():
-    """13 doğru banko + sonucu içeren 2 çifte: 2 kolon, küme içi, 15 doğru."""
+    """13 doğru banko + sonucu içeren 2 çifte: 4 kolon, küme içi, 15 doğru.
+
+    **Sayı 2'den 4'e çıktı ve sebebi ölçüm değil YAPI.** Kaplama döneminde
+    iki çifteyi bir hata payıyla örtmek 2 kolona yetiyordu (`2² = 4` noktanın
+    yarıçap-1 topları); düzde örtme diye bir şey yok, seçim kümesinin
+    tamamı oynanır ve o da `2² = 4` kolondur. Testin geri kalanı aynen
+    duruyor: küme içi, kaçak yok, en iyi kolon 15.
+    """
     h = _hafta_calistir(_girdi("1" * 13 + "10", [KUVVETLI] * 13 + [ORTA, ORTA]),
                         0.68, 0.38)
     assert h["banko"] == 13 and h["double"] == 2 and h["triple"] == 0
-    assert h["columns"] == 2 and h["in_set"] is True
+    assert h["columns"] == 2 ** h["double"] * 3 ** h["triple"] == 4
+    assert h["in_set"] is True
     assert h["misses"] == 0 and h["miss_at"] == []
     assert h["best"] == MATCH_COUNT
     assert h["guaranteed"] is True

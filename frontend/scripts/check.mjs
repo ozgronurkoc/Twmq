@@ -148,41 +148,42 @@ try {
   });
 
   // ── Ayarlar ──────────────────────────────────────────────────────────
-  dene("motor ayarlari ve mod gidis-donus", () => {
+  //
+  // Burada iki test vardi ve ikisi de kaplama ayarlarini tutuyordu: mod /
+  // varyant / butce / plan / motor ayarlarinin gidis-donusu, ve "eski 6
+  // alanli motor baglantisi hala cozuluyor". Kaplama sokuldu
+  // (docs/DUZ_SISTEME_GECIS.md); o alanlarin hicbiri artik yok. Yerlerine
+  // ESKI baglantilarin ne olduğunu tutan test geldi (asagida).
+
+  dene("kalan ayarlar gidis-donus", () => {
     const k = K.varsayilanKurulum();
-    k.mode = "butce";
-    k.budget = 4096;
-    k.planCount = 12;
-    k.planApply = 7;
-    k.variant = 3;
     k.fireMax = 0;
     k.kati = true;
-    k.eng = { trials: 9, ls_iters: 12345, seed: 7, time_limit: 90,
-              block_limit: 512, exact_limit: 1024, auto_ilp_limit: 7.5 };
+    k.mcSamples = 150000;
     const geri = K.kurulumuCoz(K.kurulumuKodla(k)).kurulum;
-    assert.equal(geri.mode, "butce");
-    assert.equal(geri.budget, 4096);
-    assert.equal(geri.planCount, 12);
-    assert.equal(geri.planApply, 7);
-    assert.equal(geri.variant, 3);
     assert.equal(geri.fireMax, 0);
     assert.equal(geri.kati, true);
-    assert.deepEqual(geri.eng, k.eng);
   });
 
-  dene("eski 6 alanli motor baglantisi hala cozuluyor", () => {
-    // `auto_ilp_limit` motor dizisine SONRADAN eklendi (6 -> 7 alan).
-    // Daha once paylasilmis adresler kirilmamali: eksik alan varsayilana
-    // duser, dizinin tamami "bozuk" sayilip ATLANMAZ.
-    const k = K.varsayilanKurulum();
-    const adres = K.kurulumuKodla(k) + "&e=9,12345,7,90,512,1024";
+  dene("kaplama devrinin baglantilari SESSIZCE yok sayilmaz", () => {
+    // Paylasilmis eski adresler `m` (mod), `v` (varyant), `b` (butce),
+    // `pc`/`pa` (butce plani) ve `e` (motor ayarlari) tasiyor. Bunlari
+    // gormezden gelmek, kullaniciya "istedigin kupon kuruldu" demek
+    // olurdu — oysa istedigi sey artik uretilemiyor. Cozucu onlari
+    // `atlanan`a yaziyor ve arayuz soyluyor.
+    const adres = K.kurulumuKodla(K.varsayilanKurulum())
+      + "&m=fix16&v=3&b=4096&pc=12&pa=7&e=9,12345,7,90,512,1024";
     const { kurulum: geri, atlanan } = K.kurulumuCoz(adres);
-    assert.equal(atlanan.includes("motor ayarları"), false,
-      "eski baglanti bozuk sayilmis");
-    assert.equal(geri.eng.trials, 9);
-    assert.equal(geri.eng.exact_limit, 1024);
-    assert.equal(geri.eng.auto_ilp_limit, K.VARSAYILAN_ENG.auto_ilp_limit,
-      "eksik alan varsayilana dusmeli");
+    for (const ad of ["mod", "varyant", "bütçe", "plan sayısı",
+                      "uygulanacak plan", "motor ayarları"]) {
+      assert.ok(
+        atlanan.some((x) => x.startsWith(ad)),
+        `"${ad}" atlanan listesinde yok: ${JSON.stringify(atlanan)}`,
+      );
+    }
+    // Kurulumun geri kalani SAGLAM kalmali: eski parametreler adresi
+    // butunuyle bozuk saydirmamali.
+    assert.deepEqual(geri.matches, K.VARSAYILAN_MACLAR);
   });
 
   dene("bayes ayarlari gidis-donus", () => {
@@ -246,11 +247,10 @@ try {
     const geri = K.kurulumuCoz("?s=99xx&m=uydurma&p=abc&e=1,2");
     assert.ok(geri, "cozum null dondu");
     assert.deepEqual(geri.kurulum.matches, K.VARSAYILAN_MACLAR);
-    assert.equal(geri.kurulum.mode, "fix16");
     assert.ok(geri.atlanan.includes("maç seçimleri"));
-    assert.ok(geri.atlanan.includes("mod"));
     assert.ok(geri.atlanan.includes("olasılıklar"));
-    assert.ok(geri.atlanan.includes("motor ayarları"));
+    assert.ok(geri.atlanan.some((x) => x.startsWith("mod")));
+    assert.ok(geri.atlanan.some((x) => x.startsWith("motor ayarları")));
   });
 
   dene("bozuk olasilik girisi KAPALI acilir, uydurma deger beslenmez", () => {
@@ -273,11 +273,9 @@ try {
   });
 
   dene("sinir disi sayilar kirpilir, patlamaz", () => {
-    const geri = K.kurulumuCoz("?s=111111111111111&v=-5&f=99&pc=999&pa=999").kurulum;
-    assert.equal(geri.variant, 0);
+    const geri = K.kurulumuCoz("?s=111111111111111&f=99&mc=99999999").kurulum;
     assert.equal(geri.fireMax, 2);
-    assert.equal(geri.planCount, 50);
-    assert.ok(geri.planApply <= geri.planCount);
+    assert.equal(geri.mcSamples, K.SINIRLAR.mc_samples.max);
   });
 
   // ── Kume-ici hesabi ──────────────────────────────────────────────────
@@ -384,19 +382,24 @@ try {
     }
   });
 
-  dene("kaplama alt siniri backend'in alt_sinir'iyla ayni", () => {
-    // Ornek kupon: 8 cifte -> uzay 256, top 9, alt sinir 29 (backend olculdu)
-    const a = Z.kaplamaAltSiniri(ORNEK_SEC);
+  // Burada iki test vardi ve ikisi de `kaplamaAltSiniri`yi olcuyordu:
+  // kure-kaplama alt sinirinin backend'in `alt_sinir`iyla ayni cikmasi, ve
+  // uclu maclarin top boyutuna 2 katmasi. Kaplama sokuldu
+  // (docs/DUZ_SISTEME_GECIS.md) ve alt sinir kavrami dustu — duzde alt
+  // sinir da ust sinir da uzayin KENDISI. Backend `alt_sinir` alanini
+  // artik hic gondermiyor.
+
+  dene("kupon bedeli backend'in kolon_bedeli'yle ayni", () => {
+    // Ornek kupon: 8 cifte -> 2^8 = 256 kolon (backend olculdu).
+    const a = Z.kuponBedeli(ORNEK_SEC);
     assert.equal(a.uzay, SOZLESME.olculmus.uzay);
-    assert.equal(a.topBoyutu, SOZLESME.olculmus.top_boyutu);
-    assert.equal(a.altSinir, SOZLESME.olculmus.alt_sinir);
+    assert.equal(a.uzay, SOZLESME.olculmus.duz_kolon);
   });
 
-  dene("uclu maclar top boyutuna 2 katar", () => {
-    const a = Z.kaplamaAltSiniri([["1", "0", "2"], ["1", "0"], ["1"]]);
-    assert.equal(a.uzay, 6);
-    assert.equal(a.topBoyutu, 1 + 2 + 1 + 0);
-    assert.equal(a.altSinir, Math.ceil(6 / 4));
+  dene("bedel isaret sayilarinin CARPIMI: 2^cifte * 3^uclu", () => {
+    assert.equal(Z.kuponBedeli([["1", "0", "2"], ["1", "0"], ["1"]]).uzay, 6);
+    assert.equal(Z.kuponBedeli([["1", "0"], ["1", "0"], ["1", "0"]]).uzay, 8);
+    assert.equal(Z.kuponBedeli([["1"], ["1"], ["1"]]).uzay, 1);
   });
 
   dene("kucuk olasilik okunur yazilir (sabit basamak farki yutardi)", () => {
@@ -422,9 +425,8 @@ try {
   // ── Senaryo karsilastirmasi ──────────────────────────────────────────
 
   const sn = (id, secim, ek = {}) => ({
-    id, secimParmak: secim, mode: "fix16", baslik: "", satir: 16, bedel: 32,
-    garanti: true, acik: 0, altSinir: 29, pKumeIci: null,
-    kurulum: K.varsayilanKurulum(), ...ek,
+    id, secimParmak: secim, baslik: "", satir: 1, bedel: 256,
+    pKumeIci: null, kurulum: K.varsayilanKurulum(), ...ek,
   });
 
   dene("ayni kurulum tekrar kosulursa satir YERINDE yenilenir", () => {
@@ -445,49 +447,61 @@ try {
     assert.equal(l[0].id, "id9");
   });
 
-  dene("en ucuz garantili YALNIZCA ayni secimden secilir", () => {
+  // Uc test buradaydi ve ucu de `enUcuzGarantili`yi olcuyordu: "yalnizca
+  // ayni secimden secilir", "garanti vermeyen daha ucuz satir en ucuz
+  // sayilmaz", "kiyaslanacak sey yoksa null". Kaplama sokuldu
+  // (docs/DUZ_SISTEME_GECIS.md); duzde ayni secim HER ZAMAN ayni bedeli
+  // verir ve garanti diye bir secenek yok, yani o soru dejenere.
+  //
+  // Yerine gecen soru: odenen her kolon ne kadar kume-ici olasilik
+  // aliyor? (`enIyiVerim`)
+
+  dene("en iyi verim KOLON BASINA olasiliktan secilir, ucuzdan degil", () => {
     const l = [
-      sn("a", "s1", { bedel: 32, mode: "fix16" }),
-      sn("b", "s2", { bedel: 8, mode: "fix16" }),   // baska secim: sayilmaz
-      sn("c", "s1", { bedel: 29, mode: "auto" }),
+      sn("ucuz", "s1", { bedel: 8, pKumeIci: 0.001 }),    // 1,25e-4 / kolon
+      sn("verimli", "s2", { bedel: 64, pKumeIci: 0.02 }), // 3,13e-4 / kolon
+      sn("pahali", "s3", { bedel: 512, pKumeIci: 0.03 }), // 5,86e-5 / kolon
     ];
-    const e = S.enUcuzGarantili(l, "s1");
-    assert.equal(e.id, "c", "baska secimden bir satir secildi");
-    assert.equal(e.bedel, 29);
+    const e = S.enIyiVerim(l);
+    assert.equal(e.id, "verimli", "en ucuz satir one cikti");
   });
 
-  dene("garanti vermeyen daha ucuz satir 'en ucuz' sayilmaz", () => {
+  dene("olasiligi bilinmeyen satir verim kiyasina GIRMEZ", () => {
     const l = [
-      sn("a", "s1", { bedel: 32, garanti: true }),
-      sn("b", "s1", { bedel: 12, garanti: false, acik: 40, mode: "maxcov" }),
+      sn("a", "s1", { bedel: 8, pKumeIci: null }),
+      sn("b", "s2", { bedel: 64, pKumeIci: 0.02 }),
+      sn("c", "s3", { bedel: 128, pKumeIci: 0.01 }),
     ];
-    const e = S.enUcuzGarantili(l, "s1");
-    assert.equal(e.id, "a", "garantisiz satir one cikti");
+    assert.equal(S.enIyiVerim(l).id, "b");
   });
 
   dene("kiyaslanacak sey yoksa null doner", () => {
-    assert.equal(S.enUcuzGarantili([], "s1"), null);
-    assert.equal(S.enUcuzGarantili([sn("a", "s2")], "s1"), null);
+    assert.equal(S.enIyiVerim([]), null);
+    // Tek satir bir KIYAS degildir: yanina koyacak sey yok.
+    assert.equal(S.enIyiVerim([sn("a", "s1", { pKumeIci: 0.5 })]), null);
+    // Olasilik girilmemisse verim hesaplanamaz.
+    assert.equal(
+      S.enIyiVerim([sn("a", "s1"), sn("b", "s2")]),
+      null,
+    );
   });
 
   dene("senaryoYap: p_kume_ici YUZDEden 0-1'e cevrilir", () => {
     const r = {
-      mode: "fix16", baslik: "x", satir_sayisi: 16, kolon_bedeli: 32,
-      acik: 0, worst: 1, alt_sinir: 29,
+      baslik: "x", satir_sayisi: 1, kolon_bedeli: 256,
       advanced: { exact: { p_kume_ici: 0.015, p_15: 0, p_14: 0, p_tek: 0 } },
     };
     const y = S.senaryoYap(r, K.varsayilanKurulum(), "id", "s1");
     assert.ok(Math.abs(y.pKumeIci - 0.00015) < 1e-9, `gelen ${y.pKumeIci}`);
-    assert.equal(y.garanti, true);
+    assert.equal(y.satir, 1, "duzde kupon tek satirdir");
+    assert.equal(y.bedel, 256);
   });
 
-  dene("acik nokta varsa garanti YOK sayilir", () => {
+  dene("olasilik girilmemisse pKumeIci null kalir (uydurulmaz)", () => {
     const r = {
-      mode: "maxcov", baslik: "x", satir_sayisi: 8, kolon_bedeli: 12,
-      acik: 40, worst: 2, alt_sinir: 29, advanced: null,
+      baslik: "x", satir_sayisi: 1, kolon_bedeli: 256, advanced: null,
     };
     const y = S.senaryoYap(r, K.varsayilanKurulum(), "id", "s1");
-    assert.equal(y.garanti, false);
     assert.equal(y.pKumeIci, null);
   });
 

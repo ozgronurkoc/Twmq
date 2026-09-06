@@ -86,7 +86,8 @@ def en_iyi_kolon(secimler: Sequence[Sequence[str]], gercek: str) -> int:
     """
     from itertools import product
 
-    from spor_toto.core import Encoder, Fix16Hatasi, solve_fix16
+    from spor_toto.core import Encoder
+    from spor_toto.kaplama_arsiv import Fix16Hatasi, solve_fix16
     listeler = [list(x) for x in secimler]
     try:
         enc = Encoder(listeler)
@@ -137,9 +138,47 @@ kacak_dagilimi = ortak_kacak_dagilimi
 #: 14 verirdi (ve 8 kat ucuza gelirdi).
 SISTEMLER = ("fix16", "tam")
 
+#: Kaydin oynandigi sistem — **varsayilana DUSULMEZ, kayittan okunur.**
+#:
+#: Bu fonksiyon bir hatanin uzerine yazildi. `sistem` her yerde
+#: `"fix16"` varsayilaniyla geciyordu ve 2026/27'nin ilk dort haftasi
+#: gercekten kaplamayla oynandigi icin dogruydu. Kaplama 2026-09-06'da
+#: sokuldu (`docs/DUZ_SISTEME_GECIS.md`): 5. haftadan itibaren kupon duz
+#: kuruluyor ve ayni varsayilan onu SESSIZCE yanlis degerlendirirdi —
+#: yedi ciftesi olan bir duz kupon 16 satirlik kaplamaya indirgenir, en
+#: iyi kolon 15 yerine 14 sayilir ve kupon kendi tuttugundan bir kademe
+#: kotu gorunur.
+#:
+#: Kayit ne diyorsa o: `meta.sistem`. Alan yoksa ESKI kayittir (kaplama
+#: doneminde yazilmis) ve `fix16` dogru cevaptir.
+#:
+#: ALAN KUPON KAYDINDA YAZILIDIR (`hafta_NN_kupon.json` -> `meta.sistem`),
+#: hafta dosyasinda degil; `super_toto_hafta.hafta_yukle` onu yukleme
+#: aninda `d["meta"]["sistem"]`e tasir. Bu satir bir kez EKSIKTI ve bu
+#: fonksiyon o yuzden HER hafta icin `fix16` donuyordu — yani "varsayilana
+#: dusulmez" sozu yaziliydi ama tutmuyordu. Bekcisi:
+#: tests/test_degerlendir.py::test_hafta_yukle_kuponun_SISTEMINI_yuzeye_cikarir
+def kayit_sistemi(d: dict[str, Any]) -> str:
+    """Donmus kaydin oynandigi sistem — `meta.sistem`, yoksa `fix16`."""
+    s = (d.get("meta") or {}).get("sistem")
+    if s in SISTEMLER:
+        return s
+    if s == "duz":            # kupon kaydinin adlandirmasi
+        return "tam"
+    if s is not None:
+        raise SystemExit(f"kayitta bilinmeyen sistem: {s!r}")
+    return "fix16"
+
 
 def kupon_degerlendir(d: dict[str, Any], picks: Sequence[str],
-                      sistem: str = "fix16") -> dict[str, Any]:
+                      sistem: str | None = None) -> dict[str, Any]:
+    #: `None` = "kayit ne diyorsa o". VARSAYILAN BILEREK `"fix16"` DEGIL:
+    #: sabit bir varsayilan, kaydi hic okumayan cagiranlari sessizce yanlis
+    #: sisteme baglar ve olculdu ki bu tam olarak olan seydi — bes ayri
+    #: cagri yeri (arayuz JSON'unu ureten `super_toto_frontend` dahil)
+    #: sistemi hic sormadan `fix16`ya dusuyordu. Artik sormamak, "kayittan
+    #: oku" demek.
+    sistem = kayit_sistemi(d) if sistem is None else sistem
     if sistem not in SISTEMLER:
         raise SystemExit(f"bilinmeyen sistem: {sistem} ({', '.join(SISTEMLER)})")
     gercek = d["meta"]["results"]
@@ -493,7 +532,7 @@ def gercegin_sirasi(d: dict[str, Any]) -> dict[str, Any]:
 
 
 def oynanan_kolonlar(d: dict[str, Any], picks: Sequence[str],
-                     sistem: str = "fix16") -> dict[str, Any]:
+                     sistem: str | None = None) -> dict[str, Any]:
     """OYNANAN kolonların toplam olasılığı — yani **P(15)**.
 
     Küme-içi olasılıkla karıştırılmamalı: küme-içi, gerçeğin seçim
@@ -506,8 +545,10 @@ def oynanan_kolonlar(d: dict[str, Any], picks: Sequence[str],
     fonksiyon yine de aynı yoldan hesaplar, çünkü iki sayının eşitliği
     **sonuç**tur, varsayım değil.
     """
-    from spor_toto.core import Encoder, Fix16Hatasi, solve_fix16
+    from spor_toto.core import Encoder
+    from spor_toto.kaplama_arsiv import Fix16Hatasi, solve_fix16
 
+    sistem = kayit_sistemi(d) if sistem is None else sistem
     listeler = [list(x) for x in picks]
     maclar = d["matches"]
     if sistem == "tam":
@@ -535,7 +576,7 @@ def oynanan_kolonlar(d: dict[str, Any], picks: Sequence[str],
 
 
 def plan_karnesi(d: dict[str, Any], picks: Sequence[str],
-                 sistem: str = "fix16", ad: str = "") -> dict[str, Any]:
+                 sistem: str | None = None, ad: str = "") -> dict[str, Any]:
     """Bir kuponun tek satırlık karnesi — **iki sistemi kıyaslanabilir kılar.**
 
     Kademe olasılıkları sistemden okunur: 16 satırlık kaplamada küme içi
@@ -543,6 +584,7 @@ def plan_karnesi(d: dict[str, Any], picks: Sequence[str],
     (`P(≥14) = P(k ≤ 1)`). Aynı dağılımı iki sistemde aynı sütuna yazmak,
     8 kat pahalı bir kuponu ucuz olanla eşit göstermek olurdu.
     """
+    sistem = kayit_sistemi(d) if sistem is None else sistem
     s = kupon_degerlendir(d, picks, sistem)
     dist = s["dist"]
     kaydir = 1 if sistem == "tam" else 0
@@ -638,7 +680,7 @@ def sapma_defteri(d: dict[str, Any], picks: Sequence[str]) -> dict[str, Any]:
 
 
 def oynanan_kolon_listesi(d: dict[str, Any], picks: Sequence[str],
-                          sistem: str = "fix16") -> list[tuple[str, ...]]:
+                          sistem: str | None = None) -> list[tuple[str, ...]]:
     """Gerçekten oynanan kolonların kendisi — sembol sembol.
 
     `oynanan_kolonlar` bu listenin olasılık toplamını verir; getiri hesabı
@@ -648,8 +690,10 @@ def oynanan_kolon_listesi(d: dict[str, Any], picks: Sequence[str],
     """
     from itertools import product
 
-    from spor_toto.core import Encoder, Fix16Hatasi, solve_fix16
+    from spor_toto.core import Encoder
+    from spor_toto.kaplama_arsiv import Fix16Hatasi, solve_fix16
 
+    sistem = kayit_sistemi(d) if sistem is None else sistem
     listeler = [list(x) for x in picks]
     if sistem == "tam":
         return list(product(*listeler))
@@ -672,7 +716,7 @@ def oynanan_kolon_listesi(d: dict[str, Any], picks: Sequence[str],
 
 
 def getiri_karnesi(d: dict[str, Any], picks: Sequence[str],
-                   sistem: str = "fix16") -> dict[str, Any] | None:
+                   sistem: str | None = None) -> dict[str, Any] | None:
     """Kuponun **gerçekleşen** ve **beklenen** getirisi — ikramiye tablosundan.
 
     Projede ilk kez para birimli bir sayı ölçümden geliyor: ikramiye ekranı
@@ -876,14 +920,16 @@ def referans_kuponlar(d: dict[str, Any],
     Bunlar bizim kuralımızın ürünü değildir ve öyle sunulmaz: ayrı bir
     başlıkta, kaynağıyla birlikte durur. Kıyasın anlamlı olması için
     oynanma biçimi (`sistem`) mutlaka kayıtta yazılıdır — yazılmazsa
-    16 satır varsayılır ve 8 kat pahalı bir kupon ucuz gibi okunur.
+    HAFTANIN kendi sistemi (`kayit_sistemi`) varsayılır; eskiden burada
+    sabit `fix16` vardı ve düz bir haftada 8 kat pahalı bir kupon ucuz
+    gibi okunurdu.
     """
     out = []
     for r in kupon.get("referans") or []:
         if r.get("sistem") == "kayitli":
             out.append(kayitli_karne(d, r))
             continue
-        kart = plan_karnesi(d, r["picks"], r.get("sistem", "fix16"),
+        kart = plan_karnesi(d, r["picks"], r.get("sistem") or kayit_sistemi(d),
                             r.get("label", "referans"))
         # Iki karsi-olgusal, ikisi de ayni gövdeyle ölçülür:
         #
@@ -893,7 +939,7 @@ def referans_kuponlar(d: dict[str, Any],
         # `azami` — AYNI SEKIL (ayni sayida banko/cift/uclu) ama mekanik
         # semboller. Bu satir kuponun kendi gorusunu yalitir: sekil ayni,
         # bedel ayni, degisen yalnizca hangi sembolun tutuldugu.
-        oteki = "fix16" if r.get("sistem", "fix16") == "tam" else "tam"
+        oteki = "fix16" if (r.get("sistem") or kayit_sistemi(d)) == "tam" else "tam"
         azami_picks = []
         for mm, pk in zip(d["matches"], r["picks"]):
             sirali = sorted(SEM, key=lambda x: -mm["probs"][x])
@@ -905,7 +951,7 @@ def referans_kuponlar(d: dict[str, Any],
             "sapma": sapma_defteri(d, r["picks"]),
             "oteki_sistem": plan_karnesi(d, r["picks"], oteki,
                                          f"{r.get('label', 'referans')} · {oteki}"),
-            "azami": plan_karnesi(d, azami_picks, r.get("sistem", "fix16"),
+            "azami": plan_karnesi(d, azami_picks, r.get("sistem") or kayit_sistemi(d),
                                   "aynı şekil · azami kapsama"),
         })
         out.append(kart)
@@ -978,9 +1024,12 @@ def rapor(sezon: str, hafta: int) -> dict[str, Any]:
         "referans": referans_kuponlar(d, kupon),
         "referans_notu": kupon.get("referans_notu"),
         "havuz": havuz_karnesi(d),
-        "kartlar": ([plan_karnesi(d, sonuclar[0]["picks"], "fix16",
+        # **Sistem kayittan okunur, varsayilana DUSULMEZ** (bkz.
+        # `kayit_sistemi`): burada "fix16" sabit yaziliydi ve 5. haftadan
+        # itibaren duz kuponlari sessizce bir kademe kotu gosterirdi.
+        "kartlar": ([plan_karnesi(d, sonuclar[0]["picks"], kayit_sistemi(d),
                                   sonuclar[0].get("label") or "1. Tahmin ana")]
-                    + ([plan_karnesi(d, ayarli["picks"], "fix16",
+                    + ([plan_karnesi(d, ayarli["picks"], kayit_sistemi(d),
                                      "2. Tahmin ayarlı")] if ayarli else [])),
         "sira": gercegin_sirasi(d),
         "crowd": kalabalik_karnesi(d),

@@ -115,7 +115,12 @@ testpaths = ["tests"]
 # Tek bir dosyayi kosarken ~0,7 sn sabit ek yuk getirir; hata ayiklarken
 # `-n0` ile kapatilir (cikti sirasi da o zaman duzelir).
 addopts = "-q --strict-markers -n auto"
-markers = ["slow: uzun suren ILP testleri"]
+# "ILP testleri" YAZIYORDU ve kaplama sokulunce yanlis oldu: ILP cozucu
+# `engines.py` ile birlikte gitti. Bugun `slow` isaretli 24 testin hicbiri
+# ILP degil — korpus uzerinde donen olcumler (`karne` 8, `deger` 2,
+# `fiyatlar` 2, `hafta_hakki` 2, `hakem` 2, `kalabalik` 2, digerleri 1'er).
+# Isaretin anlami sure, konu degil.
+markers = ["slow: uzun suren olcum testleri (korpus uzerinde doner)"]
 
 
 # ─── Ruff ─────────────────────────────────────────────────────────────────
@@ -252,7 +257,11 @@ module = [
     "spor_toto.fire_scenarios", "spor_toto.backtest", "spor_toto.benzer",
     "spor_toto.odds", "spor_toto.history", "spor_toto.predict",
     "spor_toto.tahmin", "spor_toto.health", "spor_toto.health_history",
-    "spor_toto.core", "spor_toto.engines", "spor_toto.report",
+    # `spor_toto.engines` BURADAN KALKTI: modul kaplamayla birlikte
+    # sokuldu (`docs/DUZ_SISTEME_GECIS.md`) ama adi listede kaldi ve mypy
+    # her kosumda "unused section(s)" diye uyariyordu — kapiyi kirmayan,
+    # o yuzden de kimsenin okumadigi bir uyari.
+    "spor_toto.core", "spor_toto.report",
     "spor_toto.cli", "spor_toto.bayes",
 ]
 ignore_errors = true

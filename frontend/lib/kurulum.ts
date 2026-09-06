@@ -1,7 +1,6 @@
 import {
   MAC_SAYISI,
   SEMBOLLER,
-  type EngineDefaults,
   type ModeId,
   type ProbRow,
   type Sembol,
@@ -58,11 +57,17 @@ export interface Kurulum {
   labels: string[];
   probsAcik: boolean;
   probs: ProbRow[];
-  mode: ModeId;
-  variant: number;
-  budget: number;
-  planCount: number;
-  planApply: number;
+  /**
+   * **`mode`, `variant`, `budget`, `planCount`, `planApply` ve `eng`
+   * dustu.** Alti da kaplama ARAMASININ girdisiydi: hangi cozucu, hangi
+   * Hamming varyanti, kac kolonluk butce, kac plan uretilsin, ve motorun
+   * kendi ayarlari. Kaplama sokuldu (`docs/DUZ_SISTEME_GECIS.md`); duzde
+   * kolonlar isaretlerin carpimi, secilecek bir sey yok.
+   *
+   * Eski paylasilan baglantilar KIRILMIYOR: `kurulumuCoz` bu parametreleri
+   * gorurse `atlanan` listesine yaziyor ve arayuz "su alanlar atlandi"
+   * diye soyluyor — sessizce yok saymiyor.
+   */
   kati: boolean;
   fireMax: number;
   useBayes: boolean;
@@ -71,7 +76,6 @@ export interface Kurulum {
   prior: number;
   evidence: number;
   mcSamples: number;
-  eng: EngineDefaults;
 }
 
 /** README'deki örnek kupon: "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10" */
@@ -87,21 +91,15 @@ export interface Kurulum {
  * cevap. Tablo tek kaynak oldugu icin `check.mjs` artik HEPSINI sunucuyla
  * karsilastirabiliyor.
  *
- * `plan_apply`in ust siniri calisma aninda `planCount`a baglidir; tabloda
- * ilan edilen deger mutlak tavandir.
+ * **Tablo dokuz satirdan ikiye indi.** `budget`, `plan_count`,
+ * `plan_apply`, `trials`, `ls_iters`, `time_limit`, `block_limit`,
+ * `exact_limit` ve `auto_ilp_limit` kaplama aramasinin ayarlariydi ve
+ * onunla birlikte hem sunucudan hem buradan dustu. `check.mjs` kalan
+ * ikisini hala sunucuyla karsilastiriyor.
  */
 export const SINIRLAR = {
   mc_samples: { min: MC_MIN, max: MC_MAX, default: VARSAYILAN_MC },
-  budget: { min: 1, max: 10_000_000, default: 32 },
-  plan_count: { min: 1, max: 50, default: 5 },
-  plan_apply: { min: 1, max: 50, default: 1 },
   fire_max: { min: 0, max: 2, default: 2 },
-  trials: { min: 1, max: 50, default: 5 },
-  ls_iters: { min: 100, max: 500_000, default: 30_000 },
-  time_limit: { min: 1, max: 300, default: 60 },
-  block_limit: { min: 2, max: 6561, default: 256 },
-  exact_limit: { min: 2, max: 4096, default: 512 },
-  auto_ilp_limit: { min: 0.5, max: 300, default: 3 },
 } as const;
 
 export const VARSAYILAN_MACLAR: Sembol[][] = [
@@ -110,21 +108,22 @@ export const VARSAYILAN_MACLAR: Sembol[][] = [
   ["0", "2"], ["1"], ["1", "0"], ["2"], ["1", "0"],
 ];
 
-export const VARSAYILAN_ENG: EngineDefaults = {
-  trials: 5,
-  ls_iters: 30000,
-  seed: 42,
-  time_limit: 60,
-  block_limit: 256,
-  exact_limit: 512,
-  //: Sunucunun `engine_defaults`i ile AYNI (3,0 sn). Arayuz calisma
-  //: aninda `/api/meta`yi okur; bu deger yalnizca ilk cizim icin var.
-  //: Ikisi ayrisirsa `check.mjs` sinir denetiminden duser.
-  auto_ilp_limit: 3,
-};
-
-const MODLAR: readonly ModeId[] = [
-  "fix16", "auto", "exact", "block", "heuristic", "butce", "maxcov",
+/**
+ * Eski, artik anlamsiz sorgu parametreleri. Paylasilan bir baglantida
+ * gorulurlerse SESSIZCE yok sayilmazlar: `atlanan` listesine yazilirlar ve
+ * arayuz "su alanlar atlandi" der.
+ *
+ * Hepsi kaplama aramasinin girdisiydi (`m` mod, `v` Hamming varyanti,
+ * `b` kolon butcesi, `pc`/`pa` butce plani, `e` motor ayarlari) ve
+ * kaplamayla birlikte dustu.
+ */
+const ESKI_PARAMETRELER: readonly [string, string][] = [
+  ["m", "mod"],
+  ["v", "varyant"],
+  ["b", "bütçe"],
+  ["pc", "plan sayısı"],
+  ["pa", "uygulanacak plan"],
+  ["e", "motor ayarları"],
 ] as const;
 
 /** Yerel depo anahtari. Surum numarasi anahtarin ICINDE: kurulumun sekli
@@ -137,11 +136,6 @@ export function varsayilanKurulum(): Kurulum {
     labels: Array(MAC_SAYISI).fill(""),
     probsAcik: false,
     probs: VARSAYILAN_MACLAR.map((sel) => esitPay(sel)),
-    mode: "fix16",
-    variant: 0,
-    budget: 32,
-    planCount: 5,
-    planApply: 1,
     kati: false,
     fireMax: 2,
     useBayes: false,
@@ -150,7 +144,6 @@ export function varsayilanKurulum(): Kurulum {
     prior: 1,
     evidence: 10,
     mcSamples: VARSAYILAN_MC,
-    eng: { ...VARSAYILAN_ENG },
   };
 }
 
@@ -295,17 +288,8 @@ export function kurulumuKodla(k: Kurulum): string {
   const p = new URLSearchParams();
 
   p.set("s", maclariKodla(k.matches));
-  if (k.mode !== v.mode) p.set("m", k.mode);
-  if (k.variant !== v.variant) p.set("v", String(k.variant));
   if (k.fireMax !== v.fireMax) p.set("f", String(k.fireMax));
   if (k.kati !== v.kati) p.set("kt", k.kati ? "1" : "0");
-
-  // Butce alanlari yalnizca butceli modlarda anlamli.
-  if (k.mode === "butce" || k.mode === "maxcov") p.set("b", String(k.budget));
-  if (k.mode === "butce") {
-    p.set("pc", String(k.planCount));
-    p.set("pa", String(k.planApply));
-  }
 
   if (k.probsAcik) {
     p.set("p", probsKodla(k.probs));
@@ -322,21 +306,10 @@ export function kurulumuKodla(k: Kurulum): string {
     }
   }
 
-  const e = k.eng;
-  const ev = v.eng;
-  if (
-    e.trials !== ev.trials || e.ls_iters !== ev.ls_iters || e.seed !== ev.seed ||
-    e.time_limit !== ev.time_limit || e.block_limit !== ev.block_limit ||
-    e.exact_limit !== ev.exact_limit || e.auto_ilp_limit !== ev.auto_ilp_limit
-  ) {
-    // Alan sayisi ARTTI (6 -> 7). Cozucu eski 6'lik baglantilari da kabul
-    // ediyor, yani daha once paylasilmis adresler kirilmaz.
-    p.set(
-      "e",
-      [e.trials, e.ls_iters, e.seed, e.time_limit, e.block_limit,
-       e.exact_limit, e.auto_ilp_limit].join(","),
-    );
-  }
+  // Motor ayarlari (`e`) burada YAZILIYORDU ve artik yok: kaplama
+  // aramasinin ayarlariydi, arama da kalmadi. Uretilen baglanti bu yuzden
+  // eskisinden kisa; eski `e=...` tasiyan baglantilar okunurken `atlanan`a
+  // yazilir (bkz. ESKI_PARAMETRELER).
 
   return p.toString();
 }
@@ -361,11 +334,9 @@ export function kurulumuCoz(arama: string): UrlCozum | null {
   const mac = maclariCoz(p.get("s"));
   if (!mac.gecerli) atlanan.push("maç seçimleri");
 
-  const modHam = p.get("m");
-  let mode = v.mode;
-  if (modHam !== null) {
-    if ((MODLAR as readonly string[]).includes(modHam)) mode = modHam as ModeId;
-    else atlanan.push("mod");
+  // Kaplama devrinden kalan parametreler: sessizce yok sayilmaz, soylenir.
+  for (const [anahtar, ad] of ESKI_PARAMETRELER) {
+    if (p.has(anahtar)) atlanan.push(`${ad} (kaplama söküldü)`);
   }
 
   // Olasilik alani bozuksa giris KAPALI acilir. Acik birakip secimlerden
@@ -376,35 +347,6 @@ export function kurulumuCoz(arama: string): UrlCozum | null {
   const probsAcik = probHam !== null && pr.gecerli;
   if (probHam !== null && !pr.gecerli) atlanan.push("olasılıklar");
 
-  const planCount = tamsayi(p.get("pc"), SINIRLAR.plan_count.min,
-                            SINIRLAR.plan_count.max, v.planCount);
-
-  let eng = { ...v.eng };
-  const engHam = p.get("e");
-  if (engHam !== null) {
-    const parca = engHam.split(",");
-    // 6 VE 7 kabul ediliyor: `auto_ilp_limit` sonradan eklendi ve daha once
-    // paylasilmis 6 alanli adresler kirilmamali — eksik alan varsayilana
-    // duser, dizinin tamami "bozuk" sayilip ATLANMAZ.
-    if ((parca.length === 6 || parca.length === 7)
-        && parca.every((x) => Number.isFinite(Number(x)))) {
-      eng = {
-        trials: tamsayi(parca[0], SINIRLAR.trials.min, SINIRLAR.trials.max, v.eng.trials),
-        ls_iters: tamsayi(parca[1], SINIRLAR.ls_iters.min, SINIRLAR.ls_iters.max, v.eng.ls_iters),
-        seed: tamsayi(parca[2], 0, Number.MAX_SAFE_INTEGER, v.eng.seed),
-        time_limit: tamsayi(parca[3], SINIRLAR.time_limit.min, SINIRLAR.time_limit.max, v.eng.time_limit),
-        block_limit: tamsayi(parca[4], SINIRLAR.block_limit.min, SINIRLAR.block_limit.max, v.eng.block_limit),
-        exact_limit: tamsayi(parca[5], SINIRLAR.exact_limit.min, SINIRLAR.exact_limit.max, v.eng.exact_limit),
-        auto_ilp_limit: parca.length === 7
-          ? ondalikDeger(parca[6], SINIRLAR.auto_ilp_limit.min,
-                         SINIRLAR.auto_ilp_limit.max, v.eng.auto_ilp_limit)
-          : v.eng.auto_ilp_limit,
-      };
-    } else {
-      atlanan.push("motor ayarları");
-    }
-  }
-
   return {
     atlanan,
     kurulum: {
@@ -414,11 +356,6 @@ export function kurulumuCoz(arama: string): UrlCozum | null {
       labels: Array(MAC_SAYISI).fill(""),
       probsAcik,
       probs: probsAcik ? pr.probs : mac.matches.map((s) => esitPay(s)),
-      mode,
-      variant: tamsayi(p.get("v"), 0, 9999, v.variant),
-      budget: tamsayi(p.get("b"), SINIRLAR.budget.min, SINIRLAR.budget.max, v.budget),
-      planCount,
-      planApply: tamsayi(p.get("pa"), 1, planCount, v.planApply),
       kati: bayrak(p.get("kt"), v.kati),
       fireMax: tamsayi(p.get("f"), SINIRLAR.fire_max.min, SINIRLAR.fire_max.max, v.fireMax),
       useBayes: bayrak(p.get("by"), v.useBayes),
@@ -432,7 +369,6 @@ export function kurulumuCoz(arama: string): UrlCozum | null {
       // ama ne kaydiricida gosterilebiliyor ne de sunucuda kabul ediliyordu.
       // Faz 5'te uretilen sozlesme dosyasina baglanacak.
       mcSamples: tamsayi(p.get("mc"), MC_MIN, MC_MAX, v.mcSamples),
-      eng,
     },
   };
 }

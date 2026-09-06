@@ -1,8 +1,11 @@
 # Spor Toto Lab
 
 Tarihsel veriyi ve piyasa oranlarını analiz edip **maç sonucu tahmini** üreten,
-bu tahmini 14-garanti **kaplama kodu (covering code)** ile en az kupona indiren
-motor; üstüne bu motoru sonuna kadar açan bir web arayüzü.
+bu tahmini verilen bir **kolon bütçesinin** altındaki en iyi tek/çift/üçlü
+dağılımına çeviren motor; üstüne bu motoru sonuna kadar açan bir web arayüzü.
+Kupon **düz** oynanır (tam sistem): seçim kümesinin tamamı, en iyi kolon
+`15 − kaçak`. Depo 2026-09-06'ya kadar 14-garantili bir **kaplama kodu**
+(covering code) kullanıyordu; söküm gerekçesi `docs/DUZ_SISTEME_GECIS.md`de.
 
 > **Amaç: kazanma oranını artırmak.** Hedefe bugünkü mesafe ölçülmüştür ve
 > `README.md` §1.1'de yazar (hold-out isabeti **1 hafta**, piyasa Brier 0,579,
@@ -199,7 +202,7 @@ doğrulamadan dosya yazmazlar). Ayrıntı: `docs/VERI_TOPLAMA_VE_ISLEME.md`.
 ```bash
 cd backend
 python -m pytest -m "not slow" -q   # hızlı süit
-python -m pytest                    # tamamı (2.080 test, ILP dahil)
+python -m pytest                    # tamamı (1.803 test)
 python -m pytest -n0 tests/test_egitim.py   # tek çekirdek (hata ayıklarken)
 cd .. && bash scripts/check.sh      # TEK kapı; CI de bunu çağırır
 ```

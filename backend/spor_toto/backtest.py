@@ -1,16 +1,21 @@
 """Geri test — "bu strateji geçen sezon ne yapardı?"
 
-Sezonun her haftası için oranlardan bir kupon üretir, kaplama motorunu
-çalıştırır ve **gerçekleşen sonucun** o kupona ne yaptığını ölçer: küme içinde
-mi kaldı, en iyi kolon kaç tutturdu, kaç kolona mal oldu.
+Sezonun her haftası için oranlardan bir kupon üretir, seçim kümesini
+kolonlara açar ve **gerçekleşen sonucun** o kupona ne yaptığını ölçer: küme
+içinde mi kaldı, en iyi kolon kaç tutturdu, kaç kolona mal oldu.
 
 Zincir tektir ve her adımı başka bir modülden gelir:
 
     odds.match_1x2   → maç başına marj arındırılmış olasılık
     strateji eşiği   → maç başına banko / çifte / üçlü
     core.Encoder     → seçimlerin tamsayı uzayı
-    core.solve_fix16 → 14-garantili kaplama (ya da blok/heuristik yedeği)
+    duz.kolonlar     → seçim kümesinin TAMAMI (2^çifte · 3^üçlü)
     history          → gerçekleşen sonuç
+
+Üçüncü satır eskiden `core.solve_fix16 → 14-garantili kaplama (ya da
+blok/heuristik yedeği)` idi ve bir **aramaydı**. Kaplama söküldü
+(`docs/DUZ_SISTEME_GECIS.md`); arama da doğrulama da gereksiz, çünkü
+kolonlar seçim kümesinin kendisi.
 
 **Bu bir kâr vaadi değildir.** 41 hafta küçük bir örneklemdir; eşik taraması
 yapıldığında en iyi görünen eşiğin gelecek sezon aynısını yapmayacağı
@@ -27,12 +32,8 @@ from typing import Any
 
 from .core import (
     Encoder,
-    dogrula_kaplama,
-    merge_rows,
-    solve_by_blocks,
-    solve_fix16,
-    solve_heuristic,
 )
+from .duz import kolonlar as duz_kolonlar
 from .history import MATCH_COUNT, SYMBOLS, normalized_weeks
 from .odds import (
     ARINDIRMA_VARSAYILAN,
@@ -100,10 +101,12 @@ def _kaplama(sizes: tuple[int, ...]) -> dict[str, Any] | None:
     düzine gerçek çözüme iner — eşik taramasının 5 saniyede bitmesinin sebebi
     budur.
 
-    Kesin çözücü (ILP) burada **bilerek yok**: blok ayrıştırma zaten blok
-    başına kanıtlanmış optimali kullanıyor ve ölçümde ILP tek imza için ~3 sn
-    harcıyordu (tarama 95 sn'ye çıkıyordu). Tek kupon çözerken ILP değerlidir,
-    yüzlerce imzayı tararken değil.
+    **Bu fonksiyon eskiden bir ARAMAYDI.** Yedi çifte varsa `solve_fix16`,
+    yoksa blok ayrıştırma, o da olmazsa sezgisel motor koşuyordu; sonra
+    üretilen kaplamanın gerçekten örttüğü `dogrula_kaplama` ile sınanıyordu.
+    Kaplama söküldü (`docs/DUZ_SISTEME_GECIS.md`): kolonlar seçim kümesinin
+    kendisi, yani arama da doğrulama da gereksiz. Önbellek yine de duruyor —
+    çarpımı üretmek ucuz ama bedava değil ve tarama yüzlerce imza geziyor.
     """
     if not sizes:
         return {"columns": 1, "rows": 1, "cols": [()], "engine": "tam banko",
@@ -114,32 +117,17 @@ def _kaplama(sizes: tuple[int, ...]) -> dict[str, Any] | None:
         return None
 
     enc = _sentetik_encoder(sizes)
-    cift = sum(1 for k in sizes if k == 2)
-
-    if cift >= 7:
-        cols, _ = solve_fix16(enc)
-        motor = "sabit 16 satır (Hamming 7,4)"
-    else:
-        blok = solve_by_blocks(enc, max_block_space=128, time_limit=5.0)
-        if blok:
-            cols, motor = blok[0], "blok ayrıştırma"
-        else:
-            cols = solve_heuristic(enc, trials=3, ls_iters=4_000, seed=42)
-            motor = "sezgisel"
-
-    worst, acik = dogrula_kaplama(cols, sizes)
-    # `attempts=1`: birleştirme doğal koordinat sırasıyla yapılır. Formül
-    # sayfasındaki motor 4 farklı sıra deneyip bazen 1–2 satır daha azını
-    # bulur; burada satır sayısı ikincil bir ölçü ve 4 deneme taramayı
-    # ~6 sn yavaşlatıyordu. Bedel (kolon) bundan etkilenmez.
+    cols = duz_kolonlar(enc, en_cok=UZAY_SINIRI)
     return {
         "columns": len(cols),
-        "rows": len(merge_rows(cols, attempts=1)),
+        # Duzde kupon isaretlerin kendisidir: tek satir.
+        "rows": 1,
         "cols": cols,
-        "engine": motor,
-        "guaranteed": acik == 0,
-        "worst": worst,
-        "open": acik,
+        "engine": "düz (tam sistem)",
+        # Kume ICI acik nokta olamaz: her kombinasyon oynaniyor.
+        "guaranteed": True,
+        "worst": 0,
+        "open": 0,
         # Skorlama kolon kolon dolaşmayı gerektirir; numpy varsa tek matris
         # karşılaştırmasına iner (20 bin kolonda saniyeler yerine milisaniye).
         "matrix": _np.array(cols, dtype=_np.int8) if _np is not None else None,

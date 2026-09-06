@@ -1768,6 +1768,8 @@
    "kural: esik -> hedef, P(en iyi kolon >= 12) enbuyuklenir (docs §3.19)",
    "havuz: kalabalik ayari — isaret sayilari sabit, sembol degisir (docs §3.34)",
    "gorus: Dixon-Coles + Elo, piyasadan bagimsiz (docs §3.27–3.28)"
-  ]
+  ],
+  "sistem": "kaplama",
+  "sistem_notu": "Bu kayit KAPLAMA kodu ayaktayken donduruldu (core.solve_fix16, 14-garanti, bedel = 2^a*3^b/2^7*16). Katman sokuldu — bkz. docs/DUZ_SISTEME_GECIS.md. Kayit yeniden yazilmaz; bugunun motoruyla YENIDEN URETILEMEZ ve bayatlik bekcisi bu beyani gorup atlar. Ayni doktrin `arindirma` (orantili->shin) ve `kural` (esik->hedef) gecislerinde de uygulandi."
  }
 }

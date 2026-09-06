@@ -1,20 +1,23 @@
 "use client";
 
 import * as React from "react";
-import { RotateCcw, ShieldCheck, ShieldX, TriangleAlert } from "lucide-react";
+import { RotateCcw, TriangleAlert } from "lucide-react";
 
-import { enUcuzGarantili, type Senaryo } from "@/lib/senaryo";
+import { enIyiVerim, type Senaryo } from "@/lib/senaryo";
 import { olasilikYaz } from "@/lib/kume-ici";
 import { cn, sayi } from "@/lib/utils";
 import { Badge, Button, Card, CardBody, CardHeader } from "@/components/ui/primitives";
 import { TABLO_SARMAL } from "@/components/ui/tablo";
 
 /**
- * Calistirilan modlarin yan yana karsilastirmasi.
+ * Calistirilan kuponlarin yan yana karsilastirmasi.
  *
- * Tek is: mod secimini AKILDAN yapilan bir kiyas olmaktan cikarmak. Bu
- * kart bir mod ONERMEZ — hangi garantiyi kac kolona aldigini gosterir,
- * karar kullanicinindir.
+ * Tek is: **isaret** secimini akildan yapilan bir kiyas olmaktan
+ * cikarmak. Bir maci daha cifte yapmak kume-ici olasiligi buyutur ve
+ * bedeli katlar; kart o takasi gosterir, bir kupon ONERMEZ.
+ *
+ * Eskiden mod kiyasiydi (fix16 / butce / maxcov). Modlar kaplamayla
+ * birlikte dustu; duzde ayni isaretler her zaman ayni kolonlari verir.
  */
 export function SenaryoKart({
   liste,
@@ -31,26 +34,25 @@ export function SenaryoKart({
   onDon: (s: Senaryo) => void;
   disabled?: boolean;
 }) {
-  const enUcuz = enUcuzGarantili(liste, guncelSecim);
+  const enVerimli = enIyiVerim(liste);
   const farkliVar = liste.some((s) => s.secimParmak !== guncelSecim);
 
   return (
     <Card>
       <CardHeader
-        title="Çalıştırdığın modlar"
-        hint="Aynı seçim üzerinde hangi mod neyi kaç kolona veriyor. Bu liste bir mod önermez; oturum boyunca tutulur, kaydedilmez."
+        title="Çalıştırdığın kuponlar"
+        hint="Hangi işaret seti kaç kolona ne kadar küme-içi olasılık veriyor. Bu liste bir kupon önermez; oturum boyunca tutulur, kaydedilmez."
       />
       <CardBody className="space-y-3">
         <div className={TABLO_SARMAL}>
           <table className="w-full min-w-[520px] text-[12.5px]">
             <thead>
               <tr className="text-left text-[10.5px] uppercase tracking-[0.06em] text-muted-foreground">
-                <th className="pb-2 pr-3 font-medium">Mod</th>
+                <th className="pb-2 pr-3 font-medium">Kupon</th>
                 <th className="pb-2 pr-3 text-right font-medium">Satır</th>
                 <th className="pb-2 pr-3 text-right font-medium">Kolon</th>
-                <th className="pb-2 pr-3 text-right font-medium">Alt sınır</th>
-                <th className="pb-2 pr-3 font-medium">Garanti</th>
                 <th className="pb-2 pr-3 text-right font-medium">Küme-içi</th>
+                <th className="pb-2 pr-3 text-right font-medium">Kolon başına</th>
                 <th className="pb-2 font-medium" />
               </tr>
             </thead>
@@ -69,38 +71,26 @@ export function SenaryoKart({
                   >
                     <td className="py-2 pr-3">
                       <span className="flex flex-wrap items-center gap-1.5">
-                        <span className="font-mono font-semibold">{s.mode}</span>
+                        <span className="font-mono">{s.baslik}</span>
                         {ekranda ? <Badge ton="primary">ekranda</Badge> : null}
                       </span>
                     </td>
                     <td className="py-2 pr-3 text-right font-mono">{sayi(s.satir)}</td>
-                    <td
-                      className={cn(
-                        "py-2 pr-3 text-right font-mono font-semibold",
-                        !farkli && enUcuz?.id === s.id && "text-success",
-                      )}
-                    >
+                    <td className="py-2 pr-3 text-right font-mono font-semibold">
                       {sayi(s.bedel)}
                     </td>
                     <td className="py-2 pr-3 text-right font-mono text-muted-foreground">
-                      {sayi(s.altSinir)}
-                    </td>
-                    <td className="py-2 pr-3">
-                      {s.garanti ? (
-                        <span className="flex items-center gap-1 text-success">
-                          <ShieldCheck size={13} /> var
-                        </span>
-                      ) : (
-                        <span
-                          className="flex items-center gap-1 text-danger"
-                          title={`${sayi(s.acik)} nokta kapsanmıyor`}
-                        >
-                          <ShieldX size={13} /> yok
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-2 pr-3 text-right font-mono text-muted-foreground">
                       {s.pKumeIci === null ? "—" : olasilikYaz(s.pKumeIci)}
+                    </td>
+                    <td
+                      className={cn(
+                        "py-2 pr-3 text-right font-mono text-muted-foreground",
+                        enVerimli?.id === s.id && "text-success",
+                      )}
+                    >
+                      {s.pKumeIci === null || s.bedel <= 0
+                        ? "—"
+                        : olasilikYaz(s.pKumeIci / s.bedel)}
                     </td>
                     <td className="py-2 text-right">
                       {ekranda ? null : (
@@ -126,21 +116,23 @@ export function SenaryoKart({
           <div className="flex items-start gap-2.5 rounded-xl border border-warning/30 bg-warning-soft px-3 py-2.5">
             <TriangleAlert size={15} className="mt-0.5 shrink-0 text-warning" />
             <p className="text-[11.5px] leading-relaxed">
-              Soluk satırlar <strong>başka bir maç seçimiyle</strong> koşuldu.
-              Onların kolon bedeli bu seçimle kıyaslanamaz — fark moddan değil,
-              seçimin büyüklüğünden geliyor olabilir.
+              Soluk satırlar <strong>başka bir maç seçimiyle</strong> koşuldu —
+              yani listenin asıl konusu onlar. Kolon bedeli farkı doğrudan
+              seçimin büyüklüğünden geliyor; bu bir kusur değil, ölçülen şeyin
+              kendisi.
             </p>
           </div>
         ) : null}
 
-        {enUcuz ? (
+        {enVerimli ? (
           <p className="text-[11.5px] leading-relaxed text-muted-foreground">
-            Bu seçimde 14-garantiyi veren en ucuz çalışma{" "}
-            <strong className="font-mono">{enUcuz.mode}</strong> —{" "}
-            <strong>{sayi(enUcuz.bedel)} kolon</strong>. Küre-kaplama alt sınırı{" "}
-            {sayi(enUcuz.altSinir)} kolon olduğuna göre bunun altına inen bir
-            formül <strong>matematiksel olarak yok</strong>. Garanti vermeyen
-            modlar daha ucuz olabilir; onlar farklı bir şey satın alır.
+            Kolon başına en çok küme-içi olasılığı{" "}
+            <strong className="font-mono">{enVerimli.baslik}</strong> veriyor —{" "}
+            <strong>{sayi(enVerimli.bedel)} kolon</strong>.{" "}
+            <strong>Bu bir öneri değildir:</strong> küme-içi olasılık kazanma
+            olasılığı değil, <em>en iyi kolon = 15 − kaçak</em> aritmetiğinin
+            geçerli olma koşuludur. İkramiye, kolon bedeli ve kaç kişinin
+            tutturduğu bu orana girmez.
           </p>
         ) : null}
       </CardBody>

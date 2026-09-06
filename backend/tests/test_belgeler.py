@@ -164,15 +164,22 @@ def _gercek_test_sayisi() -> int:
     modül düzeyinde `pytest.importorskip("lightgbm")` yapıyor; paket yoksa
     modül hiç TOPLANMAZ, yalnızca "atlandı" da denmez — 22 test ortadan
     kalkar. Yani "süitte kaç test var" sorusunun tek bir cevabı yok:
-    eksiksiz kurulumda 1.929, `lightgbm`siz kurulumda 22 test eksiği.
+    `lightgbm`siz kurulumda eksiksiz süitten 22 test eksiktir.
 
-    **Bu iki sayı bir kez burada eskidi ve kimse görmedi.** Docstring
-    `1.622` / `1.600` yazıyordu; o değerler README §9 tablosunun 15.
-    satırına kadarki ara toplamıydı, yani tablo bakımsız kaldığı dönemden
-    kalmaydı. Bekçinin kendi dosyası, bekçilediği hatayı taşıyordu — ve
-    `.py` olduğu için hiçbir belge taraması ona bakmıyordu. Mutlak sayı
-    yerine artık **fark** yazılı: `lightgbm` yoksa `test_agac.py` modül
-    düzeyinde atlanır ve 22 test toplanmaz.
+    **Bu sayı burada İKİ KEZ eskidi ve ikisinde de kimse görmedi.** Önce
+    docstring `1.622` / `1.600` yazıyordu; o değerler README §9 tablosunun
+    15. satırına kadarki ara toplamıydı, yani tablo bakımsız kaldığı
+    dönemden kalmaydı. Düzeltilirken *"mutlak sayı yerine artık fark
+    yazılı"* denildi ama **mutlak sayı satırda bırakıldı** (`1.929`) ve
+    kaplama sökülüp ~130 test düşünce ikinci kez bayatladı. Bekçinin kendi
+    dosyası, bekçilediği hatayı iki kez taşıdı — ve `.py` olduğu için
+    hiçbir belge taraması ona bakmıyor.
+
+    Bu yüzden mutlak sayı artık **gerçekten** yazılı değil: yalnızca fark
+    (22) duruyor, çünkü fark koda bağlı ve `test_agac.py` durdukça doğru;
+    süitin toplamı ise her eklemede değişir. Toplamın tek yazılı olduğu
+    yer belgelerdir ve onu bu dosyadaki bekçi gerçek koleksiyona karşı
+    denetler — yani toplamın burada ikinci bir kopyası olmamalı.
 
     Depo bu ikiliği zaten taşıyor ve bilerek taşıyor: üretim `lightgbm`
     kurmuyor (`scripts/run_prod.sh`), kalite kapısı kuruyor

@@ -13,7 +13,8 @@ from typing import Any
 
 import pytest
 
-from spor_toto.core import SEMBOLLER, Encoder, parse_picks, solve_fix16
+from spor_toto.core import SEMBOLLER, Encoder, parse_picks
+from spor_toto.duz import kolonlar as duz_kolonlar
 from spor_toto.fire_scenarios import fire_maliyeti, fire_scenario_report
 
 ORNEK = "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"
@@ -227,16 +228,23 @@ def test_fire2_de_14_imkansiz():
     assert r["fire2"]["p_ge_14"] == 0.0
 
 
-def test_banko_fire_ciftе_fireindan_pahali():
-    """
-    Bankoda yanilmak ciftede yanilmaktan daha kotu sonuc verir: banko her
-    kolonda sabittir, cifte ise Hamming blogunun icindedir.
+def test_fire_TURU_artik_fark_etmiyor():
+    """Duzde bir fire, nerede olursa olsun, en iyi kolonu 14'e dusurur.
+
+    **Bu testin iddiasi tersine dondu ve sebebi olcum degil YAPI.** Kaplama
+    doneminde bankoda yanilmak ciftede yanilmaktan daha kotuydu: banko her
+    kolonda sabittir, cifte ise Hamming blogunun icindeydi ve blok bir hatayi
+    zaten sogurmak uzere kurulmustu. Duzde sogurulacak bir sey yok — kumenin
+    tamami oynaniyor, yani her fire tam bir kademe dusurur ve TUR fark etmez.
+
+    Bekci bu sadelesmeyi tutar: iki tur ayrisirsa fire muhasebesinde bir
+    kaplama kalintisi var demektir. Ayni bulgu `health.py`nin fire
+    senaryosu kontrolunde de yazili.
     """
     enc, cols = _enc_cols()
     bt = fire_scenario_report(enc, cols, max_fires=1)["fire1"]["by_type"]
-    banko_14 = bt["banko"]["pct"].get("14", 0.0)
-    cifte_14 = bt["double"]["pct"].get("14", 0.0)
-    assert cifte_14 > banko_14
+    assert bt["banko"]["pct"].get("14", 0.0) == 100.0
+    assert bt["double"]["pct"].get("14", 0.0) == 100.0
 
 
 def test_uclu_mac_fire_uretemez():
@@ -313,5 +321,5 @@ def test_fire_maliyeti_artan():
 def test_buyuk_kupon_maliyeti_esigin_ustunde():
     """Uclu iceren gercekci kupon senkron istek yolunda calistirilamaz."""
     enc = Encoder(parse_picks(",".join(["1"] * 4 + ["10"] * 7 + ["102"] * 4)))
-    cols, _ = solve_fix16(enc)
+    cols = duz_kolonlar(enc)
     assert fire_maliyeti(enc, cols, max_fires=2) > 100_000_000

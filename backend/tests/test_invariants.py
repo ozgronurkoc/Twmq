@@ -14,20 +14,14 @@ import pytest
 
 from spor_toto.core import (
     Encoder,
-    Fix16Hatasi,
-    ball,
-    distance_layers,
-    dogrula_kaplama,
-    hamming,
-    merge_rows,
     olasilik_raporu,
     parse_picks,
     parse_probs,
     row_cost,
     rows_to_points,
-    solve_by_blocks,
-    solve_fix16,
 )
+from spor_toto.duz import kolonlar as duz_kolonlar
+from spor_toto.duz import tek_satir
 from spor_toto.report import (
     dagilim_satirlari,
     kolon_metni,
@@ -54,158 +48,91 @@ def rastgele_kupon(rng: random.Random, en_az_cifte: int = 0) -> list:
                 return kupon
 
 
-from tests.conftest import kaplama_gecerli  # tek kaynak
+from tests.conftest import kume_tamami_oynaniyor  # tek kaynak
 
 # ------------------------------------------------------------
-# fix16 degismezleri
+# Duz (tam sistem) degismezleri
+#
+# **Bu bolum eskiden kaplamayi olcuyordu** ve dokuz test tasiyordu: fix16'nin
+# her zaman 16 satir vermesi, varyantlarin bedeli degistirmemesi, 7 cifteden
+# azin reddedilmesi, blok motorunun fix16'dan pahali olmamasi, `distance_layers`
+# katmanlarinin bosluksuzlugu, `dogrula_kaplama` ile mesafenin tutarliligi,
+# `ball`in `hamming <= 1` ile ayni kumeyi vermesi, ve cozumun belirlenimciligi.
+# Hepsi ARAMA ozellikleriydi; kaplama sokuldu (`docs/DUZ_SISTEME_GECIS.md`) ve
+# arama diye bir sey kalmadi.
+#
+# Duzde korunacak degismez daha az ama daha KESIN: kolonlar secim kumesinin ta
+# kendisi, bedel carpimin ta kendisi, satir tek. Ozelligi FORMULE degil
+# sayarak sinariz — formulun kendisi test edilen sey.
 # ------------------------------------------------------------
 
 @pytest.mark.parametrize("tohum", range(40))
-def test_fix16_degismezleri(tohum):
+def test_duz_kolonlar_kumenin_TAMAMI(tohum):
     rng = random.Random(tohum)
-    kupon = rastgele_kupon(rng, en_az_cifte=7)
+    kupon = rastgele_kupon(rng)
     enc = Encoder(kupon)
-    cols, aciklama = solve_fix16(enc)
+    cols = duz_kolonlar(enc)
     sizes = enc.alphabet_sizes
 
-    # 1) Her zaman 16 satir
-    rows = merge_rows(cols)
-    assert len(rows) == 16, (kupon, aciklama)
+    # 1) Kume eksiksiz ve fazlasiz oynaniyor (sayarak, formule guvenmeden)
+    assert kume_tamami_oynaniyor(cols, sizes), kupon
+    assert set(cols) == set(product(*[range(k) for k in sizes]))
 
-    # 2) 14-garanti bozulmamis
-    assert kaplama_gecerli(cols, sizes), kupon
+    # 2) Bedel = 2^cifte * 3^uclu
+    cifte = sum(1 for s in kupon if len(s) == 2)
+    uclu = sum(1 for s in kupon if len(s) == 3)
+    assert len(cols) == 2 ** cifte * 3 ** uclu == enc.space_size()
 
-    # 3) Sikistirma kayipsiz ve bedeli degistirmiyor
-    assert set(rows_to_points(rows)) == set(cols)
-    assert sum(row_cost(r) for r in rows) == len(cols)
-
-    # 4) Bedel = 16 x (blok disi seceneklerin carpimi)
-    kalan = list(sizes)
-    for _ in range(7):
-        kalan.remove(2)
-    assert len(cols) == 16 * math.prod(kalan)
-
-    # 5) Kolonlar tekil ve uzay icinde
+    # 3) Kolonlar tekil ve uzay icinde
     assert len(set(cols)) == len(cols)
     for c in cols:
         assert len(c) == len(sizes)
         assert all(0 <= v < k for v, k in zip(c, sizes))
 
-    # 6) Hicbir zaman tam sistemden pahali olamaz
-    assert len(cols) <= enc.space_size()
-
-    # 7) Alt sinirin altina inemez
-    assert len(cols) >= enc.lower_bound()
-
-
-@pytest.mark.parametrize("tohum", range(15))
-def test_fix16_varyantlar_degismezleri(tohum):
-    rng = random.Random(1000 + tohum)
-    enc = Encoder(rastgele_kupon(rng, en_az_cifte=7))
-    kanonik, _ = solve_fix16(enc, variant=0)
-    for v in (1, 2, 3, 7):
-        cols, _ = solve_fix16(enc, variant=v)
-        assert len(cols) == len(kanonik)          # bedel degismez
-        assert len(merge_rows(cols)) == 16        # satir degismez
-        assert kaplama_gecerli(cols, enc.alphabet_sizes)
-
-
-@pytest.mark.parametrize("tohum", range(20))
-def test_7_cifteden_az_her_zaman_reddedilir(tohum):
-    rng = random.Random(5000 + tohum)
-    while True:
-        kupon = [list(rng.choice(SEMBOL_KUMELERI)) for _ in range(15)]
-        if sum(1 for s in kupon if len(s) == 2) < 7:
-            break
-    with pytest.raises(Fix16Hatasi):
-        solve_fix16(Encoder(kupon))
-
-
-# ------------------------------------------------------------
-# Blok motoru degismezleri
-# ------------------------------------------------------------
 
 @pytest.mark.parametrize("tohum", range(25))
-def test_blok_motoru_degismezleri(tohum):
+def test_tek_satir_kayipsiz(tohum):
+    """Kupon TEK satira siger ve o satirin acilimi kolonlarin ta kendisidir."""
     rng = random.Random(2000 + tohum)
-    kupon = rastgele_kupon(rng)
-    enc = Encoder(kupon)
-    if enc.n == 0:
-        assert solve_by_blocks(enc) is None
-        return
-    sonuc = solve_by_blocks(enc)
-    assert sonuc is not None
-    cols, _ = sonuc
-    assert kaplama_gecerli(cols, enc.alphabet_sizes)
-    assert enc.lower_bound() <= len(cols) <= enc.space_size()
-    assert len(set(cols)) == len(cols)
-
-
-@pytest.mark.parametrize("tohum", range(15))
-def test_blok_fix16den_asla_pahali_degil(tohum):
-    rng = random.Random(3000 + tohum)
-    enc = Encoder(rastgele_kupon(rng, en_az_cifte=7))
-    blok, _ = solve_by_blocks(enc)
-    f16, _ = solve_fix16(enc)
-    assert len(blok) <= len(f16)
-
-
-# ------------------------------------------------------------
-# Geometri ve sayim degismezleri
-# ------------------------------------------------------------
-
-@pytest.mark.parametrize("tohum", range(30))
-def test_distance_layers_toplami_uzay_boyutu(tohum):
-    rng = random.Random(4000 + tohum)
-    sizes = tuple(rng.choice([2, 3]) for _ in range(rng.randint(1, 6)))
-    space = list(product(*[range(k) for k in sizes]))
-    cols = rng.sample(space, rng.randint(1, len(space)))
-    dist = distance_layers(cols, sizes)
-    assert sum(dist.values()) == len(space)
-    assert dist[0] == len(set(cols))
-    # katmanlar bosluksuz olmali: d varsa d-1 de var
-    for d in dist:
-        if d > 0:
-            assert d - 1 in dist
-
-
-@pytest.mark.parametrize("tohum", range(30))
-def test_kaplama_ve_mesafe_tutarli(tohum):
-    rng = random.Random(6000 + tohum)
-    sizes = tuple(rng.choice([2, 3]) for _ in range(rng.randint(1, 5)))
-    space = list(product(*[range(k) for k in sizes]))
-    cols = rng.sample(space, rng.randint(1, len(space)))
-    _worst, acik = dogrula_kaplama(cols, sizes)
-    dist = distance_layers(cols, sizes)
-    if acik == 0:
-        assert max(dist) <= 1
-    else:
-        assert max(dist) >= 2
-        assert sum(v for d, v in dist.items() if d >= 2) == acik
+    enc = Encoder(rastgele_kupon(rng))
+    cols = duz_kolonlar(enc)
+    satir = tek_satir(enc)
+    assert row_cost(satir) == len(cols)
+    assert set(rows_to_points([satir])) == set(cols)
 
 
 @pytest.mark.parametrize("tohum", range(20))
-def test_ball_ve_hamming_tutarli(tohum):
-    rng = random.Random(7000 + tohum)
-    sizes = tuple(rng.choice([2, 3]) for _ in range(rng.randint(1, 6)))
-    space = list(product(*[range(k) for k in sizes]))
-    for p in rng.sample(space, min(30, len(space))):
-        b = set(ball(p, sizes))
-        assert b == {q for q in space if hamming(p, q) <= 1}
+def test_bir_kacak_en_iyi_kolonu_TAM_BIR_kademe_dusurur(tohum):
+    """Duzun kurucu esitligi: en iyi kolon `15 - k`.
 
+    Kaplamada bu bir ALT SINIRDI (`>= 14 - k`) cunku kumenin bir dilimi
+    oynaniyordu. Duzde esitliktir ve bu test onu kaba kuvvetle sinar:
+    kolonlar tek tek gezilir, en iyisi sayilir.
+    """
+    rng = random.Random(3000 + tohum)
+    kupon = rastgele_kupon(rng)
+    enc = Encoder(kupon)
+    cols = duz_kolonlar(enc)
+    # Gercek sonucu kupondan uret, sonra k tanesini kume DISINA it.
+    gercek = [rng.choice(s) for s in kupon]
+    kacak_yerleri = [i for i, s in enumerate(kupon) if len(s) < 3]
+    rng.shuffle(kacak_yerleri)
+    k = min(rng.randint(0, 3), len(kacak_yerleri))
+    for i in kacak_yerleri[:k]:
+        gercek[i] = next(s for s in ("1", "0", "2") if s not in kupon[i])
+    en_iyi = max(sum(1 for a, b in zip(enc.decode_full(c), gercek) if a == b)
+                 for c in cols)
+    assert en_iyi == 15 - k, (kupon, gercek, k)
 
-# ------------------------------------------------------------
-# Belirlenimcilik
-# ------------------------------------------------------------
 
 @pytest.mark.parametrize("tohum", range(10))
 def test_ayni_girdi_ayni_cikti(tohum):
     rng = random.Random(8000 + tohum)
-    kupon = rastgele_kupon(rng, en_az_cifte=7)
-    a, _ = solve_fix16(Encoder(kupon))
-    b, _ = solve_fix16(Encoder(kupon))
+    kupon = rastgele_kupon(rng)
+    a = duz_kolonlar(Encoder(kupon))
+    b = duz_kolonlar(Encoder(kupon))
     assert a == b
-    assert merge_rows(a) == merge_rows(b)
+    assert tek_satir(Encoder(kupon)) == tek_satir(Encoder(kupon))
 
 
 # ------------------------------------------------------------
@@ -217,7 +144,7 @@ def test_olasilik_degismezleri(tohum):
     rng = random.Random(9000 + tohum)
     kupon = rastgele_kupon(rng, en_az_cifte=7)
     enc = Encoder(kupon)
-    cols, _ = solve_fix16(enc)
+    cols = duz_kolonlar(enc)
     probs = [{s: rng.random() + 0.01 for s in ("1", "0", "2")} for _ in range(15)]
     for p in probs:
         t = sum(p.values())
@@ -227,12 +154,14 @@ def test_olasilik_degismezleri(tohum):
     assert 0.0 <= rap.p_15 <= 1.0
     assert 0.0 <= rap.p_kume_ici <= 1.0
     assert 0.0 <= rap.p_14 <= 1.0
-    # kaplama gecerli oldugundan 15 + 14 tam olarak kume-ici olasiligina esit
-    assert rap.p_15 + rap.p_14 == pytest.approx(rap.p_kume_ici, rel=1e-9)
-    # En olasi TEK kolon, tum kume-ici olasiliktan buyuk olamaz.
-    # (p_15 >= p_tek_kolon_15 DOGRU DEGILDIR: kaplama kodu 15 sansini
-    #  degil kapsamayi maksimize eder, en olasi nokta kolonlar arasinda
-    #  olmayabilir.)
+    # **Duzde bu esitlik guclendi.** Kaplamada `p_15 + p_14 == p_kume_ici`
+    # idi cunku kumenin bir dilimi oynaniyor ve kalan olasilik 14'e dusuyordu.
+    # Duzde kume ICINDE kalmak DOGRUDAN 15 demektir, yani `p_14` kume ici
+    # payindan gelmez: `p_15` kume-ici olasiliginin kendisidir.
+    assert rap.p_15 == pytest.approx(rap.p_kume_ici, rel=1e-9)
+    # En olasi TEK kolon kume-ici olasiliktan buyuk olamaz. Duzde en olasi
+    # nokta kolonlarin ICINDEDIR (hepsi oynaniyor), yani bu sinir gevsektir
+    # ve bilerek oyle: tutmasi gereken sey siralamanin bozulmamasi.
     assert rap.p_tek_kolon_15 <= rap.p_kume_ici + 1e-12
 
 
@@ -242,24 +171,33 @@ def test_olasilik_degismezleri(tohum):
 
 def test_yazdir_ve_kaydet_ozeti(tmp_path, capsys):
     enc = Encoder(parse_picks("1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"))
-    cols, _ = solve_fix16(enc)
+    cols = duz_kolonlar(enc)
     hedef = tmp_path / "c.txt"
     ozet = yazdir_ve_kaydet(enc, cols, "test", str(hedef), ["not"], tam_liste=False)
-    assert ozet["satir"] == 16
-    assert ozet["bedel"] == 32
-    assert ozet["en_kotu"] == 1
+    # Duzde kupon isaretlerin kendisi: tek satir, bedel = secim uzayi.
+    # `en_kotu` ve `acik` kaplama olculeriydi ve tanim geregi sifir.
+    assert ozet["satir"] == 1
+    assert ozet["bedel"] == enc.space_size()
+    assert ozet["en_kotu"] == 0
     assert ozet["acik"] == 0
     assert hedef.exists()
     capsys.readouterr()
 
 
-def test_yazdir_ve_kaydet_bozuk_sikistirmayi_yakalar(monkeypatch, capsys):
-    """Sikistirma kayipli hale gelirse rapor sessizce gecmemeli."""
+def test_yazdir_ve_kaydet_BOZUK_satiri_yakalar(monkeypatch, capsys):
+    """Basilan satir oynanan kolonlari tutmuyorsa rapor sessizce gecmemeli.
+
+    Kaplamada bu bekci `merge_rows`un (bir ARAMA) kayipsizligini tutuyordu.
+    Duzde satir kapali formda uretiliyor, yani sinanan sey arama degil
+    **tutarlilik**: eksik ya da fazla basilmis bir kupon, sessizce yanlis
+    kupondur ve ikisi de ayni derecede pahalidir.
+    """
     import spor_toto.report as rp
     enc = Encoder(parse_picks("1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"))
-    cols, _ = solve_fix16(enc)
-    monkeypatch.setattr(rp, "merge_rows", lambda c, **kw: rp.merge_rows.__wrapped__(c)
-                        if False else [tuple(frozenset([v]) for v in cols[0])])
+    cols = duz_kolonlar(enc)
+    # Tek noktalik "satir": bedeli 1, oysa kolon sayisi cok daha buyuk.
+    monkeypatch.setattr(rp, "tek_satir",
+                        lambda e: tuple(frozenset([v]) for v in cols[0]))
     with pytest.raises(AssertionError):
         rp.yazdir_ve_kaydet(enc, cols, "test", None, tam_liste=False)
     capsys.readouterr()
@@ -267,26 +205,32 @@ def test_yazdir_ve_kaydet_bozuk_sikistirmayi_yakalar(monkeypatch, capsys):
 
 def test_rapor_metin_yardimcilari():
     enc = Encoder(parse_picks("1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"))
-    cols, _ = solve_fix16(enc)
-    rows = merge_rows(cols)
-    m = satir_metni(enc, rows[0])
+    cols = duz_kolonlar(enc)
+    m = satir_metni(enc, tek_satir(enc))
     assert len(m.split()) == 15
     assert "01" not in m.replace(" ", ",")      # kupon duzeni korunmali
     k = kolon_metni(enc, cols[0])
     assert len(k.split()) == 15
     satirlar = dagilim_satirlari(enc, cols)
-    assert any("14-GARANTI DOGRULANDI" in s for s in satirlar)
+    assert any("KUMENIN TAMAMI OYNANIYOR" in s for s in satirlar)
 
 
-def test_dagilim_satirlari_acik_varsa_uyarir():
+def test_dagilim_satirlari_eksik_kume_UYARIR():
+    """Kolonlar kümenin tamamı değilse rapor bunu **söylemeli**.
+
+    Kaplama döneminde bu test "14-GARANTI YOK" uyarısını arıyordu: tek bir
+    kolon açık nokta bırakıyordu. Düzde kolonlar tanım gereği kümenin
+    tamamıdır, yani bu durum bir HATA belirtisidir — ve raporun sessiz
+    kalmaması, testin koruduğu şeyin ta kendisi.
+    """
     enc = Encoder(parse_picks("10,10,10,10,10,1,1,1,1,1,1,1,1,1,1"))
     satirlar = dagilim_satirlari(enc, [(0, 0, 0, 0, 0)])
-    assert any("14-GARANTI YOK" in s for s in satirlar)
+    assert any("kume eksik oynaniyor" in s for s in satirlar)
 
 
 def test_olasilik_satirlari_bicimi():
     enc = Encoder(parse_picks("1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"))
-    cols, _ = solve_fix16(enc)
+    cols = duz_kolonlar(enc)
     probs = parse_probs(";".join(["1:1,0:1,2:1"] * 15), enc.selections)
     satirlar = olasilik_satirlari(olasilik_raporu(enc, cols, probs))
     assert any("kar/beklenen-deger hesabi degildir" in s for s in satirlar)

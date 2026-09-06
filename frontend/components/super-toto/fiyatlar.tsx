@@ -285,7 +285,7 @@ export function KuponGerekcesi({ kupon }: { kupon: SuperTotoKupon }) {
         {kupon.lines?.length ? (
           <details className="rounded-md border border-border/70 p-3">
             <summary className="cursor-pointer text-[12.5px] font-medium">
-              Oynanacak {kupon.lines.length} satır (14-garantili)
+              Oynanacak {kupon.lines.length} satır
             </summary>
             <div className="mt-2 -mx-1 overflow-x-auto px-1">
               <table className="w-full min-w-[520px] font-mono text-[12px]">

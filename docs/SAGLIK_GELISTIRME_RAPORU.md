@@ -1,5 +1,13 @@
 # Sağlık Katmanı — Çalışma Raporu ve Yol Haritası
 
+> **TARİHSEL KAYIT — düzeltilmedi.** Bu rapor sağlık sayfası üzerinde
+> yapılan işi *yapıldığı gün* anlatır ve o gün depo 14-garantili bir
+> **kaplama kodu** kullanıyordu. Kaplama 2026-09-06'da söküldü
+> (`docs/DUZ_SISTEME_GECIS.md`): `fix16` ve diğer altı mod, küre-kaplama
+> alt sınırı ve "14-garanti VAR" rozeti artık yok. Buradaki sayılar ve
+> ekran adları **o günkü ürüne** aittir; sonradan haklı çıkmış gibi
+> düzeltmek raporu bir kayıt olmaktan çıkarırdı.
+
 **Tarih:** 2026-08-17 (önceki turlar: 2026-08-16, aynı gün ilk tur)
 **Dal:** `claude/dosyalari-gelistirme-vy2py4`
 **Kapsam:** `/saglik` sayfası, `spor_toto/health.py`, `health_history.py`,
@@ -244,7 +252,7 @@ gerektirir, yani 9.1 olmadan yapılamaz.
 
 | Ölçü | Değer |
 |---|---|
-| Kayıtlı kontrol | 27 |
+| Kayıtlı kontrol | 23 |
 | Kategori | 6 |
 | Kritik olmayan kontrol | 1 (`scipy_flag`) |
 | En yeni kontrol | `xg_kalibrasyonu` (analiz) — xG vekilinin katsayıları ters işaretli ya da özellik seyrelmiş mi |

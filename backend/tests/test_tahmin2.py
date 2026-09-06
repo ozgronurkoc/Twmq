@@ -430,6 +430,19 @@ def test_diskteki_kayit_bayat_degil(t2, govde):
     if not yol.exists():
         pytest.skip("2. tahmin kaydi yok")
     diskte = json.loads(yol.read_text(encoding="utf-8"))
+
+    # **Ölçek değişimi bayatlık DEĞİLDİR.** Kayıt hangi oynama sistemiyle
+    # kurulduğunu yazar; kaplama katmanı söküldüğü için (bkz.
+    # `docs/DUZ_SISTEME_GECIS.md`) o ölçekte dondurulmuş bir kayıt bugünkü
+    # motorla yeniden üretilemez ve üretilmeye çalışılması kaydı geriye
+    # dönük yeniden yazmak olurdu. Yukarıdaki `kayip_orani` dersinin aynısı,
+    # bir katman yukarıda. Beyan YOKSA test yine düşer — izlenemezlik
+    # bayatlıktan kötüdür.
+    assert "sistem" in diskte["meta"], (
+        "kayıt hangi oynama sistemiyle kurulduğunu yazmalı")
+    if diskte["meta"]["sistem"] != "duz":
+        pytest.skip(f"kayıt {diskte['meta']['sistem']} ölçeğinde donduruldu; "
+                    "bugünkü motor onu yeniden üretemez")
     # Kayıt KENDİ varsayımlarıyla yeniden üretilir — `frozen_at` gibi
     # `kayip_orani` da gövdede yazılı.
     #

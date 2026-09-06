@@ -20,7 +20,7 @@ from __future__ import annotations
 import math
 from collections.abc import Sequence
 
-from .core import Encoder, Point, ball
+from .core import Encoder, Point
 from .ortak import normalize_olasilik
 
 #: `bayes` ile birebir ayni govdeydi; tek kaynak artik `ortak`.
@@ -150,9 +150,11 @@ def _error_budget_exact(
     # yukaridaki dongu pc<=0 olan noktalari atliyor, yani sifir olasilikli
     # bir acik nokta orada gorunmez. UI her iki dalda ayni alanlari
     # bekledigi icin burada da hesaplanir.
-    kapsanan: set = set()
-    for c in cols:
-        kapsanan.update(ball(c, enc.alphabet_sizes))
+    # **Duzde "kapsanan" = OYNANAN.** Kaplama doneminde her kolonun yaricap-1
+    # topu (`core.ball`) alinip birlestiriliyordu, cunku bir kolon kendi
+    # komsularini da "1 hatayla" kapsiyordu. Duzde her nokta zaten oynaniyor;
+    # top kavrami dustu.
+    kapsanan: set = set(cols)
     toplam_nokta = math.prod(enc.alphabet_sizes) if enc.alphabet_sizes else 1
 
     total_g = p_dist[0] + p_dist[1]
@@ -216,9 +218,8 @@ def _error_budget_column_union(
 
     # Toplarin birlesimi: hem kaplama testini hem kapsanan kutleyi verir.
     # Maliyet O(kolon x top) - p15 dongusuyle ayni buyukluk sinifinda.
-    kapsanan: set = set()
-    for c in cols:
-        kapsanan.update(ball(c, sizes))
+    # Duzde kapsanan = oynanan (yukaridaki gerekce).
+    kapsanan: set = set(cols)
     total = math.prod(sizes) if sizes else 1
     tam_kaplama = len(kapsanan) >= total
 

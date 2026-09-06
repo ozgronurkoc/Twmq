@@ -41,12 +41,15 @@ varsayılan marj arındırmasıyla (**`shin`**) üretilir. Hizalama doğrulandı
 README §5.4'ün yayımladığı 0,579 ve %54,9 ile birebir aynı. Yani bu belgenin
 sayıları arşivin bilinen sayılarıyla aynı temele oturuyor.
 
-**`getiri.kupon_kademeleri` ile karıştırılmamalıdır.** O fonksiyon kademe
-olasılıklarını *kaplama kodu* için hesaplar: 14-garanti veren, seçim
-kümesinden küçük bir kolon altkümesi. 15/15 sorusu farklıdır — 15'i
-tutturmak için seçim kümesinin **tamamını** oynamak gerekir. Bu belgedeki
-bedeller o yüzden tam sistemin bedelidir (işaret sayılarının çarpımı) ve
-kaplama koduyla kıyaslanamaz.
+**Bu belge kaplamadan ÖNCE de tam sistemi ölçüyordu, ve bu artık bir
+istisna değil kuralın kendisi.** Yazıldığı sırada `getiri.kupon_kademeleri`
+kademe olasılıklarını *kaplama kodu* için hesaplıyordu — 14-garanti veren,
+seçim kümesinden küçük bir kolon altkümesi — ve bu belge onunla
+kıyaslanamayacağını söylemek zorundaydı: 15'i tutturmak için kümenin
+**tamamını** oynamak gerekir. Kaplama 2026-09-06'da söküldü
+(`docs/DUZ_SISTEME_GECIS.md`) ve depo tam da bu belgenin ölçtüğü şeyi
+oynuyor. Buradaki bedeller (işaret sayılarının çarpımı) artık **oynanan
+bedelin kendisidir**, alternatif bir hesap değil.
 
 Bir hafta, işaretler `s_i` ve kaçak (küme dışına çıkan) maç kümesi `K` ise,
 tam olarak `15-|K|-j` doğru yapan **kolon sayısı**:

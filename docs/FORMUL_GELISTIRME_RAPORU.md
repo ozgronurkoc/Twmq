@@ -1,5 +1,13 @@
 # Formül Sayfası — Çalışma Raporu
 
+> **TARİHSEL KAYIT — düzeltilmedi.** Bu rapor formül sayfası üzerinde
+> yapılan işi *yapıldığı gün* anlatır ve o gün depo 14-garantili bir
+> **kaplama kodu** kullanıyordu. Kaplama 2026-09-06'da söküldü
+> (`docs/DUZ_SISTEME_GECIS.md`): `fix16` ve diğer altı mod, küre-kaplama
+> alt sınırı ve "14-garanti VAR" rozeti artık yok. Buradaki sayılar ve
+> ekran adları **o günkü ürüne** aittir; sonradan haklı çıkmış gibi
+> düzeltmek raporu bir kayıt olmaktan çıkarırdı.
+
 Bu belge `/` (Formül) sayfasında yapılan **F0–F6** çalışmasının kaydıdır: neyin
 ölçüldüğü, hangi kararın neden verildiği, yolda hangi hataların çıktığı ve neyin
 bilerek yapılmadığı.

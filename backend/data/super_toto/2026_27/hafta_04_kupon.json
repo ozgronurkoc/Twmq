@@ -1,63 +1,529 @@
 {
- "meta": {
-  "season": "2026/2027",
-  "week": 4,
-  "frozen_at": "2026-09-04",
-  "results_known": false,
-  "note": "SONUÇLAR GÖRÜLMEDEN üretildi. Seçim kuralı yalnızca 2025/2026 geri testinden ve bu haftanın kendi fiyat/oynanma verisinden gelir; hiçbir yerde sonuç kullanılmadı.",
-  "strategy": {
-   "arindirma": "shin",
-   "arindirma_notu": "3. haftayla AYNI ölçek: `shin` varsayılanı (A5, docs §3.18). 1. ve 2. hafta `orantili` ile dondurulmuştu.",
-   "marj_ort_pct": 5.44,
-   "marj_notu": "Bu sayı ANA FİYATIN ortalamasıdır ve saf Pinnacle değildir: 2. maçın fiyatı Nesine'den geldiği için ortalama %4,62'den %5,44'e çıkıyor. Pinnacle satırlarının kendi ortalaması %4,62 (kapanış, 13 maç) / %4,65 (açılış, 14 maç).",
-   "kural": "hedef",
-   "butce_kolon": 6144,
-   "butce_kaynagi": "eşik kuralının (banko 0.68 / üçlü 0.38) aynı haftada ürettiği maliyet — bütçe eşitlendi ki kıyas kuralı ölçsün, bütçeyi değil (docs §3.19)",
-   "fiyat": "Pinnacle kapanış (iki satırda ikame — maçların `odds_from` alanı)",
-   "fiyat_gerekcesi": "3. haftanın gerekçesi aynen geçerli: scripts/acilis_kapanis.py 2025/26 arşivinde kapanışı açılışın önünde ölçtü (Brier %0,27 daha iyi, kural 36/36 hafta ≥12 ve %23 daha az kolon). Bu hafta seçimin PRATİK ağırlığı yok: açılış fiyatıyla kurulan kupon 15 maçın 15'inde AYNI çıktı."
+  "meta": {
+    "season": "2026/2027",
+    "week": 4,
+    "frozen_at": "2026-09-04",
+    "results_known": false,
+    "note": "SONUÇLAR GÖRÜLMEDEN üretildi. Seçim kuralı yalnızca 2025/2026 geri testinden ve bu haftanın kendi fiyat/oynanma verisinden gelir; hiçbir yerde sonuç kullanılmadı.",
+    "strategy": {
+      "arindirma": "shin",
+      "arindirma_notu": "3. haftayla AYNI ölçek: `shin` varsayılanı (A5, docs §3.18). 1. ve 2. hafta `orantili` ile dondurulmuştu.",
+      "marj_ort_pct": 5.44,
+      "marj_notu": "Bu sayı ANA FİYATIN ortalamasıdır ve saf Pinnacle değildir: 2. maçın fiyatı Nesine'den geldiği için ortalama %4,62'den %5,44'e çıkıyor. Pinnacle satırlarının kendi ortalaması %4,62 (kapanış, 13 maç) / %4,65 (açılış, 14 maç).",
+      "kural": "hedef",
+      "butce_kolon": 6144,
+      "butce_kaynagi": "eşik kuralının (banko 0.68 / üçlü 0.38) aynı haftada ürettiği maliyet — bütçe eşitlendi ki kıyas kuralı ölçsün, bütçeyi değil (docs §3.19)",
+      "fiyat": "Pinnacle kapanış (iki satırda ikame — maçların `odds_from` alanı)",
+      "fiyat_gerekcesi": "3. haftanın gerekçesi aynen geçerli: scripts/acilis_kapanis.py 2025/26 arşivinde kapanışı açılışın önünde ölçtü (Brier %0,27 daha iyi, kural 36/36 hafta ≥12 ve %23 daha az kolon). Bu hafta seçimin PRATİK ağırlığı yok: açılış fiyatıyla kurulan kupon 15 maçın 15'inde AYNI çıktı."
+    },
+    "bedel_uyarisi": "BU HAFTA KURAL 3.888 KOLON İSTİYOR — 3. haftada 864'tü, yani ×4,5 bedel. Sebep haftanın kendisi: bültende yalnızca 3 banko var (maç 3, 5, 7) ve 5 maç üçlü (maç 1, 2, 6, 10, 12). Kural DEĞİŞTİRİLMEDİ ve ana varyant kuralın cevabıdır; ama bütçe bir HARCAMA kararıdır ve veriden türetilemez. Motorun aynı haftada daha küçük bütçelerde kurduğu planlar da kayıtta duruyor: 864 kolon → P(≥12) %27,49 · 1.296 kolon → %33,27 · 3.888 kolon → %46,70 (bu üç sayı 2026-09-06'da DÜZELTİLDİ: ilk ikisi ana plandan elle kısılmış varyantlardan okunmuştu ve motorun aynı tavandaki gerçek cevabından 1,31 ve 1,43 puan geriydi — bkz. meta.duzeltme). Oynayan daha küçük bir bütçeyi oynarsa kayıt `superseded` ile güncellenir.",
+    "kalabalik_gerekcesi": "Oynanan kupon kalabalığı GÖRMEZ: işaretler yalnızca fiyattan gelir. Kalabalık ayarlı alternatif de ölçüldü ve kayıtta duruyor — P(≥12)'yi %46,70'den %44,86'e düşürüyor (−1,84 puan), buna karşılık aynı seti oynayan rakip payını %9,35'den %6,64'e indiriyor (×1,41 daha az bölüşme); müşterek beklenen değerde net ×1,35 daha iyi çıkıyor. Ayrışma 3 maçta: 4. maç 10 → 12; 9. maç 10 → 12; 15. maç 10 → 12. 3. haftada oynayan ölçüme RAĞMEN ayarsız sürümü seçti ve o hafta kazandı; defter bunu uyarı olarak taşıyor — tek hafta bir ölçüm değildir.",
+    "hedef_notu": "Asıl ölçü P(en iyi kolon ≥ 12); 14 bir yan üründür (1. haftanın 1. dersi).",
+    "veri_uyarilari": [
+      "Program tarihleri ve maç saatleri GİRİLMEDİ (kullanıcı vermedi). Uydurulmadı; `date`/`kickoff` boş. Kupon donma anını belgeleyen tek alan `frozen_at`tır (2026-09-04).",
+      "Ana fiyat İKİ satırda Pinnacle kapanışı DEĞİLDİR. 13. maç (Inter–Napoli): Pinnacle AÇILIŞI — aynı bahisçi, önceki an; kaybolan tek şey o maçın çizgi hareketi. 2. maç (Kasımpaşa–Amed): Nesine kapanışı — BAŞKA bahisçi, %17,7 marj. İkincisi ölçeği bozuyor ve otomatik kapı o satırı KUŞKULU işaretliyor; işaret DOĞRUDUR. O maç kuponda zaten ÜÇLÜ (102), yani ikamenin İŞARETLERE etkisi yok; olasılıklara ve P(≥12)'ye etkisi var.",
+      "9. maçın (Göztepe–Gaziantep) Pinnacle kapanışı açılışıyla BİREBİR aynı: bayat satır. Bayatlık bu hafta ilk kez ANA fiyat kaynağının kendisinde görünüyor. Nesine'de 8 satır bayat (maç 1, 2, 3, 4, 7, 8, 9, 14).",
+      "Kapanış oranlarının tamamı kupon donarken elde miydi, DOĞRULANMADI — 3. haftanın `odds_kind` dersi burada da geçerli. Bu hafta soru pratikte boş: Pinnacle AÇILIŞ fiyatıyla kurulan kupon işaret işaret AYNI çıktı (`duyarlilik`).",
+      "bet365.nl kaydı bu hafta yok; bahisçi ayrışması iki kaynak arasında ölçülüyor (3. haftada üçtü)."
+    ],
+    "ucuncu_kupon_notu": "3. Kupon (surpriz) ana kayitla AYNI GUN, sonuclar yine gorulmeden eklendi. Ana varyantin yerine GECMEZ; olculmus bir yan bahistir ve tek gerekcesi marjinal katkidir: ana kupon 12'ye ulasamadigi haftalarda %4.08 olasilikla o kendisi ulasiyor. Ikisi birlikte oynanirsa P(en az biri >= 12) %58.32'den %62.41'e cikiyor.",
+    "duzeltme": {
+      "tarih": "2026-09-06",
+      "ne": "Iki butce varyantinin etiketi yanlisti: \"motorun kendi plani\" diyordu ama ikisi de ana plandan `kisilan` isaretleri dusurulerek uretilmisti. Etiketler duzeltildi ve motorun ayni tavanlardaki GERCEK planlari ayri varyant olarak eklendi.",
+      "etki": "ANA VARYANT DEGISMEDI — oynanan 3.888 kolonluk plan aynen duruyor ve yeniden dogrulandi (3/7/5, bedel 3.888, P(k<=2)=0,4670). Degisen yalnizca \"daha kucuk butceyle oynasaydik ne olurdu\" sorusunun cevabidir: 864 kolonda %26,18 degil %27,49; 1.296 kolonda %31,84 degil %33,27.",
+      "sonuc_gorulmedi": true,
+      "ureten": "cd backend && python scripts/butce_kademeleri.py --hafta 4"
+    },
+    "sistem": "fix16",
+    "sistem_notu": "Bu kupon KAPLAMA ile oynandi (core.solve_fix16, 16 satir, 14-garanti). Alan sonradan EKLENDI (2026-09-06): kaplama sokuldu (docs/DUZ_SISTEME_GECIS.md) ve degerlendirici artik sistemi kayittan okuyor. Sonuclarin hicbiri degistirilmedi — yalnizca hangi sistemle oynandigi ILAN EDILDI, cunku varsayilana dusmek 5. haftadan itibaren yanlis cevap verirdi."
   },
-  "bedel_uyarisi": "BU HAFTA KURAL 3.888 KOLON İSTİYOR — 3. haftada 864'tü, yani ×4,5 bedel. Sebep haftanın kendisi: bültende yalnızca 3 banko var (maç 3, 5, 7) ve 5 maç üçlü (maç 1, 2, 6, 10, 12). Kural DEĞİŞTİRİLMEDİ ve ana varyant kuralın cevabıdır; ama bütçe bir HARCAMA kararıdır ve veriden türetilemez. Motorun aynı haftada daha küçük bütçelerde kurduğu planlar da kayıtta duruyor: 864 kolon → P(≥12) %26,18 · 1.296 kolon → %31,84 · 3.888 kolon → %46,70. Oynayan daha küçük bir bütçeyi oynarsa kayıt `superseded` ile güncellenir.",
-  "kalabalik_gerekcesi": "Oynanan kupon kalabalığı GÖRMEZ: işaretler yalnızca fiyattan gelir. Kalabalık ayarlı alternatif de ölçüldü ve kayıtta duruyor — P(≥12)'yi %46,70'den %44,86'e düşürüyor (−1,84 puan), buna karşılık aynı seti oynayan rakip payını %9,35'den %6,64'e indiriyor (×1,41 daha az bölüşme); müşterek beklenen değerde net ×1,35 daha iyi çıkıyor. Ayrışma 3 maçta: 4. maç 10 → 12; 9. maç 10 → 12; 15. maç 10 → 12. 3. haftada oynayan ölçüme RAĞMEN ayarsız sürümü seçti ve o hafta kazandı; defter bunu uyarı olarak taşıyor — tek hafta bir ölçüm değildir.",
-  "hedef_notu": "Asıl ölçü P(en iyi kolon ≥ 12); 14 bir yan üründür (1. haftanın 1. dersi).",
-  "veri_uyarilari": [
-   "Program tarihleri ve maç saatleri GİRİLMEDİ (kullanıcı vermedi). Uydurulmadı; `date`/`kickoff` boş. Kupon donma anını belgeleyen tek alan `frozen_at`tır (2026-09-04).",
-   "Ana fiyat İKİ satırda Pinnacle kapanışı DEĞİLDİR. 13. maç (Inter–Napoli): Pinnacle AÇILIŞI — aynı bahisçi, önceki an; kaybolan tek şey o maçın çizgi hareketi. 2. maç (Kasımpaşa–Amed): Nesine kapanışı — BAŞKA bahisçi, %17,7 marj. İkincisi ölçeği bozuyor ve otomatik kapı o satırı KUŞKULU işaretliyor; işaret DOĞRUDUR. O maç kuponda zaten ÜÇLÜ (102), yani ikamenin İŞARETLERE etkisi yok; olasılıklara ve P(≥12)'ye etkisi var.",
-   "9. maçın (Göztepe–Gaziantep) Pinnacle kapanışı açılışıyla BİREBİR aynı: bayat satır. Bayatlık bu hafta ilk kez ANA fiyat kaynağının kendisinde görünüyor. Nesine'de 8 satır bayat (maç 1, 2, 3, 4, 7, 8, 9, 14).",
-   "Kapanış oranlarının tamamı kupon donarken elde miydi, DOĞRULANMADI — 3. haftanın `odds_kind` dersi burada da geçerli. Bu hafta soru pratikte boş: Pinnacle AÇILIŞ fiyatıyla kurulan kupon işaret işaret AYNI çıktı (`duyarlilik`).",
-   "bet365.nl kaydı bu hafta yok; bahisçi ayrışması iki kaynak arasında ölçülüyor (3. haftada üçtü)."
+  "variants": [
+    {
+      "label": "ana — hedef kuralı, kalabalık görülmeden (DONDURULAN)",
+      "picks": [
+        "102",
+        "102",
+        "1",
+        "10",
+        "2",
+        "102",
+        "1",
+        "10",
+        "10",
+        "102",
+        "10",
+        "102",
+        "10",
+        "10",
+        "10"
+      ],
+      "columns": 3888,
+      "rows": 16,
+      "engine": "sabit 16 satır (Hamming 7,4)",
+      "guaranteed_14": true,
+      "hedef": 0.467001,
+      "in_set_p": 0.040145,
+      "crowd_in_set_p": 0.093504,
+      "crowd_ratio": 0.429,
+      "secim_uzayi": 31104,
+      "lines": [
+        "102 102 1   1   2   102 1   1   1   102 1   102 1   1   1  ",
+        "102 102 1   1   2   102 1   1   1   102 0   102 1   0   0  ",
+        "102 102 1   1   2   102 1   1   0   102 1   102 0   0   1  ",
+        "102 102 1   1   2   102 1   1   0   102 0   102 0   1   0  ",
+        "102 102 1   1   2   102 1   0   1   102 1   102 0   0   0  ",
+        "102 102 1   1   2   102 1   0   1   102 0   102 0   1   1  ",
+        "102 102 1   1   2   102 1   0   0   102 1   102 1   1   0  ",
+        "102 102 1   1   2   102 1   0   0   102 0   102 1   0   1  ",
+        "102 102 1   0   2   102 1   1   1   102 1   102 0   1   0  ",
+        "102 102 1   0   2   102 1   1   1   102 0   102 0   0   1  ",
+        "102 102 1   0   2   102 1   1   0   102 1   102 1   0   0  ",
+        "102 102 1   0   2   102 1   1   0   102 0   102 1   1   1  ",
+        "102 102 1   0   2   102 1   0   1   102 1   102 1   0   1  ",
+        "102 102 1   0   2   102 1   0   1   102 0   102 1   1   0  ",
+        "102 102 1   0   2   102 1   0   0   102 1   102 0   1   1  ",
+        "102 102 1   0   2   102 1   0   0   102 0   102 0   0   0  "
+      ],
+      "kademeler": {
+        "15": 0.005515,
+        "14": 0.065607,
+        "13": 0.204945,
+        "12": 0.307183
+      },
+      "p_en_az_12": 0.58325,
+      "kosullu_rakip_kat": 8.233,
+      "olcum_notu": "`hedef` alani P(kacak<=2)'dir ve en iyi kolonun ALT SINIRIDIR (bkz. spor_toto/secim.py basligi). `p_en_az_12` kolonlarin kendisinden olculen GERCEK degerdir; aradaki fark tam olarak P(kacak=3 ve en iyi kolon=12)'dir."
+    },
+    {
+      "label": "hedef + kalabalık ayarı (ölçüldü, oynanmadı)",
+      "picks": [
+        "102",
+        "102",
+        "1",
+        "12",
+        "2",
+        "102",
+        "1",
+        "10",
+        "12",
+        "102",
+        "10",
+        "102",
+        "10",
+        "10",
+        "12"
+      ],
+      "columns": 3888,
+      "rows": 16,
+      "engine": "sabit 16 satır (Hamming 7,4)",
+      "guaranteed_14": true,
+      "hedef": 0.448585,
+      "in_set_p": 0.03689,
+      "crowd_in_set_p": 0.066428,
+      "crowd_ratio": 0.555,
+      "secim_uzayi": 31104
+    },
+    {
+      "label": "eşik kuralı — eski kural, aynı ölçek (kıyas)",
+      "picks": [
+        "12",
+        "12",
+        "10",
+        "10",
+        "02",
+        "102",
+        "10",
+        "10",
+        "10",
+        "12",
+        "10",
+        "12",
+        "10",
+        "10",
+        "10"
+      ],
+      "columns": 6144,
+      "rows": 16,
+      "engine": "sabit 16 satır (Hamming 7,4)",
+      "guaranteed_14": true,
+      "hedef": 0.367234,
+      "in_set_p": 0.029069,
+      "crowd_in_set_p": 0.05255,
+      "crowd_ratio": 0.553,
+      "secim_uzayi": 49152
+    },
+    {
+      "label": "bütçe kısıtlı — 3. haftanın bedeli (864 kolon), ANA PLANDAN KISILMIŞ",
+      "picks": [
+        "102",
+        "102",
+        "1",
+        "10",
+        "2",
+        "102",
+        "1",
+        "10",
+        "10",
+        "2",
+        "10",
+        "12",
+        "10",
+        "10",
+        "10"
+      ],
+      "columns": 864,
+      "rows": 16,
+      "engine": "sabit 16 satır (Hamming 7,4)",
+      "guaranteed_14": true,
+      "hedef": 0.261767,
+      "in_set_p": 0.013106,
+      "crowd_in_set_p": 0.034129,
+      "crowd_ratio": 0.384,
+      "secim_uzayi": 6912,
+      "butce_tavani": 1024,
+      "kisilan": [
+        "10. mac: 102 -> 2",
+        "12. mac: 102 -> 12"
+      ],
+      "not": "Bu varyant motorun o tavandaki cevabi DEGILDIR: ana plandan `kisilan` isaretleri dusurulerek uretildi. Etiketi once \"motorun kendi plani\" diyordu ve yanlisti. Motorun ayni tavandaki GERCEK en iyisi ayri bir varyant olarak kayitta duruyor ve bu plandan +1,31 puan daha iyi; isaret farki 10. ve 14. macta. Sonuclar yine GORULMEDEN olculdu."
+    },
+    {
+      "label": "bütçe kısıtlı — orta kademe (1.296 kolon), ANA PLANDAN KISILMIŞ",
+      "picks": [
+        "102",
+        "102",
+        "1",
+        "10",
+        "2",
+        "102",
+        "1",
+        "10",
+        "10",
+        "2",
+        "10",
+        "102",
+        "10",
+        "10",
+        "10"
+      ],
+      "columns": 1296,
+      "rows": 16,
+      "engine": "sabit 16 satır (Hamming 7,4)",
+      "guaranteed_14": true,
+      "hedef": 0.318363,
+      "in_set_p": 0.018016,
+      "crowd_in_set_p": 0.046752,
+      "crowd_ratio": 0.385,
+      "secim_uzayi": 10368,
+      "butce_tavani": 2304,
+      "kisilan": [
+        "10. mac: 102 -> 2"
+      ],
+      "not": "Bu varyant motorun o tavandaki cevabi DEGILDIR: ana plandan `kisilan` isaretleri dusurulerek uretildi. Etiketi once \"motorun kendi plani\" diyordu ve yanlisti. Motorun ayni tavandaki GERCEK en iyisi ayri bir varyant olarak kayitta duruyor ve bu plandan +1,44 puan daha iyi; isaret farki 10. ve 14. macta. Sonuclar yine GORULMEDEN olculdu."
+    },
+    {
+      "label": "3. Kupon — SÜRPRİZ (kalabalıktan azami sapma, ölçüldü)",
+      "picks": [
+        "102",
+        "1",
+        "1",
+        "12",
+        "2",
+        "102",
+        "0",
+        "12",
+        "02",
+        "2",
+        "10",
+        "102",
+        "12",
+        "10",
+        "12"
+      ],
+      "columns": 432,
+      "rows": 16,
+      "engine": "sabit 16 satır (Hamming 7,4)",
+      "guaranteed_14": true,
+      "hedef": 0.081482,
+      "in_set_p": 0.001465,
+      "crowd_in_set_p": 0.000475,
+      "crowd_ratio": 3.081,
+      "secim_uzayi": 3456,
+      "kosullu_rakip_kat": 0.401,
+      "kademeler": {
+        "15": 0.000199,
+        "14": 0.003857,
+        "13": 0.027197,
+        "12": 0.097901
+      },
+      "p_en_az_12": 0.129153,
+      "marjinal_katki": 0.04083,
+      "birlesim_p_en_az_12": 0.62408,
+      "lines": [
+        "102 1   1   1   2   102 0   1   0   2   1   102 1   1   1  ",
+        "102 1   1   1   2   102 0   1   0   2   0   102 1   0   2  ",
+        "102 1   1   1   2   102 0   1   2   2   1   102 2   0   1  ",
+        "102 1   1   1   2   102 0   1   2   2   0   102 2   1   2  ",
+        "102 1   1   1   2   102 0   2   0   2   1   102 2   0   2  ",
+        "102 1   1   1   2   102 0   2   0   2   0   102 2   1   1  ",
+        "102 1   1   1   2   102 0   2   2   2   1   102 1   1   2  ",
+        "102 1   1   1   2   102 0   2   2   2   0   102 1   0   1  ",
+        "102 1   1   2   2   102 0   1   0   2   1   102 2   1   2  ",
+        "102 1   1   2   2   102 0   1   0   2   0   102 2   0   1  ",
+        "102 1   1   2   2   102 0   1   2   2   1   102 1   0   2  ",
+        "102 1   1   2   2   102 0   1   2   2   0   102 1   1   1  ",
+        "102 1   1   2   2   102 0   2   0   2   1   102 1   0   1  ",
+        "102 1   1   2   2   102 0   2   0   2   0   102 1   1   2  ",
+        "102 1   1   2   2   102 0   2   2   2   1   102 2   1   1  ",
+        "102 1   1   2   2   102 0   2   2   2   0   102 2   0   2  "
+      ],
+      "ayrisma": [
+        {
+          "no": 2,
+          "mac": "Kasımpaşa A.Ş. – Amed Sportif",
+          "ana": "102",
+          "surpriz": "1",
+          "piyasa": {
+            "1": 0.4389,
+            "0": 0.2789,
+            "2": 0.2822
+          },
+          "halk": {
+            "1": 0.46,
+            "0": 0.32,
+            "2": 0.22
+          },
+          "favori": "1",
+          "favori_dustu": false
+        },
+        {
+          "no": 4,
+          "mac": "Fenerbahçe A.Ş. – Beşiktaş A.Ş.",
+          "ana": "10",
+          "surpriz": "12",
+          "piyasa": {
+            "1": 0.5263,
+            "0": 0.2419,
+            "2": 0.2318
+          },
+          "halk": {
+            "1": 0.5,
+            "0": 0.29,
+            "2": 0.21
+          },
+          "favori": "1",
+          "favori_dustu": false
+        },
+        {
+          "no": 7,
+          "mac": "Trabzonspor A.Ş. – Gençlerbirliği",
+          "ana": "1",
+          "surpriz": "0",
+          "piyasa": {
+            "1": 0.6143,
+            "0": 0.2215,
+            "2": 0.1642
+          },
+          "halk": {
+            "1": 0.81,
+            "0": 0.11,
+            "2": 0.08
+          },
+          "favori": "1",
+          "favori_dustu": true
+        },
+        {
+          "no": 8,
+          "mac": "Çaykur Rizespor A.Ş. – Alanyaspor",
+          "ana": "10",
+          "surpriz": "12",
+          "piyasa": {
+            "1": 0.5009,
+            "0": 0.2789,
+            "2": 0.2202
+          },
+          "halk": {
+            "1": 0.53,
+            "0": 0.3,
+            "2": 0.17
+          },
+          "favori": "1",
+          "favori_dustu": false
+        },
+        {
+          "no": 9,
+          "mac": "Göztepe A.Ş. – Gaziantep F.K. A.Ş.",
+          "ana": "10",
+          "surpriz": "02",
+          "piyasa": {
+            "1": 0.509,
+            "0": 0.2543,
+            "2": 0.2367
+          },
+          "halk": {
+            "1": 0.73,
+            "0": 0.17,
+            "2": 0.1
+          },
+          "favori": "1",
+          "favori_dustu": true
+        },
+        {
+          "no": 10,
+          "mac": "Everton – Manchester United",
+          "ana": "102",
+          "surpriz": "2",
+          "piyasa": {
+            "1": 0.2878,
+            "0": 0.2635,
+            "2": 0.4488
+          },
+          "halk": {
+            "1": 0.24,
+            "0": 0.26,
+            "2": 0.5
+          },
+          "favori": "2",
+          "favori_dustu": false
+        },
+        {
+          "no": 13,
+          "mac": "Inter – Napoli",
+          "ana": "10",
+          "surpriz": "12",
+          "piyasa": {
+            "1": 0.5767,
+            "0": 0.2452,
+            "2": 0.1782
+          },
+          "halk": {
+            "1": 0.67,
+            "0": 0.24,
+            "2": 0.09
+          },
+          "favori": "1",
+          "favori_dustu": false
+        },
+        {
+          "no": 15,
+          "mac": "Juventus – AC Milan",
+          "ana": "10",
+          "surpriz": "12",
+          "piyasa": {
+            "1": 0.4609,
+            "0": 0.287,
+            "2": 0.252
+          },
+          "halk": {
+            "1": 0.43,
+            "0": 0.34,
+            "2": 0.23
+          },
+          "favori": "1",
+          "favori_dustu": false
+        }
+      ],
+      "nasil_kuruldu": "1. Kupon'un planindan baslanip `secim.kalabalik_ayari` kayip_orani=0.5 ile kosuldu, sonra motorun kendi butce danismani 512 kolon tavaniyla kisti. Elle secilen tek sey bu iki sayidir ve ikisi de ILAN EDILMIS gerekceyle secildi (asagida).",
+      "gerekce": "SAPMA 0.5: kosullu rakip yogunlugunun (`kat`) 1'in ALTINA dustugu kademe. Ayni butcede 0,30 -> 1,69 ve 0,40 -> 1,54 kaliyor; yani o kuponlar kazandiginda rakipler bizimle normalden DAHA cok birlikte olurdu — surpriz kuponun tersi. 0,50 -> 0.401. BUTCE 512: ana kuponun %11'i. Surpriz kupon ana kuponun yerine GECMEZ, yanina alinir; bedeli de ona gore secildi.",
+      "olcum_notu": "Kademeler ve marjinal katki. iki kuponun ORTAK sonuc uzayinda (3^12 = 531.441 hal) tam sayildi — ornekleme yok. `hedef` alani her zamanki gibi P(kacak<=2)'dir ve bir ALT SINIRDIR; `p_en_az_12` kolonlardan olculen gercek degerdir."
+    },
+    {
+      "label": "bütçe kısıtlı — tavan 1.024 kolon, MOTORUN KENDİ PLANI",
+      "picks": [
+        "102",
+        "102",
+        "1",
+        "10",
+        "2",
+        "102",
+        "1",
+        "10",
+        "10",
+        "12",
+        "10",
+        "12",
+        "10",
+        "1",
+        "10"
+      ],
+      "columns": 864,
+      "rows": 16,
+      "engine": "sabit 16 satır (Hamming 7,4)",
+      "guaranteed_14": true,
+      "hedef": 0.274852,
+      "in_set_p": 0.015102,
+      "crowd_in_set_p": 0.035655,
+      "crowd_ratio": 0.424,
+      "secim_uzayi": 6912,
+      "butce_tavani": 1024,
+      "not": "`secim.en_iyi_secim` ayni tavanda dogrudan kosuldu — kisma degil, yeniden en iyileme. Ayni bedel ve ayni sekil, daha yuksek hedef: kisilmis surumden +1,31 puan iyi. Ana varyantin YERINE GECMEZ; oynanan kupon 3.888 kolonluk plandir. Sonuclar GORULMEDEN olculdu (2026-09-06).",
+      "ureten": "cd backend && python scripts/butce_kademeleri.py --hafta 4 --tavan 1024"
+    },
+    {
+      "label": "bütçe kısıtlı — tavan 2.304 kolon, MOTORUN KENDİ PLANI",
+      "picks": [
+        "102",
+        "102",
+        "1",
+        "10",
+        "2",
+        "102",
+        "1",
+        "10",
+        "10",
+        "12",
+        "10",
+        "102",
+        "10",
+        "1",
+        "10"
+      ],
+      "columns": 1296,
+      "rows": 16,
+      "engine": "sabit 16 satır (Hamming 7,4)",
+      "guaranteed_14": true,
+      "hedef": 0.332737,
+      "in_set_p": 0.020759,
+      "crowd_in_set_p": 0.048842,
+      "crowd_ratio": 0.425,
+      "secim_uzayi": 10368,
+      "butce_tavani": 2304,
+      "not": "`secim.en_iyi_secim` ayni tavanda dogrudan kosuldu — kisma degil, yeniden en iyileme. Ayni bedel ve ayni sekil, daha yuksek hedef: kisilmis surumden +1,44 puan iyi. Ana varyantin YERINE GECMEZ; oynanan kupon 3.888 kolonluk plandir. Sonuclar GORULMEDEN olculdu (2026-09-06).",
+      "ureten": "cd backend && python scripts/butce_kademeleri.py --hafta 4 --tavan 2304"
+    }
   ],
-  "ucuncu_kupon_notu": "3. Kupon (surpriz) ana kayitla AYNI GUN, sonuclar yine gorulmeden eklendi. Ana varyantin yerine GECMEZ; olculmus bir yan bahistir ve tek gerekcesi marjinal katkidir: ana kupon 12'ye ulasamadigi haftalarda %4.08 olasilikla o kendisi ulasiyor. Ikisi birlikte oynanirsa P(en az biri >= 12) %58.32'den %62.41'e cikiyor."
- },
- "variants": [
-  {
-   "label": "ana — hedef kuralı, kalabalık görülmeden (DONDURULAN)",
-   "picks": [
-    "102",
-    "102",
-    "1",
-    "10",
-    "2",
-    "102",
-    "1",
-    "10",
-    "10",
-    "102",
-    "10",
-    "102",
-    "10",
-    "10",
-    "10"
-   ],
-   "columns": 3888,
-   "rows": 16,
-   "engine": "sabit 16 satır (Hamming 7,4)",
-   "guaranteed_14": true,
-   "hedef": 0.467001,
-   "in_set_p": 0.040145,
-   "crowd_in_set_p": 0.093504,
-   "crowd_ratio": 0.429,
-   "secim_uzayi": 31104,
-   "lines": [
+  "duyarlilik": {
+    "not": "Spor Toto kuponu ilk maçtan önce kapanır; haftanın son maçlarının KAPANIŞ çizgisi o anda normalde henüz yoktur. Aşağıdaki kupon, kupon anında kesinlikle elde olan fiyatla kuruldu: Pinnacle AÇILIŞ (2. maçta Nesine açılış — Pinnacle o maçı hiç fiyatlamamış).",
+    "picks": [
+      "102",
+      "102",
+      "1",
+      "10",
+      "2",
+      "102",
+      "1",
+      "10",
+      "10",
+      "102",
+      "10",
+      "102",
+      "10",
+      "10",
+      "10"
+    ],
+    "columns": 3888,
+    "rows": 16,
+    "engine": "sabit 16 satır (Hamming 7,4)",
+    "guaranteed_14": true,
+    "hedef": 0.467001,
+    "in_set_p": 0.040145,
+    "crowd_in_set_p": 0.093504,
+    "crowd_ratio": 0.429,
+    "secim_uzayi": 31104,
+    "fark": "Açılış ve kapanış kuponu HİÇBİR maçta ayrışmıyor — 15/15 aynı işaret. 3. haftada tek maçta ayrışmıştı. Sebep ölçüldü: bu haftanın en büyük Pinnacle çizgi hareketi 3,36 puan (5. maç, Galatasaray %57,6 → %61,0), ikincisi 3,06 puan (12. maç, Atletico Madrid %38,8 → %41,9); 3. haftada en büyük hareket 5,7 puandı ve kuponu tam o maçta çevirmişti. Fiyat anının bedeli bu hafta yalnızca P(≥12)'de görünüyor: kapanış olasılıklarıyla %46,70, açılış olasılıklarıyla %45,91.",
+    "ayrisan_maclar": []
+  },
+  "rows": [
     "102 102 1   1   2   102 1   1   1   102 1   102 1   1   1  ",
     "102 102 1   1   2   102 1   1   1   102 0   102 1   0   0  ",
     "102 102 1   1   2   102 1   1   0   102 1   102 0   0   1  ",
@@ -74,396 +540,5 @@
     "102 102 1   0   2   102 1   0   1   102 0   102 1   1   0  ",
     "102 102 1   0   2   102 1   0   0   102 1   102 0   1   1  ",
     "102 102 1   0   2   102 1   0   0   102 0   102 0   0   0  "
-   ],
-   "kademeler": {
-    "15": 0.005515,
-    "14": 0.065607,
-    "13": 0.204945,
-    "12": 0.307183
-   },
-   "p_en_az_12": 0.58325,
-   "kosullu_rakip_kat": 8.233,
-   "olcum_notu": "`hedef` alani P(kacak<=2)'dir ve en iyi kolonun ALT SINIRIDIR (bkz. spor_toto/secim.py basligi). `p_en_az_12` kolonlarin kendisinden olculen GERCEK degerdir; aradaki fark tam olarak P(kacak=3 ve en iyi kolon=12)'dir."
-  },
-  {
-   "label": "hedef + kalabalık ayarı (ölçüldü, oynanmadı)",
-   "picks": [
-    "102",
-    "102",
-    "1",
-    "12",
-    "2",
-    "102",
-    "1",
-    "10",
-    "12",
-    "102",
-    "10",
-    "102",
-    "10",
-    "10",
-    "12"
-   ],
-   "columns": 3888,
-   "rows": 16,
-   "engine": "sabit 16 satır (Hamming 7,4)",
-   "guaranteed_14": true,
-   "hedef": 0.448585,
-   "in_set_p": 0.03689,
-   "crowd_in_set_p": 0.066428,
-   "crowd_ratio": 0.555,
-   "secim_uzayi": 31104
-  },
-  {
-   "label": "eşik kuralı — eski kural, aynı ölçek (kıyas)",
-   "picks": [
-    "12",
-    "12",
-    "10",
-    "10",
-    "02",
-    "102",
-    "10",
-    "10",
-    "10",
-    "12",
-    "10",
-    "12",
-    "10",
-    "10",
-    "10"
-   ],
-   "columns": 6144,
-   "rows": 16,
-   "engine": "sabit 16 satır (Hamming 7,4)",
-   "guaranteed_14": true,
-   "hedef": 0.367234,
-   "in_set_p": 0.029069,
-   "crowd_in_set_p": 0.05255,
-   "crowd_ratio": 0.553,
-   "secim_uzayi": 49152
-  },
-  {
-   "label": "bütçe kısıtlı — 3. haftanın bedeli (864 kolon), motorun kendi planı",
-   "picks": [
-    "102",
-    "102",
-    "1",
-    "10",
-    "2",
-    "102",
-    "1",
-    "10",
-    "10",
-    "2",
-    "10",
-    "12",
-    "10",
-    "10",
-    "10"
-   ],
-   "columns": 864,
-   "rows": 16,
-   "engine": "sabit 16 satır (Hamming 7,4)",
-   "guaranteed_14": true,
-   "hedef": 0.261767,
-   "in_set_p": 0.013106,
-   "crowd_in_set_p": 0.034129,
-   "crowd_ratio": 0.384,
-   "secim_uzayi": 6912,
-   "butce_tavani": 1024,
-   "kisilan": [
-    "10. mac: 102 -> 2",
-    "12. mac: 102 -> 12"
-   ]
-  },
-  {
-   "label": "bütçe kısıtlı — orta kademe (1.296 kolon), motorun kendi planı",
-   "picks": [
-    "102",
-    "102",
-    "1",
-    "10",
-    "2",
-    "102",
-    "1",
-    "10",
-    "10",
-    "2",
-    "10",
-    "102",
-    "10",
-    "10",
-    "10"
-   ],
-   "columns": 1296,
-   "rows": 16,
-   "engine": "sabit 16 satır (Hamming 7,4)",
-   "guaranteed_14": true,
-   "hedef": 0.318363,
-   "in_set_p": 0.018016,
-   "crowd_in_set_p": 0.046752,
-   "crowd_ratio": 0.385,
-   "secim_uzayi": 10368,
-   "butce_tavani": 2304,
-   "kisilan": [
-    "10. mac: 102 -> 2"
-   ]
-  },
-  {
-   "label": "3. Kupon — SÜRPRİZ (kalabalıktan azami sapma, ölçüldü)",
-   "picks": [
-    "102",
-    "1",
-    "1",
-    "12",
-    "2",
-    "102",
-    "0",
-    "12",
-    "02",
-    "2",
-    "10",
-    "102",
-    "12",
-    "10",
-    "12"
-   ],
-   "columns": 432,
-   "rows": 16,
-   "engine": "sabit 16 satır (Hamming 7,4)",
-   "guaranteed_14": true,
-   "hedef": 0.081482,
-   "in_set_p": 0.001465,
-   "crowd_in_set_p": 0.000475,
-   "crowd_ratio": 3.081,
-   "secim_uzayi": 3456,
-   "kosullu_rakip_kat": 0.401,
-   "kademeler": {
-    "15": 0.000199,
-    "14": 0.003857,
-    "13": 0.027197,
-    "12": 0.097901
-   },
-   "p_en_az_12": 0.129153,
-   "marjinal_katki": 0.04083,
-   "birlesim_p_en_az_12": 0.62408,
-   "lines": [
-    "102 1   1   1   2   102 0   1   0   2   1   102 1   1   1  ",
-    "102 1   1   1   2   102 0   1   0   2   0   102 1   0   2  ",
-    "102 1   1   1   2   102 0   1   2   2   1   102 2   0   1  ",
-    "102 1   1   1   2   102 0   1   2   2   0   102 2   1   2  ",
-    "102 1   1   1   2   102 0   2   0   2   1   102 2   0   2  ",
-    "102 1   1   1   2   102 0   2   0   2   0   102 2   1   1  ",
-    "102 1   1   1   2   102 0   2   2   2   1   102 1   1   2  ",
-    "102 1   1   1   2   102 0   2   2   2   0   102 1   0   1  ",
-    "102 1   1   2   2   102 0   1   0   2   1   102 2   1   2  ",
-    "102 1   1   2   2   102 0   1   0   2   0   102 2   0   1  ",
-    "102 1   1   2   2   102 0   1   2   2   1   102 1   0   2  ",
-    "102 1   1   2   2   102 0   1   2   2   0   102 1   1   1  ",
-    "102 1   1   2   2   102 0   2   0   2   1   102 1   0   1  ",
-    "102 1   1   2   2   102 0   2   0   2   0   102 1   1   2  ",
-    "102 1   1   2   2   102 0   2   2   2   1   102 2   1   1  ",
-    "102 1   1   2   2   102 0   2   2   2   0   102 2   0   2  "
-   ],
-   "ayrisma": [
-    {
-     "no": 2,
-     "mac": "Kasımpaşa A.Ş. – Amed Sportif",
-     "ana": "102",
-     "surpriz": "1",
-     "piyasa": {
-      "1": 0.4389,
-      "0": 0.2789,
-      "2": 0.2822
-     },
-     "halk": {
-      "1": 0.46,
-      "0": 0.32,
-      "2": 0.22
-     },
-     "favori": "1",
-     "favori_dustu": false
-    },
-    {
-     "no": 4,
-     "mac": "Fenerbahçe A.Ş. – Beşiktaş A.Ş.",
-     "ana": "10",
-     "surpriz": "12",
-     "piyasa": {
-      "1": 0.5263,
-      "0": 0.2419,
-      "2": 0.2318
-     },
-     "halk": {
-      "1": 0.5,
-      "0": 0.29,
-      "2": 0.21
-     },
-     "favori": "1",
-     "favori_dustu": false
-    },
-    {
-     "no": 7,
-     "mac": "Trabzonspor A.Ş. – Gençlerbirliği",
-     "ana": "1",
-     "surpriz": "0",
-     "piyasa": {
-      "1": 0.6143,
-      "0": 0.2215,
-      "2": 0.1642
-     },
-     "halk": {
-      "1": 0.81,
-      "0": 0.11,
-      "2": 0.08
-     },
-     "favori": "1",
-     "favori_dustu": true
-    },
-    {
-     "no": 8,
-     "mac": "Çaykur Rizespor A.Ş. – Alanyaspor",
-     "ana": "10",
-     "surpriz": "12",
-     "piyasa": {
-      "1": 0.5009,
-      "0": 0.2789,
-      "2": 0.2202
-     },
-     "halk": {
-      "1": 0.53,
-      "0": 0.3,
-      "2": 0.17
-     },
-     "favori": "1",
-     "favori_dustu": false
-    },
-    {
-     "no": 9,
-     "mac": "Göztepe A.Ş. – Gaziantep F.K. A.Ş.",
-     "ana": "10",
-     "surpriz": "02",
-     "piyasa": {
-      "1": 0.509,
-      "0": 0.2543,
-      "2": 0.2367
-     },
-     "halk": {
-      "1": 0.73,
-      "0": 0.17,
-      "2": 0.1
-     },
-     "favori": "1",
-     "favori_dustu": true
-    },
-    {
-     "no": 10,
-     "mac": "Everton – Manchester United",
-     "ana": "102",
-     "surpriz": "2",
-     "piyasa": {
-      "1": 0.2878,
-      "0": 0.2635,
-      "2": 0.4488
-     },
-     "halk": {
-      "1": 0.24,
-      "0": 0.26,
-      "2": 0.5
-     },
-     "favori": "2",
-     "favori_dustu": false
-    },
-    {
-     "no": 13,
-     "mac": "Inter – Napoli",
-     "ana": "10",
-     "surpriz": "12",
-     "piyasa": {
-      "1": 0.5767,
-      "0": 0.2452,
-      "2": 0.1782
-     },
-     "halk": {
-      "1": 0.67,
-      "0": 0.24,
-      "2": 0.09
-     },
-     "favori": "1",
-     "favori_dustu": false
-    },
-    {
-     "no": 15,
-     "mac": "Juventus – AC Milan",
-     "ana": "10",
-     "surpriz": "12",
-     "piyasa": {
-      "1": 0.4609,
-      "0": 0.287,
-      "2": 0.252
-     },
-     "halk": {
-      "1": 0.43,
-      "0": 0.34,
-      "2": 0.23
-     },
-     "favori": "1",
-     "favori_dustu": false
-    }
-   ],
-   "nasil_kuruldu": "1. Kupon'un planindan baslanip `secim.kalabalik_ayari` kayip_orani=0.5 ile kosuldu, sonra motorun kendi butce danismani 512 kolon tavaniyla kisti. Elle secilen tek sey bu iki sayidir ve ikisi de ILAN EDILMIS gerekceyle secildi (asagida).",
-   "gerekce": "SAPMA 0.5: kosullu rakip yogunlugunun (`kat`) 1'in ALTINA dustugu kademe. Ayni butcede 0,30 -> 1,69 ve 0,40 -> 1,54 kaliyor; yani o kuponlar kazandiginda rakipler bizimle normalden DAHA cok birlikte olurdu — surpriz kuponun tersi. 0,50 -> 0.401. BUTCE 512: ana kuponun %11'i. Surpriz kupon ana kuponun yerine GECMEZ, yanina alinir; bedeli de ona gore secildi.",
-   "olcum_notu": "Kademeler ve marjinal katki. iki kuponun ORTAK sonuc uzayinda (3^12 = 531.441 hal) tam sayildi — ornekleme yok. `hedef` alani her zamanki gibi P(kacak<=2)'dir ve bir ALT SINIRDIR; `p_en_az_12` kolonlardan olculen gercek degerdir."
-  }
- ],
- "duyarlilik": {
-  "not": "Spor Toto kuponu ilk maçtan önce kapanır; haftanın son maçlarının KAPANIŞ çizgisi o anda normalde henüz yoktur. Aşağıdaki kupon, kupon anında kesinlikle elde olan fiyatla kuruldu: Pinnacle AÇILIŞ (2. maçta Nesine açılış — Pinnacle o maçı hiç fiyatlamamış).",
-  "picks": [
-   "102",
-   "102",
-   "1",
-   "10",
-   "2",
-   "102",
-   "1",
-   "10",
-   "10",
-   "102",
-   "10",
-   "102",
-   "10",
-   "10",
-   "10"
-  ],
-  "columns": 3888,
-  "rows": 16,
-  "engine": "sabit 16 satır (Hamming 7,4)",
-  "guaranteed_14": true,
-  "hedef": 0.467001,
-  "in_set_p": 0.040145,
-  "crowd_in_set_p": 0.093504,
-  "crowd_ratio": 0.429,
-  "secim_uzayi": 31104,
-  "fark": "Açılış ve kapanış kuponu HİÇBİR maçta ayrışmıyor — 15/15 aynı işaret. 3. haftada tek maçta ayrışmıştı. Sebep ölçüldü: bu haftanın en büyük Pinnacle çizgi hareketi 3,36 puan (5. maç, Galatasaray %57,6 → %61,0), ikincisi 3,06 puan (12. maç, Atletico Madrid %38,8 → %41,9); 3. haftada en büyük hareket 5,7 puandı ve kuponu tam o maçta çevirmişti. Fiyat anının bedeli bu hafta yalnızca P(≥12)'de görünüyor: kapanış olasılıklarıyla %46,70, açılış olasılıklarıyla %45,91.",
-  "ayrisan_maclar": []
- },
- "rows": [
-  "102 102 1   1   2   102 1   1   1   102 1   102 1   1   1  ",
-  "102 102 1   1   2   102 1   1   1   102 0   102 1   0   0  ",
-  "102 102 1   1   2   102 1   1   0   102 1   102 0   0   1  ",
-  "102 102 1   1   2   102 1   1   0   102 0   102 0   1   0  ",
-  "102 102 1   1   2   102 1   0   1   102 1   102 0   0   0  ",
-  "102 102 1   1   2   102 1   0   1   102 0   102 0   1   1  ",
-  "102 102 1   1   2   102 1   0   0   102 1   102 1   1   0  ",
-  "102 102 1   1   2   102 1   0   0   102 0   102 1   0   1  ",
-  "102 102 1   0   2   102 1   1   1   102 1   102 0   1   0  ",
-  "102 102 1   0   2   102 1   1   1   102 0   102 0   0   1  ",
-  "102 102 1   0   2   102 1   1   0   102 1   102 1   0   0  ",
-  "102 102 1   0   2   102 1   1   0   102 0   102 1   1   1  ",
-  "102 102 1   0   2   102 1   0   1   102 1   102 1   0   1  ",
-  "102 102 1   0   2   102 1   0   1   102 0   102 1   1   0  ",
-  "102 102 1   0   2   102 1   0   0   102 1   102 0   1   1  ",
-  "102 102 1   0   2   102 1   0   0   102 0   102 0   0   0  "
- ]
+  ]
 }

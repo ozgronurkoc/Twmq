@@ -86,15 +86,23 @@ export function OzetPanel({
           ton="primary"
           alt="ÖDENECEK TUTAR budur"
         />
-        <Stat
-          etiket="Küre-kaplama alt sınırı"
-          deger={sayi(r.alt_sinir)}
-          alt="bu sayının altı matematiksel olarak imkânsız"
-        />
+        {/*
+          Burada "Küre-kaplama alt siniri" duruyordu (`r.alt_sinir`) ve
+          alti "bu sayinin alti matematiksel olarak imkansiz" diyordu.
+          Kaplama sokuldu (docs/DUZ_SISTEME_GECIS.md); duzde alt sinir da
+          ust sinir da SECIM UZAYININ KENDISIDIR, yani ayri bir sayi
+          gostermek ayni sayiyi iki kere yazmak olurdu. Yerine kacak
+          esigini yaziyoruz: kuponun ne satin aldigi asil orada.
+        */}
         <Stat
           etiket="Değişken uzay"
           deger={sayi(r.total_space)}
-          alt={`${r.match_count} maç`}
+          alt={`${r.match_count} maç — oynanan kolon bu`}
+        />
+        <Stat
+          etiket="Kaçak payı"
+          deger="15 − k"
+          alt="küme dışına düşen her maç bir kademe düşürür"
         />
       </div>
 
@@ -102,6 +110,8 @@ export function OzetPanel({
         Bir maça çifte işaretlersen o satır <strong>2 kolon</strong> üretir ve 2
         kolon bedeli ödersin. Yukarıda <strong>{sayi(r.satir_sayisi)} satır</strong>{" "}
         var ama ödeyeceğin tutar <strong>{sayi(r.kolon_bedeli)} kolon</strong>.
+        Düzde kupon tek satırdır — işaretlerin kendisi — ama bedeli işaret
+        sayılarının çarpımıdır.
       </Callout>
 
       {r.notlar?.length ? (

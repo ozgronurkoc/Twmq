@@ -106,7 +106,7 @@ export default function GeriTestPage() {
         <h1 className="font-display text-[30px] italic leading-tight">Geri test</h1>
         <p className="mt-1 max-w-3xl text-[13.5px] leading-relaxed text-muted-foreground">
           “Bu strateji geçen sezon ne yapardı?” Her hafta için kapanış oranlarından bir kupon
-          üretilir, 14-garantili kaplama motoru çalıştırılır ve <strong>gerçekleşen sonucun</strong>{" "}
+          üretilir, seçim kümesinin tamamı kolonlara açılır ve <strong>gerçekleşen sonucun</strong>{" "}
           o kupona ne yaptığı ölçülür. Sonuç bir kâr vaadi değil, stratejinin geçmişteki
           bedelinin ve isabetinin kaydıdır.
         </p>
@@ -228,13 +228,13 @@ export default function GeriTestPage() {
               tamamı bu kuralla işaretlenir; elle müdahale yoktur.
             </p>
             <p>
-              <strong className="text-foreground">Kaplama.</strong> Kupon, formül sayfasındaki
-              motorun aynısıyla çözülür ve kaplama bağımsız olarak doğrulanır — açık nokta bırakan
+              <strong className="text-foreground">Kolonlar.</strong> Kupon, formül sayfasındaki
+              yolun aynısıyla açılır ve kümenin tamamının oynandığı bağımsız olarak doğrulanır — eksik kalan
               bir çözüm rapora girmez.
             </p>
             <p>
               <strong className="text-foreground">Skor.</strong> “En iyi”, üretilen kolonlar içinde
-              gerçekleşen sonuca en çok uyanın doğru sayısıdır. Küme içi kalan hafta 14-garanti
+              gerçekleşen sonuca en çok uyanın doğru sayısıdır. Küme içi kalan hafta 15
               gereği en az 14 tutturur; küme dışı her maç o haftanın tavanını bir düşürür.
             </p>
             <p>

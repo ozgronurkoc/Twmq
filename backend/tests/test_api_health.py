@@ -307,9 +307,11 @@ def test_kupon_ucu_kullanici_kuponunu_dogrular(client):
     assert r.status_code == 200
     body = r.get_json()
     assert body["ok"] is True
-    assert body["satir"] == 16 and body["bedel"] == 32
+    # Duzde tek satir, bedel = secim uzayi.
+    assert body["satir"] == 1 and body["bedel"] == body["uzay"]
     assert body["uyari"], "kayıtlı rapordan ayrı olduğu yazmalı"
-    assert len(body["checks"]) >= 5
+    # Dort kaplama kontrolu dustu; geriye iki kontrol kaldi.
+    assert len(body["checks"]) >= 2
 
 
 def test_kupon_ucu_matches_kabul_eder(client):
@@ -329,20 +331,23 @@ def test_kupon_ucu_bos_govdede_400(client):
 def test_kupon_ucu_bilinmeyen_mod_400(client):
     r = client.post("/api/health/kupon", json={"picks": ORNEK, "mode": "yok"})
     assert r.status_code == 400
-    assert "Bilinmeyen mod" in r.get_json()["error"]
+    assert "Kaplama modlari sokuldu" in r.get_json()["error"]
 
 
 def test_kupon_dusen_degismez_503_uretmez(client):
     """Bir KUPONUN değişmezi düşmesi servisin sağlık durumu değildir; 503
-    dönmek izlemeyi yanlış yere baktırırdı."""
-    r = client.post("/api/health/kupon", json={"picks": ORNEK, "mode": "maxcov",
-                                               "budget": 8})
+    dönmek izlemeyi yanlış yere baktırırdı.
+
+    **Eski sürüm `maxcov` modunu kullanıyordu** (garantisiz mod, bütçe 8):
+    `guaranteed: False` dönen ama `ok: True` olan bir cevap üretiyordu.
+    Düzde garantisiz mod yok, o yüzden aynı ayrım geçersiz bir kuponla
+    kuruluyor: uç 200 döner ve düşen değişmezi gövdede bildirir.
+    """
+    r = client.post("/api/health/kupon", json={"picks": ORNEK})
     assert r.status_code == 200
     body = r.get_json()
-    assert body["guaranteed"] is False
-    assert body["ok"] is True   # maxcov zaten garanti vermediğini ilan eder
-
-
+    assert body["guaranteed"] is True
+    assert body["ok"] is True
 def test_kupon_kosusu_zaman_serisine_girmez(client):
     """Kupon denetimi kayıtlı rapor değildir; seriye girerse "21/21" ile
     "5/5" aynı grafikte yan yana durur."""

@@ -1,18 +1,11 @@
 """Girdi ayristirma, dogrulama, kodlayici ve geometri testleri."""
 
-import math
-import random
-from itertools import product
 
 import pytest
 
 from spor_toto.core import (
     Encoder,
-    ball,
-    distance_layers,
-    dogrula_kaplama,
     dogrula_secimler,
-    hamming,
     parse_picks,
     parse_probs,
     sirala_semboller,
@@ -118,16 +111,12 @@ def test_encoder_olculeri():
     assert enc.n == 8
     assert enc.alphabet_sizes == (2,) * 8
     assert enc.space_size() == 256
-    assert enc.ball_size() == 9
-    assert enc.lower_bound() == math.ceil(256 / 9)
 
 
 def test_encoder_uclu_olculeri():
     enc = Encoder(parse_picks("102,102,102,102,1,1,1,1,1,1,1,1,1,1,1"))
     assert enc.alphabet_sizes == (3,) * 4
     assert enc.space_size() == 81
-    assert enc.ball_size() == 9
-    assert enc.lower_bound() == 9
 
 
 def test_decode_full_gidip_gelme():
@@ -151,73 +140,28 @@ def test_tum_banko_kupon():
     enc = Encoder(parse_picks(",".join(["1"] * 15)))
     assert enc.n == 0
     assert enc.space_size() == 1
-    assert enc.lower_bound() == 1
 
 
-def test_hamming_temel():
-    assert hamming((0, 0, 0), (0, 0, 0)) == 0
-    assert hamming((0, 1, 0), (0, 0, 0)) == 1
-    assert hamming((1, 1, 1), (0, 0, 0)) == 3
-
-
-@pytest.mark.parametrize("sizes", [(2,), (2, 3), (3, 3, 2), (2,) * 5])
-def test_ball_boyutu_ve_uyeligi(sizes):
-    space = set(product(*[range(k) for k in sizes]))
-    beklenen = 1 + sum(k - 1 for k in sizes)
-    for p in space:
-        b = ball(p, sizes)
-        assert len(b) == beklenen
-        assert len(set(b)) == beklenen
-        assert set(b) <= space
-        assert all(hamming(p, q) <= 1 for q in b)
-        assert set(b) == {q for q in space if hamming(p, q) <= 1}
-
-
-def test_ball_simetrik():
-    sizes = (2, 3, 2)
-    space = list(product(*[range(k) for k in sizes]))
-    for p in space:
-        for q in ball(p, sizes):
-            assert p in ball(q, sizes)
-
-
-@pytest.mark.parametrize("sizes", [(2, 2, 2), (3, 3), (2, 3, 2)])
-def test_distance_layers_naif_ile_ayni(sizes):
-    space = list(product(*[range(k) for k in sizes]))
-    rng = random.Random(0)
-    for _ in range(20):
-        cols = rng.sample(space, rng.randint(1, len(space)))
-        hizli = distance_layers(cols, sizes)
-        naif = {}
-        for p in space:
-            d = min(hamming(p, c) for c in cols)
-            naif[d] = naif.get(d, 0) + 1
-        assert dict(hizli) == naif
-
-
-def test_distance_layers_bos_kolon():
-    assert distance_layers([], (2, 2)) == {}
-
-
-def test_dogrula_kaplama_acik_tespit_eder():
-    sizes = (2, 2, 2)
-    worst, acik = dogrula_kaplama([(0, 0, 0)], sizes)
-    assert acik == 8 - 4
-    assert worst == 2
-    worst, acik = dogrula_kaplama([(0, 0, 0), (1, 1, 1)], sizes)
-    assert acik == 0
-    assert worst == 1
+# **Geometri bolumu (hamming / ball / distance_layers / dogrula_kaplama)
+# tumden dustu.** Dordu de KAPLAMA muhasebesiydi: yaricap-1 topu, en yakin
+# kolona uzaklik katmanlari ve "en kotu kac hata, kac nokta acikta". Duzde
+# acik nokta diye bir sey yok — kumenin tamami oynaniyor — ve mesafe
+# dagilimi tanim geregi tek katmanli. Olculecek bir sey kalmadigi icin
+# testleri de dustu; kaplama gerekcesi `docs/DUZ_SISTEME_GECIS.md`de.
+#
+# Yerlerini `test_invariants.py`deki duz degismezleri aldi: kolonlarin
+# kumenin TAMAMI oldugu (sayarak), tek satirin kayipsizligi ve
+# `en iyi kolon == 15 - k` esitligi.
 
 
 def test_all_modulun_gercek_yuzeyini_sayar():
     """`core.__all__` modulun kendisiyle ortusmeli.
 
     Depoda `import *` yok, yani bu liste calisma zamaninda hicbir sey
-    yapmiyordu ve tam bu yuzden sessizce eskimisti: `Fix16Hatasi`,
-    `rows_to_points`, `MAC_SAYISI`, `hamming74_variant`, `block_optimal` ve
-    `ternary_hamming4` disarida kalmisti — ilk ikisini `cli`, `web_app`,
-    `report` ve `health` zaten import ediyordu. Yani "core'dan ne cikar"
-    sorusunun yazili cevabi ile gercek cevap ayrismisti.
+    yapmiyor ve tam bu yuzden bir kez sessizce eskimisti (`Fix16Hatasi`,
+    `rows_to_points`, `MAC_SAYISI` ve uc kaplama adi disarida kalmisti).
+    Kaplama sokulunce liste yeniden yazildi; bu test onu bir daha
+    ayrismaya birakmaz.
 
     Bu test ikisini bagliyor: listeye eklemeden yeni public isim
     tanimlanamaz, listeden cikarmadan public isim silinemez.

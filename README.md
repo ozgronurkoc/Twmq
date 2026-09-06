@@ -1,16 +1,22 @@
-# Spor Toto Lab — 14-Garanti Formül Üreticisi
+# Spor Toto Lab — Düz Sistem Kupon Üreticisi
 
 Spor Toto kuponu için tarihsel veriyi ve piyasa oranlarını analiz edip **maç sonucu
-tahmini** üreten, bu tahmini **kaplama kodu** (covering code) ile en az kupona
-indiren ve her iki katmanın da isabetini/sınırını ölçen açık bir laboratuvar.
+tahmini** üreten, bu tahmini verilen bir **kolon bütçesinin** altındaki en iyi
+şekle çeviren ve her iki katmanın da isabetini/sınırını ölçen açık bir laboratuvar.
 
 **Amaç kazanma oranını artırmaktır.** Hedefe bugünkü mesafe ölçülmüştür ve
 belgede açıkça yazar (§1.1) — ölçülmemiş hiçbir iyileşme iddia edilmez.
 
-Kaplama katmanının vaadi ayrıdır ve tahminden bağımsızdır: seçtiğin ihtimal
-kümeleri içinde doğru sonuç varsa, oynanan kolonlardan en az biri **en fazla 1 maç
-hatalı** olur — yani **14-garanti**. Bu garanti bir tahmin değil, kombinatoryal bir
-teoremdir: doğruysa her zaman doğrudur, yanlışsa hiçbir zaman doğru olmaz.
+Kupon **düz** oynanır: seçim kümesinin tamamı. Küme dışında kalan her maç bir
+**kaçak**tır ve en iyi kolonu tam bir kademe düşürür, yani en iyi kolon `15 − k`.
+Bu bir tahmin değil, sayma sonucudur — ve bir alt sınır değil **eşitlik**tir.
+
+> **Bu depo eskiden 14-garantiliydi.** Yedi çifteyi Hamming(7,4) bloğuna koyan
+> bir **kaplama kodu** (covering code) bedeli düz bedelin 1/8'ine indiriyor,
+> karşılığında en iyi kolonu 15 değil **14** ile sınırlıyordu. Kaplama söküldü;
+> gerekçe, ölçümleri ve sökümün yüzeyi `docs/DUZ_SISTEME_GECIS.md`de. Kısası:
+> aynı kolon bütçesinde düz, ölçülen her kademede öndeydi ve sebep sistem değil
+> **şekil**di — "en az 7 çifte" şartı kaplamayı yayvan şekillere hapsediyordu.
 
 ---
 
@@ -20,20 +26,27 @@ Bahis araçlarının çoğu aynı şeyi yapar: bir sayı üretir, o sayının ne
 anlatmaz ve kullanıcıya kazanma hissi satar. Bu proje bunun tam tersini denemektedir.
 
 **Amaç: elimizdeki veriyi analiz ederek kazanma oranını artıracak sonuçlar
-üretmek.** Proje maç sonucu tahmini yapar ve bu tahmini en az kupona indirir. İki
-katman birlikte çalışır: **tahmin katmanı** hangi sonuçların işaretleneceğine
-katkı verir, **kaplama katmanı** o seçimi mümkün olan en ucuz şekilde oynatır.
+üretmek.** Proje maç sonucu tahmini yapar ve bu tahmini bir kolon bütçesine
+sığdırır. İki katman birlikte çalışır: **tahmin katmanı** her maçın `p₁/p₂/p₃`sini
+üretir, **karar katmanı** o olasılıklarla bütçe altındaki en iyi tek/çift/üçlü
+dağılımını seçer (`spor_toto/secim.py`, kesin Pareto DP).
 
 Bu bir vaat değil, bir hedeftir — ve hedefe bugünkü mesafe ölçülmüştür (§1.1).
 Aşağıdaki beş taahhüt amacın kendisinden bağımsızdır: onlar *neyi hedeflediğimizi*
 değil, *neyi saklamadığımızı* tanımlar. Amaç değişti, bu taahhütler değişmedi.
 
-### 1.1 Tahmin hedeftir, garanti teoremdir — ikisi karıştırılmaz
+### 1.1 Tahmin hedeftir, kaçak aritmetiği sayma sonucudur — ikisi karıştırılmaz
 
-Amaç tahmin olsa da 14-garanti tahminle değişmez. Garanti Hamming geometrisinden
-gelir: seçim kümesi içinde doğru sonuç varsa en fazla 1 hata kalır. Bu
-kombinatoryal bir teoremdir; olasılık, Bayes, Markov hiçbiri onu güçlendirmez
-veya zayıflatmaz. Kodda ayrım korunur: `core.py` olasılık katmanını hiç bilmez.
+Amaç tahmin olsa da `en iyi kolon = 15 − k` tahminle değişmez: seçim kümesinin
+tamamı oynandığı için, doğru sonucun kümeye girmediği her maç en iyi kolonu tam
+bir kademe düşürür. Bu bir sayma sonucudur; olasılık, Bayes, Markov hiçbiri onu
+güçlendirmez veya zayıflatmaz — yalnızca `k`'nın **dağılımını** kestirirler.
+Kodda ayrım korunur: `core.py` olasılık katmanını hiç bilmez.
+
+Eskiden bu satır *"garanti teoremdir"* diyordu ve `≥ 14 − k` bir **alt sınır**dı:
+kaplama kümenin bir dilimini oynadığı için gerçekleşen isabet ilan edilenin
+üstünde çıkabilirdi. Düzde sınır yok, eşitlik var — yani ilan edilen sayı
+temkinli değil **tam**.
 
 Değişen şey, **kümeyi kim seçiyor** sorusunun cevabıdır. Önceden işaretleri
 yalnızca kullanıcı koyardı, araç maliyeti düşürmekle yetinirdi. Artık tahmin
@@ -99,8 +112,8 @@ geçerli olduğunu kanıtlar.** 27 değişmez, 6 kategori, her çağrıda yenide
 |-------|--------|
 | 41 haftalık sezon verisini ve piyasa oranlarını analiz edip **maç sonucu tahmini** üretir | Kazanmayı **garanti etmez** |
 | Tahmin isabetini ölçer ve hold-out ile aşırı uyumdan ayırır | Ölçülmemiş bir isabet iddiası sunmaz |
-| Hamming yarıçap-1 kaplama kodu üretir | 14-garantiyi olasılıkla "güçlendirmez" |
-| En kötü durumda 14 doğru **garantiler** (küme içinde) | Müşterek beklenen değeri **hesaplar ama arayüze çıkarmaz** — `getiri.py`, [`docs/ISTATISTIK_YOL_HARITASI.md`](docs/ISTATISTIK_YOL_HARITASI.md) §3.34: sayı ölçülmedi (havuz payı, komisyon ve kalabalık modeli varsayım) |
+| Seçim kümesinin **tamamını** oynanacak kolonlara açar | Kaçak aritmetiğini olasılıkla "güçlendirmez" |
+| Sonuç küme içindeyse bir kolon **15 tutturur**; her kaçak en iyi kolonu tam bir kademe düşürür | Müşterek beklenen değeri **hesaplar ama arayüze çıkarmaz** — `getiri.py`, [`docs/ISTATISTIK_YOL_HARITASI.md`](docs/ISTATISTIK_YOL_HARITASI.md) §3.34: sayı ölçülmedi (havuz payı, komisyon ve kalabalık modeli varsayım) |
 | Küme dışı senaryoları **fire** olarak ölçer | Kâr vaadi vermez |
 | Exact + Monte Carlo olasılık raporu verir | Canlı bülten çekmez |
 | Bayes (Dirichlet) ile tahminlerini yumuşatır | İddaa geçmiş oranı sunmaz (yok — §5.3) |
@@ -154,57 +167,48 @@ satırlarıdır; arada olasılık yoktur.
   `ValueError` fırlatır
 - `"1, 10"` gibi boşluklu yazım geçerlidir
 
-### 3.2 Modlar
-
-| Mod | Ne yapar |
-|-----|----------|
-| `fix16` (varsayılan) | Her zaman 16 kupon satırı. En az 7 çifte zorunlu. Hamming(7,4) tabanlı. |
-| `auto` | En ucuz çözümü arar; satır sayısı değişken. Web'de ILP'ye kısa bir bütçe verilir (`auto_ilp_limit`, 3 sn) — kanıt isteyen `exact` kullanır. |
-| `exact` | ILP ile kanıtlanmış optimal (küçük uzaylar). Uzay sınırını yok sayar, tam `--time-limit` bütçesini kullanır. |
-| `block` | Yalnızca blok ayrıştırma motoru. |
-| `heuristic` | Açgözlü + local search (büyük uzaylar). |
-| `butce` | "Elimde N kolon var, hangi maçı kısmalıyım?" |
-| `maxcov` | Sabit bütçeyle maksimum kapsama. **Garanti vermez.** |
+### 3.2 Mod yok — tek yol var
 
 ```bash
-spor-toto --picks "..." --variant 3
-spor-toto --picks "..." --mode auto
-spor-toto --picks "..." --mode butce --budget 32
-spor-toto --picks "..." --mode maxcov --budget 16
+spor-toto --picks "..."                   # secim kumesinin tamami oynanir
 spor-toto --picks "..." --kati            # katı doğrulama
 spor-toto --picks "..." --kisa            # kısa çıktı
 spor-toto --picks "..." --output rapor.txt
 ```
 
-Motor ayarları: `--trials`, `--ls-iters`, `--seed`, `--time-limit`,
-`--block-limit`, `--exact-limit`, `--plan`, `--plan-uygula`.
-
-Mod dağıtımı tek yerdedir (`spor_toto/engines.py`): CLI, `/api/solve` ve sağlık
-raporu aynı çalıştırıcıları kullanır. CLI'de `auto` tam zaman bütçesiyle koşar —
-komutu bilerek çalıştırdın ve karşısında oturuyorsun; web'de aynı bekleme istek
-yolunu tıkardı.
+> **Burada yedi mod vardı ve hepsi düştü:** `fix16` (Hamming(7,4), her zaman
+> 16 satır, en az 7 çifte zorunlu), `auto`, `exact` (ILP), `block`,
+> `heuristic`, `butce`, `maxcov`. Yedisi de aynı soruyu soruyordu — *seçim
+> kümesini en az kaç kolonla örtebilirim?* — ve dağıtımları
+> `spor_toto/engines.py`deydi. Düzde o soru yok: kümenin tamamı oynanıyor,
+> yani **arama değil üretim** var. `engines.py` depodan çıktı; motor
+> ayarları (`--trials`, `--ls-iters`, `--time-limit`, `--block-limit`,
+> `--exact-limit`, `--plan`) da onunla gitti. Gerekçe:
+> [`docs/DUZ_SISTEME_GECIS.md`](docs/DUZ_SISTEME_GECIS.md).
+>
+> `/api/solve` artık `mode` alanını **reddeder** (yok saymaz) — sözleşme
+> değişikliği görünür olsun diye.
 
 ### 3.3 Satır ≠ kolon
 
 Bir maça çifte işaretlersen o satır **2 kolon** üretir ve 2 kolon bedeli ödersin.
-16 satır + ekstra çifte faktörü = daha yüksek bedel. UI ve CLI toplam **kolon
-bedelini** gösterir; bu bir tasarım kuralıdır, kolon bedeli hiçbir yerde satır
+Düzde kupon **tek satırdır** (işaretlerin kendisi) ama bedeli işaret sayılarının
+çarpımıdır. UI ve CLI toplam **kolon bedelini** gösterir; bu bir tasarım kuralıdır, kolon bedeli hiçbir yerde satır
 sayısından ayrı gösterilmez.
 
-### 3.4 Bilinen matematiksel sınırlar
+### 3.4 Bedel — kapalı form
 
-Küre-kaplama alt sınırı: `kolon ≥ |uzay| / top_boyutu`.
+```
+kolon = 2^çifte · 3^üçlü          maliyet = kolon × ₺10
+```
 
-| Durum | Optimal kolon (alt sınır civarı) |
-|-------|----------------------------------|
-| 5 çifte | 7 |
-| 6 çifte | 12 |
-| 7 çifte | **16** (Hamming(7,4)) |
-| 8 çifte | **32** |
-| 4 üçlü | **9** |
+Alt sınır da üst sınır da budur; aralarında arama yok.
 
-**8 çifteyi 16 kolona sığdırmak imkânsızdır.** `maxcov` 16 kolonla kısmi kapsama
-verir — **garanti değildir** ve arayüz bunu her seferinde yazar.
+> **Burada küre-kaplama alt sınırları tablosu vardı** (`kolon ≥ |uzay| /
+> top_boyutu`; 5 çifte → 7, 6 çifte → 12, **7 çifte → 16** Hamming(7,4),
+> 8 çifte → 32, 4 üçlü → 9) ve *"8 çifteyi 16 kolona sığdırmak
+> imkânsızdır"* diye bitiyordu. Kaplama sökülünce sınır da anlamını
+> yitirdi: düzde 8 çifte **256** kolondur, ne eksik ne fazla.
 
 ---
 
@@ -373,7 +377,7 @@ GET /api/stats/<week>   ─────────────► /istatistik/<
         │                              kalibrasyon, çift kapsama,
         │                              beraberlik, lig, Brier)
 data/odds/odds_2025_26.csv            567 maç · 108 oran sütunu
-        ▲       │  spor_toto/backtest.py   (eşikli seçim → kaplama → skor)
+        ▲       │  spor_toto/backtest.py   (eşikli seçim → düz kolonlar → skor)
         │       ▼
         │  GET /api/backtest ─────────────► /istatistik/geri-test
         │
@@ -548,8 +552,8 @@ uyarısı §3.48.
 **Aynı haftanın 15 bileni** — 2. haftanın 15 bilen kuponu kayda geçti
 (bize ait değil; `hafta_02_kupon.json` → `referans`). Ölçüldüğünde iki şey
 çıktı: (1) 15'i satın alan şey işaret seçimi değil **tam sistem** — aynı
-işaretler 16 satırlık kaplamada 1.024 kolon eder ve **14** verirdi, sekizde bir
-fiyata; (2) aynı şeklin **azami kapsama** sürümü 12/15 alıyor, yani farkı yapan
+işaretler 16 satırlık kaplamada 1.024 kolon ederdi ve **14** verirdi, sekizde bir
+fiyata (o yol söküldü); (2) aynı şeklin **azami kapsama** sürümü 12/15 alıyor, yani farkı yapan
 altı sembol. O altı sapmanın piyasa altındaki beklenen neti −0,20 iken gözlenen
 +3; böyle bir netin olasılığı **%5,6**. Bir kupon, görüşü şanstan ayıramaz —
 ayrıntı `docs/ISTATISTIK_YOL_HARITASI.md` §3.39.
@@ -762,7 +766,7 @@ girmemesi ya da yanlış commit'in yayınlanması — hiçbirini test yakalamaz.
 
 Kontrol mantığının **ikinci bir kopyası yoktur**: tek `CHECKS` tanımı üç ayrı
 soruya cevap verir. Sağlık, ölçtüğü şeyi de kendi kopyasıyla değil ürünün
-kendi yollarıyla koşturur — modlar `spor_toto/engines.py` (aynı kodu
+kendi yollarıyla koşturur — kolon üretimi `spor_toto/duz.py` (aynı kodu
 `/api/solve` ve CLI kullanır), ilan edilen envanter `spor_toto/meta.py`,
 istatistik/geri test gövdeleri `spor_toto/payloads.py`.
 
@@ -797,14 +801,13 @@ handler'a bağlı olsalardı `/health`e vuran her şey tam raporu ödetirdi ve
 `/health`i canlılık sinyali sanan bir probe, zaman aşımına düşünce **sağlıklı**
 bir konteyneri öldürebilirdi.
 
-**27 kontrol, 6 kategori.** Kategoriler motorun katmanlarını izler ve yukarıdan
+**23 kontrol, 6 kategori.** Kategoriler motorun katmanlarını izler ve yukarıdan
 aşağıya doğru ciddiyet azalır — düşen kontrolün adı değil, **hangi katmanın
 bozulduğu** okunur. Güncel liste için `--list`:
 
 | Kategori | Kapsam | Düşerse |
 |----------|--------|---------|
-| `cekirdek` | encoder, fix16 garanti, yetersiz çifte reddi, distance layers, **varyantlar** | **Ana vaat geçersiz.** Yayın durdurulur |
-| `motor` | blok motoru, heuristic, **mod envanteri (7 modun hepsi)** | Bir mod güvenilmez; fix16 ayakta olabilir |
+| `cekirdek` | encoder, düz kolon üretimi, kademe aritmetiği, mod envanteri | **Ana vaat geçersiz.** Yayın durdurulur |
 | `olasilik` | exact, Monte Carlo, Bayes, **Bayes preset'leri**, Markov | Sayılar yanlış; garanti geçerli olabilir |
 | `analiz` | error_freq, **fire senaryoları**, veri seti, oran arşivi, **geri test** | Yorum katmanı bozuk; motor sağlam |
 | `ucuca` | **meta sözleşmesi**, **stats/backtest gövdeleri**, pipeline sonuç şekli | Arayüz yanlış okuyor olabilir |
@@ -860,7 +863,7 @@ yazılmadan rastgele görünür. Zaman serisi ve önbellek de süreç başınad�
 sınıflarında doğru davrandığı anlamına gelir. Kendi kuponun için iki yol var:
 her `/api/solve` cevabındaki `guaranteed` / `worst` / `acik` alanları ve
 `POST /api/health/kupon` — ikincisi kuponu aynı kombinatoryal zorunluluklardan
-geçirir (kaplama garantisi, mesafe muhasebesi, satır/kolon muhasebesi, alt
+geçirir (kümenin tamamının oynandığı, satır/kolon muhasebesi, alt
 sınır, olasılık tutarlılığı). Sonucu kayıtlı raporun tablosuna karışmaz ve
 düşmesi 503 üretmez: bir kuponun değişmezi servisin sağlık durumu değildir.
 
@@ -907,14 +910,17 @@ backend/spor_toto/     ← Fix-16, ILP, Bayes, MC, Markov, history, odds, health
 ```
 backend/
   spor_toto/
-    core.py            Encoder, Fix-16, ILP, heuristic, exact olasılık
+    core.py            Encoder, işaret ayrıştırma, kupon satırı, olasılık raporu
+    kaplama_arsiv.py   ARŞİV: sökülmüş kaplamanın `solve_fix16`ı — yalnızca
+                       kaplamayla OYNANMIŞ haftaları değerlendirmek ve söküm
+                       kararının kanıtını üretmek için (üretim yolunda yok)
     analysis.py        Monte Carlo, maç bazlı hata frekansı
     bayes.py           Dirichlet prior → posterior, KL, preset'ler
     markov.py          Seçim hayatta kalma + hata bütçesi zinciri
     fire_scenarios.py  Seçim DIŞI fire analizi (1-fire / 2-fire)
     history.py         Tarihsel 1/0/2, 6 analiz bloğu, veri kalitesi
     odds.py            Oran arşivi okuyucu, 1X2 özeti, kalibrasyon, karar destek blokları
-    backtest.py        Eşikli strateji → kaplama → skor; eşik taraması + hold-out
+    backtest.py        Eşikli strateji → düz kolonlar → skor; eşik taraması + hold-out
     predict.py         TAHMİN: tahminci sözleşmesi + 3 referans (duzgun/sezon/piyasa)
     evaluate.py        TAHMİN: dışarıda bırakmalı + çapraz + İLERİ YÜRÜYÜŞ, bootstrap
     arena.py           TAHMİN: Model Arena — bütün aileler TEK kesitte, TEK tabloda
@@ -930,7 +936,6 @@ backend/
     egitim.py          TAHMİN: eğitim korpusu okuyucu — /istatistik'e GİRMEZ
     health.py          Kategorili değişmez (invariant) kontrolleri — tek CHECKS tanımı
     meta.py            Yetenek envanteri (modlar, preset'ler, sınırlar) = /api/meta
-    engines.py         Mod çalıştırıcıları — /api/solve, CLI ve health AYNI yolu kullanır
     ortak.py           Paylaşılan hesaplar: normalizasyon, Wilson, Brier, bantlama
     payloads.py        /api/stats ve /api/backtest gövdeleri — tek kaynak
     tahmin.py          TAHMİN: yaklaşan maçlar + ölçülmüş isabet = /api/tahmin
@@ -948,7 +953,7 @@ backend/
     kosum.py           Olcum kosum defteri (--kaydet) — surumlenmez
     benzer.py          "Bu oranda geçmişte ne oldu" = /api/benzer
     secim.py           KUPON: işaretleri HEDEFE göre seçer — eşiğe göre değil
-    sistem.py          KUPON: indirgenmiş sistem BEDELİ — formülden değil satıcı tablosundan
+    duz.py             KUPON: düz sistemde kademe başına KOLON SAYIMI ve para (seyreltmeli)
     karne.py           PARA: kuponun gerçek ikramiye tablolarına karşı getirisi (garanti tabanı)
     hafta_hakki.py     PARA: bütçe kısıtı kalkınca ne kalıyor — cephe, cetvel, kural kıyası (E6)
     kalabalik.py       HAVUZ: kalabalık modeli — 112 haftanın kademe adetlerine oturtulmuş (λ)
@@ -994,7 +999,7 @@ backend/
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
                        sehir/ · xg/ · sistem_fiyat/ · hakem/
-  tests/               pytest (72 dosya → 2.080 test; §9'da katman dökümü)
+  tests/               pytest (72 dosya → 1.803 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1015,7 +1020,7 @@ frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası 
   lib/api.ts           tipli, AbortController ile iptal edilebilir istemci
   lib/transfer.ts      hafta → formül devri (idempotent; bkz. §7.2 kural 6)
   lib/kurulum.ts       formül kurulumunun kalıcılığı + paylaşılabilir bağlantı
-  lib/kume-ici.ts      üretmeden önce görülen koşul + küre-kaplama alt sınırı
+  lib/kume-ici.ts      üretmeden önce görülen koşul + kolon bedeli
   lib/senaryo.ts       çalıştırılan modların karşılaştırma listesi
   lib/istek.ts         tek veri çekme kancası (AbortController + hata + yükleniyor)
   lib/adres.ts         adres çubuğu sorgu parametreleri — tek mekanizma
@@ -1032,7 +1037,7 @@ docs/                  Mimari, veri ve yol haritası belgeleri
 
 ### 7.1 Katman bağımsızlığı
 
-1. **Kombinatoryal** — kolon üretimi, Hamming mesafesi, 14-garanti
+1. **Kombinatoryal** — kolon üretimi (çarpım), kademe sayımı, `15 − k`
 2. **Olasılıksal** — exact, MC, Bayes, Markov (garantiyi bozmaz)
 3. **Veri** — tarihsel sonuçlar, oran arşivi, veri kalitesi
 4. **Gözlem** — health, UI, CLI
@@ -1076,11 +1081,12 @@ katmanı arayüzü bilmez.
 10. **Ekrandaki sonuç girdiyi anlatmıyorsa bunu söyler.** Girdi değişince sonuç
     silinmez — eski sonuç hâlâ okunabilir bilgidir — ama "eski hâline ait" diye
     işaretlenir.
-11. **Kıyas ancak aynı şey üzerindeyse yapılır.** Çalıştırılan modlar yan yana
-    listelenir, ama farklı maç seçimiyle koşulmuş satırlar soluklaştırılıp
-    işaretlenir — aradaki bedel farkı moddan değil seçimden geliyor olabilir.
-    Garanti vermeyen bir çalışma "en ucuz" sayılmaz: `maxcov` daha ucuz
-    görünür ama farklı bir şey satın alır (`lib/senaryo.ts`).
+11. **Kıyas ancak aynı şey üzerindeyse yapılır.** Farklı maç seçimiyle
+    koşulmuş satırlar soluklaştırılıp işaretlenir — aradaki bedel farkı
+    seçimden geliyor. (Kural mod kıyası için yazılmıştı: *"garanti vermeyen
+    bir çalışma en ucuz sayılmaz; `maxcov` daha ucuz görünür ama farklı bir
+    şey satın alır"*. Modlar düştü, kural kaldı — çünkü asıl tuttuğu şey
+    **aynı şeyi kıyaslamak**tı ve o her zaman geçerli.)
 12. **Sekmeler soruya göre bölünür, motor bloğuna göre değil.** Formül sonucu
     dört soruya ayrılır (ne aldım / ne yazacağım / ne kadar riskli / zayıf
     halkalar); backend modüllerinin birebir yansıması olan dokuz sekme, tek bir
@@ -1152,7 +1158,7 @@ WHERE o.pazar = '1X2' AND o.donem = 'kupon';
 
 ```bash
 bash scripts/check.sh        # TEK kapı: iki tarafı da koşturur (repo kökünden)
-bash scripts/check.sh --hizli # yavaş ILP testlerini atlar
+bash scripts/check.sh --hizli # yavaş ölçüm testlerini atlar
 
 cd backend
 pytest                       # tamamı (ILP dahil)
@@ -1170,7 +1176,7 @@ ve çıktı sırası da o zaman düzelir.
 `scripts/check.sh` sırasıyla **on üç adım**: ruff (backend) → ruff (`.claude/`) →
 mypy (`spor_toto` + `web_app` + `scripts` + `tests`, ayrıca `.claude/`) →
 interrogate (docstring kapsaması) → pip-audit (bağımlılık açıkları) →
-doctest → pytest (hızlı) → pytest (yavaş ILP) → health → CLI dumanı → Süper Toto
+doctest → pytest (hızlı) → pytest (yavaş ölçüm) → health → CLI dumanı → Süper Toto
 boru hattı (**2. Tahmin dahil**) + üretilmiş üç dosyanın tazeliği → eslint + tsc +
 arayüz denetimleri + üretim derlemesi → **üretim topolojisi dumanı**.
 
@@ -1199,20 +1205,21 @@ dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri t
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
 eşleme, ikinci kayıt). **72 test dosyası, parametrizasyonla
-2.080 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+1.803 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
 | Katman | Dosyalar | Test |
 |---|---|---|
-| Çekirdek + motorlar | `core` `engines` `invariants` `edge_cases` `cli` `analysis` `bayes` `markov` `fire_scenarios` | 528 |
+| Çekirdek (kodlama · düz üretim · olasılık) | `core` `invariants` `edge_cases` `cli` `analysis` `bayes` `markov` `fire_scenarios` | 256 |
 | Tahmin katmanı | `predict` `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin` `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre` `secim_kalibrasyonu` **`arena`** **`sizinti`** | 595 |
-| Sağlık | `health` `api_health` `meta` `health_history` | 90 |
+| Sağlık | `health` `api_health` `meta` `health_history` | 82 |
 | Veri / istatistik / geri test | `history` `odds` `backtest` `api_stats` `api_backtest` `snapshot_iddaa` `pazar` **`gecmis_sezon`** **`sportoto_arsiv`** **`bulten`** | 216 |
-| Süper Toto | `super_toto` `degerlendir` | 93 |
+| Süper Toto | `super_toto` `degerlendir` | 97 |
 | 2. Tahmin (kalabalık ayarı · bağımsız görüş) | `tahmin2` | 35 |
-| Karar katmanı | `secim` | 26 |
-| Sistem fiyat tablosu (bedel + garanti) | **`sistem`** | 10 |
+| Karar katmanı | `secim` | 27 |
+| Amaç kıyası (`P(k≤3)` ↔ `E[k]`: aynı kupon mu?) | **`amac_kiyasi`** | 5 |
+| Sistem kıyası (kaplama ↔ düz; söküm kararının kanıtı) | **`sistem_kiyasi`** | 3 |
 | Para karnesi (garanti tabanı · enflasyon · canlı · GERÇEK kolon dağılımı · ödeyen olay · banko sapması) | **`karne`** | 31 |
 | Hakem sütunu (E4 · sızıntısızlık · yayılım sınavı) | **`hakem`** | 5 |
 | Kalabalık modeli (λ · kademe adetleri) | **`kalabalik`** | 12 |
@@ -1259,8 +1266,8 @@ ve taşan tek bir alan, ondan sonraki *bütün* maçları kaydırıp hiçbir yer
 patlamadan **sessizce başka bir kupon** üretir. İlk sürüm tam bunu yaptı (binde
 birlik olasılık `1000` olabilir, yani dört basamak; `padStart(3)` alanı
 taşırıyordu). Aynı sınıfta olan iki hesap daha aynı dosyada bekçiye bağlıdır:
-küme-içi koşulunun backend'in `exact` değeriyle, küre-kaplama alt sınırının
-sunucunun `alt_sinir`'iyle birebir tutması.
+küme-içi koşulunun backend'in değeriyle, kolon bedelinin sunucunun
+`bedel`iyle birebir tutması.
 
 Bu sayılar artık **elle yazılmıyor**: `backend/scripts/api_sozlesme.py` onları
 üretip `frontend/lib/api-sozlesme.json`e koyuyor ve `check.mjs` oradan okuyor.
@@ -1338,7 +1345,7 @@ biçimde taşır, yani ölçülmüş isabeti olmayan bir olasılık dışarı ç
 
 > **Projenin tamamını kapsayan ve sonlanan plan:**
 > [`docs/ISTATISTIK_YOL_HARITASI.md`](docs/ISTATISTIK_YOL_HARITASI.md) §6. Hedefi üç
-> çarpımsal eksene ayırır (tahmin · havuz · kaplama), her eksene bir **durma kuralı** koyar
+> çarpımsal eksene ayırır (tahmin · havuz · bütçe), her eksene bir **durma kuralı** koyar
 > ve projenin ne zaman biteceğini tanımlar. Aşağıdaki tablo onun özetidir.
 
 Sıradakiler, "en çok belirsizliği kaldıran" ölçütüne göre:
@@ -1408,8 +1415,10 @@ Sıra, "en çok belirsizliği kaldıran" ölçütüne göredir. Ayrıntı:
 
 ## 11. Riskler ve sınırlar
 
-**Matematik.** 8 çifte 16 kolona sığmaz. `maxcov` garanti vermez. Garanti yalnızca
-seçim kümesi içinde geçerlidir.
+**Matematik.** `en iyi kolon = 15 − k` yalnızca **seçim kümesi içinde** bir
+şey söyler: kümenin dışına düşen sonuç için bir vaat yoktur, ve bedel
+`2^çifte · 3^üçlü` ile üstel büyür. Eskiden bu satır *"8 çifte 16 kolona
+sığmaz, `maxcov` garanti vermez"* diyordu; kaplama söküldü, sınır da gitti.
 
 **Küçük örneklem.** 41 hafta, tek sezon. Geri testte aşırı uyum ölçüldü ve
 büyüklüğü belli: 28 eşikli taramanın en iyisi 4 hafta, aynı yöntemin hold-out'u
@@ -1461,12 +1470,14 @@ olması gerekir. Tanımlıysa yalnızca **durum değişiminde** bildirim gider.
 | **Banko** | Bir maça tek sembol işaretlemek |
 | **Çifte / üçlü** | Bir maça iki / üç sembol işaretlemek; kolon bedelini çarpar |
 | **Küme içi** | Gerçek sonucun, işaretlenen sembollerin içinde kalması |
-| **14-garanti** | Tahmin küme içindeyse en fazla 1 hatayla en az 14 doğruyu garanti eden kaplama |
+| **Kaçak (`k`)** | Doğru sonucu işaretlenmemiş maç sayısı. En iyi kolon `15 − k` tutturur |
+| **14-garanti** | *(tarihsel)* Küme içindeyse en fazla 1 hatayla en az 14 doğruyu veren kaplama. 2026-09-06'da söküldü |
 | **Fire** | Seçim kümesinin dışına çıkılan senaryo; garantinin geçerli olmadığı bölge |
 | **Değişmez (invariant)** | Kodun her koşusunda doğru kalması gereken matematiksel zorunluluk; sağlık katmanının ölçtüğü şey |
 | **DEGRADED** | Yalnızca kritik olmayan bir kontrol düşmüş: vaat geçerli, bir yetenek eksik (200 döner) |
 | **Kolon bedeli** | Ödenecek tutar. Satır sayısıyla karıştırılmamalı |
-| **Kaplama kodu** | Uzaydaki her noktanın en fazla r uzaklıkta bir kod sözcüğüne sahip olduğu küme |
+| **Kaplama kodu** | *(tarihsel)* Uzaydaki her noktanın en fazla r uzaklıkta bir kod sözcüğüne sahip olduğu küme. `docs/DUZ_SISTEME_GECIS.md` |
+| **Düz / tam sistem** | Seçim kümesinin tamamının oynanması. Bedel `2^çifte · 3^üçlü` |
 | **Marj (overround)** | Bahisçi payı; ham olasılık toplamının 1'i aşan kısmı |
 | **Kalibrasyon** | Modelin verdiği olasılığın gerçekleşme sıklığıyla örtüşmesi |
 | **Favori** | Oranı en düşük sembol |
@@ -1501,9 +1512,10 @@ olması gerekir. Tanımlıysa yalnızca **durum değişiminde** bildirim gider.
 | [`docs/BENZER_PLANI_ESLEMESI.md`](docs/BENZER_PLANI_ESLEMESI.md) | `benzer.py` için gelen dış planın aynı biçimde eşlemesi: gerçekten eksik olan üçü (`inf` oran · toleransın üç kapıda üç sınırı · zaman kesmesi) uygulandı, altısı gerekçesiyle reddedildi, üçü kaydedildi |
 | [`docs/GELECEK_MIMARISI_ESLEMESI.md`](docs/GELECEK_MIMARISI_ESLEMESI.md) | Dışarıdan gelen bir **gelecek mimarisi makalesinin** aynı biçimde eşlemesi: önerdiği Faz I–V'in tamamı zaten yapılmış ve **ölçülmüştü** (hiçbir aile kapanış fiyatını geçmedi), gerçekten yeni olan tek madde **maçlar arası bağımlılığın kuyruk etkisi** oldu — ölçüldü ve **eksen kapandı** (§3.46); makalenin hiç görmediği şey ise açık olan tek eksen: **havuz** |
 | [`docs/KADEME_OLASILIKLARI.md`](docs/KADEME_OLASILIKLARI.md) | **15/15 yapma olasılığı** ve onun üç kardeşi (14, 13, 12): 3^15 uzayının tamamı açılarak ölçülen tek kolon olasılığı (874x), gerçek sonucun 114 haftadaki sırası, bütçeye göre kademe tablosu, paranın hangi kademeden geldiği. İki yeni ölçüm: **seyreltme** (Spearman −0,843 — tuttuğun hafta herkesin tuttuğu haftadır) ve arşivde **32 anormal hafta**. Ölçüm hattı `scripts/kademe_analizi.py` |
+| [`docs/DUZ_SISTEME_GECIS.md`](docs/DUZ_SISTEME_GECIS.md) | **Kaplama katmanının sökülmesinin gerekçesi ve planı.** Aynı kolon bütçesinde her sistemin erişebildiği en iyi şekil karşılaştırıldı: düz, E[TL]'de **1,78x-5,26x** ve `P(>=12)`'de önde: fark sistemden değil, `solve_fix16`'in **en az yedi çifte** şartının dayattığı yayvan şekilden geliyor. Once bilinen dogrusallik yeniden uretildi (aynı işaretler iki sistemde kolon başına 421,0 ↔ 421,9 TL). Belge **kaplama sökülmeden önce** yazıldı: söküm bu kıyası da götürdüğü için gerekçe yalnızca burada kalıyor. Ölçüm hattı `scripts/sistem_kiyasi.py` |
 | [`docs/KAZANMA_KARNESI.md`](docs/KAZANMA_KARNESI.md) | **Canlı karne** — her hafta öngörülen (`P(k≤eşik)`, `E[TL]`) ↔ gerçekleşen (kaçak, kademe, ödül), kümülatif net. Bir tahmin kaydı DEĞİL: plan kupon öncesi girdilerden bugünkü motorla yeniden türetiliyor ve ödül **garanti tabanıdır** (alt sınır). `scripts/hafta_kos.py --sonrasi` ile yeniden üretilir |
 | [`docs/KAZANMA_PLANI.md`](docs/KAZANMA_PLANI.md) | **Sekiz haftalık ölçüm sırası** — kazanma şansını artırmanın planı. Teşhis: tahmin ekseni on bir ölçümle kapalı ve `KADEME` §6'nın seyreltmesi (Spearman −0,843) kalanı da yiyor; açık olan eksen havuz. Çekirdeği hiç birleştirilmemiş iki arşiv: 223 haftalık resmî kazanan adedi × 112 haftalık kupon+oran+sonuç = **448 gözlem**, ve `getiri.KALABALIK_MODELLERI`'nin üç **varsayımı** o gözleme hiç oturtulmadı. Her fazın durma kuralı önceden yazılı |
-| [`docs/KUPON_NASIL_KURULUYOR.md`](docs/KUPON_NASIL_KURULUYOR.md) | **Boru hattının uçtan uca anlatımı** — girdi (15 maç · açılış/kapanış oranları · oynanma yüzdeleri) oynanacak satıra dönene kadar hangi ele değiyor: veri kapısı ve eşikleri, marj arındırma (`shin`), açılışın üç işi (kupona **girmez**), kalabalık payı, garanti↔kaçak aritmetiği, Pareto DP seçimi, satıcı fiyat tablosu, kaplama kodu, havuz ve `E[TL]`. Her sabitin yanında **ölçüm mü varsayım mı**; örnek koşum 2026/27 4. hafta |
+| [`docs/KUPON_NASIL_KURULUYOR.md`](docs/KUPON_NASIL_KURULUYOR.md) | **Boru hattının uçtan uca anlatımı** — girdi (15 maç · açılış/kapanış oranları · oynanma yüzdeleri) oynanacak satıra dönene kadar hangi ele değiyor: veri kapısı ve eşikleri, marj arındırma (`shin`), açılışın üç işi (kupona **girmez**), kalabalık payı, kademe↔kaçak aritmetiği (`15 − k`), Pareto DP seçimi, düz bedel, havuz ve `E[TL]`. Her sabitin yanında **ölçüm mü varsayım mı**; örnek koşum 2026/27 4. hafta |
 | [`docs/token_olcum_kutugu.md`](docs/token_olcum_kutugu.md) | Ajan bilgi grafının token kazancının **ölçüm kütüğü**: hangi soru, hangi cetvel, grafik öncesi ve sonrası kaç token — sayılar ölçüldü, tahmin edilmedi |
 | [`backend/README.md`](backend/README.md) | Motor + API kurulumu, ortam değişkenleri, oran arşivi kullanımı |
 | [`frontend/README.md`](frontend/README.md) | Arayüz yapısı, tasarım sistemi, grafik kuralları, tip katmanı |

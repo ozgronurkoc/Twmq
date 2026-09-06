@@ -231,8 +231,12 @@ def _probs(p1: float = 0.5):
     return [{"1": p1, "0": kalan, "2": kalan} for _ in range(15)]
 
 
-def test_kupon_kademeleri_garanti_aritmetigiyle_uyumlu():
-    """`P(en iyi = 14−k) = P(k)` — `secim` modül başlığındaki aritmetik."""
+def test_kupon_kademeleri_aritmetikle_uyumlu():
+    """`P(en iyi = 15−k) = P(k)` — `secim` modül başlığındaki aritmetik.
+
+    Kaplama döneminde bu `14−k` idi ve 15 kademesi hiç yoktu; düzde en iyi
+    kolon `15−k`'dır ve bu bir **eşitliktir**, alt sınır değil.
+    """
     from spor_toto.ortak import kacak_dagilimi
     from spor_toto.secim import en_iyi_secim, kacak_olasiligi
 
@@ -243,9 +247,8 @@ def test_kupon_kademeleri_garanti_aritmetigiyle_uyumlu():
     assert bedel == plan.bedel
     d = kacak_dagilimi([kacak_olasiligi(p, len(s))
                         for p, s in zip(probs, plan.secimler)])
-    assert kademe_p[14] == pytest.approx(d[0])
-    assert kademe_p[13] == pytest.approx(d[1])
-    assert kademe_p[12] == pytest.approx(d[2])
+    for k in range(4):
+        assert kademe_p[15 - k] == pytest.approx(d[k]), f"k={k}"
 
 
 def test_kupon_kademeleri_butce_buyudukce_iyilesir():
@@ -260,9 +263,15 @@ def test_kupon_kademeleri_bedeli_butceyi_asmaz():
         assert 0 < bedel <= butce
 
 
-def test_kupon_kademeleri_karsilanmayan_butcede_bos_doner():
-    """Bütçe hiçbir planı karşılamıyorsa uydurma sayı üretilmez."""
-    kademe_p, bedel = kupon_kademeleri(_probs(), 1)
+def test_kupon_kademeleri_bos_haftada_bos_doner():
+    """Plan kurulamıyorsa uydurma sayı üretilmez.
+
+    **Bu test eskiden 1 kolonluk bütçeyle sınıyordu** — kaplamada en ucuz
+    plan 16 kolondu (yedi çifte + Hamming bloğu), o yüzden 1 kolon "hiçbir
+    planı karşılamıyor" demekti. Düzde 1 kolon geçerli bir plandır (15 maç
+    da tek). Boş dönen tek hâl artık maçsız haftadır.
+    """
+    kademe_p, bedel = kupon_kademeleri([], 1024)
     assert kademe_p == {} and bedel == 0
 
 

@@ -30,52 +30,39 @@ MC_MIN, MC_MAX = 1_000, 200_000
 FIRE_MAX_MALIYET = 20_000_000
 FIRE_MAX_VARSAYILAN = 2
 
-# Motorun tum modlari. `garanti` bir REKLAM degil sozlesmedir: saglik
-# katmani her modu kosturup uretilen kaplamayi bu bayrakla karsilastirir
-# (bkz. health._check_mod_envanteri).
+# **Yedi mod bire indi.** Kaplama katmanı söküldü
+# (`docs/DUZ_SISTEME_GECIS.md`) ve onunla birlikte `fix16`, `auto`, `exact`,
+# `block`, `heuristic`, `butce`, `maxcov` da gitti. Hepsi aynı soruyu
+# soruyordu — *seçim kümesini en az kaç kolonla örtebilirim?* Düzde o soru
+# yok: kümenin tamamı oynanıyor, yani arama değil üretim var.
+#
+# Liste yine de **liste** olarak duruyor: `/api/meta` sözleşmesi ve arayüz
+# bir dizi bekliyor, ve tek elemanlı bir dizi "mod kavramı kalktı" demenin
+# uyumlu yoludur.
+DUZ_MOD = "duz"
 MODES: list[dict[str, Any]] = [
-    {"id": "fix16", "label": "Sabit 16 satır", "garanti": True,
+    {"id": DUZ_MOD, "label": "Düz (tam sistem)", "garanti": True,
      "needs_budget": False, "needs_scipy": False,
-     "aciklama": "Her zaman 16 kupon satırı. En az 7 çifte zorunlu. "
-                 "Hamming(7,4) tabanlı, kanıtlanmış optimal."},
-    {"id": "auto", "label": "Otomatik", "garanti": True,
-     "needs_budget": False, "needs_scipy": False,
-     "aciklama": "En ucuz çözümü arar; satır sayısı değişkendir."},
-    {"id": "exact", "label": "Kesin çözücü (ILP)", "garanti": True,
-     "needs_budget": False, "needs_scipy": True,
-     "aciklama": "ILP ile kanıtlanmış optimal. Yalnızca küçük uzaylarda."},
-    {"id": "block", "label": "Blok ayrıştırma", "garanti": True,
-     "needs_budget": False, "needs_scipy": False,
-     "aciklama": "r=1 bloğu + tam sistem ayrıştırması; cebirsel bloklar."},
-    {"id": "heuristic", "label": "Sezgisel", "garanti": True,
-     "needs_budget": False, "needs_scipy": False,
-     "aciklama": "Açgözlü + local search. Büyük uzaylar için."},
-    {"id": "butce", "label": "Bütçe danışmanı", "garanti": True,
-     "needs_budget": True, "needs_scipy": False,
-     "aciklama": "Elimde N kolon var, hangi maçı kısmalıyım?"},
-    {"id": "maxcov", "label": "Maksimum kapsama", "garanti": False,
-     "needs_budget": True, "needs_scipy": False,
-     "aciklama": "Sabit bütçeyle maksimum kapsama. GARANTİ VERMEZ."},
+     "aciklama": "Seçim kümesinin tamamı oynanır; indirgeme yok. Sonuç "
+                 "kümenin içindeyse bir kolon 15 tutturur, küme dışında "
+                 "kalan her maç en iyi kolonu bir kademe düşürür."},
 ]
 MODE_IDS: set[str] = {m["id"] for m in MODES}
 
-# CLI ile birebir ayni motor varsayilanlari (bkz. spor_toto/cli.py).
+# **Motor varsayilanlari BOSALDI ve alan bilerek duruyor.**
 #
-# `auto_ilp_limit` ayri durur ve ayri bir sorunu cozer: `auto` modu
-# `exact_limit` (512) altindaki her uzayda ILP'yi devreye sokuyordu ve 256
-# noktalik gercekci bir kuponda **~11 saniye** suruyordu. Olculdu: ayni
-# kupon 3 saniyelik sinirla da 32 kolon veriyor, yalnizca "optimallik
-# kanitlandi" bayragini kaybediyor. `auto`nun sozu "en ucuzu ara"dir,
-# "optimalligi kanitla" degil — kanit isteyen `--mode exact` kullanir.
-ENGINE_DEFAULTS: dict[str, Any] = {
-    "trials": 5,
-    "ls_iters": 30_000,
-    "seed": 42,
-    "time_limit": 60.0,
-    "block_limit": 256,
-    "exact_limit": 512,
-    "auto_ilp_limit": 3.0,
-}
+# Burada yedi ayar vardi (`trials`, `ls_iters`, `seed`, `time_limit`,
+# `block_limit`, `exact_limit`, `auto_ilp_limit`) ve hepsi kaplama
+# ARAMASININ ayarlariydi: kac deneme, kac yerel arama adimi, ILP'ye kac
+# saniye. Kaplama sokuldu (`docs/DUZ_SISTEME_GECIS.md`); duzde arama yok,
+# kolonlar carpimdan uretiliyor, ayarlanacak bir sey kalmadi.
+#
+# Alan `/api/meta` sozlesmesinde BOS SOZLUK olarak duruyor: arayuz onu
+# okuyor ve `health._check_meta_sozlesmesi` her girdisinin `limits` icinde
+# olmasini sart kosuyor. Bos birakmak "ayar yok" demenin uyumlu yoludur;
+# alani silmek arayuzu kirardi ve "ayar var ama ilan edilmiyor" ile
+# ayirt edilemezdi.
+ENGINE_DEFAULTS: dict[str, Any] = {}
 
 # Her sinir icin min <= default <= max tutmak ZORUNDADIR; arayuz kaydiraclari
 # dogrudan bu sayilardan uretiliyor.
@@ -83,21 +70,12 @@ LIMITS: dict[str, dict[str, Any]] = {
     "mc_samples": {"min": MC_MIN, "max": MC_MAX, "default": MC_WEB_SAMPLES},
     "fire_max": {"min": 0, "max": 2, "default": FIRE_MAX_VARSAYILAN},
     "fire_maliyet": {"min": 0, "max": FIRE_MAX_MALIYET},
-    # Butce (kolon sayisi) SINIRI. Onceden hicbir yerde ilan EDILMIYORDU ve
-    # `/api/solve` onu ust sinirsiz aliyordu (`int(budget_raw)`); arayuz ise
-    # paylasilabilir baglantida 10 M'e kirpiyordu. Yani tek soruya uc cevap
-    # vardi ve sunucununki "sinir yok"tu — herkese acik bir POST icin bu bir
-    # kaynak riski. Ust sinir arayuzunkiyle AYNI secildi.
-    "budget": {"min": 1, "max": 10_000_000, "default": 32},
-    "plan_count": {"min": 1, "max": 50, "default": 5},
-    "plan_apply": {"min": 1, "max": 50, "default": 1},
-    "trials": {"min": 1, "max": 50, "default": ENGINE_DEFAULTS["trials"]},
-    "ls_iters": {"min": 100, "max": 500_000, "default": ENGINE_DEFAULTS["ls_iters"]},
-    "time_limit": {"min": 1.0, "max": 300.0, "default": ENGINE_DEFAULTS["time_limit"]},
-    "block_limit": {"min": 2, "max": 6561, "default": ENGINE_DEFAULTS["block_limit"]},
-    "exact_limit": {"min": 2, "max": 4096, "default": ENGINE_DEFAULTS["exact_limit"]},
-    "auto_ilp_limit": {"min": 0.5, "max": 300.0,
-                       "default": ENGINE_DEFAULTS["auto_ilp_limit"]},
+    # **`budget`, `plan_count` ve `plan_apply` dustu.** Ucu de kaplama
+    # butce danismaninin (`core.butce_danismani`) ayarlariydi: "elimde N
+    # kolon var, hangi isareti kismaliyim, kac plan uret, hangisini
+    # uygula". Duzde bedel isaretlerin kendisi; kismak icin isareti
+    # degistirirsin, motora butce vermezsin. `/api/solve` bu alanlari
+    # ARTIK KABUL ETMIYOR.
 }
 
 
