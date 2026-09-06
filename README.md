@@ -907,7 +907,10 @@ backend/spor_toto/     ← Fix-16, ILP, Bayes, MC, Markov, history, odds, health
 ```
 backend/
   spor_toto/
-    core.py            Encoder, Fix-16, ILP, heuristic, exact olasılık
+    core.py            Encoder, işaret ayrıştırma, kupon satırı, olasılık raporu
+    kaplama_arsiv.py   ARŞİV: sökülmüş kaplamanın `solve_fix16`ı — yalnızca
+                       kaplamayla OYNANMIŞ haftaları değerlendirmek ve söküm
+                       kararının kanıtını üretmek için (üretim yolunda yok)
     analysis.py        Monte Carlo, maç bazlı hata frekansı
     bayes.py           Dirichlet prior → posterior, KL, preset'ler
     markov.py          Seçim hayatta kalma + hata bütçesi zinciri
@@ -993,7 +996,7 @@ backend/
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
                        sehir/ · xg/ · sistem_fiyat/ · hakem/
-  tests/               pytest (72 dosya → 1.922 test; §9'da katman dökümü)
+  tests/               pytest (72 dosya → 1.799 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1198,13 +1201,13 @@ dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri t
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
 eşleme, ikinci kayıt). **72 test dosyası, parametrizasyonla
-1.922 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+1.799 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
 | Katman | Dosyalar | Test |
 |---|---|---|
-| Çekirdek + motorlar | `core` `invariants` `edge_cases` `cli` `analysis` `bayes` `markov` `fire_scenarios` | 379 |
+| Çekirdek (kodlama · düz üretim · olasılık) | `core` `invariants` `edge_cases` `cli` `analysis` `bayes` `markov` `fire_scenarios` | 256 |
 | Tahmin katmanı | `predict` `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin` `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre` `secim_kalibrasyonu` **`arena`** **`sizinti`** | 595 |
 | Sağlık | `health` `api_health` `meta` `health_history` | 82 |
 | Veri / istatistik / geri test | `history` `odds` `backtest` `api_stats` `api_backtest` `snapshot_iddaa` `pazar` **`gecmis_sezon`** **`sportoto_arsiv`** **`bulten`** | 216 |

@@ -28,12 +28,12 @@ from spor_toto.core import (
     HAS_SCIPY,
     SEMBOLLER,
     Encoder,
-    merge_rows,
     olasilik_raporu,
     parse_picks,
     row_cost,
 )
 from spor_toto.duz import kolonlar as duz_kolonlar
+from spor_toto.duz import tek_satir as duz_tek_satir
 from spor_toto.fire_scenarios import fire_maliyeti, fire_scenario_report
 from spor_toto.health import (
     check_envanteri,
@@ -45,15 +45,13 @@ from spor_toto.history import history_week_detail
 from spor_toto.history import sezonlar as history_sezonlari
 from spor_toto.markov import markov_report
 from spor_toto.meta import (
-    ENGINE_DEFAULTS,
+    DUZ_MOD,
     FIRE_MAX_MALIYET,
     FIRE_MAX_VARSAYILAN,
-    LIMITS,
     MATCH_COUNT,
     MC_MAX,
     MC_MIN,
     MC_WEB_SAMPLES,
-    DUZ_MOD,
     meta_payload,
 )
 from spor_toto.odds import week_1x2
@@ -240,7 +238,7 @@ def _build_result(
     mc_samples: int = MC_WEB_SAMPLES,
     fire_max: int = FIRE_MAX_VARSAYILAN,
 ) -> dict[str, Any]:
-    rows = merge_rows(cols)
+    rows = [duz_tek_satir(enc)]
     total_cost = sum(row_cost(r) for r in rows)
     total_space = enc.space_size()
     # **`dogrula_kaplama` ve `distance_layers` dustu.** Ikisi de kume ICI

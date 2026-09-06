@@ -9,13 +9,11 @@ from .core import (
     OlasilikRaporu,
     Point,
     Row,
-    distance_layers,
-    dogrula_kaplama,
-    merge_rows,
     olasilik_raporu,
     row_cost,
     rows_to_points,
 )
+from .duz import tek_satir
 
 CIZGI = "=" * 68
 INCE = "-" * 68
@@ -134,22 +132,23 @@ def yazdir_ve_kaydet(enc: Encoder, cols: list[Point], baslik: str,
                      mc_seed: int = 42,
                      fire_max: int = 0) -> dict[str, object]:
     """Sonucu ekrana basar, istenirse dosyaya yazar. Ozet sozluk dondurur."""
-    rows = merge_rows(cols)
+    rows = [tek_satir(enc)]
     toplam_bedel = sum(row_cost(r) for r in rows)
 
-    # Sikistirma KAYIPSIZ olmali. merge_rows satir sayisini dusurur ama
-    # bedeli ve kapsanan nokta kumesini asla degistirmez (bkz. merge_rows
-    # docstring'indeki ispat). Bu kontrol olmadan bozuk bir sikistirma
-    # sessizce gecer ve kullaniciya garantiyi tutmayan bir kupon basilir.
-    # Ayni invariant health.py'de de var; rapor yolu da korunmali.
+    # **Kontrol duruyor ama artik baska bir seyi tutuyor.** Kaplamada
+    # `merge_rows` bir ARAMAYDI ve bu iki assert onun kayipsizligini
+    # sinardi. Duzde satir kapali formda uretiliyor (`duz.tek_satir`), yani
+    # sinanan sey arama degil **tutarlilik**: basilan satirin acilimi ile
+    # oynanan kolon kumesi ayni mi? Ayni degilse kupon ya eksik ya fazla
+    # basilir ve ikisi de sessizce yanlis kupondur.
     if toplam_bedel != len(cols):
         raise AssertionError(
-            f"Sikistirma bedeli bozdu: satirlarin toplam bedeli {toplam_bedel}, "
+            f"Satir bedeli kolon sayisini tutmuyor: satir bedeli {toplam_bedel}, "
             f"kolon sayisi {len(cols)}. Kupon basilmadi.")
     if set(rows_to_points(rows)) != set(cols):
         raise AssertionError(
-            "Sikistirma kolon kumesini degistirdi: satirlarin acilimi "
-            "orijinal kolonlarla ayni degil. Kupon basilmadi.")
+            "Basilan satirin acilimi oynanan kolonlarla ayni degil. "
+            "Kupon basilmadi.")
 
     print()
     print(CIZGI)

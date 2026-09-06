@@ -24,10 +24,10 @@ def enc():
     return Encoder(parse_picks(KUCUK))
 
 
-@pytest.fixture()
-def eng():
-    return engine_params(trials=1, ls_iters=2_000, time_limit=10.0,
-                         exact_limit=256, block_limit=256)
+# `eng` fixture'i (motor parametreleri) burada durdu ve `engine_params`i
+# cagiriyordu; o fonksiyon `engines.py` ile birlikte soküldu. Fixture'i
+# kullanan test kalmamisti — yani ruff'in `F821 Undefined name` uyarisi
+# calisma zamaninda hicbir zaman patlamayacak olu koddu.
 
 
 # ─── envanter ─────────────────────────────────────────────────────────────────

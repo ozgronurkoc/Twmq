@@ -5,7 +5,7 @@ import time
 
 import pytest
 
-from spor_toto.core import Encoder, Fix16Hatasi, parse_picks, solve_fix16
+from spor_toto.core import Encoder, parse_picks
 from spor_toto.health import (
     CHECKS,
     KATEGORILER,

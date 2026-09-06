@@ -91,8 +91,7 @@ from .core import SEMBOLLER
 from .getiri import KOLON_BEDELI
 from .havuz import arsiv_haftalari
 from .ortak import wilson
-from .secim import sistem_secimi
-from .secim import HEDEF_KADEME
+from .secim import HEDEF_KADEME, sistem_secimi
 
 #: Duzde en iyi kolon her zaman `15 - kacak`; "garanti seviyesi" diye bir
 #: secim yok. Sabit yalnizca `kademe = VARSAYILAN_GARANTI - kacak`

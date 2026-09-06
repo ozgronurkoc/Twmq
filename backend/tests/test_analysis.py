@@ -7,7 +7,8 @@ import math
 import pytest
 
 from spor_toto.analysis import match_error_frequency, monte_carlo_report
-from spor_toto.core import SEMBOLLER, Encoder, parse_picks, solve_fix16
+from spor_toto.core import SEMBOLLER, Encoder, parse_picks
+from spor_toto.duz import kolonlar as duz_kolonlar
 
 ORNEK = "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"
 
@@ -90,7 +91,7 @@ def _kacakli_enc_cols():
     sey soyleyebilmek icin bosluklu bir kurulum gerekiyor.
     """
     enc = Encoder(parse_picks(ORNEK))
-    cols, _ = solve_fix16(enc)
+    cols = duz_kolonlar(enc)
     return enc, cols[:3]
 
 

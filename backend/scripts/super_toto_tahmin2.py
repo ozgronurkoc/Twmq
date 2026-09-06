@@ -58,7 +58,6 @@ from spor_toto.backtest import (
     _kaplama,
     secim_uret,
 )
-from spor_toto.core import HAMMING_BLOK_BOYU
 from spor_toto.core import SEMBOLLER as SEM
 from spor_toto.getiri import (
     KALABALIK_MODELLERI,
@@ -67,6 +66,7 @@ from spor_toto.getiri import (
     kalabalik_kademeleri,
 )
 from spor_toto.gorus import ayrisma, gorus_uret
+from spor_toto.kaplama_arsiv import HAMMING_BLOK_BOYU
 from spor_toto.odds import (
     ARINDIRMA_VARSAYILAN,
     implied_probs,

@@ -17,11 +17,10 @@ from spor_toto.cli import main
 from spor_toto.core import (
     SEMBOLLER,
     Encoder,
-    Fix16Hatasi,
     parse_picks,
     parse_probs,
-    solve_fix16,
 )
+from spor_toto.duz import kolonlar as duz_kolonlar
 
 ORNEK = "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"
 
@@ -114,41 +113,39 @@ def test_bayes_update_no_nan():
         assert abs(sum(r["posterior"].values()) - 1.0) < 1e-9
 
 
-def test_fix16_6_cifte_red():
-    enc = Encoder(parse_picks("10,10,10,10,10,10,1,1,1,1,1,1,1,1,1"))
-    with pytest.raises(Fix16Hatasi, match="7 CIFTE"):
-        solve_fix16(enc)
+# **Uc "fix16" kenar durumu dustu ve yerine bir tanesi geldi.** Eskiden
+# sinanan seyler kaplamaya ozguydu: 6 ciftenin reddedilmesi (`7 CIFTE`
+# hatasi), 7 ciftede tam 16 kolon, 8 ciftede 32. Duzde "en az 7 cifte" diye
+# bir sart yok ve bedel her zaman `2^cifte * 3^uclu`; asagidaki tek test
+# ucunun de yerini tutar cunku KURALI sinar, uc ornegi degil.
 
 
-def test_fix16_7_cifte_ok():
-    enc = Encoder(parse_picks("10,10,10,10,10,10,10,1,1,1,1,1,1,1,1"))
-    cols, _ = solve_fix16(enc)
-    assert len(cols) == 16
-
-
-def test_fix16_8_cifte_bedel_32():
-    enc = Encoder(parse_picks("10,10,10,10,10,10,10,10,1,1,1,1,1,1,1"))
-    cols, _ = solve_fix16(enc)
-    assert len(cols) == 32
+@pytest.mark.parametrize("cifte,uclu", [(0, 0), (1, 0), (6, 0), (7, 0),
+                                        (8, 0), (5, 2), (0, 4)])
+def test_duz_bedel_her_sekilde_carpimin_kendisi(cifte, uclu):
+    isaret = ["10"] * cifte + ["102"] * uclu
+    isaret += ["1"] * (15 - len(isaret))
+    enc = Encoder(parse_picks(",".join(isaret)))
+    assert len(duz_kolonlar(enc)) == 2 ** cifte * 3 ** uclu
 
 
 def test_mc_n_samples_sifir_raises():
     enc = Encoder(parse_picks("10,10,10,10,10,10,10,1,1,1,1,1,1,1,1"))
-    cols, _ = solve_fix16(enc)
+    cols = duz_kolonlar(enc)
     with pytest.raises(ValueError, match="n_samples"):
         monte_carlo_report(enc, cols, _uniform_probs(15), n_samples=0)
 
 
 def test_mc_n_samples_negatif_raises():
     enc = Encoder(parse_picks("10,10,10,10,10,10,10,1,1,1,1,1,1,1,1"))
-    cols, _ = solve_fix16(enc)
+    cols = duz_kolonlar(enc)
     with pytest.raises(ValueError, match="n_samples"):
         monte_carlo_report(enc, cols, _uniform_probs(15), n_samples=-3)
 
 
 def test_mc_kucuk_n_warning():
     enc = Encoder(parse_picks("10,10,10,10,10,10,10,1,1,1,1,1,1,1,1"))
-    cols, _ = solve_fix16(enc)
+    cols = duz_kolonlar(enc)
     mc = monte_carlo_report(enc, cols, _uniform_probs(15), n_samples=5, seed=1)
     assert mc["n_samples"] == 5
     assert "warning" in mc

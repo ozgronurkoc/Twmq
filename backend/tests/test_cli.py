@@ -1,4 +1,4 @@
-"""Olasilik raporu, butce danismani, CLI ve raporlama testleri."""
+"""Olasilik raporu, CLI ve raporlama testleri."""
 
 
 import pytest
@@ -7,13 +7,11 @@ from spor_toto.cli import build_parser, main
 from spor_toto.core import (
     HAS_SCIPY,
     Encoder,
-    butce_danismani,
-    merge_rows,
     olasilik_raporu,
     parse_picks,
     parse_probs,
-    solve_fix16,
 )
+from spor_toto.duz import kolonlar as duz_kolonlar
 
 ORNEK = "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"
 gerek_scipy = pytest.mark.skipif(not HAS_SCIPY, reason="scipy yok")
@@ -54,26 +52,32 @@ def test_olasilik_kume_disi_sifirlar():
     assert rap.p_15 == pytest.approx(0.0)
 
 
-def test_olasilik_14_garanti_tutarli():
-    """p_15 + p_14 = p_kume_ici olmali (kaplama gecerliyse)."""
+def test_olasilik_kume_ici_DOGRUDAN_15_demek():
+    """Duzde `p_15 == p_kume_ici`; kaplamada `p_15 + p_14 == p_kume_ici` idi.
+
+    Fark yapisal: kaplama kumenin bir dilimini oynadigi icin kume icinde
+    kalmak 15 degil "en fazla 1 hata" demekti ve kalan kutle 14'e dusuyordu.
+    Duzde her nokta oynaniyor, yani kume icinde kalmak DOGRUDAN 15'tir ve
+    `p_14` artik kume ici payindan gelmez.
+    """
     sel = parse_picks(ORNEK)
     enc = Encoder(sel)
-    cols, _ = solve_fix16(enc)
+    cols = duz_kolonlar(enc)
     probs = parse_probs(esit_olasilik(ORNEK), sel)
     rap = olasilik_raporu(enc, cols, probs)
-    assert rap.p_15 + rap.p_14 == pytest.approx(rap.p_kume_ici)
+    assert rap.p_15 == pytest.approx(rap.p_kume_ici)
     assert 0.0 <= rap.p_15 <= rap.p_kume_ici <= 1.0
 
 
 def test_olasilik_tek_kolon_kume_ici_ile_sinirli():
     """
-    En olasi tek kolon, kume-ici olasiligi asamaz. Bilerek 'p_15 daha
-    buyuktur' iddiasinda BULUNMUYORUZ: kaplama kodu 15 sansini degil
-    kapsamayi maksimize eder.
+    En olasi tek kolon, kume-ici olasiligi asamaz. Sinir duzde gevsektir
+    (en olasi nokta zaten kolonlarin icinde) ve bilerek oyle birakiliyor:
+    tutulmasi gereken sey siralamanin bozulmamasi.
     """
     sel = parse_picks(ORNEK)
     enc = Encoder(sel)
-    cols, _ = solve_fix16(enc)
+    cols = duz_kolonlar(enc)
     probs = parse_probs(esit_olasilik(ORNEK), sel)
     rap = olasilik_raporu(enc, cols, probs)
     assert rap.p_tek_kolon_15 <= rap.p_kume_ici
@@ -91,69 +95,22 @@ def test_olasilik_tek_kolon_secim_kumesiyle_sinirli():
 def test_olasilik_mac_sayisi_uyusmazligi():
     sel = parse_picks(ORNEK)
     enc = Encoder(sel)
-    cols, _ = solve_fix16(enc)
+    cols = duz_kolonlar(enc)
     with pytest.raises(ValueError):
         olasilik_raporu(enc, cols, [{"1": 1.0}])
 
 
 # ------------------------------------------------------------
-# Butce danismani
+# Butce danismani — SOKULDU
+#
+# Alti test buradaydi ve hepsi `core.butce_danismani`yi olcuyordu: kupon
+# kaplama butcesine sigmiyorsa hangi isaretlerden feda edilecegini secen,
+# "en az degisiklik yapani once ver" diye siralayan bir yardimci. Duzde o
+# is bir DANISMAN degil, secim motorunun kendisi: `secim.en_iyi_secim`
+# tavani ZORUNLU parametre olarak alir ve tavan altindaki en iyi sekli
+# kesin (Pareto DP) olarak bulur — feda sirasi diye bir sezgiye gerek
+# birakmaz. Bekcileri `tests/test_secim.py`de.
 # ------------------------------------------------------------
-
-def test_butce_danismani_butceye_uyar():
-    enc = Encoder(parse_picks("10,10,10,10,10,10,10,10,102,2,1,0,1,1,2"))
-    planlar = butce_danismani(enc, 32)
-    assert planlar
-    for pl in planlar:
-        assert pl.bedel <= 32
-        assert pl.satir == 16
-        yeni = Encoder(pl.selections)
-        assert len(yeni.double_pos()) >= 7
-        cols, _ = solve_fix16(yeni)
-        assert len(cols) == pl.bedel
-        assert len(merge_rows(cols)) == 16
-
-
-def test_butce_danismani_en_az_feda_edeni_once_verir():
-    enc = Encoder(parse_picks("10,10,10,10,10,10,10,10,10,2,1,0,1,1,2"))
-    planlar = butce_danismani(enc, 32)
-    assert planlar
-    say = [len(p.degisiklikler) for p in planlar]
-    assert say == sorted(say)
-
-
-def test_butce_yeterliyse_degisiklik_gerekmez():
-    enc = Encoder(parse_picks("10,10,10,10,10,10,10,1,1,1,1,1,1,1,1"))
-    planlar = butce_danismani(enc, 16)
-    assert planlar[0].degisiklikler == []
-    assert planlar[0].bedel == 16
-
-
-def test_butce_cok_kucukse_plan_yok():
-    enc = Encoder(parse_picks("10,10,10,10,10,10,10,10,1,1,1,1,1,1,1"))
-    assert butce_danismani(enc, 4) == []
-
-
-def test_butce_olasilikla_dusuk_ihtimali_atar():
-    picks = "102,10,10,10,10,10,10,10,1,1,1,1,1,1,1"
-    sel = parse_picks(picks)
-    enc = Encoder(sel)
-    # 1. macta '2' cok dusuk olasilikli -> once o atilmali
-    probs = parse_probs("1:0.6,0:0.39,2:0.01;" + ";".join(["1:1,0:1"] * 14), sel)
-    planlar = butce_danismani(enc, 16, probs)
-    assert planlar
-    ilk = planlar[0].degisiklikler[0]
-    assert ilk.startswith("1. mac: 102 ->")
-    # En dusuk olasilikli '2' once atilmali, '1' her zaman kalmali
-    kalan = ilk.split("-> ")[1]
-    assert "2" not in kalan
-    assert kalan.startswith("1")
-
-
-def test_butce_gecersiz_deger():
-    enc = Encoder(parse_picks(ORNEK))
-    with pytest.raises(ValueError):
-        butce_danismani(enc, 0)
 
 
 # ------------------------------------------------------------

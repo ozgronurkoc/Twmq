@@ -176,7 +176,6 @@ def en_iyi_secim(probs_listesi: list[dict[str, float]],
     }
 
     for i in range(n):
-        kalan_mac = n - i - 1
         yeni: dict[tuple[int, int], list[tuple[tuple[float, ...], tuple[int, ...]]]] = {}
         for (a, b), kume in durumlar.items():
             for seviye in (1, 2, 3):

@@ -53,12 +53,19 @@ def client():
         yield c
 
 
-def kaplama_gecerli(cols: Any, sizes: Any) -> bool:
-    """Kaplama 14-garanti veriyor mu: en kötü hata ≤ 1 ve açıkta nokta yok."""
-    from spor_toto.core import dogrula_kaplama
+def kume_tamami_oynaniyor(cols: Any, sizes: Any) -> bool:
+    """Seçim kümesinin tamamı gerçekten oynanıyor mu?
 
-    worst, acik = dogrula_kaplama(cols, sizes)
-    return worst <= 1 and acik == 0
+    Bu yardımcı eskiden `kaplama_gecerli`ydi ve `core.dogrula_kaplama` ile
+    *"en kötü hata ≤ 1 ve açıkta nokta yok"* diye soruyordu — kaplama
+    kümenin bir dilimini oynadığı için anlamlı bir soruydu. Düzde dilim
+    yok: doğru soru **hiçbir nokta eksik değil** ve bu ondan daha güçlü bir
+    şarttır (açık nokta sayısı sıfır DEĞİL, kolon sayısı uzayın kendisi).
+    """
+    toplam = 1
+    for k in sizes:
+        toplam *= k
+    return len(set(cols)) == toplam == len(cols)
 
 
 def esit_olasiliklar(n: int = 15) -> list[dict[str, float]]:
@@ -76,12 +83,12 @@ def dagilim(*p: float) -> dict[str, float]:
 
 
 def enc_ve_kolonlar(kupon: str = ORNEK_KUPON):
-    """Örnek kupon için `(Encoder, fix16 kolonları)`."""
-    from spor_toto.core import Encoder, parse_picks, solve_fix16
+    """Örnek kupon için `(Encoder, oynanan kolonlar)` — düz, tam sistem."""
+    from spor_toto.core import Encoder, parse_picks
+    from spor_toto.duz import kolonlar as duz_kolonlar
 
     enc = Encoder(parse_picks(kupon))
-    cols, _ = solve_fix16(enc)
-    return enc, cols
+    return enc, duz_kolonlar(enc)
 
 
 def ham_satir(**alanlar: Any) -> dict[str, str]:

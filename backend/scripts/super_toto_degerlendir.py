@@ -86,7 +86,8 @@ def en_iyi_kolon(secimler: Sequence[Sequence[str]], gercek: str) -> int:
     """
     from itertools import product
 
-    from spor_toto.core import Encoder, Fix16Hatasi, solve_fix16
+    from spor_toto.core import Encoder
+    from spor_toto.kaplama_arsiv import Fix16Hatasi, solve_fix16
     listeler = [list(x) for x in secimler]
     try:
         enc = Encoder(listeler)
@@ -506,7 +507,8 @@ def oynanan_kolonlar(d: dict[str, Any], picks: Sequence[str],
     fonksiyon yine de aynı yoldan hesaplar, çünkü iki sayının eşitliği
     **sonuç**tur, varsayım değil.
     """
-    from spor_toto.core import Encoder, Fix16Hatasi, solve_fix16
+    from spor_toto.core import Encoder
+    from spor_toto.kaplama_arsiv import Fix16Hatasi, solve_fix16
 
     listeler = [list(x) for x in picks]
     maclar = d["matches"]
@@ -648,7 +650,8 @@ def oynanan_kolon_listesi(d: dict[str, Any], picks: Sequence[str],
     """
     from itertools import product
 
-    from spor_toto.core import Encoder, Fix16Hatasi, solve_fix16
+    from spor_toto.core import Encoder
+    from spor_toto.kaplama_arsiv import Fix16Hatasi, solve_fix16
 
     listeler = [list(x) for x in picks]
     if sistem == "tam":

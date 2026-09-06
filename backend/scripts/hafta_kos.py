@@ -37,10 +37,10 @@ sys.path.insert(0, str(KOK))
 from spor_toto.karne import (
     CANLI_KOK,
     RAKIP_KOLON,
+    VARSAYILAN_GARANTI,
     canli_hafta,
     canli_karne_satiri,
 )
-from spor_toto.karne import VARSAYILAN_GARANTI
 from spor_toto.secim import kacak_esigi
 
 #: Karnenin yazıldığı yer.

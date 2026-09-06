@@ -38,7 +38,8 @@ from typing import Any
 KOK = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(KOK))
 
-from spor_toto.core import HAMMING_BLOK_BOYU, SEMBOLLER, sirala_semboller
+from spor_toto.core import SEMBOLLER, sirala_semboller
+from spor_toto.kaplama_arsiv import HAMMING_BLOK_BOYU
 from spor_toto.odds import implied_probs
 from spor_toto.secim import (
     VARSAYILAN_KACAK_ESIGI,

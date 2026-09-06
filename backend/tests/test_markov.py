@@ -2,7 +2,8 @@
 
 import pytest
 
-from spor_toto.core import Encoder, olasilik_raporu, parse_picks, solve_fix16
+from spor_toto.core import Encoder, olasilik_raporu, parse_picks
+from spor_toto.duz import kolonlar as duz_kolonlar
 from spor_toto.markov import (
     error_budget_chain,
     markov_report,
@@ -34,7 +35,7 @@ def test_survival_equals_kume_ici():
 
 def test_survival_matches_olasilik_raporu():
     enc = Encoder(parse_picks(ORNEK))
-    cols, _ = solve_fix16(enc)
+    cols = duz_kolonlar(enc)
     probs = _probs_on_sel(enc)
     # evidence biraz çarpık
     probs[0] = {"1": 0.7, "0": 0.2, "2": 0.1}
@@ -45,7 +46,7 @@ def test_survival_matches_olasilik_raporu():
 
 def test_error_budget_garanti_when_on_selection():
     enc = Encoder(parse_picks(ORNEK))
-    cols, _ = solve_fix16(enc)
+    cols = duz_kolonlar(enc)
     probs = _probs_on_sel(enc)
     eb = error_budget_chain(enc, cols, probs)
     assert eb["p_garanti"] == pytest.approx(1.0, abs=1e-6)
@@ -55,7 +56,7 @@ def test_error_budget_garanti_when_on_selection():
 
 def test_markov_report_shape():
     enc = Encoder(parse_picks(ORNEK))
-    cols, _ = solve_fix16(enc)
+    cols = duz_kolonlar(enc)
     probs = _probs_on_sel(enc)
     rep = markov_report(enc, cols, probs)
     assert "survival" in rep and "error_budget" in rep and "summary" in rep

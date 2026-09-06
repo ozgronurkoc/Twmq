@@ -33,8 +33,8 @@ from .core import (
     olasilik_raporu,
     parse_picks,
 )
-from .duz import kolonlar as duz_kolonlar
 from .core import SEMBOLLER as _SEMBOLLER
+from .duz import kolonlar as duz_kolonlar
 from .markov import markov_report
 from .report import basliklar
 
@@ -903,7 +903,6 @@ def _check_tahmin_referanslari() -> str:
     kirmizi olmamalidir. Bunun yerine genis bir akil saglami var (esit
     dagitimdan iyi, kusursuzdan uzak) ve tam deger mesajda raporlanir.
     """
-    import math
 
     from .evaluate import karsilastir, olculebilir_haftalar
     from .ortak import BRIER_ESIT

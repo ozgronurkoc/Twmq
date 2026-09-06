@@ -129,3 +129,21 @@ def kolonlar(enc: Encoder,
             f"kirpilamaz: eksik kume ile hesaplanan kume-ici olasilik yanlis "
             f"olur ve yanlisligi gorunmez. Isaret sayisini azaltin.")
     return list(itertools.product(*[range(b) for b in boyutlar]))
+
+
+def tek_satir(enc: Encoder) -> tuple[frozenset[int], ...]:
+    """Kuponun **satır** gösterimi — düzde her zaman TEK satır.
+
+    Kupon fişinde bir satır, her maç için işaretlenen sembol kümesidir
+    (`core.Row`). Düzde oynanan şey seçim kümesinin kendisidir, yani o
+    küme **tek bir satıra** sığar ve o satırın bedeli `2^çifte · 3^üçlü`
+    kolondur.
+
+    Bu iş kaplama döneminde `core.merge_rows`un işiydi ve bir **aramaydı**:
+    kaplamanın ürettiği dağınık kolonlar tek tek geziliyor, bir koordinatta
+    ayrışan çiftler tekrar tekrar birleştirilerek satır sayısı düşürülüyordu
+    (kayıpsız olduğu ayrıca sınanıyordu). Düzde arayacak bir şey yok —
+    cevap kapalı formda ve yanılma payı sıfır: her değişken maçta bütün
+    semboller işaretli.
+    """
+    return tuple(frozenset(range(len(s))) for s in enc.variable_syms)

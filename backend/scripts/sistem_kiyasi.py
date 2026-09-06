@@ -47,11 +47,12 @@ KOK = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(KOK))
 
 from scripts.butce_kademeleri import hafta_olasiliklari
-from spor_toto.core import (
+from spor_toto.core import Encoder, sirala_semboller
+
+# Kaplama ARSIVDEN gelir; uretim yolunda kaplama yok (bkz. modul basligi).
+from spor_toto.kaplama_arsiv import (
     HAMMING_BLOK_BOYU,
     HAMMING_KOLON,
-    Encoder,
-    sirala_semboller,
     solve_fix16,
 )
 from spor_toto.ortak import kacak_dagilimi
