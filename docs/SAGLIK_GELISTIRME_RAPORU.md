@@ -244,7 +244,7 @@ gerektirir, yani 9.1 olmadan yapılamaz.
 
 | Ölçü | Değer |
 |---|---|
-| Kayıtlı kontrol | 27 |
+| Kayıtlı kontrol | 23 |
 | Kategori | 6 |
 | Kritik olmayan kontrol | 1 (`scipy_flag`) |
 | En yeni kontrol | `xg_kalibrasyonu` (analiz) — xG vekilinin katsayıları ters işaretli ya da özellik seyrelmiş mi |

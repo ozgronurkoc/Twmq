@@ -9,19 +9,10 @@ import pytest
 
 from spor_toto import __version__
 from spor_toto.bayes import STRENGTH_PRESETS
-from spor_toto.core import HAS_SCIPY, Encoder, dogrula_kaplama, parse_picks
-from spor_toto.engines import (
-    engine_params,
-    run_auto,
-    run_block,
-    run_butce,
-    run_exact,
-    run_fix16,
-    run_heuristic,
-    run_maxcov,
-)
+from spor_toto.core import HAS_SCIPY, Encoder, parse_picks
+from spor_toto.duz import kolonlar as duz_kolonlar
 from spor_toto.history import MATCH_COUNT
-from spor_toto.meta import ENGINE_DEFAULTS, LIMITS, MODE_IDS, MODES, meta_payload
+from spor_toto.meta import DUZ_MOD, ENGINE_DEFAULTS, LIMITS, MODE_IDS, MODES, meta_payload
 
 # 7 çifte -> 128 nokta, alt sınır 16 kolon.
 KUCUK = "1,1,1,1,1,1,1,10,10,10,10,10,10,10,1"
@@ -92,74 +83,33 @@ def test_geri_test_varsayilanlari_izgarada():
 
 # ─── mod çalıştırıcıları ──────────────────────────────────────────────────────
 
-def _kaplama_gecerli(cols, sizes) -> bool:
-    worst, acik = dogrula_kaplama(cols, sizes)
-    return worst <= 1 and acik == 0
+def test_ilan_edilen_TEK_mod_kosuyor(enc):
+    """Meta'da ilan edilen mod gerçekten koşuyor ve kümenin tamamını veriyor.
 
-
-def test_garanti_ilan_eden_modlar_gercekten_kapliyor(enc, eng):
-    kosucular = {
-        "fix16": lambda: run_fix16(enc),
-        "auto": lambda: run_auto(enc, eng),
-        "block": lambda: run_block(enc, eng),
-        "heuristic": lambda: run_heuristic(enc, eng),
-        "butce": lambda: run_butce(enc, 24),
-    }
-    for m in MODES:
-        if not m["garanti"] or m["id"] not in kosucular:
-            continue
-        r = kosucular[m["id"]]()
-        e = r.get("enc", enc)
-        assert _kaplama_gecerli(r["cols"], e.alphabet_sizes), m["id"]
-
-
-@gerek_scipy
-def test_exact_modu_kapliyor(enc, eng):
-    r = run_exact(enc, eng)
-    assert _kaplama_gecerli(r["cols"], enc.alphabet_sizes)
-
-
-def test_maxcov_garanti_vermez(enc):
-    """Alt sınırın (16) altındaki bir bütçeyle tam kaplama İMKÂNSIZDIR.
-
-    maxcov meta'da `garanti: False` ilan eder; bu test o ilanın gerçek
-    olduğunu bağlar — bayrak ile davranış ayrışırsa kullanıcı garanti
-    sandığı bir kupon oynar.
+    **Burada beş mod koşturuluyordu** (`fix16`, `auto`, `block`,
+    `heuristic`, `butce`) ve her birinin ürettiği kaplamanın geçerli olup
+    olmadığı `dogrula_kaplama` ile sınanıyordu. Kaplama söküldü
+    (`docs/DUZ_SISTEME_GECIS.md`): geriye tek mod kaldı ve onun sözü
+    "örtüyorum" değil **"kümenin tamamını oynuyorum"**.
     """
-    r = run_maxcov(enc, 8)
-    _worst, acik = dogrula_kaplama(r["cols"], enc.alphabet_sizes)
-    assert acik > 0
-    assert len(r["cols"]) <= 8
-    assert r["kapsanan"] + acik == enc.space_size()
+    assert [m["id"] for m in MODES] == [DUZ_MOD]
+    mod = MODES[0]
+    assert mod["garanti"] is True
+    cols = duz_kolonlar(enc)
+    assert len(cols) == enc.space_size()
+    assert len(set(cols)) == len(cols)
 
 
-def test_butce_plani_butceyi_asmaz(enc):
-    r = run_butce(enc, 24)
-    planlar = r["planlar"]
-    assert planlar
-    assert planlar[r["secili_index"]].bedel <= 24
-    assert len(r["cols"]) <= 24
-    assert r["enc"] is not enc  # plan kuponu daralttı
+def test_garanti_VERMEYEN_mod_kalmadi():
+    """`maxcov` gitti: düzde garantisiz bir oynama biçimi yok.
 
-
-def test_butce_sigmayan_butcede_hata_verir(enc):
-    with pytest.raises(ValueError, match="bütçeye sığan plan yok"):
-        run_butce(enc, 1)
-
-
-def test_engine_params_varsayilanlari_tamamlar():
-    p = engine_params(trials=3)
-    assert p["trials"] == 3
-    assert p["seed"] == ENGINE_DEFAULTS["seed"]
-    assert engine_params()["ls_iters"] == ENGINE_DEFAULTS["ls_iters"]
-
-
-# ─── uç: /api/meta ve ilan edilen modların çalışabilirliği ────────────────────
-
-# `client` fixture'i `tests/conftest.py`den geliyor — ayni govde bes
-# dosyada, ucu BIREBIR yaziliydi. (Ezmesi gereken ikisi eziyor:
-# `test_api_health` onbellek temizliyor, `test_tahmin` modul kapsamli.)
-
+    Eski test şunu bağlıyordu: *"maxcov meta'da `garanti: False` ilan eder;
+    bayrak ile davranış ayrışırsa kullanıcı garanti sandığı bir kupon
+    oynar."* Düzde her kupon kümenin tamamını oynar, yani `garanti: False`
+    ilan edecek bir mod yok. Değişmez ayakta: **ilan edilen bayrak gerçeği
+    söylemeli.**
+    """
+    assert [m for m in MODES if not m["garanti"]] == []
 
 def test_meta_ucu_ayni_govdeyi_verir(client):
     body = client.get("/api/meta").get_json()

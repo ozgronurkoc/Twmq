@@ -797,7 +797,7 @@ handler'a bağlı olsalardı `/health`e vuran her şey tam raporu ödetirdi ve
 `/health`i canlılık sinyali sanan bir probe, zaman aşımına düşünce **sağlıklı**
 bir konteyneri öldürebilirdi.
 
-**27 kontrol, 6 kategori.** Kategoriler motorun katmanlarını izler ve yukarıdan
+**23 kontrol, 6 kategori.** Kategoriler motorun katmanlarını izler ve yukarıdan
 aşağıya doğru ciddiyet azalır — düşen kontrolün adı değil, **hangi katmanın
 bozulduğu** okunur. Güncel liste için `--list`:
 
@@ -930,7 +930,6 @@ backend/
     egitim.py          TAHMİN: eğitim korpusu okuyucu — /istatistik'e GİRMEZ
     health.py          Kategorili değişmez (invariant) kontrolleri — tek CHECKS tanımı
     meta.py            Yetenek envanteri (modlar, preset'ler, sınırlar) = /api/meta
-    engines.py         Mod çalıştırıcıları — /api/solve, CLI ve health AYNI yolu kullanır
     ortak.py           Paylaşılan hesaplar: normalizasyon, Wilson, Brier, bantlama
     payloads.py        /api/stats ve /api/backtest gövdeleri — tek kaynak
     tahmin.py          TAHMİN: yaklaşan maçlar + ölçülmüş isabet = /api/tahmin
@@ -994,7 +993,7 @@ backend/
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
                        sehir/ · xg/ · sistem_fiyat/ · hakem/
-  tests/               pytest (73 dosya → 2.079 test; §9'da katman dökümü)
+  tests/               pytest (72 dosya → 1.941 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1198,16 +1197,16 @@ Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant'lar, CLI (Bayes pre
 dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri test,
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
-eşleme, ikinci kayıt). **73 test dosyası, parametrizasyonla
-2.079 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+eşleme, ikinci kayıt). **72 test dosyası, parametrizasyonla
+1.941 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
 | Katman | Dosyalar | Test |
 |---|---|---|
-| Çekirdek + motorlar | `core` `engines` `invariants` `edge_cases` `cli` `analysis` `bayes` `markov` `fire_scenarios` | 528 |
+| Çekirdek + motorlar | `core` `invariants` `edge_cases` `cli` `analysis` `bayes` `markov` `fire_scenarios` | 394 |
 | Tahmin katmanı | `predict` `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin` `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre` `secim_kalibrasyonu` **`arena`** **`sizinti`** | 595 |
-| Sağlık | `health` `api_health` `meta` `health_history` | 90 |
+| Sağlık | `health` `api_health` `meta` `health_history` | 86 |
 | Veri / istatistik / geri test | `history` `odds` `backtest` `api_stats` `api_backtest` `snapshot_iddaa` `pazar` **`gecmis_sezon`** **`sportoto_arsiv`** **`bulten`** | 216 |
 | Süper Toto | `super_toto` `degerlendir` | 93 |
 | 2. Tahmin (kalabalık ayarı · bağımsız görüş) | `tahmin2` | 35 |

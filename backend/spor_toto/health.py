@@ -1466,85 +1466,36 @@ def kupon_denetle(
     KAYITLI kontrol listesinden ayridir: burada olculen sey motorun genel
     sagligi degil, TEK bir kuponun sonucudur. Ikisi ayni tabloda gorunmemeli.
     """
-    from .engines import (
-        engine_params,
-        run_auto,
-        run_block,
-        run_butce,
-        run_exact,
-        run_fix16,
-        run_heuristic,
-        run_maxcov,
-    )
-    from .meta import MODES
+    from .meta import DUZ_MOD, MODES
 
     mod = next((m for m in MODES if m["id"] == mode), None)
     if mod is None:
         raise ValueError(
-            f"Bilinmeyen mod {mode!r}. Geçerli olanlar: "
-            f"{', '.join(m['id'] for m in MODES)}")
-    if mod["needs_budget"] and not budget:
-        raise ValueError(f"{mode} modu için budget gerekli")
-    if mod["needs_scipy"] and not HAS_SCIPY:
-        raise ValueError(f"{mode} modu scipy gerektirir; bu kurulumda scipy yok")
+            f"Kaplama modlari sokuldu (docs/DUZ_SISTEME_GECIS.md). Tek "
+            f"gecerli mod {DUZ_MOD!r}; {mode!r} istendi.")
 
     t0 = time.perf_counter()
     enc = Encoder(parse_picks(picks))
-    eng = engine_params()
-    kosucular = {
-        "fix16": lambda: run_fix16(enc, variant=variant),
-        "auto": lambda: run_auto(enc, eng),
-        "exact": lambda: run_exact(enc, eng),
-        "block": lambda: run_block(enc, eng),
-        "heuristic": lambda: run_heuristic(enc, eng),
-        "butce": lambda: run_butce(enc, int(budget or 0), variant=variant),
-        "maxcov": lambda: run_maxcov(enc, int(budget or 0)),
-    }
-    r = kosucular[mode]()
-    # Butce modu kuponu DARALTIR; sonraki her hesap daraltilmis kupon
-    # uzerinde yapilmali, yoksa olculen sey kullanicinin aldigi sey olmaz.
-    kupon_enc = r.get("enc", enc)
-    cols = r["cols"]
-
-    rows = merge_rows(cols)
-    worst, acik = dogrula_kaplama(cols, kupon_enc.alphabet_sizes)
-    dist = distance_layers(cols, kupon_enc.alphabet_sizes)
+    kupon_enc = enc
+    cols = duz_kolonlar(enc)
     probs = _probs_on_selections(kupon_enc)
     rap = olasilik_raporu(kupon_enc, cols, probs)
-    garanti_bekleniyor = bool(mod["garanti"])
 
     def _kontrol(ad: str, gecti: bool, aciklama: str, detail: str) -> dict[str, Any]:
         return {"name": ad, "ok": bool(gecti), "aciklama": aciklama,
                 "detail": detail}
 
+    # **Uc kontrol dustu ve dordu birine indi.** `kaplama_garantisi`,
+    # `mesafe_muhasebesi`, `satir_kolon_muhasebesi` ve `alt_sinir` hepsi
+    # kaplamanin dogru ortup ortmedigini soruyordu. Duzde ortme diye bir
+    # sey yok; geriye tek soru kaliyor ve o da asagida.
     checks = [
         _kontrol(
-            "kaplama_garantisi",
-            (worst <= 1 and acik == 0) if garanti_bekleniyor else acik > 0,
-            "Bu kuponun kaplaması, modun ilan ettiği garanti sözünü tutuyor mu.",
-            f"mod={mode} garanti={garanti_bekleniyor} worst={worst} açık={acik}",
-        ),
-        _kontrol(
-            "mesafe_muhasebesi",
-            sum(dist.values()) == kupon_enc.space_size(),
-            "0/1/2… hatalı nokta sayılarının toplamı arama uzayının tamamını "
-            "vermeli; tutmazsa bu kuponun yüzdeleri yanlıştır.",
-            f"katman={dict(sorted(dist.items()))} uzay={kupon_enc.space_size()}",
-        ),
-        _kontrol(
-            "satir_kolon_muhasebesi",
-            (set(rows_to_points(rows)) == set(cols)
-             and sum(row_cost(r_) for r_ in rows) == len(cols)),
-            "Kupona yazılacak satırlar ile ödenecek kolon bedeli birbirini "
-            "tutmalı: satır çözülüp tekrar kolona döndüğünde aynı küme çıkmalı.",
-            f"satır={len(rows)} bedel={len(cols)}",
-        ),
-        _kontrol(
-            "alt_sinir",
-            len(cols) >= kupon_enc.lower_bound() or not garanti_bekleniyor,
-            "Bedel, sayma argümanının verdiği teorik alt sınırın altına "
-            "düşemez; düşüyorsa hesap yanlıştır.",
-            f"bedel={len(cols)} alt_sınır={kupon_enc.lower_bound()}",
+            "kume_tamami_oynaniyor",
+            len(cols) == kupon_enc.space_size() and len(set(cols)) == len(cols),
+            "Oynanan kolonlar seçim kümesinin TAMAMI mı. Eksikse bu kuponun "
+            "küme-içi olasılığı yanlıştır ve yanlışlığı görünmez.",
+            f"kolon={len(cols)} uzay={kupon_enc.space_size()}",
         ),
         _kontrol(
             "olasilik_tutarliligi",
@@ -1560,15 +1511,18 @@ def kupon_denetle(
         "ok": not dusen,
         "mode": mode,
         "picks": picks,
-        "baslik": r.get("baslik", ""),
-        "notlar": list(r.get("notlar", [])),
-        "satir": len(rows),
+        "baslik": f"düz (tam sistem) — {len(cols):,} kolon",
+        "notlar": ["Seçim kümesinin tamamı oynanır: indirgeme yok."],
+        # Duzde kupon isaretlerin kendisidir: tek satir.
+        "satir": 1,
         "bedel": len(cols),
-        "alt_sinir": kupon_enc.lower_bound(),
+        # `alt_sinir` kure-kaplama alt siniriydi ve kaplamayla dustu; `worst`
+        # ile `acik` de kume ICI olculerdi ve duzde tanim geregi sifir.
+        "alt_sinir": None,
         "uzay": kupon_enc.space_size(),
-        "guaranteed": worst <= 1 and acik == 0,
-        "worst": worst,
-        "acik": acik,
+        "guaranteed": True,
+        "worst": 0,
+        "acik": 0,
         "checks": checks,
         "duration_ms": round((time.perf_counter() - t0) * 1000, 1),
         "timestamp": datetime.now(timezone.utc).isoformat(),

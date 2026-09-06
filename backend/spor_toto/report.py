@@ -36,24 +36,29 @@ def basliklar(enc: Encoder) -> list[str]:
         f"Uclu mac        : {sum(1 for k in enc.alphabet_sizes if k == 3)}",
         f"Degisken uzay   : {enc.space_size()} nokta "
         f"(tam sistem = {enc.space_size()} kolon)",
-        f"Top boyutu      : {enc.ball_size()}",
-        f"Alt sinir       : {enc.lower_bound()} kolon (kure-kaplama)",
     ]
 
 
 def dagilim_satirlari(enc: Encoder, cols: Sequence[Point]) -> list[str]:
-    dist = distance_layers(cols, enc.alphabet_sizes)
+    """Seçim kümesi ile oynanan kolonların örtüşmesi.
+
+    **Bu bölüm eskiden bir MESAFE DAĞILIMIYDI** (`core.distance_layers`):
+    kaplama kümenin yalnızca bir kısmını oynadığı için her noktanın en yakın
+    kolona uzaklığı sayılıyor ve "en kötü durum 1 hata → 14-garanti" diye
+    okunuyordu. Düzde mesafe diye bir şey yok: her nokta oynanıyor, yani
+    dağılım tanım gereği tek katmanlıdır. Bölüm yine de duruyor çünkü
+    **kümenin gerçekten tamamının oynandığını** gösteren yer burası.
+    """
     total = enc.space_size()
-    out = ["Kapsama dagilimi (degisken maclar uzerinden):"]
-    for d in sorted(dist):
-        etiket = f"{enc.total_len - d} dogru"
-        out.append(f"  d={d} ({etiket:9s}) : {dist[d]:8d}  "
-                   f"(%{100 * dist[d] / total:6.2f})")
-    worst = max(dist) if dist else 99
-    if worst <= 1:
-        out.append("  -> EN KOTU DURUM 1 HATA: 14-GARANTI DOGRULANDI")
+    out = ["Kapsama (secim kumesi <-> oynanan kolonlar):"]
+    out.append(f"  secim uzayi   : {total:8d} nokta")
+    out.append(f"  oynanan kolon : {len(cols):8d}")
+    if len(cols) == total and len(set(cols)) == total:
+        out.append(f"  -> KUMENIN TAMAMI OYNANIYOR: sonuc kume icindeyse "
+                   f"bir kolon {enc.total_len} tutturur")
     else:
-        out.append(f"  -> UYARI: en kotu durum {worst} hata. 14-GARANTI YOK.")
+        out.append(f"  -> UYARI: kume eksik oynaniyor ({len(cols)}/{total}). "
+                   f"Duzde bu olmamali.")
     return out
 
 
@@ -146,8 +151,6 @@ def yazdir_ve_kaydet(enc: Encoder, cols: list[Point], baslik: str,
             "Sikistirma kolon kumesini degistirdi: satirlarin acilimi "
             "orijinal kolonlarla ayni degil. Kupon basilmadi.")
 
-    worst, acik = dogrula_kaplama(cols, enc.alphabet_sizes)
-
     print()
     print(CIZGI)
     print("SONUC")
@@ -155,7 +158,6 @@ def yazdir_ve_kaydet(enc: Encoder, cols: list[Point], baslik: str,
     print(f"Yontem                : {baslik}")
     print(f"Kupon satiri          : {len(rows)}")
     print(f"Kolon bedeli          : {len(cols)}")
-    print(f"Kure-kaplama alt sinir: {enc.lower_bound()}")
     print("NOT                   : Satir != bedel. Cifte/kapama satiri "
           "birden fazla kolon uretir; odenecek tutar kolon bedelidir.")
     for note in ek_notlar:
@@ -218,8 +220,7 @@ def yazdir_ve_kaydet(enc: Encoder, cols: list[Point], baslik: str,
             f.write(f"Kolon bedeli : {len(cols)}\n")
             for note in ek_notlar:
                 f.write(f"{note}\n")
-            f.write(f"En kotu durum: {worst} hata "
-                    f"({'14-garanti VAR' if worst <= 1 else '14-garanti YOK'})\n")
+            f.write("Kume: tamami oynaniyor (duz sistem, indirgeme yok)\n")
             if rap:
                 f.write("\n")
                 for line in olasilik_satirlari(rap):
@@ -242,5 +243,8 @@ def yazdir_ve_kaydet(enc: Encoder, cols: list[Point], baslik: str,
                 f.write(f"{i:4d} | {kolon_metni(enc, col)}\n")
         print(f"\n-> '{output_path}' dosyasina kaydedildi.")
 
-    return {"satir": len(rows), "bedel": len(cols), "en_kotu": worst,
-            "acik": acik, "olasilik": rap, "monte_carlo": mc, "fire": fire}
+    # `en_kotu` / `acik` kaplama olculeriydi: kume ICI en buyuk mesafe ve
+    # ortulmemis nokta sayisi. Duzde ikisi de tanim geregi sifir; alanlar
+    # cagiranlarin sozlesmesi bozulmasin diye duruyor.
+    return {"satir": len(rows), "bedel": len(cols), "en_kotu": 0,
+            "acik": 0, "olasilik": rap, "monte_carlo": mc, "fire": fire}
