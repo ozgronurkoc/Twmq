@@ -68,6 +68,10 @@ class KuponSinifi:
     etiket: str
     picks: str
     uzay: int
+    # `alt_sinir` (kure-kaplama alt siniri) ve `fix16_bedel` alanlari
+    # kaplamayla birlikte dustu; duzde bedel = uzay ve alt sinir diye bir
+    # kavram yok. Alanlar KAYIT olarak duruyor: sayilar kaplama olceginde
+    # olculmustu ve silinmiyor (docs/DUZ_SISTEME_GECIS.md).
     alt_sinir: int
     fix16_bedel: int
 
@@ -283,8 +287,9 @@ def _check_encoder() -> str:
         assert enc.total_len == 15, f"{s.etiket}: {enc.total_len} maç"
         assert enc.space_size() == s.uzay, (
             f"{s.etiket}: uzay {enc.space_size()} ≠ {s.uzay}")
-        assert enc.lower_bound() == s.alt_sinir == math.ceil(s.uzay / enc.ball_size())
-        olcum.append(f"{s.etiket}={s.uzay}/{s.alt_sinir}")
+        # Duzde bedel = uzay: kolonlar kumenin kendisi.
+        assert len(duz_kolonlar(enc)) == s.uzay
+        olcum.append(f"{s.etiket}={s.uzay}")
     return f"sınıf={len(KUPON_SINIFLARI)} " + " ".join(olcum)
 
 
@@ -1451,9 +1456,7 @@ def run_health(only: str | None = None) -> HealthReport:
 
 def kupon_denetle(
     picks: str,
-    mode: str = "fix16",
-    variant: int = 0,
-    budget: int | None = None,
+    mode: str = "duz",
 ) -> dict[str, Any]:
     """KULLANICININ kendi kuponunu ayni degismezlerden gecirir.
 

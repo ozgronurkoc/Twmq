@@ -28,9 +28,6 @@ from spor_toto.core import (
     HAS_SCIPY,
     SEMBOLLER,
     Encoder,
-    Fix16Hatasi,
-    distance_layers,
-    dogrula_kaplama,
     merge_rows,
     olasilik_raporu,
     parse_picks,
@@ -164,27 +161,6 @@ def _sayi(data: dict, key: str, default: Any, cast: Callable = float,
     return val
 
 
-def _engine_params(data: dict) -> dict[str, Any]:
-    """CLI'de acik olan motor ayarlari; API'de sabit kodlanmislardi.
-
-    Sinirlar `meta.LIMITS`'ten okunur: arayuzun gordugu bant ile burada
-    uygulanan bant ayrisirsa kullanici sessizce kirpilan bir deger gonderir.
-    """
-    def _bant(ad: str, tip):
-        lim = LIMITS[ad]
-        return _sayi(data, ad, ENGINE_DEFAULTS[ad], tip, lim["min"], lim["max"])
-
-    return {
-        "trials": _bant("trials", int),
-        "ls_iters": _bant("ls_iters", int),
-        "seed": _sayi(data, "seed", ENGINE_DEFAULTS["seed"], int, 0, 2**31 - 1),
-        "time_limit": _bant("time_limit", float),
-        "block_limit": _bant("block_limit", int),
-        "exact_limit": _bant("exact_limit", int),
-        "auto_ilp_limit": _bant("auto_ilp_limit", float),
-    }
-
-
 def _resolve_bayes(data: dict) -> tuple[float, float, str | None]:
     """
     Bayes alpha / n cozumleme. `bayes_preset` verilmisse CLI ile BIREBIR ayni
@@ -205,20 +181,6 @@ def _resolve_bayes(data: dict) -> tuple[float, float, str | None]:
         _sayi(data, "evidence_strength", 10.0, float, 0.0, 10_000.0),
         None,
     )
-
-
-def _plan_to_dict(plan, index: int, secili: bool) -> dict[str, Any]:
-    """ButcePlani -> JSON. Kullanici planlar arasindan UI'dan secebilsin diye."""
-    return {
-        "index": index,
-        "bedel": plan.bedel,
-        "satir": plan.satir,
-        "selections": ["".join(s) for s in plan.selections],
-        "degisiklikler": list(plan.degisiklikler),
-        "p_kume_ici": (round(100 * plan.p_kume_ici, 3)
-                       if plan.p_kume_ici is not None else None),
-        "secili": secili,
-    }
 
 
 def _new_run_log() -> dict[str, Any]:
@@ -242,7 +204,6 @@ def _format_run_log(log: dict[str, Any]) -> str:
         f"süre toplam    : {log.get('total_ms', 0):.1f} ms",
         f"mod            : {log.get('mode', '')}",
         f"picks          : {log.get('picks', '')}",
-        f"variant        : {log.get('variant', 0)}",
         f"budget         : {log.get('budget', '')}",
         f"probs dolu     : {log.get('probs_filled', False)}",
         f"bayes          : {log.get('use_bayes', False)}",
@@ -281,9 +242,13 @@ def _build_result(
 ) -> dict[str, Any]:
     rows = merge_rows(cols)
     total_cost = sum(row_cost(r) for r in rows)
-    worst, acik = dogrula_kaplama(cols, enc.alphabet_sizes)
-    dist = distance_layers(cols, enc.alphabet_sizes)
     total_space = enc.space_size()
+    # **`dogrula_kaplama` ve `distance_layers` dustu.** Ikisi de kume ICI
+    # mesafe olcerdi: kaplama kumenin bir kismini oynadigi icin "en kotu
+    # durum kac hata" ve "kac nokta d=0/1/2'de" anlamli sorulardi. Duzde her
+    # nokta oynaniyor, yani dagilim tanim geregi tek katmanli.
+    worst, acik = 0, total_space - len(set(cols))
+    dist = {0: len(set(cols))}
 
     decoded_rows = []
     for r in rows:
@@ -401,8 +366,9 @@ def _build_result(
         "notlar": notlar,
         "satir_sayisi": len(rows),
         "kolon_bedeli": total_cost,
-        "alt_sinir": enc.lower_bound(),
-        "guaranteed": worst <= 1,
+        # `alt_sinir` kure-kaplama alt siniriydi; kaplamayla dustu.
+        "alt_sinir": None,
+        "guaranteed": acik == 0,
         "worst": worst,
         "acik": acik,
         "rows": decoded_rows,
@@ -611,15 +577,11 @@ def api_health_kupon():
     if not picks:
         return jsonify({"ok": False, "error": "picks veya matches zorunlu"}), 400
 
-    budget_raw = data.get("budget")
     try:
-        govde = kupon_denetle(
-            picks,
-            mode=str(data.get("mode") or DUZ_MOD),
-            variant=int(data.get("variant") or 0),
-            budget=(int(budget_raw) if str(budget_raw or "").strip() else None),
-        )
-    except (ValueError, RuntimeError, Fix16Hatasi) as e:
+        # `budget` ve `variant` alanlari kaplama modlarinindi ve onlarla
+        # birlikte dustu; gelen govdede varsa yok sayilir.
+        govde = kupon_denetle(picks, mode=str(data.get("mode") or DUZ_MOD))
+    except (ValueError, RuntimeError) as e:
         return jsonify({"ok": False, "error": str(e)}), 400
     return jsonify(govde)
 
@@ -798,25 +760,6 @@ def _parse_sezon(raw: Any) -> str | None:
     if sezon not in history_sezonlari():
         raise GecersizSezon(sezon)
     return sezon
-
-
-def _butce_oku(raw: Any) -> int:
-    """`budget` alanini SINIRLARIYLA okur.
-
-    Onceden `int(budget_raw)` idi ve **ust siniri yoktu**. `/api/solve`
-    kimlik istemeyen bir POST ucu; sinirsiz bir butce, motoru istege bagli
-    olarak uzun surecek bir ise sokabilirdi. Arayuz paylasilabilir
-    baglantida zaten 10 M'e kirpiyordu, yani tek soruya uc cevap vardi
-    (arayuz 10 M, ilan edilen sinir YOK, sunucu sinirsiz). Sinir artik
-    `meta.LIMITS["budget"]`ten geliyor ve UC TARAF da onu okuyor.
-    """
-    sinir = LIMITS["budget"]
-    deger = int(raw)
-    if deger < sinir["min"] or deger > sinir["max"]:
-        raise ValueError(
-            f"budget {sinir['min']}-{sinir['max']} araliginda olmali "
-            f"(gelen: {deger})")
-    return deger
 
 
 def _parse_esik(raw: Any, varsayilan: float) -> float:
@@ -1010,23 +953,16 @@ def api_solve():
         picks_str = _matches_to_picks(data["matches"])
 
     mode = str(data.get("mode") or DUZ_MOD)
-    variant_raw = str(data.get("variant", "0") or "0")
-    budget_raw = data.get("budget")
     use_bayes = bool(data.get("use_bayes", False))
     kati = bool(data.get("kati", False))
     mc_samples = _sayi(data, "mc_samples", MC_WEB_SAMPLES, int, MC_MIN, MC_MAX)
     fire_max = _sayi(data, "fire_max", FIRE_MAX_VARSAYILAN, int, 0, 2)
-    plan_count = _sayi(data, "plan_count", 5, int, 1, 50)
-    plan_apply = _sayi(data, "plan_apply", 1, int, 1, 50)
-    eng = _engine_params(data)
     # Bayes preset'i gecersizse burada patlamali (asagidaki try onu 400'e cevirir).
     bayes_preset: str | None = None
     prior_strength, evidence_strength = 1.0, 10.0
 
     run_log["mode"] = mode
     run_log["picks"] = picks_str
-    run_log["variant"] = variant_raw
-    run_log["budget"] = budget_raw
     run_log["use_bayes"] = use_bayes
     run_log["mc_samples"] = 0
     run_log["probs_filled"] = False
@@ -1066,8 +1002,6 @@ def api_solve():
             (time.perf_counter() - t1) * 1000,
         )
 
-        variant = int(variant_raw) if str(variant_raw).isdigit() else 0
-        run_log["variant"] = variant
 
         t1 = time.perf_counter()
 
@@ -1126,7 +1060,7 @@ def api_solve():
                 "markov": bool(result.get("markov")),
             }
 
-    except (ValueError, RuntimeError, Fix16Hatasi) as e:
+    except (ValueError, RuntimeError) as e:
         error = str(e)
         run_log["error"] = error
         _log_step(run_log, "HATA", error, 0.0)
