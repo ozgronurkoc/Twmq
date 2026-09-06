@@ -64,8 +64,10 @@ def test_health_includes_core_and_analysis():
     names = {c.name for c in run_health().checks}
     for required in (
         "encoder",
-        "fix16_garanti",
-        "distance_layers",
+        # `fix16_garanti` ve `distance_layers` kaplama denetimleriydi;
+        # yerlerine duz degismezleri geldi (docs/DUZ_SISTEME_GECIS.md).
+        "duz_kolonlar",
+        "duz_kademe_aritmetigi",
         "olasilik_exact",
         "monte_carlo",
         "error_freq",
@@ -88,7 +90,6 @@ def test_ilan_edilen_yuzey_kapsanir():
         "meta_sozlesmesi",
         "mod_envanteri",
         "bayes_presetleri",
-        "fix16_varyantlari",
     ):
         assert required in names
 
@@ -257,13 +258,16 @@ def test_rapor_butce_asanlari_ozetler():
 def test_kupon_siniflari_tablosu_dogru():
     """Tablodaki beklenen sayılar motorla ölçülenle aynı olmalı; tablo
     yanlışsa kontrol yanlış şeyi doğrular."""
+    from spor_toto.duz import kolonlar as duz_kolonlar
+
     for s in KUPON_SINIFLARI:
         enc = Encoder(parse_picks(s.picks))
         assert enc.total_len == 15, s.etiket
         assert enc.space_size() == s.uzay, s.etiket
-        assert enc.lower_bound() == s.alt_sinir, s.etiket
-        cols, _ = solve_fix16(enc)
-        assert len(cols) == s.fix16_bedel, s.etiket
+        # `alt_sinir` (kure-kaplama) ve `fix16_bedel` kaplama olculeriydi;
+        # tabloda KAYIT olarak duruyorlar ama artik olculemiyorlar.
+        # Duzde tek olcu var ve o da tanim geregi tutmali: bedel = uzay.
+        assert len(duz_kolonlar(enc)) == s.uzay, s.etiket
 
 
 def test_siniflar_gercekten_farkli_bicimleri_kapsar():
@@ -303,12 +307,17 @@ def test_ornek_etiketi_ortamdan_okunur(monkeypatch):
 def test_kupon_denetle_gecerli_kupon():
     r = kupon_denetle(ORNEK)
     assert r["ok"] is True
-    assert r["satir"] == 16
-    assert r["bedel"] == 32
+    # Duzde kupon isaretlerin kendisidir: TEK satir.
+    assert r["satir"] == 1
+    # Kaplamada bedel 32 kolondu (Hamming blogu + ekstralar);
+    # duzde bedel = secim uzayinin kendisi.
+    assert r["bedel"] == r["uzay"] == 256
     assert r["guaranteed"] is True
     assert {c["name"] for c in r["checks"]} >= {
-        "kaplama_garantisi", "mesafe_muhasebesi", "satir_kolon_muhasebesi",
-        "alt_sinir", "olasilik_tutarliligi",
+        # Dort kaplama kontrolu (kaplama_garantisi, mesafe_muhasebesi,
+        # satir_kolon_muhasebesi, alt_sinir) katmanla birlikte dustu.
+        "kume_tamami_oynaniyor",
+        "olasilik_tutarliligi",
     }
     for c in r["checks"]:
         assert c["aciklama"] and c["detail"]
@@ -323,36 +332,9 @@ def test_kupon_denetle_kayitli_rapordan_ayridir():
         {c.name for c in CHECKS}), "kupon kontrolleri kayıtlı adlarla karışıyor"
 
 
-def test_kupon_denetle_garanti_vermeyen_mod():
-    """maxcov garanti VERMEDİĞİNİ ilan eder; bütçe alt sınırın altındayken
-    kaplamanın açık bırakması doğru davranıştır, düşüş değil."""
-    r = kupon_denetle(ORNEK, mode="maxcov", budget=8)
-    assert r["ok"] is True
-    assert r["guaranteed"] is False
-    assert r["acik"] > 0
-
-
-def test_kupon_denetle_butce_modu_kuponu_daraltir():
-    r = kupon_denetle(ORNEK, mode="butce", budget=24)
-    assert r["ok"] is True
-    assert r["bedel"] <= 24
-
-
 def test_kupon_denetle_bilinmeyen_mod():
-    with pytest.raises(ValueError, match="Bilinmeyen mod"):
+    with pytest.raises(ValueError, match="Kaplama modlari sokuldu"):
         kupon_denetle(ORNEK, mode="boyle_bir_mod_yok")
-
-
-def test_kupon_denetle_butce_zorunlulugu():
-    with pytest.raises(ValueError, match="budget"):
-        kupon_denetle(ORNEK, mode="maxcov")
-
-
-def test_kupon_denetle_yetersiz_cifte():
-    # Kor `Exception` yerine GERCEK tip: boylece bambaska bir hata
-    # (ImportError, TypeError) testi sessizce gecirmez.
-    with pytest.raises(Fix16Hatasi):
-        kupon_denetle("1,1,1,1,1,1,1,1,1,1,1,1,1,1,1")
 
 
 def test_slowest_en_uzun_kontrolu_gosterir():

@@ -161,25 +161,12 @@ def test_butce_gecersiz_deger():
 # ------------------------------------------------------------
 
 def test_cli_varsayilan_calisir(capsys):
-    assert main(["--picks", ORNEK, "--kisa", "--no-compare"]) == 0
+    assert main(["--picks", ORNEK, "--kisa"]) == 0
     out = capsys.readouterr().out
-    assert "16 satir" in out
-    assert "14-GARANTI DOGRULANDI" in out
+    # Duzde kupon isaretlerin kendisidir: TEK satir.
+    assert "1 satir" in out
+    assert "KUMENIN TAMAMI OYNANIYOR" in out
     assert " 01" not in out            # yanlis sembol sirasi olmamali
-
-
-def test_cli_varyant(capsys):
-    assert main(["--picks", ORNEK, "--kisa", "--no-compare", "--variant", "3"]) == 0
-    a = capsys.readouterr().out
-    assert main(["--picks", ORNEK, "--kisa", "--no-compare", "--variant", "0"]) == 0
-    b = capsys.readouterr().out
-    assert a != b
-
-
-def test_cli_yetersiz_cifte_hata_kodu(capsys):
-    kod = main(["--picks", "102,102,10,10,1,1,0,2,1,1,0,1,2,1,0", "--kisa"])
-    assert kod == 1
-    assert "EN AZ 7 CIFTE" in capsys.readouterr().err
 
 
 def test_cli_gecersiz_sembol_hata_kodu(capsys):
@@ -192,56 +179,16 @@ def test_cli_kati_mod(capsys):
 
 
 def test_cli_olasilik_ciktisi(capsys):
-    assert main(["--picks", ORNEK, "--kisa", "--no-compare",
+    assert main(["--picks", ORNEK, "--kisa",
                  "--probs", esit_olasilik(ORNEK)]) == 0
     out = capsys.readouterr().out
     assert "Olasilik raporu" in out
     assert "15 tutturma" in out
 
 
-def test_cli_butce_modu(capsys):
-    assert main(["--picks", "10,10,10,10,10,10,10,10,10,2,1,0,1,1,2",
-                 "--mode", "butce", "--budget", "32", "--kisa",
-                 "--no-compare"]) == 0
-    out = capsys.readouterr().out
-    assert "BUTCE DANISMANI" in out
-    assert "Plan 1" in out
-
-
-def test_cli_butce_eksik_parametre(capsys):
-    assert main(["--picks", ORNEK, "--mode", "butce"]) == 1
-    assert "--budget" in capsys.readouterr().err
-
-
-def test_cli_maxcov_eksik_parametre(capsys):
-    assert main(["--picks", ORNEK, "--mode", "maxcov"]) == 1
-
-
-@gerek_scipy
-@pytest.mark.slow
-def test_cli_maxcov_modu(capsys):
-    assert main(["--picks", ORNEK, "--mode", "maxcov", "--budget", "16",
-                 "--kisa", "--time-limit", "60"]) == 0
-    out = capsys.readouterr().out
-    assert "GARANTI DEGIL" in out
-    assert "144/256" in out
-
-
-def test_cli_auto_modu(capsys):
-    assert main(["--picks", "10,10,10,10,10,1,1,1,1,1,1,1,1,1,1",
-                 "--mode", "auto", "--kisa"]) == 0
-    assert "SONUC" in capsys.readouterr().out
-
-
-def test_cli_heuristic_modu(capsys):
-    assert main(["--picks", "10,10,10,10,10,1,1,1,1,1,1,1,1,1,1",
-                 "--mode", "heuristic", "--kisa", "--ls-iters", "2000"]) == 0
-    assert "Heuristik" in capsys.readouterr().out
-
-
 def test_cli_dosyaya_yazar(tmp_path, capsys):
     hedef = tmp_path / "formul.txt"
-    assert main(["--picks", ORNEK, "--kisa", "--no-compare",
+    assert main(["--picks", ORNEK, "--kisa",
                  "--output", str(hedef)]) == 0
     icerik = hedef.read_text(encoding="utf-8")
     assert "KUPONA YAZILACAK" in icerik
@@ -250,8 +197,7 @@ def test_cli_dosyaya_yazar(tmp_path, capsys):
 
 
 def test_cli_15_mac_uyarisi(capsys):
-    assert main(["--picks", "10,10,10,10,10,10,10,1", "--kisa",
-                 "--no-compare"]) == 0
+    assert main(["--picks", "10,10,10,10,10,10,10,1", "--kisa",]) == 0
     assert "UYARI" in capsys.readouterr().out
 
 
@@ -269,13 +215,13 @@ def test_cli_bayes_preset_dengeli(capsys):
         "--picks", ORNEK,
         "--probs", esit_olasilik(ORNEK),
         "--bayes-preset", "dengeli",
-        "--kisa", "--no-compare",
+        "--kisa",
     ]) == 0
     out = capsys.readouterr().out
     assert "Bayes" in out
     assert "preset=dengeli" in out
     assert "Prior" in out
-    assert "14-GARANTI DOGRULANDI" in out
+    assert "KUMENIN TAMAMI OYNANIYOR" in out
 
 
 def test_cli_bayes_requires_probs(capsys):
@@ -292,17 +238,10 @@ def test_cli_bayes_manual_strengths(capsys):
         "--bayes",
         "--prior-strength", "2",
         "--evidence-strength", "5",
-        "--kisa", "--no-compare",
+        "--kisa",
     ]) == 0
     out = capsys.readouterr().out
     assert "Prior" in out
     assert "Evidence" in out
 
 
-@pytest.mark.parametrize("mode", ["fix16", "auto", "block", "heuristic"])
-def test_cli_tum_modlar_kucuk_kuponda(mode, capsys):
-    picks = "10,10,10,10,10,10,10,1,1,1,1,1,1,1,1"
-    assert main(["--picks", picks, "--mode", mode, "--kisa",
-                 "--ls-iters", "2000", "--no-compare"]) == 0
-    out = capsys.readouterr().out
-    assert "14-GARANTI DOGRULANDI" in out
