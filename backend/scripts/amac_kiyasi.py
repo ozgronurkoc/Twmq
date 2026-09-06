@@ -157,7 +157,7 @@ def sezon_kiyasi(kok: Path = KOK) -> list[dict[str, Any]]:
 def rastgele_kiyas(hafta_sayisi: int, tohum: int,
                    butceler: tuple[int, ...] = (512, 864, 1024, 1296, 2304, 3888)
                    ) -> dict[str, Any]:
-    """Rastgele haftalarda ayrışma sıklığı ve `P(k ≤ 2)` cinsinden bedeli.
+    """Rastgele haftalarda ayrışma sıklığı ve `P(k ≤ eşik)` cinsinden bedeli.
 
     Olasılıklar `u²` ile üretilir (düz uniform değil): karesi almak dağılımı
     bir sembole doğru çeker, yani gerçek bültenlerdeki gibi net favorili ve
@@ -196,12 +196,13 @@ def main() -> None:
                     help="rastgele üretimin tohumu — sayı bununla tekrarlanır")
     a = ap.parse_args()
 
-    print(f"\n{'='*74}\nİKİ AMAÇ: P(k≤2) enbüyükle  ↔  E[k] enküçükle\n{'='*74}")
+    print(f"\n{'='*74}\nİKİ AMAÇ: P(k≤{VARSAYILAN_KACAK_ESIGI}) enbüyükle  "
+          f"↔  E[k] enküçükle\n{'='*74}")
 
     sezon = sezon_kiyasi()
     print(f'\n─── {SEZON} dondurulmuş haftalar ──────────────────────────────────')
     print(f'{"hafta":<7}{"kural":<8}{"bütçe":>7}{"şekil":>9}{"bedel":>7}'
-          f'{"P(k≤2)":>9}{"E[k]":>7}  ayrışan maç')
+          f'{"P(k≤" + str(VARSAYILAN_KACAK_ESIGI) + ")":>9}{"E[k]":>7}  ayrışan maç')
     for h in sezon:
         sekil = "/".join(str(x) for x in h["hedef_sekil"])
         ayr = ", ".join(str(x) for x in h["ayrisan"]) or "yok"
@@ -215,7 +216,7 @@ def main() -> None:
     print(f'kurulabilen hafta : {r["hafta"]}')
     print(f'ayrışan hafta     : {r["ayrisan"]}  '
           f'(%{100*r["ayrisan"]/r["hafta"]:.1f})')
-    print(f'P(k≤2) kaybı      : ortalama {r["kayip_ort"]:.5f} · '
+    print(f'P(k≤{VARSAYILAN_KACAK_ESIGI}) kaybı      : ortalama {r["kayip_ort"]:.5f} · '
           f'en büyük {r["kayip_max"]:.5f} · en küçük {r["kayip_min"]:.5f}')
     if r["kayip_min"] < 0:
         print('UYARI: negatif kayıp = "en az kaçak" planı hedefi GEÇMİŞ. '

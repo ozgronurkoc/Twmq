@@ -37,12 +37,12 @@ def test_garantiler_arasi_kiyas_YASAK():
 def test_kademe_garantiden_ve_kacaktan_turer():
     """`kademe = G − k`. Kaçak arttıkça kademe düşer, 12'nin altı sıfır ödül."""
     tab = _tablo({15: 1e6, 14: 1e5, 13: 1e4, 12: 1e3})
-    r = karne.hafta_karnesi(_probs(), ["1"] * 15, tab, 3000.0, garanti=14)
+    r = karne.hafta_karnesi(_probs(), ["1"] * 15, tab, 3000.0, garanti=15)
     assert r is not None
     assert r["kademe"] == 14 - r["kacak"]
 
     # Hic tutmayan bir sonuc: butun maclarda kacak -> kademe 12'nin altinda
-    kotu = karne.hafta_karnesi(_probs(), ["0"] * 15, tab, 3000.0, garanti=14)
+    kotu = karne.hafta_karnesi(_probs(), ["0"] * 15, tab, 3000.0, garanti=15)
     assert kotu is not None
     assert kotu["odul"] == 0.0
 
@@ -180,7 +180,7 @@ def test_canli_karne_satiri_kademe_GARANTI_TABANINDAN(tmp_path):
         {"correct": 12, "winners": 500, "prize": 1e3},
     ]}
     _canli_yaz(tmp_path, "2099_00", 4, sonuc="1" * 15, payout=payout)
-    r = karne.canli_karne_satiri("2099_00", 4, 2000.0, garanti=13,
+    r = karne.canli_karne_satiri("2099_00", 4, 2000.0, garanti=15,
                                  kok=tmp_path)
     assert r is not None
     assert r["kademe"] == 13 - r["kacak"]
@@ -250,7 +250,7 @@ def test_taban_gercekten_GEVSEK_ve_yonu_belli():
     kesit = karne.kupon_kesiti()
     oranlar = []
     for h in kesit[:25]:
-        p = sistem_secimi(h["probs"], 2000.0, garanti=14)
+        p = sistem_secimi(h["probs"], 2000.0, garanti=15)
         if p is None:
             continue
         kacak = sum(1 for s, c in zip(p.secimler, h["gercek"]) if c not in s)
@@ -277,7 +277,7 @@ def test_taban_gevsekligi_ULASILABILIR_ve_yon_YUKARI():
     zorlar — depo doktrini bunu yasaklıyor. Sayının kendisi
     `.claude/olcum_kutugu.json`'da, komutuyla birlikte durur.
     """
-    t = karne.taban_gevsekligi(2000.0, garanti=14, hafta_siniri=12)
+    t = karne.taban_gevsekligi(2000.0, garanti=15, hafta_siniri=12)
     assert t["hafta"] > 0
     assert t["kat"] is not None and t["kat"] >= 1.0, \
         "gercek odul tabanin ALTINA dusemez — taban tanim geregi alt sinir"
@@ -293,7 +293,7 @@ def test_motorun_kaplamasi_TABLODAN_gevsek_ve_bu_yazili():
     ürün aynı değil, o yüzden hangi kolon sayısına indirgendiği docstring'de
     yazılı olmak zorunda.
     """
-    t = karne.taban_gevsekligi(2000.0, garanti=14, hafta_siniri=8)
+    t = karne.taban_gevsekligi(2000.0, garanti=15, hafta_siniri=8)
     assert t["motor_kolon"] >= t["tablo_kolon"] > 0
     assert t["kaplama_farki"] >= 1.0
 
@@ -309,7 +309,7 @@ def test_hedef_kademe_kiyasi_ESLESTIRILMIS_ve_ayni_haftalar():
     TL'si iki kolda da geçer. Bu test kolların GERÇEKTEN aynı haftalardan
     kurulduğunu sınar.
     """
-    h = karne.hedef_kademe_kiyasi(2000.0, garanti=14, hafta_siniri=10)
+    h = karne.hedef_kademe_kiyasi(2000.0, garanti=15, hafta_siniri=10)
     assert h["hafta"] > 0
     assert {k["kademe"] for k in h["kollar"]} == {12, 13, 14}
     assert all(k["hafta"] == h["hafta"] for k in h["kollar"]), \
@@ -326,7 +326,7 @@ def test_hedef_SIKILASINCA_tutturma_olasiligi_DUSER():
     daralıyor ve `P(k ≤ eşik)` tanım gereği küçülüyor. Ölçüm bunu
     doğrulamazsa kollar karışmış demektir.
     """
-    h = karne.hedef_kademe_kiyasi(2000.0, garanti=14, hafta_siniri=6)
+    h = karne.hedef_kademe_kiyasi(2000.0, garanti=15, hafta_siniri=6)
     p = {k["kademe"]: k["ort_p_hedef"] for k in h["kollar"]}
     assert p[12] > p[13] > p[14]
 
@@ -369,7 +369,7 @@ def test_omurga_kiyasi_P_farkinin_ayrisimini_ZORUNLU_veriyor():
     olasılık, isabet hiç değişmese bile onu büyütür. Ayrışım o payı ölçer;
     çıktıda yoksa satır yanlış okunur.
     """
-    o = karne.omurga_kiyasi(2000.0, garanti=14, aday="BFE")
+    o = karne.omurga_kiyasi(2000.0, garanti=15, aday="BFE")
     assert o["hafta"] > 0
     ay = o["p_ayrisimi"]
     assert ay["hafta"] > 0

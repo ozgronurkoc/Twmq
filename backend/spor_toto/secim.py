@@ -741,7 +741,8 @@ def getiri_secim(probs_listesi: list[dict[str, float]],
                  rakip_kolon: int | None = None,
                  kademe_havuzu: dict[int, float] | None = None,
                  kayip_tavani: float = GETIRI_KAYIP_TAVANI,
-                 yol: str | None = None) -> Secim | None:
+                 yol: str | None = None,
+                 kademe: int | None = None) -> Secim | None:
     """`E[TL]`'yi enbüyükleyen işaret planı — **kayıtlı oynanma paylarıyla.**
 
     ─── Niçin `kalabalik_ayari` yetmiyor ────────────────────────────────
@@ -777,9 +778,12 @@ def getiri_secim(probs_listesi: list[dict[str, float]],
     from .getiri import beklenen_tl
     from .havuz import BOLUSUM
 
-    # Duzde en iyi kolon her zaman 15 - k; "garanti seviyesi" secimi yok.
-    g = 15 if garanti is None else garanti
-    taban = sistem_secimi(probs_listesi, butce_tl, garanti=g, yol=yol)
+    # Duzde en iyi kolon her zaman 15 - k; "garanti seviyesi" secimi yok, o
+    # yuzden ust kademe de her zaman 15'tir.
+    g = 15
+    kad = HEDEF_KADEME if kademe is None else kademe
+    taban = sistem_secimi(probs_listesi, butce_tl, garanti=garanti,
+                          kademe=kad, yol=yol)
     if taban is None:
         return None
     if len(oynanma_listesi) != len(probs_listesi):
@@ -787,13 +791,13 @@ def getiri_secim(probs_listesi: list[dict[str, float]],
 
     # Olcek keyfi: yalnizca ORAN onemli (docstring).
     havuz = kademe_havuzu or {k: BOLUSUM[k] * 1e7
-                              for k in range(HEDEF_KADEME, g + 1)
+                              for k in range(kad, g + 1)
                               if k in BOLUSUM}
     n_rakip = rakip_kolon if rakip_kolon is not None else _RAKIP_KOLON
 
     if not 0.0 <= kayip_tavani < 1.0:
         raise ValueError("kayip_tavani [0, 1) araliginda olmali")
-    esik = kacak_esigi(HEDEF_KADEME)
+    esik = kacak_esigi(kad)
     p_alt = hedef_olasiligi(probs_listesi, taban.secimler,
                             esik) * (1.0 - kayip_tavani)
 

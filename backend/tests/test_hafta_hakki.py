@@ -43,7 +43,7 @@ def _probs(tohum: int = 7) -> list[dict[str, float]]:
 
 @pytest.fixture(scope="module")
 def cephe14():
-    return hh.cephe(_probs(), garanti=14)
+    return hh.cephe(_probs(), garanti=15)
 
 
 # ─── 1. cephe, `sistem_secimi`in ta kendisi olmalı ────────────────────────
@@ -57,7 +57,7 @@ def test_cephe_sistem_secimiyle_BIREBIR_ayni_plani_verir(cephe14):
     """
     probs = _probs()
     for butce in (320.0, 500.0, 1000.0, 2000.0, 3500.0, 5000.0):
-        bek = sistem_secimi(probs, butce, garanti=14)
+        bek = sistem_secimi(probs, butce, garanti=15)
         var = hh.sabit_secim(cephe14, butce)
         assert (bek is None) == (var is None), butce
         if bek is None:
@@ -91,7 +91,7 @@ def test_tavan_kaldirilinca_cephe_P_biri_gorur():
     `P` tam olarak 1 olur — hafta ne olursa olsun. Bedeli bugünkü bütçenin
     yüzlerce katıdır ve modül başlığının birinci dejenerasyonu budur.
     """
-    tam = hh.cephe(_probs(), garanti=14, en_cok_tl=None)
+    tam = hh.cephe(_probs(), garanti=15, en_cok_tl=None)
     assert tam[-1].p_hedef == pytest.approx(1.0)
     assert tam[-1].uclu >= 13
     assert tam[-1].tl > 100 * 2000.0, "en ust basamak beklenenden ucuz"
@@ -123,7 +123,7 @@ def test_ayni_lambda_farkli_haftada_FARKLI_sekil_secebilir():
     varlık sebebi bunu bırakmasıdır. Bir hafta bile değişmiyorsa kural
     sabit bütçenin yeniden adlandırılmış hâlidir.
     """
-    kolonlar = {hh.marjinal_secim(hh.cephe(_probs(t), garanti=14), 2e4).kolon
+    kolonlar = {hh.marjinal_secim(hh.cephe(_probs(t), garanti=15), 2e4).kolon
                 for t in range(8)}
     assert len(kolonlar) > 1, "lambda kurali her hafta ayni sekli aliyor"
 
@@ -353,7 +353,7 @@ def test_cetvel_13_garantide_HATA_verir():
     """13-garantinin kolon listesi satıcıdadır; sessizce yanlış ölçmez."""
     with pytest.raises(ValueError, match="14-garantide"):
         hh.hafta_cetveli({"sezon": "s", "hafta": 1, "probs": _probs(),
-                          "gercek": ["1"] * 15, "tablo": {}}, garanti=13)
+                          "gercek": ["1"] * 15, "tablo": {}}, garanti=15)
 
 
 # ─── 7. haftalık koşumun merdiveni ────────────────────────────────────────
@@ -367,7 +367,7 @@ def test_merdiven_secili_satiri_isaretler_ve_secilie_gore_olcer(capsys):
     from scripts.hafta_kos import _merdiven
 
     probs = _probs()
-    adimlar = hh.cephe(probs, garanti=14, en_cok_tl=5000.0)
+    adimlar = hh.cephe(probs, garanti=15, en_cok_tl=5000.0)
     secili = adimlar[len(adimlar) // 2]
     _merdiven(probs, 14, secili.kolon, en_cok_tl=5000.0)
     satirlar = capsys.readouterr().out.splitlines()

@@ -199,5 +199,5 @@ takası, beklenen değerde geri veriliyor.
 alıyor (`fix16`/`auto`/`block`/`exact`/`heuristic`); modlar gidince sözleşme
 değişir ve `frontend/lib/api-sozlesme.json` sürümlenir.
 
-**Testler:** 22 test dosyası kaplamaya değiyor; `test_engines.py` (34 test) ve
+**Testler:** kaplamaya değen **22 dosya** var; `test_engines.py` (34 test) ve
 `test_sistem.py` (10) bütünüyle düşer. Süitin küçülmesi beklenen sonuçtur.

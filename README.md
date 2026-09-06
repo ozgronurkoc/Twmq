@@ -948,6 +948,7 @@ backend/
     kosum.py           Olcum kosum defteri (--kaydet) — surumlenmez
     benzer.py          "Bu oranda geçmişte ne oldu" = /api/benzer
     secim.py           KUPON: işaretleri HEDEFE göre seçer — eşiğe göre değil
+    duz.py             KUPON: düz sistemde kademe başına KOLON SAYIMI ve para (seyreltmeli)
     sistem.py          KUPON: indirgenmiş sistem BEDELİ — formülden değil satıcı tablosundan
     karne.py           PARA: kuponun gerçek ikramiye tablolarına karşı getirisi (garanti tabanı)
     hafta_hakki.py     PARA: bütçe kısıtı kalkınca ne kalıyor — cephe, cetvel, kural kıyası (E6)

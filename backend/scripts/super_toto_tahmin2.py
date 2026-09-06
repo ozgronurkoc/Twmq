@@ -544,6 +544,11 @@ def uret(sezon: str, hafta: int,
             "onceki_arindirma": onceki_arindirma,
             "onceki_kural": onceki_kural,
             "kural": kupon["kural"],
+            # Kaydın hangi OYNAMA SİSTEMİYLE kurulduğu. `arindirma` ve
+            # `kural` gibi bir beyandır: kayıt kendi varsayımını yazmazsa
+            # ileride yeniden üretilebilirliği ölçülemez, ve bayatlıkla
+            # ölçek değişimi birbirine karışır.
+            "sistem": "duz",
             "kayip_orani": kayip_orani,
             "note": ("SONUCLAR GORULMEDEN uretildi. 1. Tahmin'in kaydi "
                      "yerinde durur ve yeniden hesaplanmaz; bu ikinci bir "

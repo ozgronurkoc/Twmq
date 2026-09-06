@@ -91,7 +91,16 @@ from .getiri import KOLON_BEDELI
 from .havuz import arsiv_haftalari
 from .ortak import wilson
 from .secim import sistem_secimi
-from .sistem import HEDEF_KADEME, VARSAYILAN_GARANTI
+from .secim import HEDEF_KADEME
+
+#: Duzde en iyi kolon her zaman `15 - kacak`; "garanti seviyesi" diye bir
+#: secim yok. Sabit yalnizca `kademe = VARSAYILAN_GARANTI - kacak`
+#: aritmetigini okunur tutmak icin duruyor.
+#:
+#: **Eskiden 14'tu** ve `sistem.py`den (saticinin indirgenmis sistem fiyat
+#: tablosu) geliyordu: kaplama kodunda en iyi kolon `>= 14 - kacak` idi ve
+#: bu bir ALT SINIRDI. Duzde esitlik — bkz. `docs/DUZ_SISTEME_GECIS.md`.
+VARSAYILAN_GARANTI = 15
 
 #: Ölçülen bütçe basamakları (TL). `kademe_analizi.BUTCELER` kolon
 #: cinsindendir ve bu modül TL konuşur (`sistem` tablosu TL taşıyor).
@@ -379,7 +388,7 @@ def kupon_kesiti(dizin: Any = None,
 
 
 def taban_gevsekligi(butce_tl: float = 2000.0,
-                     garanti: int = 14,
+                     garanti: int = VARSAYILAN_GARANTI,
                      hafta_siniri: int | None = None) -> dict[str, Any]:
     """Tabanın gerçek kolon dağılımına göre ne kadar gevşek olduğunu ölçer.
 
@@ -487,7 +496,7 @@ def taban_gevsekligi(butce_tl: float = 2000.0,
     }
 
 
-def butce_egrisi(garanti: int = 14,
+def butce_egrisi(garanti: int = VARSAYILAN_GARANTI,
                  butceler: Sequence[float] = BUTCELER,
                  referans: float = 2000.0,
                  hafta_siniri: int | None = None) -> dict[str, Any]:
@@ -624,7 +633,7 @@ def butce_egrisi(garanti: int = 14,
 
 
 def hedef_kademe_kiyasi(butce_tl: float = 2000.0,
-                        garanti: int = 14,
+                        garanti: int = VARSAYILAN_GARANTI,
                         kademeler: Sequence[int] = (12, 13, 14),
                         hafta_siniri: int | None = None) -> dict[str, Any]:
     """E2: hedef kademeyi **paradan** seç — tabandan değil gerçek kolondan.
@@ -729,7 +738,7 @@ def hedef_kademe_kiyasi(butce_tl: float = 2000.0,
 
 
 def omurga_kiyasi(butce_tl: float = 2000.0,
-                  garanti: int = 14,
+                  garanti: int = VARSAYILAN_GARANTI,
                   aday: str = "BFE",
                   omurga: str | None = None) -> dict[str, Any]:
     """E3: omurga fiyatını **kupon düzeyinde** kıyasla — Brier'de değil TL'de.
@@ -851,7 +860,7 @@ def omurga_kiyasi(butce_tl: float = 2000.0,
 
 
 def kapsama_acigi(butce_tl: float = 2000.0,
-                  garanti: int = 14,
+                  garanti: int = VARSAYILAN_GARANTI,
                   dilim: int = 3) -> dict[str, Any]:
     """`KADEME_OLASILIKLARI.md` §3'ün açıklanmamış tek yönlü sapmasını ayrıştırır.
 
@@ -1234,7 +1243,7 @@ def kalibre_kesit(kesit: Sequence[dict[str, Any]],
 
 
 def kalibrasyon_kiyasi(butce_tl: float = 2000.0,
-                       garanti: int = 14,
+                       garanti: int = VARSAYILAN_GARANTI,
                        kademe: str = "bias") -> dict[str, Any]:
     """İş 1: omurga olasılığını **karar cetveliyle** kıyasla — Brier'de değil.
 
@@ -1392,7 +1401,7 @@ def _p_hedef(secimler: Sequence[Sequence[str]],
     return sum(kum)
 
 
-def p_ayrisimi(butce_tl: float = 2000.0, garanti: int = 14,
+def p_ayrisimi(butce_tl: float = 2000.0, garanti: int = VARSAYILAN_GARANTI,
                aday: str = "BFE", omurga: str | None = None,
                ) -> dict[str, Any]:
     """`P(hedef)` farkının ne kadarı **seçim değişmeden** geliyor?
