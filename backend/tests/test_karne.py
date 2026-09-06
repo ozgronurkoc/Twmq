@@ -376,3 +376,86 @@ def test_omurga_kiyasi_P_farkinin_ayrisimini_ZORUNLU_veriyor():
     assert ay["keskinlik_payi"] is not None
     # Sekil sabitken de bir fark KALIR — yoksa ayrisim bilgi tasimiyordur.
     assert abs(ay["sekil_sabit"]) > 0.0
+
+
+# ─── İş 3: ödeyen olay ile ödemeyen olay ayrılıyor ────────────────────────
+
+def test_basabas_kacak_ELLE_YAZILMAZ_bedelden_ve_tablodan_turer():
+    """Başabaş kaçak seviyesi bir sabit değil, iki girdinin **sonucu**.
+
+    Girdiler `getiri.KOLON_BEDELI` (maliyet) ve haftanın kendi resmî
+    ikramiye tablosu (ödül). Biri değişince sayı da değişmeli — yoksa
+    karnede elle yazılmış bir sayı duruyor demektir ve depo doktrini
+    (*"ölçüsüz sayı çıkmaz"*) o an sessizce ihlal edilir.
+    """
+    tablo = _tablo({14: 50_000.0, 13: 2_000.0, 12: 300.0})
+
+    # Ucuz kupon: 13. kademe (k=1) bile maliyeti karşılıyor.
+    assert karne._basabas_kacak(tablo, 14, maliyet=1_000.0) == 1
+    # Aynı tablo, pahalı kupon: yalnız 14. kademe (k=0) karşılıyor.
+    assert karne._basabas_kacak(tablo, 14, maliyet=10_000.0) == 0
+    # Daha da pahalı: hiçbir kaçak seviyesi karşılamıyor.
+    assert karne._basabas_kacak(tablo, 14, maliyet=100_000.0) is None
+
+    # Ödül tarafı değişince cevap değişmeli (tablo da girdidir).
+    zayif = _tablo({14: 5_000.0, 13: 100.0, 12: 10.0})
+    assert karne._basabas_kacak(zayif, 14, maliyet=1_000.0) == 0
+
+
+def test_karne_satiri_ODEYEN_olayi_AYRI_tasiyor():
+    """`P(k≤eşik)` iki olayı topluyor; ödeyen olay ayrı alanda durmalı.
+
+    13-garantide `k=0` 13. kademeyi verir ve maliyeti karşılar, `k=1`
+    12'yi verir ve karşılamaz (karnenin kendi kaydı: 2. ve 3. hafta 12
+    tutturdu, ikisi de zarar). Manşet olasılık bu ikisini topladığı için
+    tek başına bir kâr ölçüsü değildir.
+    """
+    r = karne.canli_karne_satiri("2026_27", 1, 2000.0, VARSAYILAN_GARANTI)
+    if r is None:
+        pytest.skip("canli hafta yuku yok")
+    assert 0.0 < r["p_kacak_sifir"] < r["p_hedef"] <= 1.0, \
+        "P(k=0) her zaman P(k<=esik)'in ICINDE ve ondan kucuk olmali"
+
+
+# ─── §3.64: banko q sapması ölçüldü, düzeltme UYGULANMADI ─────────────────
+
+def test_banko_duzeltmesi_UYGULANMIYOR_kurali_yazili():
+    """Düzeltme yok, ve yokluğunun gerekçesi koda yazılı.
+
+    §3.64 sapmayı ölçtü (T1 banko rejimi, dört sezon, iki bağımsız
+    örneklem) ama **son** sezonda etki yok (+%0,3, n=150). Düzeltmeyi
+    2022–2024 üzerinde kalibre etmek, ölçülebilen son sezonda etkisi
+    olmayan bir şeyi geçmişe uydurmak olurdu.
+
+    Bu test bir sayıyı dondurmuyor — bir **kararı** donduruyor. Düzeltmeyi
+    koymak isteyen önce buraya dokunmak, yani kararı görünür kılmak
+    zorunda.
+    """
+    assert karne.BANKO_Q_DUZELTMESI == 0.0, (
+        "banko q'suna duzeltme konmus; §3.64'un durma kurali karsilandi mi? "
+        f"Esik: {karne.T1_DUZELTME_ESIGI} banko-rejimi maci ve Wilson %95 "
+        "araliginin soylenen p'yi TAMAMIYLA disarida birakmasi."
+    )
+    assert karne.T1_DUZELTME_ESIGI > 150, (
+        "esik bugunku n'in (150) altina cekilmis — durma kurali sonuca "
+        "bakilarak gevsetilemez (doktrin md. 1)"
+    )
+
+
+def test_banko_yanliligi_ORNEKLEMI_SABIT_tutar():
+    """Üç arındırma **aynı maçların aynı sembolünü** puanlamalı.
+
+    Her yöntem kendi favorisini seçseydi karşılaştırma iki şeyi birden
+    değiştirir ve "arındırma eseri mi" sorusu cevaplanamazdı. Bekçi:
+    kollar aynı maç sayısını taşır ve gerçekleşen oran üçünde de AYNIDIR
+    (değişen yalnız söylenen olasılıktır).
+    """
+    b = karne.banko_yanliligi(yontemler=("orantili", "shin"))
+    assert b["mac"] > 0
+    gercekler = {round(k["banko_rejimi"]["gerceklesen"], 9) for k in b["kollar"]}
+    assert len(gercekler) == 1, (
+        "yontemler farkli gerceklesen oran goruyor — ornek sabit degil, "
+        f"yani her yontem kendi favorisini secmis: {gercekler}"
+    )
+    maclar = {k["banko_rejimi"]["mac"] for k in b["kollar"]}
+    assert len(maclar) == 1, f"kollarin mac sayisi ayrisiyor: {maclar}"

@@ -153,7 +153,7 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/components/super-toto/tahmin2.tsx` | **2. Tahmin** paneli — `1. Tahmin` / `2. Tahmin` sekmeleri arasında geçilir; para birimli hiçbir sayı yok. Hafta kapandığında sonuç sütunu ve ayar karnesi açılır (§3.38) |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **2.076 test**; **85'i** istatistik katmanına (`history` `odds` `backtest`
+paketi toplam **2.080 test**; **85'i** istatistik katmanına (`history` `odds` `backtest`
 `api_stats` `api_backtest` `snapshot_iddaa`), **579'u** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre`
@@ -5081,6 +5081,505 @@ ev-artığı ±0,12) ve o sayı tamamen `n≈50`'nin gürültüsüydü.
 `hakem.ADAYLAR`da donmuş ve bekçisi var — uzatmak isteyen önce o testi
 değiştirmek, yani kararı görünür kılmak zorunda.
 
+### 3.60 Kapsama açığı ayrıştırıldı — açık gerçek, ve mekanizma **banko `q`'su**
+
+`KADEME_OLASILIKLARI.md` §3 iki yıldır açıklanmamış tek yönlü bir sapma
+taşıyordu: gözlenen kapsama modelin dediğini **her bütçede** aşıyor. Belge
+üç aday sayıyor (bağımsızlık · şans · kesit yanlılığı) ve kendi uyarısını
+koyuyordu: *"ayrıştırılmadan §5'in lehte sayıları buna yaslanmamalıdır."*
+
+```bash
+cd backend && python -m spor_toto.karne --kapsama --garanti 14 --butce 2000
+```
+
+**Açık gerçek ve büyük.** 114 hafta, 14-garanti, 2.000 TL, hedef `P(k≤2)`:
+
+| | |
+|---|---:|
+| model diyor | **%30,2** |
+| gerçekleşen | **%41,2** |
+| **açık** | **+%11,1** [+%2,1, +%20,0] — **sıfır dışında** |
+| §3.46'nın bağımlılık tavanı | kuyruğu en fazla **%5** şişirebilir |
+
+Yani (a) tek başına yetmiyor: açık, bağımsızlık varsayımının korpus üst
+sınırının **iki katından** büyük.
+
+**Hafta düzeyi kırılımların üçü de düz çıktı** — ve bu, sonucun kendisi:
+
+| kırılım | dilim 1 | dilim 2 | dilim 3 |
+|---|---:|---:|---:|
+| sezon (4 sezon) | +%10,2 · +%19,2 · +%13,3 · +%2,6 | | |
+| favori gücü | +%12,6 | +%10,5 | +%10,1 |
+| modelin kendi `P`si | +%10,0 | +%15,9 | +%7,3 |
+
+Favori gücü kırılımının düzlüğü A5'in favori–sürpriz yanlılığını
+**mekanizma adayı olmaktan çıkarıyor**: o olsaydı açık favorinin güçlü
+olduğu haftalarda büyürdü, büyümüyor.
+
+> **Sezon satırının okunuşu düzeltildi (§3.64).** Burada önce *"işaret
+> 4/4 sezonda aynı yönde, yani (c) zayıfladı"* yazıyordu. İşaret gerçekten
+> dördünde de artı, ama asıl bilgi orada değil: büyüklük **monoton
+> sönüyor** (+%10,2 → +%19,2 → +%13,3 → **+%2,6**) ve ölçülebilen son
+> sezonda neredeyse kayboluyor. §3.64 aynı sönümü mekanizmanın kendisinde
+> de buldu (T1 banko sapması: +%9,0 · +%10,5 · +%5,4 · **+%0,3**) ve karar
+> o tabloya dayandırıldı. Aşağıdaki mekanizma bulgusu **havuzlanmış dört
+> sezonun** bulgusudur; ileriye dönük bir düzeltme değildir.
+
+#### Mekanizma maç düzeyinde — ve `q` sistematik olarak fazla yüksek
+
+Hafta düzeyi düz çıkınca soru sembole indi. Optimizatörün her maça
+atadığı kaçma olasılığı `q` ile o maçların **gerçekleşen** kaçma oranı
+(1.710 maç; üçlüler hariç, `q = 0` tanım gereği):
+
+| `q` aralığı | maç | model `q` | gerçekleşen | açık | Wilson %95 | `q` dışında |
+|---|---:|---:|---:|---:|---|---|
+| 0,000–0,250 | 408 | %17,0 | %13,5 | −%3,5 | [%10,5, %17,1] | hayır |
+| 0,251–0,381 | 408 | %30,2 | %29,4 | −%0,8 | [%25,2, %34,0] | hayır |
+| 0,381–0,574 | 409 | **%45,7** | **%37,2** | **−%8,5** | [%32,6, %41,9] | **EVET** |
+
+**Ve bu bulgu bir sıralama eseri değil.** Yukarıdaki dilimler tam da
+sınanan değişkene göre sıralanıyor; `q`nun kestirim gürültüsü pozitif olan
+maçlar üst dilime toplanır ve gerçekleşen oran orada `q`nun altında
+çıkar — sapma olmasa bile (§3.49'un banda-ayırma tuzağının kardeşi). Bu
+yüzden aynı soru optimizatörün **ayrık kararıyla** da soruldu:
+
+| seviye | maç | model `q` | gerçekleşen | açık | Wilson %95 | `q` dışında |
+|---|---:|---:|---:|---:|---|---|
+| **banko** | 798 | **%37,3** | **%31,7** | **−%5,6** | [%28,6, %35,0] | **EVET** |
+| çifte | 342 | %23,9 | %21,6 | −%2,2 | [%17,6, %26,3] | hayır |
+
+Banko bir sıralama dilimi değil, optimizatörün verdiği karardır — bucket
+sınırı `q`nun gürültüsünden gelmez. Sapma orada da duruyor ve Wilson
+aralığı modelin `q`sunu **dışarıda bırakıyor**.
+
+**Okuma.** Kupon, tek işaret koyduğu maçların kaçma olasılığını
+sistematik olarak **5,6 puan fazla** sanıyor. Yönü kararın aleyhine:
+banko riskini olduğundan büyük gören bir optimizatör **gereğinden fazla
+kapsama satın alır** — çiftenin yeteceği yere üçlü koyar. Kapsama
+açığının işareti (gerçekleşen > model) tam olarak bunun beklenen imzası.
+
+**Ne kapandı:** (a) tek başına açığı açıklayamaz (tavan %5, açık %11,1);
+A5'in favori yanlılığı mekanizma adayı olmaktan **düştü** (favori gücü
+kırılımı düz).
+
+**Ne açık kaldı — ve §3.64'te kapandı.** Bu bölüm sapmanın *niçin* banko
+rejiminde olduğunu ölçmemişti. §3.64 üç adayı ayırdı: arındırma eseri
+**değil** (üç yöntemde de duruyor), genel piyasa yanlılığı **değil**
+(korpusta `guc` ölçeğinde +%0,5 ve aralık içinde), **kesit** — ve kesitin
+içinde tek bir lig, T1, iki bağımsız örneklemde de. Ama aynı bölüm etkinin
+**söndüğünü** de ölçtü ve düzeltme bu yüzden uygulanmadı.
+
+### 3.61 Kalibrasyon **karar cetveliyle** ölçüldü (İş 1) — geçmedi, ve sebebi ölçüldü
+
+§3.60 açığın mekanizmasını `q`ya bağlayınca akla gelen ilk düzeltme
+deponun kendi rafındaydı ve **manşet değildi**: `recalibrate`in `bias`
+basamağı (sıcaklık + iki sınıf sabiti, yalnız `probs` okur). Arenada geniş
+kesitte geçiyordu (−0,0013 [−0,0021, −0,0006]) ama `tahmin.py`nin
+gerekçesi **540 maçlık** eski kesite dayanıyordu; kupon kesiti 1.710'a
+çıkmıştı, yani karar bayat bir sayıya yaslanıyordu.
+
+Brier orada doğru cetvel değil ve bunu söyleyen sayı deponun kendisinde:
+§3.19'un dönüşümü **0,01 Brier ≈ +0,6 puan**, yani −0,0013 kupon
+ölçeğinde +0,08 puan eder. Karar cetveli başka bir şey sorar: **şekil
+değişiyor mu, ve değişince gerçekleşen kaçak düşüyor mu?**
+
+```bash
+cd backend && python -m spor_toto.karne --kalibrasyon --garanti 14 --butce 2000
+```
+
+| omurga | hafta | geri dönüş | ödül>0 | kaçaksız hafta | ort. kaçak | ort. `P` |
+|---|---:|---:|---:|---:|---:|---:|
+| `piyasa` | 114 | %24,2 | 48 | 4 | 2,87 | 0,3016 |
+| `kalibre_bias` | 114 | %25,4 | 44 | 5 | 2,81 | **0,3274** |
+
+Eşleştirilmiş hafta-bootstrap %95:
+
+| ölçü | ort | %95 aralık | sıfır dışında |
+|---|---:|---|---|
+| gerçek kolon ROI | +0,01227 | [−0,03688, +0,06715] | hayır |
+| gerçekleşen kaçak | −0,06140 | [−0,14035, +0,00877] | hayır |
+| kaçaksız hafta | +0,00877 | [+0,00000, +0,02632] | hayır |
+| **`P(hedef)`** | **+0,02577** | **[+0,02382, +0,02774]** | **EVET** |
+
+**Tek geçen ölçü modelin kendi güveni, ve E3'ün tuzağı üçüncü kez
+kuruldu.** `p_ayrisimi`: şekil sabit tutulup yalnız olasılık
+değiştirildiğinde fark +0,02510 — yani `P(hedef)` kazancının **%97,4'ü
+seçim hiç değişmeden** geliyor. İşaretler 42/114 haftada değişiyor ama
+gerçekleşen kaçak ölçülebilir biçimde kımıldamıyor.
+
+**Önceden yazılmış durma kuralı işledi: manşet `piyasa` kalır.**
+
+**Ve "geçmedi" burada bir bilgi taşıyor.** §3.60 kusuru **banda özgü**
+buldu (banko rejiminde −5,6 puan, çiftede −2,2 ve sıfırı kesiyor);
+`bias` ise üç parametreli **global** bir dönüşümdür ve sıcaklık bütün
+olasılıkları log uzayında aynı yönde keskinleştirir. Global bir düzeltmenin
+banda özgü bir kusuru gideremeyeceği zaten bekleniyordu — ölçüm bunu
+doğruladı ve tuzağın kendisini de gösterdi: keskinleşme `P(hedef)`i
+büyütüyor, isabeti büyütmüyor.
+
+Yan ürün: `tahmin.py`nin *"540 maçta ölçüldü"* gerekçesi bayattı ve
+**güncel kesitle yeniden yazıldı** — ölçüm ya kararı değiştirir ya
+gerekçeyi tazeler.
+
+### 3.62 Bütçe eğrisi gerçek kolon hattında koştu (İş 2) — **eğri iç bükey**, karar değişmedi
+
+> **Bu bölüm E6 ile PARALEL koştu ve ondan dardır.** Aynı eksene aynı
+> günlerde iki iş birden girdi: `KAZANMA_PLANI.md` §E6 (PR #46) bütçe
+> kısıtını **tamamen kaldırıp** haftanın cephesini ve cetvelini kurdu,
+> on iki kural sınadı, kupon öncesi işaret sınavını koştu ve bütçe
+> eksenini kapattı. Bu bölüm aynı soruyu **altı sabit basamakta** ve
+> başka bir cetvelle sordu. E6 kapsam olarak üstündür; buranın eklediği
+> tek şey **ölçünün kendisidir** (aşağıda) ve iki iş birbirini
+> çürütmüyor, **doğruluyor** — ortak basamakların beşinde de sayılar
+> birebir aynı çıktı, iki bağımsız uygulamadan.
+
+§3.57 kendi sonucunu genelleyip *"şeklin kendisiyle oynayan kollar (bütçe
+eğrisi) hedef kademesiyle oynayan koldan **yapısal olarak daha güçlü**"*
+demişti. E1–E4'ün dördü de tek bir sabit **2.000 TL**'de koşmuştu, ve var
+olan bütçe eğrisi **garanti tabanına** dayanıyordu — taban 2,39 kat gevşek
+ve **eğik** (§3.56), yani bütçe kıyaslamak için tam olarak yanlış cetvel.
+
+```bash
+cd backend && python -m spor_toto.karne --egri --garanti 14
+```
+
+Ölçü, ödeyen olayın lira başına sıklığıdır: `1.000 × kaçaksız_hafta /
+toplam_maliyet`. Gerekçesi §3.57: kaçak 0'da medyan geri dönüş **1,34×**,
+kaçak 1'de 0,28× — para yalnız `k = 0`'da.
+
+| bütçe | şekil (b/ç/ü) | kolon | `k=0` | `P(k=0)` | ort `P(hedef)` | **`k=0`/1000 TL** |
+|---:|---|---:|---:|---:|---:|---:|
+| 500 | 7/7/1 | 48 | 1 | %0,9 | 0,1336 | 0,0183 |
+| 1.000 | 7/5/3 | 92 | 3 | %2,6 | 0,2057 | **0,0286** |
+| 1.500 | 7/4/4 | 128 | 4 | %3,5 | 0,2506 | **0,0274** |
+| 2.000 | 7/3/5 | 168 | 4 | %3,5 | 0,3016 | 0,0209 |
+| 3.000 | 7/2/6 | 252 | 5 | %4,4 | 0,3582 | 0,0174 |
+| 5.000 | 7/0/8 | 486 | 12 | %10,5 | 0,4823 | 0,0217 |
+
+**Eğri monoton değil, iç bükey — ve bu sonucun kendisi.** Ölçümden önce
+yazılan beklenti *"lira başına tutturma bütçeyle azalır, öyleyse yaymak
+yığmaktan iyidir"*di. Yarısı doğru çıktı: 500'den 1.000'e **yükseliyor**
+(şekil o kadar inceyken kaçaksız hafta neredeyse hiç gelmiyor), sonra
+düşüyor. Tepe **1.000–1.500 TL** bandında. Aritmetiği açık: kaçak eklemek
+bedeli **çarpımsal** büyütür (2^çifte·3^üçlü) ama `P(k=0) = Π(1−qᵢ)`
+çarpanları 1'e yaklaştıkça kazanç yavaşlar; alt uçta ise hiçbir çarpan
+1'e yakın değildir.
+
+#### Ve durma kuralı **Holm'da** düştü
+
+| bütçe | ortak | Δ `k=0`/1000 TL | %95 aralık | tekil | p | **HOLM** |
+|---:|---:|---:|---|---|---:|---|
+| 500 | 114 | −0,0026 | [−0,0313, +0,0313] | hayır | 0,6007 | hayır |
+| 1.000 | 114 | +0,0077 | [−0,0104, +0,0259] | hayır | 0,2191 | hayır |
+| **1.500** | 114 | **+0,0065** | **[+0,0016, +0,0131]** | **EVET** | **0,0167** | **hayır** |
+| 3.000 | 114 | −0,0035 | [−0,0122, +0,0070] | hayır | 0,8214 | hayır |
+| 5.000 | 114 | +0,0008 | [−0,0165, +0,0166] | hayır | 0,4449 | hayır |
+
+1.500 TL tekil %95 aralığın tamamıyla sıfırın üstünde. Ama **beş aday
+var** ve tekil aralık beş denemede ~%23 aile hatası verir (§3.44 bu
+düzeltmeyi zorunlu kıldı). Holm'un en küçük p için istediği eşik
+0,05/5 = 0,01; ölçülen **0,0167**. Geçmiyor.
+
+**Önceden yazılmış durma kuralı işledi: varsayılan bütçe 2.000 TL kalır.**
+Eğri yayımlanıyor, karar değişmiyor — ve bu, kuralın sonuca bakılarak
+değiştirilmediğinin kaydıdır. E6 aynı sonuca **bağımsız olarak** ve daha
+geniş bir kural kümesiyle vardı (on iki kuralın on ikisi de sabit bütçeyi
+yenemedi, hepsi sıfırı kesti).
+
+#### Çapraz doğrulama — iki bağımsız uygulama, aynı sayılar
+
+E6 cepheyi şekil şekil kuruyor, bu bölüm bütçe basamaklarını tarıyor; iki
+ayrı kod yolu, aynı 114 hafta. Ortak beş basamakta gerçek kolon geri
+dönüşü:
+
+| kolon | §3.62 | E6 |
+|---:|---:|---:|
+| 92 | %28,4 | %28,4 |
+| 128 | %34,9 | %34,9 |
+| 168 | %24,2 | %24,2 |
+| 252 | %20,2 | %20,2 |
+| 486 | %29,1 | %29,1 |
+
+Beşinde de birebir. Bu, `gercek_kolon_dagilimi` hattının **yeniden
+uygulanabilir** olduğunun kaydıdır ve aşağıdaki oynaklık sınırının
+kapsamını daraltır: oynaklık hattın kendisinde değil, en küçük
+şekillerdedir.
+
+**Ve iki cetvel aynı basamağı işaret ediyor.** Bu bölümün ölçüsünde
+(kaçaksız hafta / 1.000 TL) tekil %95 aralığı geçen tek basamak **128
+kolon**du; E6'nın ROI cetvelinde de o basamak en yüksek geri dönüşü veriyor
+(%34,9, yedi satırın en büyüğü). İki farklı ölçü, aynı aday. İkisi de
+anlamlılık sınavını geçemiyor — bu bölümde Holm'da, E6'da `sabit-1000`
+kolunun sıfırı kesmesiyle. Aynı adayın iki bağımsız cetvelde de belirip
+ikisinde de eşiği aşamaması, "bütçe ekseni kapalı" sonucunu **zayıflatmaz,
+güçlendirir**: aranan yerde bir şey var, ama 114 haftada ayırt edilecek
+kadar büyük değil.
+
+#### Ve bu bölümün E6'ya eklediği tek şey: **cetvelin kendisi**
+
+E6 kuralları **gerçekleşen ROI** ile puanlıyor. Bu bölüm ödeyen olayın
+lira başına sıklığıyla puanladı. Fark önemsiz değil, ve gerekçesini yine
+E6 veriyor: kendi 5. maddesi ROI'nin **kuyruk ağırlıklı** olduğunu ölçtü —
+en iyi 5 hafta, on beş basamağın hepsinde ödülün **%42–%88'ini** taşıyor.
+Kuyruk ağırlıklı bir ölçüde 114 hafta az `n`'dir; kaçaksız hafta sayısı ise
+her hafta gözlenir. İki cetvel aynı yöne işaret ediyor (sabit bütçe kalır)
+ve bu, sonucu **iki ayrı oynaklık rejiminde** doğrulanmış yapıyor.
+
+**Okunmayacak satır: `ort P(hedef)` sütunu.** Bütçeyle monoton büyüyor
+(0,1336 → 0,4823) ama bu modelin kendi güvenidir; gerçekleşen `P(k=0)`
+aynı aralıkta %0,9 → %10,5 gidiyor, yani ikisi aynı şeyi söylemiyor.
+E3'ün dersi burada da geçerli.
+
+> **Sınır — gerçek kolon ROI'si bu tabloda yayımlanmadı, ve sebebi
+> ölçülerek bulundu.** Eğri iki kez koşturuldu. Kaçak temelli bütün
+> sütunlar **birebir aynı** çıktı (`k=0`, `P(k=0)`, `k=0`/1000 TL,
+> histogram) ama 500 TL basamağının ROI'si **%18,8 ↔ %39,5** arasında
+> oynadı — iki kattan fazla.
+>
+> İlk açıklama *"süre bütçeli ILP yük altında farklı çözüm buluyor"*du ve
+> **sınandı, düştü**: aynı ölçüm tek başına ve üç çekirdek meşgulken
+> koşturulduğunda ikisi de 0,2568 verdi, art arda iki tam koşum da birebir
+> 0,3951. Ölçüm tekrarlanabilir.
+>
+> Gerçek sebep koşumlar **arasında** kuruldu: ilk koşumda ortamda `scipy`
+> yoktu. `core.HAS_SCIPY` yanlışken `engines.run_auto`ın ILP kolu düşüyor
+> ve kaplama blok + sezgiselden geliyor. Doğrudan ölçüldü (40 hafta,
+> 500 TL): iki kurulum **aynı kolon sayısını** üretiyor (1.920) ama farklı
+> kaplama, ve gerçek kolon geri dönüşü scipy'siz **0,2693**, scipy'li
+> **0,2550**.
+>
+> **Ve yönü sabit değil — bu, bulgunun kendisi.** 40 haftada scipy'siz
+> kurulum *daha yüksek* ödül verdi, 114 haftada *daha düşük* (%18,8 ↔
+> %39,5). Yani ILP kolu "daha iyi ödül" üretmiyor; **başka** bir kaplama
+> üretiyor ve ödül kuyruk ağırlıklı olduğu için fark hangi haftada bir
+> kolon eksik/fazla düştüğüne bakıyor. Sistematik bir avantaj olsaydı
+> düzeltilebilirdi; olan şey **gürültü**, ve gürültünün genliği
+> yayımlanan sayının mertebesinde.
+>
+> Yani kaplamanın **geçerliliği** etkilenmiyor (ikisi de 14-garanti veriyor,
+> aynı bedelle); etkilenen, o kaplamanın alt kademelerde kaç kolonla
+> kazandığıdır — ve gerçek kolon ödülü **kuyruk ağırlıklı** olduğu için
+> (114 haftada ilk üç hafta toplam ödülün %57'si) tek bir haftada bir
+> kolonluk fark toplamı taşıyor.
+>
+> **Durma kuralı bu yüzden kaçak ekseninde kuruldu:** kaçak, seçimin bir
+> fonksiyonudur ve kaplamadan **bağımsızdır**. `scipy` `requirements.txt`
+> içindedir, yani düzgün bir kurulumda hep vardır — kusur eksikliğinde
+> değil, motorun eksikliği **sessizce** yutmasındadır.
+>
+> **Ve kusurun nerede olduğu ölçüldü: en küçük basamaklarda.** İki koşum
+> basamak basamak karşılaştırıldığında yalnız **iki** satır oynuyor:
+>
+> | kolon | koşum 1 (scipy yok) | koşum 2 (scipy var) |
+> |---:|---:|---:|
+> | 48 | %18,8 | **%39,5** |
+> | 92 | %28,4 | %27,9 |
+> | 128 | %34,9 | %34,9 |
+> | 168 | %24,2 | %24,2 |
+> | 252 | %20,2 | %20,2 |
+> | 486 | %29,1 | %29,1 |
+>
+> 128 kolondan itibaren **birebir aynı**. Sebebi anlaşılır: kaplama
+> büyüdükçe hangi kaplamanın seçildiği toplamı daha az belirliyor.
+> Dolayısıyla §3.56'nın 2,39 katı (168 kolon) ve E2/E3'ün ROI sayıları
+> (168 kolon) bu oynaklığın **dışındadır**; etkilenen, merdivenin en alt
+> ucudur.
+>
+> **Bu, E6 için bir uyarıdır ve buraya o yüzden yazılıyor.** E6'nın
+> ölçtüğü λ kuralı ve LOO kolu **32 kolonluk** basamağı seçiyor — yani
+> oynaklığın en yüksek olduğu uçtan da aşağısını. E6'nın o satırdaki
+> sonucu "sıfırı kesiyor" olduğu için oynaklık **kararı çevirmez** (bir
+> null'u gürültü daha da null yapar), ama o satırın tek bir koşumdan
+> okunmaması gerekir.
+
+### 3.63 BFE üçüncü cetvelle de reddedildi (İş 4) — bu kez **isabetle**
+
+E3 omurga sorusunu iki cetvelle kapattı (§3.58) ve ikisi de sorunluydu:
+gerçek kolon **ROI** kuyruk ağırlıklıdır ve 64 haftada gürültülüdür,
+`P(hedef)` ise modelin kendi güvenidir. Sorulmamış olan üçüncüsü
+**isabetin kendisiydi** — gerçekleşen kaçak sayısı her hafta gözlenir ve
+ROI'den çok daha az oynaktır.
+
+```bash
+cd backend && python -m spor_toto.karne --omurga BFE --garanti 14 --butce 2000
+```
+
+| ölçü (BFE − Avg) | ort | %95 aralık | sıfır dışında |
+|---|---:|---|---|
+| gerçek kolon ROI | −0,01074 | [−0,06232, +0,02558] | hayır |
+| **gerçekleşen kaçak** | **−0,04688** | **[−0,14062, +0,04688]** | **hayır** |
+| **kaçaksız hafta** | **+0,00000** | **[+0,00000, +0,00000]** | **hayır** |
+| `P(hedef)` | +0,00758 | [+0,00594, +0,00924] | EVET |
+
+Kaçak farkı doğru yönde (BFE daha az kaçırıyor) ama aralık sıfırı kesiyor;
+**kaçaksız hafta farkı tam olarak sıfır** — 64 haftada BFE tek bir fazladan
+kaçaksız hafta üretmedi. Sezon işareti de tutmuyor: 2024/25'te `d kaçak`
++0,000, 2025/26'da −0,088. Ve `p_ayrisimi` yine aynı şeyi söylüyor —
+`P(hedef)` farkının **%81'i seçim değişmeden**.
+
+**`Avg` kalıyor, ve artık üç cetvelle:** ROI, `P(hedef)` ayrışımı, ve
+isabet. §3.52'nin Brier bulgusu (−0,00100, Holm'lu, gerçek) doğruluğunu
+koruyor; kupon düzeyinde karşılığı yok ve bu, §3.19'un dönüşüm oranıyla
+tutarlı.
+
+#### Ayrı ve bağımsız bir kusur: canlı kayıt ile geri test **aynı ölçekte değil**
+
+Omurga sorusu ölçülürken şu görüldü ve buraya yazılmadan geçilmemeli.
+`KAZANMA_KARNESI.md`'nin canlı kaydı ile onun kıyaslandığı 114 haftalık
+geri test **üç ayrı fiyat ölçeğinde** duruyor:
+
+| kayıt | kesit | fiyat | ölçülmüş marj |
+|---|---|---|---:|
+| geri test (`kupon_kesiti`) | 2022/23–2025/26 | `Avg` kapanış | **%7,26** |
+| canlı hf 1 | 2026/27 | `iddaa` | **%16,7** |
+| canlı hf 2 | 2026/27 | `iddaa-acilis` | ~%16,7 |
+| canlı hf 3–4 | 2026/27 | `pinnacle-kapanis` | **%3,42** |
+
+Karne bunu her satırda ilan ediyor (doğru davranış) ama **ilan etmek
+karşılaştırmayı geçerli kılmıyor.** Marj arındırması yöntemden bağımsız
+olarak marjın büyüklüğüyle ölçeklenir (`odds.implied_probs` notu), yani
+%16,7'lik bir bültenden çıkan olasılık ile %3,42'lik bir borsadan çıkan
+olasılık aynı sayı değildir — ve `P(hedef)` doğrudan onlardan hesaplanır.
+
+**Ve bu, düzeltilebilir bir kusur değil: ölçülemez.** 2026/27'nin oran
+arşivi bugün **0 satır** (`load_odds(sezon="2026_27")`), yani canlı
+haftalar `Avg` ölçeğinde yeniden türetilemiyor. Ölçek farkının büyüklüğü
+kestirilemez de: canlı kayıtta iddaa ölçeğinde iki hafta
+(`P(hedef)` 0,249 · 0,219), Pinnacle ölçeğinde iki hafta (0,282 · 0,175)
+var — `n = 2` ve `n = 2`, ayırt edilecek bir şey yok.
+
+**Geçersiz olan karşılaştırmalar, açıkça:**
+
+* canlı `P(hedef)` ↔ geri testin `ort P(hedef)`i (§3.62'nin 0,3016'sı);
+* canlı haftaların `P(hedef)`leri **birbiriyle**, ölçek değiştiği yerde
+  (hf 2 ↔ hf 3);
+* canlı geri dönüş ↔ geri testin geri dönüşü, olasılık üzerinden kurulan
+  her ara adımda.
+
+**Geçerli kalanlar:** gerçekleşen kaçak sayısı, tutturulan kademe ve
+ödül — bunlar fiyattan değil **sonuçtan** gelir ve ölçekten bağımsızdır.
+§3.62'nin durma kuralını kaçak ekseninde kurmasının ikinci gerekçesi de
+budur.
+
+Kalıcı çözüm tek: canlı haftalarda **tek bir ölçeğe** bağlı kalmak ve
+değiştirmek gerekirse §3'ün kuralını uygulamak — *"kayıt yeniden
+yazılmaz, ölçek notuyla yan yana durur"* (`odds.py:162-164` kalıbı).
+
+### 3.64 Banko `q` sapmasının kaynağı (§3.60'ın açık ucu) — **etki gerçekti, ama sönüyor**
+
+§3.60 kapsama açığının mekanizmasını buldu ve orada bıraktı: optimizatörün
+banko maçlarına atadığı `q` gerçekleşenden **5,6 puan yüksek**. `q_banko =
+1 − p₁` olduğuna göre aynı cümle şudur — *en olası sembolün olasılığı 5,6
+puan düşük yazılıyor.* Açık kalan soru sebepti ve üç aday vardı; üçü de
+farklı işler gerektiriyordu.
+
+```bash
+cd backend && python -m spor_toto.karne --banko
+cd backend && python -m spor_toto.karne --banko --korpus
+cd backend && python -m spor_toto.karne --banko --lig T1
+```
+
+Sınavın kurulumu şu tek şartla anlamlı: **örneklem sabit.** Her yöntem
+kendi favorisini seçseydi karşılaştırma iki şeyi birden değiştirirdi. Favori
+sembol ve dilim sınırları bir kez `shin` ile belirlenir; üç arındırma da
+**aynı maçın aynı sembolüne** ne olasılık verdiğiyle yarışır.
+
+#### Aday 1 — arındırma eseri: **düştü**
+
+Kupon kesiti, banko rejimi (855 maç), üç yöntem:
+
+| yöntem | söylenen | gerçekleşen | açık |
+|---|---:|---:|---:|
+| `orantili` | %61,2 | %68,1 | **+%6,9** |
+| `guc` | %63,1 | %68,1 | **+%5,0** |
+| `shin` | %62,5 | %68,1 | **+%5,6** |
+
+Üçünde de duruyor ve üçünün Wilson aralığı da söyleneni dışarıda bırakıyor.
+Marj kaldırma yöntemi favoriye verdiği payı ~2 puan oynatıyor, açığı
+kapatmıyor. **Varsayılanı değiştirmek bu sorunu çözmez.**
+
+#### Aday 2 — genel piyasa yanlılığı: **düştü**
+
+Aynı sınav 31.103 maçlık korpusta (18 kat güç), banko rejimi:
+
+| yöntem | söylenen | gerçekleşen | açık | Wilson `p`'yi dışarıda bırakıyor mu |
+|---|---:|---:|---:|---|
+| `orantili` | %58,7 | %60,8 | +%2,1 | evet |
+| `guc` | %60,3 | %60,8 | **+%0,5** | **hayır** |
+| `shin` | %59,8 | %60,8 | +%1,0 | evet |
+
+Piyasanın favori sembolü genel futbolda **iyi kalibre**; `guc` ölçeğinde
+sapma yok. Yani favori–uzunatış yanlılığının klasik hâli bu kesitte
+bulunmuyor ve §3.23'ün *"piyasanın güvenilirlik borcu 0,00042"* satırıyla
+tutarlı. **+%5,6 piyasanın değil, KESİTİN özelliği.**
+
+#### Aday 3 — kesit: **tutuyor, ve ayrıştırıldı**
+
+Korpus kuponun altı ligine kısıtlandığında banko rejimi açığı %1,0 →
+**+%1,9**'a çıkıyor (8.571 maç). Yani lig karışımı farkın bir kısmını
+açıklıyor ama azını. Kalanı lig kırılımı veriyor ve tek bir lig taşıyor:
+
+| lig | kuponda (n) | korpusta (n) |
+|---|---:|---:|
+| **T1 Süper Lig** | **+%4,2** (932) | **+%4,9** (1.415) |
+| E0 Premier | −%0,1 (210) | +%2,3 (1.520) |
+| I1 Serie A | +%5,4 (173) | +%0,8 (1.520) |
+| SP1 La Liga | +%10,7 (137) | +%2,3 (1.520) |
+| D1 Bundesliga | +%10,4 (113) | — |
+
+**Yalnız T1 iki bağımsız örneklemde de aynı sapmayı veriyor** ve ikisinde de
+`n` büyük. Kupondaki büyük hücreler (SP1 +%10,7, D1 +%10,4) korpusta
++%2,3'e iniyor ve kuponda `n` 113–137 — beş lig hücresi düzeltmesiz
+okunuyor, yani bu ikisi tam olarak regresyona aday. T1 ise kuponun
+**yarısıdır** (932/1.710) ve düzeltilmesi şeklin kendisini değiştirirdi.
+
+#### Ve sonra sezon sınavı — Ö3'ün düştüğü sınav
+
+Bu, kararı belirleyen tablo. Banko rejimi, `shin`, T1:
+
+| sezon | korpus (T1) | kupon (T1) |
+|---|---:|---:|
+| 2021/22 | +%5,7 (164) | — |
+| 2022/23 | +%8,1 (160) | +%9,0 (51) |
+| 2023/24 | +%7,0 (190) | +%10,5 (130) |
+| 2024/25 | +%6,6 (194) | +%5,4 (135) |
+| **2025/26** | *(korpus kapsamıyor)* | **+%0,3 (150)** |
+
+Dört sezon boyunca **iki bağımsız örneklem de +%5 ile +%10 arasında** ve
+birbirini doğruluyor. Sonra 2025/26'da **sıfır** — ve o sezonun tek tanığı
+kupon kesiti, korpus 2024/25'te bitiyor.
+
+Aynı sönüm havuzlanmış kupon kesitinde de var (+%8,1 · +%11,5 · +%5,1 ·
+**+%0,7**), ve §3.60'ın kapsama açığı tablosunda da (+%10,2 · +%19,2 ·
++%13,3 · **+%2,6**). §3.60 o tabloyu *"işaret 4/4 sezonda aynı yönde"* diye
+okumuştu; **doğru okuma bu değil.** İşaret dördünde de artı ama büyüklük
+monoton **söndü** ve en son sezonda kayboldu — ve karar için önemli olan
+budur, işaretin kendisi değil. §3.60'ın o cümlesi düzeltildi.
+
+#### Verdikt: düzeltme **uygulanmıyor**, ve durma kuralı şimdiden yazıldı
+
+Etki dört sezon boyunca gerçekti ve iki bağımsız örneklem onu doğruladı.
+Ama gözlenebilen **son** sezonda yok. İki okuma mümkün ve bugünkü veriyle
+ayrılamıyor: ya piyasa keskinleşti ve etki kapandı, ya da `n = 150` bir
+sezonun gürültüsü. Elimizdeki tek yeni tanık haftalık birikimdir.
+
+Bu yüzden `q`ya düzeltme **konmuyor**: 2022–2024 üzerinde kalibre edilmiş
+bir düzeltme, ölçülebilen son sezonda etkisi olmayan bir şeyi geçmişe
+uydurmak olurdu — ve bu, deponun `esik_taramasi`nda bir kez yaptığı hatanın
+tam olarak aynısı.
+
+> **Durma kuralı (ölçümden önce yazıldı).** T1 banko `q`'suna düzeltme
+> ancak **2025/26 + 2026/27 birlikte** banko rejiminde `n ≥ 300`'e ulaşıp
+> havuzlanmış sapmanın Wilson %95 aralığı söylenen `p`'yi **tamamıyla**
+> dışarıda bıraktığında uygulanır. Bugün `n = 150` ve aralık `p`'yi
+> içeriyor.
+
+**Yan ürün — §3.61 retro olarak açıklandı.** Global kalibrasyon düzeltmesi
+(`kalibre_bias`) niçin geçmedi sorusunun cevabı burada: düzeltilecek
+**kararlı** bir sapma kalmamış. §3.61 *"kusur banda özgü, dönüşüm global"*
+diyordu; §3.64 bunu daraltıyor — kusur banda değil **sezona** özgü, ve
+sönmüş.
+
 ## 4. Sayfada bugün ne var
 
 **`/istatistik`** — sezon dağılımı (en sık sonuç + pay çubuğu) · 5 sayı kutusu (sembol
@@ -6078,7 +6577,7 @@ python -m spor_toto.kosum                  # kayıtlı koşumlar
 python -m spor_toto.kosum --son disari     # son koşumun ortamı
 
 # Denetim
-pytest -q                                  # 2.076 test (85'i bu katman, 583'ü tahmin)
+pytest -q                                  # 2.080 test (85'i bu katman, 583'ü tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out

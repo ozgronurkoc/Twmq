@@ -106,6 +106,41 @@ sonuç modelin olasılık sıralamasında **kaçıncı** sıradaydı?
   temkinli, (b) 114 haftalık şans, (c) kesit yanlılığı (milli maç haftaları
   dışarıda). **Ayrıştırılmadan §5'in lehte sayıları buna yaslanmamalıdır.**
 
+> **2026-09-05 — ayrıştırıldı.** Açık gerçek ve ölçüldü
+> (`ISTATISTIK_YOL_HARITASI.md` §3.60): oynanan şeklin kesitinde
+> (114 hafta, 14G, 2.000 TL) model %30,2 derken gerçekleşen %41,2 —
+> **+%11,1 [+%2,1, +%20,0]**, sıfır dışında.
+>
+> * **(a) tek başına yetmiyor.** §3.46 hafta içi bağımlılığı ölçtü ve
+>   korpus üst sınırında kuyruk yalnız **%5** şişiyor; açık onun iki katı.
+> * **(c) zayıfladı.** İşaret 4/4 sezonda aynı yönde (+%10,2 · +%19,2 ·
+>   +%13,3 · +%2,6).
+> * **Mekanizma maç düzeyinde:** optimizatörün **banko** maçlarına
+>   atadığı `q` gerçekleşenden **5,6 puan yüksek** (%37,3 ↔ %31,7, Wilson
+>   [%28,6, %35,0] modelin `q`sunu dışarıda bırakıyor). Banko bir sıralama
+>   dilimi değil ayrık bir karardır, yani bulgu ortalamaya dönüş eseri
+>   olamaz.
+> * **Denendi ve yetmedi:** global yeniden kalibrasyon (`kalibre_bias`,
+>   §3.61).
+>
+> **Kaynağı da ayrıştırıldı (§3.64) ve üç adaydan biri kaldı.** Arındırma
+> eseri değil (üç yöntemde de duruyor); genel piyasa yanlılığı değil
+> (31.103 maçlık korpusta `guc` ölçeğinde +%0,5 ve aralık içinde);
+> **kesit** — ve kesitin içinde tek bir lig, **T1 Süper Lig**, iki
+> bağımsız örneklemde de aynı büyüklükte (+%4,2 kuponda / +%4,9
+> korpusta). T1 kuponun yarısıdır, yani düzeltilseydi şeklin kendisi
+> değişirdi.
+>
+> **Ama düzeltme uygulanmadı, çünkü etki sönüyor.** T1 banko sapması
+> sezon sezon: korpusta +%5,7 · +%8,1 · +%7,0 · +%6,6, kuponda +%9,0 ·
+> +%10,5 · +%5,4 — ve gözlenebilen son sezonda (2025/26) **+%0,3**,
+> `n=150`, aralık `p`'yi içeriyor. Yukarıdaki §3'ün kendi sayıları da
+> aynı sönümü taşıyor. Durma kuralı önceden yazıldı ve koda geçti
+> (`karne.T1_DUZELTME_ESIGI`, bekçisi var).
+>
+> Bu paragrafın uyarısı **kalkmadı, daraldı**: açığın varlığı ve mekanizması
+> ölçülü, ama ileriye dönük kullanılabilir bir düzeltme **yok**.
+
 ---
 
 ## 4. Kademe olasılıkları — asıl tablo
