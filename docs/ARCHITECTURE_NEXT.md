@@ -7,7 +7,7 @@
 Tarayıcı
    │
    ▼
-frontend/              ← Next.js :3000, tek UI (7 sayfa — aşağıdaki tablo)
+frontend/              ← Next.js :3000, tek UI (10 sayfa — aşağıdaki tablo)
    │  /api/* rewrite
    ▼
 backend/web_app.py     ← Flask :8080, sadece JSON
@@ -61,6 +61,7 @@ yani boşluk üç belgeye birden yayılıyordu. Artık liste
 | `/istatistik` | **Sezon** — tarihsel dağılım ve analiz blokları (§6.8 G1'de bölündü) |
 | `/istatistik/oranlar` | **Piyasa** — favori kırılımı, banko bantları, kalibrasyon; ortak sekme şeridi `?last`i taşır |
 | `/takimlar` | Küçültülmüş takım gücü — puan, atılan, yenilen; maç sayısı ve küçültme oranıyla |
+| `/pazarlar` | Alt/üst 2,5 ve Asya handikabı — fiyat + ölçülmüş kalibrasyon |
 | `/istatistik/[week]` | Tek hafta detayı |
 | `/istatistik/geri-test` | Eşik taraması + hold-out |
 | `/saglik` | Değişmez raporu + kayıtlı kontrol envanteri |

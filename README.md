@@ -646,6 +646,8 @@ Bugün `match_conflicts` tam olarak bunu yakalar. Vaka analizi:
 | Rota | İçerik |
 |------|--------|
 | `/` | **Formül** — motorun tamamı |
+| `/tahmin` | Yaklaşan maçlara 1/0/2 + **ölçülmüş isabet** (gövdede ayrılmaz) |
+| `/super-toto` | Canlı sezon defteri (statik besleme); kaydı olan haftada `1. Tahmin` / `2. Tahmin` sekmeleri |
 | `/istatistik` | **Sezon** — dağılım, seyir, bantlar, adet, ısı haritası, geçiş, uçlar, haftalar |
 | `/istatistik/oranlar` | **Piyasa** — favori kırılımı, banko bantları, çift kapsaması, beraberlik profili, lig kırılımı, kalibrasyon |
 | `/istatistik/<hafta>` | Tek hafta detayı + "bu haftayı formüle gönder" |
@@ -992,12 +994,13 @@ backend/
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
                        sehir/ · xg/ · sistem_fiyat/ · hakem/
-  tests/               pytest (72 dosya → 2.078 test; §9'da katman dökümü)
+  tests/               pytest (72 dosya → 2.080 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
-  app/                 7 sayfa (/, /tahmin, /super-toto, /istatistik,
-                       /istatistik/[week], /istatistik/geri-test, /saglik)
+  app/                 10 sayfa (/, /tahmin, /super-toto, /istatistik,
+                       /istatistik/oranlar, /istatistik/[week],
+                       /istatistik/geri-test, /pazarlar, /takimlar, /saglik)
   components/
     shell/             kalıcı kenar çubuğu + sayfa geçişleri + tema
     formul/            maç ızgarası, olasılık girişi, sonuç panelleri
@@ -1196,7 +1199,7 @@ dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri t
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
 eşleme, ikinci kayıt). **72 test dosyası, parametrizasyonla
-2.078 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+2.080 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
@@ -1224,7 +1227,7 @@ karşı denetler):
 | Takım gücü | `takim_gucu` | 24 |
 | Yeni veri (UEFA · şehir) | `avrupa` `sehir` | 41 |
 | xG vekili kalibrasyonu | `xg` | 16 |
-| Belgeler | `belgeler` | 12 |
+| Belgeler | `belgeler` | 14 |
 | Değer bahsi (yan pazarlar) | **`deger`** | 24 |
 | Fiyat kaynakları | **`fiyatlar`** | 14 |
 | Kuyruk / bağımsızlık | **`kuyruk`** | 12 |
