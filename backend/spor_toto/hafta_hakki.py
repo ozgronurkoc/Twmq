@@ -898,7 +898,7 @@ def _main(argv: list[str] | None = None) -> int:  # pragma: no cover - elle
                     help="kesitteki hafta sayisi (varsayilan: hepsi)")
     ap.add_argument("--indis", type=int, default=0, help="tek hafta indisi")
     ap.add_argument("--garanti", type=int, default=VARSAYILAN_GARANTI,
-                    help="cephe icin; cetvel/kiyas yalniz 14'te kosar")
+                    help="ARTIK SECILEMEZ — duzde en iyi kolon 15-k")
     ap.add_argument("--tavan", type=float, default=CEPHE_TAVANI)
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args(argv)
@@ -946,7 +946,7 @@ def _main(argv: list[str] | None = None) -> int:  # pragma: no cover - elle
         print(json.dumps({"kiyas": k, "isaret": isaret},
                          ensure_ascii=False, indent=1))
         return 0
-    print(f"\nHAFTANIN HAKKI — {k['hafta']} hafta · 14-garanti · "
+    print(f"\nHAFTANIN HAKKI — {k['hafta']} hafta · duz (tam sistem) · "
           f"tavan {a.tavan:,.0f} TL")
     print(f"olculen lambda: {k['lambda_olculen']:,.0f} TL / birim P(hedef)")
     print(f"\n{'kolon':>6}{'TL':>9}{'hafta':>7}{'tutan':>7}"

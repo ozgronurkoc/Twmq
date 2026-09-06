@@ -1,7 +1,7 @@
 # backend/
 
-Spor Toto kaplama kodu motoru + JSON API. **HTML servis etmez** — arayüz
-`../frontend/` altındaki Next.js uygulamasıdır.
+Spor Toto düz (tam sistem) kupon motoru + JSON API. **HTML servis etmez** —
+arayüz `../frontend/` altındaki Next.js uygulamasıdır.
 
 ## Kurulum
 
@@ -88,7 +88,7 @@ spor_toto/                        (51 modül — aşağısı yönlendirici seçk
   fire_scenarios.py  Seçim DIŞI fire analizi (1-fire / 2-fire)
   history.py   Tarihsel 1/0/2 + analiz blokları
   odds.py      Oran arşivi okuyucu; arayüze yalnızca 1X2 çıkar (aşağıda)
-  backtest.py  Eşikli strateji → kaplama → skor; eşik taraması + hold-out
+  backtest.py  Eşikli strateji → düz kolonlar → skor; eşik taraması + hold-out
   egitim.py    Eğitim korpusu okuyucu (31.103 maç) — /istatistik'e GİRMEZ
   predict.py   TAHMİN: tahminci sözleşmesi + 3 referans
   evaluate.py  TAHMİN: dışarıda bırakmalı ölçüm + eşleştirilmiş bootstrap

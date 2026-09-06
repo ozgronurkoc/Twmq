@@ -393,28 +393,24 @@ def taban_gevsekligi(butce_tl: float = 2000.0,
     """Tabanın gerçek kolon dağılımına göre ne kadar gevşek olduğunu ölçer.
 
     Modül başlığı tabanın bir **alt sınır** olduğunu söylüyor ama ne kadar
-    alt olduğunu söylemiyordu — bu fonksiyon onu sayıya çevirir. Yalnızca
-    14-garantide koşabilir, çünkü kolonları gerçekten üretebilen tek yer
-    `engines.run_auto` ve `core.py` yarıçap 1'e kilitli. 13-garantinin
-    kolon listesi satıcıdadır ve burada yoktur.
+    alt olduğunu söylemiyordu — bu fonksiyon onu sayıya çevirir. Taban
+    haftada *bir* kolon sayar (`k` kaçakta `15−k` kademesinde); oysa tam
+    sistem 12'yi bir haftada yüzlerce kez tutturur ve ikramiye kolon başına
+    ödenir.
 
-    **İki sayı döner, çünkü iki farklı ürün var ve ikisi aynı değil.**
-    Motorun ürettiği kaplama, satıcının aynı şekle sattığı kaplamadan
-    **daha gevşektir**: ölçüldü, 3 çifte + 5 üçlü şekli için motor
-    **216** kolon üretiyor, tablo aynı şekli **168** kolonla satıyor
-    (%28,6 fazla). İkisi de 14-garanti veriyor, yani satıcının kodu
-    ölçülebilir biçimde daha sıkı.
+    ─── `kat_ham` ile `kat` artık AYNI sayı, ve bu bir sonuç ──────────────
 
-    * ``kat_ham`` — motorun kendi kolonları, olduğu gibi. Motorun ürününü
-      tarif eder, oynanan ürünü değil.
-    * ``kat`` — kolon sayısı satıcının şekline (`plan.bedel`) indirgenmiş.
-      **Varsayım:** satıcının daha az kolonu, motorunkiyle *aynı biçimde*
-      dağılıyor. Bu varsayım ölçülmedi ve ölçülemez (kolon listesi elde
-      yok). Yön muhtemelen ihtiyatlı: daha sıkı bir kod aynı bütçeyi daha
-      iyi yayar, yani indirgenmiş sayı gerçeği **eksik** sayıyor olabilir.
+    Kaplama döneminde iki ayrı sayı dönüyordu çünkü iki farklı ürün vardı:
+    motorun ürettiği kaplama satıcının aynı şekle sattığından **daha
+    gevşekti** (ölçüldü: 3 çifte + 5 üçlü şekline motor 216 kolon üretiyor,
+    tablo 168 satıyor — %28,6 fazla). `kat` o farkı bir **ölçekleme
+    varsayımıyla** kapatıyordu: *"satıcının daha az kolonu motorunkiyle
+    aynı biçimde dağılıyor"* — ölçülmemiş ve ölçülemez bir varsayım.
 
-    Yayımlanan sayı `kat`tır — ikisinden küçüğü ve oynanan ürüne yakın
-    olanı. `kat_ham` yanında durur ki indirgemenin bedeli görünsün.
+    Düzde üretim yok: oynanan kolonlar seçim kümesinin tamamı, sayıları
+    çarpımın kendisi. Motor ile tablo aynı şeyi satıyor, yani `kaplama_farki`
+    tanım gereği 1,0 ve `kat == kat_ham`. Alan **ölçüm olarak** duruyor:
+    1,0'dan saparsa bir yerde kolon üretimi geri gelmiş demektir.
     """
     from .secim import sistem_secimi
 
@@ -432,8 +428,12 @@ def taban_gevsekligi(butce_tl: float = 2000.0,
         if plan is None:
             continue
         ham = gercek_kolon_dagilimi(plan.secimler, h["gercek"])
+        # **`None` = "hicbir kademe odemiyor", "olculemedi" DEGIL.** Bkz.
+        # `hafta_hakki.hafta_cetveli` basligi: bu dali atlamak sonuca gore
+        # eleme olur ve geri donusu sistematik olarak yukari kaydirir.
+        # Hafta oynandi, parasi odendi; odulu sifir.
         if ham is None:
-            continue
+            ham = {}
         # **Olcekleme dustu.** Kaplama doneminde `ham` motorun urettigi
         # kolonlardan sayiliyordu ve saticinin sekline indirgenmesi
         # gerekiyordu (motor 216, tablo 168). Duzde oynanan kolonlar
@@ -553,11 +553,12 @@ def butce_egrisi(garanti: int = VARSAYILAN_GARANTI,
     üstünde** kalırsa değişir. Aralık sıfırı keserse eğri yayımlanır ve
     varsayılan 2.000 TL'de kalır.
 
-    Yalnız 14-garantide koşar — `taban_gevsekligi` ile aynı gerekçe: kolon
-    listesi 13-garantide satıcıdadır. Sonuç 13G'ye **taşınmaz** (§3.51'in
-    15,1 katı).
+    **Garanti seviyesi diye bir parametre kalmadı.** Eskiden bu satır
+    *"yalnız 14-garantide koşar, kolon listesi 13-garantide satıcıdadır,
+    sonuç 13G'ye taşınmaz (§3.51, 15,1 kat)"* diyordu. Düzde en iyi kolon
+    her zaman `15 − k`; taşınacak bir seviye yok.
 
-        cd backend && python -m spor_toto.karne --egri --garanti 14
+        cd backend && python -m spor_toto.karne --egri
     """
     kollar: list[dict[str, Any]] = []
     hafta_kaydi: dict[float, dict[tuple[str, int], dict[str, Any]]] = {}
@@ -668,9 +669,16 @@ def hedef_kademe_kiyasi(butce_tl: float = 2000.0,
             if plan is None:
                 continue
             ham = gercek_kolon_dagilimi(plan.secimler, h["gercek"])
-            if not ham:
-                continue
-            dagilim = dict(ham)   # duzde olcekleme yok (yukaridaki gerekce)
+            # **`None` = "hicbir kademe odemiyor", "olculemedi" DEGIL.**
+            # Kaplama doneminde `gercek_kolon_dagilimi` iki ayri sebeple
+            # `None` donerdi: motor kaplama uretemedi (olcum yok) ve hicbir
+            # kademe odemiyor (olcum var, degeri sifir). Duzde birincisi
+            # yok. Ikincisini atlamak SONUCA GORE ELEME olur: kesitte yalniz
+            # tutturan haftalar kalir, maliyet odenmis ama payda kucultulmus
+            # olur ve geri donus sistematik olarak yukari kayar. (Ayni hata
+            # `hafta_hakki.hafta_cetveli`de de vardi ve orada olculdu:
+            # havuzlanmis ROI 0,31-2,32 gibi imkansiz bir bant veriyordu.)
+            dagilim = dict(ham or {})   # duzde olcekleme yok
             maliyet = plan.bedel * KOLON_BEDELI
             odul = gercek_odul(dagilim, h["tablo"]) or 0.0
             kol[(h["sezon"], h["hafta"])] = {
@@ -787,12 +795,25 @@ def omurga_kiyasi(butce_tl: float = 2000.0,
             if plan is None:
                 continue
             ham = gercek_kolon_dagilimi(plan.secimler, h["gercek"])
-            if not ham:
-                continue
-            olcek = plan.bedel / sum(ham.values())
+            # **`None` = "hicbir kademe odemiyor", "olculemedi" DEGIL.**
+            # Kaplama doneminde `gercek_kolon_dagilimi` iki ayri sebeple
+            # `None` donerdi: motor kaplama uretemedi (olcum yok) ve hicbir
+            # kademe odemiyor (olcum var, degeri sifir). Duzde birincisi
+            # yok. Ikincisini atlamak SONUCA GORE ELEME olur: kesitte yalniz
+            # tutturan haftalar kalir, maliyet odenmis ama payda kucultulmus
+            # olur ve geri donus sistematik olarak yukari kayar. (Ayni hata
+            # `hafta_hakki.hafta_cetveli`de de vardi ve orada olculdu:
+            # havuzlanmis ROI 0,31-2,32 gibi imkansiz bir bant veriyordu.)
+            #
+            # **Ve `olcek` dustu.** Kaplamada motorun kolon sayisi
+            # saticininkinden farkliydi ve oran duzeltiyordu. Duzde oynanan
+            # kolon carpimin kendisi, yani olcek her zaman 1 — ama eski
+            # ifade `plan.bedel / sum(ham.values())` idi ve `ham` YALNIZ
+            # ODEYEN kademeleri sayiyor (15..12). Duzde o toplam kolon
+            # sayisindan kucuktur, yani olcek 1'den buyuk cikip odulu
+            # SISIRIYORDU.
             maliyet = plan.bedel * KOLON_BEDELI
-            odul = gercek_odul({k: v * olcek for k, v in ham.items()},
-                               h["tablo"]) or 0.0
+            odul = gercek_odul(dict(ham or {}), h["tablo"]) or 0.0
             kol[(h["sezon"], h["hafta"])] = {
                 "maliyet": maliyet, "odul": odul, "roi": odul / maliyet,
                 "kolon": plan.bedel, "p_hedef": plan.p_hedef,
@@ -1302,12 +1323,18 @@ def kalibrasyon_kiyasi(butce_tl: float = 2000.0,
             if plan is None:
                 continue
             dag = gercek_kolon_dagilimi(plan.secimler, h["gercek"])
-            if not dag:
-                continue
-            olcek = plan.bedel / sum(dag.values())
+            # **`None` = "hicbir kademe odemiyor", "olculemedi" DEGIL.**
+            # Kaplama doneminde `gercek_kolon_dagilimi` iki ayri sebeple
+            # `None` donerdi: motor kaplama uretemedi (olcum yok) ve hicbir
+            # kademe odemiyor (olcum var, degeri sifir). Duzde birincisi
+            # yok. Ikincisini atlamak SONUCA GORE ELEME olur: kesitte yalniz
+            # tutturan haftalar kalir, maliyet odenmis ama payda kucultulmus
+            # olur ve geri donus sistematik olarak yukari kayar. (Ayni hata
+            # `hafta_hakki.hafta_cetveli`de de vardi ve orada olculdu:
+            # havuzlanmis ROI 0,31-2,32 gibi imkansiz bir bant veriyordu.)
+            # (`olcek` de dustu — gerekce `omurga_kiyasi`nda.)
             maliyet = plan.bedel * KOLON_BEDELI
-            odul = gercek_odul({k: v * olcek for k, v in dag.items()},
-                               h["tablo"]) or 0.0
+            odul = gercek_odul(dict(dag or {}), h["tablo"]) or 0.0
             kol[(h["sezon"], h["hafta"])] = {
                 "maliyet": maliyet, "odul": odul, "roi": odul / maliyet,
                 "kolon": plan.bedel, "p_hedef": plan.p_hedef,
@@ -1451,11 +1478,11 @@ def _main(argv: list[str] | None = None) -> int:  # pragma: no cover - elle
     ap.add_argument("--garanti", type=int, default=VARSAYILAN_GARANTI)
     ap.add_argument("--butce", type=float, default=None)
     ap.add_argument("--taban", action="store_true",
-                    help="tabanin gevsekligini olc (yalniz 14-garanti)")
+                    help="tabanin gevsekligini olc")
     ap.add_argument("--hedef", action="store_true",
-                    help="E2: hedef kademeyi paradan sec (yalniz 14-garanti)")
+                    help="E2: hedef kademeyi paradan sec")
     ap.add_argument("--egri", action="store_true",
-                    help="butce egrisi GERCEK kolon oduluyle (yalniz 14-garanti)")
+                    help="butce egrisi GERCEK kolon oduluyle")
     ap.add_argument("--hafta-siniri", type=int, default=None,
                     help="ilk N haftayla sinirla (deneme kosumu)")
     ap.add_argument("--omurga", metavar="ADAY", default=None,
@@ -1538,7 +1565,7 @@ def _main(argv: list[str] | None = None) -> int:  # pragma: no cover - elle
               "bir\nbasamagin farki %95 araligin TAMAMIYLA sifirin ustunde "
               "kalirsa degisir\n(ve bes aday oldugu icin Holm'dan da "
               "gecmelidir).")
-        print("Yalniz 14-garanti. Sonuc 13G'ye TASINMAZ (§3.51, 15,1 kat).")
+        print("Duz (tam sistem); en iyi kolon 15-k. Garanti seviyesi yok.")
         return 0
 
     if a.banko:

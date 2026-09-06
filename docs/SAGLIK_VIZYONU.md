@@ -88,22 +88,28 @@ Sayfanın güvenilirliği, neyi kanıtlamadığını açıkça söylemesine bağ
 
 ### 3.1 Kanıtlanan
 
-- 16 satırlık sabit kaplama gerçekten 14-garanti veriyor (en kötü durumda
-  hata ≤ 1, açıkta nokta yok).
-- Mesafe muhasebesi kapanıyor: 0 ve 1 hatalı noktaların toplamı arama uzayının
-  tamamını veriyor.
-- Olasılık raporu kendi içinde çelişmiyor (`p15 + p14 = p_küme_içi`).
+- Seçim kümesinin **tamamı** oynanıyor: üretilen kolon sayısı seçim uzayının
+  büyüklüğüne eşit ve kolonlar tekil (`duz_kolonlar`).
+- Kademe aritmetiği kapanıyor: `duz.kademe_sayimlari`nın verdiği kademe
+  adetleri kolonlar **tek tek sayılarak** doğrulanıyor — formüle güvenilmiyor
+  (`duz_kademe_aritmetigi`).
+- Olasılık raporu kendi içinde çelişmiyor (`p15 = p_küme_içi`).
 - Simülasyon ile kesin hesap aynı yeri gösteriyor.
-- Bayes kaplamayı değiştirmiyor, yalnızca tahmini yumuşatıyor.
+- Bayes kolonları değiştirmiyor, yalnızca tahmini yumuşatıyor.
+
+> Bu listenin ilk üç maddesi eskiden şöyleydi: *"16 satırlık sabit kaplama
+> gerçekten 14-garanti veriyor (en kötü durumda hata ≤ 1, açıkta nokta yok)"*,
+> *"mesafe muhasebesi kapanıyor"*, *"`p15 + p14 = p_küme_içi`"*. Kaplama
+> söküldü (`docs/DUZ_SISTEME_GECIS.md`); mesafe ve açık nokta diye bir şey
+> kalmadı, ve küme içinde kalmak artık doğrudan **15** demek.
 - Seçim **dışı** bölgenin kombinatoryal sınırları geçerli.
 - İstatistik ve oran katmanlarının verisi kendi içinde tutarlı.
 - API'nin döndürdüğü sonuç sözleşmesi eksiksiz.
 - `/api/meta`'nın ilan ettiği envanter kendi içinde tutarlı: her sınırda
   min ≤ varsayılan ≤ max, preset ve mod listeleri motordakiyle aynı.
-- İlan edilen **her mod** koşuyor ve `garanti` bayrağı gerçeği söylüyor —
-  özellikle `maxcov`'un garanti *vermediği* de kanıtlanıyor.
-- Her Bayes preset'i çalışıyor ve hiçbiri kaplamayı bozmuyor.
-- Alternatif 16'lık kümeler (`variant`) de 14-garanti veriyor.
+- İlan edilen mod envanteri motordakiyle aynı (`mod_envanteri`). Liste artık
+  **tek elemanlı** (`duz`) — yedi modun hepsi kaplamayla birlikte düştü.
+- Her Bayes preset'i çalışıyor ve hiçbiri kolon kümesini bozmuyor.
 - Aynı değişmezler **dört kupon sınıfında** geçerli (8 çift, 7 çift + 8 banko,
   9 çift, üçlü içeren) ve her sınıfın bedeli beklenen sayıya eşit.
 - `/api/stats` ve `/api/backtest` gövdeleri kendi içinde tutarlı; `?last=`
@@ -132,7 +138,7 @@ ikisi farklı katmandır ve birbirinin yerine geçmez.
 
 **Kendi kuponunu ayrıca denetleyebilirsin.** `POST /api/health/kupon` (ve
 sayfadaki *"Kendi kuponunu doğrula"* bloğu) verilen kuponu aynı
-kombinatoryal zorunluluklardan geçirir: kaplama garantisi, mesafe
+kombinatoryal zorunluluklardan geçirir: kümenin tamamının oynandığı, kademe
 muhasebesi, satır/kolon muhasebesi, alt sınır ve olasılık tutarlılığı.
 Sonucu kayıtlı raporun tablosuna **karışmaz** ve düşmesi 503 üretmez — bir
 kuponun değişmezi servisin sağlık durumu değildir.
@@ -181,8 +187,8 @@ teşhis konumuna işaret eder:
 
 | Kategori | Katman | Düşerse |
 |---|---|---|
-| `cekirdek` | Kodlama, 14-garanti, mesafe muhasebesi, varyantlar | **Ürünün ana vaadi geçersiz.** Yayın durdurulur |
-| `motor` | Alternatif çözücüler + ilan edilen 7 modun tamamı | Bir mod güvenilmez; fix16 hâlâ ayakta olabilir |
+| `cekirdek` | Kodlama, düz kolon üretimi, kademe aritmetiği | **Ürünün ana vaadi geçersiz.** Yayın durdurulur |
+| `motor` | İlan edilen mod envanteri (tek mod: `duz`) | İlan edilen ile çalışan ayrışmış |
 | `olasilik` | Exact, Monte Carlo, Bayes (+ preset'ler), Markov | Sayılar yanlış; garanti hâlâ geçerli olabilir |
 | `analiz` | Hata frekansı, fire, veri seti, oran arşivi, geri test | Yorum katmanı bozuk; motor sağlam |
 | `ucuca` | `/api/meta`, `/api/stats` + `/api/backtest` gövdeleri ve API sonuç sözleşmesi | Arayüz yanlış okuyor olabilir |
@@ -336,8 +342,8 @@ gerekçesi bu bölümde güncellenmelidir.
 
 **Sabit kupon sınıfları.** Çekirdek kontroller dört sınıfta koşar (8 çift/256
 nokta, 7 çift + 8 banko/128, 9 çift/512, üçlü içeren/768); beklenen bedel her
-sınıf için tabloda yazılıdır, yani kontrol "kaplama geçerli" demekle kalmaz,
-"bu sınıfta bedel tam olarak bu" der. Sınıflar **sabittir**: rastgele kupon
+sınıf için tabloda yazılıdır, yani kontrol "küme tam oynanıyor" demekle
+kalmaz, "bu sınıfta bedel tam olarak bu" der. Sınıflar **sabittir**: rastgele kupon
 üretmek kapsamı genişletirdi ama determinizmi bozardı ve arada bir düşen bir
 kontrol, hiç olmamasından kötüdür (§4, madde 1). Geniş girdi taraması
 `pytest`'teki fuzz invariant testlerinin işidir; kullanıcının kendi kuponu ise
@@ -390,7 +396,7 @@ Bugün açık kalanlar, kapsamı değil **ölçeği** ilgilendiriyor:
 | 1 | **Kalıcı zaman serisi** — halka tampon yerine diske/DB'ye | Süreç yeniden başlayınca geçmiş sıfırlanıyor; "geçen hafta ne oldu?" cevapsız |
 | 2 | **Örnekler arası birleştirme** — çok worker'lı dağıtımda tek zaman serisi | Bugün her worker kendi tamponunu tutuyor (§9) |
 | 3 | **Süre bantlarının kendini ayarlaması** — sabit çarpan yerine ölçülen dağılım | Bant elle yazılıyor; makine yavaşladığında toplu yanlış alarm |
-| 4 | **Kupon denetiminde mod matrisi** — kullanıcının kuponunu tüm modlarda koşturma | Bugün tek mod (varsayılan fix16) denetleniyor |
+| 4 | ~~Kupon denetiminde mod matrisi~~ | **Konusuz kaldı:** modlar kaplamayla birlikte düştü, tek mod var (`duz`) |
 | 5 | **Alarm gövdesinin biçimlenmesi** — Slack/webhook şablonu | Bugün ham JSON gidiyor |
 
 Bilinçli olarak **yapılmayacaklar**: kontrolleri arayüzden düzenlemek
@@ -425,7 +431,7 @@ olmamalıdır.
 | Kupon sınıfları | 8 çift/256 · 7 çift+8 banko/128 · 9 çift/512 · üçlü içeren/768 |
 | Örnek kupon | `1,10,1,12,0,10,2,10,1,12,02,1,10,2,10` |
 | Mod envanteri kuponu | 7 çift → 128 nokta, alt sınır 16 kolon |
-| Kupon denetimi (`/api/health/kupon`) | 5 değişmez, varsayılan mod `fix16` |
+| Kupon denetimi (`/api/health/kupon`) | 2 değişmez (`kume_tamami_oynaniyor`, `olasilik_tutarliligi`), tek mod `duz` |
 | `auto` modu (256 nokta) | ~3,5 sn (ILP bütçesi `auto_ilp_limit` = 3 sn) |
 
 ---
