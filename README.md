@@ -994,7 +994,7 @@ backend/
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
                        sehir/ · xg/ · sistem_fiyat/ · hakem/
-  tests/               pytest (73 dosya → 2.085 test; §9'da katman dökümü)
+  tests/               pytest (74 dosya → 2.088 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1198,8 +1198,8 @@ Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant'lar, CLI (Bayes pre
 dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri test,
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
-eşleme, ikinci kayıt). **73 test dosyası, parametrizasyonla
-2.085 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+eşleme, ikinci kayıt). **74 test dosyası, parametrizasyonla
+2.088 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
@@ -1213,6 +1213,7 @@ karşı denetler):
 | 2. Tahmin (kalabalık ayarı · bağımsız görüş) | `tahmin2` | 35 |
 | Karar katmanı | `secim` | 26 |
 | Amaç kıyası (`P(k≤2)` ↔ `E[k]`: aynı kupon mu?) | **`amac_kiyasi`** | 5 |
+| Sistem kıyası (kaplama ↔ düz; Aşama 2'de silinecek) | **`sistem_kiyasi`** | 3 |
 | Sistem fiyat tablosu (bedel + garanti) | **`sistem`** | 10 |
 | Para karnesi (garanti tabanı · enflasyon · canlı · GERÇEK kolon dağılımı · ödeyen olay · banko sapması) | **`karne`** | 31 |
 | Hakem sütunu (E4 · sızıntısızlık · yayılım sınavı) | **`hakem`** | 5 |
@@ -1502,6 +1503,7 @@ olması gerekir. Tanımlıysa yalnızca **durum değişiminde** bildirim gider.
 | [`docs/BENZER_PLANI_ESLEMESI.md`](docs/BENZER_PLANI_ESLEMESI.md) | `benzer.py` için gelen dış planın aynı biçimde eşlemesi: gerçekten eksik olan üçü (`inf` oran · toleransın üç kapıda üç sınırı · zaman kesmesi) uygulandı, altısı gerekçesiyle reddedildi, üçü kaydedildi |
 | [`docs/GELECEK_MIMARISI_ESLEMESI.md`](docs/GELECEK_MIMARISI_ESLEMESI.md) | Dışarıdan gelen bir **gelecek mimarisi makalesinin** aynı biçimde eşlemesi: önerdiği Faz I–V'in tamamı zaten yapılmış ve **ölçülmüştü** (hiçbir aile kapanış fiyatını geçmedi), gerçekten yeni olan tek madde **maçlar arası bağımlılığın kuyruk etkisi** oldu — ölçüldü ve **eksen kapandı** (§3.46); makalenin hiç görmediği şey ise açık olan tek eksen: **havuz** |
 | [`docs/KADEME_OLASILIKLARI.md`](docs/KADEME_OLASILIKLARI.md) | **15/15 yapma olasılığı** ve onun üç kardeşi (14, 13, 12): 3^15 uzayının tamamı açılarak ölçülen tek kolon olasılığı (874x), gerçek sonucun 114 haftadaki sırası, bütçeye göre kademe tablosu, paranın hangi kademeden geldiği. İki yeni ölçüm: **seyreltme** (Spearman −0,843 — tuttuğun hafta herkesin tuttuğu haftadır) ve arşivde **32 anormal hafta**. Ölçüm hattı `scripts/kademe_analizi.py` |
+| [`docs/DUZ_SISTEME_GECIS.md`](docs/DUZ_SISTEME_GECIS.md) | **Kaplama katmanının sökülmesinin gerekçesi ve planı.** Aynı kolon bütçesinde her sistemin erişebildiği en iyi şekil karşılaştırıldı: düz, E[TL]'de **1,78x-5,26x** ve `P(>=12)`'de önde: fark sistemden değil, `solve_fix16`'in **en az yedi çifte** şartının dayattığı yayvan şekilden geliyor. Once bilinen dogrusallik yeniden uretildi (aynı işaretler iki sistemde kolon başına 421,0 ↔ 421,9 TL). Belge **kaplama sökülmeden önce** yazıldı: söküm bu kıyası da götürdüğü için gerekçe yalnızca burada kalıyor. Ölçüm hattı `scripts/sistem_kiyasi.py` |
 | [`docs/KAZANMA_KARNESI.md`](docs/KAZANMA_KARNESI.md) | **Canlı karne** — her hafta öngörülen (`P(k≤eşik)`, `E[TL]`) ↔ gerçekleşen (kaçak, kademe, ödül), kümülatif net. Bir tahmin kaydı DEĞİL: plan kupon öncesi girdilerden bugünkü motorla yeniden türetiliyor ve ödül **garanti tabanıdır** (alt sınır). `scripts/hafta_kos.py --sonrasi` ile yeniden üretilir |
 | [`docs/KAZANMA_PLANI.md`](docs/KAZANMA_PLANI.md) | **Sekiz haftalık ölçüm sırası** — kazanma şansını artırmanın planı. Teşhis: tahmin ekseni on bir ölçümle kapalı ve `KADEME` §6'nın seyreltmesi (Spearman −0,843) kalanı da yiyor; açık olan eksen havuz. Çekirdeği hiç birleştirilmemiş iki arşiv: 223 haftalık resmî kazanan adedi × 112 haftalık kupon+oran+sonuç = **448 gözlem**, ve `getiri.KALABALIK_MODELLERI`'nin üç **varsayımı** o gözleme hiç oturtulmadı. Her fazın durma kuralı önceden yazılı |
 | [`docs/KUPON_NASIL_KURULUYOR.md`](docs/KUPON_NASIL_KURULUYOR.md) | **Boru hattının uçtan uca anlatımı** — girdi (15 maç · açılış/kapanış oranları · oynanma yüzdeleri) oynanacak satıra dönene kadar hangi ele değiyor: veri kapısı ve eşikleri, marj arındırma (`shin`), açılışın üç işi (kupona **girmez**), kalabalık payı, garanti↔kaçak aritmetiği, Pareto DP seçimi, satıcı fiyat tablosu, kaplama kodu, havuz ve `E[TL]`. Her sabitin yanında **ölçüm mü varsayım mı**; örnek koşum 2026/27 4. hafta |

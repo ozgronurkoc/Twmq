@@ -214,7 +214,8 @@
    "anildigi_yerler": [
     "backend/data/super_toto/2026_27/hafta_04_kupon.json"
    ],
-   "bekci": "backend/tests/test_super_toto.py::test_kupon_kume_ici_olasiligi_tutarli"
+   "bekci": "backend/tests/test_super_toto.py::test_kupon_kume_ici_olasiligi_tutarli",
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "4. hafta P(en iyi kolon >= 12) — dondurulan ana varyant",
@@ -224,7 +225,8 @@
    "anildigi_yerler": [
     "backend/data/super_toto/2026_27/hafta_04_kupon.json"
    ],
-   "bekci": null
+   "bekci": null,
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "4. hafta ana fiyat ortalama marji (2. mac Nesine'den geldigi icin sisti)",
@@ -234,7 +236,8 @@
    "anildigi_yerler": [
     "backend/data/super_toto/2026_27/hafta_04_kupon.json"
    ],
-   "bekci": "backend/tests/test_super_toto.py::test_besleme_eksik_bahisci_satirinda_cokmez"
+   "bekci": "backend/tests/test_super_toto.py::test_besleme_eksik_bahisci_satirinda_cokmez",
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "4. hafta Nesine bayat kapanis satiri sayisi (kapanis == acilis)",
@@ -244,7 +247,8 @@
    "anildigi_yerler": [
     "backend/data/super_toto/2026_27/hafta_04.json"
    ],
-   "bekci": "backend/scripts/super_toto_hafta.py::_fiyat_uyarilari"
+   "bekci": "backend/scripts/super_toto_hafta.py::_fiyat_uyarilari",
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "4. hafta acilis/kapanis kuponunun ayristigi mac sayisi",
@@ -254,7 +258,8 @@
    "anildigi_yerler": [
     "backend/data/super_toto/2026_27/hafta_04_kupon.json"
    ],
-   "bekci": null
+   "bekci": null,
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "4. hafta 3. Kupon (surpriz) marjinal katkisi",
@@ -264,7 +269,8 @@
    "anildigi_yerler": [
     "backend/data/super_toto/2026_27/hafta_04_kupon.json"
    ],
-   "bekci": null
+   "bekci": null,
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "4. hafta 1. Kupon P(en iyi kolon >= 12) — kolonlardan olculen",
@@ -274,7 +280,8 @@
    "anildigi_yerler": [
     "backend/data/super_toto/2026_27/hafta_04_kupon.json"
    ],
-   "bekci": null
+   "bekci": null,
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "4. hafta 3. Kupon kalabalik-ici pay",
@@ -284,7 +291,8 @@
    "anildigi_yerler": [
     "backend/data/super_toto/2026_27/hafta_04_kupon.json"
    ],
-   "bekci": null
+   "bekci": null,
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "kalabalik modeli lambda (favoriye yigilma keskinligi)",
@@ -331,7 +339,8 @@
     "docs/KAZANMA_PLANI.md Faz S"
    ],
    "bekci": "-",
-   "not": "UCUNCU KEZ DUZELTILDI. (1) ilk olcum 2,63x — kademe havuzlari elle yazilmisti. (2) duzeltilmis 1,003x — dogru havuzlar ama KISITSIZ optimizasyon. (3) kisitli olcum: uc sonuclanmis haftada gerceklesen kazanc SIFIR; kisitsiz arama 1.439 TL kaybettiriyor cunku tek buyuk sayi (3,01x) tam da kaybeden haftadan geliyordu. n=3."
+   "not": "UCUNCU KEZ DUZELTILDI. (1) ilk olcum 2,63x — kademe havuzlari elle yazilmisti. (2) duzeltilmis 1,003x — dogru havuzlar ama KISITSIZ optimizasyon. (3) kisitli olcum: uc sonuclanmis haftada gerceklesen kazanc SIFIR; kisitsiz arama 1.439 TL kaybettiriyor cunku tek buyuk sayi (3,01x) tam da kaybeden haftadan geliyordu. n=3.",
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "haftalik geri donus P(zarar) — olculen kolon bedeliyle (₺10)",
@@ -388,7 +397,8 @@
     "docs/KAZANMA_PLANI.md"
    ],
    "bekci": "backend/tests/test_secim_kalibrasyonu.py::test_kupon_kurali_kalibrasyonu_BOZMUYOR",
-   "not": "114 hafta, 13G, 2.000 TL. Hafta duzeyinde bootstrap %95 [-0,0506, +0,0414] — sifiri kesiyor, yani kupon kurali kalibrasyonu BOZMUYOR. §3.49'un ters secimi gercek ama 'model' kuralina (p_model - p_piyasa > esik) ait."
+   "not": "114 hafta, 13G, 2.000 TL. Hafta duzeyinde bootstrap %95 [-0,0506, +0,0414] — sifiri kesiyor, yani kupon kurali kalibrasyonu BOZMUYOR. §3.49'un ters secimi gercek ama 'model' kuralina (p_model - p_piyasa > esik) ait.",
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "kalabalik ayarinin gerceklesen kazanci (makul kisitta)",
@@ -399,7 +409,8 @@
     "docs/KAZANMA_PLANI.md"
    ],
    "bekci": "backend/tests/test_secim.py::test_KISITSIZ_arama_hedefi_yok_edebilir",
-   "not": "TL. Uc sonuclanmis hafta, 13G, 2.000 TL. Kayip tavani 0,00-0,50 araliginda gerceklesen odul tabanla AYNI (2.668 TL); 0,95'te 1.230 TL, yani 1.439 TL kayip. n=3."
+   "not": "TL. Uc sonuclanmis hafta, 13G, 2.000 TL. Kayip tavani 0,00-0,50 araliginda gerceklesen odul tabanla AYNI (2.668 TL); 0,95'te 1.230 TL, yani 1.439 TL kayip. n=3.",
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "basabas kademe — 13G / 2.000 TL kuponu kac tutturunca maliyeti karsilar",
@@ -410,7 +421,8 @@
     "docs/KAZANMA_PLANI.md"
    ],
    "bekci": "-",
-   "not": "GARANTI TABANI icin (bir kolon). 114 haftanin odul medyanlari: 12 bilen 288 TL, 13 bilen 2.027 TL; 13G/2.000 TL kuponu 162 kolon = 1.620 TL. Yani 12 tutturmak MALIYETI KARSILAMIYOR — gerceklesen karne de dogruluyor (2. hafta -181 TL, 3. hafta -390 TL, ikisi de 12 tutturdu). Gercek sistem 12'yi birden cok kolonla tutar ve tabanin gevsekligi OLCULMEDI — E1 onu olcer. || OLCEK NOTU (2026-09-04): bu sayi GARANTI TABANI olceginde, yani bir kolon sayarak. E1 tabanin 2,39 kat gevsek oldugunu olctu ve 14G'de gercek kolonlarla olculdugunde 12 tutturmak kacak=0 haftalarinda maliyeti KARSILIYOR (medyan 1,34x). Sayi yeniden yazilmadi: 13G olcumu hala yok ve §3.51 garantiler arasi tasimayi gecersiz kiliyor. Yeni kayit: 'basabas kademe — 12 tutturmak GERCEK kolonlarla maliyeti karsiliyor mu'."
+   "not": "GARANTI TABANI icin (bir kolon). 114 haftanin odul medyanlari: 12 bilen 288 TL, 13 bilen 2.027 TL; 13G/2.000 TL kuponu 162 kolon = 1.620 TL. Yani 12 tutturmak MALIYETI KARSILAMIYOR — gerceklesen karne de dogruluyor (2. hafta -181 TL, 3. hafta -390 TL, ikisi de 12 tutturdu). Gercek sistem 12'yi birden cok kolonla tutar ve tabanin gevsekligi OLCULMEDI — E1 onu olcer. || OLCEK NOTU (2026-09-04): bu sayi GARANTI TABANI olceginde, yani bir kolon sayarak. E1 tabanin 2,39 kat gevsek oldugunu olctu ve 14G'de gercek kolonlarla olculdugunde 12 tutturmak kacak=0 haftalarinda maliyeti KARSILIYOR (medyan 1,34x). Sayi yeniden yazilmadi: 13G olcumu hala yok ve §3.51 garantiler arasi tasimayi gecersiz kiliyor. Yeni kayit: 'basabas kademe — 12 tutturmak GERCEK kolonlarla maliyeti karsiliyor mu'.",
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "garanti tabaninin gevsekligi — gercek kolon odulu / taban odulu",
@@ -422,7 +434,8 @@
     "docs/ISTATISTIK_YOL_HARITASI.md"
    ],
    "bekci": "backend/tests/test_karne.py::test_taban_gevsekligi_ULASILABILIR_ve_yon_YUKARI",
-   "not": "KAT. 114 hafta, 14-garanti, 2.000 TL. Taban 19.354 TL (geri donus %10,1), gercek kolon dagilimi 46.301 TL (%24,2). Yalniz 14G'de olculebilir: kolonlari uretebilen tek yer engines.run_auto ve core.py yaricap 1'e kilitli. Motorun HAM kolonlariyla 3,08 kat; yayimlanan 2,39 satici sekline (plan.bedel) indirgenmis olan."
+   "not": "KAT. 114 hafta, 14-garanti, 2.000 TL. Taban 19.354 TL (geri donus %10,1), gercek kolon dagilimi 46.301 TL (%24,2). Yalniz 14G'de olculebilir: kolonlari uretebilen tek yer engines.run_auto ve core.py yaricap 1'e kilitli. Motorun HAM kolonlariyla 3,08 kat; yayimlanan 2,39 satici sekline (plan.bedel) indirgenmis olan.",
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "garanti tabaninin verdigi geri donus — 14G / 2.000 TL",
@@ -433,7 +446,8 @@
     "docs/KAZANMA_PLANI.md"
    ],
    "bekci": "backend/tests/test_karne.py::test_taban_gevsekligi_ULASILABILIR_ve_yon_YUKARI",
-   "not": "114 hafta, 191.520 TL maliyet, 19.354 TL taban odul. Alt sinir."
+   "not": "114 hafta, 191.520 TL maliyet, 19.354 TL taban odul. Alt sinir.",
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "gercek kolon dagiliminin verdigi geri donus — 14G / 2.000 TL",
@@ -444,7 +458,8 @@
     "docs/KAZANMA_PLANI.md"
    ],
    "bekci": "backend/tests/test_karne.py::test_taban_gevsekligi_ULASILABILIR_ve_yon_YUKARI",
-   "not": "114 hafta, 191.520 TL maliyet, 46.301 TL odul. Hala 1'in ALTINDA: taban gevsekti ama kupon yine de para kaybediyor. Kalabalik ekseni bu acigi kapatmak zorunda, taban duzeltmesi kapatmiyor."
+   "not": "114 hafta, 191.520 TL maliyet, 46.301 TL odul. Hala 1'in ALTINDA: taban gevsekti ama kupon yine de para kaybediyor. Kalabalik ekseni bu acigi kapatmak zorunda, taban duzeltmesi kapatmiyor.",
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "motorun kaplamasi saticininkinden ne kadar gevsek",
@@ -455,7 +470,8 @@
     "docs/KAZANMA_PLANI.md"
    ],
    "bekci": "backend/tests/test_karne.py::test_motorun_kaplamasi_TABLODAN_gevsek_ve_bu_yazili",
-   "not": "114 hafta boyunca motor 24.624 kolon uretti, ST EXTRA tablosu ayni sekilleri 19.152 kolonla satiyor. Ikisi de 14-garanti. Yani saticinin kaplama kodu OLCULEBILIR bicimde daha siki ve motorun kolonlari oynanan urunu tarif etmiyor."
+   "not": "114 hafta boyunca motor 24.624 kolon uretti, ST EXTRA tablosu ayni sekilleri 19.152 kolonla satiyor. Ikisi de 14-garanti. Yani saticinin kaplama kodu OLCULEBILIR bicimde daha siki ve motorun kolonlari oynanan urunu tarif etmiyor.",
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "12+ tutturan ortalama kolon sayisi — kacaga gore, 14G / 2.000 TL",
@@ -466,7 +482,8 @@
     "docs/KAZANMA_PLANI.md"
    ],
    "bekci": "backend/tests/test_karne.py::test_taban_gevsekligi_ULASILABILIR_ve_yon_YUKARI",
-   "not": "k=0'da 26,8 kolon; k=1'de 10,2; k=2'de 1,3; k>=3'te 0. Taban her durumda 1 kolon sayiyor, yani tabanin yanliligi kacak KUCULDUKCE buyuyor — en cok IYI giden haftalari eksik sayiyor."
+   "not": "k=0'da 26,8 kolon; k=1'de 10,2; k=2'de 1,3; k>=3'te 0. Taban her durumda 1 kolon sayiyor, yani tabanin yanliligi kacak KUCULDUKCE buyuyor — en cok IYI giden haftalari eksik sayiyor.",
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "hedef kademe 13 - 12: eslestirilmis ROI farki (E2)",
@@ -478,7 +495,8 @@
     "docs/ISTATISTIK_YOL_HARITASI.md"
    ],
    "bekci": "backend/tests/test_karne.py::test_hedef_kademe_kiyasi_ESLESTIRILMIS_ve_ayni_haftalar",
-   "not": "114 hafta, 14G, 2.000 TL, GERCEK kolon odulu. %95 [+0,00000, +0,02724] — alt ucu tam sifirda, yani SIFIRI KESIYOR. Kuyruksuz (en iyi 5 hafta cikinca) +0,00970 [+0,00000, +0,02849], ayni sonuc. E2'nin onceden yazilmis durma kurali: hedef 12 KALIR."
+   "not": "114 hafta, 14G, 2.000 TL, GERCEK kolon odulu. %95 [+0,00000, +0,02724] — alt ucu tam sifirda, yani SIFIRI KESIYOR. Kuyruksuz (en iyi 5 hafta cikinca) +0,00970 [+0,00000, +0,02849], ayni sonuc. E2'nin onceden yazilmis durma kurali: hedef 12 KALIR.",
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "hedef kademe 14 - 12: eslestirilmis ROI farki (E2)",
@@ -489,7 +507,8 @@
     "docs/KAZANMA_PLANI.md"
    ],
    "bekci": "backend/tests/test_karne.py::test_hedef_kademe_kiyasi_ESLESTIRILMIS_ve_ayni_haftalar",
-   "not": "%95 [−0,02358, +0,00405] — sifiri kesiyor. Yon EKSI: hedefi 14'e cekmek zarar ediyor."
+   "not": "%95 [−0,02358, +0,00405] — sifiri kesiyor. Yon EKSI: hedefi 14'e cekmek zarar ediyor.",
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "hedefi sikilastirinca P(hedef) ne oluyor — 14G / 2.000 TL",
@@ -500,7 +519,8 @@
     "docs/KAZANMA_PLANI.md"
    ],
    "bekci": "backend/tests/test_karne.py::test_hedef_SIKILASINCA_tutturma_olasiligi_DUSER",
-   "not": "hedef 12'de ortalama P(hedef) 0,3016; hedef 13'te 0,1064; hedef 14'te 0,0182. Ucu de AYNI sekli aliyor (3 cifte + 5 uclu, 168 kolon) cunku sekli butce belirliyor; hedef yalnizca hangi sembolun isaretlendigini degistiriyor. E2'nin yapisal olarak zayif bir kol olmasinin sebebi bu."
+   "not": "hedef 12'de ortalama P(hedef) 0,3016; hedef 13'te 0,1064; hedef 14'te 0,0182. Ucu de AYNI sekli aliyor (3 cifte + 5 uclu, 168 kolon) cunku sekli butce belirliyor; hedef yalnizca hangi sembolun isaretlendigini degistiriyor. E2'nin yapisal olarak zayif bir kol olmasinin sebebi bu.",
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "basabas kademe — 12 tutturmak GERCEK kolonlarla maliyeti karsiliyor mu",
@@ -512,7 +532,8 @@
     "docs/ISTATISTIK_YOL_HARITASI.md"
    ],
    "bekci": "backend/tests/test_karne.py::test_hedef_kademe_kiyasi_ESLESTIRILMIS_ve_ayni_haftalar",
-   "not": "KAT, medyan. 14G / 2.000 TL / hedef 12, kacak = 0 olan 4 haftada gerceklesen medyan geri donus 1,34x — yani 12 tutturmak maliyeti KARSILIYOR. Kacak 1'de 0,28x (ortalama 0,86x), kacak 2'de 0,12x, kacak >=3'te 0. Bu, tabana dayali eski 'basabas kademe 13' okumasini duzeltir: o okuma bir kolon sayiyordu ve E1 tabanin 2,39 kat gevsek oldugunu olctu. 13G'ye TASINMAZ (§3.51)."
+   "not": "KAT, medyan. 14G / 2.000 TL / hedef 12, kacak = 0 olan 4 haftada gerceklesen medyan geri donus 1,34x — yani 12 tutturmak maliyeti KARSILIYOR. Kacak 1'de 0,28x (ortalama 0,86x), kacak 2'de 0,12x, kacak >=3'te 0. Bu, tabana dayali eski 'basabas kademe 13' okumasini duzeltir: o okuma bir kolon sayiyordu ve E1 tabanin 2,39 kat gevsek oldugunu olctu. 13G'ye TASINMAZ (§3.51).",
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "omurga BFE − Avg: eslestirilmis ROI farki, kupon duzeyi (E3)",
@@ -524,7 +545,8 @@
     "docs/ISTATISTIK_YOL_HARITASI.md"
    ],
    "bekci": "backend/tests/test_karne.py::test_omurga_kiyasi_P_farkinin_ayrisimini_ZORUNLU_veriyor",
-   "not": "64 ORTAK hafta (BFE 2022/23-2023/24'te hic yok), 14G, 2.000 TL, GERCEK kolon odulu. %95 [−0,06232, +0,02558] — sifiri kesiyor ve isaret EKSI. Kuyruksuz −0,01165 [−0,06836, +0,02787]. E3'un onceden yazilmis durma kurali: omurga Avg KALIR."
+   "not": "64 ORTAK hafta (BFE 2022/23-2023/24'te hic yok), 14G, 2.000 TL, GERCEK kolon odulu. %95 [−0,06232, +0,02558] — sifiri kesiyor ve isaret EKSI. Kuyruksuz −0,01165 [−0,06836, +0,02787]. E3'un onceden yazilmis durma kurali: omurga Avg KALIR.",
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "omurga BFE − Avg: P(hedef) farki (E3)",
@@ -536,7 +558,8 @@
     "docs/ISTATISTIK_YOL_HARITASI.md"
    ],
    "bekci": "backend/tests/test_karne.py::test_omurga_kiyasi_P_farkinin_ayrisimini_ZORUNLU_veriyor",
-   "not": "%95 [+0,00594, +0,00924] — SIFIRI KESMIYOR. Ama bu bir sonuc DEGIL: P(hedef) modelin kendi guvenidir ve daha keskin bir olasilik isabet hic degismese bile onu buyutur. Ayrisim: farkin %81'i secim DEGISMEDEN geliyor. Gerceklesen kacak farki −0,04688 [−0,14062, +0,04688] — sifiri kesiyor."
+   "not": "%95 [+0,00594, +0,00924] — SIFIRI KESMIYOR. Ama bu bir sonuc DEGIL: P(hedef) modelin kendi guvenidir ve daha keskin bir olasilik isabet hic degismese bile onu buyutur. Ayrisim: farkin %81'i secim DEGISMEDEN geliyor. Gerceklesen kacak farki −0,04688 [−0,14062, +0,04688] — sifiri kesiyor.",
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "BFE'nin P(hedef) kazancinin kacta kaci secim degismeden geliyor",
@@ -548,7 +571,8 @@
     "docs/ISTATISTIK_YOL_HARITASI.md"
    ],
    "bekci": "backend/tests/test_karne.py::test_omurga_kiyasi_P_farkinin_ayrisimini_ZORUNLU_veriyor",
-   "not": "64 hafta. Serbest (her fiyat kendi kuponunu kurar) +0,00758; sekil sabit (Avg'nin kuponu BFE olasiligiyla puanlanmis) +0,00611. Yani anlamli gorunen P kazancinin dortte ucunden fazlasi kuponda hicbir sey degismeden, yalnizca BFE'nin olasiliginin keskin olmasindan geliyor (ilk iki sembolun ortalama kutlesi Avg 0,7880 -> BFE 0,7904). Favori isabeti pratikte ayni: 548/960 -> 550/960."
+   "not": "64 hafta. Serbest (her fiyat kendi kuponunu kurar) +0,00758; sekil sabit (Avg'nin kuponu BFE olasiligiyla puanlanmis) +0,00611. Yani anlamli gorunen P kazancinin dortte ucunden fazlasi kuponda hicbir sey degismeden, yalnizca BFE'nin olasiliginin keskin olmasindan geliyor (ilk iki sembolun ortalama kutlesi Avg 0,7880 -> BFE 0,7904). Favori isabeti pratikte ayni: 548/960 -> 550/960.",
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "hakem sutununun kapsamasi — korpusun kaci hakemli (E4)",
@@ -609,7 +633,8 @@
     "docs/KUPON_NASIL_KURULUYOR.md"
    ],
    "bekci": null,
-   "not": "Dort haftanin dordunde de ayni sekil cikti: butce+garanti sekli neredeyse civiliyor, hafta yalnizca HANGI macin hangi seviyeye dusecegini ve hangi sembollerin isaretlenecegini belirliyor."
+   "not": "Dort haftanin dordunde de ayni sekil cikti: butce+garanti sekli neredeyse civiliyor, hafta yalnizca HANGI macin hangi seviyeye dusecegini ve hangi sembollerin isaretlenecegini belirliyor.",
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "2026/27 4. hafta plani — bedel (13-garanti, 2.000 TL butce)",
@@ -621,7 +646,8 @@
     "docs/KAZANMA_KARNESI.md"
    ],
    "bekci": null,
-   "not": "Ayni sekil 12-garantide 45 kolon (450 TL), 14-garantide 972 kolon (9.720 TL) — sistem.bedel(6,1,8,G)."
+   "not": "Ayni sekil 12-garantide 45 kolon (450 TL), 14-garantide 972 kolon (9.720 TL) — sistem.bedel(6,1,8,G).",
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "2026/27 4. hafta P(en iyi kolon >= 12) = P(k <= 1), 13-garanti",
@@ -632,7 +658,8 @@
     "docs/KUPON_NASIL_KURULUYOR.md"
    ],
    "bekci": null,
-   "not": "Ayni haftanin 14-garanti fix16 yolundaki karsiligi %46,70 — ama orada butce 3.888 kolon (38.880 TL). Iki sayi ayni olcekte DEGILDIR."
+   "not": "Ayni haftanin 14-garanti fix16 yolundaki karsiligi %46,70 — ama orada butce 3.888 kolon (38.880 TL). Iki sayi ayni olcekte DEGILDIR.",
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "13-garantide 2.000 TL'ye sigan sekil sayisi (ST EXTRA tablosu)",
@@ -643,7 +670,8 @@
     "docs/KUPON_NASIL_KURULUYOR.md §8"
    ],
    "bekci": null,
-   "not": "Pareto DP'nin aday kumesi budur: formulun urettigi her (cifte, uclu) ikilisi degil, saticinin GERCEKTEN sattigi sekiller."
+   "not": "Pareto DP'nin aday kumesi budur: formulun urettigi her (cifte, uclu) ikilisi degil, saticinin GERCEKTEN sattigi sekiller.",
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "2026/27 4. hafta ana fiyatinin ortalama marji",
@@ -654,7 +682,8 @@
     "docs/KUPON_NASIL_KURULUYOR.md"
    ],
    "bekci": null,
-   "not": "Saf Pinnacle DEGIL: 2. macin fiyati Nesine'den geldigi icin ortalama %4,62'den %5,44'e cikiyor. Pinnacle satirlarinin kendi ortalamasi %4,62 kapanis (13 mac) / %4,65 acilis (14 mac)."
+   "not": "Saf Pinnacle DEGIL: 2. macin fiyati Nesine'den geldigi icin ortalama %4,62'den %5,44'e cikiyor. Pinnacle satirlarinin kendi ortalamasi %4,62 kapanis (13 mac) / %4,65 acilis (14 mac).",
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "azami devir carpani 1+d (alti sezon, 222 hafta)",
@@ -701,7 +730,8 @@
     "docs/KADEME_OLASILIKLARI.md §3"
    ],
    "bekci": null,
-   "not": "Model %30,2, gerceklesen %41,2, acik +%11,1 [+%2,1, +%20,0] — sifir disinda. 114 hafta. §3.46'nin bagimlilik tavani %5, yani (a) tek basina aciklayamaz. Sezon kirilimi 4/4 ayni yonde (+%10,2 · +%19,2 · +%13,3 · +%2,6)."
+   "not": "Model %30,2, gerceklesen %41,2, acik +%11,1 [+%2,1, +%20,0] — sifir disinda. 114 hafta. §3.46'nin bagimlilik tavani %5, yani (a) tek basina aciklayamaz. Sezon kirilimi 4/4 ayni yonde (+%10,2 · +%19,2 · +%13,3 · +%2,6).",
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "banko q'sunun yanliligi — model q <-> gerceklesen kacma",
@@ -712,7 +742,8 @@
     "docs/ISTATISTIK_YOL_HARITASI.md:5141 §3.60"
    ],
    "bekci": null,
-   "not": "Model q %37,3, gerceklesen %31,7, Wilson [%28,6, %35,0], 798 mac. Kapsama aciginin MEKANIZMASI. Banko ayrik bir karardir, o yuzden bulgu q'ya gore siralamadan gelen ortalamaya donus eseri OLAMAZ. Cifte kolunda −%2,2 ve sifiri kesiyor. Not: eksi isareti U+2212 (belgedeki bicim)."
+   "not": "Model q %37,3, gerceklesen %31,7, Wilson [%28,6, %35,0], 798 mac. Kapsama aciginin MEKANIZMASI. Banko ayrik bir karardir, o yuzden bulgu q'ya gore siralamadan gelen ortalamaya donus eseri OLAMAZ. Cifte kolunda −%2,2 ve sifiri kesiyor. Not: eksi isareti U+2212 (belgedeki bicim).",
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "kalibre_bias kupon duzeyinde (Is 1) — P(hedef) farkinin keskinlik payi",
@@ -724,7 +755,8 @@
     "backend/spor_toto/tahmin.py"
    ],
    "bekci": null,
-   "not": "Fark +0,02577, sekil sabitken +0,02510 -> keskinlik payi %97,4. GECMEDI: gerceklesen kacak -0,061 [-0,140, +0,009], gercek kolon ROI +0,012 [-0,037, +0,067] — ikisi de sifiri kesiyor. Manset piyasa kaldi."
+   "not": "Fark +0,02577, sekil sabitken +0,02510 -> keskinlik payi %97,4. GECMEDI: gerceklesen kacak -0,061 [-0,140, +0,009], gercek kolon ROI +0,012 [-0,037, +0,067] — ikisi de sifiri kesiyor. Manset piyasa kaldi.",
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "butce egrisi tepe noktasi — 1.000 TL basina kacaksiz hafta",
@@ -735,7 +767,8 @@
     "docs/ISTATISTIK_YOL_HARITASI.md:5237 §3.62"
    ],
    "bekci": null,
-   "not": "1.000 TL'de 0,0286 · 1.500'de 0,0274 · 2.000'de 0,0209 — egri IC BUKEY, tepe 1.000-1.500 bandinda. 114 hafta, 14G. 1.500 TL tekil %95 araligi geciyor (p=0,0167) ama bes aday oldugu icin HOLM'dan DUSUYOR (esik 0,01). Varsayilan 2.000 TL kaldi. E6 (PR #46) ayni ekseni butce kisitini tamamen kaldirarak olctu ve ayni sonuca vardi: on iki kuralin on ikisi de sabit butceyi yenemedi. §3.62 ondan dardir; ekledigi tek sey cetveldir (kacaksiz hafta/1000 TL), ve gerekcesi E6'nin kendi 5. maddesi: ROI kuyruk agirlikli, en iyi 5 hafta odulun %42-%88'ini tasiyor."
+   "not": "1.000 TL'de 0,0286 · 1.500'de 0,0274 · 2.000'de 0,0209 — egri IC BUKEY, tepe 1.000-1.500 bandinda. 114 hafta, 14G. 1.500 TL tekil %95 araligi geciyor (p=0,0167) ama bes aday oldugu icin HOLM'dan DUSUYOR (esik 0,01). Varsayilan 2.000 TL kaldi. E6 (PR #46) ayni ekseni butce kisitini tamamen kaldirarak olctu ve ayni sonuca vardi: on iki kuralin on ikisi de sabit butceyi yenemedi. §3.62 ondan dardir; ekledigi tek sey cetveldir (kacaksiz hafta/1000 TL), ve gerekcesi E6'nin kendi 5. maddesi: ROI kuyruk agirlikli, en iyi 5 hafta odulun %42-%88'ini tasiyor.",
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "gerceklesen P(kacak=0), 14G 2.000 TL",
@@ -746,7 +779,8 @@
     "docs/ISTATISTIK_YOL_HARITASI.md:5239 §3.62"
    ],
    "bekci": null,
-   "not": "4/114 hafta. Odeyen tek olay (§3.57: k=0 medyan geri donus 1,34x, k=1 0,28x). §3.57'nin 'kacaksiz hafta oraninin 114'te 4 olmasi' satiriyla birebir. Karnede P(k=0) sutunu olarak gorunur."
+   "not": "4/114 hafta. Odeyen tek olay (§3.57: k=0 medyan geri donus 1,34x, k=1 0,28x). §3.57'nin 'kacaksiz hafta oraninin 114'te 4 olmasi' satiriyla birebir. Karnede P(k=0) sutunu olarak gorunur.",
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "BFE isabet cetveliyle (Is 4) — kacaksiz hafta farki",
@@ -757,7 +791,8 @@
     "docs/ISTATISTIK_YOL_HARITASI.md:5321 §3.63"
    ],
    "bekci": null,
-   "not": "Kacak farki −0,04688 [−0,14062, +0,04688] — sifiri kesiyor; kacaksiz hafta farki tam olarak +0,00000. GECMEDI, ucuncu cetvelle de. 64 ortak hafta. P(hedef) farkinin %81'i secim degismeden. Sezon isareti tutmuyor (24/25: +0,000, 25/26: -0,088)."
+   "not": "Kacak farki −0,04688 [−0,14062, +0,04688] — sifiri kesiyor; kacaksiz hafta farki tam olarak +0,00000. GECMEDI, ucuncu cetvelle de. 64 ortak hafta. P(hedef) farkinin %81'i secim degismeden. Sezon isareti tutmuyor (24/25: +0,000, 25/26: -0,088).",
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "gercek kolon odulunun KURULUM bagimliligi (scipy'li <-> scipy'siz)",
@@ -768,7 +803,8 @@
     "docs/ISTATISTIK_YOL_HARITASI.md:5291 §3.62"
    ],
    "bekci": null,
-   "not": "scipy yokken engines.run_auto'nun ILP kolu DUSUYOR ve ayni bedelde FARKLI bir kaplama uretiliyor. Garanti etkilenmiyor. KAPSAM DAR: iki kosum basamak basamak kiyaslandiginda yalniz 48 ve 92 kolonluk satirlar oynuyor (%18,8<->%39,5 ve %28,4<->%27,9); 128 kolondan itibaren BIREBIR AYNI. Yani §3.56'nin 2,39 kati ve E2/E3'un ROI sayilari (168 kolon) bu oynakligin DISINDA. Etkilenen merdivenin en alt ucu — ve E6'nin lambda/LOO kurallarinin sectigi 32 kolonluk basamak orada. Olcum kendi icinde tekrarlanabilir: yuk altinda ve art arda iki kosumda birebir ayni."
+   "not": "scipy yokken engines.run_auto'nun ILP kolu DUSUYOR ve ayni bedelde FARKLI bir kaplama uretiliyor. Garanti etkilenmiyor. KAPSAM DAR: iki kosum basamak basamak kiyaslandiginda yalniz 48 ve 92 kolonluk satirlar oynuyor (%18,8<->%39,5 ve %28,4<->%27,9); 128 kolondan itibaren BIREBIR AYNI. Yani §3.56'nin 2,39 kati ve E2/E3'un ROI sayilari (168 kolon) bu oynakligin DISINDA. Etkilenen merdivenin en alt ucu — ve E6'nin lambda/LOO kurallarinin sectigi 32 kolonluk basamak orada. Olcum kendi icinde tekrarlanabilir: yuk altinda ve art arda iki kosumda birebir ayni.",
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "banko q sapmasi UC arindirmada da duruyor (§3.64 aday 1)",
@@ -779,7 +815,8 @@
     "docs/ISTATISTIK_YOL_HARITASI.md §3.64"
    ],
    "bekci": "backend/tests/test_karne.py::test_banko_yanliligi_ORNEKLEMI_SABIT_tutar",
-   "not": "Kupon kesiti, banko rejimi, 855 mac: orantili +%6,9 · guc +%5,0 · shin +%5,6. Ucunun de Wilson araligi soyleneni disarida birakiyor. Arindirma yontemi favoriye verdigi payi ~2 puan oynatiyor, acigi KAPATMIYOR."
+   "not": "Kupon kesiti, banko rejimi, 855 mac: orantili +%6,9 · guc +%5,0 · shin +%5,6. Ucunun de Wilson araligi soyleneni disarida birakiyor. Arindirma yontemi favoriye verdigi payi ~2 puan oynatiyor, acigi KAPATMIYOR.",
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "korpusta banko q sapmasi (§3.64 aday 2) — genel piyasa yanliligi YOK",
@@ -790,7 +827,8 @@
     "docs/ISTATISTIK_YOL_HARITASI.md §3.64"
    ],
    "bekci": null,
-   "not": "31.103 mac, banko rejimi (15.552): guc +%0,5 ve Wilson araligi soyleneni ICERIYOR — sapma yok. shin +%1,0, orantili +%2,1. Piyasanin favori sembolu genel futbolda iyi kalibre; §3.23'un guvenilirlik borcu 0,00042 ile tutarli. +%5,6 piyasanin degil KESITIN ozelligi."
+   "not": "31.103 mac, banko rejimi (15.552): guc +%0,5 ve Wilson araligi soyleneni ICERIYOR — sapma yok. shin +%1,0, orantili +%2,1. Piyasanin favori sembolu genel futbolda iyi kalibre; §3.23'un guvenilirlik borcu 0,00042 ile tutarli. +%5,6 piyasanin degil KESITIN ozelligi.",
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "T1 banko sapmasi — iki bagimsiz orneklemde ayni (§3.64 aday 3)",
@@ -801,7 +839,8 @@
     "docs/ISTATISTIK_YOL_HARITASI.md §3.64"
    ],
    "bekci": null,
-   "not": "Korpusta +%4,9 (1.415 mac), kuponda +%4,2 (932 mac) — ikisi de sifir disinda. Kuponun DIGER lig hucreleri (SP1 +%10,7 n=137, D1 +%10,4 n=113) korpusta +%2,3'e iniyor: bes hucre duzeltmesiz okundu, o ikisi regresyona aday. T1 kuponun yarisi."
+   "not": "Korpusta +%4,9 (1.415 mac), kuponda +%4,2 (932 mac) — ikisi de sifir disinda. Kuponun DIGER lig hucreleri (SP1 +%10,7 n=137, D1 +%10,4 n=113) korpusta +%2,3'e iniyor: bes hucre duzeltmesiz okundu, o ikisi regresyona aday. T1 kuponun yarisi.",
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "T1 banko sapmasinin SONUMU — son sezonda etki yok (§3.64 verdikti)",
@@ -813,7 +852,8 @@
     "docs/KADEME_OLASILIKLARI.md §3"
    ],
    "bekci": "backend/tests/test_karne.py::test_banko_duzeltmesi_UYGULANMIYOR_kurali_yazili",
-   "not": "2025/26, banko rejimi, n=150, Wilson [%54,0, %69,4] soylenen %61,7'yi ICERIYOR. Sezon sirasi korpusta +%5,7 · +%8,1 · +%7,0 · +%6,6, kuponda +%9,0 · +%10,5 · +%5,4 · +%0,3 — dort sezon gercek, sonra sifir. DUZELTME UYGULANMADI; durma kurali karne.T1_DUZELTME_ESIGI=300 olarak koda yazildi."
+   "not": "2025/26, banko rejimi, n=150, Wilson [%54,0, %69,4] soylenen %61,7'yi ICERIYOR. Sezon sirasi korpusta +%5,7 · +%8,1 · +%7,0 · +%6,6, kuponda +%9,0 · +%10,5 · +%5,4 · +%0,3 — dort sezon gercek, sonra sifir. DUZELTME UYGULANMADI; durma kurali karne.T1_DUZELTME_ESIGI=300 olarak koda yazildi.",
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "canli kayit <-> geri test fiyat olcegi uyumsuzlugu (§3.63)",
@@ -836,7 +876,8 @@
     "docs/ISTATISTIK_YOL_HARITASI.md §3.62"
    ],
    "bekci": null,
-   "not": "Iki BAGIMSIZ uygulama, ayni 114 hafta: 92->%28,4 · 128->%34,9 · 168->%24,2 · 252->%20,2 · 486->%29,1. Besinde de birebir. E6 cepheyi sekil sekil kuruyor, §3.62 butce basamaklarini tariyor. gercek_kolon_dagilimi hattinin yeniden uygulanabilir oldugunun kaydi."
+   "not": "Iki BAGIMSIZ uygulama, ayni 114 hafta: 92->%28,4 · 128->%34,9 · 168->%24,2 · 252->%20,2 · 486->%29,1. Besinde de birebir. E6 cepheyi sekil sekil kuruyor, §3.62 butce basamaklarini tariyor. gercek_kolon_dagilimi hattinin yeniden uygulanabilir oldugunun kaydi.",
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "E6 — devir isareti: sirali korelasyon (ex-ante, gerceklesen ROI ile)",
@@ -848,7 +889,8 @@
     "docs/KUPON_NASIL_KURULUYOR.md"
    ],
    "bekci": "backend/tests/test_hafta_hakki.py::test_isaret_karnesi_HOLM_zincirini_dogru_uyguluyor",
-   "not": "n=113, %95 araligi [+0,0134, +0,3863] — SIFIRI KESMIYOR. Devir kupon oncesi bilinir (onceki hafta kapaninca ilan edilir) ve dis literaturun bu oyuna dair tek somut kosulu."
+   "not": "n=113, %95 araligi [+0,0134, +0,3863] — SIFIRI KESMIYOR. Devir kupon oncesi bilinir (onceki hafta kapaninca ilan edilir) ve dis literaturun bu oyuna dair tek somut kosulu.",
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "E6 — devir isaretinin permutasyon p degeri (Holm esigi 0,025)",
@@ -860,7 +902,8 @@
     "docs/KUPON_NASIL_KURULUYOR.md"
    ],
    "bekci": "backend/tests/test_hafta_hakki.py::test_E6_KAPANISI_hala_gecerli",
-   "not": "Iki aday sinandigi icin Holm esigi 0,05 degil 0,025; p onun ustunde, yani GECMIYOR. Tek sinav yapmis gibi raporlamak sayiyi sisirirdi (E4'te hakem icin uygulanan kural)."
+   "not": "Iki aday sinandigi icin Holm esigi 0,05 degil 0,025; p onun ustunde, yani GECMIYOR. Tek sinav yapmis gibi raporlamak sayiyi sisirirdi (E4'te hakem icin uygulanan kural).",
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "E6 — P(hedef) isareti: sirali korelasyon",
@@ -872,7 +915,8 @@
     "docs/KUPON_NASIL_KURULUYOR.md"
    ],
    "bekci": "backend/tests/test_hafta_hakki.py::test_E6_KAPANISI_hala_gecerli",
-   "not": "n=114, [-0,0548, +0,2850], permutasyon p=0,2117 — sifiri kesiyor, Holm esigi 0,050."
+   "not": "n=114, [-0,0548, +0,2850], permutasyon p=0,2117 — sifiri kesiyor, Holm esigi 0,050.",
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "E6 — devir isaretinin kaba ikili hali (alan 22 hafta ↔ almayan 91)",
@@ -883,7 +927,8 @@
     "docs/KAZANMA_PLANI.md"
    ],
    "bekci": "backend/tests/test_hafta_hakki.py::test_devir_ikili_tek_kol_bos_kalirsa_KESIYOR_der",
-   "not": "[-0,1803, +0,3080], esleştirilmemis bootstrap — kesiyor. Surekli oranla ayrisiyor: varsa bile etki 'devir var mi' degil 'ne kadar devir' ile ilgili. hafta_hakki.devir_ikili."
+   "not": "[-0,1803, +0,3080], esleştirilmemis bootstrap — kesiyor. Surekli oranla ayrisiyor: varsa bile etki 'devir var mi' degil 'ne kadar devir' ile ilgili. hafta_hakki.devir_ikili.",
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "E6 — merdivende yukari cikmanin marjinal getirisi (320 TL -> 4.860 TL)",
@@ -895,7 +940,8 @@
     "docs/KUPON_NASIL_KURULUYOR.md:573"
    ],
    "bekci": "backend/tests/test_hafta_hakki.py::test_E6_KAPANISI_hala_gecerli",
-   "not": "4.540 TL fazla harcamanin karsiligi 1.328 TL, yani %29 — ortalama oranin aynisi (haftalik odul 85 -> 1.413 TL). Basamak geri donusu 15 basamakta %10,6-%37,9 arasinda ZIPLYOR ve yonu yok: en ucuz basamak %26,5, en pahali %29,1. Capa '%29' degil '1.328': '%29' deseni yakindaki '%29,1'e de uyuyordu ve bekci kirma sinavindan gecmiyordu."
+   "not": "4.540 TL fazla harcamanin karsiligi 1.328 TL, yani %29 — ortalama oranin aynisi (haftalik odul 85 -> 1.413 TL). Basamak geri donusu 15 basamakta %10,6-%37,9 arasinda ZIPLYOR ve yonu yok: en ucuz basamak %26,5, en pahali %29,1. Capa '%29' degil '1.328': '%29' deseni yakindaki '%29,1'e de uyuyordu ve bekci kirma sinavindan gecmiyordu.",
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "E6 — bir birim P(hedef)'in tutturunca ettigi para (lambda)",
@@ -907,7 +953,8 @@
     "docs/KUPON_NASIL_KURULUYOR.md:578"
    ],
    "bekci": "backend/tests/test_hafta_hakki.py::test_fiyat_karnesi_uc_olcuyu_de_lambdaya_oranlar",
-   "not": "2.000 TL basamaginda tutturan haftalarin ortalama gercek kolon odulu (hafta_hakki.lambda_kestir)."
+   "not": "2.000 TL basamaginda tutturan haftalarin ortalama gercek kolon odulu (hafta_hakki.lambda_kestir).",
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "E6 — merdivenin uctan uca fiyati (TL / birim P(hedef))",
@@ -919,7 +966,8 @@
     "docs/KUPON_NASIL_KURULUYOR.md"
    ],
    "bekci": "backend/tests/test_hafta_hakki.py::test_fiyat_karnesi_uc_olcuyu_de_lambdaya_oranlar",
-   "not": "Medyan; lambda'nin 12,2 kati. Haftanin EN UCUZ tek adimi medyan 1.077 TL/birim (1,1x) — yani basabas adimlar var ama onlara ancak pahali bir adimdan sonra varilyor."
+   "not": "Medyan; lambda'nin 12,2 kati. Haftanin EN UCUZ tek adimi medyan 1.077 TL/birim (1,1x) — yani basabas adimlar var ama onlara ancak pahali bir adimdan sonra varilyor.",
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "E6 — oynanan basamagin BIR USTUNUN fiyati (TL / birim P(hedef))",
@@ -931,7 +979,8 @@
     "docs/KUPON_NASIL_KURULUYOR.md"
    ],
    "bekci": "backend/tests/test_hafta_hakki.py::test_fiyat_karnesi_uc_olcuyu_de_lambdaya_oranlar",
-   "not": "Medyan; lambda'nin 93,7 kati. Karar tam olarak bu adimdir."
+   "not": "Medyan; lambda'nin 93,7 kati. Karar tam olarak bu adimdir.",
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "E6 — odulun kuyruk yogunlugu: en iyi 5 haftanin payi (basamak basina)",
@@ -943,7 +992,8 @@
     "docs/KUPON_NASIL_KURULUYOR.md:576"
    ],
    "bekci": "backend/tests/test_hafta_hakki.py::test_kuyruk_payi_bilinen_dagilimda_dogru_sayiyor",
-   "not": "15 basamagin hepsinde %42-%88 (oynanan 168 kolonda %51); 15 haftalik tavan sinavinda tek hafta %28-%100. E6'nin butun genis araliklarinin tek sebebi bu. hafta_hakki.kuyruk_payi."
+   "not": "15 basamagin hepsinde %42-%88 (oynanan 168 kolonda %51); 15 haftalik tavan sinavinda tek hafta %28-%100. E6'nin butun genis araliklarinin tek sebebi bu. hafta_hakki.kuyruk_payi.",
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "E6 — gercek kolon kosumu sayisi (114 hafta x 9-15 basamak)",
@@ -954,7 +1004,8 @@
     "docs/KAZANMA_PLANI.md"
    ],
    "bekci": "backend/tests/test_hafta_hakki.py::test_E6_KAPANISI_hala_gecerli",
-   "not": "Basamak sayisi haftadan haftaya degisiyor: satilan bir sekil o haftanin olasiliklariyla cephede belirmeyebiliyor. Her hafta olculebilen basamaklar: 32/48/64/92/128/168/252/333/486."
+   "not": "Basamak sayisi haftadan haftaya degisiyor: satilan bir sekil o haftanin olasiliklariyla cephede belirmeyebiliyor. Her hafta olculebilen basamaklar: 32/48/64/92/128/168/252/333/486.",
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "amac kiyasi — 2026/27'nin dondurulmus haftalarinda ayrisan hafta sayisi",
@@ -963,7 +1014,8 @@
    "olculdu": "2026-09-06",
    "anildigi_yerler": [],
    "bekci": "backend/tests/test_amac_kiyasi.py::test_sezonda_iki_amac_AYNI_kuponu_veriyor",
-   "not": "Kuralin amaci P(k<=2)'yi enbuyuklemektir; sohbette duzenli olarak 'en az kacagi seciyor' diye okunuyor ve o BASKA bir amactir (E[k]=sum(q) enkucuklemek). Bu sezonun dort haftasinda ikisi BIREBIR ayni kuponu veriyor: hafta 1 4/7/4, hafta 2 3/7/5, hafta 3 4/8/3, hafta 4 3/7/5 — hicbirinde ayrisan mac yok. Kiyas bugunun varsayilan olceginde (shin) kosar; 3. ve 4. hafta ayni olcekte donduruldugu icin plan kuponun kendisini birebir veriyor (864 kolon / P=0,3809 ve 3.888 kolon / P=0,4670), 1. ve 2. hafta `orantili` ile donduruldugu icin kapsam disi."
+   "not": "Kuralin amaci P(k<=2)'yi enbuyuklemektir; sohbette duzenli olarak 'en az kacagi seciyor' diye okunuyor ve o BASKA bir amactir (E[k]=sum(q) enkucuklemek). Bu sezonun dort haftasinda ikisi BIREBIR ayni kuponu veriyor: hafta 1 4/7/4, hafta 2 3/7/5, hafta 3 4/8/3, hafta 4 3/7/5 — hicbirinde ayrisan mac yok. Kiyas bugunun varsayilan olceginde (shin) kosar; 3. ve 4. hafta ayni olcekte donduruldugu icin plan kuponun kendisini birebir veriyor (864 kolon / P=0,3809 ve 3.888 kolon / P=0,4670), 1. ve 2. hafta `orantili` ile donduruldugu icin kapsam disi.",
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "amac kiyasi — rastgele haftada iki amacin ayrisma sikligi",
@@ -972,7 +1024,8 @@
    "olculdu": "2026-09-06",
    "anildigi_yerler": [],
    "bekci": "backend/tests/test_amac_kiyasi.py::test_rastgele_ayrisma_sikligi_kutukle_ayni",
-   "not": "Tohum 7, 15 mac/hafta, olasiliklar u^2 ile uretilir (net favorili ve caresiz maclari birlikte uretsin diye), butce (512, 864, 1024, 1296, 2304, 3888) arasindan cekilir. Sezonda ayrisma cikmamasi 'iki amac aynidir' DEMEK DEGILDIR: rastgele haftalarin %15,2'sinde farkli kupon cikiyor. Sayi tohuma baglidir ve tohum degisirse yeniden olculur."
+   "not": "Tohum 7, 15 mac/hafta, olasiliklar u^2 ile uretilir (net favorili ve caresiz maclari birlikte uretsin diye), butce (512, 864, 1024, 1296, 2304, 3888) arasindan cekilir. Sezonda ayrisma cikmamasi 'iki amac aynidir' DEMEK DEGILDIR: rastgele haftalarin %15,2'sinde farkli kupon cikiyor. Sayi tohuma baglidir ve tohum degisirse yeniden olculur.",
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "amac kiyasi — ayrisinca 'en az kacak' okumasinin P(k<=2) kaybi",
@@ -981,7 +1034,42 @@
    "olculdu": "2026-09-06",
    "anildigi_yerler": [],
    "bekci": "backend/tests/test_amac_kiyasi.py::test_EN_AZ_KACAK_okumasi_hedefi_HICBIR_haftada_gecemez",
-   "not": "Ayrisan 61 haftanin 61'inde yon ayni: E[k]'yi enkucuklemek P(k<=2)'yi KAYBETTIRIYOR, en kucuk kayip 0,00001, negatif kayip yok. Negatif cikamaz cunku `en_iyi_secim` Pareto DP ile KESIN cozer — cikarsa sayi degil `secim.py` yanlistir; bekci bunu ayrica tutuyor. Buyukluk kucuk (azami 0,86 puan), yani yanlis okuma pratikte pahali degil; yine de sistematik."
+   "not": "Ayrisan 61 haftanin 61'inde yon ayni: E[k]'yi enkucuklemek P(k<=2)'yi KAYBETTIRIYOR, en kucuk kayip 0,00001, negatif kayip yok. Negatif cikamaz cunku `en_iyi_secim` Pareto DP ile KESIN cozer — cikarsa sayi degil `secim.py` yanlistir; bekci bunu ayrica tutuyor. Buyukluk kucuk (azami 0,86 puan), yani yanlis okuma pratikte pahali degil; yine de sistematik.",
+   "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
+  },
+  {
+   "ne": "sistem kiyasi — AYNI isaretler, iki sistemde kolon basina beklenti",
+   "deger": "421,0 ↔ 421,9 TL (sapma %0,22)",
+   "ureten": "cd backend && python scripts/sistem_kiyasi.py --dogrula --hafta 3",
+   "olculdu": "2026-09-06",
+   "anildigi_yerler": [
+    "docs/DUZ_SISTEME_GECIS.md §2"
+   ],
+   "bekci": "backend/tests/test_sistem_kiyasi.py::test_AYNI_isaretler_iki_sistemde_kolon_basina_AYNI",
+   "not": "docs/ISTATISTIK_YOL_HARITASI.md §3.40'in dogrusalligi BAGIMSIZ olarak yeniden uretildi (orada 46,88 ↔ 46,16 olculmustu). Kaplama tarafi kaba kuvvetle sayildi: solve_fix16'in 864 kolonu tek tek gezildi. Bu sayi kiyasin ON SARTIDIR — tutmasaydi en_iyi_sekil'in kaplama tarafinda kullandigi 1/8 kisayolu gecersiz olurdu. Sapma kaplama LEHINE (fix16 %0,2 daha dusuk), yani gercek fark olculenden biraz buyuk."
+  },
+  {
+   "ne": "sistem kiyasi — ayni kolon butcesinde duz/kaplama E[TL] orani",
+   "deger": "1,78× – 5,26×",
+   "ureten": "cd backend && python scripts/sistem_kiyasi.py  ·  cd backend && python scripts/sistem_kiyasi.py --odul-hafta 2",
+   "olculdu": "2026-09-06",
+   "anildigi_yerler": [
+    "docs/DUZ_SISTEME_GECIS.md §0,§3",
+    "README.md belge dizini"
+   ],
+   "bekci": "backend/tests/test_sistem_kiyasi.py::test_duz_her_butcede_kaplamayi_geciyor",
+   "not": "KAPLAMANIN SOKULME GEREKCESI. 2026/27 3. ve 4. hafta, yedi kolon butcesi (16..59.049), iki ikramiye tablosu. 1. haftanin tablosuyla 1,78×–5,01×, 2. haftanin tablosuyla 1,87×–5,26×. Mutlak TL tabloya bagli ve hafta hafta on kat oynuyor; MANSET ORANDIR. Duz ayrica P(>=12)'de de her kademede onde. Sebep sistem degil SEKIL: solve_fix16 en az yedi cifte istiyor. UYARI: beklenen deger kar gostergesi degildir — KADEME_OLASILIKLARI.md 114 hafta uzerinde haftalik geri donus medyanini %0 olctu."
+  },
+  {
+   "ne": "sistem kiyasi — 864 kolonda iki sistemin sekli",
+   "deger": "duz 7/5/3 ↔ kaplama 4/8/3",
+   "ureten": "cd backend && python scripts/sistem_kiyasi.py --hafta 3",
+   "olculdu": "2026-09-06",
+   "anildigi_yerler": [
+    "docs/DUZ_SISTEME_GECIS.md §3"
+   ],
+   "bekci": "backend/tests/test_sistem_kiyasi.py::test_kaplamanin_en_az_yedi_cifte_sarti_sekli_ZORLUYOR",
+   "not": "Farkin MEKANIZMASI, aciklama degil olcum: ayni butcede kaplama sekiz cifte tasimak zorundayken duz besle yetiniyor ve tek sayisini 4'ten 7'ye cikariyor. Yogun kolon = her kolonun kendi tutma olasiligi yuksek. E[TL] 937.411 ↔ 364.537 (2,57×)."
   }
  ],
  "komutlar": [
@@ -1084,6 +1172,11 @@
    "komut": "python scripts/amac_kiyasi.py [--hafta N] [--tohum T]",
    "kaynak": "backend/scripts/amac_kiyasi.py:1",
    "ne_yapar": "Iki amaci yan yana koyar: `secim.en_iyi_secim`in P(k<=eslik) enbuyuklemesi ile ayni kisitlar altinda E[k]=sum(q) enkucuklemesi. Bu sezonun dondurulmus haftalarinda ve tohumu sabit rastgele haftalarda ayrisma sikligini ve P(k<=2) cinsinden kaybi olcer."
+  },
+  {
+   "komut": "python scripts/sistem_kiyasi.py [--dogrula] [--hafta N] [--odul-hafta N]",
+   "kaynak": "backend/scripts/sistem_kiyasi.py:1",
+   "ne_yapar": "Kaplama mi duz mu: ayni kolon butcesinde her sistemin ERISEBILDIGI en iyi sekil, E[TL] ve P(>=12). --dogrula once §3.40'in kolon basina dogrusalligini kaba kuvvetle yeniden uretir. KAPLAMA SOKULMEDEN ONCE yazildi; sokumden sonra kosamaz, ciktisi docs/DUZ_SISTEME_GECIS.md'de dondurulmustur."
   }
  ]
 }
