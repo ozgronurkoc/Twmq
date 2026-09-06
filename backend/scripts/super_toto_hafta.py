@@ -236,6 +236,26 @@ def hafta_yukle(sezon: str, hafta: int) -> dict[str, Any]:
     # Kod insani duzeltmez, insan da kodu susturmaz — ikisi yan yana durur.
     d.setdefault("meta", {}).setdefault("data_warnings", [])
     d["meta"]["uretilen_uyarilar"] = dogrula(d)
+    # Haftanin hangi sistemle OYNANDIGI kupon kaydinda yazilidir
+    # (`hafta_NN_kupon.json` -> `meta.sistem`), hafta dosyasinda degil:
+    # hafta dosyasi maclari ve sonucu tasir, sistem ise kuponun ozelligi.
+    # Degerlendirici (`super_toto_degerlendir.kayit_sistemi`) sistemi `d`
+    # uzerinden okur, o yuzden alan yukleme aninda BURADA yuzeye cikarilir.
+    #
+    # BU SATIR OLMADAN DEGERLENDIRICI SESSIZCE YANLIS CEVAP VERIYORDU.
+    # `kayit_sistemi(d)` eklendiginde `d["meta"]["sistem"]`i okuyordu ama
+    # o alani hicbir yer yazmiyordu — yani fonksiyon HER hafta icin
+    # `fix16` donuyordu ve duz oynanan bir kupon 16 satirlik kaplamaya
+    # indirgenip bir kademe kotu gosteriliyordu (olculdu: gercekte 9
+    # tutturan bir plan 8 olarak raporlaniyordu). Cokme degil YANLIS SAYI.
+    # Bekcisi: tests/test_degerlendir.py::test_hafta_yukle_kuponun_SISTEMINI
+    # _yuzeye_cikarir ve ::test_duz_kupon_TAM_sistem_olarak_degerlendirilir.
+    kupon_yolu = yol.with_name(f"hafta_{hafta:02d}_kupon.json")
+    if kupon_yolu.exists():
+        kupon_meta = json.loads(kupon_yolu.read_text(encoding="utf-8"))
+        sistem = (kupon_meta.get("meta") or {}).get("sistem")
+        if sistem is not None:
+            d["meta"]["sistem"] = sistem
     for m in maclar:
         # Oranı ilan edilmemiş maç: olasılık 1/3–1/3–1/3. Bu bir TAHMİN
         # DEĞİL, bilgi yokluğunun ilanıdır — arayüzün ESIT kuralıyla aynı

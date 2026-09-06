@@ -999,7 +999,7 @@ backend/
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
                        sehir/ · xg/ · sistem_fiyat/ · hakem/
-  tests/               pytest (72 dosya → 1.800 test; §9'da katman dökümü)
+  tests/               pytest (72 dosya → 1.803 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1158,7 +1158,7 @@ WHERE o.pazar = '1X2' AND o.donem = 'kupon';
 
 ```bash
 bash scripts/check.sh        # TEK kapı: iki tarafı da koşturur (repo kökünden)
-bash scripts/check.sh --hizli # yavaş ILP testlerini atlar
+bash scripts/check.sh --hizli # yavaş ölçüm testlerini atlar
 
 cd backend
 pytest                       # tamamı (ILP dahil)
@@ -1176,7 +1176,7 @@ ve çıktı sırası da o zaman düzelir.
 `scripts/check.sh` sırasıyla **on üç adım**: ruff (backend) → ruff (`.claude/`) →
 mypy (`spor_toto` + `web_app` + `scripts` + `tests`, ayrıca `.claude/`) →
 interrogate (docstring kapsaması) → pip-audit (bağımlılık açıkları) →
-doctest → pytest (hızlı) → pytest (yavaş ILP) → health → CLI dumanı → Süper Toto
+doctest → pytest (hızlı) → pytest (yavaş ölçüm) → health → CLI dumanı → Süper Toto
 boru hattı (**2. Tahmin dahil**) + üretilmiş üç dosyanın tazeliği → eslint + tsc +
 arayüz denetimleri + üretim derlemesi → **üretim topolojisi dumanı**.
 
@@ -1205,7 +1205,7 @@ dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri t
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
 eşleme, ikinci kayıt). **72 test dosyası, parametrizasyonla
-1.800 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+1.803 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
@@ -1215,7 +1215,7 @@ karşı denetler):
 | Tahmin katmanı | `predict` `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin` `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre` `secim_kalibrasyonu` **`arena`** **`sizinti`** | 595 |
 | Sağlık | `health` `api_health` `meta` `health_history` | 82 |
 | Veri / istatistik / geri test | `history` `odds` `backtest` `api_stats` `api_backtest` `snapshot_iddaa` `pazar` **`gecmis_sezon`** **`sportoto_arsiv`** **`bulten`** | 216 |
-| Süper Toto | `super_toto` `degerlendir` | 94 |
+| Süper Toto | `super_toto` `degerlendir` | 97 |
 | 2. Tahmin (kalabalık ayarı · bağımsız görüş) | `tahmin2` | 35 |
 | Karar katmanı | `secim` | 27 |
 | Amaç kıyası (`P(k≤3)` ↔ `E[k]`: aynı kupon mu?) | **`amac_kiyasi`** | 5 |

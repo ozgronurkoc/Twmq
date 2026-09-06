@@ -150,8 +150,14 @@ SISTEMLER = ("fix16", "tam")
 #: kotu gorunur.
 #:
 #: Kayit ne diyorsa o: `meta.sistem`. Alan yoksa ESKI kayittir (kaplama
-#: doneminde yazilmis) ve `fix16` dogru cevaptir; yeni kayitlar alani
-#: `super_toto_hafta.py` tarafindan yazilir.
+#: doneminde yazilmis) ve `fix16` dogru cevaptir.
+#:
+#: ALAN KUPON KAYDINDA YAZILIDIR (`hafta_NN_kupon.json` -> `meta.sistem`),
+#: hafta dosyasinda degil; `super_toto_hafta.hafta_yukle` onu yukleme
+#: aninda `d["meta"]["sistem"]`e tasir. Bu satir bir kez EKSIKTI ve bu
+#: fonksiyon o yuzden HER hafta icin `fix16` donuyordu — yani "varsayilana
+#: dusulmez" sozu yaziliydi ama tutmuyordu. Bekcisi:
+#: tests/test_degerlendir.py::test_hafta_yukle_kuponun_SISTEMINI_yuzeye_cikarir
 def kayit_sistemi(d: dict[str, Any]) -> str:
     """Donmus kaydin oynandigi sistem — `meta.sistem`, yoksa `fix16`."""
     s = (d.get("meta") or {}).get("sistem")
@@ -165,7 +171,14 @@ def kayit_sistemi(d: dict[str, Any]) -> str:
 
 
 def kupon_degerlendir(d: dict[str, Any], picks: Sequence[str],
-                      sistem: str = "fix16") -> dict[str, Any]:
+                      sistem: str | None = None) -> dict[str, Any]:
+    #: `None` = "kayit ne diyorsa o". VARSAYILAN BILEREK `"fix16"` DEGIL:
+    #: sabit bir varsayilan, kaydi hic okumayan cagiranlari sessizce yanlis
+    #: sisteme baglar ve olculdu ki bu tam olarak olan seydi — bes ayri
+    #: cagri yeri (arayuz JSON'unu ureten `super_toto_frontend` dahil)
+    #: sistemi hic sormadan `fix16`ya dusuyordu. Artik sormamak, "kayittan
+    #: oku" demek.
+    sistem = kayit_sistemi(d) if sistem is None else sistem
     if sistem not in SISTEMLER:
         raise SystemExit(f"bilinmeyen sistem: {sistem} ({', '.join(SISTEMLER)})")
     gercek = d["meta"]["results"]
@@ -519,7 +532,7 @@ def gercegin_sirasi(d: dict[str, Any]) -> dict[str, Any]:
 
 
 def oynanan_kolonlar(d: dict[str, Any], picks: Sequence[str],
-                     sistem: str = "fix16") -> dict[str, Any]:
+                     sistem: str | None = None) -> dict[str, Any]:
     """OYNANAN kolonların toplam olasılığı — yani **P(15)**.
 
     Küme-içi olasılıkla karıştırılmamalı: küme-içi, gerçeğin seçim
@@ -535,6 +548,7 @@ def oynanan_kolonlar(d: dict[str, Any], picks: Sequence[str],
     from spor_toto.core import Encoder
     from spor_toto.kaplama_arsiv import Fix16Hatasi, solve_fix16
 
+    sistem = kayit_sistemi(d) if sistem is None else sistem
     listeler = [list(x) for x in picks]
     maclar = d["matches"]
     if sistem == "tam":
@@ -562,7 +576,7 @@ def oynanan_kolonlar(d: dict[str, Any], picks: Sequence[str],
 
 
 def plan_karnesi(d: dict[str, Any], picks: Sequence[str],
-                 sistem: str = "fix16", ad: str = "") -> dict[str, Any]:
+                 sistem: str | None = None, ad: str = "") -> dict[str, Any]:
     """Bir kuponun tek satırlık karnesi — **iki sistemi kıyaslanabilir kılar.**
 
     Kademe olasılıkları sistemden okunur: 16 satırlık kaplamada küme içi
@@ -570,6 +584,7 @@ def plan_karnesi(d: dict[str, Any], picks: Sequence[str],
     (`P(≥14) = P(k ≤ 1)`). Aynı dağılımı iki sistemde aynı sütuna yazmak,
     8 kat pahalı bir kuponu ucuz olanla eşit göstermek olurdu.
     """
+    sistem = kayit_sistemi(d) if sistem is None else sistem
     s = kupon_degerlendir(d, picks, sistem)
     dist = s["dist"]
     kaydir = 1 if sistem == "tam" else 0
@@ -665,7 +680,7 @@ def sapma_defteri(d: dict[str, Any], picks: Sequence[str]) -> dict[str, Any]:
 
 
 def oynanan_kolon_listesi(d: dict[str, Any], picks: Sequence[str],
-                          sistem: str = "fix16") -> list[tuple[str, ...]]:
+                          sistem: str | None = None) -> list[tuple[str, ...]]:
     """Gerçekten oynanan kolonların kendisi — sembol sembol.
 
     `oynanan_kolonlar` bu listenin olasılık toplamını verir; getiri hesabı
@@ -678,6 +693,7 @@ def oynanan_kolon_listesi(d: dict[str, Any], picks: Sequence[str],
     from spor_toto.core import Encoder
     from spor_toto.kaplama_arsiv import Fix16Hatasi, solve_fix16
 
+    sistem = kayit_sistemi(d) if sistem is None else sistem
     listeler = [list(x) for x in picks]
     if sistem == "tam":
         return list(product(*listeler))
@@ -700,7 +716,7 @@ def oynanan_kolon_listesi(d: dict[str, Any], picks: Sequence[str],
 
 
 def getiri_karnesi(d: dict[str, Any], picks: Sequence[str],
-                   sistem: str = "fix16") -> dict[str, Any] | None:
+                   sistem: str | None = None) -> dict[str, Any] | None:
     """Kuponun **gerçekleşen** ve **beklenen** getirisi — ikramiye tablosundan.
 
     Projede ilk kez para birimli bir sayı ölçümden geliyor: ikramiye ekranı

@@ -5,8 +5,13 @@ hedef) ve **optimizasyonun gerçekten optimal olduğunu**. İkincisi kritik:
 Pareto budaması "yaklaşık" olsaydı sessizce daha kötü kupon kurardı ve
 hiçbir şey patlamazdı — o yüzden küçük vakalarda kaba kuvvetle
 karşılaştırılıyor.
+
+**Referans KESİN rasyonel aritmetikle koşar, float'la değil** — ve bunun
+bir bedeli (bir saniye) ve çok somut bir sebebi var; sebep aşağıda
+`_kesin_tarama`nın başlığında yazılı.
 """
 
+from fractions import Fraction
 from itertools import product
 
 import pytest
@@ -94,23 +99,102 @@ def test_hepsi_uclu_ise_hedef_kesindir():
 
 # ─── optimizasyon ─────────────────────────────────────────────────────────
 
-def _kaba_kuvvet(maclar, butce, esik=VARSAYILAN_KACAK_ESIGI):
-    """Küçük vakada TÜM atamaları gezip en iyisini bulur — referans."""
-    n = len(maclar)
+def _seviye_kacaklari(maclar):
+    """Her maç için seviye başına **kesin** kaçak olasılığı.
+
+    `Fraction(v)` bir float'ın ikili değerini TAM olarak alır (yaklaştırmaz),
+    yani referans, DP'ye verilen sayıların aynısını görür — başka bir
+    girdiyi çözüp "farklı cevap verdi" demez.
+    """
     sirali = [sorted(m.items(), key=lambda kv: (-kv[1], SEM.index(kv[0])))
               for m in maclar]
-    en = None
-    for seviyeler in product((1, 2, 3), repeat=n):
-        cift = sum(1 for s in seviyeler if s == 2)
-        uclu = sum(1 for s in seviyeler if s == 3)
-        c = bedel_hesapla(cift, uclu)
-        if c > butce:
-            continue
-        secimler = [[s for s, _ in sirali[i][:seviyeler[i]]] for i in range(n)]
-        deger = hedef_olasiligi(maclar, secimler, esik)
-        if en is None or (deger, -c) > (en[0], -en[1]):
-            en = (deger, c)
-    return en
+    return [[max(Fraction(0), Fraction(1) - sum(Fraction(v) for _, v in s[:k]))
+             for k in (1, 2, 3)] for s in sirali]
+
+
+_TARAMA_ONBELLEGI: dict[tuple, list[tuple[Fraction, int, tuple[int, ...]]]] = {}
+
+
+def _kesin_tarama(maclar, esik=VARSAYILAN_KACAK_ESIGI):
+    """TÜM atamaların değeri — **kesin rasyonel**, float yuvarlaması yok.
+
+    Dönen her üçlü `(değer, bedel, seviye izleği)`.
+
+    ─── Neden float değil ────────────────────────────────────────────────
+
+    **Bu gövde float'la yazılmıştı ve CI'nin iki bacağını kırdı.** Eski hâli
+    en iyiyi `(deger, -c) > (en[0], -en[1])` ile seçiyordu, yani float'ları
+    `>` ile kıyaslıyordu. Kıyaslanan planların bir kısmı matematiksel olarak
+    **eşit** (üçlünün kaçağı sıfır olduğu için, kalan tek/çift maç sayısı
+    eşiği aşmıyorsa `P(k ≤ eşik)` tam olarak 1'dir) ama float'ta son ULP'de
+    ayrışıyorlar. CPython 3.12 gömülü `sum()`i float'lar için Neumaier
+    telafili toplamaya çevirdi; `hedef_olasiligi` o `sum()`i kullanıyor ve
+    son basamak değişince referans, **aynı** olasılığı iki katı bedelle
+    veren planı "daha iyi" saydı: 3.10/3.11'de 729, 3.12/3.13'te 1.458.
+    Ölçüldü: `en_iyi_secim` her iki sürümde de 729 döndürüyordu, yani hatalı
+    olan üretim kodu değil bu referanstı.
+
+    Bu, deponun daha önce bir kez ısırıldığı sınıfın aynısı:
+    `.github/workflows/tests.yml`de "Üretilmiş dosyalar" adımının gerekçesi
+    aynı 3.12 değişikliğini anlatıyor ve *"kök neden `math.fsum` ile
+    kapatıldı ama SINIFI açıktı"* diyor. Burası o sınıfın ikinci örneğiydi.
+
+    Çözüm bir tolerans DEĞİL: tolerans, eşitliği yuvarlama gürültüsünden
+    ayırmak için keyfî bir eşik seçmek olurdu ve testin iddiası ("budama
+    KESİN") tam olarak keyfî eşik kaldırmayan iddia. Referans rasyonel
+    aritmetiğe çevrildi; `Fraction` üzerinde eşitlik ve `>` matematiksel
+    anlamını taşır, yorumlayıcı sürümünden bağımsızdır.
+
+    ─── Neden yine de hızlı ──────────────────────────────────────────────
+
+    Atamalar önek paylaşır: `(1,2,…)` ile `(1,3,…)` ilk maçta aynı evrişimi
+    yapar. Derinlik-öncelikli gezerek 19.683 × 9 evrişim yerine 29.523
+    evrişim yapılıyor. Dağılımın `esik`ten büyük kuyruğu da taşınmıyor:
+    `d'[m]` yalnızca `d[j ≤ m]`e bağlı, yani `m > esik` hiçbir zaman geri
+    okunmuyor. İkisi birlikte taramayı ~1 saniyeye indiriyor.
+    """
+    anahtar = (tuple(tuple(sorted(m.items())) for m in maclar), esik)
+    if anahtar in _TARAMA_ONBELLEGI:
+        return _TARAMA_ONBELLEGI[anahtar]
+
+    n = len(maclar)
+    q = _seviye_kacaklari(maclar)
+    cikti: list[tuple[Fraction, int, tuple[int, ...]]] = []
+
+    def gez(i, dagilim, izlek, cift, uclu):
+        if i == n:
+            cikti.append((sum(dagilim), bedel_hesapla(cift, uclu), izlek))
+            return
+        for k in (1, 2, 3):
+            qq = q[i][k - 1]
+            yeni = [Fraction(0)] * (len(dagilim) + 1)
+            for j, v in enumerate(dagilim):
+                yeni[j] += v * (1 - qq)
+                yeni[j + 1] += v * qq
+            gez(i + 1, yeni[:esik + 1], (*izlek, k), cift + (k == 2),
+                uclu + (k == 3))
+
+    gez(0, [Fraction(1)], (), 0, 0)
+    _TARAMA_ONBELLEGI[anahtar] = cikti
+    return cikti
+
+
+def _kesin_referans(maclar, butce, esik=VARSAYILAN_KACAK_ESIGI):
+    """Bütçe içindeki `(en iyi değer, o değere ulaşan EN UCUZ bedel)`."""
+    uygun = [(d, c) for d, c, _ in _kesin_tarama(maclar, esik) if c <= butce]
+    if not uygun:
+        return None
+    en_iyi = max(d for d, _ in uygun)
+    return en_iyi, min(c for d, c in uygun if d == en_iyi)
+
+
+def _kesin_deger(maclar, secim, esik=VARSAYILAN_KACAK_ESIGI):
+    """DP'nin SEÇTİĞİ planın kesin değeri — `secim` bir `Secim` nesnesi."""
+    izlek = tuple(len(s) for s in secim.secimler)
+    for deger, _, aday in _kesin_tarama(maclar, esik):
+        if aday == izlek:
+            return deger
+    raise AssertionError(f"DP'nin izlegi taramada yok: {izlek}")
 
 
 @pytest.mark.parametrize("butce", [2048, 4096, 8192, 16384])
@@ -119,16 +203,27 @@ def test_optimizasyon_gercekten_optimal(butce):
 
     Budama yaklaşık olsaydı sessizce daha kötü kupon kurardı ve hiçbir yer
     patlamazdı; bu testin varlık sebebi tam olarak o sessizlik.
+
+    Üç şey ayrı ayrı sınanıyor ve üçü de gerekli:
+
+      1. DP'nin **seçtiği plan** kesin aritmetikte de en iyi değeri veriyor
+         (budama masada değer bırakmadı),
+      2. o değere ulaşan planların **en ucuzunu** seçti (eşitlikte ucuz
+         kazanır — `en_iyi_secim`in kendi sözü),
+      3. döndürdüğü `p_hedef` kesin değerin float karşılığı (aritmetiği
+         raporlarken kaymıyor).
     """
     maclar = hafta(9)          # 3^9 = 19.683 atama — kaba kuvvet mümkün
-    beklenen = _kaba_kuvvet(maclar, butce)
+    beklenen = _kesin_referans(maclar, butce)
     bulunan = en_iyi_secim(maclar, butce)
     if beklenen is None:
         assert bulunan is None
         return
+    en_iyi_deger, en_ucuz_bedel = beklenen
     assert bulunan is not None
-    assert bulunan.p_hedef == pytest.approx(beklenen[0], rel=1e-12)
-    assert bulunan.bedel == beklenen[1]
+    assert _kesin_deger(maclar, bulunan) == en_iyi_deger
+    assert bulunan.bedel == en_ucuz_bedel
+    assert bulunan.p_hedef == pytest.approx(float(en_iyi_deger), rel=1e-12)
 
 
 def test_optimizasyon_esik_kuralini_geciyor():

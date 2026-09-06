@@ -209,8 +209,14 @@ def main() -> None:
         ayr = ", ".join(str(x) for x in h["ayrisan"]) or "yok"
         print(f'{h["hafta"]:<7}{h["kural"]:<8}{h["butce"]:>7,}{sekil:>9}'
               f'{h["hedef_bedel"]:>7,}{h["hedef_p"]:>9.4f}{h["hedef_e"]:>7.4f}  {ayr}')
+    # Iki sayi da BASILIYOR ve gerekcesi somut: tek sayi ("0/4") hangi
+    # yonde okundugu belirsizdi ve bir kez TERS okundu — PR 48'in govdesi
+    # "0/4 ayrisma", yani "dordunde de ayni kupon" diye yazmisti, oysa
+    # cikti "0 haftada AYNI" diyordu, yani dordunde de ayrisiyordu.
     hic = sum(1 for h in sezon if not h["ayrisan"])
-    print(f'\n{hic}/{len(sezon)} haftada iki amaç AYNI kuponu veriyor.')
+    ayrisan = len(sezon) - hic
+    print(f'\n{ayrisan}/{len(sezon)} haftada iki amaç AYRIŞIYOR '
+          f'({hic}/{len(sezon)} haftada aynı kuponu veriyor).')
 
     r = rastgele_kiyas(a.hafta, a.tohum)
     print(f'\n─── rastgele hafta (tohum {a.tohum}) ───────────────────────────────')

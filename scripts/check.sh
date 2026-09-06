@@ -3,7 +3,7 @@
 # Deponun TEK kalite kapısı — iki tarafı da koşturur.
 #
 #   bash scripts/check.sh            # her şey
-#   bash scripts/check.sh --hizli    # yavaş ILP testlerini atla
+#   bash scripts/check.sh --hizli    # yavaş ölçüm testlerini atla
 #
 # **Neden var.** Önceden `backend/scripts/check.sh` vardı ve "CI ile aynı
 # çekirdek adımlar" diyordu, ama CI'nın altı adımından üçünü koşuyordu:
@@ -111,7 +111,7 @@ baslik "pytest (hızlı)"
 "$PY" -m pytest -m "not slow" -q -rs
 
 if [[ $HIZLI -eq 0 ]]; then
-  baslik "pytest (yavaş ILP)"
+  baslik "pytest (yavaş ölçüm)"
   "$PY" -m pytest -m slow -q
 fi
 

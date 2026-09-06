@@ -2,8 +2,8 @@
  "sayilar": [
   {
    "ne": "suit test sayisi (eksiksiz kurulum)",
-   "deger": "1.799",
-   "ureten": "cd backend && python -m pytest --collect-only -q -p no:randomly  # dosya basi toplami",
+   "deger": "1.803",
+   "ureten": "cd backend && python -m pytest --collect-only -q -p no:randomly -o addopts=  # son satirdaki toplam",
    "olculdu": "2026-09-06",
    "anildigi_yerler": [
     "README.md §7,§9",
@@ -14,13 +14,13 @@
     "replit.md"
    ],
    "bekci": "backend/tests/test_belgeler.py::test_test_sayisi_belgelerde_tek_ve_dogru",
-   "not": "lightgbm siz kurulumda 22 test eksik toplanir; yerelde 1.958 olcumu 1.980-22 ile birebir tutuyor. E1'in alti, E2'nin iki, E3'un uc, E4'un bes, E6'nin yirmi bes testi eklendi (2.027 -> 2.074, dosya 70 -> 72). Sonuncusu test_betik_sayisi_belgeyle_ayni: backend/README 24 betik diyordu, gercek 27'ydi ve bunu tutan bekci YOKTU. PR #44 sayfa bekcileriyle iki test ekledi (2.074 -> 2.076) ve bu dal dort test daha ekledi (2.076 -> 2.080): Is 1-4'un ikisi (test_basabas_kacak_ELLE_YAZILMAZ_bedelden_ve_tablodan_turer, test_karne_satiri_ODEYEN_olayi_AYRI_tasiyor) ve §3.64'un ikisi (test_banko_duzeltmesi_UYGULANMIYOR_kurali_yazili, test_banko_yanliligi_ORNEKLEMI_SABIT_tutar); dosya sayisi 72'de kaldi. Sayi bu dalda IKI KEZ olculdu (once 2.078, PR #44 main'e girince 2.080), cunku main iki kez degisti; sonuncusu 2026-09-06'da PR #44 main'e girdikten sonra eksiksiz kurulumla (scipy+lightgbm+flask+mcp+pillow) DOGRUDAN sayildi: 72 dosya, 2.080 test. || Kutuk kaydinda TAM deger: 2.080. `deger` alani belgede gecen literal olmak zorunda (bekcisi `.claude/graf_uret.py::sayilar_denetle` satir satir arar). || KAPLAMA SOKULDU (docs/DUZ_SISTEME_GECIS.md): 2.080 -> 1.799, 72 dosya. Dusen 281 testin tamami kaplamaya aitti — fix16 degismezleri, blok motoru, mesafe muhasebesi (ball/distance_layers/dogrula_kaplama), butce danismani, yedi mod, engines ve sistem fiyat tablosu. Yerlerine daha AZ ama daha KESIN degismez geldi; bunlardan biri kaplamada yazilamazdi: `en iyi kolon == 15 - k` esitligi, kaba kuvvetle (test_invariants)."
+   "not": "1.799 yaziyordu ve KENDI BEKCISIYLE celisiyordu: bekci belgelerdeki sayiyi gercek koleksiyona esitler, belgeler 1.800 diyordu. Uretici komut da yanlisti — `-o addopts=` olmadan xdist devrede kalir. PR 48 incelemesinde uc bekci eklendi: 1.800 -> 1.803."
   },
   {
    "ne": "test dosyasi sayisi",
    "deger": "72",
    "ureten": "ls backend/tests/test_*.py | wc -l",
-   "olculdu": "2026-09-05",
+   "olculdu": "2026-09-06",
    "anildigi_yerler": [
     "README.md §7",
     "backend/README.md"
@@ -30,19 +30,21 @@
   },
   {
    "ne": "hizli test sayisi",
-   "deger": "1.926",
-   "ureten": "pytest -m 'not slow' --collect-only -q",
-   "olculdu": "2026-09-03",
+   "deger": "1.779",
+   "ureten": "cd backend && python -m pytest -m 'not slow' --collect-only -q -p no:randomly -o addopts=",
+   "olculdu": "2026-09-06",
    "anildigi_yerler": [],
-   "bekci": null
+   "bekci": null,
+   "not": "1.926 yaziyordu (2026-09-03), yani kaplama sokulmeden onceki suit. Bekcisi yok; yeniden olculdu."
   },
   {
-   "ne": "yavas (ILP) test sayisi",
-   "deger": "8",
-   "ureten": "pytest -m slow --collect-only -q",
-   "olculdu": "2026-09-03",
+   "ne": "yavas (slow) test sayisi",
+   "deger": "24",
+   "ureten": "cd backend && python -m pytest -m slow --collect-only -q -p no:randomly -o addopts=",
+   "olculdu": "2026-09-06",
    "anildigi_yerler": [],
-   "bekci": null
+   "bekci": null,
+   "not": "Kayit '8' ve 'yavas (ILP)' diyordu; ILP cozucu `engines.py` ile birlikte sokuldu. Bugun slow isaretli 24 testin hicbiri ILP degil — isaret sureyi anlatiyor, konuyu degil. `pyproject.toml` markers aciklamasi da ayni koumda duzeltildi."
   },
   {
    "ne": "kapida atlanan test",
@@ -146,11 +148,12 @@
   },
   {
    "ne": "mypy bulgusu",
-   "deger": "0 / 145 dosya",
-   "ureten": "cd backend && python -m mypy",
-   "olculdu": "2026-09-03",
+   "deger": "0 / 165 dosya",
+   "ureten": "cd backend && python -m mypy   # py3.10, CI 'kalite kapisi' isiyle ayni zemin",
+   "olculdu": "2026-09-06",
    "anildigi_yerler": [],
-   "bekci": "kapsam: spor_toto + web_app + scripts + tests, ayrica check.sh'te .claude/"
+   "bekci": "kapsam: spor_toto + web_app + scripts + tests, ayrica check.sh'te .claude/",
+   "not": "Dosya sayisi 145 yaziyordu. Ayrica mypy her kosumda \"unused section(s): module = ['spor_toto.engines']\" diyordu — sokulen modul override listesinde kalmisti; kapiyi kirmadigi icin kimse okumamis. Liste temizlendi."
   },
   {
    "ne": "cagirani olmayan genel yuzey (spor_toto)",
@@ -991,32 +994,32 @@
   },
   {
    "ne": "amac kiyasi — 2026/27'nin dondurulmus haftalarinda ayrisan hafta sayisi",
-   "deger": "0/4",
-   "ureten": "cd backend && python scripts/amac_kiyasi.py",
+   "deger": "4/4",
+   "ureten": "cd backend && python scripts/amac_kiyasi.py  # tohum 7",
    "olculdu": "2026-09-06",
    "anildigi_yerler": [],
    "bekci": "backend/tests/test_amac_kiyasi.py::test_sezonda_iki_amac_AYNI_kuponu_veriyor",
-   "not": "Kuralin amaci P(k<=2)'yi enbuyuklemektir; sohbette duzenli olarak 'en az kacagi seciyor' diye okunuyor ve o BASKA bir amactir (E[k]=sum(q) enkucuklemek). Bu sezonun dort haftasinda ikisi BIREBIR ayni kuponu veriyor: hafta 1 4/7/4, hafta 2 3/7/5, hafta 3 4/8/3, hafta 4 3/7/5 — hicbirinde ayrisan mac yok. Kiyas bugunun varsayilan olceginde (shin) kosar; 3. ve 4. hafta ayni olcekte donduruldugu icin plan kuponun kendisini birebir veriyor (864 kolon / P=0,3809 ve 3.888 kolon / P=0,4670), 1. ve 2. hafta `orantili` ile donduruldugu icin kapsam disi.",
+   "not": "Onceki deger esik 2 ile, KAPLAMA doneminde olculmustu. VARSAYILAN_KACAK_ESIGI duz gecisle 2 -> 3 oldu (`docs/DUZ_SISTEME_GECIS.md`) ve sonuc degisti; ayni komut yeniden kosuldu. Onceki kayit 0/4 idi, yani iki amac dort haftada da AYNI kuponu veriyordu; esik 3'te dordunde de AYRISIYOR. Betigin cikti cumlesi ('0/4 haftada iki amac AYNI kuponu veriyor') ayni olmayi sayar, ayrismayi degil — ters okunmaya musait.",
    "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
    "ne": "amac kiyasi — rastgele haftada iki amacin ayrisma sikligi",
-   "deger": "61/400",
-   "ureten": "cd backend && python scripts/amac_kiyasi.py",
+   "deger": "306/400 (%76,5)",
+   "ureten": "cd backend && python scripts/amac_kiyasi.py  # tohum 7",
    "olculdu": "2026-09-06",
    "anildigi_yerler": [],
    "bekci": "backend/tests/test_amac_kiyasi.py::test_rastgele_ayrisma_sikligi_kutukle_ayni",
-   "not": "Tohum 7, 15 mac/hafta, olasiliklar u^2 ile uretilir (net favorili ve caresiz maclari birlikte uretsin diye), butce (512, 864, 1024, 1296, 2304, 3888) arasindan cekilir. Sezonda ayrisma cikmamasi 'iki amac aynidir' DEMEK DEGILDIR: rastgele haftalarin %15,2'sinde farkli kupon cikiyor. Sayi tohuma baglidir ve tohum degisirse yeniden olculur.",
+   "not": "Onceki deger esik 2 ile, KAPLAMA doneminde olculmustu. VARSAYILAN_KACAK_ESIGI duz gecisle 2 -> 3 oldu (`docs/DUZ_SISTEME_GECIS.md`) ve sonuc degisti; ayni komut yeniden kosuldu. Onceki kayit 61/400 (%15,2).",
    "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
-   "ne": "amac kiyasi — ayrisinca 'en az kacak' okumasinin P(k<=2) kaybi",
-   "deger": "ort. 0,00214 · azami 0,00862",
-   "ureten": "cd backend && python scripts/amac_kiyasi.py",
+   "ne": "amac kiyasi — ayrisinca 'en az kacak' okumasinin P(k<=3) kaybi",
+   "deger": "ort. 0,02259 · azami 0,09844 · asgari 0,00001",
+   "ureten": "cd backend && python scripts/amac_kiyasi.py  # tohum 7",
    "olculdu": "2026-09-06",
    "anildigi_yerler": [],
    "bekci": "backend/tests/test_amac_kiyasi.py::test_EN_AZ_KACAK_okumasi_hedefi_HICBIR_haftada_gecemez",
-   "not": "Ayrisan 61 haftanin 61'inde yon ayni: E[k]'yi enkucuklemek P(k<=2)'yi KAYBETTIRIYOR, en kucuk kayip 0,00001, negatif kayip yok. Negatif cikamaz cunku `en_iyi_secim` Pareto DP ile KESIN cozer — cikarsa sayi degil `secim.py` yanlistir; bekci bunu ayrica tutuyor. Buyukluk kucuk (azami 0,86 puan), yani yanlis okuma pratikte pahali degil; yine de sistematik.",
+   "not": "Onceki deger esik 2 ile, KAPLAMA doneminde olculmustu. VARSAYILAN_KACAK_ESIGI duz gecisle 2 -> 3 oldu (`docs/DUZ_SISTEME_GECIS.md`) ve sonuc degisti; ayni komut yeniden kosuldu. Onceki kayit ort. 0,00214 / azami 0,00862 idi. Kayip hicbir haftada negatif degil ve olamaz — `en_iyi_secim` Pareto DP ile kesin cozer.",
    "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {

@@ -611,3 +611,102 @@ def test_donmus_kupon_kaydi_SISTEMINI_ilan_eder():
         "donmus kupon kaydi sistemini ilan etmiyor: " + "; ".join(eksik)
         + " — `meta.sistem` 'fix16' (kaplama) ya da 'duz' olmali."
     )
+
+
+def test_hafta_yukle_kuponun_SISTEMINI_yuzeye_cikarir():
+    """Kupon kaydının `meta.sistem`i `hafta_yukle`nin çıktısına ULAŞMALI.
+
+    **Yukarıdaki bekçi tek başına yetmiyordu ve bu boşluk ölçüldü.** O
+    bekçi kaydın alanı *yazmasını* şart koşuyor; ama alan
+    `hafta_NN_kupon.json`da, değerlendiricinin okuduğu `d` ise
+    `hafta_NN.json`dan geliyordu ve ikisini birleştiren hiçbir yer yoktu.
+    Sonuç: `kayit_sistemi(d)` **her hafta için** `fix16` dönüyordu, yani
+    "varsayılana düşülmez" sözü yazılıydı ama tutmuyordu. Kaydın alanı
+    ilan etmesi, o alanın OKUNDUĞU anlamına gelmez — bu bekçi okunduğunu
+    tutar.
+    """
+    from scripts.super_toto_hafta import hafta_yukle
+
+    kok = KOK / "data" / "super_toto"
+    kayitlar = sorted(kok.glob("*/hafta_*_kupon.json"))
+    assert kayitlar, "donmus kupon kaydi bulunamadi"
+    yanlis = []
+    for yol in kayitlar:
+        beklenen = (json.loads(yol.read_text(encoding="utf-8")).get("meta")
+                    or {}).get("sistem")
+        if beklenen is None:
+            continue
+        sezon = yol.parent.name
+        no = int(yol.name.split("_")[1])
+        bulunan = (hafta_yukle(sezon, no).get("meta") or {}).get("sistem")
+        if bulunan != beklenen:
+            yanlis.append(f"{sezon}/hafta {no}: kupon {beklenen!r} diyor, "
+                          f"hafta_yukle {bulunan!r} veriyor")
+    assert not yanlis, (
+        "kupon kaydinin sistemi degerlendiriciye ULASMIYOR: "
+        + "; ".join(yanlis)
+        + " — bkz. scripts/super_toto_hafta.py::hafta_yukle")
+
+
+def test_duz_kupon_TAM_sistem_olarak_degerlendirilir(deg):
+    """Sistem SORULMADAN da düz kupon düz değerlendirilmeli.
+
+    Değerlendiricinin beş ayrı gövdesi `sistem` parametresini `"fix16"`
+    varsayılanıyla taşıyordu ve beş çağrı yeri (arayüzün okuduğu
+    `super-toto-veri.json`ı üreten `super_toto_frontend` dahil) onu hiç
+    sormuyordu. Düz oynanan bir hafta o yoldan 16 satırlık kaplamaya
+    indirgenir ve **bir kademe kötü** raporlanırdı: aşağıdaki kurulumda
+    gerçekte 15−k tutturan kupon 14−k gösterilirdi. Çökme değil YANLIŞ
+    SAYI, yani fark edilmesi en zor tür.
+
+    Varsayılan artık `None` = "kayıttan oku"; bu bekçi de sabit
+    varsayılanın geri gelmesini tutar.
+    """
+    probs = [{"1": 0.5, "0": 0.3, "2": 0.2}] * 15
+    # Sonuc BILEREK secildi: 7 ciftenin 128 deseninden 112'si iki sistemi
+    # ayirir, 16'si ayirmaz (onlar kaplamanin kendi satirlari — orada
+    # kaplama da 15 tutturur). Ayirmayan bir desen secilseydi asagidaki
+    # kiyas sessizce bos gecerdi.
+    sonuc = "1" * 14 + "0"
+    d = _hafta(probs, sonuc)
+    # 8 banko + 7 cifte: kaplama doneminin "en az yedi cifte" sekli.
+    picks = ["1"] * 8 + ["10"] * 7
+    d["meta"]["sistem"] = "duz"
+
+    k = deg.kupon_degerlendir(d, picks)          # sistem BILEREK sorulmuyor
+    assert k["sistem"] == "tam"
+    assert k["best"] == 15 - k["miss_count"]
+
+    # Ayni kupon kaplama ilan edilirse EN IYI KOLON DUSER — iki sistemin
+    # ayrildigi nokta tam olarak burasi, yani ustteki assert bos degil.
+    d["meta"]["sistem"] = "fix16"
+    kaplama = deg.kupon_degerlendir(d, picks)
+    assert kaplama["sistem"] == "fix16"
+    assert kaplama["best"] < k["best"]
+
+
+def test_sistem_parametresi_HICBIR_govdede_sabit_varsayilana_dusmez():
+    """`sistem=` taşıyan her genel gövdenin varsayılanı `None` olmalı.
+
+    Yukarıdaki bekçi bir gövdeyi (`kupon_degerlendir`) tutuyor; bu bekçi
+    **sınıfı** tutuyor. Beş gövde vardı ve beşi de `"fix16"` yazıyordu;
+    altıncısı eklenirse aynı sessiz hata geri gelir.
+    """
+    import inspect
+
+    from scripts import super_toto_degerlendir as mod
+
+    suclu = []
+    for ad, fn in vars(mod).items():
+        if ad.startswith("_") or not inspect.isfunction(fn):
+            continue
+        if fn.__module__ != mod.__name__:
+            continue
+        par = inspect.signature(fn).parameters.get("sistem")
+        if par is None or par.default is inspect.Parameter.empty:
+            continue
+        if par.default is not None:
+            suclu.append(f"{ad}(sistem={par.default!r})")
+    assert not suclu, (
+        "sistem parametresi sabit varsayilana dusuyor: " + ", ".join(suclu)
+        + " — varsayilan `None` olmali ve `kayit_sistemi(d)` ile cozulmeli.")
