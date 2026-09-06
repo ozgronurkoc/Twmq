@@ -3855,7 +3855,7 @@
       "crowd_ratio": 0.384,
       "hedef": 0.261767,
       "in_set_p": 0.013106,
-      "label": "bütçe kısıtlı — 3. haftanın bedeli (864 kolon), motorun kendi planı",
+      "label": "bütçe kısıtlı — 3. haftanın bedeli (864 kolon), ANA PLANDAN KISILMIŞ",
       "picks": [
        "102",
        "102",
@@ -3880,7 +3880,7 @@
       "crowd_ratio": 0.385,
       "hedef": 0.318363,
       "in_set_p": 0.018016,
-      "label": "bütçe kısıtlı — orta kademe (1.296 kolon), motorun kendi planı",
+      "label": "bütçe kısıtlı — orta kademe (1.296 kolon), ANA PLANDAN KISILMIŞ",
       "picks": [
        "102",
        "102",
@@ -3922,6 +3922,56 @@
        "12",
        "10",
        "12"
+      ]
+     },
+     {
+      "columns": 864,
+      "crowd_in_set_p": 0.035655,
+      "crowd_ratio": 0.424,
+      "hedef": 0.274852,
+      "in_set_p": 0.015102,
+      "label": "bütçe kısıtlı — tavan 1.024 kolon, MOTORUN KENDİ PLANI",
+      "picks": [
+       "102",
+       "102",
+       "1",
+       "10",
+       "2",
+       "102",
+       "1",
+       "10",
+       "10",
+       "12",
+       "10",
+       "12",
+       "10",
+       "1",
+       "10"
+      ]
+     },
+     {
+      "columns": 1296,
+      "crowd_in_set_p": 0.048842,
+      "crowd_ratio": 0.425,
+      "hedef": 0.332737,
+      "in_set_p": 0.020759,
+      "label": "bütçe kısıtlı — tavan 2.304 kolon, MOTORUN KENDİ PLANI",
+      "picks": [
+       "102",
+       "102",
+       "1",
+       "10",
+       "2",
+       "102",
+       "1",
+       "10",
+       "10",
+       "12",
+       "10",
+       "102",
+       "10",
+       "1",
+       "10"
       ]
      }
     ]

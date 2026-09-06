@@ -16,7 +16,7 @@
    "fiyat": "Pinnacle kapanış (iki satırda ikame — maçların `odds_from` alanı)",
    "fiyat_gerekcesi": "3. haftanın gerekçesi aynen geçerli: scripts/acilis_kapanis.py 2025/26 arşivinde kapanışı açılışın önünde ölçtü (Brier %0,27 daha iyi, kural 36/36 hafta ≥12 ve %23 daha az kolon). Bu hafta seçimin PRATİK ağırlığı yok: açılış fiyatıyla kurulan kupon 15 maçın 15'inde AYNI çıktı."
   },
-  "bedel_uyarisi": "BU HAFTA KURAL 3.888 KOLON İSTİYOR — 3. haftada 864'tü, yani ×4,5 bedel. Sebep haftanın kendisi: bültende yalnızca 3 banko var (maç 3, 5, 7) ve 5 maç üçlü (maç 1, 2, 6, 10, 12). Kural DEĞİŞTİRİLMEDİ ve ana varyant kuralın cevabıdır; ama bütçe bir HARCAMA kararıdır ve veriden türetilemez. Motorun aynı haftada daha küçük bütçelerde kurduğu planlar da kayıtta duruyor: 864 kolon → P(≥12) %26,18 · 1.296 kolon → %31,84 · 3.888 kolon → %46,70. Oynayan daha küçük bir bütçeyi oynarsa kayıt `superseded` ile güncellenir.",
+  "bedel_uyarisi": "BU HAFTA KURAL 3.888 KOLON İSTİYOR — 3. haftada 864'tü, yani ×4,5 bedel. Sebep haftanın kendisi: bültende yalnızca 3 banko var (maç 3, 5, 7) ve 5 maç üçlü (maç 1, 2, 6, 10, 12). Kural DEĞİŞTİRİLMEDİ ve ana varyant kuralın cevabıdır; ama bütçe bir HARCAMA kararıdır ve veriden türetilemez. Motorun aynı haftada daha küçük bütçelerde kurduğu planlar da kayıtta duruyor: 864 kolon → P(≥12) %27,49 · 1.296 kolon → %33,27 · 3.888 kolon → %46,70 (bu üç sayı 2026-09-06'da DÜZELTİLDİ: ilk ikisi ana plandan elle kısılmış varyantlardan okunmuştu ve motorun aynı tavandaki gerçek cevabından 1,31 ve 1,43 puan geriydi — bkz. meta.duzeltme). Oynayan daha küçük bir bütçeyi oynarsa kayıt `superseded` ile güncellenir.",
   "kalabalik_gerekcesi": "Oynanan kupon kalabalığı GÖRMEZ: işaretler yalnızca fiyattan gelir. Kalabalık ayarlı alternatif de ölçüldü ve kayıtta duruyor — P(≥12)'yi %46,70'den %44,86'e düşürüyor (−1,84 puan), buna karşılık aynı seti oynayan rakip payını %9,35'den %6,64'e indiriyor (×1,41 daha az bölüşme); müşterek beklenen değerde net ×1,35 daha iyi çıkıyor. Ayrışma 3 maçta: 4. maç 10 → 12; 9. maç 10 → 12; 15. maç 10 → 12. 3. haftada oynayan ölçüme RAĞMEN ayarsız sürümü seçti ve o hafta kazandı; defter bunu uyarı olarak taşıyor — tek hafta bir ölçüm değildir.",
   "hedef_notu": "Asıl ölçü P(en iyi kolon ≥ 12); 14 bir yan üründür (1. haftanın 1. dersi).",
   "veri_uyarilari": [
@@ -26,7 +26,14 @@
    "Kapanış oranlarının tamamı kupon donarken elde miydi, DOĞRULANMADI — 3. haftanın `odds_kind` dersi burada da geçerli. Bu hafta soru pratikte boş: Pinnacle AÇILIŞ fiyatıyla kurulan kupon işaret işaret AYNI çıktı (`duyarlilik`).",
    "bet365.nl kaydı bu hafta yok; bahisçi ayrışması iki kaynak arasında ölçülüyor (3. haftada üçtü)."
   ],
-  "ucuncu_kupon_notu": "3. Kupon (surpriz) ana kayitla AYNI GUN, sonuclar yine gorulmeden eklendi. Ana varyantin yerine GECMEZ; olculmus bir yan bahistir ve tek gerekcesi marjinal katkidir: ana kupon 12'ye ulasamadigi haftalarda %4.08 olasilikla o kendisi ulasiyor. Ikisi birlikte oynanirsa P(en az biri >= 12) %58.32'den %62.41'e cikiyor."
+  "ucuncu_kupon_notu": "3. Kupon (surpriz) ana kayitla AYNI GUN, sonuclar yine gorulmeden eklendi. Ana varyantin yerine GECMEZ; olculmus bir yan bahistir ve tek gerekcesi marjinal katkidir: ana kupon 12'ye ulasamadigi haftalarda %4.08 olasilikla o kendisi ulasiyor. Ikisi birlikte oynanirsa P(en az biri >= 12) %58.32'den %62.41'e cikiyor.",
+  "duzeltme": {
+   "tarih": "2026-09-06",
+   "ne": "Iki butce varyantinin etiketi yanlisti: \"motorun kendi plani\" diyordu ama ikisi de ana plandan `kisilan` isaretleri dusurulerek uretilmisti. Etiketler duzeltildi ve motorun ayni tavanlardaki GERCEK planlari ayri varyant olarak eklendi.",
+   "etki": "ANA VARYANT DEGISMEDI — oynanan 3.888 kolonluk plan aynen duruyor ve yeniden dogrulandi (3/7/5, bedel 3.888, P(k<=2)=0,4670). Degisen yalnizca \"daha kucuk butceyle oynasaydik ne olurdu\" sorusunun cevabidir: 864 kolonda %26,18 degil %27,49; 1.296 kolonda %31,84 degil %33,27.",
+   "sonuc_gorulmedi": true,
+   "ureten": "cd backend && python scripts/butce_kademeleri.py --hafta 4"
+  }
  },
  "variants": [
   {
@@ -144,7 +151,7 @@
    "secim_uzayi": 49152
   },
   {
-   "label": "bütçe kısıtlı — 3. haftanın bedeli (864 kolon), motorun kendi planı",
+   "label": "bütçe kısıtlı — 3. haftanın bedeli (864 kolon), ANA PLANDAN KISILMIŞ",
    "picks": [
     "102",
     "102",
@@ -175,10 +182,11 @@
    "kisilan": [
     "10. mac: 102 -> 2",
     "12. mac: 102 -> 12"
-   ]
+   ],
+   "not": "Bu varyant motorun o tavandaki cevabi DEGILDIR: ana plandan `kisilan` isaretleri dusurulerek uretildi. Etiketi once \"motorun kendi plani\" diyordu ve yanlisti. Motorun ayni tavandaki GERCEK en iyisi ayri bir varyant olarak kayitta duruyor ve bu plandan +1,31 puan daha iyi; isaret farki 10. ve 14. macta. Sonuclar yine GORULMEDEN olculdu."
   },
   {
-   "label": "bütçe kısıtlı — orta kademe (1.296 kolon), motorun kendi planı",
+   "label": "bütçe kısıtlı — orta kademe (1.296 kolon), ANA PLANDAN KISILMIŞ",
    "picks": [
     "102",
     "102",
@@ -208,7 +216,8 @@
    "butce_tavani": 2304,
    "kisilan": [
     "10. mac: 102 -> 2"
-   ]
+   ],
+   "not": "Bu varyant motorun o tavandaki cevabi DEGILDIR: ana plandan `kisilan` isaretleri dusurulerek uretildi. Etiketi once \"motorun kendi plani\" diyordu ve yanlisti. Motorun ayni tavandaki GERCEK en iyisi ayri bir varyant olarak kayitta duruyor ve bu plandan +1,44 puan daha iyi; isaret farki 10. ve 14. macta. Sonuclar yine GORULMEDEN olculdu."
   },
   {
    "label": "3. Kupon — SÜRPRİZ (kalabalıktan azami sapma, ölçüldü)",
@@ -415,6 +424,70 @@
    "nasil_kuruldu": "1. Kupon'un planindan baslanip `secim.kalabalik_ayari` kayip_orani=0.5 ile kosuldu, sonra motorun kendi butce danismani 512 kolon tavaniyla kisti. Elle secilen tek sey bu iki sayidir ve ikisi de ILAN EDILMIS gerekceyle secildi (asagida).",
    "gerekce": "SAPMA 0.5: kosullu rakip yogunlugunun (`kat`) 1'in ALTINA dustugu kademe. Ayni butcede 0,30 -> 1,69 ve 0,40 -> 1,54 kaliyor; yani o kuponlar kazandiginda rakipler bizimle normalden DAHA cok birlikte olurdu — surpriz kuponun tersi. 0,50 -> 0.401. BUTCE 512: ana kuponun %11'i. Surpriz kupon ana kuponun yerine GECMEZ, yanina alinir; bedeli de ona gore secildi.",
    "olcum_notu": "Kademeler ve marjinal katki. iki kuponun ORTAK sonuc uzayinda (3^12 = 531.441 hal) tam sayildi — ornekleme yok. `hedef` alani her zamanki gibi P(kacak<=2)'dir ve bir ALT SINIRDIR; `p_en_az_12` kolonlardan olculen gercek degerdir."
+  },
+  {
+   "label": "bütçe kısıtlı — tavan 1.024 kolon, MOTORUN KENDİ PLANI",
+   "picks": [
+    "102",
+    "102",
+    "1",
+    "10",
+    "2",
+    "102",
+    "1",
+    "10",
+    "10",
+    "12",
+    "10",
+    "12",
+    "10",
+    "1",
+    "10"
+   ],
+   "columns": 864,
+   "rows": 16,
+   "engine": "sabit 16 satır (Hamming 7,4)",
+   "guaranteed_14": true,
+   "hedef": 0.274852,
+   "in_set_p": 0.015102,
+   "crowd_in_set_p": 0.035655,
+   "crowd_ratio": 0.424,
+   "secim_uzayi": 6912,
+   "butce_tavani": 1024,
+   "not": "`secim.en_iyi_secim` ayni tavanda dogrudan kosuldu — kisma degil, yeniden en iyileme. Ayni bedel ve ayni sekil, daha yuksek hedef: kisilmis surumden +1,31 puan iyi. Ana varyantin YERINE GECMEZ; oynanan kupon 3.888 kolonluk plandir. Sonuclar GORULMEDEN olculdu (2026-09-06).",
+   "ureten": "cd backend && python scripts/butce_kademeleri.py --hafta 4 --tavan 1024"
+  },
+  {
+   "label": "bütçe kısıtlı — tavan 2.304 kolon, MOTORUN KENDİ PLANI",
+   "picks": [
+    "102",
+    "102",
+    "1",
+    "10",
+    "2",
+    "102",
+    "1",
+    "10",
+    "10",
+    "12",
+    "10",
+    "102",
+    "10",
+    "1",
+    "10"
+   ],
+   "columns": 1296,
+   "rows": 16,
+   "engine": "sabit 16 satır (Hamming 7,4)",
+   "guaranteed_14": true,
+   "hedef": 0.332737,
+   "in_set_p": 0.020759,
+   "crowd_in_set_p": 0.048842,
+   "crowd_ratio": 0.425,
+   "secim_uzayi": 10368,
+   "butce_tavani": 2304,
+   "not": "`secim.en_iyi_secim` ayni tavanda dogrudan kosuldu — kisma degil, yeniden en iyileme. Ayni bedel ve ayni sekil, daha yuksek hedef: kisilmis surumden +1,44 puan iyi. Ana varyantin YERINE GECMEZ; oynanan kupon 3.888 kolonluk plandir. Sonuclar GORULMEDEN olculdu (2026-09-06).",
+   "ureten": "cd backend && python scripts/butce_kademeleri.py --hafta 4 --tavan 2304"
   }
  ],
  "duyarlilik": {

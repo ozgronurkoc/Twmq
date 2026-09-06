@@ -104,7 +104,7 @@ spor_toto/                        (51 modül — aşağısı yönlendirici seçk
   health.py    Kategorili değişmez (invariant) kontrolleri — 27 kontrol
   health_history.py  Sunucu tarafı koşu geçmişi + durum değişimi bildirimi
 web_app.py     Flask — 15 uç, yalnızca JSON (tam liste: ARCHITECTURE_NEXT.md)
-scripts/                          (29 betik + __init__.py — normal paket)
+scripts/                          (30 betik + __init__.py — normal paket)
   build_history.py  Tarihsel veri setini kaynağından üretir
   build_odds.py     Kupon maçlarına piyasa oranlarını eşleştirir
   build_egitim.py   Eğitim korpusu (football-data, 22 lig × 4 geçmiş sezon)
