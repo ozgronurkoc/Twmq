@@ -14,6 +14,13 @@
 > çıktısı buraya donduruldu. Sökümden sonra `sistem_kiyasi.py` koşamaz;
 > gerekçe yalnızca bu belgede kalır.
 
+> **Kaplamanın ayakta olduğu son nokta: `4b0fa40`** (`4b0fa406b3346a7204c6768d60d5a5ad7559c511`).
+> O commit'te `core.solve_fix16`, Hamming(7,4) bloğu, sistem fiyat tablosu ve
+> 14-garanti aritmetiği hâlâ çalışıyor; kaplama tarafının davranışını yeniden
+> görmek gerekirse başlangıç noktası orasıdır. (`kaplama-son` git etiketi
+> atıldı ama bu oturumun git aktarımı yalnızca kendi dalını push edebiliyor,
+> yani etiket uzağa **gitmedi** — çıpa bu yüzden SHA olarak buraya yazıldı.)
+
 ---
 
 ## 0. Özet — üç cümle
