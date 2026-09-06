@@ -76,6 +76,42 @@ def _tl(v: float | None) -> str:
     return "—" if v is None else f"{v:,.0f}"
 
 
+def _merdiven(probs: list[dict[str, float]], garanti: int,
+              secili_kolon: int, en_cok_tl: float = 20_000.0) -> None:
+    """Haftanın **merdiveni**: bütçenin ne satın aldığı görünür olsun.
+
+    E2 şekli hedefin değil **bütçenin** belirlediğini ölçtü (§3.57); ama
+    `--oncesi` bütçeyi tek satır olarak basıyordu, yani o kararın bedeli
+    görünmüyordu. Merdiven seçilen basamağı `→` ile işaretler ve her adımın
+    marjinal fiyatını (bir puan `P(hedef)` kaç TL) yanına yazar.
+
+    Marjinal fiyat **seçili satıra göre** yazılır, bir öncekine göre değil:
+    karar "bir üst basamağa çıkayım mı" sorusudur ve komşu satırlar arası
+    fark o soruyu yanıtlamaz (merdivende neredeyse bedava tek adımlar var,
+    ama onlara ancak pahalı bir adımdan sonra varılıyor).
+
+    Bu bir öneri değil, bir **gösterge**: hangi basamağın oynanacağı hâlâ
+    bütçe kararıdır ve E6 (`docs/KAZANMA_PLANI.md`) o kararı değiştirmek
+    için gereken ölçümü yapar.
+    """
+    from spor_toto.hafta_hakki import cephe
+
+    adimlar = cephe(probs, garanti=garanti, en_cok_tl=en_cok_tl)
+    if not adimlar:
+        return
+    secili = next((x for x in adimlar if x.kolon == secili_kolon), None)
+    print(f"\n  merdiven (tavan {en_cok_tl:,.0f} TL) — TL/puan SECILIYE gore:")
+    print(f"    {'':2}{'TL':>9}{'kolon':>7}  {'sekil':<11}{'P(hedef)':>9}"
+          f"{'TL/puan':>10}")
+    for x in adimlar:
+        marj = ""
+        if secili is not None and x.p_hedef != secili.p_hedef:
+            marj = f"{(x.tl - secili.tl) / (x.p_hedef - secili.p_hedef) / 100:,.0f}"
+        im = "->" if x.kolon == secili_kolon else "  "
+        print(f"    {im:2}{x.tl:>9,.0f}{x.kolon:>7}  {x.sekil:<11}"
+              f"{x.p_hedef:>9.4f}{marj:>10}")
+
+
 def karne_metni(sezon: str, butce: float, garanti: int) -> str:
     rows = satirlar(sezon, butce, garanti)
     bitmis = [r for r in rows if "odul" in r]
@@ -180,9 +216,12 @@ def _main(argv: list[str] | None = None) -> int:
         for i, x in enumerate(r["picks"], 1):
             print(f"    {i:>2}. {x}")
 
+        h = canli_hafta(sezon, hafta)
+        if h:
+            _merdiven(h["probs"], a.garanti, r["kolon"])
+
         # Kalabalik ayari AYRI gosterilir, varsayilan DEGIL: olculdugunde
         # makul her kisitta kazanci sifir cikti (docs Faz B).
-        h = canli_hafta(sezon, hafta)
         if h and h["play"]:
             from spor_toto.getiri import beklenen_tl
             from spor_toto.havuz import BOLUSUM
