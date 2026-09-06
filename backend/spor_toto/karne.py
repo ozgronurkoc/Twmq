@@ -435,10 +435,13 @@ def taban_gevsekligi(butce_tl: float = 2000.0,
         ham = gercek_kolon_dagilimi(plan.secimler, h["gercek"])
         if ham is None:
             continue
-        motor_kolon += round(sum(ham.values()))
+        # **Olcekleme dustu.** Kaplama doneminde `ham` motorun urettigi
+        # kolonlardan sayiliyordu ve saticinin sekline indirgenmesi
+        # gerekiyordu (motor 216, tablo 168). Duzde oynanan kolonlar
+        # carpimin kendisi; donusturulecek bir sey yok.
+        motor_kolon += plan.bedel
         tablo_kolon += plan.bedel
-        olcek = plan.bedel / sum(ham.values())
-        dagilim = {k: v * olcek for k, v in ham.items()}
+        dagilim = dict(ham)
         kacak = sum(1 for s, c in zip(plan.secimler, h["gercek"])
                     if c not in s)
         taban = 0.0
@@ -668,8 +671,7 @@ def hedef_kademe_kiyasi(butce_tl: float = 2000.0,
             ham = gercek_kolon_dagilimi(plan.secimler, h["gercek"])
             if not ham:
                 continue
-            olcek = plan.bedel / sum(ham.values())
-            dagilim = {k: v * olcek for k, v in ham.items()}
+            dagilim = dict(ham)   # duzde olcekleme yok (yukaridaki gerekce)
             maliyet = plan.bedel * KOLON_BEDELI
             odul = gercek_odul(dagilim, h["tablo"]) or 0.0
             kol[(h["sezon"], h["hafta"])] = {

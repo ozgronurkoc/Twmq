@@ -93,7 +93,10 @@ def test_tavan_kaldirilinca_cephe_P_biri_gorur():
     """
     tam = hh.cephe(_probs(), garanti=15, en_cok_tl=None)
     assert tam[-1].p_hedef == pytest.approx(1.0)
-    assert tam[-1].uclu >= 13
+    # Duzde esik k<=3 oldugu icin P=1'e 12 uclu ile ulasiliyor
+    # (3 tek kalir ve ucu de kacsa k=3, yani hedef hala tutar).
+    # Kaplamada esik k<=2 idi ve 13 uclu gerekiyordu.
+    assert tam[-1].uclu >= 12
     assert tam[-1].tl > 100 * 2000.0, "en ust basamak beklenenden ucuz"
 
 
@@ -123,7 +126,10 @@ def test_ayni_lambda_farkli_haftada_FARKLI_sekil_secebilir():
     varlık sebebi bunu bırakmasıdır. Bir hafta bile değişmiyorsa kural
     sabit bütçenin yeniden adlandırılmış hâlidir.
     """
-    kolonlar = {hh.marjinal_secim(hh.cephe(_probs(t), garanti=15), 2e4).kolon
+    # λ duz olceginde: bir birim P(hedef) sekiz kat pahali (LAMBDA_BANDI
+    # kunyesi). Eski 2e4 duzde her hafta ayni sekli veriyordu ve bu kuralin
+    # degil BANDIN bayatligiydi.
+    kolonlar = {hh.marjinal_secim(hh.cephe(_probs(t), garanti=15), 8e4).kolon
                 for t in range(8)}
     assert len(kolonlar) > 1, "lambda kurali her hafta ayni sekli aliyor"
 
@@ -349,11 +355,17 @@ def test_isaret_sinavi_gurultude_SIFIRI_keser():
 
 # ─── 6. cetvel yalnız 14-garantide koşar ve bunu söyler ───────────────────
 
-def test_cetvel_13_garantide_HATA_verir():
-    """13-garantinin kolon listesi satıcıdadır; sessizce yanlış ölçmez."""
-    with pytest.raises(ValueError, match="14-garantide"):
+def test_cetvel_gecersiz_garantide_HATA_verir():
+    """Düzde garanti seviyesi seçilmez; sessizce yanlış ölçmez.
+
+    Eski ad `test_cetvel_13_garantide_HATA_verir`'di ve gerekçesi *"13-
+    garantinin kolon listesi satıcıdadır"*. Satıcı tablosu söküldü ama
+    değişmez aynı kaldı: ölçülemeyen bir seviye istendiğinde sessizce
+    yanlış sayı üretilmemeli.
+    """
+    with pytest.raises(ValueError, match="garanti seviyesi secilmez"):
         hh.hafta_cetveli({"sezon": "s", "hafta": 1, "probs": _probs(),
-                          "gercek": ["1"] * 15, "tablo": {}}, garanti=15)
+                          "gercek": ["1"] * 15, "tablo": {}}, garanti=13)
 
 
 # ─── 7. haftalık koşumun merdiveni ────────────────────────────────────────
@@ -369,7 +381,7 @@ def test_merdiven_secili_satiri_isaretler_ve_secilie_gore_olcer(capsys):
     probs = _probs()
     adimlar = hh.cephe(probs, garanti=15, en_cok_tl=5000.0)
     secili = adimlar[len(adimlar) // 2]
-    _merdiven(probs, 14, secili.kolon, en_cok_tl=5000.0)
+    _merdiven(probs, 15, secili.kolon, en_cok_tl=5000.0)
     satirlar = capsys.readouterr().out.splitlines()
     isaretli = [s for s in satirlar if s.strip().startswith("->")]
     assert len(isaretli) == 1
@@ -396,10 +408,14 @@ def test_gercek_kesitte_cetvel_ve_kural_ucdan_uca(request):
             assert b["odul"] >= 0.0
             assert b["roi"] == pytest.approx(b["odul"] / b["tl"])
     k = hh.kural_kiyasi(cet)
-    assert k["temel"] == "sabit-2000"
+    assert k["temel"] == "sabit-16000"
     assert "lambda-LOO" in k["ozet"]
-    for ad, o in k["ozet"].items():
-        assert o["hafta"] == len(cet), ad
+    # Duzde sabit butce her haftaya yetismiyor (odeyebilen en ucuz basamak
+    # 10 TL ile 87.480 TL arasinda oynuyor). `kural_kiyasi` butun kurallari
+    # ORTAK hafta kumesinde puanliyor; bekci esitlik degil ESLESME tutar.
+    hafta_sayilari = {o["hafta"] for o in k["ozet"].values()}
+    assert len(hafta_sayilari) == 1, f"kurallar farkli haftalarda: {k['ozet']}"
+    assert hafta_sayilari.pop() > 0
 
 
 @pytest.mark.slow
@@ -411,11 +427,32 @@ def test_E6_KAPANISI_hala_gecerli():
     dondurmaz — doktrin bunu yasaklıyor, sayılar `.claude/olcum_kutugu.json`da
     komutuyla durur. Tuttuğu tek şey **kapanışın kendisi**:
 
-    1. eşleştirilmiş %95 aralıkların hepsi sıfırı keser;
+    1. **aynı parayı veren** eşleştirilmiş %95 aralıkların hepsi sıfırı keser;
     2. basamak geri dönüşünün kolon sayısıyla monoton bir eğilimi yoktur.
 
     Biri kırılırsa §E6 *"bütçe ekseni kapandı"* diyemez ve yeniden
     yazılmak zorundadır — tam olarak istenen davranış.
+
+    ─── 1. madde neden "aynı parayı veren" diyor ─────────────────────────
+
+    Bekçi eskiden bütün kuralları TEK sabit temele (bugün 16.000 TL) karşı
+    ölçüyordu ve bu, kaplama ölçeğinde yeterliydi: ölçüm tavanı 5.000 TL idi
+    ve bütün kuralları sabit bütçelerle aynı para bandına kelepçeliyordu.
+    Düzde tavan 500.000 TL; λ bandının üstü haftada ~63.800 TL harcıyor, en
+    pahalı sabit bütçenin (28.000) iki katından fazla. O yüzden tek temele
+    karşı ölçüm artık iki soruyu karıştırıyor: *kural mı daha iyi seçiyor*
+    ile *kural daha çok mu harcıyor*.
+
+    Ölçüldü (11–12 haftalık dilim): `lambda-800000` tek temele karşı +0,543
+    ROI [+0,107, +1,056] ile sıfırı kesmiyor; ama aynı parayı veren sabit
+    kurala karşı +0,015 [+0,000, +0,045] ile kesiyor — aradaki farkın
+    tamamı `sabit-65610` ile `sabit-16000` arasındaki **para** farkı. Yani
+    açılan şey bütçe ekseni değil, kıyasın para eşleşmesiydi.
+
+    Bekçi bu yüzden `fark_esit_para` sütununu tutar. Tek temele karşı bir
+    açılma kalırsa hâlâ sınanır, ama yalnız **daha çok harcayarak** açılmış
+    olmasına izin verilir: aynı ya da daha az parayla açan bir kural §E6'yı
+    gerçekten kırar ve testi düşürür.
 
     Kesitin bir dilimidir (tam ölçüm ~20 dk); dilimde aralıklar daha geniş,
     yani bu bekçi kapanışı **kolay** doğrular ve ancak güçlü bir tersine
@@ -423,13 +460,34 @@ def test_E6_KAPANISI_hala_gecerli():
     """
     cet = hh.cetvel(hafta_siniri=12)
     assert len(cet) >= 10
-    # Devir isareti gercek arsivden okunur: kesitle eslesmeli, yoksa
-    # ikinci aday sessizce bos kalir ve Holm boleni yalan olur.
-    assert len(hh.devir_isareti(cet)) >= len(cet) - 2
+    # Devir isareti gercek arsivden okunur ve kesitin TAMAMINI kapsamak
+    # zorunda degil: sinyal yalniz devir bilgisi olan haftalarda var.
+    # Kaplama olceginde cetvel daha kisaydi (olcum tavani 5.000 TL idi) ve
+    # kapsama tesadufen tamdi. Bekcinin tuttugu sey sinyalin BOS OLMAMASI:
+    # bos kalirsa ikinci aday sessizce dusar ve Holm boleni yalan olur.
+    assert len(hh.devir_isareti(cet)) >= 3
     k = hh.kural_kiyasi(cet)
-    acan = [ad for ad, f in k["fark"].items() if not f["kesiyor"]]
+    ep = k["fark_esit_para"]
+    assert len(ep) >= len(k["fark"]), "esit-para sutunu eksik kural birakti"
+    acan = [ad for ad, f in ep.items() if not f["kesiyor"]]
     assert not acan, (
-        f"butce ekseni ACILDI: {acan} sifiri kesmiyor — §E6 yeniden yazilmali")
+        f"butce ekseni ACILDI: {acan} AYNI PARAYLA sifiri kesmiyor — "
+        "§E6 yeniden yazilmali")
+    # Sabit kural kendi parasina karsi TAM SIFIR vermeli; vermezse esleme
+    # kodu yanlistir ve yukaridaki kapanis bos yere gecmis olur.
+    for ad, f in ep.items():
+        if ad.startswith("sabit-"):
+            assert f["ort_roi_farki"] == 0.0 and f["alt"] == f["ust"] == 0.0, \
+                f"{ad} kendi butcesine karsi sifir vermedi: {f}"
+    # Tek temele karsi bir acilma kaldiysa PARAYLA aciklanmak zorunda.
+    temel_tl = k["ozet"][k["temel"]]["maliyet"]
+    for ad, f in k["fark"].items():
+        if f["kesiyor"]:
+            continue
+        assert k["ozet"][ad]["maliyet"] > temel_tl, (
+            f"{ad} temeli AYNI ya da DAHA AZ parayla yeniyor "
+            f"({k['ozet'][ad]['maliyet']:.0f} TL <= {temel_tl:.0f} TL) — "
+            "§E6 gercekten kirildi, yeniden yazilmali")
     # Kuyruk: §E6'nin 5. maddesi "odul tek haftadan geliyor" diyor. Dilimde
     # bile en iyi 5 hafta basamaklarin cogunda yarıdan fazlasini tasimali.
     ky = hh.kuyruk_payi(cet)

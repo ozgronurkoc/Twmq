@@ -39,7 +39,8 @@ def test_kademe_garantiden_ve_kacaktan_turer():
     tab = _tablo({15: 1e6, 14: 1e5, 13: 1e4, 12: 1e3})
     r = karne.hafta_karnesi(_probs(), ["1"] * 15, tab, 3000.0, garanti=15)
     assert r is not None
-    assert r["kademe"] == 14 - r["kacak"]
+    # Duzde en iyi kolon 15 - kacak (kaplamada 14 - kacak idi).
+    assert r["kademe"] == 15 - r["kacak"]
 
     # Hic tutmayan bir sonuc: butun maclarda kacak -> kademe 12'nin altinda
     kotu = karne.hafta_karnesi(_probs(), ["0"] * 15, tab, 3000.0, garanti=15)
@@ -183,7 +184,7 @@ def test_canli_karne_satiri_kademe_GARANTI_TABANINDAN(tmp_path):
     r = karne.canli_karne_satiri("2099_00", 4, 2000.0, garanti=15,
                                  kok=tmp_path)
     assert r is not None
-    assert r["kademe"] == 13 - r["kacak"]
+    assert r["kademe"] == 15 - r["kacak"]
     assert r["net"] == r["odul"] - r["maliyet"]
 
 
@@ -217,16 +218,29 @@ def test_gercek_dagilim_kacak_yokken_GARANTI_KADEMESINE_ulasir():
     assert sum(v for k, v in d.items() if k >= 14) >= 1
 
 
-def test_gercek_dagilim_bankolu_kuponda_toplam_KOLON_sayisi():
-    """Dağılımın toplamı kolon sayısına eşit; ölçek verilirse ona indirgenir."""
-    sec = [["1"]] * 8 + [["1", "0"]] * 7
+def test_gercek_dagilim_TUTARSIZ_olcekte_hata_atar():
+    """Ölçekleme düştü; tutarsız `hedef_kolon` sessizce kabul edilmez.
+
+    **Bu test tersine çevrildi.** Kaplama döneminde `hedef_kolon` motorun
+    ürettiği kolon sayısını satıcının şekline indirgiyordu (216 → 168) ve
+    test o indirgemenin çalıştığını sınıyordu. O ölçekleme **ölçülmemiş bir
+    varsayıma** dayanıyordu ("satıcının daha az kolonu aynı biçimde
+    dağılıyor") ve düzde gereksiz: oynanan kolonlar çarpımın kendisi.
+
+    Sessizce ölçeklemek yerine hata atmak bilinçli bir seçim — o sessizlik
+    tam olarak varsayımın görünmez kalmasının sebebiydi.
+    """
+    sec = [["1"]] * 8 + [["1", "0"]] * 7          # 2^7 = 128 kolon
     d = karne.gercek_kolon_dagilimi(sec, ["1"] * 15)
     assert d is not None
-    toplam = sum(d.values())
-    olcekli = karne.gercek_kolon_dagilimi(sec, ["1"] * 15, hedef_kolon=16)
-    assert olcekli is not None
-    assert sum(olcekli.values()) == pytest.approx(16.0)
-    assert toplam >= 16
+    # Yalniz ODEYEN kademeler (15..12) sayilir; 128 kolonun 64'u 11 ve
+    # altinda kalir ve hicbir sey odemez. Kacaksiz kuponda dagilim
+    # binom katsayilaridir: C(7,0..3) = 1, 7, 21, 35.
+    assert d == {15: 1.0, 14: 7.0, 13: 21.0, 12: 35.0}
+    # Tutarli olcek sorun degil; tutarsizi hata.
+    assert karne.gercek_kolon_dagilimi(sec, ["1"] * 15, hedef_kolon=128) == d
+    with pytest.raises(ValueError, match="carpimdir"):
+        karne.gercek_kolon_dagilimi(sec, ["1"] * 15, hedef_kolon=16)
 
 
 def test_gercek_odul_12nin_altini_saymaz():

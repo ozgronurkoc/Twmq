@@ -12,6 +12,7 @@ from itertools import product
 
 import pytest
 
+from spor_toto.duz import kolonlar as duz_kolonlar
 from spor_toto.core import (
     Encoder,
     Fix16Hatasi,
@@ -217,7 +218,7 @@ def test_olasilik_degismezleri(tohum):
     rng = random.Random(9000 + tohum)
     kupon = rastgele_kupon(rng, en_az_cifte=7)
     enc = Encoder(kupon)
-    cols, _ = solve_fix16(enc)
+    cols = duz_kolonlar(enc)
     probs = [{s: rng.random() + 0.01 for s in ("1", "0", "2")} for _ in range(15)]
     for p in probs:
         t = sum(p.values())
@@ -242,12 +243,14 @@ def test_olasilik_degismezleri(tohum):
 
 def test_yazdir_ve_kaydet_ozeti(tmp_path, capsys):
     enc = Encoder(parse_picks("1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"))
-    cols, _ = solve_fix16(enc)
+    cols = duz_kolonlar(enc)
     hedef = tmp_path / "c.txt"
     ozet = yazdir_ve_kaydet(enc, cols, "test", str(hedef), ["not"], tam_liste=False)
-    assert ozet["satir"] == 16
-    assert ozet["bedel"] == 32
-    assert ozet["en_kotu"] == 1
+    # Duzde kupon isaretlerin kendisi: tek satir, bedel = secim uzayi.
+    # `en_kotu` ve `acik` kaplama olculeriydi ve tanim geregi sifir.
+    assert ozet["satir"] == 1
+    assert ozet["bedel"] == enc.space_size()
+    assert ozet["en_kotu"] == 0
     assert ozet["acik"] == 0
     assert hedef.exists()
     capsys.readouterr()
@@ -257,7 +260,7 @@ def test_yazdir_ve_kaydet_bozuk_sikistirmayi_yakalar(monkeypatch, capsys):
     """Sikistirma kayipli hale gelirse rapor sessizce gecmemeli."""
     import spor_toto.report as rp
     enc = Encoder(parse_picks("1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"))
-    cols, _ = solve_fix16(enc)
+    cols = duz_kolonlar(enc)
     monkeypatch.setattr(rp, "merge_rows", lambda c, **kw: rp.merge_rows.__wrapped__(c)
                         if False else [tuple(frozenset([v]) for v in cols[0])])
     with pytest.raises(AssertionError):
@@ -267,7 +270,7 @@ def test_yazdir_ve_kaydet_bozuk_sikistirmayi_yakalar(monkeypatch, capsys):
 
 def test_rapor_metin_yardimcilari():
     enc = Encoder(parse_picks("1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"))
-    cols, _ = solve_fix16(enc)
+    cols = duz_kolonlar(enc)
     rows = merge_rows(cols)
     m = satir_metni(enc, rows[0])
     assert len(m.split()) == 15
@@ -275,18 +278,25 @@ def test_rapor_metin_yardimcilari():
     k = kolon_metni(enc, cols[0])
     assert len(k.split()) == 15
     satirlar = dagilim_satirlari(enc, cols)
-    assert any("14-GARANTI DOGRULANDI" in s for s in satirlar)
+    assert any("KUMENIN TAMAMI OYNANIYOR" in s for s in satirlar)
 
 
-def test_dagilim_satirlari_acik_varsa_uyarir():
+def test_dagilim_satirlari_eksik_kume_UYARIR():
+    """Kolonlar kümenin tamamı değilse rapor bunu **söylemeli**.
+
+    Kaplama döneminde bu test "14-GARANTI YOK" uyarısını arıyordu: tek bir
+    kolon açık nokta bırakıyordu. Düzde kolonlar tanım gereği kümenin
+    tamamıdır, yani bu durum bir HATA belirtisidir — ve raporun sessiz
+    kalmaması, testin koruduğu şeyin ta kendisi.
+    """
     enc = Encoder(parse_picks("10,10,10,10,10,1,1,1,1,1,1,1,1,1,1"))
     satirlar = dagilim_satirlari(enc, [(0, 0, 0, 0, 0)])
-    assert any("14-GARANTI YOK" in s for s in satirlar)
+    assert any("kume eksik oynaniyor" in s for s in satirlar)
 
 
 def test_olasilik_satirlari_bicimi():
     enc = Encoder(parse_picks("1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"))
-    cols, _ = solve_fix16(enc)
+    cols = duz_kolonlar(enc)
     probs = parse_probs(";".join(["1:1,0:1,2:1"] * 15), enc.selections)
     satirlar = olasilik_satirlari(olasilik_raporu(enc, cols, probs))
     assert any("kar/beklenen-deger hesabi degildir" in s for s in satirlar)

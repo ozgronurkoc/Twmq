@@ -125,19 +125,37 @@ def _kolon_merdiveni(n: int) -> list[int]:
 
 #: Cephenin ölçüm tavanı (TL) — **ürün kuralı değil, hesap sınırı.**
 #:
-#: Cetvelin her basamağı `engines.run_auto` ile gerçek kolon üretmeyi
-#: gerektirir ve maliyeti kolon sayısıyla büyür (ölçüldü: 32 kolon 0,25 sn,
-#: 486 kolon 1,3 sn, 1.728 kolon 7,3 sn). 5.000 TL = 500 kolon bandı 114
-#: haftayı ~20 dakikada bitiriyor; üstü saatlere çıkar.
+#: **Tavanın var olma sebebi kalktı ve sayı buna göre yükseltildi.** Eski
+#: künye şuydu: *"cetvelin her basamağı `engines.run_auto` ile gerçek kolon
+#: üretmeyi gerektirir ve maliyeti kolon sayısıyla büyür (ölçüldü: 32 kolon
+#: 0,25 sn, 486 kolon 1,3 sn, 1.728 kolon 7,3 sn)."* O yüzden 5.000 TL =
+#: 500 kolon bandında tutuluyordu.
+#:
+#: Düzde kolon **üretilmiyor, sayılıyor**: `karne.gercek_kolon_dagilimi`
+#: artık `duz.kademe_sayimlari`ya dayanıyor ve elemanter simetrik polinomla
+#: kapalı formda çalışıyor — maliyeti kolon sayısından bağımsız. Yani eski
+#: tavan yalnızca ölçümü kırpıyordu.
+#:
+#: Yeni sayı düz bedeliyle aynı bandı görsün diye seçildi: kaplama 500
+#: kolona kadar bakıyordu, düz aynı işaretleri 8 kat pahalıya oynuyor.
 #:
 #: Tavanın **bağlayıcı olup olmadığı ölçülür**: `kural_kiyasi` kaç haftada
 #: en üst basamağın seçildiğini `tavan_dayanma` alanında sayar. Sıfırdan
 #: büyükse sonuç kırpılmış demektir ve öyle okunmalıdır.
-CEPHE_TAVANI = 5000.0
+CEPHE_TAVANI = 500_000.0
 
 #: `lambda_kestir`in tarama bandı (TL / birim `P(hedef)`).
+#:
+#: **Band düz ölçeğine kaydırıldı ve sebebi birim.** `λ` "bir birim
+#: `P(hedef)`'in TL karşılığı"dır; düzde aynı işaretler sekiz kat pahalıya
+#: oynandığı için o karşılık da sekiz kat büyüdü. Eski band
+#: (1.000–100.000 TL) düzde kuralı **dejenere gösteriyordu**: ölçüldü, λ =
+#: 20.000'de sekiz sentetik haftanın sekizi de aynı şekli (216 kolon)
+#: alıyordu, yani kural sabit bütçenin yeniden adlandırılmış hâli gibi
+#: görünüyordu. Aynı ölçüm λ = 80.000'de üç ayrı şekil veriyor — kural
+#: haftaya duyarlı, band bayattı.
 LAMBDA_BANDI: tuple[float, ...] = (
-    1_000.0, 2_000.0, 5_000.0, 10_000.0, 20_000.0, 50_000.0, 100_000.0)
+    8_000.0, 16_000.0, 40_000.0, 80_000.0, 160_000.0, 400_000.0, 800_000.0)
 
 
 class Adim(NamedTuple):
@@ -221,13 +239,31 @@ def hafta_cetveli(h: dict[str, Any],
     """Bir haftanın cetveli: her basamakta **gerçekleşen** ödül.
 
     Ödül `karne.gercek_kolon_dagilimi` + `gercek_odul` ikilisinden gelir,
-    yani garanti tabanı değil **motorun ürettiği kolonların** o haftanın
-    resmî ikramiye tablosundaki karşılığı; kolon sayısı satıcının şekline
-    indirgenir. E1'in varsayımı aynen devralınır ve orada yazılıdır:
-    satıcının daha az kolonu motorunkiyle aynı biçimde dağılıyor sayılır.
+    yani garanti tabanı değil oynanan **bütün kolonların** o haftanın resmî
+    ikramiye tablosundaki karşılığı. Düzde kolonlar üretilmez, sayılır:
+    dağılım `duz.kademe_sayimlari` ile tamdır.
 
-    Kaplama üretilemeyen basamak **atlanır** (`None` dönmez) — cetvelin
-    eksik basamağı olabilir ve `basamak` alanı kaç tane ölçüldüğünü söyler.
+    ─── Ödemeyen basamak ATLANMAZ, sıfır yazılır ─────────────────────────
+
+    Kaplama döneminde `gercek_kolon_dagilimi` iki ayrı sebeple `None`
+    dönebiliyordu — *motor kaplama üretemedi* (ölçüm yok) ve *hiçbir kademe
+    ödemiyor* (ölçüm var, değeri sıfır) — ve cetvel ikisini de atlıyordu.
+    Birincisi düzde yok; geriye yalnız ikincisi kaldı ve onu atlamak
+    **sonuca göre eleme** demektir: cetvele yalnız TUTTURAN basamaklar
+    girer, dolayısıyla haftanın merdiveni "en ucuz kaç kolonda tutturdu"ya
+    göre kısalır. `kural_kiyasi` kuralları ortak hafta kümesinde eşleştirdiği
+    için bu, kıyası doğrudan zehirler: küçük seçen bir kural ancak küçüğün
+    de tutturduğu haftalarda puanlanır, yani KOLAY haftalarda.
+
+    Ölçüldü (11 haftalık dilim, 2025/26): eleme açıkken ortak hafta kümesi
+    6 haftaya düşüyor ve o altısı tam olarak en ucuz basamağı ≤648 kolon
+    olan haftalar; havuzlanmış ROI 0,31–2,32 çıkıyor — bir kupon ürünü için
+    imkânsız bir sayı, çünkü kaybeden haftalar örneklemde yok.
+
+    Bu yüzden ödemeyen basamak `odul = 0` ile cetvele girer. Aşağı akış
+    zaten buna göre yazılmıştı: `basamak_karnesi` *"tutmayan hafta = 0"*
+    diyor, `_ozet` `odul_alan_hafta` sayıyor, `tuttu` bayrağı ayrı duruyor.
+    Eksik olan tek şey basamağın cetvele girmesiydi.
     """
     if garanti != VARSAYILAN_GARANTI:
         raise ValueError(
@@ -243,7 +279,8 @@ def hafta_cetveli(h: dict[str, Any],
                                         hedef_kolon=a.kolon)
         odul = gercek_odul(dagilim, h["tablo"], hedef_kademe=kad)
         if odul is None:
-            continue
+            # Duzde tek sebep kaldi: hicbir kademe odemiyor. Bkz. baslik.
+            odul = 0.0
         kacak = sum(1 for s, c in zip(a.secimler, h["gercek"]) if c not in s)
         basamaklar.append({
             "tl": a.tl, "kolon": a.kolon, "sekil": a.sekil,
@@ -265,9 +302,14 @@ def cetvel(hafta_siniri: int | None = None,
            ) -> list[dict[str, Any]]:
     """Kesitin tamamı için cetvel — **yavaş** (114 hafta ≈ 20 dk).
 
-    Yalnız 14-garantide koşar, çünkü kolonları üretebilen tek yer orası
-    (`engines.run_auto`, `core.py` yarıçap 1'e kilitli) — E1'in sınırı
-    aynen geçerli.
+    Eskiden *"yalnız 14-garantide koşar, çünkü kolonları üretebilen tek yer
+    orası (`engines.run_auto`)"* yazıyordu; o sınır kaplamayla birlikte
+    düştü. Düzde kolon üretilmez, `duz.kademe_sayimlari` ile sayılır —
+    `garanti` artık seçilebilir bir seviye değil, `hafta_cetveli`nin
+    reddettiği bir parametredir (en iyi kolon her zaman `15 − k`).
+
+    Yavaşlığın sebebi de değişti: motor değil, **cephe**. Her hafta için
+    fiyat merdiveninin her basamağında `sistem_secimi` bir kez koşar.
     """
     kes = list(kupon_kesiti()) if kesit is None else list(kesit)
     if hafta_siniri:
@@ -470,7 +512,14 @@ def _ozet(satirlar: Sequence[dict[str, Any]]) -> dict[str, Any]:
 
 
 def kural_kiyasi(cetveller: Sequence[dict[str, Any]],
-                 butceler: Sequence[float] = (1000.0, 2000.0, 3500.0),
+                 # **Butceler duz olcegine kaydirildi (x8).** Eskiden
+                 # (1.000, 2.000, 3.500) idi; duzde ayni isaretler sekiz kat
+                 # pahali ve olculdu: bazi haftalarda ODEYEBILEN en ucuz
+                 # basamak 6.480 TL'de basliyor (daha ucuz planlar 3'ten cok
+                 # kacak birakiyor ve hicbir kademe odemiyor, o yuzden
+                 # cetvele hic girmiyorlar). 1.000 TL'lik kural o haftalarda
+                 # hicbir sey secemiyor ve kiyas eslesmeyi kaybediyordu.
+                 butceler: Sequence[float] = (8000.0, 16000.0, 28000.0),
                  lambdalar: Sequence[float] = LAMBDA_BANDI,
                  tohum: int = 13) -> dict[str, Any]:
     """Kuralları **aynı cetvel** üzerinde puanlar ve eşleştirilmiş farkı verir.
@@ -518,7 +567,7 @@ def kural_kiyasi(cetveller: Sequence[dict[str, Any]],
     secimler = {ad: {k: v for k, v in s.items() if k in ortak}
                 for ad, s in secimler.items()}
 
-    temel = "sabit-2000"
+    temel = "sabit-16000"
     ozet = {ad: _ozet(list(s.values())) for ad, s in secimler.items()}
     taban = secimler[temel]
     farklar: dict[str, Any] = {}
@@ -528,6 +577,43 @@ def kural_kiyasi(cetveller: Sequence[dict[str, Any]],
         fark = [satir[k]["roi"] - taban[k]["roi"] for k in sorted(ortak)]
         lo, hi = bootstrap_farki(fark, tohum=tohum, n=BOOTSTRAP)
         farklar[ad] = {
+            "ort_roi_farki": sum(fark) / len(fark) if fark else 0.0,
+            "alt": lo, "ust": hi, "kesiyor": lo <= 0.0 <= hi,
+            "hafta": len(fark),
+        }
+
+    # ─── Eslesik PARA farki — §E6'nin sordugu sey ────────────────────────
+    #
+    # Yukaridaki `fark` her kurali TEK bir sabit temele (16.000 TL) karsi
+    # olcer ve bu iki seyi birbirine karistirir: *kural mi daha iyi seciyor*
+    # ile *kural daha cok mu harciyor*. Kaplama olceginde karisim gorunmezdi,
+    # cunku olcum tavani (5.000 TL) butun kurallari sabit butcelerle ayni
+    # para bandina KELEPCELIYORDU. Duzde tavan 500.000 TL ve lambda bandinin
+    # ustu haftada ~63.800 TL harciyor — en pahali sabit butcenin (28.000)
+    # iki katindan fazla. Olculdu: `lambda-800000` tek temele karsi +0,543
+    # ROI [+0,107, +1,056] ile sifiri KESMIYOR; ama ayni parayi veren sabit
+    # kurala (`sabit-65610`) karsi +0,015 [+0,000, +0,045] ile KESIYOR, ve
+    # aradaki +0,529'un tamami `sabit-65610` ile `sabit-16000` arasindaki
+    # PARA farki. Yani acilan sey butce ekseni degil, kiyasin para eslesmesi.
+    #
+    # Bu yuzden her kural, kendi ORTALAMA harcamasini butce alan sabit kurala
+    # karsi ikinci kez puanlanir. §E6'nin kapanisi bu sutunda okunur:
+    # *ayni parayi verdiginde hicbir kural sabit butceden ayirt edilemiyor.*
+    # ("en-buyuk" bu okumada sifir fark verir ve vermesi gerekir — merdivenin
+    # en ust basamagini almak, o parayla sabit oynamanin ta kendisidir.)
+    esit_para: dict[str, Any] = {}
+    for ad, satir in secimler.items():
+        butce = sum(r["tl"] for r in satir.values()) / len(satir)
+        es = {c_a: r for c in cetveller
+              if (c_a := (c["sezon"], c["hafta"])) in ortak
+              and (r := _uygula(c, lambda a, b=butce: sabit_secim(a, b)))
+              is not None}
+        if len(es) < len(ortak):
+            continue
+        fark = [satir[k]["roi"] - es[k]["roi"] for k in sorted(ortak)]
+        lo, hi = bootstrap_farki(fark, tohum=tohum, n=BOOTSTRAP)
+        esit_para[ad] = {
+            "esit_butce": butce,
             "ort_roi_farki": sum(fark) / len(fark) if fark else 0.0,
             "alt": lo, "ust": hi, "kesiyor": lo <= 0.0 <= hi,
             "hafta": len(fark),
@@ -544,6 +630,7 @@ def kural_kiyasi(cetveller: Sequence[dict[str, Any]],
         "lambda_olculen": lam_ic,
         "ozet": ozet,
         "fark": farklar,
+        "fark_esit_para": esit_para,
         "tavan_dayanma": en_ust,
         "secim_dagilimi": {ad: sorted({r["kolon"] for r in s.values()})
                            for ad, s in secimler.items()},
