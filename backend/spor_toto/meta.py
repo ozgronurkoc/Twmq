@@ -30,32 +30,22 @@ MC_MIN, MC_MAX = 1_000, 200_000
 FIRE_MAX_MALIYET = 20_000_000
 FIRE_MAX_VARSAYILAN = 2
 
-# Motorun tum modlari. `garanti` bir REKLAM degil sozlesmedir: saglik
-# katmani her modu kosturup uretilen kaplamayi bu bayrakla karsilastirir
-# (bkz. health._check_mod_envanteri).
+# **Yedi mod bire indi.** Kaplama katmanı söküldü
+# (`docs/DUZ_SISTEME_GECIS.md`) ve onunla birlikte `fix16`, `auto`, `exact`,
+# `block`, `heuristic`, `butce`, `maxcov` da gitti. Hepsi aynı soruyu
+# soruyordu — *seçim kümesini en az kaç kolonla örtebilirim?* Düzde o soru
+# yok: kümenin tamamı oynanıyor, yani arama değil üretim var.
+#
+# Liste yine de **liste** olarak duruyor: `/api/meta` sözleşmesi ve arayüz
+# bir dizi bekliyor, ve tek elemanlı bir dizi "mod kavramı kalktı" demenin
+# uyumlu yoludur.
+DUZ_MOD = "duz"
 MODES: list[dict[str, Any]] = [
-    {"id": "fix16", "label": "Sabit 16 satır", "garanti": True,
+    {"id": DUZ_MOD, "label": "Düz (tam sistem)", "garanti": True,
      "needs_budget": False, "needs_scipy": False,
-     "aciklama": "Her zaman 16 kupon satırı. En az 7 çifte zorunlu. "
-                 "Hamming(7,4) tabanlı, kanıtlanmış optimal."},
-    {"id": "auto", "label": "Otomatik", "garanti": True,
-     "needs_budget": False, "needs_scipy": False,
-     "aciklama": "En ucuz çözümü arar; satır sayısı değişkendir."},
-    {"id": "exact", "label": "Kesin çözücü (ILP)", "garanti": True,
-     "needs_budget": False, "needs_scipy": True,
-     "aciklama": "ILP ile kanıtlanmış optimal. Yalnızca küçük uzaylarda."},
-    {"id": "block", "label": "Blok ayrıştırma", "garanti": True,
-     "needs_budget": False, "needs_scipy": False,
-     "aciklama": "r=1 bloğu + tam sistem ayrıştırması; cebirsel bloklar."},
-    {"id": "heuristic", "label": "Sezgisel", "garanti": True,
-     "needs_budget": False, "needs_scipy": False,
-     "aciklama": "Açgözlü + local search. Büyük uzaylar için."},
-    {"id": "butce", "label": "Bütçe danışmanı", "garanti": True,
-     "needs_budget": True, "needs_scipy": False,
-     "aciklama": "Elimde N kolon var, hangi maçı kısmalıyım?"},
-    {"id": "maxcov", "label": "Maksimum kapsama", "garanti": False,
-     "needs_budget": True, "needs_scipy": False,
-     "aciklama": "Sabit bütçeyle maksimum kapsama. GARANTİ VERMEZ."},
+     "aciklama": "Seçim kümesinin tamamı oynanır; indirgeme yok. Sonuç "
+                 "kümenin içindeyse bir kolon 15 tutturur, küme dışında "
+                 "kalan her maç en iyi kolonu bir kademe düşürür."},
 ]
 MODE_IDS: set[str] = {m["id"] for m in MODES}
 

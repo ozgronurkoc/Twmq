@@ -24,14 +24,30 @@ uygulanmasıdır; `kademe_analizi` artık buradan import eder.
 """
 from __future__ import annotations
 
+import itertools
 from collections.abc import Sequence
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:  # pragma: no cover
+    from .core import Encoder
 
 #: Kupondaki maç sayısı.
 MAC_SAYISI = 15
 
 #: Ödeyen en düşük kademe. Altı ödemez, o yüzden sayılmaz.
 EN_DUSUK_KADEME = 12
+
+#: `/api/solve` ve CLI'nin **maddeleştireceği** en fazla kolon.
+#:
+#: Düzde "çözüm" diye bir arama yok — kolonlar seçim kümesinin kendisidir ve
+#: `3¹⁵ = 14.348.907`'ye kadar çıkabilir. Sınır bir ürün kararı değil bellek
+#: kararıdır: her kolon 15 elemanlı bir demet, ve `_build_result` hepsini
+#: gezerek olasılık/Monte Carlo/fire analizi yapıyor. Ölçülen kupon
+#: bedelleri 1–60.000 bandında; tavan onun belirgin üstünde tutuldu.
+#:
+#: Aşılırsa **sessizce kırpılmaz, hata atar**: eksik bir kolon kümesiyle
+#: hesaplanan küme-içi olasılık yanlış olur ve yanlışlığı görünmez.
+KOLON_SINIRI = 200_000
 
 
 def kademe_sayimlari(s: Sequence[int],
@@ -87,3 +103,29 @@ def hafta_kazanci(s: Sequence[int], kacak: Sequence[int],
         havuz = pz * w if w > 0 else pz
         kad[tier] = havuz * m / (w + m)
     return sum(kad.values()), kad
+
+
+def kolonlar(enc: Encoder,
+             en_cok: int = KOLON_SINIRI) -> list[tuple[int, ...]]:
+    """Oynanacak kolonların tamamı — düzde "çözüm" budur.
+
+    Kaplama döneminde bu iş bir **arama**ydı: `engines.py` yedi ayrı motor
+    taşıyordu (`fix16`, `auto`, `block`, `exact`, `heuristic`, `butce`,
+    `maxcov`) ve hepsi aynı soruyu soruyordu — *seçim kümesini en az kaç
+    kolonla örtebilirim?* Düzde o soru yok: kümenin tamamı oynanıyor.
+    Geriye kalan tek şey çarpımı üretmek.
+
+    Nokta biçimi `core.Encoder`ınkiyle aynı kalır — değişken maçların
+    sembol indeksleri, banko maçlar dışarıda — ki `enc.decode_full` ve
+    `_build_result` gibi çağıranlar değişmesin.
+    """
+    boyutlar = [len(s) for s in enc.variable_syms]
+    toplam = 1
+    for b in boyutlar:
+        toplam *= b
+    if toplam > en_cok:
+        raise ValueError(
+            f"secim kumesi {toplam:,} kolon — tavan {en_cok:,}. Duzde kolonlar "
+            f"kirpilamaz: eksik kume ile hesaplanan kume-ici olasilik yanlis "
+            f"olur ve yanlisligi gorunmez. Isaret sayisini azaltin.")
+    return list(itertools.product(*[range(b) for b in boyutlar]))

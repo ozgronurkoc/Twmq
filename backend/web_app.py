@@ -36,15 +36,7 @@ from spor_toto.core import (
     parse_picks,
     row_cost,
 )
-from spor_toto.engines import (
-    run_auto,
-    run_block,
-    run_butce,
-    run_exact,
-    run_fix16,
-    run_heuristic,
-    run_maxcov,
-)
+from spor_toto.duz import kolonlar as duz_kolonlar
 from spor_toto.fire_scenarios import fire_maliyeti, fire_scenario_report
 from spor_toto.health import (
     check_envanteri,
@@ -64,8 +56,7 @@ from spor_toto.meta import (
     MC_MAX,
     MC_MIN,
     MC_WEB_SAMPLES,
-    MODE_IDS,
-    MODES,
+    DUZ_MOD,
     meta_payload,
 )
 from spor_toto.odds import week_1x2
@@ -624,7 +615,7 @@ def api_health_kupon():
     try:
         govde = kupon_denetle(
             picks,
-            mode=str(data.get("mode") or "fix16"),
+            mode=str(data.get("mode") or DUZ_MOD),
             variant=int(data.get("variant") or 0),
             budget=(int(budget_raw) if str(budget_raw or "").strip() else None),
         )
@@ -1018,7 +1009,7 @@ def api_solve():
     if not picks_str and data.get("matches"):
         picks_str = _matches_to_picks(data["matches"])
 
-    mode = str(data.get("mode") or "fix16")
+    mode = str(data.get("mode") or DUZ_MOD)
     variant_raw = str(data.get("variant", "0") or "0")
     budget_raw = data.get("budget")
     use_bayes = bool(data.get("use_bayes", False))
@@ -1046,10 +1037,13 @@ def api_solve():
         run_log["evidence_strength"] = evidence_strength
         run_log["bayes_preset"] = bayes_preset
 
-        if mode not in MODE_IDS:
+        # Mod dogrulamasi kalkti: duzde tek bir oynama bicimi var.
+        # Geriye donuk uyum icin gelen `mode` alani YOK SAYILMAZ, reddedilir —
+        # eski istemci `fix16` gonderip 14-garanti sanmasin.
+        if mode and mode != DUZ_MOD:
             raise ValueError(
-                f"Bilinmeyen mod {mode!r}. Geçerli olanlar: "
-                f"{', '.join(m['id'] for m in MODES)}")
+                f"Kaplama modlari sokuldu (docs/DUZ_SISTEME_GECIS.md). "
+                f"Tek gecerli mod {DUZ_MOD!r}; {mode!r} gonderildi.")
         if not picks_str:
             raise ValueError("picks veya matches zorunlu")
 
@@ -1076,55 +1070,22 @@ def api_solve():
         run_log["variant"] = variant
 
         t1 = time.perf_counter()
-        r = None
 
-        butce_planlari = None
-
-        if mode == "fix16":
-            r = run_fix16(enc, variant=variant)
-        elif mode == "auto":
-            r = run_auto(enc, eng)
-        elif mode == "heuristic":
-            r = run_heuristic(enc, eng)
-        elif mode == "exact":
-            r = run_exact(enc, eng)
-        elif mode == "block":
-            r = run_block(enc, eng)
-        elif mode == "butce":
-            if budget_raw is None or str(budget_raw).strip() == "":
-                raise ValueError("Bütçe modu için budget gerekli")
-            budget = _butce_oku(budget_raw)
-            # CLI'deki --plan-uygula karsiligi (1 tabanli). Once sadece
-            # planlar[0] uygulanabiliyordu; artik kullanici UI'dan secebilir.
-            b = run_butce(enc, budget, user_probs,
-                          plan_count=plan_count, plan_apply=plan_apply,
-                          variant=variant)
-            idx, planlar = b["secili_index"], b["planlar"]
-            butce_planlari = [_plan_to_dict(p, i + 1, i == idx)
-                              for i, p in enumerate(planlar)]
-            _log_step(run_log, "motor_butce",
-                      f"plan={idx + 1}/{len(planlar)} bedel={planlar[idx].bedel}",
-                      (time.perf_counter() - t1) * 1000)
-            t1 = time.perf_counter()
-            if user_probs is not None:
-                run_log["mc_samples"] = mc_samples
-            # Bu mod eskiden user_probs=None ile cagriliyordu; bu yuzden
-            # butce modunda olasilik/Bayes/Markov analizi hic calismiyordu.
-            result = _build_result(
-                b["enc"], b["cols"], b["baslik"], b["notlar"],
-                user_probs=user_probs,
-                use_bayes=use_bayes and user_probs is not None,
-                prior_strength=prior_strength,
-                evidence_strength=evidence_strength,
-                mc_samples=mc_samples,
-                fire_max=fire_max,
-            )
-            _log_step(run_log, "build_result", "butce", (time.perf_counter() - t1) * 1000)
-        elif mode == "maxcov":
-            if budget_raw is None or str(budget_raw).strip() == "":
-                raise ValueError("maxcov için budget gerekli")
-            budget = _butce_oku(budget_raw)
-            r = run_maxcov(enc, budget)
+        # **Yedi mod tek çağrıya indi.** Kaplama döneminde burada
+        # `fix16/auto/block/exact/heuristic/butce/maxcov` dallanması vardı
+        # ve hepsi aynı soruyu soruyordu: *seçim kümesini en az kaç kolonla
+        # örtebilirim?* Düzde o soru yok — kümenin tamamı oynanıyor, yani
+        # kolonlar aranmaz, üretilir (`docs/DUZ_SISTEME_GECIS.md`).
+        cols = duz_kolonlar(enc)
+        r = {
+            "cols": cols,
+            "baslik": f"düz (tam sistem) — {len(cols):,} kolon",
+            "notlar": [
+                "Seçim kümesinin tamamı oynanır: indirgeme yok.",
+                "Sonuç kümenin içindeyse bir kolon 15 tutturur; küme "
+                "dışında kalan her maç en iyi kolonu bir kademe düşürür.",
+            ],
+        }
 
         if r is not None:
             _log_step(
@@ -1149,8 +1110,6 @@ def api_solve():
         if result is not None:
             result["mode"] = mode
             result["bayes_preset"] = bayes_preset
-            if butce_planlari is not None:
-                result["butce_planlari"] = butce_planlari
 
         if result is not None and getattr(enc, "uyarilar", None):
             result["uyarilar"] = list(enc.uyarilar)
