@@ -955,6 +955,33 @@
    ],
    "bekci": "backend/tests/test_hafta_hakki.py::test_E6_KAPANISI_hala_gecerli",
    "not": "Basamak sayisi haftadan haftaya degisiyor: satilan bir sekil o haftanin olasiliklariyla cephede belirmeyebiliyor. Her hafta olculebilen basamaklar: 32/48/64/92/128/168/252/333/486."
+  },
+  {
+   "ne": "amac kiyasi — 2026/27'nin dondurulmus haftalarinda ayrisan hafta sayisi",
+   "deger": "0/4",
+   "ureten": "cd backend && python scripts/amac_kiyasi.py",
+   "olculdu": "2026-09-06",
+   "anildigi_yerler": [],
+   "bekci": "backend/tests/test_amac_kiyasi.py::test_sezonda_iki_amac_AYNI_kuponu_veriyor",
+   "not": "Kuralin amaci P(k<=2)'yi enbuyuklemektir; sohbette duzenli olarak 'en az kacagi seciyor' diye okunuyor ve o BASKA bir amactir (E[k]=sum(q) enkucuklemek). Bu sezonun dort haftasinda ikisi BIREBIR ayni kuponu veriyor: hafta 1 4/7/4, hafta 2 3/7/5, hafta 3 4/8/3, hafta 4 3/7/5 — hicbirinde ayrisan mac yok. Kiyas bugunun varsayilan olceginde (shin) kosar; 3. ve 4. hafta ayni olcekte donduruldugu icin plan kuponun kendisini birebir veriyor (864 kolon / P=0,3809 ve 3.888 kolon / P=0,4670), 1. ve 2. hafta `orantili` ile donduruldugu icin kapsam disi."
+  },
+  {
+   "ne": "amac kiyasi — rastgele haftada iki amacin ayrisma sikligi",
+   "deger": "61/400",
+   "ureten": "cd backend && python scripts/amac_kiyasi.py",
+   "olculdu": "2026-09-06",
+   "anildigi_yerler": [],
+   "bekci": "backend/tests/test_amac_kiyasi.py::test_rastgele_ayrisma_sikligi_kutukle_ayni",
+   "not": "Tohum 7, 15 mac/hafta, olasiliklar u^2 ile uretilir (net favorili ve caresiz maclari birlikte uretsin diye), butce (512, 864, 1024, 1296, 2304, 3888) arasindan cekilir. Sezonda ayrisma cikmamasi 'iki amac aynidir' DEMEK DEGILDIR: rastgele haftalarin %15,2'sinde farkli kupon cikiyor. Sayi tohuma baglidir ve tohum degisirse yeniden olculur."
+  },
+  {
+   "ne": "amac kiyasi — ayrisinca 'en az kacak' okumasinin P(k<=2) kaybi",
+   "deger": "ort. 0,00214 · azami 0,00862",
+   "ureten": "cd backend && python scripts/amac_kiyasi.py",
+   "olculdu": "2026-09-06",
+   "anildigi_yerler": [],
+   "bekci": "backend/tests/test_amac_kiyasi.py::test_EN_AZ_KACAK_okumasi_hedefi_HICBIR_haftada_gecemez",
+   "not": "Ayrisan 61 haftanin 61'inde yon ayni: E[k]'yi enkucuklemek P(k<=2)'yi KAYBETTIRIYOR, en kucuk kayip 0,00001, negatif kayip yok. Negatif cikamaz cunku `en_iyi_secim` Pareto DP ile KESIN cozer — cikarsa sayi degil `secim.py` yanlistir; bekci bunu ayrica tutuyor. Buyukluk kucuk (azami 0,86 puan), yani yanlis okuma pratikte pahali degil; yine de sistematik."
   }
  ],
  "komutlar": [
@@ -1052,6 +1079,11 @@
    "komut": "python -m spor_toto.hafta_hakki --para SEZON:HAFTA",
    "kaynak": "backend/spor_toto/hafta_hakki.py:1",
    "ne_yapar": "Canli haftada cephenin her basamaginda E[TL] — 'butcesiz para enbuyuklemesi de dejenere' iddiasinin olcumu (E/maliyet 0,10-0,12)."
+  },
+  {
+   "komut": "python scripts/amac_kiyasi.py [--hafta N] [--tohum T]",
+   "kaynak": "backend/scripts/amac_kiyasi.py:1",
+   "ne_yapar": "Iki amaci yan yana koyar: `secim.en_iyi_secim`in P(k<=eslik) enbuyuklemesi ile ayni kisitlar altinda E[k]=sum(q) enkucuklemesi. Bu sezonun dondurulmus haftalarinda ve tohumu sabit rastgele haftalarda ayrisma sikligini ve P(k<=2) cinsinden kaybi olcer."
   }
  ]
 }
