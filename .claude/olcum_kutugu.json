@@ -18,7 +18,7 @@
   },
   {
    "ne": "test dosyasi sayisi",
-   "deger": "71",
+   "deger": "72",
    "ureten": "ls backend/tests/test_*.py | wc -l",
    "olculdu": "2026-09-05",
    "anildigi_yerler": [
@@ -26,7 +26,7 @@
     "backend/README.md"
    ],
    "bekci": null,
-   "not": "Dis tarama tests/test_devir_tavani.py'yi ekledi (70 -> 71)."
+   "not": "Dis tarama tests/test_devir_tavani.py'yi ekledi (70 -> 71). E6 icin tests/test_hafta_hakki.py eklendi (71 -> 72)."
   },
   {
    "ne": "hizli test sayisi",
@@ -678,49 +678,122 @@
    "not": "%95 Wilson araligi [%50,54, %51,65]. 'Hep ev' kuralini 7,7 puan geciyor. Favorinin %68,4'u zaten ev sahibi, yani kural ayri bir eksen degil favori kuralinin zayiflatilmis hali."
   },
   {
-   "ne": "E6 — ex-ante isaret sinavi (iki aday, Holm duzeltmeli)",
-   "deger": "P(hedef): rho +0,1175 [-0,0548, +0,2850], p 0,2117 (n=114) · devir/dagitilan: rho +0,2028 [+0,0134, +0,3863], p 0,0319 (n=113). Holm esikleri 0,050 ve 0,025 — GECEN YOK",
-   "ureten": "cd backend && python -m spor_toto.hafta_hakki --kiyas   # ISARET SINAVI bolumu (hafta_hakki.isaret_karnesi)",
-   "olculdu": "2026-09-05",
-   "anildigi_yerler": [
-    "docs/KAZANMA_PLANI.md §E6"
-   ],
-   "bekci": "backend/tests/test_hafta_hakki.py::test_isaret_karnesi_HOLM_zincirini_dogru_uyguluyor",
-   "not": "Ikinci isaret (devir) sifiri KESMIYOR ama iki sinav yapildigi icin Holm esigi 0,025 ve p=0,0319 onun ustunde. Kaba ikili hali (devir alan 22 hafta ↔ almayan 91) zaten kesiyor: fark +0,0526 [-0,1803, +0,3080] — hafta_hakki.devir_ikili, ayni komutun ISARET SINAVI bolumunde basiliyor. Ve gecseydi bile eksen acilmazdi: devir carpaninin tavani ayri olculu (azami 1,645, gereken 1,95-2,84 — §4.3). Aday listesi hafta_hakki.ISARETLER'de DONDURULDU; uzatan Holm bolenini de buyutur."
-  },
-  {
-   "ne": "E6 — merdivende yukari cikmanin marjinal getirisi (14G, gercek kolon)",
-   "deger": "%29 (320 TL -> 4.860 TL: haftalik odul 85 -> 1.413 TL)",
+   "ne": "E6 — devir isareti: sirali korelasyon (ex-ante, gerceklesen ROI ile)",
+   "deger": "+0,2028",
    "ureten": "cd backend && python -m spor_toto.hafta_hakki --kiyas",
    "olculdu": "2026-09-05",
    "anildigi_yerler": [
-    "docs/KAZANMA_PLANI.md §E6",
-    "docs/KUPON_NASIL_KURULUYOR.md §8.3"
+    "docs/KAZANMA_PLANI.md",
+    "docs/KUPON_NASIL_KURULUYOR.md"
+   ],
+   "bekci": "backend/tests/test_hafta_hakki.py::test_isaret_karnesi_HOLM_zincirini_dogru_uyguluyor",
+   "not": "n=113, %95 araligi [+0,0134, +0,3863] — SIFIRI KESMIYOR. Devir kupon oncesi bilinir (onceki hafta kapaninca ilan edilir) ve dis literaturun bu oyuna dair tek somut kosulu."
+  },
+  {
+   "ne": "E6 — devir isaretinin permutasyon p degeri (Holm esigi 0,025)",
+   "deger": "0,0319",
+   "ureten": "cd backend && python -m spor_toto.hafta_hakki --kiyas",
+   "olculdu": "2026-09-05",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md",
+    "docs/KUPON_NASIL_KURULUYOR.md"
    ],
    "bekci": "backend/tests/test_hafta_hakki.py::test_E6_KAPANISI_hala_gecerli",
-   "not": "Basamak geri donusu 15 basamakta %10,6-%37,9 arasinda ziplyor ve YONU YOK (en ucuz %26,5, en pahali %29,1). Marjinal oran ortalama oranla ayni."
+   "not": "Iki aday sinandigi icin Holm esigi 0,05 degil 0,025; p onun ustunde, yani GECMIYOR. Tek sinav yapmis gibi raporlamak sayiyi sisirirdi (E4'te hakem icin uygulanan kural)."
   },
   {
-   "ne": "E6 — bir birim P(hedef): tutturunca ettigi para ve merdivenin istedigi fiyat",
-   "deger": "eder 984 TL; merdiven uctan uca medyan 12.002 TL/birim (12,2x), oynanan basamagin bir ustu 92.167 TL/birim (93,7x)",
-   "ureten": "cd backend && python -m spor_toto.hafta_hakki --kiyas   # FIYAT bolumu (hafta_hakki.fiyat_karnesi)",
+   "ne": "E6 — P(hedef) isareti: sirali korelasyon",
+   "deger": "+0,1175",
+   "ureten": "cd backend && python -m spor_toto.hafta_hakki --kiyas",
    "olculdu": "2026-09-05",
    "anildigi_yerler": [
-    "docs/KAZANMA_PLANI.md §E6"
+    "docs/KAZANMA_PLANI.md",
+    "docs/KUPON_NASIL_KURULUYOR.md"
    ],
-   "bekci": "backend/tests/test_hafta_hakki.py::test_fiyat_karnesi_uc_olcuyu_de_lambdaya_oranlar (govde); kapanisi test_E6_KAPANISI_hala_gecerli tutuyor",
-   "not": "984 TL = 2.000 TL basamaginda tutturan haftalarin ortalama gercek kolon odulu, yani lambda_kestir'in ciktisi. Haftanin EN UCUZ tek adimi medyan 1.077 TL/birim, yani basabas; ama ona ancak pahali bir adimdan sonra varilyor."
+   "bekci": "backend/tests/test_hafta_hakki.py::test_E6_KAPANISI_hala_gecerli",
+   "not": "n=114, [-0,0548, +0,2850], permutasyon p=0,2117 — sifiri kesiyor, Holm esigi 0,050."
   },
   {
-   "ne": "E6 — odulun kuyruk yogunlugu (14G, gercek kolon, basamak basina)",
-   "deger": "en iyi 5 hafta odulun %42-%88'ini tasiyor (114 hafta, 15 basamagin hepsinde; oynanan 168 kolonda %51); 15 haftalik tavan sinavinda tek hafta %28-%100",
-   "ureten": "cd backend && python -m spor_toto.hafta_hakki --kiyas   # KUYRUK satiri (hafta_hakki.kuyruk_payi)",
+   "ne": "E6 — devir isaretinin kaba ikili hali (alan 22 hafta ↔ almayan 91)",
+   "deger": "+0,0526",
+   "ureten": "cd backend && python -m spor_toto.hafta_hakki --kiyas",
    "olculdu": "2026-09-05",
    "anildigi_yerler": [
-    "docs/KAZANMA_PLANI.md §E6 (5. madde)"
+    "docs/KAZANMA_PLANI.md"
    ],
-   "bekci": "backend/tests/test_hafta_hakki.py::test_kuyruk_payi_bilinen_dagilimda_dogru_sayiyor (govde); test_E6_KAPANISI_hala_gecerli (yon)",
-   "not": "E6'nin butun genis araliklarinin tek sebebi bu. Butce ekseni 'daha iyi kural' ile degil, kuyruk yuzunden kapanmiyor: 114 hafta basamaklar arasi oran farkini ayirt etmeye yetmiyor."
+   "bekci": "backend/tests/test_hafta_hakki.py::test_devir_ikili_tek_kol_bos_kalirsa_KESIYOR_der",
+   "not": "[-0,1803, +0,3080], esleştirilmemis bootstrap — kesiyor. Surekli oranla ayrisiyor: varsa bile etki 'devir var mi' degil 'ne kadar devir' ile ilgili. hafta_hakki.devir_ikili."
+  },
+  {
+   "ne": "E6 — merdivende yukari cikmanin marjinal getirisi (320 TL -> 4.860 TL)",
+   "deger": "1.328",
+   "ureten": "cd backend && python -m spor_toto.hafta_hakki --kiyas",
+   "olculdu": "2026-09-05",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md:1670",
+    "docs/KUPON_NASIL_KURULUYOR.md:573"
+   ],
+   "bekci": "backend/tests/test_hafta_hakki.py::test_E6_KAPANISI_hala_gecerli",
+   "not": "4.540 TL fazla harcamanin karsiligi 1.328 TL, yani %29 — ortalama oranin aynisi (haftalik odul 85 -> 1.413 TL). Basamak geri donusu 15 basamakta %10,6-%37,9 arasinda ZIPLYOR ve yonu yok: en ucuz basamak %26,5, en pahali %29,1. Capa '%29' degil '1.328': '%29' deseni yakindaki '%29,1'e de uyuyordu ve bekci kirma sinavindan gecmiyordu."
+  },
+  {
+   "ne": "E6 — bir birim P(hedef)'in tutturunca ettigi para (lambda)",
+   "deger": "984",
+   "ureten": "cd backend && python -m spor_toto.hafta_hakki --kiyas",
+   "olculdu": "2026-09-05",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md:1730",
+    "docs/KUPON_NASIL_KURULUYOR.md:578"
+   ],
+   "bekci": "backend/tests/test_hafta_hakki.py::test_fiyat_karnesi_uc_olcuyu_de_lambdaya_oranlar",
+   "not": "2.000 TL basamaginda tutturan haftalarin ortalama gercek kolon odulu (hafta_hakki.lambda_kestir)."
+  },
+  {
+   "ne": "E6 — merdivenin uctan uca fiyati (TL / birim P(hedef))",
+   "deger": "12.002",
+   "ureten": "cd backend && python -m spor_toto.hafta_hakki --kiyas",
+   "olculdu": "2026-09-05",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md",
+    "docs/KUPON_NASIL_KURULUYOR.md"
+   ],
+   "bekci": "backend/tests/test_hafta_hakki.py::test_fiyat_karnesi_uc_olcuyu_de_lambdaya_oranlar",
+   "not": "Medyan; lambda'nin 12,2 kati. Haftanin EN UCUZ tek adimi medyan 1.077 TL/birim (1,1x) — yani basabas adimlar var ama onlara ancak pahali bir adimdan sonra varilyor."
+  },
+  {
+   "ne": "E6 — oynanan basamagin BIR USTUNUN fiyati (TL / birim P(hedef))",
+   "deger": "92.167",
+   "ureten": "cd backend && python -m spor_toto.hafta_hakki --kiyas",
+   "olculdu": "2026-09-05",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md",
+    "docs/KUPON_NASIL_KURULUYOR.md"
+   ],
+   "bekci": "backend/tests/test_hafta_hakki.py::test_fiyat_karnesi_uc_olcuyu_de_lambdaya_oranlar",
+   "not": "Medyan; lambda'nin 93,7 kati. Karar tam olarak bu adimdir."
+  },
+  {
+   "ne": "E6 — odulun kuyruk yogunlugu: en iyi 5 haftanin payi (basamak basina)",
+   "deger": "%88",
+   "ureten": "cd backend && python -m spor_toto.hafta_hakki --kiyas",
+   "olculdu": "2026-09-05",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md:1749",
+    "docs/KUPON_NASIL_KURULUYOR.md:576"
+   ],
+   "bekci": "backend/tests/test_hafta_hakki.py::test_kuyruk_payi_bilinen_dagilimda_dogru_sayiyor",
+   "not": "15 basamagin hepsinde %42-%88 (oynanan 168 kolonda %51); 15 haftalik tavan sinavinda tek hafta %28-%100. E6'nin butun genis araliklarinin tek sebebi bu. hafta_hakki.kuyruk_payi."
+  },
+  {
+   "ne": "E6 — gercek kolon kosumu sayisi (114 hafta x 9-15 basamak)",
+   "deger": "1.554",
+   "ureten": "cd backend && python -m spor_toto.hafta_hakki --kiyas",
+   "olculdu": "2026-09-05",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md"
+   ],
+   "bekci": "backend/tests/test_hafta_hakki.py::test_E6_KAPANISI_hala_gecerli",
+   "not": "Basamak sayisi haftadan haftaya degisiyor: satilan bir sekil o haftanin olasiliklariyla cephede belirmeyebiliyor. Her hafta olculebilen basamaklar: 32/48/64/92/128/168/252/333/486."
   }
  ],
  "komutlar": [
