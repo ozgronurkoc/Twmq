@@ -2,9 +2,9 @@
  "sayilar": [
   {
    "ne": "suit test sayisi (eksiksiz kurulum)",
-   "deger": "2.053",
+   "deger": "2.078",
    "ureten": "cd backend && pytest -p no:randomly -n0 --collect-only -q  # dosya basi toplami",
-   "olculdu": "2026-09-05",
+   "olculdu": "2026-09-06",
    "anildigi_yerler": [
     "README.md §7,§9",
     "backend/README.md",
@@ -14,11 +14,11 @@
     "replit.md"
    ],
    "bekci": "backend/tests/test_belgeler.py::test_test_sayisi_belgelerde_tek_ve_dogru",
-   "not": "lightgbm siz kurulumda 22 test eksik toplanir; yerelde 1.958 olcumu 1.980-22 ile birebir tutuyor. E1'in alti, E2'nin iki, E3'un uc, E4'un bes testi eklendi (2.027 -> 2.044). Yerel kurulumda lightgbm yok, o yuzden toplama 2.022 diyor; fark test_agac.py'nin 22 testi. Sonuncusu test_betik_sayisi_belgeyle_ayni: backend/README 24 betik diyordu, gercek 27'ydi ve bunu tutan bekci YOKTU. Dis tarama (devir tavani) bes test ekledi (2.044 -> 2.049). Is 1-4 iki test ekledi (2.049 -> 2.051): test_basabas_kacak_ELLE_YAZILMAZ_bedelden_ve_tablodan_turer ve test_karne_satiri_ODEYEN_olayi_AYRI_tasiyor. §3.64 iki test daha ekledi (2.051 -> 2.053): test_banko_duzeltmesi_UYGULANMIYOR_kurali_yazili ve test_banko_yanliligi_ORNEKLEMI_SABIT_tutar."
+   "not": "lightgbm siz kurulumda 22 test eksik toplanir; yerelde 1.958 olcumu 1.980-22 ile birebir tutuyor. E1'in alti, E2'nin iki, E3'un uc, E4'un bes, E6'nin yirmi bes testi eklendi (2.027 -> 2.074, dosya 70 -> 72). Sonuncusu test_betik_sayisi_belgeyle_ayni: backend/README 24 betik diyordu, gercek 27'ydi ve bunu tutan bekci YOKTU. Bu dal dort test daha ekledi (2.074 -> 2.078): Is 1-4'un ikisi (test_basabas_kacak_ELLE_YAZILMAZ_bedelden_ve_tablodan_turer, test_karne_satiri_ODEYEN_olayi_AYRI_tasiyor) ve §3.64'un ikisi (test_banko_duzeltmesi_UYGULANMIYOR_kurali_yazili, test_banko_yanliligi_ORNEKLEMI_SABIT_tutar); dosya sayisi 72'de kaldi. 2026-09-06'da main birlestikten sonra eksiksiz kurulumla (scipy+lightgbm+flask+mcp+pillow) DOGRUDAN sayildi: 72 dosya, 2.078 test."
   },
   {
    "ne": "test dosyasi sayisi",
-   "deger": "71",
+   "deger": "72",
    "ureten": "ls backend/tests/test_*.py | wc -l",
    "olculdu": "2026-09-05",
    "anildigi_yerler": [
@@ -26,7 +26,7 @@
     "backend/README.md"
    ],
    "bekci": null,
-   "not": "Dis tarama tests/test_devir_tavani.py'yi ekledi (70 -> 71)."
+   "not": "Dis tarama tests/test_devir_tavani.py'yi ekledi (70 -> 71). E6 icin tests/test_hafta_hakki.py eklendi (71 -> 72)."
   },
   {
    "ne": "hizli test sayisi",
@@ -823,6 +823,124 @@
    ],
    "bekci": null,
    "not": "Iki BAGIMSIZ uygulama, ayni 114 hafta: 92->%28,4 · 128->%34,9 · 168->%24,2 · 252->%20,2 · 486->%29,1. Besinde de birebir. E6 cepheyi sekil sekil kuruyor, §3.62 butce basamaklarini tariyor. gercek_kolon_dagilimi hattinin yeniden uygulanabilir oldugunun kaydi."
+  },
+  {
+   "ne": "E6 — devir isareti: sirali korelasyon (ex-ante, gerceklesen ROI ile)",
+   "deger": "+0,2028",
+   "ureten": "cd backend && python -m spor_toto.hafta_hakki --kiyas",
+   "olculdu": "2026-09-05",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md",
+    "docs/KUPON_NASIL_KURULUYOR.md"
+   ],
+   "bekci": "backend/tests/test_hafta_hakki.py::test_isaret_karnesi_HOLM_zincirini_dogru_uyguluyor",
+   "not": "n=113, %95 araligi [+0,0134, +0,3863] — SIFIRI KESMIYOR. Devir kupon oncesi bilinir (onceki hafta kapaninca ilan edilir) ve dis literaturun bu oyuna dair tek somut kosulu."
+  },
+  {
+   "ne": "E6 — devir isaretinin permutasyon p degeri (Holm esigi 0,025)",
+   "deger": "0,0319",
+   "ureten": "cd backend && python -m spor_toto.hafta_hakki --kiyas",
+   "olculdu": "2026-09-05",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md",
+    "docs/KUPON_NASIL_KURULUYOR.md"
+   ],
+   "bekci": "backend/tests/test_hafta_hakki.py::test_E6_KAPANISI_hala_gecerli",
+   "not": "Iki aday sinandigi icin Holm esigi 0,05 degil 0,025; p onun ustunde, yani GECMIYOR. Tek sinav yapmis gibi raporlamak sayiyi sisirirdi (E4'te hakem icin uygulanan kural)."
+  },
+  {
+   "ne": "E6 — P(hedef) isareti: sirali korelasyon",
+   "deger": "+0,1175",
+   "ureten": "cd backend && python -m spor_toto.hafta_hakki --kiyas",
+   "olculdu": "2026-09-05",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md",
+    "docs/KUPON_NASIL_KURULUYOR.md"
+   ],
+   "bekci": "backend/tests/test_hafta_hakki.py::test_E6_KAPANISI_hala_gecerli",
+   "not": "n=114, [-0,0548, +0,2850], permutasyon p=0,2117 — sifiri kesiyor, Holm esigi 0,050."
+  },
+  {
+   "ne": "E6 — devir isaretinin kaba ikili hali (alan 22 hafta ↔ almayan 91)",
+   "deger": "+0,0526",
+   "ureten": "cd backend && python -m spor_toto.hafta_hakki --kiyas",
+   "olculdu": "2026-09-05",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md"
+   ],
+   "bekci": "backend/tests/test_hafta_hakki.py::test_devir_ikili_tek_kol_bos_kalirsa_KESIYOR_der",
+   "not": "[-0,1803, +0,3080], esleştirilmemis bootstrap — kesiyor. Surekli oranla ayrisiyor: varsa bile etki 'devir var mi' degil 'ne kadar devir' ile ilgili. hafta_hakki.devir_ikili."
+  },
+  {
+   "ne": "E6 — merdivende yukari cikmanin marjinal getirisi (320 TL -> 4.860 TL)",
+   "deger": "1.328",
+   "ureten": "cd backend && python -m spor_toto.hafta_hakki --kiyas",
+   "olculdu": "2026-09-05",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md:1670",
+    "docs/KUPON_NASIL_KURULUYOR.md:573"
+   ],
+   "bekci": "backend/tests/test_hafta_hakki.py::test_E6_KAPANISI_hala_gecerli",
+   "not": "4.540 TL fazla harcamanin karsiligi 1.328 TL, yani %29 — ortalama oranin aynisi (haftalik odul 85 -> 1.413 TL). Basamak geri donusu 15 basamakta %10,6-%37,9 arasinda ZIPLYOR ve yonu yok: en ucuz basamak %26,5, en pahali %29,1. Capa '%29' degil '1.328': '%29' deseni yakindaki '%29,1'e de uyuyordu ve bekci kirma sinavindan gecmiyordu."
+  },
+  {
+   "ne": "E6 — bir birim P(hedef)'in tutturunca ettigi para (lambda)",
+   "deger": "984",
+   "ureten": "cd backend && python -m spor_toto.hafta_hakki --kiyas",
+   "olculdu": "2026-09-05",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md:1730",
+    "docs/KUPON_NASIL_KURULUYOR.md:578"
+   ],
+   "bekci": "backend/tests/test_hafta_hakki.py::test_fiyat_karnesi_uc_olcuyu_de_lambdaya_oranlar",
+   "not": "2.000 TL basamaginda tutturan haftalarin ortalama gercek kolon odulu (hafta_hakki.lambda_kestir)."
+  },
+  {
+   "ne": "E6 — merdivenin uctan uca fiyati (TL / birim P(hedef))",
+   "deger": "12.002",
+   "ureten": "cd backend && python -m spor_toto.hafta_hakki --kiyas",
+   "olculdu": "2026-09-05",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md",
+    "docs/KUPON_NASIL_KURULUYOR.md"
+   ],
+   "bekci": "backend/tests/test_hafta_hakki.py::test_fiyat_karnesi_uc_olcuyu_de_lambdaya_oranlar",
+   "not": "Medyan; lambda'nin 12,2 kati. Haftanin EN UCUZ tek adimi medyan 1.077 TL/birim (1,1x) — yani basabas adimlar var ama onlara ancak pahali bir adimdan sonra varilyor."
+  },
+  {
+   "ne": "E6 — oynanan basamagin BIR USTUNUN fiyati (TL / birim P(hedef))",
+   "deger": "92.167",
+   "ureten": "cd backend && python -m spor_toto.hafta_hakki --kiyas",
+   "olculdu": "2026-09-05",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md",
+    "docs/KUPON_NASIL_KURULUYOR.md"
+   ],
+   "bekci": "backend/tests/test_hafta_hakki.py::test_fiyat_karnesi_uc_olcuyu_de_lambdaya_oranlar",
+   "not": "Medyan; lambda'nin 93,7 kati. Karar tam olarak bu adimdir."
+  },
+  {
+   "ne": "E6 — odulun kuyruk yogunlugu: en iyi 5 haftanin payi (basamak basina)",
+   "deger": "%88",
+   "ureten": "cd backend && python -m spor_toto.hafta_hakki --kiyas",
+   "olculdu": "2026-09-05",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md:1749",
+    "docs/KUPON_NASIL_KURULUYOR.md:576"
+   ],
+   "bekci": "backend/tests/test_hafta_hakki.py::test_kuyruk_payi_bilinen_dagilimda_dogru_sayiyor",
+   "not": "15 basamagin hepsinde %42-%88 (oynanan 168 kolonda %51); 15 haftalik tavan sinavinda tek hafta %28-%100. E6'nin butun genis araliklarinin tek sebebi bu. hafta_hakki.kuyruk_payi."
+  },
+  {
+   "ne": "E6 — gercek kolon kosumu sayisi (114 hafta x 9-15 basamak)",
+   "deger": "1.554",
+   "ureten": "cd backend && python -m spor_toto.hafta_hakki --kiyas",
+   "olculdu": "2026-09-05",
+   "anildigi_yerler": [
+    "docs/KAZANMA_PLANI.md"
+   ],
+   "bekci": "backend/tests/test_hafta_hakki.py::test_E6_KAPANISI_hala_gecerli",
+   "not": "Basamak sayisi haftadan haftaya degisiyor: satilan bir sekil o haftanin olasiliklariyla cephede belirmeyebiliyor. Her hafta olculebilen basamaklar: 32/48/64/92/128/168/252/333/486."
   }
  ],
  "komutlar": [
@@ -905,6 +1023,21 @@
    "komut": "cd backend && python -m spor_toto.karne --banko",
    "kaynak": "backend/spor_toto/karne.py:banko_yanliligi",
    "ne_yapar": "§3.64: banko q sapmasi arindirma eseri mi, piyasa yanliligi mi, kesit mi. ORNEKLEM SABIT (favori sembol ve dilim sinirlari shin'den), uc arindirma yarisir. --korpus 31.103 macliK korpusta kosar, --lig T1 kesiti lige kisitlar. Lig ve SEZON kirilimi verir."
+  },
+  {
+   "komut": "python -m spor_toto.hafta_hakki --kiyas",
+   "kaynak": "backend/spor_toto/hafta_hakki.py:1",
+   "ne_yapar": "E6: 114 hafta x 15 basamak gercek kolon kosumu (~20 dk). Haftanin CETVELI (her basamakta gerceklesen odul), kural kiyasi (sabit butce / lambda / en-buyuk / LOO), basamak karnesi ve isaret sinavi."
+  },
+  {
+   "komut": "python -m spor_toto.hafta_hakki --cephe [--garanti G]",
+   "kaynak": "backend/spor_toto/hafta_hakki.py:1",
+   "ne_yapar": "Bir haftanin butun satin alma basamaklari, butce kisiti olmadan — maliyet, sekil, P(hedef) ve marjinal TL/puan."
+  },
+  {
+   "komut": "python -m spor_toto.hafta_hakki --para SEZON:HAFTA",
+   "kaynak": "backend/spor_toto/hafta_hakki.py:1",
+   "ne_yapar": "Canli haftada cephenin her basamaginda E[TL] — 'butcesiz para enbuyuklemesi de dejenere' iddiasinin olcumu (E/maliyet 0,10-0,12)."
   }
  ]
 }
