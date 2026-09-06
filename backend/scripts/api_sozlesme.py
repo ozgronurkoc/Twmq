@@ -209,6 +209,11 @@ def _olculmus(ornek_kupon: str) -> dict[str, Any]:
     yaziliydi ve yanlarinda "(olculdu)" notu vardi. Backend matematigi
     degistiginde bu sayilar sessizce yanlislanirdi: test yesil kalir ama
     artik yanlis bir seyi dogrulardi. Artik ayni kaynaktan uretiliyorlar.
+
+    `alt_sinir` ve `top_boyutu` bu sozlukten DUSTU: kure-kaplama
+    olculeriydi ve kaplamayla birlikte kalktilar
+    (`docs/DUZ_SISTEME_GECIS.md`). `fix16_kolon` adi da yaniltici hale
+    gelmisti — duzde uretilen kolon sayisini tutuyordu — `duz_kolon` oldu.
     """
     from spor_toto.core import Encoder, olasilik_raporu, parse_picks
     from spor_toto.duz import kolonlar as duz_kolonlar
@@ -230,7 +235,7 @@ def _olculmus(ornek_kupon: str) -> dict[str, Any]:
         "p_kume_ici": round(rap.p_kume_ici, 10),
         "uzay": enc.space_size(),
         "en_zayif_uc_mac": [i for i, _ in en_zayif],
-        "fix16_kolon": len(cols),
+        "duz_kolon": len(cols),
     }
 
 

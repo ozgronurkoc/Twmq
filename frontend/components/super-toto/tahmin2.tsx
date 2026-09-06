@@ -207,18 +207,27 @@ function KuponKarti({ tahmin }: { tahmin: SuperTotoTahmin2 }) {
         title={"2. Tahmin'in kuponu"}
         hint={`Bütçe ${sayi(tahmin.butce)} kolon — ${tahmin.butce_kaynagi}`}
         action={
-          tahmin.guaranteed_14 ? (
-            <Badge ton="success">14-garanti</Badge>
-          ) : (
-            <Badge ton="warning">garanti yok</Badge>
-          )
+          /*
+            Rozet eskiden `guaranteed_14`u okuyup "14-garanti" / "garanti
+            yok" diyordu. Kaplama sokuldu (docs/DUZ_SISTEME_GECIS.md) ve o
+            alan yeni kayitlarda HER ZAMAN true — anlami da degisti:
+            "kumenin tamami oynaniyor". Ad yaniltici oldugu icin rozet
+            artik OYNANAN SISTEMI yaziyor (`engine`), cunku donmus
+            kayitlarin bir kismi gercekten kaplamayla oynandi ve o fark
+            gorunur kalmali.
+          */
+          tahmin.engine ? (
+            <Badge ton={tahmin.engine.startsWith("düz") ? "primary" : "neutral"}>
+              {tahmin.engine}
+            </Badge>
+          ) : null
         }
       />
       <CardBody className="space-y-3 text-[12.5px]">
         <div className="font-mono text-[13px]">{tahmin.picks.join(" ")}</div>
         <div className="text-muted-foreground">
-          {sayi(tahmin.columns)} kolon · {tahmin.rows} satır ·{" "}
-          {tahmin.engine ?? "—"} · banko {tahmin.banko.length} · çift{" "}
+          {sayi(tahmin.columns)} kolon · {tahmin.rows} satır · banko{" "}
+          {tahmin.banko.length} · çift{" "}
           {tahmin.cift.length} · üçlü {tahmin.uclu.length}
         </div>
         <div className="grid gap-2 sm:grid-cols-3">

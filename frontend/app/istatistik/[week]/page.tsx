@@ -57,7 +57,7 @@ export default function HaftaPage({ params }: { params: { week: string } }) {
   /**
    * Bu haftanin 15 macini formul sayfasina tasir. Tasinan sey YALNIZCA
    * olasiliktir; isaretleri (banko/cifte/uclu) kullanici kendisi secer —
-   * kaplama motoru tahmin etmez, tahmini garantiye alir (olasilik icin
+   * kolon uretimi tahmin etmez, isaretleri sayar (olasilik icin
    * /tahmin sayfasi var).
    */
   function formuleGonder() {

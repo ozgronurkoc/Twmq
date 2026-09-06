@@ -15,14 +15,24 @@ export const MAC_SAYISI = 15;
 
 // ─── /api/meta ────────────────────────────────────────────────────────────
 
-export type ModeId =
-  | "fix16" | "auto" | "exact" | "block" | "heuristic" | "butce" | "maxcov";
+/**
+ * **Yedi mod bire indi.** `fix16` / `auto` / `exact` / `block` /
+ * `heuristic` / `butce` / `maxcov` kaplama katmaniyla birlikte dustu
+ * (`docs/DUZ_SISTEME_GECIS.md`): yedisi de ayni soruyu soruyordu — *secim
+ * kumesini en az kac kolonla ortebilirim?* Duzde o soru yok, kumenin
+ * tamami oynaniyor.
+ *
+ * Tip yine de bir BIRLESIM olarak duruyor (tek elemanli): `/api/meta`
+ * bir dizi donduruyor ve arayuz onu okuyor. `"duz"` disinda bir deger
+ * gelirse derleyici yakalar.
+ */
+export type ModeId = "duz";
 
 export interface ModeInfo {
   id: ModeId;
   label: string;
   aciklama: string;
-  /** false ise bu mod 14-garanti VERMEZ (maxcov). */
+  /** Duzde her zaman true; alan `/api/meta` sozlesmesinde duruyor. */
   garanti: boolean;
   needs_budget: boolean;
   needs_scipy: boolean;
@@ -34,24 +44,17 @@ export interface BayesPresetInfo {
   evidence_strength: number;
 }
 
-export interface EngineDefaults {
-  trials: number;
-  ls_iters: number;
-  seed: number;
-  time_limit: number;
-  block_limit: number;
-  exact_limit: number;
-  /**
-   * `auto` modunun ILP kesme suresi (sn). Sunucu bunu hem
-   * `engine_defaults` hem `limits` icinde ILAN EDIYOR ve `/api/solve`
-   * kabul ediyor (`web_app.py:192`), ama arayuz tipinde YOKTU — yani
-   * ilan edilen bir denetim arayuzden hic gonderilemiyordu.
-   *
-   * Sozlesme denetimi bunu goremiyordu cunku yalnizca 1 seviye derin
-   * bakiyordu: `engine_defaults` ust duzeyde vardi, icine bakilmiyordu.
-   */
-  auto_ilp_limit: number;
-}
+/**
+ * **Bosaldi.** Burada yedi motor ayari vardi (`trials`, `ls_iters`, `seed`,
+ * `time_limit`, `block_limit`, `exact_limit`, `auto_ilp_limit`) ve hepsi
+ * kaplama ARAMASININ ayarlariydi. Duzde arama yok: kolonlar carpimdan
+ * uretiliyor, ayarlanacak bir sey kalmadi.
+ *
+ * Alan sozlesmede duruyor ve sunucu bos sozluk gonderiyor — "ayar yok"
+ * demenin uyumlu yolu bu. Silmek, "ayar var ama ilan edilmiyor" halinden
+ * ayirt edilemezdi.
+ */
+export type EngineDefaults = Record<string, never>;
 
 export interface Limit { min: number; max: number; default?: number }
 
@@ -93,15 +96,19 @@ export interface MetaResponse {
 
 export type ProbRow = Record<Sembol, number>;
 
+/**
+ * **`mode` gonderilmez ve gonderilirse REDDEDILIR.** Sunucu `duz` disinda
+ * bir deger gelirse 400 doner — yok saymaz. Sozlesme degisikligi sessiz
+ * kalmasin diye bilerek boyle: eski bir istemci `{"mode":"fix16"}`
+ * gonderirse kaplama sanip 16 satir beklerdi ve tam sistem alirdi.
+ *
+ * `variant`, `budget`, `plan_count`, `plan_apply` ve butun motor ayarlari
+ * (`trials`, `ls_iters`, `seed`, `time_limit`, `block_limit`,
+ * `exact_limit`) da dustu — hepsi kaplama aramasinin girdileriydi.
+ */
 export interface SolveRequest {
   picks?: string;
   matches?: Sembol[][];
-  mode?: ModeId;
-  variant?: number;
-  budget?: number;
-  /** Butce modu: kac plan uretilsin / hangisi uygulansin (1 tabanli). */
-  plan_count?: number;
-  plan_apply?: number;
   kati?: boolean;
   probs?: ProbRow[];
   use_bayes?: boolean;
@@ -111,13 +118,6 @@ export interface SolveRequest {
   mc_samples?: number;
   /** 0 = fire analizi kapalı, 1 = yalnızca 1-fire, 2 = ikisi de. */
   fire_max?: number;
-  // Motor ayarlari
-  trials?: number;
-  ls_iters?: number;
-  seed?: number;
-  time_limit?: number;
-  block_limit?: number;
-  exact_limit?: number;
 }
 
 // ─── POST /api/solve — cevap ──────────────────────────────────────────────
@@ -361,10 +361,17 @@ export interface SolveResult {
   mode?: ModeId;
   bayes_preset?: string | null;
 
+  /** Duzde her zaman 1: kupon isaretlerin kendisidir. */
   satir_sayisi: number;
   /** Odenecek tutar budur. satir_sayisi ile karistirilmamali. */
   kolon_bedeli: number;
-  alt_sinir: number;
+  /**
+   * Uc alan da duzde SABIT (`true` / `0` / `0`) ve olcum olarak duruyor:
+   * kumenin tamami oynandigi icin acikta nokta olamaz. Sapma bir hatadir.
+   *
+   * `alt_sinir` burada dorduncuydu — kure-kaplama alt siniri — ve
+   * kaplamayla birlikte alanin kendisi kalkti (`None` bile gonderilmiyor).
+   */
   guaranteed: boolean;
   worst: number;
   acik: number;
@@ -875,7 +882,8 @@ export interface HealthKuponSinifi {
   etiket: string;
   picks: string;
   uzay: number;
-  alt_sinir: number;
+  /** Duzde `uzay`a esittir; ikisi ayrisirsa kolon uretimi bozulmus demektir. */
+  bedel: number;
 }
 
 export interface HealthSummary {
@@ -961,7 +969,6 @@ export interface KuponDenetimSonuc {
   notlar: string[];
   satir: number;
   bedel: number;
-  alt_sinir: number;
   uzay: number;
   guaranteed: boolean;
   worst: number;

@@ -123,25 +123,22 @@ export function kumeIciHesapla(matches: Sembol[][], probs: ProbRow[]): KumeIci {
 }
 
 /**
- * Kure-kaplama alt siniri: yaricapi 1 olan bir top `1 + Σ(kᵢ-1)` nokta
- * kapsar, dolayisiyla hicbir formul `ceil(uzay / top)` kolonun altina
- * inemez. Sunucu da ayni sayiyi doner (`alt_sinir`); burada tekrar
- * hesaplanmasinin sebebi kullanicinin motoru CALISTIRMADAN once bedelin
- * alt sinirini gorebilmesi.
+ * Kuponun bedeli: `Π len(isaretᵢ)` — yani `2^cifte · 3^uclu`.
+ *
+ * Burada `kaplamaAltSiniri` vardi ve kure-kaplama alt sinirini
+ * hesapliyordu (`ceil(uzay / (1 + Σ(kᵢ-1)))`): yaricapi 1 olan bir topun
+ * kapsadigi nokta sayisindan, hicbir kaplama formulunun inemeyecegi
+ * kolon sayisi. Kaplama sokuldu (`docs/DUZ_SISTEME_GECIS.md`) ve o sinir
+ * anlamini yitirdi: duzde alt sinir da ust sinir da **uzayin kendisi**.
+ *
+ * NEDEN ISTEMCIDE: sunucu ayni sayiyi doner (`kolon_bedeli`) ama
+ * kullanicinin isaret degistirirken odeyecegi tutari ANINDA gormesi
+ * gerekir — motoru calistirmadan.
  */
-export function kaplamaAltSiniri(matches: Sembol[][]): {
-  uzay: number;
-  topBoyutu: number;
-  altSinir: number;
-} {
+export function kuponBedeli(matches: Sembol[][]): { uzay: number } {
   let uzay = 1;
-  let topBoyutu = 1;
-  for (const satir of matches) {
-    const k = satir.length || 1;
-    uzay *= k;
-    topBoyutu += k - 1;
-  }
-  return { uzay, topBoyutu, altSinir: Math.ceil(uzay / topBoyutu) };
+  for (const satir of matches) uzay *= satir.length || 1;
+  return { uzay };
 }
 
 /**

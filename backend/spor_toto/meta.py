@@ -49,23 +49,20 @@ MODES: list[dict[str, Any]] = [
 ]
 MODE_IDS: set[str] = {m["id"] for m in MODES}
 
-# CLI ile birebir ayni motor varsayilanlari (bkz. spor_toto/cli.py).
+# **Motor varsayilanlari BOSALDI ve alan bilerek duruyor.**
 #
-# `auto_ilp_limit` ayri durur ve ayri bir sorunu cozer: `auto` modu
-# `exact_limit` (512) altindaki her uzayda ILP'yi devreye sokuyordu ve 256
-# noktalik gercekci bir kuponda **~11 saniye** suruyordu. Olculdu: ayni
-# kupon 3 saniyelik sinirla da 32 kolon veriyor, yalnizca "optimallik
-# kanitlandi" bayragini kaybediyor. `auto`nun sozu "en ucuzu ara"dir,
-# "optimalligi kanitla" degil — kanit isteyen `--mode exact` kullanir.
-ENGINE_DEFAULTS: dict[str, Any] = {
-    "trials": 5,
-    "ls_iters": 30_000,
-    "seed": 42,
-    "time_limit": 60.0,
-    "block_limit": 256,
-    "exact_limit": 512,
-    "auto_ilp_limit": 3.0,
-}
+# Burada yedi ayar vardi (`trials`, `ls_iters`, `seed`, `time_limit`,
+# `block_limit`, `exact_limit`, `auto_ilp_limit`) ve hepsi kaplama
+# ARAMASININ ayarlariydi: kac deneme, kac yerel arama adimi, ILP'ye kac
+# saniye. Kaplama sokuldu (`docs/DUZ_SISTEME_GECIS.md`); duzde arama yok,
+# kolonlar carpimdan uretiliyor, ayarlanacak bir sey kalmadi.
+#
+# Alan `/api/meta` sozlesmesinde BOS SOZLUK olarak duruyor: arayuz onu
+# okuyor ve `health._check_meta_sozlesmesi` her girdisinin `limits` icinde
+# olmasini sart kosuyor. Bos birakmak "ayar yok" demenin uyumlu yoludur;
+# alani silmek arayuzu kirardi ve "ayar var ama ilan edilmiyor" ile
+# ayirt edilemezdi.
+ENGINE_DEFAULTS: dict[str, Any] = {}
 
 # Her sinir icin min <= default <= max tutmak ZORUNDADIR; arayuz kaydiraclari
 # dogrudan bu sayilardan uretiliyor.
@@ -73,21 +70,12 @@ LIMITS: dict[str, dict[str, Any]] = {
     "mc_samples": {"min": MC_MIN, "max": MC_MAX, "default": MC_WEB_SAMPLES},
     "fire_max": {"min": 0, "max": 2, "default": FIRE_MAX_VARSAYILAN},
     "fire_maliyet": {"min": 0, "max": FIRE_MAX_MALIYET},
-    # Butce (kolon sayisi) SINIRI. Onceden hicbir yerde ilan EDILMIYORDU ve
-    # `/api/solve` onu ust sinirsiz aliyordu (`int(budget_raw)`); arayuz ise
-    # paylasilabilir baglantida 10 M'e kirpiyordu. Yani tek soruya uc cevap
-    # vardi ve sunucununki "sinir yok"tu — herkese acik bir POST icin bu bir
-    # kaynak riski. Ust sinir arayuzunkiyle AYNI secildi.
-    "budget": {"min": 1, "max": 10_000_000, "default": 32},
-    "plan_count": {"min": 1, "max": 50, "default": 5},
-    "plan_apply": {"min": 1, "max": 50, "default": 1},
-    "trials": {"min": 1, "max": 50, "default": ENGINE_DEFAULTS["trials"]},
-    "ls_iters": {"min": 100, "max": 500_000, "default": ENGINE_DEFAULTS["ls_iters"]},
-    "time_limit": {"min": 1.0, "max": 300.0, "default": ENGINE_DEFAULTS["time_limit"]},
-    "block_limit": {"min": 2, "max": 6561, "default": ENGINE_DEFAULTS["block_limit"]},
-    "exact_limit": {"min": 2, "max": 4096, "default": ENGINE_DEFAULTS["exact_limit"]},
-    "auto_ilp_limit": {"min": 0.5, "max": 300.0,
-                       "default": ENGINE_DEFAULTS["auto_ilp_limit"]},
+    # **`budget`, `plan_count` ve `plan_apply` dustu.** Ucu de kaplama
+    # butce danismaninin (`core.butce_danismani`) ayarlariydi: "elimde N
+    # kolon var, hangi isareti kismaliyim, kac plan uret, hangisini
+    # uygula". Duzde bedel isaretlerin kendisi; kismak icin isareti
+    # degistirirsin, motora butce vermezsin. `/api/solve` bu alanlari
+    # ARTIK KABUL ETMIYOR.
 }
 
 

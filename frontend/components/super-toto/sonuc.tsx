@@ -217,9 +217,9 @@ export function SonucPaneli({ hafta }: { hafta: SuperTotoHafta }) {
           </div>
           <p className="text-[11.5px] leading-relaxed text-muted-foreground">
             Bu iki kupon <strong>tek kolondur</strong>; yukarıdaki kayıtlar
-            ise kaplama. Doğrudan kıyaslanamazlar — burada durmalarının
-            sebebi haftanın kendisinin kolay mı zor mu geçtiğini
-            göstermeleridir.
+            ise çok kolonlu sistem kuponları. Doğrudan kıyaslanamazlar —
+            burada durmalarının sebebi haftanın kendisinin kolay mı zor mu
+            geçtiğini göstermeleridir.
           </p>
         </CardBody>
       </Card>

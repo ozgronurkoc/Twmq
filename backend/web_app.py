@@ -364,8 +364,11 @@ def _build_result(
         "notlar": notlar,
         "satir_sayisi": len(rows),
         "kolon_bedeli": total_cost,
-        # `alt_sinir` kure-kaplama alt siniriydi; kaplamayla dustu.
-        "alt_sinir": None,
+        # **`alt_sinir` alani KALKTI, `None` olarak da gonderilmiyor.**
+        # Kure-kaplama alt siniriydi (`ceil(uzay / top_boyutu)`) ve
+        # kaplamayla birlikte dustu. `None` gondermek "hesaplanamadi" ile
+        # "boyle bir kavram yok"u ayirt edilemez kilardi; arayuz de onu
+        # bir sayi sanip yerine bosluk basiyordu.
         "guaranteed": acik == 0,
         "worst": worst,
         "acik": acik,

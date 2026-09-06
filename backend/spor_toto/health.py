@@ -1438,8 +1438,11 @@ def run_health(only: str | None = None) -> HealthReport:
         summary={
             "ornek_kupon": ORNEK,
             "kupon_siniflari": [
+                # `alt_sinir` ilan EDILMIYOR: kaplama olcegindeki bir sayiyi
+                # duz bir kuponun yanina basmak yaniltir. Kayit olarak
+                # `KUPON_SINIFLARI` tablosunda duruyor.
                 {"etiket": s.etiket, "picks": s.picks, "uzay": s.uzay,
-                 "alt_sinir": s.alt_sinir}
+                 "bedel": s.uzay}
                 for s in KUPON_SINIFLARI
             ],
             "has_scipy": HAS_SCIPY,
@@ -1518,9 +1521,9 @@ def kupon_denetle(
         # Duzde kupon isaretlerin kendisidir: tek satir.
         "satir": 1,
         "bedel": len(cols),
-        # `alt_sinir` kure-kaplama alt siniriydi ve kaplamayla dustu; `worst`
-        # ile `acik` de kume ICI olculerdi ve duzde tanim geregi sifir.
-        "alt_sinir": None,
+        # `alt_sinir` alani KALKTI (bkz. web_app._build_result). `worst` ile
+        # `acik` kume ICI olculerdi ve duzde tanim geregi sifir; olcum
+        # olarak duruyorlar, sifirdan saparlarsa bir hata var demektir.
         "uzay": kupon_enc.space_size(),
         "guaranteed": True,
         "worst": 0,

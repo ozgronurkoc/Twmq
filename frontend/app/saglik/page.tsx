@@ -326,7 +326,7 @@ export default function SaglikPage() {
           </h1>
           <p className="mt-1 max-w-2xl text-[13.5px] leading-relaxed text-muted-foreground">
             Motorun değişmezleri (invariant). Bunlar testten farklıdır: çalışan
-            sürümün 14-garantiyi, olasılık hattını ve veri katmanını gerçekten
+            sürümün kolon üretimini, olasılık hattını ve veri katmanını gerçekten
             koruduğunu her çağrıda yeniden doğrular.
           </p>
         </div>

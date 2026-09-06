@@ -39,7 +39,8 @@ export function OlasilikPanel({ r }: { r: SolveResult }) {
     <div className="space-y-4">
       <Callout ton="primary" baslik="Bu bölüm senin tahminlerine bağlıdır">
         Aşağıdaki sayılar girdiğin olasılıklardan hesaplanır ve{" "}
-        <strong>kombinatoryal 14-garanti kadar kesin değildir</strong>. Kaynak:{" "}
+        <strong>kaçak aritmetiği kadar kesin değildir</strong> (<em>15 − k</em>
+        bir sayma sonucudur, bunlar kestirim). Kaynak:{" "}
         <Badge ton={a.source === "bayes_posterior" ? "primary" : "neutral"}>
           {a.source === "bayes_posterior" ? "Bayes posterior" : "doğrudan girdin"}
         </Badge>
@@ -105,11 +106,17 @@ export function OlasilikPanel({ r }: { r: SolveResult }) {
             />
           </div>
           <Callout ton="neutral">
-            Sistemin değeri <strong>14-garantidir</strong>, 15 şansını artırmak
-            değil. Kaplama kodu 15 olasılığını değil <strong>kapsamayı</strong>{" "}
-            maksimize eder; en olası tek nokta formülün kolonları arasında
-            olmayabilir — bu yüzden üstteki sayı alttakinden küçük çıkabilir ve bu
-            bir hata değildir.
+            {/*
+              Bu uyari eskiden tersini soyluyordu: "sistemin degeri
+              14-garantidir, 15 sansini artirmak degil; kaplama kodu 15
+              olasiligini degil KAPSAMAYI maksimize eder, en olasi tek nokta
+              formulun kolonlari arasinda OLMAYABILIR". Kaplama sokuldu
+              (docs/DUZ_SISTEME_GECIS.md) ve o cekince dustu.
+            */}
+            Düzde küme içinde kalmak <strong>doğrudan 15 demektir</strong>:
+            kümenin tamamı oynandığı için en olası nokta da kolonların
+            içindedir. Kaplama döneminde öyle değildi — kümenin bir dilimi
+            oynanıyordu ve üstteki sayı alttakinden küçük çıkabiliyordu.
           </Callout>
           <Callout ton="warning">
             Bunlar <strong>beklenen-değer veya kâr hesabı değildir</strong>.
@@ -157,9 +164,11 @@ export function BayesPanel({ r }: { r: SolveResult }) {
             />
             <Stat etiket="Güncellenen maç" deger={b.summary.n} />
           </div>
-          <Callout ton="neutral" baslik="Bayes 14-garantiyi değiştirmez">
+          <Callout ton="neutral" baslik="Bayes kaçak aritmetiğini değiştirmez">
             Yalnızca exact/Monte Carlo motorlarına giden olasılık ağırlıklarını
-            günceller. Garanti kombinatoryaldır ve olasılıkla güçlendirilemez.
+            günceller. <em>En iyi kolon = 15 − k</em> bir sayma sonucudur ve
+            olasılıkla güçlendirilemez; Bayes yalnızca{" "}
+            <strong>k&apos;nın dağılımını</strong> kestirir.
           </Callout>
         </CardBody>
       </Card>
