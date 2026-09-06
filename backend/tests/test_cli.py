@@ -159,12 +159,30 @@ def test_cli_15_mac_uyarisi(capsys):
 
 
 def test_parser_yardim_metni():
+    """`--help` sokulmus kaplama modlarini ILAN ETMEMELI.
+
+    **Bu test tersine donduruldu ve sebebi kendisiydi.** Once
+    `assert "fix16" in yardim` diyordu — yani yardim metninin sokulmus bir
+    modu anmaya DEVAM etmesini sartlliyordu. Kaplama kalkarken bu satir
+    guncellenmedi, dolayisiyla bekci artik bayatligi engellemiyor, onu
+    KORUYORDU: `--help` uc olu bayrak (`--ls-iters`, `--compare-budget`,
+    `--no-compare`) ve `--mode`/`--variant` orneklerini ilan ediyordu,
+    ustelik `cli.py`nin kendi yorumu o bayraklarin "KALKTI" oldugunu
+    yaziyordu (docs/DUZ_SISTEME_GECIS.md).
+
+    Yon simdi dogru: yardim metni **yasayan** arayuzu anlatmali.
+    """
     p = build_parser()
     yardim = p.format_help()
     assert "--picks" in yardim
-    assert "fix16" in yardim
     assert "--bayes-preset" in yardim
     assert "dengeli" in yardim
+    assert "duz" in yardim.lower()
+
+    for olu in ("fix16", "maxcov", "--mode", "--variant", "--budget",
+                "--ls-iters", "--compare-budget", "--no-compare"):
+        assert olu not in yardim, (
+            f"`--help` sokulmus kaplama arayuzunu ilan ediyor: {olu!r}")
 
 
 def test_cli_bayes_preset_dengeli(capsys):

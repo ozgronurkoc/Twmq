@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "spor-toto-kapsama"
 version = "4.0.0"
-description = "Spor Toto 14-garanti kaplama kodu (covering code) formul ureticisi"
+description = "Spor Toto duz (tam sistem) kupon ureticisi ve olcum katmani"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [

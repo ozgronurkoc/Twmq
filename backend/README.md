@@ -10,7 +10,11 @@ cd backend
 pip install -e ".[test]"
 ```
 
-`scipy` yoksa araç çalışır, yalnızca kesin çözücü (ILP) devre dışı kalır.
+`scipy` yoksa araç çalışır, yalnızca `spor_toto/kuyruk.py` yüklenmez —
+o modül `scipy.special.ndtr/ndtri`yi koşulsuz içe aktarır. (Burada
+*"kesin çözücü (ILP) devre dışı kalır"* yazıyordu; o çözücü kaplamanın
+`exact_cover`ıydı ve kaplamayla birlikte silindi — bayrağın bugünkü anlamı
+`core.HAS_SCIPY` docstring'inde.)
 
 ## Çalıştırma
 
@@ -51,7 +55,7 @@ Ortam değişkenleri (hepsi isteğe bağlı):
 ```bash
 cd backend
 pytest -m "not slow"        # hızlı süit (~77 sn, 4 çekirdek)
-pytest                      # tamamı (ILP testleri dahil)
+pytest                      # tamamı (`slow` işaretliler dahil)
 # Kalite kapisi repo KOKUNDEDIR ve iki tarafi da kosturur; CI de onu cagirir.
 # (Buradaki `backend/scripts/check.sh` silindi: "CI ile ayni cekirdek adimlar"
 #  diyordu ama alti adimdan ucunu kosuyordu.)
@@ -69,17 +73,19 @@ pytest -n0 tests/test_egitim.py -x
 
 ## Yapı
 
-> **Aşağıdaki modül listesi bir SEÇKİdir, envanter değil.** 51 modülün tam
+> **Aşağıdaki modül listesi bir SEÇKİdir, envanter değil.** Modüllerin tam
 > listesi tek yerdedir — kök `README.md` §7 — ve orayı bir bekçi dosya
 > sistemine karşı tutar (`tests/test_belgeler.py::test_readme_modul_listesi_eksiksiz`).
 > Buraya ikinci bir tam liste yazmak, eskiyecek ikinci bir liste yaratmak
-> olurdu; bu dosyanın sayıları tam olarak öyle bayatladı.
+> olurdu; bu dosyanın sayıları tam olarak öyle bayatladı — **ve bir kez daha
+> bayatladı:** burada "51 modül" yazıyordu, gerçek 57'ydi. Sayı bu yüzden
+> bu satırdan da kaldırıldı; seçkinin sayıya ihtiyacı yok.
 
 ```
-spor_toto/                        (51 modül — aşağısı yönlendirici seçki)
-  core.py      Encoder, Fix-16, ILP, heuristic, exact olasılık
-  engines.py   Mod çalıştırıcıları — /api/solve, health ve CLI AYNI yolu kullanır
-  meta.py      Yetenek envanteri (modlar, preset'ler, sınırlar) = /api/meta
+spor_toto/                        (aşağısı yönlendirici seçki — tam liste ../README.md §7)
+  core.py      Encoder, işaret ayrıştırma, kupon satırı, exact olasılık
+  duz.py       Düz (tam sistem) kolon üretimi + kademe sayımları
+  meta.py      Yetenek envanteri (tek elemanlı mod listesi, preset'ler, sınırlar) = /api/meta
   cli.py       spor-toto komut satırı
   report.py    Konsol / dosya çıktısı
   analysis.py  Monte Carlo, maç bazlı hata frekansı
@@ -101,7 +107,7 @@ spor_toto/                        (51 modül — aşağısı yönlendirici seçk
   kalibrasyon.py  ÖLÇÜM: izotonik düzeltme piyasayı geçiyor mu
   ortak.py     Paylaşılan hesaplar: normalizasyon, Wilson, Brier, bantlama
   payloads.py  Uç gövdeleri — tek kaynak (health bunları denetler)
-  health.py    Kategorili değişmez (invariant) kontrolleri — 27 kontrol
+  health.py    Kategorili değişmez (invariant) kontrolleri — 23 kontrol
   health_history.py  Sunucu tarafı koşu geçmişi + durum değişimi bildirimi
 web_app.py     Flask — 15 uç, yalnızca JSON (tam liste: ARCHITECTURE_NEXT.md)
 scripts/                          (31 betik + __init__.py — normal paket)

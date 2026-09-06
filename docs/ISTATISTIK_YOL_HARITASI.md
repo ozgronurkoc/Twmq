@@ -6,9 +6,10 @@
 > kullanıyordu; o tarihte söküldü ve düz (tam sistem) oynamaya geçti
 > (`docs/DUZ_SISTEME_GECIS.md`). Yani **§3.56 ve öncesindeki bütün kupon
 > sayıları kaplama ölçeğindedir** — silinmiyor, çünkü o gün oynanan ürünün
-> ölçümüdür. Düz karşılıkları `docs/KAZANMA_PLANI.md`nin başındaki tabloda
-> ve `.claude/olcum_kutugu.json`da durur; kütükte eski kayıtlar *"KAPLAMA
-> ÖLÇEĞİ (sökülmüştür)"* diye etiketlidir.
+> ölçümüdür. Düz karşılıkları `docs/KAZANMA_PLANI.md` → *"Durum (2026-09-06):
+> kaplama söküldü, E1–E6 düz ölçekte yeniden ölçüldü"* bölümündeki kıyas
+> tablosunda ve `.claude/olcum_kutugu.json`da durur; kütükte eski kayıtlar
+> *"KAPLAMA ÖLÇEĞİ (sökülmüştür)"* diye etiketlidir.
 >
 > Kaplamaya bağlı olmayan ölçümler (korpus istatistikleri, marj arındırma,
 > kalibrasyon, Elo/Dixon-Coles, devir çarpanı) sistem değişikliğinden
@@ -173,7 +174,7 @@ paketi toplam **1.803 test**; **85'i** istatistik katmanına (`history` `odds` `
 `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre`
 `avrupa` `sehir` **`arena`** **`sizinti`** **`kuyruk`**), **29'u** 2. Tahmin'e (`tahmin2`), **30'u** sonuç değerlendirmesine (`degerlendir`). Dosya adlarıyla sayılıdır ki tablo elle bakım gerektirmesin —
 `tests/test_belgeler.py` onları gerçek koleksiyona karşı denetler.
-`python -m spor_toto.health` **27 değişmez** çalıştırır — ikisi (`oran_arsivi`, `geri_test`)
+`python -m spor_toto.health` **23 değişmez** çalıştırır — ikisi (`oran_arsivi`, `geri_test`)
 istatistik katmanını, biri (`tahmin_referanslari`) tahmin katmanının ölçüm koşumunu korur,
 biri (`artefakt_tazeligi`) diskteki modelin hâlâ bugünkü korpustan geldiğini denetler (§2.5).
 
@@ -6609,7 +6610,7 @@ pytest -q tests/test_disari.py             # A3 ölçümü ve sızıntı bekçil
 pytest -q tests/test_arena.py              # arena kaydı, kesit, çökme tespiti
 pytest -q tests/test_sizinti.py            # sızıntı sözleşmesi (§3.41)
 pytest -q tests/test_xg.py                 # xG vekili: sızıntı, beyaz liste, kalibrasyon
-python -m spor_toto.health                 # 27 değişmez
+python -m spor_toto.health                 # 23 değişmez
 python -m spor_toto.health --only sizinti_sozlesmesi
 python -m spor_toto.health --help          # tek kontrol: ?only=geri_test
 

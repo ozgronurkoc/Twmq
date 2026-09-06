@@ -73,10 +73,13 @@ Kontrol mantığının ikinci bir kopyası **yoktur ve olmamalıdır.** Bir değ
 iki yerde ayrı ayrı yazılırsa, biri güncellenip diğeri unutulduğu gün ikisi de
 değersizleşir.
 
-Aynı ilke sağlığın *ölçtüğü* şey için de geçerlidir. Sağlık raporu modları
+Aynı ilke sağlığın *ölçtüğü* şey için de geçerlidir. Sağlık raporu kuponu
 kendi yazdığı bir kopyayla değil, `/api/solve`'un ve CLI'nin kullandığı
-`spor_toto/engines.py` ile koşturur; ilan edilen envanteri de arayüzün
-okuduğu `spor_toto/meta.py`'den okur. Sağlık, ürünün **yanında duran** bir
+`spor_toto/duz.py` (`duz_kolonlar`, `kademe_sayimlari`) ile üretir; ilan
+edilen envanteri de arayüzün okuduğu `spor_toto/meta.py`'den okur.
+(Burada `spor_toto/engines.py` yazıyordu — mod çalıştırıcılarının tek
+kaynağıydı ve kaplamayla birlikte depodan çıktı, `DUZ_SISTEME_GECIS.md`.
+İlke değişmedi, yalnızca tek kaynağın adı değişti.) Sağlık, ürünün **yanında duran** bir
 ikinci uygulama değil, ürünün kendi yollarını ölçen bir katmandır — yoksa
 yeşil bir rapor yalnızca kendi kopyasının doğruluğunu kanıtlardı.
 
@@ -139,7 +142,9 @@ ikisi farklı katmandır ve birbirinin yerine geçmez.
 **Kendi kuponunu ayrıca denetleyebilirsin.** `POST /api/health/kupon` (ve
 sayfadaki *"Kendi kuponunu doğrula"* bloğu) verilen kuponu aynı
 kombinatoryal zorunluluklardan geçirir: kümenin tamamının oynandığı, kademe
-muhasebesi, satır/kolon muhasebesi, alt sınır ve olasılık tutarlılığı.
+muhasebesi, satır/kolon muhasebesi ve olasılık tutarlılığı. (Listede bir de
+*"alt sınır"* vardı — küre-kaplama alt sınırı; kaplamayla birlikte hem
+hesap hem alan kalktı.)
 Sonucu kayıtlı raporun tablosuna **karışmaz** ve düşmesi 503 üretmez — bir
 kuponun değişmezi servisin sağlık durumu değildir.
 
@@ -349,11 +354,12 @@ kontrol, hiç olmamasından kötüdür (§4, madde 1). Geniş girdi taraması
 `pytest`'teki fuzz invariant testlerinin işidir; kullanıcının kendi kuponu ise
 ayrı bir uçtur (§3.2).
 
-**Modlar küçük kuponda sınanır.** `mod_envanteri` ILP'yi 128 noktalık bir
-uzayda koşturur; örnek kuponda aynı denetim tek başına ~11 saniye sürerdi.
-Sınanan şey çözümün kalitesi değil, ilan edilen modun ayakta olması ve
-`garanti` bayrağının gerçeği söylemesidir — bu soru uzayın büyüklüğünden
-bağımsızdır (§4, madde 3).
+**Mod envanteri küçük kuponda sınanır.** `mod_envanteri` 128 noktalık bir
+uzayda koşar; örnek kuponda aynı denetim çok daha pahalıdır. Sınanan şey
+çözümün kalitesi değil, ilan edilen modun ayakta olması ve `garanti`
+bayrağının gerçeği söylemesidir — bu soru uzayın büyüklüğünden bağımsızdır
+(§4, madde 3). (Burada *"`mod_envanteri` ILP'yi ... koşturur"* yazıyordu;
+ILP kaplamanın `exact_cover` çözücüsüydü ve onunla birlikte silindi.)
 
 **İlk koşu yanıltıcıdır ve bu koda yazılıdır.** Süreç yeni başladığında ilk
 rapor ~2,1 sn sürer; sonrakiler ~520 ms. Fark ısınmadır (numpy/scipy ilk
@@ -415,9 +421,16 @@ burada yalnızca **neden** o sırada oldukları durur.
 Bu tablo bir sözleşme değil, karşılaştırma tabanıdır. Sapma gerekçesiz
 olmamalıdır.
 
+> **Bu tablo bir kez sessizce bayatladı ve sebebi kayda değer.** "Kayıtlı
+> kontrol" sayısının bir bekçisi *vardı*
+> (`test_belgeler.py::test_saglik_kontrol_sayisi_belgeyle_ayni`) ama yalnızca
+> `SAGLIK_GELISTIRME_RAPORU.md`yi okuyordu — yani **donmuş** kaydı bekçiye
+> bağlıyor, canlı olan bu tabloyu görmüyordu. Rapor 23 diyordu, burası 27, ve
+> kapı yeşildi. Bekçi artık donmuş olanlar hariç bütün belgeleri tarıyor.
+
 | Ölçü | Değer |
 |---|---|
-| Kayıtlı kontrol | 27 |
+| Kayıtlı kontrol | 23 |
 | Kategori | 6 |
 | Kritik olmayan kontrol | 1 (`scipy_flag`) |
 | Tam rapor süresi (ısınmış) | ~520 ms |
@@ -426,13 +439,23 @@ olmamalıdır.
 | Readiness önbelleği | 5 sn TTL (`HEALTH_TTL_S`), `?fresh=1` atlar |
 | Zaman serisi tamponu | 200 koşu (`HEALTH_HISTORY_LIMIT`), süreç ömürlü |
 | Alarm | kapalı (`HEALTH_ALARM_URL` ile açılır, yalnızca durum değişiminde) |
-| En yavaş kontrol | `mod_envanteri` (~129 ms, 7 mod) |
-| Sağlık katmanının test sayısı | 79 |
+| En yavaş kontrol | `monte_carlo` |
+| Sağlık katmanının test sayısı | 82 |
 | Kupon sınıfları | 8 çift/256 · 7 çift+8 banko/128 · 9 çift/512 · üçlü içeren/768 |
 | Örnek kupon | `1,10,1,12,0,10,2,10,1,12,02,1,10,2,10` |
-| Mod envanteri kuponu | 7 çift → 128 nokta, alt sınır 16 kolon |
+| Mod envanteri kuponu | 7 çift → 128 nokta = **128 kolon** (düzde uzay = kolon) |
 | Kupon denetimi (`/api/health/kupon`) | 2 değişmez (`kume_tamami_oynaniyor`, `olasilik_tutarliligi`), tek mod `duz` |
-| `auto` modu (256 nokta) | ~3,5 sn (ILP bütçesi `auto_ilp_limit` = 3 sn) |
+
+> **En yavaş kontrol değişti çünkü `mod_envanteri` küçüldü.** Kaplama
+> döneminde yedi modu ILP dahil koşturuyordu ve tabloda `~129 ms, 7 mod`
+> yazıyordu; bugün tek modu doğrulayıp düz kolonları üretiyor. Aynı satırın
+> altındaki `auto` modu (256 nokta, `auto_ilp_limit` = 3 sn) satırı da
+> konusuz kaldı ve kaldırıldı — `auto` diye bir mod yok.
+>
+> **Süre değerleri (ms/sn) bu turda YENİDEN ÖLÇÜLMEDİ.** Makineye bağlıdırlar
+> ve buradaki taban söküm öncesi bir makinede alınmıştı; başka bir makinede
+> ölçülen sayıyı yerine yazmak bir bayatı başka bir bayatla değiştirmek
+> olurdu. Yeniden ölçülene kadar süre satırları **kıyas tabanı değildir**.
 
 ---
 
@@ -451,8 +474,8 @@ python -m spor_toto.health --only <kategori>  # dar döngüde çalış
    ısınmış sürenin ~3 katı seç (dar bant gürültü üretir).
 3. `critical=False` verecekseniz §6'daki ölçütü karşıladığını gerekçelendirin.
 4. Rastgelelik varsa tohumu sabitleyin.
-5. Kontrol bir modu, bir preset'i veya ilan edilen başka bir yeteneği
-   ölçüyorsa onu **kendi kopyanla değil** `spor_toto/engines.py` ya da
+5. Kontrol kupon üretimini, bir preset'i veya ilan edilen başka bir yeteneği
+   ölçüyorsa onu **kendi kopyanla değil** `spor_toto/duz.py` ya da
    `spor_toto/meta.py` üzerinden koştur (§2.1).
 6. `pytest tests/test_health.py tests/test_api_health.py tests/test_meta.py
    tests/test_health_history.py` çalıştırın.

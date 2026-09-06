@@ -90,8 +90,8 @@ def _apply_bayes(enc: Encoder, args) -> None:
         f"  Prior α       : {prior_s}  ·  Evidence n : {evid_s}",
         f"  Ort. KL       : {summary['mean_kl_prior_post']}  "
         f"({summary.get('mean_kl_label', '')})",
-        "  NOT            : 14-garanti kombinatoryal; Bayes sadece olasilik "
-        "agirliklarini gunceller.",
+        "  NOT            : kupon kombinatoryal; Bayes kolonlari "
+        "degistirmez, sadece olasilik agirliklarini gunceller.",
     ]
     top = summary.get("top_shifts") or []
     if top:
@@ -130,15 +130,12 @@ def _mod_duz(enc: Encoder, args) -> None:
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="spor-toto",
-        description="Spor Toto 14-garanti kaplama formulu ureticisi",
+        description="Spor Toto duz (tam sistem) kupon ureticisi",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=f"""
 Ornekler:
   spor-toto --picks "{ORNEK}"
-  spor-toto --picks "{ORNEK}" --variant 3
-  spor-toto --picks "{ORNEK}" --mode auto
-  spor-toto --picks "{ORNEK}" --mode butce --budget 32
-  spor-toto --picks "{ORNEK}" --mode maxcov --budget 16
+  spor-toto --picks "{ORNEK}" --fire
   spor-toto --picks "{ORNEK}" --probs "1:1,0:1,2:1;..." --mc-samples 20000
   spor-toto --picks "{ORNEK}" --probs "..." --bayes-preset dengeli --mc-samples 10000
   spor-toto --picks "{ORNEK}" --probs "..." --bayes --prior-strength 2 --evidence-strength 20
@@ -159,7 +156,8 @@ yazilir. '1' banko ev sahibi, '10' cifte, '102' kapama (uclu).
                    help="--probs ile Monte Carlo deneme sayisi (0=kapali)")
     p.add_argument("--fire", action="store_true",
                    help="Secim DISI fire analizi (1-fire / 2-fire). "
-                        "14-garantinin gecerli OLMADIGI bolgeyi olcer.")
+                        "Dogru sonucun secim kumesinin DISINDA kaldigi "
+                        "bolgeyi olcer.")
     p.add_argument("--fire-max", type=int, default=2, choices=[1, 2],
                    help="--fire ile kac maca kadar fire incelensin (varsayilan 2)")
     p.add_argument("--bayes", action="store_true",
@@ -182,14 +180,16 @@ yazilir. '1' banko ev sahibi, '10' cifte, '102' kapama (uclu).
     # `--ls-iters`, `--compare-budget`, `--no-compare` bayraklari KALKTI:
     # hepsi kaplama aramasinin parametreleriydi ve arama ile birlikte
     # dustu (docs/DUZ_SISTEME_GECIS.md). Duzde secilecek bir mod yok.
-    p.add_argument("--ls-iters", type=int, default=30000)
-    p.add_argument("--seed", type=int, default=42)
+    #
+    # **Son ucu bu yorumda KALKMISTI ama asagida hala kayitliydi.** Yani
+    # `--help` uc olu bayrak ilan ediyordu ve ikisinin yardim metni
+    # "fix16 modunda ..." diyordu — sokulmus bir moda gonderme. Hicbiri
+    # hicbir yerde okunmuyordu (`git grep ls_iters` -> yalnizca "kalkti"
+    # diyen yorumlar). Yorum ile kod artik ayni seyi soyluyor.
+    p.add_argument("--seed", type=int, default=42,
+                   help="Monte Carlo tohumu (--mc-samples ile)")
     p.add_argument("--kisa", action="store_true",
                    help="Kolonlarin acik listesini basma")
-    p.add_argument("--compare-budget", type=float, default=10.0,
-                   help="fix16 modunda karsilastirmaya ayrilan saniye")
-    p.add_argument("--no-compare", action="store_true",
-                   help="fix16 modunda auto ile karsilastirma yapma")
     p.add_argument("--kati", action="store_true",
                    help="15 mac disindaki girdileri hata say")
     p.add_argument("--output", type=str, default=None,
@@ -221,8 +221,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         for u in enc.uyarilar:
             print(f"UYARI          : {u}")
         if not HAS_SCIPY:
-            print("UYARI          : scipy bulunamadi; kesin cozucu devre disi "
-                  "(pip install scipy)")
+            # Once "kesin cozucu devre disi" diyordu; o cozucu kaplamanin
+            # `exact_cover`iydi ve onunla birlikte silindi. Bayragin bugunku
+            # anlami `core.HAS_SCIPY` docstring'inde.
+            print("UYARI          : scipy bulunamadi; kuyruk katmani "
+                  "(spor_toto.kuyruk) yuklenemez (pip install scipy)")
         if getattr(args, "bayes_info", None):
             for line in args.bayes_info:
                 print(line)

@@ -1039,7 +1039,7 @@ def api_solve():
                 mc_samples=mc_samples,
                 fire_max=fire_max,
             )
-            detail = "exact+MC+bayes" if user_probs is not None else "kaplama"
+            detail = "exact+MC+bayes" if user_probs is not None else "duz"
             _log_step(run_log, "build_result", detail, (time.perf_counter() - t1) * 1000)
 
         if result is not None:
