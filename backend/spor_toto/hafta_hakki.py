@@ -104,8 +104,24 @@ from .karne import (
     gercek_odul,
     kupon_kesiti,
 )
-from .secim import sistem_secimi
-from .sistem import HEDEF_KADEME, VARSAYILAN_GARANTI, kacak_esigi, sekiller
+from .secim import HEDEF_KADEME, kacak_esigi, sistem_secimi
+
+#: Düzde en iyi kolon her zaman `15 − kaçak`; garanti seviyesi diye bir
+#: seçim yok. Sabit, `garanti` parametresi taşıyan imzaları okunur tutuyor.
+VARSAYILAN_GARANTI = 15
+
+
+def _kolon_merdiveni(n: int) -> list[int]:
+    """Düzde satın alınabilen bütün kolon sayıları, artan sırada.
+
+    **Bu liste eskiden satıcının fiyat tablosundan geliyordu**
+    (`sistem.sekiller`): indirgenmiş sistemler ayrık fiyat basamaklarında
+    satılıyordu ve cephe o basamakları geziyordu. Düzde indirgeme yok —
+    bedel `2^çifte · 3^üçlü`, yani basamaklar formülün kendisinden çıkıyor.
+    """
+    return sorted({2 ** a * 3 ** b
+                   for a in range(n + 1) for b in range(n + 1 - a)})
+
 
 #: Cephenin ölçüm tavanı (TL) — **ürün kuralı değil, hesap sınırı.**
 #:
@@ -158,8 +174,7 @@ def cephe(probs_listesi: list[dict[str, float]],
     olan cetveldir.
     """
     n = len(probs_listesi)
-    fiyatlar = sorted({s.tl for s in sekiller(garanti, yol=yol)
-                       if s.tek + s.cift + s.kapali == n})
+    fiyatlar = [k * KOLON_BEDELI for k in _kolon_merdiveni(n)]
     out: list[Adim] = []
     for tl in fiyatlar:
         if en_cok_tl is not None and tl > en_cok_tl:
@@ -214,12 +229,12 @@ def hafta_cetveli(h: dict[str, Any],
     Kaplama üretilemeyen basamak **atlanır** (`None` dönmez) — cetvelin
     eksik basamağı olabilir ve `basamak` alanı kaç tane ölçüldüğünü söyler.
     """
-    if garanti != 14:
+    if garanti != VARSAYILAN_GARANTI:
         raise ValueError(
-            "cetvel yalniz 14-garantide kosar: gercek kolonlari uretebilen "
-            "tek yer orasi (karne.gercek_kolon_dagilimi, core.py yaricap 1)")
+            f"duz sistemde garanti seviyesi secilmez (en iyi kolon = 15 - k); "
+            f"garanti={garanti} verildi")
     kad = HEDEF_KADEME if kademe is None else kademe
-    esik = kacak_esigi(garanti, kad)
+    esik = kacak_esigi(kad)
     adimlar = cephe(h["probs"], garanti=garanti, kademe=kademe,
                     en_cok_tl=en_cok_tl)
     basamaklar: list[dict[str, Any]] = []
@@ -243,7 +258,7 @@ def hafta_cetveli(h: dict[str, Any],
 
 
 def cetvel(hafta_siniri: int | None = None,
-           garanti: int = 14,
+           garanti: int = VARSAYILAN_GARANTI,
            kademe: int | None = None,
            en_cok_tl: float | None = CEPHE_TAVANI,
            kesit: Sequence[dict[str, Any]] | None = None
@@ -267,7 +282,7 @@ def cetvel(hafta_siniri: int | None = None,
 
 
 def para_cephesi(sezon: str, hafta: int,
-                 garanti: int = 14,
+                 garanti: int = VARSAYILAN_GARANTI,
                  en_cok_tl: float | None = CEPHE_TAVANI) -> list[dict[str, Any]]:
     """Cephenin her basamağında modelin `E[TL]`'si — **ikinci dejenerasyonun
     ölçümü.**

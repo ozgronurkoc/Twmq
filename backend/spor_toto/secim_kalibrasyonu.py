@@ -586,7 +586,13 @@ def kupon_kurali(butce_tl: float = KUPON_BUTCE,
 
     ─── Ölçülen: seçim kalibrasyonu BOZMUYOR ────────────────────────────
 
-    114 kupon haftasında, 13-garanti ve 2.000 TL bütçeyle::
+    Aşağıdaki sayılar **kaplama ölçeğinde** ölçüldü (13-garanti, `sistem.py`
+    fiyat tablosu). Katman söküldü (`docs/DUZ_SISTEME_GECIS.md`) ve kural
+    artık düz sistemde koşuyor; sayılar yeniden ölçülmedi, o yüzden burada
+    ölçek etiketiyle duruyorlar. Bulgunun **yönü** ölçekten bağımsız
+    olmalıdır ama bu bir varsayımdır, ölçüm değil.
+
+    114 kupon haftasında, 13-garanti ve 2.000 TL bütçeyle (kaplama)::
 
         BANKO         söylenen 0,6451 · gerçek 0,6988 · aşırı güven −0,0537
         banko DEĞİL   söylenen 0,4430 · gerçek 0,4922 · aşırı güven −0,0492
@@ -607,9 +613,8 @@ def kupon_kurali(butce_tl: float = KUPON_BUTCE,
     """
     import random as _random
 
-    from .karne import kupon_kesiti
+    from .karne import VARSAYILAN_GARANTI, kupon_kesiti
     from .secim import sistem_secimi
-    from .sistem import VARSAYILAN_GARANTI
 
     g = VARSAYILAN_GARANTI if garanti is None else garanti
     haftalar: list[tuple[list[tuple[float, float]], list[tuple[float, float]]]] = []

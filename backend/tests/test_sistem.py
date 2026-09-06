@@ -62,22 +62,6 @@ def test_kacak_esigi_garantiden_turer():
         sistem.kacak_esigi(11)
 
 
-def test_tablo_formulden_ayrisiyor_ve_ayrisma_yonlu():
-    """Formül tabloyu **tutmuyor** — ve bu, tablonun var olma sebebi.
-
-    `bedel_hesapla` yedi çifte varsayar. Yedi çiftenin bulunduğu şekillerde
-    ikisi örtüşür; çifte azalınca formül tabloyu AŞAR, çünkü Hamming(7,4)
-    bloğu artık kurulamıyor ama formül kurulmuş gibi hesaplıyor.
-    """
-    ayni = sistem.bedel(7, 8, 0, garanti=14)
-    assert ayni is not None and ayni.kolon == bedel_hesapla(8, 0) == 32
-
-    az_cift = sistem.bedel(7, 4, 4, garanti=14)
-    assert az_cift is not None
-    assert az_cift.kolon < bedel_hesapla(4, 4), (
-        "yedi cifteden az iken formul tabloyu asmali")
-
-
 def test_satilmayan_sekil_none_doner():
     """Tabloda `-` yazan hücre satılmayan şekildir, bedeli sıfır değil YOK."""
     assert sistem.bedel(6, 9, 0, garanti=12) is None
@@ -104,36 +88,20 @@ def _probs(n: int = 15) -> list[dict[str, float]]:
     return out
 
 
-def test_sistem_secimi_butceyi_asmaz_ve_sekli_satiliyor():
-    """Dönen plan hem bütçeye sığar hem de tabloda GERÇEKTEN satılan bir şekil."""
-    for g in sistem.GARANTILER:
-        for tl in (1000.0, 3000.0):
-            s = sistem_secimi(_probs(), tl, garanti=g)
-            if s is None:
-                continue
-            assert s.banko + s.cift + s.uclu == 15
-            kayit = sistem.bedel(s.banko, s.cift, s.uclu, garanti=g)
-            assert kayit is not None, "satilmayan sekil onerildi"
-            assert kayit.kolon == s.bedel
-            assert kayit.tl <= tl
-
-
-def test_sistem_secimi_yedi_cifte_sartini_TASIMAZ():
-    """`en_iyi_secim`in taşıdığı Hamming şartı burada yok — tablo sattığı için.
-
-    Bu ayrımın kendisi bir bulgudur: dar bütçede en iyi plan çoğu zaman
-    yedi çifteden az taşır ve `en_iyi_secim` onu hiç göremez.
-    """
-    s = sistem_secimi(_probs(), 1000.0, garanti=13)
-    assert s is not None
-    assert s.cift < 7, "dar butcede yedi ciftenin altina inilebilmeli"
-
-
 def test_daha_cok_butce_hedefi_dusurmez():
-    """Bütçe büyürken `P(k ≤ eşik)` monoton artmalı — arama kesin olduğu için."""
+    """Bütçe büyürken `P(k ≤ eşik)` monoton artmalı — arama kesin olduğu için.
+
+    **Bu dosyanın üç testi silindi** ve sebebi bu testin ayakta kalmasıyla
+    aynı: onlar `sistem_secimi` ile satıcının indirgenmiş sistem fiyat
+    tablosu arasındaki BAĞI sınıyordu (formül ↔ tablo ayrışması, dönen
+    şeklin tabloda satılıyor olması, yedi çifte şartının tabloda olmaması).
+    Kaplama sökülünce o bağ kalmadı: `sistem_secimi` artık yalnızca TL'yi
+    kolona çeviriyor. Buradaki iddia ise bağdan bağımsız — aramanın kesin
+    olmasından geliyor ve düzde de geçerli.
+    """
     onceki = -1.0
     for tl in (500.0, 1000.0, 2000.0, 3000.0, 5000.0):
-        s = sistem_secimi(_probs(), tl, garanti=13)
+        s = sistem_secimi(_probs(), tl)
         if s is None:
             continue
         assert s.p_hedef >= onceki - 1e-12, tl
