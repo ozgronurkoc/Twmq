@@ -950,6 +950,7 @@ backend/
     secim.py           KUPON: işaretleri HEDEFE göre seçer — eşiğe göre değil
     sistem.py          KUPON: indirgenmiş sistem BEDELİ — formülden değil satıcı tablosundan
     karne.py           PARA: kuponun gerçek ikramiye tablolarına karşı getirisi (garanti tabanı)
+    hafta_hakki.py     PARA: bütçe kısıtı kalkınca ne kalıyor — cephe, cetvel, kural kıyası (E6)
     kalabalik.py       HAVUZ: kalabalık modeli — 112 haftanın kademe adetlerine oturtulmuş (λ)
     hakem.py           SÜTUN: E4'ün tek denemesi — hakem etkisi ÖLÇÜLDÜ ve yok çıktı
     havuz.py           HAVUZ: resmî ikramiye tablosundan havuzu ve devri geri hesaplar
@@ -993,7 +994,7 @@ backend/
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
                        sehir/ · xg/ · sistem_fiyat/ · hakem/
-  tests/               pytest (70 dosya → 2.046 test; §9'da katman dökümü)
+  tests/               pytest (72 dosya → 2.076 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1197,8 +1198,8 @@ Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant'lar, CLI (Bayes pre
 dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri test,
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
-eşleme, ikinci kayıt). **70 test dosyası, parametrizasyonla
-2.046 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+eşleme, ikinci kayıt). **72 test dosyası, parametrizasyonla
+2.076 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
@@ -1232,6 +1233,8 @@ karşı denetler):
 | Kuyruk / bağımsızlık | **`kuyruk`** | 12 |
 | MCP deneyi | **`mcp`** | 11 |
 | Betik ortak katmanı | **`scripts_ortak`** | 12 |
+| Devir tavanı (dış tarama · pozitif BD koşulu) | **`devir_tavani`** | 5 |
+| Haftanın hakkı (E6 · cephe · cetvel · Holm'lu işaret sınavı) | **`hafta_hakki`** | 25 |
 
 İki test bilerek **ağa çıkmaz**: `test_snapshot_iddaa.py` gerçek bültenden alınmış
 küçük bir örnek payload üzerinde koşar — ağ çağrısını sınamak bu paketin işi değil,
@@ -1492,6 +1495,7 @@ olması gerekir. Tanımlıysa yalnızca **durum değişiminde** bildirim gider.
 | [`docs/DIS_INCELEME.md`](docs/DIS_INCELEME.md) | Dış bir makine öğrenmesi çalışmasının bu projeye ne kattığı ve **ne katmadığı** — sayılar o çalışmanın kendi belgelerinden, bizim ölçümümüz değil |
 | [`docs/DIS_INCELEME_ALPHAPY.md`](docs/DIS_INCELEME_ALPHAPY.md) | Bir ML **çerçevesinin** (AlphaPy / AlphaPy Pro) incelemesi: çerçeve alınmadı, ama metrik paneline bakarken görülen eksik ölçüldü ve koda girdi — Brier'in Murphy ayrışımı |
 | [`docs/DIS_INCELEME_SPORTS_BETTING.md`](docs/DIS_INCELEME_SPORTS_BETTING.md) | Bir **sabit oranlı bahis araç kutusunun** (`georgedouzas/sports-betting`) incelemesi: model tarafında hiçbir şey, bir ölçü (`deger.py` — üç pazarda da kâr yok) ve bir kalite kapısı. Asıl getirisi **kendi kodumuzdaki dört kusur**: sessizce ölü bir sözlük (5 hafta kayıp), gizli bir duvar saati kırılganlığı, iki yanlış docstring sayısı, eskimiş bir uç envanteri |
+| [`docs/DIS_TARAMA_PIYASAYI_YENME.md`](docs/DIS_TARAMA_PIYASAYI_YENME.md) | **Dış literatürün** bu oyuna dair ne söylediği ve hangi iddianın burada denenmediği. İki eksen ölçülerek kapandı: **devir** (pozitif beklenen değer için gereken çarpan 1,95–2,84, altı sezonun azamisi **1,645**) ve naif **"hep ev sahibi"** kuralı (korpusta %43,37; piyasa favorisi 7,7 puan üstün). Açık kalan tek eksen havuz/kalabalık ve gereken kat artık yazılı |
 | [`docs/DIS_INCELEME_AZ_RAPORU.md`](docs/DIS_INCELEME_AZ_RAPORU.md) | Depo dışından gelen 64 bölümlük bir değerlendirmenin madde madde karşılığı: çoğunun karşılığı zaten vardı, **üçü gerçekten eksikti** (Model Arena, ileri yürüyüş, sızıntı sözleşmesi) ve üçü de uygulandı — ürettikleri ölçüm §3.41'de |
 | [`docs/GELISTIRME_PLANI_ESLEMESI.md`](docs/GELISTIRME_PLANI_ESLEMESI.md) | Dışarıdan gelen iki geliştirme planının madde madde karşılığı: hangisi zaten vardı, hangisi gerçekten eksikti (dördü), hangisi **ölçülmüş gerekçeyle** reddedildi |
 | [`docs/BENZER_PLANI_ESLEMESI.md`](docs/BENZER_PLANI_ESLEMESI.md) | `benzer.py` için gelen dış planın aynı biçimde eşlemesi: gerçekten eksik olan üçü (`inf` oran · toleransın üç kapıda üç sınırı · zaman kesmesi) uygulandı, altısı gerekçesiyle reddedildi, üçü kaydedildi |
@@ -1499,6 +1503,7 @@ olması gerekir. Tanımlıysa yalnızca **durum değişiminde** bildirim gider.
 | [`docs/KADEME_OLASILIKLARI.md`](docs/KADEME_OLASILIKLARI.md) | **15/15 yapma olasılığı** ve onun üç kardeşi (14, 13, 12): 3^15 uzayının tamamı açılarak ölçülen tek kolon olasılığı (874x), gerçek sonucun 114 haftadaki sırası, bütçeye göre kademe tablosu, paranın hangi kademeden geldiği. İki yeni ölçüm: **seyreltme** (Spearman −0,843 — tuttuğun hafta herkesin tuttuğu haftadır) ve arşivde **32 anormal hafta**. Ölçüm hattı `scripts/kademe_analizi.py` |
 | [`docs/KAZANMA_KARNESI.md`](docs/KAZANMA_KARNESI.md) | **Canlı karne** — her hafta öngörülen (`P(k≤eşik)`, `E[TL]`) ↔ gerçekleşen (kaçak, kademe, ödül), kümülatif net. Bir tahmin kaydı DEĞİL: plan kupon öncesi girdilerden bugünkü motorla yeniden türetiliyor ve ödül **garanti tabanıdır** (alt sınır). `scripts/hafta_kos.py --sonrasi` ile yeniden üretilir |
 | [`docs/KAZANMA_PLANI.md`](docs/KAZANMA_PLANI.md) | **Sekiz haftalık ölçüm sırası** — kazanma şansını artırmanın planı. Teşhis: tahmin ekseni on bir ölçümle kapalı ve `KADEME` §6'nın seyreltmesi (Spearman −0,843) kalanı da yiyor; açık olan eksen havuz. Çekirdeği hiç birleştirilmemiş iki arşiv: 223 haftalık resmî kazanan adedi × 112 haftalık kupon+oran+sonuç = **448 gözlem**, ve `getiri.KALABALIK_MODELLERI`'nin üç **varsayımı** o gözleme hiç oturtulmadı. Her fazın durma kuralı önceden yazılı |
+| [`docs/KUPON_NASIL_KURULUYOR.md`](docs/KUPON_NASIL_KURULUYOR.md) | **Boru hattının uçtan uca anlatımı** — girdi (15 maç · açılış/kapanış oranları · oynanma yüzdeleri) oynanacak satıra dönene kadar hangi ele değiyor: veri kapısı ve eşikleri, marj arındırma (`shin`), açılışın üç işi (kupona **girmez**), kalabalık payı, garanti↔kaçak aritmetiği, Pareto DP seçimi, satıcı fiyat tablosu, kaplama kodu, havuz ve `E[TL]`. Her sabitin yanında **ölçüm mü varsayım mı**; örnek koşum 2026/27 4. hafta |
 | [`docs/token_olcum_kutugu.md`](docs/token_olcum_kutugu.md) | Ajan bilgi grafının token kazancının **ölçüm kütüğü**: hangi soru, hangi cetvel, grafik öncesi ve sonrası kaç token — sayılar ölçüldü, tahmin edilmedi |
 | [`backend/README.md`](backend/README.md) | Motor + API kurulumu, ortam değişkenleri, oran arşivi kullanımı |
 | [`frontend/README.md`](frontend/README.md) | Arayüz yapısı, tasarım sistemi, grafik kuralları, tip katmanı |
