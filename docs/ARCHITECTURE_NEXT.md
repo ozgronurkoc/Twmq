@@ -13,7 +13,7 @@ frontend/              ← Next.js :3000, tek UI (10 sayfa — aşağıdaki tabl
 backend/web_app.py     ← Flask :8080, sadece JSON
    │
    ▼
-backend/spor_toto/     ← Fix-16, ILP, Bayes, MC, Markov, health
+backend/spor_toto/     ← düz kolon üretimi, Bayes, MC, Markov, health
 ```
 
 Repo iki taraflıdır: Python'un tamamı `backend/`, arayüzün tamamı `frontend/`.
@@ -55,7 +55,7 @@ yani boşluk üç belgeye birden yayılıyordu. Artık liste
 
 | Yol | Ne yapar |
 |-----|----------|
-| `/` | Formül — kaplama motoru, olasılık, senaryo karşılaştırma |
+| `/` | Formül — düz (tam sistem) kupon, olasılık, senaryo karşılaştırma |
 | `/tahmin` | Yaklaşan maçlara 1/0/2 + ölçülmüş isabet |
 | `/super-toto` | Canlı sezon defteri (statik besleme, bkz. aşağısı) |
 | `/istatistik` | **Sezon** — tarihsel dağılım ve analiz blokları (§6.8 G1'de bölündü) |
@@ -69,8 +69,8 @@ yani boşluk üç belgeye birden yayılıyordu. Artık liste
 ## Sözleşme nasıl korunuyor
 
 Arayüzün okuduğu gövdenin **şekli** `frontend/lib/api-sozlesme.json`
-dosyasında durur; `backend/scripts/api_sozlesme.py` onu 13 ucu gerçekten
-çağırarak üretir ve `--kontrol` ile bayatlığını denetler. `check.mjs` ayrıca
+dosyasında durur; `backend/scripts/api_sozlesme.py` onu 15 ucun **tamamını**
+gerçekten çağırarak üretir ve `--kontrol` ile bayatlığını denetler. `check.mjs` ayrıca
 TypeScript derleyici API'siyle `lib/types.ts` arayüzlerini okuyup aynı
 dosyayla karşılaştırır: **sunucunun gönderdiği her alan tipte olmalı, tipte
 zorunlu diyen her alan sunucudan gelmeli.**
@@ -123,11 +123,7 @@ hazır `n1/n0/n2` alanları çeliştiğinde fark yutulmaz,
 ```json
 {
   "matches": [["1"],["1","0"], ...],
-  "mode": "fix16 | auto | exact | block | heuristic | butce | maxcov",
-  "variant": 0,
-  "budget": 32,
-  "plan_count": 5,
-  "plan_apply": 1,
+  "mode": "duz",
   "kati": false,
   "probs": [{"1":0.5,"0":0.3,"2":0.2}, ...],
   "use_bayes": false,
@@ -135,15 +131,22 @@ hazır `n1/n0/n2` alanları çeliştiğinde fark yutulmaz,
   "prior_strength": 1,
   "evidence_strength": 10,
   "mc_samples": 80000,
-  "fire_max": 2,
-  "trials": 5,
-  "ls_iters": 30000,
-  "seed": 42,
-  "time_limit": 60,
-  "block_limit": 256,
-  "exact_limit": 512
+  "fire_max": 2
 }
 ```
+
+`matches` yerine `picks` (15 maçlık dizgi) de gönderilebilir; ikisinden biri
+zorunludur.
+
+> **`mode` neden hâlâ duruyor.** Burada yedi mod sayılıyordu (`fix16 | auto |
+> exact | block | heuristic | butce | maxcov`) ve yanlarında yalnızca kaplama
+> **aramasını** ayarlayan alanlar vardı: `variant`, `budget`, `plan_count`,
+> `plan_apply`, `trials`, `ls_iters`, `seed`, `time_limit`, `block_limit`,
+> `exact_limit`. Kaplama 2026-09-06'da söküldü
+> (`DUZ_SISTEME_GECIS.md`) ve arama ile birlikte hepsi düştü. `mode` alanı
+> **yok sayılmaz, reddedilir**: `"duz"` dışında bir değer 400 döner, çünkü
+> `fix16` gönderip 14-garanti sanan eski bir istemcinin sessizce tam sistem
+> alması en kötü kusurdur. Alan gönderilmezse `"duz"` varsayılır.
 
 `probs` gönderilmezse `advanced`, `bayes` ve `markov` blokları `null` döner —
 olasılık katmanının tamamı bu alana bağlıdır.
@@ -184,10 +187,15 @@ gerektiği için istemcide durur (`frontend/lib/kume-ici.ts`):
 | Büyüklük | Formül | Sunucudaki karşılığı |
 |---|---|---|
 | Küme-içi koşulu | `∏ᵢ Σ_{s∈secᵢ} pᵢ(s)` | `advanced.exact.p_kume_ici` |
-| Küre-kaplama alt sınırı | `⌈uzay / (1 + Σ(kᵢ−1))⌉` | `result.alt_sinir` |
 
-İkisi de sunucunun döndürdüğü değerle birebir tutmak zorundadır; CI bunu
-ölçülmüş vakalarla denetler. **Birimlere dikkat:** `advanced.exact.*` yüzde
+Sunucunun döndürdüğü değerle birebir tutmak zorundadır; CI bunu ölçülmüş
+vakalarla denetler.
+
+> **Burada ikinci bir satır vardı:** küre-kaplama alt sınırı
+> (`⌈uzay / (1 + Σ(kᵢ−1))⌉` ↔ `result.alt_sinir`). Kaplama sökülünce hem
+> `frontend/lib/kume-ici.ts`teki `kaplamaAltSiniri` hem de sunucudaki
+> `alt_sinir` alanı kalktı — alan `null` bile gönderilmiyor. Düzde kolon
+> sayısı bir alt sınır değil, **çarpımın kendisi**: `2^çifte · 3^üçlü`. **Birimlere dikkat:** `advanced.exact.*` yüzde
 döner (sunucuda `100 *` uygulanmıştır), `markov.*` ise 0–1 olasılık.
 
 ## Çalıştırma

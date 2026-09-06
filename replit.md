@@ -67,7 +67,7 @@ yani Run düğmesi tek başına da yeterlidir.
 
 | Yol | İçerik |
 |-----|--------|
-| `/` | **Formül** — maç ızgarası, olasılık girişi, motorun tüm modları |
+| `/` | **Formül** — maç ızgarası, olasılık girişi, düz kupon + olasılık raporu |
 | `/tahmin` | Yaklaşan maçlara 1/0/2 + **ölçülmüş isabet** (ayrılmaz) |
 | `/super-toto` | Canlı sezon defteri (statik besleme); kaydı olan haftada `1. Tahmin` / `2. Tahmin` sekmeleri |
 | `/istatistik` | **Sezon** — dağılım, seyir, bantlar, ısı haritası, haftalar (§6.8 G1'de bölündü) |
@@ -102,13 +102,15 @@ Sözleşmenin tamamı: `docs/ARCHITECTURE_NEXT.md` ve `frontend/lib/types.ts`.
 
 ## Motor (`backend/spor_toto/`)
 
-51 modül var; tam liste ve tek satırlık açıklamaları `README.md` §7'dedir
+Modüllerin tam listesi ve tek satırlık açıklamaları `README.md` §7'dedir
 (orayı dosya sistemine karşı bir bekçi tutar, bu cümle bir iddia değil).
-Katman katman:
+Burada bir de **sayı** yazıyordu ("51 modül") ve bekçisiz olduğu için
+sessizce bayatladı; sayı kaldırıldı, yönlendirme kaldı. Katman katman:
 
-- **Çekirdek** — `core.py` (Encoder, Fix-16, ILP, heuristic) · `engines.py`
-  (mod çalıştırıcıları — API, CLI ve sağlık **aynı** yolu kullanır) ·
-  `meta.py` (yetenek envanteri, `/api/meta` tek kaynağı) · `cli.py`
+- **Çekirdek** — `core.py` (Encoder, işaret ayrıştırma, kupon satırı, exact
+  olasılık) · `duz.py` (düz kolon üretimi + kademe sayımları — API, CLI ve
+  sağlık **aynı** yolu kullanır) · `meta.py` (yetenek envanteri, `/api/meta`
+  tek kaynağı) · `cli.py`
 - **Analiz** — `analysis.py` (Monte Carlo, hata frekansı) · `bayes.py`
   (Dirichlet prior → posterior) · `markov.py` (hata bütçesi) ·
   `fire_scenarios.py`
@@ -148,7 +150,7 @@ Katman katman:
   egitim tarihi + surum; bayatlik `health`te KIRMIZI — `--yaz` ile uretilir,
   surumlenmez)
 - **Ortak / gövde** — `ortak.py` (normalizasyon, Wilson, Brier, bantlama) ·
-  `payloads.py` (uç gövdeleri, tek kaynak) · `health.py` (27 değişmez) ·
+  `payloads.py` (uç gövdeleri, tek kaynak) · `health.py` (23 değişmez) ·
   `health_history.py` · `report.py`
 
 > `odds.py` burada uzun süre "yalnızca analiz" diye yazılıydı; **artık değil**.
@@ -169,8 +171,10 @@ python -m spor_toto.cli --picks "1,10,1,12,0,10,2,10,1,12,02,1,10,2,10"
 15 maç, virgülle ayrılır; bir maçın seçimleri bitişik yazılır:
 `1` ev, `0` beraberlik, `2` deplasman, `10`/`02`/`12` çift, `102` üçlü.
 
-Modlar: `--mode auto|exact|heuristic|butce|maxcov` (`--budget` ile),
-`--variant 3` (alternatif 16 satır).
+**Mod yok.** Kupon düz oynanır: seçim kümesinin tamamı üretilir, seçilecek
+bir şey kalmaz. Burada `--mode auto|exact|heuristic|butce|maxcov` ve
+`--variant 3` yazıyordu; hepsi kaplama **aramasının** parametreleriydi ve
+arama ile birlikte düştü (`docs/DUZ_SISTEME_GECIS.md`).
 
 ## Veri
 

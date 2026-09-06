@@ -75,15 +75,64 @@ def test_mimari_belgesi_butun_uclari_sayar():
 
 
 def test_saglik_kontrol_sayisi_belgeyle_ayni():
-    """Belgede yazan kontrol sayısı `health.CHECKS` ile örtüşmeli."""
+    """"Kayıtlı kontrol: N" diyen her belge `health.CHECKS` ile örtüşmeli.
+
+    **Bu bekçinin kör noktası tam olarak nereye baktığıydı.** Yalnızca
+    `docs/SAGLIK_GELISTIRME_RAPORU.md`yi okuyordu — yani `DONMUS_BELGELER`
+    listesindeki, tanımı gereği geçmişi anlatan tek belgeyi. Canlı olan
+    `docs/SAGLIK_VIZYONU.md` §11 aynı satırı taşıyor ve taranmıyordu:
+    rapor 23, vizyon 27 diyordu, gerçek 23'tü ve kapı yeşil kaldı.
+    Bekçinin ölçtüğü sayı doğruydu, **baktığı yer yanlıştı**.
+
+    Kaynak artık `_belge_listesi()`: donmuş kayıtlar hariç depodaki bütün
+    belgeler. Aynı desen `test_betik_sayisi_belgeyle_ayni` ve
+    `test_test_dosya_sayisi_belgelerle_ayni` ile aynıdır — varsayılan
+    korumalıdır, muafiyet açıkça yazılır.
+
+    **İkinci kör nokta: aynı sayının ikinci adı.** Yalnızca *"kayıtlı
+    kontrol"* aranıyordu, oysa depo aynı sayıyı çoğu yerde **"N değişmez"**
+    diye yazıyor. Ölçüldüğünde altı belgede toplam dokuz yerde `27` vardı
+    (`README.md` §1 dahil — ki aynı dosya §6.3'te `23 kontrol` diyordu,
+    yani dosya KENDİ İÇİNDE çelişiyordu). Bir sayının iki adı varsa bekçi
+    ikisini de tanımalıdır, yoksa tanımadığı ad bekçisiz kalır.
+
+    **Alt küme iddiaları sayılmaz.** `SAGLIK_VIZYONU.md` §11 şunu yazıyor:
+    *"2 değişmez (`kume_tamami_oynaniyor`, `olasilik_tutarliligi`)"* — bu
+    `/api/health/kupon`un koşturduğu alt kümedir, katmanın toplamı değil ve
+    **doğrudur**. Kural şudur: sayı hemen ardından hangi kontrolleri kastettiğini
+    parantez içinde `backtick`le sayıyorsa, o bir alt küme iddiasıdır ve
+    atlanır. Doğru bir cümleyi kırmızı yakan bekçi, hiç bekçi olmamasından
+    kötüdür (bu dosyanın kurucu kuralı).
+    """
     from spor_toto.health import CHECKS
 
-    metin = _oku("docs/SAGLIK_GELISTIRME_RAPORU.md")
-    sayilar = {int(x) for x in re.findall(r"[Kk]ayıtlı kontrol[^\d]{0,12}(\d+)", metin)}
-    if not sayilar:
-        pytest.skip("belgede kayıtlı kontrol sayısı geçmiyor")
-    assert sayilar == {len(CHECKS)}, (
-        f"belge {sorted(sayilar)} diyor, gerçek {len(CHECKS)}"
+    desen = re.compile(
+        r"(?:[Kk]ayıtlı kontrol[^\d\n]{0,12}(\d+)"
+        r"|(\d+)\s*(?:sağlık\s*)?değişmez)")
+    #: "2 değişmez (`a`, `b`)" — ardından kontrolleri adıyla sayan iddia.
+    alt_kume = re.compile(r"\s*\(\s*`")
+    yanlis: dict[str, list[int]] = {}
+    tarandi = 0
+    for d in _belge_listesi():
+        p = DEPO / d
+        if not p.exists():
+            continue
+        metin = p.read_text(encoding="utf-8")
+        sayilar: set[int] = set()
+        for m in desen.finditer(metin):
+            if alt_kume.match(metin, m.end()):
+                continue
+            sayilar.add(int(m.group(1) or m.group(2)))
+        if not sayilar:
+            continue
+        tarandi += 1
+        if sayilar != {len(CHECKS)}:
+            yanlis[d] = sorted(sayilar)
+    if not tarandi:
+        pytest.skip("hiçbir belgede kayıtlı kontrol sayısı geçmiyor")
+    assert not yanlis, (
+        f"kayıtlı kontrol sayısı GERÇEKLE ayrışmış (gerçek: {len(CHECKS)}): "
+        + "; ".join(f"{d}={v}" for d, v in yanlis.items())
     )
 
 

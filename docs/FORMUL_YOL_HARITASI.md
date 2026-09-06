@@ -6,24 +6,42 @@ olduğunu tutar. Bugüne kadar yapılanlar ayrı belgededir:
 
 Boyut etiketleri: `[S]` bir oturum · `[M]` bir gün · `[L]` birden fazla gün.
 
+> **Söküm sonrası gözden geçirildi (2026-09-06).** Bu yol haritası kaplama
+> döneminde yazıldı (2026-08-17) ve maddelerinin ikisi o katmanın üzerine
+> kuruluydu: **K4** (bütçe danışmanı) ve **K5** (varyant gezgini). Kaplama
+> söküldü (`DUZ_SISTEME_GECIS.md`); `core.butce_danismani` ve `variant` diye
+> bir şey kalmadı, yani o iki madde **konusuz kaldı** — silinmiyor, yerinde
+> işaretleniyor, çünkü sıranın neden o sıra olduğu bilgisi onlarla birlikte
+> yazılmıştı. Kalan altı madde (K1, K2, K3, K6, K7, K8) kaplamadan bağımsızdır
+> ve **hâlâ geçerlidir**: `fire.by_match` duruyor, canlı kart ile çözümün
+> olasılığı hâlâ ayrışıyor, mobil ve dışa aktarım işleri hiç dokunulmadı.
+> §2'nin ölçümleri o günün ürününe aittir ve yeniden ölçülmedi.
+
 ---
 
 ## 1. Bugünkü durum
 
-F0–F6 uygulandı: bedel moda göre söyleniyor, 14-garantinin koşulu üretmeden önce
-canlı görünüyor, sonuç bayatlayınca söyleniyor, sekmeler soruya göre bölündü,
-maçların adı var, çalıştırılan modlar yan yana kıyaslanıyor, kurulum kalıcı ve
-paylaşılabilir.
+F0–F6 uygulandı: bedel söyleniyor, seçim kümesinin doğru sonucu içerme koşulu
+üretmeden önce canlı görünüyor, sonuç bayatlayınca söyleniyor, sekmeler soruya
+göre bölündü, maçların adı var, çalıştırılan kuponlar yan yana kıyaslanıyor,
+kurulum kalıcı ve paylaşılabilir.
 
-Sayfanın **motoru eksik değil** — 7 modun tamamı, exact/Monte Carlo/Bayes/Markov,
-fire ve bütçe danışmanı erişilebilir. Aşağıdaki işlerin hepsi *karar desteği* ve
+> Bu paragraf eskiden *"bedel **moda göre** söyleniyor"*, *"**14-garantinin**
+> koşulu"* ve *"çalıştırılan **modlar** yan yana kıyaslanıyor"* diyordu. Kıyas
+> ekseni artık mod değil **işaretlerdir** (`frontend/lib/senaryo.ts`), ve küme
+> içindeyken kazanılan kademe 14 değil **15**.
+
+Sayfanın **motoru eksik değil** — düz kupon üretimi, exact/Monte Carlo/Bayes/
+Markov ve fire erişilebilir. Aşağıdaki işlerin hepsi *karar desteği* ve
 *kullanım* tarafındadır; hiçbiri yeni motor yeteneği istemiyor.
 
 ---
 
 ## 2. Ölçülen açıklar
 
-Aşağıdaki sayılar bu depodaki veriyle, bu makinede ölçüldü.
+Aşağıdaki sayılar bu depodaki veriyle, bu makinede ölçüldü — **2026-08-17'de,
+kaplama ayaktayken.** Yeniden ölçülmediler; son satır (`variant`) sökümle
+birlikte konusuz kaldı ve işaretlendi.
 
 | Ne | Ölçüm |
 |---|---|
@@ -31,18 +49,23 @@ Aşağıdaki sayılar bu depodaki veriyle, bu makinede ölçüldü.
 | Telefonda sayfa uzunluğu (sonuçla birlikte) | **4.637 px** |
 | Yapışkan çubuğun kapladığı bant | **92 px**, viewport'un %11'i (390×844) |
 | Kuponu elle doldurmak için ekranda | 15 dar sütunlu tablo + TSV kopyala; yazdırma yok |
-| `variant` parametresinin arayüzdeki karşılığı | yalnızca bir sayı kutusu; ne değiştirdiği görünmüyor |
+| ~~`variant` parametresinin arayüzdeki karşılığı~~ | ~~yalnızca bir sayı kutusu; ne değiştirdiği görünmüyor~~ — parametre sökümle kalktı (K5) |
 | Fire'ın maç bazlı kırılımı | var (`fire.by_match`) ama maç ızgarasından iki sekme uzakta |
 
 ---
 
 ## 3. Yol haritası
 
-**Sıra: K1 → K2 → K3 → K4 → K5 → K6 → K7 → K8.**
+**Sıra: K1 → K2 → K3 → ~~K4~~ → ~~K5~~ → K6 → K7 → K8.**
 
 K1 önce geliyor çünkü bir *doğruluk* işi: ekranda aynı büyüklüğün iki farklı
 değeri duruyor. K2 ikinci çünkü sayfanın asıl işinin bittiği yer orası ve orası
 desteklenmiyor. K3–K5 karar desteğini derinleştirir, K6–K8 kullanım ve altyapıdır.
+
+> **K4 ve K5 kaplamanın sökülmesiyle konusuz kaldı** (yukarıdaki künye).
+> Sıra numaraları kaydırılmadı: madde adları başka belgelerde ve commit
+> mesajlarında anılıyor, yeniden numaralandırmak o atıfları kırardı.
+> Bugünkü fiilî sıra **K1 → K2 → K3 → K6 → K7 → K8**.
 
 ---
 
@@ -83,8 +106,10 @@ ekranda yazıyordur. `check.mjs` bu eşitliği (ya da etiketin varlığını) de
 
 ### K2 — Kupon doldurma görünümü `[M]`
 
-**Sorun.** Sayfanın asıl işi, üretilen 16–32 satırın fiziksel kupona
-geçirilmesiyle biter. Bugün bunun için elde olan: 15 dar sütunlu bir tablo ve
+**Sorun.** Sayfanın asıl işi, üretilen satırların fiziksel kupona
+geçirilmesiyle biter. (Burada *"16–32 satır"* yazıyordu — kaplamanın ölçeği.
+Düzde satır sayısı `2^çifte · 3^üçlü`dur ve haftalık bütçede yüzlerle
+binler arasında gezer, yani bu madde sökümle birlikte **daha da** ağırlaştı.) Bugün bunun için elde olan: 15 dar sütunlu bir tablo ve
 TSV kopyalama. Yazdırma stili yok, büyük punto görünümü yok, "hangi satırdayım"
 işareti yok. En hataya açık adım en az desteklenen adım.
 
@@ -95,9 +120,9 @@ işareti yok. En hataya açık adım en az desteklenen adım.
   yalnızca kupon tablosu, maç adları ve toplam kolon bedeli.
 - Maç adları başlıkta; bugün yalnızca fare ipucunda.
 
-**Kabul kriteri.** Yazdırma önizlemesinde tek sayfada okunabilir bir kupon çıkar
-ve toplam kolon bedeli üstünde durur. Doldurma modunda 32 satır kaydırmadan
-okunur.
+**Kabul kriteri.** Yazdırma önizlemesinde okunabilir bir kupon çıkar ve toplam
+kolon bedeli üstünde durur. Doldurma modunda satırlar gruplar hâlinde, kaybolmadan
+takip edilebilir.
 
 **Neden yeni bir sekme değil.** "Ne yazacağım" sekmesinin içinde bir görünüm
 anahtarı olmalı; sekme sayısı soruya göre bölünmüştü, görünüm farkı yeni bir soru
@@ -125,7 +150,14 @@ görsel dili farklı olmalı.
 
 ---
 
-### K4 — Bütçe danışmanını girdi tarafına taşı `[M]`
+### ~~K4 — Bütçe danışmanını girdi tarafına taşı~~ `[M]` — **KONUSUZ KALDI**
+
+> `core.butce_danismani` kaplamayla birlikte söküldü ve `onPlanSec`
+> arayüzden kalktı (`frontend/app/page.tsx`). Düzde bütçeyi motora verip
+> plan istemezsin: kısmak için ızgarada işareti değiştirirsin, bedel
+> `2^çifte · 3^üçlü` olarak anında görünür. Maddenin *sorun* tespiti —
+> "bilgi ile karar ayrı yerlerde duruyor" — böylece kendiliğinden çözüldü.
+> Aşağısı o günün kaydıdır.
 
 **Sorun.** `butce` modu "hangi maçı kısmalıyım" planları üretir ve bunlar sonuçta
 listelenir. Ama o karar **girdide** verilir: kısılacak maç, ızgarada işareti
@@ -141,7 +173,13 @@ bayatlar (F2 zaten bunu söyler).
 
 ---
 
-### K5 — Varyant gezgini `[M]`
+### ~~K5 — Varyant gezgini~~ `[M]` — **KONUSUZ KALDI**
+
+> `variant` Hamming(7,4) bloğunun alternatif 16 satırını seçiyordu; blok
+> `spor_toto/kaplama_arsiv.py`ye çekildi ve parametre hem CLI'dan hem
+> `/api/solve` gövdesinden kalktı. Düzde seçilecek bir satır kümesi yok —
+> kümenin tamamı oynanır, yani "varyant" diye bir eksen kalmadı.
+> Aşağısı o günün kaydıdır.
 
 **Sorun.** `variant` bugün kör bir sayı kutusu. Aynı garantiyi veren farklı 16
 satır üretir, ama aralarındaki fark hiçbir yerde görünmez — oysa fark gerçektir:
@@ -220,7 +258,7 @@ adları). Küçük iş, K2'nin yanında yapılabilir.
 | Fikir | Neden hayır |
 |---|---|
 | Sayfanın **ölçülmemiş** işaret önermesi ("şu maçı banko yap") | Amaç tahmin olduğu için öneri artık hedeftedir, ama isabeti hold-out ile ölçülmemiş bir öneri sayfaya çıkmaz. Bugün küme-içi kartı çarpanı ve bedeli gösterir; işareti kullanıcı koyar |
-| "Önerilen mod" rozeti | Mod seçimi bütçe ve risk iştahına bağlıdır; kıyas tablosu sayıları verir, kararı vermez |
+| ~~"Önerilen mod" rozeti~~ | **Konusuz kaldı:** seçilecek mod yok, tek yol düz. Kural yine de anlamlıdır ve *işaret* eksenine taşınmıştır — kıyas tablosu sayıları verir, kararı vermez |
 | Beklenen değer / kâr hesabı | İkramiye havuzu ve kaç kişinin tuttuğu bilinmiyor; hesaplanabilirmiş gibi göstermek yanıltıcı olur |
 | Maç adlarının bağlantıya girmesi | 15 takım adı URL'i üç katına çıkarır; `transfer.ts`'te aynı karar verildi |
 | Senaryo listesinin kalıcı olması | Türetilmiş veri kaydedilmez; kalıcı olan tek şey kurulumdur |
@@ -233,7 +271,7 @@ adları). Küçük iş, K2'nin yanında yapılabilir.
 | Risk | Etki | Azaltma |
 |---|---|---|
 | Küme-içi hesabının backend'den sapması | Ekranda iki farklı gerçek | `check.mjs` backend'in `exact` değeriyle birebir tutmayı zaten denetliyor; K1'de Bayes dalı da bağlanacak |
-| Karar desteğinin "tavsiye"ye dönüşmesi | Ürünün kurucu iddiası çürür | Her yeni gösterge, ne söylemediğini de yazar; K5'te bu açıkça kabul kriteri |
+| Karar desteğinin "tavsiye"ye dönüşmesi | Ürünün kurucu iddiası çürür | Her yeni gösterge, ne söylemediğini de yazar (K5 bunu açıkça kabul kriteri yapıyordu; K5 konusuz kaldı, kural kaldı) |
 | Yapışkan çubuğun içerik örtmesi | Kontrol kaçırma | Tam çözümü yok; "hiçbir kontrol erişilemez değil" invariantı testle korunuyor |
 | Arayüz testlerinin tarayıcısız kalması | Regresyon sessizce geçer | K7 |
 

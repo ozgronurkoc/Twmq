@@ -768,7 +768,7 @@ uygulanır: her blok kendi kaynağını ve tarihini kendi içinde taşır.
 | **Yeniden üretilemez** — `scripts/` altında bu dosyayı yazan bir üretici yoktur, yalnızca okuyanlar vardır | Bunu gizlemek, dosyayı öteki dördüyle aynı statüde gösterirdi |
 | **Türetilmiş yan kayıtlar bu sınıfa GİRMEZ** — `hafta_NN_tahmin2.json` elle girilmiş veriden hesaplanır ve yeniden üretilebilir | Elle girilen ile ondan türetileni aynı sınıfta göstermek, doğrulama izini bulanıklaştırırdı |
 | **`data_quality` denetiminden geçmez** | O denetim `st_history` veri setine özgüdür (§7.3) |
-| **27 değişmezin hiçbiri ona bakmaz** | Sağlık katmanı vaadin canlıda geçerliliğini ölçer; bu dosya ürün vaadine girmiyor |
+| **23 değişmezin hiçbiri ona bakmaz** | Sağlık katmanı vaadin canlıda geçerliliğini ölçer; bu dosya ürün vaadine girmiyor |
 | **Kuşkulu satır işaretlenir, düzeltilmez** | 2. haftada 4. maçın ima ettiği marj %45,8 iken bültenin geri kalanı %17,5–17,9'du; satır **KUŞKULU** olarak işaretlendi. Doğru marjla banko, verilen oranla çifte olurdu — sessizce "doğru olanı seçmek" §1.3'ün yasakladığı şeydir |
 | **Eksik oran uydurulmaz** | Oranı ilan edilmemiş maç 1/3–1/3–1/3 taşır. Bu bir tahmin değil, **bilgi yokluğunun ilanı**; kural onu otomatik olarak üçlü yapar |
 
@@ -1274,7 +1274,7 @@ ağırdır ve karar ölçümü yapanındır.
 ### 6G.7 `st_history_2025_26.json` ile karışmaz
 
 Üretilen dosyalar `data/st_history/<sezon>.json` altındadır; eski dosya
-yerinde durur ve `/api/stats` ile 27 değişmez ona bakmaya devam eder. Yeni
+yerinde durur ve `/api/stats` ile 23 değişmez ona bakmaya devam eder. Yeni
 dizin ayrı bir köken sınıfıdır (`origin: turetilmis`) ve meta'sında bunu
 yazar.
 
@@ -1526,7 +1526,7 @@ tablolar (script'in bastığı lig dağılımı) bunu yakalayan şeydi.
 | `test_sportoto_arsiv.py::test_celisen_kapanis_tarihi_raporlanir` | İki uç çelişirse biri sessizce seçilmez (doktrin 4) |
 
 Toplam 113 test bu dört veri setini korur (backend paketi 1.803 test). `python -m spor_toto.health`
-27 değişmez çalıştırır; `oran_arsivi` ve `geri_test` bu katmanı, `tahmin_referanslari`
+23 değişmez çalıştırır; `oran_arsivi` ve `geri_test` bu katmanı, `tahmin_referanslari`
 tahmin katmanının ölçüm koşumunu korur.
 
 ### 7.7 Bilinen kabuller

@@ -103,7 +103,7 @@ makinesinde, o günkü kilitli bağımlılıklarla, o commit üzerinde koşar.
 
 Bu yüzden sağlık katmanı ayrı bir katmandır ve `/saglik` sayfası ürünün eşit
 haklı bir parçasıdır: **ürünün vaadinin şu anda, bu makinede, bu sürümde hâlâ
-geçerli olduğunu kanıtlar.** 27 değişmez, 6 kategori, her çağrıda yeniden
+geçerli olduğunu kanıtlar.** 23 değişmez, 6 kategori, her çağrıda yeniden
 ölçülür — ve neyi kanıtlamadığını da açıkça yazar (§6.3).
 
 ### 1.6 Ne yapar / ne yapmaz
@@ -119,7 +119,7 @@ geçerli olduğunu kanıtlar.** 27 değişmez, 6 kategori, her çağrıda yenide
 | Bayes (Dirichlet) ile tahminlerini yumuşatır | İddaa geçmiş oranı sunmaz (yok — §5.3) |
 | Markov ile sıralı risk profili çıkarır | Geri testi bir kâr vaadine çevirmez; aşırı uyumu ölçüp gösterir |
 | Bir stratejiyi geçmiş sezonda çalıştırıp bedelini ve isabetini ölçer (**geri test**) | Mobil uygulama değildir |
-| Vaadin canlıda geçerliliğini 27 değişmezle ölçer | |
+| Vaadin canlıda geçerliliğini 23 değişmezle ölçer | |
 | Her sayının kaynağını ve sınırını yazar | |
 
 ---
@@ -146,8 +146,11 @@ Adım 1'i atlamak isterseniz `bash scripts/setup.sh` pip ve npm bağımlılıkla
 birlikte, kuruluları atlayarak kurar; `run_next_dev.sh` zaten kendisi çağırır.
 Replit kurulumu (Run düğmesi, iş akışları, dağıtım): `replit.md`.
 
-Bağımlılıklar: `numpy`, `scipy` (kesin ILP için), `flask`, `gunicorn`.
-`scipy` yoksa araç çalışır; yalnızca kesin çözücü (ILP) devre dışı kalır.
+Bağımlılıklar: `numpy`, `scipy`, `flask`, `gunicorn`.
+`scipy` yoksa araç çalışır; yalnızca `spor_toto/kuyruk.py` yüklenmez (o modül
+`scipy.special.ndtr/ndtri`yi koşulsuz içe aktarır). Burada *"kesin çözücü
+(ILP) devre dışı kalır"* yazıyordu; o çözücü kaplamanın `exact_cover`ıydı ve
+kaplamayla birlikte silindi.
 Python ≥ 3.10. Arayüz: Next.js 14 App Router + TypeScript + Tailwind.
 
 ---
@@ -664,8 +667,7 @@ Bugün `match_conflicts` tam olarak bunu yakalar. Vaka analizi:
 `2`) · **maç adları** (toplu giriş; hafta detayından devirde kendiliğinden gelir)
 · canlı sayaç (banko / çifte / üçlü / uzay) · **üretmeden önce görülen koşul**
 (seçim kümesinin doğru sonucu içerme olasılığı + maç başına kütle + verime göre
-ekleme önerileri) · **7 modun tamamı** · varyant, bütçe, bütçe planı, katı
-doğrulama · maç bazlı olasılık girişi · Bayes preset veya elle α/n · Monte Carlo
+ekleme önerileri) · katı doğrulama · maç bazlı olasılık girişi · Bayes preset veya elle α/n · Monte Carlo
 örnek sayısı (1.000–200.000) · fire analizi (kapalı / 1-fire / 1 ve 2 fire) ·
 motor ayarları.
 
@@ -678,7 +680,7 @@ tarayıcıya yazılır, yenileme kaybettirmez. *Bağlantıyı kopyala* aynı kur
 
 | Sekme | Cevapladığı soru | İçindekiler |
 |-------|------------------|-------------|
-| Ne aldım | Kaça mal oldu, ne garanti ediyor? | garanti durumu, satır/kolon/alt sınır, bütçe planları, uyarılar, **çalıştırılan modların karşılaştırması**, kapsama dağılımı + uniform taban |
+| Ne aldım | Kaça mal oldu, ne garanti ediyor? | özet paneli (kolon, bedel, kaçak aritmetiği `15 − k`), uyarılar, **başka işaretlerle ne alırdım** (iki ve üzeri çalışma varken), kapsamanın geometrisi |
 | Ne yazacağım | Kupona ne yazacağım? | kupon tablosu, satır başına kolon bedeli, kopyala (başlıkta maç adları) |
 | Ne kadar riskli | Tahminlerime göre ne olur? | exact vs Monte Carlo (%95 CI), hata bütçesi (0 / 1 / 2+), küme-içi çözülme, Bayes (prior → posterior, KL) |
 | Zayıf halkalar | Hangi maçı değiştirmeliyim? | hata frekansı (d=1, d=2), **fire** — seçim dışı senaryolar |
@@ -822,8 +824,8 @@ eksiğim var" demek değildir:
 | **DEGRADED** | Yalnızca `critical=False` düştü **ya da** bir kontrol süre bütçesini aştı | `true` | **200** | Vaat geçerli; bir yetenek eksik ya da bir şey yavaşladı |
 | **UNHEALTHY** | En az bir kritik düştü | `false` | 503 | Vaat sorgulanır |
 
-Bugün tek bir kontrol kritik değildir (`scipy_flag`): scipy yoksa ILP devre dışı
-kalır, motorun geri kalanı doğru çalışmaya devam eder. `critical=False` bir
+Bugün tek bir kontrol kritik değildir (`scipy_flag`): scipy yoksa kuyruk katmanı
+yüklenmez, motorun geri kalanı doğru çalışmaya devam eder. `critical=False` bir
 istisnadır ve gerekçe ister; ölçüt tektir — *bu kontrol düşerken kullanıcının
 aldığı sonuç hâlâ doğru mu?*
 
@@ -904,7 +906,7 @@ frontend/              ← Next.js :3000, tek UI (Formül / İstatistik / Sağl�
 backend/web_app.py     ← Flask :8080, sadece JSON
    │
    ▼
-backend/spor_toto/     ← Fix-16, ILP, Bayes, MC, Markov, history, odds, health
+backend/spor_toto/     ← düz kolon üretimi, Bayes, MC, Markov, history, odds, health
 ```
 
 ```
@@ -1021,7 +1023,7 @@ frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası 
   lib/transfer.ts      hafta → formül devri (idempotent; bkz. §7.2 kural 6)
   lib/kurulum.ts       formül kurulumunun kalıcılığı + paylaşılabilir bağlantı
   lib/kume-ici.ts      üretmeden önce görülen koşul + kolon bedeli
-  lib/senaryo.ts       çalıştırılan modların karşılaştırma listesi
+  lib/senaryo.ts       çalıştırılan kuponların karşılaştırma listesi (eksen: işaretler)
   lib/istek.ts         tek veri çekme kancası (AbortController + hata + yükleniyor)
   lib/adres.ts         adres çubuğu sorgu parametreleri — tek mekanizma
   lib/super-toto.ts    canlı sezon beslemesi okuyucu
@@ -1161,7 +1163,7 @@ bash scripts/check.sh        # TEK kapı: iki tarafı da koşturur (repo kökün
 bash scripts/check.sh --hizli # yavaş ölçüm testlerini atlar
 
 cd backend
-pytest                       # tamamı (ILP dahil)
+pytest                       # tamamı (`slow` işaretliler dahil)
 pytest -m "not slow"         # hızlı süit
 pytest -q tests/test_backtest.py                     # strateji, skorlama, hold-out
 pytest -n0 tests/test_backtest.py                    # tek çekirdek (hata ayıklarken)

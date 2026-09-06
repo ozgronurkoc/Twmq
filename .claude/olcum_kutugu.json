@@ -56,25 +56,28 @@
   },
   {
    "ne": "spor_toto modul sayisi",
-   "deger": "51",
+   "deger": "57",
    "ureten": "ls backend/spor_toto/*.py | grep -v __init__ | wc -l",
-   "olculdu": "2026-09-03",
+   "olculdu": "2026-09-06",
    "anildigi_yerler": [
-    "README.md §7 modul agaci"
+    "README.md §7 (liste — bekcili)"
    ],
-   "bekci": "backend/tests/test_belgeler.py::test_readme_modul_listesi_eksiksiz"
+   "bekci": "backend/tests/test_belgeler.py::test_readme_modul_listesi_eksiksiz",
+   "not": "51 yaziyordu ve BEKCISIZ oldugu icin sessizce bayatladi: backend/README.md ve replit.md ayni sayiyi kopyalamisti. Sayisal bir bekci bilerek yok (test_belgeler.py'nin gerekcesi: 48/46/26/50 gibi mesru alt kumeler ve donmus kunyeler kirmizi yanardi); bunun yerine iki belgeden SAYI KALDIRILDI ve ikisi de README §7'nin bekcili LISTESINE yonlendiriyor."
   },
   {
    "ne": "saglik degismez sayisi",
-   "deger": "27",
-   "ureten": "python -c 'from spor_toto.health import CHECKS; print(len(CHECKS))'",
-   "olculdu": "2026-09-03",
+   "deger": "23",
+   "ureten": "cd backend && python -c \"from spor_toto.health import CHECKS; print(len(CHECKS))\"",
+   "olculdu": "2026-09-06",
    "anildigi_yerler": [
-    "README.md",
-    "docs/SAGLIK_VIZYONU.md",
-    "docs/VERI_TOPLAMA_VE_ISLEME.md"
+    "README.md §6.3",
+    "backend/README.md",
+    "docs/SAGLIK_VIZYONU.md §11",
+    "docs/SAGLIK_GELISTIRME_RAPORU.md (donmus)"
    ],
-   "bekci": "backend/tests/test_belgeler.py::test_saglik_kontrol_sayisi_belgeyle_ayni"
+   "bekci": "backend/tests/test_belgeler.py::test_saglik_kontrol_sayisi_belgeyle_ayni",
+   "not": "Bekci VARDI ama yalnizca docs/SAGLIK_GELISTIRME_RAPORU.md'yi okuyordu — yani DONMUS_BELGELER listesindeki tek belgeyi. Canli olan SAGLIK_VIZYONU.md §11 taranmiyordu: rapor 23, vizyon 27 diyordu, gercek 23'tu ve kapi yesildi. backend/README.md de 27 diyordu. Bekci artik _belge_listesi() uzerinden donmus olanlar haric HEPSINI tariyor; olculen sayi dogruydu, BAKTIGI YER yanlisti."
   },
   {
    "ne": "arayuz denetimi (ilk blok)",
@@ -1339,6 +1342,28 @@
    ],
    "bekci": "backend/tests/test_hafta_hakki.py::test_E6_KAPANISI_hala_gecerli",
    "not": "Merdivenin HICBIR basamaginda gerceklesen ROI 1,0'a ulasmiyor — 1 kolonluk kupondan 39.366 kolonluga kadar. §E6'nin 'butce ekseni kapali' kapanisinin en dogrudan okumasi budur ve duzde kaplamadakinden daha genis bir bantta dogrulaniyor. || Kutuk kaydinda TAM deger: ROI 0,030 – 0,877 (47 basamak). `deger` alani belgede gecen literal olmak zorunda (bekcisi `.claude/graf_uret.py::sayilar_denetle` satir satir arar)."
+  },
+  {
+   "ne": "saglik katmaninin test sayisi",
+   "deger": "82",
+   "ureten": "cd backend && python -m pytest tests/test_health.py tests/test_api_health.py tests/test_meta.py tests/test_health_history.py --collect-only -q -p no:randomly -o addopts=  # son satirdaki toplam",
+   "olculdu": "2026-09-06",
+   "anildigi_yerler": [
+    "docs/SAGLIK_VIZYONU.md §11"
+   ],
+   "bekci": null,
+   "not": "79 yaziyordu. SAGLIK_VIZYONU §11'in kendisi 'sozlesme degil kiyas tabani' diyor ama sayi bekcisizdi."
+  },
+  {
+   "ne": "en yavas saglik kontrolu",
+   "deger": "monte_carlo",
+   "ureten": "cd backend && python -c \"from spor_toto.health import run_health; r=run_health(); print(max(((c.duration_ms,c.name) for c in r.checks)))\"",
+   "olculdu": "2026-09-06",
+   "anildigi_yerler": [
+    "docs/SAGLIK_VIZYONU.md §11"
+   ],
+   "bekci": null,
+   "not": "Belge 'mod_envanteri (~129 ms, 7 mod)' diyordu; o kontrol kaplama doneminde yedi modu ILP dahil kosturuyordu, bugun tek modu dogruluyor. Kimlik degisti, yani bu bir sure gerilemesi degil YAPISAL degisiklik. ms degerleri makineye bagli oldugu icin bu turda YENIDEN OLCULMEDI — belgeye de oyle yazildi."
   }
  ],
  "komutlar": [

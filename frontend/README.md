@@ -69,7 +69,7 @@ durumdaydı. Şimdi sekme = soru:
 
 | Sekme | Cevapladığı soru | İçindekiler |
 |---|---|---|
-| **Ne aldım** | Kaça mal oldu, ne garanti ediyor? | garanti durumu, bedel, motor notları, bütçe planları, kapsama dağılımı, uniform taban |
+| **Ne aldım** | Kaça mal oldu, ne garanti ediyor? | özet paneli (kolon, bedel, kaçak aritmetiği), motor notları, uyarılar, senaryo kıyası, kapsamanın geometrisi |
 | **Ne yazacağım** | Kupona ne yazacağım? | kupon tablosu |
 | **Ne kadar riskli** | Tahminlerime göre ne olur? | exact vs Monte Carlo, hata bütçesi, küme-içi çözülme, Bayes |
 | **Zayıf halkalar** | Hangi maçı değiştirmeliyim? | hata frekansı, fire (seçim dışı) |
@@ -87,9 +87,10 @@ olduğu — bir zaman değil — artık açıkça yazıyor.
 
 ## Senaryo karşılaştırma
 
-Mod seçimi bu sayfadaki en pahalı karardır ama gözle yapılamıyordu: bir
-modu çalıştırıp diğerine geçince öncekinin sayıları ekrandan siliniyordu.
-Artık çalıştırılan kuponlar bir tabloda yan yana durur (`lib/senaryo.ts`).
+Bu liste, çalıştırılan bir kurulumun sayıları ekrandan silinmesin diye var:
+bir kurulumu çalıştırıp diğerine geçince öncekini kıyaslayacak hiçbir şey
+kalmıyordu. Artık çalıştırılan kuponlar bir tabloda yan yana durur
+(`lib/senaryo.ts`).
 
 > **Kıyas ekseni değişti: mod değil, işaretler.** Bu liste mod seçimi için
 > yazılmıştı (`fix16` mı `bütçe` mi `maxcov` mu). Kaplama söküldü

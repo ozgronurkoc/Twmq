@@ -1374,7 +1374,7 @@ CHECKS: tuple[CheckSpec, ...] = (
     ),
     CheckSpec(
         "scipy_flag", "ortam",
-        "scipy var mı — yoksa kesin çözücü (ILP) devre dışıdır. Bilgi "
+        "scipy var mı — yoksa `spor_toto.kuyruk` yüklenemez. Bilgi "
         "amaçlıdır, raporu UNHEALTHY yapmaz.",
         _check_scipy_flag,
         butce_ms=25,
