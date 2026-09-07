@@ -482,7 +482,7 @@ def odul_vektoru_onceki(sezon: str,
     Bu fonksiyon iki kusuru birden kapatır:
 
     * **Sızıntı yok.** Ölçülen haftanın kendi sezonu vektöre girmez —
-      `kalibrasyon`, `hakem` ve `secim_kalibrasyonu`nun ölçütüyle aynı.
+      `kalibrasyon` ve `secim_kalibrasyonu`nun ölçütüyle aynı.
     * **Ölçek yakın.** Bir önceki sezon, dört sezonun medyanından çok daha
       iyi bir kestirimdir; enflasyon varsayımı da gerekmez.
 

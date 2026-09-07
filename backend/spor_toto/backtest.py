@@ -257,7 +257,7 @@ def hak_secici(kademe: int = HEDEF_KADEME,
     ölçülür. Ölçülen haftanın kendi sezonunun tablosu vektöre girerse,
     strateji o sezonun ödül ölçeğini önceden bilmiş olur — küçük ama
     **gerçek** bir sızıntı, ve deponun her yerde uyguladığı ölçüte
-    (`kalibrasyon`, `hakem`, `secim_kalibrasyonu`) aykırı.
+    (`kalibrasyon`, `secim_kalibrasyonu`) aykırı.
 
     Bu yüzden vektör sezon başına **bir kez** ve o sezon **çıkarılarak**
     kestirilir. `scripts/deger_kiyasi.py` bunu yapmıyordu (vektörü tüm

@@ -2,7 +2,7 @@
  "sayilar": [
   {
    "ne": "suit test sayisi (eksiksiz kurulum)",
-   "deger": "1.860",
+   "deger": "1.834",
    "ureten": "cd backend && python -m pytest --collect-only -q -p no:randomly -o addopts=  # son satirdaki toplam",
    "olculdu": "2026-09-07",
    "anildigi_yerler": [
@@ -14,11 +14,11 @@
     "replit.md"
    ],
    "bekci": "backend/tests/test_belgeler.py::test_test_sayisi_belgelerde_tek_ve_dogru",
-   "not": "1.799 yaziyordu ve KENDI BEKCISIYLE celisiyordu: bekci belgelerdeki sayiyi gercek koleksiyona esitler, belgeler 1.800 diyordu. Uretici komut da yanlisti — `-o addopts=` olmadan xdist devrede kalir. PR 48 incelemesinde uc bekci eklendi: 1.800 -> 1.803. || 1.803 -> 1.820 (2026-09-07): geri testin hedef kuralina cevrilmesiyle 17 test eklendi (strateji secimi, butce zorunlulugu, butce taramasi monotonlugu, §1.1 sayi bekcileri, birikimli marj). || 1.837 -> 1.860 (2026-09-07): olcum kutugunun kendi bekcileri (tests/test_olcum_kutugu.py, 5) ve bekcisiz kalmis README mansetlerinin bekcileri eklendi; ayrica kupon belgesi ve secim kurali islerinin testleri. Sayi TAM KURULUMLA olculdu (lightgbm dahil) — eksik kurulumda bekci kasitli ATLIYOR ve eksik bir suit sayilirsa yanlis sayi yazilir."
+   "not": "1.799 yaziyordu ve KENDI BEKCISIYLE celisiyordu: bekci belgelerdeki sayiyi gercek koleksiyona esitler, belgeler 1.800 diyordu. Uretici komut da yanlisti — `-o addopts=` olmadan xdist devrede kalir. PR 48 incelemesinde uc bekci eklendi: 1.800 -> 1.803. || 1.803 -> 1.820 (2026-09-07): geri testin hedef kuralina cevrilmesiyle 17 test eklendi (strateji secimi, butce zorunlulugu, butce taramasi monotonlugu, §1.1 sayi bekcileri, birikimli marj). || 1.837 -> 1.860 (2026-09-07): olcum kutugunun kendi bekcileri (tests/test_olcum_kutugu.py, 5) ve bekcisiz kalmis README mansetlerinin bekcileri eklendi; ayrica kupon belgesi ve secim kurali islerinin testleri. Sayi TAM KURULUMLA olculdu (lightgbm dahil) — eksik kurulumda bekci kasitli ATLIYOR ve eksik bir suit sayilirsa yanlis sayi yazilir. || 1.860 -> 1.834 (2026-09-07): main kapanmis iki deneyi kaldirdi (E4/hakem 4acc3dd, xG vekili 25e72e0) ve tests/test_hakem.py (5) ile tests/test_xg.py (16) suitten cikti; kalan 5'lik fark ayni koumlarda silinen parametrizasyonlardan. Bu dallanmanin birlesmesinde YENIDEN OLCULDU, aritmetikle turetilmedi."
   },
   {
    "ne": "test dosyasi sayisi",
-   "deger": "73",
+   "deger": "71",
    "ureten": "ls backend/tests/test_*.py | wc -l",
    "olculdu": "2026-09-07",
    "anildigi_yerler": [
@@ -26,7 +26,7 @@
     "backend/README.md"
    ],
    "bekci": "backend/tests/test_belgeler.py::test_test_dosya_sayisi_belgelerle_ayni",
-   "not": "Dis tarama tests/test_devir_tavani.py'yi ekledi (70 -> 71). E6 icin tests/test_hafta_hakki.py eklendi (71 -> 72). || 72 -> 73: tests/test_olcum_kutugu.py eklendi."
+   "not": "Dis tarama tests/test_devir_tavani.py'yi ekledi (70 -> 71). E6 icin tests/test_hafta_hakki.py eklendi (71 -> 72). || 72 -> 73: tests/test_olcum_kutugu.py eklendi. || 73 -> 71: tests/test_hakem.py (4acc3dd) ve tests/test_xg.py (25e72e0) kapanan deneylerle birlikte kaldirildi."
   },
   {
    "ne": "hizli test sayisi",
@@ -69,9 +69,9 @@
   },
   {
    "ne": "saglik degismez sayisi",
-   "deger": "23",
+   "deger": "22",
    "ureten": "cd backend && python -c \"from spor_toto.health import CHECKS; print(len(CHECKS))\"",
-   "olculdu": "2026-09-06",
+   "olculdu": "2026-09-07",
    "anildigi_yerler": [
     "README.md §6.3",
     "backend/README.md",
@@ -79,7 +79,7 @@
     "docs/SAGLIK_GELISTIRME_RAPORU.md (donmus)"
    ],
    "bekci": "backend/tests/test_belgeler.py::test_saglik_kontrol_sayisi_belgeyle_ayni",
-   "not": "Bekci VARDI ama yalnizca docs/SAGLIK_GELISTIRME_RAPORU.md'yi okuyordu — yani DONMUS_BELGELER listesindeki tek belgeyi. Canli olan SAGLIK_VIZYONU.md §11 taranmiyordu: rapor 23, vizyon 27 diyordu, gercek 23'tu ve kapi yesildi. backend/README.md de 27 diyordu. Bekci artik _belge_listesi() uzerinden donmus olanlar haric HEPSINI tariyor; olculen sayi dogruydu, BAKTIGI YER yanlisti."
+   "not": "Bekci VARDI ama yalnizca docs/SAGLIK_GELISTIRME_RAPORU.md'yi okuyordu — yani DONMUS_BELGELER listesindeki tek belgeyi. Canli olan SAGLIK_VIZYONU.md §11 taranmiyordu: rapor 23, vizyon 27 diyordu, gercek 23'tu ve kapi yesildi. backend/README.md de 27 diyordu. Bekci artik _belge_listesi() uzerinden donmus olanlar haric HEPSINI tariyor; olculen sayi dogruydu, BAKTIGI YER yanlisti. || 23 -> 22 (2026-09-07): `xg_kalibrasyonu` kontrolu, xG vekili deneyi kapatilirken CHECKS'ten cikarildi (25e72e0)."
   },
   {
    "ne": "arayuz denetimi (ilk blok)",
@@ -597,38 +597,38 @@
   {
    "ne": "hakem sutununun kapsamasi — korpusun kaci hakemli (E4)",
    "deger": "%42,9",
-   "ureten": "cd backend && python scripts/build_hakem.py",
+   "ureten": "KAPANDI — bkz. `not`. Kapanistan once: cd backend && python scripts/build_hakem.py",
    "olculdu": "2026-09-04",
    "anildigi_yerler": [
     "docs/KAZANMA_PLANI.md",
     "docs/ISTATISTIK_YOL_HARITASI.md"
    ],
-   "bekci": "backend/tests/test_hakem.py::test_kesit_YALNIZCA_hakemi_olan_liglerde",
-   "not": "31.103 korpus satirinin 13.334'u. Eksiklik RASTGELE DEGIL, COGRAFI: football-data hakemi dokuz Britanya liginde %100 yaziyor (E0 E1 E2 E3 EC SC0 SC1 SC2 SC3), on uc kita liginde %0. Bu yuzden sutun korpusa katilmadi — katilsa kesit sessizce dengesizlesirdi ve sezon disarida birakmali CV onu yakalayamazdi."
+   "bekci": "backend/tests/test_olcum_kutugu.py::test_kutukteki_her_sayi_anildigi_yerde_GERCEKTEN_geciyor",
+   "not": "31.103 korpus satirinin 13.334'u. Eksiklik RASTGELE DEGIL, COGRAFI: football-data hakemi dokuz Britanya liginde %100 yaziyor (E0 E1 E2 E3 EC SC0 SC1 SC2 SC3), on uc kita liginde %0. Bu yuzden sutun korpusa katilmadi — katilsa kesit sessizce dengesizlesirdi ve sezon disarida birakmali CV onu yakalayamazdi. || E4 KAPANDI (4acc3dd): `spor_toto/hakem.py`, `scripts/build_hakem.py`, `data/hakem/` ve `tests/test_hakem.py` uretimden kaldirildi. Sayi SILINMEZ — docs/KAZANMA_PLANI.md ve docs/ISTATISTIK_YOL_HARITASI.md deneyin kapanisini hala bu sayilarla anlatiyor; alinti butunlugunu asagidaki bekci tutuyor. Yeniden uretmek icin once dosyalari geri al: `git checkout 4acc3dd^ -- backend/spor_toto/hakem.py backend/scripts/build_hakem.py backend/data/hakem`."
   },
   {
    "ne": "hakem ozelliginin piyasa uzerine Brier katkisi (E4)",
    "deger": "+0,000002",
-   "ureten": "cd backend && python -m spor_toto.hakem",
+   "ureten": "KAPANDI — bkz. `not`. Kapanistan once `backend/spor_toto/hakem.py` modul olarak (`python -m`) kosuluyordu.",
    "olculdu": "2026-09-04",
    "anildigi_yerler": [
     "docs/KAZANMA_PLANI.md",
     "docs/ISTATISTIK_YOL_HARITASI.md"
    ],
-   "bekci": "backend/tests/test_hakem.py::test_yayilim_sinavi_ETKI_VAR_MI_sorusunu_ayirir",
-   "not": "hakem_ev, 13.332 mac, 4 sezon disarida birakmali, hafta duzeyi bootstrap %95 [−0,000003, +0,000008], p=0,8139. hakem_beraberlik +0,000001 (p=0,9302), hakem_ikisi +0,000003 (p=0,8774). Ucu de Holm'dan gecmedi ve isaret POZITIF (yani kotu). Buyukluk, oteki ailelerin kalan etkisinden (0,0005-0,0015) uc mertebe kucuk."
+   "bekci": "backend/tests/test_olcum_kutugu.py::test_kutukteki_her_sayi_anildigi_yerde_GERCEKTEN_geciyor",
+   "not": "hakem_ev, 13.332 mac, 4 sezon disarida birakmali, hafta duzeyi bootstrap %95 [−0,000003, +0,000008], p=0,8139. hakem_beraberlik +0,000001 (p=0,9302), hakem_ikisi +0,000003 (p=0,8774). Ucu de Holm'dan gecmedi ve isaret POZITIF (yani kotu). Buyukluk, oteki ailelerin kalan etkisinden (0,0005-0,0015) uc mertebe kucuk. || E4 KAPANDI (4acc3dd): `spor_toto/hakem.py`, `scripts/build_hakem.py`, `data/hakem/` ve `tests/test_hakem.py` uretimden kaldirildi. Sayi SILINMEZ — docs/KAZANMA_PLANI.md ve docs/ISTATISTIK_YOL_HARITASI.md deneyin kapanisini hala bu sayilarla anlatiyor; alinti butunlugunu asagidaki bekci tutuyor. Yeniden uretmek icin once dosyalari geri al: `git checkout 4acc3dd^ -- backend/spor_toto/hakem.py backend/scripts/build_hakem.py backend/data/hakem`."
   },
   {
    "ne": "hakemler arasi yayilim / saf sansin urettigi yayilim (E4)",
    "deger": "0,97",
-   "ureten": "cd backend && python -m spor_toto.hakem",
+   "ureten": "KAPANDI — bkz. `not`. Kapanistan once `backend/spor_toto/hakem.py` modul olarak (`python -m`) kosuluyordu.",
    "olculdu": "2026-09-04",
    "anildigi_yerler": [
     "docs/KAZANMA_PLANI.md",
     "docs/ISTATISTIK_YOL_HARITASI.md"
    ],
-   "bekci": "backend/tests/test_hakem.py::test_yayilim_sinavi_ETKI_VAR_MI_sorusunu_ayirir",
-   "not": "ORAN. >=30 macli 160 hakem: gozlenen ev-artigi sd 0,0560, saf orneklem gurultusunun urettigi sd 0,0576 -> oran 0,97. >=50 macli 123 hakemde 0,0512 / 0,0513 = 1,00. Ikisinde de Var(gercek) = Var(gozlenen) − Var(sans) NEGATIF, yani gozlenen yayilim sansin urettiginden bile kucuk. Bu, 'gecmedi'den daha guclu bir cumle: yakalanacak bir hakem etkisi YOK, duzeltmenin kusuru degil."
+   "bekci": "backend/tests/test_olcum_kutugu.py::test_kutukteki_her_sayi_anildigi_yerde_GERCEKTEN_geciyor",
+   "not": "ORAN. >=30 macli 160 hakem: gozlenen ev-artigi sd 0,0560, saf orneklem gurultusunun urettigi sd 0,0576 -> oran 0,97. >=50 macli 123 hakemde 0,0512 / 0,0513 = 1,00. Ikisinde de Var(gercek) = Var(gozlenen) − Var(sans) NEGATIF, yani gozlenen yayilim sansin urettiginden bile kucuk. Bu, 'gecmedi'den daha guclu bir cumle: yakalanacak bir hakem etkisi YOK, duzeltmenin kusuru degil. || E4 KAPANDI (4acc3dd): `spor_toto/hakem.py`, `scripts/build_hakem.py`, `data/hakem/` ve `tests/test_hakem.py` uretimden kaldirildi. Sayi SILINMEZ — docs/KAZANMA_PLANI.md ve docs/ISTATISTIK_YOL_HARITASI.md deneyin kapanisini hala bu sayilarla anlatiyor; alinti butunlugunu asagidaki bekci tutuyor. Yeniden uretmek icin once dosyalari geri al: `git checkout 4acc3dd^ -- backend/spor_toto/hakem.py backend/scripts/build_hakem.py backend/data/hakem`."
   },
   {
    "ne": "arayuz sayfasi sayisi (frontend/app/**/page.tsx)",
