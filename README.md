@@ -1139,7 +1139,7 @@ backend/
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
                        sehir/ · xg/ · sistem_fiyat/ · hakem/
-  tests/               pytest (72 dosya → 1.830 test; §9'da katman dökümü)
+  tests/               pytest (72 dosya → 1.837 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1345,7 +1345,7 @@ dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri t
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
 eşleme, ikinci kayıt). **72 test dosyası, parametrizasyonla
-1.830 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+1.837 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
@@ -1357,7 +1357,7 @@ karşı denetler):
 | Veri / istatistik / geri test | `history` `odds` `backtest` `api_stats` `api_backtest` `snapshot_iddaa` `pazar` **`gecmis_sezon`** **`sportoto_arsiv`** **`bulten`** | 233 |
 | Süper Toto | `super_toto` `degerlendir` | 97 |
 | 2. Tahmin (kalabalık ayarı · bağımsız görüş) | `tahmin2` | 35 |
-| Karar katmanı | `secim` | 35 |
+| Karar katmanı | `secim` | 42 |
 | Amaç kıyası (`P(k≤3)` ↔ `E[k]`: aynı kupon mu?) | **`amac_kiyasi`** | 5 |
 | Sistem kıyası (kaplama ↔ düz; söküm kararının kanıtı) | **`sistem_kiyasi`** | 3 |
 | Para karnesi (garanti tabanı · enflasyon · canlı · GERÇEK kolon dağılımı · ödeyen olay · banko sapması) | **`karne`** | 31 |
@@ -1613,9 +1613,42 @@ ikincide **3/114** haftada daha iyi. Toplamdaki artışın tamamı birkaç
 haftadan geliyor — kenar değil **kuyruk**. Ödül taramasının da "en iyi
 satırı" yoktur ve betik bunu çıktısında yazar.
 
-**Yani itiraz yapısal olarak doğru, sonuç henüz doğrulanmadı.** Kural
-kodda duruyor, ölçümü yeniden üretilebilir, varsayılan **değişmedi** —
-ölçülmeden ilerleme sayılmaz.
+**Sonraki adım: kademeler kendi ağırlığıyla.** `deger_secim` "12 ve üstü"nü
+tek kova sayıyor, oysa resmî tablolarda bir kolon için **15, 12'nin 772
+katını** ödüyor (114 haftanın ortalaması: ₺8.454.763 ↔ ₺10.957). `odul_secim`
+bunu görüyor — beklenen **parayı** enbüyüklüyor ve kolon adedini kapalı
+formdan sayıyor (`kolon_dagilimi_beklentisi`).
+
+İlk denemesi **dejenere oldu ve sebebi ölçüldü**: ödül vektörü *ortalamayla*
+beslenince kural her arama tavanına dayandı (tavan 4 milyon kolona
+çıkarıldığında bile haftada 2,6 milyon kolon istedi). Sebep ağır kuyruk —
+ortalama devirli haftalardan geliyor (15 için ₺8,45 M ↔ **medyan ₺2,79 M**;
+12 için ₺10.957 ↔ **₺288**, 38 kat). *Medyanla* beslenince tavanı hiç
+kovalamadı. Yani dejenerasyon para amacından değil, ona verilen **merkez
+ölçüsünden** geliyormuş.
+
+Üç kural yan yana (114 hafta, gerçek ödül tabloları):
+
+| Kural | Şekil | Kolon/hf | ROI | Haftalık net kârda |
+|---|---:|---:|---:|---|
+| bugünkü (`P(k≤3)`, ₺210.000 tavan) | **1** | 19.683 | 0,465 | — |
+| `deger_secim` (ödül ₺3 M) | 5 | 20.661 | **0,677** | 3 iyi / 5 kötü |
+| `odul_secim` (kademeli, medyan) | **15** | **17.184** | 0,436 | **48 iyi / 21 kötü** |
+
+Kademeli kural **hiçbirini istatistiksel olarak geçmiyor** (`vs bugünkü`
+−0,030 [−0,156, +0,097]) ama davranışı ilk kez doğru: 114 haftada **15 farklı
+şekil**, daha **az** kolon, ve haftaların yarısına yakınında daha iyi.
+`deger_secim`in yüksek ROI'si ise 3 haftadan geliyor — biri **tutarlılık**,
+öteki **varyans** satın alıyor.
+
+**Yani itiraz yapısal olarak doğru, sonuç henüz doğrulanmadı.** Üç kural da
+kodda duruyor, ölçümü `python scripts/deger_kiyasi.py` ile yeniden
+üretilebilir, varsayılan **değişmedi** — ölçülmeden ilerleme sayılmaz.
+
+Açık kalan iki eksik adıyla: (1) ödül vektörü **seyrelmeyi** görmüyor —
+sizin kolonlarınız da havuzu bölüyor ve `KADEME_OLASILIKLARI` §6 bunu
+Spearman −0,843 ile ölçmüş; (2) 114 hafta, ROI farkını bu genişlikte bir
+aralıkla ayırmaya yetmiyor.
 
 Şekli parayla seçen bir yol bugün **yok**: `secim.getiri_secim` `E[TL]`'yi
 enbüyüklüyor ama şekli `sistem_secimi`den alıp **sabit tutuyor**, yalnızca

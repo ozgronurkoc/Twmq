@@ -2,7 +2,7 @@
  "sayilar": [
   {
    "ne": "suit test sayisi (eksiksiz kurulum)",
-   "deger": "1.830",
+   "deger": "1.837",
    "ureten": "cd backend && python -m pytest --collect-only -q -p no:randomly -o addopts=  # son satirdaki toplam",
    "olculdu": "2026-09-07",
    "anildigi_yerler": [
@@ -1516,6 +1516,30 @@
    "bekci": "backend/tests/test_secim.py::test_deger_secilen_plan_net_degeri_gercekten_ENBUYUKLER",
    "olcek": "duz",
    "not": "GECMEDI. Eslesik bedelde iki kiyas: tavan TL210.000 <-> odul TL3.000.000 ROI 0,465 -> 0,677, fark +0,212 %95 [-0,038, +0,682]; tavan TL2.000 <-> odul TL20.000 ROI 0,334 -> 0,754, fark +0,421 %95 [-0,198, +1,474]. IKISI DE sifiri kesiyor. Sebep: deger kurali haftalik net karda birincide 3/114, ikincide 6/114 haftada daha iyi — toplamdaki artis kuyruktan geliyor, kenardan degil. YAPISAL KAZANIM GERCEK ama para dogrulamiyor: sekil artik haftaya gore degisiyor (114 haftada 1 sekil yerine 2-5) cunku her sembol bedelini oduyor. Odul taramasinin EN IYI SATIRI YOKTUR (agir kuyruk); betik bunu ciktisinda yaziyor. VARSAYILAN DEGISMEDI."
+  },
+  {
+   "ne": "kademe basina KOLON BASINA odul — 114 haftanin resmi tablolari",
+   "deger": "772",
+   "ureten": "cd backend && python -c \"import statistics; from spor_toto.karne import kupon_kesiti; k=kupon_kesiti(); f=lambda kad,g: g([float(h['tablo'][kad]['prize']) for h in k if kad in h['tablo'] and h['tablo'][kad].get('prize') is not None]); print({kad:(round(f(kad,statistics.mean)),round(f(kad,statistics.median))) for kad in (12,13,14,15)})\"",
+   "olculdu": "2026-09-07",
+   "anildigi_yerler": [
+    "README.md §11"
+   ],
+   "bekci": null,
+   "olcek": "duz",
+   "not": "Capa: 15'in 12'ye orani ORTALAMADA 772 kat. Ortalama/medyan (TL/kolon): 15 -> 8.454.763 / 2.787.641 · 14 -> 699.695 / 34.553 · 13 -> 112.958 / 2.027 · 12 -> 10.957 / 288. Ortalama ile medyanin aciklıgı AGIR KUYRUGUN olcusudur ve 12'de 38 kata cikiyor. Bugunku amac (`P(k<=3)`) 12 ile 15'i AYNI olay sayiyor; bu tablo onun neyi gormedigini soyluyor."
+  },
+  {
+   "ne": "kademe agirlikli kural (odul_secim) <-> bugunku kural, 114 hafta",
+   "deger": "48 iyi / 21 kötü",
+   "ureten": "cd backend && python scripts/deger_kiyasi.py",
+   "olculdu": "2026-09-07",
+   "anildigi_yerler": [
+    "README.md §11"
+   ],
+   "bekci": "backend/tests/test_secim.py::test_odul_secilen_plan_net_parayi_gercekten_ENBUYUKLER",
+   "olcek": "duz · medyan odul vektoru",
+   "not": "Capa haftalik net kar kirilimi (48 iyi / 45 esit / 21 kotu) — ROI farki README'de matematiksel eksi isaretiyle (U+2212) yaziliyor ve duz ASCII capa onunla eslesmiyordu. || GECMEDI: %95 [-0,156, +0,097], sifiri kesiyor. ROI 0,465 -> 0,436, kolon/hafta 19.683 -> 17.184 (DAHA UCUZ). AMA DAVRANIS ILK KEZ DOGRU: 114 haftada 15 FARKLI SEKIL (bugunku kural 1) ve haftalik net karda 48 iyi / 45 esit / 21 kotu — yani kuyruk degil, haftalarin yarisina yakini. Kiyas `deger_secim`e karsi da gecmiyor (-0,241 %95 [-0,770, +0,094]) ama onun 0,677'si 3 haftadan geliyor: biri TUTARLILIK, oteki VARYANS satin aliyor. MERKEZ OLCUSU KRITIK: odul vektoru ORTALAMAYLA beslenince kural her arama tavanina dayaniyor (tavan 4 milyon kolonda bile haftada 2,6 milyon kolon istiyor) — dejenerasyon para amacindan degil agir kuyruklu ortalamadan geliyor. VARSAYILAN DEGISMEDI."
   }
  ],
  "komutlar": [

@@ -28,6 +28,8 @@ from spor_toto.secim import (
     hedef_olasiligi,
     kacak_olasiligi,
     kalabalik_ayari,
+    kolon_dagilimi_beklentisi,
+    odul_secim,
     sistem_secimi,
 )
 
@@ -619,3 +621,95 @@ def test_deger_secilen_plan_net_degeri_gercekten_ENBUYUKLER():
             en_iyi = net
     secilen = plan.p_hedef * odul - plan.bedel * birim
     assert secilen == pytest.approx(en_iyi, abs=1e-6)
+
+
+# ─── kademeler kendi agirligiyla ──────────────────────────────────────────────
+
+def test_kolon_dagilimi_TOPLAMI_bedeli_verir():
+    """`v[d]` olasılık değil ADET: toplamı oynanan kolon sayısını vermeli."""
+    maclar = hafta()
+    secimler = [["1"]] * 10 + [["1", "0"]] * 3 + [["1", "0", "2"]] * 2
+    v = kolon_dagilimi_beklentisi(maclar, secimler, en_cok_yanlis=15)
+    assert sum(v) == pytest.approx(bedel_hesapla(3, 2))
+
+
+def test_kolon_dagilimi_KESIN_haftada_tam_sayilir():
+    """14 kesin banko + 1 üçlü: 1 kolon 15 yapar, 2 kolon 14 yapar."""
+    kesin = p(1.0, 0.0, 0.0)
+    maclar = [kesin] * 14 + [p(0.5, 0.3, 0.2)]
+    secimler = [["1"]] * 14 + [["1", "0", "2"]]
+    v = kolon_dagilimi_beklentisi(maclar, secimler, en_cok_yanlis=2)
+    assert v[0] == pytest.approx(1.0)
+    assert v[1] == pytest.approx(2.0)
+    assert v[2] == pytest.approx(0.0)
+
+
+def test_odul_kademeleri_ESIT_sayarsa_deger_kuralina_yaklasir():
+    """Bütün kademeler aynı ödülse amaç "12 ve üstü"ne çöker.
+
+    Kademeli kuralın `deger_secim`den tek farkı ağırlıklardır; ağırlıklar
+    düzleşince ikisi aynı soruyu sormaya başlamalı. Birebir eşitlik
+    beklenmiyor — biri kolon ADEDINI, öteki OLASILIGI tartıyor — ama şekil
+    aynı yöne gitmeli.
+    """
+    maclar = hafta()
+    duz = odul_secim(maclar, dict.fromkeys((12, 13, 14, 15), 1000.0))
+    assert duz is not None
+    assert duz.bedel >= 1
+
+
+def test_odul_15i_agirlastirinca_kupon_BUYUR():
+    """15'in ödülü arttıkça daha çok sembol hak edilir."""
+    maclar = hafta()
+    kucuk = odul_secim(maclar, {12: 288.0, 13: 2027.0, 14: 34553.0, 15: 100_000.0})
+    buyuk = odul_secim(maclar, {12: 288.0, 13: 2027.0, 14: 34553.0, 15: 50_000_000.0})
+    assert buyuk.bedel >= kucuk.bedel
+
+
+def test_odul_sifir_odulde_TEK_isaret():
+    plan = odul_secim(hafta(), dict.fromkeys((12, 13, 14, 15), 0.0))
+    assert plan.bedel == 1
+
+
+def test_odul_negatif_odul_ve_sifir_bedel_REDDEDILIR():
+    with pytest.raises(ValueError):
+        odul_secim(hafta(), {12: -1.0})
+    with pytest.raises(ValueError):
+        odul_secim(hafta(), {12: 100.0}, kolon_bedeli=0.0)
+
+
+def test_odul_secilen_plan_net_parayi_gercekten_ENBUYUKLER():
+    """Kaba kuvvetle: seçilen plan beklenen net parayı enbüyüklemeli.
+
+    `deger_secim`in aynı sınavıyla aynı gerekçe — Pareto budaması
+    "yaklaşık" olsaydı sessizce daha kötü kupon kurardı.
+    """
+    from itertools import product as _product
+
+    maclar = [p(0.5, 0.3, 0.2), p(0.4, 0.35, 0.25), p(0.34, 0.33, 0.33),
+              p(0.7, 0.2, 0.1), p(0.45, 0.3, 0.25)]
+    # 5 mac: "kademe" 15'ten geriye 3 basamak (12,13,14,15 karsiligi 5,4,3,2
+    # dogru degil) — kucuk vakada `kademe` 2 kaciga kadar okunur.
+    odul = {5: 100_000.0, 4: 5_000.0, 3: 200.0}
+    birim = 10.0
+    # `odul_secim` 15 uzerinden okuyor; kucuk vaka icin ayni sekli 15'e tasi.
+    odul15 = {15: odul[5], 14: odul[4], 13: odul[3]}
+    plan = odul_secim(maclar, odul15, kolon_bedeli=birim, kademe=13)
+
+    def net(secimler):
+        v = kolon_dagilimi_beklentisi(maclar, secimler, en_cok_yanlis=2)
+        bedel = 1
+        for sec in secimler:
+            bedel *= len(sec)
+        return sum(w * x for w, x in zip((odul15[15], odul15[14], odul15[13]), v)) \
+            - bedel * birim
+
+    en_iyi = None
+    for seviyeler in _product((1, 2, 3), repeat=len(maclar)):
+        secimler = [sorted([t for t, _ in sorted(m.items(), key=lambda kv: -kv[1])[:kk]],
+                           key=lambda x: SEM.index(x))
+                    for m, kk in zip(maclar, seviyeler)]
+        d = net(secimler)
+        if en_iyi is None or d > en_iyi:
+            en_iyi = d
+    assert net(plan.secimler) == pytest.approx(en_iyi, abs=1e-6)

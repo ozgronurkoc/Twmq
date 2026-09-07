@@ -53,6 +53,7 @@ from spor_toto.secim import (
     DEGER_TAVANI,
     VARSAYILAN_KACAK_ESIGI,
     deger_secim,
+    odul_secim,
     sistem_secimi,
 )
 
@@ -66,6 +67,35 @@ ODUL_IZGARA: tuple[float, ...] = (
 TAVAN_IZGARA: tuple[float, ...] = (2_000.0, 210_000.0)
 
 BOOTSTRAP = 20_000
+
+#: Kademe ağırlıklarının merkez ölçüsü. **Medyan varsayılan** ve sebebi
+#: ölçülmüş: ortalama, devirli haftalar yüzünden ağır kuyruklu (15 için
+#: ₺8,45 M ↔ medyan ₺2,79 M; 12 için ₺10.957 ↔ ₺288 — 38 kat). Ortalama
+#: verildiğinde `odul_secim` HER tavana dayanıyor (arama tavanı 4 milyon
+#: kolona çıkarıldığında bile haftada 2,6 milyon kolon istiyor), yani amaç
+#: yine "harca"ya dönüyor. Medyan verildiğinde tavanı hiç kovalamıyor ve
+#: 114 haftada **15 farklı şekil** üretiyor.
+MERKEZ = "medyan"
+
+
+def odul_vektoru(kesit: list[dict[str, Any]], merkez: str = MERKEZ
+                 ) -> dict[int, float]:
+    """Kademe başına **kolon başına** ödül — resmî tablolardan ölçülür.
+
+    Varsayım değil kayıt: `karne.kupon_kesiti` her haftanın gerçek ikramiye
+    tablosunu taşıyor. Buradaki tek karar merkez ölçüsüdür ve o da `MERKEZ`
+    künyesinde gerekçeli.
+    """
+    import statistics
+
+    out: dict[int, float] = {}
+    for kademe in (12, 13, 14, 15):
+        v = [float(h["tablo"][kademe]["prize"]) for h in kesit
+             if kademe in h["tablo"] and h["tablo"][kademe].get("prize") is not None]
+        if not v:
+            continue
+        out[kademe] = statistics.median(v) if merkez == "medyan" else statistics.mean(v)
+    return out
 
 
 def _haftalik(kesit: list[dict[str, Any]], planlar: list[Any]
@@ -143,7 +173,8 @@ def _bootstrap(a: list[Any], b: list[Any], tohum: int = 42) -> dict[str, Any]:
 
 def kiyas(oduller: tuple[float, ...] = ODUL_IZGARA,
           tavanlar: tuple[float, ...] = TAVAN_IZGARA,
-          esik: int = VARSAYILAN_KACAK_ESIGI) -> dict[str, Any]:
+          esik: int = VARSAYILAN_KACAK_ESIGI,
+          merkez: str = MERKEZ) -> dict[str, Any]:
     """Bugünkü kural ↔ değer kuralı, gerçek ödül tablolarına karşı."""
     kesit = kupon_kesiti()
     bugun = {
@@ -155,6 +186,10 @@ def kiyas(oduller: tuple[float, ...] = ODUL_IZGARA,
                                 for h in kesit])
         for odul in oduller
     }
+    # Ucuncu kural: kademeler KENDI agirligiyla. `deger_secim` "12 ve ustu"nu
+    # tek kova sayiyor, oysa 15 bir kolona 12'nin yuzlerce kati oduyor.
+    vektor = odul_vektoru(kesit, merkez)
+    kademeli = _haftalik(kesit, [odul_secim(h["probs"], vektor) for h in kesit])
     # Kiyas ESLESIK BEDELE gore kurulur: her tavan icin, bedeli ona en yakin
     # odul satiri secilir. Farkli parayla kosan iki kurali yan yana koymak,
     # bu deponun README §1.1'de duzelttigi hatanin ta kendisiydi.
@@ -172,6 +207,13 @@ def kiyas(oduller: tuple[float, ...] = ODUL_IZGARA,
         "kolon_bedeli": KOLON_BEDELI,
         "bugun": {tl: _ozet(v) for tl, v in bugun.items()},
         "deger": {o: _ozet(v) for o, v in deger.items()},
+        "odul_vektoru": vektor,
+        "merkez": merkez,
+        "kademeli": _ozet(kademeli),
+        "kademeli_sinav": {
+            "vs_bugun": _bootstrap(bugun[max(tavanlar)], kademeli),
+            "vs_deger": _bootstrap(deger[max(oduller)], kademeli),
+        },
         "kiyas": kiyaslar,
         "uyari": (
             "Odul taramasinin EN IYI SATIRI YOKTUR: getiri agir kuyruklu, "
@@ -209,6 +251,19 @@ def _yaz(r: dict[str, Any]) -> None:  # pragma: no cover - elle kullanim
         print(f"    haftalik net karda deger {s['daha_iyi_hafta']} haftada daha iyi, "
               f"{s['esit_hafta']} esit, "
               f"{c['bugun']['hafta'] - s['daha_iyi_hafta'] - s['esit_hafta']} daha kotu")
+    o = r["kademeli"]
+    print(f"\nKADEME AGIRLIKLI KURAL (odul_secim · {r['merkez']} odul vektoru)")
+    print(f"  odul/kolon: {({k: round(v) for k, v in r['odul_vektoru'].items()})}")
+    print(f"  maliyet {o['maliyet']:,.0f}  odul {o['odul']:,.0f}  ROI {o['roi']:.3f}  "
+          f"kolon/hf {o['kolon_ort']:,.0f}  SEKIL {o['sekil_sayisi']}  "
+          f"tavana dayanan {o['tavana_dayanan']}")
+    for ad, sn in r["kademeli_sinav"].items():
+        n = o["hafta"]
+        print(f"  {ad}: fark {sn['fark']:+.3f}  %95 [{sn['alt']:+.3f}, {sn['ust']:+.3f}]  "
+              f"-> {'GECTI' if sn['gecti'] else 'GECMEDI'}  ·  "
+              f"{sn['daha_iyi_hafta']} iyi / {sn['esit_hafta']} esit / "
+              f"{n - sn['daha_iyi_hafta'] - sn['esit_hafta']} kotu")
+
     print(f"\n{r['uyari']}")
 
 
@@ -218,9 +273,12 @@ def main(argv: list[str] | None = None) -> None:  # pragma: no cover
     ap.add_argument("--odul", type=float, action="append",
                     help="taranacak odul degeri (TL); birden cok kez verilebilir")
     ap.add_argument("--esik", type=int, default=VARSAYILAN_KACAK_ESIGI)
+    ap.add_argument("--merkez", choices=("medyan", "ortalama"), default=MERKEZ,
+                    help="kademe odul vektorunun merkez olcusu")
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args(argv)
-    r = kiyas(tuple(a.odul) if a.odul else ODUL_IZGARA, esik=a.esik)
+    r = kiyas(tuple(a.odul) if a.odul else ODUL_IZGARA, esik=a.esik,
+              merkez=a.merkez)
     if a.json:
         print(json.dumps(r, ensure_ascii=False, indent=1, default=str))
     else:
