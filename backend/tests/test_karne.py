@@ -502,9 +502,9 @@ def test_hak_kurali_tarihsel_kesitte_SEKIL_CESITLENDIRIR():
     `butce` de tavana dayanır ve **aynı** planı verir. Fark, ödül ölçeğinin
     bütçenin altında kaldığı haftalarda görünür.
     """
-    from spor_toto.secim import DEGER_TAVANI, odul_secim, sistem_secimi
-    from spor_toto.getiri import KOLON_BEDELI
     from spor_toto.backtest import VARSAYILAN_BUTCE_TL, butce_kolon
+    from spor_toto.getiri import KOLON_BEDELI
+    from spor_toto.secim import DEGER_TAVANI, odul_secim, sistem_secimi
 
     kesit = karne.kupon_kesiti()
     tavan = min(DEGER_TAVANI, butce_kolon(VARSAYILAN_BUTCE_TL))

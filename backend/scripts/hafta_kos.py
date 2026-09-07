@@ -258,7 +258,7 @@ def _main(argv: list[str] | None = None) -> int:
         print(f"  P(kacak=0)    : {r['p_kacak_sifir']:.4f}   "
               f"(ODEYEN olay: {a.garanti}. kademe)")
         if r["kural"] == "hak" and r["butce_kurali_kolon"]:
-            print(f"\n  butce kurali (eski varsayilan) — KIYAS:")
+            print("\n  butce kurali (eski varsayilan) — KIYAS:")
             print(f"    sekil    : {r['butce_kurali_banko']} banko · "
                   f"{r['butce_kurali_cift']} cifte · {r['butce_kurali_uclu']} uclu")
             print(f"    bedel    : {r['butce_kurali_kolon']:,} kolon = "

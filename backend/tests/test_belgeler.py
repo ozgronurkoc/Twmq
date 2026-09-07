@@ -1025,7 +1025,10 @@ def test_saglik_katmani_test_sayisi_belgeyle_ayni():
     for d in dosyalar:
         if not (KOK / d).exists():
             pytest.skip(f"{d} yok")
-    ciktı = subprocess.run(
+    # `dosyalar` yukarida yazili dort sabit yol; kabuk yok, disaridan gelen
+    # arguman yok. S603 depoda BILEREK acik (pyproject: her cagri bilincli
+    # bir karar gerektirsin) — kosum.py ve build_bulten.py'deki desenin aynisi.
+    ciktı = subprocess.run(  # noqa: S603
         [sys.executable, "-m", "pytest", *dosyalar, "--collect-only", "-q",
          "-p", "no:randomly", "-o", "addopts="],
         cwd=KOK, capture_output=True, text=True, timeout=300)
