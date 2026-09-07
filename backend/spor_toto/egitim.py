@@ -34,7 +34,6 @@ from .dixon_coles import dc_tablosu
 from .elo import elo_tablosu
 from .odds import ARINDIRMA_VARSAYILAN, implied_probs
 from .takim import h2h_tablosu, seri_tablosu
-from .xg import xg_tablosu
 
 KOK = Path(__file__).resolve().parent.parent
 VARSAYILAN_KORPUS = KOK / "data" / "egitim" / "egitim_korpus.csv"
@@ -526,7 +525,7 @@ def bahisci_ayrismasi(bahisciler: dict[str, dict[str, float] | None] | None
 @lru_cache(maxsize=2)
 def _zenginlestirilmis_korpus(yol: str | None = None) -> tuple[dict[str, Any], ...]:
     """Korpus satirlari + `_form` / `_takvim` / `_elo` / `_dc` / `_h2h` /
-    `_seri` / `_xg`.
+    `_seri`.
 
     Iki sebeple ayri ve onbellekli:
 
@@ -554,19 +553,15 @@ def _zenginlestirilmis_korpus(yol: str | None = None) -> tuple[dict[str, Any], .
     dcler = dc_tablosu(ham)
     h2hler = h2h_tablosu(ham)
     seriler = seri_tablosu(ham)
-    # Kalibrasyon dosyasi yoksa `xg_tablosu` her mac icin nötr 0 ve
-    # `xg_var=False` dondurur; korpus onsuz da kurulur (bkz. `xg.py`).
-    xgler = xg_tablosu(ham)
     tumu = [dict(r) for r in ham]
-    for r, f, t, e, d, hh, sr, xg in zip(tumu, formlar, takvimler, elolar, dcler,
-                                         h2hler, seriler, xgler):
+    for r, f, t, e, d, hh, sr in zip(tumu, formlar, takvimler, elolar, dcler,
+                                     h2hler, seriler):
         r["_form"] = f
         r["_takvim"] = t
         r["_elo"] = e
         r["_dc"] = d
         r["_h2h"] = hh
         r["_seri"] = sr
-        r["_xg"] = xg
     return tuple(tumu)
 
 
@@ -669,7 +664,6 @@ def _korpus_haftalari(sezonlar_: tuple | None,
             h2h = r.get("_h2h") or {"h2h_var": False, "h2h_farki": 0.0}
             seri = r.get("_seri") or {"seri_ev": 0, "seri_dep": 0,
                                       "seri_farki": 0.0}
-            xg = r.get("_xg") or {"xg_var": False, "xg_farki": 0.0}
             dc = r.get("_dc") or {"dc_var": False,
                                   **{f"dc_{s}": 1 / 3 for s in ("1", "0", "2")}}
             ozellikler.append({
@@ -682,7 +676,6 @@ def _korpus_haftalari(sezonlar_: tuple | None,
                 **dc,
                 **h2h,
                 **seri,
-                **xg,
                 "cizgi_var": bool(r.get("acilis") and r.get("kapanis")),
                 "acilis_probs": (implied_probs(r["acilis"], yontem)
                                  if r.get("acilis") else None),

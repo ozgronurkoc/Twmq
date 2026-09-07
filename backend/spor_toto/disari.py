@@ -68,8 +68,10 @@ TURETILEMEYEN: dict[str, str] = {
     #
     # Girdinin kalmasi onemli: kaynagin acilmasi SORUNUN cozulmesi
     # demek degildi ve bu ayrimi yazmak, "artik var" deyip kapsamayi
-    # sessizce gormezden gelmekten iyidir. Acilan sey ayri bir
-    # anahtarla asagida: `xg_vekili`.
+    # sessizce gormezden gelmekten iyidir. Kapsadigi 1.517 macta korpusun
+    # kendi sut sayimiyla kalibre edilen bir vekil de denendi (Faz 3.5,
+    # ISTATISTIK_YOL_HARITASI.md §3.42) ve o da piyasayi gecmedi; koddan
+    # kaldirildi.
     "xg": ("kaynak ARTIK ACIK (`hudl/open-data`, her sutta "
            "`shot.statsbomb_xg`) ama kapsamiyor: Super Lig ve alt Ingiliz "
            "ligleri depoda yok, korpus penceresiyle kesisim 92 mac ve hepsi "
@@ -93,18 +95,6 @@ TURETILEBILIR_OLDU: dict[str, str] = {
     "avrupa": ("`openfootball/champions-league` (kamu mali) UEFA fiksturu "
                "veriyor; `dinlenme` ve `sikisiklik` artik o gunleri de "
                "goruyor — `scripts/build_avrupa.py`, ad eslemesi %100"),
-    # xG'nin KENDISI degil, korpusun kendi sut sayiminin KALIBRASYONU.
-    # Ayrim onemli: `xg` yukarida kapali kaldi cunku StatsBomb korpusun
-    # liglerini kapsamiyor. Kapsamadigi icin bir GIRDI olamaz — ama
-    # kapsadigi 1.517 macta gercek xG ile korpusun `sut`/`isabet`
-    # sayimlarini YAN YANA gordugu icin bir REFERANS olabilir. Vekil o
-    # kesitte uydurulur, korpusun tamamina uygulanir ve StatsBomb verisi
-    # depoya hic girmez (lisans md. 1.2.1).
-    "xg_vekili": ("`hudl/open-data`in 2015/16 dort lig kesiti (PL, La Liga, "
-                  "Serie A, Ligue 1; 1.517 mac) gercek xG'yi football-data "
-                  "sut sayimiyla ayni macta veriyor; `ev_sut`/`ev_isabet` "
-                  "artik KEYFI degil OLCULMUS katsayilarla beklenen gole "
-                  "ceviriliyor — `scripts/build_xg.py`, `spor_toto/xg.py`"),
 }
 
 #: Ham sinyal taramasında bir özelliğin "yüksek"/"düşük" sayıldığı eşik.

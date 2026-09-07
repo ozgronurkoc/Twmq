@@ -116,9 +116,9 @@ testpaths = ["tests"]
 # `-n0` ile kapatilir (cikti sirasi da o zaman duzelir).
 addopts = "-q --strict-markers -n auto"
 # "ILP testleri" YAZIYORDU ve kaplama sokulunce yanlis oldu: ILP cozucu
-# `engines.py` ile birlikte gitti. Bugun `slow` isaretli 24 testin hicbiri
+# `engines.py` ile birlikte gitti. Bugun `slow` isaretli 22 testin hicbiri
 # ILP degil — korpus uzerinde donen olcumler (`karne` 8, `deger` 2,
-# `fiyatlar` 2, `hafta_hakki` 2, `hakem` 2, `kalabalik` 2, digerleri 1'er).
+# `fiyatlar` 2, `hafta_hakki` 2, `kalabalik` 2, digerleri 1'er).
 # Isaretin anlami sure, konu degil.
 markers = ["slow: uzun suren olcum testleri (korpus uzerinde doner)"]
 

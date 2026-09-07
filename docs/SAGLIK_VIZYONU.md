@@ -33,7 +33,7 @@ zaten cevaplar. Sorulan soru şudur: **ayakta olan şey hâlâ vaat ettiğimiz �
 
 ## 2. Test yeşilken bu sayfa neden var?
 
-En sık gelen itiraz: "1.837 test geçiyor, ayrıca çalışma zamanında ne arıyoruz?"
+En sık gelen itiraz: "1.811 test geçiyor, ayrıca çalışma zamanında ne arıyoruz?"
 
 Test ile sağlık kontrolü **aynı iddiayı farklı zaman ve zeminde** sınar:
 
@@ -277,7 +277,7 @@ her kategori kartındaki *"Yalnızca bunu çalıştır"* düğmesi budur.
 İki tasarım kararı bunu güvenli kılar:
 
 1. **Kısmi rapor kendini açıkça işaretler.** `summary.kismi` true döner ve
-   sayfa bunu bir bant olarak gösterir: *"kayıtlı 23 kontrolün 5 tanesi
+   sayfa bunu bir bant olarak gösterir: *"kayıtlı 22 kontrolün 5 tanesi
    çalıştı"*. Kısmi bir yeşil, tam bir yeşil gibi görünemez.
 2. **Otomatik yenileme her zaman tam raporu koşar.** Kısmi bir koşuyu arka
    planda tekrarlamak, sayfayı giderek daha az şey doğrulayan bir yeşil
@@ -430,7 +430,7 @@ olmamalıdır.
 
 | Ölçü | Değer |
 |---|---|
-| Kayıtlı kontrol | 23 |
+| Kayıtlı kontrol | 22 |
 | Kategori | 6 |
 | Kritik olmayan kontrol | 1 (`scipy_flag`) |
 | Tam rapor süresi (ısınmış) | ~520 ms |
