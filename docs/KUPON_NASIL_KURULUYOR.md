@@ -613,6 +613,27 @@ veriden türetilemez.
 > kendi bulgusu (bütçe şekli neredeyse çiviliyor) bu farkın kozmetik
 > olmadığını söylüyor: ₺2.000 → 10/1/4, ₺210.000 → 6/0/9.
 
+### 8.3.1 Ve 2026-09-07'den beri bütçe **kısıt değil supap**
+
+Yukarıdaki iki yol da bütçeyi bir **kısıt** olarak kullanır ve bu, `hedef`
+kuralının yapısal kusurudur: `P(k ≤ eşik)` üçlü sayısında **monotondur**
+(üçlünün kaçağı sıfır), dolayısıyla sabit tavan altında cevabı her zaman
+"tavanı harca"dır. Şekli hafta değil **tavan** seçer — 114 haftanın hepsinde
+tek şekil.
+
+Canlı yolun ana planını artık `secim.odul_secim` kuruyor
+(`karne.VARSAYILAN_KURAL = "hak"`): kademeler kendi ağırlığıyla, bütçe bir
+**tavan**. Kural bedelini kendi seçer; tavana dayanırsa satır bunu
+`tavana_dayandi` + `serbest_kolon` ile **ilan eder** — "tavan hedef değildir"
+cümlesi ancak ihlali görünürse doğru kalır. Eski kural silinmedi:
+`--kural butce` ile koşulur ve her satır iki planı yan yana taşır.
+
+Ölçümü README §1.1'de; kısası: kuyruk çıkarılmış ROI farkı `+0,130
+[+0,013, +0,270]` ile **geçti**, ham ROI farkı `[−0,020, +2,627]` ile
+**geçmedi**. Ve bugünkü ödül ölçeğinde kuralın tavansız cevabı **₺1,18 M**
+olduğu için ₺210.000 altında iki kural **aynı planı** veriyor — fark, ödül
+ölçeğinin bütçenin altında kaldığı geçmiş sezonlarda görünür.
+
 Bu tablonun iki satırı da **üretilen plandır**; hangisinin bayiye yatırıldığı
 tablodan değil **dondurulmuş kayıttan** okunur (`hafta_04_kupon.json`,
 `meta.sistem` + `variants[0]`). 4. haftada oynanan ikinci satırdır.

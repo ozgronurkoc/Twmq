@@ -25,10 +25,25 @@ kural değildi**: kupon `secim.en_iyi_secim` ile, bütçe tavanı altında
 `P(k ≤ 3)` enbüyüklenerek kuruluyor. Geri test ürünün ölçmediği bir şeyi
 ölçüyordu ve README §1.1'in başlangıç çizgisi oradan yazılmıştı.
 
-Bugün iki strateji var ve varsayılan **ürünün kendi kuralıdır**:
+Bugün üç strateji var ve varsayılan **ürünün kendi kuralıdır**:
 
     "hedef"  (varsayılan)  secim.en_iyi_secim — bütçe altında P(k ≤ 3)
     "esik"   (taban çizgisi) secim_uret — iki eşikli mekanik kural
+    "hak"    secim.odul_secim — kademeler kendi ağırlığıyla, bütçe SUPAP
+
+`hak`, canlı yolun 2026-09-07'de geçtiği kuraldır
+(`karne.VARSAYILAN_KURAL`). Buraya eklenmesinin sebebi bir **künye
+sorunudur**: §1.1'in başlangıç çizgisi `hedef`i ölçüyordu ve ürün artık
+onu koşmuyorsa, geri test yine ürünün ölçmediği bir şeyi ölçer — tam da
+`esik`in vaktiyle düştüğü hata. İkisi de kalıyor ki paragraf **iki
+kuralı yan yana** yazabilsin.
+
+`hak`ın kademe agirliklari **nedensel** okunur: her haftaya kendinden
+onceki sezonun odul vektoru verilir (`karne.odul_vektoru_onceki`). Iki
+sebep birden: sizinti (olculen haftanin kendi tablosu) ve olcek (nominal
+TL dort sezonda 66 kat). Kesitin ILK sezonu bu yuzden `hak` ile
+olculemez — vektoru yoktur ve hafta atlanir, sessizce tum kesite
+dusulmez.
 
 `esik` silinmedi çünkü kıyas için gereken tek karşı örnek odur: ayarlanan
 bir parametresi olduğu için **aşırı uyum ölçülebilir** (eşik taraması +
@@ -92,7 +107,7 @@ BANKO_IZGARA: tuple[float, ...] = (0.50, 0.55, 0.60, 0.65, 0.68, 0.72, 0.78)
 UCLU_IZGARA: tuple[float, ...] = (0.0, 0.34, 0.38, 0.42)
 
 #: Tanınan stratejiler. `hedef` ürünün kendi kuralı, `esik` taban çizgisi.
-STRATEJILER: tuple[str, ...] = ("hedef", "esik")
+STRATEJILER: tuple[str, ...] = ("hedef", "esik", "hak")
 
 #: `hedef` stratejisinin varsayılan haftalık bütçesi (TL).
 #:
@@ -163,6 +178,12 @@ def secim_uret(probs: dict[str, float], banko_esik: float,
 
 #: Bir haftanın olasılıklarından işaret planı üreten şey. `None` döndürmek
 #: "bu hafta bu stratejiyle kurulamadı" demektir ve hafta atlanır.
+#:
+#: İmza `(probs_listesi, sezon=None)`dır. İkinci argüman **`hak` stratejisi
+#: için zorunludur**: o strateji kademe ağırlıklarını geçmiş ödül
+#: tablolarından okur ve ölçülen sezonun kendi tablosunu kullanırsa sızıntı
+#: olur. `esik` ve `hedef` sezonu görmezden gelir — onların hiçbir
+#: parametresi veriden uydurulmuyor.
 Secici = Any
 
 
@@ -173,7 +194,8 @@ def esik_secici(banko_esik: float, uclu_esik: float) -> Secici:
     sayıyı optimize etmez. Kıyas için duruyor — ayarlanan bir parametresi
     olduğu için aşırı uyumu **ölçülebilen** tek strateji odur.
     """
-    def sec(probs_listesi: Sequence[dict[str, float] | None]) -> list[list[str]] | None:
+    def sec(probs_listesi: Sequence[dict[str, float] | None],
+            sezon: str | None = None) -> list[list[str]] | None:
         return [secim_uret(p or {}, banko_esik, uclu_esik) for p in probs_listesi]
     return sec
 
@@ -205,11 +227,70 @@ def hedef_secici(butce_tl: float = VARSAYILAN_BUTCE_TL,
             f"(kolon bedeli {KOLON_BEDELI} TL).")
     esik = kacak_esigi(kademe)
 
-    def sec(probs_listesi: Sequence[dict[str, float] | None]) -> list[list[str]] | None:
+    def sec(probs_listesi: Sequence[dict[str, float] | None],
+            sezon: str | None = None) -> list[list[str]] | None:
         if any(p is None for p in probs_listesi):
             return None
         plan = en_iyi_secim([dict(p) for p in probs_listesi if p is not None],
                             kolon, esik)
+        return None if plan is None else plan.secimler
+    return sec
+
+
+def hak_secici(kademe: int = HEDEF_KADEME,
+               tavan_tl: float | None = None) -> Secici:
+    """Canlı yolun kuralı: **maçın hakkı** — `secim.odul_secim`.
+
+    `hedef_secici`den farkı amaçtır, motor değil: orada `P(k ≤ eşik)` sabit
+    bir bütçe altında enbüyüklenir ve o amaç üçlü sayısında **monotondur**,
+    yani cevap her zaman "bütçeyi harca" olur. Burada her sembol bedelini
+    öder:
+
+        net = Σ_d  v[d] · odul[15−d]  −  bedel · KOLON_BEDELI
+
+    Bütçe bir **kısıt değil supap**: `tavan_tl` verilmezse arama tavanı
+    `secim.DEGER_TAVANI`dır ve kural bedelini kendi seçer.
+
+    ─── SEZON DIŞARIDA BIRAKMA — bu fonksiyonun asıl işi ─────────────────
+
+    Kademe ağırlıkları (`karne.odul_vektoru`) **geçmiş ödül tablolarından**
+    ölçülür. Ölçülen haftanın kendi sezonunun tablosu vektöre girerse,
+    strateji o sezonun ödül ölçeğini önceden bilmiş olur — küçük ama
+    **gerçek** bir sızıntı, ve deponun her yerde uyguladığı ölçüte
+    (`kalibrasyon`, `hakem`, `secim_kalibrasyonu`) aykırı.
+
+    Bu yüzden vektör sezon başına **bir kez** ve o sezon **çıkarılarak**
+    kestirilir. `scripts/deger_kiyasi.py` bunu yapmıyordu (vektörü tüm
+    kesitten kuruyordu); oradaki sayılar bu yüzden bu fonksiyonunkinden
+    iyimser olabilir ve iki ölçüm birebir kıyaslanmamalıdır.
+
+    Sezonu bilinmeyen bir hafta gelirse (kesitte `sezon` boşsa) vektör tüm
+    kesitten kurulur ve bu **sessiz değildir**: böyle bir hafta zaten
+    `evaluate.sezon_anahtari`nin uyardığı durumdur.
+    """
+    from .secim import DEGER_TAVANI, odul_secim
+
+    tavan = (DEGER_TAVANI if tavan_tl is None
+             else max(1, min(DEGER_TAVANI, butce_kolon(tavan_tl))))
+    onbellek: dict[str | None, dict[int, float]] = {}
+
+    def _vektor(sezon: str | None) -> dict[int, float]:
+        if sezon not in onbellek:
+            from .karne import odul_vektoru_onceki
+            # Sezonu bilinmeyen hafta ATLANIR (bos sozluk): tum kesite
+            # dusmek kapatilan sizintiyi geri acardi.
+            onbellek[sezon] = (odul_vektoru_onceki(sezon) if sezon else {})
+        return onbellek[sezon]
+
+    def sec(probs_listesi: Sequence[dict[str, float] | None],
+            sezon: str | None = None) -> list[list[str]] | None:
+        if any(p is None for p in probs_listesi):
+            return None
+        vektor = _vektor(sezon)
+        if not vektor:
+            return None
+        plan = odul_secim([dict(p) for p in probs_listesi if p is not None],
+                          vektor, kademe=kademe, tavan=tavan)
         return None if plan is None else plan.secimler
     return sec
 
@@ -224,6 +305,10 @@ def secici_uret(strateji: str = "hedef",
         return hedef_secici(butce_tl, kademe)
     if strateji == "esik":
         return esik_secici(banko_esik, uclu_esik)
+    if strateji == "hak":
+        # Butce burada TAVAN: kural bedelini kendi secer, tavana dayanirsa
+        # bu `karne.canli_karne_satiri`nda `tavana_dayandi` ile ilan edilir.
+        return hak_secici(kademe, butce_tl)
     raise ValueError(
         f"Bilinmeyen strateji {strateji!r}; tanınanlar: {', '.join(STRATEJILER)}")
 
@@ -357,7 +442,7 @@ def hafta_girdileri(last: int | None = None,
 
 def _hafta_calistir(girdi: dict[str, Any], secici: Secici) -> dict[str, Any]:
     """Bir haftayı verilen stratejiyle koş ve gerçekleşen sonuca karşı ölç."""
-    secimler = secici(girdi["probs"])
+    secimler = secici(girdi["probs"], girdi.get("sezon") or None)
     if secimler is None:
         return {
             "week": girdi["week"],

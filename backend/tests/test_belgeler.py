@@ -584,9 +584,25 @@ def test_readme_1_1_hangi_kurali_olctugunu_soyler():
     ürünün kullandığı kural değildi. Okuyanın bunu anlamasının hiçbir yolu
     yoktu.
     """
+    from spor_toto.karne import VARSAYILAN_KURAL
+
     metin = _readme_1_1()
     for parca in ("secim.en_iyi_secim", "114 hafta", "düz ölçek"):
         assert parca in metin, f"§1.1 künyesinde '{parca}' yok"
+
+    # CANLI kuralı da yazmalı. 2026-09-07'de canlı yol `odul_secim`e geçti
+    # ve §1.1 hâlâ yalnızca `en_iyi_secim`i ölçüyordu — yani paragraf ürünün
+    # KOŞMADIĞI bir kuralı anlatıyordu. Bu, `esik` stratejisinin vaktiyle
+    # düştüğü hatanın aynısı ve o hata bu bekçinin var olma sebebi.
+    if VARSAYILAN_KURAL == "hak":
+        for parca in ("secim.odul_secim", "odul_vektoru_onceki"):
+            assert parca in metin, (
+                f"canlı kural 'hak' ama §1.1 '{parca}' demiyor — paragraf "
+                "ürünün koşmadığı bir kuralı ölçüyor")
+        # Geçmeyen sınav da yazılmali: bir kural yalnizca gecen olcumleriyle
+        # anlatilirsa okuyan onu dogrulanmis sanir.
+        assert "GEÇMEDİ" in metin, (
+            "§1.1 `hak` kuralının geçmeyen ham ROI sınavını yazmıyor")
 
 
 def test_readme_test_tablosu_GERCEK_koleksiyonu_sayar():

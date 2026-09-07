@@ -389,6 +389,112 @@ def kupon_kesiti(dizin: Any = None,
     return out
 
 
+#: Kademe ağırlıklarının merkez ölçüsü. **Medyan varsayılan** ve sebebi
+#: ölçülmüş: ortalama, devirli haftalar yüzünden ağır kuyruklu (15 için
+#: ₺8,45 M ↔ medyan ₺2,79 M; 12 için ₺10.957 ↔ ₺288 — 38 kat). Ortalama
+#: verildiğinde `secim.odul_secim` HER arama tavanına dayanıyor (tavan 4
+#: milyon kolona çıkarıldığında bile haftada 2,6 milyon kolon istiyor), yani
+#: amaç yine "bütçeyi harca"ya dönüyor. Medyan verildiğinde tavanı **hiç
+#: kovalamıyor** ve 114 haftada **15 farklı şekil** üretiyor.
+#:
+#: Yani dejenerasyonun sebebi para amacı değil, ona verilen ağır kuyruklu
+#: ortalamadır (commit 38ff7a8).
+MERKEZ_OLCUSU = "medyan"
+
+
+def odul_vektoru(kesit: list[dict[str, Any]] | None = None,
+                 merkez: str = MERKEZ_OLCUSU) -> dict[int, float]:
+    """Kademe başına **kolon başına** ödül — resmî tablolardan ölçülür.
+
+    Varsayım değil kayıt: `kupon_kesiti` her haftanın gerçek ikramiye
+    tablosunu taşır. Buradaki tek karar merkez ölçüsüdür ve o da
+    `MERKEZ_OLCUSU` künyesinde gerekçeli.
+
+    `kesit` verilmezse `kupon_kesiti()` çağrılır — canlı yol bunu böyle
+    kullanır.
+
+    ─── Niçin `scripts/` içinde değil ────────────────────────────────────
+
+    Bu fonksiyon `scripts/deger_kiyasi.py`de doğdu, çünkü ilk işi bir
+    **kıyastı**. `secim.odul_secim` canlı yolun kuralı olunca aynı vektör
+    üretimde de gerekti ve betikten ithal etmek mümkün değildi. İkinci bir
+    kopya, iki kuralın sessizce ayrışacağı yer olurdu — `secim._dp_cozumu`
+    iki kural arasında tam bu yüzden paylaşılıyor.
+    """
+    import statistics
+
+    if kesit is None:
+        kesit = kupon_kesiti()
+    out: dict[int, float] = {}
+    for kademe in (12, 13, 14, 15):
+        v = [float(h["tablo"][kademe]["prize"]) for h in kesit
+             if kademe in h["tablo"] and h["tablo"][kademe].get("prize") is not None]
+        if not v:
+            continue
+        out[kademe] = (statistics.median(v) if merkez == "medyan"
+                       else statistics.mean(v))
+    return out
+
+
+#: `sezon_odul_vektorleri()`nin argümansız hâlinin önbelleği.
+#:
+#: Ölçülmüş sıcak nokta: çağrı başına ~0,19 sn (`kupon_kesiti` iki arşivi
+#: birden okur) ve `hafta_kos.py --sonrasi` bunu hafta başına bir kez
+#: çağırıyordu. `lru_cache` kullanılamaz — fonksiyon liste alıyor ve liste
+#: hashlenemez; sadece argümansız yol önbelleklenir, kesit verilen çağrı
+#: her seferinde yeniden hesaplanır (test kesitleri paylaşılmasın diye).
+_SEZON_ODUL_ONBELLEK: dict[str, dict[int, float]] | None = None
+
+
+def sezon_odul_vektorleri(kesit: list[dict[str, Any]] | None = None
+                          ) -> dict[str, dict[int, float]]:
+    """Sezon başına kademe ödülü — `odul_vektoru`nun sezona bölünmüş hâli."""
+    global _SEZON_ODUL_ONBELLEK
+    if kesit is None:
+        if _SEZON_ODUL_ONBELLEK is None:
+            _SEZON_ODUL_ONBELLEK = sezon_odul_vektorleri(kupon_kesiti())
+        return {s: dict(v) for s, v in _SEZON_ODUL_ONBELLEK.items()}
+    sezonlar = sorted({str(h.get("sezon")) for h in kesit if h.get("sezon")})
+    return {s: odul_vektoru([h for h in kesit if str(h.get("sezon")) == s])
+            for s in sezonlar}
+
+
+def odul_vektoru_onceki(sezon: str,
+                        kesit: list[dict[str, Any]] | None = None
+                        ) -> dict[int, float]:
+    """`sezon`dan **önceki** sezonun kademe ödülleri — nedensel vektör.
+
+    ─── Niçin `odul_vektoru` doğrudan kullanılamaz ───────────────────────
+
+    `odul_vektoru` kesitin **tamamının** medyanını alır ve bu, tam olarak bu
+    modülün başka dört yerde yasakladığı şeydir: *"Kesitler arası medyan
+    alınmaz — nominal TL dört sezonda 72 kat büyümüş"* (`taban_gevsekligi`
+    künyesi), *"nominal TL sezonlar arasında toplanamaz"*. Ölçüldü ve uyarı
+    doğru — 15. kademenin kolon başına medyanı:
+
+        2022_23      197.121        2024_25    2.332.876
+        2023_24    1.103.674        2025_26   12.969.789      (66 kat)
+
+    Dört sezonun medyanı hiçbir sezonun ölçeği değildir; `secim.odul_secim`
+    bu vektörü bedelle **doğrudan** tarttığı için (`net = Σ v·odul − bedel·₺10`)
+    ölçek hatası doğrudan şekle geçer.
+
+    Bu fonksiyon iki kusuru birden kapatır:
+
+    * **Sızıntı yok.** Ölçülen haftanın kendi sezonu vektöre girmez —
+      `kalibrasyon`, `hakem` ve `secim_kalibrasyonu`nun ölçütüyle aynı.
+    * **Ölçek yakın.** Bir önceki sezon, dört sezonun medyanından çok daha
+      iyi bir kestirimdir; enflasyon varsayımı da gerekmez.
+
+    Bedeli açık: kesitin **ilk sezonu** (2022/23, 17 hafta) ölçüm dışı kalır,
+    çünkü ondan öncesi yok. Boş sözlük döner ve çağıran haftayı atlar —
+    sessizce tüm kesite düşmek, kapatılan sızıntıyı geri açardı.
+    """
+    vektorler = sezon_odul_vektorleri(kesit)
+    onceki = [s for s in sorted(vektorler) if s < str(sezon)]
+    return dict(vektorler[onceki[-1]]) if onceki else {}
+
+
 def taban_gevsekligi(butce_tl: float = 2000.0,
                      garanti: int = VARSAYILAN_GARANTI,
                      hafta_siniri: int | None = None) -> dict[str, Any]:
@@ -1927,9 +2033,55 @@ def _basabas_kacak(tablo: dict[int, dict[str, Any]], garanti: int,
     return en_iyi
 
 
+#: Canlı haftanın ana planını kuran kural.
+#:
+#: ``"hak"``   `secim.odul_secim` — kademeler kendi ağırlığıyla, bütçe supap.
+#: ``"butce"`` `secim.sistem_secimi` — `P(k ≤ eşik)`, bütçe kısıt (eski yol).
+#:
+#: Varsayılan 2026-09-07'de `"butce"`den `"hak"`a çevrildi ve **çevirmeden
+#: önce ölçüm iki kez koşuldu** — ilki kuralı değil bozuk bir girdiyi ölçtüğü
+#: için.
+#:
+#: ─── Birinci koşum: kural değil, VEKTÖR kusurluydu ────────────────────
+#:
+#: `odul_secim`in kademe ağırlıkları `odul_vektoru` ile, yani **dört sezonun
+#: nominal TL medyanıyla** besleniyordu. Bu tam olarak bu modülün başka dört
+#: yerde yasakladığı şey: nominal TL dört sezonda **66 kat** büyümüş
+#: (15. kademe kolon başına ₺197.121 → ₺12.969.789). Sonuç, aynı kuralın
+#: vektöre göre üç ayrı cevap vermesiydi:
+#:
+#:     tum kesit vektoru (SIZINTILI)      ROI 0,519
+#:     sezon disarida                     ROI 0,174
+#:
+#: ─── İkinci koşum: `odul_vektoru_onceki` ile, 97 eşleşik hafta ────────
+#:
+#:                              hedef      hak
+#:     ROI                      0,544    1,438
+#:     kuyruksuz (en iyi 5 -)   0,199    0,276
+#:     maliyet               19,09 M   4,59 M      <- dortte biri
+#:     farkli sekil                 1       21
+#:     haftalik net                 —   84 iyi / 6 kotu / 7 esit
+#:
+#:     eslesik bootstrap (B=20.000, tohum 7):
+#:       ROI farki    +0,867  %95 [-0,020, +2,627]  GECMEDI
+#:       KUYRUKSUZ    +0,130  %95 [+0,013, +0,270]  GECTI
+#:
+#: **Ham ROI farkı geçmedi ve bu satır saklanmıyor.** Geçen şey kuyruk
+#: çıkarılmış okumadır — yani `hak`ın önde olduğu yer şanslı hafta değil
+#: **tipik** hafta. Kuyruk her iki kuralda da hâkim (`hedef` de 0,544'ten
+#: 0,199'a düşüyor), o yüzden okunacak satır E6'nın dediği gibi ham ROI
+#: değil kuyruksuz olandır.
+#:
+#: `"butce"` **silinmedi**: `kural="butce"` ya da `--kural butce` ile
+#: koşulur ve her satır iki planı yan yana taşır. Ölçüm ileride aleyhte
+#: birikirse geri dönüş bir kod değişikliği değil bir bayrak.
+VARSAYILAN_KURAL = "hak"
+
+
 def canli_karne_satiri(sezon: str, hafta: int, butce_tl: float,
                        garanti: int = VARSAYILAN_GARANTI,
-                       kok: Any = None) -> dict[str, Any] | None:
+                       kok: Any = None,
+                       kural: str = VARSAYILAN_KURAL) -> dict[str, Any] | None:
     """Bir canlı haftanın karne satırı: **öngörülen ↔ gerçekleşen**.
 
     ─── Bu bir tahmin KAYDI değildir ve öyle etiketlenir ─────────────────
@@ -1944,11 +2096,72 @@ def canli_karne_satiri(sezon: str, hafta: int, butce_tl: float,
 
     Gerçekleşen taraf `hafta_karnesi` ile aynı garanti tabanını kullanır:
     `k` kaçakta **bir** kolon `garanti − k` kademesinde. Alt sınırdır.
+
+    ─── Ana plan artık BÜTÇEYİ HARCAYAN kural değil ──────────────────────
+
+    `kural="hak"` (varsayılan) planı `secim.odul_secim` ile kurar: kademeler
+    kendi ağırlığıyla, **bütçe kısıt değil supap**. Sebebi yapısal —
+    `en_iyi_secim`in amacı (`P(k ≤ eşik)`) üçlü sayısında **monotondur**,
+    dolayısıyla sabit bütçe altında cevabı her zaman "bütçeyi harca" olur ve
+    şekli hafta değil **bütçe** belirler (114 haftada 1–2 şekil). `odul_secim`
+    her sembole bedelini ödetir: tek → çifte geçişinin kazancı `p₂`, çifte →
+    üçlünün `p₃`; net favorili bir maçta `p₃` küçüktür ve o üçlü **alınmaz**.
+    114 haftada **15 farklı şekil** çıkar ve kural tavanı kovalamaz.
+
+    **Para bunu doğrulamıyor ve satır bunu saklamaz.** Aynı 114 haftada
+    gerçek ödül tablolarına karşı ROI 0,436 ↔ bütçe kuralının 0,465; haftalık
+    net 48 iyi / 21 kötü (`scripts/deger_kiyasi.py`). Yani gerekçe yapısal,
+    parasal değil. Bütçe kuralının planı **silinmez**: satıra
+    `butce_kurali_*` alanları olarak girer ve iki kural yan yana okunur —
+    ölçüm ileride aleyhte birikirse geri dönüş yolu açık kalsın diye.
+
+    ─── Tavan hedef değildir, ama sessizce de aşılmaz ────────────────────
+
+    Kural önce **serbest** koşar (`secim.DEGER_TAVANI` yalnızca arama
+    uzayının supabı). Cevabın bedeli `butce_tl`nin altındaysa satır onu
+    taşır ve `tavana_dayandi` yanlıştır. Üstündeyse kural bütçeye kısılmış
+    hâliyle **yeniden** koşar ve satır bunu `tavana_dayandi=True` +
+    `serbest_kolon` ile **ilan eder** — "tavan hedef değildir" cümlesi
+    ancak ihlali görünürse doğru kalır.
     """
+    from .secim import DEGER_TAVANI, odul_secim
+
     h = canli_hafta(sezon, hafta, kok)
     if h is None:
         return None
-    plan = sistem_secimi(h["probs"], butce_tl, garanti=garanti)
+
+    butce_kolon = max(1, int(butce_tl // KOLON_BEDELI))
+    butce_plani = sistem_secimi(h["probs"], butce_tl, garanti=garanti)
+
+    tavana_dayandi = False
+    serbest_kolon: int | None = None
+    if kural == "hak":
+        # NEDENSEL vektor: bu sezonun ODUL OLCEGI kupon kurulurken henuz
+        # bilinmez. `odul_vektoru()` (tum kesitin medyani) hem sizinti hem
+        # olcek hatasi tasiyordu — bkz. `odul_vektoru_onceki` kunyesi.
+        vektor = odul_vektoru_onceki(sezon)
+        if not vektor:
+            raise ValueError(
+                f"{sezon} icin onceki sezon odul tablosu yok; 'hak' kurali "
+                f"nedensel vektor olmadan kurulamaz (kural='butce' kullanin)")
+        plan = odul_secim(h["probs"], vektor, tavan=DEGER_TAVANI)
+        if plan is not None and plan.bedel > butce_kolon:
+            serbest_kolon = plan.bedel
+            tavana_dayandi = True
+            plan = odul_secim(h["probs"], vektor, tavan=butce_kolon)
+    elif kural == "butce":
+        plan = butce_plani
+        # "Tavana dayandi" bedelin tavana TAM ESIT olmasi degildir: bedel
+        # 2 ve 3'un carpimi oldugu icin keyfi bir tavana nadiren oturur
+        # (TL210.000 = 21.000 kolon tavaninda plan 19.683 kolondur ve yine
+        # de tavan yuzunden orada durur). Anlamli sinav sudur: TAVAN
+        # BUYUTULSE plan degisir mi?
+        genis = sistem_secimi(h["probs"], butce_tl * 3, garanti=garanti)
+        tavana_dayandi = (plan is not None and genis is not None
+                          and genis.bedel > plan.bedel)
+    else:
+        raise ValueError(f"bilinmeyen kural {kural!r} — 'hak' ya da 'butce'")
+
     if plan is None:
         return None
 
@@ -1977,6 +2190,20 @@ def canli_karne_satiri(sezon: str, hafta: int, butce_tl: float,
                         if havuzlar else None),
         "tur": "yeniden turetildi (dondurulmus kayit DEGIL)",
         "picks": plan.picks,
+        # ─── hangi kural, ve tavan kovalandi mi ───────────────────────
+        "kural": kural,
+        "tavana_dayandi": tavana_dayandi,
+        # Kuralin bütçesiz cevabı bütçeden PAHALI ciktiysa kac kolon
+        # istedigi burada durur; aksi halde None. Kısılan bir planın
+        # kisildigini söylememek, "tavan hedef degildir" cumlesini
+        # sessizce yanlislardi.
+        "serbest_kolon": serbest_kolon,
+        # Eski kuralin ayni haftadaki plani — SILINMEZ, yan yana durur.
+        "butce_kurali_kolon": butce_plani.bedel if butce_plani else None,
+        "butce_kurali_banko": butce_plani.banko if butce_plani else None,
+        "butce_kurali_cift": butce_plani.cift if butce_plani else None,
+        "butce_kurali_uclu": butce_plani.uclu if butce_plani else None,
+        "butce_kurali_p_hedef": butce_plani.p_hedef if butce_plani else None,
     }
     if h["gercek"] and h["tablo"]:
         kacak = sum(1 for sec, c in zip(plan.secimler, h["gercek"])

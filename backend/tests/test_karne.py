@@ -473,3 +473,131 @@ def test_banko_yanliligi_ORNEKLEMI_SABIT_tutar():
     )
     maclar = {k["banko_rejimi"]["mac"] for k in b["kollar"]}
     assert len(maclar) == 1, f"kollarin mac sayisi ayrisiyor: {maclar}"
+
+
+# ─── canlı yolun kuralı: "maçın hakkı" ────────────────────────────────────────
+
+def test_canli_yolun_VARSAYILAN_kurali_odul_secim():
+    """Varsayılan 2026-09-07'de `butce`den `hak`a çevrildi.
+
+    Gerekçe yapısal ve ölçülmüş: `en_iyi_secim`in amacı üçlü sayısında
+    monoton olduğu için sabit bütçe altında cevabı hep "bütçeyi harca"dır
+    ve şekli hafta değil bütçe belirler. **Parasal gerekçe yoktur**
+    (114 haftada ROI 0,436 ↔ 0,465) — sabit bu yüzden bir bayrak olarak
+    duruyor: geri dönüş bir kod değişikliği değil bir seçenek.
+    """
+    assert karne.VARSAYILAN_KURAL == "hak"
+
+
+def test_hak_kurali_tarihsel_kesitte_SEKIL_CESITLENDIRIR():
+    """Asıl kazanım: şekil bütçeden değil haftadan geliyor.
+
+    Bütçe kuralı 114 haftanın hepsinde aynı şekli (6/0/9) verir — şekli
+    hafta değil tavan seçer. `hak` aynı tavanda **21 farklı şekil** üretir
+    ve dörtte bir para harcar (₺4,59 M ↔ ₺19,09 M, 97 eşleşik hafta).
+
+    Ölçüm tarihsel kesitte yapılır, canlı haftalarda DEĞİL: 2026/27'nin
+    nedensel vektörü 2025/26'nın ödül ölçeğidir ve o ölçekte kuralın hak
+    ettiği kupon ₺1,18 M'dir — yani ₺210.000 tavanı altında `hak` da
+    `butce` de tavana dayanır ve **aynı** planı verir. Fark, ödül ölçeğinin
+    bütçenin altında kaldığı haftalarda görünür.
+    """
+    from spor_toto.secim import DEGER_TAVANI, odul_secim, sistem_secimi
+    from spor_toto.getiri import KOLON_BEDELI
+    from spor_toto.backtest import VARSAYILAN_BUTCE_TL, butce_kolon
+
+    kesit = karne.kupon_kesiti()
+    tavan = min(DEGER_TAVANI, butce_kolon(VARSAYILAN_BUTCE_TL))
+    hak_sekil, butce_sekil = set(), set()
+    hak_tl = butce_tl = 0.0
+    onbellek: dict = {}
+    for h in kesit:
+        sezon = h.get("sezon")
+        if sezon not in onbellek:
+            onbellek[sezon] = karne.odul_vektoru_onceki(sezon) if sezon else {}
+        v = onbellek[sezon]
+        if not v:
+            continue
+        a = odul_secim(h["probs"], v, tavan=tavan)
+        b = sistem_secimi(h["probs"], VARSAYILAN_BUTCE_TL, garanti=15)
+        if a is None or b is None:
+            continue
+        hak_sekil.add((a.banko, a.cift, a.uclu))
+        butce_sekil.add((b.banko, b.cift, b.uclu))
+        hak_tl += a.bedel * KOLON_BEDELI
+        butce_tl += b.bedel * KOLON_BEDELI
+
+    assert len(butce_sekil) == 1, f"butce kurali sekil cesitlendirmemeli: {butce_sekil}"
+    assert len(hak_sekil) >= 15, f"hak kurali sekil cesitlendirmeli: {len(hak_sekil)}"
+    assert hak_tl < butce_tl / 2, (
+        f"hak kurali cok daha az harcamali: {hak_tl:,.0f} vs {butce_tl:,.0f}")
+
+
+def test_hak_kuralinin_SERBEST_cevabi_dejenere_DEGIL():
+    """Tavansız bırakılınca "hepsi üçlü"ye kaçmamalı — yakınsamalı.
+
+    `en_iyi_secim`in tavansız cevabı tanım gereği dejeneredir (üçlünün
+    kaçağı sıfır, `P` monoton): `3^15` kolon. `odul_secim` her sembole
+    bedelini ödettiği için **duruyor**: 2025/26 ölçeğinde cevap
+    4/1/10 = 118.098 kolon ve tavan 1 milyondan 14 milyona çıkarılsa da
+    değişmiyor.
+
+    Bu, kuralın gerçekten bir eniyileme yaptığının kanıtı — ve aynı
+    zamanda `DEGER_TAVANI`nin (60.000) bugünkü ölçekte **bağladığının**:
+    kuralın hak ettiği kupon ₺1,18 M'dir, ₺210.000 değil.
+    """
+    from spor_toto.secim import odul_secim
+
+    h = next(x for x in karne.kupon_kesiti() if x.get("sezon") == "2025_26")
+    v = karne.odul_vektoru_onceki("2026_27")
+    planlar = [odul_secim(h["probs"], v, tavan=t)
+               for t in (1_000_000, 4_000_000, 14_348_907)]
+    assert all(p is not None for p in planlar)
+    bedeller = {p.bedel for p in planlar}
+    assert len(bedeller) == 1, f"serbest cevap yakinsamiyor: {bedeller}"
+    assert planlar[0].bedel < 3 ** 15, "cevap dejenere (hepsi uclu)"
+
+
+def test_kisilan_plan_kisildigini_ILAN_eder():
+    """Tavan hedef değildir — ama ihlali görünmezse o cümle yalan olur.
+
+    ₺2.000 tavanında 4. haftanın serbest cevabı (4.374 kolon) sığmıyor.
+    Satır bunu `tavana_dayandi` + `serbest_kolon` ile söylemeli; sessizce
+    kısmak, kuralın kendi bedelini seçtiği izlenimini bırakırdı.
+    """
+    r = karne.canli_karne_satiri("2026_27", 4, 2_000.0, kural="hak")
+    assert r is not None
+    assert r["tavana_dayandi"] is True
+    # Serbest cevap `DEGER_TAVANI` supabinin altindaki en iyi plandir
+    # (2025/26 olceginde 3^10 = 59.049 kolon); TL2.000 onun yaninda hicbir sey.
+    assert r["serbest_kolon"] == 59049
+    assert r["kolon"] * 10 <= 2_000.0
+
+
+def test_butce_kurali_plani_SILINMEZ_yan_yana_durur():
+    """Ölçüm aleyhte birikirse geri dönüş yolu açık kalmalı.
+
+    Para eksenini doğrulamayan bir kuralı varsayılan yapmak, eski kuralın
+    kaydını da silmeyi gerektirmez; satır ikisini birden taşır.
+    """
+    r = karne.canli_karne_satiri("2026_27", 4, 210_000.0, kural="hak")
+    assert r is not None
+    assert r["butce_kurali_kolon"] == 19683
+    # 2025/26 olceginde iki kural TL210.000 tavani altinda ayni plani verir
+    # (ikisi de tavana dayanir); satir yine de ikisini birden tasimali.
+    assert r["butce_kurali_p_hedef"] >= r["p_hedef"]
+
+
+def test_odul_vektoru_medyan_ve_ortalama_AYNI_DEGIL():
+    """Dejenerasyonun sebebi para amacı değil, ağır kuyruklu ortalama.
+
+    15'in ortalaması medyanının üç katı; 12'de fark 38 kat. Ortalama
+    verilirse `odul_secim` her tavana dayanır (commit 38ff7a8).
+    """
+    medyan = karne.odul_vektoru(merkez="medyan")
+    ortalama = karne.odul_vektoru(merkez="ortalama")
+    assert set(medyan) == {12, 13, 14, 15}
+    for kademe in (12, 13, 14, 15):
+        assert ortalama[kademe] > medyan[kademe], kademe
+    assert ortalama[12] / medyan[12] > 30, "12'de kuyruk 38 kat olculmustu"
+    assert karne.MERKEZ_OLCUSU == "medyan"

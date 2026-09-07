@@ -82,6 +82,48 @@ koşuldu. İki eksende de sayı var ve ikisi aynı koşumdan geliyor:
   kaybediyor. Aynı ölçüm ₺2.000 tavanında **%33,4** veriyordu — daha çok para
   daha **iyi** oran getiriyor, ama başabaşa yetmiyor.
 
+**Canlı yol 2026-09-07'den beri başka bir kural koşuyor ve bu paragraf onu da
+yazmak zorunda.** Yukarıdaki sayılar `secim.en_iyi_secim`i (bütçe kuralı)
+ölçer; `scripts/hafta_kos.py --oncesi`nin ana planını artık
+`secim.odul_secim` kuruyor (`karne.VARSAYILAN_KURAL = "hak"`) — kademeler
+kendi ağırlığıyla, **bütçe kısıt değil supap**. Sebebi bütçe kuralının
+yapısal kusuru: amacı üçlü sayısında monoton olduğu için sabit tavan altında
+cevabı hep "tavanı harca"dır ve şekli hafta değil **tavan** seçer — 114
+haftanın hepsinde tek şekil (6/0/9).
+
+İki kural, aynı 97 eşleşik haftada (`hak`ın kademe ağırlıkları **nedensel**
+okunur: her haftaya kendinden önceki sezonun ödül vektörü, `karne
+.odul_vektoru_onceki`; kesitin ilk sezonu bu yüzden ölçüm dışı):
+
+| | `en_iyi_secim` (bütçe) | `odul_secim` (**canlı**) |
+|---|---:|---:|
+| gerçek kolon ROI | 0,544 | **1,438** |
+| kuyruksuz ROI (en iyi 5 hafta çıkarılmış) | 0,199 | **0,276** |
+| 97 haftanın bedeli | ₺19.092.510 | **₺4.594.060** |
+| farklı şekil | 1 | **21** |
+| haftalık net | — | 84 iyi / 6 kötü / 7 eşit |
+
+Eşleştirilmiş bootstrap (B = 20.000): ham ROI farkı **+0,867 [−0,020, +2,627]
+— GEÇMEDİ**; kuyruksuz fark **+0,130 [+0,013, +0,270] — GEÇTİ**. Yani `hak`ın
+önde olduğu yer şanslı hafta değil **tipik** hafta; ham ROI'yi kuyruk
+yönetiyor (bütçe kuralı da 0,544'ten 0,199'a düşüyor). Geçmeyen satır burada
+duruyor çünkü geçmedi.
+
+**Bu ölçüm bir kez yanlış çıktı ve sebebi kayda geçiyor.** İlk koşumda
+`odul_secim`, kademe ağırlıklarını dört sezonun **nominal TL medyanından**
+alıyordu; nominal ödül dört sezonda **66 kat** büyümüş (15. kademe kolon
+başına ₺197.121 → ₺12.969.789), yani o medyan hiçbir sezonun ölçeği değildi.
+Aynı kural vektöre göre üç ayrı cevap veriyordu: sızıntılı 0,519 · sezon
+dışarıda 0,174 · nedensel **1,438**. Kusur kuralda değil **girdisindeydi**.
+
+> **Bugünkü ölçekte iki kural aynı yere varıyor.** 2025/26'nın ödül
+> vektörüyle `odul_secim`in tavansız cevabı 4 banko / 1 çifte / 10 üçlü =
+> **118.098 kolon ≈ ₺1,18 M**'dir (tavan 1 M'den 14 M'a çıkarılsa da
+> değişmiyor — yani dejenere değil, gerçekten duruyor). ₺210.000 bunun beşte
+> biri olduğu için 2026/27 haftalarında iki kural da tavana dayanır ve **aynı
+> planı** verir. Fark, ödül ölçeğinin bütçenin altında kaldığı geçmiş
+> sezonlarda görünür.
+
 **Bu tavan bir harcama kararıdır, veriden çıkarılmaz** — ve ne kadar
 tutturduğunu okurken bu yazılmadan okunamaz. Bütçe merdiveni yan yana:
 

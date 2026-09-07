@@ -1540,6 +1540,57 @@
    "bekci": "backend/tests/test_secim.py::test_odul_secilen_plan_net_parayi_gercekten_ENBUYUKLER",
    "olcek": "duz · medyan odul vektoru",
    "not": "Capa haftalik net kar kirilimi (48 iyi / 45 esit / 21 kotu) — ROI farki README'de matematiksel eksi isaretiyle (U+2212) yaziliyor ve duz ASCII capa onunla eslesmiyordu. || GECMEDI: %95 [-0,156, +0,097], sifiri kesiyor. ROI 0,465 -> 0,436, kolon/hafta 19.683 -> 17.184 (DAHA UCUZ). AMA DAVRANIS ILK KEZ DOGRU: 114 haftada 15 FARKLI SEKIL (bugunku kural 1) ve haftalik net karda 48 iyi / 45 esit / 21 kotu — yani kuyruk degil, haftalarin yarisina yakini. Kiyas `deger_secim`e karsi da gecmiyor (-0,241 %95 [-0,770, +0,094]) ama onun 0,677'si 3 haftadan geliyor: biri TUTARLILIK, oteki VARYANS satin aliyor. MERKEZ OLCUSU KRITIK: odul vektoru ORTALAMAYLA beslenince kural her arama tavanina dayaniyor (tavan 4 milyon kolonda bile haftada 2,6 milyon kolon istiyor) — dejenerasyon para amacindan degil agir kuyruklu ortalamadan geliyor. VARSAYILAN DEGISMEDI."
+  },
+  {
+   "ne": "hak kurali (odul_secim, nedensel vektor) — gercek kolon ROI, 97 eslesik hafta",
+   "deger": "1,438",
+   "ureten": "cd backend && python -c \"from spor_toto.karne import kupon_kesiti, odul_vektoru_onceki, gercek_kolon_dagilimi, gercek_odul; ...\"  # tests/test_karne.py::test_hak_kurali_tarihsel_kesitte_SEKIL_CESITLENDIRIR",
+   "olculdu": "2026-09-07",
+   "anildigi_yerler": [
+    "README.md §1.1",
+    "backend/spor_toto/karne.py VARSAYILAN_KURAL"
+   ],
+   "bekci": "backend/tests/test_karne.py::test_hak_kurali_tarihsel_kesitte_SEKIL_CESITLENDIRIR",
+   "olcek": "DUZ olcek · kademe agirliklari NEDENSEL (her haftaya onceki sezonun vektoru, karne.odul_vektoru_onceki). Kesitin ilk sezonu (2022_23, 17 hafta) olcum disi. Ayni alt kesitte butce kurali 0,544.",
+   "not": "HAM ROI kuyruk hakimiyetindedir: eslesik bootstrap +0,867 %95 [-0,020, +2,627] GECMEDI. Okunacak satir kuyruksuz olandir (asagidaki girdi). || Ilk olcum SIZINTILI vektorle 0,519, sezon disarida 0,174 cikmisti; ikisi de odul_vektoru'nun dort sezonun nominal TL medyanini almasindan geliyordu (nominal odul dort sezonda 66 kat buyumus)."
+  },
+  {
+   "ne": "hak <-> butce kurali — KUYRUKSUZ ROI farki (en iyi 5 hafta cikarilmis), eslesik bootstrap",
+   "deger": "+0,130",
+   "ureten": "cd backend && python -c \"from spor_toto.karne import kupon_kesiti, odul_vektoru_onceki, gercek_kolon_dagilimi, gercek_odul; ...\"  # tests/test_karne.py::test_hak_kurali_tarihsel_kesitte_SEKIL_CESITLENDIRIR",
+   "olculdu": "2026-09-07",
+   "anildigi_yerler": [
+    "README.md §1.1",
+    "backend/spor_toto/karne.py VARSAYILAN_KURAL"
+   ],
+   "bekci": "backend/tests/test_karne.py::test_hak_kurali_tarihsel_kesitte_SEKIL_CESITLENDIRIR",
+   "olcek": "DUZ olcek · nedensel vektor · B=20.000 · tohum 7 · 97 eslesik hafta",
+   "not": "Tam satir: +0,130 · %95 [+0,013, +0,270] · GECTI. VARSAYILAN_KURAL'i cevirmeyi tasiyan tek gecen sinav budur. Kuyruksuz ROI: hak 0,276, butce 0,199. Haftalik net 84 iyi / 6 kotu / 7 esit."
+  },
+  {
+   "ne": "kademe odulunun nominal olcek kaymasi — 15. kademe kolon basina medyan",
+   "deger": "66 kat",
+   "ureten": "cd backend && python -c \"from spor_toto.karne import sezon_odul_vektorleri; print(sezon_odul_vektorleri())\"",
+   "olculdu": "2026-09-07",
+   "anildigi_yerler": [
+    "README.md §1.1",
+    "backend/spor_toto/karne.py odul_vektoru_onceki"
+   ],
+   "bekci": "backend/tests/test_karne.py::test_odul_vektoru_medyan_ve_ortalama_AYNI_DEGIL",
+   "olcek": "nominal TL, sezon basina medyan: 2022_23 197.121 · 2023_24 1.103.674 · 2024_25 2.332.876 · 2025_26 12.969.789",
+   "not": "Sezon basina 15. kademe kolon basina medyan: 2022_23 197.121 · 2023_24 1.103.674 · 2024_25 2.332.876 · 2025_26 12.969.789. karne.py dort ayri yerde 'kesitler arasi medyan alinmaz, nominal TL sezonlar arasinda toplanamaz' diyordu; odul_vektoru tam bunu yapiyordu ve odul_secim'e bozuk olcek veriyordu. odul_vektoru_onceki bunu kapatir."
+  },
+  {
+   "ne": "odul_secim'in TAVANSIZ cevabi (2025/26 odul olceginde) — dejenere DEGIL, yakinsiyor",
+   "deger": "118.098",
+   "ureten": "cd backend && python -c \"from spor_toto.secim import odul_secim; from spor_toto.karne import odul_vektoru_onceki; ...\"",
+   "olculdu": "2026-09-07",
+   "anildigi_yerler": [
+    "README.md §1.1"
+   ],
+   "bekci": "backend/tests/test_karne.py::test_hak_kuralinin_SERBEST_cevabi_dejenere_DEGIL",
+   "olcek": "2025/26 nedensel vektoru · tavan 1M/4M/14,3M'de AYNI cevap",
+   "not": "Tam cevap: 118.098 kolon = 1.180.980 TL, sekil 4 banko / 1 cifte / 10 uclu. en_iyi_secim'in tavansiz cevabi tanim geregi dejeneredir (3^15). odul_secim duruyor — her sembol bedelini oduyor. Ama bugunku olcekte hak edilen kupon TL1,18 M, yani TL210.000 tavani bes kat asagida: 2026/27'de iki kural da tavana dayanir."
   }
  ],
  "komutlar": [
