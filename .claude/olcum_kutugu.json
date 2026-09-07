@@ -2,7 +2,7 @@
  "sayilar": [
   {
    "ne": "suit test sayisi (eksiksiz kurulum)",
-   "deger": "1.825",
+   "deger": "1.830",
    "ureten": "cd backend && python -m pytest --collect-only -q -p no:randomly -o addopts=  # son satirdaki toplam",
    "olculdu": "2026-09-07",
    "anildigi_yerler": [
@@ -1504,6 +1504,18 @@
    "bekci": "backend/tests/test_backtest.py::test_kademe_dagilimi_birikimliyle_TUTARLI",
    "olcek": "duz · TL210.000 tavan",
    "not": "Capa 15'in payi (%13,2 = 15 hafta). Tam dagilim: 15 -> 15 hafta (%13,2) · 14 -> 33 (%28,9) · 13 -> 37 (%32,5) · 12 -> 21 (%18,4) · 12 alti -> 8 (%7,0). MODU 13. Birikimli manset %93,0 bu dagilimin ilk dort satirinin toplami; tek basina okunursa '%93 ikramiyeye donuyor' izlenimi verir, oysa ikramiye tablosunda 15 ile 12 arasinda binlerce kat fark var. Dar kesitte (36 hafta): 15 -> 4 (%11,1) · 14 -> 7 (%19,4) · 13 -> 12 (%33,3) · 12 -> 9 (%25,0) · alt -> 4 (%11,1)."
+  },
+  {
+   "ne": "deger kurali (bedeli tartan secim) <-> bugunku kural, 114 hafta, GERCEK odul tablolari",
+   "deger": "+0,212",
+   "ureten": "cd backend && python scripts/deger_kiyasi.py",
+   "olculdu": "2026-09-07",
+   "anildigi_yerler": [
+    "README.md §11"
+   ],
+   "bekci": "backend/tests/test_secim.py::test_deger_secilen_plan_net_degeri_gercekten_ENBUYUKLER",
+   "olcek": "duz",
+   "not": "GECMEDI. Eslesik bedelde iki kiyas: tavan TL210.000 <-> odul TL3.000.000 ROI 0,465 -> 0,677, fark +0,212 %95 [-0,038, +0,682]; tavan TL2.000 <-> odul TL20.000 ROI 0,334 -> 0,754, fark +0,421 %95 [-0,198, +1,474]. IKISI DE sifiri kesiyor. Sebep: deger kurali haftalik net karda birincide 3/114, ikincide 6/114 haftada daha iyi — toplamdaki artis kuyruktan geliyor, kenardan degil. YAPISAL KAZANIM GERCEK ama para dogrulamiyor: sekil artik haftaya gore degisiyor (114 haftada 1 sekil yerine 2-5) cunku her sembol bedelini oduyor. Odul taramasinin EN IYI SATIRI YOKTUR (agir kuyruk); betik bunu ciktisinda yaziyor. VARSAYILAN DEGISMEDI."
   }
  ],
  "komutlar": [

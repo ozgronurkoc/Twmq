@@ -22,6 +22,7 @@ from spor_toto.ortak import kacak_dagilimi
 from spor_toto.secim import (
     VARSAYILAN_KACAK_ESIGI,
     bedel_hesapla,
+    deger_secim,
     en_iyi_secim,
     getiri_secim,
     hedef_olasiligi,
@@ -548,3 +549,73 @@ def test_para_ve_kalabalik_yollari_SEKLI_DEGISTIRMEZ():
         kalabalik = kalabalik_ayari(probs, oynanma, taban.secimler)
         assert para is None or _sekil(para.secimler) == beklenen
         assert _sekil(kalabalik.secimler) == beklenen
+
+
+# ─── deger kurali: her sembol bedelini oder ───────────────────────────────────
+
+def test_deger_odul_arttikca_kupon_BUYUR_kucultmez():
+    """Hedef daha değerliyse daha çok sembol hak edilir — monoton olmalı."""
+    maclar = hafta()
+    bedeller = [deger_secim(maclar, o).bedel
+                for o in (10_000.0, 100_000.0, 1_000_000.0)]
+    assert bedeller == sorted(bedeller)
+
+
+def test_deger_odul_sifirsa_HICBIR_sembol_hak_etmez():
+    """Tutturmanın değeri yoksa her maç tek işaret: bedel 1 kolon."""
+    plan = deger_secim(hafta(), 0.0)
+    assert plan.bedel == 1
+    assert (plan.banko, plan.cift, plan.uclu) == (15, 0, 0)
+
+
+def test_deger_MACIN_HAKKINI_gozetiyor():
+    """Üç yönlü belirsiz maç üçlü hak eder; net favorili maç etmez.
+
+    Bugünkü kuralın kusuru buydu: `P(k ≤ esik)` üçlü sayısında monoton
+    olduğu için bütçe elverdiğince üçlü alıyor ve **hangi** maçın üçlüyü
+    hak ettiğini sormuyor. Değer kuralı soruyor, çünkü tek → çifte
+    geçişinin kazancı `p₂` ve çifte → üçlü geçişininki `p₃`; net favorili
+    bir maçta `p₃` küçüktür ve aynı üçlü kuponu 1,5 katına çıkarır.
+    """
+    kesin = p(0.94, 0.03, 0.03)      # p3 = 0,03 — ucluye deger mez
+    belirsiz = p(0.36, 0.33, 0.31)   # p3 = 0,31 — uclu hak edilir
+    maclar = [kesin] * 14 + [belirsiz]
+    plan = deger_secim(maclar, 200_000.0)
+    assert len(plan.secimler[14]) > len(plan.secimler[0]), (
+        "belirsiz maç, kesin maçtan daha çok sembol almalı")
+    assert plan.secimler[0] == ["1"], "net favorili maç banko kalmalı"
+
+
+def test_deger_negatif_odul_ve_sifir_bedel_REDDEDILIR():
+    with pytest.raises(ValueError):
+        deger_secim(hafta(), -1.0)
+    with pytest.raises(ValueError):
+        deger_secim(hafta(), 1000.0, kolon_bedeli=0.0)
+
+
+def test_deger_secilen_plan_net_degeri_gercekten_ENBUYUKLER():
+    """Küçük bir haftada kaba kuvvetle: seçilen plan net değeri enbüyüklemeli.
+
+    `en_iyi_secim`in `test_optimizasyon_gercekten_optimal`i ile aynı
+    gerekçe: Pareto budaması "yaklaşık" olsaydı sessizce daha kötü kupon
+    kurardı ve hiçbir şey patlamazdı.
+    """
+    from itertools import product as _product
+
+    maclar = [p(0.5, 0.3, 0.2), p(0.4, 0.35, 0.25), p(0.34, 0.33, 0.33),
+              p(0.7, 0.2, 0.1), p(0.45, 0.3, 0.25)]
+    odul, birim, esik = 100_000.0, 10.0, 2
+    plan = deger_secim(maclar, odul, kolon_bedeli=birim, esik=esik)
+
+    en_iyi = None
+    for seviyeler in _product((1, 2, 3), repeat=len(maclar)):
+        secimler = [sorted([s for s, _ in sorted(m.items(), key=lambda kv: -kv[1])[:k]],
+                           key=lambda x: SEM.index(x))
+                    for m, k in zip(maclar, seviyeler)]
+        bedel = bedel_hesapla(sum(1 for k in seviyeler if k == 2),
+                              sum(1 for k in seviyeler if k == 3))
+        net = hedef_olasiligi(maclar, secimler, esik) * odul - bedel * birim
+        if en_iyi is None or net > en_iyi:
+            en_iyi = net
+    secilen = plan.p_hedef * odul - plan.bedel * birim
+    assert secilen == pytest.approx(en_iyi, abs=1e-6)

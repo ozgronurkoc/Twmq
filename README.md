@@ -1139,7 +1139,7 @@ backend/
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
                        sehir/ · xg/ · sistem_fiyat/ · hakem/
-  tests/               pytest (72 dosya → 1.825 test; §9'da katman dökümü)
+  tests/               pytest (72 dosya → 1.830 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1345,7 +1345,7 @@ dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri t
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
 eşleme, ikinci kayıt). **72 test dosyası, parametrizasyonla
-1.825 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+1.830 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
@@ -1357,7 +1357,7 @@ karşı denetler):
 | Veri / istatistik / geri test | `history` `odds` `backtest` `api_stats` `api_backtest` `snapshot_iddaa` `pazar` **`gecmis_sezon`** **`sportoto_arsiv`** **`bulten`** | 233 |
 | Süper Toto | `super_toto` `degerlendir` | 97 |
 | 2. Tahmin (kalabalık ayarı · bağımsız görüş) | `tahmin2` | 35 |
-| Karar katmanı | `secim` | 30 |
+| Karar katmanı | `secim` | 35 |
 | Amaç kıyası (`P(k≤3)` ↔ `E[k]`: aynı kupon mu?) | **`amac_kiyasi`** | 5 |
 | Sistem kıyası (kaplama ↔ düz; söküm kararının kanıtı) | **`sistem_kiyasi`** | 3 |
 | Para karnesi (garanti tabanı · enflasyon · canlı · GERÇEK kolon dağılımı · ödeyen olay · banko sapması) | **`karne`** | 31 |
@@ -1590,6 +1590,32 @@ test artefaktı **değildir**: canlı yolun üç giriş noktası da (`hafta_kos.
 alıyor ve kayıtlı dört gerçek hafta, kendi fiyatlarıyla, aynı şekli veriyor. (2) Amaç ile
 sonuç ayrışıyor: `P(k ≤ 3)` 114 haftanın %93'ünde tutturuyor derken oynanan
 paranın **%46,5**'i geri dönüyor. Yüksek isabet, satın alınan isabet.
+
+**Bunun üzerine bedeli tartan bir kural yazıldı ve ölçüldü — geçmedi.**
+`secim.deger_secim` sabit bütçe yerine net değeri enbüyüklüyor:
+`P(k ≤ 3) · ödül − bedel · ₺10`. Yani bir maçı çifteye çıkarmak kuponu iki
+katına çıkarır ve bunu ancak kazandırdığı olasılık o parayı hak ediyorsa
+yapar — kazandırdığı şey de tam olarak **maçın hakkı**dır (tek→çifte
+kazancı `p₂`, çifte→üçlü kazancı `p₃`). Şekil beklendiği gibi nefes alıyor:
+114 haftada 1 şekil yerine 2–5 şekil ve bedel haftaya göre değişiyor.
+
+Ama para bunu **doğrulamıyor**. 114 hafta, gerçek ödül tablolarına karşı,
+eşleşmiş bedelde (`python scripts/deger_kiyasi.py`):
+
+| Kıyas | ROI | Fark | %95 aralık | Sonuç |
+|---|---:|---:|---|---|
+| tavan ₺2.000 ↔ ödül ₺20.000 | 0,334 → **0,754** | +0,421 | [−0,198, +1,474] | **geçmedi** |
+| tavan ₺210.000 ↔ ödül ₺3.000.000 | 0,465 → **0,677** | +0,212 | [−0,038, +0,682] | **geçmedi** |
+
+Aralıklar sıfırı kesiyor, yani projenin geçme kuralını sağlamıyor. Sebep
+tabloda görünüyor: değer kuralı haftalık net kârda birincide **6/114**,
+ikincide **3/114** haftada daha iyi. Toplamdaki artışın tamamı birkaç
+haftadan geliyor — kenar değil **kuyruk**. Ödül taramasının da "en iyi
+satırı" yoktur ve betik bunu çıktısında yazar.
+
+**Yani itiraz yapısal olarak doğru, sonuç henüz doğrulanmadı.** Kural
+kodda duruyor, ölçümü yeniden üretilebilir, varsayılan **değişmedi** —
+ölçülmeden ilerleme sayılmaz.
 
 Şekli parayla seçen bir yol bugün **yok**: `secim.getiri_secim` `E[TL]`'yi
 enbüyüklüyor ama şekli `sistem_secimi`den alıp **sabit tutuyor**, yalnızca
