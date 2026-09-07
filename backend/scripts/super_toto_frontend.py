@@ -97,6 +97,17 @@ def _donmus_blok(donmus: dict[str, Any] | None) -> dict[str, Any] | None:
             "in_set_p": x.get("in_set_p"),
             "crowd_in_set_p": x.get("crowd_in_set_p"),
             "crowd_ratio": x.get("crowd_ratio"),
+            # Sekil, bedel ve ARA KADEME olasiligi. Tablo yalnizca
+            # P(>=12) tasiyordu; ayni bedele iki plan onerildiginde
+            # (5. hafta: 5b/5c/5u'nun A ve B surumu) fark ancak bu uc
+            # alanla okunur. Yoksa `None` doner ve sutun tire gorunur —
+            # eski haftalarin kaydi bu alanlari tasimiyor.
+            "sekil": x.get("sekil"),
+            "maliyet_tl": x.get("maliyet_tl"),
+            "p_k_en_cok_2": x.get("p_k_en_cok_2"),
+            # Varyantin KENDI gerekcesi. Etiket neyin secildigini soyler,
+            # bu alan nicin secildigini.
+            "gerekce": x.get("gerekce"),
         } for x in donmus.get("variants", [])],
         "kalabalik_gerekcesi": donmus["meta"].get("kalabalik_gerekcesi"),
         # Fiyat duyarliligi: kupon aninda KESINLIKLE elde olan fiyatla
@@ -108,6 +119,20 @@ def _donmus_blok(donmus: dict[str, Any] | None) -> dict[str, Any] | None:
             "picks": donmus["duyarlilik"].get("picks"),
             "hedef": donmus["duyarlilik"].get("hedef"),
         } if donmus.get("duyarlilik") else None),
+        # Haftanin SEVIYE SIRALAMASI — hangi mac neden o seviyede.
+        #
+        # Kupon kartı isaretleri gosteriyordu ama isaretin KARARI
+        # gorunmuyordu: bir macin banko mu cifte mi olacagi tek bir sayiya
+        # baglidir (bankoya dusurmenin ek kacagi tam olarak p2, ucluye
+        # cikmanin kazanci tam olarak p3) ve o sayi sıralanınca kupon
+        # bastan sona okunabilir hale geliyor. Kayitta yoksa `None` doner
+        # ve arayuz bolumu hic cizmez.
+        "siralama": donmus.get("siralama"),
+        # Kuponun kendi gerekcesi — "nicin mantikli olan bu" sorusunun
+        # kayitta duran cevabi. Sayfa metni burada YAZILMAZ, yalnizca
+        # tasinir: gerekce dondurulmus kaydin parcasidir ve sonradan
+        # degistirilirse kayit da degismis olur.
+        "gerekce": donmus.get("gerekce"),
     }
 
 
@@ -450,6 +475,11 @@ def uret(sezon: str = "2026_27") -> dict[str, Any]:
                 "probs": _yuvarla(m["probs"]), "fav": m["fav"],
                 "margin": round(m["margin"], 4),
                 "play": _yuvarla(m["play"]),
+                # Oynanma ÖLÇÜLMEDİYSE `play` sıfır dağılımdır ve arayüz
+                # onu "%0 oynandı" diye gösteremez — bu bayrak olmadan
+                # ölçülmemiş bir hafta, kimsenin oynamadığı bir hafta gibi
+                # görünürdü.
+                "play_yok": m["play_yok"],
                 "result": (meta["results"][m["no"] - 1]
                            if meta.get("results") else None),
             } for m in d["matches"]],

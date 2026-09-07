@@ -77,6 +77,12 @@ export interface SuperTotoMac {
   fav: string | null;
   margin: number;
   play: Record<string, number>;
+  /**
+   * Oynanma payi OLCULMEDIYSE true — `play` o zaman sifir dagilimdir ve
+   * "%0 oynandi" diye GOSTERILEMEZ. Olculmemis bir hafta ile kimsenin
+   * oynamadigi bir hafta ayni sey degildir.
+   */
+  play_yok: boolean;
   /** Sonuc girilmemisse null. */
   result: string | null;
 }
@@ -120,6 +126,59 @@ export interface SuperTotoKupon {
   kalabalik_gerekcesi: string | null;
   /** Kupon aninda KESINLIKLE elde olan fiyatla (acilis) kurulan surum. */
   duyarlilik: SuperTotoDuyarlilik | null;
+  /**
+   * Haftanin SEVIYE SIRALAMASI — hangi mac nicin o seviyede.
+   *
+   * Kart isaretleri gosteriyordu ama KARARI gostermiyordu. Karar tek bir
+   * sayiya bagli: bir maci cifteden bankoya dusurmenin ek kacagi tam
+   * olarak `p2`, cifteden ucluye cikmanin kazanci tam olarak `p3`.
+   * Kayitta yoksa `null`dur ve arayuz bolumu hic cizmez.
+   */
+  siralama: SuperTotoSiralama | null;
+  /** Kuponun kendi gerekcesi — kayitta duran metin, burada yazilmaz. */
+  gerekce: SuperTotoGerekce | null;
+}
+
+/** Bir haftanin seviye siralamasi: en cok banko -> en az, en az uclu -> en cok. */
+export interface SuperTotoSiralama {
+  not: string | null;
+  olcut_banko: string | null;
+  olcut_uclu: string | null;
+  banko_yon: string | null;
+  uclu_yon: string | null;
+  banko: SuperTotoBankoSatiri[];
+  uclu: SuperTotoUcluSatiri[];
+  /** Kesim cizgilerinin NEREDEN gectigi — kupon nerede duruyor. */
+  kesimler: Record<string, string> | null;
+}
+
+/** Banko siralamasinin bir satiri; `ceza_p2` kucukse mac bankoya yakin. */
+export interface SuperTotoBankoSatiri {
+  no: number;
+  mac: string;
+  isaret: string;
+  p_favori: number;
+  ceza_p2: number;
+  q_banko: number;
+  secili: string | null;
+  secili_555: string | null;
+}
+
+/** Uclu siralamasinin bir satiri; `kazanc_p3` kucukse mac cifteye yakin. */
+export interface SuperTotoUcluSatiri {
+  no: number;
+  mac: string;
+  atilan: string;
+  kazanc_p3: number;
+  q_cifte: number;
+  secili: string | null;
+  secili_555: string | null;
+}
+
+/** "Nicin mantikli olan bu?" — dondurulmus kaydin parcasi. */
+export interface SuperTotoGerekce {
+  baslik: string | null;
+  maddeler: { baslik: string; metin: string }[];
 }
 
 /** Kuralin ayni haftada urettigi bir secenek ve olculmus bedeli. */
@@ -132,6 +191,18 @@ export interface SuperTotoVaryant {
   in_set_p: number | null;
   crowd_in_set_p: number | null;
   crowd_ratio: number | null;
+  /**
+   * Sekil (`5b/5ç/5ü`), bedel ve bir ust kademe.
+   *
+   * Tablo yalnizca P(>=12) tasiyordu; AYNI bedele iki plan onerildiginde
+   * (5. hafta: 5/5/5'in A ve B surumu) fark ancak bu alanlarla okunur.
+   * Eski haftalarin kaydinda yoktur ve `null` gorunur.
+   */
+  sekil: string | null;
+  maliyet_tl: number | null;
+  p_k_en_cok_2: number | null;
+  /** Varyantin KENDI gerekcesi: etiket neyi, bu alan nicin oldugunu soyler. */
+  gerekce: string | null;
 }
 
 /** Fiyat duyarliligi: kapanis elde degilse bedeli ne olurdu. */

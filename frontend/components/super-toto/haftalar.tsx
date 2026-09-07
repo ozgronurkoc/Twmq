@@ -132,7 +132,11 @@ function MacSatiri({
         {SEM.map((s) => yuzde(mac.probs[s]).slice(1)).join(" / ")}
       </td>
       <td className="py-1.5 pr-3 tabular-nums text-muted-foreground">
-        {SEM.map((s) => yuzde(mac.play[s]).slice(1)).join(" / ")}
+        {/* Olculmemis oynanma "%0 / %0 / %0" degil TIREdir: sifir
+            dagilim, kimsenin oynamadigi bir mac gibi okunurdu. */}
+        {mac.play_yok
+          ? "—"
+          : SEM.map((s) => yuzde(mac.play[s]).slice(1)).join(" / ")}
       </td>
       {/* "SONUC" sutunu buradan KALDIRILDI: sonuc gelince tahmin
           tablosuna gercek sonucu ve ✓/✗ isaretini eklemek, dondurulmus
@@ -186,6 +190,11 @@ export function DoluHafta({ hafta }: { hafta: SuperTotoHafta }) {
       <div className="flex flex-wrap items-center gap-2 text-[12.5px]">
         {hafta.program ? <Badge>{hafta.program}</Badge> : null}
         {hafta.odds_kind ? <Badge>{hafta.odds_kind}</Badge> : null}
+        {/* Kalabalik sutunu bos degil YOK: rozet olmadan tire dolu bir
+            sutun, "kimse oynamamis" gibi okunurdu. */}
+        {hafta.matches.some((m) => m.play_yok) ? (
+          <Badge>oynanma verisi yok</Badge>
+        ) : null}
         {/* Rozet "sonuclandi" diyordu ve panelin geri kalani sonucla
             doluyordu. Artik yalnizca NEREDE oldugunu soyluyor. */}
         {haftaSonuclandiMi(hafta) ? (

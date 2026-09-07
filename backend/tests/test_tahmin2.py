@@ -312,8 +312,22 @@ def test_kiyas_eski_isaretleri_yeniden_secmez(govde):
     assert govde["kiyas"]["eski_picks"] == kupon["variants"][0]["picks"]
 
 
+def _oynanmasi_var(no: int) -> bool:
+    """O haftanın oynanma payı GİRİLMİŞ mi.
+
+    2. Tahmin'in gövdesi kalabalıktan kurulur; oynanma girilmemiş bir
+    haftada (5. hafta) `uret` bilerek `SystemExit` atar ve bir vekile
+    düşmez. Parametrik testler o haftayı atlar — ATLAMAK, kalabalık
+    sayılarını uydurmaktan iyidir.
+    """
+    d = json.loads((VERI / f"hafta_{no:02d}.json").read_text(encoding="utf-8"))
+    return all(sum((m.get("play_pct") or {}).values()) > 0
+               for m in d["matches"])
+
+
 @pytest.mark.parametrize("no", sorted(
-    int(f.stem.split("_")[1]) for f in VERI.glob("hafta_[0-9][0-9].json")))
+    int(f.stem.split("_")[1]) for f in VERI.glob("hafta_[0-9][0-9].json")
+    if _oynanmasi_var(int(f.stem.split("_")[1]))))
 def test_onceki_olcek_KAYITTAN_okunur_sabitten_degil(t2, no):
     """"Önceki ölçek/kural" dondurulmuş kaydın kendisinden gelmeli.
 

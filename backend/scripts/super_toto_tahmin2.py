@@ -494,6 +494,18 @@ def uret(sezon: str, hafta: int,
     meta = d["meta"]
     maclar = d["matches"]
 
+    # 2. Tahmin'in ÇEKİRDEĞİ kalabalıktır: kayıp bütçesi, koşullu rakip
+    # yoğunluğu ve küme-içi halk payı oynanma payından çıkar. Oynanma
+    # ölçülmemişse bu gövde kurulamaz ve **sessizce bir vekile düşmez** —
+    # model payı gerçek payın yerine geçseydi, "2. Tahmin kalabalığı
+    # gördü" cümlesi yalan olurdu. Hata erken ve ADIYLA atılır; aşağıda
+    # `_kosullu_rakip` "girdi bozuk" diyordu ve girdi bozuk değil, EKSİK.
+    if meta.get("play_yok"):
+        raise SystemExit(
+            f"{sezon} {hafta}. hafta: oynanma payı girilmemiş — 2. Tahmin "
+            f"kalabalık ölçüsü olmadan kurulamaz (hafta dosyasındaki "
+            f"`play_pct` alanları sıfır).")
+
     # Dondurulmus kayit ONCE okunur: "onceki olcek" ondan turer, sabitten
     # degil. Once asagida okunuyordu ve `onceki` sabit bir yontemle
     # hesaplaniyordu — 3. haftadan beri yanlis olan tam olarak buydu.

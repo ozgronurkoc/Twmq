@@ -14,6 +14,7 @@ import * as React from "react";
 import type {
   SuperTotoFiyatlar,
   SuperTotoKupon,
+  SuperTotoSiralama,
 } from "@/lib/super-toto";
 import { saglayiciAdi } from "@/lib/super-toto";
 import { SEMBOLLER as SEM } from "@/lib/types";
@@ -186,13 +187,31 @@ export function FiyatKaynaklari({
 /** Dondurulan kuponun yanindaki REDDEDILENLER — kupon gerekcesini boyle tasir. */
 export function KuponGerekcesi({ kupon }: { kupon: SuperTotoKupon }) {
   const varyantlar = kupon.variants ?? [];
-  if (varyantlar.length < 2 && !kupon.duyarlilik && !kupon.lines) return null;
+  const siralama = kupon.siralama;
+  const gerekce = kupon.gerekce;
+  if (
+    varyantlar.length < 2 &&
+    !kupon.duyarlilik &&
+    !kupon.lines &&
+    !siralama &&
+    !gerekce
+  )
+    return null;
 
   // P(>=12) yalnizca HEDEF kuraliyla dondurulmus kayitlarda var; esik
   // kuraliyla donan 1. ve 2. haftada alan yok ve sutun bastan sona tire
   // olurdu. Tamami bos bir sutun bilgi tasimaz — o yuzden hic cizilmez.
   // Bir tanesi bile doluysa sutun kalir ve eksik olan hucre tire gorunur.
   const hedefVar = varyantlar.some((v) => v.hedef !== null && v.hedef !== undefined);
+  // Ayni gerekce: sekil / bedel / P(>=13) alanlari 5. haftadan once
+  // kayitta YOK. Hepsi bossa sutun hic cizilmez.
+  const sekilVar = varyantlar.some((v) => v.sekil);
+  const bedelVar = varyantlar.some(
+    (v) => v.maliyet_tl !== null && v.maliyet_tl !== undefined,
+  );
+  const ustKademeVar = varyantlar.some(
+    (v) => v.p_k_en_cok_2 !== null && v.p_k_en_cok_2 !== undefined,
+  );
 
   return (
     <Card>
@@ -203,16 +222,29 @@ export function KuponGerekcesi({ kupon }: { kupon: SuperTotoKupon }) {
       <CardBody className="space-y-3">
         {varyantlar.length > 1 ? (
           <div className="-mx-1 overflow-x-auto px-1">
-            <table className="w-full min-w-[560px] text-[12.5px]">
+            <table className="w-full min-w-[720px] text-[12.5px]">
               <thead>
                 <tr className="border-b text-left text-muted-foreground">
                   <th className="py-1.5 pr-3 font-medium">Kupon</th>
+                  {sekilVar ? (
+                    <th className="py-1.5 pr-3 font-medium">Şekil</th>
+                  ) : null}
                   {hedefVar ? (
                     <th className="py-1.5 pr-3 text-right font-medium">
                       P(≥12)
                     </th>
                   ) : null}
+                  {/* P(>=13) bilerek P(>=12)'nin yaninda: iki plan ayni
+                      P(>=12)'yi verip ust kademede ayrisabilir. */}
+                  {ustKademeVar ? (
+                    <th className="py-1.5 pr-3 text-right font-medium">
+                      P(≥13)
+                    </th>
+                  ) : null}
                   <th className="py-1.5 pr-3 text-right font-medium">Kolon</th>
+                  {bedelVar ? (
+                    <th className="py-1.5 pr-3 text-right font-medium">Bedel</th>
+                  ) : null}
                   <th className="py-1.5 pr-3 text-right font-medium">Küme-içi</th>
                   <th className="py-1.5 pr-3 text-right font-medium">
                     Aynı seti oynayan halk
@@ -232,14 +264,31 @@ export function KuponGerekcesi({ kupon }: { kupon: SuperTotoKupon }) {
                       }
                     >
                       <td className="py-1.5 pr-3">{v.label ?? "—"}</td>
+                      {sekilVar ? (
+                        <td className="py-1.5 pr-3 font-mono">
+                          {v.sekil ?? "—"}
+                        </td>
+                      ) : null}
                       {hedefVar ? (
                         <td className="py-1.5 pr-3 text-right font-mono tabular-nums">
                           {_yuzde(v.hedef ?? undefined, 2)}
                         </td>
                       ) : null}
+                      {ustKademeVar ? (
+                        <td className="py-1.5 pr-3 text-right font-mono tabular-nums">
+                          {_yuzde(v.p_k_en_cok_2 ?? undefined, 2)}
+                        </td>
+                      ) : null}
                       <td className="py-1.5 pr-3 text-right font-mono tabular-nums">
                         {v.columns?.toLocaleString("tr-TR") ?? "—"}
                       </td>
+                      {bedelVar ? (
+                        <td className="py-1.5 pr-3 text-right font-mono tabular-nums">
+                          {v.maliyet_tl !== null && v.maliyet_tl !== undefined
+                            ? `${v.maliyet_tl.toLocaleString("tr-TR")} ₺`
+                            : "—"}
+                        </td>
+                      ) : null}
                       <td className="py-1.5 pr-3 text-right font-mono tabular-nums">
                         {_yuzde(v.in_set_p ?? undefined, 3)}
                       </td>
@@ -254,6 +303,53 @@ export function KuponGerekcesi({ kupon }: { kupon: SuperTotoKupon }) {
                 })}
               </tbody>
             </table>
+          </div>
+        ) : null}
+
+        {/* Tablo bedeli kiyasliyor ama ISARETLERI gostermiyordu: bir hafta
+            birden cok kupon tasidiginda (5. hafta uc tane) yalnizca
+            variants[0] gorunur kaliyor ve otekiler adi olan ama yuzu
+            olmayan satirlar oluyordu. */}
+        {varyantlar.some((v) => v.gerekce) ? (
+          <div className="space-y-2">
+            {varyantlar.map((v, i) => (
+              <div
+                key={i}
+                className="rounded-md border border-border/70 bg-muted/20 p-3"
+              >
+                <div className="text-[12px] font-medium">
+                  {v.label ?? `${i + 1}. kupon`}
+                </div>
+                <div className="mt-1 font-mono text-[12.5px]">
+                  {v.picks.join(" ")}
+                </div>
+                {v.gerekce ? (
+                  <p className="mt-1.5 text-[12.5px] leading-relaxed text-muted-foreground">
+                    {v.gerekce}
+                  </p>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        ) : null}
+
+        {siralama ? <SeviyeSiralamasi siralama={siralama} /> : null}
+
+        {gerekce?.maddeler?.length ? (
+          <div className="rounded-md border border-border/70 p-3">
+            <div className="text-[12px] font-medium">
+              {gerekce.baslik ?? "Niçin bu?"}
+            </div>
+            <dl className="mt-2 space-y-2">
+              {gerekce.maddeler.map((m, i) => (
+                <div key={i}>
+                  <dt className="text-[12.5px] font-medium">{m.baslik}</dt>
+                  <dd className="text-[12.5px] leading-relaxed text-muted-foreground">
+                    {m.metin}
+                  </dd>
+                </div>
+              ))}
+            </dl>
           </div>
         ) : null}
 
@@ -325,5 +421,126 @@ export function KuponGerekcesi({ kupon }: { kupon: SuperTotoKupon }) {
         ) : null}
       </CardBody>
     </Card>
+  );
+}
+
+/**
+ * Haftanin SEVIYE SIRALAMASI — kuponun kararini tek eksende okutur.
+ *
+ * Iki tablo AYNI kupondan cikar ama ters yone bakar: soldaki "en cok
+ * bankodan en az bankoya", sagdaki "en az ucluden en cok ucluye". Sayilar
+ * beslemeden gelir; burada hesaplanan hicbir sey yoktur.
+ */
+function SeviyeSiralamasi({ siralama }: { siralama: SuperTotoSiralama }) {
+  const kesimler = Object.entries(siralama.kesimler ?? {});
+  return (
+    <div className="space-y-2">
+      {siralama.not ? (
+        <p className="text-[12.5px] leading-relaxed text-muted-foreground">
+          {siralama.not}
+        </p>
+      ) : null}
+      <div className="grid gap-3 md:grid-cols-2">
+        <div className="-mx-1 overflow-x-auto px-1">
+          <div className="text-[12px] font-medium">
+            Banko sıralaması
+            {siralama.banko_yon ? (
+              <span className="font-normal text-muted-foreground">
+                {" "}
+                · {siralama.banko_yon}
+              </span>
+            ) : null}
+          </div>
+          {siralama.olcut_banko ? (
+            <div className="text-[11.5px] text-muted-foreground">
+              ölçüt: {siralama.olcut_banko}
+            </div>
+          ) : null}
+          <table className="mt-1 w-full min-w-[320px] text-[12.5px]">
+            <thead>
+              <tr className="border-b text-left text-muted-foreground">
+                <th className="py-1 pr-2 font-medium">#</th>
+                <th className="py-1 pr-2 font-medium">Maç</th>
+                <th className="py-1 pr-2 text-right font-medium">Favori</th>
+                <th className="py-1 pr-2 text-right font-medium">p₂</th>
+                <th className="py-1 text-left font-medium">Ana / 5-5-5</th>
+              </tr>
+            </thead>
+            <tbody>
+              {siralama.banko.map((r) => (
+                <tr key={r.no} className="border-b border-border/50">
+                  <td className="py-1 pr-2 tabular-nums">{r.no}</td>
+                  <td className="py-1 pr-2">
+                    {r.mac}{" "}
+                    <span className="font-mono text-muted-foreground">
+                      {r.isaret}
+                    </span>
+                  </td>
+                  <td className="py-1 pr-2 text-right font-mono tabular-nums">
+                    {_yuzde(r.p_favori, 1)}
+                  </td>
+                  <td className="py-1 pr-2 text-right font-mono tabular-nums">
+                    {_yuzde(r.ceza_p2, 1)}
+                  </td>
+                  <td className="py-1 text-muted-foreground">
+                    {r.secili ?? "—"} / {r.secili_555 ?? "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="-mx-1 overflow-x-auto px-1">
+          <div className="text-[12px] font-medium">
+            Üçlü sıralaması
+            {siralama.uclu_yon ? (
+              <span className="font-normal text-muted-foreground">
+                {" "}
+                · {siralama.uclu_yon}
+              </span>
+            ) : null}
+          </div>
+          {siralama.olcut_uclu ? (
+            <div className="text-[11.5px] text-muted-foreground">
+              ölçüt: {siralama.olcut_uclu}
+            </div>
+          ) : null}
+          <table className="mt-1 w-full min-w-[320px] text-[12.5px]">
+            <thead>
+              <tr className="border-b text-left text-muted-foreground">
+                <th className="py-1 pr-2 font-medium">#</th>
+                <th className="py-1 pr-2 font-medium">Maç</th>
+                <th className="py-1 pr-2 text-right font-medium">Atılan</th>
+                <th className="py-1 pr-2 text-right font-medium">p₃</th>
+                <th className="py-1 text-left font-medium">Ana / 5-5-5</th>
+              </tr>
+            </thead>
+            <tbody>
+              {siralama.uclu.map((r) => (
+                <tr key={r.no} className="border-b border-border/50">
+                  <td className="py-1 pr-2 tabular-nums">{r.no}</td>
+                  <td className="py-1 pr-2">{r.mac}</td>
+                  <td className="py-1 pr-2 text-right font-mono">{r.atilan}</td>
+                  <td className="py-1 pr-2 text-right font-mono tabular-nums">
+                    {_yuzde(r.kazanc_p3, 1)}
+                  </td>
+                  <td className="py-1 text-muted-foreground">
+                    {r.secili ?? "—"} / {r.secili_555 ?? "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {kesimler.length ? (
+        <ul className="list-disc space-y-1 pl-5 text-[12px] leading-relaxed text-muted-foreground">
+          {kesimler.map(([k, v]) => (
+            <li key={k}>{v}</li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
   );
 }
