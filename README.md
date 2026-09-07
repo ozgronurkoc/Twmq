@@ -1097,7 +1097,6 @@ backend/
     karne.py           PARA: kuponun gerçek ikramiye tablolarına karşı getirisi (garanti tabanı)
     hafta_hakki.py     PARA: bütçe kısıtı kalkınca ne kalıyor — cephe, cetvel, kural kıyası (E6)
     kalabalik.py       HAVUZ: kalabalık modeli — 112 haftanın kademe adetlerine oturtulmuş (λ)
-    hakem.py           SÜTUN: E4'ün tek denemesi — hakem etkisi ÖLÇÜLDÜ ve yok çıktı
     havuz.py           HAVUZ: resmî ikramiye tablosundan havuzu ve devri geri hesaplar
     skor.py            ÖLÇÜM: Asya handikabı + alt/üst 2.5 → skor dağılımı → 1X2 (A6)
     kuyruk.py          ÖLÇÜM: hafta içi bağımlılık ve kuyruk etkisi — P(k≥12) iyimser mi (§4.1)
@@ -1116,8 +1115,6 @@ backend/
     build_history.py   Tarihsel veri setini kaynağından üretir
     build_odds.py      Kupon maçlarına piyasa oranlarını eşleştirir
     build_egitim.py    Eğitim korpusu (football-data, 22 lig × 4 geçmiş sezon)
-    build_hakem.py     Hakem sütunu — korpusa DEĞİL ayrı tabloya (E4; §3.59'un
-                       gerekçesi: kapsama coğrafi, korpusa katılırsa kesit bozulur)
     build_fixtures.py  Yaklaşan maç fikstürü (tahmin katmanının ölçülen kaynağı)
     build_xg.py        xG vekili kalibrasyonu (StatsBomb 2015/16 dört lig kesiti;
                        VERI DEGIL katsayi uretir — lisans md. 1.2.1)
@@ -1138,8 +1135,8 @@ backend/
     api_sozlesme.py           API sözleşmesini üretir/denetler (--kontrol: CI kapısı)
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
-                       sehir/ · xg/ · sistem_fiyat/ · hakem/
-  tests/               pytest (72 dosya → 1.837 test; §9'da katman dökümü)
+                       sehir/ · xg/ · sistem_fiyat/
+  tests/               pytest (71 dosya → 1.832 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1344,8 +1341,8 @@ Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant'lar, CLI (Bayes pre
 dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri test,
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
-eşleme, ikinci kayıt). **72 test dosyası, parametrizasyonla
-1.837 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+eşleme, ikinci kayıt). **71 test dosyası, parametrizasyonla
+1.832 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
@@ -1361,7 +1358,6 @@ karşı denetler):
 | Amaç kıyası (`P(k≤3)` ↔ `E[k]`: aynı kupon mu?) | **`amac_kiyasi`** | 5 |
 | Sistem kıyası (kaplama ↔ düz; söküm kararının kanıtı) | **`sistem_kiyasi`** | 3 |
 | Para karnesi (garanti tabanı · enflasyon · canlı · GERÇEK kolon dağılımı · ödeyen olay · banko sapması) | **`karne`** | 31 |
-| Hakem sütunu (E4 · sızıntısızlık · yayılım sınavı) | **`hakem`** | 5 |
 | Kalabalık modeli (λ · kademe adetleri) | **`kalabalik`** | 12 |
 | Koşullu getiri (havuz biz kazanınca bölünür) | **`kosullu_getiri`** | 10 |
 | Skor türetme | `skor` | 17 |
