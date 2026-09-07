@@ -164,21 +164,50 @@ def test_hedef_kurali_BUTCESIZ_kurulamaz(butce):
         hedef_secici(butce)
 
 
-def test_butce_merdiveni_karne_ile_AYNI():
-    """Geri testin bütçe basamakları para karnesininkiyle birebir olmalı.
+def test_butce_merdiveni_karneyi_KAPSAR():
+    """Geri testin bütçe merdiveni para karnesinin bütün basamaklarını içermeli.
 
-    İkisi ayrışırsa kademe ekseni (12+ isabeti) ile para ekseni (gerçek
-    ikramiye ROI'si) **aynı koşumu anlatmayı bırakır** ve README §1.1'in
-    "ikisi aynı koşumdan geliyor" cümlesi sessizce yanlışlanır. Sabit
-    `karne`den içe aktarılmıyor: o 2.000 satırlık bir ölçüm modülü ve API'nin
-    soğuk açılışında yalnız bir demet için yüklenmesi gereksiz — bedeli
-    kopya değil, bu bekçi ödüyor.
+    Para ekseni (gerçek ikramiye ROI'si) `karne.BUTCELER` basamaklarında
+    ölçülüyor. Merdiven onları içermezse kademe isabeti ile para karşılığı
+    **aynı parayı anlatmayı bırakır** ve README §1.1'in "ikisi aynı
+    koşumdan geliyor" cümlesi sessizce yanlışlanır.
+
+    Eşitlik değil kapsama aranıyor: varsayılan tavan ₺210.000'e çıkınca
+    merdivene ₺5.000 ile tavan arasını okunur kılan basamaklar eklendi.
+    Sabit `karne`den içe aktarılmıyor — o 2.000 satırlık bir ölçüm modülü ve
+    API'nin soğuk açılışında yalnız bir demet için yüklenmesi gereksiz;
+    bedeli kopya değil, bu bekçi ödüyor.
     """
     from spor_toto.backtest import BUTCE_IZGARA
     from spor_toto.karne import BUTCELER
 
-    assert BUTCE_IZGARA == BUTCELER
-    assert VARSAYILAN_BUTCE_TL in BUTCE_IZGARA
+    assert set(BUTCELER) <= set(BUTCE_IZGARA), (
+        f"karne basamakları merdivende yok: {sorted(set(BUTCELER) - set(BUTCE_IZGARA))}")
+    assert VARSAYILAN_BUTCE_TL in BUTCE_IZGARA, (
+        "varsayılan tavan merdivende yoksa taramanın tepesi ürünün "
+        "çalıştığı noktayı göstermiyor demektir")
+    assert list(BUTCE_IZGARA) == sorted(BUTCE_IZGARA), "merdiven artan olmalı"
+
+
+def test_tavan_sekli_sabitler_ama_plani_SABITLEMEZ():
+    """Varsayılan tavanda şekil her hafta aynı, plan her hafta farklı.
+
+    ₺210.000 = 21.000 kolon; altındaki en geniş kapsama 9 üçlü + 6 banko
+    (`3^9 = 19.683`), çünkü üçlünün kaçağı sıfırdır ve optimizasyon bütçe
+    elverdiğince üçlü alır. Şekil bu yüzden sabittir.
+
+    **Ama kural körleşmiyor** ve bunu söylemek önemli: hangi altı maçın
+    banko olacağı oranlardan gelir. Şekil sabit, plan değil — bu test tam
+    olarak o ayrımı çiviliyor, çünkü "tavan yükseldi, motor artık haftayı
+    okumuyor" cümlesi kurulması kolay ve YANLIŞ bir cümledir.
+    """
+    r = backtest(sweep=False)
+    kosan = [h for h in r["weeks"] if not h["skipped"]]
+    assert len(kosan) > 10
+    sekiller = {(h["banko"], h["double"], h["triple"]) for h in kosan}
+    assert sekiller == {(6, 0, 9)}, f"beklenmeyen şekil: {sekiller}"
+    planlar = {tuple(h["picks"]) for h in kosan}
+    assert len(planlar) == len(kosan), "planlar haftaya göre değişmeli"
 
 
 def test_butce_kolona_ASAGI_yuvarlanir():

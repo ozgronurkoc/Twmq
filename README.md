@@ -54,16 +54,41 @@ katmanı bu seçime katkı verir ve **isabeti ölçülür** (§1.6).
 
 **Hedefe bugünkü mesafe ölçülmüştür ve büyüktür.** Ürünün **kendi kuralı**
 (`secim.en_iyi_secim` — bütçe tavanı altında `P(k ≤ 3)` enbüyüklenir) dört
-sezonun **114 haftasında**, düz ölçekte, haftalık **₺2.000** tavanla yeniden
+sezonun **114 haftasında**, düz ölçekte, haftalık **₺210.000** tavanla yeniden
 koşuldu. İki eksende de sayı var ve ikisi aynı koşumdan geliyor:
 
 * **Kademe.** İkramiyenin başladığı kademeyi — **12+** — haftaların
-  **%40,4**'ünde tutturuyor (46/114; %95 aralık %31,8–49,5), ortalama en iyi
-  kolon **11,12**. 14+ yedi hafta, 15 bir hafta; bunlar kuyruktur ve tek başına
-  okunmaz.
-* **Para.** Aynı koşumun bedeli ₺184.680; oynanan kolonların **resmî ikramiye
-  tablolarındaki** karşılığı ₺61.615, yani geri dönüş **%33,4**. Okunacak eşik
-  **1,0**'dır ve %33,4 onun üçte biri: ürün bugün parayı kaybediyor.
+  **%93,0**'ünde tutturuyor (106/114; %95 aralık %86,8–96,4), ortalama en iyi
+  kolon **13,22**. 14+ 48 hafta, 15 ise 15 hafta.
+* **Para.** Aynı koşumun bedeli ₺22.438.620; oynanan kolonların **resmî
+  ikramiye tablolarındaki** karşılığı ₺10.438.624, yani geri dönüş **%46,5**.
+  Okunacak eşik **1,0**'dır ve %46,5 onun yarısından az: ürün bugün parayı
+  kaybediyor. Aynı ölçüm ₺2.000 tavanında **%33,4** veriyordu — daha çok para
+  daha **iyi** oran getiriyor, ama başabaşa yetmiyor.
+
+**Bu tavan bir harcama kararıdır, veriden çıkarılmaz** — ve ne kadar
+tutturduğunu okurken bu yazılmadan okunamaz. Bütçe merdiveni yan yana:
+
+| Haftalık tavan | 12+ | Ort. en iyi kolon | Gerçek bedel |
+|---:|---:|---:|---:|
+| ₺2.000 | %40,4 | 11,12 | ₺1.620 |
+| ₺20.000 | %68,4 | 12,13 | ₺18.630 |
+| ₺60.000 | %80,7 | 12,60 | ₺52.181 |
+| **₺210.000** | **%93,0** | **13,22** | **₺196.830** |
+
+Pahalı basamak **her zaman** daha çok tutturur; bu tablonun "en iyi satırı"
+yoktur. Tavan ₺210.000 seçildi çünkü taban çizgisi eşik kuralı tavansız
+koşarken düz ölçekte ₺187.217/hafta harcıyordu — iki kural ancak bu tavanda
+**en az aynı parayla** yarışıyor.
+
+**Tavanın satın aldığı şeyin sınırı da ölçüldü.** 21.000 kolonun altındaki en
+geniş kapsama 9 üçlü + 6 bankodur (`3^9 = 19.683`), çünkü üçlünün kaçağı
+sıfırdır ve optimizasyon bütçe elverdiğince üçlü alır. **Şekil bu yüzden 114
+haftanın hepsinde aynıdır.** Ama plan aynı değildir: hangi altı maçın banko
+olacağı oranlardan gelir ve 114 haftanın 114'ünde farklı çıkar. Kural
+körleşmiyor, karar uzayı daralıyor — ve %93'ün bir kısmı kazanılmış değil
+**satın alınmıştır**. Bekçisi
+`tests/test_backtest.py::test_tavan_sekli_sabitler_ama_plani_SABITLEMEZ`.
 
 Piyasanın kendi Brier skoru bu kesitte **0,5584** (dar kesitte — 36 hafta /
 540 maç — 0,5740); eşit olasılık dağıtmanın karşılığı 0,6667, yani piyasa bilgi
@@ -83,9 +108,11 @@ değil**: ilerleme bunlara karşı ölçülür ve ölçülmeden ilerleme sayılm
 > ikramiye 12'de başlar. Geri test hattı da o gün ürünün kuralına çevrildi;
 > eşik kuralı `?strateji=esik` ile koşulabilen bir **taban çizgisi** olarak
 > kaldı. Kıyasın kendisi bir bulgu: eşik kuralı 12'yi %73,7'de tutturuyor ama
-> **bütçe tavanı olmadığı için** haftada ₺187.217 harcıyor — ürün bütçesinin
-> 116 katı. Bedeli görmeyen bir kuralın isabeti, bedeli gören bir kuralınkiyle
-> yan yana konamaz.
+> **bütçe tavanı olmadığı için** haftada ₺187.217 harcıyor. Bedeli görmeyen
+> bir kuralın isabeti, bedeli gören bir kuralınkiyle yan yana konamaz —
+> tavanın ₺2.000'den **₺210.000**'e çıkarılmasının sebebi budur: iki kural
+> ancak orada en az aynı parayla yarışıyor, ve o parayla ürün kuralı 12'yi
+> %73,7 değil **%93,0**'ünde tutturuyor.
 
 **Tahmin tarafında ilk üç adım ölçüldü ve sonuç şudur.** Tahminci sözleşmesi,
 değerlendirme koşumu, yeniden kalibrasyon kademesi ve 31.103 maçlık eğitim
@@ -539,8 +566,9 @@ karşı tek savunma budur.
 yan yana koşuldu ve ikisi de 12 verdi; 2. Tahmin bunu **3,2 kat az kolonla** aldı
 (1.296 ↔ 4.096). Bugünkü kural geçen sezonun 36 haftasında yeniden koşulduğunda
 ortalama en iyi kolon **11,81**, haftaların %67'si 12+ ve yalnızca %6'sı 14+
-(**kaplama ölçeği**; aynı kural düz ölçekte, ₺2.000 tavanla, 114 haftada
-ortalama **11,12** ve %40,4 — §1.1) —
+(**kaplama ölçeği**; aynı kural düz ölçekte ve 114 haftada ₺2.000 tavanla
+ortalama **11,12** / %40,4, bugünkü ₺210.000 tavanıyla **13,22** / %93,0 —
+§1.1) —
 yani 12 kuralın *normali*, 9 alt kuyruğu, 14 ise **üst** kuyruğu. Üç haftanın
 ortalaması 11,67. **Kural üç haftada da değiştirilmedi**; ayrıntı ve on ölçülmüş
 ders: `docs/ISTATISTIK_YOL_HARITASI.md` §3.38 (2. hafta) ve §3.47 (3. hafta).
@@ -641,18 +669,23 @@ doğru, üçü farklı kesit — ve hangisinden konuşulduğu **yazılmadan** ok
 ama az. Favori isabeti tek başına yanıltıcıdır: 1,05 oranlı favorinin tutmasıyla
 2,40 oranlınınki aynı sayılmaz; Brier olasılığın tamamını cezalandırır.
 
-**Geri test — ürünün kendi kuralı.** `secim.en_iyi_secim`, haftalık ₺2.000
-tavanla, 114 haftanın **46'sında** 12+ tutturuyor (%40,4; %95 aralık
-%31,8–49,5); ortalama en iyi kolon **11,12**, ortalama bedel **₺1.620/hafta**
-(162 kolon). Kuyruk: 13+ 23 hafta, 14+ 7 hafta, 15 bir hafta. Aynı koşumun para
-karşılığı §1.1'de: geri dönüş **%33,4**.
+**Geri test — ürünün kendi kuralı.** `secim.en_iyi_secim`, haftalık ₺210.000
+tavanla, 114 haftanın **106'sında** 12+ tutturuyor (%93,0; %95 aralık
+%86,8–96,4); ortalama en iyi kolon **13,22**, ortalama bedel **₺196.830/hafta**
+(19.683 kolon). Kuyruk: 13+ 85 hafta, 14+ 48 hafta, 15 ise 15 hafta. Aynı
+koşumun para karşılığı §1.1'de: geri dönüş **%46,5**. Bütçe merdiveninin
+tamamı da §1.1'de — pahalı basamak her zaman daha çok tutturur, o yüzden
+tavan yazılmadan isabet okunamaz.
 
-**Taban çizgisi — eşik kuralı, ve neden kıyas geçerli değil.** Eski mekanik
-kural (`backtest.secim_uret`, 0,68/0,38) aynı 114 haftada 12'yi **%73,7**'de
-tutturuyor, ortalama en iyi kolon 12,19. Daha iyi *görünüyor*. Ama o kuralın
-**bütçe tavanı yok**: düz ölçekte haftada **₺187.217** harcıyor, yani ürün
-bütçesinin 116 katı. Bedeli görmeyen bir kuralın isabeti, bedeli gören bir
-kuralınkiyle yan yana konamaz — README §1.1 uzun süre tam bunu yapıyordu.
+**Taban çizgisi — eşik kuralı, ve tavanın neden ₺210.000 olduğu.** Eski
+mekanik kural (`backtest.secim_uret`, 0,68/0,38) aynı 114 haftada 12'yi
+**%73,7**'de tutturuyor, ortalama en iyi kolon 12,19 — ama **bütçe tavanı
+yok**: düz ölçekte haftada **₺187.217** harcıyor. Bedeli görmeyen bir kuralın
+isabeti, bedeli gören bir kuralınkiyle yan yana konamaz; README §1.1 uzun süre
+tam bunu yapıyordu. Ürün tavanı o rakamın üstüne (₺210.000) çekildiğinde kıyas
+geçerli oluyor ve sonuç net: **aynı parada %73,7 ↔ %93,0**, ortalama en iyi
+kolon 12,19 ↔ 13,22. Hedef kuralı, bütçeyi gören kural olduğu için değil,
+haftanın şeklini gördüğü için önde.
 
 Aynı ailenin eşik taraması ve hold-out'u da bunu ikinci kez gösteriyor: ölçüt
 14+'dan **12+**'ya (ikramiye kademesi) çevrilince tarama en geniş eşiğe
@@ -1060,7 +1093,7 @@ backend/
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
                        sehir/ · xg/ · sistem_fiyat/ · hakem/
-  tests/               pytest (72 dosya → 1.820 test; §9'da katman dökümü)
+  tests/               pytest (72 dosya → 1.821 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1266,7 +1299,7 @@ dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri t
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
 eşleme, ikinci kayıt). **72 test dosyası, parametrizasyonla
-1.820 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+1.821 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
@@ -1275,7 +1308,7 @@ karşı denetler):
 | Çekirdek (kodlama · düz üretim · olasılık) | `core` `invariants` `edge_cases` `cli` `analysis` `bayes` `markov` `fire_scenarios` | 256 |
 | Tahmin katmanı | `predict` `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin` `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre` `secim_kalibrasyonu` **`arena`** **`sizinti`** | 595 |
 | Sağlık | `health` `api_health` `meta` `health_history` | 82 |
-| Veri / istatistik / geri test | `history` `odds` `backtest` `api_stats` `api_backtest` `snapshot_iddaa` `pazar` **`gecmis_sezon`** **`sportoto_arsiv`** **`bulten`** | 231 |
+| Veri / istatistik / geri test | `history` `odds` `backtest` `api_stats` `api_backtest` `snapshot_iddaa` `pazar` **`gecmis_sezon`** **`sportoto_arsiv`** **`bulten`** | 232 |
 | Süper Toto | `super_toto` `degerlendir` | 97 |
 | 2. Tahmin (kalabalık ayarı · bağımsız görüş) | `tahmin2` | 35 |
 | Karar katmanı | `secim` | 27 |
@@ -1493,10 +1526,12 @@ değil.
 
 **Geri test bir davranışı değil, bir kuralın bedelini ölçer.** Kupon oranlardan
 mekanik üretilir: sakatlık, motivasyon, kadro gibi hiçbir dış bilgi yoktur.
-Ürünün kuralı en azından **ödenebilir** bir kupon üretiyor (₺1.620/hafta, ₺2.000
-tavan altında); taban çizgisi eşik kuralının haftada ₺187.217'lik kuponunu ise
-gerçek bir oyuncunun oynamayacağı açıktır — bütçenin zorunlu parametre olmasının
-sebebi budur.
+Ürünün kuralı **verilen tavanın altında kalan** bir kupon üretiyor; taban
+çizgisi eşik kuralı ise tavan tanımadığı için haftada ₺187.217'ye çıkıyor.
+Bütçenin zorunlu parametre olmasının sebebi budur. Ama bugünkü varsayılan
+tavan da (₺210.000, gerçekleşen ₺196.830/hafta) küçük bir oyuncunun harcaması
+**değildir** — o sayı kıyası geçerli kılmak için seçildi, tavsiye olarak
+değil. Kendi bütçenizin karşılığı §1.1'deki merdivende.
 
 **Piyasa oranı ≠ iddaa oranı.** Seviye tutmaz, yapı tutar. Bu not sayfada her yerde
 görünür durumdadır ve kaldırılmamalıdır.
@@ -1597,10 +1632,13 @@ eklenen bir belge buraya da girmezse test düşer. Boşluk sessiz kalmasın diye
 ## 14. Uyarı
 
 Bu aracın amacı kazanma oranını artırmaktır; ancak kazanmayı **garanti etmez** ve
-hedefe bugünkü mesafe açıkça ölçülmüştür (§1.1): ürünün kendi kuralı 114 haftada
-ikramiye kademesini (12+) haftaların **%40,4'ünde** tutturuyor ve oynanan paranın
-**%33,4'ünü** geri getiriyor — yani başabaşın (1,0) üçte biri. Ölçülen bu iki sayı
-iyileşmeden, aracın kazanma oranını artırdığı iddia edilemez.
+hedefe bugünkü mesafe açıkça ölçülmüştür (§1.1): ürünün kendi kuralı 114 haftada,
+haftalık ₺210.000 tavanla, ikramiye kademesini (12+) haftaların **%93,0'ünde**
+tutturuyor ama oynanan paranın yalnızca **%46,5'ini** geri getiriyor — yani
+başabaşın (1,0) yarısından azını. **İki sayı birlikte okunmalıdır:** kademe
+isabeti yüksek çünkü çok para harcanıyor; kazandıran şey isabet değil, isabetin
+bedele oranıdır. Ölçülen bu oran iyileşmeden, aracın kazanma oranını artırdığı
+iddia edilemez.
 
 Olasılık / Monte Carlo / Bayes / Markov çıktıları **beklenen-değer veya kâr hesabı
 değildir**; ikramiye havuzu ve kolon bedeli hesaba katılmaz.

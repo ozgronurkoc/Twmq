@@ -2,7 +2,7 @@
  "sayilar": [
   {
    "ne": "suit test sayisi (eksiksiz kurulum)",
-   "deger": "1.820",
+   "deger": "1.821",
    "ureten": "cd backend && python -m pytest --collect-only -q -p no:randomly -o addopts=  # son satirdaki toplam",
    "olculdu": "2026-09-07",
    "anildigi_yerler": [
@@ -1367,16 +1367,15 @@
   },
   {
    "ne": "geri test — BUGUNKU KURAL (hedef), 114 hafta, TL2.000 tavan: 12+ tutturan hafta",
-   "deger": "46/114",
+   "deger": "%40,4",
    "ureten": "cd backend && python -c \"from spor_toto.backtest import backtest; import json; print(json.dumps(backtest(sweep=False, sezon='hepsi')['season'], ensure_ascii=False))\"",
    "olculdu": "2026-09-07",
    "anildigi_yerler": [
-    "README.md §1.1",
-    "README.md §5.4"
+    "README.md §1.1"
    ],
    "bekci": "backend/tests/test_belgeler.py::test_readme_1_1_geri_test_sayilari_olcumle_ayni",
-   "olcek": "duz",
-   "not": "Ayni kosumun yanindaki sayilari: %40,4 (%95 araligi %31,8-49,5), 13+ 23, 14+ 7, 15 bir hafta; ortalama en iyi kolon 11,12; ortalama bedel TL1.620/hafta (162 kolon). || Yanindaki sayilar ayni kosumdan: 13+ 23, 14+ 7, 15 bir hafta; ortalama en iyi kolon 11,12; ortalama bedel TL1.620/hafta (162 kolon). MANSET 12'dir cunku ikramiye orada baslar. 14+ KUYRUKTUR ve tek basina okunmaz. Bu satir README §1.1'in ESKI cumlesinin yerini aliyor: orasi 'esik kuralinin' 36 haftada 3 kez 14+ tutturdugunu yaziyordu — ne kural urunun kuraliydi, ne olcek duzdu, ne de manset dogruydu."
+   "olcek": "duz · TL2.000 tavan",
+   "not": "Capa %40,4: README §1.1 bu olcumu artik butce MERDIVENINDE aniyor (46/114 sayisi metinden dustu, olcum durdu). §5.4'ten de dustu. || TL2.000 tavan olcegi — varsayilan tavan 2026-09-07'de TL210.000'e cikti (bkz. ayni tarihli 106/114 girdisi). Kayit SILINMEZ: o gun olculen buydu ve README §1.1'in butce merdiveninde hala aniliyor. || Ayni kosumun yanindaki sayilari: %40,4 (%95 araligi %31,8-49,5), 13+ 23, 14+ 7, 15 bir hafta; ortalama en iyi kolon 11,12; ortalama bedel TL1.620/hafta (162 kolon). || Yanindaki sayilar ayni kosumdan: 13+ 23, 14+ 7, 15 bir hafta; ortalama en iyi kolon 11,12; ortalama bedel TL1.620/hafta (162 kolon). MANSET 12'dir cunku ikramiye orada baslar. 14+ KUYRUKTUR ve tek basina okunmaz. Bu satir README §1.1'in ESKI cumlesinin yerini aliyor: orasi 'esik kuralinin' 36 haftada 3 kez 14+ tutturdugunu yaziyordu — ne kural urunun kuraliydi, ne olcek duzdu, ne de manset dogruydu."
   },
   {
    "ne": "geri test — TABAN CIZGISI (esik 0,68/0,38), 114 hafta, TAVANSIZ: 12+ ve haftalik bedel",
@@ -1409,12 +1408,11 @@
    "ureten": "cd backend && python -m spor_toto.karne --taban --butce 2000",
    "olculdu": "2026-09-07",
    "anildigi_yerler": [
-    "README.md §1.1",
-    "docs/KAZANMA_PLANI.md"
+    "README.md §1.1"
    ],
    "bekci": null,
-   "olcek": "duz",
-   "not": "TL61.615 odul / TL184.680 maliyet. || Garanti tabani odulu TL26.361 (%14,3), taban gevsekligi 2,34 kat. Okunacak esik 1,0'dir ve %33,4 onun UCTE BIRI: urun bugun parayi kaybediyor. Maliyet satiri geri testle BIREBIR ortusuyor (184.680/114 = TL1.620/hafta), yani kademe ekseni ile para ekseni ayni kosumu anlatiyor."
+   "olcek": "duz · TL2.000 tavan",
+   "not": "§1.1 bunu TL210.000 tavaninin yaninda KIYAS olarak aniyor. || TL2.000 tavan olcegi — varsayilan tavan TL210.000'e cikti ve ayni olcum orada %46,5 veriyor. Kayit SILINMEZ. || TL61.615 odul / TL184.680 maliyet. || Garanti tabani odulu TL26.361 (%14,3), taban gevsekligi 2,34 kat. Okunacak esik 1,0'dir ve %33,4 onun UCTE BIRI: urun bugun parayi kaybediyor. Maliyet satiri geri testle BIREBIR ortusuyor (184.680/114 = TL1.620/hafta), yani kademe ekseni ile para ekseni ayni kosumu anlatiyor."
   },
   {
    "ne": "piyasa Brier cizgisi — iki kesit ayri ayri",
@@ -1443,6 +1441,56 @@
    ],
    "bekci": "backend/tests/test_snapshot_iddaa.py::test_rapor_birikimli_marji_tasir",
    "not": "Tam deger %16,94 ortalama / %17,99 medyan, 473 satir / 2 snapshot; belgeler yuvarlanmis %16,9 ve medyan %18,0 yaziyor. || Belgeler %17,2 diyordu ve o TEK GUNUN sayisiydi (2026-08-16, 222 mac). Bir sonraki snapshot %16,70 verdi (2026-08-17, 251 mac), rapor uzerine yazildi, belge kaymadi ve hicbir kapi gormedi — cunku `avg_margin_pct` bir KOSUM CIKTISI, birikimli bir olcum degil. `snapshot_iddaa.birikimli_marj` eklendi ve rapora `birikimli` blogu girdi; belgeye giren sayi artik odur. Haftalik cron (.github/workflows/snapshot-iddaa.yml) her pazartesi bir snapshot daha ekliyor, yani bu sayi oynayacak ama sicramayacak. Medyan (%17,99) ortalamadan yuksek: dagilim carpik, buyuk ligler dusuk marjli. Piyasa arsivinin marji %7,26 — kiyas oradan. || Web (bayi disi) fiyatinin ayni 473 satirdaki marji %21,4 ortalama / %22,4 medyan; kupon fiyati bayi fiyatidir, belgede anilan sayi odur."
+  },
+  {
+   "ne": "geri test — BUGUNKU KURAL (hedef), 114 hafta, TL210.000 tavan: 12+ tutturan hafta",
+   "deger": "106/114",
+   "ureten": "cd backend && python -c \"from spor_toto.backtest import backtest; import json; print(json.dumps(backtest(sweep=False, sezon='hepsi')['season'], ensure_ascii=False))\"",
+   "olculdu": "2026-09-07",
+   "anildigi_yerler": [
+    "README.md §1.1",
+    "README.md §5.4"
+   ],
+   "bekci": "backend/tests/test_belgeler.py::test_readme_1_1_geri_test_sayilari_OLCUMLE_ayni",
+   "olcek": "duz · TL210.000 tavan",
+   "not": "Ayni kosum: %93,0 (%95 araligi %86,8-96,4), 13+ 85, 14+ 48, 15 onbes hafta; ortalama en iyi kolon 13,22; ortalama bedel TL196.830/hafta (19.683 kolon). Tavan TL2.000'den TL210.000'e cikarildi cunku taban cizgisi esik kurali TAVANSIZ kosarken TL187.217/hafta harciyordu ve kiyas gecerli degildi; TL210.000 onun ustunde. Ayni parada sonuc %73,7 (esik) <-> %93,0 (hedef)."
+  },
+  {
+   "ne": "para ekseni — 114 hafta, TL210.000: gercek kolon odulunun geri donusu",
+   "deger": "%46,5",
+   "ureten": "cd backend && python -m spor_toto.karne --taban --butce 210000",
+   "olculdu": "2026-09-07",
+   "anildigi_yerler": [
+    "README.md §1.1",
+    "README.md §14"
+   ],
+   "bekci": null,
+   "olcek": "duz · TL210.000 tavan",
+   "not": "TL10.438.624 odul / TL22.438.620 maliyet. Garanti tabani odulu TL5.108.475 (%22,8), taban gevsekligi 2,04 kat. TL2.000 tavaninda ayni olcum %33,4 veriyordu: daha cok para daha IYI oran getiriyor ama basabas 1,0 hala uzak. Maliyet satiri geri testle birebir ortusuyor (22.438.620/114 = TL196.830/hafta)."
+  },
+  {
+   "ne": "butce merdiveni — hedef kurali, 114 hafta, dokuz basamak",
+   "deger": "%68,4",
+   "ureten": "cd backend && python -c \"from spor_toto.backtest import backtest; import json; print(json.dumps(backtest(sweep=True, sezon='hepsi')['butce_sweep'], ensure_ascii=False))\"",
+   "olculdu": "2026-09-07",
+   "anildigi_yerler": [
+    "README.md §1.1"
+   ],
+   "bekci": "backend/tests/test_backtest.py::test_butce_taramasi_MONOTON_ve_hold_out_yok",
+   "olcek": "duz",
+   "not": "Capa TL20.000 basamagi (%68,4). Merdivenin tamami: TL500 %28,1 · TL1.000 %32,5 · TL1.500 %35,1 · TL2.000 %40,4 · TL3.000 %43,0 · TL5.000 %52,6 · TL20.000 %68,4 · TL60.000 %80,7 · TL210.000 %93,0. MONOTON ve olmasi gereken de bu: buyuk tavan kucugun buldugu her plani da kapsiyor. Bu tablonun 'en iyi satiri' YOKTUR — pahali basamak her zaman daha cok tutturur; sorulacak soru bedele degip degmedigidir. Kosum 4,6 sn."
+  },
+  {
+   "ne": "TL210.000 tavanda kupon SEKLI sabit, PLAN degil",
+   "deger": "19.683",
+   "ureten": "cd backend && python -c \"from spor_toto.backtest import backtest; r=backtest(sweep=False); k=[h for h in r['weeks'] if not h['skipped']]; print({(h['banko'],h['double'],h['triple']) for h in k}, len({tuple(h['picks']) for h in k}), len(k))\"",
+   "olculdu": "2026-09-07",
+   "anildigi_yerler": [
+    "README.md §1.1"
+   ],
+   "bekci": "backend/tests/test_backtest.py::test_tavan_sekli_sabitler_ama_plani_SABITLEMEZ",
+   "olcek": "duz · TL210.000 tavan",
+   "not": "Capa 19.683 = 3^9, sekli belirleyen kolon sayisi. Sekil demeti (banko, cifte, uclu) = (6, 0, 9). || 21.000 kolonun altindaki en genis kapsama 9 uclu + 6 banko (3^9 = 19.683); uclunun kacagi sifir oldugu icin optimizasyon butce elverdigince uclu alir. Sekil bu yuzden BUTUN haftalarda ayni. AMA PLAN AYNI DEGIL: dar kesitte 36/36, genis kesitte 114/114 farkli plan — hangi alti macin banko olacagi oranlardan geliyor. 'Tavan yukseldi, motor artik haftayi okumuyor' cumlesi kurulmasi kolay ve YANLIS; bekci tam o ayrimi civiliyor."
   }
  ],
  "komutlar": [

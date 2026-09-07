@@ -94,21 +94,42 @@ UCLU_IZGARA: tuple[float, ...] = (0.0, 0.34, 0.38, 0.42)
 #: Tanınan stratejiler. `hedef` ürünün kendi kuralı, `esik` taban çizgisi.
 STRATEJILER: tuple[str, ...] = ("hedef", "esik")
 
-#: `hedef` stratejisinin varsayılan haftalık bütçesi (TL). `karne.BUTCELER`in
-#: orta basamağı ve para ekseninin ölçüldüğü bütçe — iki hat aynı parayı
-#: konuşsun diye aynı sayı seçildi.
-VARSAYILAN_BUTCE_TL = 2000.0
+#: `hedef` stratejisinin varsayılan haftalık bütçesi (TL).
+#:
+#: **Bu bir HARCAMA KARARIDIR, veriden çıkarılmaz** — ve 2026-09-07'de
+#: ₺2.000'den ₺210.000'e çıkarıldı. Gerekçe kıyasın geçerliliği: taban
+#: çizgisi eşik kuralı tavansız koştuğu için düz ölçekte ₺187.217/hafta
+#: harcıyordu, yani ürün kuralı onunla yan yana konamıyordu. ₺210.000 o
+#: rakamın üstündedir; iki kural artık **en az aynı parayla** yarışıyor.
+#:
+#: Bedelin ölçülmüş karşılığı (114 hafta, düz): 12+ %93,0, ortalama en iyi
+#: kolon 13,22, gerçek kolon ödülünün geri dönüşü %46,5. Başabaş 1,0 hâlâ
+#: uzak — daha çok para, daha az kötü kaybetmek demek.
+#:
+#: **Tavanın şekli sabitlediği yer burasıdır.** 21.000 kolonun altında en
+#: geniş kapsama 9 üçlü + 6 banko (`3^9 = 19.683`); üçlünün kaçağı sıfır
+#: olduğu için optimizasyon bütçe elverdiğince üçlü alır. Şekil bu yüzden
+#: 114 haftanın hepsinde aynıdır — ama **plan aynı değildir**: hangi altı
+#: maçın banko olacağı oranlardan gelir ve 114 haftanın 114'ünde farklı
+#: çıkar. Kural körleşmiyor, karar uzayı daralıyor.
+VARSAYILAN_BUTCE_TL = 210000.0
 
 #: `hedef` stratejisinin bütçe taraması (TL). Eşik taramasının yerini tutar:
 #: orada taranan şey ayarlanan bir parametre (aşırı uyum riski), burada
 #: taranan şey bir **harcama kararı**.
 #:
-#: `karne.BUTCELER` ile **birebir aynı** olmak zorunda: iki hat aynı parayı
-#: konuşmazsa kademe ekseni ile para ekseni yan yana okunamaz. Kopya duruyor
-#: çünkü `karne` 2.000 satırlık bir ölçüm modülü ve API'nin soğuk açılışında
-#: onu yalnız bir demet için yüklemek gereksiz; ayrışmayı
-#: `tests/test_backtest.py::test_butce_merdiveni_karne_ile_AYNI` tutuyor.
-BUTCE_IZGARA: tuple[float, ...] = (500.0, 1000.0, 1500.0, 2000.0, 3000.0, 5000.0)
+#: Merdiven `karne.BUTCELER`in bütün basamaklarını **içermek zorunda**: para
+#: ekseni (gerçek ikramiye ROI'si) orada ölçülüyor ve iki hat aynı parayı
+#: konuşmazsa kademe isabeti ile para karşılığı yan yana okunamaz. Üstüne üç
+#: basamak eklenir, çünkü varsayılan tavan artık ₺210.000 ve ₺5.000 ile onun
+#: arasındaki eğri okunmadan "bir basamak yukarı çıkmak neye değiyor"
+#: sorusu cevaplanamaz. `karne` içe aktarılmıyor (2.000 satırlık ölçüm
+#: modülü, API'nin soğuk açılışına girmemeli); kapsamayı
+#: `tests/test_backtest.py::test_butce_merdiveni_karneyi_KAPSAR` tutuyor.
+BUTCE_IZGARA: tuple[float, ...] = (
+    500.0, 1000.0, 1500.0, 2000.0, 3000.0, 5000.0,   # karne.BUTCELER
+    20000.0, 60000.0, 210000.0,                       # düz tavana giden basamaklar
+)
 
 
 def butce_kolon(butce_tl: float) -> int:

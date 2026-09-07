@@ -113,7 +113,7 @@
     "columns_avg": "float",
     "columns_max": "int",
     "columns_per_hit12": "float",
-    "columns_per_hit14": "null",
+    "columns_per_hit14": "float",
     "columns_total": "int",
     "double_avg": "float",
     "hit12": "int",

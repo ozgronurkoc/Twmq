@@ -105,7 +105,7 @@ teyit edildi (§3, Faz 0.1), yani:
 |---|---|
 | Bütçe | 1.000–3.000 TL = **100–300 kolon** |
 | Alınabilen şekil (düz) | `secim.bedel_hesapla` = `2^çifte · 3^üçlü` → 6 çifte = **64 kolon** (640 TL) · 7 çifte = **128 kolon** (1.280 TL) · 8 çifte = **256 kolon** (2.560 TL) · 9 çifte = 512 kolon, **bütçe dışı**. (Formül `/ 8` taşıyordu; o kaplama bedeliydi ve katman söküldü.) |
-| Geri testin bugünkü varsayılanı | **162 kolon/hafta ≈ 1.620 TL** — bütçenin içinde. (Bu satır 2026-09-07'de düzeldi: geri test o güne kadar tavansız **eşik** kuralını koşuyordu ve düz ölçekte 18.722 kolon/hafta ≈ 187.217 TL harcıyordu. Artık varsayılan ürünün kendi kuralı ve bütçe **zorunlu parametre**.) |
+| Geri testin bugünkü varsayılanı | **19.683 kolon/hafta ≈ 196.830 TL** (tavan 210.000 TL) — Faz S'nin 100–300 kolon bandının **çok üstünde**. (2026-09-07: geri test o güne kadar tavansız **eşik** kuralını koşuyordu, 18.722 kolon/hafta ≈ 187.217 TL. Varsayılan ürünün kendi kuralı oldu ve bütçe **zorunlu parametre**; tavan eşik kuralının harcamasının üstüne çekildi ki kıyas geçerli olsun. Faz S'nin çalışma noktası bu değildir ve `--butce` ile ayrıca kurulur.) |
 
 Faz S'nin çalışma noktası bu yüzden bugünkü geri testin çalıştığı yer değildir.
 Bütün `secim` / `backtest` ölçümleri **100–300 kolon** bandında yeniden kurulur.

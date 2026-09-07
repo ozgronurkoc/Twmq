@@ -8,11 +8,12 @@ Kupon **düz** oynanır (tam sistem): seçim kümesinin tamamı, en iyi kolon
 (covering code) kullanıyordu; söküm gerekçesi `docs/DUZ_SISTEME_GECIS.md`de.
 
 > **Amaç: kazanma oranını artırmak.** Hedefe bugünkü mesafe ölçülmüştür ve
-> `README.md` §1.1'de yazar: ürünün kendi kuralı 114 haftada ikramiye
-> kademesini (12+) **%40,4**'te tutturuyor, oynanan paranın **%33,4**'ünü geri
-> getiriyor (başabaş 1,0), piyasa Brier'i o kesitte **0,5584**, iddaa marjı
-> **%16,9**. Ölçülmemiş hiçbir iyileşme iddia edilmez, ölçülmemiş hiçbir
-> tahminci arayüze çıkmaz.
+> `README.md` §1.1'de yazar: ürünün kendi kuralı 114 haftada, haftalık
+> **₺210.000** tavanla, ikramiye kademesini (12+) **%93,0**'ünde tutturuyor
+> ama oynanan paranın yalnızca **%46,5**'ini geri getiriyor (başabaş 1,0).
+> İkisi birlikte okunur: isabet yüksek çünkü çok para harcanıyor. Piyasa
+> Brier'i o kesitte **0,5584**, iddaa marjı **%16,9**. Ölçülmemiş hiçbir
+> iyileşme iddia edilmez, ölçülmemiş hiçbir tahminci arayüze çıkmaz.
 >
 > Bu satır uzun süre "hold-out isabeti 1 hafta" diyordu. O sayı hem **kaplama
 > ölçeğinde** hem de **ürünün kullanmadığı bir kuralla** (`backtest.secim_uret`,
@@ -208,7 +209,7 @@ doğrulamadan dosya yazmazlar). Ayrıntı: `docs/VERI_TOPLAMA_VE_ISLEME.md`.
 ```bash
 cd backend
 python -m pytest -m "not slow" -q   # hızlı süit
-python -m pytest                    # tamamı (1.820 test)
+python -m pytest                    # tamamı (1.821 test)
 python -m pytest -n0 tests/test_egitim.py   # tek çekirdek (hata ayıklarken)
 cd .. && bash scripts/check.sh      # TEK kapı; CI de bunu çağırır
 ```
