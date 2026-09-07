@@ -38,6 +38,7 @@ from spor_toto.karne import (
     CANLI_KOK,
     RAKIP_KOLON,
     VARSAYILAN_GARANTI,
+    VARSAYILAN_KURAL,
     canli_hafta,
     canli_karne_satiri,
 )
@@ -64,10 +65,11 @@ def sezon_haftalari(sezon: str) -> list[int]:
     return out
 
 
-def satirlar(sezon: str, butce: float, garanti: int) -> list[dict[str, Any]]:
+def satirlar(sezon: str, butce: float, garanti: int,
+             kural: str = VARSAYILAN_KURAL) -> list[dict[str, Any]]:
     out = []
     for h in sezon_haftalari(sezon):
-        r = canli_karne_satiri(sezon, h, butce, garanti)
+        r = canli_karne_satiri(sezon, h, butce, garanti, kural=kural)
         if r:
             out.append(r)
     return out
@@ -113,8 +115,9 @@ def _merdiven(probs: list[dict[str, float]], garanti: int,
               f"{x.p_hedef:>9.4f}{marj:>10}")
 
 
-def karne_metni(sezon: str, butce: float, garanti: int) -> str:
-    rows = satirlar(sezon, butce, garanti)
+def karne_metni(sezon: str, butce: float, garanti: int,
+                kural: str = VARSAYILAN_KURAL) -> str:
+    rows = satirlar(sezon, butce, garanti, kural)
     bitmis = [r for r in rows if "odul" in r]
     maliyet = sum(r["maliyet"] for r in bitmis)
     odul = sum(r["odul"] for r in bitmis)
@@ -135,7 +138,8 @@ def karne_metni(sezon: str, butce: float, garanti: int) -> str:
 | | |
 |---|---|
 | garanti | **{garanti}** → kaçak eşiği `k ≤ {kacak_esigi()}`, hedef `P(en iyi kolon ≥ 12)` |
-| bütçe | {butce:,.0f} TL ({butce / 10:,.0f} kolon) |
+| kural | **`{kural}`** — {'`secim.odul_secim`: kademeler kendi ağırlığıyla (medyan), bütçe **kısıt değil supap**' if kural == 'hak' else '`secim.sistem_secimi`: `P(k ≤ eşik)`, bütçe **kısıt**'} |
+| bütçe | {butce:,.0f} TL ({butce / 10:,.0f} kolon) — {'**tavan**; kural bedelini kendi seçer ve satırlar tavanı kovalamaz' if kural == 'hak' else 'kısıt; kural bunu harcar'} |
 | bedel | ₺10/kolon — ölçülmüş (`getiri.KOLON_BEDELI`) |
 | ödül | **garanti tabanı**: `k` kaçakta **bir** kolon `{garanti}−k` kademesinde. **Alt sınır** — gerçekleşen getiri bundan büyüktür |
 | ödeyen olay | `k = 0` → {garanti}. kademe. `P(k≤{kacak_esigi()})` bunu `k = 1`'le **topluyor** ve o kademe maliyeti karşılamıyor — bkz. başabaş sütunu |
@@ -214,13 +218,18 @@ def _main(argv: list[str] | None = None) -> int:
     ap.add_argument("--sezon", default="2026_27")
     ap.add_argument("--butce", type=float, default=VARSAYILAN_BUTCE)
     ap.add_argument("--garanti", type=int, default=VARSAYILAN_GARANTI)
+    ap.add_argument("--kural", choices=("hak", "butce"),
+                    default=VARSAYILAN_KURAL,
+                    help="plani kuran kural: 'hak' (odul_secim, butce supap) "
+                         "ya da 'butce' (en_iyi_secim, butce kisit)")
     ap.add_argument("--yaz", action="store_true",
                     help="--sonrasi ile: dosyaya yaz (varsayilan: ekrana bas)")
     a = ap.parse_args(argv)
 
     if a.oncesi:
         sezon, hafta = a.oncesi[0], int(a.oncesi[1])
-        r = canli_karne_satiri(sezon, hafta, a.butce, a.garanti)
+        r = canli_karne_satiri(sezon, hafta, a.butce, a.garanti,
+                               kural=a.kural)
         if r is None:
             print(f"{sezon} {hafta}. hafta: yuk yok ya da eksik", file=sys.stderr)
             return 1
@@ -229,13 +238,40 @@ def _main(argv: list[str] | None = None) -> int:
         print(f"  oynanma payi  : {r['oynanma_kaynagi']}")
         print(f"  garanti       : {a.garanti} (kacak esigi k <= "
               f"{kacak_esigi()})")
+        print(f"  KURAL         : {r['kural']}"
+              + ("  (odul_secim · kademeler kendi agirligiyla · medyan)"
+                 if r["kural"] == "hak" else
+                 "  (en_iyi_secim · P(k<=esik) · butce KISIT)"))
         print(f"  sekil         : {r['banko']} banko · {r['cift']} cifte · "
               f"{r['uclu']} uclu")
-        print(f"  bedel         : {r['kolon']} kolon = {r['maliyet']:,.0f} TL")
+        print(f"  bedel         : {r['kolon']} kolon = {r['maliyet']:,.0f} TL"
+              f"   (tavan {a.butce:,.0f} TL = {a.butce / 10:,.0f} kolon)")
+        if r["tavana_dayandi"]:
+            ek = (f"; kural serbestken {r['serbest_kolon']:,} kolon istiyordu"
+                  if r["serbest_kolon"] else "")
+            print(f"    ! TAVANA DAYANDI — plan butce yuzunden kisildi{ek}")
+        else:
+            print(f"    tavan KOVALANMADI — kural bedelini kendi secti "
+                  f"(tavanin %{100 * r['maliyet'] / a.butce:.0f}'i)")
         print(f"  P(hedef)      : {r['p_hedef']:.4f}   "
               f"(k <= {kacak_esigi()}; KAPSAMA olcusu)")
         print(f"  P(kacak=0)    : {r['p_kacak_sifir']:.4f}   "
               f"(ODEYEN olay: {a.garanti}. kademe)")
+        if r["kural"] == "hak" and r["butce_kurali_kolon"]:
+            print(f"\n  butce kurali (eski varsayilan) — KIYAS:")
+            print(f"    sekil    : {r['butce_kurali_banko']} banko · "
+                  f"{r['butce_kurali_cift']} cifte · {r['butce_kurali_uclu']} uclu")
+            print(f"    bedel    : {r['butce_kurali_kolon']:,} kolon = "
+                  f"{r['butce_kurali_kolon'] * 10:,.0f} TL")
+            print(f"    P(hedef) : {r['butce_kurali_p_hedef']:.4f}")
+            print("    NOT: 97 eslesik haftada (nedensel odul vektoruyle) "
+                  "gercek kolon ROI")
+            print("         ana kural 1,438 <-> butce kurali 0,544; kuyruksuz "
+                  "(en iyi 5 hafta")
+            print("         cikarilmis) 0,276 <-> 0,199. Eslesik bootstrap: "
+                  "kuyruksuz fark")
+            print("         +0,130 [+0,013, +0,270] GECTI, ham ROI farki "
+                  "[-0,020, +2,627] GECMEDI.")
         if r["beklenen_tl"] is not None:
             print(f"  E[TL]         : {r['beklenen_tl']:,.2f}  "
                   f"(rakip {RAKIP_KOLON:,} kolon VARSAYIMIYLA)")
@@ -245,7 +281,11 @@ def _main(argv: list[str] | None = None) -> int:
 
         h = canli_hafta(sezon, hafta)
         if h:
-            _merdiven(h["probs"], a.garanti, r["kolon"])
+            # Merdivenin tavani SECILI plani kapsamali: kapsamazsa
+            # secili basamak `->` ile isaretlenemez ve TL/puan sutunu
+            # referanssiz kalir.
+            _merdiven(h["probs"], a.garanti, r["kolon"],
+                      en_cok_tl=max(20_000.0, float(r["maliyet"])))
 
         # Kalabalik ayari AYRI gosterilir, varsayilan DEGIL: olculdugunde
         # makul her kisitta kazanci sifir cikti (docs Faz B).
@@ -285,7 +325,7 @@ def _main(argv: list[str] | None = None) -> int:
                       "SIFIR; kisitsiz arama para kaybettiriyor (docs Faz B).")
         return 0
 
-    metin = karne_metni(a.sezon, a.butce, a.garanti)
+    metin = karne_metni(a.sezon, a.butce, a.garanti, a.kural)
     if a.yaz:
         KARNE.write_text(metin, encoding="utf-8")
         print(f"yazildi: {KARNE}")

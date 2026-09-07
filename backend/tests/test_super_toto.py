@@ -337,6 +337,57 @@ def test_kapi_bozuk_sonuc_dizisini_yakalar(hafta):
     assert any("sonuç dizisi bozuk" in u for u in hafta.dogrula(d))
 
 
+def test_kapi_bozuk_kunyeyi_yakalar(hafta):
+    """`odds_from` ana fiyatla tutmuyorsa soylenmeli.
+
+    Bu alanin bugune kadar HIC bekcisi yoktu: uretim yolunda tek bir `.py`
+    dosyasinda gecmiyor (`grep odds_from --include=*.py` -> 0), yani kod onu
+    ne okuyor ne denetliyordu. Kunye yine de olcum belgesine giriyor
+    (`docs/KUPON_NASIL_KURULUYOR.md` §2-§3: "2. macin fiyati Nesine'den
+    geldigi icin marj ortalamasi %4,62'den %5,44'e cikiyor"), yani yanlis
+    bir kunye DOGRU GORUNEN yanlis bir gerekce uretirdi.
+    """
+    d = _sahte()
+    d["matches"][0]["odds_books"] = {
+        "pinnacle_kapanis": {"1": 2.0, "0": 3.4, "2": 3.6},
+        "nesine_kapanis": {"1": 1.8, "0": 3.2, "2": 4.4},
+    }
+    # Ana fiyat pinnacle, kunye nesine diyor.
+    d["matches"][0]["odds_from"] = "nesine_kapanis"
+    uyarilar = hafta.dogrula(d)
+    assert any("1. maç" in u and "künye BOZUK" in u for u in uyarilar), uyarilar
+
+    # Hic olmayan bir kitaba isaret eden kunye de yakalanmali.
+    d["matches"][0]["odds_from"] = "bet365_kapanis"
+    uyarilar = hafta.dogrula(d)
+    assert any("bet365_kapanis" in u and "yok" in u for u in uyarilar), uyarilar
+
+
+def test_kunye_YOKLUGU_uyari_degildir(hafta):
+    """1-3. haftalarda `odds_from` hic yok; yokluk bir hata degildir.
+
+    Alan 4. haftada girilmeye baslandi. Yoklugu uyari sayilsaydi kapi eski
+    haftalarda 15 sahte uyari basardi ve gercek uyarilari bogardi.
+    """
+    d = _sahte()
+    for m in d["matches"]:
+        m.pop("odds_from", None)
+    assert not any("künye" in u for u in hafta.dogrula(d))
+
+
+@pytest.mark.parametrize("no", _haftalar())
+def test_donmus_haftalarin_kunyesi_ana_fiyatla_TUTAR(hafta, no):
+    """Depodaki her haftanin kunyesi gercekten ana fiyati gosteriyor mu.
+
+    Bekci testi degil, VERI testi: elle girilen bir alani gercek kayda karsi
+    dogrular. 2026-09-07'de elle denetlendiginde 4. haftada 15/15 tutuyordu;
+    bu test onu kalici hale getirir.
+    """
+    d = hafta.hafta_yukle("2026_27", no)
+    assert not any("künye" in u for u in d["meta"]["uretilen_uyarilar"]), \
+        d["meta"]["uretilen_uyarilar"]
+
+
 def test_kapi_delikli_bahisciyi_isaretler(hafta):
     """Bir bahiscinin kaydi BAZI maclarda yoksa bu soylenmeli.
 

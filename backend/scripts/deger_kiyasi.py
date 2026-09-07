@@ -45,9 +45,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from spor_toto.getiri import KOLON_BEDELI
 from spor_toto.karne import (
+    MERKEZ_OLCUSU,
     gercek_kolon_dagilimi,
     gercek_odul,
     kupon_kesiti,
+    odul_vektoru,
 )
 from spor_toto.secim import (
     DEGER_TAVANI,
@@ -68,34 +70,10 @@ TAVAN_IZGARA: tuple[float, ...] = (2_000.0, 210_000.0)
 
 BOOTSTRAP = 20_000
 
-#: Kademe ağırlıklarının merkez ölçüsü. **Medyan varsayılan** ve sebebi
-#: ölçülmüş: ortalama, devirli haftalar yüzünden ağır kuyruklu (15 için
-#: ₺8,45 M ↔ medyan ₺2,79 M; 12 için ₺10.957 ↔ ₺288 — 38 kat). Ortalama
-#: verildiğinde `odul_secim` HER tavana dayanıyor (arama tavanı 4 milyon
-#: kolona çıkarıldığında bile haftada 2,6 milyon kolon istiyor), yani amaç
-#: yine "harca"ya dönüyor. Medyan verildiğinde tavanı hiç kovalamıyor ve
-#: 114 haftada **15 farklı şekil** üretiyor.
-MERKEZ = "medyan"
-
-
-def odul_vektoru(kesit: list[dict[str, Any]], merkez: str = MERKEZ
-                 ) -> dict[int, float]:
-    """Kademe başına **kolon başına** ödül — resmî tablolardan ölçülür.
-
-    Varsayım değil kayıt: `karne.kupon_kesiti` her haftanın gerçek ikramiye
-    tablosunu taşıyor. Buradaki tek karar merkez ölçüsüdür ve o da `MERKEZ`
-    künyesinde gerekçeli.
-    """
-    import statistics
-
-    out: dict[int, float] = {}
-    for kademe in (12, 13, 14, 15):
-        v = [float(h["tablo"][kademe]["prize"]) for h in kesit
-             if kademe in h["tablo"] and h["tablo"][kademe].get("prize") is not None]
-        if not v:
-            continue
-        out[kademe] = statistics.median(v) if merkez == "medyan" else statistics.mean(v)
-    return out
+#: Kademe ağırlıklarının merkez ölçüsü — künyesi ve gerekçesi
+#: `karne.MERKEZ_OLCUSU`da. Burada yalnızca yeniden adlandırılıyor ki
+#: betiğin gövdesi değişmesin; **ikinci bir tanım değildir.**
+MERKEZ = MERKEZ_OLCUSU
 
 
 def _haftalik(kesit: list[dict[str, Any]], planlar: list[Any]

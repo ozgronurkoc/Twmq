@@ -82,6 +82,48 @@ koşuldu. İki eksende de sayı var ve ikisi aynı koşumdan geliyor:
   kaybediyor. Aynı ölçüm ₺2.000 tavanında **%33,4** veriyordu — daha çok para
   daha **iyi** oran getiriyor, ama başabaşa yetmiyor.
 
+**Canlı yol 2026-09-07'den beri başka bir kural koşuyor ve bu paragraf onu da
+yazmak zorunda.** Yukarıdaki sayılar `secim.en_iyi_secim`i (bütçe kuralı)
+ölçer; `scripts/hafta_kos.py --oncesi`nin ana planını artık
+`secim.odul_secim` kuruyor (`karne.VARSAYILAN_KURAL = "hak"`) — kademeler
+kendi ağırlığıyla, **bütçe kısıt değil supap**. Sebebi bütçe kuralının
+yapısal kusuru: amacı üçlü sayısında monoton olduğu için sabit tavan altında
+cevabı hep "tavanı harca"dır ve şekli hafta değil **tavan** seçer — 114
+haftanın hepsinde tek şekil (6/0/9).
+
+İki kural, aynı 97 eşleşik haftada (`hak`ın kademe ağırlıkları **nedensel**
+okunur: her haftaya kendinden önceki sezonun ödül vektörü, `karne
+.odul_vektoru_onceki`; kesitin ilk sezonu bu yüzden ölçüm dışı):
+
+| | `en_iyi_secim` (bütçe) | `odul_secim` (**canlı**) |
+|---|---:|---:|
+| gerçek kolon ROI | 0,544 | **1,438** |
+| kuyruksuz ROI (en iyi 5 hafta çıkarılmış) | 0,199 | **0,276** |
+| 97 haftanın bedeli | ₺19.092.510 | **₺4.594.060** |
+| farklı şekil | 1 | **21** |
+| haftalık net | — | 84 iyi / 6 kötü / 7 eşit |
+
+Eşleştirilmiş bootstrap (B = 20.000): ham ROI farkı **+0,867 [−0,020, +2,627]
+— GEÇMEDİ**; kuyruksuz fark **+0,130 [+0,013, +0,270] — GEÇTİ**. Yani `hak`ın
+önde olduğu yer şanslı hafta değil **tipik** hafta; ham ROI'yi kuyruk
+yönetiyor (bütçe kuralı da 0,544'ten 0,199'a düşüyor). Geçmeyen satır burada
+duruyor çünkü geçmedi.
+
+**Bu ölçüm bir kez yanlış çıktı ve sebebi kayda geçiyor.** İlk koşumda
+`odul_secim`, kademe ağırlıklarını dört sezonun **nominal TL medyanından**
+alıyordu; nominal ödül dört sezonda **66 kat** büyümüş (15. kademe kolon
+başına ₺197.121 → ₺12.969.789), yani o medyan hiçbir sezonun ölçeği değildi.
+Aynı kural vektöre göre üç ayrı cevap veriyordu: sızıntılı 0,519 · sezon
+dışarıda 0,174 · nedensel **1,438**. Kusur kuralda değil **girdisindeydi**.
+
+> **Bugünkü ölçekte iki kural aynı yere varıyor.** 2025/26'nın ödül
+> vektörüyle `odul_secim`in tavansız cevabı 4 banko / 1 çifte / 10 üçlü =
+> **118.098 kolon ≈ ₺1,18 M**'dir (tavan 1 M'den 14 M'a çıkarılsa da
+> değişmiyor — yani dejenere değil, gerçekten duruyor). ₺210.000 bunun beşte
+> biri olduğu için 2026/27 haftalarında iki kural da tavana dayanır ve **aynı
+> planı** verir. Fark, ödül ölçeğinin bütçenin altında kaldığı geçmiş
+> sezonlarda görünür.
+
 **Bu tavan bir harcama kararıdır, veriden çıkarılmaz** — ve ne kadar
 tutturduğunu okurken bu yazılmadan okunamaz. Bütçe merdiveni yan yana:
 
@@ -1133,7 +1175,7 @@ backend/
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
                        sehir/ · sistem_fiyat/
-  tests/               pytest (70 dosya → 1.811 test; §9'da katman dökümü)
+  tests/               pytest (71 dosya → 1.834 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1338,8 +1380,8 @@ Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant'lar, CLI (Bayes pre
 dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri test,
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
-eşleme, ikinci kayıt). **70 test dosyası, parametrizasyonla
-1.811 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+eşleme, ikinci kayıt). **71 test dosyası, parametrizasyonla
+1.834 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
@@ -1349,12 +1391,12 @@ karşı denetler):
 | Tahmin katmanı | `predict` `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin` `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre` `secim_kalibrasyonu` **`arena`** **`sizinti`** | 590 |
 | Sağlık | `health` `api_health` `meta` `health_history` | 82 |
 | Veri / istatistik / geri test | `history` `odds` `backtest` `api_stats` `api_backtest` `snapshot_iddaa` `pazar` **`gecmis_sezon`** **`sportoto_arsiv`** **`bulten`** | 233 |
-| Süper Toto | `super_toto` `degerlendir` | 97 |
+| Süper Toto | `super_toto` `degerlendir` | 103 |
 | 2. Tahmin (kalabalık ayarı · bağımsız görüş) | `tahmin2` | 35 |
 | Karar katmanı | `secim` | 42 |
 | Amaç kıyası (`P(k≤3)` ↔ `E[k]`: aynı kupon mu?) | **`amac_kiyasi`** | 5 |
 | Sistem kıyası (kaplama ↔ düz; söküm kararının kanıtı) | **`sistem_kiyasi`** | 3 |
-| Para karnesi (garanti tabanı · enflasyon · canlı · GERÇEK kolon dağılımı · ödeyen olay · banko sapması) | **`karne`** | 31 |
+| Para karnesi (garanti tabanı · enflasyon · canlı · GERÇEK kolon dağılımı · ödeyen olay · banko sapması) | **`karne`** | 37 |
 | Kalabalık modeli (λ · kademe adetleri) | **`kalabalik`** | 12 |
 | Koşullu getiri (havuz biz kazanınca bölünür) | **`kosullu_getiri`** | 10 |
 | Skor türetme | `skor` | 17 |
@@ -1366,7 +1408,8 @@ karşı denetler):
 | Koşum defteri | `kosum` | 22 |
 | Takım gücü | `takim_gucu` | 24 |
 | Yeni veri (UEFA · şehir) | `avrupa` `sehir` | 41 |
-| Belgeler | `belgeler` | 16 |
+| Belgeler | `belgeler` | 22 |
+| Ölçüm kütüğü (alıntı · üreten · bekçi bütünlüğü) | **`olcum_kutugu`** | 5 |
 | Değer bahsi (yan pazarlar) | **`deger`** | 24 |
 | Fiyat kaynakları | **`fiyatlar`** | 14 |
 | Kuyruk / bağımsızlık | **`kuyruk`** | 12 |
