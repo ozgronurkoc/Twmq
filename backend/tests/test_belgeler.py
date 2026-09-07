@@ -805,3 +805,108 @@ def test_belgelerdeki_sayfa_sayisi_gercekle_ayni():
             if int(m.group(1)) != len(gercek):
                 hata.append(f"{d}: '{m.group(1)} sayfa' yazıyor, gerçek {len(gercek)}")
     assert not hata, "Sayfa sayısı bayat: " + "; ".join(hata)
+
+
+# ─── kupon belgesi ↔ dondurulmuş kayıt ────────────────────────────────────────
+
+def _kupon_15() -> str:
+    """`KUPON_NASIL_KURULUYOR.md` §15'in gövdesi — §16'ya kadar."""
+    metin = _oku("docs/KUPON_NASIL_KURULUYOR.md")
+    bas = metin.index("## 15. 4. haftanın uçtan uca koşumu")
+    son = metin.index("## 16. ", bas)
+    return metin[bas:son]
+
+
+def test_kupon_belgesi_15_donmus_kayitla_AYNI():
+    """§15 "uçtan uca koşum" bloğu, oynanan kuponun KAYDIYLA aynı olmalı.
+
+    **Bu bekçi bir çelişkinin sonucudur.** §15 uzun süre 4. haftayı
+    *"13-garantili indirgenmiş sistemle oynandı"* diye anlatıyor ve
+    `6 banko / 1 çifte / 8 üçlü · 162 kolon · P = 0,1748` yazıyordu.
+    Dondurulmuş kayıt ise (`hafta_04_kupon.json`) `meta.sistem = "fix16"`,
+    `meta.sistem_notu` = *"14-garanti"* ve `meta.duzeltme.etki` =
+    *"oynanan 3.888 kolonluk plan"* diyordu — yani `3/7/5 · 3.888 kolon ·
+    16 satır · P = 0,4670`. Aynı belgenin §9.2 ve §9.3'ü de kaydın tarafındaydı.
+
+    İkisi aynı anda doğru olamaz ve hiçbir test bunu tutmuyordu. Depo
+    doktrini sırayı veriyor (ölçüm > kod > belge > graf): kazanan kayıttır.
+
+    162 kolonluk plan UYDURMA DEĞİLDİR — `hafta_kos.py --oncesi`'nin ₺2.000
+    varsayılanının satıcı fiyat tablosundaki gerçek çıktısıydı; §8.3'te
+    "üretilen plan" olarak durur. Bu test yalnızca §15'in **oynananı**
+    anlatmasını şart koşar.
+    """
+    import json
+
+    kayit = json.loads(
+        (KOK / "data" / "super_toto" / "2026_27" / "hafta_04_kupon.json")
+        .read_text(encoding="utf-8"))
+    ana = kayit["variants"][0]
+    picks = ana["picks"]
+    banko = sum(1 for c in picks if len(c) == 1)
+    cift = sum(1 for c in picks if len(c) == 2)
+    uclu = sum(1 for c in picks if len(c) == 3)
+
+    metin = _kupon_15()
+    hata: list[str] = []
+
+    # 1) Isaret dizisi birebir.
+    if " ".join(picks) not in metin:
+        hata.append(f"kupon satiri kayitla ayni degil (kayit: {' '.join(picks)})")
+
+    # 2) Sekil.
+    if f"{banko} banko / {cift} çifte / {uclu} üçlü" not in metin:
+        hata.append(f"sekil {banko}/{cift}/{uclu} yazmiyor")
+
+    # 3) Kolon ve satir sayisi (binlik ayrac nokta).
+    kolon = f"{ana['columns']:,}".replace(",", ".")
+    if kolon not in metin:
+        hata.append(f"kolon sayisi {kolon} yazmiyor")
+    if f"{ana['rows']} satır" not in metin:
+        hata.append(f"satir sayisi {ana['rows']} yazmiyor")
+
+    # 4) P(hedef) — dort haneye yuvarlanmis, virgullu.
+    p = f"{ana['hedef']:.4f}".replace(".", ",")
+    if p not in metin:
+        hata.append(f"P(hedef) {p} yazmiyor")
+
+    # 5) Sistem kunyesi: kayit fix16/14-garanti diyorsa belge de demeli.
+    if kayit["meta"].get("sistem") == "fix16":
+        if "14-garanti" not in metin:
+            hata.append("kayit 14-garanti diyor, §15 demiyor")
+        if "13-garanti" in metin.replace("13-garantide", ""):
+            hata.append("§15 hala 13-garanti diyor")
+
+    assert not hata, "§15 dondurulmus kayitla celisiyor: " + "; ".join(hata)
+
+
+def test_kupon_belgesi_7_2_secilen_sutunu_kayittan():
+    """§7.2'nin `seçilen` sütunu da oynanan kupondan gelmeli.
+
+    §15 ile aynı hayalet koşumdan besleniyordu: `q(banko)` / `q(çifte)`
+    sütunları doğruydu (maçın kendi olasılıkları, plandan bağımsız) ama
+    `seçilen` sütunu oynanmayan planı gösteriyordu.
+    """
+    import json
+
+    kayit = json.loads(
+        (KOK / "data" / "super_toto" / "2026_27" / "hafta_04_kupon.json")
+        .read_text(encoding="utf-8"))
+    picks = kayit["variants"][0]["picks"]
+
+    metin = _oku("docs/KUPON_NASIL_KURULUYOR.md")
+    bas = metin.index("### 7.2 ")
+    son = metin.index("### 7.3 ", bas)
+    tablo = metin[bas:son]
+
+    hata: list[str] = []
+    for satir in tablo.splitlines():
+        parca = satir.split()
+        if len(parca) != 6 or not parca[0].isdigit():
+            continue
+        no = int(parca[0])
+        if not 1 <= no <= 15:
+            continue
+        if parca[4] != picks[no - 1]:
+            hata.append(f"{no}. mac: belge {parca[4]!r}, kayit {picks[no-1]!r}")
+    assert len(hata) == 0, "§7.2 secilen sutunu kayitla celisiyor: " + "; ".join(hata)
