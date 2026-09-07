@@ -1540,6 +1540,46 @@
    "bekci": "backend/tests/test_secim.py::test_odul_secilen_plan_net_parayi_gercekten_ENBUYUKLER",
    "olcek": "duz · medyan odul vektoru",
    "not": "Capa haftalik net kar kirilimi (48 iyi / 45 esit / 21 kotu) — ROI farki README'de matematiksel eksi isaretiyle (U+2212) yaziliyor ve duz ASCII capa onunla eslesmiyordu. || GECMEDI: %95 [-0,156, +0,097], sifiri kesiyor. ROI 0,465 -> 0,436, kolon/hafta 19.683 -> 17.184 (DAHA UCUZ). AMA DAVRANIS ILK KEZ DOGRU: 114 haftada 15 FARKLI SEKIL (bugunku kural 1) ve haftalik net karda 48 iyi / 45 esit / 21 kotu — yani kuyruk degil, haftalarin yarisina yakini. Kiyas `deger_secim`e karsi da gecmiyor (-0,241 %95 [-0,770, +0,094]) ama onun 0,677'si 3 haftadan geliyor: biri TUTARLILIK, oteki VARYANS satin aliyor. MERKEZ OLCUSU KRITIK: odul vektoru ORTALAMAYLA beslenince kural her arama tavanina dayaniyor (tavan 4 milyon kolonda bile haftada 2,6 milyon kolon istiyor) — dejenerasyon para amacindan degil agir kuyruklu ortalamadan geliyor. VARSAYILAN DEGISMEDI."
+  },
+  {
+   "ne": "haftalık tutan favori sayısı — 114 haftalık kupon kesiti",
+   "deger": "8,62",
+   "ureten": "cd backend && python scripts/favori_analizi.py",
+   "olculdu": "2026-09-07",
+   "anildigi_yerler": [],
+   "bekci": null,
+   "olcek": "duz · kupon kesiti (1.710 mac)",
+   "not": "Capa: ortalama 8,62 · medyan 8 · sd 1,88 · aralik 5-13. Piyasanin ex-ante beklentisi 7,86. Mac duzeyinde favori isabeti %57,5 — korpus genelindeki %51,09'dan YUKSEK, cunku kupon kesiti bultenden secilmis maclardir; iki sayi ayni sey degildir, karistirilmaz."
+  },
+  {
+   "ne": "haftalık favori sayısının aşırı yayılım oranı — küme yapısı var mı",
+   "deger": "1,01",
+   "ureten": "cd backend && python scripts/favori_analizi.py",
+   "olculdu": "2026-09-07",
+   "anildigi_yerler": [],
+   "bekci": null,
+   "olcek": "duz · kupon kesiti",
+   "not": "Gerceklesen varyans 3,55; ayni p'lerle Poisson-binom (tam bagimsiz) varyansi 3,51. Oran 1,01 — haftalik sayi 15 bagimsiz yazi-turadan AYIRT EDILEMIYOR. 'Bu hafta favoriler tutuyor' diye bir hafta duzeyi tutamak YOK; favori bulma isi mac mac bir istir."
+  },
+  {
+   "ne": "hafta başına 'bariz favori' sayısı (p_favori ≥ 0,75)",
+   "deger": "1,06",
+   "ureten": "cd backend && python scripts/favori_analizi.py",
+   "olculdu": "2026-09-07",
+   "anildigi_yerler": [],
+   "bekci": null,
+   "olcek": "duz · kupon kesiti",
+   "not": "Merdiven (hafta basina): ≥0,60 -> 3,78 · ≥0,70 -> 1,72 · ≥0,75 -> 1,06 · ≥0,80 -> 0,44 · ≥0,85 -> 0,13. Buna karsilik p_favori < 0,50 olan mac hafta basina 7,70. Bulten DENGELI maclardan kuruluyor: 'favorisi net mac' haftada 1-2 tane, tutan 8,62'nin buyuk kismi 45-60 dilimindeki maclarin favori tarafina dusmesi."
+  },
+  {
+   "ne": "top-N banko + kalana üçlü merdiveni — banko başına isabet ve 15/15",
+   "deger": "%70,3 / %13,2 (N=6)",
+   "ureten": "cd backend && python scripts/favori_analizi.py",
+   "olculdu": "2026-09-07",
+   "anildigi_yerler": [],
+   "bekci": null,
+   "olcek": "duz · kupon kesiti · kolon 10 TL",
+   "not": "N=6 satiri README §1.1'in 114 haftalik kademe dagiliminin AYNISI (15/14/13/12/12-: %13,2 / %28,9 / %32,5 / %18,4 / %7,0 · ort 13,22) — yani urunun bugunku sekli (6,0,9) 'en emin 6 favoriyi banko yap'in ta kendisi. Merdiven: N=4 19.683x10=1,77M TL, 15/15 %27,2 · N=6 196.830 TL, %13,2 · N=7 65.610 TL, %10,5 · N=8 21.870 TL, %7,9. Banko basina isabet N ile duz iniyor: %73,2 -> %70,3 -> %66,7. 15/15 banko isabetinin 6. KUVVETIDIR: %70 -> %11,8, %80 -> %26,2, %85 -> %37,7. Kaldirac tam olarak burada ve DOGRUSAL DEGIL."
   }
  ],
  "komutlar": [
