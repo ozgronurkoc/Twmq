@@ -97,7 +97,8 @@ yoktur. Tavan ₺210.000 seçildi çünkü taban çizgisi eşik kuralı tavansı
 koşarken düz ölçekte ₺187.217/hafta harcıyordu — iki kural ancak bu tavanda
 **en az aynı parayla** yarışıyor.
 
-**Kupon şekli haftaya göre değişmiyor — ve bu bütün bütçelerde böyle.**
+**Kupon şekli haftaya göre değişmiyor — ve bu geri teste özgü değil, ürünün
+kendi davranışı.**
 21.000 kolonun altındaki en geniş kapsama 9 üçlü + 6 bankodur (`3^9 =
 19.683`), çünkü üçlünün kaçağı sıfırdır ve optimizasyon bütçe elverdiğince
 üçlü alır. Şekil bu yüzden 114 haftanın hepsinde aynı. Bu **₺210.000'e özgü
@@ -112,6 +113,15 @@ değil**, ölçüldü:
 | ₺60.000 | 2 | 114 |
 | ₺210.000 | 1 | 114 |
 
+**Canlı yol da aynısını veriyor.** Kayıtlı 2026/27 haftaları kendi **gerçek
+fiyatlarıyla** (pinnacle/nesine — geri testin football-data `Avg` ölçeğinden
+bambaşka bir kaynak) kurulduğunda dördünde de aynı şekil çıkıyor: ₺2.000'de
+`(10 banko, 1 çifte, 4 üçlü)`, ₺210.000'de `(6, 0, 9)`. Üç canlı giriş noktası
+da (`hafta_kos.py`, `super_toto_hafta.py`, `super_toto_tahmin2.py`) şekli aynı
+`en_iyi_secim`den alıyor. Yani **normal bir hafta girildiğinde de bu şekil
+çıkar** — bütçe değişmediği sürece. Bekçisi
+`tests/test_secim.py::test_sekil_BUTCENIN_sonucu_haftanin_DEGIL`.
+
 Okunacak iki satır var ve **karıştırılmamalı**: *şekil* (kaç banko / çifte /
 üçlü) neredeyse tamamen **bütçenin** sonucudur; *plan* (hangi maça hangi
 işaret) her hafta farklıdır ve oranlardan gelir. Yani kural haftayı okumayı
@@ -122,7 +132,7 @@ Bunun sebebi yapısal ve tek cümleyle söylenebilir: `P(k ≤ 3)` üçlü sayı
 monotondur (üçlü asla kaçmaz) ve bedel ×2/×3 sıçramalarıyla arttığı için
 verilen bütçe altında **tek bir azami şekil** kalır. Optimizasyon bir köşe
 çözümünde oturuyor. Sonucu §11'de: bu, kararın parayla değil yalnızca
-olasılıkla kurulmasının doğrudan bir belirtisi. Bekçisi
+olasılıkla kurulmasının doğrudan bir belirtisi. Geri test tarafındaki bekçisi
 `tests/test_backtest.py::test_tavan_sekli_sabitler_ama_plani_SABITLEMEZ`.
 
 Piyasanın kendi Brier skoru bu kesitte **0,5584** (dar kesitte — 36 hafta /
@@ -1129,7 +1139,7 @@ backend/
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
                        sehir/ · xg/ · sistem_fiyat/ · hakem/
-  tests/               pytest (72 dosya → 1.822 test; §9'da katman dökümü)
+  tests/               pytest (72 dosya → 1.825 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1335,7 +1345,7 @@ dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri t
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
 eşleme, ikinci kayıt). **72 test dosyası, parametrizasyonla
-1.822 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+1.825 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
@@ -1347,7 +1357,7 @@ karşı denetler):
 | Veri / istatistik / geri test | `history` `odds` `backtest` `api_stats` `api_backtest` `snapshot_iddaa` `pazar` **`gecmis_sezon`** **`sportoto_arsiv`** **`bulten`** | 233 |
 | Süper Toto | `super_toto` `degerlendir` | 97 |
 | 2. Tahmin (kalabalık ayarı · bağımsız görüş) | `tahmin2` | 35 |
-| Karar katmanı | `secim` | 27 |
+| Karar katmanı | `secim` | 30 |
 | Amaç kıyası (`P(k≤3)` ↔ `E[k]`: aynı kupon mu?) | **`amac_kiyasi`** | 5 |
 | Sistem kıyası (kaplama ↔ düz; söküm kararının kanıtı) | **`sistem_kiyasi`** | 3 |
 | Para karnesi (garanti tabanı · enflasyon · canlı · GERÇEK kolon dağılımı · ödeyen olay · banko sapması) | **`karne`** | 31 |
@@ -1574,13 +1584,19 @@ değil. Kendi bütçenizin karşılığı §1.1'deki merdivende.
 İki gözlenebilir sonucu var. (1) Üçlü asla kaçmadığı için amaç üçlü sayısında
 monotondur ve bedel ×2/×3 sıçradığı için verilen bütçe altında tek bir azami
 şekil kalır: kupon şekli haftaya göre değil **bütçeye göre** belirleniyor
-(§1.1'deki tablo, altı bütçe basamağının hepsinde 1–2 şekil). (2) Amaç ile
+(§1.1'deki tablo, altı bütçe basamağının hepsinde 1–2 şekil). Bu bir geri
+test artefaktı **değildir**: canlı yolun üç giriş noktası da (`hafta_kos.py`,
+`super_toto_hafta.py`, `super_toto_tahmin2.py`) şekli aynı `en_iyi_secim`den
+alıyor ve kayıtlı dört gerçek hafta, kendi fiyatlarıyla, aynı şekli veriyor. (2) Amaç ile
 sonuç ayrışıyor: `P(k ≤ 3)` 114 haftanın %93'ünde tutturuyor derken oynanan
 paranın **%46,5**'i geri dönüyor. Yüksek isabet, satın alınan isabet.
 
 Şekli parayla seçen bir yol bugün **yok**: `secim.getiri_secim` `E[TL]`'yi
 enbüyüklüyor ama şekli `sistem_secimi`den alıp **sabit tutuyor**, yalnızca
-sembolleri değiştiriyor (kendi belgesinde yazılı). Yani para katmanı şeklin
+sembolleri değiştiriyor (kendi belgesinde yazılı); `kalabalik_ayari` de öyle.
+Ölçüldü: 4. haftanın gerçek oynanma paylarıyla üç yol da (taban / getiri /
+kalabalık) her iki bütçede birebir aynı şekli veriyor —
+`tests/test_secim.py::test_para_ve_kalabalik_yollari_SEKLI_DEGISTIRMEZ`. Yani para katmanı şeklin
 içinde çalışıyor, şekli seçmiyor. Bu bir kusur değil bir **kapsam sınırı** ve
 kaldırılması ayrı bir karardır — ölçülmeden alınmamalıdır.
 

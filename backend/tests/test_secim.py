@@ -11,8 +11,10 @@ bir bedeli (bir saniye) ve çok somut bir sebebi var; sebep aşağıda
 `_kesin_tarama`nın başlığında yazılı.
 """
 
+import json
 from fractions import Fraction
 from itertools import product
+from pathlib import Path
 
 import pytest
 
@@ -21,8 +23,11 @@ from spor_toto.secim import (
     VARSAYILAN_KACAK_ESIGI,
     bedel_hesapla,
     en_iyi_secim,
+    getiri_secim,
     hedef_olasiligi,
     kacak_olasiligi,
+    kalabalik_ayari,
+    sistem_secimi,
 )
 
 SEM = ("1", "0", "2")
@@ -457,3 +462,89 @@ def test_gecersiz_kayip_tavani_sesli_duser():
     for kotu in (-0.1, 1.0, 1.5):
         with pytest.raises(ValueError, match="kayip_tavani"):
             getiri_secim(_pr(), _oyn(), 2000.0, kayip_tavani=kotu)
+
+# ─── sekil butcenin sonucu ────────────────────────────────────────────────────
+
+#: Kayitli canli haftalarin dizini. Test veri YOKSA atlar; varsa GERCEK
+#: fiyatlarla (pinnacle/nesine) kosar — geri testin football-data `Avg`
+#: olceginden bagimsiz bir kanit olsun diye.
+CANLI = Path(__file__).resolve().parent.parent / "data" / "super_toto" / "2026_27"
+
+
+def _canli_haftalar() -> list[list[dict[str, float]]]:
+    from spor_toto.odds import implied_probs
+
+    out = []
+    for yol in sorted(CANLI.glob("hafta_0*.json")):
+        if "_kupon" in yol.name or "_tahmin2" in yol.name:
+            continue
+        d = json.loads(yol.read_text(encoding="utf-8"))
+        probs = [implied_probs(m["odds"]) for m in d.get("matches", []) if m.get("odds")]
+        if len(probs) == 15:
+            out.append(probs)
+    return out
+
+
+def _sekil(secimler) -> tuple[int, int, int]:
+    return (sum(1 for x in secimler if len(x) == 1),
+            sum(1 for x in secimler if len(x) == 2),
+            sum(1 for x in secimler if len(x) == 3))
+
+
+@pytest.mark.parametrize("butce_tl,beklenen", [(2000.0, (10, 1, 4)), (210000.0, (6, 0, 9))])
+def test_sekil_BUTCENIN_sonucu_haftanin_DEGIL(butce_tl, beklenen):
+    """Kupon **şekli** haftaya göre değil bütçeye göre çıkıyor — canlı yolda da.
+
+    Bu bir **karakterizasyon** testidir: bugünkü davranışı çiviler, onu
+    savunmaz. Sebebi yapısal ve `secim` modül başlığında yazılı — `P(k ≤ eşik)`
+    üçlü sayısında monotondur (üçlü asla kaçmaz) ve bedel ×2/×3 sıçradığı için
+    verilen bütçe altında tek bir azami şekil kalır.
+
+    **Niçin bu test var.** Bulgu ilk kez geri testte görüldü ve "geri teste
+    özgü bir şey mi?" diye soruldu. Değil: aşağıdaki koşum kayıtlı canlı
+    haftaları **gerçek fiyatlarıyla** (pinnacle/nesine — geri testin
+    football-data `Avg`inden bambaşka bir ölçek) kuruyor ve aynı şekli
+    veriyor. Yani kullanıcı normal bir hafta girdiğinde de bu şekil çıkar.
+
+    Amaç bir gün `E[TL]`'ye çevrilirse bu test **düşmelidir** — düşmesi
+    istenen sonucun kendisidir. Sessizce geçmeye devam etmesi, çevrimin
+    şekle hiç dokunmadığı anlamına gelir ve bunun görünmesi gerekir.
+    """
+    haftalar = _canli_haftalar()
+    if len(haftalar) < 2:
+        pytest.skip("kayıtlı canlı hafta yok")
+    sekiller = {_sekil(sistem_secimi(pr, butce_tl).secimler) for pr in haftalar}
+    assert sekiller == {beklenen}, (
+        f"{len(haftalar)} canlı haftada beklenen tek şekil {beklenen}, "
+        f"bulunan {sorted(sekiller)}")
+
+
+def test_para_ve_kalabalik_yollari_SEKLI_DEGISTIRMEZ():
+    """`getiri_secim` ve `kalabalik_ayari` sembolleri değiştirir, şekli değil.
+
+    İkisi de tabanı `sistem_secimi`den alır ve işaret **sayılarını** sabit
+    tutar (`getiri_secim` bunu kendi başlığında yazıyor). Sonuç: para
+    katmanı şeklin **içinde** çalışıyor, şekli seçmiyor — yani kuponun
+    bedeli hiçbir zaman `E[TL]` ile kararlaştırılmıyor. Bu bir kusur değil
+    kapsam sınırıdır (README §11) ve sınırın kendisi bekçili olmalı.
+    """
+    yol = CANLI / "hafta_04.json"
+    if not yol.exists():
+        pytest.skip("4. hafta kaydı yok")
+    from spor_toto.odds import implied_probs
+
+    d = json.loads(yol.read_text(encoding="utf-8"))
+    probs = [implied_probs(m["odds"]) for m in d["matches"]]
+    ham = [m.get("play_pct") for m in d["matches"]]
+    if len(probs) != 15 or not all(ham):
+        pytest.skip("4. haftada oran ya da oynanma payı eksik")
+    oynanma = [{k: v / sum(o.values()) for k, v in o.items()} for o in ham]
+
+    for butce_tl in (2000.0, 210000.0):
+        taban = sistem_secimi(probs, butce_tl)
+        assert taban is not None
+        beklenen = _sekil(taban.secimler)
+        para = getiri_secim(probs, oynanma, butce_tl)
+        kalabalik = kalabalik_ayari(probs, oynanma, taban.secimler)
+        assert para is None or _sekil(para.secimler) == beklenen
+        assert _sekil(kalabalik.secimler) == beklenen

@@ -2,7 +2,7 @@
  "sayilar": [
   {
    "ne": "suit test sayisi (eksiksiz kurulum)",
-   "deger": "1.822",
+   "deger": "1.825",
    "ureten": "cd backend && python -m pytest --collect-only -q -p no:randomly -o addopts=  # son satirdaki toplam",
    "olculdu": "2026-09-07",
    "anildigi_yerler": [
@@ -1488,9 +1488,9 @@
    "anildigi_yerler": [
     "README.md §1.1"
    ],
-   "bekci": "backend/tests/test_backtest.py::test_tavan_sekli_sabitler_ama_plani_SABITLEMEZ",
+   "bekci": "backend/tests/test_secim.py::test_sekil_BUTCENIN_sonucu_haftanin_DEGIL",
    "olcek": "duz",
-   "not": "BULGU TL210.000'e OZGU DEGIL: alti butce basamaginin hepsinde 114 hafta boyunca 1-2 sekil cikiyor (TL500 1 · TL1.000 2 · TL1.500 2 · TL2.000 1 · TL3.000 1 · TL5.000 1 · TL20.000 2 · TL60.000 2 · TL210.000 1), PLAN ise her basamakta 114/114 farkli. Sebep yapisal: P(k<=3) uclu sayisinda MONOTON (uclu asla kacmaz) ve bedel x2/x3 sicradigi icin verilen butce altinda tek bir azami sekil kaliyor — optimizasyon bir kose cozumunde oturuyor. Kural haftayi okumayi birakmiyor ama okudugu sey maclarin SIRALAMASI, olasiliklarin DEGERLERI degil. || Capa 19.683 = 3^9, sekli belirleyen kolon sayisi. Sekil demeti (banko, cifte, uclu) = (6, 0, 9). || 21.000 kolonun altindaki en genis kapsama 9 uclu + 6 banko (3^9 = 19.683); uclunun kacagi sifir oldugu icin optimizasyon butce elverdigince uclu alir. Sekil bu yuzden BUTUN haftalarda ayni. AMA PLAN AYNI DEGIL: dar kesitte 36/36, genis kesitte 114/114 farkli plan — hangi alti macin banko olacagi oranlardan geliyor. 'Tavan yukseldi, motor artik haftayi okumuyor' cumlesi kurulmasi kolay ve YANLIS; bekci tam o ayrimi civiliyor."
+   "not": "CANLI YOLDA DA BOYLE — geri teste ozgu DEGIL. Kayitli dort 2026/27 haftasi kendi GERCEK fiyatlariyla (pinnacle/nesine; geri test football-data Avg kullaniyor, bambaska bir olcek) kuruldugunda dordunde de ayni sekil: TL2.000 -> (10 banko, 1 cifte, 4 uclu) = 162 kolon; TL210.000 -> (6, 0, 9) = 19.683 kolon. Uc canli giris noktasi da (hafta_kos.py, super_toto_hafta.py, super_toto_tahmin2.py) sekli ayni `en_iyi_secim`den aliyor. Ayrica getiri_secim ve kalabalik_ayari sekli DEGISTIRMIYOR: 4. haftanin gercek oynanma paylariyla uc yol da her iki butcede birebir ayni sekli veriyor. Bekciler: test_secim.py::test_sekil_BUTCENIN_sonucu_haftanin_DEGIL ve ::test_para_ve_kalabalik_yollari_SEKLI_DEGISTIRMEZ. || BULGU TL210.000'e OZGU DEGIL: alti butce basamaginin hepsinde 114 hafta boyunca 1-2 sekil cikiyor (TL500 1 · TL1.000 2 · TL1.500 2 · TL2.000 1 · TL3.000 1 · TL5.000 1 · TL20.000 2 · TL60.000 2 · TL210.000 1), PLAN ise her basamakta 114/114 farkli. Sebep yapisal: P(k<=3) uclu sayisinda MONOTON (uclu asla kacmaz) ve bedel x2/x3 sicradigi icin verilen butce altinda tek bir azami sekil kaliyor — optimizasyon bir kose cozumunde oturuyor. Kural haftayi okumayi birakmiyor ama okudugu sey maclarin SIRALAMASI, olasiliklarin DEGERLERI degil. || Capa 19.683 = 3^9, sekli belirleyen kolon sayisi. Sekil demeti (banko, cifte, uclu) = (6, 0, 9). || 21.000 kolonun altindaki en genis kapsama 9 uclu + 6 banko (3^9 = 19.683); uclunun kacagi sifir oldugu icin optimizasyon butce elverdigince uclu alir. Sekil bu yuzden BUTUN haftalarda ayni. AMA PLAN AYNI DEGIL: dar kesitte 36/36, genis kesitte 114/114 farkli plan — hangi alti macin banko olacagi oranlardan geliyor. 'Tavan yukseldi, motor artik haftayi okumuyor' cumlesi kurulmasi kolay ve YANLIS; bekci tam o ayrimi civiliyor."
   },
   {
    "ne": "kademe dagilimi — hedef kurali, 114 hafta, TL210.000 tavan (TAM kademe)",
