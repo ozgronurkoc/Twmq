@@ -436,6 +436,13 @@ def _ozet(hafta_sonuclari: Sequence[dict[str, Any]]) -> dict[str, Any]:
     esik13 = sum(1 for h in calisan if h["best"] >= 13)
     esik12 = sum(1 for h in calisan if h["best"] >= 12)
     lo12, hi12 = _wilson(esik12, n)
+    # KADEME DAGILIMI: birikimli degil, TAM kademe. `hit12` "12 ve ustu"
+    # demek ve icinde 15'ler de var; ikramiye tablosunda ise 15 ile 12
+    # arasinda binlerce kat fark oluyor. Birikimli sayi o farki gizler,
+    # dagilim gizlemez.
+    tam = {str(k): sum(1 for h in calisan if h["best"] == k)
+           for k in range(HEDEF_KADEME, MATCH_COUNT + 1)}
+    tam["alt"] = sum(1 for h in calisan if h["best"] < HEDEF_KADEME)
     lo, hi = _wilson(esik14, n)
     return {
         "weeks": n,
@@ -455,6 +462,9 @@ def _ozet(hafta_sonuclari: Sequence[dict[str, Any]]) -> dict[str, Any]:
         "hit12": esik12,
         "hit12_pct": round(100 * esik12 / n, 1),
         "hit12_ci": [round(100 * lo12, 1), round(100 * hi12, 1)],
+        # Manset `hit12` KALIR; bu onun kirilimidir. Toplami `weeks` eder.
+        "kademe_dagilimi": tam,
+        "kademe_dagilimi_pct": {k: round(100 * v / n, 1) for k, v in tam.items()},
         # Duzde en iyi kolon = 15 - kacak, yani bu ortalama dogrudan
         # "haftanin tipik sonucu" demek.
         "best_avg": round(sum(h["best"] for h in calisan) / n, 2),

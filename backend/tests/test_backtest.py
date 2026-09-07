@@ -282,6 +282,29 @@ def test_sezon_ozeti_tutarli():
 
 
 @pytestmark_veri
+def test_kademe_dagilimi_birikimliyle_TUTARLI():
+    """Tam kademe kırılımı, birikimli sayılarla ve hafta sayısıyla örtüşmeli.
+
+    `hit12` "12 ve üstü" demektir ve içinde 15'ler de vardır. İkramiye
+    tablosunda 15 ile 12 arasında binlerce kat fark olduğu için birikimli
+    sayı tek başına yanıltır: %93 "12+" ile %13 "15" aynı cümlede
+    okunmalıdır. Kırılım o yüzden gövdede duruyor — ama birikimliyle
+    ayrışırsa ikisinden biri yalan söylüyor demektir.
+    """
+    s = backtest(sweep=False)["season"]
+    d = s["kademe_dagilimi"]
+    assert sum(d.values()) == s["weeks"], "kırılım hafta sayısını toplamalı"
+    assert d["15"] == s["hit15"]
+    assert d["15"] + d["14"] == s["hit14"]
+    assert d["15"] + d["14"] + d["13"] == s["hit13"]
+    assert d["15"] + d["14"] + d["13"] + d["12"] == s["hit12"]
+    assert d["alt"] == s["weeks"] - s["hit12"]
+    yuzde = s["kademe_dagilimi_pct"]
+    assert set(yuzde) == set(d)
+    assert abs(sum(yuzde.values()) - 100.0) < 0.5
+
+
+@pytestmark_veri
 def test_butce_taramasi_MONOTON_ve_hold_out_yok():
     """Bütçe arttıkça isabet düşemez; ve burada hold-out'un işi yoktur.
 

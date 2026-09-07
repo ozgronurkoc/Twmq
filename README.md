@@ -59,7 +59,23 @@ koşuldu. İki eksende de sayı var ve ikisi aynı koşumdan geliyor:
 
 * **Kademe.** İkramiyenin başladığı kademeyi — **12+** — haftaların
   **%93,0**'ünde tutturuyor (106/114; %95 aralık %86,8–96,4), ortalama en iyi
-  kolon **13,22**. 14+ 48 hafta, 15 ise 15 hafta.
+  kolon **13,22**.
+
+  Ama "12+" birikimlidir ve **içinde 15'ler de vardır**; ikramiye tablosunda
+  15 ile 12 arasında binlerce kat fark olduğu için kırılım manşetin yanında
+  durmak zorunda:
+
+  | En iyi kolon | Hafta | Pay |
+  |---|---:|---:|
+  | **15** — tam bilme | 15 | %13,2 |
+  | 14 | 33 | %28,9 |
+  | 13 | 37 | %32,5 |
+  | **12** — ikramiyenin başladığı kademe | 21 | %18,4 |
+  | 12'nin altı — ikramiye yok | 8 | %7,0 |
+
+  Dağılımın modu **13**. Manşeti tek başına okumak, %93'ün tamamı ikramiyeye
+  dönüyormuş izlenimi verir; dönmüyor — paranın nereden geldiği §1.1'in para
+  satırında.
 * **Para.** Aynı koşumun bedeli ₺22.438.620; oynanan kolonların **resmî
   ikramiye tablolarındaki** karşılığı ₺10.438.624, yani geri dönüş **%46,5**.
   Okunacak eşik **1,0**'dır ve %46,5 onun yarısından az: ürün bugün parayı
@@ -81,13 +97,32 @@ yoktur. Tavan ₺210.000 seçildi çünkü taban çizgisi eşik kuralı tavansı
 koşarken düz ölçekte ₺187.217/hafta harcıyordu — iki kural ancak bu tavanda
 **en az aynı parayla** yarışıyor.
 
-**Tavanın satın aldığı şeyin sınırı da ölçüldü.** 21.000 kolonun altındaki en
-geniş kapsama 9 üçlü + 6 bankodur (`3^9 = 19.683`), çünkü üçlünün kaçağı
-sıfırdır ve optimizasyon bütçe elverdiğince üçlü alır. **Şekil bu yüzden 114
-haftanın hepsinde aynıdır.** Ama plan aynı değildir: hangi altı maçın banko
-olacağı oranlardan gelir ve 114 haftanın 114'ünde farklı çıkar. Kural
-körleşmiyor, karar uzayı daralıyor — ve %93'ün bir kısmı kazanılmış değil
-**satın alınmıştır**. Bekçisi
+**Kupon şekli haftaya göre değişmiyor — ve bu bütün bütçelerde böyle.**
+21.000 kolonun altındaki en geniş kapsama 9 üçlü + 6 bankodur (`3^9 =
+19.683`), çünkü üçlünün kaçağı sıfırdır ve optimizasyon bütçe elverdiğince
+üçlü alır. Şekil bu yüzden 114 haftanın hepsinde aynı. Bu **₺210.000'e özgü
+değil**, ölçüldü:
+
+| Haftalık tavan | Farklı şekil | Farklı plan |
+|---:|---:|---:|
+| ₺500 | 1 | 114 |
+| ₺2.000 | 1 | 114 |
+| ₺5.000 | 1 | 114 |
+| ₺20.000 | 2 | 114 |
+| ₺60.000 | 2 | 114 |
+| ₺210.000 | 1 | 114 |
+
+Okunacak iki satır var ve **karıştırılmamalı**: *şekil* (kaç banko / çifte /
+üçlü) neredeyse tamamen **bütçenin** sonucudur; *plan* (hangi maça hangi
+işaret) her hafta farklıdır ve oranlardan gelir. Yani kural haftayı okumayı
+bırakmıyor — ama okuduğu şey yalnızca maçların **sıralaması**, olasılıkların
+**değerleri** değil.
+
+Bunun sebebi yapısal ve tek cümleyle söylenebilir: `P(k ≤ 3)` üçlü sayısında
+monotondur (üçlü asla kaçmaz) ve bedel ×2/×3 sıçramalarıyla arttığı için
+verilen bütçe altında **tek bir azami şekil** kalır. Optimizasyon bir köşe
+çözümünde oturuyor. Sonucu §11'de: bu, kararın parayla değil yalnızca
+olasılıkla kurulmasının doğrudan bir belirtisi. Bekçisi
 `tests/test_backtest.py::test_tavan_sekli_sabitler_ama_plani_SABITLEMEZ`.
 
 Piyasanın kendi Brier skoru bu kesitte **0,5584** (dar kesitte — 36 hafta /
@@ -672,10 +707,11 @@ ama az. Favori isabeti tek başına yanıltıcıdır: 1,05 oranlı favorinin tut
 **Geri test — ürünün kendi kuralı.** `secim.en_iyi_secim`, haftalık ₺210.000
 tavanla, 114 haftanın **106'sında** 12+ tutturuyor (%93,0; %95 aralık
 %86,8–96,4); ortalama en iyi kolon **13,22**, ortalama bedel **₺196.830/hafta**
-(19.683 kolon). Kuyruk: 13+ 85 hafta, 14+ 48 hafta, 15 ise 15 hafta. Aynı
-koşumun para karşılığı §1.1'de: geri dönüş **%46,5**. Bütçe merdiveninin
-tamamı da §1.1'de — pahalı basamak her zaman daha çok tutturur, o yüzden
-tavan yazılmadan isabet okunamaz.
+(19.683 kolon). Tam kademe kırılımı: **15 → 15 hafta (%13,2)**, 14 → 33
+(%28,9), 13 → 37 (%32,5), 12 → 21 (%18,4), 12'nin altı → 8 (%7,0); dağılımın
+modu 13. Aynı koşumun para karşılığı §1.1'de: geri dönüş **%46,5**. Bütçe
+merdiveninin tamamı da §1.1'de — pahalı basamak her zaman daha çok tutturur,
+o yüzden tavan yazılmadan isabet okunamaz.
 
 **Taban çizgisi — eşik kuralı, ve tavanın neden ₺210.000 olduğu.** Eski
 mekanik kural (`backtest.secim_uret`, 0,68/0,38) aynı 114 haftada 12'yi
@@ -1093,7 +1129,7 @@ backend/
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
                        sehir/ · xg/ · sistem_fiyat/ · hakem/
-  tests/               pytest (72 dosya → 1.821 test; §9'da katman dökümü)
+  tests/               pytest (72 dosya → 1.822 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1299,7 +1335,7 @@ dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri t
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
 eşleme, ikinci kayıt). **72 test dosyası, parametrizasyonla
-1.821 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+1.822 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
@@ -1308,7 +1344,7 @@ karşı denetler):
 | Çekirdek (kodlama · düz üretim · olasılık) | `core` `invariants` `edge_cases` `cli` `analysis` `bayes` `markov` `fire_scenarios` | 256 |
 | Tahmin katmanı | `predict` `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin` `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre` `secim_kalibrasyonu` **`arena`** **`sizinti`** | 595 |
 | Sağlık | `health` `api_health` `meta` `health_history` | 82 |
-| Veri / istatistik / geri test | `history` `odds` `backtest` `api_stats` `api_backtest` `snapshot_iddaa` `pazar` **`gecmis_sezon`** **`sportoto_arsiv`** **`bulten`** | 232 |
+| Veri / istatistik / geri test | `history` `odds` `backtest` `api_stats` `api_backtest` `snapshot_iddaa` `pazar` **`gecmis_sezon`** **`sportoto_arsiv`** **`bulten`** | 233 |
 | Süper Toto | `super_toto` `degerlendir` | 97 |
 | 2. Tahmin (kalabalık ayarı · bağımsız görüş) | `tahmin2` | 35 |
 | Karar katmanı | `secim` | 27 |
@@ -1532,6 +1568,21 @@ Bütçenin zorunlu parametre olmasının sebebi budur. Ama bugünkü varsayılan
 tavan da (₺210.000, gerçekleşen ₺196.830/hafta) küçük bir oyuncunun harcaması
 **değildir** — o sayı kıyası geçerli kılmak için seçildi, tavsiye olarak
 değil. Kendi bütçenizin karşılığı §1.1'deki merdivende.
+
+**Karar parayla değil, olasılıkla kuruluyor — ve bu ölçülmüş bir sınırdır.**
+Ürünün kuralı `P(k ≤ 3)`'ü enbüyüklüyor; bu amacın içinde **ikramiye yok**.
+İki gözlenebilir sonucu var. (1) Üçlü asla kaçmadığı için amaç üçlü sayısında
+monotondur ve bedel ×2/×3 sıçradığı için verilen bütçe altında tek bir azami
+şekil kalır: kupon şekli haftaya göre değil **bütçeye göre** belirleniyor
+(§1.1'deki tablo, altı bütçe basamağının hepsinde 1–2 şekil). (2) Amaç ile
+sonuç ayrışıyor: `P(k ≤ 3)` 114 haftanın %93'ünde tutturuyor derken oynanan
+paranın **%46,5**'i geri dönüyor. Yüksek isabet, satın alınan isabet.
+
+Şekli parayla seçen bir yol bugün **yok**: `secim.getiri_secim` `E[TL]`'yi
+enbüyüklüyor ama şekli `sistem_secimi`den alıp **sabit tutuyor**, yalnızca
+sembolleri değiştiriyor (kendi belgesinde yazılı). Yani para katmanı şeklin
+içinde çalışıyor, şekli seçmiyor. Bu bir kusur değil bir **kapsam sınırı** ve
+kaldırılması ayrı bir karardır — ölçülmeden alınmamalıdır.
 
 **Piyasa oranı ≠ iddaa oranı.** Seviye tutmaz, yapı tutar. Bu not sayfada her yerde
 görünür durumdadır ve kaldırılmamalıdır.

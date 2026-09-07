@@ -746,6 +746,14 @@ export interface BacktestSeason {
   hit12_pct: number;
   /** Wilson %95 güven aralığı — kesit küçük. */
   hit12_ci: [number, number];
+  /**
+   * TAM kademe kirilimi: "15" | "14" | "13" | "12" | "alt". Birikimli
+   * DEGIL. `hit12` icinde 15'ler de var ve ikramiye tablosunda 15 ile 12
+   * arasinda binlerce kat fark oluyor — birikimli sayi o farki gizler.
+   * Toplami `weeks` eder.
+   */
+  kademe_dagilimi: Record<string, number>;
+  kademe_dagilimi_pct: Record<string, number>;
   /** Ortalama en iyi kolon. Düzde `15 − kaçak`, yani haftanın tipik sonucu. */
   best_avg: number;
   hit14_pct: number;

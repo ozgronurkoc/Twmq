@@ -19,6 +19,7 @@ import {
   BacktestStats,
   BacktestWeeks,
   ButceTable,
+  KademeDagilimi,
   HoldoutPanel,
   OverfitWarning,
   StrategyPicker,
@@ -210,6 +211,12 @@ export default function GeriTestPage() {
               />
             ) : null}
             <BacktestStats season={veri.season} kademe={kademe} />
+            <div>
+              <SectionTitle hint="Manşet “12+” birikimlidir ve içinde 15'ler de vardır. İkramiye tablosunda 15 ile 12 arasında binlerce kat fark olduğu için kırılım ayrı durur.">
+                Kademe kırılımı — tam sayı, birikimli değil
+              </SectionTitle>
+              <KademeDagilimi season={veri.season} />
+            </div>
             {ornek ? (
               <div>
                 <SectionTitle hint="Seçili eşiklerin son çalıştırılan haftada ürettiği kupon.">

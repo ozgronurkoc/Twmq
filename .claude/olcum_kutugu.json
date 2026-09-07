@@ -2,7 +2,7 @@
  "sayilar": [
   {
    "ne": "suit test sayisi (eksiksiz kurulum)",
-   "deger": "1.821",
+   "deger": "1.822",
    "ureten": "cd backend && python -m pytest --collect-only -q -p no:randomly -o addopts=  # son satirdaki toplam",
    "olculdu": "2026-09-07",
    "anildigi_yerler": [
@@ -1481,16 +1481,29 @@
    "not": "Capa TL20.000 basamagi (%68,4). Merdivenin tamami: TL500 %28,1 · TL1.000 %32,5 · TL1.500 %35,1 · TL2.000 %40,4 · TL3.000 %43,0 · TL5.000 %52,6 · TL20.000 %68,4 · TL60.000 %80,7 · TL210.000 %93,0. MONOTON ve olmasi gereken de bu: buyuk tavan kucugun buldugu her plani da kapsiyor. Bu tablonun 'en iyi satiri' YOKTUR — pahali basamak her zaman daha cok tutturur; sorulacak soru bedele degip degmedigidir. Kosum 4,6 sn."
   },
   {
-   "ne": "TL210.000 tavanda kupon SEKLI sabit, PLAN degil",
+   "ne": "kupon SEKLI butceye gore belirleniyor, haftaya gore DEGIL",
    "deger": "19.683",
-   "ureten": "cd backend && python -c \"from spor_toto.backtest import backtest; r=backtest(sweep=False); k=[h for h in r['weeks'] if not h['skipped']]; print({(h['banko'],h['double'],h['triple']) for h in k}, len({tuple(h['picks']) for h in k}), len(k))\"",
+   "ureten": "cd backend && python -c \"from spor_toto.backtest import BUTCE_IZGARA, hedef_secici, _hafta_calistir, kesit_girdileri; g=[x for x in kesit_girdileri(None,'shin','hepsi') if x['usable']]; print([(tl, len({(h['banko'],h['double'],h['triple']) for h in [_hafta_calistir(x, hedef_secici(tl)) for x in g]}), len({tuple(h['picks']) for h in [_hafta_calistir(x, hedef_secici(tl)) for x in g]})) for tl in BUTCE_IZGARA])\"",
    "olculdu": "2026-09-07",
    "anildigi_yerler": [
     "README.md §1.1"
    ],
    "bekci": "backend/tests/test_backtest.py::test_tavan_sekli_sabitler_ama_plani_SABITLEMEZ",
+   "olcek": "duz",
+   "not": "BULGU TL210.000'e OZGU DEGIL: alti butce basamaginin hepsinde 114 hafta boyunca 1-2 sekil cikiyor (TL500 1 · TL1.000 2 · TL1.500 2 · TL2.000 1 · TL3.000 1 · TL5.000 1 · TL20.000 2 · TL60.000 2 · TL210.000 1), PLAN ise her basamakta 114/114 farkli. Sebep yapisal: P(k<=3) uclu sayisinda MONOTON (uclu asla kacmaz) ve bedel x2/x3 sicradigi icin verilen butce altinda tek bir azami sekil kaliyor — optimizasyon bir kose cozumunde oturuyor. Kural haftayi okumayi birakmiyor ama okudugu sey maclarin SIRALAMASI, olasiliklarin DEGERLERI degil. || Capa 19.683 = 3^9, sekli belirleyen kolon sayisi. Sekil demeti (banko, cifte, uclu) = (6, 0, 9). || 21.000 kolonun altindaki en genis kapsama 9 uclu + 6 banko (3^9 = 19.683); uclunun kacagi sifir oldugu icin optimizasyon butce elverdigince uclu alir. Sekil bu yuzden BUTUN haftalarda ayni. AMA PLAN AYNI DEGIL: dar kesitte 36/36, genis kesitte 114/114 farkli plan — hangi alti macin banko olacagi oranlardan geliyor. 'Tavan yukseldi, motor artik haftayi okumuyor' cumlesi kurulmasi kolay ve YANLIS; bekci tam o ayrimi civiliyor."
+  },
+  {
+   "ne": "kademe dagilimi — hedef kurali, 114 hafta, TL210.000 tavan (TAM kademe)",
+   "deger": "%13,2",
+   "ureten": "cd backend && python -c \"from spor_toto.backtest import backtest; import json; print(json.dumps(backtest(sweep=False, sezon='hepsi')['season']['kademe_dagilimi_pct'], ensure_ascii=False))\"",
+   "olculdu": "2026-09-07",
+   "anildigi_yerler": [
+    "README.md §1.1",
+    "README.md §5.4"
+   ],
+   "bekci": "backend/tests/test_backtest.py::test_kademe_dagilimi_birikimliyle_TUTARLI",
    "olcek": "duz · TL210.000 tavan",
-   "not": "Capa 19.683 = 3^9, sekli belirleyen kolon sayisi. Sekil demeti (banko, cifte, uclu) = (6, 0, 9). || 21.000 kolonun altindaki en genis kapsama 9 uclu + 6 banko (3^9 = 19.683); uclunun kacagi sifir oldugu icin optimizasyon butce elverdigince uclu alir. Sekil bu yuzden BUTUN haftalarda ayni. AMA PLAN AYNI DEGIL: dar kesitte 36/36, genis kesitte 114/114 farkli plan — hangi alti macin banko olacagi oranlardan geliyor. 'Tavan yukseldi, motor artik haftayi okumuyor' cumlesi kurulmasi kolay ve YANLIS; bekci tam o ayrimi civiliyor."
+   "not": "Capa 15'in payi (%13,2 = 15 hafta). Tam dagilim: 15 -> 15 hafta (%13,2) · 14 -> 33 (%28,9) · 13 -> 37 (%32,5) · 12 -> 21 (%18,4) · 12 alti -> 8 (%7,0). MODU 13. Birikimli manset %93,0 bu dagilimin ilk dort satirinin toplami; tek basina okunursa '%93 ikramiyeye donuyor' izlenimi verir, oysa ikramiye tablosunda 15 ile 12 arasinda binlerce kat fark var. Dar kesitte (36 hafta): 15 -> 4 (%11,1) · 14 -> 7 (%19,4) · 13 -> 12 (%33,3) · 12 -> 9 (%25,0) · alt -> 4 (%11,1)."
   }
  ],
  "komutlar": [

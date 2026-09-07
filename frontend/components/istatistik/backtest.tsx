@@ -108,7 +108,7 @@ export function BacktestStats({ season, kademe }: { season: BacktestSeason; kade
         boyut="lg"
         etiket="Ortalama en iyi kolon"
         deger={ondalik(season.best_avg, 2)}
-        alt={`düzde 15 − kaçak · kuyruk: ${season.hit13} hafta 13+, ${season.hit14} hafta 14+`}
+        alt={`düzde 15 − kaçak · kırılım aşağıda`}
       />
       <Stat
         boyut="lg"
@@ -127,6 +127,65 @@ export function BacktestStats({ season, kademe }: { season: BacktestSeason; kade
         }
         ton={season.columns_per_hit12 === null ? "warning" : "neutral"}
       />
+    </div>
+  );
+}
+
+/**
+ * TAM kademe kirilimi. `hit12` "12 ve ustu" demek ve icinde 15'ler de var;
+ * ikramiye tablosunda 15 ile 12 arasinda binlerce kat fark oluyor. Manset
+ * 12+ KALIR ama yanina bu kirilim konmadan okunmamali.
+ */
+export function KademeDagilimi({ season }: { season: BacktestSeason }) {
+  const d = season.kademe_dagilimi;
+  // Ad BILEREK `yuzde` degil: o, `lib/utils.ts`in bicimleyici adlarindan
+  // biri ve `scripts/check.mjs` yerel bir `const yuzde`yi "kanonigi
+  // getirmeden yeniden yazilmis bicimleyici" sayiyor. Burasi bir
+  // bicimleyici degil, sunucudan gelen veri.
+  const paylar = season.kademe_dagilimi_pct;
+  const satirlar = [
+    { anahtar: "15", etiket: "15 — tam bilme", vurgu: true },
+    { anahtar: "14", etiket: "14" },
+    { anahtar: "13", etiket: "13" },
+    { anahtar: "12", etiket: "12 — ikramiyenin başladığı kademe" },
+    { anahtar: "alt", etiket: "12'nin altı — ikramiye yok", vurgu: false },
+  ];
+  const enCok = Math.max(...Object.values(d));
+  return (
+    <div className={TABLO_SARMAL}>
+      <table className="w-full min-w-[420px] text-[12.5px]">
+        <thead>
+          <tr className={TABLO_BASLIK_SATIRI}>
+            <th scope="col" className="pb-2 pr-3 font-medium">En iyi kolon</th>
+            <th scope="col" className="w-20 pb-2 pr-3 text-right font-medium">Hafta</th>
+            <th scope="col" className="w-20 pb-2 pr-3 text-right font-medium">Pay</th>
+            <th scope="col" className="pb-2 font-medium">Dağılım</th>
+          </tr>
+        </thead>
+        <tbody className="tnum">
+          {satirlar.map((r) => {
+            const n = d[r.anahtar] ?? 0;
+            const p = paylar[r.anahtar] ?? 0;
+            return (
+              <tr key={r.anahtar} className="border-t border-line">
+                <td className={cn("py-2 pr-3", r.vurgu && "font-semibold")}>{r.etiket}</td>
+                <td className="py-2 pr-3 text-right">{n}</td>
+                <td className="py-2 pr-3 text-right text-muted-foreground">%{ondalik(p, 1)}</td>
+                <td className="py-2">
+                  <div
+                    className="h-2 rounded"
+                    style={{
+                      width: `${enCok ? (100 * n) / enCok : 0}%`,
+                      minWidth: n ? "3px" : 0,
+                      background: seqFill(enCok ? n / enCok : 0),
+                    }}
+                  />
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }
