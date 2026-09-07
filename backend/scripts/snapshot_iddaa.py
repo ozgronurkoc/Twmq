@@ -205,6 +205,47 @@ def csv_yaz(yol: Path, satirlar: list[dict[str, Any]]) -> None:
             yazici.writerow(duz)
 
 
+def birikimli_marj(dizin: Path) -> dict[str, Any]:
+    """Dizindeki BUTUN snapshot'larin marj ozeti — tek koşumun degil.
+
+    Rapor uzun sure yalnizca **son** koşumun ortalamasini yaziyordu ve
+    belgeler o tek gunun sayisina (ilk snapshot: %17,20) capalanmisti. Bir
+    sonraki snapshot geldiginde sayi %16,70'e kaydi, belge kaymadi ve
+    hicbir kapi bunu gormedi — cunku tutulan sey bir **koşum ciktisiydi**,
+    birikimli bir olcum degil.
+
+    Bu arsivin degeri tanimi geregi birikimde (`note` alani bunu zaten
+    yaziyordu), dolayisiyla belgeye girecek sayi da birikimli olan olmali.
+    Haftalik cron her pazartesi bir snapshot daha ekler; birikimli ortalama
+    her eklemede biraz oynar ama tek gunluk sicramalar yapmaz.
+
+    Medyan da doner: dagilim carpik (buyuk ligler dusuk marjli, kucukler
+    yuksek) ve ortalama tek basina okununca bulteni oldugundan ucuz
+    gosterir.
+    """
+    marjlar: list[float] = []
+    dosyalar = sorted(dizin.glob("iddaa_*.csv"))
+    for yol in dosyalar:
+        with open(yol, encoding="utf-8", newline="") as fh:
+            for satir in csv.DictReader(fh):
+                ham = (satir.get("marj") or "").strip()
+                if ham:
+                    marjlar.append(float(ham))
+    if not marjlar:
+        return {"snapshot": len(dosyalar), "satir": 0,
+                "avg_margin_pct": None, "median_margin_pct": None}
+    sirali = sorted(marjlar)
+    orta = len(sirali) // 2
+    medyan = (sirali[orta] if len(sirali) % 2
+              else (sirali[orta - 1] + sirali[orta]) / 2)
+    return {
+        "snapshot": len(dosyalar),
+        "satir": len(marjlar),
+        "avg_margin_pct": round(100 * sum(marjlar) / len(marjlar), 2),
+        "median_margin_pct": round(100 * medyan, 2),
+    }
+
+
 def sqlite_yaz(yol: Path, satirlar: list[dict[str, Any]]) -> None:
     """Uzun bicim — `odds.sqlite3` ile ayni sekil, ayni sorgu diliyle okunur.
 
@@ -317,6 +358,10 @@ def main() -> int:
     #: cikarimda `Sized` olmayan bir birlesim tipine dusuyordu.
 
     snapshot_adlari = sorted(p.name for p in args.out_dir.glob("iddaa_*.csv"))
+    birikim = birikimli_marj(args.out_dir)
+    print(f"birikimli marj: %{birikim['avg_margin_pct']} "
+          f"(medyan %{birikim['median_margin_pct']}, "
+          f"{birikim['satir']} satir / {birikim['snapshot']} snapshot)")
 
     rapor = {
         "taken_at": alinma,
@@ -327,11 +372,16 @@ def main() -> int:
         "dropped": len(tum) - len(satirlar),
         "with_league_label": ligli,
         "avg_margin_pct": round(100 * sum(marjlar) / len(marjlar), 2) if marjlar else None,
+        # BELGEYE GIREN SAYI BUDUR. `avg_margin_pct` yalnizca BU kosumun
+        # ortalamasi; belgeler ona capalandiginda bir sonraki snapshot
+        # sayiyi sessizce bayatlatiyordu (%17,20 -> %16,70, kimse gormedi).
+        "birikimli": birikim,
         "snapshots": snapshot_adlari,
         "note": (
             "Tek snapshot analize yetmez; deger haftalik birikimle olusur. "
             "Gecmis iddaa orani hicbir kaynakta yayinlanmadigi icin bu arsiv "
-            "ancak ileriye donuk buyur."
+            "ancak ileriye donuk buyur. Belgede anilacak marj `birikimli` "
+            "blogundan okunur; `avg_margin_pct` tek kosumun ciktisidir."
         ),
     }
     rapor_yol = args.out_dir / "iddaa_rapor.json"

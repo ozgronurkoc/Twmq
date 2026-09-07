@@ -23,9 +23,12 @@
 > kazanma oranını artıracak sonuçlar üretmek ve maç sonucu tahmini yapmaktır**
 > (bkz. [`../README.md`](../README.md) §1). Bu belgedeki ölçüm disiplini aynen
 > geçerlidir ve daha da kritik hale gelmiştir: tahmin iddiası, ölçülmemiş hiçbir
-> sayının arayüze çıkmamasıyla dengelenir. Hold-out **1 hafta**, piyasa Brier
-> **0,579**, iddaa marjı **%17,2** — bu üç sayı tahmin katmanının başlangıç
-> çizgisidir ve ilerleme bunlara karşı ölçülür.
+> sayının arayüze çıkmamasıyla dengelenir. Başlangıç çizgisi **2026-09-07'de
+> baştan ölçüldü** (README §1.1): ürünün kendi kuralı 114 haftada 12+'yı
+> **%40,4**'te tutturuyor, para geri dönüşü **%33,4**, piyasa Brier'i o kesitte
+> **0,5584**, iddaa marjı **%16,9**. Eski çizgi (hold-out 1 hafta, Brier 0,579,
+> marj %17,2) **kaplama ölçeğinde ve ürünün kullanmadığı bir kuralla**
+> ölçülmüştü; silinmedi, `.claude/olcum_kutugu.json`da etiketli duruyor.
 >
 > **Ölçek uyarısı.** 2026-08'de marj arındırma varsayılanı `orantili`dan `shin`e
 > çevrildi (§3.18). O tarihten önceki bölümlerdeki sayılar orantısal ölçekte
@@ -168,7 +171,7 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/components/super-toto/tahmin2.tsx` | **2. Tahmin** paneli — `1. Tahmin` / `2. Tahmin` sekmeleri arasında geçilir; para birimli hiçbir sayı yok. Hafta kapandığında sonuç sütunu ve ayar karnesi açılır (§3.38) |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **1.803 test**; **85'i** istatistik katmanına (`history` `odds` `backtest`
+paketi toplam **1.837 test**; **85'i** istatistik katmanına (`history` `odds` `backtest`
 `api_stats` `api_backtest` `snapshot_iddaa`), **579'u** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre`
@@ -421,10 +424,15 @@ eşiği ise banko, < üçlü eşiği ise üçlü, arası çifte) → `solve_fix1
 → gerçekleşen sonucun skoru. Yeni olan yalnızca eşik katmanı ve skorlama; geri kalanı var olan
 modüller.
 
-**Ölçülen** (orantısal ölçek — ölçüldüğü günkü hâli). Varsayılan eşiklerle 36 haftanın
-**3'ünde** 14+ tutuyor, hafta başına ortalama **2.686 kolon**. Shin ölçeğinde aynı tablo
-1.987 kolon/hafta ve hold-out'ta 1 hafta (§3.18). Küme içi kalan hafta **yok** — 15 maçın tamamını işaretlerin içinde tutmak
-piyasa oranlarıyla pratikte olmuyor. Bu bir bulgu, kusur değil.
+**Ölçülen** (orantısal ölçek **ve kaplama ölçeği** — ölçüldüğü günkü hâli). Varsayılan
+eşiklerle 36 haftanın **3'ünde** 14+ tutuyor, hafta başına ortalama **2.686 kolon**. Shin
+ölçeğinde aynı tablo 1.987 kolon/hafta ve hold-out'ta 1 hafta (§3.18). Küme içi kalan
+hafta **yok** — 15 maçın tamamını işaretlerin içinde tutmak piyasa oranlarıyla pratikte
+olmuyor. Bu bir bulgu, kusur değil.
+
+> **Bu blok bir kayıttır, güncel tablo değildir.** Kaplama söküldükten sonra aynı komut
+> bu sayıların hiçbirini vermiyor (kolon sekiz kat büyüdü, hold-out 0,72/0,42'ye kaydı) ve
+> ölçülen kural zaten ürünün kuralı değil. Bugünkü tablo: README §5.4.
 
 **Aşırı uyuma karşı üç önlem.** Wilson %95 güven aralığı (41 hafta küçük örneklem; normal
 yaklaşım kenarlarda 1'i aşıyordu) · 28 eşikli tarama, "en iyi satır" diye sunulmadan ·
@@ -488,7 +496,7 @@ oranlınınki aynı sayılmaz. Brier olasılığın tamamını cezalandırıyor.
 karşı yazıldı: maç sonucu pazarı `t=1, st=1`, 226 futbol etkinliğinin 225'inde var, iki fiyat
 listesi (`odd` kupon, `wodd` web) ve lig adı ayrı uçtan geliyor.
 
-**İlk ölçüm: iddaa ortalama marjı %17,2.** Piyasa marjı %7,26 idi — "seviye tutmaz, yapı tutar"
+**İlk ölçüm: iddaa ortalama marjı %17,2** (tek snapshot; birikimli sayı bugün **%16,9**)**.** Piyasa marjı %7,26 idi — "seviye tutmaz, yapı tutar"
 cümlesinin artık sayısı var.
 
 225 maçın 3'ünde üçlü `17.95 / 8.48 / 1.00` gibi çıkıyor: 1.00 fiyat değil, askıya alınmış
@@ -566,7 +574,7 @@ korpusta eğitilince hepsi *iyi* tarafa geçti. Yani T2'deki aşırı uyum model
 kapasitesinden değil **örneklem küçüklüğünden** geliyormuş.
 
 **Ama miktar yetersiz.** 31 binde anlamlılık kuruluyor, 540 maçta kurulamıyor. Etki
-0,0005–0,0015 Brier; tabanı 0,57–0,59 olan bir sayıda. İddaa marjı %17,2 iken bu büyüklük
+0,0005–0,0015 Brier; tabanı 0,57–0,59 olan bir sayıda. İddaa marjı %16,9 iken bu büyüklük
 pratik eşiğe yakın bile değil. **Yön doğru, miktar yetersiz** — T5'in gerekçesi budur.
 
 ### 3.13 Referans skorları sağlık değişmezine bağlandı (T4)
@@ -845,7 +853,7 @@ Oynanmamış maçın hiçbir arşivde oranı yok. Kaynak football-data'nın `fix
 dosyası ve seçim kasıtlı: **ölçümü yaptığımız kaynağın ta kendisi.** Kupon setinde
 ölçülen isabet aynı fiyatlayıcıya ait olduğu için ürüne meşru biçimde taşınabilir.
 
-İddaa bülteni yedektir ve **kalibrasyonu ölçülmemiştir** (marj %17,2'ye karşı %7,26).
+İddaa bülteni yedektir ve **kalibrasyonu ölçülmemiştir** (marj %16,9'a karşı %7,26).
 İkisi birleştirilmez, **sıralanır**: fikstürde maç varsa o gösterilir. Karıştırmak,
 gövdedeki tek bir isabet sayısının iki farklı fiyatlayıcıya aitmiş gibi okunmasına yol
 açardı.
@@ -5671,18 +5679,27 @@ Premier Lig (71 maç) %19,7 / %47,9. Kupon başına ortalama 7 maç Süper Lig'd
 
 ---
 
-**Geri test** (sayfada var): varsayılan eşiklerle 36 haftanın 3'ünde 14+ (%8,3; %95 aralık
-%2,9–%21,8), hafta başına ort. **1.987 kolon**, bir 14 için 23.840 kolon. Küme içi hafta 0.
-**Hold-out 1 hafta** (%2,8; %95 aralık %0,5–14,2), 2.228 kolon/hafta. Hold-out'un seçtiği eşik
-36 haftanın 34'ünde varsayılanın kendisi (0,68/0,38); orantısal ölçekte 31 hafta boyunca
-0,68/0,42'ye kayıyordu (§3.18). Hold-out'taki 0→1 farkı **tek bir olaydır**, aralıklar
-fazlasıyla örtüşür — okunacak sayı maliyettir.
+**Geri test** (sayfada var): **ürünün kendi kuralı**, 114 hafta, ₺2.000 tavan —
+12+ 46 hafta (%40,4; %95 aralık %31,8–49,5), ortalama en iyi kolon 11,12, ₺1.620/hafta.
+Taban çizgisi eşik kuralı aynı kesitte 12+'yı %73,7'de tutturuyor ama **tavansız**:
+₺187.217/hafta, yani ürün bütçesinin 116 katı — kıyas bu yüzden geçerli değil.
+
+> **Bu satır 2026-09-07'de baştan ölçüldü.** Eskisi şuydu: *"varsayılan eşiklerle
+> 36 haftanın 3'ünde 14+ (%8,3), 1.987 kolon/hafta; hold-out 1 hafta (%2,8),
+> 2.228 kolon/hafta; hold-out'un seçtiği eşik 34 haftada 0,68/0,38."* Bu sayılar
+> **kaplama ölçeğinde** ölçülmüştü ve kaplama sökülünce (`../docs/DUZ_SISTEME_GECIS.md`)
+> hiçbiri yeniden üretilemez oldu — kolon sayısı sekiz kat büyüdü, hold-out'un
+> eşitlik bozucusu 0,72/0,42'ye kaydı. Ayrıca ölçülen kural ürünün kuralı
+> değildi ve manşet 14'tü; ikramiye 12'de başlar.
 
 **Piyasanın yanılması** (sayfada var): sezon ortalaması Brier **0,579** (oranı olan 567 maç,
-38 hafta); eşit olasılık vermenin karşılığı 0,667. Piyasa bilgi taşıyor ama az. En sürprizli
+38 hafta); eşit olasılık vermenin karşılığı 0,6667. Piyasa bilgi taşıyor ama az. En sürprizli
 haftalar 33 (0,759, kısmi), 7 (0,741), 37 (0,706); en tahmin edilebilir 3. hafta (0,339).
+Aynı piyasa, bütün tahmincilerin aynı haftalarda ölçüldüğü kesitte **0,5740** (36 hafta /
+540 maç) ve dört sezonluk geniş kesitte **0,5584** (114 hafta / 1.710 maç) — üç sayı da
+doğru, üçü farklı kesit; hangisinden konuşulduğu yazılmadan okunamaz.
 
-**Marj karşılaştırması** (F5 ölçümü): iddaa açık bülteninde ortalama marj **%17,2**, piyasa
+**Marj karşılaştırması** (F5 ölçümü): iddaa açık bülteninde ortalama marj **%16,9** (birikimli; ilk snapshot %17,2 demişti), piyasa
 oranlarında **%7,26**. İki kaynağın seviyesi bu yüzden tutmaz; favori sıralaması ve marj
 arındırılmış yapı tutar.
 
@@ -5746,7 +5763,7 @@ ve karşılıkları: kupon seti 0,5747 → **0,5740**, korpus 0,5940 → **0,593
 
 **Okuma.** Aşırı uyum modelin kapasitesinden değil örneklem küçüklüğünden geliyordu; büyük
 korpus onu kaldırdı. Ama kalan etki 0,0005–0,0015 Brier — 31 binde anlamlı, 540'ta değil ve
-%17,2'lik iddaa marjının yanında hiç. **Yön doğru, miktar yetersiz.**
+%16,9'luk iddaa marjının yanında hiç. **Yön doğru, miktar yetersiz.**
 
 **A1'in eklediği okuma daha serttir.** Piyasanın *kendi hareketi* — ham haliyle güçlü ve
 monoton bir sinyal — kapanışın ötesinde hiçbir şey söylemiyor. Bu, "iyi model bulamadık"
@@ -6106,7 +6123,7 @@ yer maçların **yarısında yanlış**.
 | **B1** | İkramiye / kazanan verisi | **Ön koşul sağlandı** (PR #14, yukarıdaki blok). Fizibilite sorusu kapandı: kaynak Spor Toto'nun resmî ikramiye ekranı, veri **elle** giriliyor. Kalan iş biriktirme — n = 2 |
 | **B2** | Popülerlik modeli | **Vekile gerek kalmadı** — gerçek oynanma payı var. Ama kendisi de vekil: tek platformun kullanıcıları, havuzun tamamı değil. **Sıradaki ölçüm bu yanlılıktır**: ikramiye tablosunun kat başına kazanan adetleri, oynanma payı + gerçek sonuçtan önceden söylenebilmeli; söylenemiyorsa platform havuzu temsil etmiyor |
 | **B3** | Beklenen getiriye göre kupon kurma | **Kaplamanın ve havuzun buluştuğu yer; projenin en özgün işi.** "Hangi maça kaç işaret" sorusu ilk kez ölçülmüş bir amaç fonksiyonuyla cevaplanır. Tahmin değil, **kalabalık davranışı** modellenir |
-| **B4** | Durma kuralı | *(a)* pozitif beklenen getiri ölçüldü → Faz C · *(b)* veri yok, ya da %17,2 marj + havuz seyrelmesi avantajı yutuyor → eksen kapanır |
+| **B4** | Durma kuralı | *(a)* pozitif beklenen getiri ölçüldü → Faz C · *(b)* veri yok, ya da %16,9 marj + havuz seyrelmesi avantajı yutuyor → eksen kapanır |
 
 ### 6.3b Faz B'nin ölçülebilir hâli — soru, ölçü ve durma kuralı
 
@@ -6600,7 +6617,7 @@ python -m spor_toto.kosum                  # kayıtlı koşumlar
 python -m spor_toto.kosum --son disari     # son koşumun ortamı
 
 # Denetim
-pytest -q                                  # 1.803 test (85'i bu katman, 583'ü tahmin)
+pytest -q                                  # 1.837 test (85'i bu katman, 583'ü tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out

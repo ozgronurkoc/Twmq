@@ -51,7 +51,7 @@ ikisi ölçülerek kapandı:
 
 | eksen | durum | sayı |
 |---|---|---|
-| Tahmin | **kapalı** | model ↔ piyasa farkı 0,0005–0,0015 Brier; iddaa marjı **%17,2** (README §1.1) |
+| Tahmin | **kapalı** | model ↔ piyasa farkı 0,0005–0,0015 Brier; iddaa marjı **%16,9** (README §1.1) |
 | Sütun (hakem) | **kapalı** | yayılım saf şansın 0,97–1,00 katı — etki zayıf değil **yok** (§3.59) |
 | Omurga fiyatı | **kapalı** | `Avg` kaldı; BFE farkının %81'i seçim hiç değişmeden geliyor (§3.58) |
 | Hedef kademe | **kapalı** | 12 kaldı; şekli bütçe belirliyor (§3.57) |

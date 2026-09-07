@@ -104,8 +104,8 @@ teyit edildi (§3, Faz 0.1), yani:
 | | |
 |---|---|
 | Bütçe | 1.000–3.000 TL = **100–300 kolon** |
-| Alınabilen şekil (14-garanti) | `secim.bedel_hesapla` = `2^çifte · 3^üçlü / 8` → 10 çifte = **128 kolon** (1.280 TL) · 11 çifte = **256 kolon** (2.560 TL) · 12 çifte = 512 kolon, **bütçe dışı** |
-| Geri testin bugünkü varsayılanı | **1.987 kolon/hafta ≈ 19.870 TL** — bütçenin **yedi katı** |
+| Alınabilen şekil (düz) | `secim.bedel_hesapla` = `2^çifte · 3^üçlü` → 6 çifte = **64 kolon** (640 TL) · 7 çifte = **128 kolon** (1.280 TL) · 8 çifte = **256 kolon** (2.560 TL) · 9 çifte = 512 kolon, **bütçe dışı**. (Formül `/ 8` taşıyordu; o kaplama bedeliydi ve katman söküldü.) |
+| Geri testin bugünkü varsayılanı | **19.683 kolon/hafta ≈ 196.830 TL** (tavan 210.000 TL) — Faz S'nin 100–300 kolon bandının **çok üstünde**. (2026-09-07: geri test o güne kadar tavansız **eşik** kuralını koşuyordu, 18.722 kolon/hafta ≈ 187.217 TL. Varsayılan ürünün kendi kuralı oldu ve bütçe **zorunlu parametre**; tavan eşik kuralının harcamasının üstüne çekildi ki kıyas geçerli olsun. Faz S'nin çalışma noktası bu değildir ve `--butce` ile ayrıca kurulur.) |
 
 Faz S'nin çalışma noktası bu yüzden bugünkü geri testin çalıştığı yer değildir.
 Bütün `secim` / `backtest` ölçümleri **100–300 kolon** bandında yeniden kurulur.
@@ -1166,7 +1166,7 @@ ekler; öngörülen ile gerçekleşen yan yana durur.
 5. **Oynanma payı bir vekildir.** Tek platformun kullanıcıları. K5 bunu ölçer
    ama **kaldıramaz**; kaldırılamayan sınır olarak yazılı kalır.
 6. **Piyasa oranı ≠ iddaa oranı.** Seviye tutmaz, yapı tutar (marj %7,26 ↔
-   %17,2). Faz S'nin para sayıları piyasa oranından türer. İddaa ekseninin
+   %16,9). Faz S'nin para sayıları piyasa oranından türer. İddaa ekseninin
    kalibrasyonu **45 kupon haftası** ister (§3.22) ve bu planda **kapanmaz**,
    yalnızca birikir.
 7. **Kendi oynamamızın havuzu etkilemesi modellenmiyor** (`KADEME` §9). 1.000–

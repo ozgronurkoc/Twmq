@@ -7,6 +7,7 @@ import { useIstek } from "@/lib/istek";
 import { cn, ondalik, sayi } from "@/lib/utils";
 import {
   Badge,
+  Button,
   Callout,
   Card,
   CardBody,
@@ -17,6 +18,8 @@ import {
 import {
   BacktestStats,
   BacktestWeeks,
+  ButceTable,
+  KademeDagilimi,
   HoldoutPanel,
   OverfitWarning,
   StrategyPicker,
@@ -39,6 +42,10 @@ const ARALIKLAR: Array<{ deger: number | null; etiket: string }> = [
 
 export default function GeriTestPage() {
   const [last, setLast] = React.useState<number | null>(null);
+  // Varsayilan URUNUN KENDI KURALI. Uzun sure bu sayfa yalnizca esik
+  // kuralini gosteriyordu — yani urunun kullanmadigi bir stratejinin
+  // sayilarini. `esik` silinmedi, taban cizgisine indi.
+  const [strateji, setStrateji] = React.useState<"hedef" | "esik">("hedef");
   // Sezon SEKME SERIDINDEN gelir (`?sezon=`); bu sayfa onu secmez ama
   // TASIMAK zorundadir, yoksa sezon secip bu sekmeye gecen kullanici
   // sessizce varsayilan sezonun geri testini gorur.
@@ -62,8 +69,12 @@ export default function GeriTestPage() {
     hata,
     yukleniyor: mesgul,
   } = useIstek(
-    (signal) => getBacktest({ last, banko: esik?.banko, uclu: esik?.uclu, sezon }, signal),
-    [last, esik?.banko, esik?.uclu, sezon],
+    (signal) =>
+      getBacktest(
+        { last, strateji, banko: esik?.banko, uclu: esik?.uclu, sezon },
+        signal,
+      ),
+    [last, strateji, esik?.banko, esik?.uclu, sezon],
     { hazir: urlOkundu, varsayilanHata: "Geri test alınamadı" },
   );
 
@@ -98,17 +109,23 @@ export default function GeriTestPage() {
 
   const calisan = veri.weeks.filter((h) => !h.skipped);
   const ornek = calisan.length ? calisan[calisan.length - 1] : null;
-  const secili = { banko: veri.strategy.banko, uclu: veri.strategy.uclu };
+  const esikAilesi = veri.strategy.ad === "esik";
+  const secili = {
+    banko: veri.strategy.banko ?? veri.grid.banko[0] ?? 0,
+    uclu: veri.strategy.uclu ?? 0,
+  };
+  const kademe = veri.meta.kademe;
 
   return (
     <div className="space-y-6">
       <header>
         <h1 className="font-display text-[30px] italic leading-tight">Geri test</h1>
         <p className="mt-1 max-w-3xl text-[13.5px] leading-relaxed text-muted-foreground">
-          “Bu strateji geçen sezon ne yapardı?” Her hafta için kapanış oranlarından bir kupon
+          “Bu kural geçmişte ne yapardı?” Her hafta için kapanış oranlarından bir kupon
           üretilir, seçim kümesinin tamamı kolonlara açılır ve <strong>gerçekleşen sonucun</strong>{" "}
-          o kupona ne yaptığı ölçülür. Sonuç bir kâr vaadi değil, stratejinin geçmişteki
-          bedelinin ve isabetinin kaydıdır.
+          o kupona ne yaptığı ölçülür. Manşet <strong>{kademe}+</strong>’dır: ikramiye orada
+          başlar, 15 bir yan üründür. Sonuç bir kâr vaadi değil, kuralın geçmişteki bedelinin
+          ve isabetinin kaydıdır.
         </p>
         <div className="mt-4">
           <IstatistikSekmeleri last={last} sezon={sezon} />
@@ -116,6 +133,9 @@ export default function GeriTestPage() {
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <Badge ton="primary">{veri.meta.weeks_used} hafta çalıştırıldı</Badge>
           <Badge>{veri.meta.weeks_available} hafta veri setinde</Badge>
+          <Badge ton={esikAilesi ? "warning" : "primary"}>
+            {esikAilesi ? "taban çizgisi: eşik kuralı" : "ürünün kendi kuralı"}
+          </Badge>
           {veri.meta.weeks_dropped.length ? (
             <Badge ton="warning">{veri.meta.weeks_dropped.length} hafta elendi (oran eksik)</Badge>
           ) : null}
@@ -152,24 +172,51 @@ export default function GeriTestPage() {
       <div className={cn("space-y-6 transition-opacity duration-200", mesgul && "opacity-60")}>
         <Card>
           <CardHeader
-            title="Strateji"
+            title="Kural"
             hint={veri.strategy.explain}
             action={
               <Badge>
-                %{(veri.strategy.banko * 100).toFixed(0)} /{" "}
-                {veri.strategy.uclu === 0 ? "üçlü yok" : `%${(veri.strategy.uclu * 100).toFixed(0)}`}
+                {esikAilesi
+                  ? `%${((veri.strategy.banko ?? 0) * 100).toFixed(0)} / ${
+                      veri.strategy.uclu === 0
+                        ? "üçlü yok"
+                        : `%${((veri.strategy.uclu ?? 0) * 100).toFixed(0)}`
+                    }`
+                  : `₺${sayi(veri.strategy.butce_tl ?? 0)} tavan`}
               </Badge>
             }
           />
           <CardBody className="space-y-5">
-            <StrategyPicker
-              banko={veri.strategy.banko}
-              uclu={veri.strategy.uclu}
-              grid={veri.grid}
-              onChange={(banko, uclu) => setEsik({ banko, uclu })}
-              mesgul={mesgul}
-            />
-            <BacktestStats season={veri.season} />
+            <div className="flex flex-wrap items-center gap-2">
+              {(["hedef", "esik"] as const).map((ad) => (
+                <Button
+                  key={ad}
+                  tip={strateji === ad ? "primary" : "outline"}
+                  boyut="sm"
+                  disabled={mesgul}
+                  onClick={() => setStrateji(ad)}
+                >
+                  {ad === "hedef" ? "Hedefe göre (ürün)" : "Eşik kuralı (taban çizgisi)"}
+                </Button>
+              ))}
+              <span className="text-[11.5px] text-muted-foreground">{veri.strategy.rol}</span>
+            </div>
+            {esikAilesi ? (
+              <StrategyPicker
+                banko={secili.banko}
+                uclu={secili.uclu}
+                grid={veri.grid}
+                onChange={(banko, uclu) => setEsik({ banko, uclu })}
+                mesgul={mesgul}
+              />
+            ) : null}
+            <BacktestStats season={veri.season} kademe={kademe} />
+            <div>
+              <SectionTitle hint="Manşet “12+” birikimlidir ve içinde 15'ler de vardır. İkramiye tablosunda 15 ile 12 arasında binlerce kat fark olduğu için kırılım ayrı durur.">
+                Kademe kırılımı — tam sayı, birikimli değil
+              </SectionTitle>
+              <KademeDagilimi season={veri.season} />
+            </div>
             {ornek ? (
               <div>
                 <SectionTitle hint="Seçili eşiklerin son çalıştırılan haftada ürettiği kupon.">
@@ -181,30 +228,49 @@ export default function GeriTestPage() {
           </CardBody>
         </Card>
 
-        <Card>
-          <CardHeader
-            title="Aşırı uyum sağlaması (hold-out)"
-            hint="Bir hafta dışarıda bırakılır, eşik kalan haftalarda seçilir, dışarıdaki haftada ölçülür. Karara esas alınacak sayı budur."
-          />
-          <CardBody>
-            <HoldoutPanel holdout={veri.holdout} best={veri.sweep_best} />
-          </CardBody>
-        </Card>
+        {esikAilesi ? (
+          <>
+            <Card>
+              <CardHeader
+                title="Aşırı uyum sağlaması (hold-out)"
+                hint="Bir hafta dışarıda bırakılır, eşik kalan haftalarda seçilir, dışarıdaki haftada ölçülür. Karara esas alınacak sayı budur."
+              />
+              <CardBody>
+                <HoldoutPanel holdout={veri.holdout} best={veri.sweep_best} />
+              </CardBody>
+            </Card>
 
-        <Card>
-          <CardHeader
-            title={`Eşik taraması (${veri.sweep.length} strateji)`}
-            hint="Her satır bir eşik çifti. En iyi satır bu sezona en iyi uyan stratejidir — gelecek sezonun en iyisi değil."
-          />
-          <CardBody>
-            <SweepTable
-              rows={veri.sweep}
-              best={veri.sweep_best}
-              secili={secili}
-              onSec={(banko, uclu) => setEsik({ banko, uclu })}
+            <Card>
+              <CardHeader
+                title={`Eşik taraması (${veri.sweep.length} strateji)`}
+                hint="Her satır bir eşik çifti. En iyi satır bu kesite en iyi uyan stratejidir — gelecek sezonun en iyisi değil."
+              />
+              <CardBody>
+                <SweepTable
+                  rows={veri.sweep}
+                  best={veri.sweep_best}
+                  secili={secili}
+                  onSec={(banko, uclu) => setEsik({ banko, uclu })}
+                />
+              </CardBody>
+            </Card>
+          </>
+        ) : (
+          <Card>
+            <CardHeader
+              title="Bütçe taraması"
+              hint="Hedef kuralında ayarlanan bir parametre yoktur, dolayısıyla hold-out'un koruduğu aşırı uyum riski de yoktur. Taranan şey bir parametre değil, bir harcama kararıdır."
             />
-          </CardBody>
-        </Card>
+            <CardBody className="space-y-3">
+              <ButceTable rows={veri.butce_sweep} kademe={kademe} />
+              <p className="text-[12px] leading-relaxed text-muted-foreground">
+                Pahalı basamak <strong>her zaman</strong> daha çok tutturur; bu tablonun
+                “en iyi satırı” yoktur. Okunacak şey bir basamak yukarı çıkmanın kaç lira
+                ve kaç hafta ettiğidir.
+              </p>
+            </CardBody>
+          </Card>
+        )}
 
         <Card>
           <CardHeader
@@ -225,7 +291,10 @@ export default function GeriTestPage() {
             </p>
             <p>
               <strong className="text-foreground">Seçim.</strong> {veri.strategy.explain}. 15 maçın
-              tamamı bu kuralla işaretlenir; elle müdahale yoktur.
+              tamamı bu kuralla işaretlenir; elle müdahale yoktur.{" "}
+              {esikAilesi
+                ? "Bu kural ürünün kullandığı kural DEĞİLDİR: haftanın şeklini görmez, bütçeyi bilmez ve hiçbir yerde ikramiye kademesini optimize etmez. Kıyas için duruyor."
+                : "Ürünün kupon kuran kodunun aynısı çalışır; ikinci bir kopya yoktur."}
             </p>
             <p>
               <strong className="text-foreground">Kolonlar.</strong> Kupon, formül sayfasındaki
@@ -233,9 +302,10 @@ export default function GeriTestPage() {
               bir çözüm rapora girmez.
             </p>
             <p>
-              <strong className="text-foreground">Skor.</strong> “En iyi”, üretilen kolonlar içinde
-              gerçekleşen sonuca en çok uyanın doğru sayısıdır. Küme içi kalan hafta 15
-              gereği en az 14 tutturur; küme dışı her maç o haftanın tavanını bir düşürür.
+              <strong className="text-foreground">Skor.</strong> Düzde en iyi kolon sayılmaz,
+              hesaplanır: <strong>15 − kaçak</strong>. Küme içi kalan hafta tam 15 tutturur;
+              küme dışı her maç o haftanın sonucunu tam bir kademe düşürür. Bu bir alt sınır
+              değil eşitliktir.
             </p>
             <p>
               <strong className="text-foreground">Elenen hafta.</strong> 15 maçın hepsinde oranı

@@ -75,10 +75,23 @@ from .ortak import kacak_dagilimi
 #: değişti çünkü aritmetik değişti; hedef (en az 12) değişmedi.
 VARSAYILAN_KACAK_ESIGI = 3
 
+#: Düzde bir kademeyi tutturmak için gereken en çok kaçak: `en iyi kolon =
+#: 15 − k` olduğuna göre `k ≤ 15 − kademe`. Ürünün hedef kademesi 12'dir.
+#:
+#: Sabit dosyanın altındaydı ve `odul_secim`in varsayılan argümanı olduğu
+#: için yukarı taşındı — değeri değişmedi, yalnızca yeri.
+HEDEF_KADEME = 12
+
 #: Bir durumda tutulacak en fazla Pareto noktası. Sınır güvenlik supabı;
 #: ölçümde sınıra dayanılmadı (en yoğun hafta 12 nokta gördü) ve dayanılsa
 #: bile yalnızca baskılanmış adaylar düşer.
 PARETO_SINIRI = 64
+
+#: `deger_secim`in arama tavanı (kolon). Bir bütçe DEĞİL — net değer amacı
+#: bedeli zaten cezalandırıyor, bu yalnızca arama uzayının güvenlik supabı.
+#: 3^9 = 19.683'ün üstünde seçilmiştir; tavana dayanan hafta olursa amaç
+#: yine "harca"ya döner, o yüzden `deger_kiyasi` dayanan hafta sayısını basar.
+DEGER_TAVANI = 60_000
 
 
 class Secim(NamedTuple):
@@ -134,6 +147,100 @@ def hedef_olasiligi(probs_listesi: list[dict[str, float]],
     return sum(kacak_dagilimi(q)[:esik + 1])
 
 
+#: DP durumu: (çifte, üçlü) -> Pareto kümesi [(kümülatifler, seviye izleği)].
+Durumlar = dict[tuple[int, int], list[tuple[tuple[float, ...], tuple[int, ...]]]]
+
+
+def _dp_cozumu(probs_listesi: list[dict[str, float]], butce: int, esik: int,
+               agirlik: Any = None, baslangic_vektoru: Any = None
+               ) -> tuple[list[list[tuple[str, float]]], Durumlar] | None:
+    """Kaçak dağılımının Pareto DP'si — **seçim ölçütünden bağımsız** gövde.
+
+    Bu gövde uzun süre `en_iyi_secim`in içindeydi. Ayrıldı çünkü ikinci bir
+    ölçüt geldi (`deger_secim`) ve DP'nin ikinci bir kopyası, iki kuralın
+    sessizce ayrışacağı yer olurdu. Ayrılan şey yalnızca **arama**; hangi
+    noktanın seçileceği çağırana ait.
+
+    Dönen `durumlar`, her `(çifte, üçlü)` bedeli için o bedele ulaşan
+    Pareto-baskın olmayan vektörleri taşır. Varsayılan ağırlıklarda vektör
+    kümülatiftir ve `cum[esik]` = `P(k ≤ esik)`. Pareto budaması her ölçüt
+    için güvenli: ölçüt vektörün **her bileşeninde artan** olduğu sürece
+    baskılanmış bir nokta hiçbir bedelde kazanamaz.
+
+    ─── `agirlik` ne işe yarıyor ─────────────────────────────────────────
+
+    Yineleme bağıntısı `v'[m] = v[m]·kal + v[m−1]·geç` iki ayrı soruya aynı
+    şekilde hizmet ediyor ve ikinci bir DP kopyası, iki kuralın sessizce
+    ayrışacağı yer olurdu:
+
+        kaçak dağılımı   kal = 1 − q,      geç = q,      başlangıç [1,1,…]
+        kolon dağılımı   kal = 1 − q,      geç = m − 1 + q,  başlangıç [1,0,…]
+
+    İkincisi `odul_secim`in ihtiyacı: bir maçta `m` sembol işaretliyse
+    kolonların `m − (1−q)` ağırlıklı kısmı o maçı **yanlış** biliyor.
+    Çarpım `Π(kal + geç·y)` açıldığında `v[d]`, tam `d` maç yanlış bilen
+    kolonların **beklenen sayısı** olur — olasılık değil, adet.
+    """
+    n = len(probs_listesi)
+    if n == 0:
+        return None
+
+    sirali = [_sirali(p) for p in probs_listesi]
+    # Her maç için seviye başına kaçak olasılığı. Üçlü her zaman 0'dır;
+    # yine de formülden hesaplanıyor ki olasılıklar 1'e toplanmadığında
+    # (bozuk girdi) sessizce sıfır varsayılmasın.
+    q_seviye = [[max(0.0, 1.0 - sum(v for _, v in s[:k])) for k in (1, 2, 3)]
+                for s in sirali]
+    if agirlik is None:
+        def agirlik(q: float, seviye: int) -> tuple[float, float]:
+            return 1.0 - q, q
+    baslangic: tuple[float, ...] = (
+        tuple([1.0] * (esik + 1)) if baslangic_vektoru is None
+        else tuple(baslangic_vektoru))
+    durumlar: Durumlar = {(0, 0): [(baslangic, ())]}
+
+    for i in range(n):
+        yeni: Durumlar = {}
+        for (a, b), kume in durumlar.items():
+            for seviye in (1, 2, 3):
+                ya, yb = a + (seviye == 2), b + (seviye == 3)
+                # Budama: kalan maçların hepsi tek olsa bile bedel bütçeyi
+                # aşıyorsa bu dal ölüdür (tek, bedeli 1 ile çarpar).
+                # Kaplama döneminde burada ikinci bir budama daha vardı —
+                # "kalan maçlarla yedi çifteye ulaşılamıyorsa dal kapanır";
+                # o şart Hamming bloğunundu ve katmanla birlikte kalktı.
+                if bedel_hesapla(ya, yb) > butce:
+                    continue
+                kal, gec = agirlik(q_seviye[i][seviye - 1], seviye)
+                for kumulatif, izlek in kume:
+                    # v_m' = v_m·kal + v_{m−1}·gec
+                    guncel = [kumulatif[0] * kal]
+                    for m in range(1, esik + 1):
+                        guncel.append(kumulatif[m] * kal
+                                      + kumulatif[m - 1] * gec)
+                    yeni.setdefault((ya, yb), []).append(
+                        (tuple(guncel), (*izlek, seviye)))
+        durumlar = {k: _pareto(v) for k, v in yeni.items()}
+        if not durumlar:
+            return None
+    return sirali, durumlar
+
+
+def _plan_kur(sirali: list[list[tuple[str, float]]], izlek: tuple[int, ...],
+              maliyet: int, p_hedef: float) -> Secim:
+    """İzlekten `Secim` — her maçın en olası `seviye` sembolü işaretlenir."""
+    secimler = [sirala_semboller([s for s, _ in sirali[i][:izlek[i]]])
+                for i in range(len(izlek))]
+    return Secim(
+        secimler=secimler,
+        bedel=maliyet,
+        p_hedef=p_hedef,
+        banko=sum(1 for s in secimler if len(s) == 1),
+        cift=sum(1 for s in secimler if len(s) == 2),
+        uclu=sum(1 for s in secimler if len(s) == 3),
+    )
+
+
 def en_iyi_secim(probs_listesi: list[dict[str, float]],
                  butce: int,
                  esik: int = VARSAYILAN_KACAK_ESIGI) -> Secim | None:
@@ -158,47 +265,10 @@ def en_iyi_secim(probs_listesi: list[dict[str, float]],
             "(hepsi uclu, 3^15 = 14.348.907 kolon). Bkz. modul basligi.")
     if butce <= 0:
         raise ValueError("Butce pozitif olmali.")
-    n = len(probs_listesi)
-    if n == 0:
+    dp = _dp_cozumu(probs_listesi, butce, esik)
+    if dp is None:
         return None
-
-    sirali = [_sirali(p) for p in probs_listesi]
-    # Her maç için seviye başına kaçak olasılığı. Üçlü her zaman 0'dır;
-    # yine de formülden hesaplanıyor ki olasılıklar 1'e toplanmadığında
-    # (bozuk girdi) sessizce sıfır varsayılmasın.
-    q_seviye = [[max(0.0, 1.0 - sum(v for _, v in s[:k])) for k in (1, 2, 3)]
-                for s in sirali]
-
-    # Durum: (çifte, üçlü) -> Pareto kümesi [(kümülatifler, seviye izleği)]
-    baslangic: tuple[float, ...] = tuple([1.0] * (esik + 1))
-    durumlar: dict[tuple[int, int], list[tuple[tuple[float, ...], tuple[int, ...]]]] = {
-        (0, 0): [(baslangic, ())],
-    }
-
-    for i in range(n):
-        yeni: dict[tuple[int, int], list[tuple[tuple[float, ...], tuple[int, ...]]]] = {}
-        for (a, b), kume in durumlar.items():
-            for seviye in (1, 2, 3):
-                ya, yb = a + (seviye == 2), b + (seviye == 3)
-                # Budama: kalan maçların hepsi tek olsa bile bedel bütçeyi
-                # aşıyorsa bu dal ölüdür (tek, bedeli 1 ile çarpar).
-                # Kaplama döneminde burada ikinci bir budama daha vardı —
-                # "kalan maçlarla yedi çifteye ulaşılamıyorsa dal kapanır";
-                # o şart Hamming bloğunundu ve katmanla birlikte kalktı.
-                if bedel_hesapla(ya, yb) > butce:
-                    continue
-                qq = q_seviye[i][seviye - 1]
-                for kumulatif, izlek in kume:
-                    # cum_m' = cum_m·(1−q) + cum_{m−1}·q
-                    guncel = [kumulatif[0] * (1.0 - qq)]
-                    for m in range(1, esik + 1):
-                        guncel.append(kumulatif[m] * (1.0 - qq)
-                                      + kumulatif[m - 1] * qq)
-                    yeni.setdefault((ya, yb), []).append(
-                        (tuple(guncel), (*izlek, seviye)))
-        durumlar = {k: _pareto(v) for k, v in yeni.items()}
-        if not durumlar:
-            return None
+    sirali, durumlar = dp
 
     en: tuple[float, int, tuple[int, ...]] | None = None
     for (a, b), kume in durumlar.items():
@@ -212,18 +282,187 @@ def en_iyi_secim(probs_listesi: list[dict[str, float]],
                 en = (kumulatif[esik], c, izlek)
     if en is None:
         return None
-
     p_hedef, maliyet, izlek = en
-    secimler = [sirala_semboller([s for s, _ in sirali[i][:izlek[i]]])
-                for i in range(n)]
-    return Secim(
-        secimler=secimler,
-        bedel=maliyet,
-        p_hedef=p_hedef,
-        banko=sum(1 for s in secimler if len(s) == 1),
-        cift=sum(1 for s in secimler if len(s) == 2),
-        uclu=sum(1 for s in secimler if len(s) == 3),
-    )
+    return _plan_kur(sirali, izlek, maliyet, p_hedef)
+
+
+def deger_secim(probs_listesi: list[dict[str, float]],
+                odul_tl: float,
+                kolon_bedeli: float | None = None,
+                esik: int = VARSAYILAN_KACAK_ESIGI,
+                tavan: int = DEGER_TAVANI) -> Secim | None:
+    """Net beklenen değeri enbüyükleyen plan — **her sembol bedelini ödemeli.**
+
+    ─── Niçin bu kural var ───────────────────────────────────────────────
+
+    `en_iyi_secim` sabit bir bütçe altında `P(k ≤ esik)`'i enbüyüklüyor. O
+    amaç üçlü sayısında **monotondur** (üçlünün kaçağı sıfırdır) ve bedel
+    ×2/×3 sıçramalarıyla arttığı için verilen bütçe altında tek bir azami
+    şekil kalır: bütçe elverdiğince üçlü alınır. Ölçüldü — dokuz bütçe
+    basamağının hepsinde 114 hafta boyunca 1–2 şekil çıkıyor ve şekli
+    belirleyen şey hafta değil **bütçe** (README §1.1).
+
+    Kusur aramada değil **soruda**: "bütçeyi harca" diye sorulunca cevabı
+    harcamak oluyor. Burada soru değişiyor:
+
+        net = P(k ≤ esik) · odul_tl  −  bedel · kolon_bedeli
+
+    Yani bir maçı tekten çifteye çıkarmak kuponu **iki katına** çıkarıyor ve
+    bunu ancak kazandırdığı olasılık o parayı hak ediyorsa yapıyor.
+    Kazandırdığı şey de tam olarak **maçın hakkı**dır: tek → çifte geçişi
+    kaçak olasılığını `1 − p₁`den `p₃`e indirir, yani kazanç **p₂**; çifte →
+    üçlü geçişinin kazancı **p₃**. Üç yönlü gerçek bir belirsizlikte p₃
+    büyüktür ve üçlü hak edilir; net favorili bir maçta p₃ küçüktür ve aynı
+    üçlü kuponu 1,5 katına çıkarıp neredeyse hiçbir şey almaz.
+
+    ─── `odul_tl` nedir, nereden gelir ───────────────────────────────────
+
+    "Hedefi tutturmak kaç lira değerinde." Varsayım değil, **taranacak** bir
+    parametredir: `scripts/deger_kiyasi.py` onu süpürüp her değerin 114
+    haftadaki **gerçekleşen** ikramiye karşılığını resmî ödül tablolarına
+    karşı ölçer. Yani sayıyı veri seçer, biz değil.
+
+    Sabit bütçe **yok** — `tavan` yalnızca bir güvenlik supabıdır (arama
+    uzayı). Bağlayıcı olan şey bedelin kendisi.
+
+    `None` döner ancak `tavan` altında hiçbir plan kurulamıyorsa.
+    """
+    from .getiri import KOLON_BEDELI
+
+    bedel_birim = KOLON_BEDELI if kolon_bedeli is None else kolon_bedeli
+    if odul_tl < 0:
+        raise ValueError("odul_tl negatif olamaz.")
+    if bedel_birim <= 0:
+        raise ValueError("kolon bedeli pozitif olmali.")
+    dp = _dp_cozumu(probs_listesi, tavan, esik)
+    if dp is None:
+        return None
+    sirali, durumlar = dp
+
+    en: tuple[float, float, int, tuple[int, ...]] | None = None
+    for (a, b), kume in durumlar.items():
+        c = bedel_hesapla(a, b)
+        if c > tavan:
+            continue
+        for kumulatif, izlek in kume:
+            net = kumulatif[esik] * odul_tl - c * bedel_birim
+            # Esitlikte UCUZ olan kazanir — `en_iyi_secim` ile ayni kural.
+            if en is None or (net, -c) > (en[0], -en[2]):
+                en = (net, kumulatif[esik], c, izlek)
+    if en is None:
+        return None
+    _, p_hedef, maliyet, izlek = en
+    return _plan_kur(sirali, izlek, maliyet, p_hedef)
+
+
+def kolon_dagilimi_beklentisi(probs_listesi: list[dict[str, float]],
+                              secimler: list[list[str]],
+                              en_cok_yanlis: int = 3) -> list[float]:
+    """`v[d]` = tam `d` maçı yanlış bilen kolonların **beklenen sayısı**.
+
+    Olasılık değil **adet** — düzde kupon bütün kombinasyonları oynuyor ve
+    ikramiye kolon başına ödeniyor, yani asıl soru "kaç kolonum 15 yaptı"
+    olmalı. Kapalı formu var: bir maçta `m` sembol işaretliyse ve o maçın
+    kapsama olasılığı `P = 1 − q` ise, kolonların `P` ağırlıklı kısmı maçı
+    doğru, `m − P` ağırlıklı kısmı yanlış biliyor. Çarpım
+
+        Π_i [ (1 − q_i) + (m_i − 1 + q_i)·y ]
+
+    açıldığında `y^d`nin katsayısı aranan sayıdır ve `Σ_d v[d]` toplam kolon
+    bedelini verir.
+
+    >>> [round(v, 6) for v in kolon_dagilimi_beklentisi(
+    ...     [{"1": 1.0, "0": 0.0, "2": 0.0}] * 14 + [{"1": 0.5, "0": 0.3, "2": 0.2}],
+    ...     [["1"]] * 14 + [["1", "0", "2"]], en_cok_yanlis=1)]
+    [1.0, 2.0]
+    """
+    v = [1.0] + [0.0] * en_cok_yanlis
+    for probs, sec in zip(probs_listesi, secimler, strict=True):
+        kapsama = sum(probs.get(t, 0.0) for t in sec)
+        kal = max(0.0, min(1.0, kapsama))
+        gec = len(sec) - kal
+        yeni = [v[0] * kal]
+        for d in range(1, en_cok_yanlis + 1):
+            yeni.append(v[d] * kal + v[d - 1] * gec)
+        v = yeni
+    return v
+
+
+def odul_secim(probs_listesi: list[dict[str, float]],
+               odul_kademe: dict[int, float],
+               kolon_bedeli: float | None = None,
+               kademe: int = HEDEF_KADEME,
+               tavan: int = DEGER_TAVANI) -> Secim | None:
+    """Beklenen **parayı** enbüyükleyen plan — kademeler kendi ağırlığıyla.
+
+    ─── `deger_secim`den farkı, ve niçin gerekti ─────────────────────────
+
+    `deger_secim` bedeli tartıyor ama hedefi **tek bir olay** sayıyor:
+    `P(k ≤ 3)`. Oysa 12 ile 15 aynı şey değil — resmî ödül tablolarında 114
+    haftanın ortalamasıyla **15 bir kolona 772 kat** daha çok ödüyor
+    (₺8.454.763 ↔ ₺10.957; 14 → 64 kat, 13 → 10,3 kat). "12 ve üstü"nü tek
+    kova saymak, o 772 katı görmemek demek.
+
+    Bu kural onu görüyor:
+
+        net = Σ_d  v[d] · odul_kademe[15 − d]  −  bedel · KOLON_BEDELI
+
+    `v[d]` **kolon adedi** (`kolon_dagilimi_beklentisi`), yani ödül kolon
+    başına çarpılıyor — düzde ikramiye böyle ödeniyor. `odul_kademe`
+    varsayım değil ölçümdür: `scripts/deger_kiyasi.py --odul-kaynak arsiv`
+    onu 114 haftanın gerçek tablolarından türetir.
+
+    ─── Ağır kuyruk uyarısı — bu kural onu SATIN ALIR ────────────────────
+
+    15'in ortalaması medyanının üç katı (₺8,45 M ↔ ₺2,79 M): ortalama birkaç
+    devirli haftadan geliyor. Beklenen değeri enbüyükleyen bir kural bu
+    yüzden **varyansı da** enbüyükler ve haftaların çoğunda kaybeder.
+    Ölçümde okunacak satır bu yüzden ROI değil, `deger_kiyasi`nin bastığı
+    "kaç haftada daha iyi" sayısıdır.
+
+    `None` döner ancak `tavan` altında hiçbir plan kurulamıyorsa.
+    """
+    from .getiri import KOLON_BEDELI
+
+    birim = KOLON_BEDELI if kolon_bedeli is None else kolon_bedeli
+    if birim <= 0:
+        raise ValueError("kolon bedeli pozitif olmali.")
+    if any(v < 0 for v in odul_kademe.values()):
+        raise ValueError("odul_kademe negatif olamaz.")
+    en_cok = 15 - kademe
+    if en_cok < 0:
+        raise ValueError("kademe 15'ten buyuk olamaz.")
+
+    def agirlik(q: float, seviye: int) -> tuple[float, float]:
+        kal = max(0.0, min(1.0, 1.0 - q))
+        return kal, seviye - kal
+
+    dp = _dp_cozumu(probs_listesi, tavan, en_cok, agirlik,
+                    [1.0] + [0.0] * en_cok)
+    if dp is None:
+        return None
+    sirali, durumlar = dp
+    agirliklar = [odul_kademe.get(15 - d, 0.0) for d in range(en_cok + 1)]
+
+    en: tuple[float, int, tuple[int, ...]] | None = None
+    for (a, b), kume in durumlar.items():
+        c = bedel_hesapla(a, b)
+        if c > tavan:
+            continue
+        for vektor, izlek in kume:
+            net = sum(w * x for w, x in zip(agirliklar, vektor, strict=True)) - c * birim
+            # Esitlikte UCUZ olan kazanir — oteki kurallarla ayni.
+            if en is None or (net, -c) > (en[0], -en[1]):
+                en = (net, c, izlek)
+    if en is None:
+        return None
+    _, maliyet, izlek = en
+    secimler = [sirala_semboller([t for t, _ in sirali[i][:izlek[i]]])
+                for i in range(len(izlek))]
+    # `p_hedef` OLCUTUN kendisi degil; kiyas edilebilir kalsin diye ayrica
+    # hesaplaniyor (oteki iki kural onu dogrudan enbuyukluyor).
+    return _plan_kur(sirali, izlek, maliyet,
+                     hedef_olasiligi(probs_listesi, secimler, kacak_esigi(kademe)))
 
 
 def _pareto(adaylar: list[tuple[tuple[float, ...], tuple[int, ...]]],
@@ -592,7 +831,7 @@ def kiyas(last: int | None = None,
 
     return {
         "esik_kacak": esik,
-        "hedef": f"P(kacak <= {esik}) = P(en iyi kolon >= {14 - esik})",
+        "hedef": f"P(kacak <= {esik}) = P(en iyi kolon >= {15 - esik})",
         "haftalar": haftalar,
         "ozet": {"esik": ozet("esik"), "hedef": ozet("hedef")},
         "uyari": (
@@ -638,10 +877,6 @@ if __name__ == "__main__":  # pragma: no cover
 
 
 # ─── TL cinsinden seçim ───────────────────────────────────────────────────
-
-#: Düzde bir kademeyi tutturmak için gereken en çok kaçak: `en iyi kolon =
-#: 15 − k` olduğuna göre `k ≤ 15 − kademe`. Ürünün hedef kademesi 12'dir.
-HEDEF_KADEME = 12
 
 
 def kacak_esigi(kademe: int = HEDEF_KADEME) -> int:

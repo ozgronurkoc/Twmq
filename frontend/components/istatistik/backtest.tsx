@@ -7,6 +7,7 @@ import type {
   BacktestHoldout,
   BacktestSeason,
   BacktestWeek,
+  ButceRow,
   SweepRow,
 } from "@/lib/types";
 import { cn, ondalik, sayi } from "@/lib/utils";
@@ -83,43 +84,108 @@ export function StrategyPicker({
 
 /* ── sezon ozeti ────────────────────────────────────────────────────────── */
 
-export function BacktestStats({ season }: { season: BacktestSeason }) {
+/**
+ * Kesit ozeti. MANSET 12'dir: ikramiye orada baslar, yani urunun olctugu
+ * sayi odur. Uzun sure manset 14'tu ve bu, ortalamasi 11 civarinda olan bir
+ * dagilimin ust kuyrugunu basari olcutu sanmak demekti — 14 o yuzden artik
+ * kendi kutucugunda "kuyruk" olarak duruyor.
+ */
+export function BacktestStats({ season, kademe }: { season: BacktestSeason; kademe: number }) {
   if (!season.weeks) {
     return <p className="text-[13px] text-muted-foreground">Çalıştırılabilir hafta yok.</p>;
   }
-  const [lo, hi] = season.hit14_ci;
+  const [lo, hi] = season.hit12_ci;
   return (
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
       <Stat
         boyut="lg"
-        etiket="14+ tutan hafta"
-        deger={`${season.hit14} / ${season.weeks}`}
-        alt={`%${ondalik(season.hit14_pct, 1)} · %95 aralık %${ondalik(lo, 1)}–%${ondalik(hi, 1)}`}
-        ton={season.hit14 === 0 ? "warning" : "neutral"}
+        etiket={`${kademe}+ tutan hafta`}
+        deger={`${season.hit12} / ${season.weeks}`}
+        alt={`%${ondalik(season.hit12_pct, 1)} · %95 aralık %${ondalik(lo, 1)}–%${ondalik(hi, 1)} — ikramiye ${kademe}'de başlar`}
+        ton={season.hit12 === 0 ? "warning" : "neutral"}
       />
       <Stat
         boyut="lg"
-        etiket="Küme içi hafta"
-        deger={`${season.in_set} / ${season.weeks}`}
-        alt="15 maçın tamamı işaretlerin içinde kaldı"
+        etiket="Ortalama en iyi kolon"
+        deger={ondalik(season.best_avg, 2)}
+        alt={`düzde 15 − kaçak · kırılım aşağıda`}
       />
       <Stat
         boyut="lg"
-        etiket="Toplam kolon bedeli"
-        deger={sayi(season.columns_total)}
-        alt={`haftada ort. ${sayi(Math.round(season.columns_avg))} · en pahalı hafta ${sayi(season.columns_max)}`}
+        etiket="Haftalık bedel"
+        deger={`₺${sayi(Math.round(season.tl_avg))}`}
+        alt={`ort. ${sayi(Math.round(season.columns_avg))} kolon · toplam ₺${sayi(Math.round(season.tl_total))}`}
       />
       <Stat
         boyut="lg"
-        etiket="14 başına maliyet"
-        deger={season.columns_per_hit14 === null ? "—" : sayi(Math.round(season.columns_per_hit14))}
+        etiket={`${kademe} başına maliyet`}
+        deger={season.columns_per_hit12 === null ? "—" : sayi(Math.round(season.columns_per_hit12))}
         alt={
-          season.columns_per_hit14 === null
-            ? "hiçbir hafta 14'e ulaşmadı"
-            : "bir 14 için ödenen toplam kolon"
+          season.columns_per_hit12 === null
+            ? `hiçbir hafta ${kademe}'ye ulaşmadı`
+            : `bir ${kademe} için ödenen toplam kolon`
         }
-        ton={season.columns_per_hit14 === null ? "warning" : "neutral"}
+        ton={season.columns_per_hit12 === null ? "warning" : "neutral"}
       />
+    </div>
+  );
+}
+
+/**
+ * TAM kademe kirilimi. `hit12` "12 ve ustu" demek ve icinde 15'ler de var;
+ * ikramiye tablosunda 15 ile 12 arasinda binlerce kat fark oluyor. Manset
+ * 12+ KALIR ama yanina bu kirilim konmadan okunmamali.
+ */
+export function KademeDagilimi({ season }: { season: BacktestSeason }) {
+  const d = season.kademe_dagilimi;
+  // Ad BILEREK `yuzde` degil: o, `lib/utils.ts`in bicimleyici adlarindan
+  // biri ve `scripts/check.mjs` yerel bir `const yuzde`yi "kanonigi
+  // getirmeden yeniden yazilmis bicimleyici" sayiyor. Burasi bir
+  // bicimleyici degil, sunucudan gelen veri.
+  const paylar = season.kademe_dagilimi_pct;
+  const satirlar = [
+    { anahtar: "15", etiket: "15 — tam bilme", vurgu: true },
+    { anahtar: "14", etiket: "14" },
+    { anahtar: "13", etiket: "13" },
+    { anahtar: "12", etiket: "12 — ikramiyenin başladığı kademe" },
+    { anahtar: "alt", etiket: "12'nin altı — ikramiye yok", vurgu: false },
+  ];
+  const enCok = Math.max(...Object.values(d));
+  return (
+    <div className={TABLO_SARMAL}>
+      <table className="w-full min-w-[420px] text-[12.5px]">
+        <thead>
+          <tr className={TABLO_BASLIK_SATIRI}>
+            <th scope="col" className="pb-2 pr-3 font-medium">En iyi kolon</th>
+            <th scope="col" className="w-20 pb-2 pr-3 text-right font-medium">Hafta</th>
+            <th scope="col" className="w-20 pb-2 pr-3 text-right font-medium">Pay</th>
+            <th scope="col" className="pb-2 font-medium">Dağılım</th>
+          </tr>
+        </thead>
+        <tbody className="tnum">
+          {satirlar.map((r) => {
+            const n = d[r.anahtar] ?? 0;
+            const p = paylar[r.anahtar] ?? 0;
+            return (
+              <tr key={r.anahtar} className="border-t border-line">
+                <td className={cn("py-2 pr-3", r.vurgu && "font-semibold")}>{r.etiket}</td>
+                <td className="py-2 pr-3 text-right">{n}</td>
+                <td className="py-2 pr-3 text-right text-muted-foreground">%{ondalik(p, 1)}</td>
+                <td className="py-2">
+                  <div
+                    className="h-2 rounded"
+                    style={{
+                      width: `${enCok ? (100 * n) / enCok : 0}%`,
+                      minWidth: n ? "3px" : 0,
+                      background: seqFill(enCok ? n / enCok : 0),
+                    }}
+                  />
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }
@@ -150,7 +216,7 @@ export function SweepTable({
   if (!rows.length) {
     return <p className="text-[13px] text-muted-foreground">Tarama sonucu yok.</p>;
   }
-  const enCok = Math.max(...rows.map((r) => r.hit14));
+  const enCok = Math.max(...rows.map((r) => r.hit12));
   // Sayfa butcesi (§6.8 G1: < 3.500 px). 28 satirlik tam tarama tek basina
   // 1.190 px — sayfanin ucte biri. `BacktestWeeks` ile ayni desen: veri
   // kaybolmuyor, bir tik uzaga gidiyor. SECILI ve EN IYI satirlar her zaman
@@ -174,10 +240,10 @@ export function SweepTable({
               <th scope="col" className="pb-2 pr-3 font-medium">Banko</th>
               <th scope="col" className="pb-2 pr-3 font-medium">Üçlü</th>
               <th scope="col" className="w-16 pb-2 pr-3 text-right font-medium">Hafta</th>
-              <th scope="col" className="w-20 pb-2 pr-3 text-right font-medium">14+</th>
-              <th scope="col" className="w-24 pb-2 pr-3 text-right font-medium">13+</th>
+              <th scope="col" className="w-20 pb-2 pr-3 text-right font-medium">12+</th>
+              <th scope="col" className="w-24 pb-2 pr-3 text-right font-medium">14+</th>
               <th scope="col" className="w-28 pb-2 pr-3 text-right font-medium">Ort. kolon</th>
-              <th scope="col" className="w-32 pb-2 pr-3 text-right font-medium">14 başına</th>
+              <th scope="col" className="w-32 pb-2 pr-3 text-right font-medium">12 başına</th>
               <th scope="col" className="w-28 pb-2 font-medium">Kupon şekli</th>
             </tr>
           </thead>
@@ -213,11 +279,11 @@ export function SweepTable({
                     <span
                       className="rounded px-1.5 py-0.5 font-semibold"
                       style={{
-                        background: seqFill(enCok ? r.hit14 / enCok : 0),
-                        color: seqInk(enCok ? r.hit14 / enCok : 0),
+                        background: seqFill(enCok ? r.hit12 / enCok : 0),
+                        color: seqInk(enCok ? r.hit12 / enCok : 0),
                       }}
                     >
-                      {r.hit14}
+                      {r.hit12}
                     </span>
                     {enIyi ? (
                       <span className="ml-1.5 text-[10px] uppercase tracking-wide text-primary">
@@ -226,14 +292,14 @@ export function SweepTable({
                     ) : null}
                   </td>
                   <td className="py-2 pr-3 text-right text-muted-foreground">
-                    {r.hit13}
+                    {r.hit14}
                     <span className="ml-1 text-[11px]">
-                      %{((100 * r.hit13) / Math.max(r.weeks, 1)).toFixed(0)}
+                      %{((100 * r.hit14) / Math.max(r.weeks, 1)).toFixed(0)}
                     </span>
                   </td>
                   <td className="py-2 pr-3 text-right">{sayi(Math.round(r.columns_avg))}</td>
                   <td className="py-2 pr-3 text-right text-muted-foreground">
-                    {r.columns_per_hit14 === null ? "—" : sayi(Math.round(r.columns_per_hit14))}
+                    {r.columns_per_hit12 === null ? "—" : sayi(Math.round(r.columns_per_hit12))}
                   </td>
                   <td className="py-2 text-[11.5px] text-muted-foreground">
                     {ondalik(r.banko_avg, 1)}B · {ondalik(r.double_avg, 1)}Ç ·{" "}
@@ -275,6 +341,69 @@ export function SweepTable({
 /* ── hold-out ───────────────────────────────────────────────────────────── */
 
 /**
+ * Hedef kuralinin butce taramasi.
+ *
+ * Esik taramasiyla KARISTIRILMAMALI ve o yuzden ayri bir bilesen: orada
+ * taranan sey sonuclara bakip secilen bir PARAMETREYDI (asiri uyum riski,
+ * hold-out gerektirir), burada taranan sey bir HARCAMA KARARI. Pahali
+ * basamak her zaman daha cok tutturur; okunacak sey "en iyi satir" degil,
+ * bir basamak yukari cikmanin kac lira ve kac hafta ettigidir.
+ */
+export function ButceTable({ rows, kademe }: { rows: ButceRow[]; kademe: number }) {
+  if (!rows.length) {
+    return <p className="text-[13px] text-muted-foreground">Bütçe taraması yok.</p>;
+  }
+  const enCok = Math.max(...rows.map((r) => r.hit12));
+  return (
+    <div className={TABLO_SARMAL}>
+      <table className="w-full min-w-[680px] text-[12.5px]">
+        <thead>
+          <tr className={TABLO_BASLIK_SATIRI}>
+            <th scope="col" className="pb-2 pr-3 font-medium">Bütçe</th>
+            <th scope="col" className="w-24 pb-2 pr-3 text-right font-medium">Tavan</th>
+            <th scope="col" className="w-20 pb-2 pr-3 text-right font-medium">{kademe}+</th>
+            <th scope="col" className="w-24 pb-2 pr-3 text-right font-medium">Ort. kolon</th>
+            <th scope="col" className="w-28 pb-2 pr-3 text-right font-medium">Gerçek bedel</th>
+            <th scope="col" className="w-28 pb-2 text-right font-medium">Ort. en iyi</th>
+          </tr>
+        </thead>
+        <tbody className="tnum">
+          {rows.map((r) => (
+            <tr key={r.butce_tl} className="border-t border-line">
+              <td className="py-2 pr-3 font-medium">₺{sayi(r.butce_tl)}</td>
+              <td className="py-2 pr-3 text-right text-muted-foreground">
+                {sayi(r.butce_kolon)} kolon
+              </td>
+              <td className="py-2 pr-3 text-right">
+                <span
+                  className="rounded px-1.5 py-0.5 font-semibold"
+                  style={{
+                    background: seqFill(enCok ? r.hit12 / enCok : 0),
+                    color: seqInk(enCok ? r.hit12 / enCok : 0),
+                  }}
+                >
+                  {r.hit12}
+                </span>
+                <span className="ml-1.5 text-[11px] text-muted-foreground">
+                  %{ondalik(r.hit12_pct, 1)}
+                </span>
+              </td>
+              <td className="py-2 pr-3 text-right">{sayi(Math.round(r.columns_avg))}</td>
+              <td className="py-2 pr-3 text-right text-muted-foreground">
+                ₺{sayi(Math.round(r.tl_avg))}
+              </td>
+              <td className="py-2 text-right text-muted-foreground">
+                {ondalik(r.best_avg, 2)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/**
  * Asiri uyumun olcusu. Ayni izgara, ayni motor — tek fark esigin o haftayi
  * GORMEDEN secilmis olmasi. Iki sayi arasindaki bosluk, tarama tablosunun
  * ne kadarinin gecmise uydurma oldugunu soyler.
@@ -286,11 +415,11 @@ export function HoldoutPanel({
   holdout: BacktestHoldout;
   best: SweepRow | null;
 }) {
-  if (!holdout.weeks || holdout.hit14 === undefined) {
+  if (!holdout.weeks || holdout.hit12 === undefined) {
     return <p className="text-[13px] text-muted-foreground">Hold-out için yeterli hafta yok.</p>;
   }
-  const fark = (best?.hit14 ?? 0) - holdout.hit14;
-  const [lo, hi] = holdout.hit14_ci ?? [0, 0];
+  const fark = (best?.hit12 ?? 0) - holdout.hit12;
+  const [lo, hi] = holdout.hit12_ci ?? [0, 0];
 
   return (
     <div className="space-y-4">
@@ -298,15 +427,15 @@ export function HoldoutPanel({
         <Stat
         boyut="lg"
           etiket="Taramanın en iyisi"
-          deger={best ? `${best.hit14} / ${best.weeks}` : "—"}
+          deger={best ? `${best.hit12} / ${best.weeks}` : "—"}
           alt={best ? `eşik %${(best.banko * 100).toFixed(0)} / ${best.uclu === 0 ? "üçlü yok" : `%${(best.uclu * 100).toFixed(0)}`}` : undefined}
         />
         <Stat
         boyut="lg"
           etiket="Hold-out (haftayı görmeden)"
-          deger={`${holdout.hit14} / ${holdout.weeks}`}
+          deger={`${holdout.hit12} / ${holdout.weeks}`}
           alt={
-            `%${ondalik(holdout.hit14_pct ?? 0, 1)} · %95 aralık %${ondalik(lo, 1)}–%${ondalik(hi, 1)}` +
+            `%${ondalik(holdout.hit12_pct ?? 0, 1)} · %95 aralık %${ondalik(lo, 1)}–%${ondalik(hi, 1)}` +
             // Olculemeyen kat SESSIZCE dusmez: paydada duruyor (iska
             // sayiliyor) ve bunu soylemek zorundayiz, yoksa oran
             // olculmemis haftalari yok saymis gibi okunur.
@@ -314,7 +443,7 @@ export function HoldoutPanel({
               ? ` · ${holdout.atlanan} hafta ölçülemedi (arama uzayı) ve ıska sayıldı`
               : "")
           }
-          ton={holdout.hit14 === 0 ? "warning" : "neutral"}
+          ton={holdout.hit12 === 0 ? "warning" : "neutral"}
         />
         <Stat
         boyut="lg"

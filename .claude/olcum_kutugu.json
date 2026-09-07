@@ -2,9 +2,9 @@
  "sayilar": [
   {
    "ne": "suit test sayisi (eksiksiz kurulum)",
-   "deger": "1.803",
+   "deger": "1.837",
    "ureten": "cd backend && python -m pytest --collect-only -q -p no:randomly -o addopts=  # son satirdaki toplam",
-   "olculdu": "2026-09-06",
+   "olculdu": "2026-09-07",
    "anildigi_yerler": [
     "README.md §7,§9",
     "backend/README.md",
@@ -14,7 +14,7 @@
     "replit.md"
    ],
    "bekci": "backend/tests/test_belgeler.py::test_test_sayisi_belgelerde_tek_ve_dogru",
-   "not": "1.799 yaziyordu ve KENDI BEKCISIYLE celisiyordu: bekci belgelerdeki sayiyi gercek koleksiyona esitler, belgeler 1.800 diyordu. Uretici komut da yanlisti — `-o addopts=` olmadan xdist devrede kalir. PR 48 incelemesinde uc bekci eklendi: 1.800 -> 1.803."
+   "not": "1.799 yaziyordu ve KENDI BEKCISIYLE celisiyordu: bekci belgelerdeki sayiyi gercek koleksiyona esitler, belgeler 1.800 diyordu. Uretici komut da yanlisti — `-o addopts=` olmadan xdist devrede kalir. PR 48 incelemesinde uc bekci eklendi: 1.800 -> 1.803. || 1.803 -> 1.820 (2026-09-07): geri testin hedef kuralina cevrilmesiyle 17 test eklendi (strateji secimi, butce zorunlulugu, butce taramasi monotonlugu, §1.1 sayi bekcileri, birikimli marj)."
   },
   {
    "ne": "test dosyasi sayisi",
@@ -1364,6 +1364,182 @@
    ],
    "bekci": null,
    "not": "Belge 'mod_envanteri (~129 ms, 7 mod)' diyordu; o kontrol kaplama doneminde yedi modu ILP dahil kosturuyordu, bugun tek modu dogruluyor. Kimlik degisti, yani bu bir sure gerilemesi degil YAPISAL degisiklik. ms degerleri makineye bagli oldugu icin bu turda YENIDEN OLCULMEDI — belgeye de oyle yazildi."
+  },
+  {
+   "ne": "geri test — BUGUNKU KURAL (hedef), 114 hafta, TL2.000 tavan: 12+ tutturan hafta",
+   "deger": "%40,4",
+   "ureten": "cd backend && python -c \"from spor_toto.backtest import backtest; import json; print(json.dumps(backtest(sweep=False, sezon='hepsi')['season'], ensure_ascii=False))\"",
+   "olculdu": "2026-09-07",
+   "anildigi_yerler": [
+    "README.md §1.1"
+   ],
+   "bekci": "backend/tests/test_belgeler.py::test_readme_1_1_geri_test_sayilari_olcumle_ayni",
+   "olcek": "duz · TL2.000 tavan",
+   "not": "Capa %40,4: README §1.1 bu olcumu artik butce MERDIVENINDE aniyor (46/114 sayisi metinden dustu, olcum durdu). §5.4'ten de dustu. || TL2.000 tavan olcegi — varsayilan tavan 2026-09-07'de TL210.000'e cikti (bkz. ayni tarihli 106/114 girdisi). Kayit SILINMEZ: o gun olculen buydu ve README §1.1'in butce merdiveninde hala aniliyor. || Ayni kosumun yanindaki sayilari: %40,4 (%95 araligi %31,8-49,5), 13+ 23, 14+ 7, 15 bir hafta; ortalama en iyi kolon 11,12; ortalama bedel TL1.620/hafta (162 kolon). || Yanindaki sayilar ayni kosumdan: 13+ 23, 14+ 7, 15 bir hafta; ortalama en iyi kolon 11,12; ortalama bedel TL1.620/hafta (162 kolon). MANSET 12'dir cunku ikramiye orada baslar. 14+ KUYRUKTUR ve tek basina okunmaz. Bu satir README §1.1'in ESKI cumlesinin yerini aliyor: orasi 'esik kuralinin' 36 haftada 3 kez 14+ tutturdugunu yaziyordu — ne kural urunun kuraliydi, ne olcek duzdu, ne de manset dogruydu."
+  },
+  {
+   "ne": "geri test — TABAN CIZGISI (esik 0,68/0,38), 114 hafta, TAVANSIZ: 12+ ve haftalik bedel",
+   "deger": "%73,7",
+   "ureten": "cd backend && python -c \"from spor_toto.backtest import backtest; import json; print(json.dumps(backtest(sweep=False, sezon='hepsi', strateji='esik')['season'], ensure_ascii=False))\"",
+   "olculdu": "2026-09-07",
+   "anildigi_yerler": [
+    "README.md §1.1",
+    "README.md §5.4"
+   ],
+   "bekci": null,
+   "olcek": "duz",
+   "not": "Ayni kosum: 84/114 hafta, ortalama en iyi kolon 12,19, 18.722 kolon/hafta = TL187.217/hafta. || Ortalama en iyi kolon 12,19, 18.722 kolon/hafta. 'Daha iyi' GORUNUYOR ama kiyas gecerli DEGIL: bu kuralin butce tavani YOK ve duz olcekte haftada TL187.217 harciyor — urun butcesinin (TL1.620) 116 KATI. Esik kuralinin README'de yillarca taban cizgisi diye durmasinin sorunu buydu: bedeli gormeyen bir kuralin isabetini bedeli goren bir kuralinkiyle yan yana koymak."
+  },
+  {
+   "ne": "geri test — esik ailesi, 36 hafta, tarama + hold-out (olcut 12+)",
+   "deger": "860.315",
+   "ureten": "cd backend && python -c \"from spor_toto.backtest import backtest; import json; print(json.dumps(backtest(sweep=True, strateji='esik'), ensure_ascii=False))\"",
+   "olculdu": "2026-09-07",
+   "anildigi_yerler": [
+    "README.md §5.4"
+   ],
+   "bekci": null,
+   "olcek": "duz",
+   "not": "TL860.315 taramanin EN IYI satirinin (0,78/0,42) haftalik bedeli. Ayni kosum: sezon 24/36 (%66,7), hold-out 28/36 (%77,8) ve TL775.835/hafta, taramanin en iyisi 31/33 (%93,9). || Sezonun kendisi 24/36 (%66,7), taramanin en iyisi 0,78/0,42 ile 31/33 (%93,9). Tarama olcutu 14+ iken 12+'ye cevrildi (ikramiye kademesi). SONUC: butce tavani olmayan bir ailede 12+ optimize etmek taramayi en genis esige itiyor ve bedel TL860.315/haftaya cikiyor. Yani bu tablo bir strateji tavsiyesi DEGIL, tavansiz aramanin dejenere oldugunun ikinci kanitidir. ESKI README sayilari (hold-out 1 hafta, 2.228 kolon, esik 0,68/0,38) KAPLAMA olceginde olculmustu ve bugun hicbiri yeniden uretilemiyor."
+  },
+  {
+   "ne": "para ekseni — 114 hafta, TL2.000: gercek kolon odulunun geri donusu",
+   "deger": "%33,4",
+   "ureten": "cd backend && python -m spor_toto.karne --taban --butce 2000",
+   "olculdu": "2026-09-07",
+   "anildigi_yerler": [
+    "README.md §1.1"
+   ],
+   "bekci": null,
+   "olcek": "duz · TL2.000 tavan",
+   "not": "§1.1 bunu TL210.000 tavaninin yaninda KIYAS olarak aniyor. || TL2.000 tavan olcegi — varsayilan tavan TL210.000'e cikti ve ayni olcum orada %46,5 veriyor. Kayit SILINMEZ. || TL61.615 odul / TL184.680 maliyet. || Garanti tabani odulu TL26.361 (%14,3), taban gevsekligi 2,34 kat. Okunacak esik 1,0'dir ve %33,4 onun UCTE BIRI: urun bugun parayi kaybediyor. Maliyet satiri geri testle BIREBIR ortusuyor (184.680/114 = TL1.620/hafta), yani kademe ekseni ile para ekseni ayni kosumu anlatiyor."
+  },
+  {
+   "ne": "piyasa Brier cizgisi — iki kesit ayri ayri",
+   "deger": "0,5584",
+   "ureten": "cd backend && python -c \"from spor_toto.evaluate import kupon_kesiti_tum, olculebilir_haftalar; from spor_toto.ortak import brier; f=lambda hs: sum(brier(p,g) for h in hs for p,g in zip(h['probs'],h['results']))/sum(len(h['results']) for h in hs); print(f(olculebilir_haftalar()), f(kupon_kesiti_tum()))\"",
+   "olculdu": "2026-09-07",
+   "anildigi_yerler": [
+    "README.md §1.1",
+    "README.md §5.0",
+    "README.md §5.4"
+   ],
+   "bekci": "backend/tests/test_evaluate.py::test_piyasa_baslangic_cizgisi",
+   "not": "Genis kesit (114 hafta / 1.710 mac). Dar kesit (36 hafta / 540 mac) 0,5740; her ikisi de ayni komuttan cikar. || Esit olasilik dagitmanin karsiligi 0,6667 (ortak.BRIER_ESIT). README uzun sure '0,579' diyordu ve HANGI KESIT oldugunu yazmiyordu: 0,579 = 38 hafta / 567 mac (kismi haftalar dahil, odds.season_1x2_summary), 0,5740 = 36 hafta / 540 mac (butun tahminciler AYNI haftalarda olculur), 0,5584 = 114 hafta / 1.710 mac. Uc sayi da dogru, uc farkli kesit."
+  },
+  {
+   "ne": "iddaa acik bulteni ortalama marji — BIRIKIMLI (butun snapshot'lar)",
+   "deger": "%16,9",
+   "ureten": "cd backend && python -c \"import sys; sys.path.insert(0,'.'); from pathlib import Path; from scripts.snapshot_iddaa import birikimli_marj; print(birikimli_marj(Path('data/iddaa')))\"  # ya da data/iddaa/iddaa_rapor.json -> birikimli",
+   "olculdu": "2026-09-07",
+   "anildigi_yerler": [
+    "README.md §1.1",
+    "README.md §5.3",
+    "docs/VERI_TOPLAMA_VE_ISLEME.md",
+    "docs/KUPON_NASIL_KURULUYOR.md",
+    "docs/ISTATISTIK_YOL_HARITASI.md"
+   ],
+   "bekci": "backend/tests/test_snapshot_iddaa.py::test_rapor_birikimli_marji_tasir",
+   "not": "Tam deger %16,94 ortalama / %17,99 medyan, 473 satir / 2 snapshot; belgeler yuvarlanmis %16,9 ve medyan %18,0 yaziyor. || Belgeler %17,2 diyordu ve o TEK GUNUN sayisiydi (2026-08-16, 222 mac). Bir sonraki snapshot %16,70 verdi (2026-08-17, 251 mac), rapor uzerine yazildi, belge kaymadi ve hicbir kapi gormedi — cunku `avg_margin_pct` bir KOSUM CIKTISI, birikimli bir olcum degil. `snapshot_iddaa.birikimli_marj` eklendi ve rapora `birikimli` blogu girdi; belgeye giren sayi artik odur. Haftalik cron (.github/workflows/snapshot-iddaa.yml) her pazartesi bir snapshot daha ekliyor, yani bu sayi oynayacak ama sicramayacak. Medyan (%17,99) ortalamadan yuksek: dagilim carpik, buyuk ligler dusuk marjli. Piyasa arsivinin marji %7,26 — kiyas oradan. || Web (bayi disi) fiyatinin ayni 473 satirdaki marji %21,4 ortalama / %22,4 medyan; kupon fiyati bayi fiyatidir, belgede anilan sayi odur."
+  },
+  {
+   "ne": "geri test — BUGUNKU KURAL (hedef), 114 hafta, TL210.000 tavan: 12+ tutturan hafta",
+   "deger": "106/114",
+   "ureten": "cd backend && python -c \"from spor_toto.backtest import backtest; import json; print(json.dumps(backtest(sweep=False, sezon='hepsi')['season'], ensure_ascii=False))\"",
+   "olculdu": "2026-09-07",
+   "anildigi_yerler": [
+    "README.md §1.1",
+    "README.md §5.4"
+   ],
+   "bekci": "backend/tests/test_belgeler.py::test_readme_1_1_geri_test_sayilari_OLCUMLE_ayni",
+   "olcek": "duz · TL210.000 tavan",
+   "not": "Ayni kosum: %93,0 (%95 araligi %86,8-96,4), 13+ 85, 14+ 48, 15 onbes hafta; ortalama en iyi kolon 13,22; ortalama bedel TL196.830/hafta (19.683 kolon). Tavan TL2.000'den TL210.000'e cikarildi cunku taban cizgisi esik kurali TAVANSIZ kosarken TL187.217/hafta harciyordu ve kiyas gecerli degildi; TL210.000 onun ustunde. Ayni parada sonuc %73,7 (esik) <-> %93,0 (hedef)."
+  },
+  {
+   "ne": "para ekseni — 114 hafta, TL210.000: gercek kolon odulunun geri donusu",
+   "deger": "%46,5",
+   "ureten": "cd backend && python -m spor_toto.karne --taban --butce 210000",
+   "olculdu": "2026-09-07",
+   "anildigi_yerler": [
+    "README.md §1.1",
+    "README.md §14"
+   ],
+   "bekci": null,
+   "olcek": "duz · TL210.000 tavan",
+   "not": "TL10.438.624 odul / TL22.438.620 maliyet. Garanti tabani odulu TL5.108.475 (%22,8), taban gevsekligi 2,04 kat. TL2.000 tavaninda ayni olcum %33,4 veriyordu: daha cok para daha IYI oran getiriyor ama basabas 1,0 hala uzak. Maliyet satiri geri testle birebir ortusuyor (22.438.620/114 = TL196.830/hafta)."
+  },
+  {
+   "ne": "butce merdiveni — hedef kurali, 114 hafta, dokuz basamak",
+   "deger": "%68,4",
+   "ureten": "cd backend && python -c \"from spor_toto.backtest import backtest; import json; print(json.dumps(backtest(sweep=True, sezon='hepsi')['butce_sweep'], ensure_ascii=False))\"",
+   "olculdu": "2026-09-07",
+   "anildigi_yerler": [
+    "README.md §1.1"
+   ],
+   "bekci": "backend/tests/test_backtest.py::test_butce_taramasi_MONOTON_ve_hold_out_yok",
+   "olcek": "duz",
+   "not": "Capa TL20.000 basamagi (%68,4). Merdivenin tamami: TL500 %28,1 · TL1.000 %32,5 · TL1.500 %35,1 · TL2.000 %40,4 · TL3.000 %43,0 · TL5.000 %52,6 · TL20.000 %68,4 · TL60.000 %80,7 · TL210.000 %93,0. MONOTON ve olmasi gereken de bu: buyuk tavan kucugun buldugu her plani da kapsiyor. Bu tablonun 'en iyi satiri' YOKTUR — pahali basamak her zaman daha cok tutturur; sorulacak soru bedele degip degmedigidir. Kosum 4,6 sn."
+  },
+  {
+   "ne": "kupon SEKLI butceye gore belirleniyor, haftaya gore DEGIL",
+   "deger": "19.683",
+   "ureten": "cd backend && python -c \"from spor_toto.backtest import BUTCE_IZGARA, hedef_secici, _hafta_calistir, kesit_girdileri; g=[x for x in kesit_girdileri(None,'shin','hepsi') if x['usable']]; print([(tl, len({(h['banko'],h['double'],h['triple']) for h in [_hafta_calistir(x, hedef_secici(tl)) for x in g]}), len({tuple(h['picks']) for h in [_hafta_calistir(x, hedef_secici(tl)) for x in g]})) for tl in BUTCE_IZGARA])\"",
+   "olculdu": "2026-09-07",
+   "anildigi_yerler": [
+    "README.md §1.1"
+   ],
+   "bekci": "backend/tests/test_secim.py::test_sekil_BUTCENIN_sonucu_haftanin_DEGIL",
+   "olcek": "duz",
+   "not": "CANLI YOLDA DA BOYLE — geri teste ozgu DEGIL. Kayitli dort 2026/27 haftasi kendi GERCEK fiyatlariyla (pinnacle/nesine; geri test football-data Avg kullaniyor, bambaska bir olcek) kuruldugunda dordunde de ayni sekil: TL2.000 -> (10 banko, 1 cifte, 4 uclu) = 162 kolon; TL210.000 -> (6, 0, 9) = 19.683 kolon. Uc canli giris noktasi da (hafta_kos.py, super_toto_hafta.py, super_toto_tahmin2.py) sekli ayni `en_iyi_secim`den aliyor. Ayrica getiri_secim ve kalabalik_ayari sekli DEGISTIRMIYOR: 4. haftanin gercek oynanma paylariyla uc yol da her iki butcede birebir ayni sekli veriyor. Bekciler: test_secim.py::test_sekil_BUTCENIN_sonucu_haftanin_DEGIL ve ::test_para_ve_kalabalik_yollari_SEKLI_DEGISTIRMEZ. || BULGU TL210.000'e OZGU DEGIL: alti butce basamaginin hepsinde 114 hafta boyunca 1-2 sekil cikiyor (TL500 1 · TL1.000 2 · TL1.500 2 · TL2.000 1 · TL3.000 1 · TL5.000 1 · TL20.000 2 · TL60.000 2 · TL210.000 1), PLAN ise her basamakta 114/114 farkli. Sebep yapisal: P(k<=3) uclu sayisinda MONOTON (uclu asla kacmaz) ve bedel x2/x3 sicradigi icin verilen butce altinda tek bir azami sekil kaliyor — optimizasyon bir kose cozumunde oturuyor. Kural haftayi okumayi birakmiyor ama okudugu sey maclarin SIRALAMASI, olasiliklarin DEGERLERI degil. || Capa 19.683 = 3^9, sekli belirleyen kolon sayisi. Sekil demeti (banko, cifte, uclu) = (6, 0, 9). || 21.000 kolonun altindaki en genis kapsama 9 uclu + 6 banko (3^9 = 19.683); uclunun kacagi sifir oldugu icin optimizasyon butce elverdigince uclu alir. Sekil bu yuzden BUTUN haftalarda ayni. AMA PLAN AYNI DEGIL: dar kesitte 36/36, genis kesitte 114/114 farkli plan — hangi alti macin banko olacagi oranlardan geliyor. 'Tavan yukseldi, motor artik haftayi okumuyor' cumlesi kurulmasi kolay ve YANLIS; bekci tam o ayrimi civiliyor."
+  },
+  {
+   "ne": "kademe dagilimi — hedef kurali, 114 hafta, TL210.000 tavan (TAM kademe)",
+   "deger": "%13,2",
+   "ureten": "cd backend && python -c \"from spor_toto.backtest import backtest; import json; print(json.dumps(backtest(sweep=False, sezon='hepsi')['season']['kademe_dagilimi_pct'], ensure_ascii=False))\"",
+   "olculdu": "2026-09-07",
+   "anildigi_yerler": [
+    "README.md §1.1",
+    "README.md §5.4"
+   ],
+   "bekci": "backend/tests/test_backtest.py::test_kademe_dagilimi_birikimliyle_TUTARLI",
+   "olcek": "duz · TL210.000 tavan",
+   "not": "Capa 15'in payi (%13,2 = 15 hafta). Tam dagilim: 15 -> 15 hafta (%13,2) · 14 -> 33 (%28,9) · 13 -> 37 (%32,5) · 12 -> 21 (%18,4) · 12 alti -> 8 (%7,0). MODU 13. Birikimli manset %93,0 bu dagilimin ilk dort satirinin toplami; tek basina okunursa '%93 ikramiyeye donuyor' izlenimi verir, oysa ikramiye tablosunda 15 ile 12 arasinda binlerce kat fark var. Dar kesitte (36 hafta): 15 -> 4 (%11,1) · 14 -> 7 (%19,4) · 13 -> 12 (%33,3) · 12 -> 9 (%25,0) · alt -> 4 (%11,1)."
+  },
+  {
+   "ne": "deger kurali (bedeli tartan secim) <-> bugunku kural, 114 hafta, GERCEK odul tablolari",
+   "deger": "+0,212",
+   "ureten": "cd backend && python scripts/deger_kiyasi.py",
+   "olculdu": "2026-09-07",
+   "anildigi_yerler": [
+    "README.md §11"
+   ],
+   "bekci": "backend/tests/test_secim.py::test_deger_secilen_plan_net_degeri_gercekten_ENBUYUKLER",
+   "olcek": "duz",
+   "not": "GECMEDI. Eslesik bedelde iki kiyas: tavan TL210.000 <-> odul TL3.000.000 ROI 0,465 -> 0,677, fark +0,212 %95 [-0,038, +0,682]; tavan TL2.000 <-> odul TL20.000 ROI 0,334 -> 0,754, fark +0,421 %95 [-0,198, +1,474]. IKISI DE sifiri kesiyor. Sebep: deger kurali haftalik net karda birincide 3/114, ikincide 6/114 haftada daha iyi — toplamdaki artis kuyruktan geliyor, kenardan degil. YAPISAL KAZANIM GERCEK ama para dogrulamiyor: sekil artik haftaya gore degisiyor (114 haftada 1 sekil yerine 2-5) cunku her sembol bedelini oduyor. Odul taramasinin EN IYI SATIRI YOKTUR (agir kuyruk); betik bunu ciktisinda yaziyor. VARSAYILAN DEGISMEDI."
+  },
+  {
+   "ne": "kademe basina KOLON BASINA odul — 114 haftanin resmi tablolari",
+   "deger": "772",
+   "ureten": "cd backend && python -c \"import statistics; from spor_toto.karne import kupon_kesiti; k=kupon_kesiti(); f=lambda kad,g: g([float(h['tablo'][kad]['prize']) for h in k if kad in h['tablo'] and h['tablo'][kad].get('prize') is not None]); print({kad:(round(f(kad,statistics.mean)),round(f(kad,statistics.median))) for kad in (12,13,14,15)})\"",
+   "olculdu": "2026-09-07",
+   "anildigi_yerler": [
+    "README.md §11"
+   ],
+   "bekci": null,
+   "olcek": "duz",
+   "not": "Capa: 15'in 12'ye orani ORTALAMADA 772 kat. Ortalama/medyan (TL/kolon): 15 -> 8.454.763 / 2.787.641 · 14 -> 699.695 / 34.553 · 13 -> 112.958 / 2.027 · 12 -> 10.957 / 288. Ortalama ile medyanin aciklıgı AGIR KUYRUGUN olcusudur ve 12'de 38 kata cikiyor. Bugunku amac (`P(k<=3)`) 12 ile 15'i AYNI olay sayiyor; bu tablo onun neyi gormedigini soyluyor."
+  },
+  {
+   "ne": "kademe agirlikli kural (odul_secim) <-> bugunku kural, 114 hafta",
+   "deger": "48 iyi / 21 kötü",
+   "ureten": "cd backend && python scripts/deger_kiyasi.py",
+   "olculdu": "2026-09-07",
+   "anildigi_yerler": [
+    "README.md §11"
+   ],
+   "bekci": "backend/tests/test_secim.py::test_odul_secilen_plan_net_parayi_gercekten_ENBUYUKLER",
+   "olcek": "duz · medyan odul vektoru",
+   "not": "Capa haftalik net kar kirilimi (48 iyi / 45 esit / 21 kotu) — ROI farki README'de matematiksel eksi isaretiyle (U+2212) yaziliyor ve duz ASCII capa onunla eslesmiyordu. || GECMEDI: %95 [-0,156, +0,097], sifiri kesiyor. ROI 0,465 -> 0,436, kolon/hafta 19.683 -> 17.184 (DAHA UCUZ). AMA DAVRANIS ILK KEZ DOGRU: 114 haftada 15 FARKLI SEKIL (bugunku kural 1) ve haftalik net karda 48 iyi / 45 esit / 21 kotu — yani kuyruk degil, haftalarin yarisina yakini. Kiyas `deger_secim`e karsi da gecmiyor (-0,241 %95 [-0,770, +0,094]) ama onun 0,677'si 3 haftadan geliyor: biri TUTARLILIK, oteki VARYANS satin aliyor. MERKEZ OLCUSU KRITIK: odul vektoru ORTALAMAYLA beslenince kural her arama tavanina dayaniyor (tavan 4 milyon kolonda bile haftada 2,6 milyon kolon istiyor) — dejenerasyon para amacindan degil agir kuyruklu ortalamadan geliyor. VARSAYILAN DEGISMEDI."
   }
  ],
  "komutlar": [
@@ -1403,19 +1579,19 @@
    "ne_yapar": "beyan edilen bagimlilik denetimi. Ekstra listesi pyproject'ten TUREVIR (elle yazili degil); bos cikti cikis 1 verir."
   },
   {
-   "komut": "cd backend && python -m spor_toto.karne --taban --garanti 14 --butce 2000",
+   "komut": "cd backend && python -m spor_toto.karne --taban --butce 2000",
    "kaynak": "backend/spor_toto/karne.py:taban_gevsekligi",
-   "ne_yapar": "E1: garanti tabaninin ne kadar gevsek oldugunu olcer — 114 hafta boyunca gercek kaplama kolonlarinin resmi odul tablosundaki karsiligini tabanla kiyaslar. Yalniz 14G."
+   "ne_yapar": "E1: garanti tabaninin ne kadar gevsek oldugunu olcer — 114 hafta boyunca gercek kolonlarin resmi odul tablosundaki karsiligini tabanla kiyaslar. DUZ olcek (garanti secilmez: en iyi kolon = 15 - k); `--garanti 14` ARTIK ValueError atar."
   },
   {
-   "komut": "cd backend && python -m spor_toto.karne --hedef --garanti 14 --butce 2000",
+   "komut": "cd backend && python -m spor_toto.karne --hedef --butce 2000",
    "kaynak": "backend/spor_toto/karne.py:hedef_kademe_kiyasi",
-   "ne_yapar": "E2: hedef kademeyi (12/13/14) 114 hafta boyunca GERCEK kolon oduluyle kiyaslar, eslestirilmis bootstrap + kuyruk sinavi. Yalniz 14G."
+   "ne_yapar": "E2: hedef kademeyi (12/13/14) 114 hafta boyunca GERCEK kolon oduluyle kiyaslar, eslestirilmis bootstrap + kuyruk sinavi. DUZ olcek (garanti secilmez: en iyi kolon = 15 - k); `--garanti 14` ARTIK ValueError atar."
   },
   {
-   "komut": "cd backend && python -m spor_toto.karne --omurga BFE --garanti 14 --butce 2000",
+   "komut": "cd backend && python -m spor_toto.karne --omurga BFE --butce 2000",
    "kaynak": "backend/spor_toto/karne.py:omurga_kiyasi",
-   "ne_yapar": "E3: omurga fiyatini KUPON duzeyinde kiyaslar (kolon, P(hedef), gercek kolon odulu), eslestirilmis bootstrap + kuyruk sinavi + P(hedef) ayrisimi. Yalniz 14G."
+   "ne_yapar": "E3: omurga fiyatini KUPON duzeyinde kiyaslar (kolon, P(hedef), gercek kolon odulu), eslestirilmis bootstrap + kuyruk sinavi + P(hedef) ayrisimi. DUZ olcek (garanti secilmez: en iyi kolon = 15 - k); `--garanti 14` ARTIK ValueError atar."
   },
   {
    "komut": "cd backend && python -m spor_toto.hakem",
@@ -1428,19 +1604,19 @@
    "ne_yapar": "football-data'dan hakem sutununu ceker ve korpusun satirlarina baglar; data/hakem/hakem.csv uretir. --kontrol ile bayatlik denetlenir. Korpusa DOKUNMAZ."
   },
   {
-   "komut": "cd backend && python -m spor_toto.karne --kapsama --garanti 14 --butce 2000",
+   "komut": "cd backend && python -m spor_toto.karne --kapsama --butce 2000",
    "kaynak": "backend/spor_toto/karne.py:kapsama_acigi",
-   "ne_yapar": "Modelin ex-ante P(k<=esik)'i ile GERCEKLESEN arasindaki acigi olcer ve ayristirir: sezon, favori gucu, modelin kendi P'si, q dilimi, ve isaret sayisi (banko/cifte). Son kirilim sıralama eseri olamaz cunku ayrik karardir."
+   "ne_yapar": "Modelin ex-ante P(k<=esik)'i ile GERCEKLESEN arasindaki acigi olcer ve ayristirir: sezon, favori gucu, modelin kendi P'si, q dilimi, ve isaret sayisi (banko/cifte). Son kirilim sıralama eseri olamaz cunku ayrik karardir. DUZ olcek (garanti secilmez: en iyi kolon = 15 - k); `--garanti 14` ARTIK ValueError atar."
   },
   {
-   "komut": "cd backend && python -m spor_toto.karne --kalibrasyon --garanti 14 --butce 2000",
+   "komut": "cd backend && python -m spor_toto.karne --kalibrasyon --butce 2000",
    "kaynak": "backend/spor_toto/karne.py:kalibrasyon_kiyasi",
-   "ne_yapar": "Is 1: omurga olasiligini (piyasa <-> kalibre_bias) KARAR cetveliyle kiyaslar — gerceklesen kacak, kacaksiz hafta, gercek kolon ROI. p_ayrisimi E3 tuzagini ayirir. Sezon disarida birakmali kalibrasyon."
+   "ne_yapar": "Is 1: omurga olasiligini (piyasa <-> kalibre_bias) KARAR cetveliyle kiyaslar — gerceklesen kacak, kacaksiz hafta, gercek kolon ROI. p_ayrisimi E3 tuzagini ayirir. Sezon disarida birakmali kalibrasyon. DUZ olcek (garanti secilmez: en iyi kolon = 15 - k); `--garanti 14` ARTIK ValueError atar."
   },
   {
-   "komut": "cd backend && python -m spor_toto.karne --egri --garanti 14",
+   "komut": "cd backend && python -m spor_toto.karne --egri",
    "kaynak": "backend/spor_toto/karne.py:butce_egrisi",
-   "ne_yapar": "Is 2: butce egrisi GERCEK kolon hattinda, 6 basamak x 114 hafta. Olcu '1.000 TL basina kacaksiz hafta'. Bes aday oldugu icin Holm-Bonferroni uygulanir. ~15 dk."
+   "ne_yapar": "Is 2: butce egrisi GERCEK kolon hattinda, 6 basamak x 114 hafta. Olcu '1.000 TL basina kacaksiz hafta'. Bes aday oldugu icin Holm-Bonferroni uygulanir. ~15 dk. DUZ olcek (garanti secilmez: en iyi kolon = 15 - k); `--garanti 14` ARTIK ValueError atar."
   },
   {
    "komut": "cd backend && python -m spor_toto.karne --banko",

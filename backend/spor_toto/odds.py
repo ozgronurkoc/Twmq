@@ -158,10 +158,14 @@ def market_odds(row: dict[str, Any], market: str = "1X2",
 #:
 #:     Brier            0,5940 → 0,5936 · −0,00035 [−0,00049, −0,00021]
 #:     sapan bant       10/15 → 4/15
-#:     geri test kolon  6.897/hafta → 2.228/hafta (hold-out)
+#:     geri test kolon  6.897/hafta → 2.228/hafta (hold-out, KAPLAMA ölçeği)
 #:
 #: Çevrimden ÖNCE yayımlanmış sayılar orantısal ölçekte ölçülmüştür ve
 #: yenileriyle doğrudan kıyaslanamaz; ikisi de belgede o etiketle durur.
+#: Üçüncü satır ayrıca **kaplama ölçeğindedir** ve bugün yeniden
+#: üretilemez: kaplama söküldü (`docs/DUZ_SISTEME_GECIS.md`), geri test de
+#: ürünün kendi kuralına çevrildi. Kayıt olduğu gibi duruyor — o gün
+#: ölçülen buydu.
 ARINDIRMA_YONTEMLERI = ("orantili", "guc", "shin")
 ARINDIRMA_VARSAYILAN = "shin"
 

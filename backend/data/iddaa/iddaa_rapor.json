@@ -7,9 +7,15 @@
   "dropped": 4,
   "with_league_label": 251,
   "avg_margin_pct": 16.7,
+  "birikimli": {
+    "snapshot": 2,
+    "satir": 473,
+    "avg_margin_pct": 16.94,
+    "median_margin_pct": 17.99
+  },
   "snapshots": [
     "iddaa_2026-08-16.csv",
     "iddaa_2026-08-17.csv"
   ],
-  "note": "Tek snapshot analize yetmez; deger haftalik birikimle olusur. Gecmis iddaa orani hicbir kaynakta yayinlanmadigi icin bu arsiv ancak ileriye donuk buyur."
+  "note": "Tek snapshot analize yetmez; deger haftalik birikimle olusur. Gecmis iddaa orani hicbir kaynakta yayinlanmadigi icin bu arsiv ancak ileriye donuk buyur. Belgede anilacak marj `birikimli` blogundan okunur; `avg_margin_pct` tek kosumun ciktisidir."
 }

@@ -15,7 +15,12 @@ from __future__ import annotations
 
 from typing import Any
 
-from .backtest import VARSAYILAN_BANKO, VARSAYILAN_UCLU, backtest
+from .backtest import (
+    VARSAYILAN_BANKO,
+    VARSAYILAN_BUTCE_TL,
+    VARSAYILAN_UCLU,
+    backtest,
+)
 from .history import history_analytics, history_summary, history_weeks
 from .odds import season_1x2_summary
 from .pazar import sezon_ozeti
@@ -62,15 +67,27 @@ def backtest_payload(
     uclu: float = VARSAYILAN_UCLU,
     sweep: bool = True,
     sezon: str | None = None,
+    strateji: str = "hedef",
+    butce_tl: float = VARSAYILAN_BUTCE_TL,
 ) -> dict[str, Any]:
-    """Geri test govdesi: sezon + hafta hafta + (istege bagli) esik taramasi.
+    """Geri test govdesi: kesit ozeti + hafta hafta + o stratejinin taramasi.
 
-    Tarama acikken hold-out bloku da gelir; esigin o haftayi GORMEDEN
-    secildigi halde olculen sonuc odur ve geriye uydurulmus sayinin yaninda
-    her zaman birlikte okunmalidir.
+    `strateji` varsayilan olarak **`hedef`**tir, yani urunun kendi kurali
+    (`secim.en_iyi_secim`). Uzun sure burada tek secenek `esik` vardi ve
+    arayuz urunun kullanmadigi bir kuralin sayilarini gosteriyordu.
+
+    Taramanin sekli stratejiye baglidir ve bu bilincli:
+
+    * `esik`  -> `sweep` + `sweep_best` + `holdout`. Ayarlanan bir parametre
+      var, dolayisiyla asiri uyum OLCULEBILIR ve olculmelidir; esigin o
+      haftayi GORMEDEN secildigi halde olculen sonuc, geriye uydurulmus
+      sayinin yaninda her zaman birlikte okunur.
+    * `hedef` -> `butce_sweep`, hold-out YOK. Optimizasyon sonucu gormez
+      (ex-ante bir hedefi enbuyukler), yani hold-out'un korudugu risk
+      yoktur; taranan sey bir parametre degil bir **harcama kararidir**.
     """
     return backtest(last=last, banko_esik=banko, uclu_esik=uclu, sweep=sweep,
-                    sezon=sezon)
+                    sezon=sezon, strateji=strateji, butce_tl=butce_tl)
 
 
 def takimlar_payload(lig: str | None = None,

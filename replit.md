@@ -8,14 +8,17 @@ Kupon **düz** oynanır (tam sistem): seçim kümesinin tamamı, en iyi kolon
 (covering code) kullanıyordu; söküm gerekçesi `docs/DUZ_SISTEME_GECIS.md`de.
 
 > **Amaç: kazanma oranını artırmak.** Hedefe bugünkü mesafe ölçülmüştür ve
-> `README.md` §1.1'de yazar (hold-out isabeti **1 hafta**, piyasa Brier 0,579,
-> iddaa marjı %17,2). Ölçülmemiş hiçbir iyileşme iddia edilmez, ölçülmemiş
-> hiçbir tahminci arayüze çıkmaz.
+> `README.md` §1.1'de yazar: ürünün kendi kuralı 114 haftada, haftalık
+> **₺210.000** tavanla, ikramiye kademesini (12+) **%93,0**'ünde tutturuyor
+> ama oynanan paranın yalnızca **%46,5**'ini geri getiriyor (başabaş 1,0).
+> İkisi birlikte okunur: isabet yüksek çünkü çok para harcanıyor. Piyasa
+> Brier'i o kesitte **0,5584**, iddaa marjı **%16,9**. Ölçülmemiş hiçbir
+> iyileşme iddia edilmez, ölçülmemiş hiçbir tahminci arayüze çıkmaz.
 >
-> Hold-out burada uzun süre **0** yazıyordu: marj arındırma varsayılanı
-> `orantili`dan `shin`e çevrilince (A5) o sayı 1'e çıkmıştı, bu satır ise
-> güncellenmemişti. Tek bir olaydır ve güven aralıkları fazlasıyla örtüşür —
-> okunacak sağlam sayı isabet değil maliyettir (kolon/hafta 6.897 → 2.228).
+> Bu satır uzun süre "hold-out isabeti 1 hafta" diyordu. O sayı hem **kaplama
+> ölçeğinde** hem de **ürünün kullanmadığı bir kuralla** (`backtest.secim_uret`,
+> iki eşikli mekanik seçim) ölçülmüştü; 2026-09-07'de geri test hattı ürünün
+> kuralına çevrildi ve çizgi baştan ölçüldü.
 
 > Bu dosya Replit çalışma alanının hafızasıdır. Depo iki parçalıdır ve
 > **Python HTML servis etmez**; arayüzün tamamı Next.js'tir. Mimari kararın
@@ -206,7 +209,7 @@ doğrulamadan dosya yazmazlar). Ayrıntı: `docs/VERI_TOPLAMA_VE_ISLEME.md`.
 ```bash
 cd backend
 python -m pytest -m "not slow" -q   # hızlı süit
-python -m pytest                    # tamamı (1.803 test)
+python -m pytest                    # tamamı (1.837 test)
 python -m pytest -n0 tests/test_egitim.py   # tek çekirdek (hata ayıklarken)
 cd .. && bash scripts/check.sh      # TEK kapı; CI de bunu çağırır
 ```

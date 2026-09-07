@@ -38,8 +38,61 @@
    "version": "str"
   },
   "GET /api/backtest": {
+   "butce_sweep": [
+    {
+     "all_guaranteed": "bool",
+     "banko_avg": "float",
+     "best_avg": "float",
+     "butce_kolon": "int",
+     "butce_tl": "float",
+     "columns_avg": "float",
+     "columns_max": "int",
+     "columns_per_hit12": "float",
+     "columns_per_hit14": "null",
+     "columns_total": "int",
+     "double_avg": "float",
+     "hit12": "int",
+     "hit12_ci": [
+      "float"
+     ],
+     "hit12_pct": "float",
+     "hit13": "int",
+     "hit14": "int",
+     "hit14_ci": [
+      "float"
+     ],
+     "hit14_pct": "float",
+     "hit15": "int",
+     "in_set": "int",
+     "in_set_pct": "float",
+     "kademe_dagilimi": {
+      "12": "int",
+      "13": "int",
+      "14": "int",
+      "15": "int",
+      "alt": "int"
+     },
+     "kademe_dagilimi_pct": {
+      "12": "float",
+      "13": "float",
+      "14": "float",
+      "15": "float",
+      "alt": "float"
+     },
+     "misses_total": "int",
+     "rows_avg": "float",
+     "skipped": "int",
+     "tl_avg": "float",
+     "tl_total": "float",
+     "triple_avg": "float",
+     "weeks": "int"
+    }
+   ],
    "grid": {
     "banko": [
+     "float"
+    ],
+    "butce_tl": [
      "float"
     ],
     "uclu": [
@@ -47,31 +100,15 @@
     ]
    },
    "holdout": {
-    "atlanan": "int",
-    "chosen": [
-     {
-      "threshold": "str",
-      "weeks": "int"
-     }
-    ],
-    "columns_avg": "float",
-    "columns_total": "int",
-    "hit14": "int",
-    "hit14_ci": [
-     "float"
-    ],
-    "hit14_pct": "float",
-    "olculen": "int",
-    "payda": {
-     "columns_avg": "str",
-     "hit14": "str"
-    },
     "weeks": "int"
    },
    "meta": {
     "arindirma": "str",
+    "kademe": "int",
+    "kolon_bedeli_tl": "float",
     "match_count": "int",
     "note": "str",
+    "olcek": "str",
     "sezon": "null",
     "space_limit": "int",
     "weeks_available": "int",
@@ -86,11 +123,18 @@
    "season": {
     "all_guaranteed": "bool",
     "banko_avg": "float",
+    "best_avg": "float",
     "columns_avg": "float",
     "columns_max": "int",
+    "columns_per_hit12": "float",
     "columns_per_hit14": "float",
     "columns_total": "int",
     "double_avg": "float",
+    "hit12": "int",
+    "hit12_ci": [
+     "float"
+    ],
+    "hit12_pct": "float",
     "hit13": "int",
     "hit14": "int",
     "hit14_ci": [
@@ -100,69 +144,41 @@
     "hit15": "int",
     "in_set": "int",
     "in_set_pct": "float",
+    "kademe_dagilimi": {
+     "12": "int",
+     "13": "int",
+     "14": "int",
+     "15": "int",
+     "alt": "int"
+    },
+    "kademe_dagilimi_pct": {
+     "12": "float",
+     "13": "float",
+     "14": "float",
+     "15": "float",
+     "alt": "float"
+    },
     "misses_total": "int",
     "rows_avg": "float",
     "skipped": "int",
+    "tl_avg": "float",
+    "tl_total": "float",
     "triple_avg": "float",
     "weeks": "int"
    },
    "strategy": {
-    "banko": "float",
+    "ad": "str",
+    "butce_kolon": "int",
+    "butce_tl": "float",
     "explain": "str",
-    "uclu": "float"
+    "kacak_esigi": "int",
+    "kademe": "int",
+    "rol": "str"
    },
    "sweep": [
-    {
-     "all_guaranteed": "bool",
-     "banko": "float",
-     "banko_avg": "float",
-     "columns_avg": "float",
-     "columns_max": "int",
-     "columns_per_hit14": "null",
-     "columns_total": "int",
-     "double_avg": "float",
-     "hit13": "int",
-     "hit14": "int",
-     "hit14_ci": [
-      "float"
-     ],
-     "hit14_pct": "float",
-     "hit15": "int",
-     "in_set": "int",
-     "in_set_pct": "float",
-     "misses_total": "int",
-     "rows_avg": "float",
-     "skipped": "int",
-     "triple_avg": "float",
-     "uclu": "float",
-     "weeks": "int"
-    }
+    "<bos>"
    ],
-   "sweep_best": {
-    "all_guaranteed": "bool",
-    "banko": "float",
-    "banko_avg": "float",
-    "columns_avg": "float",
-    "columns_max": "int",
-    "columns_per_hit14": "float",
-    "columns_total": "int",
-    "double_avg": "float",
-    "hit13": "int",
-    "hit14": "int",
-    "hit14_ci": [
-     "float"
-    ],
-    "hit14_pct": "float",
-    "hit15": "int",
-    "in_set": "int",
-    "in_set_pct": "float",
-    "misses_total": "int",
-    "rows_avg": "float",
-    "skipped": "int",
-    "triple_avg": "float",
-    "uclu": "float",
-    "weeks": "int"
-   },
+   "sweep_best": "null",
    "warning": "str",
    "weeks": [
     {
@@ -468,6 +484,16 @@
     "banko_grid": [
      "float"
     ],
+    "butce_default_tl": "float",
+    "butce_grid_tl": [
+     "float"
+    ],
+    "kademe": "int",
+    "strateji_default": "str",
+    "stratejiler": [
+     "str"
+    ],
+    "tum_kesit": "str",
     "uclu_default": "float",
     "uclu_grid": [
      "float"

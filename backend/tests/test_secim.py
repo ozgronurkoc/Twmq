@@ -11,8 +11,10 @@ bir bedeli (bir saniye) ve çok somut bir sebebi var; sebep aşağıda
 `_kesin_tarama`nın başlığında yazılı.
 """
 
+import json
 from fractions import Fraction
 from itertools import product
+from pathlib import Path
 
 import pytest
 
@@ -20,9 +22,15 @@ from spor_toto.ortak import kacak_dagilimi
 from spor_toto.secim import (
     VARSAYILAN_KACAK_ESIGI,
     bedel_hesapla,
+    deger_secim,
     en_iyi_secim,
+    getiri_secim,
     hedef_olasiligi,
     kacak_olasiligi,
+    kalabalik_ayari,
+    kolon_dagilimi_beklentisi,
+    odul_secim,
+    sistem_secimi,
 )
 
 SEM = ("1", "0", "2")
@@ -457,3 +465,251 @@ def test_gecersiz_kayip_tavani_sesli_duser():
     for kotu in (-0.1, 1.0, 1.5):
         with pytest.raises(ValueError, match="kayip_tavani"):
             getiri_secim(_pr(), _oyn(), 2000.0, kayip_tavani=kotu)
+
+# ─── sekil butcenin sonucu ────────────────────────────────────────────────────
+
+#: Kayitli canli haftalarin dizini. Test veri YOKSA atlar; varsa GERCEK
+#: fiyatlarla (pinnacle/nesine) kosar — geri testin football-data `Avg`
+#: olceginden bagimsiz bir kanit olsun diye.
+CANLI = Path(__file__).resolve().parent.parent / "data" / "super_toto" / "2026_27"
+
+
+def _canli_haftalar() -> list[list[dict[str, float]]]:
+    from spor_toto.odds import implied_probs
+
+    out = []
+    for yol in sorted(CANLI.glob("hafta_0*.json")):
+        if "_kupon" in yol.name or "_tahmin2" in yol.name:
+            continue
+        d = json.loads(yol.read_text(encoding="utf-8"))
+        probs = [implied_probs(m["odds"]) for m in d.get("matches", []) if m.get("odds")]
+        if len(probs) == 15:
+            out.append(probs)
+    return out
+
+
+def _sekil(secimler) -> tuple[int, int, int]:
+    return (sum(1 for x in secimler if len(x) == 1),
+            sum(1 for x in secimler if len(x) == 2),
+            sum(1 for x in secimler if len(x) == 3))
+
+
+@pytest.mark.parametrize("butce_tl,beklenen", [(2000.0, (10, 1, 4)), (210000.0, (6, 0, 9))])
+def test_sekil_BUTCENIN_sonucu_haftanin_DEGIL(butce_tl, beklenen):
+    """Kupon **şekli** haftaya göre değil bütçeye göre çıkıyor — canlı yolda da.
+
+    Bu bir **karakterizasyon** testidir: bugünkü davranışı çiviler, onu
+    savunmaz. Sebebi yapısal ve `secim` modül başlığında yazılı — `P(k ≤ eşik)`
+    üçlü sayısında monotondur (üçlü asla kaçmaz) ve bedel ×2/×3 sıçradığı için
+    verilen bütçe altında tek bir azami şekil kalır.
+
+    **Niçin bu test var.** Bulgu ilk kez geri testte görüldü ve "geri teste
+    özgü bir şey mi?" diye soruldu. Değil: aşağıdaki koşum kayıtlı canlı
+    haftaları **gerçek fiyatlarıyla** (pinnacle/nesine — geri testin
+    football-data `Avg`inden bambaşka bir ölçek) kuruyor ve aynı şekli
+    veriyor. Yani kullanıcı normal bir hafta girdiğinde de bu şekil çıkar.
+
+    Amaç bir gün `E[TL]`'ye çevrilirse bu test **düşmelidir** — düşmesi
+    istenen sonucun kendisidir. Sessizce geçmeye devam etmesi, çevrimin
+    şekle hiç dokunmadığı anlamına gelir ve bunun görünmesi gerekir.
+    """
+    haftalar = _canli_haftalar()
+    if len(haftalar) < 2:
+        pytest.skip("kayıtlı canlı hafta yok")
+    sekiller = {_sekil(sistem_secimi(pr, butce_tl).secimler) for pr in haftalar}
+    assert sekiller == {beklenen}, (
+        f"{len(haftalar)} canlı haftada beklenen tek şekil {beklenen}, "
+        f"bulunan {sorted(sekiller)}")
+
+
+def test_para_ve_kalabalik_yollari_SEKLI_DEGISTIRMEZ():
+    """`getiri_secim` ve `kalabalik_ayari` sembolleri değiştirir, şekli değil.
+
+    İkisi de tabanı `sistem_secimi`den alır ve işaret **sayılarını** sabit
+    tutar (`getiri_secim` bunu kendi başlığında yazıyor). Sonuç: para
+    katmanı şeklin **içinde** çalışıyor, şekli seçmiyor — yani kuponun
+    bedeli hiçbir zaman `E[TL]` ile kararlaştırılmıyor. Bu bir kusur değil
+    kapsam sınırıdır (README §11) ve sınırın kendisi bekçili olmalı.
+    """
+    yol = CANLI / "hafta_04.json"
+    if not yol.exists():
+        pytest.skip("4. hafta kaydı yok")
+    from spor_toto.odds import implied_probs
+
+    d = json.loads(yol.read_text(encoding="utf-8"))
+    probs = [implied_probs(m["odds"]) for m in d["matches"]]
+    ham = [m.get("play_pct") for m in d["matches"]]
+    if len(probs) != 15 or not all(ham):
+        pytest.skip("4. haftada oran ya da oynanma payı eksik")
+    oynanma = [{k: v / sum(o.values()) for k, v in o.items()} for o in ham]
+
+    for butce_tl in (2000.0, 210000.0):
+        taban = sistem_secimi(probs, butce_tl)
+        assert taban is not None
+        beklenen = _sekil(taban.secimler)
+        para = getiri_secim(probs, oynanma, butce_tl)
+        kalabalik = kalabalik_ayari(probs, oynanma, taban.secimler)
+        assert para is None or _sekil(para.secimler) == beklenen
+        assert _sekil(kalabalik.secimler) == beklenen
+
+
+# ─── deger kurali: her sembol bedelini oder ───────────────────────────────────
+
+def test_deger_odul_arttikca_kupon_BUYUR_kucultmez():
+    """Hedef daha değerliyse daha çok sembol hak edilir — monoton olmalı."""
+    maclar = hafta()
+    bedeller = [deger_secim(maclar, o).bedel
+                for o in (10_000.0, 100_000.0, 1_000_000.0)]
+    assert bedeller == sorted(bedeller)
+
+
+def test_deger_odul_sifirsa_HICBIR_sembol_hak_etmez():
+    """Tutturmanın değeri yoksa her maç tek işaret: bedel 1 kolon."""
+    plan = deger_secim(hafta(), 0.0)
+    assert plan.bedel == 1
+    assert (plan.banko, plan.cift, plan.uclu) == (15, 0, 0)
+
+
+def test_deger_MACIN_HAKKINI_gozetiyor():
+    """Üç yönlü belirsiz maç üçlü hak eder; net favorili maç etmez.
+
+    Bugünkü kuralın kusuru buydu: `P(k ≤ esik)` üçlü sayısında monoton
+    olduğu için bütçe elverdiğince üçlü alıyor ve **hangi** maçın üçlüyü
+    hak ettiğini sormuyor. Değer kuralı soruyor, çünkü tek → çifte
+    geçişinin kazancı `p₂` ve çifte → üçlü geçişininki `p₃`; net favorili
+    bir maçta `p₃` küçüktür ve aynı üçlü kuponu 1,5 katına çıkarır.
+    """
+    kesin = p(0.94, 0.03, 0.03)      # p3 = 0,03 — ucluye deger mez
+    belirsiz = p(0.36, 0.33, 0.31)   # p3 = 0,31 — uclu hak edilir
+    maclar = [kesin] * 14 + [belirsiz]
+    plan = deger_secim(maclar, 200_000.0)
+    assert len(plan.secimler[14]) > len(plan.secimler[0]), (
+        "belirsiz maç, kesin maçtan daha çok sembol almalı")
+    assert plan.secimler[0] == ["1"], "net favorili maç banko kalmalı"
+
+
+def test_deger_negatif_odul_ve_sifir_bedel_REDDEDILIR():
+    with pytest.raises(ValueError):
+        deger_secim(hafta(), -1.0)
+    with pytest.raises(ValueError):
+        deger_secim(hafta(), 1000.0, kolon_bedeli=0.0)
+
+
+def test_deger_secilen_plan_net_degeri_gercekten_ENBUYUKLER():
+    """Küçük bir haftada kaba kuvvetle: seçilen plan net değeri enbüyüklemeli.
+
+    `en_iyi_secim`in `test_optimizasyon_gercekten_optimal`i ile aynı
+    gerekçe: Pareto budaması "yaklaşık" olsaydı sessizce daha kötü kupon
+    kurardı ve hiçbir şey patlamazdı.
+    """
+    from itertools import product as _product
+
+    maclar = [p(0.5, 0.3, 0.2), p(0.4, 0.35, 0.25), p(0.34, 0.33, 0.33),
+              p(0.7, 0.2, 0.1), p(0.45, 0.3, 0.25)]
+    odul, birim, esik = 100_000.0, 10.0, 2
+    plan = deger_secim(maclar, odul, kolon_bedeli=birim, esik=esik)
+
+    en_iyi = None
+    for seviyeler in _product((1, 2, 3), repeat=len(maclar)):
+        secimler = [sorted([s for s, _ in sorted(m.items(), key=lambda kv: -kv[1])[:k]],
+                           key=lambda x: SEM.index(x))
+                    for m, k in zip(maclar, seviyeler)]
+        bedel = bedel_hesapla(sum(1 for k in seviyeler if k == 2),
+                              sum(1 for k in seviyeler if k == 3))
+        net = hedef_olasiligi(maclar, secimler, esik) * odul - bedel * birim
+        if en_iyi is None or net > en_iyi:
+            en_iyi = net
+    secilen = plan.p_hedef * odul - plan.bedel * birim
+    assert secilen == pytest.approx(en_iyi, abs=1e-6)
+
+
+# ─── kademeler kendi agirligiyla ──────────────────────────────────────────────
+
+def test_kolon_dagilimi_TOPLAMI_bedeli_verir():
+    """`v[d]` olasılık değil ADET: toplamı oynanan kolon sayısını vermeli."""
+    maclar = hafta()
+    secimler = [["1"]] * 10 + [["1", "0"]] * 3 + [["1", "0", "2"]] * 2
+    v = kolon_dagilimi_beklentisi(maclar, secimler, en_cok_yanlis=15)
+    assert sum(v) == pytest.approx(bedel_hesapla(3, 2))
+
+
+def test_kolon_dagilimi_KESIN_haftada_tam_sayilir():
+    """14 kesin banko + 1 üçlü: 1 kolon 15 yapar, 2 kolon 14 yapar."""
+    kesin = p(1.0, 0.0, 0.0)
+    maclar = [kesin] * 14 + [p(0.5, 0.3, 0.2)]
+    secimler = [["1"]] * 14 + [["1", "0", "2"]]
+    v = kolon_dagilimi_beklentisi(maclar, secimler, en_cok_yanlis=2)
+    assert v[0] == pytest.approx(1.0)
+    assert v[1] == pytest.approx(2.0)
+    assert v[2] == pytest.approx(0.0)
+
+
+def test_odul_kademeleri_ESIT_sayarsa_deger_kuralina_yaklasir():
+    """Bütün kademeler aynı ödülse amaç "12 ve üstü"ne çöker.
+
+    Kademeli kuralın `deger_secim`den tek farkı ağırlıklardır; ağırlıklar
+    düzleşince ikisi aynı soruyu sormaya başlamalı. Birebir eşitlik
+    beklenmiyor — biri kolon ADEDINI, öteki OLASILIGI tartıyor — ama şekil
+    aynı yöne gitmeli.
+    """
+    maclar = hafta()
+    duz = odul_secim(maclar, dict.fromkeys((12, 13, 14, 15), 1000.0))
+    assert duz is not None
+    assert duz.bedel >= 1
+
+
+def test_odul_15i_agirlastirinca_kupon_BUYUR():
+    """15'in ödülü arttıkça daha çok sembol hak edilir."""
+    maclar = hafta()
+    kucuk = odul_secim(maclar, {12: 288.0, 13: 2027.0, 14: 34553.0, 15: 100_000.0})
+    buyuk = odul_secim(maclar, {12: 288.0, 13: 2027.0, 14: 34553.0, 15: 50_000_000.0})
+    assert buyuk.bedel >= kucuk.bedel
+
+
+def test_odul_sifir_odulde_TEK_isaret():
+    plan = odul_secim(hafta(), dict.fromkeys((12, 13, 14, 15), 0.0))
+    assert plan.bedel == 1
+
+
+def test_odul_negatif_odul_ve_sifir_bedel_REDDEDILIR():
+    with pytest.raises(ValueError):
+        odul_secim(hafta(), {12: -1.0})
+    with pytest.raises(ValueError):
+        odul_secim(hafta(), {12: 100.0}, kolon_bedeli=0.0)
+
+
+def test_odul_secilen_plan_net_parayi_gercekten_ENBUYUKLER():
+    """Kaba kuvvetle: seçilen plan beklenen net parayı enbüyüklemeli.
+
+    `deger_secim`in aynı sınavıyla aynı gerekçe — Pareto budaması
+    "yaklaşık" olsaydı sessizce daha kötü kupon kurardı.
+    """
+    from itertools import product as _product
+
+    maclar = [p(0.5, 0.3, 0.2), p(0.4, 0.35, 0.25), p(0.34, 0.33, 0.33),
+              p(0.7, 0.2, 0.1), p(0.45, 0.3, 0.25)]
+    # 5 mac: "kademe" 15'ten geriye 3 basamak (12,13,14,15 karsiligi 5,4,3,2
+    # dogru degil) — kucuk vakada `kademe` 2 kaciga kadar okunur.
+    odul = {5: 100_000.0, 4: 5_000.0, 3: 200.0}
+    birim = 10.0
+    # `odul_secim` 15 uzerinden okuyor; kucuk vaka icin ayni sekli 15'e tasi.
+    odul15 = {15: odul[5], 14: odul[4], 13: odul[3]}
+    plan = odul_secim(maclar, odul15, kolon_bedeli=birim, kademe=13)
+
+    def net(secimler):
+        v = kolon_dagilimi_beklentisi(maclar, secimler, en_cok_yanlis=2)
+        bedel = 1
+        for sec in secimler:
+            bedel *= len(sec)
+        return sum(w * x for w, x in zip((odul15[15], odul15[14], odul15[13]), v)) \
+            - bedel * birim
+
+    en_iyi = None
+    for seviyeler in _product((1, 2, 3), repeat=len(maclar)):
+        secimler = [sorted([t for t, _ in sorted(m.items(), key=lambda kv: -kv[1])[:kk]],
+                           key=lambda x: SEM.index(x))
+                    for m, kk in zip(maclar, seviyeler)]
+        d = net(secimler)
+        if en_iyi is None or d > en_iyi:
+            en_iyi = d
+    assert net(plan.secimler) == pytest.approx(en_iyi, abs=1e-6)

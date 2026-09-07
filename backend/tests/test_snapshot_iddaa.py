@@ -198,3 +198,32 @@ def test_rapor_yayindaysa_tutarli():
     # Iddaa marji piyasa marjindan (%7,26) belirgin yuksek — kaynak
     # durustlugu notunun olculmus dayanagi.
     assert r["avg_margin_pct"] is None or r["avg_margin_pct"] > 7.26
+
+
+def test_rapor_BIRIKIMLI_marji_tasir_ve_diskle_ayni():
+    """Belgeye giren marj, tek koşumun değil ARŞİVİN sayısı olmalı.
+
+    **Bu bekçi bir kaymanın sonucudur.** Rapor uzun süre yalnızca son
+    koşumun ortalamasını (`avg_margin_pct`) taşıyordu ve belgeler ona
+    çapalanmıştı: ilk snapshot %17,20 dedi, ikincisi %16,70, rapor üzerine
+    yazıldı, belge kaymadı ve hiçbir kapı görmedi. Arşivin değeri tanımı
+    gereği birikimde (raporun kendi `note` alanı bunu zaten yazıyordu),
+    dolayısıyla belgeye giren sayı da birikimli olan olmalı.
+
+    Sabit bir sayıya çapalanmıyor — haftalık cron her pazartesi bir
+    snapshot ekliyor ve sabit çapa kapıyı kalıcı kırmızıya boyardı.
+    Tutulan şey **raporun diskteki CSV'lerle tutarlılığı**.
+    """
+    yol = KOK / "data" / "iddaa" / "iddaa_rapor.json"
+    if not yol.exists():
+        pytest.skip("henüz snapshot alınmamış")
+    r = json.loads(yol.read_text(encoding="utf-8"))
+    assert "birikimli" in r, (
+        "rapor `birikimli` blogunu tasimali — belgedeki marj oradan okunur")
+    b = r["birikimli"]
+    taze = snap.birikimli_marj(KOK / "data" / "iddaa")
+    assert b == taze, (
+        "rapordaki birikimli marj diskteki CSV'lerle ayristi; "
+        "`python scripts/snapshot_iddaa.py` ile yenilenmeli")
+    assert b["snapshot"] == len(r["snapshots"])
+    assert b["avg_margin_pct"] > 7.26, "iddaa marjı piyasa marjının üstünde olmalı"

@@ -620,18 +620,32 @@ def _check_stats_sozlesmesi() -> str:
     b = backtest_payload(sweep=False)
     # Arayuzun okudugu alanlarin TAMAMI (frontend/lib/types.ts:BacktestResponse).
     for alan in ("meta", "strategy", "season", "weeks", "sweep", "sweep_best",
-                 "holdout", "grid", "warning"):
+                 "butce_sweep", "holdout", "grid", "warning"):
         assert alan in b, f"/api/backtest gövdesinde {alan} yok"
     assert b["grid"]["banko"] and b["grid"]["uclu"], "eşik ızgarası boş"
-    assert b["strategy"]["banko"] in b["grid"]["banko"], "seçili eşik ızgarada yok"
+    assert b["grid"]["butce_tl"], "bütçe ızgarası boş"
+    # Strateji blogunun SEKLI adina bagli: `esik` esik alanlarini, `hedef`
+    # butce alanlarini tasir. Ikisini birden beklemek, arayuzun okudugu
+    # sozlesmeyi yanlis tarif etmek olurdu.
+    st = b["strategy"]
+    assert st["ad"] in ("hedef", "esik"), "strateji adı yok"
+    if st["ad"] == "esik":
+        assert st["banko"] in b["grid"]["banko"], "seçili eşik ızgarada yok"
+    else:
+        assert st["butce_kolon"] >= 1, "hedef stratejisi bütçesiz kurulamaz"
+        assert st["kademe"] == b["meta"]["kademe"]
+    assert b["meta"]["olcek"] == "duz", "ölçek künyesi gövdede yazmalı"
     sezon, hafta_dokumu = b["season"], b["weeks"]
     kosan = [h for h in hafta_dokumu if not h["skipped"]]
     assert sezon["weeks"] == len(kosan), "sezon özeti hafta dökümüyle ayrışmış"
     assert sezon["hit14"] == sum(1 for h in kosan if h["best"] >= MATCH_COUNT - 1)
     assert sezon["hit15"] == sum(1 for h in kosan if h["best"] == MATCH_COUNT)
+    # MANSET: ikramiye 12'de baslar, govde onu tasimazsa arayuz yanlis sayi
+    # gosterir.
+    assert sezon["hit12"] == sum(1 for h in kosan if h["best"] >= b["meta"]["kademe"])
 
     return (f"stats: hafta={s['meta']['weeks']} dilim={n} | "
-            f"backtest: hafta={sezon['weeks']} 14+={sezon['hit14']}")
+            f"backtest: hafta={sezon['weeks']} 12+={sezon['hit12']}")
 
 
 def _check_pipeline_result_shape() -> str:
@@ -845,9 +859,15 @@ def _check_oran_arsivi() -> str:
 def _check_geri_test() -> str:
     """
     Geri test hatti. Iki degismez var ve ikisi de raporun durustlugunu
-    korur: (1) her hafta 14-GARANTILI bir kaplamayla cozulur — acik nokta
-    birakan bir cozum bedel tablosuna giremez; (2) kume ici kalan bir hafta
-    tanimi geregi en az 14 tutturur, yani `in_set <= hit14`.
+    korur: (1) her hafta secim kumesinin TAMAMI oynanarak cozulur, yani
+    kume icinde acik nokta olamaz; (2) kume ici kalan bir hafta duzde
+    tanimi geregi 15 tutturur (`en iyi kolon = 15 - kacak`), yani
+    `in_set <= hit15`.
+
+    Ikinci degismez kaplama doneminde `in_set <= hit14` idi: orada en iyi
+    kolon bir ALT SINIRDI (`>= 14 - k`) ve kume ici bir hafta yalnizca 14
+    garanti ediyordu. Kaplama sokuldu (`docs/DUZ_SISTEME_GECIS.md`); sinir
+    esitlige dondu ve degismez siklasti.
 
     Tarama KAPALI calisir: burada olculen sey stratejinin isabeti degil,
     boru hattinin kendi tutarliligi.
@@ -863,19 +883,20 @@ def _check_geri_test() -> str:
     for h in r["weeks"]:
         if h["skipped"]:
             continue
-        assert h["guaranteed"], f"{h['week']}. hafta kaplaması açık nokta bıraktı"
+        assert h["guaranteed"], f"{h['week']}. hafta seçim kümesini kapatmadı"
         assert h["banko"] + h["double"] + h["triple"] == MATCH_COUNT
         assert h["in_set"] == (h["misses"] == 0)
         assert h["misses"] == len(h["miss_at"])
         assert 0 <= h["best"] <= MATCH_COUNT
         assert h["columns"] >= h["rows"], "kolon bedeli satır sayısının altına düşemez"
-    assert s["in_set"] <= s["hit14"], "küme içi hafta en az 14 tutturmalı"
+    assert s["in_set"] <= s["hit15"], "düzde küme içi hafta 15 tutturmalı"
     assert s["hit15"] <= s["hit14"] <= s["hit13"] <= s["weeks"]
     lo, hi = s["hit14_ci"]
     assert lo <= s["hit14_pct"] <= hi, "güven aralığı ölçümü içermeli"
     return (
-        f"hafta={s['weeks']} 14+={s['hit14']} kume_ici={s['in_set']} "
-        f"kolon/hafta={s['columns_avg']}"
+        f"hafta={s['weeks']} 12+={s['hit12']} 14+={s['hit14']} "
+        f"kume_ici={s['in_set']} kolon/hafta={s['columns_avg']} "
+        f"TL/hafta={s['tl_avg']:,.0f}"
     )
 
 

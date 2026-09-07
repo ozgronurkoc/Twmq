@@ -55,7 +55,7 @@ from spor_toto import kosum
 from spor_toto.backtest import (
     VARSAYILAN_BANKO,
     VARSAYILAN_UCLU,
-    _kaplama,
+    _kolon_kumesi,
     secim_uret,
 )
 from spor_toto.core import SEMBOLLER as SEM
@@ -178,7 +178,7 @@ def _kupon_govdesi(probs: list[dict[str, float]],
                    oynanma: list[dict[str, float]],
                    secimler: list[list[str]]) -> dict[str, Any]:
     """Bir işaret planının bütün ölçüleri — tek yerde, tek biçimde."""
-    kap = _kaplama(tuple(sorted(len(s) for s in secimler if len(s) > 1)))
+    kap = _kolon_kumesi(tuple(sorted(len(s) for s in secimler if len(s) > 1)))
     kume = 1.0
     kalabalik = 1.0
     for p, oy, sec in zip(probs, oynanma, secimler):
