@@ -86,7 +86,13 @@ def sayi(g: dict, ara: str) -> None:
             print(f"    olculdu: {s['olculdu']}")
             if s.get("olcek"):
                 print(f"    OLCEK  : {s['olcek']}")
-            print(f"    bekci  : {s.get('bekci') or 'YOK — bu sayiyi tutan test yok'}")
+            if s.get("bekci"):
+                print(f"    bekci  : {s['bekci']}")
+            elif s.get("bekcisiz_gerekce"):
+                print(f"    bekci  : YOK — {s['bekcisiz_gerekce']}")
+            else:
+                print("    bekci  : YOK ve GEREKCESI DE YOK — "
+                      "test_olcum_kutugu.py bunu kirmizi yakar")
             for y in s["anildigi_yerler"]:
                 print(f"    anilir : {y}")
 

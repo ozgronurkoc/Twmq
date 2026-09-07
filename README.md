@@ -1181,7 +1181,7 @@ backend/
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
                        sehir/ · xg/ · sistem_fiyat/ · hakem/
-  tests/               pytest (72 dosya → 1.837 test; §9'da katman dökümü)
+  tests/               pytest (73 dosya → 1.860 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1386,8 +1386,8 @@ Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant'lar, CLI (Bayes pre
 dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri test,
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
-eşleme, ikinci kayıt). **72 test dosyası, parametrizasyonla
-1.837 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+eşleme, ikinci kayıt). **73 test dosyası, parametrizasyonla
+1.860 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
@@ -1397,12 +1397,12 @@ karşı denetler):
 | Tahmin katmanı | `predict` `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin` `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre` `secim_kalibrasyonu` **`arena`** **`sizinti`** | 595 |
 | Sağlık | `health` `api_health` `meta` `health_history` | 82 |
 | Veri / istatistik / geri test | `history` `odds` `backtest` `api_stats` `api_backtest` `snapshot_iddaa` `pazar` **`gecmis_sezon`** **`sportoto_arsiv`** **`bulten`** | 233 |
-| Süper Toto | `super_toto` `degerlendir` | 97 |
+| Süper Toto | `super_toto` `degerlendir` | 103 |
 | 2. Tahmin (kalabalık ayarı · bağımsız görüş) | `tahmin2` | 35 |
 | Karar katmanı | `secim` | 42 |
 | Amaç kıyası (`P(k≤3)` ↔ `E[k]`: aynı kupon mu?) | **`amac_kiyasi`** | 5 |
 | Sistem kıyası (kaplama ↔ düz; söküm kararının kanıtı) | **`sistem_kiyasi`** | 3 |
-| Para karnesi (garanti tabanı · enflasyon · canlı · GERÇEK kolon dağılımı · ödeyen olay · banko sapması) | **`karne`** | 31 |
+| Para karnesi (garanti tabanı · enflasyon · canlı · GERÇEK kolon dağılımı · ödeyen olay · banko sapması) | **`karne`** | 37 |
 | Hakem sütunu (E4 · sızıntısızlık · yayılım sınavı) | **`hakem`** | 5 |
 | Kalabalık modeli (λ · kademe adetleri) | **`kalabalik`** | 12 |
 | Koşullu getiri (havuz biz kazanınca bölünür) | **`kosullu_getiri`** | 10 |
@@ -1416,7 +1416,8 @@ karşı denetler):
 | Takım gücü | `takim_gucu` | 24 |
 | Yeni veri (UEFA · şehir) | `avrupa` `sehir` | 41 |
 | xG vekili kalibrasyonu | `xg` | 16 |
-| Belgeler | `belgeler` | 16 |
+| Belgeler | `belgeler` | 22 |
+| Ölçüm kütüğü (alıntı · üreten · bekçi bütünlüğü) | **`olcum_kutugu`** | 5 |
 | Değer bahsi (yan pazarlar) | **`deger`** | 24 |
 | Fiyat kaynakları | **`fiyatlar`** | 14 |
 | Kuyruk / bağımsızlık | **`kuyruk`** | 12 |

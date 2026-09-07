@@ -926,3 +926,116 @@ def test_kupon_belgesi_7_2_secilen_sutunu_kayittan():
         if parca[4] != picks[no - 1]:
             hata.append(f"{no}. mac: belge {parca[4]!r}, kayit {picks[no-1]!r}")
     assert len(hata) == 0, "§7.2 secilen sutunu kayitla celisiyor: " + "; ".join(hata)
+
+
+# ─── README'nin bekçisiz kalmış manşet sayıları ───────────────────────────────
+
+def test_readme_TABAN_CIZGISI_sayilari_OLCUMLE_ayni():
+    """§1.1 ve §5.4'ün taban çizgisi sayıları bugün koşan ölçümle aynı olmalı.
+
+    **Bu bekçi bir denetimin sonucudur.** 2026-09-07'de ölçüm kütüğüne
+    `bekci` alanı sorguya eklendiğinde 140 sayının 38'inin bekçisiz olduğu
+    görüldü ve bunların beşi doğrudan README'nin manşetindeydi. Manşet
+    sayısının bekçisiz olması bu deponun daha önce de düştüğü hatadır —
+    `test_readme_1_1_geri_test_sayilari_OLCUMLE_ayni`nin künyesi aynı
+    hikâyeyi anlatıyor.
+
+    Tutulan üç sayı: taban çizgisinin 12+ oranı, haftalık harcaması ve eşik
+    ailesinin tarama-en-iyisi. Üçü de `esik` stratejisinden gelir ve
+    **ürünün kuralı değildir** — kıyas noktasıdır; §5.4 onları o sıfatla
+    yazar.
+    """
+    from spor_toto.backtest import backtest
+
+    metin = _oku("README.md")
+
+    taban = backtest(sweep=False, sezon="hepsi", strateji="esik")["season"]
+    yuzde = f"%{taban['hit12_pct']:.1f}".replace(".", ",")
+    assert yuzde in metin, (
+        f"README taban çizgisinin 12+ oranını ({yuzde}) yazmıyor — "
+        "ölçüm değişti ama paragraf değişmedi")
+
+    # Haftalik harcama: `VARSAYILAN_BUTCE_TL`nin TL210.000 secilme gerekcesi
+    # bu sayidir (taban cizgisi tavansiz kostugu icin urun kurali onunla
+    # ancak bu rakamin ustunde yan yana konabiliyor).
+    tl = f"₺{taban['tl_avg']:,.0f}".replace(",", ".")
+    assert tl in metin or f"{taban['tl_avg']:,.0f}".replace(",", ".") in metin, (
+        f"README taban çizgisinin haftalık harcamasını ({tl}) yazmıyor")
+
+    tarama = backtest(sweep=True, strateji="esik")
+    en_iyi = f"{tarama['sweep_best']['tl_avg']:,.0f}".replace(",", ".")
+    assert en_iyi in metin, (
+        f"README §5.4 eşik ailesinin tarama-en-iyisini ({en_iyi}) yazmıyor")
+
+
+def test_readme_PARA_EKSENI_sayilari_OLCUMLE_ayni():
+    """§1.1'in "geri dönüş" satırları `karne.taban_gevsekligi` ile aynı olmalı.
+
+    Para ekseni §1.1'in en kolay bayatlayan yeridir: iki bütçe basamağının
+    ROI'si yan yana yazılıyor ve ikisi de ayrı bir koşumdan geliyor. Okunacak
+    eşik **1,0**'dır; sayılar onun yarısının altında ve paragraf bunu açıkça
+    söylüyor — bekçi o cümlenin dayanağını tutar.
+    """
+    from spor_toto.karne import taban_gevsekligi
+
+    metin = _readme_1_1()
+    for butce in (2_000.0, 210_000.0):
+        roi = taban_gevsekligi(butce_tl=butce, garanti=15)["gercek_roi"]
+        yazi = f"%{100 * roi:.1f}".replace(".", ",")
+        assert yazi in metin, (
+            f"§1.1 ₺{butce:,.0f} tavanının geri dönüşünü ({yazi}) yazmıyor")
+
+
+def test_readme_KADEME_ODUL_orani_OLCUMLE_ayni():
+    """§11'in "15, 12'nin N katını ödüyor" satırı ölçümle aynı olmalı.
+
+    Bu oran `secim.odul_secim`in var olma gerekçesi: "12 ve üstü"nü tek kova
+    saymak, aradaki binlerce katı görmemek demek. Sayı 114 haftanın **resmî
+    ikramiye tablolarından** gelir, varsayımdan değil.
+    """
+    import statistics
+
+    from spor_toto.karne import kupon_kesiti
+
+    kesit = kupon_kesiti()
+
+    def ortalama(kademe: int) -> float:
+        v = [float(h["tablo"][kademe]["prize"]) for h in kesit
+             if kademe in h["tablo"] and h["tablo"][kademe].get("prize") is not None]
+        return statistics.mean(v)
+
+    oran = round(ortalama(15) / ortalama(12))
+    assert str(oran) in _oku("README.md"), (
+        f"README §11 kademe ödül oranını ({oran}) yazmıyor")
+
+
+def test_saglik_katmani_test_sayisi_belgeyle_ayni():
+    """`SAGLIK_VIZYONU.md` §11'in "sağlık katmanının test sayısı" satırı.
+
+    `test_saglik_kontrol_sayisi_belgeyle_ayni` **kontrol** sayısını tutar
+    (`health.CHECKS`); bu, o katmanı sınayan **test** sayısıdır ve ayrı bir
+    sayıdır. Ölçüm kütüğünde kayıtlıydı ama hiçbir bekçisi yoktu — yani
+    dört dosyadan birine test eklendiğinde belge sessizce bayatlıyordu.
+
+    Toplama `--collect-only` ile yapılır (0,3 sn): fonksiyonları elle saymak
+    parametreli testleri kaçırır ve iki sayı sessizce ayrışır.
+    """
+    dosyalar = ["tests/test_health.py", "tests/test_api_health.py",
+                "tests/test_meta.py", "tests/test_health_history.py"]
+    for d in dosyalar:
+        if not (KOK / d).exists():
+            pytest.skip(f"{d} yok")
+    ciktı = subprocess.run(
+        [sys.executable, "-m", "pytest", *dosyalar, "--collect-only", "-q",
+         "-p", "no:randomly", "-o", "addopts="],
+        cwd=KOK, capture_output=True, text=True, timeout=300)
+    m = re.search(r"(\d+) tests? collected", ciktı.stdout)
+    if not m:
+        pytest.skip(f"toplama okunamadi: {ciktı.stdout[-300:]}")
+    gercek = int(m.group(1))
+
+    metin = _oku("docs/SAGLIK_VIZYONU.md")
+    yazili = re.search(r"Sağlık katmanının test sayısı\s*\|\s*(\d+)", metin)
+    assert yazili, "SAGLIK_VIZYONU.md §11 'Sağlık katmanının test sayısı' satırı yok"
+    assert int(yazili.group(1)) == gercek, (
+        f"SAGLIK_VIZYONU.md {yazili.group(1)} diyor, gerçek {gercek}")
