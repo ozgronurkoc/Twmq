@@ -47,6 +47,7 @@ kurulmaz.
 from __future__ import annotations
 
 import argparse
+import itertools
 import json
 import math
 import statistics as st
@@ -110,7 +111,7 @@ def dilim_karnesi(haftalar) -> list[dict]:
     tum = [x for w in haftalar for x in w]
     kenar = (0.0, 0.45, 0.50, 0.55, 0.60, 0.70, 1.01)
     satir = []
-    for a, b in zip(kenar, kenar[1:]):
+    for a, b in itertools.pairwise(kenar):
         d = [(p, t) for p, t in tum if a <= p < b]
         if not d:
             continue
@@ -155,66 +156,43 @@ def banko_merdiveni(haftalar, n_araligi=range(4, 11)) -> list[dict]:
 
 def _yaz(rapor: dict) -> None:
     a = rapor["sayinin_sekli"]
-    print("A) HAFTALIK TUTAN FAVORİ SAYISI — %d hafta × 15 maç" % a["hafta"])
-    print(
-        "   gerçekleşen : ortalama %.2f · medyan %.0f · sd %.2f · aralık %d–%d"
-        % (a["ortalama"], a["medyan"], a["sd"], a["min"], a["max"])
-    )
-    print("   dağılım     : " + "  ".join("%d:%d" % kv for kv in a["dagilim"].items()))
-    print(
-        "   piyasa      : beklenen %.2f · bağımsızlık sd'si %.2f"
-        % (a["piyasa_beklentisi"], a["bagimsizlik_sd"])
-    )
-    print(
-        "   aşırı yayılım oranı %.2f  (1,00 = 15 bağımsız yazı-turadan ayırt edilemez)"
-        % a["asiri_yayilim"]
-    )
-    print("   maç düzeyinde favori isabeti %%%.1f (%d maç)" % (100 * a["mac_isabeti"], a["mac"]))
+    print(f"A) HAFTALIK TUTAN FAVORİ SAYISI — {a['hafta']:.0f} hafta × 15 maç")
+    print(f"   gerçekleşen : ortalama {a['ortalama']:.2f} · medyan {a['medyan']:.0f} · "
+          f"sd {a['sd']:.2f} · aralık {a['min']:.0f}–{a['max']:.0f}")
+    print("   dağılım     : "
+          + "  ".join(f"{k:.0f}:{v:.0f}" for k, v in a["dagilim"].items()))
+    print(f"   piyasa      : beklenen {a['piyasa_beklentisi']:.2f} · "
+          f"bağımsızlık sd'si {a['bagimsizlik_sd']:.2f}")
+    print(f"   aşırı yayılım oranı {a['asiri_yayilim']:.2f}  "
+          "(1,00 = 15 bağımsız yazı-turadan ayırt edilemez)")
+    print(f"   maç düzeyinde favori isabeti %{100 * a['mac_isabeti']:.1f} "
+          f"({a['mac']:.0f} maç)")
 
     print("\nB) 'BARİZ FAVORİ' NE KADAR SEYREK")
     for s in rapor["bariz_favori"]:
-        print(
-            "   p_favori ≥ %.2f : %4d maç · hafta başına %.2f · kupon payı %%%.1f"
-            % (s["esik"], s["mac"], s["hafta_basina"], 100 * s["pay"])
-        )
+        print(f"   p_favori ≥ {s['esik']:.2f} : {s['mac']:4.0f} maç · "
+              f"hafta başına {s['hafta_basina']:.2f} · kupon payı %{100 * s['pay']:.1f}")
 
     print("\nC) FAVORİ GÜCÜ DİLİMLERİ — piyasa ne dedi, ne oldu, haftaya ne kattı")
-    print("   %-14s %5s %8s %12s %7s %14s" % ("p_favori", "maç", "piyasa", "gerçekleşen", "fark", "hafta başına"))
+    print(f"   {'p_favori':<14} {'maç':>5} {'piyasa':>8} {'gerçekleşen':>12} "
+          f"{'fark':>7} {'hafta başına':>14}")
     for s in rapor["dilim_karnesi"]:
-        print(
-            "   [%.2f,%.2f) %6d %8.1f%% %11.1f%% %+7.1f %14.2f"
-            % (
-                s["alt"],
-                s["ust"],
-                s["mac"],
-                100 * s["piyasa"],
-                100 * s["gerceklesen"],
-                100 * (s["gerceklesen"] - s["piyasa"]),
-                s["hafta_basina_tutan"],
-            )
-        )
+        print(f"   [{s['alt']:.2f},{s['ust']:.2f}) {s['mac']:6.0f} "
+              f"{100 * s['piyasa']:8.1f}% {100 * s['gerceklesen']:11.1f}% "
+              f"{100 * (s['gerceklesen'] - s['piyasa']):+7.1f} "
+              f"{s['hafta_basina_tutan']:14.2f}")
 
-    print("\nD) EN EMİN N FAVORİ BANKO + KALANA ÜÇLÜ — kolon ₺%d" % KOLON_BEDELI)
-    print(
-        "   %2s %10s %12s %8s %7s %7s %7s %7s %7s %8s"
-        % ("N", "kolon", "bedel", "banko%", "15", "14", "13", "12", "12−", "ort.")
-    )
+    print(f"\nD) EN EMİN N FAVORİ BANKO + KALANA ÜÇLÜ — kolon ₺{KOLON_BEDELI:.0f}")
+    print(f"   {'N':>2} {'kolon':>10} {'bedel':>12} {'banko%':>8} {'15':>7} {'14':>7} "
+          f"{'13':>7} {'12':>7} {'12−':>7} {'ort.':>8}")
     for s in rapor["banko_merdiveni"]:
-        print(
-            "   %2d %10s %12s %7.1f%% %6.1f%% %6.1f%% %6.1f%% %6.1f%% %6.1f%% %8.2f"
-            % (
-                s["N"],
-                f"{s['kolon']:,}",
-                f"₺{s['bedel']:,.0f}",
-                100 * s["banko_isabeti"],
-                100 * s["kademe"][15],
-                100 * s["kademe"][14],
-                100 * s["kademe"][13],
-                100 * s["kademe"][12],
-                100 * s["on_ikinin_alti"],
-                s["ortalama_kademe"],
-            )
-        )
+        kolon = f"{s['kolon']:,}"
+        bedel = f"₺{s['bedel']:,.0f}"
+        print(f"   {s['N']:2.0f} {kolon:>10} {bedel:>12} "
+              f"{100 * s['banko_isabeti']:7.1f}% {100 * s['kademe'][15]:6.1f}% "
+              f"{100 * s['kademe'][14]:6.1f}% {100 * s['kademe'][13]:6.1f}% "
+              f"{100 * s['kademe'][12]:6.1f}% {100 * s['on_ikinin_alti']:6.1f}% "
+              f"{s['ortalama_kademe']:8.2f}")
     print("   N=6 satırı README §1.1'in kademe dağılımıdır — ürünün bugünkü şekli (6, 0, 9).")
 
 

@@ -98,7 +98,7 @@ DEĞİLDİR."* Bu cümle süs değil, §7'deki bütün havuz hesabının sınır
 
 ## 2. ① Kapı — `dogrula()`: kod veriyi düzeltmez, işaretler
 
-`scripts/super_toto_hafta.py::dogrula` elle girilen dosyayı yedi ayrı
+`scripts/super_toto_hafta.py::dogrula` elle girilen dosyayı sekiz ayrı
 denetimden geçirir. Hepsi `assert` değil **liste** döndürür; koşum
 durmaz, şüphe görünür olur. Kural doktrinden gelir: *belirsiz veri atılır
 ya da işaretlenir, uydurulmaz.*
@@ -112,6 +112,7 @@ ya da işaretlenir, uydurulmaz.*
 | 5 | Ana fiyatın **açılış eşi** var mı | `odds_kind` kapanışsa aynı ailenin açılışı da olmalı | Yoksa çizgi hareketi ölçülemez |
 | 6 | **Bayat kapanış** | kapanış == açılış birebir | Bu bir fiyat değil, **tazelenmemiş kayıttır**; o satırda "bahisçi ayrışması" görüş farkı değil kayıt farkıdır |
 | 7 | **Delikli bahisçi** | bir kitap bazı maçlarda yok | O satırlarda ana fiyat başka kayıttan gelmek zorunda; ayrıca o bahisçinin ortalama marjı eksik satırlar üzerinden hesaplanmaz |
+| 8 | **Bozuk künye** | `odds_from` varsa `odds_books[odds_from] == odds` olmalı | Künye **elle** girilir ve kod onu üretim yolunda hiç okumaz; yanlış künye, doğru görünen yanlış bir gerekçe üretir (§3'ün marj cümleleri doğrudan buna dayanır). Alanın **yokluğu** uyarı değildir — 1–3. haftalarda hiç yok |
 
 Ayrıca: lig etiketi olmayan maç, ve sonuç dizisi bozuksa (15 ≠ uzunluk ya
 da geçersiz sembol) uyarı.
@@ -206,6 +207,25 @@ geçme kuralını sağlıyor. Anlamlı sapan bant **10 → 4**.
 
 Marj sıfıra giderken üç yöntem de aynı sonuca yakınsar; ayrıştıkları yer
 yüksek marjdır — iddaa bülteni (~%18) tam olarak orası.
+
+**Ama marj tek başına ayrışmayı açıklamaz — ölçüldü.** Shin'in yaptığı iş
+marjı *asimetrik* dağıtmaktır, dolayısıyla dağıtacak asimetri de gerekir.
+4. haftanın 15 maçında `|shin − orantili|` şu üç büyüklükle sıralandı:
+
+| Açıklayıcı | Pearson `r` |
+|---|---:|
+| marj | +0,567 |
+| yayılım (`max p − min p`) | +0,647 |
+| **marj × yayılım** | **+0,998** |
+
+Somut karşıtlık: 6. maç (Kocaelispor–Samsunspor) %4,88 marjlıydı ama
+olasılıkları neredeyse eşitti (`0,362/0,321/0,317`, yayılım 0,043) ve üç
+yöntem **0,0010** içinde aynı cevabı verdi; 7. maç (Trabzonspor) benzer
+marjla (%5,61) ama yayılımı 0,432 olduğu için **0,0112** ayrıştı — yani
+haftanın en yüksek marjlı satırının (2. maç, %17,71 → 0,0120) neredeyse
+kadar. Pratik sonucu: yüksek marjlı bir bülten yöntem seçimini otomatik
+olarak kritik yapmaz; kritik olan yüksek marjlı **ve favorisi belirgin**
+maçlardır.
 
 **İki ölçüm bilerek `orantili`da bırakıldı:** açılış↔kapanış hareketi ve
 bahisçi anlaşmazlığı. İkisi de bir **fark** ölçer ve orantısal yöntem
@@ -404,30 +424,35 @@ banko (1 sembol)   q = 1 − p₁
 Bedel ise yalnızca **sayılara** bağlıdır (hangi maç olduğuna değil).
 Bu iki olgu aramayı küçük ve **tam çözülebilir** bir probleme indirger.
 
-4. haftanın gerçek `q` tablosu (13-garanti, ₺2.000 bütçe):
+4. haftanın gerçek `q` tablosu — **oynanan kupon** (`fix16`, 14-garanti,
+6.144 kolon tavanı). `seçilen` sütunu `hafta_04_kupon.json → variants[0]`den
+gelir; `q(banko)` / `q(çifte)` sütunları maçın kendi olasılıklarıdır ve
+hangi planın seçildiğinden bağımsızdır:
 
 ```
  #  p1/p0/p2        q(banko) q(çifte)  seçilen   q
  1  0.42/0.28/0.30    0.579    0.277     102   0.000
  2  0.44/0.28/0.28    0.561    0.279     102   0.000
  3  0.57/0.24/0.19    0.431    0.189       1   0.431
- 4  0.53/0.24/0.23    0.474    0.232     102   0.000
+ 4  0.53/0.24/0.23    0.474    0.232      10   0.232
  5  0.18/0.21/0.61    0.390    0.184       2   0.390
  6  0.36/0.32/0.32    0.638    0.317     102   0.000
  7  0.61/0.22/0.16    0.386    0.164       1   0.386
  8  0.50/0.28/0.22    0.499    0.220      10   0.220
- 9  0.51/0.25/0.24    0.491    0.237     102   0.000
+ 9  0.51/0.25/0.24    0.491    0.237      10   0.237
 10  0.29/0.26/0.45    0.551    0.263     102   0.000
-11  0.58/0.25/0.17    0.421    0.175       1   0.421
+11  0.58/0.25/0.17    0.421    0.175      10   0.175
 12  0.31/0.27/0.42    0.581    0.273     102   0.000
-13  0.58/0.25/0.18    0.423    0.178       1   0.423
-14  0.57/0.24/0.19    0.430    0.189       1   0.430
-15  0.46/0.29/0.25    0.539    0.252     102   0.000
+13  0.58/0.25/0.18    0.423    0.178      10   0.178
+14  0.57/0.24/0.19    0.430    0.189      10   0.189
+15  0.46/0.29/0.25    0.539    0.252      10   0.252
 ```
 
-Okuma: `k ≤ 1` çok sıkı bir bütçedir. Motor sekiz maçı **kapatıyor**
-(`q = 0`) ve riski yalnızca yedi maça bırakıyor — altısı banko, biri
-çifte. Toplam kaçak beklentisi `Σq = 2,70` ve `P(k ≤ 1) = 0,1748`.
+Okuma: motor beş maçı **tamamen kapatıyor** (`q = 0`, üçlü) ve riski kalan
+ona bırakıyor — üçü banko, yedisi çifte. Yedi çiftenin **tesadüf olmadığına**
+dikkat: `fix16` Hamming(7,4) bloğunu doldurmak için **tam yedi çifte** ister,
+yani şeklin bu yanı sistemin şartıdır (§9.1). Toplam kaçak beklentisi
+`Σq = 2,69` ve `P(k ≤ 2) = 0,4670`.
 
 ### 7.3 Arama — neden Pareto DP, neden açgözlü değil
 
@@ -491,6 +516,18 @@ hâlâ yapılır. Değişen şey, tutturma olasılığının **satılmamasıdır
 oynanma paylarını kullanır. Gerekçesi güçlü: kayıtlı paylar monoton
 *değil* — 60 maçın **21'inde** kalabalığın sıralaması piyasanınkinden
 farklı, yani kenar varsa oradadır ve monoton model onu göremez.
+
+**Ama o kenarın yüzeyi 21/60'ın ima ettiğinden dar.** Aynı 60 maçta
+monoton olmayan 21 vakayı ayırdığımda: **18'i** favorinin *arkasındaki* iki
+sembolün kendi aralarında yer değiştirmesi, favori yalnızca **3 maçta**
+değişiyor (2026/27 h02m5, h03m4, h04m1). Sebebi de ölçüldü — kalabalık
+favoriye ortalama **+5,5 puan** fazla yükleniyor (60 maçın 47'sinde) ve o
+payı hem beraberlikten hem zayıftan çekiyor, geriye kalan ikisinin sırası
+küçük farklarla oynuyor. (Beraberliğin sistematik olarak eksik oynandığı
+hipotezi **çürüdü**: ortalama +0,2 puan, 30/60 — yön yok.) Kuponun kararı
+ağırlıklı olarak "hangi sembolleri kümeye alıyorum" sorusu olduğu için, bu
+ayrım `getiri_secim`'in geri alınmasının **neden bu kadar az şey
+kaybettirdiğini** açıklar.
 
 Ama kısıtsız hâli **ölçülüp geri alındı**: 2026/27 2. haftada `E[TL]`'yi
 **3,01 kat** büyütürken `P(k≤1)`'i 0,2194 → **0,0073**'e (−%96,7)
@@ -563,10 +600,43 @@ veriden türetilemez.
 
 İki yol vardır ve ikisi de canlı:
 
-| Yol | Bütçe kaynağı | 4. haftada |
+| Yol | Bütçe kaynağı | 4. haftada üretilen plan |
 |---|---|---|
-| `hafta_kos.py --oncesi` (**varsayılan**) | doğrudan TL — `VARSAYILAN_BUTCE = 2000.0` | 162 kolon = **₺1.620** |
-| `super_toto_hafta.py` (profil/kıyas) | eşik kuralının aynı haftada ürettiği maliyet | 3.888 kolon = **₺38.880** |
+| `hafta_kos.py --oncesi` (**varsayılan**) | doğrudan TL — `scripts/hafta_kos.py::VARSAYILAN_BUTCE = 2000.0` | 162 kolon = **₺1.620** |
+| `super_toto_hafta.py` (profil/kıyas) | eşik kuralının aynı haftada ürettiği maliyet | 3.888 kolon = **₺38.880** ← **oynanan bu** |
+
+> ⚠️ **İki ayrı varsayılan bütçe var ve aynı sayı değiller.** Canlı haftalık
+> plan `scripts/hafta_kos.py::VARSAYILAN_BUTCE = 2000.0` ile koşar; README
+> §1.1'in manşet sayılarını üreten 114 haftalık geri test ise
+> `spor_toto/backtest.py::VARSAYILAN_BUTCE_TL = 210000.0` ile. Yani ürün
+> kendini bir bütçede **ölçüyor**, başka bir bütçede **koşuyor** — ve §8.3'ün
+> kendi bulgusu (bütçe şekli neredeyse çiviliyor) bu farkın kozmetik
+> olmadığını söylüyor: ₺2.000 → 10/1/4, ₺210.000 → 6/0/9.
+
+### 8.3.1 Ve 2026-09-07'den beri bütçe **kısıt değil supap**
+
+Yukarıdaki iki yol da bütçeyi bir **kısıt** olarak kullanır ve bu, `hedef`
+kuralının yapısal kusurudur: `P(k ≤ eşik)` üçlü sayısında **monotondur**
+(üçlünün kaçağı sıfır), dolayısıyla sabit tavan altında cevabı her zaman
+"tavanı harca"dır. Şekli hafta değil **tavan** seçer — 114 haftanın hepsinde
+tek şekil.
+
+Canlı yolun ana planını artık `secim.odul_secim` kuruyor
+(`karne.VARSAYILAN_KURAL = "hak"`): kademeler kendi ağırlığıyla, bütçe bir
+**tavan**. Kural bedelini kendi seçer; tavana dayanırsa satır bunu
+`tavana_dayandi` + `serbest_kolon` ile **ilan eder** — "tavan hedef değildir"
+cümlesi ancak ihlali görünürse doğru kalır. Eski kural silinmedi:
+`--kural butce` ile koşulur ve her satır iki planı yan yana taşır.
+
+Ölçümü README §1.1'de; kısası: kuyruk çıkarılmış ROI farkı `+0,130
+[+0,013, +0,270]` ile **geçti**, ham ROI farkı `[−0,020, +2,627]` ile
+**geçmedi**. Ve bugünkü ödül ölçeğinde kuralın tavansız cevabı **₺1,18 M**
+olduğu için ₺210.000 altında iki kural **aynı planı** veriyor — fark, ödül
+ölçeğinin bütçenin altında kaldığı geçmiş sezonlarda görünür.
+
+Bu tablonun iki satırı da **üretilen plandır**; hangisinin bayiye yatırıldığı
+tablodan değil **dondurulmuş kayıttan** okunur (`hafta_04_kupon.json`,
+`meta.sistem` + `variants[0]`). 4. haftada oynanan ikinci satırdır.
 
 İkisi çelişmiyor; **farklı bütçelerde farklı sorulara** cevap veriyorlar.
 Bütçeyi eşik kuralına sabitlemek, kural kıyasını kuponu değil **kuralı**
@@ -614,8 +684,15 @@ python -m spor_toto.hafta_hakki --kiyas                # E6 olcumu (~20 dk)
 
 ## 9. ⑧ Kolonlar — seçim kümesinin tamamı, tek satır
 
-Bu katman **olasılığı hiç bilmez**. `core.py` içinde olasılık katmanına
-tek bir atıf yoktur; kaçak aritmetiği bir tahmin değil **sayma sonucudur**.
+Bu katman **olasılığa bağımlı değildir**: `core.py` projeden **tek bir modül
+ithal etmez** (yalnızca `math`, `re`, `collections.abc`, `itertools`). Olasılık
+ona ancak **argüman olarak** girer — `olasilik_raporu(enc, cols, probs)` gibi —
+ve girmediğinde kaçak aritmetiği eksiksiz çalışır: o aritmetik bir tahmin değil
+**sayma sonucudur**.
+
+> Bu cümle eskiden *"olasılık katmanına tek bir atıf yoktur"* diyordu ve harfiyen
+> yanlıştı: `parse_probs` ve `olasilik_raporu` `core.py`dedir. Doğru olan **atıf**
+> değil **bağımlılık** yokluğudur; ayrım da tam olarak bu belgenin konusudur.
 
 ### 9.1 `duz.kolonlar` — arama değil üretim
 
@@ -903,35 +980,49 @@ değil, geriye dönük kurgu olurdu.
 
 ## 15. 4. haftanın uçtan uca koşumu
 
-> **Bu koşum KAPLAMA ile yapıldı ve öyle bırakılıyor.** 4. hafta gerçekten
-> 13-garantili indirgenmiş sistemle oynandı; sayıları düzeltmek olmayan bir
-> kuponu anlatmak olurdu. Depo 2026-09-06'dan itibaren düz oynuyor
-> (`docs/DUZ_SISTEME_GECIS.md`) — 5. haftadan itibaren bu akışta ⑤ *"hedef
-> kademe 12 → k ≤ 3"*, ⑥ *"şekil → 2^çifte·3^üçlü kolon"* olarak okunur ve
-> ⑦ bir alt sınır değil eşitliktir.
+> **Bu koşum KAPLAMA ile yapıldı ve öyle bırakılıyor.** 4. hafta `fix16`
+> kaplamasıyla — **14-garanti, 16 satır** — oynandı; kaydın kendi künyesi
+> `meta.sistem = "fix16"` ve `meta.sistem_notu` bunu ilan eder. Sayıları düz
+> ölçeğe çevirmek, olmayan bir kuponu anlatmak olurdu. Depo 2026-09-06'dan
+> itibaren düz oynuyor (`docs/DUZ_SISTEME_GECIS.md`) — 5. haftadan itibaren bu
+> akışta ⑤ *"hedef kademe 12 → k ≤ 3"*, ⑥ *"şekil → 2^çifte·3^üçlü kolon"*
+> olarak okunur ve ⑦ bir alt sınır değil eşitliktir.
+>
+> **Aşağıdaki blok elle yazılmaz.** Kaynağı
+> `backend/data/super_toto/2026_27/hafta_04_kupon.json`, `variants[0]`
+> (*"ana — hedef kuralı, kalabalık görülmeden (DONDURULAN)"*) ve bekçisi
+> `tests/test_belgeler.py::test_kupon_belgesi_15_donmus_kayitla_AYNI`.
 
 ```
 GİRDİ    15 maç · pinnacle+nesine × açılış/kapanış · % tercih · 2026-09-04
   ①      5 otomatik uyarı (1 kuşkulu marj, 3 eksik/bayat kayıt, 1 delik)
   ②      ana fiyat: 13× pinnacle_kapanis, 1× pinnacle_acilis, 1× nesine_kapanis
-  ③      shin arındırma → marj ort. %5,44 (Pinnacle satırları %4,62)
+  ③      shin arındırma → ana fiyat marjı ort. %5,44
   ④      oynanma normalize; favoriye ortalama +4,9 puan fazla oynanma
-  ⑤      13-garanti → k ≤ 1;  Pareto DP, ₺2.000 bütçe, 37 aday şekil
-  ⑥      şekil 6 banko / 1 çifte / 8 üçlü  →  tablo: 162 kolon = ₺1.620
-  ⑦      P(en iyi kolon ≥ 12) = P(k ≤ 1) = 0,1748
-  ⑧      kalabalık ayarı: değişen maç 0 · E[TL] katı 1,000×
+  ⑤      14-garanti → k ≤ 2;  Pareto DP, 6.144 kolon tavanı (eşik kuralının maliyeti)
+  ⑥      şekil 3 banko / 7 çifte / 5 üçlü  →  16 satır, 3.888 kolon = ₺38.880
+  ⑦      P(en iyi kolon ≥ 12) = P(k ≤ 2) = 0,4670   (küme-içi 0,0401)
+  ⑧      kalabalık ayarı: değişen maç 3 (4, 9, 15) · P %46,70 → %44,86
+         · rakip payı %9,35 → %6,64 · E[TL] ×1,35 — ÖLÇÜLDÜ, OYNANMADI
   ⑨      E[TL] hesaplanamadı (ikramiye tablosu henüz yok)
 
-KUPON    102 102 1 102 2 102 1 10 102 102 1 102 1 1 102
-         banko  : 3, 5, 7, 11, 13, 14
-         çifte  : 8
-         üçlü   : 1, 2, 4, 6, 9, 10, 12, 15
+KUPON    102 102 1 10 2 102 1 10 10 102 10 102 10 10 10
+         banko  : 3 "1", 5 "2", 7 "1"
+         çifte  : 4, 8, 9, 11, 13, 14, 15   (hepsi "10")
+         üçlü   : 1, 2, 6, 10, 12
 ```
 
-Aynı hafta ₺38.880 bütçeyle (eşik kuralının ürettiği maliyet, 14-garanti
-fix16 yolu — o yol da söküldü) başka bir kupon veriyor: 3 banko / 7 çifte / 5 üçlü,
-**3.888 kolon**, `P(≥12) = %46,70`. İkisi çelişmiyor — **bütçe bir
-harcama kararıdır ve veriden türetilemez.**
+**③'ün künyesi:** %5,44 **ana fiyatın** ortalamasıdır ve saf Pinnacle değildir
+— 2. maç Nesine'den geldiği için ortalamayı yukarı çeker. Pinnacle'ın kendi
+sayıları iki ayrı kümedir ve karıştırılmamalıdır: `pinnacle_kapanis`
+**kitabının** 13 satırı **%4,62**, ana fiyatı Pinnacle olan **14** satır
+(13 kapanış + 13. maçın açılışı) **%4,56**.
+
+Aynı hafta `hafta_kos.py --oncesi`'nin ₺2.000'lik varsayılan yolu **başka bir
+plan üretiyordu**: 6 banko / 1 çifte / 8 üçlü, satıcının indirgenmiş sistem
+tablosunda 13-garantide **162 kolon = ₺1.620**, `P(≥12) = P(k ≤ 1) = 0,1748`.
+O plan **oynanmadı** ve tablo depodan çıktı (§8'in fiyat modeli kutusu). İkisi
+çelişmiyor — **bütçe bir harcama kararıdır ve veriden türetilemez.**
 
 ---
 

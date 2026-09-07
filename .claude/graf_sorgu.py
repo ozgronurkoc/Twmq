@@ -64,7 +64,19 @@ def _bos_mu(g: dict, bolum: str) -> bool:
 
 
 def sayi(g: dict, ara: str) -> None:
-    """Değerde veya açıklamada geçen sayı kütüğü girdilerini basar."""
+    """Değerde veya açıklamada geçen sayı kütüğü girdilerini basar.
+
+    `olcek` ve `bekci` alanları da basılır ve **basılmaları şart**:
+
+    * `olcek` — bir sayının hangi ölçekte ölçüldüğü (ör. "kaplama ölçegi",
+      "orantili arindirma"). Kütükte aynı ölçümün iki ölçekteki karşılığı
+      YAN YANA durur (984 TL kaplama ↔ 1.339 TL düz); ölçek basılmazsa
+      sorgu ikisini ayırt edilemez gösterir ve okuyan onları kıyaslar.
+      Kütükte alan vardı, bu fonksiyon onu hiç basmıyordu.
+    * `bekci` — o sayıyı tutan test. CLAUDE.md'nin grafa sorulmasını
+      istediği sorulardan biri birebir "bir iddianın bekçisi var mı";
+      cevabı kütükteydi ama sorgu yüzeyinde görünmüyordu.
+    """
     if _bos_mu(g, "sayilar"):
         return
     for s in g["sayilar"]:
@@ -72,6 +84,15 @@ def sayi(g: dict, ara: str) -> None:
             print(f"{s['deger']} — {s['ne']}")
             print(f"    ureten : {s['ureten']}")
             print(f"    olculdu: {s['olculdu']}")
+            if s.get("olcek"):
+                print(f"    OLCEK  : {s['olcek']}")
+            if s.get("bekci"):
+                print(f"    bekci  : {s['bekci']}")
+            elif s.get("bekcisiz_gerekce"):
+                print(f"    bekci  : YOK — {s['bekcisiz_gerekce']}")
+            else:
+                print("    bekci  : YOK ve GEREKCESI DE YOK — "
+                      "test_olcum_kutugu.py bunu kirmizi yakar")
             for y in s["anildigi_yerler"]:
                 print(f"    anilir : {y}")
 

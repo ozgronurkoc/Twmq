@@ -312,18 +312,31 @@ def olasilik_raporu(enc: Encoder, cols: Sequence[Point],
     Kullanicinin kendi olasilik tahminlerine gore formulun basari sansi.
 
     Hesaplananlar:
-      p_kume_ici : tum maclarin gercek sonucunun secim kumende olma olasiligi.
-                   14-garanti ancak bu durumda devreye girer.
-      p_15       : oynanan kolonlardan birinin 15 tutturma olasiligi.
+      p_kume_ici : tum maclarin gercek sonucunun secim kumende olma
+                   olasiligi, yani P(kacak = 0).
+      p_15       : OYNANAN kolonlardan birinin 15 tutturma olasiligi.
       p_14       : tam 14 tutturma olasiligi (p_kume_ici - p_15).
       p_tek_kolon_15 : sistem oynamayip, secim kumen icinden her mactan en
                    olasi sonucu alarak TEK kolon oynasaydin 15 tutturma
                    olasiligin (karsilastirma icin).
 
+    DUZDE p_14 SIFIRDIR (kayan nokta artigi kadar; olculdu: <1e-16) ve bu
+    bir kusur degil tanimdir: `cols`
+    secim kumesinin TAMAMI oldugu icin sonuc kumedeyse ONU tutan kolon
+    mutlaka oynanmistir, yani p_15 == p_kume_ici. Bu, "en iyi kolon =
+    15 - k" esitliginin (docs/KUPON_NASIL_KURULUYOR.md §7.1) bu
+    fonksiyondaki gorunumudur.
+
+    Ucu de KAPLAMA doneminde ayrisiyordu: `cols` kumenin bir DILIMIYDI
+    (16 satir), dolayisiyla p_15 < p_kume_ici olur ve aradaki fark p_14'e
+    duserdi -- 14-garanti tam olarak o farkin adiydi. Fonksiyon degismedi;
+    degisen `cols`un ne tasidigi. Kaplamayla oynanmis haftalarin kaydi
+    icin bkz. spor_toto/kaplama_arsiv.py.
+
     DIKKAT: p_15 > p_tek_kolon_15 GARANTI DEGILDIR. Kaplama kodu 15
-    olasiligini degil, KAPSAMAYI maksimize eder; en olasi tek nokta
-    formulun kolonlari arasinda olmayabilir. Sistemin degeri 14-garantidir,
-    15 sansini artirmak degil.
+    olasiligini degil KAPSAMAYI enbuyukluyordu; en olasi tek nokta onun
+    kolonlari arasinda olmayabilirdi. Duzde boyle bir bosluk yoktur --
+    en olasi nokta kumedeyse zaten oynanir.
 
     NOT: bu bir beklenen-deger/kar hesabi DEGILDIR. Ikramiye havuzu, kolon
     bedeli ve kac kisinin tutturdugu hesaba katilmaz.

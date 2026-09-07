@@ -584,9 +584,25 @@ def test_readme_1_1_hangi_kurali_olctugunu_soyler():
     ürünün kullandığı kural değildi. Okuyanın bunu anlamasının hiçbir yolu
     yoktu.
     """
+    from spor_toto.karne import VARSAYILAN_KURAL
+
     metin = _readme_1_1()
     for parca in ("secim.en_iyi_secim", "114 hafta", "düz ölçek"):
         assert parca in metin, f"§1.1 künyesinde '{parca}' yok"
+
+    # CANLI kuralı da yazmalı. 2026-09-07'de canlı yol `odul_secim`e geçti
+    # ve §1.1 hâlâ yalnızca `en_iyi_secim`i ölçüyordu — yani paragraf ürünün
+    # KOŞMADIĞI bir kuralı anlatıyordu. Bu, `esik` stratejisinin vaktiyle
+    # düştüğü hatanın aynısı ve o hata bu bekçinin var olma sebebi.
+    if VARSAYILAN_KURAL == "hak":
+        for parca in ("secim.odul_secim", "odul_vektoru_onceki"):
+            assert parca in metin, (
+                f"canlı kural 'hak' ama §1.1 '{parca}' demiyor — paragraf "
+                "ürünün koşmadığı bir kuralı ölçüyor")
+        # Geçmeyen sınav da yazılmali: bir kural yalnizca gecen olcumleriyle
+        # anlatilirsa okuyan onu dogrulanmis sanir.
+        assert "GEÇMEDİ" in metin, (
+            "§1.1 `hak` kuralının geçmeyen ham ROI sınavını yazmıyor")
 
 
 def test_readme_test_tablosu_GERCEK_koleksiyonu_sayar():
@@ -805,3 +821,224 @@ def test_belgelerdeki_sayfa_sayisi_gercekle_ayni():
             if int(m.group(1)) != len(gercek):
                 hata.append(f"{d}: '{m.group(1)} sayfa' yazıyor, gerçek {len(gercek)}")
     assert not hata, "Sayfa sayısı bayat: " + "; ".join(hata)
+
+
+# ─── kupon belgesi ↔ dondurulmuş kayıt ────────────────────────────────────────
+
+def _kupon_15() -> str:
+    """`KUPON_NASIL_KURULUYOR.md` §15'in gövdesi — §16'ya kadar."""
+    metin = _oku("docs/KUPON_NASIL_KURULUYOR.md")
+    bas = metin.index("## 15. 4. haftanın uçtan uca koşumu")
+    son = metin.index("## 16. ", bas)
+    return metin[bas:son]
+
+
+def test_kupon_belgesi_15_donmus_kayitla_AYNI():
+    """§15 "uçtan uca koşum" bloğu, oynanan kuponun KAYDIYLA aynı olmalı.
+
+    **Bu bekçi bir çelişkinin sonucudur.** §15 uzun süre 4. haftayı
+    *"13-garantili indirgenmiş sistemle oynandı"* diye anlatıyor ve
+    `6 banko / 1 çifte / 8 üçlü · 162 kolon · P = 0,1748` yazıyordu.
+    Dondurulmuş kayıt ise (`hafta_04_kupon.json`) `meta.sistem = "fix16"`,
+    `meta.sistem_notu` = *"14-garanti"* ve `meta.duzeltme.etki` =
+    *"oynanan 3.888 kolonluk plan"* diyordu — yani `3/7/5 · 3.888 kolon ·
+    16 satır · P = 0,4670`. Aynı belgenin §9.2 ve §9.3'ü de kaydın tarafındaydı.
+
+    İkisi aynı anda doğru olamaz ve hiçbir test bunu tutmuyordu. Depo
+    doktrini sırayı veriyor (ölçüm > kod > belge > graf): kazanan kayıttır.
+
+    162 kolonluk plan UYDURMA DEĞİLDİR — `hafta_kos.py --oncesi`'nin ₺2.000
+    varsayılanının satıcı fiyat tablosundaki gerçek çıktısıydı; §8.3'te
+    "üretilen plan" olarak durur. Bu test yalnızca §15'in **oynananı**
+    anlatmasını şart koşar.
+    """
+    import json
+
+    kayit = json.loads(
+        (KOK / "data" / "super_toto" / "2026_27" / "hafta_04_kupon.json")
+        .read_text(encoding="utf-8"))
+    ana = kayit["variants"][0]
+    picks = ana["picks"]
+    banko = sum(1 for c in picks if len(c) == 1)
+    cift = sum(1 for c in picks if len(c) == 2)
+    uclu = sum(1 for c in picks if len(c) == 3)
+
+    metin = _kupon_15()
+    hata: list[str] = []
+
+    # 1) Isaret dizisi birebir.
+    if " ".join(picks) not in metin:
+        hata.append(f"kupon satiri kayitla ayni degil (kayit: {' '.join(picks)})")
+
+    # 2) Sekil.
+    if f"{banko} banko / {cift} çifte / {uclu} üçlü" not in metin:
+        hata.append(f"sekil {banko}/{cift}/{uclu} yazmiyor")
+
+    # 3) Kolon ve satir sayisi (binlik ayrac nokta).
+    kolon = f"{ana['columns']:,}".replace(",", ".")
+    if kolon not in metin:
+        hata.append(f"kolon sayisi {kolon} yazmiyor")
+    if f"{ana['rows']} satır" not in metin:
+        hata.append(f"satir sayisi {ana['rows']} yazmiyor")
+
+    # 4) P(hedef) — dort haneye yuvarlanmis, virgullu.
+    p = f"{ana['hedef']:.4f}".replace(".", ",")
+    if p not in metin:
+        hata.append(f"P(hedef) {p} yazmiyor")
+
+    # 5) Sistem kunyesi: kayit fix16/14-garanti diyorsa belge de demeli.
+    if kayit["meta"].get("sistem") == "fix16":
+        if "14-garanti" not in metin:
+            hata.append("kayit 14-garanti diyor, §15 demiyor")
+        if "13-garanti" in metin.replace("13-garantide", ""):
+            hata.append("§15 hala 13-garanti diyor")
+
+    assert not hata, "§15 dondurulmus kayitla celisiyor: " + "; ".join(hata)
+
+
+def test_kupon_belgesi_7_2_secilen_sutunu_kayittan():
+    """§7.2'nin `seçilen` sütunu da oynanan kupondan gelmeli.
+
+    §15 ile aynı hayalet koşumdan besleniyordu: `q(banko)` / `q(çifte)`
+    sütunları doğruydu (maçın kendi olasılıkları, plandan bağımsız) ama
+    `seçilen` sütunu oynanmayan planı gösteriyordu.
+    """
+    import json
+
+    kayit = json.loads(
+        (KOK / "data" / "super_toto" / "2026_27" / "hafta_04_kupon.json")
+        .read_text(encoding="utf-8"))
+    picks = kayit["variants"][0]["picks"]
+
+    metin = _oku("docs/KUPON_NASIL_KURULUYOR.md")
+    bas = metin.index("### 7.2 ")
+    son = metin.index("### 7.3 ", bas)
+    tablo = metin[bas:son]
+
+    hata: list[str] = []
+    for satir in tablo.splitlines():
+        parca = satir.split()
+        if len(parca) != 6 or not parca[0].isdigit():
+            continue
+        no = int(parca[0])
+        if not 1 <= no <= 15:
+            continue
+        if parca[4] != picks[no - 1]:
+            hata.append(f"{no}. mac: belge {parca[4]!r}, kayit {picks[no-1]!r}")
+    assert len(hata) == 0, "§7.2 secilen sutunu kayitla celisiyor: " + "; ".join(hata)
+
+
+# ─── README'nin bekçisiz kalmış manşet sayıları ───────────────────────────────
+
+def test_readme_TABAN_CIZGISI_sayilari_OLCUMLE_ayni():
+    """§1.1 ve §5.4'ün taban çizgisi sayıları bugün koşan ölçümle aynı olmalı.
+
+    **Bu bekçi bir denetimin sonucudur.** 2026-09-07'de ölçüm kütüğüne
+    `bekci` alanı sorguya eklendiğinde 140 sayının 38'inin bekçisiz olduğu
+    görüldü ve bunların beşi doğrudan README'nin manşetindeydi. Manşet
+    sayısının bekçisiz olması bu deponun daha önce de düştüğü hatadır —
+    `test_readme_1_1_geri_test_sayilari_OLCUMLE_ayni`nin künyesi aynı
+    hikâyeyi anlatıyor.
+
+    Tutulan üç sayı: taban çizgisinin 12+ oranı, haftalık harcaması ve eşik
+    ailesinin tarama-en-iyisi. Üçü de `esik` stratejisinden gelir ve
+    **ürünün kuralı değildir** — kıyas noktasıdır; §5.4 onları o sıfatla
+    yazar.
+    """
+    from spor_toto.backtest import backtest
+
+    metin = _oku("README.md")
+
+    taban = backtest(sweep=False, sezon="hepsi", strateji="esik")["season"]
+    yuzde = f"%{taban['hit12_pct']:.1f}".replace(".", ",")
+    assert yuzde in metin, (
+        f"README taban çizgisinin 12+ oranını ({yuzde}) yazmıyor — "
+        "ölçüm değişti ama paragraf değişmedi")
+
+    # Haftalik harcama: `VARSAYILAN_BUTCE_TL`nin TL210.000 secilme gerekcesi
+    # bu sayidir (taban cizgisi tavansiz kostugu icin urun kurali onunla
+    # ancak bu rakamin ustunde yan yana konabiliyor).
+    tl = f"₺{taban['tl_avg']:,.0f}".replace(",", ".")
+    assert tl in metin or f"{taban['tl_avg']:,.0f}".replace(",", ".") in metin, (
+        f"README taban çizgisinin haftalık harcamasını ({tl}) yazmıyor")
+
+    tarama = backtest(sweep=True, strateji="esik")
+    en_iyi = f"{tarama['sweep_best']['tl_avg']:,.0f}".replace(",", ".")
+    assert en_iyi in metin, (
+        f"README §5.4 eşik ailesinin tarama-en-iyisini ({en_iyi}) yazmıyor")
+
+
+def test_readme_PARA_EKSENI_sayilari_OLCUMLE_ayni():
+    """§1.1'in "geri dönüş" satırları `karne.taban_gevsekligi` ile aynı olmalı.
+
+    Para ekseni §1.1'in en kolay bayatlayan yeridir: iki bütçe basamağının
+    ROI'si yan yana yazılıyor ve ikisi de ayrı bir koşumdan geliyor. Okunacak
+    eşik **1,0**'dır; sayılar onun yarısının altında ve paragraf bunu açıkça
+    söylüyor — bekçi o cümlenin dayanağını tutar.
+    """
+    from spor_toto.karne import taban_gevsekligi
+
+    metin = _readme_1_1()
+    for butce in (2_000.0, 210_000.0):
+        roi = taban_gevsekligi(butce_tl=butce, garanti=15)["gercek_roi"]
+        yazi = f"%{100 * roi:.1f}".replace(".", ",")
+        assert yazi in metin, (
+            f"§1.1 ₺{butce:,.0f} tavanının geri dönüşünü ({yazi}) yazmıyor")
+
+
+def test_readme_KADEME_ODUL_orani_OLCUMLE_ayni():
+    """§11'in "15, 12'nin N katını ödüyor" satırı ölçümle aynı olmalı.
+
+    Bu oran `secim.odul_secim`in var olma gerekçesi: "12 ve üstü"nü tek kova
+    saymak, aradaki binlerce katı görmemek demek. Sayı 114 haftanın **resmî
+    ikramiye tablolarından** gelir, varsayımdan değil.
+    """
+    import statistics
+
+    from spor_toto.karne import kupon_kesiti
+
+    kesit = kupon_kesiti()
+
+    def ortalama(kademe: int) -> float:
+        v = [float(h["tablo"][kademe]["prize"]) for h in kesit
+             if kademe in h["tablo"] and h["tablo"][kademe].get("prize") is not None]
+        return statistics.mean(v)
+
+    oran = round(ortalama(15) / ortalama(12))
+    assert str(oran) in _oku("README.md"), (
+        f"README §11 kademe ödül oranını ({oran}) yazmıyor")
+
+
+def test_saglik_katmani_test_sayisi_belgeyle_ayni():
+    """`SAGLIK_VIZYONU.md` §11'in "sağlık katmanının test sayısı" satırı.
+
+    `test_saglik_kontrol_sayisi_belgeyle_ayni` **kontrol** sayısını tutar
+    (`health.CHECKS`); bu, o katmanı sınayan **test** sayısıdır ve ayrı bir
+    sayıdır. Ölçüm kütüğünde kayıtlıydı ama hiçbir bekçisi yoktu — yani
+    dört dosyadan birine test eklendiğinde belge sessizce bayatlıyordu.
+
+    Toplama `--collect-only` ile yapılır (0,3 sn): fonksiyonları elle saymak
+    parametreli testleri kaçırır ve iki sayı sessizce ayrışır.
+    """
+    dosyalar = ["tests/test_health.py", "tests/test_api_health.py",
+                "tests/test_meta.py", "tests/test_health_history.py"]
+    for d in dosyalar:
+        if not (KOK / d).exists():
+            pytest.skip(f"{d} yok")
+    # `dosyalar` yukarida yazili dort sabit yol; kabuk yok, disaridan gelen
+    # arguman yok. S603 depoda BILEREK acik (pyproject: her cagri bilincli
+    # bir karar gerektirsin) — kosum.py ve build_bulten.py'deki desenin aynisi.
+    ciktı = subprocess.run(  # noqa: S603
+        [sys.executable, "-m", "pytest", *dosyalar, "--collect-only", "-q",
+         "-p", "no:randomly", "-o", "addopts="],
+        cwd=KOK, capture_output=True, text=True, timeout=300)
+    m = re.search(r"(\d+) tests? collected", ciktı.stdout)
+    if not m:
+        pytest.skip(f"toplama okunamadi: {ciktı.stdout[-300:]}")
+    gercek = int(m.group(1))
+
+    metin = _oku("docs/SAGLIK_VIZYONU.md")
+    yazili = re.search(r"Sağlık katmanının test sayısı\s*\|\s*(\d+)", metin)
+    assert yazili, "SAGLIK_VIZYONU.md §11 'Sağlık katmanının test sayısı' satırı yok"
+    assert int(yazili.group(1)) == gercek, (
+        f"SAGLIK_VIZYONU.md {yazili.group(1)} diyor, gerçek {gercek}")

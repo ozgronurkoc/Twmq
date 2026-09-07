@@ -168,6 +168,42 @@ def _fiyat_uyarilari(d: dict[str, Any],
     return uyarilar
 
 
+def _kunye_uyarilari(maclar: list[dict[str, Any]]) -> list[str]:
+    """`odds_from` künyesi ana fiyatla tutuyor mu.
+
+    `odds_from` bir maçın ana fiyatının HANGİ kayıttan geldiğini yazar ve
+    **kod bu alanı hiçbir yerde okumaz** — üretim yolunda tek bir `.py`
+    dosyasında geçmez. Yani künye tamamen elle girilir ve bugüne kadar
+    hiçbir bekçisi yoktu: `odds` alanına bir fiyat, `odds_from` alanına
+    başka bir kitabın adı yazılabilir ve depo bunu fark etmezdi.
+
+    Fark etmemesi teorik bir risk değil: künyenin kendisi ölçüm belgesine
+    giriyor (`docs/KUPON_NASIL_KURULUYOR.md` §2, §3) ve "2. maçın fiyatı
+    Nesine'den geldiği için marj ortalaması %4,62'den %5,44'e çıkıyor"
+    gibi cümleler doğrudan ona dayanıyor. Yanlış künye, doğru görünen
+    yanlış bir gerekçe üretir.
+
+    Alanın **yokluğu uyarı değildir**: 2026/27'nin 1–3. haftalarında
+    `odds_from` hiç yok, yalnızca 4. haftadan itibaren giriliyor.
+    """
+    uyarilar: list[str] = []
+    for m in maclar:
+        kaynak = m.get("odds_from")
+        if not kaynak:
+            continue
+        kitaplar = m.get("odds_books") or {}
+        if kaynak not in kitaplar:
+            uyarilar.append(
+                f"{m['no']}. maç: künye BOZUK — `odds_from` {kaynak!r} diyor "
+                f"ama o kitap `odds_books`ta yok")
+        elif kitaplar[kaynak] != m.get("odds"):
+            uyarilar.append(
+                f"{m['no']}. maç: künye BOZUK — ana fiyat {m.get('odds')} "
+                f"ile `odds_from` {kaynak!r} kaydı {kitaplar[kaynak]} AYNI "
+                f"DEĞİL; künye elle girilir ve bu satırda yanlış girilmiş")
+    return uyarilar
+
+
 def dogrula(d: dict[str, Any]) -> list[str]:
     """Elle girilen hafta dosyasını denetler ve uyarı listesi döner.
 
@@ -212,6 +248,7 @@ def dogrula(d: dict[str, Any]) -> list[str]:
                 f"%{sum(pay.values()):.0f} — 100'den uzak")
 
     uyarilar.extend(_fiyat_uyarilari(d, maclar))
+    uyarilar.extend(_kunye_uyarilari(maclar))
 
     ligler = [m.get("league") for m in maclar]
     if any(not x for x in ligler):
