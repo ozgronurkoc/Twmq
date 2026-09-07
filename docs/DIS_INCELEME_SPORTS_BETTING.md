@@ -355,7 +355,7 @@ satırı yine ölçüm düzeltti.
 | `ClassifierBettor` · `BettorGridSearchCV` | `arama.SezonKatlayici` iç içe **sezon** CV'si kuruyor; onların iç halkası `TimeSeriesSplit`. `agac.py`/`yigin.py` model tarafını zaten kapsıyor |
 | `cloudpickle` ile model kaydı | `artefakt.py` modeli **JSON** zarfında, korpus sha256 + eğitim tarihi + sürümle saklıyor ve bayatlığı `health`te kırmızı yapıyor. Pickle hem güvensiz hem denetlenemez — geri adım olurdu |
 | `--model models.py:bettor` | Kullanıcının verdiği Python dosyasını `exec` etmek. Yüzeyimiz web; kabul edilemez |
-| `pandera` şemaları | `health.py`nin 23 değişmezi + `api_sozlesme.py` aynı işi bağımlılıksız yapıyor |
+| `pandera` şemaları | `health.py`nin 22 değişmezi + `api_sozlesme.py` aynı işi bağımlılıksız yapıyor |
 | `execution/` (tarayıcıdan bahis) | Spor Toto müşterek ve bayi/uygulama üzerinden oynanıyor; API yok. Kendi README'leri de bunun bahisçi şartlarını ihlal ettiğini yazıyor |
 | `sources/` sağlayıcı soyutlaması | İki beslememiz var ve ikisi de depoda sürümlü. Soyutlama boş bir kat olurdu |
 | Kelly / kasa yönetimi | `getiri.py` niçin yanlış alet olduğunu zaten yazıyor: havuzda ödeme kaç kolonun tutturduğuna bağlıdır |

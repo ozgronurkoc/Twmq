@@ -204,7 +204,7 @@ makinesinde, o günkü kilitli bağımlılıklarla, o commit üzerinde koşar.
 
 Bu yüzden sağlık katmanı ayrı bir katmandır ve `/saglik` sayfası ürünün eşit
 haklı bir parçasıdır: **ürünün vaadinin şu anda, bu makinede, bu sürümde hâlâ
-geçerli olduğunu kanıtlar.** 23 değişmez, 6 kategori, her çağrıda yeniden
+geçerli olduğunu kanıtlar.** 22 değişmez, 6 kategori, her çağrıda yeniden
 ölçülür — ve neyi kanıtlamadığını da açıkça yazar (§6.3).
 
 ### 1.6 Ne yapar / ne yapmaz
@@ -220,7 +220,7 @@ geçerli olduğunu kanıtlar.** 23 değişmez, 6 kategori, her çağrıda yenide
 | Bayes (Dirichlet) ile tahminlerini yumuşatır | İddaa geçmiş oranı sunmaz (yok — §5.3) |
 | Markov ile sıralı risk profili çıkarır | Geri testi bir kâr vaadine çevirmez; aşırı uyumu ölçüp gösterir |
 | Bir stratejiyi geçmiş sezonda çalıştırıp bedelini ve isabetini ölçer (**geri test**) | Mobil uygulama değildir |
-| Vaadin canlıda geçerliliğini 23 değişmezle ölçer | |
+| Vaadin canlıda geçerliliğini 22 değişmezle ölçer | |
 | Her sayının kaynağını ve sınırını yazar | |
 
 ---
@@ -941,7 +941,7 @@ handler'a bağlı olsalardı `/health`e vuran her şey tam raporu ödetirdi ve
 `/health`i canlılık sinyali sanan bir probe, zaman aşımına düşünce **sağlıklı**
 bir konteyneri öldürebilirdi.
 
-**23 kontrol, 6 kategori.** Kategoriler motorun katmanlarını izler ve yukarıdan
+**22 kontrol, 6 kategori.** Kategoriler motorun katmanlarını izler ve yukarıdan
 aşağıya doğru ciddiyet azalır — düşen kontrolün adı değil, **hangi katmanın
 bozulduğu** okunur. Güncel liste için `--list`:
 
@@ -1087,7 +1087,6 @@ backend/
     gorus.py           TAHMİN: piyasadan BAĞIMSIZ görüş (DC + Elo) — işaret DEĞİŞTİRMEZ
     avrupa.py          VERI: UEFA fiksturu — dinlenme/sikisiklik duzeltmesi
     sehir.py           VERI: kulup-sehir tablosu, derbi (sicaklik degiskeni)
-    xg.py              VERI: sut sayimindan KALIBRE EDILMIS xG vekili (StatsBomb referans)
     takim_gucu.py      TAKIM: kucultulmus takim gucu = /api/takimlar
     artefakt.py        Egitilmis modelin diske yazimi + bayatlik denetimi
     kosum.py           Olcum kosum defteri (--kaydet) — surumlenmez
@@ -1116,8 +1115,6 @@ backend/
     build_odds.py      Kupon maçlarına piyasa oranlarını eşleştirir
     build_egitim.py    Eğitim korpusu (football-data, 22 lig × 4 geçmiş sezon)
     build_fixtures.py  Yaklaşan maç fikstürü (tahmin katmanının ölçülen kaynağı)
-    build_xg.py        xG vekili kalibrasyonu (StatsBomb 2015/16 dört lig kesiti;
-                       VERI DEGIL katsayi uretir — lisans md. 1.2.1)
     snapshot_iddaa.py  İddaa açık bültenini tarih damgalı arşivler (haftalık)
     super_toto_hafta.py       Canlı sezon: hafta profili + kupon kurulumu
     super_toto_degerlendir.py Sonuç girildikten sonra değerlendirme (iki kaydı
@@ -1135,8 +1132,8 @@ backend/
     api_sozlesme.py           API sözleşmesini üretir/denetler (--kontrol: CI kapısı)
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
-                       sehir/ · xg/ · sistem_fiyat/
-  tests/               pytest (71 dosya → 1.832 test; §9'da katman dökümü)
+                       sehir/ · sistem_fiyat/
+  tests/               pytest (70 dosya → 1.811 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1341,15 +1338,15 @@ Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant'lar, CLI (Bayes pre
 dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri test,
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
-eşleme, ikinci kayıt). **71 test dosyası, parametrizasyonla
-1.832 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+eşleme, ikinci kayıt). **70 test dosyası, parametrizasyonla
+1.811 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
 | Katman | Dosyalar | Test |
 |---|---|---|
 | Çekirdek (kodlama · düz üretim · olasılık) | `core` `invariants` `edge_cases` `cli` `analysis` `bayes` `markov` `fire_scenarios` | 256 |
-| Tahmin katmanı | `predict` `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin` `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre` `secim_kalibrasyonu` **`arena`** **`sizinti`** | 595 |
+| Tahmin katmanı | `predict` `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin` `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre` `secim_kalibrasyonu` **`arena`** **`sizinti`** | 590 |
 | Sağlık | `health` `api_health` `meta` `health_history` | 82 |
 | Veri / istatistik / geri test | `history` `odds` `backtest` `api_stats` `api_backtest` `snapshot_iddaa` `pazar` **`gecmis_sezon`** **`sportoto_arsiv`** **`bulten`** | 233 |
 | Süper Toto | `super_toto` `degerlendir` | 97 |
@@ -1369,7 +1366,6 @@ karşı denetler):
 | Koşum defteri | `kosum` | 22 |
 | Takım gücü | `takim_gucu` | 24 |
 | Yeni veri (UEFA · şehir) | `avrupa` `sehir` | 41 |
-| xG vekili kalibrasyonu | `xg` | 16 |
 | Belgeler | `belgeler` | 16 |
 | Değer bahsi (yan pazarlar) | **`deger`** | 24 |
 | Fiyat kaynakları | **`fiyatlar`** | 14 |

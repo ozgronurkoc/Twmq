@@ -165,10 +165,11 @@ def test_derbi_yokken_sutun_sifir():
 def test_turetilemeyen_listesi_kisaldi():
     """Faz 3.4'ün kaydı: `derbi` listeden **çıktı**, `seyahat` kaldı.
 
-    Faz 3.5 buna bir ayrım ekledi: `xg` listede KALDI ama gerekçesi
-    değişti (erişim değil kapsama), ve açılan şey ayrı bir anahtarla
-    yazıldı — `xg_vekili`. "Kaynak açıldı" ile "sorun çözüldü" farklı
-    şeylerdir; bu bekçi farkı tutar.
+    Faz 3.5 buna bir ayrım ekledi: `xg`in gerekçesi değişti (erişim değil
+    kapsama). Kapsadığı 1.517 maçta korpusun kendi şut sayımıyla kalibre
+    edilen bir vekil de o fazda denendi ve piyasayı geçmedi (`xg_vekili`,
+    §3.42) — sonradan koddan kaldırıldı; `xg` girdisinin kendisi hâlâ
+    listede.
     """
     from spor_toto.disari import TURETILEBILIR_OLDU, TURETILEMEYEN
 
@@ -185,9 +186,7 @@ def test_turetilemeyen_listesi_kisaldi():
     # halde eski, artik yanlis bir cumleyi korumus olurdu.
     assert "robots.txt" not in TURETILEMEYEN["xg"]
     assert "kapsamiyor" in TURETILEMEYEN["xg"]
-    # ...ve acilan sey AYRI bir anahtar: xG'nin kendisi degil, korpusun
-    # kendi sut sayiminin kalibrasyonu.
-    assert "xg_vekili" in TURETILEBILIR_OLDU
+    assert "xg_vekili" not in TURETILEBILIR_OLDU
     assert "xg" not in TURETILEBILIR_OLDU
 
 
