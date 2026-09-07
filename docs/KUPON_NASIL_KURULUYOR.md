@@ -837,27 +837,37 @@ E[TL] = Σ_k P(k kaçak) · havuz(garanti − k) · pay_beklentisi(N, q_koşullu
 
 ### 10.5 Ve sayının kendisi
 
-4. haftada `E[TL]` hesaplanmadı çünkü ikramiye tablosu henüz yok (hafta
-kapanmamış). Sonuçlanmış üç hafta:
+Dört haftanın dördü de sonuçlandı (4. haftanın ikramiye tablosu
+2026-09-07'de girildi; sonucun okunuşu
+[`ISTATISTIK_YOL_HARITASI.md`](ISTATISTIK_YOL_HARITASI.md) §3.65'te).
+Tablo `scripts/hafta_kos.py --sonrasi` çıktısıdır ve **bugünkü
+varsayılanla** (`hak` kuralı, 15-garanti) yeniden türetilmiştir:
 
-| hf | kolon | maliyet | P(k≤1) | E[TL] | kaçak | kademe | ödül | net |
-|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| 1 | 162 | 1.620 | 0,249 | 75 | 4 | 9 | 0 | −1.620 |
-| 2 | 162 | 1.620 | 0,219 | 94 | 1 | 12 | 1.439 | −181 |
-| 3 | 162 | 1.620 | 0,282 | 93 | 1 | 12 | 1.230 | −390 |
-| **4** | **162** | **1.620** | **0,175** | — | — | — | — | — |
+| hf | şekil | kolon | maliyet | P(k≤3) | P(k=0) | E[TL] | kaçak | kademe | ödül | net |
+|---:|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 | 10b/1ç/4ü | 162 | 1.620 | 0,269 | 0,003 | 164 | 5 | 10 | 0 | −1.620 |
+| 2 | 10b/1ç/4ü | 162 | 1.620 | 0,275 | 0,003 | 462 | 4 | 11 | 0 | −1.620 |
+| 3 | 10b/1ç/4ü | 162 | 1.620 | 0,317 | 0,004 | 333 | 5 | 10 | 0 | −1.620 |
+| **4** | 10b/1ç/4ü | 162 | 1.620 | 0,224 | 0,002 | 358 | 5 | 10 | 0 | −1.620 |
 
-Toplam: ₺4.860 maliyet, ₺2.668 ödül, **net −₺2.192, geri dönüş %54,9**.
+Toplam: ₺6.480 maliyet, ₺0 ödül, **net −₺6.480, geri dönüş %0,0**.
 
-İki şey birlikte okunur ve motor ikisini de saklamaz:
-1. **`E[TL]` maliyetin çok altında** (₺75–94 ↔ ₺1.620). Kendi
+> **Bu tablo bir kez bayat kaldı ve bayatlığı sayıyı değiştirdi.** Önceki
+> hâli `13`-garanti / `hedef` kuralıyla yazılmıştı ve 1–3. haftaların
+> kaçağını 4/1/1 gösteriyordu; bugünkü varsayılanla aynı haftalar 5/4/5
+> veriyor ve üçünün de ödülü sıfırlanıyor. Karne **ekleme değil yeniden
+> üretimdir**: sonuç girilen her haftada `hafta_kos.py --sonrasi --yaz`
+> koşulur, elle düzeltilmez.
+
+Üç şey birlikte okunur ve motor üçünü de saklamaz:
+1. **`E[TL]` maliyetin çok altında** (₺164–462 ↔ ₺1.620). Kendi
    varsayımlarıyla bu kupon negatif beklenen değerlidir ve rapor bunu
    yazar.
-2. **Ödül sütunu alt sınırdır** — 162 kolonluk bir 13-garanti sistemi,
-   garantinin söylediği tek kolondan fazlasını da tutturur; karne onları
-   saymaz çünkü kolon listesi bizde değil (şekle biz karar veriyoruz,
-   kolonları satıcı üretiyor). Gerçekleşen getiri bu tablodan büyüktür.
-3. **`n` küçük.** Üç hafta bir strateji karnesi değil, bir kayıt
+2. **Ödül sütunu alt sınırdır** — 162 kolonluk bir sistem, garantinin
+   söylediği tek kolondan fazlasını da tutturur; karne onları saymaz
+   çünkü kolon listesi bizde değil (şekle biz karar veriyoruz, kolonları
+   satıcı üretiyor). Gerçekleşen getiri bu tablodan büyüktür.
+3. **`n` küçük.** Dört hafta bir strateji karnesi değil, bir kayıt
    başlangıcıdır.
 
 ---

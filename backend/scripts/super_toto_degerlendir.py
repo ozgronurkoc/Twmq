@@ -69,12 +69,14 @@ def _hafta_modulu():
 TAM_SAYIM_SINIRI = 200_000
 
 
-def en_iyi_kolon(secimler: Sequence[Sequence[str]], gercek: str) -> int:
-    """Oynanan kuponun EN İYİ kolonunun kaç doğru tutturduğu.
+def en_iyi_kolon_ayrinti(secimler: Sequence[Sequence[str]],
+                         gercek: str) -> tuple[int, str, int]:
+    """`(skor, yol, gezilen_kolon)` — puanın HANGİ kolon kümesinden çıktığı.
 
-    Kolonları tek tek gezer; 15 maç ve en fazla ~30 bin kolonda bu
-    milisaniyelerdir ve motorun kendi skorlayıcısına bağımlılık
-    yaratmaz — sonuç kümenin dışındayken de doğru cevap verir.
+    Skorun kendisi kadar önemli olan şey, onu veren kümenin **kaç kolon**
+    olduğudur: aynı işaretler 16 satırlık kaplamada ve seçim uzayının
+    tamamında farklı puan alır (`SISTEMLER` notu) ve iki kümenin bedeli de
+    farklıdır. `yol` bu yüzden dışarı çıkar — bkz. `_kupon_satiri`.
 
     **Yedek yol neden var.** `solve_fix16` en az 7 çifte maç ister; altında
     `Fix16Hatasi` atar. Kural az çifte üretebilir (çok banko çıkan hafta) ve
@@ -83,24 +85,32 @@ def en_iyi_kolon(secimler: Sequence[Sequence[str]], gercek: str) -> int:
     sonuç değerlendirmesinin çökmesi, ölçümün en çok gerektiği anda
     kaybolması olurdu. Kaplama kurulamıyorsa seçim uzayının tamamı gezilir;
     o uzay zaten küçüktür (az çifte = az kolon).
+
+    **Ama yedek yol kaydın bedelini DEĞİŞTİRİR ve bu bir kez sessizce
+    oldu.** 4. haftanın 2. Tahmin kaydı 4.374 kolonluk bir kaplamadır
+    (`engine: blok ayrıştırma`, 14-garanti); o motor depodan söküldü
+    (`docs/DUZ_SISTEME_GECIS.md`), `solve_fix16` bir çifteyle kurulamadı ve
+    bu fonksiyon 39.366 kolonluk seçim uzayının TAMAMINI gezip 15 döndürdü.
+    Yani kayıt 4.374 kolon ödediğini söylerken puan dokuz kat büyük bir
+    kümeden geliyordu — ve çıktıda bunu söyleyen tek satır yoktu. Sayı
+    yanlış değil; **künyesi eksikti.** Künye artık dönüş değerinde.
     """
     from itertools import product
 
     from spor_toto.core import Encoder
     from spor_toto.kaplama_arsiv import Fix16Hatasi, solve_fix16
     listeler = [list(x) for x in secimler]
+    uzay = math_prod(len(s) for s in listeler)
     try:
         enc = Encoder(listeler)
         cols, _ = solve_fix16(enc)
     except Fix16Hatasi:
-        uzay = 1
-        for s in listeler:
-            uzay *= len(s)
         if uzay > TAM_SAYIM_SINIRI:  # pragma: no cover - kuralin uretemedigi hal
             raise
         # Tam sayim: her kolon secim kumesinin bir noktasidir.
-        return max(sum(1 for a, b in zip(kolon, gercek) if a == b)
+        skor = max(sum(1 for a, b in zip(kolon, gercek) if a == b)
                    for kolon in product(*listeler))
+        return skor, "tam-sayim", uzay
 
     en_iyi = 0
     for c in cols:
@@ -114,7 +124,16 @@ def en_iyi_kolon(secimler: Sequence[Sequence[str]], gercek: str) -> int:
                 j += 1
         if skor > en_iyi:
             en_iyi = skor
-    return en_iyi
+    return en_iyi, "kaplama", len(cols)
+
+
+def en_iyi_kolon(secimler: Sequence[Sequence[str]], gercek: str) -> int:
+    """Oynanan kuponun EN İYİ kolonunun kaç doğru tutturduğu.
+
+    `en_iyi_kolon_ayrinti`nin yalnızca skoru — künyeyi umursamayan
+    çağıranlar için.
+    """
+    return en_iyi_kolon_ayrinti(secimler, gercek)[0]
 
 
 #: Poisson-binom `spor_toto.ortak`a taşındı: `spor_toto.secim` kuponu
@@ -187,13 +206,21 @@ def kupon_degerlendir(d: dict[str, Any], picks: Sequence[str],
     p_kacak = [1 - sum(mm["probs"][x] for x in pk) for mm, pk in zip(maclar, picks)]
     dist = kacak_dagilimi(p_kacak)
     n = len(kacaklar)
+    if sistem == "tam":
+        best, yol, puanlanan = len(gercek) - n, "tam-sayim", math_prod(
+            len(p) for p in picks)
+    else:
+        best, yol, puanlanan = en_iyi_kolon_ayrinti(
+            [list(x) for x in picks], gercek)
     return {
         "picks": list(picks),
         "sistem": sistem,
         "misses": kacaklar,
         "miss_count": n,
-        "best": (len(gercek) - n if sistem == "tam"
-                 else en_iyi_kolon([list(x) for x in picks], gercek)),
+        "best": best,
+        #: Puanı veren kolon kümesi — `best` bunun künyesi olmadan okunamaz.
+        "puanlama_yolu": yol,
+        "puanlanan_kolon": puanlanan,
         "expected_misses": sum(p_kacak),
         "p_in_set": dist[0],
         "p_at_least_actual": sum(dist[n:]),
@@ -324,6 +351,7 @@ def tahmin2_degerlendir(d: dict[str, Any],
         s.update({
             "plan": ad,
             "columns": plan.get("columns"),
+            "engine": plan.get("engine"),
             "crowd_ratio": plan.get("crowd_ratio"),
             # Kupon KURULURKEN hesaplanmış hedef olasılığı. Sonuç
             # görülmeden yazıldığı için burada yeniden hesaplanmaz.
@@ -990,6 +1018,7 @@ def rapor(sezon: str, hafta: int) -> dict[str, Any]:
     for v, s in zip(kupon["variants"], sonuclar):
         s["label"] = v.get("label")
         s["columns"] = v.get("columns")
+        s["engine"] = v.get("engine")
         s["hedefe_ulasti"] = s["best"] >= HEDEF_KADEME
 
     kayit = tahmin2_yukle(sezon, hafta)
@@ -1043,6 +1072,13 @@ def _basli(ad: str) -> None:
     print(f"\n─── {ad} " + "─" * max(0, 70 - len(ad)))
 
 
+#: Kaydin ilan ettigi kolon ile puanin cikti kume buyuklugu bu katin
+#: uzerinde ayrisiyorsa satir KUNYELENIR. 1.0 degil: kaplama motorlari
+#: kolonu yuvarlar ve kucuk sapma bir uyari degildir; 9 kat sapma — 4.
+#: haftanin 2. Tahmin kaydinda olan sey — bir uyaridir.
+KUNYE_SAPMA_KATI = 1.05
+
+
 def _kupon_satiri(s: dict[str, Any], ad: str) -> None:
     kolon = f"{s['columns']:,} kolon · " if s.get("columns") else ""
     print(f"\n─── {ad}")
@@ -1050,6 +1086,17 @@ def _kupon_satiri(s: dict[str, Any], ad: str) -> None:
     print(f"  Kaçak  : {s['misses']} ({s['miss_count']} maç)")
     print(f"  EN İYİ KOLON: {s['best']}/15 · {kolon}"
           f"{'İKRAMİYE KADEMESİNDE' if s['hedefe_ulasti'] else 'kademe dışı'}")
+    # Puan, kaydin ilan ettiginden BASKA bir kumeden ciktiysa soyle. Sessiz
+    # kalmak, kaydin bedeliyle baska bir kumenin puanini yan yana basmaktir.
+    ilan = s.get("columns")
+    gezilen = s.get("puanlanan_kolon")
+    if ilan and gezilen and gezilen > ilan * KUNYE_SAPMA_KATI:
+        print(f"  ⚠ PUAN KAYDIN KÜMESİNDEN DEĞİL: {gezilen:,} kolonluk seçim "
+              f"uzayının tamamı gezildi, kayıt {ilan:,} kolon diyor "
+              f"({gezilen / ilan:.1f} kat). Kaydın kendi motoru "
+              f"({s.get('engine') or 'bilinmiyor'}) bugün depoda yok, yani "
+              f"o kolon listesi yeniden üretilemiyor: kayıt {s['best']}'i "
+              f"GARANTİ ETMEZ, garantisi yalnızca bir alt sınırdır.")
     print(f"  Beklenen kaçak {s['expected_misses']:.2f} · küme-içi %{100*s['p_in_set']:.2f} · "
           f"P(kaçak ≥ {s['miss_count']}) = %{100*s['p_at_least_actual']:.1f}")
 

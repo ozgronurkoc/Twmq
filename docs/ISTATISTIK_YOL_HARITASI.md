@@ -171,11 +171,11 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/components/super-toto/tahmin2.tsx` | **2. Tahmin** paneli — `1. Tahmin` / `2. Tahmin` sekmeleri arasında geçilir; para birimli hiçbir sayı yok. Hafta kapandığında sonuç sütunu ve ayar karnesi açılır (§3.38) |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **1.834 test**; **85'i** istatistik katmanına (`history` `odds` `backtest`
-`api_stats` `api_backtest` `snapshot_iddaa`), **579'u** tahmin katmanına ait (`predict`
+paketi toplam **1.837 test**; **117'si** istatistik katmanına (`history` `odds` `backtest`
+`api_stats` `api_backtest` `snapshot_iddaa`), **624'ü** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre`
-`avrupa` `sehir` **`arena`** **`sizinti`** **`kuyruk`**), **29'u** 2. Tahmin'e (`tahmin2`), **30'u** sonuç değerlendirmesine (`degerlendir`). Dosya adlarıyla sayılıdır ki tablo elle bakım gerektirmesin —
+`avrupa` `sehir` **`arena`** **`sizinti`** **`kuyruk`**), **35'i** 2. Tahmin'e (`tahmin2`), **39'u** sonuç değerlendirmesine (`degerlendir`). Dosya adlarıyla sayılıdır ki tablo elle bakım gerektirmesin —
 `tests/test_belgeler.py` onları gerçek koleksiyona karşı denetler.
 `python -m spor_toto.health` **22 değişmez** çalıştırır — ikisi (`oran_arsivi`, `geri_test`)
 istatistik katmanını, biri (`tahmin_referanslari`) tahmin katmanının ölçüm koşumunu korur,
@@ -5603,6 +5603,211 @@ tam olarak aynısı.
 diyordu; §3.64 bunu daraltıyor — kusur banda değil **sezona** özgü, ve
 sönmüş.
 
+### 3.65 4. haftanın sonucu — 12/15, ve kaybettiren şey işaret değil **şekildi**
+
+Sonuç dizisi, skorlar ve ikramiye tablosu birlikte girildi (2. haftanın "üç
+şeyi birlikte gir" dersi): **1 0 1 2 2 1 1 2 2 0 1 1 1 1 0** (1/0/2 = 8/3/4;
+bitişik yazımı `101221122011110`).
+Kaynak: Spor Toto resmî *Sonuçlar* ekranı, kullanıcı ekran görüntüsü
+(2026-09-07 22:12); iki görüntü 15 maçın tamamını kapsıyor ve örtüşen üç
+satır (7–9) ikisinde de aynı okundu.
+
+Dondurulan kupon **12/15** yaptı — 3.888 kolonda **üç** kaçak.
+
+| Kayıt | Kural · sistem | Kolon | En iyi | Kaçak | Maliyet | Gerçekleşen |
+|---|---|---:|---:|---|---:|---:|
+| **ana — DONDURULAN, oynanan** | hedef · fix16 | 3.888 | **12**/15 | 4, 8, 9 | 38.880 TL | **2.155,16 TL** |
+| hedef + kalabalık ayarı (ölçüldü, oynanmadı) | hedef · fix16 | 3.888 | 12/15 | 8, 15 | 38.880 TL | — |
+| eşik kuralı (kıyas) | eşik · fix16 | 6.144 | 10/15 | 2, 4, 8, 9, 10 | 61.440 TL | — |
+| 3. Kupon — sürpriz | azami sapma · fix16 | 432 | 10/15 | 2, 7, 10, 15 | 4.320 TL | — |
+| **2. Tahmin (2026-09-06, oynanmadı)** | hedef · kaplama | 4.374 | ≥14 | **yok** | 43.740 TL | **≥ 388.222,94 TL** |
+
+Oynanan kuponun neti **−36.725 TL**, geri dönüşü **%5,5**. Başabaş kolon
+bedeli 0,55 TL: ölçülen ₺10'un on sekizde biri, yani hafta hiçbir makul
+fiyatta kâra geçmiyordu.
+
+> **2. Tahmin satırındaki `≥` gerçek bir belirsizliktir, alçakgönüllülük
+> değil.** Kayıt 4.374 kolonluk bir kaplamadır (`engine: blok ayrıştırma`,
+> 14-garanti) ve o motor depodan söküldü ([`DUZ_SISTEME_GECIS.md`](DUZ_SISTEME_GECIS.md)).
+> Kaçak sıfır olduğu için garanti en az bir kolonun 14 tutturduğunu söyler
+> — ama bu **kaydın kendi ilanıdır** (`guaranteed_14: true`) ve motor
+> gittiği için bağımsız doğrulanamaz;
+> 15'i tutturup tutturmadığı, artık yeniden üretilemeyen kolon listesine
+> bağlıdır. Aynı işaretler **düz** oynansaydı (39.366 kolon, 393.660 TL)
+> tablo 15:1 · 14:19 · 13:162 · 12:816 olurdu — ama o kupon oynanmadı ve
+> **o bedelle de kurulmadı**.
+
+#### 1. ders — üç kaçağın üçü de aynı TÜR maçtı: **orta favori**
+
+| Maç | Piyasa favorisi | Gerçek | İşaret | |
+|---|---|---|---|---|
+| 4 Fenerbahçe – Beşiktaş | 1 %53 | **2** %23 | `10` | **kaçtı** |
+| 8 Ç. Rizespor – Alanyaspor | 1 %50 | **2** %22 | `10` | **kaçtı** |
+| 9 Göztepe – Gaziantep | 1 %51 | **2** %24 | `10` | **kaçtı** |
+| 3 Çorum – Eyüpspor | 1 %57 | 1 %57 | `1` | banko tuttu |
+| 5 Başakşehir – Galatasaray | 2 %61 | 2 %61 | `2` | banko tuttu |
+| 7 Trabzonspor – Gençlerbirliği | 1 %61 | 1 %61 | `1` | banko tuttu |
+
+Üç kaçağın üçünde de ev sahibi **%50–53** bandındaydı ve üçünde de atılan
+sembol deplasmandı (%22–24). Üç bankonun üçü de **%57–61** bandındaydı ve
+üçü de tuttu (beklenen 1,79 — banko karnesi 3/3).
+
+Canlı sezonun kalibrasyon tablosu tam bu ayrımı gösteriyor:
+
+| kova | n | piyasa | gerçek | %95 aralık |
+|---|---:|---:|---:|---|
+| %40–%55 | 29 | %46,7 | **%27,6** | [%14,7, %45,7] ← **dışında** |
+| %55–%70 | 20 | %60,6 | **%75,0** | [%53,1, %88,8] |
+
+> **Bu tablo bağımsız kanıt DEĞİLDİR.** 60 maçlık canlı sezonun içinde bu
+> haftanın 15 maçı da var, yani kova sapmasının bir kısmı tam olarak
+> yukarıdaki üç kaçaktan geliyor. Aynı olayı iki kez saymak, onu iki tanık
+> yapmaz.
+>
+> **Durma kuralı (ölçümden önce yazıldı).** Orta favori bandına düzeltme
+> ancak 2026/27 birikimi `n ≥ 150`'ye ulaşıp bandın Wilson %95 aralığı
+> piyasanın söylediği `p`'yi **tamamıyla** dışarıda bıraktığında —
+> **ve** aynı sapma 2025/26 arşivinde de görüldüğünde uygulanır. Bugün
+> `n = 29` ve tek sezon var. §3.64 bunun tersini (dört sezonda gerçek,
+> son sezonda yok) zaten bir kez yaşadı.
+
+#### 2. ders — sürprizin **sayısı** yine skoru belirlemedi
+
+| | 1. hafta | 2. hafta | 3. hafta | 4. hafta |
+|---|---:|---:|---:|---:|
+| Favori tuttu | 6 (bekl. 7,77) | 9 (bekl. 7,91) | 7 (bekl. 8,03) | **8** (bekl. 7,61) |
+| En iyi kolon | 9 | 12 | **14** | **12** |
+
+4. hafta, dört haftanın **en az sürprizli ikinci** haftasıydı ve en iyi
+haftanın (3.) iki kademe altında kapandı. §3.47'nin dersi bir kez daha
+tuttu: sürprizin sayısı değil **nereye düştüğü** belirliyor. Bu hafta üç
+sürpriz de kuponun çift işaretlediği yere düştü ve üçü de atılan sembolden
+çıktı.
+
+#### 3. ders — asıl kusur kuralda değil, **kaplamanın şekil kısıtında**
+
+Oynanan şekil **3b/7ç/5ü**'ydü ve bu bir tercih değildi: `solve_fix16` **en
+az yedi çifte** ister (`Fix16Hatasi`). Yedi çiftenin her biri %20–25'lik bir
+delik demektir; kuralın beklenen kaçağı bu yüzden **2,69**'du ve gerçekleşen
+3, dağılımın tam ortasında kaldı (`P(kaçak ≥ 3) = %53,3`). Yani hafta
+şanssız geçmedi — **plan zaten oradaydı**.
+
+Haftayı yakalayan şekil **5b/1ç/9ü**'ydü (2. Tahmin) ve o şekil oynanan
+sistemde **kurulamıyordu**: bir çifteyle `solve_fix16` çalışmaz. Kaplamanın
+sattığı ucuzluk, satın alınamayan bir şekil karşılığında geldi.
+
+Aynı parayla (3.888 kolon) düz sistemin bugünkü motorla ne alacağı ölçüldü:
+
+| sistem | kolon | şekil | `P(hedef)` | kaçak | en iyi | gerçekleşen |
+|---|---:|---|---:|---:|---:|---:|
+| **kaplama (oynanan)** | 3.888 | 3b/7ç/5ü | 0,4670 | 3 | 12 | **2.155,16 TL** |
+| düz (aynı bedel) | 3.888 | 6b/4ç/5ü | 0,5354 | 3 | 12 | **8.620,64 TL** |
+
+Aynı para, aynı kademe, aynı kaçak sayısı — **dört kat** ödeme, çünkü düz
+plan o kademeyi bir değil **dört** kolonda tutturdu.
+
+> **Düz satır dondurulmuş bir kayıt değil, bir yeniden türetmedir**
+> (`secim.en_iyi_secim`, bugünkü motor, aynı dondurulmuş oranlar). Sızıntı
+> yok — girdiler sonuç girilmeden kaydedildi — ama o plan hiçbir zaman
+> oynanmadı ve karşılaştırma bu yüzden **şekil** hakkındadır, şans
+> hakkında değil: iki planın kaçağı da aynı üç maçtan geliyor.
+[`DUZ_SISTEME_GECIS.md`](DUZ_SISTEME_GECIS.md) §0.1 bu farkı geri testte 1,78×–5,26× ölçmüştü; bu,
+onun **ilk canlı doğrulaması** ve aralığın içinde (4,00×).
+
+> **Ama bu bir "keşke" değil.** Düz sisteme geçiş kararı 2026-09-06'da
+> verildi; kupon 2026-09-04'te dondu. Yani bu hafta yanlış sistemle
+> oynanmadı — **karardan önce** oynandı. Ders geriye dönük bir suçlama
+> değil, ileriye dönük bir teyit: 5. haftadan itibaren kupon düz kuruluyor
+> ve bu ölçüm o kararın bedelini canlı olarak fiyatlıyor.
+
+#### 4. ders — değerlendiricinin kendisi bir kademe fazla yazıyordu
+
+2. Tahmin satırı çıktıda şöyle duruyordu:
+
+```
+EN İYİ KOLON: 15/15 · 4,374 kolon · İKRAMİYE KADEMESİNDE
+```
+
+İki sayı da doğruydu ve **yan yana yanlıştı**. `en_iyi_kolon`, kaplama
+kurulamayınca seçim uzayının tamamını geziyor; burada o uzay **39.366**
+kolondu, yani puan kaydın ilan ettiğinden **dokuz kat** büyük bir kümeden
+geldi. Kayıt 4.374 kolon ödediğini söylerken satır 39.366 kolonun cevabını
+basıyordu — ve bunu söyleyen tek işaret yoktu.
+
+Sayı yanlış değildi; **künyesi eksikti**. Künyesiz bir puan, kaydın
+bedeliyle aynı satırda basıldığı anda yanlış okunur — ve bu hafta okunacak
+olan şey "43.740 TL, 36 milyon kazanırdı" cümlesiydi.
+
+**Değişti:** `en_iyi_kolon_ayrinti` puanla birlikte **hangi kümeden** ve
+**kaç kolondan** çıktığını döndürüyor; `kupon_degerlendir` bunu
+`puanlama_yolu` / `puanlanan_kolon` olarak taşıyor; yazıcı, gezilen küme
+kaydın ilan ettiğinden büyükse satırın altına uyarı basıyor. Bekçi:
+`tests/test_degerlendir.py::test_puan_hangi_kolon_kumesinden_ciktigini_soyler`.
+
+#### 5. ders — `E[TL]`, gerçekleşen ödül vektörüyle hesaplanınca **getiri kestirimi değildir**
+
+Oynanan kuponun beklenen getirisi **286.398,76 TL** (kolon başına 73,66 TL)
+çıkıyor; gerçekleşen **2.155,16 TL**. Aradaki 133 kat bir sürpriz değil,
+hesabın **tanımı**: beklenti, o haftanın **gerçekleşen** ödül vektörünü
+sabit alıyor. Oysa ödül kademesi kazanan sayısına bölünür — biz kazansaydık
+bölüşme de değişirdi. Sayı kuponları **birbiriyle** kıyaslamak için
+geçerlidir (hepsi aynı vektörü kullanır); "bu kupon ne kazanır"ın cevabı
+değildir. `getiri_karnesi`in docstring'i bunu zaten söylüyordu; bu hafta
+sayının kendisi söylemeyi hak edecek kadar büyüdü.
+
+#### 6. ders — bu haftayı tutturmak **311.145 kolonluk** bir bütçe isterdi
+
+Gerçek kolonun piyasa olasılığına göre sırası **311.145 / 14.348.907**
+(kalabalığa göre 837.867). Motorun kendi merdiveni de aynı şeyi söylüyor:
+
+| kolon | maliyet | kaçak | en iyi | gerçekleşen | net |
+|---:|---:|---:|---:|---:|---:|
+| 162 | 1.620 TL | 5 | 10 | 0 TL | −1.620 TL |
+| 1.944 | 19.440 TL | 3 | 12 | 8.620,64 TL | −10.819 TL |
+| 3.888 | 38.880 TL | 3 | 12 | 8.620,64 TL | −30.259 TL |
+| **6.561** | **65.610 TL** | **1** | **14** | **936.702,46 TL** | **+871.092 TL** |
+| 59.049 | 590.490 TL | 0 | 15 | 49.295.983,56 TL | +48.705.494 TL |
+
+Eşik 8. ve 9. maçlardadır: 6.561 kolonluk plan ikisini birden üçlü
+işaretleyen ilk plandır ve tek başına 14'ü açar. 4. maç (Fenerbahçe–Beşiktaş)
+o basamakta hâlâ **banko `1`**'dir ve 59.049 kolona kadar açıkta kalır — 15'in
+bedeli budur.
+
+**Bu tablo bir strateji değildir** — sonucu bilerek kurulmuş bir
+merdivendir ve haftanın hangi basamağında durulacağı sonuçtan önce
+bilinmiyordu. Söylediği tek şey şu:
+bu hafta ucuz değildi, ve 2.000 TL'lik bütçe (162 kolon) hiçbir kademeye
+yaklaşmadı.
+
+#### 7. ders — kaçaklardan biri, ana fiyatı **bayat** olan tek maçtı
+
+9. maçın (Göztepe–Gaziantep) Pinnacle kapanışı açılışıyla **birebir**
+aynıydı; bültendeki 13 maçın hiçbirinde bu yoktu (hareket %0,9–%10,0
+arasında). Bayat ana fiyat bu hafta ilk kez görüldü ve
+`hafta_04.json` → `veri_uyarilari` onu kupon donmadan **önce** işaretlemişti.
+
+**`n = 1`. Bu bir bulgu değil, bir gözlem.** Üç kaçaktan biri; diğer ikisinin
+fiyatı tazeydi (%2,5 ve %1,1 hareket). Kayda geçiyor ki birikince
+bakılabilsin — bayat satırların kaçak oranı, taze satırlarınkiyle
+kıyaslanacak kadar hafta biriktiğinde.
+
+#### 8. ders — karne git'te bayattı, ve bayatlığı **sayıyı değiştirdi**
+
+`docs/KAZANMA_KARNESI.md` `13`-garanti / `hedef` kuralıyla yazılmış hâlde
+duruyordu; bugünkü varsayılan `15`-garanti / `hak`. Karne yeniden
+üretildiğinde (`hafta_kos.py --sonrasi --yaz`) **dört haftanın dördü de**
+değişti — 1–3. haftaların kaçağı 4/1/1 iken 5/4/5 oldu, ödül sütunu üç
+haftada da sıfırlandı, sezon geri dönüşü %54,9 → **%0,0**.
+
+Bu bir gerileme değil, kararın bedelinin görünür hâli: `hak` kuralı 2.000
+TL tavanda `10b/1ç/4ü` seçiyor ve o şekil dört haftanın hiçbirinde 12'ye
+ulaşmadı. Karnenin kendi başlığı zaten *"bugünkü motorla yeniden
+türetildi"* diyor — bayat bırakıldığında o cümle yalan oluyordu.
+
+**Değişti:** karne yeniden üretildi. Sonuç girilen her haftada
+`scripts/hafta_kos.py --sonrasi --yaz` koşulmalı; karne **ekleme değil
+yeniden üretimdir** ve elle düzeltilmez.
+
 ## 4. Sayfada bugün ne var
 
 **`/istatistik`** — sezon dağılımı (en sık sonuç + pay çubuğu) · 5 sayı kutusu (sembol
@@ -6617,7 +6822,7 @@ python -m spor_toto.kosum                  # kayıtlı koşumlar
 python -m spor_toto.kosum --son disari     # son koşumun ortamı
 
 # Denetim
-pytest -q                                  # 1.834 test (85'i bu katman, 583'ü tahmin)
+pytest -q                                  # 1.837 test (117'si bu katman, 624'ü tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out

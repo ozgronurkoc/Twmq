@@ -2,7 +2,7 @@
  "sayilar": [
   {
    "ne": "suit test sayisi (eksiksiz kurulum)",
-   "deger": "1.834",
+   "deger": "1.837",
    "ureten": "cd backend && python -m pytest --collect-only -q -p no:randomly -o addopts=  # son satirdaki toplam",
    "olculdu": "2026-09-07",
    "anildigi_yerler": [
@@ -14,7 +14,7 @@
     "replit.md"
    ],
    "bekci": "backend/tests/test_belgeler.py::test_test_sayisi_belgelerde_tek_ve_dogru",
-   "not": "1.799 yaziyordu ve KENDI BEKCISIYLE celisiyordu: bekci belgelerdeki sayiyi gercek koleksiyona esitler, belgeler 1.800 diyordu. Uretici komut da yanlisti — `-o addopts=` olmadan xdist devrede kalir. PR 48 incelemesinde uc bekci eklendi: 1.800 -> 1.803. || 1.803 -> 1.820 (2026-09-07): geri testin hedef kuralina cevrilmesiyle 17 test eklendi (strateji secimi, butce zorunlulugu, butce taramasi monotonlugu, §1.1 sayi bekcileri, birikimli marj). || 1.837 -> 1.860 (2026-09-07): olcum kutugunun kendi bekcileri (tests/test_olcum_kutugu.py, 5) ve bekcisiz kalmis README mansetlerinin bekcileri eklendi; ayrica kupon belgesi ve secim kurali islerinin testleri. Sayi TAM KURULUMLA olculdu (lightgbm dahil) — eksik kurulumda bekci kasitli ATLIYOR ve eksik bir suit sayilirsa yanlis sayi yazilir. || 1.860 -> 1.834 (2026-09-07): main kapanmis iki deneyi kaldirdi (E4/hakem 4acc3dd, xG vekili 25e72e0) ve tests/test_hakem.py (5) ile tests/test_xg.py (16) suitten cikti; kalan 5'lik fark ayni koumlarda silinen parametrizasyonlardan. Bu dallanmanin birlesmesinde YENIDEN OLCULDU, aritmetikle turetilmedi."
+   "not": "1.799 yaziyordu ve KENDI BEKCISIYLE celisiyordu: bekci belgelerdeki sayiyi gercek koleksiyona esitler, belgeler 1.800 diyordu. Uretici komut da yanlisti — `-o addopts=` olmadan xdist devrede kalir. PR 48 incelemesinde uc bekci eklendi: 1.800 -> 1.803. || 1.803 -> 1.820 (2026-09-07): geri testin hedef kuralina cevrilmesiyle 17 test eklendi (strateji secimi, butce zorunlulugu, butce taramasi monotonlugu, §1.1 sayi bekcileri, birikimli marj). || 1.837 -> 1.860 (2026-09-07): olcum kutugunun kendi bekcileri (tests/test_olcum_kutugu.py, 5) ve bekcisiz kalmis README mansetlerinin bekcileri eklendi; ayrica kupon belgesi ve secim kurali islerinin testleri. Sayi TAM KURULUMLA olculdu (lightgbm dahil) — eksik kurulumda bekci kasitli ATLIYOR ve eksik bir suit sayilirsa yanlis sayi yazilir. || 1.860 -> 1.834 (2026-09-07): main kapanmis iki deneyi kaldirdi (E4/hakem 4acc3dd, xG vekili 25e72e0) ve tests/test_hakem.py (5) ile tests/test_xg.py (16) suitten cikti; kalan 5'lik fark ayni koumlarda silinen parametrizasyonlardan. Bu dallanmanin birlesmesinde YENIDEN OLCULDU, aritmetikle turetilmedi. || 1.834 -> 1.837 (2026-09-07): 4. haftanin sonuc degerlendirmesinde uc bekci eklendi: puanin kunyesi ve karne yorumunun tureticileri (test_degerlendir), §1 katman dokumu (test_belgeler). Katman dokumu ayrica DUZELTILDI: yazili 85/579/29/30, gercek 117/624/35/38."
   },
   {
    "ne": "test dosyasi sayisi",
@@ -1650,6 +1650,72 @@
    "olcek": "duz · kupon kesiti · kolon 10 TL",
    "not": "N=6 satiri README §1.1'in 114 haftalik kademe dagiliminin AYNISI (15/14/13/12/12-: %13,2 / %28,9 / %32,5 / %18,4 / %7,0 · ort 13,22) — yani urunun bugunku sekli (6,0,9) 'en emin 6 favoriyi banko yap'in ta kendisi. Merdiven: N=4 19.683x10=1,77M TL, 15/15 %27,2 · N=6 196.830 TL, %13,2 · N=7 65.610 TL, %10,5 · N=8 21.870 TL, %7,9. Banko basina isabet N ile duz iniyor: %73,2 -> %70,3 -> %66,7. 15/15 banko isabetinin 6. KUVVETIDIR: %70 -> %11,8, %80 -> %26,2, %85 -> %37,7. Kaldirac tam olarak burada ve DOGRUSAL DEGIL.",
    "bekcisiz_gerekce": "hicbir belgede anilmiyor; kutuk kaydi olarak durur. Belgeye girerse bekci gerekir. (Betigin kendisi bekcisiz degil: `scripts/favori_analizi.py` `spor_toto.evaluate.kupon_kesiti_tum` uzerinden kosuyor ve o kesitin bekcisi `backend/tests/test_evaluate.py`dir.)"
+  },
+  {
+   "ne": "2026/27 4. hafta sonuc dizisi (Spor Toto resmi ekrani)",
+   "deger": "101221122011110",
+   "ureten": "python3 -c \"import json;print(json.load(open('backend/data/super_toto/2026_27/hafta_04.json'))['meta']['results'])\"",
+   "olculdu": "2026-09-07",
+   "anildigi_yerler": [
+    "docs/ISTATISTIK_YOL_HARITASI.md §3.65"
+   ],
+   "not": "Kaynak: kullanici ekran goruntusu (2026-09-07 22:12), iki goruntu 15 macin tamamini kapsiyor; ortusen uc satir (7-9) ikisinde de ayni okundu. 1/0/2 = 8/3/4.",
+   "bekcisiz_gerekce": "Elle girilmis bir GOZLEM, turetilmis bir sayi degil: bekci onu yeniden uretemez, yalnizca kopyasini tutardi. Kaydin kendisi (hafta_04.json -> meta.results + her macin `score` alani) capraz kontrol saglar; kaynak kunyesi `results_source`ta."
+  },
+  {
+   "ne": "2026/27 4. hafta oynanan kupon — en iyi kolon",
+   "deger": "12/15",
+   "ureten": "cd backend && python scripts/super_toto_degerlendir.py --hafta 4",
+   "olculdu": "2026-09-07",
+   "anildigi_yerler": [
+    "docs/ISTATISTIK_YOL_HARITASI.md §3.65"
+   ],
+   "bekci": "backend/tests/test_degerlendir.py::test_puan_hangi_kolon_kumesinden_ciktigini_soyler",
+   "not": "3.888 kolon (fix16). Beklenen kacak 2,69; P(kacak >= 3) = %53,3 — yani sonuc dagilimın ortasinda, sanssizlik degil. Kacak 4, 8, 9. 3.888 kolon (fix16)."
+  },
+  {
+   "ne": "2026/27 4. hafta oynanan kuponun gerceklesen getirisi",
+   "deger": "2.155,16",
+   "ureten": "cd backend && python scripts/super_toto_degerlendir.py --hafta 4  # GETIRI bolumu",
+   "olculdu": "2026-09-07",
+   "anildigi_yerler": [
+    "docs/ISTATISTIK_YOL_HARITASI.md §3.65"
+   ],
+   "bekci": "backend/tests/test_degerlendir.py::test_getiri_gerceklesen_kolon_kolon_sayilir",
+   "not": "Kolon bedeli olculen 10 TL. Basabas kolon bedeli 0,55 TL. Maliyet 38.880 TL, net -36.725 TL, ROI %5,5."
+  },
+  {
+   "ne": "duz sistem ayni bedelde ne oderdi (2026/27 4. hafta, canli kiyas)",
+   "deger": "8.620,64",
+   "ureten": "cd backend && python3 -c \"import sys,importlib;sys.path.insert(0,'.');h=importlib.import_module('scripts.super_toto_hafta');import scripts.super_toto_degerlendir as g;from spor_toto.secim import en_iyi_secim;d=h.hafta_yukle('2026_27',4);s=en_iyi_secim([m['probs'] for m in d['matches']],3888);print(g.getiri_karnesi(d,s.picks,'tam')['gerceklesen'])\"",
+   "olculdu": "2026-09-07",
+   "anildigi_yerler": [
+    "docs/ISTATISTIK_YOL_HARITASI.md §3.65"
+   ],
+   "bekcisiz_gerekce": "Tek haftalik canli kiyas; bekcisi geri test tarafinda (docs/DUZ_SISTEME_GECIS.md, sistem_kiyasi.py) ve o kaplama sokulunce kosamiyor. Sayi dondurulmus bir gozlemdir, tutulacak bir davranis degil.",
+   "not": "Ayni 3.888 kolon, ayni kademe (12), ayni kacak sayisi (3); fark yalnizca kac kolonun o kademeyi tutturdugu (1 ↔ 4). DUZ_SISTEME_GECIS.md §0.1'in 1,78x-5,26x araliginin icinde. Kaplamanin 2.155,16 TL'sinin 4,00 kati."
+  },
+  {
+   "ne": "2026/27 4. hafta — gercek kolonun piyasa sirasi",
+   "deger": "311.145 / 14.348.907",
+   "ureten": "cd backend && python scripts/super_toto_degerlendir.py --hafta 4  # GERCEGIN SIRASI",
+   "olculdu": "2026-09-07",
+   "anildigi_yerler": [
+    "docs/ISTATISTIK_YOL_HARITASI.md §3.65"
+   ],
+   "bekcisiz_gerekce": "Haftaya ozgu tek seferlik olcum; bekci onu tutamaz cunku her hafta baska bir sayidir. Hesabin kendisinin bekcisi var: test_degerlendir.py::test_sira_kaba_kuvvetle_ayni.",
+   "not": "Ayni zamanda bir butcedir: bu haftayi tutturmak o kadar kolon isterdi."
+  },
+  {
+   "ne": "§1 katman dokumu — gercek dosya basina test sayisi",
+   "deger": "624",
+   "ureten": "cd backend && python -m pytest --collect-only -q -o addopts= -p no:cacheprovider | grep -oE 'tests/test_[a-z_0-9]+\\.py' | sort | uniq -c",
+   "olculdu": "2026-09-07",
+   "anildigi_yerler": [
+    "docs/ISTATISTIK_YOL_HARITASI.md §1"
+   ],
+   "bekci": "backend/tests/test_belgeler.py::test_katman_dokumu_GERCEK_koleksiyonu_sayar",
+   "not": "Dordu de bayatti: belge 85/579/29/30 diyordu. Ayni cumlenin TOPLAMI dogruydu cunku onun bekcisi vardi; dokumunse yoktu. Tam dokum: istatistik 117 · tahmin 624 · tahmin2 35 · degerlendir 39."
   }
  ],
  "komutlar": [
