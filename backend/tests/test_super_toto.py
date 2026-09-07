@@ -61,7 +61,11 @@ def test_hafta_okunur_ve_olasiliklar_bire_toplanir(hafta, no):
     assert len(d["matches"]) == 15
     for m in d["matches"]:
         assert sum(m["probs"].values()) == pytest.approx(1.0, abs=1e-9)
-        assert sum(m["play"].values()) == pytest.approx(1.0, abs=1e-9)
+        # Oynanma payı OLMAYABİLİR ve o zaman toplamı 1 değil 0'dır
+        # (5. hafta: kupon yalnızca fiyattan kuruldu). Durum `play_yok`
+        # ile ilan edilir; sessizce 1'e tamamlanmaz.
+        assert sum(m["play"].values()) == pytest.approx(
+            0.0 if m["play_yok"] else 1.0, abs=1e-9)
         assert set(m["probs"]) == {"1", "0", "2"}
 
 
@@ -518,7 +522,10 @@ def test_besleme_olasiliklari_bire_toplanir(besleme):
     for w in besleme.uret("2026_27")["weeks"]:
         for m in w["matches"]:
             assert sum(m["probs"].values()) == pytest.approx(1.0, abs=2e-4)
-            assert sum(m["play"].values()) == pytest.approx(1.0, abs=2e-4)
+            # Ölçülmemiş oynanma 1'e toplanmaz ve toplanmamalı; besleme
+            # durumu `play_yok` ile taşır (bkz. hafta_yukle).
+            assert sum(m["play"].values()) == pytest.approx(
+                0.0 if m["play_yok"] else 1.0, abs=2e-4)
 
 
 def test_besleme_iki_uyari_listesini_ayri_tasir(besleme):

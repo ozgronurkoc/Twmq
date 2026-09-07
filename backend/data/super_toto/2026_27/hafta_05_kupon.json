@@ -1,0 +1,552 @@
+{
+ "meta": {
+  "season": "2026/2027",
+  "week": 5,
+  "frozen_at": "2026-09-07",
+  "results_known": false,
+  "sistem": "duz",
+  "sistem_notu": "Düz (tam sistem): seçim kümesinin bütün kombinasyonları oynanır, indirgeme yok. En iyi kolon her zaman 15 − k.",
+  "note": "SONUÇLAR GÖRÜLMEDEN üretildi. Bu hafta üç kupon birden kaydedildi ve üçü de AYNI girdiden (Pinnacle açılış oranı) çıktı. variants[0] dondurulan kayıttır; 5/5/5 A ve B, kullanıcının sabitlediği şeklin iki sürümüdür ve karşılaştırma için yanında durur.",
+  "strategy": {
+   "kural": "hak — secim.odul_secim (bütçe kısıt değil supap)",
+   "banko_esik": null,
+   "uclu_esik": null,
+   "arindirma": "shin",
+   "marj_ort_pct": 4.8,
+   "butce_tl": 210000,
+   "butce_kaynagi": "kullanıcı kararı (harcama kararı)",
+   "hedef_kademe": 12,
+   "kacak_esigi": 3,
+   "odul_vektoru": {
+    "15": 12969789.0,
+    "14": 131799.0,
+    "13": 7374.0,
+    "12": 960.0
+   },
+   "odul_vektoru_kaynagi": "karne.odul_vektoru_onceki('2026_27') — bir ÖNCEKİ sezonun (2025/26) gerçek tablosu. Nedensel: ölçülen haftanın kendi sezonu vektöre girmez.",
+   "arindirma_notu": "İşaretler shin ölçeğinde kuruldu. Başka bir arındırmayla aynı eşikler başka işaret üretir; kayıt yeniden hesaplanmaz.",
+   "uretim": [
+    "spor_toto.odds.implied_probs(oran, 'shin')",
+    "spor_toto.secim.odul_secim(probs, vektor, tavan=21000)   # 6/0/9",
+    "spor_toto.secim._dp_cozumu(probs, 7776, 3) -> (cifte=5, uclu=5) düğümü  # 5/5/5 A",
+    "bağımsız doğrulama: C(15,5)·C(10,5) = 756.756 atamanın tamamı"
+   ]
+  },
+  "olcumler": [
+   {
+    "ad": "beraberlik sıra sınavı — marj < 2 puan",
+    "sonuc": "beraberlik 3. sırada ve 2. sembole 2 puandan yakınsa sıralama bilgi taşımıyor: p₀ = 0,20–0,27 kesitinde fark +0,1 puan (n = 1.347, p = 0,970); marj 2–4 puanda −4,5 (p = 0,001), ≥4 puanda −3,9 (p < 0,001)",
+    "kaynak": "backend/data/egitim/egitim_korpus.csv — acilis_* sütunları, n = 31.099",
+    "olculdu": "2026-09-07"
+   },
+   {
+    "ad": "haftalık beraberlik kümelenmesi",
+    "sonuc": "gözlenen/bağımsızlık varyans oranı 0,89 [0,71, 1,08] — kümelenme kanıtlanmadı, bağımsızlık varsayımı ayakta",
+    "kaynak": "aynı korpus, ISO haftası bazında 180 hafta / 31.075 maç",
+    "olculdu": "2026-09-07"
+   }
+  ],
+  "veri_uyarilari": [
+   "Oynanma payı YOK — kalabalık ölçüleri (küme-içi halk payı, oran) bu hafta hesaplanamadı ve null bırakıldı.",
+   "Yalnızca AÇILIŞ oranı var; kapanış çizgisi kayıtlı değil, fiyat duyarlılığı ölçülemiyor.",
+   "6. maçın beraberlik oranı düzeltildi (5.79 → 3.32); düzeltmeden önceki olasılıklar hatalıydı.",
+   "variants[0] seçimi bir OYNAMA kararı değildir: hangi kuponun bayiye yatırıldığı bu dosyadan okunamaz."
+  ],
+  "kalabalik_gerekcesi": "Bu haftanın kuponu kalabalığı GÖRMEZ: oynanma yüzdesi girilmedi. Kalabalık ayarlı bir alternatif üretilmedi."
+ },
+ "variants": [
+  {
+   "label": "ana — 210.000 TL tavan, kural 'hak' (DONDURULAN)",
+   "picks": [
+    "1",
+    "102",
+    "102",
+    "102",
+    "102",
+    "102",
+    "102",
+    "1",
+    "2",
+    "2",
+    "102",
+    "1",
+    "102",
+    "2",
+    "102"
+   ],
+   "columns": 19683,
+   "maliyet_tl": 196830.0,
+   "banko": 6,
+   "cift": 0,
+   "uclu": 9,
+   "sekil": "6b/0ç/9ü",
+   "engine": "düz (tam sistem — indirgeme yok)",
+   "guaranteed": 15,
+   "rows": null,
+   "hedef": 0.94567,
+   "p_k_en_cok_2": 0.775651,
+   "p_k_en_cok_1": 0.446365,
+   "in_set_p": 0.123955,
+   "q": [
+    0.2452,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.2274,
+    0.3821,
+    0.4649,
+    0.0,
+    0.2087,
+    0.0,
+    0.1876,
+    0.0
+   ],
+   "crowd_in_set_p": null,
+   "crowd_ratio": null,
+   "gerekce": "Kullanıcının verdiği 210.000 TL tavanda kuralın kendi planı. Bu tavanda 'hak' (odul_secim) ile 'butce' (en_iyi_secim) AYNI planı veriyor — şekil tartışmalı değil. Kesim çizgisi favori gücünde %53,5 (banko kalan son maç) ile %50,3 (üçlüye düşen ilk maç) arasında."
+  },
+  {
+   "label": "5b/5ç/5ü — A (beraberlik atılıyor)",
+   "picks": [
+    "1",
+    "12",
+    "102",
+    "102",
+    "12",
+    "102",
+    "102",
+    "1",
+    "2",
+    "12",
+    "12",
+    "1",
+    "12",
+    "2",
+    "102"
+   ],
+   "columns": 7776,
+   "maliyet_tl": 77760.0,
+   "banko": 5,
+   "cift": 5,
+   "uclu": 5,
+   "sekil": "5b/5ç/5ü",
+   "engine": "düz (tam sistem — indirgeme yok)",
+   "guaranteed": 15,
+   "rows": null,
+   "hedef": 0.785055,
+   "p_k_en_cok_2": 0.535353,
+   "p_k_en_cok_1": 0.249615,
+   "in_set_p": 0.057529,
+   "q": [
+    0.2452,
+    0.2454,
+    0.0,
+    0.0,
+    0.2529,
+    0.0,
+    0.0,
+    0.2274,
+    0.3821,
+    0.2266,
+    0.2406,
+    0.2087,
+    0.25,
+    0.1876,
+    0.0
+   ],
+   "crowd_in_set_p": null,
+   "crowd_ratio": null,
+   "gerekce": "Şekil kullanıcı tarafından sabitlendi. Bu atama, 5/5/5 şeklinin KANITLANMIŞ en iyisi: (çifte=5, üçlü=5) düğümüne kısıtlanmış Pareto DP ve ondan bağımsız olarak 756.756 atamanın tamamını gezen kaba kuvvet aynı planı ve aynı P(k≤3)'ü verdi. Beş çiftenin beşinde de atılan sembol beraberlik — tercih değil, sonuç: o beş maçta p₃ = beraberlik."
+  },
+  {
+   "label": "5b/5ç/5ü — B (yakın üç maçta beraberlik tutuluyor)",
+   "picks": [
+    "1",
+    "02",
+    "102",
+    "102",
+    "02",
+    "102",
+    "102",
+    "1",
+    "2",
+    "02",
+    "12",
+    "1",
+    "12",
+    "2",
+    "102"
+   ],
+   "columns": 7776,
+   "maliyet_tl": 77760.0,
+   "banko": 5,
+   "cift": 5,
+   "uclu": 5,
+   "sekil": "5b/5ç/5ü",
+   "engine": "düz (tam sistem — indirgeme yok)",
+   "guaranteed": 15,
+   "rows": null,
+   "hedef": 0.778222,
+   "p_k_en_cok_2": 0.526481,
+   "p_k_en_cok_1": 0.242964,
+   "in_set_p": 0.055339,
+   "q": [
+    0.2452,
+    0.2516,
+    0.0,
+    0.0,
+    0.2642,
+    0.0,
+    0.0,
+    0.2274,
+    0.3821,
+    0.2384,
+    0.2406,
+    0.2087,
+    0.25,
+    0.1876,
+    0.0
+   ],
+   "crowd_in_set_p": null,
+   "crowd_ratio": null,
+   "gerekce": "A ile yalnızca 2., 5. ve 10. maçlarda ayrışır: oralarda beraberlik ile 2. sembolün arası 0,6–1,2 puan ve korpus o marj bandında sıralamanın bilgi taşımadığını söylüyor (p = 0,97). Yani B bir düzeltme değil, aynı yazı-turanın öbür yüzü; ham olasılıkta bedeli 0,68 puan."
+  }
+ ],
+ "siralama": {
+  "not": "Kuponun bütün seviye kararları TEK eksende okunur. Bir maçı çifteden bankoya düşürmenin ek kaçağı tam olarak p₂'dir ((p₂+p₃) − p₃ = p₂); çifteden üçlüye çıkmanın kazancı tam olarak p₃'tür. Bu yüzden 'en banko' = en küçük p₂, 'en üçlü' = en büyük p₃.",
+  "olcut_banko": "p₂ — bankoya düşürmenin ek kaçağı (küçükse maç bankoya yakın)",
+  "olcut_uclu": "p₃ — üçlüye çıkmanın kazancı (küçükse maç çifteye yakın)",
+  "banko_yon": "en çok bankodan en az bankoya (çifteye doğru)",
+  "uclu_yon": "en az üçlüden (çifteden) en çok üçlüye",
+  "banko": [
+   {
+    "no": 14,
+    "mac": "Levante – Barcelona",
+    "isaret": "2",
+    "p_favori": 0.8124,
+    "ceza_p2": 0.1153,
+    "q_banko": 0.1876,
+    "secili": "banko",
+    "secili_555": "banko"
+   },
+   {
+    "no": 12,
+    "mac": "Chelsea – Hull City",
+    "isaret": "1",
+    "p_favori": 0.7913,
+    "ceza_p2": 0.1513,
+    "q_banko": 0.2087,
+    "secili": "banko",
+    "secili_555": "banko"
+   },
+   {
+    "no": 8,
+    "mac": "Galatasaray A.Ş. – Kocaelispor",
+    "isaret": "1",
+    "p_favori": 0.7726,
+    "ceza_p2": 0.1545,
+    "q_banko": 0.2274,
+    "secili": "banko",
+    "secili_555": "banko"
+   },
+   {
+    "no": 1,
+    "mac": "Beşiktaş A.Ş. – Erzurumspor FK",
+    "isaret": "1",
+    "p_favori": 0.7548,
+    "ceza_p2": 0.163,
+    "q_banko": 0.2452,
+    "secili": "banko",
+    "secili_555": "banko"
+   },
+   {
+    "no": 9,
+    "mac": "Gaziantep F.K. – Fenerbahçe A.Ş.",
+    "isaret": "2",
+    "p_favori": 0.6179,
+    "ceza_p2": 0.2195,
+    "q_banko": 0.3821,
+    "secili": "banko",
+    "secili_555": "banko"
+   },
+   {
+    "no": 10,
+    "mac": "Augsburg – Bayer Leverkusen",
+    "isaret": "2",
+    "p_favori": 0.5351,
+    "ceza_p2": 0.2384,
+    "q_banko": 0.4649,
+    "secili": "banko",
+    "secili_555": "cifte"
+   },
+   {
+    "no": 2,
+    "mac": "Eyüpspor – Çaykur Rizespor",
+    "isaret": "2",
+    "p_favori": 0.503,
+    "ceza_p2": 0.2516,
+    "q_banko": 0.497,
+    "secili": "uclu",
+    "secili_555": "cifte"
+   },
+   {
+    "no": 5,
+    "mac": "Konyaspor – Trabzonspor A.Ş.",
+    "isaret": "2",
+    "p_favori": 0.4829,
+    "ceza_p2": 0.2642,
+    "q_banko": 0.5171,
+    "secili": "uclu",
+    "secili_555": "cifte"
+   },
+   {
+    "no": 4,
+    "mac": "Alanyaspor – Göztepe A.Ş.",
+    "isaret": "1",
+    "p_favori": 0.4286,
+    "ceza_p2": 0.2897,
+    "q_banko": 0.5714,
+    "secili": "uclu",
+    "secili_555": "uclu"
+   },
+   {
+    "no": 6,
+    "mac": "Gençlerbirliği – Kasımpaşa A.Ş.",
+    "isaret": "1",
+    "p_favori": 0.4207,
+    "ceza_p2": 0.2943,
+    "q_banko": 0.5793,
+    "secili": "uclu",
+    "secili_555": "uclu"
+   },
+   {
+    "no": 15,
+    "mac": "Lazio – AC Milan",
+    "isaret": "2",
+    "p_favori": 0.4158,
+    "ceza_p2": 0.2953,
+    "q_banko": 0.5842,
+    "secili": "uclu",
+    "secili_555": "uclu"
+   },
+   {
+    "no": 11,
+    "mac": "Rennes – Marsilya",
+    "isaret": "1",
+    "p_favori": 0.457,
+    "ceza_p2": 0.3023,
+    "q_banko": 0.543,
+    "secili": "uclu",
+    "secili_555": "cifte"
+   },
+   {
+    "no": 3,
+    "mac": "Samsunspor A.Ş. – Çorum FK",
+    "isaret": "1",
+    "p_favori": 0.4288,
+    "ceza_p2": 0.3106,
+    "q_banko": 0.5712,
+    "secili": "uclu",
+    "secili_555": "uclu"
+   },
+   {
+    "no": 13,
+    "mac": "Manchester United – Manchester City",
+    "isaret": "2",
+    "p_favori": 0.4384,
+    "ceza_p2": 0.3116,
+    "q_banko": 0.5616,
+    "secili": "uclu",
+    "secili_555": "cifte"
+   },
+   {
+    "no": 7,
+    "mac": "Amed Sportif – Başakşehir FK",
+    "isaret": "1",
+    "p_favori": 0.3661,
+    "ceza_p2": 0.3522,
+    "q_banko": 0.6339,
+    "secili": "uclu",
+    "secili_555": "uclu"
+   }
+  ],
+  "uclu": [
+   {
+    "no": 12,
+    "mac": "Chelsea – Hull City",
+    "kazanc_p3": 0.0574,
+    "atilan": "2",
+    "q_cifte": 0.0574,
+    "secili": "banko",
+    "secili_555": "banko"
+   },
+   {
+    "no": 14,
+    "mac": "Levante – Barcelona",
+    "kazanc_p3": 0.0723,
+    "atilan": "1",
+    "q_cifte": 0.0723,
+    "secili": "banko",
+    "secili_555": "banko"
+   },
+   {
+    "no": 8,
+    "mac": "Galatasaray A.Ş. – Kocaelispor",
+    "kazanc_p3": 0.0729,
+    "atilan": "2",
+    "q_cifte": 0.0729,
+    "secili": "banko",
+    "secili_555": "banko"
+   },
+   {
+    "no": 1,
+    "mac": "Beşiktaş A.Ş. – Erzurumspor FK",
+    "kazanc_p3": 0.0823,
+    "atilan": "2",
+    "q_cifte": 0.0823,
+    "secili": "banko",
+    "secili_555": "banko"
+   },
+   {
+    "no": 9,
+    "mac": "Gaziantep F.K. – Fenerbahçe A.Ş.",
+    "kazanc_p3": 0.1626,
+    "atilan": "1",
+    "q_cifte": 0.1626,
+    "secili": "banko",
+    "secili_555": "banko"
+   },
+   {
+    "no": 10,
+    "mac": "Augsburg – Bayer Leverkusen",
+    "kazanc_p3": 0.2266,
+    "atilan": "0",
+    "q_cifte": 0.2266,
+    "secili": "banko",
+    "secili_555": "cifte"
+   },
+   {
+    "no": 11,
+    "mac": "Rennes – Marsilya",
+    "kazanc_p3": 0.2406,
+    "atilan": "0",
+    "q_cifte": 0.2406,
+    "secili": "uclu",
+    "secili_555": "cifte"
+   },
+   {
+    "no": 2,
+    "mac": "Eyüpspor – Çaykur Rizespor",
+    "kazanc_p3": 0.2454,
+    "atilan": "0",
+    "q_cifte": 0.2454,
+    "secili": "uclu",
+    "secili_555": "cifte"
+   },
+   {
+    "no": 13,
+    "mac": "Manchester United – Manchester City",
+    "kazanc_p3": 0.25,
+    "atilan": "0",
+    "q_cifte": 0.25,
+    "secili": "uclu",
+    "secili_555": "cifte"
+   },
+   {
+    "no": 5,
+    "mac": "Konyaspor – Trabzonspor A.Ş.",
+    "kazanc_p3": 0.2529,
+    "atilan": "0",
+    "q_cifte": 0.2529,
+    "secili": "uclu",
+    "secili_555": "cifte"
+   },
+   {
+    "no": 3,
+    "mac": "Samsunspor A.Ş. – Çorum FK",
+    "kazanc_p3": 0.2607,
+    "atilan": "2",
+    "q_cifte": 0.2607,
+    "secili": "uclu",
+    "secili_555": "uclu"
+   },
+   {
+    "no": 4,
+    "mac": "Alanyaspor – Göztepe A.Ş.",
+    "kazanc_p3": 0.2816,
+    "atilan": "2",
+    "q_cifte": 0.2816,
+    "secili": "uclu",
+    "secili_555": "uclu"
+   },
+   {
+    "no": 7,
+    "mac": "Amed Sportif – Başakşehir FK",
+    "kazanc_p3": 0.2817,
+    "atilan": "0",
+    "q_cifte": 0.2817,
+    "secili": "uclu",
+    "secili_555": "uclu"
+   },
+   {
+    "no": 6,
+    "mac": "Gençlerbirliği – Kasımpaşa A.Ş.",
+    "kazanc_p3": 0.285,
+    "atilan": "0",
+    "q_cifte": 0.285,
+    "secili": "uclu",
+    "secili_555": "uclu"
+   },
+   {
+    "no": 15,
+    "mac": "Lazio – AC Milan",
+    "kazanc_p3": 0.2889,
+    "atilan": "1",
+    "q_cifte": 0.2889,
+    "secili": "uclu",
+    "secili_555": "uclu"
+   }
+  ],
+  "kesimler": {
+   "ana_banko": "6/0/9 kuponunda banko kesimi 9. maçta (p₂ = 0,2195) kapanıyor; sıradaki 10. maç (p₂ = 0,2384) üçlüye düştü — arada 1,9 puan.",
+   "555_banko": "5/5/5'te banko kesimi yine 9. maçta kapanıyor; 10. maç çifte oldu.",
+   "555_uclu": "5/5/5'te üçlü kesimi 3. maçta (p₃ = 0,2607) kapanıyor; sıradaki 5. maç (p₃ = 0,2529) çifte kaldı — arada 0,8 puan."
+  }
+ },
+ "gerekce": {
+  "baslik": "Neden mantıklı olan bu?",
+  "maddeler": [
+   {
+    "baslik": "Tek girdi fiyat, ve fiyat shin ile arındırıldı",
+    "metin": "Bu hafta oynanma payı yok; işaretler yalnızca Pinnacle açılış oranından geliyor. Ham oranın tersi olasılık değildir, içinde marj vardır (bu bültende ortalama %4,80). Marj shin (1993) ile atıldı — deponun 2026-08'de ölçüp seçtiği varsayılan: orantısal yöntem marjı her sonuca eşit dağıtıyor, oysa bahisçi onu sürprizlere yüklüyor ve favori sistematik olarak eksik fiyatlanıyordu (Brier 0,5940 → 0,5936; sapan bant 10/15 → 4/15)."
+   },
+   {
+    "baslik": "Hedef 'kaç maç bildim' değil, P(en iyi kolon ≥ 12)",
+    "metin": "Düz sistemde seçim kümesinin tamamı oynanıyor, yani kümenin dışında kalan her maç HER kolonda yanlış: en iyi kolon = 15 − k. Dolayısıyla 12. kademeyi tutturmak, 'en çok 3 kaçak' demektir ve kuponun ölçüsü P(k ≤ 3)'tür. Bu bir alt sınır değil, eşitlik."
+   },
+   {
+    "baslik": "Seviye kararı iki sayıya iniyor",
+    "metin": "Bir maçın kaçağı yalnızca kaç sembol işaretlendiğine bağlı: banko q = p₂+p₃, çifte q = p₃, üçlü q = 0. Bedel ise yalnızca sayıya bağlı: 2^çifte · 3^üçlü. Bu iki olgu bütün haftayı sıralanabilir hale getiriyor — 'en büyük p₃'ler üçlü olur, kalanlardan en küçük p₂'ler banko olur' kuralı, kısıtlı şekilde en iyi çözümün ta kendisi (kaba kuvvetle doğrulandı)."
+   },
+   {
+    "baslik": "Bütçe veriden türetilemez — ölçüldü",
+    "metin": "Üçlünün kaçağı sıfır olduğu için tavansız cevap her zaman 'daha çok üçlü'dür: kural serbest bırakıldığında 59.049 kolon (590.490 TL) istiyor. Haftaya göre değişen bir kural sabiti yener mi diye ölçüldü (E6, 114 hafta × 47 basamak): sınanan on iki kuralın on birinde %95 aralık sıfırı kesiyor, kesmeyen tek kural sabit bütçeden daha kötü. Bu yüzden tavan bir HARCAMA KARARIDIR ve 210.000 TL kullanıcıdan geldi."
+   },
+   {
+    "baslik": "210.000 TL'de şekil tartışmalı değil",
+    "metin": "O tavanda iki kural — 'hak' (beklenen parayı enbüyükleyen odul_secim) ve 'butce' (P(k≤3)'ü enbüyükleyen en_iyi_secim) — aynı planı veriyor: 6 banko / 0 çifte / 9 üçlü, 19.683 kolon. Kesim, favori gücü %53,5 ile %50,3 arasından geçiyor. Aynı bütçede 114 haftalık geri testin ürettiği şekil de 6/0/9 — bütçe şekli neredeyse çiviliyor."
+   },
+   {
+    "baslik": "5/5/5 en iyi atamadır ama en iyi şekil değildir",
+    "metin": "Şekil kullanıcı kısıtı. O kısıt altında A kanıtlanmış optimumdur. Ama merdivende 7b/0ç/8ü 65.610 TL'ye P(k≤3) = %86,12 veriyor; 5/5/5 ise 77.760 TL'ye %78,51. Yani 12.150 TL daha ucuz olan plan her ölçüde önde. Sebep yapısal: çifte ×2 bedelle kaçağı yalnızca p₃'e indiriyor, üçlü ×3 bedelle sıfırlıyor; bu haftanın orta bandında p₃'ler 0,23–0,29 olduğu için çifte kötü bir alışveriş."
+   },
+   {
+    "baslik": "Çiftelerde beraberlik yok — bu bir tercih değil, ölçüm",
+    "metin": "Çifteye düşen beş maçın beşinde de beraberlik üçüncü sıradaydı. Üçünde fark 0,6–1,2 puan olduğu için korpusa soruldu (31.099 maç, açılış oranları): marj 2 puanın ÜSTÜNDEyse piyasanın sıralaması doğru ve anlamlı (2–4 puan: −4,5 puan, p = 0,001; ≥4 puan: −3,9 puan, p < 0,001) — 11 ve 13. maçlar bu bölgede. Marj 2 puanın ALTINDAysa hiçbir bilgi yok: bizim bandımızda (p₀ = 0,20–0,27) fark +0,1 puan, p = 0,97. Ayrıca beş çifteyi aynı sembole yaslamanın gizli bir cezası var mı diye haftalık beraberlik sayısının yayılımı ölçüldü (180 hafta): varyans oranı 0,89 [0,71, 1,08] — kümelenme yok. Bu yüzden A ile B arasında seçim ölçümle değil, tercihle yapılır."
+   }
+  ]
+ }
+}

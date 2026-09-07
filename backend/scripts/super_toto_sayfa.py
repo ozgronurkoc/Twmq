@@ -47,6 +47,26 @@ prof = m.hafta_profili(d, ref)
 kam = m.kamuoyu(d)
 ana = m.kupon_kur(d, 0.68, 0.38)
 
+def _yuzde_ya_da_tire(x: float | None, basamak: int) -> str:
+    """Ölçülmemiş bir oran **tire**dir, sıfır değil.
+
+    Oynanma payı girilmemiş bir haftada (5. hafta) bütün `crowd_*` alanları
+    null gelir. `%0,000` basmak, ölçülmemiş bir şeyi "kimse oynamadı" diye
+    okutur — bu sayfanın yaptığı en pahalı hata olurdu.
+    """
+    return "—" if x is None else f"%{100 * x:.{basamak}f}"
+
+
+#: Kalabalık oranı ölçülemeyebilir: oynanma payı girilmemiş bir haftada
+#: (5. hafta) `crowd_ratio` null'dur. Sayfa o zaman oranı YAZMAZ — sıfır ya
+#: da 1,00 basmak, ölçülmemiş bir şeyi ölçülmüş gibi gösterirdi.
+kalabalik_orani = ("—" if ana["crowd_ratio"] is None
+                   else f"{ana['crowd_ratio']:.2f}")
+kalabalik_orani_not = (
+    "oynanma payı girilmedi — bu haftanın kalabalık sayıları YOK"
+    if ana["crowd_ratio"] is None
+    else "1'in altı: seçim kümem olasılığına göre fazla oynanmış")
+
 # Sonuç girilmişse değerlendirme katmanı da yüklenir. Girilmemişse sayfa
 # eskisi gibi "sonuç yok" halinde üretilir — tek şablon, iki durum.
 _deg = importlib.import_module("scripts.super_toto_degerlendir")
@@ -104,6 +124,19 @@ _kal_sirali = sorted(ana["per_match_crowd"],
 KALABALIK_UC = ", ".join(
     f"{r['no']}. maç [{r['sec']}] halkın %{100*r['play_in']:.0f}&#39;i"
     for r in _kal_sirali) or "yok"
+
+#: Kalabalık cümlesi ölçüm YOKSA kurulmaz. Oynanma payı girilmemiş bir
+#: haftada (5. hafta) oran null'dur ve "kupon kalabalıkla aynı yöne
+#: bakıyor" gibi bir cümle, hiç ölçülmemiş bir şey hakkında hüküm olurdu.
+KALABALIK_NOTU = (
+    "<b>Kalabalık ölçüsü yok.</b> Bu haftanın oynanma payları girilmedi; "
+    "kupon yalnızca fiyattan kuruldu ve küme-içi halk payı, kalabalık "
+    "oranı gibi bütün ölçüler boştur."
+    if ana["crowd_ratio"] is None else
+    f"<b>{'Kupon kalabalıkla aynı yöne bakıyor' if ana['crowd_ratio'] < 1 else 'Kupon kalabalıktan sapıyor'}.</b>"
+    f" Seçim kümesinin kalabalık oranı {ana['crowd_ratio']:.2f}"
+    f" ({'1&#39;in altı: tutarsa ikramiye çok bölünür' if ana['crowd_ratio'] < 1 else '1&#39;in üstü: tutarsa ikramiye az bölünür'})."
+    f" En kalabalık işaretlerim: {KALABALIK_UC}.")
 
 #: Uyarılar hafta dosyasının kendisinden gelir (elle girilenler + `dogrula`
 #: üretenler), böylece sayfa hangi boşlukla yaşadığını saklamaz.
@@ -364,13 +397,15 @@ if DONMUS:
     for v in KUPON_JSON["variants"]:
         vur = (' style="background:var(--accent)"'
                if "DONDURULAN" in v["label"] else "")
+        oran = v["crowd_ratio"]
         donmus_satir.append(
             f'<tr{vur}><td>{e(v["label"])}</td>'
             f'<td class="num mono">%{100*v["hedef"]:.2f}</td>'
             f'<td class="num mono">{tr(v["columns"])}</td>'
             f'<td class="num mono">%{100*v["in_set_p"]:.3f}</td>'
-            f'<td class="num mono">%{100*v["crowd_in_set_p"]:.3f}</td>'
-            f'<td class="num mono">{v["crowd_ratio"]:.2f}</td></tr>')
+            f'<td class="num mono">{_yuzde_ya_da_tire(v["crowd_in_set_p"], 3)}</td>'
+            f'<td class="num mono">'
+            f'{"—" if oran is None else f"{oran:.2f}"}</td></tr>')
     for i, kupon_satiri in enumerate(KUPON_JSON.get("rows") or []):
         # Ad `hucre` DEGIL: modul duzeyinde 99 satir yukarida `hucre` bir
         # LISTE olarak baglaniyor (satir 266) ve bu betik butun govdesini
@@ -393,14 +428,20 @@ marj_rozet = " · ".join(
 
 def varyant(v, etiket, vurgu=False):
     deg = "; ".join(v.get("changes", [])) or "kural birebir — kısılan yok"
+    # Kalabalık ölçüleri ölçülmemiş olabilir (oynanma payı girilmemiş
+    # hafta). O zaman hücre tire gösterir ve "iyi/kötü" boyaması da
+    # yapılmaz — boyanmış bir tire, olmayan bir ölçüme not verirdi.
+    oran = v["crowd_ratio"]
+    oran_sinif = "" if oran is None else (" class=\"iyi\"" if oran > 1
+                                          else " class=\"kotu\"")
     return f"""
     <article class="var{' vurgu' if vurgu else ''}">
       <header><h3>{etiket}</h3><span class="kolon">{tr(v['cost'] if 'cost' in v else v['columns'])} kolon</span></header>
       <div class="var-picks">{''.join(f'<span class="vp">{i+1}<em>{p}</em></span>' for i, p in enumerate(v['picks']))}</div>
       <dl>
         <div><dt>Küme-içi</dt><dd>%{100*v['in_set_p']:.3f}</dd></div>
-        <div><dt>Kalabalık-içi</dt><dd>%{100*v['crowd_in_set_p']:.3f}</dd></div>
-        <div><dt>Oran</dt><dd class="{'iyi' if v['crowd_ratio']>1 else 'kotu'}">{v['crowd_ratio']:.2f}</dd></div>
+        <div><dt>Kalabalık-içi</dt><dd>{_yuzde_ya_da_tire(v['crowd_in_set_p'], 3)}</dd></div>
+        <div><dt>Oran</dt><dd{oran_sinif}>{"—" if oran is None else f"{oran:.2f}"}</dd></div>
         <div><dt>Satır</dt><dd>16</dd></div>
       </dl>
       <p class="deg">{e(deg)}</p>
@@ -1140,7 +1181,7 @@ footer {{ margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--line)
     <div class="stat"><div class="k">Beklenen 1 / 0 / 2</div><div class="v">{prof['expected']['1']:.1f} · {prof['expected']['0']:.1f} · {prof['expected']['2']:.1f}</div><div class="a">geçen sezon ort. {wa['1']:.1f} · {wa['0']:.1f} · {wa['2']:.1f}</div></div>
     <div class="stat"><div class="k">Favori tutar</div><div class="v">{prof['fav_expected_market']:.1f}–{prof['fav_expected_history']:.1f}</div><div class="a">piyasa – geçen sezon bantları · sezon ort. {15*o['favourite_hit_pct']/100:.1f}</div></div>
     <div class="stat"><div class="k">Küme-içi</div><div class="v">%{100*ana['in_set_p']:.2f}</div><div class="a">≈ 1/{ana['in_set_1_in']:.0f} — 14-garantinin geçerlilik koşulu</div></div>
-    <div class="stat"><div class="k">Kalabalık oranı</div><div class="v">{ana['crowd_ratio']:.2f}</div><div class="a">1'in altı: seçim kümem olasılığına göre fazla oynanmış</div></div>
+    <div class="stat"><div class="k">Kalabalık oranı</div><div class="v">{kalabalik_orani}</div><div class="a">{kalabalik_orani_not}</div></div>
   </div>
 
   {sonuc_bolumu}
@@ -1352,7 +1393,7 @@ footer {{ margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--line)
       </div>
       <ul class="notlar" style="list-style:disc;padding-left:20px;gap:8px">
         <li><b>Marj farkı ölçek bozar.</b> Eşikler football-data kapanış oranlarıyla (%{o['avg_margin_pct']:.2f} marj) kalibre edildi; bu haftanın {e(_saglayici)} oranlarında marj %{prof['avg_margin_pct']:.1f} — {MARJ_YONU}</li>
-        <li><b>{'Kupon kalabalıkla aynı yöne bakıyor' if ana['crowd_ratio'] < 1 else 'Kupon kalabalıktan sapıyor'}.</b> Seçim kümesinin kalabalık oranı {ana['crowd_ratio']:.2f} ({'1&#39;in altı: tutarsa ikramiye çok bölünür' if ana['crowd_ratio'] < 1 else '1&#39;in üstü: tutarsa ikramiye az bölünür'}). En kalabalık işaretlerim: {KALABALIK_UC}.</li>
+        <li>{KALABALIK_NOTU}</li>
         <li><b>Veri boşlukları.</b> {UYARI_OZETI} {'İkramiye kaydı bu hafta için girildi.' if BITTI else 'Ve bu haftanın ikramiye/havuz verisi henüz yok — geldiğinde kalabalık ölçüsü vekil olmaktan çıkıp gerçek paya dönüşecek.'}</li>
       </ul>
     </div>

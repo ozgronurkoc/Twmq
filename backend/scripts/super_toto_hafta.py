@@ -312,8 +312,21 @@ def hafta_yukle(sezon: str, hafta: int) -> dict[str, Any]:
                              key=lambda kv: (-kv[1], SEMBOLLER.index(kv[0])))
         # Oynanma yüzdesi platformun kendi kullanıcı payıdır; 100'e
         # normalize edilir ki oranla aynı ölçekte kıyaslanabilsin.
-        t = sum(m["play_pct"].values()) or 100
-        m["play"] = {s: m["play_pct"][s] / t for s in SEMBOLLER}
+        #
+        # **Toplam sıfırsa oynanma ÖLÇÜLMEMİŞTİR ve bu bir sayı değil, bir
+        # durumdur.** 5. hafta böyle girildi: kupon yalnızca fiyattan
+        # kuruldu, oynanma payı hiç kaydedilmedi. `play` yine sıfırlarla
+        # doldurulur — `None` bütün kalabalık yollarını (kamuoyu, küme-içi
+        # halk payı, degerlendir) çökertirdi — ama durum `play_yok` ile
+        # İLAN EDİLİR, çünkü sıfır dağılım "kimse oynamadı" gibi okunur ve
+        # ondan türeyen her kalabalık sayısı anlamsızdır.
+        t = sum(m["play_pct"].values())
+        m["play_yok"] = t <= 0
+        m["play"] = {s: m["play_pct"][s] / (t or 100) for s in SEMBOLLER}
+    # Hafta düzeyinde tek bayrak: arayüz ve rapor "bu haftanın kalabalık
+    # sayıları okunmaz" diyebilsin diye. Tek bir maçta bile eksikse hafta
+    # eksiktir — kısmi kalabalık, kuponun küme-içi payını yanlış hesaplar.
+    d["meta"]["play_yok"] = any(m["play_yok"] for m in maclar)
     return d
 
 
