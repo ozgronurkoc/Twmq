@@ -1367,7 +1367,7 @@
   },
   {
    "ne": "geri test — BUGUNKU KURAL (hedef), 114 hafta, TL2.000 tavan: 12+ tutturan hafta",
-   "deger": "46/114 (%40,4; %95 araligi %31,8-49,5)",
+   "deger": "46/114",
    "ureten": "cd backend && python -c \"from spor_toto.backtest import backtest; import json; print(json.dumps(backtest(sweep=False, sezon='hepsi')['season'], ensure_ascii=False))\"",
    "olculdu": "2026-09-07",
    "anildigi_yerler": [
@@ -1376,11 +1376,11 @@
    ],
    "bekci": "backend/tests/test_belgeler.py::test_readme_1_1_geri_test_sayilari_olcumle_ayni",
    "olcek": "duz",
-   "not": "Yanindaki sayilar ayni kosumdan: 13+ 23, 14+ 7, 15 bir hafta; ortalama en iyi kolon 11,12; ortalama bedel TL1.620/hafta (162 kolon). MANSET 12'dir cunku ikramiye orada baslar. 14+ KUYRUKTUR ve tek basina okunmaz. Bu satir README §1.1'in ESKI cumlesinin yerini aliyor: orasi 'esik kuralinin' 36 haftada 3 kez 14+ tutturdugunu yaziyordu — ne kural urunun kuraliydi, ne olcek duzdu, ne de manset dogruydu."
+   "not": "Ayni kosumun yanindaki sayilari: %40,4 (%95 araligi %31,8-49,5), 13+ 23, 14+ 7, 15 bir hafta; ortalama en iyi kolon 11,12; ortalama bedel TL1.620/hafta (162 kolon). || Yanindaki sayilar ayni kosumdan: 13+ 23, 14+ 7, 15 bir hafta; ortalama en iyi kolon 11,12; ortalama bedel TL1.620/hafta (162 kolon). MANSET 12'dir cunku ikramiye orada baslar. 14+ KUYRUKTUR ve tek basina okunmaz. Bu satir README §1.1'in ESKI cumlesinin yerini aliyor: orasi 'esik kuralinin' 36 haftada 3 kez 14+ tutturdugunu yaziyordu — ne kural urunun kuraliydi, ne olcek duzdu, ne de manset dogruydu."
   },
   {
    "ne": "geri test — TABAN CIZGISI (esik 0,68/0,38), 114 hafta, TAVANSIZ: 12+ ve haftalik bedel",
-   "deger": "84/114 (%73,7) · TL187.217/hafta",
+   "deger": "%73,7",
    "ureten": "cd backend && python -c \"from spor_toto.backtest import backtest; import json; print(json.dumps(backtest(sweep=False, sezon='hepsi', strateji='esik')['season'], ensure_ascii=False))\"",
    "olculdu": "2026-09-07",
    "anildigi_yerler": [
@@ -1389,11 +1389,11 @@
    ],
    "bekci": null,
    "olcek": "duz",
-   "not": "Ortalama en iyi kolon 12,19, 18.722 kolon/hafta. 'Daha iyi' GORUNUYOR ama kiyas gecerli DEGIL: bu kuralin butce tavani YOK ve duz olcekte haftada TL187.217 harciyor — urun butcesinin (TL1.620) 116 KATI. Esik kuralinin README'de yillarca taban cizgisi diye durmasinin sorunu buydu: bedeli gormeyen bir kuralin isabetini bedeli goren bir kuralinkiyle yan yana koymak."
+   "not": "Ayni kosum: 84/114 hafta, ortalama en iyi kolon 12,19, 18.722 kolon/hafta = TL187.217/hafta. || Ortalama en iyi kolon 12,19, 18.722 kolon/hafta. 'Daha iyi' GORUNUYOR ama kiyas gecerli DEGIL: bu kuralin butce tavani YOK ve duz olcekte haftada TL187.217 harciyor — urun butcesinin (TL1.620) 116 KATI. Esik kuralinin README'de yillarca taban cizgisi diye durmasinin sorunu buydu: bedeli gormeyen bir kuralin isabetini bedeli goren bir kuralinkiyle yan yana koymak."
   },
   {
    "ne": "geri test — esik ailesi, 36 hafta, tarama + hold-out (olcut 12+)",
-   "deger": "hold-out 28/36 (%77,8) · TL775.835/hafta",
+   "deger": "860.315",
    "ureten": "cd backend && python -c \"from spor_toto.backtest import backtest; import json; print(json.dumps(backtest(sweep=True, strateji='esik'), ensure_ascii=False))\"",
    "olculdu": "2026-09-07",
    "anildigi_yerler": [
@@ -1401,11 +1401,11 @@
    ],
    "bekci": null,
    "olcek": "duz",
-   "not": "Sezonun kendisi 24/36 (%66,7), taramanin en iyisi 0,78/0,42 ile 31/33 (%93,9). Tarama olcutu 14+ iken 12+'ye cevrildi (ikramiye kademesi). SONUC: butce tavani olmayan bir ailede 12+ optimize etmek taramayi en genis esige itiyor ve bedel TL860.315/haftaya cikiyor. Yani bu tablo bir strateji tavsiyesi DEGIL, tavansiz aramanin dejenere oldugunun ikinci kanitidir. ESKI README sayilari (hold-out 1 hafta, 2.228 kolon, esik 0,68/0,38) KAPLAMA olceginde olculmustu ve bugun hicbiri yeniden uretilemiyor."
+   "not": "TL860.315 taramanin EN IYI satirinin (0,78/0,42) haftalik bedeli. Ayni kosum: sezon 24/36 (%66,7), hold-out 28/36 (%77,8) ve TL775.835/hafta, taramanin en iyisi 31/33 (%93,9). || Sezonun kendisi 24/36 (%66,7), taramanin en iyisi 0,78/0,42 ile 31/33 (%93,9). Tarama olcutu 14+ iken 12+'ye cevrildi (ikramiye kademesi). SONUC: butce tavani olmayan bir ailede 12+ optimize etmek taramayi en genis esige itiyor ve bedel TL860.315/haftaya cikiyor. Yani bu tablo bir strateji tavsiyesi DEGIL, tavansiz aramanin dejenere oldugunun ikinci kanitidir. ESKI README sayilari (hold-out 1 hafta, 2.228 kolon, esik 0,68/0,38) KAPLAMA olceginde olculmustu ve bugun hicbiri yeniden uretilemiyor."
   },
   {
    "ne": "para ekseni — 114 hafta, TL2.000: gercek kolon odulunun geri donusu",
-   "deger": "%33,4 (TL61.615 odul / TL184.680 maliyet)",
+   "deger": "%33,4",
    "ureten": "cd backend && python -m spor_toto.karne --taban --butce 2000",
    "olculdu": "2026-09-07",
    "anildigi_yerler": [
@@ -1414,11 +1414,11 @@
    ],
    "bekci": null,
    "olcek": "duz",
-   "not": "Garanti tabani odulu TL26.361 (%14,3), taban gevsekligi 2,34 kat. Okunacak esik 1,0'dir ve %33,4 onun UCTE BIRI: urun bugun parayi kaybediyor. Maliyet satiri geri testle BIREBIR ortusuyor (184.680/114 = TL1.620/hafta), yani kademe ekseni ile para ekseni ayni kosumu anlatiyor."
+   "not": "TL61.615 odul / TL184.680 maliyet. || Garanti tabani odulu TL26.361 (%14,3), taban gevsekligi 2,34 kat. Okunacak esik 1,0'dir ve %33,4 onun UCTE BIRI: urun bugun parayi kaybediyor. Maliyet satiri geri testle BIREBIR ortusuyor (184.680/114 = TL1.620/hafta), yani kademe ekseni ile para ekseni ayni kosumu anlatiyor."
   },
   {
    "ne": "piyasa Brier cizgisi — iki kesit ayri ayri",
-   "deger": "dar 0,5740 (36 hf/540 mac) · genis 0,5584 (114 hf/1.710 mac)",
+   "deger": "0,5584",
    "ureten": "cd backend && python -c \"from spor_toto.evaluate import kupon_kesiti_tum, olculebilir_haftalar; from spor_toto.ortak import brier; f=lambda hs: sum(brier(p,g) for h in hs for p,g in zip(h['probs'],h['results']))/sum(len(h['results']) for h in hs); print(f(olculebilir_haftalar()), f(kupon_kesiti_tum()))\"",
    "olculdu": "2026-09-07",
    "anildigi_yerler": [
@@ -1427,11 +1427,11 @@
     "README.md §5.4"
    ],
    "bekci": "backend/tests/test_evaluate.py::test_piyasa_baslangic_cizgisi",
-   "not": "Esit olasilik dagitmanin karsiligi 0,6667 (ortak.BRIER_ESIT). README uzun sure '0,579' diyordu ve HANGI KESIT oldugunu yazmiyordu: 0,579 = 38 hafta / 567 mac (kismi haftalar dahil, odds.season_1x2_summary), 0,5740 = 36 hafta / 540 mac (butun tahminciler AYNI haftalarda olculur), 0,5584 = 114 hafta / 1.710 mac. Uc sayi da dogru, uc farkli kesit."
+   "not": "Genis kesit (114 hafta / 1.710 mac). Dar kesit (36 hafta / 540 mac) 0,5740; her ikisi de ayni komuttan cikar. || Esit olasilik dagitmanin karsiligi 0,6667 (ortak.BRIER_ESIT). README uzun sure '0,579' diyordu ve HANGI KESIT oldugunu yazmiyordu: 0,579 = 38 hafta / 567 mac (kismi haftalar dahil, odds.season_1x2_summary), 0,5740 = 36 hafta / 540 mac (butun tahminciler AYNI haftalarda olculur), 0,5584 = 114 hafta / 1.710 mac. Uc sayi da dogru, uc farkli kesit."
   },
   {
    "ne": "iddaa acik bulteni ortalama marji — BIRIKIMLI (butun snapshot'lar)",
-   "deger": "%16,94 ortalama · %17,99 medyan (473 satir / 2 snapshot)",
+   "deger": "%16,9",
    "ureten": "cd backend && python -c \"import sys; sys.path.insert(0,'.'); from pathlib import Path; from scripts.snapshot_iddaa import birikimli_marj; print(birikimli_marj(Path('data/iddaa')))\"  # ya da data/iddaa/iddaa_rapor.json -> birikimli",
    "olculdu": "2026-09-07",
    "anildigi_yerler": [
@@ -1442,7 +1442,7 @@
     "docs/ISTATISTIK_YOL_HARITASI.md"
    ],
    "bekci": "backend/tests/test_snapshot_iddaa.py::test_rapor_birikimli_marji_tasir",
-   "not": "Belgeler %17,2 diyordu ve o TEK GUNUN sayisiydi (2026-08-16, 222 mac). Bir sonraki snapshot %16,70 verdi (2026-08-17, 251 mac), rapor uzerine yazildi, belge kaymadi ve hicbir kapi gormedi — cunku `avg_margin_pct` bir KOSUM CIKTISI, birikimli bir olcum degil. `snapshot_iddaa.birikimli_marj` eklendi ve rapora `birikimli` blogu girdi; belgeye giren sayi artik odur. Haftalik cron (.github/workflows/snapshot-iddaa.yml) her pazartesi bir snapshot daha ekliyor, yani bu sayi oynayacak ama sicramayacak. Medyan (%17,99) ortalamadan yuksek: dagilim carpik, buyuk ligler dusuk marjli. Piyasa arsivinin marji %7,26 — kiyas oradan. || Web (bayi disi) fiyatinin ayni 473 satirdaki marji %21,4 ortalama / %22,4 medyan; kupon fiyati bayi fiyatidir, belgede anilan sayi odur."
+   "not": "Tam deger %16,94 ortalama / %17,99 medyan, 473 satir / 2 snapshot; belgeler yuvarlanmis %16,9 ve medyan %18,0 yaziyor. || Belgeler %17,2 diyordu ve o TEK GUNUN sayisiydi (2026-08-16, 222 mac). Bir sonraki snapshot %16,70 verdi (2026-08-17, 251 mac), rapor uzerine yazildi, belge kaymadi ve hicbir kapi gormedi — cunku `avg_margin_pct` bir KOSUM CIKTISI, birikimli bir olcum degil. `snapshot_iddaa.birikimli_marj` eklendi ve rapora `birikimli` blogu girdi; belgeye giren sayi artik odur. Haftalik cron (.github/workflows/snapshot-iddaa.yml) her pazartesi bir snapshot daha ekliyor, yani bu sayi oynayacak ama sicramayacak. Medyan (%17,99) ortalamadan yuksek: dagilim carpik, buyuk ligler dusuk marjli. Piyasa arsivinin marji %7,26 — kiyas oradan. || Web (bayi disi) fiyatinin ayni 473 satirdaki marji %21,4 ortalama / %22,4 medyan; kupon fiyati bayi fiyatidir, belgede anilan sayi odur."
   }
  ],
  "komutlar": [
