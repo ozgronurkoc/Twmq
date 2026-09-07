@@ -4079,7 +4079,7 @@
       "1": 0.4207,
       "2": 0.3021
      },
-     "result": null
+     "result": "1"
     },
     {
      "away": "Amed Sportif",
@@ -4106,7 +4106,7 @@
       "1": 0.4389,
       "2": 0.2822
      },
-     "result": null
+     "result": "0"
     },
     {
      "away": "Eyüpspor",
@@ -4133,7 +4133,7 @@
       "1": 0.5694,
       "2": 0.1893
      },
-     "result": null
+     "result": "1"
     },
     {
      "away": "Beşiktaş A.Ş.",
@@ -4160,7 +4160,7 @@
       "1": 0.5263,
       "2": 0.2318
      },
-     "result": null
+     "result": "2"
     },
     {
      "away": "Galatasaray A.Ş.",
@@ -4187,7 +4187,7 @@
       "1": 0.1836,
       "2": 0.6099
      },
-     "result": null
+     "result": "2"
     },
     {
      "away": "Samsunspor A.Ş.",
@@ -4214,7 +4214,7 @@
       "1": 0.3622,
       "2": 0.3173
      },
-     "result": null
+     "result": "1"
     },
     {
      "away": "Gençlerbirliği",
@@ -4241,7 +4241,7 @@
       "1": 0.6143,
       "2": 0.1642
      },
-     "result": null
+     "result": "1"
     },
     {
      "away": "Alanyaspor",
@@ -4268,7 +4268,7 @@
       "1": 0.5009,
       "2": 0.2202
      },
-     "result": null
+     "result": "2"
     },
     {
      "away": "Gaziantep F.K. A.Ş.",
@@ -4295,7 +4295,7 @@
       "1": 0.509,
       "2": 0.2367
      },
-     "result": null
+     "result": "2"
     },
     {
      "away": "Manchester United",
@@ -4322,7 +4322,7 @@
       "1": 0.2878,
       "2": 0.4488
      },
-     "result": null
+     "result": "0"
     },
     {
      "away": "Chelsea",
@@ -4349,7 +4349,7 @@
       "1": 0.5794,
       "2": 0.1748
      },
-     "result": null
+     "result": "1"
     },
     {
      "away": "Atletico Madrid",
@@ -4376,7 +4376,7 @@
       "1": 0.3084,
       "2": 0.419
      },
-     "result": null
+     "result": "1"
     },
     {
      "away": "Napoli",
@@ -4403,7 +4403,7 @@
       "1": 0.5767,
       "2": 0.1782
      },
-     "result": null
+     "result": "1"
     },
     {
      "away": "Atalanta",
@@ -4430,7 +4430,7 @@
       "1": 0.5695,
       "2": 0.1888
      },
-     "result": null
+     "result": "1"
     },
     {
      "away": "AC Milan",
@@ -4457,7 +4457,7 @@
       "1": 0.4609,
       "2": 0.252
      },
-     "result": null
+     "result": "0"
     }
    ],
    "odds_kind": "pinnacle-kapanis",
@@ -4763,8 +4763,286 @@
     }
    },
    "program": "",
-   "results": null,
-   "sonuc": null,
+   "results": "101221122011110",
+   "sonuc": {
+    "kalabalik": {
+     "beklenen_halk_dogru": 6.28,
+     "beklenen_piyasa_dogru": 6.1287046346577165,
+     "halk_dogru": 7,
+     "halk_kuponu": "211121111212111",
+     "piyasa_dogru": 8,
+     "piyasa_kuponu": "111121111212111"
+    },
+    "kayitlar": [
+     {
+      "ad": "1. Tahmin",
+      "best": 12,
+      "expected_misses": 2.6888,
+      "miss_count": 3,
+      "misses": [
+       4,
+       8,
+       9
+      ],
+      "p_at_least_actual": 0.532999,
+      "p_in_set": 0.040145,
+      "per_match": [
+       {
+        "gercek": "1",
+        "no": 1,
+        "pick": "102",
+        "tuttu": true
+       },
+       {
+        "gercek": "0",
+        "no": 2,
+        "pick": "102",
+        "tuttu": true
+       },
+       {
+        "gercek": "1",
+        "no": 3,
+        "pick": "1",
+        "tuttu": true
+       },
+       {
+        "gercek": "2",
+        "no": 4,
+        "pick": "10",
+        "tuttu": false
+       },
+       {
+        "gercek": "2",
+        "no": 5,
+        "pick": "2",
+        "tuttu": true
+       },
+       {
+        "gercek": "1",
+        "no": 6,
+        "pick": "102",
+        "tuttu": true
+       },
+       {
+        "gercek": "1",
+        "no": 7,
+        "pick": "1",
+        "tuttu": true
+       },
+       {
+        "gercek": "2",
+        "no": 8,
+        "pick": "10",
+        "tuttu": false
+       },
+       {
+        "gercek": "2",
+        "no": 9,
+        "pick": "10",
+        "tuttu": false
+       },
+       {
+        "gercek": "0",
+        "no": 10,
+        "pick": "102",
+        "tuttu": true
+       },
+       {
+        "gercek": "1",
+        "no": 11,
+        "pick": "10",
+        "tuttu": true
+       },
+       {
+        "gercek": "1",
+        "no": 12,
+        "pick": "102",
+        "tuttu": true
+       },
+       {
+        "gercek": "1",
+        "no": 13,
+        "pick": "10",
+        "tuttu": true
+       },
+       {
+        "gercek": "1",
+        "no": 14,
+        "pick": "10",
+        "tuttu": true
+       },
+       {
+        "gercek": "0",
+        "no": 15,
+        "pick": "10",
+        "tuttu": true
+       }
+      ],
+      "picks": [
+       "102",
+       "102",
+       "1",
+       "10",
+       "2",
+       "102",
+       "1",
+       "10",
+       "10",
+       "102",
+       "10",
+       "102",
+       "10",
+       "10",
+       "10"
+      ]
+     },
+     {
+      "ad": "2. Tahmin",
+      "best": 15,
+      "expected_misses": 2.2349,
+      "miss_count": 0,
+      "misses": [],
+      "p_at_least_actual": 1.0,
+      "p_in_set": 0.057826,
+      "per_match": [
+       {
+        "gercek": "1",
+        "no": 1,
+        "pick": "102",
+        "tuttu": true
+       },
+       {
+        "gercek": "0",
+        "no": 2,
+        "pick": "102",
+        "tuttu": true
+       },
+       {
+        "gercek": "1",
+        "no": 3,
+        "pick": "1",
+        "tuttu": true
+       },
+       {
+        "gercek": "2",
+        "no": 4,
+        "pick": "102",
+        "tuttu": true
+       },
+       {
+        "gercek": "2",
+        "no": 5,
+        "pick": "2",
+        "tuttu": true
+       },
+       {
+        "gercek": "1",
+        "no": 6,
+        "pick": "102",
+        "tuttu": true
+       },
+       {
+        "gercek": "1",
+        "no": 7,
+        "pick": "1",
+        "tuttu": true
+       },
+       {
+        "gercek": "2",
+        "no": 8,
+        "pick": "102",
+        "tuttu": true
+       },
+       {
+        "gercek": "2",
+        "no": 9,
+        "pick": "102",
+        "tuttu": true
+       },
+       {
+        "gercek": "0",
+        "no": 10,
+        "pick": "102",
+        "tuttu": true
+       },
+       {
+        "gercek": "1",
+        "no": 11,
+        "pick": "10",
+        "tuttu": true
+       },
+       {
+        "gercek": "1",
+        "no": 12,
+        "pick": "102",
+        "tuttu": true
+       },
+       {
+        "gercek": "1",
+        "no": 13,
+        "pick": "1",
+        "tuttu": true
+       },
+       {
+        "gercek": "1",
+        "no": 14,
+        "pick": "1",
+        "tuttu": true
+       },
+       {
+        "gercek": "0",
+        "no": 15,
+        "pick": "102",
+        "tuttu": true
+       }
+      ],
+      "picks": [
+       "102",
+       "102",
+       "1",
+       "102",
+       "2",
+       "102",
+       "1",
+       "102",
+       "102",
+       "102",
+       "10",
+       "102",
+       "1",
+       "1",
+       "102"
+      ]
+     }
+    ],
+    "note": "Bu sekmedeki her sayı sonuçlar görüldükten SONRA hesaplandı. Tahmin sekmeleri onu görmez ve değişmez.",
+    "payout": [
+     {
+      "correct": 15,
+      "prize": 36007678.16,
+      "winners": 1
+     },
+     {
+      "correct": 14,
+      "prize": 388222.94,
+      "winners": 53
+     },
+     {
+      "correct": 13,
+      "prize": 19193.85,
+      "winners": 1072
+     },
+     {
+      "correct": 12,
+      "prize": 2155.16,
+      "winners": 11934
+     }
+    ],
+    "payout_source": "Spor Toto sonuç ekranının ikramiye şeridi — kullanıcı ekran görüntüsü (2026-09-07 22:12). Şerit yalnızca 15/14/13/12 kademelerini gösteriyor; devir ve toplam havuz OKUNMADI.",
+    "results": "101221122011110",
+    "results_entered_at": "2026-09-07",
+    "results_source": "Spor Toto resmî 'Sonuçlar' ekranı — kullanıcı ekran görüntüsü (2026-09-07 22:12). İki ekran görüntüsü 15 maçın tamamını kapsıyor (1–9 ve 7–15; 7–9 iki görüntüde de aynı okundu)."
+   },
    "tahmin2": {
     "ad": "2. Tahmin",
     "arindirma": "shin",

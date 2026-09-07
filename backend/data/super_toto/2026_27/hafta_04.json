@@ -10,7 +10,7 @@
   "play_source": "tek platform kullanıcı tercih yüzdesi (% Tercih) — kullanıcı girdisi (2026-09-04)",
   "play_note": "yüzdeler tek bir platformun kendi kullanıcılarıdır; Spor Toto havuzunun tamamı DEĞİLDİR",
   "entered_at": "2026-09-04",
-  "results": null,
+  "results": "101221122011110",
   "odds_books_note": "pinnacle/nesine × acilis/kapanis. 3. haftada üç bahisçi vardı, bu hafta İKİ — bet365.nl kaydı GİRİLMEDİ, yani bahisçi ayrışması bu hafta iki kaynak arasında ölçülüyor. Marj ortalamaları: Pinnacle %4,65 açılış (14 maç) / %4,62 kapanış (13 maç) · Nesine %16,32 açılış / %16,71 kapanış (15/15 maç).",
   "data_warnings": [
    "Program tarihleri ve maç saatleri GİRİLMEDİ (kullanıcı vermedi). Uydurulmadı; `date`/`kickoff` boş bırakıldı. Kupon kapanış anını belgeleyen tek alan `entered_at`tır (2026-09-04). 3. haftada bu eksiklik sonradan kapandığında `odds_kind`in FAZLA ETİKETLİ olduğu görülmüştü; aynı şüphe bu hafta da geçerlidir — 'kapanış' diye duran şey, kupon donarken elde olan EN GEÇ kayıttır, maçın gerçek kapanış çizgisi değildir.",
@@ -20,7 +20,35 @@
    "Pinnacle'ın 9. maçı (Göztepe–Gaziantep) da bayat: kapanış (1.89–3.69–3.95) açılışla BİREBİR aynı. Bayatlık bu hafta ilk kez ana fiyat kaynağının kendisinde görünüyor — 3. haftada yalnızca Nesine'deydi. O satırda çizgi hareketi ölçülemez.",
    "bet365.nl kaydı bu hafta YOK. 3. hafta üç bahisçiyle girilmişti; haftalar arası 'bahisçi ayrışması' karşılaştırması bu daralmayı hesaba katmalıdır — iki kaynağın ayrışması üç kaynağınkiyle aynı büyüklük değildir.",
    "12. maçın ev sahibi bültende 'Atletico Bilbao' yazıyor; kulübün adı Athletic Club'dır ve kayda 'Athletic Bilbao' olarak girildi. Oranlar ve yüzdeler ekrandaki satırdan birebir alındı; değişen yalnızca takım adının yazımıdır."
-  ]
+  ],
+  "results_entered_at": "2026-09-07",
+  "results_source": "Spor Toto resmî 'Sonuçlar' ekranı — kullanıcı ekran görüntüsü (2026-09-07 22:12). İki ekran görüntüsü 15 maçın tamamını kapsıyor (1–9 ve 7–15; 7–9 iki görüntüde de aynı okundu).",
+  "payout": {
+   "source": "Spor Toto sonuç ekranının ikramiye şeridi — kullanıcı ekran görüntüsü (2026-09-07 22:12). Şerit yalnızca 15/14/13/12 kademelerini gösteriyor; devir ve toplam havuz OKUNMADI.",
+   "currency": "TRY",
+   "tiers": [
+    {
+     "correct": 15,
+     "winners": 1,
+     "prize": 36007678.16
+    },
+    {
+     "correct": 14,
+     "winners": 53,
+     "prize": 388222.94
+    },
+    {
+     "correct": 13,
+     "winners": 1072,
+     "prize": 19193.85
+    },
+    {
+     "correct": 12,
+     "winners": 11934,
+     "prize": 2155.16
+    }
+   ]
+  }
  },
  "matches": [
   {
@@ -62,6 +90,11 @@
     "1": 32.0,
     "0": 27.0,
     "2": 41.0
+   },
+   "result": "1",
+   "score": {
+    "hg": 1,
+    "ag": 0
    }
   },
   {
@@ -93,6 +126,11 @@
     "1": 46.0,
     "0": 32.0,
     "2": 22.0
+   },
+   "result": "0",
+   "score": {
+    "hg": 2,
+    "ag": 2
    }
   },
   {
@@ -134,6 +172,11 @@
     "1": 57.0,
     "0": 24.0,
     "2": 19.0
+   },
+   "result": "1",
+   "score": {
+    "hg": 3,
+    "ag": 0
    }
   },
   {
@@ -175,6 +218,11 @@
     "1": 50.0,
     "0": 29.0,
     "2": 21.0
+   },
+   "result": "2",
+   "score": {
+    "hg": 1,
+    "ag": 2
    }
   },
   {
@@ -216,6 +264,11 @@
     "1": 13.0,
     "0": 20.0,
     "2": 67.0
+   },
+   "result": "2",
+   "score": {
+    "hg": 2,
+    "ag": 3
    }
   },
   {
@@ -257,6 +310,11 @@
     "1": 40.0,
     "0": 29.0,
     "2": 31.0
+   },
+   "result": "1",
+   "score": {
+    "hg": 1,
+    "ag": 0
    }
   },
   {
@@ -298,6 +356,11 @@
     "1": 81.0,
     "0": 11.0,
     "2": 8.0
+   },
+   "result": "1",
+   "score": {
+    "hg": 5,
+    "ag": 0
    }
   },
   {
@@ -339,6 +402,11 @@
     "1": 53.0,
     "0": 30.0,
     "2": 17.0
+   },
+   "result": "2",
+   "score": {
+    "hg": 0,
+    "ag": 1
    }
   },
   {
@@ -380,6 +448,11 @@
     "1": 73.0,
     "0": 17.0,
     "2": 10.0
+   },
+   "result": "2",
+   "score": {
+    "hg": 2,
+    "ag": 4
    }
   },
   {
@@ -421,6 +494,11 @@
     "1": 24.0,
     "0": 26.0,
     "2": 50.0
+   },
+   "result": "0",
+   "score": {
+    "hg": 2,
+    "ag": 2
    }
   },
   {
@@ -462,6 +540,11 @@
     "1": 63.0,
     "0": 23.0,
     "2": 14.0
+   },
+   "result": "1",
+   "score": {
+    "hg": 2,
+    "ag": 1
    }
   },
   {
@@ -503,6 +586,11 @@
     "1": 21.0,
     "0": 27.0,
     "2": 52.0
+   },
+   "result": "1",
+   "score": {
+    "hg": 3,
+    "ag": 0
    }
   },
   {
@@ -539,6 +627,11 @@
     "1": 67.0,
     "0": 24.0,
     "2": 9.0
+   },
+   "result": "1",
+   "score": {
+    "hg": 3,
+    "ag": 2
    }
   },
   {
@@ -580,6 +673,11 @@
     "1": 60.0,
     "0": 25.0,
     "2": 15.0
+   },
+   "result": "1",
+   "score": {
+    "hg": 2,
+    "ag": 1
    }
   },
   {
@@ -621,6 +719,11 @@
     "1": 43.0,
     "0": 34.0,
     "2": 23.0
+   },
+   "result": "0",
+   "score": {
+    "hg": 1,
+    "ag": 1
    }
   }
  ]

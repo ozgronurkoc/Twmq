@@ -115,6 +115,63 @@ def _merdiven(probs: list[dict[str, float]], garanti: int,
               f"{x.p_hedef:>9.4f}{marj:>10}")
 
 
+
+#: ─── Karnenin "Okuma" bölümündeki üç cümle ─────────────────────────────
+#:
+#: **Üçü de bir kez elle yazılmıştı ve üçü de bayatladı.** Metin *"2. ve 3.
+#: hafta 12 tutturdu ve ikisi de zarar etti"*, *"manşetin dörtte biri ile
+#: beşte biri arasında"* ve *"1. haftada `k=1` bile maliyeti karşılardı"*
+#: diyordu; bunlar `13`-garanti / `hedef` varsayılanının sayılarıydı.
+#: Varsayılan `15`-garanti / `hak`a döndüğünde tablo değişti ama cümleler
+#: kalmıştı — yani karne, **kendi tablosunun yalanladığı** üç cümle
+#: taşıyordu. Karnenin var olma sebebi ölçümün ürünün tarifi olması; elle
+#: yazılmış bir yorum o tarifi sessizce bozar.
+#:
+#: Üçü de artık satırlardan TÜRETİLİYOR. Bir kural değişikliği tabloyu
+#: değiştirdiğinde yorum da değişir; ayrışamazlar.
+
+def _odeyen_olay_cumlesi(bitmis: list[dict[str, Any]]) -> str:
+    """Kaydın kendisi ödeyen kademeye ulaştı mı — satırlardan."""
+    odeyen = [r for r in bitmis if r.get("odul")]
+    if not odeyen:
+        return ("Karnenin kendi kaydında bugüne kadar **hiçbir hafta** "
+                f"ödeyen kademeye ulaşmadı ({len(bitmis)} hafta).")
+    hf = ", ".join(f"{r['hafta']}." for r in odeyen)
+    kar = [r for r in odeyen if r["net"] > 0]
+    return (f"Karnenin kendi kaydında ödeyen kademeye ulaşan hafta: {hf} "
+            + ("hiçbiri kâr etmedi." if not kar else
+               f"{len(kar)}'i kâr etti."))
+
+
+def _manset_orani(rows: list[dict[str, Any]]) -> str:
+    """`P(k=0)` manşetin kaçta kaçı — en dar ve en geniş satır."""
+    oranlar = sorted(r["p_hedef"] / r["p_kacak_sifir"]
+                     for r in rows if r.get("p_kacak_sifir"))
+    if not oranlar:
+        return "ölçülemedi (hiçbir satırda `P(k=0)` yok)"
+    if len(oranlar) == 1 or round(oranlar[0]) == round(oranlar[-1]):
+        return f"1/{oranlar[0]:.0f}"
+    return f"1/{oranlar[-1]:.0f} ile 1/{oranlar[0]:.0f} arasında"
+
+
+def _basabas_cumlesi(bitmis: list[dict[str, Any]]) -> str:
+    """Başabaş `k` sütununun kendi dağılımı — hangi hafta neyi karşılardı."""
+    var = [r for r in bitmis if r.get("basabas_kacak") is not None]
+    if not var:
+        return ("sonuçlanmış hiçbir haftada `k`'nın hiçbir değeri maliyeti "
+                "karşılamıyordu.")
+    grup: dict[int, list[int]] = {}
+    for r in var:
+        grup.setdefault(r["basabas_kacak"], []).append(r["hafta"])
+    parcalar = [f"`k={k}` " + ", ".join(f"{h}." for h in sorted(hf)) + " haftada"
+                for k, hf in sorted(grup.items())]
+    yok = [r["hafta"] for r in bitmis if r.get("basabas_kacak") is None]
+    if yok:
+        parcalar.append("hiçbir `k` " + ", ".join(f"{h}." for h in sorted(yok))
+                        + " haftada")
+    return "; ".join(parcalar) + "."
+
+
 def karne_metni(sezon: str, butce: float, garanti: int,
                 kural: str = VARSAYILAN_KURAL) -> str:
     rows = satirlar(sezon, butce, garanti, kural)
@@ -194,13 +251,11 @@ kolonları satıcı üretiyor). Gerçekleşen getiri bu tablodan **büyüktür**
 
 **`P(k≤{kacak_esigi()})` bir kapsama ölçüsüdür, kâr ölçüsü değildir.**
 Manşet olasılık iki farklı olayı topluyor ve biri para kaybettiriyor:
-`k=0` {garanti}. kademeyi verir, `k=1` {garanti - 1}. kademeyi. Karnenin
-kendi kaydı bunu iki kez yazdı — 2. ve 3. hafta 12 tutturdu ve ikisi de
-zarar etti. Ödeyen olayın olasılığı `P(k=0)` sütununda ve manşetin
-**dörtte biri ile beşte biri** arasında. **Başabaş k** sütunu her haftanın
+`k=0` {garanti}. kademeyi verir, `k=1` {garanti - 1}. kademeyi. {_odeyen_olay_cumlesi(bitmis)}
+Ödeyen olayın olasılığı `P(k=0)` sütununda ve manşetin
+**{_manset_orani(rows)}**. **Başabaş k** sütunu her haftanın
 KENDİ ikramiye tablosundan türetiliyor (medyan alınmıyor: nominal TL dört
-sezonda 72 kat büyümüş), ve o sütun sabit değil — 1. haftada `k=1` bile
-maliyeti karşılardı, 2. ve 3. haftada yalnızca `k=0`.
+sezonda 72 kat büyümüş), ve o sütun sabit değil — {_basabas_cumlesi(bitmis)}
 
 **`n` küçük.** Bu tablo bir strateji karnesi değil, bir **kayıt
 başlangıcı**. Anlamlı bir yargı için haftaların birikmesi gerekiyor ve

@@ -710,3 +710,80 @@ def test_sistem_parametresi_HICBIR_govdede_sabit_varsayilana_dusmez():
     assert not suclu, (
         "sistem parametresi sabit varsayilana dusuyor: " + ", ".join(suclu)
         + " — varsayilan `None` olmali ve `kayit_sistemi(d)` ile cozulmeli.")
+
+
+def test_puan_hangi_kolon_kumesinden_ciktigini_soyler(deg):
+    """`best` künyesiz dönmemeli: kaç kolon gezildi, hangi yoldan.
+
+    4. haftanın 2. Tahmin kaydı bu bekçiyi doğurdu. Kayıt 4.374 kolonluk
+    bir kaplamadır (`engine: blok ayrıştırma`, 14-garanti); o motor
+    depodan söküldü (`docs/DUZ_SISTEME_GECIS.md`), `solve_fix16` bir
+    çifteyle kurulamadı ve değerlendirici **39.366 kolonluk seçim
+    uzayının tamamını** gezip `15/15` bastı. Çıktıda "4,374 kolon" yazan
+    satırın hemen yanında, dokuz kat büyük bir kümeden gelen bir puan
+    duruyordu — ve bunu söyleyen tek işaret yoktu.
+
+    Sayı yanlış değildi; **künyesi eksikti**, ve künyesiz bir puan
+    kaydın bedeliyle yan yana basıldığı anda yanlış okunur.
+    """
+    probs = [{"1": 0.5, "0": 0.3, "2": 0.2}] * 15
+    d = _hafta(probs, "1" * 15)
+
+    # Yedi cifte -> kaplama kurulur: puan 16 satirdan cikar.
+    kaplamali = deg.kupon_degerlendir(d, ["1"] * 8 + ["10"] * 7)
+    assert kaplamali["puanlama_yolu"] == "kaplama"
+    assert kaplamali["puanlanan_kolon"] == 16
+
+    # Tek cifte -> `Fix16Hatasi` -> yedek yol. Puan artik BASKA bir
+    # kumeden geliyor ve gezilen kolon bunu soylemeli.
+    yedekli = deg.kupon_degerlendir(d, ["1"] * 8 + ["102"] * 6 + ["10"])
+    assert yedekli["puanlama_yolu"] == "tam-sayim"
+    assert yedekli["puanlanan_kolon"] == 3 ** 6 * 2
+
+    # Duz kayitta da kunye bos kalmaz.
+    d["meta"]["sistem"] = "duz"
+    duz = deg.kupon_degerlendir(d, ["1"] * 8 + ["10"] * 7)
+    assert duz["puanlama_yolu"] == "tam-sayim"
+    assert duz["puanlanan_kolon"] == 2 ** 7
+
+
+def test_karne_yorumu_KENDI_TABLOSUYLA_celismez():
+    """Karnenin "Okuma" bölümü, tablosunun yalanladığı cümle taşımamalı.
+
+    **Üç cümle bir kez elle yazıldı ve üçü de bayatladı.** Karne
+    *"2. ve 3. hafta 12 tutturdu ve ikisi de zarar etti"*, *"manşetin
+    dörtte biri ile beşte biri arasında"* ve *"1. haftada `k=1` bile
+    maliyeti karşılardı"* diyordu. Bunlar `13`-garanti / `hedef`
+    varsayılanının sayılarıydı; varsayılan `15`-garanti / `hak`a
+    döndüğünde tablo değişti, cümleler kaldı — yani belge kendi
+    tablosunun yalanladığı üç iddia taşıyordu.
+
+    Karnenin var olma sebebi ölçümün ürünün tarifi olması. Elle yazılmış
+    bir yorum o tarifi sessizce bozar, çünkü tablo yeniden üretilirken
+    yorum üretilmez.
+
+    Bu bekçi cümleleri değil, **türetildiklerini** tutar: üç yardımcının
+    da çıktısı satırlardan gelmeli ve satırlar değişince değişmeli.
+    """
+    from scripts.hafta_kos import _basabas_cumlesi, _manset_orani, _odeyen_olay_cumlesi
+
+    odulsuz = [{"hafta": 1, "odul": 0, "net": -1620, "basabas_kacak": 3},
+               {"hafta": 2, "odul": 0, "net": -1620, "basabas_kacak": 2}]
+    odullu = [{"hafta": 1, "odul": 1439, "net": -181, "basabas_kacak": 0},
+              {"hafta": 2, "odul": 9000, "net": 7380, "basabas_kacak": 1}]
+
+    assert "hiçbir hafta" in _odeyen_olay_cumlesi(odulsuz)
+    metin = _odeyen_olay_cumlesi(odullu)
+    assert "hiçbir hafta" not in metin and "1'i kâr etti" in metin
+
+    # Manset orani P(hedef)/P(k=0)'dan gelir, elle yazilmis bir kesirden degil.
+    assert _manset_orani([{"p_hedef": 0.2, "p_kacak_sifir": 0.05}]) == "1/4"
+    genis = _manset_orani([{"p_hedef": 0.2, "p_kacak_sifir": 0.05},
+                           {"p_hedef": 0.3, "p_kacak_sifir": 0.03}])
+    assert genis == "1/10 ile 1/4 arasında"
+
+    # Basabas cumlesi haftalari k'ya gore gruplar; k'si olmayan hafta da yazilir.
+    assert _basabas_cumlesi(odulsuz) == "`k=2` 2. haftada; `k=3` 1. haftada."
+    assert "hiçbir `k` 3. haftada" in _basabas_cumlesi(
+        [*odulsuz, {"hafta": 3, "odul": 0, "net": -1620,
+                    "basabas_kacak": None}])

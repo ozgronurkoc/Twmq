@@ -1042,3 +1042,60 @@ def test_saglik_katmani_test_sayisi_belgeyle_ayni():
     assert yazili, "SAGLIK_VIZYONU.md §11 'Sağlık katmanının test sayısı' satırı yok"
     assert int(yazili.group(1)) == gercek, (
         f"SAGLIK_VIZYONU.md {yazili.group(1)} diyor, gerçek {gercek}")
+
+
+def _dosya_basina_test_sayisi() -> dict[str, int]:
+    """`{modul_adi: test sayisi}` — AYRI surecte, `_gercek_test_sayisi` gibi."""
+    out = subprocess.run(
+        [sys.executable, "-m", "pytest", "--collect-only", "-q",
+         "-o", "addopts=", "-p", "no:cacheprovider"],
+        cwd=KOK, capture_output=True, text=True, timeout=300,
+    )
+    sayim: dict[str, int] = {}
+    for ad in re.findall(r"^tests/test_([a-z_0-9]+)\.py::", out.stdout,
+                         re.MULTILINE):
+        sayim[ad] = sayim.get(ad, 0) + 1
+    return sayim
+
+
+def test_katman_dokumu_GERCEK_koleksiyonu_sayar():
+    """§1'in katman dökümündeki dört sayı da gerçek koleksiyonla aynı olmalı.
+
+    **Dördü de bayattı ve dördünü de kimse görmedi.** Cümle
+    *"85'i istatistik katmanına ... 579'u tahmin katmanına ... 29'u 2.
+    Tahmin'e ... 30'u sonuç değerlendirmesine"* diyordu; gerçek sayılar
+    **117 / 624 / 35 / 38**'di. Aynı cümlenin **toplamı** (`1.835`)
+    doğruydu, çünkü onun bekçisi vardı
+    (`test_test_sayisi_belgelerde_tek_ve_dogru`) — dökümünse yoktu.
+
+    Cümlenin kendisi *"dosya adlarıyla sayılıdır ki tablo elle bakım
+    gerektirmesin — `tests/test_belgeler.py` onları gerçek koleksiyona
+    karşı denetler"* diye bitiyor. Bu bekçi o cümleyi doğru yapıyor:
+    dosya adları parantez içinde yazılı olduğu için sayı **türetilebilir**,
+    ve türetilebilen bir sayının elle tutulması gerekmez.
+    """
+    import importlib.util
+
+    if importlib.util.find_spec("lightgbm") is None:
+        pytest.skip("lightgbm yok: eksiksiz suit toplanmiyor, sayim eksik olur")
+
+    metin = _oku("docs/ISTATISTIK_YOL_HARITASI.md")
+    bas = metin.find("Backend test\npaketi toplam")
+    assert bas > 0, "§1'in katman dökümü cümlesi bulunamadı"
+    cumle = metin[bas:metin.find("Dosya adlarıyla sayılıdır", bas)]
+
+    gercek = _dosya_basina_test_sayisi()
+    assert gercek, "koleksiyon okunamadı"
+
+    yanlis = []
+    for yazili, etiket, dosyalar in re.findall(
+            r"\*\*([\d.]+)'[a-zü]{1,2}\*\* ([^(]+)\(([^)]*)\)", cumle):
+        adlar = re.findall(r"`([a-z_0-9]+)`", dosyalar)
+        bilinen = [a for a in adlar if a in gercek]
+        assert bilinen, f"'{etiket.strip()}' hiçbir gerçek test dosyası anmıyor"
+        toplam = sum(gercek[a] for a in bilinen)
+        if int(yazili.replace(".", "")) != toplam:
+            yanlis.append(f"{etiket.strip()}: yazılı {yazili}, gerçek {toplam}")
+    assert not yanlis, (
+        "§1 katman dökümü gerçek koleksiyonla ayrışmış — "
+        + "; ".join(yanlis))

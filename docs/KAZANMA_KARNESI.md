@@ -13,30 +13,31 @@
 
 | | |
 |---|---|
-| garanti | **13** → kaçak eşiği `k ≤ 1`, hedef `P(en iyi kolon ≥ 12)` |
-| bütçe | 2,000 TL (200 kolon) |
+| garanti | **15** → kaçak eşiği `k ≤ 3`, hedef `P(en iyi kolon ≥ 12)` |
+| kural | **`hak`** — `secim.odul_secim`: kademeler kendi ağırlığıyla (medyan), bütçe **kısıt değil supap** |
+| bütçe | 2,000 TL (200 kolon) — **tavan**; kural bedelini kendi seçer ve satırlar tavanı kovalamaz |
 | bedel | ₺10/kolon — ölçülmüş (`getiri.KOLON_BEDELI`) |
-| ödül | **garanti tabanı**: `k` kaçakta **bir** kolon `13−k` kademesinde. **Alt sınır** — gerçekleşen getiri bundan büyüktür |
-| ödeyen olay | `k = 0` → 13. kademe. `P(k≤1)` bunu `k = 1`'le **topluyor** ve o kademe maliyeti karşılamıyor — bkz. başabaş sütunu |
+| ödül | **garanti tabanı**: `k` kaçakta **bir** kolon `15−k` kademesinde. **Alt sınır** — gerçekleşen getiri bundan büyüktür |
+| ödeyen olay | `k = 0` → 15. kademe. `P(k≤3)` bunu `k = 1`'le **topluyor** ve o kademe maliyeti karşılamıyor — bkz. başabaş sütunu |
 | rakip kolon | 15,000,000 — varsayım (`karne.RAKIP_KOLON`); `E[TL]` buna `1/(N·q)` mertebesinde duyarlı |
 
 ## Haftalar
 
-| hf | şekil | kolon | maliyet | P(k≤1) | **P(k=0)** | E[TL] | kaçak | kademe | **başabaş k** | ödül | net | fiyat ölçeği |
+| hf | şekil | kolon | maliyet | P(k≤3) | **P(k=0)** | E[TL] | kaçak | kademe | **başabaş k** | ödül | net | fiyat ölçeği |
 |---:|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
-| 1 | 6b/1ç/8ü | 162 | 1,620 | 0.249 | **0.052** | 75 | 4 | 9 | 1 | 0 | -1,620 | `iddaa` |
-| 2 | 6b/1ç/8ü | 162 | 1,620 | 0.219 | **0.044** | 94 | 1 | 12 | 0 | 1,439 | -181 | `iddaa-acilis` |
-| 3 | 6b/1ç/8ü | 162 | 1,620 | 0.282 | **0.064** | 93 | 1 | 12 | 0 | 1,230 | -390 | `pinnacle-kapanis` |
-| 4 | 6b/1ç/8ü | 162 | 1,620 | 0.175 | **0.032** | — | — | — | — | — | — | `pinnacle-kapanis` |
+| 1 | 10b/1ç/4ü | 162 | 1,620 | 0.269 | **0.003** | 164 | 5 | 10 | 3 | 0 | -1,620 | `iddaa` |
+| 2 | 10b/1ç/4ü | 162 | 1,620 | 0.275 | **0.003** | 462 | 4 | 11 | 2 | 0 | -1,620 | `iddaa-acilis` |
+| 3 | 10b/1ç/4ü | 162 | 1,620 | 0.317 | **0.004** | 333 | 5 | 10 | 2 | 0 | -1,620 | `pinnacle-kapanis` |
+| 4 | 10b/1ç/4ü | 162 | 1,620 | 0.224 | **0.002** | 358 | 5 | 10 | 3 | 0 | -1,620 | `pinnacle-kapanis` |
 
-## Toplam (3 sonuçlanmış hafta)
+## Toplam (4 sonuçlanmış hafta)
 
 | | |
 |---|---:|
-| maliyet | 4,860 TL |
-| ödül (garanti tabanı) | 2,668 TL |
-| **net** | **-2,192 TL** |
-| geri dönüş | **%54.9** |
+| maliyet | 6,480 TL |
+| ödül (garanti tabanı) | 0 TL |
+| **net** | **-6,480 TL** |
+| geri dönüş | **%0.0** |
 
 ## Okuma
 
@@ -49,25 +50,23 @@ söylüyor — ama **ilan etmek karşılaştırmayı geçerli kılmıyor** (§3.
 haftalık geri test `Avg` kapanışla (marj %7,26) koşuyor, yani ortada
 **üç** ölçek var. Düzeltilemez de: 2026/27'nin oran arşivi bugün boş,
 canlı haftalar `Avg` ölçeğinde yeniden türetilemiyor. Geçersiz olan
-karşılaştırmalar açıkça şunlar: canlı `P(k≤1)` ↔ geri
+karşılaştırmalar açıkça şunlar: canlı `P(k≤3)` ↔ geri
 testin ortalaması, ve ölçeğin değiştiği yerde canlı haftaların
 olasılıkları **birbiriyle**. Geçerli kalanlar sonuçtan gelenlerdir —
 kaçak, kademe, ödül; onlar fiyattan bağımsızdır.
 
-**Ödül sütunu alt sınırdır.** 162 kolonluk bir 13-garanti
+**Ödül sütunu alt sınırdır.** 162 kolonluk bir 15-garanti
 sistemi, garantinin söylediği tek kolondan fazlasını da tutturur; karne
 onları saymaz çünkü kolon listesi bizde değil (şekle biz karar veriyoruz,
 kolonları satıcı üretiyor). Gerçekleşen getiri bu tablodan **büyüktür**.
 
-**`P(k≤1)` bir kapsama ölçüsüdür, kâr ölçüsü değildir.**
+**`P(k≤3)` bir kapsama ölçüsüdür, kâr ölçüsü değildir.**
 Manşet olasılık iki farklı olayı topluyor ve biri para kaybettiriyor:
-`k=0` 13. kademeyi verir, `k=1` 12. kademeyi. Karnenin
-kendi kaydı bunu iki kez yazdı — 2. ve 3. hafta 12 tutturdu ve ikisi de
-zarar etti. Ödeyen olayın olasılığı `P(k=0)` sütununda ve manşetin
-**dörtte biri ile beşte biri** arasında. **Başabaş k** sütunu her haftanın
+`k=0` 15. kademeyi verir, `k=1` 14. kademeyi. Karnenin kendi kaydında bugüne kadar **hiçbir hafta** ödeyen kademeye ulaşmadı (4 hafta).
+Ödeyen olayın olasılığı `P(k=0)` sütununda ve manşetin
+**1/121 ile 1/83 arasında**. **Başabaş k** sütunu her haftanın
 KENDİ ikramiye tablosundan türetiliyor (medyan alınmıyor: nominal TL dört
-sezonda 72 kat büyümüş), ve o sütun sabit değil — 1. haftada `k=1` bile
-maliyeti karşılardı, 2. ve 3. haftada yalnızca `k=0`.
+sezonda 72 kat büyümüş), ve o sütun sabit değil — `k=2` 2., 3. haftada; `k=3` 1., 4. haftada.
 
 **`n` küçük.** Bu tablo bir strateji karnesi değil, bir **kayıt
 başlangıcı**. Anlamlı bir yargı için haftaların birikmesi gerekiyor ve
