@@ -180,7 +180,8 @@ Adil bir bültende sıfır. `odds.margin()` sıfır/negatif oranı **eler**
 değildir: 2. maçın Nesine'den gelmesi ortalamayı %4,62'den %5,44'e
 çıkarıyor. Pinnacle satırlarının kendi ortalaması **%4,62** kapanış (13
 maç) / **%4,65** açılış (14 maç). Geçen sezon arşivi (football-data `Avg`)
-**%7,26**, iddaa açık bülteni **%17,2–18,9**.
+**%7,26**, iddaa açık bülteni **%16,9** (birikimli ortalama, 473 satır; medyan
+%18,0 · web fiyatında %21,4).
 
 Ölçekler aynı değildir ve rapor bunu her hafta yazar: *"iki ölçek aynı
 değildir ve arındırılmış olasılıklar birebir kıyaslanamaz."*
@@ -895,7 +896,7 @@ değil, geriye dönük kurgu olurdu.
 | **Oynanma payı = havuz payı mı** | **Hayır.** Tek platformun kullanıcıları; Spor Toto havuzunun tamamı değil |
 | **"Kapanış" gerçekten kapanış mı** | **Hayır.** Kupon donarken elde olan **en geç kayıt**. Ölçüldü ve etiketin fazla olduğu görüldü (3. haftanın 3. dersi) |
 | **Havuz ekseni (az oynanana kayma) kâr getirir mi** | **Bugün ölçülemez.** Güç analizi ≈71 ikramiyeli hafta istiyor (≈3,5 sezon); analiz koşulduğunda elde 1, bugün 3 sonuçlanmış hafta var. Durma kuralı şimdiden yazılı |
-| **Tahmin katmanı piyasayı geçiyor mu** | **Geçmiyor.** Kalan etki 0,0005–0,0015 Brier: 31 binde anlamlı, 540 kupon maçında değil, %17,2'lik iddaa marjının yanında pratik eşiğe yakın bile değil |
+| **Tahmin katmanı piyasayı geçiyor mu** | **Geçmiyor.** Kalan etki 0,0005–0,0015 Brier: 31 binde anlamlı, 540 kupon maçında değil, %16,9'luk iddaa marjının yanında pratik eşiğe yakın bile değil |
 | **Kâr vaadi** | **Yok.** Proje kazanmayı garanti etmez; garanti ettiği tek şey kombinatoryal olandır |
 
 ---
@@ -959,7 +960,7 @@ python scripts/super_toto_tahmin2.py --hafta 4
 python scripts/hafta_kos.py --sonrasi --yaz
 
 # Katman katman
-python -m spor_toto.sistem --butce 2000     # satılan şekiller ve fiyatları
+python -m spor_toto.hafta_hakki --cephe     # satın alma basamakları ve fiyatları
 python -m spor_toto.kalabalik               # λ kestirimi + çapraz doğrulama
 python -m spor_toto.kalabalik --havuz       # bağımsız kolon-sayısı sınavı
 python -m spor_toto.cizgi                   # açılış→kapanış (A1)

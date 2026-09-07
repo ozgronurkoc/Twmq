@@ -521,8 +521,72 @@ def test_workflowlarda_pytest_gercekten_kosabilir():
 # tablo hold-out'ta 0 haftaydi") ve o cumle dogru. Bir bekcinin dogru
 # cumleyi yanlis diye isaretlemesi, hic bekci olmamasindan kotudur.
 #
-# Asil celiski (§14'un §1.1 ile catismasi) elle duzeltildi; onu tutan sey
-# artik `api_sozlesme.py`nin urettigi olculmus degerler, nesir taramasi degil.
+# O gerekce HALA gecerli ve asagidaki bekci onu bozmuyor: tarama YAPMIYOR,
+# ISIMLENDIRILMIS sayilari kendi baglamlarindan cekip OLCUMLE esitliyor.
+# "Bu cumle celiskili mi" diye sormuyor; "bu sayi bugun hala bu mu" diye
+# soruyor — ve cevabi bir regex degil, bir kosum veriyor.
+
+
+def _readme_1_1() -> str:
+    """README §1.1'in gövdesi — bir sonraki `###` başlığına kadar."""
+    metin = _oku("README.md")
+    bas = metin.index("### 1.1 ")
+    son = metin.index("### 1.2 ", bas)
+    return metin[bas:son]
+
+
+def test_readme_1_1_geri_test_sayilari_OLCUMLE_ayni():
+    """§1.1'in başlangıç çizgisi, bugün koşan geri testin sayısı olmalı.
+
+    **Bu bekçi bir denetimin sonucudur.** §1.1 uzun süre şunu yazıyordu:
+    *"36 haftanın 3'ünde 14+ tutturdu; hold-out'ta 1."* Üçü de bir gün
+    doğruydu, sonra üçü de sessizce yanlışlandı — kaplama söküldü (kolon
+    sekiz kat büyüdü, hold-out'un eşitlik bozucusu başka bir eşiğe kaydı),
+    ölçülen kural ürünün kuralı değildi ve manşet 14'tü, oysa ikramiye
+    12'de başlar. Hiçbir kapı bunu görmedi çünkü **§1.1'in tek bir sayısının
+    bile bekçisi yoktu**.
+
+    Tutulan şey nesir değil, üç sayı: kesit, isabet ve bedel. Regex yalnızca
+    onları çekip alır; cümlenin nasıl kurulduğuna karışmaz.
+    """
+    from spor_toto.backtest import VARSAYILAN_BUTCE_TL, backtest
+
+    metin = _readme_1_1()
+    r = backtest(sweep=False, sezon="hepsi")
+    s = r["season"]
+
+    # 1) Kesit ve isabet: "114 haftanin 46'sinda" degil, §1.1'in yazdigi
+    #    bicim "(46/114; ...)".
+    assert f"({s['hit12']}/{s['weeks']};" in metin, (
+        f"§1.1 kesit/isabeti ({s['hit12']}/{s['weeks']}) yazmiyor — "
+        "olcum degisti ama paragraf degismedi"
+    )
+    # 2) Yuzde ve ortalama en iyi kolon.
+    for sayi_metni, ad in (
+        (f"%{s['hit12_pct']:.1f}".replace(".", ","), "12+ yuzdesi"),
+        (f"{s['best_avg']:.2f}".replace(".", ","), "ortalama en iyi kolon"),
+    ):
+        assert sayi_metni in metin, f"§1.1 {ad} ({sayi_metni}) yazmiyor"
+    # 3) Butce tavani: paragraf hangi parayla olculdugunu SOYLEMEK zorunda,
+    #    yoksa isabet sayisi okunamaz (pahali basamak her zaman daha cok
+    #    tutturur).
+    assert f"₺{VARSAYILAN_BUTCE_TL:,.0f}".replace(",", ".") in metin, (
+        "§1.1 haftalik butce tavanini yazmiyor")
+    # 4) Manset kademesi. `hit14` KUYRUKTUR ve manset olarak okunmamali.
+    assert f"{r['meta']['kademe']}+" in metin, "§1.1 manşet kademeyi yazmıyor"
+
+
+def test_readme_1_1_hangi_kurali_olctugunu_soyler():
+    """Başlangıç çizgisi, hangi kuralla ölçüldüğünü cümlenin içinde yazmalı.
+
+    Eski paragrafın asıl kusuru sayı değil **künye** eksikliğiydi: "piyasa
+    oranlarından mekanik olarak üretilen strateji" diyordu ve o strateji
+    ürünün kullandığı kural değildi. Okuyanın bunu anlamasının hiçbir yolu
+    yoktu.
+    """
+    metin = _readme_1_1()
+    for parca in ("secim.en_iyi_secim", "114 hafta", "düz ölçek"):
+        assert parca in metin, f"§1.1 künyesinde '{parca}' yok"
 
 
 def test_readme_test_tablosu_GERCEK_koleksiyonu_sayar():

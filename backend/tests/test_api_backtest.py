@@ -1,9 +1,16 @@
 """/api/backtest — uç sözleşmesi.
 
-Geri test sayfada tek başına bir sayı olarak görünmemeli: sezon özeti, eşik
-taraması ve hold-out birlikte anlam taşır. Bu testler üçünün de uçtan
-çıktığını ve birbiriyle tutarlı kaldığını denetler.
+Geri test sayfada tek başına bir sayı olarak görünmemeli: kesit özeti,
+tarama ve (eşik ailesinde) hold-out birlikte anlam taşır. Bu testler
+üçünün de uçtan çıktığını ve birbiriyle tutarlı kaldığını denetler.
+
+**Varsayılan strateji `hedef`tir** — ürünün kendi kuralı. Eşik ailesini
+sınayan testler onu `?strateji=esik` ile AÇIKÇA ister; uzun süre uç yalnız
+eşik kuralını koşuyordu ve arayüz ürünün kullanmadığı bir kuralın
+sayılarını gösteriyordu.
 """
+
+import itertools
 
 import pytest
 
@@ -26,20 +33,45 @@ def test_govde_ve_ozet(client):
     assert r.status_code == 200
     body = r.get_json()
     assert set(body) >= {
-        "meta", "strategy", "season", "weeks", "sweep", "holdout", "warning"
+        "meta", "strategy", "season", "weeks", "sweep", "butce_sweep",
+        "holdout", "warning"
     }
     s = body["season"]
     assert s["weeks"] > 0
-    assert s["hit15"] <= s["hit14"] <= s["hit13"] <= s["weeks"]
+    assert s["hit15"] <= s["hit14"] <= s["hit13"] <= s["hit12"] <= s["weeks"]
     assert s["columns_total"] > 0
-    # Uyari metni kaldirilmamali: 41 hafta kucuk ornekem.
-    assert "garanti" in body["warning"].lower()
+    # Olcek kunyesi govdede DURMALI: kaplama sokulduktan sonra ayni alan
+    # adlari bambaska bir aritmetigi anlatiyor (alt sinir -> esitlik).
+    assert body["meta"]["olcek"] == "duz"
+    assert body["meta"]["kademe"] == 12
+    # Uyari metni kaldirilmamali.
+    assert body["warning"]
+
+
+def test_varsayilan_strateji_urunun_kurali(client):
+    """Uç, ürünün kullanmadığı bir kuralı varsayılan yapmamalı."""
+    body = client.get("/api/backtest?sweep=0").get_json()
+    st = body["strategy"]
+    assert st["ad"] == "hedef"
+    assert st["kademe"] == 12 and st["kacak_esigi"] == 3
+    assert st["butce_kolon"] >= 1
+    # Bedel tavani bir HARCAMA KARARIDIR; govde onu TL olarak da tasimali.
+    assert body["season"]["tl_avg"] <= st["butce_tl"]
+
+
+def test_bilinmeyen_strateji_400(client):
+    """Tanınmayan ad sessizce varsayılana düşmez."""
+    r = client.get("/api/backtest?strateji=yok&sweep=0")
+    assert r.status_code == 400
+    assert "esik" in r.get_json()["stratejiler"]
 
 
 def test_esikler_secime_uyar(client):
     """Yüksek banko eşiği daha az banko üretir — strateji gerçekten uygulanıyor."""
-    dusuk = client.get("/api/backtest?banko=0.55&uclu=0&sweep=0").get_json()
-    yuksek = client.get("/api/backtest?banko=0.80&uclu=0&sweep=0").get_json()
+    dusuk = client.get(
+        "/api/backtest?strateji=esik&banko=0.55&uclu=0&sweep=0").get_json()
+    yuksek = client.get(
+        "/api/backtest?strateji=esik&banko=0.80&uclu=0&sweep=0").get_json()
     assert dusuk["strategy"]["banko"] == 0.55
     assert yuksek["strategy"]["banko"] == 0.80
     assert dusuk["season"]["banko_avg"] > yuksek["season"]["banko_avg"]
@@ -52,7 +84,8 @@ def test_esikler_secime_uyar(client):
     ("0.6", 0.6), ("2", 1.0), ("-1", 0.0), ("abc", 0.68), ("", 0.68),
 ])
 def test_esik_ayristirma(client, raw, beklenen):
-    body = client.get(f"/api/backtest?banko={raw}&sweep=0").get_json()
+    body = client.get(
+        f"/api/backtest?strateji=esik&banko={raw}&sweep=0").get_json()
     assert body["strategy"]["banko"] == beklenen
 
 
@@ -78,14 +111,33 @@ def test_hafta_satirlari_kendini_anlatir(client):
 
 
 def test_tarama_ve_holdout_birlikte_gelir(client):
-    body = client.get("/api/backtest").get_json()
+    """Eşik ailesinde üçü birlikte gelir — ayarlanan bir parametre var."""
+    body = client.get("/api/backtest?strateji=esik").get_json()
     assert body["sweep"], "eşik taraması boş"
     assert body["sweep_best"] in body["sweep"]
     ho = body["holdout"]
     assert ho["weeks"] > 0
     # Hold-out taramanin en iyisini gecemez; fark asiri uyumun buyuklugudur.
-    assert ho["hit14"] <= body["sweep_best"]["hit14"]
+    assert ho["hit12"] <= body["sweep_best"]["hit12"]
     assert ho["chosen"]
+
+
+def test_hedefte_holdout_YOK_butce_taramasi_VAR(client):
+    """`hedef`te ayarlanan parametre yok; hold-out da o yüzden yok.
+
+    Yerine bütçe taraması gelir — ve o bir parametre araması değil, bir
+    **harcama kararının** karşılığıdır: pahalı basamak her zaman daha çok
+    tutturur, sorulacak soru bedele değip değmediğidir.
+    """
+    body = client.get("/api/backtest").get_json()
+    assert body["holdout"]["weeks"] == 0, "hedef kuralında hold-out anlamsız"
+    assert not body["sweep"], "hedef kuralında eşik taraması anlamsız"
+    tarama = body["butce_sweep"]
+    assert len(tarama) >= 2
+    # Butce arttikca isabet DUSEMEZ: daha genis kume, ayni sonuc uzayi.
+    for onceki, sonraki in itertools.pairwise(tarama):
+        assert sonraki["butce_tl"] > onceki["butce_tl"]
+        assert sonraki["hit12"] >= onceki["hit12"]
 
 
 def test_diger_pazarlar_geri_teste_de_sizmaz(client):

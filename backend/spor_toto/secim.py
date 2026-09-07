@@ -592,7 +592,7 @@ def kiyas(last: int | None = None,
 
     return {
         "esik_kacak": esik,
-        "hedef": f"P(kacak <= {esik}) = P(en iyi kolon >= {14 - esik})",
+        "hedef": f"P(kacak <= {esik}) = P(en iyi kolon >= {15 - esik})",
         "haftalar": haftalar,
         "ozet": {"esik": ozet("esik"), "hedef": ozet("hedef")},
         "uyari": (

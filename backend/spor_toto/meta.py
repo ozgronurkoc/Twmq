@@ -95,8 +95,13 @@ def meta_payload(version: str) -> dict[str, Any]:
     # katmanini acar ve meta modulunun import maliyeti olmamalidir.
     from .backtest import (
         BANKO_IZGARA,
+        BUTCE_IZGARA,
+        HEDEF_KADEME,
+        STRATEJILER,
+        TUM_SEZONLAR,
         UCLU_IZGARA,
         VARSAYILAN_BANKO,
+        VARSAYILAN_BUTCE_TL,
         VARSAYILAN_UCLU,
     )
     from .history import sezonlar as _sezonlar
@@ -110,10 +115,22 @@ def meta_payload(version: str) -> dict[str, Any]:
         "bayes_presets": bayes_preset_listesi(),
         "engine_defaults": ENGINE_DEFAULTS,
         "backtest": {
+            # Varsayilan strateji URUNUN KENDI KURALIDIR. `esik` silinmedi
+            # ama rolu degisti: taban cizgisi. Arayuz ikisini ayni sekmede
+            # gosterse bile hangisinin urun oldugunu buradan okur.
+            "strateji_default": "hedef",
+            "stratejiler": list(STRATEJILER),
+            "kademe": HEDEF_KADEME,
+            "butce_default_tl": VARSAYILAN_BUTCE_TL,
+            "butce_grid_tl": list(BUTCE_IZGARA),
             "banko_default": VARSAYILAN_BANKO,
             "uclu_default": VARSAYILAN_UCLU,
             "banko_grid": list(BANKO_IZGARA),
             "uclu_grid": list(UCLU_IZGARA),
+            # `?sezon=hepsi` yalniz geri testte gecerli: olcum kesitinin
+            # tamami (114 hafta). `seasons.available` onu TASIMAZ, cunku
+            # `/api/stats` sezonlari birlestirmez, secer.
+            "tum_kesit": TUM_SEZONLAR,
         },
         # Arayuzun `?sezon=` icin kullanabilecegi liste. VARSAYILAN bu
         # listede YOKTUR ve olmamali: o bir sezon secimi degil, "hicbir sey

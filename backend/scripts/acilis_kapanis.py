@@ -26,7 +26,7 @@ from typing import Any
 KOK = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(KOK))
 
-from spor_toto.backtest import _en_iyi_skor, _kaplama, secim_uret
+from spor_toto.backtest import _en_iyi_skor, _kolon_kumesi, secim_uret
 from spor_toto.core import SEMBOLLER
 from spor_toto.fiyatlar import KITAPLAR
 from spor_toto.history import normalized_weeks
@@ -135,7 +135,7 @@ def kural_kosusu(closing: bool, kaynak: str = FIYAT_VARSAYILAN):
         var = [i for i, s in enumerate(sec) if len(s) > 1]
         sizes = tuple(len(sec[i]) for i in var)
         duzen = sorted(range(len(sizes)), key=lambda j: (sizes[j], j))
-        kap = _kaplama(tuple(sizes[j] for j in duzen))
+        kap = _kolon_kumesi(tuple(sizes[j] for j in duzen))
         if kap is None:
             continue
         n += 1

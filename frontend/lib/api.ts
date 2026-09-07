@@ -176,6 +176,10 @@ export function getStatsWeek(week: number, signal?: AbortSignal, sezon?: string 
 export function getBacktest(
   opt: {
     last?: number | null;
+    /** `hedef` (varsayilan, urunun kurali) ya da `esik` (taban cizgisi). */
+    strateji?: "hedef" | "esik";
+    /** `hedef` stratejisinin haftalik tavani (TL). */
+    butce?: number;
     banko?: number;
     uclu?: number;
     sweep?: boolean;
@@ -185,6 +189,8 @@ export function getBacktest(
 ) {
   const q = new URLSearchParams();
   if (opt.last && opt.last > 0) q.set("last", String(opt.last));
+  if (opt.strateji) q.set("strateji", opt.strateji);
+  if (opt.butce !== undefined) q.set("butce", String(opt.butce));
   if (opt.banko !== undefined) q.set("banko", String(opt.banko));
   if (opt.uclu !== undefined) q.set("uclu", String(opt.uclu));
   if (opt.sweep === false) q.set("sweep", "0");

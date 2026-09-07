@@ -145,7 +145,13 @@ def test_olculmus_isabet_arsivden_kosuyor():
 # ─── kaynak dürüstlüğü ────────────────────────────────────────────────────────
 
 def test_iddaa_kaynagi_olculmemis_diye_isaretlenir(tmp_path):
-    """İddaa marjı %17,2, ölçüm %7,26'lık kaynakta yapıldı — aynı şey değil."""
+    """İddaa marjı %16,9, ölçüm %7,26'lık kaynakta yapıldı — aynı şey değil.
+
+    Sayı burada yalnızca gerekçeyi anlatıyor; testin çapası değil. Çapa
+    `iddaa_rapor.json` → `birikimli` ve onu `test_snapshot_iddaa.py`
+    tutuyor. Buradaki iddia daha temel: kaynak `iddaa` ise gövde kendini
+    **ölçülmemiş** ilan etmek zorunda.
+    """
     yol = tmp_path / "iddaa_2099-01-01.csv"
     _iddaa_yaz(yol, [_iddaa_satiri()])
     g = rapor(fixtures_yolu=str(tmp_path / "yok.csv"), iddaa_yolu=str(yol))

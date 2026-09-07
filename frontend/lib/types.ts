@@ -75,10 +75,23 @@ export interface MetaResponse {
    * Sozlesme denetimi ilk kosusunda bunu yakaladi.
    */
   backtest: {
+    /**
+     * Varsayilan strateji URUNUN KENDI KURALIDIR (`hedef`). `esik` silinmedi
+     * ama rolu degisti: taban cizgisi. Arayuz hangisinin urun oldugunu
+     * buradan okur, sabit kodlamaz.
+     */
+    strateji_default: "hedef" | "esik";
+    stratejiler: string[];
+    /** Hedef ikramiye kademesi — manset `hit12` buradan gelir. */
+    kademe: number;
+    butce_default_tl: number;
+    butce_grid_tl: number[];
     banko_default: number;
     banko_grid: number[];
     uclu_default: number;
     uclu_grid: number[];
+    /** `?sezon=` degeri: olcum kesitinin tamami (yalniz geri testte gecerli). */
+    tum_kesit: string;
   };
   /**
    * Secilebilir kupon sezonlari. `default` her zaman `null`dir ve bu bir
@@ -713,7 +726,7 @@ export interface WeekDetail extends WeekRow {
 
 // ─── /api/backtest ────────────────────────────────────────────────────────
 
-/** Bir eşik çiftinin sezon özeti. `sweep` satırları da bu biçimdedir. */
+/** Bir ayarın kesit özeti. `sweep` ve `butce_sweep` satırları da bu biçimdedir. */
 export interface BacktestSeason {
   weeks: number;
   /** Seçim uzayı sınırı aşıldığı için çözülemeyen hafta sayısı. */
@@ -724,13 +737,27 @@ export interface BacktestSeason {
   hit15: number;
   hit14: number;
   hit13: number;
+  /**
+   * MANŞET: 12+ tutturan hafta sayısı. İkramiye 12. kademede başlar, yani
+   * ürünün ölçtüğü sayı budur. `hit14` bir kuyruktur ve tek başına
+   * okunursa yanıltır.
+   */
+  hit12: number;
+  hit12_pct: number;
+  /** Wilson %95 güven aralığı — kesit küçük. */
+  hit12_ci: [number, number];
+  /** Ortalama en iyi kolon. Düzde `15 − kaçak`, yani haftanın tipik sonucu. */
+  best_avg: number;
   hit14_pct: number;
-  /** Wilson %95 güven aralığı — 41 hafta küçük örneklem. */
   hit14_ci: [number, number];
   columns_total: number;
   columns_avg: number;
   columns_max: number;
-  /** 14+ tutan hafta başına kolon bedeli; hiç tutmadıysa null. */
+  /** Haftalık ortalama bedel (TL) — kolon adedi tek başına okunamaz. */
+  tl_avg: number;
+  tl_total: number;
+  /** 12+ tutan hafta başına kolon bedeli; hiç tutmadıysa null. */
+  columns_per_hit12: number | null;
   columns_per_hit14: number | null;
   rows_avg: number;
   banko_avg: number;
@@ -740,9 +767,20 @@ export interface BacktestSeason {
   all_guaranteed: boolean;
 }
 
+/** Eşik ailesinin tarama satırı. */
 export interface SweepRow extends BacktestSeason {
   banko: number;
   uclu: number;
+}
+
+/**
+ * Hedef kuralının bütçe taraması. Eşik taramasından farkı: burada aranan
+ * bir parametre yok, taranan şey bir **harcama kararı**. Pahalı basamak
+ * her zaman daha çok tutturur; sorulacak soru bedele değip değmediğidir.
+ */
+export interface ButceRow extends BacktestSeason {
+  butce_tl: number;
+  butce_kolon: number;
 }
 
 export interface BacktestWeek {
@@ -774,6 +812,10 @@ export interface BacktestWeek {
 /**
  * Eşik o haftayı GÖRMEDEN seçildiğinde ne oldu (leave-one-out). Tarama
  * satırlarıyla arasındaki fark, aşırı uyumun büyüklüğüdür.
+ *
+ * YALNIZ eşik ailesinde doludur. `hedef` kuralında ayarlanan bir parametre
+ * yoktur (optimizasyon sonucu görmez), dolayısıyla hold-out'un koruduğu
+ * risk de yoktur ve gövde `{ weeks: 0 }` döner.
  */
 export interface BacktestHoldout {
   /** Kesitin buyuklugu: kullanilabilir hafta sayisi. `hit14`in paydasi. */
@@ -782,13 +824,19 @@ export interface BacktestHoldout {
   olculen?: number;
   /** `weeks - olculen`: arama uzayi yuzunden olculemeyen kat. */
   atlanan?: number;
+  /** Hangi ölçütün enbüyüklendiği — varsayılan `hit12`. */
+  olcut?: string;
   /** Hangi metrigin hangi paydaya dayandigi — sunucudan gelir, uydurulmaz. */
-  payda?: { hit14: string; columns_avg: string };
+  payda?: Record<string, string>;
+  hit12?: number;
+  hit12_pct?: number;
+  hit12_ci?: [number, number];
   hit14?: number;
   hit14_pct?: number;
   hit14_ci?: [number, number];
   columns_total?: number;
   columns_avg?: number | null;
+  tl_avg?: number | null;
   chosen?: Array<{ threshold: string; weeks: number }>;
 }
 
@@ -802,16 +850,38 @@ export interface BacktestResponse {
     note: string;
     /** Oran arındırma yöntemi — hangi olasılıkların ölçüldüğünü söyler. */
     arindirma: string;
-    /** Seçili sezon; seçim yoksa `null` (varsayılan = bütün korpus). */
+    /** Seçili sezon; `null` varsayılan, `"hepsi"` ölçüm kesitinin tamamı. */
     sezon: string | null;
+    /** Kupon ölçeği. Kaplama söküldü; bugün her zaman `"duz"`. */
+    olcek: string;
+    /** Hedef ikramiye kademesi — manşet `hit12` buradan gelir. */
+    kademe: number;
+    kolon_bedeli_tl: number;
   };
-  strategy: { banko: number; uclu: number; explain: string };
+  /**
+   * Hangi kural ölçüldü. `ad` gövdenin şeklini de belirler: `hedef`
+   * bütçe alanlarını, `esik` eşik alanlarını taşır.
+   */
+  strategy: {
+    ad: "hedef" | "esik";
+    rol: string;
+    explain: string;
+    banko?: number;
+    uclu?: number;
+    butce_tl?: number;
+    butce_kolon?: number;
+    kademe?: number;
+    kacak_esigi?: number;
+  };
   season: BacktestSeason;
   weeks: BacktestWeek[];
+  /** Eşik ailesinin taraması; `hedef`te boş. */
   sweep: SweepRow[];
   sweep_best: SweepRow | null;
+  /** Hedef kuralının bütçe taraması; `esik`te boş. */
+  butce_sweep: ButceRow[];
   holdout: BacktestHoldout;
-  grid: { banko: number[]; uclu: number[] };
+  grid: { banko: number[]; uclu: number[]; butce_tl: number[] };
   warning: string;
 }
 

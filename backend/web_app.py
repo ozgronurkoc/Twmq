@@ -17,7 +17,13 @@ from flask import Flask, jsonify, request
 from spor_toto import __version__
 from spor_toto import health_history as saglik_gecmisi
 from spor_toto.analysis import match_error_frequency, monte_carlo_report
-from spor_toto.backtest import VARSAYILAN_BANKO, VARSAYILAN_UCLU
+from spor_toto.backtest import (
+    STRATEJILER,
+    TUM_SEZONLAR,
+    VARSAYILAN_BANKO,
+    VARSAYILAN_BUTCE_TL,
+    VARSAYILAN_UCLU,
+)
 from spor_toto.bayes import (
     STRENGTH_PRESETS,
     bayes_summary,
@@ -35,6 +41,7 @@ from spor_toto.core import (
 from spor_toto.duz import kolonlar as duz_kolonlar
 from spor_toto.duz import tek_satir as duz_tek_satir
 from spor_toto.fire_scenarios import fire_maliyeti, fire_scenario_report
+from spor_toto.getiri import KOLON_BEDELI
 from spor_toto.health import (
     check_envanteri,
     kupon_denetle,
@@ -742,7 +749,11 @@ class GecersizSezon(ValueError):
     """`?sezon=` bilinmeyen bir sezon gosteriyor."""
 
 
-def _parse_sezon(raw: Any) -> str | None:
+class GecersizStrateji(ValueError):
+    """`?strateji=` taninmayan bir strateji gosteriyor."""
+
+
+def _parse_sezon(raw: Any, tum_izin: bool = False) -> str | None:
     """`?sezon=` cozumleyici. Bos -> None (varsayilan), gecersiz -> yukselir.
 
     Gecersiz sezonu sessizce varsayilana dusurmuyoruz: kullanici bir sezon
@@ -754,10 +765,16 @@ def _parse_sezon(raw: Any) -> str | None:
     mypy hakli olarak `history_week_detail(week, sezon)` cagrisinda
     `Literal[True]`in de gecebilecegini soyledi — yani nobetci, tip
     sisteminin yakalayabilecegi bir kaymayi gizliyordu.
+
+    `tum_izin` yalnizca geri testte acilir: orada `?sezon=hepsi` tek sezon
+    degil **olcum kesitinin tamami** demektir (114 hafta). `/api/stats` icin
+    anlamsizdir — o uc sezonlari birlestirmez, secer.
     """
     if raw is None or str(raw).strip() == "":
         return None
     sezon = str(raw).strip()
+    if tum_izin and sezon == TUM_SEZONLAR:
+        return sezon
     if sezon not in history_sezonlari():
         raise GecersizSezon(sezon)
     return sezon
@@ -795,37 +812,71 @@ def _tahmin_cached(limit: int | None, genis: bool = False) -> dict[str, Any]:
 
 @lru_cache(maxsize=32)
 def _backtest_cached(last: int | None, banko: float, uclu: float,
-                     sweep: bool, sezon: str | None = None) -> dict[str, Any]:
+                     sweep: bool, sezon: str | None = None,
+                     strateji: str = "hedef",
+                     butce_tl: float = VARSAYILAN_BUTCE_TL) -> dict[str, Any]:
     """Geri test sonucu istek basina yeniden hesaplanmaz.
 
     Veri seti surumlenmis bir dosyadir; ayni parametreler ayni cevabi verir.
-    Tek strateji ~1,2 sn, 28 esikli tarama ilk cagrida ~15 sn surer (kaplama
-    imzalari onbelleklenene kadar) ve sonrasinda milisaniyeye iner.
+    `hedef` tek kosumu ~1 sn; `esik` ailesinin 28 esikli taramasi ilk cagrida
+    daha uzun surer (kolon imzalari onbelleklenene kadar) ve sonrasinda
+    milisaniyeye iner.
     """
     return backtest_payload(last=last, banko=banko, uclu=uclu, sweep=sweep,
-                            sezon=sezon)
+                            sezon=sezon, strateji=strateji, butce_tl=butce_tl)
+
+
+def _parse_strateji(ham: str | None) -> str:
+    """Bilinmeyen ad **sessizce varsayilana dusmez**; 400 dondurulur."""
+    if ham is None or not str(ham).strip():
+        return "hedef"
+    ad = str(ham).strip().lower()
+    if ad not in STRATEJILER:
+        raise GecersizStrateji(ad)
+    return ad
+
+
+def _parse_butce(ham: str | None) -> float:
+    """Bozuk ya da pozitif olmayan butce varsayilana duser."""
+    try:
+        tl = float(str(ham))
+    except (TypeError, ValueError):
+        return VARSAYILAN_BUTCE_TL
+    return tl if tl >= KOLON_BEDELI else VARSAYILAN_BUTCE_TL
 
 
 @app.route("/api/backtest", methods=["GET"])
 def api_backtest():
     """
-    "Bu strateji gecen sezon ne yapardi?"
+    "Bu strateji gecmiste ne yapardi?"
 
-    `?banko=` ve `?uclu=` esikleri, `?last=N` dilimi, `?sezon=` sezon secimi,
-    `?sweep=0` ile tarama kapali. Cevap UC blok tasir ve ucu birlikte okunmalidir: secili
-    stratejinin sezonu, esik taramasi ve **hold-out** — sonuncusu esigin o
-    haftayi gormeden secildigi halde olculen sonuctur.
+    `?strateji=hedef|esik` (varsayilan **hedef** — urunun kendi kurali),
+    `?butce=TL` hedef stratejisinin tavani, `?banko=` ve `?uclu=` esik
+    ailesinin esikleri, `?last=N` dilimi, `?sezon=` sezon secimi
+    (`hepsi` = 114 haftalik olcum kesiti), `?sweep=0` ile tarama kapali.
+
+    Govdenin sekli stratejiye baglidir: `hedef` `butce_sweep` tasir ve
+    hold-out TASIMAZ (ayarlanan parametre yok, dolayisiyla asiri uyum riski
+    de yok); `esik` `sweep` + `sweep_best` + `holdout` tasir ve ucu birlikte
+    okunur.
     """
     last = _parse_last(request.args.get("last"))
     banko = _parse_esik(request.args.get("banko"), VARSAYILAN_BANKO)
     uclu = _parse_esik(request.args.get("uclu"), VARSAYILAN_UCLU)
+    butce = _parse_butce(request.args.get("butce"))
     sweep = str(request.args.get("sweep", "1")).strip().lower() not in {"0", "false", "no"}
     try:
-        sezon = _parse_sezon(request.args.get("sezon"))
+        strateji = _parse_strateji(request.args.get("strateji"))
+    except GecersizStrateji:
+        return jsonify({"error": "bilinmeyen strateji",
+                        "stratejiler": list(STRATEJILER)}), 400
+    try:
+        sezon = _parse_sezon(request.args.get("sezon"), tum_izin=True)
     except GecersizSezon:
         return jsonify({"error": "bilinmeyen sezon",
-                        "sezonlar": history_sezonlari()}), 400
-    return jsonify(_backtest_cached(last, banko, uclu, sweep, sezon))
+                        "sezonlar": [*history_sezonlari(), TUM_SEZONLAR]}), 400
+    return jsonify(_backtest_cached(last, banko, uclu, sweep, sezon,
+                                    strateji, butce))
 
 
 @app.route("/api/tahmin", methods=["GET"])

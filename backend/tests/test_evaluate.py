@@ -270,11 +270,21 @@ def test_gercek_kesit_36_hafta_540_mac():
 
 
 def test_piyasa_baslangic_cizgisi():
-    """Piyasanın çizgisi 0,5747 — belgedeki 0,579 ile farkı bilinçlidir.
+    """Piyasanın çizgisi 0,574 — belgedeki 0,579 ile farkı bilinçlidir.
 
-    0,579, 2 kısmi haftayı da içeren 38 haftanın (567 maç) ortalamasıdır.
-    Koşum yalnızca 15 maçının tamamı oranlı haftaları alır, çünkü bütün
-    tahminciler **aynı** haftalarda ölçülmezse karşılaştırma anlamsızdır.
+    Aynı piyasanın **üç** sayısı var ve üçü de doğru, çünkü üçü farklı
+    kesit:
+
+        0,579   38 hafta / 567 maç   `odds.season_1x2_summary` (kısmi
+                                     haftalar dahil — oranı olan her maç)
+        0,574   36 hafta / 540 maç   bu koşum: yalnızca 15 maçının tamamı
+                                     oranlı haftalar
+        0,5584  114 hafta / 1.710 maç  dört sezonluk geniş kesit
+
+    Bu koşum dar olanı alır çünkü bütün tahminciler **aynı** haftalarda
+    ölçülmezse karşılaştırma anlamsızdır. README §5.4 üçünü de yan yana
+    yazar; uzun süre yalnızca "0,579" yazıyordu ve hangi kesitten
+    konuşulduğu belli değildi.
     """
     r = karsilastir()
     piyasa = next(s for s in r["tahminciler"] if s["ad"] == "piyasa")

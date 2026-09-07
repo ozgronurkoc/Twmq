@@ -22,7 +22,7 @@ yüzden gövde iki bloğu ayrılmaz biçimde taşır — `tahminler` ve
 2. **Ölçülen isabet kupon setine aittir** (540 maç, 2025/26, football-data
    kapanış oranı). Aynı fiyatlayıcı olduğu için taşınabilir; ölçüm evreninin
    dışındaki bir lig için `olculen_lig=False` ile işaretlenir.
-3. **İddaa kaynaklı tahminin kalibrasyonu ÖLÇÜLMEMİŞTİR.** Marj %17,2'ye
+3. **İddaa kaynaklı tahminin kalibrasyonu ÖLÇÜLMEMİŞTİR.** Marj %16,9'a
    karşı %7,26; yapı tutar, seviye tutmaz. Bu maçlar ayrı işaretlenir.
 
 Ve bir dördüncüsü, ürünün en kolay söyleyeceği yalanı engelleyen:
@@ -623,7 +623,7 @@ def _uyarilar(maclar: Sequence[dict[str, Any]]) -> list[dict[str, str]]:
         out.append({"ad": "kalibrasyon_olculmemis",
                     "metin": ("Bu maclar IDDAA bulteninden geliyor ve iddaa "
                               "kaynakli olasiligin kalibrasyonu OLCULMEMISTIR "
-                              "(marj %17,2'ye karsi %7,26). Yapisi tutar, "
+                              "(marj %16,9'a karsi %7,26). Yapisi tutar, "
                               "seviyesi tutmayabilir. Asagidaki olculmus "
                               "isabet bu maclara ait DEGILDIR.")})
     disarida = sum(1 for m in maclar if not m.get("olculen_lig"))

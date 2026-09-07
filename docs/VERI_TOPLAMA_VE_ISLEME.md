@@ -52,7 +52,7 @@ taşır. Bu ise **henüz oynanmamış** maçı taşır ve hafta oynandıkça bo�
 Kaynağı football-data'nın `fixtures.csv` dosyasıdır ve seçim kasıtlı:
 **ölçümün yapıldığı kaynağın ta kendisi.** Kupon setinde ölçülen isabet aynı
 fiyatlayıcıya ait olduğu için ürüne meşru biçimde taşınabilir. İddaa bülteni
-yedektir ve kalibrasyonu **ölçülmemiştir** (marj %17,2'ye karşı %7,26); o
+yedektir ve kalibrasyonu **ölçülmemiştir** (marj %16,9'a karşı %7,26); o
 maçlar gövdede ayrı işaretlenir.
 
 Oranlar **açılış** oranıdır ve bedeli ölçülmüştür (A1): açılış Brier 0,5964,
@@ -147,7 +147,7 @@ Bant özeti (haftalık adet serisinin dağılımı):
 | Toplanan | Yalnızca futbol (`sid=1`) ve yalnızca maç sonucu (1X2) |
 | Ölçülen | 226 futbol etkinliği, 225'inde 1X2 pazarı; 222'si kaydedildi |
 | Fiyat listesi | İki tane, ikisi de saklanır: `odd` (kupon), `wodd` (web) |
-| **Ortalama marj** | **%17,2** — piyasa oranlarında %7,26 idi |
+| **Ortalama marj** | **%16,9** (birikimli, 473 satır / 2 snapshot; medyan %18,0) — piyasa oranlarında %7,26 idi |
 | Biriktirme | Haftalık snapshot; tarih damgalı CSV sürümlenir |
 
 Bu arşiv **bugün analize girmiyor** çünkü tek snapshot bir şey söylemez. Değeri birikimdedir:
@@ -220,7 +220,7 @@ sitelerin maç sayfalarında durur, ama orası otomatik erişime kapalıdır.
 Sonuç: **geçmiş için piyasa oranı** kullanıyoruz. Seviye tutmaz (iddaa marjı daha yüksek),
 **favori sıralaması ve marj arındırılmış olasılık yapısı** tutar — analizde kullanılan da budur.
 İleriye dönük çözüm uygulandı (§6): haftalık bülten snapshot'ı alındıkça bir sezonda kendi
-iddaa arşivimiz olur. Ölçülen marj farkı (%17,2 → %7,26) vekilin neden yalnızca *yapı* için
+iddaa arşivimiz olur. Ölçülen marj farkı (%16,9 → %7,26) vekilin neden yalnızca *yapı* için
 kullanılabileceğini somutlaştırıyor.
 
 ### 3.3 Yasal ve etik sınır
@@ -793,7 +793,7 @@ yolunun beslediği arşive dokunmaz. Ayrım §6A'daki korpus ayrımıyla aynı
 gerekçeye dayanır: biri kapanmış kayıt, öteki işleyen sezon.
 
 Bir uyarı dosyanın kendi içinde duruyor ve taşınmalı: **oranlar iddaa oranıdır,
-geçen sezon arşivi football-data piyasa kapanışıdır.** Marj farkı (%17,2 ↔
+geçen sezon arşivi football-data piyasa kapanışıdır.** Marj farkı (%16,9 ↔
 %7,26) yüzünden marj arındırılmış olasılıklar birebir aynı ölçekte değildir.
 
 ## 6C. xG kalibrasyonu — veri değil, KATSAYI üreten boru hattı
@@ -1525,7 +1525,7 @@ tablolar (script'in bastığı lig dağılımı) bunu yakalayan şeydi.
 | `test_sportoto_arsiv.py::test_hafta_no_tahmin_edilmez` | Hafta numarası uydurulmaz (doktrin 2) |
 | `test_sportoto_arsiv.py::test_celisen_kapanis_tarihi_raporlanir` | İki uç çelişirse biri sessizce seçilmez (doktrin 4) |
 
-Toplam 113 test bu dört veri setini korur (backend paketi 1.803 test). `python -m spor_toto.health`
+Toplam 113 test bu dört veri setini korur (backend paketi 1.820 test). `python -m spor_toto.health`
 23 değişmez çalıştırır; `oran_arsivi` ve `geri_test` bu katmanı, `tahmin_referanslari`
 tahmin katmanının ölçüm koşumunu korur.
 
@@ -1559,7 +1559,7 @@ tahmin katmanının ölçüm koşumunu korur.
    sınırlı ama sınır artık "tek sezon" değil.
 3. **Milli maç haftalarında oran yok** (5, 10, 15). Oran blokları o haftalarda boş; kapsama
    hiçbir zaman %100 olmayacak.
-4. **Geçmiş iddaa oranı yok** (§3.2). Piyasa oranı vekildir; ölçülen marj farkı (%17,2 → %7,26)
+4. **Geçmiş iddaa oranı yok** (§3.2). Piyasa oranı vekildir; ölçülen marj farkı (%16,9 → %7,26)
    bu vekilin neden yalnızca *yapı* için kullanılabileceğini gösterir. İleriye dönük arşiv
    §6 ile başladı; haftalık tetik açık ama arşiv henüz tek snapshot.
 5. **Üçüncü parti kaynak riski:** üç kaynak da dış. İlk ikisi silinir ya da biçim değiştirirse
@@ -1581,8 +1581,13 @@ Amaç tahmine döndüğü için iki sınır daha kritik hale geldi ve ayrıca ya
    > Planı: [`ISTATISTIK_YOL_HARITASI.md`](ISTATISTIK_YOL_HARITASI.md) §6.2 A3.
 
    Yine de sınır gerçektir: bu özellikler de piyasanın gördüğü bilgiden türer, yalnızca
-   farklı biçimde. Ölçülen sayılar bu sınırla tutarlı — hold-out isabeti **36 haftada 1**
-   (%2,8; aralık %0,5–14,2), formun artık değeri ~0.
+   farklı biçimde. Ölçülen sayılar bu sınırla tutarlı — formun artık değeri ~0.
+
+   > **Buradaki "hold-out isabeti 36 haftada 1" sayısı 2026-09-07'de düştü.** Kaplama
+   > ölçeğinde ve ürünün kullanmadığı eşik kuralıyla ölçülmüştü; bugün aynı komut o
+   > sayıyı vermiyor (README §5.4). **Argüman değişmedi** ve dayanağı zaten hold-out
+   > değildi: piyasa dışı sinyalin artık değeri 0,0005–0,0015 Brier mertebesinde ve
+   > bunun kupon sonucundaki karşılığı +0,03 puan `P(≥12)`.
 
    > **Sayı güncellendi (2026-08-23).** Burada "hold-out isabeti 0 hafta" yazıyordu; o
    > sayı `orantili` arındırma ölçeğinde ölçülmüştü ve varsayılan `shin`e çevrilince 1

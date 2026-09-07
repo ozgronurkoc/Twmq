@@ -393,7 +393,7 @@ gelecek hesap kirlenir.
 - **Milli maç haftaları kesit dışı** (oran yok). Kapsama hiçbir zaman %100
   olmayacak — README §5.3.
 - **Piyasa oranı ≠ iddaa oranı.** Seviye tutmaz, yapı tutar; olasılıklar
-  piyasa oranından gelir, iddaa marjı (%17,2) hesaba girmez.
+  piyasa oranından gelir, iddaa marjı (%16,9) hesaba girmez.
 - **Kolon bedeli 1,50 TL doğrulanmadı** (§5.3-4).
 - **Seyreltme tek yönlü modellendi:** kendi kolonlarımızı ekliyoruz ama
   kalabalığın davranışının bizim oynamamızdan etkilenmediğini varsayıyoruz.
