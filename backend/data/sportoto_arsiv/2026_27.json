@@ -2,14 +2,14 @@
  "meta": {
   "season": "2026/2027",
   "season_key": "2026_27",
-  "weeks": 4,
-  "weeks_with_payout": 2,
+  "weeks": 5,
+  "weeks_with_payout": 4,
   "source": "sportoto.gov.tr resmi arsivi (webapi.sportoto.gov.tr) — RESMI KAYNAK",
   "source_endpoints": [
    "GET /api/GameRound",
    "GET /api/GameResult/GetGameResultByGameRoundId?id=<gameRoundId>"
   ],
-  "fetched_at": "2026-08-30 07:43",
+  "fetched_at": "2026-09-08 12:04",
   "contains": "hafta kaydi + IKRAMIYE tablosu",
   "close_date_note": "`close_date` KUPON KAPANISIDIR, haftanin bitisi degil. Olculdu: 2025/26'nin 41 haftasinin 41'inde bu tarih haftanin ILK macinin gunune esit. `st_history_2025_26.json`in ayni adli alani ise haftanin SON macina denk duser ve 1-4 gun sonradir; iki alan celismiyor, farkli seyleri olcuyor.",
   "does_not_contain": "15 maclik liste ve 1/0/2 dizisi YOK — resmi ucta mac listesi yalnizca bulten GORSELI olarak var (bulletin_image). Kupon dizisi icin st_history veri setine bakilir."
@@ -102,7 +102,33 @@
    "game_round_id": 1530,
    "close_date": "2026-08-28 21:25",
    "is_published": true,
-   "payout": null,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 9,
+      "prize": 4261867.07
+     },
+     {
+      "correct": 14,
+      "winners": 188,
+      "prize": 116586.02
+     },
+     {
+      "correct": 13,
+      "winners": 2540,
+      "prize": 8629.2
+     },
+     {
+      "correct": 12,
+      "winners": 22282,
+      "prize": 1229.58
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2026-08-28 21:25"
+   },
    "bulletin_image": {
     "name": "1001390621-bm2irgka.jpg",
     "url": "https://webapi.sportoto.gov.tr/image/1001390621-bm2irgka.jpg"
@@ -114,12 +140,52 @@
    "name": "4. Hafta",
    "season": "2026/2027",
    "game_round_id": 1531,
-   "close_date": "2026-09-05 17:10",
+   "close_date": "2026-09-04 19:55",
    "is_published": true,
-   "payout": null,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 1,
+      "prize": 36007678.16
+     },
+     {
+      "correct": 14,
+      "winners": 53,
+      "prize": 388222.94
+     },
+     {
+      "correct": 13,
+      "winners": 1072,
+      "prize": 19193.85
+     },
+     {
+      "correct": 12,
+      "winners": 11934,
+      "prize": 2155.16
+     }
+    ],
+    "description": "15 BİLEN İŞTİRAKÇİMİZ SANAL BAYİMİZDEN 40 TL KUPON BEDELİ KARŞILIĞINDA İKRAMİYE KAZANMIŞTIR",
+    "close_date": "2026-09-04 19:55"
+   },
    "bulletin_image": {
     "name": "1001405844-cvdlqrnr.jpg",
     "url": "https://webapi.sportoto.gov.tr/image/1001405844-cvdlqrnr.jpg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 5,
+   "name": "5. Hafta",
+   "season": "2026/2027",
+   "game_round_id": 1532,
+   "close_date": "2026-09-11 19:55",
+   "is_published": true,
+   "payout": null,
+   "bulletin_image": {
+    "name": "1001420257-a3mb83yz.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/1001420257-a3mb83yz.jpg"
    },
    "data_warnings": []
   }
