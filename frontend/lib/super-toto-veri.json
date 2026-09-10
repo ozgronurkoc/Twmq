@@ -7127,6 +7127,7 @@
     "pinnacle_kapanis: 2 maçta kapanış açılışla BİREBİR aynı (maçlar: 6, 8) — bu bir fiyat değil, tazelenmemiş kayıttır; o satırlarda ayrışma görüş farkı değil kayıt farkıdır"
    ],
    "warnings_manual": [
+    "KAPANIŞ ETİKETİ FAZLA OLABİLİR — 3. haftanın 3. dersi. Spor Toto kuponu İLK MAÇTAN ÖNCE kapanır; haftanın son maçlarının gerçek kapanış çizgisi o anda henüz yoktur. Buradaki `pinnacle_kapanis`, kupon donarken (2026-09-10) elde olan EN GEÇ KAYITTIR, tanım gereği kapanış değildir. Bu hafta doğrulama ayrıca İMKÂNSIZ: program tarihleri ve maç saatleri girilmedi, yani 3. haftada etiket hatasını ortaya çıkaran denetimin (kayıt anı ↔ maç saati) girdisi yok. Sonuç: A1'in geri test gerekçesi (gerçek kapanış > açılış) buraya DOĞRUDAN DEVREDİLEMEZ; burada ölçülen şey 'iki anlık kayıttan geç olanı'dır.",
     "Program tarihleri ve maç saatleri GİRİLMEDİ (kullanıcı vermedi). Uydurulmadı; `date`/`kickoff` boş bırakıldı. Kuponun donduğu anı belgeleyen tek alan `entered_at`tır (kapanış sürümü için 2026-09-10).",
     "6. maçın (Gençlerbirliği–Kasımpaşa) beraberlik oranı ilk ekran görüntüsünde 5.79 okunmuştu; o değerle bültenin marjı −%7,8 çıkıyordu (arbitraj, Pinnacle'da olmaz). Kullanıcı doğru değeri 3.32 olarak verdi (2026-09-07) ve tablodaki açılış değeri odur. Düzeltmeden önceki olasılıklar (%47,6 / %18,7 / %33,7) HATALIDIR.",
     "Yalnızca TEK bahisçi (Pinnacle) var; iki an kayıtlı. Bahisçi ayrışması bu hafta ölçülemez, açılış↔kapanış hareketi ölçülebilir.",

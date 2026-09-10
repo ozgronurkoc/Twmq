@@ -60,13 +60,15 @@
       }
     ],
     "veri_uyarilari": [
+      "'Kapanış' etiketi fazladır (3. haftanın 3. dersi): kayıt, kupon donarken elde olan EN GEÇ KAYITTIR. Program tarihleri girilmediği için bu hafta doğrulanamaz da — A1'in gerçek-kapanış gerekçesi buraya doğrudan devredilemez.",
       "6. ve 8. maçta kapanış açılışla BİREBİR aynı — `dogrula` 'bayat kapanış' dedi ve uyarı susturulmadı.",
       "Oynanma yüzdeleri TEK platformun kendi kullanıcılarıdır; Spor Toto havuzunun tamamı DEĞİLDİR. Kalabalık-içi payı ve oranı bu sınırla okunur.",
       "Oynanma payı işaretleri DEĞİŞTİRMEDİ: kalabalık ayarının kazancı ölçüldü ve sıfır (docs KUPON_NASIL_KURULUYOR §7.4). Bu hafta 5% kayıp tavanlı ayar 9. maçı '2'→'1' çeviriyor ve P'yi 0,9518 → 0,9132'ye düşürüyor; OYNANMADI.",
       "6. maçın beraberlik AÇILIŞ oranı düzeltilmişti (5.79 → 3.32); düzeltmeden önceki olasılıklar hatalıydı.",
       "variants[0] seçimi bir OYNAMA kararı değildir: hangi kuponun bayiye yatırıldığı bu dosyadan okunamaz."
     ],
-    "kalabalik_gerekcesi": "Bu haftanın kuponu kalabalığı ÖLÇER ama ONA GÖRE KURULMAZ. Oynanma payı rapor katmanındadır (kalabalık-içi, oran); işaretler yalnızca fiyattan çıkar."
+    "kalabalik_gerekcesi": "Bu haftanın kuponu kalabalığı ÖLÇER ama ONA GÖRE KURULMAZ. Oynanma payı rapor katmanındadır (kalabalık-içi, oran); işaretler yalnızca fiyattan çıkar.",
+    "hedef_notu": "Asıl ölçü P(en iyi kolon ≥ 12); 14 bir yan üründür (1. haftanın 1. dersi). Bu alan 2.–4. haftaların kayıtlarında vardı ve 5. haftada sessizce düşmüştü."
   },
   "variants": [
     {
