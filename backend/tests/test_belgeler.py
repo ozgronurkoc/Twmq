@@ -1099,3 +1099,42 @@ def test_katman_dokumu_GERCEK_koleksiyonu_sayar():
     assert not yanlis, (
         "§1 katman dökümü gerçek koleksiyonla ayrışmış — "
         + "; ".join(yanlis))
+
+
+def test_kazanma_karnesi_GIT_TE_TAZE():
+    """`docs/KAZANMA_KARNESI.md` diskteki hâliyle yeniden üretilenle AYNI olmalı.
+
+    **Bu bekçi ikinci kez bayatladığı için yazıldı.** 4. haftanın sonuç
+    commit'i (`9a56f55`) üç ölçüm hatasını "düzeltildi **ve bekçilendi**"
+    diye kayda geçirmişti; ikincisi tam olarak buydu — *"docs/
+    KAZANMA_KARNESI.md git'te bayattı"*. Ama o düzeltmenin kendisine bekçi
+    konmadı: dosya elle yeniden üretildi ve iş bitti sayıldı.
+
+    5. haftaya oynanma payı girilince karne yeniden ayrıştı. Sebep sinsi:
+    hafta dosyası değişmemişti, karne satırının **girdisi** değişmişti
+    (`play_yok` düşünce hafta karneye giriyor). Yani karne, kendisine
+    dokunulmadan bayatlayabiliyor — elle bakımın yakalayamayacağı tek
+    bayatlama biçimi bu.
+
+    Düşerse yapılacak şey `python scripts/hafta_kos.py --sonrasi --yaz`.
+    Metni elle düzeltmek bu bekçiyi geçirir ama bir sonraki koşumda geri
+    alınır: karne **ekleme değil yeniden üretimdir** (bkz. `hafta_kos`
+    modül başlığı).
+    """
+    import importlib.util
+
+    if importlib.util.find_spec("numpy") is None:      # kalabalik modeli
+        pytest.skip("numpy yok: karne yeniden uretilemez")
+
+    yol = KOK / "scripts" / "hafta_kos.py"
+    spec = importlib.util.spec_from_file_location("_hafta_kos", yol)
+    assert spec and spec.loader
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+
+    beklenen = mod.karne_metni("2026_27", mod.VARSAYILAN_BUTCE,
+                               mod.VARSAYILAN_GARANTI, mod.VARSAYILAN_KURAL)
+    assert _oku("docs/KAZANMA_KARNESI.md") == beklenen, (
+        "docs/KAZANMA_KARNESI.md bayat — yeniden uretilenle ayrisiyor. "
+        "Duzeltmek icin: cd backend && python scripts/hafta_kos.py --sonrasi --yaz"
+    )
