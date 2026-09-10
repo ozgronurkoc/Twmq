@@ -1,446 +1,522 @@
 {
- "meta": {
-  "season": "2026/2027",
-  "week": 5,
-  "program": "",
-  "match_count": 15,
-  "odds_source": "Pinnacle — AÇILIŞ oranları, kullanıcı ekran görüntüsü (2026-09-07)",
-  "odds_kind": "pinnacle-acilis",
-  "odds_note": "Bu haftanın kaydı yalnızca AÇILIŞ çizgisini taşıyor: kapanış girilmedi, o yüzden fiyat duyarlılığı (açılış↔kapanış) bu hafta ölçülemez ve `odds_books` tek an taşır. Önceki haftalarda ana fiyat kapanıştı; burada açılış olması bir tercih değil, elde olanın kendisi.",
-  "play_source": "",
-  "play_note": "Oynanma yüzdesi GİRİLMEDİ — kullanıcı bu hafta kuponun yalnızca fiyattan kurulmasını istedi. `play_pct` alanları sıfırdır ve bu 'kimse oynamadı' DEĞİL 'ölçülmedi' demektir; kalabalık ölçüleri (küme-içi halk payı, oran) bu hafta hesaplanamaz.",
-  "entered_at": "2026-09-07",
-  "results": null,
-  "data_warnings": [
-   "Program tarihleri ve maç saatleri GİRİLMEDİ (kullanıcı vermedi). Uydurulmadı; `date`/`kickoff` boş bırakıldı. Kuponun donduğu anı belgeleyen tek alan `entered_at`tır (2026-09-07).",
-   "Oynanma payı YOK. `play_pct` üç sembolde de 0 girildi ve `dogrula` her maç için 'toplamı %0' uyarısı üretiyor — o uyarılar DOĞRUDUR ve susturulmadı. Bu haftanın kuponu kalabalığı görmez.",
-   "6. maçın (Gençlerbirliği–Kasımpaşa) beraberlik oranı ilk ekran görüntüsünde 5.79 okunmuştu; o değerle bültenin marjı −%7,8 çıkıyordu (arbitraj, Pinnacle'da olmaz). Kullanıcı doğru değeri 3.32 olarak verdi (2026-09-07) ve tablodaki değer odur. Düzeltmeden önceki olasılıklar (%47,6 / %18,7 / %33,7) HATALIDIR.",
-   "Yalnızca TEK bahisçi (Pinnacle) ve TEK an (açılış) var. 3.–4. haftadaki bahisçi×an karşılaştırması bu hafta yapılamaz; `prices` bloğu boş kalır.",
-   "12. maç (Chelsea–Hull City) lig kodu `E0` yazıldı ama iki takım aynı ligde değil; maç büyük olasılıkla bir kupa eşleşmesidir. Kod, ev sahibinin liginden türetilmiş bir ETİKETTİR, olgu değildir.",
-   "Takım adları kullanıcının listesindeki kısaltmalardan bu depodaki yazımlara elle eşlendi (Amed→Amed Sportif, Çorum→Çorum FK, B.Leverkusen→Bayer Leverkusen, Marsilya, Rizespor→Çaykur Rizespor). Eşleme doğrulanmadı.",
-   "Sonuçlar girilmedi; hafta açık."
+  "meta": {
+    "season": "2026/2027",
+    "week": 5,
+    "program": "",
+    "match_count": 15,
+    "odds_source": "Pinnacle — AÇILIŞ ve KAPANIŞ oranları, kullanıcı ekran görüntüleri (açılış 2026-09-07, kapanış 2026-09-10)",
+    "odds_kind": "pinnacle-kapanis",
+    "odds_note": "Hafta iki anla kayıtlı: `pinnacle_acilis` (7 Eylül'de girilen ilk çizgi) ve `pinnacle_kapanis` (10 Eylül). Ana fiyat KAPANIŞTIR — A1 ölçümü kapanışın açılıştan daha iyi bir tahminci olduğunu söylüyor (Brier 0,5940 ↔ 0,5964, %95 aralık tamamen sıfırın üstünde). 7 Eylül'de dondurulan kupon açılışla kurulmuştu; o kayıt silinmedi, bu dosya onun üstüne kapanışı EKLER.",
+    "play_source": "Kullanıcı ekran görüntüsü (2026-09-10). Yüzdeler TEK bir platformun kendi kullanıcılarının tercih payıdır; Spor Toto havuzunun tamamı DEĞİLDİR.",
+    "play_note": "Oynanma payı bu hafta GİRİLDİ (15 maçın 15'i, her satır tam 100). Kuponun işaretleri yine de yalnızca fiyattan çıkar: kalabalık ayarının kazancı ölçüldü ve sıfır çıktı (KUPON_NASIL_KURULUYOR §7.4). Yüzdeler rapor katmanında — havuz payı, rakip yoğunluğu, E[TL] — kullanılır.",
+    "entered_at": "2026-09-10",
+    "results": null,
+    "data_warnings": [
+      "Program tarihleri ve maç saatleri GİRİLMEDİ (kullanıcı vermedi). Uydurulmadı; `date`/`kickoff` boş bırakıldı. Kuponun donduğu anı belgeleyen tek alan `entered_at`tır (kapanış sürümü için 2026-09-10).",
+      "6. maçın (Gençlerbirliği–Kasımpaşa) beraberlik oranı ilk ekran görüntüsünde 5.79 okunmuştu; o değerle bültenin marjı −%7,8 çıkıyordu (arbitraj, Pinnacle'da olmaz). Kullanıcı doğru değeri 3.32 olarak verdi (2026-09-07) ve tablodaki açılış değeri odur. Düzeltmeden önceki olasılıklar (%47,6 / %18,7 / %33,7) HATALIDIR.",
+      "Yalnızca TEK bahisçi (Pinnacle) var; iki an kayıtlı. Bahisçi ayrışması bu hafta ölçülemez, açılış↔kapanış hareketi ölçülebilir.",
+      "12. maç (Chelsea–Hull City) lig kodu `E0` yazıldı ama iki takım aynı ligde değil; maç büyük olasılıkla bir kupa eşleşmesidir. Kod, ev sahibinin liginden türetilmiş bir ETİKETTİR, olgu değildir.",
+      "Takım adları kullanıcının listesindeki kısaltmalardan bu depodaki yazımlara elle eşlendi (Amed→Amed Sportif, Çorum→Çorum FK, B.Leverkusen→Bayer Leverkusen, Marsilya, Rizespor→Çaykur Rizespor). Eşleme doğrulanmadı.",
+      "6. ve 8. maçta kapanış açılışla BİREBİR aynı; `dogrula` bunu 'bayat kapanış' olarak işaretler ve UYARI DOĞRUDUR — o iki satırda kapanış bir fiyat değil, tazelenmemiş bir kayıt olabilir. Susturulmadı.",
+      "Oynanma yüzdeleri tek platformun kendi kullanıcılarıdır (bkz. `play_source`); havuzun tamamı sanılırsa §7'nin bütün TL hesabı yanlış okunur.",
+      "Sonuçlar girilmedi; hafta açık."
+    ]
+  },
+  "matches": [
+    {
+      "no": 1,
+      "date": "",
+      "kickoff": "",
+      "league": "T1",
+      "home": "Beşiktaş A.Ş.",
+      "away": "Erzurumspor FK",
+      "odds": {
+        "1": 1.26,
+        "0": 6.48,
+        "2": 13.54
+      },
+      "odds_from": "pinnacle_kapanis",
+      "odds_books": {
+        "pinnacle_acilis": {
+          "1": 1.28,
+          "0": 5.53,
+          "2": 10.16
+        },
+        "pinnacle_kapanis": {
+          "1": 1.26,
+          "0": 6.48,
+          "2": 13.54
+        }
+      },
+      "play_pct": {
+        "1": 90.0,
+        "0": 8.0,
+        "2": 2.0
+      },
+      "result": null,
+      "score": null
+    },
+    {
+      "no": 2,
+      "date": "",
+      "kickoff": "",
+      "league": "T1",
+      "home": "Eyüpspor",
+      "away": "Çaykur Rizespor",
+      "odds": {
+        "1": 3.98,
+        "0": 3.75,
+        "2": 1.86
+      },
+      "odds_from": "pinnacle_kapanis",
+      "odds_books": {
+        "pinnacle_acilis": {
+          "1": 3.72,
+          "0": 3.81,
+          "2": 1.91
+        },
+        "pinnacle_kapanis": {
+          "1": 3.98,
+          "0": 3.75,
+          "2": 1.86
+        }
+      },
+      "play_pct": {
+        "1": 23.0,
+        "0": 29.0,
+        "2": 48.0
+      },
+      "result": null,
+      "score": null
+    },
+    {
+      "no": 3,
+      "date": "",
+      "kickoff": "",
+      "league": "T1",
+      "home": "Samsunspor A.Ş.",
+      "away": "Çorum FK",
+      "odds": {
+        "1": 2.25,
+        "0": 3.19,
+        "2": 3.44
+      },
+      "odds_from": "pinnacle_kapanis",
+      "odds_books": {
+        "pinnacle_acilis": {
+          "1": 2.24,
+          "0": 3.06,
+          "2": 3.62
+        },
+        "pinnacle_kapanis": {
+          "1": 2.25,
+          "0": 3.19,
+          "2": 3.44
+        }
+      },
+      "play_pct": {
+        "1": 53.0,
+        "0": 25.0,
+        "2": 22.0
+      },
+      "result": null,
+      "score": null
+    },
+    {
+      "no": 4,
+      "date": "",
+      "kickoff": "",
+      "league": "T1",
+      "home": "Alanyaspor",
+      "away": "Göztepe A.Ş.",
+      "odds": {
+        "1": 2.21,
+        "0": 3.41,
+        "2": 3.29
+      },
+      "odds_from": "pinnacle_kapanis",
+      "odds_books": {
+        "pinnacle_acilis": {
+          "1": 2.24,
+          "0": 3.27,
+          "2": 3.36
+        },
+        "pinnacle_kapanis": {
+          "1": 2.21,
+          "0": 3.41,
+          "2": 3.29
+        }
+      },
+      "play_pct": {
+        "1": 41.0,
+        "0": 30.0,
+        "2": 29.0
+      },
+      "result": null,
+      "score": null
+    },
+    {
+      "no": 5,
+      "date": "",
+      "kickoff": "",
+      "league": "T1",
+      "home": "Konyaspor",
+      "away": "Trabzonspor A.Ş.",
+      "odds": {
+        "1": 3.62,
+        "0": 3.78,
+        "2": 1.96
+      },
+      "odds_from": "pinnacle_kapanis",
+      "odds_books": {
+        "pinnacle_acilis": {
+          "1": 3.56,
+          "0": 3.71,
+          "2": 1.99
+        },
+        "pinnacle_kapanis": {
+          "1": 3.62,
+          "0": 3.78,
+          "2": 1.96
+        }
+      },
+      "play_pct": {
+        "1": 16.0,
+        "0": 22.0,
+        "2": 62.0
+      },
+      "result": null,
+      "score": null
+    },
+    {
+      "no": 6,
+      "date": "",
+      "kickoff": "",
+      "league": "T1",
+      "home": "Gençlerbirliği",
+      "away": "Kasımpaşa A.Ş.",
+      "odds": {
+        "1": 2.28,
+        "0": 3.32,
+        "2": 3.22
+      },
+      "odds_from": "pinnacle_kapanis",
+      "odds_books": {
+        "pinnacle_acilis": {
+          "1": 2.28,
+          "0": 3.32,
+          "2": 3.22
+        },
+        "pinnacle_kapanis": {
+          "1": 2.28,
+          "0": 3.32,
+          "2": 3.22
+        }
+      },
+      "play_pct": {
+        "1": 44.0,
+        "0": 31.0,
+        "2": 25.0
+      },
+      "result": null,
+      "score": null
+    },
+    {
+      "no": 7,
+      "date": "",
+      "kickoff": "",
+      "league": "T1",
+      "home": "Amed Sportif",
+      "away": "Başakşehir FK",
+      "odds": {
+        "1": 2.51,
+        "0": 3.51,
+        "2": 2.73
+      },
+      "odds_from": "pinnacle_kapanis",
+      "odds_books": {
+        "pinnacle_acilis": {
+          "1": 2.61,
+          "0": 3.36,
+          "2": 2.71
+        },
+        "pinnacle_kapanis": {
+          "1": 2.51,
+          "0": 3.51,
+          "2": 2.73
+        }
+      },
+      "play_pct": {
+        "1": 36.0,
+        "0": 29.0,
+        "2": 35.0
+      },
+      "result": null,
+      "score": null
+    },
+    {
+      "no": 8,
+      "date": "",
+      "kickoff": "",
+      "league": "T1",
+      "home": "Galatasaray A.Ş.",
+      "away": "Kocaelispor",
+      "odds": {
+        "1": 1.25,
+        "0": 5.79,
+        "2": 11.2
+      },
+      "odds_from": "pinnacle_kapanis",
+      "odds_books": {
+        "pinnacle_acilis": {
+          "1": 1.25,
+          "0": 5.79,
+          "2": 11.2
+        },
+        "pinnacle_kapanis": {
+          "1": 1.25,
+          "0": 5.79,
+          "2": 11.2
+        }
+      },
+      "play_pct": {
+        "1": 75.0,
+        "0": 18.0,
+        "2": 7.0
+      },
+      "result": null,
+      "score": null
+    },
+    {
+      "no": 9,
+      "date": "",
+      "kickoff": "",
+      "league": "T1",
+      "home": "Gaziantep F.K.",
+      "away": "Fenerbahçe A.Ş.",
+      "odds": {
+        "1": 5.39,
+        "0": 4.15,
+        "2": 1.58
+      },
+      "odds_from": "pinnacle_kapanis",
+      "odds_books": {
+        "pinnacle_acilis": {
+          "1": 5.58,
+          "0": 4.22,
+          "2": 1.56
+        },
+        "pinnacle_kapanis": {
+          "1": 5.39,
+          "0": 4.15,
+          "2": 1.58
+        }
+      },
+      "play_pct": {
+        "1": 9.0,
+        "0": 17.0,
+        "2": 74.0
+      },
+      "result": null,
+      "score": null
+    },
+    {
+      "no": 10,
+      "date": "",
+      "kickoff": "",
+      "league": "D1",
+      "home": "Augsburg",
+      "away": "Bayer Leverkusen",
+      "odds": {
+        "1": 4.02,
+        "0": 4.18,
+        "2": 1.82
+      },
+      "odds_from": "pinnacle_kapanis",
+      "odds_books": {
+        "pinnacle_acilis": {
+          "1": 4.0,
+          "0": 4.2,
+          "2": 1.82
+        },
+        "pinnacle_kapanis": {
+          "1": 4.02,
+          "0": 4.18,
+          "2": 1.82
+        }
+      },
+      "play_pct": {
+        "1": 28.0,
+        "0": 22.0,
+        "2": 50.0
+      },
+      "result": null,
+      "score": null
+    },
+    {
+      "no": 11,
+      "date": "",
+      "kickoff": "",
+      "league": "F1",
+      "home": "Rennes",
+      "away": "Marsilya",
+      "odds": {
+        "1": 2.12,
+        "0": 3.96,
+        "2": 3.24
+      },
+      "odds_from": "pinnacle_kapanis",
+      "odds_books": {
+        "pinnacle_acilis": {
+          "1": 2.13,
+          "0": 3.98,
+          "2": 3.19
+        },
+        "pinnacle_kapanis": {
+          "1": 2.12,
+          "0": 3.96,
+          "2": 3.24
+        }
+      },
+      "play_pct": {
+        "1": 42.0,
+        "0": 27.0,
+        "2": 31.0
+      },
+      "result": null,
+      "score": null
+    },
+    {
+      "no": 12,
+      "date": "",
+      "kickoff": "",
+      "league": "E0",
+      "home": "Chelsea",
+      "away": "Hull City",
+      "odds": {
+        "1": 1.24,
+        "0": 6.04,
+        "2": 13.7
+      },
+      "odds_from": "pinnacle_kapanis",
+      "odds_books": {
+        "pinnacle_acilis": {
+          "1": 1.23,
+          "0": 6.04,
+          "2": 14.29
+        },
+        "pinnacle_kapanis": {
+          "1": 1.24,
+          "0": 6.04,
+          "2": 13.7
+        }
+      },
+      "play_pct": {
+        "1": 80.0,
+        "0": 13.0,
+        "2": 7.0
+      },
+      "result": null,
+      "score": null
+    },
+    {
+      "no": 13,
+      "date": "",
+      "kickoff": "",
+      "league": "E0",
+      "home": "Manchester United",
+      "away": "Manchester City",
+      "odds": {
+        "1": 3.21,
+        "0": 3.89,
+        "2": 2.15
+      },
+      "odds_from": "pinnacle_kapanis",
+      "odds_books": {
+        "pinnacle_acilis": {
+          "1": 3.1,
+          "0": 3.84,
+          "2": 2.22
+        },
+        "pinnacle_kapanis": {
+          "1": 3.21,
+          "0": 3.89,
+          "2": 2.15
+        }
+      },
+      "play_pct": {
+        "1": 28.0,
+        "0": 26.0,
+        "2": 46.0
+      },
+      "result": null,
+      "score": null
+    },
+    {
+      "no": 14,
+      "date": "",
+      "kickoff": "",
+      "league": "SP1",
+      "home": "Levante",
+      "away": "Barcelona",
+      "odds": {
+        "1": 14.06,
+        "0": 9.17,
+        "2": 1.16
+      },
+      "odds_from": "pinnacle_kapanis",
+      "odds_books": {
+        "pinnacle_acilis": {
+          "1": 11.81,
+          "0": 7.79,
+          "2": 1.2
+        },
+        "pinnacle_kapanis": {
+          "1": 14.06,
+          "0": 9.17,
+          "2": 1.16
+        }
+      },
+      "play_pct": {
+        "1": 5.0,
+        "0": 9.0,
+        "2": 86.0
+      },
+      "result": null,
+      "score": null
+    },
+    {
+      "no": 15,
+      "date": "",
+      "kickoff": "",
+      "league": "I1",
+      "home": "Lazio",
+      "away": "AC Milan",
+      "odds": {
+        "1": 3.37,
+        "0": 3.29,
+        "2": 2.31
+      },
+      "odds_from": "pinnacle_kapanis",
+      "odds_books": {
+        "pinnacle_acilis": {
+          "1": 3.34,
+          "0": 3.27,
+          "2": 2.34
+        },
+        "pinnacle_kapanis": {
+          "1": 3.37,
+          "0": 3.29,
+          "2": 2.31
+        }
+      },
+      "play_pct": {
+        "1": 27.0,
+        "0": 30.0,
+        "2": 43.0
+      },
+      "result": null,
+      "score": null
+    }
   ]
- },
- "matches": [
-  {
-   "no": 1,
-   "date": "",
-   "kickoff": "",
-   "league": "T1",
-   "home": "Beşiktaş A.Ş.",
-   "away": "Erzurumspor FK",
-   "odds": {
-    "1": 1.28,
-    "0": 5.53,
-    "2": 10.16
-   },
-   "odds_from": "pinnacle_acilis",
-   "odds_books": {
-    "pinnacle_acilis": {
-     "1": 1.28,
-     "0": 5.53,
-     "2": 10.16
-    }
-   },
-   "play_pct": {
-    "1": 0,
-    "0": 0,
-    "2": 0
-   },
-   "result": null,
-   "score": null
-  },
-  {
-   "no": 2,
-   "date": "",
-   "kickoff": "",
-   "league": "T1",
-   "home": "Eyüpspor",
-   "away": "Çaykur Rizespor",
-   "odds": {
-    "1": 3.72,
-    "0": 3.81,
-    "2": 1.91
-   },
-   "odds_from": "pinnacle_acilis",
-   "odds_books": {
-    "pinnacle_acilis": {
-     "1": 3.72,
-     "0": 3.81,
-     "2": 1.91
-    }
-   },
-   "play_pct": {
-    "1": 0,
-    "0": 0,
-    "2": 0
-   },
-   "result": null,
-   "score": null
-  },
-  {
-   "no": 3,
-   "date": "",
-   "kickoff": "",
-   "league": "T1",
-   "home": "Samsunspor A.Ş.",
-   "away": "Çorum FK",
-   "odds": {
-    "1": 2.24,
-    "0": 3.06,
-    "2": 3.62
-   },
-   "odds_from": "pinnacle_acilis",
-   "odds_books": {
-    "pinnacle_acilis": {
-     "1": 2.24,
-     "0": 3.06,
-     "2": 3.62
-    }
-   },
-   "play_pct": {
-    "1": 0,
-    "0": 0,
-    "2": 0
-   },
-   "result": null,
-   "score": null
-  },
-  {
-   "no": 4,
-   "date": "",
-   "kickoff": "",
-   "league": "T1",
-   "home": "Alanyaspor",
-   "away": "Göztepe A.Ş.",
-   "odds": {
-    "1": 2.24,
-    "0": 3.27,
-    "2": 3.36
-   },
-   "odds_from": "pinnacle_acilis",
-   "odds_books": {
-    "pinnacle_acilis": {
-     "1": 2.24,
-     "0": 3.27,
-     "2": 3.36
-    }
-   },
-   "play_pct": {
-    "1": 0,
-    "0": 0,
-    "2": 0
-   },
-   "result": null,
-   "score": null
-  },
-  {
-   "no": 5,
-   "date": "",
-   "kickoff": "",
-   "league": "T1",
-   "home": "Konyaspor",
-   "away": "Trabzonspor A.Ş.",
-   "odds": {
-    "1": 3.56,
-    "0": 3.71,
-    "2": 1.99
-   },
-   "odds_from": "pinnacle_acilis",
-   "odds_books": {
-    "pinnacle_acilis": {
-     "1": 3.56,
-     "0": 3.71,
-     "2": 1.99
-    }
-   },
-   "play_pct": {
-    "1": 0,
-    "0": 0,
-    "2": 0
-   },
-   "result": null,
-   "score": null
-  },
-  {
-   "no": 6,
-   "date": "",
-   "kickoff": "",
-   "league": "T1",
-   "home": "Gençlerbirliği",
-   "away": "Kasımpaşa A.Ş.",
-   "odds": {
-    "1": 2.28,
-    "0": 3.32,
-    "2": 3.22
-   },
-   "odds_from": "pinnacle_acilis",
-   "odds_books": {
-    "pinnacle_acilis": {
-     "1": 2.28,
-     "0": 3.32,
-     "2": 3.22
-    }
-   },
-   "play_pct": {
-    "1": 0,
-    "0": 0,
-    "2": 0
-   },
-   "result": null,
-   "score": null
-  },
-  {
-   "no": 7,
-   "date": "",
-   "kickoff": "",
-   "league": "T1",
-   "home": "Amed Sportif",
-   "away": "Başakşehir FK",
-   "odds": {
-    "1": 2.61,
-    "0": 3.36,
-    "2": 2.71
-   },
-   "odds_from": "pinnacle_acilis",
-   "odds_books": {
-    "pinnacle_acilis": {
-     "1": 2.61,
-     "0": 3.36,
-     "2": 2.71
-    }
-   },
-   "play_pct": {
-    "1": 0,
-    "0": 0,
-    "2": 0
-   },
-   "result": null,
-   "score": null
-  },
-  {
-   "no": 8,
-   "date": "",
-   "kickoff": "",
-   "league": "T1",
-   "home": "Galatasaray A.Ş.",
-   "away": "Kocaelispor",
-   "odds": {
-    "1": 1.25,
-    "0": 5.79,
-    "2": 11.2
-   },
-   "odds_from": "pinnacle_acilis",
-   "odds_books": {
-    "pinnacle_acilis": {
-     "1": 1.25,
-     "0": 5.79,
-     "2": 11.2
-    }
-   },
-   "play_pct": {
-    "1": 0,
-    "0": 0,
-    "2": 0
-   },
-   "result": null,
-   "score": null
-  },
-  {
-   "no": 9,
-   "date": "",
-   "kickoff": "",
-   "league": "T1",
-   "home": "Gaziantep F.K.",
-   "away": "Fenerbahçe A.Ş.",
-   "odds": {
-    "1": 5.58,
-    "0": 4.22,
-    "2": 1.56
-   },
-   "odds_from": "pinnacle_acilis",
-   "odds_books": {
-    "pinnacle_acilis": {
-     "1": 5.58,
-     "0": 4.22,
-     "2": 1.56
-    }
-   },
-   "play_pct": {
-    "1": 0,
-    "0": 0,
-    "2": 0
-   },
-   "result": null,
-   "score": null
-  },
-  {
-   "no": 10,
-   "date": "",
-   "kickoff": "",
-   "league": "D1",
-   "home": "Augsburg",
-   "away": "Bayer Leverkusen",
-   "odds": {
-    "1": 4.0,
-    "0": 4.2,
-    "2": 1.82
-   },
-   "odds_from": "pinnacle_acilis",
-   "odds_books": {
-    "pinnacle_acilis": {
-     "1": 4.0,
-     "0": 4.2,
-     "2": 1.82
-    }
-   },
-   "play_pct": {
-    "1": 0,
-    "0": 0,
-    "2": 0
-   },
-   "result": null,
-   "score": null
-  },
-  {
-   "no": 11,
-   "date": "",
-   "kickoff": "",
-   "league": "F1",
-   "home": "Rennes",
-   "away": "Marsilya",
-   "odds": {
-    "1": 2.13,
-    "0": 3.98,
-    "2": 3.19
-   },
-   "odds_from": "pinnacle_acilis",
-   "odds_books": {
-    "pinnacle_acilis": {
-     "1": 2.13,
-     "0": 3.98,
-     "2": 3.19
-    }
-   },
-   "play_pct": {
-    "1": 0,
-    "0": 0,
-    "2": 0
-   },
-   "result": null,
-   "score": null
-  },
-  {
-   "no": 12,
-   "date": "",
-   "kickoff": "",
-   "league": "E0",
-   "home": "Chelsea",
-   "away": "Hull City",
-   "odds": {
-    "1": 1.23,
-    "0": 6.04,
-    "2": 14.29
-   },
-   "odds_from": "pinnacle_acilis",
-   "odds_books": {
-    "pinnacle_acilis": {
-     "1": 1.23,
-     "0": 6.04,
-     "2": 14.29
-    }
-   },
-   "play_pct": {
-    "1": 0,
-    "0": 0,
-    "2": 0
-   },
-   "result": null,
-   "score": null
-  },
-  {
-   "no": 13,
-   "date": "",
-   "kickoff": "",
-   "league": "E0",
-   "home": "Manchester United",
-   "away": "Manchester City",
-   "odds": {
-    "1": 3.1,
-    "0": 3.84,
-    "2": 2.22
-   },
-   "odds_from": "pinnacle_acilis",
-   "odds_books": {
-    "pinnacle_acilis": {
-     "1": 3.1,
-     "0": 3.84,
-     "2": 2.22
-    }
-   },
-   "play_pct": {
-    "1": 0,
-    "0": 0,
-    "2": 0
-   },
-   "result": null,
-   "score": null
-  },
-  {
-   "no": 14,
-   "date": "",
-   "kickoff": "",
-   "league": "SP1",
-   "home": "Levante",
-   "away": "Barcelona",
-   "odds": {
-    "1": 11.81,
-    "0": 7.79,
-    "2": 1.2
-   },
-   "odds_from": "pinnacle_acilis",
-   "odds_books": {
-    "pinnacle_acilis": {
-     "1": 11.81,
-     "0": 7.79,
-     "2": 1.2
-    }
-   },
-   "play_pct": {
-    "1": 0,
-    "0": 0,
-    "2": 0
-   },
-   "result": null,
-   "score": null
-  },
-  {
-   "no": 15,
-   "date": "",
-   "kickoff": "",
-   "league": "I1",
-   "home": "Lazio",
-   "away": "AC Milan",
-   "odds": {
-    "1": 3.34,
-    "0": 3.27,
-    "2": 2.34
-   },
-   "odds_from": "pinnacle_acilis",
-   "odds_books": {
-    "pinnacle_acilis": {
-     "1": 3.34,
-     "0": 3.27,
-     "2": 2.34
-    }
-   },
-   "play_pct": {
-    "1": 0,
-    "0": 0,
-    "2": 0
-   },
-   "result": null,
-   "score": null
-  }
- ]
 }
