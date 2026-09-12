@@ -539,8 +539,24 @@
     "available": [
      "str"
     ],
+    "birlesik": "str",
     "default": "null",
-    "note": "str"
+    "kayitlar": [
+     {
+      "birlesimde": "bool",
+      "date_from": "str",
+      "date_to": "str",
+      "deger": "str",
+      "etiket": "str",
+      "koken": "str",
+      "koken_kisa": "str",
+      "matches": "int",
+      "sezon": "str",
+      "weeks": "int"
+     }
+    ],
+    "note": "str",
+    "varsayilan_kayit": "str"
    },
    "symbols": [
     "str"
@@ -631,36 +647,48 @@
     "extremes": {
      "0": {
       "max": {
+       "anahtar": "str",
        "results": "str",
+       "sezon": "null",
        "value": "int",
        "week": "int"
       },
       "min": {
+       "anahtar": "str",
        "results": "str",
+       "sezon": "null",
        "value": "int",
        "week": "int"
       }
      },
      "1": {
       "max": {
+       "anahtar": "str",
        "results": "str",
+       "sezon": "null",
        "value": "int",
        "week": "int"
       },
       "min": {
+       "anahtar": "str",
        "results": "str",
+       "sezon": "null",
        "value": "int",
        "week": "int"
       }
      },
      "2": {
       "max": {
+       "anahtar": "str",
        "results": "str",
+       "sezon": "null",
        "value": "int",
        "week": "int"
       },
       "min": {
+       "anahtar": "str",
        "results": "str",
+       "sezon": "null",
        "value": "int",
        "week": "int"
       }
@@ -684,6 +712,9 @@
      }
     ],
     "recent": {
+     "anahtarlar": [
+      "str"
+     ],
      "avg": {
       "0": "float",
       "1": "float",
@@ -703,24 +734,33 @@
      "avg_week_max": "float",
      "by_symbol": {
       "0": {
+       "anahtar": "str",
        "length": "int",
+       "sezon": "null",
        "start": "int",
        "week": "int"
       },
       "1": {
+       "anahtar": "str",
        "length": "int",
+       "sezon": "null",
        "start": "int",
        "week": "int"
       },
       "2": {
+       "anahtar": "str",
        "length": "int",
+       "sezon": "null",
        "start": "int",
        "week": "int"
       }
      },
      "top": [
       {
+       "anahtar": "str",
+       "close_date": "str",
        "length": "int",
+       "sezon": "null",
        "start": "int",
        "symbol": "str",
        "week": "int"
@@ -974,11 +1014,13 @@
     "underdog_wins": "int",
     "weekly_brier": [
      {
+      "anahtar": "str",
       "brier": "float",
       "favourite_hit": "int",
       "favourite_hit_pct": "float",
       "n": "int",
       "partial": "bool",
+      "sezon": "null",
       "week": "int"
      }
     ],
@@ -1000,6 +1042,7 @@
    },
    "weeks": [
     {
+     "anahtar": "str",
      "close_date": "str",
      "complete": "bool",
      "consistent": "bool",
@@ -1031,12 +1074,14 @@
      "reported_counts": "null",
      "results": "str",
      "season": "str",
+     "sezon": "null",
      "top": "str",
      "week": "int"
     }
    ]
   },
   "GET /api/stats/<week>": {
+   "anahtar": "str",
    "cells": [
     {
      "pos": "int",
@@ -1397,6 +1442,7 @@
     "1": "float",
     "2": "float"
    },
+   "sezon": "null",
    "top": "str",
    "week": "int"
   },

@@ -104,6 +104,7 @@ def meta_payload(version: str) -> dict[str, Any]:
         VARSAYILAN_BUTCE_TL,
         VARSAYILAN_UCLU,
     )
+    from .history import VARSAYILAN_KAYIT, kayit_secenekleri
     from .history import sezonlar as _sezonlar
 
     return {
@@ -127,20 +128,34 @@ def meta_payload(version: str) -> dict[str, Any]:
             "uclu_default": VARSAYILAN_UCLU,
             "banko_grid": list(BANKO_IZGARA),
             "uclu_grid": list(UCLU_IZGARA),
-            # `?sezon=hepsi` yalniz geri testte gecerli: olcum kesitinin
-            # tamami (114 hafta). `seasons.available` onu TASIMAZ, cunku
-            # `/api/stats` sezonlari birlestirmez, secer.
+            # `?sezon=hepsi` burada olcum kesitinin tamamidir (114 hafta:
+            # oran kapsamasi olanlar). Ayni dize `/api/stats`te de gecerli
+            # ama orada kuponun BUTUN haftalari sayilir (122) — fark
+            # suzgecte, kesitin taniminda degil (`history.TUM_SEZONLAR`).
             "tum_kesit": TUM_SEZONLAR,
         },
-        # Arayuzun `?sezon=` icin kullanabilecegi liste. VARSAYILAN bu
-        # listede YOKTUR ve olmamali: o bir sezon secimi degil, "hicbir sey
-        # secilmedi" hali (§6G.5 — 2025/26'nin iki ayri okumasi var).
+        # Arayuzun `?sezon=` icin kullanabilecegi secenekler.
+        #
+        # `available` SEZON DOSYALARIDIR ve oyle kaldi (uyumluluk). Secici
+        # artik `kayitlar`i basiyor: birlesik kesit + her kayit, etiketi,
+        # kokeni ve kunyesiyle. Arayuzde sabit liste tutulmuyor — yeni bir
+        # sezon eklendiginde secici kendiliginden buyur, kimse guncellemeyi
+        # unutamaz.
         "seasons": {
+            # Sezon HIC verilmezse okunan kayit. `null` kaldi cunku uc
+            # sozlesmesi bu: parametresiz `/api/stats` varsayilan kaydi
+            # dondurur ve 27 degismez ona bakiyor. Arayuzun VARSAYILAN
+            # GORUNUMU ayri bir seydir ve o `birlesik`tir.
             "default": None,
             "available": _sezonlar(),
-            "note": ("varsayilan secim yok; secilirse `?sezon=` ile "
-                     "gonderilir. `2025_26` varsayilanin AYNI sezonu ikinci "
-                     "kez okumasidir (31 hafta / 41 hafta)"),
+            "birlesik": TUM_SEZONLAR,
+            "varsayilan_kayit": VARSAYILAN_KAYIT,
+            "kayitlar": kayit_secenekleri(),
+            "note": ("`?sezon=` bos birakilirsa varsayilan kayit okunur; "
+                     "`varsayilan` ayni kaydin ACIK adidir. `hepsi` "
+                     "sezonlarin BIRLESIMIDIR (2025/26 bir kez sayilir: "
+                     "bultenden okunan `2025_26` birlesime girmez, ayri "
+                     "secilir — §6G.5)"),
         },
         "limits": LIMITS,
     }

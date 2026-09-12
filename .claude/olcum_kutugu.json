@@ -2,7 +2,7 @@
   "sayilar": [
     {
       "ne": "suit test sayisi (eksiksiz kurulum)",
-      "deger": "1.843",
+      "deger": "1.863",
       "ureten": "cd backend && python -m pytest --collect-only -q -p no:randomly -o addopts=  # son satirdaki toplam",
       "olculdu": "2026-09-12",
       "anildigi_yerler": [
@@ -14,7 +14,7 @@
         "replit.md"
       ],
       "bekci": "backend/tests/test_belgeler.py::test_test_sayisi_belgelerde_tek_ve_dogru",
-      "not": "1.799 yaziyordu ve KENDI BEKCISIYLE celisiyordu: bekci belgelerdeki sayiyi gercek koleksiyona esitler, belgeler 1.800 diyordu. Uretici komut da yanlisti — `-o addopts=` olmadan xdist devrede kalir. PR 48 incelemesinde uc bekci eklendi: 1.800 -> 1.803. || 1.803 -> 1.820 (2026-09-07): geri testin hedef kuralina cevrilmesiyle 17 test eklendi (strateji secimi, butce zorunlulugu, butce taramasi monotonlugu, §1.1 sayi bekcileri, birikimli marj). || 1.837 -> 1.860 (2026-09-07): olcum kutugunun kendi bekcileri (tests/test_olcum_kutugu.py, 5) ve bekcisiz kalmis README mansetlerinin bekcileri eklendi; ayrica kupon belgesi ve secim kurali islerinin testleri. Sayi TAM KURULUMLA olculdu (lightgbm dahil) — eksik kurulumda bekci kasitli ATLIYOR ve eksik bir suit sayilirsa yanlis sayi yazilir. || 1.860 -> 1.834 (2026-09-07): main kapanmis iki deneyi kaldirdi (E4/hakem 4acc3dd, xG vekili 25e72e0) ve tests/test_hakem.py (5) ile tests/test_xg.py (16) suitten cikti; kalan 5'lik fark ayni koumlarda silinen parametrizasyonlardan. Bu dallanmanin birlesmesinde YENIDEN OLCULDU, aritmetikle turetilmedi. || 1.834 -> 1.837 (2026-09-07): 4. haftanin sonuc degerlendirmesinde uc bekci eklendi: puanin kunyesi ve karne yorumunun tureticileri (test_degerlendir), §1 katman dokumu (test_belgeler). Katman dokumu ayrica DUZELTILDI: yazili 85/579/29/30, gercek 117/624/35/38. || 1.837 -> 1.841 (2026-09-10): dal 4a83172'de kutuk zaten bayatti (gercek 1.840, belgeler 1.837 diyordu — Delta 3'un tamami tests/test_super_toto.py'ye eklenen bekcilerdi ve README §9'un 'Super Toto' satiri da 105'te kalmisti). 5. haftaya oynanma payi girilince test_tahmin2.py::test_onceki_olcek_KAYITTAN_okunur_sabitten_degil parametrizasyonu 5. haftayi da topluyor: +1. Yeniden olculdu, aritmetikle turetilmedi. || 1.841 -> 1.842 (2026-09-10): karnenin tazelik bekcisi eklendi (test_belgeler.py::test_kazanma_karnesi_GIT_TE_TAZE) — 4. haftanin 'karne git'te bayatti' hatasi bekcisiz kaldigi icin 5. haftada tekrarlamisti. || 1.842 -> 1.843 (2026-09-12): capraz dogrulama sayilarinin metin bekcisi eklendi (test_belgeler.py::test_capraz_dogrulama_sayilari_RAPORLA_ayni) — '29 ortak hafta / 28'i birebir ayni' dokuz yerde bayat kalmisti. TAM KURULUMLA olculdu (numpy, scipy, lightgbm, scikit-learn)."
+      "not": "1.799 yaziyordu ve KENDI BEKCISIYLE celisiyordu: bekci belgelerdeki sayiyi gercek koleksiyona esitler, belgeler 1.800 diyordu. Uretici komut da yanlisti — `-o addopts=` olmadan xdist devrede kalir. PR 48 incelemesinde uc bekci eklendi: 1.800 -> 1.803. || 1.803 -> 1.820 (2026-09-07): geri testin hedef kuralina cevrilmesiyle 17 test eklendi (strateji secimi, butce zorunlulugu, butce taramasi monotonlugu, §1.1 sayi bekcileri, birikimli marj). || 1.837 -> 1.860 (2026-09-07): olcum kutugunun kendi bekcileri (tests/test_olcum_kutugu.py, 5) ve bekcisiz kalmis README mansetlerinin bekcileri eklendi; ayrica kupon belgesi ve secim kurali islerinin testleri. Sayi TAM KURULUMLA olculdu (lightgbm dahil) — eksik kurulumda bekci kasitli ATLIYOR ve eksik bir suit sayilirsa yanlis sayi yazilir. || 1.860 -> 1.834 (2026-09-07): main kapanmis iki deneyi kaldirdi (E4/hakem 4acc3dd, xG vekili 25e72e0) ve tests/test_hakem.py (5) ile tests/test_xg.py (16) suitten cikti; kalan 5'lik fark ayni koumlarda silinen parametrizasyonlardan. Bu dallanmanin birlesmesinde YENIDEN OLCULDU, aritmetikle turetilmedi. || 1.834 -> 1.837 (2026-09-07): 4. haftanin sonuc degerlendirmesinde uc bekci eklendi: puanin kunyesi ve karne yorumunun tureticileri (test_degerlendir), §1 katman dokumu (test_belgeler). Katman dokumu ayrica DUZELTILDI: yazili 85/579/29/30, gercek 117/624/35/38. || 1.837 -> 1.841 (2026-09-10): dal 4a83172'de kutuk zaten bayatti (gercek 1.840, belgeler 1.837 diyordu — Delta 3'un tamami tests/test_super_toto.py'ye eklenen bekcilerdi ve README §9'un 'Super Toto' satiri da 105'te kalmisti). 5. haftaya oynanma payi girilince test_tahmin2.py::test_onceki_olcek_KAYITTAN_okunur_sabitten_degil parametrizasyonu 5. haftayi da topluyor: +1. Yeniden olculdu, aritmetikle turetilmedi. || 1.841 -> 1.842 (2026-09-10): karnenin tazelik bekcisi eklendi (test_belgeler.py::test_kazanma_karnesi_GIT_TE_TAZE) — 4. haftanin 'karne git'te bayatti' hatasi bekcisiz kaldigi icin 5. haftada tekrarlamisti. || 1.842 -> 1.843 (2026-09-12): capraz dogrulama sayilarinin metin bekcisi eklendi (test_belgeler.py::test_capraz_dogrulama_sayilari_RAPORLA_ayni) — '29 ortak hafta / 28'i birebir ayni' dokuz yerde bayat kalmisti. TAM KURULUMLA olculdu (numpy, scipy, lightgbm, scikit-learn). || 1.843 -> 1.863 (2026-09-12): birlesik kesit (`?sezon=hepsi`) islendi — test_history +10, test_api_stats +6, test_odds +3, test_belgeler +1 (kayit hafta sayisi metin bekcisi). TAM KURULUMLA olculdu."
     },
     {
       "ne": "test dosyasi sayisi",
@@ -1766,7 +1766,7 @@
       "ureten": "python3 -c \"import json;from collections import Counter;A={w['week']:w for w in json.load(open('backend/data/st_history_2025_26.json'))['weeks']};B={w['week']:w for w in json.load(open('backend/data/st_history/2025_26.json'))['weeks']};c=Counter();[c.update(A[w]['results']) for w in A];print(c)\"  # ayni sayim ortak (A&B) ve ekstra (A-B) kesitleri icin tekrarlandi",
       "olculdu": "2026-09-12",
       "anildigi_yerler": [
-        "README.md:556"
+        "README.md:562"
       ],
       "bekci": "backend/tests/test_history.py::test_varsayilan_sezon_DEGISMEDI",
       "not": "varsayilan %43,9/%24,2/%31,9 (615 mac) ↔ turetilmis %44,5/%25,4/%30,1 (465 mac). Fark TAMAMEN fazladan 10 haftadan geliyor: o 150 macta dagilim %42,0/%20,7/%37,3. Ortak 31 haftada iki kayit sembol SAYIMI bazinda birebir ayni — hf 30'daki ayrisma sira farki (§6G.5), sayim farki degil. README §1'in 615/270/%43,90 kunyesini o bekci tutar; iki kaydin FARKINI tutan bir bekci yok — fark iki veri dosyasindan dogrudan sayimdir."
@@ -1777,19 +1777,67 @@
       "ureten": "python3 -c \"import json;print(json.load(open('backend/data/st_history/gecmis_rapor.json'))['capraz_dogrulama'])\"",
       "olculdu": "2026-09-12",
       "anildigi_yerler": [
-        "docs/VERI_TOPLAMA_VE_ISLEME.md:1233",
+        "docs/VERI_TOPLAMA_VE_ISLEME.md:1237",
         "README.md:441",
-        "backend/spor_toto/history.py:42",
-        "backend/spor_toto/meta.py:143",
         "backend/spor_toto/evaluate.py:109",
         "backend/tests/test_sizinti.py:593",
         "backend/tests/test_gecmis_sezon.py:240",
-        "backend/tests/test_history.py:265",
-        "frontend/components/istatistik/parts.tsx:65",
-        "frontend/lib/types.ts:705"
+        "backend/tests/test_history.py:265"
       ],
       "bekci": "backend/tests/test_belgeler.py::test_capraz_dogrulama_sayilari_RAPORLA_ayni",
-      "not": "Ortak 31 haftanin 30'u birebir ayni; ayrisan tek hafta (hf 30) SIRA farkidir. Sayi §6I'de 29->31 / 28->30 buyudu (Unicode kusuru duzeltildi) ama iddiayi anan dokuz yer bayat kalmisti: tek bekci ESIKLIydi (ortak>=25, oran>=0,90) ve metni tutmuyordu. 2026-09-12'de hepsi duzeltildi ve metin bekcisi yazildi."
+      "not": "Ortak 31 haftanin 30'u birebir ayni; ayrisan tek hafta (hf 30) SIRA farkidir. Sayi §6I'de 29->31 / 28->30 buyudu (Unicode kusuru duzeltildi) ama iddiayi anan dokuz yer bayat kalmisti: tek bekci ESIKLIydi (ortak>=25, oran>=0,90) ve metni tutmuyordu. 2026-09-12'de hepsi duzeltildi ve metin bekcisi yazildi. || 2026-09-12: birlesik kesit isi `meta.py` ve `parts.tsx` metinlerini yeniden yazdi; ikisi artik capraz dogrulama sayisini ANMIYOR ve listeden cikti (bekci 'iddia bulunamadi' diye dusurdu, sessiz kalmadi). Ayrica KAYIT BOYU iddiasi (41 ↔ 31) ayri bir bekciye ayrildi: test_belgeler.py::test_kayit_hafta_sayilari_METINLERDE_olcumle_ayni."
+    },
+    {
+      "ne": "birlesik kesit (`?sezon=hepsi`) — hafta ve mac sayisi",
+      "deger": "122",
+      "ureten": "cd backend && python3 -c \"from spor_toto.history import normalized_weeks, TUM_SEZONLAR;w=normalized_weeks(sezon=TUM_SEZONLAR);print(len(w), sum(len(x['results']) for x in w))\"",
+      "olculdu": "2026-09-12",
+      "anildigi_yerler": [
+        "docs/VERI_TOPLAMA_VE_ISLEME.md §2.5",
+        "docs/VERI_TOPLAMA_VE_ISLEME.md §6G.8",
+        "docs/ISTATISTIK_YOL_HARITASI.md §3.66",
+        "README.md §5.0",
+        "replit.md"
+      ],
+      "bekci": "backend/tests/test_history.py::test_birlesik_hafta_sayisi_parcalarin_TOPLAMI || backend/tests/test_api_stats.py::test_birlesik_kesit_govdesi",
+      "not": "122 hafta · 1.830 mac = 17 (2022/23) + 31 (2023/24) + 33 (2024/25) + 41 (2025/26 payload). 2025/26'nin bultenden okunan 31 haftalik kaydi GIRMEZ: ayni sezonun ikinci okumasi (§6G.5), koysaydik 31 hafta iki kez sayilirdi. Geri testin ayni dizedeki kesiti 114 hafta — fark oran kapsamasi suzgeci (`usable`)."
+    },
+    {
+      "ne": "birlesik kesitin 1/0/2 dagilimi (varsayilan kayitla karsilastirmali)",
+      "deger": "%46,0",
+      "ureten": "cd backend && python3 -c \"from collections import Counter;from spor_toto.history import normalized_weeks, TUM_SEZONLAR;c=Counter();[c.update(w['results']) for w in normalized_weeks(sezon=TUM_SEZONLAR)];t=sum(c.values());print({k: round(100*v/t,1) for k,v in sorted(c.items())})\"",
+      "olculdu": "2026-09-12",
+      "anildigi_yerler": [
+        "docs/ISTATISTIK_YOL_HARITASI.md §3.66"
+      ],
+      "bekci": "yok — veri dosyalarindan dogrudan sayim; §3.66 tablosu bu olcumu aniyor",
+      "not": "birlesik %46,0 / %23,8 / %30,2 (1.830 mac) ↔ varsayilan kayit %43,9 / %24,2 / %31,9 (615 mac). Fark bir bulgu degil KESIT farki: eski sezonlarda ev sahibi payi daha yuksek (§3.43'un sezon tablosu ayni egilimde)."
+    },
+    {
+      "ne": "birlesik kesitte oran kapsamasi (/api/stats?sezon=hepsi odds blogu)",
+      "deger": "%97,3",
+      "ureten": "cd backend && python3 -c \"from spor_toto.payloads import stats_payload;from spor_toto.history import TUM_SEZONLAR;o=stats_payload(sezon=TUM_SEZONLAR)['odds'];print(o['with_odds'],'/',o['matches'],o['coverage_pct'])\"",
+      "olculdu": "2026-09-12",
+      "anildigi_yerler": [],
+      "bekci": "backend/tests/test_api_stats.py::test_birlesik_kesitte_oran_ozeti_de_birlesir",
+      "bekcisiz_gerekce": "",
+      "not": "1.737 / 1.785 mac. Payda 1.830 DEGIL: oran arsivinde satiri olmayan haftalar var (varsayilan kayitta kapsama %92,2 · 567/615). Haftalik Brier satirlari hafta ANAHTARIYLA (`2023_24-12`) geliyor — numara birlesik kesitte benzersiz degil."
+    },
+    {
+      "ne": "2025/26'nin iki kaydinin BOYU (varsayilan payload ↔ bulten)",
+      "deger": "41",
+      "ureten": "cd backend && python3 -c \"from spor_toto.history import normalized_weeks;print(len(normalized_weeks()), len(normalized_weeks(sezon='2025_26')))\"",
+      "olculdu": "2026-09-12",
+      "anildigi_yerler": [
+        "backend/spor_toto/history.py:60",
+        "backend/spor_toto/evaluate.py:109",
+        "frontend/components/istatistik/parts.tsx:147",
+        "frontend/lib/types.ts:808",
+        "backend/tests/test_history.py:265",
+        "backend/tests/test_sizinti.py:593"
+      ],
+      "bekci": "backend/tests/test_belgeler.py::test_kayit_hafta_sayilari_METINLERDE_olcumle_ayni",
+      "not": "41 (varsayilan payload) ↔ 31 (bultenden). Capraz dogrulama sayisiyla (ortak 31) KARISTIRILMAMALI: bugun ikisi de 31'den geciyor cunku turetilmis kaydin 31 haftasinin tamami varsayilanin icinde; bultenden bir hafta daha okunursa kayit 32 olur, ortusme 31'de kalabilir. O gun tek bekci sessiz kalirdi, bu yuzden iki iddia iki ayri bekcide."
     }
   ],
   "komutlar": [

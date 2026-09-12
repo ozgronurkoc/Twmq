@@ -196,6 +196,10 @@ Ne çözdüğü §10.1'dedir ve tek cümleyle şudur: havuz ekseni **n = 3'ten n
 Kupon değerlendirme seti 41 haftadan **153 haftaya** çıktı (41 eski + 112
 yeni; 31'i aynı sezonun iki bağımsız okuması). Ayrıntı §6F ve §6G.
 
+Arayüzün varsayılan görünümü bu kayıtların **birleşimidir**: 122 hafta ·
+1.830 maç. 153 ile 122 arasındaki fark, aynı sezonu iki kez sayan 31
+haftadır — birleşim 2025/26'yı **bir kez** alır (§6G.8).
+
 ## 3. Kaynak seçimi
 
 ### 3.1 Değerlendirilen kaynaklar
@@ -1292,6 +1296,52 @@ yazar.
 
 ---
 
+### 6G.8 Birleşik kesit (`?sezon=hepsi`) — ve 2025/26'nın iki kez sayılmaması
+
+Kayıtlar ayrı dosyalarda duruyor ama arayüzün **varsayılan görünümü** artık
+onların birleşimidir. Kesit ölçüldü:
+
+| Kayıt | Hafta | Maç | Birleşimde |
+|---|---|---|---|
+| 2022/23 | 17 | 255 | ✔ |
+| 2023/24 | 31 | 465 | ✔ |
+| 2024/25 | 33 | 495 | ✔ |
+| 2025/26 · payload (`st_history_2025_26.json`) | 41 | 615 | ✔ |
+| 2025/26 · bülten (`st_history/2025_26.json`) | 31 | 465 | **✘** |
+| **Birleşik** | **122** | **1.830** | |
+
+**Birleşimin tek gerçek tehlikesi aynı sezonu iki kez saymaktır** ve o tehlike
+2025/26'da somuttur: iki kaydın ortak 31 haftasının 30'u birebir aynı dizidir
+(§6G.5). İkisini birden koymak o haftaları iki kez saymak olurdu — yüzdeler
+kaymaz ama `n` şişer ve hiçbir yerde yazmaz.
+
+Kesit bu yüzden **`evaluate.OLCUM_SEZONLARI`den türüyor**: o demet aynı
+gerekçeyle `2025_26`yi zaten dışarıda bırakıyor ve gerekçesini yanında
+taşıyor. `history.birlesik_kesit()` ikinci bir liste tutmaz; tutsaydı biri
+değişir, öteki sessizce aynı sezonu iki kez sayardı. Bültenden okunan kayıt
+seçilebilir olarak kalır (`?sezon=2025_26`), birleşime girmez.
+
+**Hafta numarası birleşimde kimlik değildir.** Dört kaydın dördünde de 12.
+hafta var; satırlar kendi `sezon`unu ve `anahtar`ını (`"2023_24-12"`) taşır.
+Sıralama kronolojiktir (`close_date`), kopya dizi denetimi **sezon içinde**
+yapılır (iki bağımsız kuponun aynı diziyi vermesi kusur değildir) ve tek
+hafta sorgusu birleşik kesitte **400 döner** — "12. hafta" belirsizdir ve
+doktrin 4 gereği biri sessizce seçilmez.
+
+**Aynı dize iki uçta aynı kesiti tanımlar, aynı sayıyı vermez.** `?sezon=hepsi`
+`/api/stats`te kuponun **bütün** haftalarını sayar (122); `/api/backtest`te
+piyasa oranı olan alt kümeyi (114 — `usable`). Fark süzgeçtedir, kesitin
+tanımında değil; sabit tek yerde durur (`history.TUM_SEZONLAR`) ki iki uçta
+iki farklı anlam kazanmasın.
+
+Bekçiler: `test_history.py` (iki kez sayma, anahtar benzersizliği, kronoloji,
+dilim, künye, sezona göre kopya denetimi), `test_api_stats.py` (gövde, oran
+özeti, tek hafta ucunun 400'ü, **seçicideki her tuşun gövdeyle aynı hafta
+sayısını vermesi**), `test_odds.py` (süzgecin `(sezon, hafta)` çifti olması)
+ve `health._check_stats_sozlesmesi` (birleşik gövde de denetleniyor).
+
+---
+
 ## 6H. Oran arşivi artık sezonlu
 
 §5'in oran boru hattı tek sezona çiviliydi ve **üç sabiti** vardı; üçü de
@@ -1537,7 +1587,12 @@ tablolar (script'in bastığı lig dağılımı) bunu yakalayan şeydi.
 | `test_sportoto_arsiv.py::test_hafta_no_tahmin_edilmez` | Hafta numarası uydurulmaz (doktrin 2) |
 | `test_sportoto_arsiv.py::test_celisen_kapanis_tarihi_raporlanir` | İki uç çelişirse biri sessizce seçilmez (doktrin 4) |
 
-Toplam 113 test bu dört veri setini korur (backend paketi 1.843 test). `python -m spor_toto.health`
+Dört veri setinin bekçileri dört dosyadadır — `test_history` (35) ·
+`test_odds` (9) · `test_snapshot_iddaa` (14) · `test_sportoto_arsiv` (28):
+**86 test** (backend paketi 1.863). Sayı burada dosya dosya yazılıyor çünkü
+önceki hâli ("113") elle sayılmıştı ve neyi topladığı yazmıyordu; hangi
+dosyaları saydığı yazılmayan bir toplam, ilk değişiklikte sessizce bayatlar.
+`python -m spor_toto.health`
 22 değişmez çalıştırır; `oran_arsivi` ve `geri_test` bu katmanı, `tahmin_referanslari`
 tahmin katmanının ölçüm koşumunu korur.
 

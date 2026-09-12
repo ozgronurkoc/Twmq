@@ -27,7 +27,7 @@ import {
   RangeFilter,
   SliceNote,
   aralikUrldenOku,
-  sezonUrldenOku,
+  useSezonSecimi,
   aralikUrleYaz,
 } from "@/components/istatistik/parts";
 import { IstatistikSekmeleri } from "@/components/istatistik/sekmeler";
@@ -55,13 +55,13 @@ export default function OranlarPage() {
   const [last, setLast] = React.useState<number | null>(null);
   // Sezon SEKME SERIDINDEN gelir (`?sezon=`); bu sayfa onu secmez ama
   // TASIMAK zorundadir, yoksa sezon secip bu sekmeye gecen kullanici
-  // sessizce varsayilan sezona duser.
-  const [sezon, setSezon] = React.useState<string | null>(null);
+  // sessizce baska bir kesite duser. Adres bos ise varsayilan gorunum
+  // (birlesik kesit) ortak kancadan gelir — uc sekme de ayni kesitte acilir.
+  const { sezon, hazir: sezonHazir } = useSezonSecimi();
   const [urlOkundu, setUrlOkundu] = React.useState(false);
 
   React.useEffect(() => {
     setLast(aralikUrldenOku());
-    setSezon(sezonUrldenOku());
     setUrlOkundu(true);
   }, []);
 
@@ -74,8 +74,8 @@ export default function OranlarPage() {
     veri,
     hata,
     yukleniyor: mesgul,
-  } = useIstek((signal) => getStats(last, signal, sezon), [last, sezon], {
-    hazir: urlOkundu,
+  } = useIstek((signal) => getStats(last, signal, sezon ?? null), [last, sezon], {
+    hazir: urlOkundu && sezonHazir,
     varsayilanHata: "Oran özeti alınamadı",
   });
 
@@ -118,9 +118,10 @@ export default function OranlarPage() {
           />
           {veri ? (
             <SliceNote
-              weeks={veri.weeks.map((w) => w.week)}
+              weeks={veri.weeks}
               matches={veri.meta.matches ?? 0}
               sliced={Boolean(veri.meta.sliced)}
+              birlesim={veri.meta.birlesim}
             />
           ) : null}
         </div>

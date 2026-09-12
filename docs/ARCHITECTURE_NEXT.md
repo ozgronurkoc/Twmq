@@ -39,7 +39,7 @@ yani boşluk üç belgeye birden yayılıyordu. Artık liste
 | GET | `/api/health/checks` | Kayıtlı kontrol envanteri — kontrolleri **koşturmadan** listeler |
 | GET | `/api/health/history` | Sunucudaki son koşuların özeti (süreç ömürlü) |
 | POST | `/api/health/kupon` | Kullanıcının kendi kuponunu aynı değişmezlerden geçirir |
-| GET | `/api/stats?last=N` | Tarihsel 1/0/2 + analiz blokları (`last` = son N hafta dilimi) |
+| GET | `/api/stats?last=N&sezon=` | Tarihsel 1/0/2 + analiz blokları (`last` = son N hafta dilimi; `sezon=hepsi` = kayıtların birleşimi) |
 | GET | `/api/stats/<week>` | Tek hafta detayı (komşular, sıra, sapma, sıra-sıra bağlam) |
 | GET | `/api/backtest` | Geri test: sezon + hafta hafta + eşik taraması + hold-out |
 | GET | `/api/pazar?arindirma=…` | 1X2 dışı pazarlar (alt/üst 2,5 · Asya handikabı) — fiyat **ve** ölçülmüş kalibrasyonu birlikte |
@@ -93,9 +93,17 @@ min ≤ varsayılan ≤ max, preset ve mod listelerinin motorla örtüşmesi).
 üzerinden hesaplanır (`last` yoksa/geçersizse tüm sezon). Arayüzdeki tek filtre
 satırı buraya bağlıdır; böylece iki görsel asla farklı veriyi anlatmaz.
 
+`?sezon=` hangi kaydın okunacağını seçer: boş (varsayılan kayıt, uç
+sözleşmesi), `varsayilan` (aynı kaydın açık adı), bir sezon anahtarı
+(`2023_24`) ya da **`hepsi`** — kayıtların birleşimi, 122 hafta (§6G.8).
+Arayüzün varsayılan görünümü `hepsi`dir. Geçerli değerler `/api/meta`
+`seasons.kayitlar`da ilan edilir; tanınmayan değer 400 döner.
+`/api/stats/<week>` `hepsi` KABUL ETMEZ (hafta numarası kayıtlar arasında
+benzersiz değil) ve 400 ile bunu söyler.
+
 | Alan | İçerik |
 |------|--------|
-| `meta` | sezon, hafta sayısı, hafta/tarih aralığı, `sliced` |
+| `meta` | sezon, hafta sayısı, hafta/tarih aralığı, `sliced`, `origin`; birleşik kesitte `birlesim` (kayıt dökümü) dolu ve hafta aralığı `null` |
 | `totals` / `weekly_avg` / `bands` | toplam, haftalık ortalama, min–maks–ortanca–σ, ortalama üstü/altı |
 | `analytics.positions` | 1.–15. maç sırasına göre 1/0/2 dağılımı |
 | `analytics.transitions` | ardışık maçlarda sembol geçiş matrisi (3×3) |
@@ -105,7 +113,7 @@ satırı buraya bağlıdır; böylece iki görsel asla farklı veriyi anlatmaz.
 | `analytics.recent` | son 6 haftanın ortalaması ve sezona göre farkı |
 | `data_quality` | sayım çelişkileri, tekrar eden diziler, eksik haftalar |
 | `odds` | maç sonucu (1X2) özeti: kapsama, favori isabeti, marj, kalibrasyon — arşiv yoksa `null` |
-| `weeks` | hafta satırları (`counts`, `max_streak`, `consistent`, …) |
+| `weeks` | hafta satırları (`sezon`, `anahtar`, `counts`, `max_streak`, `consistent`, …) |
 
 `/api/stats/<week>` ayrıca `odds` (maç numarasına göre 1X2 bloğu) ve `odds_hit`
 (o hafta favorinin tuttuğu maç sayısı) döner.

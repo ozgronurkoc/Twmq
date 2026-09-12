@@ -21,7 +21,12 @@ from .backtest import (
     VARSAYILAN_UCLU,
     backtest,
 )
-from .history import history_analytics, history_summary, history_weeks
+from .history import (
+    TUM_SEZONLAR,
+    history_analytics,
+    history_summary,
+    history_weeks,
+)
 from .odds import season_1x2_summary
 from .pazar import sezon_ozeti
 
@@ -38,9 +43,19 @@ def stats_payload(last: int | None = None,
     numara sezon tasimiyor — sezon gecirilmezse baska bir sezonun oran
     arsivinde ayni numaralar bulunur ve oran karti SESSIZCE baska bir
     sezonu anlatirdi.
+
+    `sezon == TUM_SEZONLAR` (birlesik kesit) ayni tuzagin BUYUK halidir:
+    orada numara listesi dort sezonun ayni numarali haftalarini birden
+    gecirirdi. Bu yuzden birlesik kipte suzgec `(sezon, hafta)` ciftidir ve
+    cift, hafta satirlarinin KENDI `sezon` alanindan kurulur — ikinci bir
+    sezon listesi burada tutulmaz.
     """
     summary = history_summary(last, sezon)
     weeks = history_weeks(last, sezon)
+    oran_kesiti: list[Any] = (
+        [(w["sezon"], w["week"]) for w in weeks] if sezon == TUM_SEZONLAR
+        else [w["week"] for w in weeks]
+    )
     return {
         "meta": summary.get("meta", {}),
         "totals": summary.get("totals", {}),
@@ -53,7 +68,7 @@ def stats_payload(last: int | None = None,
         # (alt/ust ikili ve Brier'li, handikap kesirli getirili ve Brier'siz)
         # ve ayni govdeye sikistirmak ikisini de yanlis okuturdu.
         # Arsiv yoksa None doner.
-        "odds": season_1x2_summary([w["week"] for w in weeks], sezon),
+        "odds": season_1x2_summary(oran_kesiti, sezon),
         "weeks": weeks,
         "last": last,
         "sezon": sezon,

@@ -2,8 +2,16 @@
 
 import * as React from "react";
 
-import { SEMBOLLER, type DataQuality } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import {
+  SEMBOLLER,
+  type DataQuality,
+  type HaftaKimlik,
+  type SezonKaydi,
+  type StatsMeta,
+  type WeekRow,
+} from "@/lib/types";
+import { cn, sayi } from "@/lib/utils";
+import { getMeta } from "@/lib/api";
 import { Button } from "@/components/ui/primitives";
 import { ResultStrip } from "@/components/ui/symbol";
 import { isaretli } from "./viz";
@@ -51,52 +59,126 @@ export function sezonUrleYaz(deger: string | null): void {
   adreseYaz(SEZON_PARAM, deger || null);
 }
 
-/** "2023_24" -> "2023/24". */
-function sezonEtiketi(anahtar: string): string {
+/**
+ * Sezon secimi — UC SAYFANIN ORTAK kancasi (`Sezon`, `Oranlar`, `Geri test`).
+ *
+ * Uc sayfa da ayni secimi okur ve ayni varsayilana dusmelidir. Once yalnizca
+ * adres cubugu okunuyordu (`sezonUrldenOku`) ve varsayilan "parametre yok"
+ * demekti; sayfanin varsayilan gorunumu birlesik kesit olunca bu yetmez
+ * oldu: /istatistik `hepsi` gosterirken dogrudan acilan /istatistik/oranlar
+ * sessizce varsayilan kaydi gosterirdi — iki sekme ayni anda iki farkli
+ * kesiti anlatir ve hicbir yerde yazmazdi (§6.8'in `?last` icin cozdugu
+ * arizanin aynisi).
+ *
+ * Varsayilan gorunum burada SABIT YAZILI DEGIL: motor `/api/meta`da ilan
+ * ediyor (`seasons.birlesik`). `undefined` "henuz karar verilmedi"
+ * demektir ve istekler o sirada BEKLER — aksi halde sayfa once varsayilan
+ * kaydi cekip sonra birlesik kesite doner, iki kez ve iki farkli sayiyla
+ * cizilirdi.
+ */
+export function useSezonSecimi(): {
+  sezon: string | null | undefined;
+  kayitlar: SezonKaydi[];
+  sec: (v: string) => void;
+  hazir: boolean;
+  /** Secili kesit BIRLESIK mi — dize karsilastirmasi burada yapilir. */
+  birlesik: boolean;
+} {
+  const [sezon, setSezon] = React.useState<string | null | undefined>(undefined);
+  const [kayitlar, setKayitlar] = React.useState<SezonKaydi[]>([]);
+  // Birlesik kesitin dizesi ("hepsi") MOTORDAN gelir; sayfalar onu sabit
+  // yazmasin diye burada tutuluyor.
+  const [birlesikDeger, setBirlesikDeger] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    let iptal = false;
+    getMeta()
+      .then((m) => {
+        if (iptal) return;
+        setKayitlar(m.seasons?.kayitlar ?? []);
+        const adresten = sezonUrldenOku();
+        const varsayilanGorunum = m.seasons?.birlesik ?? null;
+        setBirlesikDeger(varsayilanGorunum);
+        setSezon(adresten ?? varsayilanGorunum);
+        // Secim adrese de YAZILIR: sekme seridi ve paylasilan baglanti
+        // hangi kesite bakildigini tasisin.
+        if (!adresten && varsayilanGorunum) sezonUrleYaz(varsayilanGorunum);
+      })
+      .catch(() => {
+        // Envanter alinamadiysa sayfa yine calisir: adreste ne varsa o,
+        // yoksa varsayilan kayit. Secici bos kalir (tus basilmaz).
+        if (iptal) return;
+        setKayitlar([]);
+        setSezon(sezonUrldenOku());
+      });
+    return () => {
+      iptal = true;
+    };
+  }, []);
+
+  const sec = React.useCallback((v: string) => {
+    setSezon(v);
+    sezonUrleYaz(v);
+  }, []);
+
+  return {
+    sezon,
+    kayitlar,
+    sec,
+    hazir: sezon !== undefined,
+    birlesik: Boolean(birlesikDeger) && sezon === birlesikDeger,
+  };
+}
+
+/** "2023_24" -> "2023/24"; ic anahtari olmayan kayitlar oldugu gibi kalir. */
+export function sezonEtiketi(anahtar: string | null): string {
+  if (!anahtar) return "varsayılan";
   const [bas, son] = anahtar.split("_");
   return son ? `${bas}/${son}` : anahtar;
 }
 
 /**
- * Sezon secici.
+ * Sezon secici — tuslarin TAMAMI motordan (`/api/meta` `seasons.kayitlar`).
  *
- * Ilk secenek "Varsayilan" ve bu bir sezon ADI DEGIL: varsayilan kayit
- * (`st_history_2025_26.json`, 41 hafta) ile listedeki `2025_26` (resmi
- * bultenden okunan 31 hafta) AYNI sezonun iki farkli kaydidir. Ikisini
- * "2025/26" diye yan yana koymak hangisinin secildigini belirsizlestirirdi;
- * bu yuzden varsayilan kendi adiyla durur ve rozet kokeni yazar.
+ * Ilk tus **birlesik kesittir** ("Tum sezonlar") ve sayfanin varsayilan
+ * gorunumu odur. Oncesinde ilk tus "Varsayilan" diye duruyordu ve bu bir
+ * sezon ADI DEGILDI — "hicbir sey secilmedi" haliydi; yaninda `2025_26`
+ * durunca AYNI sezonun iki kaydi iki farkli ada sahip goruniyordu ve
+ * hangisinin ne oldugu sayfadan okunamiyordu (41 hafta ↔ 31 hafta).
+ *
+ * Artik iki kayit da kendi adiyla ve kokeniyle duruyor ("2025/26 · payload"
+ * ↔ "2025/26 · bulten"); etiketi motor uretiyor, burada sezon adi ya da
+ * anahtari SABIT YAZILI DEGIL — yeni bir sezon eklendiginde secici
+ * kendiliginden buyur.
  */
 export function SeasonFilter({
   deger,
-  secenekler,
+  kayitlar,
   onChange,
   mesgul,
 }: {
-  deger: string | null;
-  secenekler: string[];
-  onChange: (v: string | null) => void;
+  deger: string | null | undefined;
+  kayitlar: SezonKaydi[];
+  onChange: (v: string) => void;
   mesgul?: boolean;
 }) {
-  if (!secenekler.length) return null;
-  const hepsi: Array<{ deger: string | null; etiket: string }> = [
-    { deger: null, etiket: "Varsayılan" },
-    ...secenekler.map((s) => ({ deger: s, etiket: sezonEtiketi(s) })),
-  ];
+  if (!kayitlar.length) return null;
   return (
     <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Sezon">
-      {hepsi.map((o) => {
-        const secili = o.deger === deger;
+      {kayitlar.map((k) => {
+        const secili = k.deger === deger;
         return (
           <Button
-            key={String(o.deger)}
+            key={k.deger}
             type="button"
             tip={secili ? "primary" : "outline"}
             boyut="sm"
             aria-pressed={secili}
-            onClick={() => onChange(o.deger)}
+            onClick={() => onChange(k.deger)}
             disabled={mesgul}
+            title={`${k.weeks} hafta · ${k.matches} maç · ${k.koken}`}
           >
-            {o.etiket}
+            {k.etiket}
           </Button>
         );
       })}
@@ -187,29 +269,64 @@ function eksikAraliklar(numaralar: number[]): string[] {
 /**
  * Filtrenin altindaki tek satirlik acıklama: hangi haftalar hesaba giriyor.
  * Filtre veriyi kirpmaz, kesit secer — bu satir secimi somutlastirir.
+ *
+ * Iki kip var ve ayri cumleler kurarlar:
+ *
+ * * **tek kayit** — "2–51. haftalar" ve aradaki bosluklar. Hafta numarasi
+ *   burada anlamlidir, cunku tek bir sezonun numaralandirmasidir.
+ * * **birlesik kesit** — numara araligi YAZILMAZ. Dort kaydin numaralari
+ *   ic ice gecer ve "2–51. haftalar" hem yanlis hem anlamsiz olurdu
+ *   (`meta.week_from` da bu yuzden `null` gelir). Yerine kesitin dokumu
+ *   basilir: hangi kayittan kac hafta.
  */
 export function SliceNote({
   weeks,
   matches,
   sliced,
+  birlesim,
 }: {
-  weeks: number[];
+  weeks: WeekRow[];
   matches: number;
   sliced: boolean;
+  /** `meta.birlesim` — yalnizca birlesik kesitte dolu. */
+  birlesim?: StatsMeta["birlesim"];
 }) {
   if (!weeks.length) return null;
-  const ilk = weeks[0];
-  const son = weeks[weeks.length - 1];
-  const bosluk = eksikAraliklar(weeks);
+
+  if (birlesim?.length) {
+    // Dilim alindiginda dokum kesitin TAMAMINI anlatir, dilimi degil;
+    // bu yuzden dilimde gorunen hafta sayisi ayrica yazilir.
+    const gorunen = weeks.length;
+    return (
+      <p className="mt-2 text-[11.5px] leading-relaxed text-muted-foreground">
+        <span className="tnum">
+          Seçili kesit:{" "}
+          <span className="font-medium text-foreground">{birlesim.length} kayıt birleşik</span>
+          {" · "}
+          {gorunen} hafta · {sayi(matches)} maç
+        </span>
+        {sliced ? ` — kesitin en son ${gorunen} haftası.` : " — tüm kayıtlar."}{" "}
+        <span className="tnum">
+          {birlesim.map((b) => `${b.etiket} ${b.weeks}`).join(" · ")} hafta
+        </span>
+        . Aynı sezonun ikinci okuması birleşime girmez; ayrı seçilir.
+      </p>
+    );
+  }
+
+  const numaralar = weeks.map((w) => w.week);
+  const ilk = numaralar[0];
+  const son = numaralar[numaralar.length - 1];
+  const bosluk = eksikAraliklar(numaralar);
 
   return (
     <p className="mt-2 text-[11.5px] leading-relaxed text-muted-foreground">
       <span className="tnum">
         Seçili kesit: <span className="font-medium text-foreground">{ilk}–{son}. haftalar</span>
         {" · "}
-        {weeks.length} hafta · {matches} maç
+        {numaralar.length} hafta · {sayi(matches)} maç
       </span>
-      {sliced ? " — veri setindeki son " + weeks.length + " hafta." : " — tüm sezon."}
+      {sliced ? " — veri setindeki son " + numaralar.length + " hafta." : " — tüm sezon."}
       {bosluk.length > 0 ? (
         <>
           {" "}
@@ -272,7 +389,25 @@ export function DeltaStat({
  * Veri kalitesi. Dosyadaki hazir sayim ile 15 karakterlik dizi
  * catistiginda fark burada acikca listelenir — sessizce yutulmaz.
  */
-export function DataQualityPanel({ dq }: { dq: DataQuality }) {
+/**
+ * Kusur listelerinde bir haftanin yazilisi.
+ *
+ * Birlesik kesitte "12. hafta" dort sezonun dordunu birden gosterebilir;
+ * o yuzden orada sezonuyla yazilir. Tek kayitta sezon zaten sabittir ve
+ * her satira eklemek gurultu olurdu.
+ */
+function haftaYazisi(k: HaftaKimlik, birlesik: boolean): string {
+  return birlesik ? `${sezonEtiketi(k.sezon)} · ${k.week}` : String(k.week);
+}
+
+export function DataQualityPanel({
+  dq,
+  birlesik = false,
+}: {
+  dq: DataQuality;
+  /** Birlesik kesitte kusurlar SEZONUYLA yazilir. */
+  birlesik?: boolean;
+}) {
   const catisma = dq.count_conflicts ?? [];
   const kopya = dq.duplicate_results ?? [];
   const eksik = dq.incomplete_weeks ?? [];
@@ -309,8 +444,8 @@ export function DataQualityPanel({ dq }: { dq: DataQuality }) {
           <div className="mb-1.5 text-muted-foreground">Sayım çelişkisi: {catisma.length} hafta</div>
           <ul className="tnum space-y-1">
             {catisma.map((c) => (
-              <li key={c.week}>
-                <span className="font-medium">{c.week}. hafta</span>{" "}
+              <li key={c.anahtar}>
+                <span className="font-medium">{haftaYazisi(c, birlesik)}. hafta</span>{" "}
                 <span className="text-muted-foreground">
                   dosya {SEMBOLLER.map((s) => c.reported?.[s] ?? 0).join("/")} · dizi{" "}
                   {SEMBOLLER.map((s) => c.derived[s]).join("/")}
@@ -326,8 +461,11 @@ export function DataQualityPanel({ dq }: { dq: DataQuality }) {
           <div className="mb-1.5 text-muted-foreground">Aynı sonuç dizisi tekrar eden haftalar</div>
           <ul className="space-y-2">
             {kopya.map((d) => (
-              <li key={d.results} className="flex flex-wrap items-center gap-2">
-                <span className="tnum">{d.weeks.join(" · ")}. hafta</span>
+              <li key={`${d.sezon ?? ""}-${d.results}`} className="flex flex-wrap items-center gap-2">
+                <span className="tnum">
+                  {birlesik ? `${sezonEtiketi(d.sezon)} · ` : ""}
+                  {d.weeks.join(" · ")}. hafta
+                </span>
                 <ResultStrip results={d.results} />
               </li>
             ))}
@@ -337,19 +475,22 @@ export function DataQualityPanel({ dq }: { dq: DataQuality }) {
 
       {dq.match_conflicts?.length ? (
         <div className="text-muted-foreground">
-          Maç listesi sonuç dizisiyle örtüşmeyen hafta: {dq.match_conflicts.join(", ")}
+          Maç listesi sonuç dizisiyle örtüşmeyen hafta:{" "}
+          {dq.match_conflicts.map((k) => haftaYazisi(k, birlesik)).join(", ")}
         </div>
       ) : null}
 
       {dq.weeks_without_matches?.length ? (
         <div className="text-muted-foreground">
-          Maç listesi taşımayan hafta: {dq.weeks_without_matches.join(", ")}
+          Maç listesi taşımayan hafta:{" "}
+          {dq.weeks_without_matches.map((k) => haftaYazisi(k, birlesik)).join(", ")}
         </div>
       ) : null}
 
       {eksik.length > 0 ? (
         <div className="text-muted-foreground">
-          Eksik hafta (15 maçtan az): {eksik.join(", ")}
+          Eksik hafta (15 maçtan az):{" "}
+          {eksik.map((k) => haftaYazisi(k, birlesik)).join(", ")}
         </div>
       ) : null}
     </div>

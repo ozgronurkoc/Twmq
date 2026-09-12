@@ -55,6 +55,21 @@ export default function HaftaPage({ params }: { params: { week: string } }) {
   const oranliMac = veri ? Object.keys(veri.odds || {}).length : 0;
 
   /**
+   * Bu sayfadaki hafta baglantilari — SEZONU tasir.
+   *
+   * Onceki/sonraki hafta baglantilari sezonu tasimiyordu: 2023/24'un 12.
+   * haftasindan "13. hf"ye gecen kullanici VARSAYILAN kaydin 13. haftasina
+   * dusuyordu ve bunu anlamasinin bir yolu yoktu. Govde zaten ayni sezondan
+   * geliyor (`getStatsWeek(week, signal, sezon)`), yalnizca gezinme
+   * kopuyordu.
+   */
+  const haftaAdresi = (w: number) =>
+    sezon ? `/istatistik/${w}?sezon=${encodeURIComponent(sezon)}` : `/istatistik/${w}`;
+  // "Tum haftalar" da secili kesite doner; sezonsuz donmek kullaniciyi
+  // baktigi kesitten sessizce cikarirdi.
+  const listeAdresi = sezon ? `/istatistik?sezon=${encodeURIComponent(sezon)}` : "/istatistik";
+
+  /**
    * Bu haftanin 15 macini formul sayfasina tasir. Tasinan sey YALNIZCA
    * olasiliktir; isaretleri (banko/cifte/uclu) kullanici kendisi secer —
    * kolon uretimi tahmin etmez, isaretleri sayar (olasilik icin
@@ -100,7 +115,7 @@ export default function HaftaPage({ params }: { params: { week: string } }) {
   return (
     <div className="space-y-6">
       <Link
-        href="/istatistik"
+        href={listeAdresi}
         className="inline-flex items-center gap-1.5 text-[13px] text-muted-foreground transition-colors hover:text-foreground"
       >
         <ArrowLeft size={15} />
@@ -140,7 +155,7 @@ export default function HaftaPage({ params }: { params: { week: string } }) {
               ) : null}
               {veri.prev_week !== null ? (
                 <Link
-                  href={`/istatistik/${veri.prev_week}`}
+                  href={haftaAdresi(veri.prev_week)}
                   className="inline-flex h-9 items-center gap-1 rounded-xl border border-line-strong px-3 text-[12.5px] transition-colors hover:bg-muted"
                 >
                   <ChevronLeft size={14} />
@@ -149,7 +164,7 @@ export default function HaftaPage({ params }: { params: { week: string } }) {
               ) : null}
               {veri.next_week !== null ? (
                 <Link
-                  href={`/istatistik/${veri.next_week}`}
+                  href={haftaAdresi(veri.next_week)}
                   className="inline-flex h-9 items-center gap-1 rounded-xl border border-line-strong px-3 text-[12.5px] transition-colors hover:bg-muted"
                 >
                   {veri.next_week}. hf

@@ -171,7 +171,7 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/components/super-toto/tahmin2.tsx` | **2. Tahmin** paneli — `1. Tahmin` / `2. Tahmin` sekmeleri arasında geçilir; para birimli hiçbir sayı yok. Hafta kapandığında sonuç sütunu ve ayar karnesi açılır (§3.38) |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **1.843 test**; **117'si** istatistik katmanına (`history` `odds` `backtest`
+paketi toplam **1.863 test**; **136'sı** istatistik katmanına (`history` `odds` `backtest`
 `api_stats` `api_backtest` `snapshot_iddaa`), **624'ü** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre`
@@ -5808,6 +5808,102 @@ türetildi"* diyor — bayat bırakıldığında o cümle yalan oluyordu.
 `scripts/hafta_kos.py --sonrasi --yaz` koşulmalı; karne **ekleme değil
 yeniden üretimdir** ve elle düzeltilmez.
 
+### 3.66 İstatistik sayfasının varsayılan görünümü **birleşik kesit** oldu
+
+#### Sorun bir soruyla geldi: "aynı sezon neden iki kez var?"
+
+Sezon seçicisinin ilk tuşu **"Varsayılan"**dı ve bu bir sezon adı değildi —
+"hiçbir şey seçilmedi" hâliydi. Yanında `2025_26` duruyordu. İkisi **aynı
+sezonun iki ayrı okumasıdır** (§6G.5): biri 41 hafta (üçüncü parti payload),
+öteki 31 (bültenden fikstüre bağlanan). Sayfa bunu hiçbir yerde
+söylemiyordu; kullanıcı iki farklı hafta sayısı görüp hangisinin ne olduğunu
+soramıyordu bile.
+
+Bir kusur daha aynı yerde duruyordu: hafta tablosundaki bağlantılar ve hafta
+detayının önceki/sonraki tuşları **sezonu taşımıyordu**. 2023/24 seçip bir
+haftaya tıklayan kullanıcı varsayılan kaydın o numaralı haftasını görüyordu
+— sessizce. (Uçlar/seriler bağlantıları taşıyordu: aynı sayfada iki farklı
+davranış.)
+
+#### Karar: ilk tuş artık kayıtların BİRLEŞİMİ
+
+| | Önce | Sonra |
+|---|---|---|
+| İlk tuş | "Varsayılan" (41 hafta, adı yok) | **"Tüm sezonlar"** — birleşik kesit |
+| 2025/26'nın iki kaydı | "Varsayılan" ↔ "2025/26" | "2025/26 · payload" ↔ "2025/26 · bülten" |
+| Hafta bağlantıları | sezonsuz (yanlış haftaya) | satırın kendi sezonuyla |
+
+Etiketleri **motor** üretiyor (`/api/meta` `seasons.kayitlar`): arayüzde sezon
+adı ya da anahtarı sabit yazılı değil, yeni bir sezon eklendiğinde seçici
+kendiliğinden büyür. Aynı etikete iki kayıt düşerse ayıran şey **köken**dir,
+sezon anahtarı değil — aynı çakışma üçüncü bir sezonda çıktığında da çalışır.
+
+#### Kesit ölçüldü: 122 hafta · 1.830 maç
+
+| Kayıt | Hafta | Maç | Birleşimde |
+|---|---|---|---|
+| 2022/23 (bülten) | 17 | 255 | ✔ |
+| 2023/24 (bülten) | 31 | 465 | ✔ |
+| 2024/25 (bülten) | 33 | 495 | ✔ |
+| 2025/26 · payload | 41 | 615 | ✔ |
+| 2025/26 · bülten | 31 | 465 | **✘** |
+| **Birleşik** | **122** | **1.830** | |
+
+**2025/26 bir kez sayılır.** Kesit `evaluate.OLCUM_SEZONLARI`den türüyor ve o
+demet aynı sezonu ikinci kez okuyan dosyayı zaten dışarıda bırakıyor; ikinci
+bir liste tutmak o gerekçenin bekçisiz bir kopyasını üretirdi. Bültenden
+okunan kayıt seçilebilir olarak **kalır**, birleşime girmez.
+
+Dağılım da ölçüldü — birleşim tek sezondan farklı bir tablo veriyor:
+
+| Kesit | 1 | 0 | 2 |
+|---|---|---|---|
+| Birleşik (122 hafta) | **%46,0** | %23,8 | %30,2 |
+| 2025/26 · payload (41 hafta) | %43,9 | %24,2 | %31,9 |
+
+Fark bir bulgu değil **kesit farkıdır**: eski sezonlarda ev sahibi payı daha
+yüksek (§3.43'ün sezon tablosu aynı eğilimi gösteriyor).
+
+#### Hafta NUMARASI kimlik olmaktan çıktı
+
+Birleştirmenin önündeki gerçek engel buydu ve `history.normalized_weeks`in
+docstring'i *"sezonlar BİRLEŞTİRİLMEZ, seçilir"* diye yazıyordu: `week` beş
+yerde küresel birincil anahtar gibi kullanılıyordu — sıralama,
+`history_week_detail` araması, oran arşivinin haftalık Brier'i, arayüzün
+bağlantıları ve `duplicate_results`un çakışma denetimi. Dört kaydın
+dördünde de 12. hafta var.
+
+Yasak kalkmadı, **koşulu karşılandı**: her satır artık `sezon` ve `anahtar`
+(`"2023_24-12"`) taşıyor, beş kullanımın beşi de kimliğe geçti, numara
+yalnızca gösterimde kaldı. Sıralama kronolojik (`close_date`), kopya dizi
+denetimi sezon içinde yapılıyor (iki farklı sezonun aynı diziyi vermesi kusur
+değil), kusur listeleri haftayı sezonuyla anıyor.
+
+#### Birleştirilmeyen iki şey — ve gerekçeleri
+
+* **Tek hafta sorgusu** (`/api/stats/<hafta>?sezon=hepsi`) **400 döner.**
+  "12. hafta" birleşimde dört kaydın dördünde de var; birini sessizce seçmek
+  doktrin 4'ün yasakladığı şeydir. Arayüzün bağlantıları satırın kendi
+  sezonunu yazdığı için o istek normalde hiç oluşmaz.
+* **Geri testin kesiti 114 hafta kaldı**, 122 değil. `?sezon=hepsi` her iki
+  uçta da aynı kesiti *tanımlar*; geri test onun piyasa oranı olan alt
+  kümesini ölçer (`usable`). Fark süzgeçte, tanımda değil — ve sabit tek
+  yerde (`history.TUM_SEZONLAR`), iki uçta iki farklı anlam kazanamasın diye.
+
+#### Bekçiler
+
+`test_history.py` birleşimin 2025/26'yı iki kez saymadığını, hafta
+anahtarlarının benzersizliğini, kronolojik sırayı, dilimi, künyenin hafta
+aralığı yazmadığını ve kopya denetiminin sezona göre yapıldığını tutuyor.
+`test_api_stats.py` gövdeyi, oran özetinin de birleştiğini, tek hafta ucunun
+400'lediğini ve **seçicideki her tuşun gerçekten çalıştığını** (hafta sayısı
+gövdeyle aynı mı) sınıyor. `test_odds.py` süzgecin `(sezon, hafta)` çifti
+olduğunu — numara listesi kabul etseydi dört sezonun aynı numaralı haftasını
+birden geçirirdi. `health._check_stats_sozlesmesi` artık birleşik gövdeyi de
+denetliyor: sayfanın **varsayılan görünümü** odur.
+
+---
+
 ## 4. Sayfada bugün ne var
 
 **`/istatistik`** — sezon dağılımı (en sık sonuç + pay çubuğu) · 5 sayı kutusu (sembol
@@ -5818,6 +5914,12 @@ kapsaması** + **beraberlik profili** + **lig kırılımı** + kalibrasyon) · *
 (4 kutu + geri test sayfasına bağlantı) · maç sırasına göre ısı haritası · geçiş matrisi ·
 uçlar ve seriler · hafta tablosu (**Brier sütunu + CSV**) · veri kalitesi.
 Filtre `?last=N` olarak adres çubuğunda durur; sayfa paylaşılabilir.
+
+Sayfanın **varsayılan görünümü birleşik kesittir** (§3.66): dört kaydın
+birleşimi, 122 hafta · 1.830 maç. Seçici `?sezon=` ile adreste durur ve üç
+sekme (Sezon · Oranlar · Geri test) aynı seçimi taşır; 2025/26'nın iki kaydı
+seçicide kökeniyle ayrılır ("payload" ↔ "bülten") ve birleşime yalnızca biri
+girer.
 
 **`/istatistik/<hafta>`** — sapma ve sıra kutuları · maç maç tablo (takım, saat, skor, sonuç,
 sezon payı, kapanış oranı) · **"bu haftayı formüle gönder"** · sürprizler · ardışık bloklar ·
@@ -6822,7 +6924,7 @@ python -m spor_toto.kosum                  # kayıtlı koşumlar
 python -m spor_toto.kosum --son disari     # son koşumun ortamı
 
 # Denetim
-pytest -q                                  # 1.843 test (117'si bu katman, 624'ü tahmin)
+pytest -q                                  # 1.863 test (136'sı bu katman, 624'ü tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out

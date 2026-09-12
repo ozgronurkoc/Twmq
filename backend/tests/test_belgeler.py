@@ -1157,6 +1157,18 @@ def test_capraz_dogrulama_sayilari_RAPORLA_ayni():
 
     Düşerse: `gecmis_rapor.json` yeniden üretilmiştir; aşağıdaki listedeki
     satırlar elle güncellenir (liste kasıtlı olarak dar ve açıktır).
+
+    **Liste iki kez daraldı ve bu bekçinin işlediğinin kanıtıdır.** Birinci
+    daralma bir AYRIŞTIRMAYDI: `history.py` ve `test_history.py` satırları
+    "31"i çapraz doğrulama sayısı olarak değil **kaydın boyu** olarak anıyor
+    (41 ↔ 31). İkisi bugün aynı sayıdan geçiyor ama aynı iddia değil; kayıt
+    boyu aşağıdaki ikinci bekçinin işi. İkinci daralma: Birleşik
+    kesit gelince `meta.py`nin notu ve `parts.tsx`in açıklaması yeniden
+    yazıldı; ikisi de artık çapraz doğrulama sayısını ANMIYOR (biri kesitin
+    tanımını, öteki seçicinin etiket kuralını anlatıyor). Bekçi bunu
+    "iddia bulunamadı" diye düşürdü — iddia kaybolduğunda sessiz kalmadı.
+    İki yer listeden çıkarıldı; taşıdıkları KAYIT BOYU iddiası (41 ↔ 31)
+    aşağıdaki ikinci bekçinin işi.
     """
     import json
 
@@ -1180,21 +1192,12 @@ def test_capraz_dogrulama_sayilari_RAPORLA_ayni():
          r"\*\*(\d+)\s+ortak\s+haftanın\s+(\d+)'[a-zü]{1,5}\s+1/0/2\s+"
          r"dizisi\s+birebir\s+aynı",
          (ortak, ayni)),
-        ("backend/spor_toto/history.py",
-         r"ayni\s+sezonun\s+(\d+)\s+haftalik\s+BASKA\s+bir", (ortak,)),
-        ("backend/spor_toto/meta.py",
-         r"kez\s+okumasidir\s+\((\d+)\s+hafta\s+/\s+41\s+hafta\)", (ortak,)),
         ("backend/spor_toto/evaluate.py",
-         r"\((\d+)\s+hafta\s+↔\s+41\s+hafta,\s+(\d+)'[a-zü]{1,5}\s+birebir\s+aynı",
-         (ortak, ayni)),
+         r"hafta,\s+(\d+)'[a-zü]{1,5}\s+birebir\s+aynı", (ayni,)),
         ("backend/tests/test_sizinti.py",
-         r"\((\d+)\s+↔\s+41\s+hafta,\s+(\d+)'[a-zü]{1,5}\s+birebir\s+aynı", (ortak, ayni)),
+         r"hafta,\s+(\d+)'[a-zü]{1,5}\s+birebir\s+aynı", (ayni,)),
         ("backend/tests/test_gecmis_sezon.py",
          r"Ölçülen:\s+\*\*(\d+)/(\d+)\s+hafta\s+birebir\s+aynı", (ayni, ortak)),
-        ("backend/tests/test_history.py",
-         r"okumasıdır\s+\((\d+)\s+hafta\s+↔\s+41\s+hafta\)", (ortak,)),
-        ("frontend/components/istatistik/parts.tsx",
-         r"bultenden\s+okunan\s+(\d+)\s+hafta\)", (ortak,)),
         ("frontend/lib/types.ts",
          r"BASKA\s+bir\s+kaydidir\s+\((\d+)\s+hafta\)", (ortak,)),
     ]
@@ -1212,3 +1215,61 @@ def test_capraz_dogrulama_sayilari_RAPORLA_ayni():
     assert not yanlis, (
         "çapraz doğrulama sayısı metinlerde bayat "
         f"(rapor: {ayni}/{ortak}) — " + "; ".join(yanlis))
+
+
+def test_kayit_hafta_sayilari_METINLERDE_olcumle_ayni():
+    """"41 hafta ↔ 31 hafta" altı yerde anılıyor — altısı da ölçümle aynı olmalı.
+
+    Bu, çapraz doğrulama sayısından **ayrı bir iddiadır** ve ayrı tutulması
+    gerekir: biri iki kaydın ne kadar ÖRTÜŞTÜĞÜNÜ söyler (ortak hafta /
+    birebir aynı), öteki kayıtların KENDİ BOYUNU. Bugün ikisi de 31'den
+    geçiyor — çünkü türetilmiş kaydın 31 haftasının tamamı varsayılanın
+    içinde — ama bu bir tesadüftür: bültenden bir hafta daha okunursa kayıt
+    32 olur, örtüşme 31'de kalabilir. Tek bekçiyle tutmak o günü sessiz
+    geçirirdi.
+
+    Ölçüm kaynağı dosyaların kendisidir (`normalized_weeks`), bir belge
+    değil. Düşerse veri seti yeniden üretilmiştir: sayıyı belgeye geri
+    yapıştırmak değil, aşağıdaki satırları ölçülen değere güncellemek gerekir.
+    """
+    from spor_toto.history import normalized_weeks
+
+    varsayilan = len(normalized_weeks())
+    bulten = len(normalized_weeks(sezon="2025_26"))
+    assert varsayilan and bulten, "kayitlar okunamadi"
+
+    iddialar = [
+        ("backend/spor_toto/history.py",
+         r"`st_history_2025_26\.json`\s+(\d+)\s+hafta\s+tasir\s+ve\s+"
+         r"`data/st_history/2025_26\.json`\s+ayni\s+sezonun\s+(\d+)\s+haftalik",
+         (varsayilan, bulten)),
+        ("backend/spor_toto/history.py",
+         r"TEMSIL\s+EDER\s+—\s+(\d+)\s+hafta", (varsayilan,)),
+        ("backend/spor_toto/evaluate.py",
+         r"\((\d+)\s+hafta\s+↔\s+(\d+)\s+hafta,", (bulten, varsayilan)),
+        ("frontend/components/istatistik/parts.tsx",
+         r"okunamiyordu\s+\((\d+)\s+hafta\s+↔\s+(\d+)\s+hafta\)",
+         (varsayilan, bulten)),
+        ("frontend/lib/types.ts",
+         r"`st_history_2025_26\.json`\s+\((\d+)\s+hafta\)", (varsayilan,)),
+        ("frontend/lib/types.ts",
+         r"BASKA\s+bir\s+kaydidir\s+\((\d+)\s+hafta\)", (bulten,)),
+        ("backend/tests/test_history.py",
+         r"okumasıdır\s+\((\d+)\s+hafta\s+↔\s+(\d+)\s+hafta\)", (bulten, varsayilan)),
+        ("backend/tests/test_sizinti.py",
+         r"kez\s+okumasıdır\s+\((\d+)\s+↔\s+(\d+)\s+hafta", (bulten, varsayilan)),
+    ]
+
+    yanlis = []
+    for göreli, desen, beklenen in iddialar:
+        metin = _oku(göreli)
+        m = re.search(desen, metin)
+        if not m:
+            yanlis.append(f"{göreli}: iddia bulunamadı ({desen})")
+            continue
+        okunan = tuple(int(g) for g in m.groups())
+        if okunan != beklenen:
+            yanlis.append(f"{göreli}: yazılı {okunan}, ölçülen {beklenen}")
+    assert not yanlis, (
+        f"kayit hafta sayisi metinlerde bayat (varsayilan {varsayilan}, "
+        f"bulten {bulten}) — " + "; ".join(yanlis))

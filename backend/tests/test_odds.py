@@ -78,3 +78,62 @@ def test_favori_isabeti_gerceklikle_uyumlu():
     assert top > 400
     assert 0.45 <= tut / top <= 0.70, f"favori isabeti %{100 * tut / top:.1f} — eşleştirme şüpheli"
 
+
+
+# ─── birleşik kesitte oran özeti ─────────────────────────────────────────────
+
+def test_birlesik_suzgec_HAFTA_NUMARASIYLA_calismaz():
+    """Birleşik kesitte süzgeç `(sezon, hafta)` çiftidir — ve olmak zorunda.
+
+    Hafta numarası dört kaydın dördünde de var. Süzgeç numara listesi
+    kabul etseydi "2023/24'ün 12. haftası" isteği dört sezonun 12.
+    haftasını birden geçirirdi: özet dolu görünür, maç sayısı dörde
+    katlanır ve hiçbir yerde yazmazdı.
+    """
+    from spor_toto.history import TUM_SEZONLAR
+    from spor_toto.odds import _kesit_satirlari
+
+    tek = _kesit_satirlari([(("2023_24"), 12)], TUM_SEZONLAR)
+    assert tek, "cift suzgeci hicbir satir gecirmedi"
+    assert {r["sezon"] for r in tek} == {"2023_24"}
+    assert {r["week"] for r in tek} == {12}
+    assert {r["anahtar"] for r in tek} == {"2023_24-12"}
+
+    # Aynı numara başka kayıtlarda da var — kanıt:
+    hepsi = _kesit_satirlari(None, TUM_SEZONLAR)
+    on_ikiler = {r["sezon"] for r in hepsi if r["week"] == 12}
+    assert len(on_ikiler) > 1, "testin dayandigi cakisma yok"
+
+
+def test_birlesik_ozet_haftalik_brier_ANAHTARLA_gruplar():
+    """Aynı numaralı haftalar tek satırda toplanmamalı."""
+    from spor_toto.history import TUM_SEZONLAR, normalized_weeks
+    from spor_toto.odds import season_1x2_summary
+
+    kesit = [(w["sezon"], w["week"]) for w in normalized_weeks(sezon=TUM_SEZONLAR)]
+    ozet = season_1x2_summary(kesit, TUM_SEZONLAR)
+    assert ozet is not None
+    satirlar = ozet["weekly_brier"]
+    anahtarlar = [h["anahtar"] for h in satirlar]
+    assert len(set(anahtarlar)) == len(anahtarlar)
+    # Numaraya göre gruplansaydı satır sayısı benzersiz numara kadar olurdu.
+    assert len(satirlar) > len({h["week"] for h in satirlar})
+    # Her satırın maç sayısı bir kuponu aşmamalı — çakışmanın ikinci kanıtı.
+    for h in satirlar:
+        assert h["n"] <= 15, f"{h['anahtar']}: {h['n']} mac — haftalar birlesmis"
+
+
+def test_birlesik_ozet_tek_sezonlardan_BUYUK():
+    """Birleşim gerçekten birleştiriyor mu — toplamın alt sınırı."""
+    from spor_toto.history import TUM_SEZONLAR, birlesik_kesit, normalized_weeks
+    from spor_toto.odds import season_1x2_summary
+
+    kesit = [(w["sezon"], w["week"]) for w in normalized_weeks(sezon=TUM_SEZONLAR)]
+    birlesik = season_1x2_summary(kesit, TUM_SEZONLAR)
+    assert birlesik is not None
+    toplam = 0
+    for s in birlesik_kesit():
+        tek = season_1x2_summary([w["week"] for w in normalized_weeks(sezon=s)], s)
+        if tek:
+            toplam += tek["matches"]
+    assert birlesik["matches"] == toplam, "birlesim parcalarin toplami degil"
