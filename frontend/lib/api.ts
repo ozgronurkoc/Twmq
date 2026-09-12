@@ -144,6 +144,16 @@ export function denetleKupon(
 /**
  * `last` verilirse ozet, bantlar ve analiz bloklarinin TAMAMI son N hafta
  * uzerinden hesaplanir — filtre tek noktadan butun gorselleri kapsar.
+ *
+ * `sezon` uc deger alir ve ucu de `/api/meta` `seasons`ta ilan edilir:
+ *
+ *     (bos)          varsayilan kayit — ucun sozlesmesi, degismez
+ *     "varsayilan"   ayni kaydin ACIK adi
+ *     "hepsi"        BIRLESIK KESIT: sezonlarin birlesimi (122 hafta)
+ *     "2023_24"      tek sezon
+ *
+ * Birlesik kesitte 2025/26 bir kez sayilir: bultenden okunan ikinci kayit
+ * (§6G.5) birlesime girmez, ayri secilir.
  */
 export function getStats(
   last?: number | null,
@@ -162,6 +172,10 @@ export function getStats(
  * verilirse hafta detayi ve oranlari AYNI sezondan gelir; oran arsivinin
  * anahtari `(hafta, no)` ve sezon bileseni yok, yani ayri gonderilmezse
  * baska bir sezonun oranlari bu haftaya yapisirdi.
+ *
+ * `hepsi` (birlesik kesit) burada GECERSIZDIR ve uc 400 doner: "12. hafta"
+ * birlesik kesitte dort kaydin dordunde de var. Arayuzun hafta baglantilari
+ * satirin KENDI sezonunu yazar, bu yuzden o istek normalde hic olusmaz.
  */
 export function getStatsWeek(week: number, signal?: AbortSignal, sezon?: string | null) {
   const q = sezon ? `?sezon=${encodeURIComponent(sezon)}` : "";

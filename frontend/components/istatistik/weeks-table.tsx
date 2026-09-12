@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/primitives";
 import { ResultStrip } from "@/components/ui/symbol";
 import { TABLO_BASLIK_SATIRI, TABLO_SARMAL } from "@/components/ui/tablo";
 
-type SiraAnahtari = "week" | Sembol | "streak" | "brier";
+type SiraAnahtari = "week" | Sembol | "streak" | "brier" | "tarih";
 
 const BASLIKLAR: Array<{ key: SiraAnahtari; etiket: string; baslik: string }> = [
   { key: "week", etiket: "Hf", baslik: "Hafta" },
@@ -32,6 +32,13 @@ type BrierSatiri = OddsSummary["weekly_brier"][number];
  */
 const VARSAYILAN_SATIR = 12;
 
+/** `"2023_24"` -> `"2023/24"`; varsayılan kayıt kendi adıyla anılır. */
+function kayitEtiketi(sezon: string | null): string {
+  if (!sezon) return "varsayılan";
+  const [bas, son] = sezon.split("_");
+  return son ? `${bas}/${son}` : sezon;
+}
+
 /** CSV alanı: ayırıcı, tırnak ve satır sonu içeren değerler tırnaklanır. */
 function csvAlan(v: string | number): string {
   const s = String(v);
@@ -45,15 +52,18 @@ function csvAlan(v: string | number): string {
  * bekliyor, virgullu CSV tek sutuna yapisiyor. BOM da bu yuzden var —
  * onsuz Excel dosyayi latin-1 okuyup Turkce karakterleri bozuyor.
  */
-function csvUret(rows: WeekRow[], brier: Map<number, BrierSatiri>): string {
+function csvUret(rows: WeekRow[], brier: Map<string, BrierSatiri>): string {
   const basliklar = [
-    "hafta", "tarih", "sezon", "1", "0", "2", "en_uzun_seri", "seri_sembolu",
+    "hafta", "kayit", "tarih", "sezon", "1", "0", "2", "en_uzun_seri", "seri_sembolu",
     "sonuc_dizisi", "oranli_mac", "favori_isabet", "brier", "kismi_oran",
   ];
   const satirlar = rows.map((w) => {
-    const b = brier.get(w.week);
+    const b = brier.get(w.anahtar);
     return [
       w.week,
+      // Hangi KAYITTAN geldigi: birlesik kesitte dort kaydin haftalari
+      // yan yana duruyor ve yalnizca numara ile ayirt edilemezler.
+      w.sezon ?? "varsayilan",
       w.close_date,
       w.season,
       w.counts["1"],
@@ -94,20 +104,47 @@ export function WeeksTable({
   avg,
   brier,
   brierAvg,
+  birlesik = false,
+  haftaAdresi,
 }: {
   weeks: WeekRow[];
   avg: Partial<Record<Sembol, number>>;
-  /** Hafta numarasına göre piyasa Brier skoru; oran arşivi yoksa boş. */
+  /** Hafta ANAHTARINA göre piyasa Brier skoru; oran arşivi yoksa boş. */
   brier?: OddsSummary["weekly_brier"];
   brierAvg?: number;
+  /**
+   * Birleşik kesitte satır hangi kayıttan geldiğini de yazar.
+   *
+   * Numara tek başına yetmez: dört kaydın dördünde de 12. hafta var ve
+   * tablo onları yan yana gösteriyor.
+   */
+  birlesik?: boolean;
+  /**
+   * Hafta detayının adresi — kuralı SAYFA verir, tablo kendi kurmaz.
+   *
+   * Bu bağlantı uzun süre sezonu hiç taşımıyordu: 2023/24 seçip bir haftaya
+   * tıklayan kullanıcı **varsayılan kaydın** o numaralı haftasını görüyordu
+   * ve bunu anlamasının bir yolu yoktu. (Sayfanın uçlar/seriler bağlantıları
+   * sezonu taşıyordu, tablo taşımıyordu — aynı sayfada iki farklı davranış.)
+   * Birleşik kesitte aynı kusur dört katına çıkardı. Kural artık tek yerde.
+   */
+  haftaAdresi: (week: number, sezon: string | null) => string;
 }) {
   const [arama, setArama] = React.useState("");
-  const [sira, setSira] = React.useState<SiraAnahtari>("week");
+  // Birlesik kesitte varsayilan sira TARIHTIR, hafta numarasi degil.
+  // Tek kayitta ikisi ayni siradir (numara tarihle birlikte artar); dort
+  // kayit yan yanayken numaraya gore siralamak "41. haftalar" diye bir
+  // kume uretir ve "son 12 hafta" kisaltmasi en YENI degil en YUKSEK
+  // numarali haftalari gosterirdi.
+  const [sira, setSira] = React.useState<SiraAnahtari>(birlesik ? "tarih" : "week");
   const [azalan, setAzalan] = React.useState(false);
   const [tumu, setTumu] = React.useState(false);
 
+  // Eslesme ANAHTAR uzerinden. Numaraya gore eslestirmek birlesik kesitte
+  // dort sezonun 12. haftasini tek satira baglardi — ve sessizce: tablo
+  // dolu gorunur, sayilar yanlis olurdu.
   const brierHarita = React.useMemo(
-    () => new Map((brier ?? []).map((b) => [b.week, b])),
+    () => new Map((brier ?? []).map((b) => [b.anahtar, b])),
     [brier],
   );
   const brierVar = brierHarita.size > 0;
@@ -119,20 +156,31 @@ export function WeeksTable({
           (w) =>
             String(w.week).includes(q) ||
             w.close_date.toLowerCase().includes(q) ||
-            w.results.includes(q),
+            w.results.includes(q) ||
+            // Birlesik kesitte "2023" yazip o kaydin haftalarini suzmek
+            // dogal bir beklenti; anahtar zaten sezonu tasiyor.
+            w.anahtar.toLowerCase().includes(q),
         )
       : weeks;
     const deger = (w: WeekRow) =>
-      sira === "week"
+      sira === "tarih"
+        ? 0 // siralama asagidaki kronolojik esitlik bozucuya birakilir
+        : sira === "week"
         ? w.week
         : sira === "streak"
           ? w.max_streak.length
           : sira === "brier"
             ? // Oransiz haftalar siralamada en sona dussun.
-              (brierHarita.get(w.week)?.brier ?? -1)
+              (brierHarita.get(w.anahtar)?.brier ?? -1)
             : w.counts[sira];
+    // Esitlik bozucu KRONOLOJIK: birlesik kesitte hafta numarasi tekrar
+    // eder ve yalnizca numaraya gore ikincil siralama dort kaydi ic ice
+    // gecirirdi.
     return [...suzulmus].sort(
-      (a, b) => (azalan ? deger(b) - deger(a) : deger(a) - deger(b)) || a.week - b.week,
+      (a, b) =>
+        (azalan ? deger(b) - deger(a) : deger(a) - deger(b)) ||
+        a.close_date.localeCompare(b.close_date) ||
+        a.week - b.week,
     );
   }, [weeks, arama, sira, azalan, brierHarita]);
 
@@ -141,7 +189,9 @@ export function WeeksTable({
       setAzalan((d) => !d);
     } else {
       setSira(key);
-      setAzalan(key !== "week");
+      // Kronolojik sutunlar ARTAN baslar (eskiden yeniye), sayisal olanlar
+      // azalan (once en buyuk deger).
+      setAzalan(key !== "week" && key !== "tarih");
     }
   }
 
@@ -153,14 +203,24 @@ export function WeeksTable({
   // her zaman "listenin sonu" degil, "siralamanin bası"ndan alinir —
   // kullanicinin sectigi sira korunur.
   const gorunen = kisaltiliyor
-    ? sira === "week" && !azalan
+    ? (sira === "week" || sira === "tarih") && !azalan
       ? satirlar.slice(-VARSAYILAN_SATIR)
       : satirlar.slice(0, VARSAYILAN_SATIR)
     : satirlar;
 
-  const basliklar = brierVar
-    ? [...BASLIKLAR, { key: "brier" as SiraAnahtari, etiket: "Brier", baslik: "Piyasanın o haftaki yanılma ölçüsü — yüksek = sürprizli hafta" }]
-    : BASLIKLAR;
+  const basliklar = [
+    ...BASLIKLAR,
+    ...(brierVar
+      ? [{
+          key: "brier" as SiraAnahtari,
+          etiket: "Brier",
+          baslik: "Piyasanın o haftaki yanılma ölçüsü — yüksek = sürprizli hafta",
+        }]
+      : []),
+    // Tarih sutunu artik SIRALANABILIR. Birlesik kesitte varsayilan sira
+    // budur ve kullanicinin ona geri donebilmesi gerekir.
+    { key: "tarih" as SiraAnahtari, etiket: "Tarih", baslik: "Haftanın kapanış tarihi" },
+  ];
 
   return (
     <div>
@@ -226,9 +286,6 @@ export function WeeksTable({
                   </button>
                 </th>
               ))}
-              <th scope="col" className="pb-2 pr-3 font-medium">
-                Tarih
-              </th>
               <th scope="col" className="pb-2 font-medium">
                 Sonuç dizisi
               </th>
@@ -236,16 +293,24 @@ export function WeeksTable({
           </thead>
           <tbody className="tnum">
             {gorunen.map((w) => {
-              const b = brierHarita.get(w.week);
+              const b = brierHarita.get(w.anahtar);
               return (
-                <tr key={w.week} className="border-t border-line transition-colors hover:bg-muted">
+                <tr
+                  key={w.anahtar}
+                  className="border-t border-line transition-colors hover:bg-muted"
+                >
                   <td className="py-2 pr-3">
                     <Link
-                      href={`/istatistik/${w.week}`}
+                      href={haftaAdresi(w.week, w.sezon)}
                       className="font-semibold text-primary hover:underline"
                     >
                       {w.week}
                     </Link>
+                    {birlesik ? (
+                      <span className="ml-1.5 text-[11px] text-muted-foreground">
+                        {kayitEtiketi(w.sezon)}
+                      </span>
+                    ) : null}
                   </td>
                   {SEMBOLLER.map((s) => (
                     <td key={s} className="py-2 pr-3">
@@ -289,7 +354,10 @@ export function WeeksTable({
                     {w.close_date}
                   </td>
                   <td className="py-2">
-                    <Link href={`/istatistik/${w.week}`} aria-label={`${w.week}. hafta detayı`}>
+                    <Link
+                      href={haftaAdresi(w.week, w.sezon)}
+                      aria-label={`${kayitEtiketi(w.sezon)} ${w.week}. hafta detayı`}
+                    >
                       <ResultStrip results={w.results} />
                     </Link>
                   </td>

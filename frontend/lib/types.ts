@@ -94,15 +94,50 @@ export interface MetaResponse {
     tum_kesit: string;
   };
   /**
-   * Secilebilir kupon sezonlari. `default` her zaman `null`dir ve bu bir
-   * sezon ADI DEGIL, "hicbir sey secilmedi" halidir — varsayilan kayit
-   * `available` listesinde YOKTUR.
+   * Secilebilir kupon kayitlari.
+   *
+   * `default` her zaman `null`dir ve bu bir sezon ADI DEGIL: parametresiz
+   * `/api/stats` varsayilan kaydi dondurur. Arayuzun VARSAYILAN GORUNUMU
+   * ayri bir seydir ve o `birlesik`tir (butun sezonlar).
+   *
+   * Secici `kayitlar`dan kurulur; `available` yalnizca sezon DOSYALARINI
+   * sayar ve uyumluluk icin duruyor.
    */
   seasons: {
     default: string | null;
     available: string[];
+    /** Birlesik kesitin `?sezon=` degeri (`"hepsi"`). */
+    birlesik: string;
+    /** Varsayilan kaydin ACIK adi (`"varsayilan"`). */
+    varsayilan_kayit: string;
+    /** Secicinin bastigi kayitlarin TAMAMI — etiketi motor belirler. */
+    kayitlar: SezonKaydi[];
     note: string;
   };
+}
+
+/**
+ * Sezon secicisinin tek bir tusu — etiketi ve kunyesi MOTORDAN gelir.
+ *
+ * Arayuz sezon adlarini ve hangisinin birlesime girdigini kendi bilmez:
+ * yeni bir sezon eklendiginde secici kendiliginden buyur. `2025/26`nin iki
+ * okumasi (§6G.5) etikette kokeniyle ayrilir — "2025/26 · bulten" ↔
+ * "2025/26 · payload".
+ */
+export interface SezonKaydi {
+  /** `?sezon=` degeri: `"hepsi"`, `"varsayilan"` ya da sezon anahtari. */
+  deger: string;
+  /** Ic anahtar; varsayilan kayit ve birlesik kesit disinda `deger` ile ayni. */
+  sezon: string | null;
+  etiket: string;
+  koken: string;
+  koken_kisa: string;
+  weeks: number;
+  matches: number;
+  date_from: string;
+  date_to: string;
+  /** Birlesik kesitte sayiliyor mu — 2025/26'nin ikinci okumasi sayilmaz. */
+  birlesimde: boolean;
 }
 
 // ─── POST /api/solve — istek ──────────────────────────────────────────────
@@ -429,10 +464,28 @@ export interface StatsMeta {
   week_from: number | null;
   week_to: number | null;
   sliced: boolean;
-  /** Istenen sezon (`?sezon=`); varsayilan kayitta null. */
+  /** Istenen sezon (`?sezon=`); varsayilan kayitta null, birlesimde "hepsi". */
   sezon_secimi?: string | null;
-  /** Kaydin kokeni — varsayilan ile turetilmis set ayni gorunmesin diye. */
+  /** Kaydin kokeni — varsayilan, turetilmis ve birlesik ayni gorunmesin diye. */
   origin?: string;
+  /** Birlesik kesitte: kac kayittan kuruldu. */
+  sezon_sayisi?: number;
+  /**
+   * Birlesik kesitin dokumu — hangi kayittan kac hafta.
+   *
+   * Toplam bir sayi ("122 hafta") nereden geldigini soylemez; bu dokum
+   * soyler ve 2025/26'nin BIR KEZ sayildigi buradan gorunur.
+   */
+  birlesim?: Array<{
+    sezon: string | null;
+    deger: string;
+    etiket: string;
+    weeks: number;
+    matches: number;
+    date_from: string;
+    date_to: string;
+    origin: string;
+  }>;
 }
 
 export interface Band {
@@ -469,6 +522,16 @@ export interface Mac {
 
 export interface WeekRow {
   week: number;
+  /**
+   * Satirin KENDI kaydi (`null` = varsayilan kayit).
+   *
+   * Birlesik kesitte hafta NUMARASI kimlik degildir — dort sezonun
+   * dordunde de 12. hafta var. Baglantilar, oranin haftalik Brier'i ve
+   * kopya denetimi `anahtar` uzerinden eslesir.
+   */
+  sezon: string | null;
+  /** `"2023_24-12"` — kesitten bagimsiz hafta kimligi. */
+  anahtar: string;
   close_date: string;
   season: string;
   n1: number;
@@ -500,6 +563,15 @@ export interface PositionStat {
   top: Sembol | "";
 }
 
+/** Bir sembolun en yuksek/en dusuk haftasi — kimligiyle. */
+export interface HaftaUcu {
+  week: number;
+  value: number;
+  results: string;
+  sezon: string | null;
+  anahtar: string;
+}
+
 export interface Analytics {
   positions: PositionStat[];
   transitions: {
@@ -511,20 +583,35 @@ export interface Analytics {
   };
   distribution: Record<Sembol, Array<{ count: number; weeks: number; pct: number }>>;
   streaks: {
-    by_symbol: Record<Sembol, { length: number; week: number | null; start: number }>;
-    top: Array<{ week: number; symbol: Sembol; start: number; length: number }>;
+    by_symbol: Record<
+      Sembol,
+      { length: number; week: number | null; start: number;
+        sezon: string | null; anahtar: string }
+    >;
+    /** `sezon`/`anahtar` bagli: arayuz bu satirdan bir BAGLANTI kuruyor. */
+    top: Array<{
+      week: number;
+      symbol: Sembol;
+      start: number;
+      length: number;
+      sezon: string | null;
+      anahtar: string;
+      close_date: string;
+    }>;
     avg_week_max: number;
   };
   extremes: Record<
     Sembol,
     {
-      max: { week: number; value: number; results: string } | null;
-      min: { week: number; value: number; results: string } | null;
+      max: HaftaUcu | null;
+      min: HaftaUcu | null;
     }
   >;
   recent: {
     window: number;
     weeks: number[];
+    /** Numaralarin kimlik hali — birlesik kesitte numara tek basina yetmez. */
+    anahtarlar: string[];
     avg: Record<Sembol, number>;
     delta: Record<Sembol, number>;
   };
@@ -534,21 +621,35 @@ export interface Analytics {
  * Veri seti kendini denetler: dosyadaki hazir sayim ile 15 karakterlik dizi
  * catistiginda fark GIZLENMEZ, buradan raporlanir.
  */
+/** Kusur listelerinde bir haftayi ANAN kayit: numara + sezon + anahtar. */
+export interface HaftaKimlik {
+  week: number;
+  sezon: string | null;
+  anahtar: string;
+}
+
 export interface DataQuality {
   source: string;
   weeks_total: number;
   weeks_with_matches: number;
-  count_conflicts: Array<{
-    week: number;
-    close_date: string;
-    reported: Record<Sembol, number> | null;
-    derived: Record<Sembol, number>;
-  }>;
+  count_conflicts: Array<
+    HaftaKimlik & {
+      close_date: string;
+      reported: Record<Sembol, number> | null;
+      derived: Record<Sembol, number>;
+    }
+  >;
   /** Mac listesi ile `results` dizisi ortusmeyen haftalar. */
-  match_conflicts: number[];
-  weeks_without_matches: number[];
-  incomplete_weeks: number[];
-  duplicate_results: Array<{ results: string; weeks: number[] }>;
+  match_conflicts: HaftaKimlik[];
+  weeks_without_matches: HaftaKimlik[];
+  incomplete_weeks: HaftaKimlik[];
+  /**
+   * Ayni diziyi tekrar eden haftalar — AYNI sezon icinde.
+   *
+   * Iki farkli sezonda ayni dizinin cikmasi kusur degildir; kusur, bir
+   * sezonun kendi icinde tekrardir (§7.4 v1 vakasi).
+   */
+  duplicate_results: Array<{ results: string; sezon: string | null; weeks: number[] }>;
   ok: boolean;
 }
 
@@ -651,6 +752,9 @@ export interface OddsSummary {
    */
   weekly_brier: Array<{
     week: number;
+    /** Hafta satirlariyla eslesme ANAHTAR uzerinden — numara benzersiz degil. */
+    sezon: string | null;
+    anahtar: string;
     n: number;
     brier: number;
     favourite_hit: number;
@@ -702,7 +806,7 @@ export interface StatsResponse {
    *
    * `null` bir sezon DEGIL, "hicbir sey secilmedi" halidir: varsayilan
    * `st_history_2025_26.json` (41 hafta), `"2025_26"` ise ayni sezonun
-   * resmi bultenden okunan BASKA bir kaydidir (29 hafta).
+   * resmi bultenden okunan BASKA bir kaydidir (31 hafta).
    */
   sezon: string | null;
   error?: string | null;

@@ -106,7 +106,7 @@ def olculebilir_haftalar(last: int | None = None) -> list[Girdi]:
 #:
 #: `2025_26` bilerek DIŞARIDA: §6G'nin ürettiği o dosya, varsayılan
 #: `st_history_2025_26.json`in **aynı sezonu ikinci kez okumasıdır**
-#: (29 hafta ↔ 41 hafta, 28'i birebir aynı — §6G.5). İkisini birden
+#: (31 hafta ↔ 41 hafta, 30'u birebir aynı — §6G.5). İkisini birden
 #: ölçüme sokmak aynı maçları iki kez saymak olurdu; paired bootstrap da
 #: bağımsız hafta varsayar.
 OLCUM_SEZONLARI: tuple[str, ...] = ("2022_23", "2023_24", "2024_25")

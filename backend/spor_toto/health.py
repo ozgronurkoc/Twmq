@@ -616,6 +616,34 @@ def _check_stats_sozlesmesi() -> str:
         "last dilimi analiz bloğunu daraltmadı"
     assert d["last"] == n
 
+    # Birlesik kesit (`?sezon=hepsi`) — SAYFANIN VARSAYILAN GORUNUMU.
+    #
+    # Denetim tek sezonunkiyle ayni sekle bakar, cunku arayuz iki kip icin
+    # iki ayri okuma yazmiyor. Ustune iki sey daha: hafta ANAHTARLARININ
+    # benzersizligi (numara birlesik kesitte tekrar eder ve numaraya gore
+    # eslesen her tablo sessizce yanlis satira baglanir) ve oran ozetinin
+    # kesitin disina tasmamasi.
+    from .history import TUM_SEZONLAR
+
+    bir = stats_payload(sezon=TUM_SEZONLAR)
+    bir_haftalar = bir["weeks"]
+    assert bir["meta"]["weeks"] == len(bir_haftalar), \
+        "birlesik kesitte meta.weeks hafta listesiyle ayrismis"
+    assert bir["meta"]["matches"] == len(bir_haftalar) * MATCH_COUNT
+    assert len(bir_haftalar) > len(haftalar), \
+        "birlesik kesit tek sezondan buyuk degil"
+    anahtarlar = [w["anahtar"] for w in bir_haftalar]
+    assert len(set(anahtarlar)) == len(anahtarlar), \
+        "birlesik kesitte hafta anahtari tekrar ediyor"
+    assert bir["analytics"]["transitions"]["n"] == len(bir_haftalar) * (MATCH_COUNT - 1)
+    assert bir["data_quality"]["ok"] is True
+    assert sum(k["weeks"] for k in bir["meta"]["birlesim"]) == bir["meta"]["weeks"], \
+        "birlesim dokumu toplamla ayrismis"
+    if bir["odds"]:
+        oran_anahtar = {h["anahtar"] for h in bir["odds"]["weekly_brier"]}
+        assert oran_anahtar <= set(anahtarlar), \
+            "oran ozeti kesit disindan hafta tasiyor"
+
     # Geri test: tarama KAPALI (sure butcesi); acik hali `pytest -m slow` isi.
     b = backtest_payload(sweep=False)
     # Arayuzun okudugu alanlarin TAMAMI (frontend/lib/types.ts:BacktestResponse).
@@ -1286,11 +1314,18 @@ CHECKS: tuple[CheckSpec, ...] = (
     ),
     CheckSpec(
         "stats_sozlesmesi", "ucuca",
-        "`/api/stats` ve `/api/backtest` gövdeleri kendi içinde tutarlı mı ve "
-        "`?last=` dilimi gövdenin tamamını daraltıyor mu. Bir alan adı "
-        "değiştiğinde motor sağlam kalır, /istatistik sessizce boşalır.",
+        "`/api/stats` (tek sezon VE birleşik kesit) ile `/api/backtest` "
+        "gövdeleri kendi içinde tutarlı mı ve `?last=` dilimi gövdenin "
+        "tamamını daraltıyor mu. Bir alan adı değiştiğinde motor sağlam "
+        "kalır, /istatistik sessizce boşalır.",
         _check_stats_sozlesmesi,
-        butce_ms=120,
+        # Bütçe ÖLÇÜLDÜ ve eskisi (120 ms) gerçeği çoktan geçmişti: kontrol
+        # dört gövde kuruyor ve `backtest_payload` tek başına ~206 ms.
+        # Bu kapsayıcıda ölçülen toplam ~425 ms (tek sezon 15 · dilim 4 ·
+        # birleşik kesit 55 · geri test 206 + serileştirme). Sapma bugüne
+        # kadar görünmedi çünkü bütçe yalnızca ısınmadan SONRAKİ koşumda
+        # uygulanıyor ve hem CLI hem /api/health ilk raporu ısınma sayıyor.
+        butce_ms=500,
     ),
     CheckSpec(
         "pipeline_result_shape", "ucuca",

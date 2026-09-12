@@ -590,7 +590,7 @@ def test_olcum_sezonlari_2025_26nin_IKINCI_okumasini_disarida_birakir():
     """Aynı sezonu iki kez saymak paired bootstrap'ı da bozar.
 
     `data/st_history/2025_26.json` varsayılan dosyanın aynı sezonu ikinci
-    kez okumasıdır (29 ↔ 41 hafta, 28'i birebir aynı — §6G.5).
+    kez okumasıdır (31 ↔ 41 hafta, 30'u birebir aynı — §6G.5).
     """
     from spor_toto.evaluate import OLCUM_SEZONLARI
 

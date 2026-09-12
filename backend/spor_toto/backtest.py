@@ -75,7 +75,19 @@ from .core import (
 )
 from .duz import kolonlar as duz_kolonlar
 from .getiri import KOLON_BEDELI
-from .history import MATCH_COUNT, SYMBOLS, normalized_weeks
+
+# `TUM_SEZONLAR` ("hepsi") burada TANIMLI DEGIL, `history`den geliyor:
+# `/api/stats` ayni sorgu dizesini birlesik istatistik icin kullaniyor ve
+# iki ayri tanim, ayni dizenin iki ucta iki farkli sey anlatmasina acik
+# kapi birakirdi. Kesitler yine de bire bir ayni degil ve bu kasitli:
+# istatistik kuponun BUTUN haftalarini sayar (122), geri test yalnizca
+# piyasa orani olanlari (114 — `usable`). Fark suzgecte, tanimda degil.
+from .history import (
+    MATCH_COUNT,
+    SYMBOLS,
+    TUM_SEZONLAR,
+    normalized_weeks,
+)
 from .odds import (
     ARINDIRMA_VARSAYILAN,
     load_odds,
@@ -788,10 +800,6 @@ UYARI_HEDEF = (
 #: Geriye uyum: bu ad dışarıdan çağrılıyordu.
 UYARI = UYARI_ESIK
 
-
-#: `sezon` bu değeri alırsa kesit tek sezon değil, ölçüm kesitinin tamamıdır
-#: (varsayılan sezon + `evaluate.OLCUM_SEZONLARI` = 114 hafta / 1.710 maç).
-TUM_SEZONLAR = "hepsi"
 
 
 def kesit_girdileri(last: int | None = None,

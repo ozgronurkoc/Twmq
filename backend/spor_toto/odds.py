@@ -27,6 +27,7 @@ from pathlib import Path
 from typing import Any
 
 from .core import SEMBOLLER as _SEMBOLLER
+from .history import TUM_SEZONLAR, birlesik_kesit, hafta_anahtari
 from .ortak import BRIER_ESIT, brier
 
 ODDS_DIZIN = Path(__file__).resolve().parent.parent / "data" / "odds"
@@ -693,17 +694,30 @@ def _haftalik_brier(oranli: list[Any]) -> list[dict[str, Any]]:
     tamamını cezalandırır, bu yüzden sürpriz haftayı isabet sayısından
     daha dürüst gösterir.
     """
-    gruplar: dict[int, list[Any]] = {}
+    # Gruplama HAFTA ANAHTARINA gore: birlesik kesitte dort sezonun da
+    # 12. haftasi var ve numaraya gore gruplamak dordunu tek satirda
+    # toplardi. Tek sezonda anahtar zaten hafta basina birebirdir.
+    gruplar: dict[str, list[Any]] = {}
     for r, b in oranli:
-        gruplar.setdefault(r["week"], []).append((r, b))
+        gruplar.setdefault(r["anahtar"], []).append((r, b))
 
     out: list[dict[str, Any]] = []
-    for hafta, grup in sorted(gruplar.items()):
+    # Sira KRONOLOJIK (haftanin en erken maci), numaraya gore degil:
+    # birlesik kesitte hafta numarasi sezonlar arasinda tekrar eder ve
+    # numaraya gore siralamak dort sezonu ic ice gecirirdi. Tek sezonda
+    # ikisi ayni sirayi verir.
+    def _sira(kv: tuple[str, list[Any]]) -> tuple[str, str]:
+        return (min(str(r["kickoff"] or "") for r, _ in kv[1]), kv[0])
+
+    for anahtar, grup in sorted(gruplar.items(), key=_sira):
         n = len(grup)
         toplam = sum(_brier(b, r["code"]) for r, b in grup)
         tutan = sum(1 for _, b in grup if b["hit"])
+        ilk = grup[0][0]
         out.append({
-            "week": hafta,
+            "week": ilk["week"],
+            "sezon": ilk["sezon"],
+            "anahtar": anahtar,
             "n": n,
             "brier": round(toplam / n, 4),
             "favourite_hit": tutan,
@@ -714,23 +728,58 @@ def _haftalik_brier(oranli: list[Any]) -> list[dict[str, Any]]:
     return out
 
 
-def season_1x2_summary(weeks: list[int] | None = None,
+def _kesit_satirlari(weeks: Sequence[Any] | None,
+                     sezon: str | None) -> list[dict[str, Any]]:
+    """Özete girecek oran satırları — tek sezon ya da birleşik kesit.
+
+    Her satır kendi ``sezon``unu ve ``anahtar``ını (``"2023_24-12"``)
+    taşıyarak döner: haftalık Brier bu anahtara göre gruplanıyor ve hafta
+    NUMARASI birleşik kesitte benzersiz değil.
+
+    ``weeks`` süzgecinin şekli kipe bağlıdır ve bu kasıtlı:
+
+        tek sezon   -> [12, 13, ...]                 hafta numaraları
+        birleşim    -> [("2023_24", 12), (None, 5)]  (sezon, hafta) çiftleri
+
+    Birleşimde numara listesi kabul edilseydi süzgeç dört sezonun aynı
+    numaralı haftalarını birden geçirirdi — bu fonksiyonun önlediği hatanın
+    ta kendisi. Çağıran tek yer ``payloads.stats_payload``dır ve çifti
+    hafta satırlarının kendi ``sezon`` alanından kurar.
+    """
+    if sezon == TUM_SEZONLAR:
+        izin_cift = set(weeks) if weeks is not None else None
+        out: list[dict[str, Any]] = []
+        for anahtar in birlesik_kesit():
+            for r in load_odds(sezon=anahtar):
+                if izin_cift is not None and (anahtar, r["week"]) not in izin_cift:
+                    continue
+                out.append({**r, "sezon": anahtar,
+                            "anahtar": hafta_anahtari(anahtar, r["week"])})
+        return out
+    izin = set(weeks) if weeks is not None else None
+    return [
+        {**r, "sezon": sezon, "anahtar": hafta_anahtari(sezon, r["week"])}
+        for r in load_odds(sezon=sezon)
+        if izin is None or r["week"] in izin
+    ]
+
+
+def season_1x2_summary(weeks: Sequence[Any] | None = None,
                        sezon: str | None = None) -> dict[str, Any] | None:
     """Dilim için oran özeti: kapsama, favori isabeti, marj ve kalibrasyon.
 
     ``weeks`` verilirse yalnızca o haftalar sayılır — arayüzdeki aralık
     filtresi böylece oran kartını da kapsar. ``sezon`` verilmezse varsayılan
-    arşiv okunur.
+    arşiv okunur, ``"hepsi"`` ise birleşik kesitin bütün sezonları okunup
+    **tek özet** kurulur (kesitin tanımı: ``history.birlesik_kesit``).
 
-    **`weeks` bir hafta NUMARASI listesidir, sezon taşımaz.** Bu yüzden
-    ``sezon`` ile birlikte verilmesi şarttır: yanlış sezonun arşivinde aynı
-    numaralar bulunur ve özet sessizce başka bir sezonu anlatır.
+    **`weeks` tek sezonda hafta NUMARASI listesidir, sezon taşımaz.** Bu
+    yüzden ``sezon`` ile birlikte verilmesi şarttır: yanlış sezonun
+    arşivinde aynı numaralar bulunur ve özet sessizce başka bir sezonu
+    anlatır. Birleşik kesitte süzgeç ``(sezon, hafta)`` çiftidir —
+    ``_kesit_satirlari``ya bak.
     """
-    rows = load_odds(sezon=sezon)
-    if not rows:
-        return None
-    izin = set(weeks) if weeks is not None else None
-    ilgili = [r for r in rows if izin is None or r["week"] in izin]
+    ilgili = _kesit_satirlari(weeks, sezon)
     if not ilgili:
         return None
 
@@ -802,7 +851,10 @@ def season_1x2_summary(weeks: list[int] | None = None,
         # Karar destek blokları — üçü de aynı dilim üzerinden hesaplanır.
         "set_coverage": _kume_kapsama(oranli),
         "draw_profile": _beraberlik_profili(oranli),
-        "leagues": _lig_kirilimi(oranli, len({r["week"] for r, _ in oranli})),
+        # Hafta sayisi ANAHTARA gore: numaraya gore saymak birlesik
+        # kesitte dort sezonun ayni numarali haftasini tek hafta sayar ve
+        # "hafta basina mac" orani dorde katlanirdi.
+        "leagues": _lig_kirilimi(oranli, len({r["anahtar"] for r, _ in oranli})),
         "weekly_brier": _haftalik_brier(oranli),
         "brier_avg": round(
             sum(_brier(b, r["code"]) for r, b in oranli) / len(oranli), 4

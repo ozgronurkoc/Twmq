@@ -237,7 +237,7 @@ def test_capraz_dogrulama_st_history_ile_ortusuyor():
     bu set resmî bülten görselinden OCR ile okunup football-data fikstürüne
     bağlanarak üretiliyor. İkisi birbirini hiç görmüyor.
 
-    Ölçülen: **28/29 hafta birebir aynı.** Eşik oraya değil biraz altına
+    Ölçülen: **30/31 hafta birebir aynı.** Eşik oraya değil biraz altına
     konuldu; düşerse OCR ya da eşleştirme bozulmuş demektir.
     """
     yol = gecmis.CIKTI_DIZIN / "gecmis_rapor.json"

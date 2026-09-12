@@ -29,7 +29,7 @@ import {
 import {
   RangeFilter,
   aralikUrldenOku,
-  sezonUrldenOku,
+  useSezonSecimi,
   aralikUrleYaz,
 } from "@/components/istatistik/parts";
 import { IstatistikSekmeleri } from "@/components/istatistik/sekmeler";
@@ -48,14 +48,18 @@ export default function GeriTestPage() {
   const [strateji, setStrateji] = React.useState<"hedef" | "esik">("hedef");
   // Sezon SEKME SERIDINDEN gelir (`?sezon=`); bu sayfa onu secmez ama
   // TASIMAK zorundadir, yoksa sezon secip bu sekmeye gecen kullanici
-  // sessizce varsayilan sezonun geri testini gorur.
-  const [sezon, setSezon] = React.useState<string | null>(null);
+  // sessizce baska bir kesitin geri testini gorur. Adres bos ise
+  // varsayilan gorunum (birlesik kesit) ortak kancadan gelir.
+  //
+  // Birlesik kesit burada 114 HAFTADIR, istatistikteki 122 degil: geri test
+  // piyasa orani olmayan haftayi olcemez (`usable`). Fark suzgectedir,
+  // kesitin taniminda degil (`history.TUM_SEZONLAR`).
+  const { sezon, hazir: sezonHazir, birlesik: birlesikKesit } = useSezonSecimi();
   const [esik, setEsik] = React.useState<{ banko: number; uclu: number } | null>(null);
   const [urlOkundu, setUrlOkundu] = React.useState(false);
 
   React.useEffect(() => {
     setLast(aralikUrldenOku());
-    setSezon(sezonUrldenOku());
     setUrlOkundu(true);
   }, []);
 
@@ -75,7 +79,7 @@ export default function GeriTestPage() {
         signal,
       ),
     [last, strateji, esik?.banko, esik?.uclu, sezon],
-    { hazir: urlOkundu, varsayilanHata: "Geri test alınamadı" },
+    { hazir: urlOkundu && sezonHazir, varsayilanHata: "Geri test alınamadı" },
   );
 
   // Kesit araligi JSX'te `veri.weeks[0]` ve `veri.weeks[son]` diye
@@ -83,8 +87,16 @@ export default function GeriTestPage() {
   // olabilir ve `.week` erisimi cokerdi. Bir kez, guard'la hesaplanir.
   const ilkHafta = veri?.weeks[0];
   const sonHafta = veri?.weeks[(veri?.weeks.length ?? 0) - 1];
-  const kesitAraligi =
-    ilkHafta && sonHafta ? `${ilkHafta.week}–${sonHafta.week}. haftalar` : null;
+  // Birlesik kesitte hafta NUMARASI araligi yazilmaz. Oradaki `week`
+  // degerleri sezonla on-eklenmis sentetik sayilardir (`evaluate`:
+  // 2022/23'un 21. haftasi `202221`) ve "202221–51. haftalar" diye
+  // okunurdu — hem yanlis hem anlamsiz. Kesitin ne oldugunu kayit sayisi
+  // anlatir; hangi haftalar oldugu zaten Sezon sekmesinde dokumlu.
+  const kesitAraligi = birlesikKesit
+    ? "kayıtların tamamı"
+    : ilkHafta && sonHafta
+      ? `${ilkHafta.week}–${sonHafta.week}. haftalar`
+      : null;
 
   if (hata) {
     return (
@@ -150,14 +162,21 @@ export default function GeriTestPage() {
             <span className="font-medium text-foreground">
               {kesitAraligi ?? "—"}
             </span>{" "}
-            · {veri.meta.weeks_used} hafta · {veri.meta.weeks_used * veri.meta.match_count} maç
-            {last === null ? " — tüm sezon." : ` — veri setindeki son ${last} hafta.`}
+            · {veri.meta.weeks_used} hafta ·{" "}
+            {sayi(veri.meta.weeks_used * veri.meta.match_count)} maç
+            {last === null
+              ? birlesikKesit
+                ? " — birleşik kesit; piyasa oranı olmayan hafta ölçüme giremez."
+                : " — tüm sezon."
+              : ` — veri setindeki son ${last} hafta.`}
             {veri.meta.weeks_dropped.length ? (
               <>
                 {" "}
                 Hesaba girmeyen{" "}
                 <span className="font-medium text-foreground">
-                  {veri.meta.weeks_dropped.map((d) => d.week).join(", ")}. hafta
+                  {birlesikKesit
+                    ? `${veri.meta.weeks_dropped.length} hafta`
+                    : `${veri.meta.weeks_dropped.map((d) => d.week).join(", ")}. hafta`}
                 </span>
                 : 15 maçın hepsinde oran yok (milli maç haftalarında kaynak oran yayınlamıyor),
                 eksik oran tamamlanmadığı için hafta tamamen elenir.

@@ -10,7 +10,7 @@ import {
   type Sembol,
   type WeekRow,
 } from "@/lib/types";
-import { cn, ondalik } from "@/lib/utils";
+import { cn, ondalik, sayi } from "@/lib/utils";
 import { SEMBOL_ADI } from "@/components/ui/symbol";
 import { SYM_BG, SYM_FILL, SYM_STROKE, barPath, seqFill, seqInk } from "./viz";
 import { TABLO_BASLIK_SATIRI, TABLO_SARMAL } from "@/components/ui/tablo";
@@ -109,13 +109,21 @@ export function ShareBar({
         ))}
       </div>
       <div className="tnum mt-2 text-[11.5px] text-muted-foreground">
-        {matches} maç · {SEMBOLLER.map((s) => `${totals[s]} × ${s}`).join(" · ")}
+        {sayi(matches)} maç ·{" "}
+        {SEMBOLLER.map((s) => `${sayi(totals[s])} × ${s}`).join(" · ")}
       </div>
     </div>
   );
 }
 
 /* ── 2. Haftalik seyir ──────────────────────────────────────────────────── */
+
+/** `"2023_24"` -> `"2023/24"`; varsayılan kayıt kendi adıyla anılır. */
+function kayitEtiketi(sezon: string | null): string {
+  if (!sezon) return "varsayılan";
+  const [bas, son] = sezon.split("_");
+  return son ? `${bas}/${son}` : sezon;
+}
 
 export function TrendChart({ weeks }: { weeks: WeekRow[] }) {
   const { fare, olaylar } = useFare();
@@ -147,14 +155,41 @@ export function TrendChart({ weeks }: { weeks: WeekRow[] }) {
     return out;
   }, [yTepe]);
 
+  /**
+   * Kesit birden fazla KAYITTAN mi kuruldu (birlesik kesit).
+   *
+   * Veriden okunuyor, disaridan bayrak olarak gelmiyor: grafik neyi
+   * cizdigini kendi bilir ve cagiran her yerde ayni bayragi tasimayi
+   * unutabilecek bir yer kalmaz.
+   */
+  const kayitlar = React.useMemo(() => {
+    const out: Array<{ sezon: string | null; bas: number; son: number }> = [];
+    weeks.forEach((w, i) => {
+      const onceki = out[out.length - 1];
+      if (onceki && onceki.sezon === w.sezon) onceki.son = i;
+      else out.push({ sezon: w.sezon, bas: i, son: i });
+    });
+    return out;
+  }, [weeks]);
+  const cokKayit = kayitlar.length > 1;
+
+  /**
+   * Yatay eksen etiketleri.
+   *
+   * Tek kayitta hafta NUMARASI yazilir. Birlesik kesitte numara yazmak
+   * yaniltir: dort kaydin numaralari ic ice gecer ve eksende "21, 42, 21,
+   * 41, 21…" diye tekrar eder — okuyan bunu tek bir sezonun ileri geri
+   * atlamasi sanir. Orada eksen KAYIT SINIRLARINI gosterir.
+   */
   const xEksen = React.useMemo(() => {
     if (!n) return [];
+    if (cokKayit) return kayitlar.map((k) => k.bas);
     const adim = Math.max(1, Math.round(n / Math.min(8, n)));
     const idx: number[] = [];
     for (let i = 0; i < n; i += adim) idx.push(i);
     if (idx[idx.length - 1] !== n - 1) idx.push(n - 1);
     return idx;
-  }, [n]);
+  }, [n, cokKayit, kayitlar]);
 
   const vurgu =
     fare && n
@@ -195,7 +230,13 @@ export function TrendChart({ weeks }: { weeks: WeekRow[] }) {
         viewBox={`0 0 ${W} ${H}`}
         className="h-auto w-full"
         role="img"
-        aria-label={`${ilkHafta.week}–${sonHafta.week}. haftalar arasi haftalik 1/0/2 sayilari`}
+        aria-label={
+          cokKayit
+            ? `${kayitlar.length} kaydin haftalarinda 1/0/2 sayilari (${kayitlar
+                .map((k) => kayitEtiketi(k.sezon))
+                .join(", ")})`
+            : `${ilkHafta.week}–${sonHafta.week}. haftalar arasi haftalik 1/0/2 sayilari`
+        }
       >
         {yEksen.map((v) => (
           <g key={v}>
@@ -211,16 +252,32 @@ export function TrendChart({ weeks }: { weeks: WeekRow[] }) {
             </text>
           </g>
         ))}
+        {/* Kayit siniri: birlesik kesitte iki sezonun arasi gorunur olmali,
+            yoksa cizgi kesintisiz akar ve sezon gecisi kaybolur. */}
+        {cokKayit
+          ? kayitlar.slice(1).map((k) => (
+              <line
+                key={`sinir-${k.sezon ?? "varsayilan"}`}
+                x1={px(k.bas) - (px(1) - px(0)) / 2}
+                x2={px(k.bas) - (px(1) - px(0)) / 2}
+                y1={ustB}
+                y2={H - altB}
+                className="stroke-line"
+                strokeWidth={1}
+                strokeDasharray="3 3"
+              />
+            ))
+          : null}
         {xEksen.map((i) => (
           <text
             key={i}
             x={px(i)}
             y={H - altB + 18}
-            textAnchor="middle"
+            textAnchor={cokKayit ? "start" : "middle"}
             fontSize={11}
             className="tnum fill-muted-foreground"
           >
-            {weeks[i]?.week}
+            {cokKayit ? kayitEtiketi(weeks[i]?.sezon ?? null) : weeks[i]?.week}
           </text>
         ))}
 
@@ -279,7 +336,10 @@ export function TrendChart({ weeks }: { weeks: WeekRow[] }) {
 
       {fare && vurgu !== null && vurguHafta ? (
         <Tooltip x={(px(vurgu) / W) * fare.w} y={fare.py} w={fare.w}>
-          <div className="mb-1 font-semibold">{vurguHafta.week}. hafta</div>
+          <div className="mb-1 font-semibold">
+            {cokKayit ? `${kayitEtiketi(vurguHafta.sezon)} · ` : ""}
+            {vurguHafta.week}. hafta
+          </div>
           <div className="min-w-[128px] space-y-0.5">
             {SEMBOLLER.map((s) => (
               <TooltipSatir key={s} sym={s} etiket={s} deger={String(vurguHafta.counts[s] ?? 0)} />
