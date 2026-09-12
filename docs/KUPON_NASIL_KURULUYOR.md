@@ -197,13 +197,14 @@ değildir ve arındırılmış olasılıklar birebir kıyaslanamaz."*
 
 **Neden `orantili` bırakıldı (A5).** Bahisçi marjı sürprizlere ağır
 yükler; eşit dağıtmak favoriyi **sistematik olarak eksik fiyatlar**.
-31.103 maçlık korpusta ölçüldü: piyasanın %70–80 dediği maçlar gerçekte
-**%78,9** oluyor (n=1.702, +4,4 puan, %95 aralığın dışında) ve 15 banttan
+23.085 maçlık korpusta ölçüldü: piyasanın %70–80 dediği maçlar gerçekte
+**%79,2** oluyor (n=1.507, +4,6 puan, %95 aralığın dışında) ve 15 banttan
 **10'u** anlamlı sapıyor.
 
-`shin`e çevrildikten sonra: Brier 0,5940 → **0,5936**, fark −0,00035
-[−0,00049, −0,00021] — aralığın tamamı sıfırın altında, yani projenin
-geçme kuralını sağlıyor. Anlamlı sapan bant **10 → 4**.
+`shin`e çevrildikten sonra: Brier 0,5873 → **0,5869** ve anlamlı sapan
+bant **10 → 3**. (Yöntemler arası eşleştirilmiş bootstrap aralığı 22 ligli
+kesitte −0,00035 [−0,00049, −0,00021] ölçülmüştü; 17 ligli kesitte henüz
+yeniden koşulmadı, o yüzden buraya yazılmıyor.)
 
 Marj sıfıra giderken üç yöntem de aynı sonuca yakınsar; ayrıştıkları yer
 yüksek marjdır — iddaa bülteni (~%18) tam olarak orası.
@@ -261,12 +262,12 @@ yüzden ayrı bölüm.
 
 ### 5.1 Ölçüm ne dedi (A1)
 
-31.099 / 31.103 maçlık kesitte, sezon dışarıda bırakmalı:
+23.083 / 23.085 maçlık kesitte, sezon dışarıda bırakmalı:
 
 | Tahminci | Brier | Fark | %95 aralık |
 |---|---:|---:|---|
-| **kapanış** | **0,5940** | — | referans |
-| açılış | 0,5964 | +0,0025 | [+0,0019, +0,0030] |
+| **kapanış** | **0,5873** | — | referans |
+| açılış | 0,5898 | +0,0025 | [+0,0019, +0,0030] |
 
 **Soru 1 — piyasa bilgiyi soğuruyor mu? Evet.** Aralık tamamen sıfırın
 üstünde: açılışla kapanış arasında gelen bilgi (kadro, sakatlık, hava,

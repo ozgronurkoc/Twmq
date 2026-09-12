@@ -151,9 +151,16 @@ def test_ayrim_korpus_kupon_bilesimi_tasimaz():
 # ─── korpus sözleşmesi ────────────────────────────────────────────────────────
 
 def test_korpus_ozeti_tutarli(haftalar):
+    """Kaba saglik: kesin sayiyi `test_korpus_boyutu_RAPORLA_ve_KUTUKLE_ayni` tutar.
+
+    Esikler korpusun lig evrenine gore GEVSEK secilir. 2026-09-12'de bes lig
+    (E2/E3/EC/SC2/SC3) cikarilinca `lig >= 20` dustu ve esik 15'e indi. Kesin
+    degeri burada tutmak yanlis olurdu: bu test toplamin IC TUTARLILIGINI
+    kolluyor (kod dagilimi maca esit mi), buyuklugunu degil.
+    """
     o = ozet()
     assert o["mac"] > 10_000, "korpus beklenenden kucuk"
-    assert o["lig"] >= 20
+    assert o["lig"] >= 15
     assert sum(o["kod_dagilimi"].values()) == o["mac"]
 
 
@@ -254,7 +261,7 @@ def test_en_az_mac_esigi_uygulanir():
 def test_korpus_haftalari_paylasilan_kaydi_korur():
     """**Önbelleğin bekçisi.** `korpus_haftalari` aynı listeyi geri verir.
 
-    Çağrı 31.103 satırı gezip 217.701 kez marj arındırdığı için önbelleklendi
+    Çağrı 23.085 satırı gezip 161.595 kez marj arındırdığı için önbelleklendi
     (tek geçiş ~12 sn, suite'te onlarca çağrı). Bunun bedeli şu: dönen kayıt
     artık **paylaşılıyor**. Bir çağıran bir haftanın alanını değiştirirse
     öteki çağıranların gördüğü veri sessizce bozulur — ve sessiz olur, çünkü

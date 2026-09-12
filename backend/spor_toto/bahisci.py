@@ -22,7 +22,7 @@ tekil bahisçi veriyor ama kapsamaları sezona göre değişiyor: `BW` 2425'te
 %63'e, `WH` %76'ya düşüyor, `BF`/`1XB`/`BFE` yalnızca 2425'te var. Hepsini
 isteyen bir filtre kesitin **sezon dengesini bozar** ve sezon dışarıda
 bırakmalı ölçümde bu sessiz bir yanlılıktır. Taşınan dört kaynak
-(`B365C`, `PSC`, `MaxC`, `AvgC`) dört sezonda da ~%100 — kesit 31.100 maç.
+(`B365C`, `PSC`, `MaxC`, `AvgC`) dört sezonda da ~%100 — kesit 23.083 maç.
 
 Aynı gerekçenin ikinci yüzü `egitim.bahisci_ayrismasi`'nde: `Max/Avg` açığı
 daha geniş bir anlaşmazlık ölçüsüdür ama bahisçi sayısına duyarlıdır ve

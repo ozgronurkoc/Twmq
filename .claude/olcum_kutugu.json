@@ -2,9 +2,9 @@
  "sayilar": [
   {
    "ne": "suit test sayisi (eksiksiz kurulum)",
-   "deger": "1.842",
+   "deger": "1.847",
    "ureten": "cd backend && python -m pytest --collect-only -q -p no:randomly -o addopts=  # son satirdaki toplam",
-   "olculdu": "2026-09-10",
+   "olculdu": "2026-09-12",
    "anildigi_yerler": [
     "README.md §7,§9",
     "backend/README.md",
@@ -14,19 +14,19 @@
     "replit.md"
    ],
    "bekci": "backend/tests/test_belgeler.py::test_test_sayisi_belgelerde_tek_ve_dogru",
-   "not": "1.799 yaziyordu ve KENDI BEKCISIYLE celisiyordu: bekci belgelerdeki sayiyi gercek koleksiyona esitler, belgeler 1.800 diyordu. Uretici komut da yanlisti — `-o addopts=` olmadan xdist devrede kalir. PR 48 incelemesinde uc bekci eklendi: 1.800 -> 1.803. || 1.803 -> 1.820 (2026-09-07): geri testin hedef kuralina cevrilmesiyle 17 test eklendi (strateji secimi, butce zorunlulugu, butce taramasi monotonlugu, §1.1 sayi bekcileri, birikimli marj). || 1.837 -> 1.860 (2026-09-07): olcum kutugunun kendi bekcileri (tests/test_olcum_kutugu.py, 5) ve bekcisiz kalmis README mansetlerinin bekcileri eklendi; ayrica kupon belgesi ve secim kurali islerinin testleri. Sayi TAM KURULUMLA olculdu (lightgbm dahil) — eksik kurulumda bekci kasitli ATLIYOR ve eksik bir suit sayilirsa yanlis sayi yazilir. || 1.860 -> 1.834 (2026-09-07): main kapanmis iki deneyi kaldirdi (E4/hakem 4acc3dd, xG vekili 25e72e0) ve tests/test_hakem.py (5) ile tests/test_xg.py (16) suitten cikti; kalan 5'lik fark ayni koumlarda silinen parametrizasyonlardan. Bu dallanmanin birlesmesinde YENIDEN OLCULDU, aritmetikle turetilmedi. || 1.834 -> 1.837 (2026-09-07): 4. haftanin sonuc degerlendirmesinde uc bekci eklendi: puanin kunyesi ve karne yorumunun tureticileri (test_degerlendir), §1 katman dokumu (test_belgeler). Katman dokumu ayrica DUZELTILDI: yazili 85/579/29/30, gercek 117/624/35/38. || 1.837 -> 1.841 (2026-09-10): dal 4a83172'de kutuk zaten bayatti (gercek 1.840, belgeler 1.837 diyordu — Delta 3'un tamami tests/test_super_toto.py'ye eklenen bekcilerdi ve README §9'un 'Super Toto' satiri da 105'te kalmisti). 5. haftaya oynanma payi girilince test_tahmin2.py::test_onceki_olcek_KAYITTAN_okunur_sabitten_degil parametrizasyonu 5. haftayi da topluyor: +1. Yeniden olculdu, aritmetikle turetilmedi. || 1.841 -> 1.842 (2026-09-10): karnenin tazelik bekcisi eklendi (test_belgeler.py::test_kazanma_karnesi_GIT_TE_TAZE) — 4. haftanin 'karne git'te bayatti' hatasi bekcisiz kaldigi icin 5. haftada tekrarlamisti."
+   "not": "1.799 yaziyordu ve KENDI BEKCISIYLE celisiyordu: bekci belgelerdeki sayiyi gercek koleksiyona esitler, belgeler 1.800 diyordu. Uretici komut da yanlisti — `-o addopts=` olmadan xdist devrede kalir. PR 48 incelemesinde uc bekci eklendi: 1.800 -> 1.803. || 1.803 -> 1.820 (2026-09-07): geri testin hedef kuralina cevrilmesiyle 17 test eklendi (strateji secimi, butce zorunlulugu, butce taramasi monotonlugu, §1.1 sayi bekcileri, birikimli marj). || 1.837 -> 1.860 (2026-09-07): olcum kutugunun kendi bekcileri (tests/test_olcum_kutugu.py, 5) ve bekcisiz kalmis README mansetlerinin bekcileri eklendi; ayrica kupon belgesi ve secim kurali islerinin testleri. Sayi TAM KURULUMLA olculdu (lightgbm dahil) — eksik kurulumda bekci kasitli ATLIYOR ve eksik bir suit sayilirsa yanlis sayi yazilir. || 1.860 -> 1.834 (2026-09-07): main kapanmis iki deneyi kaldirdi (E4/hakem 4acc3dd, xG vekili 25e72e0) ve tests/test_hakem.py (5) ile tests/test_xg.py (16) suitten cikti; kalan 5'lik fark ayni koumlarda silinen parametrizasyonlardan. Bu dallanmanin birlesmesinde YENIDEN OLCULDU, aritmetikle turetilmedi. || 1.834 -> 1.837 (2026-09-07): 4. haftanin sonuc degerlendirmesinde uc bekci eklendi: puanin kunyesi ve karne yorumunun tureticileri (test_degerlendir), §1 katman dokumu (test_belgeler). Katman dokumu ayrica DUZELTILDI: yazili 85/579/29/30, gercek 117/624/35/38. || 1.837 -> 1.841 (2026-09-10): dal 4a83172'de kutuk zaten bayatti (gercek 1.840, belgeler 1.837 diyordu — Delta 3'un tamami tests/test_super_toto.py'ye eklenen bekcilerdi ve README §9'un 'Super Toto' satiri da 105'te kalmisti). 5. haftaya oynanma payi girilince test_tahmin2.py::test_onceki_olcek_KAYITTAN_okunur_sabitten_degil parametrizasyonu 5. haftayi da topluyor: +1. Yeniden olculdu, aritmetikle turetilmedi. || 1.841 -> 1.842 (2026-09-10): karnenin tazelik bekcisi eklendi (test_belgeler.py::test_kazanma_karnesi_GIT_TE_TAZE) — 4. haftanin 'karne git'te bayatti' hatasi bekcisiz kaldigi icin 5. haftada tekrarlamisti. || 1.842 -> 1.847 (2026-09-12): korpus daraltmasinda tests/test_sembol_sirasi.py eklendi (4) ve test_egitim.py'ye korpus boyutu bekcisi girdi (1). Yeniden olculdu, aritmetikle turetilmedi."
   },
   {
    "ne": "test dosyasi sayisi",
-   "deger": "71",
+   "deger": "72",
    "ureten": "ls backend/tests/test_*.py | wc -l",
-   "olculdu": "2026-09-07",
+   "olculdu": "2026-09-12",
    "anildigi_yerler": [
     "README.md §7",
     "backend/README.md"
    ],
    "bekci": "backend/tests/test_belgeler.py::test_test_dosya_sayisi_belgelerle_ayni",
-   "not": "Dis tarama tests/test_devir_tavani.py'yi ekledi (70 -> 71). E6 icin tests/test_hafta_hakki.py eklendi (71 -> 72). || 72 -> 73: tests/test_olcum_kutugu.py eklendi. || 73 -> 71: tests/test_hakem.py (4acc3dd) ve tests/test_xg.py (25e72e0) kapanan deneylerle birlikte kaldirildi."
+   "not": "Dis tarama tests/test_devir_tavani.py'yi ekledi (70 -> 71). E6 icin tests/test_hafta_hakki.py eklendi (71 -> 72). || 72 -> 73: tests/test_olcum_kutugu.py eklendi. || 73 -> 71: tests/test_hakem.py (4acc3dd) ve tests/test_xg.py (25e72e0) kapanan deneylerle birlikte kaldirildi. || 71 -> 72 (2026-09-12): tests/test_sembol_sirasi.py — kutukteki 2.<->3. sembol sirasi olcumunun betigi depoya girdi, bekcisi de onunla geldi."
   },
   {
    "ne": "hizli test sayisi",
@@ -388,14 +388,14 @@
   },
   {
    "ne": "kapanisi acilistan ongorme — acigin geri alinan orani (F1)",
-   "deger": "%3,3",
+   "deger": "%2,8",
    "ureten": "cd backend && python -c 'from spor_toto.cizgi import cizgi_tahmini; print(cizgi_tahmini())'",
-   "olculdu": "2026-09-04",
+   "olculdu": "2026-09-12",
    "anildigi_yerler": [
     "docs/KAZANMA_PLANI.md"
    ],
    "bekci": "backend/tests/test_cizgi.py::test_kapanis_acilistan_ongorulEMIYOR",
-   "not": "31.099 mac, sezon disarida birakmali. b ~ 1,009 yani acilis kapanisin YANSIZ kestiricisi; acik +0,002458, kazanc +0,000082. §5.2'nin %22'lik kolon bedeli bu yolla geri alinamaz."
+   "not": "31.099 mac, sezon disarida birakmali. b ~ 1,009 yani acilis kapanisin YANSIZ kestiricisi; acik +0,002458, kazanc +0,000082. §5.2'nin %22'lik kolon bedeli bu yolla geri alinamaz.|| KORPUS DARALTILDI (2026-09-12): E2/E3/EC/SC2/SC3 cikarildi, 22 lig · 31.103 mac -> 17 lig · 23.085 mac. Bu sayi o korpusta YENIDEN OLCULDU; eski deger asagida. A/B ile dogrulandi: eski korpusta komut hala eski degeri veriyor, yani fark bu daraltmanin, baska bir bayatlamanin degil. Eski deger: %3,3. Acilis->kapanis acigi 0,00250 -> 0,00246; geri alinan pay %3,32 -> %2,80. Yon ayni: acik kapanmiyor, F1 hala GECMEDI."
   },
   {
    "ne": "Betfair Exchange kapanis — Avg kapanisa gore Brier farki (F2)",
@@ -410,14 +410,14 @@
   },
   {
    "ne": "kupon kuralinda ters secim — banko ile banko-degil arasindaki fark (F3)",
-   "deger": "−0,0045",
+   "deger": "+0,0029",
    "ureten": "cd backend && python -c 'from spor_toto.secim_kalibrasyonu import kupon_kurali; print(kupon_kurali())'",
-   "olculdu": "2026-09-04",
+   "olculdu": "2026-09-12",
    "anildigi_yerler": [
     "docs/KAZANMA_PLANI.md"
    ],
    "bekci": "backend/tests/test_secim_kalibrasyonu.py::test_kupon_kurali_kalibrasyonu_BOZMUYOR",
-   "not": "114 hafta, 13G, 2.000 TL. Hafta duzeyinde bootstrap %95 [-0,0506, +0,0414] — sifiri kesiyor, yani kupon kurali kalibrasyonu BOZMUYOR. §3.49'un ters secimi gercek ama 'model' kuralina (p_model - p_piyasa > esik) ait.",
+   "not": "114 hafta, 13G, 2.000 TL. Hafta duzeyinde bootstrap %95 [-0,0506, +0,0414] — sifiri kesiyor, yani kupon kurali kalibrasyonu BOZMUYOR. §3.49'un ters secimi gercek ama 'model' kuralina (p_model - p_piyasa > esik) ait. || ZATEN BAYATTI — korpus daraltmasiyla ILGISIZ (2026-09-12). A/B kosuldu: ESKI korpusta (22 lig) da komut +0,00287 veriyor, yani -0,0045 bu daraltmadan once eskimisti. Kayit '13G' diyor ama komut bugun garanti=15 kosuyor: sayi kaplama->duz gecisinde bayatladi ve yakalanmamisti, cunku bekcisi ALINTI butunlugunu tutuyor, DEGERI degil. Yeni deger 114 hafta, 15G, 2.000 TL: fark +0,00287, bootstrap %95 [-0,0469, +0,0522] sifiri kesiyor — 'kupon kurali kalibrasyonu BOZMUYOR' hukmu degismedi, yalnizca sayinin isareti duzeldi.",
    "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
@@ -717,27 +717,27 @@
    "not": "Pozitif beklenen deger icin gereken carpan 1,95-2,84 (odeme orani %35,2-%51,4 imasiyla). Azami 1,645 -> devir ekseni KAPANDI. Arsive sezon eklenirse bu sayi degisir; test_devir_ekseninin_KAPANISI_hala_gecerli o zaman kirilir ve belge §4.3 yeniden yazilir."
   },
   {
-   "ne": "ev sahibi galibiyeti orani (egitim korpusu, 31.103 mac)",
-   "deger": "%43,37",
+   "ne": "ev sahibi galibiyeti orani (egitim korpusu, 23.085 mac)",
+   "deger": "%43,53",
    "ureten": "cd backend && python scripts/devir_tavani.py --evkurali",
-   "olculdu": "2026-09-05",
+   "olculdu": "2026-09-12",
    "anildigi_yerler": [
     "docs/DIS_TARAMA_PIYASAYI_YENME.md §5",
     "README.md §13 belge dizini"
    ],
    "bekci": "backend/tests/test_devir_tavani.py::test_belgedeki_ev_orani_olculenle_ayni",
-   "not": "%95 Wilson araligi [%42,82, %43,92]. arXiv:2303.16648'in 'hep ev sahibi' kuralinin oncülü; makale Bundesliga'da %50,4 aliyor ve bu kesitin araligi %50,4'u ICERMIYOR."
+   "not": "%95 Wilson araligi [%42,82, %43,92]. arXiv:2303.16648'in 'hep ev sahibi' kuralinin oncülü; makale Bundesliga'da %50,4 aliyor ve bu kesitin araligi %50,4'u ICERMIYOR.|| KORPUS DARALTILDI (2026-09-12): E2/E3/EC/SC2/SC3 cikarildi, 22 lig · 31.103 mac -> 17 lig · 23.085 mac. Bu sayi o korpusta YENIDEN OLCULDU; eski deger asagida. A/B ile dogrulandi: eski korpusta komut hala eski degeri veriyor, yani fark bu daraltmanin, baska bir bayatlamanin degil. Eski deger: %43,37. Wilson %95 [%42,89, %44,17]. Makalenin %50,4 oncilu hala tutmuyor."
   },
   {
-   "ne": "piyasa favorisi isabeti (egitim korpusu, 31.103 mac)",
-   "deger": "%51,09",
+   "ne": "piyasa favorisi isabeti (egitim korpusu, 23.085 mac)",
+   "deger": "%51,87",
    "ureten": "cd backend && python scripts/devir_tavani.py --evkurali",
-   "olculdu": "2026-09-05",
+   "olculdu": "2026-09-12",
    "anildigi_yerler": [
     "docs/DIS_TARAMA_PIYASAYI_YENME.md §5"
    ],
    "bekci": "backend/tests/test_devir_tavani.py::test_ev_kurali_piyasa_favorisinden_ZAYIF",
-   "not": "%95 Wilson araligi [%50,54, %51,65]. 'Hep ev' kuralini 7,7 puan geciyor. Favorinin %68,4'u zaten ev sahibi, yani kural ayri bir eksen degil favori kuralinin zayiflatilmis hali."
+   "not": "%95 Wilson araligi [%50,54, %51,65]. 'Hep ev' kuralini 7,7 puan geciyor. Favorinin %68,4'u zaten ev sahibi, yani kural ayri bir eksen degil favori kuralinin zayiflatilmis hali.|| KORPUS DARALTILDI (2026-09-12): E2/E3/EC/SC2/SC3 cikarildi, 22 lig · 31.103 mac -> 17 lig · 23.085 mac. Bu sayi o korpusta YENIDEN OLCULDU; eski deger asagida. A/B ile dogrulandi: eski korpusta komut hala eski degeri veriyor, yani fark bu daraltmanin, baska bir bayatlamanin degil. Eski deger: %51,09. Wilson %95 [%51,23, %52,52]. Piyasa favorisi ev kuralini 8,3 puan geciyor (onceki farkta 7,7). Sonuc yonu degismedi."
   },
   {
    "ne": "kapsama acigi (model P(k<=2) <-> gerceklesen), 14G 2.000 TL",
@@ -839,14 +839,14 @@
   },
   {
    "ne": "korpusta banko q sapmasi (§3.64 aday 2) — genel piyasa yanliligi YOK",
-   "deger": "+%0,5",
+   "deger": "+%0,8",
    "ureten": "cd backend && python -m spor_toto.karne --banko --korpus",
-   "olculdu": "2026-09-05",
+   "olculdu": "2026-09-12",
    "anildigi_yerler": [
     "docs/ISTATISTIK_YOL_HARITASI.md §3.64"
    ],
    "bekci": "backend/tests/test_olcum_kutugu.py::test_kutukteki_her_sayi_anildigi_yerde_GERCEKTEN_geciyor",
-   "not": "31.103 mac, banko rejimi (15.552): guc +%0,5 ve Wilson araligi soyleneni ICERIYOR — sapma yok. shin +%1,0, orantili +%2,1. Piyasanin favori sembolu genel futbolda iyi kalibre; §3.23'un guvenilirlik borcu 0,00042 ile tutarli. +%5,6 piyasanin degil KESITIN ozelligi. || BEKCI KAPSAMI: bu bekci ALINTI BUTUNLUGUNU tutar (sayi hala anildigi belgede geciyor mu), olcumu YENIDEN KOSMAZ. Ureten komut dakikalar suruyor ve kapinin isi degil; sayinin kendisi degistiyse komutu elle kos.",
+   "not": "31.103 mac, banko rejimi (15.552): guc +%0,5 ve Wilson araligi soyleneni ICERIYOR — sapma yok. shin +%1,0, orantili +%2,1. Piyasanin favori sembolu genel futbolda iyi kalibre; §3.23'un guvenilirlik borcu 0,00042 ile tutarli. +%5,6 piyasanin degil KESITIN ozelligi. || BEKCI KAPSAMI: bu bekci ALINTI BUTUNLUGUNU tutar (sayi hala anildigi belgede geciyor mu), olcumu YENIDEN KOSMAZ. Ureten komut dakikalar suruyor ve kapinin isi degil; sayinin kendisi degistiyse komutu elle kos.|| KORPUS DARALTILDI (2026-09-12): E2/E3/EC/SC2/SC3 cikarildi, 22 lig · 31.103 mac -> 17 lig · 23.085 mac. Bu sayi o korpusta YENIDEN OLCULDU; eski deger asagida. A/B ile dogrulandi: eski korpusta komut hala eski degeri veriyor, yani fark bu daraltmanin, baska bir bayatlamanin degil. Eski deger: +%0,5. 23.085 mac, banko rejimi (11.543): guc +%0,8 ve Wilson araligi soyleneni hala ICERIYOR — genel piyasa yanliligi YOK hukmu AYAKTA. shin +%1,3 (onceki +%1,0), orantili +%2,3 (onceki +%2,1). Uc yontemin ucu birden sapma gostermedigi icin okuma degismedi.",
    "olcek": "kaplama olcegi — bu sayi 14-garanti/fix16 bedeliyle olculdu. Kaplama katmani sokuluyor (docs/DUZ_SISTEME_GECIS.md); sayi SILINMEZ, duz olcegindeki karsiligi ayri girdi olarak eklenir. Precedent: orantili->shin ve TL1,50->TL10 gecisleri."
   },
   {
@@ -1230,14 +1230,14 @@
   },
   {
    "ne": "kalibre_bias kupon duzeyinde — keskinlik payi (DUZ)",
-   "deger": "%98,6",
+   "deger": "%97,9",
    "ureten": "cd backend && python -m spor_toto.karne --kalibrasyon",
-   "olculdu": "2026-09-06",
+   "olculdu": "2026-09-12",
    "anildigi_yerler": [
     "docs/KAZANMA_PLANI.md"
    ],
    "bekci": "backend/tests/test_karne.py",
-   "not": "DUZ olcegi, AYNI para (2.000 TL) ve AYNI kesit (114 hafta) — kaplama olcegindeki kardes kayitla dogrudan kiyaslanabilir. Kaplamada %97,4. Isareti degisen hafta 25/114; ayni sekil VE ayni kacak 101/114. Verdikt GECMEDI."
+   "not": "DUZ olcegi, AYNI para (2.000 TL) ve AYNI kesit (114 hafta) — kaplama olcegindeki kardes kayitla dogrudan kiyaslanabilir. Kaplamada %97,4. Isareti degisen hafta 25/114; ayni sekil VE ayni kacak 101/114. Verdikt GECMEDI.|| KORPUS DARALTILDI (2026-09-12): E2/E3/EC/SC2/SC3 cikarildi, 22 lig · 31.103 mac -> 17 lig · 23.085 mac. Bu sayi o korpusta YENIDEN OLCULDU; eski deger asagida. A/B ile dogrulandi: eski korpusta komut hala eski degeri veriyor, yani fark bu daraltmanin, baska bir bayatlamanin degil. Eski deger: %98,6. p_hedef farki +0,02325 -> +0,02417; sekil sabitken +0,02313 -> +0,02366. Isareti degisen hafta 25/114 -> 33/114. VERDIKT hala GECMEDI."
   },
   {
    "ne": "butce egrisi tepe noktasi — 1.000 TL basina kacaksiz hafta (DUZ)",
@@ -1739,19 +1739,19 @@
    "not": "Ayni haftada 7b/0c/8u 65.610 TL'ye 0,873800 veriyor: 5/5/5 hem pahali hem geride. Sekil kullanici kisiti."
   },
   {
-   "ne": "2.<->3. sembol sirasi bilgi tasiyor mu (beraberlik 3. siradayken, <2 puan bandi)",
+   "ne": "2.<->3. sembol sirasi bilgi tasiyor mu (beraberlik 3. siradayken, <2 puan bandi) — 22 LIGLI KORPUS",
    "deger": "−1,5",
-   "ureten": "korpus kosumu: data/egitim/egitim_korpus.csv acilis_* sutunlari, shin arindirma, beraberlik 3. sirada olan maclar marj bandina bolunur; olcu = 2. sembolun isabet orani eksi 3. sembolunki (puan)",
+   "ureten": "cd backend && python scripts/sembol_sirasi.py <22-ligli korpus>  # kesit artik varsayilan degil",
    "olculdu": "2026-09-10",
    "anildigi_yerler": [
     "backend/data/super_toto/2026_27/hafta_05_kupon.json"
    ],
-   "bekci": "yok — tek koşumluk korpus olcumu; betik depoda durmuyor, ureten alani tarifi tasiyor",
-   "not": "n = 3.705; piyasa +1,0 diyordu, artik -2,4 [-4,8, +0,0]. 2-4 puan bandinda +4,5 (n = 3.212, beklenen 3,0), >=4 puanda +3,9 (n = 5.383, beklenen 6,5; artik -2,5 [-4,7, -0,5]). Kayittaki dar kesit (p0 0,20-0,27 & marj<2) birebir yeniden uretildi: n = 1.347, fark -0,1 puan — 7 Eylul kaydiyla ayni buyukluk, ters isaret sozlesmesi."
+   "bekci": "yok — KAPANDI: 22 ligli korpus artik uretilmiyor; sayi hafta_05_kupon.json donmus kaydinda yasiyor",
+   "not": "n = 3.705; piyasa +1,0 diyordu, artik -2,4 [-4,8, +0,0]. 2-4 puan bandinda +4,5 (n = 3.212, beklenen 3,0), >=4 puanda +3,9 (n = 5.383, beklenen 6,5). || DONMUS OLCEK (2026-09-12): korpus 17 lige daraltildi ve bu sayi orada -3,2 cikiyor (ayri girdi). Bu kayit SILINMEZ ve GUNCELLENMEZ: hafta_05_kupon.json o haftanin kuponunu hangi bilgiyle kurdugumuzun donmus kaydidir, o gun korpus 22 ligdi. Precedent: kaplama->duz gecisi — eski olcek kalir, yenisi ayri girdi olur. TARIF DUZELTILDI: eski `ureten` 'marj bandina bolunur' diyordu, bant aslinda BEKLENEN FARK (2. olasilik eksi 3., puan) uzerinde; dogru tarifle 22 ligli korpusta uc bandin n'i ve degeri BIREBIR cikti."
   },
   {
-   "ne": "egitim korpusunun mac sayisi (4 sezon · 22 lig · 2021-07-23..2025-06-01)",
-   "deger": "31.103",
+   "ne": "egitim korpusunun mac sayisi (4 sezon · 17 lig · 2021-07-23..2025-06-01)",
+   "deger": "23.085",
    "ureten": "cd backend && python -c \"from spor_toto.egitim import korpus_yukle; print(len(korpus_yukle()))\"  # ayni sayi: data/egitim/egitim_rapor.json .matches",
    "olculdu": "2026-09-12",
    "anildigi_yerler": [
@@ -1764,11 +1764,19 @@
     "docs/KAZANMA_PLANI.md",
     "docs/KADEME_OLASILIKLARI.md",
     "docs/KUPON_NASIL_KURULUYOR.md",
-    "docs/GELECEK_MIMARISI_ESLEMESI.md",
-    "docs/GELISTIRME_PLANI_ESLEMESI.md"
+    "docs/GELECEK_MIMARISI_ESLEMESI.md"
    ],
    "bekci": "backend/tests/test_egitim.py::test_korpus_boyutu_RAPORLA_ve_KUTUKLE_ayni",
-   "not": "Kutukte kendi girdisi YOKTU: 31.103 baska girdilerin parantezinde (\"egitim korpusu, 31.103 mac\") gecip duruyordu ama sayinin kendisi kunyesizdi. Tek bekcisi test_egitim.py::test_korpus_ozeti_tutarli'nin `mac > 10.000` esigiydi — 53 yerde anilan kesin bir sayi icin gevsek. Olcum uc yerde ortusuyor: korpus_yukle() suzgecinden gecen satir (31.103), CSV'nin ham satiri (31.103, basliksiz) ve egitim_rapor.json .matches (31.103). Uretici raporu 2026-08-30 tarihli ve `dropped.toplam` 31.132 diyor: 29 mac oransiz elendi. Alt kesitler AYRI sayilardir ve bu girdi onlari kapsamaz: acilis+kapanis cifti 31.099 (A1), bahisci dortlusu 31.100 (A2), mac sonrasi istatistik 28.928."
+   "not": "Kutukte kendi girdisi YOKTU: 31.103 baska girdilerin parantezinde (\"egitim korpusu, 31.103 mac\") gecip duruyordu ama sayinin kendisi kunyesizdi. Tek bekcisi test_egitim.py::test_korpus_ozeti_tutarli'nin `mac > 10.000` esigiydi — 53 yerde anilan kesin bir sayi icin gevsek. Olcum uc yerde ortusuyor: korpus_yukle() suzgecinden gecen satir (31.103), CSV'nin ham satiri (31.103, basliksiz) ve egitim_rapor.json .matches (31.103). Uretici raporu 2026-08-30 tarihli ve `dropped.toplam` 31.132 diyor: 29 mac oransiz elendi. Alt kesitler AYRI sayilardir ve bu girdi onlari kapsamaz: acilis+kapanis cifti 31.099 (A1), bahisci dortlusu 31.100 (A2), mac sonrasi istatistik 28.928. || KORPUS DARALTILDI (2026-09-12): E2/E3/EC/SC2/SC3 cikarildi (8.018 mac, %25,8). 31.103 -> 23.085. Gerekce mac sonrasi istatistigin kapsamasi: %93,01 -> %99,95; T5 form ozelligi istatigi olmayan maci gecmise katmiyordu, o bes lig ozelligi seyreltiyordu. Alt kesitler de yenilendi: A1 cizgi cifti 31.099 -> 23.083, A2 bahisci dortlusu 31.100 -> 23.083, mac sonrasi istatistik 28.928 -> 23.073. DONMUS belge cikarildi: docs/GELISTIRME_PLANI_ESLEMESI.md kendi kunye damgasini tasiyor (2026-08-29 · taban d607360) ve test_belgeler.DONMUS_BELGELER icinde — gecmisi anlatir, bugunku iddiayi degil, o yuzden 31.103 orada oldugu gibi kalir."
+  },
+  {
+   "ne": "2.<->3. sembol sirasi bilgi tasiyor mu (beraberlik 3. siradayken, <2 puan bandi) — 17 LIGLI KORPUS",
+   "deger": "−3,2",
+   "ureten": "cd backend && python scripts/sembol_sirasi.py",
+   "olculdu": "2026-09-12",
+   "anildigi_yerler": [],
+   "bekci": "backend/tests/test_sembol_sirasi.py::test_bant_olcusu_kutukle_ayni",
+   "not": "n = 2.648; piyasa yine +1,0 diyor, artik -4,2. 2-4 bandi +3,5 (n = 2.153, beklenen 3,0), >=4 bandi +3,6 (n = 3.458, beklenen 6,5). 22 ligli olcekteki kardesi -1,5 (ayri girdi, donmus). Yon AYNI: <2 bandinda 2. sembol 3.'den daha sik tutmuyor, yani sira bilgi tasimiyor — daraltma hukmu degil buyuklugu oynatti. Henuz hicbir belgede anilmiyor; anilirsa `anildigi_yerler` guncellenir."
   }
  ],
  "komutlar": [

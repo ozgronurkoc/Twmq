@@ -72,7 +72,7 @@ Makale §2'de dört soru soruyor. Üçünün cevabı **ölçülmüş** durumda.
 
 ### RQ1 — "Piyasa kapanış olasılıklarını aşan ek bilgi tarihsel verilerden çıkarılabilir mi?"
 
-**Cevap: hayır — ölçüldü.** Dokuz özellik, dört bağımsız açı, 31.103 maçlık
+**Cevap: hayır — ölçüldü.** Dokuz özellik, dört bağımsız açı, 23.085 maçlık
 korpus, sezon dışarıda bırakmalı, hafta üzerinden eşleştirilmiş bootstrap.
 "Geçti" ölçütü güven aralığının **tamamen** sıfırın altında kalmasıdır.
 Tek bir "geçti" yok (§6.2 A4). Model arenası aynı sonucu tek kesitte

@@ -653,13 +653,13 @@ dışarıda bırakmalı ölçüyor:
 
 | tutulan sezon | n | `b` | açığın geri alınanı |
 |---|---:|---:|---:|
-| 2021/22 | 7.821 | 1,0073 | %2,7 |
-| 2022/23 | 7.800 | 1,0096 | %6,2 |
-| 2023/24 | 7.797 | 1,0099 | %2,9 |
-| 2024/25 | 7.681 | 1,0095 | %2,3 |
-| **toplam** | **31.099** | **≈1,009** | **%3,3** |
+| 2021/22 | 5.851 | 1,0061 | %1,9 |
+| 2022/23 | 5.785 | 1,0080 | %4,3 |
+| 2023/24 | 5.782 | 1,0074 | %3,2 |
+| 2024/25 | 5.665 | 1,0061 | %1,9 |
+| **toplam** | **23.083** | **≈1,007** | **%2,8** |
 
-Açılış–kapanış açığı Brier'de **+0,002458**; ölçeklemenin kazandırdığı
+Açılış–kapanış açığı Brier'de **+0,002502**; ölçeklemenin kazandırdığı
 **+0,000082**.
 
 **Okuma sert:** `b ≈ 1`, yani açılış zaten kapanışın **yansız
@@ -750,11 +750,11 @@ bileşimidir**.
 
 | | n | söylenen | gerçek | aşırı güven |
 |---|---:|---:|---:|---:|
-| **BANKO** | 684 | 0,6451 | 0,6988 | **−0,0537** |
-| banko değil | 1.026 | 0,4430 | 0,4922 | **−0,0492** |
-| **fark** | | | | **−0,0045** |
+| **BANKO** | 1.140 | 0,4507 | 0,5007 | **−0,0501** |
+| banko değil | 570 | 0,4765 | 0,5294 | **−0,0529** |
+| **fark** | | | | **+0,0029** |
 
-Hafta düzeyinde bootstrap %95: **[−0,0506, +0,0414]** — sıfırı kesiyor.
+Hafta düzeyinde bootstrap %95: **[−0,0469, +0,0522]** — sıfırı kesiyor.
 
 **Kupon kuralı modelin yanıldığı yeri seçmiyor. Düzeltilecek bir şey yok**
 ve madde bu cevapla kapandı.
@@ -1021,7 +1021,7 @@ kadar oynar — **haftanın son maçlarında kapanış fiyatı kupon verilirken 
 yoktur.** Bedeli isabet değil **kolon: %22 artış (2.686 → 3.290)**.
 
 Bu, piyasayı yenmek değil **piyasanın kendi kapanışını öngörmektir.** Korpus
-31.103 maçta hem `acilis_*` hem `kapanis_*` taşıyor (`egitim.py`); hedef sonuç
+23.085 maçta hem `acilis_*` hem `kapanis_*` taşıyor (`egitim.py`); hedef sonuç
 değil **kapanış fiyatının kendisi**. `cizgi.py`'ye `cizgi_tahmini` eklenir.
 
 **Ölçü:** geri testte kolon sayısındaki %22'nin ne kadarı geri alınıyor.
@@ -1217,7 +1217,7 @@ ekler; öngörülen ile gerçekleşen yan yana durur.
 | E2 · 14−12 ROI farkı | −0,00702 | **−0,01400** | |
 | E3 · `P(hedef)` farkı | +0,00758 | **+0,00466** | hâlâ sıfır dışında |
 | E3 · keskinlik payı | %81 | **%85** | tuzak ayakta |
-| kalibrasyon keskinlik payı | %97,4 | **%98,6** | |
+| kalibrasyon keskinlik payı | %97,4 | **%97,9** | |
 | bütçe eğrisi tepesi | 0,0286 | **0,0108** | k=0 / 1.000 TL |
 | gerçekleşen P(k=0) | %3,5 | **%0,9** | 114 haftada 1 |
 | E6 · ölçülen λ | 984 TL | **1.339 TL** | birim `P(hedef)` başına |

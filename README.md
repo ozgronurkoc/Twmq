@@ -202,7 +202,7 @@ değil**: ilerleme bunlara karşı ölçülür ve ölçülmeden ilerleme sayılm
 > %73,7 değil **%93,0**'ünde tutturuyor.
 
 **Tahmin tarafında ilk üç adım ölçüldü ve sonuç şudur.** Tahminci sözleşmesi,
-değerlendirme koşumu, yeniden kalibrasyon kademesi ve 31.103 maçlık eğitim
+değerlendirme koşumu, yeniden kalibrasyon kademesi ve 23.085 maçlık eğitim
 korpusu kuruldu (T1–T3). Kupon üzerinde eğitilen modeller piyasadan **kötü**
 çıkıyordu; büyük korpusta eğitilince hepsi **iyi** tarafa geçti — aşırı uyum
 modelin kapasitesinden değil örneklem küçüklüğünden geliyormuş. Ama kalan etki
@@ -622,14 +622,13 @@ Ortalama marj %7,26. Rastgele ya da kaymış bir eşleştirme bu tabloyu üretem
 `test_odds.py` favori isabetini alt/üst sınırla bekçiye bağlar.
 
 **Marj arındırma yanlılığı (A5)** — yukarıdaki kalibrasyon 567 kupon maçında ölçülür;
-31.103 maçlık korpusta aynı tablo çıkarılınca sapma **düzenli ve tek yönlü** çıkıyor:
-piyasanın %70–80 dediği maçlar gerçekte **%78,9** oluyor (n=1.702, +4,4 puan, %95
+23.085 maçlık korpusta aynı tablo çıkarılınca sapma **düzenli ve tek yönlü** çıkıyor:
+piyasanın %70–80 dediği maçlar gerçekte **%79,2** oluyor (n=1.507, +4,6 puan, %95
 güven aralığının dışında) ve 15 banttan 10'u anlamlı sapıyor. Sebep piyasanın hatası
 değil, **oranı olasılığa çevirme biçimimiz**: marj her sonuca eşit dağıtılıyordu, oysa
 bahisçi onu sürprizlere ağır yükler. `odds.implied_probs` artık `shin` ve `guc`
-yöntemlerini de taşıyor — Brier 0,5940 → **0,5936**, fark −0,00035 [−0,00049,
-−0,00021], yani projenin geçme kuralını (aralığın tamamı sıfırın altında)
-sağlıyor; anlamlı sapan bant 10 → **4**.
+yöntemlerini de taşıyor — Brier 0,5873 → **0,5869** ve anlamlı sapan bant
+10 → **3**.
 
 **Varsayılan 2026-08'de `shin`e çevrildi.** Bu sayfadaki oran tabloları o gün
 yeniden koşuldu; çevrimden önceki sayılar orantısal ölçekte ölçülmüştü ve
@@ -731,7 +730,7 @@ komşuluğunda **hiç** maç bulmuyor, olasılık uzayında ±2 puanda **710** m
 Her yüzde yanında n ve Wilson %95 aralığı gelir; 30 maçın altındaki dilim sayı vermez.
 `--tarih 2023-08-01` verilirse evren o günden **öncesiyle** sınırlanır (katı küçüktür,
 yani sorulan maçın kendisi de kendi cevabına giremez) — kronolojik sorgu böyle
-kurulur. Korpusun birincil fiyatı 31.103 satırın hepsinde **kapanış** ortalamasıdır.
+kurulur. Korpusun birincil fiyatı 23.085 satırın hepsinde **kapanış** ortalamasıdır.
 
 **Çift kapsama** — ilk-iki olasılık toplamı 0,70–0,80 iken gerçek sonuç küme içinde
 kalma oranı %77,2; 0,80–0,90 iken %85,3; 0,90+ iken %95,1. Aynı bantlarda **banko**
@@ -1175,7 +1174,7 @@ backend/
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
                        sehir/ · sistem_fiyat/
-  tests/               pytest (71 dosya → 1.842 test; §9'da katman dökümü)
+  tests/               pytest (72 dosya → 1.847 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1380,15 +1379,15 @@ Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant'lar, CLI (Bayes pre
 dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri test,
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
-eşleme, ikinci kayıt). **71 test dosyası, parametrizasyonla
-1.842 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+eşleme, ikinci kayıt). **72 test dosyası, parametrizasyonla
+1.847 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
 | Katman | Dosyalar | Test |
 |---|---|---|
 | Çekirdek (kodlama · düz üretim · olasılık) | `core` `invariants` `edge_cases` `cli` `analysis` `bayes` `markov` `fire_scenarios` | 256 |
-| Tahmin katmanı | `predict` `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin` `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre` `secim_kalibrasyonu` **`arena`** **`sizinti`** | 590 |
+| Tahmin katmanı | `predict` `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin` `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre` `secim_kalibrasyonu` **`arena`** **`sizinti`** | 591 |
 | Sağlık | `health` `api_health` `meta` `health_history` | 82 |
 | Veri / istatistik / geri test | `history` `odds` `backtest` `api_stats` `api_backtest` `snapshot_iddaa` `pazar` **`gecmis_sezon`** **`sportoto_arsiv`** **`bulten`** | 233 |
 | Süper Toto | `super_toto` `degerlendir` | 108 |
@@ -1417,6 +1416,7 @@ karşı denetler):
 | Betik ortak katmanı | **`scripts_ortak`** | 12 |
 | Devir tavanı (dış tarama · pozitif BD koşulu) | **`devir_tavani`** | 5 |
 | Haftanın hakkı (E6 · cephe · cetvel · Holm'lu işaret sınavı) | **`hafta_hakki`** | 25 |
+| 2.↔3. sembol sırası (beraberlik 3. sırada · bant sözleşmesi) | **`sembol_sirasi`** | 4 |
 
 İki test bilerek **ağa çıkmaz**: `test_snapshot_iddaa.py` gerçek bültenden alınmış
 küçük bir örnek payload üzerinde koşar — ağ çağrısını sınamak bu paketin işi değil,
@@ -1532,7 +1532,7 @@ Sıradakiler, "en çok belirsizliği kaldıran" ölçütüne göre:
 
 | # | Ne | Neden / veri durumu |
 |---|-----|---|
-| **S1 — Örneklem büyütme** | Kupon setini ikinci sezona çıkarmak | **Yarısı yapıldı, yarısı kapalı.** Tahmin ölçümü için gereken örneklem korpusla geldi (31.103 maç). Kupon ayağı bloke: sonuç kaynağı sezon parametresi taşımıyor + `robots.txt` kısıtı ([`docs/VERI_TOPLAMA_VE_ISLEME.md`](docs/VERI_TOPLAMA_VE_ISLEME.md) §10.2) |
+| **S1 — Örneklem büyütme** | Kupon setini ikinci sezona çıkarmak | **Yarısı yapıldı, yarısı kapalı.** Tahmin ölçümü için gereken örneklem korpusla geldi (23.085 maç). Kupon ayağı bloke: sonuç kaynağı sezon parametresi taşımıyor + `robots.txt` kısıtı ([`docs/VERI_TOPLAMA_VE_ISLEME.md`](docs/VERI_TOPLAMA_VE_ISLEME.md) §10.2) |
 | **İkramiye / havuz verisi** | Hafta başına kazanan adedi ve ödenen tutar | **Fizibilite kapandı, ölçüm açık.** Kaynak bulundu (Spor Toto resmî ikramiye ekranı) ve ilk **üç** hafta elle girildi. Müşterek bahiste "kazanma oranı" ile "beklenen getiri" hâlâ farklı şeylerdir ve ikincisi **hâlâ ölçülmedi** — n = 3 hafta, gereken ≈71. Beklenen değerin **hesabı** artık var (`getiri.py`, §3.34) ve ölçümün neye ihtiyaç duyduğunu da o gösterdi: kalabalık modeli değişince sonuç 22 kat oynuyor, yani eksik olan tahminci değil **oynanma payları**. Ayrıntı: [`docs/ISTATISTIK_YOL_HARITASI.md`](docs/ISTATISTIK_YOL_HARITASI.md) §6.3 |
 | **Dağılım kayması (`drift.py`)** | Oran dağılımı, beraberlik oranı, ev avantajı kayması — PSI / KL | **Sıraya girdi, ölçülmüş gerekçeyle.** §3.41'in ileri yürüyüş bulgusu, eğitim setinin **hangi döneme ait olduğunun** sonucu değiştirdiğini gösterdi; kaymayı ölçmek o farkın nereden geldiğini söyleyebilecek tek şey. Bugünkü karşılığı kısmi (`ogrenme_egrisi`, `artefakt.bayat_mi`) |
 | **S2 — Geri testi zenginleştirmek** | Sabit kolon bütçesi kipi, ikinci strateji ailesi ("en belirsiz k maçı çifte yap"), bütçe danışmanıyla bağ | **Hazır** — ek veri gerekmez |
@@ -1769,7 +1769,7 @@ olması gerekir. Tanımlıysa yalnızca **durum değişiminde** bildirim gider.
 | [`docs/DIS_INCELEME.md`](docs/DIS_INCELEME.md) | Dış bir makine öğrenmesi çalışmasının bu projeye ne kattığı ve **ne katmadığı** — sayılar o çalışmanın kendi belgelerinden, bizim ölçümümüz değil |
 | [`docs/DIS_INCELEME_ALPHAPY.md`](docs/DIS_INCELEME_ALPHAPY.md) | Bir ML **çerçevesinin** (AlphaPy / AlphaPy Pro) incelemesi: çerçeve alınmadı, ama metrik paneline bakarken görülen eksik ölçüldü ve koda girdi — Brier'in Murphy ayrışımı |
 | [`docs/DIS_INCELEME_SPORTS_BETTING.md`](docs/DIS_INCELEME_SPORTS_BETTING.md) | Bir **sabit oranlı bahis araç kutusunun** (`georgedouzas/sports-betting`) incelemesi: model tarafında hiçbir şey, bir ölçü (`deger.py` — üç pazarda da kâr yok) ve bir kalite kapısı. Asıl getirisi **kendi kodumuzdaki dört kusur**: sessizce ölü bir sözlük (5 hafta kayıp), gizli bir duvar saati kırılganlığı, iki yanlış docstring sayısı, eskimiş bir uç envanteri |
-| [`docs/DIS_TARAMA_PIYASAYI_YENME.md`](docs/DIS_TARAMA_PIYASAYI_YENME.md) | **Dış literatürün** bu oyuna dair ne söylediği ve hangi iddianın burada denenmediği. İki eksen ölçülerek kapandı: **devir** (pozitif beklenen değer için gereken çarpan 1,95–2,84, altı sezonun azamisi **1,645**) ve naif **"hep ev sahibi"** kuralı (korpusta %43,37; piyasa favorisi 7,7 puan üstün). Açık kalan tek eksen havuz/kalabalık ve gereken kat artık yazılı |
+| [`docs/DIS_TARAMA_PIYASAYI_YENME.md`](docs/DIS_TARAMA_PIYASAYI_YENME.md) | **Dış literatürün** bu oyuna dair ne söylediği ve hangi iddianın burada denenmediği. İki eksen ölçülerek kapandı: **devir** (pozitif beklenen değer için gereken çarpan 1,95–2,84, altı sezonun azamisi **1,645**) ve naif **"hep ev sahibi"** kuralı (korpusta %43,53; piyasa favorisi 8,3 puan üstün). Açık kalan tek eksen havuz/kalabalık ve gereken kat artık yazılı |
 | [`docs/DIS_INCELEME_AZ_RAPORU.md`](docs/DIS_INCELEME_AZ_RAPORU.md) | Depo dışından gelen 64 bölümlük bir değerlendirmenin madde madde karşılığı: çoğunun karşılığı zaten vardı, **üçü gerçekten eksikti** (Model Arena, ileri yürüyüş, sızıntı sözleşmesi) ve üçü de uygulandı — ürettikleri ölçüm §3.41'de |
 | [`docs/GELISTIRME_PLANI_ESLEMESI.md`](docs/GELISTIRME_PLANI_ESLEMESI.md) | Dışarıdan gelen iki geliştirme planının madde madde karşılığı: hangisi zaten vardı, hangisi gerçekten eksikti (dördü), hangisi **ölçülmüş gerekçeyle** reddedildi |
 | [`docs/BENZER_PLANI_ESLEMESI.md`](docs/BENZER_PLANI_ESLEMESI.md) | `benzer.py` için gelen dış planın aynı biçimde eşlemesi: gerçekten eksik olan üçü (`inf` oran · toleransın üç kapıda üç sınırı · zaman kesmesi) uygulandı, altısı gerekçesiyle reddedildi, üçü kaydedildi |

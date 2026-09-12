@@ -1204,7 +1204,7 @@ def banko_yanliligi(dilim: int = 3,
     olasılık verdiğiyle sınanır. Dilimler de referansa göre kesilir. Böylece
     değişen tek şey arındırmanın kendisidir.
 
-    `korpus=True` aynı sınavı 31.103 maçlık eğitim korpusunda koşar — kupon
+    `korpus=True` aynı sınavı 23.085 maçlık eğitim korpusunda koşar — kupon
     kesitinin 1.710'una karşı 18 kat güç. Kupon kesiti **karar için**,
     korpus **güç için** okunur.
 
@@ -1603,7 +1603,7 @@ def _main(argv: list[str] | None = None) -> int:  # pragma: no cover - elle
     ap.add_argument("--banko", action="store_true",
                     help="§3.64: banko q sapmasi arindirma eseri mi, yanlilik mi")
     ap.add_argument("--korpus", action="store_true",
-                    help="--banko ile: kupon kesiti yerine 31.103 macliK korpus")
+                    help="--banko ile: kupon kesiti yerine 23.085 maclik korpus")
     ap.add_argument("--lig", nargs="+", metavar="LIG", default=None,
                     help="--banko ile: kesiti bu liglere kisitla (or. T1 E0)")
     ap.add_argument("--json", action="store_true")

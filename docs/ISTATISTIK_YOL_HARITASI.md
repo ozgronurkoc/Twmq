@@ -86,7 +86,7 @@ iddaa açık bülteni  ──► scripts/snapshot_iddaa.py ──► data/iddaa/
 football-data (22 lig × 4 sezon)
         │  scripts/build_egitim.py
         ▼
-data/egitim/egitim_korpus.csv         31.103 maç
+data/egitim/egitim_korpus.csv         23.085 maç
         │  spor_toto/egitim.py        (ISO haftası → sözde-hafta + sezon)
         ▼
 spor_toto/evaluate.py  ◄── spor_toto/predict.py     (sözleşme + 3 referans)
@@ -171,11 +171,11 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/components/super-toto/tahmin2.tsx` | **2. Tahmin** paneli — `1. Tahmin` / `2. Tahmin` sekmeleri arasında geçilir; para birimli hiçbir sayı yok. Hafta kapandığında sonuç sütunu ve ayar karnesi açılır (§3.38) |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **1.842 test**; **117'si** istatistik katmanına (`history` `odds` `backtest`
-`api_stats` `api_backtest` `snapshot_iddaa`), **624'ü** tahmin katmanına ait (`predict`
+paketi toplam **1.847 test**; **117'si** istatistik katmanına (`history` `odds` `backtest`
+`api_stats` `api_backtest` `snapshot_iddaa`), **629'u** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre`
-`avrupa` `sehir` **`arena`** **`sizinti`** **`kuyruk`**), **36'sı** 2. Tahmin'e (`tahmin2`), **39'u** sonuç değerlendirmesine (`degerlendir`). Dosya adlarıyla sayılıdır ki tablo elle bakım gerektirmesin —
+`avrupa` `sehir` **`arena`** **`sizinti`** **`kuyruk`** **`sembol_sirasi`**), **36'sı** 2. Tahmin'e (`tahmin2`), **39'u** sonuç değerlendirmesine (`degerlendir`). Dosya adlarıyla sayılıdır ki tablo elle bakım gerektirmesin —
 `tests/test_belgeler.py` onları gerçek koleksiyona karşı denetler.
 `python -m spor_toto.health` **22 değişmez** çalıştırır — ikisi (`oran_arsivi`, `geri_test`)
 istatistik katmanını, biri (`tahmin_referanslari`) tahmin katmanının ölçüm koşumunu korur,
@@ -558,7 +558,16 @@ yorumlanacaktı. Newton yinelemesine geçildi (10 adımda makine hassasiyeti, ko
 kaynak (football-data) kupon dışı maçların hem sonucunu hem oranını taşıyor; bir tahminciyi
 ölçmek için gereken üçlü budur ve **kupon bileşimi bu iş için ilgisizdir.**
 
-Korpus: **31.103 maç · 4 geçmiş sezon · 22 lig.** Ayrıntı ve ayrım kuralları
+> **⚠ 2026-09-12 — korpus daraltıldı, bu bölümdeki ölçümlerin bir kısmı
+> hâlâ 22 ligli kesitte.** E2/E3/EC/SC2/SC3 çıkarıldı (8.018 maç): 31.103 →
+> 23.085. Yeniden koşulup güncellenenler: taban Brier (0,5936 → **0,5869**),
+> "hep ev" kuralı (§DIS_TARAMA §5), F1 çizgi öngörüsü, §3.64 banko sapması,
+> kalibrasyon keskinlik payı, 2.↔3. sembol sırası. **Henüz koşulmayanlar bu
+> sayfada `31.103` yazmaya devam ediyor ve o sayı doğrudur — ölçüm o kesitte
+> yapıldı.** Yeniden ölçülene kadar 22 ligli okunmalıdır; hangi sayının hangi
+> kesitte alındığı `.claude/olcum_kutugu.json` künyelerinde yazılı.
+
+Korpus: **23.085 maç · 4 geçmiş sezon · 17 lig.** Ayrıntı ve ayrım kuralları
 [`VERI_TOPLAMA_VE_ISLEME.md`](VERI_TOPLAMA_VE_ISLEME.md) §6A'da.
 
 İki yeni ölçüm kipi: **sezon dışarıda bırakmalı** (aynı sezonun başka haftaları da bilgi
@@ -5963,7 +5972,7 @@ ve karşılıkları: kupon seti 0,5747 → **0,5740**, korpus 0,5940 → **0,593
 | **Hafta içi bağımlılık (§3.46)** | 183 hafta · 31.103 maç + 114 kupon haftası | **Eksen kapandı — ön kayıtlı kuralla.** Demeanlenmiş artıkların ortalama ikili korelasyonu korpusta **−0,00009 [−0,00102, +0,00080]**, üç kesitte de aralık sıfırı kesiyor. Kuyruğa çevrildiğinde korpus üst sınırında `P(k≥14)` yalnızca **%5** şişiyor (kupon kesiti tek başına %82'ye izin verirdi — sonucu taşıyan korpus). Yan ürün: eski bekçinin istatistiği yanlıştı (`Var(K)` yerine `Var(K−M)`) ve düzeltildi; ham artıklarla görünen `ρ=+0,0077` tamamen **kalibrasyon yanlılığıydı** |
 | **Betfair Exchange (§3.52)** | 985 kupon maçı · 119 hafta | **GEÇTİ** — ve beş aday üzerinde **Holm düzeltmesiyle**: `BFE_kapanis` −0,00100 [−0,00181, −0,00021], p=0,0054. Bir model değil bir **fiyat**: marj **%0,62**, omurganınkinin onda biri. Kapsama 2022/23–2023/24'te **sıfır**, 2024/25 %100, 2025/26 %87 — ileriye dönük sorun yok, `n` iki sezon |
 | **Kupon-zamanı fiyatı (§3.53)** | 31.099 maç · sezon dışarıda | **Kapandı.** `L_kapanış ≈ b·L_açılış` kestirimi `b ≈ 1,009` veriyor ve açığın yalnızca **%3,3**'ünü geri alıyor (dört katta %2,3–6,2). Açılış zaten kapanışın **yansız kestiricisi**; §5.2'nin %22'lik kolon bedeli bu yolla geri alınamaz |
-| **Kupon kuralında ters seçim (§3.54)** | 114 hafta · 1.710 maç | **Yok.** Banko −0,0537, banko değil −0,0492, fark **−0,0045** [−0,0506, +0,0414] — sıfırı kesiyor. §3.49'un ters seçimi gerçek ama `model` kuralına ait; kupon onu kullanmıyor. İki kolda da *eksik* güven, ki A5'in favori–sürpriz yanlılığı |
+| **Kupon kuralında ters seçim (§3.54)** | 114 hafta · 1.710 maç | **Yok.** Banko −0,0501, banko değil −0,0529, fark **+0,0029** [−0,0469, +0,0522] — sıfırı kesiyor. §3.49'un ters seçimi gerçek ama `model` kuralına ait; kupon onu kullanmıyor. İki kolda da *eksik* güven, ki A5'in favori–sürpriz yanlılığı |
 | **Hakem (§3.59)** | 13.332 maç · 254 hakem · 9 lig | **Yok — ve bu kez "yok" ölçüldü.** Üç aday da Holm'dan düştü (`hakem_ev` +0,000002 [−0,000003, +0,000008], p=0,8139), etki öteki ailelerin kalanından **üç mertebe** küçük. Ayrıştırıldı: hakemler arası gözlenen yayılım saf şansın ürettiğinin **0,97–1,00 katı**, yani `Var(gerçek)` negatif — yakalanacak etki yok, düzeltmenin kusuru değil. Kapsama **coğrafi** (%42,9; yalnız Britanya ligleri), o yüzden sütun korpusa katılmadı. **Sütun ekseni kapandı** |
 
 **Okuma.** Aşırı uyum modelin kapasitesinden değil örneklem küçüklüğünden geliyordu; büyük
@@ -6822,7 +6831,7 @@ python -m spor_toto.kosum                  # kayıtlı koşumlar
 python -m spor_toto.kosum --son disari     # son koşumun ortamı
 
 # Denetim
-pytest -q                                  # 1.842 test (117'si bu katman, 624'ü tahmin)
+pytest -q                                  # 1.847 test (117'si bu katman, 624'ü tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out

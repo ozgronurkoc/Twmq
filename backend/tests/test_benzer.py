@@ -46,7 +46,7 @@ def test_marjsiz_oranda_uc_yontem_ayni(yontem):
 def test_yuksek_marjda_favori_orantilidan_buyuk():
     """Yanlılığın yönü: orantısal yöntem favoriyi eksik fiyatlar.
 
-    Ölçüldü (31.099 maç): piyasanın %70–80 dediği maçlar gerçekte %78,9
+    Ölçüldü (23.085 maç): piyasanın %70–80 dediği maçlar gerçekte %79,2
     geliyor. Shin ve güç yöntemleri favoriye daha çok pay verir; bu testin
     kırılması, düzeltmenin yönünün ters çevrildiği anlamına gelir.
     """
@@ -252,10 +252,12 @@ def test_olculen_sayilar_korunur():
     belgede o etiketle duruyor. Varsayılan değiştiğinde (2026-08'de `shin`
     oldu) sabitlenmiş sayı sessizce başka bir şeyi ölçmeye başlamamalı.
     """
+    # 2026-09-12 korpus daraltmasi (22 -> 17 lig): 710 -> 426.
+    # Onceki dagilim {"1": 293, "0": 184, "2": 233}.
     r = benzer_maclar(ORNEK, tolerans=0.02, yontem="orantili")
-    assert r["toplam"]["n"] == 710
+    assert r["toplam"]["n"] == 426
     sayilar = {s: r["toplam"]["semboller"][s]["adet"] for s in SEMBOLLER}
-    assert sayilar == {"1": 293, "0": 184, "2": 233}
+    assert sayilar == {"1": 180, "0": 111, "2": 135}
 
 
 def test_varsayilan_yontem_kendi_sayilarini_uretir():
@@ -267,8 +269,8 @@ def test_varsayilan_yontem_kendi_sayilarini_uretir():
     """
     r = benzer_maclar(ORNEK, tolerans=0.02)
     assert r["arindirma"] == "shin"
-    assert r["toplam"]["n"] == 241
-    assert sum(r["toplam"]["semboller"][s]["adet"] for s in SEMBOLLER) == 241
+    assert r["toplam"]["n"] == 151      # korpus daraltmasi: 241 -> 151
+    assert sum(r["toplam"]["semboller"][s]["adet"] for s in SEMBOLLER) == 151
 
 
 # ─── /api/benzer ──────────────────────────────────────────────────────────────
@@ -286,7 +288,7 @@ def test_api_govdesi_n_ve_ga_tasir(istemci):
     g = istemci.get(
         "/api/benzer?oran=1.82,3.04,2.44&tolerans=0.02&arindirma=orantili"
     ).get_json()
-    assert g["toplam"]["n"] == 710
+    assert g["toplam"]["n"] == 426      # korpus daraltmasi: 710 -> 426
     for s in SEMBOLLER:
         h = g["toplam"]["semboller"][s]
         assert {"adet", "oran", "ga_alt", "ga_ust", "piyasa",

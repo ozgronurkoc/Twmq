@@ -244,9 +244,16 @@ def yaz_ev(o: dict[str, Any]) -> None:
     print("  Kupon sütunları BAĞIMSIZLIK varsayar (maçlar arası bağımlılık")
     print("  ölçülmedi — KADEME_OLASILIKLARI §9). Kıyas için, ölçüm değil.")
     print()
-    print("  -> Kuralın öncülü bu korpusta tutmuyor: ev oranı %50,4 değil")
-    print("     %43,4 ve piyasa favorisi onu 7,7 puan geçiyor. Üstelik")
-    print("     favorinin %68,4'ü zaten ev sahibi — kural ayrı bir eksen")
+    # Bu üç sayı ELLE YAZILIYDI (%43,4 · 7,7 · %68,4) ve korpus daraldığında
+    # tablonun hemen altında sessizce yanlışlandı: tablo ölçümden basılıyor,
+    # hüküm cümlesi basılmıyordu. Aynı koşumdan türetiliyorlar.
+    fark_puan = 100 * (o["favori_isabeti"] - o["ev_orani"])
+    print(f"  -> Kuralın öncülü bu korpusta tutmuyor: ev oranı "
+          f"%{100 * o['makalenin_orani']:.1f} değil")
+    print(f"     %{100 * o['ev_orani']:.1f} ve piyasa favorisi onu "
+          f"{fark_puan:.1f} puan geçiyor. Üstelik")
+    print(f"     favorinin ev sahibi olduğu pay "
+          f"%{100 * o['favorinin_ev_oldugu_pay']:.1f} — kural ayrı bir eksen")
     print("     değil, favori kuralının **zayıflatılmış** hâli.")
 
 

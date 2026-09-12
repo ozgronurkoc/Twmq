@@ -359,7 +359,7 @@ def test_kapanis_acilistan_ongorulEMIYOR():
     from spor_toto.cizgi import cizgi_tahmini
 
     r = cizgi_tahmini()
-    assert r["n"] > 30_000
+    assert r["n"] > 20_000     # korpus 2026-09-12 daraltmasi: 31.099 -> 23.083
     # Kapanis acilistan GERCEKTEN iyi — olculecek bir acik var.
     assert r["acik"] > 0
     # Ama olcekleme onu kapatmiyor.
