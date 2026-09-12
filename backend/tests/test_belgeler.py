@@ -1138,3 +1138,77 @@ def test_kazanma_karnesi_GIT_TE_TAZE():
         "docs/KAZANMA_KARNESI.md bayat — yeniden uretilenle ayrisiyor. "
         "Duzeltmek icin: cd backend && python scripts/hafta_kos.py --sonrasi --yaz"
     )
+
+
+def test_capraz_dogrulama_sayilari_RAPORLA_ayni():
+    """"29 ortak hafta / 28'i birebir aynı" **dokuz yerde** bayat kalmıştı.
+
+    Sayı §6I'de büyüdü (29 → 31, 28 → 30): sebep yeni veri değil,
+    eşleştirmedeki Unicode kusurunun düzeltilmesiydi. `gecmis_rapor.json`
+    yeniden üretildi, §6I'nin kendi tablosu da güncellendi — ama **iddiayı
+    anan öteki yerler** olduğu gibi kaldı: §6G.5'in tablosu, `README`,
+    `history.py`, `meta.py` (bu üçüncüsü API'den **dışarı** servis ediliyor),
+    `evaluate.py` ve dört test docstring'i, iki de arayüz yorumu.
+
+    Kimse görmedi, çünkü tek bekçi **eşiklidir** (`ortak >= 25`,
+    `oran >= 0,90`) ve olması gereken de budur: o test veriyi tutar, metni
+    değil. Bu bekçi metni tutar — iddianın anıldığı her yer ölçülen değeri
+    söylemeli.
+
+    Düşerse: `gecmis_rapor.json` yeniden üretilmiştir; aşağıdaki listedeki
+    satırlar elle güncellenir (liste kasıtlı olarak dar ve açıktır).
+    """
+    import json
+
+    yol = KOK / "data" / "st_history" / "gecmis_rapor.json"
+    if not yol.exists():
+        pytest.skip("geçmiş sezon henüz üretilmemiş")
+    c = json.loads(yol.read_text(encoding="utf-8")).get("capraz_dogrulama", {})
+    if not c.get("kosuldu"):
+        pytest.skip(c.get("gerekce", "çapraz doğrulama koşulmadı"))
+    ortak, ayni = c["ortak_hafta"], c["birebir_ayni"]
+
+    # (dosya, regex, beklenen sayı dizisi). Regex'teki her grup sırayla
+    # `beklenen`in bir elemanıyla karşılaştırılır.
+    iddialar = [
+        ("docs/VERI_TOPLAMA_VE_ISLEME.md",
+         r"\|\s+Ortak hafta \(2025/26\)\s+\|\s+(\d+)\s+\|", (ortak,)),
+        ("docs/VERI_TOPLAMA_VE_ISLEME.md",
+         r"\|\s+\*\*1/0/2 dizisi birebir aynı\*\*\s+\|\s+\*\*(\d+)\s*/\s*(\d+)\*\*\s+\|",
+         (ayni, ortak)),
+        ("README.md",
+         r"\*\*(\d+)\s+ortak\s+haftanın\s+(\d+)'[a-zü]{1,5}\s+1/0/2\s+"
+         r"dizisi\s+birebir\s+aynı",
+         (ortak, ayni)),
+        ("backend/spor_toto/history.py",
+         r"ayni\s+sezonun\s+(\d+)\s+haftalik\s+BASKA\s+bir", (ortak,)),
+        ("backend/spor_toto/meta.py",
+         r"kez\s+okumasidir\s+\((\d+)\s+hafta\s+/\s+41\s+hafta\)", (ortak,)),
+        ("backend/spor_toto/evaluate.py",
+         r"\((\d+)\s+hafta\s+↔\s+41\s+hafta,\s+(\d+)'[a-zü]{1,5}\s+birebir\s+aynı",
+         (ortak, ayni)),
+        ("backend/tests/test_sizinti.py",
+         r"\((\d+)\s+↔\s+41\s+hafta,\s+(\d+)'[a-zü]{1,5}\s+birebir\s+aynı", (ortak, ayni)),
+        ("backend/tests/test_gecmis_sezon.py",
+         r"Ölçülen:\s+\*\*(\d+)/(\d+)\s+hafta\s+birebir\s+aynı", (ayni, ortak)),
+        ("backend/tests/test_history.py",
+         r"okumasıdır\s+\((\d+)\s+hafta\s+↔\s+41\s+hafta\)", (ortak,)),
+        ("frontend/components/istatistik/parts.tsx",
+         r"bultenden\s+okunan\s+(\d+)\s+hafta\)", (ortak,)),
+        ("frontend/lib/types.ts",
+         r"BASKA\s+bir\s+kaydidir\s+\((\d+)\s+hafta\)", (ortak,)),
+    ]
+
+    yanlis = []
+    for göreli, desen, beklenen in iddialar:
+        metin = _oku(göreli)
+        m = re.search(desen, metin)
+        if not m:
+            yanlis.append(f"{göreli}: iddia bulunamadı ({desen})")
+            continue
+        okunan = tuple(int(g) for g in m.groups())
+        if okunan != beklenen:
+            yanlis.append(f"{göreli}: yazılı {okunan}, ölçülen {beklenen}")
+    assert not yanlis, (
+        "çapraz doğrulama sayısı metinlerde bayat "
+        f"(rapor: {ayni}/{ortak}) — " + "; ".join(yanlis))

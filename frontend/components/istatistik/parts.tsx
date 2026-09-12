@@ -62,7 +62,7 @@ function sezonEtiketi(anahtar: string): string {
  *
  * Ilk secenek "Varsayilan" ve bu bir sezon ADI DEGIL: varsayilan kayit
  * (`st_history_2025_26.json`, 41 hafta) ile listedeki `2025_26` (resmi
- * bultenden okunan 29 hafta) AYNI sezonun iki farkli kaydidir. Ikisini
+ * bultenden okunan 31 hafta) AYNI sezonun iki farkli kaydidir. Ikisini
  * "2025/26" diye yan yana koymak hangisinin secildigini belirsizlestirirdi;
  * bu yuzden varsayilan kendi adiyla durur ve rozet kokeni yazar.
  */

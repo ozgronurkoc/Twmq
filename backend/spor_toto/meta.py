@@ -140,7 +140,7 @@ def meta_payload(version: str) -> dict[str, Any]:
             "available": _sezonlar(),
             "note": ("varsayilan secim yok; secilirse `?sezon=` ile "
                      "gonderilir. `2025_26` varsayilanin AYNI sezonu ikinci "
-                     "kez okumasidir (29 hafta / 41 hafta)"),
+                     "kez okumasidir (31 hafta / 41 hafta)"),
         },
         "limits": LIMITS,
     }

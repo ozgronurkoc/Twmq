@@ -193,8 +193,8 @@ Ne çözdüğü §10.1'dedir ve tek cümleyle şudur: havuz ekseni **n = 3'ten n
 | Çapraz doğrulama | 2025/26'nın 31 ortak haftasında **30'u birebir aynı** |
 | Taşımadığı | Oran ve maç istatistiği yok |
 
-Kupon değerlendirme seti 41 haftadan **148 haftaya** çıktı (41 eski + 107
-yeni; 29'u aynı sezonun iki bağımsız okuması). Ayrıntı §6F ve §6G.
+Kupon değerlendirme seti 41 haftadan **153 haftaya** çıktı (41 eski + 112
+yeni; 31'i aynı sezonun iki bağımsız okuması). Ayrıntı §6F ve §6G.
 
 ## 3. Kaynak seçimi
 
@@ -1230,8 +1230,20 @@ değil, kaynağın yapısal sınırıdır ve kapanmaz.
 
 | Ölçüm | Sonuç |
 |---|---|
-| Ortak hafta (2025/26) | 29 |
-| **1/0/2 dizisi birebir aynı** | **28 / 29** |
+| Ortak hafta (2025/26) | 31 |
+| **1/0/2 dizisi birebir aynı** | **30 / 31** |
+
+> **Sayılar §6I'de büyüdü** (ortak hafta 29 → 31, birebir aynı 28 → 30).
+> Sebep yeni veri değil, eşleştirmedeki Unicode kusurunun düzeltilmesi;
+> kaybolan hafta ve değişen 1/0/2 dizisi yok. Ayrışan hafta yine **tek**
+> ve aynı vaka. Kaynak: `data/st_history/gecmis_rapor.json`
+> → `capraz_dogrulama`.
+>
+> **Bekçi:** `test_belgeler.py::test_capraz_dogrulama_sayilari_RAPORLA_ayni`.
+> Bu sayı dokuz yerde anılıyor (bu tablo, `README`, `history.py`,
+> `meta.py`, `evaluate.py`, dört test docstring'i, iki arayüz yorumu) ve
+> §6I'de büyüdüğünde **hepsi bayat kalmıştı**: tek bekçi eşiklidir
+> (`ortak >= 25`, `oran >= 0,90`), yani veriyi tutar metni tutmaz.
 
 **Ayrışan tek hafta bir sonuç hatası değil, bir SIRA ayrışmasıdır.** 2025/26
 30. haftada iki kaynak **aynı 15 maçı** taşıyor (skor kümeleri birebir aynı)
@@ -1325,7 +1337,7 @@ aynı numaralar bulunur ve özet sessizce başka bir sezonu anlatırdı.
 
 ## 6I. Eşleştirme teşhisi — ve sessizce ölü bir sözlük
 
-§6G'nin boru hattı 156 haftanın **107'sini** kabul ediyor, 49'unu eliyordu.
+§6G'nin boru hattı 156 haftanın **107'sini** kabul ediyordu, 49'unu eliyordu.
 `georgedouzas/sports-betting` incelemesi bir eşleştirme stratejisi önerdi
 (küresel bire-bir atama + artık-tek kuralı) ve soru şuydu: elenen 49
 haftanın kaçına dokunabilir?
@@ -1525,7 +1537,7 @@ tablolar (script'in bastığı lig dağılımı) bunu yakalayan şeydi.
 | `test_sportoto_arsiv.py::test_hafta_no_tahmin_edilmez` | Hafta numarası uydurulmaz (doktrin 2) |
 | `test_sportoto_arsiv.py::test_celisen_kapanis_tarihi_raporlanir` | İki uç çelişirse biri sessizce seçilmez (doktrin 4) |
 
-Toplam 113 test bu dört veri setini korur (backend paketi 1.842 test). `python -m spor_toto.health`
+Toplam 113 test bu dört veri setini korur (backend paketi 1.843 test). `python -m spor_toto.health`
 22 değişmez çalıştırır; `oran_arsivi` ve `geri_test` bu katmanı, `tahmin_referanslari`
 tahmin katmanının ölçüm koşumunu korur.
 
@@ -1548,14 +1560,15 @@ tahmin katmanının ölçüm koşumunu korur.
 1. **Tam sezon değil:** 41 / ~53 hafta. Eksik skorlu haftalar bilinçli olarak yok.
 
    > **Genişledi (2026-08-30).** Bültenden okunup fikstüre bağlanan set (§6F, §6G)
-   > **4 sezon · 107 hafta · 1.605 maç** ekledi. Yine "tam sezon" değil ve olmayacak:
-   > tavan **milli takım haftalarıdır** — football-data yalnızca kulüp liglerini
-   > kapsıyor ve o haftalar bu yolla hiçbir zaman gelmeyecek. Ayrıca bültenin
-   > listelediği ama **ertelenen** maçı olan hafta da bilinçli olarak düşer (§6G.2).
+   > **4 sezon · 112 hafta · 1.680 maç** ekledi (§6I'de 107 hafta · 1.605
+   > maçtan çıktı). Yine "tam sezon" değil ve olmayacak: tavan **milli takım
+   > haftalarıdır** — football-data yalnızca kulüp liglerini kapsıyor ve o
+   > haftalar bu yolla hiçbir zaman gelmeyecek. Ayrıca bültenin listelediği
+   > ama **ertelenen** maçı olan hafta da bilinçli olarak düşer (§6G.2).
 
 2. **Tek sezon değil, artık dört.** Bu madde "tek sezon: 2025/2026, 41 hafta küçük
-   örneklem" diyordu. Kupon değerlendirme seti **148 haftaya** çıktı (41 eski +
-   107 yeni, 29'u aynı sezonun iki bağımsız okuması). İstatistiksel güç hâlâ
+   örneklem" diyordu. Kupon değerlendirme seti **153 haftaya** çıktı (41 eski +
+   112 yeni, 31'i aynı sezonun iki bağımsız okuması). İstatistiksel güç hâlâ
    sınırlı ama sınır artık "tek sezon" değil.
 3. **Milli maç haftalarında oran yok** (5, 10, 15). Oran blokları o haftalarda boş; kapsama
    hiçbir zaman %100 olmayacak.
@@ -1872,9 +1885,9 @@ sürümünde hakkında hiçbir şey bilinmeyen bir boyuttur.
 
 > **Durum (2026-08-30).** Bu bölüm "kalan tek parça maç listesi" diye
 > açılmıştı. O parça §6F'de (bülten OCR) okundu, §6G'de fikstüre bağlandı ve
-> ayak **kapandı**: 4 sezon · **107 hafta** · **1.605 kupon maçı**, tam 1/0/2
-> dizisiyle. Aşağıdaki tablo o günün durumunu anlatıyor ve kayıt olarak
-> duruyor; güncel sayılar §6G.4'te.
+> ayak **kapandı**: 4 sezon · **107 hafta** · **1.605 kupon maçı** (§6I'de
+> 112 hafta · 1.680 maça çıktı), tam 1/0/2 dizisiyle. Aşağıdaki tablo o
+> günün durumunu anlatıyor ve kayıt olarak duruyor; güncel sayılar §6G.4'te.
 >
 > Kapanmayan tek şey **yapısal tavan**: milli takım haftaları football-data'da
 > hiç yok ve o haftalar bu yolla hiçbir zaman gelmeyecek.

@@ -702,7 +702,7 @@ export interface StatsResponse {
    *
    * `null` bir sezon DEGIL, "hicbir sey secilmedi" halidir: varsayilan
    * `st_history_2025_26.json` (41 hafta), `"2025_26"` ise ayni sezonun
-   * resmi bultenden okunan BASKA bir kaydidir (29 hafta).
+   * resmi bultenden okunan BASKA bir kaydidir (31 hafta).
    */
   sezon: string | null;
   error?: string | null;

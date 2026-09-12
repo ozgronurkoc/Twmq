@@ -39,7 +39,7 @@ def sezonlar() -> list[str]:
 
     Varsayilan liste disinda tutulur cunku o bir sezon SECIMI degil,
     "hicbir sey secilmedi" hali: `st_history_2025_26.json` 41 hafta tasir
-    ve `data/st_history/2025_26.json` ayni sezonun 29 haftalik BASKA bir
+    ve `data/st_history/2025_26.json` ayni sezonun 31 haftalik BASKA bir
     okumasidir (§6G.5). Ikisini tek listede sunmak hangisinin secildigini
     belirsizlestirirdi.
     """

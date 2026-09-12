@@ -262,7 +262,7 @@ def test_sezon_listesi_varsayilani_ICERMEZ():
     """`sezonlar()` bir SEÇİM listesidir; varsayılan bir seçim değildir.
 
     `2025_26` listede olabilir ama o, varsayılanın aynı sezonu ikinci kez
-    okumasıdır (29 hafta ↔ 41 hafta) — ikisi karıştırılmamalı.
+    okumasıdır (31 hafta ↔ 41 hafta) — ikisi karıştırılmamalı.
     """
     from spor_toto.history import sezonlar
 
