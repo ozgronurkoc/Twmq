@@ -583,6 +583,7 @@ try {
     "GET /api/takimlar": "TakimlarResponse",
     "GET /api/tahmin": "TahminResponse",
     "GET /api/benzer": "BenzerResponse",
+    "GET /api/benzer/maclar": "BenzerMaclarResponse",
     "POST /api/solve": "SolveResponse",
   };
 

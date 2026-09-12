@@ -1,6 +1,6 @@
 """Benzer maç arama — "bu oranda geçmişte ne olmuş?"
 
-Bir maçın oranını alır, 31 bin maçlık eğitim korpusunda **aynı fiyata sahip**
+Bir maçın oranını alır, 23.085 maçlık eğitim korpusunda **aynı fiyata sahip**
 maçları bulur ve nasıl sonuçlandıklarını sayar:
 
     python -m spor_toto.benzer --oran 1.82,3.04,2.44
@@ -14,17 +14,23 @@ piyasanın kendi dediği yüzde de yazar.
 
 En önemli tasarım kararı bu. Aynı gerçek olasılık, farklı marjda tamamen
 farklı oran verir: %18 marjlı bir iddaa bülteninde 1.82 ne diyorsa, %7 marjlı
-football-data arşivinde başka bir sayı onu der. Ölçüldü — 1.82/3.04/2.44
-(marj %28,8) korpusta:
+football-data arşivinde başka bir sayı onu der. Ölçüldü (2026-09-12) —
+1.82/3.04/2.44 (marj %28,8) korpusta, **her iki çizgide de aynı sonuç**:
 
-    birebir aynı oran ..............   0 maç
-    oran ±%2 .......................   0 maç
-    oran ±%10 ......................   0 maç
-    olasılık ±2 puan ................ 709 maç
+                                      kapanış      açılış
+    birebir aynı oran ..............    0 maç       0 maç
+    oran ±%2 .......................    0 maç       0 maç
+    oran ±%10 ......................    0 maç       0 maç
+    olasılık ±2 puan ................ 426 maç     504 maç
 
 Yani oran uzayında arama sessizce "sonuç yok" der. Eşleme **marj
 arındırıldıktan sonra olasılık uzayında** yapılır; `tests/test_benzer.py`
 bunu regresyon testine bağlar.
+
+Sayılar 709/710 olarak yazılıydı ve 2026-09-12'de korpus 22 ligden 17'ye
+inince bayatladı: o koşumda korpus boyutu satırı güncellendi, hemen
+üstündeki bu blok güncellenmedi. İkisi de **yeniden ölçüldü**, eskisinden
+türetilmedi; tekrarı `test_docstring_olcumu_GERCEK_kosumla_ayni` tutar.
 
 ─── Örneklem dürüstlüğü ──────────────────────────────────────────────────────
 
@@ -43,9 +49,11 @@ Bu araç yanlış kullanılmaya en müsait yer olduğu için üç koruma taşır
    `_dogrula_tarih` yorumunda; sözleşme `tests/test_sizinti.py`te.
 
 Korpusun birincil fiyatı 23.085 satırın **hepsinde kapanış** ortalamasıdır
-(`oran_kaynak = AvgC`). Yani bu modül bugün "kapanış çizgisinde bu fiyatı
-gören maçlar" sorusuna cevap veriyor; açılış çizgisi korpusta ayrıca duruyor
-ama burada kullanılmıyor.
+(`oran_kaynak = AvgC`) ve varsayılan arama orada yapılır. `cizgi="acilis"`
+aynı soruyu **açılış** çizgisinde sorar; o evren 23.083 satırdır (bkz.
+`CIZGILER`). İki evren arasındaki fark **tam 2 satır** olduğu için iki
+çizginin karneleri arasındaki fark evren farkından gelemez — fiyattan gelir;
+bekçisi `test_acilis_ve_kapanis_EVRENI_tam_iki_satir_ayrisir`.
 """
 from __future__ import annotations
 
@@ -57,7 +65,14 @@ from functools import lru_cache
 from typing import Any
 
 from .egitim import korpus_yukle
-from .odds import ARINDIRMA_VARSAYILAN, AZ_ORNEK, SEMBOLLER, implied_probs, margin
+from .odds import (
+    ARINDIRMA_VARSAYILAN,
+    AZ_ORNEK,
+    LIG_ADLARI,
+    SEMBOLLER,
+    implied_probs,
+    margin,
+)
 from .ortak import wilson
 
 #: Aramanın başladığı yarıçap (olasılık puanı). Dar başlanır ki yakın maç
@@ -73,10 +88,20 @@ EN_COK_TOLERANS = 0.05
 HEDEF_ORNEKLEM = 200
 #: Bu sayıdan çok dilim açılırsa çoklu karşılaştırma uyarısı basılır.
 COK_DILIM = 8
+#: Aramanın hangi fiyat çizgisinde yapılacağı. Varsayılan `kapanis`, çünkü
+#: korpusun birincil fiyatı (`oran_*`) her satırda kapanış ortalamasıdır —
+#: yani varsayılan yol bu eksen eklenmeden önceki davranışın ta kendisidir.
+#:
+#: **Neden eksen oldu.** Kupon kapanmadan önce oynanır; haftanın geç
+#: maçlarında kapanış fiyatı kupon verilirken HENÜZ YOKTUR
+#: (`scripts/acilis_kapanis.py` başlığı). Elinde açılış oranı olan biri
+#: kapanış evreninde arama yaparsa elmayı armutla karşılaştırır: aynı maçın
+#: iki fiyatı arasındaki fark bu deponun ayrıca ölçtüğü bir şeydir.
+CIZGILER: tuple[str, ...] = ("kapanis", "acilis")
 
 
 def _dogrula(oranlar: dict[str, float], tolerans: float | None,
-             en_az: int) -> None:
+             en_az: int, cizgi: str = "kapanis") -> None:
     """Girdiyi tek kapıda denetler — fonksiyon, CLI ve HTTP aynı kuralı görsün.
 
     Kural üç kapıda üç türlüydü: fonksiyonun hiç sınırı yoktu, CLI `float`
@@ -125,6 +150,14 @@ def _dogrula(oranlar: dict[str, float], tolerans: float | None,
     if en_az < 1:
         raise ValueError(f"en_az en az 1 olmalı (verilen: {en_az})")
 
+    # Bilinmeyen çizgi sessizce varsayılana DUSMEZ. Düşseydi `?cizgi=AvgC`
+    # yazan biri kapanış cevabını alır ve açılış sorduğunu sanırdı — bu
+    # fonksiyonun yukarıdaki iki deliğiyle (`inf`, kırpılan tolerans) aynı
+    # türden bir arıza: istek reddedilmiyor, BASKA BIR SORGUYA çevriliyor.
+    if cizgi not in CIZGILER:
+        raise ValueError(
+            f"cizgi {' | '.join(CIZGILER)} olmalı (verilen: {cizgi!r})")
+
 
 def _dogrula_tarih(tarih: str | None) -> None:
     """`tarih` süzgecinin biçimi — `YYYY-MM-DD`, korpusun kendi biçimi.
@@ -171,22 +204,44 @@ def _mesafe(a: dict[str, float], b: dict[str, float]) -> float:
     return max(abs(a[s] - b[s]) for s in SEMBOLLER)
 
 
-@lru_cache(maxsize=8)
-def _olasilik_tablosu(yontem: str, korpus: str | None
+def _cizgi_orani(r: dict[str, Any], cizgi: str) -> dict[str, float] | None:
+    """Satırın seçili çizgideki fiyatı — yoksa `None` (satır evrene girmez).
+
+    `kapanis` için `r["oranlar"]` okunur, `r["kapanis"]` DEGIL. İkisi aynı
+    fiyattır (korpusun `oran_kaynak`ı her satırda `AvgC`) ama `kapanis`
+    alanı `acilis` ile birlikte düşer: `egitim._cizgi_uclusu` çifti "ya tam
+    ya yok" diye taşır, yani açılışı eksik iki satırda `kapanis` de `None`
+    olur. `oranlar`ı okumak bu eksenin varsayılan yolunu, eksen eklenmeden
+    önceki davranışla **birebir** aynı tutar — regresyon sabitleri kımıldamaz.
+    """
+    return r["oranlar"] if cizgi == "kapanis" else r.get(cizgi)
+
+
+@lru_cache(maxsize=16)
+def _olasilik_tablosu(yontem: str, korpus: str | None, cizgi: str = "kapanis"
                       ) -> tuple[tuple[dict[str, float], dict[str, Any]], ...]:
     """Korpusun tamamının arındırılmış olasılıkları — yöntem başına bir kez.
 
-    Bunsuz her sorgu 31 bin satırı yeniden arındırıyordu (~2 sn). Bir hafta
+    Bunsuz her sorgu 23 bin satırı yeniden arındırıyordu (~2 sn). Bir hafta
     sayfası 15 maç için 15 sorgu yapar; onbelleksiz yarım dakika sürerdi.
     Korpus sürümlenmiş bir dosyadır, aynı yöntem hep aynı tabloyu verir.
+
+    `maxsize` çizgi ekseniyle birlikte 8'den 16'ya çıktı: anahtar artık
+    (yöntem × korpus yolu × **çizgi**) ve üç arındırma × iki çizgi zaten
+    altı gözü tek başına doldurur.
 
     Dönen yapı **okunmak içindir**; çağıran taraf satırları değiştirmemeli
     (onbellekteki nesnenin ta kendisidir).
     """
-    return tuple((p, r) for p, r in
-                 ((implied_probs(r["oranlar"], yontem), r)
-                  for r in korpus_yukle(korpus))
-                 if len(p) == 3)
+    out = []
+    for r in korpus_yukle(korpus):
+        ham = _cizgi_orani(r, cizgi)
+        if ham is None:
+            continue
+        p = implied_probs(ham, yontem)
+        if len(p) == 3:
+            out.append((p, r))
+    return tuple(out)
 
 
 def _mesafe_ozeti(mesafeler: Sequence[float]) -> dict[str, float] | None:
@@ -242,37 +297,29 @@ def _sayim(maclar: Sequence[dict[str, Any]],
     return {"n": n, "yeterli": n >= AZ_ORNEK, "semboller": satirlar}
 
 
-def benzer_maclar(oranlar: dict[str, float],
-                  tolerans: float | None = None,
-                  en_az: int = HEDEF_ORNEKLEM,
-                  lig: str | None = None,
-                  sezon: str | None = None,
-                  yontem: str = ARINDIRMA_VARSAYILAN,
-                  korpus: str | None = None,
-                  tarih: str | None = None) -> dict[str, Any]:
-    """Verilen orana benzeyen geçmiş maçları bulur ve karnelerini çıkarır.
+def _ara(hedef: dict[str, float], tolerans: float | None, en_az: int,
+         lig: str | None, sezon: str | None, yontem: str,
+         korpus: str | None, tarih: str | None, cizgi: str
+         ) -> tuple[list[tuple[float, dict[str, Any]]], int, float, bool, int,
+                    dict[str, int]]:
+    """Evreni kurar, mesafeleri ölçer, yarıçapı uyarlar — **tek kopya**.
 
-    `tolerans=None` iken yarıçap **uyarlanır**: `BASLANGIC_TOLERANS`'tan
-    başlar, `en_az` maça ulaşana kadar büyür, `EN_COK_TOLERANS`'ta durur.
-    Fiilen kullanılan yarıçap raporda her zaman yazar — genişlemiş bir arama
-    kendini gizlememeli.
+    `benzer_maclar` ve `benzer_mac_listesi` bu kümeyi aynı yerden almak
+    zorunda. Ayrı ayrı kurulsalardı ikisi sessizce farklı bir yarıçapta
+    durabilirdi ve kullanıcı, sayılan maçlardan BASKA maçların listesini
+    görürdü — üstelik bunu gösteren hiçbir alan olmadan.
 
-    `tarih="YYYY-MM-DD"` verilirse evren **o günden öncesiyle** sınırlanır.
-    Karşılaştırma katı küçüktür: aynı gün oynanan maçlar da dışarıda kalır,
-    böylece sorulan maçın kendisi kendi cevabına giremez — ayrı bir "kendini
-    dışla" koduna gerek yok. Gerekçe `_zaman_kesme` yorumunda.
+    Dönüş: `(yakinlar, evren_boyu, kullanilan_tolerans, genisledi, kesilen,
+    taban)`; `yakinlar` = `[(mesafe, satir)]`, mesafeye göre artan sıralı,
+    `taban` = evrenin tamamının 1/0/2 sayımı.
 
-    `tarih=None` (varsayılan) bugünkü davranışı birebir korur.
+    **`taban` niçin var.** Tek başına bir yüzde okunamaz: "bu oranda %58 ev
+    sahibi" çarpıcı görünür, ama korpusun genelinde ev sahibi zaten %43,5
+    kazanıyor. Fiyatın taşıdığı bilgi ikisinin FARKIDIR. Sayı arayüzde elle
+    yazılmaz, bu sorgunun kendi evreninden sayılır — lig/sezon/tarih
+    süzgeçleri uygulandıktan sonra, yani kıyas hep aynı havuzla yapılır.
     """
-    _dogrula(oranlar, tolerans, en_az)
-    _dogrula_tarih(tarih)
-    hedef = implied_probs(oranlar, yontem)
-    if len(hedef) != 3:
-        # `_dogrula`dan sonra bu artık gerçekten "arındırma üç sembol
-        # üretemedi" demek: `nan`/`inf` bir üst kapıda adıyla düşüyor.
-        raise ValueError("üç sembolün de oranı gerekli")
-
-    dilim = [(p, r) for p, r in _olasilik_tablosu(yontem, korpus)
+    dilim = [(p, r) for p, r in _olasilik_tablosu(yontem, korpus, cizgi)
              if (lig is None or r["lig"] == lig)
              and (sezon is None or r["sezon"] == sezon)]
     # Kesme lig/sezon süzgecinden SONRA sayılır: `evren_kesilen` "bu sorgunun
@@ -296,6 +343,47 @@ def benzer_maclar(oranlar: dict[str, float],
 
     # `olculu` sıralı: mesafeler de sırayla çıkıyor, ayrıca sıralanmıyor.
     yakinlar = [(d, r) for d, r in olculu if d <= kullanilan]
+    taban = {s: sum(1 for _, r in olculu if r["kod"] == s) for s in SEMBOLLER}
+    return yakinlar, len(olculu), kullanilan, genisledi, kesilen, taban
+
+
+def benzer_maclar(oranlar: dict[str, float],
+                  tolerans: float | None = None,
+                  en_az: int = HEDEF_ORNEKLEM,
+                  lig: str | None = None,
+                  sezon: str | None = None,
+                  yontem: str = ARINDIRMA_VARSAYILAN,
+                  korpus: str | None = None,
+                  tarih: str | None = None,
+                  cizgi: str = "kapanis") -> dict[str, Any]:
+    """Verilen orana benzeyen geçmiş maçları bulur ve karnelerini çıkarır.
+
+    `tolerans=None` iken yarıçap **uyarlanır**: `BASLANGIC_TOLERANS`'tan
+    başlar, `en_az` maça ulaşana kadar büyür, `EN_COK_TOLERANS`'ta durur.
+    Fiilen kullanılan yarıçap raporda her zaman yazar — genişlemiş bir arama
+    kendini gizlememeli.
+
+    `tarih="YYYY-MM-DD"` verilirse evren **o günden öncesiyle** sınırlanır.
+    Karşılaştırma katı küçüktür: aynı gün oynanan maçlar da dışarıda kalır,
+    böylece sorulan maçın kendisi kendi cevabına giremez — ayrı bir "kendini
+    dışla" koduna gerek yok. Gerekçe `_zaman_kesme` yorumunda.
+
+    `tarih=None` (varsayılan) bugünkü davranışı birebir korur.
+
+    `cizgi="acilis"` aramayı **açılış** fiyatlarının evreninde yapar;
+    varsayılan `kapanis` korpusun birincil fiyatıdır (bkz. `CIZGILER`).
+    Hangi çizgide arandığı raporda her zaman yazar.
+    """
+    _dogrula(oranlar, tolerans, en_az, cizgi)
+    _dogrula_tarih(tarih)
+    hedef = implied_probs(oranlar, yontem)
+    if len(hedef) != 3:
+        # `_dogrula`dan sonra bu artık gerçekten "arındırma üç sembol
+        # üretemedi" demek: `nan`/`inf` bir üst kapıda adıyla düşüyor.
+        raise ValueError("üç sembolün de oranı gerekli")
+
+    yakinlar, evren_boyu, kullanilan, genisledi, kesilen, taban = _ara(
+        hedef, tolerans, en_az, lig, sezon, yontem, korpus, tarih, cizgi)
     bulunan = [r for _, r in yakinlar]
     rapor: dict[str, Any] = {
         "oranlar": dict(oranlar),
@@ -308,12 +396,16 @@ def benzer_maclar(oranlar: dict[str, float],
         "tolerans_tavana_dayandi": (tolerans is None
                                     and kullanilan >= EN_COK_TOLERANS
                                     and len(bulunan) < en_az),
-        "evren": len(olculu),
+        "evren": evren_boyu,
+        "cizgi": cizgi,
         "as_of": tarih,
         "evren_kesilen": kesilen,
         "filtre": {"lig": lig, "sezon": sezon},
         "mesafe": _mesafe_ozeti([d for d, _ in yakinlar]),
         "toplam": _sayim(bulunan, hedef),
+        # Kiyas cizgisi: aynı evrenin TAMAMINDA 1/0/2 nasıl dagiliyor.
+        # Bir yuzde ancak bunun yaninda okunur (gerekce `_ara` govdesinde).
+        "taban": taban,
         "uyarilar": [],
     }
 
@@ -351,14 +443,132 @@ def benzer_maclar(oranlar: dict[str, float],
 
 def _dilimle(maclar: Sequence[dict[str, Any]], hedef: dict[str, float],
              alan: str) -> list[dict[str, Any]]:
-    """Bulunan maçları bir alana göre böler; her dilim kendi n'i ve GA'sıyla."""
+    """Bulunan maçları bir alana göre böler; her dilim kendi n'i ve GA'sıyla.
+
+    Lig diliminde ayrıca okunur bir `etiket` taşınır (`odds.LIG_ADLARI`).
+    Çeviri **sunucuda** yapılır çünkü harita orada zaten var; arayüze
+    kopyalansaydı iki yerde tutulan ve ayrışabilen bir sözlük daha olurdu.
+    Eşleşmeyen kod olduğu gibi geçer — `odds.LIG_ADLARI` yorumundaki kural:
+    uydurma ad üretilmez.
+    """
     gruplar: dict[str, list[dict[str, Any]]] = {}
     for m in maclar:
         gruplar.setdefault(m[alan], []).append(m)
-    out = [{"deger": k, "karne": _sayim(v, hedef)}
+    out = [{"deger": k, "etiket": _etiket(k, alan), "karne": _sayim(v, hedef)}
            for k, v in gruplar.items()]
     out.sort(key=lambda d: -d["karne"]["n"])
     return out
+
+
+def _etiket(deger: str, alan: str) -> str:
+    """Dilim değerinin okunur karşılığı; yalnızca lig için çeviri var."""
+    return LIG_ADLARI.get(deger, deger) if alan == "lig" else deger
+
+
+#: Maç listesinin tek seferde döndürebileceği en çok satır. Tavan uydurma
+#: değil: `HEDEF_ORNEKLEM`in (200) iki buçuk katı — uyarlanan aramanın
+#: hedeflediği örneklemin tamamı tek sayfada, genişlemiş aramanın fazlası da
+#: büyük ölçüde sığar.
+EN_COK_LISTE = 500
+
+
+def benzer_mac_listesi(oranlar: dict[str, float], *,
+                       tolerans: float,
+                       lig: str | None = None,
+                       sezon: str | None = None,
+                       yontem: str = ARINDIRMA_VARSAYILAN,
+                       korpus: str | None = None,
+                       tarih: str | None = None,
+                       cizgi: str = "kapanis",
+                       limit: int = HEDEF_ORNEKLEM,
+                       atla: int = 0) -> dict[str, Any]:
+    """Karnenin arkasındaki **maçların kendisi** — tarih, skor, sonuç, fiyat.
+
+    `benzer_maclar` bir yüzde döndürür; bu fonksiyon o yüzdenin sayıldığı
+    satırları döndürür. Yüzde bir iddiadır ve bu depo iddiayı `n` ve güven
+    aralığı olmadan yazmaz; **maç listesi bir iddia değil kayıttır**, o
+    yüzden `AZ_ORNEK` eşiği burada uygulanmaz. 12 maçlık bir ligin yüzdesi
+    okunmaz ama o 12 maç görülebilir.
+
+    ─── `tolerans` niçin ZORUNLU ──────────────────────────────────────────
+
+    Tek gerçek tuzak bu. Uyarlanan yarıçap **evrene** bağlıdır: `en_az` maça
+    ulaşana kadar büyür. `lig="T1"` ile çağrılan bir arama, bütün liglerde
+    çalışan aramadan daha küçük bir evrende durur, yani **daha geniş** bir
+    yarıçapta dinlenir. Liste kendi yarıçapını uyarlasaydı, kullanıcı lig
+    satırında "n=34" okuyup tıkladığında 51 maç görebilirdi — ve iki sayının
+    neden tutmadığını gösteren hiçbir alan olmazdı.
+
+    Bu yüzden çağıran taraf (arayüz de, CLI de) ana cevaptaki **çözülmüş**
+    `tolerans`ı aynen geri verir. Bekçisi
+    `tests/test_benzer.py::test_mac_listesi_karneyle_AYNI_kumeyi_sayar`.
+    """
+    if tolerans is None:
+        raise ValueError(
+            "mac listesi tolerans ZORUNLU ister: karnenin cozdugu yaricapi "
+            "aynen geri verin, yoksa liste sayilan kumeden baska bir kumeyi "
+            "gosterir (bkz. fonksiyon govdesi).")
+    # `en_az` burada anlamsız (yarıçap sabit), ama `_dogrula` tek kapıdır ve
+    # tolerans tavanını orada kontrol ettiriyoruz.
+    _dogrula(oranlar, tolerans, 1, cizgi)
+    _dogrula_tarih(tarih)
+    if limit < 1 or limit > EN_COK_LISTE:
+        raise ValueError(
+            f"limit 1..{EN_COK_LISTE} arasinda olmali (verilen: {limit})")
+    if atla < 0:
+        raise ValueError(f"atla negatif olamaz (verilen: {atla})")
+
+    hedef = implied_probs(oranlar, yontem)
+    if len(hedef) != 3:
+        raise ValueError("üç sembolün de oranı gerekli")
+
+    yakinlar, evren_boyu, kullanilan, _, kesilen, _taban = _ara(
+        hedef, tolerans, 1, lig, sezon, yontem, korpus, tarih, cizgi)
+
+    dilim = yakinlar[atla:atla + limit]
+    return {
+        "oranlar": dict(oranlar),
+        "arindirma": yontem,
+        "hedef_olasilik": hedef,
+        "tolerans": kullanilan,
+        "cizgi": cizgi,
+        "evren": evren_boyu,
+        "evren_kesilen": kesilen,
+        "as_of": tarih,
+        "filtre": {"lig": lig, "sezon": sezon},
+        # `n` SAYFANIN degil KUMENIN buyuklugu — arayuz "34 maçin 20'si"
+        # diyebilsin diye. Sayfanin boyu `len(maclar)`.
+        "n": len(yakinlar),
+        "limit": limit,
+        "atla": atla,
+        "maclar": [_mac_satiri(d, r, yontem, cizgi) for d, r in dilim],
+    }
+
+
+def _mac_satiri(mesafe: float, r: dict[str, Any], yontem: str,
+                cizgi: str) -> dict[str, Any]:
+    """Korpus satırının dışarı verilen yüzü.
+
+    Gönderilen fiyat **arananla aynı çizgidendir**: kapanış evreninde
+    arayıp açılış oranı göstermek, listedeki maçın neden bulunduğunu
+    okunamaz kılardı. `mesafe` de aynı sebeple taşınır — kullanıcı satırın
+    hedefe ne kadar yakın olduğunu görmeden "benzer" kelimesini denetleyemez.
+    """
+    ham = _cizgi_orani(r, cizgi) or {}
+    return {
+        "tarih": r["tarih"],
+        "lig": r["lig"],
+        "lig_etiket": LIG_ADLARI.get(r["lig"], r["lig"]),
+        "sezon": r["sezon"],
+        "ev": r["ev"],
+        "dep": r["dep"],
+        "ev_gol": r["ev_gol"],
+        "dep_gol": r["dep_gol"],
+        "kod": r["kod"],
+        "oranlar": dict(ham),
+        "olasilik": implied_probs(ham, yontem) if ham else {},
+        "mesafe": mesafe,
+    }
 
 
 # ─── yazdırma ─────────────────────────────────────────────────────────────────
@@ -389,6 +599,8 @@ def yaz(rapor: dict[str, Any]) -> None:
     kapsam = ", ".join(x for x in (f["lig"], f["sezon"]) if x) or "tüm korpus"
     if rapor["as_of"]:
         kapsam += f" · {rapor['as_of']} öncesi ({rapor['evren_kesilen']:,} maç kesildi)"
+    print(f"Çizgi       : {rapor['cizgi']}"
+          f"{'  (korpusun birincil fiyatı)' if rapor['cizgi'] == 'kapanis' else ''}")
     print(f"Arama       : {kapsam} · {rapor['evren']:,} maç içinde, "
           f"olasılık uzayında ±{100*rapor['tolerans']:.1f} puan"
           f"{' (uyarlandı)' if rapor['tolerans_uyarlandi'] else ''}")
@@ -413,7 +625,7 @@ def yaz(rapor: dict[str, Any]) -> None:
             k = d["karne"]
             hucre = "  ".join(
                 f"{s}:%{100*k['semboller'][s]['oran']:.0f}" for s in SEMBOLLER)
-            print(f"  {d['deger']:<8} n={k['n']:<5} {hucre}")
+            print(f"  {d['etiket']:<28} n={k['n']:<5} {hucre}")
         if atlanan:
             print(f"  ({atlanan} dilim {AZ_ORNEK} maçın altında olduğu için yazılmadı)")
 
@@ -421,6 +633,29 @@ def yaz(rapor: dict[str, Any]) -> None:
         print("\n─── UYARILAR " + "─" * 58)
         for u in rapor["uyarilar"]:
             print(f"  • {u}")
+
+
+def yaz_maclar(liste: dict[str, Any]) -> None:
+    """Maç listesini konsola basar — karnenin arkasındaki kayıtlar."""
+    n, gosterilen = liste["n"], len(liste["maclar"])
+    f = liste["filtre"]
+    kapsam = ", ".join(x for x in (f["lig"], f["sezon"]) if x) or "tüm korpus"
+    print(f"\n─── MAÇLAR ({kapsam}) " + "─" * 45)
+    print(f"  {n} maçın {gosterilen}'i · ±{100*liste['tolerans']:.1f} puan "
+          f"· {liste['cizgi']} çizgisi")
+    if not liste["maclar"]:
+        print("  (yok)")
+        return
+    print(f"  {'tarih':<11} {'lig':<5} {'ev — dep':<44} {'skor':>5} "
+          f"{'sonuç':>5}  {'oran (1/0/2)':<20} uzaklık")
+    for m in liste["maclar"]:
+        o = m["oranlar"]
+        es = f"{m['ev']} — {m['dep']}"
+        skor = (f"{m['ev_gol']}-{m['dep_gol']}"
+                if m["ev_gol"] is not None else "?")
+        oran = f"{o.get('1', 0):.2f}/{o.get('0', 0):.2f}/{o.get('2', 0):.2f}"
+        print(f"  {m['tarih']:<11} {m['lig']:<5} {es[:44]:<44} {skor:>5} "
+              f"{m['kod']:>5}  {oran:<20} %{100*m['mesafe']:.2f}")
 
 
 def main(argv: Sequence[str] | None = None) -> None:
@@ -440,6 +675,13 @@ def main(argv: Sequence[str] | None = None) -> None:
                          "aranır (kronolojik sorgu)")
     ap.add_argument("--arindirma", default=ARINDIRMA_VARSAYILAN,
                     choices=("orantili", "guc", "shin"))
+    ap.add_argument("--cizgi", default="kapanis", choices=CIZGILER,
+                    help="hangi fiyat çizgisinde aranacak "
+                         "(varsayılan: korpusun birincil fiyatı = kapanış)")
+    ap.add_argument("--maclar", type=int, default=0, metavar="N",
+                    help="karnenin arkasındaki ilk N maçı da yaz "
+                         "(karnenin ÇÖZDÜĞÜ yarıçapla, ayrı bir aramayla "
+                         "değil)")
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args(argv)
 
@@ -456,16 +698,30 @@ def main(argv: Sequence[str] | None = None) -> None:
         rapor = benzer_maclar(
             {"1": parcalar[0], "0": parcalar[1], "2": parcalar[2]},
             tolerans=a.tolerans, en_az=a.en_az, lig=a.lig,
-            sezon=a.sezon, yontem=a.arindirma, tarih=a.tarih)
+            sezon=a.sezon, yontem=a.arindirma, tarih=a.tarih,
+            cizgi=a.cizgi)
+        # Liste, karnenin COZDUGU yaricapi alir. Kendi yaricapini
+        # uyarlasaydi lig suzgecli cagrida karneden BASKA bir kume sayardi
+        # (gerekce `benzer_mac_listesi` govdesinde).
+        liste = (benzer_mac_listesi(
+            {"1": parcalar[0], "0": parcalar[1], "2": parcalar[2]},
+            tolerans=rapor["tolerans"], lig=a.lig, sezon=a.sezon,
+            yontem=a.arindirma, tarih=a.tarih, cizgi=a.cizgi,
+            limit=a.maclar) if a.maclar else None)
     except ValueError as e:
         # CLI kendi kuralını YAZMAZ. Doğrulama tek yerde (`_dogrula`) ve
         # burası onun cümlesini olduğu gibi iletir; ikinci bir kopya iki
         # kapının zamanla ayrışması demekti.
         raise SystemExit(str(e)) from None
     if a.json:
-        print(json.dumps(rapor, ensure_ascii=False, indent=1))
+        govde = dict(rapor)
+        if liste is not None:
+            govde["maclar"] = liste["maclar"]
+        print(json.dumps(govde, ensure_ascii=False, indent=1))
     else:
         yaz(rapor)
+        if liste is not None:
+            yaz_maclar(liste)
 
 
 if __name__ == "__main__":

@@ -208,10 +208,12 @@
   "GET /api/benzer": {
    "arindirma": "str",
    "as_of": "null",
+   "cizgi": "str",
    "dilimler": {
     "lig": [
      {
       "deger": "str",
+      "etiket": "str",
       "karne": {
        "n": "int",
        "semboller": {
@@ -250,6 +252,7 @@
     "sezon": [
      {
       "deger": "str",
+      "etiket": "str",
       "karne": {
        "n": "int",
        "semboller": {
@@ -309,6 +312,11 @@
     "1": "float",
     "2": "float"
    },
+   "taban": {
+    "0": "int",
+    "1": "int",
+    "2": "int"
+   },
    "tolerans": "float",
    "tolerans_genisledi": "bool",
    "tolerans_tavana_dayandi": "bool",
@@ -349,6 +357,55 @@
    "uyarilar": [
     "str"
    ]
+  },
+  "GET /api/benzer/maclar": {
+   "arindirma": "str",
+   "as_of": "null",
+   "atla": "int",
+   "cizgi": "str",
+   "evren": "int",
+   "evren_kesilen": "int",
+   "filtre": {
+    "lig": "null",
+    "sezon": "null"
+   },
+   "hedef_olasilik": {
+    "0": "float",
+    "1": "float",
+    "2": "float"
+   },
+   "limit": "int",
+   "maclar": [
+    {
+     "dep": "str",
+     "dep_gol": "int",
+     "ev": "str",
+     "ev_gol": "int",
+     "kod": "str",
+     "lig": "str",
+     "lig_etiket": "str",
+     "mesafe": "float",
+     "olasilik": {
+      "0": "float",
+      "1": "float",
+      "2": "float"
+     },
+     "oranlar": {
+      "0": "float",
+      "1": "float",
+      "2": "float"
+     },
+     "sezon": "str",
+     "tarih": "str"
+    }
+   ],
+   "n": "int",
+   "oranlar": {
+    "0": "float",
+    "1": "float",
+    "2": "float"
+   },
+   "tolerans": "float"
   },
   "GET /api/health": {
    "categories": [
