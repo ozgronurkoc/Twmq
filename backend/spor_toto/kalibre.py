@@ -49,7 +49,7 @@ from .recalibrate import _pav
 
 #: `p0`/`p1` ızgarasının nokta sayısı.
 #:
-#: Saf IVAP her test noktası için iki PAV uydurması ister; 31 bin maç × 3
+#: Saf IVAP her test noktası için iki PAV uydurması ister; 23 bin maç × 3
 #: sembol × 2 uydurma pratikte koşmaz. Izgara, kalibrasyon skorlarının
 #: **quantile**'larına kurulur ve ara değerler doğrusal ara değerlenir.
 #: Bu bir yaklaşıklıktır ve büyüklüğü ölçülebilir: ızgara sıklaştıkça

@@ -289,7 +289,7 @@ def sezon_ozeti(yontem: str = ARINDIRMA_VARSAYILAN,
         "handikap": {"kapsama": len(ah) / len(satirlar) if satirlar else 0.0,
                      **_handikap_ozeti(ah)},
         "sinir": (
-            "Kesit BIR SEZON (kupon arsivi), 31 binlik egitim korpusu degil: "
+            "Kesit BIR SEZON (kupon arsivi), 23 binlik egitim korpusu degil: "
             "korpus bu iki fiyati tasimiyor. Bantlar bu yuzden kaba ve "
             "sayilar 1X2 olcumlerinden daha genis araliklidir."),
     }

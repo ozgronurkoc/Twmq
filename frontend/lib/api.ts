@@ -280,7 +280,7 @@ export function getTahmin(
 }
 
 /**
- * "Bu oranda gecmiste ne olmus?" — 31 bin maclik korpusta ayni fiyata sahip
+ * "Bu oranda gecmiste ne olmus?" — 23 bin maclik korpusta ayni fiyata sahip
  * maclarin nasil bittigi.
  *
  * `oranlar` 1/0/2 sirasiyla gonderilir. Cevap bir TAHMIN degildir: her yuzde

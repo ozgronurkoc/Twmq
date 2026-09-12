@@ -189,7 +189,7 @@ export default function TakimlarSayfasi() {
   // Govde HER ZAMAN suzulmemis cekilir ve lig secimi ISTEMCIDE yapilir.
   // Sunucu tarafi suzme (`?lig=`) API'de duruyor ama sayfa onu kullanmiyor:
   // her tikta yeni bir istek atmak, hesabi degistirmeyen bir suzgec icin
-  // 31 bin satiri yeniden okumak demekti.
+  // 23 bin satiri yeniden okumak demekti.
   const { veri, hata, yukleniyor, yenile } = useIstek(
     (signal) => getTakimlar(undefined, sezon || undefined, signal),
     [sezon],

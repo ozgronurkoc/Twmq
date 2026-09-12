@@ -8,7 +8,7 @@ katmanı bu modülü import etmez, korpustan hiçbir sayı `/api/stats` gövdesi
 girmez.
 
 Korpus `scripts/build_egitim.py` tarafından üretilir (football-data.co.uk,
-22 lig × 4 geçmiş sezon, ~31 bin maç). Kupon değerlendirme setinin 58 katı
+17 lig × 4 geçmiş sezon, 23.085 maç). Kupon değerlendirme setinin 43 katı
 büyüklüğünde ve **kupon bileşimi taşımaz** — bir tahminciyi ölçmek için
 gereken üçlü `(maç, oran, sonuç)` olduğu için buna gerek de yoktur.
 
@@ -99,7 +99,7 @@ def korpus_yukle(yol: str | None = None) -> list[dict[str, Any]]:
                 continue
             if any(v <= 1.0 for v in oranlar.values()):
                 continue
-            # Bu iki yardimci DONGUNUN ICINDE tanimliydi: 31 bin satirin
+            # Bu iki yardimci DONGUNUN ICINDE tanimliydi: 23 bin satirin
             # her biri icin iki fonksiyon nesnesi uretiliyordu. Ayrica
             # dongu degiskenini kapatiyorlardi (ruff B023) — burada zararsiz,
             # cunku ayni yinelemede cagriliyorlar, ama desen kirilgan.
@@ -535,7 +535,7 @@ def _zenginlestirilmis_korpus(yol: str | None = None) -> tuple[dict[str, Any], .
        satirlara YERINDE yazmak onbellegi ve o sozu birlikte bozuyordu; bu
        yuzden kopya uzerinde calisilir.
     2. **Hiz.** Kopya ve iki tablo hesabi (birlikte ~1,3 sn) `korpus_haftalari`nin govdesinde
-       duruyordu, yani HER cagrida 31 bin sozluk kopyalaniyor ve form/takvim
+       duruyordu, yani HER cagrida 23 bin sozluk kopyalaniyor ve form/takvim
        tablolari bastan kuruluyordu. Suzgecler (sezon, lig, cizgi, bahisci)
        sonucu degistirir ama bu zenginlestirmeyi degistirmez — dolayisiyla
        onbelleklenebilir.

@@ -970,7 +970,7 @@ def api_benzer():
     yani aynı gun oynanan maclar da disarida). Verilmezse butun korpus
     aranir -- eski davranis.
 
-    Govde bir TAHMIN degildir: 31 bin maclik korpusta ayni fiyata sahip
+    Govde bir TAHMIN degildir: 23 bin maclik korpusta ayni fiyata sahip
     maclarin nasil bittigini sayar. Her yuzde yaninda `n` ve Wilson %95
     guven araligi gelir ve **kirpilmaz** — cunku bu aracin tek gercek
     tehlikesi ince bir dilimdeki carpici oranin bulgu sanilmasidir.
@@ -979,7 +979,7 @@ def api_benzer():
     """
     # Gec import: `benzer` egitim korpusunu okur ve o korpus yalnizca tahmin
     # katmanina aittir (bkz. test_ayrim_istatistik_katmani_korpusu_import_etmez).
-    # Modul duzeyinde import edilseydi surec acilisinda 31 bin satir okunurdu.
+    # Modul duzeyinde import edilseydi surec acilisinda 23 bin satir okunurdu.
     from spor_toto.benzer import HEDEF_ORNEKLEM
     from spor_toto.odds import ARINDIRMA_VARSAYILAN, ARINDIRMA_YONTEMLERI
 

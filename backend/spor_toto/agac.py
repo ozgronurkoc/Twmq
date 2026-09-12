@@ -65,7 +65,7 @@ OLASILIK_TABANI = 1e-6
 #: (`arama.izgara_ara`), yani az kapasiteli model tercih edilir.
 #:
 #: Liste bilerek kısa. Geniş bir ızgara iç halkada daha iyi bir sayı bulur
-#: ama arama gürültüsünü de büyütür; 31 bin maçta dört aday, kapasitenin
+#: ama arama gürültüsünü de büyütür; 23 bin maçta dört aday, kapasitenin
 #: yardım edip etmediğini görmeye yeter.
 ADAYLAR: tuple[dict[str, Any], ...] = (
     {"num_leaves": 4, "n_estimators": 100, "learning_rate": 0.05,

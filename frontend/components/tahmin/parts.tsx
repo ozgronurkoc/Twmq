@@ -299,7 +299,7 @@ export function IsabetKarti({ isabet }: { isabet: OlculmusIsabet }) {
           Kesit: {isabet.kesit}
           {a ? (
             <>
-              {" · "}Alternatif <strong>31.103 maçlık korpusta</strong> eğitildi
+              {" · "}Alternatif <strong>23.085 maçlık korpusta</strong> eğitildi
               ve burada ölçüldü; iki set arasında ortak maç yok.
             </>
           ) : null}

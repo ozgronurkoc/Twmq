@@ -159,7 +159,7 @@ def hafta_disarida_birak(fabrika: Fabrika,
 
     `grup` verilmezse her hafta kendi grubudur — klasik hafta dışarıda
     bırakmalı ölçüm. `grup=sezon_anahtari` verilirse haftanın **bütün
-    sezonu** eğitimden çıkarılır; 31 bin maçlık korpusta doğru ölçüm budur,
+    sezonu** eğitimden çıkarılır; 23 bin maçlık korpusta doğru ölçüm budur,
     çünkü aynı sezonun başka haftaları da bilgi sızdırır.
 
     Dönen liste hafta başına bir kayıt taşır; toplamlar `degerlendir` içinde
@@ -264,7 +264,7 @@ def ileri_yuruyus(fabrika: Fabrika,
     """Kronolojik ölçüm: `k`. grup ölçülürken eğitim yalnızca `0..k-1`.
 
     `grup` verilmezse her hafta kendi grubudur — hafta hafta ileri yürüyüş.
-    `grup=sezon_anahtari` verilirse sezon sezon yürünür; 31 bin maçlık
+    `grup=sezon_anahtari` verilirse sezon sezon yürünür; 23 bin maçlık
     korpusta uydurma sayısını 183'ten 4'e indirdiği için varsayılan kullanım
     budur (`arena`).
 
@@ -323,7 +323,7 @@ def _hafta_skoru(tahminci: Tahminci, hafta: Girdi) -> dict[str, Any]:
         "brier": round(b_top / n, 4) if n else 0.0,
         "log_kaybi": round(l_top / n, 4) if n else 0.0,
         # Ham tahminler ayrisim ve karisiklik matrisi icin gerekli; ozel
-        # tutuluyor cunku 31 bin maclik korpusta API govdesini sisirirdi.
+        # tutuluyor cunku 23 bin maclik korpusta API govdesini sisirirdi.
         # `_panel` bunlari tuketir, `_panel_temizle` govdeden siler.
         "_tahminler": [tahminler[k] for k in range(n)],
         "_kodlar": list(kodlar),
@@ -363,7 +363,7 @@ def _siralama(kayitlar: Sequence[dict[str, Any]]) -> dict[str, Any]:
 
     Ayrisim ve karisiklik butun kesit uzerinde havuzlanir; siralama
     **havuzlanamaz**. "Bu haftanin en emin maci" haftanin kendi icinde
-    tanimlidir; 31 bin maci tek listeye dizip ilk 5'ine bakmak bambaska bir
+    tanimlidir; 23 bin maci tek listeye dizip ilk 5'ine bakmak bambaska bir
     soru olurdu (ve cevabi yalnizca "en kisa oranli 5 mac" olurdu).
 
     NDCG hafta ortalamasidir ve **isabetsiz haftalar disarida kalir**: o
@@ -852,7 +852,7 @@ def main(argv: Sequence[str] | None = None) -> None:  # pragma: no cover
     """Ölçüm koşumunun elle çalıştırılan yüzü.
 
         python -m spor_toto.evaluate            # kupon setinde karsilastirma
-        python -m spor_toto.evaluate --korpus   # 31 bin maclik korpusta
+        python -m spor_toto.evaluate --korpus   # 23 bin maclik korpusta
         python -m spor_toto.evaluate --egri     # ogrenme egrisi
     """
     import argparse

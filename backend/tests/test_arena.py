@@ -11,7 +11,7 @@ Arena bir model değil bir **karşılaştırma zemini**dir, bu yüzden testlerin
 Sonuncusu arenanın en kolay sessiz hatasıdır: `+0,0000` yazan bir satır
 "ölçtük, fark yok" gibi okunur, oysa söylediği şey "model hiç koşmadı".
 
-Korpus üzerindeki gerçek koşum burada YOK: 31 bin maçta on aile eğitmek
+Korpus üzerindeki gerçek koşum burada YOK: 23 bin maçta on aile eğitmek
 dakikalar sürer ve bu bir test değil bir ölçüm koşumudur
 (`python -m spor_toto.arena`). Buradaki uçtan uca denetim sentetik bir
 kesitte koşar.
