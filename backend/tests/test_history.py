@@ -262,7 +262,7 @@ def test_sezon_listesi_varsayilani_ICERMEZ():
     """`sezonlar()` bir SEÇİM listesidir; varsayılan bir seçim değildir.
 
     `2025_26` listede olabilir ama o, varsayılanın aynı sezonu ikinci kez
-    okumasıdır (29 hafta ↔ 41 hafta) — ikisi karıştırılmamalı.
+    okumasıdır (31 hafta ↔ 41 hafta) — ikisi karıştırılmamalı.
     """
     from spor_toto.history import sezonlar
 
@@ -317,3 +317,197 @@ def test_onbellek_sezonlar_arasi_karismaz():
     history_summary(sezon=s)
     b = history_summary()["meta"]["weeks"]
     assert a == b == 41, "sezon seçimi varsayılanın önbelleğini düşürdü"
+
+
+# ─── birleşik kesit (`?sezon=hepsi`) ─────────────────────────────────────────
+
+def test_birlesik_kesit_ayni_sezonu_IKI_KEZ_saymaz():
+    """Birleşimin tek gerçek tehlikesi budur: 2025/26'nın iki kaydı var.
+
+    `st_history_2025_26.json` (41 hafta, üçüncü parti payload) ile
+    `data/st_history/2025_26.json` (31 hafta, bültenden) **aynı sezonun iki
+    okumasıdır** (§6G.5) ve ortak 31 haftanın 30'u birebir aynı dizidir.
+    İkisini birden birleşime koymak o 31 haftayı iki kez saymak olurdu —
+    yüzdeler kaymaz ama n şişer ve hiçbir yerde yazmaz.
+
+    Kesit bu yüzden `evaluate.OLCUM_SEZONLARI`den türüyor: o demet aynı
+    gerekçeyle `2025_26`yi zaten dışarıda bırakıyor.
+    """
+    from spor_toto.evaluate import OLCUM_SEZONLARI
+    from spor_toto.history import birlesik_kesit
+
+    kesit = birlesik_kesit()
+    assert kesit[0] is None, "varsayilan kayit birlesimde olmali"
+    assert "2025_26" not in kesit, (
+        "2025/26'nin ikinci okumasi birlesime girdi: ayni haftalar iki kez sayilir")
+    assert tuple(kesit[1:]) == tuple(OLCUM_SEZONLARI), (
+        "kesit ikinci bir listeden kuruluyor — `OLCUM_SEZONLARI` ile ayrisabilir")
+
+
+def test_birlesik_hafta_sayisi_parcalarin_TOPLAMI():
+    """Birleşim ne kaybeder ne uydurur: hafta sayısı parçaların toplamıdır."""
+    from spor_toto.history import (
+        TUM_SEZONLAR,
+        birlesik_kesit,
+        history_summary,
+        normalized_weeks,
+    )
+
+    parcalar = {s: len(normalized_weeks(sezon=s)) for s in birlesik_kesit()}
+    birlesik = normalized_weeks(sezon=TUM_SEZONLAR)
+    assert len(birlesik) == sum(parcalar.values())
+    meta = history_summary(sezon=TUM_SEZONLAR)["meta"]
+    assert meta["weeks"] == len(birlesik)
+    assert meta["matches"] == len(birlesik) * MATCH_COUNT
+    # Künye de aynı toplamı vermeli — arayüz bu dökümü basıyor.
+    assert sum(d["weeks"] for d in meta["birlesim"]) == meta["weeks"]
+    assert sum(d["matches"] for d in meta["birlesim"]) == meta["matches"]
+
+
+def test_birlesik_hafta_anahtarlari_BENZERSIZ():
+    """Hafta NUMARASI kimlik değil; anahtar kimliktir.
+
+    Dört kaydın dördünde de 12. hafta var. Arayüzün bağlantıları, oranın
+    haftalık Brier'i ve kopya denetimi anahtara bakar; anahtar benzersiz
+    olmazsa üçü birden sessizce yanlış satıra bağlanır.
+    """
+    from spor_toto.history import TUM_SEZONLAR, normalized_weeks
+
+    weeks = normalized_weeks(sezon=TUM_SEZONLAR)
+    anahtarlar = [w["anahtar"] for w in weeks]
+    assert len(set(anahtarlar)) == len(anahtarlar)
+    # Numaralar ise TEKRAR EDER — testin dayandığı gerçek bu.
+    assert len({w["week"] for w in weeks}) < len(weeks)
+    for w in weeks:
+        assert w["anahtar"] == f"{w['sezon'] or 'varsayilan'}-{w['week']}"
+
+
+def test_birlesik_kesit_KRONOLOJIK_sirali():
+    """Sıra hafta numarasından değil tarihten gelir.
+
+    Numaraya göre sıralamak dört kaydı iç içe geçirirdi (dördünde de 2.
+    hafta var) ve "son 12 hafta" dilimi dört sezondan derlenmiş rastgele
+    bir kümeye dönerdi.
+    """
+    from spor_toto.history import TUM_SEZONLAR, normalized_weeks
+
+    tarihler = [w["close_date"] for w in normalized_weeks(sezon=TUM_SEZONLAR)]
+    assert tarihler == sorted(tarihler)
+
+
+def test_birlesik_dilim_kesitin_SONUNDAN_alinir():
+    """`?last=N` birleşimde de "en son N hafta"dır — sezon başına değil."""
+    from spor_toto.history import TUM_SEZONLAR, normalized_weeks
+
+    tam = normalized_weeks(sezon=TUM_SEZONLAR)
+    dilim = normalized_weeks(6, sezon=TUM_SEZONLAR)
+    assert len(dilim) == 6
+    assert [w["anahtar"] for w in dilim] == [w["anahtar"] for w in tam[-6:]]
+
+
+def test_birlesik_meta_hafta_ARALIGI_yazmaz():
+    """"2–51. haftalar" birleşimde yanlıştır; künye onu hiç yazmaz.
+
+    `week_from`/`week_to` `None` gelir ve bu bir boşluk değil bir cevaptır:
+    arayüz o rozeti basmaz, yerine sezon dökümünü gösterir.
+    """
+    from spor_toto.history import TUM_SEZONLAR, history_summary
+
+    meta = history_summary(sezon=TUM_SEZONLAR)["meta"]
+    assert meta["week_from"] is None and meta["week_to"] is None
+    assert meta["origin"] == "birlesik kesit"
+    assert meta["sezon_secimi"] == TUM_SEZONLAR
+    # Tek kayıtta aralık yerinde durmalı — bu test onu da tutar.
+    tek = history_summary()["meta"]
+    assert tek["week_from"] == 2 and tek["week_to"] == 51
+
+
+def test_birlesik_kesitte_TEK_HAFTA_sorgusu_reddedilir():
+    """"12. hafta" birleşimde dört kaydın dördünde de var: seçmeyiz.
+
+    Doktrin 4: belirsiz veri sessizce bir tarafa yazılmaz. Uç bunu 400 ile
+    bildirir, motor `ValueError` ile.
+    """
+    from spor_toto.history import TUM_SEZONLAR, history_week, history_week_detail
+
+    with pytest.raises(ValueError):
+        history_week(12, sezon=TUM_SEZONLAR)
+    with pytest.raises(ValueError):
+        history_week_detail(12, sezon=TUM_SEZONLAR)
+
+
+def test_kopya_dizi_denetimi_SEZONA_gore_yapilir():
+    """Aynı dizi iki FARKLI sezonda kusur değildir; aynı sezonda kusurdur.
+
+    §7.4'ün v1 vakası bir sezonun kendi içinde tekrar eden dizilerdi ve
+    denetim onu yakalamak için var. Sezonsuz gruplama birleşik kesitte
+    "2022/23 hf 21 ile 2024/25 hf 30 aynı" gibi anlamsız bir çakışma
+    raporlardı — iki bağımsız kuponun aynı diziyi vermesi olağandır.
+
+    Gerçek veride bugün hiç çakışma yok (ölçüldü), yani bu kural ancak
+    sentetik satırla sınanabilir.
+    """
+    from spor_toto.history import _data_quality
+
+    def satir(sezon, week, results):
+        return {
+            "week": week, "sezon": sezon,
+            "anahtar": f"{sezon or 'varsayilan'}-{week}",
+            "close_date": "2024-01-01", "results": results,
+            "counts": {s: results.count(s) for s in SYMBOLS},
+            "consistent": True, "complete": len(results) == MATCH_COUNT,
+            "reported_counts": None, "matches": [], "matches_match_results": False,
+        }
+
+    dizi = "1" * MATCH_COUNT
+    farkli_sezon = _data_quality([satir("2022_23", 3, dizi), satir("2023_24", 9, dizi)])
+    assert farkli_sezon["duplicate_results"] == [], (
+        "iki ayri sezonun ayni dizisi kopya sayildi")
+
+    ayni_sezon = _data_quality([satir("2022_23", 3, dizi), satir("2022_23", 9, dizi)])
+    assert [d["weeks"] for d in ayni_sezon["duplicate_results"]] == [[3, 9]]
+    assert ayni_sezon["duplicate_results"][0]["sezon"] == "2022_23"
+
+
+def test_kusur_listeleri_haftayi_SEZONUYLA_anar():
+    """Kusur raporu birleşik kesitte belirsiz olamaz.
+
+    Listeler düz hafta numarasıydı; "12. hafta eksik" cümlesi birleşimde
+    dört kaydın dördünü birden gösterebilirdi.
+    """
+    from spor_toto.history import _data_quality
+
+    eksik = {
+        "week": 7, "sezon": "2023_24", "anahtar": "2023_24-7",
+        "close_date": "2024-01-01", "results": "1" * (MATCH_COUNT - 1),
+        "counts": {"1": MATCH_COUNT - 1, "0": 0, "2": 0},
+        "consistent": True, "complete": False, "reported_counts": None,
+        "matches": [], "matches_match_results": False,
+    }
+    dq = _data_quality([eksik])
+    assert dq["incomplete_weeks"] == [
+        {"week": 7, "sezon": "2023_24", "anahtar": "2023_24-7"}]
+    assert dq["weeks_without_matches"] == [
+        {"week": 7, "sezon": "2023_24", "anahtar": "2023_24-7"}]
+
+
+def test_kayit_secenekleri_AYNI_etiketi_kokenle_ayirir():
+    """2025/26'nın iki kaydı seçicide ayırt edilebilmeli.
+
+    Kullanıcının ilk sorduğu soru buydu: biri 41 hafta diyor, öteki 31 —
+    hangisi hangisi? Ayıran şey sezon anahtarı değil **köken**: anahtarı
+    ("2025_26") buraya yazmak, aynı çakışma üçüncü bir sezonda çıktığında
+    sessizce yanlış olurdu.
+    """
+    from spor_toto.history import TUM_SEZONLAR, kayit_secenekleri
+
+    kayitlar = kayit_secenekleri()
+    assert kayitlar[0]["deger"] == TUM_SEZONLAR, "ilk secenek birlesik kesit olmali"
+    etiketler = [k["etiket"] for k in kayitlar]
+    assert len(set(etiketler)) == len(etiketler), f"etiket cakismasi: {etiketler}"
+
+    ikili = [k for k in kayitlar if k["etiket"].startswith("2025/26")]
+    assert len(ikili) == 2, "2025/26'nin iki kaydi da secilebilir olmali"
+    assert {k["weeks"] for k in ikili} == {31, 41}
+    # Birleşime yalnızca biri girer ve hangisi olduğu seçicide okunur.
+    assert [k["birlesimde"] for k in sorted(ikili, key=lambda k: k["weeks"])] == [False, True]

@@ -193,8 +193,12 @@ Ne çözdüğü §10.1'dedir ve tek cümleyle şudur: havuz ekseni **n = 3'ten n
 | Çapraz doğrulama | 2025/26'nın 31 ortak haftasında **30'u birebir aynı** |
 | Taşımadığı | Oran ve maç istatistiği yok |
 
-Kupon değerlendirme seti 41 haftadan **148 haftaya** çıktı (41 eski + 107
-yeni; 29'u aynı sezonun iki bağımsız okuması). Ayrıntı §6F ve §6G.
+Kupon değerlendirme seti 41 haftadan **153 haftaya** çıktı (41 eski + 112
+yeni; 31'i aynı sezonun iki bağımsız okuması). Ayrıntı §6F ve §6G.
+
+Arayüzün varsayılan görünümü bu kayıtların **birleşimidir**: 122 hafta ·
+1.830 maç. 153 ile 122 arasındaki fark, aynı sezonu iki kez sayan 31
+haftadır — birleşim 2025/26'yı **bir kez** alır (§6G.8).
 
 ## 3. Kaynak seçimi
 
@@ -1230,8 +1234,20 @@ değil, kaynağın yapısal sınırıdır ve kapanmaz.
 
 | Ölçüm | Sonuç |
 |---|---|
-| Ortak hafta (2025/26) | 29 |
-| **1/0/2 dizisi birebir aynı** | **28 / 29** |
+| Ortak hafta (2025/26) | 31 |
+| **1/0/2 dizisi birebir aynı** | **30 / 31** |
+
+> **Sayılar §6I'de büyüdü** (ortak hafta 29 → 31, birebir aynı 28 → 30).
+> Sebep yeni veri değil, eşleştirmedeki Unicode kusurunun düzeltilmesi;
+> kaybolan hafta ve değişen 1/0/2 dizisi yok. Ayrışan hafta yine **tek**
+> ve aynı vaka. Kaynak: `data/st_history/gecmis_rapor.json`
+> → `capraz_dogrulama`.
+>
+> **Bekçi:** `test_belgeler.py::test_capraz_dogrulama_sayilari_RAPORLA_ayni`.
+> Bu sayı dokuz yerde anılıyor (bu tablo, `README`, `history.py`,
+> `meta.py`, `evaluate.py`, dört test docstring'i, iki arayüz yorumu) ve
+> §6I'de büyüdüğünde **hepsi bayat kalmıştı**: tek bekçi eşiklidir
+> (`ortak >= 25`, `oran >= 0,90`), yani veriyi tutar metni tutmaz.
 
 **Ayrışan tek hafta bir sonuç hatası değil, bir SIRA ayrışmasıdır.** 2025/26
 30. haftada iki kaynak **aynı 15 maçı** taşıyor (skor kümeleri birebir aynı)
@@ -1280,6 +1296,52 @@ yazar.
 
 ---
 
+### 6G.8 Birleşik kesit (`?sezon=hepsi`) — ve 2025/26'nın iki kez sayılmaması
+
+Kayıtlar ayrı dosyalarda duruyor ama arayüzün **varsayılan görünümü** artık
+onların birleşimidir. Kesit ölçüldü:
+
+| Kayıt | Hafta | Maç | Birleşimde |
+|---|---|---|---|
+| 2022/23 | 17 | 255 | ✔ |
+| 2023/24 | 31 | 465 | ✔ |
+| 2024/25 | 33 | 495 | ✔ |
+| 2025/26 · payload (`st_history_2025_26.json`) | 41 | 615 | ✔ |
+| 2025/26 · bülten (`st_history/2025_26.json`) | 31 | 465 | **✘** |
+| **Birleşik** | **122** | **1.830** | |
+
+**Birleşimin tek gerçek tehlikesi aynı sezonu iki kez saymaktır** ve o tehlike
+2025/26'da somuttur: iki kaydın ortak 31 haftasının 30'u birebir aynı dizidir
+(§6G.5). İkisini birden koymak o haftaları iki kez saymak olurdu — yüzdeler
+kaymaz ama `n` şişer ve hiçbir yerde yazmaz.
+
+Kesit bu yüzden **`evaluate.OLCUM_SEZONLARI`den türüyor**: o demet aynı
+gerekçeyle `2025_26`yi zaten dışarıda bırakıyor ve gerekçesini yanında
+taşıyor. `history.birlesik_kesit()` ikinci bir liste tutmaz; tutsaydı biri
+değişir, öteki sessizce aynı sezonu iki kez sayardı. Bültenden okunan kayıt
+seçilebilir olarak kalır (`?sezon=2025_26`), birleşime girmez.
+
+**Hafta numarası birleşimde kimlik değildir.** Dört kaydın dördünde de 12.
+hafta var; satırlar kendi `sezon`unu ve `anahtar`ını (`"2023_24-12"`) taşır.
+Sıralama kronolojiktir (`close_date`), kopya dizi denetimi **sezon içinde**
+yapılır (iki bağımsız kuponun aynı diziyi vermesi kusur değildir) ve tek
+hafta sorgusu birleşik kesitte **400 döner** — "12. hafta" belirsizdir ve
+doktrin 4 gereği biri sessizce seçilmez.
+
+**Aynı dize iki uçta aynı kesiti tanımlar, aynı sayıyı vermez.** `?sezon=hepsi`
+`/api/stats`te kuponun **bütün** haftalarını sayar (122); `/api/backtest`te
+piyasa oranı olan alt kümeyi (114 — `usable`). Fark süzgeçtedir, kesitin
+tanımında değil; sabit tek yerde durur (`history.TUM_SEZONLAR`) ki iki uçta
+iki farklı anlam kazanmasın.
+
+Bekçiler: `test_history.py` (iki kez sayma, anahtar benzersizliği, kronoloji,
+dilim, künye, sezona göre kopya denetimi), `test_api_stats.py` (gövde, oran
+özeti, tek hafta ucunun 400'ü, **seçicideki her tuşun gövdeyle aynı hafta
+sayısını vermesi**), `test_odds.py` (süzgecin `(sezon, hafta)` çifti olması)
+ve `health._check_stats_sozlesmesi` (birleşik gövde de denetleniyor).
+
+---
+
 ## 6H. Oran arşivi artık sezonlu
 
 §5'in oran boru hattı tek sezona çiviliydi ve **üç sabiti** vardı; üçü de
@@ -1325,7 +1387,7 @@ aynı numaralar bulunur ve özet sessizce başka bir sezonu anlatırdı.
 
 ## 6I. Eşleştirme teşhisi — ve sessizce ölü bir sözlük
 
-§6G'nin boru hattı 156 haftanın **107'sini** kabul ediyor, 49'unu eliyordu.
+§6G'nin boru hattı 156 haftanın **107'sini** kabul ediyordu, 49'unu eliyordu.
 `georgedouzas/sports-betting` incelemesi bir eşleştirme stratejisi önerdi
 (küresel bire-bir atama + artık-tek kuralı) ve soru şuydu: elenen 49
 haftanın kaçına dokunabilir?
@@ -1525,7 +1587,12 @@ tablolar (script'in bastığı lig dağılımı) bunu yakalayan şeydi.
 | `test_sportoto_arsiv.py::test_hafta_no_tahmin_edilmez` | Hafta numarası uydurulmaz (doktrin 2) |
 | `test_sportoto_arsiv.py::test_celisen_kapanis_tarihi_raporlanir` | İki uç çelişirse biri sessizce seçilmez (doktrin 4) |
 
-Toplam 113 test bu dört veri setini korur (backend paketi 1.842 test). `python -m spor_toto.health`
+Dört veri setinin bekçileri dört dosyadadır — `test_history` (35) ·
+`test_odds` (9) · `test_snapshot_iddaa` (14) · `test_sportoto_arsiv` (28):
+**86 test** (backend paketi 1.863). Sayı burada dosya dosya yazılıyor çünkü
+önceki hâli ("113") elle sayılmıştı ve neyi topladığı yazmıyordu; hangi
+dosyaları saydığı yazılmayan bir toplam, ilk değişiklikte sessizce bayatlar.
+`python -m spor_toto.health`
 22 değişmez çalıştırır; `oran_arsivi` ve `geri_test` bu katmanı, `tahmin_referanslari`
 tahmin katmanının ölçüm koşumunu korur.
 
@@ -1548,14 +1615,15 @@ tahmin katmanının ölçüm koşumunu korur.
 1. **Tam sezon değil:** 41 / ~53 hafta. Eksik skorlu haftalar bilinçli olarak yok.
 
    > **Genişledi (2026-08-30).** Bültenden okunup fikstüre bağlanan set (§6F, §6G)
-   > **4 sezon · 107 hafta · 1.605 maç** ekledi. Yine "tam sezon" değil ve olmayacak:
-   > tavan **milli takım haftalarıdır** — football-data yalnızca kulüp liglerini
-   > kapsıyor ve o haftalar bu yolla hiçbir zaman gelmeyecek. Ayrıca bültenin
-   > listelediği ama **ertelenen** maçı olan hafta da bilinçli olarak düşer (§6G.2).
+   > **4 sezon · 112 hafta · 1.680 maç** ekledi (§6I'de 107 hafta · 1.605
+   > maçtan çıktı). Yine "tam sezon" değil ve olmayacak: tavan **milli takım
+   > haftalarıdır** — football-data yalnızca kulüp liglerini kapsıyor ve o
+   > haftalar bu yolla hiçbir zaman gelmeyecek. Ayrıca bültenin listelediği
+   > ama **ertelenen** maçı olan hafta da bilinçli olarak düşer (§6G.2).
 
 2. **Tek sezon değil, artık dört.** Bu madde "tek sezon: 2025/2026, 41 hafta küçük
-   örneklem" diyordu. Kupon değerlendirme seti **148 haftaya** çıktı (41 eski +
-   107 yeni, 29'u aynı sezonun iki bağımsız okuması). İstatistiksel güç hâlâ
+   örneklem" diyordu. Kupon değerlendirme seti **153 haftaya** çıktı (41 eski +
+   112 yeni, 31'i aynı sezonun iki bağımsız okuması). İstatistiksel güç hâlâ
    sınırlı ama sınır artık "tek sezon" değil.
 3. **Milli maç haftalarında oran yok** (5, 10, 15). Oran blokları o haftalarda boş; kapsama
    hiçbir zaman %100 olmayacak.
@@ -1872,9 +1940,9 @@ sürümünde hakkında hiçbir şey bilinmeyen bir boyuttur.
 
 > **Durum (2026-08-30).** Bu bölüm "kalan tek parça maç listesi" diye
 > açılmıştı. O parça §6F'de (bülten OCR) okundu, §6G'de fikstüre bağlandı ve
-> ayak **kapandı**: 4 sezon · **107 hafta** · **1.605 kupon maçı**, tam 1/0/2
-> dizisiyle. Aşağıdaki tablo o günün durumunu anlatıyor ve kayıt olarak
-> duruyor; güncel sayılar §6G.4'te.
+> ayak **kapandı**: 4 sezon · **107 hafta** · **1.605 kupon maçı** (§6I'de
+> 112 hafta · 1.680 maça çıktı), tam 1/0/2 dizisiyle. Aşağıdaki tablo o
+> günün durumunu anlatıyor ve kayıt olarak duruyor; güncel sayılar §6G.4'te.
 >
 > Kapanmayan tek şey **yapısal tavan**: milli takım haftaları football-data'da
 > hiç yok ve o haftalar bu yolla hiçbir zaman gelmeyecek.

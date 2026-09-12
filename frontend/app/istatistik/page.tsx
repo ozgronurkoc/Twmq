@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 
-import { getMeta, getStats } from "@/lib/api";
+import { getStats } from "@/lib/api";
 import { useIstek } from "@/lib/istek";
 import {
   SEMBOLLER,
@@ -37,8 +37,8 @@ import {
   aralikUrldenOku,
   aralikUrleYaz,
   SeasonFilter,
-  sezonUrldenOku,
-  sezonUrleYaz,
+  sezonEtiketi,
+  useSezonSecimi,
 } from "@/components/istatistik/parts";
 import { WeeksTable } from "@/components/istatistik/weeks-table";
 import { IstatistikSekmeleri } from "@/components/istatistik/sekmeler";
@@ -53,24 +53,16 @@ const ARALIKLAR: Array<{ deger: number | null; etiket: string }> = [
 
 export default function IstatistikPage() {
   const [last, setLast] = React.useState<number | null>(null);
-  const [sezon, setSezon] = React.useState<string | null>(null);
-  const [sezonlar, setSezonlar] = React.useState<string[]>([]);
+  // Sezon secimi UC SAYFANIN ORTAK kancasindan gelir; varsayilan gorunum
+  // (birlesik kesit) orada motorun ilanindan okunur.
+  const { sezon, kayitlar, sec: sezonSec, hazir: sezonHazir } = useSezonSecimi();
   // Adresteki `?last=` okunana kadar istek atmiyoruz; aksi halde
   // paylasilan bir baglanti once tum sezonu cekip sonra dilime donerdi.
   const [urlOkundu, setUrlOkundu] = React.useState(false);
 
   React.useEffect(() => {
     setLast(aralikUrldenOku());
-    setSezon(sezonUrldenOku());
     setUrlOkundu(true);
-  }, []);
-
-  // Secilebilir sezonlar motorun yetenek envanterinden gelir; arayuzde
-  // sabit liste tutmuyoruz ki yeni bir sezon eklendiginde burasi bayatlamasin.
-  React.useEffect(() => {
-    getMeta()
-      .then((m) => setSezonlar(m.seasons?.available ?? []))
-      .catch(() => setSezonlar([]));
   }, []);
 
   /** Filtre secimi hem state'e hem adres cubuguna yazilir. */
@@ -79,22 +71,15 @@ export default function IstatistikPage() {
     aralikUrleYaz(v);
   }
 
-  function sezonSec(v: string | null) {
-    setSezon(v);
-    sezonUrleYaz(v);
-  }
-
-  // Hafta baglantilari secili sezonu TASIMALI: tasimazsa sezon secip bir
-  // haftaya tiklayan kullanici varsayilan sezonun o numarali haftasini
-  // gorurdu ve bunu anlamasinin bir yolu olmazdi.
-  const sezonSorgu = sezon ? `?sezon=${encodeURIComponent(sezon)}` : "";
-
   const {
     veri,
     hata,
     yukleniyor: mesgul,
-  } = useIstek((signal) => getStats(last, signal, sezon), [last, sezon], {
-    hazir: urlOkundu,
+  } = useIstek((signal) => getStats(last, signal, sezon ?? null), [last, sezon], {
+    // Sezon kararlasmadan istek atmiyoruz: atsaydik sayfa once varsayilan
+    // kaydi cekip sonra birlesik kesite doner, iki kez ve iki farkli
+    // sayiyla cizilirdi.
+    hazir: urlOkundu && sezonHazir,
     varsayilanHata: "İstatistik alınamadı",
   });
 
@@ -132,6 +117,32 @@ export default function IstatistikPage() {
   };
   const lider = SEMBOLLER.reduce((a, b) => (adet[a] >= adet[b] ? a : b));
   const son = analytics.recent;
+  // Birlesik kesitin isareti META'DA: `birlesim` yalnizca orada dolu.
+  // Sayfanin "hangi kipteyim" sorusu tek yerden cevaplaniyor.
+  const birlesikKesit = Boolean(meta.birlesim?.length);
+
+  /**
+   * Hafta detayinin adresi — hafta KENDI kaydini tasir.
+   *
+   * Once sayfanin secili sezonu butun baglantilara yazılıyordu; birlesik
+   * kesitte bu `?sezon=hepsi` demek olurdu ve o uc (haklı olarak) 400
+   * doner: "12. hafta" birlesik kesitte dort sezonun dordunde de var.
+   * Dogru sezon, satirin kendi sezonudur.
+   *
+   * Varsayilan kayit icin de bir ad yazilir ("varsayilan"), ama o ad burada
+   * SABIT DEGIL: motorun ilan ettigi kayitlardan (`seasons.kayitlar`)
+   * okunur. Yazilmasinin sebebi geri donus: hafta detayindaki "Tum
+   * haftalar" baglantisi ayni parametreyi tasiyor ve kullanici geldigi
+   * kesite doner — parametresiz donseydi varsayilan kayittan birlesik
+   * kesite sessizce atlardi. Kayit listesi henuz gelmediyse parametre
+   * yazilmaz; uc parametresiz cagriyi zaten varsayilan kayit sayar.
+   */
+  const haftaAdresi = (week: number, hs: string | null | undefined) => {
+    const deger = kayitlar.find((k) => k.sezon === (hs ?? null))?.deger ?? hs;
+    return deger
+      ? `/istatistik/${week}?sezon=${encodeURIComponent(deger)}`
+      : `/istatistik/${week}`;
+  };
 
   return (
     <div className="space-y-6">
@@ -150,6 +161,8 @@ export default function IstatistikPage() {
           {meta.season ? <Badge ton="primary">{meta.season}</Badge> : null}
           <Badge>
             {sayi(meta.weeks)} hafta
+            {/* Birlesik kesitte numara araligi YOK (`week_from` null gelir):
+                dort kaydin numaralari ic ice gecer ve "2–51" yanlis okunur. */}
             {meta.week_from ? ` (${meta.week_from}–${meta.week_to})` : ""}
           </Badge>
           <Badge>{sayi(meta.matches)} maç</Badge>
@@ -159,20 +172,29 @@ export default function IstatistikPage() {
             </Badge>
           ) : null}
           {meta.sliced ? <Badge ton="warning">dilim</Badge> : null}
-          {sezon ? <Badge ton="warning">türetilmiş kayıt</Badge> : null}
+          {/* Koken rozeti META'DAN gelir. Once `sezon ? ...` yaziyordu, yani
+              "bir sezon secilmisse turetilmistir" varsayimi vardi; birlesik
+              kesit secilince o varsayim birlesimi "turetilmis" diye
+              etiketlerdi. */}
+          {birlesikKesit ? (
+            <Badge ton="primary">birleşik kesit</Badge>
+          ) : meta.origin?.startsWith("turetilmis") ? (
+            <Badge ton="warning">türetilmiş kayıt</Badge>
+          ) : null}
         </div>
         <div className="mt-4 space-y-3">
           <SeasonFilter
             deger={sezon}
-            secenekler={sezonlar}
+            kayitlar={kayitlar}
             onChange={sezonSec}
             mesgul={mesgul}
           />
           <RangeFilter deger={last} onChange={aralikSec} secenekler={ARALIKLAR} mesgul={mesgul} />
           <SliceNote
-            weeks={veri.weeks.map((w) => w.week)}
+            weeks={veri.weeks}
             matches={meta.matches ?? 0}
             sliced={Boolean(meta.sliced)}
+            birlesim={meta.birlesim}
           />
         </div>
       </header>
@@ -240,7 +262,11 @@ export default function IstatistikPage() {
         <Card>
           <CardHeader
             title="Haftalık seyir"
-            hint="Dikey eksen o haftaki maç sayısı, yatay eksen hafta numarası. Eksik veri nedeniyle dışarıda kalan haftalar eksende yer almaz."
+            hint={
+              birlesikKesit
+                ? "Dikey eksen o haftaki maç sayısı; yatay eksen kayıtları sırasıyla gösterir (kesikli çizgi kayıt sınırı). Birleşik kesitte hafta numarası eksende yazılmaz: dört kaydın numaraları iç içe geçer."
+                : "Dikey eksen o haftaki maç sayısı, yatay eksen hafta numarası. Eksik veri nedeniyle dışarıda kalan haftalar eksende yer almaz."
+            }
             action={<SymbolLegend />}
           />
           <CardBody>
@@ -336,8 +362,9 @@ export default function IstatistikPage() {
                           {etiket} {u.value} →{" "}
                           <Link
                             className="text-primary hover:underline"
-                            href={`/istatistik/${u.week}${sezonSorgu}`}
+                            href={haftaAdresi(u.week, u.sezon)}
                           >
+                            {birlesikKesit ? `${sezonEtiketi(u.sezon)} · ` : ""}
                             {u.week}. hf
                           </Link>
                         </>
@@ -361,12 +388,16 @@ export default function IstatistikPage() {
                 </div>
                 <ul className="tnum space-y-1.5 text-[12.5px] text-muted-foreground">
                   {analytics.streaks.top.slice(0, 5).map((r, i) => (
-                    <li key={`${r.week}-${r.start}-${i}`}>
+                    <li key={`${r.anahtar}-${r.start}-${i}`}>
                       <span className="font-medium text-foreground">
                         {r.length}× {r.symbol}
                       </span>{" "}
                       ·{" "}
-                      <Link className="text-primary hover:underline" href={`/istatistik/${r.week}${sezonSorgu}`}>
+                      <Link
+                        className="text-primary hover:underline"
+                        href={haftaAdresi(r.week, r.sezon)}
+                      >
+                        {birlesikKesit ? `${sezonEtiketi(r.sezon)} · ` : ""}
                         {r.week}. hf
                       </Link>{" "}
                       · {r.start}. maçtan itibaren
@@ -391,6 +422,8 @@ export default function IstatistikPage() {
               avg={weeklyAvg}
               brier={veri.odds?.weekly_brier}
               brierAvg={veri.odds?.brier_avg}
+              birlesik={birlesikKesit}
+              haftaAdresi={haftaAdresi}
             />
           </CardBody>
         </Card>
@@ -399,7 +432,7 @@ export default function IstatistikPage() {
         <Card>
           <CardHeader title="Veri kalitesi" hint={meta.source} />
           <CardBody>
-            <DataQualityPanel dq={dq} />
+            <DataQualityPanel dq={dq} birlesik={birlesikKesit} />
           </CardBody>
         </Card>
       </div>

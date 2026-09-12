@@ -48,7 +48,7 @@ from spor_toto.health import (
     ornek_kimligi,
     run_health,
 )
-from spor_toto.history import history_week_detail
+from spor_toto.history import VARSAYILAN_KAYIT, history_week_detail, sezon_anahtari
 from spor_toto.history import sezonlar as history_sezonlari
 from spor_toto.markov import markov_report
 from spor_toto.meta import (
@@ -658,10 +658,10 @@ def api_stats():
     """
     last = _parse_last(request.args.get("last"))
     try:
-        sezon = _parse_sezon(request.args.get("sezon"))
+        sezon = _parse_sezon(request.args.get("sezon"), tum_izin=True)
     except GecersizSezon:
         return jsonify({"error": "bilinmeyen sezon",
-                        "sezonlar": history_sezonlari()}), 400
+                        "sezonlar": _sezon_secenekleri(tum_izin=True)}), 400
     return jsonify(stats_payload(last, sezon))
 
 
@@ -730,9 +730,21 @@ def api_takimlar():
 def api_stats_week(week: int):
     try:
         sezon = _parse_sezon(request.args.get("sezon"))
-    except GecersizSezon:
-        return jsonify({"error": "bilinmeyen sezon",
-                        "sezonlar": history_sezonlari()}), 400
+    except GecersizSezon as e:
+        # `hepsi` burada gecersiz ve gerekcesi ayri: bilinmeyen bir sezon
+        # degil, TEK HAFTA sorgusuna uymayan bir kesit. Ayni 400'u dondurup
+        # ayni metni yazmak, arayuzun kullaniciya "sezon secin" diyecegi
+        # yerde "bilinmeyen sezon" dedirtirdi.
+        birlesik = str(e) == TUM_SEZONLAR
+        return jsonify({
+            # Metin KULLANICIYA gorunuyor (arayuz bu govdeyi basiyor), o
+            # yuzden duzgun Turkce; dosyanin geri kalanindaki ASCII yorumlar
+            # kod icindir.
+            "error": ("birleşik kesitte tek hafta yok: hafta numarası "
+                      "sezonlar arasında benzersiz değil, bir sezon seçin")
+            if birlesik else "bilinmeyen sezon",
+            "sezonlar": _sezon_secenekleri(),
+        }), 400
     w = history_week_detail(week, sezon)
     if not w:
         return jsonify({"error": f"{week}. hafta yok"}), 404
@@ -743,6 +755,19 @@ def api_stats_week(week: int):
     w["odds"] = {str(no): blok for no, blok in oranlar.items()}
     w["odds_hit"] = sum(1 for b in oranlar.values() if b["hit"])
     return jsonify(w)
+
+
+def _sezon_secenekleri(tum_izin: bool = False) -> list[str]:
+    """400 govdesinin yazdigi GECERLI degerler — ucun kabul ettigi kume.
+
+    Liste elle tutulmuyordu ve `varsayilan` hic gorunmuyordu: arayuz
+    varsayilan kaydi sezon vermeyerek seciyordu, yani bir ad yoktu.
+    Birlesik kesit gelince ad sart oldu (secici artik ikisini de tus
+    olarak gosteriyor) ve hata govdesi de onu saymali — okuyan, neyi
+    yazabilecegini buradan ogreniyor.
+    """
+    return [VARSAYILAN_KAYIT, *history_sezonlari(),
+            *([TUM_SEZONLAR] if tum_izin else [])]
 
 
 class GecersizSezon(ValueError):
@@ -756,6 +781,12 @@ class GecersizStrateji(ValueError):
 def _parse_sezon(raw: Any, tum_izin: bool = False) -> str | None:
     """`?sezon=` cozumleyici. Bos -> None (varsayilan), gecersiz -> yukselir.
 
+    Cozumlemenin KENDISI `history.sezon_anahtari`dedir; burasi yalnizca
+    ucun kabul ettigi kumeyi daraltir ve hatayi HTTP'nin anladigi tipe
+    cevirir. Iki yerde iki ayri cozumleyici tutmak, `varsayilan`/`hepsi`
+    gibi ozel adlarin bir ucta taninip otekinde taninmamasina acik kapi
+    birakirdi.
+
     Gecersiz sezonu sessizce varsayilana dusurmuyoruz: kullanici bir sezon
     ISTEDI ve baska bir sezonun sayilarini gormek, hic sayi gormemekten
     kotudur. Ucler `GecersizSezon`u yakalayip 400 ve gecerli listeyi doner.
@@ -766,17 +797,19 @@ def _parse_sezon(raw: Any, tum_izin: bool = False) -> str | None:
     `Literal[True]`in de gecebilecegini soyledi — yani nobetci, tip
     sisteminin yakalayabilecegi bir kaymayi gizliyordu.
 
-    `tum_izin` yalnizca geri testte acilir: orada `?sezon=hepsi` tek sezon
-    degil **olcum kesitinin tamami** demektir (114 hafta). `/api/stats` icin
-    anlamsizdir — o uc sezonlari birlestirmez, secer.
+    `tum_izin` kapali oldugunda `?sezon=hepsi` GECERSIZDIR ve bu, ucun
+    kendi dogasindan gelir: `/api/stats/<hafta>` tek hafta dondurur ve
+    "12. hafta" birlesik kesitte dort sezonun dordunde de vardir. Birini
+    sessizce secmek yerine 400 doner (doktrin 4).
     """
-    if raw is None or str(raw).strip() == "":
-        return None
-    sezon = str(raw).strip()
-    if tum_izin and sezon == TUM_SEZONLAR:
-        return sezon
-    if sezon not in history_sezonlari():
-        raise GecersizSezon(sezon)
+    try:
+        sezon = sezon_anahtari(raw)
+    except KeyError as e:
+        # `str(KeyError("x"))` tirnakli gelir (`"'x'"`); istisnanin kendi
+        # argumani alinir ki tasidigi deger ham haliyle kalsin.
+        raise GecersizSezon(e.args[0] if e.args else "") from e
+    if sezon == TUM_SEZONLAR and not tum_izin:
+        raise GecersizSezon(TUM_SEZONLAR)
     return sezon
 
 
@@ -874,7 +907,7 @@ def api_backtest():
         sezon = _parse_sezon(request.args.get("sezon"), tum_izin=True)
     except GecersizSezon:
         return jsonify({"error": "bilinmeyen sezon",
-                        "sezonlar": [*history_sezonlari(), TUM_SEZONLAR]}), 400
+                        "sezonlar": _sezon_secenekleri(tum_izin=True)}), 400
     return jsonify(_backtest_cached(last, banko, uclu, sweep, sezon,
                                     strateji, butce))
 

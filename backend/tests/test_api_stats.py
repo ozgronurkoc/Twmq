@@ -245,3 +245,103 @@ def test_meta_sezon_listesini_yayinlar(client):
     b = client.get("/api/meta").get_json()
     assert b["seasons"]["default"] is None
     assert b["seasons"]["available"]
+
+
+# ─── birleşik kesit (`?sezon=hepsi`) ─────────────────────────────────────────
+
+def test_birlesik_kesit_govdesi(client):
+    """Sayfanın VARSAYILAN görünümü budur; gövdesi tek sezonla aynı şekilde.
+
+    Arayüz iki kip için iki ayrı okuma yazmıyor: aynı alanlar, aynı tipler.
+    Fark yalnızca künyededir (`birlesim` dolu, `week_from` boş).
+    """
+    from spor_toto.history import TUM_SEZONLAR, normalized_weeks
+
+    r = client.get(f"/api/stats?sezon={TUM_SEZONLAR}")
+    assert r.status_code == 200
+    b = r.get_json()
+    beklenen = len(normalized_weeks(sezon=TUM_SEZONLAR))
+    assert b["meta"]["weeks"] == len(b["weeks"]) == beklenen
+    assert b["meta"]["matches"] == beklenen * MATCH_COUNT
+    assert b["sezon"] == TUM_SEZONLAR
+    assert b["meta"]["week_from"] is None, "birlesik kesitte numara araligi anlamsiz"
+    assert sum(d["weeks"] for d in b["meta"]["birlesim"]) == beklenen
+    for sym in SYMBOLS:
+        assert b["totals"][sym] == sum(w["counts"][sym] for w in b["weeks"])
+    # Kesit tek sezondan BUYUK olmali — yoksa birlesim adi boş bir vaattir.
+    assert beklenen > len(history_weeks())
+
+
+def test_birlesik_kesitte_oran_ozeti_de_birlesir(client):
+    """*Oranlar* sekmesi aynı uçtan besleniyor: orada da boş kalmamalı.
+
+    Ve haftalık Brier satırları hafta ANAHTARIYLA gelmeli: numara birleşik
+    kesitte dört kaydın dördünde de var, numaraya göre eşleşen bir tablo
+    dolu görünür ve sessizce yanlış olurdu.
+    """
+    from spor_toto.history import TUM_SEZONLAR
+
+    b = client.get(f"/api/stats?sezon={TUM_SEZONLAR}").get_json()
+    oran = b["odds"]
+    assert oran, "birlesik kesitte oran ozeti bos geldi"
+    anahtarlar = [h["anahtar"] for h in oran["weekly_brier"]]
+    assert len(set(anahtarlar)) == len(anahtarlar)
+    hafta_anahtarlari = {w["anahtar"] for w in b["weeks"]}
+    assert set(anahtarlar) <= hafta_anahtarlari, "oran ozeti kesit disi hafta tasiyor"
+    assert oran["matches"] > client.get("/api/stats").get_json()["odds"]["matches"]
+
+
+def test_birlesik_kesitte_dilim_de_calisir(client):
+    """`?last=N` birleşimde de gövdenin TAMAMINI daraltmalı."""
+    from spor_toto.history import TUM_SEZONLAR
+
+    b = client.get(f"/api/stats?sezon={TUM_SEZONLAR}&last=6").get_json()
+    assert b["meta"]["weeks"] == len(b["weeks"]) == 6
+    assert b["meta"]["sliced"] is True
+    assert b["analytics"]["transitions"]["n"] == 6 * (MATCH_COUNT - 1)
+
+
+def test_varsayilan_kayit_ACIK_adiyla_da_secilebilir(client):
+    """`?sezon=varsayilan` ile parametresiz çağrı AYNI gövdeyi vermeli.
+
+    Seçicide artık birleşik kesit ilk sırada duruyor; varsayılan kaydın da
+    bir adı olmalı ki tuşa basılabilsin. Uç sözleşmesi değişmedi:
+    parametresiz çağrı hâlâ varsayılan kaydı döndürür.
+    """
+    a = client.get("/api/stats").get_json()
+    b = client.get("/api/stats?sezon=varsayilan").get_json()
+    assert a["meta"]["weeks"] == b["meta"]["weeks"] == 41
+    assert [w["anahtar"] for w in a["weeks"]] == [w["anahtar"] for w in b["weeks"]]
+
+
+def test_hafta_ucu_birlesik_kesiti_REDDEDER(client):
+    """Tek hafta sorgusu birleşimde anlamsız: 400, ve gerekçesi ayrı yazılır.
+
+    "Bilinmeyen sezon" demek yanlış olurdu — `hepsi` bilinen bir kesittir,
+    yalnızca bu uca uymaz. Arayüz kullanıcıya "sezon seçin" diyebilmeli.
+    """
+    from spor_toto.history import TUM_SEZONLAR
+
+    r = client.get(f"/api/stats/12?sezon={TUM_SEZONLAR}")
+    assert r.status_code == 400
+    b = r.get_json()
+    assert "birleşik" in b["error"]
+    assert TUM_SEZONLAR not in b["sezonlar"], "bu uc birlesik kesiti sunmamali"
+    assert "varsayilan" in b["sezonlar"]
+
+
+def test_meta_secici_kayitlarini_yayinlar(client):
+    """Seçici motorun ilanından kurulur; arayüzde sabit sezon listesi yok."""
+    from spor_toto.history import TUM_SEZONLAR
+
+    s = client.get("/api/meta").get_json()["seasons"]
+    assert s["birlesik"] == TUM_SEZONLAR
+    assert s["varsayilan_kayit"] == "varsayilan"
+    kayitlar = s["kayitlar"]
+    assert kayitlar[0]["deger"] == TUM_SEZONLAR
+    # Her kaydın `deger`i `?sezon=` olarak GERÇEKTEN çalışmalı.
+    for k in kayitlar:
+        r = client.get(f"/api/stats?sezon={k['deger']}")
+        assert r.status_code == 200, f"{k['deger']} secilemedi"
+        assert r.get_json()["meta"]["weeks"] == k["weeks"], (
+            f"{k['deger']}: secicideki hafta sayisi govdeyle ayristi")

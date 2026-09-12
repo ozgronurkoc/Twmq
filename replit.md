@@ -91,6 +91,7 @@ GET  /api/health/checks      kontrol envanteri (çalıştırmadan)
 GET  /api/health/history     son koşular ("ne zamandan beri kırmızı?")
 POST /api/health/kupon       kullanıcının kendi kuponunu doğrular
 GET  /api/stats              sezon istatistikleri (?last=N, ?sezon=)
+                             ?sezon=hepsi -> birlesik kesit (122 hafta)
 GET  /api/stats/<week>       hafta detayı (?sezon=)
 GET  /api/backtest           geri test (eşik taraması + hold-out)
 GET  /api/tahmin             yaklaşan maçlar + ölçülmüş isabet
@@ -192,7 +193,9 @@ arama ile birlikte düştü (`docs/DUZ_SISTEME_GECIS.md`).
 - `backend/data/st_history/` — bültenleri football-data fikstürüne bağlayıp
   **tam 1/0/2 dizisi** üreten geçmiş sezon seti: **4 sezon · 112 hafta · 1.680
   maç** (§6I'de 107'den çıktı — eşleştirmedeki Unicode kusuru düzeltildi).
-  `st_history_2025_26.json` ile karışmaz; `/api/stats` hâlâ eskisine bakar
+  `st_history_2025_26.json` ile karışmaz; `/api/stats` parametresiz çağrıda
+  hâlâ eskisine bakar. `?sezon=hepsi` ikisini **birleştirir** (122 hafta ·
+  1.830 maç) ve 2025/26'yı bir kez sayar — arayüzün varsayılan görünümü budur
 - `backend/data/sportoto_arsiv/` — **resmî** Spor Toto arşivi (`webapi.sportoto.gov.tr`):
   6 sezon · 225 hafta · **223 ikramiye tablosu**. Deponun ilk resmî kaynağı.
   **Maç listesi taşımaz** — o resmî uçta yalnızca bülten görseli olarak var
@@ -207,7 +210,7 @@ doğrulamadan dosya yazmazlar). Ayrıntı: `docs/VERI_TOPLAMA_VE_ISLEME.md`.
 ```bash
 cd backend
 python -m pytest -m "not slow" -q   # hızlı süit
-python -m pytest                    # tamamı (1.842 test)
+python -m pytest                    # tamamı (1.863 test)
 python -m pytest -n0 tests/test_egitim.py   # tek çekirdek (hata ayıklarken)
 cd .. && bash scripts/check.sh      # TEK kapı; CI de bunu çağırır
 ```

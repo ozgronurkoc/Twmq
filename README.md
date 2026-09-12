@@ -438,7 +438,7 @@ düzeltildi). Kupon değerlendirme seti 41 haftadan **153 haftaya** çıktı.
 
 Bu ikisinin en güçlü kanıtı bir çapraz doğrulamadır: `st_history_2025_26.json`
 üçüncü parti bir payload'dan, yeni set resmî görselden gelir ve ikisi birbirini
-hiç görmez — **29 ortak haftanın 28'inde 1/0/2 dizisi birebir aynı.** Ayrışan tek
+hiç görmez — **31 ortak haftanın 30'unda 1/0/2 dizisi birebir aynı.** Ayrışan tek
 hafta bir sonuç hatası değil, bir **kupon sırası** ayrışmasıdır ve düzeltilmeden
 raporlanır ([`docs/VERI_TOPLAMA_VE_ISLEME.md`](docs/VERI_TOPLAMA_VE_ISLEME.md)
 §6G.5).
@@ -460,11 +460,17 @@ kapanmadığı bir test bekçisiyle sabitlendi
 İlk üç set 2026-08-30'da **sezonlu** hale geldi:
 
 - `/api/stats?sezon=2023_24` seçilen sezonun tamamını (özet, bantlar, analiz
-  blokları **ve** oran kartı) tek dilimden anlatır. Varsayılan `?sezon` yoktur
-  ve varsayılan kayıt 41 haftadır — mevcut hiçbir sayı oynamadı.
-- Sezonlar **birleştirilmez, seçilir**. `week` bu katmanda birincil anahtar
-  gibi davranıyor (sıralama, hafta detayı, oranın `(hafta, no)` haritası);
-  dört sezonu tek listeye koymak dördünü birden bozardı.
+  blokları **ve** oran kartı) tek dilimden anlatır. Parametresiz çağrı hâlâ
+  varsayılan kaydı döndürür (41 hafta) — mevcut hiçbir sayı oynamadı.
+- **`?sezon=hepsi` kayıtların BİRLEŞİMİDİR** ve arayüzün varsayılan görünümü
+  odur: **122 hafta · 1.830 maç**. 2025/26 bir kez sayılır — aynı sezonun
+  bültenden okunan ikinci kaydı (§6G.5) birleşime girmez, ayrı seçilir.
+- Birleştirme uzun süre **yasaktı** ve gerekçesi gerçekti: `week` bu katmanda
+  birincil anahtar gibi davranıyordu (sıralama, hafta detayı, oranın haftalık
+  Brier'i, arayüzün bağlantıları, kopya denetimi) ve dört kaydın dördünde de
+  12. hafta var. Yasak kalkmadı, **koşulu karşılandı**: satırlar artık
+  `sezon` + `anahtar` (`"2023_24-12"`) taşıyor. Tek hafta sorgusu birleşik
+  kesitte yine 400 döner — "12. hafta" orada belirsizdir (§6G.8).
 
 **Ölçüm tarafında kesit 36 → 114 haftaya çıktı** (540 → 1.710 maç) ve bu
 sayının bedeli önce ödendi: yeni haftalar oran taşımıyordu, oransız hafta
@@ -1175,7 +1181,7 @@ backend/
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
                        sehir/ · sistem_fiyat/
-  tests/               pytest (71 dosya → 1.842 test; §9'da katman dökümü)
+  tests/               pytest (71 dosya → 1.863 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1381,7 +1387,7 @@ dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri t
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
 eşleme, ikinci kayıt). **71 test dosyası, parametrizasyonla
-1.842 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+1.863 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
@@ -1390,7 +1396,7 @@ karşı denetler):
 | Çekirdek (kodlama · düz üretim · olasılık) | `core` `invariants` `edge_cases` `cli` `analysis` `bayes` `markov` `fire_scenarios` | 256 |
 | Tahmin katmanı | `predict` `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin` `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre` `secim_kalibrasyonu` **`arena`** **`sizinti`** | 590 |
 | Sağlık | `health` `api_health` `meta` `health_history` | 82 |
-| Veri / istatistik / geri test | `history` `odds` `backtest` `api_stats` `api_backtest` `snapshot_iddaa` `pazar` **`gecmis_sezon`** **`sportoto_arsiv`** **`bulten`** | 233 |
+| Veri / istatistik / geri test | `history` `odds` `backtest` `api_stats` `api_backtest` `snapshot_iddaa` `pazar` **`gecmis_sezon`** **`sportoto_arsiv`** **`bulten`** | 252 |
 | Süper Toto | `super_toto` `degerlendir` | 108 |
 | 2. Tahmin (kalabalık ayarı · bağımsız görüş) | `tahmin2` | 36 |
 | Karar katmanı | `secim` | 42 |
@@ -1408,7 +1414,7 @@ karşı denetler):
 | Koşum defteri | `kosum` | 22 |
 | Takım gücü | `takim_gucu` | 24 |
 | Yeni veri (UEFA · şehir) | `avrupa` `sehir` | 41 |
-| Belgeler | `belgeler` | 24 |
+| Belgeler | `belgeler` | 26 |
 | Ölçüm kütüğü (alıntı · üreten · bekçi bütünlüğü) | **`olcum_kutugu`** | 5 |
 | Değer bahsi (yan pazarlar) | **`deger`** | 24 |
 | Fiyat kaynakları | **`fiyatlar`** | 14 |
