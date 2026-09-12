@@ -1777,6 +1777,18 @@
    "anildigi_yerler": [],
    "bekci": "backend/tests/test_sembol_sirasi.py::test_bant_olcusu_kutukle_ayni",
    "not": "n = 2.648; piyasa yine +1,0 diyor, artik -4,2. 2-4 bandi +3,5 (n = 2.153, beklenen 3,0), >=4 bandi +3,6 (n = 3.458, beklenen 6,5). 22 ligli olcekteki kardesi -1,5 (ayri girdi, donmus). Yon AYNI: <2 bandinda 2. sembol 3.'den daha sik tutmuyor, yani sira bilgi tasimiyor — daraltma hukmu degil buyuklugu oynatti. Henuz hicbir belgede anilmiyor; anilirsa `anildigi_yerler` guncellenir."
+  },
+  {
+   "ne": "kademe korpus ici sezon disarida birakmali — GECEN basamak sayisi",
+   "deger": "0/20",
+   "ureten": "cd backend && python -c \"from spor_toto.evaluate import karsilastir, sezon_anahtari; from spor_toto.egitim import korpus_haftalari; from spor_toto.recalibrate import kademe_fabrikalari; from spor_toto.predict import PiyasaTahminci; print(karsilastir([PiyasaTahminci, *kademe_fabrikalari()], haftalar=korpus_haftalari(), grup=sezon_anahtari))\"",
+   "olculdu": "2026-09-12",
+   "anildigi_yerler": [
+    "docs/ISTATISTIK_YOL_HARITASI.md"
+   ],
+   "bekci": "-",
+   "bekcisiz_gerekce": "kosum ~40 dakika suruyor; kapiya baglanamaz. Alinti butunlugunu test_olcum_kutugu.py::test_kutukteki_her_sayi_anildigi_yerde_GERCEKTEN_geciyor tutuyor.",
+   "not": "KORPUS DARALTMASININ TEK HUKUM DEGISTIREN SONUCU (2026-09-12). 22 ligli korpusta iki basamak geciyordu: kalibre_bias -0,0005 ve kalibre_sicaklik -0,0004. 17 ligli korpusta ikisi de gecmiyor: bias -0,0002 [-0,0005, +0,0000], sicaklik -0,0001 [-0,0003, +0,0001] — ikisinin de araligi sifiri kesiyor. Etki YON degistirmedi (ikisi de hala negatif, yani piyasadan iyi tarafta); kaybolan sey ISTATISTIKSEL GUCTUR: ornekem %25,8 kuculunce aralik genisledi. Bu, korpusu daraltmanin OLCULMUS bedelidir ve kaplama degil DUZ bir kayiptir: §6.2'nin gecme kurali (aralık tamamen sifirin altinda) daha buyuk bir orneklem ister. Diger 18 basamak zaten gecmiyordu ve gecmemeye devam ediyor."
   }
  ],
  "komutlar": [

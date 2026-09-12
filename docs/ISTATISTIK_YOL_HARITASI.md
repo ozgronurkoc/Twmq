@@ -562,7 +562,14 @@ kaynak (football-data) kupon dışı maçların hem sonucunu hem oranını taş�
 > hâlâ 22 ligli kesitte.** E2/E3/EC/SC2/SC3 çıkarıldı (8.018 maç): 31.103 →
 > 23.085. Yeniden koşulup güncellenenler: taban Brier (0,5936 → **0,5869**),
 > "hep ev" kuralı (§DIS_TARAMA §5), F1 çizgi öngörüsü, §3.64 banko sapması,
-> kalibrasyon keskinlik payı, 2.↔3. sembol sırası. **Henüz koşulmayanlar bu
+> kalibrasyon keskinlik payı, 2.↔3. sembol sırası, Brier ayrışımı, bant
+> tablosu, Elo, Dixon-Coles, takım gücü, şehir/derbi, arena, hafta içi
+> bağımlılık, kademe.
+>
+> **Tek hüküm değişikliği kademede:** 22 ligli korpusta `kalibre_bias`
+> (−0,0005) ve `kalibre_sicaklik` (−0,0004) geçen tek iki basamaktı; 17
+> ligli korpusta ikisinin de aralığı sıfırı kesiyor, yani geçen basamak
+> **0/20**. Etkinin yönü değişmedi — kaybolan şey istatistiksel güç. **Henüz koşulmayanlar bu
 > sayfada `31.103` yazmaya devam ediyor ve o sayı doğrudur — ölçüm o kesitte
 > yapıldı.** Yeniden ölçülene kadar 22 ligli okunmalıdır; hangi sayının hangi
 > kesitte alındığı `.claude/olcum_kutugu.json` künyelerinde yazılı.
@@ -575,7 +582,7 @@ sızdırır) ve **çapraz** (`capraz_olc` — bir sette eğit, ortak maçı olma
 
 | Ölçüm | Sonuç |
 |---|---|
-| Korpus içi, sezon dışarıda bırakmalı (31.103 maç) | `kalibre_sicaklik` −0,0004 ve `kalibre_bias` −0,0005 **geçti**; lig/bant geçmedi |
+| Korpus içi, sezon dışarıda bırakmalı (23.085 maç) | **Artık hiçbir basamak geçmiyor.** `kalibre_bias` −0,0002 [−0,0005, +0,0000] ve `kalibre_sicaklik` −0,0001 [−0,0003, +0,0001] — ikisi de sıfırı kesiyor. 22 ligli kesitte bu ikisi geçen tek basamaklardı (−0,0005 / −0,0004) |
 | Korpusta eğit → 2025/26 kuponunda ölç (540 maç) | Dört basamak da piyasadan **iyi** (−0,0010…−0,0015) ama **hiçbiri geçmedi** |
 
 **Bulgu.** T2'de kupon üzerinde eğitilen aynı modeller piyasadan *kötü* çıkıyordu; büyük
@@ -1603,7 +1610,7 @@ Karışıklık paneli aynı şeyi karar tarafından söylüyor:
 
 | | isabet | dengeli isabet | duyarlılık 1 | duyarlılık 0 | duyarlılık 2 |
 |---|---:|---:|---:|---:|---:|
-| korpus (31.103) | 0,511 | 0,443 | 0,819 | **0,003** | 0,508 |
+| korpus (23.085) | 0,519 | 0,450 | 0,830 | **0,004** | 0,517 |
 | kupon (540) | 0,556 | 0,487 | — | **0,000** | — |
 
 **Piyasanın argmax'ı hiçbir maça beraberlik demiyor.** Dış çalışmanın
@@ -5944,10 +5951,10 @@ ve karşılıkları: kupon seti 0,5747 → **0,5740**, korpus 0,5940 → **0,593
 | Piyasa çizgisi | 540 kupon maçı | Brier **0,5747** · log 0,9660 *(orantısal)* |
 | Piyasa çizgisi | 23.085 korpus maçı | Brier **0,5869** — kupon maçları ortalama maçtan daha tahmin edilebilir |
 | Kademe, kupon üzerinde eğitilmiş | 540 maç | Dört basamak da piyasadan **kötü** (+0,0009…+0,0133) |
-| Kademe, korpus içi sezon dışarıda | 31.103 maç | `sicaklik` −0,0004 ve `bias` −0,0005 **geçti** |
+| Kademe, korpus içi sezon dışarıda | 23.085 maç | **Hiçbiri geçmiyor.** `bias` −0,0002 [−0,0005, +0,0000], `sicaklik` −0,0001 [−0,0003, +0,0001] — 22 ligli kesitte geçen tek iki basamaktı, örneklem %26 küçülünce aralık sıfırı kesti |
 | Kademe, korpusta eğit → kuponda ölç | 540 maç | Dört basamak da **iyi** (−0,0010…−0,0015), hiçbiri geçmedi |
-| Takım formu (T5) | 31.103 maç | `kalibre_form` −0,0003 [−0,0007, +0,0001] — **geçmedi**; ham sinyal güçlü, piyasa fiyatlamış |
-| **Kapanış vs açılış (A1)** | 31.099 maç | Kapanış **0,5940**, açılış 0,5964 · +0,0025 [+0,0019, +0,0030] — **piyasa bilgiyi soğuruyor** |
+| Takım formu (T5) | 23.085 maç | `kalibre_form` −0,0001 [−0,0005, +0,0003] — **geçmedi**; ham sinyal güçlü, piyasa fiyatlamış |
+| **Kapanış vs açılış (A1)** | 23.083 maç | Kapanış **0,5873**, açılış 0,5898 · +0,0025 [+0,0019, +0,0030] — **piyasa bilgiyi soğuruyor** |
 | **Çizgi hareketi (A1)** | 31.099 maç | `kalibre_hareket` = `kalibre_form`, uzatma **%1,01** — **kapanış verimli** |
 | **Pinnacle vs kolektif (A2)** | 31.100 maç | `ps` **0,5936** · −0,0004 [−0,0006, −0,0002] — **geçti**; `b365` geçmedi |
 | **Bahisçi anlaşmazlığı (A2)** | 31.100 maç | Ham ilişki favori gücüyle karışık; sabitlenince **kayboluyor**. Güven kısma %0,02 |
