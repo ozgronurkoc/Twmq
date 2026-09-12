@@ -60,7 +60,7 @@ TURETILEMEYEN: dict[str, str] = {
     #
     # Ama ikinci yari AYAKTA ve tek basina yetiyor. Depo lig-sezon
     # lig-sezon sayildi: Super Lig YOK, alt Ingiliz ligleri (E1/E2/E3/EC)
-    # YOK. Korpus penceresiyle (2122-2425) kesisim 31.103 macta topu topu
+    # YOK. Korpus penceresiyle (2122-2425) kesisim 23.085 macta topu topu
     # 92 mac ve o 92'nin hepsi tek takima yanli (PSG'nin Ligue 1 maclari,
     # Leverkusen'in Bundesliga maclari). Ustelik canli akis yok: veri
     # maclardan yillar sonra yayimlaniyor, yani `/tahmin` onu ilkesel
@@ -91,7 +91,7 @@ TURETILEMEYEN: dict[str, str] = {
 TURETILEBILIR_OLDU: dict[str, str] = {
     "derbi": ("`openfootball/clubs` (CC0) kulup-sehir tablosu veriyor; elle "
               "liste yazmak kuratorluk olurdu ama KAYNAKTAN sehir okumak "
-              "turetmedir — `scripts/build_sehir.py`, 592/604 takim"),
+              "turetmedir — `scripts/build_sehir.py`, 374/384 takim"),
     "avrupa": ("`openfootball/champions-league` (kamu mali) UEFA fiksturu "
                "veriyor; `dinlenme` ve `sikisiklik` artik o gunleri de "
                "goruyor — `scripts/build_avrupa.py`, ad eslemesi %100"),

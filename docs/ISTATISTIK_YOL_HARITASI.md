@@ -1022,17 +1022,17 @@ oranda dağıtıyordu (`p = (1/o) / Σ(1/o)`); oysa bahisçi marjı sürprizlere
 `odds.implied_probs` artık üç yöntem taşıyor. Marj sıfırken üçü **çakışır**; ayrıştıkları
 yer yüksek marjdır — iddaa bülteni (~%18) tam olarak orası.
 
-| Yöntem | Brier (31.103) | Log | Anlamlı sapan bant |
+| Yöntem | Brier (23.085) | Log | Anlamlı sapan bant |
 |---|---:|---:|---:|
-| `orantili` (varsayılan) | 0,5940 | 0,9945 | **10 / 15** |
-| `guc` | **0,5936** | **0,9937** | — |
-| `shin` | **0,5936** | 0,9938 | **4 / 15** |
+| `orantili` (varsayılan) | 0,5873 | 0,9848 | **10 / 15** |
+| `guc` | **0,5868** | **0,9839** | **3 / 15** |
+| `shin` | **0,5869** | 0,9841 | **3 / 15** |
 
-Brier farkı **0,00042**. Kıyas: A2'de "projenin piyasayı geçen ilk tahmincisi" diye kaydedilen
+Brier farkı **0,00043**. Kıyas: A2'de "projenin piyasayı geçen ilk tahmincisi" diye kaydedilen
 Pinnacle bulgusu 0,0004 idi. Aynı büyüklükteki kazanç, **yeni veri kaynağı ve model eğitimi
 gerektirmeden**, tek fonksiyonda duruyordu.
 
-En büyük bant hatası (%70–80) +4,4 → +3,0 puana iniyor; kalan sapma ampirik/izotonik bir
+En büyük bant hatası (%70–80) +4,6 → +3,2 puana iniyor; kalan sapma ampirik/izotonik bir
 kademeyle kapatılabilir ve o iş **henüz yapılmadı**.
 
 #### Varsayılan `shin`e çevrildi — ve eşiklerin değişmesi gerekmedi
@@ -1041,8 +1041,8 @@ kademeyle kapatılabilir ve o iş **henüz yapılmadı**.
 
 | Ölçüm | orantısal | shin |
 |---|---:|---:|
-| Brier (31.103 maç) | 0,5940 | **0,5936** — fark −0,00035 [−0,00049, −0,00021], **geçti** |
-| Anlamlı sapan bant | 10 / 15 | **4 / 15** |
+| Brier (23.085 maç) | 0,5873 | **0,5869** — fark −0,00043 (eşleştirilmiş aralık 17 ligli kesitte yeniden koşulmadı) |
+| Anlamlı sapan bant | 10 / 15 | **3 / 15** |
 | Geri test kolon/hafta (hold-out) | 6.897 | **2.228** |
 | Hold-out'un seçtiği eşik | 36 haftanın 31'inde 0,68/**0,42** | 34'ünde 0,68/**0,38** |
 
@@ -1906,8 +1906,8 @@ Sızıntı disiplini `egitim._form_tablosu` ile birebir aynı: kronolojik gez,
 farkı **önce oku, sonra** maçı işle. Elo'da bu daha kritiktir çünkü form
 bir pencereyken Elo bütün geçmişi taşır.
 
-Kapsama: 31.103 maçın **%95,6**'sı (`elo_var`; iki tarafın da en az 5 maçı
-olması şartı). Farkın ortalaması **+65,4** — yani tam olarak ev avantajının
+Kapsama: 23.085 maçın **%95,1**'i (`elo_var`; iki tarafın da en az 5 maçı
+olması şartı). Farkın ortalaması **+65,3** — yani tam olarak ev avantajının
 kendisi, puanlar sıfır toplamlı olduğu için. Bu bir sağlamadır.
 
 #### Ham sinyal — devasa
@@ -2000,8 +2000,8 @@ bakılmadan seçildi. Sızıntı disiplini `elo.elo_tablosu` ile aynı, tek
 farkla: Elo maç maç güncellenirken DC **tur tur yeniden uydurulur** (ISO
 hafta). Bir turun maçları birbirinin sonucunu görmez.
 
-Uydurulan tanı sayıları (31.103 maç, 477 takım): **γ = 1,2297** (ev sahibi
-%23 daha çok gol atıyor) ve **ρ = −0,0330**. Bu parametrizasyonda negatif
+Uydurulan tanı sayıları (23.085 maç, 384 takım): **γ = 1,2348** (ev sahibi
+%23 daha çok gol atıyor) ve **ρ = −0,0296**. Bu parametrizasyonda negatif
 `ρ`, 0-0 ve 1-1'i yukarı iter — yani bağımsız Poisson'un beraberliği eksik
 tahmin etme kusurunu düzeltir. Dixon & Coles'un kendi bulgusuyla **aynı
 yönde**, daha küçük büyüklükte.
@@ -2643,13 +2643,13 @@ soru *üstünlük*tü (§3.29). Burada soru **başarı** ve okurun beklediği ö
 lig tablosununkidir. Aynı projede iki ölçek olması bir tutarsızlık değil,
 iki ayrı sorunun iki ayrı cevabı.
 
-#### Ölçülen — 31.103 maç · 22 lig · 604 takım
+#### Ölçülen — 23.085 maç · 17 lig · 445 takım
 
 | | değer |
 |---|---:|
-| medyan maç sayısı | 108 |
-| ortalama küçültme `B` | **0,854** |
-| ortalama %95 aralık genişliği (puan) | 0,509 |
+| medyan maç sayısı | 113 |
+| ortalama küçültme `B` | **0,858** |
+| ortalama %95 aralık genişliği (puan) | 0,506 |
 
 Küçültmenin en çok konuştuğu satırlar — hepsi az maçlı takımlar:
 
@@ -2749,8 +2749,8 @@ rekabet tablosu yok; **elle liste yazmak türetme değil kuratörlük
 olurdu**."* Cümle doğruydu ve kapıyı kapatmıyordu: elle liste yazmak
 kuratörlüktür, **kaynaktan şehir okumak türetmedir**.
 
-`openfootball/clubs` (CC0) kulüp–şehir tablosu veriyor. Kapsama **%98,0**
-(604 takımın 592'si); kalan 12'sinin şehri kaynakta **hiç yazmıyor** ve
+`openfootball/clubs` (CC0) kulüp–şehir tablosu veriyor. Kapsama **%97,4**
+(384 takımın 374'ü); kalan 10'unun şehri kaynakta **hiç yazmıyor** ve
 uydurulmuyor — o maçlarda derbi sorusu **cevapsız** kalıyor.
 
 Derbi bir **yön** değil **sıcaklık** değişkeni olarak girdi (`ayrisma` ile
@@ -5967,8 +5967,8 @@ ve karşılıkları: kupon seti 0,5747 → **0,5740**, korpus 0,5940 → **0,593
 | **Yığınlama (§3.32)** | 31.103 maç · kat dışı 31.103 | **Serinin ilk negatif nokta tahmini** ama geçmedi: −0,000137 [−0,000402, +0,000148]. Ağırlıklar sebebini söylüyor — piyasa +0,5307, kademe +0,3242, agac +0,2347 (**üçü de piyasa çıpalı**, toplamları 1,09) ve piyasadan bağımsız tek taban Dixon-Coles **−0,0693**. Yeni bilgi değil, aynı bilginin farklı paketlenmesi |
 | **LOFO + Venn-Abers (§3.33)** | 31.103 maç · 4 sezon katı | **LOFO: hiçbir özellik taşımıyor**, onun beşi net negatif — en zararlısı `ayrisma` (−0,000159), ve `elo_farki` (−0,000042) ile `h2h_farki` (−0,000065) de negatif. **Venn-Abers geçmedi** (+0,000264) ama aralık yeni bir sayı verdi: ortalama genişlik **0,00472** — piyasanın olasılıkları sıkı destekleniyor, §3.23'ün bağımsız teyidi |
 | **Müşterek beklenen değer (§3.34)** | 51. hafta · 3.888 kolon · havuz varsayımı | **Ölçüm değil, hesap** — ve sonucu belirleyen tahminci değil kalabalık varsayımı: `orneklem` modelinde getiri oranı **0,156**, `favori` modelinde **0,007** — arada **22 kat**. Havuz büyüklüğü getiriyi hiç belirlemiyor (havuz ve rakip kolon birlikte ölçeklendiğinde eğri tam düz); belirleyen `p_k/q_k` oranı. Bu eksenin ihtiyacı yeni model değil, **oynanma paylarının ölçümü** |
-| **Takım bazlı istatistik (§3.35)** | 31.103 maç · 22 lig · 604 takım | **Yasak kalktı, kural kalmadı.** Ampirik Bayes küçültmesi: ortalama `B` **0,854**, ortalama %95 aralık 0,509. Tek sezona inildiğinde sistem **kendiliğinden temkinli oluyor** — `B` 0,697'ye düşüyor, aralık 0,690'a genişliyor. En çok konuşan satır Scunthorpe: 46 maçta ham 0,565 → küçültülmüş **0,875** [0,58, 1,17] |
-| **Yeni veri (§3.36)** | 768 UEFA maçı · 592 takım şehri · 31.103 maç | **Serinin niteliksel olarak farklı kapanışı.** Eksik veri gerçekten eksikti: UEFA fikstürü eklenince §3.16'nın açıklanamayan anomalisi **+0,0613 → +0,0325**'e indi (kontrol katmanı bit bit aynı kaldı). Ama düzeltilmiş özellik de geçmedi — `kalibre_avrupa` +0,000028 [−0,000277, +0,000352]. Derbi de türetilebilir oldu (667 maç) ve geçmedi (+0,000176). xG ve kadro **kapalı**: biri `robots.txt`, öteki eğitim/servis ayrışması |
+| **Takım bazlı istatistik (§3.35)** | 23.085 maç · 17 lig · 445 takım | **Yasak kalktı, kural kalmadı.** Ampirik Bayes küçültmesi: ortalama `B` **0,858**, ortalama %95 aralık 0,506. Tek sezona inildiğinde sistem **kendiliğinden temkinli oluyor** — `B` 0,697'ye düşüyor, aralık 0,690'a genişliyor. En çok konuşan satır Scunthorpe: 46 maçta ham 0,565 → küçültülmüş **0,875** [0,58, 1,17] |
+| **Yeni veri (§3.36)** | 768 UEFA maçı · 374 takım şehri · 23.085 maç | **Serinin niteliksel olarak farklı kapanışı.** Eksik veri gerçekten eksikti: UEFA fikstürü eklenince §3.16'nın açıklanamayan anomalisi **+0,0613 → +0,0325**'e indi (kontrol katmanı bit bit aynı kaldı). Ama düzeltilmiş özellik de geçmedi — `kalibre_avrupa` +0,000028 [−0,000277, +0,000352]. Derbi de türetilebilir oldu (597 maç) ve geçmedi (+0,000176). xG ve kadro **kapalı**: biri `robots.txt`, öteki eğitim/servis ayrışması |
 | **Hafta içi bağımlılık (§3.46)** | 183 hafta · 31.103 maç + 114 kupon haftası | **Eksen kapandı — ön kayıtlı kuralla.** Demeanlenmiş artıkların ortalama ikili korelasyonu korpusta **−0,00009 [−0,00102, +0,00080]**, üç kesitte de aralık sıfırı kesiyor. Kuyruğa çevrildiğinde korpus üst sınırında `P(k≥14)` yalnızca **%5** şişiyor (kupon kesiti tek başına %82'ye izin verirdi — sonucu taşıyan korpus). Yan ürün: eski bekçinin istatistiği yanlıştı (`Var(K)` yerine `Var(K−M)`) ve düzeltildi; ham artıklarla görünen `ρ=+0,0077` tamamen **kalibrasyon yanlılığıydı** |
 | **Betfair Exchange (§3.52)** | 985 kupon maçı · 119 hafta | **GEÇTİ** — ve beş aday üzerinde **Holm düzeltmesiyle**: `BFE_kapanis` −0,00100 [−0,00181, −0,00021], p=0,0054. Bir model değil bir **fiyat**: marj **%0,62**, omurganınkinin onda biri. Kapsama 2022/23–2023/24'te **sıfır**, 2024/25 %100, 2025/26 %87 — ileriye dönük sorun yok, `n` iki sezon |
 | **Kupon-zamanı fiyatı (§3.53)** | 31.099 maç · sezon dışarıda | **Kapandı.** `L_kapanış ≈ b·L_açılış` kestirimi `b ≈ 1,009` veriyor ve açığın yalnızca **%3,3**'ünü geri alıyor (dört katta %2,3–6,2). Açılış zaten kapanışın **yansız kestiricisi**; §5.2'nin %22'lik kolon bedeli bu yolla geri alınamaz |
@@ -6210,7 +6210,7 @@ belirsiz bırakmadı, üçünü de somutlaştırdı:
 |---|---|
 | ~~**Fikstür verisi** (kupa + Avrupa)~~ | ✅ **YAPILDI (§3.36).** UEFA maçları geldi (768 maç, ad eşlemesi %100) ve takvime enjekte edildi. Kör nokta taraması **+0,0613 → +0,0325**: anomalinin yarısı ölçüm hatasıymış. Kalan yarı da fiyatlanmış — `kalibre_avrupa` geçmedi. **İç kupalar hâlâ yok**, yani sınır küçüldü ama kaybolmadı |
 | ~~**Kadro / sakatlık**~~ | ❌ **ARANDI, KAPALI (§3.36).** Kaynak teknik olarak açık (transfermarkt `Allow: /`) ama özellik **ileriye dönük kullanılamaz**: gerçek kadro ancak ilk vuruşta bellidir. Korpusta kullanıp `/tahmin`de kullanamamak eğitim/servis ayrışmasıdır. Bu "kaynak yok" değil, **"özellik bu ürün için geçersiz"** demektir |
-| ~~**Şehir / rekabet tablosu**~~ | ✅ **YAPILDI (§3.36).** `openfootball/clubs` (CC0) kulüp–şehir tablosu verdi: kapsama **%98,0**, 667 derbi. `derbi` bir sıcaklık değişkeni olarak girdi ve **geçmedi** (+0,000176). `seyahat` hâlâ kapalı ama gerekçesi değişti: artık "şehir yok" değil **"koordinat yok"** |
+| ~~**Şehir / rekabet tablosu**~~ | ✅ **YAPILDI (§3.36).** `openfootball/clubs` (CC0) kulüp–şehir tablosu verdi: kapsama **%97,4**, 597 derbi. `derbi` bir sıcaklık değişkeni olarak girdi ve **geçmedi** (+0,000176). `seyahat` hâlâ kapalı ama gerekçesi değişti: artık "şehir yok" değil **"koordinat yok"** |
 | ~~**xG (Understat)**~~ | ❌ **Kaynak değil — ölçülmüş negatif, ve ayrıca erişime kapalı.** Dış bir çalışma 14 xG özelliğiyle denedi ve piyasayı geçemedi ([`DIS_INCELEME.md`](DIS_INCELEME.md) §4); üstelik Understat **Süper Lig'i kapsamıyor**. Faz 3.4 bir de erişimi denetledi: `robots.txt` `User-agent: * / Disallow: /` — otomatik erişime **tamamen kapalı**, fbref ise Cloudflare sorgusu arkasında (§3.36) |
 
 > **Dört madde de kapandı (Faz 3.4, §3.36).** İkisi geldi ve ölçüldü, ikisi arandı ve
