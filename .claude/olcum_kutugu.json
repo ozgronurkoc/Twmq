@@ -1748,6 +1748,27 @@
    ],
    "bekci": "yok — tek koşumluk korpus olcumu; betik depoda durmuyor, ureten alani tarifi tasiyor",
    "not": "n = 3.705; piyasa +1,0 diyordu, artik -2,4 [-4,8, +0,0]. 2-4 puan bandinda +4,5 (n = 3.212, beklenen 3,0), >=4 puanda +3,9 (n = 5.383, beklenen 6,5; artik -2,5 [-4,7, -0,5]). Kayittaki dar kesit (p0 0,20-0,27 & marj<2) birebir yeniden uretildi: n = 1.347, fark -0,1 puan — 7 Eylul kaydiyla ayni buyukluk, ters isaret sozlesmesi."
+  },
+  {
+   "ne": "egitim korpusunun mac sayisi (4 sezon · 22 lig · 2021-07-23..2025-06-01)",
+   "deger": "31.103",
+   "ureten": "cd backend && python -c \"from spor_toto.egitim import korpus_yukle; print(len(korpus_yukle()))\"  # ayni sayi: data/egitim/egitim_rapor.json .matches",
+   "olculdu": "2026-09-12",
+   "anildigi_yerler": [
+    "README.md",
+    "backend/README.md",
+    "replit.md",
+    "docs/VERI_TOPLAMA_VE_ISLEME.md",
+    "docs/ISTATISTIK_YOL_HARITASI.md",
+    "docs/DIS_TARAMA_PIYASAYI_YENME.md",
+    "docs/KAZANMA_PLANI.md",
+    "docs/KADEME_OLASILIKLARI.md",
+    "docs/KUPON_NASIL_KURULUYOR.md",
+    "docs/GELECEK_MIMARISI_ESLEMESI.md",
+    "docs/GELISTIRME_PLANI_ESLEMESI.md"
+   ],
+   "bekci": "backend/tests/test_egitim.py::test_korpus_boyutu_RAPORLA_ve_KUTUKLE_ayni",
+   "not": "Kutukte kendi girdisi YOKTU: 31.103 baska girdilerin parantezinde (\"egitim korpusu, 31.103 mac\") gecip duruyordu ama sayinin kendisi kunyesizdi. Tek bekcisi test_egitim.py::test_korpus_ozeti_tutarli'nin `mac > 10.000` esigiydi — 53 yerde anilan kesin bir sayi icin gevsek. Olcum uc yerde ortusuyor: korpus_yukle() suzgecinden gecen satir (31.103), CSV'nin ham satiri (31.103, basliksiz) ve egitim_rapor.json .matches (31.103). Uretici raporu 2026-08-30 tarihli ve `dropped.toplam` 31.132 diyor: 29 mac oransiz elendi. Alt kesitler AYRI sayilardir ve bu girdi onlari kapsamaz: acilis+kapanis cifti 31.099 (A1), bahisci dortlusu 31.100 (A2), mac sonrasi istatistik 28.928."
   }
  ],
  "komutlar": [

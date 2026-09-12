@@ -7,6 +7,9 @@ girmez. Bu ayrım yorumla değil, testle korunur — aksi halde bir sonraki
 "küçük ekleme" onu sessizce bozar.
 """
 
+import json
+from pathlib import Path
+
 import pytest
 
 from spor_toto.egitim import EN_AZ_MAC, korpus_haftalari, korpus_yukle, ozet
@@ -24,6 +27,8 @@ from spor_toto.predict import (
 )
 from spor_toto.recalibrate import KalibreTahminci
 from tests.conftest import korpus_yoksa_atla
+
+KOK = Path(__file__).resolve().parent.parent
 
 
 @pytest.fixture(scope="module")
@@ -150,6 +155,52 @@ def test_korpus_ozeti_tutarli(haftalar):
     assert o["mac"] > 10_000, "korpus beklenenden kucuk"
     assert o["lig"] >= 20
     assert sum(o["kod_dagilimi"].values()) == o["mac"]
+
+
+def test_korpus_boyutu_RAPORLA_ve_KUTUKLE_ayni():
+    """Korpusun maç sayısı üç yerde yazılı ve **üçü de aynı olmalı**.
+
+    `test_korpus_ozeti_tutarli` bu sayıyı yalnızca `> 10.000` diye tutuyor.
+    Oysa depo onu **kesin** biçimde kullanıyor: "31.103" tek başına
+    `docs/ISTATISTIK_YOL_HARITASI.md`de 53 yerde geçiyor ve büyük bölümü bir
+    ÖLÇÜMÜN künyesi ("31.103 maçta şu çıktı"). Korpus yeniden kurulunca
+    (yeni sezon, yeni lig, kaynak dosyanın değişmesi) satır sayısı kayar ve
+    bu künyeler sessizce yalan söylemeye başlar — gevşek eşik hiçbirini
+    yakalamaz.
+
+    Zincir şu: **yükleyici** (CSV'yi süzgeçten geçirerek okuyan gerçek yol)
+    → `data/egitim/egitim_rapor.json` (üreticinin kapsama raporu) →
+    `.claude/olcum_kutugu.json` (belgelerdeki sayının künyesi). İkisi de
+    git'te sürümlü; ayrışmaları kapıda görünür. Kütükteki değerin
+    BELGELERDE gerçekten geçtiğini ise
+    `test_olcum_kutugu.py::test_kutukteki_her_sayi_anildigi_yerde_GERCEKTEN_geciyor`
+    tutar — yani bu bekçi ölçümü, o bekçi alıntıyı tutar.
+
+    Düşerse yapılacak şey eşiği gevşetmek DEĞİLDİR: korpus gerçekten
+    değiştiyse `build_egitim.py` raporu zaten yeniden yazar, kütükteki
+    künye ile belgelerdeki sayı elle güncellenir.
+    """
+    gercek = len(korpus_yoksa_atla(korpus_yukle))
+
+    rapor_yol = KOK / "data" / "egitim" / "egitim_rapor.json"
+    if rapor_yol.exists():
+        rapor = json.loads(rapor_yol.read_text(encoding="utf-8"))
+        assert rapor["matches"] == gercek, (
+            f"egitim_rapor.json bayat: {rapor['matches']} yaziyor, korpus {gercek}. "
+            "Duzeltmek icin: cd backend && python scripts/build_egitim.py"
+        )
+
+    kutuk_yol = KOK.parent / ".claude" / "olcum_kutugu.json"
+    if not kutuk_yol.exists():
+        return
+    kutuk = json.loads(kutuk_yol.read_text(encoding="utf-8"))
+    kayitli = [s["deger"] for s in kutuk.get("sayilar", [])
+               if s["ne"].startswith("egitim korpusunun mac sayisi")]
+    assert kayitli, ("olcum kutugunde korpus boyutu kaydi yok — "
+                     "53 yerde anilan bir sayinin kunyesi olmali")
+    assert {int(d.replace(".", "")) for d in kayitli} == {gercek}, (
+        f"olcum kutugu bayat: {kayitli} yaziyor, korpus {gercek}"
+    )
 
 
 def test_varsayilan_korpus_guncel_sezonu_icermez():
