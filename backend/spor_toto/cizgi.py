@@ -22,7 +22,7 @@ hareketi bile kendini yenemiyorsa, sorun modelde değil veridedir.
 
 **Ölçümün tek zor kısmı kesittir.** Açılış tahmincisiyle kapanış tahmincisi
 *aynı maçlarda* ölçülmezse, aradaki fark hareketi değil örneklem farkını ölçer.
-Bu yüzden `kesit()` yalnızca ikisi de tam olan maçları alır (31.099 / 31.103)
+Bu yüzden `kesit()` yalnızca ikisi de tam olan maçları alır (23.083 / 23.085)
 ve haftanın `probs` alanını **açıkça kapanışla** doldurur — `oran_*` sütununun
 hangi ucu tercih ettiğine bağlı kalmaz.
 

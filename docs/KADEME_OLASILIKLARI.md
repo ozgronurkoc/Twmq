@@ -128,7 +128,7 @@ sonuç modelin olasılık sıralamasında **kaçıncı** sıradaydı?
 >
 > **Kaynağı da ayrıştırıldı (§3.64) ve üç adaydan biri kaldı.** Arındırma
 > eseri değil (üç yöntemde de duruyor); genel piyasa yanlılığı değil
-> (31.103 maçlık korpusta `guc` ölçeğinde +%0,5 ve aralık içinde);
+> (23.085 maçlık korpusta `guc` ölçeğinde +%0,8 ve aralık içinde);
 > **kesit** — ve kesitin içinde tek bir lig, **T1 Süper Lig**, iki
 > bağımsız örneklemde de aynı büyüklükte (+%4,2 kuponda / +%4,9
 > korpusta). T1 kuponun yarısıdır, yani düzeltilseydi şeklin kendisi

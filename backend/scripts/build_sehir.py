@@ -31,7 +31,7 @@ Kaynakta şehri **hiç yazmayan** kulüpler var (ör. `CD Leganés`). Onlar
 tabloya girmez; `sehir.py` o takımlar için "bilinmiyor" der ve derbi
 sorusunu **cevapsız** bırakır. Uydurmak yerine bilmemek.
 
-Ölçülen kapsama: **%98,0** (604 takımın 592'si). Kalan 12'sinin şehri
+Ölçülen kapsama: **%97,4** (384 takımın 374'ü). Kalan 10'unun şehri
 kaynakta **hiç yazmıyor** (ör. `CD Leganés`); onlar "bilinmiyor" kalır.
 
 Kullanım:
