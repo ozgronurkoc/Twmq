@@ -352,7 +352,7 @@ def dc_tablosu(satirlar: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
     maç maç güncellenirken DC **tur tur yeniden uydurulur**. Tur ölçüsü ISO
     haftadır (`iso_yil`, `iso_hafta`) — korpusun kendi gruplaması.
 
-    Maç başına yeniden uydurmak doğru olurdu ama 31 bin uydurma anlamına
+    Maç başına yeniden uydurmak doğru olurdu ama 23 bin uydurma anlamına
     gelirdi ve kazancı yok: aynı haftanın maçları arasında güçler ölçülebilir
     biçimde değişmez. Hafta başına uydurmak **muhafazakâr** taraftadır —
     bir haftanın maçları birbirinin sonucunu görmez.

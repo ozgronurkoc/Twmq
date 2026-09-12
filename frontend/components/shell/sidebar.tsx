@@ -11,6 +11,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Scale,
+  SearchCode,
   Target,
   Trophy,
   Users,
@@ -77,6 +78,12 @@ const GRUPLAR: NavGroup[] = [
         label: "Takımlar",
         hint: "Küçültülmüş takım gücü",
         icon: <Users size={17} />,
+      },
+      {
+        href: "/oran-analizi",
+        label: "Oran Analizi",
+        hint: "Bu oranda geçmişte ne oldu",
+        icon: <SearchCode size={17} />,
       },
       {
         href: "/istatistik/geri-test",

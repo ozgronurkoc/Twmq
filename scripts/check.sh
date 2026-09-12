@@ -313,7 +313,8 @@ def al(yol):
 
 # 1) Arayuzun butun sayfalari uretim sunucusundan 200 donmeli.
 sayfalar = ["/", "/saglik", "/super-toto", "/istatistik", "/istatistik/geri-test",
-            "/istatistik/oranlar", "/takimlar", "/pazarlar", "/tahmin"]
+            "/istatistik/oranlar", "/takimlar", "/pazarlar", "/tahmin",
+            "/oran-analizi"]
 for yol in sayfalar:
     kod, govde = al(yol)
     assert kod == 200, f"{yol} -> {kod}"

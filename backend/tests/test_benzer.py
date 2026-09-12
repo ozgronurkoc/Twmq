@@ -9,8 +9,12 @@ import pytest
 
 from spor_toto.benzer import (
     AZ_ORNEK,
+    CIZGILER,
+    EN_COK_LISTE,
     EN_COK_TOLERANS,
     _mesafe,
+    _olasilik_tablosu,
+    benzer_mac_listesi,
     benzer_maclar,
 )
 from spor_toto.egitim import korpus_yukle
@@ -318,3 +322,290 @@ def test_api_gecerli_ve_bozuk_ek_parametreler_cokmez(istemci, sorgu):
     r = istemci.get("/api/benzer?oran=1.82,3.04,2.44" + sorgu)
     assert r.status_code == 200
     assert r.get_json()["toplam"]["n"] >= 0
+
+
+# ─── çizgi ekseni (açılış ↔ kapanış) ──────────────────────────────────────────
+
+def test_kapanis_varsayilani_BUGUNKU_cevabi_DEGISTIRMEZ():
+    """Çizgi ekseni eklendi diye varsayılan yol kımıldamamalı.
+
+    `cizgi="kapanis"` satırın `oranlar` alanını okur, `kapanis` alanını
+    DEĞİL. İkisi aynı fiyattır (`oran_kaynak` her satırda `AvgC`) ama
+    `kapanis`, `acilis` ile birlikte düşer — `egitim._cizgi_uclusu` çifti
+    "ya tam ya yok" diye taşır. `kapanis` okunsaydı varsayılan evren iki
+    satır daralır ve eksen, kimse istemeden eski sayıları oynatırdı.
+
+    Sabitler `test_olculen_sayilar_korunur`unkilerle aynı; burada
+    **çizgi açıkça verilerek** bir kez daha sınanıyor.
+    """
+    varsayilan = benzer_maclar(ORNEK, tolerans=0.02, yontem="orantili")
+    acikca = benzer_maclar(ORNEK, tolerans=0.02, yontem="orantili",
+                           cizgi="kapanis")
+    assert varsayilan["toplam"]["n"] == acikca["toplam"]["n"] == 426
+    assert varsayilan["evren"] == acikca["evren"] == len(KORPUS)
+    assert varsayilan["cizgi"] == "kapanis"
+
+
+def test_acilis_ve_kapanis_EVRENI_tam_iki_satir_ayrisir():
+    """**Bir sayının değil, bir YORUMUN bekçisi.**
+
+    Arayüz ve belge şunu söylüyor: açılış ile kapanış karneleri arasındaki
+    fark *fiyattan* gelir. Bu cümle ancak iki evren neredeyse aynıysa
+    doğrudur — evrenler ciddi biçimde ayrışsaydı fark, fiyat farkı mı
+    örneklem farkı mı, ayırt edilemezdi ve o cümle sessizce yanlış olurdu.
+
+    Ölçülen: kapanış 23.085, açılış 23.083 — tam 2 satır. Kesin sayı
+    buraya YAZILMAZ (korpus boyutunun künyesi kütükte, bekçisi
+    `test_egitim.py::test_korpus_boyutu_RAPORLA_ve_KUTUKLE_ayni`); burada
+    tutulan şey **farkın kendisi**.
+    """
+    kapanis = len(_olasilik_tablosu("orantili", None, "kapanis"))
+    acilis = len(_olasilik_tablosu("orantili", None, "acilis"))
+    assert kapanis - acilis == 2, (
+        f"evren farki {kapanis - acilis} satir. Iki cizginin karne farki "
+        f"artik fiyata atfedilemez — belgedeki cumle duzeltilmeli."
+    )
+
+
+def test_acilis_cizgisi_FARKLI_karne_uretir():
+    """`cizgi` gerçekten bağlanmış mı — aynı sayı dönüyorsa bağlanmamıştır.
+
+    Evrenler yalnızca 2 satır ayrıştığı için (üstteki bekçi) bu fark
+    fiyattan gelir: açılış çizgisi kapanıştan başka bir yere bakıyor.
+    """
+    k = benzer_maclar(ORNEK, tolerans=0.02, yontem="orantili")
+    a = benzer_maclar(ORNEK, tolerans=0.02, yontem="orantili",
+                      cizgi="acilis")
+    assert a["cizgi"] == "acilis"
+    assert a["toplam"]["n"] != k["toplam"]["n"]
+
+
+@pytest.mark.parametrize("bozuk", ["AvgC", "kapanış", "", "KAPANIS", None, 1])
+def test_gecersiz_cizgi_SESSIZCE_dusmez(bozuk):
+    """Bilinmeyen çizgi varsayılana düşmemeli — `inf` ve kırpılan
+    toleransla aynı türden arıza: istek reddedilmiyor, BAŞKA BİR SORGUYA
+    çevriliyor. `?cizgi=AvgC` yazan biri kapanış cevabını alıp açılış
+    sorduğunu sanırdı."""
+    with pytest.raises(ValueError, match="cizgi"):
+        benzer_maclar(ORNEK, tolerans=0.02, cizgi=bozuk)
+
+
+def test_api_cizgi_govdede_YAZAR_ve_bozugu_400(istemci):
+    r = istemci.get("/api/benzer?oran=1.82,3.04,2.44&cizgi=acilis")
+    assert r.status_code == 200
+    assert r.get_json()["cizgi"] == "acilis"
+    assert istemci.get(
+        "/api/benzer?oran=1.82,3.04,2.44&cizgi=AvgC").status_code == 400
+
+
+def test_cizgi_onbellegi_ayri_goz_kullanir():
+    """İki çizgi aynı önbellek gözünü paylaşırsa biri diğerinin cevabını
+    döndürür. `_olasilik_tablosu` anahtarı `cizgi`yi de içermeli."""
+    assert _olasilik_tablosu("orantili", None, "kapanis") is not \
+        _olasilik_tablosu("orantili", None, "acilis")
+    assert len(CIZGILER) == 2
+
+
+# ─── lig etiketi ──────────────────────────────────────────────────────────────
+
+def test_lig_dilimi_OKUNUR_etiket_tasir():
+    """Kod (`T1`) değil ad (`Türkiye · Süper Lig`) gösterilebilsin diye.
+
+    Çeviri sunucuda yapılır: harita (`odds.LIG_ADLARI`) orada zaten var,
+    arayüze kopyalansaydı ayrışabilen ikinci bir sözlük olurdu.
+    """
+    r = benzer_maclar(ORNEK, tolerans=0.02, yontem="orantili")
+    ligler = {d["deger"]: d["etiket"] for d in r["dilimler"]["lig"]}
+    assert ligler.get("T1") == "Türkiye · Süper Lig"
+    assert all(d["etiket"] for d in r["dilimler"]["lig"])
+    # Sezon diliminde cevrilecek bir sey yok; etiket degeri aynen tasir.
+    assert all(d["etiket"] == d["deger"] for d in r["dilimler"]["sezon"])
+
+
+# ─── maç listesi ──────────────────────────────────────────────────────────────
+
+def test_mac_listesi_karneyle_AYNI_kumeyi_sayar():
+    """**Bu dosyanın asıl yeni bekçisi.**
+
+    Uyarlanan yarıçap EVRENE bağlıdır: `lig="T1"` ile yapılan arama, bütün
+    liglerdeki aramadan daha küçük bir evrende durduğu için daha GENİŞ bir
+    yarıçapta dinlenir. Liste kendi yarıçapını uyarlasaydı, lig satırında
+    "n=41" okuyup tıklayan kullanıcı başka sayıda maç görürdü — ve iki
+    sayının neden tutmadığını gösteren hiçbir alan olmazdı.
+
+    Sözleşme bu yüzden şu: çağıran taraf karnenin **çözdüğü** yarıçapı
+    aynen geri verir. Test onu her lig dilimi için doğrular.
+    """
+    r = benzer_maclar(ORNEK, tolerans=None, yontem="orantili")
+    tol = r["tolerans"]
+    assert r["dilimler"]["lig"], "lig dilimi yok — test bir sey olcmuyor"
+    for d in r["dilimler"]["lig"]:
+        liste = benzer_mac_listesi(ORNEK, tolerans=tol, lig=d["deger"],
+                                   yontem="orantili", limit=EN_COK_LISTE)
+        assert liste["n"] == d["karne"]["n"], (
+            f"{d['deger']}: karne {d['karne']['n']} mac sayiyor, liste "
+            f"{liste['n']} dondurdu — yaricap ayristi."
+        )
+
+
+def test_mac_listesi_UYARLANAN_yaricapla_cagrilirsa_ayrisirdi():
+    """Üstteki bekçinin **niçin** var olduğunu gösteren ölçüm.
+
+    Aynı sorgu lig süzgeciyle kendi yarıçapını uyarlarsa, süzgeçsiz aramanın
+    çözdüğü yarıçaptan farklı bir yere düşer. Bu test o farkın gerçek
+    olduğunu kanıtlar; kaybolursa `tolerans`ı zorunlu tutmanın gerekçesi de
+    kaybolmuş demektir ve sözleşme yeniden düşünülmeli.
+    """
+    genel = benzer_maclar(ORNEK, tolerans=None, yontem="orantili")
+    tekil = benzer_maclar(ORNEK, tolerans=None, yontem="orantili", lig="T1")
+    assert tekil["tolerans"] > genel["tolerans"]
+
+
+def test_mac_listesi_tolerans_ZORUNLU():
+    with pytest.raises(ValueError, match="tolerans"):
+        benzer_mac_listesi(ORNEK, tolerans=None)
+
+
+def test_mac_listesi_satiri_ARANAN_cizginin_fiyatini_tasir():
+    """Kapanış evreninde arayıp açılış oranı göstermek, satırın neden
+    bulunduğunu okunamaz kılardı."""
+    for cizgi in CIZGILER:
+        liste = benzer_mac_listesi(ORNEK, tolerans=0.02, lig="T1",
+                                   yontem="orantili", cizgi=cizgi, limit=5)
+        assert liste["cizgi"] == cizgi
+        for m in liste["maclar"]:
+            assert set(m["oranlar"]) == set(SEMBOLLER)
+            assert m["mesafe"] <= 0.02
+            assert m["kod"] in SEMBOLLER
+            assert m["lig_etiket"]
+        # Mesafeye gore artan: en benzer mac ustte.
+        uzakliklar = [m["mesafe"] for m in liste["maclar"]]
+        assert uzakliklar == sorted(uzakliklar)
+
+
+def test_mac_listesi_sayfalama_kumeyi_bolmez():
+    """`n` KÜMENİN, `maclar` SAYFANIN boyudur; arayüz 'N maçın M'si'
+    diyebilsin diye ikisi ayrı alan."""
+    tam = benzer_mac_listesi(ORNEK, tolerans=0.02, lig="T1",
+                             yontem="orantili", limit=EN_COK_LISTE)
+    ilk = benzer_mac_listesi(ORNEK, tolerans=0.02, lig="T1",
+                             yontem="orantili", limit=10)
+    sonra = benzer_mac_listesi(ORNEK, tolerans=0.02, lig="T1",
+                               yontem="orantili", limit=10, atla=10)
+    assert ilk["n"] == sonra["n"] == tam["n"]
+    assert len(ilk["maclar"]) == 10
+    assert ([m["tarih"] for m in ilk["maclar"] + sonra["maclar"]]
+            == [m["tarih"] for m in tam["maclar"][:20]])
+
+
+def test_az_ornek_dilim_YUZDE_vermez_ama_LISTELENEBILIR():
+    """Onaylanan kural: yüzde bir iddiadır ve `AZ_ORNEK` altında okunmaz;
+    maç listesi bir iddia değil KAYITTIR, o yüzden eşik ona uygulanmaz.
+
+    12 maçlık bir ligin yüzdesi okunmaz ama o 12 maç görülebilir.
+    """
+    r = benzer_maclar(ORNEK, tolerans=0.02, yontem="orantili")
+    ince = [d for d in r["dilimler"]["lig"] if not d["karne"]["yeterli"]]
+    if not ince:
+        pytest.skip("bu sorguda AZ_ORNEK altinda dilim yok")
+    d = ince[0]
+    assert d["karne"]["n"] < AZ_ORNEK
+    liste = benzer_mac_listesi(ORNEK, tolerans=0.02, lig=d["deger"],
+                               yontem="orantili", limit=EN_COK_LISTE)
+    assert liste["n"] == d["karne"]["n"] > 0
+    assert len(liste["maclar"]) == liste["n"]
+
+
+@pytest.mark.parametrize("bozuk", [{"limit": 0}, {"limit": EN_COK_LISTE + 1},
+                                   {"atla": -1}, {"cizgi": "AvgC"}])
+def test_mac_listesi_sinir_disi_deger_SESSIZCE_kirpilmaz(bozuk):
+    with pytest.raises(ValueError):
+        benzer_mac_listesi(ORNEK, tolerans=0.02, yontem="orantili", **bozuk)
+
+
+# ─── /api/benzer/maclar ───────────────────────────────────────────────────────
+
+def test_api_maclar_govdesi_karneyle_ayni_n_verir(istemci):
+    r = istemci.get("/api/benzer?oran=1.82,3.04,2.44&arindirma=orantili"
+                    ).get_json()
+    tol = r["tolerans"]
+    d = r["dilimler"]["lig"][0]
+    g = istemci.get(
+        f"/api/benzer/maclar?oran=1.82,3.04,2.44&arindirma=orantili"
+        f"&tolerans={tol}&lig={d['deger']}&limit={EN_COK_LISTE}").get_json()
+    assert g["n"] == d["karne"]["n"]
+    assert g["cizgi"] == "kapanis"
+    for m in g["maclar"]:
+        assert {"tarih", "lig", "lig_etiket", "ev", "dep", "ev_gol",
+                "dep_gol", "kod", "oranlar", "mesafe"} <= set(m)
+
+
+@pytest.mark.parametrize("sorgu", [
+    # `tolerans` YOK — varsayilana dusmemeli, 400 vermeli.
+    "?oran=1.82,3.04,2.44",
+    "?oran=1.82,3.04,2.44&tolerans=abc",
+    "?oran=1.82,3.04,2.44&tolerans=0.9",
+    "?oran=1.82,3.04,2.44&tolerans=0.02&cizgi=AvgC",
+    "?oran=1.82,3.04,2.44&tolerans=0.02&limit=99999",
+    "?oran=1.82,3.04,2.44&tolerans=0.02&arindirma=kelly",
+    "?oran=abc&tolerans=0.02",
+])
+def test_api_maclar_bozuk_girdi_400_verir(istemci, sorgu):
+    assert istemci.get("/api/benzer/maclar" + sorgu).status_code == 400
+
+
+# ─── docstring'in ölçümü ──────────────────────────────────────────────────────
+
+def test_docstring_olcumu_GERCEK_kosumla_ayni():
+    """Modül başındaki ölçüm bloğu bugünkü koşumla eşit olmalı.
+
+    **Niçin var.** 2026-09-12'de korpus 22 ligden 17'ye inince o bloğun
+    korpus boyutu satırı güncellendi, hemen üstündeki sayılar (709/710)
+    güncellenmedi ve bayat kaldı — gerçek 426'ydı. Aynı arıza aynı gün
+    başka bir ölçümde on bir yere yayılmıştı
+    (`test_capraz_dogrulama_sayilari_RAPORLA_ayni`), ve iki kez yakalanmadı
+    çünkü metni tutan bir bekçi yoktu. Bu, o bekçinin bu modüldeki eşi:
+    **veriyi değil METNİ** tutar.
+    """
+    import re
+
+    import spor_toto.benzer as modul
+
+    satirlar = dict(re.findall(r"olasılık ±2 puan \.+\s+(\d+) maç\s+(\d+) maç",
+                               modul.__doc__ or ""))
+    assert satirlar, "docstring'deki olcum blogu okunamadi — bicim degisti mi?"
+    kapanis_yazili, acilis_yazili = next(iter(satirlar.items()))
+    for cizgi, yazili in (("kapanis", kapanis_yazili),
+                          ("acilis", acilis_yazili)):
+        r = benzer_maclar(ORNEK, tolerans=0.02, yontem="orantili",
+                          cizgi=cizgi)
+        assert r["toplam"]["n"] == int(yazili), (
+            f"docstring {cizgi} icin {yazili} yaziyor, kosum "
+            f"{r['toplam']['n']} veriyor — blok bayat."
+        )
+
+
+# ─── taban (kıyas çizgisi) ────────────────────────────────────────────────────
+
+def test_taban_EVRENIN_tamamini_sayar():
+    """Bir yüzde tek başına okunamaz; kıyas çizgisi gövdede gelmeli.
+
+    "Bu oranda %58 ev sahibi" çarpıcı görünür ama korpusun genelinde ev
+    sahibi zaten %43,5 kazanıyor — fiyatın taşıdığı bilgi ikisinin FARKI.
+    Sayı arayüzde elle yazılmaz; burada evrenin kendisinden sayılır.
+    """
+    r = benzer_maclar(ORNEK, tolerans=0.02, yontem="orantili")
+    assert set(r["taban"]) == set(SEMBOLLER)
+    assert sum(r["taban"].values()) == r["evren"] == len(KORPUS)
+    # Ev sahibi ustunlugu korpusun bilinen ozelligi; yon tersine donerse
+    # okunan sey artik ayni korpus degildir.
+    assert r["taban"]["1"] > r["taban"]["2"] > r["taban"]["0"]
+
+
+def test_taban_SUZGECLE_birlikte_daralir():
+    """Kıyas hep **aynı havuzla** yapılmalı: lig süzgeci varsa taban da o
+    ligin tabanıdır, korpusun tamamının değil. Aksi halde Süper Lig'in
+    beraberlik oranı, 17 ligin ortalamasıyla kıyaslanırdı."""
+    genel = benzer_maclar(ORNEK, tolerans=0.02, yontem="orantili")
+    tekil = benzer_maclar(ORNEK, tolerans=0.02, yontem="orantili", lig="T1")
+    assert sum(tekil["taban"].values()) == tekil["evren"] < genel["evren"]

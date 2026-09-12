@@ -298,7 +298,10 @@ function LigDilimleri({ dilimler }: { dilimler: BenzerDilim[] }) {
           <tbody>
             {yeterli.map((d) => (
               <tr key={d.deger}>
-                <td className="pr-2 font-mono">{d.deger}</td>
+                {/* Kod degil AD: `etiket` sunucudan geliyor (`odds.LIG_ADLARI`).
+                    Kod gosterildigi surece `T1`in ne oldugunu bilmeyen biri
+                    tabloyu okuyamiyordu; `/oran-analizi` ile de ayrisiyordu. */}
+                <td className="pr-2">{d.etiket}</td>
                 <td className="tnum pr-2 text-right text-muted-foreground">
                   {d.karne.n}
                 </td>

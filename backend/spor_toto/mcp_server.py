@@ -186,7 +186,7 @@ def sunucu() -> Any:
     @s.tool()
     def benzer_maclar(oran_1: float, oran_0: float, oran_2: float,
                       tolerans: float | None = None) -> dict[str, Any]:
-        """"Bu oranda geçmişte ne oldu" — 31 bin maçlık korpusta arar."""
+        """"Bu oranda geçmişte ne oldu" — 23.085 maçlık korpusta arar."""
         return _al("/api/benzer", oran_1=oran_1, oran_0=oran_0,
                    oran_2=oran_2, tolerans=tolerans)
 

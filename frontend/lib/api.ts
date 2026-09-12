@@ -1,6 +1,8 @@
 import type {
   BacktestResponse,
+  BenzerMaclarResponse,
   BenzerResponse,
+  Cizgi,
   HealthChecksResponse,
   HealthHistoryResponse,
   HealthReport,
@@ -278,7 +280,7 @@ export function getTahmin(
 }
 
 /**
- * "Bu oranda gecmiste ne olmus?" — 31 bin maclik korpusta ayni fiyata sahip
+ * "Bu oranda gecmiste ne olmus?" — 23 bin maclik korpusta ayni fiyata sahip
  * maclarin nasil bittigi.
  *
  * `oranlar` 1/0/2 sirasiyla gonderilir. Cevap bir TAHMIN degildir: her yuzde
@@ -291,6 +293,8 @@ export type ArindirmaYontemi = (typeof ARINDIRMA_YONTEMLERI)[number];
 export function getBenzer(
   oranlar: Record<string, number>,
   secenek?: {
+    /** Hangi fiyat cizgisi aranacak. Sunucu varsayilani `kapanis`. */
+    cizgi?: Cizgi;
     lig?: string;
     tolerans?: number;
     /** Marj arindirma yontemi. Sunucu varsayilani `shin`. */
@@ -312,6 +316,7 @@ export function getBenzer(
     throw new ApiError(`oran eksik: ${eksik.join(", ")}`, 0);
   }
   const q = new URLSearchParams({ oran: SEMBOLLER.map((s) => oranlar[s]).join(",") });
+  if (secenek?.cizgi) q.set("cizgi", secenek.cizgi);
   if (secenek?.lig) q.set("lig", secenek.lig);
   if (secenek?.sezon) q.set("sezon", secenek.sezon);
   if (secenek?.tolerans !== undefined) q.set("tolerans", String(secenek.tolerans));
@@ -319,4 +324,46 @@ export function getBenzer(
   if (secenek?.en_az !== undefined) q.set("en_az", String(secenek.en_az));
   if (secenek?.tarih) q.set("tarih", secenek.tarih);
   return istek<BenzerResponse>(`/api/benzer?${q}`, { signal });
+}
+
+/**
+ * Karnenin arkasindaki MACLAR — tarih, skor, sonuc, o macin fiyati.
+ *
+ * `tolerans` ZORUNLUDUR ve bu kasitli. `/api/benzer` yaricapi orneklem
+ * hedefine gore uyarlar; uyarlanan yaricap EVRENE baglidir, yani `lig`
+ * suzgecli bir cagri suzgecsizden daha GENIS bir yaricapta dinlenir. Bu uc
+ * kendi yaricapini uyarlasaydi, lig satirinda "n=41" okuyup tiklayan
+ * kullanici baska sayida mac gorurdu. Cagiran taraf bu yuzden ana
+ * cevaptaki **cozulmus** `tolerans`i (`veri.tolerans`) aynen geri verir.
+ */
+export function getBenzerMaclar(
+  oranlar: Record<string, number>,
+  secenek: {
+    tolerans: number;
+    cizgi?: Cizgi;
+    lig?: string;
+    sezon?: string;
+    arindirma?: ArindirmaYontemi;
+    tarih?: string;
+    limit?: number;
+    atla?: number;
+  },
+  signal?: AbortSignal,
+) {
+  const eksik = SEMBOLLER.filter((s) => !Number.isFinite(oranlar[s]));
+  if (eksik.length) {
+    throw new ApiError(`oran eksik: ${eksik.join(", ")}`, 0);
+  }
+  const q = new URLSearchParams({
+    oran: SEMBOLLER.map((s) => oranlar[s]).join(","),
+    tolerans: String(secenek.tolerans),
+  });
+  if (secenek.cizgi) q.set("cizgi", secenek.cizgi);
+  if (secenek.lig) q.set("lig", secenek.lig);
+  if (secenek.sezon) q.set("sezon", secenek.sezon);
+  if (secenek.arindirma) q.set("arindirma", secenek.arindirma);
+  if (secenek.tarih) q.set("tarih", secenek.tarih);
+  if (secenek.limit !== undefined) q.set("limit", String(secenek.limit));
+  if (secenek.atla !== undefined) q.set("atla", String(secenek.atla));
+  return istek<BenzerMaclarResponse>(`/api/benzer/maclar?${q}`, { signal });
 }

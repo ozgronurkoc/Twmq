@@ -728,15 +728,22 @@ haftalık ikramiye kaydı var, güç analizi ≈71 ikramiyeli hafta (≈3,5 sezo
 istiyor. Durma kuralı şimdiden yazılı (`docs/ISTATISTIK_YOL_HARITASI.md`
 §6.3b).
 
-**"Bu oranda geçmişte ne olmuş?"** — `python -m spor_toto.benzer --oran 1.82,3.04,2.44`
-ya da `GET /api/benzer?oran=1.82,3.04,2.44`. Verilen orana benzeyen geçmiş maçları
-31 binlik korpusta bulur ve nasıl bittiklerini sayar. Eşleme **olasılık uzayında**
-yapılır, oran uzayında değil: örnek oran (marj %28,8) korpusta ±%10'luk oran
-komşuluğunda **hiç** maç bulmuyor, olasılık uzayında ±2 puanda **710** maç buluyor.
-Her yüzde yanında n ve Wilson %95 aralığı gelir; 30 maçın altındaki dilim sayı vermez.
-`--tarih 2023-08-01` verilirse evren o günden **öncesiyle** sınırlanır (katı küçüktür,
-yani sorulan maçın kendisi de kendi cevabına giremez) — kronolojik sorgu böyle
-kurulur. Korpusun birincil fiyatı 23.085 satırın hepsinde **kapanış** ortalamasıdır.
+**"Bu oranda geçmişte ne olmuş?"** — `python -m spor_toto.benzer --oran 1.82,3.04,2.44`,
+`GET /api/benzer?oran=1.82,3.04,2.44` ya da **`/oran-analizi` sayfası**. Verilen orana
+benzeyen geçmiş maçları 23.085'lik korpusta bulur ve nasıl bittiklerini sayar. Eşleme
+**olasılık uzayında** yapılır, oran uzayında değil: örnek oran (marj %28,8) korpusta
+±%10'luk oran komşuluğunda **hiç** maç bulmuyor, olasılık uzayında ±2 puanda **426**
+maç buluyor. Her yüzde yanında n ve Wilson %95 aralığı gelir; 30 maçın altındaki dilim
+sayı vermez — ama o dilimin **maçları** görülebilir (`/api/benzer/maclar`), çünkü bir
+yüzde iddiadır, maç listesi kayıttır. `--tarih 2023-08-01` verilirse evren o günden
+**öncesiyle** sınırlanır (katı küçüktür, yani sorulan maçın kendisi de kendi cevabına
+giremez) — kronolojik sorgu böyle kurulur.
+
+Korpusun birincil fiyatı 23.085 satırın hepsinde **kapanış** ortalamasıdır ve varsayılan
+arama orada yapılır; `--cizgi acilis` aynı soruyu **açılış** çizgisinde sorar (o evren
+23.083 satır, ±2 puanda **504** maç). İki evren arasındaki fark **tam 2 satırdır**, yani
+iki çizginin karneleri arasındaki fark evren farkından gelemez — fiyattan gelir
+(bekçi: `test_acilis_ve_kapanis_EVRENI_tam_iki_satir_ayrisir`).
 
 **Çift kapsama** — ilk-iki olasılık toplamı 0,70–0,80 iken gerçek sonuç küme içinde
 kalma oranı %77,2; 0,80–0,90 iken %85,3; 0,90+ iken %95,1. Aynı bantlarda **banko**
@@ -843,6 +850,7 @@ Bugün `match_conflicts` tam olarak bunu yakalar. Vaka analizi:
 | `/pazarlar` | **1X2 dışı pazarlar** — alt/üst 2,5 · Asya handikabı, ölçülmüş kalibrasyonlarıyla |
 | `/takimlar` | **Takım gücü** — küçültülmüş; her satırda maç sayısı, küçültme oranı ve %95 aralık |
 | `/istatistik/geri-test` | **Geri test** — ürünün kuralı (bütçe taraması) ↔ eşik taban çizgisi (eşik taraması + hold-out) |
+| `/oran-analizi` | **Oran analizi** — elle 1/0/2 girilir; aynı fiyata sahip geçmiş maçların 1/0/2 karnesi, lig kırılımı ve lige tıklanınca maçların kendisi. Açılış/kapanış çizgisi seçilir |
 | `/saglik` | Değişmezler — kategori kategori, süre ve açıklamalarıyla |
 
 **Formül sayfası — girdi:** 15 × 3 maç ızgarası (klavye: ok tuşları + `1` / `0` /
@@ -1180,13 +1188,14 @@ backend/
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
                        sehir/ · sistem_fiyat/
-  tests/               pytest (72 dosya → 1.868 test; §9'da katman dökümü)
+  tests/               pytest (72 dosya → 1.903 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
-  app/                 10 sayfa (/, /tahmin, /super-toto, /istatistik,
+  app/                 11 sayfa (/, /tahmin, /super-toto, /istatistik,
                        /istatistik/oranlar, /istatistik/[week],
-                       /istatistik/geri-test, /pazarlar, /takimlar, /saglik)
+                       /istatistik/geri-test, /pazarlar, /takimlar,
+                       /oran-analizi, /saglik)
   components/
     shell/             kalıcı kenar çubuğu + sayfa geçişleri + tema
     formul/            maç ızgarası, olasılık girişi, sonuç panelleri
@@ -1195,6 +1204,7 @@ frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası 
     saglik/            durum kartı, kategori kartları, çalışma geçmişi, kontrol envanteri
     tahmin/            olasılık çubuğu, ölçülmüş isabet kartı
     benzer/            "bu oranda geçmişte ne oldu" kartı + lig kırılımı
+    oran-analizi/      elle oran girişi, karne, lig kırılımı, maç listesi
     super-toto/        canlı sezon hafta sekmeleri + 2. Tahmin paneli
     ui/                temel bileşenler (elle yazıldı, Radix yok)
   lib/types.ts         API sözleşmesinin tamamı tipli
@@ -1386,14 +1396,14 @@ dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri t
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
 eşleme, ikinci kayıt). **72 test dosyası, parametrizasyonla
-1.868 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+1.903 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
 | Katman | Dosyalar | Test |
 |---|---|---|
 | Çekirdek (kodlama · düz üretim · olasılık) | `core` `invariants` `edge_cases` `cli` `analysis` `bayes` `markov` `fire_scenarios` | 256 |
-| Tahmin katmanı | `predict` `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin` `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre` `secim_kalibrasyonu` **`arena`** **`sizinti`** | 591 |
+| Tahmin katmanı | `predict` `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin` `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre` `secim_kalibrasyonu` **`arena`** **`sizinti`** | 624 |
 | Sağlık | `health` `api_health` `meta` `health_history` | 82 |
 | Veri / istatistik / geri test | `history` `odds` `backtest` `api_stats` `api_backtest` `snapshot_iddaa` `pazar` **`gecmis_sezon`** **`sportoto_arsiv`** **`bulten`** | 252 |
 | Süper Toto | `super_toto` `degerlendir` | 108 |
@@ -1413,7 +1423,7 @@ karşı denetler):
 | Koşum defteri | `kosum` | 22 |
 | Takım gücü | `takim_gucu` | 24 |
 | Yeni veri (UEFA · şehir) | `avrupa` `sehir` | 41 |
-| Belgeler | `belgeler` | 26 |
+| Belgeler | `belgeler` | 28 |
 | Ölçüm kütüğü (alıntı · üreten · bekçi bütünlüğü) | **`olcum_kutugu`** | 5 |
 | Değer bahsi (yan pazarlar) | **`deger`** | 24 |
 | Fiyat kaynakları | **`fiyatlar`** | 14 |

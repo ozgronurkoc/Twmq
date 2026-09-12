@@ -27,6 +27,8 @@ from pathlib import Path
 
 import pytest
 
+from tests.conftest import korpus_yoksa_atla
+
 KOK = Path(__file__).resolve().parent.parent
 DEPO = KOK.parent
 
@@ -1273,3 +1275,101 @@ def test_kayit_hafta_sayilari_METINLERDE_olcumle_ayni():
     assert not yanlis, (
         f"kayit hafta sayisi metinlerde bayat (varsayilan {varsayilan}, "
         f"bulten {bulten}) — " + "; ".join(yanlis))
+
+
+# ─── canlı korpus tarifi ↔ ölçüm ──────────────────────────────────────────────
+
+#: Korpusun **bugünkü** boyutunu tarif eden yüzeyler. Ayrım kasıtlı: bir
+#: ÖLÇÜM kaydı ("31.103 maçta şu çıktı") kendi kesitini taşır ve
+#: değiştirilmez — `ISTATISTIK_YOL_HARITASI.md` §3.12'nin ⚠ bloğu bunu açıkça
+#: yazıyor. Buradaki dosyalar ise "korpus NEDİR" / "bu uç NEREDE arar"
+#: diyor; onlar bayatlayınca kullanıcıya bugün yanlış bir sayı gösterilir.
+CANLI_KORPUS_YUZEYLERI = (
+    "backend/spor_toto/egitim.py",
+    "backend/spor_toto/benzer.py",
+    "backend/spor_toto/evaluate.py",
+    "backend/spor_toto/pazar.py",
+    "backend/spor_toto/deger.py",
+    "backend/spor_toto/mcp_server.py",
+    "backend/web_app.py",
+    "frontend/lib/api.ts",
+    "frontend/components/tahmin/parts.tsx",
+    "replit.md",
+)
+
+#: "N bin maç" / "N bin satır" / "N bin maçlık" kalıbı.
+_BIN_KALIBI = re.compile(r"(\d{1,3}) bin (?:maç|mac|satır|satir|sözlük|sozluk|uydurma)")
+#: "23.085 maçlık" / "31.103 satır" kalıbı.
+_TAM_KALIBI = re.compile(r"(\d{2}\.\d{3})(?= (?:maç|mac|satır|satir))")
+
+
+def test_canli_korpus_tarifi_OLCUMLE_ayni():
+    """"Korpus N maç" diyen her canlı yüzey bugünkü korpusu söylemeli.
+
+    **Niçin var.** 2026-09-12'de korpus 22 ligden 17'ye indi (31.103 →
+    23.085) ve sayı onlarca yerde geçiyordu. Ölçüm kayıtları bilerek
+    dokunulmadan bırakıldı — `ISTATISTIK_YOL_HARITASI.md` §3.12'nin ⚠ bloğu
+    *"henüz koşulmayanlar `31.103` yazmaya devam ediyor ve o sayı doğrudur"*
+    diyor. Ama aynı sayı **bugünü tarif eden** yerlerde de duruyordu:
+    `/api/benzer`in gövdesi "31 bin maçlık korpusta arar" diyordu,
+    `/tahmin` sayfası kullanıcıya "31.103 maçlık korpusta eğitildi"
+    yazıyordu, `egitim.py`nin başlığı korpusu "22 lig" diye tanıtıyordu.
+    Hiçbiri bir bekçiye bağlı değildi.
+
+    Bu bekçi ölçümü değil **metni** tutar — `test_capraz_dogrulama_sayilari_
+    RAPORLA_ayni` ile aynı tür ve aynı sebeple. Ölçümü tutan bekçi ayrı:
+    `test_egitim.py::test_korpus_boyutu_RAPORLA_ve_KUTUKLE_ayni`.
+
+    Düşerse yapılacak şey listeden dosya çıkarmak DEĞİLDİR: sayı gerçekten
+    değiştiyse o cümleler güncellenir.
+    """
+    from spor_toto.egitim import korpus_yukle
+
+    korpus = korpus_yoksa_atla(korpus_yukle)
+    gercek = len(korpus)
+    tam = f"{gercek:,}".replace(",", ".")
+    bin_ = str(round(gercek / 1000))
+
+    # Korpusun ALT KESITLERI de mesru sayilardir ve kendi kunyeleri vardir
+    # (or. acilis cizgisi evreni). Hepsi OLCULUR, elle yazilmaz — boylece
+    # yeni bir alt kesit eklendiginde bu bekci onu kendiliginden taniyor.
+    gecerli_tam = {tam} | {
+        f"{n:,}".replace(",", ".")
+        for n in (sum(1 for r in korpus if r.get("acilis")),
+                  sum(1 for r in korpus if r.get("bahisciler")))
+    }
+    gecerli_bin = {bin_} | {str(round(int(t.replace(".", "")) / 1000))
+                            for t in gecerli_tam}
+
+    yanlis: list[str] = []
+    for d in CANLI_KORPUS_YUZEYLERI:
+        p = DEPO / d
+        if not p.exists():
+            continue
+        metin = p.read_text(encoding="utf-8")
+        for no, satir in enumerate(metin.splitlines(), 1):
+            for m in _TAM_KALIBI.finditer(satir):
+                if m.group(1) not in gecerli_tam:
+                    yanlis.append(f"{d}:{no} '{m.group(1)}' yazıyor, korpus {tam}")
+            for m in _BIN_KALIBI.finditer(satir):
+                if m.group(1) not in gecerli_bin:
+                    yanlis.append(f"{d}:{no} '{m.group(1)} bin' yazıyor, "
+                                  f"korpus ~{bin_} bin")
+    assert not yanlis, (
+        "Canlı korpus tarifi ölçümle ayrışmış:\n  " + "\n  ".join(yanlis)
+        + f"\nKorpus bugün {tam} maç. (Ölçüm KAYITLARI ayrıdır ve "
+          "değiştirilmez — ISTATISTIK_YOL_HARITASI.md §3.12 ⚠ bloğu.)"
+    )
+
+
+def test_egitim_basligi_LIG_sayisini_dogru_veriyor():
+    """Korpusun lig sayısı da bir tarif — ve o da bayatlamıştı (22 → 17)."""
+    from spor_toto.egitim import korpus_yukle
+
+    korpus = korpus_yoksa_atla(korpus_yukle)
+    lig = len({r["lig"] for r in korpus})
+    metin = _oku("backend/spor_toto/egitim.py")
+    m = re.search(r"(\d+) lig × 4 geçmiş sezon", metin)
+    assert m, "egitim.py başlığındaki korpus tarifi bulunamadı"
+    assert int(m.group(1)) == lig, (
+        f"egitim.py '{m.group(1)} lig' diyor, korpus {lig} lig taşıyor")

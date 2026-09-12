@@ -163,6 +163,10 @@ def _uclar(istemci, ornek_kupon: str) -> dict[str, Any]:
         {"ad": "GET /api/takimlar", "yol": "/api/takimlar"},
         {"ad": "GET /api/tahmin", "yol": "/api/tahmin"},
         {"ad": "GET /api/benzer", "yol": "/api/benzer?oran=1.82,3.04,2.44"},
+        # `tolerans` ZORUNLU (uc govdesindeki gerekce); sozlesme ornegi de
+        # onu tasir, yoksa burada 400 alinir ve uretim SystemExit'e duser.
+        {"ad": "GET /api/benzer/maclar",
+         "yol": "/api/benzer/maclar?oran=1.82,3.04,2.44&tolerans=0.02&limit=5"},
         {"ad": "POST /api/solve", "yol": "/api/solve",
          "govde": {"picks": ornek_kupon, "mode": "duz",
                    "probs": _SOLVE_PROBS, "fire_max": 1}},

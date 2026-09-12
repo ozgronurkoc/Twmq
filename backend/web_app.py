@@ -474,6 +474,7 @@ UC_ACIKLAMALARI: dict[str, str] = {
     "/api/tahmin": ("yaklasan maclar + olculmus isabet; "
                     "?genis=1 dort sezonluk olcumu de ekler"),
     "/api/benzer": "bu oranda gecmiste ne oldu",
+    "/api/benzer/maclar": "o oranlardaki maclarin kendisi (tarih/skor/sonuc)",
     "/api/pazar": "alt/ust 2,5 ve Asya handikabi",
     "/api/takimlar": "kucultulmus takim gucu",
     "/health": "liveness: süreç ayakta mı",
@@ -940,16 +941,21 @@ def api_tahmin():
 @lru_cache(maxsize=128)
 def _benzer_cached(oran: tuple[float, float, float], tolerans: float | None,
                    en_az: int, lig: str | None, sezon: str | None,
-                   yontem: str, tarih: str | None = None) -> dict[str, Any]:
+                   yontem: str, tarih: str | None = None,
+                   cizgi: str = "kapanis") -> dict[str, Any]:
     """Benzer mac sorgusu onbelleklenir — korpus surumlenmis bir dosyadir.
 
-    `tahmin`in aksine burada zaman gecmesi cevabi degistirmez: 31 bin maclik
+    `tahmin`in aksine burada zaman gecmesi cevabi degistirmez: 23 bin maclik
     gecmis korpus donmustur, ayni oran ayni cevabi verir.
+
+    `cizgi` anahtarin parcasidir: acilis ve kapanis AYRI evrenler, ayni
+    onbellek gozunu paylasamazlar.
     """
     from spor_toto.benzer import benzer_maclar
     return benzer_maclar({"1": oran[0], "0": oran[1], "2": oran[2]},
                          tolerans=tolerans, en_az=en_az, lig=lig,
-                         sezon=sezon, yontem=yontem, tarih=tarih)
+                         sezon=sezon, yontem=yontem, tarih=tarih,
+                         cizgi=cizgi)
 
 
 @app.route("/api/benzer", methods=["GET"])
@@ -964,7 +970,7 @@ def api_benzer():
     yani aynı gun oynanan maclar da disarida). Verilmezse butun korpus
     aranir -- eski davranis.
 
-    Govde bir TAHMIN degildir: 31 bin maclik korpusta ayni fiyata sahip
+    Govde bir TAHMIN degildir: 23 bin maclik korpusta ayni fiyata sahip
     maclarin nasil bittigini sayar. Her yuzde yaninda `n` ve Wilson %95
     guven araligi gelir ve **kirpilmaz** — cunku bu aracin tek gercek
     tehlikesi ince bir dilimdeki carpici oranin bulgu sanilmasidir.
@@ -973,7 +979,7 @@ def api_benzer():
     """
     # Gec import: `benzer` egitim korpusunu okur ve o korpus yalnizca tahmin
     # katmanina aittir (bkz. test_ayrim_istatistik_katmani_korpusu_import_etmez).
-    # Modul duzeyinde import edilseydi surec acilisinda 31 bin satir okunurdu.
+    # Modul duzeyinde import edilseydi surec acilisinda 23 bin satir okunurdu.
     from spor_toto.benzer import HEDEF_ORNEKLEM
     from spor_toto.odds import ARINDIRMA_VARSAYILAN, ARINDIRMA_YONTEMLERI
 
@@ -1012,11 +1018,100 @@ def api_benzer():
     if yontem not in ARINDIRMA_YONTEMLERI:
         return jsonify({"error": f"arindirma: {', '.join(ARINDIRMA_YONTEMLERI)}"}), 400
 
+    # `cizgi` bilinmeyen bir deger alirsa 400 doner, sessizce kapanisa
+    # DUSMEZ: dusseydi `?cizgi=AvgC` yazan biri kapanis cevabini alir ve
+    # acilis sordugunu sanirdi. Ayni gerekce `benzer._dogrula`da yazili;
+    # sinir orada, buraya `ValueError` -> 400 yolundan geliyor.
+    cizgi = (request.args.get("cizgi") or "kapanis").strip()
     try:
         govde = _benzer_cached(parcalar, tolerans, en_az,
                                request.args.get("lig") or None,
                                request.args.get("sezon") or None, yontem,
-                               request.args.get("tarih") or None)
+                               request.args.get("tarih") or None, cizgi)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    return jsonify(govde)
+
+
+@lru_cache(maxsize=64)
+def _benzer_maclar_cached(oran: tuple[float, float, float], tolerans: float,
+                          lig: str | None, sezon: str | None, yontem: str,
+                          tarih: str | None, cizgi: str, limit: int,
+                          atla: int) -> dict[str, Any]:
+    """Mac listesi de onbelleklenir — ayni gerekce (`_benzer_cached`)."""
+    from spor_toto.benzer import benzer_mac_listesi
+    return benzer_mac_listesi({"1": oran[0], "0": oran[1], "2": oran[2]},
+                              tolerans=tolerans, lig=lig, sezon=sezon,
+                              yontem=yontem, tarih=tarih, cizgi=cizgi,
+                              limit=limit, atla=atla)
+
+
+@app.route("/api/benzer/maclar", methods=["GET"])
+def api_benzer_maclar():
+    """
+    Karnenin arkasindaki MACLARIN KENDISI — tarih, skor, sonuc, fiyat.
+
+    `?oran=` ve **`?tolerans=` zorunlu**; istege bagli `?lig=`, `?sezon=`,
+    `?arindirma=`, `?cizgi=`, `?tarih=`, `?limit=`, `?atla=`.
+
+    **`tolerans` nicin zorunlu.** `/api/benzer` yaricapi orneklem hedefine
+    gore UYARLAR ve uyarlanan yaricap EVRENE baglidir: `?lig=T1` ile yapilan
+    arama, butun liglerdeki aramadan daha kucuk bir evrende durdugu icin
+    daha GENIS bir yaricapta dinlenir. Bu uc kendi yaricapini uyarlasaydi,
+    lig satirinda "n=41" okuyup tiklayan kullanici 60 mac gorebilirdi — ve
+    iki sayinin neden tutmadigini gosteren hicbir alan olmazdi. Cagiran
+    taraf `/api/benzer` govdesindeki **cozulmus** `tolerans`i aynen geri
+    verir; bekcisi `tests/test_benzer.py`.
+
+    Govde bir yuzde TASIMAZ. `AZ_ORNEK` esigi burada uygulanmaz cunku mac
+    listesi bir iddia degil KAYITTIR: 12 maclik bir ligin yuzdesi okunmaz
+    ama o 12 mac gorulebilir.
+    """
+    # Gec import: ayni gerekce `api_benzer`de yazili (korpus surec
+    # acilisinda okunmasin).
+    from spor_toto.benzer import EN_COK_LISTE, HEDEF_ORNEKLEM
+    from spor_toto.odds import ARINDIRMA_VARSAYILAN, ARINDIRMA_YONTEMLERI
+
+    ham = (request.args.get("oran") or "").strip()
+    try:
+        parcalar = tuple(float(x) for x in ham.split(","))
+    except ValueError:
+        return jsonify({"error": "oran uc sayi olmali: 1.82,3.04,2.44"}), 400
+    if len(parcalar) != 3:
+        return jsonify({"error": "oran uc sayi olmali: 1.82,3.04,2.44"}), 400
+
+    # Okunamayan tolerans varsayilana DUSMEZ — bu ucta varsayilan bir
+    # tolerans yoktur (govdedeki gerekce).
+    try:
+        tolerans = float(request.args["tolerans"])
+    except (KeyError, TypeError, ValueError):
+        return jsonify({
+            "error": "tolerans zorunlu: /api/benzer govdesindeki cozulmus "
+                     "`tolerans` degerini aynen gonderin"}), 400
+
+    yontem = (request.args.get("arindirma") or ARINDIRMA_VARSAYILAN).strip()
+    if yontem not in ARINDIRMA_YONTEMLERI:
+        return jsonify({"error": f"arindirma: {', '.join(ARINDIRMA_YONTEMLERI)}"}), 400
+
+    # `limit`/`atla` okunamazsa varsayilana duser (eski `en_az` sozlesmesi);
+    # okunan ama sinir disi deger `benzer` kapisindan 400 olarak doner.
+    try:
+        limit = int(request.args.get("limit", HEDEF_ORNEKLEM))
+    except (TypeError, ValueError):
+        limit = HEDEF_ORNEKLEM
+    try:
+        atla = int(request.args.get("atla", 0))
+    except (TypeError, ValueError):
+        atla = 0
+    if limit > EN_COK_LISTE:
+        return jsonify({"error": f"limit en cok {EN_COK_LISTE} olabilir"}), 400
+
+    try:
+        govde = _benzer_maclar_cached(
+            parcalar, tolerans, request.args.get("lig") or None,
+            request.args.get("sezon") or None, yontem,
+            request.args.get("tarih") or None,
+            (request.args.get("cizgi") or "kapanis").strip(), limit, atla)
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
     return jsonify(govde)

@@ -1203,7 +1203,62 @@ export interface BenzerKarne {
 
 export interface BenzerDilim {
   deger: string;
+  /**
+   * Okunur ad — lig diliminde `odds.LIG_ADLARI` cevirisi (`T1` ->
+   * `Turkiye · Super Lig`), sezon diliminde `deger`in kendisi. Ceviri
+   * SUNUCUDA yapilir: harita orada zaten var, buraya kopyalansaydi
+   * ayrisabilen ikinci bir sozluk olurdu.
+   */
+  etiket: string;
   karne: BenzerKarne;
+}
+
+/** Aramanin yapildigi fiyat cizgisi. Varsayilan `kapanis`. */
+export const CIZGILER = ["kapanis", "acilis"] as const;
+export type Cizgi = (typeof CIZGILER)[number];
+
+/** Karnenin arkasindaki tek mac — bir iddia degil, bir KAYIT. */
+export interface BenzerMac {
+  tarih: string;
+  lig: string;
+  lig_etiket: string;
+  sezon: string;
+  ev: string;
+  dep: string;
+  ev_gol: number | null;
+  dep_gol: number | null;
+  /** `1` | `0` | `2` — macin nasil bittigi. */
+  kod: string;
+  /**
+   * ARANAN cizginin fiyati; baska cizgininki gosterilseydi macin neden
+   * bulundugu okunamazdi.
+   */
+  oranlar: Record<string, number>;
+  olasilik: Record<string, number>;
+  /** Hedefe uzaklik (olasilik puani, L∞). */
+  mesafe: number;
+}
+
+export interface BenzerMaclarResponse {
+  oranlar: Record<string, number>;
+  arindirma: string;
+  hedef_olasilik: Record<string, number>;
+  /**
+   * Bu ucta tolerans ZORUNLUDUR ve uyarlanmaz: `/api/benzer` govdesindeki
+   * **cozulmus** deger aynen geri gonderilir. Uyarlansaydi lig suzgecli
+   * cagri, karnenin saydigindan BASKA bir kume dondururdu.
+   */
+  tolerans: number;
+  cizgi: Cizgi;
+  evren: number;
+  evren_kesilen: number;
+  as_of: string | null;
+  filtre: { lig: string | null; sezon: string | null };
+  /** KUMENIN buyuklugu (sayfaninki degil) — "N macin M'si" icin. */
+  n: number;
+  limit: number;
+  atla: number;
+  maclar: BenzerMac[];
 }
 
 export interface BenzerResponse {
@@ -1225,6 +1280,8 @@ export interface BenzerResponse {
   as_of: string | null;
   /** Kesme yuzunden bu sorgunun evreninden dusen mac sayisi. */
   evren_kesilen: number;
+  /** Hangi fiyat cizgisinde arandi — cevabin kendisinde yazar. */
+  cizgi: Cizgi;
   /**
    * Uygulanan suzgecler. Sunucu bunu bastan beri donduruyordu ama tip
    * bilmiyordu; sozlesme denetimi yakaladi. `null` = suzgec yok.
@@ -1243,6 +1300,16 @@ export interface BenzerResponse {
     en_uzak: number;
   } | null;
   toplam: BenzerKarne;
+  /**
+   * Kiyas cizgisi — AYNI evrenin tamamindaki 1/0/2 sayimi.
+   *
+   * Bir yuzde tek basina okunamaz: "bu oranda %58 ev sahibi" carpici
+   * gorunur ama korpusun genelinde ev sahibi zaten ~%43,5 kazaniyor.
+   * Fiyatin tasidigi bilgi ikisinin FARKI. Sayi arayuzde elle yazilmaz,
+   * sunucu bu sorgunun kendi evreninden sayar (suzgecler uygulandiktan
+   * sonra), boylece kiyas hep ayni havuzla yapilir.
+   */
+  taban: Record<string, number>;
   dilimler: { lig: BenzerDilim[]; sezon: BenzerDilim[] };
   uyarilar: string[];
 }

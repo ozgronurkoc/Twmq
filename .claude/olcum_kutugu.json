@@ -2,7 +2,7 @@
  "sayilar": [
   {
    "ne": "suit test sayisi (eksiksiz kurulum)",
-   "deger": "1.868",
+   "deger": "1.903",
    "ureten": "cd backend && python -m pytest --collect-only -q -p no:randomly -o addopts=  # son satirdaki toplam",
    "olculdu": "2026-09-12",
    "anildigi_yerler": [
@@ -14,7 +14,7 @@
     "replit.md"
    ],
    "bekci": "backend/tests/test_belgeler.py::test_test_sayisi_belgelerde_tek_ve_dogru",
-   "not": "1.799 yaziyordu ve KENDI BEKCISIYLE celisiyordu: bekci belgelerdeki sayiyi gercek koleksiyona esitler, belgeler 1.800 diyordu. Uretici komut da yanlisti — `-o addopts=` olmadan xdist devrede kalir. PR 48 incelemesinde uc bekci eklendi: 1.800 -> 1.803. || 1.803 -> 1.820 (2026-09-07): geri testin hedef kuralina cevrilmesiyle 17 test eklendi (strateji secimi, butce zorunlulugu, butce taramasi monotonlugu, §1.1 sayi bekcileri, birikimli marj). || 1.837 -> 1.860 (2026-09-07): olcum kutugunun kendi bekcileri (tests/test_olcum_kutugu.py, 5) ve bekcisiz kalmis README mansetlerinin bekcileri eklendi; ayrica kupon belgesi ve secim kurali islerinin testleri. Sayi TAM KURULUMLA olculdu (lightgbm dahil) — eksik kurulumda bekci kasitli ATLIYOR ve eksik bir suit sayilirsa yanlis sayi yazilir. || 1.860 -> 1.834 (2026-09-07): main kapanmis iki deneyi kaldirdi (E4/hakem 4acc3dd, xG vekili 25e72e0) ve tests/test_hakem.py (5) ile tests/test_xg.py (16) suitten cikti; kalan 5'lik fark ayni koumlarda silinen parametrizasyonlardan. Bu dallanmanin birlesmesinde YENIDEN OLCULDU, aritmetikle turetilmedi. || 1.834 -> 1.837 (2026-09-07): 4. haftanin sonuc degerlendirmesinde uc bekci eklendi: puanin kunyesi ve karne yorumunun tureticileri (test_degerlendir), §1 katman dokumu (test_belgeler). Katman dokumu ayrica DUZELTILDI: yazili 85/579/29/30, gercek 117/624/35/38. || 1.837 -> 1.841 (2026-09-10): dal 4a83172'de kutuk zaten bayatti (gercek 1.840, belgeler 1.837 diyordu — Delta 3'un tamami tests/test_super_toto.py'ye eklenen bekcilerdi ve README §9'un 'Super Toto' satiri da 105'te kalmisti). 5. haftaya oynanma payi girilince test_tahmin2.py::test_onceki_olcek_KAYITTAN_okunur_sabitten_degil parametrizasyonu 5. haftayi da topluyor: +1. Yeniden olculdu, aritmetikle turetilmedi. || 1.841 -> 1.842 (2026-09-10): karnenin tazelik bekcisi eklendi (test_belgeler.py::test_kazanma_karnesi_GIT_TE_TAZE) — 4. haftanin 'karne git'te bayatti' hatasi bekcisiz kaldigi icin 5. haftada tekrarlamisti. || 1.842 -> 1.847 (2026-09-12, main): korpus daraltmasinda tests/test_sembol_sirasi.py eklendi (4) ve test_egitim.py'ye korpus boyutu bekcisi girdi (1). || 1.842 -> 1.863 (2026-09-12, bu dal AYRI AYRI): capraz dogrulama metin bekcisi (+1) ve birlesik kesit isi (test_history +10, test_api_stats +6, test_odds +3, test_belgeler +1). || BIRLESTIRME (2026-09-12): iki dal ayni tabandan (1.842) ayri ayri buyudu; toplam ARITMETIKLE TURETILMEDI, birlesmis agacta yeniden olculdu: 1.868 (72 dosya)."
+   "not": "1.799 yaziyordu ve KENDI BEKCISIYLE celisiyordu: bekci belgelerdeki sayiyi gercek koleksiyona esitler, belgeler 1.800 diyordu. Uretici komut da yanlisti — `-o addopts=` olmadan xdist devrede kalir. PR 48 incelemesinde uc bekci eklendi: 1.800 -> 1.803. || 1.803 -> 1.820 (2026-09-07): geri testin hedef kuralina cevrilmesiyle 17 test eklendi (strateji secimi, butce zorunlulugu, butce taramasi monotonlugu, §1.1 sayi bekcileri, birikimli marj). || 1.837 -> 1.860 (2026-09-07): olcum kutugunun kendi bekcileri (tests/test_olcum_kutugu.py, 5) ve bekcisiz kalmis README mansetlerinin bekcileri eklendi; ayrica kupon belgesi ve secim kurali islerinin testleri. Sayi TAM KURULUMLA olculdu (lightgbm dahil) — eksik kurulumda bekci kasitli ATLIYOR ve eksik bir suit sayilirsa yanlis sayi yazilir. || 1.860 -> 1.834 (2026-09-07): main kapanmis iki deneyi kaldirdi (E4/hakem 4acc3dd, xG vekili 25e72e0) ve tests/test_hakem.py (5) ile tests/test_xg.py (16) suitten cikti; kalan 5'lik fark ayni koumlarda silinen parametrizasyonlardan. Bu dallanmanin birlesmesinde YENIDEN OLCULDU, aritmetikle turetilmedi. || 1.834 -> 1.837 (2026-09-07): 4. haftanin sonuc degerlendirmesinde uc bekci eklendi: puanin kunyesi ve karne yorumunun tureticileri (test_degerlendir), §1 katman dokumu (test_belgeler). Katman dokumu ayrica DUZELTILDI: yazili 85/579/29/30, gercek 117/624/35/38. || 1.837 -> 1.841 (2026-09-10): dal 4a83172'de kutuk zaten bayatti (gercek 1.840, belgeler 1.837 diyordu — Delta 3'un tamami tests/test_super_toto.py'ye eklenen bekcilerdi ve README §9'un 'Super Toto' satiri da 105'te kalmisti). 5. haftaya oynanma payi girilince test_tahmin2.py::test_onceki_olcek_KAYITTAN_okunur_sabitten_degil parametrizasyonu 5. haftayi da topluyor: +1. Yeniden olculdu, aritmetikle turetilmedi. || 1.841 -> 1.842 (2026-09-10): karnenin tazelik bekcisi eklendi (test_belgeler.py::test_kazanma_karnesi_GIT_TE_TAZE) — 4. haftanin 'karne git'te bayatti' hatasi bekcisiz kaldigi icin 5. haftada tekrarlamisti. || 1.842 -> 1.847 (2026-09-12, main): korpus daraltmasinda tests/test_sembol_sirasi.py eklendi (4) ve test_egitim.py'ye korpus boyutu bekcisi girdi (1). || 1.842 -> 1.863 (2026-09-12, bu dal AYRI AYRI): capraz dogrulama metin bekcisi (+1) ve birlesik kesit isi (test_history +10, test_api_stats +6, test_odds +3, test_belgeler +1). || BIRLESTIRME (2026-09-12): iki dal ayni tabandan (1.842) ayri ayri buyudu; toplam ARITMETIKLE TURETILMEDI, birlesmis agacta yeniden olculdu: 1.868 (72 dosya). || 1.868 -> 1.901 (2026-09-12): oran analizi sayfasinin bekcileri tests/test_benzer.py'ye eklendi (cizgi ekseni, mac listesi <-> karne esitligi, taban kiyas cizgisi, docstring olcumu). Yeni test DOSYASI acilmadi, dosya sayisi 72'de kaldi. Yeniden olculdu, aritmetikle turetilmedi. || 1.901 -> 1.903 (2026-09-12): korpus daraltmasindan kalan BAYAT TARIF taramasinda iki bekci eklendi (test_canli_korpus_tarifi_OLCUMLE_ayni, test_egitim_basligi_LIG_sayisini_dogru_veriyor). Yeniden olculdu."
   },
   {
    "ne": "test dosyasi sayisi",
@@ -1684,14 +1684,14 @@
   },
   {
    "ne": "§1 katman dokumu — gercek dosya basina test sayisi",
-   "deger": "629",
+   "deger": "662",
    "ureten": "cd backend && python -m pytest --collect-only -q -o addopts= -p no:cacheprovider | grep -oE 'tests/test_[a-z_0-9]+\\.py' | sort | uniq -c",
    "olculdu": "2026-09-12",
    "anildigi_yerler": [
     "docs/ISTATISTIK_YOL_HARITASI.md §1"
    ],
    "bekci": "backend/tests/test_belgeler.py::test_katman_dokumu_GERCEK_koleksiyonu_sayar",
-   "not": "Dordu de bayatti: belge 85/579/29/30 diyordu. Ayni cumlenin TOPLAMI dogruydu cunku onun bekcisi vardi; dokumunse yoktu. Tam dokum: istatistik 117 · tahmin 624 · tahmin2 35 · degerlendir 39. || 624 -> 629 (2026-09-12): korpus daraltmasi tests/test_sembol_sirasi.py'yi (4) ve test_egitim.py'ye bir bekci (1) ekledi; ikisi de tahmin katmaninda. Birlesmis agacta yeniden olculdu."
+   "not": "Dordu de bayatti: belge 85/579/29/30 diyordu. Ayni cumlenin TOPLAMI dogruydu cunku onun bekcisi vardi; dokumunse yoktu. Tam dokum: istatistik 117 · tahmin 624 · tahmin2 35 · degerlendir 39. || 624 -> 629 (2026-09-12): korpus daraltmasi tests/test_sembol_sirasi.py'yi (4) ve test_egitim.py'ye bir bekci (1) ekledi; ikisi de tahmin katmaninda. Birlesmis agacta yeniden olculdu. || 629 -> 662 (2026-09-12): oran analizi isi tests/test_benzer.py'ye 33 bekci ekledi ve `benzer` tahmin katmanindadir. Yeniden olculdu."
   },
   {
    "ne": "5. hafta (kapanis) ana plan P(k<=3) — 6b/0c/9u, 19.683 kolon",
@@ -1879,6 +1879,56 @@
    "bekci": "-",
    "bekcisiz_gerekce": "kosum ~40 dakika suruyor; kapiya baglanamaz. Alinti butunlugunu test_olcum_kutugu.py::test_kutukteki_her_sayi_anildigi_yerde_GERCEKTEN_geciyor tutuyor.",
    "not": "KORPUS DARALTMASININ TEK HUKUM DEGISTIREN SONUCU (2026-09-12). 22 ligli korpusta iki basamak geciyordu: kalibre_bias -0,0005 ve kalibre_sicaklik -0,0004. 17 ligli korpusta ikisi de gecmiyor: bias -0,0002 [-0,0005, +0,0000], sicaklik -0,0001 [-0,0003, +0,0001] — ikisinin de araligi sifiri kesiyor. Etki YON degistirmedi (ikisi de hala negatif, yani piyasadan iyi tarafta); kaybolan sey ISTATISTIKSEL GUCTUR: ornekem %25,8 kuculunce aralik genisledi. Bu, korpusu daraltmanin OLCULMUS bedelidir ve kaplama degil DUZ bir kayiptir: §6.2'nin gecme kurali (aralık tamamen sifirin altinda) daha buyuk bir orneklem ister. Diger 18 basamak zaten gecmiyordu ve gecmemeye devam ediyor."
+  },
+  {
+   "ne": "acilis cizgisi evreni (17 ligli korpus) — benzer mac aramasinin acilis havuzu",
+   "deger": "23.083",
+   "ureten": "cd backend && python -c \"from spor_toto.egitim import korpus_yukle; print(sum(1 for r in korpus_yukle() if r['acilis']))\"",
+   "olculdu": "2026-09-12",
+   "anildigi_yerler": [
+    "README.md \"Bu oranda gecmiste ne olmus?\"",
+    "docs/ARCHITECTURE_NEXT.md API tablosu",
+    "backend/spor_toto/benzer.py modul docstring'i"
+   ],
+   "bekci": "backend/tests/test_benzer.py::test_acilis_ve_kapanis_EVRENI_tam_iki_satir_ayrisir",
+   "not": "Korpusun KENDISI 23.085 satir (ayri kunye, bekcisi test_egitim.py::test_korpus_boyutu_RAPORLA_ve_KUTUKLE_ayni) — bu onun ALT KESITI, ustune yazmaz. Fark tam 2 satir: egitim._cizgi_uclusu acilis/kapanis ciftini 'ya tam ya yok' diye tasir, yani acilisi eksik iki satirda ikisi de dusuyor."
+  },
+  {
+   "ne": "kapanis <-> acilis evren farki — karne farki FIYATTAN gelir, evrenden DEGIL",
+   "deger": "2",
+   "ureten": "cd backend && python -c \"from spor_toto.egitim import korpus_yukle; r=korpus_yukle(); print(len(r)-sum(1 for x in r if x['acilis']))\"",
+   "olculdu": "2026-09-12",
+   "anildigi_yerler": [
+    "README.md \"Bu oranda gecmiste ne olmus?\"",
+    "backend/spor_toto/benzer.py modul docstring'i"
+   ],
+   "bekci": "backend/tests/test_benzer.py::test_acilis_ve_kapanis_EVRENI_tam_iki_satir_ayrisir",
+   "not": "Bir SAYININ degil bir YORUMUN kunyesi. Arayuz ve belge 'iki cizginin farki fiyattan gelir' diyor; bu cumle ancak iki evren neredeyse ayniysa dogrudur — ciddi ayrissalardi fark fiyat mi orneklem mi ayirt edilemezdi. Bekci DUSURULEREK dogrulandi: _cizgi_orani kapanis icin r['kapanis'] okuyunca kirmizi."
+  },
+  {
+   "ne": "ornek sorgunun benzer mac sayisi — KAPANIS cizgisi, +-2 puan, orantili (17 ligli korpus)",
+   "deger": "426",
+   "ureten": "cd backend && python -m spor_toto.benzer --oran 1.82,3.04,2.44 --tolerans 0.02 --arindirma orantili",
+   "olculdu": "2026-09-12",
+   "anildigi_yerler": [
+    "README.md \"Bu oranda gecmiste ne olmus?\"",
+    "backend/spor_toto/benzer.py modul docstring'i (olcum blogu)"
+   ],
+   "bekci": "backend/tests/test_benzer.py::test_docstring_olcumu_GERCEK_kosumla_ayni || backend/tests/test_benzer.py::test_olculen_sayilar_korunur",
+   "olcek": "17 ligli korpus (23.085). 22 ligli olcekteki karsiligi 710'du; korpus daraltmasinda test sabitleri guncellendi ama docstring ve README'deki 709/710 BAYAT KALDI ve 2026-09-12'de bu iste duzeltildi.",
+   "not": "709 (docstring) ile 710 (README) birbirini zaten tutmuyordu; ikisi de 426'dan TURETILMEDI, yeniden olculdu. Tekrari artik metni tutan bir bekci engelliyor — ayni gun ayni arizanin on bir yere yayildigi vaka: test_belgeler.py::test_capraz_dogrulama_sayilari_RAPORLA_ayni."
+  },
+  {
+   "ne": "ornek sorgunun benzer mac sayisi — ACILIS cizgisi, +-2 puan, orantili (17 ligli korpus)",
+   "deger": "504",
+   "ureten": "cd backend && python -m spor_toto.benzer --oran 1.82,3.04,2.44 --tolerans 0.02 --arindirma orantili --cizgi acilis",
+   "olculdu": "2026-09-12",
+   "anildigi_yerler": [
+    "README.md \"Bu oranda gecmiste ne olmus?\"",
+    "backend/spor_toto/benzer.py modul docstring'i (olcum blogu)"
+   ],
+   "bekci": "backend/tests/test_benzer.py::test_docstring_olcumu_GERCEK_kosumla_ayni",
+   "not": "Ayni sorgu, ayni yaricap, ayni arindirma — tek fark fiyat cizgisi. 426 -> 504 farki evren farkindan GELEMEZ (evrenler 2 satir ayrisiyor, ustteki kunye); fiyattan gelir."
   }
  ],
  "komutlar": [

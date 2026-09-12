@@ -461,7 +461,7 @@ def rapor(pazarlar: Sequence[str] | None = None,
         "fiyat_kaynagi": FIYAT_KAYNAGI,
         "pazarlar": {},
         "sinir": (
-            "Kesit kupon oran arsividir (4 sezon), 31 binlik egitim korpusu "
+            "Kesit kupon oran arsividir (4 sezon), 23 binlik egitim korpusu "
             "DEGIL: korpus alt/ust ve AH fiyatlarini tasimiyor. Kupona "
             "uygulanmaz — muserek havuzda odeme kac kolonun tutturduguna "
             "baglidir (`getiri.py`)."),

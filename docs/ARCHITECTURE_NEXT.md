@@ -7,7 +7,7 @@
 Tarayıcı
    │
    ▼
-frontend/              ← Next.js :3000, tek UI (10 sayfa — aşağıdaki tablo)
+frontend/              ← Next.js :3000, tek UI (11 sayfa — aşağıdaki tablo)
    │  /api/* rewrite
    ▼
 backend/web_app.py     ← Flask :8080, sadece JSON
@@ -45,7 +45,8 @@ yani boşluk üç belgeye birden yayılıyordu. Artık liste
 | GET | `/api/pazar?arindirma=…` | 1X2 dışı pazarlar (alt/üst 2,5 · Asya handikabı) — fiyat **ve** ölçülmüş kalibrasyonu birlikte |
 | GET | `/api/takimlar?lig=…&sezon=…` | Takım bazlı istatistik — **küçültülmüş**; her satırda `n` ve `kucultme` |
 | GET | `/api/tahmin?limit=N` | Yaklaşan maçlar — olasılık **ve** ölçülmüş isabet birlikte |
-| GET | `/api/benzer?oran=…&tarih=…` | "Bu oranda geçmişte ne oldu" — 31 bin maçlık korpus; `tarih` verilirse evren o günden **öncesiyle** sınırlı (kronolojik sorgu) |
+| GET | `/api/benzer?oran=…&cizgi=…&tarih=…` | "Bu oranda geçmişte ne oldu" — 23.085 maçlık korpus; `cizgi=acilis` aynı soruyu açılış çizgisinde sorar (o evren 23.083); `tarih` verilirse evren o günden **öncesiyle** sınırlı (kronolojik sorgu) |
+| GET | `/api/benzer/maclar?oran=…&tolerans=…` | Karnenin arkasındaki **maçların kendisi** (tarih · skor · sonuç · o maçın fiyatı · hedefe uzaklık). `tolerans` **zorunlu**: `/api/benzer`in çözdüğü yarıçap aynen geri verilir, yoksa liste sayılan kümeden başka bir kümeyi gösterir |
 | POST | `/api/solve` | Tüm motor özellikleri |
 
 İstatistik katmanının durumu, alınan kararlar ve yol haritası:
@@ -64,6 +65,7 @@ yani boşluk üç belgeye birden yayılıyordu. Artık liste
 | `/pazarlar` | Alt/üst 2,5 ve Asya handikabı — fiyat + ölçülmüş kalibrasyon |
 | `/istatistik/[week]` | Tek hafta detayı |
 | `/istatistik/geri-test` | Eşik taraması + hold-out |
+| `/oran-analizi` | **Oran analizi** — elle girilen 1/0/2 → benzer geçmiş maçların karnesi, lig kırılımı, maç listesi; açılış/kapanış seçilir |
 | `/saglik` | Değişmez raporu + kayıtlı kontrol envanteri |
 
 ## Sözleşme nasıl korunuyor

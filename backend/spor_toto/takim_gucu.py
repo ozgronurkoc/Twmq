@@ -238,7 +238,7 @@ def takim_tablosu(satirlar: Sequence[dict[str, Any]] | None = None,
         "sezon": sezon,
         # Secilebilir sezonlar GOVDEDE tasiniyor, `/api/meta`da DEGIL.
         # Gerekce maliyet: bu liste korpustan cikiyor ve korpus zaten burada
-        # acik; `/api/meta`ya konsaydi her sayfa acilisinda 31 bin satir
+        # acik; `/api/meta`ya konsaydi her sayfa acilisinda 23 bin satir
         # okunurdu. Arayuz sezon secicisini bu alandan kuruyor — serbest
         # metin kutusu, ilan edilmeyen bir anahtar bicimi yuzunden sessizce
         # bos tablo gosteriyordu.

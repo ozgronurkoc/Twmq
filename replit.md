@@ -79,6 +79,7 @@ yani Run düğmesi tek başına da yeterlidir.
 | `/pazarlar` | **Alt/üst 2,5 ve Asya handikabı** — fiyat + ölçülmüş kalibrasyon |
 | `/takimlar` | **Küçültülmüş takım gücü** — her satırda maç sayısı, küçültme oranı, %95 aralık |
 | `/istatistik/geri-test` | Oranlardan strateji üretip 41 haftayı motorla koşturur |
+| `/oran-analizi` | **Oran analizi** — elle 1/0/2 girilir; benzer geçmiş maçların karnesi + lig kırılımı + maç listesi (açılış/kapanış çizgisi) |
 | `/saglik` | Kategorili değişmez (invariant) kontrolleri, kısmi çalıştırma |
 
 ## API (Flask, `backend/web_app.py`)
@@ -97,7 +98,7 @@ GET  /api/backtest           geri test (eşik taraması + hold-out)
 GET  /api/tahmin             yaklaşan maçlar + ölçülmüş isabet
 GET  /api/pazar              1X2 disi pazarlar (alt/ust 2,5 · Asya handikabi)
 GET  /api/takimlar           kucultulmus takim gucu (?lig=, ?sezon=)
-GET  /api/benzer             "bu oranda geçmişte ne oldu" (31 bin maç)
+GET  /api/benzer             "bu oranda geçmişte ne oldu" (23 bin maç)
 GET  /                       servis bilgisi + uç envanteri
 POST /api/solve              motorun tamamı
 ```
@@ -210,7 +211,7 @@ doğrulamadan dosya yazmazlar). Ayrıntı: `docs/VERI_TOPLAMA_VE_ISLEME.md`.
 ```bash
 cd backend
 python -m pytest -m "not slow" -q   # hızlı süit
-python -m pytest                    # tamamı (1.868 test)
+python -m pytest                    # tamamı (1.903 test)
 python -m pytest -n0 tests/test_egitim.py   # tek çekirdek (hata ayıklarken)
 cd .. && bash scripts/check.sh      # TEK kapı; CI de bunu çağırır
 ```
