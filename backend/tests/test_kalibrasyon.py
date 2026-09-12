@@ -114,8 +114,10 @@ def test_egri_veri_disinda_duzlesir(egitilmis):
 # ─── eğri tablosu ─────────────────────────────────────────────────────────────
 
 @pytest.mark.parametrize("yontem,sapan,n70,gercek70", [
-    ("orantili", 10, 1702, 78.9),
-    ("shin", 4, 1865, 77.3),
+    # 2026-09-12 korpus daraltmasi (22 -> 17 lig) ile yeniden olculdu.
+    # Onceki kesit: ("orantili", 10, 1702, 78.9) · ("shin", 4, 1865, 77.3).
+    ("orantili", 10, 1507, 79.2),
+    ("shin", 3, 1602, 77.6),
 ])
 def test_egri_belgedeki_sayilari_uretir(yontem, sapan, n70, gercek70):
     """`docs §3.18` tablosu buradan üretilir; elle yazılmış sayı yok.

@@ -118,7 +118,7 @@ sessizce bayatladı; sayı kaldırıldı, yönlendirme kaldı. Katman katman:
   (Dirichlet prior → posterior) · `markov.py` (hata bütçesi) ·
   `fire_scenarios.py`
 - **Veri** — `history.py` (tarihsel 1/0/2) · `odds.py` (oran arşivi) ·
-  `backtest.py` (eşikli strateji + hold-out) · `egitim.py` (31.103 maçlık
+  `backtest.py` (eşikli strateji + hold-out) · `egitim.py` (23.085 maçlık
   korpus)
 - **Tahmin** — `predict.py` (tahminci sözleşmesi) · `evaluate.py` (dışarıda
   bırakmalı ölçüm + bootstrap) · `recalibrate.py` · `tahmin.py`
@@ -207,7 +207,7 @@ doğrulamadan dosya yazmazlar). Ayrıntı: `docs/VERI_TOPLAMA_VE_ISLEME.md`.
 ```bash
 cd backend
 python -m pytest -m "not slow" -q   # hızlı süit
-python -m pytest                    # tamamı (1.842 test)
+python -m pytest                    # tamamı (1.847 test)
 python -m pytest -n0 tests/test_egitim.py   # tek çekirdek (hata ayıklarken)
 cd .. && bash scripts/check.sh      # TEK kapı; CI de bunu çağırır
 ```

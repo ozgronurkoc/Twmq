@@ -19,7 +19,7 @@ boş dosya yazarak değil, açıkça söyleyerek bildirir (doktrin 4: çelişki 
 eksik gizlenmez).
 
 **Oranlar AÇILIŞ oranıdır** ve bunun bedeli ölçülmüştür: A1'de açılış çizgisi
-31.099 maçta Brier 0,5964, kapanış 0,5940 — aradaki fark +0,0025. Yani maç
+23.083 maçta Brier 0,5898, kapanış 0,5873 — aradaki fark +0,0025. Yani maç
 öncesi verilen bir tahmin, maç saatinde verilecek olandan **ölçülebilir
 biçimde** biraz kötüdür. Bu sayı ürün gövdesinde taşınır.
 

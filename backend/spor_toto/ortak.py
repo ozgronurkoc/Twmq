@@ -594,7 +594,7 @@ def kacak_dagilimi(kacak_olasiliklari: Sequence[float]) -> list[float]:
     istatistik hafta zorluğunun değişmesini bağımlılık sanıyor (`Var(K) =
     E[V] + Var(M)`). Düzeltilmiş ölçüm `spor_toto.kuyruk`tadır ve aralıkla
     gelir: hafta içi ortalama ikili artık korelasyonu korpusta (183 hafta ·
-    31.103 maç) **−0,00009 [−0,00102, +0,00080]**, kupon geniş kesitinde
+    23.085 maç) **−0,00046 [−0,00163, +0,00070]**, kupon geniş kesitinde
     (114 hafta) **−0,00349 [−0,01724, +0,01020]**. Üç kesitte de aralık
     sıfırı kesiyor, yani §6.2'nin ölçüm görülmeden yazılmış durma kuralı
     gereği eksen kapandı (§3.46).

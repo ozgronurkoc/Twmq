@@ -162,21 +162,21 @@ Toto'nun bölüşüm kuralı sınırlıyor, `n` biriktirmek bunu değiştirmez.
 
 K3 taramanın bulduğu tek rakip iddiadır ve reçetesi tek cümledir: ev sahibi
 galibiyeti en sık sonuçtur, hep `1` işaretle. Makale isabet oranını
-Bundesliga'da **%50,4** alıyor. Aynı kural bizim 31.103 maçlık korpusumuzda:
+Bundesliga'da **%50,4** alıyor. Aynı kural bizim 23.085 maçlık korpusumuzda:
 
 | kural | p | %95 aralık | E[doğru/15] | P(12+) | P(14+) |
 |---|---:|---|---:|---:|---:|
-| **hep ev** (makalenin kuralı) | **%43,37** | [%42,82, %43,92] | 6,50 | %0,438 | %0,0074 |
-| piyasa favorisi | **%51,09** | [%50,54, %51,65] | 7,66 | %2,156 | %0,0649 |
+| **hep ev** (makalenin kuralı) | **%43,53** | [%42,89, %44,17] | 6,53 | %0,455 | %0,0078 |
+| piyasa favorisi | **%51,87** | [%51,23, %52,52] | 7,78 | %2,483 | %0,0790 |
 
 Üç şey birden çıkıyor:
 
-1. **Kuralın öncülü bu kesitte tutmuyor.** Ev oranı %50,4 değil **%43,4** ve
+1. **Kuralın öncülü bu kesitte tutmuyor.** Ev oranı %50,4 değil **%43,5** ve
    aralık %50,4'ü içermiyor. Makalenin sayısı tek lige (Bundesliga) aittir;
-   kuponun yarısı Süper Lig'den gelir ve korpus 22 lig taşır.
-2. **Piyasa favorisi kuralı 7,7 puan geçiyor** ve P(12+)'yı 4,9 kata
+   kuponun yarısı Süper Lig'den gelir ve korpus 17 lig taşır.
+2. **Piyasa favorisi kuralı 8,3 puan geçiyor** ve P(12+)'yı 5,5 kata
    çıkarıyor. Yani kural piyasadan üstün değil, piyasadan **zayıf**.
-3. **Kural ayrı bir eksen bile değil:** favorinin **%68,4'ü zaten ev
+3. **Kural ayrı bir eksen bile değil:** favorinin **%68,7'si zaten ev
    sahibi**. "Hep ev" kuralı, favori kuralının bilgi atılmış hâlidir.
 
 Ayrıca makale kendi sonuç bölümünde kârın *"çabayı sorgulatacak ölçüde
@@ -232,7 +232,7 @@ mertebesinde değildir ve tavanın 1,003× çıkması bir kusur değil,
 | Eksen | Bu taramadan önce | Bu taramadan sonra |
 |---|---|---|
 | **Devir** | "25 haftada gürültü baskın, **ölçülemez**" (`KADEME_OLASILIKLARI` §7) | **Kapandı.** Hesaplandı: gereken 1,95–2,84, altı sezonun azamisi **1,645**. Yapısal, `n` ile açılmaz |
-| **"Hep ev" / naif sabit kural** | denenmemişti | **Kapandı.** Korpusta %43,37; piyasa favorisi 7,7 puan üstün |
+| **"Hep ev" / naif sabit kural** | denenmemişti | **Kapandı.** Korpusta %43,53; piyasa favorisi 8,3 puan üstün |
 | **Havuz / kalabalık** | açık, `n = 3` | **Açık kaldı** — ve tek açık eksen o. Gereken kat §6'da yazılı artık |
 | **Sabit oranlı piyasa** (K4) | kapsam dışı | **Kapsam dışı kalıyor** — ama gerekçesi artık ölçülü, §8 |
 
