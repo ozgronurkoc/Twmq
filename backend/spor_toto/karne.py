@@ -1006,7 +1006,7 @@ def kapsama_acigi(butce_tl: float = 2000.0,
     ─── (a) aradan geçen sürede büyük ölçüde elendi, ama TAM değil ───────
 
     §3.46 hafta içi bağımlılığı ölçtü: korpusta ortalama ikili artık
-    korelasyonu −0,00009 [−0,00102, +0,00080] ve korpus **üst sınırında**
+    korelasyonu −0,00046 [−0,00163, +0,00070] ve korpus **üst sınırında**
     kuyruk yalnız **%5** şişiyor. Ama o sonucu taşıyan korpustur; kupon
     kesiti tek başına ±%82'ye izin veriyordu. Yani (a) *korpus sınırının
     kupona taşındığı varsayımıyla* eleniyor. Bu fonksiyon açığın
@@ -1204,7 +1204,7 @@ def banko_yanliligi(dilim: int = 3,
     olasılık verdiğiyle sınanır. Dilimler de referansa göre kesilir. Böylece
     değişen tek şey arındırmanın kendisidir.
 
-    `korpus=True` aynı sınavı 31.103 maçlık eğitim korpusunda koşar — kupon
+    `korpus=True` aynı sınavı 23.085 maçlık eğitim korpusunda koşar — kupon
     kesitinin 1.710'una karşı 18 kat güç. Kupon kesiti **karar için**,
     korpus **güç için** okunur.
 
@@ -1603,7 +1603,7 @@ def _main(argv: list[str] | None = None) -> int:  # pragma: no cover - elle
     ap.add_argument("--banko", action="store_true",
                     help="§3.64: banko q sapmasi arindirma eseri mi, yanlilik mi")
     ap.add_argument("--korpus", action="store_true",
-                    help="--banko ile: kupon kesiti yerine 31.103 macliK korpus")
+                    help="--banko ile: kupon kesiti yerine 23.085 maclik korpus")
     ap.add_argument("--lig", nargs="+", metavar="LIG", default=None,
                     help="--banko ile: kesiti bu liglere kisitla (or. T1 E0)")
     ap.add_argument("--json", action="store_true")

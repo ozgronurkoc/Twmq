@@ -4,7 +4,7 @@ Bugün üretimdeki tahminci ilk istekte eğitiliyor ve `lru_cache(maxsize=1)`
 ile süreç ömrü boyunca tutuluyor (`tahmin._egitilmis_alternatif`). Bu iki
 şeyi birden bozuyor:
 
-1. **İlk isteğin bedeli.** 31.103 maçlık korpus okunuyor ve model
+1. **İlk isteğin bedeli.** 23.085 maçlık korpus okunuyor ve model
    uyduruluyor; o isteği yapan kullanıcı bekliyor.
 2. **Hangi korpusla eğitildiği kayıtsız.** Süreç yeniden başlarsa model
    sessizce *yeni* korpusla yeniden eğitilir. Değişen bir şey olduğu hiçbir

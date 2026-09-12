@@ -9,7 +9,7 @@
 İkinci cümle **doğruydu ve kapıyı kapatmıyordu**. Elle liste yazmak
 kuratörlüktür; kamuya açık bir kaynaktan şehir okumak türetmedir.
 `scripts/build_sehir.py` o tabloyu `openfootball/clubs`tan (CC0) üretiyor —
-604 takımın 592'si, **%98,0**.
+384 takımın 374'ü, **%97,4**.
 
 **`seyahat` hâlâ kapalı** ve gerekçesi değişti: artık "şehir yok" değil,
 *"koordinat yok"*. İki şehrin arasındaki mesafe şehir adından çıkmaz.

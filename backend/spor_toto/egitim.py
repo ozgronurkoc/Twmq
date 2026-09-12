@@ -597,7 +597,7 @@ def korpus_haftalari(sezonlar_: Sequence[str] | None = None,
     sayıları onunla ölçüldü. Parametre, "aynı ölçüm başka arındırmayla ne
     verir" sorusunu sormak için var — cevabı görmek isteyen açıkça ister.
 
-    Sonuç **önbelleklidir** (`_korpus_haftalari`). Bu çağrı 31.103 satırlık
+    Sonuç **önbelleklidir** (`_korpus_haftalari`). Bu çağrı 23.085 satırlık
     korpusu baştan geziyor, 217.701 kez marj arındırıyor ve tek başına ~16 sn
     sürüyor; test suitinde 27 kez, hep aynı argümanlarla koşuyordu. Korpus
     sürümlenmiş bir dosyadır — iki çağrı arasında değişmez.

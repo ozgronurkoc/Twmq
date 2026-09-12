@@ -72,7 +72,7 @@ Makale §2'de dört soru soruyor. Üçünün cevabı **ölçülmüş** durumda.
 
 ### RQ1 — "Piyasa kapanış olasılıklarını aşan ek bilgi tarihsel verilerden çıkarılabilir mi?"
 
-**Cevap: hayır — ölçüldü.** Dokuz özellik, dört bağımsız açı, 31.103 maçlık
+**Cevap: hayır — ölçüldü.** Dokuz özellik, dört bağımsız açı, 23.085 maçlık
 korpus, sezon dışarıda bırakmalı, hafta üzerinden eşleştirilmiş bootstrap.
 "Geçti" ölçütü güven aralığının **tamamen** sıfırın altında kalmasıdır.
 Tek bir "geçti" yok (§6.2 A4). Model arenası aynı sonucu tek kesitte
@@ -168,7 +168,7 @@ kural — *aralık sıfırı kesiyorsa eksen kapanır* — üç kesitte de sağl
 |---|---:|---:|---:|---|
 | Kupon (varsayılan) | 36 | 540 | −0,02022 | [−0,03926, +0,00079] |
 | Kupon (geniş) | 114 | 1.710 | −0,00349 | [−0,01724, +0,01020] |
-| **Korpus** | **183** | **31.103** | **−0,00009** | **[−0,00102, +0,00080]** |
+| **Korpus** | **183** | **23.085** | **−0,00046** | **[−0,00163, +0,00070]** |
 
 Kuyruğa çevrildiğinde (tek faktör Gauss kopulası + Gauss-Hermite, RNG yok):
 korpus aralığının üst sınırında `P(k≥14)` yalnızca **%5** şişiyor. Nokta

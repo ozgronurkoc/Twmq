@@ -594,8 +594,8 @@ kuponun hangi 15 maçtan oluştuğu bu iş için ilgisizdir. Kupon bileşimi yal
 `https://www.football-data.co.uk/mmz4281/{sezon}/{lig}.csv` — 22 lig × 4 geçmiş
 sezon. `robots.txt` tüm erişime açıktır (`Disallow:` boş).
 
-Ölçülen: **31.103 maç · 4 sezon · 22 lig · %100 kapanış oranı.** Oranı tam
-olmadığı için elenen 29 maç. Sonuç dağılımı 1: %43,4 · 0: %26,1 · 2: %30,5 —
+Ölçülen: **23.085 maç · 4 sezon · 17 lig · %100 kapanış oranı.** Oranı tam
+olmadığı için elenen 29 maç. Sonuç dağılımı 1: %43,5 · 0: %26,2 · 2: %30,3 —
 Spor Toto sezonunun dağılımıyla (%43,9 / %24,2 / %31,9) tutarlı; bağımsız bir
 sağlama sayılır.
 
@@ -651,7 +651,7 @@ hem okuyucuda reddedilir; sızsaydı hareket o maçta sıfır görünür, maç A
 kesitine girer ve ölçümü sessizce seyreltirdi.
 
 **Çifti olmayan maç elenmez.** `oran_*` tamdır, maç tahminci ölçümüne girer;
-yalnızca A1 kesitine giremez. Korpus 31.103 maçta kaldı (31.099'unda çift var),
+yalnızca A1 kesitine giremez. Korpus 23.085 maçta kaldı (23.083'ünde çift var),
 böylece kesit önceki ölçümlerle karşılaştırılabilir.
 
 **Hareket ham oran üzerinden değil, marj arındırılmış olasılık üzerinden
@@ -678,7 +678,7 @@ football-data yedi tekil bahisçi veriyor; **kapsamaları sezona göre değişiy
 Hepsini isteyen bir filtre 2425'in %40'ını atardı. Sezon dışarıda bırakmalı
 ölçümde bu **sessiz bir yanlılıktır**: model bir sezonu diğerlerinden farklı
 bir maç evreninde öğrenir. Bu yüzden yalnızca dört sezonda da ~%100 olan dört
-kaynak taşınır — `B365C`, `PSC`, `MaxC`, `AvgC` — ve kesit 31.100 maç kalır.
+kaynak taşınır — `B365C`, `PSC`, `MaxC`, `AvgC` — ve kesit 23.083 maç kalır.
 
 Aynı gerekçenin ikinci yüzü türetilen özelliklerdedir. İki anlaşmazlık ölçüsü
 var ve biri bilerek **ikincil**:
@@ -723,10 +723,18 @@ katlaması onu yakalayamaz. Model bir lig kümesini ötekinden farklı bir maç
 evreninde öğrenirdi ve sızıntı sessiz olurdu.
 
 İkinci ve teknik sebep: korpus değişirse `artefakt.py`'nin taşıdığı sha256
-bayatlar ve `health` kırmızı yanar; ayrıca `ISTATISTIK_YOL_HARITASI.md`de
-"31.103" 53 yerde geçiyor ve çoğu bir **ölçümün kaydı** — sütun eklemek satır
-sayısını değiştirmese de o dosyaların hiçbirine dokunmadan ölçmek zaten
-mümkündü.
+bayatlar; `health`in `artefakt_tazeligi` kontrolü bunu görür (artefakt yoksa
+servis ilk istekte yeniden eğitir, o yüzden depoda bayat zarf kalmaz). Ayrıca
+`ISTATISTIK_YOL_HARITASI.md`de "31.103" **60'tan fazla** yerde geçiyor ve çoğu
+bir **ölçümün kaydı** — sütun eklemek satır sayısını değiştirmese de o
+dosyaların hiçbirine dokunmadan ölçmek zaten mümkündü.
+
+> **2026-09-12: bu bedel bir kez ödendi.** Beş lig (E2/E3/EC/SC2/SC3) korpustan
+> çıkarıldı — 31.103 → 23.085 — ve çıpalı ölçümler yeniden koşuldu. Yöntem
+> A/B'ydi: her komut önce **eski** korpusta koşuldu ve künyedeki değeri
+> verdiği doğrulandı, sonra yenisinde. Böylece değişen sayının bu daraltmadan
+> mı yoksa daha önceki bir bayatlamadan mı geldiği ayrıldı; bir sayı
+> (§F3 ters seçim) gerçekten de **önceden** bayatmış çıktı.
 
 Ölçümün sonucu §3.59'da: hakem etkisi **yok** (hakemler arası yayılım saf
 şansın ürettiğinin 0,97–1,00 katı). Tablo yine de depoda duruyor — bir
@@ -1003,10 +1011,13 @@ Korpusu büyütmek **serbest bir kazanç değildir**:
 
 1. **Ölçüm kayıtları bu korpusa çıpalı.** Yalnız
    [`ISTATISTIK_YOL_HARITASI.md`](ISTATISTIK_YOL_HARITASI.md)'de "31.103"
-   **53 yerde** geçiyor ve bunların çoğu bir *ölçümün kaydıdır* ("31.103
-   maçta şu çıktı"). Korpusu değiştirip o satırları olduğu gibi bırakmak
-   onları yanlış yapar; sayıları değiştirmek ise **yapılmamış bir ölçümü
-   yapılmış gibi göstermek** olur. İkisi de bu deponun yasakladığı şeydir.
+   **60'tan fazla** yerde geçiyor ve bunların çoğu bir *ölçümün kaydıdır*
+   ("31.103 maçta şu çıktı"). Korpusu değiştirip o satırları olduğu gibi
+   bırakmak onları yanlış yapar; sayıları değiştirmek ise **yapılmamış bir
+   ölçümü yapılmış gibi göstermek** olur. İkisi de bu deponun yasakladığı
+   şeydir. Üçüncü yol vardır ve 2026-09-12 daraltmasında o izlendi: ölçümü
+   **yeniden koş**, koşulamayanı (kapanmış deney, dondurulmuş kayıt) hangi
+   kesitte alındığını yazarak bırak.
 2. **`artefakt.py`** eğitilmiş modelin korpus sha256'sını taşıyor;
    `health` bayatlık görünce **kırmızı** yanıyor.
 3. **Kazanç ölçülmüş ve küçük.** README §1.1 ve §10 aynı türden daha çok
@@ -1525,7 +1536,7 @@ tablolar (script'in bastığı lig dağılımı) bunu yakalayan şeydi.
 | `test_sportoto_arsiv.py::test_hafta_no_tahmin_edilmez` | Hafta numarası uydurulmaz (doktrin 2) |
 | `test_sportoto_arsiv.py::test_celisen_kapanis_tarihi_raporlanir` | İki uç çelişirse biri sessizce seçilmez (doktrin 4) |
 
-Toplam 113 test bu dört veri setini korur (backend paketi 1.842 test). `python -m spor_toto.health`
+Toplam 113 test bu dört veri setini korur (backend paketi 1.847 test). `python -m spor_toto.health`
 22 değişmez çalıştırır; `oran_arsivi` ve `geri_test` bu katmanı, `tahmin_referanslari`
 tahmin katmanının ölçüm koşumunu korur.
 
@@ -1727,9 +1738,9 @@ değil, **tahminin ölçülebilir hale gelmesini sağlayan veridir.**
 
 | Öncelik | İş | Veri durumu |
 |---|---|---|
-| **✔** | **Eğitim korpusu** (§6A) | **Yapıldı.** 31.103 maç · 4 sezon · 22 lig |
+| **✔** | **Eğitim korpusu** (§6A) | **Yapıldı.** 23.085 maç · 4 sezon · 17 lig |
 | **✔** | **T5 — Takım formu özellikleri** | **Yapıldı.** Maç istatistiği sütunları korpusa eklendi; form yuvarlanan pencereyle türetiliyor. Ham sinyal güçlü, artık değer ~0 |
-| **✔** | **A1 — Açılış/kapanış çizgi çifti** (§6A.6) | **Yapıldı.** Aynı kaynaktan, yeni indirme gerekmedi. 31.099 maçta çift var |
+| **✔** | **A1 — Açılış/kapanış çizgi çifti** (§6A.6) | **Yapıldı.** Aynı kaynaktan, yeni indirme gerekmedi. 23.083 maçta çift var |
 | **✔** | **A2 — Bahisçi kırılımı** (§6A.7) | **Yapıldı.** Dört kaynak taşınıyor; kapsaması sezona göre değişenler bilerek dışarıda |
 | **✔** | **A3 — Türetilebilir özellikler** | **Yapıldı.** Dördü türetildi ve geçmedi; seyahat ile derbi türetilemedi. Faz A **(b) ile kapandı** |
 | **1** | **Fikstür verisi** (kupa + Avrupa) | **Hiç yok.** A3'ün kör noktası: korpus 22 ligi görüyor, kupa/Avrupa maçlarını görmüyor. Tahmin eksenini yeniden açabilecek üç kaynaktan biri |

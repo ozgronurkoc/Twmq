@@ -16,8 +16,8 @@ yüzden gövde iki bloğu ayrılmaz biçimde taşır — `tahminler` ve
 
 Üç sınır gövdede açıkça yazılıdır ve hiçbiri gizlenmez:
 
-1. **Oranlar açılış oranıdır.** Bedeli ölçülmüştür (A1): 31.099 maçta açılış
-   Brier 0,5964, kapanış 0,5940 — fark +0,0025. Maç öncesi verilen tahmin,
+1. **Oranlar açılış oranıdır.** Bedeli ölçülmüştür (A1): 23.083 maçta açılış
+   Brier 0,5898, kapanış 0,5873 — fark +0,0025. Maç öncesi verilen tahmin,
    maç saatinde verilecek olandan ölçülebilir biçimde biraz kötüdür.
 2. **Ölçülen isabet kupon setine aittir** (540 maç, 2025/26, football-data
    kapanış oranı). Aynı fiyatlayıcı olduğu için taşınabilir; ölçüm evreninin
@@ -65,7 +65,7 @@ MANSET_AD = "piyasa"
 #: basamaklar o alanları nötr sıfır görüp `bias` ile aynı sayıyı üretirdi;
 #: fazladan parametre, fazladan iddia demek olurdu.
 #:
-#: **Geçmedi ve öyle etiketlenir.** 31.103 maçta eğitilip 540 maçlık kupon
+#: **Geçmedi ve öyle etiketlenir.** 23.085 maçta eğitilip 540 maçlık kupon
 #: setinde ölçüldüğünde piyasadan iyi çıkıyor (0,5732'ye karşı 0,5740) ama
 #: güven aralığı sıfırı içeriyor. Ürüne manşet olarak değil, **ölçülmüş
 #: alternatif** olarak girer — farkı ve aralığıyla birlikte.
@@ -242,7 +242,7 @@ def _egitilmis_alternatif():
     uydurma öyle — ikisi farklı şeyler.
 
     **Önce diskteki artefakta bakılır** (Faz 0.3). Taze bir artefakt varsa
-    eğitim hiç yapılmaz: ilk isteğin bedeli 31.103 satırlık bir uydurma
+    eğitim hiç yapılmaz: ilk isteğin bedeli 23.085 satırlık bir uydurma
     olmaktan çıkar. Artefakt yoksa ya da **bayatsa** (korpus değişmiş,
     sürüm değişmiş) eskisi gibi eğitilir — yani bu bir hızlandırma, bir
     bağımlılık değil. Servis burada **yazmaz**: yazmak `--yaz`ın işidir,
@@ -385,7 +385,7 @@ def olculmus_isabet() -> dict[str, Any]:
     yazılmadı; hepsi arşivden koşar, çünkü elle yazılan bir sayı veri
     kaydığında sessizce yalan söylemeye başlar.
 
-    **Alternatif için ölçüm gerçekten çaprazdır:** 31.103 maçlık korpusta
+    **Alternatif için ölçüm gerçekten çaprazdır:** 23.085 maçlık korpusta
     eğitilir, 540 maçlık kupon setinde ölçülür ve aralarında **tek bir ortak
     maç yoktur**. Fark, hafta üzerinden eşleştirilmiş bootstrap ile verilir;
     `gecti` yalnızca aralık tamamen sıfırın altındaysa `True` olur.
@@ -429,7 +429,7 @@ def olculmus_isabet() -> dict[str, Any]:
     fark = bootstrap_farki(a_kayit, m_kayit)
     out["alternatif"] = {
         "ad": ALTERNATIF_AD,
-        "aciklama": ("31.103 maçlık korpusta eğitilmiş yeniden kalibrasyon "
+        "aciklama": ("23.085 maçlık korpusta eğitilmiş yeniden kalibrasyon "
                      "(3 parametre); kupon setinde ölçüldü, ortak maç yok"),
         **skor,
         "fark": fark,
@@ -594,7 +594,7 @@ def _uyarilar(maclar: Sequence[dict[str, Any]]) -> list[dict[str, str]]:
                    "denendi, hicbiri piyasayi out-of-sample gecemedi "
                    "(§6.2 A4) — yani bu bir eksiklik degil olcum sonucudur.")},
         {"ad": "alternatif_gecmedi",
-         "metin": ("Yanindaki `kalibre_bias`, 31.103 maclik korpusta "
+         "metin": ("Yanindaki `kalibre_bias`, 23.085 maclik korpusta "
                    "egitilmis 3 parametreli bir yeniden kalibrasyondur ve "
                    "540 maclik kupon setinde ORTALAMADA daha iyi cikiyor "
                    "(0,5732'ye karsi 0,5740). Ama guven araligi sifiri "
@@ -615,8 +615,8 @@ def _uyarilar(maclar: Sequence[dict[str, Any]]) -> list[dict[str, str]]:
     kaynaklar = {m["kaynak"] for m in maclar}
     if KAYNAK_OLCULEN in kaynaklar:
         out.append({"ad": "acilis_orani",
-                    "metin": ("Oranlar ACILIS oranidir. A1 olcumu: 31.099 macta "
-                              "acilis Brier 0,5964, kapanis 0,5940 — fark "
+                    "metin": ("Oranlar ACILIS oranidir. A1 olcumu: 23.083 macta "
+                              "acilis Brier 0,5898, kapanis 0,5873 — fark "
                               "+0,0025. Mac saatinde verilecek tahmin "
                               "olculebilir bicimde biraz daha iyidir.")})
     if KAYNAK_OLCULMEMIS in kaynaklar:

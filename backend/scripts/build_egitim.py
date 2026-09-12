@@ -60,6 +60,10 @@ ANA_URL = "https://www.football-data.co.uk/mmz4281/{sezon}/{lig}.csv"
 #:     kapanis %100 · cizgi cifti %100 · bahisci dortlusu %99,9
 #:     mac istatistigi %93,2 · orani olmadigi icin elenen 32
 #:
+#: DIKKAT — bu olcum 22 LIGLI kesitte yapildi (2026-08-30). Lig evreni
+#: 2026-09-12'de 17'ye indi; alti sezonun bugunku karsiligi YENIDEN
+#: OLCULMEDI. Buradaki 45.652 ve 31.103 o gunun kaydidir.
+#:
 #: Yani sema HIC BOZULMUYOR. Tavan da olculdu: football-data'nin tam semasi
 #: **2019/20'de basliyor** — `mmz4281/1819/T1.csv` basliginda yalnizca
 #: PSCH/PSCD/PSCA ve eski `Bb*` toplayicilari var. 1819 ve oncesi eklenirse
@@ -69,13 +73,19 @@ ANA_URL = "https://www.football-data.co.uk/mmz4281/{sezon}/{lig}.csv"
 #: **Neden varsayilan degil.** Korpusu buyutmek serbest bir kazanc DEGILDIR:
 #:
 #:   1. Depodaki olculmus bulgularin cogu bu korpusa cipali. Yalniz
-#:      `ISTATISTIK_YOL_HARITASI.md`de "31.103" 53 yerde geciyor ve bunlarin
-#:      buyuk bolumu bir OLCUMUN kaydidir ("31.103 macta su cikti"). Korpusu
-#:      degistirip o satirlari oldugu gibi birakmak onlari yanlis yapar;
-#:      degistirmek ise yapilmamis bir olcumu yapilmis gibi gostermek olur.
-#:      Ikisi de bu deponun yasakladigi seydir.
+#:      `ISTATISTIK_YOL_HARITASI.md`de "31.103" 60'tan fazla yerde geciyor ve
+#:      bunlarin buyuk bolumu bir OLCUMUN kaydidir ("31.103 macta su cikti").
+#:      Korpusu degistirip o satirlari oldugu gibi birakmak onlari yanlis
+#:      yapar; degistirmek ise yapilmamis bir olcumu yapilmis gibi gostermek
+#:      olur. Ikisi de bu deponun yasakladigi seydir. UCUNCU YOL vardir ve
+#:      2026-09-12 daraltmasinda o izlendi: olcumu YENIDEN KOS (once ESKI
+#:      korpusta kosup kunyedeki degeri verdigini dogrula, sonra yenisinde —
+#:      boylece degisimin bu degisiklikten mi geldigi ayrilir), koşulamayani
+#:      hangi kesitte alindigini yazarak birak.
 #:   2. `artefakt.py` egitilmis modelin korpus sha256'sini tasiyor ve
-#:      `health` bayatlik gorunce KIRMIZI yaniyor.
+#:      `health`in `artefakt_tazeligi` kontrolu bayatligi gorur. (Depoda
+#:      artefakt tutulmuyor; servis ilk istekte egitir, o yuzden daraltma
+#:      kirmizi yakmadi.)
 #:   3. Kazanc olculmus ve kucuk: README §1.1/§10 ayni turden daha cok
 #:      verinin Brier'i buyutmedigini ZATEN olctu (kalan etki 0,0005-0,0015).
 #:      Buyuyen sey istatistiksel guctur, sinyal degil.
@@ -88,10 +98,41 @@ ANA_URL = "https://www.football-data.co.uk/mmz4281/{sezon}/{lig}.csv"
 #: sayilari kaydiyla birlikte guncellemelidir. O ayri bir istir.
 VARSAYILAN_SEZONLAR: tuple[str, ...] = ("2122", "2223", "2324", "2425")
 
-#: build_odds.py ile ayni lig listesi — ayni kaynak, ayni etiketler.
+#: Korpusun lig evreni — **`build_odds.py` ile ARTIK AYNI DEGIL.**
+#:
+#: Ayni kaynak (football-data mmz4281) ve ayni etiketler, ama farkli kume:
+#: `build_odds.py` 22 ana ligi cekmeye devam eder cunku o arsiv /istatistik
+#: kupon katmanini besler ve Spor Toto kuponu bu liglerin HEPSINDEN mac
+#: tasiyabilir. Korpus ise tahminciyi egitir; oradaki soru "kupon hangi ligi
+#: iceriyor" degil, "hangi maclar olculebilir bir ornek verir".
+#:
+#: ─── BES LIG NEDEN CIKARILDI (2026-09-12) ────────────────────────────────
+#:
+#: Cikanlar: E2 (League One), E3 (League Two), EC (National League),
+#: SC2/SC3 (Iskocya League One/Two) — 8.018 mac, korpusun %25,8'i.
+#:
+#:     22 lig · 31.103 mac  ->  17 lig · 23.085 mac
+#:
+#: Olculen gerekce **mac sonrasi istatistigin kapsamasidir**. Korpusta
+#: istatistigi eksik 2.175 macin neredeyse tamami bu bes ligdeydi:
+#:
+#:     kapsama %93,01  ->  %99,95
+#:
+#: T5 takim formu ozelligi (`_form_tablosu`) sut/isabet farkindan hesaplanir
+#: ve istatistigi olmayan mac gecmise KATILMAZ. Yani bu bes lig ozelligi
+#: seyreltiyordu: form penceresi onlarin uzerinden atliyor, ama maclar
+#: korpusta kalip olcumu buyutuyordu. A1/A2 kesitleri zaten %99,99'du ve
+#: oyle kaldi — kaybedilen sey ornek sayisi, kazanilan sey ozellik
+#: yogunlugu.
+#:
+#: **Bedeli odendi, atlanmadi.** Korpusa cipali butun olcumler bu degisiklikle
+#: bayatladi ve yeniden kosuldu; belgelerdeki sayilar ve `.claude/
+#: olcum_kutugu.json` kunyeleri yeni korpusla guncellendi. Yukaridaki
+#: derinlestirme notunun 1. maddesi tam olarak bunu sart kosuyor: korpusu
+#: degistirip cipali satirlari oldugu gibi birakmak onlari yanlis yapardi.
 ANA_LIGLER: tuple[str, ...] = (
-    "E0", "E1", "E2", "E3", "EC",
-    "SC0", "SC1", "SC2", "SC3",
+    "E0", "E1",
+    "SC0", "SC1",
     "D1", "D2", "I1", "I2", "SP1", "SP2",
     "F1", "F2", "N1", "B1", "P1", "T1", "G1",
 )

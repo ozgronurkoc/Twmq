@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-30",
+  "generated_at": "2026-09-12",
   "source": "football-data.co.uk (mmz4281) — piyasa oranlari, IDDAA DEGIL",
   "purpose": "tahmin katmaninin egitimi ve olcumu; istatistik sayfasinin verisi DEGILDIR",
   "seasons": [
@@ -21,12 +21,12 @@
     "2425"
   ],
   "kesisim_notu": "Bu sezonlar HEM korpusta HEM kupon degerlendirme setinde. Bu sezonlarin kupon haftalari uzerinde olcum yapilacaksa `evaluate.sezon_anahtari` (sezon disarida birakmali) KULLANILMALI; duz `capraz_olc` sizdirir. Kesisimi bosaltmak icin: `--sezonlar` ile o sezonlari cikarin.",
-  "matches": 31103,
+  "matches": 23085,
   "by_season": {
-    "2122": 7822,
-    "2223": 7801,
-    "2324": 7799,
-    "2425": 7681
+    "2122": 5852,
+    "2223": 5785,
+    "2324": 5783,
+    "2425": 5665
   },
   "leagues": [
     "B1",
@@ -34,9 +34,6 @@
     "D2",
     "E0",
     "E1",
-    "E2",
-    "E3",
-    "EC",
     "F1",
     "F2",
     "G1",
@@ -46,22 +43,20 @@
     "P1",
     "SC0",
     "SC1",
-    "SC2",
-    "SC3",
     "SP1",
     "SP2",
     "T1"
   ],
   "result_distribution": {
-    "1": 13488,
-    "0": 8115,
-    "2": 9500
+    "1": 10049,
+    "0": 6040,
+    "2": 6996
   },
   "closing_odds_pct": 100.0,
-  "with_line_pair": 31099,
+  "with_line_pair": 23083,
   "line_pair_pct": 99.99,
   "line_pair_note": "acilis+kapanis ayni bahisci ailesinden esitlenmis cift; A1 (kapanis cizgisi verimliligi) kesiti budur. Cifti olmayan mac ELENMEZ — `oran_*` tamdir ve tahminci olcumune girer",
-  "with_bookmaker_quartet": 31100,
+  "with_bookmaker_quartet": 23083,
   "bookmaker_quartet_pct": 99.99,
   "bookmaker_sources": [
     "B365C",
@@ -70,16 +65,16 @@
     "AvgC"
   ],
   "bookmaker_note": "A2 (bahisci anlasmazligi) kesiti. Yalnizca dort sezonda da ~%100 olan kaynaklar tasinir; BW/WH/BF/1XB eklenirse kesit sezona gore dengesizlesir ve sezon disarida birakmali olcum yanlilanir",
-  "with_match_stats": 28928,
-  "match_stats_pct": 93.01,
+  "with_match_stats": 23073,
+  "match_stats_pct": 99.95,
   "match_stats_note": "mac SONRASI veridir; dogrudan tahminci girdisi degil, yalnizca yuvarlanan takim formu icin",
   "dropped": {
-    "toplam": 31132,
+    "toplam": 23114,
     "tarih_yok": 0,
     "sonuc_yok": 0,
     "oran_yok": 29,
-    "cizgi_cifti_yok": 4,
-    "bahisci_dortlusu_yok": 3
+    "cizgi_cifti_yok": 2,
+    "bahisci_dortlusu_yok": 2
   },
   "unavailable_files": []
 }

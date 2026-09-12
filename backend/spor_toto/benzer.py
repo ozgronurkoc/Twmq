@@ -42,7 +42,7 @@ Bu araç yanlış kullanılmaya en müsait yer olduğu için üç koruma taşır
    kendi cevabına girmesini ayrı bir koda gerek kalmadan engeller. Gerekçe
    `_dogrula_tarih` yorumunda; sözleşme `tests/test_sizinti.py`te.
 
-Korpusun birincil fiyatı 31.103 satırın **hepsinde kapanış** ortalamasıdır
+Korpusun birincil fiyatı 23.085 satırın **hepsinde kapanış** ortalamasıdır
 (`oran_kaynak = AvgC`). Yani bu modül bugün "kapanış çizgisinde bu fiyatı
 gören maçlar" sorusuna cevap veriyor; açılış çizgisi korpusta ayrıca duruyor
 ama burada kullanılmıyor.
