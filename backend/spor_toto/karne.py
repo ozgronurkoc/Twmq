@@ -1006,7 +1006,7 @@ def kapsama_acigi(butce_tl: float = 2000.0,
     ─── (a) aradan geçen sürede büyük ölçüde elendi, ama TAM değil ───────
 
     §3.46 hafta içi bağımlılığı ölçtü: korpusta ortalama ikili artık
-    korelasyonu −0,00009 [−0,00102, +0,00080] ve korpus **üst sınırında**
+    korelasyonu −0,00046 [−0,00163, +0,00070] ve korpus **üst sınırında**
     kuyruk yalnız **%5** şişiyor. Ama o sonucu taşıyan korpustur; kupon
     kesiti tek başına ±%82'ye izin veriyordu. Yani (a) *korpus sınırının
     kupona taşındığı varsayımıyla* eleniyor. Bu fonksiyon açığın

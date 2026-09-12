@@ -978,7 +978,7 @@ değil, geriye dönük kurgu olurdu.
 
 | Sınır | Durum |
 |---|---|
-| **Maç bağımsızlığı** (`kacak_dagilimi` Poisson-binom varsayar) | Ölçüldü, **kırılmadı**: hafta içi ortalama ikili artık korelasyon korpusta −0,00009 [−0,00102, +0,00080]; kupon kesitinde −0,00349 [−0,01724, +0,01020]. Kuyruğa çevrildiğinde `P(k≥14)` en fazla %5 şişiyor |
+| **Maç bağımsızlığı** (`kacak_dagilimi` Poisson-binom varsayar) | Ölçüldü, **kırılmadı**: hafta içi ortalama ikili artık korelasyon korpusta −0,00046 [−0,00163, +0,00070]; kupon kesitinde −0,00349 [−0,01724, +0,01020]. Kuyruğa çevrildiğinde `P(k≥14)` en fazla %5 şişiyor |
 | **Seçim koşullu aşırı güven** | Ölçüldü ve **gerçek**: yüksek eşikte +%14,9 aşırı güven (§3.49). Küresel olarak iyi kalibre bir model, *seçtiği* alt kümede gürültüyü seçer |
 | **`P(k ≤ eşik)` iyimser mi** | Hayır — **alt sınırdır**; gerçekleşen isabet üstünde çıkıyor |
 | **Oynanma payı = havuz payı mı** | **Hayır.** Tek platformun kullanıcıları; Spor Toto havuzunun tamamı değil |

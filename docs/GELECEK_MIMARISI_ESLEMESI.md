@@ -168,7 +168,7 @@ kural — *aralık sıfırı kesiyorsa eksen kapanır* — üç kesitte de sağl
 |---|---:|---:|---:|---|
 | Kupon (varsayılan) | 36 | 540 | −0,02022 | [−0,03926, +0,00079] |
 | Kupon (geniş) | 114 | 1.710 | −0,00349 | [−0,01724, +0,01020] |
-| **Korpus** | **183** | **31.103** | **−0,00009** | **[−0,00102, +0,00080]** |
+| **Korpus** | **183** | **23.085** | **−0,00046** | **[−0,00163, +0,00070]** |
 
 Kuyruğa çevrildiğinde (tek faktör Gauss kopulası + Gauss-Hermite, RNG yok):
 korpus aralığının üst sınırında `P(k≥14)` yalnızca **%5** şişiyor. Nokta

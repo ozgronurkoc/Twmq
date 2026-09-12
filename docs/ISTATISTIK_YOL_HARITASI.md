@@ -4092,7 +4092,7 @@ Bootstrap birimi **hafta**dır ve bu bir tercih değil zorunluluk: maç düzeyin
 |---|---:|---:|---:|---:|---:|---|
 | Kupon (varsayılan sezon) | 36 | 540 | +0,0271 | 0,7242 | −0,02022 | [−0,03926, +0,00079] |
 | Kupon (geniş kesit) | 114 | 1.710 | +0,0510 | 0,9320 | −0,00349 | [−0,01724, +0,01020] |
-| **Korpus** | **183** | **31.103** | +0,0066 | 0,9762 | **−0,00009** | **[−0,00102, +0,00080]** |
+| **Korpus** | **183** | **23.085** | +0,0079 | 0,9212 | **−0,00046** | **[−0,00163, +0,00070]** |
 
 Üç kesitin üçünde de nokta tahmini **negatif** ve aralık sıfırı kesiyor. Korpus tek gerçek
 güç kaynağıdır: aralığın genişliği 0,0018, yani hafta içi eş-hareket varsa bile binde ikiden
@@ -5969,7 +5969,7 @@ ve karşılıkları: kupon seti 0,5747 → **0,5740**, korpus 0,5940 → **0,593
 | **Müşterek beklenen değer (§3.34)** | 51. hafta · 3.888 kolon · havuz varsayımı | **Ölçüm değil, hesap** — ve sonucu belirleyen tahminci değil kalabalık varsayımı: `orneklem` modelinde getiri oranı **0,156**, `favori` modelinde **0,007** — arada **22 kat**. Havuz büyüklüğü getiriyi hiç belirlemiyor (havuz ve rakip kolon birlikte ölçeklendiğinde eğri tam düz); belirleyen `p_k/q_k` oranı. Bu eksenin ihtiyacı yeni model değil, **oynanma paylarının ölçümü** |
 | **Takım bazlı istatistik (§3.35)** | 23.085 maç · 17 lig · 445 takım | **Yasak kalktı, kural kalmadı.** Ampirik Bayes küçültmesi: ortalama `B` **0,858**, ortalama %95 aralık 0,506. Tek sezona inildiğinde sistem **kendiliğinden temkinli oluyor** — `B` 0,697'ye düşüyor, aralık 0,690'a genişliyor. En çok konuşan satır Scunthorpe: 46 maçta ham 0,565 → küçültülmüş **0,875** [0,58, 1,17] |
 | **Yeni veri (§3.36)** | 768 UEFA maçı · 374 takım şehri · 23.085 maç | **Serinin niteliksel olarak farklı kapanışı.** Eksik veri gerçekten eksikti: UEFA fikstürü eklenince §3.16'nın açıklanamayan anomalisi **+0,0613 → +0,0325**'e indi (kontrol katmanı bit bit aynı kaldı). Ama düzeltilmiş özellik de geçmedi — `kalibre_avrupa` +0,000028 [−0,000277, +0,000352]. Derbi de türetilebilir oldu (597 maç) ve geçmedi (+0,000176). xG ve kadro **kapalı**: biri `robots.txt`, öteki eğitim/servis ayrışması |
-| **Hafta içi bağımlılık (§3.46)** | 183 hafta · 31.103 maç + 114 kupon haftası | **Eksen kapandı — ön kayıtlı kuralla.** Demeanlenmiş artıkların ortalama ikili korelasyonu korpusta **−0,00009 [−0,00102, +0,00080]**, üç kesitte de aralık sıfırı kesiyor. Kuyruğa çevrildiğinde korpus üst sınırında `P(k≥14)` yalnızca **%5** şişiyor (kupon kesiti tek başına %82'ye izin verirdi — sonucu taşıyan korpus). Yan ürün: eski bekçinin istatistiği yanlıştı (`Var(K)` yerine `Var(K−M)`) ve düzeltildi; ham artıklarla görünen `ρ=+0,0077` tamamen **kalibrasyon yanlılığıydı** |
+| **Hafta içi bağımlılık (§3.46)** | 183 hafta · 23.085 maç + 114 kupon haftası | **Eksen kapandı — ön kayıtlı kuralla.** Demeanlenmiş artıkların ortalama ikili korelasyonu korpusta **−0,00046 [−0,00163, +0,00070]**, üç kesitte de aralık sıfırı kesiyor. Kuyruğa çevrildiğinde korpus üst sınırında `P(k≥14)` yalnızca **%5** şişiyor (kupon kesiti tek başına %82'ye izin verirdi — sonucu taşıyan korpus). Yan ürün: eski bekçinin istatistiği yanlıştı (`Var(K)` yerine `Var(K−M)`) ve düzeltildi; ham artıklarla görünen `ρ=+0,0077` tamamen **kalibrasyon yanlılığıydı** |
 | **Betfair Exchange (§3.52)** | 985 kupon maçı · 119 hafta | **GEÇTİ** — ve beş aday üzerinde **Holm düzeltmesiyle**: `BFE_kapanis` −0,00100 [−0,00181, −0,00021], p=0,0054. Bir model değil bir **fiyat**: marj **%0,62**, omurganınkinin onda biri. Kapsama 2022/23–2023/24'te **sıfır**, 2024/25 %100, 2025/26 %87 — ileriye dönük sorun yok, `n` iki sezon |
 | **Kupon-zamanı fiyatı (§3.53)** | 31.099 maç · sezon dışarıda | **Kapandı.** `L_kapanış ≈ b·L_açılış` kestirimi `b ≈ 1,009` veriyor ve açığın yalnızca **%3,3**'ünü geri alıyor (dört katta %2,3–6,2). Açılış zaten kapanışın **yansız kestiricisi**; §5.2'nin %22'lik kolon bedeli bu yolla geri alınamaz |
 | **Kupon kuralında ters seçim (§3.54)** | 114 hafta · 1.710 maç | **Yok.** Banko −0,0501, banko değil −0,0529, fark **+0,0029** [−0,0469, +0,0522] — sıfırı kesiyor. §3.49'un ters seçimi gerçek ama `model` kuralına ait; kupon onu kullanmıyor. İki kolda da *eksik* güven, ki A5'in favori–sürpriz yanlılığı |
@@ -6266,7 +6266,7 @@ yukarıdaki üç kaynaktan biri gelirse. Ayrıntı: [`DIS_INCELEME.md`](DIS_INCE
 İŞLETİLDİ (§3.46).** Madde bu tabloya girmişti; ölçüm koşulduğu için
 çıkarıldı. Kural şuydu: *bootstrap %95 aralığı sıfırı kesiyorsa eksen kapanır
 ve bugünkü geri test savunulmuş olur.* Aralık üç kesitte de sıfırı kesti
-(korpus: **−0,00009 [−0,00102, +0,00080]**, 183 hafta · 31.103 maç), yani
+(korpus: **−0,00046 [−0,00163, +0,00070]**, 183 hafta · 23.085 maç), yani
 **eksen kapandı** ve `P(k≤2)` · `P(k≥12)` · `kacak_dagilimi` savunuldu.
 Kapanışın sınırı da yazılı: sonucu taşıyan şey korpustur — kupon kesiti tek
 başına `P(k≥14)`ün %82 şişmesine hâlâ izin verirdi. Ölçümün kendisi
