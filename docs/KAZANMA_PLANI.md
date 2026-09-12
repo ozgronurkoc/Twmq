@@ -35,7 +35,7 @@ takım formu (T5), xG (§3.42).
 
 | Ölçüm | Sonuç |
 |---|---|
-| **Brier ayrışımı** (§3.23) | Kalibrasyon ekseninin tavanı: piyasanın toplam güvenilirlik borcu **0,00042**. Denenen etkiler bu tavanın **üstünde** — geçmemeleri kapasiteden değil, alınacak yolun kalmamasından |
+| **Brier ayrışımı** (§3.23) | Kalibrasyon ekseninin tavanı: piyasanın toplam güvenilirlik borcu **0,00060**. Denenen etkiler bu tavanın **üstünde** — geçmemeleri kapasiteden değil, alınacak yolun kalmamasından |
 | **Öğrenme eğrisi** (§3.24) | Eğri düzleşti, gap kapanmadan: son adım **0,00006**. *"Sorun satır sayısı değil sütun"* |
 | **LOFO** (§3.33) | **Hiçbir özellik taşımıyor**; onun beşi net negatif |
 

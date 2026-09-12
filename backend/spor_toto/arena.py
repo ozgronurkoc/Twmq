@@ -196,7 +196,7 @@ def kesit(kupon: bool = False,
                                             dict[str, Any]]:
     """Arenanın koşacağı haftalar, gruplama ve kesit künyesi.
 
-    Varsayılan **korpustur** (22 lig × 4 sezon, ~31 bin maç).
+    Varsayılan **korpustur** (17 lig × 4 sezon, ~23 bin maç).
 
     `kupon=True` ölçümü Spor Toto kupon haftalarına çeker. **Bu kesit artık
     çok sezonlu** (§6G: 2022/23–2024/25 eklendi) ve `hafta_girdileri` artık
@@ -225,11 +225,17 @@ def kesit(kupon: bool = False,
                 "ayni sezonun baska haftalari bilgi sizdirir"),
         }
 
-    from .egitim import korpus_haftalari, sezonlar
+    from .egitim import korpus_haftalari, korpus_yukle, sezonlar
 
     haftalar = korpus_haftalari()
+    # Etiketteki lig ve sezon sayisi ELLE yaziliydi ("22 lig x 4 sezon") ve
+    # korpus daralinca ciktinin ILK SATIRINDA sessizce yanlislandi. Tablo
+    # olcumden basiliyordu, basligi basilmiyordu — ayni kusurun
+    # `devir_tavani.yaz_ev`daki kardesiyle birlikte kapatildi.
+    _lig = len({r["lig"] for r in korpus_yukle()})
+    _sezon = len(sezonlar())
     return list(haftalar), sezon_anahtari, {
-        "kaynak": "egitim korpusu (22 lig x 4 sezon)",
+        "kaynak": f"egitim korpusu ({_lig} lig x {_sezon} sezon)",
         "grup_olcusu": "sezon",
         "sezonlar": sezonlar(),
         "uyari": None,

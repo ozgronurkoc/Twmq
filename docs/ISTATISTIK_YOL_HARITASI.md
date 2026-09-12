@@ -247,7 +247,7 @@ Bunlar katmanın tasarım sözleşmesidir; yeni kart eklerken bozulmamalı:
 ### 2.5 Model kalıcılığı — artefakt (Faz 0.3)
 
 Üretimdeki tahminci ilk istekte eğitiliyordu (`lru_cache(maxsize=1)`). İki
-şey birden bozuluyordu: **ilk isteğin bedeli** (31.103 satır okunuyor ve
+şey birden bozuluyordu: **ilk isteğin bedeli** (23.085 satır okunuyor ve
 model uyduruluyor) ve **hangi korpusla eğitildiğinin kayıtsızlığı** — süreç
 yeniden başlarsa model sessizce yeni korpusla yeniden eğitilir ve değişen
 bir şey olduğu hiçbir yerde görünmez.
@@ -628,7 +628,7 @@ kuralla: **çift yalnızca aynı bahisçi ailesinden kurulur** (`Avg`↔`AvgC`, 
 `PS`↔`PSC`). Açılışı `Avg`'den kapanışı `B365C`'den alsaydık aradaki fark piyasanın fikir
 değiştirmesini değil, iki farklı fiyatlayıcıyı ölçerdi.
 
-Kesit: **31.099 / 31.103 maç** (%99,99). Çifti olmayan maç elenmedi — `oran_*` tam olduğu
+Kesit: **23.083 / 23.085 maç** (%99,99). Çifti olmayan maç elenmedi — `oran_*` tam olduğu
 için tahminci ölçümüne giriyor, yalnızca A1 kesitine giremiyor. Korpus boyutu sabit kaldığı
 için önceki ölçümler karşılaştırılabilir.
 
@@ -905,9 +905,9 @@ zamana "maç öncesi" demek, iddiayı doğrulanamaz kılar.
 yaklaşan maçları okur ve cevap zamanla değişir. Önbelleklenmiş bir tahmin, başlamış bir
 maça maç öncesi olasılığı göstermeye devam ederdi.
 
-#### İki tahminci yan yana — 31 binlik korpusun ürüne dönüşü
+#### İki tahminci yan yana — 23 binlik korpusun ürüne dönüşü
 
-Ürün ilk sürümünde yalnızca eğitimsiz `piyasa`yı taşıyordu ve **31.103 maçlık
+Ürün ilk sürümünde yalnızca eğitimsiz `piyasa`yı taşıyordu ve **23.085 maçlık
 korpusun ürüne katkısı sıfırdı.** Korpusun işi "eğitmek yardım ediyor mu" sorusunu
 cevaplamaktı; cevap *"yön doğru, miktar kurulamadı"* çıkmıştı.
 
@@ -995,21 +995,21 @@ Aynı gerçek olasılık, farklı marjda tamamen farklı oran verir. Oran uzayı
 
 #### Bulgu: orantısal arındırma favoriyi eksik fiyatlıyor
 
-Her sembol kendi olasılık bandında, gözlenen ↔ piyasanın dediği (31.103 maç, Wilson %95):
+Her sembol kendi olasılık bandında, gözlenen ↔ piyasanın dediği (23.085 maç, Wilson %95):
 
 | Band | n | Piyasa | Gerçek | Fark | GA dışında |
 |---|---:|---:|---:|---:|:--:|
-| %5–10 | 1.697 | %7,9 | %5,7 | **−2,2** | ✗ |
-| %10–15 | 3.557 | %12,8 | %10,6 | **−2,2** | ✗ |
-| %15–20 | 6.530 | %17,7 | %16,6 | −1,2 | ✗ |
-| %20–25 | 11.924 | %22,8 | %21,7 | −1,1 | ✗ |
-| %25–40 | 45.074 | — | — | ~0 | içeride |
-| %40–45 | 6.828 | %42,4 | %43,6 | +1,2 | ✗ |
-| %50–55 | 3.757 | %52,4 | %54,3 | +1,9 | ✗ |
-| %55–60 | 2.820 | %57,3 | %60,1 | +2,8 | ✗ |
-| %60–70 | 3.346 | %64,5 | %67,2 | +2,7 | ✗ |
-| **%70–80** | 1.702 | %74,5 | **%78,9** | **+4,4** | ✗ |
-| %80+ | 627 | %83,8 | %86,8 | +3,0 | ✗ |
+| %5–10 | 1.552 | %7,8 | %5,7 | **−2,1** | ✗ |
+| %10–15 | 2.998 | %12,7 | %10,7 | **−2,1** | ✗ |
+| %15–20 | 5.211 | %17,7 | %16,1 | −1,6 | ✗ |
+| %20–25 | 8.823 | %22,8 | %21,9 | −0,9 | ✗ |
+| %25–40 | 32.372 | — | — | ~0 | içeride |
+| %40–45 | 4.766 | %42,4 | %43,9 | +1,5 | ✗ |
+| %50–55 | 2.718 | %52,4 | %54,4 | +2,0 | ✗ |
+| %55–60 | 2.159 | %57,3 | %60,5 | +3,2 | ✗ |
+| %60–70 | 2.599 | %64,6 | %67,3 | +2,6 | ✗ |
+| **%70–80** | 1.507 | %74,6 | **%79,2** | **+4,6** | ✗ |
+| %80+ | 591 | %83,7 | %87,0 | +3,2 | ✗ |
 
 Sapma **tek yönlü ve düzenli**: sürprizler abartılıyor, favoriler küçümseniyor — klasik
 favourite–longshot yanlılığı. 15 banttan **10'u** anlamlı sapıyor.
@@ -1167,9 +1167,9 @@ hâliyle **hiçbir kronolojik ölçümün içine konulamıyordu.** §6.6'nın il
 yürüyüş bulgusu (kronoloji zorlandığında piyasanın artığını öğrenen aileler
 2–3 kat kötüleşiyor) tam da bu aracın hiç geçmediği sınavdır.
 
-`tarih=` isteğe bağlı eklendi; varsayılan davranış birebir korundu (`n` = 241
-shin, 710 orantılı). Karşılaştırma katı küçüktür, yani sorulan maç kendi
-cevabına giremez. Ölçüldü: `2023-08-01` kesmesiyle evren 31.103 → 15.640 ve
+`tarih=` isteğe bağlı eklendi; varsayılan davranış birebir korundu (`n` = 151
+shin, 426 orantılı). Karşılaştırma katı küçüktür, yani sorulan maç kendi
+cevabına giremez. Ölçüldü: `2023-08-01` kesmesiyle evren 23.085 → 11.654 ve
 uyarlanan yarıçap %2,0'dan **%3,0'a** genişliyor — yarım korpusta hedef
 örnekleme ulaşmak zorlaşıyor. Bu, ileri yürüyüş koşumunun kendi örneklem
 sorusudur ve koşum henüz yapılmadı (eşleme belgesi §6.1).
@@ -1563,22 +1563,22 @@ yol mu kalmamıştı? Murphy (1973) ayrışımı bu ikisini ayırır.
 `Σ_s BS_s` tam olarak `ortak.brier`in maç ortalamasıdır — ayrışım projenin
 **kendi ölçeğinde** kapanır, yeni bir ölçek uydurulmadı.
 
-#### Ölçülen — 31.103 maç · 183 hafta · sezon dışarıda bırakmalı · `shin`
+#### Ölçülen — 23.085 maç · 183 hafta · sezon dışarıda bırakmalı · `shin`
 
 | tahminci · sembol | Brier | güvenilirlik | çözünürlük | belirsizlik | bant içi | taban |
 |---|---:|---:|---:|---:|---:|---:|
-| **piyasa** · 1 | 0,2163 | 0,00012 | **0,02922** | 0,24560 | −0,00022 | 0,434 |
-| **piyasa** · 0 | 0,1901 | 0,00008 | **0,00257** | 0,19284 | −0,00020 | 0,261 |
-| **piyasa** · 2 | 0,1872 | 0,00022 | **0,02478** | 0,21215 | −0,00036 | 0,305 |
-| **piyasa** · TOPLAM | **0,5936** | **0,00042** | **0,05657** | 0,65058 | −0,00079 | — |
-| izotonik · TOPLAM | 0,5936 | 0,00022 | 0,05660 | 0,65058 | −0,00056 | — |
+| **piyasa** · 1 | 0,2133 | 0,00021 | **0,03248** | 0,24581 | −0,00026 | 0,435 |
+| **piyasa** · 0 | 0,1899 | 0,00011 | **0,00315** | 0,19318 | −0,00022 | 0,262 |
+| **piyasa** · 2 | 0,1837 | 0,00028 | **0,02740** | 0,21121 | −0,00043 | 0,303 |
+| **piyasa** · TOPLAM | **0,5869** | **0,00060** | **0,06304** | 0,65021 | −0,00091 | — |
+| izotonik · TOPLAM | 0,5868 | 0,00031 | 0,06309 | 0,65021 | −0,00064 | — |
 
-Sapma payı 0,00021 (aşağıda). Özdeşlik artığı her satırda `0,0e+00`.
+Sapma payı 0,00028 (aşağıda). Özdeşlik artığı her satırda `0,0e+00`.
 
-#### Birinci okuma — kalibrasyon ekseninin tavanı bir sayıdır: **0,00042**
+#### Birinci okuma — kalibrasyon ekseninin tavanı bir sayıdır: **0,00060**
 
 `REL`, *herhangi bir* yeniden kalibrasyon basamağının kazanabileceğinin
-**üst sınırıdır**. Piyasa için 0,00042.
+**üst sınırıdır**. Piyasa için 0,00060.
 
 T2/T3'te ölçülen etkiler 0,0005–0,0015 aralığındaydı; yani **bu tavanın
 üstünde.** O basamakların geçmemesi model kapasitesinden değil,
@@ -1587,8 +1587,8 @@ T2/T3'te ölçülen etkiler 0,0005–0,0015 aralığındaydı; yani **bu tavanı
 olduğunu söylüyor.
 
 Aynı koşum bunu doğrudan gösteriyor: `izotonik` `REL`i **yarıya indiriyor**
-(0,00042 → 0,00022) ama toplam Brier 0,5936'da **kımıldamıyor** —
-kazandığını bant içi terimde geri veriyor (−0,00079 → −0,00056). A5'in
+(0,00060 → 0,00031) ama toplam Brier 0,587'de **kımıldamıyor** —
+kazandığını bant içi terimde geri veriyor (−0,00091 → −0,00064). A5'in
 *"`shin` üzerinde izotonik hiçbir şey eklemiyor"* bulgusunun mekanizması
 budur.
 
@@ -1596,7 +1596,7 @@ budur.
 
 Piyasanın çözünürlüğü sembole göre on kat ayrışıyor:
 
-    1 → 0,02922      2 → 0,02478      0 → 0,00257
+    1 → 0,03248      2 → 0,02740      0 → 0,00315
 
 Beraberlikte piyasa maçları birbirinden neredeyse **hiç ayırt edemiyor**.
 Karışıklık paneli aynı şeyi karar tarafından söylüyor:
@@ -1623,7 +1623,7 @@ Büyüklüğü tahmin edilebilir ve `sapma_payi` alanı olarak yan yana basılı
 
 | kesit | REL | sapma payı | okunur mu |
 |---|---:|---:|---|
-| korpus · 31.103 maç | 0,00042 | 0,00021 | **evet** — tahmin payın iki katı |
+| korpus · 23.085 maç | 0,00060 | 0,00028 | **evet** — tahmin payın iki katı |
 | kupon · 540 maç | 0,00907 | **0,01085** | **hayır** — gürültü tabanı tahminin üstünde |
 
 Yani kupon setinde `REL` **okunamaz**; yukarıdaki bütün okuma korpus
@@ -1712,7 +1712,7 @@ o bilgi 6 bin maçta zaten öğrenilmiş.
 
 §3.23 gibi bu da **yeni bir tahminci değildir** — cetvelin bir parçasıdır ve
 A4'ün durma kuralına girmez. Ama §3.23'ten farklı bir şey söylüyor: §3.23
-kalibrasyon ekseninde alınacak yolun **0,00042** olduğunu ölçtü; §3.24 o
+kalibrasyon ekseninde alınacak yolun **0,00060** olduğunu ölçtü; §3.24 o
 yolun **daha çok veriyle de alınamayacağını** ölçüyor.
 
     python -m spor_toto.evaluate --egri --korpus
@@ -1876,7 +1876,7 @@ Sıra artık `KADEMELER`in kendisinden okunuyor; listenin iki kopyası yok.
 geçirmişti ve gerekçesi bir **tahsis kararıydı**, bir imkânsızlık değil.
 Faz 1'in iki ölçümü o kararı tersine çevirdi:
 
-* **§3.23** kalibrasyon ekseninin tavanının 0,00042 olduğunu ölçtü —
+* **§3.23** kalibrasyon ekseninin tavanının 0,00060 olduğunu ölçtü —
   yeniden kalibrasyon tarafında alınacak yol kalmadı;
 * **§3.24** öğrenme eğrisinin piyasaya **yetişmeden** düzleştiğini ölçtü —
   aynı türden daha çok satır bu farkı kapatmıyor.
@@ -2786,8 +2786,8 @@ kullanılan bir bilgiyi tahmin anında bulamıyorsak ölçüm ürünü tarif etm
 > `robots.txt` engeli ne Cloudflare var.
 >
 > **Ama satırın ikinci yarısı ayakta ve tek başına yetiyor.** Depo lig-sezon
-> lig-sezon sayıldı: Süper Lig yok, alt İngiliz ligleri (E1/E2/E3/EC) yok,
-> korpus penceresiyle kesişim 31.103 maçta **92 maç** ve o 92'nin hepsi tek
+> lig-sezon sayıldı: Süper Lig yok, Championship (E1) yok — E2/E3/EC 2026-09-12'de
+> korpustan da çıktı — korpus penceresiyle kesişim 23.085 maçta **92 maç** ve o 92'nin hepsi tek
 > takıma yanlı. Üstelik canlı akış yok — veri maçlardan yıllar sonra
 > yayımlanıyor, yani `/tahmin` onu ilkesel olarak da göremezdi.
 >
@@ -3455,23 +3455,25 @@ bootstrap tohumu, aynı referans.**
 
 #### Birinci ölçüm — arena, tam korpus
 
-183 hafta · 31.103 maç · 10 aile · sezon dışarıda bırakmalı · referans
+183 hafta · 23.085 maç · 10 aile · sezon dışarıda bırakmalı · referans
 `piyasa`:
 
 | tahminci | Brier | log | ΔBrier | %95 aralık | geçti |
 |---|---:|---:|---:|---:|---|
-| `yigin` | 0,5935 | 0,9935 | −0,0001 | [−0,0004, +0,0002] | hayır |
-| **`piyasa`** | **0,5936** | **0,9938** | — | — | — |
-| `izotonik` | 0,5936 | 0,9939 | +0,0000 | [−0,0002, +0,0002] | hayır |
-| `beraberlik_bant` | 0,5936 | 0,9938 | −0,0000 | [−0,0001, +0,0001] | hayır |
-| `venn_abers` | 0,5939 | 0,9943 | +0,0003 | [−0,0001, +0,0006] | hayır |
-| `kalibre_etkilesim_favori` | 0,5941 | 0,9945 | +0,0005 | [+0,0001, +0,0009] | hayır |
-| `agac` | 0,5941 | 0,9945 | +0,0005 | [+0,0001, +0,0008] | hayır |
-| `dixon_coles` | 0,6160 | 1,0297 | +0,0224 | [+0,0191, +0,0262] | hayır |
-| `sezon_sabiti` | 0,6506 | 1,0752 | +0,0570 | [+0,0540, +0,0601] | hayır |
-| `duzgun` | 0,6667 | 1,0986 | +0,0730 | [+0,0695, +0,0768] | hayır |
+| `izotonik` | 0,5868 | 0,9841 | −0,0001 | [−0,0003, +0,0002] | hayır |
+| `beraberlik_bant` | 0,5868 | 0,9840 | −0,0001 | [−0,0002, +0,0001] | hayır |
+| **`piyasa`** | **0,5869** | **0,9841** | — | — | — |
+| `yigin` | 0,5869 | 0,9840 | +0,0000 | [−0,0004, +0,0005] | hayır |
+| `venn_abers` | 0,5871 | 0,9847 | +0,0002 | [−0,0003, +0,0007] | hayır |
+| `agac` | 0,5874 | 0,9848 | +0,0005 | [−0,0000, +0,0011] | hayır |
+| `kalibre_etkilesim_favori` | 0,5875 | 0,9850 | +0,0006 | [+0,0000, +0,0012] | hayır |
+| `dixon_coles` | 0,6110 | 1,0230 | +0,0241 | [+0,0206, +0,0281] | hayır |
+| `sezon_sabiti` | 0,6503 | 1,0748 | +0,0634 | [+0,0599, +0,0670] | hayır |
+| `duzgun` | 0,6667 | 1,0986 | +0,0798 | [+0,0756, +0,0843] | hayır |
 
-**Hiçbir aile geçmedi.** En yakın olan `yigin`'in aralığı sıfırı kesiyor.
+**Hiçbir aile geçmedi.** En yakına `izotonik` ve `beraberlik_bant` düşüyor
+(ikisi de −0,0001) ve ikisinin de aralığı sıfırı kesiyor. 22 ligli kesitte
+en yakın olan `yigin`'di; sıralama oynadı, **hüküm oynamadı**.
 Bu, §5.1'in sonucunun tekrarı değil — ilk kez **kıyaslanabilir** hâlidir.
 
 #### İkinci ölçüm — ileri yürüyüş, ve bu yeni
@@ -3580,7 +3582,7 @@ penceresiyle (2122–2425) kesişim:
 | Ligue 1 2021/22 | 26 | yalnız PSG |
 | Ligue 1 2022/23 | 32 | yalnız PSG |
 | Bundesliga 2023/24 | 34 | yalnız Leverkusen |
-| **Toplam** | **92** | 31.103 maçlık korpusun **%0,3'ü** |
+| **Toplam** | **92** | 23.085 maçlık korpusun **%0,4'ü** |
 
 **Süper Lig yok. Alt İngiliz ligleri (E1/E2/E3/EC) yok** — oysa korpusun
 çoğunluğu onlardan geliyor, ve kupon maçları T1'den. Üstelik canlı akış da
@@ -5077,7 +5079,11 @@ cd backend && python -m spor_toto.hakem
 
 **Kesitin sınırı bir bulgudur.** football-data hakemi yalnızca dokuz
 Britanya liginde yazıyor (%100), on üç kıta liginde hiç yazmıyor (%0);
-korpusa bağlandığında 31.103 satırın **13.334'ü** (%42,9) hakemli. Eksiklik
+korpusa bağlandığında 31.103 satırın **13.334'ü** (%42,9) hakemli. (Bu sayı
+**22 ligli** korpusta ölçüldü ve öyle kalıyor: E4 kapandı, `build_hakem.py`
+depodan çıktı, yani yeniden ölçülemez. 2026-09-12 daraltmasının çıkardığı beş
+ligin dördü Britanya'dan — yani hakemli olan taraftan — o yüzden bugünkü oran
+buradakinden **düşüktür**, ama ölçülmeden bir sayı yazılmıyor.) Eksiklik
 rastgele değil **coğrafi**, o yüzden sütun korpusa katılmadı —
 `build_egitim.A2_KAYNAKLARI`nın gerekçesiyle aynı kusuru üretirdi, üstelik
 sezona değil coğrafyaya bağlı olduğu için sezon dışarıda bırakmalı çapraz
@@ -5532,17 +5538,17 @@ kapatmıyor. **Varsayılanı değiştirmek bu sorunu çözmez.**
 
 #### Aday 2 — genel piyasa yanlılığı: **düştü**
 
-Aynı sınav 31.103 maçlık korpusta (18 kat güç), banko rejimi:
+Aynı sınav 23.085 maçlık korpusta (13 kat güç), banko rejimi:
 
 | yöntem | söylenen | gerçekleşen | açık | Wilson `p`'yi dışarıda bırakıyor mu |
 |---|---:|---:|---:|---|
-| `orantili` | %58,7 | %60,8 | +%2,1 | evet |
-| `guc` | %60,3 | %60,8 | **+%0,5** | **hayır** |
-| `shin` | %59,8 | %60,8 | +%1,0 | evet |
+| `orantili` | %59,9 | %62,2 | +%2,3 | evet |
+| `guc` | %61,5 | %62,2 | **+%0,8** | **hayır** |
+| `shin` | %61,0 | %62,2 | +%1,3 | evet |
 
 Piyasanın favori sembolü genel futbolda **iyi kalibre**; `guc` ölçeğinde
 sapma yok. Yani favori–uzunatış yanlılığının klasik hâli bu kesitte
-bulunmuyor ve §3.23'ün *"piyasanın güvenilirlik borcu 0,00042"* satırıyla
+bulunmuyor ve §3.23'ün *"piyasanın güvenilirlik borcu 0,00060"* satırıyla
 tutarlı. **+%5,6 piyasanın değil, KESİTİN özelliği.**
 
 #### Aday 3 — kesit: **tutuyor, ve ayrıştırıldı**
@@ -5936,7 +5942,7 @@ ve karşılıkları: kupon seti 0,5747 → **0,5740**, korpus 0,5940 → **0,593
 | Ölçüm | Kesit | Sonuç |
 |---|---|---|
 | Piyasa çizgisi | 540 kupon maçı | Brier **0,5747** · log 0,9660 *(orantısal)* |
-| Piyasa çizgisi | 31.103 korpus maçı | Brier **0,5940** — kupon maçları ortalama maçtan daha tahmin edilebilir |
+| Piyasa çizgisi | 23.085 korpus maçı | Brier **0,5869** — kupon maçları ortalama maçtan daha tahmin edilebilir |
 | Kademe, kupon üzerinde eğitilmiş | 540 maç | Dört basamak da piyasadan **kötü** (+0,0009…+0,0133) |
 | Kademe, korpus içi sezon dışarıda | 31.103 maç | `sicaklik` −0,0004 ve `bias` −0,0005 **geçti** |
 | Kademe, korpusta eğit → kuponda ölç | 540 maç | Dört basamak da **iyi** (−0,0010…−0,0015), hiçbiri geçmedi |
@@ -5947,8 +5953,8 @@ ve karşılıkları: kupon seti 0,5747 → **0,5740**, korpus 0,5940 → **0,593
 | **Bahisçi anlaşmazlığı (A2)** | 31.100 maç | Ham ilişki favori gücüyle karışık; sabitlenince **kayboluyor**. Güven kısma %0,02 |
 | **Dinlenme + sıkışıklık (A3)** | 31.103 maç | Geçmedi. Korpus kupa/Avrupa maçlarını görmüyor — ölçülen, yorgunluğun **vekili** |
 | **İç/dış form + sezon sonu (A3)** | 31.103 maç | Geçmedi. İç/dış form ham farkı **+0,247**, artığı onda biri — güçlü sinyal, sıfır katkı |
-| **Marj arındırma (A5)** | 31.103 maç | `orantili` 15 bandın **10'unda** anlamlı sapıyor; `shin`/`guc` Brier **0,5936** (−0,00042) ve sapan bant **4'e** iniyor |
-| **Favori–sürpriz yanlılığı (A5)** | 31.103 maç | Piyasanın %70–80 dediği maçlar gerçekte **%78,9** (n=1.702) — sapma tek yönlü ve düzenli |
+| **Marj arındırma (A5)** | 23.085 maç | `orantili` 15 bandın **10'unda** anlamlı sapıyor; `shin`/`guc` Brier **0,5936** (−0,00042) ve sapan bant **4'e** iniyor |
+| **Favori–sürpriz yanlılığı (A5)** | 23.085 maç | Piyasanın %70–80 dediği maçlar gerçekte **%79,2** (n=1.507) — sapma tek yönlü ve düzenli |
 | **İzotonik kalibrasyon (A5)** | 31.103 maç | `orantili` üzerinde **geçti** (−0,00036 [−0,00067, −0,00003]); `shin` üzerinde **hiçbir şey eklemiyor** — aynı olgu, iki kez sayılamaz |
 | **Arındırma çevrimi (A5)** | 31.103 maç · 36 hafta | Varsayılan `shin` oldu. Kupon seti Brier 0,5747→**0,5740**; geri test hold-out kolon/hafta 6.897→**2.228**, seçilen eşik 31 hafta 0,68/0,42 → **34 hafta 0,68/0,38** (varsayılanın kendisi) |
 | **Karar katmanı (B0)** | 36 hafta | Seçim `P(k≤2)`'ye göre kurulunca **+6,02 puan** hedef ve **%26 daha az kolon**; eşik kuralı 35/36 haftada optimalin altında. Tahmin tarafında aynı kazanç için ~0,10 Brier gerekirdi |
