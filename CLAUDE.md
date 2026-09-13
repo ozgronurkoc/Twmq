@@ -49,3 +49,13 @@ O durumda kural seni taramadan muaf tutmaz: **ölç, sonra kütüğe yaz.**
 **Graf kanıt değildir.** Çelişkide sıra: çalışan ölçüm > kod > belge > graf.
 `tazelik` bayat girdi gösteriyorsa o girdi **yeniden ölçülür**, düzeltilmiş
 sayılmaz. Ayrıntı: `.claude/skills/knowledge-graph/SKILL.md`.
+
+## Oturumlar arası süreklilik
+
+`.claude/devam_notu.md` git'e giren bir el notudur; oturum başında
+`.claude/hooks/session-start.sh` içeriğini otomatik bağlama basar (yukarıda
+"Devam notu (önceki oturumdan)" bloğunu zaten gördün). Bir işi yarım
+bırakırken (oturum sonu, uzun görev arası) o dosyanın "Şu an" bölümünü kısa
+tut ve güncelle: şu an neredeyiz, sıradaki adım, neden böyle. Kural burada
+da geçerli: bu bir niyet/durum kaydıdır, kanıt değildir — çelişkide
+commit/kod kazanır.
