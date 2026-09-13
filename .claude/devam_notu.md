@@ -18,8 +18,13 @@ için bırakılmış kısa bir özet ve nedendir.
 - Üç satır yeter: **Şu an neredeyiz**, **Sıradaki adım**, **Neden böyle**
   (kısa — asıl gerekçe kod/commit mesajında zaten var, burada yalnızca
   bir sonraki oturumun hangi commit'e/dala bakması gerektiğini söyle).
-- Eski "Şu an" girdisi silinmez, **Geçmiş** bölümüne düşer; orada en fazla
-  son 5 girdi tutulur, daha eskisi atılır (günlük değil, devam kartı).
+- Eski "Şu an" girdisi silinmez, **Geçmiş** bölümüne düşer. Kaç girdi
+  tutulacağına **sabit bir sayı yok** — bunu her seferinde sen karar
+  verirsin: hâlâ işe yarayan bağlamı (yarım kalan bir iş, tekrar sorulması
+  muhtemel bir karar) tut; artık hiçbir işe yaramayan, tamamlanmış ve
+  başka yerde (commit, PR, belge) zaten kayıtlı olanı budayarak at. Ölçüt
+  fayda, girdi sayısı değil — dosya büyüsün diye elde tutma, sonraki
+  oturumun okuma yükünü de düşün (her oturumda tamamı bağlama giriyor).
 - Buraya gizli/kişisel veri, token, şifre yazma — bu dosya depoya girer.
 - Graf kanıt değildir kuralı burada da geçerli: bu not bir **niyet/durum**
   kaydıdır, çalışan koddan veya commit geçmişinden üstün değildir.
