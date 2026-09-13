@@ -164,6 +164,14 @@ DONMUS_BELGELER = {
     # içindeki sayılar bilerek geçmişi anlatır (ör. "62 dosya → 1.879 test"
     # düzeltilmiş bir kör noktanın ANLATIMIDIR, bugünkü iddia değil).
     "docs/token_olcum_kutugu.md",
+    # Commit geçmişinin BIREBIR dökümü (521 commit, `git log --reverse`).
+    # Donmuşluğun en saf hâli: içindeki her sayı bir commit mesajının
+    # kendisidir ve o gün doğruydu. Bekçi burada "1.799 test" görüp bayat
+    # sanıyordu; oysa o, 2026-08 tarihli bir commit'in metni. Bu belgeyi
+    # tazelemek git geçmişini yeniden yazmak demek olurdu — yalnızca
+    # yanlış değil, imkânsız. Üreteci: `git log --reverse` (bkz. belgenin
+    # kendi başlığı).
+    "docs/PROJE_GECMISI.md",
 }
 
 #: `.claude/` taranmaz: ajan kurulumudur, ürünün iddiası değil — ve

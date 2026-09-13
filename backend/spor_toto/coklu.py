@@ -34,15 +34,31 @@ zaten alınır:
 729 kupon, serbest kümenin kazancının **~%88'ini** alır. Üretici:
 `cd backend && python scripts/coklu_kiyasi.py`.
 
-> **YENİDEN ÖLÇÜLÜYOR (2026-09-13).** Yukarıdaki tablo bu modülün **ilk**
-> sürümüyle koşuldu. O sürümden sonra iki şey değişti ve ikisi de planı
-> yalnızca iyileştirir: (a) kupon sayısı artık sabit bir ızgaradan değil alt
-> sistemin bedelinden türüyor — 21.000 kolonluk bütçede 1.317 kolon boşa
-> gidiyordu, gitmiyor; (b) eksen bileşimleri yığınla üretiliyor. Yani
-> tablodaki çoklu kupon satırları bugünkü davranış için **alt sınırdır**.
-> Sayılar silinmez, yeniden ölçülüp değiştirilir (`.claude/olcum_kutugu.json`).
-> Bekçiler yönü tutuyor: `test_coklu_TEK_SISTEMI_gecer`,
-> `test_kupon_sayisi_buyudukce_P15_DUSMEZ`, `test_butce_BOSA_gitmez`.
+> **YENİDEN ÖLÇÜLDÜ (2026-09-13).** Tablo modülün ilk sürümüyle koşulmuştu;
+> sonra kupon sayısı sabit ızgaradan alt sistemin bedeline bağlandı ve eksen
+> bileşimleri yığınla üretilir oldu. Yeniden koşuldu ve **birebir aynı**
+> çıktı — çünkü bu kıyas `3⁹ = 19.683` kolonda koşuyor ve o bütçede merdiven
+> zaten yoktu (`bütçe // kupon_kolon`, ızgaranın verdiği sayıyla aynı).
+
+─── Gerçek bütçede (21.000 kolon = 210.000 TL) ───────────────────────────
+
+Merdivenin farkı yuvarlak olmayan bütçelerde ortaya çıkar. Tek sistem
+`2^a·3^b`'ye sıkıştığı için 19.683 kolonda takılı kalır; çoklu kupon
+bütçenin neredeyse tamamını kullanır:
+
+    kupon    kolon     model P(15/15)   gerçekleşen   13 hafta
+        1   19.683          %7,489        15/114        %63,7   ← tek sistem
+       27   19.683          %9,353        20/114        %72,1
+       79   19.709          %9,864        21/114        %74,1
+      136   20.514         %10,264        21/114        %75,5
+      329   20.786         %10,602        20/114        %76,7
+
+**×1,42**, aynı parada. Üretici:
+`cd backend && python scripts/coklu_kiyasi.py --butce 21000`.
+
+Gözlenen sütun `n = 114` ile gürültülüdür (329 kuponda 20, 79 kuponda 21);
+güvenilen sinyal **model** sütunudur ve o monotondur — bekçisi
+`test_kupon_sayisi_buyudukce_P15_DUSMEZ`.
 
 Yapı: `d` maç **eksen** seçilir — en emin olduklarımız — ve kuponlar arasında
 tek tek sabitlenir; eksen üzerindeki `3^d` bileşimden en olası `M` tanesi

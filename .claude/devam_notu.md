@@ -86,6 +86,18 @@ eksen dışını **üçlüye zorluyordu** — `en_iyi_secim` daha iyisini buluyo
 küçük bir maçta **çifte** kapsamanın neredeyse tamamını yarı bedele alır.
 Zorlama kaldırıldı.
 
+### GERÇEK bütçede (21.000 kolon = 210.000 TL) — oynanacak sayı budur
+
+    kupon    kolon    model P(15)   gözlenen   13 hafta
+        1   19.683       %7,489      15/114      %63,7   ← bugün
+       79   19.709       %9,864      21/114      %74,1
+      329   20.786      %10,602      20/114      %76,7   ×1,42
+
+Tek sistem 19.683'te **takılı kalıyor** (bedeli `2^a·3^b`, sonraki basamak
+39.366); aradaki 13.170 TL hiçbir şey satın almıyor. Çoklu kupon 20.786
+kullanıyor. 5. hafta için üretilen fiili plan: 777 kupon × 27 kolon,
+`P(15/15) = %17,242` ↔ tek sistem %13,081.
+
 ### Kıyas koşuldu — sonuç (114 hafta, 19.683 kolon)
 
     kupon   model P(15)   gözlenen   13 hafta   12+ kolon
@@ -104,6 +116,21 @@ Kütüğe dört sayı girdi ve **kütük bekçisi bir hatamı tuttu**: `deger`
 alanı, anıldığı iddia edilen dosyada birebir geçmeli; ilk yazdığım bileşik
 dizeler ("%7,489 model, 15/114 gerceklesen") hiçbir yerde geçmiyordu.
 Girdiler deponun biçimine çevrildi.
+
+### Belge bekçilerinin yakaladıkları (hepsi kapatıldı)
+
+13 test eklemek bir zincir tetikledi ve deponun bekçileri tek tek saydı:
+test sayısı 1.903 → **1.916** (yedi belgede anılıyor), test dosyası 72 →
+**73**, betik 32 → **34**, README §7 modül ağacına `coklu.py`, README §9
+katman tablosuna "Çoklu kupon" satırı, README §13 belge dizinine
+`PROJE_GECMISI.md`. Sayı **tam kurulumla** ölçüldü (sklearn + lightgbm);
+eksik kurulumda düşük çıkıyor ve kütük bunu zaten yazmış.
+
+**Kendi açtığım bir sorunu da kapattım:** `docs/PROJE_GECMISI.md` (521
+commit dökümü) belge bekçilerini zehirliyordu — içindeki "1.799 test" gibi
+sayılar bayat değil, *commit mesajlarının kendisi*. Belge
+`tests/test_belgeler.py::DONMUS_BELGELER`e eklendi; tazelemek git geçmişini
+yeniden yazmak olurdu.
 
 ### Sıradaki adım
 
