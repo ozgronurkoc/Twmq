@@ -1190,7 +1190,7 @@ backend/
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
                        sehir/ · sistem_fiyat/
-  tests/               pytest (74 dosya → 1.959 test; §9'da katman dökümü)
+  tests/               pytest (74 dosya → 1.965 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1398,7 +1398,7 @@ dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri t
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
 eşleme, ikinci kayıt). **74 test dosyası, parametrizasyonla
-1.959 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+1.965 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
@@ -1435,7 +1435,7 @@ karşı denetler):
 | Devir tavanı (dış tarama · pozitif BD koşulu) | **`devir_tavani`** | 5 |
 | Haftanın hakkı (E6 · cephe · cetvel · Holm'lu işaret sınavı) | **`hafta_hakki`** | 25 |
 | 2.↔3. sembol sırası (beraberlik 3. sırada · bant sözleşmesi) | **`sembol_sirasi`** | 4 |
-| Çoklu kupon (çarpım kısıtı · kupon ayrıklığı · bütçe boşa gitmesin · hedefin tipi · normalleşmemiş girdi · **tahsis**) | **`coklu`** | 21 |
+| Çoklu kupon (çarpım kısıtı · kupon ayrıklığı · bütçe boşa gitmesin · hedefin tipi · normalleşmemiş girdi · **tahsis** · **değişken derinlik**) | **`coklu`** | 27 |
 | Duyarlılık (banko sapması senaryosu · plan düzeyi kalibrasyon · üretime sızmama) | **`duyarlilik`** | 14 |
 
 İki test bilerek **ağa çıkmaz**: `test_snapshot_iddaa.py` gerçek bültenden alınmış

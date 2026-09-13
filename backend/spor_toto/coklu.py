@@ -26,9 +26,9 @@ zaten alınır:
 
     kupon    model P(15/15)    gerçekleşen    13 hafta
         1          %7,489         15/114        %63,6   ← tek sistem
-       27          %9,644         22/114        %73,2
-       81         %10,120         21/114        %75,0
-      729         %10,633         21/114        %76,8
+       27          %9,647         22/114        %73,3
+       81         %10,121         21/114        %75,0
+      729         %10,636         21/114        %76,8
    19.683         %10,865         22/114        %77,6   ← serbest
 
 729 kupon, serbest kümenin kazancının **~%93'ünü** alır. Üretici:
@@ -43,6 +43,10 @@ sütunudur ve o monotondur — bekçisi `test_kupon_sayisi_buyudukce_P15_DUSMEZ`
 > parada 729 kuponu %10,461 → **%10,633**'e çıkardı ve serbest kümenin
 > kazancından alınan pay %88 → %93 oldu. Tek sistem satırı **oynamadı** (tek
 > kuponda bölünecek bütçe yok), yani kıyas tabanı yerinde.
+>
+> **ÜÇÜNCÜ KEZ (2026-09-13, değişken derinlik).** §3.72 aramaya bir aday daha
+> koydu ve tablo dördüncü hanede oynadı (729: %10,633 → **%10,636**). Kazancın
+> bu kadar küçük olması bulgunun kendisidir, ayrıntı aşağıda.
 
 ─── Gerçek bütçede (21.000 kolon = 210.000 TL) ───────────────────────────
 
@@ -52,10 +56,10 @@ bütçenin neredeyse tamamını kullanır:
 
     kupon    kolon     model P(15/15)   gerçekleşen   13 hafta
         1   19.683          %7,489        15/114        %63,6   ← tek sistem
-       27   20.963          %9,999        22/114        %74,6
-       81   20.986         %10,488        21/114        %76,3
-      243   20.998         %10,805        22/114        %77,4
-      729   21.000         %11,031        21/114        %78,1
+       27   20.970         %10,003        22/114        %74,6
+       81   20.987         %10,489        21/114        %76,3
+      243   20.998         %10,806        22/114        %77,4
+      729   21.000         %11,034        21/114        %78,1
 
 **×1,47**, aynı parada. Üretici:
 `cd backend && python scripts/coklu_kiyasi.py --butce 21000`.
@@ -78,10 +82,11 @@ Serbest küme tavanı bu bütçede **%11,272**; 729 kuponluk plan onun
 > 1 toplayan olasılıklarla kuruldu ve kaydın 1e-9'luk bekçisi hep yeşildi —
 > kusurun bugüne kadar görünmemesinin sebebi de o.
 
-Yapı: `d` maç **eksen** seçilir — en emin olduklarımız — ve kuponlar arasında
-tek tek sabitlenir; eksen üzerindeki `3^d` bileşimden en olası `M` tanesi
-oynanır. Kalan `15−d` maç her kuponda bir **alt sistemdir** ve onu
-`secim.secim_cephesi` çözer.
+Yapı: maçlar **eminliğe göre** sıralanır; bir kupon bu sıranın bir ön ekini
+tekleştirir (**eksen**) ve kalan maçlarda bir **alt sistem** oynar — onu
+`secim.secim_cephesi` çözer. Sabit derinlikte bütün kuponların ön eki aynı
+boydadır (`d`) ve eksenin `3^d` bileşiminden en olası `M` tanesi oynanır;
+değişken derinlikte (§3.72) ön ek boyu kupondan kupona değişebilir.
 
 `M = 1` tam olarak bugünkü tek sistemdir. Yani bu modül mevcut davranışı
 **içerir** ve arama onu bir aday olarak gezer; `M`i büyütmek genelleştirir.
@@ -103,6 +108,42 @@ serbest küme tavanının %94,1'inden %97,9'una.
 
 Tek tip aday aramada **kalıyor**, yani yeni arama eskisinin üst kümesi ve
 hiçbir haftada ondan kötü olamaz (570 kıyasın 570'inde doğrulandı).
+
+─── Eksen boyu SABİT olmak zorunda değil — ve olması da gerekmiyor (§3.72) ─
+
+§3.71 bitince şu açık kalmıştı: eksen hâlâ **sabit boyda**, yani bütün
+kuponlarda aynı `d` maç tekleştiriliyor. İki kısıt görünüyordu: granülerlik
+tek tip (hepsi favori dalı ile 81. bileşim aynı inceliği alıyor, oysa `q` iki
+mertebe ayrışıyor) ve **artan kütle düşüyor** (en olası `M` bileşimin dışı
+hiç oynanmıyor — ölçüldü, eksen kütlesinin **%83'ü**). Beklenti, az kuponla
+oynandığında masada değer olduğuydu.
+
+Aile genelleştirildi: kuponlar artık eminlik sırasının ön ek ağacında bir
+**antizincir** (`_degisken_derinlik`) ve sabit derinlik bunun özel hâli.
+Ölçüldü (114 hafta, gerçek bütçe) ve **beklenti yanlandı**:
+
+    tavan    sabit derinlik    + değişken    kazanç   kapanan açık
+       27           %9,9999      %10,0025   ×1,00026          %0,2
+       81          %10,4879      %10,4892   ×1,00013          %0,2
+      729          %11,0312      %11,0337   ×1,00023          %1,0
+
+570 kıyasın 570'inde geri gidiş yok (aile üst küme, o yüzden tanım gereği),
+ama kazanç binde birler. **Sebebi de ölçüldü ve sezgisel içermiyor**: sabit
+derinlikli planın yaprak kümesi bu ailenin bir üyesidir, o hâlde üstünde
+ailenin hamleleri tek tek denenebilir. En düşük olasılıklı yaprağı atıp terk
+edilmiş en olası düğümü koymak — kupon sayısı sabit, bütçe yeniden ve kesin
+dağıtılmış — 114 haftada binde 0,3'ü geçmiyor. Yani sabit derinlikli
+plan bu hamle kümesinde **yerel en iyi**; bulgu ailenin, aramanın değil.
+
+Terk edilen %83'lük kütle ucuz durmuyor: onu kapatmak hem kolon hem kupon
+yuvası harcıyor ve ikisinin marjinal getirisi derinleşmeninkiyle aynı yerde
+buluşuyor. Üretici: `cd backend && python scripts/derinlik_kiyasi.py --butce
+21000 --serbest` ve `--mekanizma 114`.
+
+Aday aramada **kalıyor**: gerilemesi imkânsız (en iyisi seçiliyor), maliyeti
+hafta başına onda birkaç saniye, ve kaldırılırsa yanlanan beklentinin kaydı
+yeniden koşulamaz hâle gelir. `degisken_derinlik=False` onu kapatır ve
+ölçümün kıyas tabanı odur.
 
 ─── Yan fayda: bütçe merdiveni kalkıyor ──────────────────────────────────
 
@@ -130,7 +171,7 @@ kalibre edilmiyor — ve 114 hafta bağımlı hâlde yeniden fiyatlanıyor.
 
     19.683 kolon      bağımsız   en kötü makul a (0,0166)   şişme
     tek sistem          %7,489                    %8,050    ×1,075
-    729 kupon          %10,633                   %11,909    ×1,120
+    729 kupon          %10,636                   %11,905    ×1,119
     oran                 ×1,42                     ×1,48
 
 Oran **gerilemedi, büyüdü**; 114 haftanın hiçbirinde çoklu plan tek sistemin
@@ -166,7 +207,7 @@ tutturmaz."* Bir varsayımdı; ölçüldü ve **yanlış çıktı**. 114 haftada
 tutturan kolon toplamı:
 
     tek sistem   18.628
-    729 kupon    26.348        **+%41**
+    729 kupon    26.304        **+%41**
 
 Sebebi geriye dönük açık: olasılığa göre en büyük `N` kolon kümesi yalnızca
 15'e değil 12–13'e de daha yakın durur; çarpımın satın almak zorunda kaldığı
@@ -175,6 +216,7 @@ silinmedi, **düzeltildi** (kayıt yeniden yazılmaz, `.claude/olcum_kutugu.json
 """
 from __future__ import annotations
 
+import bisect
 import heapq
 from typing import TYPE_CHECKING, NamedTuple, TypeAlias
 
@@ -325,11 +367,13 @@ def coklu_plan(probs_listesi: list[dict[str, float]],
 
     Plan iki parçadır:
 
-    * **eksen** — `d` maç, kuponlar arasında tek tek sabitlenir. Eksen
-      üzerindeki `3^d` bileşimden en olası `M` tanesi oynanır, her biri bir
-      kupon.
-    * **alt sistem** — kalan `15−d` maç, her kuponda **aynı**, ve bütçesi
-      `bütçe // M` olan bir tam sistem. Onu `secim.en_iyi_secim` çözer.
+    * **eksen** — eminlik sırasının bir ön eki, kupon içinde tek tek
+      sabitlenir. Sabit derinlikte boyu (`d`) bütün kuponlarda aynıdır ve
+      `3^d` bileşimden en olası `M` tanesi oynanır; değişken derinlikte
+      (§3.72) kupondan kupona değişebilir.
+    * **alt sistem** — eksen dışında kalan maçlar üzerinde bir tam sistem.
+      Bütçesi kupon başına **ayrıdır** (§3.71, `_tahsis`) ve onu
+      `secim.secim_cephesi` çözer.
 
     Maçlar bağımsız sayıldığı için ikisi çarpılır:
 
@@ -422,17 +466,37 @@ def _tahsis(q: list[float], noktalar: list[Nokta],
     kabuk = _ust_kabuk(noktalar)
     if not kabuk:
         return None
+    return _tahsis_kabuklu(q, [kabuk] * len(q), butce)
+
+
+def _tahsis_kabuklu(q: list[float], kabuklar: list[list[Nokta]],
+                    butce: int) -> tuple[float, list[Nokta]] | None:
+    """`_tahsis`in genel gövdesi: her kuponun **kendi** kabuğu olabilir.
+
+    Sabit derinlikli eksende bütün kuponlar aynı `15−d` maçı alt sistem
+    olarak oynar, yani cephe tektir ve `_tahsis` onu `M` kez kopyalar.
+    Değişken derinlikte (§3.72) kuponların eksen boyu farklı, o hâlde alt
+    sistem uzayları da farklı — ortak bir cephe yok. Açgözlü kural
+    değişmiyor: en yüksek `q_j · Δp / Δbedel` oranlı basamak alınır.
+
+    Kabuklar **hazır** gelir (`_ust_kabuk`ten geçmiş): bu gövde onları
+    yeniden kabuklamaz, çünkü çağıranların ikisi de kabuğu zaten derinlik
+    başına bir kez kuruyor.
+    """
     M = len(q)
-    taban = kabuk[0][0]
-    if M * taban > butce:
+    if M == 0 or any(not k for k in kabuklar):
+        return None
+    taban = sum(k[0][0] for k in kabuklar)
+    if taban > butce:
         return None
 
     seviye = [0] * M
-    harcanan = M * taban
+    harcanan = taban
     # `-oran` ile en iyi yükseltme yığının tepesinde; eşitlikte küçük `j`.
     yigin: list[tuple[float, int]] = []
 
     def _it(j: int, k: int) -> None:
+        kabuk = kabuklar[j]
         if k + 1 < len(kabuk):
             dc = kabuk[k + 1][0] - kabuk[k][0]
             dp = kabuk[k + 1][1] - kabuk[k][1]
@@ -443,6 +507,7 @@ def _tahsis(q: list[float], noktalar: list[Nokta],
     while yigin:
         _oran, j = heapq.heappop(yigin)
         k = seviye[j]
+        kabuk = kabuklar[j]
         dc = kabuk[k + 1][0] - kabuk[k][0]
         # Bütçe yetmiyorsa bu kupon için DAHA UCUZ bir basamak da yok
         # (kabukta bedel artan), o yüzden kupon burada durur.
@@ -451,14 +516,256 @@ def _tahsis(q: list[float], noktalar: list[Nokta],
             seviye[j] = k + 1
             _it(j, k + 1)
 
-    deger = sum(q[j] * kabuk[seviye[j]][1] for j in range(M))
-    return deger, [kabuk[seviye[j]] for j in range(M)]
+    deger = sum(q[j] * kabuklar[j][seviye[j]][1] for j in range(M))
+    return deger, [kabuklar[j][seviye[j]] for j in range(M)]
+
+
+# ─── Değişken derinlikli eksen (§3.72) ───────────────────────────────────
+#
+# Sabit derinlikte **bütün** kuponlar aynı `d` maçı tekleştirir ve eksenin
+# `3^d` bileşiminden en olası `M` tanesi oynanır. İki kısıt birden var:
+#
+# 1. **Granülerlik tek tip.** Hepsi favori dalı ile 81. bileşim aynı
+#    inceliği alıyor, oysa `q` iki mertebe ayrışıyor.
+# 2. **Artan kütle düşüyor.** En olası `M` bileşimin dışında kalan her şey
+#    hiç oynanmıyor — `M = 27`, `d = 5` iken 243 bileşimin 216'sı boşta.
+#
+# Ağaç ikisini de kaldırır: kuponlar eminlik sırasının **ön eklerinde**
+# duran bir antizincirdir. Olası dal derinlemesine bölünür, olanaksız dal
+# sığ tek bir kupon olarak durur (yani düşmez). `M = 3^d` ile hepsi aynı
+# derinlikte olan aile bu ailenin özel hâlidir.
+#
+# ─── Niçin fiyatlı (Lagrange) büyütme ────────────────────────────────────
+#
+# Bir düğümü bölmenin değeri, çocuklara **eşit olmayan** bütçe verebilmekten
+# gelir; eşit bölmek tanım gereği hiçbir şey kazandırmaz (çocuklara `c`,
+# ebeveyne `3c` vermek aynı şeydir — ebeveyn o maçı üçlü oynar). O hâlde
+# bölmenin kazancı ancak para **fiyatlıyken** ölçülebilir: sabit bir `λ`
+# altında her yaprak `q·p − λ·bedel`i enbüyükleyen kabuk noktasını seçer ve
+# bölme kazancı çocukların toplamı eksi ebeveynin değeridir. `λ` bir
+# **ızgarada** taranır ve gerçek hedefe göre en iyisi alınır; **harcamayı
+# yine tahsis yapar** (`_tahsis_kabuklu`, kesin), yani `λ` ağacın yalnızca
+# ŞEKLİNİ belirler. Gerekçesi `FIYAT_IZGARASI`nda.
+
+#: Taranan `λ` ızgarası, `p/bütçe`nin katları olarak. Merkez orada çünkü
+#: `λ` bir **fiyat**tır: bütçenin son kolonunun `P(15/15)` cinsinden değeri,
+#: yani büyüklük mertebesi `p/bütçe`dir. Ölçülen en iyi `λ` bu merkezin
+#: 0,25–0,5 katında çıktı; ızgara onu iki yana da bolca aşıyor.
+#:
+#: **Niçin ızgara, niçin ikili arama değil.** İlk sürüm `λ`yı bütçeyi tam
+#: harcayacak şekilde ikili aramayla buluyordu ve bu YANLIŞ hedefti: bütçeyi
+#: zaten `_tahsis_kabuklu` kesin harcıyor, `λ`nın tek işi ağacın şeklini
+#: seçmek. Üstelik bedel `λ`da süreksiz (ağaç bir anda köke iniyor), yani
+#: ikili arama dejenere tek yapraklı ağaçta duruyordu — ölçüldü, tek
+#: sistemin kendisini veriyordu. Izgara doğrudan **gerçek hedefi** tarıyor.
+FIYAT_IZGARASI = tuple(0.35 * 2.0 ** (k / 2) for k in range(-6, 7))
+
+
+class _Kat(NamedTuple):
+    """Bir eksen derinliğinin alt sistem kabuğu — fiyatlamaya hazır hâlde.
+
+    `neg_oran[i]`, kabuğun `i → i+1` basamağının marjinal oranının
+    **eksisi**dir. Kabukta oranlar azalan olduğu için bu dizi **artan**dır ve
+    `bisect` ile "bu fiyatta kaç basamak alınır" sorusu `O(log n)` olur.
+    """
+
+    kabuk: list[Nokta]
+    bedel: tuple[int, ...]
+    p: tuple[float, ...]
+    neg_oran: tuple[float, ...]
+
+
+def _kat_kur(noktalar: list[Nokta]) -> _Kat | None:
+    """Cepheyi kabukla ve fiyatlama dizilerini çıkar."""
+    kabuk = _ust_kabuk(noktalar)
+    if not kabuk:
+        return None
+    bedel = tuple(int(c) for c, _p, _s in kabuk)
+    p = tuple(float(x) for _c, x, _s in kabuk)
+    neg = tuple(-(p[i + 1] - p[i]) / (bedel[i + 1] - bedel[i])
+                for i in range(len(kabuk) - 1))
+    return _Kat(kabuk=kabuk, bedel=bedel, p=p, neg_oran=neg)
+
+
+def _cepheler(probs_listesi: list[dict[str, float]], P: np.ndarray,
+              butce: int, sira: list[int]
+              ) -> tuple[list[list[Nokta] | None], list[_Kat | None]]:
+    """Her eksen derinliği için alt sistem cephesi ve kabuğu — 16 DP, tek yer.
+
+    `d` derinlikte eksen `sira`nın ilk `d` maçıdır ve alt sistem kalan
+    `15−d` maçtır; cephe o maç kümesine ait, yani **yalnızca derinliğe**
+    bağlı. Sabit derinlikli arama, ağaç araması ve mekanizma ölçümü
+    (`scripts/derinlik_kiyasi.py`) aynı 16 cepheyi istiyor — üç kopya olsaydı
+    biri sessizce eskirdi.
+
+    Cephe **tam bütçeyle** çıkarılır, `bütçe // M` ile değil: tahsiste bir
+    kupon ortalamanın çok üstüne çıkabilir ve o noktalar kırpılırsa tahsis
+    eşit bölmeye geri düşer (prototipte tam bu oldu — kazanç sıfır göründü).
+    """
+    from .secim import secim_cephesi
+
+    cepheler: list[list[Nokta] | None] = [None] * (MAC_SAYISI + 1)
+    katlar: list[_Kat | None] = [None] * (MAC_SAYISI + 1)
+    for d in range(MAC_SAYISI + 1):
+        kalanlar = sorted(sira[d:])
+        if kalanlar:
+            cephe = secim_cephesi([probs_listesi[i] for i in kalanlar],
+                                  butce, esik=0)
+            if not cephe:
+                continue
+            noktalar: list[Nokta] = [
+                (s.bedel, _p_alt(P, kalanlar, s.secimler), s) for s in cephe]
+        else:
+            noktalar = [(1, 1.0, None)]
+        cepheler[d] = noktalar
+        katlar[d] = _kat_kur(noktalar)
+    return cepheler, katlar
+
+
+def _en_iyi_nokta(kat: _Kat, w: float, lam: float) -> tuple[int, float] | None:
+    """`w·p − λ·bedel`i enbüyükleyen kabuk noktası; değer `≤ 0` ise `None`.
+
+    `None`, "bu dal bu fiyatta oynanmaz" demektir — sabit derinlikteki
+    `sum(q[:sayi])` kırpmasının yerine geçen şey budur, ama kırpma artık
+    **sıraya değil değere** bakıyor.
+    """
+    if w <= 0.0:
+        return None
+    # Kabukta `i → i+1` ancak `w·Δp > λ·Δc` iken alınır, yani `-oran < -λ/w`.
+    # `neg_oran` artan olduğu için alınan basamaklar bir ön ektir.
+    i = bisect.bisect_left(kat.neg_oran, -lam / w)
+    deger = w * kat.p[i] - lam * kat.bedel[i]
+    if deger <= 0.0:
+        return None
+    return i, deger
+
+
+#: Ağacın bir yaprağı: `(q, derinlik, eksen bileşimi)`. Bileşim, eminlik
+#: sırasının ilk `derinlik` maçına karşılık gelen **sembol indeksleri**dir.
+Yaprak: TypeAlias = "tuple[float, int, tuple[int, ...]]"
+
+
+def _agac_buyut(P: np.ndarray, sira: list[int], katlar: list[_Kat | None],
+                tavan: int, lam: float) -> tuple[list[Yaprak], list[int], int] | None:
+    """`λ` fiyatında açgözlü ağaç: `(yapraklar, kabuk indeksleri, bedel)`.
+
+    Kök tek yapraktır (derinlik 0 — eksen yok, tek sistem). Her adımda
+    "bölmenin kupon başına kazancı" en büyük yaprak bölünür; kazanç, çocuk
+    değerlerinin toplamı eksi yaprağın kendi değeridir ve fiyat sabit
+    olduğu için **yapraklar arası bağımsız**dır (bir yaprağın bölünmesi
+    başkasının kazancını değiştirmez), yani yığın bayatlamaz.
+
+    Bir çocuk bu fiyatta değer üretmiyorsa hiç alınmaz; o yüzden bölme bazen
+    kupon sayısını ikiden az artırır ve bedava bölme (`delta = 0`) öne geçer.
+    """
+    kok = katlar[0]
+    if kok is None:
+        return None
+    se = _en_iyi_nokta(kok, 1.0, lam)
+    # Kök **düşemez**: bütçeyi harcayacak en az bir kupon olmak zorunda.
+    # Değer negatifse en ucuz nokta alınır; bütçeyi zaten tahsis harcıyor.
+    kok_i, kok_deger = se if se is not None else (0, kok.p[0] - lam * kok.bedel[0])
+
+    dugum: TypeAlias = "tuple[int, tuple[int, ...]]"
+    yaprak: dict[dugum, tuple[float, int]] = {(0, ()): (1.0, kok_i)}
+    yigin: list[tuple[float, int, dugum,
+                      list[tuple[dugum, float, int]]]] = []
+    sayac = 0
+
+    def _it(d: dugum, q: float, deger: float) -> None:
+        """Bir yaprağın bölünme adayını yığına koyar (kazanç yoksa koymaz)."""
+        nonlocal sayac
+        k = d[0]
+        if k >= MAC_SAYISI:
+            return
+        kat = katlar[k + 1]
+        if kat is None:
+            return
+        mac = sira[k]
+        cocuklar: list[tuple[dugum, float, int]] = []
+        toplam = 0.0
+        for s in range(len(SEMBOLLER)):
+            qc = q * float(P[mac][s])
+            c = _en_iyi_nokta(kat, qc, lam)
+            if c is None:
+                continue
+            cocuklar.append(((k + 1, (*d[1], s)), qc, c[0]))
+            toplam += c[1]
+        if not cocuklar or toplam <= deger:
+            return
+        delta = len(cocuklar) - 1
+        # Bedava bölme (`delta ≤ 0`) her zaman önce: kupon harcamıyor.
+        anahtar = -float("inf") if delta <= 0 else -(toplam - deger) / delta
+        heapq.heappush(yigin, (anahtar, sayac, d, cocuklar))
+        sayac += 1
+
+    _it((0, ()), 1.0, kok_deger)
+    while yigin:
+        _anahtar, _s, d, cocuklar = heapq.heappop(yigin)
+        delta = len(cocuklar) - 1
+        # Sığmayan bölme ATILIR, ertelenmez: kupon sayısı yalnızca artıyor,
+        # yani bir daha sığmaz. Yığında kalan daha küçük `delta`lı adaylar
+        # sığabilir ve döngü onlara devam eder.
+        if len(yaprak) + delta > tavan:
+            continue
+        del yaprak[d]
+        for cd, qc, idx in cocuklar:
+            yaprak[cd] = (qc, idx)
+            kat = katlar[cd[0]]
+            assert kat is not None                       # `_it` onu gördü
+            _it(cd, qc, qc * kat.p[idx] - lam * kat.bedel[idx])
+
+    sirali = sorted(((q, k, bil, i) for (k, bil), (q, i) in yaprak.items()),
+                    key=lambda x: (-x[0], x[1], x[2]))
+    bedel = 0
+    for _q, k, _bil, i in sirali:
+        kat = katlar[k]
+        assert kat is not None
+        bedel += kat.bedel[i]
+    return ([(q, k, bil) for q, k, bil, _i in sirali],
+            [i for _q, _k, _b, i in sirali], bedel)
+
+
+def _degisken_derinlik(P: np.ndarray, sira: list[int],
+                       katlar: list[_Kat | None], butce: int, tavan: int,
+                       taban_p: float
+                       ) -> tuple[float, list[Yaprak], list[Nokta]] | None:
+    """Değişken derinlikli eksen adayı: `(p_onbes, yapraklar, noktalar)`.
+
+    `λ` yalnızca ağacın **şeklini** seçer; bütçeyi `_tahsis_kabuklu` kesin
+    olarak harcar. Bu ayrım gereklidir: Lagrange gevşetmesi bütçeyi tam
+    tutturamaz (basamaklar bölünemez) ve artan para boşa giderdi.
+
+    `taban_p` sabit derinlikli aramanın o tavandaki hedefidir ve yalnızca
+    `λ` ızgarasının merkezini ölçeklemeye yarar (`FIYAT_IZGARASI`); dönen
+    değerin içine girmez.
+    """
+    if katlar[0] is None or taban_p <= 0.0:
+        return None
+    merkez = taban_p / butce
+    en: tuple[float, list[Yaprak], list[Nokta]] | None = None
+    for kat_sayi in FIYAT_IZGARASI:
+        son = _agac_buyut(P, sira, katlar, tavan, kat_sayi * merkez)
+        if son is None:
+            continue
+        yapraklar, _indeksler, _bedel = son
+        kabuklar = [katlar[k].kabuk for _q, k, _b in yapraklar  # type: ignore[union-attr]
+                    if katlar[k] is not None]
+        if len(kabuklar) != len(yapraklar):
+            continue
+        sonuc = _tahsis_kabuklu([q for q, _k, _b in yapraklar], kabuklar, butce)
+        if sonuc is None:
+            continue
+        if en is None or sonuc[0] > en[0]:
+            en = (sonuc[0], yapraklar, sonuc[1])
+    return en
 
 
 def coklu_plan_serisi(probs_listesi: list[dict[str, float]],
                       butce: int,
                       tavanlar: tuple[int, ...] | None = None,
-                      eksen_sirasi: list[int] | None = None
+                      eksen_sirasi: list[int] | None = None,
+                      degisken_derinlik: bool = True
                       ) -> dict[int, CokluPlan]:
     """Her kupon tavanı için en iyi plan — **tek aramada**.
 
@@ -477,10 +784,17 @@ def coklu_plan_serisi(probs_listesi: list[dict[str, float]],
     takas araması ×1,0002 — yani kural doğru ve arama onu **varsayım olarak
     değil ölçülmüş olarak** kullanıyor.
 
-    ─── Arama iki aday ailesini birlikte geziyor ─────────────────────────
+    `degisken_derinlik` üçüncü aday ailesini kapatır. O da aynı sebeple
+    parametre: ailenin kazancı **ölçülecekti** ve bir aramanın kazancı ancak
+    onsuz koşulan bir arama varsa ölçülebilir (§3.72,
+    `scripts/derinlik_kiyasi.py`). Ölçüldü — kazanç binde birler mertebesinde
+    ve **hiçbir haftada geri gidiş yok**; aday, gerilemesi imkânsız olduğu
+    için aramada kalıyor.
+
+    ─── Arama üç aday ailesini birlikte geziyor ──────────────────────────
 
     Her `d` için kalan `15−d` maçın **bütün bütçelerdeki** en iyi alt
-    sistemleri bir kez çıkarılır (`secim.secim_cephesi`, tek DP) ve iki aday
+    sistemleri bir kez çıkarılır (`secim.secim_cephesi`, tek DP) ve üç aday
     değerlendirilir:
 
     * **tek tip** — bütün kuponlar aynı alt sistemi oynar. Bu, bu modülün
@@ -490,18 +804,23 @@ def coklu_plan_serisi(probs_listesi: list[dict[str, float]],
       sistem bütçesi alır (`_tahsis`). Eksen bileşimlerinin olasılıkları
       yüzler kat ayrıştığı için eşit bölmek masada değer bırakıyordu;
       ölçüldü (§3.71).
+    * **değişken derinlik** — kuponların eksen boyu **aynı olmak zorunda
+      değil**: yapraklar eminlik sırasının ön ek ağacında bir antizincirdir
+      (`_degisken_derinlik`). Sabit derinlik bu ailenin özel hâlidir.
+      Ölçüldü (§3.72) ve kazancı binde birler çıktı — sebebi de ölçüldü:
+      sabit derinliğin terk ettiği eksen kütlesinin marjinal getirisi, aynı
+      parayı derinleşmeye harcamanınkiyle neredeyse **aynı**.
 
-    İkisinin en iyisi seçilir, yani yeni arama eski aramanın **üst
-    kümesidir** ve hiçbir haftada ondan kötü olamaz. Bekçisi
-    `test_tahsis_TEK_TIP_adayini_da_geziyor` ve
-    `test_tahsisli_plan_ESKI_aramadan_kotu_DEGIL`.
+    Üçünün en iyisi seçilir, yani arama her genişlemede eskisinin **üst
+    kümesi** olarak kalıyor ve hiçbir haftada ondan kötü olamaz. Bekçisi
+    `test_tahsis_TEK_TIP_adayini_da_geziyor`,
+    `test_tahsisli_plan_ESKI_aramadan_kotu_DEGIL` ve
+    `test_agac_adayi_ARAMAYI_DARALTMIYOR`.
     """
     if butce is None or butce <= 0:
         raise ValueError("Butce pozitif bir kolon sayisi olmali.")
     if len(probs_listesi) != MAC_SAYISI:
         raise ValueError(f"{MAC_SAYISI} macin olasiligi gerekir.")
-
-    from .secim import secim_cephesi
 
     istenen = sorted(tavanlar) if tavanlar else sorted(ARANAN_KUPON)
     tavan_ust = max(istenen)
@@ -513,27 +832,22 @@ def coklu_plan_serisi(probs_listesi: list[dict[str, float]],
     else:
         emin_sira = list(eksen_sirasi)
 
-    #: tavan -> (p_onbes, kupon sayısı, eksen, kalanlar, bileşimler, noktalar)
-    en_iyi: dict[int, tuple[float, int, list[int], list[int],
-                            list[tuple[int, ...]], list[Nokta]]] = {}
+    #: tavan -> (p_onbes, kupon sayısı, gövde verisi). Gövde iki biçimden
+    #: biri: sabit derinlik `("duz", eksen, kalanlar, bileşimler, noktalar)`,
+    #: değişken derinlik `("agac", yapraklar, noktalar)`. Kupon GÖVDELERİ
+    #: burada kurulmaz — yalnızca kazanan için kurulur.
+    en_iyi: dict[int, tuple[float, int, tuple]] = {}
+
+    # Ağaç araması da aynı 16 cepheyi istiyor; ikinci bir DP koşmuyor.
+    cepheler, katlar = _cepheler(probs_listesi, P, butce, emin_sira)
 
     for d in range(MAC_SAYISI + 1):
+        noktalar = cepheler[d]
+        if noktalar is None:
+            continue
         eksen = sorted(emin_sira[:d])
-        kalanlar = [i for i in range(MAC_SAYISI) if i not in set(eksen)]
-        if kalanlar:
-            # Cephe TAM bütçeyle çıkarılır, `bütçe // M` ile değil: tahsiste
-            # bir kupon ortalamanın çok üstüne çıkabilir ve o noktalar
-            # kırpılırsa tahsis eşit bölmeye geri düşer (prototipte tam bu
-            # oldu — kazanç sıfır göründü).
-            cephe = secim_cephesi([probs_listesi[i] for i in kalanlar],
-                                  butce, esik=0)
-            if not cephe:
-                continue
-            noktalar: list[Nokta] = [
-                (s.bedel, _p_alt(P, kalanlar, s.secimler), s) for s in cephe]
-        else:
-            noktalar = [(1, 1.0, None)]
-
+        kalanlar = sorted(emin_sira[d:])
+        kat = katlar[d]
         bilesimler, q = _eksen_olasiliklari(P, eksen, min(tavan_ust, 3 ** d))
 
         for tavan in istenen:
@@ -553,7 +867,8 @@ def coklu_plan_serisi(probs_listesi: list[dict[str, float]],
                 adaylar.append((sum(q[:sayi]) * p_alt, sayi, [nokta] * sayi))
 
             # ─── aday 2: tahsisli ─────────────────────────────────────
-            sonuc = _tahsis(q[:M], noktalar, butce)
+            sonuc = (None if kat is None
+                     else _tahsis_kabuklu(q[:M], [kat.kabuk] * M, butce))
             if sonuc is not None:
                 adaylar.append((sonuc[0], M, sonuc[1]))
 
@@ -561,19 +876,45 @@ def coklu_plan_serisi(probs_listesi: list[dict[str, float]],
                 varsa = en_iyi.get(tavan)
                 # eşitlikte AZ kupon kazanır: aynı hedefe daha az operasyonla
                 if varsa is None or (p, -sayi) > (varsa[0], -varsa[1]):
-                    en_iyi[tavan] = (p, sayi, eksen, kalanlar,
-                                     bilesimler[:sayi], secilen)
+                    en_iyi[tavan] = (p, sayi, ("duz", eksen, kalanlar,
+                                               bilesimler[:sayi], secilen))
+
+    # ─── aday 3: değişken derinlikli eksen (§3.72) ────────────────────────
+    # Döngüden SONRA: bütün derinliklerin kabuğu gerekiyor ve arama `d` boyunca
+    # değil kupon sayısı boyunca ilerliyor.
+    for tavan in istenen if degisken_derinlik else ():
+        varsa = en_iyi.get(tavan)
+        agac = _degisken_derinlik(P, emin_sira, katlar, butce, tavan,
+                                  varsa[0] if varsa else 0.0)
+        if agac is None:
+            continue
+        p, yapraklar, secilen = agac
+        if varsa is None or (p, -len(yapraklar)) > (varsa[0], -varsa[1]):
+            en_iyi[tavan] = (p, len(yapraklar), ("agac", yapraklar, secilen))
 
     if not en_iyi:
         raise ValueError(f"Butce hicbir plani karsilamiyor: {butce}")
 
     seri: dict[int, CokluPlan] = {}
-    for tavan, (p, _sayi, eksen, kalanlar, bilesimler, secilen) in sorted(
-            en_iyi.items()):
-        kuponlar = [
-            _kuponlari_kur([bilesim], eksen, kalanlar, nokta[2], nokta[0])[0]
-            for bilesim, nokta in zip(bilesimler, secilen)]
-        seri[tavan] = CokluPlan(kuponlar=kuponlar, eksen=eksen,
+    for tavan, (p, _sayi, veri) in sorted(en_iyi.items()):
+        if veri[0] == "duz":
+            _tip, eksen, kalanlar, bilesimler, secilen = veri
+            kuponlar = [
+                _kuponlari_kur([bilesim], eksen, kalanlar, nokta[2], nokta[0])[0]
+                for bilesim, nokta in zip(bilesimler, secilen)]
+            ortak = eksen
+        else:
+            _tip, yapraklar, secilen = veri
+            kuponlar = []
+            for (_q, derinlik, bilesim), nokta in zip(yapraklar, secilen):
+                y_eksen = emin_sira[:derinlik]
+                y_kalan = sorted(emin_sira[derinlik:])
+                kuponlar += _kuponlari_kur([bilesim], y_eksen, y_kalan,
+                                           nokta[2], nokta[0])
+            # Ortak eksen = HER kuponda tekleşen maçlar, yani en sığ yaprağın
+            # ön eki. Sabit derinlikte bu tam olarak eski `eksen`dir.
+            ortak = sorted(emin_sira[:min(k for _q, k, _b in yapraklar)])
+        seri[tavan] = CokluPlan(kuponlar=kuponlar, eksen=ortak,
                                 kolon=sum(k.kolon for k in kuponlar),
                                 p_onbes=p)
     return seri
