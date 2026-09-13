@@ -308,24 +308,48 @@ def test_tahsis_GERCEKTEN_farkli_boyda_kupon_uretiyor():
 def test_tahsis_DAHA_OLASI_kupona_daha_cok_kolon():
     """Eksen olasılığı büyük olan kupon daha az kolon alamaz.
 
-    Bu, tahsisin tanımının kendisi: bütün kuponlar aynı cepheyi paylaşıyor ve
+    Bu, tahsisin tanımının kendisi: kuponlar aynı cepheyi paylaşıyor ve
     yükseltmenin değeri `q_j · Δp`. O hâlde `q` azalırken seçilen bedel de
     azalmak zorunda — tersi, açgözlünün bozulduğu ya da `q`nun sırasının
-    kaybolduğu anlamına gelir (`_eksen_bilesimleri` azalan sırada döner).
-    """
-    from spor_toto.coklu import _matris
+    kaybolduğu anlamına gelir.
 
-    for tohum in range(4):
-        probs = _probs(tohum)
-        P = _matris(probs)
-        plan = coklu_plan(probs, 19_683, kupon_tavani=81)
-        q = [float(np.prod([P[i][SEMBOLLER.index(sec[0])]
-                            for i, sec in enumerate(k.secimler)
-                            if i in set(plan.eksen)]))
-             for k in plan.kuponlar]
-        kolonlar = [k.kolon for k in plan.kuponlar]
-        ikili = sorted(zip(q, kolonlar), key=lambda x: -x[0])
-        assert all(y[1] <= x[1] for x, y in pairwise(ikili)), ikili
+    Bekçi önce **planın üzerinden** koşuyordu: `plan.eksen`e bakıp `q`yu
+    kupondan yeniden kuruyordu. §3.72 onu kırdı ve haklı olarak — değişken
+    derinlikli planda kuponların ortak ekseni yok, yani o yoldan okunan `q`
+    bütün kuponlarda **aynı** çıkıyor ve test kendi ölçtüğü şeyi kaybediyor.
+    İddia zaten plana değil tahsisin kendisine aitti; bekçi oraya indi.
+    """
+    from spor_toto.coklu import _tahsis
+
+    cephe = [(1, 0.10, None), (2, 0.18, None), (4, 0.30, None),
+             (8, 0.44, None), (16, 0.56, None), (32, 0.63, None)]
+    q = [0.30, 0.20, 0.12, 0.08, 0.05, 0.03, 0.01, 0.004]
+    sonuc = _tahsis(q, cephe, 120)
+    assert sonuc is not None
+    kolonlar = [n[0] for n in sonuc[1]]
+    assert all(y <= x for x, y in pairwise(kolonlar)), kolonlar
+    assert sum(kolonlar) <= 120
+
+
+def test_tahsis_KABUKLU_govdesi_ayni_kabukta_tahsisle_ayni():
+    """`_tahsis_kabuklu` genelleştirme, davranış değişikliği değil.
+
+    Değişken derinlikte her kuponun kabuğu ayrı (§3.72) ve tahsis o yüzden
+    kabuk listesi alan bir gövdeye taşındı. Bütün kabuklar aynıyken sonuç
+    eski gövdeyle birebir aynı olmalı — ayrışırsa §3.71'in bütün sayıları
+    sessizce kayardı.
+    """
+    from spor_toto.coklu import _tahsis, _tahsis_kabuklu, _ust_kabuk
+
+    cephe = [(1, 0.10, None), (3, 0.31, None), (9, 0.52, None),
+             (27, 0.70, None), (81, 0.81, None)]
+    q = [0.4, 0.25, 0.15, 0.1, 0.06, 0.04]
+    kabuk = _ust_kabuk(cephe)
+    a = _tahsis(q, cephe, 200)
+    b = _tahsis_kabuklu(q, [kabuk] * len(q), 200)
+    assert a is not None and b is not None
+    assert a[0] == pytest.approx(b[0], rel=1e-15)
+    assert [n[0] for n in a[1]] == [n[0] for n in b[1]]
 
 
 def test_ust_kabuk_ORANLARI_azaltiyor_ve_cepheden_secmiyor_disindan():
@@ -356,3 +380,151 @@ def test_tahsis_butce_yetmezse_None():
 
     assert _tahsis([0.5] * 10, [(3, 0.4, None)], 20) is None
     assert _tahsis([0.5] * 10, [], 1000) is None
+
+
+# ─── değişken derinlikli eksen (§3.72) ───────────────────────────────────
+
+def _oyuncak_katlar() -> list:
+    """Elde kurulmuş kat listesi — ağaç mekaniğini cepheden bağımsız sınar.
+
+    Gerçek katlar `secim_cephesi`den gelir ve onu kurmak 16 DP demek; ağacın
+    kendi kuralları (antizincir, tavan, kök) cephenin şekline bakmıyor.
+
+    Ama bir şeye bakıyor: **derin kat sığ kattan iyi olmalı**. `n` maçlık alt
+    sistemde hepsi tek işaret `0,6ⁿ` verir ve bir maçı çifte çevirmek bedeli
+    ikiye, olasılığı `0,85/0,6` katına çıkarır. İlk sürüm bütün derinliklere
+    aynı kabuğu veriyordu ve ağaç **hiç bölünmüyordu** — haklı olarak:
+    `w ↦ max_i(w·pᵢ − λ·cᵢ)` dışbükey ve `f(0) ≤ 0` olduğu için üstToplamsal,
+    yani aynı kabukta bölmek tanım gereği kaybettirir. Bölmenin değeri
+    tamamen "bir maç eksildi" farkından gelir.
+    """
+    from spor_toto.coklu import Nokta, _kat_kur
+
+    katlar = []
+    for k in range(MAC_SAYISI + 1):
+        n = MAC_SAYISI - k
+        noktalar: list[Nokta] = (
+            [(1, 1.0, None)] if n == 0 else
+            [(2 ** i, 0.6 ** (n - i) * 0.85 ** i, None) for i in range(n + 1)])
+        katlar.append(_kat_kur(noktalar))
+    return katlar
+
+
+def _oyuncak_P() -> np.ndarray:
+    """15 maçlık, favorisi belirgin ve maçtan maça değişen olasılık matrisi."""
+    rng = np.random.default_rng(17)
+    return np.array([rng.dirichlet([7.0, 3.0, 2.0]) for _ in range(MAC_SAYISI)])
+
+
+def test_agac_yapraklari_ANTIZINCIR():
+    """Hiçbir yaprak başka bir yaprağın ön eki olamaz.
+
+    `p_onbes` kupon olasılıklarını **topluyor** ve bu ancak kuponlar ayrıksa
+    doğrudur. Değişken derinlikte ayrıklığın tek kaynağı budur: yapraklar
+    eminlik sırasının ön ek ağacında bir antizincirdir. Bölünen düğüm yaprak
+    listesinde kalsaydı çocuklarının kolonları iki kez sayılırdı — ve
+    `p_onbes` bunu **görmezdi**, çünkü o da aynı listeden toplar.
+    """
+    from spor_toto.coklu import _agac_buyut
+
+    katlar = _oyuncak_katlar()
+    P = _oyuncak_P()
+    sonuc = _agac_buyut(P, list(range(MAC_SAYISI)), katlar, 81, 1e-5)
+    assert sonuc is not None
+    yapraklar = [bil for _q, _k, bil in sonuc[0]]
+    assert len(yapraklar) > 1, "agac hic bolunmedi — sinav bos"
+    for a in yapraklar:
+        for b in yapraklar:
+            if a is b:
+                continue
+            assert a[:len(b)] != b, f"{b} yapragi {a} yapraginin on eki"
+
+
+def test_agac_TAVANI_asmiyor_ve_TEK_TAVANDA_kok():
+    """Tavan bir operasyon kısıtı: aşılırsa oynanamayan plan üretilir.
+
+    `tavan = 1` özellikle sınanıyor — o hâlde ağaç hiç bölünmemeli ve kök
+    (derinlik 0, yani eksen yok) tek yaprak olarak kalmalı. Kök bölünseydi
+    `coklu_plan(..., kupon_tavani=1)` tek sistem olmaktan çıkardı ve §3.67'nin
+    bütün kıyas tabanı kayardı.
+    """
+    from spor_toto.coklu import _agac_buyut
+
+    katlar = _oyuncak_katlar()
+    P = _oyuncak_P()
+    for tavan in (1, 2, 7, 27, 243):
+        sonuc = _agac_buyut(P, list(range(MAC_SAYISI)), katlar, tavan, 1e-5)
+        assert sonuc is not None
+        assert len(sonuc[0]) <= tavan, f"tavan {tavan}: {len(sonuc[0])} yaprak"
+    tek = _agac_buyut(P, list(range(MAC_SAYISI)), katlar, 1, 1e-5)
+    assert tek is not None
+    assert tek[0] == [(1.0, 0, ())]
+
+
+def test_en_iyi_nokta_KABUGUN_ARGMAXI():
+    """Fiyatlama `bisect` ile yapılıyor; kaba kuvvetle aynı noktayı vermeli.
+
+    `w·p − λ·bedel`in enbüyükleyeni, kabukta oranlar azalan olduğu için bir
+    **ön ek** sayısıyla bulunuyor (`bisect`). Kayma olsaydı ağaç sessizce
+    yanlış şekli alırdı ve hiçbir bekçi bunu görmezdi: sonuç yine geçerli bir
+    plan olurdu, yalnızca daha kötüsü.
+    """
+    from spor_toto.coklu import _en_iyi_nokta, _kat_kur
+
+    kat = _kat_kur([(1, 0.10, None), (2, 0.18, None), (4, 0.30, None),
+                    (8, 0.44, None), (16, 0.56, None), (64, 0.66, None)])
+    assert kat is not None
+    for w in (1.0, 0.4, 0.05, 0.004):
+        for lam in (1e-5, 1e-3, 5e-3, 2e-2, 0.1):
+            kaba = max(range(len(kat.bedel)),
+                       key=lambda i: w * kat.p[i] - lam * kat.bedel[i])
+            en_iyi = w * kat.p[kaba] - lam * kat.bedel[kaba]
+            sonuc = _en_iyi_nokta(kat, w, lam)
+            if en_iyi <= 0:
+                assert sonuc is None, f"w={w} lam={lam}: deger {en_iyi}"
+            else:
+                assert sonuc is not None
+                assert sonuc[1] == pytest.approx(en_iyi, rel=1e-12), (w, lam)
+
+
+def test_agac_adayi_ARAMAYI_DARALTMIYOR():
+    """Üçüncü aday eklendi; önceki iki aday **yerinde** kalmalı.
+
+    Ağaç bir sezgiseldir (açgözlü, fiyat ızgarası üstünde) ve ölçülen kazancı
+    binde birler mertebesinde (§3.72). O yüzden burada tutulan şey kazanç
+    **değil**: üçüncü adayın eskileri gölgelemediği. Gölgeleseydi §3.71'in
+    bütün sayıları sessizce gerilerdi ve bunun tek belirtisi bu bekçi olurdu.
+    """
+    tavanlar = (1, 27, 81)
+    for tohum in range(5):
+        probs = _probs(tohum)
+        yeni = coklu_plan_serisi(probs, 21_000, tavanlar)
+        eski = coklu_plan_serisi(probs, 21_000, tavanlar,
+                                 degisken_derinlik=False)
+        for t in tavanlar:
+            assert yeni[t].p_onbes >= eski[t].p_onbes - 1e-12, (tohum, t)
+
+
+def test_agac_KAZANDIGINDA_da_kupon_ayrik_ve_hedef_ayni():
+    """Ağaç planı üretim yoluna girdiğinde de aynı iki değişmez geçerli.
+
+    Üstteki iki genel bekçi (`test_kuponlar_AYRIK`,
+    `test_p_onbes_plandan_ve_kupondan_AYNI`) **kazanan** aileyi sınıyor, yani
+    ağaç hiç kazanmadığı bir tohum kümesinde onlara hiç değmez. Bu bekçi
+    ağacın kazandığı bir hafta seçiyor ve iki değişmezi orada kovalıyor —
+    değişken derinlikte kupon gövdeleri ayrı bir yoldan kuruluyor
+    (`_kuponlari_kur` kupon başına, farklı eksenle).
+    """
+    probs = _probs(2)
+    plan = coklu_plan_serisi(probs, 21_000, (9,))[9]
+    duz = coklu_plan_serisi(probs, 21_000, (9,), degisken_derinlik=False)[9]
+    assert plan.p_onbes > duz.p_onbes, "secilen hafta artik agacla kazanmiyor"
+
+    assert plan.p_onbes == pytest.approx(p_onbes(probs, plan.kuponlar),
+                                         rel=1e-12)
+    assert plan.kolon == sum(k.kolon for k in plan.kuponlar) <= 21_000
+    for a in range(len(plan.kuponlar)):
+        for b in range(a + 1, len(plan.kuponlar)):
+            ka, kb = plan.kuponlar[a], plan.kuponlar[b]
+            assert any(set(x).isdisjoint(y)
+                       for x, y in zip(ka.secimler, kb.secimler)), (a, b)

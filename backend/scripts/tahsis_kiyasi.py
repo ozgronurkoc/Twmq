@@ -116,7 +116,14 @@ def kos(butce: int, serbest: bool = False) -> dict[str, Any]:
 
     for _sezon, _w, lst in haftalar:
         probs, _gercek = hafta_probs(lst)
-        seri = coklu_plan_serisi(probs, butce, TAVANLAR)
+        # `degisken_derinlik=False` BİLEREK: bu betik tek bir mekanizmayı
+        # yalıtıyor (kupon başına ayrı bütçe). Üretim araması §3.72'de bir
+        # aday daha aldı ve onu buradaki "tahsisli" sütununa karıştırmak iki
+        # bulguyu birbirine yedirirdi — tablo "tahsis ne getirdi" diye
+        # okunurken içinde başka bir şeyin kazancı da olurdu. Ağacın kendi
+        # kazancını `scripts/derinlik_kiyasi.py` ölçüyor.
+        seri = coklu_plan_serisi(probs, butce, TAVANLAR,
+                                 degisken_derinlik=False)
         for t in TAVANLAR:
             plan = seri[t]
             eski = tek_tip_arama(probs, butce, t)
