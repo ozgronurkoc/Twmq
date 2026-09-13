@@ -395,6 +395,7 @@ def coklu_degerlendir(d: dict[str, Any],
     from spor_toto.coklu import Kupon
     from spor_toto.coklu import kademe_dagilimi as coklu_kademe
     from spor_toto.coklu import p_onbes as coklu_p_onbes
+    from spor_toto.sadelestirme import ayni_kolonlar
 
     plan = kayit["plan"]
     gercek = d["meta"]["results"]
@@ -414,6 +415,23 @@ def coklu_degerlendir(d: dict[str, Any],
     p_yeniden = coklu_p_onbes(probs, kuponlar)
     kayitli = float(plan["p_onbes"])
 
+    # ─── `slipler` varsa PLANLA AYNI ŞEYİ oynamalı (§3.75) ───────────────
+    # Kayıt iki liste taşıyor: `kuponlar` plan, `slipler` fiilen doldurulan
+    # kutular. İkisinin aynı kolonları oynadığı `coklu_kupon.py`de yazarken
+    # sınanıyor — ama bekçi **artefaktın kendisini** sınamalı, yazan gövdeyi
+    # değil (§3.74'ün sıralama dersi birebir bu). `None`, alan yok demektir
+    # ve o bir hata değil: §3.69–3.74 arası donan beş kayıtta bu alan yok.
+    slip_tutarli: bool | None = None
+    slip_sayisi: int | None = None
+    if plan.get("slipler"):
+        slipler = [Kupon(secimler=[list(p) for p in k["picks"]],
+                         kolon=int(k["kolon"]))
+                   for k in plan["slipler"]]
+        slip_sayisi = len(slipler)
+        slip_tutarli = (
+            ayni_kolonlar(kuponlar, slipler)
+            and sum(k.kolon for k in slipler) == kolon_toplami)
+
     return {
         "ad": kayit["meta"]["ad"],
         "frozen_at": kayit["meta"]["frozen_at"],
@@ -429,6 +447,9 @@ def coklu_degerlendir(d: dict[str, Any],
         "p_onbes_kayittan": p_yeniden,
         "kayit_tutarli": abs(p_yeniden - kayitli) < 1e-9,
         "kolon_tutarli": kolon_toplami == int(plan["kolon"]),
+        # `None` = kayıtta slip listesi yok (§3.75 öncesi kayıtlar).
+        "slip_sayisi": slip_sayisi,
+        "slip_tutarli": slip_tutarli,
         "en_iyi": tek_tek[en_iyi]["best"],
         "en_iyi_kupon": plan["kuponlar"][en_iyi]["no"],
         "en_iyi_kacaklar": tek_tek[en_iyi]["misses"],

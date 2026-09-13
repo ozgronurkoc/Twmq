@@ -808,6 +808,49 @@ def test_coklu_kaydi_KENDINI_dogruluyor(deg):
         assert c["kolon_tutarli"]
 
 
+def test_coklu_kaydinin_SLIPLERI_ayni_kolonlari_oynuyor(deg):
+    """`slipler` varsa plandan BAŞKA bir şey oynayamaz (§3.75).
+
+    Kayıt iki liste taşır: `kuponlar` plandır, `slipler` fiilen doldurulan
+    kutulardır ve ikisi aynı kolon kümesini oynamak zorundadır. Yazan gövde
+    (`coklu_kupon.py`) bunu zaten sınıyor — ama bekçi **artefaktın
+    kendisini** sınamalı: §3.74'te sıralama kuralı da yazan gövdede
+    doğruydu ve donmuş kayıtların 6'sında tutmuyordu.
+
+    §3.69–3.74 arası donan beş kayıtta bu alan **yok** ve o bir hata
+    değil; `None` o hâli işaretliyor ve bekçi onu atlıyor. `atlanan`
+    sayacı, alan geldiğinde bekçinin gerçekten koştuğunu görebilmek için.
+    """
+    from spor_toto.coklu import Kupon
+    from spor_toto.sadelestirme import ayni_kolonlar
+
+    dosyalar = sorted((KOK / "data" / "super_toto" / "2026_27")
+                      .glob("hafta_*_coklu.json"))
+    assert dosyalar, "hic donmus coklu kayit yok"
+    atlanan = 0
+    for yol in dosyalar:
+        plan = json.loads(yol.read_text(encoding="utf-8"))["plan"]
+        if not plan.get("slipler"):
+            atlanan += 1
+            continue
+        def oku(lst):
+            return [Kupon(secimler=[list(p) for p in k["picks"]],
+                          kolon=int(k["kolon"])) for k in lst]
+
+        kuponlar, slipler = oku(plan["kuponlar"]), oku(plan["slipler"])
+        assert ayni_kolonlar(kuponlar, slipler), f"{yol.name}: kolonlar sapti"
+        assert (sum(k.kolon for k in slipler)
+                == sum(k.kolon for k in kuponlar)), f"{yol.name}: butce sapti"
+        assert 0 < len(slipler) <= len(kuponlar)
+    assert atlanan <= 5, "beklenenden cok kayit atlandi"
+
+    # Değerlendirici de aynı bayrağı taşımalı — sonucu girilmiş haftalarda.
+    for hafta in (1, 2, 3, 4):
+        c = deg.rapor("2026_27", hafta)["coklu"]
+        assert "slip_tutarli" in c
+        assert c["slip_tutarli"] in (None, True)
+
+
 def test_coklu_kaydi_BUTCEYI_asmiyor(deg):
     """Kolon toplamı bütçeyi aşamaz — aşarsa kıyas parayı da değiştirir."""
     for hafta in (1, 2, 3, 4):

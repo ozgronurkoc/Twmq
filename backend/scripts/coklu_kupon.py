@@ -67,6 +67,7 @@ from spor_toto.coklu import (
 )
 from spor_toto.getiri import KOLON_BEDELI
 from spor_toto.operasyon import kupon_olasiliklari, yogunlasma
+from spor_toto.sadelestirme import ayni_kolonlar, sadelestir
 from spor_toto.secim import en_iyi_secim
 
 
@@ -93,6 +94,24 @@ def plan_uret(d: dict, butce: int, tavan: int | None) -> dict:
                                      key=lambda t: -t[0])]
     yog = yogunlasma(probs, kuponlar)
 
+    # ─── SLİPLER: fiilen doldurulacak kutular (§3.75) ────────────────────
+    # `kuponlar` planın kendisidir ve ölçümler onun üstünden koşar; ama
+    # terminalin başındaki insan onu doldurmak zorunda değil. İki kupon bir
+    # tek konumda ayrışıyorsa tek kutuya iner: aynı kolonlar, aynı para,
+    # aynı `P(15/15)` — daha az giriş. Kayıt ikisini de taşıyor çünkü ikisi
+    # iki ayrı soruya cevap: `kuponlar` "plan neydi", `slipler` "ne
+    # dolduruldu".
+    sad = sadelestir(kuponlar)
+    slip_paylar = kupon_olasiliklari(probs, sad.kuponlar)
+    slipler = [k for _, k in sorted(zip(slip_paylar, sad.kuponlar),
+                                    key=lambda t: -t[0])]
+    # Özdeşlik kaydın kurulduğu anda sınanıyor. Bekçi zaten var
+    # (`tests/test_sadelestirme.py`); burası donan dosyanın kendisi ve
+    # sessizce başka bir plan yazmasındansa SESLİ patlaması gerekir.
+    if not ayni_kolonlar(kuponlar, slipler):
+        raise ValueError("Slipler plandan BASKA kolonlar oynuyor.")
+    slip_yog = yogunlasma(probs, slipler)
+
     # kıyas: aynı bütçede tek sistem ne verirdi
     tek = en_iyi_secim(probs, butce, esik=0)
     if tek is None:
@@ -118,14 +137,24 @@ def plan_uret(d: dict, butce: int, tavan: int | None) -> dict:
                        "picks": ["".join(s) for s in tek.secimler]},
         "kazanc": plan.p_onbes / p_tek if p_tek else None,
         # Denetim künyesi: girişi yapan kişinin okuması gereken sayı.
+        # `slip_*` alanları `slipler` üstünden ölçülür, `kuponlar` üstünden
+        # değil: elle girilen şey odur ve §3.74'ün "en çok taşıyanı iki kez
+        # oku" kuralı da onun sırasına uygulanır.
         "denetim": {
             "sirali": "p_azalan",
             "en_buyuk_pay": yog.en_buyuk_pay,
             "yarisini_tasiyan": yog.yarisini_tasiyan,
             "duz_pay": yog.duz_pay,
+            "slip_sayisi": sad.slip_sonra,
+            "slip_en_buyuk_pay": slip_yog.en_buyuk_pay,
+            "slip_yarisini_tasiyan": slip_yog.yarisini_tasiyan,
+            "isaret_kupon": sad.isaret_once,
+            "isaret_slip": sad.isaret_sonra,
         },
         "kuponlar": [{"no": i + 1, "kolon": k.kolon, "picks": k.picks}
                      for i, k in enumerate(kuponlar)],
+        "slipler": [{"no": i + 1, "kolon": k.kolon, "picks": k.picks}
+                    for i, k in enumerate(slipler)],
         "maclar": [{"no": m.get("no", i + 1),
                     "mac": f"{m.get('home')} – {m.get('away')}",
                     "probs": m["probs"]}
@@ -183,9 +212,19 @@ def kayit_kur(d: dict, c: dict, butce: int, tavan: int | None,
 def yaz(c: dict, egri: list | None) -> None:
     print(f"\n{c['sezon']} · {c['hafta']}. hafta — çoklu kupon planı")
     print(f"bütçe   : {c['butce_kolon']:,} kolon  ({c['butce_tl']:,.0f} TL)")
-    print(f"kullanım: {c['kupon_sayisi']:,} kupon × "
-          f"{c['kuponlar'][0]['kolon']:,} kolon = {c['kolon']:,} kolon "
-          f"({c['tl']:,.0f} TL)")
+    # Kupon bedelleri §3.71'den beri EŞİT DEĞİL (her kupon kendi alt sistem
+    # bütçesini alıyor), yani "M × kolon" çarpımı artık bir yalan: burada
+    # `kuponlar[0]` yazıyordu ve o, olasılığa göre sıralı listenin ilk
+    # elemanıdır — temsilci değil.
+    kolonlar_ = [k["kolon"] for k in c["kuponlar"]]
+    print(f"kullanım: {c['kupon_sayisi']:,} kupon "
+          f"({min(kolonlar_):,}–{max(kolonlar_):,} kolon) = "
+          f"{c['kolon']:,} kolon ({c['tl']:,.0f} TL)")
+    d = c["denetim"]
+    print(f"giriş   : {d['slip_sayisi']:,} slip "
+          f"(×{c['kupon_sayisi'] / d['slip_sayisi']:.2f} az), "
+          f"{d['isaret_slip']:,} kutucuk "
+          f"(×{d['isaret_kupon'] / d['isaret_slip']:.2f} az) — aynı kolonlar")
     print(f"\nP(15/15) : {c['p_onbes']:.3%}")
     print(f"tek sistem: {c['tek_sistem']['p_onbes']:.3%} "
           f"({c['tek_sistem']['kolon']:,} kolon)")
@@ -205,11 +244,16 @@ def yaz(c: dict, egri: list | None) -> None:
         for kupon, kolon, p in egri:
             print(f"  {kupon:>6,} kupon × {kolon:>7,} kolon   P(15/15) = {p:.3%}")
 
-    print(f"\n{'#':>5}  " + "  ".join(f"{i + 1:>3}" for i in range(15)))
-    for k in c["kuponlar"][:40]:
+    # Basılan tablo SLİPLERDİR, kuponlar değil: bu çıktıyı okuyan kişi
+    # terminalin başında oturuyor ve dolduracağı şey budur. Plan
+    # `kuponlar`da duruyor ve ölçümler onun üstünden koşuyor.
+    print(f"\nSLIPLER (p azalan — ilk {d['slip_yarisini_tasiyan']} slip "
+          f"hedefin yarısını taşıyor, iki kez oku)")
+    print(f"{'#':>5}  " + "  ".join(f"{i + 1:>3}" for i in range(15)))
+    for k in c["slipler"][:40]:
         print(f"{k['no']:>5}  " + "  ".join(f"{p:>3}" for p in k["picks"]))
-    if len(c["kuponlar"]) > 40:
-        print(f"  ... ve {len(c['kuponlar']) - 40:,} kupon daha (--json ile tamamı)")
+    if len(c["slipler"]) > 40:
+        print(f"  ... ve {len(c['slipler']) - 40:,} slip daha (--json ile tamamı)")
 
 
 def main() -> None:
