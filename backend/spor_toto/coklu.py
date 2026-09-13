@@ -60,6 +60,21 @@ Gözlenen sütun `n = 114` ile gürültülüdür (329 kuponda 20, 79 kuponda 21)
 güvenilen sinyal **model** sütunudur ve o monotondur — bekçisi
 `test_kupon_sayisi_buyudukce_P15_DUSMEZ`.
 
+> **NORMALLEŞTİRME DÜZELTİLDİ, iki tablo YENİDEN ÖLÇÜLDÜ (2026-09-13).**
+> `p_alt` ham sözlükten okunuyordu (`p_eksen` ise normalleştirilmiş `P`den):
+> arşiv satırları dört haneye yuvarlı ve 1,0001 toplayabildiği için
+> `plan.p_onbes`, aynı kuponu yeniden ölçen `p_onbes`ten binde 0,3'e kadar
+> büyük çıkıyordu — ve fazlalık adaylara **eşit binmediği** için (üçlü
+> bırakılan maç sayısı kadar) aramanın sıralamasını da oynatabiliyordu.
+> Düzeltildi; bekçisi `test_p_onbes_NORMALLESMEMIS_girdide_de_AYNI`. İki
+> tablo yeniden koşuldu: **basılan hanelerde hiçbir sayı değişmedi** (en
+> büyük oynama %7,4895 → %7,4890), gözlenen sütun ve kademe sayımları
+> birebir aynı. Değişen tek şey `tavan = 3`ün kupon ortalaması (2,5 → 2,4),
+> yani en az bir haftada seçilen yapılandırma gerçekten oynadı. Kusur
+> **canlı haftalara değmedi**: `hafta_NN_coklu.json` kayıtları satırları tam
+> 1 toplayan olasılıklarla kuruldu ve kaydın 1e-9'luk bekçisi hep yeşildi —
+> kusurun bugüne kadar görünmemesinin sebebi de o.
+
 Yapı: `d` maç **eksen** seçilir — en emin olduklarımız — ve kuponlar arasında
 tek tek sabitlenir; eksen üzerindeki `3^d` bileşimden en olası `M` tanesi
 oynanır. Kalan `15−d` maç her kuponda **aynı alt sistemdir** ve onu
@@ -130,6 +145,10 @@ if TYPE_CHECKING:  # `secim` çalışma zamanında TEMBEL çekiliyor (döngü),
 #: Kupondaki maç sayısı.
 MAC_SAYISI = 15
 
+#: Sembol → `_matris` sütunu. İki yerde gerekiyordu ve iki yerde ayrı ayrı
+#: kuruluyordu.
+_INDEKS: dict[str, int] = {s: j for j, s in enumerate(SEMBOLLER)}
+
 #: Varsayılan kupon tavanı. Ölçülen eğride kazancın büyük kısmı ilk birkaç
 #: düzine kuponda alınıyor; tavan bir **operasyon** kararıdır, matematiksel
 #: bir sınır değil. `None` verilirse arama `ARANAN_KUPON`un tamamını gezer.
@@ -161,7 +180,13 @@ class CokluPlan(NamedTuple):
 
 
 def _matris(probs_listesi: list[dict[str, float]]) -> np.ndarray:
-    """Olasılıkları satır başına büyükten küçüğe sıralı matrise çevirir."""
+    """Olasılıkları satır toplamı 1 olan matrise çevirir — **sembol düzeninde**.
+
+    Sıralama YOK: sütunlar `core.SEMBOLLER` (`1/0/2`) düzenindedir. Docstring
+    burada "büyükten küçüğe sıralı" diyordu ve bu yanlıştı — `eksen_sec`in
+    içindeki uyarı (*"`P[:, 0]` DEĞİL, ilk sütun ev sahibidir"*) tam bu
+    yanlışa karşı yazılmış.
+    """
     p = np.array([[d.get(s, 0.0) for s in SEMBOLLER] for d in probs_listesi],
                  dtype=float)
     toplam = p.sum(axis=1, keepdims=True)
@@ -337,8 +362,18 @@ def coklu_plan_serisi(probs_listesi: list[dict[str, float]],
                 continue
             gorulen.add((d, kolon_kupon))
 
+            # Olasılıklar **normalleştirilmiş** `P`den okunur, ham
+            # sözlükten değil. Arşiv satırları dört haneye yuvarlı ve
+            # toplamları 1,0001 gelebiliyor; ham sözlükle çarpılan `p_alt` o
+            # fazlalığı üçlü bırakılan her maçta bir kez daha taşıyordu. İki
+            # sonucu vardı: `plan.p_onbes` aynı kuponu bağımsız yeniden ölçen
+            # `p_onbes`ten binde 0,3 büyük çıkıyordu (tek kupon, iki sayı —
+            # `p_onbes`in docstring'i tam bunu yasaklıyor), ve fazlalık
+            # adaylara EŞİT binmediği için (üçlü bırakılan maç sayısı kadar)
+            # aramanın sıralamasını da oynatabiliyordu. Kusur
+            # `kuyruk.kapsama`nın `a = 0` sağlaması yazılırken çıktı.
             p_alt = 1.0 if alt is None else float(np.prod(
-                [sum(probs_listesi[i][s] for s in sec)
+                [P[i, [_INDEKS[s] for s in sec]].sum()
                  for i, sec in zip(kalanlar, alt.secimler)]))
             yapilar.append((tam, p_alt, eksen, kalanlar, alt, kolon_kupon))
 
@@ -409,12 +444,11 @@ def p_onbes(probs_listesi: list[dict[str, float]],
     Kuponlar ayrık olduğu için toplam, kupon olasılıklarının toplamıdır.
     """
     P = _matris(probs_listesi)
-    indeks = {s: j for j, s in enumerate(SEMBOLLER)}
     toplam = 0.0
     for k in kuponlar:
         p = 1.0
         for i, sec in enumerate(k.secimler):
-            p *= sum(P[i][indeks[s]] for s in sec)
+            p *= sum(P[i][_INDEKS[s]] for s in sec)
         toplam += p
     # `float(...)` SÜS DEĞİL: `P` numpy olduğu için `toplam` `np.float64`
     # çıkıyordu ve imza `-> float` diyordu. Tip yalanı sessiz kalmadı —

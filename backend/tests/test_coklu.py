@@ -47,6 +47,29 @@ def test_p_onbes_plandan_ve_kupondan_AYNI():
                                              rel=1e-12)
 
 
+def test_p_onbes_NORMALLESMEMIS_girdide_de_AYNI():
+    """Aynı ayrışma, satır toplamı 1 **olmayan** girdide de olmamalı.
+
+    Üstteki bekçi bu kusuru göremiyordu: `_probs` Dirichlet'ten üretiyor ve
+    satırları tam 1 topluyor. Arşiv öyle değil — olasılıklar dört haneye
+    yuvarlı ve satır 1,0001 gelebiliyor. `coklu_plan` `p_eksen`i
+    normalleştirilmiş matristen, `p_alt`ı ise ham sözlükten okuduğu için o
+    fazlalık üçlü bırakılan her maçta bir kez daha çarpılıyordu: gerçek
+    haftalarda `plan.p_onbes`, kupondan yeniden ölçülen `p_onbes`ten binde
+    0,3 büyük çıkıyordu. Küçük bir sayı ama iki sonucu var — aynı kupon iki
+    hedef gösteriyor, ve fazlalık adaylara eşit binmediği için aramanın
+    sıralamasını oynatabiliyor.
+    """
+    for tohum in range(8):
+        probs = _probs(tohum)
+        # arşivin yuvarlaması: dört hane, satır toplamı 1'den sapıyor
+        probs = [{s: round(v, 4) for s, v in d.items()} for d in probs]
+        assert any(abs(sum(d.values()) - 1.0) > 1e-9 for d in probs)
+        plan = coklu_plan(probs, 19_683, VARSAYILAN_KUPON_TAVANI)
+        assert plan.p_onbes == pytest.approx(p_onbes(probs, plan.kuponlar),
+                                             rel=1e-12)
+
+
 def test_kuponlar_AYRIK():
     """İki kupon aynı kolonu içeremez — içerseydi toplama hakkımız olmazdı.
 
