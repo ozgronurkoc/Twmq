@@ -58,8 +58,19 @@ else
   # `gunicorn` sessizce geciyor, sorun ancak testi/dagitimi kosarken
   # ortaya cikiyordu.
   if ! "$PY" -m pip install -q -e "./backend[$EKSTRALAR]"; then
-    echo "! duzenlenebilir kurulum basarisiz; requirements.txt deneniyor" >&2
-    "$PY" -m pip install -q -r backend/requirements.txt
+    # Bir kez daha, ama sistem paketini SOKMEYE calismadan. Gerekcesi olculdu:
+    # dagitimin `python3-blinker`i (flask'in bagimliligi) `pip` disinda
+    # kuruluyor ve RECORD dosyasi yok, o yuzden pip onu kaldiramiyor ve
+    # kurulumun TAMAMI "Cannot uninstall blinker ... RECORD file not found"
+    # ile dusuyor. Ikinci deneme o paketi oldugu yerde birakir. Bu, uzak
+    # oturumlarda (taze konteyner) kurulumu bastan bloke ediyordu ve
+    # requirements.txt'e dusen yedek de ayni hataya carpiyordu — yani
+    # `numpy` bile gelmiyordu.
+    echo "! duzenlenebilir kurulum basarisiz; sistem paketleri korunarak yeniden deneniyor" >&2
+    if ! "$PY" -m pip install -q --ignore-installed blinker -e "./backend[$EKSTRALAR]"; then
+      echo "! duzenlenebilir kurulum yine basarisiz; requirements.txt deneniyor" >&2
+      "$PY" -m pip install -q --ignore-installed blinker -r backend/requirements.txt
+    fi
   fi
 fi
 

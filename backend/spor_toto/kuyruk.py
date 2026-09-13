@@ -97,6 +97,17 @@ etkilemediği ayrıca sınandı (`tests/test_kuyruk.py`).
 **8,6·10⁻⁴**tür. İki hesap birbirini tanımıyor; aynı sayıya varmaları
 dördünlemenin ve kopulanın doğru kurulduğunun kanıtıdır.
 
+─── Aynı bağımlılık, KUPON kapsamasında (§3.70) ─────────────────────────
+
+Yukarıdaki her şey **tek kolonun** isabet sayısını sayar. Bir kupon
+ailesinin `P(15/15)`'i başka bir büyüklüktür ve şekle göre farklı tepki
+verebilir; `coklu.py` bunu yazılı bir varsayım olarak bırakmıştı. `kapsama`
+aynı `a`yı üç sembole taşır (rütbe eşikleri — favori göstergesinde bu
+modelin **birebir aynısı**, o yüzden `ρ` yeniden kalibre edilmez) ve 114
+haftada ölçüldü: en kötü makul `a`da çoklu kuponun kazancı ×1,40'tan
+×1,45'e **çıkıyor**, mutlak değerler %11'e kadar şişiyor. Ayrıntı §3.70,
+üretici `scripts/bagimli_kapsama.py`.
+
 Sonucu okumak için: `python -m spor_toto.kuyruk`.
 """
 from __future__ import annotations
@@ -105,12 +116,16 @@ import math
 import random
 from collections.abc import Sequence
 from operator import itemgetter
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from scipy.special import ndtr, ndtri
 
+from .core import SEMBOLLER
 from .ortak import kacak_dagilimi
+
+if TYPE_CHECKING:  # yalnızca tip: `coklu` çalışma zamanında ÇEKİLMEZ, çünkü
+    from .coklu import Kupon  # bu modülün kupon üretmeye ihtiyacı yok.
 
 #: Gauss-Hermite düğüm sayısı. Ölçüm görülmeden seçildi; duyarlılığı
 #: `tests/test_kuyruk.py::test_dugum_sayisi_karari_degistirmiyor` tutuyor.
@@ -303,6 +318,143 @@ def kuyruk_etkisi(kesit: Sequence[Sequence[float]], rho: float,
             "oran": (bagimli / bagimsiz) if bagimsiz > 0 else None,
         }
     return out
+
+
+# ─── kupon kapsaması: aynı bağımlılık, üç sembol ──────────────────────────────
+#
+# Yukarıdaki hesap **tek kolonun** isabet sayısını sayar. Çoklu kupon sorusu
+# başkadır: bir kupon ailesinin `P(15/15)`'i, yani gerçek kolonun oynanan
+# kümeye düşme olasılığı. `coklu.p_onbes` onu maçlar **bağımsız** sayarak
+# hesaplar ve `coklu.py`nin "Sınır" bölümü bunu yazılı bir varsayım olarak
+# bırakmıştı.
+#
+# ─── Neden `kuyruk()` bu soruya cevap VERMEZ ─────────────────────────────
+#
+# Akla gelen ilk yol yanlıştır: her kupon için maç başına "kapsandı"
+# göstergesi kurup (`q_i = Σ_{s∈seçim} p_is`) yukarıdaki ikili modeli
+# çalıştırmak. O model göstergeleri `{Z_i < Φ⁻¹(q_i)}` biçiminde **iç içe**
+# eşikler yapar; oysa iki kuponun eksen maçındaki seçimleri **ayrıktır**
+# (biri "1", öteki "0"). İç içe eşiklerle kurulan olasılıklar toplandığında
+# aynı sonucu iki kez sayar ve eksen maçında üç sembolün toplamı 1 vermez.
+#
+# ─── Seçilen model, ve `ρ`nun onu neden KALİBRE ETTİĞİ ───────────────────
+#
+# Bu yüzden model üç sembolün **tamamı** üzerine kurulur ve `Z_i` maçın
+# sembollerini **rütbeye göre** keser::
+#
+#     sembol = favori    ⟺  Z_i < Φ⁻¹(p₁)
+#            = ikinci    ⟺  Φ⁻¹(p₁) ≤ Z_i < Φ⁻¹(p₁+p₂)
+#            = üçüncü    ⟺  aksi
+#
+# Bu, yukarıdaki ikili modelin **genellemesidir, başka bir model değil**:
+# favori göstergesinin eşiği birebir aynı (`Φ⁻¹(p₁)`), yani `ρ → a`
+# çevirisi (`latent_coz`) olduğu gibi geçerlidir ve ölçülen `ρ` yeniden
+# kalibre edilmez. Rütbe sırası bir tercih değil **zorunluluk**: `ρ` favori
+# göstergesinden ölçüldü (§3.46) ve modeli o göstergede ölçümle aynı yapan
+# tek kesim sırası budur. Sembolleri sonuç ekseninde (`1/0/2`) sıralayan
+# model de kurulabilir ama onun ortak etkeni başka bir mekanizmadır ("ev
+# sahibi günü") ve ölçülen `ρ` onu kalibre etmez.
+#
+# Modelin `ρ` tarafından **belirlenmeyen** tek parçası, kötü haftada kalan
+# kütlenin 2. ile 3. sembol arasında nasıl paylaşıldığıdır. İki uç ayrı ayrı
+# hesaplanır (`KAPSAMA_MODELLERI`) ve ikisi de aynı `a`ya oturur; aradaki
+# fark varsayımın bedelidir ve ölçülür — uydurulmaz.
+#
+# Kuponlar ayrık kolon kümeleri olduğu için `U = u` verildiğinde toplam,
+# kupon olasılıklarının **toplamıdır** (`coklu.p_onbes`in gerekçesinin
+# aynısı); dördünleme yalnızca dışta durur.
+
+#: Kapsama modelinde favori DIŞI kütlenin ortak etkene tepkisi. `rutbe`:
+#: kötü hafta 3. sembole de kayar (rütbe eşikleri). `oransal`: kaçan kütle
+#: 2. ile 3. sembol arasında haftanın **kendi** oranını korur, yani ortak
+#: etken yalnızca favori ↔ favori-dışı ayrımını oynatır. İkisi de `a = 0`da
+#: bağımsızlığa iner ve ikisi de favori göstergesinde aynı modeldir.
+KAPSAMA_MODELLERI: tuple[str, ...] = ("rutbe", "oransal")
+
+
+def _kosullu_sembol(probs_listesi: Sequence[dict[str, float]], a: float,
+                    model: str = "rutbe", dugum: int = DUGUM
+                    ) -> tuple[np.ndarray, np.ndarray]:
+    """`U = u` verildiğinde ÜÇ sembolün koşullu olasılıkları + ağırlıklar.
+
+    Dönen dizi `(düğüm, maç, 3)` boyutundadır ve son eksen
+    `core.SEMBOLLER` düzenindedir — rütbe düzeninde değil. Rütbe hesabın
+    içinde kalır; dışarıya sembol verilir, çünkü kupon seçimleri semboldür
+    ve ikisini karıştırmak `coklu._kuponlari_kur`un ilk hatasıydı.
+
+    Dördünleme ağırlıklarıyla integre edildiğinde satırlar **girdi
+    olasılıklarının kendisini** verir (bekçisi
+    `test_kapsama_marjinalleri_GIRDIYI_veriyor`): model bağımlılığı ekler,
+    tahmini değiştirmez.
+    """
+    if model not in KAPSAMA_MODELLERI:
+        raise ValueError(f"Bilinmeyen kapsama modeli: {model!r} "
+                         f"(gecerli: {'/'.join(KAPSAMA_MODELLERI)})")
+    p = np.array([[float(d.get(s, 0.0)) for s in SEMBOLLER]
+                  for d in probs_listesi], dtype=float)
+    if p.ndim != 2 or p.shape[0] == 0:
+        raise ValueError("Bos olasilik listesi.")
+    toplam = p.sum(axis=1, keepdims=True)
+    if np.any(toplam <= 0):
+        raise ValueError("Bir macin olasilik toplami sifir.")
+    p = p / toplam
+
+    u, w = _dugumler(dugum)
+    rutbe = np.argsort(-p, axis=1)                       # 0: favori, 2: üçüncü
+    sirali = np.take_along_axis(p, rutbe, axis=1)
+
+    if a <= 0.0:
+        q_sirali = np.tile(sirali, (len(u), 1, 1))
+    else:
+        z = ndtri(np.clip(np.cumsum(sirali[:, :2], axis=1), 1e-12, 1 - 1e-12))
+        F = ndtr((z[None, :, :] - math.sqrt(a) * u[:, None, None])
+                 / math.sqrt(1.0 - a))                   # (düğüm, maç, 2)
+        q_sirali = np.empty((len(u), p.shape[0], 3))
+        q_sirali[:, :, 0] = F[:, :, 0]
+        if model == "rutbe":
+            q_sirali[:, :, 1] = F[:, :, 1] - F[:, :, 0]
+        else:
+            kalan = sirali[:, 1] + sirali[:, 2]
+            oran = np.divide(sirali[:, 1], kalan,
+                             out=np.zeros_like(kalan), where=kalan > 0)
+            q_sirali[:, :, 1] = (1.0 - F[:, :, 0]) * oran[None, :]
+        # Üçüncü sembol **çıkarmayla**: satır toplamı tam 1 kalsın.
+        q_sirali[:, :, 2] = np.clip(
+            1.0 - q_sirali[:, :, 0] - q_sirali[:, :, 1], 0.0, None)
+
+    q = np.empty_like(q_sirali)
+    np.put_along_axis(q, np.broadcast_to(rutbe[None], q.shape), q_sirali,
+                      axis=2)
+    return w, q
+
+
+def kapsama(probs_listesi: Sequence[dict[str, float]],
+            kuponlar: Sequence[Kupon], a: float,
+            model: str = "rutbe", dugum: int = DUGUM) -> float:
+    """Kupon ailesinin `P(15/15)`'i — hafta içi bağımlılık altında.
+
+    `a = 0`da dönen sayı `coklu.p_onbes`in **ta kendisidir** (bekçisi
+    `test_kapsama_a_SIFIRDA_coklu_p_onbes`); `a > 0` aynı kuponu bağımlı
+    haftada yeniden fiyatlar. Kuponların ayrık olduğu varsayılır —
+    `coklu.coklu_plan` öyle üretir.
+    """
+    w, q = _kosullu_sembol(probs_listesi, a, model, dugum)
+    n = q.shape[1]
+    indeks = {s: j for j, s in enumerate(SEMBOLLER)}
+    maske = np.zeros((len(kuponlar), n, 3))
+    for k, kupon in enumerate(kuponlar):
+        if len(kupon.secimler) != n:
+            raise ValueError(f"Kupon {n} macin secimini tasimali: "
+                             f"{len(kupon.secimler)}")
+        for i, sec in enumerate(kupon.secimler):
+            for s in sec:
+                maske[k, i, indeks[s]] = 1.0
+    if not len(maske):
+        return 0.0
+    # `einsum` süs değil: 729 kuponu tek tek dolaşmak 114 haftalık kıyasta
+    # ölçülür bir yavaşlıktı (kupon başına küçük numpy çağrısı).
+    kapsanan = np.einsum("qis,kis->kqi", q, maske)        # (kupon, düğüm, maç)
+    return float((w * kapsanan.prod(axis=2).sum(axis=0)).sum())
 
 
 # ─── rapor ────────────────────────────────────────────────────────────────────

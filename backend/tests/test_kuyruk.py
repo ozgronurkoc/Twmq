@@ -10,12 +10,18 @@ from __future__ import annotations
 import math
 import random
 
+import numpy as np
 import pytest
 
+from spor_toto.core import SEMBOLLER
 from spor_toto.kuyruk import (
     DUGUM,
+    KAPSAMA_MODELLERI,
+    _kosullu,
+    _kosullu_sembol,
     bootstrap,
     hafta_kayitlari,
+    kapsama,
     kuyruk,
     kuyruk_etkisi,
     latent_coz,
@@ -184,3 +190,168 @@ def test_bagimsiz_kuyruk_yayimlanmis_sayiyi_uretiyor():
     t14 = sum(kuyruk(p, 0.0, 14) for p in kesit) / len(kesit)
     assert 7e-4 < t14 < 1.1e-3, f"P(K>=14)={t14:.4e}"
     assert math.isclose(t14, 8.9e-4, rel_tol=0.10)
+
+
+# ─── kupon kapsaması: aynı bağımlılık, üç sembol ──────────────────────────────
+
+def _kupon(*picks: str):
+    """Sembol dizgelerinden kupon: `_kupon("1", "10", "102")`."""
+    from spor_toto.coklu import Kupon
+
+    return Kupon(secimler=[list(p) for p in picks],
+                 kolon=int(np.prod([len(p) for p in picks])))
+
+
+def _probs(satirlar: list[tuple[float, float, float]]) -> list[dict[str, float]]:
+    return [dict(zip(SEMBOLLER, satir)) for satir in satirlar]
+
+
+#: Sentetik bir hafta — satır toplamları TAM 1, yani `a = 0` sağlaması
+#: normalleştirmeye değil modele bakar.
+ONBES_MAC = _probs([
+    (0.55, 0.25, 0.20), (0.40, 0.30, 0.30), (0.70, 0.20, 0.10),
+    (0.34, 0.33, 0.33), (0.25, 0.30, 0.45), (0.60, 0.25, 0.15),
+    (0.45, 0.30, 0.25), (0.50, 0.20, 0.30), (0.38, 0.32, 0.30),
+    (0.65, 0.20, 0.15), (0.30, 0.25, 0.45), (0.48, 0.27, 0.25),
+    (0.20, 0.30, 0.50), (0.42, 0.28, 0.30), (0.58, 0.22, 0.20),
+])
+
+
+def test_kapsama_marjinalleri_GIRDIYI_veriyor():
+    """Model bağımlılığı ekler, **tahmini değiştirmez**.
+
+    `u` üzerinden integre edildiğinde her maçın üç sembol olasılığı girdinin
+    ta kendisi olmalı. Olmazsa model sessizce başka bir tahminci kurmuş olur
+    ve kapsama sayıları kendi tahmin katmanıyla çelişirdi.
+    """
+    ham = np.array([[d[s] for s in SEMBOLLER] for d in ONBES_MAC])
+    for model in KAPSAMA_MODELLERI:
+        for a in (0.0, 0.0011, 0.0166, 0.20):
+            w, q = _kosullu_sembol(ONBES_MAC, a, model)
+            marj = np.einsum("q,qis->is", w, q)
+            assert np.abs(marj - ham).max() < 1e-9, f"{model} a={a}"
+            assert np.abs(q.sum(axis=2) - 1.0).max() < 1e-12
+
+
+def test_kapsama_FAVORI_gostergesi_IKILI_modelin_AYNISI():
+    """Üçlü model, favori göstergesinde `_kosullu`nun **birebir aynısı**.
+
+    `ρ → a` çevirisi (`latent_coz`) favori göstergesinden ölçülmüş `ρ` ile
+    kalibre edilir (§3.46). Üçlü modelin o göstergede ikili modelle aynı
+    eşiği kullanması, ölçülen `a`nın kapsama hesabına **yeniden kalibre
+    edilmeden** taşınmasının tek gerekçesidir. Ayrışırlarsa kapsama sayıları
+    ölçülmemiş bir `a` ile hesaplanmış olurdu.
+    """
+    p_fav = [max(d.values()) for d in ONBES_MAC]
+    fav_i = [max(range(3), key=lambda j: d[SEMBOLLER[j]]) for d in ONBES_MAC]
+    for a in (0.0, 0.0011, 0.0166, 0.20):
+        _, ikili = _kosullu(p_fav, a)
+        for model in KAPSAMA_MODELLERI:
+            _, q = _kosullu_sembol(ONBES_MAC, a, model)
+            uclu = np.array([q[:, i, j] for i, j in enumerate(fav_i)]).T
+            assert np.abs(uclu - ikili).max() < 1e-12, f"{model} a={a}"
+
+
+def test_kapsama_a_SIFIRDA_coklu_p_onbes():
+    """`a = 0` tam olarak bağımsız hesaptır — iki gövde, tek sayı.
+
+    `coklu.p_onbes` bağımsızlık altında aynı kuponu fiyatlar; ayrışırlarsa
+    "bağımlılığın etkisi" diye okunan oranın bir kısmı iki hesabın
+    farkından gelirdi.
+    """
+    from spor_toto.coklu import coklu_plan, p_onbes
+
+    plan = coklu_plan(ONBES_MAC, 3 ** 9, kupon_tavani=81)
+    assert kapsama(ONBES_MAC, plan.kuponlar, 0.0) == pytest.approx(
+        p_onbes(ONBES_MAC, plan.kuponlar), rel=1e-12)
+    assert kapsama(ONBES_MAC, plan.kuponlar, 0.0) == pytest.approx(
+        plan.p_onbes, rel=1e-12)
+
+
+def test_kapsama_BUTUN_kolonlar_oynanirsa_bir():
+    """Bütün kolonlar ayrı ayrı oynanırsa toplam olasılık 1 — her `a`da.
+
+    Bu testin tuttuğu şey modelin **tutarlılığıdır**, ve kapsamayı
+    kupon başına ikili eşikle hesaplayan (reddedilen) yol tam burada
+    düşer: iç içe eşikler eksen maçında üç sembolün toplamını 1 vermez.
+    """
+    from itertools import product
+
+    probs = _probs([(0.5, 0.3, 0.2), (0.34, 0.33, 0.33), (0.7, 0.2, 0.1)])
+    hepsi = [_kupon(*k) for k in product(*[SEMBOLLER] * 3)]
+    assert len(hepsi) == 27
+    for model in KAPSAMA_MODELLERI:
+        for a in (0.0, 0.0166, 0.30):
+            assert kapsama(probs, hepsi, a, model) == pytest.approx(1.0,
+                                                                   abs=1e-12)
+
+
+def test_kapsama_AYRIK_kuponlarda_toplaniyor():
+    """Ayrık kuponların kapsaması toplanır — `a > 0`da da.
+
+    `coklu.p_onbes`in gerekçesi bağımlılıkta da geçerli olmalı: koşullu
+    bağımsızlık altında toplam `u` içinde toplanır, dördünleme dışta durur.
+    """
+    probs = _probs([(0.5, 0.3, 0.2), (0.4, 0.35, 0.25), (0.6, 0.25, 0.15)])
+    bir, iki = _kupon("1", "10", "12"), _kupon("0", "10", "12")
+    for model in KAPSAMA_MODELLERI:
+        for a in (0.0, 0.0166, 0.30):
+            assert (kapsama(probs, [bir, iki], a, model)
+                    == pytest.approx(kapsama(probs, [bir], a, model)
+                                     + kapsama(probs, [iki], a, model),
+                                     rel=1e-12))
+
+
+def test_kapsama_pozitif_bagimlilik_FAVORI_kolonunu_sismanlatiyor():
+    """Yön: tek favori kolonu `a` büyüdükçe **daha olası** olmalı.
+
+    `kuyruk`un `P(K≥14)` yönünün kapsama tarafındaki karşılığı; ters çıkarsa
+    ölçülen oranlar da ters işaretli okunurdu.
+    """
+    favori = _kupon(*[max(d, key=lambda s: d[s]) for d in ONBES_MAC])
+    for model in KAPSAMA_MODELLERI:
+        onceki = kapsama(ONBES_MAC, [favori], 0.0, model)
+        for a in (0.01, 0.05, 0.20):
+            simdi = kapsama(ONBES_MAC, [favori], a, model)
+            assert simdi > onceki, f"{model} a={a} kapsamayi buyutmedi"
+            onceki = simdi
+
+
+def test_kapsama_IKI_model_a_sifirda_ayni_buyudukce_ayrisiyor():
+    """`ρ` 2.↔3. sembol paylaşımını belirlemez; iki uç ayrı ayrı ölçülür.
+
+    `a = 0`da ikisi aynı sayıyı vermeli (fark modelden değil `a`dan gelir),
+    `a > 0`da ayrışmalı — ayrışmasalar iki modeli ayrı ayrı raporlamak
+    gereksiz olurdu ve bunu ölçüm söyler.
+    """
+    from spor_toto.coklu import coklu_plan
+
+    plan = coklu_plan(ONBES_MAC, 3 ** 9, kupon_tavani=81)
+    r0 = kapsama(ONBES_MAC, plan.kuponlar, 0.0, "rutbe")
+    o0 = kapsama(ONBES_MAC, plan.kuponlar, 0.0, "oransal")
+    assert r0 == pytest.approx(o0, rel=1e-12)
+    r1 = kapsama(ONBES_MAC, plan.kuponlar, 0.05, "rutbe")
+    o1 = kapsama(ONBES_MAC, plan.kuponlar, 0.05, "oransal")
+    assert r1 != pytest.approx(o1, rel=1e-6)
+
+
+def test_kapsama_dugum_sayisi_karari_degistirmiyor():
+    """`DUGUM = 64` kapsama tarafında da kararı taşımıyor."""
+    from spor_toto.coklu import coklu_plan
+
+    plan = coklu_plan(ONBES_MAC, 3 ** 9, kupon_tavani=81)
+    taban = kapsama(ONBES_MAC, plan.kuponlar, 0.0166, dugum=DUGUM)
+    for dugum in (32, 96, 128):
+        assert kapsama(ONBES_MAC, plan.kuponlar, 0.0166,
+                       dugum=dugum) == pytest.approx(taban, rel=1e-6)
+
+
+def test_kapsama_bilinmeyen_model_hata_veriyor():
+    with pytest.raises(ValueError, match="kapsama modeli"):
+        kapsama(ONBES_MAC, [_kupon(*["1"] * 15)], 0.01, model="yok")
+
+
+def test_kapsama_eksik_mac_sayisi_hata_veriyor():
+    """Kupon ile olasılık listesi ayrışırsa sessizce yanlış sayı çıkmaz."""
+    with pytest.raises(ValueError, match="macin secimini"):
+        kapsama(ONBES_MAC, [_kupon("1", "0")], 0.01)

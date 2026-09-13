@@ -12,6 +12,8 @@ kupondan yeniden ölçüm `0,0215` veriyordu. Aynı kupon iki yerde iki farklı
 hedef gösteriyordu ve tek görünür belirti bu ayrışmaydı.
 """
 
+from itertools import pairwise
+
 import numpy as np
 import pytest
 
@@ -42,6 +44,29 @@ def test_p_onbes_plandan_ve_kupondan_AYNI():
     """Planın taşıdığı hedef ile kupondan yeniden ölçülen hedef ayrışmaz."""
     for tohum in range(8):
         probs = _probs(tohum)
+        plan = coklu_plan(probs, 19_683, VARSAYILAN_KUPON_TAVANI)
+        assert plan.p_onbes == pytest.approx(p_onbes(probs, plan.kuponlar),
+                                             rel=1e-12)
+
+
+def test_p_onbes_NORMALLESMEMIS_girdide_de_AYNI():
+    """Aynı ayrışma, satır toplamı 1 **olmayan** girdide de olmamalı.
+
+    Üstteki bekçi bu kusuru göremiyordu: `_probs` Dirichlet'ten üretiyor ve
+    satırları tam 1 topluyor. Arşiv öyle değil — olasılıklar dört haneye
+    yuvarlı ve satır 1,0001 gelebiliyor. `coklu_plan` `p_eksen`i
+    normalleştirilmiş matristen, `p_alt`ı ise ham sözlükten okuduğu için o
+    fazlalık üçlü bırakılan her maçta bir kez daha çarpılıyordu: gerçek
+    haftalarda `plan.p_onbes`, kupondan yeniden ölçülen `p_onbes`ten binde
+    0,3 büyük çıkıyordu. Küçük bir sayı ama iki sonucu var — aynı kupon iki
+    hedef gösteriyor, ve fazlalık adaylara eşit binmediği için aramanın
+    sıralamasını oynatabiliyor.
+    """
+    for tohum in range(8):
+        probs = _probs(tohum)
+        # arşivin yuvarlaması: dört hane, satır toplamı 1'den sapıyor
+        probs = [{s: round(v, 4) for s, v in d.items()} for d in probs]
+        assert any(abs(sum(d.values()) - 1.0) > 1e-9 for d in probs)
         plan = coklu_plan(probs, 19_683, VARSAYILAN_KUPON_TAVANI)
         assert plan.p_onbes == pytest.approx(p_onbes(probs, plan.kuponlar),
                                              rel=1e-12)
@@ -215,3 +240,119 @@ def test_p_onbes_GERCEK_float_donuyor():
     assert type(plan.p_onbes) is float
     import json
     json.dumps({"p": yeniden, "esit": yeniden == plan.p_onbes})
+
+
+# ─── tahsis: kupon başına ayrı alt sistem bütçesi (§3.71) ─────────────────
+
+def _eski_arama(probs: list[dict[str, float]], butce: int, tavan: int) -> float:
+    """Bu modülün İLK aramasının kendisi — betikten çağrılır, kopyalanmaz.
+
+    Referans gövde `scripts/tahsis_kiyasi.py::tek_tip_arama`da duruyor ve
+    orada durmasının sebebi var: 114 haftalık kıyası koşan şey o betik, yani
+    gövde zaten orada gerekiyor. Buraya kopyalansaydı iki referans olurdu ve
+    biri sessizce eskirdi — bu deponun tam olarak kaçındığı desen.
+    """
+    from scripts.tahsis_kiyasi import tek_tip_arama
+
+    return tek_tip_arama(probs, butce, tavan)
+
+
+def test_tahsisli_plan_ESKI_aramadan_kotu_DEGIL():
+    """Yeni arama eski aramayı **içeriyor**: hiçbir haftada geride kalamaz.
+
+    Tahsis bir sezgisel değil bir genişletme: tek tip aday (eski aramanın
+    tamamı) aramada duruyor ve ikisinin en iyisi seçiliyor. Bu bekçi düşerse
+    genişletme sırasında bir aday **kaybolmuş** demektir — ölçülen kazanç da
+    o hâlde bir kazanç değil bir kıyas hatası olurdu.
+    """
+    for tohum in range(6):
+        probs = _probs(tohum)
+        for tavan in (1, 27, 81, 729):
+            yeni = coklu_plan(probs, 19_683, kupon_tavani=tavan)
+            eski = _eski_arama(probs, 19_683, tavan)
+            assert yeni.p_onbes >= eski - 1e-12, (
+                f"tohum={tohum} tavan={tavan}: yeni {yeni.p_onbes:.6f} < "
+                f"eski {eski:.6f}")
+
+
+def test_tahsis_TEK_KUPONDA_eski_aramanin_AYNISI():
+    """`tavan = 1`de tahsisin oynayacak bir şeyi yok — sayı birebir aynı.
+
+    Tek kupon hâlinde eksen bileşimi tektir, yani bütçe bölünmüyor ve tahsis
+    tek tip adaya iner. Ayrışırlarsa genişletme tek sistem satırını da
+    oynatmış olurdu ve §3.67'nin kıyas tabanı kayardı.
+    """
+    for tohum in range(4):
+        probs = _probs(tohum)
+        plan = coklu_plan(probs, 19_683, kupon_tavani=1)
+        assert plan.p_onbes == pytest.approx(_eski_arama(probs, 19_683, 1),
+                                             rel=1e-12)
+
+
+def test_tahsis_GERCEKTEN_farkli_boyda_kupon_uretiyor():
+    """Mekanizma kâğıt üstünde değil, gerçekten ateşliyor mu.
+
+    Tahsisin tek işi kuponlara **ayrı** bütçeler vermek. Kazanan plan hep
+    tek tip çıkıyorsa ya cephe kırpılmıştır (prototipte tam bu oldu: cephe
+    `bütçe // M` ile çıkarılınca kazanç sıfır göründü) ya da açgözlü
+    yükseltme hiç çalışmıyordur. İkisi de sessiz kusurdur.
+    """
+    farkli = 0
+    for tohum in range(6):
+        plan = coklu_plan(_probs(tohum), 19_683, kupon_tavani=81)
+        if len({k.kolon for k in plan.kuponlar}) > 1:
+            farkli += 1
+    assert farkli >= 4, f"6 haftanin yalnizca {farkli}'inde tahsis farkli bedel verdi"
+
+
+def test_tahsis_DAHA_OLASI_kupona_daha_cok_kolon():
+    """Eksen olasılığı büyük olan kupon daha az kolon alamaz.
+
+    Bu, tahsisin tanımının kendisi: bütün kuponlar aynı cepheyi paylaşıyor ve
+    yükseltmenin değeri `q_j · Δp`. O hâlde `q` azalırken seçilen bedel de
+    azalmak zorunda — tersi, açgözlünün bozulduğu ya da `q`nun sırasının
+    kaybolduğu anlamına gelir (`_eksen_bilesimleri` azalan sırada döner).
+    """
+    from spor_toto.coklu import _matris
+
+    for tohum in range(4):
+        probs = _probs(tohum)
+        P = _matris(probs)
+        plan = coklu_plan(probs, 19_683, kupon_tavani=81)
+        q = [float(np.prod([P[i][SEMBOLLER.index(sec[0])]
+                            for i, sec in enumerate(k.secimler)
+                            if i in set(plan.eksen)]))
+             for k in plan.kuponlar]
+        kolonlar = [k.kolon for k in plan.kuponlar]
+        ikili = sorted(zip(q, kolonlar), key=lambda x: -x[0])
+        assert all(y[1] <= x[1] for x, y in pairwise(ikili)), ikili
+
+
+def test_ust_kabuk_ORANLARI_azaltiyor_ve_cepheden_secmiyor_disindan():
+    """Kabuk: marjinal oranlar azalan, ve her noktası cephenin **gerçek** noktası.
+
+    İkisi de gerekli. Oranlar azalmazsa açgözlü tahsis yanlış sırayla
+    yükseltir; kabuk cephe dışına çıkarsa seçilen "plan" oynanamaz bir
+    noktadır.
+    """
+    from spor_toto.coklu import _ust_kabuk
+
+    noktalar = [(1, 0.20, None), (2, 0.34, None), (3, 0.40, None),
+                (4, 0.52, None), (6, 0.60, None), (9, 0.61, None),
+                (12, 0.75, None), (27, 0.90, None)]
+    kabuk = _ust_kabuk(noktalar)
+    assert all(n in noktalar for n in kabuk)
+    assert kabuk[0] == noktalar[0] and kabuk[-1] == noktalar[-1]
+    oranlar = [(y[1] - x[1]) / (y[0] - x[0]) for x, y in pairwise(kabuk)]
+    assert all(y <= x + 1e-15 for x, y in pairwise(oranlar)), oranlar
+    # baskılanmış nokta (3, 0,40) kabukta olmamalı: (2,0,34)-(4,0,52) dogrusu
+    # onu asiyor
+    assert (3, 0.40, None) not in kabuk
+
+
+def test_tahsis_butce_yetmezse_None():
+    """`M` kupon en ucuz noktadan bile alınamıyorsa tahsis yok, hata da yok."""
+    from spor_toto.coklu import _tahsis
+
+    assert _tahsis([0.5] * 10, [(3, 0.4, None)], 20) is None
+    assert _tahsis([0.5] * 10, [], 1000) is None
