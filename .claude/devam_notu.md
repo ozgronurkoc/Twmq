@@ -45,86 +45,104 @@ benim kararım):
 
 ## Şu an (en güncel)
 
-**2026-09-13 — dal `claude/devam-edelim-51rff7` (ikinci iş)**
+**2026-09-13 — dal `claude/devam-edelim-w8mob0`**
 
-### Bu oturumda ne yapıldı — **hedefin kendisi** ölçüldü (§3.73)
+### Bu oturumda ne yapıldı — **operasyon** fiyatlandı (§3.74)
 
-§3.72 şekil eksenini kapatınca sıradaki doğal soru şekil değil **zamanlama**
-oldu. Ama ona bakarken daha temel bir boşluk çıktı: bu deponun **her ölçüsü
-haftalıktı**, sahibinin hedefi ise haftalık değil — *"3 ay içinde 15/15."*
-Çeviri (`1 − Π(1 − p_w)`) hiç yapılmamıştı; daha doğrusu **yarım**
-yapılmıştı (`coklu_kiyasi.py`nin "13 hafta" sütunu ortalamayla).
+Not'un sıradaki adımlarından 1 ve 2 veriye bağlı (5. haftanın sonucu girilmedi,
+6. hafta yok). Açık duran tek iş **operasyondu** ve §3.73 onun yalnızca
+yarısını fiyatlamıştı: 81'de takılmanın bedeli hedefte 1,8 puan. Fiyatlanmayan
+yarısı sorunun içindeki "**güvenle**" kelimesiydi — 81 kupon elle giriliyor.
 
-**Ölçülen (114 hafta, 8 ayrık 13 haftalık pencere, 21.000 kolon):**
+**Önce bir gövde hatası çıktı.** `coklu.p_onbes` **oynanan** kuponu
+puanlayamıyor: olasılıkları topluyor ve bu yalnızca kuponlar ayrıkken doğru.
+Bir kupon iki kez girilirse ayrıklık bozulur ve toplam aynı kolonu iki kez
+sayar — ölçüldü, sapma **tek yöne**: gerçek %9,563 iken `p_onbes` %9,601
+diyor. Yani denetim en çok ihtiyaç duyulduğu anda iyimser.
+`operasyon.birlesim_p_onbes` kolonları tek tek sayıyor.
 
-    kupon     hafta P(15)    HEDEF   pencere aralığı   gözlenen
-        1         %7,489    %64,2       %53,4–74,9        7/8
-       27        %10,003    %75,2       %66,0–84,3        8/8
-       81        %10,489    %77,0       %68,1–85,5        7/8
-      729        %11,034    %78,8       %69,9–86,7        8/8
+**Ölçülen (114 hafta, 21.000 kolon, tek slipin o haftanın `P`si içindeki payı):**
+
+    tavan   P(15/15)  hedef   atlama/kopya      takas          fazla
+       27     %10,00  %75,2   +3,70 | +44,23   +2,33 | +41,62   −0,85
+       81     %10,49  %77,0   +1,23 | +42,76   +0,79 | +39,53   −0,28
+      243     %10,81  %78,1   +0,41 | +35,93   +0,27 | +31,98   −0,09
+      729     %11,03  %78,8   +0,14 | +26,59   +0,09 | +26,04   −0,03
 
 Üç şey çıktı:
 
-1. **Hedef tek sayı değil, aralık.** %69,9–%86,7; haftalar arası `P` **on
-   altı kat** ayrışıyor (%2,3 ↔ %37,2).
-2. **§3.67–3.71'in işi hedef kademesinde 14,6 puan etti** (%64,2 → %78,8).
-   Haftalık `P`de ×1,47 olan kazanç hedefte ×1,23 — fark **doymadır** ve
-   doyma bu bölümün asıl bulgusu.
-3. **Yaklaşıklık tek yöne yanlıydı** (Jensen, 0,6–0,7 puan düşük).
-   `coklu_kiyasi.py` kesin hesaba çevrildi, §3.67'nin iki tablosu yeniden
-   koşuldu.
+1. **`fazla` işaret `P`yi YÜKSELTİYOR**, bedeli parada: 81 kuponda tek bir
+   fazla işaret **+65.610 TL** (bütçenin %31'i).
+2. **Ortalama küçük, en kötü 35 kat büyük** — ve sebebi yoğunlaşma:
+   **81 kuponun ortalama 11'i hedefin yarısını taşıyor** (en kötü haftada 2).
+3. **Eşikler uzak.** 81 → 729 çıkmak ancak **11 kuponda 1** yanlış
+   işaretlenirse zarara dönüyor; 81'i özensiz girmek 729'un kazancını ancak
+   13 kuponda 1 hatada geri veriyor. Yani operasyon hatası **hiçbir kararı
+   değiştirmiyor**.
 
-### Zamanlama ekseni: açıldı ve KAPANDI
+### Ölçüm kâğıtta kalmadı — kayda girdi
 
-"Parayı iyi haftalara yığ" fikri aritmetiğe de makul geliyordu (güçlü
-haftanın mutlak marjinal getirisi zayıfınkinin iki katı). Üst sınırdan
-ölçüldü: `ufuk.kahin_tahsisi` bütün pencerenin eğrilerini **önceden bilerek**
-dağıtıyor — uygulanamaz, dolayısıyla hiçbir gerçek kural onu geçemez.
-Ölçülen: 8 pencerede ortalama **×1,031**, en çok ×1,051. Sebebi tek cümle:
-`1 − Π(1 − p)` **doyar**. Haftalık sabit bütçe artık bir varsayım değil
-**ölçülmüş bir tercih**.
-
-### Operasyon sorusu küçüldü
-
-Açık duran tek engel operasyondu ve şimdi hedefin kendi para biriminde
-fiyatlandı: 729 kupona çıkmanın toplam kazancının (14,6 puan) **%75'i 27
-kuponda**, **%88'i 81 kuponda** alınıyor. Donan kayıt zaten 81 kuponluk,
-yani 729'a çıkmanın hedefe katkısı **1,8 puan**. Soru kapanmadı ama
-küçüldü — operasyon 81'de takılırsa kaybedilen ölçülmüştür.
+Yoğunlaşmadan çıkan kural ("kuponları olasılığa göre azalan sırala, ilk kümeyi
+iki kez oku") ancak girişi yapan kişinin elindeki dosyada varsa işe yarar.
+`coklu_kupon.py` artık kuponları azalan sırada yazıyor ve `plan.denetim` bloğu
+en büyük payı + yarıyı taşıyan kupon sayısını taşıyor. **Sıralama gerçek iş
+yapıyor**: aramanın kendi çıktısı azalan değil (51 gerçek hafta × tavan
+kıyasının 6'sında karışık). Donmuş beş kayıt tesadüfen sıralıydı; bekçi artık
+artefaktın kendisini sınıyor.
 
 ### Yan işler
 
-* `spor_toto/ufuk.py` + `tests/test_ufuk.py` (9 bekçi) + `scripts/ufuk_kiyasi.py`.
-* `kahin_tahsisi` yeni bir çözücü yazmıyor: hedef `Σ −log(1 − p_w)` ve bu
-  §3.71'in sırt çantasının aynısı, o yüzden `coklu._ust_kabuk` +
-  `_tahsis_kabuklu` yeniden kullanılıyor.
-* `pencereler`/`ufuk_ortalamasi` tek gövdede; iki betik de onu çağırıyor.
-* `ufuk.py` kapının doctest listesine girdi.
-
-Belge zinciri: test 1.965 → **1.974**, dosya 74 → 75, betik 38 → 39,
-README §7 modül ağacı 57 → 58.
+* `spor_toto/operasyon.py` + `tests/test_operasyon.py` (22 bekçi) +
+  `scripts/operasyon_kiyasi.py`.
+* Kayıplar **kapalı formdur ama kesindir** (örtüşme dâhil); bekçisi kolon
+  kolon sayan `birlesim_p_onbes`e karşı koşuyor, biri gerçek arşiv haftasında.
+* `_tekil_tanik` ikinci tanığı görünce duruyor — 729 kuponda yarım milyon çift
+  var ve erken çıkış onu darboğaz olmaktan çıkardı.
+* `operasyon.py` kapının doctest listesine girdi. `core.SEMBOLLER` yeniden
+  kullanıldı (ilk sürümde kopyalanmıştı).
+* Belge zinciri: test 1.974 → **1.996**, dosya 75 → 76, betik 39 → 40,
+  README §7 modül ağacı 58 → 59, §9'a `operasyon` satırı.
 
 ### Sıradaki adım
 
 1. **6. hafta geldiğinde `--yaz` ile dondur.**
-   `coklu_kupon.py --hafta N --butce 21000 --tavan 81 --yaz`.
+   `coklu_kupon.py --hafta N --butce 21000 --tavan 81 --yaz`. Kayıt artık
+   `denetim` bloğuyla geliyor — giriş sırası orada yazılı.
 2. **5. haftanın sonucu girildiğinde ilk ileriye dönük satır okunacak.**
-3. **Operasyon** — artık fiyatlı. Gerçek soru "729 kupon yatırabilir miyiz"
-   değil, **"81 kuponu güvenle yatırabiliyor muyuz"**; 729'un üstü 1,8 puan.
+   (5. hafta 2026-09-13'te donduruldu; **o kaydın üstüne yazma** — arama
+   §3.71/3.72'den sonra iyileşti ve bugün yeniden koşulsa daha iyi bir plan
+   veriyor, ama kaydın değeri donmuş olmasında.)
+3. **Operasyonun kalan yarısı saf lojistik** ve bu depodan ölçülemez: bir
+   insan 81 kuponu kupon kapanmadan girebiliyor mu? Ölçmek için giriş süresi
+   kaydı gerekir. İstatistiksel yarısı kapandı.
 4. **Sönüm ekseni.** Dördüncü örneklem 2026/27 birikimiyle kendiliğinden
    geliyor.
-5. **Kapanan iki başlık:** değişken derinlik (§3.72) ve zamanlama (§3.73).
-   İkisinin de yeniden açılma şartı ölçülmüş olarak yazılı.
+5. **Kapanan üç başlık:** değişken derinlik (§3.72), zamanlama (§3.73) ve
+   operasyonun istatistiksel yarısı (§3.74). Üçünün de yeniden açılma şartı
+   ölçülmüş olarak yazılı.
 
 ### Neden böyle
 
-Bu oturum bir kazanç aramadı, **hedefi ölçtü**. Proje bir yıldır haftalık
-sayılar üretiyordu ve sahibinin sorduğu soruya ("üç ayda olur mu") hiç
-doğrudan cevap vermemişti. Artık cevap var, aralığıyla ve okuma kuralıyla:
-bugünkü planla **%77**, ve kalan üç serbest değişkenin ikisi (şekil,
-zamanlama) ölçülerek kapandı. Geriye operasyon ve modelin kendisi kalıyor.
+Bu oturum da bir kazanç aramadı, **bir riski fiyatladı**. Proje "81 kupon
+yatırabilir miyiz" sorusunu bir yıldır açık tutuyordu ve soru aslında ikiydi:
+*yatırabilir miyiz* (lojistik) ve *doğru yatırabilir miyiz* (ölçülebilir).
+İkincisi ölçüldü ve cevabı rahatlatıcı — ama asıl çıktı rahatlama değil, iki
+somut şey: `p_onbes`in oynanan kuponda yalan söylediğinin bulunması ve
+kaydın artık denetlenebilir sırada yazılması.
 
 ## Geçmiş girdiler
+
+**2026-09-13 (önceki, dal `claude/devam-edelim-51rff7`)** — **hedefin kendisi**
+ölçüldü (§3.73). Deponun her ölçüsü haftalıktı, sahibinin hedefi değil; çeviri
+(`1 − Π(1 − p_w)`) hiç yapılmamıştı. Ölçülen: 114 hafta, 8 ayrık 13 haftalık
+pencere, 21.000 kolon — 1 kupon %64,2 · 27 kupon %75,2 · 81 kupon %77,0 ·
+729 kupon **%78,8** (pencere aralığı %69,9–86,7, haftalar arası `P` on altı
+kat ayrışıyor). §3.67–3.71'in işi hedef kademesinde **14,6 puan**; haftalık
+×1,47 olan kazanç hedefte ×1,23 ve fark **doymadır**. Aynı oturumda zamanlama
+ekseni açıldı ve **kapandı** (`ufuk.kahin_tahsisi` üst sınırı ×1,031 ortalama,
+en çok ×1,051 — `1 − Π(1 − p)` doyuyor); yaklaşıklığın Jensen yanlılığı
+ölçülüp `coklu_kiyasi.py` kesin hesaba çevrildi. `spor_toto/ufuk.py` +
+`tests/test_ufuk.py` (9 bekçi) + `scripts/ufuk_kiyasi.py`.
 
 **2026-09-13 (önceki, aynı dal)** — değişken derinlikli eksen (§3.72) kuruldu,
 ölçüldü ve **beklenti yanlandı**: kuponlar artık eminlik sırasının ön ek

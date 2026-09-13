@@ -101,7 +101,7 @@ baslik "doctest (belgelerdeki sayılar hâlâ doğru mu)"
 "$PY" -m pytest --doctest-modules -p no:randomly -q \
   spor_toto/ortak.py spor_toto/getiri.py spor_toto/takim.py spor_toto/deger.py \
   spor_toto/odds.py spor_toto/egitim.py spor_toto/hafta_hakki.py \
-  spor_toto/ufuk.py
+  spor_toto/ufuk.py spor_toto/operasyon.py
 
 baslik "pytest (hızlı)"
 # `-rs`: ATLANAN her test sebebiyle birlikte yazilir. `-q` onlari

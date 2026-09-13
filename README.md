@@ -1151,6 +1151,7 @@ backend/
     coklu.py           KUPON: ayni butceyi COK KUPONA boler — carpim kisitini kaldirir
     duyarlilik.py      OLCUM: olculen banko sapmasi planin KARARINI degistiriyor mu (senaryo)
     ufuk.py            HEDEF: haftalik P(15/15) -> 'uc ayda en az bir 15/15' (ceviri + zamanlama)
+    operasyon.py       HEDEF: plani ELLE YATIRMANIN bedeli — slip fiyati, yogunlasma, denetim sirasi
     karne.py           PARA: kuponun gerçek ikramiye tablolarına karşı getirisi (garanti tabanı)
     hafta_hakki.py     PARA: bütçe kısıtı kalkınca ne kalıyor — cephe, cetvel, kural kıyası (E6)
     kalabalik.py       HAVUZ: kalabalık modeli — 112 haftanın kademe adetlerine oturtulmuş (λ)
@@ -1191,7 +1192,7 @@ backend/
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
                        sehir/ · sistem_fiyat/
-  tests/               pytest (75 dosya → 1.974 test; §9'da katman dökümü)
+  tests/               pytest (76 dosya → 1.996 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1398,8 +1399,8 @@ Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant'lar, CLI (Bayes pre
 dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri test,
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
-eşleme, ikinci kayıt). **75 test dosyası, parametrizasyonla
-1.974 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+eşleme, ikinci kayıt). **76 test dosyası, parametrizasyonla
+1.996 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
@@ -1439,6 +1440,7 @@ karşı denetler):
 | Çoklu kupon (çarpım kısıtı · kupon ayrıklığı · bütçe boşa gitmesin · hedefin tipi · normalleşmemiş girdi · **tahsis** · **değişken derinlik**) | **`coklu`** | 27 |
 | Duyarlılık (banko sapması senaryosu · plan düzeyi kalibrasyon · üretime sızmama) | **`duyarlilik`** | 14 |
 | Ufuk (hedefin kendisi: `1 − Π(1 − p)` · Jensen yönü · kâhin tahsis üst sınırı) | **`ufuk`** | 9 |
+| Operasyon (elle giriş slipleri · örtüşmede doğru `P` · yoğunlaşma · donmuş kaydın denetim sırası) | **`operasyon`** | 22 |
 
 İki test bilerek **ağa çıkmaz**: `test_snapshot_iddaa.py` gerçek bültenden alınmış
 küçük bir örnek payload üzerinde koşar — ağ çağrısını sınamak bu paketin işi değil,
