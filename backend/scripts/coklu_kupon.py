@@ -66,6 +66,7 @@ from spor_toto.coklu import (
     p_onbes,
 )
 from spor_toto.getiri import KOLON_BEDELI
+from spor_toto.operasyon import kupon_olasiliklari, yogunlasma
 from spor_toto.secim import en_iyi_secim
 
 
@@ -75,6 +76,22 @@ def plan_uret(d: dict, butce: int, tavan: int | None) -> dict:
     probs = [m["probs"] for m in maclar]
 
     plan = coklu_plan(probs, butce, kupon_tavani=tavan)
+
+    # ─── Kuponlar OLASILIĞA GÖRE AZALAN sıralanır ────────────────────────
+    # Bu bir süs değil, §3.74'ün ölçtüğü şeyin operasyondaki karşılığı:
+    # hedefin yarısını 81 kuponun ortalama **11'i** taşıyor (en kötü haftada
+    # 2), yani hangi kuponu yanlış girdiğiniz çok fark ediyor. Denetim
+    # sırası bu yüzden "önce en pahalı kupon"dur ve sıranın kaydın
+    # KENDİSİNDE olması gerekir — girişi yapan kişi elinde bu dosyayla
+    # oturuyor.
+    #
+    # Aramanın kendi çıktısı bu sırada DEĞİL: 51 gerçek hafta × tavan
+    # kıyasının 6'sında kuponlar azalan gelmiyordu (5. haftanın kaydı
+    # tesadüfen geliyordu ve bu, kurala güvenmek için bir sebep değil).
+    paylar = kupon_olasiliklari(probs, plan.kuponlar)
+    kuponlar = [k for _, k in sorted(zip(paylar, plan.kuponlar),
+                                     key=lambda t: -t[0])]
+    yog = yogunlasma(probs, kuponlar)
 
     # kıyas: aynı bütçede tek sistem ne verirdi
     tek = en_iyi_secim(probs, butce, esik=0)
@@ -95,13 +112,20 @@ def plan_uret(d: dict, butce: int, tavan: int | None) -> dict:
         "tl": plan.kolon * KOLON_BEDELI,
         "p_onbes": plan.p_onbes,
         # planın taşıdığı sayı ile kupondan yeniden ölçüm ayrışmamalı
-        "p_onbes_dogrulama": p_onbes(probs, plan.kuponlar),
+        "p_onbes_dogrulama": p_onbes(probs, kuponlar),
         "eksen": plan.eksen,
         "tek_sistem": {"kolon": tek.bedel, "p_onbes": p_tek,
                        "picks": ["".join(s) for s in tek.secimler]},
         "kazanc": plan.p_onbes / p_tek if p_tek else None,
+        # Denetim künyesi: girişi yapan kişinin okuması gereken sayı.
+        "denetim": {
+            "sirali": "p_azalan",
+            "en_buyuk_pay": yog.en_buyuk_pay,
+            "yarisini_tasiyan": yog.yarisini_tasiyan,
+            "duz_pay": yog.duz_pay,
+        },
         "kuponlar": [{"no": i + 1, "kolon": k.kolon, "picks": k.picks}
-                     for i, k in enumerate(plan.kuponlar)],
+                     for i, k in enumerate(kuponlar)],
         "maclar": [{"no": m.get("no", i + 1),
                     "mac": f"{m.get('home')} – {m.get('away')}",
                     "probs": m["probs"]}

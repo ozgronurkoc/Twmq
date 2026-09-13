@@ -171,7 +171,7 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/components/super-toto/tahmin2.tsx` | **2. Tahmin** paneli — `1. Tahmin` / `2. Tahmin` sekmeleri arasında geçilir; para birimli hiçbir sayı yok. Hafta kapandığında sonuç sütunu ve ayar karnesi açılır (§3.38) |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **1.974 test**; **136'sı** istatistik katmanına (`history` `odds` `backtest`
+paketi toplam **1.996 test**; **136'sı** istatistik katmanına (`history` `odds` `backtest`
 `api_stats` `api_backtest` `snapshot_iddaa`), **672'si** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre`
@@ -6856,6 +6856,141 @@ küçük olursa. İkisi de bugünkü kesitte doğru değil.
 
 ---
 
+### 3.74 Operasyonun bedeli ölçüldü — elle giriş hatası **hiçbir kararı değiştirmiyor**
+
+§3.73 operasyon sorusunun yarısını fiyatladı: 81 kuponda takılmanın bedeli
+hedefte **1,8 puan**. Fiyatlanmayan yarısı sorunun içindeki "**güvenle**"
+kelimesiydi. 81 kupon bir insan tarafından, bir terminalin başında, elle
+giriliyor ve insan yanlış girer. O ana kadar bu deponun bütün ölçüleri
+**kâğıt üstündeki** planın ölçüleriydi.
+
+Üretici: `cd backend && python scripts/operasyon_kiyasi.py --butce 21000`
+(114 tam hafta, ~4,5 dk).
+
+#### Önce bir gövde: `p_onbes` **oynanan** kuponu puanlayamıyordu
+
+`coklu.p_onbes` olasılıkları toplar ve bu yalnızca kuponlar ayrıkken
+doğrudur. Planın kuponları ayrıktır — ayrıklık eksen bileşimlerinin farklı
+olmasından gelir. Ama insanın girdiği küme plan değildir: **bir kupon iki kez
+girilirse ayrıklık bozulur ve toplam aynı kolonu iki kez sayar.** Ölçüldü:
+81 kuponluk bir planda 0. kupon yerine 5. kuponun kopyası girildiğinde gerçek
+`P` %9,563'e düşüyor, `p_onbes` ise **%9,601** diyor. Yani sapma küçük ama
+**tek yöne** bakıyor: denetim, en çok ihtiyaç duyulduğu anda iyimser.
+
+`operasyon.birlesim_p_onbes` kolonları tek tek sayar, ayrıklığı varsaymaz.
+Bekçisi `test_kopya_NAIF_toplami_SISIRIYOR`.
+
+#### Tek slipin bedeli — 114 hafta, 21.000 kolon
+
+Elle giriş bozulduğunda bozulma bir **kalem darbesi** kadardır: kupon
+atlanır, iki kez girilir, bir işaret unutulur, fazladan bir işaret konur, ya
+da yanlış kutu işaretlenir. Aşağıdaki sayılar tek bir slipin **o haftanın
+kendi** `P(15/15)`i içindeki payıdır (ortalama | en kötü hafta):
+
+| tavan | `P(15/15)` | hedef | atlama / kopya | eksik | fazla | takas |
+|---|---:|---:|---:|---:|---:|---:|
+| 27 | %10,00 | %75,2 | +3,70% \| +44,23% | +1,48% \| +23,64% | −0,85% | +2,33% \| +41,62% |
+| **81** | **%10,49** | **%77,0** | **+1,23% \| +42,76%** | +0,50% \| +23,20% | −0,28% | **+0,79% \| +39,53%** |
+| 243 | %10,81 | %78,1 | +0,41% \| +35,93% | +0,18% \| +15,02% | −0,09% | +0,27% \| +31,98% |
+| 729 | %11,03 | %78,8 | +0,14% \| +26,59% | +0,07% \| +16,69% | −0,03% | +0,09% \| +26,04% |
+
+Üç şey okunuyor:
+
+1. **`fazla` işaretin kaybı NEGATİF** — fazladan işaret kapsamayı
+   genişletiyor. Bedeli olasılıkta değil **parada**: plan bütçenin neredeyse
+   tamamını kullandığı için tek bir fazla işaret 81 kuponda **+6.561 kolon
+   = +65.610 TL** (bütçenin %31'i) yazabiliyor. 729 kuponda aşım %10'a
+   iniyor, çünkü kuponlar küçük.
+2. **`kopya` ile `atlama` birebir aynı.** İkisinde de kaybedilen girilmeyen
+   kupondur; kopyanın eklediği kutu kümede zaten var. Bu bir ölçüm değil bir
+   **denetimdir** ve bekçisi var (`test_kopya_kaybi_atlama_kaybiyla_AYNI`).
+3. **Ortalama küçük, en kötü büyük.** 81 kuponda ortalama slip haftalık
+   `P`nin %1'i kadar; ama en kötü haftada tek bir atlama o haftanın
+   `P`sinin **%42,76'sını** götürüyor. Aradaki 35 kat, bir sonraki bölümün
+   konusu.
+
+#### Yoğunlaşma — hangi kuponu yanlış girdiğiniz çok fark ediyor
+
+Bütün kuponlar eşit değerde olsaydı her biri `1/M` taşırdı. Ölçülen bunun
+tersi (114 haftanın ortalaması):
+
+| tavan | en büyük kupon | düz olsaydı | kaç kat | hedefin **yarısını** taşıyan | en az |
+|---|---:|---:|---:|---:|---:|
+| 27 | %23,25 | %3,70 | ×6,3 | 4 kupon | 2 |
+| **81** | **%10,60** | %1,23 | **×8,6** | **11 kupon** | **2** |
+| 243 | %4,85 | %0,41 | ×11,8 | 32 kupon | 6 |
+| 729 | %4,16 | %0,14 | ×29,7 | 84 kupon | 7 |
+
+**81 kuponun ortalama 11'i hedefin yarısını taşıyor** — ve en kötü haftada
+**2'si**. Buradan bir operasyon kuralı çıkıyor ve kural ölçümün kendisinden
+geliyor, sezgiden değil: *kuponları olasılığa göre azalan sırala, ilk kümeyi
+iki kez oku.*
+
+Bu kural **kayda da girdi**, çünkü kâğıt üstünde kalırsa işe yaramaz: girişi
+yapan kişi elinde `hafta_NN_coklu.json` ile oturuyor. `coklu_kupon.py` artık
+kuponları olasılığa göre azalan yazıyor ve `plan.denetim` bloğu en büyük payı
+ve yarıyı taşıyan kupon sayısını taşıyor. Sıralama **gerçek iş yapıyor**:
+aramanın kendi çıktısı bu sırada değil — 51 gerçek hafta × tavan kıyasının
+6'sında kuponlar karışık geliyordu. (Bugüne kadar donmuş beş kayıt tesadüfen
+azalan sıradaydı ve bekçi artık artefaktın kendisini sınıyor:
+`test_DONMUS_kayitlar_azalan_sirada`.)
+
+#### Asıl soru: hangi hata oranında fazladan kupon **zarara** döner
+
+Tek bir slipin kaç puan ettiği tek başına bir şey söylemiyor. Söyleyen şu:
+729 kupon 81'e göre hedefte 1,84 puan kazandırıyor **ama dokuz kat daha çok
+giriş** demek, yani dokuz kat daha çok slip. Kupon başına hata oranı `r`
+büyüdükçe kazanç eriyor ve bir yerde işareti dönüyor:
+
+| kıyas | slip türü | hedef farkı | fazla giriş | `r*` | yani |
+|---|---|---:|---:|---:|---|
+| 81 → 243 | takas | +1,08 p | 162 | %7,02 | 1 kuponda 14 |
+| 81 → 243 | atlama | +1,08 p | 162 | %4,68 | 1 kuponda 21 |
+| **81 → 729** | **takas** | **+1,84 p** | **648** | **%9,06** | **1 kuponda 11** |
+| 81 → 729 | atlama | +1,84 p | 648 | %6,05 | 1 kuponda 17 |
+
+Ve tersinden: 81 kuponu **özensiz** girmek, 729'a çıkmanın kazancını ancak
+`r* = %7,88` (takas) ya da `%5,24` (atlama) — yani **1 kuponda 13** hata —
+oranında geri veriyor.
+
+**Hüküm.** Bu eşikler bir insanın yapacağı hata oranının çok üstünde. 81
+kuponluk bir girişte 1 kuponda 1'den fazla hata yapmak (yani %1'in üstü)
+zaten fark edilir bir özensizliktir ve o oranda bile hedef kaybı **çeyrek
+puanın altında** kalıyor. Operasyon hatası, ölçüldüğü kadarıyla, **hiçbir
+kararı değiştirmiyor**: ne 81'de kalma kararını, ne 729'a çıkma kararını.
+
+#### Ne kapandı, ne kapanmadı
+
+* **Kapandı:** operasyon sorusunun **istatistiksel** yarısı. "Yanlış girersek
+  ne kaybederiz" artık ölçülü ve cevabı "makul oranlarda, ihmal edilebilir".
+* **Kapanmadı:** saf lojistik yarısı — *bir insan 81 kuponu kupon kapanmadan
+  önce fiilen girebiliyor mu?* Bu bir insan olgusudur, bu depodan
+  ölçülemez; ölçmek için giriş süresi kaydı tutmak gerekir. Bu bölüm o soruyu
+  **küçültüyor**: eğer girilebiliyorsa, doğru girilip girilmediği artık
+  endişe konusu değil.
+* **Yeniden açılma şartı, ölçülmüş olarak:** gerçek hata oranının %1'i
+  aşması, ya da tavanın 729'un üstüne çıkarılması (fazla giriş büyüdükçe `r*`
+  düşer). İkisi de bugünkü kesitte geçerli değil.
+
+#### Okuma kuralı ve sınırlar
+
+* **`r*` bir tahmin değil bir sınırdır.** "İnsanlar şu kadar hata yapar"
+  demiyor; "şu kadardan çok hata yapılıyorsa kupon sayısını artırmak
+  zarardır" diyor. Gerçek hata oranı bu depoda **ölçülmedi**.
+* **Doğrusal yaklaşıklık.** Beklenen kayıp `M · r · δ̄` yazıldı, yani
+  slipler bağımsız ve tek tek küçük sayıldı. `r` büyüdükçe bozulur; eşik
+  sayıları %5–9 bandında olduğu için orada yaklaşıklık gerilmeye başlar ve
+  gerçek `r*` bir miktar **daha yüksektir** (kayıp doyar). Yani hüküm
+  ("eşik uzak") yaklaşıklığın yanıldığı yönde **daha da** doğrudur.
+* **Slip ailesi tek darbeliktir.** İki sembolü aynı anda oynatan bozulmalar
+  ailede yok; olsalardı "tek hata" sayımı başka bir şeyi sayardı. Bekçisi
+  `test_slip_ailesi_TEK_DARBE`.
+* **Kayıplar kapalı formdur ama kesindir** — örtüşme dâhil. Bekçisi kolon
+  kolon sayan `birlesim_p_onbes`e karşı koşuyor
+  (`test_slip_kaybi_KESIN_sayimla_ayni`, biri gerçek arşiv haftasında).
+
+---
+
 ## 4. Sayfada bugün ne var
 
 **`/istatistik`** — sezon dağılımı (en sık sonuç + pay çubuğu) · 5 sayı kutusu (sembol
@@ -7882,6 +8017,8 @@ python scripts/derinlik_kiyasi.py [--butce 21000] [--serbest]
 python scripts/derinlik_kiyasi.py --butce 21000 --mekanizma 114
 # HEDEFIN KENDISI: uc ayda 15/15 olasiligi + zamanlama sinavi (§3.73; ~1/6 dk)
 python scripts/ufuk_kiyasi.py --butce 21000 [--zamanlama]
+# OPERASYON: elle giris slipinin bedeli + yogunlasma + esik (§3.74; ~4,5 dk)
+python scripts/operasyon_kiyasi.py --butce 21000 [--tavan 27 81 243 729]
 # Ayni kiyas hafta ici BAGIMLILIK altinda (§3.70; ~4 dk)
 python scripts/bagimli_kapsama.py [--butce 21000]
 
@@ -7891,7 +8028,7 @@ python -m spor_toto.kosum                  # kayıtlı koşumlar
 python -m spor_toto.kosum --son disari     # son koşumun ortamı
 
 # Denetim
-pytest -q                                  # 1.974 test (136'sı bu katman, 672'si tahmin)
+pytest -q                                  # 1.996 test (136'sı bu katman, 672'si tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out
