@@ -171,7 +171,7 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/components/super-toto/tahmin2.tsx` | **2. Tahmin** paneli — `1. Tahmin` / `2. Tahmin` sekmeleri arasında geçilir; para birimli hiçbir sayı yok. Hafta kapandığında sonuç sütunu ve ayar karnesi açılır (§3.38) |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **1.916 test**; **136'sı** istatistik katmanına (`history` `odds` `backtest`
+paketi toplam **1.930 test**; **136'sı** istatistik katmanına (`history` `odds` `backtest`
 `api_stats` `api_backtest` `snapshot_iddaa`), **662'si** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre`
@@ -5924,6 +5924,283 @@ olduğunu — numara listesi kabul etseydi dört sezonun aynı numaralı haftas�
 birden geçirirdi. `health._check_stats_sozlesmesi` artık birleşik gövdeyi de
 denetliyor: sayfanın **varsayılan görünümü** odur.
 
+### 3.67 Kuponun ŞEKLİ — çarpım kısıtı kalktı, `P(15/15)` aynı bütçede ×1,45
+
+Bu bölüm deponun ölçtüğü **en büyük tek kazancı** kayda geçiriyor ve o kazanç
+hiçbir model değişikliğinden gelmedi. Kaynak `backend/spor_toto/coklu.py`
+modül başlığıdır; buradaki iş onu yol haritasına bağlamak, çünkü bulgu
+haftalık kararın kendisini değiştiriyor.
+
+#### Soru doğru kademede sorulmuyordu
+
+Depo kuponu **tek bir tam sistem** olarak kuruyordu: her maça 1/2/3 sembol,
+kupon bunların Kartezyen çarpımı, bedel `2^a·3^b`. İki kusur ayrı ayrı
+ölçüldü ve **yalnızca ikincisi gerçek çıktı**.
+
+* **Amaç kademesi — hipotez ölçümle düştü.** `secim.VARSAYILAN_KACAK_ESIGI =
+  3`, yani enbüyüklenen şey `P(en iyi kolon ≥ 12)`'ydi; modül başlığı bunu
+  açıkça yazıyor (*"ikramiye eşiği 12'dir, 15 bir yan üründür"*). Sahibinin
+  hedefi 15. Ama 21.000 kolonda `esik = 0` ile `esik = 3` planları 114
+  haftanın **hiçbirinde** ayrışmadı: o bütçede plan zaten 9 üçlü + 6 banko
+  şekline sıkışıyor. Eksen kapandı.
+* **Çarpım kısıtı — bulgu burada.** `N` kolonluk en iyi küme, tanım gereği
+  olasılığa göre en büyük `N` kolondur ve o küme genel olarak bir **kutu
+  değildir**. Çarpım, kutunun köşelerini (bütün belirsiz maçların aynı anda
+  ters gitmesi) satın almak zorunda kalırken kutunun dışındaki daha olası
+  kolonları (tek bir bankonun dönmesi) alamıyor.
+
+Aynı bütçe, aynı olasılık modeli, 114 tam hafta, `3⁹ = 19.683` kolon:
+
+| küme | model `P(15/15)` | gerçekleşen |
+|---|---:|---:|
+| tek sistem (çarpım) | %7,489 | 15/114 |
+| serbest (en büyük `N` kolon) | %10,865 | 22/114 |
+
+**×1,45**, ve fark yalnızca kümenin şekli.
+
+#### Araya giren aile: `coklu.py`
+
+Serbest kümeyi birebir oynamak ~4.300 ayrı kupon ister (ölçüldü, 20 haftada
+medyan 4.290 kutu). Bedel aynıdır, operasyon ağır. `coklu.py` araya giren
+aileyi kurar: `d` maç **eksen** seçilir (en emin olduklarımız) ve kuponlar
+arasında tek tek sabitlenir; eksen üzerindeki `3^d` bileşimden en olası `M`
+tanesi oynanır. Kalan `15−d` maç her kuponda **aynı alt sistemdir** ve onu
+`secim.en_iyi_secim` kendi bütçesiyle çözer. `M = 1` tam olarak bugünkü tek
+sistemdir, yani arama mevcut davranışı bir aday olarak geziyor.
+
+    kupon   model P(15)   gerçekleşen   13 hafta
+        1       %7,489        15/114       %63,7   ← bugün
+       27       %9,353        20/114       %72,1
+       81       %9,862        21/114       %74,1
+      729      %10,461        22/114       %76,2
+   19.683      %10,865        22/114       %77,6   ← üst sınır
+
+729 kupon, serbest kümenin kazancının **~%88'ini** alıyor. Üretici:
+`cd backend && python scripts/coklu_kiyasi.py`.
+
+#### Gerçek bütçede bir yan fayda: **bütçe merdiveni kalkıyor**
+
+Tek sistemde bedel `2^a·3^b` olduğu için bütçe basamaklıdır: 19.683 ile
+21.000 kolon *aynı* kuponu alır, aradaki 13.170 TL hiçbir şey satın almaz
+(sonraki basamak 39.366). Çoklu kuponda bedel `M · 3^(15−d)` ve `M` serbest
+bir tamsayıdır.
+
+    kupon    kolon   model P(15)   gerçekleşen   13 hafta
+        1   19.683       %7,489        15/114       %63,7   ← bugün
+       79   19.709       %9,864        21/114       %74,1
+      329   20.786      %10,602        20/114       %76,7
+
+**×1,42**, aynı parada. Gözlenen sütun `n = 114` ile gürültülüdür (79
+kuponda 21, 329 kuponda 20); güvenilen sinyal **model** sütunudur ve o
+monotondur — bekçisi `test_coklu.py::test_kupon_sayisi_buyudukce_P15_DUSMEZ`.
+
+#### Bir beklenti yalanlandı — ve ödünleşme yok
+
+Modül başlığında önce şu yazıyordu: *"alt kademeler paranın çoğunu taşır ve
+çoklu kupon onları tek sistem kadar tutturmaz."* Bir varsayımdı, ölçüldü ve
+**tam tersi** çıktı. 114 haftada 12+ tutturan kolon toplamı: tek sistem
+18.628, 729 kupon 26.274 — **+%41**. Sebebi geriye dönük açık: olasılığa
+göre en büyük `N` kolon kümesi yalnızca 15'e değil 12–13'e de daha yakın
+durur; çarpımın satın almak zorunda kaldığı köşeler hiçbir kademeye
+yaramıyordu. Cümle silinmedi, **düzeltildi** — kayıt yeniden yazılmaz
+(`.claude/olcum_kutugu.json`, "beklentiyi yalanladı" notuyla).
+
+#### İki bekçi gerçek hata tuttu
+
+İkisi de yazılırken değil **koşarken**:
+
+* `test_p_onbes_plandan_ve_kupondan_AYNI` — `p_onbes` plandan ve kupondan
+  iki farklı sayı veriyordu (`P = 0,0329` ↔ `0,0215`): bileşim indeksi ham
+  sembol düzeninde (`1/0/2`) kurulup sıralama düzeninde çözülüyordu. Tek
+  görünür belirti bu ayrışmaydı.
+* `test_tek_kupon_TEK_SISTEMIN_kendisi` — ilk tasarım eksen dışını **üçlüye
+  zorluyordu**; `en_iyi_secim` daha iyisini buldu (`P = 0,1240` ↔ `0,1142`,
+  üstelik 17.496 ↔ 19.683 kolon), çünkü üçüncü sembolü çok küçük olan bir
+  maçta **çifte**, üçlünün kapsamasının neredeyse tamamını üçte iki değil
+  yarı bedele alır. Zorlama kaldırıldı.
+
+#### Sınır — ve bu sınır kapatılmadı
+
+Buradaki bütün olasılıklar maçlar arası **bağımsızlık** varsayıyor. §3.46
+o varsayımı ölçtü ve kırmadı, ama korpus üst sınırında kuyruğun %5 şiştiğini
+buldu. Bu her iki şekli de aynı yönde etkiler, yani **oran** (×1,45) görece
+dayanıklıdır; `P(15/15)`'in **mutlak** değeri varsayıma bağlıdır ve öyle
+okunmalıdır. Mutlak değerin kendisi §3.68'de sınava sokuluyor.
+
+### 3.68 Planın `P(15/15)` iddiası sınava sokuldu — açık gerçek ama **güncel değil**, ve kararı hiç değiştirmiyor
+
+§3.67'nin tablosunda iki sütun yan yana duruyor ve **ayrışıyorlar**: model
+%7,489 diyor, gerçekleşen 15/114 = %13,2. Bu ayrışma bir yıl boyunca
+yazıldı ve hiç sınanmadı. Bu bölüm onu sınıyor, ve ortaya çıkan şey
+beklenenden başka: açık gerçek, sebebi bulundu, **ama düzeltme yine
+uygulanmıyor — bu kez daha güçlü bir gerekçeyle.**
+
+```bash
+cd backend && python -m spor_toto.karne --kapsama --butce 210000
+cd backend && python scripts/banko_duyarliligi.py
+```
+
+#### Niçin banko — sapma doğrudan çarpanın içinde
+
+Gerçek bütçede (21.000 kolon) tek sistemin şekli **6 banko + 9 üçlü**dür.
+Üçlü hiç kaçmaz (`q = 0`), yani planın hedefi tam olarak `P(15/15) = Π p₁`
+(altı banko üzerinde). İddia **yalnızca banko olasılıklarından** kurulu ve
+`p₁`'deki bir hata altıncı kuvvetten büyüyor.
+
+`karne --kapsama` gerçek bütçede, **düz** ölçekte, 114 haftada ölçtü:
+
+| kesit | `n` | model `q` | gerçekleşen | açık | Wilson %95 |
+|---|---:|---:|---:|---:|---|
+| banko rejimi | 684 | %35,5 | %29,7 | **−%5,8** | [%26,4, %33,2] ← `q` DIŞINDA |
+
+`q = 1 − p₁` olduğuna göre aynı cümle: **`p₁` 5,8 puan düşük yazılıyor.**
+(§3.64'ün −%5,6'sı aynı sapmanın *kaplama* ölçeğindeki, `n = 855`'lik
+karşılığıydı; kaplama katmanı söküldü, bu onun düz ölçekteki ölçümü.)
+
+#### A · Plan düzeyi kalibrasyon — iddia gerçekleşenle bağdaşmıyor
+
+Sınav maç düzeyinden **bağımsız** bir istatistik kullanıyor: 15/15 tutan
+**hafta sayısı**. Her hafta kendi `p`siyle bir Bernoulli denemesidir ve
+haftalar ayrı maç kümelerinden kuruludur — haftalar arası bağımsızlık hafta
+*içi* bağımsızlıktan çok daha güvenli. O hâlde dağılım Poisson-binomdur ve
+o hesap depoda zaten var (`ortak.kacak_dagilimi`).
+
+Plan **sabit** tutulur (taban planı), yalnızca cetvel değişir; yoksa sapmalı
+cetvelle kurulan sapmalı bir plan kendini haklı çıkarırdı.
+
+| kupon | cetvel | beklenen | gözlenen | oran | iki yanlı |
+|---:|---|---:|---:|---:|---:|
+| 1 | taban | 8,54 | 15 | **×1,76** | **0,0444** |
+| 1 | sapmalı | 14,22 | 15 | ×1,05 | 0,9097 |
+| 27 | taban | 10,66 | 20 | ×1,88 | 0,0079 |
+| 27 | sapmalı | 16,26 | 20 | ×1,23 | 0,3726 |
+| 81 | taban | 11,24 | 21 | ×1,87 | 0,0065 |
+| 81 | sapmalı | 16,82 | 21 | ×1,25 | 0,3210 |
+| 729 | taban | 12,09 | 20 | **×1,65** | **0,0305** |
+| 729 | sapmalı | 17,90 | 20 | ×1,12 | 0,6572 |
+
+Havuzlanmış hâlde model **karamsar**: dört şeklin dördünde de gerçekleşen
+beklenenin ×1,65–1,88'i ve dördünde de iki yanlı olasılık %5'in altında.
+Bağımsız ölçülen banko sapmasını koymak açığı **kapatıyor** (×1,05–1,25,
+uyumsuzluk kayboluyor).
+
+> **Kapanmanın kendisi bir uydurma DEĞİL.** +%5,8 bu sınava ayarlanmadı; maç
+> düzeyi kapsamadan, ayrı bir istatistikten geldi ve buraya olduğu gibi
+> kondu. Tek bir serbest parametre bile uydurulmadı.
+>
+> **Ama dört satır dört tanık değil.** Dördü de aynı 114 haftayı kullanıyor,
+> yani bu tek bir bulgunun dört görünümü. Ve sınav önceden yazılmadı: §3.67
+> aynı haftalardan çıktı.
+
+#### Sezon sınavı — ve §3.64'ün dersi ÜÇÜNCÜ kez
+
+§3.64 tam olarak burada bir hata yapmaktan dönmüştü: işaretin dört sezonda
+aynı yönde olması "etki gerçek" diye okunmuş, oysa **büyüklük sönüyordu.**
+O sınav burada da koşuldu ve aynı imzayı verdi.
+
+Tek sistem (kupon 1):
+
+| sezon | hafta | beklenen | sapmalı | gözlenen | oran | iki yanlı |
+|---|---:|---:|---:|---:|---:|---:|
+| 2022/23 | 17 | 0,95 | 1,62 | 0 | ×0,00 | 0,7516 |
+| 2023/24 | 31 | 2,28 | 3,81 | 7 | **×3,07** | **0,0116** |
+| 2024/25 | 30 | 2,62 | 4,32 | 4 | ×1,53 | 0,5265 |
+| **2025/26** | 36 | 2,69 | 4,48 | 4 | **×1,49** | 0,5596 |
+
+729 kupon:
+
+| sezon | hafta | beklenen | sapmalı | gözlenen | oran | iki yanlı |
+|---|---:|---:|---:|---:|---:|---:|
+| 2022/23 | 17 | 1,34 | 2,03 | 3 | ×2,24 | 0,2868 |
+| 2023/24 | 31 | 3,11 | 4,65 | 7 | ×2,25 | 0,0581 |
+| 2024/25 | 30 | 3,65 | 5,38 | 6 | ×1,65 | 0,2943 |
+| **2025/26** | 36 | 3,99 | 5,84 | 4 | **×1,00** | 1,0000 |
+
+Havuzlanmış açık **tek bir sezondan geliyor**: 2023/24, ve aralığı `p`yi
+dışarıda bırakan tek sezon o. Sonrası iniyor, ve **2025/26'da model
+zaten tutuyor** — 729 kuponda tam ×1,00.
+
+Asıl cümle şu: o sezonda **düzeltilmiş** model artık fazla iyimser olurdu.
+Sapmalı cetvel 5,84 hafta bekliyor, gerçekleşen 4. Yani düzeltmeyi koymak
+bugünün verisinde modeli *bozardı*.
+
+> Bu, aynı imzanın deponun ölçümlerinde **üçüncü** görünüşü: §3.60'ın
+> kapsama açığı (+%10,2 · +%19,2 · +%13,3 · **+%2,6**), §3.64'ün T1 banko
+> `q`'su (+%9,0 · +%10,5 · +%5,4 · **+%0,3**), ve şimdi plan düzeyi oran
+> (×2,24 · ×2,25 · ×1,65 · **×1,00**). Üçü de aynı şeyi söylüyor ve üçünün
+> de son sezonu sıfıra yakın. Mekanizma için iki okuma var — piyasa
+> keskinleşti, ya da üç ölçüm aynı kesitin aynı gürültüsünü görüyor — ve
+> bugünkü veriyle ayrılamıyor. Ayrılabilecek tek şey haftalık birikimdir.
+
+#### B · Karar — sapma planı KIPIRDATMIYOR
+
+Beklemenin bedeli buradadır ve sıfır çıktı. Plan sapmalı cetvelle kurulur,
+sonra **taban** cetvelle ve gerçekleşenle ölçülür (sapmalı cetvelle ölçmek
+kendini doğrulardı). "Sayı" kaç maçın favorisinin kaldırıldığıdır; 15 üst
+sınırdır ve korpus ölçümü genel futbolda sapma bulmadığı için bilerek
+abartır.
+
+| sayı | kupon | eksen | kolon | P senaryo | **P taban** | gözlenen |
+|---:|---:|---:|---:|---:|---:|---:|
+| 0 | 1 | 3,1 | 19.683 | %7,489 | **%7,489** | 15/114 ← bugün |
+| 0 | 27 | 9,0 | 19.683 | %9,353 | **%9,353** | 20/114 |
+| 0 | 329 | 11,1 | 20.786 | %10,602 | **%10,602** | 20/114 |
+| 6 | 1 | 1,8 | 19.683 | %12,477 | **%7,489** | 15/114 |
+| 6 | 27 | 9,0 | 19.683 | %14,393 | **%9,289** | 17/114 |
+| 6 | 288 | 11,1 | 20.899 | %15,855 | **%10,509** | 19/114 |
+| 15 | 1 | 2,0 | 19.683 | %12,477 | **%7,489** | 15/114 |
+| 15 | 614 | 11,8 | 20.001 | %19,176 | **%10,463** | 21/114 |
+
+Okunuşu:
+
+* **Bugün oynanan kupon hiç değişmiyor.** `tavan = 1`'de eksen ortalaması
+  3,1'den 1,8'e iniyor ama `P taban` birebir %7,489 ve gözlenen birebir
+  15/114 kalıyor. Ayrıca doğrudan sınandı: **kuponun kendisi 114/114
+  haftada birebir aynı.** `M = 1` hâlinde eksen/alt sistem ayrımı aynı
+  kararın bir bölünmesidir ve optimizatör aynı kupona varıyor.
+* **Çoklu şekillerde plan kıpırdıyor ama iyileşmiyor.** `P taban` her
+  satırda tabandan küçük ya da eşit (%9,353 → %9,289; %10,602 → %10,509) —
+  zorunlu, çünkü taban planı taban amacını enbüyükler. Gözlenen de
+  iyileşmiyor: 20 → 17 ve 20 → 19. İkisi de gürültü içinde, ama kazanç
+  **hiçbir satırda yok**.
+* **Sıralama korunuyor.** `P senaryo` da tavana göre monoton, yani §3.67'nin
+  ×1,45'i senaryodan etkilenmiyor. Sebebi mekaniktir: sapma, planın zaten en
+  emin olduğu maçlara uygulanan neredeyse çarpımsal bir dönüşümdür ve
+  adayları yeniden **sıralamaz**. Kalibrasyon *sayıyı* değiştiriyor,
+  *seçimi* değiştirmiyor.
+
+#### Verdikt — üç ayrı karar, üçü de "hayır"
+
+1. **`q`ya düzeltme konmuyor.** `karne.BANKO_Q_DUZELTMESI = 0,0` kalıyor ve
+   §3.64'ün durma kuralı (`T1_DUZELTME_ESIGI = 300`, bugün `n = 150`)
+   yürürlükte. Gerekçe artık daha güçlü: ölçülebilen son sezonda
+   düzeltilmiş model **fazla iyimser** olurdu.
+2. **Belgelerdeki `P(15/15)` sayıları yeniden ölçeklenmiyor.** Havuzlanmış
+   ×1,76 gerçek ama **güncel bir özellik değil**; onunla bütün sayıları
+   büyütmek 2023/24'ü geçmişe uydurmak olurdu. Sayılar §3.67'de olduğu gibi
+   duruyor; eklenen şey bir **okuma kuralıdır**: mutlak `P(15/15)`
+   havuzlanmış kesitte karamsar tarafta kalmış olabilir, ve kararı bu
+   belirsizlik taşımıyor.
+3. **Beklemenin bedeli sıfır.** Oynanan kupon değişmiyor, çoklu şekiller
+   iyileşmiyor, sıralama korunuyor. Durma kuralı bir şeye mal olmuyor — bu
+   ölçülmeden bilinemezdi ve ölçülmeden beklemek de savunulamazdı.
+
+#### Bekçiler
+
+`tests/test_duyarlilik.py` (14 test) iki şeyi kovalıyor. Birincisi
+**sızıntı**: `test_senaryo_URETIME_sizmiyor` `BANKO_Q_DUZELTMESI`nin sıfır
+ve eşiğin 300 olduğunu tutuyor, yani düzeltmeyi üretime koymak isteyen önce
+o testi değiştirmek — kararı görünür kılmak — zorunda. İkincisi sınavın
+**yönü**: küçük bir `iki_yanli` "model iyi" değil "iddia bağdaşmıyor"
+demektir ve yön bir kez ters yazılırsa bütün okuma tersine döner, o yüzden
+iki uçtan da sınanıyor.
+
+Senaryonun kendisi de bir hata tuttu: `sapma_uygula` taban durumunda
+(`sayi = 0`) ham sözlüğü kopyalıyor, senaryo durumunda normalleştiriyordu —
+yani taban ile senaryo aynı olasılıkları iki ayrı biçimde veriyordu.
+`coklu._matris` ikisini de normalleştirdiği için sonuç değişmiyordu, ama
+sözleşme ayrışıktı ve `test_sapma_SIFIR_taban_ile_ayni` onu koşarken tuttu.
+
 ---
 
 ## 4. Sayfada bugün ne var
@@ -6946,7 +7223,7 @@ python -m spor_toto.kosum                  # kayıtlı koşumlar
 python -m spor_toto.kosum --son disari     # son koşumun ortamı
 
 # Denetim
-pytest -q                                  # 1.916 test (136'sı bu katman, 662'si tahmin)
+pytest -q                                  # 1.930 test (136'sı bu katman, 662'si tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out

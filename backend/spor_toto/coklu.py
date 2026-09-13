@@ -82,6 +82,24 @@ hafta içi bağımlılığı ölçtü ve korpus üst sınırında kuyruk %5 şi�
 her iki şekli de aynı yönde etkiler, oran görece dayanıklıdır — ama
 `P(15/15)`'in mutlak değeri bu varsayıma bağlıdır ve öyle okunmalıdır.
 
+─── Mutlak değer sınandı: OKUMA KURALI ───────────────────────────────────
+
+Yukarıdaki tablonun iki sütunu (model ↔ gerçekleşen) ayrışıyor ve bu
+ayrışma ölçüldü (`spor_toto.duyarlilik`, §3.68). Havuzlanmış 114 haftada
+model **karamsar**: tek sistemde beklenen 8,54 hafta, gerçekleşen 15
+(×1,76); 729 kuponda 12,09 ↔ 20 (×1,65). Açığın tamamını, bağımsız ölçülmüş
+banko sapması (`p₁` 5,8 puan düşük yazılıyor) kapatıyor.
+
+**Ama tablodaki sayılar yeniden ÖLÇEKLENMEDİ ve ölçeklenmeyecek.** Sezon
+kırılımı açığın 2023/24'ten geldiğini ve 2025/26'da **kapandığını** gösterdi
+(729 kuponda ×1,00); düzeltilmiş model o sezonda fazla iyimser olurdu.
+Havuzlanmış oranla bütün sayıları büyütmek 2023/24'ü geçmişe uydurmak olurdu.
+
+Okuma kuralı şu: bu sütun **havuzlanmış kesitte karamsar tarafta kalmış
+olabilir**, ve kararı bu belirsizlik taşımıyor — aynı ölçüm sapmalı cetvelle
+kurulan planın taban cetvelde hiç iyileşmediğini, `tavan = 1`'de ise
+kuponun 114 haftanın 114'ünde **birebir aynı** kaldığını buldu.
+
 ─── Alt kademe: beklenti yalanlandı ──────────────────────────────────────
 
 Bu modül **yalnızca 15/15'i** enbüyükler ve burada önce şu yazıyordu: *"alt
@@ -100,11 +118,14 @@ silinmedi, **düzeltildi** (kayıt yeniden yazılmaz, `.claude/olcum_kutugu.json
 from __future__ import annotations
 
 import heapq
-from typing import NamedTuple
+from typing import TYPE_CHECKING, NamedTuple
 
 import numpy as np
 
 from .core import SEMBOLLER, sirala_semboller
+
+if TYPE_CHECKING:  # `secim` çalışma zamanında TEMBEL çekiliyor (döngü),
+    from .secim import Secim  # tip burada gerekiyor ve orada gerekmiyor.
 
 #: Kupondaki maç sayısı.
 MAC_SAYISI = 15
@@ -211,7 +232,7 @@ def _eksen_bilesimleri(P: np.ndarray, eksen: list[int], M: int
         toplam += -eksi_p
         for k in range(d):
             if rutbe[k] + 1 < 3:
-                komsu = rutbe[:k] + (rutbe[k] + 1,) + rutbe[k + 1:]
+                komsu = (*rutbe[:k], rutbe[k] + 1, *rutbe[k + 1:])
                 if komsu in gorulen:
                     continue
                 gorulen.add(komsu)
@@ -277,7 +298,6 @@ def coklu_plan_serisi(probs_listesi: list[dict[str, float]],
     from .secim import en_iyi_secim
 
     istenen = sorted(tavanlar) if tavanlar else sorted(ARANAN_KUPON)
-    tavan_ust = max(istenen)
     P = _matris(probs_listesi)
     emin_sira = np.argsort(-P.max(axis=1)).tolist()   # en eminden başlayarak
 
@@ -288,7 +308,8 @@ def coklu_plan_serisi(probs_listesi: list[dict[str, float]],
     # kırpılan bir aday, daha küçük bir tavanın seçiminden tamamen
     # düşüyordu (`test_seri_TEK_TEK_cagirmakla_ayni` tuttu).
     #: (tam_kupon, p_alt, eksen, kalanlar, alt, kolon_kupon)
-    yapilar: list[tuple[int, float, list[int], list[int], object, int]] = []
+    yapilar: list[tuple[int, float, list[int], list[int],
+                        Secim | None, int]] = []
     gorulen: set[tuple[int, int]] = set()
 
     for M in ARANAN_KUPON:
@@ -327,7 +348,8 @@ def coklu_plan_serisi(probs_listesi: list[dict[str, float]],
     # ─── 2. her tavan için en iyi yapılandırma ─────────────────────────
     seri: dict[int, CokluPlan] = {}
     for tavan in istenen:
-        en: tuple[float, int, list[int], list[int], object, int] | None = None
+        en: tuple[float, int, list[int], list[int],
+                  Secim | None, int] | None = None
         for tam, p_alt, eksen, kalanlar, alt, kolon_kupon in yapilar:
             sayi = min(tam, tavan)
             if sayi < 1:
@@ -356,7 +378,8 @@ def _plan(en: tuple[float, list[Kupon], list[int]]) -> CokluPlan:
 
 
 def _kuponlari_kur(bilesimler: list[tuple[int, ...]], eksen: list[int],
-                   kalanlar: list[int], alt, kolon_kupon: int) -> list[Kupon]:
+                   kalanlar: list[int], alt: Secim | None,
+                   kolon_kupon: int) -> list[Kupon]:
     """Eksen bileşimleri + ortak alt sistem → oynanabilir kuponlar.
 
     `bilesimler`in her elemanı, `eksen` sırasına karşılık gelen **sembol

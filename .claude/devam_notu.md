@@ -45,120 +45,89 @@ benim kararım):
 
 ## Şu an (en güncel)
 
-**2026-09-13 — dal `claude/project-history-521-commits-bl5e4o`**
+**2026-09-13 — dal `claude/devam-edelim-tkk1b8`**
 
-### Bulgu 1 — kuponun ŞEKLİ, modelden daha çok değer taşıyor
+### Bu oturumda ne yapıldı — banko ekseni açıldı ve **kapandı**
 
-Depo kuponu **tek bir tam sistem** olarak kuruyordu (`secim.en_iyi_secim`,
-Kartezyen çarpım, bedel `2^a·3^b`). İki kusur ölçüldü:
+Devam notunun 1. sıradaki adımı "banko kalibrasyonu, yeniden açılacak"
+diyordu. Açıldı ve ölçüldü; sonuç beklenenin tersi ve **karar değişmedi**.
+Ayrıntı `docs/ISTATISTIK_YOL_HARITASI.md` §3.68, üretici
+`cd backend && python scripts/banko_duyarliligi.py` (~9,5 dk).
 
-* **Amaç yanlış kademedeydi.** `secim.VARSAYILAN_KACAK_ESIGI = 3`, yani
-  `P(en iyi kolon ≥ 12)` enbüyükleniyordu; modül başlığı bunu açıkça yazıyor:
-  *"ikramiye eşiği 12'dir, 15 bir yan üründür."* Sahibinin hedefi 15.
-  — **Ama ölçüldü ve bu tek başına bir şey değiştirmiyor:** 21.000 kolonda
-  `esik=0` ile `esik=3` planları 114 haftanın **hiçbirinde** ayrışmadı.
-  Sebebi bütçenin planı zorlaması (9 üçlü + 6 banko). Hipotez ölçümle düştü.
+Üç cevap, üçü de "hayır":
 
-* **Asıl kusur çarpım kısıtının kendisi.** `N` kolonluk en iyi küme
-  olasılığa göre en büyük `N` kolondur ve o küme bir **kutu değildir**.
-  114 haftada, aynı 19.683 kolonda:
+1. **Açık gerçek.** Planın `P(15/15)` iddiası ilk kez plan düzeyinde sınandı
+   (Poisson-binom, 15/15 tutan **hafta sayısı** — maç düzeyi kapsamadan
+   bağımsız bir istatistik). Havuzlanmış 114 haftada model **karamsar**: tek
+   sistemde beklenen 8,54 ↔ gerçekleşen 15 (×1,76, iki yanlı 0,0444); 729
+   kuponda 12,09 ↔ 20 (×1,65). Gerçek bütçede düz ölçekte ölçülen banko
+   sapması (`p₁` −%5,8 düşük, `n = 684`) açığı **kapatıyor** (×1,05–1,25) ve
+   o 5,8 bu sınava ayarlanmadı — ayrı bir istatistikten geldi.
 
-      tek sistem (çarpım)    P(15/15) = %7,489   gerçekleşen 15/114
-      serbest (en büyük N)   P(15/15) = %10,865  gerçekleşen 22/114   ×1,45
+2. **Ama açık GÜNCEL DEĞİL.** Sezon sınavı §3.64'ün imzasını verdi: 729
+   kuponda ×2,24 · ×2,25 · ×1,65 · **×1,00**. Havuzlanmış sayı 2023/24'ten
+   geliyor; 2025/26'da model zaten tutuyor ve **düzeltilmiş** model fazla
+   iyimser olurdu (sapmalı cetvel 5,84 hafta bekliyor, gerçekleşen 4). Bu
+   imzanın üçüncü görünüşü (§3.60, §3.64, şimdi bu).
 
-  Serbest kümeyi birebir oynamak ~4.300 kupon ister (ölçüldü, medyan 4.290),
-  ama kazancın çoğu birkaç düzine kuponda alınıyor.
+3. **Karar hiç değişmiyor.** `tavan = 1`'de oynanan kupon **114/114**
+   haftada birebir aynı. Çoklu şekillerde plan kıpırdıyor ama taban cetvelde
+   hiçbir satırda iyileşmiyor (%9,353 → %9,289, gözlenen 20 → 17). Sıralama
+   korunuyor, §3.67'nin ×1,45'i etkilenmiyor. Sebep mekanik: sapma, planın
+   zaten en emin olduğu maçlara uygulanan neredeyse çarpımsal bir
+   dönüşümdür ve adayları **yeniden sıralamaz** — kalibrasyon *sayıyı*
+   değiştiriyor, *seçimi* değiştirmiyor.
 
-### Yapılanlar
+**Sonuç:** `karne.BANKO_Q_DUZELTMESI = 0,0` kalıyor, durma kuralı
+yürürlükte, ve belgelerdeki `P(15/15)` sayıları **yeniden ölçeklenmedi** —
+havuzlanmış ×1,76'yla hepsini büyütmek 2023/24'ü geçmişe uydurmak olurdu.
+Eklenen şey bir **okuma kuralı** (`coklu.py` başlığı).
 
-* `backend/spor_toto/coklu.py` — çoklu kupon planlayıcı. `d` maç **eksen**
-  (kuponlar arası sabitlenir, en olası `M` bileşim oynanır) + kalan maçlar
-  için ortak **alt sistem** (`en_iyi_secim` çözer). `M=1` bugünkü tek
-  sistemin kendisi, yani arama mevcut davranışı bir aday olarak geziyor.
-* `backend/tests/test_coklu.py` — 10 bekçi, hepsi geçiyor.
-* `backend/scripts/coklu_kiyasi.py` — 114 haftalık kıyas koşumu.
-
-**İki bekçi gerçek hata tuttu** (ikisi de yazılırken değil, koşarken):
-`p_onbes` plandan ve kupondan iki farklı sayı veriyordu (bileşim indeksi ham
-sembol düzeninde kurulup sıralama düzeninde çözülüyordu); ve ilk tasarım
-eksen dışını **üçlüye zorluyordu** — `en_iyi_secim` daha iyisini buluyordu
-(`P=0,1240` ↔ `0,1142`, üstelik 17.496 ↔ 19.683 kolon), çünkü üçüncü sembolü
-küçük bir maçta **çifte** kapsamanın neredeyse tamamını yarı bedele alır.
-Zorlama kaldırıldı.
-
-### GERÇEK bütçede (21.000 kolon = 210.000 TL) — oynanacak sayı budur
-
-    kupon    kolon    model P(15)   gözlenen   13 hafta
-        1   19.683       %7,489      15/114      %63,7   ← bugün
-       79   19.709       %9,864      21/114      %74,1
-      329   20.786      %10,602      20/114      %76,7   ×1,42
-
-Tek sistem 19.683'te **takılı kalıyor** (bedeli `2^a·3^b`, sonraki basamak
-39.366); aradaki 13.170 TL hiçbir şey satın almıyor. Çoklu kupon 20.786
-kullanıyor. 5. hafta için üretilen fiili plan: 777 kupon × 27 kolon,
-`P(15/15) = %17,242` ↔ tek sistem %13,081.
-
-### Kıyas koşuldu — sonuç (114 hafta, 19.683 kolon)
-
-    kupon   model P(15)   gözlenen   13 hafta   12+ kolon
-        1       %7,489      15/114     %63,7      18.628   ← bugün
-       27       %9,353      20/114     %72,1      21.911
-       81       %9,862      21/114     %74,1      24.131
-      729      %10,461      22/114     %76,2      26.274
-   19.683      %10,865      22/114     %77,6           —   ← üst sınır
-
-**Alt kademe beklentisi yalanlandı.** Çoklu kuponun 12–13'ten bedel
-alacağı varsayılmıştı; ölçüldü, **tam tersi**: 12+ tutturan kolon 18.628 →
-26.274 (+%41). `coklu.py` başlığındaki yanlış cümle düzeltildi, kütüğe
-"beklentiyi yalanladı" notuyla yazıldı. Ödünleşme yok.
-
-Kütüğe dört sayı girdi ve **kütük bekçisi bir hatamı tuttu**: `deger`
-alanı, anıldığı iddia edilen dosyada birebir geçmeli; ilk yazdığım bileşik
-dizeler ("%7,489 model, 15/114 gerceklesen") hiçbir yerde geçmiyordu.
-Girdiler deponun biçimine çevrildi.
-
-### Belge bekçilerinin yakaladıkları (hepsi kapatıldı)
-
-13 test eklemek bir zincir tetikledi ve deponun bekçileri tek tek saydı:
-test sayısı 1.903 → **1.916** (yedi belgede anılıyor), test dosyası 72 →
-**73**, betik 32 → **34**, README §7 modül ağacına `coklu.py`, README §9
-katman tablosuna "Çoklu kupon" satırı, README §13 belge dizinine
-`PROJE_GECMISI.md`. Sayı **tam kurulumla** ölçüldü (sklearn + lightgbm);
-eksik kurulumda düşük çıkıyor ve kütük bunu zaten yazmış.
-
-**Kendi açtığım bir sorunu da kapattım:** `docs/PROJE_GECMISI.md` (521
-commit dökümü) belge bekçilerini zehirliyordu — içindeki "1.799 test" gibi
-sayılar bayat değil, *commit mesajlarının kendisi*. Belge
-`tests/test_belgeler.py::DONMUS_BELGELER`e eklendi; tazelemek git geçmişini
-yeniden yazmak olurdu.
+Eklenen dosyalar: `spor_toto/duyarlilik.py`, `scripts/banko_duyarliligi.py`,
+`tests/test_duyarlilik.py` (14 bekçi). Belge zinciri kapatıldı: test 1.916 →
+**1.930**, dosya 73 → **74**, betik 34 → **35**, modül 56 → **57**; §3.67 de
+bu oturumda yazıldı (çoklu kupon bulgusu yol haritasında hiç yoktu).
 
 ### Sıradaki adım
 
-1. Sonraki eksen: **banko kalibrasyonu.** Plan `P(15/15) = Π p₁` biçiminde
-   olduğu için en emin maçların olasılık doğruluğu doğrudan çarpan.
-   `ISTATISTIK_YOL_HARITASI` §3.64 bankoda modelin `q`sunun gerçekleşenden
-   5,6 puan yüksek olduğunu ölçmüş ve kaynağı T1 Süper Lig'e indirmiş; etki
-   sönüyor (son sezon +%0,3) ve düzeltme uygulanmamış. Yeniden açılacak.
-2. **Haftalık üretim hattına bağla.** `coklu_plan_serisi` henüz yalnızca
-   kıyas betiğinden çağrılıyor; `scripts/super_toto_hafta.py` hâlâ tek
-   sistem kuruyor. Oynanan kupon değişmeden bu bulgu kâğıt üstünde kalır.
-3. **Bağımsızlık varsayımını sına.** `P(15/15)` çarpımı maçları bağımsız
-   sayıyor; `kuyruk.py` korpus üst sınırında kuyruğun %5 şiştiğini ölçmüş.
-   Oran dayanıklı ama mutlak sayı bu varsayıma bağlı — çoklu kupon
-   kesitinde yeniden ölçülmeli.
-4. Operasyon: 27–729 kupon tek haftada fiilen yatırılabiliyor mu, hangi
-   kanaldan? Sahibi "çözeriz" dedi, o yüzden plan **tavansız** kuruluyor;
-   tavan ortaya çıkınca `VARSAYILAN_KUPON_TAVANI` ona göre ayarlanır.
+1. **Haftalık üretim hattı.** `scripts/coklu_kupon.py` haftanın oynanacak
+   çoklu kuponlarını üretiyor, ama `scripts/super_toto_hafta.py` hâlâ tek
+   sistem kuruyor. Oynanan kupon değişmeden §3.67 kâğıt üstünde kalır. Bu
+   oturumun bulgusu şunu ekliyor: geçişin **kalibrasyon** tarafında bir
+   engeli yok — sapma seçimi değiştirmiyor, yani karar yalnızca operasyon
+   (kaç kupon fiilen yatırılabilir) sorusuna bağlı.
+2. **Bağımsızlık varsayımı, çoklu kupon kesitinde.** §3.46 korpusta ölçtü
+   (kuyruk üst sınırda %5 şişiyor) ama `P(15/15)` çarpımı çoklu kupon
+   şeklinde yeniden ölçülmedi. Not: §3.68'in havuzlanmış ×1,76'sı bağımlılık
+   **değil** marjinal sapmayla kapanıyor, yani bağımlılık bu açığın taşıyıcı
+   sebebi değil — ama mutlak değerin ikinci kaynağı hâlâ o.
+3. **Operasyon.** 27–729 kupon tek haftada fiilen yatırılabiliyor mu, hangi
+   kanaldan? Sahibi "çözeriz" dedi, plan **tavansız** kuruluyor; tavan
+   ortaya çıkınca `VARSAYILAN_KUPON_TAVANI` ona göre ayarlanır. Artık 1.
+   maddenin de önkoşulu bu.
+4. **Sönümün kendisi bir eksen.** Aynı imza üç ayrı ölçümde çıktı. Dördüncü
+   bir örneklem (2026/27 birikimi) ya "piyasa keskinleşti"yi doğrular ya da
+   üç ölçümün aynı gürültüyü gördüğünü. §3.64'ün durma kuralı (`n ≥ 300`)
+   bunu zaten bekliyor; haftalık sonuç girildikçe kendiliğinden birikir.
 
 ### Neden böyle
 
-Hedef 15/15 ve bütçe sabit. O hâlde iş iyi tanımlı: **sabit kolon bütçesi
-altında `P(15/15)`'i enbüyüklemek.** Model iyileştirmesi bu çarpanın
-içindeki `p`leri kıpırdatır; kümenin şekli ise çarpanın kendisini
-değiştiriyor ve ölçülen kazanç (×1,45) hiçbir model değişikliğinden
-alınmadı. O yüzden sıra önce şekilde, sonra kalibrasyonda.
+Hedef 15/15, bütçe sabit, iş iyi tanımlı: **sabit kolon bütçesi altında
+`P(15/15)`'i enbüyüklemek.** Bu oturum çarpanın *içindeki* `p`lere baktı ve
+oradan kazanç **çıkmadığını** ölçtü — sapma gerçek ama güncel değil, ve
+güncel olsa bile planı değiştirmiyor. O hâlde sıra geri şekle ve operasyona
+dönüyor: kazancın ölçülmüş olduğu yer orası ve oynanan kupon hâlâ tek
+sistem.
 
 ## Geçmiş girdiler
+
+**2026-09-13 (önceki)** — çoklu kupon işi: `coklu.py` + 13 bekçi +
+`coklu_kiyasi.py` + `coklu_kupon.py`. Çarpım kısıtı kalktı, `P(15/15)` aynı
+bütçede ×1,45 (19.683 kolon), gerçek bütçede (21.000) ×1,42. Alt kademe
+beklentisi **yalanlandı**: 12+ tutturan kolon 18.628 → 26.274 (+%41), yani
+ödünleşme yok. Ayrıntı artık belgede: `docs/ISTATISTIK_YOL_HARITASI.md`
+§3.67 (bu oturumda yol haritasına bağlandı) ve `coklu.py` başlığı.
+
 
 **2026-09-13 (önceki)** — `docs/PROJE_GECMISI.md` yazıldı: 521 commit, ilk
 commit'ten HEAD'e kronolojik, hash+tarih+mesaj+stat. Depo sığ klonlanmıştı,

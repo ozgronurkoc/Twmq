@@ -4,8 +4,11 @@
 `super_toto_hafta.py` haftayı okur, profilini çıkarır ve **tek** bir tam
 sistem kurar (`secim.en_iyi_secim`). Bu script aynı olasılıkları alır ve
 `coklu.coklu_plan` ile aynı bütçeyi birden çok kupona böler. 114 haftada
-ölçülen fark, aynı parada `P(15/15)` için **×1,40**
-(`scripts/coklu_kiyasi.py`).
+ölçülen fark, aynı parada `P(15/15)` için **×1,40** — ve bu çarpan hangi
+satırdan geldiği yazılmadan okunmamalı: **729 kupon ↔ tek sistem, 19.683
+kolonda** (%10,461 ↔ %7,489). Aynı bütçedeki üst sınır (serbest küme)
+×1,45, gerçek bütçede (21.000 kolon) 329 kupon ×1,42. Üçü ayrı satırdır ve
+üçü de `scripts/coklu_kiyasi.py`'den çıkar; ayrıntı `coklu.py` başlığında.
 
 Olasılıklar `super_toto_hafta.hafta_yukle`den gelir — ayrı bir hesap
 kurulmadı ve kurulmamalı: kuponu **kuran** olasılıkla onu **değerlendiren**
@@ -53,6 +56,10 @@ def plan_uret(d: dict, butce: int, tavan: int | None) -> dict:
 
     # kıyas: aynı bütçede tek sistem ne verirdi
     tek = en_iyi_secim(probs, butce, esik=0)
+    if tek is None:
+        # `coklu_plan` yukarıda ValueError atardı, yani buraya normalde
+        # gelinmez; sessizce `None` taşımak yerine SESLİ patlıyor.
+        raise ValueError(f"Butce tek sistemi de karsilamiyor: {butce}")
     p_tek = 1.0
     for m, sec in zip(maclar, tek.secimler):
         p_tek *= sum(m["probs"][s] for s in sec)

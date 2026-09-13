@@ -17,11 +17,10 @@ import json
 import sys
 from collections.abc import Sequence
 from pathlib import Path
+from typing import Any
 
 if __package__ in (None, ""):  # pragma: no cover
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-
-import numpy as np
 
 from scripts.kademe_analizi import ikramiye_tablolari, tam_haftalar
 from spor_toto.coklu import coklu_plan_serisi, kademe_dagilimi
@@ -53,8 +52,12 @@ def kos(butce: int) -> dict:
     haftalar = tam_haftalar(ars)
     n = len(haftalar)
 
-    top = {t: {"p": 0.0, "isabet": 0, "kolon": 0, "kupon": 0,
-               "kademe": {12: 0, 13: 0, 14: 0, 15: 0}} for t in TAVANLAR}
+    # Tip açıkça yazılıyor: `kademe` bir sözlük, ötekiler sayı — çıkarım
+    # ortak üst tip olarak `object` buluyor ve aşağıdaki her toplama mypy'da
+    # düşüyordu.
+    top: dict[int, dict[str, Any]] = {
+        t: {"p": 0.0, "isabet": 0, "kolon": 0, "kupon": 0,
+            "kademe": {12: 0, 13: 0, 14: 0, 15: 0}} for t in TAVANLAR}
 
     for _sezon, _w, lst in haftalar:
         probs, gercek = hafta_probs(lst)
