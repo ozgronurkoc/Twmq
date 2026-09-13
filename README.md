@@ -1148,6 +1148,7 @@ backend/
     benzer.py          "Bu oranda geçmişte ne oldu" = /api/benzer
     secim.py           KUPON: işaretleri HEDEFE göre seçer — eşiğe göre değil
     duz.py             KUPON: düz sistemde kademe başına KOLON SAYIMI ve para (seyreltmeli)
+    coklu.py           KUPON: ayni butceyi COK KUPONA boler — carpim kisitini kaldirir
     karne.py           PARA: kuponun gerçek ikramiye tablolarına karşı getirisi (garanti tabanı)
     hafta_hakki.py     PARA: bütçe kısıtı kalkınca ne kalıyor — cephe, cetvel, kural kıyası (E6)
     kalabalik.py       HAVUZ: kalabalık modeli — 112 haftanın kademe adetlerine oturtulmuş (λ)
@@ -1188,7 +1189,7 @@ backend/
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
                        sehir/ · sistem_fiyat/
-  tests/               pytest (72 dosya → 1.903 test; §9'da katman dökümü)
+  tests/               pytest (73 dosya → 1.916 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1395,8 +1396,8 @@ Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant'lar, CLI (Bayes pre
 dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri test,
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
-eşleme, ikinci kayıt). **72 test dosyası, parametrizasyonla
-1.903 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+eşleme, ikinci kayıt). **73 test dosyası, parametrizasyonla
+1.916 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
@@ -1433,6 +1434,7 @@ karşı denetler):
 | Devir tavanı (dış tarama · pozitif BD koşulu) | **`devir_tavani`** | 5 |
 | Haftanın hakkı (E6 · cephe · cetvel · Holm'lu işaret sınavı) | **`hafta_hakki`** | 25 |
 | 2.↔3. sembol sırası (beraberlik 3. sırada · bant sözleşmesi) | **`sembol_sirasi`** | 4 |
+| Çoklu kupon (çarpım kısıtı · kupon ayrıklığı · bütçe boşa gitmesin) | **`coklu`** | 13 |
 
 İki test bilerek **ağa çıkmaz**: `test_snapshot_iddaa.py` gerçek bültenden alınmış
 küçük bir örnek payload üzerinde koşar — ağ çağrısını sınamak bu paketin işi değil,
@@ -1791,6 +1793,7 @@ olması gerekir. Tanımlıysa yalnızca **durum değişiminde** bildirim gider.
 | [`docs/BENZER_PLANI_ESLEMESI.md`](docs/BENZER_PLANI_ESLEMESI.md) | `benzer.py` için gelen dış planın aynı biçimde eşlemesi: gerçekten eksik olan üçü (`inf` oran · toleransın üç kapıda üç sınırı · zaman kesmesi) uygulandı, altısı gerekçesiyle reddedildi, üçü kaydedildi |
 | [`docs/GELECEK_MIMARISI_ESLEMESI.md`](docs/GELECEK_MIMARISI_ESLEMESI.md) | Dışarıdan gelen bir **gelecek mimarisi makalesinin** aynı biçimde eşlemesi: önerdiği Faz I–V'in tamamı zaten yapılmış ve **ölçülmüştü** (hiçbir aile kapanış fiyatını geçmedi), gerçekten yeni olan tek madde **maçlar arası bağımlılığın kuyruk etkisi** oldu — ölçüldü ve **eksen kapandı** (§3.46); makalenin hiç görmediği şey ise açık olan tek eksen: **havuz** |
 | [`docs/KADEME_OLASILIKLARI.md`](docs/KADEME_OLASILIKLARI.md) | **15/15 yapma olasılığı** ve onun üç kardeşi (14, 13, 12): 3^15 uzayının tamamı açılarak ölçülen tek kolon olasılığı (874x), gerçek sonucun 114 haftadaki sırası, bütçeye göre kademe tablosu, paranın hangi kademeden geldiği. İki yeni ölçüm: **seyreltme** (Spearman −0,843 — tuttuğun hafta herkesin tuttuğu haftadır) ve arşivde **32 anormal hafta**. Ölçüm hattı `scripts/kademe_analizi.py` |
+| [`docs/PROJE_GECMISI.md`](docs/PROJE_GECMISI.md) | **Commit commit proje kronolojisi** — ilk commit'ten bugune 521 commit, her biri icin hash, tarih, tam mesaj ve degisiklik istatistigi. `git log --reverse` dokumudur: **donmus bir kayittir**, tazelenmez ve belge bekcilerinin sayi taramasindan bilerek muaftir (`tests/test_belgeler.py` `DONMUS_BELGELER`) — icindeki her sayi bir commit mesajinin kendisidir |
 | [`docs/DUZ_SISTEME_GECIS.md`](docs/DUZ_SISTEME_GECIS.md) | **Kaplama katmanının sökülmesinin gerekçesi ve planı.** Aynı kolon bütçesinde her sistemin erişebildiği en iyi şekil karşılaştırıldı: düz, E[TL]'de **1,78x-5,26x** ve `P(>=12)`'de önde: fark sistemden değil, `solve_fix16`'in **en az yedi çifte** şartının dayattığı yayvan şekilden geliyor. Once bilinen dogrusallik yeniden uretildi (aynı işaretler iki sistemde kolon başına 421,0 ↔ 421,9 TL). Belge **kaplama sökülmeden önce** yazıldı: söküm bu kıyası da götürdüğü için gerekçe yalnızca burada kalıyor. Ölçüm hattı `scripts/sistem_kiyasi.py` |
 | [`docs/KAZANMA_KARNESI.md`](docs/KAZANMA_KARNESI.md) | **Canlı karne** — her hafta öngörülen (`P(k≤eşik)`, `E[TL]`) ↔ gerçekleşen (kaçak, kademe, ödül), kümülatif net. Bir tahmin kaydı DEĞİL: plan kupon öncesi girdilerden bugünkü motorla yeniden türetiliyor ve ödül **garanti tabanıdır** (alt sınır). `scripts/hafta_kos.py --sonrasi` ile yeniden üretilir |
 | [`docs/KAZANMA_PLANI.md`](docs/KAZANMA_PLANI.md) | **Sekiz haftalık ölçüm sırası** — kazanma şansını artırmanın planı. Teşhis: tahmin ekseni on bir ölçümle kapalı ve `KADEME` §6'nın seyreltmesi (Spearman −0,843) kalanı da yiyor; açık olan eksen havuz. Çekirdeği hiç birleştirilmemiş iki arşiv: 223 haftalık resmî kazanan adedi × 112 haftalık kupon+oran+sonuç = **448 gözlem**, ve `getiri.KALABALIK_MODELLERI`'nin üç **varsayımı** o gözleme hiç oturtulmadı. Her fazın durma kuralı önceden yazılı |
