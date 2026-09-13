@@ -171,11 +171,11 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/components/super-toto/tahmin2.tsx` | **2. Tahmin** paneli — `1. Tahmin` / `2. Tahmin` sekmeleri arasında geçilir; para birimli hiçbir sayı yok. Hafta kapandığında sonuç sütunu ve ayar karnesi açılır (§3.38) |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **1.996 test**; **136'sı** istatistik katmanına (`history` `odds` `backtest`
+paketi toplam **2.021 test**; **136'sı** istatistik katmanına (`history` `odds` `backtest`
 `api_stats` `api_backtest` `snapshot_iddaa`), **672'si** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre`
-`avrupa` `sehir` **`arena`** **`sizinti`** **`kuyruk`** **`sembol_sirasi`**), **36'sı** 2. Tahmin'e (`tahmin2`), **45'i** sonuç değerlendirmesine (`degerlendir`). Dosya adlarıyla sayılıdır ki tablo elle bakım gerektirmesin —
+`avrupa` `sehir` **`arena`** **`sizinti`** **`kuyruk`** **`sembol_sirasi`**), **36'sı** 2. Tahmin'e (`tahmin2`), **46'sı** sonuç değerlendirmesine (`degerlendir`). Dosya adlarıyla sayılıdır ki tablo elle bakım gerektirmesin —
 `tests/test_belgeler.py` onları gerçek koleksiyona karşı denetler.
 `python -m spor_toto.health` **22 değişmez** çalıştırır — ikisi (`oran_arsivi`, `geri_test`)
 istatistik katmanını, biri (`tahmin_referanslari`) tahmin katmanının ölçüm koşumunu korur,
@@ -6991,6 +6991,152 @@ kararı değiştirmiyor**: ne 81'de kalma kararını, ne 729'a çıkma kararın�
 
 ---
 
+### 3.75 Kupon ≠ slip — planı yazmanın **aynı kolonlarla** daha ucuz hâli
+
+§3.74 operasyonun istatistiksel yarısını kapattı ve lojistik yarısını *"bu
+depodan ölçülemez"* diye bıraktı: **bir insan 81 kuponu kupon kapanmadan
+girebiliyor mu?** Kapanmayan yarı gerçekten bir insan olgusu. Ama o cümle
+bir şeyi **sormadan doğru kabul ediyordu**: 81 kupon 81 slip demek.
+
+Demek değil. Planın kuponları birer **kutudur** — her maçta bir sembol
+kümesi, kolon sayısı kümelerin çarpımı. İki kutu *bir tek* konumda
+ayrışıyorsa o konumdaki kümeler birleştirilip **tek kutu** yazılabilir:
+
+```
+kupon A:  1  2  102  102  2 … 2 …
+kupon B:  1  2  102  102  2 … 1 …
+──────────────────────────────────
+tek slip: 1  2  102  102  2 … 12 …
+```
+
+Bu bir yaklaşıklık değil bir **özdeşliktir**. Birleşmiş kutunun kolon
+kümesi ikisinin birleşimidir, kolon sayısı toplamlarıdır (kutular ayrık),
+ve `P(15/15)` kolon kümesinin fonksiyonu olduğu için **birebir aynı
+kalır**. Değişen tek şey kaç kez elle kutu doldurulacağı.
+
+Üretici: `cd backend && python scripts/sadelestirme_kiyasi.py --butce 21000`
+(114 tam hafta, ~11 dk). Gövde `spor_toto/sadelestirme.py`, 24 bekçi.
+
+#### Neden örtüşen kapama değil, ayrık bölüntü
+
+Aynı kolon kümesini daha az kutuyla yazmanın iki yolu var ve biri tuzak.
+Kutuların **örtüşmesine** izin verilirse arama serbestleşir — ama örtüşen
+kolon iki kez oynanır, yani iki kez ödenir. Ölçüldü (5. haftanın donmuş
+kaydı, açgözlü kapama): slip sayısı **25**, yani ayrık bölüntüyle **aynı**,
+ama kolon 19.683 yerine **33.048** — bütçenin 1,68 katı. Serbestlik burada
+hiçbir şey almıyor, yalnızca para harcıyor. Gövde bu yüzden bölüntü arar.
+
+#### Gerçek yük — 114 tam hafta, 21.000 kolon
+
+| tavan | kupon | slip (ort) | en kötü hafta | × | kutucuk | → | × | en büyük slip |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| 27 | 27 | 21,5 | 26 | ×1,26 | 701 | 561 | ×1,25 | 6.561 kolon |
+| **81** | **81** | **60,1** | **75** | **×1,35** | **1.945** | **1.447** | **×1,34** | **6.561 kolon** |
+| 243 | 243 | 162,6 | 215 | ×1,49 | 5.290 | 3.550 | ×1,49 | 6.561 kolon |
+| 729 | 729 | 458,7 | 632 | ×1,59 | 14.295 | 9.003 | ×1,59 | 2.187 kolon |
+
+Üç şey okunuyor:
+
+1. **81 kupon 60 slip.** Yük dörtte bir azaldı ve karşılığında hiçbir şey
+   verilmedi: aynı kolonlar, aynı para, aynı `P(15/15)` (ölçülen sapma
+   en çok **7,2·10⁻¹⁶**, yani kayan nokta gürültüsü).
+2. **Karalanan kutucuk da aynı oranda düşüyor.** Slip sayısı girişin *kaç
+   kez* yapıldığını sayar, kutucuk *ne kadar* iş olduğunu; ikisi birlikte
+   düştüğü için "daha az ama daha ağır slip" itirazı bu kesitte geçmiyor.
+3. **En büyük birleşmiş slip 6.561 kolon** — deponun bir yıldır **tek
+   giriş** saydığı tek sistem kuponunun (19.683 kolon) üçte biri. İddia
+   deponun kendi varsayımına yaslanıyor, yeni bir varsayım getirmiyor.
+
+#### Ve asıl bulgu: **tahsis birleşmeyi öldürüyor**
+
+İki kutu ancak bir tek konumda ayrışıyorsa birleşir. §3.71 her kupona
+**ayrı** alt sistem bütçesi verdi; o günden beri kuponların alt sistemleri
+de birbirinden ayrışıyor ve ayrışan iki kupon **hiç** birleşmiyor. Yani
+§3.71'in `P` kazancının ölçülmemiş bir operasyon bedeli vardı:
+
+| tavan | tahsisli kupon → slip | tekdüze kupon → slip | slip oranı | birleşme (tahsisli) | birleşme (tekdüze) | `P` kazancı |
+|---|---:|---:|---:|---:|---:|---:|
+| 27 | 27 → 21,5 | 27,0 → 11,3 | ×1,90 | ×1,26 | ×2,39 | ×1,0694 |
+| **81** | **81 → 60,1** | **79,1 → 27,5** | **×2,19** | **×1,35** | **×2,88** | **×1,0634** |
+| 243 | 243 → 162,6 | 135,6 → 44,1 | ×3,69 | ×1,49 | ×3,07 | ×1,0528 |
+| 729 | 729 → 458,7 | 329,1 → 88,5 | ×5,18 | ×1,59 | ×3,72 | ×1,0408 |
+
+`tekdüze kupon` sütunu süs değil, **okuma şartı**: tekdüze arama tavana
+dayanmak zorunda değil (`bütçe // bedel` onu erken kesebilir), yani slip
+farkı iki ayrı şeyden gelebilir — daha az kupon, ya da daha çok birleşme.
+27'de kupon sayısı **aynı** (27,0 ↔ 27) ve fark tamamen birleşmeden
+geliyor: ×2,39'a karşı ×1,26. 729'da ise tekdüze plan tavana ulaşamıyor
+(329,1 kupon) ve ×5,18'in bir kısmı bu.
+
+Aynı satırların hedef karşılığı (13 hafta, `1 − Π(1 − p_w)`):
+81 kuponda **%76,98 ↔ %74,76**, 729'da **%78,82 ↔ %77,40**. İlki §3.73'ün
+%77,0'siyle, ikincisi %78,8'iyle aynı koşumdan çıkıyor — yani bu bölüm
+§3.73'ün sayılarını da yeniden üretiyor.
+
+#### Karar: eşik, ama bu kez **slip** cinsinden
+
+§3.74'ün eşiği "fazladan **kupon** ne zaman zarara döner" diye soruyordu.
+Fazladan girilen şey slip olduğuna göre eşik de onunla yazılmalı:
+
+| kıyas | slip türü | hedef farkı | fazla slip | `r*` | yani |
+|---|---|---:|---:|---:|---|
+| 81 → 243 | takas | +1,08 p | 102,5 | %8,37 | 1 slipte 12 |
+| **81 → 729** | **takas** | **+1,84 p** | **398,6** | **%10,52** | **1 slipte 10** |
+| 81 → 729 | atlama | +1,84 p | 398,6 | %6,05 | 1 slipte 17 |
+| **tahsis @ 81** | **takas** | **+2,22 p** | **32,6** | **%19,22** | **1 slipte 5** |
+| tahsis @ 81 | atlama | +2,22 p | 32,6 | %11,64 | 1 slipte 9 |
+| tahsis @ 729 | takas | +1,42 p | 370,1 | %8,74 | 1 slipte 11 |
+
+**İki hüküm.**
+
+* **Tavan kararı değişmedi ve biraz daha rahatladı.** §3.74 81 → 729 için
+  %9,06 (1 kuponda 11) diyordu; birim slipe çevrilince eşik **%10,52**'ye
+  çıkıyor, çünkü fazladan giriş sanıldığından az. Yön aynı: eşik makul
+  insan hatasının çok üstünde.
+* **§3.71 ayakta.** Tahsisi açık tutmak 81 kuponda 32,6 fazla slip
+  demek ve bunun zarara dönmesi için **1 slipte 5** (takas) ya da **1
+  slipte 9** (atlama) hata gerekiyor. Bu bir özensizlik değil, girişin
+  hiç yapılmamış olması demektir. Tahsis kalıyor.
+
+#### Ölçüm kâğıtta kalmadı — kayda girdi
+
+`coklu_kupon.py` artık kayda `slipler` listesini de yazıyor (`kuponlar`
+plandır ve ölçümler onun üstünden koşar; `slipler` fiilen doldurulan
+kutulardır) ve `denetim` bloğu slip sayısını, kutucuk sayısını ve
+sliplerin kendi yoğunlaşmasını taşıyor. Betiğin bastığı tablo da artık
+sliplerdir — o çıktıyı okuyan kişi terminalin başında oturuyor.
+
+Özdeşlik iki yerde sınanıyor ve ikincisi asıl olan: yazarken
+(`coklu_kupon.py` sesli patlar) **ve artefaktın kendisinde**
+(`test_coklu_kaydinin_SLIPLERI_ayni_kolonlari_oynuyor`, donmuş
+dosyaları tarar). §3.74'ün sıralama dersi birebir buydu — kural yazan
+gövdede doğruydu ve donmuş kayıtların altısında tutmuyordu.
+
+#### Okuma kuralı ve sınırlar
+
+* **Bulunan slip sayısı bir ÜST SINIRDIR.** Ayrık kutu bölüntüsünün
+  enküçüğünü bulmak genel hâlde zordur; `birlestir` açgözlü bir fixpoint
+  verir. Bu, iddiayı **zayıflatan** yöndedir: gerçek yük ölçülenden ancak
+  daha az olabilir. `en_az_slip` küçük örneklerde kesin cevabı arıyor ve
+  ölçülen dört ailede ikisi **eşit** çıktı; ışın araması (genişlik 8 ve
+  40) da hiçbir haftada iyileştiremedi.
+* **`r*` bir tahmin değil bir sınırdır** — §3.74'teki anlamıyla aynı.
+  Gerçek hata oranı bu depoda hâlâ ölçülmedi ve ölçülemez.
+* **Beklenen kayıp modeli seçilmedi.** Birleşme slip sayısını küçültürken
+  slip başına bedeli büyütüyor (atlanan kutu artık daha büyük). Hata
+  oranı slip başınaysa iki etki kısmen birbirini götürür; kutucuk
+  başınaysa götürmez. Tablo iki sayıyı da ayrı ayrı veriyor ve hangisinin
+  doğru olduğunu **söylemiyor** — o, §3.74'ün kapanmayan yarısı.
+* **Kapanmayan yarı küçüldü, kapanmadı.** "Bir insan 81 kuponu
+  girebiliyor mu" sorusu artık "bir insan **60 slip** girebiliyor mu"
+  sorusudur, ve en büyüğü deponun zaten tek giriş saydığı kupondan
+  küçüktür. Ölçmek için hâlâ giriş süresi kaydı gerekiyor.
+* **Yeniden açılma şartı, ölçülmüş olarak:** gerçek hata oranının %5'i
+  (atlama) aşması, ya da aramanın alt sistem çeşitliliğini artırması —
+  ikincisi birleşme oranını daha da düşürür ve tahsis eşiğini aşağı çeker.
+
+---
+
 ## 4. Sayfada bugün ne var
 
 **`/istatistik`** — sezon dağılımı (en sık sonuç + pay çubuğu) · 5 sayı kutusu (sembol
@@ -8028,7 +8174,7 @@ python -m spor_toto.kosum                  # kayıtlı koşumlar
 python -m spor_toto.kosum --son disari     # son koşumun ortamı
 
 # Denetim
-pytest -q                                  # 1.996 test (136'sı bu katman, 672'si tahmin)
+pytest -q                                  # 2.021 test (136'sı bu katman, 672'si tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out

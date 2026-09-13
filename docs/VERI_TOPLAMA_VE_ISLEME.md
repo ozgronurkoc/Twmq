@@ -1600,7 +1600,7 @@ tablolar (script'in bastığı lig dağılımı) bunu yakalayan şeydi.
 
 Dört veri setinin bekçileri dört dosyadadır — `test_history` (35) ·
 `test_odds` (9) · `test_snapshot_iddaa` (14) · `test_sportoto_arsiv` (28):
-**86 test** (backend paketi 1.996). Sayı burada dosya dosya yazılıyor çünkü
+**86 test** (backend paketi 2.021). Sayı burada dosya dosya yazılıyor çünkü
 önceki hâli ("113") elle sayılmıştı ve neyi topladığı yazmıyordu; hangi
 dosyaları saydığı yazılmayan bir toplam, ilk değişiklikte sessizce bayatlar.
 `python -m spor_toto.health`

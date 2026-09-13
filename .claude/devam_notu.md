@@ -45,92 +45,115 @@ benim kararım):
 
 ## Şu an (en güncel)
 
-**2026-09-13 — dal `claude/devam-edelim-w8mob0`**
+**2026-09-13 — dal `claude/devam-edelim-sltxrg`**
 
-### Bu oturumda ne yapıldı — **operasyon** fiyatlandı (§3.74)
+### Bu oturumda ne yapıldı — **kupon ≠ slip** (§3.75)
 
-Not'un sıradaki adımlarından 1 ve 2 veriye bağlı (5. haftanın sonucu girilmedi,
-6. hafta yok). Açık duran tek iş **operasyondu** ve §3.73 onun yalnızca
-yarısını fiyatlamıştı: 81'de takılmanın bedeli hedefte 1,8 puan. Fiyatlanmayan
-yarısı sorunun içindeki "**güvenle**" kelimesiydi — 81 kupon elle giriliyor.
+Not'un sıradaki adımlarından 1 ve 2 hâlâ veriye bağlı (5. haftanın sonucu
+girilmedi, 6. hafta yok) ve 4 birikmeyi bekliyor. Açık duran tek iş 3'tü ve
+"saf lojistik, bu depodan ölçülemez" diye kapatılmıştı. O cümle bir şeyi
+**sormadan doğru kabul ediyordu**: *81 kupon 81 slip demek.*
 
-**Önce bir gövde hatası çıktı.** `coklu.p_onbes` **oynanan** kuponu
-puanlayamıyor: olasılıkları topluyor ve bu yalnızca kuponlar ayrıkken doğru.
-Bir kupon iki kez girilirse ayrıklık bozulur ve toplam aynı kolonu iki kez
-sayar — ölçüldü, sapma **tek yöne**: gerçek %9,563 iken `p_onbes` %9,601
-diyor. Yani denetim en çok ihtiyaç duyulduğu anda iyimser.
-`operasyon.birlesim_p_onbes` kolonları tek tek sayıyor.
+Demek değil. Planın kuponları birer kutudur; iki kutu **bir tek** konumda
+ayrışıyorsa o konumdaki sembol kümeleri birleştirilip tek kutu yazılabilir.
+Bu bir yaklaşıklık değil **özdeşlik**: aynı kolonlar, aynı kolon sayısı,
+aynı `P(15/15)` (ölçülen sapma en çok 7,2·10⁻¹⁶). Değişen tek şey kaç kez
+elle kutu doldurulacağı.
 
-**Ölçülen (114 hafta, 21.000 kolon, tek slipin o haftanın `P`si içindeki payı):**
+**Ölçülen (114 tam hafta, 21.000 kolon):**
 
-    tavan   P(15/15)  hedef   atlama/kopya      takas          fazla
-       27     %10,00  %75,2   +3,70 | +44,23   +2,33 | +41,62   −0,85
-       81     %10,49  %77,0   +1,23 | +42,76   +0,79 | +39,53   −0,28
-      243     %10,81  %78,1   +0,41 | +35,93   +0,27 | +31,98   −0,09
-      729     %11,03  %78,8   +0,14 | +26,59   +0,09 | +26,04   −0,03
+    tavan  kupon   slip  en kötü     ×   kutucuk →          ×   en büyük slip
+       27     27   21,5       26  1,26   701 →   561     1,25    6.561 kolon
+       81     81   60,1       75  1,35 1.945 → 1.447     1,34    6.561 kolon
+      243    243  162,6      215  1,49 5.290 → 3.550     1,49    6.561 kolon
+      729    729  458,7      632  1,59 14.295 → 9.003    1,59    2.187 kolon
 
-Üç şey çıktı:
+En büyük birleşmiş slip (6.561 kolon) deponun bir yıldır **tek giriş**
+saydığı tek sistem kuponunun (19.683) üçte biri — iddia yeni bir varsayım
+getirmiyor.
 
-1. **`fazla` işaret `P`yi YÜKSELTİYOR**, bedeli parada: 81 kuponda tek bir
-   fazla işaret **+65.610 TL** (bütçenin %31'i).
-2. **Ortalama küçük, en kötü 35 kat büyük** — ve sebebi yoğunlaşma:
-   **81 kuponun ortalama 11'i hedefin yarısını taşıyor** (en kötü haftada 2).
-3. **Eşikler uzak.** 81 → 729 çıkmak ancak **11 kuponda 1** yanlış
-   işaretlenirse zarara dönüyor; 81'i özensiz girmek 729'un kazancını ancak
-   13 kuponda 1 hatada geri veriyor. Yani operasyon hatası **hiçbir kararı
-   değiştirmiyor**.
+### Asıl bulgu: **tahsis birleşmeyi öldürüyor**
+
+İki kutu ancak bir tek konumda ayrışıyorsa birleşir. §3.71 her kupona ayrı
+alt sistem bütçesi verdiğinden alt sistemler de ayrışıyor ve ayrışan iki
+kupon **hiç** birleşmiyor. Tavan 81'de: tahsisli 81 → 60,1 slip (×1,35),
+tekdüze 79,1 → 27,5 (×2,88), yani tahsis **×2,19 slip** demek. Tavan 27'de
+kupon sayısı aynı (27,0 ↔ 27) ve fark **tamamen** birleşmeden geliyor.
+
+**Karar: §3.71 ayakta.** Tahsisin hedefteki kazancı +2,22 puan (%76,98 ↔
+%74,76), bedeli 32,6 fazla slip; zarara dönmesi için **1 slipte 5** (takas)
+ya da **1 slipte 9** (atlama) hata gerekir — bu özensizlik değil, girişin
+hiç yapılmamış olması demektir. Tavan kararı da değişmedi ve biraz
+rahatladı: §3.74'ün 81 → 729 eşiği kupon cinsinden %9,06 iken slip
+cinsinden **%10,52**.
 
 ### Ölçüm kâğıtta kalmadı — kayda girdi
 
-Yoğunlaşmadan çıkan kural ("kuponları olasılığa göre azalan sırala, ilk kümeyi
-iki kez oku") ancak girişi yapan kişinin elindeki dosyada varsa işe yarar.
-`coklu_kupon.py` artık kuponları azalan sırada yazıyor ve `plan.denetim` bloğu
-en büyük payı + yarıyı taşıyan kupon sayısını taşıyor. **Sıralama gerçek iş
-yapıyor**: aramanın kendi çıktısı azalan değil (51 gerçek hafta × tavan
-kıyasının 6'sında karışık). Donmuş beş kayıt tesadüfen sıralıydı; bekçi artık
-artefaktın kendisini sınıyor.
+`coklu_kupon.py` artık kayda `slipler` listesini de yazıyor (`kuponlar`
+plandır, ölçümler onun üstünden koşar) ve bastığı tablo artık sliplerdir.
+`denetim` bloğu slip sayısını, kutucuk sayısını ve sliplerin kendi
+yoğunlaşmasını taşıyor. Özdeşlik iki yerde sınanıyor ve ikincisi asıl
+olan: yazarken sesli patlıyor **ve artefaktın kendisinde**
+(`test_coklu_kaydinin_SLIPLERI_ayni_kolonlari_oynuyor` donmuş dosyaları
+tarar) — §3.74'ün sıralama dersi birebir buydu.
 
 ### Yan işler
 
-* `spor_toto/operasyon.py` + `tests/test_operasyon.py` (22 bekçi) +
-  `scripts/operasyon_kiyasi.py`.
-* Kayıplar **kapalı formdur ama kesindir** (örtüşme dâhil); bekçisi kolon
-  kolon sayan `birlesim_p_onbes`e karşı koşuyor, biri gerçek arşiv haftasında.
-* `_tekil_tanik` ikinci tanığı görünce duruyor — 729 kuponda yarım milyon çift
-  var ve erken çıkış onu darboğaz olmaktan çıkardı.
-* `operasyon.py` kapının doctest listesine girdi. `core.SEMBOLLER` yeniden
-  kullanıldı (ilk sürümde kopyalanmıştı).
-* Belge zinciri: test 1.974 → **1.996**, dosya 75 → 76, betik 39 → 40,
-  README §7 modül ağacı 58 → 59, §9'a `operasyon` satırı.
+* `spor_toto/sadelestirme.py` + `tests/test_sadelestirme.py` (24 bekçi) +
+  `scripts/sadelestirme_kiyasi.py`.
+* Gövde **grup birleştirme** (her turda en çok kazandıran konum, fixpoint'e
+  kadar). İkişer birleştirme sıraya duyarlıydı (5. haftada 60 rastgele
+  sırada en iyisi 30, bu gövde 25); dilim ayrıştırması 26 buluyor ama
+  tahsisli planda nokta kümesi 19.683'e çıktığı için koşamıyor. Işın
+  araması (8 ve 40) hiçbir haftada iyileştirmedi.
+* `en_az_slip` kesin enküçüğü arıyor (yalnız bekçi için) ve ölçülen dört
+  küçük ailede açgözlü sonuçla **eşit** çıktı.
+* `coklu_kupon.py`nin "kullanım" satırı düzeldi: `M × kolon` yazıyordu ve
+  §3.71'den beri kupon bedelleri eşit değil, yani çarpım bir yalandı.
+* Belge zinciri: test 1.996 → **2.021**, dosya 76 → 77, betik 40 → 41,
+  README §7 modül ağacına `sadelestirme`, §9'a katman satırı.
 
 ### Sıradaki adım
 
-1. **6. hafta geldiğinde `--yaz` ile dondur.**
-   `coklu_kupon.py --hafta N --butce 21000 --tavan 81 --yaz`. Kayıt artık
-   `denetim` bloğuyla geliyor — giriş sırası orada yazılı.
+1. **6. hafta geldiğinde `--yaz` ile dondur.** Kayıt artık `slipler`
+   bloğuyla geliyor — girilecek kutular orada yazılı.
 2. **5. haftanın sonucu girildiğinde ilk ileriye dönük satır okunacak.**
-   (5. hafta 2026-09-13'te donduruldu; **o kaydın üstüne yazma** — arama
-   §3.71/3.72'den sonra iyileşti ve bugün yeniden koşulsa daha iyi bir plan
-   veriyor, ama kaydın değeri donmuş olmasında.)
-3. **Operasyonun kalan yarısı saf lojistik** ve bu depodan ölçülemez: bir
-   insan 81 kuponu kupon kapanmadan girebiliyor mu? Ölçmek için giriş süresi
-   kaydı gerekir. İstatistiksel yarısı kapandı.
+   (5. hafta 2026-09-13'te donduruldu; **o kaydın üstüne yazma.**)
+3. **Operasyonun kalan yarısı küçüldü ama kapanmadı.** Soru artık "bir
+   insan 81 kupon girebiliyor mu" değil "**60 slip** girebiliyor mu", ve en
+   büyüğü deponun zaten tek giriş saydığı kupondan küçük. Ölçmek için hâlâ
+   giriş süresi kaydı gerekiyor.
 4. **Sönüm ekseni.** Dördüncü örneklem 2026/27 birikimiyle kendiliğinden
    geliyor.
-5. **Kapanan üç başlık:** değişken derinlik (§3.72), zamanlama (§3.73) ve
-   operasyonun istatistiksel yarısı (§3.74). Üçünün de yeniden açılma şartı
-   ölçülmüş olarak yazılı.
+5. **Kapanan dört başlık:** değişken derinlik (§3.72), zamanlama (§3.73),
+   operasyonun istatistiksel yarısı (§3.74) ve slip yükü (§3.75). Dördünün
+   de yeniden açılma şartı ölçülmüş olarak yazılı.
 
 ### Neden böyle
 
-Bu oturum da bir kazanç aramadı, **bir riski fiyatladı**. Proje "81 kupon
-yatırabilir miyiz" sorusunu bir yıldır açık tutuyordu ve soru aslında ikiydi:
-*yatırabilir miyiz* (lojistik) ve *doğru yatırabilir miyiz* (ölçülebilir).
-İkincisi ölçüldü ve cevabı rahatlatıcı — ama asıl çıktı rahatlama değil, iki
-somut şey: `p_onbes`in oynanan kuponda yalan söylediğinin bulunması ve
-kaydın artık denetlenebilir sırada yazılması.
+Bu oturum yeni bir kazanç aramadı, **kapatılmış bir sorunun içindeki
+varsayımı** sorguladı. "Ölçülemez" denen şey ölçülemezdi; ölçülebilir olan,
+onun yanında sessizce doğru kabul edilen sayıydı. Çıktı iki şey: yükün
+gerçek sayısı, ve §3.71'in ölçülmemiş bedelinin ilk kez fiyatlanması —
+fiyat kararı değiştirmedi ama artık biliniyor.
 
 ## Geçmiş girdiler
+
+**2026-09-13 (önceki, dal `claude/devam-edelim-w8mob0`)** — **operasyon**
+fiyatlandı (§3.74). Önce bir gövde hatası çıktı: `coklu.p_onbes` **oynanan**
+kuponu puanlayamıyor (olasılıkları topluyor, bu yalnız kuponlar ayrıkken
+doğru) ve sapma tek yöne bakıyor — gerçek %9,563 iken %9,601 diyor, yani
+denetim en çok ihtiyaç duyulduğu anda iyimser; `operasyon.birlesim_p_onbes`
+kolonları tek tek sayıyor. Ölçülen (114 hafta, 21.000 kolon): `fazla` işaret
+`P`yi **yükseltiyor** ve bedeli parada (81 kuponda +65.610 TL, bütçenin
+%31'i); ortalama slip küçük ama en kötüsü 35 kat büyük ve sebebi yoğunlaşma
+(**81 kuponun ortalama 11'i hedefin yarısını taşıyor**, en kötü haftada 2);
+eşikler uzak — 81 → 729 çıkmak ancak 11 kuponda 1 hatada zarara dönüyor.
+Hüküm: operasyon hatası **hiçbir kararı değiştirmiyor**. Yoğunlaşmadan çıkan
+denetim sırası kayda girdi (`coklu_kupon.py` kuponları azalan yazıyor,
+`plan.denetim` bloğu) ve bekçi **artefaktın kendisini** sınıyor — aramanın
+çıktısı azalan değildi (51 hafta × tavan kıyasının 6'sında karışık).
+`spor_toto/operasyon.py` + 22 bekçi + `scripts/operasyon_kiyasi.py`.
 
 **2026-09-13 (önceki, dal `claude/devam-edelim-51rff7`)** — **hedefin kendisi**
 ölçüldü (§3.73). Deponun her ölçüsü haftalıktı, sahibinin hedefi değil; çeviri

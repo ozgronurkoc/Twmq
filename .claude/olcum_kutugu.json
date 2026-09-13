@@ -2,7 +2,7 @@
  "sayilar": [
   {
    "ne": "suit test sayisi (eksiksiz kurulum)",
-   "deger": "1.996",
+   "deger": "2.021",
    "ureten": "cd backend && python -m pytest --collect-only -q -p no:randomly -o addopts=  # son satirdaki toplam",
    "olculdu": "2026-09-13",
    "anildigi_yerler": [
@@ -14,11 +14,11 @@
     "replit.md"
    ],
    "bekci": "backend/tests/test_belgeler.py::test_test_sayisi_belgelerde_tek_ve_dogru",
-   "not": "1.799 yaziyordu ve KENDI BEKCISIYLE celisiyordu: bekci belgelerdeki sayiyi gercek koleksiyona esitler, belgeler 1.800 diyordu. Uretici komut da yanlisti — `-o addopts=` olmadan xdist devrede kalir. PR 48 incelemesinde uc bekci eklendi: 1.800 -> 1.803. || 1.803 -> 1.820 (2026-09-07): geri testin hedef kuralina cevrilmesiyle 17 test eklendi (strateji secimi, butce zorunlulugu, butce taramasi monotonlugu, §1.1 sayi bekcileri, birikimli marj). || 1.837 -> 1.860 (2026-09-07): olcum kutugunun kendi bekcileri (tests/test_olcum_kutugu.py, 5) ve bekcisiz kalmis README mansetlerinin bekcileri eklendi; ayrica kupon belgesi ve secim kurali islerinin testleri. Sayi TAM KURULUMLA olculdu (lightgbm dahil) — eksik kurulumda bekci kasitli ATLIYOR ve eksik bir suit sayilirsa yanlis sayi yazilir. || 1.860 -> 1.834 (2026-09-07): main kapanmis iki deneyi kaldirdi (E4/hakem 4acc3dd, xG vekili 25e72e0) ve tests/test_hakem.py (5) ile tests/test_xg.py (16) suitten cikti; kalan 5'lik fark ayni koumlarda silinen parametrizasyonlardan. Bu dallanmanin birlesmesinde YENIDEN OLCULDU, aritmetikle turetilmedi. || 1.834 -> 1.837 (2026-09-07): 4. haftanin sonuc degerlendirmesinde uc bekci eklendi: puanin kunyesi ve karne yorumunun tureticileri (test_degerlendir), §1 katman dokumu (test_belgeler). Katman dokumu ayrica DUZELTILDI: yazili 85/579/29/30, gercek 117/624/35/38. || 1.837 -> 1.841 (2026-09-10): dal 4a83172'de kutuk zaten bayatti (gercek 1.840, belgeler 1.837 diyordu — Delta 3'un tamami tests/test_super_toto.py'ye eklenen bekcilerdi ve README §9'un 'Super Toto' satiri da 105'te kalmisti). 5. haftaya oynanma payi girilince test_tahmin2.py::test_onceki_olcek_KAYITTAN_okunur_sabitten_degil parametrizasyonu 5. haftayi da topluyor: +1. Yeniden olculdu, aritmetikle turetilmedi. || 1.841 -> 1.842 (2026-09-10): karnenin tazelik bekcisi eklendi (test_belgeler.py::test_kazanma_karnesi_GIT_TE_TAZE) — 4. haftanin 'karne git'te bayatti' hatasi bekcisiz kaldigi icin 5. haftada tekrarlamisti. || 1.842 -> 1.847 (2026-09-12, main): korpus daraltmasinda tests/test_sembol_sirasi.py eklendi (4) ve test_egitim.py'ye korpus boyutu bekcisi girdi (1). || 1.842 -> 1.863 (2026-09-12, bu dal AYRI AYRI): capraz dogrulama metin bekcisi (+1) ve birlesik kesit isi (test_history +10, test_api_stats +6, test_odds +3, test_belgeler +1). || BIRLESTIRME (2026-09-12): iki dal ayni tabandan (1.842) ayri ayri buyudu; toplam ARITMETIKLE TURETILMEDI, birlesmis agacta yeniden olculdu: 1.868 (72 dosya). || 1.868 -> 1.901 (2026-09-12): oran analizi sayfasinin bekcileri tests/test_benzer.py'ye eklendi (cizgi ekseni, mac listesi <-> karne esitligi, taban kiyas cizgisi, docstring olcumu). Yeni test DOSYASI acilmadi, dosya sayisi 72'de kaldi. Yeniden olculdu, aritmetikle turetilmedi. || 1.901 -> 1.903 (2026-09-12): korpus daraltmasindan kalan BAYAT TARIF taramasinda iki bekci eklendi (test_canli_korpus_tarifi_OLCUMLE_ayni, test_egitim_basligi_LIG_sayisini_dogru_veriyor). Yeniden olculdu. || 1.903 -> 1.916 (2026-09-13): coklu kupon isi tests/test_coklu.py acti (13). Dosya sayisi 72 -> 73 ve README §9 katman tablosuna 'Coklu kupon' satiri girdi. TAM KURULUMLA olculdu (sklearn + lightgbm); eksik kurulumda sayi dusuk cikiyordu. || 1.916 -> 1.930 (2026-09-13): banko duyarliligi isi tests/test_duyarlilik.py acti (14). Dosya sayisi 73 -> 74, betik 34 -> 35, modul 56 -> 57; README §7 modul agacina duyarlilik.py ve §9 katman tablosuna 'Duyarlilik' satiri girdi. replit.md'deki kopya NOKTASIZ yaziliyor (1916) ve o yuzden ilk taramada kacti — bekcisi tuttu. TAM KURULUMLA olculdu (sklearn + lightgbm). || 1.930 -> 1.937 (2026-09-13): coklu kupon uretim hattina baglandi — donmus kayit icin alti bekci (test_degerlendir) ve kutugun KOMUT semasi icin bir bekci (test_olcum_kutugu) eklendi. Komut bekcisi bir COKMEDEN sonra yazildi: sema kapisi yalnizca 'sayilar'a bakiyordu ve 'komutlar'a yanlis alan adiyla girilen bir girdi kapiyi yesil gecip graf_sorgu.py'yi KeyError ile dusurdu. Dosya sayisi 74'te kaldi. README §9: Super Toto 108 -> 114, Olcum kutugu 5 -> 6; §1 katman dokumu 39 -> 45. TAM KURULUMLA olculdu. || 1.937 -> 1.938: p_onbes'in TIP bekcisi eklendi (test_coklu.py::test_p_onbes_GERCEK_float_donuyor). Imza '-> float' diyordu, govde np.float64 donuyordu ve bu yalan coklu kupon kaydinin JSON ciktisinda TypeError ile ortaya cikti. README §9 'Coklu kupon' satiri 13 -> 14. || 1.938 -> 1.949 (2026-09-13): kupon kapsamasinin bagimlilik altinda olculmesi tests/test_kuyruk.py'ye 10 bekci ekledi (kapsama modeli) ve tests/test_coklu.py'ye 1 (normallesmemis girdide p_onbes ayrismasi). Dosya sayisi 74'te kaldi, betik 35 -> 36 (scripts/bagimli_kapsama.py). README §9: Kuyruk 12 -> 22, Coklu kupon 14 -> 15; §1 katman dokumu 662 -> 672 (kuyruk tahmin katmaninda sayiliyor). TAM KURULUMLA olculdu (sklearn + lightgbm). || 1.949 -> 1.959 (2026-09-13): tahsis isi tests/test_coklu.py'ye 6 bekci (tahsis, ust kabuk, eksen orani) ve tests/test_secim.py'ye 4 bekci (Pareto cephesi) ekledi. Dosya sayisi 74'te kaldi, betik 36 -> 37 (scripts/tahsis_kiyasi.py). README §9: Karar katmani 42 -> 46, Coklu kupon 15 -> 21. §1 katman dokumu 672'de KALDI (`coklu` ve `secim` o dokumde sayilmiyor). TAM KURULUMLA olculdu. || §3.72: `test_coklu.py` 21 -> 27 (degisken derinlikli eksen — antizincir, tavan, fiyatlamanin kaba kuvvetle ayni noktayi vermesi, ucuncu adayin eskileri golgelememesi, agac kazandiginda kupon ayrikligi, `_tahsis_kabuklu` genellemesi). 1.959 -> 1.965. || §3.73: `tests/test_ufuk.py` acildi (9 bekci — carpimin kendisi, Jensen yonu, kahin tahsisin duz dagitimdan kotu olmamasi, kaba kuvvetle ayni cikmasi, butce). 1.965 -> 1.974, dosya 74 -> 75. || §3.74: `tests/test_operasyon.py` acildi (22 bekci — ortusmede dogru P, kapali formun kesin sayimla ayni cikmasi, slip ailesinin tek darbeligi, yogunlasma, donmus kaydin denetim sirasi). 1.974 -> 1.996, dosya 75 -> 76, betik 39 -> 40, modul 58 -> 59."
+   "not": "1.799 yaziyordu ve KENDI BEKCISIYLE celisiyordu: bekci belgelerdeki sayiyi gercek koleksiyona esitler, belgeler 1.800 diyordu. Uretici komut da yanlisti — `-o addopts=` olmadan xdist devrede kalir. PR 48 incelemesinde uc bekci eklendi: 1.800 -> 1.803. || 1.803 -> 1.820 (2026-09-07): geri testin hedef kuralina cevrilmesiyle 17 test eklendi (strateji secimi, butce zorunlulugu, butce taramasi monotonlugu, §1.1 sayi bekcileri, birikimli marj). || 1.837 -> 1.860 (2026-09-07): olcum kutugunun kendi bekcileri (tests/test_olcum_kutugu.py, 5) ve bekcisiz kalmis README mansetlerinin bekcileri eklendi; ayrica kupon belgesi ve secim kurali islerinin testleri. Sayi TAM KURULUMLA olculdu (lightgbm dahil) — eksik kurulumda bekci kasitli ATLIYOR ve eksik bir suit sayilirsa yanlis sayi yazilir. || 1.860 -> 1.834 (2026-09-07): main kapanmis iki deneyi kaldirdi (E4/hakem 4acc3dd, xG vekili 25e72e0) ve tests/test_hakem.py (5) ile tests/test_xg.py (16) suitten cikti; kalan 5'lik fark ayni koumlarda silinen parametrizasyonlardan. Bu dallanmanin birlesmesinde YENIDEN OLCULDU, aritmetikle turetilmedi. || 1.834 -> 1.837 (2026-09-07): 4. haftanin sonuc degerlendirmesinde uc bekci eklendi: puanin kunyesi ve karne yorumunun tureticileri (test_degerlendir), §1 katman dokumu (test_belgeler). Katman dokumu ayrica DUZELTILDI: yazili 85/579/29/30, gercek 117/624/35/38. || 1.837 -> 1.841 (2026-09-10): dal 4a83172'de kutuk zaten bayatti (gercek 1.840, belgeler 1.837 diyordu — Delta 3'un tamami tests/test_super_toto.py'ye eklenen bekcilerdi ve README §9'un 'Super Toto' satiri da 105'te kalmisti). 5. haftaya oynanma payi girilince test_tahmin2.py::test_onceki_olcek_KAYITTAN_okunur_sabitten_degil parametrizasyonu 5. haftayi da topluyor: +1. Yeniden olculdu, aritmetikle turetilmedi. || 1.841 -> 1.842 (2026-09-10): karnenin tazelik bekcisi eklendi (test_belgeler.py::test_kazanma_karnesi_GIT_TE_TAZE) — 4. haftanin 'karne git'te bayatti' hatasi bekcisiz kaldigi icin 5. haftada tekrarlamisti. || 1.842 -> 1.847 (2026-09-12, main): korpus daraltmasinda tests/test_sembol_sirasi.py eklendi (4) ve test_egitim.py'ye korpus boyutu bekcisi girdi (1). || 1.842 -> 1.863 (2026-09-12, bu dal AYRI AYRI): capraz dogrulama metin bekcisi (+1) ve birlesik kesit isi (test_history +10, test_api_stats +6, test_odds +3, test_belgeler +1). || BIRLESTIRME (2026-09-12): iki dal ayni tabandan (1.842) ayri ayri buyudu; toplam ARITMETIKLE TURETILMEDI, birlesmis agacta yeniden olculdu: 1.868 (72 dosya). || 1.868 -> 1.901 (2026-09-12): oran analizi sayfasinin bekcileri tests/test_benzer.py'ye eklendi (cizgi ekseni, mac listesi <-> karne esitligi, taban kiyas cizgisi, docstring olcumu). Yeni test DOSYASI acilmadi, dosya sayisi 72'de kaldi. Yeniden olculdu, aritmetikle turetilmedi. || 1.901 -> 1.903 (2026-09-12): korpus daraltmasindan kalan BAYAT TARIF taramasinda iki bekci eklendi (test_canli_korpus_tarifi_OLCUMLE_ayni, test_egitim_basligi_LIG_sayisini_dogru_veriyor). Yeniden olculdu. || 1.903 -> 1.916 (2026-09-13): coklu kupon isi tests/test_coklu.py acti (13). Dosya sayisi 72 -> 73 ve README §9 katman tablosuna 'Coklu kupon' satiri girdi. TAM KURULUMLA olculdu (sklearn + lightgbm); eksik kurulumda sayi dusuk cikiyordu. || 1.916 -> 1.930 (2026-09-13): banko duyarliligi isi tests/test_duyarlilik.py acti (14). Dosya sayisi 73 -> 74, betik 34 -> 35, modul 56 -> 57; README §7 modul agacina duyarlilik.py ve §9 katman tablosuna 'Duyarlilik' satiri girdi. replit.md'deki kopya NOKTASIZ yaziliyor (1916) ve o yuzden ilk taramada kacti — bekcisi tuttu. TAM KURULUMLA olculdu (sklearn + lightgbm). || 1.930 -> 1.937 (2026-09-13): coklu kupon uretim hattina baglandi — donmus kayit icin alti bekci (test_degerlendir) ve kutugun KOMUT semasi icin bir bekci (test_olcum_kutugu) eklendi. Komut bekcisi bir COKMEDEN sonra yazildi: sema kapisi yalnizca 'sayilar'a bakiyordu ve 'komutlar'a yanlis alan adiyla girilen bir girdi kapiyi yesil gecip graf_sorgu.py'yi KeyError ile dusurdu. Dosya sayisi 74'te kaldi. README §9: Super Toto 108 -> 114, Olcum kutugu 5 -> 6; §1 katman dokumu 39 -> 45. TAM KURULUMLA olculdu. || 1.937 -> 1.938: p_onbes'in TIP bekcisi eklendi (test_coklu.py::test_p_onbes_GERCEK_float_donuyor). Imza '-> float' diyordu, govde np.float64 donuyordu ve bu yalan coklu kupon kaydinin JSON ciktisinda TypeError ile ortaya cikti. README §9 'Coklu kupon' satiri 13 -> 14. || 1.938 -> 1.949 (2026-09-13): kupon kapsamasinin bagimlilik altinda olculmesi tests/test_kuyruk.py'ye 10 bekci ekledi (kapsama modeli) ve tests/test_coklu.py'ye 1 (normallesmemis girdide p_onbes ayrismasi). Dosya sayisi 74'te kaldi, betik 35 -> 36 (scripts/bagimli_kapsama.py). README §9: Kuyruk 12 -> 22, Coklu kupon 14 -> 15; §1 katman dokumu 662 -> 672 (kuyruk tahmin katmaninda sayiliyor). TAM KURULUMLA olculdu (sklearn + lightgbm). || 1.949 -> 1.959 (2026-09-13): tahsis isi tests/test_coklu.py'ye 6 bekci (tahsis, ust kabuk, eksen orani) ve tests/test_secim.py'ye 4 bekci (Pareto cephesi) ekledi. Dosya sayisi 74'te kaldi, betik 36 -> 37 (scripts/tahsis_kiyasi.py). README §9: Karar katmani 42 -> 46, Coklu kupon 15 -> 21. §1 katman dokumu 672'de KALDI (`coklu` ve `secim` o dokumde sayilmiyor). TAM KURULUMLA olculdu. || §3.72: `test_coklu.py` 21 -> 27 (degisken derinlikli eksen — antizincir, tavan, fiyatlamanin kaba kuvvetle ayni noktayi vermesi, ucuncu adayin eskileri golgelememesi, agac kazandiginda kupon ayrikligi, `_tahsis_kabuklu` genellemesi). 1.959 -> 1.965. || §3.73: `tests/test_ufuk.py` acildi (9 bekci — carpimin kendisi, Jensen yonu, kahin tahsisin duz dagitimdan kotu olmamasi, kaba kuvvetle ayni cikmasi, butce). 1.965 -> 1.974, dosya 74 -> 75. || §3.74: `tests/test_operasyon.py` acildi (22 bekci — ortusmede dogru P, kapali formun kesin sayimla ayni cikmasi, slip ailesinin tek darbeligi, yogunlasma, donmus kaydin denetim sirasi). 1.974 -> 1.996, dosya 75 -> 76, betik 39 -> 40, modul 58 -> 59. 2026-09-13: sadelestirme katmani 25 bekci ekledi (1.996 -> 2.021)."
   },
   {
    "ne": "test dosyasi sayisi",
-   "deger": "76",
+   "deger": "77",
    "ureten": "ls backend/tests/test_*.py | wc -l",
    "olculdu": "2026-09-13",
    "anildigi_yerler": [
@@ -26,7 +26,7 @@
     "backend/README.md"
    ],
    "bekci": "backend/tests/test_belgeler.py::test_test_dosya_sayisi_belgelerle_ayni",
-   "not": "Dis tarama tests/test_devir_tavani.py'yi ekledi (70 -> 71). E6 icin tests/test_hafta_hakki.py eklendi (71 -> 72). || 72 -> 73: tests/test_olcum_kutugu.py eklendi. || 73 -> 71: tests/test_hakem.py (4acc3dd) ve tests/test_xg.py (25e72e0) kapanan deneylerle birlikte kaldirildi. || 71 -> 72 (2026-09-12): tests/test_sembol_sirasi.py — kutukteki 2.<->3. sembol sirasi olcumunun betigi depoya girdi, bekcisi de onunla geldi. || 72 -> 73 (2026-09-13): coklu kupon isi tests/test_coklu.py acti. || 73 -> 74 (2026-09-13): banko duyarliligi isi tests/test_duyarlilik.py acti. || §3.73: `tests/test_ufuk.py` acildi, 74 -> 75. || §3.74: `tests/test_operasyon.py` acildi, 75 -> 76."
+   "not": "Dis tarama tests/test_devir_tavani.py'yi ekledi (70 -> 71). E6 icin tests/test_hafta_hakki.py eklendi (71 -> 72). || 72 -> 73: tests/test_olcum_kutugu.py eklendi. || 73 -> 71: tests/test_hakem.py (4acc3dd) ve tests/test_xg.py (25e72e0) kapanan deneylerle birlikte kaldirildi. || 71 -> 72 (2026-09-12): tests/test_sembol_sirasi.py — kutukteki 2.<->3. sembol sirasi olcumunun betigi depoya girdi, bekcisi de onunla geldi. || 72 -> 73 (2026-09-13): coklu kupon isi tests/test_coklu.py acti. || 73 -> 74 (2026-09-13): banko duyarliligi isi tests/test_duyarlilik.py acti. || §3.73: `tests/test_ufuk.py` acildi, 74 -> 75. || §3.74: `tests/test_operasyon.py` acildi, 75 -> 76. 2026-09-13: tests/test_sadelestirme.py eklendi (76 -> 77)."
   },
   {
    "ne": "hizli test sayisi",
@@ -2281,6 +2281,83 @@
    ],
    "bekci": "backend/tests/test_operasyon.py::test_fazla_isaret_P_YUKSELTIR_ama_BUTCE_asar",
    "not": "Tek fazla isaret 81 kuponda +6.561 kolon = +65.610 TL, yani butcenin %31'i. `fazla` tek slip turudur ki P'yi YUKSELTIR (81 kuponda ortalama -%0,28, yani kazanc); bedeli olasilikta degil parada odenir ve plan butcenin neredeyse tamamini kullandigi icin asim dogrudan cebe yazilir. 729 kuponda asim %10'a iniyor cunku kuponlar kucuk."
+  },
+  {
+   "ne": "81 kuponluk planin gercek SLIP sayisi (114 tam hafta, 21.000 kolon)",
+   "deger": "60,1",
+   "ureten": "cd backend && python scripts/sadelestirme_kiyasi.py --butce 21000",
+   "olculdu": "2026-09-13",
+   "anildigi_yerler": [
+    "docs/ISTATISTIK_YOL_HARITASI.md §3.75"
+   ],
+   "bekci": "backend/tests/test_sadelestirme.py::test_gercek_planda_slip_KUPONDAN_AZ",
+   "not": "Ortalama slip sayisi, tavan 81. En kotu hafta 75 slip. Kupon != slip. Iki kutu bir TEK konumda ayrisiyorsa o konumdaki sembol kumeleri birlestirilip tek kutu yazilabilir: kolon kumesi ayni, kolon SAYISI ayni, P(15/15) ayni (olculen sapma en cok 7,2e-16). 81 kupon -> 60,1 slip = x1,35. Bulunan sayi bir UST SINIRDIR (acgozlu fixpoint); gercek yuk ancak daha az olabilir."
+  },
+  {
+   "ne": "81 kuponluk planin karalanan KUTUCUK sayisi (birlestirmeden once -> sonra)",
+   "deger": "1.447",
+   "ureten": "cd backend && python scripts/sadelestirme_kiyasi.py --butce 21000",
+   "olculdu": "2026-09-13",
+   "anildigi_yerler": [
+    "docs/ISTATISTIK_YOL_HARITASI.md §3.75"
+   ],
+   "bekci": "backend/tests/test_sadelestirme.py::test_gercek_planda_slip_KUPONDAN_AZ",
+   "not": "Tavan 81'de karalanan kutucuk 1.945 -> 1.447, yani x1,34. Slip sayisi girisin KAC KEZ yapildigini sayar, kutucuk NE KADAR is oldugunu. Ikisi birlikte dustugu icin 'daha az ama daha agir slip' itirazi bu kesitte gecmiyor. Bir birlesme iki kutunun ORTAK konumlarini bir kez yazar, yani Sigma_{i!=k} |A_i| isaret siler."
+  },
+  {
+   "ne": "en buyuk BIRLESMIS slipin kolon sayisi (tavan 81, 114 hafta icinde en buyuk)",
+   "deger": "6.561 kolon",
+   "ureten": "cd backend && python scripts/sadelestirme_kiyasi.py --butce 21000",
+   "olculdu": "2026-09-13",
+   "anildigi_yerler": [
+    "docs/ISTATISTIK_YOL_HARITASI.md §3.75"
+   ],
+   "bekci": "backend/tests/test_sadelestirme.py::test_kolon_SAYISI_degismiyor",
+   "not": "Deponun bir yildir TEK GIRIS saydigi tek sistem kuponunun (19.683 kolon) ucte biri. Iddia deponun kendi varsayimina yaslaniyor, yeni varsayim getirmiyor."
+  },
+  {
+   "ne": "TAHSISIN (§3.71) operasyon bedeli — tavan 81, slip orani",
+   "deger": "×2,19",
+   "ureten": "cd backend && python scripts/sadelestirme_kiyasi.py --butce 21000",
+   "olculdu": "2026-09-13",
+   "anildigi_yerler": [
+    "docs/ISTATISTIK_YOL_HARITASI.md §3.75"
+   ],
+   "bekci": "backend/tests/test_sadelestirme.py::test_TEKDUZE_plan_TAHSISLIDEN_cok_birlesiyor",
+   "not": "Tavan 81: tahsisli 60,1 slip, tekduze 27,5 slip. Iki kutu ancak bir tek konumda ayrisiyorsa birlesir; §3.71 her kupona AYRI alt sistem butcesi verdigi icin alt sistemler de ayrisiyor ve ayrisan iki kupon HIC birlesmiyor. Tekduze planda birlesme x2,88, tahsislide x1,35. Tavan 27'de kupon sayisi AYNI (27,0 ↔ 27) ve fark tamamen birlesmeden geliyor; 729'da tekduze plan tavana ulasamiyor (329,1 kupon) ve x5,18'in bir kismi bu."
+  },
+  {
+   "ne": "TAHSISI acik tutmanin ZARARA dondugu slip basina hata orani (tavan 81, takas)",
+   "deger": "%19,22",
+   "ureten": "cd backend && python scripts/sadelestirme_kiyasi.py --butce 21000",
+   "olculdu": "2026-09-13",
+   "anildigi_yerler": [
+    "docs/ISTATISTIK_YOL_HARITASI.md §3.75"
+   ],
+   "bekci": "backend/tests/test_operasyon.py::test_kritik_oran_SLIP_PAHALILASINCA_dusuyor",
+   "not": "1 slipte 5 hata demek. Tahsisin hedefteki kazanci +2,22 puan (%76,98 ↔ %74,76), bedeli 32,6 fazla slip. atlama slipiyle %11,64 (1 slipte 9). Bu bir ozensizlik degil, girisin hic yapilmamis olmasi demektir — §3.71 AYAKTA. r* bir TAHMIN DEGIL SINIR; gercek hata orani bu depoda olculmedi."
+  },
+  {
+   "ne": "81 -> 729 kupona cikmanin ZARARA dondugu SLIP basina hata orani (takas)",
+   "deger": "%10,52",
+   "ureten": "cd backend && python scripts/sadelestirme_kiyasi.py --butce 21000",
+   "olculdu": "2026-09-13",
+   "anildigi_yerler": [
+    "docs/ISTATISTIK_YOL_HARITASI.md §3.75"
+   ],
+   "bekci": "backend/tests/test_operasyon.py::test_kritik_oran_SLIP_PAHALILASINCA_dusuyor",
+   "not": "1 slipte 10 hata demek. §3.74 ayni esigi KUPON basina %9,06 (1 kuponda 11) olcmustu; birim slipe cevrilince esik YUKSELIYOR cunku fazladan giris sanildigindan az (398,6 slip ↔ 648 kupon). Yon ayni: esik makul insan hatasinin cok ustunde, tavan karari degismiyor."
+  },
+  {
+   "ne": "ORTUSEN kapamanin bedeli — 5. haftanin donmus kaydi, acgozlu kapama",
+   "deger": "33.048",
+   "ureten": "cd backend && python scripts/sadelestirme_kiyasi.py --butce 21000",
+   "olculdu": "2026-09-13",
+   "anildigi_yerler": [
+    "docs/ISTATISTIK_YOL_HARITASI.md §3.75"
+   ],
+   "bekci": "backend/tests/test_sadelestirme.py::test_ORTUSEN_kapama_kolonu_COGALTIR",
+   "not": "Ortusen kapama 25 slip veriyor, yani ayrik bolunti ile AYNI; kolon ise 19.683 yerine 33.048, butcenin 1,68 kati. Ayni kolon kumesini daha az kutuyla yazmanin iki yolu var ve biri tuzak: kutularin ortusmesine izin verilirse ortusen kolon IKI KEZ oynanir, yani iki kez odenir. Olculdu — serbestlik bu haftada slip kazandirmiyor bile, yalnizca para harciyor. Govde bu yuzden bolunti arar."
   }
  ],
  "komutlar": [
@@ -2423,6 +2500,11 @@
    "komut": "cd backend && python scripts/operasyon_kiyasi.py --butce 21000 [--tavan 27 81 243 729]",
    "ne_yapar": "Elle girisin bedelini olcer (§3.74): tek slipin P(15/15) kaybi tur tur (atlama/kopya/eksik/fazla/takas), hedefin kac kupona yigildigi, ve fazladan kuponun ZARARA dondugu hata orani r*. 114 tam hafta, ~4,5 dk. Kayiplar kapali formdur ama KESINdir (ortusme dahil) ve bekcisi kolon kolon sayan `operasyon.birlesim_p_onbes`e karsi kosuyor. Okuma kurali betigin basliginda ve OLCUM GORULMEDEN yazildi.",
    "kaynak": "backend/scripts/operasyon_kiyasi.py:kos"
+  },
+  {
+   "komut": "cd backend && python scripts/sadelestirme_kiyasi.py --butce 21000 [--hafta N] [--json]",
+   "ne_yapar": "Planin SLIP sayisini olcer (§3.75): kupon -> slip ve kutucuk yuku tavan tavan, tahsisli aramaya karsi TEKDUZE butceli arama (tahsisin operasyon bedeli), ve fazladan slipin ZARARA dondugu hata orani r*. 114 tam hafta, ~11 dk. Birlestirme bir OZDESLIKtir: ayni kolonlar, ayni kolon sayisi, ayni P(15/15) — betik bunu her hafta yeniden dogruluyor (P sapmasi sutunu). `tekduze kupon` sutunu okuma sarti: slip farki daha az kupondan mi daha cok birlesmeden mi geldigini ancak o ayirir.",
+   "kaynak": "backend/scripts/sadelestirme_kiyasi.py:kos"
   }
  ]
 }
