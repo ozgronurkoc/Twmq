@@ -197,3 +197,21 @@ def test_kademe_dagilimi_kupon_kupon_TOPLANIR():
     dag = kademe_dagilimi(probs, plan.kuponlar, gercek)
     assert dag[15] == 1, "favori sonucunda tam olarak bir kolon 15 yapar"
     assert sum(dag.values()) <= plan.kolon
+
+
+def test_p_onbes_GERCEK_float_donuyor():
+    """İmza `-> float` diyor; numpy skaleri dönmek bir tip yalanıdır.
+
+    `_matris` numpy döndüğü için gövdedeki toplam `np.float64` çıkıyordu ve
+    bu sessiz kalmadı: çoklu kupon kaydının değerlendirmesinde bu değerden
+    türeyen bir karşılaştırma `np.bool_` verdi ve `json.dumps` `TypeError`
+    attı. `coklu_plan`ın taşıdığı `p_onbes` zaten `float`tu — yani aynı
+    sayı iki yoldan iki ayrı TİPTE geliyordu.
+    """
+    probs = _probs(11)
+    plan = coklu_plan(probs, 2187, kupon_tavani=9)
+    yeniden = p_onbes(probs, plan.kuponlar)
+    assert type(yeniden) is float
+    assert type(plan.p_onbes) is float
+    import json
+    json.dumps({"p": yeniden, "esit": yeniden == plan.p_onbes})

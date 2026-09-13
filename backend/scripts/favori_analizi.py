@@ -128,7 +128,14 @@ def dilim_karnesi(haftalar) -> list[dict]:
     return satir
 
 
-def banko_merdiveni(haftalar, n_araligi=range(4, 11)) -> list[dict]:
+#: D bölümünün taradığı banko sayıları. Modül düzeyinde duruyor çünkü
+#: argüman varsayılanında `range(...)` çağırmak ruff'ın `B008`'i — kural
+#: "varsayılanı modül düzeyi bir tekilden oku" diyor ve burada yapılan tam
+#: olarak bu. `range` değişmez olduğu için davranış değişmedi.
+VARSAYILAN_N_ARALIGI = range(4, 11)
+
+
+def banko_merdiveni(haftalar, n_araligi=VARSAYILAN_N_ARALIGI) -> list[dict]:
     """D — en emin N favori banko + kalana üçlü: kademe dağılımı ve bedel."""
     satir = []
     for N in n_araligi:

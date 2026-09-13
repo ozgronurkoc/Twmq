@@ -362,6 +362,87 @@ def tahmin2_degerlendir(d: dict[str, Any],
     return out
 
 
+def coklu_yukle(sezon: str, hafta: int) -> dict[str, Any] | None:
+    """Haftanın donmuş çoklu kupon kaydı — yoksa `None`, hata değil.
+
+    Kayıt `scripts/coklu_kupon.py --yaz` ile kurulur ve **oynanan kupon
+    değildir**: oynanan kupon tek sistemdir, bu onun ölçülen rakibi. 2.
+    Tahmin kaydıyla aynı desen (ölçülür, oynanmaz).
+    """
+    yol = (KOK / "data" / "super_toto" / sezon /
+           f"hafta_{hafta:02d}_coklu.json")
+    if not yol.exists():
+        return None
+    return json.loads(yol.read_text(encoding="utf-8"))
+
+
+def coklu_degerlendir(d: dict[str, Any],
+                      kayit: dict[str, Any]) -> dict[str, Any]:
+    """Çoklu kupon planını puanlar — tek sistemle **AYNI** gövdeyle.
+
+    Her kupon `kupon_degerlendir`den geçer; ayrı bir puanlayıcı yazmak iki
+    kaydı farklı hesapla ölçmek olurdu ve o hâlde aradaki fark kupondan mı
+    yöntemden mi geldiği bilinemezdi (2. Tahmin'de aynı gerekçe yazılı).
+
+    ─── Kayıt KENDİNİ doğrular ───────────────────────────────────────────
+
+    `p_onbes` kayıtta yazılıdır ve burada kaydın **kolonlarından** yeniden
+    ölçülür. İkisi ayrışırsa kayıt planlayıcıdan kopmuş demektir ve bu
+    sessizce geçmez — §3.65'in 2. Tahmin satırı tam olarak böyle bir
+    kayıttır (motoru söküldü, artık bağımsız doğrulanamıyor). Burada
+    doğrulama kaydın **içinde** olduğu için motor değişse bile durur.
+    """
+    from spor_toto.coklu import Kupon
+    from spor_toto.coklu import kademe_dagilimi as coklu_kademe
+    from spor_toto.coklu import p_onbes as coklu_p_onbes
+
+    plan = kayit["plan"]
+    gercek = d["meta"]["results"]
+    probs = [m["probs"] for m in d["matches"]]
+    kuponlar = [Kupon(secimler=[list(p) for p in k["picks"]],
+                      kolon=int(k["kolon"]))
+                for k in plan["kuponlar"]]
+
+    tek_tek = [kupon_degerlendir(d, k["picks"]) for k in plan["kuponlar"]]
+    en_iyi = max(range(len(tek_tek)), key=lambda i: tek_tek[i]["best"])
+
+    # Kuponlar AYRIK olmalı: değilse aynı kolon iki kez sayılır ve hem
+    # bedel hem `p_onbes` şişer. Ayrıklığı kolon toplamı ile plandaki
+    # kolon sayısının eşitliği ölçer (çakışan kupon bu eşitliği bozmaz,
+    # ama `p_onbes` ayrışması bozar — ikisi birlikte tutuyor).
+    kolon_toplami = sum(k.kolon for k in kuponlar)
+    p_yeniden = coklu_p_onbes(probs, kuponlar)
+    kayitli = float(plan["p_onbes"])
+
+    return {
+        "ad": kayit["meta"]["ad"],
+        "frozen_at": kayit["meta"]["frozen_at"],
+        "results_known": kayit["meta"].get("results_known"),
+        "kupon_tavani": kayit["meta"].get("kupon_tavani"),
+        "butce_kolon": kayit["meta"].get("butce_kolon"),
+        "kupon_sayisi": len(kuponlar),
+        "kolon": kolon_toplami,
+        "maliyet": kolon_toplami * KOLON_BEDELI,
+        # Kupon KURULURKEN hesaplanmış hedef; sonuç görülmeden yazıldı ve
+        # burada YENIDEN HESAPLANMAZ, yalnızca doğrulanır.
+        "p_onbes_onceden": kayitli,
+        "p_onbes_kayittan": p_yeniden,
+        "kayit_tutarli": abs(p_yeniden - kayitli) < 1e-9,
+        "kolon_tutarli": kolon_toplami == int(plan["kolon"]),
+        "en_iyi": tek_tek[en_iyi]["best"],
+        "en_iyi_kupon": plan["kuponlar"][en_iyi]["no"],
+        "en_iyi_kacaklar": tek_tek[en_iyi]["misses"],
+        "onbes_tuttu": tek_tek[en_iyi]["best"] == len(gercek),
+        "hedefe_ulasti": tek_tek[en_iyi]["best"] >= HEDEF_KADEME,
+        # Kademe dağılımı kuponlar arasında TOPLANIR (kuponlar ayrık).
+        "kademe": {str(k): v for k, v in
+                   sorted(coklu_kademe(probs, kuponlar, gercek).items(),
+                          reverse=True)},
+        "tek_sistem_p_onbes": (plan.get("tek_sistem") or {}).get("p_onbes"),
+        "tavansiz_p_onbes": kayit["meta"].get("tavansiz_p_onbes"),
+    }
+
+
 def ayar_karnesi(d: dict[str, Any], kayit: dict[str, Any]) -> dict[str, Any]:
     """Kalabalık ayarı ne kazandırdı, ne kaybettirdi.
 
@@ -1023,6 +1104,8 @@ def rapor(sezon: str, hafta: int) -> dict[str, Any]:
 
     kayit = tahmin2_yukle(sezon, hafta)
     ikinci = tahmin2_degerlendir(d, kayit) if kayit else []
+    coklu_kayit = coklu_yukle(sezon, hafta)
+    coklu = coklu_degerlendir(d, coklu_kayit) if coklu_kayit else None
     # Kiyas ANA kupon ile AYARLI plan arasinda: ikisi de o kaydin "oynanacak"
     # plani. Taban ve esik ayni dosyada duruyor ama onlar ara olcumdur.
     ayarli = next((x for x in ikinci if x["plan"] == "ayarli"), None)
@@ -1031,6 +1114,10 @@ def rapor(sezon: str, hafta: int) -> dict[str, Any]:
         "results": d["meta"]["results"],
         "results_source": d["meta"].get("results_source"),
         "coupons": sonuclar,
+        # Çoklu kupon kaydı OYNANMAZ; yan yana durması gerekiyor çünkü
+        # §3.67'nin ×1,45'i 114 haftalık GERI testten geliyor ve ileriye
+        # dönük tanık ancak hafta hafta birikir.
+        "coklu": coklu,
         "tahmin2": ikinci,
         "tahmin2_meta": ({"ad": kayit["meta"]["ad"],
                           "frozen_at": kayit["meta"]["frozen_at"],
@@ -1121,6 +1208,31 @@ def yaz(o: dict[str, Any]) -> None:
               f"ölçek {t['arindirma']}")
         for s in o["tahmin2"]:
             _kupon_satiri(s, f"{s['plan']}")
+
+    if o["coklu"]:
+        c = o["coklu"]
+        onceden = "SONUC GORULMEDEN" if not c["results_known"] else \
+            "sonuc GIRILDIKTEN SONRA (geriye donuk secim)"
+        print(f"\n█ {c['ad']} — {c['frozen_at']} · {onceden} donduruldu")
+        print("  OYNANMADI. Oynanan kupon 1. Tahmin'dir; bu onun olculen "
+              "rakibi (operasyon sorusu acik).")
+        print(f"  {c['kupon_sayisi']:,} kupon × "
+              f"{c['kolon'] // max(c['kupon_sayisi'], 1):,} kolon = "
+              f"{c['kolon']:,} kolon  (₺{c['maliyet']:,.0f}, "
+              f"butce {c['butce_kolon']:,} kolon, tavan {c['kupon_tavani']})")
+        print(f"  EN IYI KOLON: {c['en_iyi']}/15  "
+              f"(kupon #{c['en_iyi_kupon']}, kacak {c['en_iyi_kacaklar']})")
+        print(f"  P(15/15) onceden: {c['p_onbes_onceden']:.3%}   "
+              f"tek sistem {c['tek_sistem_p_onbes']:.3%}   "
+              f"tavansiz {c['tavansiz_p_onbes']:.3%}")
+        print("  kademe (kolon): " + "  ".join(
+            f"{k}:{v:,}" for k, v in c["kademe"].items()))
+        # Kayıt kendini doğrular; ayrışma SESSIZ geçmez.
+        if not (c["kayit_tutarli"] and c["kolon_tutarli"]):
+            print(f"  ! KAYIT AYRISTI — p_onbes kayitta "
+                  f"{c['p_onbes_onceden']}, kolonlardan "
+                  f"{c['p_onbes_kayittan']}; kolon tutarli="
+                  f"{c['kolon_tutarli']}")
 
     ana = o["coupons"][0]
     _basli("MAÇ MAÇ (1. Tahmin ana kupon)")
