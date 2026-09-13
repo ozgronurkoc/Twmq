@@ -30,5 +30,14 @@ git rev-parse --git-dir >/dev/null 2>&1 || exit 0
 
 python3 .claude/graf_uret.py --sessiz 2>&1 || {
   echo "bilgi grafi tazelenemedi (oturum etkilenmedi): .claude/graf_uret.py"
-  exit 0
 }
+
+# Oturumlar arasi sureklilik: onceki oturumun birakip gittigi devam notu
+# git'e girer (.claude/devam_notu.md), grafin aksine yeniden uretilemez.
+# Burada dogrudan yazdirilir ki bir sonraki oturum ayri bir komut calistirmadan
+# "kaldigi yeri" gorsun.
+if [ -f .claude/devam_notu.md ]; then
+  echo
+  echo "--- Devam notu (onceki oturumdan, .claude/devam_notu.md) ---"
+  cat .claude/devam_notu.md
+fi
