@@ -1190,7 +1190,7 @@ backend/
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
                        sehir/ · sistem_fiyat/
-  tests/               pytest (74 dosya → 1.930 test; §9'da katman dökümü)
+  tests/               pytest (74 dosya → 1.938 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1398,7 +1398,7 @@ dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri t
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
 eşleme, ikinci kayıt). **74 test dosyası, parametrizasyonla
-1.930 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+1.938 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
@@ -1408,7 +1408,7 @@ karşı denetler):
 | Tahmin katmanı | `predict` `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin` `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre` `secim_kalibrasyonu` **`arena`** **`sizinti`** | 624 |
 | Sağlık | `health` `api_health` `meta` `health_history` | 82 |
 | Veri / istatistik / geri test | `history` `odds` `backtest` `api_stats` `api_backtest` `snapshot_iddaa` `pazar` **`gecmis_sezon`** **`sportoto_arsiv`** **`bulten`** | 252 |
-| Süper Toto | `super_toto` `degerlendir` | 108 |
+| Süper Toto | `super_toto` `degerlendir` | 114 |
 | 2. Tahmin (kalabalık ayarı · bağımsız görüş) | `tahmin2` | 36 |
 | Karar katmanı | `secim` | 42 |
 | Amaç kıyası (`P(k≤3)` ↔ `E[k]`: aynı kupon mu?) | **`amac_kiyasi`** | 5 |
@@ -1426,7 +1426,7 @@ karşı denetler):
 | Takım gücü | `takim_gucu` | 24 |
 | Yeni veri (UEFA · şehir) | `avrupa` `sehir` | 41 |
 | Belgeler | `belgeler` | 28 |
-| Ölçüm kütüğü (alıntı · üreten · bekçi bütünlüğü) | **`olcum_kutugu`** | 5 |
+| Ölçüm kütüğü (alıntı · üreten · bekçi bütünlüğü · komut şeması) | **`olcum_kutugu`** | 6 |
 | Değer bahsi (yan pazarlar) | **`deger`** | 24 |
 | Fiyat kaynakları | **`fiyatlar`** | 14 |
 | Kuyruk / bağımsızlık | **`kuyruk`** | 12 |
@@ -1435,7 +1435,7 @@ karşı denetler):
 | Devir tavanı (dış tarama · pozitif BD koşulu) | **`devir_tavani`** | 5 |
 | Haftanın hakkı (E6 · cephe · cetvel · Holm'lu işaret sınavı) | **`hafta_hakki`** | 25 |
 | 2.↔3. sembol sırası (beraberlik 3. sırada · bant sözleşmesi) | **`sembol_sirasi`** | 4 |
-| Çoklu kupon (çarpım kısıtı · kupon ayrıklığı · bütçe boşa gitmesin) | **`coklu`** | 13 |
+| Çoklu kupon (çarpım kısıtı · kupon ayrıklığı · bütçe boşa gitmesin · hedefin tipi) | **`coklu`** | 14 |
 | Duyarlılık (banko sapması senaryosu · plan düzeyi kalibrasyon · üretime sızmama) | **`duyarlilik`** | 14 |
 
 İki test bilerek **ağa çıkmaz**: `test_snapshot_iddaa.py` gerçek bültenden alınmış

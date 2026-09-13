@@ -416,7 +416,13 @@ def p_onbes(probs_listesi: list[dict[str, float]],
         for i, sec in enumerate(k.secimler):
             p *= sum(P[i][indeks[s]] for s in sec)
         toplam += p
-    return toplam
+    # `float(...)` SÜS DEĞİL: `P` numpy olduğu için `toplam` `np.float64`
+    # çıkıyordu ve imza `-> float` diyordu. Tip yalanı sessiz kalmadı —
+    # `json.dumps`, bu değerden türeyen bir karşılaştırmanın `np.bool_`
+    # sonucunda `TypeError` attı (çoklu kupon kaydının değerlendirmesi).
+    # `coklu_plan`ın taşıdığı `p_onbes` zaten `float`tu, yani iki yol
+    # aynı sayıyı iki ayrı TIPTE veriyordu.
+    return float(toplam)
 
 
 def kademe_dagilimi(probs_listesi: list[dict[str, float]],

@@ -37,6 +37,16 @@ KUTUK = DEPO / ".claude" / "olcum_kutugu.json"
 #: Bir girdinin taşımak zorunda olduğu alanlar.
 ZORUNLU = ("ne", "deger", "ureten", "olculdu", "anildigi_yerler")
 
+#: `komutlar` bölümünün zorunlu alanları. Ayrı bir tuple, çünkü bölüm ayrı
+#: bir şey ölçüyor: bir sayının künyesi değil bir **komutun ne yaptığı**.
+#:
+#: BU LISTE BIR COKMEDEN SONRA YAZILDI. Şema kapısı yalnızca `sayilar`a
+#: bakıyordu; `komutlar`a `ne_yapar` yerine `ne` alanıyla bir girdi
+#: eklenince kapı yeşil kaldı ve kusur `graf_sorgu.py komut <terim>`
+#: çağrısında `KeyError: 'ne_yapar'` ile **çökerek** ortaya çıktı. Yani
+#: defterin bir bölümü bekçisizdi ve tek belirtisi bir aracın patlamasıydı.
+ZORUNLU_KOMUT = ("komut", "ne_yapar", "kaynak")
+
 
 def _kutuk() -> dict:
     if not KUTUK.exists():
@@ -137,6 +147,33 @@ def test_kutuk_girdilerinin_semasi_TAM():
         if not str(s.get("olculdu", "")).strip():
             hata.append(f"  {s.get('deger', '?')!r}: 'olculdu' bos")
     assert not hata, "kutuk semasi bozuk:\n" + "\n".join(hata)
+
+
+def test_kutuk_KOMUT_girdilerinin_semasi_TAM():
+    """`komutlar` bölümü de şemaya uymalı — bu kapı bir çökmeden sonra var.
+
+    Üstteki test yalnızca `sayilar`a bakıyordu. `komutlar`a alan adı yanlış
+    (`ne`, `ne_yapar` değil) bir girdi girince kapı yeşil kaldı ve kusur
+    `python3 .claude/graf_sorgu.py komut <terim>` çağrısında `KeyError` ile
+    çıktı. Bir aracın patlaması bir bekçi değildir: yalnızca o yolu
+    yürüyen görür, ve bu depoda o yolu grafa güvenerek başlayan her oturum
+    yürüyor.
+
+    Alanların **boş olmaması** da sınanıyor: `graf_sorgu.komut` üçünü de
+    basıyor, yani boş bir alan sorguyu sessizce yarım bırakırdı.
+    """
+    hata: list[str] = []
+    for k in _kutuk().get("komutlar", []):
+        ad = k.get("komut", "?")
+        for alan in ZORUNLU_KOMUT:
+            if alan not in k:
+                hata.append(f"  {ad!r}: '{alan}' alani yok")
+            elif not str(k[alan]).strip():
+                hata.append(f"  {ad!r}: '{alan}' bos")
+        fazla = set(k) - set(ZORUNLU_KOMUT)
+        if fazla:
+            hata.append(f"  {ad!r}: taninmayan alan {sorted(fazla)}")
+    assert not hata, "kutuk komut semasi bozuk:\n" + "\n".join(hata)
 
 
 def test_bekci_alani_GERCEK_bir_teste_isaret_ediyor():

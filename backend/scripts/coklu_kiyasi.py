@@ -91,15 +91,20 @@ def kos(butce: int) -> dict:
 def bas(c: dict) -> None:
     print(f"tam hafta: {c['hafta']}   butce: {c['butce']:,} kolon "
           f"({c['butce'] * 10:,} TL/hafta)\n")
-    print(f"{'kupon':>8} {'kolon':>9} {'model P(15)':>13} {'gozlenen':>11} "
-          f"{'13 hafta':>10} {'12+ kolon':>11}")
+    # `tavan` sütunu bilerek var: `kupon_ort` yuvarlanıyor ve küçük
+    # bütçelerde iki farklı tavan aynı ortalamaya düşüyor (3.888 kolonda
+    # tavan 1 ile 3 ikisi de "1 kupon" yazıyordu ve tablo aynı satırı iki
+    # kez basmış gibi görünüyordu — oysa 12+ kolonları farklıydı).
+    print(f"{'tavan':>6} {'kupon':>8} {'kolon':>9} {'model P(15)':>13} "
+          f"{'gozlenen':>11} {'13 hafta':>10} {'12+ kolon':>11}")
     taban = None
     for r in c["satirlar"]:
         alt = sum(r["kademe"].values())
         if taban is None:
             taban = r["p_model"]
         not_ = "  <- bugun" if r["tavan"] == 1 else ""
-        print(f"{r['kupon_ort']:>8,.0f} {r['kolon_ort']:>9,.0f} "
+        print(f"{r['tavan']:>6,} {r['kupon_ort']:>8,.0f} "
+              f"{r['kolon_ort']:>9,.0f} "
               f"{r['p_model']:>12.3%} {r['isabet']:>6}/{c['hafta']:<4} "
               f"{r['p_13hafta']:>9.1%} {alt:>11,}{not_}")
     en = c["satirlar"][-1]

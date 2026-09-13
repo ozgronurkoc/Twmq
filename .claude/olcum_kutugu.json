@@ -2,7 +2,7 @@
  "sayilar": [
   {
    "ne": "suit test sayisi (eksiksiz kurulum)",
-   "deger": "1.930",
+   "deger": "1.938",
    "ureten": "cd backend && python -m pytest --collect-only -q -p no:randomly -o addopts=  # son satirdaki toplam",
    "olculdu": "2026-09-13",
    "anildigi_yerler": [
@@ -14,7 +14,7 @@
     "replit.md"
    ],
    "bekci": "backend/tests/test_belgeler.py::test_test_sayisi_belgelerde_tek_ve_dogru",
-   "not": "1.799 yaziyordu ve KENDI BEKCISIYLE celisiyordu: bekci belgelerdeki sayiyi gercek koleksiyona esitler, belgeler 1.800 diyordu. Uretici komut da yanlisti — `-o addopts=` olmadan xdist devrede kalir. PR 48 incelemesinde uc bekci eklendi: 1.800 -> 1.803. || 1.803 -> 1.820 (2026-09-07): geri testin hedef kuralina cevrilmesiyle 17 test eklendi (strateji secimi, butce zorunlulugu, butce taramasi monotonlugu, §1.1 sayi bekcileri, birikimli marj). || 1.837 -> 1.860 (2026-09-07): olcum kutugunun kendi bekcileri (tests/test_olcum_kutugu.py, 5) ve bekcisiz kalmis README mansetlerinin bekcileri eklendi; ayrica kupon belgesi ve secim kurali islerinin testleri. Sayi TAM KURULUMLA olculdu (lightgbm dahil) — eksik kurulumda bekci kasitli ATLIYOR ve eksik bir suit sayilirsa yanlis sayi yazilir. || 1.860 -> 1.834 (2026-09-07): main kapanmis iki deneyi kaldirdi (E4/hakem 4acc3dd, xG vekili 25e72e0) ve tests/test_hakem.py (5) ile tests/test_xg.py (16) suitten cikti; kalan 5'lik fark ayni koumlarda silinen parametrizasyonlardan. Bu dallanmanin birlesmesinde YENIDEN OLCULDU, aritmetikle turetilmedi. || 1.834 -> 1.837 (2026-09-07): 4. haftanin sonuc degerlendirmesinde uc bekci eklendi: puanin kunyesi ve karne yorumunun tureticileri (test_degerlendir), §1 katman dokumu (test_belgeler). Katman dokumu ayrica DUZELTILDI: yazili 85/579/29/30, gercek 117/624/35/38. || 1.837 -> 1.841 (2026-09-10): dal 4a83172'de kutuk zaten bayatti (gercek 1.840, belgeler 1.837 diyordu — Delta 3'un tamami tests/test_super_toto.py'ye eklenen bekcilerdi ve README §9'un 'Super Toto' satiri da 105'te kalmisti). 5. haftaya oynanma payi girilince test_tahmin2.py::test_onceki_olcek_KAYITTAN_okunur_sabitten_degil parametrizasyonu 5. haftayi da topluyor: +1. Yeniden olculdu, aritmetikle turetilmedi. || 1.841 -> 1.842 (2026-09-10): karnenin tazelik bekcisi eklendi (test_belgeler.py::test_kazanma_karnesi_GIT_TE_TAZE) — 4. haftanin 'karne git'te bayatti' hatasi bekcisiz kaldigi icin 5. haftada tekrarlamisti. || 1.842 -> 1.847 (2026-09-12, main): korpus daraltmasinda tests/test_sembol_sirasi.py eklendi (4) ve test_egitim.py'ye korpus boyutu bekcisi girdi (1). || 1.842 -> 1.863 (2026-09-12, bu dal AYRI AYRI): capraz dogrulama metin bekcisi (+1) ve birlesik kesit isi (test_history +10, test_api_stats +6, test_odds +3, test_belgeler +1). || BIRLESTIRME (2026-09-12): iki dal ayni tabandan (1.842) ayri ayri buyudu; toplam ARITMETIKLE TURETILMEDI, birlesmis agacta yeniden olculdu: 1.868 (72 dosya). || 1.868 -> 1.901 (2026-09-12): oran analizi sayfasinin bekcileri tests/test_benzer.py'ye eklendi (cizgi ekseni, mac listesi <-> karne esitligi, taban kiyas cizgisi, docstring olcumu). Yeni test DOSYASI acilmadi, dosya sayisi 72'de kaldi. Yeniden olculdu, aritmetikle turetilmedi. || 1.901 -> 1.903 (2026-09-12): korpus daraltmasindan kalan BAYAT TARIF taramasinda iki bekci eklendi (test_canli_korpus_tarifi_OLCUMLE_ayni, test_egitim_basligi_LIG_sayisini_dogru_veriyor). Yeniden olculdu. || 1.903 -> 1.916 (2026-09-13): coklu kupon isi tests/test_coklu.py acti (13). Dosya sayisi 72 -> 73 ve README §9 katman tablosuna 'Coklu kupon' satiri girdi. TAM KURULUMLA olculdu (sklearn + lightgbm); eksik kurulumda sayi dusuk cikiyordu. || 1.916 -> 1.930 (2026-09-13): banko duyarliligi isi tests/test_duyarlilik.py acti (14). Dosya sayisi 73 -> 74, betik 34 -> 35, modul 56 -> 57; README §7 modul agacina duyarlilik.py ve §9 katman tablosuna 'Duyarlilik' satiri girdi. replit.md'deki kopya NOKTASIZ yaziliyor (1916) ve o yuzden ilk taramada kacti — bekcisi tuttu. TAM KURULUMLA olculdu (sklearn + lightgbm)."
+   "not": "1.799 yaziyordu ve KENDI BEKCISIYLE celisiyordu: bekci belgelerdeki sayiyi gercek koleksiyona esitler, belgeler 1.800 diyordu. Uretici komut da yanlisti — `-o addopts=` olmadan xdist devrede kalir. PR 48 incelemesinde uc bekci eklendi: 1.800 -> 1.803. || 1.803 -> 1.820 (2026-09-07): geri testin hedef kuralina cevrilmesiyle 17 test eklendi (strateji secimi, butce zorunlulugu, butce taramasi monotonlugu, §1.1 sayi bekcileri, birikimli marj). || 1.837 -> 1.860 (2026-09-07): olcum kutugunun kendi bekcileri (tests/test_olcum_kutugu.py, 5) ve bekcisiz kalmis README mansetlerinin bekcileri eklendi; ayrica kupon belgesi ve secim kurali islerinin testleri. Sayi TAM KURULUMLA olculdu (lightgbm dahil) — eksik kurulumda bekci kasitli ATLIYOR ve eksik bir suit sayilirsa yanlis sayi yazilir. || 1.860 -> 1.834 (2026-09-07): main kapanmis iki deneyi kaldirdi (E4/hakem 4acc3dd, xG vekili 25e72e0) ve tests/test_hakem.py (5) ile tests/test_xg.py (16) suitten cikti; kalan 5'lik fark ayni koumlarda silinen parametrizasyonlardan. Bu dallanmanin birlesmesinde YENIDEN OLCULDU, aritmetikle turetilmedi. || 1.834 -> 1.837 (2026-09-07): 4. haftanin sonuc degerlendirmesinde uc bekci eklendi: puanin kunyesi ve karne yorumunun tureticileri (test_degerlendir), §1 katman dokumu (test_belgeler). Katman dokumu ayrica DUZELTILDI: yazili 85/579/29/30, gercek 117/624/35/38. || 1.837 -> 1.841 (2026-09-10): dal 4a83172'de kutuk zaten bayatti (gercek 1.840, belgeler 1.837 diyordu — Delta 3'un tamami tests/test_super_toto.py'ye eklenen bekcilerdi ve README §9'un 'Super Toto' satiri da 105'te kalmisti). 5. haftaya oynanma payi girilince test_tahmin2.py::test_onceki_olcek_KAYITTAN_okunur_sabitten_degil parametrizasyonu 5. haftayi da topluyor: +1. Yeniden olculdu, aritmetikle turetilmedi. || 1.841 -> 1.842 (2026-09-10): karnenin tazelik bekcisi eklendi (test_belgeler.py::test_kazanma_karnesi_GIT_TE_TAZE) — 4. haftanin 'karne git'te bayatti' hatasi bekcisiz kaldigi icin 5. haftada tekrarlamisti. || 1.842 -> 1.847 (2026-09-12, main): korpus daraltmasinda tests/test_sembol_sirasi.py eklendi (4) ve test_egitim.py'ye korpus boyutu bekcisi girdi (1). || 1.842 -> 1.863 (2026-09-12, bu dal AYRI AYRI): capraz dogrulama metin bekcisi (+1) ve birlesik kesit isi (test_history +10, test_api_stats +6, test_odds +3, test_belgeler +1). || BIRLESTIRME (2026-09-12): iki dal ayni tabandan (1.842) ayri ayri buyudu; toplam ARITMETIKLE TURETILMEDI, birlesmis agacta yeniden olculdu: 1.868 (72 dosya). || 1.868 -> 1.901 (2026-09-12): oran analizi sayfasinin bekcileri tests/test_benzer.py'ye eklendi (cizgi ekseni, mac listesi <-> karne esitligi, taban kiyas cizgisi, docstring olcumu). Yeni test DOSYASI acilmadi, dosya sayisi 72'de kaldi. Yeniden olculdu, aritmetikle turetilmedi. || 1.901 -> 1.903 (2026-09-12): korpus daraltmasindan kalan BAYAT TARIF taramasinda iki bekci eklendi (test_canli_korpus_tarifi_OLCUMLE_ayni, test_egitim_basligi_LIG_sayisini_dogru_veriyor). Yeniden olculdu. || 1.903 -> 1.916 (2026-09-13): coklu kupon isi tests/test_coklu.py acti (13). Dosya sayisi 72 -> 73 ve README §9 katman tablosuna 'Coklu kupon' satiri girdi. TAM KURULUMLA olculdu (sklearn + lightgbm); eksik kurulumda sayi dusuk cikiyordu. || 1.916 -> 1.930 (2026-09-13): banko duyarliligi isi tests/test_duyarlilik.py acti (14). Dosya sayisi 73 -> 74, betik 34 -> 35, modul 56 -> 57; README §7 modul agacina duyarlilik.py ve §9 katman tablosuna 'Duyarlilik' satiri girdi. replit.md'deki kopya NOKTASIZ yaziliyor (1916) ve o yuzden ilk taramada kacti — bekcisi tuttu. TAM KURULUMLA olculdu (sklearn + lightgbm). || 1.930 -> 1.937 (2026-09-13): coklu kupon uretim hattina baglandi — donmus kayit icin alti bekci (test_degerlendir) ve kutugun KOMUT semasi icin bir bekci (test_olcum_kutugu) eklendi. Komut bekcisi bir COKMEDEN sonra yazildi: sema kapisi yalnizca 'sayilar'a bakiyordu ve 'komutlar'a yanlis alan adiyla girilen bir girdi kapiyi yesil gecip graf_sorgu.py'yi KeyError ile dusurdu. Dosya sayisi 74'te kaldi. README §9: Super Toto 108 -> 114, Olcum kutugu 5 -> 6; §1 katman dokumu 39 -> 45. TAM KURULUMLA olculdu. || 1.937 -> 1.938: p_onbes'in TIP bekcisi eklendi (test_coklu.py::test_p_onbes_GERCEK_float_donuyor). Imza '-> float' diyordu, govde np.float64 donuyordu ve bu yalan coklu kupon kaydinin JSON ciktisinda TypeError ile ortaya cikti. README §9 'Coklu kupon' satiri 13 -> 14."
   },
   {
    "ne": "test dosyasi sayisi",
@@ -2048,118 +2048,145 @@
    ],
    "bekci": "YOK — 114 haftalik kosum bir suit testine sigmaz; kutuk bekcisi sayinin belgede ve modulde birebir gectigini tutuyor. Senaryonun URETIME sizmadiginin bekcisi ayri ve VAR (bkz. not).",
    "not": "BEKLEMENIN BEDELI SIFIR. Plan sapmali cetvelle kurulup TABAN cetvelle olculdugunde tavan = 1'de (bugun oynanan tek sistem) P taban birebir %7,489 ve gozlenen birebir 15/114 kaliyor; kupon esitligi dogrudan da sinandi ve 114 haftanin 114'unde BIREBIR ayni cikti. Eksen ortalamasi 3,1 -> 1,8 oynuyor ama kupon oynamiyor: M = 1 halinde eksen/alt sistem ayrimi ayni kararin bolunmesidir. Coklu sekillerde plan kipirdiyor ama HICBIR satirda iyilesmiyor (%9,353 -> %9,289, gozlenen 20 -> 17; %10,602 -> %10,509, 20 -> 19) ve siralama korunuyor, yani §3.67'nin x1,45'i senaryodan etkilenmiyor. Sebep mekanik: sapma planin zaten en emin oldugu maclara uygulanan neredeyse carpimsal bir donusumdur ve adaylari yeniden SIRALAMAZ. || Sizinti bekcisi: backend/tests/test_duyarlilik.py::test_senaryo_URETIME_sizmiyor"
+  },
+  {
+   "ne": "47 <-> 45 — ilk dort canli haftada en iyi kolon toplami (tek sistem <-> coklu kupon)",
+   "deger": "47",
+   "ureten": "cd backend && python scripts/super_toto_degerlendir.py --sezon 2026_27 --hafta 4  # her hafta: coupons[0].best ve coklu.en_iyi",
+   "olculdu": "2026-09-13",
+   "anildigi_yerler": [
+    "docs/ISTATISTIK_YOL_HARITASI.md §3.69"
+   ],
+   "bekci": "backend/tests/test_degerlendir.py::test_coklu_ilk_dort_hafta_GERCEKLESENDE_onde_DEGIL",
+   "not": "BEKLENTIYI YALANLADI. Model dort haftanin dordunde de coklu kuponu onde gosteriyor (x1,24 · x1,57 · x1,34 · x1,47) ama gerceklesen gostermiyor: en iyi kolon toplami tek sistemde 47, cokluda 45. Fark neredeyse tamamen 3. haftadan geliyor (tek sistem 14/15, coklu 11/15). Kiyas her haftada o haftanin KENDI oynanan kolon butcesinde kosuyor (2.187 · 4.050 · 864 · 3.888); 21.000 kolonla olcmek sekli degil parayi kiyaslamak olurdu. n = 4 hicbir sey kanitlamaz ve bu cumle iki yone de bakiyor: dort hafta coklu kuponu yalanlamiyor, 114 haftalik geri test de onu OYNANMIS halde dogrulamiyor. || 1-4. haftalar sonuc GIRILDIKTEN SONRA donduruldu (geriye donuk secim, kayitta results_known=true); 5. hafta sonuc GORULMEDEN donduruldu ve ileriye donuk tanigin birincisidir."
+  },
+  {
+   "ne": "8.673 — 3.888 kolonda 432 kuponluk planin 12+ tutturan kolonu, 114 hafta",
+   "deger": "8.673",
+   "ureten": "cd backend && python scripts/coklu_kiyasi.py --butce 3888  # 12+ kolon sutunu",
+   "olculdu": "2026-09-13",
+   "anildigi_yerler": [
+    "docs/ISTATISTIK_YOL_HARITASI.md §3.69"
+   ],
+   "bekci": "YOK — 114 haftalik kosum bir suit testine sigmaz. Kutuk bekcisi sayinin belgede birebir gectigini tutuyor.",
+   "not": "BIR HIPOTEZI YALANLADI. Ilk dort canli haftada coklu kupon kademe tarafinda cok kotu cikti (12+ kolon 194 <-> 10) ve ilk okuma 'iki olcum farkli butce rejimlerinde kostu; §3.67 19.683 kolonda olculdu, bu haftalar 864-4.050'de' idi. Olculdu ve TAM TERSI cikti: kucuk butcede de coklu kupon 12+ tutturan kolonu %63 artiriyor — tek sistem 5.309, 432 kupon 8.673 — ve gerceklesen 15/15'i 4/114'ten 11/114'e cikariyor. Yani dort haftalik ters sonuc bir rejim etkisi degil GURULTUDUR. Hipotez silinmedi, duzeltildi."
   }
  ],
  "komutlar": [
   {
    "komut": "bash scripts/check.sh",
-   "kaynak": "scripts/check.sh:1",
-   "ne_yapar": "tek kalite kapisi — 13 adim, backend + frontend + URETIM TOPOLOJISI. CI 'kapi' isi bunu CAGIRIR."
+   "ne_yapar": "tek kalite kapisi — 13 adim, backend + frontend + URETIM TOPOLOJISI. CI 'kapi' isi bunu CAGIRIR.",
+   "kaynak": "scripts/check.sh:1"
   },
   {
    "komut": "bash scripts/setup.sh [--kalite]",
-   "kaynak": "scripts/setup.sh:1",
-   "ne_yapar": "editable kurulum + npm ci. --kalite CI kapisiyla AYNI ekstra kumesini kurar (test,kalite,model,mcp,ocr); bekcisi test_kalite_kapisi_ve_setup_AYNI_ekstralari_kurar."
+   "ne_yapar": "editable kurulum + npm ci. --kalite CI kapisiyla AYNI ekstra kumesini kurar (test,kalite,model,mcp,ocr); bekcisi test_kalite_kapisi_ve_setup_AYNI_ekstralari_kurar.",
+   "kaynak": "scripts/setup.sh:1"
   },
   {
    "komut": "bash scripts/run_prod.sh",
-   "kaynak": "scripts/run_prod.sh:1",
-   "ne_yapar": "gunicorn 127.0.0.1:8080 + next start 0.0.0.0:3000. Artik check.sh'in 13. adimi bu topolojiyi rastgele portlarda kosturuyor."
+   "ne_yapar": "gunicorn 127.0.0.1:8080 + next start 0.0.0.0:3000. Artik check.sh'in 13. adimi bu topolojiyi rastgele portlarda kosturuyor.",
+   "kaynak": "scripts/run_prod.sh:1"
   },
   {
    "komut": "python -m spor_toto.health",
-   "kaynak": "backend/spor_toto/health.py:1295",
-   "ne_yapar": "27 degismez raporu, 6 kategori. CI matrisinin dort bacaginda da kosar."
+   "ne_yapar": "27 degismez raporu, 6 kategori. CI matrisinin dort bacaginda da kosar.",
+   "kaynak": "backend/spor_toto/health.py:1295"
   },
   {
    "komut": "python -m spor_toto.agac --lofo",
-   "kaynak": "backend/spor_toto/agac.py:250",
-   "ne_yapar": "ozellik ablasyonu (Leave-One-Feature-Out, sezon katlariyla). 2026-09'da baglandi; oncesinde fonksiyon vardi ama calistirma yolu YOKTU."
+   "ne_yapar": "ozellik ablasyonu (Leave-One-Feature-Out, sezon katlariyla). 2026-09'da baglandi; oncesinde fonksiyon vardi ama calistirma yolu YOKTU.",
+   "kaynak": "backend/spor_toto/agac.py:250"
   },
   {
    "komut": "python -m spor_toto.mcp_server --envanter",
-   "kaynak": "backend/spor_toto/mcp_server.py:106",
-   "ne_yapar": "MCP araclari <-> Flask kayit tablosu denetimi. mcp ekstrasi artik CI kalite kapisinda kuruluyor."
+   "ne_yapar": "MCP araclari <-> Flask kayit tablosu denetimi. mcp ekstrasi artik CI kalite kapisinda kuruluyor.",
+   "kaynak": "backend/spor_toto/mcp_server.py:106"
   },
   {
    "komut": "python scripts/bagimliliklar.py | pip-audit -r /dev/stdin",
-   "kaynak": "backend/scripts/bagimliliklar.py:26",
-   "ne_yapar": "beyan edilen bagimlilik denetimi. Ekstra listesi pyproject'ten TUREVIR (elle yazili degil); bos cikti cikis 1 verir."
+   "ne_yapar": "beyan edilen bagimlilik denetimi. Ekstra listesi pyproject'ten TUREVIR (elle yazili degil); bos cikti cikis 1 verir.",
+   "kaynak": "backend/scripts/bagimliliklar.py:26"
   },
   {
    "komut": "cd backend && python -m spor_toto.karne --taban --butce 2000",
-   "kaynak": "backend/spor_toto/karne.py:taban_gevsekligi",
-   "ne_yapar": "E1: garanti tabaninin ne kadar gevsek oldugunu olcer — 114 hafta boyunca gercek kolonlarin resmi odul tablosundaki karsiligini tabanla kiyaslar. DUZ olcek (garanti secilmez: en iyi kolon = 15 - k); `--garanti 14` ARTIK ValueError atar."
+   "ne_yapar": "E1: garanti tabaninin ne kadar gevsek oldugunu olcer — 114 hafta boyunca gercek kolonlarin resmi odul tablosundaki karsiligini tabanla kiyaslar. DUZ olcek (garanti secilmez: en iyi kolon = 15 - k); `--garanti 14` ARTIK ValueError atar.",
+   "kaynak": "backend/spor_toto/karne.py:taban_gevsekligi"
   },
   {
    "komut": "cd backend && python -m spor_toto.karne --hedef --butce 2000",
-   "kaynak": "backend/spor_toto/karne.py:hedef_kademe_kiyasi",
-   "ne_yapar": "E2: hedef kademeyi (12/13/14) 114 hafta boyunca GERCEK kolon oduluyle kiyaslar, eslestirilmis bootstrap + kuyruk sinavi. DUZ olcek (garanti secilmez: en iyi kolon = 15 - k); `--garanti 14` ARTIK ValueError atar."
+   "ne_yapar": "E2: hedef kademeyi (12/13/14) 114 hafta boyunca GERCEK kolon oduluyle kiyaslar, eslestirilmis bootstrap + kuyruk sinavi. DUZ olcek (garanti secilmez: en iyi kolon = 15 - k); `--garanti 14` ARTIK ValueError atar.",
+   "kaynak": "backend/spor_toto/karne.py:hedef_kademe_kiyasi"
   },
   {
    "komut": "cd backend && python -m spor_toto.karne --omurga BFE --butce 2000",
-   "kaynak": "backend/spor_toto/karne.py:omurga_kiyasi",
-   "ne_yapar": "E3: omurga fiyatini KUPON duzeyinde kiyaslar (kolon, P(hedef), gercek kolon odulu), eslestirilmis bootstrap + kuyruk sinavi + P(hedef) ayrisimi. DUZ olcek (garanti secilmez: en iyi kolon = 15 - k); `--garanti 14` ARTIK ValueError atar."
+   "ne_yapar": "E3: omurga fiyatini KUPON duzeyinde kiyaslar (kolon, P(hedef), gercek kolon odulu), eslestirilmis bootstrap + kuyruk sinavi + P(hedef) ayrisimi. DUZ olcek (garanti secilmez: en iyi kolon = 15 - k); `--garanti 14` ARTIK ValueError atar.",
+   "kaynak": "backend/spor_toto/karne.py:omurga_kiyasi"
   },
   {
    "komut": "cd backend && python -m spor_toto.hakem",
-   "kaynak": "backend/spor_toto/hakem.py",
-   "ne_yapar": "E4: hakem sutununu piyasanin ustune ekleyip sezon disarida birakmali olcer (Holm'lu), sonra yayilim sinaviyla 'etki yok mu yakalanamiyor mu' sorusunu ayirir."
+   "ne_yapar": "E4: hakem sutununu piyasanin ustune ekleyip sezon disarida birakmali olcer (Holm'lu), sonra yayilim sinaviyla 'etki yok mu yakalanamiyor mu' sorusunu ayirir.",
+   "kaynak": "backend/spor_toto/hakem.py"
   },
   {
    "komut": "cd backend && python scripts/build_hakem.py",
-   "kaynak": "backend/scripts/build_hakem.py",
-   "ne_yapar": "football-data'dan hakem sutununu ceker ve korpusun satirlarina baglar; data/hakem/hakem.csv uretir. --kontrol ile bayatlik denetlenir. Korpusa DOKUNMAZ."
+   "ne_yapar": "football-data'dan hakem sutununu ceker ve korpusun satirlarina baglar; data/hakem/hakem.csv uretir. --kontrol ile bayatlik denetlenir. Korpusa DOKUNMAZ.",
+   "kaynak": "backend/scripts/build_hakem.py"
   },
   {
    "komut": "cd backend && python -m spor_toto.karne --kapsama --butce 2000",
-   "kaynak": "backend/spor_toto/karne.py:kapsama_acigi",
-   "ne_yapar": "Modelin ex-ante P(k<=esik)'i ile GERCEKLESEN arasindaki acigi olcer ve ayristirir: sezon, favori gucu, modelin kendi P'si, q dilimi, ve isaret sayisi (banko/cifte). Son kirilim sıralama eseri olamaz cunku ayrik karardir. DUZ olcek (garanti secilmez: en iyi kolon = 15 - k); `--garanti 14` ARTIK ValueError atar."
+   "ne_yapar": "Modelin ex-ante P(k<=esik)'i ile GERCEKLESEN arasindaki acigi olcer ve ayristirir: sezon, favori gucu, modelin kendi P'si, q dilimi, ve isaret sayisi (banko/cifte). Son kirilim sıralama eseri olamaz cunku ayrik karardir. DUZ olcek (garanti secilmez: en iyi kolon = 15 - k); `--garanti 14` ARTIK ValueError atar.",
+   "kaynak": "backend/spor_toto/karne.py:kapsama_acigi"
   },
   {
    "komut": "cd backend && python -m spor_toto.karne --kalibrasyon --butce 2000",
-   "kaynak": "backend/spor_toto/karne.py:kalibrasyon_kiyasi",
-   "ne_yapar": "Is 1: omurga olasiligini (piyasa <-> kalibre_bias) KARAR cetveliyle kiyaslar — gerceklesen kacak, kacaksiz hafta, gercek kolon ROI. p_ayrisimi E3 tuzagini ayirir. Sezon disarida birakmali kalibrasyon. DUZ olcek (garanti secilmez: en iyi kolon = 15 - k); `--garanti 14` ARTIK ValueError atar."
+   "ne_yapar": "Is 1: omurga olasiligini (piyasa <-> kalibre_bias) KARAR cetveliyle kiyaslar — gerceklesen kacak, kacaksiz hafta, gercek kolon ROI. p_ayrisimi E3 tuzagini ayirir. Sezon disarida birakmali kalibrasyon. DUZ olcek (garanti secilmez: en iyi kolon = 15 - k); `--garanti 14` ARTIK ValueError atar.",
+   "kaynak": "backend/spor_toto/karne.py:kalibrasyon_kiyasi"
   },
   {
    "komut": "cd backend && python -m spor_toto.karne --egri",
-   "kaynak": "backend/spor_toto/karne.py:butce_egrisi",
-   "ne_yapar": "Is 2: butce egrisi GERCEK kolon hattinda, 6 basamak x 114 hafta. Olcu '1.000 TL basina kacaksiz hafta'. Bes aday oldugu icin Holm-Bonferroni uygulanir. ~15 dk. DUZ olcek (garanti secilmez: en iyi kolon = 15 - k); `--garanti 14` ARTIK ValueError atar."
+   "ne_yapar": "Is 2: butce egrisi GERCEK kolon hattinda, 6 basamak x 114 hafta. Olcu '1.000 TL basina kacaksiz hafta'. Bes aday oldugu icin Holm-Bonferroni uygulanir. ~15 dk. DUZ olcek (garanti secilmez: en iyi kolon = 15 - k); `--garanti 14` ARTIK ValueError atar.",
+   "kaynak": "backend/spor_toto/karne.py:butce_egrisi"
   },
   {
    "komut": "cd backend && python -m spor_toto.karne --banko",
-   "kaynak": "backend/spor_toto/karne.py:banko_yanliligi",
-   "ne_yapar": "§3.64: banko q sapmasi arindirma eseri mi, piyasa yanliligi mi, kesit mi. ORNEKLEM SABIT (favori sembol ve dilim sinirlari shin'den), uc arindirma yarisir. --korpus 31.103 macliK korpusta kosar, --lig T1 kesiti lige kisitlar. Lig ve SEZON kirilimi verir."
+   "ne_yapar": "§3.64: banko q sapmasi arindirma eseri mi, piyasa yanliligi mi, kesit mi. ORNEKLEM SABIT (favori sembol ve dilim sinirlari shin'den), uc arindirma yarisir. --korpus 31.103 macliK korpusta kosar, --lig T1 kesiti lige kisitlar. Lig ve SEZON kirilimi verir.",
+   "kaynak": "backend/spor_toto/karne.py:banko_yanliligi"
   },
   {
    "komut": "python -m spor_toto.hafta_hakki --kiyas",
-   "kaynak": "backend/spor_toto/hafta_hakki.py:1",
-   "ne_yapar": "E6: 114 hafta x 15 basamak gercek kolon kosumu (~20 dk). Haftanin CETVELI (her basamakta gerceklesen odul), kural kiyasi (sabit butce / lambda / en-buyuk / LOO), basamak karnesi ve isaret sinavi."
+   "ne_yapar": "E6: 114 hafta x 15 basamak gercek kolon kosumu (~20 dk). Haftanin CETVELI (her basamakta gerceklesen odul), kural kiyasi (sabit butce / lambda / en-buyuk / LOO), basamak karnesi ve isaret sinavi.",
+   "kaynak": "backend/spor_toto/hafta_hakki.py:1"
   },
   {
    "komut": "python -m spor_toto.hafta_hakki --cephe [--garanti G]",
-   "kaynak": "backend/spor_toto/hafta_hakki.py:1",
-   "ne_yapar": "Bir haftanin butun satin alma basamaklari, butce kisiti olmadan — maliyet, sekil, P(hedef) ve marjinal TL/puan."
+   "ne_yapar": "Bir haftanin butun satin alma basamaklari, butce kisiti olmadan — maliyet, sekil, P(hedef) ve marjinal TL/puan.",
+   "kaynak": "backend/spor_toto/hafta_hakki.py:1"
   },
   {
    "komut": "python -m spor_toto.hafta_hakki --para SEZON:HAFTA",
-   "kaynak": "backend/spor_toto/hafta_hakki.py:1",
-   "ne_yapar": "Canli haftada cephenin her basamaginda E[TL] — 'butcesiz para enbuyuklemesi de dejenere' iddiasinin olcumu (E/maliyet 0,10-0,12)."
+   "ne_yapar": "Canli haftada cephenin her basamaginda E[TL] — 'butcesiz para enbuyuklemesi de dejenere' iddiasinin olcumu (E/maliyet 0,10-0,12).",
+   "kaynak": "backend/spor_toto/hafta_hakki.py:1"
   },
   {
    "komut": "python scripts/amac_kiyasi.py [--hafta N] [--tohum T]",
-   "kaynak": "backend/scripts/amac_kiyasi.py:1",
-   "ne_yapar": "Iki amaci yan yana koyar: `secim.en_iyi_secim`in P(k<=eslik) enbuyuklemesi ile ayni kisitlar altinda E[k]=sum(q) enkucuklemesi. Bu sezonun dondurulmus haftalarinda ve tohumu sabit rastgele haftalarda ayrisma sikligini ve P(k<=2) cinsinden kaybi olcer."
+   "ne_yapar": "Iki amaci yan yana koyar: `secim.en_iyi_secim`in P(k<=eslik) enbuyuklemesi ile ayni kisitlar altinda E[k]=sum(q) enkucuklemesi. Bu sezonun dondurulmus haftalarinda ve tohumu sabit rastgele haftalarda ayrisma sikligini ve P(k<=2) cinsinden kaybi olcer.",
+   "kaynak": "backend/scripts/amac_kiyasi.py:1"
   },
   {
    "komut": "python scripts/sistem_kiyasi.py [--dogrula] [--hafta N] [--odul-hafta N]",
-   "kaynak": "backend/scripts/sistem_kiyasi.py:1",
-   "ne_yapar": "Kaplama mi duz mu: ayni kolon butcesinde her sistemin ERISEBILDIGI en iyi sekil, E[TL] ve P(>=12). --dogrula once §3.40'in kolon basina dogrusalligini kaba kuvvetle yeniden uretir. KAPLAMA SOKULMEDEN ONCE yazildi; sokumden sonra kosamaz, ciktisi docs/DUZ_SISTEME_GECIS.md'de dondurulmustur."
+   "ne_yapar": "Kaplama mi duz mu: ayni kolon butcesinde her sistemin ERISEBILDIGI en iyi sekil, E[TL] ve P(>=12). --dogrula once §3.40'in kolon basina dogrusalligini kaba kuvvetle yeniden uretir. KAPLAMA SOKULMEDEN ONCE yazildi; sokumden sonra kosamaz, ciktisi docs/DUZ_SISTEME_GECIS.md'de dondurulmustur.",
+   "kaynak": "backend/scripts/sistem_kiyasi.py:1"
   },
   {
    "komut": "cd backend && python scripts/banko_duyarliligi.py",
-   "ne": "Olculen banko sapmasini SENARYO olarak kosar (uretime konmaz) ve iki soruyu ayri ayri olcer: A kalibrasyon — plan SABIT tutulup cetvel degistirilince modelin P(15/15) iddiasi gerceklesen hafta sayisiyla bagdasiyor mu (Poisson-binom, sezon kirilimiyla); B karar — sapmali cetvelle kurulan plan TABAN cetvelle olculunce iyilesiyor mu. 114 hafta, ~9,5 dk.",
+   "ne_yapar": "Olculen banko sapmasini SENARYO olarak kosar (uretime konmaz) ve iki soruyu ayri ayri olcer: A kalibrasyon — plan SABIT tutulup cetvel degistirilince modelin P(15/15) iddiasi gerceklesen hafta sayisiyla bagdasiyor mu (Poisson-binom, sezon kirilimiyla); B karar — sapmali cetvelle kurulan plan TABAN cetvelle olculunce iyilesiyor mu. 114 hafta, ~9,5 dk.",
    "kaynak": "backend/scripts/banko_duyarliligi.py:1"
+  },
+  {
+   "komut": "cd backend && python scripts/coklu_kupon.py --hafta N --butce B --tavan T --yaz",
+   "ne_yapar": "Bir haftanin coklu kupon planini DONDURUR (data/super_toto/<sezon>/hafta_NN_coklu.json, git'e girer). Kayit kuponlarin KENDISINI tasir, tarifi degil — tarif motora baglidir ve §3.65'in 2. Tahmin satiri motoru sokuldugu icin artik bagimsiz dogrulanamiyor. Kayit OYNANAN kupon DEGIL: oynanan kupon tek sistemdir, bu onun olculen rakibi. meta.results_known kaydin epistemik kunyesidir. Var olan kaydin uzerine --uzerine olmadan yazilmaz.",
+   "kaynak": "backend/scripts/coklu_kupon.py:kayit_kur"
   }
  ]
 }

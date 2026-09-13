@@ -132,7 +132,7 @@ data/
   st_history_2025_26.json   Tarihsel 1/0/2 (history.py buradan okur)
   odds/                     Oran arşivi (aşağıda)
   iddaa/ egitim/ fixtures/ super_toto/
-tests/                            (74 dosya → 1.930 test)
+tests/                            (74 dosya → 1.938 test)
 ```
 
 > **ÖLÇÜM modülleri arayüze çıkmaz** ve yalnızca `python -m spor_toto.<ad>`

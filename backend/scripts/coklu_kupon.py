@@ -18,12 +18,34 @@ yaptı (`ortak.py` uyarısı).
     python scripts/coklu_kupon.py --hafta 5 --butce 21000
     python scripts/coklu_kupon.py --hafta 5 --butce 21000 --tavan 81
     python scripts/coklu_kupon.py --hafta 5 --butce 21000 --json > kupon.json
+    python scripts/coklu_kupon.py --hafta 5 --butce 21000 --tavan 81 --yaz
+
+─── `--yaz`: planı DONDURUR ──────────────────────────────────────────────
+
+`--yaz` planı `hafta_NN_coklu.json` olarak yazar ve o dosya git'e girer.
+Sebebi şu: §3.67'nin ×1,45'i 114 haftalık **geri** testten geliyor ve geri
+test bir kupon oynatmaz. İleriye dönük tanık ancak hafta hafta birikir, ve
+birikmesi için planın **sonuç görülmeden** donmuş olması gerekir. Kayıt
+`meta.results_known` ile bunu ilan eder; git geçmişi de doğrular.
+
+Kayıt **kuponların kendisini** taşır, tarifi (eksen + alt sistem + `M`)
+değil. Tarif ~1 KB, kuponlar ~100 KB — ama tarif motora bağlıdır ve bu depo
+o hatayı bir kez yaptı: §3.65'in 2. Tahmin satırı bir kaplama kaydıdır,
+motoru söküldü ve artık **bağımsız doğrulanamıyor**. Bu yüzden kolonlar
+açıkça yazılıyor; tarif zaten kayıttan geri okunabilir (eksen dışı maçlarda
+bütün kuponlar aynı işareti taşır) ve bekçisi bunu sınıyor.
+
+**Bu kayıt OYNANAN kupon değildir.** Oynanan kupon `hafta_NN_kupon.json`da
+duran tek sistemdir; burada donan plan onun ölçülen rakibidir ve operasyon
+sorusu (bir haftada kaç kupon fiilen yatırılabilir) açık olduğu sürece
+öyle kalır. Deponun bu deseni var: 2. Tahmin kaydı da ölçülür, oynanmaz.
 """
 from __future__ import annotations
 
 import argparse
 import json
 import sys
+from datetime import date
 from pathlib import Path
 
 KOK = Path(__file__).resolve().parent.parent
@@ -87,6 +109,53 @@ def plan_uret(d: dict, butce: int, tavan: int | None) -> dict:
     }
 
 
+#: Donmuş kaydın adı — 2. Tahmin kaydıyla aynı kalıp.
+KAYIT_ADI = "Çoklu kupon"
+
+
+def kayit_yolu(sezon: str, hafta: int) -> Path:
+    """Donmuş çoklu kupon kaydının yolu."""
+    return KOK / "data" / "super_toto" / sezon / f"hafta_{hafta:02d}_coklu.json"
+
+
+def kayit_kur(d: dict, c: dict, butce: int, tavan: int | None,
+              tavansiz_p: float | None = None) -> dict:
+    """Donmuş kaydın gövdesi.
+
+    `results_known` kaydın **epistemik** künyesidir ve uydurulmuyor: hafta
+    dosyasında sonuç varsa `True` yazılır. `True` olan bir kayıt geçersiz
+    değildir ama ileriye dönük tanık da değildir — girdiler `entered_at`'te
+    donmuş olduğu için sızıntı yoktur, ama planı **şimdi** hesaplamaya karar
+    vermek geriye dönük bir seçimdir ve okuyan bunu bilmelidir.
+    """
+    sonuc = (d.get("meta") or {}).get("results")
+    return {
+        "meta": {
+            "ad": KAYIT_ADI,
+            "season": (d.get("meta") or {}).get("season"),
+            "week": (d.get("meta") or {}).get("week"),
+            "frozen_at": date.today().isoformat(),
+            "results_known": bool(sonuc),
+            "entered_at": (d.get("meta") or {}).get("entered_at"),
+            "butce_kolon": butce,
+            "kupon_tavani": tavan,
+            # Tavanın bedeli görünür olsun: tavansız aramanın hedefi.
+            # Tavan matematiksel bir sınır değil bir OPERASYON kararıdır
+            # (`coklu.VARSAYILAN_KUPON_TAVANI` bunu açıkça yazıyor).
+            "tavansiz_p_onbes": tavansiz_p,
+            "sistem": "duz",
+            "note": (
+                "OYNANAN kupon DEGIL. Oynanan kupon hafta_NN_kupon.json'daki "
+                "tek sistemdir; bu onun olculen rakibidir ve operasyon "
+                "sorusu (bir haftada kac kupon fiilen yatirilabilir) acik "
+                "oldugu surece oyle kalir. Kolonlar ACIKCA yazilidir, tarif "
+                "degil: tarif motora baglidir ve §3.65'in 2. Tahmin satiri "
+                "motoru sokuldugu icin artik bagimsiz dogrulanamiyor."),
+        },
+        "plan": c,
+    }
+
+
 def yaz(c: dict, egri: list | None) -> None:
     print(f"\n{c['sezon']} · {c['hafta']}. hafta — çoklu kupon planı")
     print(f"bütçe   : {c['butce_kolon']:,} kolon  ({c['butce_tl']:,.0f} TL)")
@@ -130,6 +199,10 @@ def main() -> None:
     ap.add_argument("--egri", action="store_true",
                     help="kupon sayisi <-> hedef odunlesmesini de bas")
     ap.add_argument("--json", action="store_true")
+    ap.add_argument("--yaz", action="store_true",
+                    help="plani hafta_NN_coklu.json olarak DONDURUR")
+    ap.add_argument("--uzerine", action="store_true",
+                    help="--yaz ile: var olan kaydin uzerine yaz")
     a = ap.parse_args()
 
     d = hafta_yukle(a.sezon, a.hafta)
@@ -142,6 +215,27 @@ def main() -> None:
         egri = [(seri[t].kupon_sayisi,
                  seri[t].kuponlar[0].kolon,
                  seri[t].p_onbes) for t in sorted(seri)]
+
+    if a.yaz:
+        yol = kayit_yolu(a.sezon, a.hafta)
+        # Donmuş kaydın üzerine SESSIZCE yazılmaz: kaydın değeri donmuş
+        # olmasından geliyor ve bir tazeleme onu sessizce geriye dönük
+        # kılardı. Üzerine yazmak açık bir karardır.
+        if yol.exists() and not a.uzerine:
+            raise SystemExit(
+                f"kayit ZATEN VAR: {yol.relative_to(KOK.parent)}\n"
+                "donmus bir kaydin uzerine yazmak kaydi geriye donuk kilar; "
+                "gercekten istiyorsan --uzerine ver.")
+        # Tavanın bedeli kayda girsin diye tavansız hedef de ölçülür.
+        probs = [m["probs"] for m in d["matches"]]
+        tavansiz = coklu_plan(probs, a.butce, kupon_tavani=None).p_onbes
+        yol.parent.mkdir(parents=True, exist_ok=True)
+        kayit = kayit_kur(d, c, a.butce, a.tavan, tavansiz)
+        yol.write_text(json.dumps(kayit, ensure_ascii=False, indent=1) + "\n",
+                       encoding="utf-8")
+        print(f"yazildi: {yol.relative_to(KOK.parent)}  "
+              f"({yol.stat().st_size / 1024:,.0f} KB)  "
+              f"results_known={kayit['meta']['results_known']}")
 
     if a.json:
         print(json.dumps(c, ensure_ascii=False, indent=1))

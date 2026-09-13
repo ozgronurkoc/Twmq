@@ -787,3 +787,106 @@ def test_karne_yorumu_KENDI_TABLOSUYLA_celismez():
     assert "hiçbir `k` 3. haftada" in _basabas_cumlesi(
         [*odulsuz, {"hafta": 3, "odul": 0, "net": -1620,
                     "basabas_kacak": None}])
+
+
+# ─── çoklu kupon kaydı ────────────────────────────────────────────────────
+
+def test_coklu_kaydi_KENDINI_dogruluyor(deg):
+    """Kaydın `p_onbes`i kaydın KOLONLARINDAN yeniden ölçülünce aynı çıkmalı.
+
+    Bu bekçi §3.65'in dersinden geliyor: orada 2. Tahmin satırı bir kaplama
+    kaydıdır, motoru söküldü ve kayıt artık **bağımsız doğrulanamıyor**.
+    Çoklu kupon kaydı kolonları açıkça taşıdığı için doğrulama kaydın
+    içindedir — motor değişse bile durur, ve ayrışırsa bu test kırılır.
+    """
+    for hafta in (1, 2, 3, 4):
+        c = deg.rapor("2026_27", hafta)["coklu"]
+        assert c is not None, f"hafta {hafta}: coklu kayit yok"
+        assert c["kayit_tutarli"], (
+            f"hafta {hafta}: p_onbes kayitta {c['p_onbes_onceden']}, "
+            f"kolonlardan {c['p_onbes_kayittan']}")
+        assert c["kolon_tutarli"]
+
+
+def test_coklu_kaydi_BUTCEYI_asmiyor(deg):
+    """Kolon toplamı bütçeyi aşamaz — aşarsa kıyas parayı da değiştirir."""
+    for hafta in (1, 2, 3, 4):
+        c = deg.rapor("2026_27", hafta)["coklu"]
+        assert c["kolon"] <= c["butce_kolon"]
+        assert c["kupon_sayisi"] <= c["kupon_tavani"]
+
+
+def test_coklu_kaydi_OYNANMADIGINI_soyluyor(deg):
+    """Kayıt oynanmadığını ilan etmeli; karıştırmak karneyi bozar.
+
+    1–4. haftanın kayıtları sonuç GİRİLDİKTEN SONRA donduruldu ve bunu
+    `results_known` ile yazıyorlar. Girdiler `entered_at`te donmuş olduğu
+    için sızıntı yok, ama planı **şimdi** hesaplamaya karar vermek geriye
+    dönük bir seçimdir ve kayıt bunu saklamamalı.
+    """
+    for hafta in (1, 2, 3, 4):
+        c = deg.rapor("2026_27", hafta)["coklu"]
+        assert c["results_known"] is True
+        assert c["ad"] == "Çoklu kupon"
+
+
+def test_coklu_MODEL_hedefi_tek_sistemi_geciyor(deg):
+    """Plan tek sistemi MODELDE geçmeli — geçmiyorsa arama bozuk.
+
+    Arama `M = 1`'i (tek sistemin kendisi) bir aday olarak geziyor, o hâlde
+    bulunan plan tek sistemden kötü OLAMAZ. Bu, gerçekleşen sonuçla ilgili
+    bir iddia değildir — dördüncü test onu ayrıca ve tersine ölçüyor.
+    """
+    for hafta in (1, 2, 3, 4):
+        c = deg.rapor("2026_27", hafta)["coklu"]
+        assert c["p_onbes_onceden"] >= c["tek_sistem_p_onbes"]
+        # Tavansız arama tavanlıdan kötü olamaz: uzay daha geniş.
+        assert c["tavansiz_p_onbes"] >= c["p_onbes_onceden"] - 1e-12
+
+
+def test_coklu_ilk_dort_hafta_GERCEKLESENDE_onde_DEGIL(deg):
+    """ÖLÇÜLMÜŞ VE ÖNE GEÇMEMİŞ — kayıt bu hâliyle duruyor.
+
+    §3.67 114 haftada çoklu kuponun 12+ tutturan kolonunu tek sistemin
+    %41 üstünde ölçtü. İlk dört canlı haftada **tam tersi** oldu: en iyi
+    kolon toplamı 47 ↔ 45 ve 12+ kolon 194 ↔ 10. Fark neredeyse tamamen
+    3. haftadan geliyor (tek sistem 14/15, çoklu 11/15).
+
+    Bu test bir iddiayı değil bir **kaydı** tutuyor. Sayı oynarsa bunu
+    görmek gerekir, çünkü buradaki her satır oynanmış bir haftadır.
+
+    **BİR AÇIKLAMA DENENDİ VE YANLANDI.** İlk okuma "iki ölçüm farklı
+    bütçe rejimlerinde koştu" idi (§3.67 19.683 kolonda, bu haftalar
+    864–4.050'de) ve küçük bütçede çoklu kuponun kademe tarafında bedel
+    ödediği sanıldı. Ölçüldü — `coklu_kiyasi.py --butce 3888`, 114 hafta —
+    ve **tam tersi** çıktı: 12+ tutturan kolon tek sistemde 5.309, 432
+    kuponda 8.673 (+%63), gerçekleşen 15/15 ise 4/114 ↔ 11/114. Yani
+    §3.67'nin bulgusu küçük bütçede de duruyor ve buradaki dört haftalık
+    ters sonuç bir rejim etkisi değil **gürültüdür**; farkın neredeyse
+    tamamı 3. haftadan geliyor (tek sistem 14/15 tutunca 864 kolonun 178'i
+    12+ oldu; çoklu plan o hafta 11/15'te kaldı).
+    """
+    tek = cok = 0
+    for hafta in (1, 2, 3, 4):
+        o = deg.rapor("2026_27", hafta)
+        tek += o["coupons"][0]["best"]
+        cok += o["coklu"]["en_iyi"]
+    assert (tek, cok) == (47, 45)
+
+
+def test_hafta_bes_coklu_kaydi_SONUC_GORULMEDEN_dondu():
+    """5. haftanın kaydı ileriye dönük tek tanık — künyesi öyle demeli.
+
+    5. haftanın sonucu bu kayıt yazıldığında GİRİLMEMİŞTİ ve git geçmişi
+    bunu doğrular. `rapor()` sonucu olmayan haftada patladığı için bu test
+    kaydı doğrudan okuyor.
+    """
+    yol = (Path(__file__).resolve().parent.parent / "data" / "super_toto" /
+           "2026_27" / "hafta_05_coklu.json")
+    kayit = json.loads(yol.read_text(encoding="utf-8"))
+    assert kayit["meta"]["results_known"] is False
+    assert kayit["meta"]["week"] == 5
+    assert kayit["meta"]["butce_kolon"] == 21_000
+    # Kolonlar açıkça yazılı olmalı — tarif değil.
+    assert len(kayit["plan"]["kuponlar"]) == kayit["meta"]["kupon_tavani"]
+    assert all(len(k["picks"]) == 15 for k in kayit["plan"]["kuponlar"])

@@ -171,11 +171,11 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/components/super-toto/tahmin2.tsx` | **2. Tahmin** paneli — `1. Tahmin` / `2. Tahmin` sekmeleri arasında geçilir; para birimli hiçbir sayı yok. Hafta kapandığında sonuç sütunu ve ayar karnesi açılır (§3.38) |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **1.930 test**; **136'sı** istatistik katmanına (`history` `odds` `backtest`
+paketi toplam **1.938 test**; **136'sı** istatistik katmanına (`history` `odds` `backtest`
 `api_stats` `api_backtest` `snapshot_iddaa`), **662'si** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre`
-`avrupa` `sehir` **`arena`** **`sizinti`** **`kuyruk`** **`sembol_sirasi`**), **36'sı** 2. Tahmin'e (`tahmin2`), **39'u** sonuç değerlendirmesine (`degerlendir`). Dosya adlarıyla sayılıdır ki tablo elle bakım gerektirmesin —
+`avrupa` `sehir` **`arena`** **`sizinti`** **`kuyruk`** **`sembol_sirasi`**), **36'sı** 2. Tahmin'e (`tahmin2`), **45'i** sonuç değerlendirmesine (`degerlendir`). Dosya adlarıyla sayılıdır ki tablo elle bakım gerektirmesin —
 `tests/test_belgeler.py` onları gerçek koleksiyona karşı denetler.
 `python -m spor_toto.health` **22 değişmez** çalıştırır — ikisi (`oran_arsivi`, `geri_test`)
 istatistik katmanını, biri (`tahmin_referanslari`) tahmin katmanının ölçüm koşumunu korur,
@@ -6201,6 +6201,103 @@ yani taban ile senaryo aynı olasılıkları iki ayrı biçimde veriyordu.
 `coklu._matris` ikisini de normalleştirdiği için sonuç değişmiyordu, ama
 sözleşme ayrışıktı ve `test_sapma_SIFIR_taban_ile_ayni` onu koşarken tuttu.
 
+### 3.69 Çoklu kupon üretim hattına bağlandı — ve ilk dört hafta **aleyhine** çıktı
+
+§3.67'nin ×1,45'i 114 haftalık **geri** testten geliyor ve geri test bir
+kupon oynatmaz. İleriye dönük tanık ancak hafta hafta birikir; birikmesi
+için planın **sonuç görülmeden** donmuş olması gerekir. Bu bölüm o hattı
+kuruyor ve ilk dört haftanın kaydını — beklenenin tersi olduğu hâlde —
+olduğu gibi yazıyor.
+
+```bash
+cd backend && python scripts/coklu_kupon.py --hafta 5 --butce 21000 --tavan 81 --yaz
+cd backend && python scripts/super_toto_degerlendir.py --sezon 2026_27 --hafta 4
+```
+
+#### Kayıt: ölçülür, **oynanmaz**
+
+Donmuş kayıt `hafta_NN_coklu.json` olarak git'e giriyor. Oynanan kupon
+`hafta_NN_kupon.json`daki tek sistem olarak **kalıyor**: operasyon sorusu
+(bir haftada kaç kupon fiilen yatırılabilir) açık ve o soru cevaplanmadan
+oynanan kuponu değiştirmek ölçüme değil tahmine dayanmak olurdu. Deponun bu
+deseni zaten var — 2. Tahmin kaydı da ölçülür, oynanmaz (§3.65).
+
+İki tasarım kararı ve ikisinin de bir gerekçesi var:
+
+* **Kayıt kuponların KENDİSİNİ taşıyor**, tarifi (eksen + alt sistem + `M`)
+  değil. Tarif ~1 KB, kuponlar ~20 KB — ama tarif motora bağlıdır ve bu depo
+  o hatayı bir kez yaptı: §3.65'in 2. Tahmin satırı bir kaplama kaydıdır,
+  motoru söküldü ve kayıt artık **bağımsız doğrulanamıyor**. Kolonlar açıkça
+  yazılınca doğrulama kaydın *içine* giriyor: `p_onbes` kayıtta yazılıdır ve
+  değerlendirici onu kaydın kolonlarından yeniden ölçer. Bekçisi
+  `test_coklu_kaydi_KENDINI_dogruluyor`.
+* **Puanlama tek sistemle AYNI gövdeden** geçiyor (`kupon_degerlendir`, her
+  kupon için). Ayrı bir puanlayıcı yazmak iki kaydı farklı hesapla ölçmek
+  olurdu ve o hâlde aradaki fark kupondan mı yöntemden mi geldiği bilinemezdi
+  — 2. Tahmin'de aynı gerekçe yazılı.
+
+#### 5. hafta ileriye dönük, 1–4 geriye dönük — ve kayıt bunu söylüyor
+
+5. haftanın sonucu bu kayıt dondurulduğunda **girilmemişti**
+(`results_known: false`, git geçmişi doğrular). 1–4. haftalar sonuç
+girildikten **sonra** donduruldu ve kayıtları bunu ilan ediyor: girdiler
+`entered_at`'te donmuş olduğu için sızıntı yok, ama planı *şimdi*
+hesaplamaya karar vermek geriye dönük bir seçimdir.
+
+Kıyas her haftada o haftanın **kendi oynanan kolon bütçesinde** koşuyor;
+21.000 kolonla ölçmek şekli değil parayı kıyaslamak olurdu.
+
+| hafta | kolon | tek sistem `P(15)` | en iyi | çoklu `P(15)` | en iyi | kazanç |
+|---|---:|---:|---:|---:|---:|---:|
+| 1 | 2.187 | %1,654 | 9 | %2,047 | **10** | ×1,24 |
+| 2 | 4.050 | %1,942 | 12 | %3,055 | 12 | ×1,57 |
+| 3 | 864 | %1,076 | **14** | %1,445 | 11 | ×1,34 |
+| 4 | 3.888 | %1,389 | 12 | %2,042 | 12 | ×1,47 |
+
+Para kademeleri, aynı dört hafta:
+
+| | en iyi kolon toplamı | 12+ kolon | 13+ kolon |
+|---|---:|---:|---:|
+| tek sistem (oynanan) | **47** | **194** | **28** |
+| çoklu kupon (kayıt) | 45 | 10 | 0 |
+
+**Model her hafta çoklu kuponu önde gösteriyor, gerçekleşen dört haftada
+göstermiyor.** Farkın neredeyse tamamı 3. haftadan geliyor: tek sistem
+14/15 tutunca 864 kolonun 178'i 12+ oldu, çoklu plan o hafta 11/15'te
+kaldı.
+
+#### Bir açıklama denendi ve **yanlandı**
+
+İlk okuma şuydu: *"iki ölçüm farklı bütçe rejimlerinde koştu — §3.67 19.683
+kolonda, bu haftalar 864–4.050'de; çoklu kupon küçük bütçede kademe
+tarafında bedel ödüyor olabilir."* Makul bir hipotezdi ve ölçüldü
+(`coklu_kiyasi.py --butce 3888`, 114 hafta):
+
+    tavan    kupon    kolon   model P(15)   gozlenen   12+ kolon
+        1        1    3.879        %2,655      4/114       5.309
+       48       48    3.888        %3,711      9/114       7.922
+      729      432    3.888        %3,951     11/114       8.673
+
+**Tam tersi.** Küçük bütçede de çoklu kupon 12+ tutturan kolonu %63
+artırıyor (5.309 → 8.673) ve gerçekleşen 15/15'i 4/114'ten 11/114'e
+çıkarıyor. Yani §3.67'nin bulgusu bu rejimde de duruyor ve dört haftalık
+ters sonuç bir rejim etkisi **değil**, gürültüdür. Hipotez silinmedi,
+düzeltildi — bekçisi `test_coklu_ilk_dort_hafta_GERCEKLESENDE_onde_DEGIL`
+ve gerekçe o testin gövdesinde duruyor.
+
+> **`n = 4` hiçbir şey kanıtlamaz, ve bu cümle iki yöne de bakıyor.**
+> Dört hafta çoklu kuponu yalanlamıyor; ama 114 haftalık geri test de onu
+> *oynanmış* hâlde doğrulamıyor. Kaydın varlık sebebi tam olarak bu boşluk:
+> oynanan kupon değişmeden, hafta hafta ileriye dönük tanık birikecek.
+> 5. hafta o tanıkların birincisidir.
+
+#### Yan ürün — ölçüm çıktısı aynı satırı iki kez basıyordu
+
+`coklu_kiyasi.py` tabloyu `kupon_ort` ile yazıyordu ve o sayı yuvarlanıyor:
+3.888 kolonda tavan 1 ile tavan 3 ikisi de "1 kupon" yazıyor, 12+ kolonları
+ise 5.309 ↔ 5.308. Tablo aynı satırı iki kez basmış gibi görünüyordu ve
+okuyan bunu bir hata sanardı. `tavan` sütunu eklendi.
+
 ---
 
 ## 4. Sayfada bugün ne var
@@ -7223,7 +7320,7 @@ python -m spor_toto.kosum                  # kayıtlı koşumlar
 python -m spor_toto.kosum --son disari     # son koşumun ortamı
 
 # Denetim
-pytest -q                                  # 1.930 test (136'sı bu katman, 662'si tahmin)
+pytest -q                                  # 1.938 test (136'sı bu katman, 662'si tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out

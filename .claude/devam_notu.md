@@ -47,79 +47,103 @@ benim kararım):
 
 **2026-09-13 — dal `claude/devam-edelim-tkk1b8`**
 
-### Bu oturumda ne yapıldı — banko ekseni açıldı ve **kapandı**
+### Bu oturumda ne yapıldı — çoklu kupon üretim hattına bağlandı (§3.69)
 
-Devam notunun 1. sıradaki adımı "banko kalibrasyonu, yeniden açılacak"
-diyordu. Açıldı ve ölçüldü; sonuç beklenenin tersi ve **karar değişmedi**.
-Ayrıntı `docs/ISTATISTIK_YOL_HARITASI.md` §3.68, üretici
-`cd backend && python scripts/banko_duyarliligi.py` (~9,5 dk).
+Devam notunun 1. sıradaki adımı buydu: `coklu_kupon.py` planı üretiyordu ama
+hiçbir yere **yazmıyordu**, yani §3.67'nin ×1,45'i 114 haftalık geri testte
+kalıyordu ve ileriye dönük tek bir tanık bile birikmiyordu.
 
-Üç cevap, üçü de "hayır":
+**Kurulan hat.** `coklu_kupon.py --yaz` planı `hafta_NN_coklu.json` olarak
+donduruyor (git'e girer); `super_toto_degerlendir.py` onu **tek sistemle
+aynı gövdeyle** puanlıyor (`kupon_degerlendir`, her kupon için). Kayıt
+kuponların *kendisini* taşıyor, tarifi değil — §3.65'in 2. Tahmin satırı
+motoru söküldüğü için bağımsız doğrulanamıyor ve o hata tekrarlanmadı;
+`p_onbes` kaydın kolonlarından yeniden ölçülüyor
+(`test_coklu_kaydi_KENDINI_dogruluyor`).
 
-1. **Açık gerçek.** Planın `P(15/15)` iddiası ilk kez plan düzeyinde sınandı
-   (Poisson-binom, 15/15 tutan **hafta sayısı** — maç düzeyi kapsamadan
-   bağımsız bir istatistik). Havuzlanmış 114 haftada model **karamsar**: tek
-   sistemde beklenen 8,54 ↔ gerçekleşen 15 (×1,76, iki yanlı 0,0444); 729
-   kuponda 12,09 ↔ 20 (×1,65). Gerçek bütçede düz ölçekte ölçülen banko
-   sapması (`p₁` −%5,8 düşük, `n = 684`) açığı **kapatıyor** (×1,05–1,25) ve
-   o 5,8 bu sınava ayarlanmadı — ayrı bir istatistikten geldi.
+**5. hafta SONUÇ GÖRÜLMEDEN donduruldu** (81 kupon × 243 kolon = 19.683,
+`P(15/15)` %15,937 ↔ tek sistem %13,081, tavansız %17,242). İleriye dönük
+tanıkların birincisi bu; git geçmişi `results_known: false` ile doğruluyor.
+1–4. haftalar da donduruldu ama sonuç girildikten **sonra**, ve kayıtları
+bunu ilan ediyor.
 
-2. **Ama açık GÜNCEL DEĞİL.** Sezon sınavı §3.64'ün imzasını verdi: 729
-   kuponda ×2,24 · ×2,25 · ×1,65 · **×1,00**. Havuzlanmış sayı 2023/24'ten
-   geliyor; 2025/26'da model zaten tutuyor ve **düzeltilmiş** model fazla
-   iyimser olurdu (sapmalı cetvel 5,84 hafta bekliyor, gerçekleşen 4). Bu
-   imzanın üçüncü görünüşü (§3.60, §3.64, şimdi bu).
+### Ölçülen ve BEKLENTİYE TERS çıkan şey
 
-3. **Karar hiç değişmiyor.** `tavan = 1`'de oynanan kupon **114/114**
-   haftada birebir aynı. Çoklu şekillerde plan kıpırdıyor ama taban cetvelde
-   hiçbir satırda iyileşmiyor (%9,353 → %9,289, gözlenen 20 → 17). Sıralama
-   korunuyor, §3.67'nin ×1,45'i etkilenmiyor. Sebep mekanik: sapma, planın
-   zaten en emin olduğu maçlara uygulanan neredeyse çarpımsal bir
-   dönüşümdür ve adayları **yeniden sıralamaz** — kalibrasyon *sayıyı*
-   değiştiriyor, *seçimi* değiştirmiyor.
+İlk dört canlı haftada, her hafta o haftanın **kendi** kolon bütçesinde:
 
-**Sonuç:** `karne.BANKO_Q_DUZELTMESI = 0,0` kalıyor, durma kuralı
-yürürlükte, ve belgelerdeki `P(15/15)` sayıları **yeniden ölçeklenmedi** —
-havuzlanmış ×1,76'yla hepsini büyütmek 2023/24'ü geçmişe uydurmak olurdu.
-Eklenen şey bir **okuma kuralı** (`coklu.py` başlığı).
+    en iyi kolon toplamı   tek sistem 47   çoklu 45
+    12+ kolon              tek sistem 194  çoklu 10
+    13+ kolon              tek sistem 28   çoklu 0
 
-Eklenen dosyalar: `spor_toto/duyarlilik.py`, `scripts/banko_duyarliligi.py`,
-`tests/test_duyarlilik.py` (14 bekçi). Belge zinciri kapatıldı: test 1.916 →
-**1.930**, dosya 73 → **74**, betik 34 → **35**, modül 56 → **57**; §3.67 de
-bu oturumda yazıldı (çoklu kupon bulgusu yol haritasında hiç yoktu).
+Model dördünde de çoklu kuponu önde gösteriyor (×1,24 · ×1,57 · ×1,34 ·
+×1,47); gerçekleşen göstermiyor. Farkın neredeyse tamamı 3. haftadan:
+tek sistem 14/15 tutunca 864 kolonun 178'i 12+ oldu, çoklu plan 11/15.
+
+**Bir açıklama denendi ve yanlandı.** "Bütçe rejimi farklı, çoklu kupon
+küçük bütçede kademe tarafında bedel ödüyor" hipotezi ölçüldü
+(`coklu_kiyasi.py --butce 3888`, 114 hafta) ve tam tersi çıktı: küçük
+bütçede de 12+ kolon 5.309 → **8.673** (+%63), gerçekleşen 15/15 4/114 →
+11/114. Yani dört haftalık ters sonuç gürültü. `n = 4` hiçbir şey
+kanıtlamaz — ve bu cümle iki yöne de bakıyor.
+
+### Yan işler
+
+* **Kütüğün komut şeması bekçisizdi.** Geçen oturumda `komutlar`a yanlış
+  alan adıyla (`ne`, `ne_yapar` değil) girdi ekledim; şema kapısı yalnızca
+  `sayilar`a baktığı için yeşil geçti ve kusur `graf_sorgu.py komut <terim>`
+  çağrısında **KeyError ile çökerek** çıktı. Düzeltildi ve bekçisi yazıldı
+  (`test_kutuk_KOMUT_girdilerinin_semasi_TAM`; kusuru geri koyup kırmızı
+  olduğu doğrulandı).
+* **`coklu.p_onbes` tip yalanı.** İmza `-> float`, gövde `np.float64`
+  döndürüyordu. Sessiz kalmadı: kaydın JSON çıktısı `np.bool_` üzerinden
+  `TypeError` attı. Düzeltildi, bekçisi var.
+* `coklu_kiyasi.py` tablosu küçük bütçelerde **aynı satırı iki kez basmış
+  gibi** görünüyordu (`kupon_ort` yuvarlanıyor); `tavan` sütunu eklendi.
+* Belge zinciri: test 1.930 → **1.938**, README §9 Süper Toto 108 → 114,
+  Çoklu kupon 13 → 14, Ölçüm kütüğü 5 → 6, §1 katman dökümü 39 → 45.
 
 ### Sıradaki adım
 
-1. **Haftalık üretim hattı.** `scripts/coklu_kupon.py` haftanın oynanacak
-   çoklu kuponlarını üretiyor, ama `scripts/super_toto_hafta.py` hâlâ tek
-   sistem kuruyor. Oynanan kupon değişmeden §3.67 kâğıt üstünde kalır. Bu
-   oturumun bulgusu şunu ekliyor: geçişin **kalibrasyon** tarafında bir
-   engeli yok — sapma seçimi değiştirmiyor, yani karar yalnızca operasyon
-   (kaç kupon fiilen yatırılabilir) sorusuna bağlı.
-2. **Bağımsızlık varsayımı, çoklu kupon kesitinde.** §3.46 korpusta ölçtü
-   (kuyruk üst sınırda %5 şişiyor) ama `P(15/15)` çarpımı çoklu kupon
-   şeklinde yeniden ölçülmedi. Not: §3.68'in havuzlanmış ×1,76'sı bağımlılık
-   **değil** marjinal sapmayla kapanıyor, yani bağımlılık bu açığın taşıyıcı
-   sebebi değil — ama mutlak değerin ikinci kaynağı hâlâ o.
-3. **Operasyon.** 27–729 kupon tek haftada fiilen yatırılabiliyor mu, hangi
-   kanaldan? Sahibi "çözeriz" dedi, plan **tavansız** kuruluyor; tavan
-   ortaya çıkınca `VARSAYILAN_KUPON_TAVANI` ona göre ayarlanır. Artık 1.
-   maddenin de önkoşulu bu.
-4. **Sönümün kendisi bir eksen.** Aynı imza üç ayrı ölçümde çıktı. Dördüncü
-   bir örneklem (2026/27 birikimi) ya "piyasa keskinleşti"yi doğrular ya da
-   üç ölçümün aynı gürültüyü gördüğünü. §3.64'ün durma kuralı (`n ≥ 300`)
-   bunu zaten bekliyor; haftalık sonuç girildikçe kendiliğinden birikir.
+1. **6. hafta geldiğinde `--yaz` ile dondur.** Akış: `coklu_kupon.py
+   --hafta N --butce 21000 --tavan 81 --yaz`, sonuç girilince
+   `super_toto_degerlendir.py` kaydı kendiliğinden puanlar. Tanık ancak
+   böyle birikir ve bu artık tek komutluk bir iş.
+2. **5. haftanın sonucu girildiğinde ilk ileriye dönük satır okunacak.**
+   Beklenti kurulmasın: bir hafta hiçbir şey söylemez. Kayıt oynanan kupon
+   değil, o yüzden bu satır bir *karar* değil bir *tanık*.
+3. **Operasyon hâlâ açık ve artık tek engel bu.** 81–729 kupon bir haftada
+   fiilen yatırılabiliyor mu, hangi kanaldan? Kalibrasyon tarafında engel
+   olmadığı §3.68'de ölçüldü; oynanan kuponu değiştirmek bu cevaba bağlı.
+   Tavan ortaya çıkınca `coklu.VARSAYILAN_KUPON_TAVANI` ona göre ayarlanır.
+4. **Bağımsızlık varsayımı, çoklu kupon kesitinde** (§3.46 korpusta ölçtü).
+   §3.68 havuzlanmış açığın marjinal sapmayla kapandığını gösterdi, yani
+   bağımlılık taşıyıcı sebep değil — ama mutlak değerin ikinci kaynağı o.
+5. **Sönüm ekseni.** Aynı imza üç ölçümde çıktı (§3.60, §3.64, §3.68);
+   dördüncü örneklem 2026/27 birikimi ve haftalık sonuçla kendiliğinden
+   geliyor.
 
 ### Neden böyle
 
-Hedef 15/15, bütçe sabit, iş iyi tanımlı: **sabit kolon bütçesi altında
-`P(15/15)`'i enbüyüklemek.** Bu oturum çarpanın *içindeki* `p`lere baktı ve
-oradan kazanç **çıkmadığını** ölçtü — sapma gerçek ama güncel değil, ve
-güncel olsa bile planı değiştirmiyor. O hâlde sıra geri şekle ve operasyona
-dönüyor: kazancın ölçülmüş olduğu yer orası ve oynanan kupon hâlâ tek
-sistem.
+Hedef 15/15, bütçe sabit, iş: **sabit kolon bütçesi altında `P(15/15)`'i
+enbüyüklemek.** Ölçülen en büyük kazanç kuponun şeklinde (×1,45) ve o
+kazanç hâlâ oynanmıyor. Bu oturum onu oynanır hâle getirmedi — operasyon
+cevabı yok — ama **ölçülür** hâle getirdi: artık her hafta iki kayıt yan
+yana duruyor ve aralarındaki fark hafta hafta birikiyor. Karar için gereken
+şey buydu; dört haftanın aleyhte çıkması da tam olarak bu yüzden kayda
+geçti, gizlenmedi.
 
 ## Geçmiş girdiler
+
+**2026-09-13 (önceki)** — banko ekseni açıldı ve kapandı (§3.68).
+Planın `P(15/15)` iddiası ilk kez plan düzeyinde sınandı: havuzlanmış 114
+haftada model karamsar (tek sistemde 8,54 ↔ 15, ×1,76) ve bağımsız ölçülen
+banko sapması açığı kapatıyor — **ama açık güncel değil** (2025/26'da 729
+kuponda ×1,00; düzeltilmiş model o sezonda fazla iyimser olurdu) **ve karar
+değişmiyor** (oynanan kupon 114/114 haftada birebir aynı). Sonuç:
+`BANKO_Q_DUZELTMESI = 0,0` kalıyor, `P(15/15)` sayıları yeniden
+ölçeklenmedi, beklemenin bedeli sıfır. Aynı oturumda §3.67 yazıldı (çoklu
+kupon bulgusu yol haritasında hiç yoktu).
+
 
 **2026-09-13 (önceki)** — çoklu kupon işi: `coklu.py` + 13 bekçi +
 `coklu_kiyasi.py` + `coklu_kupon.py`. Çarpım kısıtı kalktı, `P(15/15)` aynı
