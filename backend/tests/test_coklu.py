@@ -19,6 +19,7 @@ from spor_toto.coklu import (
     MAC_SAYISI,
     VARSAYILAN_KUPON_TAVANI,
     coklu_plan,
+    coklu_plan_serisi,
     eksen_sec,
     kademe_dagilimi,
     kupon_sayisi_egrisi,
@@ -106,12 +107,54 @@ def test_coklu_TEK_SISTEMI_gecer():
         assert cok.p_onbes >= tek.p_onbes - 1e-12
 
 
+def test_seri_TEK_TEK_cagirmakla_ayni():
+    """Tek geçişli seri, tavan tavan çağırmakla aynı planı vermeli.
+
+    Seri bir hızlandırmadır (114 haftalık kıyasta yedi kat), davranış
+    değişikliği değil. Ayrışırsa hızlandırma sessizce yanlış plan üretir.
+    """
+    tavanlar = (1, 9, 81)
+    for tohum in range(4):
+        probs = _probs(tohum)
+        seri = coklu_plan_serisi(probs, 19_683, tavanlar)
+        for t in tavanlar:
+            tek = coklu_plan(probs, 19_683, kupon_tavani=t)
+            assert seri[t].p_onbes == pytest.approx(tek.p_onbes, rel=1e-12)
+            assert seri[t].kupon_sayisi == tek.kupon_sayisi
+
+
+def test_seri_tavanla_BIRIKIMLI():
+    """Tavan büyüdükçe hedef düşemez — arama uzayı yalnızca genişler."""
+    probs = _probs(5)
+    seri = coklu_plan_serisi(probs, 19_683)
+    ps = [seri[t].p_onbes for t in sorted(seri)]
+    assert ps == sorted(ps)
+
+
 def test_butce_asilmaz():
     for butce in (243, 729, 5_000, 19_683, 21_000):
         probs = _probs(1)
         plan = coklu_plan(probs, butce, VARSAYILAN_KUPON_TAVANI)
         assert plan.kolon <= butce
         assert plan.kolon == sum(k.kolon for k in plan.kuponlar)
+
+
+def test_butce_BOSA_gitmez():
+    """Tavan kısıtlamıyorsa bütçenin neredeyse tamamı kullanılmalı.
+
+    Kupon sayısı bir ızgaradan (`ARANAN_KUPON`) alınıyordu ve bütçe boşa
+    gidiyordu: 21.000 kolonda plan 81 × 243 = 19.683 kuruyor, 1.317 kolon
+    (13.170 TL) hiçbir şey satın almıyordu. Kupon sayısı artık alt sistemin
+    bedelinden türüyor; artan, bir kupon boyundan küçük olmalı.
+    """
+    for butce in (21_000, 19_683, 12_345):
+        probs = _probs(6)
+        plan = coklu_plan(probs, butce)
+        kupon_kolon = plan.kuponlar[0].kolon
+        assert plan.kolon <= butce
+        assert butce - plan.kolon < kupon_kolon, (
+            f"butce {butce}: {butce - plan.kolon} kolon bosa gitti "
+            f"(kupon {kupon_kolon} kolon)")
 
 
 def test_butce_pozitif_olmali():

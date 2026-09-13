@@ -1929,6 +1929,52 @@
    ],
    "bekci": "backend/tests/test_benzer.py::test_docstring_olcumu_GERCEK_kosumla_ayni",
    "not": "Ayni sorgu, ayni yaricap, ayni arindirma — tek fark fiyat cizgisi. 426 -> 504 farki evren farkindan GELEMEZ (evrenler 2 satir ayrisiyor, ustteki kunye); fiyattan gelir."
+  },
+  {
+   "ne": "%7,489 — tek sistem (carpim) kuponunun P(15/15)'i, 114 tam hafta",
+   "deger": "%7,489",
+   "ureten": "cd backend && python scripts/coklu_kiyasi.py  # tavan=1 satiri",
+   "olculdu": "2026-09-13",
+   "anildigi_yerler": [
+    "backend/spor_toto/coklu.py",
+    ".claude/devam_notu.md"
+   ],
+   "bekci": "backend/tests/test_coklu.py::test_coklu_TEK_SISTEMI_gecer",
+   "not": "Gerceklesen isabet 15/114. Kesit: 114 tam hafta, butce 19.683 kolon (3^9 = 196.830 TL/hafta, olculen ₺10 kolon bedeliyle). Bagimsizlik varsayimi altinda; kuyruk.py hafta ici bagimliligi olctu ve korpus ust sinirinda kuyruk %5 sisiyor, yani MUTLAK deger o varsayima baglidir. Karsilastirilan iki sekil de ayni varsayimi tasidigi icin ORAN gorece dayanikli."
+  },
+  {
+   "ne": "%10,461 — 729 kuponluk coklu planin P(15/15)'i, AYNI butcede",
+   "deger": "%10,461",
+   "ureten": "cd backend && python scripts/coklu_kiyasi.py  # tavan=729 satiri",
+   "olculdu": "2026-09-13",
+   "anildigi_yerler": [
+    "backend/spor_toto/coklu.py"
+   ],
+   "bekci": "backend/tests/test_coklu.py::test_coklu_TEK_SISTEMI_gecer",
+   "not": "YENIDEN OLCULUYOR (2026-09-13): bu sayi coklu.py'nin ILK surumuyle olculdu. Sonra kupon sayisi sabit izgaradan alt sistemin bedeline baglandi (21.000 kolonda 1.317 kolon bosa gidiyordu) ve eksen bilesimleri yiginla uretilir oldu. Ikisi de plani yalnizca IYILESTIRIR, yani bu sayi bugunku davranis icin ALT SINIRDIR. Silinmedi; yeniden olculup degistirilecek. || Gerceklesen 22/114; tek sisteme gore x1,40. AYNI para, AYNI olasilik modeli, AYNI kolon sayisi (19.683) — tek degisen kuponun sekli. Ara noktalar ayni kosumda: 27 kupon %9,353 (20/114) · 81 kupon %9,862 (21/114) · 243 kupon %10,202 (20/114)."
+  },
+  {
+   "ne": "%10,865 — serbest kume (olasiliga gore en buyuk N kolon) P(15/15)'i",
+   "deger": "%10,865",
+   "ureten": "cd backend && python scripts/coklu_kiyasi.py  # ust sinir; 3^15 kolonun tamami siralanir",
+   "olculdu": "2026-09-13",
+   "anildigi_yerler": [
+    "backend/spor_toto/coklu.py",
+    ".claude/devam_notu.md"
+   ],
+   "bekci": "backend/tests/test_coklu.py::test_kupon_sayisi_buyudukce_P15_DUSMEZ",
+   "not": "Gerceklesen 22/114. Bu, carpim kisiti tamamen kalktiginda ulasilabilecek UST SINIRDIR: N kolonluk en iyi kume tanim geregi olasiliga gore en buyuk N kolondur. Birebir oynamak ~4.300 kupon ister (20 haftada olculdu, medyan 4.290 kutu). 729 kupon bu kazancin ~%88'ini aliyor."
+  },
+  {
+   "ne": "26.274 — 729 kuponluk planin 12+ tutturan kolon toplami, 114 hafta",
+   "deger": "26.274",
+   "ureten": "cd backend && python scripts/coklu_kiyasi.py  # 12+ kolon sutunu",
+   "olculdu": "2026-09-13",
+   "anildigi_yerler": [
+    "backend/spor_toto/coklu.py"
+   ],
+   "bekci": "YOK — modul basliginda aniliyor ama sayiyi tutan bir test yok. Belgeye (docs/) girerse bekci gerekir.",
+   "not": "YENIDEN OLCULUYOR (2026-09-13): bu sayi coklu.py'nin ILK surumuyle olculdu. Sonra kupon sayisi sabit izgaradan alt sistemin bedeline baglandi (21.000 kolonda 1.317 kolon bosa gidiyordu) ve eksen bilesimleri yiginla uretilir oldu. Ikisi de plani yalnizca IYILESTIRIR, yani bu sayi bugunku davranis icin ALT SINIRDIR. Silinmedi; yeniden olculup degistirilecek. || BEKLENTIYI YALANLADI ve modul basligindaki cumle duzeltildi. Tek sistem 18.628, 729 kupon 26.274: +%41. Coklu kuponun 15'i enbuyuklerken alt kademelerde BEDEL odetecegi varsayilmisti; olculdu, tam tersi. Sebep: olasiliga gore en buyuk N kolon kumesi 12-13'e de daha yakin durur, carpimin satin almak zorunda kaldigi koseler hicbir kademeye yaramiyordu."
   }
  ],
  "komutlar": [

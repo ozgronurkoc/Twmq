@@ -86,21 +86,42 @@ eksen dışını **üçlüye zorluyordu** — `en_iyi_secim` daha iyisini buluyo
 küçük bir maçta **çifte** kapsamanın neredeyse tamamını yarı bedele alır.
 Zorlama kaldırıldı.
 
+### Kıyas koşuldu — sonuç (114 hafta, 19.683 kolon)
+
+    kupon   model P(15)   gözlenen   13 hafta   12+ kolon
+        1       %7,489      15/114     %63,7      18.628   ← bugün
+       27       %9,353      20/114     %72,1      21.911
+       81       %9,862      21/114     %74,1      24.131
+      729      %10,461      22/114     %76,2      26.274
+   19.683      %10,865      22/114     %77,6           —   ← üst sınır
+
+**Alt kademe beklentisi yalanlandı.** Çoklu kuponun 12–13'ten bedel
+alacağı varsayılmıştı; ölçüldü, **tam tersi**: 12+ tutturan kolon 18.628 →
+26.274 (+%41). `coklu.py` başlığındaki yanlış cümle düzeltildi, kütüğe
+"beklentiyi yalanladı" notuyla yazıldı. Ödünleşme yok.
+
+Kütüğe dört sayı girdi ve **kütük bekçisi bir hatamı tuttu**: `deger`
+alanı, anıldığı iddia edilen dosyada birebir geçmeli; ilk yazdığım bileşik
+dizeler ("%7,489 model, 15/114 gerceklesen") hiçbir yerde geçmiyordu.
+Girdiler deponun biçimine çevrildi.
+
 ### Sıradaki adım
 
-1. `scripts/coklu_kiyasi.py` koşumu bitince sayıları **ölçüm kütüğüne** yaz
-   (`.claude/olcum_kutugu.json`) ve bir belgeye bağla — bekçisiz sayı
-   belgeye girmez, bu deponun kuralı.
-2. Alt kademe bedelini oku: çoklu kupon 15'i büyütürken 12–13'ü küçültüyor
-   mu? Küçültüyorsa **rapor et ama durma** — ürün kararı 15.
-3. Sonraki eksen: **banko kalibrasyonu.** Plan `P(15/15) = Π p₁` biçiminde
+1. Sonraki eksen: **banko kalibrasyonu.** Plan `P(15/15) = Π p₁` biçiminde
    olduğu için en emin maçların olasılık doğruluğu doğrudan çarpan.
    `ISTATISTIK_YOL_HARITASI` §3.64 bankoda modelin `q`sunun gerçekleşenden
    5,6 puan yüksek olduğunu ölçmüş ve kaynağı T1 Süper Lig'e indirmiş; etki
    sönüyor (son sezon +%0,3) ve düzeltme uygulanmamış. Yeniden açılacak.
-4. Operasyon sorusu (sahibine sorulacak **tek** şey, çünkü cevabı depoda
-   yok): 27–729 arası kupon tek haftada fiilen yatırılabiliyor mu, hangi
-   kanaldan? Bu sayı planın tavanını belirliyor.
+2. **Haftalık üretim hattına bağla.** `coklu_plan_serisi` henüz yalnızca
+   kıyas betiğinden çağrılıyor; `scripts/super_toto_hafta.py` hâlâ tek
+   sistem kuruyor. Oynanan kupon değişmeden bu bulgu kâğıt üstünde kalır.
+3. **Bağımsızlık varsayımını sına.** `P(15/15)` çarpımı maçları bağımsız
+   sayıyor; `kuyruk.py` korpus üst sınırında kuyruğun %5 şiştiğini ölçmüş.
+   Oran dayanıklı ama mutlak sayı bu varsayıma bağlı — çoklu kupon
+   kesitinde yeniden ölçülmeli.
+4. Operasyon: 27–729 kupon tek haftada fiilen yatırılabiliyor mu, hangi
+   kanaldan? Sahibi "çözeriz" dedi, o yüzden plan **tavansız** kuruluyor;
+   tavan ortaya çıkınca `VARSAYILAN_KUPON_TAVANI` ona göre ayarlanır.
 
 ### Neden böyle
 

@@ -25,11 +25,24 @@ Bu modül araya giren aileyi kurar ve kazancın çoğu birkaç düzine kuponda
 zaten alınır:
 
     kupon    model P(15/15)    gerçekleşen    13 hafta
-        1          %7,489         15/114        %63,6   ← tek sistem
+        1          %7,489         15/114        %63,7   ← tek sistem
        27          %9,353         20/114        %72,1
        81          %9,862         21/114        %74,1
       729         %10,461         22/114        %76,2
    19.683         %10,865         22/114        %77,6   ← serbest
+
+729 kupon, serbest kümenin kazancının **~%88'ini** alır. Üretici:
+`cd backend && python scripts/coklu_kiyasi.py`.
+
+> **YENİDEN ÖLÇÜLÜYOR (2026-09-13).** Yukarıdaki tablo bu modülün **ilk**
+> sürümüyle koşuldu. O sürümden sonra iki şey değişti ve ikisi de planı
+> yalnızca iyileştirir: (a) kupon sayısı artık sabit bir ızgaradan değil alt
+> sistemin bedelinden türüyor — 21.000 kolonluk bütçede 1.317 kolon boşa
+> gidiyordu, gitmiyor; (b) eksen bileşimleri yığınla üretiliyor. Yani
+> tablodaki çoklu kupon satırları bugünkü davranış için **alt sınırdır**.
+> Sayılar silinmez, yeniden ölçülüp değiştirilir (`.claude/olcum_kutugu.json`).
+> Bekçiler yönü tutuyor: `test_coklu_TEK_SISTEMI_gecer`,
+> `test_kupon_sayisi_buyudukce_P15_DUSMEZ`, `test_butce_BOSA_gitmez`.
 
 Yapı: `d` maç **eksen** seçilir — en emin olduklarımız — ve kuponlar arasında
 tek tek sabitlenir; eksen üzerindeki `3^d` bileşimden en olası `M` tanesi
@@ -53,13 +66,24 @@ hafta içi bağımlılığı ölçtü ve korpus üst sınırında kuyruk %5 şi�
 her iki şekli de aynı yönde etkiler, oran görece dayanıklıdır — ama
 `P(15/15)`'in mutlak değeri bu varsayıma bağlıdır ve öyle okunmalıdır.
 
-Bu modül **yalnızca 15/15'i** enbüyükler. Alt kademeler (12–13) paranın
-çoğunu taşır ve çoklu kupon onları tek sistem kadar tutturmaz; ölçümü
-`kademe_dagilimi` ile alınır. Ürün kararı bilerek 15'tir.
+─── Alt kademe: beklenti yalanlandı ──────────────────────────────────────
+
+Bu modül **yalnızca 15/15'i** enbüyükler ve burada önce şu yazıyordu: *"alt
+kademeler paranın çoğunu taşır ve çoklu kupon onları tek sistem kadar
+tutturmaz."* Bir varsayımdı; ölçüldü ve **yanlış çıktı**. 114 haftada 12+
+tutturan kolon toplamı:
+
+    tek sistem   18.628
+    729 kupon    26.274        **+%41**
+
+Sebebi geriye dönük açık: olasılığa göre en büyük `N` kolon kümesi yalnızca
+15'e değil 12–13'e de daha yakın durur; çarpımın satın almak zorunda kaldığı
+köşeler hiçbir kademeye yaramıyordu. Yani burada bir ödünleşme yok — cümle
+silinmedi, **düzeltildi** (kayıt yeniden yazılmaz, `.claude/olcum_kutugu.json`).
 """
 from __future__ import annotations
 
-import math
+import heapq
 from typing import NamedTuple
 
 import numpy as np
@@ -131,17 +155,54 @@ def eksen_sec(probs_listesi: list[dict[str, float]], d: int) -> list[int]:
 ARANAN_KUPON = (1, 3, 9, 27, 81, 243, 729, 2187)
 
 
-def _eksen_bilesimleri(P: np.ndarray, eksen: list[int], M: int):
-    """Eksen üzerindeki en olası `M` bileşim: (indeksler, toplam olasılık)."""
-    v = np.array([1.0])
-    for i in eksen:
-        v = np.multiply.outer(v, P[i]).ravel()
-    if M >= v.size:
-        sec = np.arange(v.size)
-    else:
-        sec = np.argpartition(v, -M)[-M:]
-    sec = sec[np.argsort(-v[sec])]          # en olasıdan başlayarak
-    return sec, float(v[sec].sum())
+def _eksen_bilesimleri(P: np.ndarray, eksen: list[int], M: int
+                       ) -> tuple[list[tuple[int, ...]], float]:
+    """Eksen üzerindeki en olası `M` bileşim: (sembol indeksleri, toplam).
+
+    ─── Neden yığın, neden `3^d` dizi değil ──────────────────────────────
+
+    İlk sürüm bütün bileşimleri kurup sıralıyordu (`np.multiply.outer`
+    zinciri + `argpartition`). Doğruydu ama `d = 15`'te o dizi **14.348.907**
+    eleman ve arama onu her `(M, d)` adayı için yeniden kuruyordu: tek
+    haftanın planı 3,77 sn sürüyordu, 114 haftalık kıyas saatler.
+
+    Oysa yalnızca en üstteki `M` bileşim gerekiyor. Her maçın sembolleri
+    olasılığa göre sıralandığında bileşimler bir **kafes** kurar: bir
+    bileşimden daha olasısına ancak bir koordinatın rütbesini *azaltarak*
+    gidilir. O hâlde en olası bileşimden (hepsi favori) başlayıp komşuları
+    bir yığında gezmek, `M` bileşimi sırayla ve tamamını kurmadan verir.
+    Maliyet `O(M · d · log(M · d))`.
+    """
+    if not eksen:
+        return [()], 1.0
+
+    sirali = [np.argsort(-P[i]) for i in eksen]          # rütbe → sembol
+    olas = [P[i][sirali[k]] for k, i in enumerate(eksen)]
+    d = len(eksen)
+    M = min(M, 3 ** d)
+
+    baslangic = (0,) * d
+    p0 = float(np.prod([olas[k][0] for k in range(d)]))
+    # `-p` ile en büyük olasılık yığının tepesinde
+    yigin = [(-p0, baslangic)]
+    gorulen = {baslangic}
+    cikti: list[tuple[int, ...]] = []
+    toplam = 0.0
+
+    while yigin and len(cikti) < M:
+        eksi_p, rutbe = heapq.heappop(yigin)
+        cikti.append(tuple(int(sirali[k][rutbe[k]]) for k in range(d)))
+        toplam += -eksi_p
+        for k in range(d):
+            if rutbe[k] + 1 < 3:
+                komsu = rutbe[:k] + (rutbe[k] + 1,) + rutbe[k + 1:]
+                if komsu in gorulen:
+                    continue
+                gorulen.add(komsu)
+                p = float(np.prod([olas[j][komsu[j]] for j in range(d)]))
+                heapq.heappush(yigin, (-p, komsu))
+
+    return cikti, toplam
 
 
 def coklu_plan(probs_listesi: list[dict[str, float]],
@@ -173,6 +234,25 @@ def coklu_plan(probs_listesi: list[dict[str, float]],
     sembolü çok küçük olan bir maçta **çifte**, üçlünün kapsamasının
     neredeyse tamamını üçte iki değil yarı bedele alır. Zorlama kalktı.
     """
+    seri = coklu_plan_serisi(probs_listesi, butce, (kupon_tavani,)
+                             if kupon_tavani is not None else None)
+    return seri[max(seri)]
+
+
+def coklu_plan_serisi(probs_listesi: list[dict[str, float]],
+                      butce: int,
+                      tavanlar: tuple[int, ...] | None = None
+                      ) -> dict[int, CokluPlan]:
+    """Her kupon tavanı için en iyi plan — **tek aramada**.
+
+    `coklu_plan`ı tavan tavan çağırmak aramayı her seferinde baştan yapardı;
+    114 haftalık kıyasta bu yedi kat israftı. Arama zaten `M` büyüdükçe
+    ilerlediği için, bir tavanın cevabı o tavana kadarki adayların en
+    iyisidir — yani tek geçişte hepsi toplanır.
+
+    Dönen sözlüğün anahtarları verilen tavanlardır ve değerler **birikimli
+    en iyi**dir, yani tavan büyüdükçe `p_onbes` düşemez.
+    """
     if butce is None or butce <= 0:
         raise ValueError("Butce pozitif bir kolon sayisi olmali.")
     if len(probs_listesi) != MAC_SAYISI:
@@ -180,68 +260,99 @@ def coklu_plan(probs_listesi: list[dict[str, float]],
 
     from .secim import en_iyi_secim
 
+    istenen = sorted(tavanlar) if tavanlar else sorted(ARANAN_KUPON)
+    tavan_ust = max(istenen)
     P = _matris(probs_listesi)
     emin_sira = np.argsort(-P.max(axis=1)).tolist()   # en eminden başlayarak
 
-    en: tuple[float, list[Kupon], list[int]] | None = None
+    # ─── 1. yapılandırmalar ────────────────────────────────────────────
+    # Bir yapılandırma = (eksen kümesi, ortak alt sistem). Kaç kupon
+    # alınacağı buraya GİRMEZ; o tavana göre sonra kesilir. Önce kupon
+    # sayısı burada sabitleniyordu ve seri bozuluyordu: `tavan_ust`e göre
+    # kırpılan bir aday, daha küçük bir tavanın seçiminden tamamen
+    # düşüyordu (`test_seri_TEK_TEK_cagirmakla_ayni` tuttu).
+    #: (tam_kupon, p_alt, eksen, kalanlar, alt, kolon_kupon)
+    yapilar: list[tuple[int, float, list[int], list[int], object, int]] = []
+    gorulen: set[tuple[int, int]] = set()
+
     for M in ARANAN_KUPON:
-        if kupon_tavani is not None and M > kupon_tavani:
-            break
         kupon_butce = butce // M
         if kupon_butce < 1:
             break
         for d in range(MAC_SAYISI + 1):
-            if 3 ** d < M:
-                continue                     # o kadar bileşim yok
             eksen = sorted(emin_sira[:d])
             kalanlar = [i for i in range(MAC_SAYISI) if i not in set(eksen)]
             alt = en_iyi_secim([probs_listesi[i] for i in kalanlar],
                                kupon_butce, esik=0) if kalanlar else None
             if kalanlar and alt is None:
                 continue
+            kolon_kupon = 1 if alt is None else alt.bedel
+
+            # ─── kupon sayısı ızgaradan DEĞİL, bedelden türetilir ───────
+            # Önce `M`in kendisi kullanılıyordu ve bütçe boşa gidiyordu:
+            # 21.000 kolonluk bütçede `M = 81`, alt sistem 243 kolon çıkıyor
+            # ve 81 × 243 = 19.683 — geriye 1.317 kolon (13.170 TL) hiçbir
+            # şey satın almadan kalıyordu. Aynı boydaki kupondan bütçenin
+            # aldığı KADAR alınır; fazladan her kupon bir eksen bileşimi
+            # daha açar ve hedefi yalnızca büyütür.
+            tam = min(butce // kolon_kupon, 3 ** d)
+            if tam < 1 or (d, kolon_kupon) in gorulen:
+                continue
+            gorulen.add((d, kolon_kupon))
+
             p_alt = 1.0 if alt is None else float(np.prod(
                 [sum(probs_listesi[i][s] for s in sec)
                  for i, sec in zip(kalanlar, alt.secimler)]))
-            kolon_kupon = 1 if alt is None else alt.bedel
-            sec, p_eksen = _eksen_bilesimleri(P, eksen, M)
-            gercek_M = len(sec)
-            if gercek_M * kolon_kupon > butce:
-                continue
-            p = p_eksen * p_alt
-            if en is not None and p <= en[0]:
-                continue
-            kuponlar = _kuponlari_kur(sec, eksen, kalanlar, alt, kolon_kupon)
-            en = (p, kuponlar, eksen)
+            yapilar.append((tam, p_alt, eksen, kalanlar, alt, kolon_kupon))
 
-    if en is None:                            # bütçe 1 kolona bile yetmiyor
+    if not yapilar:                           # bütçe 1 kolona bile yetmiyor
         raise ValueError(f"Butce hicbir plani karsilamiyor: {butce}")
+
+    # ─── 2. her tavan için en iyi yapılandırma ─────────────────────────
+    seri: dict[int, CokluPlan] = {}
+    for tavan in istenen:
+        en: tuple[float, int, list[int], list[int], object, int] | None = None
+        for tam, p_alt, eksen, kalanlar, alt, kolon_kupon in yapilar:
+            sayi = min(tam, tavan)
+            if sayi < 1:
+                continue
+            _, p_eksen = _eksen_bilesimleri(P, eksen, sayi)
+            p = p_eksen * p_alt
+            # eşitlikte AZ kupon kazanır: aynı hedefe daha az operasyonla
+            if en is None or (p, -sayi) > (en[0], -en[1]):
+                en = (p, sayi, eksen, kalanlar, alt, kolon_kupon)
+        if en is None:
+            continue
+        p, sayi, eksen, kalanlar, alt, kolon_kupon = en
+        bilesimler, _ = _eksen_bilesimleri(P, eksen, sayi)
+        seri[tavan] = _plan((p, _kuponlari_kur(bilesimler, eksen, kalanlar,
+                                               alt, kolon_kupon), eksen))
+
+    if not seri:
+        raise ValueError(f"Butce hicbir plani karsilamiyor: {butce}")
+    return seri
+
+
+def _plan(en: tuple[float, list[Kupon], list[int]]) -> CokluPlan:
     p, kuponlar, eksen = en
-    return CokluPlan(
-        kuponlar=kuponlar,
-        eksen=eksen,
-        kolon=sum(k.kolon for k in kuponlar),
-        p_onbes=p,
-    )
+    return CokluPlan(kuponlar=kuponlar, eksen=eksen,
+                     kolon=sum(k.kolon for k in kuponlar), p_onbes=p)
 
 
-def _kuponlari_kur(sec, eksen: list[int], kalanlar: list[int], alt,
-                   kolon_kupon: int) -> list[Kupon]:
+def _kuponlari_kur(bilesimler: list[tuple[int, ...]], eksen: list[int],
+                   kalanlar: list[int], alt, kolon_kupon: int) -> list[Kupon]:
     """Eksen bileşimleri + ortak alt sistem → oynanabilir kuponlar.
 
-    Bileşim indeksi `_eksen_bilesimleri`de **ham** sembol düzeninde
-    (`SEMBOLLER`) kuruldu; her basamak doğrudan bir `SEMBOLLER` indeksidir.
-    Sıralama düzenine çevirmek bir hataydı ve `p_onbes` bekçisi tuttu.
+    `bilesimler`in her elemanı, `eksen` sırasına karşılık gelen **sembol
+    indeksleri**dir (rütbe değil — `_eksen_bilesimleri` çevirisini kendi
+    içinde yapar). Rütbe ile sembolü karıştırmak bu modülün ilk hatasıydı
+    ve `p_onbes` bekçisi onu tuttu.
     """
-    eksen_kumesi = set(eksen)
     alt_secim = {} if alt is None else dict(zip(kalanlar, alt.secimler))
     kuponlar = []
-    for ix in sec:
-        kalan = int(ix)
-        basamak = [0] * MAC_SAYISI
-        for i in reversed(eksen):
-            basamak[i] = kalan % 3
-            kalan //= 3
-        secimler = [[SEMBOLLER[basamak[i]]] if i in eksen_kumesi
+    for bilesim in bilesimler:
+        yerlesim = dict(zip(eksen, bilesim))
+        secimler = [[SEMBOLLER[yerlesim[i]]] if i in yerlesim
                     else list(alt_secim[i])
                     for i in range(MAC_SAYISI)]
         kuponlar.append(Kupon(secimler=secimler, kolon=kolon_kupon))

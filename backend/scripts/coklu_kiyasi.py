@@ -24,7 +24,7 @@ if __package__ in (None, ""):  # pragma: no cover
 import numpy as np
 
 from scripts.kademe_analizi import ikramiye_tablolari, tam_haftalar
-from spor_toto.coklu import coklu_plan, kademe_dagilimi
+from spor_toto.coklu import coklu_plan_serisi, kademe_dagilimi
 from spor_toto.core import SEMBOLLER
 
 #: Kıyaslanan kupon tavanları. 1 bugünkü tek sistemdir.
@@ -58,8 +58,11 @@ def kos(butce: int) -> dict:
 
     for _sezon, _w, lst in haftalar:
         probs, gercek = hafta_probs(lst)
+        # tek geçiş: `coklu_plan`ı tavan tavan çağırmak aramayı yedi kez
+        # baştan yapardı (bkz. `coklu.coklu_plan_serisi`).
+        seri = coklu_plan_serisi(probs, butce, TAVANLAR)
         for t in TAVANLAR:
-            plan = coklu_plan(probs, butce, kupon_tavani=t)
+            plan = seri[t]
             h = top[t]
             h["p"] += plan.p_onbes
             h["isabet"] += int(isabet(plan.kuponlar, gercek))
