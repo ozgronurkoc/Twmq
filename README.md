@@ -1190,7 +1190,7 @@ backend/
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
                        sehir/ · sistem_fiyat/
-  tests/               pytest (74 dosya → 1.938 test; §9'da katman dökümü)
+  tests/               pytest (74 dosya → 1.949 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1398,7 +1398,7 @@ dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri t
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
 eşleme, ikinci kayıt). **74 test dosyası, parametrizasyonla
-1.938 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+1.949 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
@@ -1429,13 +1429,13 @@ karşı denetler):
 | Ölçüm kütüğü (alıntı · üreten · bekçi bütünlüğü · komut şeması) | **`olcum_kutugu`** | 6 |
 | Değer bahsi (yan pazarlar) | **`deger`** | 24 |
 | Fiyat kaynakları | **`fiyatlar`** | 14 |
-| Kuyruk / bağımsızlık | **`kuyruk`** | 12 |
+| Kuyruk / bağımsızlık (kuyruk çevirisi · kupon kapsaması) | **`kuyruk`** | 22 |
 | MCP deneyi | **`mcp`** | 11 |
 | Betik ortak katmanı | **`scripts_ortak`** | 12 |
 | Devir tavanı (dış tarama · pozitif BD koşulu) | **`devir_tavani`** | 5 |
 | Haftanın hakkı (E6 · cephe · cetvel · Holm'lu işaret sınavı) | **`hafta_hakki`** | 25 |
 | 2.↔3. sembol sırası (beraberlik 3. sırada · bant sözleşmesi) | **`sembol_sirasi`** | 4 |
-| Çoklu kupon (çarpım kısıtı · kupon ayrıklığı · bütçe boşa gitmesin · hedefin tipi) | **`coklu`** | 14 |
+| Çoklu kupon (çarpım kısıtı · kupon ayrıklığı · bütçe boşa gitmesin · hedefin tipi · normalleşmemiş girdi) | **`coklu`** | 15 |
 | Duyarlılık (banko sapması senaryosu · plan düzeyi kalibrasyon · üretime sızmama) | **`duyarlilik`** | 14 |
 
 İki test bilerek **ağa çıkmaz**: `test_snapshot_iddaa.py` gerçek bültenden alınmış
@@ -1446,7 +1446,7 @@ ayrıştırmanın doğruluğu ise arşivin tamamının dayandığı şey.
 
 ```bash
 cd frontend
-npm run check                # eslint + tsc + saf mantık ve sözleşme (56 vaka)
+npm run check                # eslint + tsc + saf mantık ve sözleşme (57 vaka)
 npm run lint                 # yalnızca eslint
 npm run build                # üretim derlemesi
 ```

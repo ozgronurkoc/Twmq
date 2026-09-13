@@ -171,8 +171,8 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/components/super-toto/tahmin2.tsx` | **2. Tahmin** paneli — `1. Tahmin` / `2. Tahmin` sekmeleri arasında geçilir; para birimli hiçbir sayı yok. Hafta kapandığında sonuç sütunu ve ayar karnesi açılır (§3.38) |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **1.938 test**; **136'sı** istatistik katmanına (`history` `odds` `backtest`
-`api_stats` `api_backtest` `snapshot_iddaa`), **662'si** tahmin katmanına ait (`predict`
+paketi toplam **1.949 test**; **136'sı** istatistik katmanına (`history` `odds` `backtest`
+`api_stats` `api_backtest` `snapshot_iddaa`), **672'si** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre`
 `avrupa` `sehir` **`arena`** **`sizinti`** **`kuyruk`** **`sembol_sirasi`**), **36'sı** 2. Tahmin'e (`tahmin2`), **45'i** sonuç değerlendirmesine (`degerlendir`). Dosya adlarıyla sayılıdır ki tablo elle bakım gerektirmesin —
@@ -4118,8 +4118,18 @@ yazılmadan.
 | Senaryo | ρ | latent a | P(K≥12) | oran | P(K≥14) | oran |
 |---|---:|---:|---:|---:|---:|---:|
 | Nokta tahmini (negatif → a=0) | +0,00000 | 0,0000 | 2,688·10⁻² | 1,00 | 8,876·10⁻⁴ | 1,00 |
-| Korpus aralığının üst sınırı | +0,00080 | 0,0013 | 2,754·10⁻² | **1,02** | 9,353·10⁻⁴ | **1,05** |
+| Korpus aralığının üst sınırı | +0,00070 | 0,0011 | 2,746·10⁻² | **1,02** | 9,293·10⁻⁴ | **1,05** |
 | En kötü makul (kupon üst sınırı) | +0,01020 | 0,0166 | 3,548·10⁻² | 1,32 | 1,615·10⁻³ | 1,82 |
+
+> **BU SATIR BAYATTI, 2026-09-13'te yeniden ölçüldü.** Korpus üst sınırı
+> ilk koşumda (2026-08-30) `+0,00080`, `a = 0,0013`, `P(K≥14) = 9,353·10⁻⁴`
+> idi ve o sayılar **22 ligli korpustan** (31.103 maç) geliyordu. Korpus
+> daraltıldığında (§korpus notu, 2026-09-12) üstteki kesit tablosu
+> güncellendi — `−0,00009 → −0,00046`, aralık `+0,00080 → +0,00070` — ama
+> bu senaryo satırı güncellenmedi, yani tablo kendi kendisiyle çelişiyordu:
+> senaryonun `ρ`su, iki satır yukarıdaki aralığın üst sınırı olmalı.
+> `python -m spor_toto.kuyruk` yeniden koşuldu; öteki iki satır **birebir**
+> aynı çıktı ve **hüküm değişmedi** (%5 şişme, aynı basamak).
 
 **Makine kendi kendini doğruluyor.** `a = 0`da `P(K≥14)` = **8,876·10⁻⁴**; §6.2'nin bağımsız
 olarak yayımladığı sayı **8,6·10⁻⁴**. İki hesap birbirini tanımıyor.
@@ -6019,13 +6029,17 @@ yaramıyordu. Cümle silinmedi, **düzeltildi** — kayıt yeniden yazılmaz
   maçta **çifte**, üçlünün kapsamasının neredeyse tamamını üçte iki değil
   yarı bedele alır. Zorlama kaldırıldı.
 
-#### Sınır — ve bu sınır kapatılmadı
+#### Sınır — ve iki parçası da sonradan kapatıldı
 
 Buradaki bütün olasılıklar maçlar arası **bağımsızlık** varsayıyor. §3.46
 o varsayımı ölçtü ve kırmadı, ama korpus üst sınırında kuyruğun %5 şiştiğini
-buldu. Bu her iki şekli de aynı yönde etkiler, yani **oran** (×1,45) görece
-dayanıklıdır; `P(15/15)`'in **mutlak** değeri varsayıma bağlıdır ve öyle
-okunmalıdır. Mutlak değerin kendisi §3.68'de sınava sokuluyor.
+buldu. Burada önce şu yazıyordu: *"bu her iki şekli de aynı yönde etkiler,
+yani oran (×1,45) görece dayanıklıdır"* — makul bir beklentiydi ve
+**ölçülmemişti**; §3.46 tek kolonun kuyruğunu ölçtü, bir kupon ailesinin
+kapsamasını değil. §3.70 onu ölçtü: oran gerilemiyor, **büyüyor** (×1,40 →
+×1,45) ve 114 haftanın hiçbirinde çoklu plan geride kalmıyor. `P(15/15)`'in
+**mutlak** değeri ise gerçekten varsayıma bağlı (%11'e kadar şişiyor, §3.70)
+ve ayrıca §3.68'de sınava sokuluyor.
 
 ### 3.68 Planın `P(15/15)` iddiası sınava sokuldu — açık gerçek ama **güncel değil**, ve kararı hiç değiştirmiyor
 
@@ -6300,6 +6314,147 @@ okuyan bunu bir hata sanardı. `tavan` sütunu eklendi.
 
 ---
 
+### 3.70 Çoklu kuponun kazancı **bağımlılıkta da duruyor** — ve mutlak değer %11 şişiyor
+
+§3.67 aynı bütçede çoklu kuponun `P(15/15)`'ini tek sistemin **1,4 katına**
+çıkardığını ölçtü (`729` kupon: %7,489 → %10,461; serbest kümeye kadar
+gidilirse ×1,45). İki sayı da maçları **bağımsız** sayıyor ve `coklu.py`nin
+"Sınır" bölümü bunu şöyle bırakmıştı:
+
+> *"Bu her iki şekli de aynı yönde etkiler, oran görece dayanıklıdır — ama
+> `P(15/15)`'in mutlak değeri bu varsayıma bağlıdır."*
+
+İkinci yarısı doğruydu ve ölçülmüştü (§3.46). **Birinci yarısı bir
+varsayımdı.** §3.46 hafta içi bağımlılığı *tek kolonun* kuyruğuna çevirdi;
+bir kupon **ailesinin** kapsaması başka bir büyüklüktür ve şekle göre farklı
+tepki verebilir. Bu bölüm onu ölçüyor.
+
+#### Model: aynı `a`, üç sembol — ve reddedilen kolay yol
+
+Akla gelen ilk yol yanlıştır: her kupon için maç başına "kapsandı"
+göstergesi kurup (`q_i = Σ_{s∈seçim} p_is`) §3.46'nın ikili modelini
+çalıştırmak. O model göstergeleri `{Z_i < Φ⁻¹(q_i)}` biçiminde **iç içe**
+eşikler yapar; oysa iki kuponun eksen maçındaki seçimleri **ayrıktır** (biri
+"1", öteki "0"). İç içe eşiklerle kurulan olasılıklar toplandığında aynı
+sonucu iki kez sayar ve eksen maçında üç sembolün toplamı 1 vermez. Bekçisi
+`test_kapsama_BUTUN_kolonlar_oynanirsa_bir` — reddedilen yol tam orada düşer.
+
+Doğru model, aynı tek faktörü **üç sembolün tamamına** taşır ve `Z_i` maçın
+sembollerini **rütbeye göre** keser:
+
+    sembol = favori   ⟺  Z_i < Φ⁻¹(p₁)
+           = ikinci   ⟺  Φ⁻¹(p₁) ≤ Z_i < Φ⁻¹(p₁+p₂)
+           = üçüncü   ⟺  aksi
+
+Bu başka bir model değil, §3.46'nın **genellemesidir**: favori
+göstergesinin eşiği birebir aynı (`Φ⁻¹(p₁)`), yani ölçülen `ρ → a`
+çevirisi yeniden kalibre edilmeden geçerlidir. Rütbe sırası bir tercih
+değil zorunluluk — `ρ` favori göstergesinden ölçüldü, modeli o göstergede
+ölçümle aynı yapan tek kesim sırası budur. Bekçisi
+`test_kapsama_FAVORI_gostergesi_IKILI_modelin_AYNISI`.
+
+`ρ`nun **belirlemediği** tek parça, kötü haftada kalan kütlenin 2. ile 3.
+sembol arasında nasıl paylaşıldığıdır. Uydurulmadı: iki uç ayrı ayrı
+hesaplandı (`rutbe` — kötü hafta 3. sembole de kayar; `oransal` — kaçan
+kütle haftanın kendi oranını korur) ve aradaki fark varsayımın bedeli olarak
+tabloda duruyor. Hesap yine **Monte Carlo değil**: `U = u` verildiğinde
+maçlar koşullu bağımsız, kuponlar ayrık, yani toplam `u` içinde toplanır ve
+dışta Gauss-Hermite ile integre edilir.
+
+#### Durma kuralı — ölçüm görülmeden yazıldı ve **commit'lendi**
+
+> En kötü makul `a`da, 114 haftanın ortalamasında çoklu kuponun tek sisteme
+> oranı **1'in altına düşerse** ya da bağımsız hâldeki orandan **%10'dan
+> fazla gerilerse** → şekil kararı bağımsızlık varsayımına bağımlıdır ve
+> eksen yeniden açılır. Bandın içinde kalırsa → bağımlılık iki şekli aynı
+> yönde etkiliyor demektir; mutlak değer varsayıma bağlı kalır, **karar**
+> taşımaz. — `scripts/bagimli_kapsama.py` başlığı, 114 haftalık koşumdan
+> önceki commit'te
+
+Kural iki yöne de bakıyor: oran büyürse de kapanır. Sorulan şey "çoklu kupon
+bağımlılıkta bedel ödüyor mu", "kazancı nereden geliyor" değil.
+
+#### Ölçüm — 114 tam hafta, 19.683 kolon
+
+| senaryo | model | ρ | a | tek sistem | 81 kupon | 729 kupon | oran | 729 geride |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| bağımsız | — | +0,00000 | 0,0000 | %7,489 | %9,862 | %10,461 | ×1,40 | 0/114 |
+| korpus üst | rütbe | +0,00070 | 0,0011 | %7,528 | %9,932 | %10,544 | ×1,40 | 0/114 |
+| korpus üst | oransal | +0,00070 | 0,0011 | %7,528 | %9,927 | %10,538 | ×1,40 | 0/114 |
+| **en kötü makul** | **rütbe** | **+0,01020** | **0,0166** | **%8,050** | **%10,860** | **%11,641** | **×1,45** | **0/114** |
+| en kötü makul | oransal | +0,01020 | 0,0166 | %8,050 | %10,795 | %11,550 | ×1,43 | 0/114 |
+
+**Oran gerilemedi, büyüdü:** ×1,40 → ×1,45 (en kötü makul `a`, `rutbe`) ya
+da ×1,43 (`oransal`). 114 haftanın **hiçbirinde** çoklu plan tek sistemin
+gerisine düşmüyor ve en iyi tavan her senaryoda 729'da kalıyor. Ön kayıtlı
+kural işletildi: **eksen kapandı.**
+
+Mutlak değerler ise şişiyor, ve **şekle göre farklı şişiyor**:
+
+| | bağımsız | en kötü makul | şişme |
+|---|---:|---:|---:|
+| tek sistem | %7,489 | %8,050 | ×1,075 |
+| 81 kupon | %9,862 | %10,860 | ×1,101 |
+| 729 kupon | %10,461 | %11,641 | ×1,113 |
+
+Yani bağımlılık iki şekli aynı yönde etkiliyor (kuralın sorduğu buydu) ama
+çoklu kupona **biraz daha çok** yarıyor. Bir okuma: pozitif ortak etken
+kütleyi haftanın *iyi* tarafına taşır ve çoklu kupon tam o tarafı satın
+alıyor; çarpımın satın almak zorunda kaldığı köşeler bağımlılıkta görece
+daha da ucuzlar. Bu bir **mekanizma iddiası değil**, tablonun okunuşu —
+ayrıştırılmadı.
+
+Gerçek bütçede (21.000 kolon) aynı koşum aynı hükmü veriyor: oran
+×1,42'den en kötü makul `a`da ×1,46'ya (`rutbe`) / ×1,45'e (`oransal`)
+çıkıyor ve yine 0/114 hafta geride:
+
+| senaryo | model | tek sistem | 81 kupon | 729 kupon | oran |
+|---|---|---:|---:|---:|---:|
+| bağımsız | — | %7,489 | %9,864 | %10,602 | ×1,42 |
+| en kötü makul | rütbe | %8,050 | %10,859 | %11,721 | ×1,46 |
+| en kötü makul | oransal | %8,050 | %10,795 | %11,639 | ×1,45 |
+
+Üretici: `cd backend && python scripts/bagimli_kapsama.py [--butce 21000]`
+(~4 dk; süresinin çoğu `ρ`nun kendi ölçümünde, `kuyruk.rapor`).
+
+#### Ne ölçülmedi
+
+Plan her haftada **bağımsızlık altında** kuruluyor; bağımlılık yalnızca onu
+yeniden fiyatlıyor. Aramanın kendisini bağımlı hedefe göre koşmak ayrı bir
+iştir ve ucuz değil: `coklu.coklu_plan_serisi`nin `p_eksen · p_alt`
+çarpanlaması tam olarak bağımsızlıktan gelir. Buna karşılık **tavanlar arası
+sıralama** bağımlı hedefte de okundu (tablodaki "en iyi tavan" ve "geride"
+sütunları), yani kararın yön değiştirip değiştirmediği sorusu cevapsız
+kalmadı: değiştirmiyor.
+
+`ρ`nun kendisi de bu bölümde yeniden ölçülmedi; §3.46'nın kesitleri ve
+bootstrap aralıkları aynen kullanıldı (betik `kuyruk.rapor`u çağırıyor, sayı
+elle yazılmıyor). Kapanışın sınırı da §3.46'nınkiyle aynı: kapanan şey
+*"bağımlılık yok"* değil, *"olsa bile şekil kararını çevirmiyor ve tavanı
+ölçüldü"*.
+
+#### Yan ürün — bir sayı yalanı ve bir bayat satır
+
+* **`coklu.p_alt` ham sözlükten okunuyordu.** `a = 0` sağlaması yazılırken
+  çıktı: `kapsama(..., a=0)` ile `coklu.p_onbes` birebir aynı olmalı, ama
+  `plan.p_onbes` ikisinden binde 0,3 sapıyordu. Sebep, arşiv olasılıklarının
+  dört haneye yuvarlı olması (satır 1,0001 topluyor) ve `p_eksen`in
+  normalleştirilmiş matristen, `p_alt`ın ham sözlükten okunması. Fazlalık
+  adaylara **eşit binmediği** için aramanın sıralamasını da
+  oynatabiliyordu. Düzeltildi; iki tablo (19.683 ve 21.000) yeniden koşuldu
+  ve **basılan hanelerde hiçbir sayı değişmedi**, değişen tek şey tavan 3'ün
+  kupon ortalaması (2,5 → 2,4). Mevcut bekçi kusuru göremiyordu çünkü
+  girdisi Dirichlet'ten geliyor ve satırları tam 1 topluyor; yeni bekçi
+  arşivin yuvarlamasını taklit ediyor.
+* **§3.46'nın senaryo tablosunda bayat bir satır vardı.** Korpus üst sınırı
+  satırı 22 ligli korpustan (`+0,00080`) kalmıştı; korpus daraltıldığında
+  (2026-09-12) aynı tablonun kesit satırı güncellendi, senaryo satırı
+  güncellenmedi — yani tablo kendi kendisiyle çelişiyordu. Yeniden ölçüldü
+  (`+0,00070`, `a = 0,0011`, `P(K≥14) = 9,293·10⁻⁴`); öteki iki satır
+  birebir aynı çıktı ve hüküm (%5 şişme) değişmedi.
+
+---
+
 ## 4. Sayfada bugün ne var
 
 **`/istatistik`** — sezon dağılımı (en sık sonuç + pay çubuğu) · 5 sayı kutusu (sembol
@@ -6459,6 +6614,7 @@ ve karşılıkları: kupon seti 0,5747 → **0,5740**, korpus 0,5940 → **0,593
 | **Takım bazlı istatistik (§3.35)** | 23.085 maç · 17 lig · 445 takım | **Yasak kalktı, kural kalmadı.** Ampirik Bayes küçültmesi: ortalama `B` **0,858**, ortalama %95 aralık 0,506. Tek sezona inildiğinde sistem **kendiliğinden temkinli oluyor** — `B` 0,697'ye düşüyor, aralık 0,690'a genişliyor. En çok konuşan satır Scunthorpe: 46 maçta ham 0,565 → küçültülmüş **0,875** [0,58, 1,17] |
 | **Yeni veri (§3.36)** | 768 UEFA maçı · 374 takım şehri · 23.085 maç | **Serinin niteliksel olarak farklı kapanışı.** Eksik veri gerçekten eksikti: UEFA fikstürü eklenince §3.16'nın açıklanamayan anomalisi **+0,0613 → +0,0325**'e indi (kontrol katmanı bit bit aynı kaldı). Ama düzeltilmiş özellik de geçmedi — `kalibre_avrupa` +0,000028 [−0,000277, +0,000352]. Derbi de türetilebilir oldu (597 maç) ve geçmedi (+0,000176). xG ve kadro **kapalı**: biri `robots.txt`, öteki eğitim/servis ayrışması |
 | **Hafta içi bağımlılık (§3.46)** | 183 hafta · 23.085 maç + 114 kupon haftası | **Eksen kapandı — ön kayıtlı kuralla.** Demeanlenmiş artıkların ortalama ikili korelasyonu korpusta **−0,00046 [−0,00163, +0,00070]**, üç kesitte de aralık sıfırı kesiyor. Kuyruğa çevrildiğinde korpus üst sınırında `P(k≥14)` yalnızca **%5** şişiyor (kupon kesiti tek başına %82'ye izin verirdi — sonucu taşıyan korpus). Yan ürün: eski bekçinin istatistiği yanlıştı (`Var(K)` yerine `Var(K−M)`) ve düzeltildi; ham artıklarla görünen `ρ=+0,0077` tamamen **kalibrasyon yanlılığıydı** |
+| **Çoklu kuponun bağımlılık sınavı (§3.70)** | 114 kupon haftası · 19.683 ve 21.000 kolon | **Eksen kapandı — ön kayıtlı kuralla, ve kural iki yöne bakıyordu.** §3.46'nın `a`sı üç sembole taşındı (rütbe eşikleri; favori göstergesinde ikili modelin birebir aynısı, o yüzden `ρ` yeniden kalibre edilmedi) ve plan bağımlı hâlde yeniden fiyatlandı. Oran **gerilemedi, büyüdü**: ×1,40 → **×1,45** (en kötü makul `a` = 0,0166; `oransal` modelde ×1,43), 21.000 kolonda ×1,42 → ×1,46, ve **0/114** haftada çoklu plan tek sistemin gerisinde. Mutlak değerler şekle göre farklı şişiyor (tek sistem ×1,075, 729 kupon ×1,113), yani bağımlılık çoklu kupona biraz daha yarıyor. Yan ürün: `coklu.p_alt` ham sözlükten okunuyordu ve `plan.p_onbes` kupondan ölçülenden binde 0,3 sapıyordu — düzeltildi, tablolar yeniden koşuldu, basılan hanelerde değişmedi |
 | **Betfair Exchange (§3.52)** | 985 kupon maçı · 119 hafta | **GEÇTİ** — ve beş aday üzerinde **Holm düzeltmesiyle**: `BFE_kapanis` −0,00100 [−0,00181, −0,00021], p=0,0054. Bir model değil bir **fiyat**: marj **%0,62**, omurganınkinin onda biri. Kapsama 2022/23–2023/24'te **sıfır**, 2024/25 %100, 2025/26 %87 — ileriye dönük sorun yok, `n` iki sezon |
 | **Kupon-zamanı fiyatı (§3.53)** | 31.099 maç · sezon dışarıda | **Kapandı.** `L_kapanış ≈ b·L_açılış` kestirimi `b ≈ 1,009` veriyor ve açığın yalnızca **%3,3**'ünü geri alıyor (dört katta %2,3–6,2). Açılış zaten kapanışın **yansız kestiricisi**; §5.2'nin %22'lik kolon bedeli bu yolla geri alınamaz |
 | **Kupon kuralında ters seçim (§3.54)** | 114 hafta · 1.710 maç | **Yok.** Banko −0,0501, banko değil −0,0529, fark **+0,0029** [−0,0469, +0,0522] — sıfırı kesiyor. §3.49'un ters seçimi gerçek ama `model` kuralına ait; kupon onu kullanmıyor. İki kolda da *eksik* güven, ki A5'in favori–sürpriz yanlılığı |
@@ -7314,13 +7470,18 @@ python -m spor_toto.arena --kupon          # kupon setinde (tek sezon; uyarılı
 # Hafta ici bagimlilik ve kuyruk etkisi (§3.46; ~70 sn)
 python -m spor_toto.kuyruk
 
+# Coklu kupon <-> tek sistem, 114 hafta (§3.67; ~90 sn)
+python scripts/coklu_kiyasi.py [--butce 21000]
+# Ayni kiyas hafta ici BAGIMLILIK altinda (§3.70; ~4 dk)
+python scripts/bagimli_kapsama.py [--butce 21000]
+
 # Her ölçüm CLI'sı koşumunu deftere yazabilir (§2.6)
 python -m spor_toto.disari --kaydet
 python -m spor_toto.kosum                  # kayıtlı koşumlar
 python -m spor_toto.kosum --son disari     # son koşumun ortamı
 
 # Denetim
-pytest -q                                  # 1.938 test (136'sı bu katman, 662'si tahmin)
+pytest -q                                  # 1.949 test (136'sı bu katman, 672'si tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out

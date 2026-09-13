@@ -97,6 +97,17 @@ etkilemediği ayrıca sınandı (`tests/test_kuyruk.py`).
 **8,6·10⁻⁴**tür. İki hesap birbirini tanımıyor; aynı sayıya varmaları
 dördünlemenin ve kopulanın doğru kurulduğunun kanıtıdır.
 
+─── Aynı bağımlılık, KUPON kapsamasında (§3.70) ─────────────────────────
+
+Yukarıdaki her şey **tek kolonun** isabet sayısını sayar. Bir kupon
+ailesinin `P(15/15)`'i başka bir büyüklüktür ve şekle göre farklı tepki
+verebilir; `coklu.py` bunu yazılı bir varsayım olarak bırakmıştı. `kapsama`
+aynı `a`yı üç sembole taşır (rütbe eşikleri — favori göstergesinde bu
+modelin **birebir aynısı**, o yüzden `ρ` yeniden kalibre edilmez) ve 114
+haftada ölçüldü: en kötü makul `a`da çoklu kuponun kazancı ×1,40'tan
+×1,45'e **çıkıyor**, mutlak değerler %11'e kadar şişiyor. Ayrıntı §3.70,
+üretici `scripts/bagimli_kapsama.py`.
+
 Sonucu okumak için: `python -m spor_toto.kuyruk`.
 """
 from __future__ import annotations

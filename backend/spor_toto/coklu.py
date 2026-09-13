@@ -90,12 +90,27 @@ Tek sistemde bedel `2^a·3^b` olduğu için bütçe **basamaklıdır**: 19.683 i
 Çoklu kuponda bedel `M · 3^(15−d)`'dir ve `M` serbest tamsayıdır, yani her
 bütçe kullanılabilir.
 
-─── Sınır ────────────────────────────────────────────────────────────────
+─── Sınır: bağımsızlık — ve artık ÖLÇÜLDÜ ────────────────────────────────
 
-Buradaki olasılıklar maçlar arası **bağımsızlık** varsayar; `kuyruk.py`
-hafta içi bağımlılığı ölçtü ve korpus üst sınırında kuyruk %5 şişiyor. Bu
-her iki şekli de aynı yönde etkiler, oran görece dayanıklıdır — ama
-`P(15/15)`'in mutlak değeri bu varsayıma bağlıdır ve öyle okunmalıdır.
+Buradaki olasılıklar maçlar arası **bağımsızlık** varsayar. Burada önce şu
+yazıyordu: *"bu her iki şekli de aynı yönde etkiler, oran görece
+dayanıklıdır — ama mutlak değer bu varsayıma bağlıdır"*. İkinci yarısı
+ölçülmüştü (§3.46); **birinci yarısı bir varsayımdı** ve şekle göre farklı
+çıkabilirdi. Ölçüldü (§3.70): `kuyruk.kapsama` §3.46'nın `a`sını üç sembole
+taşıyor — favori göstergesinde eşik birebir aynı kaldığı için `ρ` yeniden
+kalibre edilmiyor — ve 114 hafta bağımlı hâlde yeniden fiyatlanıyor.
+
+    19.683 kolon      bağımsız   en kötü makul a (0,0166)   şişme
+    tek sistem          %7,489                    %8,050    ×1,075
+    729 kupon          %10,461                   %11,641    ×1,113
+    oran                 ×1,40                     ×1,45
+
+Oran **gerilemedi, büyüdü**; 114 haftanın hiçbirinde çoklu plan tek sistemin
+gerisine düşmüyor ve en iyi tavan her senaryoda 729'da kalıyor. Yani cümlenin
+birinci yarısı ayakta, ama artık "görece dayanıklı" değil **ölçülmüş** —
+bağımlılık çoklu kupona biraz daha yarıyor. Mutlak değer ise %11'e kadar
+şişiyor ve öyle okunmalıdır. Üretici:
+`cd backend && python scripts/bagimli_kapsama.py`.
 
 ─── Mutlak değer sınandı: OKUMA KURALI ───────────────────────────────────
 
