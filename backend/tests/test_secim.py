@@ -12,8 +12,9 @@ bir bedeli (bir saniye) ve çok somut bir sebebi var; sebep aşağıda
 """
 
 import json
+import math
 from fractions import Fraction
-from itertools import product
+from itertools import pairwise, product
 from pathlib import Path
 
 import pytest
@@ -713,3 +714,74 @@ def test_odul_secilen_plan_net_parayi_gercekten_ENBUYUKLER():
         if en_iyi is None or d > en_iyi:
             en_iyi = d
     assert net(plan.secimler) == pytest.approx(en_iyi, abs=1e-6)
+
+
+# ─── cephe ────────────────────────────────────────────────────────────────────
+
+def _cephe_haftasi(tohum: int) -> list[dict[str, float]]:
+    """Tohuma göre kaydırılmış hafta — `hafta()` sabit, cephe çeşit istiyor."""
+    temel = hafta()
+    return temel[tohum:] + temel[:tohum]
+
+
+def test_en_iyi_secim_CEPHENIN_son_noktasi():
+    """`en_iyi_secim` cepheden ayrışmaz — iki gövde değil, tek gövde.
+
+    Fonksiyon zaten cepheyi çağırıyor; bu bekçi o bağı **sözleşme** hâline
+    getiriyor. Ayrı gövdelerle yazılsalardı ayrışabilirlerdi ve çoklu kupon
+    tahsisi cephedeki, kaydedilen hedef ise ötekindeki noktayı gösterirdi.
+    """
+    from spor_toto.secim import secim_cephesi
+
+    for tohum in range(5):
+        probs = _cephe_haftasi(tohum)
+        for butce in (1, 8, 64, 729, 19_683):
+            cephe = secim_cephesi(probs, butce, esik=0)
+            en = en_iyi_secim(probs, butce, esik=0)
+            assert cephe, f"cephe bos: butce={butce}"
+            assert en is not None
+            assert cephe[-1] == en
+
+
+def test_cephe_bedelde_ARTAN_hedefte_KESIN_artan():
+    """Cephe tanımı: bedel artar, hedef kesin artar, bedel bütçeyi aşmaz.
+
+    Tahsis (`coklu`) bu sıralamaya güveniyor: üst konveks kabuk ve açgözlü
+    yükseltme, noktaların bedele göre sıralı olduğunu varsayar.
+    """
+    from spor_toto.secim import secim_cephesi
+
+    for tohum in range(5):
+        probs = _cephe_haftasi(tohum)
+        cephe = secim_cephesi(probs, 19_683, esik=0)
+        bedeller = [s.bedel for s in cephe]
+        hedefler = [s.p_hedef for s in cephe]
+        assert bedeller == sorted(bedeller) and len(set(bedeller)) == len(bedeller)
+        assert all(b <= 19_683 for b in bedeller)
+        assert all(y > x for x, y in pairwise(hedefler)), hedefler
+        # her noktanin bedeli kendi secimlerinin carpimi
+        for s in cephe:
+            assert s.bedel == math.prod(len(x) for x in s.secimler)
+
+
+def test_cephe_her_noktasi_O_BEDELDE_en_iyi():
+    """Cephedeki nokta, kendi bütçesinde `en_iyi_secim`in bulduğunun aynısı.
+
+    Cephe ayrı bir arama değil; aynı DP'nin bütün bedelleri. Ayrışırsa
+    tahsis, tek tek çağrılarla kurulan plandan kötü bir plana "daha iyi"
+    diyebilirdi.
+    """
+    from spor_toto.secim import secim_cephesi
+
+    probs = _cephe_haftasi(2)
+    for s in secim_cephesi(probs, 2_048, esik=0):
+        tek = en_iyi_secim(probs, s.bedel, esik=0)
+        assert tek is not None
+        assert tek.p_hedef == pytest.approx(s.p_hedef, rel=1e-12)
+
+
+def test_cephe_butce_sifir_ya_da_negatif_hata():
+    from spor_toto.secim import secim_cephesi
+
+    with pytest.raises(ValueError, match="pozitif"):
+        secim_cephesi(hafta(), 0, esik=0)

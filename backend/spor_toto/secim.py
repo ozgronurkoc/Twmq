@@ -241,6 +241,62 @@ def _plan_kur(sirali: list[list[tuple[str, float]]], izlek: tuple[int, ...],
     )
 
 
+def secim_cephesi(probs_listesi: list[dict[str, float]],
+                  butce: int,
+                  esik: int = VARSAYILAN_KACAK_ESIGI) -> list[Secim]:
+    """Bütçeye kadar **her bedelin en iyi planı** — Pareto cephesi.
+
+    Dönen liste bedele göre artan ve `p_hedef`i **kesin artan**dır: bir
+    bedelde daha iyisi bulunamıyorsa o nokta cepheye girmez. Son elemanı
+    `en_iyi_secim`in ta kendisidir (o fonksiyon bu gövdeyi çağırır).
+
+    ─── Niçin cephe, tek nokta değil ─────────────────────────────────────
+
+    Çoklu kuponda her kupon **ayrı** bir alt sistem bütçesi alabilir
+    (`coklu.coklu_plan_serisi`): eksen bileşimlerinin olasılıkları yüzler
+    kat ayrışıyor ve sabit bütçeyi eşit bölmek, olası bileşime az, olanaksız
+    bileşime çok vermek demek. O tahsisi yapabilmek için "bu bütçede en
+    iyisi" değil **"her bütçede en iyisi"** gerekir. DP zaten bütün bedelleri
+    dolaşıyordu; tek nokta seçmek bilgiyi atmaktı.
+
+    `esik` burada da serbesttir ama çoklu kupon onu **0**'da kullanır: orada
+    sorulan şey "alt sistem hiç kaçmaz mı".
+    """
+    if butce is None:
+        raise ValueError(
+            "Butce zorunludur — tavansiz aramanin cevabi dejeneredir "
+            "(hepsi uclu, 3^15 = 14.348.907 kolon). Bkz. modul basligi.")
+    if butce <= 0:
+        raise ValueError("Butce pozitif olmali.")
+    dp = _dp_cozumu(probs_listesi, butce, esik)
+    if dp is None:
+        return []
+    sirali, durumlar = dp
+
+    # Bedel başına en iyi: eşitlikte ILK görülen kazanır (durumların kendi
+    # sırası), `en_iyi_secim`in eski gövdesindeki kuralın aynısı.
+    en_bedelde: dict[int, tuple[float, tuple[int, ...]]] = {}
+    for (a, b), kume in durumlar.items():
+        c = bedel_hesapla(a, b)
+        if c > butce:
+            continue
+        for kumulatif, izlek in kume:
+            varsa = en_bedelde.get(c)
+            if varsa is None or kumulatif[esik] > varsa[0]:
+                en_bedelde[c] = (kumulatif[esik], izlek)
+
+    cephe: list[Secim] = []
+    en_iyi_p = -1.0
+    for c in sorted(en_bedelde):                 # artan bedel
+        p_hedef, izlek = en_bedelde[c]
+        # Eşitlikte UCUZ olan kazanır: aynı hedefe daha az kolonla ulaşmak
+        # her zaman tercih edilir, yani pahalı eşit nokta cepheye girmez.
+        if p_hedef > en_iyi_p:
+            cephe.append(_plan_kur(sirali, izlek, c, p_hedef))
+            en_iyi_p = p_hedef
+    return cephe
+
+
 def en_iyi_secim(probs_listesi: list[dict[str, float]],
                  butce: int,
                  esik: int = VARSAYILAN_KACAK_ESIGI) -> Secim | None:
@@ -256,34 +312,15 @@ def en_iyi_secim(probs_listesi: list[dict[str, float]],
     bir plan bulur — kaplama dönemindeki "yedi çifte kurulamıyor" hâli artık
     yok.
 
-    Arama, kaçak eşiğine kadarki kümülatif olasılıkları taşır; `esik` büyürse
-    taşınan vektör de büyür, karmaşıklık `esik` ile doğrusaldır.
+    Gövde `secim_cephesi`nin **son noktasıdır** ve bu bir sadeleştirme değil
+    bir güvence: iki fonksiyon ayrı gövdelerle yazılsaydı, cephenin en iyi
+    noktası ile burada seçilen nokta sessizce ayrışabilirdi. Cephe artan
+    `p_hedef` taşıdığı için son eleman en büyük hedefi, eşitlikte de en ucuz
+    bedeli verir — eski gövdenin `(p, −bedel)` kuralının aynısı. Bekçisi
+    `tests/test_secim.py::test_en_iyi_secim_CEPHENIN_son_noktasi`.
     """
-    if butce is None:
-        raise ValueError(
-            "Butce zorunludur — tavansiz aramanin cevabi dejeneredir "
-            "(hepsi uclu, 3^15 = 14.348.907 kolon). Bkz. modul basligi.")
-    if butce <= 0:
-        raise ValueError("Butce pozitif olmali.")
-    dp = _dp_cozumu(probs_listesi, butce, esik)
-    if dp is None:
-        return None
-    sirali, durumlar = dp
-
-    en: tuple[float, int, tuple[int, ...]] | None = None
-    for (a, b), kume in durumlar.items():
-        c = bedel_hesapla(a, b)
-        if c > butce:
-            continue
-        for kumulatif, izlek in kume:
-            # Eşitlikte UCUZ olan kazanır: aynı hedefe daha az kolonla
-            # ulaşmak her zaman tercih edilir.
-            if en is None or (kumulatif[esik], -c) > (en[0], -en[1]):
-                en = (kumulatif[esik], c, izlek)
-    if en is None:
-        return None
-    p_hedef, maliyet, izlek = en
-    return _plan_kur(sirali, izlek, maliyet, p_hedef)
+    cephe = secim_cephesi(probs_listesi, butce, esik)
+    return cephe[-1] if cephe else None
 
 
 def deger_secim(probs_listesi: list[dict[str, float]],

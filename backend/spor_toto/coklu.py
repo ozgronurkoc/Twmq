@@ -148,7 +148,7 @@ silinmedi, **düzeltildi** (kayıt yeniden yazılmaz, `.claude/olcum_kutugu.json
 from __future__ import annotations
 
 import heapq
-from typing import TYPE_CHECKING, NamedTuple
+from typing import TYPE_CHECKING, NamedTuple, TypeAlias
 
 import numpy as np
 
@@ -159,6 +159,11 @@ if TYPE_CHECKING:  # `secim` çalışma zamanında TEMBEL çekiliyor (döngü),
 
 #: Kupondaki maç sayısı.
 MAC_SAYISI = 15
+
+#: Cephe noktası: `(bedel, alt sistemin kaçmama olasılığı, planın kendisi)`.
+#: Eksen 15 maçın tamamını kapladığında alt sistem **yoktur** ve nokta
+#: `(1, 1.0, None)`'dır — kupon yalnızca eksen bileşiminin kendisidir.
+Nokta: TypeAlias = "tuple[int, float, Secim | None]"
 
 #: Sembol → `_matris` sütunu. İki yerde gerekiyordu ve iki yerde ayrı ayrı
 #: kuruluyordu.
@@ -316,115 +321,234 @@ def coklu_plan(probs_listesi: list[dict[str, float]],
     return seri[max(seri)]
 
 
+def _eksen_olasiliklari(P: np.ndarray, eksen: list[int], M: int
+                        ) -> tuple[list[tuple[int, ...]], list[float]]:
+    """Eksenin en olası `M` bileşimi ve **her birinin ayrı olasılığı**.
+
+    `_eksen_bilesimleri` toplamı döndürüyor; tahsis için tek tek gerekiyor,
+    çünkü bir kupona ne kadar bütçe ayrılacağını belirleyen şey tam olarak o
+    kuponun eksen olasılığıdır.
+    """
+    bilesimler, _ = _eksen_bilesimleri(P, eksen, M)
+    q = [float(np.prod([P[i][s] for i, s in zip(eksen, b)]))
+         for b in bilesimler]
+    return bilesimler, q
+
+
+def _p_alt(P: np.ndarray, kalanlar: list[int],
+           secimler: list[list[str]]) -> float:
+    """Alt sistemin kaçmama olasılığı — **normalleştirilmiş** `P`den."""
+    return float(np.prod([P[i, [_INDEKS[s] for s in sec]].sum()
+                          for i, sec in zip(kalanlar, secimler)]))
+
+
+def _ust_kabuk(noktalar: list[Nokta]) -> list[Nokta]:
+    """Cephenin **üst konveks kabuğu** — marjinal oranlar azalan kalsın.
+
+    Açgözlü tahsis (aşağıda) ancak "bir kuponu bir basamak yükseltmenin
+    kazanç/bedel oranı" o kupon için azalıyorsa doğru çalışır. Cephenin
+    kendisi bunu garanti etmez: bedel ×2/×3 sıçradığı için aradaki bir nokta
+    komşularının doğrusal birleşiminin altında kalabilir ve açgözlü o noktada
+    durup daha iyisini kaçırabilir. Kabuktaki noktalar cephenin **gerçek**
+    noktalarıdır, yani seçilen her plan oynanabilir; atılanlar yalnızca
+    baskılanmışlardır.
+    """
+    kabuk: list[Nokta] = []
+    for nokta in noktalar:
+        c, p, _ = nokta
+        while len(kabuk) >= 2:
+            (c1, p1, _), (c2, p2, _) = kabuk[-2], kabuk[-1]
+            # kabuk[-1] baskın değilse at: oran azalmıyor demektir
+            if (p2 - p1) * (c - c2) <= (p - p2) * (c2 - c1):
+                kabuk.pop()
+            else:
+                break
+        kabuk.append(nokta)
+    return kabuk
+
+
+def _tahsis(q: list[float], noktalar: list[Nokta],
+            butce: int) -> tuple[float, list[Nokta]] | None:
+    """Kupon başına alt sistem — **eşit bölmek yerine olasılığa göre**.
+
+    ─── Niçin eşit bölmek yanlış ─────────────────────────────────────────
+
+    Eksen bileşimlerinin olasılıkları yüzler kat ayrışıyor: en olası bileşim
+    (hepsi favori) ile 81.'si arasında iki mertebe fark var. Alt sistem
+    bütçesini eşit bölmek, o iki kupona aynı parayı vermek demek — oysa bir
+    kuponun alt sistemini genişletmenin değeri tam olarak o kuponun eksen
+    olasılığıyla çarpılıyor (`P(15/15) = Σ_j q_j · p_alt_j`). Yani sabit
+    bütçe altında doğru şey **ayrılabilir bir sırt çantası** çözmek.
+
+    ─── Çözüm: açgözlü, ve niçin kesin ──────────────────────────────────
+
+    Her kupon en ucuz noktadan başlar; sonra "bir basamak yükseltmenin
+    `q_j · Δp / Δbedel` oranı" en büyük olan kupon yükseltilir, bütçe
+    bitene kadar. Üst konveks kabukta oranlar her kupon için azalan
+    olduğundan bu, kabuk üzerinde tanımlı problemin **kesin** çözümüdür;
+    kalan pay yalnızca bütçenin son artığı kadardır (bölünemeyen basamak).
+
+    Dönen değer `Σ q_j · p_alt_j` ve kupon başına seçilen noktalardır.
+    `None` döner ancak en ucuz noktadan bile `len(q)` kupon alınamıyorsa.
+    """
+    kabuk = _ust_kabuk(noktalar)
+    if not kabuk:
+        return None
+    M = len(q)
+    taban = kabuk[0][0]
+    if M * taban > butce:
+        return None
+
+    seviye = [0] * M
+    harcanan = M * taban
+    # `-oran` ile en iyi yükseltme yığının tepesinde; eşitlikte küçük `j`.
+    yigin: list[tuple[float, int]] = []
+
+    def _it(j: int, k: int) -> None:
+        if k + 1 < len(kabuk):
+            dc = kabuk[k + 1][0] - kabuk[k][0]
+            dp = kabuk[k + 1][1] - kabuk[k][1]
+            heapq.heappush(yigin, (-q[j] * dp / dc, j))
+
+    for j in range(M):
+        _it(j, 0)
+    while yigin:
+        _oran, j = heapq.heappop(yigin)
+        k = seviye[j]
+        dc = kabuk[k + 1][0] - kabuk[k][0]
+        # Bütçe yetmiyorsa bu kupon için DAHA UCUZ bir basamak da yok
+        # (kabukta bedel artan), o yüzden kupon burada durur.
+        if harcanan + dc <= butce:
+            harcanan += dc
+            seviye[j] = k + 1
+            _it(j, k + 1)
+
+    deger = sum(q[j] * kabuk[seviye[j]][1] for j in range(M))
+    return deger, [kabuk[seviye[j]] for j in range(M)]
+
+
 def coklu_plan_serisi(probs_listesi: list[dict[str, float]],
                       butce: int,
-                      tavanlar: tuple[int, ...] | None = None
+                      tavanlar: tuple[int, ...] | None = None,
+                      eksen_sirasi: list[int] | None = None
                       ) -> dict[int, CokluPlan]:
     """Her kupon tavanı için en iyi plan — **tek aramada**.
 
     `coklu_plan`ı tavan tavan çağırmak aramayı her seferinde baştan yapardı;
-    114 haftalık kıyasta bu yedi kat israftı. Arama zaten `M` büyüdükçe
-    ilerlediği için, bir tavanın cevabı o tavana kadarki adayların en
-    iyisidir — yani tek geçişte hepsi toplanır.
+    114 haftalık kıyasta bu yedi kat israftı. Arama zaten bütün eksen
+    boylarını (`d`) geziyor, yani tek geçişte her tavanın cevabı toplanır.
 
     Dönen sözlüğün anahtarları verilen tavanlardır ve değerler **birikimli
     en iyi**dir, yani tavan büyüdükçe `p_onbes` düşemez.
+
+    `eksen_sirasi` verilmezse eksen **en emin maçtan** başlayarak kurulur
+    (`eksen_sec`in kuralı). Parametre olarak durmasının sebebi şu: o kural bir
+    **iddiaydı** ve ölçülmeden duruyordu; sınanabilmesi için aramanın başka
+    bir sırayla da koşması gerekiyordu (§3.71, `scripts/tahsis_kiyasi.py
+    --eksen-sinavi`). Ölçüldü: ters sıra ×0,73, tek takas araması ×1,0009 —
+    yani kural doğru ve arama onu **varsayım olarak değil ölçülmüş olarak**
+    kullanıyor.
+
+    ─── Arama iki aday ailesini birlikte geziyor ─────────────────────────
+
+    Her `d` için kalan `15−d` maçın **bütün bütçelerdeki** en iyi alt
+    sistemleri bir kez çıkarılır (`secim.secim_cephesi`, tek DP) ve iki aday
+    değerlendirilir:
+
+    * **tek tip** — bütün kuponlar aynı alt sistemi oynar. Bu, bu modülün
+      ilk sürümünün yaptığı şeydir ve aramada **kalıyor**: cephenin her
+      noktası için `M = min(tavan, bütçe // bedel, 3^d)` kupon alınır.
+    * **tahsisli** — her kupon eksen olasılığına göre **ayrı** bir alt
+      sistem bütçesi alır (`_tahsis`). Eksen bileşimlerinin olasılıkları
+      yüzler kat ayrıştığı için eşit bölmek masada değer bırakıyordu;
+      ölçüldü (§3.71).
+
+    İkisinin en iyisi seçilir, yani yeni arama eski aramanın **üst
+    kümesidir** ve hiçbir haftada ondan kötü olamaz. Bekçisi
+    `test_tahsis_TEK_TIP_adayini_da_geziyor` ve
+    `test_tahsisli_plan_ESKI_aramadan_kotu_DEGIL`.
     """
     if butce is None or butce <= 0:
         raise ValueError("Butce pozitif bir kolon sayisi olmali.")
     if len(probs_listesi) != MAC_SAYISI:
         raise ValueError(f"{MAC_SAYISI} macin olasiligi gerekir.")
 
-    from .secim import en_iyi_secim
+    from .secim import secim_cephesi
 
     istenen = sorted(tavanlar) if tavanlar else sorted(ARANAN_KUPON)
+    tavan_ust = max(istenen)
     P = _matris(probs_listesi)
-    emin_sira = np.argsort(-P.max(axis=1)).tolist()   # en eminden başlayarak
+    if eksen_sirasi is None:
+        emin_sira = np.argsort(-P.max(axis=1)).tolist()   # en eminden başla
+    elif sorted(eksen_sirasi) != list(range(MAC_SAYISI)):
+        raise ValueError(f"Eksen sirasi {MAC_SAYISI} macin permutasyonu olmali.")
+    else:
+        emin_sira = list(eksen_sirasi)
 
-    # ─── 1. yapılandırmalar ────────────────────────────────────────────
-    # Bir yapılandırma = (eksen kümesi, ortak alt sistem). Kaç kupon
-    # alınacağı buraya GİRMEZ; o tavana göre sonra kesilir. Önce kupon
-    # sayısı burada sabitleniyordu ve seri bozuluyordu: `tavan_ust`e göre
-    # kırpılan bir aday, daha küçük bir tavanın seçiminden tamamen
-    # düşüyordu (`test_seri_TEK_TEK_cagirmakla_ayni` tuttu).
-    #: (tam_kupon, p_alt, eksen, kalanlar, alt, kolon_kupon)
-    yapilar: list[tuple[int, float, list[int], list[int],
-                        Secim | None, int]] = []
-    gorulen: set[tuple[int, int]] = set()
+    #: tavan -> (p_onbes, kupon sayısı, eksen, kalanlar, bileşimler, noktalar)
+    en_iyi: dict[int, tuple[float, int, list[int], list[int],
+                            list[tuple[int, ...]], list[Nokta]]] = {}
 
-    for M in ARANAN_KUPON:
-        kupon_butce = butce // M
-        if kupon_butce < 1:
-            break
-        for d in range(MAC_SAYISI + 1):
-            eksen = sorted(emin_sira[:d])
-            kalanlar = [i for i in range(MAC_SAYISI) if i not in set(eksen)]
-            alt = en_iyi_secim([probs_listesi[i] for i in kalanlar],
-                               kupon_butce, esik=0) if kalanlar else None
-            if kalanlar and alt is None:
+    for d in range(MAC_SAYISI + 1):
+        eksen = sorted(emin_sira[:d])
+        kalanlar = [i for i in range(MAC_SAYISI) if i not in set(eksen)]
+        if kalanlar:
+            # Cephe TAM bütçeyle çıkarılır, `bütçe // M` ile değil: tahsiste
+            # bir kupon ortalamanın çok üstüne çıkabilir ve o noktalar
+            # kırpılırsa tahsis eşit bölmeye geri düşer (prototipte tam bu
+            # oldu — kazanç sıfır göründü).
+            cephe = secim_cephesi([probs_listesi[i] for i in kalanlar],
+                                  butce, esik=0)
+            if not cephe:
                 continue
-            kolon_kupon = 1 if alt is None else alt.bedel
+            noktalar: list[Nokta] = [
+                (s.bedel, _p_alt(P, kalanlar, s.secimler), s) for s in cephe]
+        else:
+            noktalar = [(1, 1.0, None)]
 
-            # ─── kupon sayısı ızgaradan DEĞİL, bedelden türetilir ───────
-            # Önce `M`in kendisi kullanılıyordu ve bütçe boşa gidiyordu:
-            # 21.000 kolonluk bütçede `M = 81`, alt sistem 243 kolon çıkıyor
-            # ve 81 × 243 = 19.683 — geriye 1.317 kolon (13.170 TL) hiçbir
-            # şey satın almadan kalıyordu. Aynı boydaki kupondan bütçenin
-            # aldığı KADAR alınır; fazladan her kupon bir eksen bileşimi
-            # daha açar ve hedefi yalnızca büyütür.
-            tam = min(butce // kolon_kupon, 3 ** d)
-            if tam < 1 or (d, kolon_kupon) in gorulen:
-                continue
-            gorulen.add((d, kolon_kupon))
+        bilesimler, q = _eksen_olasiliklari(P, eksen, min(tavan_ust, 3 ** d))
 
-            # Olasılıklar **normalleştirilmiş** `P`den okunur, ham
-            # sözlükten değil. Arşiv satırları dört haneye yuvarlı ve
-            # toplamları 1,0001 gelebiliyor; ham sözlükle çarpılan `p_alt` o
-            # fazlalığı üçlü bırakılan her maçta bir kez daha taşıyordu. İki
-            # sonucu vardı: `plan.p_onbes` aynı kuponu bağımsız yeniden ölçen
-            # `p_onbes`ten binde 0,3 büyük çıkıyordu (tek kupon, iki sayı —
-            # `p_onbes`in docstring'i tam bunu yasaklıyor), ve fazlalık
-            # adaylara EŞİT binmediği için (üçlü bırakılan maç sayısı kadar)
-            # aramanın sıralamasını da oynatabiliyordu. Kusur
-            # `kuyruk.kapsama`nın `a = 0` sağlaması yazılırken çıktı.
-            p_alt = 1.0 if alt is None else float(np.prod(
-                [P[i, [_INDEKS[s] for s in sec]].sum()
-                 for i, sec in zip(kalanlar, alt.secimler)]))
-            yapilar.append((tam, p_alt, eksen, kalanlar, alt, kolon_kupon))
+        for tavan in istenen:
+            M = min(tavan, 3 ** d)
+            #: (p, kupon sayısı, kupon başına nokta) — kupon GÖVDELERI
+            #: burada kurulmaz, yalnızca kazanan için kurulur. Önce hepsi
+            #: kuruluyordu ve 2.187 kupon × 16 eksen boyu × 8 tavan =
+            #: haftada yüz binlerce gereksiz liste demekti.
+            adaylar: list[tuple[float, int, list[Nokta]]] = []
 
-    if not yapilar:                           # bütçe 1 kolona bile yetmiyor
+            # ─── aday 1: tek tip (eski aramanın tamamı) ────────────────
+            for nokta in noktalar:
+                bedel, p_alt, _alt = nokta
+                sayi = min(M, butce // bedel)
+                if sayi < 1:
+                    continue
+                adaylar.append((sum(q[:sayi]) * p_alt, sayi, [nokta] * sayi))
+
+            # ─── aday 2: tahsisli ─────────────────────────────────────
+            sonuc = _tahsis(q[:M], noktalar, butce)
+            if sonuc is not None:
+                adaylar.append((sonuc[0], M, sonuc[1]))
+
+            for p, sayi, secilen in adaylar:
+                varsa = en_iyi.get(tavan)
+                # eşitlikte AZ kupon kazanır: aynı hedefe daha az operasyonla
+                if varsa is None or (p, -sayi) > (varsa[0], -varsa[1]):
+                    en_iyi[tavan] = (p, sayi, eksen, kalanlar,
+                                     bilesimler[:sayi], secilen)
+
+    if not en_iyi:
         raise ValueError(f"Butce hicbir plani karsilamiyor: {butce}")
 
-    # ─── 2. her tavan için en iyi yapılandırma ─────────────────────────
     seri: dict[int, CokluPlan] = {}
-    for tavan in istenen:
-        en: tuple[float, int, list[int], list[int],
-                  Secim | None, int] | None = None
-        for tam, p_alt, eksen, kalanlar, alt, kolon_kupon in yapilar:
-            sayi = min(tam, tavan)
-            if sayi < 1:
-                continue
-            _, p_eksen = _eksen_bilesimleri(P, eksen, sayi)
-            p = p_eksen * p_alt
-            # eşitlikte AZ kupon kazanır: aynı hedefe daha az operasyonla
-            if en is None or (p, -sayi) > (en[0], -en[1]):
-                en = (p, sayi, eksen, kalanlar, alt, kolon_kupon)
-        if en is None:
-            continue
-        p, sayi, eksen, kalanlar, alt, kolon_kupon = en
-        bilesimler, _ = _eksen_bilesimleri(P, eksen, sayi)
-        seri[tavan] = _plan((p, _kuponlari_kur(bilesimler, eksen, kalanlar,
-                                               alt, kolon_kupon), eksen))
-
-    if not seri:
-        raise ValueError(f"Butce hicbir plani karsilamiyor: {butce}")
+    for tavan, (p, _sayi, eksen, kalanlar, bilesimler, secilen) in sorted(
+            en_iyi.items()):
+        kuponlar = [
+            _kuponlari_kur([bilesim], eksen, kalanlar, nokta[2], nokta[0])[0]
+            for bilesim, nokta in zip(bilesimler, secilen)]
+        seri[tavan] = CokluPlan(kuponlar=kuponlar, eksen=eksen,
+                                kolon=sum(k.kolon for k in kuponlar),
+                                p_onbes=p)
     return seri
-
-
-def _plan(en: tuple[float, list[Kupon], list[int]]) -> CokluPlan:
-    p, kuponlar, eksen = en
-    return CokluPlan(kuponlar=kuponlar, eksen=eksen,
-                     kolon=sum(k.kolon for k in kuponlar), p_onbes=p)
 
 
 def _kuponlari_kur(bilesimler: list[tuple[int, ...]], eksen: list[int],
