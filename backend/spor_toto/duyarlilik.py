@@ -58,27 +58,32 @@ değiştirildi:
     kupon   cetvel     beklenen   gözlenen    oran   iki yanlı
         1   taban          8,54         15   ×1,76      0,0444
         1   sapmalı       14,22         15   ×1,05      0,9097
-      729   taban         12,09         20   ×1,65      0,0305
-      729   sapmalı       17,90         20   ×1,12      0,6572
+      729   taban         12,58         21   ×1,67      0,0234
+      729   sapmalı       18,46         21   ×1,14      0,5843
 
 Havuzlanmış hâlde model **karamsar** ve ölçülen banko sapması açığı
 kapatıyor. Kapanma bir uydurma değil: +%5,8 bu sınava ayarlanmadı, maç
 düzeyi kapsamadan geldi ve olduğu gibi kondu.
 
 **2. Ama açık GÜNCEL DEĞİL.** Sezon sınavı (§3.64'ün kararını belirleyen
-sınav) aynı imzayı verdi — 729 kuponda ×2,24 · ×2,25 · ×1,65 · **×1,00**.
+sınav) aynı imzayı verdi — 729 kuponda ×2,15 · ×2,16 · ×1,85 · **×0,96**.
 Havuzlanmış açık 2023/24'ten geliyor ve 2025/26'da model zaten tutuyor.
-O sezonda **düzeltilmiş** model fazla iyimser olurdu: sapmalı cetvel 5,84
+O sezonda **düzeltilmiş** model fazla iyimser olurdu: sapmalı cetvel 6,04
 hafta bekliyor, gerçekleşen 4. Yani düzeltmeyi koymak bugünün verisinde
 modeli bozardı.
 
 **3. Ve karar hiç değişmiyor.** Sapmalı cetvelle kurulan plan taban cetvelle
 ölçüldüğünde `tavan = 1`'de kupon **114/114** haftada birebir aynı
-çıkıyor (eksen ortalaması 3,1 → 1,8 oynuyor, kupon oynamıyor: `M = 1`
+çıkıyor (eksen ortalaması 1,5 → 1,1 oynuyor, kupon oynamıyor: `M = 1`
 hâlinde eksen/alt sistem ayrımı aynı kararın bölünmesidir). Çoklu
-şekillerde plan kıpırdıyor ama hiçbir satırda iyileşmiyor (%9,353 →
-%9,289, gözlenen 20 → 17). Sıralama korunuyor, yani §3.67'nin ×1,45'i
-senaryodan etkilenmiyor.
+şekillerde plan kıpırdıyor ama hiçbir satırda iyileşmiyor (27 kuponda
+%10,000 → %9,937, 729 kuponda %11,031 → %10,937). Sıralama korunuyor,
+yani §3.67'nin kazancı senaryodan etkilenmiyor.
+
+> **YENİDEN ÖLÇÜLDÜ (2026-09-13).** Yukarıdaki sayılar arama **tahsisli**
+> hâle gelince (§3.71) yeniden koşuldu. Tek sistem satırı birebir aynı
+> (o plan değişmedi); çoklu satırlar iyileşti ve `tavan = 1`'in **114/114**
+> hükmü ile üç cevabın hiçbiri değişmedi.
 
 Sebebi mekanik: sapma, planın zaten en emin olduğu maçlara uygulanan
 neredeyse çarpımsal bir dönüşümdür ve adayları yeniden **sıralamaz**.

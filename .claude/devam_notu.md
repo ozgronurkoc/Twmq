@@ -45,100 +45,107 @@ benim kararım):
 
 ## Şu an (en güncel)
 
-**2026-09-13 — dal `claude/devam-edelim-q99bac`**
+**2026-09-13 — dal `claude/devam-edelim-q99bac` (ikinci iş)**
 
-### Bu oturumda ne yapıldı — bağımsızlık varsayımı çoklu kupon kesitinde (§3.70)
+### Bu oturumda ne yapıldı — kupon başına AYRI bütçe (§3.71)
 
-Önceki notun 4. sıradaki adımı buydu. `coklu.py`nin "Sınır" bölümü şunu
-yazılı bir **varsayım** olarak bırakmıştı: *"bağımlılık her iki şekli de aynı
-yönde etkiler, oran görece dayanıklıdır"*. Cümlenin ikinci yarısı (mutlak
-değerin varsayıma bağlı olduğu) §3.46'da ölçülmüştü; **birinci yarısı hiç
-ölçülmemişti** ve §3.67'nin ×1,45'i tam olarak o yarıya dayanıyor.
+Devam notunun listesindeki adımların hepsi dışarıya bağlıydı (6. hafta, 5.
+haftanın sonucu, operasyon kanalı) ya da bilerek ertelenmişti. O yüzden
+listede olmayan bir şey arandı ve bulundu: `coklu.py`nin kurduğu ailede
+**bütün kuponlar aynı alt sistemi** oynuyordu ve bu ölçülmemiş bir kısıttı.
 
-**Kurulan makine.** `kuyruk.kapsama` §3.46'nın tek faktörünü üç sembole
-taşıyor: `Z_i` sembolleri **rütbeye göre** kesiyor, yani favori
-göstergesinde eşik birebir aynı kalıyor ve ölçülen `ρ → a` çevirisi yeniden
-kalibre edilmeden geçiyor (bekçisi
-`test_kapsama_FAVORI_gostergesi_IKILI_modelin_AYNISI`). Kupon başına ikili
-eşik kurma yolu **reddedildi** — iç içe eşikler ayrık eksen sembollerini iki
-kez sayar; bekçisi `test_kapsama_BUTUN_kolonlar_oynanirsa_bir` ve reddedilen
-yol tam orada düşüyor. `ρ`nun belirlemediği tek parça (kötü haftada 2.↔3.
-sembol paylaşımı) uydurulmadı, iki uç ayrı ayrı hesaplandı.
+Hedef şu: `P(15/15) = Σ_j q_j · p_alt_j`. Bir kuponun alt sistemini
+genişletmenin değeri `q_j` ile çarpılıyor ve `q_j` **iki mertebe** ayrışıyor
+(hepsi favori ↔ 81. bileşim). Eşit bölmek, o hâlde, olası bileşime az
+olanaksız bileşime çok vermek demek. Arama artık **ayrılabilir bir sırt
+çantası** çözüyor.
 
-**Durma kuralı ölçüm görülmeden yazıldı ve ayrı commit'le mühürlendi**
-(1316851): en kötü makul `a`da oran 1'in altına düşerse ya da bağımsız
-orandan %10'dan fazla gerilerse eksen yeniden açılır.
+**Ölçülen (114 hafta, gerçek bütçe 21.000 kolon):**
 
-**Ölçülen (114 hafta, 19.683 kolon):** oran gerilemedi, **büyüdü** —
-×1,40 → ×1,45 (en kötü makul `a`, `rutbe`) / ×1,43 (`oransal`); 21.000
-kolonda ×1,42 → ×1,46. **0/114 haftada** çoklu plan tek sistemin gerisine
-düşüyor ve en iyi tavan her senaryoda 729'da kalıyor. Mutlak değerler
-şişiyor ve **şekle göre farklı**: tek sistem ×1,075, 81 kupon ×1,101, 729
-kupon ×1,113 — yani bağımlılık çoklu kupona biraz daha yarıyor. Eksen
-kapandı; kapanan şey *"bağımlılık yok"* değil, *"olsa bile şekil kararını
-çevirmiyor ve tavanı ölçüldü"*.
+    tavan      tek tip   tahsisli   kazanç   kapanan açık
+       27       %9,353    %10,000   ×1,069          %33,7
+       81       %9,864    %10,488   ×1,063          %44,3
+      729      %10,602    %11,031   ×1,041          %64,0
+    serbest küme tavanı %11,272 → plan tavanın %94,1'inden %97,9'una
 
-### Yan işler — ikisi de bir sayı yalanıydı
+Yuvarlak bütçede (19.683) kazanç daha küçük (×1,016–1,031) ve **fark
+ölçülebilir**: 21.000'de ikinci bir etken var — tek tip ailede bedel `M · c`
+çarpımına sıkışıyor ve artan **harcanamıyor** (eski arama 21.000 kolonun
+19.683'ünü kullanıyordu). `coklu.py` "bütçe merdiveni kalktı" diyordu; ölçüm
+onu düzeltti, merdiven yarı yarıya kalkmıştı.
 
-* **`coklu.p_alt` ham sözlükten okunuyordu** (`p_eksen` normalleştirilmiş
-  matristen). Arşiv olasılıkları dört haneye yuvarlı ve satır 1,0001
-  topluyor; `plan.p_onbes` aynı kuponu yeniden ölçen `p_onbes`ten binde
-  0,3'e kadar sapıyordu, üstelik fazlalık adaylara **eşit binmediği** için
-  aramanın sıralamasını da oynatabiliyordu. Kusur `kapsama`nın `a = 0`
-  sağlaması yazılırken çıktı. Mevcut bekçi göremiyordu çünkü girdisi
-  Dirichlet'ten geliyor (satır tam 1); yeni bekçi arşivin yuvarlamasını
-  taklit ediyor ve düzeltme geri konup **kırmızı olduğu doğrulandı**. İki
-  tablo yeniden koşuldu: basılan hanelerde hiçbir sayı değişmedi, değişen
-  tek şey tavan 3'ün kupon ortalaması (2,5 → 2,4). Canlı haftalara
-  değmemişti (kayıtların olasılıkları tam 1 topluyor) — bekçinin kusuru
-  görememesinin sebebi de o.
-* **§3.46'nın senaryo tablosunda bayat bir satır vardı.** Korpus üst sınırı
-  22 ligli korpustan (`+0,00080`) kalmıştı; korpus daraltıldığında aynı
-  tablonun kesit satırı güncellenmiş, senaryo satırı güncellenmemişti — tablo
-  kendi kendisiyle çelişiyordu. Yeniden ölçüldü (`+0,00070`, `a = 0,0011`,
-  `P(K≥14) = 9,293·10⁻⁴`); öteki iki satır birebir aynı, hüküm değişmedi.
-* **`scripts/setup.sh` uzak oturumda kurulumu bitiremiyordu:** dağıtımın
-  `python3-blinker`ı pip dışında kurulu ve RECORD'u yok, pip onu
-  kaldıramadığı için kurulumun tamamı düşüyordu — `numpy` bile gelmiyordu.
-  İkinci deneme eklendi (`--ignore-installed blinker`), gerekçe betikte.
+**570 kıyasın 570'inde geri gidiş yok** ve bu tanım gereği: tek tip aday
+aramada kaldı, yani yeni arama eskisinin üst kümesi. Referans gövde
+`scripts/tahsis_kiyasi.py::tek_tip_arama`da ve test onu **çağırıyor**.
 
-Belge zinciri: test 1.938 → **1.949**, §1 katman dökümü 662 → 672, betik
-35 → 36, README §9 Kuyruk 12 → 22 ve Çoklu kupon 14 → 15.
+**Arama ayrıca hızlandı:** `d` başına tek Pareto cephesi (16 DP), eskiden
+`(M, d)` başına bir DP (128) → 0,63 → 0,38 sn/hafta.
+
+### Yan işler
+
+* **Eksen kuralı ilk kez sınandı.** `eksen_sec` "en emin `d` maç" diyor ve
+  docstring'i bunu gerekçesiyle savunuyordu, ama ölçmemişti.
+  `coklu_plan_serisi` bir `eksen_sirasi` parametresi aldı ve 20 haftada
+  ölçüldü: ters sıra **×0,755**, tek takas araması ×1,0002 (7 takas). Kural
+  doğru — artık varsayım değil ölçüm.
+* **`en_iyi_secim` cephenin son noktası oldu** (`secim.secim_cephesi`): iki
+  gövde tek gövdeye indi, bekçisi var.
+* **Prototipte bir kusur çıktı ve bekçisi yazıldı.** Cephe `bütçe // M` ile
+  çıkarılınca hiçbir kupon ortalamanın üstüne çıkamıyor ve kazanç **tam
+  olarak sıfır** görünüyor. İlk koşum böyleydi ve "tahsis işe yaramıyor"
+  diye okunabilirdi.
+* **Bağlı sayıların hepsi yeniden ölçüldü** (plan değiştiği için): §3.67 iki
+  tablo, §3.68 (banko duyarlılığı; tek sistem satırları birebir aynı), §3.69
+  küçük bütçe bloğu, §3.70 bağımlılık tabloları. **Hiçbirinde hüküm
+  değişmedi.** Kütükte sekiz girdi güncellendi, üç yeni girdi açıldı.
+
+Belge zinciri: test 1.949 → **1.959**, betik 36 → 37, README §9 Karar
+katmanı 42 → 46 ve Çoklu kupon 15 → 21.
 
 ### Sıradaki adım
 
-1. **6. hafta geldiğinde `--yaz` ile dondur.** Akış değişmedi:
-   `coklu_kupon.py --hafta N --butce 21000 --tavan 81 --yaz`, sonuç girilince
-   `super_toto_degerlendir.py` kaydı kendiliğinden puanlar.
-2. **5. haftanın sonucu girildiğinde ilk ileriye dönük satır okunacak.** Bir
-   hafta hiçbir şey söylemez; kayıt oynanan kupon değil, o yüzden o satır bir
-   *karar* değil bir *tanık*.
+1. **6. hafta geldiğinde `--yaz` ile dondur** — ve bu hafta donacak kayıt
+   artık **tahsisli** plandır (aynı tavan, aynı bütçe, daha yüksek hedef).
+   Akış değişmedi: `coklu_kupon.py --hafta N --butce 21000 --tavan 81 --yaz`.
+2. **5. haftanın sonucu girildiğinde ilk ileriye dönük satır okunacak.** O
+   kayıt eski aramayla donmuştu; kayıt bir koşum kaydıdır, yeniden
+   hesaplanmaz.
 3. **Operasyon hâlâ açık ve tek engel bu.** 81–729 kupon bir haftada fiilen
-   yatırılabiliyor mu, hangi kanaldan? Kalibrasyon (§3.68) ve artık
-   bağımlılık (§3.70) tarafında engel **yok**; oynanan kuponu değiştirmek bu
-   cevaba bağlı. Tavan ortaya çıkınca `coklu.VARSAYILAN_KUPON_TAVANI` ona
-   göre ayarlanır.
-4. **Aramayı bağımlı hedefe göre koşmak** (§3.70'in açık bıraktığı yer).
-   Bugünkü plan bağımsızlık altında kuruluyor; bağımlılık onu yalnızca
-   yeniden fiyatlıyor. Tavanlar arası sıralama bağımlı hedefte de okundu
-   (değişmiyor), ama `coklu_plan_serisi`nin `p_eksen · p_alt` çarpanlaması
-   tam olarak bağımsızlıktan gelir ve aramanın kendisi ölçülmedi. Ölçülen
-   sisme küçük olduğu için sıra bunda **değil**.
+   yatırılabiliyor mu, hangi kanaldan? Tahsisli planda kuponlar **farklı
+   boyda** (gerçek bütçede ortalama 7,6 ayrı bedel) — operasyon sorusunun
+   cevabı bunu da kapsamalı.
+4. **Değişken derinlikli eksen** (§3.71'in açık bıraktığı yer). Eksen bugün
+   sabit boyda: bütün kuponlarda aynı `d` maç tekleştirilir. Tavan 729'da
+   serbest kümeye kalan açık %2,1'e indi ama **tavan 27'de hâlâ %12,7** —
+   yani az kuponla oynanacaksa masada değer var. Olası dalda daha çok,
+   olanaksız dalda daha az ayrıştıran bir karar ağacı onu alabilir; bu yeni
+   bir arama demek (`coklu_plan_serisi`nin çarpanlaması sabit `d`ye bağlı).
 5. **Sönüm ekseni.** Aynı imza üç ölçümde çıktı (§3.60, §3.64, §3.68);
    dördüncü örneklem 2026/27 birikimi ve haftalık sonuçla kendiliğinden
-   geliyor.
+   geliyor. §3.68'in yeniden ölçümünde 2025/26 oranı ×1,00 → ×0,96, yani
+   imza aynı yerde.
 
 ### Neden böyle
 
 Hedef 15/15, bütçe sabit, iş: **sabit kolon bütçesi altında `P(15/15)`'i
-enbüyüklemek.** Ölçülen en büyük kazanç kuponun şeklinde ve o kazanç hâlâ
-oynanmıyor — engel operasyon. Bu oturum engeli kaldırmadı ama kazancın
-**son ölçülmemiş dayanağını** ölçtü: şekil kararı bağımsızlık varsayımına
-bağlı değil. Sırada duran soruların hiçbiri artık kalibrasyon ya da
-varsayım tarafında değil; hepsi ya operasyon ya da hafta hafta biriken
-tanık.
+enbüyüklemek.** Bu oturum tam o işi yaptı — operasyon cevabı beklenirken
+oynanacak planın kendisi iyileşti ve iyileşme **aynı parada, aynı kupon
+sayısında**. Kalan başlık da ölçüldü ve nerede olduğu belli: az kuponlu
+tarafta, ve onu alacak şey eksenin sabit boyundan kurtulmak.
 
 ## Geçmiş girdiler
+
+**2026-09-13 (önceki, aynı dal)** — bağımsızlık varsayımı çoklu kupon
+kesitinde ölçüldü (§3.70). `kuyruk.kapsama` §3.46'nın tek faktörünü üç
+sembole taşıdı (rütbe eşikleri → favori göstergesinde ikili modelin birebir
+aynısı, `ρ` yeniden kalibre edilmedi); kupon başına ikili eşik kurma yolu
+reddedildi ve bekçisi yazıldı. Ölçülen: oran **gerilemedi, büyüdü** (×1,42 →
+×1,48 en kötü makul `a`da), 0/114 haftada çoklu plan geride, mutlak değerler
+%12'ye kadar şişiyor. Aynı oturumda `coklu.p_alt`ın ham sözlükten okunması
+düzeltildi (binde 0,3'lük sayı yalanı, arama sıralamasını da
+oynatabiliyordu), §3.46'nın senaryo tablosundaki bayat satır yeniden ölçüldü
+ve `scripts/setup.sh`e `--ignore-installed blinker` yedeği eklendi (uzak
+oturumda kurulum bitmiyordu).
 
 **2026-09-13 (önceki)** — çoklu kupon üretim hattına bağlandı (§3.69):
 `coklu_kupon.py --yaz` planı `hafta_NN_coklu.json` olarak donduruyor, kayıt

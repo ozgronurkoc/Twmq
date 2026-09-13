@@ -25,20 +25,24 @@ Bu modül araya giren aileyi kurar ve kazancın çoğu birkaç düzine kuponda
 zaten alınır:
 
     kupon    model P(15/15)    gerçekleşen    13 hafta
-        1          %7,489         15/114        %63,7   ← tek sistem
-       27          %9,353         20/114        %72,1
-       81          %9,862         21/114        %74,1
-      729         %10,461         22/114        %76,2
+        1          %7,489         15/114        %63,6   ← tek sistem
+       27          %9,644         22/114        %73,2
+       81         %10,120         21/114        %75,0
+      729         %10,633         21/114        %76,8
    19.683         %10,865         22/114        %77,6   ← serbest
 
-729 kupon, serbest kümenin kazancının **~%88'ini** alır. Üretici:
+729 kupon, serbest kümenin kazancının **~%93'ünü** alır. Üretici:
 `cd backend && python scripts/coklu_kiyasi.py`.
 
-> **YENİDEN ÖLÇÜLDÜ (2026-09-13).** Tablo modülün ilk sürümüyle koşulmuştu;
-> sonra kupon sayısı sabit ızgaradan alt sistemin bedeline bağlandı ve eksen
-> bileşimleri yığınla üretilir oldu. Yeniden koşuldu ve **birebir aynı**
-> çıktı — çünkü bu kıyas `3⁹ = 19.683` kolonda koşuyor ve o bütçede merdiven
-> zaten yoktu (`bütçe // kupon_kolon`, ızgaranın verdiği sayıyla aynı).
+Gözlenen sütun `n = 114` ile gürültülüdür ve bunu bu tablonun kendisi
+gösteriyor: 27 kuponda 22, 729 kuponda 21. Güvenilen sinyal **model**
+sütunudur ve o monotondur — bekçisi `test_kupon_sayisi_buyudukce_P15_DUSMEZ`.
+
+> **YENİDEN ÖLÇÜLDÜ (2026-09-13, ikinci kez).** Sayılar arama **tahsisli**
+> hâle gelince değişti (§3.71): kupon başına ayrı alt sistem bütçesi, aynı
+> parada 729 kuponu %10,461 → **%10,633**'e çıkardı ve serbest kümenin
+> kazancından alınan pay %88 → %93 oldu. Tek sistem satırı **oynamadı** (tek
+> kuponda bölünecek bütçe yok), yani kıyas tabanı yerinde.
 
 ─── Gerçek bütçede (21.000 kolon = 210.000 TL) ───────────────────────────
 
@@ -47,18 +51,17 @@ Merdivenin farkı yuvarlak olmayan bütçelerde ortaya çıkar. Tek sistem
 bütçenin neredeyse tamamını kullanır:
 
     kupon    kolon     model P(15/15)   gerçekleşen   13 hafta
-        1   19.683          %7,489        15/114        %63,7   ← tek sistem
-       27   19.683          %9,353        20/114        %72,1
-       79   19.709          %9,864        21/114        %74,1
-      136   20.514         %10,264        21/114        %75,5
-      329   20.786         %10,602        20/114        %76,7
+        1   19.683          %7,489        15/114        %63,6   ← tek sistem
+       27   20.963          %9,999        22/114        %74,6
+       81   20.986         %10,488        21/114        %76,3
+      243   20.998         %10,805        22/114        %77,4
+      729   21.000         %11,031        21/114        %78,1
 
-**×1,42**, aynı parada. Üretici:
+**×1,47**, aynı parada. Üretici:
 `cd backend && python scripts/coklu_kiyasi.py --butce 21000`.
 
-Gözlenen sütun `n = 114` ile gürültülüdür (329 kuponda 20, 79 kuponda 21);
-güvenilen sinyal **model** sütunudur ve o monotondur — bekçisi
-`test_kupon_sayisi_buyudukce_P15_DUSMEZ`.
+Serbest küme tavanı bu bütçede **%11,272**; 729 kuponluk plan onun
+**%97,9**'una çıkıyor (§3.71).
 
 > **NORMALLEŞTİRME DÜZELTİLDİ, iki tablo YENİDEN ÖLÇÜLDÜ (2026-09-13).**
 > `p_alt` ham sözlükten okunuyordu (`p_eksen` ise normalleştirilmiş `P`den):
@@ -77,18 +80,43 @@ güvenilen sinyal **model** sütunudur ve o monotondur — bekçisi
 
 Yapı: `d` maç **eksen** seçilir — en emin olduklarımız — ve kuponlar arasında
 tek tek sabitlenir; eksen üzerindeki `3^d` bileşimden en olası `M` tanesi
-oynanır. Kalan `15−d` maç her kuponda **aynı alt sistemdir** ve onu
-`secim.en_iyi_secim` kendi bütçesiyle (`bütçe // M`) çözer.
+oynanır. Kalan `15−d` maç her kuponda bir **alt sistemdir** ve onu
+`secim.secim_cephesi` çözer.
 
 `M = 1` tam olarak bugünkü tek sistemdir. Yani bu modül mevcut davranışı
 **içerir** ve arama onu bir aday olarak gezer; `M`i büyütmek genelleştirir.
+
+─── Alt sistem bütçesi kupon başına AYRI (§3.71) ─────────────────────────
+
+Burada önce *"kalan `15−d` maç her kuponda **aynı** alt sistemdir"* yazıyordu
+ve o eşitlik ölçülmemiş bir kısıttı. Hedef şu:
+
+    P(15/15) = Σ_j q_j · p_alt_j        q_j: j. kuponun eksen olasılığı
+
+Bir kuponun alt sistemini genişletmenin değeri `q_j` ile çarpılıyor ve `q_j`
+iki mertebe ayrışıyor (hepsi favori ↔ 81. bileşim). Eşit bölmek, o hâlde,
+olası bileşime az olanaksız bileşime çok vermek demek. Arama artık
+**ayrılabilir bir sırt çantası** çözüyor (`_tahsis`): cephenin üst konveks
+kabuğunda, en yüksek `q_j · Δp / Δbedel` oranlı kupon yükseltilerek. Ölçülen
+(114 hafta, gerçek bütçe): 729 kuponda %10,602 → **%11,031**, yani ×1,041 ve
+serbest küme tavanının %94,1'inden %97,9'una.
+
+Tek tip aday aramada **kalıyor**, yani yeni arama eskisinin üst kümesi ve
+hiçbir haftada ondan kötü olamaz (570 kıyasın 570'inde doğrulandı).
 
 ─── Yan fayda: bütçe merdiveni kalkıyor ──────────────────────────────────
 
 Tek sistemde bedel `2^a·3^b` olduğu için bütçe **basamaklıdır**: 19.683 ile
 21.000 kolon *aynı* kuponu alır, aradaki 13.170 TL hiçbir şey satın almaz.
-Çoklu kuponda bedel `M · 3^(15−d)`'dir ve `M` serbest tamsayıdır, yani her
-bütçe kullanılabilir.
+Çoklu kuponda bedel `M · c`'dir ve `M` serbest tamsayıdır, yani basamak
+büyük ölçüde kalkar.
+
+> **Ama burada önce "merdiven kalktı" yazıyordu ve bu fazla iddialıydı.**
+> Bütün kuponlar aynı alt sistemi oynadığı sürece bedel `M · c` çarpımına
+> sıkışır ve artan hâlâ harcanamaz: 21.000 kolonluk bütçede eski arama
+> 19.683 kolon kullanıyordu. Kupon başına **ayrı** bütçe (§3.71) artanı da
+> harcıyor — 21.000'in 21.000'i — ve ölçülen kazancın yarısı tam olarak
+> buradan geliyor (yuvarlak bütçede ×1,016, gerçek bütçede ×1,041).
 
 ─── Sınır: bağımsızlık — ve artık ÖLÇÜLDÜ ────────────────────────────────
 
@@ -102,13 +130,13 @@ kalibre edilmiyor — ve 114 hafta bağımlı hâlde yeniden fiyatlanıyor.
 
     19.683 kolon      bağımsız   en kötü makul a (0,0166)   şişme
     tek sistem          %7,489                    %8,050    ×1,075
-    729 kupon          %10,461                   %11,641    ×1,113
-    oran                 ×1,40                     ×1,45
+    729 kupon          %10,633                   %11,909    ×1,120
+    oran                 ×1,42                     ×1,48
 
 Oran **gerilemedi, büyüdü**; 114 haftanın hiçbirinde çoklu plan tek sistemin
 gerisine düşmüyor ve en iyi tavan her senaryoda 729'da kalıyor. Yani cümlenin
 birinci yarısı ayakta, ama artık "görece dayanıklı" değil **ölçülmüş** —
-bağımlılık çoklu kupona biraz daha yarıyor. Mutlak değer ise %11'e kadar
+bağımlılık çoklu kupona biraz daha yarıyor. Mutlak değer ise %12'ye kadar
 şişiyor ve öyle okunmalıdır. Üretici:
 `cd backend && python scripts/bagimli_kapsama.py`.
 
@@ -117,12 +145,12 @@ bağımlılık çoklu kupona biraz daha yarıyor. Mutlak değer ise %11'e kadar
 Yukarıdaki tablonun iki sütunu (model ↔ gerçekleşen) ayrışıyor ve bu
 ayrışma ölçüldü (`spor_toto.duyarlilik`, §3.68). Havuzlanmış 114 haftada
 model **karamsar**: tek sistemde beklenen 8,54 hafta, gerçekleşen 15
-(×1,76); 729 kuponda 12,09 ↔ 20 (×1,65). Açığın tamamını, bağımsız ölçülmüş
+(×1,76); 729 kuponda 12,58 ↔ 21 (×1,67). Açığın tamamını, bağımsız ölçülmüş
 banko sapması (`p₁` 5,8 puan düşük yazılıyor) kapatıyor.
 
 **Ama tablodaki sayılar yeniden ÖLÇEKLENMEDİ ve ölçeklenmeyecek.** Sezon
 kırılımı açığın 2023/24'ten geldiğini ve 2025/26'da **kapandığını** gösterdi
-(729 kuponda ×1,00); düzeltilmiş model o sezonda fazla iyimser olurdu.
+(729 kuponda ×0,96); düzeltilmiş model o sezonda fazla iyimser olurdu.
 Havuzlanmış oranla bütün sayıları büyütmek 2023/24'ü geçmişe uydurmak olurdu.
 
 Okuma kuralı şu: bu sütun **havuzlanmış kesitte karamsar tarafta kalmış
@@ -138,7 +166,7 @@ tutturmaz."* Bir varsayımdı; ölçüldü ve **yanlış çıktı**. 114 haftada
 tutturan kolon toplamı:
 
     tek sistem   18.628
-    729 kupon    26.274        **+%41**
+    729 kupon    26.348        **+%41**
 
 Sebebi geriye dönük açık: olasılığa göre en büyük `N` kolon kümesi yalnızca
 15'e değil 12–13'e de daha yakın durur; çarpımın satın almak zorunda kaldığı
@@ -445,9 +473,9 @@ def coklu_plan_serisi(probs_listesi: list[dict[str, float]],
     (`eksen_sec`in kuralı). Parametre olarak durmasının sebebi şu: o kural bir
     **iddiaydı** ve ölçülmeden duruyordu; sınanabilmesi için aramanın başka
     bir sırayla da koşması gerekiyordu (§3.71, `scripts/tahsis_kiyasi.py
-    --eksen-sinavi`). Ölçüldü: ters sıra ×0,73, tek takas araması ×1,0009 —
-    yani kural doğru ve arama onu **varsayım olarak değil ölçülmüş olarak**
-    kullanıyor.
+    --eksen-sinavi`). Ölçüldü (20 hafta, tavan 81): ters sıra **×0,755**, tek
+    takas araması ×1,0002 — yani kural doğru ve arama onu **varsayım olarak
+    değil ölçülmüş olarak** kullanıyor.
 
     ─── Arama iki aday ailesini birlikte geziyor ─────────────────────────
 
