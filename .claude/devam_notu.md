@@ -45,99 +45,57 @@ benim kararım):
 
 ## Şu an (en güncel)
 
-**2026-09-13 — dal `claude/devam-edelim-sltxrg`**
+**2026-09-13 — dal `claude/proje-durumu-ilerleme-8h7l86`**
 
-### Bu oturumda ne yapıldı — **kupon ≠ slip** (§3.75)
+### Bu oturumda: durum denetimi — yeni ölçüm yok, **doğrulama** var
 
-Not'un sıradaki adımlarından 1 ve 2 hâlâ veriye bağlı (5. haftanın sonucu
-girilmedi, 6. hafta yok) ve 4 birikmeyi bekliyor. Açık duran tek iş 3'tü ve
-"saf lojistik, bu depodan ölçülemez" diye kapatılmıştı. O cümle bir şeyi
-**sormadan doğru kabul ediyordu**: *81 kupon 81 slip demek.*
+Sahibi "işler ne durumda, hedefe ne kadar uzağız" diye sordu. Yeni eksen
+açılmadı; rapor ölçülmüş kayıttan çıkarıldı ve **bir şey yeniden koşuldu**:
+taze klonda kurulum + suit.
 
-Demek değil. Planın kuponları birer kutudur; iki kutu **bir tek** konumda
-ayrışıyorsa o konumdaki sembol kümeleri birleştirilip tek kutu yazılabilir.
-Bu bir yaklaşıklık değil **özdeşlik**: aynı kolonlar, aynı kolon sayısı,
-aynı `P(15/15)` (ölçülen sapma en çok 7,2·10⁻¹⁶). Değişen tek şey kaç kez
-elle kutu doldurulacağı.
+* `bash scripts/setup.sh` — blinker yedeğine düştü ve **geçti** (uzak
+  oturumda kurulum yolunun hâlâ çalıştığı doğrulandı).
+* `cd backend && python -m pytest` — **2017 geçti · 4 atlandı** (203 sn),
+  yani koleksiyon 2.021. Kütükteki `2.021` **bayat değil**, doğrulandı.
+* `graf_sorgu.py tazelik` — 0 bayat girdi; envanter 330 girdi.
 
-**Ölçülen (114 tam hafta, 21.000 kolon):**
-
-    tavan  kupon   slip  en kötü     ×   kutucuk →          ×   en büyük slip
-       27     27   21,5       26  1,26   701 →   561     1,25    6.561 kolon
-       81     81   60,1       75  1,35 1.945 → 1.447     1,34    6.561 kolon
-      243    243  162,6      215  1,49 5.290 → 3.550     1,49    6.561 kolon
-      729    729  458,7      632  1,59 14.295 → 9.003    1,59    2.187 kolon
-
-En büyük birleşmiş slip (6.561 kolon) deponun bir yıldır **tek giriş**
-saydığı tek sistem kuponunun (19.683) üçte biri — iddia yeni bir varsayım
-getirmiyor.
-
-### Asıl bulgu: **tahsis birleşmeyi öldürüyor**
-
-İki kutu ancak bir tek konumda ayrışıyorsa birleşir. §3.71 her kupona ayrı
-alt sistem bütçesi verdiğinden alt sistemler de ayrışıyor ve ayrışan iki
-kupon **hiç** birleşmiyor. Tavan 81'de: tahsisli 81 → 60,1 slip (×1,35),
-tekdüze 79,1 → 27,5 (×2,88), yani tahsis **×2,19 slip** demek. Tavan 27'de
-kupon sayısı aynı (27,0 ↔ 27) ve fark **tamamen** birleşmeden geliyor.
-
-**Karar: §3.71 ayakta.** Tahsisin hedefteki kazancı +2,22 puan (%76,98 ↔
-%74,76), bedeli 32,6 fazla slip; zarara dönmesi için **1 slipte 5** (takas)
-ya da **1 slipte 9** (atlama) hata gerekir — bu özensizlik değil, girişin
-hiç yapılmamış olması demektir. Tavan kararı da değişmedi ve biraz
-rahatladı: §3.74'ün 81 → 729 eşiği kupon cinsinden %9,06 iken slip
-cinsinden **%10,52**.
-
-### Ölçüm kâğıtta kalmadı — kayda girdi
-
-`coklu_kupon.py` artık kayda `slipler` listesini de yazıyor (`kuponlar`
-plandır, ölçümler onun üstünden koşar) ve bastığı tablo artık sliplerdir.
-`denetim` bloğu slip sayısını, kutucuk sayısını ve sliplerin kendi
-yoğunlaşmasını taşıyor. Özdeşlik iki yerde sınanıyor ve ikincisi asıl
-olan: yazarken sesli patlıyor **ve artefaktın kendisinde**
-(`test_coklu_kaydinin_SLIPLERI_ayni_kolonlari_oynuyor` donmuş dosyaları
-tarar) — §3.74'ün sıralama dersi birebir buydu.
-
-### Yan işler
-
-* `spor_toto/sadelestirme.py` + `tests/test_sadelestirme.py` (24 bekçi) +
-  `scripts/sadelestirme_kiyasi.py`.
-* Gövde **grup birleştirme** (her turda en çok kazandıran konum, fixpoint'e
-  kadar). İkişer birleştirme sıraya duyarlıydı (5. haftada 60 rastgele
-  sırada en iyisi 30, bu gövde 25); dilim ayrıştırması 26 buluyor ama
-  tahsisli planda nokta kümesi 19.683'e çıktığı için koşamıyor. Işın
-  araması (8 ve 40) hiçbir haftada iyileştirmedi.
-* `en_az_slip` kesin enküçüğü arıyor (yalnız bekçi için) ve ölçülen dört
-  küçük ailede açgözlü sonuçla **eşit** çıktı.
-* `coklu_kupon.py`nin "kullanım" satırı düzeldi: `M × kolon` yazıyordu ve
-  §3.71'den beri kupon bedelleri eşit değil, yani çarpım bir yalandı.
-* Belge zinciri: test 1.996 → **2.021**, dosya 76 → 77, betik 40 → 41,
-  README §7 modül ağacına `sadelestirme`, §9'a katman satırı.
+Rapora giren hedef sayısı yeniden türetilmedi, kayıttan alındı: 13 haftada
+en az bir 15/15 **%77,0** (81 kupon, 21.000 kolon; pencere aralığı
+%68,1–85,5), tek sistemde %64,2 (§3.73). Canlı kayıtta **gerçek bütçeyle
+girilmiş hafta 1** (5. hafta, 21.000 kolon, `P(15/15)` %15,937), sonucu
+henüz yok.
 
 ### Sıradaki adım
 
-1. **6. hafta geldiğinde `--yaz` ile dondur.** Kayıt artık `slipler`
-   bloğuyla geliyor — girilecek kutular orada yazılı.
-2. **5. haftanın sonucu girildiğinde ilk ileriye dönük satır okunacak.**
-   (5. hafta 2026-09-13'te donduruldu; **o kaydın üstüne yazma.**)
-3. **Operasyonun kalan yarısı küçüldü ama kapanmadı.** Soru artık "bir
-   insan 81 kupon girebiliyor mu" değil "**60 slip** girebiliyor mu", ve en
-   büyüğü deponun zaten tek giriş saydığı kupondan küçük. Ölçmek için hâlâ
-   giriş süresi kaydı gerekiyor.
-4. **Sönüm ekseni.** Dördüncü örneklem 2026/27 birikimiyle kendiliğinden
-   geliyor.
-5. **Kapanan dört başlık:** değişken derinlik (§3.72), zamanlama (§3.73),
-   operasyonun istatistiksel yarısı (§3.74) ve slip yükü (§3.75). Dördünün
-   de yeniden açılma şartı ölçülmüş olarak yazılı.
+Önceki notunkiyle **aynı** — bu oturum hiçbirini kapatmadı:
+
+1. 6. hafta geldiğinde `--yaz` ile dondur.
+2. 5. haftanın sonucu girildiğinde ilk ileriye dönük satır okunacak
+   (**o kaydın üstüne yazma**).
+3. Operasyonun lojistik yarısı: 60 slip elle girilebiliyor mu — giriş
+   süresi kaydı gerekiyor, bu depodan ölçülemez.
+4. Sönüm ekseni: dördüncü örneklem 2026/27 birikimiyle geliyor.
+5. Havuz ekseni (§3.51) `n = 3`te duruyor; kapanmadı, birikmeyi bekliyor.
 
 ### Neden böyle
 
-Bu oturum yeni bir kazanç aramadı, **kapatılmış bir sorunun içindeki
-varsayımı** sorguladı. "Ölçülemez" denen şey ölçülemezdi; ölçülebilir olan,
-onun yanında sessizce doğru kabul edilen sayıydı. Çıktı iki şey: yükün
-gerçek sayısı, ve §3.71'in ölçülmemiş bedelinin ilk kez fiyatlanması —
-fiyat kararı değiştirmedi ama artık biliniyor.
+Durum sorusu bir ölçüm sorusu değildi ama **ölçülmemiş bir iddiaya
+dayanmamalıydı**: "proje sağlam" cümlesinin bekçisi suit'in kendisidir, o
+yüzden rapordan önce koşuldu.
 
 ## Geçmiş girdiler
+
+**2026-09-13 (önceki, dal `claude/devam-edelim-sltxrg`)** — **kupon ≠ slip**
+ölçüldü (§3.75). "81 kupon = 81 slip" sessiz bir varsayımdı ve yanlıştı: tek
+konumda ayrışan iki kutu **özdeş** olarak birleşiyor (sapma ≤ 7,2·10⁻¹⁶).
+Ölçülen (114 hafta, 21.000 kolon): tavan 81'de 81 kupon → **60,1 slip** (en
+kötü 75), kutucuk 1.945 → 1.447; en büyük birleşmiş slip 6.561 kolon, deponun
+zaten tek giriş saydığı kuponun üçte biri. Asıl bulgu: **tahsis birleşmeyi
+öldürüyor** (tekdüze 27,5 ↔ tahsisli 60,1 slip, ×2,19) — ama §3.71 **ayakta**:
+tahsisin hedefteki +2,22 puanı zarara dönmek için 1 slipte 5 (takas) ya da 1
+slipte 9 (atlama) hata ister. `coklu_kupon.py` artık kayda `slipler` yazıyor,
+özdeşlik donmuş artefaktın üstünde bekçili. Yan iş: `sadelestirme.py` + 24
+bekçi + `sadelestirme_kiyasi.py`.
 
 **2026-09-13 (önceki, dal `claude/devam-edelim-w8mob0`)** — **operasyon**
 fiyatlandı (§3.74). Önce bir gövde hatası çıktı: `coklu.p_onbes` **oynanan**
