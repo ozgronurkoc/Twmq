@@ -25,6 +25,7 @@ if __package__ in (None, ""):  # pragma: no cover
 from scripts.kademe_analizi import ikramiye_tablolari, tam_haftalar
 from spor_toto.coklu import coklu_plan_serisi, kademe_dagilimi
 from spor_toto.core import SEMBOLLER
+from spor_toto.ufuk import UFUK_HAFTA, ufuk_ortalamasi
 
 #: Kıyaslanan kupon tavanları. 1 bugünkü tek sistemdir.
 TAVANLAR = (1, 3, 9, 27, 81, 243, 729)
@@ -58,6 +59,8 @@ def kos(butce: int) -> dict:
     top: dict[int, dict[str, Any]] = {
         t: {"p": 0.0, "isabet": 0, "kolon": 0, "kupon": 0,
             "kademe": {12: 0, 13: 0, 14: 0, 15: 0}} for t in TAVANLAR}
+    #: hafta hafta `p` — "13 hafta" sutunu ORTALAMAYLA hesaplanamaz (§3.73).
+    haftalik: dict[int, list[float]] = {t: [] for t in TAVANLAR}
 
     for _sezon, _w, lst in haftalar:
         probs, gercek = hafta_probs(lst)
@@ -68,6 +71,7 @@ def kos(butce: int) -> dict:
             plan = seri[t]
             h = top[t]
             h["p"] += plan.p_onbes
+            haftalik[t].append(plan.p_onbes)
             h["isabet"] += int(isabet(plan.kuponlar, gercek))
             h["kolon"] += plan.kolon
             h["kupon"] += plan.kupon_sayisi
@@ -83,7 +87,7 @@ def kos(butce: int) -> dict:
                 "kolon_ort": top[t]["kolon"] / n,
                 "p_model": top[t]["p"] / n,
                 "isabet": top[t]["isabet"],
-                "p_13hafta": 1 - (1 - top[t]["p"] / n) ** 13,
+                "p_13hafta": ufuk_ortalamasi(haftalik[t], UFUK_HAFTA),
                 "kademe": top[t]["kademe"],
             } for t in TAVANLAR]}
 
@@ -97,6 +101,9 @@ def bas(c: dict) -> None:
     # kez basmış gibi görünüyordu — oysa 12+ kolonları farklıydı).
     print(f"{'tavan':>6} {'kupon':>8} {'kolon':>9} {'model P(15)':>13} "
           f"{'gozlenen':>11} {'13 hafta':>10} {'12+ kolon':>11}")
+    # "13 hafta" = ayrik 13 haftalik pencerelerde `1 - PI(1-p_w)`in
+    # ortalamasi (`ufuk.ufuk_ortalamasi`). Once `1 - (1-p_ort)^13` yaziyordu
+    # ve o, Jensen geregi HEP dusuk cikar (§3.73'te 0,6-0,7 puan).
     taban = None
     for r in c["satirlar"]:
         alt = sum(r["kademe"].values())

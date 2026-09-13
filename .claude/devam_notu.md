@@ -45,100 +45,98 @@ benim kararım):
 
 ## Şu an (en güncel)
 
-**2026-09-13 — dal `claude/devam-edelim-51rff7`**
+**2026-09-13 — dal `claude/devam-edelim-51rff7` (ikinci iş)**
 
-### Bu oturumda ne yapıldı — değişken derinlikli eksen (§3.72), ve **yanlandı**
+### Bu oturumda ne yapıldı — **hedefin kendisi** ölçüldü (§3.73)
 
-Devam notunun 4. maddesi: *"eksen bugün sabit boyda; olası dalda daha çok,
-olanaksız dalda daha az ayrıştıran bir karar ağacı tavan 27'deki %12,7'lik
-açığın bir kısmını kapatabilir."* Bir **beklentiydi**. Aile kuruldu, ölçüldü,
-beklenti **çıkmadı** — ve niçin çıkmadığı da ölçüldü.
+§3.72 şekil eksenini kapatınca sıradaki doğal soru şekil değil **zamanlama**
+oldu. Ama ona bakarken daha temel bir boşluk çıktı: bu deponun **her ölçüsü
+haftalıktı**, sahibinin hedefi ise haftalık değil — *"3 ay içinde 15/15."*
+Çeviri (`1 − Π(1 − p_w)`) hiç yapılmamıştı; daha doğrusu **yarım**
+yapılmıştı (`coklu_kiyasi.py`nin "13 hafta" sütunu ortalamayla).
 
-Aile: kuponlar artık eminlik sırasının ön ek ağacında bir **antizincir**;
-sabit derinlik bunun özel hâli, yani arama üst küme ve gerileyemez.
-Büyütme fiyatlı (Lagrange `λ`) çünkü bölmenin değeri ancak para
-fiyatlıyken görünür — eşit bölmek tanım gereği hiçbir şey kazandırmaz.
+**Ölçülen (114 hafta, 8 ayrık 13 haftalık pencere, 21.000 kolon):**
 
-**Ölçülen (114 hafta, gerçek bütçe 21.000 kolon):**
+    kupon     hafta P(15)    HEDEF   pencere aralığı   gözlenen
+        1         %7,489    %64,2       %53,4–74,9        7/8
+       27        %10,003    %75,2       %66,0–84,3        8/8
+       81        %10,489    %77,0       %68,1–85,5        7/8
+      729        %11,034    %78,8       %69,9–86,7        8/8
 
-    tavan   sabit derinlik   + değişken     kazanç   kapanan açık
-       27         %9,9999     %10,0025   ×1,00026           %0,2
-       81        %10,4879     %10,4892   ×1,00013           %0,2
-      729        %11,0312     %11,0337   ×1,00023           %1,0
+Üç şey çıktı:
 
-570 kıyasın 570'inde geri gidiş yok, ama kazanç **binde birler**. §3.71 aynı
-sütunda %33–64 kapatıyordu; iki mertebe fark.
+1. **Hedef tek sayı değil, aralık.** %69,9–%86,7; haftalar arası `P` **on
+   altı kat** ayrışıyor (%2,3 ↔ %37,2).
+2. **§3.67–3.71'in işi hedef kademesinde 14,6 puan etti** (%64,2 → %78,8).
+   Haftalık `P`de ×1,47 olan kazanç hedefte ×1,23 — fark **doymadır** ve
+   doyma bu bölümün asıl bulgusu.
+3. **Yaklaşıklık tek yöne yanlıydı** (Jensen, 0,6–0,7 puan düşük).
+   `coklu_kiyasi.py` kesin hesaba çevrildi, §3.67'nin iki tablosu yeniden
+   koşuldu.
 
-**Niçin — ve bu kısımda sezgisel yok.** Ağaç açgözlü olduğu için "aile boş"
-ile "arama zayıf" ayrılmadan bulgu okunamazdı. Sabit derinlikli planın yaprak
-kümesi bu ailenin bir üyesi olduğundan üstünde ailenin hamlesi **tek tek** ve
-**kesin** denendi (en düşük olasılıklı yaprağı at + terk edilmiş en olası
-düğümü koy, bütçeyi `_tahsis_kabuklu` ile yeniden dağıt, kupon sayısı sabit):
-114 haftada ortalama **binde 0,23** (tavan 27). Yani sabit derinlikli plan
-bu hamle kümesinde **yerel en iyi** — bulgu ailenin, aramanın değil.
+### Zamanlama ekseni: açıldı ve KAPANDI
 
-Sabit derinlikli plan eksen kütlesinin **%83,3'ünü terk ediyor** ve bu bir
-fırsat gibi görünüyordu; değil. Terk edilen kütleyi kapatmak hem kolon hem
-**kupon yuvası** harcıyor ve marjinal getirisi derinleşmeninkiyle aynı yerde
-buluşuyor. Tavan 27'deki %12,7'lik açık o hâlde **şekilden değil kupon
-sayısından** geliyor — onu kapatan şey ölçülmüş olarak bellidir: daha çok
-kupon.
+"Parayı iyi haftalara yığ" fikri aritmetiğe de makul geliyordu (güçlü
+haftanın mutlak marjinal getirisi zayıfınkinin iki katı). Üst sınırdan
+ölçüldü: `ufuk.kahin_tahsisi` bütün pencerenin eğrilerini **önceden bilerek**
+dağıtıyor — uygulanamaz, dolayısıyla hiçbir gerçek kural onu geçemez.
+Ölçülen: 8 pencerede ortalama **×1,031**, en çok ×1,051. Sebebi tek cümle:
+`1 − Π(1 − p)` **doyar**. Haftalık sabit bütçe artık bir varsayım değil
+**ölçülmüş bir tercih**.
+
+### Operasyon sorusu küçüldü
+
+Açık duran tek engel operasyondu ve şimdi hedefin kendi para biriminde
+fiyatlandı: 729 kupona çıkmanın toplam kazancının (14,6 puan) **%75'i 27
+kuponda**, **%88'i 81 kuponda** alınıyor. Donan kayıt zaten 81 kuponluk,
+yani 729'a çıkmanın hedefe katkısı **1,8 puan**. Soru kapanmadı ama
+küçüldü — operasyon 81'de takılırsa kaybedilen ölçülmüştür.
 
 ### Yan işler
 
-* **Bir ölçüm hatası yakalandı ve düzeltildi.** İlk sürüm `λ`yı bütçeyi tam
-  harcayacak şekilde ikili aramayla buluyordu. Yanlış hedefti: bütçeyi zaten
-  tahsis kesin harcıyor, `λ`nın işi ağacın **şeklini** seçmek. Üstelik bedel
-  `λ`da süreksiz (ağaç bir anda köke iniyor) ve ikili arama dejenere tek
-  yapraklı ağaçta duruyordu — aday sessizce **tek sistemin kendisi**
-  oluyordu. Izgara doğrudan gerçek hedefi tarıyor.
-* **`tahsis_kiyasi.py` artık `degisken_derinlik=False` ile koşuyor.** §3.71'in
-  tablosu tek bir mekanizmayı yalıtmalı; ağacın kazancını ona karıştırmak iki
-  bulguyu birbirine yedirirdi. §3.71'in sayıları bu yüzden **değişmedi**.
-* **Cepheler tek yere toplandı** (`coklu._cepheler`, 16 DP) ve `_tahsis`
-  genelleşti (`_tahsis_kabuklu`, kupon başına ayrı kabuk).
-* **Bir bekçi yanlış kademedeydi ve düştü.**
-  `test_tahsis_DAHA_OLASI_kupona_daha_cok_kolon` `q`yu `plan.eksen` üzerinden
-  okuyordu; değişken derinlikte ortak eksen olmadığı için o yoldan okunan `q`
-  bütün kuponlarda aynı çıkıyor ve test kendi ölçtüğü şeyi kaybediyordu.
-  İddia zaten tahsise aitti; bekçi oraya indi.
-* **Bağlı sayılar yeniden ölçüldü** (plan değiştiği için): §3.67 iki tablo,
-  §3.68 banko duyarlılığı (taban satırları birebir aynı), §3.70 bağımlılık
-  tabloları (iki bütçe). **Hiçbirinde hüküm değişmedi**, oynama dördüncü
-  hanede. Kütükte yedi girdi güncellendi, üç yeni girdi açıldı.
+* `spor_toto/ufuk.py` + `tests/test_ufuk.py` (9 bekçi) + `scripts/ufuk_kiyasi.py`.
+* `kahin_tahsisi` yeni bir çözücü yazmıyor: hedef `Σ −log(1 − p_w)` ve bu
+  §3.71'in sırt çantasının aynısı, o yüzden `coklu._ust_kabuk` +
+  `_tahsis_kabuklu` yeniden kullanılıyor.
+* `pencereler`/`ufuk_ortalamasi` tek gövdede; iki betik de onu çağırıyor.
+* `ufuk.py` kapının doctest listesine girdi.
 
-Belge zinciri: test 1.959 → **1.965**, betik 37 → 38, README §9 Çoklu kupon
-21 → 27.
+Belge zinciri: test 1.965 → **1.974**, dosya 74 → 75, betik 38 → 39,
+README §7 modül ağacı 57 → 58.
 
 ### Sıradaki adım
 
-1. **6. hafta geldiğinde `--yaz` ile dondur.** Akış değişmedi:
+1. **6. hafta geldiğinde `--yaz` ile dondur.**
    `coklu_kupon.py --hafta N --butce 21000 --tavan 81 --yaz`.
-2. **5. haftanın sonucu girildiğinde ilk ileriye dönük satır okunacak.** O
-   kayıt eski aramayla donmuştu; kayıt bir koşum kaydıdır, yeniden
-   hesaplanmaz.
-3. **Operasyon hâlâ açık ve tek engel bu** — ve §3.72 onu bir derece daha
-   sıkıştırdı: tavan 27 ↔ 729 arasındaki fark **şekille kapatılamıyor**, yani
-   "kaç kupon fiilen yatırılabiliyor" sorusu artık planın tek serbest
-   değişkeni. Kuponlar farklı boyda (gerçek bütçede ortalama 7,6 ayrı bedel);
-   cevap bunu da kapsamalı.
-4. **Sönüm ekseni.** Aynı imza üç ölçümde çıktı (§3.60, §3.64, §3.68);
-   dördüncü örneklem 2026/27 birikimi ve haftalık sonuçla kendiliğinden
+2. **5. haftanın sonucu girildiğinde ilk ileriye dönük satır okunacak.**
+3. **Operasyon** — artık fiyatlı. Gerçek soru "729 kupon yatırabilir miyiz"
+   değil, **"81 kuponu güvenle yatırabiliyor muyuz"**; 729'un üstü 1,8 puan.
+4. **Sönüm ekseni.** Dördüncü örneklem 2026/27 birikimiyle kendiliğinden
    geliyor.
-5. **Kapanan başlık:** değişken derinlik. Yeniden açılmasının şartı ölçülmüş
-   olarak bellidir — yerel sınavın hamle kümesi genişletilirse (çoklu takas)
-   ya da iki kaynaklı (kolon + kupon) kesin bir ağaç DP'si yazılırsa. Ölçülen
-   büyüklük mertebesi göz önüne alındığında ikisi de şu an hedefe götürmüyor.
+5. **Kapanan iki başlık:** değişken derinlik (§3.72) ve zamanlama (§3.73).
+   İkisinin de yeniden açılma şartı ölçülmüş olarak yazılı.
 
 ### Neden böyle
 
-Hedef 15/15, bütçe sabit, iş: **sabit kolon bütçesi altında `P(15/15)`'i
-enbüyüklemek.** Bu oturum bir beklentiyi kapattı. Kazanç getirmedi ve
-getirmemesi bulgunun kendisi: açık nerede **değil** olduğu artık ölçülü, ve
-kalan tek serbest değişken operasyon. Ölçülmemiş bir umut listede durmaktansa
-ölçülmüş bir "hayır" olarak kapanması yolu kısaltıyor.
+Bu oturum bir kazanç aramadı, **hedefi ölçtü**. Proje bir yıldır haftalık
+sayılar üretiyordu ve sahibinin sorduğu soruya ("üç ayda olur mu") hiç
+doğrudan cevap vermemişti. Artık cevap var, aralığıyla ve okuma kuralıyla:
+bugünkü planla **%77**, ve kalan üç serbest değişkenin ikisi (şekil,
+zamanlama) ölçülerek kapandı. Geriye operasyon ve modelin kendisi kalıyor.
 
 ## Geçmiş girdiler
+
+**2026-09-13 (önceki, aynı dal)** — değişken derinlikli eksen (§3.72) kuruldu,
+ölçüldü ve **beklenti yanlandı**: kuponlar artık eminlik sırasının ön ek
+ağacında bir antizincir (sabit derinlik özel hâli, yani arama üst küme), ama
+kazanç binde birler (×1,0001–×1,0003, 570/570 geri gidiş yok). Niçin'i de
+ölçüldü ve sezgisel içermiyor: sabit derinlikli plan bu ailede **yerel en
+iyi** (aynı yuva sayısında en iyi takas binde 0,23). Plan eksen kütlesinin
+%83,3'ünü terk ediyor ve bu bir fırsat değil — kapatmak kupon yuvası da
+harcıyor. Aynı oturumda kendi ilk sürümümdeki bir ölçüm hatası yakalandı
+(`λ` ikili araması yanlış hedefe koşuyor, aday dejenere tek sisteme
+düşüyordu) ve `tahsis_kiyasi.py` `degisken_derinlik=False`a alındı ki
+§3.71'in tablosu tek mekanizmayı yalıtsın.
 
 **2026-09-13 (önceki, dal `claude/devam-edelim-q99bac`)** — kupon başına
 **ayrı** alt sistem bütçesi (§3.71). Arama ayrılabilir bir sırt çantası

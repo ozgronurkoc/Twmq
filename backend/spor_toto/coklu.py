@@ -25,11 +25,11 @@ Bu modül araya giren aileyi kurar ve kazancın çoğu birkaç düzine kuponda
 zaten alınır:
 
     kupon    model P(15/15)    gerçekleşen    13 hafta
-        1          %7,489         15/114        %63,6   ← tek sistem
-       27          %9,647         22/114        %73,3
-       81         %10,121         21/114        %75,0
-      729         %10,636         21/114        %76,8
-   19.683         %10,865         22/114        %77,6   ← serbest
+        1          %7,489         15/114        %64,2   ← tek sistem
+       27          %9,647         22/114        %73,9
+       81         %10,121         21/114        %75,7
+      729         %10,636         21/114        %77,5
+   19.683         %10,865         22/114        %78,3   ← serbest
 
 729 kupon, serbest kümenin kazancının **~%93'ünü** alır. Üretici:
 `cd backend && python scripts/coklu_kiyasi.py`.
@@ -55,11 +55,11 @@ Merdivenin farkı yuvarlak olmayan bütçelerde ortaya çıkar. Tek sistem
 bütçenin neredeyse tamamını kullanır:
 
     kupon    kolon     model P(15/15)   gerçekleşen   13 hafta
-        1   19.683          %7,489        15/114        %63,6   ← tek sistem
-       27   20.970         %10,003        22/114        %74,6
-       81   20.987         %10,489        21/114        %76,3
-      243   20.998         %10,806        22/114        %77,4
-      729   21.000         %11,034        21/114        %78,1
+        1   19.683          %7,489        15/114        %64,2   ← tek sistem
+       27   20.970         %10,003        22/114        %75,2
+       81   20.987         %10,489        21/114        %77,0
+      243   20.998         %10,806        22/114        %78,1
+      729   21.000         %11,034        21/114        %78,8
 
 **×1,47**, aynı parada. Üretici:
 `cd backend && python scripts/coklu_kiyasi.py --butce 21000`.
