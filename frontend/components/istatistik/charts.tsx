@@ -6,6 +6,7 @@ import {
   SEMBOLLER,
   type Analytics,
   type Band,
+  type HaftalikFavoriOzet,
   type OddsSummary,
   type Sembol,
   type WeekRow,
@@ -670,6 +671,158 @@ export function CalibrationChart({
   );
 }
 
+/* ── 4b-2. Favorinin uclu karnesi: kazandi / berabere / yenildi ─────────── */
+
+//: Uclu karnenin renk sozlesmesi. Bant tablosu (4d) ve hafta dagilimi
+//: (4c-2) AYNI ucluyu basiyor; renkler tek yerde durmazsa iki gorsel ayni
+//: seyi farkli renkle anlatir ve okuyucu ikisini birbirine baglayamaz.
+const UCLU = [
+  { anahtar: "won", ad: "Favori kazandı", renk: "bg-success" },
+  { anahtar: "draw", ad: "Berabere kaldı", renk: "bg-warning" },
+  { anahtar: "lost", ad: "Favori yenildi", renk: "bg-danger" },
+] as const;
+
+/**
+ * "15 macin kacinda ne oldu" — sayfanin en cok sorulan sorusu.
+ *
+ * Bu ucu ozette zaten vardi ama UC AYRI yere dagilmisti (`favourite_hit`,
+ * `outcome_when_miss["0"]`, `underdog_wins`) ve okuyucunun toplamasi
+ * gerekiyordu. Tek serit halinde durdugunda oran okunur oluyor: kaybin
+ * buyuk kismi surpriz degil BERABERLIK.
+ */
+export function FavouriteOutcome({
+  karne,
+}: {
+  karne: OddsSummary["favourite_outcome"];
+}) {
+  // Anahtar kumesi `UCLU`nun kendi birlesimidir, `string` DEGIL: genis
+  // anahtarla yazilirsa `noUncheckedIndexedAccess` her okumayi
+  // `| undefined` yapar ve gorsel gereksiz korumalarla dolar.
+  const deger: Record<(typeof UCLU)[number]["anahtar"], { n: number; pct: number }> = {
+    won: { n: karne.won, pct: karne.won_pct },
+    draw: { n: karne.draw, pct: karne.draw_pct },
+    lost: { n: karne.lost, pct: karne.lost_pct },
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="flex h-3 gap-[2px] overflow-hidden rounded-full" aria-hidden>
+        {UCLU.map((u) => (
+          <div
+            key={u.anahtar}
+            className={u.renk}
+            style={{ flexGrow: Math.max(deger[u.anahtar].pct, 0.0001), flexBasis: 0 }}
+            title={`${u.ad}: ${deger[u.anahtar].n} maç`}
+          />
+        ))}
+      </div>
+      <div className="grid grid-cols-3 gap-3">
+        {UCLU.map((u) => (
+          <div key={u.anahtar} className="rounded-lg border border-line px-3 py-2.5">
+            <div className="flex items-center gap-1.5 text-[11.5px] text-muted-foreground">
+              <span className={cn("inline-block h-2.5 w-2.5 rounded-sm", u.renk)} aria-hidden />
+              {u.ad}
+            </div>
+            <div className="tnum mt-1 text-[20px] font-semibold leading-none">
+              %{ondalik(deger[u.anahtar].pct, 1)}
+            </div>
+            <div className="tnum mt-1 text-[11.5px] text-muted-foreground">
+              {sayi(deger[u.anahtar].n)} maç
+            </div>
+          </div>
+        ))}
+      </div>
+      <p className="text-[11.5px] leading-relaxed text-muted-foreground">
+        Üçü {sayi(karne.n)} maça tam toplanır. “Berabere” ile “yenildi” ayrı durur çünkü banko
+        kararında farklı risklerdir: beraberlik her maçta masadadır, yenilmek favorinin
+        gerçekten yanılmasıdır.
+      </p>
+    </div>
+  );
+}
+
+/* ── 4c-1. Ucluye haftalik dagilim ──────────────────────────────────────── */
+
+/** Tek bir dağılımın çubukları — hafta sayısı yüksekliğe döner. */
+function DagilimCubugu({
+  hist,
+  renk,
+}: {
+  hist: Record<string, number>;
+  renk: string;
+}) {
+  const anahtarlar = Object.keys(hist)
+    .map(Number)
+    .sort((a, b) => a - b);
+  const enCok = Math.max(...anahtarlar.map((k) => hist[String(k)] ?? 0), 1);
+  return (
+    <div className="flex items-end gap-[3px]" style={{ height: 56 }}>
+      {anahtarlar.map((k) => {
+        // Arka uc araliktaki her sayiyi yaziyor (gorulmeyenler 0), ama
+        // gorsel bunu VARSAYMAZ: eksik anahtar 0 sayilir.
+        const v = hist[String(k)] ?? 0;
+        return (
+          <div key={k} className="flex flex-1 flex-col items-center gap-1">
+            <div
+              className={cn("w-full rounded-sm", renk)}
+              style={{ height: Math.max((44 * v) / enCok, v ? 2 : 0) }}
+              title={`${k} maç: ${v} hafta`}
+            />
+            <span className="tnum text-[10px] text-muted-foreground">{k}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * "Ortalama 8,6" karar icin yetmez: kupon TEK bir haftada oynanir ve o
+ * hafta 5 de olabiliyor 13 de. Dagilimin kendisi burada duruyor.
+ */
+export function FavouriteWeekly({ ozet }: { ozet: HaftalikFavoriOzet }) {
+  if (!ozet || !ozet.weeks) {
+    return <p className="text-[13px] text-muted-foreground">Yeterli hafta yok.</p>;
+  }
+  const deger = { won: ozet.won, draw: ozet.draw, lost: ozet.lost };
+
+  return (
+    <div className="space-y-3">
+      <div className="grid gap-4 sm:grid-cols-3">
+        {UCLU.map((u) => {
+          const d = deger[u.anahtar];
+          return (
+            <div key={u.anahtar} className="space-y-2">
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="flex items-center gap-1.5 text-[11.5px] text-muted-foreground">
+                  <span className={cn("inline-block h-2.5 w-2.5 rounded-sm", u.renk)} aria-hidden />
+                  {u.ad}
+                </span>
+                <span className="tnum text-[15px] font-semibold">{ondalik(d.avg, 2)}</span>
+              </div>
+              <DagilimCubugu hist={d.hist} renk={u.renk} />
+              <div className="tnum text-[11px] text-muted-foreground">
+                medyan {ondalik(d.median, 1)} · aralık {d.min}–{d.max}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <p className="text-[11.5px] leading-relaxed text-muted-foreground">
+        {sayi(ozet.weeks)} hafta ·{" "}
+        {/* Tam haftalarda bu deger tanimi geregi 15,00 ve "ortalama 15.00
+            oranli mac" demek totoloji olurdu. Eksik hafta karisan kumede
+            ise sayi bilgi TASIR (14,97) ve yazilmasi gerekir. */}
+        {ozet.avg_matches === 15
+          ? "her biri 15 maç"
+          : `hafta başına ortalama ${ondalik(ozet.avg_matches, 2)} oranlı maç`}
+        . Çubuk yüksekliği o sayının kaç hafta görüldüğüdür; altındaki rakam haftalık maç
+        sayısıdır.
+      </p>
+    </div>
+  );
+}
+
 /* ── 4c. Favori tuttu / tutmadi kirilimi ────────────────────────────────── */
 
 function PayCubugu({ dagilim, toplam }: { dagilim: Record<Sembol, number>; toplam: number }) {
@@ -712,6 +865,9 @@ export function FavouriteBreakdown({
     { ad: "Favori tuttu", dagilim: hit, n: hitTotal },
     { ad: "Favori tutmadı", dagilim: miss, n: missTotal },
   ];
+  // Beraberligin FAVORI oldugu mac sayisi — capraz tablonun "0" satirinin
+  // toplami. Sabit 0 yazmak yanlisti; veriden okunur.
+  const beraberlikFavori = SEMBOLLER.reduce((a, s) => a + cross["0"][s], 0);
 
   return (
     <div className="space-y-5">
@@ -820,10 +976,14 @@ export function FavouriteBreakdown({
         </table>
       </div>
 
+      {/* Burada "beraberlik hicbir macta favori olmaz" yaziyordu ve OLCUM
+          curuttu: birlesik kesitte bir mac var (2023_24 h42 m7, p0=0,3735).
+          Metin artik bir varsayim anlatmiyor, VERIYI okuyor. */}
       <p className="text-[11.5px] leading-relaxed text-muted-foreground">
-        Beraberlik hiçbir maçta favori olmaz; bu yüzden <strong>her beraberlik</strong> tanımı
-        gereği “tutmadı” tarafına düşer ve “tuttu” satırında 0 sütunu boştur. Gerçek sürpriz,
-        favorinin karşı tarafının kazandığı{" "}
+        Beraberliğin kendisi çok seyrek favori olur — bu kesitte{" "}
+        <span className="tnum font-medium text-foreground">{beraberlikFavori}</span>{" "}
+        maçta — bu yüzden beraberliklerin neredeyse tamamı “tutmadı” tarafına düşer. Gerçek
+        sürpriz, favorinin karşı tarafının kazandığı{" "}
         <span className="tnum font-medium text-foreground">{underdog}</span> maçtır (%
         {((100 * underdog) / toplam).toFixed(1)}).
       </p>

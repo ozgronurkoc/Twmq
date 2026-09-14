@@ -128,12 +128,24 @@ tarar) — §3.74'ün sıralama dersi birebir buydu.
 5. **Kapanan dört başlık:** değişken derinlik (§3.72), zamanlama (§3.73),
    operasyonun istatistiksel yarısı (§3.74) ve slip yükü (§3.75). Dördünün
    de yeniden açılma şartı ölçülmüş olarak yazılı.
-6. **Çürük iddia — karar bekliyor (2026-09-14).** "Beraberlik hiçbir maçta
-   favori olmaz" iki yerde yazılı (`spor_toto/odds.py` `season_1x2_summary`
-   yorumu, `components/istatistik/charts.tsx:824` arayüz metni) ve birleşik
-   kesitte **yanlış**: `cross["0"]["0"] == 1` (2023_24 h42 m7,
-   Kayserispor–Konyaspor, p₀=0,3735). İddianın bekçisi yoktu, o yüzden
-   sessizce yanlış kaldı. Düzeltme yapılmadı — sahibi karar verecek.
+6a. **Bant sabiti İKİYE AYRILDI (2026-09-14) — tuzak burada.** Rapor
+   tablosunun sınırları incelirken (6 → 8 bant) `odds.FAVORI_BANTLARI`
+   değiştirildi ve `test_recalibrate::test_bant_sinirlari` kırmızıya döndü.
+   Sebep: `recalibrate.KADEMELER` içinde `"bant"` **oturtulan bir kademe** —
+   sınırlar oynarsa model başka kovalarla yeniden oturur ve ona bağlı bütün
+   ölçümler sessizce değişir. Ayrıldı: `FAVORI_BANTLARI` (model, 6 bant,
+   **dokunulmaz**) ve `FAVORI_BANTLARI_RAPOR` (arayüz, 8 bant). İkisini
+   "aynılaştırmak" akla yatkın görünüyor ve yapılmamalı; raporun modelin
+   **inceltmesi** olduğunu bir bekçi tutuyor.
+
+6. **Çürük iddia — KAPANDI (2026-09-14).** "Beraberlik hiçbir maçta favori
+   olmaz" üç yerde yazılıydı (`odds.py` yorumu, `charts.tsx` arayüz metni,
+   `test_api_stats.py`'de **iki assert**) ve birleşik kesitte yanlıştı:
+   `cross["0"]["0"] == 1` (2023_24 h42 m7, p₀ = 0,3735). Bedeli gerçekti —
+   `_favori_bantlari` beraberliği sonuca göre sayıyordu, o maç hem `hit` hem
+   `draw` yazılıyor ve bantlar çapraz tabloyla uzlaşmıyordu (`draw` 422/421,
+   `upset` 321/322). Düzeltildi; **birleşik kesitte koşan** bir gerileme
+   bekçisi eklendi ve kusur geri konarak kırmızıya döndüğü doğrulandı.
 
 ### Neden böyle
 

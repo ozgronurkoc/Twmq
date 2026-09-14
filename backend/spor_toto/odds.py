@@ -21,6 +21,7 @@ from __future__ import annotations
 import csv
 import math
 import re
+import statistics
 from collections.abc import Sequence
 from functools import lru_cache
 from pathlib import Path
@@ -496,9 +497,34 @@ def week_1x2(week: int, sezon: str | None = None) -> dict[int, dict[str, Any]]:
     return out
 
 
-#: Banko kararı için favori oranı bantları (alt dahil, üst hariç).
+#: Favori oranı bantları — **MODELİN** kullandığı sınırlar (alt dahil, üst
+#: hariç).
+#:
+#: ⚠ **BU SINIRLAR RAPOR İÇİN DEĞİŞTİRİLMEZ.** `recalibrate` bandı bir
+#: *özellik* olarak taşıyor ve `recalibrate.KADEMELER` içinde `"bant"` bir
+#: **oturtulan kademe**: sınırlar oynarsa model başka kovalarla yeniden
+#: oturur ve ona bağlı bütün ölçümler sessizce değişir. Ölçüldü — bu sabiti
+#: raporun ihtiyacı için inceltmek `test_recalibrate::test_bant_sinirlari`i
+#: kırıyor, ve o test burada bir kaza değil bekçidir.
+#:
+#: Tablonun daha ince sınıflandırması `FAVORI_BANTLARI_RAPOR`dadır. İkisini
+#: "aynılaştırmak" akla yatkın görünür ve tam da yapılmaması gereken şeydir.
 FAVORI_BANTLARI = ((1.0, 1.20), (1.20, 1.35), (1.35, 1.50),
                    (1.50, 1.75), (1.75, 2.00), (2.00, 99.0))
+
+#: Favori oranı bantları — **RAPOR** tablosunun sınırları. Modelden ayrı.
+#:
+#: Modelin "2,00 ve üstü" kovası okuyucu için tek satır olarak işe yaramıyor:
+#: ölçüldüğünde 798 maç tutuyordu, kesitin **%46'sı**, ve o 1,00'lık genişlik
+#: boyunca isabet %51'den %36'ya iniyordu — tek satır bunu %46 diye
+#: ortalıyor, yani sınıflandırma bandın içinde bilgi kaybediyordu. Üçe
+#: bölündü; en küçüğü 132 maç, hepsi `AZ_ORNEK`in üstünde.
+#:
+#: Üst uç **2,50'de açık**: ölçüldüğünde favori oranı 3,00'ı hiçbir maçta
+#: geçmiyor (0 maç), daha ileri bir sınır boş satır üretirdi.
+FAVORI_BANTLARI_RAPOR = ((1.0, 1.20), (1.20, 1.35), (1.35, 1.50),
+                         (1.50, 1.75), (1.75, 2.00), (2.00, 2.25),
+                         (2.25, 2.50), (2.50, 99.0))
 
 
 def _favori_bantlari(oranli: list[Any]) -> list[dict[str, Any]]:
@@ -507,15 +533,24 @@ def _favori_bantlari(oranli: list[Any]) -> list[dict[str, Any]]:
     ``tutmadı`` iki parçaya ayrılır — beraberlik ve karşı tarafın kazanması —
     çünkü banko kararında bunlar farklı riskler: beraberlik her maçta masada,
     karşı tarafın kazanması ise favorinin gerçekten yanılmasıdır.
+
+    **Beraberlik sayımı `hit`e bağlıdır, yalnız sonuca değil.** Önce
+    ``r["code"] == "0"`` sayılıyordu; bu, beraberliğin KENDİSİNİN favori
+    olduğu maçı hem `hit` hem `draw` yazıyor ve `upset`i bir eksiltiyordu.
+    Birleşik kesitte ölçüldü: `draw` 422 (olması gereken 421), `upset` 321
+    (olması gereken 322). Tek maçlık bir sapma ama tablo **iç tutarlılığını**
+    kaybediyordu — `sum(draw)` çapraz tablonun `outcome_when_miss["0"]`ına
+    eşit değildi. Sebebi "beraberlik hiçbir maçta favori olmaz" varsayımıydı;
+    ölçüm çürüttü (2023_24 h42 m7, p₀ = 0,3735).
     """
     out: list[dict[str, Any]] = []
-    for lo, hi in FAVORI_BANTLARI:
+    for lo, hi in FAVORI_BANTLARI_RAPOR:
         grup = [(r, b) for r, b in oranli if lo <= min(b["odds"].values()) < hi]
         n = len(grup)
         if not n:
             continue
         tuttu = sum(1 for r, b in grup if b["hit"])
-        beraberlik = sum(1 for r, _ in grup if r["code"] == "0")
+        beraberlik = sum(1 for r, b in grup if not b["hit"] and r["code"] == "0")
         tutmadi = n - tuttu
         out.append({
             "lo": lo,
@@ -722,10 +757,86 @@ def _haftalik_brier(oranli: list[Any]) -> list[dict[str, Any]]:
             "brier": round(toplam / n, 4),
             "favourite_hit": tutan,
             "favourite_hit_pct": round(100 * tutan / n, 1),
+            # Haftanın ÜÇLÜ karnesi — kupon okuyucusunun saydığı şey bu:
+            # 15 maçın kaçında favori kazandı, kaçında berabere kalındı,
+            # kaçında favori yenildi. `favourite_hit` ikincisiyle üçüncüsünü
+            # tek "tutmadı"da topluyordu ve bu iki riski eşitliyordu.
+            "favourite_draw": sum(
+                1 for r, b in grup if not b["hit"] and r["code"] == "0"),
+            "favourite_lost": sum(
+                1 for r, b in grup if not b["hit"] and r["code"] != "0"),
             # Kupon eksik oranlıysa hafta karşılaştırmaya girmemeli.
             "partial": n < 15,
         })
     return out
+
+
+def _favori_karnesi(oranli: list[Any], tutmadi_sonuc: dict[str, int],
+                    underdog: int) -> dict[str, Any]:
+    """Favorinin ÜÇLÜ karnesi — kazandı / berabere / yenildi, tek blokta.
+
+    Bu sayılar özette zaten vardı ama **üç ayrı yere dağılmıştı**
+    (`favourite_hit`, `outcome_when_miss["0"]`, `underdog_wins`) ve
+    okuyucunun onları kendisi toplaması gerekiyordu. Kupon sahibinin
+    sorduğu soru tek bir soru — *"15 maçın kaçında ne oldu"* — ve üçü
+    burada `n`e tam toplanır.
+
+    Üçlü bölüntü `hit`e göre kurulur, sonuca göre değil: beraberliğin
+    kendisi favori olduğu (ölçüldü, oluyor) maç `won` tarafındadır, çünkü
+    o maçta piyasanın dediği işaret tutmuştur.
+    """
+    n = len(oranli)
+    kazandi = sum(1 for _, b in oranli if b["hit"])
+    berabere = tutmadi_sonuc["0"]
+    return {
+        "n": n,
+        "won": kazandi,
+        "draw": berabere,
+        "lost": underdog,
+        "won_pct": round(100 * kazandi / n, 1),
+        "draw_pct": round(100 * berabere / n, 1),
+        "lost_pct": round(100 * underdog / n, 1),
+    }
+
+
+def _favori_haftalik(haftalar: list[dict[str, Any]]) -> dict[str, Any]:
+    """Üçlü karnenin HAFTA dağılımı — ortalama tek başına yalan söyler.
+
+    "Haftada 8,6 favori tutuyor" doğru ama karar için yetersiz: kupon tek
+    bir haftada oynanır ve o hafta 4 de olabiliyor 13 de. Dağılımın kendisi
+    burada duruyor.
+
+    Ortalamalar **tam haftalar** üzerinden ayrıca verilir (`full`): eksik
+    oranlı hafta (milli maç arası) 15 maç taşımıyor ve onu tam haftayla
+    aynı kaba koymak ortalamayı aşağı çeker — okuyucu ise "15 maçta kaç"
+    diye okur. İkisi de döner, hangisinin okunduğu arayüzde yazılıdır.
+    """
+    def _ozet(satirlar: list[dict[str, Any]]) -> dict[str, Any]:
+        if not satirlar:
+            return {}
+        alan = (("won", "favourite_hit"), ("draw", "favourite_draw"),
+                ("lost", "favourite_lost"))
+        out: dict[str, Any] = {"weeks": len(satirlar),
+                               "avg_matches": round(
+                                   sum(s["n"] for s in satirlar) / len(satirlar), 2)}
+        for ad, anahtar in alan:
+            d = sorted(s[anahtar] for s in satirlar)
+            out[ad] = {
+                "avg": round(sum(d) / len(d), 2),
+                "median": statistics.median(d),
+                "min": d[0],
+                "max": d[-1],
+                # Histogram: arayüz bunu çubuk olarak basar. Anahtarlar JSON'da
+                # metin olur (JS nesne anahtarı zaten metindir), bu yüzden
+                # burada da metin yazılır — iki taraf aynı tipi görsün.
+                "hist": {str(k): d.count(k) for k in range(d[0], d[-1] + 1)},
+            }
+        return out
+
+    return {
+        "all": _ozet(haftalar),
+        "full": _ozet([h for h in haftalar if not h["partial"]]),
+    }
 
 
 def _kesit_satirlari(weeks: Sequence[Any] | None,
@@ -792,8 +903,18 @@ def season_1x2_summary(weeks: Sequence[Any] | None = None,
     fav_dagilim = {s: sum(1 for _, b in oranli if b["favourite"] == s) for s in SEMBOLLER}
 
     # Favori tuttuğunda / tutmadığında ne gerçekleşti.
-    # "0" tuttu sütunu her zaman 0'dır: beraberlik hiçbir maçta favori olmaz,
-    # bu yüzden HER beraberlik tanımı gereği "tutmadı" tarafına düşer.
+    #
+    # Burada uzun süre şu yazılıydı: *"'0' tuttu sütunu her zaman 0'dır:
+    # beraberlik hiçbir maçta favori olmaz."* **Yanlış** — ve yanlışlığı
+    # sessizdi, çünkü iddiayı tutan bekçi (`test_api_stats`) yalnız tek
+    # sezonun kesitine bakıyordu. Birleşik kesitte ölçüldü: `cross["0"]["0"]`
+    # = 1 (2023_24 hafta 42 maç 7, Kayserispor–Konyaspor, p₀ = 0,3735 ile
+    # beraberlik favori ve maç berabere bitti). Piyasa nadiren de olsa
+    # beraberliği en yüksek olasılıklı sembol yapıyor.
+    #
+    # Sayısal etkisi bir maç, ama tanımları kirletiyordu: "her beraberlik
+    # tutmadı tarafındadır" varsayımı `_favori_bantlari`nin `draw`ını bir
+    # fazla, `upset`ini bir eksik sayıyordu.
     tuttu_sonuc = {
         s: sum(1 for r, b in oranli if b["hit"] and r["code"] == s) for s in SEMBOLLER
     }
@@ -813,6 +934,10 @@ def season_1x2_summary(weeks: Sequence[Any] | None = None,
     )
 
     bantlar = _favori_bantlari(oranli)
+    # Hafta satırları İKİ blok besliyor (`weekly_brier` ve `favourite_weekly`),
+    # o yüzden bir kez hesaplanır: iki çağrı iki ayrı gruplama demek olurdu
+    # ve gruplama kuralı (hafta ANAHTARI, numara değil) sessizce ayrışabilirdi.
+    haftalik = _haftalik_brier(oranli)
 
     # Kalibrasyon: modelin verdiği olasılık ile gerçekleşme yan yana.
     kovalar: dict[int, dict[str, float]] = {}
@@ -848,6 +973,10 @@ def season_1x2_summary(weeks: Sequence[Any] | None = None,
         "cross": capraz,
         "underdog_wins": underdog,
         "favourite_bands": bantlar,
+        # Üçlü karne ve onun hafta dağılımı. Sayılar yukarıdakilerden
+        # TÜRETİLİR, yeniden sayılmaz — iki blok asla ayrışamasın diye.
+        "favourite_outcome": _favori_karnesi(oranli, tutmadi_sonuc, underdog),
+        "favourite_weekly": _favori_haftalik(haftalik),
         # Karar destek blokları — üçü de aynı dilim üzerinden hesaplanır.
         "set_coverage": _kume_kapsama(oranli),
         "draw_profile": _beraberlik_profili(oranli),
@@ -855,7 +984,7 @@ def season_1x2_summary(weeks: Sequence[Any] | None = None,
         # kesitte dort sezonun ayni numarali haftasini tek hafta sayar ve
         # "hafta basina mac" orani dorde katlanirdi.
         "leagues": _lig_kirilimi(oranli, len({r["anahtar"] for r, _ in oranli})),
-        "weekly_brier": _haftalik_brier(oranli),
+        "weekly_brier": haftalik,
         "brier_avg": round(
             sum(_brier(b, r["code"]) for r, b in oranli) / len(oranli), 4
         ),

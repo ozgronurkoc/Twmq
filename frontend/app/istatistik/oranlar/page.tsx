@@ -19,6 +19,8 @@ import {
   DrawProfile,
   FavouriteBands,
   FavouriteBreakdown,
+  FavouriteOutcome,
+  FavouriteWeekly,
   LeagueSplit,
   SetCoverage,
 } from "@/components/istatistik/charts";
@@ -171,8 +173,25 @@ export default function OranlarPage() {
               <DeltaStat
                 etiket="Favori 0 idi"
                 deger={String(odds.favourite_split["0"])}
-                alt="beraberlik hiçbir maçta favori olmaz"
+                /* "beraberlik hicbir macta favori olmaz" yaziyordu; olcum
+                   curuttu (birlesik kesitte 1 mac). Metin artik degeri
+                   okuyor, bir varsayimi tekrarlamiyor. */
+                alt="maçta beraberlik en yüksek olasılıktı"
               />
+            </div>
+
+            <div>
+              <SectionTitle hint="Kuponun 15 maçında favori kaç kez kazandı, kaç kez berabere kalındı, kaç kez favori yenildi. Üçü toplam maç sayısına tam toplanır.">
+                Favorinin karnesi — kazandı / berabere / yenildi
+              </SectionTitle>
+              <FavouriteOutcome karne={odds.favourite_outcome} />
+            </div>
+
+            <div>
+              <SectionTitle hint="Ortalama tek başına karar verdirmez: kupon tek bir haftada oynanır. Dağılım o haftanın ne kadar sapabileceğini gösterir. Yalnızca 15 maçı da oranlı haftalar sayılır.">
+                Hafta hafta — 15 maçlık kuponda dağılım
+              </SectionTitle>
+              <FavouriteWeekly ozet={odds.favourite_weekly.full} />
             </div>
 
             <div>
@@ -190,13 +209,27 @@ export default function OranlarPage() {
             </div>
 
             <div>
-              <SectionTitle hint="Favorinin oranı düştükçe isabet artar. Banko yapmadan önce bakılacak tablo budur; “tutmadı”nın ne kadarının beraberlikten geldiği ayrı gösterilir.">
-                Banko güvenilirliği — favori oranına göre
+              <SectionTitle hint="Aynı üçlü karne, favorinin oranına göre ayrılmış: hangi oran aralığında favori kaç kez kazandı, kaç kez berabere kalındı, kaç kez yenildi. Banko yapmadan önce bakılacak tablo budur.">
+                Oran aralığına göre — favori kaç kez kazandı, berabere kaldı,
+                yenildi
               </SectionTitle>
               <FavouriteBands bands={odds.favourite_bands} />
               <p className="mt-3 text-[11.5px] leading-relaxed text-muted-foreground">
                 Az maç içeren bantlarda yüzdeler oynaktır; “Maç” sütununa
-                bakmadan karar vermeyin. Aralık filtresi bu tabloyu da kapsar.
+                bakmadan karar vermeyin. Aralık filtresi bu tabloyu da kapsar.{" "}
+                {/* Bu uyari SART. Kullanici tabloyu ONDALIK ORAN olarak okur ve
+                    iddaa da ondalik oran yazar — yani sayilar birebir iddaa
+                    kuponundan geliyormus gibi gorunur. Gelmiyor: gecmis iddaa
+                    orani hicbir kaynakta yayinlanmiyor (bkz. data/iddaa
+                    raporu), arsiv football-data.co.uk. Marj farki yonu de
+                    belli: iddaa ~%16, buradaki ~%6 — ayni mac iddaa'da daha
+                    YUKSEK oranli gorunmez, daha DUSUK gorunur. */}
+                <strong className="text-foreground">Bantlar iddaa oranı değildir:</strong>{" "}
+                geçmiş iddaa oranı yayınlanmadığı için arşiv {odds.books.join(", ")}{" "}
+                (football-data.co.uk) fiyatından kuruludur. Ortalama bahisçi payı burada %
+                {ondalik(odds.avg_margin_pct, 2)}; iddaa’nın ölçülmüş payı bunun iki katından
+                fazla, yani aynı maç iddaa kuponunda daha <em>düşük</em> oranla yazılır ve bir
+                maç bir üst banda değil, bir <em>alt</em> banda düşer.
               </p>
             </div>
 

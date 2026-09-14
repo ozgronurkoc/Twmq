@@ -56,10 +56,19 @@ def test_stats_mac_sonucu_orani_tasiyor(client):
         return
     assert 0 < o["with_odds"] <= o["matches"]
     assert 0 <= o["favourite_hit_pct"] <= 100
-    assert o["favourite_split"]["0"] == 0, "beraberlik favori olamaz"
     assert o["favourite_hit"] + o["favourite_miss"] == o["with_odds"]
-    # Favori tuttugunda beraberlik cikamaz: beraberlik hicbir zaman favori degil.
-    assert o["outcome_when_hit"]["0"] == 0
+    # BURADA IKI YANLIS BEKCI VARDI:
+    #     assert o["favourite_split"]["0"] == 0, "beraberlik favori olamaz"
+    #     assert o["outcome_when_hit"]["0"] == 0
+    # Ikisi de "beraberlik hicbir macta favori olmaz" varsayimini KURAL diye
+    # yaziyordu. Olculdu ve yanlis: birlesik kesitte bir mac var (2023_24
+    # hafta 42 mac 7, p0 = 0,3735). Bekci tek sezonun kesitine baktigi icin
+    # yesil kaliyordu — yani iddiayi tutmuyordu, yalnizca gormuyordu.
+    # Yerine gecen kural gercekten degismez olan: favori EN YUKSEK olasilikli
+    # semboldur, hangi sembol oldugu veriye kalmistir.
+    for sym in SYMBOLS:
+        assert o["favourite_split"][sym] >= 0
+    assert sum(o["favourite_split"].values()) == o["with_odds"]
     for sym in SYMBOLS:
         assert (o["outcome_when_hit"][sym] + o["outcome_when_miss"][sym]
                 == o["outcome_totals"][sym])
@@ -80,6 +89,17 @@ def test_stats_mac_sonucu_orani_tasiyor(client):
     assert sum(b["draw"] for b in o["favourite_bands"]) == o["outcome_when_miss"]["0"]
     assert sum(b["upset"] for b in o["favourite_bands"]) == o["underdog_wins"]
     assert sum(b["hit"] for b in o["favourite_bands"]) == o["favourite_hit"]
+
+    # Uclu karne: ucu `n`e TAM toplanir. Sayilar yukaridaki uc ayri alandan
+    # turetilir, o yuzden bu esitlik bir tekrar degil — iki blok ayrisirsa
+    # (biri sonuca, digeri `hit`e gore sayarsa) yalnizca bu kirmizi olur.
+    k = o["favourite_outcome"]
+    assert k["n"] == o["with_odds"]
+    assert k["won"] + k["draw"] + k["lost"] == k["n"]
+    assert k["won"] == o["favourite_hit"]
+    assert k["draw"] == o["outcome_when_miss"]["0"]
+    assert k["lost"] == o["underdog_wins"]
+    assert k["won_pct"] + k["draw_pct"] + k["lost_pct"] == pytest.approx(100, abs=0.2)
     assert o["avg_margin_pct"] > 0
     for kova in o["calibration"]:
         assert kova["lo"] < kova["hi"] and kova["n"] >= 10
@@ -140,6 +160,15 @@ def test_haftalik_brier(client):
         assert 0.0 <= w["brier"] <= 2.0
         assert w["favourite_hit"] <= w["n"]
         assert w["partial"] == (w["n"] < 15)
+        # Haftanin uclu karnesi haftanin mac sayisina TAM toplanir.
+        assert (w["favourite_hit"] + w["favourite_draw"] + w["favourite_lost"]
+                == w["n"])
+    # Hafta toplamlari sezon toplamlarini vermeli — aksi halde iki blok
+    # ayni kesiti farkli sayiyor demektir.
+    k = o["favourite_outcome"]
+    assert sum(w["favourite_hit"] for w in haftalar) == k["won"]
+    assert sum(w["favourite_draw"] for w in haftalar) == k["draw"]
+    assert sum(w["favourite_lost"] for w in haftalar) == k["lost"]
     # Esit olasilik referansi: piyasa bunun altinda kalmali, yoksa bilgi
     # tasimiyor demektir.
     assert o["brier_uniform"] == pytest.approx(2 / 3, abs=1e-3)
@@ -345,3 +374,72 @@ def test_meta_secici_kayitlarini_yayinlar(client):
         assert r.status_code == 200, f"{k['deger']} secilemedi"
         assert r.get_json()["meta"]["weeks"] == k["weeks"], (
             f"{k['deger']}: secicideki hafta sayisi govdeyle ayristi")
+
+
+# ─── Beraberliğin favori olduğu maç — bir varsayımın çürüğü ───────────────────
+
+def test_BIRLESIK_kesitte_beraberlik_de_favori_olabiliyor(client):
+    """Bu test bir **çürük varsayımın** yerine geçti.
+
+    Gövde uzun süre şunu kural sayıyordu: *"beraberlik hiçbir maçta favori
+    olmaz, bu yüzden her beraberlik 'tutmadı' tarafındadır."* Cümle üç yerde
+    yazılıydı (`odds.py` yorumu, arayüz metni, ve **bu dosyadaki iki
+    assert**) ve hiçbiri onu tutmuyordu: bekçi yalnız tek sezonun kesitine
+    bakıyor, orada öyle bir maç bulunmuyordu.
+
+    Birleşik kesitte bulunuyor — 2023_24 hafta 42 maç 7, p₀ = 0,3735 ile
+    beraberlik en yüksek olasılıklı sembol ve maç berabere bitti. Sayısal
+    etkisi bir maç, ama `_favori_bantlari` beraberliği sonuca göre saydığı
+    için o maç hem `hit` hem `draw` yazılıyor ve `upset` bir eksiliyordu:
+    ölçüldü, `draw` 422 / `upset` 321 iken çapraz tablo 421 / 322 diyordu.
+
+    Bu yüzden test **birleşik kesitte** koşar: kusuru yalnız orası gösterir.
+    """
+    from spor_toto.history import TUM_SEZONLAR
+
+    o = client.get(f"/api/stats?sezon={TUM_SEZONLAR}").get_json()["odds"]
+    if o is None:
+        pytest.skip("birlesik kesitte oran arsivi yok")
+
+    # Varsayımın kendisi: beraberlik EN AZ bir maçta favori.
+    assert o["favourite_split"]["0"] >= 1, (
+        "birlesik kesitte beraberligin favori oldugu mac kalmadi — "
+        "olcum degistiyse bu testin gerekcesi yeniden yazilmali")
+    assert o["cross"]["0"]["0"] == o["outcome_when_hit"]["0"]
+
+    # Asıl gerileme: bantlar çapraz tabloyla TAM uzlaşmalı. Kusurlu gövdede
+    # bu iki satır birer birim sapıyordu.
+    assert sum(b["draw"] for b in o["favourite_bands"]) == o["outcome_when_miss"]["0"]
+    assert sum(b["upset"] for b in o["favourite_bands"]) == o["underdog_wins"]
+
+    # Ve üçlü karne yine `n`e tam toplanır.
+    k = o["favourite_outcome"]
+    assert k["won"] + k["draw"] + k["lost"] == o["with_odds"]
+
+
+def test_favori_bantlari_TEK_kovada_yigilmiyor(client):
+    """Hiçbir bant kesitin üçte birinden fazlasını yutmamalı.
+
+    "2,00 ve üstü" tek kovayken 798 maç tutuyordu — kesitin %46'sı — ve o
+    aralıkta isabet %51'den %36'ya iniyordu. Tek satır bunu ortalıyor, yani
+    sınıflandırma bandın içinde bilgi kaybediyordu. Bant sınırları elle
+    seçilir; bu bekçi seçimin **yeniden yığılmasını** engeller.
+    """
+    from spor_toto.history import TUM_SEZONLAR
+
+    o = client.get(f"/api/stats?sezon={TUM_SEZONLAR}").get_json()["odds"]
+    if o is None:
+        pytest.skip("birlesik kesitte oran arsivi yok")
+
+    bantlar = o["favourite_bands"]
+    toplam = sum(b["n"] for b in bantlar)
+    en_buyuk = max(bantlar, key=lambda b: b["n"])
+    assert en_buyuk["n"] / toplam <= 1 / 3, (
+        f"{en_buyuk['label']} bandi kesitin %{100 * en_buyuk['n'] / toplam:.0f}'ini "
+        "tutuyor — bant bolunmeli")
+
+    # İsabet, favori oranı büyüdükçe DÜŞMELİ: bantlar bunu göstermek için
+    # var. Az örnekli bantlar oynak olduğu için eşikten geçenlere bakılır.
+    saglam = [b for b in bantlar if b["n"] >= o["low_sample_at"]]
+    assert saglam == sorted(saglam, key=lambda b: -b["hit_pct"]), (
+        "favori orani buyudukce isabet dusmuyor — bant siralamasi bozuk")

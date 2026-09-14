@@ -1799,7 +1799,7 @@
         "backend/spor_toto/history.py:60",
         "backend/spor_toto/evaluate.py:109",
         "frontend/components/istatistik/parts.tsx:147",
-        "frontend/lib/types.ts:808",
+        "frontend/lib/types.ts:860",
         "backend/tests/test_history.py:265",
         "backend/tests/test_sizinti.py:593"
       ],
@@ -2361,23 +2361,23 @@
     },
     {
       "ne": "Favorinin UCLU karnesi — kazandi / berabere / yenildi (birlesik kesit, oranli mac)",
-      "deger": "994 / 422 / 322",
-      "olcek": "1.737 oranli mac · 116 hafta · %57,2 / %24,3 / %18,5",
-      "ureten": "cd backend && python -c \"from spor_toto.payloads import stats_payload; from spor_toto.history import TUM_SEZONLAR; o=stats_payload(None,TUM_SEZONLAR)['odds']; print(o['favourite_hit'], o['outcome_when_miss'], o['underdog_wins'], o['cross'])\"",
+      "deger": "994 / 421 / 322",
+      "olcek": "1.737 oranli mac · 116 hafta · %57,2 / %24,2 / %18,5",
+      "ureten": "cd backend && python -c \"from spor_toto.payloads import stats_payload; from spor_toto.history import TUM_SEZONLAR; print(stats_payload(None,TUM_SEZONLAR)['odds']['favourite_outcome'])\"",
       "olculdu": "2026-09-14",
       "anildigi_yerler": [],
-      "bekcisiz_gerekce": "Hicbir belgede anilmiyor — gudulecek iddia yok. Kesitin ic tutarliligini (capraz tablo = hit/miss ayrismasi) backend/tests/test_api_stats.py zaten tutuyor; tutulmayan sey degerin KENDISI.",
-      "not": "Uclu kirilim TOPLU olarak tutuluyor (odds.season_1x2_summary -> cross / outcome_when_miss / underdog_wins / favourite_bands), HAFTA BAZINDA tutulmuyor. 422 beraberligin 421'i 'favori tutmadi' tarafinda, 1'i ise beraberligin KENDISI favori oldugu mac (bkz. asagidaki girdi). scripts/favori_analizi.py haftalik seriyi verir ama IKILI (tuttu/tutmadi) — berabere ile yenilmeyi ayirmaz."
+      "not": "Ilk olcumde 422/322 yazilmisti; bolunt SONUCA gore kuruluydu ve beraberligin KENDISININ favori oldugu maci berabere sayiyordu. Uclu artik `hit`e gore bolunuyor (o mac `won` tarafinda, cunku piyasanin dedigi isaret tuttu) ve ucu `n`e TAM toplaniyor: 994+421+322 = 1.737. Ozet artik `favourite_outcome` blogunu dogrudan veriyor; arayuzde /istatistik/oranlar sayfasinda basiliyor.",
+      "bekci": "backend/tests/test_api_stats.py::test_stats_mac_sonucu_orani_tasiyor"
     },
     {
       "ne": "Hafta basina favori karnesi — kazandi / berabere / yenildi ortalamasi",
-      "deger": "8,56 / 3,64 / 2,78",
-      "olcek": "116 hafta · hafta basina ortalama 14,97 oranli mac (15 degil: oran kapsamasi %97,3)",
-      "ureten": "cd backend && python -c \"from spor_toto.payloads import stats_payload; from spor_toto.history import TUM_SEZONLAR; o=stats_payload(None,TUM_SEZONLAR)['odds']; print(o['favourite_hit'], o['outcome_when_miss'], o['underdog_wins'], o['cross'])\"  # hafta anahtarina gore gruplayip ortalamasi alinir",
+      "deger": "8,62 / 3,65 / 2,73",
+      "olcek": "114 TAM hafta (15 macin hepsi oranli) · birlesik kesit",
+      "ureten": "cd backend && python -c \"from spor_toto.payloads import stats_payload; from spor_toto.history import TUM_SEZONLAR; print(stats_payload(None,TUM_SEZONLAR)['odds']['favourite_weekly']['full'])\"",
       "olculdu": "2026-09-14",
       "anildigi_yerler": [],
-      "bekcisiz_gerekce": "Turetilmis ortalama, hicbir belgede anilmiyor.",
-      "not": "Dagilimlar: kazandi 4-13 (medyan 8), berabere 0-8 (medyan 4), yenildi 0-8 (medyan 3). 'Haftada 7-8 favori tutuyor' sezgisi burada 8,56 cikiyor; scripts/favori_analizi.py A bolumu ayni sayinin SEKLINI (asiri yayilim) olcer."
+      "not": "Ilk olcum 116 haftanin TAMAMINI sayiyordu (8,56) ve eksik oranli iki haftayi 15 maclik haftayla ayni kaba koyuyordu. Ozet artik ikisini de veriyor: `full` yalniz 15 macin hepsi oranli 114 hafta (8,62 / 3,65 / 2,73), `all` hepsi (8,57 / 3,63 / 2,78). Arayuz `full` basiyor cunku okuyucunun sorusu '15 macta kac'. 8,62 BAGIMSIZ bir yoldan dogrulandi: scripts/favori_analizi.py ayni 114 haftada ayni sayiyi veriyor. Dagilim (full): kazandi 5-13 medyan 8,5 · berabere 0-8 medyan 4 · yenildi 0-6 medyan 3.",
+      "bekci": "backend/tests/test_api_stats.py::test_haftalik_brier"
     },
     {
       "ne": "Beraberligin favori oldugu mac sayisi (birlesik kesit)",
@@ -2386,8 +2386,28 @@
       "ureten": "cd backend && python -c \"from spor_toto.odds import _kesit_satirlari, match_1x2; from spor_toto.history import TUM_SEZONLAR, history_weeks; w=history_weeks(None,TUM_SEZONLAR); k=[(x['sezon'],x['week']) for x in w]; print([ (r['sezon'],r['week'],r['no']) for r in _kesit_satirlari(k,TUM_SEZONLAR) if (b:=match_1x2(r)) and b['favourite']=='0' ])\"",
       "olculdu": "2026-09-14",
       "anildigi_yerler": [],
-      "bekcisiz_gerekce": "Bekcisi YOK ve olmasi gerekirdi: iki yerde yazili 'her zaman 0' iddiasini bu olcum curutuyor, ama iddia bir testle tutulmadigi icin sessizce yanlis kalmis.",
-      "not": "CURUK IDDIA. backend/spor_toto/odds.py:~795 yorumu ve frontend/components/istatistik/charts.tsx:824 arayuz metni 'beraberlik hicbir macta favori olmaz, bu yuzden 0 tuttu sutunu her zaman 0'dir' diyor. Olculdu: cross['0']['0'] == 1, yani outcome_when_hit['0'] == 1. Iddia birlesik kesitte YANLIS. Duzeltme kararlastirilmadi — sahibine bildirildi."
+      "not": "CURUK IDDIA DUZELTILDI. 'Beraberlik hicbir macta favori olmaz' UC yerde yaziliydi: odds.py yorumu, charts.tsx arayuz metni ve test_api_stats.py'de IKI assert. Bekci yalniz tek sezonun kesitine baktigi icin yesil kaliyordu. Varsayimin bedeli gercekti: `_favori_bantlari` beraberligi SONUCA gore sayiyordu, o yuzden bu mac hem `hit` hem `draw` yaziliyor ve `upset` bir eksiliyordu — bantlar capraz tabloyla uzlasmiyordu (draw 422/421, upset 321/322). Duzeltildi ve birlesik kesitte kosan bir gerileme bekcisi eklendi.",
+      "bekci": "backend/tests/test_api_stats.py::test_BIRLESIK_kesitte_beraberlik_de_favori_olabiliyor"
+    },
+    {
+      "ne": "Favori ORAN BANDINA gore uclu karne — 8 bant, birlesik kesit",
+      "deger": "%82,1 -> %36,4",
+      "olcek": "isabet, 1,00-1,20 bandindan 2,50 ve ustu bandina; 1.737 mac / 8 bant, en kucuk bant 39 mac",
+      "ureten": "cd backend && python -c \"from spor_toto.payloads import stats_payload; from spor_toto.history import TUM_SEZONLAR; [print(b['label'], b['n'], b['hit'], b['draw'], b['upset']) for b in stats_payload(None,TUM_SEZONLAR)['odds']['favourite_bands']]\"",
+      "olculdu": "2026-09-14",
+      "anildigi_yerler": [],
+      "bekci": "backend/tests/test_api_stats.py::test_favori_bantlari_TEK_kovada_yigilmiyor || backend/tests/test_odds.py::test_RAPOR_bantlari_MODEL_bantlarinin_INCELTMESI",
+      "not": "Bant  mac  tuttu  berabere  karsi:  1,00-1,20  39  %82,1 %12,8 % 5,1 | 1,20-1,35 126 %81,0 %16,7 % 2,4 | 1,35-1,50 171 %71,3 %15,8 %12,9 | 1,50-1,75 282 %64,9 %22,0 %13,1 | 1,75-2,00 321 %58,3 %28,3 %13,4 | 2,00-2,25 360 %50,6 %24,2 %25,3 | 2,25-2,50 306 %45,1 %30,1 %24,8 | 2,50+ 132 %36,4 %27,3 %36,4. '2,00 ve ustu' ONCE TEK KOVAYDI: 798 mac, kesitin %46'si, ve icinde isabet %51'den %36'ya iniyordu — tek satir bunu ortaliyordu. Uce bolundu. Ust uc 2,50'de ACIK: favori orani 3,00'i hicbir macta gecmiyor (0 mac). Beraberlik payi duz degil, 1,75-2,00'de tepe yapiyor (%28,3) ve 2,25-2,50'de %30,1 — yani favori zayifladikca kayip once beraberlige, sonra yenilgiye kayiyor. || AYRI SABIT: bu 8 bant `odds.FAVORI_BANTLARI_RAPOR`; modelin `FAVORI_BANTLARI`si 6 bant olarak DEGISMEDI. Sebep olculdu: `recalibrate.KADEMELER` icinde 'bant' OTURTULAN bir kademe, yani sinirlari incelmek modeli baska kovalarla yeniden oturtur ve ona bagli butun olcumler sessizce degisirdi (ilk denemede test_recalibrate::test_bant_sinirlari kirmiziya dondu). Ikisini 'aynilastirmak' akla yatkin gorunur ve yapilmamalidir; rapor bantlarinin modelin INCELTMESI oldugunu test_odds::test_RAPOR_bantlari_MODEL_bantlarinin_INCELTMESI tutuyor."
+    },
+    {
+      "ne": "iddaa marjinin football-data marjina orani — bant tablosu iddaa kuponuna cevrilemez",
+      "deger": "2,71 kat",
+      "olcek": "iddaa %16,38 (3 snapshot, 759 satir) / football-data 'Avg' %6,04 (1.737 mac)",
+      "ureten": "cd backend && python -c \"import json; from spor_toto.payloads import stats_payload; from spor_toto.history import TUM_SEZONLAR; o=stats_payload(None,TUM_SEZONLAR)['odds']; r=json.load(open('data/iddaa/iddaa_rapor.json')); print(r['birikimli']['avg_margin_pct']/o['avg_margin_pct'])\"",
+      "olculdu": "2026-09-14",
+      "anildigi_yerler": [],
+      "bekcisiz_gerekce": "Iki ayri kaynagin marj oranini tutan bir bekci yok ve kurmak iddaa arsivinin BUYUMESINI bekler (su an 3 snapshot). Arayuzde anilan sey oran DEGIL, yonu: 'iki katindan fazla' — olculen 2,71 bunun altina dusmeden bayatlamaz.",
+      "not": "Kullanici bant tablosunu ondalik oran olarak okur ve iddaa da ondalik oran yazar — tablo iddaa kuponundan geliyormus gibi gorunur. GELMIYOR: gecmis iddaa orani hicbir kaynakta yayinlanmiyor (data/iddaa/iddaa_rapor.json notu), arsiv football-data.co.uk. Yon onemli: marj yuksekse yazilan oran DUSUKTUR, yani ayni mac iddaa kuponunda bir ALT banda duser. Arayuze uyari olarak yazildi."
     }
   ],
   "komutlar": [

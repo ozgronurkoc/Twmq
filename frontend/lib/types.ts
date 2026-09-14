@@ -669,6 +669,25 @@ export interface MacOran {
   closing: boolean;
 }
 
+/** Bir hafta kümesinin üçlü favori karnesi — ortalama, medyan ve dağılım. */
+export interface HaftalikFavoriDagilim {
+  avg: number;
+  median: number;
+  min: number;
+  max: number;
+  /** Anahtar = haftalık sayı (metin), değer = o sayının kaç hafta görüldüğü. */
+  hist: Record<string, number>;
+}
+
+export interface HaftalikFavoriOzet {
+  weeks: number;
+  /** Hafta başına ortalama ORANLI maç — 15 değildir (milli maç araları). */
+  avg_matches: number;
+  won: HaftalikFavoriDagilim;
+  draw: HaftalikFavoriDagilim;
+  lost: HaftalikFavoriDagilim;
+}
+
 export interface OddsSummary {
   matches: number;
   with_odds: number;
@@ -677,7 +696,13 @@ export interface OddsSummary {
   favourite_miss: number;
   favourite_hit_pct: number;
   favourite_split: Record<Sembol, number>;
-  /** Favori TUTTUĞUNDA gerçekleşen sonuçlar; "0" daima 0'dır. */
+  /**
+   * Favori TUTTUĞUNDA gerçekleşen sonuçlar.
+   *
+   * Burada `"0" daima 0'dır` yazıyordu ve YANLIŞTI: piyasa nadiren de olsa
+   * beraberliği en yüksek olasılıklı sembol yapıyor (birleşik kesitte bir
+   * maç, 2023_24 h42 m7). Bkz. `odds.season_1x2_summary`.
+   */
   outcome_when_hit: Record<Sembol, number>;
   /** Favori TUTMADIĞINDA gerçekleşen sonuçlar. */
   outcome_when_miss: Record<Sembol, number>;
@@ -702,6 +727,29 @@ export interface OddsSummary {
     draw_pct: number;
     upset_pct: number;
   }>;
+  /**
+   * Favorinin ÜÇLÜ karnesi: kazandı / berabere / yenildi. Üçü `n`e tam
+   * toplanır — `favourite_hit` + `outcome_when_miss["0"]` + `underdog_wins`
+   * ile aynı sayılar, tek blokta.
+   */
+  favourite_outcome: {
+    n: number;
+    won: number;
+    draw: number;
+    lost: number;
+    won_pct: number;
+    draw_pct: number;
+    lost_pct: number;
+  };
+  /**
+   * Üçlü karnenin HAFTA dağılımı. `full` yalnız 15 maçı da oranlı haftalar
+   * (kupon okuyucusunun "15 maçta kaç" sorusunun tam karşılığı), `all`
+   * eksik haftalar dahil.
+   */
+  favourite_weekly: {
+    all: HaftalikFavoriOzet;
+    full: HaftalikFavoriOzet;
+  };
   /**
    * Çift (ilk iki sembol) işaretlemek sonucu ne sıklıkla kapsıyor.
    * `model_pct` piyasanın söylediği, `in_two_pct` gerçekleşen kapsamadır.
@@ -759,6 +807,10 @@ export interface OddsSummary {
     brier: number;
     favourite_hit: number;
     favourite_hit_pct: number;
+    /** Favori tutmadı ve maç berabere bitti. */
+    favourite_draw: number;
+    /** Favori tutmadı ve KARŞI taraf kazandı. */
+    favourite_lost: number;
     /** 15 maçın hepsinde oran yoksa hafta karşılaştırmaya girmemeli. */
     partial: boolean;
   }>;

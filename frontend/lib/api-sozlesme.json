@@ -1013,10 +1013,125 @@
     "favourite_hit": "int",
     "favourite_hit_pct": "float",
     "favourite_miss": "int",
+    "favourite_outcome": {
+     "draw": "int",
+     "draw_pct": "float",
+     "lost": "int",
+     "lost_pct": "float",
+     "n": "int",
+     "won": "int",
+     "won_pct": "float"
+    },
     "favourite_split": {
      "0": "int",
      "1": "int",
      "2": "int"
+    },
+    "favourite_weekly": {
+     "all": {
+      "avg_matches": "float",
+      "draw": {
+       "avg": "float",
+       "hist": {
+        "0": "int",
+        "1": "int",
+        "2": "int",
+        "3": "int",
+        "4": "int",
+        "5": "int",
+        "6": "int",
+        "7": "int",
+        "8": "int"
+       },
+       "max": "int",
+       "median": "float",
+       "min": "int"
+      },
+      "lost": {
+       "avg": "float",
+       "hist": {
+        "1": "int",
+        "2": "int",
+        "3": "int",
+        "4": "int",
+        "5": "int",
+        "6": "int",
+        "7": "int",
+        "8": "int"
+       },
+       "max": "int",
+       "median": "float",
+       "min": "int"
+      },
+      "weeks": "int",
+      "won": {
+       "avg": "float",
+       "hist": {
+        "10": "int",
+        "11": "int",
+        "12": "int",
+        "4": "int",
+        "5": "int",
+        "6": "int",
+        "7": "int",
+        "8": "int",
+        "9": "int"
+       },
+       "max": "int",
+       "median": "float",
+       "min": "int"
+      }
+     },
+     "full": {
+      "avg_matches": "float",
+      "draw": {
+       "avg": "float",
+       "hist": {
+        "0": "int",
+        "1": "int",
+        "2": "int",
+        "3": "int",
+        "4": "int",
+        "5": "int",
+        "6": "int",
+        "7": "int",
+        "8": "int"
+       },
+       "max": "int",
+       "median": "float",
+       "min": "int"
+      },
+      "lost": {
+       "avg": "float",
+       "hist": {
+        "1": "int",
+        "2": "int",
+        "3": "int",
+        "4": "int",
+        "5": "int"
+       },
+       "max": "int",
+       "median": "float",
+       "min": "int"
+      },
+      "weeks": "int",
+      "won": {
+       "avg": "float",
+       "hist": {
+        "10": "int",
+        "11": "int",
+        "12": "int",
+        "5": "int",
+        "6": "int",
+        "7": "int",
+        "8": "int",
+        "9": "int"
+       },
+       "max": "int",
+       "median": "float",
+       "min": "int"
+      }
+     }
     },
     "leagues": [
      {
@@ -1073,8 +1188,10 @@
      {
       "anahtar": "str",
       "brier": "float",
+      "favourite_draw": "int",
       "favourite_hit": "int",
       "favourite_hit_pct": "float",
+      "favourite_lost": "int",
       "n": "int",
       "partial": "bool",
       "sezon": "null",
