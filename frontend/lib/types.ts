@@ -1248,7 +1248,10 @@ export interface BenzerSembol {
 
 export interface BenzerKarne {
   n: number;
-  /** `AZ_ORNEK` (30) altındaysa yüzde okunmaz. */
+  /**
+   * `AZ_ORNEK` (30) altındaysa yüzde **oynaktır**. Lig kırılımı yine de
+   * yazar (adet ve "az örnek" işaretiyle birlikte); genel karne yazmaz.
+   */
   yeterli: boolean;
   semboller: Record<string, BenzerSembol>;
 }

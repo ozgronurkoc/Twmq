@@ -318,6 +318,30 @@ function ligYuzdesi(karne: BenzerKarne, sembol: string): string {
   return r?.oran == null ? "—" : `%${(100 * r.oran).toFixed(0)}`;
 }
 
+/**
+ * Bir lig satırının tek sonuç hücresi: **yüzde ve onu sayan maç adedi**.
+ *
+ * Yüzde eskiden `n < AZ_ORNEK` (30) dilimlerde hiç yazılmıyordu; satır
+ * "yetersiz örnek" diyip üç sütunu birden yutuyordu. Sahibi bunu istedi:
+ * sayı görünsün. Eşiğin arkasındaki gerekçe yine de duruyor — 12 maçta %58
+ * ile %33 arasındaki fark gürültüdür — o yüzden yüzde **çıplak** değil,
+ * yanında adet (`%58 · 7`) ve satır başında "az örnek" işaretiyle çıkar.
+ * Bu deponun kuralı yüzdeyi yasaklamak değil, `n`siz yazmamaktır.
+ */
+function LigHucresi({ karne, sembol }: { karne: BenzerKarne; sembol: string }) {
+  const r = karne.semboller[sembol];
+  return (
+    <td className="py-2 pr-3 text-right tabular-nums">
+      <span className={karne.yeterli ? "font-medium" : "text-muted-foreground"}>
+        {ligYuzdesi(karne, sembol)}
+      </span>
+      <span className="ml-1 text-[11px] text-muted-foreground">
+        · {r?.adet ?? 0}
+      </span>
+    </td>
+  );
+}
+
 export function LigKirilimi({
   veri,
   sorgu,
@@ -342,7 +366,7 @@ export function LigKirilimi({
     <Card>
       <CardHeader
         title="Lig kırılımı"
-        hint="Bir lige tıklayın: o oranlardaki maçların kendisi açılır. 30 maçın altındaki dilimde yüzde okunmaz — ama maçlar görülebilir."
+        hint="Her sonuç sütununda yüzde ve onu sayan maç adedi yan yana durur (%58 · 7). 30 maçın altındaki dilim 'az örnek' diye işaretlenir: yüzdesi yazılır ama oynaktır. Bir lige tıklayın: o oranlardaki maçların kendisi açılır."
       />
       <CardBody className="space-y-3">
         <div className={TABLO_SARMAL}>
@@ -351,6 +375,7 @@ export function LigKirilimi({
               <tr>
                 <th className="py-2 pr-3 text-left">Lig</th>
                 <th className="py-2 pr-3 text-right">Maç</th>
+                {/* Sira KUPON duzeni (1, 0, 2); her hucre "% · adet". */}
                 <th className="py-2 pr-3 text-right">1</th>
                 <th className="py-2 pr-3 text-right">0</th>
                 <th className="py-2 pr-3 text-right">2</th>
@@ -405,18 +430,20 @@ function LigSatiri({
             {acik ? "▾" : "▸"} {dilim.etiket}
           </button>
         </td>
-        <td className="py-2 pr-3 text-right tabular-nums">{k.n}</td>
-        {k.yeterli ? (
-          SEMBOLLER.map((s) => (
-            <td key={s} className="py-2 pr-3 text-right tabular-nums">
-              {ligYuzdesi(k, s)}
-            </td>
-          ))
-        ) : (
-          <td colSpan={3} className="py-2 pr-3 text-right text-[11.5px] text-muted-foreground">
-            yetersiz örnek (n&lt;30)
-          </td>
-        )}
+        <td className="py-2 pr-3 text-right tabular-nums">
+          {k.n}
+          {k.yeterli ? null : (
+            <span
+              className="ml-1.5 text-[10px] uppercase tracking-wide text-warning"
+              title={`${k.n} maç — 30 maçın altında yüzdeler oynaktır`}
+            >
+              az örnek
+            </span>
+          )}
+        </td>
+        {SEMBOLLER.map((s) => (
+          <LigHucresi key={s} karne={k} sembol={s} />
+        ))}
         <td className="py-2 text-right text-[11.5px] text-muted-foreground">
           {acik ? "gizle" : "maçlar"}
         </td>
