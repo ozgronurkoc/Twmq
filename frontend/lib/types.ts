@@ -66,6 +66,14 @@ export interface MetaResponse {
   modes: ModeInfo[];
   bayes_presets: BayesPresetInfo[];
   engine_defaults: EngineDefaults;
+  /**
+   * Bir kolonun TL bedeli (`getiri.KOLON_BEDELI`).
+   *
+   * Arayüz bunu SABİT KODLAMAZ: kupon kurucu "şu kadar kolon = ne kadar
+   * para" diye yazıyor ve o çarpanın iki yerde yaşaması, birinin
+   * değişmesiyle ötekinin sessizce yalan söylemesi demek olurdu.
+   */
+  kolon_bedeli_tl: number;
   limits: Record<string, Limit>;
   /**
    * Geri test esiklerinin varsayilanlari ve izgarasi.

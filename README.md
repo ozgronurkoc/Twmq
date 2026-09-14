@@ -850,7 +850,7 @@ Bugün `match_conflicts` tam olarak bunu yakalar. Vaka analizi:
 | `/pazarlar` | **1X2 dışı pazarlar** — alt/üst 2,5 · Asya handikabı, ölçülmüş kalibrasyonlarıyla |
 | `/takimlar` | **Takım gücü** — küçültülmüş; her satırda maç sayısı, küçültme oranı ve %95 aralık |
 | `/istatistik/geri-test` | **Geri test** — ürünün kuralı (bütçe taraması) ↔ eşik taban çizgisi (eşik taraması + hold-out) |
-| `/kupon` | **Kupon kurucu** — 15 maç elle girilir (lig · ev · deplasman · 1/0/2); zincirin ilk halkası. Satır başına marj ve favori anında okunur, tablo tarayıcıya kalıcı yazılır |
+| `/kupon` | **Kupon kurucu** — zincirin tamamı tek sayfada: 15 maç elle girilir (lig · ev · deplasman · 1/0/2) → hepsi **tek ayarla tüm liglerin korpusunda** aranır (açılış/kapanış · shin/güç/orantılı) → her maçta **karnenin en yüksek iki sembolü** işaretlenir → kupon adıyla arşive kaydedilir (girdi + ayar + damgalı analiz + işaretler) |
 | `/oran-analizi` | **Oran analizi** — elle 1/0/2 girilir; aynı fiyata sahip geçmiş maçların 1/0/2 karnesi, lig kırılımı ve lige tıklanınca maçların kendisi. Açılış/kapanış çizgisi seçilir |
 | `/saglik` | Değişmezler — kategori kategori, süre ve açıklamalarıyla |
 
@@ -1221,6 +1221,8 @@ frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası 
   lib/kurulum.ts       formül kurulumunun kalıcılığı + paylaşılabilir bağlantı
   lib/kume-ici.ts      üretmeden önce görülen koşul + kolon bedeli
   lib/kupon.ts         kupon kurucunun girdisi: doğrulama, marj, kalıcılık
+  lib/kupon-analiz.ts  15 satırın sorgu ayarı, izi, özeti; arşiv çevrimi
+  lib/kupon-kur.ts     kuponun kuralı: karnenin en yüksek İKİ sembolü
   lib/senaryo.ts       çalıştırılan kuponların karşılaştırma listesi (eksen: işaretler)
   lib/istek.ts         tek veri çekme kancası (AbortController + hata + yükleniyor)
   lib/adres.ts         adres çubuğu sorgu parametreleri — tek mekanizma

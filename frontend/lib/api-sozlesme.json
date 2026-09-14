@@ -505,7 +505,7 @@
      "duration_ms": "float",
      "durum": "str",
      "dusenler": [
-      "<bos>"
+      "str"
      ],
      "ok": "bool",
      "passed": "int",
@@ -531,7 +531,7 @@
     "durum": "str",
     "kayit": "int",
     "sinir": "int",
-    "son_saglikli": "str"
+    "son_saglikli": "null"
    },
    "version": "str"
   },
@@ -668,6 +668,7 @@
    ],
    "engine_defaults": {},
    "has_scipy": "bool",
+   "kolon_bedeli_tl": "float",
    "limits": {
     "fire_maliyet": {
      "max": "int",

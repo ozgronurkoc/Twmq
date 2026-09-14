@@ -51,7 +51,7 @@ try {
     "npx",
     [
       "tsc", "lib/kurulum.ts", "lib/kume-ici.ts", "lib/senaryo.ts",
-      "lib/kupon.ts", "lib/kupon-analiz.ts",
+      "lib/kupon.ts", "lib/kupon-analiz.ts", "lib/kupon-kur.ts",
       "lib/utils.ts", "lib/types.ts", "lib/sekmeler.ts",
       "lib/super-toto.ts",
       "--outDir", cikti,
@@ -69,6 +69,7 @@ try {
   const T = iste(join(cikti, "sekmeler.js"));
   const KP = iste(join(cikti, "kupon.js"));
   const KA = iste(join(cikti, "kupon-analiz.js"));
+  const KK = iste(join(cikti, "kupon-kur.js"));
   // `types.ts` yalnizca tip TASIMIYOR; `MAC_SAYISI` ve `SEMBOLLER`
   // gibi calisma zamani sabitleri de orada ve ikisi de sunucuyla
   // karsilastirilmak zorunda.
@@ -516,6 +517,94 @@ try {
 
     // Analiz hic yoksa tablo bos acilir, patlamaz.
     assert.equal(KA.kayittanAnaliz(null).length, TIP.MAC_SAYISI);
+  });
+
+  // ── Kuponun kurulmasi (lib/kupon-kur.ts) ─────────────────────────────
+  //
+  // Sahibinin kurali: *"oran analizden en yuksek ikiliyi alip sececeksin."*
+  // Ornegi de verdi ve bekci onu AYNEN kosuyor.
+
+  const _sembol = (oran, piyasa) => ({
+    adet: Math.round((oran ?? 0) * 100), oran, ga_alt: 0, ga_ust: 1,
+    piyasa, fark: null, piyasa_ga_icinde: true,
+  });
+  const _satir = (karne, piyasa, yeterli = true) => ({
+    durum: "bitti", hata: null,
+    veri: {
+      tolerans: 0.02, tolerans_genisledi: false, tolerans_tavana_dayandi: false,
+      toplam: {
+        n: yeterli ? 225 : 12, yeterli,
+        semboller: {
+          "1": _sembol(karne[0], piyasa[0]),
+          "0": _sembol(karne[1], piyasa[1]),
+          "2": _sembol(karne[2], piyasa[2]),
+        },
+      },
+    },
+  });
+
+  dene("SAHIBININ ORNEGI: Besiktas–Erzurum karnesi 1-0 verir", () => {
+    // 1 %80,9 · 0 %12,4 · 2 %6,7  ->  en yuksek ikili: 1 ve 0.
+    const k = KK.kuponKur([_satir([0.809, 0.124, 0.067], [0.784, 0.148, 0.068])]);
+    assert.deepEqual(k.satirlar[0].semboller, ["1", "0"]);
+    assert.equal(k.satirlar[0].kaynak, "karne");
+  });
+
+  dene("secim KARNEDEN yapilir, piyasadan DEGIL", () => {
+    // Karne 2'yi ikinci sirada diyor, piyasa 0'i. Kural karneye uyar.
+    const k = KK.kuponKur([_satir([0.50, 0.20, 0.30], [0.50, 0.40, 0.10])]);
+    assert.deepEqual(k.satirlar[0].semboller, ["1", "2"]);
+  });
+
+  dene("isaret sirasi KUPON duzeni (1, 0, 2), buyuklukten bagimsiz", () => {
+    // En yuksek 2, ikinci 0 — ama isaret "0-2" diye yazilir, "2-0" degil.
+    const k = KK.kuponKur([_satir([0.10, 0.30, 0.60], [0.1, 0.3, 0.6])]);
+    assert.deepEqual(k.satirlar[0].semboller, ["0", "2"]);
+  });
+
+  dene("esitlik PIYASAYLA bozulur, rastgele DEGIL", () => {
+    // Karne 0 ve 2'de birebir esit; piyasa 2'yi one aliyor.
+    const k = KK.kuponKur([_satir([0.50, 0.25, 0.25], [0.50, 0.20, 0.30])]);
+    assert.deepEqual(k.satirlar[0].semboller, ["1", "2"]);
+    assert.equal(k.satirlar[0].esitlikBozuldu, true);
+    assert.deepEqual(k.esitlikli, [0]);
+
+    // Piyasa da esitse sembol duzeni bozar — ve AYNI girdi hep AYNI kupon.
+    const tam = [_satir([0.40, 0.30, 0.30], [0.4, 0.3, 0.3])];
+    assert.deepEqual(KK.kuponKur(tam).satirlar[0].semboller, ["1", "0"]);
+    assert.deepEqual(KK.kuponKur(tam).satirlar[0].semboller, ["1", "0"]);
+  });
+
+  dene("karnesi olmayan satir PIYASADAN secilir ve isaretlenir", () => {
+    const k = KK.kuponKur([_satir([null, null, null], [0.55, 0.25, 0.20])]);
+    assert.deepEqual(k.satirlar[0].semboller, ["1", "0"]);
+    assert.equal(k.satirlar[0].kaynak, "piyasa");
+    assert.deepEqual(k.piyasadanSecilen, [0]);
+
+    // Hicbir veri yoksa isaret UYDURULMAZ; satir eksik sayilir.
+    const bos = KK.kuponKur(KA.bosAnaliz(TIP.MAC_SAYISI));
+    assert.deepEqual(bos.satirlar[0].semboller, []);
+    assert.equal(bos.eksik.length, TIP.MAC_SAYISI);
+  });
+
+  dene("az orneklem SECIMI engellemez ama ISARETLENIR", () => {
+    const k = KK.kuponKur([_satir([0.60, 0.25, 0.15], [0.6, 0.25, 0.15], false)]);
+    assert.deepEqual(k.satirlar[0].semboller, ["1", "0"]);
+    assert.deepEqual(k.azOrnekli, [0]);
+  });
+
+  dene("15 mac cifte -> 2^15 kolon; bedel SUNUCUDAN gelen carpanla", () => {
+    const hepsi = Array.from({ length: TIP.MAC_SAYISI }, () =>
+      _satir([0.5, 0.3, 0.2], [0.5, 0.3, 0.2]));
+    const k = KK.kuponKur(hepsi);
+    assert.equal(k.kolon, 2 ** TIP.MAC_SAYISI);
+    assert.equal(k.kolon, 32768);
+    assert.deepEqual(k.eksik, []);
+    // Kolon bedeli sunucunun sayisidir; arayuzde sabit YOK.
+    const bedel = SOZLESME.uclar["GET /api/meta"].kolon_bedeli_tl;
+    assert.equal(typeof bedel, "string", "sozlesme TIP tasir, deger degil");
+    assert.equal(KK.kuponBedeli(k.kolon, 10), 327680);
+    assert.equal(KK.kuponBedeli(k.kolon, null), null, "carpan yoksa para UYDURULMAZ");
   });
 
   // ── Kume-ici hesabi ──────────────────────────────────────────────────

@@ -1799,7 +1799,7 @@
     "backend/spor_toto/history.py:60",
     "backend/spor_toto/evaluate.py:109",
     "frontend/components/istatistik/parts.tsx:147",
-    "frontend/lib/types.ts:860",
+    "frontend/lib/types.ts",
     "backend/tests/test_history.py:265",
     "backend/tests/test_sizinti.py:593"
    ],

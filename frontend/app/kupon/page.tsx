@@ -9,6 +9,7 @@ import {
   getArsivKaydi,
   getArsivListesi,
   getBenzer,
+  getMeta,
 } from "@/lib/api";
 import { hataMetni, iptalMi } from "@/lib/istek";
 import {
@@ -21,6 +22,7 @@ import {
   yereliTemizle,
   type KuponSatiri,
 } from "@/lib/kupon";
+import { kuponBedeli, kuponKur } from "@/lib/kupon-kur";
 import {
   analizOzeti,
   analizdenKayit,
@@ -47,6 +49,11 @@ import { KuponIzgarasi } from "@/components/kupon/izgara";
 import { AnalizAyarlari } from "@/components/kupon/ayarlar";
 import { AnalizTablosu, TabloAciklamasi } from "@/components/kupon/analiz-tablosu";
 import { KuponArsivi } from "@/components/kupon/kupon-arsivi";
+import {
+  KuponAciklamasi,
+  KuponMuhasebesi,
+  KuponTablosu,
+} from "@/components/kupon/kupon-tablosu";
 
 /**
  * Kupon kurucu — **1. aşama: giriş**.
@@ -113,6 +120,30 @@ export default function KuponSayfasi() {
   const [arsivKosuyor, setArsivKosuyor] = React.useState(false);
   const [arsivHata, setArsivHata] = React.useState<string | null>(null);
   const [kaydedildi, setKaydedildi] = React.useState<string | null>(null);
+
+  /**
+   * Kolon bedeli ve haftalik tavan SUNUCUDAN gelir, burada sabit yok
+   * (`getiri.KOLON_BEDELI` ve `backtest.VARSAYILAN_BUTCE_TL`). Okunamazsa
+   * kupon yine kurulur — yalnizca para satiri "—" kalir.
+   */
+  const [kolonBedeli, setKolonBedeli] = React.useState<number | null>(null);
+  const [haftalikTavan, setHaftalikTavan] = React.useState<number | null>(null);
+
+  React.useEffect(() => {
+    let birakildi = false;
+    getMeta()
+      .then((m) => {
+        if (birakildi) return;
+        setKolonBedeli(m.kolon_bedeli_tl ?? null);
+        setHaftalikTavan(m.backtest?.butce_default_tl ?? null);
+      })
+      .catch(() => {
+        /* para satiri "—" kalir; kupon bundan bagimsiz kurulur */
+      });
+    return () => {
+      birakildi = true;
+    };
+  }, []);
 
   const listeyiTazele = React.useCallback(async () => {
     try {
@@ -282,9 +313,10 @@ export default function KuponSayfasi() {
         // Bayat bir analiz KAYDEDILMEZ: ekrandaki karne su anki girdiye ait
         // degilse onu kuponun gerekcesi diye yazmak, kaydi yalanci yapar.
         analiz: bayat ? null : analizdenKayit(sonuclar, evren),
-        // Kupon halkasi henuz kurulmuyor (o asama yazilmadi); alan sozlesmede
-        // duruyor ve `null` gidiyor.
-        kupon: null,
+        // Kupon, ekrandaki analizden kurulan isaretler. Bayat analizden
+        // kupon kurulmadigi icin bu alan da o durumda `null` gider: kaydin
+        // "neden bu isaretler" zinciri yalanci olmamali.
+        kupon: kuponGecerli && kupon ? { isaretler: kupon.satirlar.map((x) => x.semboller) } : null,
       });
       setAcikNo(kayit.no);
       setAd(kayit.ad);
@@ -369,6 +401,20 @@ export default function KuponSayfasi() {
   const doluMu = satirlar.some(
     (s) => s.lig || s.ev || s.dep || s.oran["1"] || s.oran["0"] || s.oran["2"],
   );
+
+  /**
+   * Kupon, ekrandaki analizden KURULUR — ayri bir sorgu atilmaz.
+   *
+   * Bayat bir analizden kupon kurulmaz: ekrandaki karne su anki girdiye
+   * ait degilse ondan cikan isaretler de degildir. Ayni gerekce kaydetmede
+   * de gecerli (`arsiveKaydet` bayat analizi yazmiyor).
+   */
+  const kupon = React.useMemo(
+    () => (sonucVar && !bayat && analiz.biten > 0 ? kuponKur(sonuclar) : null),
+    [sonucVar, bayat, analiz.biten, sonuclar],
+  );
+  const kuponGecerli = !!kupon && kupon.eksik.length === 0;
+  const bedel = kupon ? kuponBedeli(kupon.kolon, kolonBedeli) : null;
 
   return (
     <div className="mx-auto w-full max-w-[1180px] space-y-6 px-4 py-6 sm:px-6">
@@ -470,7 +516,7 @@ export default function KuponSayfasi() {
             onSil={arsivdenKaldir}
             kaydedildi={kaydedildi}
             analizVar={!bayat && analiz.biten > 0}
-            kuponVar={false}
+            kuponVar={kuponGecerli}
           />
         </CardBody>
       </Card>
@@ -543,14 +589,47 @@ export default function KuponSayfasi() {
         </Card>
       ) : null}
 
+      {kupon ? (
+        <Card>
+          <CardHeader
+            title="Kupon"
+            hint="Her maçta karnenin en yüksek iki sembolü işaretlenir — kural bu, seçim elle değiştirilmiyor."
+          />
+          <CardBody className="space-y-4">
+            <KuponMuhasebesi
+              kupon={kupon}
+              bedelTl={bedel}
+              haftalikTavanTl={haftalikTavan}
+            />
+            {bedel != null && haftalikTavan != null && bedel > haftalikTavan ? (
+              <Callout ton="warning" baslik="Bedel haftalık tavanı aşıyor">
+                Kural her maça iki sembol verdiği için kolon sayısı{" "}
+                <strong>girdiden bağımsız olarak</strong> 2¹⁵ çıkıyor:{" "}
+                {(bedel / haftalikTavan).toFixed(2)}× tavan. Aşımı kapatmanın
+                tek yolu bazı maçları <strong>banko</strong> (tek sembol)
+                yapmaktır — hangi maçların bankolaşacağı henüz karara
+                bağlanmadı.
+              </Callout>
+            ) : null}
+            <KuponTablosu satirlar={satirlar} kupon={kupon} />
+            <div className="border-t border-line pt-4">
+              <KuponAciklamasi kupon={kupon} />
+            </div>
+          </CardBody>
+        </Card>
+      ) : null}
+
       <Callout ton={sonucVar && analiz.tamam ? "success" : "neutral"} baslik="Sıradaki aşama">
-        {sonucVar && analiz.tamam ? (
+        {kuponGecerli ? (
           <>
-            Karne çıktı. Bundan sonrası <strong>olasılık</strong> ve{" "}
-            <strong>işaret seçimi</strong>: hangi sayının kupona gireceği
-            (piyasa · karne · karışım) ve 15 maçın banko/çifte/üçlü
-            dağılımının hangi bütçeyle kurulacağı — ikisi de henüz karara
-            bağlanmadı.
+            Kupon kuruldu ve arşive kaydedilebilir. Açık kalan tek soru{" "}
+            <strong>bütçe</strong>: kural her maça iki sembol verdiği için
+            kolon sayısı sabit 2¹⁵ ve bu haftalık tavanın üstünde. Bazı
+            maçları bankoya indirmenin kuralı henüz karara bağlanmadı.
+          </>
+        ) : sonucVar && analiz.tamam ? (
+          <>
+            Karne çıktı ama kupon kurulamadı — işaretsiz kalan satır var.
           </>
         ) : ozet.sorguyaHazir ? (
           <>
