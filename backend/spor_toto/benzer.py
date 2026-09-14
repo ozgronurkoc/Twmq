@@ -39,7 +39,12 @@ Bu araç yanlış kullanılmaya en müsait yer olduğu için üç koruma taşır
 1. Hiçbir yüzde **n ve güven aralığı olmadan** dönmez. "44 maçın 35'i ev
    sahibi" tek başına bir bilgi değildir; 44 maçta %80 ile %55 arasındaki
    fark gürültüdür.
-2. `AZ_ORNEK` (30) altındaki dilim sayı vermez, "yetersiz" der.
+2. `AZ_ORNEK` (30) altındaki dilim sayıyı **işaretli** verir: yüzde yazılır
+   ama satır "az örnek" damgasını taşır ve yanındaki güven aralığı zaten o
+   yüzdenin ne kadar oynak olduğunu söyler. (Eskiden sayı hiç yazılmazdı;
+   2026-09-14'te sahibinin isteğiyle değişti. Değişen, yüzdenin yazılıp
+   yazılmadığı — 1. maddedeki "n ve güven aralığı olmadan dönmez" kuralı
+   değil.) `n = 0` ayrı: orada okunacak yüzde yoktur, `oran` `None` döner.
 3. Dilimleme (lig × sezon) çoklu karşılaştırma uyarısı bastırır: 22 lig ×
    4 sezon taranırsa rastgele bir yerde çarpıcı bir oran **kesinlikle**
    çıkar ve o bir bulgu değildir.
@@ -415,7 +420,8 @@ def benzer_maclar(oranlar: dict[str, float],
             "arandığı için bu ancak çok uç bir fiyatta olur.")
     elif len(bulunan) < AZ_ORNEK:
         rapor["uyarilar"].append(
-            f"Örneklem {len(bulunan)} maç — {AZ_ORNEK} altında yüzde okunmaz.")
+            f"Örneklem {len(bulunan)} maç — {AZ_ORNEK} altında yüzdeler "
+            f"oynak; her satırın güven aralığına bakın.")
     if rapor["tolerans_tavana_dayandi"]:
         rapor["uyarilar"].append(
             f"Yarıçap tavana (±{100*EN_COK_TOLERANS:.0f} puan) dayandı ve "
@@ -612,10 +618,21 @@ def _mac_satiri(mesafe: float, r: dict[str, Any], yontem: str,
 # ─── yazdırma ─────────────────────────────────────────────────────────────────
 
 def _karne_satirlari(karne: dict[str, Any], girinti: str = "") -> None:
+    """Bir karnenin 1/0/2 satırları — az örnekli karne de yazılır.
+
+    Eşiğin altındaki karne eskiden tek satır "yetersiz" yazıp dönüyordu.
+    Artık yazılıyor (arayüzle aynı kural, gerekçe modül başlığının 2.
+    maddesinde): satırın kendisinde `adet` ve Wilson aralığı zaten duruyor,
+    yani oynaklık gizlenmiyor — okunur hâlde veriliyor. `n = 0` hâlâ ayrı:
+    `oran` `None`dur, biçimlenecek bir yüzde yoktur.
+    """
     n = karne["n"]
-    if not karne["yeterli"]:
-        print(f"{girinti}n={n} — örneklem yetersiz, yüzde yazılmadı.")
+    if not n:
+        print(f"{girinti}n=0 — bu yarıçapta maç yok, okunacak yüzde de yok.")
         return
+    if not karne["yeterli"]:
+        print(f"{girinti}(n={n} — {AZ_ORNEK} altında; yüzdeler oynak, "
+              f"güven aralığı geniş)")
     for s in SEMBOLLER:
         r = karne["semboller"][s]
         isaret = "" if r["piyasa_ga_icinde"] else "   ← piyasa GA DIŞINDA"
@@ -654,18 +671,23 @@ def yaz(rapor: dict[str, Any]) -> None:
     _karne_satirlari(rapor["toplam"], "  ")
 
     for ad, baslik in (("lig", "LİG"), ("sezon", "SEZON")):
-        dilimler = [d for d in rapor["dilimler"][ad] if d["karne"]["yeterli"]]
-        atlanan = len(rapor["dilimler"][ad]) - len(dilimler)
+        # Az örnekli dilim artık ATLANMIYOR, DAMGALANIYOR — arayüzdeki lig
+        # kırılımıyla aynı kural. Hücre yüzdenin yanında onu sayan adedi de
+        # taşır (`1:%58(7)`): oynaklığı gizleyen şey eksik sayıdır, yazılan
+        # sayı değil.
+        dilimler = rapor["dilimler"][ad]
         if not dilimler:
             continue
         print(f"\n─── {baslik} KIRILIMI " + "─" * 50)
         for d in dilimler:
             k = d["karne"]
-            hucre = "  ".join(
-                f"{s}:%{100*k['semboller'][s]['oran']:.0f}" for s in SEMBOLLER)
-            print(f"  {d['etiket']:<28} n={k['n']:<5} {hucre}")
-        if atlanan:
-            print(f"  ({atlanan} dilim {AZ_ORNEK} maçın altında olduğu için yazılmadı)")
+            # Sabit genişlik: sütunlar üç dilim arasında hizalı kalsın.
+            hucre = " ".join(
+                f"{s}:%{100*k['semboller'][s]['oran']:>3.0f}"
+                f"({k['semboller'][s]['adet']})".ljust(12)
+                for s in SEMBOLLER).rstrip()
+            damga = "" if k["yeterli"] else f"  ← az örnek (n<{AZ_ORNEK})"
+            print(f"  {d['etiket']:<28} n={k['n']:<5} {hucre}{damga}")
 
     if rapor["uyarilar"]:
         print("\n─── UYARILAR " + "─" * 58)
