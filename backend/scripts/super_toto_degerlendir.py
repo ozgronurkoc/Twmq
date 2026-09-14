@@ -461,6 +461,54 @@ def coklu_degerlendir(d: dict[str, Any],
                           reverse=True)},
         "tek_sistem_p_onbes": (plan.get("tek_sistem") or {}).get("p_onbes"),
         "tavansiz_p_onbes": kayit["meta"].get("tavansiz_p_onbes"),
+        # Para. 5. haftaya kadar bu blok YOKTU ve eksikliğin bedeli o hafta
+        # ölçüldü: plan ₺196.324,34 getirirken oynanan tek sistem ₺4.436,90
+        # getirdi ve rapor ikisini yan yana hiç yazmadı (§3.82, 2. ders).
+        "getiri": coklu_getiri(d, plan["kuponlar"]),
+    }
+
+
+def coklu_getiri(d: dict[str, Any],
+                 kuponlar: Sequence[dict[str, Any]]) -> dict[str, Any] | None:
+    """Çoklu planın parası — tek sistemle **AYNI** gövdeden (`getiri_karnesi`).
+
+    Kuponlar ayrıktır (`coklu_degerlendir` bunu kolon toplamıyla sınar), o
+    yüzden gerçekleşen ve beklenen TL kupon kupon toplanabilir. Ayrı bir
+    para hesabı yazmak, iki kaydı farklı gövdeyle ölçmek olurdu — bu
+    dosyanın çoklu planı `kupon_degerlendir`den geçirmesindeki gerekçenin
+    aynısı.
+
+    **Niçin sonradan eklendi.** §3.69'dan beri çoklu plan her hafta donuyor
+    ve puanlanıyordu, ama yalnızca *kademe* olarak. Haftanın en büyük sayısı
+    — oynanmayan planın oynanana göre kaç lira ettiği — hiçbir çıktıda
+    yoktu; 5. haftada elle hesaplanınca **44 kat** çıktı. Rapor artık onu
+    kendisi yazıyor.
+    """
+    # `"tam"` = tam sistem: cokul planin her kuponu secim kumesinin
+    # TAMAMINI oynar (`meta.sistem: "duz"`nin `SISTEMLER` karsiligi,
+    # bkz. `kayit_sistemi`). Burada bir kez `"duz"` yaziliydi ve
+    # `oynanan_kolon_listesi` onu tanimayip `fix16`ya dusuyordu; hesap
+    # sessizce `None` donuyor, PARA satiri hic basilmiyordu.
+    ham = [getiri_karnesi(d, k["picks"], "tam") for k in kuponlar]
+    if not ham or any(x is None for x in ham):
+        return None
+    parcalar: list[dict[str, Any]] = [x for x in ham if x is not None]
+    kolon = sum(x["kolon"] for x in parcalar)
+    ger = sum(x["gerceklesen"] for x in parcalar)
+    bek = sum(x["beklenen"] for x in parcalar)
+    mal = kolon * KOLON_BEDELI
+    kazanan: dict[int, int] = {}
+    for x in parcalar:
+        for k, adet in x["kazanan_kolon"].items():
+            kazanan[k] = kazanan.get(k, 0) + adet
+    return {
+        "kolon": kolon, "maliyet": mal,
+        "kazanan_kolon": {k: kazanan[k] for k in sorted(kazanan, reverse=True)},
+        "gerceklesen": ger, "gerceklesen_kolon_basi": ger / kolon,
+        "beklenen": bek, "beklenen_kolon_basi": bek / kolon,
+        "net": ger - mal, "roi": ger / mal,
+        "beklenen_net": bek - mal, "beklenen_roi": bek / mal,
+        "kolon_bedeli": KOLON_BEDELI, "bedel_kaynagi": KOLON_BEDELI_KAYNAGI,
     }
 
 
@@ -1248,6 +1296,21 @@ def yaz(o: dict[str, Any]) -> None:
               f"tavansiz {c['tavansiz_p_onbes']:.3%}")
         print("  kademe (kolon): " + "  ".join(
             f"{k}:{v:,}" for k, v in c["kademe"].items()))
+        # OYNANMAYAN planin parasi — oynananla YAN YANA. Tek basina "13
+        # tutturdu" cumlesi haftanin en buyuk sayisini gizliyordu (§3.82).
+        if c.get("getiri"):
+            g = c["getiri"]
+            ana_g = (o["kartlar"][0] or {}).get("getiri") if o["kartlar"] else None
+            print(f"  PARA: gerceklesen ₺{g['gerceklesen']:,.2f} · maliyet "
+                  f"₺{g['maliyet']:,.0f} · net ₺{g['net']:+,.2f} · "
+                  f"geri donus {100*g['roi']:.2f}%")
+            if ana_g:
+                fark = g["gerceklesen"] - ana_g["gerceklesen"]
+                kat = (g["gerceklesen"] / ana_g["gerceklesen"]
+                       if ana_g["gerceklesen"] else None)
+                print(f"        OYNANANA GORE: ₺{fark:+,.2f}"
+                      + (f"  ({kat:.1f} kat)" if kat else "")
+                      + "  — oynanmadigi icin ALINMADI.")
         # Kayıt kendini doğrular; ayrışma SESSIZ geçmez.
         if not (c["kayit_tutarli"] and c["kolon_tutarli"]):
             print(f"  ! KAYIT AYRISTI — p_onbes kayitta "

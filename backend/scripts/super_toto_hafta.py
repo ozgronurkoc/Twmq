@@ -23,6 +23,7 @@ import argparse
 import json
 import math
 import sys
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -168,6 +169,131 @@ def _fiyat_uyarilari(d: dict[str, Any],
     return uyarilar
 
 
+#: Fiyat kaydinin kupon kapanisindan **en fazla** ne kadar once alinmasi
+#: makul sayilir. 5. haftada olculdu ve esik oradan geldi: fiyat
+#: 2026-09-10'da kaydedildi, kupon 2026-09-11 19:55'te kapandi — 1 gun 20
+#: saat. `odds_kind` o kayda "kapanis" diyordu ve bu ETIKET FAZLAYDI.
+#: Sekiz saat, ayni gun icinde alinan bir kaydi gecirir, bir gun oncesini
+#: gecirmez.
+FIYAT_YASI_ESIGI_SAAT = 8.0
+
+#: Resmi kapanis damgasinin geldigi arsiv. `build_sportoto_arsiv.py`
+#: uretir ve her haftanin `close_date`ini tasir.
+ARSIV_KOK = KOK / "data" / "sportoto_arsiv"
+
+
+def _resmi_kapanis(meta: dict[str, Any]) -> datetime | None:
+    """Haftanin RESMI kupon kapanis ani — arsivden, elle girilenden degil.
+
+    Kaynak `data/sportoto_arsiv/<sezon>.json`; orada her haftanin
+    `close_date`i Spor Toto'nun kendi ucundan gelir. Bulunamazsa `None`
+    doner ve denetim sessizce atlanir — "arsiv yok" ile "fiyat bayat" ayri
+    seylerdir.
+    """
+    sezon = (meta.get("season") or "").strip()
+    hafta = meta.get("week")
+    if not sezon or hafta is None:
+        return None
+    parca = sezon.split("/")
+    if len(parca) != 2:
+        return None
+    yol = ARSIV_KOK / f"{parca[0].strip()}_{parca[1].strip()[-2:]}.json"
+    if not yol.exists():
+        return None
+    try:
+        govde = json.loads(yol.read_text(encoding="utf-8"))
+        for h in govde.get("weeks") or []:
+            if h.get("week") == int(hafta) and h.get("close_date"):
+                return datetime.strptime(h["close_date"], "%Y-%m-%d %H:%M")
+    except (ValueError, KeyError, TypeError):
+        return None
+    return None
+
+
+def _yas_uyarilari(d: dict[str, Any]) -> list[str]:
+    """Ana fiyat kupon kapanisina gore NE ZAMAN alinmis — ve etiket dogru mu.
+
+    **5. haftanin 3. dersi.** Depo iki hafta ust uste `odds_kind`e
+    "kapanis" yazdi ve iki hafta ust uste bunu elle yazilmis bir
+    `data_warnings` satiriyla itiraf etti (3. haftanin 3. dersi). Itiraf
+    bir bekci degildir: bir dahaki hafta unutulur ve etiket sessizce dogru
+    gorunur.
+
+    Burasi onu **hesaplar**. Resmi kupon kapanisi arsivde duruyor
+    (`close_date`, Spor Toto'nun kendi ucu) ve fiyatin kayit ani
+    `meta.entered_at`.
+
+    ─── `entered_at` yalnizca GUN tasiyor, ve karar buna gore ucludur ──
+
+    Saat girilmedigi icin ayni GUN icinde alinan bir kaydin kapanistan once
+    mi sonra mi oldugu **bilinemez**. Uc dal, ucu de kaydi kayirir:
+
+    ``kayit gunu < kapanis gunu``
+        Fiyat kesinlikle onceden alinmis. Yasin ALT siniri yazilir (kayit
+        gununun sonu varsayilir), yani gercek yas bundan buyuktur.
+    ``kayit gunu = kapanis gunu``
+        Ayrilamaz — **susulur**. "Bilinmiyor" ile "kusurlu" ayri seylerdir.
+    ``kayit gunu > kapanis gunu``
+        Fiyat kupon kapandiktan SONRA alinmis. Bu "eski fiyat"tan baska ve
+        daha agir bir sey: o hafta ileriye donuk bir tanik DEGILDIR, cunku
+        kayit anina kadar maclarin bir kismi ya da tamami oynanmisti.
+        Donmus kuponun `results_known: false` kunyesi orada yalanlanmiyor
+        ama **dogrulanamiyor** da. 1. haftada oldu ve bes hafta boyunca
+        hicbir yerde yazmiyordu (fiyat 2026-08-18, kapanis 2026-08-14).
+
+    **Nicin bu bir kalite sorusu, ucuz bir titizlik degil:** A1 olcumu
+    kapanis cizgisini acilistan daha iyi bir tahminci buluyor (Brier
+    0,5940 ↔ 0,5964). O olcum "gec fiyat daha iyidir" diyor; bir gun
+    onceden alinan kayit o kazanci alamaz ve alindigi da sanilir.
+    """
+    meta = d.get("meta") or {}
+    ham = (meta.get("entered_at") or "").strip()
+    if not ham:
+        return []
+    kapanis = _resmi_kapanis(meta)
+    if kapanis is None:
+        return []
+    try:
+        gun = datetime.strptime(ham, "%Y-%m-%d").date()
+    except ValueError:
+        return []
+
+    if gun > kapanis.date():
+        # Kaydi kayiran alt sinir: kayit gununun BASI.
+        saat = (datetime.combine(gun, datetime.min.time())
+                - kapanis).total_seconds() / 3600.0
+        return [
+            f"KAYIT KUPON KAPANDIKTAN SONRA: fiyat {ham}'de girildi, resmi "
+            f"kupon kapanisi {kapanis:%Y-%m-%d %H:%M} — en iyi halde "
+            f"{saat:.0f} saat SONRA. Bu hafta ILERIYE DONUK BIR TANIK "
+            f"DEGILDIR; donmus kuponun `results_known: false` kunyesi "
+            f"burada dogrulanamaz ve karne okunurken bu satir ayrica "
+            f"sayilmalidir."
+        ]
+    if gun == kapanis.date():
+        return []      # ayrilamaz — susulur
+
+    # Kaydi kayiran alt sinir: kayit gununun SONU.
+    saat = (kapanis - datetime.combine(gun, datetime.max.time())
+            ).total_seconds() / 3600.0
+    if saat <= FIYAT_YASI_ESIGI_SAAT:
+        return []
+    uyarilar = [
+        f"ANA FIYAT KAPANISA GORE ESKI: kayit {ham}, resmi kupon kapanisi "
+        f"{kapanis:%Y-%m-%d %H:%M} — en iyi halde {saat:.0f} saat once "
+        f"alinmis (esik {FIYAT_YASI_ESIGI_SAAT:.0f} saat). A1 gec fiyati "
+        f"daha iyi olcuyor; bu kayit o kazanci ALMIYOR."
+    ]
+    ana = (meta.get("odds_kind") or "").replace("-", "_")
+    if ana.endswith("_kapanis"):
+        uyarilar.append(
+            f"`odds_kind` {meta.get('odds_kind')!r} diyor ama kayit kupon "
+            f"kapanisindan {saat:.0f} saat ONCE alinmis — ETIKET FAZLA. "
+            "Kapanis diye anilan sey, o an elde olan en gec kayit bile "
+            "degil.")
+    return uyarilar
+
+
 def _kunye_uyarilari(maclar: list[dict[str, Any]]) -> list[str]:
     """`odds_from` künyesi ana fiyatla tutuyor mu.
 
@@ -248,6 +374,7 @@ def dogrula(d: dict[str, Any]) -> list[str]:
                 f"%{sum(pay.values()):.0f} — 100'den uzak")
 
     uyarilar.extend(_fiyat_uyarilari(d, maclar))
+    uyarilar.extend(_yas_uyarilari(d))
     uyarilar.extend(_kunye_uyarilari(maclar))
 
     ligler = [m.get("league") for m in maclar]

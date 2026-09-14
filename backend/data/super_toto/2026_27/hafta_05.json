@@ -2,7 +2,7 @@
   "meta": {
     "season": "2026/2027",
     "week": 5,
-    "program": "",
+    "program": "11–14 Eylül 2026",
     "match_count": 15,
     "odds_source": "Pinnacle — AÇILIŞ ve KAPANIŞ oranları, kullanıcı ekran görüntüleri (açılış 2026-09-07, kapanış 2026-09-10)",
     "odds_kind": "pinnacle-kapanis",
@@ -10,24 +10,54 @@
     "play_source": "Kullanıcı ekran görüntüsü (2026-09-10). Yüzdeler TEK bir platformun kendi kullanıcılarının tercih payıdır; Spor Toto havuzunun tamamı DEĞİLDİR.",
     "play_note": "Oynanma payı bu hafta GİRİLDİ (15 maçın 15'i, her satır tam 100). Kuponun işaretleri yine de yalnızca fiyattan çıkar: kalabalık ayarının kazancı ölçüldü ve sıfır çıktı (KUPON_NASIL_KURULUYOR §7.4). Yüzdeler rapor katmanında — havuz payı, rakip yoğunluğu, E[TL] — kullanılır.",
     "entered_at": "2026-09-10",
-    "results": null,
+    "results": "122012110010220",
     "data_warnings": [
       "KAPANIŞ ETİKETİ FAZLA OLABİLİR — 3. haftanın 3. dersi. Spor Toto kuponu İLK MAÇTAN ÖNCE kapanır; haftanın son maçlarının gerçek kapanış çizgisi o anda henüz yoktur. Buradaki `pinnacle_kapanis`, kupon donarken (2026-09-10) elde olan EN GEÇ KAYITTIR, tanım gereği kapanış değildir. Bu hafta doğrulama ayrıca İMKÂNSIZ: program tarihleri ve maç saatleri girilmedi, yani 3. haftada etiket hatasını ortaya çıkaran denetimin (kayıt anı ↔ maç saati) girdisi yok. Sonuç: A1'in geri test gerekçesi (gerçek kapanış > açılış) buraya DOĞRUDAN DEVREDİLEMEZ; burada ölçülen şey 'iki anlık kayıttan geç olanı'dır.",
-      "Program tarihleri ve maç saatleri GİRİLMEDİ (kullanıcı vermedi). Uydurulmadı; `date`/`kickoff` boş bırakıldı. Kuponun donduğu anı belgeleyen tek alan `entered_at`tır (kapanış sürümü için 2026-09-10).",
       "6. maçın (Gençlerbirliği–Kasımpaşa) beraberlik oranı ilk ekran görüntüsünde 5.79 okunmuştu; o değerle bültenin marjı −%7,8 çıkıyordu (arbitraj, Pinnacle'da olmaz). Kullanıcı doğru değeri 3.32 olarak verdi (2026-09-07) ve tablodaki açılış değeri odur. Düzeltmeden önceki olasılıklar (%47,6 / %18,7 / %33,7) HATALIDIR.",
       "Yalnızca TEK bahisçi (Pinnacle) var; iki an kayıtlı. Bahisçi ayrışması bu hafta ölçülemez, açılış↔kapanış hareketi ölçülebilir.",
       "12. maç (Chelsea–Hull City) lig kodu `E0` yazıldı ama iki takım aynı ligde değil; maç büyük olasılıkla bir kupa eşleşmesidir. Kod, ev sahibinin liginden türetilmiş bir ETİKETTİR, olgu değildir.",
       "Takım adları kullanıcının listesindeki kısaltmalardan bu depodaki yazımlara elle eşlendi (Amed→Amed Sportif, Çorum→Çorum FK, B.Leverkusen→Bayer Leverkusen, Marsilya, Rizespor→Çaykur Rizespor). Eşleme doğrulanmadı.",
       "6. ve 8. maçta kapanış açılışla BİREBİR aynı; `dogrula` bunu 'bayat kapanış' olarak işaretler ve UYARI DOĞRUDUR — o iki satırda kapanış bir fiyat değil, tazelenmemiş bir kayıt olabilir. Susturulmadı.",
       "Oynanma yüzdeleri tek platformun kendi kullanıcılarıdır (bkz. `play_source`); havuzun tamamı sanılırsa §7'nin bütün TL hesabı yanlış okunur.",
-      "Sonuçlar girilmedi; hafta açık."
-    ]
+      "Program tarihleri ve maç saatleri SONRADAN girildi (2026-09-14, sonuç ekranıyla birlikte) — kupon donarken elde değildi. Girildikleri anda `odds_kind: pinnacle-kapanis` etiketinin FAZLA olduğu ölçülebilir hâle geldi: kupon 2026-09-11 19:55'te kapandı, oranlar 2026-09-10'da kaydedildi ve haftanın son maçı 2026-09-14 20:00'de oynandı. Yani ana fiyat ne gerçek kapanış çizgisidir ne de kupon kapanışındaki en geç kayıttır; en geç kayıttan yaklaşık 1 gün 20 saat ÖNCEDİR.",
+      "Sonuç dizisi ve skorlar tek kaynaktan (ekran görüntüsü) okundu; skor ↔ sembol tutarlılığı kodla çapraz denetlendi (15/15), ama skorların kendisi ikinci bir kaynakla doğrulanmadı. İkramiye tablosu iki kaynakla doğrulandı, sonuç dizisi DEĞİL."
+    ],
+    "results_entered_at": "2026-09-14",
+    "results_source": "Spor Toto resmî 'Sonuçlar' ekranı — kullanıcı ekran görüntüsü (2026-09-14 23:50). İki görüntü 15 maçın tamamını kapsıyor; ikincisi 11–15. satırları ve ikramiye şeridini tekrar gösteriyor, örtüşen beş satır ikisinde de aynı okundu. Program tarihleri ve maç saatleri AYNI ekrandan geldi — bu hafta ilk kez sonuçla birlikte girildi.",
+    "payout": {
+      "source": "İKİ BAĞIMSIZ KAYNAK, birebir uyuştu: (a) kullanıcı ekran görüntüsündeki ikramiye şeridi (2026-09-14 23:50), (b) resmî uç `GameResult` üzerinden `scripts/build_sportoto_arsiv.py` ile çekilen arşiv kaydı (`data/sportoto_arsiv/2026_27.json`, game_round_id 1532, çekim 2026-09-14). Önceki haftalarda tablo yalnızca ekran görüntüsünden okunuyordu.",
+      "currency": "TRY",
+      "close_date": "2026-09-11 19:55",
+      "tiers": [
+        {
+          "correct": 15,
+          "winners": 0,
+          "prize": 39574570.01
+        },
+        {
+          "correct": 14,
+          "winners": 35,
+          "prize": 646115.42
+        },
+        {
+          "correct": 13,
+          "winners": 591,
+          "prize": 38264.02
+        },
+        {
+          "correct": 12,
+          "winners": 6371,
+          "prize": 4436.9
+        }
+      ],
+      "note": "15 kademesinde KAZANAN YOK; `prize` orada kişi başı ödül değil ÖNÜMÜZDEKİ HAFTAYA DEVREDEN tutardır (arşivin 1. hafta kaydıyla aynı düzen). `havuz.hafta_havuzu` bunu 'devreden' olarak okur."
+    }
   },
   "matches": [
     {
       "no": 1,
-      "date": "",
-      "kickoff": "",
+      "date": "2026-09-11",
+      "kickoff": "20:00",
       "league": "T1",
       "home": "Beşiktaş A.Ş.",
       "away": "Erzurumspor FK",
@@ -54,13 +84,16 @@
         "0": 8.0,
         "2": 2.0
       },
-      "result": null,
-      "score": null
+      "result": "1",
+      "score": {
+        "hg": 3,
+        "ag": 0
+      }
     },
     {
       "no": 2,
-      "date": "",
-      "kickoff": "",
+      "date": "2026-09-12",
+      "kickoff": "17:00",
       "league": "T1",
       "home": "Eyüpspor",
       "away": "Çaykur Rizespor",
@@ -87,13 +120,16 @@
         "0": 29.0,
         "2": 48.0
       },
-      "result": null,
-      "score": null
+      "result": "2",
+      "score": {
+        "hg": 0,
+        "ag": 2
+      }
     },
     {
       "no": 3,
-      "date": "",
-      "kickoff": "",
+      "date": "2026-09-12",
+      "kickoff": "17:00",
       "league": "T1",
       "home": "Samsunspor A.Ş.",
       "away": "Çorum FK",
@@ -120,13 +156,16 @@
         "0": 25.0,
         "2": 22.0
       },
-      "result": null,
-      "score": null
+      "result": "2",
+      "score": {
+        "hg": 1,
+        "ag": 5
+      }
     },
     {
       "no": 4,
-      "date": "",
-      "kickoff": "",
+      "date": "2026-09-12",
+      "kickoff": "20:00",
       "league": "T1",
       "home": "Alanyaspor",
       "away": "Göztepe A.Ş.",
@@ -153,13 +192,16 @@
         "0": 30.0,
         "2": 29.0
       },
-      "result": null,
-      "score": null
+      "result": "0",
+      "score": {
+        "hg": 2,
+        "ag": 2
+      }
     },
     {
       "no": 5,
-      "date": "",
-      "kickoff": "",
+      "date": "2026-09-12",
+      "kickoff": "20:00",
       "league": "T1",
       "home": "Konyaspor",
       "away": "Trabzonspor A.Ş.",
@@ -186,13 +228,16 @@
         "0": 22.0,
         "2": 62.0
       },
-      "result": null,
-      "score": null
+      "result": "1",
+      "score": {
+        "hg": 1,
+        "ag": 0
+      }
     },
     {
       "no": 6,
-      "date": "",
-      "kickoff": "",
+      "date": "2026-09-13",
+      "kickoff": "17:00",
       "league": "T1",
       "home": "Gençlerbirliği",
       "away": "Kasımpaşa A.Ş.",
@@ -219,13 +264,16 @@
         "0": 31.0,
         "2": 25.0
       },
-      "result": null,
-      "score": null
+      "result": "2",
+      "score": {
+        "hg": 1,
+        "ag": 2
+      }
     },
     {
       "no": 7,
-      "date": "",
-      "kickoff": "",
+      "date": "2026-09-13",
+      "kickoff": "20:00",
       "league": "T1",
       "home": "Amed Sportif",
       "away": "Başakşehir FK",
@@ -252,13 +300,16 @@
         "0": 29.0,
         "2": 35.0
       },
-      "result": null,
-      "score": null
+      "result": "1",
+      "score": {
+        "hg": 5,
+        "ag": 0
+      }
     },
     {
       "no": 8,
-      "date": "",
-      "kickoff": "",
+      "date": "2026-09-13",
+      "kickoff": "20:00",
       "league": "T1",
       "home": "Galatasaray A.Ş.",
       "away": "Kocaelispor",
@@ -285,13 +336,16 @@
         "0": 18.0,
         "2": 7.0
       },
-      "result": null,
-      "score": null
+      "result": "1",
+      "score": {
+        "hg": 1,
+        "ag": 0
+      }
     },
     {
       "no": 9,
-      "date": "",
-      "kickoff": "",
+      "date": "2026-09-14",
+      "kickoff": "20:00",
       "league": "T1",
       "home": "Gaziantep F.K.",
       "away": "Fenerbahçe A.Ş.",
@@ -318,13 +372,16 @@
         "0": 17.0,
         "2": 74.0
       },
-      "result": null,
-      "score": null
+      "result": "0",
+      "score": {
+        "hg": 0,
+        "ag": 0
+      }
     },
     {
       "no": 10,
-      "date": "",
-      "kickoff": "",
+      "date": "2026-09-12",
+      "kickoff": "16:30",
       "league": "D1",
       "home": "Augsburg",
       "away": "Bayer Leverkusen",
@@ -351,13 +408,16 @@
         "0": 22.0,
         "2": 50.0
       },
-      "result": null,
-      "score": null
+      "result": "0",
+      "score": {
+        "hg": 2,
+        "ag": 2
+      }
     },
     {
       "no": 11,
-      "date": "",
-      "kickoff": "",
+      "date": "2026-09-11",
+      "kickoff": "21:45",
       "league": "F1",
       "home": "Rennes",
       "away": "Marsilya",
@@ -384,13 +444,16 @@
         "0": 27.0,
         "2": 31.0
       },
-      "result": null,
-      "score": null
+      "result": "1",
+      "score": {
+        "hg": 1,
+        "ag": 0
+      }
     },
     {
       "no": 12,
-      "date": "",
-      "kickoff": "",
+      "date": "2026-09-12",
+      "kickoff": "17:00",
       "league": "E0",
       "home": "Chelsea",
       "away": "Hull City",
@@ -417,13 +480,16 @@
         "0": 13.0,
         "2": 7.0
       },
-      "result": null,
-      "score": null
+      "result": "0",
+      "score": {
+        "hg": 2,
+        "ag": 2
+      }
     },
     {
       "no": 13,
-      "date": "",
-      "kickoff": "",
+      "date": "2026-09-13",
+      "kickoff": "18:30",
       "league": "E0",
       "home": "Manchester United",
       "away": "Manchester City",
@@ -450,13 +516,16 @@
         "0": 26.0,
         "2": 46.0
       },
-      "result": null,
-      "score": null
+      "result": "2",
+      "score": {
+        "hg": 0,
+        "ag": 1
+      }
     },
     {
       "no": 14,
-      "date": "",
-      "kickoff": "",
+      "date": "2026-09-13",
+      "kickoff": "17:15",
       "league": "SP1",
       "home": "Levante",
       "away": "Barcelona",
@@ -483,13 +552,16 @@
         "0": 9.0,
         "2": 86.0
       },
-      "result": null,
-      "score": null
+      "result": "2",
+      "score": {
+        "hg": 2,
+        "ag": 4
+      }
     },
     {
       "no": 15,
-      "date": "",
-      "kickoff": "",
+      "date": "2026-09-12",
+      "kickoff": "19:00",
       "league": "I1",
       "home": "Lazio",
       "away": "AC Milan",
@@ -516,8 +588,11 @@
         "0": 30.0,
         "2": 43.0
       },
-      "result": null,
-      "score": null
+      "result": "0",
+      "score": {
+        "hg": 2,
+        "ag": 2
+      }
     }
   ]
 }

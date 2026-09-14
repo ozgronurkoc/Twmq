@@ -2,7 +2,7 @@
  "sayilar": [
   {
    "ne": "suit test sayisi (eksiksiz kurulum)",
-   "deger": "2.087",
+   "deger": "2.098",
    "ureten": "cd backend && python -m pytest --collect-only -q -p no:randomly -o addopts=  # son satirdaki toplam",
    "olculdu": "2026-09-14",
    "anildigi_yerler": [
@@ -2555,6 +2555,83 @@
    ],
    "bekcisiz_gerekce": "Korpusa bagli bir OLCUM, degismez degil: korpus buyudukce bu sayi duser ve dusmesi beklenen bir seydir. Kapiya baglanmasi, veri eklendiginde kirmizi yanan bir test demek olurdu. Tutulan sey sayinin kendisi degil ARKASINDAKI mekanizma ve o bekcili: test_benzer.py::test_lig_suzgeci_EVRENI_daraltir_ve_bunu_yazar.",
    "not": "Ayni kosumda TUM LIGLER kapsaminda tavana dayanan satir 1/15. Fark evrenden: 23.085 -> bir ligin boyu (T1 1.415, D1 1.224, E0/SP1/I1 1.520, F1 1.372). En uc ornek Levante-Barcelona: tum liglerde n=123, kendi liginde n=2 (az ornek). Bu sayi secenegi KOTU yapmaz, bedelini yazar: kendi liginde orneklem 'benzer' maclardan degil SINIRDAN toplaniyor."
+  },
+  {
+   "ne": "5. hafta — OYNANAN tek sistem kuponunun gerceklesen getirisi",
+   "deger": "4.436,90",
+   "ureten": "cd backend && python scripts/super_toto_degerlendir.py --hafta 5",
+   "olculdu": "2026-09-14",
+   "anildigi_yerler": [
+    "docs/ISTATISTIK_YOL_HARITASI.md"
+   ],
+   "bekci": "backend/tests/test_degerlendir.py::test_coklu_planin_PARASI_oynananla_yan_yana",
+   "not": "19.683 kolon, 196.830 TL maliyet, en iyi kolon 12/15, kacak [9, 10, 12]. Tek bir kolon 12 tutturdu. Net -192.393,10 TL, geri donus %2,25, basabas kolon bedeli 0,23 TL. Odul vektoru resmi ikramiye tablosundan (15 kademesi KAZANANSIZ, 39.574.570,01 TL devretti)."
+  },
+  {
+   "ne": "5. hafta — OYNANMAYAN coklu planin (81 kupon) gerceklesen getirisi",
+   "deger": "196.324,34",
+   "ureten": "cd backend && python scripts/super_toto_degerlendir.py --hafta 5",
+   "olculdu": "2026-09-14",
+   "anildigi_yerler": [
+    "docs/ISTATISTIK_YOL_HARITASI.md"
+   ],
+   "bekci": "backend/tests/test_degerlendir.py::test_coklu_planin_PARASI_oynananla_yan_yana",
+   "not": "AYNI bedel (19.683 kolon, 196.830 TL), 2026-09-13'te SONUC GORULMEDEN donduruldu. En iyi kolon 13/15 (kupon #49), kademe 13:2 + 12:27. Net -505,66 TL, geri donus %99,74, basabas kolon bedeli 9,97 TL. Oynanana gore fark +191.887,44 TL = 44,2 kat. Beklenti tarafi da ayni yone bakiyor: E[TL/kolon] 521,25 (tek sistem 432,04, x1,206)."
+  },
+  {
+   "ne": "canli 5 haftanin gerceklesen ROI defteri — oynanan tek sistem ile coklu plan",
+   "deger": "0,698 ↔ 0,699",
+   "ureten": "cd backend && python -c \"import importlib,sys; sys.path.insert(0,'.'); d=importlib.import_module('scripts.super_toto_degerlendir'); r=[d.rapor('2026_27',h) for h in (1,2,3,4,5)]; t=[o['kartlar'][0]['getiri'] for o in r]; c=[o['coklu']['getiri'] for o in r]; f=lambda x: sum(g['gerceklesen'] for g in x)/sum(g['maliyet'] for g in x); print(round(f(t),3), round(f(c),3))\"",
+   "olculdu": "2026-09-14",
+   "anildigi_yerler": [
+    "docs/ISTATISTIK_YOL_HARITASI.md"
+   ],
+   "bekci": "backend/tests/test_degerlendir.py::test_bes_hafta_defteri_TEK_HAFTAYA_dayaniyor",
+   "not": "215.158,06/308.350 ↔ 214.293,14/306.720. Berabere gorunuyor ve DEGIL: 3. hafta cikarilirsa oynanan 0,041'e duser (coklu 0,719), 5. hafta cikarilirsa coklu 0,164'e duser (oynanan 1,890). n=5 hicbir sey soylemiyor; §3.69'un 'ilk dort hafta aleyhte' okumasi bu yuzden gecersiz."
+  },
+  {
+   "ne": "5. hafta — ana fiyat kaydinin resmi kupon kapanisina gore yasi",
+   "deger": "20 saat",
+   "ureten": "cd backend && python -c \"import sys; sys.path.insert(0,'.'); from scripts.super_toto_hafta import hafta_yukle; print([u for u in hafta_yukle('2026_27',5)['meta']['uretilen_uyarilar'] if 'ESKI' in u])\"",
+   "olculdu": "2026-09-14",
+   "anildigi_yerler": [
+    "docs/ISTATISTIK_YOL_HARITASI.md"
+   ],
+   "bekci": "backend/tests/test_super_toto.py::test_kapi_FIYAT_YASINI_resmi_kapanisa_gore_olcer || backend/tests/test_super_toto.py::test_kapi_KAPANISTAN_SONRA_girilen_fiyati_ayirir",
+   "not": "Fiyat 2026-09-10'da kaydedildi, resmi kupon kapanisi 2026-09-11 19:55 (arsiv close_date, game_round_id 1532). `entered_at` yalnizca gun tasidigi icin karar ucludur ve ucu de kaydi KAYIRIR: kayit gunu kapanis gununden onceyse yasin ALT siniri yazilir, ayni gunse SUSULUR, sonraysa ayri ve daha agir bir uyari cikar. 5. haftada alt sinir 20 saat, yani `odds_kind: pinnacle-kapanis` etiketi FAZLA. Geriye donuk kosturuldu: hf 2 69 s once, hf 3 21 s once, hf 5 20 s once; hf 4 ayni gun (ayrilamaz, susuluyor); hf 1 kupon KAPANDIKTAN 99 saat SONRA — o hafta ileriye donuk bir tanik degildir ve bu bes hafta boyunca hicbir yerde yazmiyordu."
+  },
+  {
+   "ne": "§3.64 durma kurali — T1 banko rejimi havuzlanmis orneklem (2025/26 + 2026/27)",
+   "deger": "175",
+   "ureten": "cd backend && python scripts/durma_kurallari.py",
+   "olculdu": "2026-09-14",
+   "anildigi_yerler": [
+    "docs/ISTATISTIK_YOL_HARITASI.md"
+   ],
+   "bekci": "backend/tests/test_durma_kurallari.py::test_banko_kurali_ESIGIN_ALTINDA_ve_isaret_TERS",
+   "not": "Esik (T1_DUZELTME_ESIGI=300) ULASILMADI, yani duzeltme YOK. Asil okuma isarette: 2025/26 kupon kesiti +0,3 puan (n=150), canli sezon -9,2 puan (n=25). Tarihsel etki dort sezon boyunca ARTI yondeydi (+%5..+%10); canli sezon EKSI veriyor, yani 2022-2024 uzerinde kalibre edilmis bir duzeltme bu sezon zarar yazardi."
+  },
+  {
+   "ne": "§3.65 durma kurali — orta favori bandi (%40-55), canli sezon ile 2025/26 arsivi",
+   "deger": "−17,6",
+   "ureten": "cd backend && python scripts/durma_kurallari.py",
+   "olculdu": "2026-09-14",
+   "anildigi_yerler": [
+    "docs/ISTATISTIK_YOL_HARITASI.md"
+   ],
+   "bekci": "backend/tests/test_durma_kurallari.py::test_orta_favori_kurali_ARSIVDE_TERS_yonde",
+   "not": "Canli sezon n=38 (soylenen %46,6, gerceklesen %28,9, Wilson [%17,0, %44,8] — p disinda). 2025/26 kupon kesiti n=266 (soylenen %46,5, gerceklesen %51,1) — TERS yonde ve yedi kat orneklem. Iki sart da dusuyor (n>=150 yok, arsivde ayni yon yok), duzeltme YOK."
+  },
+  {
+   "ne": "5. haftanin coklu planinin (81 kupon) elle giris yuku — birlestirmeden sonra",
+   "deger": "25 slip",
+   "ureten": "cd backend && python -c \"import json,sys; sys.path.insert(0,'.'); from spor_toto.coklu import Kupon; from spor_toto.sadelestirme import sadelestir; d=json.load(open('data/super_toto/2026_27/hafta_05_coklu.json')); s=sadelestir([Kupon(tuple(k['picks']), k['kolon']) for k in d['plan']['kuponlar']]); print(s.slip_once, '->', s.slip_sonra, '·', s.isaret_once, '->', s.isaret_sonra)\"",
+   "olculdu": "2026-09-14",
+   "anildigi_yerler": [
+    "docs/ISTATISTIK_YOL_HARITASI.md"
+   ],
+   "bekcisiz_gerekce": "Tek bir haftanin plani icin olculmus bir sayi; mekanizmanin kendisi (ayni kolonlar, daha az slip) §3.75'te bekcili (test_sadelestirme.py). Bu satirin isi o haftanin fiyatini yazmak: engel 81 slip degil 25 slipti ve oynanmayan planin bedeli 191.887,44 TL cikti.",
+   "not": "81 kupon -> 25 slip, karalanan kutucuk 2.025 -> 660. §3.75'in havuzlanmis ortalamasi 60,1 slip (en kotu 75); bu hafta ondan cok daha ucuzdu."
   }
  ],
  "komutlar": [
@@ -2712,6 +2789,11 @@
    "komut": "cd backend && python scripts/bilgi_esnekligi.py --butce 21000 [--k 0 1 2] [--yayilmis]",
    "ne_yapar": "Model ekseninin fiyatini hedefin para biriminde olcer (§3.76). Iki uc: KESIN bilgi (k maci kahin acar) ve YAYILMIS bilgi (her maca lambda kadar gercek karisir, Brier'iyle). Asil cikti 'mBrier/puan' sutunudur: bir hedef puani icin gereken Brier iyilesmesi. Her satir UST SINIRDIR — gercek bir model iyilestirmesi egrinin altinda kalir. ~1 sn/hafta/adim.",
    "kaynak": "backend/scripts/bilgi_esnekligi.py:kos"
+  },
+  {
+   "komut": "cd backend && python scripts/durma_kurallari.py [--json]",
+   "ne_yapar": "Depodaki ONCEDEN YAZILMIS iki durma kuralini (§3.64 T1 banko q, §3.65 orta favori bandi) kosar ve esigin neresinde oldugumuzu yazar. Karar vermez. Var olma sebebi: bir esik sozle kontrol edilirse kotu bir hafta onu her zaman esnetir. ~20 sn.",
+   "kaynak": "backend/scripts/durma_kurallari.py:rapor"
   }
  ]
 }

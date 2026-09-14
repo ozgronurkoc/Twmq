@@ -297,8 +297,23 @@ def test_kapi_kuskulu_marji_yakalar(hafta):
 
 
 def test_kapi_temiz_haftada_susar(hafta):
-    d = hafta.hafta_yukle("2026_27", 1)
-    assert d["meta"]["uretilen_uyarilar"] == []
+    """Kapı, kusuru olmayan bir haftada susar — ve o hafta artık 4. hafta.
+
+    **Bu test eskiden 1. haftaya bakıyordu ve düştü.** Düşmesi doğruydu:
+    fiyat yaşı denetimi eklenince 1. haftanın kaydının kupon
+    **kapandıktan sonra** alındığı ortaya çıktı (2026-08-18 ↔ kapanış
+    2026-08-14 21:25). Yani o hafta "temiz" değildi, kusuru **ölçülmüyordu**
+    — beş hafta boyunca. Testi 1. haftaya geri döndürmek kapıyı susturmak
+    olurdu; örnek değişti, iddia aynı kaldı.
+
+    4. hafta bu iş için doğru örnek: fiyat kupon kapanışının **kendi
+    gününde** girildi (2026-09-04, kapanış 19:55) ve denetimlerin hiçbiri
+    konuşmuyor.
+    """
+    d = hafta.hafta_yukle("2026_27", 4)
+    yas = [u for u in d["meta"]["uretilen_uyarilar"]
+           if "KAPANISA GORE ESKI" in u or "KAPANDIKTAN SONRA" in u]
+    assert yas == []
 
 
 def test_elle_yazilan_uyarilar_korunur(hafta):
@@ -339,6 +354,61 @@ def test_kapi_bozuk_sonuc_dizisini_yakalar(hafta):
     assert any("sonuç dizisi bozuk" in u for u in hafta.dogrula(d))
     d["meta"]["results"] = "1" * 14 + "X"
     assert any("sonuç dizisi bozuk" in u for u in hafta.dogrula(d))
+
+
+def test_kapi_FIYAT_YASINI_resmi_kapanisa_gore_olcer(hafta):
+    """5. haftanın 3. dersi — itiraf yerine **bekçi**.
+
+    3. ve 5. haftada `odds_kind` "kapanış" diyordu ve ikisinde de bunu
+    elle yazılmış bir `data_warnings` satırı itiraf ediyordu. İtiraf bir
+    bekçi değildir: bir sonraki hafta unutulur ve etiket sessizce doğru
+    görünür. Burada ölçülüyor — resmî kapanış anı arşivden geliyor
+    (`data/sportoto_arsiv/2026_27.json`, Spor Toto'nun kendi ucu), fiyatın
+    kayıt anı `meta.entered_at`ten.
+
+    Sayılar canlı kayıttır: 5. hafta 2026-09-10'da girildi, kupon
+    2026-09-11 19:55'te kapandı. `entered_at` yalnızca gün taşıdığı için
+    hesap **kaydı kayırarak** günün sonunu alır ve yine de 20 saat çıkar.
+    """
+    d = hafta.hafta_yukle("2026_27", 5)
+    uyarilar = d["meta"]["uretilen_uyarilar"]
+    assert any("ANA FIYAT KAPANISA GORE ESKI" in u for u in uyarilar), uyarilar
+    assert any("ETIKET FAZLA" in u for u in uyarilar), uyarilar
+    # 4. hafta AYNI GUN girildi (2026-09-04, kapanış 2026-09-04 19:55).
+    # `entered_at` saat taşımıyor, yani önce mi sonra mı AYRILAMAZ ve
+    # denetim orada SUSAR: "bilinmiyor" ile "kusurlu" ayrı şeylerdir.
+    temiz = hafta.hafta_yukle("2026_27", 4)["meta"]["uretilen_uyarilar"]
+    assert not any("KAPANISA GORE ESKI" in u for u in temiz), temiz
+    assert not any("KAPANDIKTAN SONRA" in u for u in temiz), temiz
+
+
+def test_kapi_KAPANISTAN_SONRA_girilen_fiyati_ayirir(hafta):
+    """1. hafta ileriye dönük bir tanık DEĞİL — ve bunu kimse yazmamıştı.
+
+    Fiyat 2026-08-18'de kaydedildi; o haftanın kuponu **2026-08-14
+    21:25**'te kapanmıştı, yani dört gün önce, ve maçların tamamı
+    oynanmıştı. Donmuş kupon kaydı `results_known: false` diyor: bu, o
+    satırda **yalanlanmıyor ama doğrulanamıyor** da.
+
+    Beş hafta boyunca hiçbir yerde yazmıyordu. Uyarı "eski fiyat"tan ayrı
+    tutuluyor çünkü ayrı bir şey: biri kazanç kaybı, öteki **kaydın
+    türü**.
+    """
+    u = hafta.hafta_yukle("2026_27", 1)["meta"]["uretilen_uyarilar"]
+    assert any("KAPANDIKTAN SONRA" in x for x in u), u
+    assert any("ILERIYE DONUK BIR TANIK DEGILDIR" in x for x in u), u
+    # Iki uyari birbirinin yerine gecmez.
+    assert not any("KAPANISA GORE ESKI" in x for x in u), u
+
+
+def test_kapi_fiyat_yasi_ARSIV_YOKSA_susar(hafta):
+    """"Arşiv yok" ile "fiyat bayat" ayrı şeylerdir; ikincisi uydurulmaz."""
+    d = _sahte()
+    d["meta"] = {"season": "1999/2000", "week": 3, "entered_at": "1999-01-01"}
+    assert not any("KAPANISA GORE ESKI" in u for u in hafta.dogrula(d))
+    # `entered_at` hic yoksa da susar — eksik alan bir kusur iddiasi degil.
+    d["meta"] = {"season": "2026/2027", "week": 5}
+    assert not any("KAPANISA GORE ESKI" in u for u in hafta.dogrula(d))
 
 
 def test_kapi_bozuk_kunyeyi_yakalar(hafta):
