@@ -29,15 +29,15 @@
 | 2 | 10b/1ç/4ü | 162 | 1,620 | 0.275 | **0.003** | 462 | 4 | 11 | 2 | 0 | -1,620 | `iddaa-acilis` |
 | 3 | 10b/1ç/4ü | 162 | 1,620 | 0.317 | **0.004** | 333 | 5 | 10 | 2 | 0 | -1,620 | `pinnacle-kapanis` |
 | 4 | 10b/1ç/4ü | 162 | 1,620 | 0.224 | **0.002** | 358 | 5 | 10 | 3 | 0 | -1,620 | `pinnacle-kapanis` |
-| 5 | 8b/6ç/1ü | 192 | 1,920 | 0.337 | **0.005** | — | — | — | — | — | — | `pinnacle-kapanis` |
+| 5 | 8b/6ç/1ü | 192 | 1,920 | 0.337 | **0.005** | 267 | 6 | 9 | 3 | 0 | -1,920 | `pinnacle-kapanis` |
 
-## Toplam (4 sonuçlanmış hafta)
+## Toplam (5 sonuçlanmış hafta)
 
 | | |
 |---|---:|
-| maliyet | 6,480 TL |
+| maliyet | 8,400 TL |
 | ödül (garanti tabanı) | 0 TL |
-| **net** | **-6,480 TL** |
+| **net** | **-8,400 TL** |
 | geri dönüş | **%0.0** |
 
 ## Okuma
@@ -63,11 +63,11 @@ kolonları satıcı üretiyor). Gerçekleşen getiri bu tablodan **büyüktür**
 
 **`P(k≤3)` bir kapsama ölçüsüdür, kâr ölçüsü değildir.**
 Manşet olasılık iki farklı olayı topluyor ve biri para kaybettiriyor:
-`k=0` 15. kademeyi verir, `k=1` 14. kademeyi. Karnenin kendi kaydında bugüne kadar **hiçbir hafta** ödeyen kademeye ulaşmadı (4 hafta).
+`k=0` 15. kademeyi verir, `k=1` 14. kademeyi. Karnenin kendi kaydında bugüne kadar **hiçbir hafta** ödeyen kademeye ulaşmadı (5 hafta).
 Ödeyen olayın olasılığı `P(k=0)` sütununda ve manşetin
 **1/121 ile 1/65 arasında**. **Başabaş k** sütunu her haftanın
 KENDİ ikramiye tablosundan türetiliyor (medyan alınmıyor: nominal TL dört
-sezonda 72 kat büyümüş), ve o sütun sabit değil — `k=2` 2., 3. haftada; `k=3` 1., 4. haftada.
+sezonda 72 kat büyümüş), ve o sütun sabit değil — `k=2` 2., 3. haftada; `k=3` 1., 4., 5. haftada.
 
 **`n` küçük.** Bu tablo bir strateji karnesi değil, bir **kayıt
 başlangıcı**. Anlamlı bir yargı için haftaların birikmesi gerekiyor ve

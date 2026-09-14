@@ -821,7 +821,9 @@
     "results_source": "Spor Toto resmî sonuç ekranı — kullanıcı ekran görüntüsü (2026-08-18)"
    },
    "tahmin2": null,
-   "warnings_generated": [],
+   "warnings_generated": [
+    "KAYIT KUPON KAPANDIKTAN SONRA: fiyat 2026-08-18'de girildi, resmi kupon kapanisi 2026-08-14 21:25 — en iyi halde 75 saat SONRA. Bu hafta ILERIYE DONUK BIR TANIK DEGILDIR; donmus kuponun `results_known: false` kunyesi burada dogrulanamaz ve karne okunurken bu satir ayrica sayilmalidir."
+   ],
    "warnings_manual": [],
    "week": 1
   },
@@ -2572,7 +2574,8 @@
     ]
    },
    "warnings_generated": [
-    "4. maç: marj %45.8, bültenin ortancası %17.7 — 28.0 puan sapma, KUŞKULU"
+    "4. maç: marj %45.8, bültenin ortancası %17.7 — 28.0 puan sapma, KUŞKULU",
+    "ANA FIYAT KAPANISA GORE ESKI: kayit 2026-08-18, resmi kupon kapanisi 2026-08-21 21:25 — en iyi halde 69 saat once alinmis (esik 8 saat). A1 gec fiyati daha iyi olcuyor; bu kayit o kazanci ALMIYOR."
    ],
    "warnings_manual": [
     "4. maç (Fenerbahçe–Konyaspor): oranların ima ettiği marj %45,8. Bültenin geri kalanı %17,5–17,9 bandında. Bu satır KUŞKULU — kaynaktan doğrulanmalı.",
@@ -3796,7 +3799,9 @@
    },
    "tahmin2": null,
    "warnings_generated": [
-    "nesine_kapanis: 6 maçta kapanış açılışla BİREBİR aynı (maçlar: 10, 11, 12, 13, 14, 15) — bu bir fiyat değil, tazelenmemiş kayıttır; o satırlarda ayrışma görüş farkı değil kayıt farkıdır"
+    "nesine_kapanis: 6 maçta kapanış açılışla BİREBİR aynı (maçlar: 10, 11, 12, 13, 14, 15) — bu bir fiyat değil, tazelenmemiş kayıttır; o satırlarda ayrışma görüş farkı değil kayıt farkıdır",
+    "ANA FIYAT KAPANISA GORE ESKI: kayit 2026-08-27, resmi kupon kapanisi 2026-08-28 21:25 — en iyi halde 21 saat once alinmis (esik 8 saat). A1 gec fiyati daha iyi olcuyor; bu kayit o kazanci ALMIYOR.",
+    "`odds_kind` 'pinnacle-kapanis' diyor ama kayit kupon kapanisindan 21 saat ONCE alinmis — ETIKET FAZLA. Kapanis diye anilan sey, o an elde olan en gec kayit bile degil."
    ],
    "warnings_manual": [
     "Program tarihleri ve maç saatleri kupon kurulurken GİRİLMEMİŞTİ; sonuç ekranıyla birlikte (2026-09-01) girildi. Kupon dondurulurken elde olan tek zaman damgası `entered_at`tır (2026-08-27).",
@@ -5937,7 +5942,7 @@
    "week": 4
   },
   {
-   "close_date": null,
+   "close_date": "2026-09-11",
    "coupon": {
     "arindirma": "shin",
     "banko_esik": null,
@@ -6479,10 +6484,10 @@
    "matches": [
     {
      "away": "Erzurumspor FK",
-     "date": "",
+     "date": "2026-09-11",
      "fav": "1",
      "home": "Beşiktaş A.Ş.",
-     "kickoff": "",
+     "kickoff": "20:00",
      "league": "T1",
      "margin": 0.0218,
      "no": 1,
@@ -6503,14 +6508,14 @@
       "1": 0.7839,
       "2": 0.0681
      },
-     "result": null
+     "result": "1"
     },
     {
      "away": "Çaykur Rizespor",
-     "date": "",
+     "date": "2026-09-12",
      "fav": "2",
      "home": "Eyüpspor",
-     "kickoff": "",
+     "kickoff": "17:00",
      "league": "T1",
      "margin": 0.0556,
      "no": 2,
@@ -6531,14 +6536,14 @@
       "1": 0.2341,
       "2": 0.5166
      },
-     "result": null
+     "result": "2"
     },
     {
      "away": "Çorum FK",
-     "date": "",
+     "date": "2026-09-12",
      "fav": "1",
      "home": "Samsunspor A.Ş.",
-     "kickoff": "",
+     "kickoff": "17:00",
      "league": "T1",
      "margin": 0.0486,
      "no": 3,
@@ -6559,14 +6564,14 @@
       "1": 0.4271,
       "2": 0.2752
      },
-     "result": null
+     "result": "2"
     },
     {
      "away": "Göztepe A.Ş.",
-     "date": "",
+     "date": "2026-09-12",
      "fav": "1",
      "home": "Alanyaspor",
-     "kickoff": "",
+     "kickoff": "20:00",
      "league": "T1",
      "margin": 0.0497,
      "no": 4,
@@ -6587,14 +6592,14 @@
       "1": 0.4347,
       "2": 0.2879
      },
-     "result": null
+     "result": "0"
     },
     {
      "away": "Trabzonspor A.Ş.",
-     "date": "",
+     "date": "2026-09-12",
      "fav": "2",
      "home": "Konyaspor",
-     "kickoff": "",
+     "kickoff": "20:00",
      "league": "T1",
      "margin": 0.051,
      "no": 5,
@@ -6615,14 +6620,14 @@
       "1": 0.2602,
       "2": 0.4912
      },
-     "result": null
+     "result": "1"
     },
     {
      "away": "Kasımpaşa A.Ş.",
-     "date": "",
+     "date": "2026-09-13",
      "fav": "1",
      "home": "Gençlerbirliği",
-     "kickoff": "",
+     "kickoff": "17:00",
      "league": "T1",
      "margin": 0.0504,
      "no": 6,
@@ -6643,14 +6648,14 @@
       "1": 0.4207,
       "2": 0.2943
      },
-     "result": null
+     "result": "2"
     },
     {
      "away": "Başakşehir FK",
-     "date": "",
+     "date": "2026-09-13",
      "fav": "1",
      "home": "Amed Sportif",
-     "kickoff": "",
+     "kickoff": "20:00",
      "league": "T1",
      "margin": 0.0496,
      "no": 7,
@@ -6671,14 +6676,14 @@
       "1": 0.3813,
       "2": 0.3496
      },
-     "result": null
+     "result": "1"
     },
     {
      "away": "Kocaelispor",
-     "date": "",
+     "date": "2026-09-13",
      "fav": "1",
      "home": "Galatasaray A.Ş.",
-     "kickoff": "",
+     "kickoff": "20:00",
      "league": "T1",
      "margin": 0.062,
      "no": 8,
@@ -6699,14 +6704,14 @@
       "1": 0.7726,
       "2": 0.0729
      },
-     "result": null
+     "result": "1"
     },
     {
      "away": "Fenerbahçe A.Ş.",
-     "date": "",
+     "date": "2026-09-14",
      "fav": "2",
      "home": "Gaziantep F.K.",
-     "kickoff": "",
+     "kickoff": "20:00",
      "league": "T1",
      "margin": 0.0594,
      "no": 9,
@@ -6727,14 +6732,14 @@
       "1": 0.1682,
       "2": 0.6091
      },
-     "result": null
+     "result": "0"
     },
     {
      "away": "Bayer Leverkusen",
-     "date": "",
+     "date": "2026-09-12",
      "fav": "2",
      "home": "Augsburg",
-     "kickoff": "",
+     "kickoff": "16:30",
      "league": "D1",
      "margin": 0.0374,
      "no": 10,
@@ -6755,14 +6760,14 @@
       "1": 0.2372,
       "2": 0.5351
      },
-     "result": null
+     "result": "0"
     },
     {
      "away": "Marsilya",
-     "date": "",
+     "date": "2026-09-11",
      "fav": "1",
      "home": "Rennes",
-     "kickoff": "",
+     "kickoff": "21:45",
      "league": "F1",
      "margin": 0.0329,
      "no": 11,
@@ -6783,14 +6788,14 @@
       "1": 0.4597,
       "2": 0.298
      },
-     "result": null
+     "result": "1"
     },
     {
      "away": "Hull City",
-     "date": "",
+     "date": "2026-09-12",
      "fav": "1",
      "home": "Chelsea",
-     "kickoff": "",
+     "kickoff": "17:00",
      "league": "E0",
      "margin": 0.045,
      "no": 12,
@@ -6811,14 +6816,14 @@
       "1": 0.7864,
       "2": 0.0613
      },
-     "result": null
+     "result": "0"
     },
     {
      "away": "Manchester City",
-     "date": "",
+     "date": "2026-09-13",
      "fav": "2",
      "home": "Manchester United",
-     "kickoff": "",
+     "kickoff": "18:30",
      "league": "E0",
      "margin": 0.0337,
      "no": 13,
@@ -6839,14 +6844,14 @@
       "1": 0.3006,
       "2": 0.4529
      },
-     "result": null
+     "result": "2"
     },
     {
      "away": "Barcelona",
-     "date": "",
+     "date": "2026-09-13",
      "fav": "2",
      "home": "Levante",
-     "kickoff": "",
+     "kickoff": "17:15",
      "league": "SP1",
      "margin": 0.0422,
      "no": 14,
@@ -6867,14 +6872,14 @@
       "1": 0.06,
       "2": 0.8427
      },
-     "result": null
+     "result": "2"
     },
     {
      "away": "AC Milan",
-     "date": "",
+     "date": "2026-09-12",
      "fav": "2",
      "home": "Lazio",
-     "kickoff": "",
+     "kickoff": "19:00",
      "league": "I1",
      "margin": 0.0336,
      "no": 15,
@@ -6895,7 +6900,7 @@
       "1": 0.2859,
       "2": 0.421
      },
-     "result": null
+     "result": "0"
     }
    ],
    "odds_kind": "pinnacle-kapanis",
@@ -7119,23 +7124,185 @@
      ]
     }
    },
-   "program": "",
-   "results": null,
-   "sonuc": null,
+   "program": "11–14 Eylül 2026",
+   "results": "122012110010220",
+   "sonuc": {
+    "kalabalik": {
+     "beklenen_halk_dogru": 5.98,
+     "beklenen_piyasa_dogru": 6.2125958520757,
+     "halk_dogru": 7,
+     "halk_kuponu": "121121112211222",
+     "piyasa_dogru": 7,
+     "piyasa_kuponu": "121121112211222"
+    },
+    "kayitlar": [
+     {
+      "ad": "1. Tahmin",
+      "best": 12,
+      "expected_misses": 1.6702,
+      "miss_count": 3,
+      "misses": [
+       9,
+       10,
+       12
+      ],
+      "p_at_least_actual": 0.209516,
+      "p_in_set": 0.130812,
+      "per_match": [
+       {
+        "gercek": "1",
+        "no": 1,
+        "pick": "1",
+        "tuttu": true
+       },
+       {
+        "gercek": "2",
+        "no": 2,
+        "pick": "102",
+        "tuttu": true
+       },
+       {
+        "gercek": "2",
+        "no": 3,
+        "pick": "102",
+        "tuttu": true
+       },
+       {
+        "gercek": "0",
+        "no": 4,
+        "pick": "102",
+        "tuttu": true
+       },
+       {
+        "gercek": "1",
+        "no": 5,
+        "pick": "102",
+        "tuttu": true
+       },
+       {
+        "gercek": "2",
+        "no": 6,
+        "pick": "102",
+        "tuttu": true
+       },
+       {
+        "gercek": "1",
+        "no": 7,
+        "pick": "102",
+        "tuttu": true
+       },
+       {
+        "gercek": "1",
+        "no": 8,
+        "pick": "1",
+        "tuttu": true
+       },
+       {
+        "gercek": "0",
+        "no": 9,
+        "pick": "2",
+        "tuttu": false
+       },
+       {
+        "gercek": "0",
+        "no": 10,
+        "pick": "2",
+        "tuttu": false
+       },
+       {
+        "gercek": "1",
+        "no": 11,
+        "pick": "102",
+        "tuttu": true
+       },
+       {
+        "gercek": "0",
+        "no": 12,
+        "pick": "1",
+        "tuttu": false
+       },
+       {
+        "gercek": "2",
+        "no": 13,
+        "pick": "102",
+        "tuttu": true
+       },
+       {
+        "gercek": "2",
+        "no": 14,
+        "pick": "2",
+        "tuttu": true
+       },
+       {
+        "gercek": "0",
+        "no": 15,
+        "pick": "102",
+        "tuttu": true
+       }
+      ],
+      "picks": [
+       "1",
+       "102",
+       "102",
+       "102",
+       "102",
+       "102",
+       "102",
+       "1",
+       "2",
+       "2",
+       "102",
+       "1",
+       "102",
+       "2",
+       "102"
+      ]
+     }
+    ],
+    "note": "Bu sekmedeki her sayı sonuçlar görüldükten SONRA hesaplandı. Tahmin sekmeleri onu görmez ve değişmez.",
+    "payout": [
+     {
+      "correct": 15,
+      "prize": 39574570.01,
+      "winners": 0
+     },
+     {
+      "correct": 14,
+      "prize": 646115.42,
+      "winners": 35
+     },
+     {
+      "correct": 13,
+      "prize": 38264.02,
+      "winners": 591
+     },
+     {
+      "correct": 12,
+      "prize": 4436.9,
+      "winners": 6371
+     }
+    ],
+    "payout_source": "İKİ BAĞIMSIZ KAYNAK, birebir uyuştu: (a) kullanıcı ekran görüntüsündeki ikramiye şeridi (2026-09-14 23:50), (b) resmî uç `GameResult` üzerinden `scripts/build_sportoto_arsiv.py` ile çekilen arşiv kaydı (`data/sportoto_arsiv/2026_27.json`, game_round_id 1532, çekim 2026-09-14). Önceki haftalarda tablo yalnızca ekran görüntüsünden okunuyordu.",
+    "results": "122012110010220",
+    "results_entered_at": "2026-09-14",
+    "results_source": "Spor Toto resmî 'Sonuçlar' ekranı — kullanıcı ekran görüntüsü (2026-09-14 23:50). İki görüntü 15 maçın tamamını kapsıyor; ikincisi 11–15. satırları ve ikramiye şeridini tekrar gösteriyor, örtüşen beş satır ikisinde de aynı okundu. Program tarihleri ve maç saatleri AYNI ekrandan geldi — bu hafta ilk kez sonuçla birlikte girildi."
+   },
    "tahmin2": null,
    "warnings_generated": [
-    "pinnacle_kapanis: 2 maçta kapanış açılışla BİREBİR aynı (maçlar: 6, 8) — bu bir fiyat değil, tazelenmemiş kayıttır; o satırlarda ayrışma görüş farkı değil kayıt farkıdır"
+    "pinnacle_kapanis: 2 maçta kapanış açılışla BİREBİR aynı (maçlar: 6, 8) — bu bir fiyat değil, tazelenmemiş kayıttır; o satırlarda ayrışma görüş farkı değil kayıt farkıdır",
+    "ANA FIYAT KAPANISA GORE ESKI: kayit 2026-09-10, resmi kupon kapanisi 2026-09-11 19:55 — en iyi halde 20 saat once alinmis (esik 8 saat). A1 gec fiyati daha iyi olcuyor; bu kayit o kazanci ALMIYOR.",
+    "`odds_kind` 'pinnacle-kapanis' diyor ama kayit kupon kapanisindan 20 saat ONCE alinmis — ETIKET FAZLA. Kapanis diye anilan sey, o an elde olan en gec kayit bile degil."
    ],
    "warnings_manual": [
     "KAPANIŞ ETİKETİ FAZLA OLABİLİR — 3. haftanın 3. dersi. Spor Toto kuponu İLK MAÇTAN ÖNCE kapanır; haftanın son maçlarının gerçek kapanış çizgisi o anda henüz yoktur. Buradaki `pinnacle_kapanis`, kupon donarken (2026-09-10) elde olan EN GEÇ KAYITTIR, tanım gereği kapanış değildir. Bu hafta doğrulama ayrıca İMKÂNSIZ: program tarihleri ve maç saatleri girilmedi, yani 3. haftada etiket hatasını ortaya çıkaran denetimin (kayıt anı ↔ maç saati) girdisi yok. Sonuç: A1'in geri test gerekçesi (gerçek kapanış > açılış) buraya DOĞRUDAN DEVREDİLEMEZ; burada ölçülen şey 'iki anlık kayıttan geç olanı'dır.",
-    "Program tarihleri ve maç saatleri GİRİLMEDİ (kullanıcı vermedi). Uydurulmadı; `date`/`kickoff` boş bırakıldı. Kuponun donduğu anı belgeleyen tek alan `entered_at`tır (kapanış sürümü için 2026-09-10).",
     "6. maçın (Gençlerbirliği–Kasımpaşa) beraberlik oranı ilk ekran görüntüsünde 5.79 okunmuştu; o değerle bültenin marjı −%7,8 çıkıyordu (arbitraj, Pinnacle'da olmaz). Kullanıcı doğru değeri 3.32 olarak verdi (2026-09-07) ve tablodaki açılış değeri odur. Düzeltmeden önceki olasılıklar (%47,6 / %18,7 / %33,7) HATALIDIR.",
     "Yalnızca TEK bahisçi (Pinnacle) var; iki an kayıtlı. Bahisçi ayrışması bu hafta ölçülemez, açılış↔kapanış hareketi ölçülebilir.",
     "12. maç (Chelsea–Hull City) lig kodu `E0` yazıldı ama iki takım aynı ligde değil; maç büyük olasılıkla bir kupa eşleşmesidir. Kod, ev sahibinin liginden türetilmiş bir ETİKETTİR, olgu değildir.",
     "Takım adları kullanıcının listesindeki kısaltmalardan bu depodaki yazımlara elle eşlendi (Amed→Amed Sportif, Çorum→Çorum FK, B.Leverkusen→Bayer Leverkusen, Marsilya, Rizespor→Çaykur Rizespor). Eşleme doğrulanmadı.",
     "6. ve 8. maçta kapanış açılışla BİREBİR aynı; `dogrula` bunu 'bayat kapanış' olarak işaretler ve UYARI DOĞRUDUR — o iki satırda kapanış bir fiyat değil, tazelenmemiş bir kayıt olabilir. Susturulmadı.",
     "Oynanma yüzdeleri tek platformun kendi kullanıcılarıdır (bkz. `play_source`); havuzun tamamı sanılırsa §7'nin bütün TL hesabı yanlış okunur.",
-    "Sonuçlar girilmedi; hafta açık."
+    "Program tarihleri ve maç saatleri SONRADAN girildi (2026-09-14, sonuç ekranıyla birlikte) — kupon donarken elde değildi. Girildikleri anda `odds_kind: pinnacle-kapanis` etiketinin FAZLA olduğu ölçülebilir hâle geldi: kupon 2026-09-11 19:55'te kapandı, oranlar 2026-09-10'da kaydedildi ve haftanın son maçı 2026-09-14 20:00'de oynandı. Yani ana fiyat ne gerçek kapanış çizgisidir ne de kupon kapanışındaki en geç kayıttır; en geç kayıttan yaklaşık 1 gün 20 saat ÖNCEDİR.",
+    "Sonuç dizisi ve skorlar tek kaynaktan (ekran görüntüsü) okundu; skor ↔ sembol tutarlılığı kodla çapraz denetlendi (15/15), ama skorların kendisi ikinci bir kaynakla doğrulanmadı. İkramiye tablosu iki kaynakla doğrulandı, sonuç dizisi DEĞİL."
    ],
    "week": 5
   }

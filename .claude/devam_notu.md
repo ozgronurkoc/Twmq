@@ -68,7 +68,83 @@ benim kararım):
 
 ## Şu an (en güncel)
 
-**2026-09-14 — dal `claude/match-analysis-coupon-page-p7w5dd`**
+**2026-09-14 — dal `claude/weekly-results-error-lessons-yrxc8i`**
+
+### 5. haftanın sonucu girildi ve dersleri çıkarıldı (§3.82)
+
+Sonuç `122012110010220` (1/0/2 = **5/5/5**), skorlar, **program saatleri**
+ve ikramiye tablosu birlikte girildi. İkramiye tablosu bu hafta **iki
+bağımsız kaynakla** doğrulandı (ekran görüntüsü + resmî uç, arşiv yeniden
+çekildi); sonuç dizisi hâlâ tek kaynak ve dosya bunu yazıyor.
+
+    oynanan tek sistem   19.683 kolon · 12/15 · ₺4.436,90   (%2,25)
+    coklu plan (donmus,  19.683 kolon · 13/15 · ₺196.324,34 (%99,74)
+    OYNANMADI)           fark +₺191.887,44 = 44,2 kat
+
+**Üç kaçağın üçü de BANKOYDU** (9, 10, 12); çift/üçlü işaretlenen dokuz
+maçın dokuzu tuttu. Beklenen kaçak 1,67, `P(kaçak ≥ 3) = %21` — hafta
+dağılımın içinde, kural kırılmadı.
+
+### Bu turda kapatılan üç boşluk (hepsi bekçili)
+
+1. **Çoklu planın parası hiçbir çıktıda yazmıyordu** — §3.69'dan beri plan
+   her hafta donuyordu ama yalnızca *kademe* olarak puanlanıyordu. Haftanın
+   en büyük sayısı elle hesaplanınca çıktı. `coklu_getiri()` eklendi, tek
+   sistemle **aynı gövdeden** (`getiri_karnesi`), rapor ikisini yan yana
+   yazıyor.
+2. **"Kapanış" etiketi üçüncü kez fazlaydı** — program saatleri girilince
+   ölçülebildi: fiyat 2026-09-10'da kaydedildi, kupon 2026-09-11 19:55'te
+   kapandı (20 saat). İki haftadır elle yazılmış bir itiraf olarak
+   duruyordu; artık **hesaplanıyor** (`super_toto_hafta._yas_uyarilari`,
+   resmî `close_date` arşivden). Geriye dönük: beş haftanın **üçünde**
+   kusur var (hf 2: 69 s, hf 3: 21 s, hf 5: 20 s).
+3. **Durma kuralları sözle kontrol ediliyordu** — `scripts/durma_kurallari.py`
+   ikisini de koşuyor. İkisi de **geçmedi** ve biri ters yönde:
+   §3.64 havuzlanmış `n = 175 < 300` (canlı sezon −9,2 puan, tarihsel +%5…+%10
+   **artı** yöndeydi); §3.65 canlı `n = 38 < 150`, canlı −17,6 puan ↔ 2025/26
+   arşivi **+4,7 puan** (n = 266, ters yön ve yedi kat örneklem).
+
+### Defter: `n = 5` hâlâ karar vermiyor
+
+| | oynanan | çoklu |
+|---|---:|---:|
+| 5 haftalık ROI | **0,698** | **0,699** |
+| 3. hafta çıkınca | 0,041 | 0,719 |
+| 5. hafta çıkınca | 1,890 | 0,164 |
+
+§3.69'un *"ilk dört hafta aleyhte"* okuması **geçersiz**. İki taraf da tek
+haftanın üstünde duruyor; biri öne geçtiğinde ilk soru "hangi hafta" olmalı.
+
+### Sıradaki adım
+
+1. **729 kupona çıkmanın operasyonu** — sıra değişmedi ama fiyatı artık
+   canlı: **₺191.887,44, tek haftada.** Bu haftanın 81 kuponu
+   `sadelestir` ile **25 slipte** birleşiyordu (§3.75'in havuzlanmış
+   ortalaması 60,1); yani engel sanıldığından küçüktü.
+2. **6. hafta `--yaz` ile dondurulacak** ve fiyat **kupon kapanışının kendi
+   gününde** (18 Eylül Cuma, kapanış 19:55) alınacak. Kapı artık bunu
+   denetliyor.
+3. Hâlâ karara bağlanmamış: olasılık kaynağı (piyasa ↔ karne ↔ karışım),
+   `benzer`in ileri yürüyüş ölçümü (§6.1), kupon kuralının 2¹⁵ = 32.768
+   kolonluk bedeli (₺327.680, tavanın 1,56 katı — hangi maçlar bankolaşacak).
+4. Kesintisiz 13 haftalık pencere çıkınca §3.81'in öbeklenme sınavı.
+5. **Bant sabiti İKİYE AYRILDI — dokunmadan önce oku.** `odds.FAVORI_BANTLARI`
+   *modelin* sınırlarıdır (`recalibrate.KADEMELER` içinde oturtulan bir
+   kademe); arayüzünki ayrı: `FAVORI_BANTLARI_RAPOR`. İkisini
+   "aynılaştırmak" akla yatkın görünüyor ve **yapılmamalı**.
+
+### Neden böyle
+
+Bu turun asıl bulgusu bir model kusuru değil bir **ölçüm hattı** kusuru:
+en pahalı karar (planı oynamamak) hiçbir ekranda fiyatlanmıyordu ve
+haftalardır öyleydi. 4. haftanın 4. dersi aynı şeydi. Kural değişmedi,
+çünkü değiştirmeyi haklı çıkaracak hiçbir ölçüm eşiği geçmedi — ve iki
+haftadır aynı yerde kaybetmek tam olarak durma kurallarının **yazılma
+sebebidir**.
+
+## Geçmiş girdiler
+
+### 2026-09-14 — dal `claude/match-analysis-coupon-page-p7w5dd`
 
 ### `/kupon` sayfası — **zincirin tamamı ayakta**
 
@@ -168,7 +244,6 @@ satır numarasıyla anılıyordu ve dosyaya alan eklendikçe kayıp bekçiyi
 kırmızıya çeviriyordu. Numara düşürüldü; iddia aynı kaldı, kırılgan kısmı
 gitti.
 
-## Geçmiş girdiler
 
 **2026-09-14 (önceki, aynı dal)** — `/kupon`un 1. aşaması (giriş tablosu). Ayrıntısı yukarıdaki güncel girdide; commit `c9f1b48`.
 

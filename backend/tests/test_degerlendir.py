@@ -933,3 +933,83 @@ def test_hafta_bes_coklu_kaydi_SONUC_GORULMEDEN_dondu():
     # Kolonlar açıkça yazılı olmalı — tarif değil.
     assert len(kayit["plan"]["kuponlar"]) == kayit["meta"]["kupon_tavani"]
     assert all(len(k["picks"]) == 15 for k in kayit["plan"]["kuponlar"])
+
+
+def test_hafta_bes_UC_KACAGIN_ucu_de_BANKOYDU(deg):
+    """5. haftanın ölçülmüş kaydı — kaybın **nerede** olduğu.
+
+    Oynanan kupon 19.683 kolonda 12/15 yaptı ve üç kaçağın üçü de tek
+    sembolle işaretlenmiş maçtı (9, 10, 12). Çifte ve üçlü işaretlenen
+    dokuz maçın dokuzu tuttu; yani hafta işaretin *genişliğinde* değil,
+    **daraltıldığı yerde** kaybedildi.
+
+    Şanssızlık mı yapı mı: beklenen kaçak 1,67 ve `P(kaçak ≥ 3) = %21`.
+    Yani hafta kötüydü ama kuralın dağılımının içinde — bu test bir kusur
+    iddiası değil, **kaydın kendisidir**.
+    """
+    o = deg.rapor("2026_27", 5)
+    ana = o["coupons"][0]
+    assert ana["best"] == 12
+    assert ana["misses"] == [9, 10, 12]
+    banko = {r["no"] for r in ana["per_match"] if len(r["pick"]) == 1}
+    assert banko == {1, 8, 9, 10, 12, 14}
+    assert set(ana["misses"]) <= banko          # üç kaçağın üçü de banko
+    # Genis isaretli dokuz macin dokuzu tuttu.
+    genis = [r for r in ana["per_match"] if len(r["pick"]) > 1]
+    assert len(genis) == 9 and all(r["tuttu"] for r in genis)
+
+
+def test_coklu_planin_PARASI_oynananla_yan_yana(deg):
+    """Haftanın en büyük sayısı raporda GÖRÜNÜR olmalı (§3.82, 2. ders).
+
+    §3.69'dan beri çoklu plan her hafta donuyor ve puanlanıyordu — ama
+    yalnızca *kademe* olarak. Oynanmayan planın oynanana göre kaç lira
+    ettiği hiçbir çıktıda yoktu ve 5. haftada elle hesaplanınca **44 kat**
+    çıktı: plan ₺196.324,34, oynanan ₺4.436,90, ikisinin bedeli aynı
+    (₺196.830).
+
+    Test iki şeyi birden tutuyor: blok **var**, ve sayısı doğru. İkincisi
+    olmadan birincisi bir kabuktur.
+    """
+    o = deg.rapor("2026_27", 5)
+    g = o["coklu"]["getiri"]
+    ana = o["kartlar"][0]["getiri"]
+    assert g is not None, "çoklu plan para satırı olmadan raporlanamaz"
+    assert g["kolon"] == ana["kolon"] == 19_683      # aynı bedel, aynı bütçe
+    assert round(g["gerceklesen"], 2) == 196_324.34
+    assert round(ana["gerceklesen"], 2) == 4_436.90
+    assert round(g["gerceklesen"] - ana["gerceklesen"], 2) == 191_887.44
+    # Kademe dagilimindan bagimsiz ikinci yol: kazanan kolonlar × odul.
+    odul = {t["correct"]: t["prize"] for t in o["payout"]["tiers"]}
+    assert round(sum(n * odul[k] for k, n in g["kazanan_kolon"].items()),
+                 2) == round(g["gerceklesen"], 2)
+
+
+def test_bes_hafta_defteri_TEK_HAFTAYA_dayaniyor(deg):
+    """Canlı defter berabere, ve iki taraf da tek haftanın üstünde duruyor.
+
+    §3.69 ilk dört haftaya bakıp "çoklu kupon aleyhte" demişti. 5. hafta
+    o okumayı **tersine çevirmiyor, geçersiz kılıyor**: beş haftada
+    gerçekleşen ROI oynanan 0,698 ↔ çoklu 0,699 — ölçülemeyecek kadar
+    yakın. Ve yakınlık bir denge değil, iki uç haftanın rastlantısı:
+
+    * 3. hafta çıkarılırsa oynanan 0,041'e düşer (çoklu 0,719),
+    * 5. hafta çıkarılırsa çoklu 0,164'e düşer (oynanan 1,890).
+
+    Yani `n = 5` hiçbir şey söylemiyor ve bu test tam olarak onu tutuyor:
+    biri öne geçtiğinde ilk sorulacak soru "hangi hafta" olmalı.
+    """
+    satir = []
+    for hafta in (1, 2, 3, 4, 5):
+        o = deg.rapor("2026_27", hafta)
+        satir.append((o["kartlar"][0]["getiri"], o["coklu"]["getiri"]))
+    assert all(a and b for a, b in satir)
+
+    def roi(i, atla=None):
+        g = sum(x[i]["gerceklesen"] for k, x in enumerate(satir, 1) if k != atla)
+        m = sum(x[i]["maliyet"] for k, x in enumerate(satir, 1) if k != atla)
+        return g / m
+
+    assert round(roi(0), 3) == 0.698 and round(roi(1), 3) == 0.699
+    assert round(roi(0, atla=3), 3) == 0.041   # oynanan 3. haftasız
+    assert round(roi(1, atla=5), 3) == 0.164   # çoklu 5. haftasız

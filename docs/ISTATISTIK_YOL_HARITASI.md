@@ -171,7 +171,7 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/components/super-toto/tahmin2.tsx` | **2. Tahmin** paneli — `1. Tahmin` / `2. Tahmin` sekmeleri arasında geçilir; para birimli hiçbir sayı yok. Hafta kapandığında sonuç sütunu ve ayar karnesi açılır (§3.38) |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **2.087 test**; **136'sı** istatistik katmanına (`history` `odds` `backtest`
+paketi toplam **2.098 test**; **136'sı** istatistik katmanına (`history` `odds` `backtest`
 `api_stats` `api_backtest` `snapshot_iddaa`), **676'sı** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre`
@@ -7525,6 +7525,244 @@ yüzden hüküm ikisinin **arasındadır** ve iyimser uca yazılmaz — ama
 sahibinin bilmesi gereken şu: bugünkü tablo (8,9 hafta) **muhafazakâr**
 taraftan yazılmış.
 
+### 3.82 5. haftanın sonucu — 12/15, ve haftanın en pahalı kararı **oynanmayan plandı**
+
+Sonuç dizisi, skorlar, program ve ikramiye tablosu birlikte girildi:
+**1 2 2 0 1 2 1 1 0 0 1 0 2 2 0** (1/0/2 = **5/5/5**; bitişik yazımı
+`122012110010220`).
+Kaynak: Spor Toto resmî *Sonuçlar* ekranı, kullanıcı ekran görüntüsü
+(2026-09-14 23:50). **İkramiye tablosu bu hafta İKİ bağımsız kaynakla
+doğrulandı** — ekran görüntüsü ve resmî uç (`build_sportoto_arsiv.py`,
+`game_round_id 1532`) birebir aynı; sonuç dizisi hâlâ tek kaynaktır ve
+hafta dosyası bunu yazıyor. Program tarihleri ve maç saatleri de ilk kez
+girildi; niçin önemli olduğu 3. derste.
+
+| kademe | kazanan | ödül |
+|---|---:|---:|
+| **15** | **0** | ₺39.574.570,01 **devretti** |
+| 14 | 35 | ₺646.115,42 |
+| 13 | 591 | ₺38.264,02 |
+| 12 | 6.371 | ₺4.436,90 |
+
+#### Oynanan kupon: 12/15, ve parası
+
+| kayıt | sistem | kolon | maliyet | en iyi | kaçak | gerçekleşen | geri dönüş |
+|---|---|---:|---:|---:|---|---:|---:|
+| **ana — DONDURULAN, oynanan** | düz | 19.683 | ₺196.830 | **12**/15 | 9, 10, 12 | **₺4.436,90** | **%2,25** |
+| çoklu plan (ölçüldü, **oynanmadı**) | 81 kupon × 243 | 19.683 | ₺196.830 | **13**/15 | 9, 12 | **₺196.324,34** | **%99,74** |
+
+Oynanan kuponun neti **−₺192.393,10**, başabaş kolon bedeli **₺0,23**.
+Çoklu planın neti **−₺505,66**, başabaş kolon bedeli **₺9,97** — ölçülen
+₺10'un **binde 2,6'sı** kadar altında. Aynı para, aynı hafta, aynı 15 maç:
+fark **₺191.887,44** ve **44,2 kat**.
+
+#### 1. ders — üç kaçağın üçü de BANKOYDU, genişin dokuzu tuttu
+
+| maç | işaret | `p` | gerçek | |
+|---|---|---:|---|---|
+| 1 Beşiktaş – Erzurumspor | `1` | %78 | 1 | tuttu |
+| 8 Galatasaray – Kocaelispor | `1` | %77 | 1 | tuttu |
+| 14 Levante – Barcelona | `2` | %84 | 2 | tuttu |
+| **9 Gaziantep – Fenerbahçe** | `2` | **%61** | **0** | **kaçtı** |
+| **10 Augsburg – Leverkusen** | `2` | **%54** | **0** | **kaçtı** |
+| **12 Chelsea – Hull City** | `1` | **%79** | **0** | **kaçtı** |
+
+Üçlü ve çift işaretlenen **dokuz maçın dokuzu** tuttu. Yani hafta işaretin
+genişliğinde değil, **daraltıldığı yerde** kaybedildi — ve üç kaçağın
+üçünde de gelen sembol **beraberlik**ti (atılan `0` defteri: 6 bankoda 3
+kez geldi, beklenen 1,0).
+
+Şanssızlık mı yapı mı, ölçüldü: beklenen kaçak **1,67** ve
+**`P(kaçak ≥ 3) = %21,0`**. Banko karnesi 3/6 (beklenen 4,33), haftanın
+beraberlik sayısı 5 ↔ beklenen 3,41 (`P(≥5) = %24`). **Hepsi dağılımın
+içinde**, yani hafta kötüydü ama kural kırılmadı.
+
+Ve "üç kaçağın üçü de banko" cümlesi göründüğünden daha az şaşırtıcı:
+haftanın şekli **6b/0ç/9ü**'ydü — **hiç çifte yok.** Üçlü işaretlenen bir
+maç tanım gereği kaçamaz, dolayısıyla bu şekilde kaybedilebilecek tek yer
+zaten altı bankoydu. Ders şekil tarafında: `P(15/15)`yi enbüyükleyen plan
+bütün riskini altı satıra topluyor ve bu, aşağıdaki 5. dersin de
+mekanizması (çoklu plan aynı parayla riski **kuponlara dağıtıyor**).
+
+#### 2. ders — **oynanmayan planın parası hiçbir çıktıda yazmıyordu**
+
+§3.69'dan beri çoklu plan her hafta donuyor ve puanlanıyor. Ama yalnızca
+**kademe** olarak: `super_toto_degerlendir.py` "EN IYI KOLON: 13/15" yazıp
+duruyordu ve haftanın en büyük sayısı — oynanmayan planın oynanana göre
+kaç lira ettiği — hiçbir ekranda yoktu. 5. haftada elle hesaplandı ve
+**44,2 kat** çıktı.
+
+Bu, 4. haftanın 4. dersinin aynısıdır (*değerlendiricinin kendisi bir
+kademe fazla yazıyordu*): **ölçüm hattındaki bir boşluk, bulgunun kendisi
+kadar pahalıdır.** Düzeltildi — `coklu_getiri()` çoklu planın parasını tek
+sistemle **aynı gövdeden** (`getiri_karnesi`) hesaplıyor ve rapor ikisini
+yan yana yazıyor:
+
+```
+PARA: gerceklesen ₺196,324.34 · maliyet ₺196,830 · net ₺-505.66 · geri donus 99.74%
+      OYNANANA GORE: ₺+191,887.44  (44.2 kat)  — oynanmadigi icin ALINMADI.
+```
+
+Bekçisi `test_degerlendir.py::test_coklu_planin_PARASI_oynananla_yan_yana`
+ve blokla birlikte **sayıyı** da tutuyor; blok kabuk kalırsa test geçmez.
+
+Beklenti tarafı da ölçüldü ve aynı yöne bakıyor: aynı 19.683 kolonda
+`E[TL/kolon]` tek sistemde **432,04**, çoklu planda **521,25** (×1,206).
+Yani 44 kat gerçekleşen bir kuyruk, ×1,21 ise haftanın gürültüsünden
+bağımsız olan kısım.
+
+#### 3. ders — "kapanış" etiketi üçüncü kez fazlaydı, ve artık **hesaplanıyor**
+
+Program saatleri girilince 3. haftanın 3. dersi ölçülebilir hâle geldi:
+
+| | an |
+|---|---|
+| ana fiyatın kaydı (`entered_at`) | 2026-09-10 |
+| **resmî kupon kapanışı** (arşiv, `close_date`) | **2026-09-11 19:55** |
+| haftanın son maçı (9. maç) | 2026-09-14 20:00 |
+
+Yani `odds_kind: pinnacle-kapanis` etiketi taşıyan fiyat, kupon
+kapanışından **en iyi hâlde 20 saat önce** alınmış bir kayıttır — gerçek
+kapanış çizgisi değil, o an elde olan en geç kayıt bile değil. A1 ölçümü
+geç fiyatı açılıştan daha iyi bir tahminci buluyor (Brier 0,5940 ↔
+0,5964); bu kayıt **o kazancı almıyor** ve aldığı sanılıyordu.
+
+İki haftadır bu bir **itiraf** olarak duruyordu (elle yazılmış bir
+`data_warnings` satırı). İtiraf bekçi değildir: bir sonraki hafta
+unutulur ve etiket sessizce doğru görünür. Artık hesaplanıyor —
+`super_toto_hafta._yas_uyarilari`, resmî kapanış anını arşivden okuyup
+`entered_at` ile karşılaştırıyor (`FIYAT_YASI_ESIGI_SAAT = 8`, ve
+`entered_at` yalnızca gün taşıdığı için hesap **kaydı kayırarak** günün
+sonunu alır). Geriye dönük koşturulunca kusurun **beş haftanın üçünde**
+olduğu çıktı:
+
+| hafta | kayıt | resmî kapanış | durum | etiket |
+|---|---|---|---|---|
+| **1** | 2026-08-18 | 2026-08-14 21:25 | **KAPANDIKTAN 99 s SONRA** | (kapanış demiyordu) |
+| 2 | 2026-08-18 | 2026-08-21 21:25 | 69 s önce | (kapanış demiyordu) |
+| 3 | 2026-08-27 | 2026-08-28 21:25 | 21 s önce | **FAZLA** |
+| 4 | 2026-09-04 | 2026-09-04 19:55 | aynı gün — **ayrılamaz** | — |
+| **5** | 2026-09-10 | 2026-09-11 19:55 | 20 s önce | **FAZLA** |
+
+`entered_at` saat taşımıyor, o yüzden karar üçlü ve **üçü de kaydı
+kayırır**: kayıt günü kapanış gününden önceyse yaşın **alt sınırı**
+yazılır (gerçek yaş daha büyük), aynı gündeyse **susulur** ("bilinmiyor"
+ile "kusurlu" ayrı şeylerdir), sonraysa ayrı ve daha ağır bir uyarı çıkar.
+
+> **Ve o ağır uyarı 1. haftada çıktı, beş hafta sonra.** 1. haftanın
+> fiyatı kupon **kapandıktan dört gün sonra** kaydedilmiş: maçların
+> tamamı oynanmıştı. Donmuş kupon kaydı `results_known: false` diyor ve
+> o satırda bu **yalanlanmıyor ama doğrulanamıyor** da — 1. hafta ileriye
+> dönük bir tanık değildir. Beş hafta boyunca hiçbir yerde yazmıyordu;
+> şimdi kapı her yüklemede söylüyor ve karne okunurken o satır ayrıca
+> sayılmalı. (Beş haftalık defterde 1. hafta iki tarafta da ₺0 getirdiği
+> için 5. dersin sayılarını oynatmıyor.)
+
+**Tekrarlanmayacak hâli:** fiyat, kupon kapanışının **kendi gününde**
+alınır — sonrasında değil, bir gün öncesinde değil. Bu bir model
+değişikliği değil, sıfır maliyetli bir işlem değişikliğidir ve kapı artık
+unutulduğunda bağırıyor.
+
+#### 4. ders — iki durma kuralı da **hâlâ geçmiyor**, ve biri ters yönde
+
+4. hafta üç kaçağını orta favori bandında verdi, 5. hafta üçünü bankoda
+(ikisi yine o bantta: %54 ve %61). İki hafta üst üste aynı yere düşen bir
+kayıp, modele elle düzeltme koymak için en güçlü sezgiyi üretir. Kurallar
+tam bu an için **ölçümden önce** yazılmıştı; 5. haftada ilk kez
+**koşturuldular** (`scripts/durma_kurallari.py`):
+
+**§3.64 — T1 banko `q` düzeltmesi** (şart: 2025/26 + 2026/27 birlikte banko
+rejiminde `n ≥ 300` **ve** Wilson `p`'yi dışarıda bıraksın):
+
+| kesit | `n` | söylenen | gerçekleşen | açık |
+|---|---:|---:|---:|---:|
+| 2025/26 (kupon) | 150 | %61,7 | %62,0 | +0,3 |
+| **2026/27 (canlı)** | 25 | %61,2 | **%52,0** | **−9,2** |
+| havuzlanmış | **175** | %61,6 | %60,6 | −1,0 |
+
+`n = 175 < 300` → **geçmedi.** Ve asıl okuma işarette: tarihsel etki dört
+sezon boyunca **artı** yöndeydi (+%5…+%10, yani piyasa favoriyi ucuza
+satıyordu); canlı sezon **eksi** veriyor. 2022–2024 üzerinde kalibre
+edilmiş bir düzeltme bu sezon işleri **kötüleştirirdi**. Kuralın
+beklettiği şey bir titizlik değil, ölçülmüş bir zarardır.
+
+**§3.65 — orta favori bandı (%40–55)** (şart: canlı `n ≥ 150`, Wilson
+dışarıda, **ve** aynı sapma arşivde de görünsün):
+
+| kesit | `n` | söylenen | gerçekleşen | açık | Wilson %95 |
+|---|---:|---:|---:|---:|---|
+| **2026/27 (canlı)** | 38 | %46,6 | %28,9 | **−17,6** | [%17,0, %44,8] ← dışında |
+| **2025/26 (arşiv)** | **266** | %46,5 | **%51,1** | **+4,7** | [%45,1, %57,1] |
+
+`n = 38 < 150` → **geçmedi**, ve ikinci şart da düşüyor: arşiv **ters
+yönde** ve **yedi kat** örneklemle. "İki haftadır aynı yerde
+kaybediyoruz"un tek cümlelik cevabı budur.
+
+> Betik karar vermez, eşiğin neresinde olduğumuzu yazar. Var olma sebebi
+> şu: bir eşik sözle kontrol edilirse **kötü bir hafta onu her zaman
+> esnetir.** Bekçileri `tests/test_durma_kurallari.py`.
+
+#### 5. ders — canlı defter berabere, ve iki taraf da **tek haftanın** üstünde duruyor
+
+§3.69 ilk dört haftaya bakıp *"çoklu kupon aleyhine"* demişti (12+ kolon
+194 ↔ 10). 5. hafta o okumayı tersine çevirmiyor — **geçersiz kılıyor**:
+
+| hafta | oynanan (en iyi · TL) | çoklu plan (en iyi · TL) |
+|---:|---|---|
+| 1 | 9 · ₺0 | 10 · ₺0 |
+| 2 | 12 · ₺5.754,40 | 12 · ₺7.193,00 |
+| 3 | **14 · ₺202.811,60** | 11 · ₺0 |
+| 4 | 12 · ₺2.155,16 | 12 · ₺10.775,80 |
+| 5 | 12 · ₺4.436,90 | **13 · ₺196.324,34** |
+| **toplam** | ₺215.158,06 / ₺308.350 = **0,698** | ₺214.293,14 / ₺306.720 = **0,699** |
+
+Beş haftada ROI **0,698 ↔ 0,699** — ölçülemeyecek kadar yakın. Ve yakınlık
+bir denge değil, iki uç haftanın rastlantısı:
+
+* **3. hafta çıkarılırsa** oynanan **0,041**'e düşer (çoklu 0,719),
+* **5. hafta çıkarılırsa** çoklu **0,164**'e düşer (oynanan 1,890).
+
+`n = 5` hiçbir şey söylemiyor ve bekçisi
+(`test_degerlendir.py::test_bes_hafta_defteri_TEK_HAFTAYA_dayaniyor`)
+tam olarak bunu tutuyor: biri öne geçtiğinde ilk sorulacak soru **"hangi
+hafta"** olmalı. Geri testin hükmü (§3.67–3.73) değişmedi ve canlı
+defterden destek de almadı.
+
+#### 6. ders — operasyon engelinin bu haftaki boyu: **25 slip**
+
+Çoklu plan oynanmadı çünkü 81 kuponun elle girilmesi açık bir işti
+(§3.75). Bu haftanın planı ölçüldü (`sadelestirme.sadelestir`): 81 kupon
+**25 slipte** birleşiyor, karalanan kutucuk 2.025 → **660**. Yani bu
+haftanın engeli 81 değil **25 slip**ti — §3.75'in havuzlanmış ortalaması
+(60,1) değil.
+
+Sıra bu yüzden değişmiyor ama fiyatı artık canlı: **₺191.887,44, tek
+haftada.** §3.76 kombinatorik eksenin tamamını +2,6 puan diye fiyatlamıştı
+ve *"kalan tek gerçek kaldıraç matematik değil operasyon"* demişti; bu,
+o cümlenin ilk canlı faturasıdır.
+
+#### Ne değişti, ne değişmedi
+
+* **Değişmedi:** kupon kuralı, olasılık kaynağı, `BANKO_Q_DUZELTMESI = 0,0`,
+  orta favori bandına düzeltme yok, plan (81 kupon). Beş haftalık defter
+  hiçbir kararı desteklemiyor ya da çürütmüyor.
+* **Değişti (ölçüm hattı):** çoklu planın **parası** raporda; fiyat yaşı
+  **kapıda**; iki durma kuralı **koşulabilir**.
+* **Açık kalan, adıyla:** 12. maç (Chelsea–Hull City) hafta dosyasında
+  *"lig kodu bir etikettir, maç büyük olasılıkla kupa eşleşmesidir"* diye
+  **işaretliydi** ve haftanın en pahalı bankosu (%79) oydu. Bir maç hiçbir
+  şey kanıtlamaz (%79 favori %21 ihtimalle kaçar) ve kupon kuralı
+  `data_warnings`i okumaz — okusaydı bu bir model değişikliği olurdu ve
+  ölçülmeden yapılmaz. **Durma kuralı (ölçümden önce yazıldı):** lig
+  etiketi şüpheli maçlar biriktikçe ayrı bir kesit olarak ölçülür;
+  düzeltme ancak `n ≥ 100`'e ulaşıp Wilson aralığı piyasanın `p`'sini
+  tamamıyla dışarıda bıraktığında tartışılır. Bugün `n = 1`.
+* **§3.79 ile tutarlı, ama tanık değil:** 5. hafta bir **devir haftası**
+  (15'i kimse bilmedi) ve biz de tutturmadık — 114 haftalık geri testte
+  26/26 aynıydı. Canlı bir hafta o tabloyu doğrulamaz, `n = 1`; yalnızca
+  ters düşmediği yazılıyor.
+
+
 ---
 
 ## 4. Sayfada bugün ne var
@@ -8564,7 +8802,7 @@ python -m spor_toto.kosum                  # kayıtlı koşumlar
 python -m spor_toto.kosum --son disari     # son koşumun ortamı
 
 # Denetim
-pytest -q                                  # 2.087 test (136'sı bu katman, 676'sı tahmin)
+pytest -q                                  # 2.098 test (136'sı bu katman, 676'sı tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out

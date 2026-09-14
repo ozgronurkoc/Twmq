@@ -1195,7 +1195,7 @@ backend/
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
                        sehir/ · sistem_fiyat/
-  tests/               pytest (82 dosya → 2.087 test; §9'da katman dökümü)
+  tests/               pytest (83 dosya → 2.098 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1406,8 +1406,8 @@ Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant'lar, CLI (Bayes pre
 dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri test,
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
-eşleme, ikinci kayıt). **82 test dosyası, parametrizasyonla
-2.087 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+eşleme, ikinci kayıt). **83 test dosyası, parametrizasyonla
+2.098 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
@@ -1417,7 +1417,7 @@ karşı denetler):
 | Tahmin katmanı | `predict` `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin` `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre` `secim_kalibrasyonu` **`arena`** **`sizinti`** | 628 |
 | Sağlık | `health` `api_health` `meta` `health_history` | 82 |
 | Veri / istatistik / geri test | `history` `odds` `backtest` `api_stats` `api_backtest` `snapshot_iddaa` `pazar` **`gecmis_sezon`** **`sportoto_arsiv`** **`bulten`** | 256 |
-| Süper Toto | `super_toto` `degerlendir` | 115 |
+| Süper Toto | `super_toto` `degerlendir` | 121 |
 | 2. Tahmin (kalabalık ayarı · bağımsız görüş) | `tahmin2` | 36 |
 | Karar katmanı (bütçe kuralı · Pareto cephesi) | `secim` | 46 |
 | Amaç kıyası (`P(k≤3)` ↔ `E[k]`: aynı kupon mu?) | **`amac_kiyasi`** | 5 |
@@ -1454,6 +1454,7 @@ karşı denetler):
 | Bütçe cephesi (bekleme ↔ beklenen harcama · `p` içbükeyliği · tüm kolonlarda P=1) | **`butce_egrisi`** | 6 |
 | Haftalar arası bağımlılık (komşuluk tanımı · sezon sınırı · ÖLÇÜLEMEDİ satırı düşmez) | **`haftalar_arasi`** | 6 |
 | Kupon arşivi (yol kaçağı · numara yeniden kullanılmaz · zincir: girdi ↔ analiz ↔ kupon · **damgasız analiz yazılamaz** · kolon hesaplanır) | **`kupon_arsivi`** | 27 |
+| Durma kuralları (önceden yazılmış eşikler koşulabilir mi · rejim sınırı canlıdan kesilmez · arşiv ters yönde) | **`durma_kurallari`** | 5 |
 
 İki test bilerek **ağa çıkmaz**: `test_snapshot_iddaa.py` gerçek bültenden alınmış
 küçük bir örnek payload üzerinde koşar — ağ çağrısını sınamak bu paketin işi değil,

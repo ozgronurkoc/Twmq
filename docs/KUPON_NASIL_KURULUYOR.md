@@ -303,7 +303,13 @@ gelmiyor.
    yeniden koşulur. Sebebi dürüst: *Spor Toto kuponu ilk maçtan önce
    kapanır; haftanın son maçlarının gerçek kapanış çizgisi o anda henüz
    yoktur.* Kayıttaki "kapanış", **kupon donarken elde olan en geç
-   kayıttır** (3. haftanın 3. dersi).
+   kayıttır** (3. haftanın 3. dersi) — 5. haftada ölçüldü ve **o bile
+   değil**: kayıt kupon kapanışından 20 saat öncesine aitti (§3.82).
+4. **Fiyat yaşı denetimi** — ana fiyatın kayıt anı, resmî kupon kapanışı
+   (`data/sportoto_arsiv/<sezon>.json` → `close_date`) ile kıyaslanır ve
+   8 saatten eskiyse uyarı çıkar. **Tekrarlanmayacak hâli budur:** fiyat
+   kupon kapanışının kendi gününde alınır; sıfır maliyetli bir işlem
+   değişikliği ve unutulduğunda kapı bağırıyor.
 
 **4. haftada bu farkın pratik ağırlığı sıfır çıktı:** Pinnacle açılış
 fiyatıyla kurulan kupon **15 maçın 15'inde birebir aynı** işaretleri
@@ -982,7 +988,8 @@ değil, geriye dönük kurgu olurdu.
 | **Seçim koşullu aşırı güven** | Ölçüldü ve **gerçek**: yüksek eşikte +%14,9 aşırı güven (§3.49). Küresel olarak iyi kalibre bir model, *seçtiği* alt kümede gürültüyü seçer |
 | **`P(k ≤ eşik)` iyimser mi** | Hayır — **alt sınırdır**; gerçekleşen isabet üstünde çıkıyor |
 | **Oynanma payı = havuz payı mı** | **Hayır.** Tek platformun kullanıcıları; Spor Toto havuzunun tamamı değil |
-| **"Kapanış" gerçekten kapanış mı** | **Hayır.** Kupon donarken elde olan **en geç kayıt**. Ölçüldü ve etiketin fazla olduğu görüldü (3. haftanın 3. dersi) |
+| **"Kapanış" gerçekten kapanış mı** | **Hayır, ve en geç kayıt bile değil.** 5. haftada program saatleri girilince hesaplanabildi: fiyat 2026-09-10'da kaydedildi, kupon **2026-09-11 19:55**'te kapandı — 20 saat. Beş haftanın **üçünde** fiyat erken (hf 2: 69 s, hf 3: 21 s, hf 5: 20 s), **birinde ise kupon kapandıktan SONRA** alınmış (hf 1, 99 s sonra — o hafta ileriye dönük bir tanık değildir). Artık itiraf değil **kapı**: `super_toto_hafta._yas_uyarilari` resmî kapanışı arşivden okuyup `entered_at` ile kıyaslıyor (§3.82, 3. ders) |
+| **Çoklu plan oynanmadığında ne kaybediliyor** | **5. haftada ₺191.887,44 (44,2 kat).** Aynı bedelle (19.683 kolon) donmuş plan ₺196.324,34 getirirdi, oynanan tek sistem ₺4.436,90 getirdi. Beş haftalık defter yine de **berabere** (ROI 0,698 ↔ 0,699) ve iki taraf da tek haftanın üstünde duruyor — `n = 5` karar vermiyor (§3.82, 5. ders) |
 | **Havuz ekseni (az oynanana kayma) kâr getirir mi** | **Bugün ölçülemez.** Güç analizi ≈71 ikramiyeli hafta istiyor (≈3,5 sezon); analiz koşulduğunda elde 1, bugün 3 sonuçlanmış hafta var. Durma kuralı şimdiden yazılı |
 | **Tahmin katmanı piyasayı geçiyor mu** | **Geçmiyor.** Kalan etki 0,0005–0,0015 Brier: 31 binde anlamlı, 540 kupon maçında değil, %16,9'luk iddaa marjının yanında pratik eşiğe yakın bile değil |
 | **Kâr vaadi** | **Yok.** Proje kazanmayı garanti etmez; garanti ettiği tek şey kombinatoryal olandır |
