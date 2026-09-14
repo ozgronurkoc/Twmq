@@ -76,6 +76,16 @@ bölümü (üç soru), ve bunun **bekçisi**
 (`test_dis_tarama_durusu_CLAUDE_MDde_ve_becerisi_yerinde`) — kural budanırsa
 suit kırmızıya döner.
 
+### Ek ölçüm (aynı oturum): hedef bir **süre** sorusu (§3.78)
+
+Sahibi *"bilimle ulaşabilir miyiz"* diye sordu. Hiç değiştirilmemiş tek
+eksen ufuktu; aynı plan, aynı bütçe, yalnız süre: **13 hafta %77,0 · 26
+hafta %94,9 · 39 hafta %99,0** (81 kupon; gözlenen 4/4 ve 2/2). Üç aydan
+altı aya çıkmak **+17,9 puan** — kombinatorik eksenin tamamının yedi katı,
+729 kupona çıkmanın on katı, en iyi model bulgusunun dokuz yüz katı.
+Engel bilgi değil **takvim**. Süre sahibinin kararı; sayı kararı değil
+**bedelini** veriyor.
+
 ### Sıradaki adım
 
 1. **729 kupona çıkmanın operasyonu** — hâlâ birinci iş (+1,8 puan, 458,7

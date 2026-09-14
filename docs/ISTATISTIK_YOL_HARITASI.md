@@ -7281,6 +7281,29 @@ on üç kat büyük bir atıştan kıyaslanamayacak kadar iyidir.
 **Eksen kapandı ve bir daha açılmaz:** kâhin, elinde 13 kat yığma seçeneği
 varken onu kullanmıyor. Uygulanabilir hiçbir kural kâhini geçemez.
 
+### 3.78 Hedef bir **süre** sorusudur — ve bu, bilimin sınırını gösterir
+
+Sahibi sordu: *"bilimi kullanarak hedefe ulaşabilir miyiz?"* §3.76–§3.77
+soruyu iki tavanla çevrelemişti ama bir eksen hiç değiştirilmemişti:
+**ufuk**. Üç ay verili sayılıyordu.
+
+Aynı plan, aynı bütçe, yalnız süre uzatılarak (`ufuk_kiyasi.py --pencere`):
+
+| ufuk | 81 kupon | 729 kupon | pencere | gözlenen |
+|---|---:|---:|---:|---:|
+| 13 hafta (~3 ay) | **%77,0** | %78,8 | 8 ayrık | 7/8 · 8/8 |
+| 26 hafta (~6 ay) | **%94,9** | %95,7 | 4 ayrık | 4/4 |
+| 39 hafta (~9 ay) | **%99,0** | %99,2 | 2 ayrık | 2/2 |
+
+Okunuşu tek cümle ve projenin en önemli cümlelerinden biri: **hedefin
+önündeki engel bilgi değil, takvim.** Üç aydan altı aya çıkmak **+17,9
+puan** getiriyor — kombinatorik eksenin tamamının (+2,6) yedi katı, 729
+kupona çıkmanın (+1,8) on katı, ve ölçülen en iyi model bulgusunun (+0,02)
+**dokuz yüz katı**.
+
+Bu satır bir öneri değil bir **fiyat etiketidir**: süre sahibinin kararı,
+ölçüt değil. Ama kararın bedeli artık ölçülmüş olarak yazılı.
+
 #### Bu taramanın kalıcı hâli
 
 Bulgular `docs/DIS_UFUK_TARAMASI.md` §7'de. Taramanın **bir kereye mahsus

@@ -2417,6 +2417,17 @@
    ],
    "bekci": "backend/tests/test_bilgi_esnekligi.py::test_zamanlama_izgarasi_TAM_YIGILMAYI_iceriyor",
    "not": "Izgara 4 katta kesiliyordu ve bu, Mandel'in 'dogru cekilise yig' kuralini SORMADAN kapatiyordu. 6,5 ve 13,0 eklendi; kahin yeni basamaklari BIR KEZ BILE kullanmadi (sekiz pencerenin hicbirinde 4,0 ustune cikmadi) ve kazanc izgara buyumeden onceki degerinde kaldi. Sebep: hedef hafta ici harcamada ICBUKEY (en olasi N kolonun toplami doyar), piyangoda yigmayi karli yapan sey ise ikramiyenin buyumesiydi — odeme tarafi burada olcut degil. Eksen kapandi: uygulanabilir hicbir kural kahini gecemez."
+  },
+  {
+   "ne": "ufuk uzatmanin bedeli — ayni plan, ayni butce, yalniz sure",
+   "deger": "%94,9",
+   "ureten": "cd backend && python scripts/ufuk_kiyasi.py --butce 21000 --pencere 26  # tavan 81 satiri, HEDEF sutunu",
+   "olculdu": "2026-09-14",
+   "anildigi_yerler": [
+    "docs/ISTATISTIK_YOL_HARITASI.md §3.78"
+   ],
+   "bekci": "YOK — mevcut betigin farkli bir --pencere ile kosumu; gövdesinin bekcisi tests/test_ufuk.py.",
+   "not": "13 hafta %77,0 -> 26 hafta %94,9 -> 39 hafta %99,0 (81 kupon). Uc aydan alti aya cikmak +17,9 puan: kombinatorik eksenin TAMAMININ (+2,6) yedi kati, 729 kupona cikmanin (+1,8) on kati, olculen en iyi model bulgusunun (+0,02) dokuz yuz kati. Hedefin onundeki engel bilgi degil TAKVIM. Gozlenen: 26 haftada 4/4 pencere, 39 haftada 2/2. Sure sahibinin kararidir; bu sayi karari degil BEDELINI verir."
   }
  ],
  "komutlar": [
