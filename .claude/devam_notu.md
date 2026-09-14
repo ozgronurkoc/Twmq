@@ -128,6 +128,12 @@ tarar) — §3.74'ün sıralama dersi birebir buydu.
 5. **Kapanan dört başlık:** değişken derinlik (§3.72), zamanlama (§3.73),
    operasyonun istatistiksel yarısı (§3.74) ve slip yükü (§3.75). Dördünün
    de yeniden açılma şartı ölçülmüş olarak yazılı.
+6. **Çürük iddia — karar bekliyor (2026-09-14).** "Beraberlik hiçbir maçta
+   favori olmaz" iki yerde yazılı (`spor_toto/odds.py` `season_1x2_summary`
+   yorumu, `components/istatistik/charts.tsx:824` arayüz metni) ve birleşik
+   kesitte **yanlış**: `cross["0"]["0"] == 1` (2023_24 h42 m7,
+   Kayserispor–Konyaspor, p₀=0,3735). İddianın bekçisi yoktu, o yüzden
+   sessizce yanlış kaldı. Düzeltme yapılmadı — sahibi karar verecek.
 
 ### Neden böyle
 
