@@ -3,6 +3,8 @@
 Bu testler arayüzü değil, ileride yapılacak analizin girdisini korur.
 """
 
+import itertools
+
 import pytest
 
 from spor_toto.history import normalized_weeks
@@ -165,7 +167,7 @@ def test_RAPOR_bantlari_MODEL_bantlarinin_INCELTMESI():
         "bir model bandi rapor satirlarina ortasindan bolunuyor")
 
     for bantlar, ad in ((FAVORI_BANTLARI, "model"), (FAVORI_BANTLARI_RAPOR, "rapor")):
-        for (_, ust), (alt_sonraki, _) in zip(bantlar, bantlar[1:]):
+        for (_, ust), (alt_sonraki, _) in itertools.pairwise(bantlar):
             assert ust == alt_sonraki, f"{ad} bantlarinda bosluk/ortusme var"
     assert FAVORI_BANTLARI[0][0] == FAVORI_BANTLARI_RAPOR[0][0]
     assert FAVORI_BANTLARI[-1][1] == FAVORI_BANTLARI_RAPOR[-1][1]

@@ -44,11 +44,21 @@ function Tooltip({
   x,
   y,
   w,
+  yon = "ust",
   children,
 }: {
   x: number;
   y: number;
   w: number;
+  /**
+   * İpucunun çıpaya göre yönü. Varsayılan `"ust"` — grafiklerin çoğu
+   * yeterince uzun, ipucu tepeden taşmaz.
+   *
+   * `"alt"` **alçak** grafikler için: 56 px'lik bir dağılım çubuğunun
+   * üstüne 60 px'lik bir ipucu koymak onu bölüm başlığının üzerine
+   * fırlatıyor ve ipucu çıpasından kopmuş görünüyor.
+   */
+  yon?: "ust" | "alt";
   children: React.ReactNode;
 }) {
   const kirpik = Math.min(Math.max(x, 76), Math.max(w - 76, 76));
@@ -56,7 +66,8 @@ function Tooltip({
     <div
       role="status"
       className={cn(
-        "pointer-events-none absolute z-20 -translate-x-1/2 -translate-y-[calc(100%+10px)]",
+        "pointer-events-none absolute z-20 -translate-x-1/2",
+        yon === "ust" ? "-translate-y-[calc(100%+10px)]" : "translate-y-[10px]",
         "whitespace-nowrap rounded-xl bg-foreground px-3 py-2 text-[12px] text-background shadow-card",
       )}
       style={{ left: kirpik, top: y }}
@@ -747,31 +758,114 @@ export function FavouriteOutcome({
 function DagilimCubugu({
   hist,
   renk,
+  ad,
+  toplamHafta,
 }: {
   hist: Record<string, number>;
   renk: string;
+  /** "Favori kazandı" gibi — ipucunun başlığı. */
+  ad: string;
+  /** Payda: kesitteki hafta sayısı. İpucu yüzdeyi bundan kurar. */
+  toplamHafta: number;
 }) {
   const anahtarlar = Object.keys(hist)
     .map(Number)
     .sort((a, b) => a - b);
   const enCok = Math.max(...anahtarlar.map((k) => hist[String(k)] ?? 0), 1);
+
+  // Ipucu KONUMU cubugun kendi kutusundan okunur (`offsetLeft`), fare
+  // koordinatindan degil: dokunmatikte parmak cubugun kenarina basar ve
+  // ipucu kaymis gorunurdu. `w` sarmalayicinin genisligi — `Tooltip`
+  // kendini kenara tasmadan kirpmak icin ona bakiyor.
+  const [vurgu, setVurgu] = React.useState<{ k: number; v: number; x: number; w: number } | null>(
+    null,
+  );
+
+  function yakala(k: number, v: number) {
+    return (e: React.PointerEvent<HTMLButtonElement>) => {
+      const dugme = e.currentTarget;
+      const sarmal = dugme.parentElement;
+      if (!sarmal) return;
+      setVurgu({ k, v, x: dugme.offsetLeft + dugme.offsetWidth / 2, w: sarmal.offsetWidth });
+    };
+  }
+
   return (
-    <div className="flex items-end gap-[3px]" style={{ height: 56 }}>
-      {anahtarlar.map((k) => {
-        // Arka uc araliktaki her sayiyi yaziyor (gorulmeyenler 0), ama
-        // gorsel bunu VARSAYMAZ: eksik anahtar 0 sayilir.
-        const v = hist[String(k)] ?? 0;
-        return (
-          <div key={k} className="flex flex-1 flex-col items-center gap-1">
-            <div
-              className={cn("w-full rounded-sm", renk)}
-              style={{ height: Math.max((44 * v) / enCok, v ? 2 : 0) }}
-              title={`${k} maç: ${v} hafta`}
-            />
-            <span className="tnum text-[10px] text-muted-foreground">{k}</span>
+    <div className="relative">
+      <div className="flex items-end gap-[3px]" style={{ height: 56 }}>
+        {anahtarlar.map((k) => {
+          // Arka uc araliktaki her sayiyi yaziyor (gorulmeyenler 0), ama
+          // gorsel bunu VARSAYMAZ: eksik anahtar 0 sayilir.
+          const v = hist[String(k)] ?? 0;
+          return (
+            <button
+              key={k}
+              type="button"
+              // Pointer olaylari UC girdiyi birden kapsiyor: masaustunde
+              // `enter`/`leave` uzerine GELMEK, dokunmatikte parmak
+              // degdiginde `enter`, kaldirinca `leave` — yani "basili
+              // tutunca goster" davranisi ayrica yazilmadan cikiyor.
+              onPointerEnter={yakala(k, v)}
+              onPointerLeave={() => setVurgu(null)}
+              onPointerCancel={() => setVurgu(null)}
+              // Klavye: sekme ile gezilir, odak ipucunu acar.
+              onFocus={(e) => {
+                const sarmal = e.currentTarget.parentElement;
+                if (sarmal) {
+                  setVurgu({
+                    k,
+                    v,
+                    x: e.currentTarget.offsetLeft + e.currentTarget.offsetWidth / 2,
+                    w: sarmal.offsetWidth,
+                  });
+                }
+              }}
+              onBlur={() => setVurgu(null)}
+              className={cn(
+                "flex flex-1 cursor-default flex-col items-center gap-1 rounded-sm",
+                "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2",
+                "focus-visible:outline-foreground",
+              )}
+              // Ekran okuyucu icin ipucunun TAM metni; gorsel ipucu
+              // `pointer-events-none` oldugu icin ona ulasamaz.
+              aria-label={`${k} maç: ${v} hafta, ${toplamHafta} hafta içinden`}
+            >
+              <div
+                className={cn(
+                  "w-full rounded-sm transition-opacity",
+                  renk,
+                  vurgu && vurgu.k !== k ? "opacity-40" : "opacity-100",
+                )}
+                style={{ height: Math.max((44 * v) / enCok, v ? 2 : 0) }}
+              />
+              <span
+                className={cn(
+                  "tnum text-[10px]",
+                  vurgu?.k === k ? "font-semibold text-foreground" : "text-muted-foreground",
+                )}
+              >
+                {k}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      {/* `y` = cubuk seridinin ALTI (56 px serit + 16 px rakam satiri):
+          ipucu asagi aciliyor, bkz. `Tooltip` `yon` gerekcesi. */}
+      {vurgu ? (
+        <Tooltip x={vurgu.x} y={72} w={vurgu.w} yon="alt">
+          <div className="mb-1 font-semibold">
+            {ad}: {vurgu.k} maç
           </div>
-        );
-      })}
+          <div className="min-w-[140px] space-y-0.5">
+            <TooltipSatir
+              etiket="kaç haftada"
+              deger={`${vurgu.v} hafta · %${((100 * vurgu.v) / toplamHafta).toFixed(1)}`}
+            />
+          </div>
+          <div className="mt-1 opacity-60">{sayi(toplamHafta)} hafta içinden</div>
+        </Tooltip>
+      ) : null}
     </div>
   );
 }
@@ -800,7 +894,12 @@ export function FavouriteWeekly({ ozet }: { ozet: HaftalikFavoriOzet }) {
                 </span>
                 <span className="tnum text-[15px] font-semibold">{ondalik(d.avg, 2)}</span>
               </div>
-              <DagilimCubugu hist={d.hist} renk={u.renk} />
+              <DagilimCubugu
+                hist={d.hist}
+                renk={u.renk}
+                ad={u.ad}
+                toplamHafta={ozet.weeks}
+              />
               <div className="tnum text-[11px] text-muted-foreground">
                 medyan {ondalik(d.median, 1)} · aralık {d.min}–{d.max}
               </div>

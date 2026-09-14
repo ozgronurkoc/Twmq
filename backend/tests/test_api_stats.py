@@ -443,3 +443,48 @@ def test_favori_bantlari_TEK_kovada_yigilmiyor(client):
     saglam = [b for b in bantlar if b["n"] >= o["low_sample_at"]]
     assert saglam == sorted(saglam, key=lambda b: -b["hit_pct"]), (
         "favori orani buyudukce isabet dusmuyor — bant siralamasi bozuk")
+
+
+def test_haftalik_uclu_ozet_ve_HISTOGRAM_tutarli(client):
+    """`favourite_weekly` — arayüzün ipucu bu bloğun iç tutarlılığına dayanır.
+
+    Dağılım çubuğuna basınca çıkan ipucu *"20 hafta · %17,5 · 114 hafta
+    içinden"* diyor. O yüzde `hist` değerinin `weeks`e bölümüdür ve
+    **histogramın hafta sayısına tam toplandığını varsayar**. Toplamazsa
+    yüzdeler sessizce yanlış olur: toplam 100'ü tutmaz ama hiçbir satır tek
+    başına saçma görünmez, yani gözle yakalanmaz.
+
+    `full` ayrıca daha dar olmalı — tanımı gereği `all`ın alt kümesi.
+    """
+    o = client.get("/api/stats").get_json()["odds"]
+    if o is None:
+        return
+    haftalik = o["favourite_weekly"]
+    assert set(haftalik) == {"all", "full"}
+
+    for kip in ("all", "full"):
+        ozet = haftalik[kip]
+        if not ozet:  # tam hafta hiç yoksa blok boş döner
+            continue
+        assert ozet["weeks"] > 0
+        assert ozet["avg_matches"] > 0
+        for ad in ("won", "draw", "lost"):
+            d = ozet[ad]
+            # ASIL BEKCI: histogram hafta sayisina TAM toplanir.
+            assert sum(d["hist"].values()) == ozet["weeks"], (
+                f"{kip}/{ad}: histogram {sum(d['hist'].values())} hafta sayiyor, "
+                f"kesitte {ozet['weeks']} hafta var — ipucunun yuzdesi yanlis olur")
+            # Histogram anahtarlari JSON'da METIN; arayuz onlari boyle okuyor.
+            assert all(isinstance(k, str) for k in d["hist"])
+            anahtar = sorted(int(k) for k in d["hist"])
+            assert anahtar[0] == d["min"] and anahtar[-1] == d["max"]
+            # Aralik SUREKLI: gorulmeyen sayi da 0 olarak yazilir, yoksa
+            # cubuk seridinde bosluk degil KAYMA olurdu.
+            assert anahtar == list(range(d["min"], d["max"] + 1))
+            assert d["min"] <= d["avg"] <= d["max"]
+            assert d["min"] <= d["median"] <= d["max"]
+
+    tam, hepsi = haftalik["full"], haftalik["all"]
+    if tam and hepsi:
+        assert tam["weeks"] <= hepsi["weeks"], "tam haftalar hepsinin alt kumesi"
+        assert tam["avg_matches"] == 15
