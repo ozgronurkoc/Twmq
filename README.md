@@ -1193,7 +1193,7 @@ backend/
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
                        sehir/ · sistem_fiyat/
-  tests/               pytest (78 dosya → 2.030 test; §9'da katman dökümü)
+  tests/               pytest (78 dosya → 2.032 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1401,7 +1401,7 @@ dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri t
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
 eşleme, ikinci kayıt). **78 test dosyası, parametrizasyonla
-2.030 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+2.032 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
@@ -1428,7 +1428,7 @@ karşı denetler):
 | Koşum defteri | `kosum` | 22 |
 | Takım gücü | `takim_gucu` | 24 |
 | Yeni veri (UEFA · şehir) | `avrupa` `sehir` | 41 |
-| Belgeler | `belgeler` | 28 |
+| Belgeler | `belgeler` | 29 |
 | Ölçüm kütüğü (alıntı · üreten · bekçi bütünlüğü · komut şeması) | **`olcum_kutugu`** | 6 |
 | Değer bahsi (yan pazarlar) | **`deger`** | 24 |
 | Fiyat kaynakları | **`fiyatlar`** | 14 |
@@ -1443,7 +1443,7 @@ karşı denetler):
 | Ufuk (hedefin kendisi: `1 − Π(1 − p)` · Jensen yönü · kâhin tahsis üst sınırı) | **`ufuk`** | 9 |
 | Operasyon (elle giriş slipleri · örtüşmede doğru `P` · yoğunlaşma · donmuş kaydın denetim sırası) | **`operasyon`** | 22 |
 | Sadeleştirme (aynı kolonlar daha az kutuyla · ayrık bölüntü · kesin enküçükle kıyas · tahsis birleşmeyi öldürüyor) | **`sadelestirme`** | 24 |
-| Bilgi esnekliği (kombinatorik TAVAN · kesin bilgi eğrisi · Brier → hedef puanı çevirisi) | **`bilgi_esnekligi`** | 9 |
+| Bilgi esnekliği (kombinatorik TAVAN · kesin bilgi eğrisi · Brier → hedef puanı çevirisi · yığma ızgarası) | **`bilgi_esnekligi`** | 10 |
 
 İki test bilerek **ağa çıkmaz**: `test_snapshot_iddaa.py` gerçek bültenden alınmış
 küçük bir örnek payload üzerinde koşar — ağ çağrısını sınamak bu paketin işi değil,

@@ -109,3 +109,22 @@ def test_brier_esit_dagilimda_bilinen_degeri_verir():
     """Sağlama: üç sembole 1/3 vermek 2/3 eder."""
     esit = [{s: 1 / 3 for s in SEMBOLLER} for _ in range(MAC_SAYISI)]
     assert _brier(esit, _gercek(0)) == pytest.approx(2 / 3)
+
+
+def test_zamanlama_izgarasi_TAM_YIGILMAYI_iceriyor():
+    """Yığma ekseni ölçülerek kapandı; ızgara yeniden budanırsa açılır.
+
+    §3.77: Mandel'in kuralının ikinci yarısı *"doğru çekilişe yığ"*dır ve
+    ızgara 4 katta kesildiği sürece kâhin o seçeneği **göremez**. Ölçüm
+    ancak pencerenin tamamı (13 kat) ızgaradaysa bir şey söyler; söylediği
+    de şu oldu: kâhin yeni basamakları bir kez bile kullanmadı.
+
+    Bu bekçi bir sayıyı değil, **sorunun sorulmuş olmasını** tutuyor.
+    """
+    from scripts.ufuk_kiyasi import ZAMANLAMA_IZGARASI
+    from spor_toto.ufuk import UFUK_HAFTA
+
+    assert max(ZAMANLAMA_IZGARASI) >= UFUK_HAFTA, (
+        f"izgara {max(ZAMANLAMA_IZGARASI)} katta kesiliyor; pencerenin "
+        f"tamamini ({UFUK_HAFTA}) tek haftaya yigmak secenek disi kaldi")
+    assert 0.0 in ZAMANLAMA_IZGARASI, "'bu haftayi oynama' secenegi kayboldu"

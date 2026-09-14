@@ -256,7 +256,95 @@ iddiayla gelen her fikir sınanır; gelmeyen fikir sıraya girmez.
 
 ---
 
-## 7. Kaynaklar
+## 7. Varlık kanıtları — bunu gerçekten başaran kim var?
+
+> Bu bölüm sahibinin ikinci sorusunun cevabı: *"dışarıda bir yerde bu hedefe
+> çoktan ulaşmış fikirler, insanlar, projeler olabilir."* Doğru soru — ve
+> cevabı "hayır" değil, **"evet ama başka bir oyunda"**.
+
+### 7.1 Müşterek havuzu gerçekten yenen üç vaka
+
+**Bill Benter.** Müşterek bahiste belgelenmiş en büyük başarı: Hong Kong at
+yarışı havuzlarında, yüzden fazla değişkenli bir modelle, on yıllar içinde
+~1 milyar dolar. Yöntemin çekirdeği bu projeyi doğrudan ilgilendiriyor:
+Benter **halkın oranını modelin bir değişkeni yaptı** ve kendi temel modelini
+onun üstüne koydu — tam olarak bu deponun on bir kez denediği şey.
+
+**Niçin orada işe yaradı, burada yaramıyor.** At yarışında **fiyatı kalabalık
+koyar**: havuzdaki para oranı belirler, dolayısıyla kalabalığı yenmek fiyatı
+yenmektir ve doğrudan paraya döner. Spor Toto'da ise olasılığı doğa koyar;
+kalabalık yalnızca **ikramiyeyi böler**. Yani Benter'in kaldıracı burada da
+var — ama `P(15/15)` ekseninde değil, **para** ekseninde. Sahibi kâr/zararı
+ölçüt saymadığı için bugün bu kaldıraç hedefe hizmet etmiyor.
+
+> Bu, bu belgedeki en önemli tek cümle olabilir: **hedef "olasılık" iken
+> kalabalığı yenmenin karşılığı sıfırdır; hedef "para" olsaydı Benter'in
+> ekseni açık olan tek eksen olurdu** — ve bu depoda o eksenin adı havuz
+> (`getiri.py` + `kalabalik.py`, §3.50–3.51, `n = 3`).
+
+**Ranogajec / Woods / "Bankroll".** Aynı ailenin sanayi ölçeği: yılda ~10
+milyar dolar ciro. Ama belgelerdeki belirleyici ayrıntı model değil:
+**iade** — bahis başına %8–13 geri ödeme, ABD'de kaybeden bahislerde ortalama
+%13. Başabaş oynayıp iadeyle kâr ediyorlar. Spor Toto'da iade yok, yani bu
+vakanın kopyalanabilir kısmı **ticari**, matematiksel değil.
+
+**Stefan Mandel.** Piyangoda 14 kez kazandı ve kuralı basit: **bütün
+kombinasyonları satın al**, ikramiye tam kaplama bedelinin ~3 katını
+aştığında. Burada iki kez ölçüldü, iki kez düştü:
+
+| Mandel koşulu | burada |
+|---|---|
+| Tam kaplama bedeli | `3¹⁵ × ₺10` = **₺143.489.070** |
+| Üç aylık bütçenin tamamı | ₺210.000 × 13 = **₺2.730.000** |
+| Oran | bütçe, kesin kazancın **%1,9'u** |
+| Devir koşulu (pozitif BD için gereken çarpan) | 1,95–2,84 gerekiyor; 222 haftanın azamisi **1,645** |
+
+> Bu tablonun ters okunuşu da doğru ve moral vericidir: **bütçe kesin
+> kazancın %1,9'u, ve o parayla bugün %77 alıyoruz.** Kalan pay satın
+> alınamıyor çünkü satılık değil.
+
+**Mandel'in ikinci yarısı — yığmak — ayrıca ölçüldü.** Zamanlama ızgarası
+haftalık bütçenin 4 katında kesiliyordu; pencereyi tek haftaya yığmak 13
+kattır ve ızgarada yoktu. Izgara 13'e çıkarıldı, kâhin (uygulanamaz üst
+sınır) yeniden koşuldu: **yeni basamakları bir kez bile kullanmadı**, kazanç
+×1,031'de kaldı. Sebebi, hedefin hafta içi harcamada **içbükey** olması:
+on üç ayrı atış, on üç kat büyük tek atıştan iyi. Piyangoda yığmayı kârlı
+yapan şey ikramiyenin büyümesiydi; burada ödeme tarafı hedefin ölçütü değil.
+
+### 7.2 Aranıp **bulunamayan** — ve bunun da bir bulgu olduğu
+
+1X2 havuzunu (Spor Toto, Totocalcio, Stryktipset, UK pools) sistemli biçimde
+yendiği **ölçülerek** gösterilmiş tek bir kişi, sendika veya açık kaynak
+proje bulunamadı. Bulunanlar iki kümede toplanıyor:
+
+* **Para havuzlayanlar** — UK pools'ta 1986'da ilk 1 milyon sterlini alan
+  hemşire sendikası gibi. Bu bir *yöntem* değil, daha çok kolon alabilmek
+  için sermaye birleştirmek. Bizde bütçe zaten verili.
+* **İddia satanlar** — Türkiye'de `sportoto.pro`, `Hedef15`,
+  `sportotopremium`, `sportotowinner`: *"60+ matematiksel formül"*,
+  *"garantili sistem"*, *"şansı devreden çıkar"*. Hiçbiri ölçülmüş bir kayıt
+  yayımlamıyor; garanti kelimesi kaplama garantisidir (14 garanti), kazanç
+  garantisi değil — bu depo o farkı `karne.py`de sayıyla ölçüyor
+  (garanti tabanı gerçek kolon dağılımından **2,39 kat** gevşek, §3.56).
+
+Matematik tarafında ise literatür zaten bizim tarafımızda: *Football Pools —
+A Game for Mathematicians* (Amer. Math. Monthly, 1995) bu problemin kaplama
+kodu koluna ayrılmış klasik derlemedir ve §3.1'de fiyatlandı.
+
+### 7.3 Bu taramanın kalıcı hâli
+
+Sahibinin asıl isteği bir tarama değil bir **duruş**tu: *"hep böyle dışa
+dönük ol, kendini bu depoyla sınırlama."* Duruşu kalıcı kılmanın yolu onu
+bir oturumun iyi niyetine bırakmak değil, **kurala bağlamaktır**:
+
+* `.claude/skills/dis-tarama/SKILL.md` — dış taramanın nasıl yapılacağı ve
+  bulunanın nasıl fiyatlanacağı (para birimi: **hedef puanı**).
+* `CLAUDE.md` — yeni bir eksen açılmadan önce sorulacak üç soru.
+* Bu belgenin §4'ü — fiyat listesi; her yeni bulgu oraya bir satır ekler.
+
+---
+
+## 8. Kaynaklar
 
 * [An improved upper bound for the football pool problem for nine matches](https://www.sciencedirect.com/science/article/pii/S0097316503000104) — `K₃(9,1) ≤ 1269`
 * [A new lower bound for the football pool problem for 7 matches](https://www.numdam.org/item/JTNB_1996__8_2_481_0.pdf)
@@ -269,3 +357,9 @@ iddiayla gelen her fikir sınanır; gelmeyen fikir sıraya girmez.
 * [Close Approximations of Minimum Rectangular Coverings](https://link.springer.com/article/10.1023/A:1009879504783) — kutu örtme
 * [Pari-Mutuel Betting Markets: Racetracks and Lotteries Revisited](https://www.annualreviews.org/content/journals/10.1146/annurev-financial-053122-021925)
 * [FootyStats — Türkiye Süper Lig xG](https://footystats.org/turkey/super-lig/xg) — denenmemiş tek kaynak
+* [Benter (1994), Computer Based Horse Race Handicapping and Wagering Systems](https://gwern.net/doc/statistics/decision/1994-benter.pdf) — müşterek havuzu yenen belgelenmiş yöntem
+* [The Gambler Who Cracked the Horse-Racing Code (Bloomberg)](https://www.bloomberg.com/news/features/2018-05-03/the-gambler-who-cracked-the-horse-racing-code)
+* [Zeljko Ranogajec](https://en.wikipedia.org/wiki/Zeljko_Ranogajec) — iade (%8–13) yapısı
+* [Stefan Mandel — tam kaplama stratejisi](https://thehustle.co/the-man-who-won-the-lottery-14-times-part-1)
+* [Football Pools — A Game for Mathematicians (Amer. Math. Monthly, 1995)](https://www.tandfonline.com/doi/abs/10.1080/00029890.1995.12004624)
+* [Football pools (tarihçe, sendikalar)](https://en.wikipedia.org/wiki/Football_pools)

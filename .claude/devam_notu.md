@@ -47,60 +47,62 @@ benim kararım):
 
 **2026-09-14 — dal `claude/proje-durumu-ilerleme-8h7l86`**
 
-### Bu oturumda: **iki tavan ölçüldü** (§3.76) — kalan payın tamamı fiyatlandı
+### Bu oturumda: varlık kanıtları arandı (§3.77) + duruş **kurala bağlandı**
 
-Sahibi vizyonu depo dışına açmayı istedi (*"profesörlerin makaleleri,
-gerekirse kuantum"*). Dış tarama yapıldı — ama taramanın kendisi ölçüm
-değildir, o yüzden tarama **iki ölçüme** çevrildi:
+Sahibi §3.76'nın dış taramasını yeterli bulmadı ve haklıydı: istediği bir
+tarama değil bir **duruş**tu (*"hep böyle dışa dönük ol"*) ve bir soru
+sormamıştım — *"dışarıda bu hedefe çoktan ulaşmış biri olabilir."*
 
-**Tavan 1 — kombinatorik eksenin tamamı: +2,6 puan.** `ufuk_kiyasi.py
---serbest` artık tabloya "en olası N kolon" satırını basıyor: 81 kupon
-%77,0 · 729 %78,8 · **serbest %79,6**. Sınır olduğu bir teoremdir (15/15
-olayları ayrık ⇒ `P = Σ p`). Yani bütün arama/algoritma/donanım işinin
-toplam payı 2,6 puan ve **1,8'i yalnızca kupon sayısı**; kalana 0,8 kalıyor.
+**Arandı. Bulunan üç vaka ve niçin burada tekrarlanamadıkları:**
+Benter (~1 mlr $, at yarışı) — orada **fiyatı kalabalık koyar**, burada doğa
+koyar, kalabalık yalnızca ikramiyeyi böler; Ranogajec/Woods — kârın
+belirleyicisi model değil **%8–13 iade**, Spor Toto'da iade yok; Mandel (14
+piyango) — tam kaplama burada **₺143.489.070**, üç aylık bütçenin 52,6 katı.
+Ve **bulunamayan** da bulgu: 1X2 havuzunu ölçülerek yendiği gösterilmiş tek
+kişi/sendika/proje yok; bulunanlar ya para havuzlayan sendikalar ya iddia
+satan platformlar (`sportoto.pro`, `Hedef15`, …) — ölçülmüş kayıt yok.
 
-**Tavan 2 — model ekseninin fiyatı: 1 puan = 0,02–0,047 Brier**
-(`scripts/bilgi_esnekligi.py`, yeni). İki uçtan ölçüldü: 1 maçı kesin
-bilmek **+15,3 p** (üç kez üst sınır, ve aranmayacak bir şey), yayılmış
-bilgide `λ=0,01` → +0,2 p. Karşılığı: projenin piyasayı geçen **tek**
-bulgusu (Betfair, ΔBrier −0,00100) hedefte **≈0,02 puan**; §3.23'ün
-ulaşılamaz kalibrasyon tavanı ≈0,01 puan.
+**Ve arama bir ÖLÇÜM üretti.** Mandel'in ikinci yarısı (*"doğru çekilişe
+yığ"*) bu depoda hiç sorulmamıştı: zamanlama ızgarası 4 katta kesiliyordu,
+pencereyi tek haftaya yığmak ise 13 kat. Izgara 13'e çıkarıldı (6,5 + 13,0),
+kâhin yeniden koşuldu: **yeni basamakları bir kez bile kullanmadı**, kazanç
+×1,0312'de kaldı. Sebep: hedef hafta içi harcamada **içbükey**. Eksen
+kapandı — kâhin geçemiyorsa uygulanabilir hiçbir kural geçemez.
 
-**Yön değişikliği:** kalan tek gerçek kaldıraç matematik değil
-**operasyon** — 729 kupon = 458,7 slip ve girilebilirliği hâlâ ölçülmedi.
-
-Dış tarama `docs/DIS_UFUK_TARAMASI.md`de: football pool problem (`K₃(n,1)`,
-gerçekten açık bir kombinatorik problem ama **yanlış soruyu** çözüyor),
-çoklu kuponda entropi (arXiv 2308.14339 — ciddi itiraz, ya-hep-ya-hiç
-hedefte **geçmiyor**, yeniden açılma şartı yazılı), piyasa verimliliği
-yazını (bizimle aynı yere varıyor), kuantum tavlama (tavanı 0,8 puan,
-klasik taraf zaten %97,9'da), veri kaynakları (denenmemiş tek kapı:
-FootyStats Süper Lig xG).
+**Duruş kalıcı hâle getirildi** (asıl istenen buydu):
+`.claude/skills/dis-tarama/SKILL.md` (yordam + fiyatlama tavanları + arama
+kalıpları + tuzaklar), CLAUDE.md'ye "Depo dışına bakmak — varsayılan duruş"
+bölümü (üç soru), ve bunun **bekçisi**
+(`test_dis_tarama_durusu_CLAUDE_MDde_ve_becerisi_yerinde`) — kural budanırsa
+suit kırmızıya döner.
 
 ### Sıradaki adım
 
-1. **729 kupona çıkmanın operasyonu.** Artık sayısı var: +1,8 puan, bedeli
-   458,7 slip. Bu, projenin **birinci** işi — ölçmek için giriş süresi
-   kaydı gerekiyor ve o kayıt sahibinden gelmeli.
-2. 6. hafta geldiğinde `--yaz` ile dondur.
-3. 5. haftanın sonucu girildiğinde ilk ileriye dönük satır okunacak
-   (5. hafta 2026-09-13'te donduruldu; **o kaydın üstüne yazma**).
-4. Havuz ekseni (§3.51) `n = 3`te; sönüm ekseni birikmeyi bekliyor.
-5. **Kapanmaya hazır iki eksen:** kombinatorik (729'a çıkıldığı anda
-   kapanır, fark 0,8 puan) ve model (yalnız ΔBrier ≥ 0,02 iddiasıyla
-   açılır). İkisinin de şartı §3.76'da ölçüm görülmeden yazıldı.
+1. **729 kupona çıkmanın operasyonu** — hâlâ birinci iş (+1,8 puan, 458,7
+   slip). Giriş süresi kaydı sahibinden gelmeli.
+2. 6. hafta geldiğinde `--yaz` ile dondur; 5. haftanın sonucu girilince ilk
+   ileriye dönük satır okunacak (**o kaydın üstüne yazma**).
+3. Denenmemiş tek veri kapısı: FootyStats Süper Lig xG — beklenen değeri
+   §3.76'nın çeviri oranıyla peşinen düşük, ama kontrolü ucuz.
+4. **Hedef para olursa** iki kapalı eksen anında açılır: kalabalıktan sapmak
+   (Benter'in ekseni) ve çoklu kuponda entropi. Bu, dış taramanın en önemli
+   koşullu bulgusu.
 
 ### Neden böyle
 
-Sahibin isteği "daha geniş bak"tı ve doğru cevabı geniş bakıp **fiyat
-biçmekti**: dışarıdaki her fikri reddetmek değil, her birini hedefin para
-biriminde ölçmek. Sonuç iki mertebe farkı gösterdi — ve projenin kalan
-işini matematikten operasyona taşıdı.
+Bir duruş, bir oturumun iyi niyetine bırakılırsa bir sonraki oturumda yok
+olur. Bu depoda kalıcı olan tek şey **bekçisi olan** şeydir — o yüzden dışa
+dönüklük de bir dosyaya değil, bir teste bağlandı.
 
 ## Geçmiş girdiler
 
-**2026-09-14 (önceki, aynı dal)** — durum denetimi: taze klonda kurulum
-geçti, suit yeşil (o gün 2017+4 = 2.021).
+**2026-09-14 (önceki, aynı dal)** — **iki tavan ölçüldü** (§3.76):
+kombinatorik eksenin tamamı **+2,6 puan** (81 kupon %77,0 → serbest küme
+%79,6; 1,8'i yalnızca 729 kupon), ve model ekseninde **1 hedef puanı =
+0,02–0,047 Brier** — projenin piyasayı geçen tek bulgusu (Betfair,
+ΔBrier −0,00100) hedefte ≈0,02 puan. `scripts/bilgi_esnekligi.py` +
+`ufuk_kiyasi.py --serbest` + 9 bekçi + `docs/DIS_UFUK_TARAMASI.md`.
+Yön: kalan tek gerçek kaldıraç matematik değil **operasyon**.
 
 **2026-09-13 (önceki, dal `claude/devam-edelim-sltxrg`)** — **kupon ≠ slip**
 ölçüldü (§3.75). "81 kupon = 81 slip" sessiz bir varsayımdı ve yanlıştı: tek

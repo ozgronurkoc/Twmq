@@ -67,9 +67,15 @@ VARSAYILAN_PENCERE = UFUK_HAFTA
 
 #: Zamanlama sınavının bütçe ızgarası, haftalık bütçenin katları olarak.
 #: `0` bilerek var — "bu haftayı hiç oynama" bir seçenektir ve kâhin onu
-#: gerçekten kullanıyor. Üst uç 4 katta kesiliyor: haftada 840.000 TL zaten
-#: operasyonun çok ötesinde ve eğri orada düzleşiyor.
-ZAMANLAMA_IZGARASI = (0.0, 0.25, 0.5, 1.0, 2.0, 3.0, 4.0)
+#: gerçekten kullanıyor.
+#:
+#: **Üst uç 4'ten 13'e çıkarıldı (§3.77).** Eskiden 4 katta kesiliyordu ve
+#: gerekçesi *"haftada 840.000 TL zaten operasyonun ötesinde"*ydi. O gerekçe
+#: bir soruyu sormadan kapatıyordu: Mandel'in piyangoda işe yarayan kuralı
+#: **yığmaktır** — bütün bütçeyi tek çekilişe koy. 13, pencerenin tamamını
+#: tek haftaya yığmaktır; ızgarada yoksa kâhin o seçeneği hiç göremez ve
+#: "yığmak işe yaramıyor" cümlesi ölçülmemiş kalır.
+ZAMANLAMA_IZGARASI = (0.0, 0.25, 0.5, 1.0, 2.0, 3.0, 4.0, 6.5, 13.0)
 
 
 def kos(butce: int, pencere: int = VARSAYILAN_PENCERE,

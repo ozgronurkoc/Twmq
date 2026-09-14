@@ -1381,3 +1381,19 @@ def test_egitim_basligi_LIG_sayisini_dogru_veriyor():
     assert m, "egitim.py başlığındaki korpus tarifi bulunamadı"
     assert int(m.group(1)) == lig, (
         f"egitim.py '{m.group(1)} lig' diyor, korpus {lig} lig taşıyor")
+
+
+def test_dis_tarama_duruşu_CLAUDE_MDde_ve_becerisi_yerinde():
+    """Dışa dönük duruş bir oturumun iyi niyetine bırakılmaz.
+
+    Sahibi bunu açıkça istedi (2026-09-14) ve istek "bu sefer şunu yap"
+    değil "**hep böyle ol**"du. Böyle bir isteğin tek kalıcı biçimi kurala
+    bağlanmasıdır; kural da ancak bekçisi varsa kalıcıdır — aksi hâlde
+    sonraki bir düzenleme onu sessizce budar ve kimse fark etmez.
+    """
+    beceri = DEPO / ".claude" / "skills" / "dis-tarama" / "SKILL.md"
+    assert beceri.exists(), "dis-tarama becerisi yok — duruş kuralsız kaldı"
+    metin = (DEPO / "CLAUDE.md").read_text(encoding="utf-8")
+    for parca in (".claude/skills/dis-tarama/SKILL.md",
+                  "docs/DIS_UFUK_TARAMASI.md"):
+        assert parca in metin, f"CLAUDE.md {parca} dosyasını göstermiyor"

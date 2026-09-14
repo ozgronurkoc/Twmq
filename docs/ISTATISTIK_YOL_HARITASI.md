@@ -171,7 +171,7 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/components/super-toto/tahmin2.tsx` | **2. Tahmin** paneli — `1. Tahmin` / `2. Tahmin` sekmeleri arasında geçilir; para birimli hiçbir sayı yok. Hafta kapandığında sonuç sütunu ve ayar karnesi açılır (§3.38) |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **2.030 test**; **136'sı** istatistik katmanına (`history` `odds` `backtest`
+paketi toplam **2.032 test**; **136'sı** istatistik katmanına (`history` `odds` `backtest`
 `api_stats` `api_backtest` `snapshot_iddaa`), **672'si** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre`
@@ -7225,6 +7225,70 @@ Ve bu, §3.74–§3.75'in kapanmayan yarısını projenin **birinci** işi yapı
    729 kuponu kaldırabilir olacak **ve** kalan 0,8 puanın yarısını alan
    klasik bir yöntem bulunamayacak.
 
+### 3.77 **Varlık kanıtları** arandı — ve Mandel'in kuralı ölçülüp kapandı
+
+§3.76 dış fikirleri fiyatladı ama bir soruyu sormamıştı, ve o soru sahibinin
+sorduğu soruydu: *"dışarıda bu hedefe **çoktan ulaşmış** biri olabilir."*
+Doğru soru. Arandı — ve arama bir **ölçüm** üretti.
+
+#### Bulunanlar: müşterek havuzu gerçekten yenen üç vaka
+
+| kim | ne yaptı | **niçin burada tekrarlanamaz** |
+|---|---|---|
+| **Bill Benter** (~1 milyar $) | At yarışı müşterek havuzunda, temel modeli **halkın oranıyla birlikte** kullanan bir sistem | At yarışında **fiyatı kalabalık koyar**; kalabalığı yenmek fiyatı yenmektir. Spor Toto'da olasılığı doğa koyar, kalabalık yalnızca **ikramiyeyi böler** |
+| **Ranogajec / Woods / "Bankroll"** (~10 milyar $/yıl ciro) | Aynı aile, sanayi ölçeğinde | Kârın belirleyicisi model değil **iade**: bahis başına %8–13 geri ödeme. Başabaş oynayıp iadeyle kazanıyorlar. Spor Toto'da iade **yok** |
+| **Stefan Mandel** (14 piyango) | **Bütün kombinasyonları** satın al — ikramiye tam kaplama bedelinin 3 katını aştığında | Tam kaplama burada **3¹⁵ × ₺10 = ₺143.489.070**. Üç aylık bütçenin tamamı ₺2.730.000, yani **52,6 kat** küçük |
+
+Ve **aranıp bulunamayan** şey de bir bulgudur: 1X2 havuzunu (Spor Toto,
+Totocalcio, Stryktipset, UK pools) sistemli biçimde yendiği **ölçülerek**
+gösterilmiş tek bir kişi, sendika ya da açık kaynak proje yok. Bulunanlar
+iki kümede toplanıyor: *para havuzlayan* sendikalar (yöntem değil, sermaye)
+ve *iddia satan* platformlar — Türkiye'de `sportoto.pro`, `Hedef15`,
+`Premium`, `Winner`: "60+ matematiksel formül", "garantili sistem". Hiçbiri
+ölçülmüş bir kayıt yayımlamıyor. Bu depo tam olarak onun karşıtı olmak için
+var.
+
+#### Mandel'in kuralı iki kez ölçüldü ve iki kez düştü
+
+1. **Tam kaplama**: ₺143,5 milyon ↔ ₺2,73 milyon bütçe. Kapalı, aritmetik.
+2. **Devir koşulu** zaten ölçülmüştü (`DIS_TARAMA_PIYASAYI_YENME.md` §4):
+   pozitif beklenen değer için gereken çarpan **1,95–2,84**, 222 haftanın
+   azamisi **1,645**.
+
+#### Ama Mandel'in ikinci yarısı ölçülmemişti: **yığmak**
+
+Mandel yalnız "hepsini al" demiyor, "**doğru çekilişe yığ**" diyor. Bu
+depoda zamanlama ekseni §3.73'te ölçülmüştü ama ızgarası haftalık bütçenin
+**4 katında** kesiliyordu ve gerekçesi operasyoneldi (*"840.000 TL zaten
+operasyonun ötesinde"*). O kesme, yığma sorusunu **sormadan** kapatıyordu:
+pencerenin tamamını tek haftaya koymak 13 kattır ve ızgarada yoktu.
+
+Izgara **13'e çıkarıldı** (6,5 ve 13,0 eklendi) ve kâhin yeniden koşuldu —
+yani bütün pencerenin eğrilerini önceden bilen, uygulanamaz üst sınır:
+
+    kahin kazanci: ortalama x1,0312, en buyuk x1,0508
+
+**Kâhin yeni basamakları bir kez bile kullanmadı.** Sekiz pencerenin
+hiçbirinde 4,0'ın üstüne çıkmadı; seçtiği dağılımlar 0,25–3,0 arasında
+gezindi ve kazanç ızgara büyümeden önceki değerinde (×1,031) **kaldı**.
+
+Sebebi aritmetiktir ve Mandel'in oyunuyla farkı tam burada: piyangoda yığmayı
+kârlı yapan şey **ikramiyenin büyümesidir** (ödeme tarafı). Burada hedef
+`P(tutturma)` ve o, hafta içi harcamada **içbükeydir** — en olası `N` kolonun
+toplamı `N` büyüdükçe doyar. On üç ayrı haftada on üç ayrı atış, tek haftada
+on üç kat büyük bir atıştan kıyaslanamayacak kadar iyidir.
+
+**Eksen kapandı ve bir daha açılmaz:** kâhin, elinde 13 kat yığma seçeneği
+varken onu kullanmıyor. Uygulanabilir hiçbir kural kâhini geçemez.
+
+#### Bu taramanın kalıcı hâli
+
+Bulgular `docs/DIS_UFUK_TARAMASI.md` §7'de. Taramanın **bir kereye mahsus
+olmaması** için `.claude/skills/dis-tarama/SKILL.md` yazıldı ve CLAUDE.md'ye
+bir kural girdi: yeni bir eksen açılmadan önce *"bunu dışarıda çözen var mı,
+ne ödedi, burada neden tekrarlanır/tekrarlanmaz"* sorulur ve cevabı hedefin
+para biriminde yazılır.
+
 ---
 
 ## 4. Sayfada bugün ne var
@@ -8264,7 +8328,7 @@ python -m spor_toto.kosum                  # kayıtlı koşumlar
 python -m spor_toto.kosum --son disari     # son koşumun ortamı
 
 # Denetim
-pytest -q                                  # 2.030 test (136'sı bu katman, 672'si tahmin)
+pytest -q                                  # 2.032 test (136'sı bu katman, 672'si tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out
