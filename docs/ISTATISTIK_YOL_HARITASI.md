@@ -171,7 +171,7 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/components/super-toto/tahmin2.tsx` | **2. Tahmin** paneli — `1. Tahmin` / `2. Tahmin` sekmeleri arasında geçilir; para birimli hiçbir sayı yok. Hafta kapandığında sonuç sütunu ve ayar karnesi açılır (§3.38) |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **2.021 test**; **136'sı** istatistik katmanına (`history` `odds` `backtest`
+paketi toplam **2.051 test**; **136'sı** istatistik katmanına (`history` `odds` `backtest`
 `api_stats` `api_backtest` `snapshot_iddaa`), **672'si** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre`
@@ -7135,6 +7135,396 @@ gövdede doğruydu ve donmuş kayıtların altısında tutmuyordu.
   (atlama) aşması, ya da aramanın alt sistem çeşitliliğini artırması —
   ikincisi birleşme oranını daha da düşürür ve tahsis eşiğini aşağı çeker.
 
+### 3.76 İki TAVAN ölçüldü — kalan payın tamamı fiyatlandı
+
+Sahibi 2026-09-13'te vizyonu depo dışına açmayı istedi: *"profesörlerin
+makalelerine bak, gerekirse kuantum fiziğinden yararlan."* Dış tarama
+yapıldı ve bulguları [`DIS_UFUK_TARAMASI.md`](DIS_UFUK_TARAMASI.md)'da; ama
+taramanın kendisi bir ölçüm değildir. Ölçüm şu oldu: **dışarıdan gelebilecek
+her fikri birden sınırlayan iki tavan**, hedefin kendi para biriminde.
+
+#### Tavan 1 — kombinatorik eksenin tamamı: **+2,6 puan**
+
+`ufuk_kiyasi.py` artık `--serbest` ile tabloya bir satır daha basıyor: aynı
+bütçeyle **en olası `N` kolon**. Oynanabilir bir plan değildir (~4.300 ayrı
+kutu), bir **sınırdır** — ve sınır olduğu bir teoremdir, bir tahmin değil:
+15/15 olayları ayrık olduğu için `P(en az bir) = Σ p`, ve `N` kolonluk bir
+kümenin toplamı en olası `N` kolonun toplamını geçemez.
+
+114 tam hafta, 21.000 kolon, 8 ayrık 13 haftalık pencere:
+
+| tavan | `P(15)` hafta | **HEDEF** | bugüne göre |
+|---|---:|---:|---:|
+| 81 (bugünkü plan) | %10,489 | **%77,0** | — |
+| 729 | %11,034 | %78,8 | +1,8 p |
+| **serbest (TAVAN)** | **%11,272** | **%79,6** | **+2,6 p** |
+
+Okunuşu sert: bütün arama, bütün algoritma, bütün donanım — hepsinin
+**toplam** payı 2,6 puan, ve 1,8'i yeni bir fikir değil yalnızca kupon
+sayısını artırmak. Geriye kalan **0,8 puan**, klasik açgözlü çözümün (§3.71,
+tavanın %97,9'u) üstüne konulabilecek her şeyin tamamıdır.
+
+#### Tavan 2 — model ekseninin fiyatı: **1 puan = 0,02–0,047 Brier**
+
+Kombinatorik kapalıysa kalan tek eksen olasılıkların kendisi. Onun da parası
+ölçüldü (`scripts/bilgi_esnekligi.py`, aynı kesit). İki uçtan:
+
+**Kesin bilgi** (bir haftada `k` maçın sonucu bilinseydi — kâhin en belirsiz
+maçları seçer, kolon kümesi serbest, yani üç kez üst sınır):
+
+| bilinen maç | `P(15)` hafta | **HEDEF** | kazanç |
+|---:|---:|---:|---:|
+| 0 | %11,272 | %79,6 | — |
+| 1 | %20,244 | **%94,9** | **+15,3 p** |
+| 2 | %33,962 | %99,6 | +20,0 p |
+
+**Yayılmış bilgi** (her maça `λ` kadar gerçek karışsaydı — "daha iyi model"in
+gerçekçi biçimi), ve asıl sütun sonuncusu:
+
+| `λ` | Brier | **HEDEF** | kazanç | **1 puan için gereken ΔBrier** |
+|---:|---:|---:|---:|---:|
+| 0,00 | 0,5584 | %79,6 | — | — |
+| 0,01 | 0,5473 | %79,8 | +0,2 p | **0,047** |
+| 0,05 | 0,5040 | %81,5 | +1,9 p | 0,028 |
+| 0,10 | 0,4523 | %85,0 | +5,4 p | 0,020 |
+
+Bunu projenin ölçülmüş gerçeğiyle yan yana koyunca eksen kapanıyor:
+
+* Projede piyasayı geçen **tek** tahminci (Betfair, §3.52): ΔBrier −0,00100
+  → hedefte **≈ 0,02 puan**.
+* Piyasanın toplam kalibrasyon borcu (§3.23, **ulaşılamaz tavan**): 0,00042
+  → hedefte **≈ 0,01 puan**.
+
+Yani on bir model ailesinin arandığı eksenin **tamamı**, hedefte birinci
+ondalığın altında. §5.1'in *"yön doğru, miktar yetersiz"* teşhisi ilk kez
+hedef kademesinde sayıya çevrildi: miktar yalnızca yetersiz değil, **iki
+mertebe** yetersiz.
+
+#### Niçin bu bir kapanış değil, bir sıralama
+
+Üç ölçüm birlikte şunu söylüyor ve bu cümle projenin yönünü değiştiriyor:
+
+> Hedefe giden yolda kalan tek **gerçek** kaldıraç matematik değil
+> **operasyon** — haftada kaç kupon fiilen yatırılabildiği (+1,8 puan).
+> Geri kalan her şey, dünyadaki bütün literatür ve bütün donanım dâhil,
+> +0,8 puanı paylaşıyor.
+
+Ve bu, §3.74–§3.75'in kapanmayan yarısını projenin **birinci** işi yapıyor:
+729 kupon 458,7 slip demek ve o sayının girilebilirliği hâlâ ölçülmedi.
+
+#### Durma kuralları — ölçüm görülmeden yazıldı
+
+1. **Kombinatorik eksen**, tavan ile plan arasındaki fark 1 puanın altına
+   inince kapanır. 729 kuponda fark **0,8** — yani 729'a çıkıldığı anda
+   eksen kapanır ve bir daha açılmaz.
+2. **Model ekseni** yalnızca ΔBrier ≥ 0,02 iddiasıyla gelen bir aday için
+   açılır (ölçülen en iyinin yirmi katı). Ölçüt değişmez: sezon dışarıda
+   bırakmalı, hafta eşleştirmeli bootstrap, aralık tamamen sıfırın bir
+   yanında.
+3. **Kuantum ekseni** iki şart birlikte gerçekleşmeden açılmaz: operasyon
+   729 kuponu kaldırabilir olacak **ve** kalan 0,8 puanın yarısını alan
+   klasik bir yöntem bulunamayacak.
+
+### 3.77 **Varlık kanıtları** arandı — ve Mandel'in kuralı ölçülüp kapandı
+
+§3.76 dış fikirleri fiyatladı ama bir soruyu sormamıştı, ve o soru sahibinin
+sorduğu soruydu: *"dışarıda bu hedefe **çoktan ulaşmış** biri olabilir."*
+Doğru soru. Arandı — ve arama bir **ölçüm** üretti.
+
+#### Bulunanlar: müşterek havuzu gerçekten yenen üç vaka
+
+| kim | ne yaptı | **niçin burada tekrarlanamaz** |
+|---|---|---|
+| **Bill Benter** (~1 milyar $) | At yarışı müşterek havuzunda, temel modeli **halkın oranıyla birlikte** kullanan bir sistem | At yarışında **fiyatı kalabalık koyar**; kalabalığı yenmek fiyatı yenmektir. Spor Toto'da olasılığı doğa koyar, kalabalık yalnızca **ikramiyeyi böler** |
+| **Ranogajec / Woods / "Bankroll"** (~10 milyar $/yıl ciro) | Aynı aile, sanayi ölçeğinde | Kârın belirleyicisi model değil **iade**: bahis başına %8–13 geri ödeme. Başabaş oynayıp iadeyle kazanıyorlar. Spor Toto'da iade **yok** |
+| **Stefan Mandel** (14 piyango) | **Bütün kombinasyonları** satın al — ikramiye tam kaplama bedelinin 3 katını aştığında | Tam kaplama burada **3¹⁵ × ₺10 = ₺143.489.070**. Üç aylık bütçenin tamamı ₺2.730.000, yani **52,6 kat** küçük |
+
+Ve **aranıp bulunamayan** şey de bir bulgudur: 1X2 havuzunu (Spor Toto,
+Totocalcio, Stryktipset, UK pools) sistemli biçimde yendiği **ölçülerek**
+gösterilmiş tek bir kişi, sendika ya da açık kaynak proje yok. Bulunanlar
+iki kümede toplanıyor: *para havuzlayan* sendikalar (yöntem değil, sermaye)
+ve *iddia satan* platformlar — Türkiye'de `sportoto.pro`, `Hedef15`,
+`Premium`, `Winner`: "60+ matematiksel formül", "garantili sistem". Hiçbiri
+ölçülmüş bir kayıt yayımlamıyor. Bu depo tam olarak onun karşıtı olmak için
+var.
+
+#### Mandel'in kuralı iki kez ölçüldü ve iki kez düştü
+
+1. **Tam kaplama**: ₺143,5 milyon ↔ ₺2,73 milyon bütçe. Kapalı, aritmetik.
+2. **Devir koşulu** zaten ölçülmüştü (`DIS_TARAMA_PIYASAYI_YENME.md` §4):
+   pozitif beklenen değer için gereken çarpan **1,95–2,84**, 222 haftanın
+   azamisi **1,645**.
+
+#### Ama Mandel'in ikinci yarısı ölçülmemişti: **yığmak**
+
+Mandel yalnız "hepsini al" demiyor, "**doğru çekilişe yığ**" diyor. Bu
+depoda zamanlama ekseni §3.73'te ölçülmüştü ama ızgarası haftalık bütçenin
+**4 katında** kesiliyordu ve gerekçesi operasyoneldi (*"840.000 TL zaten
+operasyonun ötesinde"*). O kesme, yığma sorusunu **sormadan** kapatıyordu:
+pencerenin tamamını tek haftaya koymak 13 kattır ve ızgarada yoktu.
+
+Izgara **13'e çıkarıldı** (6,5 ve 13,0 eklendi) ve kâhin yeniden koşuldu —
+yani bütün pencerenin eğrilerini önceden bilen, uygulanamaz üst sınır:
+
+    kahin kazanci: ortalama x1,0312, en buyuk x1,0508
+
+**Kâhin yeni basamakları bir kez bile kullanmadı.** Sekiz pencerenin
+hiçbirinde 4,0'ın üstüne çıkmadı; seçtiği dağılımlar 0,25–3,0 arasında
+gezindi ve kazanç ızgara büyümeden önceki değerinde (×1,031) **kaldı**.
+
+Sebebi aritmetiktir ve Mandel'in oyunuyla farkı tam burada: piyangoda yığmayı
+kârlı yapan şey **ikramiyenin büyümesidir** (ödeme tarafı). Burada hedef
+`P(tutturma)` ve o, hafta içi harcamada **içbükeydir** — en olası `N` kolonun
+toplamı `N` büyüdükçe doyar. On üç ayrı haftada on üç ayrı atış, tek haftada
+on üç kat büyük bir atıştan kıyaslanamayacak kadar iyidir.
+
+**Eksen kapandı ve bir daha açılmaz:** kâhin, elinde 13 kat yığma seçeneği
+varken onu kullanmıyor. Uygulanabilir hiçbir kural kâhini geçemez.
+
+#### Bu taramanın kalıcı hâli
+
+Bulgular `docs/DIS_UFUK_TARAMASI.md` §7'de. Taramanın **bir kereye mahsus
+olmaması** için `.claude/skills/dis-tarama/SKILL.md` yazıldı ve CLAUDE.md'ye
+bir kural girdi: yeni bir eksen açılmadan önce *"bunu dışarıda çözen var mı,
+ne ödedi, burada neden tekrarlanır/tekrarlanmaz"* sorulur ve cevabı hedefin
+para biriminde yazılır.
+
+---
+
+### 3.78 Hedef bir **süre** sorusudur — ve bu, bilimin sınırını gösterir
+
+Sahibi sordu: *"bilimi kullanarak hedefe ulaşabilir miyiz?"* §3.76–§3.77
+soruyu iki tavanla çevrelemişti ama bir eksen hiç değiştirilmemişti:
+**ufuk**. Üç ay verili sayılıyordu.
+
+Aynı plan, aynı bütçe, yalnız süre uzatılarak (`ufuk_kiyasi.py --pencere`):
+
+| ufuk | 81 kupon | 729 kupon | pencere | gözlenen |
+|---|---:|---:|---:|---:|
+| 13 hafta (~3 ay) | **%77,0** | %78,8 | 8 ayrık | 7/8 · 8/8 |
+| 26 hafta (~6 ay) | **%94,9** | %95,7 | 4 ayrık | 4/4 |
+| 39 hafta (~9 ay) | **%99,0** | %99,2 | 2 ayrık | 2/2 |
+
+Okunuşu tek cümle ve projenin en önemli cümlelerinden biri: **hedefin
+önündeki engel bilgi değil, takvim.** Üç aydan altı aya çıkmak **+17,9
+puan** getiriyor — kombinatorik eksenin tamamının (+2,6) yedi katı, 729
+kupona çıkmanın (+1,8) on katı, ve ölçülen en iyi model bulgusunun (+0,02)
+**dokuz yüz katı**.
+
+Bu satır bir öneri değil bir **fiyat etiketidir**: süre sahibinin kararı,
+ölçüt değil. Ama kararın bedeli artık ölçülmüş olarak yazılı.
+
+### 3.79 Ufuk açılınca bağlayıcı kısıt **para** oluyor — ve fatura ölçüldü
+
+Sahibi süre kısıtını gevşetti (2026-09-14). §3.78 bunun kazancını ölçmüştü
+(13 → 39 hafta: %77,0 → %99,0). Bu bölüm **bedelini** ölçüyor, çünkü açık
+ufuk bir şeyi sessizce değiştiriyor: kâr hâlâ ölçüt değil, ama **bütçe
+tükenirse hedef de tükenir.** Yani para, *ölçüt* olmadan *kısıt* hâline
+geliyor.
+
+Ve bu, görev ölçeğinde **hiç ölçülmemişti**: `karne.py` düz planı ₺320–4.860
+merdiveninde fiyatlıyor; oynanan plan çoklu kupon ve bütçe ₺210.000/hafta.
+Yeni ölçüm hattı `scripts/coklu_karne.py`.
+
+#### Ölçülen (114 tam hafta, 21.000 kolon, gerçek ikramiye tabloları)
+
+| | 81 kupon | 729 kupon |
+|---|---:|---:|
+| maliyet | ₺23.924.950 | ₺23.939.690 |
+| getiri (**seyrelmiş**) | ₺10.753.321 | ₺11.641.273 |
+| **gerçekleşen ROI** | **0,449** | **0,486** |
+| hafta başı net | **−₺115.541** | **−₺107.881** |
+| 15/15 tutturulan hafta | 21/114 | 21/114 |
+| ödeme alınan hafta | 106/114 | 108/114 |
+
+Seyrelmiş getiri, o kademenin havuzunun **bizim kolonlarımız da eklenerek**
+yeniden bölünmesidir — müşterek bahsin tanımı. Ham getiriyle farkı küçük
+(%1,7), yani ölçek kendi payını ciddi biçimde yemiyor; sorun başka yerde.
+
+**Ufuk faturası** (hafta başı net × hafta, 81 kupon):
+
+| ufuk | hedef (§3.78) | harcanan | **net** |
+|---|---:|---:|---:|
+| 13 hafta | %77,0 | ₺2,73 M | −₺1,50 M |
+| 26 hafta | %94,9 | ₺5,46 M | −₺3,00 M |
+| 39 hafta | %99,0 | ₺8,18 M | −₺4,51 M |
+| 52 hafta | — | ₺10,91 M | −₺6,01 M |
+
+Okunuşu: **hedefin fiyatı ~%99 için ₺4,5 milyon net.** Bu bir itiraz değil
+bir etiket; sahibi kâr/zararı ölçüt saymadı ve karar onun.
+
+#### Ölçerken çıkan asıl bulgu: **devir haftası bizim haftamız değil**
+
+İlk sürüm `havuz = kazanan × pay` yazıyordu ve **kazananı sıfır** olan
+kademede bunu sıfır veriyordu — yani devir haftalarında (114 haftanın
+**26'sı** 15. kademede kazanansız) plan tutturmuş olsa bile getirisi sıfır
+sayılırdı. Düzeltilirken çapraz tablo kuruldu ve düzeltmenin **gereksiz**
+olduğu ortaya çıktı, ama sebebi bir bulgu:
+
+| | biz tutturduk | tutturamadık |
+|---|---:|---:|
+| **devir haftası** (15'i kimse bilmemiş) | **0** | 26 |
+| normal hafta | 21 | 67 |
+
+Bağımsızlık altında beklenen kesişim **4,79**; gözlenen **0**
+(hipergeometrik alt kuyruk **p = 0,0023**). İkinci ve bağımsız teyit: en iyi
+kolonumuzun ortalama kaçağı devir haftalarında **3,00**, normal haftalarda
+**1,43**.
+
+**Yani ikramiyenin en büyük olduğu haftalar, bizim de kaçırdığımız
+haftalar.** Bu, `KADEME_OLASILIKLARI.md` §6'nın *"tuttuğunuz hafta herkesin
+tuttuğu haftadır"* bulgusunun (Spearman −0,843) kupon düzeyindeki
+karşılığıdır ve ROI'nin niçin 0,45'te kaldığını açıklar: 21 isabetin
+**hepsi** paylaşılan ikramiyeden geldi, hiçbiri devirden.
+
+> Çapraz tablo betimleyicidir, ön kayıtlı bir sınav değildir — bir eksen
+> kapatmaz. Yaptığı şey ROI'nin mekanizmasını göstermek.
+
+#### Ne değişti, ne değişmedi
+
+* **Değişmedi:** hedef `P(15/15)`, kâr ölçüt değil, plan (81 kupon) ve
+  §3.76'nın tavanları.
+* **Değişti:** artık bir **dayanıklılık** sayısı var. Ufuk açıksa sorulacak
+  soru "kaç hafta oynayabiliriz"dir ve cevabı bütçenin toplamına bağlı:
+  hafta başı net −₺115.541 (81 kupon) ya da −₺107.881 (729 kupon).
+* **729 kupon para tarafında da önde** (+₺7.660/hafta), yani §3.76'nın
+  operasyon önerisiyle çelişmiyor, onu güçlendiriyor.
+
+#### Durma kuralı — ölçüm görülmeden yazıldı
+
+Bu eksen (dayanıklılık) bir arama ekseni değildir, bir **muhasebe**
+eksenidir: kapanmaz, her sezon yeniden koşulur. Ama bir karar kuralı var ve
+şimdiden yazılı: **gerçekleşen ROI 1,0'ı geçerse** plan kendini finanse
+ediyor demektir ve ufuk kısıtı tamamen kalkar. Bugün 0,449 (81) / 0,486
+(729); 1,0'a ulaşmak için getirinin **iki kattan fazla** büyümesi gerekir ve
+§3.76'nın tavanları bunu kombinatorikten alamayacağımızı söylüyor.
+
+### 3.80 İki tavan da kalktı — hedef artık **kesin**, soru fiyatı ve süresi
+
+Sahibi 2026-09-14'te ikinci kısıtı da kaldırdı: *"toplam bütçe tavan yok."*
+Süre tavanı zaten kalkmıştı (§3.78). Bu ikisi birlikte hedefin **türünü**
+değiştiriyor: haftalık `P(15/15) > 0` olduğu sürece, tavansız oynayan
+**kesin** tutturur. Yani *"ulaşabilir miyiz"* sorusu kapandı; yerine iki
+soru geldi ve ikisi de ölçüldü.
+
+#### Soru 1 — hedefin kendisi ne ödüyor?
+
+`coklu_karne.py` artık isabet haftalarını ayrı basıyor. 114 haftada
+tutturulan 21 hafta, 21.000 kolon, gerçek tablolar:
+
+| ölçü | değer |
+|---|---:|
+| ortalama alınan (seyrelmiş) | ₺183.595 |
+| **ortanca alınan** | **₺42.649** |
+| en küçük ↔ en büyük | ₺1.592 ↔ ₺2.685.915 |
+| o haftalarda kayıttaki kazanan sayısı (ortanca) | **528** |
+| toplam 15 geliri | ₺3.855.491 — bütün getirinin %36'sı |
+
+**Ortanca ödül, bir haftalık kupon bedelinin (₺210.000) beşte biri.** Sebebi
+§3.79'un çapraz tablosu: tutturduğumuz haftalarda ortanca **528 kişi** daha
+tutturuyor ve havuz bölünüyor. Büyük para devirde ve orayı **0/26**
+tutturuyoruz.
+
+> Bu, hedefin değersiz olduğunu söylemez — sahibi kâr/zararı ölçüt saymadı
+> ve 15/15 bir başarıdır. Söylediği şey şu: **"15/15 tutturmak" ile "büyük
+> para" aynı olay değil** ve bu depoda ikisi ilk kez ayrı ayrı ölçüldü.
+
+#### Soru 2 — haftalık bütçe ne olmalı? (`scripts/butce_egrisi.py`)
+
+Tavan kalkınca haftalık bütçe bir **kısıt** olmaktan çıkıp **seçim** hâline
+geliyor. Cephe (tavan `p`, yani gerçek plan bunun altında):
+
+| kolon | haftalık | `P(15)` | **E[hafta]** | **E[brüt harcama]** | %90 için hafta |
+|---:|---:|---:|---:|---:|---:|
+| 1 | ₺10 | %0,0061 | 16.416 | ₺164.162 | 37.799 |
+| 1.000 | ₺10.000 | %1,64 | 61,0 | ₺609.797 | 139 |
+| 10.000 | ₺100.000 | %7,31 | 13,7 | ₺1.368.099 | 30 |
+| **21.000** | **₺210.000** | **%11,27** | **8,9** | **₺1.862.951** | **19,3** |
+| 100.000 | ₺1.000.000 | %25,59 | 3,9 | ₺3.907.037 | 7,8 |
+| 1.000.000 | ₺10.000.000 | %64,40 | 1,6 | ₺15.529.127 | 2,2 |
+| 14.348.907 | ₺143.489.070 | %100 | 1,0 | ₺143.489.070 | 0,1 |
+
+**Cephenin kuralı tek cümle: bütçe büyüdükçe bekleme kısalır, beklenen
+harcama büyür.** Çünkü `p` bütçeyle orantılı değil, **altında** büyüyor
+(içbükey) — 100 kolon, 1 kolonun 100 katı olasılık vermiyor. Bu ödünleşme
+bekçiye bağlı (`test_olasilik_butceyle_ORANTILI_DEGIL_altinda_buyur`).
+
+Bekleme `1/E[p]` ile hesaplanır ve **tamdır, yaklaşık değil**: gelecek
+haftalar bu dağılımdan bağımsız çekiliyorsa `P(H haftada) = 1 − (1−E[p])^H`.
+Varsayımın sınırı yazılı — haftalar **arası** bağımlılık ölçülmedi (§3.46
+hafta **içi** bağımlılığı ölçüp kapatmıştı).
+
+#### Bugünkü bütçe cephede nerede
+
+₺210.000/hafta, cephenin **orta** noktası: beklenen 8,9 hafta, %90 için
+19,3 hafta, beklenen brüt harcama ₺1,86 M (geri dönüş 0,449 düşülünce net
+≈ ₺1,03 M). Hızlanmak ₺1 M/haftaya çıkmakla mümkün (≈3,9 hafta) ama
+beklenen harcama **iki katından fazla** olur.
+
+#### Ne kapandı, ne açık
+
+* **Kapandı:** *"hedefe ulaşabilir miyiz"*. İki tavan da kalktığı için evet,
+  kesin — geriye fiyat ve süre kaldı ve ikisi de yukarıda.
+* **Açık ve artık tek gerçek karar:** cephede **nerede durulacağı**. Bu bir
+  ölçüm sorusu değil, sahibinin tercihi; ölçüm yalnızca fiyatını veriyor.
+* **Değişmedi:** 729 kupona çıkmak hâlâ birinci teknik iş (+1,8 puan,
+  +₺7.660/hafta) ve §3.76'nın iki tavanı yerinde.
+
+### 3.81 Haftalık tavan ₺210.000'de sabitlendi — ve bekleme sayısının dayanağı sınandı
+
+Sahibi cepheyi kendi seçti (2026-09-14): *"haftalık üst sınırımız yine 210
+bin TL."* Yani §3.80'in tablosu tek satıra indi (21.000 kolon) ve geriye
+sahibinin ilgilendiği **tek** sayı kaldı: *ne kadar sürer* — beklenen 8,9
+hafta, %90 için 19,3.
+
+O sayı bir varsayıma dayanıyordu ve bu depoda hiç ölçülmemişti: **gelecek
+haftalar, ölçülen `p` dağılımından bağımsız mı çekiliyor?** §3.46 hafta
+*içi* bağımlılığı ölçüp kapatmıştı; haftalar *arası* hiç bakılmamıştı. Fark
+önemli: hafta içi bağımlılık tek bir haftanın `P`sini oynatır, haftalar
+arası **bekleme süresinin kuyruğunu** oynatır.
+
+Yeni hat: `scripts/haftalar_arasi.py`. Aranan şey heterojenlik değil —
+`p`nin haftadan haftaya on altı kat ayrışması zaten modelde — **onun
+üstünde kalan artık bağımlılık**. Komşuluk tanımı: aynı sezon **ve** hafta
+numarası tam 1 fark (arşivde eksik haftalar var, sezon sınırı gerçek bir
+kesinti; ikisi de bekçili).
+
+#### Ölçülen (114 hafta, 21.000 kolon, 10.000 permütasyon)
+
+| sınav | gözlenen | permütasyon %95 null | p | hüküm |
+|---|---:|---|---:|---|
+| `p` serisi gecikme-1 (83 komşu çift) | **r = +0,1852** | [−0,206, +0,213] | 0,0842 | ilişki yok |
+| isabet öbeklenmesi, 4 hafta (45 pencere) | 23 isabetsiz | [13,0 · 27,0] | 0,4211 | öbeklenme yok |
+| isabet öbeklenmesi, 8 hafta (7 pencere) | 3 isabetsiz | [0,0 · 4,0] | 0,1971 | öbeklenme yok |
+
+Holm'lu iki sınavın ikisi de geçmedi → **ön kayıtlı kurala göre eksen
+kapandı** ve §3.80'in bekleme sayıları olduğu gibi duruyor.
+
+#### Kapanışın iki sınırı — açıkça
+
+1. **Gecikme-1 ilişkisi sıfır ölçülmedi, sıfırdan ayrılamadı** (r = +0,19,
+   83 çift, aralık geniş). İşaret **pozitif** ve gerçek olsaydı kuyruğu
+   **uzatırdı**. "Ölçülmedi" ile "yok" aynı cümle değil.
+2. **Sınav yalnız 4 ve 8 haftalık pencerede koşabildi.** İlgilendiğimiz
+   ufuk (13–26 hafta) arşivde **kesintisiz bulunmuyor**, yani hiç
+   sınanmadı. Bu satırlar tablodan düşmüyor, "ÖLÇÜLEMEDİ" diye yazılıyor
+   ve bekçisi var (`test_OLCULEMEYEN_pencere_tablodan_DUSMEZ`).
+
+**Yeniden açılma şartı:** hafta biriktikçe kesintisiz 13 haftalık pencere
+çıkınca sınav o boyda tekrarlanır.
+
+#### Yan ölçüm: model karamsar çıkıyor, ve bu iyi haber
+
+| | oran | `E[hafta]` |
+|---|---:|---:|
+| model `p` | %10,489 | 9,5 |
+| **gerçekleşen** | **%18,421** (21/114) | **5,4** |
+
+§3.68 bu açığı ölçmüştü ve hükmü *"güncel değil"*di (2025/26'da ×1,00). O
+yüzden hüküm ikisinin **arasındadır** ve iyimser uca yazılmaz — ama
+sahibinin bilmesi gereken şu: bugünkü tablo (8,9 hafta) **muhafazakâr**
+taraftan yazılmış.
+
 ---
 
 ## 4. Sayfada bugün ne var
@@ -8174,7 +8564,7 @@ python -m spor_toto.kosum                  # kayıtlı koşumlar
 python -m spor_toto.kosum --son disari     # son koşumun ortamı
 
 # Denetim
-pytest -q                                  # 2.021 test (136'sı bu katman, 672'si tahmin)
+pytest -q                                  # 2.051 test (136'sı bu katman, 672'si tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out

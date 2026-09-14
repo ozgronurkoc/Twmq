@@ -44,6 +44,7 @@ if __package__ in (None, ""):  # pragma: no cover
 
 from scripts.coklu_kiyasi import VARSAYILAN_BUTCE, hafta_probs, isabet
 from scripts.kademe_analizi import ikramiye_tablolari, tam_haftalar
+from scripts.tahsis_kiyasi import kolon_p, serbest_kume
 from spor_toto.coklu import coklu_plan_serisi
 from spor_toto.ufuk import (
     UFUK_HAFTA,
@@ -56,22 +57,45 @@ from spor_toto.ufuk import (
 #: Kıyaslanan kupon tavanları. 1 bugünkü tek sistemdir.
 TAVANLAR = (1, 27, 81, 243, 729)
 
+#: Tavan satırının anahtarı. Bir kupon sayısı DEĞİL — bu yüzden `int` değil:
+#: tabloda kupon sütununa bir sayı yazmak, oynanabilir bir plan olduğunu
+#: ima ederdi. Serbest küme ~4.300 ayrı kutu ister (`coklu.py` başlığı).
+SERBEST = "serbest"
+
 #: Ufuk uzunluğu (hafta). 13 ≈ üç ay; sahibinin verdiği süre bu.
 VARSAYILAN_PENCERE = UFUK_HAFTA
 
 #: Zamanlama sınavının bütçe ızgarası, haftalık bütçenin katları olarak.
 #: `0` bilerek var — "bu haftayı hiç oynama" bir seçenektir ve kâhin onu
-#: gerçekten kullanıyor. Üst uç 4 katta kesiliyor: haftada 840.000 TL zaten
-#: operasyonun çok ötesinde ve eğri orada düzleşiyor.
-ZAMANLAMA_IZGARASI = (0.0, 0.25, 0.5, 1.0, 2.0, 3.0, 4.0)
+#: gerçekten kullanıyor.
+#:
+#: **Üst uç 4'ten 13'e çıkarıldı (§3.77).** Eskiden 4 katta kesiliyordu ve
+#: gerekçesi *"haftada 840.000 TL zaten operasyonun ötesinde"*ydi. O gerekçe
+#: bir soruyu sormadan kapatıyordu: Mandel'in piyangoda işe yarayan kuralı
+#: **yığmaktır** — bütün bütçeyi tek çekilişe koy. 13, pencerenin tamamını
+#: tek haftaya yığmaktır; ızgarada yoksa kâhin o seçeneği hiç göremez ve
+#: "yığmak işe yaramıyor" cümlesi ölçülmemiş kalır.
+ZAMANLAMA_IZGARASI = (0.0, 0.25, 0.5, 1.0, 2.0, 3.0, 4.0, 6.5, 13.0)
 
 
-def kos(butce: int, pencere: int = VARSAYILAN_PENCERE) -> dict[str, Any]:
-    """Pencere pencere hedefe ulaşma olasılığı — model ve gerçekleşen."""
+def kos(butce: int, pencere: int = VARSAYILAN_PENCERE,
+        serbest: bool = False) -> dict[str, Any]:
+    """Pencere pencere hedefe ulaşma olasılığı — model ve gerçekleşen.
+
+    `serbest=True` tabloya **tavan satırını** ekler: aynı bütçeyle en olası
+    `bütçe` kolonu doğrudan oynamak. O satır bir plan değil bir **sınırdır**
+    — hiçbir kupon ailesi, hiçbir arama, hiçbir donanım onu geçemez (15/15
+    olayları ayrık olduğu için `P = Σ p` ve en büyük `n` toplamı en büyüktür).
+    Hedef kademesinde basıldığında, bütün kombinatorik eksenin geriye kalan
+    payı **tek bakışta** okunur. Bedeli hafta başına ~1 sn.
+    """
     haftalar = tam_haftalar(ikramiye_tablolari())
     n = len(haftalar)
-    #: tavan -> hafta başına (p, isabet)
-    haftalik: dict[int, list[tuple[float, bool]]] = {t: [] for t in TAVANLAR}
+    #: tavan -> hafta başına (p, isabet). `SERBEST` anahtarı sahte bir tavan
+    #: değil, ailenin dışıdır — basımda ayrı yazılır.
+    anahtarlar: list[int | str] = [*TAVANLAR] + ([SERBEST] if serbest else [])
+    haftalik: dict[int | str, list[tuple[float, bool]]] = {
+        t: [] for t in anahtarlar}
 
     for _sezon, _w, lst in haftalar:
         probs, gercek = hafta_probs(lst)
@@ -79,10 +103,13 @@ def kos(butce: int, pencere: int = VARSAYILAN_PENCERE) -> dict[str, Any]:
         for t in TAVANLAR:
             plan = seri[t]
             haftalik[t].append((plan.p_onbes, isabet(plan.kuponlar, gercek)))
+        if serbest:
+            toplam, esik = serbest_kume(probs, butce)
+            haftalik[SERBEST].append((toplam, kolon_p(probs, gercek) >= esik))
 
     aralik = pencereler(n, pencere)
     satirlar = []
-    for t in TAVANLAR:
+    for t in anahtarlar:
         kesin, tutan = [], 0
         for bas, son in aralik:
             dilim = haftalik[t][bas:son]
@@ -152,17 +179,24 @@ def bas(c: dict[str, Any]) -> None:
           f"({c['butce'] * 10:,} TL/hafta)")
     print(f"ufuk: {c['pencere']} hafta  ->  {c['pencere_sayisi']} ayrik "
           f"pencere\n")
-    print(f"{'tavan':>6} {'P(15) hafta':>12} {'hafta araligi':>17} "
+    print(f"{'tavan':>7} {'P(15) hafta':>12} {'hafta araligi':>17} "
           f"{'HEDEF (kesin)':>14} {'pencere araligi':>17} {'yaklasik':>9} "
           f"{'yanlilik':>9} {'gozlenen':>10}")
     for r in c["satirlar"]:
-        not_ = "  <- bugun" if r["tavan"] == 1 else ""
-        print(f"{r['tavan']:>6,} {r['p_hafta']:>12.3%} "
+        not_ = ("  <- bugun" if r["tavan"] == 1 else
+                "  <- TAVAN (plan degil)" if r["tavan"] == SERBEST else "")
+        ad = SERBEST if r["tavan"] == SERBEST else f"{r['tavan']:,}"
+        print(f"{ad:>7} {r['p_hafta']:>12.3%} "
               f"{r['p_en_dusuk']:>7.1%}-{r['p_en_yuksek']:<9.1%} "
               f"{r['kesin']:>14.1%} "
               f"{r['en_dusuk']:>7.1%}-{r['en_yuksek']:<9.1%} "
               f"{r['yaklasik']:>9.1%} {r['yanlilik']:>+9.1%} "
               f"{r['tutan_pencere']:>4}/{c['pencere_sayisi']:<5}{not_}")
+    if any(r["tavan"] == SERBEST for r in c["satirlar"]):
+        print("\n'serbest' = ayni butceyle EN OLASI `butce` kolon. Oynanabilir")
+        print("bir plan DEGIL (~4.300 ayri kutu); KOMBINATORIK EKSENIN TAVANI.")
+        print("Bir planla bu satir arasindaki fark, gelecekteki her arama,")
+        print("her algoritma ve her donanim icin kalan TOPLAM paydir.")
     print("\n'HEDEF (kesin)' = 1 - PI(1-p_w), pencere ortalamasi. 'yaklasik' =")
     print("1-(1-p_ort)^n, yani `coklu_kiyasi.py`nin '13 hafta' sutunu; farki")
     print("Jensen'dir ve HEP ayni yone bakar. 'gozlenen' kac pencerede gercekten")
@@ -192,12 +226,15 @@ def main(argv: Sequence[str] | None = None) -> None:
                     help="kolon butcesi (varsayilan 3^9 = 19.683)")
     ap.add_argument("--pencere", type=int, default=VARSAYILAN_PENCERE,
                     help="ufuk uzunlugu, hafta (varsayilan 13 ~ uc ay)")
+    ap.add_argument("--serbest", action="store_true",
+                    help="tabloya kombinatorik TAVAN satirini ekle "
+                         "(~1 sn/hafta, ~115 MB)")
     ap.add_argument("--zamanlama", action="store_true",
                     help="tam ongorulu tahsisin ust sinirini da olc (yavas)")
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args(argv)
 
-    c = kos(a.butce, a.pencere)
+    c = kos(a.butce, a.pencere, a.serbest)
     z = zamanlama(a.butce, a.pencere) if a.zamanlama else None
     if a.json:
         print(json.dumps({"hedef": c, "zamanlama": z}, ensure_ascii=False,
