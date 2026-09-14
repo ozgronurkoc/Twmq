@@ -358,6 +358,17 @@
     "str"
    ]
   },
+  "GET /api/benzer/ligler": {
+   "cizgi": "str",
+   "evren": "int",
+   "ligler": [
+    {
+     "etiket": "str",
+     "lig": "str",
+     "n": "int"
+    }
+   ]
+  },
   "GET /api/benzer/maclar": {
    "arindirma": "str",
    "as_of": "null",
@@ -505,7 +516,7 @@
      "duration_ms": "float",
      "durum": "str",
      "dusenler": [
-      "str"
+      "<bos>"
      ],
      "ok": "bool",
      "passed": "int",
@@ -531,7 +542,7 @@
     "durum": "str",
     "kayit": "int",
     "sinir": "int",
-    "son_saglikli": "null"
+    "son_saglikli": "str"
    },
    "version": "str"
   },
@@ -546,6 +557,7 @@
       "arindirma": "str",
       "cizgi": "str",
       "en_az": "int",
+      "kapsam": "str",
       "tarih": "str"
      },
      "girildi": "str",
@@ -606,6 +618,7 @@
     "arindirma": "str",
     "cizgi": "str",
     "en_az": "int",
+    "kapsam": "str",
     "tarih": "str"
    },
    "girildi": "str",
@@ -1962,6 +1975,7 @@
     "arindirma": "str",
     "cizgi": "str",
     "en_az": "int",
+    "kapsam": "str",
     "tarih": "str"
    },
    "girildi": "str",

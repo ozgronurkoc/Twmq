@@ -1046,6 +1046,48 @@ def _benzer_maclar_cached(oran: tuple[float, float, float], tolerans: float,
                               limit=limit, atla=atla)
 
 
+@lru_cache(maxsize=4)
+def _lig_envanteri_cached(cizgi: str) -> list[dict[str, Any]]:
+    """Korpusun lig envanteri — ONBELLEKLI.
+
+    Onbellek `_benzer_cached` ile ayni gerekceyle: fonksiyon 23 bin satirlik
+    korpusu tariyor ve cevap yalnizca korpus degistiginde degisir (o da
+    surec yeniden basladiginda). Boyut 4 cunku evren yalnizca `cizgi` ile
+    degisiyor.
+    """
+    from spor_toto.benzer import lig_envanteri
+    return lig_envanteri(cizgi)
+
+
+@app.route("/api/benzer/ligler", methods=["GET"])
+def api_benzer_ligler():
+    """
+    Korpusta HANGI ligler var, her birinde kac mac (`?cizgi=`).
+
+    `/kupon` sayfasi maclari "kendi liginde" aratabiliyor ve o sorgu `lig=`
+    ile yapiliyor. Kullanicinin yazdigi kod korpusta yoksa arama sessizce
+    BOS doner; yani "bu fiyatta benzer mac yok" ile "yazdigin kodu
+    tanimiyorum" ayirt edilemez. Bu liste o ayrimi mumkun kilar.
+
+    `/api/meta`ya KONULMADI: meta her sayfanin acilista cagirdigi UCUZ bir
+    envanterdir, bu uc ise korpusu okur. `benzer` modulu tam bu yuzden
+    modul duzeyinde import edilmiyor.
+    """
+    cizgi = (request.args.get("cizgi") or "kapanis").strip()
+    try:
+        envanter = _lig_envanteri_cached(cizgi)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    return jsonify({
+        "cizgi": cizgi,
+        "ligler": envanter,
+        # Evrenin TAMAMI. Arayuz "bu lig korpusun %6'si" diyebilsin diye
+        # burada duruyor; toplami arayuzde yeniden hesaplamak, iki yerde
+        # yasayan bir sayi daha demek olurdu.
+        "evren": sum(x["n"] for x in envanter),
+    })
+
+
 @app.route("/api/benzer/maclar", methods=["GET"])
 def api_benzer_maclar():
     """

@@ -144,7 +144,8 @@ _ARSIV_GOVDESI: dict[str, Any] = {
     "ad": "sozlesme ornegi",
     "hafta": 5,
     "not": "sozlesme ornegi",
-    "ayar": {"cizgi": "kapanis", "arindirma": "shin", "en_az": 200, "tarih": ""},
+    "ayar": {"cizgi": "kapanis", "arindirma": "shin", "en_az": 200,
+             "tarih": "", "kapsam": "tum"},
     "satirlar": [
         {"lig": "T1", "ev": f"ev{i}", "dep": f"dep{i}",
          "oran": {"1": "2.0", "0": "3.2", "2": "3.8"}}
@@ -203,6 +204,7 @@ def _uclar(istemci, ornek_kupon: str) -> dict[str, Any]:
         {"ad": "GET /api/benzer", "yol": "/api/benzer?oran=1.82,3.04,2.44"},
         # `tolerans` ZORUNLU (uc govdesindeki gerekce); sozlesme ornegi de
         # onu tasir, yoksa burada 400 alinir ve uretim SystemExit'e duser.
+        {"ad": "GET /api/benzer/ligler", "yol": "/api/benzer/ligler"},
         {"ad": "GET /api/benzer/maclar",
          "yol": "/api/benzer/maclar?oran=1.82,3.04,2.44&tolerans=0.02&limit=5"},
         {"ad": "POST /api/solve", "yol": "/api/solve",

@@ -3,6 +3,7 @@ import type {
   ArsivAyari,
   ArsivKaydi,
   ArsivListesi,
+  LigEnvanteri,
   Sembol,
   BacktestResponse,
   BenzerMaclarResponse,
@@ -371,6 +372,18 @@ export function getBenzerMaclar(
   if (secenek.limit !== undefined) q.set("limit", String(secenek.limit));
   if (secenek.atla !== undefined) q.set("atla", String(secenek.atla));
   return istek<BenzerMaclarResponse>(`/api/benzer/maclar?${q}`, { signal });
+}
+
+/**
+ * Korpusun lig envanteri — hangi ligler var, her birinde kac mac.
+ *
+ * `/kupon` sayfasi maclari "kendi liginde" aratabiliyor; kullanicinin
+ * yazdigi kod korpusta yoksa arama sessizce BOS doner ve bu liste o ayrimi
+ * gorunur kilar. `/api/meta`da DEGIL: meta ucuzdur, bu uc korpusu okur.
+ */
+export function getLigEnvanteri(cizgi?: Cizgi, signal?: AbortSignal) {
+  const q = cizgi ? `?cizgi=${encodeURIComponent(cizgi)}` : "";
+  return istek<LigEnvanteri>(`/api/benzer/ligler${q}`, { signal });
 }
 
 /* ── Kupon arşivi ────────────────────────────────────────────────────────── */

@@ -441,6 +441,44 @@ def benzer_maclar(oranlar: dict[str, float],
     return rapor
 
 
+def lig_envanteri(cizgi: str = "kapanis") -> list[dict[str, Any]]:
+    """Korpusta HANGİ ligler var ve her birinde kaç maç.
+
+    **Neden gerekli.** `/kupon` sayfasında maçlar maçın kendi liginde
+    aranabiliyor ve o sorgu `lig=` ile yapılıyor. Kullanıcının yazdığı lig
+    kodu korpusta yoksa arama sessizce **boş** döner — yani kullanıcı
+    "bu fiyatta hiç benzer maç yok" ile "yazdığım kodu tanımıyorum"u
+    ayırt edemez. Bu liste o ayrımı mümkün kılar.
+
+    **Neden `/api/meta`da değil.** Bu fonksiyon korpusu okur (23 bin satır);
+    `meta` ise her sayfanın açılışta çağırdığı ucuz bir envanterdir ve
+    `benzer` modülü tam bu yüzden modül düzeyinde import EDİLMİYOR. Liste
+    kendi ucunda durur ve orada önbelleklenir.
+
+    Çeviri burada yapılır (`odds.LIG_ADLARI`), arayüzde değil — `_etiket`in
+    gerekçesiyle aynı: harita sunucuda zaten var, kopyalansaydı ayrışabilen
+    ikinci bir sözlük olurdu.
+    """
+    if cizgi not in CIZGILER:
+        raise ValueError(f"cizgi: {', '.join(CIZGILER)}")
+    sayim: dict[str, int] = {}
+    for r in korpus_yukle():
+        # Evrenin tanımı `_cizgi_orani`dir — ARAMANIN kendi kullandığı
+        # fonksiyon. Burada `r.get(cizgi)` yazmak ikinci bir tanım olurdu
+        # ve YANLIŞ olurdu: korpusta kapanış fiyatı `oranlar` anahtarında
+        # durur, `kapanis` diye bir alan yoktur. Liste ile aramanın aynı
+        # evreni saydığını garanti eden tek şey bu ortak çağrıdır.
+        if _cizgi_orani(r, cizgi) is None:
+            continue
+        kod = r.get("lig") or ""
+        if kod:
+            sayim[kod] = sayim.get(kod, 0) + 1
+    return sorted(
+        ({"lig": k, "etiket": LIG_ADLARI.get(k, k), "n": v} for k, v in sayim.items()),
+        key=lambda d: (-d["n"], d["lig"]),
+    )
+
+
 def _dilimle(maclar: Sequence[dict[str, Any]], hedef: dict[str, float],
              alan: str) -> list[dict[str, Any]]:
     """Bulunan maçları bir alana göre böler; her dilim kendi n'i ve GA'sıyla.

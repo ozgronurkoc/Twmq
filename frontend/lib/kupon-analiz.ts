@@ -43,6 +43,30 @@ import {
  * kendi baglantisi oraya gidiyor.
  */
 
+/**
+ * Aramanin EVRENI: butun korpus mu, macin kendi ligi mi.
+ *
+ * `tum`  — lig suzgeci hic gonderilmez. Varsayilan ve en genis evren.
+ * `kendi`— her satir KENDI lig koduyla aranir (`lig=T1`).
+ *
+ * Ikisi ayni soruyu SORMAZ. "Bu fiyatta genel olarak ne olmus" ile "bu
+ * fiyatta BU LIGDE ne olmus" farkli sorulardir ve ikincisinin bedeli
+ * OLCULDU (5. haftanin 15 maci, kapanis, shin, hedef orneklem 200):
+ *
+ *     tum ligler   yaricap tavani  1/15   az ornek 0/15
+ *     kendi ligi   yaricap tavani 10/15   az ornek 1/15
+ *
+ * Evren 23.085'ten bir ligin boyuna duser (T1: 1.415, D1: 1.224), yani
+ * uyarlanan yaricap +-5 puana dayanir ve orneklem "benzer" maclardan degil
+ * SINIRDAN toplanir. En uc ornek Levante–Barcelona: tum liglerde n=123,
+ * kendi liginde n=2.
+ *
+ * Bu, secenegi kotu yapmaz — baska bir soru sordurur. Sayfa bedeli
+ * gizlemiyor: her satirda n ve yaricap yaziyor, tavana dayanan satir
+ * "tavan" diye isaretleniyor.
+ */
+export type LigKapsami = "tum" | "kendi";
+
 export interface AnalizAyari {
   /** Korpusun HANGI fiyat cizgisinde aranacagi. */
   cizgi: Cizgi;
@@ -51,13 +75,20 @@ export interface AnalizAyari {
   enAz: number;
   /** `YYYY-AA-GG`; bos = butun korpus. Verilirse yalnizca ONCESI aranir. */
   tarih: string;
+  /** Arama evreni — tum ligler mi, macin kendi ligi mi. */
+  kapsam: LigKapsami;
 }
+
+export const KAPSAMLAR = ["tum", "kendi"] as const;
 
 export const VARSAYILAN_ANALIZ: AnalizAyari = {
   cizgi: "kapanis",
   arindirma: "shin",
   enAz: 200,
   tarih: "",
+  // Varsayilan TUM LIGLER: sahibinin ilk istegi buydu ve genis evren
+  // orneklemi ayakta tutuyor. "Kendi ligi" bilincli olarak secilir.
+  kapsam: "tum",
 };
 
 /** Tek satirin analizdeki hali. */
@@ -108,7 +139,15 @@ export function sorguIzi(satirlar: KuponSatiri[], ayar: AnalizAyari): string {
   const oranlar = satirlar
     .map((s) => SEMBOLLER.map((sem) => s.oran[sem].trim()).join(","))
     .join("|");
-  return [oranlar, ayar.cizgi, ayar.arindirma, ayar.enAz, ayar.tarih].join("§");
+  // Kapsam `kendi` iken LIG KODLARI da ize girer: bir satirin ligi
+  // degisirse o satirin sorgusu degisir ve ekrandaki karne bayatlar.
+  // Kapsam `tum` iken lig sorgunun parcasi degildir ve ize girmez —
+  // girseydi etiket duzeltmek butun tabloyu bayatlatirdi.
+  const ligler = ayar.kapsam === "kendi"
+    ? satirlar.map((s) => s.lig.trim().toUpperCase()).join(",")
+    : "";
+  return [oranlar, ayar.cizgi, ayar.arindirma, ayar.enAz, ayar.tarih,
+          ayar.kapsam, ligler].join("§");
 }
 
 /**
@@ -131,6 +170,11 @@ export function oranAnaliziAdresi(satir: KuponSatiri, ayar: AnalizAyari): string
   if (ayar.arindirma !== VARSAYILAN_ANALIZ.arindirma) q.set("arindirma", ayar.arindirma);
   if (ayar.enAz !== VARSAYILAN_ANALIZ.enAz) q.set("en_az", String(ayar.enAz));
   if (ayar.tarih) q.set("tarih", ayar.tarih);
+  // Kapsam `kendi` ise baglanti AYNI suzgecle acilmali; yoksa "ac" dendiginde
+  // baska bir sorgunun cevabi gorunurdu.
+  if (ayar.kapsam === "kendi" && satir.lig.trim()) {
+    q.set("lig", satir.lig.trim().toUpperCase());
+  }
   return `/oran-analizi?${q}`;
 }
 
@@ -153,6 +197,7 @@ export function tarihGecerli(ham: string): boolean {
 /** Ayarin tamami sunucuya gonderilebilir mi. */
 export function ayarGecerli(ayar: AnalizAyari): boolean {
   return (
+    (KAPSAMLAR as readonly string[]).includes(ayar.kapsam) &&
     (CIZGILER as readonly string[]).includes(ayar.cizgi) &&
     (ARINDIRMA_YONTEMLERI as readonly string[]).includes(ayar.arindirma) &&
     Number.isInteger(ayar.enAz) &&
@@ -161,9 +206,43 @@ export function ayarGecerli(ayar: AnalizAyari): boolean {
   );
 }
 
-/** Analiz kosulabilir mi: 15 satirin da orani tam VE ayar gecerli. */
-export function analizeHazir(satirlar: KuponSatiri[], ayar: AnalizAyari): boolean {
-  return satirlar.length > 0 && satirlar.every(oranTam) && ayarGecerli(ayar);
+/**
+ * Kapsam `kendi` iken korpusun TANIMADIGI lig kodu tasiyan satirlar.
+ *
+ * Bu sessiz bir kusurdur ve bekci gerektirir: `lig=Süper Lig` diye bir
+ * arama 400 DONMEZ, bos doner — kullanici "bu fiyatta hic benzer mac yok"
+ * ile "yazdigin kodu tanimiyorum"u ayirt edemez. Envanter yuklenmediyse
+ * (`null`) dogrulama YAPILMAZ: olmayan bir listeye gore satir suclanamaz.
+ */
+export function taninmayanLigler(
+  satirlar: KuponSatiri[],
+  ayar: AnalizAyari,
+  bilinenKodlar: Set<string> | null,
+): number[] {
+  if (ayar.kapsam !== "kendi" || !bilinenKodlar) return [];
+  const eksik: number[] = [];
+  satirlar.forEach((s, i) => {
+    const kod = s.lig.trim().toUpperCase();
+    if (!kod || !bilinenKodlar.has(kod)) eksik.push(i);
+  });
+  return eksik;
+}
+
+/**
+ * Analiz kosulabilir mi: 15 satirin da orani tam, ayar gecerli VE kapsam
+ * `kendi` ise her satirin ligi korpusta taniniyor.
+ */
+export function analizeHazir(
+  satirlar: KuponSatiri[],
+  ayar: AnalizAyari,
+  bilinenKodlar: Set<string> | null = null,
+): boolean {
+  return (
+    satirlar.length > 0 &&
+    satirlar.every(oranTam) &&
+    ayarGecerli(ayar) &&
+    taninmayanLigler(satirlar, ayar, bilinenKodlar).length === 0
+  );
 }
 
 // ─── Ozet ─────────────────────────────────────────────────────────────────

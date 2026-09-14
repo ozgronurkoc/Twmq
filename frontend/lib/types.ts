@@ -1273,6 +1273,25 @@ export interface BenzerDilim {
   karne: BenzerKarne;
 }
 
+/**
+ * Korpustaki bir lig ve oradaki maç sayısı (`GET /api/benzer/ligler`).
+ *
+ * Etiket SUNUCUDA çevrilir (`odds.LIG_ADLARI`); arayüz kendi sözlüğünü
+ * tutmaz — tutsaydı ayrışabilen ikinci bir sözlük olurdu.
+ */
+export interface LigEnvanteriSatiri {
+  lig: string;
+  etiket: string;
+  n: number;
+}
+
+export interface LigEnvanteri {
+  cizgi: Cizgi;
+  ligler: LigEnvanteriSatiri[];
+  /** Evrenin TAMAMI — aramanın gördüğü sayıyla birebir aynı (bekçili). */
+  evren: number;
+}
+
 /** Aramanin yapildigi fiyat cizgisi. Varsayilan `kapanis`. */
 export const CIZGILER = ["kapanis", "acilis"] as const;
 export type Cizgi = (typeof CIZGILER)[number];
@@ -1672,6 +1691,14 @@ export interface ArsivAyari {
   en_az: number;
   /** `YYYY-AA-GG` ya da boş. */
   tarih: string;
+  /**
+   * Aramanın evreni: `tum` bütün korpus, `kendi` maçın kendi ligi.
+   *
+   * Kayıtta durmak ZORUNDA: aynı oranlar, aynı çizgi ve farklı kapsam
+   * farklı karne verir. Sunucu bilinmeyen değeri reddeder, eksik değeri
+   * `tum`a düşürür (eski kayıtlar okunabilsin).
+   */
+  kapsam: "tum" | "kendi";
 }
 
 export interface ArsivSatiri {

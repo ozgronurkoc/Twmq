@@ -607,6 +607,70 @@ try {
     assert.equal(KK.kuponBedeli(k.kolon, null), null, "carpan yoksa para UYDURULMAZ");
   });
 
+  dene("kapsam: `kendi` lig kodlarini IZE sokar, `tum` sokmaz", () => {
+    const satir = (lig) => ({
+      lig, ev: "a", dep: "b", oran: { "1": "2.0", "0": "3.0", "2": "4.0" },
+    });
+    const k = Array.from({ length: TIP.MAC_SAYISI }, () => satir("T1"));
+    const tum = { ...KA.VARSAYILAN_ANALIZ, kapsam: "tum" };
+    const kendi = { ...KA.VARSAYILAN_ANALIZ, kapsam: "kendi" };
+
+    // Kapsam ayrimi izi degistirir: iki kapsam AYNI soruyu sormuyor.
+    assert.notEqual(KA.sorguIzi(k, tum), KA.sorguIzi(k, kendi));
+
+    // `tum` iken lig sorgunun parcasi DEGIL — etiket duzeltmek tabloyu
+    // bayatlatmamali.
+    const baskaLig = k.map((r, i) => (i === 2 ? satir("E0") : r));
+    assert.equal(KA.sorguIzi(k, tum), KA.sorguIzi(baskaLig, tum));
+    // `kendi` iken AYNI degisiklik sorguyu degistirir, yani ize girer.
+    assert.notEqual(KA.sorguIzi(k, kendi), KA.sorguIzi(baskaLig, kendi));
+  });
+
+  dene("taninmayan lig kodu analizi ENGELLER (bos cevap sessiz kalmasin)", () => {
+    const satir = (lig) => ({
+      lig, ev: "a", dep: "b", oran: { "1": "2.0", "0": "3.0", "2": "4.0" },
+    });
+    const kodlar = new Set(["T1", "E0", "SP1"]);
+    const kendi = { ...KA.VARSAYILAN_ANALIZ, kapsam: "kendi" };
+    const tum = { ...KA.VARSAYILAN_ANALIZ, kapsam: "tum" };
+
+    const temiz = Array.from({ length: TIP.MAC_SAYISI }, () => satir("T1"));
+    assert.deepEqual(KA.taninmayanLigler(temiz, kendi, kodlar), []);
+    assert.equal(KA.analizeHazir(temiz, kendi, kodlar), true);
+
+    // Kucuk harf kabul: kullanici "t1" yazabilir.
+    const kucuk = temiz.map((r, i) => (i === 0 ? satir("t1") : r));
+    assert.deepEqual(KA.taninmayanLigler(kucuk, kendi, kodlar), []);
+
+    // Bilinmeyen kod ve BOS kod analizi engeller.
+    for (const bozuk of ["Süper Lig", "TR", ""]) {
+      const k = temiz.map((r, i) => (i === 4 ? satir(bozuk) : r));
+      assert.deepEqual(KA.taninmayanLigler(k, kendi, kodlar), [4], bozuk);
+      assert.equal(KA.analizeHazir(k, kendi, kodlar), false, bozuk);
+      // Kapsam `tum` iken lig sorgunun parcasi degil: engellemez.
+      assert.deepEqual(KA.taninmayanLigler(k, tum, kodlar), []);
+      assert.equal(KA.analizeHazir(k, tum, kodlar), true, bozuk);
+    }
+
+    // Envanter okunmadiysa (null) dogrulama YAPILMAZ: olmayan bir listeye
+    // gore satir suclanamaz.
+    const bozukTablo = temiz.map((r, i) => (i === 4 ? satir("yok") : r));
+    assert.deepEqual(KA.taninmayanLigler(bozukTablo, kendi, null), []);
+    assert.equal(KA.analizeHazir(bozukTablo, kendi, null), true);
+  });
+
+  dene("kapsam `kendi` ise /oran-analizi baglantisi AYNI suzgeci tasir", () => {
+    const satir = { lig: "t1", ev: "a", dep: "b",
+                    oran: { "1": "1.26", "0": "6.48", "2": "13.54" } };
+    const tum = new URLSearchParams(
+      KA.oranAnaliziAdresi(satir, { ...KA.VARSAYILAN_ANALIZ, kapsam: "tum" }).split("?")[1]);
+    assert.equal(tum.get("lig"), null, "tum liglerde lig suzgeci YOK");
+
+    const kendi = new URLSearchParams(
+      KA.oranAnaliziAdresi(satir, { ...KA.VARSAYILAN_ANALIZ, kapsam: "kendi" }).split("?")[1]);
+    assert.equal(kendi.get("lig"), "T1", "buyuk harfe normallesir");
+  });
+
   // ── Kume-ici hesabi ──────────────────────────────────────────────────
 
   // README'nin ornek kuponu + check.sh'in ornek olasiliklari. Ikisi de
@@ -913,6 +977,7 @@ try {
     "GET /api/tahmin": "TahminResponse",
     "GET /api/benzer": "BenzerResponse",
     "GET /api/benzer/maclar": "BenzerMaclarResponse",
+    "GET /api/benzer/ligler": "LigEnvanteri",
     "POST /api/solve": "SolveResponse",
     "POST /api/kupon/arsiv": "ArsivKaydi",
     "GET /api/kupon/arsiv": "ArsivListesi",

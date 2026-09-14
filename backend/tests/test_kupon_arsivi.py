@@ -68,7 +68,8 @@ def _kupon(**ek):
 def _govde(**ek):
     return {"sezon": "2026_27", "ad": "1 numaralı kupon", "hafta": 5,
             "not": "iddaa açılış",
-            "ayar": {"cizgi": "acilis", "arindirma": "shin", "en_az": 200, "tarih": ""},
+            "ayar": {"cizgi": "acilis", "arindirma": "shin", "en_az": 200,
+                     "tarih": "", "kapsam": "tum"},
             "satirlar": [_satir(i) for i in range(ka.MAC_SAYISI)],
             "analiz": _analiz(), "kupon": _kupon(), **ek}
 
@@ -180,8 +181,15 @@ def test_ayar_SUNUCUNUN_listesinden_dogrulanir():
     for y in ARINDIRMA_YONTEMLERI:
         assert ka.kaydi_kur(_govde(ayar={"arindirma": y}), no=1)["ayar"]["arindirma"] == y
 
+    for kapsam in ka.KAPSAMLAR:
+        k = ka.kaydi_kur(_govde(ayar={**_govde()["ayar"], "kapsam": kapsam}), no=1)
+        assert k["ayar"]["kapsam"] == kapsam
+    # Kapsam verilmezse `tum`a duser — eski kayitlar da okunabilsin.
+    assert ka.kaydi_kur(_govde(ayar={"cizgi": "acilis"}), no=1)["ayar"]["kapsam"] == "tum"
+
     for bozuk in ({"cizgi": "AvgC"}, {"arindirma": "yok"}, {"en_az": 0},
-                  {"en_az": 99999}, {"tarih": "2026-02-30"}, {"tarih": "01.09.2026"}):
+                  {"en_az": 99999}, {"tarih": "2026-02-30"}, {"tarih": "01.09.2026"},
+                  {"kapsam": "lig"}, {"kapsam": "hepsi"}):
         with pytest.raises(ka.ArsivHatasi):
             ka.kaydi_kur(_govde(ayar={**_govde()["ayar"], **bozuk}), no=1)
 

@@ -98,6 +98,10 @@ NO_MIN, NO_MAX = 1, 9999
 #: adı taşıyabilir.
 AD_SINIR = 80
 
+#: Aramanın evreni: bütün korpus mu, maçın kendi ligi mi. İkisi AYNI soruyu
+#: sormaz, o yüzden kayıt hangisinin sorulduğunu taşır.
+KAPSAMLAR = ("tum", "kendi")
+
 #: Metin alanlarının en fazla uzunluğu (arayüzdeki `METIN_SINIR` ile aynı).
 METIN_SINIR = 40
 NOT_SINIR = 400
@@ -238,6 +242,12 @@ def ayari_dogrula(ham: Any) -> dict[str, Any]:
     from .odds import ARINDIRMA_YONTEMLERI
 
     ham = ham if isinstance(ham, dict) else {}
+    # Kapsam: `tum` butun korpus, `kendi` macin KENDI ligi. İkisi aynı
+    # soruyu sormaz ve kayıt hangisinin sorulduğunu söylemek zorunda —
+    # aynı oranlar, aynı çizgi, farklı kapsam farklı karne verir.
+    kapsam = str(ham.get("kapsam") or "tum").strip()
+    if kapsam not in KAPSAMLAR:
+        raise ArsivHatasi(f"kapsam: {', '.join(KAPSAMLAR)}")
     cizgi = str(ham.get("cizgi") or "kapanis").strip()
     if cizgi not in CIZGILER:
         raise ArsivHatasi(f"cizgi: {', '.join(CIZGILER)}")
@@ -256,7 +266,8 @@ def ayari_dogrula(ham: Any) -> dict[str, Any]:
             datetime.strptime(tarih, "%Y-%m-%d")
         except ValueError:
             raise ArsivHatasi("tarih YYYY-AA-GG olmali") from None
-    return {"cizgi": cizgi, "arindirma": arindirma, "en_az": en_az, "tarih": tarih}
+    return {"cizgi": cizgi, "arindirma": arindirma, "en_az": en_az,
+            "tarih": tarih, "kapsam": kapsam}
 
 
 def _kesir(ham: Any, ad: str) -> float:

@@ -4,9 +4,9 @@ import * as React from "react";
 import { Search } from "lucide-react";
 
 import { ARINDIRMA_YONTEMLERI, type ArindirmaYontemi } from "@/lib/api";
-import { tarihGecerli, type AnalizAyari } from "@/lib/kupon-analiz";
-import type { Cizgi } from "@/lib/types";
-import { yuzde } from "@/lib/utils";
+import { tarihGecerli, type AnalizAyari, type LigKapsami } from "@/lib/kupon-analiz";
+import type { Cizgi, LigEnvanteriSatiri } from "@/lib/types";
+import { sayi, yuzde } from "@/lib/utils";
 import { Collapsible, NumberField, Select, TextField } from "@/components/ui/controls";
 import { Button } from "@/components/ui/primitives";
 
@@ -33,6 +33,8 @@ export function AnalizAyarlari({
   kosuyor,
   ortalamaMarj,
   bayat,
+  ligler,
+  taninmayan,
 }: {
   ayar: AnalizAyari;
   onChange: (next: AnalizAyari) => void;
@@ -44,11 +46,43 @@ export function AnalizAyarlari({
   ortalamaMarj: number | null;
   /** Ekrandaki sonuc, su anki girdi/ayarla ayrismis mi. */
   bayat: boolean;
+  /** Korpusun lig envanteri; `null` = henuz okunmadi. */
+  ligler: LigEnvanteriSatiri[] | null;
+  /** Kapsam `kendi` iken ligi taninmayan satirlarin 0 tabanli sirasi. */
+  taninmayan: number[];
 }) {
   const tarihBozuk = !tarihGecerli(ayar.tarih);
 
   return (
     <div className="space-y-4">
+      <Select<LigKapsami>
+        label="Arama evreni"
+        value={ayar.kapsam}
+        onChange={(v) => onChange({ ...ayar, kapsam: v })}
+        options={[
+          { value: "tum", label: "Tüm ligler" },
+          { value: "kendi", label: "Maçın kendi ligi" },
+        ]}
+        hint={
+          ayar.kapsam === "tum" ? (
+            <>
+              Her satır <strong>bütün korpusta</strong> aranır
+              {ligler ? ` (${sayi(ligler.reduce((t, l) => t + l.n, 0))} maç, ${ligler.length} lig)` : ""}
+              . Geniş evren örneklemi ayakta tutar; karşılığında cevap
+              &quot;bu ligde&quot; değil &quot;bu fiyatta genel olarak&quot;dır.
+            </>
+          ) : (
+            <>
+              Her satır <strong>kendi lig koduyla</strong> aranır. Evren bir
+              ligin boyuna düşer, yani yarıçap büyür ve örneklem küçülür —
+              her satırda n ve yarıçap yazıyor, &quot;tavan&quot; uyarısı
+              sıklaşırsa cevap benzer maçlardan değil sınırdan toplanmış
+              demektir.
+            </>
+          )
+        }
+      />
+
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Select<Cizgi>
           label="Fiyat çizgisi"
@@ -106,6 +140,31 @@ export function AnalizAyarlari({
         </div>
       </Collapsible>
 
+      {ayar.kapsam === "kendi" && ligler ? (
+        <div className="rounded-xl border border-line px-4 py-3">
+          <div className="text-[12px] font-medium text-muted-foreground">
+            Korpusun tanıdığı lig kodları
+          </div>
+          <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1">
+            {ligler.map((l) => (
+              <span key={l.lig} className="text-[11.5px] text-muted-foreground">
+                <code className="font-mono text-foreground">{l.lig}</code>{" "}
+                {l.etiket} <span className="tnum opacity-60">{sayi(l.n)}</span>
+              </span>
+            ))}
+          </div>
+          {taninmayan.length ? (
+            <p className="mt-2 text-[11.5px] text-danger">
+              {taninmayan.map((i) => i + 1).join(", ")}. satırın lig kodu
+              korpusta yok. Bu kodla arama <strong>400 dönmez, boş döner</strong>{" "}
+              — yani &quot;benzer maç yok&quot; ile &quot;kodu tanımıyorum&quot;
+              ayırt edilemezdi. Tablodaki lig hücrelerini yukarıdaki kodlarla
+              düzeltin.
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
       <div className="flex flex-wrap items-center gap-3">
         <Button tip="primary" onClick={onAnaliz} disabled={!hazir || kosuyor}>
           <Search size={15} />
@@ -113,7 +172,9 @@ export function AnalizAyarlari({
         </Button>
         {!hazir ? (
           <span className="text-[12px] text-muted-foreground">
-            15 satırın da oranı tam olmalı{tarihBozuk ? " ve tarih kesmesi okunabilmeli" : ""}.
+            15 satırın da oranı tam olmalı
+            {tarihBozuk ? ", tarih kesmesi okunabilmeli" : ""}
+            {taninmayan.length ? ", her satırın lig kodu korpusta tanınmalı" : ""}.
           </span>
         ) : bayat ? (
           <span className="text-[12px] text-warning">

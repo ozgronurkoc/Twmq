@@ -9,6 +9,7 @@ import {
   getArsivKaydi,
   getArsivListesi,
   getBenzer,
+  getLigEnvanteri,
   getMeta,
 } from "@/lib/api";
 import { hataMetni, iptalMi } from "@/lib/istek";
@@ -31,6 +32,7 @@ import {
   evreniOku,
   kayittanAnaliz,
   sorguIzi,
+  taninmayanLigler,
   VARSAYILAN_ANALIZ,
   type AnalizAyari,
   type SatirAnalizi,
@@ -40,6 +42,7 @@ import {
   MAC_SAYISI,
   type ArsivOzeti,
   type BenzerResponse,
+  type LigEnvanteriSatiri,
   type Cizgi,
   type Sembol,
 } from "@/lib/types";
@@ -128,6 +131,13 @@ export default function KuponSayfasi() {
    */
   const [kolonBedeli, setKolonBedeli] = React.useState<number | null>(null);
   const [haftalikTavan, setHaftalikTavan] = React.useState<number | null>(null);
+  /**
+   * Korpusun lig envanteri. `null` = henuz okunmadi ve o haldeyken lig
+   * DOGRULAMASI YAPILMAZ: olmayan bir listeye gore satir suclanamaz.
+   * Cizgiye bagli (acilis evreni kapanistan kucuk), o yuzden cizgi
+   * degisince yeniden okunur.
+   */
+  const [ligler, setLigler] = React.useState<LigEnvanteriSatiri[] | null>(null);
 
   React.useEffect(() => {
     let birakildi = false;
@@ -144,6 +154,16 @@ export default function KuponSayfasi() {
       birakildi = true;
     };
   }, []);
+
+  React.useEffect(() => {
+    const kontrol = new AbortController();
+    getLigEnvanteri(ayar.cizgi, kontrol.signal)
+      .then((e) => setLigler(e.ligler))
+      .catch(() => {
+        /* envanter okunamazsa lig dogrulamasi YAPILMAZ, sayfa calisir */
+      });
+    return () => kontrol.abort();
+  }, [ayar.cizgi]);
 
   const listeyiTazele = React.useCallback(async () => {
     try {
@@ -245,7 +265,12 @@ export default function KuponSayfasi() {
               cizgi: ayar.cizgi,
               arindirma: ayar.arindirma,
               en_az: ayar.enAz,
-              // Lig suzgeci BILEREK yok: aranan yer tum liglerin korpusu.
+              // Kapsam `tum` iken lig suzgeci HIC gonderilmez; `kendi`
+              // iken satirin kendi kodu gider. Kod bos ya da taninmiyorsa
+              // buraya hic gelinmez (`analizeHazir` engelliyor).
+              ...(ayar.kapsam === "kendi" && satir.lig.trim()
+                ? { lig: satir.lig.trim().toUpperCase() }
+                : {}),
               ...(ayar.tarih ? { tarih: ayar.tarih } : {}),
             },
             kontrol.signal,
@@ -303,6 +328,7 @@ export default function KuponSayfasi() {
           arindirma: ayar.arindirma,
           en_az: ayar.enAz,
           tarih: ayar.tarih,
+          kapsam: ayar.kapsam,
         },
         satirlar: satirlar.map((s) => ({
           lig: s.lig,
@@ -351,6 +377,8 @@ export default function KuponSayfasi() {
         arindirma: kayit.ayar.arindirma as AnalizAyari["arindirma"],
         enAz: kayit.ayar.en_az,
         tarih: kayit.ayar.tarih ?? "",
+        // Eski kayitlarda alan yoktu; `tum` sunucunun da varsayilani.
+        kapsam: kayit.ayar.kapsam === "kendi" ? "kendi" : "tum",
       };
       const yeniSatirlar = kayittanSatirlar(kayit.satirlar);
       setSatirlar(yeniSatirlar);
@@ -394,7 +422,12 @@ export default function KuponSayfasi() {
 
   const ozet = kuponOzeti(satirlar);
   const analiz = analizOzeti(sonuclar);
-  const hazir = analizeHazir(satirlar, ayar);
+  const bilinenKodlar = React.useMemo(
+    () => (ligler ? new Set(ligler.map((l) => l.lig.toUpperCase())) : null),
+    [ligler],
+  );
+  const taninmayan = taninmayanLigler(satirlar, ayar, bilinenKodlar);
+  const hazir = analizeHazir(satirlar, ayar, bilinenKodlar);
   const suankiIz = sorguIzi(satirlar, ayar);
   const bayat = kosanIz != null && kosanIz !== suankiIz;
   const sonucVar = kosanIz != null;
@@ -524,7 +557,11 @@ export default function KuponSayfasi() {
       <Card>
         <CardHeader
           title="Analiz ayarları"
-          hint="15 satırın tamamı bu ayarla, tüm liglerin korpusunda aranır — lig süzgeci yok."
+          hint={
+            ayar.kapsam === "kendi"
+              ? "15 satırın tamamı bu ayarla, HER MAÇ KENDİ LİGİNDE aranır."
+              : "15 satırın tamamı bu ayarla, tüm liglerin korpusunda aranır — lig süzgeci yok."
+          }
         />
         <CardBody>
           <AnalizAyarlari
@@ -535,6 +572,8 @@ export default function KuponSayfasi() {
             kosuyor={kosuyor}
             ortalamaMarj={ozet.ortalamaMarj}
             bayat={bayat}
+            ligler={ligler}
+            taninmayan={taninmayan}
           />
         </CardBody>
       </Card>
@@ -542,7 +581,7 @@ export default function KuponSayfasi() {
       {sonucVar ? (
         <Card>
           <CardHeader
-            title="Karne — tüm ligler"
+            title={ayar.kapsam === "kendi" ? "Karne — maçın kendi liginde" : "Karne — tüm ligler"}
             hint={
               kosuyor
                 ? `${analiz.biten + analiz.hatali}/${MAC_SAYISI} satır tamamlandı…`

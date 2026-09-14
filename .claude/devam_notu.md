@@ -108,13 +108,49 @@ Analiz **damgalı** kaydediliyor (`olculdu` + `evren`) — ilk sürümde bilerek
 atılıyordu, o karar geri alındı: kupon o analizden çıkıyor, analiz atılırsa
 kayıt kendi gerekçesini kaybeder.
 
+### Bu turda eklenen: **lig kapsamı seçilebilir**
+
+Sahibi istedi: *"tüm ligleri kapsayarak yapıyor ya, bunu seçilebilir yapıp
+sadece maçları kendi liglerinde değerlendirebileceğimiz bir sistem."*
+
+`tum` (varsayılan, bütün korpus) ↔ `kendi` (her satır kendi lig koduyla).
+Kapsam **kayda giriyor** (`ayar.kapsam`) — aynı oranlar, aynı çizgi, farklı
+kapsam farklı karne verir; kayıt hangisinin sorulduğunu söylemek zorunda.
+
+**Sessiz kusur kapatıldı.** Korpusun tanımadığı bir lig koduyla arama 400
+DÖNMEZ, **boş** döner — kullanıcı "bu fiyatta benzer maç yok" ile "yazdığın
+kodu tanımıyorum"u ayırt edemezdi. Yeni uç `GET /api/benzer/ligler` korpusun
+lig envanterini veriyor (17 lig, kod + etiket + n); kapsam `kendi` iken
+tanınmayan kod taşıyan satır analizi ENGELLİYOR ve sayfada adıyla yazıyor.
+
+**Envanterin ilk sürümü YANLIŞTI ve bekçi yakaladı:** `r.get("kapanis")`
+ile süzüyordu, oysa korpusta kapanış fiyatı `oranlar` anahtarında durur —
+liste 23.083, arama 23.085 diyordu. Evrenin tanımı artık tek yerde
+(`_cizgi_orani`, aramanın kendi fonksiyonu) ve bekçi ikisinin eşitliğini
+tutuyor.
+
+### ÖLÇÜLEN: kendi liginde bakmanın bedeli
+
+5. haftanın 15 maçı, kapanış, shin, hedef örneklem 200:
+
+    tüm ligler   yarıçap tavanı  1/15   az örnek 0/15
+    kendi ligi   yarıçap tavanı 10/15   az örnek 1/15
+
+Evren 23.085'ten bir ligin boyuna düşüyor (T1 1.415, D1 1.224). En uç
+örnek Levante–Barcelona: tüm liglerde n=123, kendi liginde **n=2**.
+
+Bu, seçeneği kötü yapmaz — **başka bir soru** sordurur. Sayfa bedeli
+gizlemiyor: her satırda n ve yarıçap yazıyor, tavana dayanan satır
+işaretleniyor. Kütükte.
+
 ### Sıradaki adım
 
-1. **Bütçe kararı** — 1,56× aşımı nasıl kapanacak? (bankolaştırma kuralı)
-2. Hâlâ karara bağlanmamış dördü: olasılık kaynağı (piyasa ↔ karne ↔
-   karışım), kuponun nerede üretileceği, işaret seçiminin bütçesi,
+1. **Bütçe kararı** — kupon kuralı her maça iki sembol verdiği için kolon
+   sayısı sabit 2¹⁵ = 32.768 (₺327.680, tavanın 1,56 katı). Aşımı kapatmanın
+   tek yolu bazı maçları bankoya indirmek; kuralı sahibi koyacak.
+2. Hâlâ karara bağlanmamış: olasılık kaynağı (piyasa ↔ karne ↔ karışım),
    `benzer`in ileri yürüyüş ölçümünün (§6.1) sırası.
-3. İsteğe bağlı ve henüz sorulmadı: işaretleri **elle** değiştirebilmek.
+3. İsteğe bağlı, sorulmadı: işaretleri elle değiştirebilmek.
 
 Teknik olarak bekleyenler değişmedi: 729 kuponun operasyonu (§3.75),
 6. haftada `--yaz` ile dondurma, kesintisiz 13 haftalık pencere çıkınca
