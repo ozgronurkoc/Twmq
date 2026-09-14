@@ -171,7 +171,7 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/components/super-toto/tahmin2.tsx` | **2. Tahmin** paneli — `1. Tahmin` / `2. Tahmin` sekmeleri arasında geçilir; para birimli hiçbir sayı yok. Hafta kapandığında sonuç sütunu ve ayar karnesi açılır (§3.38) |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **2.045 test**; **136'sı** istatistik katmanına (`history` `odds` `backtest`
+paketi toplam **2.051 test**; **136'sı** istatistik katmanına (`history` `odds` `backtest`
 `api_stats` `api_backtest` `snapshot_iddaa`), **672'si** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre`
@@ -7470,6 +7470,61 @@ beklenen harcama **iki katından fazla** olur.
 * **Değişmedi:** 729 kupona çıkmak hâlâ birinci teknik iş (+1,8 puan,
   +₺7.660/hafta) ve §3.76'nın iki tavanı yerinde.
 
+### 3.81 Haftalık tavan ₺210.000'de sabitlendi — ve bekleme sayısının dayanağı sınandı
+
+Sahibi cepheyi kendi seçti (2026-09-14): *"haftalık üst sınırımız yine 210
+bin TL."* Yani §3.80'in tablosu tek satıra indi (21.000 kolon) ve geriye
+sahibinin ilgilendiği **tek** sayı kaldı: *ne kadar sürer* — beklenen 8,9
+hafta, %90 için 19,3.
+
+O sayı bir varsayıma dayanıyordu ve bu depoda hiç ölçülmemişti: **gelecek
+haftalar, ölçülen `p` dağılımından bağımsız mı çekiliyor?** §3.46 hafta
+*içi* bağımlılığı ölçüp kapatmıştı; haftalar *arası* hiç bakılmamıştı. Fark
+önemli: hafta içi bağımlılık tek bir haftanın `P`sini oynatır, haftalar
+arası **bekleme süresinin kuyruğunu** oynatır.
+
+Yeni hat: `scripts/haftalar_arasi.py`. Aranan şey heterojenlik değil —
+`p`nin haftadan haftaya on altı kat ayrışması zaten modelde — **onun
+üstünde kalan artık bağımlılık**. Komşuluk tanımı: aynı sezon **ve** hafta
+numarası tam 1 fark (arşivde eksik haftalar var, sezon sınırı gerçek bir
+kesinti; ikisi de bekçili).
+
+#### Ölçülen (114 hafta, 21.000 kolon, 10.000 permütasyon)
+
+| sınav | gözlenen | permütasyon %95 null | p | hüküm |
+|---|---:|---|---:|---|
+| `p` serisi gecikme-1 (83 komşu çift) | **r = +0,1852** | [−0,206, +0,213] | 0,0842 | ilişki yok |
+| isabet öbeklenmesi, 4 hafta (45 pencere) | 23 isabetsiz | [13,0 · 27,0] | 0,4211 | öbeklenme yok |
+| isabet öbeklenmesi, 8 hafta (7 pencere) | 3 isabetsiz | [0,0 · 4,0] | 0,1971 | öbeklenme yok |
+
+Holm'lu iki sınavın ikisi de geçmedi → **ön kayıtlı kurala göre eksen
+kapandı** ve §3.80'in bekleme sayıları olduğu gibi duruyor.
+
+#### Kapanışın iki sınırı — açıkça
+
+1. **Gecikme-1 ilişkisi sıfır ölçülmedi, sıfırdan ayrılamadı** (r = +0,19,
+   83 çift, aralık geniş). İşaret **pozitif** ve gerçek olsaydı kuyruğu
+   **uzatırdı**. "Ölçülmedi" ile "yok" aynı cümle değil.
+2. **Sınav yalnız 4 ve 8 haftalık pencerede koşabildi.** İlgilendiğimiz
+   ufuk (13–26 hafta) arşivde **kesintisiz bulunmuyor**, yani hiç
+   sınanmadı. Bu satırlar tablodan düşmüyor, "ÖLÇÜLEMEDİ" diye yazılıyor
+   ve bekçisi var (`test_OLCULEMEYEN_pencere_tablodan_DUSMEZ`).
+
+**Yeniden açılma şartı:** hafta biriktikçe kesintisiz 13 haftalık pencere
+çıkınca sınav o boyda tekrarlanır.
+
+#### Yan ölçüm: model karamsar çıkıyor, ve bu iyi haber
+
+| | oran | `E[hafta]` |
+|---|---:|---:|
+| model `p` | %10,489 | 9,5 |
+| **gerçekleşen** | **%18,421** (21/114) | **5,4** |
+
+§3.68 bu açığı ölçmüştü ve hükmü *"güncel değil"*di (2025/26'da ×1,00). O
+yüzden hüküm ikisinin **arasındadır** ve iyimser uca yazılmaz — ama
+sahibinin bilmesi gereken şu: bugünkü tablo (8,9 hafta) **muhafazakâr**
+taraftan yazılmış.
+
 ---
 
 ## 4. Sayfada bugün ne var
@@ -8509,7 +8564,7 @@ python -m spor_toto.kosum                  # kayıtlı koşumlar
 python -m spor_toto.kosum --son disari     # son koşumun ortamı
 
 # Denetim
-pytest -q                                  # 2.045 test (136'sı bu katman, 672'si tahmin)
+pytest -q                                  # 2.051 test (136'sı bu katman, 672'si tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out
