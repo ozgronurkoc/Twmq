@@ -80,18 +80,43 @@ export function KuponIzgarasi({
 
   return (
     <div className={TABLO_SARMAL}>
-      <table className="w-full min-w-[820px] border-separate border-spacing-0">
+      <table className="w-full min-w-[900px] table-fixed border-separate border-spacing-0">
+        {/*
+          Genislikler `colgroup`ta ve YUZDE: `table-fixed` ile birlikte bu,
+          iki takim sutununu birbirine ESIT tutar. Once genislik yoktu ve
+          tarayici sutunu ICERIGE gore buyutuyordu — "Manchester United"
+          yazan sutun, karsisindaki "Hull City" sutunundan genis oluyor ve
+          baslik satiri govdeyle ayni yerde durmuyordu.
+        */}
+        <colgroup>
+          <col className="w-[4%]" />
+          <col className="w-[9%]" />
+          <col className="w-[23.5%]" />
+          <col className="w-[23.5%]" />
+          <col className="w-[10%]" />
+          <col className="w-[10%]" />
+          <col className="w-[10%]" />
+          <col className="w-[10%]" />
+        </colgroup>
         <thead>
-          <tr className={TABLO_BASLIK_SATIRI}>
-            <th className="w-9 pb-2 pl-1 font-medium">#</th>
-            <th className="w-[120px] pb-2 pl-2 font-medium">Lig</th>
-            <th className="pb-2 pl-2 font-medium">Ev sahibi</th>
-            <th className="pb-2 pl-2 font-medium">Deplasman</th>
+          {/*
+            Baslik dolgulari govdedekiyle AYNI olmak zorunda ve esitlik
+            gorunenden zor: govdede yazi iki dolgunun toplami kadar iceride
+            duruyor (`td` + kutunun kendi `px-2`si), baslikta ise yalnizca
+            biri vardi. Fark 8 piksel ve ciplak gozle "kaymis" goruluyordu.
+            Hizalama da sutunun kendi hizasini izler: lig ortali, fiyat ve
+            marj saga dayali.
+          */}
+          <tr className={cn(TABLO_BASLIK_SATIRI, "[&>th]:whitespace-nowrap")}>
+            <th className="pb-2 pr-2 text-right font-medium">#</th>
+            <th className="pb-2 text-center font-medium">Lig</th>
+            <th className="pb-2 pl-4 font-medium">Ev sahibi</th>
+            <th className="pb-2 pl-4 font-medium">Deplasman</th>
             {SEMBOLLER.map((s, k) => (
               <th
                 key={s}
                 className={cn(
-                  "w-[86px] pb-2 pl-2 font-medium",
+                  "pb-2 pr-2 text-right font-medium",
                   k === 0 && "border-l border-line/50",
                 )}
               >
@@ -101,7 +126,7 @@ export function KuponIzgarasi({
                 </span>
               </th>
             ))}
-            <th className="w-[74px] pb-2 pl-2 pr-1 text-right font-medium">Marj</th>
+            <th className="pb-2 pr-1 text-right font-medium">Marj</th>
           </tr>
         </thead>
         <tbody>
