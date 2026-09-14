@@ -222,3 +222,35 @@ export function yereliTemizle(): void {
     /* zaten yazilamamisti */
   }
 }
+
+/**
+ * Arsiv kaydini GIRIS tablosuna cevirir.
+ *
+ * Kayitta oran SAYIDIR (bir kayit tipinde gevsek olmamali), tabloda ise
+ * METIN — `1.` yazmakta olan biri sayiya cevrilen bir alanda her tus
+ * vurusunda alaninin altindan kayan bir deger gorurdu (modul basindaki
+ * gerekce). Cevrim bu yuzden tek yerde ve burada.
+ *
+ * `String(1.26)` -> `"1.26"`. Kayipsiz DEGILDIR ve olmasi da gerekmiyor:
+ * kullanicinin yazdigi `1.260` kayitta `1.26` olur ve geri okundugunda
+ * `1.26` gorunur. Ayni SAYI, farkli yazim.
+ */
+export function kayittanSatirlar(
+  kayitSatirlari: { lig?: string; ev?: string; dep?: string; oran?: Record<string, number | null> }[],
+): KuponSatiri[] {
+  return Array.from({ length: MAC_SAYISI }, (_, i) => {
+    const k = kayitSatirlari[i];
+    if (!k) return bosSatir();
+    const oranHam = k.oran ?? {};
+    const metin = (s: Sembol) => {
+      const v = oranHam[s];
+      return typeof v === "number" && Number.isFinite(v) ? String(v) : "";
+    };
+    return {
+      lig: temizMetin(k.lig, METIN_SINIR),
+      ev: temizMetin(k.ev, METIN_SINIR),
+      dep: temizMetin(k.dep, METIN_SINIR),
+      oran: { "1": metin("1"), "0": metin("0"), "2": metin("2") },
+    };
+  });
+}

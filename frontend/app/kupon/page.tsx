@@ -3,12 +3,19 @@
 import * as React from "react";
 import { Eraser } from "lucide-react";
 
-import { getBenzer } from "@/lib/api";
+import {
+  arsiveYaz,
+  arsivdenSil,
+  getArsivKaydi,
+  getArsivListesi,
+  getBenzer,
+} from "@/lib/api";
 import { hataMetni, iptalMi } from "@/lib/istek";
 import {
   bosKupon,
   kuponOzeti,
   kuponuYereldenOku,
+  kayittanSatirlar,
   kuponuYereleYaz,
   oranSayilari,
   yereliTemizle,
@@ -23,12 +30,13 @@ import {
   type AnalizAyari,
   type SatirAnalizi,
 } from "@/lib/kupon-analiz";
-import { MAC_SAYISI, type Sembol } from "@/lib/types";
+import { CIZGILER, MAC_SAYISI, type ArsivOzeti, type Cizgi, type Sembol } from "@/lib/types";
 import { yuzde } from "@/lib/utils";
 import { Badge, Button, Callout, Card, CardBody, CardHeader } from "@/components/ui/primitives";
 import { KuponIzgarasi } from "@/components/kupon/izgara";
 import { AnalizAyarlari } from "@/components/kupon/ayarlar";
 import { AnalizTablosu, TabloAciklamasi } from "@/components/kupon/analiz-tablosu";
+import { ArsivCubugu } from "@/components/kupon/arsiv-cubugu";
 
 /**
  * Kupon kurucu — **1. aşama: giriş**.
@@ -76,6 +84,33 @@ export default function KuponSayfasi() {
   const [kosanIz, setKosanIz] = React.useState<string | null>(null);
   const iptalci = React.useRef<AbortController | null>(null);
 
+  // ─── Arsiv ─────────────────────────────────────────────────────────────
+  const [hafta, setHafta] = React.useState(1);
+  const [not, setNot] = React.useState("");
+  const [kayitlar, setKayitlar] = React.useState<ArsivOzeti[]>([]);
+  /** Ekrandaki tablo hangi haftadan yuklendi; `null` = arsivden gelmedi. */
+  const [yuklenen, setYuklenen] = React.useState<number | null>(null);
+  const [arsivKosuyor, setArsivKosuyor] = React.useState(false);
+  const [arsivHata, setArsivHata] = React.useState<string | null>(null);
+  const [kaydedildi, setKaydedildi] = React.useState<string | null>(null);
+
+  const listeyiTazele = React.useCallback(async () => {
+    try {
+      const liste = await getArsivListesi();
+      setKayitlar(liste.kayitlar);
+      return liste.kayitlar;
+    } catch (e) {
+      // Liste okunamamasi SAYFAYI dusurmez: tablo ve analiz arsivden
+      // bagimsiz calisir. Hata gorunur durur, sessizce yutulmaz.
+      setArsivHata(hataMetni(e, "Arşiv listesi okunamadı"));
+      return [];
+    }
+  }, []);
+
+  React.useEffect(() => {
+    void listeyiTazele();
+  }, [listeyiTazele]);
+
   React.useEffect(() => {
     const kayit = kuponuYereldenOku();
     if (kayit) setSatirlar(kayit);
@@ -108,6 +143,8 @@ export default function KuponSayfasi() {
     setSonuclar(bosAnaliz(MAC_SAYISI));
     setKosanIz(null);
     setKosuyor(false);
+    setYuklenen(null);
+    setKaydedildi(null);
     yereliTemizle();
   }
 
@@ -172,6 +209,99 @@ export default function KuponSayfasi() {
     );
 
     if (!kontrol.signal.aborted) setKosuyor(false);
+  }
+
+  /**
+   * Haftayi arsive yazar.
+   *
+   * Tablo zaten her tus vurusunda tarayiciya yaziliyor; bu ondan BASKA bir
+   * sey. Arsiv bilincli bir karardir ve bu yuzden otomatik degil: yanlislikla
+   * 5. haftanin ustune 6. haftanin yarim tablosunu yazmak, bu sayfada geri
+   * alinamayacak tek islem olurdu.
+   *
+   * Gonderilen sey GIRDI ve AYAR; karne gonderilmiyor (turetilmis veri
+   * bayatlar — `spor_toto/kupon_arsivi.py` bas yorumu). Dogrulama da
+   * sunucuda: buradan gecen govde orada yeniden dogrulanir.
+   */
+  async function arsiveKaydet() {
+    setArsivKosuyor(true);
+    setArsivHata(null);
+    try {
+      const kayit = await arsiveYaz({
+        hafta,
+        not,
+        ayar: {
+          cizgi: ayar.cizgi,
+          arindirma: ayar.arindirma,
+          en_az: ayar.enAz,
+          tarih: ayar.tarih,
+        },
+        satirlar: satirlar.map((s) => ({
+          lig: s.lig,
+          ev: s.ev,
+          dep: s.dep,
+          oran: { ...s.oran },
+        })),
+      });
+      setYuklenen(kayit.hafta);
+      setKaydedildi(kayit.guncellendi.slice(11, 16));
+      await listeyiTazele();
+    } catch (e) {
+      setArsivHata(hataMetni(e, "Kaydedilemedi"));
+    } finally {
+      setArsivKosuyor(false);
+    }
+  }
+
+  /**
+   * Kayitli bir haftayi ekrana yukler.
+   *
+   * Analiz sonuclari TEMIZLENIR: ekrandaki karne baska bir haftanin
+   * girdisine aitti ve onu yeni tablonun cevabi gibi birakmak, sayfanin
+   * "bayat sonuc" kuralinin tam tersi olurdu.
+   */
+  async function arsivdenAc(no: number) {
+    setArsivKosuyor(true);
+    setArsivHata(null);
+    try {
+      const kayit = await getArsivKaydi(no);
+      iptalci.current?.abort();
+      setSatirlar(kayittanSatirlar(kayit.satirlar));
+      setAyar({
+        cizgi: (CIZGILER as readonly string[]).includes(kayit.ayar.cizgi)
+          ? (kayit.ayar.cizgi as Cizgi)
+          : VARSAYILAN_ANALIZ.cizgi,
+        arindirma: kayit.ayar
+          .arindirma as AnalizAyari["arindirma"],
+        enAz: kayit.ayar.en_az,
+        tarih: kayit.ayar.tarih ?? "",
+      });
+      setNot(kayit.not ?? "");
+      setHafta(kayit.hafta);
+      setYuklenen(kayit.hafta);
+      setSonuclar(bosAnaliz(MAC_SAYISI));
+      setKosanIz(null);
+      setKosuyor(false);
+      setKaydedildi(null);
+    } catch (e) {
+      setArsivHata(hataMetni(e, "Kayıt açılamadı"));
+    } finally {
+      setArsivKosuyor(false);
+    }
+  }
+
+  async function arsivdenKaldir(no: number) {
+    setArsivKosuyor(true);
+    setArsivHata(null);
+    try {
+      await arsivdenSil(no);
+      if (yuklenen === no) setYuklenen(null);
+      await listeyiTazele();
+    } catch (e) {
+      setArsivHata(hataMetni(e, "Silinemedi"));
+    } finally {
+      setArsivKosuyor(false);
+    }
   }
 
   const ozet = kuponOzeti(satirlar);
@@ -247,6 +377,39 @@ export default function KuponSayfasi() {
           belirlemeye yetmez.
         </Callout>
       ) : null}
+
+      <Card>
+        <CardHeader
+          title="Hafta arşivi"
+          hint={
+            yuklenen
+              ? `Ekrandaki tablo ${yuklenen}. haftanın kaydından açıldı.`
+              : "Kayıt sunucuda dosya olarak durur — başka tarayıcıda da açılır, git'e girebilir."
+          }
+        />
+        <CardBody>
+          <ArsivCubugu
+            hafta={hafta}
+            onHaftaChange={(v) => {
+              setHafta(v);
+              setKaydedildi(null);
+            }}
+            not={not}
+            onNotChange={(v) => {
+              setNot(v);
+              setKaydedildi(null);
+            }}
+            kayitlar={kayitlar}
+            yuklenen={yuklenen}
+            kosuyor={arsivKosuyor}
+            hata={arsivHata}
+            onKaydet={arsiveKaydet}
+            onAc={arsivdenAc}
+            onSil={arsivdenKaldir}
+            kaydedildi={kaydedildi}
+          />
+        </CardBody>
+      </Card>
 
       <Card>
         <CardHeader

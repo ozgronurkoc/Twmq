@@ -1117,6 +1117,76 @@ def api_benzer_maclar():
     return jsonify(govde)
 
 
+# ─── Kupon kurucu arsivi ─────────────────────────────────────────────────
+#
+# **Bu uc ailesi, API'nin DISKE YAZAN ilk uyesi.** Geri kalan her sey
+# okuyucu: korpusu, arsivi, saglik kaydini okur ve tureti doner. Buradaki
+# fark bilincli ve sinirlari dar tutuldu:
+#
+#   * yazilan yer TEK bir agac (`data/kupon_arsivi/<sezon>/hafta_NN.json`)
+#     ve yol `kupon_arsivi.yol` disinda hicbir yerde kurulmuyor; o fonksiyon
+#     sezonu/haftayi dogruladiktan SONRA bir de sonucun arsiv kokunun
+#     altinda kaldigini denetliyor.
+#   * govde `kupon_arsivi.kaydi_kur`dan geciyor; dogrulama arayuze
+#     BIRAKILMIYOR (arayuz bir istemcidir, kapi degil).
+#   * yazma atomik (gecici dosya + `os.replace`), yani yarida kesilen bir
+#     istek elle girilmis bir haftayi yarim bir JSON'a cevirmiyor.
+
+
+def _arsiv_hata(e: Exception) -> tuple[Any, int]:
+    from spor_toto.kupon_arsivi import ArsivHatasi
+    if isinstance(e, ArsivHatasi):
+        return jsonify({"error": str(e)}), 400
+    if isinstance(e, FileNotFoundError):
+        return jsonify({"error": str(e)}), 404
+    raise e
+
+
+@app.route("/api/kupon/arsiv", methods=["GET", "POST", "OPTIONS"])
+def api_kupon_arsiv():
+    """
+    GET  — sezonun kayit OZETLERI (`?sezon=2026_27`).
+    POST — bir haftayi yazar; ayni hafta varsa uzerine yazar ve ilk giris
+           anini (`girildi`) KORUR.
+
+    Govde: `{sezon, hafta, not, ayar, satirlar[15], sonuclar?}`.
+    """
+    if request.method == "OPTIONS":
+        return "", 204
+    from spor_toto.kupon_arsivi import VARSAYILAN_SEZON, listele, yaz
+
+    if request.method == "GET":
+        sezon = request.args.get("sezon") or VARSAYILAN_SEZON
+        try:
+            return jsonify({"sezon": sezon, "kayitlar": listele(sezon)})
+        except Exception as e:  # noqa: BLE001 - _arsiv_hata bilmedigini yeniden firlatir
+            return _arsiv_hata(e)
+
+    data = request.get_json(silent=True) or {}
+    try:
+        return jsonify(yaz(data))
+    except Exception as e:  # noqa: BLE001
+        return _arsiv_hata(e)
+
+
+@app.route("/api/kupon/arsiv/<int:hafta>", methods=["GET", "DELETE", "OPTIONS"])
+def api_kupon_arsiv_hafta(hafta: int):
+    """Tek haftanin kaydi: oku ya da sil. Olmayan haftaya 404."""
+    if request.method == "OPTIONS":
+        return "", 204
+    from spor_toto.kupon_arsivi import VARSAYILAN_SEZON, oku, sil
+
+    sezon = request.args.get("sezon") or VARSAYILAN_SEZON
+    try:
+        if request.method == "DELETE":
+            # Silinmemis bir kaydi silmek hata DEGILDIR; istemci ayni
+            # istegi iki kez gonderdiginde ikincisi de basarili olmali.
+            return jsonify({"silindi": sil(sezon, hafta), "hafta": hafta})
+        return jsonify(oku(sezon, hafta))
+    except Exception as e:  # noqa: BLE001
+        return _arsiv_hata(e)
+
+
 @app.route("/api/solve", methods=["POST", "OPTIONS"])
 def api_solve():
     if request.method == "OPTIONS":

@@ -342,6 +342,27 @@ try {
     assert.equal(ilk.lig, "T1");
   });
 
+  dene("arsiv kaydi giris tablosuna cevrilirken SAYI metne doner", () => {
+    // Kayitta oran SAYI (bir kayit tipinde gevsek olmamali), tabloda METIN.
+    const kayit = Array.from({ length: TIP.MAC_SAYISI }, (_, i) => ({
+      lig: "T1", ev: `ev${i}`, dep: `dep${i}`,
+      oran: { "1": 1.26, "0": 6.48, "2": 13.54 },
+    }));
+    const satirlar = KP.kayittanSatirlar(kayit);
+    assert.equal(satirlar.length, TIP.MAC_SAYISI);
+    assert.deepEqual(satirlar[0].oran, { "1": "1.26", "0": "6.48", "2": "13.54" });
+    // Cevrim ORANI degistirmemeli: metin geri sayiya donunce ayni sayi.
+    assert.equal(KP.kuponOzeti(satirlar).oranliMac, TIP.MAC_SAYISI);
+
+    // Bos hucre (`null`) bos METIN olur, "null" yazisi DEGIL.
+    const bosOranli = KP.kayittanSatirlar([{ oran: { "1": null, "0": 2.5, "2": null } }]);
+    assert.deepEqual(bosOranli[0].oran, { "1": "", "0": "2.5", "2": "" });
+    // Eksik/bozuk kayit patlamaz, 15 satira oturur.
+    for (const cop of [[], null, [{}], [{ oran: "yok" }]]) {
+      assert.equal(KP.kayittanSatirlar(cop ?? []).length, TIP.MAC_SAYISI);
+    }
+  });
+
   // ── Kupon analizi (lib/kupon-analiz.ts) ──────────────────────────────
 
   dene("sorgu izi hem ORANI hem AYARI kapsar", () => {
@@ -758,6 +779,9 @@ try {
     "GET /api/benzer": "BenzerResponse",
     "GET /api/benzer/maclar": "BenzerMaclarResponse",
     "POST /api/solve": "SolveResponse",
+    "POST /api/kupon/arsiv": "ArsivKaydi",
+    "GET /api/kupon/arsiv": "ArsivListesi",
+    "GET /api/kupon/arsiv/<hafta>": "ArsivKaydi",
   };
 
   /**

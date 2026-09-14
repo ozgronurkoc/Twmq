@@ -70,49 +70,69 @@ benim kararım):
 
 **2026-09-14 — dal `claude/match-analysis-coupon-page-p7w5dd`**
 
-### Bu oturumda: `/kupon` sayfası — **1. aşama (giriş tablosu) ayakta**
+### Bu oturumda: `/kupon` sayfası — giriş · analiz · **hafta arşivi**
 
 Sahibi yeni bir sayfa istedi ve zinciri kendi cümlesiyle kurdu: *15 satır ·
 elle maç ve 1/0/2 oranı · oran analizinden veri çek · kupon oluştur · en
 mantıklı seçenekler · **tüm liglerin** sonucu · açılış/kapanış ve
-shin/güç/orantılı seçilebilsin.*
+shin/güç/orantılı seçilebilsin.* Üç aşamanın **ikisi** bitti.
 
-Plan taslağı sunuldu, **kararlar sahibine soruldu ve sahibi "anlatacağım"
-dedi** — yani olasılık kaynağı (piyasa ↔ karne ↔ karışım), kuponun nerede
-üretileceği, bütçe ve §6.1'in sırası **HENÜZ KARARA BAĞLANMADI**. Sahibi
-uygulamalı anlatmayı tercih etti; o yüzden yalnızca zincirin ilk halkası
-yazıldı.
+**1. aşama — giriş tablosu.** `lib/kupon.ts` (saf: doğrulama, marj, favori,
+kalıcılık), `components/kupon/izgara.tsx` (15×6; Tab satır, ok/Enter sütun
+boyunca), `app/kupon/page.tsx`. Sayfa hiçbir şeyi kendiliğinden
+DOLDURMUYOR: depo 5. haftanın Pinnacle oranlarını taşıyor ama sahibinin
+gireceği fiyat iddaa bülteninden gelecek.
 
-Yazılanlar: `frontend/lib/kupon.ts` (saf: doğrulama · marj · favori ·
-kalıcılık), `frontend/components/kupon/izgara.tsx` (15×6 ızgara, Tab satır
-boyunca / ok-Enter sütun boyunca), `frontend/app/kupon/page.tsx`, kenar
-çubuğu kaydı, README/replit/ARCHITECTURE_NEXT sayfa tabloları.
+**2. aşama — 15 satırın tamamı tek ayarla korpusta aranıyor.** Tek çubuk:
+çizgi · arındırma · hedef örneklem · kronolojik kesme. **Lig süzgeci
+bilerek yok** (sahibinin isteği: tüm ligler). Her hücrede üstte karne,
+altta piyasa; sapma işareti YALNIZCA `piyasa_ga_icinde=false` ile basılıyor
+— arayüz kendi eşiğini uydurmuyor.
 
-Kapılar: `npm run lint` · `npm run typecheck` · `node scripts/check.mjs`
-(57 → **60** denetim; yeni üçü `lib/kupon.ts`'i tutuyor) · `npm run build`
-geçti. Marj denetimi uydurma değil: 5. haftanın 1. maçının (1.26/6.48/13.54)
-marjı beslemedeki ölçülmüş `0.0218` ile karşılaştırılıyor.
+**3. Hafta arşivi — API'nin DİSKE YAZAN ilk uç ailesi.** Sahibi sordu
+("hafta hafta kaydedebilir miyim"), nereye yazılacağını sorunca *"sen benim
+dediğimi yap, ben bu ekranda kaydedeceğim"* dedi. Sunucuya yazılıyor:
+`backend/data/kupon_arsivi/<sezon>/hafta_NN.json`, `spor_toto/kupon_arsivi.py`
++ `GET·POST /api/kupon/arsiv` + `GET·DELETE /api/kupon/arsiv/<hafta>`.
+
+### Ölçülen ve karara bağlanan iki şey
+
+1. **Toplu uç EKLENMEDİ.** 15 sorgu korpus sıcakken **0,81 sn** (54 ms/satır);
+   ilk sorgu 1,98 sn ve onun tamamı korpus okuması. Kazanç, ayrışabilecek
+   ikinci bir sorgu yolunun bakım borcunu ödemiyor. Kütüğe yazıldı.
+2. **`hafta_NN.json`un ÜSTÜNE yazılmıyor.** O dosya `odds_source`,
+   `entered_at` ve dokuz maddelik `data_warnings` taşıyor; arayüzden gelen
+   bir kayıt onu ezseydi kanıt zinciri sessizce silinirdi. Yeni kayıt ayrı
+   ailede, yanında duruyor. Karne de arşive GİRMİYOR — türetilmiş veri
+   korpus büyüdükçe bayatlar.
 
 ### Sıradaki adım
 
-**Sahibi anlatmaya devam edecek** — 2. aşamanın (satır başına `/api/benzer`
-sorgusu) şekli onun anlatacağı akışa göre kurulacak. Ölçülmemiş olarak
-duran ve karara bağlanmayı bekleyen dört şey yukarıda yazılı.
+**Sahibi anlatmaya devam edecek.** Hâlâ karara bağlanmamış olanlar:
+olasılık kaynağı (piyasa ↔ karne ↔ karışım), kuponun nerede üretileceği,
+işaret seçiminin bütçesi, ve `benzer`in ileri yürüyüş ölçümünün (§6.1)
+sırası. Dördü de soruldu, sahibi "anlatacağım" dedi.
 
-Teknik olarak hazırda bekleyenler değişmedi: 729 kuponun operasyonu (§3.75),
+Teknik olarak bekleyenler değişmedi: 729 kuponun operasyonu (§3.75),
 6. haftada `--yaz` ile dondurma, kesintisiz 13 haftalık pencere çıkınca
 §3.81'in öbeklenme sınavı.
 
 ### Neden böyle
 
-Girdinin şekli (hangi alanlar, hangi doğrulama, neyin kalıcı olduğu)
-sonraki bütün halkaları belirliyor; önce o şekil elle denenir, sonra
-üstüne sorgu bağlanır. Sayfanın kendisi hiçbir şey **doldurmuyor**: depo
-5. haftanın Pinnacle oranlarını taşıyor ama sahibinin gireceği fiyat iddaa
-bülteninden gelecek ve ikisi aynı değil — hazır tablo, kullanıcının başka
-bir bültenle çalıştığını gizlerdi.
+Arşiv tarayıcıya değil diske yazılıyor ve gerekçe ölçüm kütüğününkiyle
+birebir aynı: **elle girilen bir kayıt depodan yeniden üretilemez**, o
+yüzden git'e girer. Türetilmiş olan (envanter, karne, kolonlar) her zaman
+yeniden üretilebilir ve sürümlenmez.
+
+Bir bekçi genelleştirildi: `test_belgeler.py`in API tablosu denetimi
+Flask dönüştürücüsünü yalnızca `<int:week>` için düşürüyordu ve ikinci bir
+sayısal parametre gelince tabloda satırı OLAN bir ucu eksik saydı. Kural
+gevşetilmedi, adına bakılmaz hâle getirildi.
 
 ## Geçmiş girdiler
+
+**2026-09-14 (önceki, aynı dal)** — `/kupon`un 1. aşaması (giriş tablosu). Ayrıntısı yukarıdaki güncel girdide; commit `c9f1b48`.
+
 
 ### 2026-09-14 — dal `claude/proje-durumu-ilerleme-8h7l86`
 

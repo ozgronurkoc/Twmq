@@ -1,4 +1,7 @@
 import type {
+  ArsivAyari,
+  ArsivKaydi,
+  ArsivListesi,
   BacktestResponse,
   BenzerMaclarResponse,
   BenzerResponse,
@@ -366,4 +369,50 @@ export function getBenzerMaclar(
   if (secenek.limit !== undefined) q.set("limit", String(secenek.limit));
   if (secenek.atla !== undefined) q.set("atla", String(secenek.atla));
   return istek<BenzerMaclarResponse>(`/api/benzer/maclar?${q}`, { signal });
+}
+
+/* ── Kupon kurucu arşivi ─────────────────────────────────────────────────── */
+
+/**
+ * Haftalik girdi arsivi — API'nin DISKE YAZAN tek ailesi.
+ *
+ * Dogrulama SUNUCUDA: bu istemci gonderdigini dogrulamaz, cunku arayuz bir
+ * istemcidir, kapi degil (`tests/test_kupon_arsivi.py` bunu tutuyor). Buradaki
+ * tek is govdeyi tasimak ve hatayi `ApiError` olarak yukari vermek.
+ */
+export function getArsivListesi(sezon?: string, signal?: AbortSignal) {
+  const q = sezon ? `?sezon=${encodeURIComponent(sezon)}` : "";
+  return istek<ArsivListesi>(`/api/kupon/arsiv${q}`, { signal });
+}
+
+export function getArsivKaydi(hafta: number, sezon?: string, signal?: AbortSignal) {
+  const q = sezon ? `?sezon=${encodeURIComponent(sezon)}` : "";
+  return istek<ArsivKaydi>(`/api/kupon/arsiv/${hafta}${q}`, { signal });
+}
+
+export function arsiveYaz(
+  govde: {
+    hafta: number;
+    sezon?: string;
+    not?: string;
+    ayar: ArsivAyari;
+    satirlar: { lig: string; ev: string; dep: string; oran: Record<string, string> }[];
+    sonuclar?: (string | null)[] | null;
+  },
+  signal?: AbortSignal,
+) {
+  return istek<ArsivKaydi>("/api/kupon/arsiv", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(govde),
+    signal,
+  });
+}
+
+export function arsivdenSil(hafta: number, sezon?: string, signal?: AbortSignal) {
+  const q = sezon ? `?sezon=${encodeURIComponent(sezon)}` : "";
+  return istek<{ silindi: boolean; hafta: number }>(`/api/kupon/arsiv/${hafta}${q}`, {
+    method: "DELETE",
+    signal,
+  });
 }

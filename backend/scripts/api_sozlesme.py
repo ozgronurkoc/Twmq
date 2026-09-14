@@ -130,6 +130,23 @@ _SOLVE_PROBS = [
 ]
 
 
+#: Arsiv ucunun ornek govdesi. Sayilar onemsiz, SEKIL onemli: 15 satirin
+#: hepsi dolu olmali (uc yarim satiri kabul eder ama sozlesme `oran`
+#: alanlarinin tipini ancak dolu bir satirda gorur).
+_ARSIV_GOVDESI: dict[str, Any] = {
+    "sezon": "2026_27",
+    "hafta": 5,
+    "not": "sozlesme ornegi",
+    "ayar": {"cizgi": "kapanis", "arindirma": "shin", "en_az": 200, "tarih": ""},
+    "satirlar": [
+        {"lig": "T1", "ev": f"ev{i}", "dep": f"dep{i}",
+         "oran": {"1": "2.0", "0": "3.2", "2": "3.8"}}
+        for i in range(15)
+    ],
+    "sonuclar": None,
+}
+
+
 def _uclar(istemci, ornek_kupon: str) -> dict[str, Any]:
     """Her ucu gercekten cagirip sekli cikarir."""
     from spor_toto.tahmin import genis_kesit_isabeti, olculmus_isabet
@@ -170,6 +187,15 @@ def _uclar(istemci, ornek_kupon: str) -> dict[str, Any]:
         {"ad": "POST /api/solve", "yol": "/api/solve",
          "govde": {"picks": ornek_kupon, "mode": "duz",
                    "probs": _SOLVE_PROBS, "fire_max": 1}},
+        # Arsiv ucleri SIRALI cagrilir ve sira onemli: POST once kosar,
+        # yoksa GET'ler bos bir arsiv gorur ve `ArsivOzeti`/`ArsivKaydi`
+        # alanlarinin hicbiri sozlesmeye girmez (bos liste bir sekil
+        # tasimaz). Yazilan yer GERCEK arsiv degil — `uret()` icinde
+        # `kupon_arsivi.ARSIV` gecici bir dizine bakiyor.
+        {"ad": "POST /api/kupon/arsiv", "yol": "/api/kupon/arsiv",
+         "govde": _ARSIV_GOVDESI},
+        {"ad": "GET /api/kupon/arsiv", "yol": "/api/kupon/arsiv"},
+        {"ad": "GET /api/kupon/arsiv/<hafta>", "yol": "/api/kupon/arsiv/5"},
     ]
 
     # Hafta numarasi VERIDEN cozulur. `/api/stats/1` yazmak cazipti ama
@@ -259,6 +285,7 @@ def _sinirlar(istemci) -> dict[str, Any]:
 def uret() -> dict[str, Any]:
     import spor_toto.tahmin as tahmin_mod
     from spor_toto import __version__
+    from spor_toto import kupon_arsivi
     from spor_toto.core import ORNEK_KUPON
     from web_app import app
 
@@ -269,11 +296,17 @@ def uret() -> dict[str, Any]:
         eski_fikstur = tahmin_mod.VARSAYILAN_FIXTURES
         tahmin_mod.VARSAYILAN_FIXTURES = _gecici_fikstur(Path(gecici))
         tahmin_mod.olculmus_isabet.cache_clear()
+        # `POST /api/kupon/arsiv` DISKE YAZAN tek uc. Sozlesme uretmek onun
+        # seklini gormeyi gerektiriyor ama depodaki gercek arsive bir
+        # "sozlesme ornegi" haftasi birakmamali — kok gecici dizine alinir.
+        eski_arsiv = kupon_arsivi.ARSIV
+        kupon_arsivi.ARSIV = Path(gecici) / "kupon_arsivi"
         try:
             uclar = _uclar(istemci, ORNEK_KUPON)
         finally:
             tahmin_mod.VARSAYILAN_FIXTURES = eski_fikstur
             tahmin_mod.olculmus_isabet.cache_clear()
+            kupon_arsivi.ARSIV = eski_arsiv
 
     return {
         "_aciklama": (

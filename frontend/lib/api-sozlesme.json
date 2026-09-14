@@ -535,6 +535,53 @@
    },
    "version": "str"
   },
+  "GET /api/kupon/arsiv": {
+   "kayitlar": [
+    {
+     "adli_mac": "int",
+     "ayar": {
+      "arindirma": "str",
+      "cizgi": "str",
+      "en_az": "int",
+      "tarih": "str"
+     },
+     "girildi": "str",
+     "guncellendi": "str",
+     "hafta": "int",
+     "not": "str",
+     "oranli_mac": "int",
+     "sonuc_var": "bool"
+    }
+   ],
+   "sezon": "str"
+  },
+  "GET /api/kupon/arsiv/<hafta>": {
+   "ayar": {
+    "arindirma": "str",
+    "cizgi": "str",
+    "en_az": "int",
+    "tarih": "str"
+   },
+   "girildi": "str",
+   "guncellendi": "str",
+   "hafta": "int",
+   "not": "str",
+   "satirlar": [
+    {
+     "dep": "str",
+     "ev": "str",
+     "lig": "str",
+     "oran": {
+      "0": "float",
+      "1": "float",
+      "2": "float"
+     }
+    }
+   ],
+   "sezon": "str",
+   "sonuclar": "null",
+   "surum": "int"
+  },
   "GET /api/meta": {
    "backtest": {
     "banko_default": "float",
@@ -1812,6 +1859,33 @@
    "uzay": "int",
    "version": "str",
    "worst": "int"
+  },
+  "POST /api/kupon/arsiv": {
+   "ayar": {
+    "arindirma": "str",
+    "cizgi": "str",
+    "en_az": "int",
+    "tarih": "str"
+   },
+   "girildi": "str",
+   "guncellendi": "str",
+   "hafta": "int",
+   "not": "str",
+   "satirlar": [
+    {
+     "dep": "str",
+     "ev": "str",
+     "lig": "str",
+     "oran": {
+      "0": "float",
+      "1": "float",
+      "2": "float"
+     }
+    }
+   ],
+   "sezon": "str",
+   "sonuclar": "null",
+   "surum": "int"
   },
   "POST /api/solve": {
    "error": "null",

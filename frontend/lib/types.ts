@@ -1624,3 +1624,59 @@ export interface PazarResponse {
   /** Kesitin sınırı — arayüzde görünür durur, katlanmaz. */
   sinir: string;
 }
+
+/* ── Kupon kurucu arşivi ─────────────────────────────────────────────────── */
+
+/**
+ * Bir haftanın **elle girilmiş** kaydı (`spor_toto/kupon_arsivi.py`).
+ *
+ * Karne TAŞIMAZ ve bu bilinçli: türetilmiş veri korpus büyüdükçe bayatlar,
+ * kayıt ise girdiyi ve hangi ayarla bakıldığını tutar — karne o ayarla
+ * yeniden üretilir. Bekçisi `tests/test_kupon_arsivi.py::test_kayit_KARNE_tasimaz`.
+ */
+export interface ArsivKaydi {
+  surum: number;
+  sezon: string;
+  hafta: number;
+  /** İlk giriş anı — üzerine yazmada KORUNUR. */
+  girildi: string;
+  guncellendi: string;
+  not: string;
+  ayar: ArsivAyari;
+  satirlar: ArsivSatiri[];
+  /** Hafta oynandıktan sonra girilen 1/0/2; girilmemişse `null`. */
+  sonuclar: (string | null)[] | null;
+}
+
+export interface ArsivAyari {
+  cizgi: Cizgi;
+  arindirma: string;
+  en_az: number;
+  /** `YYYY-AA-GG` ya da boş. */
+  tarih: string;
+}
+
+export interface ArsivSatiri {
+  lig: string;
+  ev: string;
+  dep: string;
+  /** Boş hücre `null` — yarım tablo da kaydedilebilir. */
+  oran: Record<Sembol, number | null>;
+}
+
+/** Hafta seçicinin okuduğu ÖZET — 15 satırı taşımaz. */
+export interface ArsivOzeti {
+  hafta: number;
+  girildi: string;
+  guncellendi: string;
+  not: string;
+  ayar: ArsivAyari | null;
+  oranli_mac: number;
+  adli_mac: number;
+  sonuc_var: boolean;
+}
+
+export interface ArsivListesi {
+  sezon: string;
+  kayitlar: ArsivOzeti[];
+}
