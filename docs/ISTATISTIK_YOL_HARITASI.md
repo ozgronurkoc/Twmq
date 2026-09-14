@@ -171,7 +171,7 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/components/super-toto/tahmin2.tsx` | **2. Tahmin** paneli — `1. Tahmin` / `2. Tahmin` sekmeleri arasında geçilir; para birimli hiçbir sayı yok. Hafta kapandığında sonuç sütunu ve ayar karnesi açılır (§3.38) |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **2.021 test**; **136'sı** istatistik katmanına (`history` `odds` `backtest`
+paketi toplam **2.030 test**; **136'sı** istatistik katmanına (`history` `odds` `backtest`
 `api_stats` `api_backtest` `snapshot_iddaa`), **672'si** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre`
@@ -7135,6 +7135,96 @@ gövdede doğruydu ve donmuş kayıtların altısında tutmuyordu.
   (atlama) aşması, ya da aramanın alt sistem çeşitliliğini artırması —
   ikincisi birleşme oranını daha da düşürür ve tahsis eşiğini aşağı çeker.
 
+### 3.76 İki TAVAN ölçüldü — kalan payın tamamı fiyatlandı
+
+Sahibi 2026-09-13'te vizyonu depo dışına açmayı istedi: *"profesörlerin
+makalelerine bak, gerekirse kuantum fiziğinden yararlan."* Dış tarama
+yapıldı ve bulguları [`DIS_UFUK_TARAMASI.md`](DIS_UFUK_TARAMASI.md)'da; ama
+taramanın kendisi bir ölçüm değildir. Ölçüm şu oldu: **dışarıdan gelebilecek
+her fikri birden sınırlayan iki tavan**, hedefin kendi para biriminde.
+
+#### Tavan 1 — kombinatorik eksenin tamamı: **+2,6 puan**
+
+`ufuk_kiyasi.py` artık `--serbest` ile tabloya bir satır daha basıyor: aynı
+bütçeyle **en olası `N` kolon**. Oynanabilir bir plan değildir (~4.300 ayrı
+kutu), bir **sınırdır** — ve sınır olduğu bir teoremdir, bir tahmin değil:
+15/15 olayları ayrık olduğu için `P(en az bir) = Σ p`, ve `N` kolonluk bir
+kümenin toplamı en olası `N` kolonun toplamını geçemez.
+
+114 tam hafta, 21.000 kolon, 8 ayrık 13 haftalık pencere:
+
+| tavan | `P(15)` hafta | **HEDEF** | bugüne göre |
+|---|---:|---:|---:|
+| 81 (bugünkü plan) | %10,489 | **%77,0** | — |
+| 729 | %11,034 | %78,8 | +1,8 p |
+| **serbest (TAVAN)** | **%11,272** | **%79,6** | **+2,6 p** |
+
+Okunuşu sert: bütün arama, bütün algoritma, bütün donanım — hepsinin
+**toplam** payı 2,6 puan, ve 1,8'i yeni bir fikir değil yalnızca kupon
+sayısını artırmak. Geriye kalan **0,8 puan**, klasik açgözlü çözümün (§3.71,
+tavanın %97,9'u) üstüne konulabilecek her şeyin tamamıdır.
+
+#### Tavan 2 — model ekseninin fiyatı: **1 puan = 0,02–0,047 Brier**
+
+Kombinatorik kapalıysa kalan tek eksen olasılıkların kendisi. Onun da parası
+ölçüldü (`scripts/bilgi_esnekligi.py`, aynı kesit). İki uçtan:
+
+**Kesin bilgi** (bir haftada `k` maçın sonucu bilinseydi — kâhin en belirsiz
+maçları seçer, kolon kümesi serbest, yani üç kez üst sınır):
+
+| bilinen maç | `P(15)` hafta | **HEDEF** | kazanç |
+|---:|---:|---:|---:|
+| 0 | %11,272 | %79,6 | — |
+| 1 | %20,244 | **%94,9** | **+15,3 p** |
+| 2 | %33,962 | %99,6 | +20,0 p |
+
+**Yayılmış bilgi** (her maça `λ` kadar gerçek karışsaydı — "daha iyi model"in
+gerçekçi biçimi), ve asıl sütun sonuncusu:
+
+| `λ` | Brier | **HEDEF** | kazanç | **1 puan için gereken ΔBrier** |
+|---:|---:|---:|---:|---:|
+| 0,00 | 0,5584 | %79,6 | — | — |
+| 0,01 | 0,5473 | %79,8 | +0,2 p | **0,047** |
+| 0,05 | 0,5040 | %81,5 | +1,9 p | 0,028 |
+| 0,10 | 0,4523 | %85,0 | +5,4 p | 0,020 |
+
+Bunu projenin ölçülmüş gerçeğiyle yan yana koyunca eksen kapanıyor:
+
+* Projede piyasayı geçen **tek** tahminci (Betfair, §3.52): ΔBrier −0,00100
+  → hedefte **≈ 0,02 puan**.
+* Piyasanın toplam kalibrasyon borcu (§3.23, **ulaşılamaz tavan**): 0,00042
+  → hedefte **≈ 0,01 puan**.
+
+Yani on bir model ailesinin arandığı eksenin **tamamı**, hedefte birinci
+ondalığın altında. §5.1'in *"yön doğru, miktar yetersiz"* teşhisi ilk kez
+hedef kademesinde sayıya çevrildi: miktar yalnızca yetersiz değil, **iki
+mertebe** yetersiz.
+
+#### Niçin bu bir kapanış değil, bir sıralama
+
+Üç ölçüm birlikte şunu söylüyor ve bu cümle projenin yönünü değiştiriyor:
+
+> Hedefe giden yolda kalan tek **gerçek** kaldıraç matematik değil
+> **operasyon** — haftada kaç kupon fiilen yatırılabildiği (+1,8 puan).
+> Geri kalan her şey, dünyadaki bütün literatür ve bütün donanım dâhil,
+> +0,8 puanı paylaşıyor.
+
+Ve bu, §3.74–§3.75'in kapanmayan yarısını projenin **birinci** işi yapıyor:
+729 kupon 458,7 slip demek ve o sayının girilebilirliği hâlâ ölçülmedi.
+
+#### Durma kuralları — ölçüm görülmeden yazıldı
+
+1. **Kombinatorik eksen**, tavan ile plan arasındaki fark 1 puanın altına
+   inince kapanır. 729 kuponda fark **0,8** — yani 729'a çıkıldığı anda
+   eksen kapanır ve bir daha açılmaz.
+2. **Model ekseni** yalnızca ΔBrier ≥ 0,02 iddiasıyla gelen bir aday için
+   açılır (ölçülen en iyinin yirmi katı). Ölçüt değişmez: sezon dışarıda
+   bırakmalı, hafta eşleştirmeli bootstrap, aralık tamamen sıfırın bir
+   yanında.
+3. **Kuantum ekseni** iki şart birlikte gerçekleşmeden açılmaz: operasyon
+   729 kuponu kaldırabilir olacak **ve** kalan 0,8 puanın yarısını alan
+   klasik bir yöntem bulunamayacak.
+
 ---
 
 ## 4. Sayfada bugün ne var
@@ -8174,7 +8264,7 @@ python -m spor_toto.kosum                  # kayıtlı koşumlar
 python -m spor_toto.kosum --son disari     # son koşumun ortamı
 
 # Denetim
-pytest -q                                  # 2.021 test (136'sı bu katman, 672'si tahmin)
+pytest -q                                  # 2.030 test (136'sı bu katman, 672'si tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out

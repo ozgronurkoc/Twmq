@@ -1193,7 +1193,7 @@ backend/
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
                        sehir/ · sistem_fiyat/
-  tests/               pytest (77 dosya → 2.021 test; §9'da katman dökümü)
+  tests/               pytest (78 dosya → 2.030 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1400,8 +1400,8 @@ Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant'lar, CLI (Bayes pre
 dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri test,
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
-eşleme, ikinci kayıt). **77 test dosyası, parametrizasyonla
-2.021 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+eşleme, ikinci kayıt). **78 test dosyası, parametrizasyonla
+2.030 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
@@ -1443,6 +1443,7 @@ karşı denetler):
 | Ufuk (hedefin kendisi: `1 − Π(1 − p)` · Jensen yönü · kâhin tahsis üst sınırı) | **`ufuk`** | 9 |
 | Operasyon (elle giriş slipleri · örtüşmede doğru `P` · yoğunlaşma · donmuş kaydın denetim sırası) | **`operasyon`** | 22 |
 | Sadeleştirme (aynı kolonlar daha az kutuyla · ayrık bölüntü · kesin enküçükle kıyas · tahsis birleşmeyi öldürüyor) | **`sadelestirme`** | 24 |
+| Bilgi esnekliği (kombinatorik TAVAN · kesin bilgi eğrisi · Brier → hedef puanı çevirisi) | **`bilgi_esnekligi`** | 9 |
 
 İki test bilerek **ağa çıkmaz**: `test_snapshot_iddaa.py` gerçek bültenden alınmış
 küçük bir örnek payload üzerinde koşar — ağ çağrısını sınamak bu paketin işi değil,
@@ -1800,6 +1801,7 @@ olması gerekir. Tanımlıysa yalnızca **durum değişiminde** bildirim gider.
 | [`docs/GELISTIRME_PLANI_ESLEMESI.md`](docs/GELISTIRME_PLANI_ESLEMESI.md) | Dışarıdan gelen iki geliştirme planının madde madde karşılığı: hangisi zaten vardı, hangisi gerçekten eksikti (dördü), hangisi **ölçülmüş gerekçeyle** reddedildi |
 | [`docs/BENZER_PLANI_ESLEMESI.md`](docs/BENZER_PLANI_ESLEMESI.md) | `benzer.py` için gelen dış planın aynı biçimde eşlemesi: gerçekten eksik olan üçü (`inf` oran · toleransın üç kapıda üç sınırı · zaman kesmesi) uygulandı, altısı gerekçesiyle reddedildi, üçü kaydedildi |
 | [`docs/GELECEK_MIMARISI_ESLEMESI.md`](docs/GELECEK_MIMARISI_ESLEMESI.md) | Dışarıdan gelen bir **gelecek mimarisi makalesinin** aynı biçimde eşlemesi: önerdiği Faz I–V'in tamamı zaten yapılmış ve **ölçülmüştü** (hiçbir aile kapanış fiyatını geçmedi), gerçekten yeni olan tek madde **maçlar arası bağımlılığın kuyruk etkisi** oldu — ölçüldü ve **eksen kapandı** (§3.46); makalenin hiç görmediği şey ise açık olan tek eksen: **havuz** |
+| [`docs/DIS_UFUK_TARAMASI.md`](docs/DIS_UFUK_TARAMASI.md) | **Depo dışındaki her fikrin buradaki fiyatı.** Literatür (football pool problem / kaplama kodları, çoklu kuponda entropi, piyasa verimliliği, kuantum tavlama) tarandı ve her fikir hedefin para birimine çevrildi. İki tavan ölçüldü: kombinatorik eksenin tamamı **+2,6 puan** (1,8'i yalnızca 81→729 kupon), bir HEDEF puanı için gereken Brier iyileşmesi **0,02–0,047** — projenin en iyi model bulgusunun (Betfair, 0,001) yirmi katı. Kalan tek gerçek kaldıraç **operasyon** |
 | [`docs/KADEME_OLASILIKLARI.md`](docs/KADEME_OLASILIKLARI.md) | **15/15 yapma olasılığı** ve onun üç kardeşi (14, 13, 12): 3^15 uzayının tamamı açılarak ölçülen tek kolon olasılığı (874x), gerçek sonucun 114 haftadaki sırası, bütçeye göre kademe tablosu, paranın hangi kademeden geldiği. İki yeni ölçüm: **seyreltme** (Spearman −0,843 — tuttuğun hafta herkesin tuttuğu haftadır) ve arşivde **32 anormal hafta**. Ölçüm hattı `scripts/kademe_analizi.py` |
 | [`docs/PROJE_GECMISI.md`](docs/PROJE_GECMISI.md) | **Commit commit proje kronolojisi** — ilk commit'ten bugune 521 commit, her biri icin hash, tarih, tam mesaj ve degisiklik istatistigi. `git log --reverse` dokumudur: **donmus bir kayittir**, tazelenmez ve belge bekcilerinin sayi taramasindan bilerek muaftir (`tests/test_belgeler.py` `DONMUS_BELGELER`) — icindeki her sayi bir commit mesajinin kendisidir |
 | [`docs/DUZ_SISTEME_GECIS.md`](docs/DUZ_SISTEME_GECIS.md) | **Kaplama katmanının sökülmesinin gerekçesi ve planı.** Aynı kolon bütçesinde her sistemin erişebildiği en iyi şekil karşılaştırıldı: düz, E[TL]'de **1,78x-5,26x** ve `P(>=12)`'de önde: fark sistemden değil, `solve_fix16`'in **en az yedi çifte** şartının dayattığı yayvan şekilden geliyor. Once bilinen dogrusallik yeniden uretildi (aynı işaretler iki sistemde kolon başına 421,0 ↔ 421,9 TL). Belge **kaplama sökülmeden önce** yazıldı: söküm bu kıyası da götürdüğü için gerekçe yalnızca burada kalıyor. Ölçüm hattı `scripts/sistem_kiyasi.py` |

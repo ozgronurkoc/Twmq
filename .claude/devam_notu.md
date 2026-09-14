@@ -45,45 +45,62 @@ benim kararım):
 
 ## Şu an (en güncel)
 
-**2026-09-13 — dal `claude/proje-durumu-ilerleme-8h7l86`**
+**2026-09-14 — dal `claude/proje-durumu-ilerleme-8h7l86`**
 
-### Bu oturumda: durum denetimi — yeni ölçüm yok, **doğrulama** var
+### Bu oturumda: **iki tavan ölçüldü** (§3.76) — kalan payın tamamı fiyatlandı
 
-Sahibi "işler ne durumda, hedefe ne kadar uzağız" diye sordu. Yeni eksen
-açılmadı; rapor ölçülmüş kayıttan çıkarıldı ve **bir şey yeniden koşuldu**:
-taze klonda kurulum + suit.
+Sahibi vizyonu depo dışına açmayı istedi (*"profesörlerin makaleleri,
+gerekirse kuantum"*). Dış tarama yapıldı — ama taramanın kendisi ölçüm
+değildir, o yüzden tarama **iki ölçüme** çevrildi:
 
-* `bash scripts/setup.sh` — blinker yedeğine düştü ve **geçti** (uzak
-  oturumda kurulum yolunun hâlâ çalıştığı doğrulandı).
-* `cd backend && python -m pytest` — **2017 geçti · 4 atlandı** (203 sn),
-  yani koleksiyon 2.021. Kütükteki `2.021` **bayat değil**, doğrulandı.
-* `graf_sorgu.py tazelik` — 0 bayat girdi; envanter 330 girdi.
+**Tavan 1 — kombinatorik eksenin tamamı: +2,6 puan.** `ufuk_kiyasi.py
+--serbest` artık tabloya "en olası N kolon" satırını basıyor: 81 kupon
+%77,0 · 729 %78,8 · **serbest %79,6**. Sınır olduğu bir teoremdir (15/15
+olayları ayrık ⇒ `P = Σ p`). Yani bütün arama/algoritma/donanım işinin
+toplam payı 2,6 puan ve **1,8'i yalnızca kupon sayısı**; kalana 0,8 kalıyor.
 
-Rapora giren hedef sayısı yeniden türetilmedi, kayıttan alındı: 13 haftada
-en az bir 15/15 **%77,0** (81 kupon, 21.000 kolon; pencere aralığı
-%68,1–85,5), tek sistemde %64,2 (§3.73). Canlı kayıtta **gerçek bütçeyle
-girilmiş hafta 1** (5. hafta, 21.000 kolon, `P(15/15)` %15,937), sonucu
-henüz yok.
+**Tavan 2 — model ekseninin fiyatı: 1 puan = 0,02–0,047 Brier**
+(`scripts/bilgi_esnekligi.py`, yeni). İki uçtan ölçüldü: 1 maçı kesin
+bilmek **+15,3 p** (üç kez üst sınır, ve aranmayacak bir şey), yayılmış
+bilgide `λ=0,01` → +0,2 p. Karşılığı: projenin piyasayı geçen **tek**
+bulgusu (Betfair, ΔBrier −0,00100) hedefte **≈0,02 puan**; §3.23'ün
+ulaşılamaz kalibrasyon tavanı ≈0,01 puan.
+
+**Yön değişikliği:** kalan tek gerçek kaldıraç matematik değil
+**operasyon** — 729 kupon = 458,7 slip ve girilebilirliği hâlâ ölçülmedi.
+
+Dış tarama `docs/DIS_UFUK_TARAMASI.md`de: football pool problem (`K₃(n,1)`,
+gerçekten açık bir kombinatorik problem ama **yanlış soruyu** çözüyor),
+çoklu kuponda entropi (arXiv 2308.14339 — ciddi itiraz, ya-hep-ya-hiç
+hedefte **geçmiyor**, yeniden açılma şartı yazılı), piyasa verimliliği
+yazını (bizimle aynı yere varıyor), kuantum tavlama (tavanı 0,8 puan,
+klasik taraf zaten %97,9'da), veri kaynakları (denenmemiş tek kapı:
+FootyStats Süper Lig xG).
 
 ### Sıradaki adım
 
-Önceki notunkiyle **aynı** — bu oturum hiçbirini kapatmadı:
-
-1. 6. hafta geldiğinde `--yaz` ile dondur.
-2. 5. haftanın sonucu girildiğinde ilk ileriye dönük satır okunacak
-   (**o kaydın üstüne yazma**).
-3. Operasyonun lojistik yarısı: 60 slip elle girilebiliyor mu — giriş
-   süresi kaydı gerekiyor, bu depodan ölçülemez.
-4. Sönüm ekseni: dördüncü örneklem 2026/27 birikimiyle geliyor.
-5. Havuz ekseni (§3.51) `n = 3`te duruyor; kapanmadı, birikmeyi bekliyor.
+1. **729 kupona çıkmanın operasyonu.** Artık sayısı var: +1,8 puan, bedeli
+   458,7 slip. Bu, projenin **birinci** işi — ölçmek için giriş süresi
+   kaydı gerekiyor ve o kayıt sahibinden gelmeli.
+2. 6. hafta geldiğinde `--yaz` ile dondur.
+3. 5. haftanın sonucu girildiğinde ilk ileriye dönük satır okunacak
+   (5. hafta 2026-09-13'te donduruldu; **o kaydın üstüne yazma**).
+4. Havuz ekseni (§3.51) `n = 3`te; sönüm ekseni birikmeyi bekliyor.
+5. **Kapanmaya hazır iki eksen:** kombinatorik (729'a çıkıldığı anda
+   kapanır, fark 0,8 puan) ve model (yalnız ΔBrier ≥ 0,02 iddiasıyla
+   açılır). İkisinin de şartı §3.76'da ölçüm görülmeden yazıldı.
 
 ### Neden böyle
 
-Durum sorusu bir ölçüm sorusu değildi ama **ölçülmemiş bir iddiaya
-dayanmamalıydı**: "proje sağlam" cümlesinin bekçisi suit'in kendisidir, o
-yüzden rapordan önce koşuldu.
+Sahibin isteği "daha geniş bak"tı ve doğru cevabı geniş bakıp **fiyat
+biçmekti**: dışarıdaki her fikri reddetmek değil, her birini hedefin para
+biriminde ölçmek. Sonuç iki mertebe farkı gösterdi — ve projenin kalan
+işini matematikten operasyona taşıdı.
 
 ## Geçmiş girdiler
+
+**2026-09-14 (önceki, aynı dal)** — durum denetimi: taze klonda kurulum
+geçti, suit yeşil (o gün 2017+4 = 2.021).
 
 **2026-09-13 (önceki, dal `claude/devam-edelim-sltxrg`)** — **kupon ≠ slip**
 ölçüldü (§3.75). "81 kupon = 81 slip" sessiz bir varsayımdı ve yanlıştı: tek
