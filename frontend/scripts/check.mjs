@@ -51,6 +51,7 @@ try {
     "npx",
     [
       "tsc", "lib/kurulum.ts", "lib/kume-ici.ts", "lib/senaryo.ts",
+      "lib/kupon.ts",
       "lib/utils.ts", "lib/types.ts", "lib/sekmeler.ts",
       "lib/super-toto.ts",
       "--outDir", cikti,
@@ -66,6 +67,7 @@ try {
   const Z = iste(join(cikti, "kume-ici.js"));
   const S = iste(join(cikti, "senaryo.js"));
   const T = iste(join(cikti, "sekmeler.js"));
+  const KP = iste(join(cikti, "kupon.js"));
   // `types.ts` yalnizca tip TASIMIYOR; `MAC_SAYISI` ve `SEMBOLLER`
   // gibi calisma zamani sabitleri de orada ve ikisi de sunucuyla
   // karsilastirilmak zorunda.
@@ -276,6 +278,67 @@ try {
     const geri = K.kurulumuCoz("?s=111111111111111&f=99&mc=99999999").kurulum;
     assert.equal(geri.fireMax, 2);
     assert.equal(geri.mcSamples, K.SINIRLAR.mc_samples.max);
+  });
+
+  // ── Kupon kurucu girdisi (lib/kupon.ts) ──────────────────────────────
+  //
+  // Bu modulun tek isi GIRDIYI dogrulamak, yani hatanin ekranda
+  // gorunmeden gecmesi tam da burada olur. Uc vaka bekcili: bos ile
+  // yarim ayrimi, marjin gercekten olculmesi, ve depodan gelen COPE
+  // guvenilmemesi.
+
+  dene("bos satir 'bozuk' DEGILDIR, yarim satir eksik sayilir", () => {
+    const k = KP.bosKupon();
+    assert.equal(k.length, TIP.MAC_SAYISI);
+    let o = KP.kuponOzeti(k);
+    assert.deepEqual(o.bozukSatirlar, []);
+    assert.deepEqual(o.eksikOranlar, []);
+    assert.equal(o.sorguyaHazir, false);
+
+    // Adi girilmis ama orani yok: BOS degil, EKSIK.
+    k[0] = { ...k[0], ev: "Beşiktaş", dep: "Erzurumspor FK" };
+    o = KP.kuponOzeti(k);
+    assert.deepEqual(o.eksikOranlar, [0]);
+    assert.deepEqual(o.bozukSatirlar, []);
+    assert.equal(o.adliMac, 1);
+
+    // 1.00 ve alti oran degildir; okunamayan hucre BOZUKtur.
+    k[1] = { ...k[1], oran: { "1": "1.00", "0": "3.4", "2": "abc" } };
+    o = KP.kuponOzeti(k);
+    assert.deepEqual(o.bozukSatirlar, [1]);
+  });
+
+  dene("marj 5. haftanin gercek oraniyla olculur", () => {
+    // hafta_05.json, 1. mac (Pinnacle kapanis): 1.26 / 6.48 / 13.54.
+    // Besleme ayni sayiyi 0.0218 diye tasiyor; ikisi ayrisirsa bu duser.
+    const satir = {
+      lig: "T1", ev: "Beşiktaş A.Ş.", dep: "Erzurumspor FK",
+      oran: { "1": "1.26", "0": "6.48", "2": "13.54" },
+    };
+    const hafta5 = BESLEME.weeks.find((w) => w.week === 5);
+    const mac1 = hafta5.matches.find((m) => m.no === 1);
+    assert.equal(
+      Number(KP.satirMarji(satir).toFixed(4)),
+      mac1.margin,
+      "marj beslemedeki olculmus degerle ayrismamali",
+    );
+    assert.equal(KP.favori(satir), mac1.fav);
+    // Oran yarim kalinca marj UYDURULMAZ.
+    assert.equal(KP.satirMarji({ ...satir, oran: { "1": "1.26", "0": "", "2": "13.54" } }), null);
+  });
+
+  dene("depodan gelen cope guvenilmez, 15 satira oturur", () => {
+    // Elle kurcalanmis / eski surumden kalmis kayitlar. Hicbiri patlamamali.
+    for (const cop of [null, 42, "kupon", {}, [1, 2, 3], [{ ev: 5 }]]) {
+      const temiz = KP.kuponuTemizle(cop);
+      assert.equal(temiz.length, TIP.MAC_SAYISI);
+      assert.ok(temiz.every((r) => typeof r.ev === "string" && typeof r.oran["1"] === "string"));
+    }
+    // Uzun yapistirma kirpilir ve satir sonu izgara duzenini bozmaz.
+    const [ilk] = KP.kuponuTemizle([{ ev: "x".repeat(500), dep: "a\nb", lig: "  T1  " }]);
+    assert.equal(ilk.ev.length, KP.METIN_SINIR);
+    assert.equal(ilk.dep, "a b");
+    assert.equal(ilk.lig, "T1");
   });
 
   // ── Kume-ici hesabi ──────────────────────────────────────────────────

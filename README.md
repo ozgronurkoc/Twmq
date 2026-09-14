@@ -850,6 +850,7 @@ Bugün `match_conflicts` tam olarak bunu yakalar. Vaka analizi:
 | `/pazarlar` | **1X2 dışı pazarlar** — alt/üst 2,5 · Asya handikabı, ölçülmüş kalibrasyonlarıyla |
 | `/takimlar` | **Takım gücü** — küçültülmüş; her satırda maç sayısı, küçültme oranı ve %95 aralık |
 | `/istatistik/geri-test` | **Geri test** — ürünün kuralı (bütçe taraması) ↔ eşik taban çizgisi (eşik taraması + hold-out) |
+| `/kupon` | **Kupon kurucu** — 15 maç elle girilir (lig · ev · deplasman · 1/0/2); zincirin ilk halkası. Satır başına marj ve favori anında okunur, tablo tarayıcıya kalıcı yazılır |
 | `/oran-analizi` | **Oran analizi** — elle 1/0/2 girilir; aynı fiyata sahip geçmiş maçların 1/0/2 karnesi, lig kırılımı ve lige tıklanınca maçların kendisi. Açılış/kapanış çizgisi seçilir |
 | `/saglik` | Değişmezler — kategori kategori, süre ve açıklamalarıyla |
 
@@ -1197,7 +1198,7 @@ backend/
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
-  app/                 11 sayfa (/, /tahmin, /super-toto, /istatistik,
+  app/                 12 sayfa (/, /kupon, /tahmin, /super-toto, /istatistik,
                        /istatistik/oranlar, /istatistik/[week],
                        /istatistik/geri-test, /pazarlar, /takimlar,
                        /oran-analizi, /saglik)
@@ -1209,6 +1210,7 @@ frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası 
     saglik/            durum kartı, kategori kartları, çalışma geçmişi, kontrol envanteri
     tahmin/            olasılık çubuğu, ölçülmüş isabet kartı
     benzer/            "bu oranda geçmişte ne oldu" kartı + lig kırılımı
+    kupon/             15 maçlık elle giriş ızgarası (lig · takımlar · 1/0/2)
     oran-analizi/      elle oran girişi, karne, lig kırılımı, maç listesi
     super-toto/        canlı sezon hafta sekmeleri + 2. Tahmin paneli
     ui/                temel bileşenler (elle yazıldı, Radix yok)
@@ -1217,6 +1219,7 @@ frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası 
   lib/transfer.ts      hafta → formül devri (idempotent; bkz. §7.2 kural 6)
   lib/kurulum.ts       formül kurulumunun kalıcılığı + paylaşılabilir bağlantı
   lib/kume-ici.ts      üretmeden önce görülen koşul + kolon bedeli
+  lib/kupon.ts         kupon kurucunun girdisi: doğrulama, marj, kalıcılık
   lib/senaryo.ts       çalıştırılan kuponların karşılaştırma listesi (eksen: işaretler)
   lib/istek.ts         tek veri çekme kancası (AbortController + hata + yükleniyor)
   lib/adres.ts         adres çubuğu sorgu parametreleri — tek mekanizma

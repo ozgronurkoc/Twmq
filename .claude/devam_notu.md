@@ -68,7 +68,53 @@ benim kararım):
 
 ## Şu an (en güncel)
 
-**2026-09-14 — dal `claude/proje-durumu-ilerleme-8h7l86`**
+**2026-09-14 — dal `claude/match-analysis-coupon-page-p7w5dd`**
+
+### Bu oturumda: `/kupon` sayfası — **1. aşama (giriş tablosu) ayakta**
+
+Sahibi yeni bir sayfa istedi ve zinciri kendi cümlesiyle kurdu: *15 satır ·
+elle maç ve 1/0/2 oranı · oran analizinden veri çek · kupon oluştur · en
+mantıklı seçenekler · **tüm liglerin** sonucu · açılış/kapanış ve
+shin/güç/orantılı seçilebilsin.*
+
+Plan taslağı sunuldu, **kararlar sahibine soruldu ve sahibi "anlatacağım"
+dedi** — yani olasılık kaynağı (piyasa ↔ karne ↔ karışım), kuponun nerede
+üretileceği, bütçe ve §6.1'in sırası **HENÜZ KARARA BAĞLANMADI**. Sahibi
+uygulamalı anlatmayı tercih etti; o yüzden yalnızca zincirin ilk halkası
+yazıldı.
+
+Yazılanlar: `frontend/lib/kupon.ts` (saf: doğrulama · marj · favori ·
+kalıcılık), `frontend/components/kupon/izgara.tsx` (15×6 ızgara, Tab satır
+boyunca / ok-Enter sütun boyunca), `frontend/app/kupon/page.tsx`, kenar
+çubuğu kaydı, README/replit/ARCHITECTURE_NEXT sayfa tabloları.
+
+Kapılar: `npm run lint` · `npm run typecheck` · `node scripts/check.mjs`
+(57 → **60** denetim; yeni üçü `lib/kupon.ts`'i tutuyor) · `npm run build`
+geçti. Marj denetimi uydurma değil: 5. haftanın 1. maçının (1.26/6.48/13.54)
+marjı beslemedeki ölçülmüş `0.0218` ile karşılaştırılıyor.
+
+### Sıradaki adım
+
+**Sahibi anlatmaya devam edecek** — 2. aşamanın (satır başına `/api/benzer`
+sorgusu) şekli onun anlatacağı akışa göre kurulacak. Ölçülmemiş olarak
+duran ve karara bağlanmayı bekleyen dört şey yukarıda yazılı.
+
+Teknik olarak hazırda bekleyenler değişmedi: 729 kuponun operasyonu (§3.75),
+6. haftada `--yaz` ile dondurma, kesintisiz 13 haftalık pencere çıkınca
+§3.81'in öbeklenme sınavı.
+
+### Neden böyle
+
+Girdinin şekli (hangi alanlar, hangi doğrulama, neyin kalıcı olduğu)
+sonraki bütün halkaları belirliyor; önce o şekil elle denenir, sonra
+üstüne sorgu bağlanır. Sayfanın kendisi hiçbir şey **doldurmuyor**: depo
+5. haftanın Pinnacle oranlarını taşıyor ama sahibinin gireceği fiyat iddaa
+bülteninden gelecek ve ikisi aynı değil — hazır tablo, kullanıcının başka
+bir bültenle çalıştığını gizlerdi.
+
+## Geçmiş girdiler
+
+### 2026-09-14 — dal `claude/proje-durumu-ilerleme-8h7l86`
 
 ### Bu oturumda: parametreler kilitlendi, **son açık varsayım sınandı** (§3.81)
 
@@ -126,7 +172,6 @@ Karar tarafında bekleyen bir şey **kalmadı**; sıradakiler teknik:
 tek ölçülmemiş varsayımı sınamaktı — geçti, ama nerede sınanamadığı da
 yazıldı. Bundan sonrası hafta biriktirmek ve 729 kuponun operasyonu.
 
-## Geçmiş girdiler
 
 **2026-09-14 (önceki, aynı dal)** — iki tavan da kalktı (§3.80): hedef
 **kesin**, soru fiyatı ve süresi. 15/15 tutturunca alınan **ortanca

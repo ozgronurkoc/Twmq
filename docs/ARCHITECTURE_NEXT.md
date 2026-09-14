@@ -65,6 +65,7 @@ yani boşluk üç belgeye birden yayılıyordu. Artık liste
 | `/pazarlar` | Alt/üst 2,5 ve Asya handikabı — fiyat + ölçülmüş kalibrasyon |
 | `/istatistik/[week]` | Tek hafta detayı |
 | `/istatistik/geri-test` | Eşik taraması + hold-out |
+| `/kupon` | **Kupon kurucu** — 15 maçlık elle giriş tablosu; sonraki aşamalarda satır satır `/api/benzer` (tüm ligler) → olasılık → işaret seçimi |
 | `/oran-analizi` | **Oran analizi** — elle girilen 1/0/2 → benzer geçmiş maçların karnesi, lig kırılımı, maç listesi; açılış/kapanış seçilir |
 | `/saglik` | Değişmez raporu + kayıtlı kontrol envanteri |
 

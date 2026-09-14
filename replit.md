@@ -79,6 +79,7 @@ yani Run düğmesi tek başına da yeterlidir.
 | `/pazarlar` | **Alt/üst 2,5 ve Asya handikabı** — fiyat + ölçülmüş kalibrasyon |
 | `/takimlar` | **Küçültülmüş takım gücü** — her satırda maç sayısı, küçültme oranı, %95 aralık |
 | `/istatistik/geri-test` | Oranlardan strateji üretip 41 haftayı motorla koşturur |
+| `/kupon` | **Kupon kurucu** — 15 maçlık elle giriş tablosu (lig · ev · deplasman · 1/0/2), satır marjı + favori |
 | `/oran-analizi` | **Oran analizi** — elle 1/0/2 girilir; benzer geçmiş maçların karnesi + lig kırılımı + maç listesi (açılış/kapanış çizgisi) |
 | `/saglik` | Kategorili değişmez (invariant) kontrolleri, kısmi çalıştırma |
 
