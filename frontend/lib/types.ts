@@ -1249,8 +1249,10 @@ export interface BenzerSembol {
 export interface BenzerKarne {
   n: number;
   /**
-   * `AZ_ORNEK` (30) altındaysa yüzde **oynaktır**. Lig kırılımı yine de
-   * yazar (adet ve "az örnek" işaretiyle birlikte); genel karne yazmaz.
+   * `AZ_ORNEK` (30) altındaysa yüzde **oynaktır** — yazılmaz değil. Hem
+   * genel karne hem lig kırılımı sayıyı verir; bayrak yalnızca "az örnek"
+   * damgasını ve güven aralığına bakma çağrısını tetikler. `n = 0` ayrı:
+   * orada `oran` `null`dur ve okunacak yüzde yoktur.
    */
   yeterli: boolean;
   semboller: Record<string, BenzerSembol>;
