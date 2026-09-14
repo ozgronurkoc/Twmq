@@ -91,20 +91,45 @@ def tek_tip_arama(probs: list[dict[str, float]], butce: int, tavan: int) -> floa
     return en
 
 
-def serbest_kume_p(probs: list[dict[str, float]], n: int) -> float:
-    """Olasılığa göre en büyük `n` kolonun toplam olasılığı — **tavan**.
+def serbest_kume(probs: list[dict[str, float]],
+                 n: int) -> tuple[float, float]:
+    """En büyük `n` kolonun **toplam olasılığı** ve **eşiği**.
 
-    Hiçbir kupon ailesi bunu geçemez: `n` kolonluk herhangi bir küme, en
-    olası `n` kolondan fazlasını taşıyamaz. `3¹⁵ = 14.348.907` kolonun
-    tamamı kurulur (~115 MB, ~1 sn); bu yüzden isteğe bağlı.
+    Hiçbir kupon ailesi toplamı geçemez: `n` kolonluk herhangi bir küme, en
+    olası `n` kolondan fazlasını taşıyamaz — ve 15/15 olayları **ayrıktır**
+    (tam olarak bir kolon tutar), o yüzden `P(en az bir) = Σ p`. Yani bu
+    sayı, seçme özgürlüğünün tamamı verildiğinde bile aşılamaz.
+
+    Eşik, kümeye giren en küçük kolon olasılığıdır; bir kolonun kümede olup
+    olmadığı `p_kolon >= esik` ile sınanır (eşitlikte bağ kopması lehe
+    okunur — 114 haftada hiç rastlanmadı, sürekli dağılımda ölçüm sıfır).
+
+    `3¹⁵ = 14.348.907` kolonun tamamı kurulur (~115 MB, ~1 sn); bu yüzden
+    isteğe bağlı.
     """
     P = _matris(probs)
     kolonlar = P[0]
     for i in range(1, MAC_SAYISI):
         kolonlar = np.multiply.outer(kolonlar, P[i]).ravel()
     if n >= kolonlar.size:
-        return float(kolonlar.sum())
-    return float(np.partition(kolonlar, -n)[-n:].sum())
+        return float(kolonlar.sum()), 0.0
+    ust = np.partition(kolonlar, -n)[-n:]
+    return float(ust.sum()), float(ust.min())
+
+
+def serbest_kume_p(probs: list[dict[str, float]], n: int) -> float:
+    """`serbest_kume`nin yalnız toplamı — eski çağrı yerleri için."""
+    return serbest_kume(probs, n)[0]
+
+
+def kolon_p(probs: list[dict[str, float]], kolon: list[str]) -> float:
+    """Tek bir kolonun olasılığı — **normalleşmiş** matristen.
+
+    Ham sözlükten çarpmak binde birler kaydırır (§3.70'in `p_alt` kusuru);
+    eşikle kıyaslanacak sayı bu yüzden aynı matristen gelmek zorunda.
+    """
+    P = _matris(probs)
+    return float(np.prod([P[i, _INDEKS[s]] for i, s in enumerate(kolon)]))
 
 
 def kos(butce: int, serbest: bool = False) -> dict[str, Any]:

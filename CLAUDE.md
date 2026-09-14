@@ -59,3 +59,34 @@ bırakırken (oturum sonu, uzun görev arası) o dosyanın "Şu an" bölümünü
 tut ve güncelle: şu an neredeyiz, sıradaki adım, neden böyle. Kural burada
 da geçerli: bu bir niyet/durum kaydıdır, kanıt değildir — çelişkide
 commit/kod kazanır.
+
+## Depo dışına bakmak — varsayılan duruş, istisna değil
+
+Sahibi bunu açıkça istedi (2026-09-14): *"kendini bu repoyla sınırlama;
+dışarıda bu hedefe çoktan ulaşmış fikirler, insanlar, projeler olabilir."*
+Bu bir seferlik görev değil **varsayılan duruştur**: hedefe giden yol bu
+depodan geçmek zorunda değil.
+
+**Kural.** Yeni bir eksen/fikir/iyileştirme açmadan önce üç soru sorulur ve
+cevapları yazılır:
+
+1. Bunu dışarıda çözen var mı — kim, hangi oyunda, nasıl belgeleyerek?
+2. Neye mal oldu, ve burada neden tekrarlanır/tekrarlanmaz? (Kopyalanamayan
+   şey çoğu zaman model değil **yapıdır**: iade, likidite, fiyatı kimin
+   koyduğu, ikramiyenin nasıl bölündüğü.)
+3. Buradaki fiyatı kaç puan? Para birimi tektir: **üç ayda 15/15
+   olasılığının puanı**.
+
+**Fiyatlama tavanları ölçüldü** (§3.76) ve her dış fikir birine çarpar:
+kombinatorik/algoritma/donanım ekseninin **tamamı +2,6 puan** (1,8'i yalnızca
+729 kupona çıkmak), model ekseninde **1 puan = 0,02–0,047 Brier** (ölçülen en
+iyi bulgu 0,001 = 0,02 puan). Bu tavanların üstünde iddia taşımayan fikir
+sıraya girmez; taşıyan fikir normal ölçütle sınanır.
+
+**Tavanlar hedefe bağlıdır.** Hedef `P(15/15)`ten "beklenen para"ya dönerse
+en az iki kapalı eksen anında açılır (kalabalıktan sapmak, çoklu kuponda
+entropi). Bir dış fikri reddetmeden önceki son soru: *bu fikir bizim
+hedefimizde mi, yoksa başka bir hedefte mi doğru?*
+
+Yordam ve arama kalıpları: `.claude/skills/dis-tarama/SKILL.md`.
+Birikmiş tarama ve fiyat listesi: `docs/DIS_UFUK_TARAMASI.md`.
