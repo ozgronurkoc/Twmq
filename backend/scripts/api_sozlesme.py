@@ -130,6 +130,45 @@ _SOLVE_PROBS = [
 ]
 
 
+#: Arsiv ucunun ornek govdesi. Sayilar onemsiz, SEKIL onemli ve ZINCIRIN
+#: DORDU DE dolu olmali: analiz `null` gonderilseydi `ArsivAnalizi` ve
+#: `ArsivKarnesi` alanlarinin hicbiri sozlesmeye girmezdi — tam da arayuzun
+#: kaydi acarken okudugu blok denetimsiz kalirdi.
+_ARSIV_SEMBOLU: dict[str, Any] = {
+    "adet": 80, "oran": 0.42, "ga_alt": 0.31, "ga_ust": 0.53,
+    "piyasa": 0.44, "piyasa_ga_icinde": True,
+}
+
+_ARSIV_GOVDESI: dict[str, Any] = {
+    "sezon": "2026_27",
+    "ad": "sozlesme ornegi",
+    "hafta": 5,
+    "not": "sozlesme ornegi",
+    "ayar": {"cizgi": "kapanis", "arindirma": "shin", "en_az": 200,
+             "tarih": "", "kapsam": "tum"},
+    "satirlar": [
+        {"lig": "T1", "ev": f"ev{i}", "dep": f"dep{i}",
+         "oran": {"1": "2.0", "0": "3.2", "2": "3.8"}}
+        for i in range(15)
+    ],
+    "analiz": {
+        "olculdu": "2026-09-14T15:00:00+00:00",
+        "evren": 23085,
+        "satirlar": [
+            {"n": 225, "yeterli": True, "tolerans": 0.015,
+             "tolerans_genisledi": False, "tolerans_tavana_dayandi": False,
+             "semboller": {s: dict(_ARSIV_SEMBOLU) for s in ("1", "0", "2")}}
+            for _ in range(15)
+        ],
+    },
+    "kupon": {
+        "isaretler": [["1"]] * 8 + [["1", "0"]] * 5 + [["1", "0", "2"]] * 2,
+        "not": "sozlesme ornegi",
+    },
+    "sonuclar": None,
+}
+
+
 def _uclar(istemci, ornek_kupon: str) -> dict[str, Any]:
     """Her ucu gercekten cagirip sekli cikarir."""
     from spor_toto.tahmin import genis_kesit_isabeti, olculmus_isabet
@@ -165,11 +204,21 @@ def _uclar(istemci, ornek_kupon: str) -> dict[str, Any]:
         {"ad": "GET /api/benzer", "yol": "/api/benzer?oran=1.82,3.04,2.44"},
         # `tolerans` ZORUNLU (uc govdesindeki gerekce); sozlesme ornegi de
         # onu tasir, yoksa burada 400 alinir ve uretim SystemExit'e duser.
+        {"ad": "GET /api/benzer/ligler", "yol": "/api/benzer/ligler"},
         {"ad": "GET /api/benzer/maclar",
          "yol": "/api/benzer/maclar?oran=1.82,3.04,2.44&tolerans=0.02&limit=5"},
         {"ad": "POST /api/solve", "yol": "/api/solve",
          "govde": {"picks": ornek_kupon, "mode": "duz",
                    "probs": _SOLVE_PROBS, "fire_max": 1}},
+        # Arsiv ucleri SIRALI cagrilir ve sira onemli: POST once kosar,
+        # yoksa GET'ler bos bir arsiv gorur ve `ArsivOzeti`/`ArsivKaydi`
+        # alanlarinin hicbiri sozlesmeye girmez (bos liste bir sekil
+        # tasimaz). Yazilan yer GERCEK arsiv degil — `uret()` icinde
+        # `kupon_arsivi.ARSIV` gecici bir dizine bakiyor.
+        {"ad": "POST /api/kupon/arsiv", "yol": "/api/kupon/arsiv",
+         "govde": _ARSIV_GOVDESI},
+        {"ad": "GET /api/kupon/arsiv", "yol": "/api/kupon/arsiv"},
+        {"ad": "GET /api/kupon/arsiv/<no>", "yol": "/api/kupon/arsiv/1"},
     ]
 
     # Hafta numarasi VERIDEN cozulur. `/api/stats/1` yazmak cazipti ama
@@ -259,6 +308,7 @@ def _sinirlar(istemci) -> dict[str, Any]:
 def uret() -> dict[str, Any]:
     import spor_toto.tahmin as tahmin_mod
     from spor_toto import __version__
+    from spor_toto import kupon_arsivi
     from spor_toto.core import ORNEK_KUPON
     from web_app import app
 
@@ -269,11 +319,17 @@ def uret() -> dict[str, Any]:
         eski_fikstur = tahmin_mod.VARSAYILAN_FIXTURES
         tahmin_mod.VARSAYILAN_FIXTURES = _gecici_fikstur(Path(gecici))
         tahmin_mod.olculmus_isabet.cache_clear()
+        # `POST /api/kupon/arsiv` DISKE YAZAN tek uc. Sozlesme uretmek onun
+        # seklini gormeyi gerektiriyor ama depodaki gercek arsive bir
+        # "sozlesme ornegi" haftasi birakmamali — kok gecici dizine alinir.
+        eski_arsiv = kupon_arsivi.ARSIV
+        kupon_arsivi.ARSIV = Path(gecici) / "kupon_arsivi"
         try:
             uclar = _uclar(istemci, ORNEK_KUPON)
         finally:
             tahmin_mod.VARSAYILAN_FIXTURES = eski_fikstur
             tahmin_mod.olculmus_isabet.cache_clear()
+            kupon_arsivi.ARSIV = eski_arsiv
 
     return {
         "_aciklama": (

@@ -1046,6 +1046,48 @@ def _benzer_maclar_cached(oran: tuple[float, float, float], tolerans: float,
                               limit=limit, atla=atla)
 
 
+@lru_cache(maxsize=4)
+def _lig_envanteri_cached(cizgi: str) -> list[dict[str, Any]]:
+    """Korpusun lig envanteri — ONBELLEKLI.
+
+    Onbellek `_benzer_cached` ile ayni gerekceyle: fonksiyon 23 bin satirlik
+    korpusu tariyor ve cevap yalnizca korpus degistiginde degisir (o da
+    surec yeniden basladiginda). Boyut 4 cunku evren yalnizca `cizgi` ile
+    degisiyor.
+    """
+    from spor_toto.benzer import lig_envanteri
+    return lig_envanteri(cizgi)
+
+
+@app.route("/api/benzer/ligler", methods=["GET"])
+def api_benzer_ligler():
+    """
+    Korpusta HANGI ligler var, her birinde kac mac (`?cizgi=`).
+
+    `/kupon` sayfasi maclari "kendi liginde" aratabiliyor ve o sorgu `lig=`
+    ile yapiliyor. Kullanicinin yazdigi kod korpusta yoksa arama sessizce
+    BOS doner; yani "bu fiyatta benzer mac yok" ile "yazdigin kodu
+    tanimiyorum" ayirt edilemez. Bu liste o ayrimi mumkun kilar.
+
+    `/api/meta`ya KONULMADI: meta her sayfanin acilista cagirdigi UCUZ bir
+    envanterdir, bu uc ise korpusu okur. `benzer` modulu tam bu yuzden
+    modul duzeyinde import edilmiyor.
+    """
+    cizgi = (request.args.get("cizgi") or "kapanis").strip()
+    try:
+        envanter = _lig_envanteri_cached(cizgi)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    return jsonify({
+        "cizgi": cizgi,
+        "ligler": envanter,
+        # Evrenin TAMAMI. Arayuz "bu lig korpusun %6'si" diyebilsin diye
+        # burada duruyor; toplami arayuzde yeniden hesaplamak, iki yerde
+        # yasayan bir sayi daha demek olurdu.
+        "evren": sum(x["n"] for x in envanter),
+    })
+
+
 @app.route("/api/benzer/maclar", methods=["GET"])
 def api_benzer_maclar():
     """
@@ -1115,6 +1157,80 @@ def api_benzer_maclar():
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
     return jsonify(govde)
+
+
+# ─── Kupon arsivi ────────────────────────────────────────────────────────
+#
+# **Bu uc ailesi, API'nin DISKE YAZAN tek uyesi.** Geri kalan her sey
+# okuyucu: korpusu, arsivi, saglik kaydini okur ve tureti doner. Buradaki
+# fark bilincli ve sinirlari dar tutuldu:
+#
+#   * yazilan yer TEK bir agac (`data/kupon_arsivi/<sezon>/kupon_NNN.json`)
+#     ve yol `kupon_arsivi.yol` disinda hicbir yerde kurulmuyor; o fonksiyon
+#     sezonu/numarayi dogruladiktan SONRA bir de sonucun arsiv kokunun
+#     altinda kaldigini denetliyor.
+#   * govde `kupon_arsivi.kaydi_kur`dan geciyor; dogrulama arayuze
+#     BIRAKILMIYOR (arayuz bir istemcidir, kapi degil).
+#   * yazma atomik (gecici dosya + `os.replace`), yani yarida kesilen bir
+#     istek elle kurulmus bir kuponu yarim bir JSON'a cevirmiyor.
+
+
+def _arsiv_hata(e: Exception) -> tuple[Any, int]:
+    from spor_toto.kupon_arsivi import ArsivHatasi
+    if isinstance(e, ArsivHatasi):
+        return jsonify({"error": str(e)}), 400
+    if isinstance(e, FileNotFoundError):
+        return jsonify({"error": str(e)}), 404
+    raise e
+
+
+@app.route("/api/kupon/arsiv", methods=["GET", "POST", "OPTIONS"])
+def api_kupon_arsiv():
+    """
+    GET  — sezonun kayit OZETLERI (`?sezon=2026_27`).
+    POST — bir kuponu yazar.
+
+    Govde: `{sezon?, no?, ad, hafta?, not, ayar, satirlar[15], analiz?,
+    kupon?, sonuclar?}`.
+
+    **`no` varsa uzerine yazar, yoksa YENI kupon acar.** Ayrim govdeden
+    okunur, cunku "kaydet" ile "yeni kupon olarak kaydet" ayni ekrandaki iki
+    ayri istektir ve ikisini bir ucun tahmin etmesi gerekmiyor.
+    """
+    if request.method == "OPTIONS":
+        return "", 204
+    from spor_toto.kupon_arsivi import VARSAYILAN_SEZON, listele, yaz
+
+    if request.method == "GET":
+        sezon = request.args.get("sezon") or VARSAYILAN_SEZON
+        try:
+            return jsonify({"sezon": sezon, "kayitlar": listele(sezon)})
+        except Exception as e:  # noqa: BLE001 - _arsiv_hata bilmedigini yeniden firlatir
+            return _arsiv_hata(e)
+
+    data = request.get_json(silent=True) or {}
+    try:
+        return jsonify(yaz(data))
+    except Exception as e:  # noqa: BLE001
+        return _arsiv_hata(e)
+
+
+@app.route("/api/kupon/arsiv/<int:no>", methods=["GET", "DELETE", "OPTIONS"])
+def api_kupon_arsiv_kayit(no: int):
+    """Tek kuponun kaydi: oku ya da sil. Olmayan numaraya 404."""
+    if request.method == "OPTIONS":
+        return "", 204
+    from spor_toto.kupon_arsivi import VARSAYILAN_SEZON, oku, sil
+
+    sezon = request.args.get("sezon") or VARSAYILAN_SEZON
+    try:
+        if request.method == "DELETE":
+            # Silinmemis bir kaydi silmek hata DEGILDIR; istemci ayni
+            # istegi iki kez gonderdiginde ikincisi de basarili olmali.
+            return jsonify({"silindi": sil(sezon, no), "no": no})
+        return jsonify(oku(sezon, no))
+    except Exception as e:  # noqa: BLE001
+        return _arsiv_hata(e)
 
 
 @app.route("/api/solve", methods=["POST", "OPTIONS"])

@@ -850,6 +850,7 @@ Bugün `match_conflicts` tam olarak bunu yakalar. Vaka analizi:
 | `/pazarlar` | **1X2 dışı pazarlar** — alt/üst 2,5 · Asya handikabı, ölçülmüş kalibrasyonlarıyla |
 | `/takimlar` | **Takım gücü** — küçültülmüş; her satırda maç sayısı, küçültme oranı ve %95 aralık |
 | `/istatistik/geri-test` | **Geri test** — ürünün kuralı (bütçe taraması) ↔ eşik taban çizgisi (eşik taraması + hold-out) |
+| `/kupon` | **Kupon kurucu** — zincirin tamamı tek sayfada: 15 maç elle girilir (lig · ev · deplasman · 1/0/2) → hepsi **tek ayarla tüm liglerin korpusunda** aranır (açılış/kapanış · shin/güç/orantılı) → her maçta **karnenin en yüksek iki sembolü** işaretlenir → kupon adıyla arşive kaydedilir (girdi + ayar + damgalı analiz + işaretler) |
 | `/oran-analizi` | **Oran analizi** — elle 1/0/2 girilir; aynı fiyata sahip geçmiş maçların 1/0/2 karnesi, lig kırılımı ve lige tıklanınca maçların kendisi. Açılış/kapanış çizgisi seçilir |
 | `/saglik` | Değişmezler — kategori kategori, süre ve açıklamalarıyla |
 
@@ -1146,6 +1147,7 @@ backend/
     artefakt.py        Egitilmis modelin diske yazimi + bayatlik denetimi
     kosum.py           Olcum kosum defteri (--kaydet) — surumlenmez
     benzer.py          "Bu oranda geçmişte ne oldu" = /api/benzer
+    kupon_arsivi.py    KUPON: kupon kaydi (girdi·ayar·analiz·isaret) = /api/kupon/arsiv (diske YAZAN tek uc)
     secim.py           KUPON: işaretleri HEDEFE göre seçer — eşiğe göre değil
     duz.py             KUPON: düz sistemde kademe başına KOLON SAYIMI ve para (seyreltmeli)
     coklu.py           KUPON: ayni butceyi COK KUPONA boler — carpim kisitini kaldirir
@@ -1193,11 +1195,11 @@ backend/
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
                        sehir/ · sistem_fiyat/
-  tests/               pytest (81 dosya → 2.056 test; §9'da katman dökümü)
+  tests/               pytest (82 dosya → 2.087 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
-  app/                 11 sayfa (/, /tahmin, /super-toto, /istatistik,
+  app/                 12 sayfa (/, /kupon, /tahmin, /super-toto, /istatistik,
                        /istatistik/oranlar, /istatistik/[week],
                        /istatistik/geri-test, /pazarlar, /takimlar,
                        /oran-analizi, /saglik)
@@ -1209,6 +1211,7 @@ frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası 
     saglik/            durum kartı, kategori kartları, çalışma geçmişi, kontrol envanteri
     tahmin/            olasılık çubuğu, ölçülmüş isabet kartı
     benzer/            "bu oranda geçmişte ne oldu" kartı + lig kırılımı
+    kupon/             15 maçlık elle giriş ızgarası (lig · takımlar · 1/0/2)
     oran-analizi/      elle oran girişi, karne, lig kırılımı, maç listesi
     super-toto/        canlı sezon hafta sekmeleri + 2. Tahmin paneli
     ui/                temel bileşenler (elle yazıldı, Radix yok)
@@ -1217,6 +1220,9 @@ frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası 
   lib/transfer.ts      hafta → formül devri (idempotent; bkz. §7.2 kural 6)
   lib/kurulum.ts       formül kurulumunun kalıcılığı + paylaşılabilir bağlantı
   lib/kume-ici.ts      üretmeden önce görülen koşul + kolon bedeli
+  lib/kupon.ts         kupon kurucunun girdisi: doğrulama, marj, kalıcılık
+  lib/kupon-analiz.ts  15 satırın sorgu ayarı, izi, özeti; arşiv çevrimi
+  lib/kupon-kur.ts     kuponun kuralı: karnenin en yüksek İKİ sembolü
   lib/senaryo.ts       çalıştırılan kuponların karşılaştırma listesi (eksen: işaretler)
   lib/istek.ts         tek veri çekme kancası (AbortController + hata + yükleniyor)
   lib/adres.ts         adres çubuğu sorgu parametreleri — tek mekanizma
@@ -1400,15 +1406,15 @@ Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant'lar, CLI (Bayes pre
 dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri test,
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
-eşleme, ikinci kayıt). **81 test dosyası, parametrizasyonla
-2.056 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+eşleme, ikinci kayıt). **82 test dosyası, parametrizasyonla
+2.087 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
 | Katman | Dosyalar | Test |
 |---|---|---|
 | Çekirdek (kodlama · düz üretim · olasılık) | `core` `invariants` `edge_cases` `cli` `analysis` `bayes` `markov` `fire_scenarios` | 256 |
-| Tahmin katmanı | `predict` `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin` `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre` `secim_kalibrasyonu` **`arena`** **`sizinti`** | 624 |
+| Tahmin katmanı | `predict` `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin` `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre` `secim_kalibrasyonu` **`arena`** **`sizinti`** | 628 |
 | Sağlık | `health` `api_health` `meta` `health_history` | 82 |
 | Veri / istatistik / geri test | `history` `odds` `backtest` `api_stats` `api_backtest` `snapshot_iddaa` `pazar` **`gecmis_sezon`** **`sportoto_arsiv`** **`bulten`** | 256 |
 | Süper Toto | `super_toto` `degerlendir` | 115 |
@@ -1447,6 +1453,7 @@ karşı denetler):
 | Görev ölçeğinde para karnesi (kademe sayımı · kupon ayrıklığı · KAZANANSIZ kademe · seyrelme yönü) | **`coklu_karne`** | 7 |
 | Bütçe cephesi (bekleme ↔ beklenen harcama · `p` içbükeyliği · tüm kolonlarda P=1) | **`butce_egrisi`** | 6 |
 | Haftalar arası bağımlılık (komşuluk tanımı · sezon sınırı · ÖLÇÜLEMEDİ satırı düşmez) | **`haftalar_arasi`** | 6 |
+| Kupon arşivi (yol kaçağı · numara yeniden kullanılmaz · zincir: girdi ↔ analiz ↔ kupon · **damgasız analiz yazılamaz** · kolon hesaplanır) | **`kupon_arsivi`** | 27 |
 
 İki test bilerek **ağa çıkmaz**: `test_snapshot_iddaa.py` gerçek bültenden alınmış
 küçük bir örnek payload üzerinde koşar — ağ çağrısını sınamak bu paketin işi değil,

@@ -609,3 +609,79 @@ def test_taban_SUZGECLE_birlikte_daralir():
     genel = benzer_maclar(ORNEK, tolerans=0.02, yontem="orantili")
     tekil = benzer_maclar(ORNEK, tolerans=0.02, yontem="orantili", lig="T1")
     assert sum(tekil["taban"].values()) == tekil["evren"] < genel["evren"]
+
+
+# ─── Lig envanteri (`/api/benzer/ligler`) ────────────────────────────────
+
+def test_lig_envanteri_ARAMAYLA_ayni_evreni_sayar():
+    """Listedeki toplam, aramanın gördüğü evrenle **birebir** aynı olmalı.
+
+    Bu bir tercih değil, bir değişmez. Envanter ayrı bir filtre yazsaydı
+    (ve ilk sürümde tam bunu yaptı: `r.get("kapanis")` — korpusta öyle bir
+    alan yok, kapanış fiyatı `oranlar`da durur) liste "şu ligde 241 maç"
+    der, arama aynı ligde başka bir sayı bulurdu. Kullanıcı da hangisinin
+    doğru olduğunu anlayamazdı.
+
+    İki çizgi AYRI ayrı tutuluyor: açılış evreni kapanıştan küçüktür
+    (23.083 ↔ 23.085) ve bu fark ölçülmüş bir şeydir.
+    """
+    from spor_toto.benzer import benzer_maclar, lig_envanteri
+
+    for cizgi in ("kapanis", "acilis"):
+        envanter = lig_envanteri(cizgi)
+        toplam = sum(x["n"] for x in envanter)
+        arama = benzer_maclar({"1": 1.82, "0": 3.04, "2": 2.44},
+                              tolerans=0.02, yontem="shin", cizgi=cizgi)
+        assert toplam == arama["evren"], (
+            f"{cizgi}: envanter {toplam}, arama {arama['evren']}")
+
+
+def test_lig_envanteri_ETIKETI_SUNUCUDA_cevirir():
+    """Çeviri `odds.LIG_ADLARI`den gelir; arayüz kendi sözlüğünü tutmaz."""
+    from spor_toto.benzer import lig_envanteri
+    from spor_toto.odds import LIG_ADLARI
+
+    envanter = lig_envanteri("kapanis")
+    assert envanter, "korpus ligsiz olamaz"
+    for x in envanter:
+        assert x["etiket"] == LIG_ADLARI.get(x["lig"], x["lig"])
+        assert x["n"] > 0, "sifir macli lig listede durmaz"
+    # Siralama buyukten kucuge: secici en cok macli ligi basta gostersin.
+    assert [x["n"] for x in envanter] == sorted((x["n"] for x in envanter), reverse=True)
+    # Bilinmeyen cizgi sessizce varsayilana DUSMEZ.
+    with pytest.raises(ValueError):
+        lig_envanteri("AvgC")
+
+
+def test_lig_suzgeci_EVRENI_daraltir_ve_bunu_yazar():
+    """`lig=` verilen arama, o ligin evreninde koşar.
+
+    Sayfanın "maçı kendi liginde değerlendir" seçeneği tam buna dayanıyor;
+    daralmanın ölçüsü de görünür olmalı — daralan evrende yarıçap büyür ve
+    örneklem küçülür.
+    """
+    from spor_toto.benzer import benzer_maclar, lig_envanteri
+
+    envanter = {x["lig"]: x["n"] for x in lig_envanteri("kapanis")}
+    hepsi = benzer_maclar({"1": 1.82, "0": 3.04, "2": 2.44},
+                          tolerans=0.02, yontem="shin")
+    tek = benzer_maclar({"1": 1.82, "0": 3.04, "2": 2.44},
+                        tolerans=0.02, yontem="shin", lig="T1")
+    assert tek["evren"] == envanter["T1"]
+    assert tek["evren"] < hepsi["evren"]
+    assert tek["filtre"]["lig"] == "T1", "hangi suzgecle arandigi cevapta yazar"
+    assert tek["toplam"]["n"] <= hepsi["toplam"]["n"]
+
+
+def test_api_ligler_ucu_cizgiyi_okur_bozuga_400():
+    import web_app
+    c = web_app.app.test_client()
+
+    govde = c.get("/api/benzer/ligler").get_json()
+    assert govde["cizgi"] == "kapanis"
+    assert govde["evren"] == sum(x["n"] for x in govde["ligler"])
+    assert {"lig", "etiket", "n"} == set(govde["ligler"][0])
+
+    acilis = c.get("/api/benzer/ligler?cizgi=acilis").get_json()
+    assert acilis["evren"] < govde["evren"], "acilis evreni kapanistan kucuk"
+    assert c.get("/api/benzer/ligler?cizgi=AvgC").status_code == 400

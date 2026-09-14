@@ -1,4 +1,10 @@
 import type {
+  ArsivAnalizi,
+  ArsivAyari,
+  ArsivKaydi,
+  ArsivListesi,
+  LigEnvanteri,
+  Sembol,
   BacktestResponse,
   BenzerMaclarResponse,
   BenzerResponse,
@@ -366,4 +372,72 @@ export function getBenzerMaclar(
   if (secenek.limit !== undefined) q.set("limit", String(secenek.limit));
   if (secenek.atla !== undefined) q.set("atla", String(secenek.atla));
   return istek<BenzerMaclarResponse>(`/api/benzer/maclar?${q}`, { signal });
+}
+
+/**
+ * Korpusun lig envanteri — hangi ligler var, her birinde kac mac.
+ *
+ * `/kupon` sayfasi maclari "kendi liginde" aratabiliyor; kullanicinin
+ * yazdigi kod korpusta yoksa arama sessizce BOS doner ve bu liste o ayrimi
+ * gorunur kilar. `/api/meta`da DEGIL: meta ucuzdur, bu uc korpusu okur.
+ */
+export function getLigEnvanteri(cizgi?: Cizgi, signal?: AbortSignal) {
+  const q = cizgi ? `?cizgi=${encodeURIComponent(cizgi)}` : "";
+  return istek<LigEnvanteri>(`/api/benzer/ligler${q}`, { signal });
+}
+
+/* ── Kupon arşivi ────────────────────────────────────────────────────────── */
+
+/**
+ * Kupon arsivi — API'nin DISKE YAZAN tek ailesi.
+ *
+ * Dogrulama SUNUCUDA: bu istemci gonderdigini dogrulamaz, cunku arayuz bir
+ * istemcidir, kapi degil (`tests/test_kupon_arsivi.py` bunu tutuyor). Buradaki
+ * tek is govdeyi tasimak ve hatayi `ApiError` olarak yukari vermek.
+ */
+export function getArsivListesi(sezon?: string, signal?: AbortSignal) {
+  const q = sezon ? `?sezon=${encodeURIComponent(sezon)}` : "";
+  return istek<ArsivListesi>(`/api/kupon/arsiv${q}`, { signal });
+}
+
+export function getArsivKaydi(no: number, sezon?: string, signal?: AbortSignal) {
+  const q = sezon ? `?sezon=${encodeURIComponent(sezon)}` : "";
+  return istek<ArsivKaydi>(`/api/kupon/arsiv/${no}${q}`, { signal });
+}
+
+/**
+ * Kuponu yazar. **`no` verilirse ustune yazar, verilmezse YENI kupon acar.**
+ *
+ * Ayrim bilerek cagiranda: "kaydet" ile "yeni kupon olarak kaydet" ayni
+ * ekrandaki iki ayri istektir ve ikisini bir ucun tahmin etmesi gerekmiyor.
+ */
+export function arsiveYaz(
+  govde: {
+    ad: string;
+    no?: number | null;
+    hafta?: number | null;
+    sezon?: string;
+    not?: string;
+    ayar: ArsivAyari;
+    satirlar: { lig: string; ev: string; dep: string; oran: Record<string, string> }[];
+    analiz?: ArsivAnalizi | null;
+    kupon?: { isaretler: Sembol[][]; not?: string } | null;
+    sonuclar?: (string | null)[] | null;
+  },
+  signal?: AbortSignal,
+) {
+  return istek<ArsivKaydi>("/api/kupon/arsiv", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(govde),
+    signal,
+  });
+}
+
+export function arsivdenSil(no: number, sezon?: string, signal?: AbortSignal) {
+  const q = sezon ? `?sezon=${encodeURIComponent(sezon)}` : "";
+  return istek<{ silindi: boolean; no: number }>(`/api/kupon/arsiv/${no}${q}`, {
+    method: "DELETE",
+    signal,
+  });
 }

@@ -68,7 +68,112 @@ benim kararım):
 
 ## Şu an (en güncel)
 
-**2026-09-14 — dal `claude/proje-durumu-ilerleme-8h7l86`**
+**2026-09-14 — dal `claude/match-analysis-coupon-page-p7w5dd`**
+
+### `/kupon` sayfası — **zincirin tamamı ayakta**
+
+    15 maç elle giriş  →  tek ayarla tüm liglerin korpusunda karne
+                       →  karnenin en yüksek İKİ sembolü = işaret
+                       →  adıyla arşive kayıt (girdi + ayar + analiz + işaret)
+
+**Kupon kuralı sahibinden, kendi cümlesiyle:** *"mevcut olan oran analizden
+en yüksek ikiliyi alıp seçeceksin."* Beşiktaş–Erzurumspor örneği
+(1 %80,9 · 0 %12,4 · 2 %6,7 → `1-0`) `check.mjs`te bekçi olarak koşuyor.
+
+Kural KARNEDEN okur, piyasadan değil. Eşitlikte sıra piyasaya, o da eşitse
+sembol düzenine (1, 0, 2) göre bozulur — rastgele seçilseydi aynı girdi iki
+farklı kupon verir ve kayıt yeniden üretilemez olurdu. Karnesi olmayan
+satır piyasadan seçilir ve **işaretlenir**, sessizce geçmez.
+
+### ÖLÇÜLEN VE SAHİBİNE SÖYLENEN: bedel tavanı aşıyor
+
+Kural her maça iki sembol verdiği için kolon sayısı **girdiden bağımsız**:
+
+    2^15 = 32.768 kolon · ₺10 = ₺327.680   ↔   haftalık tavan ₺210.000
+    1,56× tavan
+
+Aşımı kapatmanın tek yolu bazı maçları **bankoya** indirmektir; hangi
+maçların bankolaşacağı **henüz karara bağlanmadı**. Sayfada kırmızı kutuda
+ve uyarı bloğunda yazılı, gizlenmedi.
+
+Kolon bedeli ve haftalık tavan arayüzde SABİT DEĞİL: `/api/meta`ya bağlandı
+(`getiri.KOLON_BEDELI`, `backtest.VARSAYILAN_BUTCE_TL`). İki yerde
+yaşasaydı biri değiştiğinde öteki sessizce yalan söylerdi.
+
+### Arşiv: birim KUPON, kayıt zincirin dördünü taşır
+
+Bir haftanın birden çok kuponu olur (biri açılışla, öteki kapanışla).
+Kimlik `no` (yeniden kullanılmaz), ad serbest, hafta yalnızca etiket.
+Analiz **damgalı** kaydediliyor (`olculdu` + `evren`) — ilk sürümde bilerek
+atılıyordu, o karar geri alındı: kupon o analizden çıkıyor, analiz atılırsa
+kayıt kendi gerekçesini kaybeder.
+
+### Bu turda eklenen: **lig kapsamı seçilebilir**
+
+Sahibi istedi: *"tüm ligleri kapsayarak yapıyor ya, bunu seçilebilir yapıp
+sadece maçları kendi liglerinde değerlendirebileceğimiz bir sistem."*
+
+`tum` (varsayılan, bütün korpus) ↔ `kendi` (her satır kendi lig koduyla).
+Kapsam **kayda giriyor** (`ayar.kapsam`) — aynı oranlar, aynı çizgi, farklı
+kapsam farklı karne verir; kayıt hangisinin sorulduğunu söylemek zorunda.
+
+**Sessiz kusur kapatıldı.** Korpusun tanımadığı bir lig koduyla arama 400
+DÖNMEZ, **boş** döner — kullanıcı "bu fiyatta benzer maç yok" ile "yazdığın
+kodu tanımıyorum"u ayırt edemezdi. Yeni uç `GET /api/benzer/ligler` korpusun
+lig envanterini veriyor (17 lig, kod + etiket + n); kapsam `kendi` iken
+tanınmayan kod taşıyan satır analizi ENGELLİYOR ve sayfada adıyla yazıyor.
+
+**Envanterin ilk sürümü YANLIŞTI ve bekçi yakaladı:** `r.get("kapanis")`
+ile süzüyordu, oysa korpusta kapanış fiyatı `oranlar` anahtarında durur —
+liste 23.083, arama 23.085 diyordu. Evrenin tanımı artık tek yerde
+(`_cizgi_orani`, aramanın kendi fonksiyonu) ve bekçi ikisinin eşitliğini
+tutuyor.
+
+### ÖLÇÜLEN: kendi liginde bakmanın bedeli
+
+5. haftanın 15 maçı, kapanış, shin, hedef örneklem 200:
+
+    tüm ligler   yarıçap tavanı  1/15   az örnek 0/15
+    kendi ligi   yarıçap tavanı 10/15   az örnek 1/15
+
+Evren 23.085'ten bir ligin boyuna düşüyor (T1 1.415, D1 1.224). En uç
+örnek Levante–Barcelona: tüm liglerde n=123, kendi liginde **n=2**.
+
+Bu, seçeneği kötü yapmaz — **başka bir soru** sordurur. Sayfa bedeli
+gizlemiyor: her satırda n ve yarıçap yazıyor, tavana dayanan satır
+işaretleniyor. Kütükte.
+
+### Sıradaki adım
+
+1. **Bütçe kararı** — kupon kuralı her maça iki sembol verdiği için kolon
+   sayısı sabit 2¹⁵ = 32.768 (₺327.680, tavanın 1,56 katı). Aşımı kapatmanın
+   tek yolu bazı maçları bankoya indirmek; kuralı sahibi koyacak.
+2. Hâlâ karara bağlanmamış: olasılık kaynağı (piyasa ↔ karne ↔ karışım),
+   `benzer`in ileri yürüyüş ölçümünün (§6.1) sırası.
+3. İsteğe bağlı, sorulmadı: işaretleri elle değiştirebilmek.
+
+Teknik olarak bekleyenler değişmedi: 729 kuponun operasyonu (§3.75),
+6. haftada `--yaz` ile dondurma, kesintisiz 13 haftalık pencere çıkınca
+§3.81'in öbeklenme sınavı.
+
+### Neden böyle
+
+Kupon ekrandaki analizden kuruluyor, ayrı bir sorgu atılmıyor: ikisinin
+ayrışabilmesi için bir sebep yok. **Bayat analizden kupon kurulmuyor** ve
+kaydedilmiyor — ekrandaki karne şu anki girdiye ait değilse ondan çıkan
+işaretler de değildir.
+
+Ölçüm kütüğünde bir alıntı kırılganlığı düzeltildi: `frontend/lib/types.ts`
+satır numarasıyla anılıyordu ve dosyaya alan eklendikçe kayıp bekçiyi
+kırmızıya çeviriyordu. Numara düşürüldü; iddia aynı kaldı, kırılgan kısmı
+gitti.
+
+## Geçmiş girdiler
+
+**2026-09-14 (önceki, aynı dal)** — `/kupon`un 1. aşaması (giriş tablosu). Ayrıntısı yukarıdaki güncel girdide; commit `c9f1b48`.
+
+
+### 2026-09-14 — dal `claude/proje-durumu-ilerleme-8h7l86`
 
 ### Bu oturumda: parametreler kilitlendi, **son açık varsayım sınandı** (§3.81)
 
@@ -126,7 +231,6 @@ Karar tarafında bekleyen bir şey **kalmadı**; sıradakiler teknik:
 tek ölçülmemiş varsayımı sınamaktı — geçti, ama nerede sınanamadığı da
 yazıldı. Bundan sonrası hafta biriktirmek ve 729 kuponun operasyonu.
 
-## Geçmiş girdiler
 
 **2026-09-14 (önceki, aynı dal)** — iki tavan da kalktı (§3.80): hedef
 **kesin**, soru fiyatı ve süresi. 15/15 tutturunca alınan **ortanca

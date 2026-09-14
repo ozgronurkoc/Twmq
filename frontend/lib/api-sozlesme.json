@@ -358,6 +358,17 @@
     "str"
    ]
   },
+  "GET /api/benzer/ligler": {
+   "cizgi": "str",
+   "evren": "int",
+   "ligler": [
+    {
+     "etiket": "str",
+     "lig": "str",
+     "n": "int"
+    }
+   ]
+  },
   "GET /api/benzer/maclar": {
    "arindirma": "str",
    "as_of": "null",
@@ -535,6 +546,111 @@
    },
    "version": "str"
   },
+  "GET /api/kupon/arsiv": {
+   "kayitlar": [
+    {
+     "ad": "str",
+     "adli_mac": "int",
+     "analiz_olculdu": "str",
+     "analiz_var": "bool",
+     "ayar": {
+      "arindirma": "str",
+      "cizgi": "str",
+      "en_az": "int",
+      "kapsam": "str",
+      "tarih": "str"
+     },
+     "girildi": "str",
+     "guncellendi": "str",
+     "hafta": "int",
+     "kolon": "int",
+     "kupon_var": "bool",
+     "no": "int",
+     "not": "str",
+     "oranli_mac": "int",
+     "sonuc_var": "bool"
+    }
+   ],
+   "sezon": "str"
+  },
+  "GET /api/kupon/arsiv/<no>": {
+   "ad": "str",
+   "analiz": {
+    "evren": "int",
+    "olculdu": "str",
+    "satirlar": [
+     {
+      "n": "int",
+      "semboller": {
+       "0": {
+        "adet": "int",
+        "ga_alt": "float",
+        "ga_ust": "float",
+        "oran": "float",
+        "piyasa": "float",
+        "piyasa_ga_icinde": "bool"
+       },
+       "1": {
+        "adet": "int",
+        "ga_alt": "float",
+        "ga_ust": "float",
+        "oran": "float",
+        "piyasa": "float",
+        "piyasa_ga_icinde": "bool"
+       },
+       "2": {
+        "adet": "int",
+        "ga_alt": "float",
+        "ga_ust": "float",
+        "oran": "float",
+        "piyasa": "float",
+        "piyasa_ga_icinde": "bool"
+       }
+      },
+      "tolerans": "float",
+      "tolerans_genisledi": "bool",
+      "tolerans_tavana_dayandi": "bool",
+      "yeterli": "bool"
+     }
+    ]
+   },
+   "ayar": {
+    "arindirma": "str",
+    "cizgi": "str",
+    "en_az": "int",
+    "kapsam": "str",
+    "tarih": "str"
+   },
+   "girildi": "str",
+   "guncellendi": "str",
+   "hafta": "int",
+   "kupon": {
+    "isaretler": [
+     [
+      "str"
+     ]
+    ],
+    "kolon": "int",
+    "not": "str"
+   },
+   "no": "int",
+   "not": "str",
+   "satirlar": [
+    {
+     "dep": "str",
+     "ev": "str",
+     "lig": "str",
+     "oran": {
+      "0": "float",
+      "1": "float",
+      "2": "float"
+     }
+    }
+   ],
+   "sezon": "str",
+   "sonuclar": "null",
+   "surum": "int"
+  },
   "GET /api/meta": {
    "backtest": {
     "banko_default": "float",
@@ -565,6 +681,7 @@
    ],
    "engine_defaults": {},
    "has_scipy": "bool",
+   "kolon_bedeli_tl": "float",
    "limits": {
     "fire_maliyet": {
      "max": "int",
@@ -1812,6 +1929,84 @@
    "uzay": "int",
    "version": "str",
    "worst": "int"
+  },
+  "POST /api/kupon/arsiv": {
+   "ad": "str",
+   "analiz": {
+    "evren": "int",
+    "olculdu": "str",
+    "satirlar": [
+     {
+      "n": "int",
+      "semboller": {
+       "0": {
+        "adet": "int",
+        "ga_alt": "float",
+        "ga_ust": "float",
+        "oran": "float",
+        "piyasa": "float",
+        "piyasa_ga_icinde": "bool"
+       },
+       "1": {
+        "adet": "int",
+        "ga_alt": "float",
+        "ga_ust": "float",
+        "oran": "float",
+        "piyasa": "float",
+        "piyasa_ga_icinde": "bool"
+       },
+       "2": {
+        "adet": "int",
+        "ga_alt": "float",
+        "ga_ust": "float",
+        "oran": "float",
+        "piyasa": "float",
+        "piyasa_ga_icinde": "bool"
+       }
+      },
+      "tolerans": "float",
+      "tolerans_genisledi": "bool",
+      "tolerans_tavana_dayandi": "bool",
+      "yeterli": "bool"
+     }
+    ]
+   },
+   "ayar": {
+    "arindirma": "str",
+    "cizgi": "str",
+    "en_az": "int",
+    "kapsam": "str",
+    "tarih": "str"
+   },
+   "girildi": "str",
+   "guncellendi": "str",
+   "hafta": "int",
+   "kupon": {
+    "isaretler": [
+     [
+      "str"
+     ]
+    ],
+    "kolon": "int",
+    "not": "str"
+   },
+   "no": "int",
+   "not": "str",
+   "satirlar": [
+    {
+     "dep": "str",
+     "ev": "str",
+     "lig": "str",
+     "oran": {
+      "0": "float",
+      "1": "float",
+      "2": "float"
+     }
+    }
+   ],
+   "sezon": "str",
+   "sonuclar": "null",
+   "surum": "int"
   },
   "POST /api/solve": {
    "error": "null",

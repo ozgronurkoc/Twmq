@@ -50,8 +50,12 @@ def test_mimari_belgesi_butun_uclari_sayar():
     kaynak = (KOK / "web_app.py").read_text(encoding="utf-8")
 
     yollar = set(re.findall(r'@app\.route\("([^"]+)"', kaynak))
-    # `<int:week>` tabloda `<week>` diye yazılır.
-    yollar = {y.replace("<int:week>", "<week>") for y in yollar}
+    # Flask'ın dönüştürücüsü (`<int:week>`) tabloda yazılmaz: orada `<week>`
+    # durur. Kural her parametre için aynı olduğu hâlde önce YALNIZCA `week`
+    # için yazılıydı; ikinci bir sayısal parametre (`<int:hafta>`) eklenince
+    # bekçi, tabloda satırı OLAN bir ucu eksik saydı. Dönüştürücü artık
+    # adına bakılmaksızın düşürülüyor — kural gevşemiyor, genelleşiyor.
+    yollar = {re.sub(r"<\w+:(\w+)>", r"<\1>", y) for y in yollar}
 
     # YALNIZCA tablo satırları sayılır. Önce "belgede geçiyor mu" diye
     # bakılıyordu ve bekçi işe yaramıyordu: aynı belgenin NESRİ de uçları

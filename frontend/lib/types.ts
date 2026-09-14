@@ -66,6 +66,14 @@ export interface MetaResponse {
   modes: ModeInfo[];
   bayes_presets: BayesPresetInfo[];
   engine_defaults: EngineDefaults;
+  /**
+   * Bir kolonun TL bedeli (`getiri.KOLON_BEDELI`).
+   *
+   * Arayüz bunu SABİT KODLAMAZ: kupon kurucu "şu kadar kolon = ne kadar
+   * para" diye yazıyor ve o çarpanın iki yerde yaşaması, birinin
+   * değişmesiyle ötekinin sessizce yalan söylemesi demek olurdu.
+   */
+  kolon_bedeli_tl: number;
   limits: Record<string, Limit>;
   /**
    * Geri test esiklerinin varsayilanlari ve izgarasi.
@@ -1265,6 +1273,25 @@ export interface BenzerDilim {
   karne: BenzerKarne;
 }
 
+/**
+ * Korpustaki bir lig ve oradaki maç sayısı (`GET /api/benzer/ligler`).
+ *
+ * Etiket SUNUCUDA çevrilir (`odds.LIG_ADLARI`); arayüz kendi sözlüğünü
+ * tutmaz — tutsaydı ayrışabilen ikinci bir sözlük olurdu.
+ */
+export interface LigEnvanteriSatiri {
+  lig: string;
+  etiket: string;
+  n: number;
+}
+
+export interface LigEnvanteri {
+  cizgi: Cizgi;
+  ligler: LigEnvanteriSatiri[];
+  /** Evrenin TAMAMI — aramanın gördüğü sayıyla birebir aynı (bekçili). */
+  evren: number;
+}
+
 /** Aramanin yapildigi fiyat cizgisi. Varsayilan `kapanis`. */
 export const CIZGILER = ["kapanis", "acilis"] as const;
 export type Cizgi = (typeof CIZGILER)[number];
@@ -1623,4 +1650,119 @@ export interface PazarResponse {
   handikap: PazarOzeti;
   /** Kesitin sınırı — arayüzde görünür durur, katlanmaz. */
   sinir: string;
+}
+
+/* ── Kupon arşivi ────────────────────────────────────────────────────────── */
+
+/**
+ * Bir kuponun kaydı (`spor_toto/kupon_arsivi.py`).
+ *
+ * Arşivin birimi hafta değil **kupon**: bir haftanın birden çok kuponu olur
+ * (biri açılışla, öteki kapanışla). Kayıt zincirin dördünü birden taşır —
+ * girdi · ayar · analiz · kupon — çünkü bir halkası eksikse kayıt "neden bu
+ * işaretler" sorusunu cevaplayamaz.
+ */
+export interface ArsivKaydi {
+  surum: number;
+  sezon: string;
+  /** Kaydın KİMLİĞİ. Yeniden kullanılmaz: silinen numara boşalmaz. */
+  no: number;
+  /** Serbest ad — kimlik değil; iki kupon aynı adı taşıyabilir. */
+  ad: string;
+  /** Hafta ETİKETİ; boş olabilir ve kimlik değildir. */
+  hafta: number | null;
+  /** İlk kuruluş anı — üzerine yazmada KORUNUR. */
+  girildi: string;
+  guncellendi: string;
+  not: string;
+  ayar: ArsivAyari;
+  satirlar: ArsivSatiri[];
+  /** Koşulmamışsa `null`. */
+  analiz: ArsivAnalizi | null;
+  /** Kurulmamışsa `null`. */
+  kupon: ArsivKuponu | null;
+  /** Hafta oynandıktan sonra girilen 1/0/2; girilmemişse `null`. */
+  sonuclar: (string | null)[] | null;
+}
+
+export interface ArsivAyari {
+  cizgi: Cizgi;
+  arindirma: string;
+  en_az: number;
+  /** `YYYY-AA-GG` ya da boş. */
+  tarih: string;
+  /**
+   * Aramanın evreni: `tum` bütün korpus, `kendi` maçın kendi ligi.
+   *
+   * Kayıtta durmak ZORUNDA: aynı oranlar, aynı çizgi ve farklı kapsam
+   * farklı karne verir. Sunucu bilinmeyen değeri reddeder, eksik değeri
+   * `tum`a düşürür (eski kayıtlar okunabilsin).
+   */
+  kapsam: "tum" | "kendi";
+}
+
+export interface ArsivSatiri {
+  lig: string;
+  ev: string;
+  dep: string;
+  /** Boş hücre `null` — yarım tablo da kaydedilebilir. */
+  oran: Record<Sembol, number | null>;
+}
+
+/**
+ * Kaydedilmiş karne — **damgalı**.
+ *
+ * `olculdu` ve `evren` alan değil zorunluluktur: bu blok türetilmiş bir
+ * sayıdır ve korpus büyüdükçe bayatlar. Damga olmasaydı iki ay sonra açan
+ * kişi onu bugünün cevabı sanırdı. Sunucu damgasız analizi REDDEDER
+ * (`test_analiz_DAMGASIZ_yazilamaz`).
+ */
+export interface ArsivAnalizi {
+  olculdu: string;
+  /** Ölçümün yapıldığı andaki korpus büyüklüğü. */
+  evren: number;
+  /** Sorgusu hata almış satır `null` durur — bu bir kayıp değil, kayıttır. */
+  satirlar: (ArsivKarnesi | null)[];
+}
+
+/** Tek satırın kaydedilmiş karnesi — `BenzerResponse`un okunan ALT KÜMESİ. */
+export interface ArsivKarnesi {
+  n: number;
+  yeterli: boolean;
+  tolerans: number;
+  tolerans_genisledi: boolean;
+  tolerans_tavana_dayandi: boolean;
+  semboller: Record<Sembol, BenzerSembol>;
+}
+
+export interface ArsivKuponu {
+  /** 15 maçın işaretleri; sıra kupon düzeni (1, 0, 2). Boş satır olamaz. */
+  isaretler: Sembol[][];
+  /** İşaretlerin çarpımı. Sunucuda HESAPLANIR, gönderilen değer yok sayılır. */
+  kolon: number;
+  not: string;
+}
+
+/** Kupon seçicinin okuduğu ÖZET — kaydın gövdesini taşımaz. */
+export interface ArsivOzeti {
+  no: number;
+  ad: string;
+  hafta: number | null;
+  girildi: string;
+  guncellendi: string;
+  not: string;
+  ayar: ArsivAyari | null;
+  oranli_mac: number;
+  adli_mac: number;
+  /** Zincirin durumu — liste ekranında okunacak asıl şey. */
+  analiz_var: boolean;
+  analiz_olculdu: string | null;
+  kupon_var: boolean;
+  kolon: number | null;
+  sonuc_var: boolean;
+}
+
+export interface ArsivListesi {
+  sezon: string;
+  kayitlar: ArsivOzeti[];
 }

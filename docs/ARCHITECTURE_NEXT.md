@@ -7,7 +7,7 @@
 Tarayıcı
    │
    ▼
-frontend/              ← Next.js :3000, tek UI (11 sayfa — aşağıdaki tablo)
+frontend/              ← Next.js :3000, tek UI (12 sayfa — aşağıdaki tablo)
    │  /api/* rewrite
    ▼
 backend/web_app.py     ← Flask :8080, sadece JSON
@@ -46,8 +46,11 @@ yani boşluk üç belgeye birden yayılıyordu. Artık liste
 | GET | `/api/takimlar?lig=…&sezon=…` | Takım bazlı istatistik — **küçültülmüş**; her satırda `n` ve `kucultme` |
 | GET | `/api/tahmin?limit=N` | Yaklaşan maçlar — olasılık **ve** ölçülmüş isabet birlikte |
 | GET | `/api/benzer?oran=…&cizgi=…&tarih=…` | "Bu oranda geçmişte ne oldu" — 23.085 maçlık korpus; `cizgi=acilis` aynı soruyu açılış çizgisinde sorar (o evren 23.083); `tarih` verilirse evren o günden **öncesiyle** sınırlı (kronolojik sorgu) |
+| GET | `/api/benzer/ligler?cizgi=…` | Korpusun **lig envanteri**: hangi ligler var, her birinde kaç maç, okunur etiketiyle. `/kupon`un "maçın kendi liginde ara" seçeneği bu listeyle doğrulanır — tanınmayan bir kodla arama 400 değil **boş** döner ve bu ayrım görünmeden kalırdı. Toplam, aramanın gördüğü evrenle birebir aynıdır (bekçili). `/api/meta`da değil: meta ucuzdur, bu uç korpusu okur |
 | GET | `/api/benzer/maclar?oran=…&tolerans=…` | Karnenin arkasındaki **maçların kendisi** (tarih · skor · sonuç · o maçın fiyatı · hedefe uzaklık). `tolerans` **zorunlu**: `/api/benzer`in çözdüğü yarıçap aynen geri verilir, yoksa liste sayılan kümeden başka bir kümeyi gösterir |
 | POST | `/api/solve` | Tüm motor özellikleri |
+| GET · POST | `/api/kupon/arsiv` | **Kupon arşivi** — bir kayıt = maçlar + oranlar + ayar + analiz + işaretler. GET sezonun kayıt özetleri, POST bir kuponu yazar: `no` verilirse üstüne yazar (ilk kuruluş anını korur), verilmezse yeni kupon açar. Bir haftanın birden çok kuponu olur; hafta kimlik değil etikettir. **API'nin diske yazan tek ailesi**; doğrulama `spor_toto/kupon_arsivi.py`de, yol arşiv kökünün dışına çıkamaz, analiz **damgasız** (ölçüm anı + evren) yazılamaz |
+| GET · DELETE | `/api/kupon/arsiv/<no>` | Tek kuponun kaydı: oku ya da sil. Olmayan numaraya 404; silinmiş bir kaydı yeniden silmek hata değildir. Numara **yeniden kullanılmaz** — silinen numara boşalmaz |
 
 İstatistik katmanının durumu, alınan kararlar ve yol haritası:
 [`ISTATISTIK_YOL_HARITASI.md`](ISTATISTIK_YOL_HARITASI.md).
@@ -65,6 +68,7 @@ yani boşluk üç belgeye birden yayılıyordu. Artık liste
 | `/pazarlar` | Alt/üst 2,5 ve Asya handikabı — fiyat + ölçülmüş kalibrasyon |
 | `/istatistik/[week]` | Tek hafta detayı |
 | `/istatistik/geri-test` | Eşik taraması + hold-out |
+| `/kupon` | **Kupon kurucu** — 15 maçlık elle giriş → satır satır `/api/benzer` (tüm ligler, tek ayar) → karnenin en yüksek iki sembolü = işaret → adıyla arşivlenir. Kolon bedeli ve haftalık tavan `/api/meta`dan okunur, sabit kodlanmaz |
 | `/oran-analizi` | **Oran analizi** — elle girilen 1/0/2 → benzer geçmiş maçların karnesi, lig kırılımı, maç listesi; açılış/kapanış seçilir |
 | `/saglik` | Değişmez raporu + kayıtlı kontrol envanteri |
 

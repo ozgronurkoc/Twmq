@@ -104,6 +104,7 @@ def meta_payload(version: str) -> dict[str, Any]:
         VARSAYILAN_BUTCE_TL,
         VARSAYILAN_UCLU,
     )
+    from .getiri import KOLON_BEDELI
     from .history import VARSAYILAN_KAYIT, kayit_secenekleri
     from .history import sezonlar as _sezonlar
 
@@ -157,5 +158,11 @@ def meta_payload(version: str) -> dict[str, Any]:
                      "bultenden okunan `2025_26` birlesime girmez, ayri "
                      "secilir — §6G.5)"),
         },
+        # Bir kolonun TL bedeli. Arayuz bunu SABIT KODLAMAZ: kupon kurucu
+        # "32.768 kolon = ne kadar para" diye yaziyor ve o carpanin iki
+        # yerde yasamasi, birinin degismesiyle otekinin sessizce yalan
+        # soylemesi demek olurdu (`api_sozlesme.py` kunyesindeki hatanin
+        # ta kendisi). Kaynak `getiri.KOLON_BEDELI`.
+        "kolon_bedeli_tl": KOLON_BEDELI,
         "limits": LIMITS,
     }
