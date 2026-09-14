@@ -12,9 +12,12 @@ Tutulan şeyler:
    yerine yenisi geçerse "2 numaralı kupon" iki farklı kayda işaret eder.
 3. **Kayıp yok.** Yarım tablo kaydedilebilir, ama okunabilen ama geçersiz
    bir oran sessizce boşa çevrilmez.
-4. **Zincir bütün.** Kayıt girdi · ayar · analiz · kupon taşır; analiz
+4. **Zincir bütün.** Kayıt girdi · ayar · analizler · kupon taşır; analiz
    DAMGASIZ yazılamaz (ne zaman, hangi evrende ölçüldü), kuponun bir maçı
    işaretsiz kalamaz.
+5. **İki çizgi ayrı.** Satır açılışın ve kapanışın oranını birlikte taşır,
+   karne çizgi başına saklanır ve 2. sürümün DÜZ biçimi okunmaya devam
+   eder — göç kodu olmadan eski bir kayıt sessizce boşalırdı.
 """
 from __future__ import annotations
 
@@ -38,9 +41,16 @@ def _gecici_arsiv(tmp_path, monkeypatch):
     return tmp_path
 
 
+#: Iki cizgi BILEREK farkli sayilar tasiyor: bloklar birbirine karisirsa
+#: (ya da biri otekinin uzerine yazarsa) esit sayilarla bu gorunmezdi.
+ACILIS_ORANI = {"1": "2.1", "0": "3.3", "2": "3.6"}
+KAPANIS_ORANI = {"1": "2.0", "0": "3.2", "2": "3.8"}
+
+
 def _satir(i: int = 0, **ek):
     return {"lig": "T1", "ev": f"ev{i}", "dep": f"dep{i}",
-            "oran": {"1": "2.0", "0": "3.2", "2": "3.8"}, **ek}
+            "oran": {"acilis": dict(ACILIS_ORANI), "kapanis": dict(KAPANIS_ORANI)},
+            **ek}
 
 
 def _sembol(icinde=True):
@@ -59,6 +69,19 @@ def _analiz(**ek):
             "satirlar": [_analiz_satiri() for _ in range(ka.MAC_SAYISI)], **ek}
 
 
+def _analizler(**ek):
+    """İki çizginin karnesi. Kayıt artık ikisini birden taşıyor."""
+    return {"acilis": _analiz(), "kapanis": _analiz(), **ek}
+
+
+#: 6 banko + 9 uclu -> 3^9 = 19.683 kolon. Bu sayi UYDURULMADI: 5. haftada
+#: OYNANAN tek sistemin kolon sayisi (`docs`/devam notu §3.82) tam buydu ve
+#: sahibinin istedigi ilk sekil odur.
+def _sekilli(**ek):
+    return {"cizgi": "acilis", "sekil": "b6u9",
+            "isaretler": [["1"]] * 6 + [["1", "0", "2"]] * 9, **ek}
+
+
 def _kupon(**ek):
     # 8 banko + 5 cifte + 2 uclu -> 2^5 * 3^2 = 288 kolon.
     return {"isaretler": [["1"]] * 8 + [["1", "0"]] * 5 + [["1", "0", "2"]] * 2,
@@ -71,7 +94,8 @@ def _govde(**ek):
             "ayar": {"cizgi": "acilis", "arindirma": "shin", "en_az": 200,
                      "tarih": "", "kapsam": "tum"},
             "satirlar": [_satir(i) for i in range(ka.MAC_SAYISI)],
-            "analiz": _analiz(), "kupon": _kupon(), **ek}
+            "analizler": _analizler(), "kupon": _kupon(),
+            "sekilli": [_sekilli()], **ek}
 
 
 def test_mac_sayisi_meta_ile_AYNI():
@@ -152,17 +176,20 @@ def test_hafta_ETIKET_kimlik_degil():
 
 def test_yarim_tablo_kaydedilir_ama_BOZUK_oran_reddedilir():
     yarim = _govde(satirlar=[
-        {"lig": "", "ev": "", "dep": "", "oran": {"1": "", "0": None, "2": ""}}
+        {"lig": "", "ev": "", "dep": "", "oran": {"kapanis": {"1": "", "0": None, "2": ""}}}
         for _ in range(ka.MAC_SAYISI)
-    ], analiz=None, kupon=None)
+    ], analizler=None, kupon=None, sekilli=None)
     kayit = ka.kaydi_kur(yarim, no=1)
-    assert all(kayit["satirlar"][0]["oran"][s] is None for s in SEMBOLLER)
+    for cizgi in ("acilis", "kapanis"):
+        assert all(kayit["satirlar"][0]["oran"][cizgi][s] is None for s in SEMBOLLER)
 
-    for bozuk in ("0.5", "1.0", "-2", "0", "inf", "abc"):
-        g = _govde()
-        g["satirlar"][3] = _satir(3, oran={"1": bozuk, "0": "3.2", "2": "3.8"})
-        with pytest.raises(ka.ArsivHatasi, match="4. satir"):
-            ka.kaydi_kur(g, no=1)
+    # Bozuk hucre HANGI blokta olursa olsun satiri reddeder.
+    for cizgi in ("acilis", "kapanis"):
+        for bozuk in ("0.5", "1.0", "-2", "0", "inf", "abc"):
+            g = _govde()
+            g["satirlar"][3] = _satir(3, oran={cizgi: {"1": bozuk, "0": "3.2", "2": "3.8"}})
+            with pytest.raises(ka.ArsivHatasi, match="4. satir"):
+                ka.kaydi_kur(g, no=1)
 
 
 def test_satir_sayisi_TAM_15_olmali():
@@ -205,44 +232,58 @@ def test_analiz_DAMGASIZ_yazilamaz():
     dayanıyor.
     """
     with pytest.raises(ka.ArsivHatasi, match="evren"):
-        ka.kaydi_kur(_govde(analiz=_analiz(evren=0)), no=1)
+        ka.kaydi_kur(_govde(analizler=_analizler(acilis=_analiz(evren=0))), no=1)
     with pytest.raises(ka.ArsivHatasi, match="evren"):
-        ka.kaydi_kur(_govde(analiz={"satirlar": [_analiz_satiri()] * 15}), no=1)
+        ka.kaydi_kur(
+            _govde(analizler={"kapanis": {"satirlar": [_analiz_satiri()] * 15}}), no=1)
     # `olculdu` verilmezse SESSIZCE bos kalmaz, su an damgalanir.
-    k = ka.kaydi_kur(_govde(analiz=_analiz(olculdu="")), no=1)
-    assert k["analiz"]["olculdu"], "damga uydurulmaz ama BOS da birakilmaz"
+    k = ka.kaydi_kur(_govde(analizler=_analizler(acilis=_analiz(olculdu=""))), no=1)
+    assert k["analizler"]["acilis"]["olculdu"], "damga uydurulmaz ama BOS da birakilmaz"
 
 
 def test_analiz_kosulmamissa_null_satir_hatasi_KAYDIN_kendisi():
-    assert ka.kaydi_kur(_govde(analiz=None), no=1)["analiz"] is None
+    bos = ka.kaydi_kur(_govde(analizler=None), no=1)["analizler"]
+    assert bos == {"acilis": None, "kapanis": None}
+    # Tek cizgi kosulmus olabilir: oteki `null` durur, alan yine de VARDIR.
+    tek = ka.kaydi_kur(_govde(analizler={"kapanis": _analiz()}), no=1)["analizler"]
+    assert tek["acilis"] is None and tek["kapanis"]["evren"] == 23083
     # Bir satirin sorgusu hata almis olabilir: o satir `null` durur.
     yarim = _analiz()
     yarim["satirlar"][6] = None
-    k = ka.kaydi_kur(_govde(analiz=yarim), no=1)
-    assert k["analiz"]["satirlar"][6] is None
-    assert k["analiz"]["satirlar"][0]["n"] == 225
+    k = ka.kaydi_kur(_govde(analizler=_analizler(acilis=yarim)), no=1)
+    assert k["analizler"]["acilis"]["satirlar"][6] is None
+    assert k["analizler"]["acilis"]["satirlar"][0]["n"] == 225
+
+
+def test_analizler_BILINMEYEN_cizgiyi_sessizce_atmaz():
+    """Yanlış anahtarla gelen bir karne kaybolmamalı, reddedilmeli."""
+    with pytest.raises(ka.ArsivHatasi, match="AvgC"):
+        ka.kaydi_kur(_govde(analizler={"AvgC": _analiz()}), no=1)
 
 
 def test_analiz_sinir_disi_olasilik_REDDEDILIR():
+    def _kur(a):
+        return ka.kaydi_kur(_govde(analizler=_analizler(acilis=a)), no=1)
+
     for alan, deger in (("oran", 1.4), ("ga_alt", -0.1), ("piyasa", 2.0)):
         a = _analiz()
         a["satirlar"][0]["semboller"]["1"] = {**_sembol(), alan: deger}
         with pytest.raises(ka.ArsivHatasi):
-            ka.kaydi_kur(_govde(analiz=a), no=1)
+            _kur(a)
     # Ornek yoksa ampirik oran YOKTUR; `null` gecerlidir, 0 DEGIL ayni sey.
     a = _analiz()
     a["satirlar"][0]["semboller"]["1"] = {**_sembol(), "oran": None, "adet": 0}
-    assert ka.kaydi_kur(_govde(analiz=a), no=1)["analiz"]["satirlar"][0]["semboller"]["1"]["oran"] is None
+    assert _kur(a)["analizler"]["acilis"]["satirlar"][0]["semboller"]["1"]["oran"] is None
     # `piyasa_ga_icinde` uc durumlu: True / False / null (karar verilemez).
     for deger in (True, False, None):
         a = _analiz()
         a["satirlar"][0]["semboller"]["1"] = _sembol(icinde=deger)
-        k = ka.kaydi_kur(_govde(analiz=a), no=1)
-        assert k["analiz"]["satirlar"][0]["semboller"]["1"]["piyasa_ga_icinde"] is deger
+        k = _kur(a)
+        assert k["analizler"]["acilis"]["satirlar"][0]["semboller"]["1"]["piyasa_ga_icinde"] is deger
     a = _analiz()
     a["satirlar"][0]["semboller"]["1"] = _sembol(icinde="evet")
     with pytest.raises(ka.ArsivHatasi):
-        ka.kaydi_kur(_govde(analiz=a), no=1)
+        _kur(a)
 
 
 def test_analiz_LIG_kirilimi_ve_mac_listesi_TASIMAZ():
@@ -251,9 +292,101 @@ def test_analiz_LIG_kirilimi_ve_mac_listesi_TASIMAZ():
     metin = json.dumps(k, ensure_ascii=False)
     for buyuk in ("dilimler", "maclar", "lig_etiket", "ev_gol"):
         assert buyuk not in metin
-    satir = k["analiz"]["satirlar"][0]
+    satir = k["analizler"]["acilis"]["satirlar"][0]
     assert set(satir) == {"n", "yeterli", "tolerans", "tolerans_genisledi",
                           "tolerans_tavana_dayandi", "semboller"}
+
+
+# ─── 2. sürümden göç ─────────────────────────────────────────────────────
+
+def test_ESKI_duz_oran_kaydin_kendi_cizgisine_oturur():
+    """2. sürümde satır TEK fiyat taşıyordu ve çizgiyi `ayar` söylüyordu.
+
+    Göç o bilgiyi kullanır: düz `{1,0,2}` bloğu kaydın `ayar.cizgi`sine
+    yerleşir, öteki çizgi BOŞ kalır. İki çizgiye birden kopyalasaydık
+    girilmemiş bir fiyatı girilmiş gibi kaydederdik — ve o fiyattan kupon
+    kurulurdu.
+    """
+    for cizgi in ("acilis", "kapanis"):
+        g = _govde(ayar={**_govde()["ayar"], "cizgi": cizgi}, satirlar=[
+            {"lig": "T1", "ev": "a", "dep": "b",
+             "oran": {"1": "1.26", "0": "6.48", "2": "13.54"}}
+            for _ in range(ka.MAC_SAYISI)
+        ])
+        oran = ka.kaydi_kur(g, no=1)["satirlar"][0]["oran"]
+        assert oran[cizgi] == {"1": 1.26, "0": 6.48, "2": 13.54}
+        oteki = "kapanis" if cizgi == "acilis" else "acilis"
+        assert all(v is None for v in oran[oteki].values()), "uydurulmus fiyat YOK"
+
+
+def test_ESKI_tek_analiz_kaydin_kendi_cizgisine_oturur():
+    g = _govde(ayar={**_govde()["ayar"], "cizgi": "kapanis"}, analizler=None,
+               analiz=_analiz())
+    a = ka.kaydi_kur(g, no=1)["analizler"]
+    assert a["kapanis"]["evren"] == 23083
+    assert a["acilis"] is None
+    # Yeni biçim geldiyse eski alan GÖRMEZDEN gelinir; iki kaynak
+    # çakışmasın diye sıra bellidir: `analizler` kazanır.
+    g2 = _govde(analizler={"acilis": _analiz(evren=999)}, analiz=_analiz())
+    a2 = ka.kaydi_kur(g2, no=1)["analizler"]
+    assert a2["acilis"]["evren"] == 999 and a2["kapanis"] is None
+
+
+def test_ESKI_kayit_listede_okunur():
+    """2. sürüm dosyası diskte duruyorsa liste onu `analiz_var` saymalı."""
+    ka.yaz(_govde())
+    yol = ka.yol("2026_27", 1)
+    eski = json.loads(yol.read_text(encoding="utf-8"))
+    eski["surum"] = 2
+    eski["analiz"] = eski.pop("analizler")["acilis"]
+    eski["satirlar"] = [{**s, "oran": {"1": 2.0, "0": 3.2, "2": 3.8}}
+                        for s in eski["satirlar"]]
+    yol.write_text(json.dumps(eski, ensure_ascii=False), encoding="utf-8")
+
+    (k,) = ka.listele("2026_27")
+    assert k["analiz_var"] and k["analiz_cizgileri"] == ["acilis"]
+    # Düz oran, kaydın kendi çizgisinde sayılır; öteki boş görünür.
+    assert k["oranli_mac"] == {"acilis": 15, "kapanis": 0}
+
+
+# ─── Zincirin şekilli kupon halkası ──────────────────────────────────────
+
+def test_sekilli_kolon_ve_dagilim_HESAPLANIR():
+    """Sahibinin iki şekli; kolon sayıları ölçülmüş değil ARİTMETİK."""
+    g = _govde(sekilli=[
+        _sekilli(cizgi="acilis", sekil="b6u9"),
+        _sekilli(cizgi="acilis", sekil="b5c5u5",
+                 isaretler=[["1"]] * 5 + [["1", "0"]] * 5 + [["1", "0", "2"]] * 5),
+        _sekilli(cizgi="kapanis", sekil="b6u9"),
+    ])
+    sekilli = ka.kaydi_kur(g, no=1)["sekilli"]
+    assert [x["kolon"] for x in sekilli] == [3 ** 9, 2 ** 5 * 3 ** 5, 3 ** 9]
+    assert [x["kolon"] for x in sekilli] == [19683, 7776, 19683]
+    assert sekilli[1]["banko"] == 5 and sekilli[1]["cift"] == 5 and sekilli[1]["uclu"] == 5
+    # Gonderilen sayilar YOK SAYILIR, hesap kazanir.
+    yalanci = ka.kaydi_kur(_govde(sekilli=[_sekilli(kolon=7, banko=99)]), no=1)
+    assert yalanci["sekilli"][0]["kolon"] == 19683
+    assert yalanci["sekilli"][0]["banko"] == 6
+
+
+def test_sekilli_AYNI_cizgi_sekil_iki_kez_gelemez():
+    """"Açılışın 5/5/5'i" diyen iki satır, hangisinin oynandığını siler."""
+    with pytest.raises(ka.ArsivHatasi, match="iki kez"):
+        ka.kaydi_kur(_govde(sekilli=[_sekilli(), _sekilli()]), no=1)
+    # Ayni sekil BASKA cizgide serbest — zaten istenen sey bu.
+    k = ka.kaydi_kur(_govde(sekilli=[_sekilli(), _sekilli(cizgi="kapanis")]), no=1)
+    assert len(k["sekilli"]) == 2
+
+
+def test_sekilli_bozuk_govdeyi_REDDEDER():
+    assert ka.kaydi_kur(_govde(sekilli=None), no=1)["sekilli"] == []
+    assert ka.kaydi_kur(_govde(sekilli=[]), no=1)["sekilli"] == []
+    for bozuk in ([_sekilli(cizgi="AvgC")], [_sekilli(sekil="")],
+                  [_sekilli(sekil="../kotu")], [_sekilli(sekil="A" * 40)],
+                  [_sekilli(isaretler=[[]] * 15)], [_sekilli(isaretler=[["1"]] * 14)],
+                  [_sekilli()] * (ka.SEKIL_SINIRI + 1), "liste degil", [3]):
+        with pytest.raises(ka.ArsivHatasi):
+            ka.kaydi_kur(_govde(sekilli=bozuk), no=1)
 
 
 # ─── Zincirin kupon halkası ──────────────────────────────────────────────
@@ -301,16 +434,22 @@ def test_yazma_ATOMIK_gecici_dosya_birakmaz():
 
 def test_gidis_donus_ZINCIRIN_TAMAMINI_korur():
     """Kaydı açan kişi dördünü de görmeli: girdi · ayar · analiz · kupon."""
+    # 5. haftanin 1. maci, iki cizgi (`data/super_toto/2026_27/hafta_05.json`).
     ka.yaz(_govde(satirlar=[
-        _satir(i, oran={"1": "1.26", "0": "6.48", "2": "13.54"})
+        _satir(i, oran={"acilis": {"1": "1.28", "0": "5.53", "2": "10.16"},
+                        "kapanis": {"1": "1.26", "0": "6.48", "2": "13.54"}})
         for i in range(ka.MAC_SAYISI)
     ]))
     geri = ka.oku("2026_27", 1)
-    assert geri["satirlar"][0]["oran"] == {"1": 1.26, "0": 6.48, "2": 13.54}
+    assert geri["surum"] == 3
+    assert geri["satirlar"][0]["oran"]["acilis"] == {"1": 1.28, "0": 5.53, "2": 10.16}
+    assert geri["satirlar"][0]["oran"]["kapanis"] == {"1": 1.26, "0": 6.48, "2": 13.54}
     assert geri["ayar"]["cizgi"] == "acilis"
-    assert geri["analiz"]["evren"] == 23083
-    assert geri["analiz"]["satirlar"][0]["semboller"]["1"]["adet"] == 80
+    assert geri["analizler"]["acilis"]["evren"] == 23083
+    assert geri["analizler"]["kapanis"]["evren"] == 23083
+    assert geri["analizler"]["acilis"]["satirlar"][0]["semboller"]["1"]["adet"] == 80
     assert geri["kupon"]["kolon"] == 288
+    assert geri["sekilli"][0]["kolon"] == 3 ** 9 == 19683
     assert geri["ad"] == "1 numaralı kupon"
 
 
@@ -325,17 +464,22 @@ def test_sonuclar_ya_null_ya_15_sembol():
 
 def test_listele_OZET_doner_govdeyi_tasimaz():
     ka.yaz(_govde(ad="birinci"))
-    ka.yaz(_govde(ad="ikinci", analiz=None, kupon=None, satirlar=[
-        _satir(i, oran={"1": "", "0": "", "2": ""}) for i in range(ka.MAC_SAYISI)
+    ka.yaz(_govde(ad="ikinci", analizler=None, kupon=None, sekilli=None, satirlar=[
+        _satir(i, oran={"acilis": {"1": "", "0": "", "2": ""}})
+        for i in range(ka.MAC_SAYISI)
     ]))
     kayitlar = ka.listele("2026_27")
     assert [k["no"] for k in kayitlar] == [1, 2], "numara sirasiyla"
     for k in kayitlar:
-        assert "satirlar" not in k and "analiz" not in k, "ozet govdeyi tasimaz"
+        assert "satirlar" not in k and "analizler" not in k, "ozet govdeyi tasimaz"
     assert kayitlar[0]["analiz_var"] and kayitlar[0]["kupon_var"]
     assert kayitlar[0]["kolon"] == 288
+    assert kayitlar[0]["sekilli_sayisi"] == 1
+    assert kayitlar[0]["analiz_cizgileri"] == ["acilis", "kapanis"]
+    # Oran sayimi CIZGI BASINA: tek tarafi dolu bir tablo "15/15" demez.
+    assert kayitlar[0]["oranli_mac"] == {"acilis": 15, "kapanis": 15}
     assert not kayitlar[1]["analiz_var"] and not kayitlar[1]["kupon_var"]
-    assert kayitlar[1]["oranli_mac"] == 0
+    assert kayitlar[1]["oranli_mac"] == {"acilis": 0, "kapanis": 0}
     assert ka.listele("2019_20") == [], "kayitsiz sezon bos liste, hata degil"
 
 
@@ -382,7 +526,9 @@ def test_uc_olmayan_kayda_404_bozuk_govdeye_400(istemci):
     assert istemci.get("/api/kupon/arsiv/9").status_code == 404
     for bozuk in ({}, _govde(sezon="../gizli"), _govde(satirlar=[]),
                   _govde(ayar={"cizgi": "AvgC"}), _govde(kupon={"isaretler": [[]] * 15}),
-                  _govde(analiz=_analiz(evren=0))):
+                  _govde(analizler={"acilis": _analiz(evren=0)}),
+                  _govde(sekilli=[_sekilli(sekil="../kotu")]),
+                  _govde(sekilli=[_sekilli(), _sekilli()])):
         r = istemci.post("/api/kupon/arsiv", json=bozuk)
         assert r.status_code == 400, (bozuk.get("ad"), r.get_json())
         assert "error" in r.get_json()
@@ -402,5 +548,5 @@ def test_kayit_alanlari_SABIT():
     """Kaydın şekli sözleşmedir; sessizce alan eklenip çıkmaz."""
     assert set(ka.kaydi_kur(_govde(), no=1)) == {
         "surum", "sezon", "no", "ad", "hafta", "girildi", "guncellendi",
-        "not", "ayar", "satirlar", "analiz", "kupon", "sonuclar",
+        "not", "ayar", "satirlar", "analizler", "kupon", "sekilli", "sonuclar",
     }

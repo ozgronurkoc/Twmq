@@ -419,9 +419,18 @@ export function arsiveYaz(
     sezon?: string;
     not?: string;
     ayar: ArsivAyari;
-    satirlar: { lig: string; ev: string; dep: string; oran: Record<string, string> }[];
-    analiz?: ArsivAnalizi | null;
+    satirlar: {
+      lig: string;
+      ev: string;
+      dep: string;
+      /** Cizgi basina 1/0/2 — arayuzun METIN hucreleri, sunucu sayiya cevirir. */
+      oran: Record<string, Record<string, string>>;
+    }[];
+    /** Cizgi basina karne; kosulmamis cizgi `null` gider. */
+    analizler?: Record<string, ArsivAnalizi | null> | null;
     kupon?: { isaretler: Sembol[][]; not?: string } | null;
+    /** Sekilli kuponlar — `kolon` ve sayimlar SUNUCUDA hesaplanir. */
+    sekilli?: { cizgi: string; sekil: string; isaretler: Sembol[][] }[] | null;
     sonuclar?: (string | null)[] | null;
   },
   signal?: AbortSignal,

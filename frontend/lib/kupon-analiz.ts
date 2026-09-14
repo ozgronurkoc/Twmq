@@ -135,9 +135,13 @@ export function bosAnaliz(uzunluk: number): SatirAnalizi[] {
  * ederse eski cevabi gorurdu. Sayfa bu izi karsilastirip "sonuc bayat"
  * diyor, sessizce eski veriyi gostermiyor.
  */
-export function sorguIzi(satirlar: KuponSatiri[], ayar: AnalizAyari): string {
+export function sorguIzi(
+  satirlar: KuponSatiri[],
+  ayar: AnalizAyari,
+  cizgi: Cizgi,
+): string {
   const oranlar = satirlar
-    .map((s) => SEMBOLLER.map((sem) => s.oran[sem].trim()).join(","))
+    .map((s) => SEMBOLLER.map((sem) => s.oran[cizgi][sem].trim()).join(","))
     .join("|");
   // Kapsam `kendi` iken LIG KODLARI da ize girer: bir satirin ligi
   // degisirse o satirin sorgusu degisir ve ekrandaki karne bayatlar.
@@ -146,7 +150,10 @@ export function sorguIzi(satirlar: KuponSatiri[], ayar: AnalizAyari): string {
   const ligler = ayar.kapsam === "kendi"
     ? satirlar.map((s) => s.lig.trim().toUpperCase()).join(",")
     : "";
-  return [oranlar, ayar.cizgi, ayar.arindirma, ayar.enAz, ayar.tarih,
+  // `ayar.cizgi` ize GIRMEZ, `cizgi` girer: ayarin cizgisi artik ekranda
+  // hangi cizginin gosterildigidir, sorgunun kendisi degil. Girseydi
+  // ekranda cizgi degistirmek iki tarafi birden bayatlatirdi.
+  return [oranlar, cizgi, ayar.arindirma, ayar.enAz, ayar.tarih,
           ayar.kapsam, ligler].join("§");
 }
 
@@ -157,8 +164,12 @@ export function sorguIzi(satirlar: KuponSatiri[], ayar: AnalizAyari): string {
  * dikkat cektiginde (lig kirilimi, maclarin kendisi) oraya tek tiklamayla
  * gidilebilmeli. Adres `/oran-analizi`nin okudugu adlarla kurulur.
  */
-export function oranAnaliziAdresi(satir: KuponSatiri, ayar: AnalizAyari): string {
-  const n = oranSayilari(satir);
+export function oranAnaliziAdresi(
+  satir: KuponSatiri,
+  ayar: AnalizAyari,
+  cizgi: Cizgi,
+): string {
+  const n = oranSayilari(satir, cizgi);
   const q = new URLSearchParams({
     o1: String(n["1"]),
     o0: String(n["0"]),
@@ -166,7 +177,7 @@ export function oranAnaliziAdresi(satir: KuponSatiri, ayar: AnalizAyari): string
   });
   // Varsayilanlar adrese YAZILMAZ — `/oran-analizi` kendi kuralinda da
   // boyle yapiyor: paylasilan baglanti yalnizca degiseni tasisin.
-  if (ayar.cizgi !== VARSAYILAN_ANALIZ.cizgi) q.set("cizgi", ayar.cizgi);
+  if (cizgi !== VARSAYILAN_ANALIZ.cizgi) q.set("cizgi", cizgi);
   if (ayar.arindirma !== VARSAYILAN_ANALIZ.arindirma) q.set("arindirma", ayar.arindirma);
   if (ayar.enAz !== VARSAYILAN_ANALIZ.enAz) q.set("en_az", String(ayar.enAz));
   if (ayar.tarih) q.set("tarih", ayar.tarih);
@@ -235,14 +246,31 @@ export function taninmayanLigler(
 export function analizeHazir(
   satirlar: KuponSatiri[],
   ayar: AnalizAyari,
+  cizgi: Cizgi,
   bilinenKodlar: Set<string> | null = null,
 ): boolean {
   return (
     satirlar.length > 0 &&
-    satirlar.every(oranTam) &&
+    satirlar.every((s) => oranTam(s, cizgi)) &&
     ayarGecerli(ayar) &&
     taninmayanLigler(satirlar, ayar, bilinenKodlar).length === 0
   );
+}
+
+/**
+ * Su anda KOSULABILECEK cizgiler — orani tam olan her cizgi.
+ *
+ * Sahibinin istegi iki cizgiyi birden tasiyor ama tabloyu yarim dolduran
+ * biri engellenmez: yalnizca kapanisi girilmisse kapanis kosar ve o
+ * cizginin kuponlari kurulur. "Iki cizgi de zorunlu" deseydik, elinde tek
+ * bulten olan kullanici hicbir sey goremezdi.
+ */
+export function hazirCizgiler(
+  satirlar: KuponSatiri[],
+  ayar: AnalizAyari,
+  bilinenKodlar: Set<string> | null = null,
+): Cizgi[] {
+  return CIZGILER.filter((c) => analizeHazir(satirlar, ayar, c, bilinenKodlar));
 }
 
 // ─── Ozet ─────────────────────────────────────────────────────────────────

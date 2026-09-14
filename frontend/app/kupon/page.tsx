@@ -14,6 +14,8 @@ import {
 } from "@/lib/api";
 import { hataMetni, iptalMi } from "@/lib/istek";
 import {
+  CIZGI_ADI,
+  CIZGI_SIRASI,
   bosKupon,
   kuponOzeti,
   kuponuYereldenOku,
@@ -24,12 +26,13 @@ import {
   type KuponSatiri,
 } from "@/lib/kupon";
 import { kuponBedeli, kuponKur } from "@/lib/kupon-kur";
+import { SEKILLER, sekilliKuponKur } from "@/lib/kupon-sekil";
 import {
   analizOzeti,
   analizdenKayit,
-  analizeHazir,
   bosAnaliz,
   evreniOku,
+  hazirCizgiler,
   kayittanAnaliz,
   sorguIzi,
   taninmayanLigler,
@@ -46,12 +49,17 @@ import {
   type Cizgi,
   type Sembol,
 } from "@/lib/types";
-import { yuzde } from "@/lib/utils";
+import { sayi, yuzde } from "@/lib/utils";
 import { Badge, Button, Callout, Card, CardBody, CardHeader } from "@/components/ui/primitives";
 import { KuponIzgarasi } from "@/components/kupon/izgara";
 import { AnalizAyarlari } from "@/components/kupon/ayarlar";
 import { AnalizTablosu, TabloAciklamasi } from "@/components/kupon/analiz-tablosu";
 import { KuponArsivi } from "@/components/kupon/kupon-arsivi";
+import {
+  SekilAciklamasi,
+  SekilliKuponlar,
+  type KuponGirdisi,
+} from "@/components/kupon/sekilli-kuponlar";
 import {
   KuponAciklamasi,
   KuponMuhasebesi,
@@ -59,17 +67,24 @@ import {
 } from "@/components/kupon/kupon-tablosu";
 
 /**
- * Kupon kurucu — **1. aşama: giriş**.
+ * Kupon kurucu.
  *
- * Bu sayfanin tamamlanmis hali su zinciri kuracak:
+ * Zincir:
  *
- *   elle 15 satir  →  satir basina `/api/benzer` sorgusu (tum ligler)
- *                  →  olasilik  →  isaret secimi  →  kupon
+ *   elle 15 satir, ACILIS ve KAPANIS orani
+ *     -> her cizgi kendi orani ve kendi korpus cizgisiyle araniyor
+ *     -> cizgi basina karne
+ *     -> isaret secimi  ->  kuponlar
  *
- * Su an yalnizca ILK halka var ve bu bilerek boyle: girdinin sekli
- * (hangi alanlar, hangi dogrulama, neyin kalici oldugu) sonraki halkalarin
- * hepsini belirliyor. Once o sekil elle denenir, sonra uzerine sorgu
- * baglanir.
+ * ─── Neden iki cizgi, neden dort kupon ────────────────────────────────────
+ *
+ * Sahibinin istegi: *"acilis ve kapanis oranlarini verdigimde 6 banko 9
+ * uclu ve 5 banko 5 cift 5 uclu seklinde 2 ayri kupon olusacak. (Acilis
+ * kendi icinde 2 kupon, kapanis kendi icinde 2 kupon olacak.)"*
+ *
+ * Yani sayfa artik iki fiyat okuyor ve alti kupon gosteriyor: cizgi basina
+ * bir IKILI kupon (her maca en yuksek iki sembol — onceki kural, oldugu
+ * gibi duruyor) ve iki SEKILLI kupon (`lib/kupon-sekil.ts`).
  *
  * ─── Neden `/oran-analizi`nin bir kopyasi degil ───────────────────────────
  *
@@ -86,14 +101,27 @@ import {
  * Pinnacle'inkiyle ayni degil. Hazir doldurulmus bir tablo, kullanicinin
  * kendi bulteni yerine baska bir bultenle calistigini gizlerdi.
  */
+
+/** Cizgi basina tutulan bir deger — analiz durumunun tamami boyle tutulur. */
+type CizgiBasina<T> = Record<Cizgi, T>;
+
+function cizgiBasina<T>(uret: (c: Cizgi) => T): CizgiBasina<T> {
+  return { acilis: uret("acilis"), kapanis: uret("kapanis") };
+}
+
 export default function KuponSayfasi() {
   const [satirlar, setSatirlar] = React.useState<KuponSatiri[]>(bosKupon);
   // Yerel kayit ANCAK okunduktan sonra yazilir: ilk render'daki bos tablo
   // depodaki dolu tabloyu ezmesin.
   const [okundu, setOkundu] = React.useState(false);
   const [ayar, setAyar] = React.useState<AnalizAyari>(VARSAYILAN_ANALIZ);
-  const [sonuclar, setSonuclar] = React.useState<SatirAnalizi[]>(() =>
-    bosAnaliz(MAC_SAYISI),
+  /**
+   * Cizgi basina karne. Iki cizgi AYRI sorgudur (ayri fiyat, ayri korpus
+   * cizgisi) ve tek bir dizide tutulsalardi ekranda cizgi degistirmek
+   * otekinin cevabini silerdi.
+   */
+  const [sonuclar, setSonuclar] = React.useState<CizgiBasina<SatirAnalizi[]>>(() =>
+    cizgiBasina(() => bosAnaliz(MAC_SAYISI)),
   );
   const [kosuyor, setKosuyor] = React.useState(false);
   /**
@@ -101,7 +129,9 @@ export default function KuponSayfasi() {
    * tutmaz ve sayfa "sonuc bayat" der — eski karneyi yeni oranin cevabi
    * gibi gostermek, sessizce yanlis kupon kurdurur.
    */
-  const [kosanIz, setKosanIz] = React.useState<string | null>(null);
+  const [kosanIz, setKosanIz] = React.useState<CizgiBasina<string | null>>(() =>
+    cizgiBasina(() => null),
+  );
   const iptalci = React.useRef<AbortController | null>(null);
 
   // ─── Arsiv ─────────────────────────────────────────────────────────────
@@ -117,9 +147,13 @@ export default function KuponSayfasi() {
    * buyuklukteki korpusta olculdugunu ancak cevabin kendisi soyler.
    * Arsivden acilan kayitta kaydin kendi damgasindan gelir.
    */
-  const [evren, setEvren] = React.useState<number | null>(null);
+  const [evren, setEvren] = React.useState<CizgiBasina<number | null>>(() =>
+    cizgiBasina(() => null),
+  );
   /** Arsivden acilan analizin damgasi; canli kosumda `null`. */
-  const [analizDamgasi, setAnalizDamgasi] = React.useState<string | null>(null);
+  const [analizDamgasi, setAnalizDamgasi] = React.useState<CizgiBasina<string | null>>(
+    () => cizgiBasina(() => null),
+  );
   const [arsivKosuyor, setArsivKosuyor] = React.useState(false);
   const [arsivHata, setArsivHata] = React.useState<string | null>(null);
   const [kaydedildi, setKaydedildi] = React.useState<string | null>(null);
@@ -196,33 +230,40 @@ export default function KuponSayfasi() {
   // Sayfadan cikilirken ucan sorgular birakilmaz.
   React.useEffect(() => () => iptalci.current?.abort(), []);
 
-  function yaz(mac: number, alan: string, deger: string) {
+  function yazKimlik(mac: number, alan: "lig" | "ev" | "dep", deger: string) {
     setSatirlar((onceki) =>
-      onceki.map((satir, i) => {
-        if (i !== mac) return satir;
-        if (alan === "lig" || alan === "ev" || alan === "dep") {
-          return { ...satir, [alan]: deger };
-        }
-        return { ...satir, oran: { ...satir.oran, [alan as Sembol]: deger } };
-      }),
+      onceki.map((satir, i) => (i === mac ? { ...satir, [alan]: deger } : satir)),
+    );
+  }
+
+  function yazOran(mac: number, cizgi: Cizgi, sembol: Sembol, deger: string) {
+    setSatirlar((onceki) =>
+      onceki.map((satir, i) =>
+        i === mac
+          ? {
+              ...satir,
+              oran: { ...satir.oran, [cizgi]: { ...satir.oran[cizgi], [sembol]: deger } },
+            }
+          : satir,
+      ),
     );
   }
 
   function temizle() {
     iptalci.current?.abort();
     setSatirlar(bosKupon());
-    setSonuclar(bosAnaliz(MAC_SAYISI));
-    setKosanIz(null);
+    setSonuclar(cizgiBasina(() => bosAnaliz(MAC_SAYISI)));
+    setKosanIz(cizgiBasina(() => null));
     setKosuyor(false);
     setAcikNo(null);
     setKaydedildi(null);
-    setEvren(null);
-    setAnalizDamgasi(null);
+    setEvren(cizgiBasina(() => null));
+    setAnalizDamgasi(cizgiBasina(() => null));
     yereliTemizle();
   }
 
   /**
-   * 15 satiri AYNI ayarla arar.
+   * Orani TAM olan her cizgiyi, 15 satirin tamamiyla arar.
    *
    * ─── Neden 15 ayri istek, neden toplu bir uc degil ──────────────────────
    *
@@ -232,82 +273,197 @@ export default function KuponSayfasi() {
    * Toplu bir uc, ayrisabilecek ikinci bir yol acardi. Olculmeden eklenmez:
    * once bu halin suresi olculur.
    *
+   * ─── Neden iki cizgi TEK dugmede ────────────────────────────────────────
+   *
+   * Ayri dugmeler olsaydi, dort kuponun ikisi bir oranin, ikisi baska bir
+   * anin cevabindan cikabilirdi. Kosum hazir olan HER cizgiyi birlikte
+   * tazeler; bir cizginin orani yarimsa o cizgi atlanir ve kuponlari
+   * kurulmaz.
+   *
    * ─── Neden satir satir yaziliyor ────────────────────────────────────────
    *
-   * `Promise.all` toplu beklenip tek seferde yazilsaydi ekran 15 sorgu
+   * `Promise.all` toplu beklenip tek seferde yazilsaydi ekran sorgular
    * boyunca olu dururdu. Her cevap geldigi anda kendi satirina yaziliyor;
    * tablo doldukca doluyor.
    */
   async function analizEt() {
-    if (!analizeHazir(satirlar, ayar)) return;
+    const cizgiler = hazirCizgiler(satirlar, ayar, bilinenKodlar);
+    if (!cizgiler.length) return;
     iptalci.current?.abort();
     const kontrol = new AbortController();
     iptalci.current = kontrol;
 
-    const iz = sorguIzi(satirlar, ayar);
     setKosuyor(true);
-    setKosanIz(iz);
-    setSonuclar(satirlar.map(() => ({ durum: "kosuyor", veri: null, hata: null })));
+    setKosanIz((onceki) => {
+      const yeni = { ...onceki };
+      cizgiler.forEach((c) => {
+        yeni[c] = sorguIzi(satirlar, ayar, c);
+      });
+      return yeni;
+    });
+    setSonuclar((onceki) => {
+      const yeni = { ...onceki };
+      cizgiler.forEach((c) => {
+        yeni[c] = satirlar.map(() => ({ durum: "kosuyor", veri: null, hata: null }));
+      });
+      return yeni;
+    });
 
-    const yazSatir = (i: number, sonuc: SatirAnalizi) =>
-      setSonuclar((onceki) => onceki.map((s, j) => (j === i ? sonuc : s)));
+    const yazSatir = (c: Cizgi, i: number, sonuc: SatirAnalizi) =>
+      setSonuclar((onceki) => ({
+        ...onceki,
+        [c]: onceki[c].map((s, j) => (j === i ? sonuc : s)),
+      }));
 
     // Evren cevabin KENDISINDEN okunur, sabit yazilmaz: korpus buyudukce
     // degisir ve kaydin damgasinin yarisi odur.
-    const hamCevaplar: (BenzerResponse | null)[] = Array(satirlar.length).fill(null);
+    const hamCevaplar = cizgiBasina<(BenzerResponse | null)[]>(() =>
+      Array(satirlar.length).fill(null),
+    );
 
     await Promise.all(
-      satirlar.map(async (satir, i) => {
-        try {
-          const veri = await getBenzer(
-            oranSayilari(satir),
-            {
-              cizgi: ayar.cizgi,
-              arindirma: ayar.arindirma,
-              en_az: ayar.enAz,
-              // Kapsam `tum` iken lig suzgeci HIC gonderilmez; `kendi`
-              // iken satirin kendi kodu gider. Kod bos ya da taninmiyorsa
-              // buraya hic gelinmez (`analizeHazir` engelliyor).
-              ...(ayar.kapsam === "kendi" && satir.lig.trim()
-                ? { lig: satir.lig.trim().toUpperCase() }
-                : {}),
-              ...(ayar.tarih ? { tarih: ayar.tarih } : {}),
-            },
-            kontrol.signal,
-          );
-          if (kontrol.signal.aborted) return;
-          hamCevaplar[i] = veri;
-          yazSatir(i, { durum: "bitti", veri, hata: null });
-        } catch (e) {
-          // Iptal bir hata DEGILDIR (`lib/istek` doktrini): durum hic
-          // guncellenmez, cunku yerine yeni bir kosum gecmistir.
-          if (iptalMi(e, kontrol.signal)) return;
-          yazSatir(i, {
-            durum: "hata",
-            veri: null,
-            hata: hataMetni(e, "Sorgu başarısız"),
-          });
-        }
-      }),
+      cizgiler.flatMap((c) =>
+        satirlar.map(async (satir, i) => {
+          try {
+            const veri = await getBenzer(
+              oranSayilari(satir, c),
+              {
+                cizgi: c,
+                arindirma: ayar.arindirma,
+                en_az: ayar.enAz,
+                // Kapsam `tum` iken lig suzgeci HIC gonderilmez; `kendi`
+                // iken satirin kendi kodu gider. Kod bos ya da taninmiyorsa
+                // buraya hic gelinmez (`analizeHazir` engelliyor).
+                ...(ayar.kapsam === "kendi" && satir.lig.trim()
+                  ? { lig: satir.lig.trim().toUpperCase() }
+                  : {}),
+                ...(ayar.tarih ? { tarih: ayar.tarih } : {}),
+              },
+              kontrol.signal,
+            );
+            if (kontrol.signal.aborted) return;
+            hamCevaplar[c][i] = veri;
+            yazSatir(c, i, { durum: "bitti", veri, hata: null });
+          } catch (e) {
+            // Iptal bir hata DEGILDIR (`lib/istek` doktrini): durum hic
+            // guncellenmez, cunku yerine yeni bir kosum gecmistir.
+            if (iptalMi(e, kontrol.signal)) return;
+            yazSatir(c, i, {
+              durum: "hata",
+              veri: null,
+              hata: hataMetni(e, "Sorgu başarısız"),
+            });
+          }
+        }),
+      ),
     );
 
     if (!kontrol.signal.aborted) {
       setKosuyor(false);
-      setEvren(evreniOku(hamCevaplar));
+      setEvren((onceki) => {
+        const yeni = { ...onceki };
+        cizgiler.forEach((c) => {
+          yeni[c] = evreniOku(hamCevaplar[c]);
+        });
+        return yeni;
+      });
       // Canli kosum kaydin damgasini TASIMAZ: damga yazilirken atilir.
-      setAnalizDamgasi(null);
+      setAnalizDamgasi((onceki) => {
+        const yeni = { ...onceki };
+        cizgiler.forEach((c) => {
+          yeni[c] = null;
+        });
+        return yeni;
+      });
     }
   }
+
+  const bilinenKodlar = React.useMemo(
+    () => (ligler ? new Set(ligler.map((l) => l.lig.toUpperCase())) : null),
+    [ligler],
+  );
+  const ozetler = React.useMemo(
+    () => cizgiBasina((c) => kuponOzeti(satirlar, c)),
+    [satirlar],
+  );
+  const taninmayan = taninmayanLigler(satirlar, ayar, bilinenKodlar);
+  const hazirlar = hazirCizgiler(satirlar, ayar, bilinenKodlar);
+  const hazir = hazirlar.length > 0;
+  /** Ekrandaki cizgi — karne tablosu ve ikili kupon bunu okur. */
+  const cizgi = ayar.cizgi;
+  const bayatlar = React.useMemo(
+    () =>
+      cizgiBasina(
+        (c) => kosanIz[c] != null && kosanIz[c] !== sorguIzi(satirlar, ayar, c),
+      ),
+    [kosanIz, satirlar, ayar],
+  );
+  const analizler = React.useMemo(
+    () => cizgiBasina((c) => analizOzeti(sonuclar[c])),
+    [sonuclar],
+  );
+  const analiz = analizler[cizgi];
+  const bayat = bayatlar[cizgi];
+  const sonucVar = kosanIz[cizgi] != null;
+  const doluMu = satirlar.some(
+    (s) =>
+      s.lig ||
+      s.ev ||
+      s.dep ||
+      CIZGILER.some((c) => s.oran[c]["1"] || s.oran[c]["0"] || s.oran[c]["2"]),
+  );
+
+  /**
+   * Kupon, ekrandaki analizden KURULUR — ayri bir sorgu atilmaz.
+   *
+   * Bayat bir analizden kupon kurulmaz: ekrandaki karne su anki girdiye
+   * ait degilse ondan cikan isaretler de degildir. Ayni gerekce kaydetmede
+   * de gecerli (`arsiveKaydet` bayat analizi yazmiyor).
+   */
+  const kupon = React.useMemo(
+    () => (sonucVar && !bayat && analiz.biten > 0 ? kuponKur(sonuclar[cizgi]) : null),
+    [sonucVar, bayat, analiz.biten, sonuclar, cizgi],
+  );
+  const kuponGecerli = !!kupon && kupon.eksik.length === 0;
+  const bedel = kupon ? kuponBedeli(kupon.kolon, kolonBedeli) : null;
+
+  /** Karnesi TAZE olan cizgiler — sekilli kuponlar yalnizca bunlardan cikar. */
+  const tazeCizgiler = React.useMemo(
+    () =>
+      CIZGI_SIRASI.filter(
+        (c) => kosanIz[c] != null && !bayatlar[c] && analizler[c].biten > 0,
+      ),
+    [kosanIz, bayatlar, analizler],
+  );
+
+  /**
+   * Dort kupon: her taze cizgi icin iki sekil.
+   *
+   * Sira ekranda okunacak sira: once acilisin iki sekli, sonra kapanisin.
+   * Sahibinin cumlesindeki gruplama bu ("acilis kendi icinde 2 kupon,
+   * kapanis kendi icinde 2 kupon").
+   */
+  const sekilliler = React.useMemo<KuponGirdisi[]>(
+    () =>
+      tazeCizgiler.flatMap((c) =>
+        SEKILLER.map((sekil) => ({
+          cizgi: c,
+          kupon: sekilliKuponKur(sonuclar[c], sekil),
+          damga: analizDamgasi[c],
+        })),
+      ),
+    [tazeCizgiler, sonuclar, analizDamgasi],
+  );
 
   /**
    * Kuponu arsive yazar — ZINCIRIN TAMAMIYLA.
    *
-   * Gonderilen sey girdi · ayar · analiz · kupon. Analiz de gidiyor ve bu
-   * ILK SURUMDEKI KARARIN TERSI: orada karne bilerek atiliyordu ("turetilmis
-   * veri bayatlar"). Teshis dogruydu, care yanlisti — kupon o analizden
-   * cikiyor, analiz atilirsa kayit kendi kararinin gerekcesini kaybeder.
-   * Bayatlamanin caresi atmak degil DAMGALAMAK: `analiz.olculdu` ve
-   * `analiz.evren` kayitla birlikte gidiyor (`spor_toto/kupon_arsivi.py`).
+   * Gonderilen sey girdi · ayar · analizler · kuponlar. Analiz de gidiyor ve
+   * bu ILK SURUMDEKI KARARIN TERSI: orada karne bilerek atiliyordu
+   * ("turetilmis veri bayatlar"). Teshis dogruydu, care yanlisti — kupon o
+   * analizden cikiyor, analiz atilirsa kayit kendi kararinin gerekcesini
+   * kaybeder. Bayatlamanin caresi atmak degil DAMGALAMAK: `analiz.olculdu`
+   * ve `analiz.evren` kayitla birlikte gidiyor (`spor_toto/kupon_arsivi.py`).
    *
    * `yeniOlarak` ise numara GONDERILMEZ ve sunucu yeni bir kupon acar.
    * Ayrim burada, cunku "kaydet" ile "yeni kupon olarak kaydet" iki ayri
@@ -334,20 +490,38 @@ export default function KuponSayfasi() {
           lig: s.lig,
           ev: s.ev,
           dep: s.dep,
-          oran: { ...s.oran },
+          oran: { acilis: { ...s.oran.acilis }, kapanis: { ...s.oran.kapanis } },
         })),
         // Bayat bir analiz KAYDEDILMEZ: ekrandaki karne su anki girdiye ait
         // degilse onu kuponun gerekcesi diye yazmak, kaydi yalanci yapar.
-        analiz: bayat ? null : analizdenKayit(sonuclar, evren),
-        // Kupon, ekrandaki analizden kurulan isaretler. Bayat analizden
-        // kupon kurulmadigi icin bu alan da o durumda `null` gider: kaydin
-        // "neden bu isaretler" zinciri yalanci olmamali.
-        kupon: kuponGecerli && kupon ? { isaretler: kupon.satirlar.map((x) => x.semboller) } : null,
+        analizler: Object.fromEntries(
+          CIZGILER.map((c) => [
+            c,
+            bayatlar[c] ? null : analizdenKayit(sonuclar[c], evren[c]),
+          ]),
+        ),
+        // Ikili kupon, ekrandaki cizginin kuponu. Bayat analizden kupon
+        // kurulmadigi icin bu alan o durumda `null` gider.
+        kupon:
+          kuponGecerli && kupon
+            ? { isaretler: kupon.satirlar.map((x) => x.semboller) }
+            : null,
+        // Sekilli kuponlar yalnizca TAZE cizgilerden ve yalnizca eksiksiz
+        // olanlar. Isaretsiz satiri olan bir kupon sunucuda zaten reddedilir.
+        sekilli: sekilliler
+          .filter((g) => g.kupon.eksik.length === 0)
+          .map((g) => ({
+            cizgi: g.cizgi,
+            sekil: g.kupon.sekil.anahtar,
+            isaretler: g.kupon.satirlar.map((x) => x.semboller),
+          })),
       });
       setAcikNo(kayit.no);
       setAd(kayit.ad);
       setKaydedildi(kayit.guncellendi.slice(11, 16));
-      if (kayit.analiz) setAnalizDamgasi(kayit.analiz.olculdu);
+      setAnalizDamgasi(
+        cizgiBasina((c) => kayit.analizler?.[c]?.olculdu ?? null),
+      );
       await listeyiTazele();
     } catch (e) {
       setArsivHata(hataMetni(e, "Kaydedilemedi"));
@@ -357,12 +531,17 @@ export default function KuponSayfasi() {
   }
 
   /**
-   * Kayitli bir kuponu ekrana yukler — DORDUNU birden.
+   * Kayitli bir kuponu ekrana yukler — ZINCIRIN tamamiyla.
    *
-   * Girdi, ayar, analiz ve (kurulunca) kupon geri gelir. Analiz kaydin
-   * kendi damgasiyla gelir ve ekranda o damga gorunur: bugunun korpusunda
-   * ayni sorgu baska bir cevap verebilir ve bunu gizlemek, kaydi bugunun
-   * cevabi gibi okutmak olurdu.
+   * Girdi, ayar, iki cizginin karnesi ve (kurulunca) kupon geri gelir.
+   * Analiz kaydin kendi damgasiyla gelir ve ekranda o damga gorunur:
+   * bugunun korpusunda ayni sorgu baska bir cevap verebilir ve bunu
+   * gizlemek, kaydi bugunun cevabi gibi okutmak olurdu.
+   *
+   * Sekilli kuponlar kayittan CIZILMEZ, karneden yeniden kurulur: kayit
+   * onlari tasiyor (denetim icin) ama ekranda gosterilen sey her zaman
+   * ekrandaki karnenin sonucu olmali — ikisi ayrisirsa hangisinin dogru
+   * oldugu sorusu dogar.
    */
   async function arsivdenAc(no: number) {
     setArsivKosuyor(true);
@@ -370,17 +549,18 @@ export default function KuponSayfasi() {
     try {
       const kayit = await getArsivKaydi(no);
       iptalci.current?.abort();
+      const kayitCizgisi: Cizgi = (CIZGILER as readonly string[]).includes(kayit.ayar.cizgi)
+        ? (kayit.ayar.cizgi as Cizgi)
+        : VARSAYILAN_ANALIZ.cizgi;
       const yeniAyar: AnalizAyari = {
-        cizgi: (CIZGILER as readonly string[]).includes(kayit.ayar.cizgi)
-          ? (kayit.ayar.cizgi as Cizgi)
-          : VARSAYILAN_ANALIZ.cizgi,
+        cizgi: kayitCizgisi,
         arindirma: kayit.ayar.arindirma as AnalizAyari["arindirma"],
         enAz: kayit.ayar.en_az,
         tarih: kayit.ayar.tarih ?? "",
         // Eski kayitlarda alan yoktu; `tum` sunucunun da varsayilani.
         kapsam: kayit.ayar.kapsam === "kendi" ? "kendi" : "tum",
       };
-      const yeniSatirlar = kayittanSatirlar(kayit.satirlar);
+      const yeniSatirlar = kayittanSatirlar(kayit.satirlar, kayitCizgisi);
       setSatirlar(yeniSatirlar);
       setAyar(yeniAyar);
       setAd(kayit.ad);
@@ -390,13 +570,16 @@ export default function KuponSayfasi() {
       setKaydedildi(null);
       setKosuyor(false);
 
-      setSonuclar(kayittanAnaliz(kayit.analiz));
-      setEvren(kayit.analiz?.evren ?? null);
-      setAnalizDamgasi(kayit.analiz?.olculdu ?? null);
+      const kayitli = cizgiBasina((c) => kayit.analizler?.[c] ?? null);
+      setSonuclar(cizgiBasina((c) => kayittanAnaliz(kayitli[c])));
+      setEvren(cizgiBasina((c) => kayitli[c]?.evren ?? null));
+      setAnalizDamgasi(cizgiBasina((c) => kayitli[c]?.olculdu ?? null));
       // Iz, kaydin KENDI girdisi ve ayariyla kurulur: acilan analiz bu
-      // ikisine aittir ve sayfa onu "bayat" diye isaretlememeli. Analiz
-      // yoksa iz de yok — sonuc bolumu hic acilmaz.
-      setKosanIz(kayit.analiz ? sorguIzi(yeniSatirlar, yeniAyar) : null);
+      // ikisine aittir ve sayfa onu "bayat" diye isaretlememeli. Analizi
+      // olmayan cizginin izi de yok — o cizginin sonucu hic acilmaz.
+      setKosanIz(
+        cizgiBasina((c) => (kayitli[c] ? sorguIzi(yeniSatirlar, yeniAyar, c) : null)),
+      );
     } catch (e) {
       setArsivHata(hataMetni(e, "Kayıt açılamadı"));
     } finally {
@@ -420,51 +603,31 @@ export default function KuponSayfasi() {
     }
   }
 
-  const ozet = kuponOzeti(satirlar);
-  const analiz = analizOzeti(sonuclar);
-  const bilinenKodlar = React.useMemo(
-    () => (ligler ? new Set(ligler.map((l) => l.lig.toUpperCase())) : null),
-    [ligler],
+  const bozukSatirlar = CIZGI_SIRASI.flatMap((c) =>
+    ozetler[c].bozukSatirlar.map((i) => ({ cizgi: c, satir: i })),
   );
-  const taninmayan = taninmayanLigler(satirlar, ayar, bilinenKodlar);
-  const hazir = analizeHazir(satirlar, ayar, bilinenKodlar);
-  const suankiIz = sorguIzi(satirlar, ayar);
-  const bayat = kosanIz != null && kosanIz !== suankiIz;
-  const sonucVar = kosanIz != null;
-  const doluMu = satirlar.some(
-    (s) => s.lig || s.ev || s.dep || s.oran["1"] || s.oran["0"] || s.oran["2"],
+  const eksikOranlar = CIZGI_SIRASI.flatMap((c) =>
+    ozetler[c].eksikOranlar.map((i) => ({ cizgi: c, satir: i })),
   );
-
-  /**
-   * Kupon, ekrandaki analizden KURULUR — ayri bir sorgu atilmaz.
-   *
-   * Bayat bir analizden kupon kurulmaz: ekrandaki karne su anki girdiye
-   * ait degilse ondan cikan isaretler de degildir. Ayni gerekce kaydetmede
-   * de gecerli (`arsiveKaydet` bayat analizi yazmiyor).
-   */
-  const kupon = React.useMemo(
-    () => (sonucVar && !bayat && analiz.biten > 0 ? kuponKur(sonuclar) : null),
-    [sonucVar, bayat, analiz.biten, sonuclar],
-  );
-  const kuponGecerli = !!kupon && kupon.eksik.length === 0;
-  const bedel = kupon ? kuponBedeli(kupon.kolon, kolonBedeli) : null;
 
   return (
     <div className="mx-auto w-full max-w-[1180px] space-y-6 px-4 py-6 sm:px-6">
       <div>
         <h1 className="text-[22px] font-semibold tracking-tight">Kupon Kurucu</h1>
         <p className="mt-1 max-w-[68ch] text-[13px] leading-relaxed text-muted-foreground">
-          Haftanın 15 maçını ve elinizdeki bültenin 1 / 0 / 2 oranlarını buraya
-          yazın. Bu tablo zincirin <strong>ilk halkası</strong>: sonraki
-          aşamada her satır kendi oranıyla tüm liglerin korpusunda aranacak,
-          çıkan karneden olasılık üretilecek ve işaretler seçilecek.
+          Haftanın 15 maçını ve elinizdeki bültenin <strong>açılış</strong> ile{" "}
+          <strong>kapanış</strong> 1 / 0 / 2 oranlarını buraya yazın. Her satır
+          kendi oranıyla korpusun aynı çizgisinde aranır, çıkan karneden
+          olasılık üretilir ve işaretler seçilir. Her çizgi kendi içinde{" "}
+          <strong>iki şekilli kupon</strong> verir: 6 banko + 9 üçlü ve 5 banko
+          + 5 çift + 5 üçlü.
         </p>
       </div>
 
       <Card>
         <CardHeader
           title="Maçlar ve oranlar"
-          hint="Tab satır boyunca, ok tuşları ve Enter sütun boyunca ilerler — bülten sütun sütun okunur."
+          hint="Tab satır boyunca, ok tuşları ve Enter sütun boyunca ilerler — bülten sütun sütun okunur. Bir çizgi boş bırakılabilir; o çizginin kuponları kurulmaz."
           action={
             <Button tip="ghost" boyut="sm" onClick={temizle} disabled={!doluMu}>
               <Eraser size={14} />
@@ -473,43 +636,55 @@ export default function KuponSayfasi() {
           }
         />
         <CardBody className="space-y-4">
-          <KuponIzgarasi satirlar={satirlar} onChange={yaz} />
+          <KuponIzgarasi satirlar={satirlar} onKimlik={yazKimlik} onOran={yazOran} />
 
-          <div className="flex flex-wrap items-center gap-2 border-t border-line pt-4">
-            <Badge ton={ozet.adliMac === MAC_SAYISI ? "success" : "neutral"}>
-              {ozet.adliMac}/{MAC_SAYISI} maç adı
-            </Badge>
-            <Badge ton={ozet.sorguyaHazir ? "success" : "neutral"}>
-              {ozet.oranliMac}/{MAC_SAYISI} oran tam
-            </Badge>
-            {ozet.ortalamaMarj != null ? (
-              <Badge ton={ozet.ortalamaMarj > 0.12 ? "warning" : "neutral"}>
-                ortalama marj {yuzde(ozet.ortalamaMarj)}
+          <div className="space-y-2 border-t border-line pt-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge ton={ozetler.kapanis.adliMac === MAC_SAYISI ? "success" : "neutral"}>
+                {ozetler.kapanis.adliMac}/{MAC_SAYISI} maç adı
               </Badge>
-            ) : null}
+              {CIZGI_SIRASI.map((c) => (
+                <React.Fragment key={c}>
+                  <Badge ton={ozetler[c].sorguyaHazir ? "success" : "neutral"}>
+                    {CIZGI_ADI[c]} {ozetler[c].oranliMac}/{MAC_SAYISI} oran tam
+                  </Badge>
+                  {ozetler[c].ortalamaMarj != null ? (
+                    <Badge ton={ozetler[c].ortalamaMarj! > 0.12 ? "warning" : "neutral"}>
+                      {CIZGI_ADI[c].toLocaleLowerCase("tr")} marj{" "}
+                      {yuzde(ozetler[c].ortalamaMarj!)}
+                    </Badge>
+                  ) : null}
+                </React.Fragment>
+              ))}
+            </div>
             {doluMu ? (
-              <span className="text-[11.5px] text-muted-foreground">
+              <p className="text-[11.5px] text-muted-foreground">
                 Tablo tarayıcıya kaydedildi — yenileme kaybettirmez.
-              </span>
+              </p>
             ) : null}
           </div>
         </CardBody>
       </Card>
 
-      {ozet.bozukSatirlar.length ? (
+      {bozukSatirlar.length ? (
         <Callout ton="danger" baslik="Okunamayan oran">
-          {ozet.bozukSatirlar.map((i) => i + 1).join(", ")}. satırda 1,00&apos;den
-          büyük bir sayı olmayan hücre var. Oran her zaman ondalık yazılır;
-          virgül otomatik noktaya çevrilir.
+          {bozukSatirlar
+            .map((x) => `${x.satir + 1}. satır (${CIZGI_ADI[x.cizgi].toLocaleLowerCase("tr")})`)
+            .join(", ")}{" "}
+          — 1,00&apos;den büyük bir sayı olmayan hücre var. Oran her zaman
+          ondalık yazılır; virgül otomatik noktaya çevrilir.
         </Callout>
       ) : null}
 
-      {ozet.eksikOranlar.length ? (
+      {eksikOranlar.length ? (
         <Callout ton="warning" baslik="Oranı yarım kalan satır">
-          {ozet.eksikOranlar.map((i) => i + 1).join(", ")}. satırda veri var ama
-          üç oranın hepsi girilmemiş. Arama <strong>olasılık uzayında</strong>
-          {" "}yapılır; bunun için üç oran birden gerekir — ikisi marjı
-          belirlemeye yetmez.
+          {eksikOranlar
+            .map((x) => `${x.satir + 1}. satır (${CIZGI_ADI[x.cizgi].toLocaleLowerCase("tr")})`)
+            .join(", ")}{" "}
+          — veri var ama üç oranın hepsi girilmemiş. Arama{" "}
+          <strong>olasılık uzayında</strong> yapılır; bunun için üç oran birden
+          gerekir — ikisi marjı belirlemeye yetmez. Bir çizgiyi tamamen boş
+          bırakmak ise bir eksiklik değildir: o çizgi atlanır.
         </Callout>
       ) : null}
 
@@ -519,7 +694,7 @@ export default function KuponSayfasi() {
           hint={
             acikNo
               ? `Ekranda #${acikNo} açık — kaydet üstüne yazar, "yeni kupon olarak kaydet" ayrı bir deneme açar.`
-              : "Bir kupon = maçlar + oranlar + analiz + işaretler. Kayıt sunucuda dosya olarak durur, git'e girebilir."
+              : "Bir kupon = maçlar + iki çizginin oranı + karneler + işaretler. Kayıt sunucuda dosya olarak durur, git'e girebilir."
           }
         />
         <CardBody>
@@ -548,8 +723,8 @@ export default function KuponSayfasi() {
             onAc={arsivdenAc}
             onSil={arsivdenKaldir}
             kaydedildi={kaydedildi}
-            analizVar={!bayat && analiz.biten > 0}
-            kuponVar={kuponGecerli}
+            analizVar={tazeCizgiler.length > 0}
+            kuponVar={kuponGecerli || sekilliler.some((g) => g.kupon.eksik.length === 0)}
           />
         </CardBody>
       </Card>
@@ -558,9 +733,12 @@ export default function KuponSayfasi() {
         <CardHeader
           title="Analiz ayarları"
           hint={
-            ayar.kapsam === "kendi"
-              ? "15 satırın tamamı bu ayarla, HER MAÇ KENDİ LİGİNDE aranır."
-              : "15 satırın tamamı bu ayarla, tüm liglerin korpusunda aranır — lig süzgeci yok."
+            hazirlar.length
+              ? `${hazirlar.map((c) => CIZGI_ADI[c]).join(" ve ")} bu ayarla` +
+                (ayar.kapsam === "kendi"
+                  ? ", HER MAÇ KENDİ LİGİNDE aranır."
+                  : ", tüm liglerin korpusunda aranır — lig süzgeci yok.")
+              : "Bir çizginin 15 satırının da oranı tam olunca analiz koşulabilir."
           }
         />
         <CardBody>
@@ -570,7 +748,7 @@ export default function KuponSayfasi() {
             onAnaliz={analizEt}
             hazir={hazir}
             kosuyor={kosuyor}
-            ortalamaMarj={ozet.ortalamaMarj}
+            ortalamaMarj={ozetler[cizgi].ortalamaMarj}
             bayat={bayat}
             ligler={ligler}
             taninmayan={taninmayan}
@@ -578,22 +756,49 @@ export default function KuponSayfasi() {
         </CardBody>
       </Card>
 
+      {sekilliler.length ? (
+        <Card>
+          <CardHeader
+            title="Şekilli kuponlar"
+            hint={
+              `${sekilliler.length} kupon — ` +
+              tazeCizgiler.map((c) => CIZGI_ADI[c]).join(" ve ") +
+              ", her biri 6 banko + 9 üçlü ve 5 banko + 5 çift + 5 üçlü."
+            }
+          />
+          <CardBody className="space-y-4">
+            <SekilliKuponlar
+              satirlar={satirlar}
+              kuponlar={sekilliler}
+              kolonBedeliTl={kolonBedeli}
+              haftalikTavanTl={haftalikTavan}
+            />
+            <div className="border-t border-line pt-4">
+              <SekilAciklamasi kuponlar={sekilliler} />
+            </div>
+          </CardBody>
+        </Card>
+      ) : null}
+
       {sonucVar ? (
         <Card>
           <CardHeader
-            title={ayar.kapsam === "kendi" ? "Karne — maçın kendi liginde" : "Karne — tüm ligler"}
+            title={
+              `Karne — ${CIZGI_ADI[cizgi].toLocaleLowerCase("tr")}, ` +
+              (ayar.kapsam === "kendi" ? "maçın kendi liginde" : "tüm ligler")
+            }
             hint={
               kosuyor
                 ? `${analiz.biten + analiz.hatali}/${MAC_SAYISI} satır tamamlandı…`
                 : [
-                    `${ayar.cizgi === "acilis" ? "Açılış" : "Kapanış"} çizgisi`,
+                    `${CIZGI_ADI[cizgi]} çizgisi`,
                     `${ayar.arindirma} arındırma`,
                     ayar.tarih ? `${ayar.tarih} öncesi` : null,
                     // Arsivden acilan analiz KENDI gununun cevabidir; bugunun
                     // korpusunda ayni sorgu baska sayi verebilir ve bunu
                     // gizlemek kaydi bugunun cevabi gibi okutmak olurdu.
-                    analizDamgasi
-                      ? `kayıttan: ${analizDamgasi.slice(0, 10)} ölçüldü${evren ? `, ${evren.toLocaleString("tr-TR")} maçlık evren` : ""}`
+                    analizDamgasi[cizgi]
+                      ? `kayıttan: ${analizDamgasi[cizgi]!.slice(0, 10)} ölçüldü${evren[cizgi] ? `, ${sayi(evren[cizgi]!)} maçlık evren` : ""}`
                       : null,
                   ]
                     .filter(Boolean)
@@ -601,7 +806,12 @@ export default function KuponSayfasi() {
             }
           />
           <CardBody className="space-y-4">
-            <AnalizTablosu satirlar={satirlar} sonuclar={sonuclar} ayar={ayar} />
+            <AnalizTablosu
+              satirlar={satirlar}
+              sonuclar={sonuclar[cizgi]}
+              ayar={ayar}
+              cizgi={cizgi}
+            />
             <div className="space-y-3 border-t border-line pt-4">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge ton={analiz.hatali ? "danger" : "neutral"}>
@@ -631,8 +841,8 @@ export default function KuponSayfasi() {
       {kupon ? (
         <Card>
           <CardHeader
-            title="Kupon"
-            hint="Her maçta karnenin en yüksek iki sembolü işaretlenir — kural bu, seçim elle değiştirilmiyor."
+            title={`İkili kupon — ${CIZGI_ADI[cizgi].toLocaleLowerCase("tr")}`}
+            hint="Her maçta karnenin en yüksek iki sembolü işaretlenir — derinlik dağıtılmaz, herkes çifte."
           />
           <CardBody className="space-y-4">
             <KuponMuhasebesi
@@ -644,10 +854,10 @@ export default function KuponSayfasi() {
               <Callout ton="warning" baslik="Bedel haftalık tavanı aşıyor">
                 Kural her maça iki sembol verdiği için kolon sayısı{" "}
                 <strong>girdiden bağımsız olarak</strong> 2¹⁵ çıkıyor:{" "}
-                {(bedel / haftalikTavan).toFixed(2)}× tavan. Aşımı kapatmanın
-                tek yolu bazı maçları <strong>banko</strong> (tek sembol)
-                yapmaktır — hangi maçların bankolaşacağı henüz karara
-                bağlanmadı.
+                {(bedel / haftalikTavan).toFixed(2)}× tavan. Derinliği maça göre
+                dağıtan <strong>şekilli kuponlar</strong> bu sorunu kuralın
+                kendisinde çözüyor — 3⁹ = {sayi(3 ** 9)} ve 2⁵·3⁵ ={" "}
+                {sayi(2 ** 5 * 3 ** 5)} kolon.
               </Callout>
             ) : null}
             <KuponTablosu satirlar={satirlar} kupon={kupon} />
@@ -658,27 +868,34 @@ export default function KuponSayfasi() {
         </Card>
       ) : null}
 
-      <Callout ton={sonucVar && analiz.tamam ? "success" : "neutral"} baslik="Sıradaki aşama">
-        {kuponGecerli ? (
+      <Callout
+        ton={sekilliler.length ? "success" : "neutral"}
+        baslik="Sıradaki aşama"
+      >
+        {sekilliler.length ? (
           <>
-            Kupon kuruldu ve arşive kaydedilebilir. Açık kalan tek soru{" "}
-            <strong>bütçe</strong>: kural her maça iki sembol verdiği için
-            kolon sayısı sabit 2¹⁵ ve bu haftalık tavanın üstünde. Bazı
-            maçları bankoya indirmenin kuralı henüz karara bağlanmadı.
+            {sekilliler.length} kupon kuruldu ve arşive kaydedilebilir.
+            {tazeCizgiler.length === 1 ? (
+              <>
+                {" "}
+                Yalnızca{" "}
+                <strong>{CIZGI_ADI[tazeCizgiler[0]!].toLocaleLowerCase("tr")}</strong>{" "}
+                çizgisi koşuldu; öteki çizginin 15 oranı da girilirse iki kupon
+                daha çıkar.
+              </>
+            ) : null}
           </>
-        ) : sonucVar && analiz.tamam ? (
+        ) : hazir ? (
           <>
-            Karne çıktı ama kupon kurulamadı — işaretsiz kalan satır var.
-          </>
-        ) : ozet.sorguyaHazir ? (
-          <>
-            15 satırın da oranı tam. Üstteki ayarlarla{" "}
-            <strong>tüm liglerin korpusunda</strong> aratabilirsiniz.
+            {hazirlar.map((c) => CIZGI_ADI[c]).join(" ve ")} için 15 satırın da
+            oranı tam. Üstteki ayarlarla aratın; karne çıkınca kuponlar
+            kendiliğinden kurulur.
           </>
         ) : (
           <>
-            Tabloyu doldurun. Sorgu, <strong>15 satırın da</strong> oranı tam
-            olduğunda kurulabilir — eksik satır kuponun o maçını körleştirir.
+            Tabloyu doldurun. Bir çizginin sorgusu,{" "}
+            <strong>o çizginin 15 satırının da</strong> oranı tam olduğunda
+            kurulabilir — eksik satır kuponun o maçını körleştirir.
           </>
         )}
       </Callout>

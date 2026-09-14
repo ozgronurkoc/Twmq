@@ -7,13 +7,21 @@ durmaları gerekir.
 
 Bir kayıt dört şeyi birden taşır — çünkü kupon bu dördünün **zinciridir**:
 
-    girdi   15 maç, elle yazılmış ad ve 1/0/2 oranı
-    ayar    hangi çizgi, hangi arındırma, hangi örneklem, hangi kesme
-    analiz  o ayarla çıkan karne — ÖLÇÜLDÜĞÜ ANIN damgasıyla
-    kupon   o analizden çıkan işaretler
+    girdi     15 maç, elle yazılmış ad ve HER ÇİZGİ İÇİN 1/0/2 oranı
+    ayar      hangi arındırma, hangi örneklem, hangi kesme, hangi kapsam
+    analizler açılışın ve kapanışın karnesi — ÖLÇÜLDÜĞÜ ANIN damgasıyla
+    kupon     o analizlerden çıkan işaretler (ikili kupon + şekilli kuponlar)
 
 Zincirin bir halkası eksikse kayıt "neden bu işaretler" sorusunu
 cevaplayamaz.
+
+─── Neden satırda İKİ fiyat var ─────────────────────────────────────────
+
+Sahibinin isteği: *"açılış ve kapanış oranlarını verdiğimde ... açılış
+kendi içinde 2 kupon, kapanış kendi içinde 2 kupon olacak."* Yani bir hafta
+artık dört kupon üretiyor ve dördü **aynı 15 maçın** iki ayrı fiyatından
+çıkıyor. Satır tek fiyat taşısaydı bu dört kupon iki ayrı kayda dağılır ve
+"aynı maçlar mıydı" sorusunu hiçbir şey garanti etmezdi.
 
 ─── Neden diskte, neden tarayıcıda değil ────────────────────────────────
 
@@ -73,7 +81,13 @@ ARSIV = KOK / "data" / "kupon_arsivi"
 #: bu bilinçli: 1. sürümde hiç kayıt üretilmemişti (özellik aynı gün yazıldı),
 #: yani göç edecek veri yok. Olmayan veri için göç yazmak, sınanamayan kod
 #: yazmaktır.
-SURUM = 2
+#: 2 -> 3: satırın oranı DÜZ bir `{1,0,2}` idi, ÇİZGİ BAŞINA bloğa dönüştü
+#: (`{acilis: {...}, kapanis: {...}}`) ve tek `analiz` bloğu `analizler`
+#: sözlüğü oldu. Anlam değişikliği: aynı alan artık başka bir şey tutuyor.
+#: Göç kodu YAZILDI ve okumada çalışıyor (`_oranlari_coz`, `kaydi_kur`):
+#: düz oran ve tek analiz, kaydın kendi `ayar.cizgi`sine oturur — o kayıtta
+#: fiyatın hangi çizgiye ait olduğunu zaten o alan söylüyordu.
+SURUM = 3
 
 #: Bir haftada kaç maç. `core.SEMBOLLER` gibi bu da tek kaynaktan gelmeli;
 #: `meta.MATCH_COUNT` ile aynı sayıdır ve testi bunu tutar.
@@ -101,6 +115,17 @@ AD_SINIR = 80
 #: Aramanın evreni: bütün korpus mu, maçın kendi ligi mi. İkisi AYNI soruyu
 #: sormaz, o yüzden kayıt hangisinin sorulduğunu taşır.
 KAPSAMLAR = ("tum", "kendi")
+
+#: Kuponun şekil anahtarının biçimi — arayüzün `SEKILLER` listesindeki
+#: `anahtar`. Liste BURAYA KOPYALANMAZ: şekiller ürün kararıdır ve arayüzde
+#: yaşar; kopyalansaydı ayrışabilen ikinci bir liste olurdu (`lib/types.ts`
+#: lig sözlüğü için aynı kararı veriyor). Doğrulanan şey biçim: kısa, güvenli
+#: bir anahtar — çünkü kayda yazılıyor ve listede gösteriliyor.
+SEKIL_DESENI = re.compile(r"^[a-z0-9][a-z0-9_-]{0,23}$")
+
+#: Bir kayıtta en çok kaç şekilli kupon durabilir. Bugün dört (iki çizgi x
+#: iki şekil); sınır cömert ama sınırsız değil.
+SEKIL_SINIRI = 8
 
 #: Metin alanlarının en fazla uzunluğu (arayüzdeki `METIN_SINIR` ile aynı).
 METIN_SINIR = 40
@@ -198,12 +223,55 @@ def _oran(ham: Any) -> float | None:
     return v
 
 
-def satirlari_dogrula(ham: Any) -> list[dict[str, Any]]:
-    """15 satır, her satırda lig/ev/dep ve 1/0/2.
+def _bos_blok() -> dict[str, float | None]:
+    """Hiç oran girilmemiş bir çizgi bloğu — üç hücre de `None`."""
+    return dict.fromkeys(SEMBOLLER)
+
+
+def _oranlari_coz(ham: Any, cizgi: str) -> dict[str, dict[str, float | None]]:
+    """Satırın `oran` alanını **çizgi başına bloğa** çevirir — eskisini de.
+
+    Yeni biçim `{acilis: {1,0,2}, kapanis: {1,0,2}}`. Eski biçim düz bir
+    `{1,0,2}` sözlüğüydü ve hangi çizgiye ait olduğunu KENDİSİ söylemezdi;
+    onu `ayar.cizgi` söylüyordu. Göç bu yüzden çizgiyi dışarıdan alıyor ve
+    düz bloğu oraya oturtuyor. Öteki çizgi BOŞ kalır: iki çizgiye birden
+    kopyalamak, girilmemiş bir fiyatı girilmiş gibi kaydetmek olurdu.
+    """
+    from .benzer import CIZGILER
+
+    if not isinstance(ham, dict):
+        raise ArsivHatasi("satirin orani bir nesne olmali")
+
+    bloklar: dict[str, dict[str, float | None]] = {c: _bos_blok() for c in CIZGILER}
+    yeni_bicim = False
+    for c in CIZGILER:
+        ic = ham.get(c)
+        if ic is None:
+            continue
+        if not isinstance(ic, dict):
+            raise ArsivHatasi(f"oran.{c} bir nesne olmali")
+        yeni_bicim = True
+        bloklar[c] = {s: _oran(ic.get(s)) for s in SEMBOLLER}
+
+    if yeni_bicim:
+        return bloklar
+
+    # Eski (düz) biçim. Hiçbir hücresi yoksa satır zaten boştur.
+    duz = {s: _oran(ham.get(s)) for s in SEMBOLLER}
+    if any(v is not None for v in duz.values()):
+        bloklar[cizgi] = duz
+    return bloklar
+
+
+def satirlari_dogrula(ham: Any, cizgi: str) -> list[dict[str, Any]]:
+    """15 satır, her satırda lig/ev/dep ve **her çizgi için** 1/0/2.
 
     Eksik satır **tamamlanır**, fazlası kırpılmaz: uzunluk tam 15 değilse
     reddedilir. Sebep, sessiz kaymanın bedeli — 14 satırlık bir kayıt geri
     okunurken 15. maç boş gelir ve kullanıcı bunu fark etmeyebilir.
+
+    `cizgi` yalnızca ESKİ biçimli gövdeler için kullanılır (bkz.
+    `_oranlari_coz`); yeni biçimde hiçbir etkisi yoktur.
     """
     if not isinstance(ham, list):
         raise ArsivHatasi("satirlar bir liste olmali")
@@ -214,11 +282,8 @@ def satirlari_dogrula(ham: Any) -> list[dict[str, Any]]:
     for i, aday in enumerate(ham, start=1):
         if not isinstance(aday, dict):
             raise ArsivHatasi(f"{i}. satir bir nesne olmali")
-        oran_ham = aday.get("oran") or {}
-        if not isinstance(oran_ham, dict):
-            raise ArsivHatasi(f"{i}. satirin orani bir nesne olmali")
         try:
-            oran = {s: _oran(oran_ham.get(s)) for s in SEMBOLLER}
+            oran = _oranlari_coz(aday.get("oran") or {}, cizgi)
         except ArsivHatasi as e:
             raise ArsivHatasi(f"{i}. satir: {e}") from None
         cikti.append({
@@ -237,6 +302,12 @@ def ayari_dogrula(ham: Any) -> dict[str, Any]:
     aynı oranlar açılış evreninde ve kapanış evreninde farklı karne verir.
     Burada sunucunun kendi listeleri kullanılır (`odds.ARINDIRMA_YONTEMLERI`,
     `benzer.CIZGILER`), arayüzün gönderdiği dize değil.
+
+    **`cizgi`nin anlamı 3. sürümde DARALDI.** Artık "bu kaydın tek çizgisi"
+    değil; kayıt iki çizginin karnesini birden taşıyor (`analizler`). Kalan
+    iki işi var: ekranda açılınca hangi çizginin gösterileceği, ve ikili
+    `kupon` bloğunun hangi çizgiden çıktığı. ESKİ kayıtları okumadaki rolü
+    ise kritik: düz yazılmış oran ve tek analiz bu alana göre yerleşir.
     """
     from .benzer import CIZGILER
     from .odds import ARINDIRMA_YONTEMLERI
@@ -372,6 +443,111 @@ def analizi_dogrula(ham: Any) -> dict[str, Any] | None:
     }
 
 
+def analizleri_dogrula(ham: Any, eski: Any, cizgi: str) -> dict[str, Any]:
+    """Kaydın **analiz halkası** — çizgi başına bir karne bloğu.
+
+    Dönen sözlükte her çizgi vardır; koşulmamış olan `None` durur. Alan
+    baştan tam olsun diye: sonradan eklenen bir anahtar, eski kayıtları
+    "eksik" gösterir ve okuyanın her seferinde iki biçimi ayırt etmesini
+    gerektirir (`sonuclari_dogrula` ile aynı gerekçe).
+
+    `eski`, 2. sürümün tek `analiz` bloğudur ve varsa `cizgi`ye oturur —
+    o kayıtta karnenin hangi çizgide ölçüldüğünü zaten o alan söylüyordu.
+    """
+    from .benzer import CIZGILER
+
+    cikti: dict[str, Any] = dict.fromkeys(CIZGILER)
+    if ham is None and eski is None:
+        return cikti
+    if ham is not None and not isinstance(ham, dict):
+        raise ArsivHatasi("analizler ya null ya bir nesne olmali")
+
+    verilen = ham if isinstance(ham, dict) else {}
+    # Bilinmeyen bir çizgi SESSİZCE ATILMAZ: `analizler` sözlüğüne yanlış
+    # anahtarla yazan bir istemci, karnesini kaybettiğini fark etmezdi.
+    for anahtar in verilen:
+        if anahtar not in CIZGILER:
+            raise ArsivHatasi(f"analizler.{anahtar}: cizgi {', '.join(CIZGILER)} olmali")
+    for c in CIZGILER:
+        try:
+            cikti[c] = analizi_dogrula(verilen.get(c))
+        except ArsivHatasi as e:
+            raise ArsivHatasi(f"analizler.{c}: {e}") from None
+
+    if cikti[cizgi] is None and eski is not None:
+        cikti[cizgi] = analizi_dogrula(eski)
+    return cikti
+
+
+def _isaretleri_dogrula(ham: Any, ad: str) -> tuple[list[list[str]], int]:
+    """15 maçın işaretleri ve kolon sayısı — `kupon` ve `sekilli` ortak."""
+    if not isinstance(ham, list) or len(ham) != MAC_SAYISI:
+        raise ArsivHatasi(f"{ad} tam {MAC_SAYISI} olmali")
+    temiz: list[list[str]] = []
+    kolon = 1
+    for i, sec in enumerate(ham, start=1):
+        if not isinstance(sec, list) or not sec:
+            raise ArsivHatasi(f"{i}. macin isareti bos olamaz")
+        bilinmeyen = [x for x in sec if x not in SEMBOLLER]
+        if bilinmeyen:
+            raise ArsivHatasi(f"{i}. macta bilinmeyen sembol: {bilinmeyen!r}")
+        # Yinelenen sembol sessizce TEKILLESIR ama sira KUPON duzenine oturur.
+        satir = [sem for sem in SEMBOLLER if sem in sec]
+        temiz.append(satir)
+        kolon *= len(satir)
+    return temiz, kolon
+
+
+def sekilli_dogrula(ham: Any) -> list[dict[str, Any]]:
+    """**Şekilli kuponlar** — 6 banko/9 üçlü ve 5/5/5, çizgi başına.
+
+    Kurulmamışsa boş liste. Her kayıt hangi çizgiden çıktığını ve hangi
+    şekil anahtarıyla kurulduğunu söyler; `kolon` ile banko/çift/üçlü
+    sayıları YAZILMAZ, **hesaplanır** — yazılsaydı kaydın içinde birbirini
+    yalanlayabilecek iki sayı olurdu (`kuponu_dogrula` ile aynı karar).
+
+    Aynı (çizgi, şekil) çifti iki kez GELEMEZ: ikisi de "açılışın 5/5/5'i"
+    diyen iki satır, hangisinin oynandığını cevaplanamaz yapardı.
+    """
+    from .benzer import CIZGILER
+
+    if ham is None:
+        return []
+    if not isinstance(ham, list):
+        raise ArsivHatasi("sekilli ya null ya bir liste olmali")
+    if len(ham) > SEKIL_SINIRI:
+        raise ArsivHatasi(f"sekilli en cok {SEKIL_SINIRI} kupon tasiyabilir")
+
+    cikti: list[dict[str, Any]] = []
+    gorulen: set[tuple[str, str]] = set()
+    for i, aday in enumerate(ham, start=1):
+        if not isinstance(aday, dict):
+            raise ArsivHatasi(f"sekilli[{i}] bir nesne olmali")
+        cizgi = str(aday.get("cizgi") or "").strip()
+        if cizgi not in CIZGILER:
+            raise ArsivHatasi(f"sekilli[{i}].cizgi: {', '.join(CIZGILER)}")
+        sekil = str(aday.get("sekil") or "").strip()
+        if not SEKIL_DESENI.match(sekil):
+            raise ArsivHatasi(f"sekilli[{i}].sekil bicimi kabul edilmedi: {sekil!r}")
+        if (cizgi, sekil) in gorulen:
+            raise ArsivHatasi(f"sekilli[{i}]: ayni cizgi/sekil iki kez geldi")
+        gorulen.add((cizgi, sekil))
+        try:
+            isaretler, kolon = _isaretleri_dogrula(aday.get("isaretler"), "sekilli.isaretler")
+        except ArsivHatasi as e:
+            raise ArsivHatasi(f"sekilli[{i}]: {e}") from None
+        cikti.append({
+            "cizgi": cizgi,
+            "sekil": sekil,
+            "isaretler": isaretler,
+            "kolon": kolon,
+            "banko": sum(1 for x in isaretler if len(x) == 1),
+            "cift": sum(1 for x in isaretler if len(x) == 2),
+            "uclu": sum(1 for x in isaretler if len(x) == 3),
+        })
+    return cikti
+
+
 def kuponu_dogrula(ham: Any) -> dict[str, Any] | None:
     """Kaydın **kupon halkası** — 15 maçın işaretleri. Kurulmamışsa `None`.
 
@@ -386,22 +562,7 @@ def kuponu_dogrula(ham: Any) -> dict[str, Any] | None:
         return None
     if not isinstance(ham, dict):
         raise ArsivHatasi("kupon ya null ya bir nesne olmali")
-    isaretler = ham.get("isaretler")
-    if not isinstance(isaretler, list) or len(isaretler) != MAC_SAYISI:
-        raise ArsivHatasi(f"kupon.isaretler tam {MAC_SAYISI} olmali")
-
-    temiz: list[list[str]] = []
-    kolon = 1
-    for i, sec in enumerate(isaretler, start=1):
-        if not isinstance(sec, list) or not sec:
-            raise ArsivHatasi(f"{i}. macin isareti bos olamaz")
-        bilinmeyen = [x for x in sec if x not in SEMBOLLER]
-        if bilinmeyen:
-            raise ArsivHatasi(f"{i}. macta bilinmeyen sembol: {bilinmeyen!r}")
-        # Yinelenen sembol sessizce TEKILLESIR ama sira KUPON duzenine oturur.
-        satir = [sem for sem in SEMBOLLER if sem in sec]
-        temiz.append(satir)
-        kolon *= len(satir)
+    temiz, kolon = _isaretleri_dogrula(ham.get("isaretler"), "kupon.isaretler")
 
     return {
         "isaretler": temiz,
@@ -468,6 +629,9 @@ def kaydi_kur(govde: dict[str, Any], no: int,
     """
     simdi = _simdi()
     ad = _metin(govde.get("ad"), AD_SINIR)
+    # Ayar ONCE cozulur: satirlarin ve analizin ESKI bicimden gocu, kaydin
+    # kendi cizgisini bilmeyi gerektiriyor (bkz. `_oranlari_coz`).
+    ayar = ayari_dogrula(govde.get("ayar"))
     return {
         "surum": SURUM,
         "sezon": sezon_dogrula(govde.get("sezon") or VARSAYILAN_SEZON),
@@ -479,10 +643,13 @@ def kaydi_kur(govde: dict[str, Any], no: int,
         "girildi": (onceki or {}).get("girildi") or simdi,
         "guncellendi": simdi,
         "not": _metin(govde.get("not"), NOT_SINIR),
-        "ayar": ayari_dogrula(govde.get("ayar")),
-        "satirlar": satirlari_dogrula(govde.get("satirlar")),
-        "analiz": analizi_dogrula(govde.get("analiz")),
+        "ayar": ayar,
+        "satirlar": satirlari_dogrula(govde.get("satirlar"), ayar["cizgi"]),
+        "analizler": analizleri_dogrula(
+            govde.get("analizler"), govde.get("analiz"), ayar["cizgi"],
+        ),
         "kupon": kuponu_dogrula(govde.get("kupon")),
+        "sekilli": sekilli_dogrula(govde.get("sekilli")),
         "sonuclar": sonuclari_dogrula(govde.get("sonuclar")),
     }
 
@@ -545,8 +712,34 @@ def sil(sezon: Any, no: Any) -> bool:
     return True
 
 
-def _dolu_satir(satir: dict[str, Any]) -> bool:
-    return all(satir.get("oran", {}).get(s) is not None for s in SEMBOLLER)
+def _cizgiler() -> tuple[str, ...]:
+    """Sunucunun çizgi listesi. `benzer` içe aktarımı TEMBEL: bu modül
+    korpusu açan bir modülü import zincirine sokmamalı."""
+    from .benzer import CIZGILER
+
+    return tuple(CIZGILER)
+
+
+def _dolu_satir(satir: dict[str, Any], cizgi: str, kayit_cizgisi: str) -> bool:
+    """Satırın **o çizgideki** üç oranı da girilmiş mi.
+
+    Çizgi başına sayılır, çünkü iki blok bağımsız doldurulabiliyor: yalnızca
+    kapanışı girilmiş bir tabloda "15/15 oran tam" demek, açılışın da hazır
+    olduğunu söylemek olurdu.
+
+    Listede 2. sürüm dosyaları da okunuyor ve orada oran DÜZ yazılmıştı;
+    `kayit_cizgisi` o bloğun hangi çizgiye ait olduğunu söyler (aynı göç
+    kuralı `_oranlari_coz`da). Doğrulama YOK — liste bozuk bir dosya
+    yüzünden düşmemeli, `kayit_alanlari` orada sayılmaz.
+    """
+    oran = satir.get("oran") or {}
+    blok = oran.get(cizgi)
+    if not isinstance(blok, dict):
+        # Düz (eski) biçim: yalnızca kaydın kendi çizgisinde sayılır.
+        blok = oran if cizgi == kayit_cizgisi and not any(
+            isinstance(oran.get(c), dict) for c in _cizgiler()
+        ) else {}
+    return all(blok.get(s) is not None for s in SEMBOLLER)
 
 
 def listele(sezon: Any = None) -> list[dict[str, Any]]:
@@ -572,7 +765,13 @@ def listele(sezon: Any = None) -> list[dict[str, Any]]:
             continue
         satirlar = k.get("satirlar") or []
         kupon = k.get("kupon") or {}
-        analiz = k.get("analiz") or {}
+        # 2. sürüm kayıtlarında tek `analiz` vardı; listede ikisi de aynı
+        # soruya cevap veriyor ("karne var mı"), o yüzden birleşik okunur.
+        kayit_cizgisi = (k.get("ayar") or {}).get("cizgi") or "kapanis"
+        analizler = k.get("analizler") or {}
+        if not analizler and k.get("analiz"):
+            analizler = {kayit_cizgisi: k["analiz"]}
+        olculenler = [a.get("olculdu") for a in analizler.values() if a]
         cikti.append({
             "no": k.get("no"),
             "ad": k.get("ad") or "",
@@ -581,12 +780,20 @@ def listele(sezon: Any = None) -> list[dict[str, Any]]:
             "guncellendi": k.get("guncellendi"),
             "not": k.get("not", ""),
             "ayar": k.get("ayar"),
-            "oranli_mac": sum(1 for s in satirlar if _dolu_satir(s)),
+            # Çizgi başına sayı: hangi tarafın hazır olduğu listeden okunsun.
+            "oranli_mac": {
+                c: sum(1 for s in satirlar if _dolu_satir(s, c, kayit_cizgisi))
+                for c in _cizgiler()
+            },
             "adli_mac": sum(1 for s in satirlar if s.get("ev") and s.get("dep")),
-            "analiz_var": bool(analiz),
-            "analiz_olculdu": analiz.get("olculdu"),
+            "analiz_var": bool(olculenler),
+            # En YENİ damga: liste "bu kayıt ne zaman ölçüldü" sorusuna tek
+            # sayı ile cevap verir, iki çizginin ikisini birden yazmaz.
+            "analiz_olculdu": max(olculenler) if olculenler else None,
+            "analiz_cizgileri": sorted(c for c, a in analizler.items() if a),
             "kupon_var": bool(kupon),
             "kolon": kupon.get("kolon"),
+            "sekilli_sayisi": len(k.get("sekilli") or []),
             "sonuc_var": bool(k.get("sonuclar")),
         })
     cikti.sort(key=lambda d: d["no"] or 0)

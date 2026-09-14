@@ -146,25 +146,41 @@ _ARSIV_GOVDESI: dict[str, Any] = {
     "not": "sozlesme ornegi",
     "ayar": {"cizgi": "kapanis", "arindirma": "shin", "en_az": 200,
              "tarih": "", "kapsam": "tum"},
+    # Satir IKI fiyat tasiyor (acilis ve kapanis) ve karne cizgi basina
+    # saklaniyor: sozlesme ornegi de ikisini birden doldurmali, yoksa
+    # `ArsivKaydi.analizler`in sekli tek cizgiyle ciker.
     "satirlar": [
         {"lig": "T1", "ev": f"ev{i}", "dep": f"dep{i}",
-         "oran": {"1": "2.0", "0": "3.2", "2": "3.8"}}
+         "oran": {"acilis": {"1": "2.1", "0": "3.3", "2": "3.6"},
+                  "kapanis": {"1": "2.0", "0": "3.2", "2": "3.8"}}}
         for i in range(15)
     ],
-    "analiz": {
-        "olculdu": "2026-09-14T15:00:00+00:00",
-        "evren": 23085,
-        "satirlar": [
-            {"n": 225, "yeterli": True, "tolerans": 0.015,
-             "tolerans_genisledi": False, "tolerans_tavana_dayandi": False,
-             "semboller": {s: dict(_ARSIV_SEMBOLU) for s in ("1", "0", "2")}}
-            for _ in range(15)
-        ],
+    "analizler": {
+        c: {
+            "olculdu": "2026-09-14T15:00:00+00:00",
+            "evren": 23085,
+            "satirlar": [
+                {"n": 225, "yeterli": True, "tolerans": 0.015,
+                 "tolerans_genisledi": False, "tolerans_tavana_dayandi": False,
+                 "semboller": {s: dict(_ARSIV_SEMBOLU) for s in ("1", "0", "2")}}
+                for _ in range(15)
+            ],
+        }
+        for c in ("acilis", "kapanis")
     },
     "kupon": {
         "isaretler": [["1"]] * 8 + [["1", "0"]] * 5 + [["1", "0", "2"]] * 2,
         "not": "sozlesme ornegi",
     },
+    # Sahibinin iki sekli: 6 banko + 9 uclu (3^9) ve 5/5/5 (2^5 * 3^5).
+    "sekilli": [
+        {"cizgi": c, "sekil": sekil, "isaretler": isaretler}
+        for c in ("acilis", "kapanis")
+        for sekil, isaretler in (
+            ("b6u9", [["1"]] * 6 + [["1", "0", "2"]] * 9),
+            ("b5c5u5", [["1"]] * 5 + [["1", "0"]] * 5 + [["1", "0", "2"]] * 5),
+        )
+    ],
     "sonuclar": None,
 }
 

@@ -1662,10 +1662,13 @@ export interface PazarResponse {
 /**
  * Bir kuponun kaydı (`spor_toto/kupon_arsivi.py`).
  *
- * Arşivin birimi hafta değil **kupon**: bir haftanın birden çok kuponu olur
- * (biri açılışla, öteki kapanışla). Kayıt zincirin dördünü birden taşır —
- * girdi · ayar · analiz · kupon — çünkü bir halkası eksikse kayıt "neden bu
+ * Arşivin birimi hafta değil **kupon**. Kayıt zincirin dördünü birden taşır —
+ * girdi · ayar · analizler · kupon — çünkü bir halkası eksikse kayıt "neden bu
  * işaretler" sorusunu cevaplayamaz.
+ *
+ * 3. sürümde satır **iki fiyat** taşıyor (açılış ve kapanış) ve karne çizgi
+ * başına saklanıyor: bir hafta artık dört kupon üretiyor ve dördü aynı 15
+ * maçın iki ayrı fiyatından çıkıyor.
  */
 export interface ArsivKaydi {
   surum: number;
@@ -1682,15 +1685,23 @@ export interface ArsivKaydi {
   not: string;
   ayar: ArsivAyari;
   satirlar: ArsivSatiri[];
-  /** Koşulmamışsa `null`. */
-  analiz: ArsivAnalizi | null;
-  /** Kurulmamışsa `null`. */
+  /** Çizgi başına karne; koşulmamış çizgi `null` durur (anahtar hep vardır). */
+  analizler: Record<Cizgi, ArsivAnalizi | null>;
+  /** İkili kupon (`ayar.cizgi`nin en yüksek iki sembolü). Kurulmamışsa `null`. */
   kupon: ArsivKuponu | null;
+  /** Şekilli kuponlar — 6/9 ve 5/5/5, çizgi başına. Kurulmamışsa boş liste. */
+  sekilli: ArsivSekilliKuponu[];
   /** Hafta oynandıktan sonra girilen 1/0/2; girilmemişse `null`. */
   sonuclar: (string | null)[] | null;
 }
 
 export interface ArsivAyari {
+  /**
+   * Kaydın çizgisi. 3. sürümde anlamı DARALDI: artık "bu kaydın tek
+   * çizgisi" değil, ekranda hangi çizginin açılacağı ve ikili `kupon`
+   * bloğunun hangi çizgiden çıktığı. Eski kayıtlarda düz yazılmış oran ve
+   * tek analiz bu alana göre yerleşir.
+   */
   cizgi: Cizgi;
   arindirma: string;
   en_az: number;
@@ -1710,8 +1721,11 @@ export interface ArsivSatiri {
   lig: string;
   ev: string;
   dep: string;
-  /** Boş hücre `null` — yarım tablo da kaydedilebilir. */
-  oran: Record<Sembol, number | null>;
+  /**
+   * Her çizginin kendi 1/0/2'si. Boş hücre `null` — yarım tablo da
+   * kaydedilebilir, ve bir çizgi tamamen boş bırakılabilir.
+   */
+  oran: Record<Cizgi, Record<Sembol, number | null>>;
 }
 
 /**
@@ -1740,6 +1754,23 @@ export interface ArsivKarnesi {
   semboller: Record<Sembol, BenzerSembol>;
 }
 
+/**
+ * Şekilli kupon — sabit banko/çift/üçlü dağılımıyla kurulan kupon.
+ *
+ * `kolon` ve sayımlar sunucuda HESAPLANIR; gönderilen değer yok sayılır.
+ * `sekil` arayüzün `SEKILLER` listesindeki anahtardır (`b6u9`, `b5c5u5`) —
+ * sunucu listeyi kopyalamaz, yalnızca anahtarın biçimini doğrular.
+ */
+export interface ArsivSekilliKuponu {
+  cizgi: Cizgi;
+  sekil: string;
+  isaretler: Sembol[][];
+  kolon: number;
+  banko: number;
+  cift: number;
+  uclu: number;
+}
+
 export interface ArsivKuponu {
   /** 15 maçın işaretleri; sıra kupon düzeni (1, 0, 2). Boş satır olamaz. */
   isaretler: Sembol[][];
@@ -1757,13 +1788,18 @@ export interface ArsivOzeti {
   guncellendi: string;
   not: string;
   ayar: ArsivAyari | null;
-  oranli_mac: number;
+  /** Çizgi başına "üç oranı da girilmiş" satır sayısı. */
+  oranli_mac: Record<Cizgi, number>;
   adli_mac: number;
   /** Zincirin durumu — liste ekranında okunacak asıl şey. */
   analiz_var: boolean;
+  /** Çizgilerin EN YENİ damgası; hiç analiz yoksa `null`. */
   analiz_olculdu: string | null;
+  /** Karnesi olan çizgiler (alfabetik). */
+  analiz_cizgileri: Cizgi[];
   kupon_var: boolean;
   kolon: number | null;
+  sekilli_sayisi: number;
   sonuc_var: boolean;
 }
 
