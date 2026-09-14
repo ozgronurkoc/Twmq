@@ -538,7 +538,10 @@
   "GET /api/kupon/arsiv": {
    "kayitlar": [
     {
+     "ad": "str",
      "adli_mac": "int",
+     "analiz_olculdu": "str",
+     "analiz_var": "bool",
      "ayar": {
       "arindirma": "str",
       "cizgi": "str",
@@ -548,6 +551,9 @@
      "girildi": "str",
      "guncellendi": "str",
      "hafta": "int",
+     "kolon": "int",
+     "kupon_var": "bool",
+     "no": "int",
      "not": "str",
      "oranli_mac": "int",
      "sonuc_var": "bool"
@@ -555,7 +561,47 @@
    ],
    "sezon": "str"
   },
-  "GET /api/kupon/arsiv/<hafta>": {
+  "GET /api/kupon/arsiv/<no>": {
+   "ad": "str",
+   "analiz": {
+    "evren": "int",
+    "olculdu": "str",
+    "satirlar": [
+     {
+      "n": "int",
+      "semboller": {
+       "0": {
+        "adet": "int",
+        "ga_alt": "float",
+        "ga_ust": "float",
+        "oran": "float",
+        "piyasa": "float",
+        "piyasa_ga_icinde": "bool"
+       },
+       "1": {
+        "adet": "int",
+        "ga_alt": "float",
+        "ga_ust": "float",
+        "oran": "float",
+        "piyasa": "float",
+        "piyasa_ga_icinde": "bool"
+       },
+       "2": {
+        "adet": "int",
+        "ga_alt": "float",
+        "ga_ust": "float",
+        "oran": "float",
+        "piyasa": "float",
+        "piyasa_ga_icinde": "bool"
+       }
+      },
+      "tolerans": "float",
+      "tolerans_genisledi": "bool",
+      "tolerans_tavana_dayandi": "bool",
+      "yeterli": "bool"
+     }
+    ]
+   },
    "ayar": {
     "arindirma": "str",
     "cizgi": "str",
@@ -565,6 +611,16 @@
    "girildi": "str",
    "guncellendi": "str",
    "hafta": "int",
+   "kupon": {
+    "isaretler": [
+     [
+      "str"
+     ]
+    ],
+    "kolon": "int",
+    "not": "str"
+   },
+   "no": "int",
    "not": "str",
    "satirlar": [
     {
@@ -1861,6 +1917,46 @@
    "worst": "int"
   },
   "POST /api/kupon/arsiv": {
+   "ad": "str",
+   "analiz": {
+    "evren": "int",
+    "olculdu": "str",
+    "satirlar": [
+     {
+      "n": "int",
+      "semboller": {
+       "0": {
+        "adet": "int",
+        "ga_alt": "float",
+        "ga_ust": "float",
+        "oran": "float",
+        "piyasa": "float",
+        "piyasa_ga_icinde": "bool"
+       },
+       "1": {
+        "adet": "int",
+        "ga_alt": "float",
+        "ga_ust": "float",
+        "oran": "float",
+        "piyasa": "float",
+        "piyasa_ga_icinde": "bool"
+       },
+       "2": {
+        "adet": "int",
+        "ga_alt": "float",
+        "ga_ust": "float",
+        "oran": "float",
+        "piyasa": "float",
+        "piyasa_ga_icinde": "bool"
+       }
+      },
+      "tolerans": "float",
+      "tolerans_genisledi": "bool",
+      "tolerans_tavana_dayandi": "bool",
+      "yeterli": "bool"
+     }
+    ]
+   },
    "ayar": {
     "arindirma": "str",
     "cizgi": "str",
@@ -1870,6 +1966,16 @@
    "girildi": "str",
    "guncellendi": "str",
    "hafta": "int",
+   "kupon": {
+    "isaretler": [
+     [
+      "str"
+     ]
+    ],
+    "kolon": "int",
+    "not": "str"
+   },
+   "no": "int",
    "not": "str",
    "satirlar": [
     {

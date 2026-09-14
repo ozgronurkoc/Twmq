@@ -472,6 +472,52 @@ try {
     assert.equal(KA.analizeHazir(dolu, { ...KA.VARSAYILAN_ANALIZ, tarih: "dun" }), false);
   });
 
+  dene("analiz gidis-donusu: kaydedilen karne EKRANDAKIYLE ayni", () => {
+    // Kupon analizden CIKIYOR; kayit analizi tasimasaydi "neden bu
+    // isaretler" sorusu bir daha cevaplanamazdi. Bu bekci, kaydedilenle
+    // acilanin ayni tabloyu verdigini tutuyor.
+    const sembol = (icinde) => ({
+      adet: 80, oran: 0.42, ga_alt: 0.31, ga_ust: 0.53,
+      piyasa: 0.44, fark: -0.02, piyasa_ga_icinde: icinde,
+    });
+    const cevap = (n, icinde) => ({
+      evren: 23085, tolerans: 0.015, tolerans_genisledi: false,
+      tolerans_tavana_dayandi: false,
+      toplam: { n, yeterli: n >= 30, semboller: { "1": sembol(icinde), "0": sembol(true), "2": sembol(true) } },
+    });
+    const sonuclar = Array.from({ length: TIP.MAC_SAYISI }, (_, i) => ({
+      durum: "bitti", hata: null, veri: cevap(200 + i, i === 3 ? false : true),
+    }));
+
+    const kayit = KA.analizdenKayit(sonuclar, KA.evreniOku(sonuclar.map((s) => s.veri)));
+    assert.equal(kayit.evren, 23085, "evren CEVABIN kendisinden okunur");
+    assert.ok(kayit.olculdu, "damgasiz analiz yazilmaz");
+    assert.equal(kayit.satirlar.length, TIP.MAC_SAYISI);
+
+    // Geri acilan analiz AYNI ozeti vermeli — yoksa "kaydettigimle
+    // gordugum ayni mi" sorusu dogar.
+    const geri = KA.kayittanAnaliz(kayit);
+    assert.deepEqual(KA.analizOzeti(geri), KA.analizOzeti(sonuclar));
+    assert.deepEqual(KA.analizOzeti(geri).sapan, [3]);
+    assert.equal(geri[0].veri.toplam.n, 200);
+
+    // Hic satir bitmemisse kayit YOK: bos bir analiz blogu yazmak, kosulmus
+    // gibi gostermek olurdu.
+    assert.equal(KA.analizdenKayit(KA.bosAnaliz(TIP.MAC_SAYISI), 23085), null);
+    // Evren okunamiyorsa da yazilmaz — damganin yarisi eksik kalirdi.
+    assert.equal(KA.analizdenKayit(sonuclar, null), null);
+    assert.equal(KA.evreniOku([null, null]), null);
+
+    // Sorgusu HATA almis satir `null` durur ve bu bir kayip degil, kayittir.
+    const eksikli = sonuclar.map((s, i) => (i === 7 ? { durum: "hata", veri: null, hata: "500" } : s));
+    const k2 = KA.analizdenKayit(eksikli, 23085);
+    assert.equal(k2.satirlar[7], null);
+    assert.equal(KA.kayittanAnaliz(k2)[7].durum, "bos");
+
+    // Analiz hic yoksa tablo bos acilir, patlamaz.
+    assert.equal(KA.kayittanAnaliz(null).length, TIP.MAC_SAYISI);
+  });
+
   // ── Kume-ici hesabi ──────────────────────────────────────────────────
 
   // README'nin ornek kuponu + check.sh'in ornek olasiliklari. Ikisi de
@@ -781,7 +827,7 @@ try {
     "POST /api/solve": "SolveResponse",
     "POST /api/kupon/arsiv": "ArsivKaydi",
     "GET /api/kupon/arsiv": "ArsivListesi",
-    "GET /api/kupon/arsiv/<hafta>": "ArsivKaydi",
+    "GET /api/kupon/arsiv/<no>": "ArsivKaydi",
   };
 
   /**

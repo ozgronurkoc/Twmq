@@ -70,48 +70,55 @@ benim kararım):
 
 **2026-09-14 — dal `claude/match-analysis-coupon-page-p7w5dd`**
 
-### Bu oturumda: `/kupon` sayfası — giriş · analiz · **hafta arşivi**
+### Bu oturumda: `/kupon` sayfası — giriş · analiz · **kupon arşivi**
 
 Sahibi yeni bir sayfa istedi ve zinciri kendi cümlesiyle kurdu: *15 satır ·
 elle maç ve 1/0/2 oranı · oran analizinden veri çek · kupon oluştur · en
 mantıklı seçenekler · **tüm liglerin** sonucu · açılış/kapanış ve
-shin/güç/orantılı seçilebilsin.* Üç aşamanın **ikisi** bitti.
+shin/güç/orantılı seçilebilsin.* Sonra arşivi tarif etti: *"bu kupon benim
+1 numaralı kuponum oluyor, istediğim ismi verebiliyor olmam lazım; açtığımda
+hem maçları hem oranları hem oran analizini hem de kuponu görmeliyim."*
 
-**1. aşama — giriş tablosu.** `lib/kupon.ts` (saf: doğrulama, marj, favori,
-kalıcılık), `components/kupon/izgara.tsx` (15×6; Tab satır, ok/Enter sütun
-boyunca), `app/kupon/page.tsx`. Sayfa hiçbir şeyi kendiliğinden
-DOLDURMUYOR: depo 5. haftanın Pinnacle oranlarını taşıyor ama sahibinin
-gireceği fiyat iddaa bülteninden gelecek.
+**Bitti:** 1. aşama (giriş tablosu) · 2. aşama (15 satır tek ayarla tüm
+liglerin korpusunda) · arşiv (bir kupon = bir kayıt).
+**Bitmedi:** kuponun kendisi — olasılık ve işaret seçimi.
 
-**2. aşama — 15 satırın tamamı tek ayarla korpusta aranıyor.** Tek çubuk:
-çizgi · arındırma · hedef örneklem · kronolojik kesme. **Lig süzgeci
-bilerek yok** (sahibinin isteği: tüm ligler). Her hücrede üstte karne,
-altta piyasa; sapma işareti YALNIZCA `piyasa_ga_icinde=false` ile basılıyor
-— arayüz kendi eşiğini uydurmuyor.
+### Arşivin birimi HAFTA değil KUPON
 
-**3. Hafta arşivi — API'nin DİSKE YAZAN ilk uç ailesi.** Sahibi sordu
-("hafta hafta kaydedebilir miyim"), nereye yazılacağını sorunca *"sen benim
-dediğimi yap, ben bu ekranda kaydedeceğim"* dedi. Sunucuya yazılıyor:
-`backend/data/kupon_arsivi/<sezon>/hafta_NN.json`, `spor_toto/kupon_arsivi.py`
-+ `GET·POST /api/kupon/arsiv` + `GET·DELETE /api/kupon/arsiv/<hafta>`.
+İlk sürüm haftaya göre kaydediyordu; sahibinin tarifi bunu değiştirdi. Bir
+haftanın birden çok kuponu olur (biri açılışla, öteki kapanışla) ve bunlar
+birbirinin sürümü değil AYRI denemelerdir. Kimlik `no`, hafta yalnızca
+etiket, ad serbest. Numara **yeniden kullanılmaz**: silinen numara boşalsa
+"2 numaralı kupon" iki kayda işaret ederdi.
 
-### Ölçülen ve karara bağlanan iki şey
+Kayıt zincirin dördünü birden taşır: **girdi · ayar · analiz · işaretler**.
 
-1. **Toplu uç EKLENMEDİ.** 15 sorgu korpus sıcakken **0,81 sn** (54 ms/satır);
-   ilk sorgu 1,98 sn ve onun tamamı korpus okuması. Kazanç, ayrışabilecek
-   ikinci bir sorgu yolunun bakım borcunu ödemiyor. Kütüğe yazıldı.
-2. **`hafta_NN.json`un ÜSTÜNE yazılmıyor.** O dosya `odds_source`,
-   `entered_at` ve dokuz maddelik `data_warnings` taşıyor; arayüzden gelen
-   bir kayıt onu ezseydi kanıt zinciri sessizce silinirdi. Yeni kayıt ayrı
-   ailede, yanında duruyor. Karne de arşive GİRMİYOR — türetilmiş veri
-   korpus büyüdükçe bayatlar.
+### Geri alınan karar: analiz artık KAYDEDİLİYOR
+
+İlk sürümde karne bilerek atılıyordu (*"türetilmiş veri bayatlar"*). Teşhis
+doğruydu, çare yanlıştı: kupon o analizden çıkıyor, analiz atılırsa kayıt
+kendi kararının gerekçesini kaybeder. Bayatlamanın çaresi atmak değil
+**damgalamak** — ölçüm kütüğünün baştan beri yaptığı şey. `analiz.olculdu`
+ve `analiz.evren` zorunlu; sunucu damgasız analizi reddediyor, arayüz
+kaydı açarken damgayı yazıyor ("kayıttan: 2026-09-14 ölçüldü, 23.083
+maçlık evren").
+
+Arşive GİRMEYEN iki şey kaldı: lig kırılımı ve karnenin arkasındaki maç
+listesi — ikisi de `/oran-analizi`de tek tıkla açılıyor ve kaydı on katına
+çıkarırdı.
+
+### Ölçülen
+
+15 sorgu korpus sıcakken **0,81 sn** (54 ms/satır); ilk sorgu 1,98 sn ve
+tamamı korpus okuması. Toplu uç bu yüzden EKLENMEDİ. Kütükte.
 
 ### Sıradaki adım
 
-**Sahibi anlatmaya devam edecek.** Hâlâ karara bağlanmamış olanlar:
-olasılık kaynağı (piyasa ↔ karne ↔ karışım), kuponun nerede üretileceği,
-işaret seçiminin bütçesi, ve `benzer`in ileri yürüyüş ölçümünün (§6.1)
-sırası. Dördü de soruldu, sahibi "anlatacağım" dedi.
+**Kuponun kendisi.** Karara bağlanmamış olanlar (dördü de soruldu, sahibi
+"anlatacağım" dedi): olasılık kaynağı (piyasa ↔ karne ↔ karışım), kuponun
+nerede üretileceği, işaret seçiminin bütçesi, ve `benzer`in ileri yürüyüş
+ölçümünün (§6.1) sırası. Kayıt biçiminde `kupon` alanı hazır ve şu an
+`null` gidiyor.
 
 Teknik olarak bekleyenler değişmedi: 729 kuponun operasyonu (§3.75),
 6. haftada `--yaz` ile dondurma, kesintisiz 13 haftalık pencere çıkınca
@@ -119,15 +126,15 @@ Teknik olarak bekleyenler değişmedi: 729 kuponun operasyonu (§3.75),
 
 ### Neden böyle
 
-Arşiv tarayıcıya değil diske yazılıyor ve gerekçe ölçüm kütüğününkiyle
+Arşiv tarayıcıya değil diske yazılıyor; gerekçe ölçüm kütüğününkiyle
 birebir aynı: **elle girilen bir kayıt depodan yeniden üretilemez**, o
-yüzden git'e girer. Türetilmiş olan (envanter, karne, kolonlar) her zaman
-yeniden üretilebilir ve sürümlenmez.
+yüzden git'e girer. `hafta_NN.json`un üstüne de yazılmıyor — o dosyanın
+dokuz maddelik `data_warnings` künyesi arayüzden gelen bir kayıtla
+ezilseydi kanıt zinciri sessizce silinirdi.
 
-Bir bekçi genelleştirildi: `test_belgeler.py`in API tablosu denetimi
-Flask dönüştürücüsünü yalnızca `<int:week>` için düşürüyordu ve ikinci bir
-sayısal parametre gelince tabloda satırı OLAN bir ucu eksik saydı. Kural
-gevşetilmedi, adına bakılmaz hâle getirildi.
+Bir bekçi genelleştirildi: `test_belgeler.py`in API tablosu denetimi Flask
+dönüştürücüsünü yalnızca `<int:week>` için düşürüyordu. Kural gevşetilmedi,
+adına bakılmaz hâle getirildi.
 
 ## Geçmiş girdiler
 

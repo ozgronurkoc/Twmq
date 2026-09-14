@@ -1,6 +1,16 @@
 import { ARINDIRMA_YONTEMLERI, type ArindirmaYontemi } from "./api";
 import { oranSayilari, oranTam, type KuponSatiri } from "./kupon";
-import { CIZGILER, SEMBOLLER, type BenzerResponse, type Cizgi, type Sembol } from "./types";
+import {
+  CIZGILER,
+  MAC_SAYISI,
+  SEMBOLLER,
+  type ArsivAnalizi,
+  type ArsivKarnesi,
+  type BenzerResponse,
+  type BenzerSembol,
+  type Cizgi,
+  type Sembol,
+} from "./types";
 
 /**
  * Kupon kurucunun 2. asamasi: 15 satirin AYNI ayarla korpusta aranmasi.
@@ -53,9 +63,28 @@ export const VARSAYILAN_ANALIZ: AnalizAyari = {
 /** Tek satirin analizdeki hali. */
 export type SatirDurumu = "bos" | "kosuyor" | "bitti" | "hata";
 
+/**
+ * Tablonun cizmek icin ihtiyac duydugu EN KUCUK karne.
+ *
+ * `BenzerResponse` bunu yapisal olarak zaten karsiliyor; arsivden gelen
+ * damgali kayit (`ArsivKarnesi`) da. Tek bir tablo bileseni ikisini de
+ * cizebilsin diye tip burada daraltildi: canli sorgu ile acilan kayit ayni
+ * ekrani vermeli, yoksa "kaydettigimle gordugum ayni mi" sorusu dogar.
+ */
+export interface KarneGorunumu {
+  tolerans: number;
+  tolerans_genisledi: boolean;
+  tolerans_tavana_dayandi: boolean;
+  toplam: {
+    n: number;
+    yeterli: boolean;
+    semboller: Record<Sembol, BenzerSembol>;
+  };
+}
+
 export interface SatirAnalizi {
   durum: SatirDurumu;
-  veri: BenzerResponse | null;
+  veri: KarneGorunumu | null;
   hata: string | null;
 }
 
@@ -205,4 +234,71 @@ export function sembolSapiyorMu(
   const s = veri?.toplam.semboller[sembol];
   if (!s || s.piyasa_ga_icinde == null) return null;
   return !s.piyasa_ga_icinde;
+}
+
+// ─── Arsiv cevrimi ────────────────────────────────────────────────────────
+//
+// Kupon, analizden CIKIYOR. Kayit analizi tasimasaydi "neden bu isaretler"
+// sorusu bir daha cevaplanamazdi (`spor_toto/kupon_arsivi.py` kunyesi).
+// Buradaki iki fonksiyon o halkayi ceviriyor; ikisi de saf.
+
+/**
+ * Kosulmus analizi arsiv blogua cevirir. Hic satir bitmemisse `null`.
+ *
+ * `evren` ilk BITEN satirdan okunur: damganin ikinci yarisi odur ve
+ * uydurulamaz — hangi buyuklukteki korpusta olculdugunu ancak cevabin
+ * kendisi soyler. Sunucu damgasiz analizi reddediyor.
+ */
+export function analizdenKayit(
+  sonuclar: SatirAnalizi[],
+  evren: number | null,
+): ArsivAnalizi | null {
+  const biten = sonuclar.some((s) => s.durum === "bitti" && s.veri);
+  if (!biten || !evren || evren <= 0) return null;
+  return {
+    olculdu: new Date().toISOString(),
+    evren,
+    satirlar: Array.from({ length: MAC_SAYISI }, (_, i) => {
+      const s = sonuclar[i];
+      // Sorgusu hata almis ya da hic kosmamis satir `null` durur: bu bir
+      // kayip degil, kaydin kendisidir.
+      if (!s || s.durum !== "bitti" || !s.veri) return null;
+      const k: ArsivKarnesi = {
+        n: s.veri.toplam.n,
+        yeterli: s.veri.toplam.yeterli,
+        tolerans: s.veri.tolerans,
+        tolerans_genisledi: s.veri.tolerans_genisledi,
+        tolerans_tavana_dayandi: s.veri.tolerans_tavana_dayandi,
+        semboller: s.veri.toplam.semboller,
+      };
+      return k;
+    }),
+  };
+}
+
+/** Arsivden gelen analizi tabloya cevirir — canli sorguyla AYNI sekil. */
+export function kayittanAnaliz(analiz: ArsivAnalizi | null): SatirAnalizi[] {
+  if (!analiz) return bosAnaliz(MAC_SAYISI);
+  return Array.from({ length: MAC_SAYISI }, (_, i) => {
+    const k = analiz.satirlar?.[i];
+    if (!k) return { durum: "bos" as SatirDurumu, veri: null, hata: null };
+    return {
+      durum: "bitti" as SatirDurumu,
+      veri: {
+        tolerans: k.tolerans,
+        tolerans_genisledi: k.tolerans_genisledi,
+        tolerans_tavana_dayandi: k.tolerans_tavana_dayandi,
+        toplam: { n: k.n, yeterli: k.yeterli, semboller: k.semboller },
+      },
+      hata: null,
+    };
+  });
+}
+
+/** Kosulmus sorgularin evreni — hepsinde ayni olmali, ilk bulunani yeter. */
+export function evreniOku(sonuclar: (BenzerResponse | null)[]): number | null {
+  for (const v of sonuclar) {
+    if (v && Number.isFinite(v.evren) && v.evren > 0) return v.evren;
+  }
+  return null;
 }

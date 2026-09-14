@@ -1147,7 +1147,7 @@ backend/
     artefakt.py        Egitilmis modelin diske yazimi + bayatlik denetimi
     kosum.py           Olcum kosum defteri (--kaydet) — surumlenmez
     benzer.py          "Bu oranda geçmişte ne oldu" = /api/benzer
-    kupon_arsivi.py    KUPON: haftalik elle giris kaydi = /api/kupon/arsiv (diske YAZAN tek uc)
+    kupon_arsivi.py    KUPON: kupon kaydi (girdi·ayar·analiz·isaret) = /api/kupon/arsiv (diske YAZAN tek uc)
     secim.py           KUPON: işaretleri HEDEFE göre seçer — eşiğe göre değil
     duz.py             KUPON: düz sistemde kademe başına KOLON SAYIMI ve para (seyreltmeli)
     coklu.py           KUPON: ayni butceyi COK KUPONA boler — carpim kisitini kaldirir
@@ -1195,7 +1195,7 @@ backend/
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
                        sehir/ · sistem_fiyat/
-  tests/               pytest (82 dosya → 2.072 test; §9'da katman dökümü)
+  tests/               pytest (82 dosya → 2.083 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1405,7 +1405,7 @@ dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri t
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
 eşleme, ikinci kayıt). **82 test dosyası, parametrizasyonla
-2.072 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+2.083 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
@@ -1451,7 +1451,7 @@ karşı denetler):
 | Görev ölçeğinde para karnesi (kademe sayımı · kupon ayrıklığı · KAZANANSIZ kademe · seyrelme yönü) | **`coklu_karne`** | 7 |
 | Bütçe cephesi (bekleme ↔ beklenen harcama · `p` içbükeyliği · tüm kolonlarda P=1) | **`butce_egrisi`** | 6 |
 | Haftalar arası bağımlılık (komşuluk tanımı · sezon sınırı · ÖLÇÜLEMEDİ satırı düşmez) | **`haftalar_arasi`** | 6 |
-| Kupon arşivi (yol kaçağı · yarım tablo ↔ bozuk oran · künye korunur · karne TAŞIMAZ) | **`kupon_arsivi`** | 16 |
+| Kupon arşivi (yol kaçağı · numara yeniden kullanılmaz · zincir: girdi ↔ analiz ↔ kupon · **damgasız analiz yazılamaz** · kolon hesaplanır) | **`kupon_arsivi`** | 27 |
 
 İki test bilerek **ağa çıkmaz**: `test_snapshot_iddaa.py` gerçek bültenden alınmış
 küçük bir örnek payload üzerinde koşar — ağ çağrısını sınamak bu paketin işi değil,

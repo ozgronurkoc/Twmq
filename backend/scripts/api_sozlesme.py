@@ -130,11 +130,18 @@ _SOLVE_PROBS = [
 ]
 
 
-#: Arsiv ucunun ornek govdesi. Sayilar onemsiz, SEKIL onemli: 15 satirin
-#: hepsi dolu olmali (uc yarim satiri kabul eder ama sozlesme `oran`
-#: alanlarinin tipini ancak dolu bir satirda gorur).
+#: Arsiv ucunun ornek govdesi. Sayilar onemsiz, SEKIL onemli ve ZINCIRIN
+#: DORDU DE dolu olmali: analiz `null` gonderilseydi `ArsivAnalizi` ve
+#: `ArsivKarnesi` alanlarinin hicbiri sozlesmeye girmezdi — tam da arayuzun
+#: kaydi acarken okudugu blok denetimsiz kalirdi.
+_ARSIV_SEMBOLU: dict[str, Any] = {
+    "adet": 80, "oran": 0.42, "ga_alt": 0.31, "ga_ust": 0.53,
+    "piyasa": 0.44, "piyasa_ga_icinde": True,
+}
+
 _ARSIV_GOVDESI: dict[str, Any] = {
     "sezon": "2026_27",
+    "ad": "sozlesme ornegi",
     "hafta": 5,
     "not": "sozlesme ornegi",
     "ayar": {"cizgi": "kapanis", "arindirma": "shin", "en_az": 200, "tarih": ""},
@@ -143,6 +150,20 @@ _ARSIV_GOVDESI: dict[str, Any] = {
          "oran": {"1": "2.0", "0": "3.2", "2": "3.8"}}
         for i in range(15)
     ],
+    "analiz": {
+        "olculdu": "2026-09-14T15:00:00+00:00",
+        "evren": 23085,
+        "satirlar": [
+            {"n": 225, "yeterli": True, "tolerans": 0.015,
+             "tolerans_genisledi": False, "tolerans_tavana_dayandi": False,
+             "semboller": {s: dict(_ARSIV_SEMBOLU) for s in ("1", "0", "2")}}
+            for _ in range(15)
+        ],
+    },
+    "kupon": {
+        "isaretler": [["1"]] * 8 + [["1", "0"]] * 5 + [["1", "0", "2"]] * 2,
+        "not": "sozlesme ornegi",
+    },
     "sonuclar": None,
 }
 
@@ -195,7 +216,7 @@ def _uclar(istemci, ornek_kupon: str) -> dict[str, Any]:
         {"ad": "POST /api/kupon/arsiv", "yol": "/api/kupon/arsiv",
          "govde": _ARSIV_GOVDESI},
         {"ad": "GET /api/kupon/arsiv", "yol": "/api/kupon/arsiv"},
-        {"ad": "GET /api/kupon/arsiv/<hafta>", "yol": "/api/kupon/arsiv/5"},
+        {"ad": "GET /api/kupon/arsiv/<no>", "yol": "/api/kupon/arsiv/1"},
     ]
 
     # Hafta numarasi VERIDEN cozulur. `/api/stats/1` yazmak cazipti ama

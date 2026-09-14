@@ -1,17 +1,44 @@
-"""Kupon kurucunun haftalık girdi arşivi — **elle girilen kayıt**.
+"""Kupon arşivi — **bir kupon, bir kayıt**.
 
-Bu modül bir ölçüm yapmaz, bir tahmin üretmez. Tek işi, kullanıcının
-`/kupon` ekranında elle doldurduğu 15 satırlık tabloyu hafta hafta diske
-yazmak ve geri okumaktır.
+Arşivin birimi hafta değil **kupon**. Bir haftanın birden çok kuponu olur:
+biri açılış oranlarıyla, öteki kapanışla; biri shin, öteki orantılı
+arındırmayla. Bunlar birbirinin sürümü değil, ayrı denemelerdir ve yan yana
+durmaları gerekir.
+
+Bir kayıt dört şeyi birden taşır — çünkü kupon bu dördünün **zinciridir**:
+
+    girdi   15 maç, elle yazılmış ad ve 1/0/2 oranı
+    ayar    hangi çizgi, hangi arındırma, hangi örneklem, hangi kesme
+    analiz  o ayarla çıkan karne — ÖLÇÜLDÜĞÜ ANIN damgasıyla
+    kupon   o analizden çıkan işaretler
+
+Zincirin bir halkası eksikse kayıt "neden bu işaretler" sorusunu
+cevaplayamaz.
 
 ─── Neden diskte, neden tarayıcıda değil ────────────────────────────────
 
 Gerekçe `.claude/olcum_kutugu.json`unkiyle **birebir aynı**: elle girilen
-bir kayıt depodan yeniden üretilemez. Türetilmiş olan (envanter, karne,
-kolonlar) her zaman yeniden üretilebilir ve sürümlenmez; bir koşum ya da
-giriş kaydı üretilemez ve sürümlenir. Tarayıcıda tutulan bir arşiv bu
-ayrımın dışında kalırdı: başka makinede yoktur, tarayıcı verisi silinince
-gider ve `git log` onu hiç görmez.
+bir kayıt depodan yeniden üretilemez. Türetilmiş olan (envanter, kolonlar)
+her zaman yeniden üretilebilir ve sürümlenmez; bir koşum ya da giriş kaydı
+üretilemez ve sürümlenir. Tarayıcıda tutulan bir arşiv bu ayrımın dışında
+kalırdı: başka makinede yoktur, tarayıcı verisi silinince gider ve
+`git log` onu hiç görmez.
+
+─── Analiz neden KAYDEDİLİYOR (önceki karar geri alındı) ────────────────
+
+İlk sürümde karne bilerek yazılmıyordu: *"türetilmiş veridir ve korpus
+büyüdükçe bayatlar."* Teşhis doğruydu, çare yanlıştı. Kupon **o analizden**
+çıkıyor; analiz atılırsa kayıt, kendi kararının gerekçesini kaybeder ve
+"neden bu işaretler" sorusu bir daha cevaplanamaz. Bayatlamanın çaresi
+kaydı ATMAK değil **damgalamaktır** — ölçüm kütüğünün baştan beri yaptığı
+şey: sayının yanında ne zaman ve neyin üstünde ölçüldüğü durur
+(`analiz.olculdu`, `analiz.evren`). Arayüz o damgayı gösterir ve aynı
+sorguyu bugünün korpusunda yeniden koşturmayı önerir; kayıt ise o günün
+kaydı olarak kalır.
+
+Yine de şu iki şey arşive GİRMEZ: lig kırılımı ve karnenin arkasındaki maç
+listesi. İkisi de `/oran-analizi`de tek tıkla açılır ve kaydı on katına
+çıkarırdı.
 
 ─── Neden `hafta_NN.json`un ÜSTÜNE yazmıyor ─────────────────────────────
 
@@ -19,18 +46,10 @@ gider ve `git log` onu hiç görmez.
 `odds_source`, `entered_at` ve dokuz maddelik `data_warnings` ("kapanış
 etiketi fazla olabilir", "takım adı eşlemesi doğrulanmadı"). Arayüzden
 gelen bir kayıt onun üstüne yazsaydı o kanıt zinciri **sessizce** silinirdi.
-Bu yüzden yeni kayıt ayrı bir ailede, onun yanında durur; iki kaydı
-birleştirmek istenirse bu bilinçli bir iş olur, bir yan etki değil.
-
-─── Ne YAZILMIYOR ───────────────────────────────────────────────────────
-
-Karne (sorgunun çıktısı) arşive girmez. Türetilmiş veridir ve korpus
-büyüdükçe **bayatlar**: iki ay sonra açılan bir kayıt, o günkü korpusun
-cevabını bugünün cevabı sanırdı. Kayıt girdiyi ve hangi ayarla bakıldığını
-tutar; karne o ayarla yeniden üretilir.
+Bu yüzden bu aile ayrı, onun yanında durur.
 
     python -m spor_toto.kupon_arsivi --liste
-    python -m spor_toto.kupon_arsivi --hafta 5
+    python -m spor_toto.kupon_arsivi --no 1
 """
 from __future__ import annotations
 
@@ -48,7 +67,13 @@ KOK = Path(__file__).resolve().parent.parent
 ARSIV = KOK / "data" / "kupon_arsivi"
 
 #: Kayıt biçiminin sürümü. Alan eklenirse artmaz; **anlam** değişirse artar.
-SURUM = 1
+#:
+#: 1 -> 2: birim HAFTA idi, KUPON oldu (`hafta_NN.json` -> `kupon_NNN.json`)
+#: ve kayıt artık analiz ile kuponun kendisini de taşıyor. Göç kodu YOK ve
+#: bu bilinçli: 1. sürümde hiç kayıt üretilmemişti (özellik aynı gün yazıldı),
+#: yani göç edecek veri yok. Olmayan veri için göç yazmak, sınanamayan kod
+#: yazmaktır.
+SURUM = 2
 
 #: Bir haftada kaç maç. `core.SEMBOLLER` gibi bu da tek kaynaktan gelmeli;
 #: `meta.MATCH_COUNT` ile aynı sayıdır ve testi bunu tutar.
@@ -61,8 +86,17 @@ SEZON_DESENI = re.compile(r"^\d{4}_\d{2}$")
 VARSAYILAN_SEZON = "2026_27"
 
 #: Hafta numarasının sınırı. Spor Toto sezonu ~40 hafta; üst sınır cömert
-#: tutuldu ama sınırsız değil — sınırsız bir tamsayı dosya adına girmez.
+#: tutuldu ama sınırsız değil. Hafta ARTIK KİMLİK DEĞİL, yalnızca bir
+#: etikettir (bir haftanın birden çok kuponu olur) ve boş bırakılabilir.
 HAFTA_MIN, HAFTA_MAX = 1, 60
+
+#: Kupon numarasının sınırı. Numara dosya adına girer, o yüzden sınırlı.
+NO_MIN, NO_MAX = 1, 9999
+
+#: Kupon adının en fazla uzunluğu. Ad SERBESTTİR ("1 numaralı kupon",
+#: "açılışla kurulan") ve kimlik DEĞİLDİR: kimlik `no`dur, iki kupon aynı
+#: adı taşıyabilir.
+AD_SINIR = 80
 
 #: Metin alanlarının en fazla uzunluğu (arayüzdeki `METIN_SINIR` ile aynı).
 METIN_SINIR = 40
@@ -92,7 +126,15 @@ def sezon_dogrula(ham: Any) -> str:
     return sezon
 
 
-def hafta_dogrula(ham: Any) -> int:
+def hafta_dogrula(ham: Any) -> int | None:
+    """Hafta ETİKETİ — boş bırakılabilir.
+
+    Artık kimlik değil: bir haftanın birden çok kuponu olur ve bir kupon
+    henüz bir haftaya bağlanmamış olabilir. Ama VERİLDİYSE okunabilir
+    olmalı; sessizce `None`a düşen bir hafta, listede yanlış gruplanır.
+    """
+    if ham is None or (isinstance(ham, str) and not ham.strip()):
+        return None
     try:
         hafta = int(ham)
     except (TypeError, ValueError):
@@ -102,7 +144,18 @@ def hafta_dogrula(ham: Any) -> int:
     return hafta
 
 
-def yol(sezon: str, hafta: int) -> Path:
+def no_dogrula(ham: Any) -> int:
+    """Kupon numarası — kaydın KİMLİĞİ. Ad değil bu; ad serbesttir."""
+    try:
+        no = int(ham)
+    except (TypeError, ValueError):
+        raise ArsivHatasi(f"kupon no bir tamsayi olmali: {ham!r}") from None
+    if not NO_MIN <= no <= NO_MAX:
+        raise ArsivHatasi(f"kupon no {NO_MIN}-{NO_MAX} arasinda olmali: {no}")
+    return no
+
+
+def yol(sezon: str, no: int) -> Path:
     """Kaydın dosya yolu.
 
     İki doğrulamadan da geçmiş değerlerle çağrılır; yine de sonuç arşiv
@@ -110,7 +163,7 @@ def yol(sezon: str, hafta: int) -> Path:
     doğrulayıcılardan biri gevşerse yol kaçağı burada durur, sessizce
     depodaki başka bir dosyanın üstüne yazılmaz.
     """
-    p = (ARSIV / sezon_dogrula(sezon) / f"hafta_{hafta_dogrula(hafta):02d}.json").resolve()
+    p = (ARSIV / sezon_dogrula(sezon) / f"kupon_{no_dogrula(no):03d}.json").resolve()
     if not str(p).startswith(str(ARSIV.resolve()) + os.sep):
         raise ArsivHatasi("yol arsiv kokunun disina cikiyor")
     return p
@@ -206,6 +259,146 @@ def ayari_dogrula(ham: Any) -> dict[str, Any]:
     return {"cizgi": cizgi, "arindirma": arindirma, "en_az": en_az, "tarih": tarih}
 
 
+def _kesir(ham: Any, ad: str) -> float:
+    """0-1 arasi bir olasilik/oran. Sinir disi deger REDDEDILIR."""
+    try:
+        v = float(ham)
+    except (TypeError, ValueError):
+        raise ArsivHatasi(f"{ad} bir sayi olmali: {ham!r}") from None
+    if not (0.0 <= v <= 1.0) or v != v:
+        raise ArsivHatasi(f"{ad} 0-1 arasinda olmali: {ham!r}")
+    return v
+
+
+def _sembol_okumasi(ham: Any, ad: str) -> dict[str, Any]:
+    """Bir sembolün karne hücresi — `benzer`in ürettiği alanların ALT KÜMESİ.
+
+    Tamamı değil: `fark` gibi türetilebilen alanlar yazılmaz (iki sayıdan
+    çıkar), lig kırılımı ve maç listesi ise hiç girmez (bkz. modül künyesi).
+    Yazılanlar, arayüzün tabloyu **aynen** çizebilmesi için gerekli olan
+    en küçük kümedir.
+    """
+    if not isinstance(ham, dict):
+        raise ArsivHatasi(f"{ad} bir nesne olmali")
+    adet = ham.get("adet")
+    try:
+        adet = int(adet)
+    except (TypeError, ValueError):
+        raise ArsivHatasi(f"{ad}.adet bir tamsayi olmali: {adet!r}") from None
+    if adet < 0:
+        raise ArsivHatasi(f"{ad}.adet negatif olamaz")
+    oran = ham.get("oran")
+    ga_icinde = ham.get("piyasa_ga_icinde")
+    if ga_icinde is not None and not isinstance(ga_icinde, bool):
+        raise ArsivHatasi(f"{ad}.piyasa_ga_icinde ya null ya boolean olmali")
+    return {
+        "adet": adet,
+        # Ornek yoksa ampirik oran YOKTUR; 0 yazmak "hic olmadi" demek olurdu.
+        "oran": None if oran is None else _kesir(oran, f"{ad}.oran"),
+        "ga_alt": _kesir(ham.get("ga_alt", 0.0), f"{ad}.ga_alt"),
+        "ga_ust": _kesir(ham.get("ga_ust", 0.0), f"{ad}.ga_ust"),
+        "piyasa": _kesir(ham.get("piyasa", 0.0), f"{ad}.piyasa"),
+        "piyasa_ga_icinde": ga_icinde,
+    }
+
+
+def analizi_dogrula(ham: Any) -> dict[str, Any] | None:
+    """Kaydın **analiz halkası** — koşulmamışsa `None`.
+
+    Damga (`olculdu`, `evren`) alan değil ZORUNLULUKTUR: bu blok türetilmiş
+    bir sayıdır ve korpus büyüdükçe bayatlar. Damgasız yazılırsa iki ay
+    sonra açan kişi onu bugünün cevabı sanır — modül künyesindeki kararın
+    tamamı bu iki alana dayanıyor.
+    """
+    if ham is None:
+        return None
+    if not isinstance(ham, dict):
+        raise ArsivHatasi("analiz ya null ya bir nesne olmali")
+    satirlar = ham.get("satirlar")
+    if not isinstance(satirlar, list) or len(satirlar) != MAC_SAYISI:
+        raise ArsivHatasi(f"analiz.satirlar tam {MAC_SAYISI} olmali")
+
+    try:
+        evren = int(ham.get("evren", 0))
+    except (TypeError, ValueError):
+        raise ArsivHatasi("analiz.evren bir tamsayi olmali") from None
+    if evren <= 0:
+        raise ArsivHatasi("analiz.evren pozitif olmali — damgasiz analiz yazilmaz")
+
+    cikti: list[dict[str, Any] | None] = []
+    for i, satir in enumerate(satirlar, start=1):
+        # Bir satirin sorgusu HATA almis olabilir; o satir `null` durur ve
+        # bu bir kayip degil, kaydin kendisidir.
+        if satir is None:
+            cikti.append(None)
+            continue
+        if not isinstance(satir, dict):
+            raise ArsivHatasi(f"analiz.satirlar[{i}] ya null ya nesne olmali")
+        semboller_ham = satir.get("semboller")
+        if not isinstance(semboller_ham, dict):
+            raise ArsivHatasi(f"analiz.satirlar[{i}].semboller bir nesne olmali")
+        try:
+            n = int(satir.get("n", 0))
+        except (TypeError, ValueError):
+            raise ArsivHatasi(f"analiz.satirlar[{i}].n bir tamsayi olmali") from None
+        cikti.append({
+            "n": n,
+            "yeterli": bool(satir.get("yeterli")),
+            "tolerans": _kesir(satir.get("tolerans", 0.0), f"analiz.satirlar[{i}].tolerans"),
+            "tolerans_genisledi": bool(satir.get("tolerans_genisledi")),
+            "tolerans_tavana_dayandi": bool(satir.get("tolerans_tavana_dayandi")),
+            "semboller": {
+                sem: _sembol_okumasi(semboller_ham.get(sem),
+                                     f"analiz.satirlar[{i}].semboller.{sem}")
+                for sem in SEMBOLLER
+            },
+        })
+
+    return {
+        "olculdu": _metin(ham.get("olculdu"), 40) or _simdi(),
+        "evren": evren,
+        "satirlar": cikti,
+    }
+
+
+def kuponu_dogrula(ham: Any) -> dict[str, Any] | None:
+    """Kaydın **kupon halkası** — 15 maçın işaretleri. Kurulmamışsa `None`.
+
+    Bir maçın işareti boş OLAMAZ: boş maç motorda `ValueError` üretir
+    (`core.Encoder`) ve arayüz de en az bir seçimi garanti eder. Sıra
+    `SEMBOLLER` sırasıdır (1, 0, 2) — alfabetik değil, kupon düzeni.
+
+    `kolon` yazılmaz, HESAPLANIR: işaretlerin çarpımı. Yazılsaydı kaydın
+    içinde birbirini yalanlayabilecek iki sayı olurdu.
+    """
+    if ham is None:
+        return None
+    if not isinstance(ham, dict):
+        raise ArsivHatasi("kupon ya null ya bir nesne olmali")
+    isaretler = ham.get("isaretler")
+    if not isinstance(isaretler, list) or len(isaretler) != MAC_SAYISI:
+        raise ArsivHatasi(f"kupon.isaretler tam {MAC_SAYISI} olmali")
+
+    temiz: list[list[str]] = []
+    kolon = 1
+    for i, sec in enumerate(isaretler, start=1):
+        if not isinstance(sec, list) or not sec:
+            raise ArsivHatasi(f"{i}. macin isareti bos olamaz")
+        bilinmeyen = [x for x in sec if x not in SEMBOLLER]
+        if bilinmeyen:
+            raise ArsivHatasi(f"{i}. macta bilinmeyen sembol: {bilinmeyen!r}")
+        # Yinelenen sembol sessizce TEKILLESIR ama sira KUPON duzenine oturur.
+        satir = [sem for sem in SEMBOLLER if sem in sec]
+        temiz.append(satir)
+        kolon *= len(satir)
+
+    return {
+        "isaretler": temiz,
+        "kolon": kolon,
+        "not": _metin(ham.get("not"), NOT_SINIR),
+    }
+
+
 def sonuclari_dogrula(ham: Any) -> list[str | None] | None:
     """Hafta oynandıktan sonra girilen 1/0/2. Girilmemişse `None`.
 
@@ -234,24 +427,51 @@ def sonuclari_dogrula(ham: Any) -> list[str | None] | None:
     return cikti
 
 
-def kaydi_kur(govde: dict[str, Any], onceki: dict[str, Any] | None = None) -> dict[str, Any]:
+def sonraki_no(sezon: str) -> int:
+    """Sezonun bir sonraki kupon numarası.
+
+    **Numara yeniden KULLANILMAZ.** 1 ve 2 varken 2 silinirse sıradaki
+    numara 3'tür, 2 değil: "2 numaralı kupon" dediğin şeyin iki farklı
+    kayda işaret etmesi, arşivi bir kayıt olmaktan çıkarır.
+
+    Bu yüzden sayım değil, EN BÜYÜK + 1 okunur — ve dosya adından, çünkü
+    dosyanın içi bozulmuş olsa bile adı numarayı taşır.
+    """
+    dizin = ARSIV / sezon_dogrula(sezon)
+    if not dizin.is_dir():
+        return NO_MIN
+    enbuyuk = 0
+    for p in dizin.glob("kupon_*.json"):
+        m = re.match(r"kupon_(\d+)\.json$", p.name)
+        if m:
+            enbuyuk = max(enbuyuk, int(m.group(1)))
+    return max(NO_MIN, enbuyuk + 1)
+
+
+def kaydi_kur(govde: dict[str, Any], no: int,
+              onceki: dict[str, Any] | None = None) -> dict[str, Any]:
     """Gelen gövdeden yazılacak kaydı kurar — saf, diske dokunmaz.
 
-    `onceki` verilirse `girildi` KORUNUR: bir haftayı düzeltmek onu yeniden
-    girmek değildir ve ilk giriş anı kaydın künyesidir.
+    `onceki` verilirse `girildi` KORUNUR: bir kuponu düzeltmek onu yeniden
+    kurmak değildir ve ilk giriş anı kaydın künyesidir.
     """
-    sezon = sezon_dogrula(govde.get("sezon") or VARSAYILAN_SEZON)
-    hafta = hafta_dogrula(govde.get("hafta"))
     simdi = _simdi()
+    ad = _metin(govde.get("ad"), AD_SINIR)
     return {
         "surum": SURUM,
-        "sezon": sezon,
-        "hafta": hafta,
+        "sezon": sezon_dogrula(govde.get("sezon") or VARSAYILAN_SEZON),
+        "no": no_dogrula(no),
+        # Adsiz kayit olmaz: liste okunamaz hale gelirdi. Ad verilmediyse
+        # numaradan turetilir ve kullanici sonra degistirebilir.
+        "ad": ad or f"{no_dogrula(no)}. kupon",
+        "hafta": hafta_dogrula(govde.get("hafta")),
         "girildi": (onceki or {}).get("girildi") or simdi,
         "guncellendi": simdi,
         "not": _metin(govde.get("not"), NOT_SINIR),
         "ayar": ayari_dogrula(govde.get("ayar")),
         "satirlar": satirlari_dogrula(govde.get("satirlar")),
+        "analiz": analizi_dogrula(govde.get("analiz")),
+        "kupon": kuponu_dogrula(govde.get("kupon")),
         "sonuclar": sonuclari_dogrula(govde.get("sonuclar")),
     }
 
@@ -259,13 +479,26 @@ def kaydi_kur(govde: dict[str, Any], onceki: dict[str, Any] | None = None) -> di
 def yaz(govde: dict[str, Any]) -> dict[str, Any]:
     """Kaydı diske yazar ve yazılanı döner.
 
-    Yazma **atomik**: geçici dosyaya yazılıp `os.replace` ile yerine
-    konur. Yarıda kesilen bir yazma (süreç ölümü, disk dolması) mevcut
-    kaydı bozmaz — elle girilmiş bir haftayı yarım bir JSON'a çevirmek
-    onu kaybetmekle aynı şeydir.
+    `no` verilmişse o kaydın ÜSTÜNE yazar, verilmemişse YENİ kupon açar.
+    Ayrım gövdenin kendisinden okunur: arayüz "kaydet" ile "yeni kupon
+    olarak kaydet"i ayırabilsin diye.
+
+    Yazma **atomik**: geçici dosyaya yazılıp `os.replace` ile yerine konur.
+    Yarıda kesilen bir yazma (süreç ölümü, disk dolması) mevcut kaydı
+    bozmaz — elle girilmiş bir kuponu yarım bir JSON'a çevirmek onu
+    kaybetmekle aynı şeydir.
     """
-    kayit = kaydi_kur(govde, onceki=_oku_sessiz(govde.get("sezon"), govde.get("hafta")))
-    p = yol(kayit["sezon"], kayit["hafta"])
+    sezon = sezon_dogrula(govde.get("sezon") or VARSAYILAN_SEZON)
+    ham_no = govde.get("no")
+    if ham_no is None or (isinstance(ham_no, str) and not ham_no.strip()):
+        no = sonraki_no(sezon)
+        onceki = None
+    else:
+        no = no_dogrula(ham_no)
+        onceki = _oku_sessiz(sezon, no)
+
+    kayit = kaydi_kur(govde, no, onceki=onceki)
+    p = yol(kayit["sezon"], kayit["no"])
     p.parent.mkdir(parents=True, exist_ok=True)
     metin = json.dumps(kayit, ensure_ascii=False, indent=1) + "\n"
     with tempfile.NamedTemporaryFile(
@@ -277,24 +510,24 @@ def yaz(govde: dict[str, Any]) -> dict[str, Any]:
     return kayit
 
 
-def _oku_sessiz(sezon: Any, hafta: Any) -> dict[str, Any] | None:
+def _oku_sessiz(sezon: Any, no: Any) -> dict[str, Any] | None:
     try:
-        return oku(sezon, hafta)
+        return oku(sezon, no)
     except (ArsivHatasi, FileNotFoundError, json.JSONDecodeError):
         return None
 
 
-def oku(sezon: Any, hafta: Any) -> dict[str, Any]:
+def oku(sezon: Any, no: Any) -> dict[str, Any]:
     """Kaydı okur. Yoksa `FileNotFoundError`."""
-    p = yol(sezon_dogrula(sezon), hafta_dogrula(hafta))
+    p = yol(sezon_dogrula(sezon), no_dogrula(no))
     if not p.exists():
         raise FileNotFoundError(f"kayit yok: {p.name}")
     return json.loads(p.read_text(encoding="utf-8"))
 
 
-def sil(sezon: Any, hafta: Any) -> bool:
+def sil(sezon: Any, no: Any) -> bool:
     """Kaydı siler. Zaten yoksa `False` — bu bir hata DEĞİLDİR."""
-    p = yol(sezon_dogrula(sezon), hafta_dogrula(hafta))
+    p = yol(sezon_dogrula(sezon), no_dogrula(no))
     if not p.exists():
         return False
     p.unlink()
@@ -306,24 +539,32 @@ def _dolu_satir(satir: dict[str, Any]) -> bool:
 
 
 def listele(sezon: Any = None) -> list[dict[str, Any]]:
-    """Sezonun kayıtları — hafta sırasıyla, **özet** hâlinde.
+    """Sezonun kayıtları — numara sırasıyla, **özet** hâlinde.
 
-    Liste 15 satırın tamamını taşımaz: hafta seçicinin ihtiyacı
-    "hangi haftalar var, ne zaman girildi, kaç satırı tam". Tamamını
-    taşısaydı 40 haftalık bir sezonun listesi 600 satır olurdu.
+    Liste kaydın gövdesini taşımaz: seçicinin ihtiyacı "hangi kuponlar var,
+    adları ne, zinciri tam mı". Tamamını taşısaydı on kuponluk bir sezonun
+    listesi yüzlerce satır, analizlerle birlikte yüz kilobayt olurdu.
+
+    Zincirin durumu (`analiz_var` · `kupon_var`) özet alanıdır ve **liste
+    ekranında okunacak asıl şey**: yarım kalmış bir kupon, kaydı açmadan
+    görünmeli.
     """
     dizin = ARSIV / sezon_dogrula(sezon)
     if not dizin.is_dir():
         return []
     cikti: list[dict[str, Any]] = []
-    for p in sorted(dizin.glob("hafta_*.json")):
+    for p in sorted(dizin.glob("kupon_*.json")):
         try:
             k = json.loads(p.read_text(encoding="utf-8"))
         except json.JSONDecodeError:
             # Elle bozulmus bir dosya butun listeyi dusurmemeli.
             continue
         satirlar = k.get("satirlar") or []
+        kupon = k.get("kupon") or {}
+        analiz = k.get("analiz") or {}
         cikti.append({
+            "no": k.get("no"),
+            "ad": k.get("ad") or "",
             "hafta": k.get("hafta"),
             "girildi": k.get("girildi"),
             "guncellendi": k.get("guncellendi"),
@@ -331,9 +572,13 @@ def listele(sezon: Any = None) -> list[dict[str, Any]]:
             "ayar": k.get("ayar"),
             "oranli_mac": sum(1 for s in satirlar if _dolu_satir(s)),
             "adli_mac": sum(1 for s in satirlar if s.get("ev") and s.get("dep")),
+            "analiz_var": bool(analiz),
+            "analiz_olculdu": analiz.get("olculdu"),
+            "kupon_var": bool(kupon),
+            "kolon": kupon.get("kolon"),
             "sonuc_var": bool(k.get("sonuclar")),
         })
-    cikti.sort(key=lambda d: d["hafta"] or 0)
+    cikti.sort(key=lambda d: d["no"] or 0)
     return cikti
 
 
@@ -343,25 +588,32 @@ def _cli() -> int:
     ap = argparse.ArgumentParser(description="Kupon kurucu haftalik arsivi")
     ap.add_argument("--sezon", default=VARSAYILAN_SEZON)
     ap.add_argument("--liste", action="store_true", help="sezonun kayitlarini yaz")
-    ap.add_argument("--hafta", type=int, help="tek bir haftayi JSON olarak yaz")
+    ap.add_argument("--no", type=int, help="tek bir kuponu JSON olarak yaz")
     a = ap.parse_args()
 
-    if a.hafta is not None:
-        print(json.dumps(oku(a.sezon, a.hafta), ensure_ascii=False, indent=1))
+    if a.no is not None:
+        print(json.dumps(oku(a.sezon, a.no), ensure_ascii=False, indent=1))
         return 0
 
     kayitlar = listele(a.sezon)
     if not kayitlar:
         print(f"{a.sezon}: kayit yok ({ARSIV / a.sezon})")
         return 0
-    print(f"{a.sezon} — {len(kayitlar)} kayit")
+    print(f"{a.sezon} — {len(kayitlar)} kupon")
     for k in kayitlar:
         ayar = k.get("ayar") or {}
-        print(f"  hafta {k['hafta']:>2}  {k['oranli_mac']:>2}/{MAC_SAYISI} oran"
-              f"  {k['adli_mac']:>2}/{MAC_SAYISI} ad"
+        hafta = f"h{k['hafta']:02d}" if k.get("hafta") else "  - "
+        zincir = "".join((
+            "G" if k["oranli_mac"] == MAC_SAYISI else "-",
+            "A" if k["analiz_var"] else "-",
+            "K" if k["kupon_var"] else "-",
+            "S" if k["sonuc_var"] else "-",
+        ))
+        print(f"  #{k['no']:<3} {hafta}  {zincir}  {k['ad'][:28]:<28}"
               f"  {ayar.get('cizgi', '?')}/{ayar.get('arindirma', '?')}"
-              f"  {k.get('guncellendi', '')}"
-              f"{'  [sonuclu]' if k['sonuc_var'] else ''}")
+              f"  {(k.get('kolon') or '-')!s:>7} kolon"
+              f"  {k.get('guncellendi', '')[:10]}")
+    print("\n  zincir: G girdi · A analiz · K kupon · S sonuc")
     return 0
 
 

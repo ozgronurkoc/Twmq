@@ -23,20 +23,30 @@ import {
 } from "@/lib/kupon";
 import {
   analizOzeti,
+  analizdenKayit,
   analizeHazir,
   bosAnaliz,
+  evreniOku,
+  kayittanAnaliz,
   sorguIzi,
   VARSAYILAN_ANALIZ,
   type AnalizAyari,
   type SatirAnalizi,
 } from "@/lib/kupon-analiz";
-import { CIZGILER, MAC_SAYISI, type ArsivOzeti, type Cizgi, type Sembol } from "@/lib/types";
+import {
+  CIZGILER,
+  MAC_SAYISI,
+  type ArsivOzeti,
+  type BenzerResponse,
+  type Cizgi,
+  type Sembol,
+} from "@/lib/types";
 import { yuzde } from "@/lib/utils";
 import { Badge, Button, Callout, Card, CardBody, CardHeader } from "@/components/ui/primitives";
 import { KuponIzgarasi } from "@/components/kupon/izgara";
 import { AnalizAyarlari } from "@/components/kupon/ayarlar";
 import { AnalizTablosu, TabloAciklamasi } from "@/components/kupon/analiz-tablosu";
-import { ArsivCubugu } from "@/components/kupon/arsiv-cubugu";
+import { KuponArsivi } from "@/components/kupon/kupon-arsivi";
 
 /**
  * Kupon kurucu — **1. aşama: giriş**.
@@ -85,11 +95,21 @@ export default function KuponSayfasi() {
   const iptalci = React.useRef<AbortController | null>(null);
 
   // ─── Arsiv ─────────────────────────────────────────────────────────────
-  const [hafta, setHafta] = React.useState(1);
+  const [ad, setAd] = React.useState("");
+  /** Hafta ETIKETI; 0 = bos birakildi. Kimlik degil (bkz. kupon-arsivi). */
+  const [hafta, setHafta] = React.useState(0);
   const [not, setNot] = React.useState("");
   const [kayitlar, setKayitlar] = React.useState<ArsivOzeti[]>([]);
-  /** Ekrandaki tablo hangi haftadan yuklendi; `null` = arsivden gelmedi. */
-  const [yuklenen, setYuklenen] = React.useState<number | null>(null);
+  /** Ekrandaki kayit hangi numaradan acildi; `null` = henuz kaydedilmedi. */
+  const [acikNo, setAcikNo] = React.useState<number | null>(null);
+  /**
+   * Kosulan analizin evreni — damganin yarisi ve UYDURULAMAZ: hangi
+   * buyuklukteki korpusta olculdugunu ancak cevabin kendisi soyler.
+   * Arsivden acilan kayitta kaydin kendi damgasindan gelir.
+   */
+  const [evren, setEvren] = React.useState<number | null>(null);
+  /** Arsivden acilan analizin damgasi; canli kosumda `null`. */
+  const [analizDamgasi, setAnalizDamgasi] = React.useState<string | null>(null);
   const [arsivKosuyor, setArsivKosuyor] = React.useState(false);
   const [arsivHata, setArsivHata] = React.useState<string | null>(null);
   const [kaydedildi, setKaydedildi] = React.useState<string | null>(null);
@@ -143,8 +163,10 @@ export default function KuponSayfasi() {
     setSonuclar(bosAnaliz(MAC_SAYISI));
     setKosanIz(null);
     setKosuyor(false);
-    setYuklenen(null);
+    setAcikNo(null);
     setKaydedildi(null);
+    setEvren(null);
+    setAnalizDamgasi(null);
     yereliTemizle();
   }
 
@@ -179,6 +201,10 @@ export default function KuponSayfasi() {
     const yazSatir = (i: number, sonuc: SatirAnalizi) =>
       setSonuclar((onceki) => onceki.map((s, j) => (j === i ? sonuc : s)));
 
+    // Evren cevabin KENDISINDEN okunur, sabit yazilmaz: korpus buyudukce
+    // degisir ve kaydin damgasinin yarisi odur.
+    const hamCevaplar: (BenzerResponse | null)[] = Array(satirlar.length).fill(null);
+
     await Promise.all(
       satirlar.map(async (satir, i) => {
         try {
@@ -194,6 +220,7 @@ export default function KuponSayfasi() {
             kontrol.signal,
           );
           if (kontrol.signal.aborted) return;
+          hamCevaplar[i] = veri;
           yazSatir(i, { durum: "bitti", veri, hata: null });
         } catch (e) {
           // Iptal bir hata DEGILDIR (`lib/istek` doktrini): durum hic
@@ -208,27 +235,37 @@ export default function KuponSayfasi() {
       }),
     );
 
-    if (!kontrol.signal.aborted) setKosuyor(false);
+    if (!kontrol.signal.aborted) {
+      setKosuyor(false);
+      setEvren(evreniOku(hamCevaplar));
+      // Canli kosum kaydin damgasini TASIMAZ: damga yazilirken atilir.
+      setAnalizDamgasi(null);
+    }
   }
 
   /**
-   * Haftayi arsive yazar.
+   * Kuponu arsive yazar — ZINCIRIN TAMAMIYLA.
    *
-   * Tablo zaten her tus vurusunda tarayiciya yaziliyor; bu ondan BASKA bir
-   * sey. Arsiv bilincli bir karardir ve bu yuzden otomatik degil: yanlislikla
-   * 5. haftanin ustune 6. haftanin yarim tablosunu yazmak, bu sayfada geri
-   * alinamayacak tek islem olurdu.
+   * Gonderilen sey girdi · ayar · analiz · kupon. Analiz de gidiyor ve bu
+   * ILK SURUMDEKI KARARIN TERSI: orada karne bilerek atiliyordu ("turetilmis
+   * veri bayatlar"). Teshis dogruydu, care yanlisti — kupon o analizden
+   * cikiyor, analiz atilirsa kayit kendi kararinin gerekcesini kaybeder.
+   * Bayatlamanin caresi atmak degil DAMGALAMAK: `analiz.olculdu` ve
+   * `analiz.evren` kayitla birlikte gidiyor (`spor_toto/kupon_arsivi.py`).
    *
-   * Gonderilen sey GIRDI ve AYAR; karne gonderilmiyor (turetilmis veri
-   * bayatlar — `spor_toto/kupon_arsivi.py` bas yorumu). Dogrulama da
-   * sunucuda: buradan gecen govde orada yeniden dogrulanir.
+   * `yeniOlarak` ise numara GONDERILMEZ ve sunucu yeni bir kupon acar.
+   * Ayrim burada, cunku "kaydet" ile "yeni kupon olarak kaydet" iki ayri
+   * niyet ve ikisini de bir dugmenin tahmin etmesi gerekmiyor.
    */
-  async function arsiveKaydet() {
+  async function arsiveKaydet(yeniOlarak = false) {
     setArsivKosuyor(true);
     setArsivHata(null);
     try {
       const kayit = await arsiveYaz({
-        hafta,
+        ad,
+        no: yeniOlarak ? null : acikNo,
+        // 0 "bos birakildi" demek; sunucu `null` bekliyor.
+        hafta: hafta > 0 ? hafta : null,
         not,
         ayar: {
           cizgi: ayar.cizgi,
@@ -242,9 +279,17 @@ export default function KuponSayfasi() {
           dep: s.dep,
           oran: { ...s.oran },
         })),
+        // Bayat bir analiz KAYDEDILMEZ: ekrandaki karne su anki girdiye ait
+        // degilse onu kuponun gerekcesi diye yazmak, kaydi yalanci yapar.
+        analiz: bayat ? null : analizdenKayit(sonuclar, evren),
+        // Kupon halkasi henuz kurulmuyor (o asama yazilmadi); alan sozlesmede
+        // duruyor ve `null` gidiyor.
+        kupon: null,
       });
-      setYuklenen(kayit.hafta);
+      setAcikNo(kayit.no);
+      setAd(kayit.ad);
       setKaydedildi(kayit.guncellendi.slice(11, 16));
+      if (kayit.analiz) setAnalizDamgasi(kayit.analiz.olculdu);
       await listeyiTazele();
     } catch (e) {
       setArsivHata(hataMetni(e, "Kaydedilemedi"));
@@ -254,11 +299,12 @@ export default function KuponSayfasi() {
   }
 
   /**
-   * Kayitli bir haftayi ekrana yukler.
+   * Kayitli bir kuponu ekrana yukler — DORDUNU birden.
    *
-   * Analiz sonuclari TEMIZLENIR: ekrandaki karne baska bir haftanin
-   * girdisine aitti ve onu yeni tablonun cevabi gibi birakmak, sayfanin
-   * "bayat sonuc" kuralinin tam tersi olurdu.
+   * Girdi, ayar, analiz ve (kurulunca) kupon geri gelir. Analiz kaydin
+   * kendi damgasiyla gelir ve ekranda o damga gorunur: bugunun korpusunda
+   * ayni sorgu baska bir cevap verebilir ve bunu gizlemek, kaydi bugunun
+   * cevabi gibi okutmak olurdu.
    */
   async function arsivdenAc(no: number) {
     setArsivKosuyor(true);
@@ -266,23 +312,31 @@ export default function KuponSayfasi() {
     try {
       const kayit = await getArsivKaydi(no);
       iptalci.current?.abort();
-      setSatirlar(kayittanSatirlar(kayit.satirlar));
-      setAyar({
+      const yeniAyar: AnalizAyari = {
         cizgi: (CIZGILER as readonly string[]).includes(kayit.ayar.cizgi)
           ? (kayit.ayar.cizgi as Cizgi)
           : VARSAYILAN_ANALIZ.cizgi,
-        arindirma: kayit.ayar
-          .arindirma as AnalizAyari["arindirma"],
+        arindirma: kayit.ayar.arindirma as AnalizAyari["arindirma"],
         enAz: kayit.ayar.en_az,
         tarih: kayit.ayar.tarih ?? "",
-      });
+      };
+      const yeniSatirlar = kayittanSatirlar(kayit.satirlar);
+      setSatirlar(yeniSatirlar);
+      setAyar(yeniAyar);
+      setAd(kayit.ad);
       setNot(kayit.not ?? "");
-      setHafta(kayit.hafta);
-      setYuklenen(kayit.hafta);
-      setSonuclar(bosAnaliz(MAC_SAYISI));
-      setKosanIz(null);
-      setKosuyor(false);
+      setHafta(kayit.hafta ?? 0);
+      setAcikNo(kayit.no);
       setKaydedildi(null);
+      setKosuyor(false);
+
+      setSonuclar(kayittanAnaliz(kayit.analiz));
+      setEvren(kayit.analiz?.evren ?? null);
+      setAnalizDamgasi(kayit.analiz?.olculdu ?? null);
+      // Iz, kaydin KENDI girdisi ve ayariyla kurulur: acilan analiz bu
+      // ikisine aittir ve sayfa onu "bayat" diye isaretlememeli. Analiz
+      // yoksa iz de yok — sonuc bolumu hic acilmaz.
+      setKosanIz(kayit.analiz ? sorguIzi(yeniSatirlar, yeniAyar) : null);
     } catch (e) {
       setArsivHata(hataMetni(e, "Kayıt açılamadı"));
     } finally {
@@ -295,7 +349,9 @@ export default function KuponSayfasi() {
     setArsivHata(null);
     try {
       await arsivdenSil(no);
-      if (yuklenen === no) setYuklenen(null);
+      // Acik kayit silindiyse ekrandaki tablo artik bir KAYDA ait degil;
+      // "uzerine yaz" dugmesi olmayan bir numarayi gostermemeli.
+      if (acikNo === no) setAcikNo(null);
       await listeyiTazele();
     } catch (e) {
       setArsivHata(hataMetni(e, "Silinemedi"));
@@ -380,15 +436,20 @@ export default function KuponSayfasi() {
 
       <Card>
         <CardHeader
-          title="Hafta arşivi"
+          title="Kupon arşivi"
           hint={
-            yuklenen
-              ? `Ekrandaki tablo ${yuklenen}. haftanın kaydından açıldı.`
-              : "Kayıt sunucuda dosya olarak durur — başka tarayıcıda da açılır, git'e girebilir."
+            acikNo
+              ? `Ekranda #${acikNo} açık — kaydet üstüne yazar, "yeni kupon olarak kaydet" ayrı bir deneme açar.`
+              : "Bir kupon = maçlar + oranlar + analiz + işaretler. Kayıt sunucuda dosya olarak durur, git'e girebilir."
           }
         />
         <CardBody>
-          <ArsivCubugu
+          <KuponArsivi
+            ad={ad}
+            onAdChange={(v) => {
+              setAd(v);
+              setKaydedildi(null);
+            }}
             hafta={hafta}
             onHaftaChange={(v) => {
               setHafta(v);
@@ -400,13 +461,16 @@ export default function KuponSayfasi() {
               setKaydedildi(null);
             }}
             kayitlar={kayitlar}
-            yuklenen={yuklenen}
+            acikNo={acikNo}
             kosuyor={arsivKosuyor}
             hata={arsivHata}
-            onKaydet={arsiveKaydet}
+            onKaydet={() => arsiveKaydet(false)}
+            onYeniOlarakKaydet={() => arsiveKaydet(true)}
             onAc={arsivdenAc}
             onSil={arsivdenKaldir}
             kaydedildi={kaydedildi}
+            analizVar={!bayat && analiz.biten > 0}
+            kuponVar={false}
           />
         </CardBody>
       </Card>
@@ -436,7 +500,19 @@ export default function KuponSayfasi() {
             hint={
               kosuyor
                 ? `${analiz.biten + analiz.hatali}/${MAC_SAYISI} satır tamamlandı…`
-                : `${ayar.cizgi === "acilis" ? "Açılış" : "Kapanış"} çizgisi · ${ayar.arindirma} arındırma${ayar.tarih ? ` · ${ayar.tarih} öncesi` : ""}`
+                : [
+                    `${ayar.cizgi === "acilis" ? "Açılış" : "Kapanış"} çizgisi`,
+                    `${ayar.arindirma} arındırma`,
+                    ayar.tarih ? `${ayar.tarih} öncesi` : null,
+                    // Arsivden acilan analiz KENDI gununun cevabidir; bugunun
+                    // korpusunda ayni sorgu baska sayi verebilir ve bunu
+                    // gizlemek kaydi bugunun cevabi gibi okutmak olurdu.
+                    analizDamgasi
+                      ? `kayıttan: ${analizDamgasi.slice(0, 10)} ölçüldü${evren ? `, ${evren.toLocaleString("tr-TR")} maçlık evren` : ""}`
+                      : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")
             }
           />
           <CardBody className="space-y-4">

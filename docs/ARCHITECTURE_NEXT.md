@@ -48,8 +48,8 @@ yani boşluk üç belgeye birden yayılıyordu. Artık liste
 | GET | `/api/benzer?oran=…&cizgi=…&tarih=…` | "Bu oranda geçmişte ne oldu" — 23.085 maçlık korpus; `cizgi=acilis` aynı soruyu açılış çizgisinde sorar (o evren 23.083); `tarih` verilirse evren o günden **öncesiyle** sınırlı (kronolojik sorgu) |
 | GET | `/api/benzer/maclar?oran=…&tolerans=…` | Karnenin arkasındaki **maçların kendisi** (tarih · skor · sonuç · o maçın fiyatı · hedefe uzaklık). `tolerans` **zorunlu**: `/api/benzer`in çözdüğü yarıçap aynen geri verilir, yoksa liste sayılan kümeden başka bir kümeyi gösterir |
 | POST | `/api/solve` | Tüm motor özellikleri |
-| GET · POST | `/api/kupon/arsiv` | Kupon kurucunun **haftalık elle girdi** arşivi: GET sezonun kayıt özetleri, POST bir haftayı yazar (aynı hafta varsa üstüne yazar, ilk giriş anını korur). **API'nin diske yazan tek ailesi**; doğrulama `spor_toto/kupon_arsivi.py`de, yol arşiv kökünün dışına çıkamaz |
-| GET · DELETE | `/api/kupon/arsiv/<hafta>` | Tek haftanın kaydı: oku ya da sil. Olmayan haftaya 404; silinmiş bir kaydı yeniden silmek hata değildir |
+| GET · POST | `/api/kupon/arsiv` | **Kupon arşivi** — bir kayıt = maçlar + oranlar + ayar + analiz + işaretler. GET sezonun kayıt özetleri, POST bir kuponu yazar: `no` verilirse üstüne yazar (ilk kuruluş anını korur), verilmezse yeni kupon açar. Bir haftanın birden çok kuponu olur; hafta kimlik değil etikettir. **API'nin diske yazan tek ailesi**; doğrulama `spor_toto/kupon_arsivi.py`de, yol arşiv kökünün dışına çıkamaz, analiz **damgasız** (ölçüm anı + evren) yazılamaz |
+| GET · DELETE | `/api/kupon/arsiv/<no>` | Tek kuponun kaydı: oku ya da sil. Olmayan numaraya 404; silinmiş bir kaydı yeniden silmek hata değildir. Numara **yeniden kullanılmaz** — silinen numara boşalmaz |
 
 İstatistik katmanının durumu, alınan kararlar ve yol haritası:
 [`ISTATISTIK_YOL_HARITASI.md`](ISTATISTIK_YOL_HARITASI.md).
