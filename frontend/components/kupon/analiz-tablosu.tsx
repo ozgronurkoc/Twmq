@@ -214,22 +214,43 @@ function SembolHucresi({
   const aralik =
     sembol.oran == null
       ? "örnek yok"
-      : `%95 aralık: ${yuzde(sembol.ga_alt)} – ${yuzde(sembol.ga_ust)} · ${sayi(sembol.adet)} maç`;
+      : `%95 aralık: ${yuzde(sembol.ga_alt)} – ${yuzde(sembol.ga_ust)}`;
 
   return (
-    <div title={`Karne ${aralik}\nPiyasa: ${yuzde(sembol.piyasa)}`}>
-      <div
-        className={cn(
-          "tnum text-[13px]",
-          !yeterli && "text-muted-foreground",
-          sapiyor && yeterli && "font-semibold text-primary",
-        )}
-      >
-        {sapiyor ? <span aria-hidden>• </span> : null}
-        {sembol.oran == null ? "—" : yuzde(sembol.oran)}
+    <div
+      title={
+        `Karne: ${sayi(sembol.adet)} maç bu sembolle bitti (${aralik})\n` +
+        `Piyasa: ${yuzde(sembol.piyasa)} — girilen oranın marj arındırılmış hâli`
+      }
+    >
+      <div className="flex items-baseline justify-end gap-1.5">
+        <span
+          className={cn(
+            "tnum text-[13px]",
+            !yeterli && "text-muted-foreground",
+            sapiyor && yeterli && "font-semibold text-primary",
+          )}
+        >
+          {sapiyor ? <span aria-hidden>• </span> : null}
+          {sembol.oran == null ? "—" : yuzde(sembol.oran)}
+        </span>
+        {/*
+          Yuzdenin KAC MACA denk geldigi. Yuzde tek basina okunamaz: aynı
+          %40, 4 macta da 400 macta da %40'tir ve ikisi ayni sey degildir.
+          Sayi satirin `n`iyle birlikte okunur (Orneklem sutunu); ucunun
+          toplami n'i verir.
+        */}
+        <span className="tnum text-[11px] text-muted-foreground/70">
+          {sayi(sembol.adet)}
+        </span>
       </div>
+      {/*
+        Once burada yalnizca `p` yaziyordu ve ne oldugu ancak tablonun
+        altindaki aciklamadan anlasiliyordu — yani okunmuyordu. Kisaltma
+        yerine kelime.
+      */}
       <div className="tnum mt-0.5 text-[11px] text-muted-foreground">
-        p {yuzde(sembol.piyasa)}
+        piyasa {yuzde(sembol.piyasa)}
       </div>
     </div>
   );
@@ -239,10 +260,12 @@ function SembolHucresi({
 export function TabloAciklamasi({ sapanVar }: { sapanVar: boolean }) {
   return (
     <p className="text-[11.5px] leading-relaxed text-muted-foreground">
-      Her hücrede üstteki sayı <strong>karne</strong> (aynı fiyattaki geçmiş
-      maçların nasıl bittiği), alttaki <code className="font-mono">p</code>{" "}
-      <strong>piyasa</strong> (o fiyatın marj arındırılmış olasılığı). Fiyatın
-      taşıdığı bilgi ikisinin farkıdır.{" "}
+      Her hücrede üstteki sayı <strong>karne</strong> — aynı fiyattaki geçmiş
+      maçların yüzde kaçı o sembolle bitmiş; yanındaki küçük sayı bunun{" "}
+      <strong>kaç maça</strong> denk geldiği (üçünün toplamı satırın
+      örneklemini verir). Alttaki <strong>piyasa</strong>, girdiğiniz oranın
+      marj arındırılmış hâli — yani bültenin o sembole verdiği olasılık.
+      Fiyatın taşıdığı bilgi ikisinin farkıdır.{" "}
       {sapanVar ? (
         <>
           <span className="text-primary">•</span> işareti, piyasanın ampirik %95
