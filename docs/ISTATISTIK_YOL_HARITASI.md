@@ -171,7 +171,7 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/components/super-toto/tahmin2.tsx` | **2. Tahmin** paneli — `1. Tahmin` / `2. Tahmin` sekmeleri arasında geçilir; para birimli hiçbir sayı yok. Hafta kapandığında sonuç sütunu ve ayar karnesi açılır (§3.38) |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **2.032 test**; **136'sı** istatistik katmanına (`history` `odds` `backtest`
+paketi toplam **2.039 test**; **136'sı** istatistik katmanına (`history` `odds` `backtest`
 `api_stats` `api_backtest` `snapshot_iddaa`), **672'si** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre`
@@ -7281,6 +7281,16 @@ on üç kat büyük bir atıştan kıyaslanamayacak kadar iyidir.
 **Eksen kapandı ve bir daha açılmaz:** kâhin, elinde 13 kat yığma seçeneği
 varken onu kullanmıyor. Uygulanabilir hiçbir kural kâhini geçemez.
 
+#### Bu taramanın kalıcı hâli
+
+Bulgular `docs/DIS_UFUK_TARAMASI.md` §7'de. Taramanın **bir kereye mahsus
+olmaması** için `.claude/skills/dis-tarama/SKILL.md` yazıldı ve CLAUDE.md'ye
+bir kural girdi: yeni bir eksen açılmadan önce *"bunu dışarıda çözen var mı,
+ne ödedi, burada neden tekrarlanır/tekrarlanmaz"* sorulur ve cevabı hedefin
+para biriminde yazılır.
+
+---
+
 ### 3.78 Hedef bir **süre** sorusudur — ve bu, bilimin sınırını gösterir
 
 Sahibi sordu: *"bilimi kullanarak hedefe ulaşabilir miyiz?"* §3.76–§3.77
@@ -7304,13 +7314,90 @@ kupona çıkmanın (+1,8) on katı, ve ölçülen en iyi model bulgusunun (+0,02
 Bu satır bir öneri değil bir **fiyat etiketidir**: süre sahibinin kararı,
 ölçüt değil. Ama kararın bedeli artık ölçülmüş olarak yazılı.
 
-#### Bu taramanın kalıcı hâli
+### 3.79 Ufuk açılınca bağlayıcı kısıt **para** oluyor — ve fatura ölçüldü
 
-Bulgular `docs/DIS_UFUK_TARAMASI.md` §7'de. Taramanın **bir kereye mahsus
-olmaması** için `.claude/skills/dis-tarama/SKILL.md` yazıldı ve CLAUDE.md'ye
-bir kural girdi: yeni bir eksen açılmadan önce *"bunu dışarıda çözen var mı,
-ne ödedi, burada neden tekrarlanır/tekrarlanmaz"* sorulur ve cevabı hedefin
-para biriminde yazılır.
+Sahibi süre kısıtını gevşetti (2026-09-14). §3.78 bunun kazancını ölçmüştü
+(13 → 39 hafta: %77,0 → %99,0). Bu bölüm **bedelini** ölçüyor, çünkü açık
+ufuk bir şeyi sessizce değiştiriyor: kâr hâlâ ölçüt değil, ama **bütçe
+tükenirse hedef de tükenir.** Yani para, *ölçüt* olmadan *kısıt* hâline
+geliyor.
+
+Ve bu, görev ölçeğinde **hiç ölçülmemişti**: `karne.py` düz planı ₺320–4.860
+merdiveninde fiyatlıyor; oynanan plan çoklu kupon ve bütçe ₺210.000/hafta.
+Yeni ölçüm hattı `scripts/coklu_karne.py`.
+
+#### Ölçülen (114 tam hafta, 21.000 kolon, gerçek ikramiye tabloları)
+
+| | 81 kupon | 729 kupon |
+|---|---:|---:|
+| maliyet | ₺23.924.950 | ₺23.939.690 |
+| getiri (**seyrelmiş**) | ₺10.753.321 | ₺11.641.273 |
+| **gerçekleşen ROI** | **0,449** | **0,486** |
+| hafta başı net | **−₺115.541** | **−₺107.881** |
+| 15/15 tutturulan hafta | 21/114 | 21/114 |
+| ödeme alınan hafta | 106/114 | 108/114 |
+
+Seyrelmiş getiri, o kademenin havuzunun **bizim kolonlarımız da eklenerek**
+yeniden bölünmesidir — müşterek bahsin tanımı. Ham getiriyle farkı küçük
+(%1,7), yani ölçek kendi payını ciddi biçimde yemiyor; sorun başka yerde.
+
+**Ufuk faturası** (hafta başı net × hafta, 81 kupon):
+
+| ufuk | hedef (§3.78) | harcanan | **net** |
+|---|---:|---:|---:|
+| 13 hafta | %77,0 | ₺2,73 M | −₺1,50 M |
+| 26 hafta | %94,9 | ₺5,46 M | −₺3,00 M |
+| 39 hafta | %99,0 | ₺8,18 M | −₺4,51 M |
+| 52 hafta | — | ₺10,91 M | −₺6,01 M |
+
+Okunuşu: **hedefin fiyatı ~%99 için ₺4,5 milyon net.** Bu bir itiraz değil
+bir etiket; sahibi kâr/zararı ölçüt saymadı ve karar onun.
+
+#### Ölçerken çıkan asıl bulgu: **devir haftası bizim haftamız değil**
+
+İlk sürüm `havuz = kazanan × pay` yazıyordu ve **kazananı sıfır** olan
+kademede bunu sıfır veriyordu — yani devir haftalarında (114 haftanın
+**26'sı** 15. kademede kazanansız) plan tutturmuş olsa bile getirisi sıfır
+sayılırdı. Düzeltilirken çapraz tablo kuruldu ve düzeltmenin **gereksiz**
+olduğu ortaya çıktı, ama sebebi bir bulgu:
+
+| | biz tutturduk | tutturamadık |
+|---|---:|---:|
+| **devir haftası** (15'i kimse bilmemiş) | **0** | 26 |
+| normal hafta | 21 | 67 |
+
+Bağımsızlık altında beklenen kesişim **4,79**; gözlenen **0**
+(hipergeometrik alt kuyruk **p = 0,0023**). İkinci ve bağımsız teyit: en iyi
+kolonumuzun ortalama kaçağı devir haftalarında **3,00**, normal haftalarda
+**1,43**.
+
+**Yani ikramiyenin en büyük olduğu haftalar, bizim de kaçırdığımız
+haftalar.** Bu, `KADEME_OLASILIKLARI.md` §6'nın *"tuttuğunuz hafta herkesin
+tuttuğu haftadır"* bulgusunun (Spearman −0,843) kupon düzeyindeki
+karşılığıdır ve ROI'nin niçin 0,45'te kaldığını açıklar: 21 isabetin
+**hepsi** paylaşılan ikramiyeden geldi, hiçbiri devirden.
+
+> Çapraz tablo betimleyicidir, ön kayıtlı bir sınav değildir — bir eksen
+> kapatmaz. Yaptığı şey ROI'nin mekanizmasını göstermek.
+
+#### Ne değişti, ne değişmedi
+
+* **Değişmedi:** hedef `P(15/15)`, kâr ölçüt değil, plan (81 kupon) ve
+  §3.76'nın tavanları.
+* **Değişti:** artık bir **dayanıklılık** sayısı var. Ufuk açıksa sorulacak
+  soru "kaç hafta oynayabiliriz"dir ve cevabı bütçenin toplamına bağlı:
+  hafta başı net −₺115.541 (81 kupon) ya da −₺107.881 (729 kupon).
+* **729 kupon para tarafında da önde** (+₺7.660/hafta), yani §3.76'nın
+  operasyon önerisiyle çelişmiyor, onu güçlendiriyor.
+
+#### Durma kuralı — ölçüm görülmeden yazıldı
+
+Bu eksen (dayanıklılık) bir arama ekseni değildir, bir **muhasebe**
+eksenidir: kapanmaz, her sezon yeniden koşulur. Ama bir karar kuralı var ve
+şimdiden yazılı: **gerçekleşen ROI 1,0'ı geçerse** plan kendini finanse
+ediyor demektir ve ufuk kısıtı tamamen kalkar. Bugün 0,449 (81) / 0,486
+(729); 1,0'a ulaşmak için getirinin **iki kattan fazla** büyümesi gerekir ve
+§3.76'nın tavanları bunu kombinatorikten alamayacağımızı söylüyor.
 
 ---
 
@@ -8351,7 +8438,7 @@ python -m spor_toto.kosum                  # kayıtlı koşumlar
 python -m spor_toto.kosum --son disari     # son koşumun ortamı
 
 # Denetim
-pytest -q                                  # 2.032 test (136'sı bu katman, 672'si tahmin)
+pytest -q                                  # 2.039 test (136'sı bu katman, 672'si tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out

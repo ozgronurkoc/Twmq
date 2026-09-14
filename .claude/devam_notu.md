@@ -26,10 +26,20 @@ için bırakılmış kısa bir özet ve nedendir.
 
 ## Görev tanımı (2026-09-13, sahibinden — değişmedikçe geçerli)
 
-Sahibi projeyi teknik olarak devretti. **Hedef: 3 ay içinde Spor Toto'da
-15/15.** Bütçe **haftada 210.000 TL** (₺10 kolon → 21.000 kolon). Kâr/zarar
-açıkça **ölçüt değil**; sahibi bunu bilerek ve yazılı olarak istedi. Karar
-sormadan alınacak.
+Sahibi projeyi teknik olarak devretti. **Hedef: Spor Toto'da 15/15.**
+Bütçe **haftada 210.000 TL** (₺10 kolon → 21.000 kolon). Kâr/zarar açıkça
+**ölçüt değil**; sahibi bunu bilerek ve yazılı olarak istedi. Karar sormadan
+alınacak.
+
+> **GÜNCELLEME (2026-09-14): üç aylık kısıt gevşedi.** Sahibi *"süre
+> sıkıntın olmasın"* dedi. Cümle iki anlama da gelebilir (çalışma temposu ↔
+> hedefin ufku); ikisi de aynı yöne baktığı için **ufuk kısıtı bağlayıcı
+> değil** varsayıldı. Farklı kastedildiyse tek düzeltilecek şey budur ve
+> ölçümlerin hiçbiri boşa gitmez — §3.78 hedefi ufuk ufuk veriyor.
+>
+> Bunun iki sonucu ölçüldü: hedef **13 hafta %77,0 → 39 hafta %99,0**
+> (§3.78), fatura **39 haftada −₺4,51 M** (§3.79). Yani kâr hâlâ ölçüt
+> değil ama **para artık kısıt**: bütçe tükenirse hedef de tükenir.
 
 **Kabul etmediğim iki şey ve nedeni** (karar bana bırakıldığı için bunlar da
 benim kararım):
@@ -47,64 +57,66 @@ benim kararım):
 
 **2026-09-14 — dal `claude/proje-durumu-ilerleme-8h7l86`**
 
-### Bu oturumda: varlık kanıtları arandı (§3.77) + duruş **kurala bağlandı**
+### Bu oturumda: ufuk açıldı, **fatura ölçüldü** (§3.79)
 
-Sahibi §3.76'nın dış taramasını yeterli bulmadı ve haklıydı: istediği bir
-tarama değil bir **duruş**tu (*"hep böyle dışa dönük ol"*) ve bir soru
-sormamıştım — *"dışarıda bu hedefe çoktan ulaşmış biri olabilir."*
+Süre kısıtı gevşeyince §3.78'in kazancı (13→39 hafta: %77,0→%99,0) bir
+soruyu zorunlu kıldı: **kaç hafta dayanabiliriz?** Kâr ölçüt değil ama açık
+ufukta para *kısıt* oluyor. Ve bu, görev ölçeğinde hiç ölçülmemişti —
+`karne.py` düz planı ₺320–4.860 merdiveninde fiyatlıyor, oynanan plan ise
+çoklu kupon ve bütçe ₺210.000/hafta.
 
-**Arandı. Bulunan üç vaka ve niçin burada tekrarlanamadıkları:**
-Benter (~1 mlr $, at yarışı) — orada **fiyatı kalabalık koyar**, burada doğa
-koyar, kalabalık yalnızca ikramiyeyi böler; Ranogajec/Woods — kârın
-belirleyicisi model değil **%8–13 iade**, Spor Toto'da iade yok; Mandel (14
-piyango) — tam kaplama burada **₺143.489.070**, üç aylık bütçenin 52,6 katı.
-Ve **bulunamayan** da bulgu: 1X2 havuzunu ölçülerek yendiği gösterilmiş tek
-kişi/sendika/proje yok; bulunanlar ya para havuzlayan sendikalar ya iddia
-satan platformlar (`sportoto.pro`, `Hedef15`, …) — ölçülmüş kayıt yok.
+**Yeni hat: `scripts/coklu_karne.py`** (kademe sayımı üreteç fonksiyonuyla,
+tam sayım; kuponların ayrıklığı her hafta sınanıyor). Ölçülen, 114 hafta:
 
-**Ve arama bir ÖLÇÜM üretti.** Mandel'in ikinci yarısı (*"doğru çekilişe
-yığ"*) bu depoda hiç sorulmamıştı: zamanlama ızgarası 4 katta kesiliyordu,
-pencereyi tek haftaya yığmak ise 13 kat. Izgara 13'e çıkarıldı (6,5 + 13,0),
-kâhin yeniden koşuldu: **yeni basamakları bir kez bile kullanmadı**, kazanç
-×1,0312'de kaldı. Sebep: hedef hafta içi harcamada **içbükey**. Eksen
-kapandı — kâhin geçemiyorsa uygulanabilir hiçbir kural geçemez.
+* 81 kupon → ROI **0,449**, hafta başı net **−₺115.541**
+* 729 kupon → ROI **0,486**, hafta başı net **−₺107.881** (para tarafında
+  da 729 önde, §3.76'nın operasyon önerisiyle çelişmiyor)
+* Ufuk faturası: 13 hafta −₺1,50 M · 26 hafta −₺3,00 M · **39 hafta
+  −₺4,51 M** · 52 hafta −₺6,01 M
 
-**Duruş kalıcı hâle getirildi** (asıl istenen buydu):
-`.claude/skills/dis-tarama/SKILL.md` (yordam + fiyatlama tavanları + arama
-kalıpları + tuzaklar), CLAUDE.md'ye "Depo dışına bakmak — varsayılan duruş"
-bölümü (üç soru), ve bunun **bekçisi**
-(`test_dis_tarama_durusu_CLAUDE_MDde_ve_becerisi_yerinde`) — kural budanırsa
-suit kırmızıya döner.
+**Ölçerken bir hata yakalandı ve bir bulgu çıktı.** İlk sürüm
+`havuz = kazanan × pay` yazıyordu; kazananı **sıfır** olan kademede bu
+sıfır veriyordu, yani devir haftalarında getiri yok sayılıyordu. Düzeltmek
+için çapraz tablo kuruldu ve düzeltmenin **gereksiz** olduğu görüldü —
+sebebi bulgunun kendisi:
 
-### Ek ölçüm (aynı oturum): hedef bir **süre** sorusu (§3.78)
+| | biz tutturduk | tutturamadık |
+|---|---:|---:|
+| **devir haftası** (15'i kimse bilmemiş) | **0** | 26 |
+| normal hafta | 21 | 67 |
 
-Sahibi *"bilimle ulaşabilir miyiz"* diye sordu. Hiç değiştirilmemiş tek
-eksen ufuktu; aynı plan, aynı bütçe, yalnız süre: **13 hafta %77,0 · 26
-hafta %94,9 · 39 hafta %99,0** (81 kupon; gözlenen 4/4 ve 2/2). Üç aydan
-altı aya çıkmak **+17,9 puan** — kombinatorik eksenin tamamının yedi katı,
-729 kupona çıkmanın on katı, en iyi model bulgusunun dokuz yüz katı.
-Engel bilgi değil **takvim**. Süre sahibinin kararı; sayı kararı değil
-**bedelini** veriyor.
+Beklenen kesişim 4,79, gözlenen 0 (p = 0,0023); en iyi kolonun ortalama
+kaçağı devirde 3,00 ↔ normalde 1,43. **İkramiyenin en büyük olduğu haftalar
+bizim de kaçırdığımız haftalar** — Spearman −0,843'ün kupon düzeyindeki
+karşılığı ve ROI'nin niçin 0,45'te kaldığının mekanizması.
 
 ### Sıradaki adım
 
-1. **729 kupona çıkmanın operasyonu** — hâlâ birinci iş (+1,8 puan, 458,7
-   slip). Giriş süresi kaydı sahibinden gelmeli.
-2. 6. hafta geldiğinde `--yaz` ile dondur; 5. haftanın sonucu girilince ilk
+1. **729 kupona çıkmanın operasyonu** — birinci iş olmaya devam ediyor ve
+   artık iki gerekçesi var: +1,8 puan (§3.76) **ve** +₺7.660/hafta (§3.79).
+   Engel aynı: 458,7 slip, giriş süresi kaydı sahibinden gelmeli.
+2. **Sahibine sorulacak tek şey: toplam bütçe tavanı.** Ufuk açıksa "kaç
+   hafta" sorusunun cevabı paradadır; hafta başı net ölçüldü, tavan yok.
+3. 6. hafta geldiğinde `--yaz` ile dondur; 5. haftanın sonucu girilince ilk
    ileriye dönük satır okunacak (**o kaydın üstüne yazma**).
-3. Denenmemiş tek veri kapısı: FootyStats Süper Lig xG — beklenen değeri
-   §3.76'nın çeviri oranıyla peşinen düşük, ama kontrolü ucuz.
-4. **Hedef para olursa** iki kapalı eksen anında açılır: kalabalıktan sapmak
-   (Benter'in ekseni) ve çoklu kuponda entropi. Bu, dış taramanın en önemli
-   koşullu bulgusu.
+4. Havuz ekseni (§3.51) `n = 3`te; §3.79 ona yeni bir gerekçe verdi —
+   dayanıklılık artık hedefin parçası.
 
 ### Neden böyle
 
-Bir duruş, bir oturumun iyi niyetine bırakılırsa bir sonraki oturumda yok
-olur. Bu depoda kalıcı olan tek şey **bekçisi olan** şeydir — o yüzden dışa
-dönüklük de bir dosyaya değil, bir teste bağlandı.
+Sahibi süreyi açtı; açık ufukta hedefin olasılığı %99'a çıkıyor ama fatura
+da büyüyor. Bu oturumda yapılan şey birini ötekine bağlamak: artık "ne kadar
+sürerse sürsün" cümlesinin bir fiyat etiketi var, ve karar sahibinin
+olabilmesi için sayının önce ölçülmesi gerekiyordu.
 
 ## Geçmiş girdiler
+
+**2026-09-14 (önceki, aynı dal)** — varlık kanıtları arandı (§3.77:
+Benter/Ranogajec/Mandel, üçü de burada tekrarlanamıyor), **yığma ekseni**
+ölçülüp kapandı (kâhin 13 kat seçeneği varken kullanmadı, ×1,0312), ve
+dış bakış **kurala** bağlandı (`dis-tarama` becerisi + CLAUDE.md +
+bekçisi). Ayrıca §3.78: hedef bir **süre** sorusu — 13/26/39 hafta →
+%77,0 / %94,9 / %99,0.
 
 **2026-09-14 (önceki, aynı dal)** — **iki tavan ölçüldü** (§3.76):
 kombinatorik eksenin tamamı **+2,6 puan** (81 kupon %77,0 → serbest küme

@@ -1193,7 +1193,7 @@ backend/
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
                        sehir/ · sistem_fiyat/
-  tests/               pytest (78 dosya → 2.032 test; §9'da katman dökümü)
+  tests/               pytest (79 dosya → 2.039 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1400,8 +1400,8 @@ Kapsam: girdi doğrulama, geometri, motorlar, fuzz invariant'lar, CLI (Bayes pre
 dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri test,
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
-eşleme, ikinci kayıt). **78 test dosyası, parametrizasyonla
-2.032 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+eşleme, ikinci kayıt). **79 test dosyası, parametrizasyonla
+2.039 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
@@ -1444,6 +1444,7 @@ karşı denetler):
 | Operasyon (elle giriş slipleri · örtüşmede doğru `P` · yoğunlaşma · donmuş kaydın denetim sırası) | **`operasyon`** | 22 |
 | Sadeleştirme (aynı kolonlar daha az kutuyla · ayrık bölüntü · kesin enküçükle kıyas · tahsis birleşmeyi öldürüyor) | **`sadelestirme`** | 24 |
 | Bilgi esnekliği (kombinatorik TAVAN · kesin bilgi eğrisi · Brier → hedef puanı çevirisi · yığma ızgarası) | **`bilgi_esnekligi`** | 10 |
+| Görev ölçeğinde para karnesi (kademe sayımı · kupon ayrıklığı · KAZANANSIZ kademe · seyrelme yönü) | **`coklu_karne`** | 7 |
 
 İki test bilerek **ağa çıkmaz**: `test_snapshot_iddaa.py` gerçek bültenden alınmış
 küçük bir örnek payload üzerinde koşar — ağ çağrısını sınamak bu paketin işi değil,
