@@ -194,3 +194,37 @@ def test_bekci_alani_GERCEK_bir_teste_isaret_ediyor():
             if not (DEPO / dosya).exists():
                 hata.append(f"  {s['deger']!r}: bekci dosyasi yok -> {dosya}")
     assert not hata, "bekci alani olmayan dosyayi gosteriyor:\n" + "\n".join(hata)
+
+
+def test_kutuk_KANONIK_bicimde_yazilmis():
+    """Kütük, kendi yazıcısının ürettiği baytların aynısı olmalı.
+
+    **Bu bekçi bir gürültüden sonra yazıldı.** Kütüğe elle girdi eklerken
+    `json.dumps(..., indent=2)` kullanıldı; oysa deponun kendi yazıcısı
+    (`.claude/graf_uret.py::kutuk_yaz`) `indent=1` yazıyor. Sonuç: bir
+    sonraki oturum açılışında kanca dosyayı kanonik biçime geri çevirdi ve
+    **5.116 satırlık** bir boşluk farkı, hiç ilgisi olmayan bir işlemeye
+    düştü. Ne veri bozuldu ne bir sayı değişti — ama o işlemenin gerçek
+    değişikliği (dört satır) 2.500 satırlık gürültünün içinde kayboldu.
+
+    Kütük elle de düzenlenebilir, düzenlenmeli de; bu test biçimi
+    dayatmıyor, yalnızca **yazıcının kendi biçimini** dayatıyor. Düşerse
+    yapılacak şey tek satır:
+
+        python3 -c "import importlib.util as u, json, pathlib; \
+        s=u.spec_from_file_location('g','.claude/graf_uret.py'); \
+        m=u.module_from_spec(s); s.loader.exec_module(m); \
+        m.kutuk_yaz(json.loads(pathlib.Path('.claude/olcum_kutugu.json').read_text()))"
+    """
+    yol = DEPO / ".claude" / "graf_uret.py"
+    if not KUTUK.exists() or not yol.exists():
+        pytest.skip("kutuk ya da uretici yok")
+    gu = _graf_uret()
+    beklenen = json.dumps(
+        {"sayilar": _kutuk().get("sayilar", []),
+         "komutlar": _kutuk().get("komutlar", [])},
+        ensure_ascii=False, indent=1) + "\n"
+    assert KUTUK.read_text(encoding="utf-8") == beklenen, (
+        "kutuk kendi yazicisinin bicimine uymuyor — bir sonraki oturum acilisi "
+        "onu yeniden yazacak ve fark ilgisiz bir islemeye dusecek. "
+        f"(yazici: {gu.kutuk_yaz.__module__}.kutuk_yaz, indent=1)")

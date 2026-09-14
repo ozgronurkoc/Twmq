@@ -786,6 +786,16 @@ def _check_oran_arsivi() -> str:
             == o["outcome_totals"][s]
         ), f"capraz tablo {s} icin tutmuyor"
     assert sum(b["n"] for b in o["favourite_bands"]) == o["with_odds"]
+    # Uclu karne (kazandi / berabere / yenildi) capraz tabloyla UZLASMALI.
+    # Bu uc satir bir kusurdan sonra var: bantlar beraberligi SONUCA gore
+    # sayiyordu ve beraberligin kendisi favori oldugunda `draw` bir fazla,
+    # `upset` bir eksik cikiyordu. Arayuz o sayilari basiyor.
+    k = o["favourite_outcome"]
+    assert k["won"] + k["draw"] + k["lost"] == o["with_odds"], "uclu karne toplamiyor"
+    assert sum(b["draw"] for b in o["favourite_bands"]) == k["draw"], \
+        "bant beraberlikleri capraz tabloyla ayristi"
+    assert sum(b["upset"] for b in o["favourite_bands"]) == k["lost"], \
+        "bant surprizleri capraz tabloyla ayristi"
     assert o["avg_margin_pct"] > 0, "marj pozitif olmali"
 
     # Karar destek bloklari: her biri ayni mac kumesini bolusturur, bir mac

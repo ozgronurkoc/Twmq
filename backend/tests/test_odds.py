@@ -3,6 +3,8 @@
 Bu testler arayüzü değil, ileride yapılacak analizin girdisini korur.
 """
 
+import itertools
+
 import pytest
 
 from spor_toto.history import normalized_weeks
@@ -137,3 +139,35 @@ def test_birlesik_ozet_tek_sezonlardan_BUYUK():
         if tek:
             toplam += tek["matches"]
     assert birlesik["matches"] == toplam, "birlesim parcalarin toplami degil"
+
+
+def test_RAPOR_bantlari_MODEL_bantlarinin_INCELTMESI():
+    """İki bant kümesi ayrı durur ama çelişemez.
+
+    `FAVORI_BANTLARI` modelin özelliğidir (`recalibrate.KADEMELER` içinde
+    `"bant"` oturtulan bir kademe), `FAVORI_BANTLARI_RAPOR` ise arayüz
+    tablosunun sınırlarıdır. Ayrı olmaları **kasıtlı**: raporun okunurluğu
+    için sınır oynatmak modeli başka kovalarla yeniden oturturdu.
+
+    Ama ayrı olmaları "ilgisiz" demek değil. Rapor bantları modelin
+    sınırlarını **incelten** bir küme olmalı: her model sınırı raporda da
+    bir sınır olmalı. Aksi halde bir model bandı iki rapor satırına
+    **ortasından** bölünür ve iki tablo aynı maç kümesi hakkında
+    birbirine çevrilemeyen şeyler söyler.
+
+    Ayrıca ikisi aynı aralığı kapsamalı — rapor bir maçı düşürürse tablo
+    toplamı çapraz tabloyu tutmaz.
+    """
+    from spor_toto.odds import FAVORI_BANTLARI, FAVORI_BANTLARI_RAPOR
+
+    model_sinir = {a for a, _ in FAVORI_BANTLARI} | {u for _, u in FAVORI_BANTLARI}
+    rapor_sinir = {a for a, _ in FAVORI_BANTLARI_RAPOR} | {u for _, u in FAVORI_BANTLARI_RAPOR}
+    assert model_sinir <= rapor_sinir, (
+        f"model sinirlari raporda yok: {sorted(model_sinir - rapor_sinir)} — "
+        "bir model bandi rapor satirlarina ortasindan bolunuyor")
+
+    for bantlar, ad in ((FAVORI_BANTLARI, "model"), (FAVORI_BANTLARI_RAPOR, "rapor")):
+        for (_, ust), (alt_sonraki, _) in itertools.pairwise(bantlar):
+            assert ust == alt_sonraki, f"{ad} bantlarinda bosluk/ortusme var"
+    assert FAVORI_BANTLARI[0][0] == FAVORI_BANTLARI_RAPOR[0][0]
+    assert FAVORI_BANTLARI[-1][1] == FAVORI_BANTLARI_RAPOR[-1][1]

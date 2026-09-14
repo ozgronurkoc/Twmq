@@ -1193,7 +1193,7 @@ backend/
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
                        sehir/ · sistem_fiyat/
-  tests/               pytest (81 dosya → 2.051 test; §9'da katman dökümü)
+  tests/               pytest (81 dosya → 2.056 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1401,7 +1401,7 @@ dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri t
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
 eşleme, ikinci kayıt). **81 test dosyası, parametrizasyonla
-2.051 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+2.056 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
@@ -1410,7 +1410,7 @@ karşı denetler):
 | Çekirdek (kodlama · düz üretim · olasılık) | `core` `invariants` `edge_cases` `cli` `analysis` `bayes` `markov` `fire_scenarios` | 256 |
 | Tahmin katmanı | `predict` `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin` `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre` `secim_kalibrasyonu` **`arena`** **`sizinti`** | 624 |
 | Sağlık | `health` `api_health` `meta` `health_history` | 82 |
-| Veri / istatistik / geri test | `history` `odds` `backtest` `api_stats` `api_backtest` `snapshot_iddaa` `pazar` **`gecmis_sezon`** **`sportoto_arsiv`** **`bulten`** | 252 |
+| Veri / istatistik / geri test | `history` `odds` `backtest` `api_stats` `api_backtest` `snapshot_iddaa` `pazar` **`gecmis_sezon`** **`sportoto_arsiv`** **`bulten`** | 256 |
 | Süper Toto | `super_toto` `degerlendir` | 115 |
 | 2. Tahmin (kalabalık ayarı · bağımsız görüş) | `tahmin2` | 36 |
 | Karar katmanı (bütçe kuralı · Pareto cephesi) | `secim` | 46 |
@@ -1429,7 +1429,7 @@ karşı denetler):
 | Takım gücü | `takim_gucu` | 24 |
 | Yeni veri (UEFA · şehir) | `avrupa` `sehir` | 41 |
 | Belgeler | `belgeler` | 29 |
-| Ölçüm kütüğü (alıntı · üreten · bekçi bütünlüğü · komut şeması) | **`olcum_kutugu`** | 6 |
+| Ölçüm kütüğü (alıntı · üreten · bekçi bütünlüğü · komut şeması · **kanonik biçim**) | **`olcum_kutugu`** | 7 |
 | Değer bahsi (yan pazarlar) | **`deger`** | 24 |
 | Fiyat kaynakları | **`fiyatlar`** | 14 |
 | Kuyruk / bağımsızlık (kuyruk çevirisi · kupon kapsaması) | **`kuyruk`** | 22 |

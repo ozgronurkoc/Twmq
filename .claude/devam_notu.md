@@ -108,6 +108,16 @@ Karar tarafında bekleyen bir şey **kalmadı**; sıradakiler teknik:
 3. **Kesintisiz 13 haftalık pencere çıkınca** §3.81'in öbeklenme sınavı o
    boyda tekrarlanır (yeniden açılma şartı yazılı).
 4. Havuz ekseni (§3.51) `n = 3`te; sönüm ekseni birikmeyi bekliyor.
+5. **Bant sabiti İKİYE AYRILDI — dokunmadan önce oku** (favori karnesi işi,
+   dal `claude/favori-match-statistics-tp6lg4`). `odds.FAVORI_BANTLARI`
+   **modelin** sınırlarıdır: `recalibrate.KADEMELER` içinde `"bant"`
+   *oturtulan* bir kademe, yani sınırlar oynarsa model başka kovalarla
+   yeniden oturur ve ona bağlı bütün ölçümler sessizce değişir. Rapor
+   tablosunu incelttiğimde önce bu sabiti değiştirdim ve
+   `test_recalibrate::test_bant_sinirlari` kırmızıya döndü — kusuru o
+   yakaladı. Arayüzün sınırları ayrı: `FAVORI_BANTLARI_RAPOR` (8 bant).
+   İkisini "aynılaştırmak" akla yatkın görünüyor ve **yapılmamalı**;
+   raporun modelin *inceltmesi* olduğunu bir bekçi tutuyor.
 
 ### Neden böyle
 
