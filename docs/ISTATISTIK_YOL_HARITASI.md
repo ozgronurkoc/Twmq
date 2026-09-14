@@ -171,7 +171,7 @@ ayrı tabloda tutulmuştur.
 | UI | `frontend/components/super-toto/tahmin2.tsx` | **2. Tahmin** paneli — `1. Tahmin` / `2. Tahmin` sekmeleri arasında geçilir; para birimli hiçbir sayı yok. Hafta kapandığında sonuç sütunu ve ayar karnesi açılır (§3.38) |
 
 Backend istatistik/oran/geri test katmanı ~2.434 satır, frontend ~3.585 satır. Backend test
-paketi toplam **2.039 test**; **136'sı** istatistik katmanına (`history` `odds` `backtest`
+paketi toplam **2.045 test**; **136'sı** istatistik katmanına (`history` `odds` `backtest`
 `api_stats` `api_backtest` `snapshot_iddaa`), **672'si** tahmin katmanına ait (`predict`
 `evaluate` `recalibrate` `egitim` `cizgi` `bahisci` `disari` `kalibrasyon` `tahmin`
 `benzer` `elo` `dixon_coles` `takim` `arama` `agac` `yigin` `kalibre`
@@ -7399,6 +7399,77 @@ ediyor demektir ve ufuk kısıtı tamamen kalkar. Bugün 0,449 (81) / 0,486
 (729); 1,0'a ulaşmak için getirinin **iki kattan fazla** büyümesi gerekir ve
 §3.76'nın tavanları bunu kombinatorikten alamayacağımızı söylüyor.
 
+### 3.80 İki tavan da kalktı — hedef artık **kesin**, soru fiyatı ve süresi
+
+Sahibi 2026-09-14'te ikinci kısıtı da kaldırdı: *"toplam bütçe tavan yok."*
+Süre tavanı zaten kalkmıştı (§3.78). Bu ikisi birlikte hedefin **türünü**
+değiştiriyor: haftalık `P(15/15) > 0` olduğu sürece, tavansız oynayan
+**kesin** tutturur. Yani *"ulaşabilir miyiz"* sorusu kapandı; yerine iki
+soru geldi ve ikisi de ölçüldü.
+
+#### Soru 1 — hedefin kendisi ne ödüyor?
+
+`coklu_karne.py` artık isabet haftalarını ayrı basıyor. 114 haftada
+tutturulan 21 hafta, 21.000 kolon, gerçek tablolar:
+
+| ölçü | değer |
+|---|---:|
+| ortalama alınan (seyrelmiş) | ₺183.595 |
+| **ortanca alınan** | **₺42.649** |
+| en küçük ↔ en büyük | ₺1.592 ↔ ₺2.685.915 |
+| o haftalarda kayıttaki kazanan sayısı (ortanca) | **528** |
+| toplam 15 geliri | ₺3.855.491 — bütün getirinin %36'sı |
+
+**Ortanca ödül, bir haftalık kupon bedelinin (₺210.000) beşte biri.** Sebebi
+§3.79'un çapraz tablosu: tutturduğumuz haftalarda ortanca **528 kişi** daha
+tutturuyor ve havuz bölünüyor. Büyük para devirde ve orayı **0/26**
+tutturuyoruz.
+
+> Bu, hedefin değersiz olduğunu söylemez — sahibi kâr/zararı ölçüt saymadı
+> ve 15/15 bir başarıdır. Söylediği şey şu: **"15/15 tutturmak" ile "büyük
+> para" aynı olay değil** ve bu depoda ikisi ilk kez ayrı ayrı ölçüldü.
+
+#### Soru 2 — haftalık bütçe ne olmalı? (`scripts/butce_egrisi.py`)
+
+Tavan kalkınca haftalık bütçe bir **kısıt** olmaktan çıkıp **seçim** hâline
+geliyor. Cephe (tavan `p`, yani gerçek plan bunun altında):
+
+| kolon | haftalık | `P(15)` | **E[hafta]** | **E[brüt harcama]** | %90 için hafta |
+|---:|---:|---:|---:|---:|---:|
+| 1 | ₺10 | %0,0061 | 16.416 | ₺164.162 | 37.799 |
+| 1.000 | ₺10.000 | %1,64 | 61,0 | ₺609.797 | 139 |
+| 10.000 | ₺100.000 | %7,31 | 13,7 | ₺1.368.099 | 30 |
+| **21.000** | **₺210.000** | **%11,27** | **8,9** | **₺1.862.951** | **19,3** |
+| 100.000 | ₺1.000.000 | %25,59 | 3,9 | ₺3.907.037 | 7,8 |
+| 1.000.000 | ₺10.000.000 | %64,40 | 1,6 | ₺15.529.127 | 2,2 |
+| 14.348.907 | ₺143.489.070 | %100 | 1,0 | ₺143.489.070 | 0,1 |
+
+**Cephenin kuralı tek cümle: bütçe büyüdükçe bekleme kısalır, beklenen
+harcama büyür.** Çünkü `p` bütçeyle orantılı değil, **altında** büyüyor
+(içbükey) — 100 kolon, 1 kolonun 100 katı olasılık vermiyor. Bu ödünleşme
+bekçiye bağlı (`test_olasilik_butceyle_ORANTILI_DEGIL_altinda_buyur`).
+
+Bekleme `1/E[p]` ile hesaplanır ve **tamdır, yaklaşık değil**: gelecek
+haftalar bu dağılımdan bağımsız çekiliyorsa `P(H haftada) = 1 − (1−E[p])^H`.
+Varsayımın sınırı yazılı — haftalar **arası** bağımlılık ölçülmedi (§3.46
+hafta **içi** bağımlılığı ölçüp kapatmıştı).
+
+#### Bugünkü bütçe cephede nerede
+
+₺210.000/hafta, cephenin **orta** noktası: beklenen 8,9 hafta, %90 için
+19,3 hafta, beklenen brüt harcama ₺1,86 M (geri dönüş 0,449 düşülünce net
+≈ ₺1,03 M). Hızlanmak ₺1 M/haftaya çıkmakla mümkün (≈3,9 hafta) ama
+beklenen harcama **iki katından fazla** olur.
+
+#### Ne kapandı, ne açık
+
+* **Kapandı:** *"hedefe ulaşabilir miyiz"*. İki tavan da kalktığı için evet,
+  kesin — geriye fiyat ve süre kaldı ve ikisi de yukarıda.
+* **Açık ve artık tek gerçek karar:** cephede **nerede durulacağı**. Bu bir
+  ölçüm sorusu değil, sahibinin tercihi; ölçüm yalnızca fiyatını veriyor.
+* **Değişmedi:** 729 kupona çıkmak hâlâ birinci teknik iş (+1,8 puan,
+  +₺7.660/hafta) ve §3.76'nın iki tavanı yerinde.
+
 ---
 
 ## 4. Sayfada bugün ne var
@@ -8438,7 +8509,7 @@ python -m spor_toto.kosum                  # kayıtlı koşumlar
 python -m spor_toto.kosum --son disari     # son koşumun ortamı
 
 # Denetim
-pytest -q                                  # 2.039 test (136'sı bu katman, 672'si tahmin)
+pytest -q                                  # 2.045 test (136'sı bu katman, 672'si tahmin)
 pytest -n0 -q tests/test_cizgi.py          # tek çekirdek (süit varsayılan `-n auto`)
 pytest -q tests/test_history.py            # veri setinin kendi denetimi
 pytest -q tests/test_backtest.py           # strateji, skorlama, hold-out

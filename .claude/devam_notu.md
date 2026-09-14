@@ -38,8 +38,18 @@ alınacak.
 > ölçümlerin hiçbiri boşa gitmez — §3.78 hedefi ufuk ufuk veriyor.
 >
 > Bunun iki sonucu ölçüldü: hedef **13 hafta %77,0 → 39 hafta %99,0**
-> (§3.78), fatura **39 haftada −₺4,51 M** (§3.79). Yani kâr hâlâ ölçüt
-> değil ama **para artık kısıt**: bütçe tükenirse hedef de tükenir.
+> (§3.78), fatura **39 haftada −₺4,51 M** (§3.79).
+>
+> **İKİNCİ GÜNCELLEME (2026-09-14): toplam bütçe tavanı da yok.** Sahibinin
+> sözü: *"Toplam bütçe tavan yok."* Bu ikisi birlikte hedefin türünü
+> değiştiriyor — haftalık `P > 0` olduğu sürece tavansız oynayan **kesin**
+> tutturur. *"Ulaşabilir miyiz"* kapandı; kalan iki soru ölçüldü (§3.80):
+> hedefin kendisi **ortanca ₺42.649** ödüyor (tutturduğumuz haftalarda
+> ortanca 528 kişi daha tutturuyor), ve bugünkü bütçede ilk isabete kadar
+> beklenen brüt harcama **₺1,86 M** (beklenen 8,9 hafta, %90 için 19,3).
+>
+> Geriye kalan **tek gerçek karar** sahibinin: bütçe cephesinde nerede
+> durulacağı. Ölçüm onu seçmez, fiyatını verir.
 
 **Kabul etmediğim iki şey ve nedeni** (karar bana bırakıldığı için bunlar da
 benim kararım):
@@ -57,59 +67,61 @@ benim kararım):
 
 **2026-09-14 — dal `claude/proje-durumu-ilerleme-8h7l86`**
 
-### Bu oturumda: ufuk açıldı, **fatura ölçüldü** (§3.79)
+### Bu oturumda: ikinci tavan da kalktı, **hedef kesinleşti** (§3.80)
 
-Süre kısıtı gevşeyince §3.78'in kazancı (13→39 hafta: %77,0→%99,0) bir
-soruyu zorunlu kıldı: **kaç hafta dayanabiliriz?** Kâr ölçüt değil ama açık
-ufukta para *kısıt* oluyor. Ve bu, görev ölçeğinde hiç ölçülmemişti —
-`karne.py` düz planı ₺320–4.860 merdiveninde fiyatlıyor, oynanan plan ise
-çoklu kupon ve bütçe ₺210.000/hafta.
+Sahibi *"toplam bütçe tavan yok"* dedi. Süre tavanı zaten kalkmıştı, yani
+artık haftalık `P > 0` olduğu sürece tutturmak **kesin**. Soru türü değişti
+ve iki yeni soru ölçüldü.
 
-**Yeni hat: `scripts/coklu_karne.py`** (kademe sayımı üreteç fonksiyonuyla,
-tam sayım; kuponların ayrıklığı her hafta sınanıyor). Ölçülen, 114 hafta:
+**1) Hedefin kendisi ne ödüyor?** `coklu_karne.py` isabet haftalarını ayrı
+basıyor: 21 isabet haftasında alınan **ortalama ₺183.595, ortanca
+₺42.649** (uçlar ₺1.592 ↔ ₺2.685.915). Sebebi §3.79'un çapraz tablosu —
+tutturduğumuz haftalarda kayıttaki kazanan sayısı **ortanca 528**. Yani
+ortanca ödül, bir haftalık kupon bedelinin **beşte biri**. Toplam 15 geliri
+bütün getirinin yalnız %36'sı. **"15/15 tutturmak" ile "büyük para" aynı
+olay değil**; büyük para devirde ve orayı 0/26 tutturuyoruz.
 
-* 81 kupon → ROI **0,449**, hafta başı net **−₺115.541**
-* 729 kupon → ROI **0,486**, hafta başı net **−₺107.881** (para tarafında
-  da 729 önde, §3.76'nın operasyon önerisiyle çelişmiyor)
-* Ufuk faturası: 13 hafta −₺1,50 M · 26 hafta −₺3,00 M · **39 hafta
-  −₺4,51 M** · 52 hafta −₺6,01 M
+**2) Haftalık bütçe ne olmalı?** Yeni hat `scripts/butce_egrisi.py` cepheyi
+çiziyor (tavan `p`, gerçek plan altında):
 
-**Ölçerken bir hata yakalandı ve bir bulgu çıktı.** İlk sürüm
-`havuz = kazanan × pay` yazıyordu; kazananı **sıfır** olan kademede bu
-sıfır veriyordu, yani devir haftalarında getiri yok sayılıyordu. Düzeltmek
-için çapraz tablo kuruldu ve düzeltmenin **gereksiz** olduğu görüldü —
-sebebi bulgunun kendisi:
+| kolon | haftalık | `P` | E[hafta] | E[brüt harcama] |
+|---:|---:|---:|---:|---:|
+| 1.000 | ₺10.000 | %1,64 | 61,0 | ₺609.797 |
+| 10.000 | ₺100.000 | %7,31 | 13,7 | ₺1,37 M |
+| **21.000** | **₺210.000** | **%11,27** | **8,9** | **₺1,86 M** |
+| 100.000 | ₺1 M | %25,59 | 3,9 | ₺3,91 M |
+| 14.348.907 | ₺143,5 M | %100 | 1,0 | ₺143,5 M |
 
-| | biz tutturduk | tutturamadık |
-|---|---:|---:|
-| **devir haftası** (15'i kimse bilmemiş) | **0** | 26 |
-| normal hafta | 21 | 67 |
-
-Beklenen kesişim 4,79, gözlenen 0 (p = 0,0023); en iyi kolonun ortalama
-kaçağı devirde 3,00 ↔ normalde 1,43. **İkramiyenin en büyük olduğu haftalar
-bizim de kaçırdığımız haftalar** — Spearman −0,843'ün kupon düzeyindeki
-karşılığı ve ROI'nin niçin 0,45'te kaldığının mekanizması.
+Kural: **bütçe büyüdükçe bekleme kısalır, beklenen harcama büyür** — `p`
+bütçeyle orantılı değil, altında (içbükey). Bugünkü bütçe cephenin orta
+noktası: %90 için 19,3 hafta, brüt ₺1,86 M (0,449 geri dönüşle net ≈₺1,03 M).
 
 ### Sıradaki adım
 
-1. **729 kupona çıkmanın operasyonu** — birinci iş olmaya devam ediyor ve
-   artık iki gerekçesi var: +1,8 puan (§3.76) **ve** +₺7.660/hafta (§3.79).
-   Engel aynı: 458,7 slip, giriş süresi kaydı sahibinden gelmeli.
-2. **Sahibine sorulacak tek şey: toplam bütçe tavanı.** Ufuk açıksa "kaç
-   hafta" sorusunun cevabı paradadır; hafta başı net ölçüldü, tavan yok.
+1. **Sahibinin tek kararı kaldı: cephede nerede duracağı.** Hızlı mı ucuz
+   mu — ölçüm ikisini de fiyatladı, seçim onun.
+2. **729 kupona çıkmanın operasyonu** hâlâ birinci teknik iş (+1,8 puan
+   **ve** +₺7.660/hafta). Engel: 458,7 slip, giriş süresi kaydı gerekiyor.
 3. 6. hafta geldiğinde `--yaz` ile dondur; 5. haftanın sonucu girilince ilk
    ileriye dönük satır okunacak (**o kaydın üstüne yazma**).
-4. Havuz ekseni (§3.51) `n = 3`te; §3.79 ona yeni bir gerekçe verdi —
-   dayanıklılık artık hedefin parçası.
+4. **Ölçülmemiş tek varsayım: haftalar ARASI bağımsızlık.** Cephenin
+   bekleme sayıları ona dayanıyor; §3.46 hafta *içi* bağımlılığı ölçüp
+   kapatmıştı, haftalar arası hiç bakılmadı. İlk fırsatta ölçülmeli.
 
 ### Neden böyle
 
-Sahibi süreyi açtı; açık ufukta hedefin olasılığı %99'a çıkıyor ama fatura
-da büyüyor. Bu oturumda yapılan şey birini ötekine bağlamak: artık "ne kadar
-sürerse sürsün" cümlesinin bir fiyat etiketi var, ve karar sahibinin
-olabilmesi için sayının önce ölçülmesi gerekiyordu.
+İki tavan da kalkınca proje "olasılık" işi olmaktan çıkıp "fiyat ve süre"
+işine döndü. Bu oturumda yapılan şey o dönüşümü sayıya bağlamak: artık
+"kesin tuttururuz" cümlesinin yanında hem beklenen faturası hem de
+tutturunca alınacak ortanca ödül yazılı — ikisi de ölçülmüş.
 
 ## Geçmiş girdiler
+
+**2026-09-14 (önceki, aynı dal)** — ufuk açıldı, **fatura ölçüldü**
+(§3.79): görev ölçeğinde ROI **0,449** (729 kuponda 0,486), hafta başı
+net −₺115.541, 39 haftada −₺4,51 M. Ölçerken bulgu: **devir haftası
+bizim haftamız değil** — 26 devir haftasının **0'ında** tutturmuşuz
+(beklenen 4,79; p = 0,0023). `scripts/coklu_karne.py` + 7 bekçi.
 
 **2026-09-14 (önceki, aynı dal)** — varlık kanıtları arandı (§3.77:
 Benter/Ranogajec/Mandel, üçü de burada tekrarlanamıyor), **yığma ekseni**

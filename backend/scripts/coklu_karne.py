@@ -132,7 +132,7 @@ def hafta_getirisi(kuponlar: Sequence[Any], gercek: Sequence[str],
             toplam_kolon += adet
 
     ham = seyrelmis = 0.0
-    devirden = 0.0
+    devirden = onbes_geliri = 0.0
     for kademe in KADEMELER:
         adet = bizim.get(kademe, 0)
         satir = tablo.get(kademe)
@@ -143,7 +143,10 @@ def hafta_getirisi(kuponlar: Sequence[Any], gercek: Sequence[str],
         if kazanan > 0:
             ham += adet * pay
             havuz = kazanan * pay
-            seyrelmis += adet * (havuz / (kazanan + adet))
+            bize = adet * (havuz / (kazanan + adet))
+            seyrelmis += bize
+            if kademe == 15:
+                onbes_geliri += bize
         elif birim:
             # Kazanansız kademe: o haftanın kendi payı ileri devrediyordu;
             # biz oynasaydık tek kazanan biz olurduk. ALT SINIR.
@@ -151,8 +154,12 @@ def hafta_getirisi(kuponlar: Sequence[Any], gercek: Sequence[str],
             ham += havuz
             seyrelmis += havuz
             devirden += havuz
+            if kademe == 15:
+                onbes_geliri += havuz
     return {"kolon": toplam_kolon, "kademeler": bizim, "ham": ham,
-            "seyrelmis": seyrelmis, "devirden": devirden}
+            "seyrelmis": seyrelmis, "devirden": devirden,
+            "onbes_geliri": onbes_geliri,
+            "onbes_kazanan": int(tablo[15]["winners"]) if 15 in tablo else 0}
 
 
 def kos(butce: int, tavan: int = VARSAYILAN_TAVAN) -> dict[str, Any]:
@@ -183,6 +190,8 @@ def kos(butce: int, tavan: int = VARSAYILAN_TAVAN) -> dict[str, Any]:
             "devir": int(tablolar[(sezon, hafta)][15]["winners"]) == 0,
             "ham": g["ham"], "seyrelmis": g["seyrelmis"],
             "devirden": g["devirden"],
+            "onbes_geliri": g["onbes_geliri"],
+            "onbes_kazanan": g["onbes_kazanan"],
         })
 
     # Çapraz tablo: devir haftası (kimse 15 bilmemiş) ↔ bizim isabetimiz.
@@ -195,6 +204,10 @@ def kos(butce: int, tavan: int = VARSAYILAN_TAVAN) -> dict[str, Any]:
     p_alt = sum(comb(n_d, i) * comb(n_h - n_d, n_t - i) / comb(n_h, n_t)
                 for i in range(kesisim + 1)
                 if 0 <= n_t - i <= n_h - n_d)
+
+    # HEDEFIN KENDISI ne oduyor: 15/15 tutturulan haftalarda alinan.
+    isabet = sorted(float(r["onbes_geliri"]) for r in satirlar if r["onbes"])
+    kazananlar = sorted(int(r["onbes_kazanan"]) for r in satirlar if r["onbes"])
 
     maliyet = sum(float(r["maliyet"]) for r in satirlar)
     ham = sum(float(r["ham"]) for r in satirlar)
@@ -217,6 +230,15 @@ def kos(butce: int, tavan: int = VARSAYILAN_TAVAN) -> dict[str, Any]:
             "kacak_normal": (sum(int(r["en_iyi_kacak"]) for r in satirlar
                                  if not r["devir"]) / (n_h - n_d))
             if n_h - n_d else 0.0,
+        },
+        "onbes_odul": {
+            "toplam": sum(isabet),
+            "ortalama": (sum(isabet) / len(isabet)) if isabet else 0.0,
+            "ortanca": isabet[len(isabet) // 2] if isabet else 0.0,
+            "en_kucuk": isabet[0] if isabet else 0.0,
+            "en_buyuk": isabet[-1] if isabet else 0.0,
+            "kazanan_ortanca": (kazananlar[len(kazananlar) // 2]
+                                if kazananlar else 0),
         },
         "onbes_hafta": sum(1 for r in satirlar if r["onbes"]),
         "odeyen_hafta": sum(1 for r in satirlar if r["seyrelmis"] > 0),
@@ -245,6 +267,21 @@ def bas(c: dict[str, Any]) -> None:
     for h in (13, 26, 39, 52):
         print(f"  {h:>3} hafta  net {c['hafta_basi_net'] * h:>16,.0f} TL   "
               f"harcanan {c['hafta_basi_maliyet'] * h:>14,.0f} TL")
+    o = c["onbes_odul"]
+    print(f"\nHEDEFIN KENDISI NE ODUYOR — 15/15 tutturulan "
+          f"{c['onbes_hafta']} hafta")
+    print(f"  alinan (seyrelmis): ortalama {o['ortalama']:>12,.0f} TL   "
+          f"ortanca {o['ortanca']:>12,.0f} TL")
+    print(f"                      en kucuk {o['en_kucuk']:>11,.0f} TL   "
+          f"en buyuk {o['en_buyuk']:>11,.0f} TL")
+    print(f"  o haftalarda kayittaki kazanan sayisi (ortanca): "
+          f"{o['kazanan_ortanca']:,}")
+    print(f"  toplam 15 geliri {o['toplam']:,.0f} TL — butun getirinin "
+          f"{o['toplam'] / c['seyrelmis']:.0%}'i")
+    print("  Ortanca odul haftalik kupon bedelinin ALTINDA: 15/15 tutturmak")
+    print("  ile buyuk para ayni sey degil; buyuk para DEVIRDE ve orayi")
+    print("  tutturamiyoruz (asagi).")
+
     d = c["devir_capraz"]
     print(f"\nDEVIR HAFTASI BIZIM HAFTAMIZ DEGIL")
     print(f"  15'i kimsenin bilmedigi hafta (havuz devrediyor): "
