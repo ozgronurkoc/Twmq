@@ -15,7 +15,7 @@ import {
   CardHeader,
   Skeleton,
 } from "@/components/ui/primitives";
-import { Collapsible, NumberField, Select } from "@/components/ui/controls";
+import { Collapsible, NumberField, Select, TextField } from "@/components/ui/controls";
 import {
   GenelKarne,
   LigKirilimi,
@@ -232,14 +232,14 @@ export default function OranAnaliziSayfasi() {
                 onChange={(v) => setForm((f) => ({ ...f, enAz: v }))}
                 hint="Uyarlanan aramanın ulaşmaya çalıştığı maç sayısı."
               />
-              <TextAlan
+              <TextField
                 label="Sezon"
                 value={form.sezon}
                 placeholder="2425"
                 onChange={(v) => setForm((f) => ({ ...f, sezon: v }))}
                 hint="Boş = tüm sezonlar."
               />
-              <TextAlan
+              <TextField
                 label="Tarih kesmesi"
                 value={form.tarih}
                 placeholder="2023-08-01"
@@ -281,41 +281,6 @@ export default function OranAnaliziSayfasi() {
           <GenelKarne veri={veri} />
           <LigKirilimi veri={veri} sorgu={gonderilen} />
         </>
-      ) : null}
-    </div>
-  );
-}
-
-/** `ui/controls`ta metin alanı yok; sezon/tarih için en küçük karşılığı. */
-function TextAlan({
-  label,
-  value,
-  onChange,
-  placeholder,
-  hint,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  placeholder?: string;
-  hint?: React.ReactNode;
-}) {
-  const id = React.useId();
-  return (
-    <div>
-      <label htmlFor={id} className="block text-[12px] font-medium text-muted-foreground">
-        {label}
-      </label>
-      <input
-        id={id}
-        type="text"
-        value={value}
-        placeholder={placeholder}
-        onChange={(e) => onChange(e.target.value)}
-        className="mt-1.5 h-10 w-full rounded-xl border border-line bg-background px-3 text-[13.5px] transition-shadow duration-200 ease-smooth focus:outline-none focus:ring-2 focus:ring-primary/50"
-      />
-      {hint ? (
-        <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">{hint}</p>
       ) : null}
     </div>
   );

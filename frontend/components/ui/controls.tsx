@@ -233,6 +233,62 @@ export function Select<T extends string>({
 
 // ─── Katlanir bolum ───────────────────────────────────────────────────────
 
+/**
+ * Tek satirlik metin alani — sezon, tarih kesmesi, serbest etiket.
+ *
+ * `NumberField`in metin kardesi. Once `app/oran-analizi/page.tsx` icinde
+ * YEREL duruyordu ("`ui/controls`ta metin alani yok; sezon/tarih icin en
+ * kucuk karsiligi"); ikinci cagiran cikinca kopyalanmadi, buraya tasindi.
+ * Sinif dizgisi `NumberField` ile ayni kalmak zorunda: iki kutu yan yana
+ * duruyor ve birinin yuksekligi otekinden farkli olursa hizasi bozulur.
+ */
+export function TextField({
+  label,
+  value,
+  onChange,
+  placeholder,
+  hint,
+  bozuk,
+  disabled,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  hint?: React.ReactNode;
+  /** `aria-invalid` + kirmizi kenar; dogrulama CAGIRAN tarafta kalir. */
+  bozuk?: boolean;
+  disabled?: boolean;
+}) {
+  const id = React.useId();
+  return (
+    <div>
+      <label htmlFor={id} className="block text-[12px] font-medium text-muted-foreground">
+        {label}
+      </label>
+      <input
+        id={id}
+        type="text"
+        value={value}
+        placeholder={placeholder}
+        disabled={disabled}
+        aria-invalid={bozuk}
+        onChange={(e) => onChange(e.target.value)}
+        className={cn(
+          "mt-1.5 h-10 w-full rounded-xl border bg-background px-3 text-[13.5px]",
+          "transition-shadow duration-200 ease-smooth",
+          "focus:outline-none focus:ring-2 focus:ring-primary/50",
+          "disabled:opacity-50",
+          bozuk ? "border-danger" : "border-line",
+        )}
+      />
+      {hint ? (
+        <p className="mt-1 text-[11.5px] leading-relaxed text-muted-foreground">{hint}</p>
+      ) : null}
+    </div>
+  );
+}
+
 export function Collapsible({
   baslik,
   hint,

@@ -2533,6 +2533,17 @@
    "anildigi_yerler": [],
    "bekcisiz_gerekce": "Iki ayri kaynagin marj oranini tutan bir bekci yok ve kurmak iddaa arsivinin BUYUMESINI bekler (su an 3 snapshot). Arayuzde anilan sey oran DEGIL, yonu: 'iki katindan fazla' — olculen 2,71 bunun altina dusmeden bayatlamaz.",
    "not": "Kullanici bant tablosunu ondalik oran olarak okur ve iddaa da ondalik oran yazar — tablo iddaa kuponundan geliyormus gibi gorunur. GELMIYOR: gecmis iddaa orani hicbir kaynakta yayinlanmiyor (data/iddaa/iddaa_rapor.json notu), arsiv football-data.co.uk. Yon onemli: marj yuksekse yazilan oran DUSUKTUR, yani ayni mac iddaa kuponunda bir ALT banda duser. Arayuze uyari olarak yazildi."
+  },
+  {
+   "ne": "kupon kurucunun 15 satirlik analizinin suresi — korpus sicakken",
+   "deger": "0,81",
+   "ureten": "cd backend && python -c \"import json,time; from spor_toto.benzer import benzer_maclar; d=json.load(open('data/super_toto/2026_27/hafta_05.json')); [benzer_maclar({k:m['odds_books']['pinnacle_kapanis'][k] for k in ('1','0','2')}, tolerans=None, en_az=200, yontem='shin', cizgi='kapanis') for m in d['matches']]; t=time.time(); [benzer_maclar({k:m['odds_books']['pinnacle_kapanis'][k] for k in ('1','0','2')}, tolerans=None, en_az=200, yontem='shin', cizgi='kapanis') for m in d['matches']]; print(round(time.time()-t,2))\"",
+   "olculdu": "2026-09-14",
+   "anildigi_yerler": [
+    "frontend/lib/kupon-analiz.ts"
+   ],
+   "bekcisiz_gerekce": "Bir SURE olcumu; kapinin tutabilecegi bir degismez degil (makineden makineye degisir). Karari tutan sey sayinin kendisi degil ondan cikan HUKUM: toplu uc eklenmedi. Hukum modul kunyesinde yazili ve oradaki sayiyi kutugun alinti denetimi tutuyor.",
+   "not": "5. haftanin 15 maci, Pinnacle kapanis oraniyla, shin arindirma, hedef orneklem 200, lig suzgeci YOK. Ilk sorgu 1,98 sn — o surenin tamami korpus okumasi ve surec basina bir kez odeniyor; 15 sorgunun kendisi 0,81 sn (54 ms/satir). Bu olcum bir KARARIN gerekcesi: `POST /api/benzer/toplu` diye ikinci bir yol ACILMADI."
   }
  ],
  "komutlar": [

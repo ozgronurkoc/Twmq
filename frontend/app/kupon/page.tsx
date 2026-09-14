@@ -3,18 +3,32 @@
 import * as React from "react";
 import { Eraser } from "lucide-react";
 
+import { getBenzer } from "@/lib/api";
+import { hataMetni, iptalMi } from "@/lib/istek";
 import {
   bosKupon,
   kuponOzeti,
   kuponuYereldenOku,
   kuponuYereleYaz,
+  oranSayilari,
   yereliTemizle,
   type KuponSatiri,
 } from "@/lib/kupon";
+import {
+  analizOzeti,
+  analizeHazir,
+  bosAnaliz,
+  sorguIzi,
+  VARSAYILAN_ANALIZ,
+  type AnalizAyari,
+  type SatirAnalizi,
+} from "@/lib/kupon-analiz";
 import { MAC_SAYISI, type Sembol } from "@/lib/types";
 import { yuzde } from "@/lib/utils";
 import { Badge, Button, Callout, Card, CardBody, CardHeader } from "@/components/ui/primitives";
 import { KuponIzgarasi } from "@/components/kupon/izgara";
+import { AnalizAyarlari } from "@/components/kupon/ayarlar";
+import { AnalizTablosu, TabloAciklamasi } from "@/components/kupon/analiz-tablosu";
 
 /**
  * Kupon kurucu — **1. aşama: giriş**.
@@ -49,6 +63,18 @@ export default function KuponSayfasi() {
   // Yerel kayit ANCAK okunduktan sonra yazilir: ilk render'daki bos tablo
   // depodaki dolu tabloyu ezmesin.
   const [okundu, setOkundu] = React.useState(false);
+  const [ayar, setAyar] = React.useState<AnalizAyari>(VARSAYILAN_ANALIZ);
+  const [sonuclar, setSonuclar] = React.useState<SatirAnalizi[]>(() =>
+    bosAnaliz(MAC_SAYISI),
+  );
+  const [kosuyor, setKosuyor] = React.useState(false);
+  /**
+   * Ekrandaki sonucun ait oldugu sorgu. Girdi ya da ayar degisince bu iz
+   * tutmaz ve sayfa "sonuc bayat" der — eski karneyi yeni oranin cevabi
+   * gibi gostermek, sessizce yanlis kupon kurdurur.
+   */
+  const [kosanIz, setKosanIz] = React.useState<string | null>(null);
+  const iptalci = React.useRef<AbortController | null>(null);
 
   React.useEffect(() => {
     const kayit = kuponuYereldenOku();
@@ -60,6 +86,9 @@ export default function KuponSayfasi() {
     if (!okundu) return;
     kuponuYereleYaz(satirlar);
   }, [satirlar, okundu]);
+
+  // Sayfadan cikilirken ucan sorgular birakilmaz.
+  React.useEffect(() => () => iptalci.current?.abort(), []);
 
   function yaz(mac: number, alan: string, deger: string) {
     setSatirlar((onceki) =>
@@ -74,11 +103,83 @@ export default function KuponSayfasi() {
   }
 
   function temizle() {
+    iptalci.current?.abort();
     setSatirlar(bosKupon());
+    setSonuclar(bosAnaliz(MAC_SAYISI));
+    setKosanIz(null);
+    setKosuyor(false);
     yereliTemizle();
   }
 
+  /**
+   * 15 satiri AYNI ayarla arar.
+   *
+   * ─── Neden 15 ayri istek, neden toplu bir uc degil ──────────────────────
+   *
+   * `/api/benzer` zaten var, onbellekli (`lru_cache`) ve tek maclik sorgusu
+   * `/oran-analizi` ile BIREBIR ayni — yani buradaki cevap orada acilanla
+   * ayni cevap olmak zorunda ve ayni ucu cagirmak bunu tanim geregi saglar.
+   * Toplu bir uc, ayrisabilecek ikinci bir yol acardi. Olculmeden eklenmez:
+   * once bu halin suresi olculur.
+   *
+   * ─── Neden satir satir yaziliyor ────────────────────────────────────────
+   *
+   * `Promise.all` toplu beklenip tek seferde yazilsaydi ekran 15 sorgu
+   * boyunca olu dururdu. Her cevap geldigi anda kendi satirina yaziliyor;
+   * tablo doldukca doluyor.
+   */
+  async function analizEt() {
+    if (!analizeHazir(satirlar, ayar)) return;
+    iptalci.current?.abort();
+    const kontrol = new AbortController();
+    iptalci.current = kontrol;
+
+    const iz = sorguIzi(satirlar, ayar);
+    setKosuyor(true);
+    setKosanIz(iz);
+    setSonuclar(satirlar.map(() => ({ durum: "kosuyor", veri: null, hata: null })));
+
+    const yazSatir = (i: number, sonuc: SatirAnalizi) =>
+      setSonuclar((onceki) => onceki.map((s, j) => (j === i ? sonuc : s)));
+
+    await Promise.all(
+      satirlar.map(async (satir, i) => {
+        try {
+          const veri = await getBenzer(
+            oranSayilari(satir),
+            {
+              cizgi: ayar.cizgi,
+              arindirma: ayar.arindirma,
+              en_az: ayar.enAz,
+              // Lig suzgeci BILEREK yok: aranan yer tum liglerin korpusu.
+              ...(ayar.tarih ? { tarih: ayar.tarih } : {}),
+            },
+            kontrol.signal,
+          );
+          if (kontrol.signal.aborted) return;
+          yazSatir(i, { durum: "bitti", veri, hata: null });
+        } catch (e) {
+          // Iptal bir hata DEGILDIR (`lib/istek` doktrini): durum hic
+          // guncellenmez, cunku yerine yeni bir kosum gecmistir.
+          if (iptalMi(e, kontrol.signal)) return;
+          yazSatir(i, {
+            durum: "hata",
+            veri: null,
+            hata: hataMetni(e, "Sorgu başarısız"),
+          });
+        }
+      }),
+    );
+
+    if (!kontrol.signal.aborted) setKosuyor(false);
+  }
+
   const ozet = kuponOzeti(satirlar);
+  const analiz = analizOzeti(sonuclar);
+  const hazir = analizeHazir(satirlar, ayar);
+  const suankiIz = sorguIzi(satirlar, ayar);
+  const bayat = kosanIz != null && kosanIz !== suankiIz;
+  const sonucVar = kosanIz != null;
   const doluMu = satirlar.some(
     (s) => s.lig || s.ev || s.dep || s.oran["1"] || s.oran["0"] || s.oran["2"],
   );
@@ -147,13 +248,75 @@ export default function KuponSayfasi() {
         </Callout>
       ) : null}
 
-      <Callout ton={ozet.sorguyaHazir ? "success" : "neutral"} baslik="Sıradaki aşama">
-        {ozet.sorguyaHazir ? (
+      <Card>
+        <CardHeader
+          title="Analiz ayarları"
+          hint="15 satırın tamamı bu ayarla, tüm liglerin korpusunda aranır — lig süzgeci yok."
+        />
+        <CardBody>
+          <AnalizAyarlari
+            ayar={ayar}
+            onChange={setAyar}
+            onAnaliz={analizEt}
+            hazir={hazir}
+            kosuyor={kosuyor}
+            ortalamaMarj={ozet.ortalamaMarj}
+            bayat={bayat}
+          />
+        </CardBody>
+      </Card>
+
+      {sonucVar ? (
+        <Card>
+          <CardHeader
+            title="Karne — tüm ligler"
+            hint={
+              kosuyor
+                ? `${analiz.biten + analiz.hatali}/${MAC_SAYISI} satır tamamlandı…`
+                : `${ayar.cizgi === "acilis" ? "Açılış" : "Kapanış"} çizgisi · ${ayar.arindirma} arındırma${ayar.tarih ? ` · ${ayar.tarih} öncesi` : ""}`
+            }
+          />
+          <CardBody className="space-y-4">
+            <AnalizTablosu satirlar={satirlar} sonuclar={sonuclar} ayar={ayar} />
+            <div className="space-y-3 border-t border-line pt-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge ton={analiz.hatali ? "danger" : "neutral"}>
+                  {analiz.biten}/{MAC_SAYISI} satır
+                  {analiz.hatali ? ` · ${analiz.hatali} hata` : ""}
+                </Badge>
+                <Badge ton={analiz.sapan.length ? "primary" : "neutral"}>
+                  {analiz.sapan.length} satırda piyasa aralık dışında
+                </Badge>
+                {analiz.azOrnek.length ? (
+                  <Badge ton="warning">
+                    {analiz.azOrnek.length} satırda az örneklem
+                  </Badge>
+                ) : null}
+                {analiz.tavanaDayanan.length ? (
+                  <Badge ton="warning">
+                    {analiz.tavanaDayanan.length} satırda yarıçap tavanda
+                  </Badge>
+                ) : null}
+              </div>
+              <TabloAciklamasi sapanVar={analiz.sapan.length > 0} />
+            </div>
+          </CardBody>
+        </Card>
+      ) : null}
+
+      <Callout ton={sonucVar && analiz.tamam ? "success" : "neutral"} baslik="Sıradaki aşama">
+        {sonucVar && analiz.tamam ? (
           <>
-            15 satırın da oranı tam. Sonraki adımda bu tablo{" "}
-            <strong>tüm liglerin korpusunda</strong> satır satır aranacak;
-            açılış/kapanış çizgisi ve marj arındırma yöntemi (shin · güç ·
-            orantılı) üstte tek çubuktan seçilecek.
+            Karne çıktı. Bundan sonrası <strong>olasılık</strong> ve{" "}
+            <strong>işaret seçimi</strong>: hangi sayının kupona gireceği
+            (piyasa · karne · karışım) ve 15 maçın banko/çifte/üçlü
+            dağılımının hangi bütçeyle kurulacağı — ikisi de henüz karara
+            bağlanmadı.
+          </>
+        ) : ozet.sorguyaHazir ? (
+          <>
+            15 satırın da oranı tam. Üstteki ayarlarla{" "}
+            <strong>tüm liglerin korpusunda</strong> aratabilirsiniz.
           </>
         ) : (
           <>

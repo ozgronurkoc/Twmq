@@ -51,7 +51,7 @@ try {
     "npx",
     [
       "tsc", "lib/kurulum.ts", "lib/kume-ici.ts", "lib/senaryo.ts",
-      "lib/kupon.ts",
+      "lib/kupon.ts", "lib/kupon-analiz.ts",
       "lib/utils.ts", "lib/types.ts", "lib/sekmeler.ts",
       "lib/super-toto.ts",
       "--outDir", cikti,
@@ -68,6 +68,7 @@ try {
   const S = iste(join(cikti, "senaryo.js"));
   const T = iste(join(cikti, "sekmeler.js"));
   const KP = iste(join(cikti, "kupon.js"));
+  const KA = iste(join(cikti, "kupon-analiz.js"));
   // `types.ts` yalnizca tip TASIMIYOR; `MAC_SAYISI` ve `SEMBOLLER`
   // gibi calisma zamani sabitleri de orada ve ikisi de sunucuyla
   // karsilastirilmak zorunda.
@@ -339,6 +340,115 @@ try {
     assert.equal(ilk.ev.length, KP.METIN_SINIR);
     assert.equal(ilk.dep, "a b");
     assert.equal(ilk.lig, "T1");
+  });
+
+  // ── Kupon analizi (lib/kupon-analiz.ts) ──────────────────────────────
+
+  dene("sorgu izi hem ORANI hem AYARI kapsar", () => {
+    const k = KP.bosKupon().map(() => ({
+      lig: "T1", ev: "a", dep: "b", oran: { "1": "2.0", "0": "3.0", "2": "4.0" },
+    }));
+    const iz = KA.sorguIzi(k, KA.VARSAYILAN_ANALIZ);
+    // Ayni girdi + ayni ayar -> ayni iz (sonuc bayat degil).
+    assert.equal(iz, KA.sorguIzi(k, KA.VARSAYILAN_ANALIZ));
+    // Tek bir oran degisirse iz DEGISIR: eski karne yeni orana ait degildir.
+    const degisik = k.map((r, i) => (i === 7 ? { ...r, oran: { ...r.oran, "0": "3.1" } } : r));
+    assert.notEqual(iz, KA.sorguIzi(degisik, KA.VARSAYILAN_ANALIZ));
+    // Ayarin her ekseni ize girer.
+    for (const ayar of [
+      { ...KA.VARSAYILAN_ANALIZ, cizgi: "acilis" },
+      { ...KA.VARSAYILAN_ANALIZ, arindirma: "orantili" },
+      { ...KA.VARSAYILAN_ANALIZ, enAz: 500 },
+      { ...KA.VARSAYILAN_ANALIZ, tarih: "2026-09-01" },
+    ]) {
+      assert.notEqual(iz, KA.sorguIzi(k, ayar), JSON.stringify(ayar));
+    }
+    // Mac ADI ize GIRMEZ: ad sorgunun parcasi degil, cevabi bayatlatmaz.
+    const adli = k.map((r) => ({ ...r, ev: "Beşiktaş", lig: "SP1" }));
+    assert.equal(iz, KA.sorguIzi(adli, KA.VARSAYILAN_ANALIZ));
+  });
+
+  dene("tarih kesmesi: takvimde olmayan gun ELENIR", () => {
+    assert.equal(KA.tarihGecerli(""), true, "bos = kesme yok, gecerli");
+    assert.equal(KA.tarihGecerli("2026-09-01"), true);
+    // `new Date` bunlari sessizce baska bir gune tasir; bicim denetimi
+    // tek basina yetmiyor, o yuzden gidis-donus karsilastiriliyor.
+    assert.equal(KA.tarihGecerli("2026-13-45"), false);
+    assert.equal(KA.tarihGecerli("2026-02-30"), false);
+    assert.equal(KA.tarihGecerli("01.09.2026"), false);
+    assert.equal(KA.ayarGecerli({ ...KA.VARSAYILAN_ANALIZ, tarih: "2026-02-30" }), false);
+    assert.equal(KA.ayarGecerli({ ...KA.VARSAYILAN_ANALIZ, enAz: 0 }), false);
+    assert.equal(KA.ayarGecerli(KA.VARSAYILAN_ANALIZ), true);
+  });
+
+  dene("/oran-analizi adresi AYNI sorguyu tasir, varsayilani tasimaz", () => {
+    const satir = { lig: "T1", ev: "a", dep: "b", oran: { "1": "1.26", "0": "6.48", "2": "13.54" } };
+    const varsayilan = KA.oranAnaliziAdresi(satir, KA.VARSAYILAN_ANALIZ);
+    assert.ok(varsayilan.startsWith("/oran-analizi?"));
+    const p = new URLSearchParams(varsayilan.split("?")[1]);
+    assert.deepEqual([p.get("o1"), p.get("o0"), p.get("o2")], ["1.26", "6.48", "13.54"]);
+    // Varsayilan ayar adrese YAZILMAZ.
+    assert.equal(p.get("cizgi"), null);
+    assert.equal(p.get("arindirma"), null);
+    assert.equal(p.get("en_az"), null);
+    // Degisen ayar yazilir — ve adlari `/oran-analizi`nin OKUDUGU adlar.
+    const q = new URLSearchParams(
+      KA.oranAnaliziAdresi(satir, {
+        cizgi: "acilis", arindirma: "orantili", enAz: 500, tarih: "2026-09-01",
+      }).split("?")[1],
+    );
+    assert.equal(q.get("cizgi"), "acilis");
+    assert.equal(q.get("arindirma"), "orantili");
+    assert.equal(q.get("en_az"), "500");
+    assert.equal(q.get("tarih"), "2026-09-01");
+  });
+
+  dene("ozet: sapma piyasa_ga_icinde=false'tan sayilir, null sapma DEGILDIR", () => {
+    const sembol = (icinde) => ({
+      adet: 100, oran: 0.4, ga_alt: 0.3, ga_ust: 0.5, piyasa: 0.42,
+      fark: -0.02, piyasa_ga_icinde: icinde,
+    });
+    const satir = (icinde, yeterli = true, tavan = false) => ({
+      durum: "bitti",
+      hata: null,
+      veri: {
+        tolerans_tavana_dayandi: tavan,
+        toplam: {
+          n: yeterli ? 200 : 12,
+          yeterli,
+          semboller: { "1": sembol(icinde), "0": sembol(true), "2": sembol(true) },
+        },
+      },
+    });
+    const o = KA.analizOzeti([
+      satir(true),                      // 0: uyumlu
+      satir(false),                     // 1: sapiyor
+      satir(null),                      // 2: karar verilemez -> sapma DEGIL
+      satir(true, false),               // 3: az orneklem
+      satir(true, true, true),          // 4: yaricap tavanda
+      { durum: "hata", veri: null, hata: "500" },
+      { durum: "kosuyor", veri: null, hata: null },
+    ]);
+    assert.deepEqual(o.sapan, [1]);
+    assert.deepEqual(o.azOrnek, [3]);
+    assert.deepEqual(o.tavanaDayanan, [4]);
+    assert.equal(o.biten, 5);
+    assert.equal(o.hatali, 1);
+    assert.equal(o.kosan, 1);
+    assert.equal(o.tamam, false, "bir satir hala kosuyorken tamam degil");
+  });
+
+  dene("analiz ancak 15 satirin ORANI TAMken kosulabilir", () => {
+    const dolu = KP.bosKupon().map(() => ({
+      lig: "", ev: "", dep: "", oran: { "1": "2.0", "0": "3.0", "2": "4.0" },
+    }));
+    assert.equal(KA.analizeHazir(dolu, KA.VARSAYILAN_ANALIZ), true);
+    // Tek satirin tek hucresi eksikse kosmaz — o mac korlesirdi.
+    const eksik = dolu.map((r, i) => (i === 3 ? { ...r, oran: { ...r.oran, "2": "" } } : r));
+    assert.equal(KA.analizeHazir(eksik, KA.VARSAYILAN_ANALIZ), false);
+    assert.equal(KA.analizeHazir(KP.bosKupon(), KA.VARSAYILAN_ANALIZ), false);
+    // Bozuk ayar da kosumu engeller.
+    assert.equal(KA.analizeHazir(dolu, { ...KA.VARSAYILAN_ANALIZ, tarih: "dun" }), false);
   });
 
   // ── Kume-ici hesabi ──────────────────────────────────────────────────
