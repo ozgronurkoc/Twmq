@@ -2141,6 +2141,55 @@
    "sonuclar": "null",
    "surum": "int"
   },
+  "POST /api/kupon/motor": {
+   "arindirma": "str",
+   "butce_kolon": "int",
+   "butce_tl": "float",
+   "cizgiler": {
+    "kapanis": {
+     "marjlar": [
+      "float"
+     ],
+     "planlar": [
+      {
+       "ad": "str",
+       "anahtar": "str",
+       "banko": "int",
+       "bedel_tl": "float",
+       "cift": "int",
+       "isaretler": [
+        [
+         "str"
+        ]
+       ],
+       "kolon": "int",
+       "p_hedef": "float",
+       "p_kacaksiz": "float",
+       "sekil": "str",
+       "serbest_kolon": "int",
+       "tavana_dayandi": "bool",
+       "uclu": "int"
+      }
+     ],
+     "probs": [
+      {
+       "0": "float",
+       "1": "float",
+       "2": "float"
+      }
+     ]
+    }
+   },
+   "kacak_esigi": "int",
+   "kolon_bedeli_tl": "float",
+   "odul_vektoru": {
+    "12": "float",
+    "13": "float",
+    "14": "float",
+    "15": "float"
+   },
+   "sezon": "str"
+  },
   "POST /api/solve": {
    "error": "null",
    "ok": "bool",

@@ -139,6 +139,20 @@ _ARSIV_SEMBOLU: dict[str, Any] = {
     "piyasa": 0.44, "piyasa_ga_icinde": True,
 }
 
+#: `/api/kupon/motor` icin ornek oran: 5. haftanin 15 macinin Pinnacle
+#: KAPANIS fiyatlari. Uydurulmus degil — depodaki kayittan okunuyor ki
+#: sozlesme gercek bir cevabin seklini tasisin.
+def _motor_oranlari() -> list[dict[str, float]]:
+    import json
+
+    yol = KOK / "data" / "super_toto" / "2026_27" / "hafta_05.json"
+    hafta = json.loads(yol.read_text(encoding="utf-8"))
+    return [m["odds_books"]["pinnacle_kapanis"] for m in hafta["matches"]]
+
+
+_MOTOR_ORANLARI = _motor_oranlari()
+
+
 _ARSIV_GOVDESI: dict[str, Any] = {
     "sezon": "2026_27",
     "ad": "sozlesme ornegi",
@@ -231,6 +245,11 @@ def _uclar(istemci, ornek_kupon: str) -> dict[str, Any]:
         # alanlarinin hicbiri sozlesmeye girmez (bos liste bir sekil
         # tasimaz). Yazilan yer GERCEK arsiv degil — `uret()` icinde
         # `kupon_arsivi.ARSIV` gecici bir dizine bakiyor.
+        # Motorun kuponu: govde yalnizca ORAN tasiyor (takim kimligi yok).
+        # 5. haftanin kapanis fiyatlariyla cagriliyor ki sozlesme gercek bir
+        # cevaptan ciksin, uydurulmus bir tablodan degil.
+        {"ad": "POST /api/kupon/motor", "yol": "/api/kupon/motor",
+         "govde": {"cizgiler": {"kapanis": _MOTOR_ORANLARI}}},
         {"ad": "POST /api/kupon/arsiv", "yol": "/api/kupon/arsiv",
          "govde": _ARSIV_GOVDESI},
         {"ad": "GET /api/kupon/arsiv", "yol": "/api/kupon/arsiv"},

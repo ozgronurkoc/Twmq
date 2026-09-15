@@ -111,6 +111,45 @@ Dört kupon kuruldu ve gerçek sonuç `122012110010220` ile karşılaştırıld�
 (sahibi iddaa bülteniyle çalışacak), hafta korpusun içinde — yani sızıntı
 var. Okunacak tek şey zincirin uçtan uca çalıştığı.
 
+### Motor kuponu SAYFAYA bağlandı (aynı gün, ikinci tur)
+
+Sahibi düzeltti: *"hafta 5 için yaptığımız her şeyi, hafta 6 verilerini
+girince tuşa basınca hafta 6 için yapmalı."* Ölçüldü ve **ilk turda yanlış
+olanı yapmışım**: 5. haftanın OYNANAN kuponu karneden değil MOTORDAN
+çıkmış (`hafta_05_kupon.json`). Karne kuponları kalıyor ama yanına asıl
+zincir bağlandı.
+
+* **`spor_toto/secim.sekilli_secim()`** (yeni): şekli sabitlenmiş planın
+  kanıtlanmış en iyisi — DP'nin `(çifte, üçlü)` düğümüne kısıtlanmış hâli.
+* **`spor_toto/kupon_motor.py`** (yeni): oran → `implied_probs` → `odul_secim`
+  (bütçenin seçtiği şekil) + `sekilli_secim(5,5)` (sabit şekil). **Takım
+  kimliği ya da model GEREKMİYOR** — `super_toto_hafta.py` da baştan beri
+  öyle ("bu script tahmin üretmez"), o yüzden sayfanın elle girilen oran
+  tablosu motoru beslemeye yetiyor.
+* **`POST /api/kupon/motor`** + `/kupon`ta "Motoru çalıştır" düğmesi ve
+  "Motor kuponları" kartı. Karne kartı "Karne kuponları" oldu.
+
+**Bekçi: 5. hafta BİREBİR yeniden üretiliyor** (`tests/test_kupon_motor.py`,
+10 test). Üç varyantın da on beş işareti ve `P(k≤3)`i tutuyor:
+
+    kapanış · bütçe  6b/0ç/9ü  19.683 kolon  0,951801   (variants[0])
+    kapanış · sabit  5b/5ç/5ü   7.776 kolon  0,799613   (variants[1])
+    açılış  · bütçe  6b/0ç/9ü  19.683 kolon  0,945670   (variants[2])
+
+`sekilli_secim` ayrıca kaba kuvvetle sınandı (küçük vakada bütün atamalar).
+Bir kusur da bekçiden çıktı: `butce_tl: 0` sessizce ₺210.000'e düşüyordu
+(`0 or VARSAYILAN`).
+
+### Bu turda AÇIK KALAN (zaman kısıtıyla atlandı)
+
+1. **Kapı koşulmadı.** Sahibi "testleri atla, direkt commit et" dedi. Koşan:
+   `tsc`, `eslint`, sözleşme üretimi. **Koşmayan:** `pytest` (tamamı),
+   `check.mjs`, tarayıcı dumanı. Bir sonraki oturumun İLK işi budur.
+2. **Motor kuponları arşive YAZILMIYOR.** `sekilli` listesi yalnızca karne
+   kuponlarını taşıyor; motorunkiler kaydedilince kayboluyor.
+3. Belgeler (README §6.1, ARCHITECTURE_NEXT uç tablosu) yeni ucu anmıyor;
+   test sayısı bekçisi de bayat (2.105 → 2.115).
+
 ### Sıradaki adım
 
 1. **Sızıntısız ölçüm**: aynı dört şekil, `tarih` kesmesiyle (maç gününden

@@ -1657,6 +1657,66 @@ export interface PazarResponse {
   sinir: string;
 }
 
+/* ── Kupon motoru ─────────────────────────────────────────────────────────── */
+
+/**
+ * `POST /api/kupon/motor` — elle girilen oranlardan **motorun** kuponu.
+ *
+ * Karne kuponlarının (`lib/kupon-sekil.ts`) ikizi, rakibi değil: orası "bu
+ * fiyatta geçmişte ne olmuş" diye sorar, burası marjı atılmış fiyatın
+ * kendisinden plan kurar (`spor_toto/kupon_motor.py`). 5. haftanın OYNANAN
+ * kuponunu birebir yeniden üretiyor ve bunun bir bekçisi var
+ * (`backend/tests/test_kupon_motor.py`).
+ */
+export interface MotorPlani {
+  /** Kalıcı anahtar: `hak` (bütçenin seçtiği şekil) ya da `sabit5c5u`. */
+  anahtar: string;
+  ad: string;
+  /** 15 maçın işaretleri; sıra kupon düzeni (1, 0, 2). */
+  isaretler: Sembol[][];
+  kolon: number;
+  bedel_tl: number;
+  banko: number;
+  cift: number;
+  uclu: number;
+  /** `6b/0ç/9ü` biçiminde okunur şekil. */
+  sekil: string;
+  /** `P(kaçak ≤ 3)` = `P(en iyi kolon ≥ 12)` — KAPSAMA ölçüsü. */
+  p_hedef: number;
+  /** `P(kaçak = 0)` — ÖDEYEN olay, 15. kademe. Hedefle karıştırılmamalı. */
+  p_kacaksiz: number;
+  /**
+   * Şekli hafta değil TAVAN mı seçti. `true` ise plan bütçe yüzünden
+   * kısıldı ve `serbest_kolon` kuralın serbestken istediği bedeldir.
+   */
+  tavana_dayandi: boolean;
+  serbest_kolon: number | null;
+}
+
+export interface MotorCizgisi {
+  /** Her maçın marjı atılmış 1/0/2 olasılığı — planın girdisi. */
+  probs: Record<Sembol, number>[];
+  /** Satır başına `Σ 1/oran − 1`. */
+  marjlar: number[];
+  planlar: MotorPlani[];
+}
+
+export interface MotorCevabi {
+  sezon: string;
+  arindirma: string;
+  butce_tl: number;
+  butce_kolon: number;
+  kolon_bedeli_tl: number;
+  /**
+   * Planın kurulduğu kademe ödülleri — bu sezonun DEĞİL, bir öncekinin
+   * tablosu (nedensel: bu sezonun ödül ölçeği kupon kurulurken bilinmez).
+   */
+  odul_vektoru: Record<string, number>;
+  kacak_esigi: number;
+  /** Yalnızca oranı TAM gönderilen çizgiler döner. */
+  cizgiler: Partial<Record<Cizgi, MotorCizgisi>>;
+}
+
 /* ── Kupon arşivi ────────────────────────────────────────────────────────── */
 
 /**

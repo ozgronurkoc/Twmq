@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Eraser } from "lucide-react";
+import { Eraser, Play } from "lucide-react";
 
 import {
   arsiveYaz,
@@ -11,6 +11,7 @@ import {
   getBenzer,
   getLigEnvanteri,
   getMeta,
+  motoruKos,
 } from "@/lib/api";
 import { hataMetni, iptalMi } from "@/lib/istek";
 import {
@@ -43,10 +44,12 @@ import {
 import {
   CIZGILER,
   MAC_SAYISI,
+  SEMBOLLER,
   type ArsivOzeti,
   type BenzerResponse,
   type LigEnvanteriSatiri,
   type Cizgi,
+  type MotorCevabi,
   type Sembol,
 } from "@/lib/types";
 import { sayi, yuzde } from "@/lib/utils";
@@ -60,6 +63,10 @@ import {
   SekilliKuponlar,
   type KuponGirdisi,
 } from "@/components/kupon/sekilli-kuponlar";
+import {
+  MotorAciklamasi,
+  MotorKuponlari,
+} from "@/components/kupon/motor-kuponlari";
 import {
   KuponAciklamasi,
   KuponMuhasebesi,
@@ -154,6 +161,18 @@ export default function KuponSayfasi() {
   const [analizDamgasi, setAnalizDamgasi] = React.useState<CizgiBasina<string | null>>(
     () => cizgiBasina(() => null),
   );
+  // ─── Motor ──────────────────────────────────────────────────────────
+  //
+  // Karneden BAGIMSIZ bir kosum: `/api/kupon/motor` yalnizca orani okur ve
+  // haftanin kuponunu fiilen kuran zinciri calistirir. Ayri durumda
+  // tutuluyor cunku ayri bir soru ve biri kosmadan oteki gosterilebilir.
+  const [motor, setMotor] = React.useState<MotorCevabi | null>(null);
+  const [motorKosuyor, setMotorKosuyor] = React.useState(false);
+  const [motorHata, setMotorHata] = React.useState<string | null>(null);
+  /** Motorun cevabinin ait oldugu girdi; degisince cevap BAYATLAR. */
+  const [motorIz, setMotorIz] = React.useState<string | null>(null);
+  const motorIptal = React.useRef<AbortController | null>(null);
+
   const [arsivKosuyor, setArsivKosuyor] = React.useState(false);
   const [arsivHata, setArsivHata] = React.useState<string | null>(null);
   const [kaydedildi, setKaydedildi] = React.useState<string | null>(null);
@@ -229,6 +248,7 @@ export default function KuponSayfasi() {
 
   // Sayfadan cikilirken ucan sorgular birakilmaz.
   React.useEffect(() => () => iptalci.current?.abort(), []);
+  React.useEffect(() => () => motorIptal.current?.abort(), []);
 
   function yazKimlik(mac: number, alan: "lig" | "ev" | "dep", deger: string) {
     setSatirlar((onceki) =>
@@ -259,6 +279,11 @@ export default function KuponSayfasi() {
     setKaydedildi(null);
     setEvren(cizgiBasina(() => null));
     setAnalizDamgasi(cizgiBasina(() => null));
+    motorIptal.current?.abort();
+    setMotor(null);
+    setMotorIz(null);
+    setMotorHata(null);
+    setMotorKosuyor(false);
     yereliTemizle();
   }
 
@@ -378,6 +403,50 @@ export default function KuponSayfasi() {
     }
   }
 
+  /**
+   * Motorun kuponunu kurar — 5. haftada OYNANAN zincirin ta kendisi.
+   *
+   * Karne sorgusundan BAGIMSIZ ve bilerek: motor yalnizca orani okuyor
+   * (`implied_probs`), yani karne kosulmamis olsa da calisir. Orani TAM
+   * olan her cizgi gonderilir; oteki sunucuda atlanir.
+   *
+   * Tek istek, cunku hesap sunucuda ve 15 satirin tamamini birlikte
+   * gormesi gerekiyor: plan bir maca degil HAFTAYA kurulur.
+   */
+  async function motoruCalistir() {
+    const hazirOranlar = CIZGI_SIRASI.filter((c) => ozetler[c].sorguyaHazir);
+    if (!hazirOranlar.length) return;
+    motorIptal.current?.abort();
+    const kontrol = new AbortController();
+    motorIptal.current = kontrol;
+    setMotorKosuyor(true);
+    setMotorHata(null);
+    const iz = motorunIzi();
+    try {
+      const cevap = await motoruKos(
+        {
+          cizgiler: Object.fromEntries(
+            hazirOranlar.map((c) => [c, satirlar.map((x) => oranSayilari(x, c))]),
+          ),
+          arindirma: ayar.arindirma,
+          ...(haftalikTavan ? { butce_tl: haftalikTavan } : {}),
+        },
+        kontrol.signal,
+      );
+      if (kontrol.signal.aborted) return;
+      setMotor(cevap);
+      setMotorIz(iz);
+    } catch (e) {
+      // Iptal bir hata DEGILDIR: yerine yeni bir kosum gecmistir.
+      if (iptalMi(e, kontrol.signal)) return;
+      setMotorHata(hataMetni(e, "Motor koşulamadı"));
+      setMotor(null);
+      setMotorIz(null);
+    } finally {
+      if (!kontrol.signal.aborted) setMotorKosuyor(false);
+    }
+  }
+
   const bilinenKodlar = React.useMemo(
     () => (ligler ? new Set(ligler.map((l) => l.lig.toUpperCase())) : null),
     [ligler],
@@ -402,6 +471,22 @@ export default function KuponSayfasi() {
     () => cizgiBasina((c) => analizOzeti(sonuclar[c])),
     [sonuclar],
   );
+  /**
+   * Motorun girdisinin parmak izi. Karnenin izinden AYRI ve daha dar:
+   * motor kapsama, ornekleme ve tarih kesmesine bakmaz — yalnizca orani ve
+   * marj arindirmasini okur. Genis bir iz, lig etiketi duzeltmek gibi
+   * motoru hic ilgilendirmeyen bir degisiklikte cevabi bayatlatirdi.
+   */
+  function motorunIzi(): string {
+    const oranlar = CIZGI_SIRASI.map((c) =>
+      satirlar.map((x) => SEMBOLLER.map((s) => x.oran[c][s].trim()).join(",")).join("|"),
+    ).join("§");
+    return [oranlar, ayar.arindirma, haftalikTavan ?? ""].join("§");
+  }
+
+  const motorHazir = CIZGI_SIRASI.some((c) => ozetler[c].sorguyaHazir);
+  const motorBayat = motor != null && motorIz !== motorunIzi();
+
   const analiz = analizler[cizgi];
   const bayat = bayatlar[cizgi];
   const sonucVar = kosanIz[cizgi] != null;
@@ -756,14 +841,69 @@ export default function KuponSayfasi() {
         </CardBody>
       </Card>
 
+      <Card>
+        <CardHeader
+          title="Motor kuponları — haftanın kuponu"
+          hint={
+            motor
+              ? `${Object.keys(motor.cizgiler).length} çizgi · bütçe ₺${sayi(motor.butce_tl)} = ${sayi(motor.butce_kolon)} kolon · marj ${motor.arindirma}`
+              : "5. haftada OYNANAN kuponu kuran zincir. Yalnızca oranı okur — karne koşulmasa da çalışır."
+          }
+          action={
+            <Button
+              tip="primary"
+              boyut="sm"
+              onClick={motoruCalistir}
+              disabled={!motorHazir || motorKosuyor}
+            >
+              <Play size={14} />
+              {motorKosuyor ? "Kuruluyor…" : "Motoru çalıştır"}
+            </Button>
+          }
+        />
+        <CardBody className="space-y-4">
+          {motorHata ? (
+            <Callout ton="danger" baslik="Motor koşulamadı">
+              {motorHata}
+            </Callout>
+          ) : null}
+          {!motorHazir ? (
+            <p className="text-[12.5px] text-muted-foreground">
+              Bir çizginin <strong>15 satırının da</strong> oranı tam olduğunda
+              düğme açılır. Motor takım adı ya da lig kodu istemez — yalnızca
+              1 / 0 / 2 fiyatını okur.
+            </p>
+          ) : null}
+          {motorBayat ? (
+            <Callout ton="warning" baslik="Aşağıdaki plan güncel oranla üretilmedi">
+              Tablodaki oran ya da arındırma, motor koşulduktan sonra değişti.
+              Düğmeye yeniden basın.
+            </Callout>
+          ) : null}
+          {motor ? (
+            <>
+              <MotorKuponlari
+                satirlar={satirlar}
+                cevap={motor}
+                haftalikTavanTl={haftalikTavan}
+              />
+              <div className="border-t border-line pt-4">
+                <MotorAciklamasi cevap={motor} />
+              </div>
+            </>
+          ) : null}
+        </CardBody>
+      </Card>
+
       {sekilliler.length ? (
         <Card>
           <CardHeader
-            title="Şekilli kuponlar"
+            title="Karne kuponları"
             hint={
               `${sekilliler.length} kupon — ` +
               tazeCizgiler.map((c) => CIZGI_ADI[c]).join(" ve ") +
-              ", her biri 6 banko + 9 üçlü ve 5 banko + 5 çift + 5 üçlü."
+              ", her biri 6 banko + 9 üçlü ve 5 banko + 5 çift + 5 üçlü. " +
+              "Motor kuponlarının İKİZİ: aynı maçlar, başka bir soru."
             }
           />
           <CardBody className="space-y-4">
