@@ -68,9 +68,115 @@ benim kararım):
 
 ## Şu an (en güncel)
 
-**2026-09-14 — dal `claude/weekly-results-error-lessons-yrxc8i`**
+**2026-09-14 — dal `claude/kupon-kurma-sayfasi-u78o1v`**
 
-### 5. haftanın sonucu girildi ve dersleri çıkarıldı (§3.82)
+### `/kupon` iki fiyat çizgisine açıldı ve ŞEKİLLİ kupon kuruyor
+
+Sahibinin isteği: *"açılış ve kapanış oranlarını verdiğimde 6 banko 9 üçlü
+ve 5 banko 5 çift 5 üçlü şekilde 2 ayrı kupon oluşacak (açılış kendi içinde
+2, kapanış kendi içinde 2)"*, derecelendirme *"en fazla tekten en çok çifte,
+en çok çiftten en çok üçlüye"*, ve *"çiftlilerde en mantıklı seçenekler"*.
+
+Yapılan:
+
+* **Girdi iki bloğa ayrıldı.** `KuponSatiri.oran` artık çizgi başına
+  (`{acilis, kapanis}`); ızgarada iki fiyat bloğu yan yana, her birinin
+  kendi marj sütunu. Bir blok boş bırakılabilir — o çizgi atlanır, öteki
+  yine kupon verir.
+* **`lib/kupon-sekil.ts`** (yeni): şekiller `b6u9` (3⁹ = 19.683 kolon — 5.
+  haftada OYNANAN tek sistemin kolon sayısı) ve `b5c5u5` (2⁵·3⁵ = 7.776).
+  Derecelendirme **iki anahtarlı**, çünkü iyi banko ile iyi çifte aynı maç
+  değil: banko sırası `p₁`e, kalanların çift/üçlü sırası `p₃`e bakar
+  (`spor_toto/secim.py`nin kaçak aritmetiği). Çiftte seçilen iki sembol
+  ikili kuponunkiyle AYNI koddan geliyor (`satirOkumasi`). Kupon başına
+  `P(15/15)` ve `P(kaçak ≤ 3)` Poisson-binom evrişimiyle yazılıyor.
+* **Arşiv 3. sürüme geçti**: satır iki fiyat taşıyor, karne `analizler`
+  sözlüğünde çizgi başına, şekilli kuponlar `sekilli` listesinde (kolon ve
+  banko/çift/üçlü sayıları YAZILMAZ, hesaplanır). 2. sürüm kayıtları
+  **göçle** okunuyor: düz oran ve tek analiz, kaydın kendi `ayar.cizgi`sine
+  oturur. Diskte kayıt yoktu ama göç yine de yazıldı ve bekçilendi.
+
+### 5. haftanın oranlarıyla uçtan uca ölçüldü (Pinnacle, tarayıcıda)
+
+Dört kupon kuruldu ve gerçek sonuç `122012110010220` ile karşılaştırıldı:
+
+| kupon | kolon | kaçak | en iyi kolon | karneye göre P(≥12) |
+|---|---:|---:|---:|---:|
+| açılış 6 banko + 9 üçlü | 19.683 | 3 | **12/15** | %96,1 |
+| açılış 5/5/5 | 7.776 | 2 | **13/15** | %82,7 |
+| kapanış 6 banko + 9 üçlü | 19.683 | 2 | **13/15** | %96,2 |
+| kapanış 5/5/5 | 7.776 | 4 | 11/15 | %82,6 |
+
+**Bu bir geri test DEĞİL, tek haftalık bir duman testi.** Fiyat Pinnacle
+(sahibi iddaa bülteniyle çalışacak), hafta korpusun içinde — yani sızıntı
+var. Okunacak tek şey zincirin uçtan uca çalıştığı.
+
+### Motor kuponu SAYFAYA bağlandı (aynı gün, ikinci tur)
+
+Sahibi düzeltti: *"hafta 5 için yaptığımız her şeyi, hafta 6 verilerini
+girince tuşa basınca hafta 6 için yapmalı."* Ölçüldü ve **ilk turda yanlış
+olanı yapmışım**: 5. haftanın OYNANAN kuponu karneden değil MOTORDAN
+çıkmış (`hafta_05_kupon.json`). Karne kuponları kalıyor ama yanına asıl
+zincir bağlandı.
+
+* **`spor_toto/secim.sekilli_secim()`** (yeni): şekli sabitlenmiş planın
+  kanıtlanmış en iyisi — DP'nin `(çifte, üçlü)` düğümüne kısıtlanmış hâli.
+* **`spor_toto/kupon_motor.py`** (yeni): oran → `implied_probs` → `odul_secim`
+  (bütçenin seçtiği şekil) + `sekilli_secim(5,5)` (sabit şekil). **Takım
+  kimliği ya da model GEREKMİYOR** — `super_toto_hafta.py` da baştan beri
+  öyle ("bu script tahmin üretmez"), o yüzden sayfanın elle girilen oran
+  tablosu motoru beslemeye yetiyor.
+* **`POST /api/kupon/motor`** + `/kupon`ta "Motoru çalıştır" düğmesi ve
+  "Motor kuponları" kartı. Karne kartı "Karne kuponları" oldu.
+
+**Bekçi: 5. hafta BİREBİR yeniden üretiliyor** (`tests/test_kupon_motor.py`,
+10 test). Üç varyantın da on beş işareti ve `P(k≤3)`i tutuyor:
+
+    kapanış · bütçe  6b/0ç/9ü  19.683 kolon  0,951801   (variants[0])
+    kapanış · sabit  5b/5ç/5ü   7.776 kolon  0,799613   (variants[1])
+    açılış  · bütçe  6b/0ç/9ü  19.683 kolon  0,945670   (variants[2])
+
+`sekilli_secim` ayrıca kaba kuvvetle sınandı (küçük vakada bütün atamalar).
+Bir kusur da bekçiden çıktı: `butce_tl: 0` sessizce ₺210.000'e düşüyordu
+(`0 or VARSAYILAN`).
+
+### Bu turda AÇIK KALAN (zaman kısıtıyla atlandı)
+
+1. **Kapı koşulmadı.** Sahibi "testleri atla, direkt commit et" dedi. Koşan:
+   `tsc`, `eslint`, sözleşme üretimi. **Koşmayan:** `pytest` (tamamı),
+   `check.mjs`, tarayıcı dumanı. Bir sonraki oturumun İLK işi budur.
+2. **Motor kuponları arşive YAZILMIYOR.** `sekilli` listesi yalnızca karne
+   kuponlarını taşıyor; motorunkiler kaydedilince kayboluyor.
+3. Belgeler (README §6.1, ARCHITECTURE_NEXT uç tablosu) yeni ucu anmıyor;
+   test sayısı bekçisi de bayat (2.105 → 2.115).
+
+### Sıradaki adım
+
+1. **Sızıntısız ölçüm**: aynı dört şekil, `tarih` kesmesiyle (maç gününden
+   önce) geçmiş haftalarda koşulmalı. Şu anki tablo bunu söylemiyor.
+2. Dört kuponun toplamı **₺549.180 = haftalık tavanın 2,62 katı**. Hangisinin
+   oynanacağı sahibinin kararı; sayfa dördünü de gösteriyor ve toplamı
+   tavanla kıyaslıyor.
+3. Önceki listedeki maddeler duruyor: 729 kupon operasyonu (fiyatı
+   ₺191.887,44), 6. haftanın kendi gününde dondurulması, olasılık kaynağı
+   kararı (piyasa ↔ karne ↔ karışım), §3.81'in öbeklenme sınavı.
+4. **Bant sabiti İKİYE AYRILDI — dokunmadan önce oku.** `odds.FAVORI_BANTLARI`
+   *modelin* sınırlarıdır; arayüzünki ayrı: `FAVORI_BANTLARI_RAPOR`.
+
+### Neden böyle
+
+Şekil sahibinin kararı ve arayüzden değiştirilmiyor: `SEKILLER` sabit.
+Değişebilir olan tek şey **derecelendirme** ve o da veriden okunuyor —
+karne varsa karneden, yoksa piyasadan, ikisi de yoksa satır üçlüye düşüyor
+ve "karne yok" diye işaretleniyor. Uydurulmuş banko yok. İkili kupon
+(2¹⁵ = 32.768 kolon) kaldırılmadı: kural sahibinin önceki kuralı ve
+şekilli kuponların yanında duruyor.
+
+## Geçmiş girdiler
+
+### 2026-09-14 — dal `claude/weekly-results-error-lessons-yrxc8i`
+
+#### 5. haftanın sonucu girildi ve dersleri çıkarıldı (§3.82)
 
 Sonuç `122012110010220` (1/0/2 = **5/5/5**), skorlar, **program saatleri**
 ve ikramiye tablosu birlikte girildi. İkramiye tablosu bu hafta **iki
@@ -142,7 +248,6 @@ haftalardır öyleydi. 4. haftanın 4. dersi aynı şeydi. Kural değişmedi,
 haftadır aynı yerde kaybetmek tam olarak durma kurallarının **yazılma
 sebebidir**.
 
-## Geçmiş girdiler
 
 ### 2026-09-14 — dal `claude/match-analysis-coupon-page-p7w5dd`
 

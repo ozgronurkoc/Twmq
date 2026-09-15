@@ -3,6 +3,7 @@ import type {
   ArsivAyari,
   ArsivKaydi,
   ArsivListesi,
+  MotorCevabi,
   LigEnvanteri,
   Sembol,
   BacktestResponse,
@@ -419,14 +420,50 @@ export function arsiveYaz(
     sezon?: string;
     not?: string;
     ayar: ArsivAyari;
-    satirlar: { lig: string; ev: string; dep: string; oran: Record<string, string> }[];
-    analiz?: ArsivAnalizi | null;
+    satirlar: {
+      lig: string;
+      ev: string;
+      dep: string;
+      /** Cizgi basina 1/0/2 — arayuzun METIN hucreleri, sunucu sayiya cevirir. */
+      oran: Record<string, Record<string, string>>;
+    }[];
+    /** Cizgi basina karne; kosulmamis cizgi `null` gider. */
+    analizler?: Record<string, ArsivAnalizi | null> | null;
     kupon?: { isaretler: Sembol[][]; not?: string } | null;
+    /** Sekilli kuponlar — `kolon` ve sayimlar SUNUCUDA hesaplanir. */
+    sekilli?: { cizgi: string; sekil: string; isaretler: Sembol[][] }[] | null;
     sonuclar?: (string | null)[] | null;
   },
   signal?: AbortSignal,
 ) {
   return istek<ArsivKaydi>("/api/kupon/arsiv", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(govde),
+    signal,
+  });
+}
+
+/**
+ * Motorun kuponu — elle girilen oranlardan (`spor_toto/kupon_motor.py`).
+ *
+ * `getBenzer`in KARDESI: o karneyi sorar (gecmiste ne olmus), bu plani
+ * kurar (marji atilmis fiyatin kendisi ne diyor). Ikisi ayri cevap
+ * verebilir ve sayfa ikisini yan yana gosterir — ayrisma bir kusur degil,
+ * okunacak seyin kendisi.
+ *
+ * Yalnizca orani TAM olan cizgiler gonderilir; oteki sunucuda atlanir.
+ */
+export function motoruKos(
+  govde: {
+    cizgiler: Partial<Record<string, Record<string, number>[]>>;
+    arindirma?: string;
+    butce_tl?: number;
+    sezon?: string;
+  },
+  signal?: AbortSignal,
+) {
+  return istek<MotorCevabi>("/api/kupon/motor", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(govde),

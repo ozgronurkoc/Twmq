@@ -64,13 +64,28 @@ export interface KurulanKupon {
 /** Kac sembol isaretlenecek. Sahibinin kurali: en yuksek IKI. */
 export const IKILI = 2;
 
+/** Bir satirin SIRALANMIS okumasi — isaret secimi bunun uzerine kurulur. */
+export interface SatirOkumasi {
+  kaynak: IsaretKaynagi;
+  /** Buyukten kucuge sirali semboller. `kaynak` "yok" ise sira ham duzen. */
+  sirali: { sembol: Sembol; deger: number | null; piyasa: number }[];
+  azOrnek: boolean;
+  /** Siralamanin okundugu deger: karne varsa karne, yoksa piyasa. */
+  agirlik: (x: { deger: number | null; piyasa: number }) => number;
+}
+
 /**
- * Tek satirin isaretini kurar.
+ * Tek satirin karnesini SIRALAR — isaret saymadan.
  *
  * Siralama uc anahtarli ve sirasi onemli: karne -> piyasa -> sembol duzeni.
  * Ilk ikisi veriden gelir, ucuncusu yalnizca belirlilik icindir.
+ *
+ * Ayri bir fonksiyon, cunku iki musterisi var: her maca sabit sayida sembol
+ * veren `satiriKur`, ve maclara FARKLI derinlik dagitan `kupon-sekil`.
+ * Ikisinin ayni siradan okumasi sart — ayrisirlarsa ayni karne iki farkli
+ * isaret uretirdi.
  */
-function satiriKur(sonuc: SatirAnalizi | undefined, kacSembol: number): SatirIsareti {
+export function satirOkumasi(sonuc: SatirAnalizi | undefined): SatirOkumasi {
   const veri = sonuc?.durum === "bitti" ? sonuc.veri : null;
   const semboller = veri?.toplam.semboller;
 
@@ -88,38 +103,57 @@ function satiriKur(sonuc: SatirAnalizi | undefined, kacSembol: number): SatirIsa
       ? "piyasa"
       : "yok";
 
-  if (kaynak === "yok") {
-    return { semboller: [], kaynak, sirali, azOrnek: false, esitlikBozuldu: false };
-  }
-
-  const anahtar = (x: (typeof sirali)[number]) =>
+  const agirlik = (x: { deger: number | null; piyasa: number }) =>
     kaynak === "karne" ? (x.deger ?? -1) : x.piyasa;
+
+  if (kaynak === "yok") {
+    return { kaynak, sirali, azOrnek: false, agirlik };
+  }
 
   const duzen = (s: Sembol) => SEMBOLLER.indexOf(s);
   const siraliKopya = [...sirali].sort(
     (a, b) =>
-      anahtar(b) - anahtar(a) ||
+      agirlik(b) - agirlik(a) ||
       // Karne esitse PIYASA bozar; o da esitse sembol duzeni (1, 0, 2).
       b.piyasa - a.piyasa ||
       duzen(a.sembol) - duzen(b.sembol),
   );
 
-  const secilen = siraliKopya.slice(0, kacSembol).map((x) => x.sembol);
+  return {
+    kaynak,
+    sirali: siraliKopya,
+    azOrnek: veri ? !veri.toplam.yeterli : false,
+    agirlik,
+  };
+}
+
+/** Sirali okumadan `kacSembol` tanesini isaretler. */
+export function okumadanIsaret(okuma: SatirOkumasi, kacSembol: number): SatirIsareti {
+  const { kaynak, sirali, azOrnek, agirlik } = okuma;
+  if (kaynak === "yok") {
+    return { semboller: [], kaynak, sirali, azOrnek: false, esitlikBozuldu: false };
+  }
+
+  const secilen = sirali.slice(0, kacSembol).map((x) => x.sembol);
   // Esitlik yalnizca SINIRDA onemli: secilenin sonuncusu ile disarida
   // kalanin ilki ayni degerdeyse secim veriyle degil kuralla yapildi.
-  const sinirIci = siraliKopya[kacSembol - 1];
-  const sinirDisi = siraliKopya[kacSembol];
+  const sinirIci = sirali[kacSembol - 1];
+  const sinirDisi = sirali[kacSembol];
   const esitlikBozuldu =
-    !!sinirIci && !!sinirDisi && anahtar(sinirIci) === anahtar(sinirDisi);
+    !!sinirIci && !!sinirDisi && agirlik(sinirIci) === agirlik(sinirDisi);
 
   return {
     // Sira KUPON duzeni (1, 0, 2) — buyuklukten bagimsiz.
     semboller: SEMBOLLER.filter((s) => secilen.includes(s)),
     kaynak,
-    sirali: siraliKopya,
-    azOrnek: veri ? !veri.toplam.yeterli : false,
+    sirali,
+    azOrnek,
     esitlikBozuldu,
   };
+}
+
+function satiriKur(sonuc: SatirAnalizi | undefined, kacSembol: number): SatirIsareti {
+  return okumadanIsaret(satirOkumasi(sonuc), kacSembol);
 }
 
 /**

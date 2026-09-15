@@ -52,6 +52,7 @@ try {
     [
       "tsc", "lib/kurulum.ts", "lib/kume-ici.ts", "lib/senaryo.ts",
       "lib/kupon.ts", "lib/kupon-analiz.ts", "lib/kupon-kur.ts",
+      "lib/kupon-sekil.ts",
       "lib/utils.ts", "lib/types.ts", "lib/sekmeler.ts",
       "lib/super-toto.ts",
       "--outDir", cikti,
@@ -70,6 +71,7 @@ try {
   const KP = iste(join(cikti, "kupon.js"));
   const KA = iste(join(cikti, "kupon-analiz.js"));
   const KK = iste(join(cikti, "kupon-kur.js"));
+  const KS = iste(join(cikti, "kupon-sekil.js"));
   // `types.ts` yalnizca tip TASIMIYOR; `MAC_SAYISI` ve `SEMBOLLER`
   // gibi calisma zamani sabitleri de orada ve ikisi de sunucuyla
   // karsilastirilmak zorunda.
@@ -289,25 +291,56 @@ try {
   // yarim ayrimi, marjin gercekten olculmesi, ve depodan gelen COPE
   // guvenilmemesi.
 
+  /** Tek cizgiyi doldurulmus bir satir kurar; oteki cizgi bos kalir. */
+  const _blok = (a, b, c) => ({ "1": a, "0": b, "2": c });
+  const _oran = (cizgi, blok) => ({
+    acilis: cizgi === "acilis" ? blok : _blok("", "", ""),
+    kapanis: cizgi === "kapanis" ? blok : _blok("", "", ""),
+  });
+  const _ikiCizgi = (a, k) => ({ acilis: a, kapanis: k });
+
   dene("bos satir 'bozuk' DEGILDIR, yarim satir eksik sayilir", () => {
     const k = KP.bosKupon();
     assert.equal(k.length, TIP.MAC_SAYISI);
-    let o = KP.kuponOzeti(k);
+    let o = KP.kuponOzeti(k, "kapanis");
     assert.deepEqual(o.bozukSatirlar, []);
     assert.deepEqual(o.eksikOranlar, []);
     assert.equal(o.sorguyaHazir, false);
 
     // Adi girilmis ama orani yok: BOS degil, EKSIK.
     k[0] = { ...k[0], ev: "Beşiktaş", dep: "Erzurumspor FK" };
-    o = KP.kuponOzeti(k);
+    o = KP.kuponOzeti(k, "kapanis");
     assert.deepEqual(o.eksikOranlar, [0]);
     assert.deepEqual(o.bozukSatirlar, []);
     assert.equal(o.adliMac, 1);
 
     // 1.00 ve alti oran degildir; okunamayan hucre BOZUKtur.
-    k[1] = { ...k[1], oran: { "1": "1.00", "0": "3.4", "2": "abc" } };
-    o = KP.kuponOzeti(k);
+    k[1] = { ...k[1], oran: _oran("kapanis", _blok("1.00", "3.4", "abc")) };
+    o = KP.kuponOzeti(k, "kapanis");
     assert.deepEqual(o.bozukSatirlar, [1]);
+    // Bozukluk O CIZGININ sorunu: acilis tarafi temiz gorunmeli.
+    assert.deepEqual(KP.kuponOzeti(k, "acilis").bozukSatirlar, []);
+  });
+
+  dene("iki cizgi BIRBIRINDEN bagimsiz sayilir", () => {
+    // Sahibinin istegi iki fiyat: yalnizca kapanis dolduran biri kapanisin
+    // kuponlarini kurabilmeli, ve "15/15 oran tam" ancak O CIZGI icin
+    // dogru olmali. Tek sayaç olsaydi yarim tablo hazir gorunurdu.
+    const satirlar = KP.bosKupon().map(() => ({
+      lig: "T1", ev: "a", dep: "b",
+      oran: _oran("kapanis", _blok("2.0", "3.2", "3.8")),
+    }));
+    assert.equal(KP.kuponOzeti(satirlar, "kapanis").sorguyaHazir, true);
+    assert.equal(KP.kuponOzeti(satirlar, "acilis").sorguyaHazir, false);
+    // Bos BIRAKILMIS cizgi "eksik" DEGILDIR: satirda baska veri var ama
+    // o cizgi hic doldurulmamis olabilir — yine de raporlanir, cunku
+    // satirin kendisi bos degil.
+    assert.deepEqual(KP.kuponOzeti(satirlar, "acilis").eksikOranlar.length, TIP.MAC_SAYISI);
+    // Marj cizgi basina olculur.
+    assert.equal(KP.satirMarji(satirlar[0], "acilis"), null);
+    assert.ok(KP.satirMarji(satirlar[0], "kapanis") > 0);
+    assert.equal(KP.favori(satirlar[0], "kapanis"), "1");
+    assert.equal(KP.favori(satirlar[0], "acilis"), null);
   });
 
   dene("marj 5. haftanin gercek oraniyla olculur", () => {
@@ -315,18 +348,21 @@ try {
     // Besleme ayni sayiyi 0.0218 diye tasiyor; ikisi ayrisirsa bu duser.
     const satir = {
       lig: "T1", ev: "Beşiktaş A.Ş.", dep: "Erzurumspor FK",
-      oran: { "1": "1.26", "0": "6.48", "2": "13.54" },
+      oran: _ikiCizgi(_blok("1.28", "5.53", "10.16"), _blok("1.26", "6.48", "13.54")),
     };
     const hafta5 = BESLEME.weeks.find((w) => w.week === 5);
     const mac1 = hafta5.matches.find((m) => m.no === 1);
     assert.equal(
-      Number(KP.satirMarji(satir).toFixed(4)),
+      Number(KP.satirMarji(satir, "kapanis").toFixed(4)),
       mac1.margin,
       "marj beslemedeki olculmus degerle ayrismamali",
     );
-    assert.equal(KP.favori(satir), mac1.fav);
+    assert.equal(KP.favori(satir, "kapanis"), mac1.fav);
+    // Acilis AYRI bir fiyat: marji da ayri cikar.
+    assert.notEqual(KP.satirMarji(satir, "acilis"), KP.satirMarji(satir, "kapanis"));
     // Oran yarim kalinca marj UYDURULMAZ.
-    assert.equal(KP.satirMarji({ ...satir, oran: { "1": "1.26", "0": "", "2": "13.54" } }), null);
+    const yarim = { ...satir, oran: _oran("kapanis", _blok("1.26", "", "13.54")) };
+    assert.equal(KP.satirMarji(yarim, "kapanis"), null);
   });
 
   dene("depodan gelen cope guvenilmez, 15 satira oturur", () => {
@@ -334,7 +370,9 @@ try {
     for (const cop of [null, 42, "kupon", {}, [1, 2, 3], [{ ev: 5 }]]) {
       const temiz = KP.kuponuTemizle(cop);
       assert.equal(temiz.length, TIP.MAC_SAYISI);
-      assert.ok(temiz.every((r) => typeof r.ev === "string" && typeof r.oran["1"] === "string"));
+      assert.ok(temiz.every((r) =>
+        typeof r.ev === "string" &&
+        TIP.CIZGILER.every((c) => typeof r.oran[c]["1"] === "string")));
     }
     // Uzun yapistirma kirpilir ve satir sonu izgara duzenini bozmaz.
     const [ilk] = KP.kuponuTemizle([{ ev: "x".repeat(500), dep: "a\nb", lig: "  T1  " }]);
@@ -343,21 +381,49 @@ try {
     assert.equal(ilk.lig, "T1");
   });
 
+  dene("ESKI duz oranli yerel kayit, VERILEN cizgiye oturur", () => {
+    // Tarayicida 2. surumden kalmis bir tablo duz `{1,0,2}` tasiyor ve
+    // hangi cizgiye ait oldugunu SOYLEMIYOR. Iki cizgiye birden
+    // kopyalamak, girilmemis bir fiyati girilmis gibi gostermek olurdu.
+    const eski = [{ lig: "T1", ev: "a", dep: "b", oran: { "1": "2.0", "0": "3.0", "2": "4.0" } }];
+    for (const cizgi of TIP.CIZGILER) {
+      const [satir] = KP.kuponuTemizle(eski, cizgi);
+      assert.deepEqual(satir.oran[cizgi], { "1": "2.0", "0": "3.0", "2": "4.0" });
+      const oteki = cizgi === "acilis" ? "kapanis" : "acilis";
+      assert.deepEqual(satir.oran[oteki], { "1": "", "0": "", "2": "" });
+    }
+    // Yeni bicim geldiyse cizgi argumani HICBIR SEY yapmaz.
+    const yeni = [{ oran: _oran("acilis", _blok("1.5", "4.0", "6.0")) }];
+    assert.deepEqual(KP.kuponuTemizle(yeni, "kapanis")[0].oran.acilis,
+                     { "1": "1.5", "0": "4.0", "2": "6.0" });
+    assert.deepEqual(KP.kuponuTemizle(yeni, "kapanis")[0].oran.kapanis,
+                     { "1": "", "0": "", "2": "" });
+  });
+
   dene("arsiv kaydi giris tablosuna cevrilirken SAYI metne doner", () => {
     // Kayitta oran SAYI (bir kayit tipinde gevsek olmamali), tabloda METIN.
     const kayit = Array.from({ length: TIP.MAC_SAYISI }, (_, i) => ({
       lig: "T1", ev: `ev${i}`, dep: `dep${i}`,
-      oran: { "1": 1.26, "0": 6.48, "2": 13.54 },
+      oran: { acilis: { "1": 1.28, "0": 5.53, "2": 10.16 },
+              kapanis: { "1": 1.26, "0": 6.48, "2": 13.54 } },
     }));
     const satirlar = KP.kayittanSatirlar(kayit);
     assert.equal(satirlar.length, TIP.MAC_SAYISI);
-    assert.deepEqual(satirlar[0].oran, { "1": "1.26", "0": "6.48", "2": "13.54" });
+    assert.deepEqual(satirlar[0].oran.kapanis, { "1": "1.26", "0": "6.48", "2": "13.54" });
+    assert.deepEqual(satirlar[0].oran.acilis, { "1": "1.28", "0": "5.53", "2": "10.16" });
     // Cevrim ORANI degistirmemeli: metin geri sayiya donunce ayni sayi.
-    assert.equal(KP.kuponOzeti(satirlar).oranliMac, TIP.MAC_SAYISI);
+    for (const c of TIP.CIZGILER) {
+      assert.equal(KP.kuponOzeti(satirlar, c).oranliMac, TIP.MAC_SAYISI);
+    }
+
+    // 2. surum kaydi duz oran tasiyordu: kaydin KENDI cizgisine oturur.
+    const duz = KP.kayittanSatirlar([{ oran: { "1": 1.26, "0": 6.48, "2": 13.54 } }], "acilis");
+    assert.deepEqual(duz[0].oran.acilis, { "1": "1.26", "0": "6.48", "2": "13.54" });
+    assert.deepEqual(duz[0].oran.kapanis, { "1": "", "0": "", "2": "" });
 
     // Bos hucre (`null`) bos METIN olur, "null" yazisi DEGIL.
-    const bosOranli = KP.kayittanSatirlar([{ oran: { "1": null, "0": 2.5, "2": null } }]);
-    assert.deepEqual(bosOranli[0].oran, { "1": "", "0": "2.5", "2": "" });
+    const bosOranli = KP.kayittanSatirlar([{ oran: { kapanis: { "1": null, "0": 2.5, "2": null } } }]);
+    assert.deepEqual(bosOranli[0].oran.kapanis, { "1": "", "0": "2.5", "2": "" });
     // Eksik/bozuk kayit patlamaz, 15 satira oturur.
     for (const cop of [[], null, [{}], [{ oran: "yok" }]]) {
       assert.equal(KP.kayittanSatirlar(cop ?? []).length, TIP.MAC_SAYISI);
@@ -366,28 +432,38 @@ try {
 
   // ── Kupon analizi (lib/kupon-analiz.ts) ──────────────────────────────
 
-  dene("sorgu izi hem ORANI hem AYARI kapsar", () => {
+  dene("sorgu izi hem ORANI hem AYARI kapsar, CIZGI BASINA", () => {
     const k = KP.bosKupon().map(() => ({
-      lig: "T1", ev: "a", dep: "b", oran: { "1": "2.0", "0": "3.0", "2": "4.0" },
+      lig: "T1", ev: "a", dep: "b",
+      oran: _ikiCizgi(_blok("2.1", "3.1", "4.1"), _blok("2.0", "3.0", "4.0")),
     }));
-    const iz = KA.sorguIzi(k, KA.VARSAYILAN_ANALIZ);
+    const iz = KA.sorguIzi(k, KA.VARSAYILAN_ANALIZ, "kapanis");
     // Ayni girdi + ayni ayar -> ayni iz (sonuc bayat degil).
-    assert.equal(iz, KA.sorguIzi(k, KA.VARSAYILAN_ANALIZ));
-    // Tek bir oran degisirse iz DEGISIR: eski karne yeni orana ait degildir.
-    const degisik = k.map((r, i) => (i === 7 ? { ...r, oran: { ...r.oran, "0": "3.1" } } : r));
-    assert.notEqual(iz, KA.sorguIzi(degisik, KA.VARSAYILAN_ANALIZ));
-    // Ayarin her ekseni ize girer.
+    assert.equal(iz, KA.sorguIzi(k, KA.VARSAYILAN_ANALIZ, "kapanis"));
+    // Iki cizginin izi AYRI: biri bayatlayinca oteki bayatlamamali.
+    assert.notEqual(iz, KA.sorguIzi(k, KA.VARSAYILAN_ANALIZ, "acilis"));
+    // Tek bir oran degisirse O CIZGININ izi degisir, otekininki DEGISMEZ.
+    const degisik = k.map((r, i) =>
+      i === 7 ? { ...r, oran: { ...r.oran, kapanis: { ...r.oran.kapanis, "0": "3.1" } } } : r);
+    assert.notEqual(iz, KA.sorguIzi(degisik, KA.VARSAYILAN_ANALIZ, "kapanis"));
+    assert.equal(
+      KA.sorguIzi(k, KA.VARSAYILAN_ANALIZ, "acilis"),
+      KA.sorguIzi(degisik, KA.VARSAYILAN_ANALIZ, "acilis"),
+      "kapanisi duzeltmek ACILISIN karnesini bayatlatmamali",
+    );
+    // Ayarin her ekseni ize girer — `cizgi` DISINDA: o artik ekranda hangi
+    // cizginin gosterildigidir, sorgunun kendisi arguman olarak geliyor.
     for (const ayar of [
-      { ...KA.VARSAYILAN_ANALIZ, cizgi: "acilis" },
       { ...KA.VARSAYILAN_ANALIZ, arindirma: "orantili" },
       { ...KA.VARSAYILAN_ANALIZ, enAz: 500 },
       { ...KA.VARSAYILAN_ANALIZ, tarih: "2026-09-01" },
     ]) {
-      assert.notEqual(iz, KA.sorguIzi(k, ayar), JSON.stringify(ayar));
+      assert.notEqual(iz, KA.sorguIzi(k, ayar, "kapanis"), JSON.stringify(ayar));
     }
+    assert.equal(iz, KA.sorguIzi(k, { ...KA.VARSAYILAN_ANALIZ, cizgi: "acilis" }, "kapanis"));
     // Mac ADI ize GIRMEZ: ad sorgunun parcasi degil, cevabi bayatlatmaz.
     const adli = k.map((r) => ({ ...r, ev: "Beşiktaş", lig: "SP1" }));
-    assert.equal(iz, KA.sorguIzi(adli, KA.VARSAYILAN_ANALIZ));
+    assert.equal(iz, KA.sorguIzi(adli, KA.VARSAYILAN_ANALIZ, "kapanis"));
   });
 
   dene("tarih kesmesi: takvimde olmayan gun ELENIR", () => {
@@ -404,8 +480,11 @@ try {
   });
 
   dene("/oran-analizi adresi AYNI sorguyu tasir, varsayilani tasimaz", () => {
-    const satir = { lig: "T1", ev: "a", dep: "b", oran: { "1": "1.26", "0": "6.48", "2": "13.54" } };
-    const varsayilan = KA.oranAnaliziAdresi(satir, KA.VARSAYILAN_ANALIZ);
+    const satir = {
+      lig: "T1", ev: "a", dep: "b",
+      oran: _ikiCizgi(_blok("1.28", "5.53", "10.16"), _blok("1.26", "6.48", "13.54")),
+    };
+    const varsayilan = KA.oranAnaliziAdresi(satir, KA.VARSAYILAN_ANALIZ, "kapanis");
     assert.ok(varsayilan.startsWith("/oran-analizi?"));
     const p = new URLSearchParams(varsayilan.split("?")[1]);
     assert.deepEqual([p.get("o1"), p.get("o0"), p.get("o2")], ["1.26", "6.48", "13.54"]);
@@ -416,9 +495,11 @@ try {
     // Degisen ayar yazilir — ve adlari `/oran-analizi`nin OKUDUGU adlar.
     const q = new URLSearchParams(
       KA.oranAnaliziAdresi(satir, {
-        cizgi: "acilis", arindirma: "orantili", enAz: 500, tarih: "2026-09-01",
-      }).split("?")[1],
+        cizgi: "kapanis", arindirma: "orantili", enAz: 500, tarih: "2026-09-01",
+      }, "acilis").split("?")[1],
     );
+    // Adres SATIRIN acilis fiyatini tasir, kapanisinkini degil.
+    assert.deepEqual([q.get("o1"), q.get("o0"), q.get("o2")], ["1.28", "5.53", "10.16"]);
     assert.equal(q.get("cizgi"), "acilis");
     assert.equal(q.get("arindirma"), "orantili");
     assert.equal(q.get("en_az"), "500");
@@ -462,15 +543,24 @@ try {
 
   dene("analiz ancak 15 satirin ORANI TAMken kosulabilir", () => {
     const dolu = KP.bosKupon().map(() => ({
-      lig: "", ev: "", dep: "", oran: { "1": "2.0", "0": "3.0", "2": "4.0" },
+      lig: "", ev: "", dep: "",
+      oran: _ikiCizgi(_blok("2.1", "3.1", "4.1"), _blok("2.0", "3.0", "4.0")),
     }));
-    assert.equal(KA.analizeHazir(dolu, KA.VARSAYILAN_ANALIZ), true);
-    // Tek satirin tek hucresi eksikse kosmaz — o mac korlesirdi.
-    const eksik = dolu.map((r, i) => (i === 3 ? { ...r, oran: { ...r.oran, "2": "" } } : r));
-    assert.equal(KA.analizeHazir(eksik, KA.VARSAYILAN_ANALIZ), false);
-    assert.equal(KA.analizeHazir(KP.bosKupon(), KA.VARSAYILAN_ANALIZ), false);
-    // Bozuk ayar da kosumu engeller.
-    assert.equal(KA.analizeHazir(dolu, { ...KA.VARSAYILAN_ANALIZ, tarih: "dun" }), false);
+    assert.equal(KA.analizeHazir(dolu, KA.VARSAYILAN_ANALIZ, "kapanis"), true);
+    assert.deepEqual(KA.hazirCizgiler(dolu, KA.VARSAYILAN_ANALIZ).sort(),
+                     [...TIP.CIZGILER].sort());
+    // Tek satirin tek hucresi eksikse O CIZGI kosmaz — o mac korlesirdi.
+    const eksik = dolu.map((r, i) =>
+      i === 3 ? { ...r, oran: { ...r.oran, kapanis: { ...r.oran.kapanis, "2": "" } } } : r);
+    assert.equal(KA.analizeHazir(eksik, KA.VARSAYILAN_ANALIZ, "kapanis"), false);
+    // ... ama oteki cizgi HAZIR kalir: tek bulteni olan biri engellenmez.
+    assert.deepEqual(KA.hazirCizgiler(eksik, KA.VARSAYILAN_ANALIZ), ["acilis"]);
+    assert.equal(KA.analizeHazir(KP.bosKupon(), KA.VARSAYILAN_ANALIZ, "kapanis"), false);
+    assert.deepEqual(KA.hazirCizgiler(KP.bosKupon(), KA.VARSAYILAN_ANALIZ), []);
+    // Bozuk ayar da kosumu engeller — her iki cizgide.
+    const bozuk = { ...KA.VARSAYILAN_ANALIZ, tarih: "dun" };
+    assert.equal(KA.analizeHazir(dolu, bozuk, "kapanis"), false);
+    assert.deepEqual(KA.hazirCizgiler(dolu, bozuk), []);
   });
 
   dene("analiz gidis-donusu: kaydedilen karne EKRANDAKIYLE ayni", () => {
@@ -607,28 +697,188 @@ try {
     assert.equal(KK.kuponBedeli(k.kolon, null), null, "carpan yoksa para UYDURULMAZ");
   });
 
+  // ── Sekilli kupon (lib/kupon-sekil.ts) ───────────────────────────────
+  //
+  // Sahibinin kurali: *"6 banko 9 uclu ve 5 banko 5 cift 5 uclu seklinde 2
+  // ayri kupon"*, ve *"en fazla tekten en cok cifte ve en cok ciftten en cok
+  // ucluye dogru derecelendirilecek."* Uc sey bekcili: sayilar (kolon
+  // aritmetigi), SIRANIN neye baktigi, ve olasiligin UYDURULMAMASI.
+
+  const _sekil = (anahtar) => KS.SEKILLER.find((x) => x.anahtar === anahtar);
+
+  /** `p1/p2/p3` verilen bir satirin karnesi — semboller 1/0/2 sirasinda. */
+  const _karne = (p1, p0, p2) => _satir([p1, p0, p2], [p1, p0, p2]);
+
+  dene("sekiller sahibinin istedigi iki sekil ve kolonlari ARITMETIK", () => {
+    assert.deepEqual(KS.SEKILLER.map((x) => x.anahtar), ["b6u9", "b5c5u5"]);
+    assert.deepEqual(
+      KS.SEKILLER.map((x) => [x.banko, x.cift, x.uclu]),
+      [[6, 0, 9], [5, 5, 5]],
+    );
+    // Her sekil 15 maci TAM kapsamali; eksigi kalan bir sekil, kalan
+    // maclari sessizce uclu yapardi ve kolon sayisi ilan edilenden buyuk
+    // cikardi.
+    for (const sekil of KS.SEKILLER) {
+      assert.equal(sekil.banko + sekil.cift + sekil.uclu, TIP.MAC_SAYISI);
+    }
+    // 3^9 = 19.683: 5. haftada OYNANAN tek sistemin kolon sayisi.
+    assert.equal(KS.sekilKolonu(_sekil("b6u9")), 3 ** 9);
+    assert.equal(KS.sekilKolonu(_sekil("b6u9")), 19683);
+    assert.equal(KS.sekilKolonu(_sekil("b5c5u5")), 2 ** 5 * 3 ** 5);
+    assert.equal(KS.sekilKolonu(_sekil("b5c5u5")), 7776);
+  });
+
+  dene("derecelendirme: banko p1'e, cift/uclu p3'e bakar", () => {
+    // 15 mac, p1 azalan sirada. p3 BILEREK ters yonde artiyor: tek
+    // anahtarli bir siralama burada baska bir cevap verirdi.
+    const sonuclar = Array.from({ length: TIP.MAC_SAYISI }, (_, i) =>
+      _karne(0.80 - i * 0.03, 0.12 + i * 0.02, 0.08 + i * 0.01));
+    const k = KS.sekilliKuponKur(sonuclar, _sekil("b6u9"));
+    assert.equal(k.kolon, 19683);
+    // En yuksek p1'li ALTI mac banko, kalani uclu.
+    assert.deepEqual(k.satirlar.map((s) => s.seviye), [1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3]);
+    assert.deepEqual(k.satirlar[0].semboller, ["1"], "banko: karnenin en yuksek TEK sembolu");
+    assert.deepEqual(k.satirlar[9].semboller, ["1", "0", "2"], "uclu: uc sembol de");
+
+    const b = KS.sekilliKuponKur(sonuclar, _sekil("b5c5u5"));
+    assert.equal(b.kolon, 7776);
+    assert.deepEqual(b.satirlar.map((s) => s.seviye), [1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3]);
+    // Ciftede secilen iki sembol, IKILI kuponunkiyle AYNI olmali: iki modul
+    // ayni siradan okuyor (`satirOkumasi`). Ayrisirlarsa ayni karne iki
+    // farkli isaret uretirdi.
+    const ikili = KK.kuponKur(sonuclar);
+    for (const i of [5, 6, 7, 8, 9]) {
+      assert.deepEqual(b.satirlar[i].semboller, ikili.satirlar[i].semboller);
+    }
+    // 5 bankonun tamami 6 bankonun ICINDE: sira ayni, yalnizca kesim farkli.
+    const alti = new Set(k.satirlar.flatMap((s, i) => (s.seviye === 1 ? [i] : [])));
+    for (const [i, s] of b.satirlar.entries()) {
+      if (s.seviye === 1) assert.ok(alti.has(i), `${i}. mac 6'lida banko degil`);
+    }
+  });
+
+  dene("iyi CIFTE ile iyi BANKO ayni mac degildir", () => {
+    // 0. mac: p1 dusuk ama p3 cok dusuk -> kotu banko, MUKEMMEL cifte.
+    // 1-5. maclar: p1 yuksek -> banko. 6-14: p3 buyuk -> uclu.
+    const sonuclar = [
+      _karne(0.45, 0.53, 0.02),
+      ...Array.from({ length: 5 }, () => _karne(0.75, 0.15, 0.10)),
+      ...Array.from({ length: 9 }, () => _karne(0.40, 0.33, 0.27)),
+    ];
+    const b = KS.sekilliKuponKur(sonuclar, _sekil("b5c5u5"));
+    assert.equal(b.satirlar[0].seviye, 2, "p3 en kucuk olan mac CIFTE olmali");
+    assert.deepEqual(b.satirlar.slice(1, 6).map((s) => s.seviye), [1, 1, 1, 1, 1]);
+    // Tek anahtarli (yalnizca p1) bir sira 0. maci uclu yapardi: p1'i
+    // dokuz macinkinden yuksek ama begininkilerden dusuk.
+    assert.notEqual(b.satirlar[0].seviye, 3);
+  });
+
+  dene("kacak olasiligi: uclu HIC kacmaz, banko 1-p1, cifte p3", () => {
+    const sonuclar = [
+      ...Array.from({ length: 6 }, () => _karne(0.90, 0.06, 0.04)),
+      ...Array.from({ length: 9 }, () => _karne(0.40, 0.35, 0.25)),
+    ];
+    const k = KS.sekilliKuponKur(sonuclar, _sekil("b6u9"));
+    assert.deepEqual(k.satirlar.slice(6).map((s) => s.kacak), Array(9).fill(0));
+    for (const s of k.satirlar.slice(0, 6)) {
+      assert.ok(Math.abs(s.kacak - 0.10) < 1e-9, `banko kacagi 1-p1 olmali: ${s.kacak}`);
+    }
+    // Alti bagimsiz banko, her biri %10 kacak: P(hic kacak yok) = 0.9^6.
+    assert.ok(Math.abs(k.p15 - 0.9 ** 6) < 1e-9);
+    // Hedef `k <= 3`; alti bankonun dorde kadar kacmasi disarida kalir.
+    assert.ok(k.pHedef > k.p15 && k.pHedef <= 1);
+    // Dagilim bir olasilik dagilimi: 1'e toplanir.
+    assert.ok(Math.abs(k.dagilim.reduce((a, b) => a + b, 0) - 1) < 1e-9);
+  });
+
+  dene("kacak dagilimi evrisimle olculur (elde hesapla dogrulandi)", () => {
+    assert.deepEqual(KS.kacakDagilimi([]), [1]);
+    assert.deepEqual(KS.kacakDagilimi([0]), [1, 0]);
+    // Iki bagimsiz mac, q = 0,1 ve 0,2:
+    //   0 kacak 0,9*0,8 = 0,72 · 1 kacak 0,9*0,2 + 0,1*0,8 = 0,26
+    //   2 kacak 0,1*0,2 = 0,02
+    const d = KS.kacakDagilimi([0.1, 0.2]);
+    assert.deepEqual(d.map((x) => Number(x.toFixed(10))), [0.72, 0.26, 0.02]);
+  });
+
+  dene("karnesi olmayan satir UCLUYE duser, olasilik UYDURULMAZ", () => {
+    // Karnesiz bir satirin hangi seviyeye uydugunu soyleyecek sayi yok.
+    // Sirada en sona konur: uclu hicbir bilgi gerektirmez.
+    const sonuclar = [
+      ...Array.from({ length: 14 }, () => _karne(0.60, 0.25, 0.15)),
+      { durum: "hata", veri: null, hata: "500" },
+    ];
+    const k = KS.sekilliKuponKur(sonuclar, _sekil("b6u9"));
+    assert.equal(k.satirlar[14].seviye, 3);
+    assert.deepEqual(k.satirlar[14].semboller, [], "karnesiz satirda isaret UYDURULMAZ");
+    assert.deepEqual(k.eksik, [14]);
+    // Bir satirin kacagi okunamiyorsa DAGILIM da okunamaz: "0 kacak"
+    // varsaymak kuponu oldugundan iyi gosterirdi.
+    assert.equal(k.dagilim, null);
+    assert.equal(k.p15, null);
+    assert.equal(k.pHedef, null);
+  });
+
+  dene("piyasadan secilen satir SIRAYA girer ve isaretlenir", () => {
+    const sonuclar = [
+      _satir([null, null, null], [0.62, 0.22, 0.16]),
+      ...Array.from({ length: 14 }, () => _karne(0.40, 0.35, 0.25)),
+    ];
+    const k = KS.sekilliKuponKur(sonuclar, _sekil("b6u9"));
+    // Piyasa marj tasir; normallestirme sonrasi p1 hala en yuksek -> banko.
+    assert.equal(k.satirlar[0].seviye, 1);
+    assert.deepEqual(k.satirlar[0].semboller, ["1"]);
+    assert.deepEqual(k.piyasadanSecilen, [0]);
+    assert.deepEqual(k.eksik, []);
+    // Olasilik yine hesaplanir: piyasa da bir olasilik kaynagidir ve
+    // satirda "piyasadan" diye yaziyor.
+    assert.ok(k.p15 > 0 && k.p15 < 1);
+  });
+
+  dene("AYNI karne hep AYNI sekilli kuponu verir", () => {
+    // Esitlikte sira mac numarasina duser; rastgelelik olsaydi ayni girdi
+    // iki farkli kupon verirdi ve kayit yeniden uretilemez olurdu.
+    const sonuclar = Array.from({ length: TIP.MAC_SAYISI }, () => _karne(0.50, 0.30, 0.20));
+    const a = KS.sekilliKuponKur(sonuclar, _sekil("b5c5u5"));
+    const b = KS.sekilliKuponKur(sonuclar, _sekil("b5c5u5"));
+    assert.deepEqual(a.satirlar.map((s) => s.seviye), b.satirlar.map((s) => s.seviye));
+    assert.deepEqual(a.satirlar.map((s) => s.seviye),
+                     [1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3]);
+    assert.deepEqual(a.satirlar.map((s) => s.derece), Array.from({ length: 15 }, (_, i) => i + 1));
+  });
+
+  dene("dort kuponun bedeli: iki cizgi x iki sekil", () => {
+    // Sahibinin haftalik tavani `/api/meta`dan gelir; burada olculen sey
+    // yalnizca ARITMETIK — dort kuponun kolon toplami.
+    const toplam = 2 * (3 ** 9 + 2 ** 5 * 3 ** 5);
+    assert.equal(toplam, 54918);
+    assert.equal(KK.kuponBedeli(toplam, 10), 549180);
+  });
+
   dene("kapsam: `kendi` lig kodlarini IZE sokar, `tum` sokmaz", () => {
     const satir = (lig) => ({
-      lig, ev: "a", dep: "b", oran: { "1": "2.0", "0": "3.0", "2": "4.0" },
+      lig, ev: "a", dep: "b",
+      oran: _ikiCizgi(_blok("2.1", "3.1", "4.1"), _blok("2.0", "3.0", "4.0")),
     });
     const k = Array.from({ length: TIP.MAC_SAYISI }, () => satir("T1"));
     const tum = { ...KA.VARSAYILAN_ANALIZ, kapsam: "tum" };
     const kendi = { ...KA.VARSAYILAN_ANALIZ, kapsam: "kendi" };
 
     // Kapsam ayrimi izi degistirir: iki kapsam AYNI soruyu sormuyor.
-    assert.notEqual(KA.sorguIzi(k, tum), KA.sorguIzi(k, kendi));
+    assert.notEqual(KA.sorguIzi(k, tum, "kapanis"), KA.sorguIzi(k, kendi, "kapanis"));
 
     // `tum` iken lig sorgunun parcasi DEGIL — etiket duzeltmek tabloyu
     // bayatlatmamali.
     const baskaLig = k.map((r, i) => (i === 2 ? satir("E0") : r));
-    assert.equal(KA.sorguIzi(k, tum), KA.sorguIzi(baskaLig, tum));
+    assert.equal(KA.sorguIzi(k, tum, "kapanis"), KA.sorguIzi(baskaLig, tum, "kapanis"));
     // `kendi` iken AYNI degisiklik sorguyu degistirir, yani ize girer.
-    assert.notEqual(KA.sorguIzi(k, kendi), KA.sorguIzi(baskaLig, kendi));
+    assert.notEqual(KA.sorguIzi(k, kendi, "kapanis"), KA.sorguIzi(baskaLig, kendi, "kapanis"));
   });
 
   dene("taninmayan lig kodu analizi ENGELLER (bos cevap sessiz kalmasin)", () => {
     const satir = (lig) => ({
-      lig, ev: "a", dep: "b", oran: { "1": "2.0", "0": "3.0", "2": "4.0" },
+      lig, ev: "a", dep: "b",
+      oran: _ikiCizgi(_blok("2.1", "3.1", "4.1"), _blok("2.0", "3.0", "4.0")),
     });
     const kodlar = new Set(["T1", "E0", "SP1"]);
     const kendi = { ...KA.VARSAYILAN_ANALIZ, kapsam: "kendi" };
@@ -636,7 +886,7 @@ try {
 
     const temiz = Array.from({ length: TIP.MAC_SAYISI }, () => satir("T1"));
     assert.deepEqual(KA.taninmayanLigler(temiz, kendi, kodlar), []);
-    assert.equal(KA.analizeHazir(temiz, kendi, kodlar), true);
+    assert.equal(KA.analizeHazir(temiz, kendi, "kapanis", kodlar), true);
 
     // Kucuk harf kabul: kullanici "t1" yazabilir.
     const kucuk = temiz.map((r, i) => (i === 0 ? satir("t1") : r));
@@ -646,28 +896,30 @@ try {
     for (const bozuk of ["Süper Lig", "TR", ""]) {
       const k = temiz.map((r, i) => (i === 4 ? satir(bozuk) : r));
       assert.deepEqual(KA.taninmayanLigler(k, kendi, kodlar), [4], bozuk);
-      assert.equal(KA.analizeHazir(k, kendi, kodlar), false, bozuk);
+      assert.equal(KA.analizeHazir(k, kendi, "kapanis", kodlar), false, bozuk);
       // Kapsam `tum` iken lig sorgunun parcasi degil: engellemez.
       assert.deepEqual(KA.taninmayanLigler(k, tum, kodlar), []);
-      assert.equal(KA.analizeHazir(k, tum, kodlar), true, bozuk);
+      assert.equal(KA.analizeHazir(k, tum, "kapanis", kodlar), true, bozuk);
     }
 
     // Envanter okunmadiysa (null) dogrulama YAPILMAZ: olmayan bir listeye
     // gore satir suclanamaz.
     const bozukTablo = temiz.map((r, i) => (i === 4 ? satir("yok") : r));
     assert.deepEqual(KA.taninmayanLigler(bozukTablo, kendi, null), []);
-    assert.equal(KA.analizeHazir(bozukTablo, kendi, null), true);
+    assert.equal(KA.analizeHazir(bozukTablo, kendi, "kapanis", null), true);
   });
 
   dene("kapsam `kendi` ise /oran-analizi baglantisi AYNI suzgeci tasir", () => {
     const satir = { lig: "t1", ev: "a", dep: "b",
-                    oran: { "1": "1.26", "0": "6.48", "2": "13.54" } };
+                    oran: _oran("kapanis", _blok("1.26", "6.48", "13.54")) };
     const tum = new URLSearchParams(
-      KA.oranAnaliziAdresi(satir, { ...KA.VARSAYILAN_ANALIZ, kapsam: "tum" }).split("?")[1]);
+      KA.oranAnaliziAdresi(satir, { ...KA.VARSAYILAN_ANALIZ, kapsam: "tum" }, "kapanis")
+        .split("?")[1]);
     assert.equal(tum.get("lig"), null, "tum liglerde lig suzgeci YOK");
 
     const kendi = new URLSearchParams(
-      KA.oranAnaliziAdresi(satir, { ...KA.VARSAYILAN_ANALIZ, kapsam: "kendi" }).split("?")[1]);
+      KA.oranAnaliziAdresi(satir, { ...KA.VARSAYILAN_ANALIZ, kapsam: "kendi" }, "kapanis")
+        .split("?")[1]);
     assert.equal(kendi.get("lig"), "T1", "buyuk harfe normallesir");
   });
 

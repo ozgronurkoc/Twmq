@@ -551,6 +551,9 @@
     {
      "ad": "str",
      "adli_mac": "int",
+     "analiz_cizgileri": [
+      "str"
+     ],
      "analiz_olculdu": "str",
      "analiz_var": "bool",
      "ayar": {
@@ -567,7 +570,11 @@
      "kupon_var": "bool",
      "no": "int",
      "not": "str",
-     "oranli_mac": "int",
+     "oranli_mac": {
+      "acilis": "int",
+      "kapanis": "int"
+     },
+     "sekilli_sayisi": "int",
      "sonuc_var": "bool"
     }
    ],
@@ -575,44 +582,85 @@
   },
   "GET /api/kupon/arsiv/<no>": {
    "ad": "str",
-   "analiz": {
-    "evren": "int",
-    "olculdu": "str",
-    "satirlar": [
-     {
-      "n": "int",
-      "semboller": {
-       "0": {
-        "adet": "int",
-        "ga_alt": "float",
-        "ga_ust": "float",
-        "oran": "float",
-        "piyasa": "float",
-        "piyasa_ga_icinde": "bool"
+   "analizler": {
+    "acilis": {
+     "evren": "int",
+     "olculdu": "str",
+     "satirlar": [
+      {
+       "n": "int",
+       "semboller": {
+        "0": {
+         "adet": "int",
+         "ga_alt": "float",
+         "ga_ust": "float",
+         "oran": "float",
+         "piyasa": "float",
+         "piyasa_ga_icinde": "bool"
+        },
+        "1": {
+         "adet": "int",
+         "ga_alt": "float",
+         "ga_ust": "float",
+         "oran": "float",
+         "piyasa": "float",
+         "piyasa_ga_icinde": "bool"
+        },
+        "2": {
+         "adet": "int",
+         "ga_alt": "float",
+         "ga_ust": "float",
+         "oran": "float",
+         "piyasa": "float",
+         "piyasa_ga_icinde": "bool"
+        }
        },
-       "1": {
-        "adet": "int",
-        "ga_alt": "float",
-        "ga_ust": "float",
-        "oran": "float",
-        "piyasa": "float",
-        "piyasa_ga_icinde": "bool"
+       "tolerans": "float",
+       "tolerans_genisledi": "bool",
+       "tolerans_tavana_dayandi": "bool",
+       "yeterli": "bool"
+      }
+     ]
+    },
+    "kapanis": {
+     "evren": "int",
+     "olculdu": "str",
+     "satirlar": [
+      {
+       "n": "int",
+       "semboller": {
+        "0": {
+         "adet": "int",
+         "ga_alt": "float",
+         "ga_ust": "float",
+         "oran": "float",
+         "piyasa": "float",
+         "piyasa_ga_icinde": "bool"
+        },
+        "1": {
+         "adet": "int",
+         "ga_alt": "float",
+         "ga_ust": "float",
+         "oran": "float",
+         "piyasa": "float",
+         "piyasa_ga_icinde": "bool"
+        },
+        "2": {
+         "adet": "int",
+         "ga_alt": "float",
+         "ga_ust": "float",
+         "oran": "float",
+         "piyasa": "float",
+         "piyasa_ga_icinde": "bool"
+        }
        },
-       "2": {
-        "adet": "int",
-        "ga_alt": "float",
-        "ga_ust": "float",
-        "oran": "float",
-        "piyasa": "float",
-        "piyasa_ga_icinde": "bool"
-       }
-      },
-      "tolerans": "float",
-      "tolerans_genisledi": "bool",
-      "tolerans_tavana_dayandi": "bool",
-      "yeterli": "bool"
-     }
-    ]
+       "tolerans": "float",
+       "tolerans_genisledi": "bool",
+       "tolerans_tavana_dayandi": "bool",
+       "yeterli": "bool"
+      }
+     ]
+    }
    },
    "ayar": {
     "arindirma": "str",
@@ -641,10 +689,32 @@
      "ev": "str",
      "lig": "str",
      "oran": {
-      "0": "float",
-      "1": "float",
-      "2": "float"
+      "acilis": {
+       "0": "float",
+       "1": "float",
+       "2": "float"
+      },
+      "kapanis": {
+       "0": "float",
+       "1": "float",
+       "2": "float"
+      }
      }
+    }
+   ],
+   "sekilli": [
+    {
+     "banko": "int",
+     "cift": "int",
+     "cizgi": "str",
+     "isaretler": [
+      [
+       "str"
+      ]
+     ],
+     "kolon": "int",
+     "sekil": "str",
+     "uclu": "int"
     }
    ],
    "sezon": "str",
@@ -1932,44 +2002,85 @@
   },
   "POST /api/kupon/arsiv": {
    "ad": "str",
-   "analiz": {
-    "evren": "int",
-    "olculdu": "str",
-    "satirlar": [
-     {
-      "n": "int",
-      "semboller": {
-       "0": {
-        "adet": "int",
-        "ga_alt": "float",
-        "ga_ust": "float",
-        "oran": "float",
-        "piyasa": "float",
-        "piyasa_ga_icinde": "bool"
+   "analizler": {
+    "acilis": {
+     "evren": "int",
+     "olculdu": "str",
+     "satirlar": [
+      {
+       "n": "int",
+       "semboller": {
+        "0": {
+         "adet": "int",
+         "ga_alt": "float",
+         "ga_ust": "float",
+         "oran": "float",
+         "piyasa": "float",
+         "piyasa_ga_icinde": "bool"
+        },
+        "1": {
+         "adet": "int",
+         "ga_alt": "float",
+         "ga_ust": "float",
+         "oran": "float",
+         "piyasa": "float",
+         "piyasa_ga_icinde": "bool"
+        },
+        "2": {
+         "adet": "int",
+         "ga_alt": "float",
+         "ga_ust": "float",
+         "oran": "float",
+         "piyasa": "float",
+         "piyasa_ga_icinde": "bool"
+        }
        },
-       "1": {
-        "adet": "int",
-        "ga_alt": "float",
-        "ga_ust": "float",
-        "oran": "float",
-        "piyasa": "float",
-        "piyasa_ga_icinde": "bool"
+       "tolerans": "float",
+       "tolerans_genisledi": "bool",
+       "tolerans_tavana_dayandi": "bool",
+       "yeterli": "bool"
+      }
+     ]
+    },
+    "kapanis": {
+     "evren": "int",
+     "olculdu": "str",
+     "satirlar": [
+      {
+       "n": "int",
+       "semboller": {
+        "0": {
+         "adet": "int",
+         "ga_alt": "float",
+         "ga_ust": "float",
+         "oran": "float",
+         "piyasa": "float",
+         "piyasa_ga_icinde": "bool"
+        },
+        "1": {
+         "adet": "int",
+         "ga_alt": "float",
+         "ga_ust": "float",
+         "oran": "float",
+         "piyasa": "float",
+         "piyasa_ga_icinde": "bool"
+        },
+        "2": {
+         "adet": "int",
+         "ga_alt": "float",
+         "ga_ust": "float",
+         "oran": "float",
+         "piyasa": "float",
+         "piyasa_ga_icinde": "bool"
+        }
        },
-       "2": {
-        "adet": "int",
-        "ga_alt": "float",
-        "ga_ust": "float",
-        "oran": "float",
-        "piyasa": "float",
-        "piyasa_ga_icinde": "bool"
-       }
-      },
-      "tolerans": "float",
-      "tolerans_genisledi": "bool",
-      "tolerans_tavana_dayandi": "bool",
-      "yeterli": "bool"
-     }
-    ]
+       "tolerans": "float",
+       "tolerans_genisledi": "bool",
+       "tolerans_tavana_dayandi": "bool",
+       "yeterli": "bool"
+      }
+     ]
+    }
    },
    "ayar": {
     "arindirma": "str",
@@ -1998,15 +2109,86 @@
      "ev": "str",
      "lig": "str",
      "oran": {
-      "0": "float",
-      "1": "float",
-      "2": "float"
+      "acilis": {
+       "0": "float",
+       "1": "float",
+       "2": "float"
+      },
+      "kapanis": {
+       "0": "float",
+       "1": "float",
+       "2": "float"
+      }
      }
+    }
+   ],
+   "sekilli": [
+    {
+     "banko": "int",
+     "cift": "int",
+     "cizgi": "str",
+     "isaretler": [
+      [
+       "str"
+      ]
+     ],
+     "kolon": "int",
+     "sekil": "str",
+     "uclu": "int"
     }
    ],
    "sezon": "str",
    "sonuclar": "null",
    "surum": "int"
+  },
+  "POST /api/kupon/motor": {
+   "arindirma": "str",
+   "butce_kolon": "int",
+   "butce_tl": "float",
+   "cizgiler": {
+    "kapanis": {
+     "marjlar": [
+      "float"
+     ],
+     "planlar": [
+      {
+       "ad": "str",
+       "anahtar": "str",
+       "banko": "int",
+       "bedel_tl": "float",
+       "cift": "int",
+       "isaretler": [
+        [
+         "str"
+        ]
+       ],
+       "kolon": "int",
+       "p_hedef": "float",
+       "p_kacaksiz": "float",
+       "sekil": "str",
+       "serbest_kolon": "int",
+       "tavana_dayandi": "bool",
+       "uclu": "int"
+      }
+     ],
+     "probs": [
+      {
+       "0": "float",
+       "1": "float",
+       "2": "float"
+      }
+     ]
+    }
+   },
+   "kacak_esigi": "int",
+   "kolon_bedeli_tl": "float",
+   "odul_vektoru": {
+    "12": "float",
+    "13": "float",
+    "14": "float",
+    "15": "float"
+   },
+   "sezon": "str"
   },
   "POST /api/solve": {
    "error": "null",

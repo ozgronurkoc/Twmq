@@ -3,7 +3,8 @@
 import * as React from "react";
 import { Check, FilePlus2, FolderOpen, Save, Trash2 } from "lucide-react";
 
-import type { ArsivOzeti } from "@/lib/types";
+import { CIZGI_ADI, CIZGI_SIRASI } from "@/lib/kupon";
+import { MAC_SAYISI, type ArsivOzeti } from "@/lib/types";
 import { cn, sayi } from "@/lib/utils";
 import { NumberField, TextField } from "@/components/ui/controls";
 import { Badge, Button, Callout } from "@/components/ui/primitives";
@@ -214,18 +215,41 @@ export function KuponArsivi({
  * Kaydın zinciri tek bakışta: girdi · analiz · kupon · sonuç.
  *
  * Yarım kalmış bir kupon, kaydı AÇMADAN görünmeli — listedeki asıl bilgi bu.
+ *
+ * Girdi halkası artık İKİ çizgiyi birden sayıyor ve "tam" demek için
+ * **en az bir** çizginin 15/15 olması yetiyor: elinde tek bülten olan biri
+ * de kupon kurabiliyor ve o kayıt yarım sayılmamalı. Kaç çizginin hazır
+ * olduğu ipucunda yazıyor.
  */
 function Zincir({ kayit }: { kayit: ArsivOzeti }) {
+  const oranli = kayit.oranli_mac ?? ({} as Record<string, number>);
+  const sayimlar = CIZGI_SIRASI.map((c) => [c, oranli[c] ?? 0] as const);
   const halkalar: [string, boolean, string][] = [
-    ["G", kayit.oranli_mac === 15, `girdi: ${kayit.oranli_mac}/15 oran`],
+    [
+      "G",
+      sayimlar.some(([, n]) => n === MAC_SAYISI),
+      `girdi: ${sayimlar.map(([c, n]) => `${CIZGI_ADI[c]} ${n}/${MAC_SAYISI}`).join(" · ")}`,
+    ],
     [
       "A",
       kayit.analiz_var,
       kayit.analiz_olculdu
         ? `analiz: ${kayit.analiz_olculdu.slice(0, 10)} ölçüldü`
+          + (kayit.analiz_cizgileri?.length
+            ? ` (${kayit.analiz_cizgileri.map((c) => CIZGI_ADI[c]).join(", ")})`
+            : "")
         : "analiz koşulmadı",
     ],
-    ["K", kayit.kupon_var, kayit.kupon_var ? "kupon kuruldu" : "kupon kurulmadı"],
+    [
+      "K",
+      kayit.kupon_var || kayit.sekilli_sayisi > 0,
+      [
+        kayit.kupon_var ? "ikili kupon kuruldu" : "ikili kupon kurulmadı",
+        kayit.sekilli_sayisi
+          ? `${kayit.sekilli_sayisi} şekilli kupon`
+          : "şekilli kupon yok",
+      ].join(" · "),
+    ],
     ["S", kayit.sonuc_var, kayit.sonuc_var ? "sonuçlar girildi" : "sonuç girilmedi"],
   ];
   return (

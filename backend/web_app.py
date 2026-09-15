@@ -1233,6 +1233,35 @@ def api_kupon_arsiv_kayit(no: int):
         return _arsiv_hata(e)
 
 
+@app.route("/api/kupon/motor", methods=["POST", "OPTIONS"])
+def api_kupon_motor():
+    """Elle girilen oranlardan **motorun** kuponu — `/kupon` sayfasinin dugmesi.
+
+    Govde: `{cizgiler: {acilis?: [{1,0,2}]x15, kapanis?: [...]}, arindirma?,
+    butce_tl?, sezon?}`. En az bir cizgi dolu olmali; oteki atlanir.
+
+    Cevap her cizgi icin IKI plan tasir: butcenin sectigi sekil (`hak` —
+    `secim.odul_secim`) ve sabit sekil (5 banko/5 cifte/5 uclu —
+    `secim.sekilli_secim`). Ikisi de `spor_toto/kupon_motor.py`den gelir ve
+    o modul 5. haftanin OYNANAN kuponunu birebir yeniden uretiyor
+    (`tests/test_kupon_motor.py`).
+
+    Bu uc `/api/benzer`in RAKIBI DEGIL, ikizi: orasi karneden ("bu fiyatta
+    gecmiste ne olmus"), burasi motordan (marji atilmis fiyatin kendisi)
+    kupon kurar. Sayfa ikisini yan yana gosterir — ayrismalari bir kusur
+    degil, okunacak seyin kendisidir.
+    """
+    if request.method == "OPTIONS":
+        return "", 204
+    from spor_toto.kupon_motor import MotorHatasi, motoru_kos
+
+    data = request.get_json(silent=True) or {}
+    try:
+        return jsonify(motoru_kos(data))
+    except MotorHatasi as e:
+        return jsonify({"error": str(e)}), 400
+
+
 @app.route("/api/solve", methods=["POST", "OPTIONS"])
 def api_solve():
     if request.method == "OPTIONS":

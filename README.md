@@ -850,7 +850,7 @@ Bugün `match_conflicts` tam olarak bunu yakalar. Vaka analizi:
 | `/pazarlar` | **1X2 dışı pazarlar** — alt/üst 2,5 · Asya handikabı, ölçülmüş kalibrasyonlarıyla |
 | `/takimlar` | **Takım gücü** — küçültülmüş; her satırda maç sayısı, küçültme oranı ve %95 aralık |
 | `/istatistik/geri-test` | **Geri test** — ürünün kuralı (bütçe taraması) ↔ eşik taban çizgisi (eşik taraması + hold-out) |
-| `/kupon` | **Kupon kurucu** — zincirin tamamı tek sayfada: 15 maç elle girilir (lig · ev · deplasman · 1/0/2) → hepsi **tek ayarla tüm liglerin korpusunda** aranır (açılış/kapanış · shin/güç/orantılı) → her maçta **karnenin en yüksek iki sembolü** işaretlenir → kupon adıyla arşive kaydedilir (girdi + ayar + damgalı analiz + işaretler) |
+| `/kupon` | **Kupon kurucu** — zincirin tamamı tek sayfada: 15 maç elle girilir (lig · ev · deplasman · **açılış 1/0/2 · kapanış 1/0/2**) → her çizgi kendi fiyatıyla korpusun kendi çizgisinde aranır (shin/güç/orantılı; tüm ligler ya da maçın kendi ligi) → çıkan karneden **çizgi başına iki şekilli kupon**: 6 banko + 9 üçlü (3⁹) ve 5 banko + 5 çift + 5 üçlü (2⁵·3⁵), artı ekrandaki çizginin **en yüksek iki sembolü** kuponu → adıyla arşive kaydedilir (girdi + ayar + damgalı karneler + işaretler) |
 | `/oran-analizi` | **Oran analizi** — elle 1/0/2 girilir; aynı fiyata sahip geçmiş maçların 1/0/2 karnesi, lig kırılımı ve lige tıklanınca maçların kendisi. Açılış/kapanış çizgisi seçilir |
 | `/saglik` | Değişmezler — kategori kategori, süre ve açıklamalarıyla |
 
@@ -1147,7 +1147,7 @@ backend/
     artefakt.py        Egitilmis modelin diske yazimi + bayatlik denetimi
     kosum.py           Olcum kosum defteri (--kaydet) — surumlenmez
     benzer.py          "Bu oranda geçmişte ne oldu" = /api/benzer
-    kupon_arsivi.py    KUPON: kupon kaydi (girdi·ayar·analiz·isaret) = /api/kupon/arsiv (diske YAZAN tek uc)
+    kupon_arsivi.py    KUPON: kupon kaydi (girdi·ayar·analizler·isaret) = /api/kupon/arsiv (diske YAZAN tek uc)
     secim.py           KUPON: işaretleri HEDEFE göre seçer — eşiğe göre değil
     duz.py             KUPON: düz sistemde kademe başına KOLON SAYIMI ve para (seyreltmeli)
     coklu.py           KUPON: ayni butceyi COK KUPONA boler — carpim kisitini kaldirir
@@ -1195,7 +1195,7 @@ backend/
   data/                st_history_2025_26.json · odds/ · iddaa/ · egitim/ ·
                        fixtures/ · super_toto/ · sportoto_arsiv/ · avrupa/ ·
                        sehir/ · sistem_fiyat/
-  tests/               pytest (83 dosya → 2.098 test; §9'da katman dökümü)
+  tests/               pytest (83 dosya → 2.105 test; §9'da katman dökümü)
   pyproject.toml
 
 frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası yok
@@ -1220,9 +1220,10 @@ frontend/              Next.js App Router — yalnızca TSX, hiç HTML dosyası 
   lib/transfer.ts      hafta → formül devri (idempotent; bkz. §7.2 kural 6)
   lib/kurulum.ts       formül kurulumunun kalıcılığı + paylaşılabilir bağlantı
   lib/kume-ici.ts      üretmeden önce görülen koşul + kolon bedeli
-  lib/kupon.ts         kupon kurucunun girdisi: doğrulama, marj, kalıcılık
+  lib/kupon.ts         kupon kurucunun girdisi: ÇİZGİ BAŞINA oran, marj, kalıcılık
   lib/kupon-analiz.ts  15 satırın sorgu ayarı, izi, özeti; arşiv çevrimi
-  lib/kupon-kur.ts     kuponun kuralı: karnenin en yüksek İKİ sembolü
+  lib/kupon-kur.ts     ikili kupon: karnenin en yüksek İKİ sembolü
+  lib/kupon-sekil.ts   şekilli kupon: derinlik maça göre dağıtılır (6/9 · 5/5/5)
   lib/senaryo.ts       çalıştırılan kuponların karşılaştırma listesi (eksen: işaretler)
   lib/istek.ts         tek veri çekme kancası (AbortController + hata + yükleniyor)
   lib/adres.ts         adres çubuğu sorgu parametreleri — tek mekanizma
@@ -1407,7 +1408,7 @@ dahil), analysis, bayes, markov, fire, health, health API, history, odds, geri t
 iddaa snapshot'ı, API sözleşmesi, tahminci sözleşmesi, değerlendirme koşumu,
 yeniden kalibrasyon, eğitim korpusu ve **2. Tahmin** (kalabalık ayarı, ad
 eşleme, ikinci kayıt). **83 test dosyası, parametrizasyonla
-2.098 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
+2.105 test.** Katman katman dökümü (dosyalar adıyla sayılıdır ki bu tablo
 elle bakımı gerektirmesin — `tests/test_belgeler.py` onu gerçek koleksiyona
 karşı denetler):
 
@@ -1453,7 +1454,7 @@ karşı denetler):
 | Görev ölçeğinde para karnesi (kademe sayımı · kupon ayrıklığı · KAZANANSIZ kademe · seyrelme yönü) | **`coklu_karne`** | 7 |
 | Bütçe cephesi (bekleme ↔ beklenen harcama · `p` içbükeyliği · tüm kolonlarda P=1) | **`butce_egrisi`** | 6 |
 | Haftalar arası bağımlılık (komşuluk tanımı · sezon sınırı · ÖLÇÜLEMEDİ satırı düşmez) | **`haftalar_arasi`** | 6 |
-| Kupon arşivi (yol kaçağı · numara yeniden kullanılmaz · zincir: girdi ↔ analiz ↔ kupon · **damgasız analiz yazılamaz** · kolon hesaplanır) | **`kupon_arsivi`** | 27 |
+| Kupon arşivi (yol kaçağı · numara yeniden kullanılmaz · zincir: girdi ↔ analizler ↔ kupon · **damgasız analiz yazılamaz** · kolon hesaplanır · iki çizgi ayrı · 2. sürümden göç · şekilli kuponlar) | **`kupon_arsivi`** | 34 |
 | Durma kuralları (önceden yazılmış eşikler koşulabilir mi · rejim sınırı canlıdan kesilmez · arşiv ters yönde) | **`durma_kurallari`** | 5 |
 
 İki test bilerek **ağa çıkmaz**: `test_snapshot_iddaa.py` gerçek bültenden alınmış
@@ -1464,7 +1465,7 @@ ayrıştırmanın doğruluğu ise arşivin tamamının dayandığı şey.
 
 ```bash
 cd frontend
-npm run check                # eslint + tsc + saf mantık ve sözleşme (57 vaka)
+npm run check                # eslint + tsc + saf mantık ve sözleşme (92 vaka)
 npm run lint                 # yalnızca eslint
 npm run build                # üretim derlemesi
 ```

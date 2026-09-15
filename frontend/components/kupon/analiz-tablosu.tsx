@@ -6,7 +6,13 @@ import { ExternalLink } from "lucide-react";
 
 import { oranAnaliziAdresi, type AnalizAyari, type SatirAnalizi } from "@/lib/kupon-analiz";
 import type { KuponSatiri } from "@/lib/kupon";
-import { MAC_SAYISI, SEMBOLLER, type BenzerSembol, type Sembol } from "@/lib/types";
+import {
+  MAC_SAYISI,
+  SEMBOLLER,
+  type BenzerSembol,
+  type Cizgi,
+  type Sembol,
+} from "@/lib/types";
 import { cn, sayi, yuzde } from "@/lib/utils";
 import { TABLO_BASLIK_SATIRI, TABLO_SARMAL } from "@/components/ui/tablo";
 
@@ -37,10 +43,13 @@ export function AnalizTablosu({
   satirlar,
   sonuclar,
   ayar,
+  cizgi,
 }: {
   satirlar: KuponSatiri[];
   sonuclar: SatirAnalizi[];
   ayar: AnalizAyari;
+  /** Tablonun okudugu fiyat cizgisi — satirdaki oran bloku de buradan. */
+  cizgi: Cizgi;
 }) {
   return (
     <div className={TABLO_SARMAL}>
@@ -92,7 +101,7 @@ export function AnalizTablosu({
                   <div className="tnum mt-0.5 text-[11px] text-muted-foreground">
                     {satir.lig ? <span className="font-mono">{satir.lig}</span> : null}
                     {satir.lig ? " · " : ""}
-                    {SEMBOLLER.map((s) => satir.oran[s]).join(" / ")}
+                    {SEMBOLLER.map((s) => satir.oran[cizgi][s]).join(" / ")}
                   </div>
                 </td>
 
@@ -119,7 +128,7 @@ export function AnalizTablosu({
 
                 <td className={cn("py-2 pr-1 text-right align-top", alt)}>
                   <Link
-                    href={oranAnaliziAdresi(satir, ayar)}
+                    href={oranAnaliziAdresi(satir, ayar, cizgi)}
                     title="Bu satırı /oran-analizi'nde aç — lig kırılımı ve maçların kendisi"
                     className="inline-flex items-center gap-1 text-[11.5px] text-muted-foreground transition-colors hover:text-primary"
                   >

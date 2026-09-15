@@ -3,6 +3,8 @@
 import * as React from "react";
 
 import {
+  CIZGI_ADI,
+  CIZGI_SIRASI,
   favori,
   oranHucresiBozuk,
   satirMarji,
@@ -10,12 +12,13 @@ import {
   METIN_SINIR,
   ORAN_SINIR,
 } from "@/lib/kupon";
-import { MAC_SAYISI, SEMBOLLER, type Sembol } from "@/lib/types";
+import { MAC_SAYISI, SEMBOLLER, type Cizgi, type Sembol } from "@/lib/types";
 import { cn, yuzde } from "@/lib/utils";
 import { TABLO_BASLIK_SATIRI, TABLO_SARMAL } from "@/components/ui/tablo";
 
 /**
- * 15 satirlik elle giris izgarasi: lig · ev · deplasman · 1 / 0 / 2.
+ * 15 satirlik elle giris izgarasi: lig · ev · deplasman · ACILIS 1/0/2 ·
+ * KAPANIS 1/0/2.
  *
  * ─── Neden tablo, neden 15 ayri kart degil ────────────────────────────────
  *
@@ -23,9 +26,20 @@ import { TABLO_BASLIK_SATIRI, TABLO_SARMAL } from "@/components/ui/tablo";
  * karsilastirarak girer ("bu maca 1.26 yazdim, digeri 1.25'ti"). Kartlara
  * bolunmus bir duzen o karsilastirmayi imkansiz kilar.
  *
+ * ─── Neden iki fiyat blogu ────────────────────────────────────────────────
+ *
+ * Sahibinin istegi: *"acilis ve kapanis oranlarini verdigimde ... acilis
+ * kendi icinde 2 kupon, kapanis kendi icinde 2 kupon olacak."* Onceden tek
+ * blok vardi ve hangi cizgiye ait oldugunu AYAR soyluyordu; o hal iki
+ * fiyati ayni anda tutamiyordu. Iki blok YAN YANA duruyor, cunku okunacak
+ * asil sey ikisinin FARKI — fiyatin nereye kaydigi.
+ *
+ * Bir blok bos birakilabilir: elinde yalnizca kapanis bulteni olan biri o
+ * tarafi doldurur ve yalnizca kapanisin kuponlari kurulur.
+ *
  * ─── Klavye ───────────────────────────────────────────────────────────────
  *
- * 90 hucre (15 x 6) yalnizca fareyle doldurulmaz. `Tab` satir boyunca
+ * 135 hucre (15 x 9) yalnizca fareyle doldurulmaz. `Tab` satir boyunca
  * ilerler — tarayicinin kendi davranisi, dokunulmadi. Ok tuslari ve `Enter`
  * ise SUTUN boyunca ilerler: bulten cogu zaman sutun sutun okunur (once 15
  * ev sahibi, sonra 15 oran). `components/formul/match-grid.tsx` ayni kalibi
@@ -35,8 +49,25 @@ import { TABLO_BASLIK_SATIRI, TABLO_SARMAL } from "@/components/ui/tablo";
  * hareket ettirirler ve onlari kacirmak yazmayi bozar.
  */
 
-/** Sutun duzeni — `refs` ve klavye gezinmesi bu siraya baglidir. */
-const SUTUNLAR = ["lig", "ev", "dep", ...SEMBOLLER] as const;
+/** Kimlik sutunlari — oranlar disindaki serbest metin alanlari. */
+export type KimlikAlani = "lig" | "ev" | "dep";
+
+const KIMLIK: readonly KimlikAlani[] = ["lig", "ev", "dep"] as const;
+
+/**
+ * Klavye gezinmesinin sutun duzeni: uc kimlik alani, sonra her cizginin uc
+ * orani. `refs` bu sirayla doldurulur; sira degisirse gezinme de degisir.
+ */
+const SUTUN_SAYISI = KIMLIK.length + CIZGI_SIRASI.length * SEMBOLLER.length;
+
+/** Bir oran hucresinin gezinme sutunu. */
+function oranSutunu(cizgi: Cizgi, sembol: Sembol): number {
+  return (
+    KIMLIK.length +
+    CIZGI_SIRASI.indexOf(cizgi) * SEMBOLLER.length +
+    SEMBOLLER.indexOf(sembol)
+  );
+}
 
 const SEMBOL_ETIKETI: Record<Sembol, string> = {
   "1": "Ev",
@@ -53,16 +84,18 @@ const FAVORI_RENGI: Record<Sembol, string> = {
 
 export function KuponIzgarasi({
   satirlar,
-  onChange,
+  onKimlik,
+  onOran,
 }: {
   satirlar: KuponSatiri[];
-  onChange: (mac: number, alan: (typeof SUTUNLAR)[number], deger: string) => void;
+  onKimlik: (mac: number, alan: KimlikAlani, deger: string) => void;
+  onOran: (mac: number, cizgi: Cizgi, sembol: Sembol, deger: string) => void;
 }) {
   const refs = React.useRef<(HTMLInputElement | null)[][]>([]);
 
   function odakla(mac: number, sut: number) {
     const m = Math.max(0, Math.min(MAC_SAYISI - 1, mac));
-    const s = Math.max(0, Math.min(SUTUNLAR.length - 1, sut));
+    const s = Math.max(0, Math.min(SUTUN_SAYISI - 1, sut));
     const hedef = refs.current[m]?.[s];
     hedef?.focus();
     hedef?.select();
@@ -80,7 +113,7 @@ export function KuponIzgarasi({
 
   return (
     <div className={TABLO_SARMAL}>
-      <table className="w-full min-w-[900px] table-fixed border-separate border-spacing-0">
+      <table className="w-full min-w-[1180px] table-fixed border-separate border-spacing-0">
         {/*
           Genislikler `colgroup`ta ve YUZDE: `table-fixed` ile birlikte bu,
           iki takim sutununu birbirine ESIT tutar. Once genislik yoktu ve
@@ -89,50 +122,71 @@ export function KuponIzgarasi({
           baslik satiri govdeyle ayni yerde durmuyordu.
         */}
         <colgroup>
-          <col className="w-[4%]" />
-          <col className="w-[9%]" />
-          <col className="w-[23.5%]" />
-          <col className="w-[23.5%]" />
-          <col className="w-[10%]" />
-          <col className="w-[10%]" />
-          <col className="w-[10%]" />
-          <col className="w-[10%]" />
+          <col className="w-[3%]" />
+          <col className="w-[7%]" />
+          <col className="w-[17%]" />
+          <col className="w-[17%]" />
+          {CIZGI_SIRASI.map((c) => (
+            <React.Fragment key={c}>
+              <col className="w-[7%]" />
+              <col className="w-[7%]" />
+              <col className="w-[7%]" />
+              <col className="w-[7%]" />
+            </React.Fragment>
+          ))}
         </colgroup>
         <thead>
           {/*
-            Baslik dolgulari govdedekiyle AYNI olmak zorunda ve esitlik
-            gorunenden zor: govdede yazi iki dolgunun toplami kadar iceride
-            duruyor (`td` + kutunun kendi `px-2`si), baslikta ise yalnizca
-            biri vardi. Fark 8 piksel ve ciplak gozle "kaymis" goruluyordu.
-            Hizalama da sutunun kendi hizasini izler: lig ortali, fiyat ve
-            marj saga dayali.
+            Iki satirlik baslik: ust satir fiyat BLOGUNU adlandirir (acilis /
+            kapanis), alt satir blogun icindeki sutunlari. Tek satirlik bir
+            baslikta alti oran yan yana dururdu ve hangi ucunun acilis
+            oldugu ancak sayarak anlasilirdi.
           */}
           <tr className={cn(TABLO_BASLIK_SATIRI, "[&>th]:whitespace-nowrap")}>
-            <th className="pb-2 pr-2 text-right font-medium">#</th>
-            <th className="pb-2 text-center font-medium">Lig</th>
-            <th className="pb-2 pl-4 font-medium">Ev sahibi</th>
-            <th className="pb-2 pl-4 font-medium">Deplasman</th>
-            {SEMBOLLER.map((s, k) => (
+            <th className="pb-1 pr-2" rowSpan={2} />
+            <th className="pb-1" rowSpan={2} />
+            <th className="pb-1 pl-4 text-left font-medium align-bottom" rowSpan={2}>
+              Ev sahibi
+            </th>
+            <th className="pb-1 pl-4 text-left font-medium align-bottom" rowSpan={2}>
+              Deplasman
+            </th>
+            {CIZGI_SIRASI.map((c) => (
               <th
-                key={s}
-                className={cn(
-                  "pb-2 pr-2 text-right font-medium",
-                  k === 0 && "border-l border-line/50",
-                )}
+                key={c}
+                colSpan={4}
+                className="border-l border-line/50 pb-1 pl-2 text-left font-semibold text-foreground/80"
               >
-                <span className="font-mono">{s}</span>{" "}
-                <span className="font-normal normal-case tracking-normal opacity-70">
-                  {SEMBOL_ETIKETI[s]}
-                </span>
+                {CIZGI_ADI[c]}
               </th>
             ))}
-            <th className="pb-2 pr-1 text-right font-medium">Marj</th>
+          </tr>
+          <tr className={cn(TABLO_BASLIK_SATIRI, "[&>th]:whitespace-nowrap")}>
+            {CIZGI_SIRASI.map((c) =>
+              [
+                ...SEMBOLLER.map((s, k) => (
+                  <th
+                    key={`${c}-${s}`}
+                    className={cn(
+                      "pb-2 pr-2 text-right font-medium",
+                      k === 0 && "border-l border-line/50",
+                    )}
+                  >
+                    <span className="font-mono">{s}</span>{" "}
+                    <span className="font-normal normal-case tracking-normal opacity-70">
+                      {SEMBOL_ETIKETI[s]}
+                    </span>
+                  </th>
+                )),
+                <th key={`${c}-marj`} className="pb-2 pr-1 text-right font-medium">
+                  Marj
+                </th>,
+              ],
+            )}
           </tr>
         </thead>
         <tbody>
           {satirlar.map((satir, i) => {
-            const marj = satirMarji(satir);
-            const fav = favori(satir);
             // 15 satirda goz kayar: her satirin altinda ince bir ayrac var,
             // sonuncusunda yok (tablonun kendi alt kenari onun yerine gecer).
             const alt = i === MAC_SAYISI - 1 ? "" : "border-b border-line/50";
@@ -149,7 +203,7 @@ export function KuponIzgarasi({
                   yerTutucu={i === 0 ? "T1" : ""}
                   sinir={METIN_SINIR}
                   hizala="orta"
-                  onChange={(v) => onChange(i, "lig", v)}
+                  onChange={(v) => onKimlik(i, "lig", v)}
                   onKeyDown={(e) => tusla(e, i, 0)}
                   etiket={`${i + 1}. maçın ligi`}
                 />
@@ -159,7 +213,7 @@ export function KuponIzgarasi({
                   deger={satir.ev}
                   yerTutucu={i === 0 ? "Beşiktaş" : ""}
                   sinir={METIN_SINIR}
-                  onChange={(v) => onChange(i, "ev", v)}
+                  onChange={(v) => onKimlik(i, "ev", v)}
                   onKeyDown={(e) => tusla(e, i, 1)}
                   etiket={`${i + 1}. maçın ev sahibi`}
                 />
@@ -169,52 +223,60 @@ export function KuponIzgarasi({
                   deger={satir.dep}
                   yerTutucu={i === 0 ? "Erzurumspor" : ""}
                   sinir={METIN_SINIR}
-                  onChange={(v) => onChange(i, "dep", v)}
+                  onChange={(v) => onKimlik(i, "dep", v)}
                   onKeyDown={(e) => tusla(e, i, 2)}
                   etiket={`${i + 1}. maçın deplasmanı`}
                 />
 
-                {SEMBOLLER.map((s, k) => (
-                  <Hucre
-                    key={s}
-                    // Fiyat blogu kimlik blogundan ince bir cizgiyle ayrilir:
-                    // "Deplasman" sutunu genis ve bitisigindeki 1 orani ona
-                    // ait sanilabiliyordu.
-                    kutu={cn(alt, k === 0 && "border-l border-line/50")}
-                    ref={(el) => kaydet(refs, i, 3 + k, el)}
-                    deger={satir.oran[s]}
-                    yerTutucu={i === 0 ? ORNEK_ORAN[s] : ""}
-                    sinir={ORAN_SINIR}
-                    sayisal
-                    bozuk={oranHucresiBozuk(satir.oran[s])}
-                    vurgu={fav === s ? FAVORI_RENGI[s] : undefined}
-                    onChange={(v) => onChange(i, s, v)}
-                    onKeyDown={(e) => tusla(e, i, 3 + k)}
-                    etiket={`${i + 1}. maçın ${s} oranı`}
-                  />
-                ))}
-
-                <td className={cn("py-[3px] pl-2 pr-1 text-right align-middle", alt)}>
-                  <span
-                    className={cn(
-                      "tnum text-[12px]",
-                      marj == null
-                        ? "text-muted-foreground/50"
-                        : marj > 0.12
-                          ? "text-warning"
-                          : "text-muted-foreground",
-                    )}
-                    title={
-                      marj == null
-                        ? "Üç oran da girilince marj burada görünür"
-                        : marj > 0.12
-                          ? "Korpus ~%7 marjlı; bu farkta arındırma yöntemi sonucu görünür biçimde değiştirir"
-                          : undefined
-                    }
-                  >
-                    {marj == null ? "—" : yuzde(marj)}
-                  </span>
-                </td>
+                {CIZGI_SIRASI.map((c) => {
+                  const marj = satirMarji(satir, c);
+                  const fav = favori(satir, c);
+                  return (
+                    <React.Fragment key={c}>
+                      {SEMBOLLER.map((s, k) => (
+                        <Hucre
+                          key={s}
+                          // Fiyat blogu kimlik blogundan (ve oteki fiyat
+                          // blogundan) ince bir cizgiyle ayrilir: "Deplasman"
+                          // sutunu genis ve bitisigindeki 1 orani ona ait
+                          // sanilabiliyordu.
+                          kutu={cn(alt, k === 0 && "border-l border-line/50")}
+                          ref={(el) => kaydet(refs, i, oranSutunu(c, s), el)}
+                          deger={satir.oran[c][s]}
+                          yerTutucu={i === 0 ? ORNEK_ORAN[c][s] : ""}
+                          sinir={ORAN_SINIR}
+                          sayisal
+                          bozuk={oranHucresiBozuk(satir.oran[c][s])}
+                          vurgu={fav === s ? FAVORI_RENGI[s] : undefined}
+                          onChange={(v) => onOran(i, c, s, v)}
+                          onKeyDown={(e) => tusla(e, i, oranSutunu(c, s))}
+                          etiket={`${i + 1}. maçın ${CIZGI_ADI[c].toLocaleLowerCase("tr")} ${s} oranı`}
+                        />
+                      ))}
+                      <td className={cn("py-[3px] pl-2 pr-1 text-right align-middle", alt)}>
+                        <span
+                          className={cn(
+                            "tnum text-[12px]",
+                            marj == null
+                              ? "text-muted-foreground/50"
+                              : marj > 0.12
+                                ? "text-warning"
+                                : "text-muted-foreground",
+                          )}
+                          title={
+                            marj == null
+                              ? "Üç oran da girilince marj burada görünür"
+                              : marj > 0.12
+                                ? "Korpus ~%7 marjlı; bu farkta arındırma yöntemi sonucu görünür biçimde değiştirir"
+                                : undefined
+                          }
+                        >
+                          {marj == null ? "—" : yuzde(marj)}
+                        </span>
+                      </td>
+                    </React.Fragment>
+                  );
+                })}
               </tr>
             );
           })}
@@ -224,11 +286,16 @@ export function KuponIzgarasi({
   );
 }
 
-/** İlk satirda gosterilen ornek oran — 5. haftanin 1. maci. */
-const ORNEK_ORAN: Record<Sembol, string> = {
-  "1": "1.26",
-  "0": "6.48",
-  "2": "13.54",
+/**
+ * Ilk satirda gosterilen ornek oran — 5. haftanin 1. maci (Pinnacle).
+ *
+ * Iki cizgi ayri ayri yaziyor ve sayilar BIREBIR o haftanin kaydindan
+ * (`data/super_toto/2026_27/hafta_05.json`): yer tutucu bile uydurulmus bir
+ * fiyat gostermemeli.
+ */
+const ORNEK_ORAN: Record<Cizgi, Record<Sembol, string>> = {
+  acilis: { "1": "1.28", "0": "5.53", "2": "10.16" },
+  kapanis: { "1": "1.26", "0": "6.48", "2": "13.54" },
 };
 
 function kaydet(
@@ -244,7 +311,7 @@ function kaydet(
 
 /**
  * Tek hucre. Kenarlik hucrenin KENDISINDE degil, odaklandiginda beliren bir
- * halkada: 90 kutuluk bir izgarada 90 cerceve cizmek tabloyu okunmaz yapar.
+ * halkada: 135 kutuluk bir izgarada 135 cerceve cizmek tabloyu okunmaz yapar.
  */
 const Hucre = React.forwardRef<
   HTMLInputElement,

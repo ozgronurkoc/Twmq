@@ -297,6 +297,50 @@ def secim_cephesi(probs_listesi: list[dict[str, float]],
     return cephe
 
 
+def sekilli_secim(probs_listesi: list[dict[str, float]],
+                  cift: int, uclu: int,
+                  esik: int = VARSAYILAN_KACAK_ESIGI) -> Secim | None:
+    """Şekli **sabitlenmiş** planın kanıtlanmış en iyisi.
+
+    `en_iyi_secim` bütçeyi verir ve şekli kendisi seçer. Bazen istenen
+    bunun tersidir: *şekil* kullanıcının kararıdır (5 banko / 5 çifte /
+    5 üçlü) ve sorulan şey "o şekilde hangi maça hangi derinlik".
+
+    Aritmetik aynı DP'dir, yalnızca **tek bir düğüme** kısıtlanmıştır:
+    `_dp_cozumu`nun `durumlar` sözlüğü zaten `(çifte, üçlü)` ile anahtarlı
+    ve o düğümün Pareto kümesi, o şekle ulaşan baskılanmamış bütün
+    atamaları taşır. Bütçe şeklin kendi bedelidir (`2^çifte · 3^üçlü`),
+    yani arama o bedelin üstüne hiç çıkmaz.
+
+    Sonuç bir yaklaşıklık DEĞİL, o şeklin **en iyisidir**: Pareto budaması
+    yalnızca baskılanmışı atar (modül başlığındaki baskınlık savı) ve
+    5. haftada bu kaba kuvvetle doğrulandı — `C(15,5) · C(10,5) = 756.756`
+    atamanın tamamı gezildiğinde aynı plan ve aynı `P(k ≤ 3) = 0,799613`
+    çıktı (`data/super_toto/2026_27/hafta_05_kupon.json`, `variants[1]`).
+
+    `None` döner ancak DP hiç durum üretemezse (boş girdi).
+    """
+    n = len(probs_listesi)
+    if cift < 0 or uclu < 0:
+        raise ValueError("cifte ve uclu sayisi negatif olamaz.")
+    if cift + uclu > n:
+        raise ValueError(
+            f"cifte + uclu ({cift} + {uclu}) mac sayisini ({n}) asamaz.")
+    butce = bedel_hesapla(cift, uclu)
+    dp = _dp_cozumu(probs_listesi, butce, esik)
+    if dp is None:
+        return None
+    sirali, durumlar = dp
+    kume = durumlar.get((cift, uclu))
+    if not kume:
+        return None
+    # Düğümün Pareto kümesinde ölçüt tek: `P(k <= esik)`. Eşitlikte ILK
+    # görülen kazanır — `secim_cephesi`nin kuralıyla aynı, ve aynı girdi
+    # her zaman aynı planı versin diye.
+    kumulatif, izlek = max(kume, key=lambda x: x[0][esik])
+    return _plan_kur(sirali, izlek, butce, kumulatif[esik])
+
+
 def en_iyi_secim(probs_listesi: list[dict[str, float]],
                  butce: int,
                  esik: int = VARSAYILAN_KACAK_ESIGI) -> Secim | None:
