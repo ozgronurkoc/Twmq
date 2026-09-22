@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-09-15 12:35",
+ "generated_at": "2026-09-22 12:30",
  "source": "sportoto.gov.tr resmi arsivi (webapi.sportoto.gov.tr) — RESMI KAYNAK",
  "seasons": {
   "2021_22": {
@@ -34,15 +34,15 @@
   },
   "2026_27": {
    "season": "2026/2027",
-   "weeks": 6,
-   "with_payout": 5,
-   "with_bulletin_image": 6
+   "weeks": 7,
+   "with_payout": 6,
+   "with_bulletin_image": 7
   }
  },
  "totals": {
-  "weeks": 227,
-  "with_payout": 226,
-  "with_bulletin_image": 226,
+  "weeks": 228,
+  "with_payout": 227,
+  "with_bulletin_image": 227,
   "with_warnings": 0
  },
  "limits": [

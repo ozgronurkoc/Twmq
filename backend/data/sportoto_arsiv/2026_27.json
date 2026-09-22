@@ -2,14 +2,14 @@
  "meta": {
   "season": "2026/2027",
   "season_key": "2026_27",
-  "weeks": 6,
-  "weeks_with_payout": 5,
+  "weeks": 7,
+  "weeks_with_payout": 6,
   "source": "sportoto.gov.tr resmi arsivi (webapi.sportoto.gov.tr) — RESMI KAYNAK",
   "source_endpoints": [
    "GET /api/GameRound",
    "GET /api/GameResult/GetGameResultByGameRoundId?id=<gameRoundId>"
   ],
-  "fetched_at": "2026-09-15 12:35",
+  "fetched_at": "2026-09-22 12:30",
   "contains": "hafta kaydi + IKRAMIYE tablosu",
   "close_date_note": "`close_date` KUPON KAPANISIDIR, haftanin bitisi degil. Olculdu: 2025/26'nin 41 haftasinin 41'inde bu tarih haftanin ILK macinin gunune esit. `st_history_2025_26.json`in ayni adli alani ise haftanin SON macina denk duser ve 1-4 gun sonradir; iki alan celismiyor, farkli seyleri olcuyor.",
   "does_not_contain": "15 maclik liste ve 1/0/2 dizisi YOK — resmi ucta mac listesi yalnizca bulten GORSELI olarak var (bulletin_image). Kupon dizisi icin st_history veri setine bakilir."
@@ -222,10 +222,50 @@
    "game_round_id": 1533,
    "close_date": "2026-09-18 19:55",
    "is_published": true,
-   "payout": null,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 9,
+      "prize": 10152127.33
+     },
+     {
+      "correct": 14,
+      "winners": 231,
+      "prize": 128125.11
+     },
+     {
+      "correct": 13,
+      "winners": 3303,
+      "prize": 8960.61
+     },
+     {
+      "correct": 12,
+      "winners": 28827,
+      "prize": 1283.38
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2026-09-18 19:55"
+   },
    "bulletin_image": {
     "name": "1001430815-dco6ijh2.jpg",
     "url": "https://webapi.sportoto.gov.tr/image/1001430815-dco6ijh2.jpg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 7,
+   "name": "7. Hafta",
+   "season": "2026/2027",
+   "game_round_id": 1534,
+   "close_date": "2026-09-25 21:40",
+   "is_published": true,
+   "payout": null,
+   "bulletin_image": {
+    "name": "spor-toto-listesi-7-hafta-l1sqpyct.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/spor-toto-listesi-7-hafta-l1sqpyct.jpg"
    },
    "data_warnings": []
   }
