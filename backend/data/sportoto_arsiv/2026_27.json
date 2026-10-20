@@ -2,14 +2,14 @@
  "meta": {
   "season": "2026/2027",
   "season_key": "2026_27",
-  "weeks": 10,
-  "weeks_with_payout": 9,
+  "weeks": 11,
+  "weeks_with_payout": 10,
   "source": "sportoto.gov.tr resmi arsivi (webapi.sportoto.gov.tr) — RESMI KAYNAK",
   "source_endpoints": [
    "GET /api/GameRound",
    "GET /api/GameResult/GetGameResultByGameRoundId?id=<gameRoundId>"
   ],
-  "fetched_at": "2026-10-13 14:55",
+  "fetched_at": "2026-10-20 12:38",
   "contains": "hafta kaydi + IKRAMIYE tablosu",
   "close_date_note": "`close_date` KUPON KAPANISIDIR, haftanin bitisi degil. Olculdu: 2025/26'nin 41 haftasinin 41'inde bu tarih haftanin ILK macinin gunune esit. `st_history_2025_26.json`in ayni adli alani ise haftanin SON macina denk duser ve 1-4 gun sonradir; iki alan celismiyor, farkli seyleri olcuyor.",
   "does_not_contain": "15 maclik liste ve 1/0/2 dizisi YOK — resmi ucta mac listesi yalnizca bulten GORSELI olarak var (bulletin_image). Kupon dizisi icin st_history veri setine bakilir."
@@ -382,10 +382,50 @@
    "game_round_id": 1537,
    "close_date": "2026-10-16 19:55",
    "is_published": true,
-   "payout": null,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 1863,
+      "prize": 24024.22
+     },
+     {
+      "correct": 14,
+      "winners": 34791,
+      "prize": 735.11
+     },
+     {
+      "correct": 13,
+      "winners": 293810,
+      "prize": 87.04
+     },
+     {
+      "correct": 12,
+      "winners": 1017195,
+      "prize": 31.42
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2026-10-16 19:55"
+   },
    "bulletin_image": {
     "name": "spor-toto-listesi-10-hafta-n82ru55x.jpg",
     "url": "https://webapi.sportoto.gov.tr/image/spor-toto-listesi-10-hafta-n82ru55x.jpg"
+   },
+   "data_warnings": []
+  },
+  {
+   "week": 11,
+   "name": "11. Hafta",
+   "season": "2026/2027",
+   "game_round_id": 1538,
+   "close_date": "2026-10-23 19:55",
+   "is_published": true,
+   "payout": null,
+   "bulletin_image": {
+    "name": "1001503134-4akx7lns.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/1001503134-4akx7lns.jpg"
    },
    "data_warnings": []
   }
