@@ -1,0 +1,155 @@
+alinma,event_id,kickoff,home,away,lig,lig_kodu,canli,odd_1,odd_0,odd_2,wodd_1,wodd_0,wodd_2,marj
+2026-11-09 15:28,3282540,2026-11-09 15:30,FC Fratria Varna,PFK Sportist Svoge,Bulgaristan 2. Lig,33379,1,1.19,4.51,7.58,1.15,4.37,7.35,0.194
+2026-11-09 15:28,3321739,2026-11-09 16:00,FC Iberia 1999,FC Gagra,Gürcistan Erovnuli Ligi,16326,1,1.3,3.99,5.74,1.26,3.87,5.56,0.1941
+2026-11-09 15:28,3270688,2026-11-09 16:30,Veles Moskova,Kamaz Chelny,Rusya Futbol Ulusal Ligi,1918,1,1.91,2.91,3.05,1.85,2.82,2.96,0.1951
+2026-11-09 15:28,3282548,2026-11-09 17:00,FC Köln (K),RB Leipzig (K),"Almanya Amatör Bundesliga, Women",33461,1,1.64,3.33,3.54,1.59,3.23,3.43,0.1925
+2026-11-09 15:28,3274867,2026-11-09 18:00,Hvidovre,Aarhus Fremad,Danimarka 1.Lig,302,1,1.58,3.46,3.7,1.53,3.36,3.58,0.1922
+2026-11-09 15:28,3276599,2026-11-09 18:00,Botosani,FC Otelul Galati,Romanya 1. Lig,1912,1,1.81,3.07,3.16,1.75,2.98,3.06,0.1947
+2026-11-09 15:28,3279585,2026-11-09 18:00,Atletico Madrid (K),Levante Las Planas FC (K),İspanya Primera Division Femenina,22622,1,1.11,5.37,8.95,1.08,5.21,8.68,0.1989
+2026-11-09 15:28,3279801,2026-11-09 18:00,Mushuc Runa,Delfin Sc,"Ekvador Pro Lig, Düşme Turu",54971,1,1.51,3.2,4.48,1.47,3.1,4.35,0.198
+2026-11-09 15:28,3380885,2026-11-09 18:00,Kristiansund,Valerenga,Norveç Eliteserien,573,1,2.52,3.66,2.08,2.45,3.55,2.01,0.1508
+2026-11-09 15:28,3282468,2026-11-09 19:00,West Bromwich Albion U21,Bromley FC U21,"İngiltere Amatör U21 Premier League Cup, Group",39444,1,1.3,4.54,4.92,1.26,4.4,4.77,0.1927
+2026-11-09 15:28,3282507,2026-11-09 19:00,Middlesbrough FC U21,Derby County U21,"İngiltere Amatör Premier League 2, Division 1",33472,1,1.71,3.77,2.9,1.66,3.65,2.81,0.1949
+2026-11-09 15:28,3278992,2026-11-09 19:30,Las Palmas,Club Deportivo Eldense,İspanya La Liga 2,1951,1,1.86,3.27,3.24,1.8,3.17,3.14,0.1521
+2026-11-09 15:28,3279223,2026-11-09 19:30,CE Sabadell FC,Real Sociedad B,İspanya La Liga 2,1951,1,1.59,3.37,4.45,1.54,3.26,4.31,0.1504
+2026-11-09 15:28,3282541,2026-11-09 19:30,Asd Team Altamura,Cavese 1919,İtalya Serie C,90600,1,2.43,2.84,2.33,2.35,2.75,2.26,0.1928
+2026-11-09 15:28,3282569,2026-11-09 19:30,Foggia,Barletta Calcio,İtalya Serie C,90600,1,1.88,2.86,3.2,1.82,2.77,3.1,0.1941
+2026-11-09 15:28,3282591,2026-11-09 19:30,ASD Pineto Calcio,SSD Vis Pesaro 1898,İtalya Serie C,90600,1,1.63,3.16,3.75,1.58,3.06,3.63,0.1966
+2026-11-09 15:28,3330636,2026-11-09 19:30,Plymouth Parkway,Berkhamsted FC,İngiltere Federasyon Kupası,152,1,1.64,3.37,3.49,1.59,3.26,3.38,0.193
+2026-11-09 15:28,3381506,2026-11-09 19:30,CA Lito,Danubio FC,Uruguay Kupası Eleme,82749,1,2.98,2.99,1.9,2.89,2.9,1.84,0.1963
+2026-11-09 15:28,3282478,2026-11-09 19:45,Chelmsford C,Ebbsfleet United,İngiltere Amatör Konferans Ligi Güney,140,1,3.37,3.41,1.65,3.27,3.31,1.6,0.1961
+2026-11-09 15:28,3282501,2026-11-09 19:45,Redditch utd,Peterborough Sports,"İngiltere Amatör İngiltere Güney Ligi, Merkez",2667,1,2.03,3.35,2.46,1.97,3.24,2.39,0.1976
+2026-11-09 15:28,3282584,2026-11-09 19:45,AZ Picerno,SSC Bari,İtalya Serie C,90600,1,3.1,2.84,1.92,3.0,2.75,1.87,0.1955
+2026-11-09 15:28,3279206,2026-11-09 20:00,Deportivo La Coruna (K),Valencia (K),İspanya Primera Division Femenina,22622,1,1.46,3.46,4.52,1.41,3.36,4.38,0.1952
+2026-11-09 15:28,3282491,2026-11-09 20:15,Torreense,Uniao Leiria,Portekiz 2. Lig,1897,1,1.78,3.16,3.15,1.73,3.06,3.05,0.1957
+2026-11-09 15:28,3279319,2026-11-09 20:30,CD Tecnico Universitario,Manta FC,"Ekvador Pro Lig, Düşme Turu",54971,1,1.31,3.89,5.77,1.27,3.77,5.6,0.1937
+2026-11-09 15:28,3361097,2026-11-09 20:30,Independiente Yumbo,U. Magdalena,"Kolombiya Primera B, Kapanış,Yükselme A",3761,1,2.35,2.77,2.44,2.28,2.69,2.37,0.1964
+2026-11-09 15:28,3282544,2026-11-09 22:05,Chapelton Maroons FC,Racing United FC,Jamaika Premier Lig,5591,0,3.89,3.1,1.62,3.77,3.0,1.57,0.1969
+2026-11-09 15:28,3351588,2026-11-10 00:00,Atl. Junior,Cucuta Depor,"Kolombiya Liga DIMAYOR, Final",77379,1,1.53,3.4,4.01,1.48,3.3,3.89,0.1971
+2026-11-09 15:28,3381507,2026-11-10 00:00,Deportivo Maldonado,Nacional,Uruguay Kupası Eleme,82749,1,2.52,3.04,2.13,2.45,2.95,2.06,0.1953
+2026-11-09 15:28,3304805,2026-11-10 00:30,Club Aurora,FC Universitario de Vinto,Bolivya Profesyonel Ligi,20546,0,1.56,3.44,3.79,1.51,3.33,3.68,0.1956
+2026-11-09 15:28,3284223,2026-11-10 01:00,Arnett Gardens FC,Waterhouse FC,Jamaika Premier Lig,5591,0,2.9,3.03,1.92,2.81,2.94,1.86,0.1957
+2026-11-09 15:28,3370531,2026-11-10 08:00,Katar U23,Singapur U23,U23 Hazırlık Maçları,1755,1,1.11,5.4,8.95,1.08,5.23,8.68,0.1978
+2026-11-09 15:28,3137346,2026-11-10 11:00,Santa Clara U23,Torreense U23,Portekiz U23 Liga Next Gen,78382,0,2.62,3.17,2.0,2.54,3.07,1.94,0.1971
+2026-11-09 15:28,3370543,2026-11-10 12:00,Vietnam U23,Tayland U23,U23 Hazırlık Maçları,1755,0,1.54,3.15,4.35,1.49,3.05,4.22,0.1967
+2026-11-09 15:28,3284482,2026-11-10 13:00,Hull City U21,Fleetwood Town U21,İngiltere Amatör Profesyonel Gelişim Ligi,33362,0,1.68,3.65,3.03,1.63,3.54,2.94,0.1992
+2026-11-09 15:28,3284400,2026-11-10 14:00,Colchester United U21,Charlton Athletic U21,İngiltere Amatör Profesyonel Gelişim Ligi,33362,0,2.21,3.97,2.03,2.14,3.85,1.97,0.197
+2026-11-09 15:28,3346936,2026-11-10 14:00,Paradou AC,JSM Skikda,"Cezayir 2.Lig, Merkez-Doğu",22866,0,1.56,3.13,4.28,1.51,3.04,4.15,0.1942
+2026-11-09 15:28,3346957,2026-11-10 14:00,JS Djidjel,CR Beni Thour,"Cezayir 2.Lig, Merkez-Doğu",22866,0,1.5,3.15,4.67,1.46,3.05,4.53,0.1983
+2026-11-09 15:28,3346981,2026-11-10 14:00,WA Tlemcen,RC Arbaa,"Cezayir 2.Lig, Merkez-Batı",22865,0,1.67,2.97,3.82,1.62,2.88,3.7,0.1973
+2026-11-09 15:28,3346997,2026-11-10 14:00,MO Bejaia,Nrb Nezla,"Cezayir 2.Lig, Merkez-Doğu",22866,0,1.33,3.54,6.12,1.29,3.44,5.93,0.1978
+2026-11-09 15:28,3351595,2026-11-10 15:00,Al Mokawloon,Telecom Egypt,Mısır Kupası,1275,1,1.44,3.26,5.09,1.4,3.16,4.94,0.1977
+2026-11-09 15:28,3355303,2026-11-10 17:30,AFC Metalul Buzau,CSA Steaua Bucuresti,Romanya 2.Lig,17089,1,1.89,2.96,3.04,1.83,2.87,2.95,0.1959
+2026-11-09 15:28,3284293,2026-11-10 17:45,Real Madrid (K),Paris FC (K),UEFA Şamp. Ligi Kadınlar,54684,1,1.24,4.58,5.84,1.21,4.44,5.66,0.196
+2026-11-09 15:28,3284464,2026-11-10 17:45,Hacken (K),Chelsea FC (K),UEFA Şamp. Ligi Kadınlar,54684,1,9.8,5.87,1.08,9.5,5.69,1.0,0.1983
+2026-11-09 15:28,3380161,2026-11-10 18:00,CD Pamplona,Eibar,İspanya Kral Kupası,622,0,11.45,6.02,1.07,11.1,5.84,1.0,0.188
+2026-11-09 15:28,3284175,2026-11-10 19:00,Huddersfield,Liverpool U21,"İngiltere Futbol Ligi Kupası, Kuzey Grub",1288,1,1.19,4.95,6.65,1.15,4.8,6.45,0.1927
+2026-11-09 15:28,3284200,2026-11-10 19:00,Crewe Alexandra,Wigan Athletic,"İngiltere Futbol Ligi Kupası, Kuzey Grub",1282,1,1.88,3.12,2.93,1.82,3.03,2.84,0.1937
+2026-11-09 15:28,3284201,2026-11-10 19:00,Northampton,Gillingham,"İngiltere Futbol Ligi Kupası, Güney Grub",1295,1,1.84,3.34,2.82,1.79,3.24,2.73,0.1975
+2026-11-09 15:28,3284214,2026-11-10 19:00,Burton Albion,Notts County,"İngiltere Futbol Ligi Kupası, Kuzey Grub",1286,1,1.92,3.36,2.65,1.87,3.25,2.57,0.1958
+2026-11-09 15:28,3284221,2026-11-10 19:00,Plymouth,Swindon Town,"İngiltere Futbol Ligi Kupası, Güney Grub",1293,1,1.29,4.47,5.18,1.25,4.33,5.02,0.192
+2026-11-09 15:28,3284261,2026-11-10 19:00,Mansfield,Chesterfield,"İngiltere Futbol Ligi Kupası, Kuzey Grub",1284,1,1.93,3.34,2.65,1.87,3.24,2.57,0.1949
+2026-11-09 15:28,3284283,2026-11-10 19:00,Bristol Rovers,Reading,"İngiltere Futbol Ligi Kupası, Güney Grub",1291,1,3.13,3.37,1.73,3.04,3.27,1.67,0.1943
+2026-11-09 15:28,3284291,2026-11-10 19:00,Stockport,Tranmere,"İngiltere Futbol Ligi Kupası, Kuzey Grub",1285,1,1.2,4.62,6.77,1.16,4.48,6.56,0.1975
+2026-11-09 15:28,3284344,2026-11-10 19:00,Leicester City,Walsall,"İngiltere Futbol Ligi Kupası, Güney Grub",1290,1,1.18,5.1,6.59,1.15,4.94,6.38,0.1953
+2026-11-09 15:28,3284375,2026-11-10 19:00,Grimsby Town,Nottingham Forest U21,"İngiltere Futbol Ligi Kupası, Kuzey Grub",1286,1,1.2,5.05,6.07,1.16,4.89,5.88,0.1961
+2026-11-09 15:28,3284424,2026-11-10 19:00,Millwall U21,Brighton U21,"İngiltere Amatör U21 Premier League Cup, Group",39441,0,3.03,3.51,1.73,2.93,3.4,1.67,0.193
+2026-11-09 15:28,3284434,2026-11-10 19:00,Oxford,Cheltenham,"İngiltere Futbol Ligi Kupası, Güney Grub",1289,1,1.11,5.57,8.49,1.08,5.4,8.23,0.1982
+2026-11-09 15:28,3284443,2026-11-10 19:00,Stevenage,Fulham U21,"İngiltere Futbol Ligi Kupası, Güney Grub",1290,1,1.27,4.37,5.54,1.23,4.23,5.37,0.1967
+2026-11-09 15:28,3284450,2026-11-10 19:00,Barnet,Leyton Orient,"İngiltere Futbol Ligi Kupası, Güney Grub",1294,1,2.16,3.37,2.3,2.09,3.27,2.23,0.1945
+2026-11-09 15:28,3368249,2026-11-10 19:00,Cp Mijas-Las Lagunas,Real Jaen CF,İspanya Kral Kupası,622,0,3.28,3.11,1.75,3.18,3.01,1.7,0.1979
+2026-11-09 15:28,3380160,2026-11-10 19:00,Amorebieta,Logrones,İspanya Kral Kupası,622,0,2.97,3.15,1.84,2.88,3.05,1.79,0.1976
+2026-11-09 15:28,3284309,2026-11-10 19:30,Bromley,MK Dons,"İngiltere Futbol Ligi Kupası, Güney Grub",1296,1,3.19,3.55,1.66,3.09,3.44,1.61,0.1976
+2026-11-09 15:28,3284357,2026-11-10 19:30,Bradford,York City,"İngiltere Futbol Ligi Kupası, Kuzey Grub",1283,1,1.6,3.59,3.42,1.55,3.48,3.31,0.1959
+2026-11-09 15:28,3284388,2026-11-10 19:30,Wimborne,Poole Town,"İngiltere Amatör İngiltere Güney Ligi, Güney",2665,0,2.13,3.23,2.4,2.06,3.13,2.32,0.1957
+2026-11-09 15:28,3284481,2026-11-10 19:30,Crawley Town,Brentford U21,"İngiltere Futbol Ligi Kupası, Güney Grub",1296,1,1.28,4.56,5.07,1.24,4.42,4.91,0.1978
+2026-11-09 15:28,3384148,2026-11-10 19:30,Boston River,Torque,Uruguay Kupası Eleme,82749,0,2.82,2.88,2.02,2.73,2.79,1.96,0.1969
+2026-11-09 15:28,3284204,2026-11-10 19:45,Colchester,Ipswich Town U21,"İngiltere Futbol Ligi Kupası, Güney Grub",1292,1,1.33,4.55,4.44,1.29,4.41,4.3,0.1969
+2026-11-09 15:28,3284241,2026-11-10 19:45,Leiston,Real Bedford,"İngiltere Amatör İngiltere Güney Ligi, Merkez",2667,0,3.53,3.6,1.58,3.42,3.49,1.53,0.194
+2026-11-09 15:28,3284250,2026-11-10 19:45,Leamington,Bromsgrove Sporting FC,"İngiltere Amatör İngiltere Güney Ligi, Merkez",2667,0,3.25,3.41,1.68,3.15,3.31,1.63,0.1962
+2026-11-09 15:28,3284264,2026-11-10 19:45,Anstey Nomads,Kettering,"İngiltere Amatör İngiltere Güney Ligi, Merkez",2667,0,1.88,3.41,2.69,1.82,3.31,2.61,0.1969
+2026-11-09 15:28,3284277,2026-11-10 19:45,Stamford,Needham,"İngiltere Amatör İngiltere Güney Ligi, Merkez",2667,0,5.89,4.39,1.25,5.71,4.25,1.21,0.1976
+2026-11-09 15:28,3284288,2026-11-10 19:45,Gloucester,Malvern Town,"İngiltere Amatör İngiltere Güney Ligi, Güney",2665,0,1.32,4.13,5.07,1.28,4.01,4.92,0.1969
+2026-11-09 15:28,3284328,2026-11-10 19:45,Evesham United,Yate Town,"İngiltere Amatör İngiltere Güney Ligi, Güney",2665,0,1.96,3.15,2.72,1.9,3.05,2.64,0.1953
+2026-11-09 15:28,3284335,2026-11-10 19:45,Stourbridge,Alvechurch,"İngiltere Amatör İngiltere Güney Ligi, Merkez",2667,0,2.35,3.24,2.17,2.28,3.14,2.1,0.195
+2026-11-09 15:28,3284336,2026-11-10 19:45,Worcester City,RC Warwick,"İngiltere Amatör İngiltere Güney Ligi, Merkez",2667,0,1.84,3.23,2.91,1.79,3.13,2.82,0.1967
+2026-11-09 15:28,3284341,2026-11-10 19:45,Bury Town FC,Bishop's Sto,"İngiltere Amatör İngiltere Güney Ligi, Merkez",2667,0,1.37,3.98,4.65,1.33,3.86,4.5,0.1962
+2026-11-09 15:28,3284363,2026-11-10 19:45,Stratford,Banbury Utd,"İngiltere Amatör İngiltere Güney Ligi, Merkez",2667,0,2.01,3.07,2.68,1.95,2.98,2.59,0.1964
+2026-11-09 15:28,3284365,2026-11-10 19:45,Rushall Olym,Halesowen,"İngiltere Amatör İngiltere Güney Ligi, Merkez",2667,0,1.92,3.47,2.6,1.86,3.37,2.52,0.1936
+2026-11-09 15:28,3284420,2026-11-10 19:45,Bath City,Taunton Town,"İngiltere Amatör İngiltere Güney Ligi, Güney",2665,0,1.61,3.54,3.44,1.56,3.43,3.33,0.1943
+2026-11-09 15:28,3284468,2026-11-10 19:45,Chertsey Town,Chichester City FC,"İngiltere Amatör İngiltere Güney Ligi, Güney",2665,0,1.64,3.56,3.28,1.59,3.45,3.18,0.1955
+2026-11-09 15:28,3284473,2026-11-10 19:45,Sholing FC,Chippenham,"İngiltere Amatör İngiltere Güney Ligi, Güney",2665,0,1.68,3.37,3.28,1.63,3.27,3.18,0.1969
+2026-11-09 15:28,3284475,2026-11-10 19:45,Uxbridge FC,Hanwell Town FC,"İngiltere Amatör İngiltere Güney Ligi, Güney",2665,0,1.62,3.44,3.47,1.57,3.33,3.37,0.1962
+2026-11-09 15:28,3286578,2026-11-10 19:45,Cray Wanderers,Three Bridges,İngiltere Amatör Isthmian Ligi,2666,0,1.59,3.7,3.37,1.54,3.58,3.26,0.1959
+2026-11-09 15:28,3293329,2026-11-10 19:45,Eastbourne Borough,Dulwich,İngiltere Amatör Isthmian Ligi,2666,0,1.51,3.67,3.84,1.47,3.56,3.72,0.1951
+2026-11-09 15:28,3301026,2026-11-10 19:45,Chatham Town,Leatherhead,İngiltere Amatör Isthmian Ligi,2666,0,1.86,3.33,2.78,1.8,3.23,2.7,0.1976
+2026-11-09 15:28,3304820,2026-11-10 19:45,Scarborough,Marine,İngiltere Amatör Konferans Ligi Kuzey,134,1,1.92,3.2,2.76,1.87,3.1,2.67,0.1957
+2026-11-09 15:28,3318039,2026-11-10 19:45,Redcar Athletic FC,Bamber Bridge,İngiltere Amatör İngiltere Kuzey Ligi,2646,0,1.24,4.44,6.12,1.2,4.3,5.93,0.1951
+2026-11-09 15:28,3321745,2026-11-10 19:45,Bury,Cleethorpes,İngiltere Amatör İngiltere Kuzey Ligi,2646,0,1.79,3.42,2.91,1.74,3.31,2.82,0.1947
+2026-11-09 15:28,3321746,2026-11-10 19:45,Warrington Rylands 1906 FC,Guiseley,İngiltere Amatör İngiltere Kuzey Ligi,2646,0,2.21,3.3,2.26,2.14,3.2,2.19,0.198
+2026-11-09 15:28,3330650,2026-11-10 19:45,Quorn FC,Stockton Town,İngiltere Amatör İngiltere Kuzey Ligi,2646,0,1.98,3.37,2.55,1.92,3.26,2.47,0.1939
+2026-11-09 15:28,3330665,2026-11-10 19:45,Workington,Alfreton,İngiltere Amatör İngiltere Kuzey Ligi,2646,0,2.17,3.26,2.34,2.1,3.16,2.27,0.1949
+2026-11-09 15:28,3330678,2026-11-10 19:45,Curzon Ashton,Ilkeston Town FC,İngiltere Amatör İngiltere Kuzey Ligi,2646,0,1.24,4.43,6.23,1.2,4.29,6.04,0.1927
+2026-11-09 15:28,3330680,2026-11-10 19:45,Morecambe,Hereford,İngiltere Amatör Konferans Ligi Kuzey,134,1,2.0,3.23,2.6,1.93,3.13,2.52,0.1942
+2026-11-09 15:28,3346939,2026-11-10 19:45,Whitehawk,Welling Utd,İngiltere Amatör Isthmian Ligi,2666,0,5.1,4.09,1.32,4.94,3.96,1.28,0.1982
+2026-11-09 15:28,3346970,2026-11-10 19:45,Enfield Town,Lewes,İngiltere Amatör Isthmian Ligi,2666,0,1.35,4.0,4.88,1.31,3.88,4.73,0.1957
+2026-11-09 15:28,3351607,2026-11-10 19:45,Darlington,Oxford City,İngiltere Amatör Konferans Ligi Kuzey,134,1,2.87,3.36,1.82,2.78,3.25,1.76,0.1955
+2026-11-09 15:28,3355294,2026-11-10 19:45,Salisbury,Braintree,İngiltere Amatör Konferans Ligi Güney,140,1,1.23,4.66,6.03,1.19,4.52,5.85,0.1934
+2026-11-09 15:28,3355342,2026-11-10 19:45,H Hempstead,Torquay,İngiltere Amatör Konferans Ligi Güney,140,1,3.2,3.37,1.7,3.11,3.27,1.65,0.1975
+2026-11-09 15:28,3284244,2026-11-10 20:00,AS Roma (K),Servette FC (K),UEFA Şamp. Ligi Kadınlar,54684,1,1.11,5.84,8.18,1.08,5.66,7.93,0.1944
+2026-11-09 15:28,3284343,2026-11-10 20:00,Inter (K),Manchester City (K),UEFA Şamp. Ligi Kadınlar,54684,1,6.19,4.7,1.22,6.0,4.55,1.18,0.194
+2026-11-09 15:28,3284446,2026-11-10 20:00,Paris Saint-Germain (K),Bayern Münih (K),UEFA Şamp. Ligi Kadınlar,54684,1,3.66,3.46,1.58,3.55,3.36,1.53,0.1952
+2026-11-09 15:28,3361098,2026-11-10 20:30,Envigado FC,Boca Juniors De Cali,"Kolombiya Primera B, Kapanış,Yükselme A",3761,0,1.66,2.97,3.85,1.61,2.88,3.73,0.1989
+2026-11-09 15:28,3372487,2026-11-10 23:30,Internacional de Bogota.,America De Cali,Kolombiya Kupası,49730,1,2.92,3.03,1.91,2.83,2.94,1.85,0.1961
+2026-11-09 15:28,3384743,2026-11-11 00:00,Liverpool Montevideo,CA Juventud De Las Piedras,Uruguay Kupası Eleme,82749,1,2.17,2.82,2.62,2.11,2.73,2.54,0.1971
+2026-11-09 15:28,3372531,2026-11-11 01:30,Once Caldas,Atl. Nacional Medellin,Kolombiya Kupası,49730,1,2.51,2.92,2.2,2.43,2.83,2.13,0.1954
+2026-11-09 15:28,3301021,2026-11-11 09:30,Hindistan,Maldivler,"SAFF Şampiyonası, B Grubu",1474,0,1.15,4.91,8.01,1.12,4.76,7.76,0.1981
+2026-11-09 15:28,3301017,2026-11-11 14:00,Bangladeş,Sri Lanka,"SAFF Şampiyonası, A Grubu",1473,0,1.69,3.28,3.36,1.64,3.18,3.25,0.1942
+2026-11-09 15:28,3286943,2026-11-11 17:45,OH Leuven (K),HB Koege (K),UEFA Şamp. Ligi Kadınlar,54684,1,3.77,3.57,1.54,3.65,3.46,1.49,0.1947
+2026-11-09 15:28,3284216,2026-11-11 19:00,Sheffield Wednesday,Accrington,"İngiltere Futbol Ligi Kupası, Kuzey Grub",1281,0,1.39,3.95,4.55,1.34,3.83,4.41,0.1924
+2026-11-09 15:28,3284266,2026-11-11 19:00,Barnsley,Oldham,"İngiltere Futbol Ligi Kupası, Kuzey Grub",1287,0,1.73,3.58,2.98,1.67,3.47,2.89,0.1929
+2026-11-09 15:28,3384751,2026-11-11 19:00,Ontinyent CF,CD Utiel,"İspanya Amatör Tercera Federacion, Group 6",33664,0,1.83,2.79,3.45,1.77,2.71,3.35,0.1947
+2026-11-09 15:28,3330672,2026-11-11 19:45,Avro FC,Whitby Town,İngiltere Amatör İngiltere Kuzey Ligi,2646,0,1.39,4.07,4.35,1.34,3.95,4.22,0.195
+2026-11-09 15:28,3286996,2026-11-11 20:00,SL Benfica (K),FK Austria Wien (K),UEFA Şamp. Ligi Kadınlar,54684,1,1.39,3.82,4.7,1.34,3.7,4.55,0.194
+2026-11-09 15:28,3294553,2026-11-11 22:00,Londrina PR,Nautico PE,Brezilya Seri B,21,1,1.39,3.73,4.78,1.34,3.62,4.63,0.1967
+2026-11-09 15:28,3387599,2026-11-11 22:00,Atlético Morelia,Leones Negros Udeg,"Meksika ExpansionMX Lig,Açılış,Playoff",23352,0,1.63,3.37,3.54,1.58,3.26,3.43,0.1927
+2026-11-09 15:28,3387600,2026-11-11 22:00,Piratas Veracruz,Club Atletico La Paz,"Meksika ExpansionMX Lig,Açılış,Playoff",23352,0,1.49,3.68,3.97,1.44,3.57,3.85,0.1948
+2026-11-09 15:28,3330646,2026-11-12 06:00,Yeni Zelanda,Hindistan,Uluslararası Hazırlık Maçları,1484,0,1.22,4.33,7.03,1.18,4.2,6.81,0.1929
+2026-11-09 15:28,3370578,2026-11-12 08:00,Tayland U23,Katar U23,U23 Hazırlık Maçları,1755,0,1.99,3.0,2.77,1.93,2.91,2.69,0.1969
+2026-11-09 15:28,3339022,2026-11-12 15:00,Özbekistan,Rusya,Uluslararası Hazırlık Maçları,1484,0,3.6,3.01,1.71,3.49,2.91,1.66,0.1948
+2026-11-09 15:28,3330648,2026-11-12 16:00,Madagaskar,Gine Bissau,"Afrika Uluslar Kup.,Eleme,Gr.L",1440,1,2.68,2.77,2.17,2.59,2.68,2.11,0.195
+2026-11-09 15:28,3330660,2026-11-12 16:00,Gine,Eritre,"Afrika Uluslar Kup.,Eleme,Gr.D",1432,1,1.07,5.35,12.7,1.0,5.19,12.3,0.2002
+2026-11-09 15:28,3330664,2026-11-12 16:00,Demokratik Kongo Cumhu.,Sierra Leone,"Afrika Uluslar Kup.,Eleme,Gr.E",1433,1,1.08,5.19,13.2,1.0,5.03,12.8,0.1944
+2026-11-09 15:28,3330692,2026-11-12 16:00,Ekvator Ginesi,Zimbabve,"Afrika Uluslar Kup.,Eleme,Gr.E",1433,0,1.94,2.8,3.09,1.88,2.72,2.99,0.1962
+2026-11-09 15:28,3288510,2026-11-12 17:00,Türkiye,Belçika,UEFA Uluslar Ligi,1407,1,3.22,3.56,1.79,3.12,3.45,1.74,0.1501
+2026-11-09 15:28,3288581,2026-11-12 17:00,Ermenistan,Kıbrıs Rum Kesimi,UEFA Uluslar Ligi,1407,1,2.04,3.09,2.95,1.98,2.99,2.86,0.1528
+2026-11-09 15:28,3286942,2026-11-12 17:45,Barcelona (K),Arsenal (K),UEFA Şamp. Ligi Kadınlar,54684,1,1.11,5.82,8.05,1.08,5.64,7.8,0.1969
+2026-11-09 15:28,3330645,2026-11-12 19:00,Benin,Orta Afrika Cumhuriyeti,"Afrika Uluslar Kup.,Eleme,Gr.F",1434,1,1.36,3.35,6.25,1.32,3.24,6.06,0.1938
+2026-11-09 15:28,3330675,2026-11-12 19:00,Kamerun,Namibya,"Afrika Uluslar Kup.,Eleme,Gr.G",1435,0,1.12,4.51,12.5,1.08,4.37,12.1,0.1946
+2026-11-09 15:28,3330683,2026-11-12 19:00,Fildişi Sahili,Gambiya,"Afrika Uluslar Kup.,Eleme,Gr.C",1431,1,1.07,5.44,14.0,1.0,5.27,13.6,0.1898
+2026-11-09 15:28,3288528,2026-11-12 19:45,Çekya,İspanya,UEFA Uluslar Ligi,1407,1,11.25,6.85,1.09,10.9,6.64,1.06,0.1523
+2026-11-09 15:28,3288565,2026-11-12 19:45,Arnavutluk,Finlandiya,UEFA Uluslar Ligi,1407,1,1.75,3.08,3.9,1.7,2.98,3.78,0.1525
+2026-11-09 15:28,3288707,2026-11-12 19:45,Karadağ,Letonya,UEFA Uluslar Ligi,1407,1,1.21,4.82,8.74,1.17,4.67,8.48,0.1483
+2026-11-09 15:28,3288733,2026-11-12 19:45,İtalya,Fransa,UEFA Uluslar Ligi,1407,1,3.72,3.55,1.66,3.61,3.44,1.61,0.1529
+2026-11-09 15:28,3288736,2026-11-12 19:45,İngiltere,Hırvatistan,UEFA Uluslar Ligi,1407,1,1.13,6.1,9.89,1.09,5.92,9.59,0.15
+2026-11-09 15:28,3335742,2026-11-12 21:00,Millonarios,Alianza FC Valledupar,"Kolombiya Liga DIMAYOR, Final",77379,1,1.13,4.71,10.0,1.09,4.56,9.72,0.1973
+2026-11-09 15:28,3346980,2026-11-12 21:00,R Aguilas,Indep.Medell,"Kolombiya Liga DIMAYOR, Final",77379,0,2.26,2.82,2.51,2.19,2.73,2.44,0.1955
+2026-11-09 15:28,3286926,2026-11-12 23:00,Estudiantes,Ind. Mendoza,Arjantin Süper Kupa,1205,0,2.28,2.86,2.75,2.21,2.78,2.66,0.1519
+2026-11-09 15:28,3379520,2026-11-12 23:00,Cerro Largo FC,CA Progreso,"Uruguay Primera Ligi, Kapanış",2008,0,1.78,3.0,3.32,1.73,2.91,3.22,0.1963
+2026-11-09 15:28,3290838,2026-11-13 17:00,Moldova,Kazakistan,UEFA Uluslar Ligi,1407,0,2.41,2.85,2.6,2.33,2.76,2.52,0.1504
+2026-11-09 15:28,3290774,2026-11-13 19:45,Sırbistan,Almanya,UEFA Uluslar Ligi,1407,0,8.31,5.83,1.16,8.05,5.65,1.13,0.1539
+2026-11-09 15:28,3290829,2026-11-13 19:45,Lihtenştayn,Azerbaycan,UEFA Uluslar Ligi,1407,1,11.6,5.07,1.15,11.25,4.91,1.12,0.153
+2026-11-09 15:28,3290880,2026-11-13 19:45,Lüksemburg,Estonya,UEFA Uluslar Ligi,1407,1,1.99,2.98,3.21,1.93,2.89,3.11,0.1496
+2026-11-09 15:28,3290950,2026-11-13 19:45,Bulgaristan,İzlanda,UEFA Uluslar Ligi,1407,1,3.83,3.24,1.72,3.71,3.14,1.67,0.1511
+2026-11-09 15:28,3291048,2026-11-13 19:45,Slovakya,Faroe Adaları,UEFA Uluslar Ligi,1407,1,1.2,4.92,8.72,1.16,4.77,8.45,0.1513
+2026-11-09 15:28,3291086,2026-11-13 19:45,Andorra,Cebelitarık,UEFA Uluslar Ligi,1407,0,1.72,2.85,4.6,1.67,2.76,4.46,0.1497
+2026-11-09 15:28,3291134,2026-11-13 19:45,İskoçya,Kuzey Makedonya,UEFA Uluslar Ligi,1407,0,1.09,6.34,13.4,1.06,6.14,12.95,0.1498
+2026-11-09 15:28,3291215,2026-11-13 19:45,Hollanda,Yunanistan,UEFA Uluslar Ligi,1407,0,1.35,4.34,5.58,1.31,4.21,5.4,0.1504
+2026-11-09 15:28,3291403,2026-11-13 19:45,Slovenya,İsviçre,UEFA Uluslar Ligi,1407,0,5.07,3.39,1.52,4.92,3.29,1.47,0.1501
+2026-11-09 15:28,3293527,2026-11-14 17:00,Norveç,Galler,UEFA Uluslar Ligi,1407,1,1.14,6.07,9.4,1.1,5.88,9.11,0.1483
+2026-11-09 15:28,3294343,2026-11-14 17:00,Gürcistan,Macaristan,UEFA Uluslar Ligi,1407,1,2.92,2.93,2.14,2.83,2.84,2.07,0.1511
+2026-11-09 15:28,3293479,2026-11-14 19:45,Kuzey İrlanda,Ukrayna,UEFA Uluslar Ligi,1407,0,2.18,2.88,2.9,2.12,2.79,2.81,0.1508
+2026-11-09 15:28,3294235,2026-11-14 19:45,Portekiz,Danimarka,UEFA Uluslar Ligi,1407,1,1.36,4.3,5.38,1.32,4.17,5.21,0.1537
+2026-11-09 15:28,3294332,2026-11-14 19:45,İsveç,Bosna Hersek,UEFA Uluslar Ligi,1407,0,1.4,4.12,5.28,1.35,3.99,5.12,0.1464
+2026-11-09 15:28,3295068,2026-11-14 19:45,Avusturya,İrlanda,UEFA Uluslar Ligi,1407,0,1.46,3.79,4.93,1.41,3.67,4.78,0.1516
+2026-11-09 15:28,3295136,2026-11-14 19:45,Romanya,Polonya,UEFA Uluslar Ligi,1407,0,3.45,3.34,1.78,3.35,3.24,1.73,0.1511
