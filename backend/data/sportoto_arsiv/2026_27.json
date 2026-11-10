@@ -2,342 +2,22 @@
  "meta": {
   "season": "2026/2027",
   "season_key": "2026_27",
-  "weeks": 13,
-  "weeks_with_payout": 12,
+  "weeks": 15,
+  "weeks_with_payout": 14,
   "source": "sportoto.gov.tr resmi arsivi (webapi.sportoto.gov.tr) — RESMI KAYNAK",
   "source_endpoints": [
    "GET /api/GameRound",
    "GET /api/GameResult/GetGameResultByGameRoundId?id=<gameRoundId>"
   ],
-  "fetched_at": "2026-11-03 14:56",
+  "fetched_at": "2026-11-10 15:29",
   "contains": "hafta kaydi + IKRAMIYE tablosu",
   "close_date_note": "`close_date` KUPON KAPANISIDIR, haftanin bitisi degil. Olculdu: 2025/26'nin 41 haftasinin 41'inde bu tarih haftanin ILK macinin gunune esit. `st_history_2025_26.json`in ayni adli alani ise haftanin SON macina denk duser ve 1-4 gun sonradir; iki alan celismiyor, farkli seyleri olcuyor.",
   "does_not_contain": "15 maclik liste ve 1/0/2 dizisi YOK — resmi ucta mac listesi yalnizca bulten GORSELI olarak var (bulletin_image). Kupon dizisi icin st_history veri setine bakilir."
  },
  "weeks": [
   {
-   "week": 1,
-   "name": "1. Hafta",
-   "season": "2026/2027",
-   "game_round_id": 1528,
-   "close_date": "2026-08-14 21:25",
-   "is_published": true,
-   "payout": {
-    "currency": "TRY",
-    "tiers": [
-     {
-      "correct": 15,
-      "winners": 0,
-      "prize": 30149380.57
-     },
-     {
-      "correct": 14,
-      "winners": 8,
-      "prize": 2153527.18
-     },
-     {
-      "correct": 13,
-      "winners": 210,
-      "prize": 82039.13
-     },
-     {
-      "correct": 12,
-      "winners": 2859,
-      "prize": 7532.44
-     }
-    ],
-    "description": "Tebrikler",
-    "close_date": "2026-08-14 21:25"
-   },
-   "bulletin_image": {
-    "name": "1001366704-gvuaoijc.jpg",
-    "url": "https://webapi.sportoto.gov.tr/image/1001366704-gvuaoijc.jpg"
-   },
-   "data_warnings": []
-  },
-  {
-   "week": 2,
-   "name": "2. Hafta",
-   "season": "2026/2027",
-   "game_round_id": 1529,
-   "close_date": "2026-08-21 21:25",
-   "is_published": true,
-   "payout": {
-    "currency": "TRY",
-    "tiers": [
-     {
-      "correct": 15,
-      "winners": 3,
-      "prize": 24330749.43
-     },
-     {
-      "correct": 14,
-      "winners": 121,
-      "prize": 202327.59
-     },
-     {
-      "correct": 13,
-      "winners": 2077,
-      "prize": 11787.01
-     },
-     {
-      "correct": 12,
-      "winners": 21272,
-      "prize": 1438.6
-     }
-    ],
-    "description": "Tebrikler",
-    "close_date": "2026-08-21 21:25"
-   },
-   "bulletin_image": {
-    "name": "1001378831-1uhblbzm.jpg",
-    "url": "https://webapi.sportoto.gov.tr/image/1001378831-1uhblbzm.jpg"
-   },
-   "data_warnings": []
-  },
-  {
-   "week": 3,
-   "name": "3. Hafta",
-   "season": "2026/2027",
-   "game_round_id": 1530,
-   "close_date": "2026-08-28 21:25",
-   "is_published": true,
-   "payout": {
-    "currency": "TRY",
-    "tiers": [
-     {
-      "correct": 15,
-      "winners": 9,
-      "prize": 4261867.07
-     },
-     {
-      "correct": 14,
-      "winners": 188,
-      "prize": 116586.02
-     },
-     {
-      "correct": 13,
-      "winners": 2540,
-      "prize": 8629.2
-     },
-     {
-      "correct": 12,
-      "winners": 22282,
-      "prize": 1229.58
-     }
-    ],
-    "description": "Tebrikler",
-    "close_date": "2026-08-28 21:25"
-   },
-   "bulletin_image": {
-    "name": "1001390621-bm2irgka.jpg",
-    "url": "https://webapi.sportoto.gov.tr/image/1001390621-bm2irgka.jpg"
-   },
-   "data_warnings": []
-  },
-  {
-   "week": 4,
-   "name": "4. Hafta",
-   "season": "2026/2027",
-   "game_round_id": 1531,
-   "close_date": "2026-09-04 19:55",
-   "is_published": true,
-   "payout": {
-    "currency": "TRY",
-    "tiers": [
-     {
-      "correct": 15,
-      "winners": 1,
-      "prize": 36007678.16
-     },
-     {
-      "correct": 14,
-      "winners": 53,
-      "prize": 388222.94
-     },
-     {
-      "correct": 13,
-      "winners": 1072,
-      "prize": 19193.85
-     },
-     {
-      "correct": 12,
-      "winners": 11934,
-      "prize": 2155.16
-     }
-    ],
-    "description": "15 BİLEN İŞTİRAKÇİMİZ SANAL BAYİMİZDEN 40 TL KUPON BEDELİ KARŞILIĞINDA İKRAMİYE KAZANMIŞTIR",
-    "close_date": "2026-09-04 19:55"
-   },
-   "bulletin_image": {
-    "name": "1001405844-cvdlqrnr.jpg",
-    "url": "https://webapi.sportoto.gov.tr/image/1001405844-cvdlqrnr.jpg"
-   },
-   "data_warnings": []
-  },
-  {
-   "week": 5,
-   "name": "5. Hafta",
-   "season": "2026/2027",
-   "game_round_id": 1532,
-   "close_date": "2026-09-11 19:55",
-   "is_published": true,
-   "payout": {
-    "currency": "TRY",
-    "tiers": [
-     {
-      "correct": 15,
-      "winners": 0,
-      "prize": 39574570.01
-     },
-     {
-      "correct": 14,
-      "winners": 35,
-      "prize": 646115.42
-     },
-     {
-      "correct": 13,
-      "winners": 591,
-      "prize": 38264.02
-     },
-     {
-      "correct": 12,
-      "winners": 6371,
-      "prize": 4436.9
-     }
-    ],
-    "description": "Tebrikler",
-    "close_date": "2026-09-11 19:55"
-   },
-   "bulletin_image": {
-    "name": "1001420257-a3mb83yz.jpg",
-    "url": "https://webapi.sportoto.gov.tr/image/1001420257-a3mb83yz.jpg"
-   },
-   "data_warnings": []
-  },
-  {
-   "week": 6,
-   "name": "6. Hafta",
-   "season": "2026/2027",
-   "game_round_id": 1533,
-   "close_date": "2026-09-18 19:55",
-   "is_published": true,
-   "payout": {
-    "currency": "TRY",
-    "tiers": [
-     {
-      "correct": 15,
-      "winners": 9,
-      "prize": 10152127.33
-     },
-     {
-      "correct": 14,
-      "winners": 231,
-      "prize": 128125.11
-     },
-     {
-      "correct": 13,
-      "winners": 3303,
-      "prize": 8960.61
-     },
-     {
-      "correct": 12,
-      "winners": 28827,
-      "prize": 1283.38
-     }
-    ],
-    "description": "Tebrikler",
-    "close_date": "2026-09-18 19:55"
-   },
-   "bulletin_image": {
-    "name": "1001430815-dco6ijh2.jpg",
-    "url": "https://webapi.sportoto.gov.tr/image/1001430815-dco6ijh2.jpg"
-   },
-   "data_warnings": []
-  },
-  {
-   "week": 7,
-   "name": "7. Hafta",
-   "season": "2026/2027",
-   "game_round_id": 1534,
-   "close_date": "2026-09-25 21:40",
-   "is_published": true,
-   "payout": {
-    "currency": "TRY",
-    "tiers": [
-     {
-      "correct": 15,
-      "winners": 6,
-      "prize": 4418640.12
-     },
-     {
-      "correct": 14,
-      "winners": 419,
-      "prize": 36156.61
-     },
-     {
-      "correct": 13,
-      "winners": 7955,
-      "prize": 1904.41
-     },
-     {
-      "correct": 12,
-      "winners": 73867,
-      "prize": 256.36
-     }
-    ],
-    "description": "Tebrikler",
-    "close_date": "2026-09-25 21:40"
-   },
-   "bulletin_image": {
-    "name": "spor-toto-listesi-7-hafta-l1sqpyct.jpg",
-    "url": "https://webapi.sportoto.gov.tr/image/spor-toto-listesi-7-hafta-l1sqpyct.jpg"
-   },
-   "data_warnings": []
-  },
-  {
-   "week": 8,
-   "name": "8. Hafta",
-   "season": "2026/2027",
-   "game_round_id": 1535,
-   "close_date": "2026-10-02 21:40",
-   "is_published": true,
-   "payout": {
-    "currency": "TRY",
-    "tiers": [
-     {
-      "correct": 15,
-      "winners": 2580,
-      "prize": 11080.76
-     },
-     {
-      "correct": 14,
-      "winners": 39156,
-      "prize": 417.2
-     },
-     {
-      "correct": 13,
-      "winners": 244768,
-      "prize": 66.74
-     },
-     {
-      "correct": 12,
-      "winners": 868463,
-      "prize": 23.51
-     }
-    ],
-    "description": "Tebrikler",
-    "close_date": "2026-10-02 21:40"
-   },
-   "bulletin_image": {
-    "name": "1001460062-cfjnxsuj.jpg",
-    "url": "https://webapi.sportoto.gov.tr/image/1001460062-cfjnxsuj.jpg"
-   },
-   "data_warnings": []
-  },
-  {
-   "week": 9,
-   "name": "9. Hafta",
+   "week": null,
+   "name": "9. Oyun Programı",
    "season": "2026/2027",
    "game_round_id": 1536,
    "close_date": "2026-10-09 19:55",
@@ -373,91 +53,407 @@
     "name": "1001471491-dmfevttx.jpg",
     "url": "https://webapi.sportoto.gov.tr/image/1001471491-dmfevttx.jpg"
    },
-   "data_warnings": []
+   "data_warnings": [
+    "hafta numarasi ad'dan cikarilamadi: '9. Oyun Programı' — week null birakildi"
+   ]
   },
   {
-   "week": 10,
-   "name": "10. Hafta",
+   "week": null,
+   "name": "8. Oyun Programı",
    "season": "2026/2027",
-   "game_round_id": 1537,
-   "close_date": "2026-10-16 19:55",
+   "game_round_id": 1535,
+   "close_date": "2026-10-02 21:40",
    "is_published": true,
    "payout": {
     "currency": "TRY",
     "tiers": [
      {
       "correct": 15,
-      "winners": 1863,
-      "prize": 24024.22
+      "winners": 2580,
+      "prize": 11080.76
      },
      {
       "correct": 14,
-      "winners": 34791,
-      "prize": 735.11
+      "winners": 39156,
+      "prize": 417.2
      },
      {
       "correct": 13,
-      "winners": 293810,
-      "prize": 87.04
+      "winners": 244768,
+      "prize": 66.74
      },
      {
       "correct": 12,
-      "winners": 1017195,
-      "prize": 31.42
+      "winners": 868463,
+      "prize": 23.51
      }
     ],
     "description": "Tebrikler",
-    "close_date": "2026-10-16 19:55"
+    "close_date": "2026-10-02 21:40"
    },
    "bulletin_image": {
-    "name": "spor-toto-listesi-10-hafta-n82ru55x.jpg",
-    "url": "https://webapi.sportoto.gov.tr/image/spor-toto-listesi-10-hafta-n82ru55x.jpg"
+    "name": "1001460062-cfjnxsuj.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/1001460062-cfjnxsuj.jpg"
    },
-   "data_warnings": []
+   "data_warnings": [
+    "hafta numarasi ad'dan cikarilamadi: '8. Oyun Programı' — week null birakildi"
+   ]
   },
   {
-   "week": 11,
-   "name": "11. Hafta",
+   "week": null,
+   "name": "7. Oyun Programı",
    "season": "2026/2027",
-   "game_round_id": 1538,
-   "close_date": "2026-10-23 19:55",
+   "game_round_id": 1534,
+   "close_date": "2026-09-25 21:40",
    "is_published": true,
    "payout": {
     "currency": "TRY",
     "tiers": [
      {
       "correct": 15,
-      "winners": 14,
-      "prize": 2902003.02
+      "winners": 6,
+      "prize": 4418640.12
      },
      {
       "correct": 14,
       "winners": 419,
-      "prize": 55408.17
+      "prize": 36156.61
      },
      {
       "correct": 13,
-      "winners": 6951,
-      "prize": 3339.95
+      "winners": 7955,
+      "prize": 1904.41
      },
      {
       "correct": 12,
-      "winners": 64371,
-      "prize": 450.82
+      "winners": 73867,
+      "prize": 256.36
      }
     ],
     "description": "Tebrikler",
-    "close_date": "2026-10-23 19:55"
+    "close_date": "2026-09-25 21:40"
    },
    "bulletin_image": {
-    "name": "1001503134-4akx7lns.jpg",
-    "url": "https://webapi.sportoto.gov.tr/image/1001503134-4akx7lns.jpg"
+    "name": "spor-toto-listesi-7-hafta-l1sqpyct.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/spor-toto-listesi-7-hafta-l1sqpyct.jpg"
    },
-   "data_warnings": []
+   "data_warnings": [
+    "hafta numarasi ad'dan cikarilamadi: '7. Oyun Programı' — week null birakildi"
+   ]
   },
   {
-   "week": 12,
-   "name": "12. Hafta",
+   "week": null,
+   "name": "6. Oyun Programı",
+   "season": "2026/2027",
+   "game_round_id": 1533,
+   "close_date": "2026-09-18 19:55",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 9,
+      "prize": 10152127.33
+     },
+     {
+      "correct": 14,
+      "winners": 231,
+      "prize": 128125.11
+     },
+     {
+      "correct": 13,
+      "winners": 3303,
+      "prize": 8960.61
+     },
+     {
+      "correct": 12,
+      "winners": 28827,
+      "prize": 1283.38
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2026-09-18 19:55"
+   },
+   "bulletin_image": {
+    "name": "1001430815-dco6ijh2.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/1001430815-dco6ijh2.jpg"
+   },
+   "data_warnings": [
+    "hafta numarasi ad'dan cikarilamadi: '6. Oyun Programı' — week null birakildi"
+   ]
+  },
+  {
+   "week": null,
+   "name": "5. Oyun Programı",
+   "season": "2026/2027",
+   "game_round_id": 1532,
+   "close_date": "2026-09-11 19:55",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 0,
+      "prize": 39574570.01
+     },
+     {
+      "correct": 14,
+      "winners": 35,
+      "prize": 646115.42
+     },
+     {
+      "correct": 13,
+      "winners": 591,
+      "prize": 38264.02
+     },
+     {
+      "correct": 12,
+      "winners": 6371,
+      "prize": 4436.9
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2026-09-11 19:55"
+   },
+   "bulletin_image": {
+    "name": "1001420257-a3mb83yz.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/1001420257-a3mb83yz.jpg"
+   },
+   "data_warnings": [
+    "hafta numarasi ad'dan cikarilamadi: '5. Oyun Programı' — week null birakildi"
+   ]
+  },
+  {
+   "week": null,
+   "name": "4. Oyun Programı",
+   "season": "2026/2027",
+   "game_round_id": 1531,
+   "close_date": "2026-09-04 19:55",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 1,
+      "prize": 36007678.16
+     },
+     {
+      "correct": 14,
+      "winners": 53,
+      "prize": 388222.94
+     },
+     {
+      "correct": 13,
+      "winners": 1072,
+      "prize": 19193.85
+     },
+     {
+      "correct": 12,
+      "winners": 11934,
+      "prize": 2155.16
+     }
+    ],
+    "description": "15 BİLEN İŞTİRAKÇİMİZ SANAL BAYİMİZDEN 40 TL KUPON BEDELİ KARŞILIĞINDA İKRAMİYE KAZANMIŞTIR",
+    "close_date": "2026-09-04 19:55"
+   },
+   "bulletin_image": {
+    "name": "1001405844-cvdlqrnr.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/1001405844-cvdlqrnr.jpg"
+   },
+   "data_warnings": [
+    "hafta numarasi ad'dan cikarilamadi: '4. Oyun Programı' — week null birakildi"
+   ]
+  },
+  {
+   "week": null,
+   "name": "3. Oyun Programı",
+   "season": "2026/2027",
+   "game_round_id": 1530,
+   "close_date": "2026-08-28 21:25",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 9,
+      "prize": 4261867.07
+     },
+     {
+      "correct": 14,
+      "winners": 188,
+      "prize": 116586.02
+     },
+     {
+      "correct": 13,
+      "winners": 2540,
+      "prize": 8629.2
+     },
+     {
+      "correct": 12,
+      "winners": 22282,
+      "prize": 1229.58
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2026-08-28 21:25"
+   },
+   "bulletin_image": {
+    "name": "1001390621-bm2irgka.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/1001390621-bm2irgka.jpg"
+   },
+   "data_warnings": [
+    "hafta numarasi ad'dan cikarilamadi: '3. Oyun Programı' — week null birakildi"
+   ]
+  },
+  {
+   "week": null,
+   "name": "2. Oyun Programı",
+   "season": "2026/2027",
+   "game_round_id": 1529,
+   "close_date": "2026-08-21 21:25",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 3,
+      "prize": 24330749.43
+     },
+     {
+      "correct": 14,
+      "winners": 121,
+      "prize": 202327.59
+     },
+     {
+      "correct": 13,
+      "winners": 2077,
+      "prize": 11787.01
+     },
+     {
+      "correct": 12,
+      "winners": 21272,
+      "prize": 1438.6
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2026-08-21 21:25"
+   },
+   "bulletin_image": {
+    "name": "1001378831-1uhblbzm.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/1001378831-1uhblbzm.jpg"
+   },
+   "data_warnings": [
+    "hafta numarasi ad'dan cikarilamadi: '2. Oyun Programı' — week null birakildi"
+   ]
+  },
+  {
+   "week": null,
+   "name": "15. Oyun Programı",
+   "season": "2026/2027",
+   "game_round_id": 1542,
+   "close_date": "2026-11-13 22:40",
+   "is_published": true,
+   "payout": null,
+   "bulletin_image": {
+    "name": "1001547717-i8aqobdk.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/1001547717-i8aqobdk.jpg"
+   },
+   "data_warnings": [
+    "hafta numarasi ad'dan cikarilamadi: '15. Oyun Programı' — week null birakildi"
+   ]
+  },
+  {
+   "week": null,
+   "name": "14. Oyun Programı",
+   "season": "2026/2027",
+   "game_round_id": 1541,
+   "close_date": "2026-11-06 19:55",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 1031,
+      "prize": 44261.24
+     },
+     {
+      "correct": 14,
+      "winners": 20811,
+      "prize": 877.1
+     },
+     {
+      "correct": 13,
+      "winners": 168466,
+      "prize": 102.33
+     },
+     {
+      "correct": 12,
+      "winners": 718133,
+      "prize": 28.24
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2026-11-06 19:55"
+   },
+   "bulletin_image": {
+    "name": "spor-toto-listesi-14-hafta-1-imlzwts6.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/spor-toto-listesi-14-hafta-1-imlzwts6.jpg"
+   },
+   "data_warnings": [
+    "hafta numarasi ad'dan cikarilamadi: '14. Oyun Programı' — week null birakildi"
+   ]
+  },
+  {
+   "week": null,
+   "name": "13. Oyun Programı",
+   "season": "2026/2027",
+   "game_round_id": 1540,
+   "close_date": "2026-11-03 20:40",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 243,
+      "prize": 140567.23
+     },
+     {
+      "correct": 14,
+      "winners": 8853,
+      "prize": 1543.33
+     },
+     {
+      "correct": 13,
+      "winners": 81545,
+      "prize": 158.24
+     },
+     {
+      "correct": 12,
+      "winners": 380733,
+      "prize": 39.87
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2026-11-03 20:40"
+   },
+   "bulletin_image": {
+    "name": "1001533385-nrso9nh9.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/1001533385-nrso9nh9.jpg"
+   },
+   "data_warnings": [
+    "hafta numarasi ad'dan cikarilamadi: '13. Oyun Programı' — week null birakildi"
+   ]
+  },
+  {
+   "week": null,
+   "name": "12. Oyun Programı",
    "season": "2026/2027",
    "game_round_id": 1539,
    "close_date": "2026-10-30 19:55",
@@ -493,22 +489,134 @@
     "name": "1001517341-kgianydp.jpg",
     "url": "https://webapi.sportoto.gov.tr/image/1001517341-kgianydp.jpg"
    },
-   "data_warnings": []
+   "data_warnings": [
+    "hafta numarasi ad'dan cikarilamadi: '12. Oyun Programı' — week null birakildi"
+   ]
   },
   {
    "week": null,
-   "name": "13. Oyun Programı",
+   "name": "11. Oyun Programı",
    "season": "2026/2027",
-   "game_round_id": 1540,
-   "close_date": "2026-11-03 20:40",
+   "game_round_id": 1538,
+   "close_date": "2026-10-23 19:55",
    "is_published": true,
-   "payout": null,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 14,
+      "prize": 2902003.02
+     },
+     {
+      "correct": 14,
+      "winners": 419,
+      "prize": 55408.17
+     },
+     {
+      "correct": 13,
+      "winners": 6951,
+      "prize": 3339.95
+     },
+     {
+      "correct": 12,
+      "winners": 64371,
+      "prize": 450.82
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2026-10-23 19:55"
+   },
    "bulletin_image": {
-    "name": "1001533385-nrso9nh9.jpg",
-    "url": "https://webapi.sportoto.gov.tr/image/1001533385-nrso9nh9.jpg"
+    "name": "1001503134-4akx7lns.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/1001503134-4akx7lns.jpg"
    },
    "data_warnings": [
-    "hafta numarasi ad'dan cikarilamadi: '13. Oyun Programı' — week null birakildi"
+    "hafta numarasi ad'dan cikarilamadi: '11. Oyun Programı' — week null birakildi"
+   ]
+  },
+  {
+   "week": null,
+   "name": "10. Oyun Programı",
+   "season": "2026/2027",
+   "game_round_id": 1537,
+   "close_date": "2026-10-16 19:55",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 1863,
+      "prize": 24024.22
+     },
+     {
+      "correct": 14,
+      "winners": 34791,
+      "prize": 735.11
+     },
+     {
+      "correct": 13,
+      "winners": 293810,
+      "prize": 87.04
+     },
+     {
+      "correct": 12,
+      "winners": 1017195,
+      "prize": 31.42
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2026-10-16 19:55"
+   },
+   "bulletin_image": {
+    "name": "spor-toto-listesi-10-hafta-n82ru55x.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/spor-toto-listesi-10-hafta-n82ru55x.jpg"
+   },
+   "data_warnings": [
+    "hafta numarasi ad'dan cikarilamadi: '10. Oyun Programı' — week null birakildi"
+   ]
+  },
+  {
+   "week": null,
+   "name": "1. Oyun Programı",
+   "season": "2026/2027",
+   "game_round_id": 1528,
+   "close_date": "2026-08-14 21:25",
+   "is_published": true,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 0,
+      "prize": 30149380.57
+     },
+     {
+      "correct": 14,
+      "winners": 8,
+      "prize": 2153527.18
+     },
+     {
+      "correct": 13,
+      "winners": 210,
+      "prize": 82039.13
+     },
+     {
+      "correct": 12,
+      "winners": 2859,
+      "prize": 7532.44
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2026-08-14 21:25"
+   },
+   "bulletin_image": {
+    "name": "1001366704-gvuaoijc.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/1001366704-gvuaoijc.jpg"
+   },
+   "data_warnings": [
+    "hafta numarasi ad'dan cikarilamadi: '1. Oyun Programı' — week null birakildi"
    ]
   }
  ]
