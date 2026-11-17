@@ -2,14 +2,14 @@
  "meta": {
   "season": "2026/2027",
   "season_key": "2026_27",
-  "weeks": 15,
-  "weeks_with_payout": 14,
+  "weeks": 16,
+  "weeks_with_payout": 15,
   "source": "sportoto.gov.tr resmi arsivi (webapi.sportoto.gov.tr) — RESMI KAYNAK",
   "source_endpoints": [
    "GET /api/GameRound",
    "GET /api/GameResult/GetGameResultByGameRoundId?id=<gameRoundId>"
   ],
-  "fetched_at": "2026-11-10 15:29",
+  "fetched_at": "2026-11-17 16:48",
   "contains": "hafta kaydi + IKRAMIYE tablosu",
   "close_date_note": "`close_date` KUPON KAPANISIDIR, haftanin bitisi degil. Olculdu: 2025/26'nin 41 haftasinin 41'inde bu tarih haftanin ILK macinin gunune esit. `st_history_2025_26.json`in ayni adli alani ise haftanin SON macina denk duser ve 1-4 gun sonradir; iki alan celismiyor, farkli seyleri olcuyor.",
   "does_not_contain": "15 maclik liste ve 1/0/2 dizisi YOK — resmi ucta mac listesi yalnizca bulten GORSELI olarak var (bulletin_image). Kupon dizisi icin st_history veri setine bakilir."
@@ -353,12 +353,54 @@
   },
   {
    "week": null,
+   "name": "16. Oyun Programı",
+   "season": "2026/2027",
+   "game_round_id": 1543,
+   "close_date": "2026-11-21 13:25",
+   "is_published": true,
+   "payout": null,
+   "bulletin_image": {
+    "name": "spor-toto-listesi-16-hafta-tibyx8oi.jpg",
+    "url": "https://webapi.sportoto.gov.tr/image/spor-toto-listesi-16-hafta-tibyx8oi.jpg"
+   },
+   "data_warnings": [
+    "hafta numarasi ad'dan cikarilamadi: '16. Oyun Programı' — week null birakildi"
+   ]
+  },
+  {
+   "week": null,
    "name": "15. Oyun Programı",
    "season": "2026/2027",
    "game_round_id": 1542,
    "close_date": "2026-11-13 22:40",
    "is_published": true,
-   "payout": null,
+   "payout": {
+    "currency": "TRY",
+    "tiers": [
+     {
+      "correct": 15,
+      "winners": 118,
+      "prize": 247969.29
+     },
+     {
+      "correct": 14,
+      "winners": 2745,
+      "prize": 4263.8
+     },
+     {
+      "correct": 13,
+      "winners": 28883,
+      "prize": 382.71
+     },
+     {
+      "correct": 12,
+      "winners": 176420,
+      "prize": 73.71
+     }
+    ],
+    "description": "Tebrikler",
+    "close_date": "2026-11-13 22:40"
+   },
    "bulletin_image": {
     "name": "1001547717-i8aqobdk.jpg",
     "url": "https://webapi.sportoto.gov.tr/image/1001547717-i8aqobdk.jpg"

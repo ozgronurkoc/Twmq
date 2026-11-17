@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-10 15:29",
+ "generated_at": "2026-11-17 16:48",
  "source": "sportoto.gov.tr resmi arsivi (webapi.sportoto.gov.tr) — RESMI KAYNAK",
  "seasons": {
   "2021_22": {
@@ -34,16 +34,16 @@
   },
   "2026_27": {
    "season": "2026/2027",
-   "weeks": 15,
-   "with_payout": 14,
-   "with_bulletin_image": 15
+   "weeks": 16,
+   "with_payout": 15,
+   "with_bulletin_image": 16
   }
  },
  "totals": {
-  "weeks": 236,
-  "with_payout": 235,
-  "with_bulletin_image": 235,
-  "with_warnings": 15
+  "weeks": 237,
+  "with_payout": 236,
+  "with_bulletin_image": 236,
+  "with_warnings": 16
  },
  "limits": [
   "Mac listesi ve 1/0/2 dizisi bu kaynakta YOK; yalnizca bulten gorseli var.",
