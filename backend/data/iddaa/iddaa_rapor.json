@@ -1,17 +1,17 @@
 {
-  "taken_at": "2026-11-16 15:06",
+  "taken_at": "2026-11-23 17:35",
   "source": "sportsbookv2.iddaa.com/sportsbook/events — ACIK bulten, gecmis yok",
-  "bulletin_version": 1794841600804,
-  "football_events": 193,
-  "with_1x2": 172,
-  "dropped": 21,
-  "with_league_label": 172,
-  "avg_margin_pct": 19.54,
+  "bulletin_version": 1795455217175,
+  "football_events": 307,
+  "with_1x2": 297,
+  "dropped": 10,
+  "with_league_label": 297,
+  "avg_margin_pct": 18.68,
   "birikimli": {
-    "snapshot": 13,
-    "satir": 3520,
-    "avg_margin_pct": 16.9,
-    "median_margin_pct": 17.53
+    "snapshot": 14,
+    "satir": 3817,
+    "avg_margin_pct": 17.04,
+    "median_margin_pct": 17.56
   },
   "snapshots": [
     "iddaa_2026-08-16.csv",
@@ -26,7 +26,8 @@
     "iddaa_2026-10-26.csv",
     "iddaa_2026-11-02.csv",
     "iddaa_2026-11-09.csv",
-    "iddaa_2026-11-16.csv"
+    "iddaa_2026-11-16.csv",
+    "iddaa_2026-11-23.csv"
   ],
   "note": "Tek snapshot analize yetmez; deger haftalik birikimle olusur. Gecmis iddaa orani hicbir kaynakta yayinlanmadigi icin bu arsiv ancak ileriye donuk buyur. Belgede anilacak marj `birikimli` blogundan okunur; `avg_margin_pct` tek kosumun ciktisidir."
 }
